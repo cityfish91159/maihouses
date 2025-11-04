@@ -39,7 +39,7 @@ async function readBase(): Promise<AppConfig & Partial<RuntimeOverrides>> {
     const cache = localStorage.getItem(LS)
     if (cache) {
       const parsed = JSON.parse(cache)
-      if (isValidConfig(parsed)) return parsed
+      if (isValidConfig(parsed)) return { ...parsed, ...pickParams() }
     }
   } catch {}
   

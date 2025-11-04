@@ -25,10 +25,11 @@ export default function App() {
     if (config) trackEvent('page_view', loc.pathname)
   }, [loc, config])
 
-  if (!config)
+  if (!config) {
     return (
       <div className="p-6 text-sm text-[var(--text-secondary)]">載入中…</div>
     )
+  }
 
   return (
     <>
