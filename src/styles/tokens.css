@@ -1,0 +1,77 @@
+:root {
+  /* 品牌色 - 從 HTML 提取 */
+  --brand: #1749D7;
+  --brand-light: #6aa4ff;
+  --brand-lighter: #eef3ff;
+  --brand-fg: #FFFFFF;
+  
+  /* 背景色 - 匹配 HTML */
+  --bg-page: #f6f9ff;
+  --bg-card: #ffffff;
+  --bg-card-hero: #f7faff;
+  
+  /* 邊框色 */
+  --border-default: #e6edf7;
+  
+  /* 中性灰階 */
+  --neutral-50: #F9FAFB;
+  --neutral-100: #F3F4F6;
+  --neutral-200: #E5E7EB;
+  --neutral-300: #D1D5DB;
+  --neutral-400: #9CA3AF;
+  --neutral-500: #6B7280;
+  --neutral-600: #4B5563;
+  --neutral-700: #374151;
+  --neutral-800: #1F2937;
+  --neutral-900: #111827;
+  
+  /* 文字色 - 從 HTML 提取 */
+  --text-primary: #0a2246;
+  --text-secondary: #6c7b91;
+  --text-tertiary: #8a95a5;
+  
+  /* 語義色 */
+  --success: #16A34A;
+  --warning: #F59E0B;
+  --danger: #E11D48;
+  --info: #0EA5E9;
+  
+  /* 字體尺寸 */
+  --fs-xs: 12px;
+  --fs-sm: 13px;
+  --fs-md: 14px;
+  --fs-base: 16px;
+  --fs-lg: 18px;
+  --fs-xl: 20px;
+  --fs-2xl: 24px;
+  --fs-3xl: 28px;
+  
+  /* 間距 - 保留 HTML 的緊湊風格 */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-6: 24px;
+  --sp-8: 32px;
+  --sp-12: 48px;
+  
+  /* 圓角 - 從 HTML 提取 */
+  --r-sm: 8px;
+  --r-md: 10px;
+  --r-lg: 12px;
+  --r-xl: 16px;
+  --r-pill: 999px;
+  
+  /* 陰影 - 保留 HTML 的輕量風格 */
+  --shadow-card: 0 2px 8px rgba(10, 34, 70, 0.04);
+  --shadow-hover: 0 4px 12px rgba(10, 34, 70, 0.08);
+  
+  /* z-index */
+  --z-header: 50;
+  --z-overlay: 100;
+  
+  /* 過渡 */
+  --transition-fast: 150ms;
+  --transition-normal: 250ms;
+  --transition-slow: 400ms;
+}
