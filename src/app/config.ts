@@ -43,7 +43,8 @@ async function readBase(): Promise<AppConfig & Partial<RuntimeOverrides>> {
     }
   } catch {}
   
-  const url = new URL('app.config.json', import.meta.env.BASE_URL).toString()
+  const baseUrl = import.meta.env.BASE_URL || '/'
+  const url = `${window.location.origin}${baseUrl}app.config.json`
   return fetchJson(url)
 }
 
