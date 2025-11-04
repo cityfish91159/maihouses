@@ -46,12 +46,20 @@ export async function apiFetch<T = unknown>(endpoint: string, options: RequestIn
   const id = setTimeout(() => controller.abort(), 8000)
 
   try {
-    const res = await fetch(url, { ...options, headers, signal: controller.signal })
-    if (!res.ok) {
-      return { ok: false, error: { code: 'API_ERROR', message: 'API 請求失敗' } }
+    try {
+      const res = await fetch(url, { ...options, headers, signal: controller.signal })
+      if (!res.ok) {
+        return { ok: false, error: { code: 'API_ERROR', message: 'API 請求失敗' } }
+      }
+      const data = await res.json()
+      return { ok: true, data }
+    } catch (e) {
+      if ((e as any)?.name === 'AbortError')
+        return { ok: false, error: { code: 'NETWORK_TIMEOUT', message: '請求超時' } }
+      return { ok: false, error: { code: 'NETWORK_ERROR', message: (e as Error).message } }
+    } finally {
+      clearTimeout(id)
     }
-    const data = await res.json()
-    return { ok: true, data }
   } catch (e) {
     if ((e as any)?.name === 'AbortError')
       return { ok: false, error: { code: 'NETWORK_TIMEOUT', message: '請求超時' } }
