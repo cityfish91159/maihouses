@@ -1,0 +1,14 @@
+{
+  "apiBaseUrl": "https://api.maihouses.com",
+  "appVersion": "1.0.7",
+  "minBackend": "1.0.0",
+  "features": {
+    "heroAssure": true,
+    "smartAsk": true,
+    "communityTeaser": true,
+    "propertyGrid": true
+  },
+  "mock": true,
+  "latency": 0,
+  "error": 0
+}
