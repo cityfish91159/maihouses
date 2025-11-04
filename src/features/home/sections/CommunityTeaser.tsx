@@ -22,32 +22,40 @@ export default function CommunityTeaser() {
   }
 
   return (
-    <section className="bg-white rounded-[var(--r-lg)] shadow-[var(--shadow-card)] p-4">
-      <h3 className="font-semibold text-[var(--fs-lg)] mb-2 text-[var(--text-primary)]">社區牆</h3>
-      <p className="text-[var(--fs-sm)] text-[var(--text-secondary)] mb-4">
+    <section className="bg-white rounded-[var(--r-xl)] shadow-[var(--shadow-card)] p-4 md:p-6 transition-shadow hover:shadow-[var(--shadow-hover)]">
+      <h3 className="font-bold text-[var(--text-primary)] mb-2" style={{ fontSize: 'var(--fs-xl)' }}>
+        社區牆
+      </h3>
+      <p className="text-[var(--text-secondary)] mb-5" style={{ fontSize: 'var(--fs-sm)' }}>
         看看住戶怎麼說，快速了解生活圈與鄰居素質
       </p>
 
       {communities.length === 0 ? (
-        <div className="text-center py-8 text-[var(--text-tertiary)] text-[var(--fs-sm)]">載入中...</div>
+        <div className="text-center py-10 text-[var(--text-tertiary)]" style={{ fontSize: 'var(--fs-sm)' }}>
+          載入中...
+        </div>
       ) : (
-        <div className="grid gap-3 sm:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {communities.map((c) => (
             <article
               key={c.id}
-              className="border border-[var(--border-default)] rounded-[var(--r-md)] overflow-hidden cursor-pointer hover:shadow-[var(--shadow-hover)] transition-shadow"
+              className="border-2 border-[var(--border-default)] rounded-[var(--r-lg)] overflow-hidden cursor-pointer transition-all hover:border-[var(--brand)] hover:shadow-[var(--shadow-hover)] hover:-translate-y-1"
               onClick={() => goToWall(c.id)}
             >
               <div
-                className="h-28 bg-cover bg-center"
+                className="h-32 bg-cover bg-center"
                 style={{ backgroundImage: `url(${c.cover})` }}
                 aria-hidden="true"
               />
-              <div className="p-3">
-                <h4 className="font-semibold text-[var(--fs-sm)] text-[var(--text-primary)] mb-1">{c.name}</h4>
-                <div className="text-xs text-[var(--text-secondary)] mb-2">{c.location}</div>
-                <div className="flex items-center gap-2">
-                  <span className="text-[var(--brand)] font-semibold text-[var(--fs-sm)]">★ {c.score.toFixed(1)}</span>
+              <div className="p-4">
+                <h4 className="font-bold text-[var(--text-primary)] mb-1" style={{ fontSize: 'var(--fs-base)' }}>
+                  {c.name}
+                </h4>
+                <div className="text-xs text-[var(--text-secondary)] mb-3">{c.location}</div>
+                <div className="flex items-center gap-3">
+                  <span className="text-[var(--brand)] font-bold" style={{ fontSize: 'var(--fs-base)' }}>
+                    ★ {c.score.toFixed(1)}
+                  </span>
                   <span className="text-xs text-[var(--text-tertiary)]">{c.reviewCount} 則評價</span>
                 </div>
               </div>
