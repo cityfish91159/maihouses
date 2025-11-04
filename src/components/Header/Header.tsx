@@ -17,7 +17,8 @@ export default function Header() {
         <div className="header-inner">
           <Link to="/" className="brand">
             <div className="mark" />
-            <span>邁房子</span>
+            <span className="brand-name">邁房子</span>
+            <span className="brand-slogan">讓家，不只是地址</span>
           </Link>
           <div className="auth">
             <Link to="/auth/login" className="login">登入</Link>
