@@ -3,7 +3,6 @@ import { Routes, Route, useLocation } from 'react-router-dom'
 import { getConfig, type AppConfig, type RuntimeOverrides } from './app/config'
 import DevTools from './app/devtools'
 import { trackEvent } from './services/uag'
-import Header from './components/Header'
 import Home from './pages/Home'
 import Register from './pages/Auth/Register'
 import Login from './pages/Auth/Login'
@@ -33,7 +32,6 @@ export default function App() {
 
   return (
     <>
-      <Header />
       <Routes key={loc.pathname}>
         <Route
           path="/"

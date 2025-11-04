@@ -48,10 +48,10 @@ export default function Home({ config }: { config: AppConfig & RuntimeOverrides 
   return (
     <>
       <Header />
+      {banner && (
+        <div className="bg-[var(--warning)] text-white rounded-[var(--r-md)] p-3 text-[var(--fs-sm)] max-w-container mx-auto mt-4">{banner}</div>
+      )}
       <main className="max-w-container mx-auto p-4 md:p-6 space-y-6">
-        {banner && (
-          <div className="bg-[var(--warning)] text-white rounded-[var(--r-md)] p-3 text-[var(--fs-sm)]">{banner}</div>
-        )}
         {features.heroAssure !== false && <HeroAssure />}
         {features.smartAsk !== false && <SmartAsk />}
         {features.communityTeaser !== false && <CommunityTeaser />}
