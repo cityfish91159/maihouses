@@ -1,10 +1,16 @@
 .assurance-card {
   position: relative;
-  background: #fff;
+  background: var(--gradient-hero);
   border: 1px solid #e6edf7;
-  border-radius: 14px;
-  box-shadow: 0 10px 26px rgba(23, 73, 215, 0.10);
+  border-radius: var(--r-2xl);
+  box-shadow: var(--shadow-card);
   overflow: hidden;
+  transition: box-shadow 0.3s ease;
+  animation: fadeIn 0.6s ease-out;
+}
+
+.assurance-card:hover {
+  box-shadow: var(--shadow-hover);
 }
 
 .assurance-header {
