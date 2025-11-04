@@ -193,9 +193,9 @@
 
 @media (max-width: 640px) {
   .login {
-    font-size: 15px;
+    font-size: 16px;
     font-weight: 700;
-    padding: 5px 10px;
+    padding: 6px 12px;
   }
 }
 
@@ -218,7 +218,7 @@
 @media (max-width: 640px) {
   .signup {
     font-size: 14px;
-    padding: 7px 14px;
+    padding: 6px 12px;
     font-weight: 700;
   }
 }
