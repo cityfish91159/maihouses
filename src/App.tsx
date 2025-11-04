@@ -19,7 +19,7 @@ export default function App() {
 
   useEffect(() => {
     getConfig().then(setConfig)
-  }, [loc.pathname])
+  }, [])
 
   useEffect(() => {
     if (config) trackEvent('page_view', loc.pathname)
