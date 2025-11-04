@@ -10,13 +10,13 @@ export default function HeroAssure() {
     { id: 2, name: '已出價', status: 'done', icon: '✓' },
     { id: 3, name: '雙向簽署', status: 'active', icon: '✍️' },
     { id: 4, name: '身分驗證', status: 'next', icon: '💳' },
-    { id: 5, name: '金流通知', status: 'pending', icon: '💰' },
+    { id: 5, name: '貸款服務', status: 'pending', icon: '💰' },
     { id: 6, name: '交屋驗屋', status: 'pending', icon: '🔍' },
   ]
 
   return (
     <section 
-      aria-label="安心保證流程卡片" 
+      aria-label="安心留痕服務卡片" 
       className="assurance-card"
       style={{
         borderRadius: '14px',
@@ -33,7 +33,7 @@ export default function HeroAssure() {
 
       {/* 進度標題 */}
       <div className="assurance-header">
-        <div className="assurance-title">安心保證流程</div>
+        <div className="assurance-title">安心留痕服務</div>
         <div className="assurance-progress-text">
           進度{' '}
           <span className="progress-badge">{progress}</span>%
@@ -57,7 +57,7 @@ export default function HeroAssure() {
           <div>
             <div className="info-title">
               <strong style={{ color: 'var(--brand)' }}>你的權益：</strong>
-              <strong>完成身分驗證，並開啟金流通知；所有簽署與溝通都在平台留痕，可回溯可查證。</strong>
+              <strong>完成身分驗證，並開啟貸款服務；所有簽署與溝通都在平台留痕，可回溯可查證。</strong>
             </div>
             <div className="info-chips">
               <span className="chip">流程即時更新</span>
