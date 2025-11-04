@@ -345,7 +345,7 @@
 /* Pills */
 .pills {
   display: flex;
-  gap: 16px;
+  gap: 20px;
   justify-content: center;
   flex-wrap: wrap;
 }
@@ -361,9 +361,9 @@
   background: white;
   color: var(--brand);
   border: 1.5px solid var(--brand);
-  padding: 10px 24px;
+  padding: 12px 28px;
   border-radius: 999px;
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
