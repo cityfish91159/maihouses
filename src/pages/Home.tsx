@@ -42,16 +42,17 @@ export default function Home({ config }: { config: AppConfig & RuntimeOverrides 
   }, [])
 
   const q = useMemo(() => config.q, [config.q])
+  const features = config.features || {}
 
   return (
     <main className="max-w-container mx-auto p-4 md:p-6 space-y-6">
       {banner && (
         <div className="bg-[var(--warning)] text-white rounded-[var(--r-md)] p-3 text-[var(--fs-sm)]">{banner}</div>
       )}
-      {config.features.heroAssure ? <HeroAssure /> : <div>Hero Assure 功能未啟用</div>}
-      {config.features.smartAsk ? <SmartAsk /> : <div>Smart Ask 功能未啟用</div>}
-      {config.features.communityTeaser ? <CommunityTeaser /> : <div>Community Teaser 功能未啟用</div>}
-      {config.features.propertyGrid ? <PropertyGrid q={q} /> : <div>Property Grid 功能未啟用</div>}
+      {features.heroAssure !== false && <HeroAssure />}
+      {features.smartAsk !== false && <SmartAsk />}
+      {features.communityTeaser !== false && <CommunityTeaser />}
+      {features.propertyGrid !== false && <PropertyGrid q={q} />}
     </main>
   )
 }
