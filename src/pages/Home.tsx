@@ -23,14 +23,9 @@ export default function Home({ config }: { config: AppConfig & RuntimeOverrides 
   useEffect(() => {
     getMeta().then((r) => {
       if (r.ok && r.data) {
-        if (r.ok && r.data) {
-          if (r.data.maintenance || cmp(r.data.backendVersion, config.minBackend) < 0) {
-            console.warn('版本不相容或維護中')
-            setBanner('版本不相容或維護中')
-          }
-        } else {
-          console.error('無法獲取元數據', r.error)
-          setBanner('無法獲取元數據')
+        if (r.data.maintenance || cmp(r.data.backendVersion, config.minBackend) < 0) {
+          console.warn('版本不相容或維護中')
+          setBanner('版本不相容或維護中')
         }
       }
     })
