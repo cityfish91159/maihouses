@@ -256,6 +256,14 @@
   box-shadow: 0 3px 12px rgba(26, 95, 219, 0.1);
   gap: 10px;
   margin-bottom: 12px;
+  border: 2px solid transparent;
+  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.search-box:focus-within {
+  transform: scale(1.02);
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px rgba(23, 73, 215, 0.1), 0 4px 16px rgba(26, 95, 219, 0.15);
 }
 
 @media (max-width: 640px) {

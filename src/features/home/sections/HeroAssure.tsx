@@ -1,9 +1,11 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import './HeroAssure.css'
 
 export default function HeroAssure() {
   const [progress] = useState(62)
+  const [isVisible, setIsVisible] = useState(false)
+  const cardRef = useRef<HTMLElement>(null)
   
   const steps = [
     { id: 1, name: '已看屋', status: 'done', icon: '✓' },
@@ -14,13 +16,35 @@ export default function HeroAssure() {
     { id: 6, name: '交屋驗屋', status: 'pending', icon: '🔍' },
   ]
 
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true)
+          observer.disconnect()
+        }
+      },
+      { threshold: 0.1 }
+    )
+
+    if (cardRef.current) {
+      observer.observe(cardRef.current)
+    }
+
+    return () => observer.disconnect()
+  }, [])
+
   return (
     <section 
+      ref={cardRef}
       aria-label="安心留痕服務卡片" 
       className="assurance-card"
       style={{
         borderRadius: '14px',
-        overflow: 'visible'
+        overflow: 'visible',
+        opacity: isVisible ? 1 : 0,
+        transform: isVisible ? 'translateY(0)' : 'translateY(20px)',
+        transition: 'opacity 0.6s ease-out, transform 0.6s ease-out'
       }}
     >
       {/* 進度條裝飾 */}
