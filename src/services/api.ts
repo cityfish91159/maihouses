@@ -47,6 +47,9 @@ export async function apiFetch<T = unknown>(endpoint: string, options: RequestIn
 
   try {
     const res = await fetch(url, { ...options, headers, signal: controller.signal })
+    if (!res.ok) {
+      return { ok: false, error: { code: 'API_ERROR', message: 'API 請求失敗' } }
+    }
     return res.json()
   } catch (e) {
     if ((e as any)?.name === 'AbortError')

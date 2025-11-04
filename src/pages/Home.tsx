@@ -47,10 +47,10 @@ export default function Home({ config }: { config: AppConfig & RuntimeOverrides 
       {banner && (
         <div className="bg-[var(--warning)] text-white rounded-[var(--r-md)] p-3 text-[var(--fs-sm)]">{banner}</div>
       )}
-      {config.features.heroAssure && <HeroAssure />}
-      {config.features.smartAsk && <SmartAsk />}
-      {config.features.communityTeaser && <CommunityTeaser />}
-      {config.features.propertyGrid && <PropertyGrid q={q} />}
+      {config.features.heroAssure ? <HeroAssure /> : <div>Hero Assure 功能未啟用</div>}
+      {config.features.smartAsk ? <SmartAsk /> : <div>Smart Ask 功能未啟用</div>}
+      {config.features.communityTeaser ? <CommunityTeaser /> : <div>Community Teaser 功能未啟用</div>}
+      {config.features.propertyGrid ? <PropertyGrid q={q} /> : <div>Property Grid 功能未啟用</div>}
     </main>
   )
 }

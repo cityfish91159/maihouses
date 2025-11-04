@@ -34,7 +34,7 @@ export default function App() {
   return (
     <>
       <Header />
-      <Routes>
+      <Routes key={loc.pathname}>
         <Route
           path="/"
           element={
