@@ -210,7 +210,7 @@
 /* Hero Search Section */
 .hero-search-wrap {
   background: linear-gradient(135deg, #f7faff 0%, #eef3ff 100%);
-  padding: 20px 16px 16px;
+  padding: 24px 20px 18px;
   border-bottom: 1px solid rgba(26, 95, 219, 0.08);
 }
 
@@ -221,7 +221,7 @@
 
 @media (max-width: 640px) {
   .hero-search-wrap {
-    padding: 12px 12px 10px;
+    padding: 14px 14px 12px;
   }
 }
 
@@ -230,29 +230,29 @@
   align-items: center;
   background: white;
   border-radius: 10px;
-  padding: 4px 4px 4px 12px;
+  padding: 5px 5px 5px 14px;
   box-shadow: 0 3px 12px rgba(26, 95, 219, 0.1);
-  gap: 8px;
-  margin-bottom: 10px;
+  gap: 10px;
+  margin-bottom: 12px;
 }
 
 @media (max-width: 640px) {
   .search-box {
-    padding: 3px 3px 3px 10px;
-    gap: 6px;
-    margin-bottom: 8px;
+    padding: 5px 5px 5px 12px;
+    gap: 8px;
+    margin-bottom: 10px;
     border-radius: 8px;
   }
 }
 
 .search-icon {
-  font-size: 18px;
+  font-size: 20px;
   flex-shrink: 0;
 }
 
 @media (max-width: 640px) {
   .search-icon {
-    font-size: 16px;
+    font-size: 18px;
   }
 }
 
@@ -260,7 +260,7 @@
   flex: 1;
   border: none;
   outline: none;
-  font-size: 14px;
+  font-size: 15px;
   color: var(--text-primary);
   background: transparent;
   min-width: 0;
@@ -268,7 +268,7 @@
 
 @media (max-width: 640px) {
   .search-input {
-    font-size: 13px;
+    font-size: 14px;
   }
 }
 
@@ -280,9 +280,9 @@
   background: var(--brand);
   color: white;
   border: none;
-  padding: 8px 24px;
+  padding: 9px 28px;
   border-radius: 7px;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 900;
   cursor: pointer;
   transition: all 0.2s;
@@ -292,8 +292,8 @@
 
 @media (max-width: 640px) {
   .find-btn {
-    padding: 6px 16px;
-    font-size: 13px;
+    padding: 7px 18px;
+    font-size: 14px;
     border-radius: 6px;
   }
 }
@@ -307,14 +307,14 @@
 /* Pills */
 .pills {
   display: flex;
-  gap: 8px;
+  gap: 10px;
   justify-content: center;
   flex-wrap: wrap;
 }
 
 @media (max-width: 640px) {
   .pills {
-    gap: 6px;
+    gap: 8px;
   }
 }
 
@@ -322,9 +322,9 @@
   background: white;
   color: var(--brand);
   border: 1.5px solid var(--brand);
-  padding: 6px 16px;
+  padding: 7px 18px;
   border-radius: 999px;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
@@ -333,8 +333,8 @@
 
 @media (max-width: 640px) {
   .pill {
-    padding: 5px 12px;
-    font-size: 12px;
+    padding: 6px 14px;
+    font-size: 13px;
     border-width: 1.2px;
   }
 }
