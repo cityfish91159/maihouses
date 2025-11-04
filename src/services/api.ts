@@ -50,7 +50,8 @@ export async function apiFetch<T = unknown>(endpoint: string, options: RequestIn
     if (!res.ok) {
       return { ok: false, error: { code: 'API_ERROR', message: 'API 請求失敗' } }
     }
-    return res.json()
+    const data = await res.json()
+    return { ok: true, data }
   } catch (e) {
     if ((e as any)?.name === 'AbortError')
       return { ok: false, error: { code: 'NETWORK_TIMEOUT', message: '請求超時' } }
