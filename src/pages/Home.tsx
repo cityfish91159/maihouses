@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import Header from '../components/Header/Header'
 import HeroAssure from '../features/home/sections/HeroAssure'
 import SmartAsk from '../features/home/sections/SmartAsk'
 import CommunityTeaser from '../features/home/sections/CommunityTeaser'
@@ -45,14 +46,17 @@ export default function Home({ config }: { config: AppConfig & RuntimeOverrides 
   const features = config.features || {}
 
   return (
-    <main className="max-w-container mx-auto p-4 md:p-6 space-y-6">
-      {banner && (
-        <div className="bg-[var(--warning)] text-white rounded-[var(--r-md)] p-3 text-[var(--fs-sm)]">{banner}</div>
-      )}
-      {features.heroAssure !== false && <HeroAssure />}
-      {features.smartAsk !== false && <SmartAsk />}
-      {features.communityTeaser !== false && <CommunityTeaser />}
-      {features.propertyGrid !== false && <PropertyGrid q={q} />}
-    </main>
+    <>
+      <Header />
+      <main className="max-w-container mx-auto p-4 md:p-6 space-y-6">
+        {banner && (
+          <div className="bg-[var(--warning)] text-white rounded-[var(--r-md)] p-3 text-[var(--fs-sm)]">{banner}</div>
+        )}
+        {features.heroAssure !== false && <HeroAssure />}
+        {features.smartAsk !== false && <SmartAsk />}
+        {features.communityTeaser !== false && <CommunityTeaser />}
+        {features.propertyGrid !== false && <PropertyGrid q={q} />}
+      </main>
+    </>
   )
 }

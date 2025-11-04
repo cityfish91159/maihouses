@@ -1,0 +1,80 @@
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.header-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: #1a1a1a;
+  font-weight: 600;
+  font-size: 18px;
+  transition: opacity 0.2s;
+}
+
+.brand:hover {
+  opacity: 0.8;
+}
+
+.mark {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  background: linear-gradient(135deg, var(--brand) 0%, var(--brand-600) 100%);
+  box-shadow: 0 2px 8px rgba(26, 95, 219, 0.2);
+}
+
+.auth {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.login {
+  color: var(--brand);
+  font-weight: 500;
+  font-size: 14px;
+  text-decoration: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  transition: background-color 0.2s;
+}
+
+.login:hover {
+  background-color: rgba(26, 95, 219, 0.08);
+}
+
+.signup {
+  background: var(--brand);
+  color: white;
+  font-weight: 500;
+  font-size: 14px;
+  text-decoration: none;
+  padding: 8px 20px;
+  border-radius: 8px;
+  transition: all 0.2s;
+  box-shadow: 0 1px 3px rgba(26, 95, 219, 0.3);
+}
+
+.signup:hover {
+  background: var(--brand-600);
+  box-shadow: 0 2px 6px rgba(26, 95, 219, 0.4);
+  transform: translateY(-1px);
+}

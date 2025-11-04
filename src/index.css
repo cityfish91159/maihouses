@@ -1,7 +1,8 @@
 
 :root {
   /* 品牌色 - 從 HTML 提取 */
-  --brand: #1749D7;
+  --brand: #1A5FDB;
+  --brand-600: #1550C0;
   --brand-light: #6aa4ff;
   --brand-lighter: #eef3ff;
   --brand-fg: #FFFFFF;
@@ -66,8 +67,11 @@
   --transition-slow: 400ms;
 }
 
+/* stylelint-disable-next-line at-rule-no-unknown */
 @tailwind base;
+/* stylelint-disable-next-line at-rule-no-unknown */
 @tailwind components;
+/* stylelint-disable-next-line at-rule-no-unknown */
 @tailwind utilities;
 
 /* 全局重置 */
@@ -83,11 +87,4 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* 保留舊語彙占位 */
-.card {}
-.hero {}
-.badge {}
-.tag {}
-.chip {}
-.house {}
-.wall-hero {}
+/* 保留舊語彙占位 - 移除空白規則集以符合 CSS 規範 */
