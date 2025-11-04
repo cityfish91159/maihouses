@@ -67,12 +67,11 @@
   --transition-slow: 400ms;
 }
 
-/* stylelint-disable-next-line at-rule-no-unknown */
+/* stylelint-disable at-rule-no-unknown */
 @tailwind base;
-/* stylelint-disable-next-line at-rule-no-unknown */
 @tailwind components;
-/* stylelint-disable-next-line at-rule-no-unknown */
 @tailwind utilities;
+/* stylelint-enable at-rule-no-unknown */
 
 /* 全局重置 */
 * {
