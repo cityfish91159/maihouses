@@ -2,3 +2,7 @@ node_modules
 .DS_Store
 *.log
 .aider*
+
+# 環境變數 (包含 API keys)
+.env.local
+.env.*.local

@@ -1,5 +1,6 @@
 import { v4 as uuidv4 } from 'uuid'
 import { getConfig } from '../app/config'
+import { callOpenAI } from './openai'
 import type { ApiResponse, Paginated, PropertyCard, ReviewSnippet, AiAskReq, AiAskRes, CommunityPreview } from '../types'
 
 let sessionId = uuidv4()
@@ -78,9 +79,45 @@ export const getReviews = (communityId: string, limit = 2, offset = 0) =>
 
 export const getCommunities = () => apiFetch<CommunityPreview[]>('/api/v1/communities/preview')
 
-export const aiAsk = (req: AiAskReq) =>
-  apiFetch<AiAskRes>('/api/v1/ai/ask', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(req)
-  })
+export const aiAsk = async (req: AiAskReq): Promise<ApiResponse<AiAskRes>> => {
+  const cfg = await getConfig()
+  
+  // 如果是 mock 模式，使用原有的 mock 處理
+  if (cfg.mock) {
+    return apiFetch<AiAskRes>('/api/v1/ai/ask', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(req)
+    })
+  }
+
+  // 真實模式：呼叫 OpenAI API
+  try {
+    // 轉換格式：AiMessage (role: 'user'|'assistant') -> ChatMessage
+    const messages = req.messages.map(msg => ({
+      role: msg.role as 'user' | 'assistant',
+      content: msg.content
+    }))
+
+    // 呼叫 OpenAI (目前無 system prompt，純聊天)
+    const aiResponse = await callOpenAI(messages)
+
+    // 轉換回前端格式
+    const result: AiAskRes = {
+      answers: [aiResponse],
+      recommends: [] // 目前不推薦物件，未來可加
+    }
+
+    return { ok: true, data: result }
+
+  } catch (error) {
+    console.error('AI Ask 失敗:', error)
+    return {
+      ok: false,
+      error: {
+        code: 'AI_ERROR',
+        message: error instanceof Error ? error.message : 'AI 服務暫時無法使用'
+      }
+    }
+  }
+}
