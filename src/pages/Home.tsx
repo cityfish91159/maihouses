@@ -51,7 +51,7 @@ export default function Home({ config }: { config: AppConfig & RuntimeOverrides 
       {banner && (
         <div className="bg-[var(--warning)] text-white rounded-[var(--r-md)] p-3 text-[var(--fs-sm)] max-w-container mx-auto mt-4">{banner}</div>
       )}
-      <main className="max-w-container mx-auto p-4 md:p-6 space-y-12 md:space-y-16">
+      <main className="max-w-container mx-auto p-4 md:p-6 space-y-6 md:space-y-8">
         {features.heroAssure !== false && (
           <section className="bg-white rounded-[var(--r-xl)] shadow-[0_2px_12px_rgba(0,0,0,0.08)] p-6 md:p-8">
             <HeroAssure />
