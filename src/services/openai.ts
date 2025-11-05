@@ -47,7 +47,7 @@ const SYSTEM_PROMPT = `繁中回答。**50–100字**內，直給重點，少寒
 export async function callOpenAI(
   messages: Array<{ role: 'user' | 'assistant'; content: string }>,
   onChunk?: (chunk: string) => void
-): Promise<string> {
+): Promise<{ content: string; usage?: { promptTokens: number; completionTokens: number; totalTokens: number } }> {
   // 從環境變數讀取 API key
   const apiKey = import.meta.env.VITE_OPENAI_API_KEY
   
@@ -116,7 +116,7 @@ export async function callOpenAI(
         }
       }
 
-      return fullContent
+      return { content: fullContent }
     }
 
     // 非串流模式（原本的邏輯）
@@ -131,7 +131,24 @@ export async function callOpenAI(
       throw new Error('OpenAI API 回傳空結果')
     }
 
-    return data.choices[0].message.content
+    // 記錄 tokens 使用情況（開發環境）
+    if (data.usage && import.meta.env.DEV) {
+      console.log('📊 Tokens 使用:', {
+        prompt: data.usage.prompt_tokens,
+        completion: data.usage.completion_tokens,
+        total: data.usage.total_tokens,
+        估算成本: `$${(data.usage.total_tokens * 0.00015 / 1000).toFixed(6)}`
+      })
+    }
+
+    return {
+      content: data.choices[0].message.content,
+      usage: data.usage ? {
+        promptTokens: data.usage.prompt_tokens,
+        completionTokens: data.usage.completion_tokens,
+        totalTokens: data.usage.total_tokens
+      } : undefined
+    }
 
   } catch (error) {
     console.error('OpenAI API 呼叫失敗:', error)

@@ -92,15 +92,16 @@ export const aiAsk = async (
     }))
 
     // 呼叫 OpenAI（支援串流）
-    const aiResponse = await callOpenAI(messages, onChunk)
+    const result = await callOpenAI(messages, onChunk)
 
     // 轉換回前端格式
-    const result: AiAskRes = {
-      answers: [aiResponse],
-      recommends: [] // 目前不推薦物件，未來可加
+    const aiResult: AiAskRes = {
+      answers: [result.content],
+      recommends: [], // 目前不推薦物件，未來可加
+      usage: result.usage
     }
 
-    return { ok: true, data: result }
+    return { ok: true, data: aiResult }
 
   } catch (error) {
     console.error('AI Ask 失敗:', error)

@@ -10,6 +10,7 @@ export default function SmartAsk() {
   const [input, setInput] = useState('')
   const [reco, setReco] = useState<PropertyCard[]>([])
   const [loading, setLoading] = useState(false)
+  const [totalTokens, setTotalTokens] = useState(0)
   const chatRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -57,6 +58,11 @@ export default function SmartAsk() {
       const r = res.data.recommends || []
       setReco(r)
       if (r[0]?.communityId) localStorage.setItem('recoCommunity', r[0].communityId)
+      
+      // 累積 tokens 使用（開發模式）
+      if (res.data.usage?.totalTokens) {
+        setTotalTokens(prev => prev + res.data!.usage!.totalTokens)
+      }
     }
     
     setLoading(false)
@@ -79,7 +85,9 @@ export default function SmartAsk() {
         <h3 className="font-bold text-[var(--text-primary)]" style={{ fontSize: 'var(--fs-xl)' }}>
           AI 找房助理
         </h3>
-        <span className="text-xs text-[var(--text-tertiary)] ml-auto">多輪對話・智能推薦</span>
+        <span className="text-xs text-[var(--text-tertiary)] ml-auto">
+          {import.meta.env.DEV && totalTokens > 0 ? `${totalTokens} tokens` : '多輪對話・智能推薦'}
+        </span>
       </div>
 
       <div className="flex flex-wrap gap-2 md:gap-2">

@@ -51,4 +51,9 @@ export type AiAskReq = {
 export type AiAskRes = {
   answers: string[]
   recommends?: PropertyCard[]
+  usage?: {
+    promptTokens: number
+    completionTokens: number
+    totalTokens: number
+  }
 }
