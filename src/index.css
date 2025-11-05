@@ -31,6 +31,12 @@
   --gradient-button: linear-gradient(135deg, #1749D7 0%, #1550C0 100%);
   --gradient-ask: linear-gradient(135deg, #f0f4ff 0%, #e8f0fe 100%);
   
+  /* 中性色 */
+  --neutral-50: #f9fafb;
+  --neutral-100: #f3f4f6;
+  --neutral-800: #1f2937;
+  --neutral-900: #111827;
+  
   /* 背景色 */
   --bg-page: #EEF2F7;
   --bg-card: #EEF2F7;

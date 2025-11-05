@@ -80,18 +80,7 @@ export const getReviews = (communityId: string, limit = 2, offset = 0) =>
 export const getCommunities = () => apiFetch<CommunityPreview[]>('/api/v1/communities/preview')
 
 export const aiAsk = async (req: AiAskReq): Promise<ApiResponse<AiAskRes>> => {
-  const cfg = await getConfig()
-  
-  // 如果是 mock 模式，使用原有的 mock 處理
-  if (cfg.mock) {
-    return apiFetch<AiAskRes>('/api/v1/ai/ask', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(req)
-    })
-  }
-
-  // 真實模式：呼叫 OpenAI API
+  // AI 助理永遠使用真實 OpenAI API，不受 mock 設定影響
   try {
     // 轉換格式：AiMessage (role: 'user'|'assistant') -> ChatMessage
     const messages = req.messages.map(msg => ({
@@ -99,7 +88,7 @@ export const aiAsk = async (req: AiAskReq): Promise<ApiResponse<AiAskRes>> => {
       content: msg.content
     }))
 
-    // 呼叫 OpenAI (目前無 system prompt，純聊天)
+    // 呼叫 OpenAI
     const aiResponse = await callOpenAI(messages)
 
     // 轉換回前端格式
