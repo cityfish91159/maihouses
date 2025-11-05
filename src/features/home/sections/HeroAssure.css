@@ -71,32 +71,42 @@
 }
 
 .hero-assure-card .pct {
-  display: grid;
-  place-items: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.hero-assure-card .pct::before {
+  content: '進度';
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  letter-spacing: 0.5px;
 }
 
 .hero-assure-card .pct-chip {
   position: relative;
-  width: 74px;
-  height: 74px;
+  width: 68px;
+  height: 68px;
   border-radius: 50%;
   background: conic-gradient(var(--brand) 0% 62%, #e8eefc 62% 100%);
   display: grid;
   place-items: center;
-  box-shadow: 0 4px 12px rgba(23, 73, 215, 0.15);
+  box-shadow: 0 3px 10px rgba(23, 73, 215, 0.12);
 }
 
 .hero-assure-card .pct-chip::before {
   content: '';
   position: absolute;
-  inset: 6px;
+  inset: 5px;
   border-radius: 50%;
   background: #fff;
 }
 
 .hero-assure-card .pct-chip b {
   position: relative;
-  font-size: 22px;
+  font-size: 20px;
   line-height: 1;
   color: var(--brand);
   font-weight: 900;
@@ -104,10 +114,10 @@
 
 .hero-assure-card .pct-chip span {
   position: relative;
-  font-size: 12px;
+  font-size: 11px;
   color: var(--brand);
   font-weight: 700;
-  margin-left: 2px;
+  margin-left: 1px;
 }
 
 .hero-assure-card .pct-bar {
@@ -191,14 +201,14 @@
 .hero-assure-card .info {
   border: 1px dashed rgba(23, 73, 215, 0.45);
   border-radius: 12px;
-  padding: 14px;
+  padding: 10px 12px;
   background: #fff;
   display: block;
 }
 
 .hero-assure-card .info > div {
   font-size: var(--fs-sm);
-  line-height: var(--lh-body);
+  line-height: 1.4;
   color: #243355;
 }
 
@@ -208,20 +218,21 @@
 
 .hero-assure-card .chips {
   display: flex;
-  gap: 10px;
-  margin-top: 10px;
+  gap: 8px;
+  margin-top: 6px;
   flex-wrap: wrap;
 }
 
 .hero-assure-card .chip {
-  font-size: var(--fs-sm);
-  border: 2px solid var(--brand);
+  font-size: 11px;
+  border: 1.5px solid var(--brand);
   border-radius: 999px;
-  padding: 8px 16px;
+  padding: 4px 10px;
   background: #eef3ff;
   color: var(--brand);
-  font-weight: 900;
-  box-shadow: 0 2px 6px rgba(23, 73, 215, 0.15);
+  font-weight: 800;
+  box-shadow: 0 1px 3px rgba(23, 73, 215, 0.1);
+  white-space: nowrap;
 }
 
 .hero-assure-card .foot {
@@ -288,14 +299,14 @@
     gap: 14px;
   }
   .hero-assure-card .pct-chip {
-    width: 64px;
-    height: 64px;
+    width: 60px;
+    height: 60px;
   }
   .hero-assure-card .pct-chip b {
-    font-size: 20px;
+    font-size: 18px;
   }
   .hero-assure-card .pct-chip span {
-    font-size: 11px;
+    font-size: 10px;
   }
   .hero-assure-card .steps {
     gap: 12px;
@@ -329,14 +340,14 @@
     gap: 12px;
   }
   .hero-assure-card .pct-chip {
-    width: 56px;
-    height: 56px;
+    width: 52px;
+    height: 52px;
   }
   .hero-assure-card .pct-chip b {
-    font-size: 18px;
+    font-size: 16px;
   }
   .hero-assure-card .pct-chip span {
-    font-size: 10px;
+    font-size: 9px;
   }
   .hero-assure-card .steps {
     gap: 10px;
