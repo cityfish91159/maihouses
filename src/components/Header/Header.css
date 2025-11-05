@@ -61,6 +61,15 @@
   animation: colorPulse 3s ease-in-out infinite;
 }
 
+@-webkit-keyframes colorPulse {
+  0%, 100% {
+    color: var(--brand);
+  }
+  50% {
+    color: var(--brand-light);
+  }
+}
+
 @keyframes colorPulse {
   0%, 100% {
     color: var(--brand);
@@ -79,6 +88,15 @@
   opacity: 0.85;
   position: relative;
   animation: float 3s ease-in-out infinite;
+}
+
+@-webkit-keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-2px);
+  }
 }
 
 @keyframes float {
@@ -120,6 +138,19 @@
   animation: pulse 2s ease-in-out infinite, pulse-subtle 3s ease-in-out infinite;
 }
 
+@-webkit-keyframes pulse {
+  0%, 100% {
+    box-shadow: 
+      0 4px 15px rgba(26, 95, 219, 0.3),
+      0 0 0 0 rgba(26, 95, 219, 0.4);
+  }
+  50% {
+    box-shadow: 
+      0 4px 15px rgba(26, 95, 219, 0.3),
+      0 0 0 8px rgba(26, 95, 219, 0);
+  }
+}
+
 @keyframes pulse {
   0%, 100% {
     box-shadow: 
@@ -143,6 +174,15 @@
   background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.4), transparent);
   transform: rotate(45deg);
   animation: shine 2.5s infinite;
+}
+
+@-webkit-keyframes shine {
+  0%, 100% {
+    transform: translateX(-100%) translateY(-100%) rotate(45deg);
+  }
+  50% {
+    transform: translateX(100%) translateY(100%) rotate(45deg);
+  }
 }
 
 @keyframes shine {
@@ -222,6 +262,8 @@
   margin: 20px auto;
   max-width: 980px;
   box-shadow: 10px 10px 24px rgba(9,15,30,.16), -10px -10px 24px rgba(255,255,255,.9);
+  position: relative;
+  z-index: 1;
 }
 
 /* 跑馬燈 - 內凹 */
