@@ -1,3 +1,8 @@
+/* stylelint-disable at-rule-no-unknown */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+/* stylelint-enable at-rule-no-unknown */
 
 :root {
   /* 新擬物風格色彩系統 */
@@ -58,19 +63,6 @@
   --fs-xl: 20px;
   --fs-2xl: 24px;
   --fs-3xl: 28px;
-}
-
-/* stylelint-disable at-rule-no-unknown */
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-/* stylelint-enable at-rule-no-unknown */
-
-/* 全局重置 */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
 }
 
 @layer base {
