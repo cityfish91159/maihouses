@@ -399,7 +399,7 @@
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
 }
 
-/* 膠囊按鈕 */
+/* 膠囊按鈕 - 新擬物風格 */
 .filter-pills {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -409,16 +409,18 @@
 
 .pill {
   text-align: center;
-  border-radius: 6px;
+  border-radius: 16px;
   cursor: pointer;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 800;
   padding: 12px 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  background: #FAFBFC;
+  /* 新擬物凸起效果 */
+  box-shadow: 8px 8px 18px rgba(9, 15, 30, 0.14), -8px -8px 18px rgba(255, 255, 255, 0.9);
+  background: #EEF2F7;
   border: none;
-  color: #0e1530;
-  transition: all 0.2s ease;
+  color: #21304a;
+  letter-spacing: 0.02em;
+  transition: all 0.15s ease;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -426,14 +428,12 @@
 }
 
 .pill:hover {
-  opacity: 0.85;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  opacity: 0.95;
 }
 
+/* 按下時的凹陷效果 */
 .pill:active {
-  transform: translateY(0);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  box-shadow: inset 6px 6px 12px rgba(9, 15, 30, 0.14), inset -6px -6px 12px rgba(255, 255, 255, 0.9);
 }
 
 .pill:focus {
