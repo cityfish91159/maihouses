@@ -64,17 +64,9 @@ export async function mockHandler<T = unknown>(endpoint: string, options: Reques
     return { ok: true, data: makeCommunities(6) as any }
   }
 
+  // AI 助理已接 OpenAI API，不使用 mock
   if (endpoint === '/api/v1/ai/ask') {
-    const key = header(options, 'Idempotency-Key') || ''
-    if (key && idempotent.has(key)) return idempotent.get(key)! as any
-    
-    const resp: ApiResponse<AiAskRes> = {
-      ok: true,
-      data: { answers: ['好的，根據您的需求，以下是推薦物件。'], recommends: makeProperties(3) }
-    }
-    
-    if (key) idempotent.set(key, resp)
-    return resp as any
+    return { ok: false, error: { code: 'USE_REAL_API', message: 'AI 助理使用真實 OpenAI API' } }
   }
 
   return { ok: false, error: { code: 'NOT_FOUND', message: '端點不存在' } }
