@@ -72,52 +72,50 @@
 
 .hero-assure-card .pct {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 0;
 }
 
 .hero-assure-card .pct::before {
   content: '進度';
   font-size: 11px;
   font-weight: 700;
-  color: var(--muted);
+  color: #fff;
   letter-spacing: 0.5px;
+  background: var(--brand);
+  padding: 6px 10px;
+  border-radius: 12px 0 0 12px;
+  box-shadow: 0 2px 6px rgba(23, 73, 215, 0.15);
 }
 
 .hero-assure-card .pct-chip {
   position: relative;
-  width: 68px;
-  height: 68px;
-  border-radius: 50%;
-  background: conic-gradient(var(--brand) 0% 62%, #e8eefc 62% 100%);
-  display: grid;
-  place-items: center;
-  box-shadow: 0 3px 10px rgba(23, 73, 215, 0.12);
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+  background: #fff;
+  border: 1.5px solid var(--brand);
+  border-left: none;
+  border-radius: 0 12px 12px 0;
+  padding: 6px 12px 6px 10px;
+  box-shadow: 0 2px 6px rgba(23, 73, 215, 0.15);
 }
 
 .hero-assure-card .pct-chip::before {
-  content: '';
-  position: absolute;
-  inset: 5px;
-  border-radius: 50%;
-  background: #fff;
+  display: none;
 }
 
 .hero-assure-card .pct-chip b {
-  position: relative;
-  font-size: 20px;
+  font-size: 18px;
   line-height: 1;
   color: var(--brand);
   font-weight: 900;
 }
 
 .hero-assure-card .pct-chip span {
-  position: relative;
   font-size: 11px;
   color: var(--brand);
   font-weight: 700;
-  margin-left: 1px;
 }
 
 .hero-assure-card .pct-bar {
