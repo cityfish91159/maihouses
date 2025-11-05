@@ -29,16 +29,31 @@ export default function SmartAsk() {
     
     trackEvent('ai_message_sent', '/')
     
-    const res = await aiAsk({ messages: newMessages })
+    // 先建立一個空的 AI 訊息，用於串流更新
+    const aiMsg: AiMessage = {
+      role: 'assistant',
+      content: '',
+      timestamp: new Date().toISOString()
+    }
+    setMessages([...newMessages, aiMsg])
+    
+    // 呼叫 API，支援串流回傳
+    const res = await aiAsk(
+      { messages: newMessages },
+      (chunk: string) => {
+        // 每收到一段文字就更新最後一則訊息
+        setMessages(prev => {
+          const updated = [...prev]
+          updated[updated.length - 1] = {
+            ...updated[updated.length - 1],
+            content: updated[updated.length - 1].content + chunk
+          }
+          return updated
+        })
+      }
+    )
     
     if (res.ok && res.data) {
-      const aiMsg: AiMessage = {
-        role: 'assistant',
-        content: res.data.answers.join('\n'),
-        timestamp: new Date().toISOString()
-      }
-      setMessages([...newMessages, aiMsg])
-      
       const r = res.data.recommends || []
       setReco(r)
       if (r[0]?.communityId) localStorage.setItem('recoCommunity', r[0].communityId)

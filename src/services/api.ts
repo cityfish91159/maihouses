@@ -79,7 +79,10 @@ export const getReviews = (communityId: string, limit = 2, offset = 0) =>
 
 export const getCommunities = () => apiFetch<CommunityPreview[]>('/api/v1/communities/preview')
 
-export const aiAsk = async (req: AiAskReq): Promise<ApiResponse<AiAskRes>> => {
+export const aiAsk = async (
+  req: AiAskReq,
+  onChunk?: (chunk: string) => void
+): Promise<ApiResponse<AiAskRes>> => {
   // AI 助理永遠使用真實 OpenAI API，不受 mock 設定影響
   try {
     // 轉換格式：AiMessage (role: 'user'|'assistant') -> ChatMessage
@@ -88,8 +91,8 @@ export const aiAsk = async (req: AiAskReq): Promise<ApiResponse<AiAskRes>> => {
       content: msg.content
     }))
 
-    // 呼叫 OpenAI
-    const aiResponse = await callOpenAI(messages)
+    // 呼叫 OpenAI（支援串流）
+    const aiResponse = await callOpenAI(messages, onChunk)
 
     // 轉換回前端格式
     const result: AiAskRes = {

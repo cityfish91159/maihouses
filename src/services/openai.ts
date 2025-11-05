@@ -65,10 +65,12 @@ const SYSTEM_PROMPT = `你是「邁房子」的 AI 找房助理，專業、親�
 
 ## 對話風格
 
-- 親切專業，簡潔有力
+- **簡短回應**：每次回覆控制在 2-3 句話內（50-80 字）
+- 親切專業，口語化
 - 繁體中文，適時 emoji
 - 主動提問了解需求
 - 不編造物件資訊
+- 避免冗長說明，除非使用者要求詳細資訊
 
 ## 開場白
 
@@ -82,9 +84,13 @@ const SYSTEM_PROMPT = `你是「邁房子」的 AI 找房助理，專業、親�
 /**
  * 呼叫 OpenAI API 進行對話
  * @param messages 對話訊息列表（不含 system message）
- * @returns AI 回應的文字內容
+ * @param onChunk 串流回傳的回調函數（每收到一段文字就呼叫）
+ * @returns AI 回應的完整文字內容
  */
-export async function callOpenAI(messages: Array<{ role: 'user' | 'assistant'; content: string }>): Promise<string> {
+export async function callOpenAI(
+  messages: Array<{ role: 'user' | 'assistant'; content: string }>,
+  onChunk?: (chunk: string) => void
+): Promise<string> {
   // 從環境變數讀取 API key
   const apiKey = import.meta.env.VITE_OPENAI_API_KEY
   
@@ -92,10 +98,13 @@ export async function callOpenAI(messages: Array<{ role: 'user' | 'assistant'; c
     throw new Error('請在 .env.local 設定 VITE_OPENAI_API_KEY')
   }
 
-  // 組合完整訊息（system + user/assistant 歷史）
+  // 限制對話歷史長度（只保留最近 6 輪，減少 tokens 消耗）
+  const recentMessages = messages.slice(-6)
+  
+  // 組合完整訊息（system + 最近對話歷史）
   const fullMessages: ChatMessage[] = [
     { role: 'system', content: SYSTEM_PROMPT },
-    ...messages.map(msg => ({
+    ...recentMessages.map(msg => ({
       role: msg.role,
       content: msg.content
     }))
@@ -112,10 +121,47 @@ export async function callOpenAI(messages: Array<{ role: 'user' | 'assistant'; c
         model: 'gpt-4o-mini',
         messages: fullMessages,
         temperature: 0.7,
-        max_tokens: 800
+        max_tokens: 300,  // 降低以加快回應速度並強制簡短回答
+        stream: !!onChunk  // 如果有 onChunk 就啟用串流
       })
     })
 
+    // 串流模式
+    if (onChunk && response.body) {
+      const reader = response.body.getReader()
+      const decoder = new TextDecoder()
+      let fullContent = ''
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+
+        const chunk = decoder.decode(value)
+        const lines = chunk.split('\n').filter(line => line.trim() !== '')
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6)
+            if (data === '[DONE]') continue
+
+            try {
+              const parsed = JSON.parse(data)
+              const content = parsed.choices?.[0]?.delta?.content
+              if (content) {
+                fullContent += content
+                onChunk(content)  // 即時回傳每個片段
+              }
+            } catch (e) {
+              // 忽略解析錯誤
+            }
+          }
+        }
+      }
+
+      return fullContent
+    }
+
+    // 非串流模式（原本的邏輯）
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}))
       throw new Error(`OpenAI API 錯誤: ${response.status} - ${JSON.stringify(errorData)}`)
