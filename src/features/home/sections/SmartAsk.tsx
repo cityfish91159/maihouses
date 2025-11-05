@@ -126,7 +126,9 @@ export default function SmartAsk() {
                   background: m.role === 'user' ? 'var(--gradient-button)' : undefined
                 }}
               >
-                <div className="whitespace-pre-wrap leading-relaxed">{m.content}</div>
+                <div className="whitespace-pre-wrap leading-relaxed">
+                  {m.content.length > 100 ? `${m.content.slice(0, 100)}...` : m.content}
+                </div>
                 {m.timestamp && (
                   <div className={`text-xs mt-1.5 ${m.role === 'user' ? 'text-white/70' : 'text-[var(--text-tertiary)]'}`}>
                     {new Date(m.timestamp).toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' })}
