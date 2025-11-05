@@ -27,6 +27,10 @@
   --brand-lighter: #eef3ff;
   --brand-fg: #FFFFFF;
   
+  /* 漸層 */
+  --gradient-button: linear-gradient(135deg, #1749D7 0%, #1550C0 100%);
+  --gradient-ask: linear-gradient(135deg, #f0f4ff 0%, #e8f0fe 100%);
+  
   /* 背景色 */
   --bg-page: #EEF2F7;
   --bg-card: #EEF2F7;

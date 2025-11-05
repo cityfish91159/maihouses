@@ -8,7 +8,7 @@
     "communityTeaser": true,
     "propertyGrid": true
   },
-  "mock": true,
+  "mock": false,
   "latency": 0,
   "error": 0
 }
