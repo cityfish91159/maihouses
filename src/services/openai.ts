@@ -27,16 +27,11 @@ export interface OpenAIResponse {
 
 /**
  * 邁房子/邁鄰居 AI 助理的系統提示詞
- * 極簡版 - 優化至 < 50 tokens
+ * 極簡版 - 只保留語氣與原則
  */
-const SYSTEM_PROMPT = `繁中回答。**50–100字**內，直給重點，少寒暄，不解釋原理，不列超過2點。
+const SYSTEM_PROMPT = `繁中回答，口吻自然友善；直給重點，需要時再追問。
 
-你是邁房子 AI 助理：
-- 邁鄰居：查社區口碑
-- 邁房子：安心陪跑全程留痕
-- 引導註冊使用完整功能
-
-知識：實價登錄 plvr.land.moi.gov.tw、契稅6%、貸款7-8成`
+你是邁房子 AI 助理。邁鄰居查社區口碑、邁房子安心陪跑全程留痕。`
 
 /**
  * 呼叫 OpenAI API 進行對話
@@ -55,8 +50,8 @@ export async function callOpenAI(
     throw new Error('請在 .env.local 設定 VITE_OPENAI_API_KEY')
   }
 
-  // 限制對話歷史長度（只保留最近 6 輪，減少 tokens 消耗）
-  const recentMessages = messages.slice(-6)
+  // 限制對話歷史長度（只保留最近 8 輪，減少 tokens 消耗）
+  const recentMessages = messages.slice(-8)
   
   // 組合完整訊息（system + 最近對話歷史）
   const fullMessages: ChatMessage[] = [
