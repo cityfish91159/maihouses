@@ -29,7 +29,7 @@ export interface OpenAIResponse {
  * 邁房子/邁鄰居 AI 助理的系統提示詞
  * 極簡版 - 只保留語氣與原則
  */
-const SYSTEM_PROMPT = `繁中回答，口吻自然友善；直給重點，需要時再追問。
+const SYSTEM_PROMPT = `繁中回答，口吻自然友善；先給結論，50–150 字內、最多 2 點、必要再問 1 題。
 
 你是邁房子 AI 助理。邁鄰居查社區口碑、邁房子安心陪跑全程留痕。`
 
@@ -53,6 +53,13 @@ export async function callOpenAI(
   // 限制對話歷史長度（只保留最近 8 輪，減少 tokens 消耗）
   const recentMessages = messages.slice(-8)
   
+  // 計算使用者最後一則訊息的 tokens（粗估：中文 1 字 ≈ 1.5 tokens）
+  const lastUserMsg = recentMessages.filter(m => m.role === 'user').slice(-1)[0]
+  const userTokensEstimate = lastUserMsg ? Math.ceil(lastUserMsg.content.length * 1.5) : 20
+  
+  // 動態 max_tokens：最低 120、最高 220、一般 150-200
+  const maxTokens = Math.min(220, Math.max(120, Math.ceil(userTokensEstimate * 0.8)))
+  
   // 組合完整訊息（system + 最近對話歷史）
   const fullMessages: ChatMessage[] = [
     { role: 'system', content: SYSTEM_PROMPT },
@@ -72,10 +79,10 @@ export async function callOpenAI(
       body: JSON.stringify({
         model: 'gpt-4o-mini',
         messages: fullMessages,
-        temperature: 0.6,  // 降低以獲得更穩定快速的回應
-        max_tokens: 100,  // 硬控回應長度 50-100 字
+        temperature: 0.6,
+        max_tokens: maxTokens,  // 動態調整（120-220）
         top_p: 1.0,
-        stream: !!onChunk  // 如果有 onChunk 就啟用串流
+        stream: !!onChunk
       })
     })
 
@@ -132,6 +139,7 @@ export async function callOpenAI(
         prompt: data.usage.prompt_tokens,
         completion: data.usage.completion_tokens,
         total: data.usage.total_tokens,
+        max_tokens: maxTokens,
         估算成本: `$${(data.usage.total_tokens * 0.00015 / 1000).toFixed(6)}`
       })
     }
