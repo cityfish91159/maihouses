@@ -33,7 +33,7 @@ export default function Header() {
       {/* Panel 卡片 - 包含跑馬燈、搜索框、膠囊按鈕 */}
       <div className="panel">
         <div className="marquee-container">
-          最新：<b className="brand-highlight">邁鄰居</b> 開放社區查詢；留痕簽署、斡旋雙簽，讓每一步可回溯。
+          買房這麼大的事，先到 <b className="brand-highlight">邁鄰居</b> 為未來的家查口碑、找評價，最放心！
         </div>
 
         <div className="search-container">
