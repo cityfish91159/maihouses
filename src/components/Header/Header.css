@@ -1,5 +1,7 @@
 :root {
   --brand: #1A5FDB;
+  --brand2: #1749D7;
+  --brand-600: #1549C5;
   --brand-light: #6aa4ff;
   --text-primary: #333;
   --text-secondary: #666;
@@ -403,14 +405,10 @@
 }
 
 .pill-icon {
-  font-size: 12px;
+  font-size: 16px;
   line-height: 1;
   display: inline-flex;
   align-items: center;
-}
-
-.pill-icon {
-  font-size: 16px;
 }
 
 /* 響應式設計 */
