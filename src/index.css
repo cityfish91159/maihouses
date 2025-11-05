@@ -1,44 +1,54 @@
 
 :root {
-  /* 品牌色 - 從 HTML 提取 */
-  --brand: #1A5FDB;
+  /* 新擬物風格色彩系統 */
+  --brand: #1749D7;
+  --bg: #EEF2F7;
+  --ink: #0e1530;
+  --muted: #6b7280;
+  
+  /* 新擬物陰影系統 */
+  --shadow-neu-raised: 10px 10px 24px rgba(9,15,30,.16), -10px -10px 24px rgba(255,255,255,.9);
+  --shadow-neu-inset: inset 8px 8px 16px rgba(9,15,30,.12), inset -8px -8px 16px rgba(255,255,255,.9);
+  --shadow-neu-inset-subtle: inset 6px 6px 12px rgba(9,15,30,.08), inset -6px -6px 12px rgba(255,255,255,.8);
+  --shadow-neu-button: 6px 6px 16px rgba(9,15,30,.18), -4px -4px 12px rgba(255,255,255,.8);
+  --shadow-neu-pill: 8px 8px 18px rgba(9,15,30,.14), -8px -8px 18px rgba(255,255,255,.9);
+  --shadow-neu-pill-active: inset 6px 6px 12px rgba(9,15,30,.14), inset -6px -6px 12px rgba(255,255,255,.9);
+  --shadow-neu-badge: inset 4px 4px 10px rgba(9,15,30,.08), inset -4px -4px 10px rgba(255,255,255,.85);
+  
+  /* 品牌色 - 保留舊變數以兼容 */
+  --brand-primary: #1749D7;
   --brand-600: #1550C0;
   --brand-light: #6aa4ff;
   --brand-lighter: #eef3ff;
   --brand-fg: #FFFFFF;
-  /* 背景色 - 匹配 HTML */
-  --bg-page: #f6f9ff;
-  --bg-card: #ffffff;
-  --bg-card-hero: #f7faff;
   
-  /* 漸層 (新增活潑感) */
-  --gradient-hero: linear-gradient(135deg, #f7faff 0%, #eaf1ff 100%);
-  --gradient-ask: linear-gradient(135deg, #fef9f7 0%, #f7f9ff 100%);
-  --gradient-badge: linear-gradient(135deg, #eef3ff, #e3f0ff);
-  --gradient-button: linear-gradient(135deg, #1A5FDB, #2e5ade);
+  /* 背景色 */
+  --bg-page: #EEF2F7;
+  --bg-card: #EEF2F7;
+  --bg-card-hero: #EEF2F7;
   
-  /* 邊框色 */
-  --border-default: #e6edf7;
-  /* 中性灰階 */
-  --neutral-50: #F9FAFB;
-  --neutral-100: #F3F4F6;
-  --neutral-200: #E5E7EB;
-  --neutral-300: #D1D5DB;
-  --neutral-400: #9CA3AF;
-  --neutral-500: #6B7280;
-  --neutral-600: #4B5563;
-  --neutral-700: #374151;
-  --neutral-800: #1F2937;
-  --neutral-900: #111827;
-  /* 文字色 - 從 HTML 提取 */
-  --text-primary: #0a2246;
-  --text-secondary: #6c7b91;
+  /* 文字色 */
+  --text-primary: #0e1530;
+  --text-secondary: #6b7280;
   --text-tertiary: #8a95a5;
-  /* 語義色 */
-  --success: #16A34A;
-  --warning: #F59E0B;
-  --danger: #E11D48;
-  --info: #0EA5E9;
+  
+  /* 圓角系統 - 新擬物風格 */
+  --r-sm: 12px;
+  --r-md: 16px;
+  --r-lg: 20px;
+  --r-xl: 28px;
+  --r-2xl: 32px;
+  --r-pill: 999px;
+  
+  /* 間距 */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-6: 24px;
+  --sp-8: 32px;
+  --sp-12: 48px;
+  
   /* 字體尺寸 */
   --fs-xs: 12px;
   --fs-sm: 13px;
@@ -48,34 +58,6 @@
   --fs-xl: 20px;
   --fs-2xl: 24px;
   --fs-3xl: 28px;
-  /* 間距 - 保留 HTML 的緊湊風格 */
-  --sp-1: 4px;
-  --sp-2: 8px;
-  --sp-3: 12px;
-  --sp-4: 16px;
-  --sp-6: 24px;
-  --sp-8: 32px;
-  --sp-12: 48px;
-  /* 圓角 - 從 HTML 提取 (加大更活潑) */
-  --r-sm: 8px;
-  --r-md: 12px;
-  --r-lg: 16px;
-  --r-xl: 20px;
-  --r-2xl: 24px;
-  --r-pill: 999px;
-  /* 陰影 - 保留 HTML 的輕量風格 */
-  --shadow-card: 0 2px 8px rgba(10, 34, 70, 0.04);
-  --shadow-hover: 0 4px 12px rgba(10, 34, 70, 0.08);
-  --shadow-medium: 0 4px 16px rgba(10, 34, 70, 0.12);
-  --shadow-large: 0 8px 24px rgba(10, 34, 70, 0.15);
-  --text-shadow: 0 2px 4px rgba(10, 34, 70, 0.1);
-  /* z-index */
-  --z-header: 50;
-  --z-overlay: 100;
-  /* 過渡 */
-  --transition-fast: 150ms;
-  --transition-normal: 250ms;
-  --transition-slow: 400ms;
 }
 
 /* stylelint-disable at-rule-no-unknown */
@@ -96,7 +78,8 @@
     font-family: 'Noto Sans TC', 'PingFang TC', -apple-system, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    background-color: #FAFBFC;
+    background-color: var(--bg);
+    color: var(--ink);
   }
 }
 
