@@ -11,12 +11,14 @@
   --fs-lg: clamp(17px, 2.6vw, 20px);
   --lh-tight: 1.28;
   --lh-body: 1.52;
-  --steps-offset: 34px;
-  --steps-col: 68px;
-  --steps-gap: 0px;
+  --steps-offset: 20px;
+  --steps-col: 50px;
+  --steps-gap: 12px;
   --dot-size: 18px;
   --dot-border: 4px;
   
+  max-width: 600px;
+  margin: 0 auto;
   background: #fff;
   border: 1px solid var(--line);
   border-radius: 16px;
@@ -29,15 +31,15 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding: 12px 14px;
+  gap: 16px;
+  padding: 16px 20px;
   background: linear-gradient(135deg, #f8fbff, #eef4ff);
 }
 
 .hero-assure-card .ttl {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
 }
 
 .hero-assure-card .shield {
@@ -114,14 +116,14 @@
 }
 
 .hero-assure-card .body {
-  padding: 14px;
+  padding: 20px 24px;
   display: grid;
-  gap: 12px;
+  gap: 16px;
 }
 
 .hero-assure-card .steps {
   display: grid;
-  gap: 16px;
+  gap: 14px;
   position: relative;
   padding-left: var(--steps-offset);
 }
@@ -136,6 +138,9 @@
 .hero-assure-card .dot-wrap {
   position: relative;
   height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
 }
 
 .hero-assure-card .dot {
@@ -151,7 +156,8 @@
 
 .hero-assure-card .line {
   position: absolute;
-  left: calc((var(--steps-col) / 2) - (var(--dot-size) / 2));
+  left: 50%;
+  transform: translateX(-50%);
   top: 20px;
   bottom: -14px;
   width: 2px;
@@ -221,7 +227,7 @@
 }
 
 .hero-assure-card .foot {
-  padding: 12px 14px;
+  padding: 16px 20px;
   border-top: 1px solid var(--line);
   display: flex;
   justify-content: space-between;
@@ -254,22 +260,76 @@
   border-color: var(--brand);
 }
 
-@media (max-width: 480px) {
+@media (max-width: 768px) {
   .hero-assure-card {
-    --steps-offset: 28px;
-    --steps-col: 54px;
-    --steps-gap: 8px;
+    --steps-offset: 10px;
+    --steps-col: 28px;
+    --steps-gap: 10px;
   }
   .hero-assure-card .head {
-    padding: 10px 12px;
+    padding: 14px 16px;
+    gap: 12px;
+  }
+  .hero-assure-card .ttl {
+    gap: 10px;
+  }
+  .hero-assure-card .shield {
+    width: 32px;
+    height: 32px;
+    font-size: 16px;
+  }
+  .hero-assure-card .body {
+    padding: 16px;
+    gap: 14px;
   }
   .hero-assure-card .pct-bar {
-    width: 128px;
+    width: 120px;
+  }
+  .hero-assure-card .steps {
+    gap: 12px;
   }
   .hero-assure-card .foot {
+    padding: 14px 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-assure-card {
+    --steps-offset: 8px;
+    --steps-col: 24px;
+    --steps-gap: 8px;
+    --dot-size: 16px;
+  }
+  .hero-assure-card .head {
+    padding: 12px 14px;
+    gap: 10px;
+  }
+  .hero-assure-card .ttl {
+    gap: 8px;
+  }
+  .hero-assure-card .shield {
+    width: 28px;
+    height: 28px;
+    font-size: 14px;
+  }
+  .hero-assure-card .body {
+    padding: 14px;
+    gap: 12px;
+  }
+  .hero-assure-card .pct {
+    gap: 4px;
+  }
+  .hero-assure-card .pct-bar {
+    width: 100px;
+  }
+  .hero-assure-card .steps {
+    gap: 10px;
+  }
+  .hero-assure-card .foot {
+    padding: 12px 14px;
     flex-direction: column;
     align-items: stretch;
-    gap: 12px;
+    gap: 10px;
   }
   .hero-assure-card .btn {
     width: 100%;

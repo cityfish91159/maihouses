@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5">
+  <title>安心保證流程｜Rewrite v1</title>
+  <style>
+    /* ========= Design Tokens ========= */
+    :root{
+      --brand:#1749d7;     /* 主色 */
+      --brand2:#4aa1ff;    /* 次藍 */
+      --muted:#6c7b91;     /* 次字色 */
+      --line:#e6edf7;      /* 線條 */
+      --soft:#f7f9fe;      /* 背景 */
+      /* 字級比例（流體排版） */
+      --fs-xs: clamp(12px, 1.4vw, 13px);
+      --fs-sm: clamp(13px, 1.6vw, 14.5px);
+      --fs-md: clamp(15px, 2.0vw, 17.5px);
+      --fs-lg: clamp(17px, 2.6vw, 20px);
+      --lh-tight: 1.28;
+      --lh-body: 1.52;
+
+      /* ====== 可調的時間軸幾何 ====== */
+      --steps-offset: 34px; /* 整組步驟往右位移（建議 30–40px） */
+      --steps-col:    68px; /* ICON→TEXT 靠到極限（文字不動） */
+      --steps-gap:     0px; /* gap=0，總和維持 68 → 文案起點不變 */
+
+      /* 點大小（桌面） */
+      --dot-size: 18px;
+      --dot-border: 4px;
+    }
+
+    /* ========= Base ========= */
+    html,body{margin:0;padding:0;background:var(--soft);
+      font-family:system-ui,-apple-system,"Noto Sans TC","PingFang TC",Segoe UI,Roboto,Helvetica,Arial;}
+    .wrap{max-width:900px;margin:28px auto;padding:0 16px}
+
+    /* ========= Card ========= */
+    .card{background:#fff;border:1px solid var(--line);border-radius:16px;
+      box-shadow:0 10px 26px rgba(23,73,215,.10);overflow:hidden}
+
+    .head{display:flex;align-items:center;justify-content:space-between;gap:12px;
+      padding:12px 14px;background:linear-gradient(135deg,#f8fbff,#eef4ff)}
+    .ttl{display:flex;align-items:center;gap:12px}
+    .shield{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;
+      background:linear-gradient(135deg,var(--brand),var(--brand2));color:#fff;font-weight:900;font-size:18px;
+      box-shadow:0 6px 14px rgba(23,73,215,.25)}
+    .title{margin:0;color:var(--brand);font-weight:900;font-size:var(--fs-lg);line-height:var(--lh-tight)}
+    .subtitle{font-size:var(--fs-sm);color:var(--muted);line-height:var(--lh-tight);margin-top:2px}
+
+    /* 右上進度：極簡數字膠囊 + 細條 */
+    .pct{display:grid;gap:6px;justify-items:end}
+    .pct-chip{display:inline-flex;align-items:baseline;gap:4px;background:#fff;border:1px solid var(--line);
+      border-radius:999px;padding:6px 12px;box-shadow:0 3px 10px rgba(23,73,215,.10)}
+    .pct-chip b{font-size:var(--fs-lg);line-height:1;color:var(--brand);font-weight:900}
+    .pct-chip span{font-size:var(--fs-sm);color:var(--brand)}
+    .pct-bar{width:150px;height:8px;border-radius:999px;background:#eef3ff;border:1px solid var(--line);overflow:hidden}
+    .pct-bar i{display:block;height:100%;width:62%;background:linear-gradient(90deg,var(--brand),var(--brand2));}
+
+    /* ========= Body ========= */
+    .body{padding:14px;display:grid;gap:12px}
+
+    /* 時間軸：整組往右，圖示與文字一起移動；gap 更緊湊 */
+    .steps{display:grid;gap:16px;position:relative;padding-left:var(--steps-offset)}
+    .step{display:grid;grid-template-columns:var(--steps-col) 1fr;gap:var(--steps-gap);align-items:start}
+
+    .dot-wrap{position:relative;height:100%}
+    .dot{width:var(--dot-size);height:var(--dot-size);border-radius:50%;background:#fff;border:var(--dot-border) solid #cfe1ff;
+      box-shadow:0 0 0 8px #4aa1ff22, 0 4px 10px rgba(23,73,215,.12);position:relative;z-index:2}
+    .line{position:absolute;left:calc((var(--steps-col)/2) - (var(--dot-size)/2));top:20px;bottom:-14px;width:2px;
+      background:linear-gradient(#eaefff,#d9e6ff)}
+
+    .step.done .dot{background:linear-gradient(135deg,#12b886,#6be7c6);border-color:#12b886;box-shadow:none}
+    .step.active .dot{border-color:var(--brand)}
+
+    .cap .t{font-weight:800;color:#0f1a39;font-size:var(--fs-md);line-height:var(--lh-tight)}
+    .cap .s{font-size:var(--fs-sm);color:var(--muted);line-height:var(--lh-body)}
+
+    /* 資訊塊與膠囊 */
+    .info{border:1px dashed rgba(23,73,215,.45);border-radius:12px;padding:12px;background:#fff;display:flex;gap:10px;align-items:flex-start}
+    .lock{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,var(--brand),var(--brand2));color:#fff;font-weight:900;font-size:16px}
+    .chips{display:flex;gap:8px;margin-top:6px;flex-wrap:wrap}
+    .chip{font-size:var(--fs-sm);border:1px solid var(--line);border-radius:999px;padding:6px 12px;background:#f6fbff;color:var(--brand);font-weight:800}
+
+    /* ========= Footer ========= */
+    .foot{padding:12px 14px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
+    .hint{font-size:var(--fs-sm);color:var(--muted)}
+    .btn{height:40px;padding:0 18px;border-radius:999px;border:1px solid var(--line);background:#fff;color:var(--brand);
+      font-weight:900;font-size:var(--fs-md);cursor:pointer}
+
+    /* ========= Responsive ========= */
+    @media (max-width: 480px) {
+      :root {
+        --steps-offset: 28px;
+        --steps-col: 54px;
+        --steps-gap: 8px;
+      }
+      .head {
+        padding: 10px 12px;
+      }
+      .pct-bar {
+        width: 128px;
+      }
+      .foot {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .btn {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section class="card" aria-label="安心保證流程（Rewrite v1）">
+      <header class="head">
+        <div class="ttl">
+          <div class="shield">🔒</div>
+          <div>
+            <h3 class="title">安心保證流程</h3>
+            <div class="subtitle">每一步都有紀錄與保障</div>
+          </div>
+        </div>
+        <div class="pct">
+          <div class="pct-chip" aria-label="目前進度 62%"><b>62</b><span>%</span></div>
+          <div class="pct-bar" aria-hidden="true"><i style="width:62%"></i></div>
+        </div>
+      </header>
+
+      <div class="body">
+        <div class="steps" id="steps">
+          <div class="step done">
+            <div class="dot-wrap"><div class="dot"></div><div class="line"></div></div>
+            <div class="cap"><div class="t">已看屋</div><div class="s">完成現場帶看與基本紀錄</div></div>
+          </div>
+          <div class="step done">
+            <div class="dot-wrap"><div class="dot"></div><div class="line"></div></div>
+            <div class="cap"><div class="t">已出價</div><div class="s">要約與條件已留痕</div></div>
+          </div>
+          <div class="step active">
+            <div class="dot-wrap"><div class="dot"></div><div class="line"></div></div>
+            <div class="cap"><div class="t">雙向簽署</div><div class="s">平台簽署，雙方可回溯查驗</div></div>
+          </div>
+          <div class="step">
+            <div class="dot-wrap"><div class="dot"></div><div class="line"></div></div>
+            <div class="cap"><div class="t">身分驗證</div><div class="s">KYC 驗證與黑名單檢核</div></div>
+          </div>
+          <div class="step">
+            <div class="dot-wrap"><div class="dot"></div><div class="line"></div></div>
+            <div class="cap"><div class="t">金流通知</div><div class="s">代收代付與異常監控</div></div>
+          </div>
+          <div class="step">
+            <div class="dot-wrap"><div class="dot"></div></div>
+            <div class="cap"><div class="t">交屋驗屋</div><div class="s">交付清單與驗屋紀錄</div></div>
+          </div>
+        </div>
+
+        <div class="info">
+          <div class="lock">✔</div>
+          <div>
+            <b style="color:var(--brand)">你的權益：</b>
+            完成<b>身分驗證</b>並開啟<b>金流通知</b>；所有簽署與溝通都在平台留痕，可回溯可查證。
+            <div class="chips">
+              <span class="chip">流程即時更新</span>
+              <span class="chip">可疑變更自動警示</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <footer class="foot">
+        <span class="hint">了解每一步保護了什麼</span>
+        <button class="btn">詳讀保障內容</button>
+      </footer>
+    </section>
+  </div>
+</body>
+</html>
