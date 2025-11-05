@@ -126,6 +126,8 @@
   gap: 14px;
   position: relative;
   padding-left: var(--steps-offset);
+  max-width: 500px;
+  margin: 0 auto;
 }
 
 .hero-assure-card .step {
