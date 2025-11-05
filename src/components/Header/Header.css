@@ -256,29 +256,32 @@
 
 /* Panel 卡片 - 包含跑馬燈、搜索、膠囊 */
 .panel {
-  background: #EEF2F7;
-  border-radius: 28px;
+  background: #FAFBFC;
+  border-radius: 8px;
   padding: 20px;
   margin: 20px auto;
   max-width: 980px;
-  box-shadow: 10px 10px 24px rgba(9,15,30,.16), -10px -10px 24px rgba(255,255,255,.9);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   position: relative;
   z-index: 1;
 }
 
 /* 跑馬燈 - 內凹 */
 .marquee-container {
-  background: #EEF2F7;
-  border-radius: 16px;
+  background: #F8F9FA;
+  border-radius: 8px;
   padding: 12px 16px;
   margin-bottom: 14px;
-  box-shadow: inset 6px 6px 12px rgba(9,15,30,.08), inset -6px -6px 12px rgba(255,255,255,.8);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.06);
   overflow: hidden;
   position: relative;
-  height: auto;
+  height: 48px;
+  display: flex;
+  align-items: center;
 }
 
 .marquee-content {
+  position: absolute;
   white-space: nowrap;
   animation: marquee-left 20s linear infinite;
   will-change: transform;
@@ -288,12 +291,13 @@
 @media (prefers-reduced-motion: reduce) {
   .marquee-content {
     animation: none;
+    position: static;
   }
 }
 
 .marquee-text {
-  font-size: 20px;
-  font-weight: 700;
+  font-size: 18px;
+  font-weight: 400;
   color: #111;
   letter-spacing: 0.3px;
   white-space: nowrap;
@@ -314,10 +318,10 @@
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  font-weight: 900;
+  font-weight: 700;
 }
 
-/* 搜索框 - 內凹 */
+/* 搜索框 */
 .search-container {
   max-width: 100%;
   margin: 0;
@@ -325,29 +329,20 @@
 
 .search-box-modern {
   display: flex;
-  gap: 10px;
+  gap: 12px;
   align-items: center;
-  background: #EEF2F7;
-  border-radius: 16px;
-  padding: 14px 12px;
-  box-shadow: inset 8px 8px 16px rgba(9,15,30,.12), inset -8px -8px 16px rgba(255,255,255,.9);
+  background: #F8F9FA;
+  border-radius: 8px;
+  padding: 12px 16px;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.06);
   border: none;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
 }
 
 .search-box-modern:focus-within {
   box-shadow: 
-    inset 8px 8px 16px rgba(9,15,30,.15), 
-    inset -8px -8px 16px rgba(255,255,255,.9),
-    0 0 0 3px rgba(23, 73, 215, 0.2);
-}
-
-.search-icon {
-  opacity: 0.7;
-  margin-right: 6px;
-  color: var(--brand);
-  font-size: 20px;
-  flex-shrink: 0;
+    inset 0 1px 3px rgba(0, 0, 0, 0.06),
+    0 0 0 3px rgba(23, 73, 215, 0.1);
 }
 
 .search-input {
@@ -355,8 +350,9 @@
   border: none;
   background: transparent;
   outline: none;
-  font-size: 16px;
-  padding: 8px 4px 8px 0;
+  font-size: 14px;
+  font-weight: 400;
+  padding: 8px 4px;
   color: #111;
 }
 
@@ -377,31 +373,33 @@
   border-width: 0;
 }
 
-/* 搜索按鈕 - 凸起 */
+/* 搜索按鈕 */
 .search-btn-primary {
   background: var(--brand);
   color: #fff;
   border: none;
-  border-radius: 14px;
-  padding: 12px 18px;
-  font-weight: 800;
+  border-radius: 6px;
+  padding: 10px 20px;
+  font-size: 13px;
+  font-weight: 600;
   letter-spacing: 0.02em;
   cursor: pointer;
-  box-shadow: 6px 6px 16px rgba(9,15,30,.18), -4px -4px 12px rgba(255,255,255,.8);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   transition: all 0.2s ease;
 }
 
 .search-btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 8px 8px 20px rgba(9,15,30,.22), -5px -5px 14px rgba(255,255,255,.85);
+  opacity: 0.9;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
 }
 
 .search-btn-primary:active {
   transform: translateY(0);
-  box-shadow: inset 6px 6px 12px rgba(9,15,30,.14), inset -6px -6px 12px rgba(255,255,255,.9);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
 }
 
-/* 膠囊按鈕 - 凸起 */
+/* 膠囊按鈕 */
 .filter-pills {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -411,36 +409,43 @@
 
 .pill {
   text-align: center;
-  border-radius: 16px;
+  border-radius: 6px;
   cursor: pointer;
-  font-weight: 800;
+  font-size: 13px;
+  font-weight: 600;
   padding: 12px 8px;
-  box-shadow: 8px 8px 18px rgba(9,15,30,.14), -8px -8px 18px rgba(255,255,255,.9);
-  background: #EEF2F7;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  background: #FAFBFC;
   border: none;
   color: #0e1530;
-  font-size: 14px;
   transition: all 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 8px;
 }
 
 .pill:hover {
+  opacity: 0.85;
   transform: translateY(-2px);
-  box-shadow: 10px 10px 22px rgba(9,15,30,.16), -10px -10px 22px rgba(255,255,255,.95);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
 }
 
-.pill:active,
-.pill.active {
-  box-shadow: inset 6px 6px 12px rgba(9,15,30,.14), inset -6px -6px 12px rgba(255,255,255,.9);
+.pill:active {
   transform: translateY(0);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
 }
 
 .pill:focus {
   outline: 2px solid var(--brand);
   outline-offset: 2px;
+}
+
+.pill-icon {
+  font-size: 12px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
 }
 
 .pill-icon {
@@ -454,9 +459,18 @@
     padding: 16px;
   }
   
+  .marquee-container {
+    height: 40px;
+  }
+  
+  .marquee-text {
+    font-size: 14px;
+  }
+  
   .search-box-modern {
     flex-direction: column;
     align-items: stretch;
+    gap: 10px;
   }
   
   .search-btn-primary {
@@ -465,10 +479,6 @@
   
   .filter-pills {
     grid-template-columns: 1fr;
-  }
-  
-  .marquee-text {
-    font-size: 14px;
   }
 }
 

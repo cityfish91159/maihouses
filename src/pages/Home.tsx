@@ -53,22 +53,22 @@ export default function Home({ config }: { config: AppConfig & RuntimeOverrides 
       )}
       <main className="max-w-container mx-auto p-4 md:p-6 space-y-6 md:space-y-8">
         {features.heroAssure !== false && (
-          <section className="bg-white rounded-[var(--r-xl)] shadow-[0_2px_12px_rgba(0,0,0,0.08)] p-6 md:p-8">
+          <section className="bg-white rounded-lg shadow-[0_2px_8px_rgba(0,0,0,0.08)] p-6 md:p-8 transition-all duration-200 hover:shadow-[0_4px_12px_rgba(0,0,0,0.12)]">
             <HeroAssure />
           </section>
         )}
         {features.smartAsk !== false && (
-          <section className="bg-white rounded-[var(--r-xl)] shadow-[0_2px_12px_rgba(0,0,0,0.08)] p-6 md:p-8">
+          <section className="bg-white rounded-lg shadow-[0_2px_8px_rgba(0,0,0,0.08)] p-6 md:p-8 transition-all duration-200 hover:shadow-[0_4px_12px_rgba(0,0,0,0.12)]">
             <SmartAsk />
           </section>
         )}
         {features.communityTeaser !== false && (
-          <section className="bg-white rounded-[var(--r-xl)] shadow-[0_2px_12px_rgba(0,0,0,0.08)] p-6 md:p-8">
+          <section className="bg-white rounded-lg shadow-[0_2px_8px_rgba(0,0,0,0.08)] p-6 md:p-8 transition-all duration-200 hover:shadow-[0_4px_12px_rgba(0,0,0,0.12)]">
             <CommunityTeaser />
           </section>
         )}
         {features.propertyGrid !== false && (
-          <section className="bg-white rounded-[var(--r-xl)] shadow-[0_2px_12px_rgba(0,0,0,0.08)] p-6 md:p-8">
+          <section className="bg-white rounded-lg shadow-[0_2px_8px_rgba(0,0,0,0.08)] p-6 md:p-8 transition-all duration-200 hover:shadow-[0_4px_12px_rgba(0,0,0,0.12)]">
             <PropertyGrid q={q} />
           </section>
         )}

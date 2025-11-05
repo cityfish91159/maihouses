@@ -43,7 +43,6 @@ export default function Header() {
         <div className="search-container">
           {/* 主搜索框 */}
           <div className="search-box-modern">
-            <FaSearch className="search-icon" />
             <label htmlFor="search-input" className="sr-only">搜尋框</label>
             <input 
               type="text" 
