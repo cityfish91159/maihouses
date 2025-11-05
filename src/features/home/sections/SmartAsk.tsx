@@ -56,7 +56,7 @@ export default function SmartAsk() {
 
   return (
     <section 
-      className="rounded-[var(--r-xl)] shadow-[var(--shadow-card)] p-4 md:p-6 space-y-4 transition-shadow hover:shadow-[var(--shadow-hover)]"
+      className="rounded-[28px] shadow-[10px_10px_24px_rgba(9,15,30,.16),_-10px_-10px_24px_rgba(255,255,255,.9)] p-4 md:p-6 space-y-4 transition-shadow hover:shadow-[var(--shadow-hover)]"
       style={{ background: 'var(--gradient-ask)' }}
     >
       <div className="flex items-center gap-2 mb-2">

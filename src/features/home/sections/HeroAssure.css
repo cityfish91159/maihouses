@@ -21,8 +21,8 @@
   margin: 0 auto;
   background: #fff;
   border: 1px solid var(--line);
-  border-radius: 16px;
-  box-shadow: 0 10px 26px rgba(23, 73, 215, 0.1);
+  border-radius: 28px;
+  box-shadow: 10px 10px 24px rgba(9,15,30,.16), -10px -10px 24px rgba(255,255,255,.9);
   overflow: hidden;
   transition: opacity 0.4s ease, transform 0.4s ease;
 }
