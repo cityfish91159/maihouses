@@ -91,10 +91,13 @@
   box-sizing: border-box;
 }
 
-body {
-  font-family: 'Noto Sans TC', 'PingFang TC', -apple-system, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+@layer base {
+  body {
+    font-family: 'Noto Sans TC', 'PingFang TC', -apple-system, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background-color: #FAFBFC;
+  }
 }
 
 /* 微動畫 - 增加活潑感 */
