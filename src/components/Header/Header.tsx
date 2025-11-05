@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { FaBars, FaHome, FaUser, FaTimes, FaSearch } from 'react-icons/fa'
 import { Link } from 'react-router-dom'
 import './Header.css'
 
@@ -15,49 +16,69 @@ export default function Header() {
     <>
       <header className="site-header">
         <div className="header-inner">
-          <Link to="/" className="brand">
+          <div className="brand">
             <div className="mark" />
             <span className="brand-name">邁房子</span>
             <span className="brand-slogan">讓家，不只是地址</span>
-          </Link>
+          </div>
           <div className="auth">
-            <Link to="/auth/login" className="login">登入</Link>
-            <Link to="/auth/register" className="signup">註冊</Link>
+            <FaBars className="menu-icon" onClick={() => setModalOpen(!modalOpen)} />
+            {modalOpen && <FaTimes className="menu-icon" onClick={() => setModalOpen(false)} />}
+            <Link to="/auth/login" className="icon-button"><FaUser /></Link>
+            <Link to="/" className="icon-button"><FaHome /></Link>
           </div>
         </div>
       </header>
 
-      <div className="hero-search-wrap">
-        <div className="hero-search">
-          <div className="search-box">
-            <span className="search-icon">🔍</span>
-            <input 
-              type="text" 
-              placeholder="搜尋社區、地址..." 
-              className="search-input"
-            />
-            <button className="find-btn">找房</button>
+      {/* 跑馬燈 Banner - 只放文字 */}
+      <div className="hero-banner">
+        <div className="marquee-container">
+          <div className="marquee-content">
+            <span className="marquee-text">
+              買房這麼大的事，快上<span className="brand-highlight">邁鄰居</span>看未來的家完整評價、認識未來的鄰居
+            </span>
           </div>
         </div>
-        <div className="pills">
-          <button 
-            className="pill"
-            onClick={() => openModal('社區評價', '查看真實住戶的社區評價與回饋')}
-          >
-            社區評價
-          </button>
-          <button 
-            className="pill"
-            onClick={() => openModal('房仲專區', '專業房仲服務與物件推薦')}
-          >
-            房仲專區
-          </button>
-          <button 
-            className="pill"
-            onClick={() => openModal('邁鄰居', '認識您的鄰居，建立社區連結')}
-          >
-            邁鄰居
-          </button>
+      </div>
+
+      {/* 搜索框區域 - 2025 流行設計 */}
+      <div className="search-section">
+        <div className="search-container">
+          {/* 主搜索框 */}
+          <div className="search-box-modern">
+            <FaSearch className="search-icon" />
+            <input 
+              type="text" 
+              className="search-input" 
+              placeholder="輸入社區名稱、地址或捷運站..."
+            />
+            <button className="search-btn-primary">搜索</button>
+          </div>
+          
+          {/* 快速篩選膠囊按鈕 */}
+          <div className="filter-pills">
+            <button 
+              className="pill pill-community"
+              onClick={() => openModal('社區評價', '查看真實住戶的社區評價與回饋')}
+            >
+              <span className="pill-icon">●</span>
+              社區評價
+            </button>
+            <button 
+              className="pill pill-location"
+              onClick={() => openModal('房仲專區', '專業房仲服務與物件推薦')}
+            >
+              <span className="pill-icon">●</span>
+              房仲專區
+            </button>
+            <button 
+              className="pill pill-transit"
+              onClick={() => openModal('邁鄰居', '認識您的鄰居，建立社區連結')}
+            >
+              <span className="pill-icon">●</span>
+              邁鄰居
+            </button>
+          </div>
         </div>
       </div>
 
