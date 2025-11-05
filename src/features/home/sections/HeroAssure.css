@@ -192,53 +192,52 @@
 .hero-assure-card .info {
   border: 1px dashed rgba(23, 73, 215, 0.45);
   border-radius: 12px;
-  padding: 12px;
+  padding: 14px;
   background: #fff;
-  display: flex;
-  gap: 10px;
-  align-items: flex-start;
+  display: block;
+}
+
+.hero-assure-card .info > div {
+  font-size: var(--fs-sm);
+  line-height: var(--lh-body);
+  color: #243355;
 }
 
 .hero-assure-card .lock {
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  background: linear-gradient(135deg, var(--brand), var(--brand2));
-  color: #fff;
-  font-weight: 900;
-  font-size: 16px;
+  display: none;
 }
 
 .hero-assure-card .chips {
   display: flex;
-  gap: 8px;
-  margin-top: 6px;
+  gap: 10px;
+  margin-top: 10px;
   flex-wrap: wrap;
 }
 
 .hero-assure-card .chip {
   font-size: var(--fs-sm);
-  border: 1px solid var(--line);
+  border: 2px solid var(--brand);
   border-radius: 999px;
-  padding: 6px 12px;
-  background: #f6fbff;
+  padding: 8px 16px;
+  background: #eef3ff;
   color: var(--brand);
-  font-weight: 800;
+  font-weight: 900;
+  box-shadow: 0 2px 6px rgba(23, 73, 215, 0.15);
 }
 
 .hero-assure-card .foot {
   padding: 16px 20px;
   border-top: 1px solid var(--line);
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
+  gap: 16px;
 }
 
 .hero-assure-card .hint {
   font-size: var(--fs-sm);
   color: var(--muted);
+  font-weight: 600;
 }
 
 .hero-assure-card .btn {
@@ -330,8 +329,7 @@
   .hero-assure-card .foot {
     padding: 12px 14px;
     flex-direction: column;
-    align-items: stretch;
-    gap: 10px;
+    gap: 12px;
   }
   .hero-assure-card .btn {
     width: 100%;
