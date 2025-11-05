@@ -51,11 +51,27 @@ export default function Home({ config }: { config: AppConfig & RuntimeOverrides 
       {banner && (
         <div className="bg-[var(--warning)] text-white rounded-[var(--r-md)] p-3 text-[var(--fs-sm)] max-w-container mx-auto mt-4">{banner}</div>
       )}
-      <main className="max-w-container mx-auto p-4 md:p-6 space-y-6">
-        {features.heroAssure !== false && <HeroAssure />}
-        {features.smartAsk !== false && <SmartAsk />}
-        {features.communityTeaser !== false && <CommunityTeaser />}
-        {features.propertyGrid !== false && <PropertyGrid q={q} />}
+      <main className="max-w-container mx-auto p-4 md:p-6 space-y-12 md:space-y-16">
+        {features.heroAssure !== false && (
+          <section className="bg-white rounded-[var(--r-xl)] shadow-[0_2px_12px_rgba(0,0,0,0.08)] p-6 md:p-8">
+            <HeroAssure />
+          </section>
+        )}
+        {features.smartAsk !== false && (
+          <section className="bg-white rounded-[var(--r-xl)] shadow-[0_2px_12px_rgba(0,0,0,0.08)] p-6 md:p-8">
+            <SmartAsk />
+          </section>
+        )}
+        {features.communityTeaser !== false && (
+          <section className="bg-white rounded-[var(--r-xl)] shadow-[0_2px_12px_rgba(0,0,0,0.08)] p-6 md:p-8">
+            <CommunityTeaser />
+          </section>
+        )}
+        {features.propertyGrid !== false && (
+          <section className="bg-white rounded-[var(--r-xl)] shadow-[0_2px_12px_rgba(0,0,0,0.08)] p-6 md:p-8">
+            <PropertyGrid q={q} />
+          </section>
+        )}
       </main>
     </>
   )
