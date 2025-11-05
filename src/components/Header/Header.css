@@ -254,34 +254,31 @@
   transform: translateY(-1px);
 }
 
-/* Panel 卡片 - 包含跑馬燈、搜索、膠囊 */
+/* Panel 卡片 - 新擬物風格凸起 */
 .panel {
-  background: #FAFBFC;
-  border-radius: 8px;
+  background: #EEF2F7;
+  border-radius: 28px;
   padding: 20px;
   margin: 20px auto;
   max-width: 980px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  box-shadow: 10px 10px 24px rgba(9, 15, 30, 0.16), -10px -10px 24px rgba(255, 255, 255, 0.9);
   position: relative;
   z-index: 1;
 }
 
-/* 跑馬燈 - 內凹 */
+/* 跑馬燈 - 新擬物內凹 */
 .marquee-container {
-  background: #F8F9FA;
-  border-radius: 8px;
+  background: #EEF2F7;
+  border-radius: 16px;
   padding: 12px 16px;
   margin-bottom: 14px;
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.06);
+  box-shadow: inset 6px 6px 12px rgba(9, 15, 30, 0.08), inset -6px -6px 12px rgba(255, 255, 255, 0.8);
   overflow: hidden;
   position: relative;
-  height: 48px;
-  display: flex;
-  align-items: center;
+  white-space: nowrap;
 }
 
 .marquee-content {
-  position: absolute;
   white-space: nowrap;
   animation: marquee-left 20s linear infinite;
   will-change: transform;
@@ -291,7 +288,6 @@
 @media (prefers-reduced-motion: reduce) {
   .marquee-content {
     animation: none;
-    position: static;
   }
 }
 
@@ -321,7 +317,7 @@
   font-weight: 700;
 }
 
-/* 搜索框 */
+/* 搜索框 - 新擬物內凹 */
 .search-container {
   max-width: 100%;
   margin: 0;
@@ -329,19 +325,20 @@
 
 .search-box-modern {
   display: flex;
-  gap: 12px;
+  gap: 10px;
   align-items: center;
-  background: #F8F9FA;
-  border-radius: 8px;
-  padding: 12px 16px;
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.06);
+  background: #EEF2F7;
+  border-radius: 16px;
+  padding: 14px 12px;
+  box-shadow: inset 8px 8px 16px rgba(9, 15, 30, 0.12), inset -8px -8px 16px rgba(255, 255, 255, 0.9);
   border: none;
   transition: all 0.2s ease;
 }
 
 .search-box-modern:focus-within {
   box-shadow: 
-    inset 0 1px 3px rgba(0, 0, 0, 0.06),
+    inset 8px 8px 16px rgba(9, 15, 30, 0.12), 
+    inset -8px -8px 16px rgba(255, 255, 255, 0.9),
     0 0 0 3px rgba(23, 73, 215, 0.1);
 }
 
@@ -350,10 +347,10 @@
   border: none;
   background: transparent;
   outline: none;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 400;
-  padding: 8px 4px;
-  color: #111;
+  padding: 8px 4px 8px 0;
+  color: #0e1530;
 }
 
 .search-input::placeholder {
@@ -373,30 +370,28 @@
   border-width: 0;
 }
 
-/* 搜索按鈕 */
+/* 搜索按鈕 - 新擬物風格 */
 .search-btn-primary {
   background: var(--brand);
   color: #fff;
   border: none;
-  border-radius: 6px;
-  padding: 10px 20px;
+  border-radius: 14px;
+  padding: 12px 18px;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 800;
   letter-spacing: 0.02em;
   cursor: pointer;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  transition: all 0.2s ease;
+  box-shadow: 6px 6px 16px rgba(9, 15, 30, 0.18), -4px -4px 12px rgba(255, 255, 255, 0.8);
+  transition: all 0.15s ease;
 }
 
 .search-btn-primary:hover {
-  opacity: 0.9;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  opacity: 0.95;
 }
 
 .search-btn-primary:active {
-  transform: translateY(0);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  transform: translateY(1px);
+  box-shadow: 4px 4px 12px rgba(9, 15, 30, 0.15), -2px -2px 8px rgba(255, 255, 255, 0.7);
 }
 
 /* 膠囊按鈕 - 新擬物風格 */
@@ -460,7 +455,7 @@
   }
   
   .marquee-container {
-    height: 40px;
+    padding: 10px 14px;
   }
   
   .marquee-text {
