@@ -67,12 +67,11 @@ export default function SmartAsk() {
         <span className="text-xs text-[var(--text-tertiary)] ml-auto">多輪對話・智能推薦</span>
       </div>
 
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-2 md:gap-2">
         {QUICK.map((q, i) => (
           <button
             key={q}
-            className="px-3 py-1.5 rounded-[var(--r-pill)] bg-white border border-[var(--border-default)] font-medium transition-all hover:border-[var(--brand)] hover:text-[var(--brand)] hover:-translate-y-0.5 hover:shadow-sm active:translate-y-0"
-            style={{ fontSize: 'var(--fs-sm)' }}
+            className="px-2 py-1 md:px-3 md:py-1.5 rounded-[var(--r-pill)] bg-white border border-[var(--border-default)] font-medium transition-all hover:border-[var(--brand)] hover:text-[var(--brand)] hover:-translate-y-0.5 hover:shadow-sm active:translate-y-0 text-xs md:text-sm whitespace-nowrap"
             onClick={() => setInput(q)}
             aria-label={`快速輸入 ${q}`}
           >
@@ -85,14 +84,17 @@ export default function SmartAsk() {
         ref={chatRef}
         role="log"
         aria-live="polite"
-        className="bg-white rounded-[var(--r-lg)] p-4 min-h-[240px] max-h-[400px] overflow-y-auto space-y-3 border border-[var(--border-default)] shadow-inner"
+        className="bg-white rounded-[var(--r-lg)] p-4 min-h-[280px] md:min-h-[240px] max-h-[450px] md:max-h-[400px] overflow-y-auto space-y-3 border border-[var(--border-default)] shadow-inner"
       >
         {messages.length === 0 ? (
           <div className="flex items-center justify-center h-full text-[var(--text-tertiary)]" style={{ fontSize: 'var(--fs-sm)' }}>
             <div className="text-center">
               <p className="mb-2 text-2xl">💬</p>
-              <p className="font-medium mb-1">您好！我是邁房子 AI 助理</p>
-              <p className="text-xs">請告訴我您的找房需求</p>
+              <p className="font-medium mb-2 text-[var(--text-primary)]">您好！我是邁房子 AI 助理</p>
+              <p className="text-xs leading-relaxed max-w-[280px] mx-auto">
+                <span className="font-semibold text-[var(--brand)]">邁鄰居</span>：買房前先查社區口碑<br/>
+                <span className="font-semibold text-[var(--brand)]">邁房子</span>：安心陪跑全程留痕
+              </p>
             </div>
           </div>
         ) : (
