@@ -30,8 +30,8 @@ export default function Header() {
         </div>
       </header>
 
-      {/* 跑馬燈 Banner - 只放文字 */}
-      <div className="hero-banner">
+      {/* Panel 卡片 - 包含跑馬燈、搜索框、膠囊按鈕 */}
+      <div className="panel">
         <div className="marquee-container">
           <div className="marquee-content">
             <span className="marquee-text">
@@ -39,20 +39,21 @@ export default function Header() {
             </span>
           </div>
         </div>
-      </div>
 
-      {/* 搜索框區域 - 2025 流行設計 */}
-      <div className="search-section">
         <div className="search-container">
           {/* 主搜索框 */}
           <div className="search-box-modern">
             <FaSearch className="search-icon" />
+            <label htmlFor="search-input" className="sr-only">搜尋框</label>
             <input 
               type="text" 
+              id="search-input"
               className="search-input" 
               placeholder="輸入社區名稱、地址或捷運站..."
+              aria-label="搜尋框"
+              onKeyDown={(e) => e.key === 'Enter' && console.log('Search triggered')}
             />
-            <button className="search-btn-primary">搜索</button>
+            <button className="search-btn-primary" onClick={() => console.log('Search triggered')}>搜索</button>
           </div>
           
           {/* 快速篩選膠囊按鈕 */}
