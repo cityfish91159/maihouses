@@ -99,7 +99,7 @@ export default function SmartAsk() {
         {QUICK.map((q, i) => (
           <button
             key={q}
-            className="px-3 py-1.5 md:px-4 md:py-2 rounded-[var(--r-pill)] bg-white border border-[var(--border-default)] font-medium transition-all hover:border-[var(--brand)] hover:text-[var(--brand)] hover:-translate-y-0.5 hover:shadow-sm active:translate-y-0 text-xs md:text-sm whitespace-nowrap"
+            className="px-3 py-[0.45rem] md:px-4 md:py-[0.6rem] rounded-[var(--r-pill)] bg-white border border-[var(--border-default)] text-[var(--text-secondary)] hover:border-[var(--brand)] hover:shadow-sm transition-all duration-200 text-sm font-medium cursor-pointer"
             onClick={() => setInput(q)}
             aria-label={`快速輸入 ${q}`}
           >
