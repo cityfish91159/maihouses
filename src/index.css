@@ -102,3 +102,145 @@
 }
 
 /* 保留舊語彙占位 - 移除空白規則集以符合 CSS 規範 */
+
+/* ========================================
+   舊版樣式移植 - Append Only
+   不破壞現有 Tailwind 與組件樣式
+   ======================================== */
+
+/* 補充缺少的變數 */
+:root {
+  --gradient-badge: linear-gradient(135deg, #eef3ff, #d9e6ff);
+  --old-brand: #1749D7;
+  --old-accent: #4aa1ff;
+  --old-muted: #6c7b91;
+  --old-line: #e6edf7;
+  --old-soft: #f7f9fe;
+  --old-ink-dark: #0f1a39;
+  --old-ink-mid: #243355;
+}
+
+/* 通用卡片容器（精確選擇器，避免破壞 Tailwind）*/
+section.bg-white[class*="shadow"][class*="rounded"] {
+  background: #fff;
+  border: 1px solid var(--old-line);
+  transition: all 0.3s ease;
+}
+
+section.bg-white[class*="shadow"][class*="rounded"]:hover {
+  box-shadow: var(--shadow-neu-raised);
+}
+
+/* 標題列（section 內的 h3 + 說明文字）*/
+section > h3 {
+  color: var(--old-brand);
+  font-weight: 900;
+  letter-spacing: -0.01em;
+}
+
+section > h3 + p {
+  color: var(--old-muted);
+  line-height: 1.52;
+}
+
+/* AI 卡片特定樣式（SmartAsk）*/
+section[class*="gradient-ask"] {
+  background: var(--gradient-ask);
+  border: 1px solid var(--old-line);
+}
+
+/* 快速輸入膠囊 */
+section[class*="gradient-ask"] button[class*="rounded-"] {
+  background: #fff;
+  border: 1.5px solid var(--old-line);
+  font-weight: 700;
+  transition: all 0.2s ease;
+}
+
+section[class*="gradient-ask"] button[class*="rounded-"]:hover {
+  border-color: var(--old-brand);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(23, 73, 215, 0.15);
+}
+
+/* 對話框容器 */
+section[class*="gradient-ask"] div[class*="bg-white"][class*="rounded"] {
+  border: 1px solid var(--old-line);
+  box-shadow: var(--shadow-neu-inset-subtle);
+}
+
+/* 使用者訊息氣泡 */
+section[class*="gradient-ask"] div[class*="gradient-button"] {
+  background: var(--gradient-button);
+  box-shadow: 0 2px 8px rgba(23, 73, 215, 0.2);
+}
+
+/* AI 回覆氣泡 */
+section[class*="gradient-ask"] div[class*="neutral-100"] {
+  background: var(--neutral-100);
+  border: 1px solid var(--old-line);
+}
+
+/* 房源卡片與社區卡片網格 */
+section article[class*="border-2"] {
+  border-color: var(--old-line);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+section article[class*="border-2"]:hover {
+  border-color: var(--old-brand);
+  box-shadow: 0 8px 20px rgba(23, 73, 215, 0.12);
+  transform: translateY(-4px);
+}
+
+/* 封面圖 */
+section article > div[class*="bg-cover"] {
+  border-radius: var(--r-md);
+  overflow: hidden;
+}
+
+/* 價格 */
+section article div[class*="text-"][class*="brand"] {
+  color: var(--old-brand);
+  font-weight: 900;
+}
+
+/* 徽章 */
+section article span[class*="gradient-badge"] {
+  background: var(--gradient-badge);
+  font-weight: 700;
+  font-size: 10px;
+  box-shadow: inset 2px 2px 6px rgba(9,15,30,.05), inset -2px -2px 6px rgba(255,255,255,.9);
+}
+
+/* 評分星號 */
+section article span[class*="★"] {
+  color: var(--old-brand);
+  font-weight: 900;
+}
+
+/* RWD 微調（手機優化）*/
+@media (max-width: 640px) {
+  section.bg-white[class*="shadow"] {
+    padding: 1rem;
+  }
+  
+  section > h3 {
+    font-size: var(--fs-lg);
+  }
+  
+  section[class*="gradient-ask"] button[class*="rounded-"] {
+    font-size: var(--fs-xs);
+    padding: 0.25rem 0.5rem;
+  }
+}
+
+/* 微動畫增強 */
+section article[class*="border-2"] {
+  animation: fadeIn 0.4s ease-out;
+}
+
+/* 懸停陰影增強（全域）*/
+section[class*="hover:shadow"] {
+  transition: box-shadow 0.3s ease, transform 0.2s ease;
+}
