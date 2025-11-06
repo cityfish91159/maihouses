@@ -163,8 +163,8 @@ export default function SmartAsk() {
 
       <div className="flex gap-2">
         <input
-          className="flex-1 border-2 border-gray-300 rounded-full px-5 py-3 focus:outline-none focus:border-blue-500 transition-colors"
-          style={{ fontSize: 'var(--fs-sm)' }}
+          className="flex-1 border-2 border-gray-300 rounded-full px-5 focus:outline-none focus:border-blue-500 transition-colors"
+          style={{ fontSize: 'var(--fs-sm)', paddingTop: '0.625rem', paddingBottom: '0.625rem' }}
           placeholder="輸入需求（例:西屯區 2房 預算1500萬）"
           value={input}
           onChange={(e) => setInput(e.target.value)}
