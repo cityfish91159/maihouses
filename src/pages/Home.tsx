@@ -12,8 +12,10 @@ const cmp = (a: string, b: string) => {
   const pa = a.split('.').map((n) => +n || 0)
   const pb = b.split('.').map((n) => +n || 0)
   for (let i = 0; i < 3; i++) {
-    if (pa[i] < pb[i]) return -1
-    if (pa[i] > pb[i]) return 1
+    const paVal = pa[i] ?? 0
+    const pbVal = pb[i] ?? 0
+    if (paVal < pbVal) return -1
+    if (paVal > pbVal) return 1
   }
   return 0
 }
@@ -69,7 +71,7 @@ export default function Home({ config }: { config: AppConfig & RuntimeOverrides 
         )}
         {features.propertyGrid !== false && (
           <section className="bg-white rounded-lg shadow-[0_2px_8px_rgba(0,0,0,0.08)] p-6 md:p-8 transition-all duration-200 hover:shadow-[0_4px_12px_rgba(0,0,0,0.12)]">
-            <PropertyGrid q={q} />
+            <PropertyGrid {...(q ? { q } : {})} />
           </section>
         )}
       </main>

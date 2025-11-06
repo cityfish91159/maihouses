@@ -144,14 +144,21 @@ export async function callOpenAI(
       })
     }
 
-    return {
-      content: data.choices[0].message.content,
-      usage: data.usage ? {
+    const messageContent = data.choices[0]?.message.content ?? ''
+    
+    const result: { content: string; usage?: { promptTokens: number; completionTokens: number; totalTokens: number } } = {
+      content: messageContent
+    }
+    
+    if (data.usage) {
+      result.usage = {
         promptTokens: data.usage.prompt_tokens,
         completionTokens: data.usage.completion_tokens,
         totalTokens: data.usage.total_tokens
-      } : undefined
+      }
     }
+    
+    return result
 
   } catch (error) {
     console.error('OpenAI API 呼叫失敗:', error)

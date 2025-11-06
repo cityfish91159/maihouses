@@ -97,9 +97,9 @@ export const aiAsk = async (
     // 轉換回前端格式
     const aiResult: AiAskRes = {
       answers: [result.content],
-      recommends: [], // 目前不推薦物件，未來可加
-      usage: result.usage
+      recommends: []
     }
+    if (result.usage) aiResult.usage = result.usage
 
     return { ok: true, data: aiResult }
 

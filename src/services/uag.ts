@@ -80,13 +80,14 @@ export function trackEvent(event: string, page: string, targetId?: string) {
   const ev: Uag = {
     event,
     page,
-    targetId,
     sessionId: getSessionId(),
     userId: null,
     ts: new Date().toISOString(),
     meta: { origin: 'gh-pages' },
     requestId: crypto.randomUUID()
   }
+  
+  if (targetId) ev.targetId = targetId
   
   G.queue.push(ev)
   if (G.queue.length > CAP) G.queue = G.queue.slice(-CAP)

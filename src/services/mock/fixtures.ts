@@ -24,14 +24,14 @@ export const reseed = (k: number) => {
 
 export const makeReview = (i: number): ReviewSnippet => ({
   id: `r${i}`,
-  authorMask: AU[i % AU.length],
-  content: TX[Math.floor(rnd() * TX.length)],
+  authorMask: AU[i % AU.length] ?? '',
+  content: TX[Math.floor(rnd() * TX.length)] ?? '',
   ts: new Date(Date.now() - i * 36e5).toISOString()
 })
 
 export function makeProperty(i: number): PropertyCard {
-  const cname = COMM[i % COMM.length]
-  const highlights = [HL[Math.floor(rnd() * HL.length)], HL[Math.floor(rnd() * HL.length)]]
+  const cname = COMM[i % COMM.length] ?? ''
+  const highlights = [HL[Math.floor(rnd() * HL.length)] ?? '', HL[Math.floor(rnd() * HL.length)] ?? ''].filter(Boolean)
   return {
     id: `p${i}`,
     title: `${cname} 景觀${(i % 3) + 2}房`,
@@ -47,11 +47,11 @@ export function makeProperty(i: number): PropertyCard {
 export function makeCommunity(i: number): CommunityPreview {
   return {
     id: `c${i}`,
-    name: COMM[i % COMM.length],
+    name: COMM[i % COMM.length] ?? '',
     cover: `https://picsum.photos/seed/comm-${i}/600/300`,
     score: 4.0 + Math.floor(rnd() * 10) / 10,
     reviewCount: 10 + Math.floor(rnd() * 90),
-    location: LOC[i % LOC.length]
+    location: LOC[i % LOC.length] ?? ''
   }
 }
 

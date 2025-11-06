@@ -45,9 +45,14 @@ export default function SmartAsk() {
         // 每收到一段文字就更新最後一則訊息
         setMessages(prev => {
           const updated = [...prev]
-          updated[updated.length - 1] = {
-            ...updated[updated.length - 1],
-            content: updated[updated.length - 1].content + chunk
+          const lastMsg = updated[updated.length - 1]
+          if (lastMsg) {
+            const newMsg: AiMessage = {
+              role: lastMsg.role || 'assistant',
+              content: lastMsg.content + chunk
+            }
+            if (lastMsg.timestamp) newMsg.timestamp = lastMsg.timestamp
+            updated[updated.length - 1] = newMsg
           }
           return updated
         })
