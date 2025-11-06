@@ -28,7 +28,7 @@ export default function HeroAssure() {
   return (
     <section
       ref={cardRef}
-      className="hero-assure-card"
+      className="hero-assure-card assure-card"
       aria-label="安心保證流程"
       style={{
         opacity: isVisible ? 1 : 0,

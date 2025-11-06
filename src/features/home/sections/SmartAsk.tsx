@@ -77,7 +77,7 @@ export default function SmartAsk() {
 
   return (
     <section 
-      className="rounded-[32px] shadow-lg p-6 md:p-8 space-y-6 transition-shadow hover:shadow-xl"
+      className="rounded-[32px] shadow-lg p-6 md:p-8 space-y-6 transition-shadow hover:shadow-xl ai-card"
       style={{ background: 'linear-gradient(135deg, #1749D7 0%, #1E90FF 100%)' }}
     >
       <div className="flex items-center gap-2 mb-2">

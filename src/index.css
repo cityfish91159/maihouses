@@ -559,3 +559,22 @@ button:hover{transform:translateY(-2px)} button:active{transform:translateY(0)}
 .highlight::before{content:"";position:absolute;top:0;left:-100%;width:100%;height:100%;
   background:linear-gradient(90deg,transparent,rgba(255,255,255,.3),transparent);animation:shimmer 3s infinite}
 @media (max-width:768px){.card{animation-delay:.1s} h1,h2,h3{animation-delay:.15s}}
+
+/* ====== MaiHouse AI Pack CSS (append-only) ====== */
+/* Bot Avatar (SVG inside .ai-avatar) */
+.bot-avatar{
+  --bot-ring:#dbe6ff;
+  --bot-shadow:0 2px 8px rgba(46,89,255,.12);
+  display:grid;place-items:center;border-radius:999px;
+  background:#fff;border:1px solid var(--bot-ring);box-shadow:var(--bot-shadow);
+  overflow:hidden;
+}
+.bot-avatar svg{width:70%;height:70%;display:block}
+.bot-24{width:24px;height:24px}
+.bot-32{width:32px;height:32px}
+.bot-40{width:40px;height:40px}
+.bot-48{width:48px;height:48px}
+.bot-64{width:64px;height:64px}
+@keyframes botBlink{0%,92%,100%{transform:scaleY(1)}95%{transform:scaleY(.1)}}
+.bot-eye{transform-origin:center;animation:botBlink 6s infinite}
+
