@@ -377,8 +377,8 @@
   font-size: 13px;
   font-weight: 800;
   padding: 20px 16px;
-  /* 新擬物凸起效果 */
-  box-shadow: 8px 8px 18px rgba(9, 15, 30, 0.14), -8px -8px 18px rgba(255, 255, 255, 0.9);
+  /* 新擬物凸起效果 - 加深陰影 */
+  box-shadow: 10px 10px 24px rgba(9, 15, 30, 0.25), -10px -10px 24px rgba(255, 255, 255, 0.9);
   background: #EEF2F7;
   border: none;
   color: #21304a;
@@ -396,7 +396,7 @@
 
 /* 按下時的凹陷效果 */
 .filter-pills .pill:active {
-  box-shadow: inset 6px 6px 12px rgba(9, 15, 30, 0.14), inset -6px -6px 12px rgba(255, 255, 255, 0.9);
+  box-shadow: inset 8px 8px 16px rgba(9, 15, 30, 0.2), inset -8px -8px 16px rgba(255, 255, 255, 0.9);
 }
 
 .filter-pills .pill:focus {
