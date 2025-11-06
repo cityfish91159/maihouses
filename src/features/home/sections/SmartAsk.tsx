@@ -83,7 +83,7 @@ export default function SmartAsk() {
   return (
     <section 
       className="ai-card rounded-[32px] shadow-lg p-6 md:p-8 space-y-6 transition-shadow hover:shadow-xl"
-      style={{ background: 'linear-gradient(135deg, #A8CDFF 0%, #C8E3FF 100%)' }}
+      style={{ background: 'linear-gradient(135deg, #D8E9FF 0%, #EAF4FF 100%)' }}
     >
       <div className="flex items-center gap-2 mb-2">
         <div className="w-2.5 h-2.5 rounded-full bg-[var(--brand)]" style={{ animation: 'pulse-subtle 2s ease-in-out infinite' }} />
@@ -99,7 +99,7 @@ export default function SmartAsk() {
         {QUICK.map((q, i) => (
           <button
             key={q}
-            className="px-3 py-[0.45rem] md:px-4 md:py-[0.6rem] rounded-[var(--r-pill)] bg-white border border-[var(--border-default)] text-[var(--text-secondary)] hover:border-[var(--brand)] hover:shadow-sm transition-all duration-200 text-sm font-medium cursor-pointer"
+            className="px-3 py-3 md:px-4 md:py-4 rounded-[var(--r-pill)] bg-white border border-[var(--border-default)] text-[var(--text-secondary)] hover:border-[var(--brand)] hover:shadow-sm transition-all duration-200 text-sm font-medium cursor-pointer"
             onClick={() => setInput(q)}
             aria-label={`快速輸入 ${q}`}
           >
