@@ -10,7 +10,11 @@
     "deploy": "npm run build && gh-pages -d docs",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "speedup:start": "bash scripts/speedup-control.sh start",
+    "speedup:stop": "bash scripts/speedup-control.sh stop",
+    "speedup:status": "bash scripts/speedup-control.sh status",
+    "speedup:log": "bash scripts/speedup-control.sh log"
   },
   "dependencies": {
     "react": "^18.3.1",

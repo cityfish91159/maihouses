@@ -154,6 +154,7 @@ section[class*="gradient-ask"] button[class*="rounded-"] {
   background: #fff;
   border: 1.5px solid var(--old-line);
   font-weight: 700;
+  padding: 0.75rem 0.75rem !important;
   transition: all 0.2s ease;
 }
 
@@ -231,7 +232,7 @@ section article span[class*="★"] {
   
   section[class*="gradient-ask"] button[class*="rounded-"] {
     font-size: var(--fs-xs);
-    padding: 0.25rem 0.5rem;
+    padding: 0.75rem 0.75rem !important;
   }
 }
 
@@ -300,6 +301,7 @@ section[class*="gradient-ask"] button[class*="rounded-"]{
   background:#fff;
   border:1.5px solid var(--old-line);
   font-weight:700;
+  padding: 0.75rem 0.75rem !important;
   transition:all .2s ease;
 }
 section[class*="gradient-ask"] button[class*="rounded-"]:hover{
@@ -357,7 +359,7 @@ section article span[class*="★"]{
   section.bg-white[class*="shadow"]{ padding:1rem; }
   section>h3{ font-size:var(--fs-lg); }
   section[class*="gradient-ask"] button[class*="rounded-"]{
-    font-size:var(--fs-xs); padding:.25rem .5rem;
+    font-size:var(--fs-xs); padding: 0.75rem 0.75rem !important;
   }
 }
 
