@@ -83,7 +83,7 @@ export default function SmartAsk() {
   return (
     <section 
       className="ai-card rounded-[32px] shadow-lg p-6 md:p-8 space-y-6 transition-shadow hover:shadow-xl"
-      style={{ background: 'linear-gradient(135deg, #1749D7 0%, #1E90FF 100%)' }}
+      style={{ background: 'linear-gradient(135deg, #4A7FE8 0%, #5FB8FF 100%)' }}
     >
       <div className="flex items-center gap-2 mb-2">
         <div className="w-2.5 h-2.5 rounded-full bg-[var(--brand)]" style={{ animation: 'pulse-subtle 2s ease-in-out infinite' }} />
@@ -99,7 +99,7 @@ export default function SmartAsk() {
         {QUICK.map((q, i) => (
           <button
             key={q}
-            className="px-2 py-1 md:px-3 md:py-1.5 rounded-[var(--r-pill)] bg-white border border-[var(--border-default)] font-medium transition-all hover:border-[var(--brand)] hover:text-[var(--brand)] hover:-translate-y-0.5 hover:shadow-sm active:translate-y-0 text-xs md:text-sm whitespace-nowrap"
+            className="px-2 py-[0.3rem] md:px-3 md:py-[0.45rem] rounded-[var(--r-pill)] bg-white border border-[var(--border-default)] font-medium transition-all hover:border-[var(--brand)] hover:text-[var(--brand)] hover:-translate-y-0.5 hover:shadow-sm active:translate-y-0 text-xs md:text-sm whitespace-nowrap"
             onClick={() => setInput(q)}
             aria-label={`快速輸入 ${q}`}
           >
