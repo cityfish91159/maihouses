@@ -376,7 +376,7 @@
   cursor: pointer;
   font-size: 13px;
   font-weight: 800;
-  padding: 12px 8px;
+  padding: 24px 16px;
   /* 新擬物凸起效果 */
   box-shadow: 8px 8px 18px rgba(9, 15, 30, 0.14), -8px -8px 18px rgba(255, 255, 255, 0.9);
   background: #EEF2F7;
