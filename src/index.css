@@ -170,7 +170,7 @@ section[class*="gradient-ask"] div[class*="bg-white"][class*="rounded"] {
 }
 
 /* 使用者訊息氣泡 */
-section[class*="gradient-ask"] div[class*="gradient-button"] {
+section[class*="gradient-ask"] div[class*="gradient-button"], .ai-card {
   background: var(--gradient-button);
   box-shadow: 0 2px 8px rgba(23, 73, 215, 0.2);
 }
@@ -541,7 +541,10 @@ section.ask-card .ask-btn:active{transform:translateY(1px)}
   background:linear-gradient(135deg,#eef4ff,#fff);border:1px solid #e6edf7;box-shadow:0 4px 10px rgba(23,73,215,.10)}
 .assure-card .step.done .ico{background:linear-gradient(135deg,#12b886,#6be7c6);color:#fff;border:none}
 .assure-card .step.active .ico{border-color:#1749d7;animation:assure-bounce .9s ease-in-out infinite}
-@keyframes assure-bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+@keyframes assure-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
 .assure-card .chip{font-size:11px;border:1px solid #e6edf7;border-radius:999px;padding:2px 8px;background:#f6fbff;color:#1749d7;font-weight:800}
 
 /* C. 動畫 */
@@ -549,7 +552,10 @@ section.ask-card .ask-btn:active{transform:translateY(1px)}
 @keyframes fadeInUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
 @keyframes popIn{0%{transform:scale(.8);opacity:0}100%{transform:scale(1);opacity:1}}
 @keyframes scaleIn{from{transform:scaleY(0);opacity:0}to{transform:scaleY(1);opacity:1}}
-@keyframes shimmer{0%,100%{opacity:1}50%{opacity:.7}}
+@keyframes shimmer {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
 header{animation:slideDown .5s cubic-bezier(.34,1.56,.64,1)}
 .card,.section{animation:fadeInUp .6s cubic-bezier(.4,0,.2,1) backwards;transition:all .3s cubic-bezier(.4,0,.2,1)}
 .card:hover{transform:translateY(-8px);box-shadow:0 12px 32px rgba(10,34,70,.15)}
@@ -575,6 +581,9 @@ button:hover{transform:translateY(-2px)} button:active{transform:translateY(0)}
 .bot-40{width:40px;height:40px}
 .bot-48{width:48px;height:48px}
 .bot-64{width:64px;height:64px}
-@keyframes botBlink{0%,92%,100%{transform:scaleY(1)}95%{transform:scaleY(.1)}}
+@keyframes botBlink {
+  0%, 92%, 100% { transform: scaleY(1); }
+  95% { transform: scaleY(0.1); }
+}
 .bot-eye{transform-origin:center;animation:botBlink 6s infinite}
 
