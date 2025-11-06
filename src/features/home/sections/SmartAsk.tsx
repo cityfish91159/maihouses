@@ -77,8 +77,8 @@ export default function SmartAsk() {
 
   return (
     <section 
-      className="rounded-[28px] shadow-[10px_10px_24px_rgba(9,15,30,.16),_-10px_-10px_24px_rgba(255,255,255,.9)] p-4 md:p-6 space-y-4 transition-shadow hover:shadow-[var(--shadow-hover)]"
-      style={{ background: 'var(--gradient-ask)' }}
+      className="rounded-[32px] shadow-lg p-6 md:p-8 space-y-6 transition-shadow hover:shadow-xl"
+      style={{ background: 'linear-gradient(135deg, #1749D7 0%, #1E90FF 100%)' }}
     >
       <div className="flex items-center gap-2 mb-2">
         <div className="w-2.5 h-2.5 rounded-full bg-[var(--brand)]" style={{ animation: 'pulse-subtle 2s ease-in-out infinite' }} />
@@ -158,7 +158,7 @@ export default function SmartAsk() {
 
       <div className="flex gap-2">
         <input
-          className="flex-1 border-2 border-[var(--border-default)] rounded-[var(--r-lg)] px-4 py-2.5 focus:outline-none focus:border-[var(--brand)] transition-colors"
+          className="flex-1 border-2 border-gray-300 rounded-full px-4 py-3 focus:outline-none focus:border-blue-500 transition-colors"
           style={{ fontSize: 'var(--fs-sm)' }}
           placeholder="輸入需求（例：西屯區 2房 預算1500萬）"
           value={input}
@@ -170,9 +170,9 @@ export default function SmartAsk() {
         <button
           onClick={send}
           disabled={loading || !input.trim()}
-          className="px-5 py-2.5 rounded-[var(--r-pill)] text-white font-medium shadow-md transition-all hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-          style={{ 
-            background: 'var(--gradient-button)',
+          className="px-6 py-3 rounded-full text-white font-medium shadow-md transition-all hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed"
+          style={{
+            background: 'linear-gradient(135deg, #1749D7 0%, #1E90FF 100%)',
             fontSize: 'var(--fs-sm)'
           }}
         >
