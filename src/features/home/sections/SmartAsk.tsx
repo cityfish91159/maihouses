@@ -99,7 +99,7 @@ export default function SmartAsk() {
         {QUICK.map((q, i) => (
           <button
             key={q}
-            className="rounded-[var(--r-pill)] bg-white border border-[var(--border-default)] text-[var(--text-secondary)] hover:border-[var(--brand)] hover:shadow-sm transition-all duration-200 text-sm font-medium cursor-pointer"
+            className="rounded-[var(--r-pill)] bg-white border border-[var(--border-default)] text-[var(--text-secondary)] hover:border-[var(--brand)] hover:shadow-sm transition-all duration-200 text-sm font-medium cursor-pointer px-4 py-2"
             onClick={() => setInput(q)}
             aria-label={`快速輸入 ${q}`}
           >
@@ -163,7 +163,7 @@ export default function SmartAsk() {
 
       <div className="flex gap-2">
         <input
-          className="flex-1 border-2 border-gray-300 rounded-full px-4 py-3 focus:outline-none focus:border-blue-500 transition-colors"
+          className="flex-1 border-2 border-gray-300 rounded-full px-3 py-2 focus:outline-none focus:border-blue-500 transition-colors"
           style={{ fontSize: 'var(--fs-sm)' }}
           placeholder="輸入需求（例：西屯區 2房 預算1500萬）"
           value={input}
@@ -175,7 +175,7 @@ export default function SmartAsk() {
         <button
           onClick={send}
           disabled={loading || !input.trim()}
-          className="px-6 py-3 rounded-full text-white font-medium shadow-md transition-all hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-5 py-2 rounded-full text-white font-medium shadow-md transition-all hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed"
           style={{
             background: 'linear-gradient(135deg, #1749D7 0%, #1E90FF 100%)',
             fontSize: 'var(--fs-sm)'
