@@ -421,6 +421,14 @@
   .marquee-container {
     padding: 10px 14px;
   }
+}
+
+/* 手機版 pill 按鈕縮小 30% */
+@media (max-width: 640px) {
+  .filter-pills .pill {
+    padding: 14px 11px;
+    font-size: 12px;
+  }
   
   .marquee-text {
     font-size: 14px;
