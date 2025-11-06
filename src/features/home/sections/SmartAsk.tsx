@@ -83,7 +83,7 @@ export default function SmartAsk() {
   return (
     <section 
       className="ai-card rounded-[32px] shadow-lg p-6 md:p-8 space-y-6 transition-shadow hover:shadow-xl"
-      style={{ background: 'linear-gradient(135deg, #6B9FF9 0%, #8AC9FF 100%)' }}
+      style={{ background: 'linear-gradient(135deg, #A8CDFF 0%, #C8E3FF 100%)' }}
     >
       <div className="flex items-center gap-2 mb-2">
         <div className="w-2.5 h-2.5 rounded-full bg-[var(--brand)]" style={{ animation: 'pulse-subtle 2s ease-in-out infinite' }} />
