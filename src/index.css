@@ -245,14 +245,19 @@ section[class*="hover:shadow"] {
   transition: box-shadow 0.3s ease, transform 0.2s ease;
 }
 
-/* === append: legacy theme supplements (safe, no markup change) === */
+/* ========================================
+   舊版樣式移植 - Append Only（基準 commit: 2da05fc）
+   不破壞現有 Tailwind 與組件樣式
+   ======================================== */
+/* 變數補強（若已定義，以下為後備值）*/
 :root{
-  /* 若專案已有同名變數，以下值僅作為後備值 */
   --shadow-neu-raised: var(--shadow-neu-raised, 0 8px 20px rgba(23,73,215,.12));
   --shadow-neu-inset-subtle: var(--shadow-neu-inset-subtle, inset 0 1px 0 rgba(230,237,247,.9), 0 2px 8px rgba(10,34,70,.06));
   --gradient-ask: var(--gradient-ask, linear-gradient(135deg,#eaf2ff,#dceaff));
   --gradient-button: var(--gradient-button, linear-gradient(135deg,#7a5cff,#2e59ff));
+  --gradient-badge: var(--gradient-badge, linear-gradient(135deg,#eef3ff,#dceaff));
   --neutral-100: var(--neutral-100, #ffffff);
+  --shadow-neu-badge: var(--shadow-neu-badge, 0 2px 8px rgba(10,34,70,.08));
   --r-md: var(--r-md, 12px);
   --fs-lg: var(--fs-lg, 1.125rem);
   --fs-xs: var(--fs-xs, .75rem);
@@ -265,7 +270,7 @@ section[class*="hover:shadow"] {
   --old-ink-mid: var(--old-ink-mid, #243355);
 }
 
-/* 卡片：避免 Tailwind 全域覆蓋，使用精確 selector（只在 bg-white+shadow+rounded 的 section 生效） */
+/* 3. 通用卡片容器（精確選擇器）*/
 section.bg-white[class*="shadow"][class*="rounded"]{
   background:#fff;
   border:1px solid var(--old-line);
@@ -275,7 +280,7 @@ section.bg-white[class*="shadow"][class*="rounded"]:hover{
   box-shadow:var(--shadow-neu-raised);
 }
 
-/* 標題列：僅限 section 直屬標題與其說明文字 */
+/* 4. 標題列（section 內的 h3 + 說明文字）*/
 section>h3{
   color:var(--old-brand);
   font-weight:900;
@@ -286,7 +291,7 @@ section>h3 + p{
   line-height:1.52;
 }
 
-/* SmartAsk（AI 卡）：背景漸層與快速輸入膠囊 */
+/* 5. AI 卡片特定樣式（SmartAsk）*/
 section[class*="gradient-ask"]{
   background:var(--gradient-ask);
   border:1px solid var(--old-line);
@@ -315,7 +320,7 @@ section[class*="gradient-ask"] div[class*="neutral-100"]{
   border:1px solid var(--old-line);
 }
 
-/* 房源卡片（PropertyGrid）：邊框與 hover 效果 */
+/* 6. 房源卡片網格（PropertyGrid）*/
 section article[class*="border-2"]{
   border-color:var(--old-line);
   transition:all .25s cubic-bezier(.4,0,.2,1);
@@ -335,16 +340,19 @@ section article div[class*="text-"][class*="brand"]{
   font-weight:900;
 }
 section article span[class*="gradient-badge"]{
-  background:var(--gradient-badge, linear-gradient(135deg,#eef3ff,#dceaff));
+  background:var(--gradient-badge);
   font-weight:700;
   font-size:10px;
-  box-shadow:var(--shadow-neu-badge, 0 2px 8px rgba(10,34,70,.08));
+  box-shadow:var(--shadow-neu-badge);
 }
 
-/* 評分星（CommunityTeaser 等） */
-section article span[class*="★"]{ color:var(--old-brand); font-weight:900; }
+/* 7. 社區牆卡片（CommunityTeaser）— 評分 */
+section article span[class*="★"]{
+  color:var(--old-brand);
+  font-weight:900;
+}
 
-/* RWD：手機微調 */
+/* 8. RWD 微調（手機優化）*/
 @media (max-width:640px){
   section.bg-white[class*="shadow"]{ padding:1rem; }
   section>h3{ font-size:var(--fs-lg); }
@@ -353,7 +361,13 @@ section article span[class*="★"]{ color:var(--old-brand); font-weight:900; }
   }
 }
 
+/* 9. 微動畫增強 */
 @keyframes fadeIn{
   from{ opacity:0; transform:translateY(6px); }
   to{ opacity:1; transform:translateY(0); }
+}
+
+/* 10. 懸停陰影增強（全域）*/
+section[class*="hover:shadow"]{
+  transition:box-shadow .3s ease, transform .2s ease;
 }
