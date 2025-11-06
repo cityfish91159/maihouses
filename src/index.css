@@ -244,3 +244,116 @@ section article[class*="border-2"] {
 section[class*="hover:shadow"] {
   transition: box-shadow 0.3s ease, transform 0.2s ease;
 }
+
+/* === append: legacy theme supplements (safe, no markup change) === */
+:root{
+  /* 若專案已有同名變數，以下值僅作為後備值 */
+  --shadow-neu-raised: var(--shadow-neu-raised, 0 8px 20px rgba(23,73,215,.12));
+  --shadow-neu-inset-subtle: var(--shadow-neu-inset-subtle, inset 0 1px 0 rgba(230,237,247,.9), 0 2px 8px rgba(10,34,70,.06));
+  --gradient-ask: var(--gradient-ask, linear-gradient(135deg,#eaf2ff,#dceaff));
+  --gradient-button: var(--gradient-button, linear-gradient(135deg,#7a5cff,#2e59ff));
+  --neutral-100: var(--neutral-100, #ffffff);
+  --r-md: var(--r-md, 12px);
+  --fs-lg: var(--fs-lg, 1.125rem);
+  --fs-xs: var(--fs-xs, .75rem);
+  --old-brand: var(--old-brand, #1749D7);
+  --old-accent: var(--old-accent, #4aa1ff);
+  --old-muted: var(--old-muted, #6c7b91);
+  --old-line: var(--old-line, #e6edf7);
+  --old-soft: var(--old-soft, #f7f9fe);
+  --old-ink-dark: var(--old-ink-dark, #0f1a39);
+  --old-ink-mid: var(--old-ink-mid, #243355);
+}
+
+/* 卡片：避免 Tailwind 全域覆蓋，使用精確 selector（只在 bg-white+shadow+rounded 的 section 生效） */
+section.bg-white[class*="shadow"][class*="rounded"]{
+  background:#fff;
+  border:1px solid var(--old-line);
+  transition:all .3s ease;
+}
+section.bg-white[class*="shadow"][class*="rounded"]:hover{
+  box-shadow:var(--shadow-neu-raised);
+}
+
+/* 標題列：僅限 section 直屬標題與其說明文字 */
+section>h3{
+  color:var(--old-brand);
+  font-weight:900;
+  letter-spacing:-.01em;
+}
+section>h3 + p{
+  color:var(--old-muted);
+  line-height:1.52;
+}
+
+/* SmartAsk（AI 卡）：背景漸層與快速輸入膠囊 */
+section[class*="gradient-ask"]{
+  background:var(--gradient-ask);
+  border:1px solid var(--old-line);
+}
+section[class*="gradient-ask"] button[class*="rounded-"]{
+  background:#fff;
+  border:1.5px solid var(--old-line);
+  font-weight:700;
+  transition:all .2s ease;
+}
+section[class*="gradient-ask"] button[class*="rounded-"]:hover{
+  border-color:var(--old-brand);
+  transform:translateY(-2px);
+  box-shadow:0 4px 12px rgba(23,73,215,.15);
+}
+section[class*="gradient-ask"] div[class*="bg-white"][class*="rounded"]{
+  border:1px solid var(--old-line);
+  box-shadow:var(--shadow-neu-inset-subtle);
+}
+section[class*="gradient-ask"] div[class*="gradient-button"]{
+  background:var(--gradient-button);
+  box-shadow:0 2px 8px rgba(23,73,215,.2);
+}
+section[class*="gradient-ask"] div[class*="neutral-100"]{
+  background:var(--neutral-100);
+  border:1px solid var(--old-line);
+}
+
+/* 房源卡片（PropertyGrid）：邊框與 hover 效果 */
+section article[class*="border-2"]{
+  border-color:var(--old-line);
+  transition:all .25s cubic-bezier(.4,0,.2,1);
+  animation:fadeIn .4s ease-out;
+}
+section article[class*="border-2"]:hover{
+  border-color:var(--old-brand);
+  box-shadow:0 8px 20px rgba(23,73,215,.12);
+  transform:translateY(-4px);
+}
+section article>div[class*="bg-cover"]{
+  border-radius:var(--r-md);
+  overflow:hidden;
+}
+section article div[class*="text-"][class*="brand"]{
+  color:var(--old-brand);
+  font-weight:900;
+}
+section article span[class*="gradient-badge"]{
+  background:var(--gradient-badge, linear-gradient(135deg,#eef3ff,#dceaff));
+  font-weight:700;
+  font-size:10px;
+  box-shadow:var(--shadow-neu-badge, 0 2px 8px rgba(10,34,70,.08));
+}
+
+/* 評分星（CommunityTeaser 等） */
+section article span[class*="★"]{ color:var(--old-brand); font-weight:900; }
+
+/* RWD：手機微調 */
+@media (max-width:640px){
+  section.bg-white[class*="shadow"]{ padding:1rem; }
+  section>h3{ font-size:var(--fs-lg); }
+  section[class*="gradient-ask"] button[class*="rounded-"]{
+    font-size:var(--fs-xs); padding:.25rem .5rem;
+  }
+}
+
+@keyframes fadeIn{
+  from{ opacity:0; transform:translateY(6px); }
+  to{ opacity:1; transform:translateY(0); }
+}
