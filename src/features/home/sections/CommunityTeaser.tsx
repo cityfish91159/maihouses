@@ -25,11 +25,11 @@ export default function CommunityTeaser() {
     <section className="bg-white rounded-[28px] shadow-[10px_10px_24px_rgba(9,15,30,.16),_-10px_-10px_24px_rgba(255,255,255,.9)] p-4 md:p-6 transition-shadow hover:shadow-[var(--shadow-hover)]">
       <h3
         className="font-bold text-[var(--text-primary)] mb-1"
-        style={{ fontSize: 'clamp(19px, 2.4vw, 22px)', fontWeight: 900, marginTop: '0.5rem' }}
+        style={{ fontSize: 'clamp(19px, 2.4vw, 22px)', fontWeight: 900, marginTop: 0 }}
       >
         社區牆
       </h3>
-      <p className="text-[var(--text-secondary)] mb-2" style={{ fontSize: 'var(--fs-sm)', marginTop: '-0.5rem' }}>
+      <p className="text-[var(--text-secondary)] mb-2" style={{ fontSize: 'var(--fs-sm)' }}>
         看看住戶怎麼說，快速了解生活圈與鄰居素質
       </p>
 
