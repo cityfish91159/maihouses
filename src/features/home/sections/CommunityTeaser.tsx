@@ -23,7 +23,10 @@ export default function CommunityTeaser() {
 
   return (
     <section className="bg-white rounded-[28px] shadow-[10px_10px_24px_rgba(9,15,30,.16),_-10px_-10px_24px_rgba(255,255,255,.9)] p-4 md:p-6 transition-shadow hover:shadow-[var(--shadow-hover)]">
-      <h3 className="font-bold text-[var(--text-primary)] mb-2" style={{ fontSize: 'var(--fs-xl)' }}>
+      <h3
+        className="font-bold text-[var(--text-primary)] mb-2"
+        style={{ fontSize: 'var(--fs-lg)', fontWeight: 900 }}
+      >
         社區牆
       </h3>
       <p className="text-[var(--text-secondary)] mb-5" style={{ fontSize: 'var(--fs-sm)' }}>
