@@ -29,7 +29,7 @@ export default function CommunityTeaser() {
       >
         社區牆
       </h3>
-      <p className="text-[var(--text-secondary)] mb-3" style={{ fontSize: 'var(--fs-sm)' }}>
+      <p className="text-[var(--text-secondary)] mb-2" style={{ fontSize: 'var(--fs-sm)' }}>
         看看住戶怎麼說，快速了解生活圈與鄰居素質
       </p>
 
