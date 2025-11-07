@@ -5,6 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="color-scheme" content="light only" />
     <meta name="theme-color" content="#ffffff" />
+    <script>
+      (function(){
+        try{
+          var isLocal = /^(localhost|127\.0\.0\.1|::1)$/.test(location.hostname);
+          if(isLocal) return; // 本地開發不導向
+          var base = location.pathname.indexOf('/maihouses/') === 0 ? '/maihouses/' : '/';
+          var target = base + 'real-estate_home_mvp.html';
+          // 嘗試 HEAD 確認存在，再導向
+          fetch(target, { method: 'HEAD' }).then(function(r){ if(r.ok) location.replace(target); });
+        }catch(e){ /* 忽略 */ }
+      })();
+    </script>
     
     <!-- DNS 預解析與預連線優化 -->
     <link rel="preconnect" href="https://api.openai.com" crossorigin />
