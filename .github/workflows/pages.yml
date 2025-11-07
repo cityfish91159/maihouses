@@ -25,16 +25,11 @@ jobs:
           npm ci
           npm run build
           
-      - name: Copy standalone pages to docs (preserve built index.html)
+      - name: Copy community wall to docs
         run: |
-          # DO NOT copy index.html - it's the built React SPA!
           cp -v community-wall_mvp.html docs/
-          cp -v real-estate_home_mvp.html docs/
-          # Don't copy 404.html - use the one built by Vite or remove if needed
-          echo "=== docs/ contents ==="
+          echo "=== docs/ final contents ==="
           ls -lah docs/
-          echo "=== Verify React SPA index.html ==="
-          head -20 docs/index.html
           
       - uses: actions/upload-pages-artifact@v3
         with:
