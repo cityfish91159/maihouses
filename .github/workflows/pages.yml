@@ -11,45 +11,30 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  prepare:
-    name: Prepare artifact
+  build-and-deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Prepare _site with explicit files
+      
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          
+      - name: Install and build
         run: |
-          set -eux
-          pwd
-          ls -la
-          rm -rf _site || true
-          mkdir -p _site
+          npm ci
+          npm run build
           
-          # Explicitly copy each required HTML
-          cp -v index.html _site/
-          cp -v real-estate_home_mvp.html _site/
-          cp -v community-wall_mvp.html _site/
-          cp -v 404.html _site/
+      - name: Copy standalone pages to docs
+        run: |
+          cp -v community-wall_mvp.html docs/
+          cp -v real-estate_home_mvp.html docs/
+          cp -v 404.html docs/ 2>/dev/null || true
+          echo "=== docs/ contents ==="
+          ls -lah docs/
           
-          # Copy static assets if present
-          cp -r public/* _site/ 2>/dev/null || true
-          
-          # Ensure Pages won't run Jekyll
-          touch _site/.nojekyll
-          
-          # Debug output
-          echo "=== _site/ contents ==="
-          ls -lah _site/
-
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: _site
-
-  deploy:
-    needs: prepare
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-    steps:
-      - id: deployment
-        uses: actions/deploy-pages@v4
+          path: docs
+          
+      - uses: actions/deploy-pages@v4
