@@ -85,34 +85,35 @@ export default function SmartAsk() {
       className="gradient-ask ai-card rounded-[32px] shadow-lg p-6 md:p-8 space-y-6 transition-shadow hover:shadow-xl"
       style={{ background: 'linear-gradient(135deg, #D8E9FF 0%, #EAF4FF 100%)' }}
     >
-      <div className="flex items-center gap-2 mb-2">
-        <div className="w-2.5 h-2.5 rounded-full bg-[var(--brand)]" style={{ animation: 'pulse-subtle 2s ease-in-out infinite' }} />
-        <h3 className="font-bold text-[var(--text-primary)]" style={{ fontSize: 'var(--fs-xl)' }}>
-          AI 找房助理
-        </h3>
-        <span className="text-xs text-[var(--text-tertiary)] ml-auto">
-          {import.meta.env.DEV && totalTokens > 0 ? `${totalTokens} tokens` : '多輪對話・智能推薦'}
-        </span>
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-2">
+        <div className="flex items-center gap-2 min-w-0">
+          <div className="w-2.5 h-2.5 rounded-full bg-[var(--brand)]" style={{ animation: 'pulse-subtle 2s ease-in-out infinite' }} />
+          <h3 className="font-bold text-[var(--text-primary)] truncate" style={{ fontSize: 'var(--fs-xl)' }}>
+            AI 找房助理
+          </h3>
+        </div>
+        <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap no-scrollbar">
+          {QUICK.map((q) => (
+            <button
+              key={q}
+              className="px-2.5 py-1.5 rounded-[var(--r-pill)] bg-white border border-[var(--border-default)] text-[var(--text-secondary)] hover:border-[var(--brand)] hover:shadow-sm transition-all duration-200 text-xs md:text-sm font-medium cursor-pointer"
+              onClick={() => setInput(q)}
+              aria-label={`快速輸入 ${q}`}
+            >
+              {q}
+            </button>
+          ))}
+        </div>
       </div>
-
-      <div className="flex flex-wrap gap-2 md:gap-2">
-        {QUICK.map((q, i) => (
-          <button
-            key={q}
-            className="rounded-[var(--r-pill)] bg-white border border-[var(--border-default)] text-[var(--text-secondary)] hover:border-[var(--brand)] hover:shadow-sm transition-all duration-200 text-sm font-medium cursor-pointer"
-            onClick={() => setInput(q)}
-            aria-label={`快速輸入 ${q}`}
-          >
-            {q}
-          </button>
-        ))}
+      <div className="text-xs text-[var(--text-tertiary)] mb-1">
+        {import.meta.env.DEV && totalTokens > 0 ? `${totalTokens} tokens` : '多輪對話・智能推薦'}
       </div>
 
       <div
         ref={chatRef}
         role="log"
         aria-live="polite"
-        className="bg-white rounded-[var(--r-lg)] p-4 min-h-[280px] md:min-h-[240px] max-h-[450px] md:max-h-[400px] overflow-y-auto space-y-3 border border-[var(--border-default)] shadow-inner"
+  className="bg-white rounded-[var(--r-lg)] p-4 min-h-[340px] md:min-h-[300px] max-h-[560px] md:max-h-[480px] overflow-y-auto space-y-3 border border-[var(--border-default)] shadow-inner"
       >
         {messages.length === 0 ? (
           <div className="flex items-center justify-center h-full text-[var(--text-tertiary)]" style={{ fontSize: 'var(--fs-sm)' }}>
