@@ -95,7 +95,7 @@ export default function SmartAsk() {
             AI 找房助理
           </h3>
         </div>
-  <div style={{ width: '7rem' }} aria-hidden="true" />
+  <div style={{ width: '3.5rem' }} aria-hidden="true" />
         <div className="flex items-center gap-1 flex-wrap md:flex-nowrap" style={{ minWidth: 'fit-content' }}>
           {QUICK.map((q) => (
             <button
