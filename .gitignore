@@ -9,5 +9,4 @@ node_modules
 
 # 編譯輸出 (包含環境變數,不應進 git)
 docs/
-!docs/community-wall_mvp.html
 dist/

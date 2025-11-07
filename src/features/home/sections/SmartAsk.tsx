@@ -134,16 +134,18 @@ export default function SmartAsk() {
           messages.map((m, i) => (
             <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'} animate-[fadeIn_0.3s_ease-out]`}>
               <div
-                className={`max-w-[85%] md:max-w-[75%] px-4 py-2.5 rounded-[var(--r-lg)] shadow-sm ${
+                className={`chat-bubble max-w-[85%] md:max-w-[75%] px-4 py-2.5 rounded-[var(--r-lg)] shadow-sm relative overflow-hidden ${
                   m.role === 'user'
-                    ? 'gradient-button text-white'
+                    ? 'chat-user-bubble text-white'
                     : 'bg-[var(--neutral-100)] text-[var(--text-primary)]'
                 }`}
-                style={{
-                  fontSize: 'var(--fs-sm)'
-                }}
+                style={{ fontSize: 'var(--fs-sm)' }}
               >
-                <div className="whitespace-pre-wrap leading-relaxed">{m.content}</div>
+                {/* 背景後備 */}
+                {m.role === 'user' && (
+                  <div aria-hidden className="absolute inset-0 pointer-events-none opacity-[0.00001] bg-[var(--gradient-button)]" />
+                )}
+                <div className="whitespace-pre-wrap leading-relaxed z-10 relative">{m.content || '（空訊息）'}</div>
                 {m.timestamp && (
                   <div className={`text-xs mt-1.5 ${m.role === 'user' ? 'text-white/70' : 'text-[var(--text-tertiary)]'}`}>
                     {new Date(m.timestamp).toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' })}
@@ -212,13 +214,12 @@ export default function SmartAsk() {
                 <div className="text-[var(--brand)] font-bold mb-2" style={{ fontSize: 'var(--fs-base)' }}>
                   NT$ {p.price} 萬
                 </div>
-                <a
-                  href={`#/community/${p.communityId}/wall`}
-                  className="inline-block px-3 py-1.5 rounded-[var(--r-pill)] bg-[var(--neutral-800)] text-white text-xs font-medium hover:bg-[var(--neutral-900)] transition-all hover:-translate-y-0.5"
-                  aria-label="前往社區牆"
+                <span
+                  className="inline-block px-3 py-1.5 rounded-[var(--r-pill)] bg-[var(--neutral-800)] text-white text-xs font-medium opacity-60"
+                  aria-label="社區牆功能已移除"
                 >
-                  看社區牆 →
-                </a>
+                  社區牆（已移除）
+                </span>
               </article>
             ))}
           </div>

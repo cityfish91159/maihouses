@@ -226,6 +226,22 @@ section article span[class*="★"] {
   color: #fff;
 }
 
+/* 聊天使用者泡泡強化：確保任何 purge 或變數異常時仍有顯示 */
+.chat-user-bubble {
+  background: var(--gradient-button, linear-gradient(135deg,#1749D7,#1550C0));
+  color: #fff;
+  position: relative;
+}
+.chat-user-bubble::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--gradient-button, linear-gradient(135deg,#1749D7,#1550C0));
+  opacity: 0.00001; /* 供某些瀏覽器先渲染顏色，避免 FOUC */
+  pointer-events: none;
+}
+.chat-bubble { isolation: isolate; }
+
 /* RWD 微調（手機優化）*/
 @media (max-width: 640px) {
   section.bg-white[class*="shadow"] {
