@@ -6,21 +6,11 @@
   <title>邁房子｜首頁（自動前往房地產首頁）</title>
   <script>
     (function(){
-      // 依照 hash 判斷要導向的靜態頁面；預設為房地產首頁
-      var rawHash = (location.hash || '').slice(1); // 去掉 '#'
-      // 標準化：去掉前導 '/' 與可能的 'maihouses/' 子路徑前綴
-      var norm = rawHash.replace(/^\/+/,'').replace(/^maihouses\//,'');
-      var target = './real-estate_home_mvp.html';
-
-      // 若 hash 指向社區牆，導向社區牆靜態頁
-      if (/community-wall_mvp\.html/i.test(norm)) {
-        target = './community-wall_mvp.html';
-      } else if (/real-estate_home_mvp\.html/i.test(norm)) {
-        target = './real-estate_home_mvp.html';
+      // 臨時補救：若使用者誤把檔案網址放進 HashRouter 的路由，改為直接開檔案
+      var h = location.hash;
+      if (h === '#/maihouses/community-wall_mvp.html' || h === '#/community-wall_mvp.html') {
+        location.replace('./community-wall_mvp.html');
       }
-
-      // 以 replace 不汙染返回歷史
-      location.replace(target);
     })();
   </script>
   <style>
