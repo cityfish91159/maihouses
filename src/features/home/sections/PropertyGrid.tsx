@@ -34,7 +34,7 @@ export default function PropertyGrid({ q }: { q?: string }) {
   return (
   <section className="bg-white rounded-[28px] shadow-[10px_10px_24px_rgba(9,15,30,.16),_-10px_-10px_24px_rgba(255,255,255,.9)] p-6 md:p-8 pt-8 md:pt-10 pb-6 md:pb-8 transition-shadow hover:shadow-[var(--shadow-hover)]">
       <h3
-        className="font-bold text-[var(--text-primary)] mb-1"
+        className="font-bold text-[var(--text-primary)] mb-4"
         style={{ fontSize: 'clamp(19px, 2.4vw, 22px)', fontWeight: 900, marginTop: 0 }}
       >
         精選房源
