@@ -23,12 +23,13 @@ jobs:
         run: |
           # 若有 dist 則發佈 dist，沒有就發佈 repo 根目錄（純靜態）
           if [ -d dist ]; then echo "dist" > publish_dir; else echo "." > publish_dir; fi
-      - name: Include standalone static HTMLs
-        if: ${{ hashFiles('dist') != '' }}
+      - name: Include standalone static HTMLs (when dist exists)
         run: |
-          # 若有打包輸出，將根目錄的獨立 HTML 一併放入 dist 以便直接存取
-          cp -f community-wall_mvp.html dist/ 2>/dev/null || true
-          cp -f real-estate_home_mvp.html dist/ 2>/dev/null || true
+          if [ -d dist ]; then
+            cp -f community-wall_mvp.html dist/ 2>/dev/null || true
+            cp -f real-estate_home_mvp.html dist/ 2>/dev/null || true
+            cp -f 404.html dist/ 2>/dev/null || true
+          fi
       - uses: actions/upload-pages-artifact@v3
         with:
           path: $(cat publish_dir)
