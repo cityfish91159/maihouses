@@ -65,12 +65,12 @@ export default function Home({ config }: { config: AppConfig & RuntimeOverrides 
           </section>
         )}
         {features.communityTeaser !== false && (
-          <section className="bg-white rounded-lg shadow-[0_2px_8px_rgba(0,0,0,0.08)] p-6 md:p-8 transition-all duration-200 hover:shadow-[0_4px_12px_rgba(0,0,0,0.12)]">
+          <section className="bg-white rounded-lg shadow-[0_2px_8px_rgba(0,0,0,0.08)] pt-3 pb-6 md:pt-4 md:pb-8 transition-all duration-200 hover:shadow-[0_4px_12px_rgba(0,0,0,0.12)]">
             <CommunityTeaser />
           </section>
         )}
         {features.propertyGrid !== false && (
-          <section className="bg-white rounded-lg shadow-[0_2px_8px_rgba(0,0,0,0.08)] p-6 md:p-8 transition-all duration-200 hover:shadow-[0_4px_12px_rgba(0,0,0,0.12)]">
+          <section className="bg-white rounded-lg shadow-[0_2px_8px_rgba(0,0,0,0.08)] pt-3 pb-6 md:pt-4 md:pb-8 transition-all duration-200 hover:shadow-[0_4px_12px_rgba(0,0,0,0.12)]">
             <PropertyGrid {...(q ? { q } : {})} />
           </section>
         )}
