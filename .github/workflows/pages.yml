@@ -1,5 +1,5 @@
 name: Deploy to GitHub Pages
-"on":
+on:
   push:
     branches: [ main ]
 permissions:
@@ -7,39 +7,15 @@ permissions:
   pages: write
   id-token: write
 concurrency:
-  group: "pages"
+  group: pages
   cancel-in-progress: true
 jobs:
-  build:
+  deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-      - run: npm ci || npm i
-      - run: npm run build || echo "no build step, publishing static root"
-      - name: Select artifact folder
-        run: |
-          # 優先使用 Vite outDir（docs），再退而求其次 dist，否則發佈根目錄
-          if [ -d docs ]; then echo "docs" > publish_dir;
-          elif [ -d dist ]; then echo "dist" > publish_dir;
-          else echo "." > publish_dir; fi
-      - name: Include standalone static HTMLs into publish_dir
-        run: |
-          PUBDIR="$(cat publish_dir)"
-          cp -f community-wall_mvp.html "$PUBDIR/" 2>/dev/null || true
-          cp -f real-estate_home_mvp.html "$PUBDIR/" 2>/dev/null || true
-          cp -f 404.html "$PUBDIR/" 2>/dev/null || true
+      # 直接發佈 repo 根目錄，避免壞掉的 docs 覆蓋
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: $(cat publish_dir)
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - id: deployment
-        uses: actions/deploy-pages@v4
+          path: .
+      - uses: actions/deploy-pages@v4
