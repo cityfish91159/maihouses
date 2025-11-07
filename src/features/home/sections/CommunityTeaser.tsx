@@ -17,8 +17,8 @@ export default function CommunityTeaser() {
   }, [])
 
   const goToWall = (id: string) => {
-    // 移除社區牆導向：僅記錄點擊，不導頁
-    trackEvent('community_wall_click_removed', '/', id)
+    trackEvent('community_wall_click', '/', id)
+    nav(`/community/${id}/wall`)
   }
 
   return (

@@ -214,12 +214,13 @@ export default function SmartAsk() {
                 <div className="text-[var(--brand)] font-bold mb-2" style={{ fontSize: 'var(--fs-base)' }}>
                   NT$ {p.price} 萬
                 </div>
-                <span
-                  className="inline-block px-3 py-1.5 rounded-[var(--r-pill)] bg-[var(--neutral-800)] text-white text-xs font-medium opacity-60"
-                  aria-label="社區牆功能已移除"
+                <a
+                  href={`#/community/${p.communityId}/wall`}
+                  className="inline-block px-3 py-1.5 rounded-[var(--r-pill)] bg-[var(--neutral-800)] text-white text-xs font-medium hover:bg-[var(--neutral-900)] transition-all hover:-translate-y-0.5"
+                  aria-label="前往社區牆"
                 >
-                  社區牆（已移除）
-                </span>
+                  看社區牆 →
+                </a>
               </article>
             ))}
           </div>

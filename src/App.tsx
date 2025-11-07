@@ -6,6 +6,7 @@ import { trackEvent } from './services/uag'
 import Home from './pages/Home'
 import Register from './pages/Auth/Register'
 import Login from './pages/Auth/Login'
+import Wall from './pages/Community/Wall'
 import Suggested from './pages/Community/Suggested'
 import Detail from './pages/Property/Detail'
 import AssureDetail from './pages/Assure/Detail'
@@ -53,6 +54,14 @@ export default function App() {
           element={
             <ErrorBoundary>
               <Login />
+            </ErrorBoundary>
+          }
+        />
+        <Route
+          path="/community/:id/wall"
+          element={
+            <ErrorBoundary>
+              <Wall />
             </ErrorBoundary>
           }
         />
