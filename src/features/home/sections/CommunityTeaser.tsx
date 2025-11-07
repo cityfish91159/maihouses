@@ -22,14 +22,14 @@ export default function CommunityTeaser() {
   }
 
   return (
-  <section className="bg-white rounded-[28px] shadow-[10px_10px_24px_rgba(9,15,30,.16),_-10px_-10px_24px_rgba(255,255,255,.9)] p-6 md:p-8 pt-8 md:pt-10 pb-6 md:pb-8 transition-shadow hover:shadow-[var(--shadow-hover)]">
+    <section className="bg-white rounded-[28px] shadow-[10px_10px_24px_rgba(9,15,30,.16),_-10px_-10px_24px_rgba(255,255,255,.9)] p-6 md:p-8 pt-5 md:pt-6 pb-6 md:pb-8 transition-shadow hover:shadow-[var(--shadow-hover)]">
       <h3
-        className="font-bold text-[var(--text-primary)] mb-4"
+        className="font-bold text-[var(--text-primary)] mb-2"
         style={{ fontSize: 'clamp(19px, 2.4vw, 22px)', fontWeight: 900, marginTop: 0 }}
       >
         社區牆
       </h3>
-      <p className="text-[var(--text-secondary)] mb-4" style={{ fontSize: 'var(--fs-sm)' }}>
+      <p className="text-[var(--text-secondary)] mb-3" style={{ fontSize: 'var(--fs-sm)' }}>
         看看住戶怎麼說，快速了解生活圈與鄰居素質
       </p>
 
