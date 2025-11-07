@@ -14,8 +14,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      # 直接發佈 repo 根目錄，避免壞掉的 docs 覆蓋
+      # 只包含必要的靜態檔案，排除 src/node_modules/等開發檔
+      - name: Prepare artifact directory
+        run: |
+          mkdir -p _site
+          cp -f *.html _site/ 2>/dev/null || true
+          cp -f *.css _site/ 2>/dev/null || true
+          cp -f *.js _site/ 2>/dev/null || true
+          cp -rf public/* _site/ 2>/dev/null || true
+          cp -f .nojekyll _site/ 2>/dev/null || true
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: .
+          path: _site
       - uses: actions/deploy-pages@v4
