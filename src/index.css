@@ -665,6 +665,12 @@ section .grid > article[class*="border-2"][class*="rounded-"] .price {
 /* —— Point fixes for legacy strong shadows if any remain —— */
 /* Add specific class overrides here if you spot old heavy shadows that leak through. */
 
+/* —— Section headers of major cards: color only, no size change —— */
+/* Targets: sections with white background + shadow (PropertyGrid, CommunityTeaser, etc.) */
+section.bg-white[class*="shadow"] > h3 {
+  color: var(--mh-title);
+}
+
 /* ====== MaiHouse AI Pack CSS (append-only) ====== */
 /* Bot Avatar (SVG inside .ai-avatar) */
 .bot-avatar{
