@@ -95,7 +95,7 @@ export default function SmartAsk() {
             AI 找房助理
           </h3>
         </div>
-  <div style={{ width: '3.5rem' }} aria-hidden="true" />
+        <div style={{ width: '3.5rem' }} aria-hidden="true" />
         <div className="flex items-center gap-1 flex-wrap md:flex-nowrap" style={{ minWidth: 'fit-content' }}>
           {QUICK.map((q) => (
             <button
@@ -136,12 +136,11 @@ export default function SmartAsk() {
               <div
                 className={`max-w-[85%] md:max-w-[75%] px-4 py-2.5 rounded-[var(--r-lg)] shadow-sm ${
                   m.role === 'user'
-                    ? 'text-white'
+                    ? 'gradient-button text-white'
                     : 'bg-[var(--neutral-100)] text-[var(--text-primary)]'
                 }`}
                 style={{
-                  fontSize: 'var(--fs-sm)',
-                  background: m.role === 'user' ? 'var(--gradient-button)' : undefined
+                  fontSize: 'var(--fs-sm)'
                 }}
               >
                 <div className="whitespace-pre-wrap leading-relaxed">{m.content}</div>
