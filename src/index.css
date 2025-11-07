@@ -220,6 +220,12 @@ section article span[class*="★"] {
   font-weight: 900;
 }
 
+/* =============== 修復使用者訊息泡泡背景 =============== */
+.gradient-button {
+  background: var(--gradient-button);
+  color: #fff;
+}
+
 /* RWD 微調（手機優化）*/
 @media (max-width: 640px) {
   section.bg-white[class*="shadow"] {
