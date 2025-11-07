@@ -255,7 +255,8 @@ section[class*="hover:shadow"] {
   --shadow-neu-raised: var(--shadow-neu-raised, 0 8px 20px rgba(23,73,215,.12));
   --shadow-neu-inset-subtle: var(--shadow-neu-inset-subtle, inset 0 1px 0 rgba(230,237,247,.9), 0 2px 8px rgba(10,34,70,.06));
   --gradient-ask: var(--gradient-ask, linear-gradient(135deg,#eaf2ff,#dceaff));
-  --gradient-button: var(--gradient-button, linear-gradient(135deg,#7a5cff,#2e59ff));
+  /* 避免自我引用導致無效值：僅提供 fallback，不覆蓋主變數 */
+  --gradient-button-fallback: linear-gradient(135deg,#7a5cff,#2e59ff);
   --gradient-badge: var(--gradient-badge, linear-gradient(135deg,#eef3ff,#dceaff));
   --neutral-100: var(--neutral-100, #ffffff);
   --shadow-neu-badge: var(--shadow-neu-badge, 0 2px 8px rgba(10,34,70,.08));
@@ -314,12 +315,17 @@ section[class*="gradient-ask"] div[class*="bg-white"][class*="rounded"]{
   box-shadow:var(--shadow-neu-inset-subtle);
 }
 section[class*="gradient-ask"] div[class*="gradient-button"]{
-  background:var(--gradient-button);
+  background:var(--gradient-button, var(--gradient-button-fallback));
   box-shadow:0 2px 8px rgba(23,73,215,.2);
 }
 section[class*="gradient-ask"] div[class*="neutral-100"]{
   background:var(--neutral-100);
   border:1px solid var(--old-line);
+}
+
+/* 額外防護：使用者氣泡確保一定有底色（避免白字白底）*/
+.user-bubble{
+  background: var(--gradient-button, var(--gradient-button-fallback, var(--neutral-800))) !important;
 }
 
 /* 6. 房源卡片網格（PropertyGrid）*/

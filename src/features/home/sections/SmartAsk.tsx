@@ -21,56 +21,89 @@ export default function SmartAsk() {
 
   const send = async () => {
     if (!input.trim() || loading) return
-    
+
     const userMsg: AiMessage = { role: 'user', content: input.trim(), timestamp: new Date().toISOString() }
     const newMessages = [...messages, userMsg]
     setMessages(newMessages)
     setInput('')
     setLoading(true)
-    
+
     trackEvent('ai_message_sent', '/')
-    
-    // 先建立一個空的 AI 訊息，用於串流更新
+
+    // 先建立一個空的 AI 訊息，用於串流更新（失敗時改為錯誤文字）
     const aiMsg: AiMessage = {
       role: 'assistant',
       content: '',
       timestamp: new Date().toISOString()
     }
+    // 立即加上一個空的 assistant，供串流填充
     setMessages([...newMessages, aiMsg])
-    
-    // 呼叫 API，支援串流回傳
-    const res = await aiAsk(
-      { messages: newMessages },
-      (chunk: string) => {
-        // 每收到一段文字就更新最後一則訊息
+
+    try {
+      // 呼叫 API，支援串流回傳
+      const res = await aiAsk(
+        { messages: newMessages },
+        (chunk: string) => {
+          // 串流逐段更新最後一則訊息
+          setMessages(prev => {
+            const updated = [...prev]
+            const lastMsg = updated[updated.length - 1]
+            if (lastMsg) {
+              const newMsg: AiMessage = {
+                role: lastMsg.role || 'assistant',
+                content: (lastMsg.content || '') + chunk
+              }
+              if (lastMsg.timestamp) newMsg.timestamp = lastMsg.timestamp
+              updated[updated.length - 1] = newMsg
+            }
+            return updated
+          })
+        }
+      )
+
+      if (res.ok && res.data) {
+        const r = res.data.recommends || []
+        setReco(r)
+        if (r[0]?.communityId) localStorage.setItem('recoCommunity', r[0].communityId)
+
+        // 累積 tokens 使用（開發模式）
+        if (res.data.usage?.totalTokens) {
+          setTotalTokens(prev => prev + res.data!.usage!.totalTokens)
+        }
+      } else {
+        // 若呼叫失敗，將最後一則（assistant）填入錯誤提示，避免空白氣泡
         setMessages(prev => {
           const updated = [...prev]
-          const lastMsg = updated[updated.length - 1]
-          if (lastMsg) {
-            const newMsg: AiMessage = {
-              role: lastMsg.role || 'assistant',
-              content: lastMsg.content + chunk
+          if (updated.length > 0) {
+            const last = updated[updated.length - 1]
+            updated[updated.length - 1] = {
+              ...last,
+              role: 'assistant',
+              content:
+                '抱歉，AI 服務目前暫時不可用，請稍後再試。您也可以先描述需求讓我為您推薦房源格局與區域喔。'
             }
-            if (lastMsg.timestamp) newMsg.timestamp = lastMsg.timestamp
-            updated[updated.length - 1] = newMsg
           }
           return updated
         })
       }
-    )
-    
-    if (res.ok && res.data) {
-      const r = res.data.recommends || []
-      setReco(r)
-      if (r[0]?.communityId) localStorage.setItem('recoCommunity', r[0].communityId)
-      
-      // 累積 tokens 使用（開發模式）
-      if (res.data.usage?.totalTokens) {
-        setTotalTokens(prev => prev + res.data!.usage!.totalTokens)
-      }
+    } catch (e) {
+      // 例外同樣填入錯誤訊息
+      setMessages(prev => {
+        const updated = [...prev]
+        if (updated.length > 0) {
+          const last = updated[updated.length - 1]
+          updated[updated.length - 1] = {
+            ...last,
+            role: 'assistant',
+            content:
+              '抱歉，AI 服務連線失敗（可能未設定金鑰）。請稍後再試，或通知我們協助處理。'
+          }
+        }
+        return updated
+      })
+    } finally {
+      setLoading(false)
     }
-    
-    setLoading(false)
   }
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -136,12 +169,16 @@ export default function SmartAsk() {
               <div
                 className={`max-w-[85%] md:max-w-[75%] px-4 py-2.5 rounded-[var(--r-lg)] shadow-sm ${
                   m.role === 'user'
-                    ? 'text-white'
+                    ? 'text-white bg-[var(--neutral-800)] user-bubble'
                     : 'bg-[var(--neutral-100)] text-[var(--text-primary)]'
                 }`}
                 style={{
                   fontSize: 'var(--fs-sm)',
-                  background: m.role === 'user' ? 'var(--gradient-button)' : undefined
+                  // 若變數不存在提供後備漸層，避免白字配白底看起來空白
+                  background:
+                    m.role === 'user'
+                      ? 'var(--gradient-button, linear-gradient(135deg, #1749D7 0%, #1E90FF 100%))'
+                      : undefined
                 }}
               >
                 <div className="whitespace-pre-wrap leading-relaxed">{m.content}</div>
