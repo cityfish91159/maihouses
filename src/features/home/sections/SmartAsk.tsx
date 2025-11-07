@@ -95,7 +95,7 @@ export default function SmartAsk() {
             AI 找房助理
           </h3>
         </div>
-        <div style={{ width: '3.5rem' }} aria-hidden="true" />
+  <div style={{ width: '3.5rem' }} aria-hidden="true" />
         <div className="flex items-center gap-1 flex-wrap md:flex-nowrap" style={{ minWidth: 'fit-content' }}>
           {QUICK.map((q) => (
             <button
@@ -134,18 +134,17 @@ export default function SmartAsk() {
           messages.map((m, i) => (
             <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'} animate-[fadeIn_0.3s_ease-out]`}>
               <div
-                className={`chat-bubble max-w-[85%] md:max-w-[75%] px-4 py-2.5 rounded-[var(--r-lg)] shadow-sm relative overflow-hidden ${
+                className={`max-w-[85%] md:max-w-[75%] px-4 py-2.5 rounded-[var(--r-lg)] shadow-sm ${
                   m.role === 'user'
-                    ? 'chat-user-bubble text-white'
+                    ? 'text-white'
                     : 'bg-[var(--neutral-100)] text-[var(--text-primary)]'
                 }`}
-                style={{ fontSize: 'var(--fs-sm)' }}
+                style={{
+                  fontSize: 'var(--fs-sm)',
+                  background: m.role === 'user' ? 'var(--gradient-button)' : undefined
+                }}
               >
-                {/* 背景後備 */}
-                {m.role === 'user' && (
-                  <div aria-hidden className="absolute inset-0 pointer-events-none opacity-[0.00001] bg-[var(--gradient-button)]" />
-                )}
-                <div className="whitespace-pre-wrap leading-relaxed z-10 relative">{m.content || '（空訊息）'}</div>
+                <div className="whitespace-pre-wrap leading-relaxed">{m.content}</div>
                 {m.timestamp && (
                   <div className={`text-xs mt-1.5 ${m.role === 'user' ? 'text-white/70' : 'text-[var(--text-tertiary)]'}`}>
                     {new Date(m.timestamp).toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' })}
