@@ -668,7 +668,21 @@ section .grid > article[class*="border-2"][class*="rounded-"] .price {
 /* —— Section headers of major cards: color only, no size change —— */
 /* Targets: sections with white background + shadow (PropertyGrid, CommunityTeaser, etc.) */
 section.bg-white[class*="shadow"] > h3 {
-  color: var(--mh-title);
+  /* Align major card section headers to Assure style: color + size */
+  color: var(--brand);
+  font-size: var(--fs-lg) !important;
+}
+
+/* Limit to home major cards that contain a grid (PropertyGrid/CommunityTeaser) */
+section.bg-white[class*="shadow"]:has(> .grid) > h3 {
+  color: var(--brand);
+  font-size: var(--fs-lg) !important;
+}
+
+/* AI 找房助理卡標題：只調色與字級，其他不動 */
+section.gradient-ask.ai-card h3 {
+  color: var(--brand);
+  font-size: var(--fs-lg) !important;
 }
 
 /* ====== MaiHouse AI Pack CSS (append-only) ====== */
