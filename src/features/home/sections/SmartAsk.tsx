@@ -85,7 +85,7 @@ export default function SmartAsk() {
       className="gradient-ask ai-card rounded-[32px] shadow-lg p-6 md:p-8 space-y-6 transition-shadow hover:shadow-xl"
       style={{ background: 'linear-gradient(135deg, #D8E9FF 0%, #EAF4FF 100%)' }}
     >
-      <div className="flex flex-wrap items-center gap-2 mb-1">
+      <div className="flex flex-wrap items-center gap-2 mb-2">
         <div className="flex items-center gap-2 min-w-0">
           <div className="w-2.5 h-2.5 rounded-full bg-[var(--brand)]" style={{ animation: 'pulse-subtle 2s ease-in-out infinite' }} />
           <h3
@@ -95,13 +95,12 @@ export default function SmartAsk() {
             AI 找房助理
           </h3>
         </div>
-      </div>
-      <div className="flex flex-wrap items-center gap-2 justify-between mb-2">
-        <div className="flex items-center gap-1 flex-wrap" style={{ marginLeft: '1.5rem' }}>
+  <div style={{ width: '7rem' }} aria-hidden="true" />
+        <div className="flex items-center gap-1 flex-wrap md:flex-nowrap" style={{ minWidth: 'fit-content' }}>
           {QUICK.map((q) => (
             <button
               key={q}
-              className="px-2 py-[0.35rem] rounded-[var(--r-pill)] bg-white border border-[var(--border-default)] text-[var(--text-secondary)] hover:border-[var(--brand)] hover:shadow-sm transition-all duration-200 text-xs font-medium cursor-pointer"
+              className="px-2 py-[0.35rem] rounded-[var(--r-pill)] bg-white border border-[var(--border-default)] text-[var(--text-secondary)] hover:border-[var(--brand)] hover:shadow-sm transition-all duration-200 text-xs font-medium cursor-pointer whitespace-nowrap"
               onClick={() => setInput(q)}
               aria-label={`快速輸入 ${q}`}
             >
@@ -109,7 +108,7 @@ export default function SmartAsk() {
             </button>
           ))}
         </div>
-        <div className="text-xs text-[var(--text-tertiary)] ml-auto text-right min-w-[120px]">
+        <div className="text-xs font-medium text-[var(--text-secondary)] ml-auto text-right min-w-[150px]">
           {import.meta.env.DEV && totalTokens > 0 ? `${totalTokens} tokens` : '多輪對話・智能推薦'}
         </div>
       </div>
