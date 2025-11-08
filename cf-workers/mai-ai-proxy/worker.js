@@ -10,14 +10,18 @@ export default {
 
     // CORS allowlist (adjust to your Pages origins)
     const ORIGIN = req.headers.get('Origin') || '';
+    // GitHub Pages 部署的 origin 不包含路徑，保留主域即可；加入本地開發與 127.0.0.1
     const ALLOW = new Set([
       'https://cityfish91159.github.io',
-      'https://cityfish91159.github.io/maihouses',
+      'http://localhost:5173',
+      'http://127.0.0.1:5173'
     ]);
+    const allowed = ALLOW.has(ORIGIN);
     const corsHeaders = {
-      'Access-Control-Allow-Origin': ALLOW.has(ORIGIN) ? ORIGIN : '',
+      'Access-Control-Allow-Origin': allowed ? ORIGIN : '',
       'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization, Accept',
+      'Access-Control-Max-Age': '86400'
     };
     if (req.method === 'OPTIONS') {
       return new Response(null, { headers: corsHeaders });
@@ -30,6 +34,21 @@ export default {
 
     // Proxy route
     if (url.pathname === '/api/chat' && req.method === 'POST') {
+      // 若不在允許清單，直接回 403（避免回傳空的 SSE 導致前端解析失敗）
+      if (!allowed) {
+        return new Response(JSON.stringify({ error: 'CORS_DENY', origin: ORIGIN }), {
+          status: 403,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      // 缺少金鑰的即時檢查（避免連上游 401 才失敗）
+      if (!env.OPENAI_API_KEY) {
+        return new Response(JSON.stringify({ error: 'MISSING_OPENAI_KEY' }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
       // Simple rate limit: 30 req/min per IP
       const ip = req.headers.get('CF-Connecting-IP') || '0.0.0.0';
       const bucket = `rl:${ip}:${new Date().getUTCFullYear()}${new Date().getUTCMonth()}${new Date().getUTCDate()}${new Date().getUTCHours()}${new Date().getUTCMinutes()}`;
@@ -64,7 +83,16 @@ export default {
         }),
       });
 
-      // Pass-thru SSE stream
+      // 若上游非 2xx，回傳 JSON 方便前端直接檢測，不進入 SSE 解析邏輯
+      if (!upstreamResp.ok) {
+        const errText = await upstreamResp.text();
+        return new Response(JSON.stringify({ error: 'UPSTREAM_ERROR', status: upstreamResp.status, body: errText.slice(0, 500) }), {
+          status: upstreamResp.status,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      // Pass-thru SSE stream（成功情況）
       return new Response(upstreamResp.body, {
         status: upstreamResp.status,
         headers: {

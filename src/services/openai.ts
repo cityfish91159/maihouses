@@ -138,6 +138,10 @@ export async function callOpenAI(
         }
       }
 
+      // 若整個串流期間沒有任何內容，視為失敗以便上層顯示明確錯誤
+      if (!fullContent.trim()) {
+        throw new Error('EMPTY_STREAM')
+      }
       return { content: fullContent }
     }
 
