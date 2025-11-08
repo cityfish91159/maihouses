@@ -16,6 +16,10 @@ export default function CommunityTeaser() {
 				.reviews-agg .cta{margin-top:8px;display:flex;align-items:center;gap:10px;background:linear-gradient(90deg,rgba(52,199,89,.25),rgba(52,199,89,.12));border:1px solid rgba(52,199,89,.40);padding:12px 14px;border-radius:14px;font-weight:900;color:#0e3d1c;text-decoration:none}
 				.reviews-agg .cta .text{font-size:17px;letter-spacing:.3px}
 				.reviews-agg .cta .pill{margin-left:auto;background:#0f6a23;color:#fff;border-radius:999px;font-size:14px;padding:8px 12px}
+				/* 桌機版置中：移除 margin-left:auto 改為水平置中；保留原本順序 */
+				@media(min-width:900px){.reviews-agg .cta{justify-content:center;text-align:center}.reviews-agg .cta .pill{margin-left:12px}}
+				/* 手機版縮小字體 2px */
+				@media(max-width:560px){.reviews-agg .cta .text{font-size:15px}.reviews-agg .cta .pill{font-size:12px;padding:7px 10px}}
 			`}</style>
 
 			<div className="header"><h3 className="title">社區評價（聚合）</h3></div>
