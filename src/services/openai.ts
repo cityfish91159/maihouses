@@ -43,12 +43,26 @@ export async function callOpenAI(
     ? 'https://api.openai.com/v1/chat/completions'
     : (envAny.VITE_AI_PROXY_URL || '/api/chat')
 
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    // 提示代理或上游服務以繁體中文處理
+    'Accept-Language': 'zh-Hant-TW'
+  }
   if (clientKey) headers['Authorization'] = `Bearer ${clientKey}`
+
+  // 在最前面插入 system prompt：統一繁體中文，不輸出簡體
+  const systemPrompt = {
+    role: 'system' as const,
+    content:
+      '你是房產諮詢助理。無論使用者輸入何種語言，回覆一律使用繁體中文（台灣用語、標點與字形，避免簡體字）。若需輸出地點、價錢或面積，請用在地常用格式。'
+  }
 
   const bodyPayload = {
     model: 'gpt-4o-mini',
-    messages: recent.map(m => ({ role: m.role, content: m.content })),
+    messages: [
+      systemPrompt,
+      ...recent.map(m => ({ role: m.role, content: m.content }))
+    ],
     stream: !!onChunk
   }
 
@@ -58,8 +72,14 @@ export async function callOpenAI(
     body: JSON.stringify(bodyPayload)
   })
 
-  // 串流模式（不做額外錯誤 guard）
-  if (onChunk && resp.body) {
+  // 若上游非 2xx，直接丟出錯誤讓呼叫端處理
+  if (!resp.ok) {
+    throw new Error(`Upstream error: ${resp.status}`)
+  }
+
+  // 串流模式：僅在 SSE 回應時啟用
+  const isEventStream = resp.headers.get('content-type')?.includes('text/event-stream')
+  if (onChunk && resp.body && isEventStream) {
     const reader = resp.body.getReader()
     const decoder = new TextDecoder()
     let acc = ''

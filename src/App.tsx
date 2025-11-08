@@ -10,6 +10,7 @@ import Wall from './pages/Community/Wall'
 import Suggested from './pages/Community/Suggested'
 import Detail from './pages/Property/Detail'
 import AssureDetail from './pages/Assure/Detail'
+import ChatStandalone from './pages/Chat/Standalone'
 import ErrorBoundary from './app/ErrorBoundary'
 
 export default function App() {
@@ -86,6 +87,14 @@ export default function App() {
           element={
             <ErrorBoundary>
               <AssureDetail />
+            </ErrorBoundary>
+          }
+        />
+        <Route
+          path="/chat"
+          element={
+            <ErrorBoundary>
+              <ChatStandalone />
             </ErrorBoundary>
           }
         />
