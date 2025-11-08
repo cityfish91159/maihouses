@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import Header from '../components/Header/Header'
 import HeroAssure from '../features/home/sections/HeroAssure'
 import SmartAsk from '../features/home/sections/SmartAsk'
+import CommunityTeaser from '../features/home/sections/CommunityTeaser'
 import PropertyGrid from '../features/home/sections/PropertyGrid'
 import { getMeta } from '../services/api'
 import { trackEvent } from '../services/uag'
@@ -63,7 +64,9 @@ export default function Home({ config }: { config: AppConfig & RuntimeOverrides 
             <SmartAsk />
           </section>
         )}
-        {/* 社區牆：改為 docs/index.html 靜態片段注入，避免重複與誤頁 */}
+        <section className="rounded-lg bg-white p-6 shadow-[0_2px_8px_rgba(0,0,0,0.08)] transition-all duration-200 hover:shadow-[0_4px_12px_rgba(0,0,0,0.12)] md:p-8">
+          <CommunityTeaser />
+        </section>
         {features.propertyGrid !== false && (
           <section className="rounded-lg bg-white p-6 shadow-[0_2px_8px_rgba(0,0,0,0.08)] transition-all duration-200 hover:shadow-[0_4px_12px_rgba(0,0,0,0.12)] md:p-8">
             <PropertyGrid {...(q ? { q } : {})} />
