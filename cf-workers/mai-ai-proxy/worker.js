@@ -1,14 +1,12 @@
 // cf-workers/mai-ai-proxy/worker.js
-// Cloudflare Workers proxy for OpenAI-compatible chat completions with SSE streaming
-// - CORS allowlist for your GitHub Pages domain
-// - Basic per-IP rate limiting via KV
-// - Keys live in Workers secrets (never in frontend)
+// Cloudflare Workers proxy for OpenAI-compatible chat completions (minimal)
+// 極簡回退：保留原始 CORS allowlist + 基礎 KV 流量桶 + 直接 SSE 轉發，不加額外 JSON 錯誤格式化或本地開發白名單。
 
 export default {
   async fetch(req, env) {
     const url = new URL(req.url);
 
-    // CORS allowlist (adjust to your Pages origins)
+  // CORS allowlist（維持最初設定，不自動擴增）
     const ORIGIN = req.headers.get('Origin') || '';
     const ALLOW = new Set([
       'https://cityfish91159.github.io',
@@ -23,14 +21,14 @@ export default {
       return new Response(null, { headers: corsHeaders });
     }
 
-    // Health check
+  // Health check（純 200 OK）
     if (url.pathname === '/' && req.method === 'GET') {
       return new Response('OK', { headers: corsHeaders });
     }
 
-    // Proxy route
+  // Proxy route（直接轉發，不加額外驗錯）
     if (url.pathname === '/api/chat' && req.method === 'POST') {
-      // Simple rate limit: 30 req/min per IP
+  // Simple rate limit: 30 req/min per IP（保持不變）
       const ip = req.headers.get('CF-Connecting-IP') || '0.0.0.0';
       const bucket = `rl:${ip}:${new Date().getUTCFullYear()}${new Date().getUTCMonth()}${new Date().getUTCDate()}${new Date().getUTCHours()}${new Date().getUTCMinutes()}`;
       const current = (await env.RATE.get(bucket)) || '0';
@@ -52,7 +50,7 @@ export default {
         'Content-Type': 'application/json',
       };
 
-      // Forward as streaming chat completions
+  // Forward as streaming chat completions（保持 upstream headers 與流）
       const upstreamResp = await fetch(`${upstream}/chat/completions`, {
         method: 'POST',
         headers,

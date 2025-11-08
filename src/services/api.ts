@@ -79,38 +79,14 @@ export const getReviews = (communityId: string, limit = 2, offset = 0) =>
 
 export const getCommunities = () => apiFetch<CommunityPreview[]>('/api/v1/communities/preview')
 
-export const aiAsk = async (
-  req: AiAskReq,
-  onChunk?: (chunk: string) => void
-): Promise<ApiResponse<AiAskRes>> => {
-  /**
-   * 說明：移除前端直接攜帶 OpenAI Key；現在透過 callOpenAI -> Cloudflare Worker proxy。
-   * 若 proxy 故障，回傳 AI_ERROR；可在 UI 顯示「AI 暫時離線」。
-   */
+export const aiAsk = async (req: AiAskReq, onChunk?: (chunk: string) => void): Promise<ApiResponse<AiAskRes>> => {
   try {
-    const messages = req.messages.map(msg => ({
-      role: msg.role as 'user' | 'assistant',
-      content: msg.content
-    }))
-
+    const messages = req.messages.map(m => ({ role: m.role as 'user' | 'assistant', content: m.content }))
     const result = await callOpenAI(messages, onChunk)
-
-    const aiResult: AiAskRes = {
-      answers: [result.content],
-      recommends: []
-    }
-    if (result.usage) aiResult.usage = result.usage
-
+    const aiResult: AiAskRes = { answers: [result.content], recommends: [] }
     return { ok: true, data: aiResult }
-
   } catch (error) {
-    console.error('AI Ask 失敗 (proxy):', error)
-    return {
-      ok: false,
-      error: {
-        code: 'AI_ERROR',
-        message: error instanceof Error ? error.message : 'AI 服務暫時無法使用'
-      }
-    }
+    console.error('AI Ask 失敗:', error)
+    return { ok: false, error: { code: 'AI_ERROR', message: error instanceof Error ? error.message : 'AI 暫時無法使用' } }
   }
 }
