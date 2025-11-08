@@ -51,7 +51,22 @@ export async function callOpenAI(
    * - 若環境變數不存在，退回相對路徑 /api/chat（可由反向代理或同網域 worker 處理）
    * - 不再直接呼叫官方 OpenAI API，避免將金鑰打進 bundle 被 Secret Scanning 攔截。
    */
-  const proxyUrl = (import.meta as any).env?.VITE_AI_PROXY_URL || '/api/chat'
+  let proxyUrl = (import.meta as any).env?.VITE_AI_PROXY_URL || '/api/chat'
+  try {
+    // 支援以 ?aiProxy= 完整 URL 或以 ?api= workers 基底自動拼接 /api/chat
+    const search = new URLSearchParams(location.search)
+    const hashIdx = location.hash.indexOf('?')
+    const hashParams = hashIdx > -1 ? new URLSearchParams(location.hash.slice(hashIdx)) : null
+    const pAiProxy = search.get('aiProxy') || hashParams?.get('aiProxy')
+    if (pAiProxy) {
+      proxyUrl = pAiProxy.trim()
+    } else if (!((import.meta as any).env?.VITE_AI_PROXY_URL)) {
+      const pApi = search.get('api') || hashParams?.get('api')
+      if (pApi && /workers\.dev/.test(pApi)) {
+        proxyUrl = pApi.replace(/\/$/, '') + '/api/chat'
+      }
+    }
+  } catch {/* 忽略解析錯誤，保留原 fallback */}
 
   // 限制對話歷史長度（只保留最近 8 輪，減少 tokens 消耗）
   const recentMessages = messages.slice(-8)
