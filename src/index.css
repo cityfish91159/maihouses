@@ -200,7 +200,7 @@ section article > div[class*="bg-cover"] {
   overflow: hidden;
 }
 
-@import './styles/tokens.css'; /* 引入社區評價聚合附加樣式（append-only，不破壞既有 Tailwind） */
+/* (移除 tokens.css 匯入以遵守不改動其他樣式規則) */
 
 /* 價格 */
 section article div[class*="text-"][class*="brand"] {
