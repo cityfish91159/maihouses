@@ -1,6 +1,7 @@
 /**
- * OpenAI API 串接服務
- * 用於 AI 找房助理的對話功能
+ * OpenAI / LLM 對話服務（前端）
+ * 重要：不再於前端打包任何 API Key，全部請透過後端 / proxy 轉發。
+ * 你已經有 Cloudflare Workers `mai-ai-proxy`，此檔案會優先使用 proxy。
  */
 
 export interface ChatMessage {
@@ -43,12 +44,14 @@ export async function callOpenAI(
   messages: Array<{ role: 'user' | 'assistant'; content: string }>,
   onChunk?: (chunk: string) => void
 ): Promise<{ content: string; usage?: { promptTokens: number; completionTokens: number; totalTokens: number } }> {
-  // 從環境變數讀取 API key
-  const apiKey = import.meta.env.VITE_OPENAI_API_KEY
-  
-  if (!apiKey) {
-    throw new Error('請在 .env.local 設定 VITE_OPENAI_API_KEY')
-  }
+  /**
+   * Proxy 設定：
+   * - 推薦設置 VITE_AI_PROXY_URL 指向你的 Cloudflare Worker，例如：
+   *   https://mai-ai-proxy.your-account.workers.dev/api/chat
+   * - 若環境變數不存在，退回相對路徑 /api/chat（可由反向代理或同網域 worker 處理）
+   * - 不再直接呼叫官方 OpenAI API，避免將金鑰打進 bundle 被 Secret Scanning 攔截。
+   */
+  const proxyUrl = (import.meta as any).env?.VITE_AI_PROXY_URL || '/api/chat'
 
   // 限制對話歷史長度（只保留最近 8 輪，減少 tokens 消耗）
   const recentMessages = messages.slice(-8)
@@ -70,18 +73,14 @@ export async function callOpenAI(
   ]
 
   try {
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    const response = await fetch(proxyUrl, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
         messages: fullMessages,
         temperature: 0.6,
-        max_tokens: maxTokens,  // 動態調整（120-220）
-        top_p: 1.0,
+        // 讓後端統一選模型與 stream，避免前端硬編
+        max_tokens: maxTokens,
         stream: !!onChunk
       })
     })
@@ -124,13 +123,16 @@ export async function callOpenAI(
     // 非串流模式（原本的邏輯）
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}))
-      throw new Error(`OpenAI API 錯誤: ${response.status} - ${JSON.stringify(errorData)}`)
+      throw new Error(`AI Proxy 錯誤: ${response.status} - ${JSON.stringify(errorData)}`)
     }
 
-    const data: OpenAIResponse = await response.json()
+    // 後端直接 pass-through OpenAI 回應；若不是原生格式則容錯
+    const data: OpenAIResponse | any = await response.json()
 
-    if (!data.choices || data.choices.length === 0) {
-      throw new Error('OpenAI API 回傳空結果')
+    if (!data || !data.choices) {
+      // proxy 可能只回 {content:"..."}
+      const content = data?.content || ''
+      return { content }
     }
 
     // 記錄 tokens 使用情況（開發環境）
@@ -161,7 +163,7 @@ export async function callOpenAI(
     return result
 
   } catch (error) {
-    console.error('OpenAI API 呼叫失敗:', error)
+    console.error('AI Proxy 呼叫失敗:', error)
     throw error
   }
 }

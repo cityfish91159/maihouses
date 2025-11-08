@@ -83,18 +83,18 @@ export const aiAsk = async (
   req: AiAskReq,
   onChunk?: (chunk: string) => void
 ): Promise<ApiResponse<AiAskRes>> => {
-  // AI 助理永遠使用真實 OpenAI API，不受 mock 設定影響
+  /**
+   * 說明：移除前端直接攜帶 OpenAI Key；現在透過 callOpenAI -> Cloudflare Worker proxy。
+   * 若 proxy 故障，回傳 AI_ERROR；可在 UI 顯示「AI 暫時離線」。
+   */
   try {
-    // 轉換格式：AiMessage (role: 'user'|'assistant') -> ChatMessage
     const messages = req.messages.map(msg => ({
       role: msg.role as 'user' | 'assistant',
       content: msg.content
     }))
 
-    // 呼叫 OpenAI（支援串流）
     const result = await callOpenAI(messages, onChunk)
 
-    // 轉換回前端格式
     const aiResult: AiAskRes = {
       answers: [result.content],
       recommends: []
@@ -104,7 +104,7 @@ export const aiAsk = async (
     return { ok: true, data: aiResult }
 
   } catch (error) {
-    console.error('AI Ask 失敗:', error)
+    console.error('AI Ask 失敗 (proxy):', error)
     return {
       ok: false,
       error: {
