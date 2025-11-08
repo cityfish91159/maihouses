@@ -2,8 +2,7 @@ export default function CommunityTeaser() {
 	return (
 		<section className="reviews-agg">
 			<style>{`
-				/* 聚合評價卡主容器 */
-				.reviews-agg{background:rgba(255,255,255,.96);backdrop-filter:blur(8px);border:1px solid #e8f0f8;border-radius:18px;padding:10px;box-sizing:border-box}
+				.reviews-agg{background:rgba(255,255,255,.96);backdrop-filter:blur(8px);border:1px solid #e8f0f8;border-radius:18px;padding:10px}
 				.reviews-agg .header{display:flex;justify-content:space-between;align-items:center;gap:6px;margin-bottom:6px}
 				.reviews-agg .title{font-size:18px;font-weight:800;margin:0;color:#0d2d8f;letter-spacing:.3px}
 				.reviews-agg .grid{display:grid;grid-template-columns:1fr;gap:8px}
@@ -14,13 +13,9 @@ export default function CommunityTeaser() {
 				.reviews-agg .tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:3px}
 				.reviews-agg .tag{font-size:12px;padding:3px 8px;border-radius:999px;background:rgba(52,199,89,.12);border:1px solid rgba(52,199,89,.40);color:#0f6a23;font-weight:700}
 				.reviews-agg p{margin:4px 0 0;font-size:14.5px;line-height:1.48;color:#1a3a62;font-weight:500}
-				/* 底部綠色 CTA：原始格式強化（寬度鋪滿、hover 效果、避免被外層樣式覆寫） */
-				.reviews-agg .cta{margin-top:8px;display:flex;align-items:center;gap:10px;background:linear-gradient(90deg,rgba(52,199,89,.25),rgba(52,199,89,.12));border:1px solid rgba(52,199,89,.40);padding:12px 14px;border-radius:14px;font-weight:900;color:#0e3d1c;text-decoration:none;width:100%;box-sizing:border-box;position:relative}
-				.reviews-agg .cta:hover{background:linear-gradient(90deg,rgba(52,199,89,.32),rgba(52,199,89,.18));border-color:rgba(52,199,89,.55)}
-				.reviews-agg .cta:active{transform:translateY(1px)}
-				.reviews-agg .cta .text{font-size:17px;letter-spacing:.3px;white-space:nowrap}
-				.reviews-agg .cta .pill{margin-left:auto;background:#0f6a23;color:#fff;border-radius:999px;font-size:14px;padding:8px 12px;white-space:nowrap;box-shadow:0 2px 6px rgba(15,106,35,.25)}
-				@media(max-width:420px){.reviews-agg .cta{flex-wrap:wrap;gap:6px}.reviews-agg .cta .pill{margin-left:0}}
+				.reviews-agg .cta{margin-top:8px;display:flex;align-items:center;gap:10px;background:linear-gradient(90deg,rgba(52,199,89,.25),rgba(52,199,89,.12));border:1px solid rgba(52,199,89,.40);padding:12px 14px;border-radius:14px;font-weight:900;color:#0e3d1c;text-decoration:none}
+				.reviews-agg .cta .text{font-size:17px;letter-spacing:.3px}
+				.reviews-agg .cta .pill{margin-left:auto;background:#0f6a23;color:#fff;border-radius:999px;font-size:14px;padding:8px 12px}
 			`}</style>
 
 			<div className="header"><h3 className="title">社區評價（聚合）</h3></div>
