@@ -1,0 +1,28 @@
+{
+  "root": true,
+  "env": {
+    "browser": true,
+    "es2022": true
+  },
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "ecmaVersion": 2022,
+    "sourceType": "module"
+  },
+  "plugins": [
+    "tailwindcss"
+  ],
+  "extends": [
+    "plugin:tailwindcss/recommended"
+  ],
+  "settings": {
+    "tailwindcss": {
+      "config": "tailwind.config.cjs"
+    }
+  },
+  "ignorePatterns": [
+    "**/*.d.ts",
+    "node_modules",
+    "dist"
+  ]
+}

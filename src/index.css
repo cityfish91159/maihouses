@@ -154,7 +154,7 @@ section[class*="gradient-ask"] button[class*="rounded-"] {
   background: #fff;
   border: 1.5px solid var(--old-line);
   font-weight: 700;
-  padding: 8px 16px !important;
+  padding: 8px 16px;
   transition: all 0.2s ease;
 }
 
@@ -232,7 +232,7 @@ section article span[class*="★"] {
   
   section[class*="gradient-ask"] button[class*="rounded-"] {
     font-size: var(--fs-xs);
-    padding: 6px 12px !important;
+    padding: 6px 12px;
   }
 }
 
@@ -302,7 +302,7 @@ section[class*="gradient-ask"] button[class*="rounded-"]{
   background:#fff;
   border:1.5px solid var(--old-line);
   font-weight:700;
-  padding: 8px 16px !important;
+  padding: 8px 16px;
   transition:all .2s ease;
 }
 section[class*="gradient-ask"] button[class*="rounded-"]:hover{
@@ -325,7 +325,7 @@ section[class*="gradient-ask"] div[class*="neutral-100"]{
 
 /* 額外防護：使用者氣泡確保一定有底色（避免白字白底）*/
 .user-bubble{
-  background: var(--gradient-button, var(--gradient-button-fallback, var(--neutral-800))) !important;
+  background: var(--gradient-button, var(--gradient-button-fallback, var(--neutral-800)));
 }
 
 /* 6. 房源卡片網格（PropertyGrid）*/
@@ -365,7 +365,7 @@ section article span[class*="★"]{
   section.bg-white[class*="shadow"]{ padding:1rem; }
   section>h3{ font-size:var(--fs-lg); }
   section[class*="gradient-ask"] button[class*="rounded-"]{
-    font-size:var(--fs-xs); padding: 6px 12px !important;
+    font-size:var(--fs-xs); padding: 6px 12px;
   }
 }
 
@@ -676,22 +676,22 @@ section .grid > article[class*="border-2"][class*="rounded-"] .price {
 section.bg-white[class*="shadow"] > h3 {
   /* Align major card section headers to Assure style: color + size + weight */
   color: var(--brand);
-  font-size: clamp(19px, 2.4vw, 22px) !important;
-  font-weight: 900 !important;
+  font-size: clamp(19px, 2.4vw, 22px);
+  font-weight: 900;
 }
 
 /* Limit to home major cards that contain a grid (PropertyGrid/CommunityTeaser) */
 section.bg-white[class*="shadow"]:has(> .grid) > h3 {
   color: var(--brand);
-  font-size: clamp(19px, 2.4vw, 22px) !important;
-  font-weight: 900 !important;
+  font-size: clamp(19px, 2.4vw, 22px);
+  font-weight: 900;
 }
 
 /* AI 找房助理卡標題：只調色與字級，其他不動 */
 section.gradient-ask.ai-card h3 {
   color: var(--brand);
-  font-size: clamp(19px, 2.4vw, 22px) !important;
-  font-weight: 900 !important;
+  font-size: clamp(19px, 2.4vw, 22px);
+  font-weight: 900;
 }
 
 /* ====== MaiHouse AI Pack CSS (append-only) ====== */

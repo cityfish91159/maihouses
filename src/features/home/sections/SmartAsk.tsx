@@ -115,25 +115,25 @@ export default function SmartAsk() {
 
   return (
     <section 
-      className="gradient-ask ai-card rounded-[32px] shadow-lg p-6 md:p-8 space-y-6 transition-shadow hover:shadow-xl"
+      className="gradient-ask ai-card space-y-6 rounded-[32px] p-6 shadow-lg transition-shadow hover:shadow-xl md:p-8"
       style={{ background: 'linear-gradient(135deg, #D8E9FF 0%, #EAF4FF 100%)' }}
     >
-      <div className="flex flex-wrap items-center gap-2 mb-2">
-        <div className="flex items-center gap-2 min-w-0">
-          <div className="w-2.5 h-2.5 rounded-full bg-[var(--brand)]" style={{ animation: 'pulse-subtle 2s ease-in-out infinite' }} />
+      <div className="mb-2 flex flex-wrap items-center gap-2">
+        <div className="flex min-w-0 items-center gap-2">
+          <div className="size-2.5 rounded-full bg-[var(--brand)]" style={{ animation: 'pulse-subtle 2s ease-in-out infinite' }} />
           <h3
-            className="font-bold text-[var(--text-primary)] truncate"
+            className="truncate font-bold text-[var(--text-primary)]"
             style={{ fontSize: 'clamp(19px, 2.4vw, 22px)', fontWeight: 900 }}
           >
             AI 找房助理
           </h3>
         </div>
   <div style={{ width: '3.5rem' }} aria-hidden="true" />
-        <div className="flex items-center gap-1 flex-wrap md:flex-nowrap" style={{ minWidth: 'fit-content' }}>
+        <div className="flex flex-wrap items-center gap-1 md:flex-nowrap" style={{ minWidth: 'fit-content' }}>
           {QUICK.map((q) => (
             <button
               key={q}
-              className="px-2 py-[0.35rem] rounded-[var(--r-pill)] bg-white border border-[var(--border-default)] text-[var(--text-secondary)] hover:border-[var(--brand)] hover:shadow-sm transition-all duration-200 text-xs font-medium cursor-pointer whitespace-nowrap"
+              className="cursor-pointer whitespace-nowrap rounded-[var(--r-pill)] border border-[var(--border-default)] bg-white px-2 py-[0.35rem] text-xs font-medium text-[var(--text-secondary)] transition-all duration-200 hover:border-[var(--brand)] hover:shadow-sm"
               onClick={() => setInput(q)}
               aria-label={`快速輸入 ${q}`}
             >
@@ -141,7 +141,7 @@ export default function SmartAsk() {
             </button>
           ))}
         </div>
-        <div className="text-xs font-medium text-[var(--text-secondary)] ml-auto text-right min-w-[150px]">
+        <div className="ml-auto min-w-[150px] text-right text-xs font-medium text-[var(--text-secondary)]">
           {import.meta.env.DEV && totalTokens > 0 ? `${totalTokens} tokens` : '多輪對話・智能推薦'}
         </div>
       </div>
@@ -150,14 +150,14 @@ export default function SmartAsk() {
         ref={chatRef}
         role="log"
         aria-live="polite"
-  className="bg-white rounded-[var(--r-lg)] p-4 min-h-[380px] md:min-h-[340px] max-h-[620px] md:max-h-[540px] overflow-y-auto space-y-3 border border-[var(--border-default)] shadow-inner"
+  className="max-h-[620px] min-h-[380px] space-y-3 overflow-y-auto rounded-[var(--r-lg)] border border-[var(--border-default)] bg-white p-4 shadow-inner md:max-h-[540px] md:min-h-[340px]"
       >
         {messages.length === 0 ? (
-          <div className="flex items-center justify-center h-full text-[var(--text-tertiary)]" style={{ fontSize: 'var(--fs-sm)' }}>
+          <div className="flex h-full items-center justify-center text-[var(--text-tertiary)]" style={{ fontSize: 'var(--fs-sm)' }}>
             <div className="text-center">
               <p className="mb-2 text-2xl">💬</p>
-              <p className="font-medium mb-2 text-[var(--text-primary)]">您好！我是邁房子 AI 助理</p>
-              <p className="text-xs leading-relaxed max-w-[280px] mx-auto">
+              <p className="mb-2 font-medium text-[var(--text-primary)]">您好！我是邁房子 AI 助理</p>
+              <p className="mx-auto max-w-[280px] text-xs leading-relaxed">
                 <span className="font-semibold text-[var(--brand)]">邁鄰居</span>：買房前先查社區口碑<br/>
                 <span className="font-semibold text-[var(--brand)]">邁房子</span>：安心陪跑全程留痕
               </p>
@@ -167,9 +167,9 @@ export default function SmartAsk() {
           messages.map((m, i) => (
             <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'} animate-[fadeIn_0.3s_ease-out]`}>
               <div
-                className={`max-w-[85%] md:max-w-[75%] px-4 py-2.5 rounded-[var(--r-lg)] shadow-sm ${
+                className={`max-w-[85%] rounded-[var(--r-lg)] px-4 py-2.5 shadow-sm md:max-w-[75%] ${
                   m.role === 'user'
-                    ? 'text-white bg-[var(--neutral-800)] user-bubble'
+                    ? 'user-bubble text-white'
                     : 'bg-[var(--neutral-100)] text-[var(--text-primary)]'
                 }`}
                 style={{
@@ -183,7 +183,7 @@ export default function SmartAsk() {
               >
                 <div className="whitespace-pre-wrap leading-relaxed">{m.content}</div>
                 {m.timestamp && (
-                  <div className={`text-xs mt-1.5 ${m.role === 'user' ? 'text-white/70' : 'text-[var(--text-tertiary)]'}`}>
+                  <div className={`mt-1.5 text-xs ${m.role === 'user' ? 'text-white/70' : 'text-[var(--text-tertiary)]'}`}>
                     {new Date(m.timestamp).toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' })}
                   </div>
                 )}
@@ -193,7 +193,7 @@ export default function SmartAsk() {
         )}
         {loading && (
           <div className="flex justify-start">
-            <div className="max-w-[80%] px-4 py-2.5 rounded-[var(--r-lg)] bg-[var(--neutral-100)] text-[var(--text-primary)]" style={{ fontSize: 'var(--fs-sm)' }}>
+            <div className="max-w-[80%] rounded-[var(--r-lg)] bg-[var(--neutral-100)] px-4 py-2.5 text-[var(--text-primary)]" style={{ fontSize: 'var(--fs-sm)' }}>
               <div className="flex items-center gap-1">
                 <span>正在思考</span>
                 <span className="animate-pulse">...</span>
@@ -205,7 +205,7 @@ export default function SmartAsk() {
 
       <div className="flex gap-2">
         <input
-          className="flex-1 border-2 border-gray-300 rounded-full px-5 focus:outline-none focus:border-blue-500 transition-colors"
+          className="flex-1 rounded-full border-2 border-gray-300 px-5 transition-colors focus:border-blue-500 focus:outline-none"
           style={{ fontSize: 'var(--fs-sm)', paddingTop: '0.625rem', paddingBottom: '0.625rem' }}
           placeholder="輸入需求（例:西屯區 2房 預算1500萬）"
           value={input}
@@ -217,7 +217,7 @@ export default function SmartAsk() {
         <button
           onClick={send}
           disabled={loading || !input.trim()}
-          className="px-5 py-2 rounded-full text-white font-medium shadow-md transition-all hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="rounded-full px-5 py-2 font-medium text-white shadow-md transition-all hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50"
           style={{
             background: 'linear-gradient(135deg, #1749D7 0%, #1E90FF 100%)',
             fontSize: 'var(--fs-sm)'
@@ -228,31 +228,31 @@ export default function SmartAsk() {
       </div>
 
       {!!reco.length && (
-        <div className="mt-4 pt-4 border-t border-[var(--border-default)]">
-          <div className="text-[var(--text-secondary)] mb-3 font-semibold" style={{ fontSize: 'var(--fs-base)' }}>
+        <div className="mt-4 border-t border-[var(--border-default)] pt-4">
+          <div className="mb-3 font-semibold text-[var(--text-secondary)]" style={{ fontSize: 'var(--fs-base)' }}>
             🎯 為您推薦
           </div>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {reco.map((p) => (
               <article
                 key={p.id}
-                className="border-2 border-[var(--border-default)] rounded-[var(--r-lg)] p-3 bg-white transition-all hover:border-[var(--brand)] hover:shadow-[var(--shadow-hover)] hover:-translate-y-1"
+                className="rounded-[var(--r-lg)] border-2 border-[var(--border-default)] bg-white p-3 transition-all hover:-translate-y-1 hover:border-[var(--brand)] hover:shadow-[var(--shadow-hover)]"
               >
                 <div
-                  className="h-28 mb-2 rounded-[var(--r-md)] bg-cover bg-center"
+                  className="mb-2 h-28 rounded-[var(--r-md)] bg-cover bg-center"
                   style={{ backgroundImage: `url(${p.cover})` }}
                   aria-hidden="true"
                 />
-                <div className="font-semibold text-[var(--text-primary)] mb-1" style={{ fontSize: 'var(--fs-sm)' }}>
+                <div className="mb-1 font-semibold text-[var(--text-primary)]" style={{ fontSize: 'var(--fs-sm)' }}>
                   {p.title}
                 </div>
-                <div className="text-xs text-[var(--text-secondary)] mb-2">{p.communityName}</div>
-                <div className="text-[var(--brand)] font-bold mb-2" style={{ fontSize: 'var(--fs-base)' }}>
+                <div className="mb-2 text-xs text-[var(--text-secondary)]">{p.communityName}</div>
+                <div className="mb-2 font-bold text-[var(--brand)]" style={{ fontSize: 'var(--fs-base)' }}>
                   NT$ {p.price} 萬
                 </div>
                 <a
                   href={`#/community/${p.communityId}/wall`}
-                  className="inline-block px-3 py-1.5 rounded-[var(--r-pill)] bg-[var(--neutral-800)] text-white text-xs font-medium hover:bg-[var(--neutral-900)] transition-all hover:-translate-y-0.5"
+                  className="inline-block rounded-[var(--r-pill)] bg-[var(--neutral-800)] px-3 py-1.5 text-xs font-medium text-white transition-all hover:-translate-y-0.5 hover:bg-[var(--neutral-900)]"
                   aria-label="前往社區牆"
                 >
                   看社區牆 →

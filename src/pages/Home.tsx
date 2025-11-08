@@ -51,26 +51,26 @@ export default function Home({ config }: { config: AppConfig & RuntimeOverrides 
     <>
       <Header />
       {banner && (
-        <div className="bg-[var(--warning)] text-white rounded-[var(--r-md)] p-3 text-[var(--fs-sm)] max-w-container mx-auto mt-4">{banner}</div>
+        <div className="mx-auto mt-4 max-w-container rounded-[var(--r-md)] bg-[var(--warning)] p-3 text-[var(--fs-sm)] text-white">{banner}</div>
       )}
-      <main className="max-w-container mx-auto p-4 md:p-6 space-y-6 md:space-y-8">
+      <main className="mx-auto max-w-container space-y-6 p-4 md:space-y-8 md:p-6">
         {features.heroAssure !== false && (
-          <section className="bg-white rounded-lg shadow-[0_2px_8px_rgba(0,0,0,0.08)] p-6 md:p-8 transition-all duration-200 hover:shadow-[0_4px_12px_rgba(0,0,0,0.12)]">
+          <section className="rounded-lg bg-white p-6 shadow-[0_2px_8px_rgba(0,0,0,0.08)] transition-all duration-200 hover:shadow-[0_4px_12px_rgba(0,0,0,0.12)] md:p-8">
             <HeroAssure />
           </section>
         )}
         {features.smartAsk !== false && (
-          <section className="bg-white rounded-lg shadow-[0_2px_8px_rgba(0,0,0,0.08)] p-6 md:p-8 transition-all duration-200 hover:shadow-[0_4px_12px_rgba(0,0,0,0.12)]">
+          <section className="rounded-lg bg-white p-6 shadow-[0_2px_8px_rgba(0,0,0,0.08)] transition-all duration-200 hover:shadow-[0_4px_12px_rgba(0,0,0,0.12)] md:p-8">
             <SmartAsk />
           </section>
         )}
         {features.communityTeaser !== false && (
-          <section className="bg-white rounded-lg shadow-[0_2px_8px_rgba(0,0,0,0.08)] p-6 md:p-8 transition-all duration-200 hover:shadow-[0_4px_12px_rgba(0,0,0,0.12)]">
+          <section className="rounded-lg bg-white p-6 shadow-[0_2px_8px_rgba(0,0,0,0.08)] transition-all duration-200 hover:shadow-[0_4px_12px_rgba(0,0,0,0.12)] md:p-8">
             <CommunityTeaser />
           </section>
         )}
         {features.propertyGrid !== false && (
-          <section className="bg-white rounded-lg shadow-[0_2px_8px_rgba(0,0,0,0.08)] p-6 md:p-8 transition-all duration-200 hover:shadow-[0_4px_12px_rgba(0,0,0,0.12)]">
+          <section className="rounded-lg bg-white p-6 shadow-[0_2px_8px_rgba(0,0,0,0.08)] transition-all duration-200 hover:shadow-[0_4px_12px_rgba(0,0,0,0.12)] md:p-8">
             <PropertyGrid {...(q ? { q } : {})} />
           </section>
         )}

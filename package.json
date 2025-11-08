@@ -14,7 +14,9 @@
     "speedup:start": "bash scripts/speedup-control.sh start",
     "speedup:stop": "bash scripts/speedup-control.sh stop",
     "speedup:status": "bash scripts/speedup-control.sh status",
-    "speedup:log": "bash scripts/speedup-control.sh log"
+    "speedup:log": "bash scripts/speedup-control.sh log",
+    "lint:ui": "bash ./check-ui.sh",
+    "dev:force": "vite --force"
   },
   "dependencies": {
     "react": "^18.3.1",
@@ -24,11 +26,14 @@
     "uuid": "^9.0.1"
   },
   "devDependencies": {
-    "@types/react": "^18.3.4",
+  "@types/react": "^18.3.4",
     "@types/react-dom": "^18.3.0",
     "@types/uuid": "^9.0.8",
     "@vitejs/plugin-react": "^4.3.2",
     "autoprefixer": "^10.4.20",
+  "@typescript-eslint/parser": "^8.13.0",
+  "eslint": "^9.12.0",
+  "eslint-plugin-tailwindcss": "^3.17.5",
     "gh-pages": "^6.1.1",
     "postcss": "^8.4.47",
     "stylelint": "^16.25.0",

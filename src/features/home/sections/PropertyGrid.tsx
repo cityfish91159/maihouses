@@ -32,19 +32,19 @@ export default function PropertyGrid({ q }: { q?: string }) {
   }
 
   return (
-    <section className="bg-white rounded-[28px] shadow-[10px_10px_24px_rgba(9,15,30,.16),_-10px_-10px_24px_rgba(255,255,255,.9)] p-6 md:p-8 pt-5 md:pt-6 pb-6 md:pb-8 transition-shadow hover:shadow-[var(--shadow-hover)]">
+    <section className="rounded-[28px] bg-white p-6 pt-5 shadow-[10px_10px_24px_rgba(9,15,30,.16),_-10px_-10px_24px_rgba(255,255,255,.9)] transition-shadow hover:shadow-[var(--shadow-hover)] md:p-8 md:pt-6">
       <h3
-        className="font-bold text-[var(--text-primary)] mb-2"
+        className="mb-2 font-bold text-[var(--text-primary)]"
         style={{ fontSize: 'clamp(19px, 2.4vw, 22px)', fontWeight: 900, marginTop: 0 }}
       >
         精選房源
       </h3>
 
       {items.length === 0 ? (
-        <div className="text-center text-[var(--text-secondary)] py-16" style={{ fontSize: 'var(--fs-base)' }}>
+        <div className="py-16 text-center text-[var(--text-secondary)]" style={{ fontSize: 'var(--fs-base)' }}>
           {q ? (
             <>
-              找不到含「<span className="text-[var(--brand)] font-semibold">{q}</span>」的物件
+              找不到含「<span className="font-semibold text-[var(--brand)]">{q}</span>」的物件
             </>
           ) : (
             '暫無物件，稍後再試'
@@ -55,28 +55,28 @@ export default function PropertyGrid({ q }: { q?: string }) {
           {items.map((p) => (
             <article
               key={p.id}
-              className="border-2 border-[var(--border-default)] rounded-[var(--r-lg)] p-3 bg-white transition-all hover:border-[var(--brand)] hover:shadow-[var(--shadow-hover)] hover:-translate-y-1"
+              className="rounded-[var(--r-lg)] border-2 border-[var(--border-default)] bg-white p-3 transition-all hover:-translate-y-1 hover:border-[var(--brand)] hover:shadow-[var(--shadow-hover)]"
               aria-labelledby={`t-${p.id}`}
             >
               <div
-                className="h-36 mb-3 rounded-[var(--r-md)] bg-cover bg-center"
+                className="mb-3 h-36 rounded-[var(--r-md)] bg-cover bg-center"
                 style={{ backgroundImage: `url(${p.cover})` }}
                 aria-hidden="true"
               />
-              <h4 id={`t-${p.id}`} className="font-bold text-[var(--text-primary)] mb-1" style={{ fontSize: 'var(--fs-base)' }}>
+              <h4 id={`t-${p.id}`} className="mb-1 font-bold text-[var(--text-primary)]" style={{ fontSize: 'var(--fs-base)' }}>
                 {p.title}
               </h4>
-              <div className="text-xs text-[var(--text-secondary)] mb-2">{p.communityName}</div>
-              <div className="text-[var(--brand)] font-bold mb-3" style={{ fontSize: 'var(--fs-lg)' }}>
+              <div className="mb-2 text-xs text-[var(--text-secondary)]">{p.communityName}</div>
+              <div className="mb-3 font-bold text-[var(--brand)]" style={{ fontSize: 'var(--fs-lg)' }}>
                 NT$ {p.price} 萬
               </div>
               
               {p.highlights && p.highlights.length > 0 && (
-                <div className="flex flex-wrap gap-1.5 mb-3">
+                <div className="mb-3 flex flex-wrap gap-1.5">
                   {p.highlights.map((h, i) => (
                     <span
                       key={i}
-                      className="px-2 py-1 rounded-[var(--r-pill)] font-medium transition-all hover:-translate-y-0.5"
+                      className="rounded-[var(--r-pill)] px-2 py-1 font-medium transition-all hover:-translate-y-0.5"
                       style={{ 
                         background: 'var(--gradient-badge)',
                         fontSize: '10px'
@@ -88,7 +88,7 @@ export default function PropertyGrid({ q }: { q?: string }) {
                 </div>
               )}
               
-              <ul className="text-xs text-[var(--text-secondary)] mb-3 space-y-1.5 bg-[var(--neutral-50)] rounded-[var(--r-md)] p-3">
+              <ul className="mb-3 space-y-1.5 rounded-[var(--r-md)] bg-[var(--neutral-50)] p-3 text-xs text-[var(--text-secondary)]">
                 {p.reviewsTop2.slice(0, 2).map((r) => (
                   <li key={r.id} className="truncate leading-relaxed">
                     💬 「{r.content}」 — {r.authorMask}
@@ -98,7 +98,7 @@ export default function PropertyGrid({ q }: { q?: string }) {
               
               <button
                 onClick={() => memberCTA(p.id)}
-                className="w-full px-3 py-2 rounded-[var(--r-pill)] text-white font-medium text-xs shadow-md transition-all hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0"
+                className="w-full rounded-[var(--r-pill)] px-3 py-2 text-xs font-medium text-white shadow-md transition-all hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0"
                 style={{ background: 'var(--gradient-button)' }}
                 aria-label="註冊看更多評價"
               >
@@ -109,9 +109,9 @@ export default function PropertyGrid({ q }: { q?: string }) {
         </div>
       )}
 
-      <div className="flex items-center justify-center gap-3 mt-8">
+      <div className="mt-8 flex items-center justify-center gap-3">
         <button
-          className="px-5 py-2 border-2 border-[var(--border-default)] rounded-[var(--r-lg)] font-medium transition-all hover:border-[var(--brand)] hover:text-[var(--brand)] hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+          className="rounded-[var(--r-lg)] border-2 border-[var(--border-default)] px-5 py-2 font-medium transition-all hover:-translate-y-0.5 hover:border-[var(--brand)] hover:text-[var(--brand)] active:translate-y-0 disabled:transform-none disabled:cursor-not-allowed disabled:opacity-50"
           style={{ fontSize: 'var(--fs-sm)' }}
           onClick={() => setPage((p) => Math.max(1, p - 1))}
           disabled={page <= 1}
@@ -119,11 +119,11 @@ export default function PropertyGrid({ q }: { q?: string }) {
         >
           ← 上一頁
         </button>
-        <span className="text-[var(--text-secondary)] font-medium" style={{ fontSize: 'var(--fs-sm)' }}>
+        <span className="font-medium text-[var(--text-secondary)]" style={{ fontSize: 'var(--fs-sm)' }}>
           第 {page} / {maxPage} 頁
         </span>
         <button
-          className="px-5 py-2 border-2 border-[var(--border-default)] rounded-[var(--r-lg)] font-medium transition-all hover:border-[var(--brand)] hover:text-[var(--brand)] hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+          className="rounded-[var(--r-lg)] border-2 border-[var(--border-default)] px-5 py-2 font-medium transition-all hover:-translate-y-0.5 hover:border-[var(--brand)] hover:text-[var(--brand)] active:translate-y-0 disabled:transform-none disabled:cursor-not-allowed disabled:opacity-50"
           style={{ fontSize: 'var(--fs-sm)' }}
           onClick={() => setPage((p) => Math.min(maxPage, p + 1))}
           disabled={page >= maxPage}

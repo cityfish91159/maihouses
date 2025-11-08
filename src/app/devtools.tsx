@@ -38,8 +38,8 @@ export default function DevTools({ config }: { config: AppConfig & RuntimeOverri
   }
 
   return (
-    <aside className="fixed bottom-4 right-4 z-[var(--z-overlay)] bg-white shadow-[var(--shadow-card)] rounded-[var(--r-lg)] p-4 w-[320px] text-sm">
-      <div className="font-medium mb-2">Developer HUD</div>
+    <aside className="fixed bottom-4 right-4 z-[var(--z-overlay)] w-[320px] rounded-[var(--r-lg)] bg-white p-4 text-sm shadow-[var(--shadow-card)]">
+      <div className="mb-2 font-medium">Developer HUD</div>
       <div className="space-y-1 text-[var(--text-secondary)]">
         <div>API：{config.apiBaseUrl}</div>
         <div>App：{config.appVersion}</div>
@@ -51,7 +51,7 @@ export default function DevTools({ config }: { config: AppConfig & RuntimeOverri
         <label className="flex items-center gap-2">
           Latency
           <input
-            className="border p-1 rounded w-20"
+            className="w-20 rounded border p-1"
             type="number"
             value={latency}
             onChange={(e) => setLatency(+e.target.value || 0)}
@@ -60,7 +60,7 @@ export default function DevTools({ config }: { config: AppConfig & RuntimeOverri
         <label className="flex items-center gap-2">
           Error
           <input
-            className="border p-1 rounded w-20"
+            className="w-20 rounded border p-1"
             step="0.1"
             type="number"
             value={error}
@@ -68,25 +68,25 @@ export default function DevTools({ config }: { config: AppConfig & RuntimeOverri
           />
         </label>
         <label className="flex items-center gap-2">
-          q <input className="border p-1 rounded flex-1" value={q} onChange={(e) => setQ(e.target.value)} />
+          q <input className="flex-1 rounded border p-1" value={q} onChange={(e) => setQ(e.target.value)} />
         </label>
         <label className="flex items-center gap-2">
           seed
-          <input className="border p-1 rounded flex-1" value={mockSeed} onChange={(e) => setMockSeed(e.target.value)} />
+          <input className="flex-1 rounded border p-1" value={mockSeed} onChange={(e) => setMockSeed(e.target.value)} />
         </label>
       </div>
       <div className="mt-3 flex justify-between">
         <button
-          className="px-3 py-1 rounded-[var(--r-pill)] bg-[var(--neutral-100)]"
+          className="rounded-[var(--r-pill)] bg-[var(--neutral-100)] px-3 py-1"
           onClick={() => setVisible(false)}
         >
           關閉
         </button>
         <div className="flex gap-2">
-          <button className="px-3 py-1 rounded-[var(--r-pill)] bg-[var(--neutral-300)]" onClick={reseed}>
+          <button className="rounded-[var(--r-pill)] bg-[var(--neutral-300)] px-3 py-1" onClick={reseed}>
             🎲 換數據
           </button>
-          <button className="px-3 py-1 rounded-[var(--r-pill)] bg-[var(--brand)] text-[var(--brand-fg)]" onClick={apply}>
+          <button className="rounded-[var(--r-pill)] bg-[var(--brand)] px-3 py-1 text-[var(--brand-fg)]" onClick={apply}>
             更新
           </button>
         </div>

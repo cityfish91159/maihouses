@@ -20,7 +20,7 @@ export default class ErrorBoundary extends Component<Props, State> {
   
   override render() {
     return this.state.hasError ? (
-      <div className="p-4 rounded-[var(--r-lg)] bg-white shadow-[var(--shadow-card)] text-[var(--danger)]">
+      <div className="rounded-[var(--r-lg)] bg-white p-4 text-[var(--danger)] shadow-[var(--shadow-card)]">
         區塊錯誤，請重試。
       </div>
     ) : (
