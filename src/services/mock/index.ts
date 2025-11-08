@@ -1,5 +1,5 @@
 import { getConfig } from '../../app/config'
-import { makePropertiesDeterministic, makeProperties, makeReview, makeCommunities } from './fixtures'
+import { makePropertiesDeterministic, makeProperties, makeReview, makeCommunities, COMMUNITY_REVIEWS } from './fixtures'
 import type { ApiResponse, Paginated, PropertyCard, AiAskRes, CommunityPreview } from '../../types'
 
 const idempotent = new Map<string, ApiResponse<AiAskRes>>()
@@ -52,10 +52,21 @@ export async function mockHandler<T = unknown>(endpoint: string, options: Reques
     return p ? { ok: true, data: p as any } : { ok: false, error: { code: 'NOT_FOUND', message: '物件不存在' } }
   }
 
-  if (/^\/api\/v1\/communities\/[^/?]+\/reviews\?/.test(endpoint)) {
+  if (/^\/api\/v1\/communities\/.+\/reviews\?/.test(endpoint)) {
+    // 解析 communityId
+    const m = endpoint.match(/^\/api\/v1\/communities\/([^/?]+)\/reviews\?/)!
+    const communityId = m?.[1] ?? ''
     const sp = new URLSearchParams(endpoint.split('?')[1] || '')
     const limit = +sp.get('limit')! || 2
     const offset = +sp.get('offset')! || 0
+
+    const fixed = COMMUNITY_REVIEWS[communityId]
+    if (fixed && fixed.length > 0) {
+      const sliced = fixed.slice(offset, offset + limit)
+      return { ok: true, data: sliced as any }
+    }
+
+    // fallback：舊隨機生成
     const reviews = Array.from({ length: limit }, (_, i) => makeReview(i + offset))
     return { ok: true, data: reviews as any }
   }
