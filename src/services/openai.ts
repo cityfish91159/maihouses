@@ -85,6 +85,12 @@ export async function callOpenAI(
       })
     })
 
+    // 先檢查回應狀態，避免在 404/500 時走到串流分支造成空白內容
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}))
+      throw new Error(`AI Proxy 錯誤: ${response.status} - ${JSON.stringify(errorData)}`)
+    }
+
     // 串流模式
     if (onChunk && response.body) {
       const reader = response.body.getReader()
