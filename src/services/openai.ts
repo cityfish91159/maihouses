@@ -52,21 +52,7 @@ export async function callOpenAI(
    * - 不再直接呼叫官方 OpenAI API，避免將金鑰打進 bundle 被 Secret Scanning 攔截。
    */
   let proxyUrl = (import.meta as any).env?.VITE_AI_PROXY_URL || '/api/chat'
-  try {
-    // 支援以 ?aiProxy= 完整 URL 或以 ?api= workers 基底自動拼接 /api/chat
-    const search = new URLSearchParams(location.search)
-    const hashIdx = location.hash.indexOf('?')
-    const hashParams = hashIdx > -1 ? new URLSearchParams(location.hash.slice(hashIdx)) : null
-    const pAiProxy = search.get('aiProxy') || hashParams?.get('aiProxy')
-    if (pAiProxy) {
-      proxyUrl = pAiProxy.trim()
-    } else if (!((import.meta as any).env?.VITE_AI_PROXY_URL)) {
-      const pApi = search.get('api') || hashParams?.get('api')
-      if (pApi && /workers\.dev/.test(pApi)) {
-        proxyUrl = pApi.replace(/\/$/, '') + '/api/chat'
-      }
-    }
-  } catch {/* 忽略解析錯誤，保留原 fallback */}
+  // 回退：移除動態 URL 參數覆蓋策略，僅使用環境變數或預設 /api/chat
 
   // 限制對話歷史長度（只保留最近 8 輪，減少 tokens 消耗）
   const recentMessages = messages.slice(-8)
@@ -138,10 +124,6 @@ export async function callOpenAI(
         }
       }
 
-      // 若整個串流期間沒有任何內容，視為失敗以便上層顯示明確錯誤
-      if (!fullContent.trim()) {
-        throw new Error('EMPTY_STREAM')
-      }
       return { content: fullContent }
     }
 
