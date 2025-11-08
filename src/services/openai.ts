@@ -34,16 +34,27 @@ export async function callOpenAI(
 ): Promise<{ content: string }> {
   // 僅保留最近少量訊息（避免無限增長）
   const recent = messages.slice(-6)
-  const proxyUrl = (import.meta as any).env?.VITE_AI_PROXY_URL || '/api/chat'
+
+  // 直接使用前端金鑰直連 OpenAI；若未提供金鑰則回退為既有相對路徑（避免破壞其他情境）
+  const envAny = (import.meta as any).env || {}
+  const clientKey: string | undefined = envAny.VITE_OPENAI_API_KEY
+
+  const upstreamUrl = clientKey
+    ? 'https://api.openai.com/v1/chat/completions'
+    : (envAny.VITE_AI_PROXY_URL || '/api/chat')
+
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+  if (clientKey) headers['Authorization'] = `Bearer ${clientKey}`
 
   const bodyPayload = {
+    model: 'gpt-4o-mini',
     messages: recent.map(m => ({ role: m.role, content: m.content })),
     stream: !!onChunk
   }
 
-  const resp = await fetch(proxyUrl, {
+  const resp = await fetch(upstreamUrl, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers,
     body: JSON.stringify(bodyPayload)
   })
 
