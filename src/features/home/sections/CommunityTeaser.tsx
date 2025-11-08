@@ -13,11 +13,13 @@ export default function CommunityTeaser() {
 				.reviews-agg .tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:3px}
 				.reviews-agg .tag{font-size:12px;padding:3px 8px;border-radius:999px;background:rgba(52,199,89,.12);border:1px solid rgba(52,199,89,.40);color:#0f6a23;font-weight:700}
 				.reviews-agg p{margin:4px 0 0;font-size:14.5px;line-height:1.48;color:#1a3a62;font-weight:500}
-				.reviews-agg .cta{margin-top:8px;display:flex;align-items:center;gap:10px;background:linear-gradient(90deg,rgba(52,199,89,.25),rgba(52,199,89,.12));border:1px solid rgba(52,199,89,.40);padding:12px 14px;border-radius:14px;font-weight:900;color:#0e3d1c;text-decoration:none}
+				.reviews-agg .cta{margin-top:8px;display:flex;align-items:center;gap:10px;background:linear-gradient(90deg,rgba(52,199,89,.25),rgba(52,199,89,.12));border:1px solid rgba(52,199,89,.40);padding:12px 14px;border-radius:14px;font-weight:900;color:#0e3d1c;text-decoration:none;position:relative}
 				.reviews-agg .cta .text{font-size:17px;letter-spacing:.3px}
 				.reviews-agg .cta .pill{margin-left:auto;background:#0f6a23;color:#fff;border-radius:999px;font-size:14px;padding:8px 12px}
+				/* 桌機：文字置中，膠囊固定最右側 */
+				@media(min-width:900px){.reviews-agg .cta{justify-content:center}.reviews-agg .cta .text{margin:0 auto}.reviews-agg .cta .pill{position:absolute;right:14px;top:50%;transform:translateY(-50%);margin-left:0}}
 				/* 桌機版置中：移除 margin-left:auto 改為水平置中；保留原本順序 */
-				@media(min-width:900px){.reviews-agg .cta{justify-content:center;text-align:center}.reviews-agg .cta .pill{margin-left:12px}}
+				@media(min-width:900px){.reviews-agg .cta{text-align:center}}
 				/* 手機版縮小字體 2px */
 				@media(max-width:560px){.reviews-agg .cta .text{font-size:15px}.reviews-agg .cta .pill{font-size:12px;padding:7px 10px}}
 			`}</style>
