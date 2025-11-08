@@ -32,17 +32,56 @@ export async function callOpenAI(
   messages: Array<{ role: 'user' | 'assistant'; content: string }>,
   onChunk?: (chunk: string) => void
 ): Promise<{ content: string }> {
-  // 緊急暫時修復：直接回傳測試回應，讓對話立刻可用
-  const mockResponse = '你好！我是邁房子 AI 助理。目前系統正在維護中，暫時以測試模式回應。請稍後再試完整功能。'
-  
-  if (onChunk) {
-    // 模擬串流回應
-    for (let i = 0; i < mockResponse.length; i += 3) {
-      const chunk = mockResponse.slice(i, i + 3)
-      onChunk(chunk)
-      await new Promise(resolve => setTimeout(resolve, 50))
-    }
+  // 僅保留最近少量訊息（避免無限增長）
+  const recent = messages.slice(-6)
+  const proxyUrl = (import.meta as any).env?.VITE_AI_PROXY_URL || '/api/chat'
+
+  const bodyPayload = {
+    messages: recent.map(m => ({ role: m.role, content: m.content })),
+    stream: !!onChunk
   }
-  
-  return { content: mockResponse }
+
+  const resp = await fetch(proxyUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(bodyPayload)
+  })
+
+  // 串流模式（不做額外錯誤 guard）
+  if (onChunk && resp.body) {
+    const reader = resp.body.getReader()
+    const decoder = new TextDecoder()
+    let acc = ''
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+      const chunk = decoder.decode(value)
+      for (const line of chunk.split('\n')) {
+        if (!line.startsWith('data: ')) continue
+        const data = line.slice(6).trim()
+        if (!data || data === '[DONE]') continue
+        try {
+          const parsed = JSON.parse(data)
+          const piece: string | undefined = parsed.choices?.[0]?.delta?.content
+          if (piece) {
+            acc += piece
+            onChunk(piece)
+          }
+        } catch (_) {
+          // 忽略解析錯誤
+        }
+      }
+    }
+    return { content: acc }
+  }
+
+  // 非串流：嘗試解析 JSON，失敗則回傳空字串
+  let text = ''
+  try {
+    const data: OpenAIResponse = await resp.json()
+    text = data?.choices?.[0]?.message?.content || ''
+  } catch (_) {
+    text = ''
+  }
+  return { content: text }
 }
