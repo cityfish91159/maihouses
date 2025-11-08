@@ -698,6 +698,20 @@ section.gradient-ask.ai-card h3 {
 
 /* ====== MaiHouse AI Pack CSS (append-only) ====== */
 /* Bot Avatar (SVG inside .ai-avatar) */
+.reviews-mini{margin-top:10px;padding:10px 12px;border:1px solid #E6EDF7;border-radius:10px;background:#F6F9FF}
+.reviews-mini__title{font-size:13px;font-weight:800;margin-bottom:8px;color:rgba(0,0,0,.86)}
+.reviews-mini__item{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-top:1px dashed rgba(0,0,0,.08)}
+.reviews-mini__item:first-of-type{border-top:none}
+.reviews-mini__avatar{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:800;background:#EAF0FF;color:#1749D7;flex:0 0 auto}
+.reviews-mini__content{flex:1 1 auto}
+.reviews-mini__head{display:flex;align-items:center;gap:6px;margin-bottom:2px;font-size:12px;color:rgba(0,0,0,.62)}
+.reviews-mini__name{font-weight:800;color:rgba(0,0,0,.85)}
+.reviews-mini__dot{width:4px;height:4px;border-radius:50%;background:rgba(0,0,0,.18);display:inline-block}
+.reviews-mini__tag{padding:1px 6px;border-radius:999px;background:rgba(23,73,215,.08);color:#1749D7;font-weight:800}
+.reviews-mini__text{font-size:13px;line-height:1.55;color:rgba(0,0,0,.85)}
+.reviews-mini__more{margin-top:10px;width:100%;padding:9px 12px;border-radius:10px;border:1px solid rgba(23,73,215,.25);background:#fff;cursor:pointer;font-size:13px;font-weight:900;color:#1749D7;transition:background .15s ease,transform .06s ease}
+.reviews-mini__more:hover{background:rgba(23,73,215,.06)}
+.reviews-mini__more:active{transform:translateY(1px)}
 .bot-avatar{
   --bot-ring:#dbe6ff;
   --bot-shadow:0 2px 8px rgba(46,89,255,.12);

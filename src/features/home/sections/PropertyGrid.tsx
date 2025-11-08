@@ -88,22 +88,36 @@ export default function PropertyGrid({ q }: { q?: string }) {
                 </div>
               )}
               
-              <ul className="mb-3 space-y-1.5 rounded-[var(--r-md)] bg-[var(--neutral-50)] p-3 text-xs text-[var(--text-secondary)]">
-                {p.reviewsTop2.slice(0, 2).map((r) => (
-                  <li key={r.id} className="truncate leading-relaxed">
-                    💬 「{r.content}」 — {r.authorMask}
-                  </li>
-                ))}
-              </ul>
-              
-              <button
-                onClick={() => memberCTA(p.id)}
-                className="w-full rounded-[var(--r-pill)] px-3 py-2 text-xs font-medium text-white shadow-md transition-all hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0"
-                style={{ background: 'var(--gradient-button)' }}
-                aria-label="註冊看更多評價"
-              >
-                註冊看更多評價 →
-              </button>
+              {/* 住戶真實留言（新卡樣式） */}
+              <div className="reviews-mini">
+                <div className="reviews-mini__title">住戶真實留言</div>
+                {p.reviewsTop2.slice(0, 2).map((r, idx) => {
+                  const avatar = (r.authorMask || '住').charAt(0).toUpperCase()
+                  // 嘗試以 highlights 當作標籤，沒有則略過
+                  const tag = (p.highlights && p.highlights[idx]) || ''
+                  return (
+                    <div className="reviews-mini__item" key={r.id}>
+                      <div className="reviews-mini__avatar" aria-hidden="true">{avatar}</div>
+                      <div className="reviews-mini__content">
+                        <div className="reviews-mini__head">
+                          <span className="reviews-mini__name">{r.authorMask}</span>
+                          <span className="reviews-mini__dot" />
+                          {tag ? <span className="reviews-mini__tag">{tag}</span> : null}
+                        </div>
+                        <div className="reviews-mini__text">{r.content}</div>
+                      </div>
+                    </div>
+                  )
+                })}
+                <button
+                  className="reviews-mini__more"
+                  type="button"
+                  onClick={() => memberCTA(p.id)}
+                  aria-label="註冊後看更多評價"
+                >
+                  註冊後看更多評價
+                </button>
+              </div>
             </article>
           ))}
         </div>
