@@ -75,6 +75,18 @@
     @media (min-width:1024px){
       .title{font-size:20px}
     }
+    /* 區塊主標題：與 public 版本同步 */
+    .section-heading{
+      font-size:clamp(19px,4.4vw,26px);
+      font-weight:900;
+      line-height:1.25;
+      letter-spacing:.5px;
+      margin:4px 2px 18px;
+      background:linear-gradient(90deg,#0F3EBE,#2E63EE);
+      background-clip:text;
+      -webkit-background-clip:text;
+      color:transparent;
+    }
     .meta{display:flex;flex-wrap:wrap;gap:8px;align-items:center;color:var(--ink-600);font-size:13px;margin-bottom:6px}
     .pill{
       padding:2px 10px;border-radius:999px;
@@ -130,6 +142,7 @@
 </head>
 <body>
   <div class="container">
+    <h2 class="section-heading">智能房源推薦</h2>
     <main id="listings">
       <section class="grid" aria-label="房源清單">
 
