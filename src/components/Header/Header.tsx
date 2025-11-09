@@ -1,8 +1,7 @@
 import { useState } from 'react'
-import { FaBars, FaTimes } from 'react-icons/fa'
+import { FaBars, FaHome, FaUser, FaTimes } from 'react-icons/fa'
 import { Link } from 'react-router-dom'
 import './Header.css'
-import './header_nav.css'
 
 export default function Header() {
   const [modalOpen, setModalOpen] = useState(false)
@@ -25,24 +24,8 @@ export default function Header() {
           <div className="auth">
             <FaBars className="menu-icon" onClick={() => setModalOpen(!modalOpen)} />
             {modalOpen && <FaTimes className="menu-icon" onClick={() => setModalOpen(false)} />}
-            {/* 右側三顆：使用者提供 snippet_nav.html 的膠囊化結構 */}
-            <nav className="mh-nav" aria-label="主要操作">
-              {/* 房地產表列：若採 HashRouter 可改 href="#/list" */}
-              <a href="/maihouses_list_noheader.html" className="mh-nav__btn mh-nav__btn--ghost" data-action="listings">
-                <span className="mh-nav__icon">🏠</span>
-                <span>房地產表列</span>
-              </a>
-              {/* 登入 */}
-              <Link to="/auth/login" className="mh-nav__btn mh-nav__btn--ghost" data-action="login">
-                <span className="mh-nav__icon">→</span>
-                <span>登入</span>
-              </Link>
-              {/* 註冊（主動作膠囊） */}
-              <Link to="/auth/register" className="mh-nav__btn mh-nav__btn--primary" data-action="signup">
-                <span className="mh-nav__icon">★</span>
-                <span>註冊</span>
-              </Link>
-            </nav>
+            <Link to="/auth/login" className="icon-button"><FaUser /></Link>
+            <Link to="/" className="icon-button"><FaHome /></Link>
           </div>
         </div>
       </header>
