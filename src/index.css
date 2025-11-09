@@ -387,6 +387,29 @@ section[class*="hover:shadow"]{
    來源：用戶提供的設計規格
    ======================================== */
 
+/* 智能房源推薦：標題（品牌藍，僅此區塊樣式） */
+.mh-reco-title{display:flex;align-items:center;gap:10px;margin:18px 0 12px}
+.mh-reco-title__pill{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:6px 12px;border:1px solid #E6EDF7;border-radius:999px;
+  background:linear-gradient(180deg,#FFFFFF,#F6F9FF);
+  color:#1749D7;font-weight:900;font-size:14px;letter-spacing:.2px;
+}
+.mh-reco-title__icon{
+  width:18px;height:18px;border-radius:6px;display:grid;place-items:center;
+  background:linear-gradient(180deg,#1749D7,#2E63EE);color:#fff;font-size:12px;font-weight:900;
+  box-shadow:0 2px 6px rgba(23,73,215,.18)
+}
+.mh-reco-title__text{line-height:1}
+.mh-reco-title__sub{margin-left:6px;font-size:12px;color:#6C7B91;font-weight:700}
+.mh-reco-title__underline{
+  height:6px;border-radius:999px;flex:1;
+  background:linear-gradient(90deg,#1749D7,#2E63EE,#7EA5FF);
+  background-size:200% 100%;opacity:.25;margin-left:10px;
+  animation:mhRecoBar 6s linear infinite;
+}
+@keyframes mhRecoBar{0%{background-position:0% 0}100%{background-position:200% 0}}
+
 /* A. Base & Home（重建頁面基礎與首頁元件）*/
 /* Reset & Base */
 html,body{margin:0;padding:0;background:#f6f9ff;color:#0a2246;
