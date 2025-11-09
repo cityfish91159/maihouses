@@ -123,10 +123,10 @@
     .reviews-mini__more:active{transform:translateY(1px)}
 
     /* 智能房源推薦：標題（本檔專用，與 SPA 共用視覺） */
-    .mh-reco-title{display:flex;align-items:center;gap:10px;margin:18px 0 12px}
+  .mh-reco-title{display:flex;align-items:center;gap:11px;margin:19px 0 13px}
     .mh-reco-title__pill{
       display:inline-flex;align-items:center;gap:8px;
-      padding:6px 12px;border:1px solid var(--line);border-radius:999px;
+  padding:7px 13px;border:1px solid var(--line);border-radius:999px;
       background:linear-gradient(180deg,#FFFFFF,var(--brand-50));
       color:var(--brand-600);font-weight:900;font-size:14px;letter-spacing:.2px;
     }
@@ -140,8 +140,14 @@
     .mh-reco-title__underline{
       height:6px;border-radius:999px;flex:1;
       background:linear-gradient(90deg,var(--brand-600),var(--brand-500),var(--brand-300));
-      background-size:200% 100%;opacity:.25;margin-left:10px;
+      background-size:200% 100%;opacity:.25;margin-left:11px;
       animation:mhRecoBar 6s linear infinite;
+    }
+    @keyframes mhRecoBar{0%{background-position:0% 0}100%{background-position:200% 0}}
+    @media (min-width:1024px){
+      .mh-reco-title{gap:14px;margin:22px 0 16px}
+      .mh-reco-title__pill{padding:10px 16px}
+      .mh-reco-title__underline{margin-left:14px}
     }
     @keyframes mhRecoBar{0%{background-position:0% 0}100%{background-position:200% 0}}
 
