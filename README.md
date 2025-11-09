@@ -81,3 +81,9 @@ bash scripts/check-ai.sh
 
 ---
 維運備忘：聊天請求目標 = 直連 OpenAI 或設定的代理域名；禁止最終指向 `/api/chat`（GitHub Pages 靜態環境無該端點）。
+
+## 🗓 更新日誌 / Changelog
+
+### 2025-11-09
+- UI：第 11 次回朔後調整，房源卡標題 `.title` 對齊社區評價主標題尺寸，統一為 `font-size:16px; font-weight:800;`，移除 clamp / 放大與暫時主區塊標題造成的視覺漂移。
+- 策略：先鎖定最小一致基準再考慮漸進放大，避免頻繁回退成本與樣式飄忽。
