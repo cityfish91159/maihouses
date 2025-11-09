@@ -71,7 +71,10 @@
 
   .house-body{padding:12px 12px 14px}
   /* 房源卡標題：對齊社區評價主標題尺寸（16px / 800） */
-  .title{font-weight:800;font-size:16px;line-height:1.35;margin:2px 0 8px;letter-spacing:.3px;color:var(--ink-900)}
+    .title{font-weight:800;font-size:16px;line-height:1.35;margin:2px 0 8px;letter-spacing:.3px;color:var(--ink-900)}
+    @media(min-width:1024px){
+      .title{font-size:21px}
+    }
     /* 智能房源推薦：標題（品牌藍，僅此區塊樣式） */
     .mh-reco-title{display:flex;align-items:center;gap:10px;margin:18px 0 12px}
     .mh-reco-title__pill{
