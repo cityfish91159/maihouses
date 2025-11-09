@@ -41,7 +41,7 @@ export default function Header() {
     --x:14px; --y:10px;
     display:inline-flex; align-items:center; gap:8px;
     padding:var(--y) var(--x);
-    min-height:44px;                  /* 44x44 點擊 */
+    min-height:44px;                  /* base desktop height */
     border-radius:var(--mh-radius);
     background:var(--mh-pill-bg);
     backdrop-filter:blur(var(--mh-blur)); -webkit-backdrop-filter:blur(var(--mh-blur));
@@ -58,7 +58,16 @@ export default function Header() {
   .mh-pill--primary:hover{ background:linear-gradient(180deg, rgba(23,73,215,.12), rgba(23,73,215,.04)); }
   .mh-icon{ width:18px; height:18px; opacity:.9; }
   .mh-icon path{ fill:currentColor; }
-  @media (max-width:768px){ .mh-pill{ font-size:13px; --x:12px } }
+  /* 手機版縮小30% (高度/字級/padding/icon) */
+  @media (max-width:640px){
+    .mh-pill{ font-size:10px; --x:10px; --y:7px; min-height:31px; gap:6px; }
+    .mh-icon{ width:14px; height:14px; }
+  }
+  /* 桌機版放大字級 +4px，增 padding 與 icon 尺寸 */
+  @media (min-width:1024px){
+    .mh-pill{ font-size:18px; --x:18px; --y:12px; min-height:48px; }
+    .mh-icon{ width:22px; height:22px; }
+  }
 </style>
                 `.trim()
               }}
