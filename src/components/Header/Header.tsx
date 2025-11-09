@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { FaBars, FaHome, FaUser, FaTimes } from 'react-icons/fa'
 import { Link } from 'react-router-dom'
 import './Header.css'
 
@@ -22,10 +21,78 @@ export default function Header() {
             <span className="brand-slogan">讓家，不只是地址</span>
           </div>
           <div className="auth">
-            <FaBars className="menu-icon" onClick={() => setModalOpen(!modalOpen)} />
-            {modalOpen && <FaTimes className="menu-icon" onClick={() => setModalOpen(false)} />}
-            <Link to="/auth/login" className="icon-button"><FaUser /></Link>
-            <Link to="/" className="icon-button"><FaHome /></Link>
+            {/* 使用者提供：右上三欄（房地產表列｜登入｜註冊）CSS，原樣貼入 */}
+            <span
+              dangerouslySetInnerHTML={{
+                __html: `
+<style>
+  :root{
+    --mh-brand:#1749D7;               /* 你的品牌藍 */
+    --mh-text:#0b1220;
+    --mh-hair:rgba(11,18,32,.08);
+    --mh-pill-bg:rgba(255,255,255,.72);
+    --mh-pill-hover:rgba(255,255,255,.9);
+    --mh-blur:12px;
+    --mh-radius:14px;
+    --mh-t:150ms ease;                /* 微互動 150ms */
+  }
+  .mh-nav-right{ display:flex; gap:10px; align-items:center; }
+  .mh-pill{
+    --x:14px; --y:10px;
+    display:inline-flex; align-items:center; gap:8px;
+    padding:var(--y) var(--x);
+    min-height:44px;                  /* 44x44 點擊 */
+    border-radius:var(--mh-radius);
+    background:var(--mh-pill-bg);
+    backdrop-filter:blur(var(--mh-blur)); -webkit-backdrop-filter:blur(var(--mh-blur));
+    border:1px solid var(--mh-hair);
+    color:var(--mh-text); text-decoration:none;
+    font-size:14px; font-weight:600; line-height:1;
+    transition:transform var(--mh-t), background var(--mh-t), box-shadow var(--mh-t), border-color var(--mh-t);
+    box-shadow:0 0 0 0 rgba(23,73,215,0);
+  }
+  .mh-pill:hover{ background:var(--mh-pill-hover); transform:translateY(-1px); box-shadow:0 6px 16px rgba(23,73,215,.10); border-color:rgba(23,73,215,.18); }
+  .mh-pill:active{ transform:translateY(0); box-shadow:0 2px 8px rgba(23,73,215,.12); }
+  .mh-pill:focus-visible{ outline:none; box-shadow:0 0 0 3px rgba(23,73,215,.20); border-color:rgba(23,73,215,.32); }
+  .mh-pill--primary{ background:linear-gradient(180deg, rgba(23,73,215,.08), rgba(23,73,215,.02)); border-color:rgba(23,73,215,.22); }
+  .mh-pill--primary:hover{ background:linear-gradient(180deg, rgba(23,73,215,.12), rgba(23,73,215,.04)); }
+  .mh-icon{ width:18px; height:18px; opacity:.9; }
+  .mh-icon path{ fill:currentColor; }
+  @media (max-width:768px){ .mh-pill{ font-size:13px; --x:12px } }
+</style>
+                `.trim()
+              }}
+            />
+
+            {/* 使用者提供：右上三欄（房地產表列｜登入｜註冊）HTML，原樣貼入（HashRouter 版本 href） */}
+            <span
+              dangerouslySetInnerHTML={{
+                __html: `
+<!-- 右上三欄（房地產表列｜登入｜註冊） START -->
+<nav class="mh-nav-right" aria-label="主要動作">
+  <a class="mh-pill" href="#/list">
+    <svg class="mh-icon" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M3 4h18v2H3V4zm0 7h18v2H3v-2zm0 7h18v2H3v-2z"/>
+    </svg>
+    <span>房地產表列</span>
+  </a>
+  <a class="mh-pill" href="#/login">
+    <svg class="mh-icon" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M10 17l5-5-5-5v3H3v4h7v3zm9-12h-8v2h8v10h-8v2h8a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2z"/>
+    </svg>
+    <span>登入</span>
+  </a>
+  <a class="mh-pill mh-pill--primary" href="#/signup">
+    <svg class="mh-icon" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5zm-9 9a9 9 0 0 1 18 0z"/>
+    </svg>
+    <span>註冊</span>
+  </a>
+</nav>
+<!-- 右上三欄（房地產表列｜登入｜註冊） END -->
+                `.trim()
+              }}
+            />
           </div>
         </div>
       </header>
