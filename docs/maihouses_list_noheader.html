@@ -122,43 +122,11 @@
     .reviews-mini__more:hover{background:linear-gradient(180deg,#fff, #E8F0FF);box-shadow:0 6px 14px rgba(23,73,215,.18)}
     .reviews-mini__more:active{transform:translateY(1px)}
 
-    /* 智能房源推薦：標題（本檔專用，與 SPA 共用視覺） */
-    .mh-reco-title{display:flex;align-items:center;gap:10px;margin:18px 0 12px}
-    .mh-reco-title__pill{
-      display:inline-flex;align-items:center;gap:8px;
-      padding:6px 12px;border:1px solid var(--line);border-radius:999px;
-      background:linear-gradient(180deg,#FFFFFF,var(--brand-50));
-      color:var(--brand-600);font-weight:900;font-size:14px;letter-spacing:.2px;
-    }
-    .mh-reco-title__icon{
-      width:18px;height:18px;border-radius:6px;display:grid;place-items:center;
-      background:linear-gradient(180deg,var(--brand-600),var(--brand-500));color:#fff;font-size:12px;font-weight:900;
-      box-shadow:0 2px 6px rgba(23,73,215,.18)
-    }
-    .mh-reco-title__text{line-height:1}
-    .mh-reco-title__sub{margin-left:6px;font-size:12px;color:var(--ink-600);font-weight:700}
-    .mh-reco-title__underline{
-      height:6px;border-radius:999px;flex:1;
-      background:linear-gradient(90deg,var(--brand-600),var(--brand-500),var(--brand-300));
-      background-size:200% 100%;opacity:.25;margin-left:10px;
-      animation:mhRecoBar 6s linear infinite;
-    }
-    @keyframes mhRecoBar{0%{background-position:0% 0}100%{background-position:200% 0}}
-
   </style>
 </head>
 <body>
   <div class="container">
     <main id="listings">
-      <!-- 智能房源推薦標題（貼在房源清單上方） -->
-      <div class="mh-reco-title" aria-label="智能房源推薦">
-        <div class="mh-reco-title__pill">
-          <span class="mh-reco-title__icon">★</span>
-          <span class="mh-reco-title__text">〔智能房源推薦〕</span>
-          <span class="mh-reco-title__sub">依瀏覽行為與社區口碑輔助排序</span>
-        </div>
-        <div class="mh-reco-title__underline" aria-hidden="true"></div>
-      </div>
       <section class="grid" aria-label="房源清單">
 
         <!-- 1 -->

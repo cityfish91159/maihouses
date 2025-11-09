@@ -40,16 +40,6 @@ export default function PropertyGrid({ q }: { q?: string }) {
         精選房源
       </h3>
 
-      {/* 智能房源推薦標題（置於房源清單上方）*/}
-      <div className="mh-reco-title" aria-label="智能房源推薦">
-        <div className="mh-reco-title__pill">
-          <span className="mh-reco-title__icon" aria-hidden="true">★</span>
-          <span className="mh-reco-title__text">〔智能房源推薦〕</span>
-          <span className="mh-reco-title__sub">依瀏覽行為與社區口碑輔助排序</span>
-        </div>
-        <div className="mh-reco-title__underline" aria-hidden="true" />
-      </div>
-
       {items.length === 0 ? (
         <div className="py-16 text-center text-[var(--text-secondary)]" style={{ fontSize: 'var(--fs-base)' }}>
           {q ? (

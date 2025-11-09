@@ -70,17 +70,6 @@ export default function Home({ config }: { config: AppConfig & RuntimeOverrides 
         </section>
         {features.propertyGrid !== false && (
           <section className="rounded-lg bg-white p-0 shadow-[0_2px_8px_rgba(0,0,0,0.08)] transition-all duration-200 hover:shadow-[0_4px_12px_rgba(0,0,0,0.12)] overflow-hidden">
-            {/* 智能房源推薦標題（顯示於嵌入清單上方；CSS 來自 index.css 的 .mh-reco-title 系列）*/}
-            <div className="p-6 md:p-8">
-              <div className="mh-reco-title" aria-label="智能房源推薦">
-                <div className="mh-reco-title__pill">
-                  <span className="mh-reco-title__icon" aria-hidden="true">★</span>
-                  <span className="mh-reco-title__text">〔智能房源推薦〕</span>
-                  <span className="mh-reco-title__sub">依瀏覽行為與社區口碑輔助排序</span>
-                </div>
-                <div className="mh-reco-title__underline" aria-hidden="true" />
-              </div>
-            </div>
             {/* 以 iframe 方式嵌入你上傳的完整房源清單 HTML，完全不改動其內文與排版 */}
             <iframe
               title="房源清單"
