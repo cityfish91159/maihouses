@@ -86,11 +86,8 @@
   #src,#dst{position:absolute;inset:0;width:100%;height:100%;
     object-fit:contain;display:block;}
   #dst{opacity:0;}
-  #afterWrap{position:absolute;inset:0;overflow:hidden;pointer-events:none;}
-  #afterWrap #dst{opacity:1;}
-  #divider{position:absolute;left:50%;top:0;bottom:0;width:2px;
-    background:transparent;box-shadow:none;
-    cursor:col-resize;z-index:50;transform:translateX(-50%);pointer-events:auto;touch-action:none;}
+  #afterWrap{display:none;}
+  #divider{display:none;}
   #info{font-size:11px;color:#7a92c0;margin:6px 0;line-height:1.4;min-height:32px;}
   .autoHint{background:var(--warning);color:#fff;padding:6px 10px;
     border-radius:6px;font-size:11px;margin:6px 0;display:none;align-items:center;gap:6px;}
@@ -304,7 +301,7 @@
         <div id="divider"></div>
       </div>
       <div style="margin-top:6px;font-size:10px;color:#6a7fa0">
-        💡 拖動中線查看對比 | 快捷鍵: O=開啟 H=高畫質 S=儲存
+        💡 處理完成後顯示結果 | 快捷鍵: O=開啟 H=高畫質 S=儲存
       </div>
     </div>
   </div>
@@ -1689,25 +1686,7 @@
     }
   });
   
-  let dividerX = 0.5;
-  divider.addEventListener('mousedown', () => { state.isDragging = true; });
-  divider.addEventListener('touchstart', (e) => { state.isDragging = true; e.preventDefault(); }, {passive:false});
-  document.addEventListener('mousemove', (e) => {
-    if(!state.isDragging) return;
-    const rect = compareWrap.getBoundingClientRect();
-    dividerX = clamp((e.clientX - rect.left) / rect.width, 0, 1);
-    divider.style.left = (dividerX * 100) + '%';
-    afterWrap.style.clipPath = `inset(0 ${(1-dividerX)*100}% 0 0)`;
-  });
-  document.addEventListener('touchmove', (e) => {
-    if(!state.isDragging || !e.touches[0]) return;
-    const rect = compareWrap.getBoundingClientRect();
-    dividerX = clamp((e.touches[0].clientX - rect.left) / rect.width, 0, 1);
-    divider.style.left = (dividerX * 100) + '%';
-    afterWrap.style.clipPath = `inset(0 ${(1-dividerX)*100}% 0 0)`;
-  }, {passive:true});
-  document.addEventListener('mouseup', () => { state.isDragging = false; });
-  document.addEventListener('touchend', () => { state.isDragging = false; });
+  // 移除分隔線拖動功能
   
   compareWrap.addEventListener('click', () => {
     if(compareWrap.requestFullscreen) compareWrap.requestFullscreen();
