@@ -828,6 +828,7 @@
   
   // 主處理邏輯
   self.onmessage = (e) => {
+    try {
     const {type, jobId, w, h, buf, params, chunkId, startY, endY} = e.data;
     
     if(type === 'analyze') {
@@ -1179,6 +1180,9 @@
     
     postProgress(100);
     self.postMessage({type:'done', jobId, chunkId, buf:out.buffer, startY, endY}, [out.buffer]);
+    } catch(err) {
+      self.postMessage({type:'error', jobId, chunkId, error: err.message});
+    }
   };
   `;
   
@@ -1239,6 +1243,15 @@
       }
       
       if(jobId !== state.latest) return;
+      
+      if(type === 'error') {
+        console.error(`Worker ${workerId} processing error:`, e.data.error);
+        setInfo(`❌ 處理失敗: ${e.data.error}`);
+        processing.style.display = 'none';
+        state.processing = false;
+        enableBtn();
+        return;
+      }
       
       if(type === 'progress') {
         const avgPct = (pct + chunkId * 100) / numWorkers;
