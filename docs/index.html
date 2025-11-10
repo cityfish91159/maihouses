@@ -112,6 +112,51 @@
 }
     </style>
 
+    <!-- 安心流程卡加強 + 膠囊放大 (僅首頁) -->
+    <style id="assure-card-boost-home">
+/* 1. 整體卡片存在感加強 */
+.hero-assure-card {
+  box-shadow: 
+    10px 10px 30px rgba(9, 15, 30, 0.22),    /* 加深加大 */
+    -10px -10px 30px rgba(255, 255, 255, 0.95),
+    0 8px 24px rgba(23, 73, 215, 0.12) !important;  /* 新增藍色光暈 */
+  border: 1.5px solid rgba(23, 73, 215, 0.08) !important;  /* 淡藍邊框 */
+}
+
+/* 2. info 區塊強化（底部提示區） */
+.hero-assure-card .info {
+  border: 2px dashed rgba(23, 73, 215, 0.6) !important;  /* 虛線加粗加深 */
+  background: linear-gradient(135deg, #f0f5ff, #e8f1ff) !important;  /* 明顯淺藍漸層 */
+  padding: 14px 16px !important;  /* 增加內距 */
+  box-shadow: 0 2px 8px rgba(23, 73, 215, 0.06) !important;  /* 微陰影 */
+}
+
+/* 3. 兩個膠囊放大 +2px */
+.hero-assure-card .chip {
+  font-size: 13px !important;  /* 11px → 13px */
+  padding: 6px 12px !important;  /* 4px 10px → 6px 12px */
+  font-weight: 700 !important;
+  border: 2px solid var(--brand) !important;  /* 邊框加粗 */
+  box-shadow: 0 2px 6px rgba(23, 73, 215, 0.15) !important;  /* 陰影加強 */
+}
+
+/* 4. 進場動畫優化（如果還沒觸發過） */
+.hero-assure-card[style*="opacity: 1"] {
+  animation: cardPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes cardPop {
+  from { 
+    transform: translateY(20px) scale(0.96); 
+    opacity: 0; 
+  }
+  to { 
+    transform: translateY(0) scale(1); 
+    opacity: 1; 
+  }
+}
+    </style>
+
     <!-- 搜索框與按鈕活潑優化 (僅首頁) -->
     <style id="search-boost-home">
 /* 1. 三個膠囊按鈕調整：加高 1px (22→21) + 字體放大 2px + 陰影 */
