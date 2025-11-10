@@ -89,7 +89,7 @@
   #afterWrap{position:absolute;inset:0;overflow:hidden;pointer-events:none;}
   #afterWrap #dst{opacity:1;}
   #divider{position:absolute;left:50%;top:0;bottom:0;width:2px;
-    background:var(--brand);box-shadow:0 0 8px rgba(43,227,138,0.6);
+    background:transparent;box-shadow:none;
     cursor:col-resize;z-index:50;transform:translateX(-50%);pointer-events:auto;touch-action:none;}
   #info{font-size:11px;color:#7a92c0;margin:6px 0;line-height:1.4;min-height:32px;}
   .autoHint{background:var(--warning);color:#fff;padding:6px 10px;
@@ -132,8 +132,8 @@
   @media(max-width:600px){
     .wrap{padding:8px}
     .grid{grid-template-columns:1fr !important;grid-template-rows:auto 1fr;}
-    .card:first-child{max-height:40vh;order:2;}
-    .card:last-child{order:1;min-height:50vh;}
+    .card:first-child{max-height:50vh;order:2;overflow-y:scroll !important;-webkit-overflow-scrolling:touch;}
+    .card:last-child{order:1;min-height:45vh;}
     #ajDock{max-width:calc(100vw - 80px);max-height:50vh;right:8px;top:auto;
       bottom:max(70px,calc(70px + env(safe-area-inset-bottom)));transform:none;}
   }
@@ -1917,6 +1917,9 @@
   console.log('✅ CLAHE 邊界平滑');
   console.log('✅ 記憶體洩漏修復 + 超時保護');
   console.log('✅ Canvas context 狀態清理');
+  
+  // 初始化顯示狀態
+  toggleGroups();
   
   } // initMainApp() 結束
   
