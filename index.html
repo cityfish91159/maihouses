@@ -113,9 +113,14 @@
 
     <!-- 搜索框與按鈕活潑優化 (僅首頁) -->
     <style id="search-boost-home">
-/* 1. 三個膠囊按鈕加高 2px */
+/* 1. 三個膠囊按鈕調整：加高 1px (22→21) + 字體放大 2px + 陰影 */
 .filter-pills .pill {
-  padding: 22px 16px !important;  /* 20px → 22px */
+  padding: 21px 16px !important;  /* 20px → 21px (少 1px from 22px) */
+  font-size: 15px !important;     /* 13px → 15px (大 2px) */
+  box-shadow: 
+    10px 10px 24px rgba(9, 15, 30, 0.25), 
+    -10px -10px 24px rgba(255, 255, 255, 0.9),
+    0 4px 8px rgba(0, 0, 0, 0.08) !important;  /* 新增底部陰影 */
 }
 
 /* 2. 方案 A：微彈跳 hover */
