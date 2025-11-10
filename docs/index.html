@@ -11,10 +11,59 @@
     <link rel="dns-prefetch" href="https://api.openai.com" />
     
     <title>邁房子｜讓家,不只是地址</title>
-    <script type="module" crossorigin src="/maihouses/assets/index-C8qbRTiq.js"></script>
-    <link rel="stylesheet" crossorigin href="/maihouses/assets/index-B71Zlht_.css">
+    <script type="module" crossorigin src="/maihouses/assets/index-BV7WbrZ9.js"></script>
+    <link rel="stylesheet" crossorigin href="/maihouses/assets/index-CrhbHWfA.css">
   </head>
   <body style="margin:0;background:#f6f9ff;color:#0a2246;font-family:'Noto Sans TC','PingFang TC',-apple-system,'Segoe UI','Roboto','Helvetica Neue',Arial,sans-serif;">
     <div id="root"></div>
+
+    <!-- 首頁 Hero 標語溫和放大 + 微動畫 (僅作用首頁) -->
+    <style id="hero-mini-boost-home">
+/* 精準選擇器：只放大標語文字 */
+.marquee-container {
+  font-weight: 600 !important;
+  letter-spacing: -0.01em !important;
+  line-height: 1.4 !important;
+  font-size: 20px !important;            /* 手機起始 */
+  text-wrap: balance;
+  animation: heroPop .28s ease-out both;  /* 輕微活潑感 */
+}
+
+/* 平板 */
+@media (min-width: 768px){
+  .marquee-container { 
+    font-size: 24px !important; 
+    padding: 14px 18px !important;
+  }
+}
+
+/* 桌機（溫和） */
+@media (min-width: 1024px){
+  .marquee-container { 
+    font-size: 28px !important;
+    padding: 16px 20px !important;
+  }
+}
+
+/* 超寬（選用） */
+@media (min-width: 1440px){
+  .marquee-container { 
+    font-size: 30px !important;
+    padding: 18px 22px !important;
+  }
+}
+
+/* 微動畫：輕微淡入上移 */
+@keyframes heroPop { 
+  from { 
+    transform: translateY(4px) scale(.985); 
+    opacity: 0; 
+  } 
+  to { 
+    transform: none; 
+    opacity: 1; 
+  } 
+}
+    </style>
   </body>
 </html>
