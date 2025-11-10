@@ -16,18 +16,23 @@
 
   /* 1.5) Header 文字與 icon 放大 */
   header, .site-header, .topbar, .header-inner {
-    font-size: 16px !important;
+    font-size: 17px !important;
   }
   header .brand, .topbar .brand, .logo {
-    font-size: 18px !important;
+    font-size: 20px !important;
+    font-weight: 900 !important;
   }
   header .icon, .topbar .icon, .tools .icon, .chip {
-    font-size: 15px !important;
-    padding: 8px 12px !important;
+    font-size: 16px !important;
+    padding: 10px 14px !important;
   }
   header svg, .topbar svg, .icon svg, .tools svg {
-    width: 20px !important;
-    height: 20px !important;
+    width: 22px !important;
+    height: 22px !important;
+  }
+  .home-link {
+    font-size: 14px !important;
+    padding: 6px 12px !important;
   }
 
   /* 2) 主欄寬度：避免卡片顯小（不改字級與顏色） */
