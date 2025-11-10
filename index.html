@@ -110,5 +110,60 @@
   50% { background-position: 100% 50%; }
 }
     </style>
+
+    <!-- 搜索框與按鈕活潑優化 (僅首頁) -->
+    <style id="search-boost-home">
+/* 1. 三個膠囊按鈕加高 2px */
+.filter-pills .pill {
+  padding: 22px 16px !important;  /* 20px → 22px */
+}
+
+/* 2. 方案 A：微彈跳 hover */
+.filter-pills .pill:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 12px 12px 28px rgba(9, 15, 30, 0.28), -12px -12px 28px rgba(255, 255, 255, 0.95) !important;
+  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+
+/* 3. 方案 B：圓點呼吸閃爍（3秒循環，三個按鈕錯開） */
+.pill-community .pill-icon {
+  animation: dotPulse 3s ease-in-out infinite;
+}
+
+.pill-location .pill-icon {
+  animation: dotPulse 3s ease-in-out 1s infinite;  /* 延遲 1s */
+}
+
+.pill-transit .pill-icon {
+  animation: dotPulse 3s ease-in-out 2s infinite;  /* 延遲 2s */
+}
+
+@keyframes dotPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(1.15); }
+}
+
+/* 4. 方案 D：彩色光暈 hover（各按鈕專屬色） */
+.pill-community:hover {
+  box-shadow: 
+    12px 12px 28px rgba(9, 15, 30, 0.28), 
+    -12px -12px 28px rgba(255, 255, 255, 0.95),
+    0 0 0 2px rgba(34, 197, 94, 0.5) !important;  /* 綠色 */
+}
+
+.pill-location:hover {
+  box-shadow: 
+    12px 12px 28px rgba(9, 15, 30, 0.28), 
+    -12px -12px 28px rgba(255, 255, 255, 0.95),
+    0 0 0 2px rgba(251, 146, 60, 0.5) !important;  /* 橘色 */
+}
+
+.pill-transit:hover {
+  box-shadow: 
+    12px 12px 28px rgba(9, 15, 30, 0.28), 
+    -12px -12px 28px rgba(255, 255, 255, 0.95),
+    0 0 0 2px rgba(147, 51, 234, 0.5) !important;  /* 紫色 */
+}
+    </style>
   </body>
 </html>
