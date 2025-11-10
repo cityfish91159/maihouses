@@ -11,13 +11,13 @@
     <link rel="dns-prefetch" href="https://api.openai.com" />
     
     <title>邁房子｜讓家,不只是地址</title>
-    <script type="module" crossorigin src="/maihouses/assets/index-BV7WbrZ9.js"></script>
-    <link rel="stylesheet" crossorigin href="/maihouses/assets/index-CrhbHWfA.css">
+    <script type="module" crossorigin src="/maihouses/assets/index-5Vc4rCkk.js"></script>
+    <link rel="stylesheet" crossorigin href="/maihouses/assets/index-C77li8vG.css">
   </head>
   <body style="margin:0;background:#f6f9ff;color:#0a2246;font-family:'Noto Sans TC','PingFang TC',-apple-system,'Segoe UI','Roboto','Helvetica Neue',Arial,sans-serif;">
     <div id="root"></div>
 
-    <!-- 首頁 Hero 標語溫和放大 + 微動畫 (僅作用首頁) -->
+    <!-- 首頁 Hero 標語溫和放大 + 活潑美化動畫 (僅作用首頁) -->
     <style id="hero-mini-boost-home">
 /* 精準選擇器：只放大標語文字 */
 .marquee-container {
@@ -26,7 +26,34 @@
   line-height: 1.4 !important;
   font-size: 20px !important;            /* 手機起始 */
   text-wrap: balance;
-  animation: heroPop .28s ease-out both;  /* 輕微活潑感 */
+  animation: heroBounce .5s cubic-bezier(0.34, 1.56, 0.64, 1) both;  /* 活潑彈跳 */
+  position: relative;
+  overflow: hidden;
+}
+
+/* 微光掃過效果 */
+.marquee-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  animation: shine 2.5s 0.3s ease-in-out;
+  pointer-events: none;
+}
+
+/* 品牌名漸層動態 */
+.marquee-container .brand-highlight {
+  background: linear-gradient(135deg, #1A5FDB 0%, #6aa4ff 50%, #1A5FDB 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: gradientFlow 3s ease-in-out infinite;
+  display: inline-block;
+  transform-origin: center;
 }
 
 /* 平板 */
@@ -53,16 +80,35 @@
   }
 }
 
-/* 微動畫：輕微淡入上移 */
-@keyframes heroPop { 
-  from { 
-    transform: translateY(4px) scale(.985); 
+/* 活潑彈跳進場 */
+@keyframes heroBounce { 
+  0% { 
+    transform: translateY(20px) scale(0.95); 
     opacity: 0; 
-  } 
-  to { 
+  }
+  60% {
+    transform: translateY(-4px) scale(1.01);
+    opacity: 1;
+  }
+  80% {
+    transform: translateY(2px) scale(0.99);
+  }
+  100% { 
     transform: none; 
     opacity: 1; 
   } 
+}
+
+/* 微光掃過 */
+@keyframes shine {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+
+/* 品牌漸層流動 */
+@keyframes gradientFlow {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
 }
     </style>
   </body>
