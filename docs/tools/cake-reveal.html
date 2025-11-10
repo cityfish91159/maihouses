@@ -389,9 +389,9 @@
   function initMainApp() {
   
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-  const MAX_CANVAS_PIXELS = isIOS ? 16777216 : 268435456;
-  const MAX_CANVAS_SIDE = isIOS ? 4096 : 32767;
-  const numWorkers = Math.min(navigator.hardwareConcurrency || 4, isIOS ? 2 : 4);
+  const MAX_CANVAS_PIXELS = isIOS ? 4194304 : 268435456;  // iOS: 2048x2048
+  const MAX_CANVAS_SIDE = isIOS ? 2048 : 32767;
+  const numWorkers = Math.min(navigator.hardwareConcurrency || 4, isIOS ? 1 : 4);
   const PROCESS_TIMEOUT = 60000; // 60秒超時保護
   
   console.log(`🎂 v12.0 AI增強版 | iOS=${isIOS} | Workers=${numWorkers}`);
@@ -1718,7 +1718,8 @@
   }
   
   const defaultParams = {
-    pv:800, ckDeblock:false, ckBilateral:false, fbSigma:1.2,
+    pv: isIOS ? 512 : 800, 
+    ckDeblock:false, ckBilateral:false, fbSigma:1.2,
     bilatR:30, bilatS:30, ckEnh:true, usmK:1, edge:0.4, emboss:0.2,
     shadow:0.4, blur:0, ckXray:true, xrayMode:'neutral', xrayK:4.5,
     xrayDetail:1.0, ckHeat:false, heatA:0.6
@@ -1804,6 +1805,13 @@
   
   toggleGroups();
   enableBtn();
+  
+  // iOS 優化設置
+  if(isIOS) {
+    $('pv').value = 512;
+    $('pv').max = 1024;
+    $('pv_v').textContent = '512';
+  }
   
   console.log('✅ v12.0 AI增強版初始化完成');
   console.log('【新功能】');
