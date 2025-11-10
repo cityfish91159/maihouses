@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1, viewport-fit=cover" name="viewport"/>
+<title>邁房子｜個人信息流（MVP・消費者版 v4.2）</title>
+<meta name="description" content="Profile 卡移除「我的」大按鈕；統計膠囊改為綠色樣式。Header 維持：我的（下拉）｜通知｜訊息。"/>
+<style>
+:root{
+  --ink:#0b214a; --muted:#6c7b91; --brand:#1749d7; --brand-2:#4aa1ff; --line:#e6edf7; --card:#fff;
+  --bg1:#f6f9ff; --bg2:#eef3ff;
+  --pill-border:#cbead4; --pill-bg1:#f3fff8; --pill-bg2:#e8faef; --pill-ink:#0e8d52;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:linear-gradient(180deg,var(--bg1),var(--bg2));color:var(--ink);
+  font-family:"Noto Sans TC","PingFang TC","Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased}
+.page{max-width:560px;margin:0 auto;padding:10px 10px 64px;display:flex;flex-direction:column;gap:10px}
+
+/* ── 頂部（品牌＋右上工具） ───────────────────────────── */
+.topbar{position:sticky;top:0;z-index:10;background:rgba(246,249,255,.95);backdrop-filter:blur(8px);
+  border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;padding:6px 10px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:900;color:var(--brand)}
+.brand a{color:var(--brand);text-decoration:none}
+.home-link{font-size:12px;color:#355; text-decoration:none; border:1px solid var(--line); padding:3px 8px; border-radius:999px}
+.home-link:hover{ text-decoration:underline}
+.tools{margin-left:auto;display:flex;gap:6px;align-items:center}
+.icon{border:1px solid var(--line);border-radius:12px;background:#fff;padding:6px 10px;font-size:13px;color:#173a7c;
+  display:inline-flex;align-items:center;gap:6px;line-height:1}
+.icon.badge::after{content:attr(data-badge);display:inline-flex;align-items:center;justify-content:center;
+  margin-left:6px;min-width:18px;height:18px;border-radius:999px;background:#e02626;color:#fff;font-size:11px;padding:0 5px}
+/* 「我的」下拉 */
+.menu{position:relative;display:inline-block}
+.menu > summary{list-style:none;cursor:pointer}
+.menu > summary::-webkit-details-marker{display:none}
+.chip{border:1px solid var(--line);border-radius:14px;padding:6px 10px;font-size:13px;color:#173a7c;background:#fff;display:inline-flex;align-items:center;gap:6px;line-height:1}
+.menu[open] > summary .chip{box-shadow:0 3px 10px rgba(23,73,215,.08)}
+.menu-list{display:none;position:absolute;right:0;top:calc(100% + 6px);min-width:176px;background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:0 10px 24px rgba(23,73,215,.12);padding:4px}
+.menu[open] .menu-list{display:block}
+.menu-list a{display:flex;align-items:center;gap:8px;padding:9px;border-radius:8px;color:#173a7c;text-decoration:none;font-weight:800;font-size:13px}
+.menu-list a:hover{background:#f6f9ff}
+
+/* ── 個人卡 ─────────────────────────────────────────────────────── */
+.profile-card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px;
+  box-shadow:0 4px 14px rgba(23,73,215,.08);display:flex;flex-direction:column;gap:10px}
+.profile-card .row{display:flex;align-items:center;gap:12px}
+.profile-card .avatar{width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#eef3ff,#fff);
+  border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-weight:900;color:var(--brand)}
+.profile-card .hgroup{flex:1}
+.profile-card .hgroup h3{margin:0 0 4px 0;font-size:16px;font-weight:900}
+.profile-card .hgroup p{margin:0;font-size:12px;color:var(--muted)}
+.level{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:4px 8px;font-weight:900;
+  font-size:12px;color:#0b2342;background:linear-gradient(135deg,#fff7e0,#ffeaa1);border:1px solid #ffe5a1}
+.profile-card .stats{display:flex;gap:10px;flex-wrap:wrap}
+/* 綠色膠囊樣式 */
+.pill{display:inline-flex;align-items:center;padding:6px 12px;border-radius:999px;border:1px solid var(--pill-border);
+  background:linear-gradient(180deg,var(--pill-bg1),var(--pill-bg2));font-weight:800;font-size:13px;color:var(--pill-ink);
+  box-shadow:0 2px 6px rgba(16,138,82,.06)}
+
+/* Profile 主要按鈕（僅保留「查看我的社區牆」） */
+.links{display:flex;gap:8px;flex-wrap:wrap}
+.link{display:inline-flex;align-items:center;gap:6px;padding:10px 12px;border-radius:999px;border:1.5px solid var(--line);
+  text-decoration:none;color:var(--brand);background:#fff;font-weight:900}
+.link.primary{background:linear-gradient(135deg,var(--brand),var(--brand-2));color:#fff;border-color:var(--brand)}
+
+/* Composer */
+.composer{display:flex;gap:10px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:14px;padding:10px}
+.composer .avatar{width:32px;height:32px;border-radius:999px;background:#eef3ff;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;color:#173a7c;font-weight:900}
+.composer input{flex:1;border:1px solid var(--line);border-radius:999px;padding:10px 12px;font-size:14px}
+.composer .btn{border:1px solid var(--line);border-radius:8px;background:#fff;padding:8px 12px;font-weight:800}
+
+
+@media (max-width: 375px){ .links a[href="#my-community"]{ margin-left: 0; } }
+/* 帖文 */
+.post{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:10px}
+.head{display:flex;gap:10px;align-items:center}
+.head .avatar{width:36px;height:36px;border-radius:999px;background:#eef3ff;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;color:#173a7c;font-weight:900}
+.hgroup{flex:1}
+.hgroup b{display:block}
+.hgroup .sub{font-size:12px;color:#6c7b91}
+.tags{display:flex;gap:6px;flex-wrap:wrap}
+.tag{border:1px solid var(--line);background:#fff;border-radius:999px;padding:2px 8px;font-size:12px}
+.tag.ok{border-color:#cbead4;color:#107a39;background:#e8faef}
+.actions{display:flex;gap:8px}
+.btn{border:1px solid var(--line);border-radius:8px;background:#fff;padding:8px 12px;font-weight:800}
+.btn.primary{background:#1749d7;color:#fff;border-color:#1749d7}
+.photo{width:100%;height:auto;border-radius:10px;border:1px solid var(--line);background:#f5f8ff}
+
+/* 黏底 CTA */
+.sticky{position:fixed;left:0;right:0;bottom:0;background:rgba(255,255,255,.9);backdrop-filter:blur(8px);
+  border-top:1px solid var(--line);padding:10px;display:flex;gap:10px;justify-content:center}
+.sticky .cta{border:1.5px solid var(--brand);border-radius:999px;padding:10px 14px;font-weight:900;background:#fff;color:#1749d7}
+.sticky .cta.primary{background:#1749d7;color:#fff}
+
+/* 定位調整：將個人卡中的「查看我的社區牆」膠囊，平行往右移 30px */
+.links a[href="#my-community"]{ margin-left: 0; }
+
+/* MVP add-ons: non-visual, robustness tweaks */
+.composer .btn{
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 64px;
+  flex-shrink: 0;
+}
+/* GPU hint for sticky zones */
+.topbar, .sticky { transform: translateZ(0); will-change: transform; }
+
+
+/* 客戶池摘要卡（統一膠囊尺寸） */
+#uag-summary .tags{display:flex;flex-wrap:wrap;gap:8px 10px;margin-top:6px}
+#uag-summary .tags .tag{font-size:14px;padding:6px 12px;border-radius:999px;line-height:1.1}
+#uag-summary .tags .tag.ok{border-color:#cbead4;background:#e8faef;color:#107a39}
+#uag-summary .actions .btn.primary{font-size:16px;padding:10px 14px;border-radius:14px}
+
+/* 客戶池摘要卡：緊湊網格版本（僅作用於 #uag-summary） */
+#uag-summary .body{padding-top:10px}
+#uag-summary .metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+#uag-summary .metric{display:flex;align-items:center;justify-content:center;height:34px;border:1px solid var(--line);border-radius:999px;font-size:14px;font-weight:600}
+#uag-summary .metric.ok{background:#e8faef;border-color:#cbead4;color:#107a39}
+#uag-summary .actions{display:flex;justify-content:flex-end}
+#uag-summary .actions .btn.primary{font-size:14px;padding:8px 12px;border-radius:12px}
+@media (min-width:480px){
+  #uag-summary .metrics{grid-template-columns:repeat(6,minmax(0,1fr))}
+}
+</style>
+</head>
+<body>
+
+<!-- 頂部 -->
+<header class="topbar">
+  <div class="brand">
+    <a href="/maihouses/" aria-label="邁房子首頁">邁房子</a>
+    <a class="home-link" href="/maihouses/">首頁</a>
+  </div>
+  <div class="tools">
+    <details class="menu">
+      <summary><span class="chip">👤 我的</span></summary>
+      <div class="menu-list" role="menu" aria-label="我的選單">
+        <a href="#fav" role="menuitem">⭐ 我的收藏</a>
+        <a href="#trust" role="menuitem">🛡️ 安心留痕</a>
+      </div>
+    </details>
+    <button type="button" class="icon badge" data-badge="2" aria-label="通知">🔔 通知</button>
+    <button type="button" class="icon" aria-label="訊息">💬 訊息</button>
+  </div>
+</header>
+
+<main class="page">
+<section class="profile-card">
+    <div class="row">
+      <div class="avatar">游</div>
+      <div class="hgroup">
+        <h3>游杰倫</h3>
+        <p>來自21世紀河南店｜<span class="level">黃金住戶</span> <span class="level">認證房仲</span></p>
+      </div>
+    </div>
+    <div class="stats">
+      <span class="pill">積分 2,560</span>
+      <span class="pill">互動 128 天</span>
+      <span class="pill">被感謝 73</span>
+    </div>
+    <!-- 主要按鈕：只保留「查看我的社區牆」 -->
+    <div class="links"><a href="#agent" class="btn primary">🏷️ 房仲專區</a>
+  <a href="#my-community" class="btn">🧱 前往我的社區牆</a></div>
+  </section>
+<div class="composer">
+    <div class="avatar">你</div>
+    <input placeholder="分享社區想法、上傳物件或提出提問…"/>
+    <button class="btn">發佈</button>
+  </div>
+
+  
+
+  <!-- 安心留痕｜帶看完成 -->
+  <!-- 客戶池摘要卡 -->
+<article class="post" id="uag-summary">
+  <div class="head">
+    <div class="avatar">客</div>
+    <div class="hgroup">
+      <b>客戶池摘要</b>
+      <div class="sub">UAG 精準獲客 · 即時</div>
+    </div>
+  </div>
+  <div class="body"><div class="metrics">
+      <div class="metric ok">S 2</div>
+      <div class="metric ok">A 1</div>
+      <div class="metric">B 0</div>
+      <div class="metric">未回覆 1</div>
+      <div class="metric">逾時 0</div>
+      <div class="metric">近7日新增 3</div>
+    </div></div>
+  <div class="actions">
+    <a href="#workbench" class="btn primary">查看全部（進工作臺）</a>
+  </div>
+</article>
+<article class="post">
+    <div class="head">
+      <div class="avatar">安</div>
+      <div class="hgroup">
+        <b>安心留痕</b>
+        <div class="sub">帶看完成 · 惠宇上晴 12F A2 · 剛剛</div>
+      </div>
+    </div>
+    <div class="body">
+      <p><b>11:30–12:05 帶看完成。</b>簽到、位置軌跡、現場照片 3 張與對話摘要已留存。</p>
+      <p><b>憑證號 MJ-2025-11-10-0007。</b>僅你與 買方 可見（個資受保護）。</p>
+      <div class="tags">
+        <span class="tag ok">帶看完成</span>
+        <span class="tag">留痕憑證</span>
+        <span class="tag">僅雙方可見</span>
+      </div>
+    </div>
+    <div class="actions">
+      <button class="btn">👍 讚</button>
+      <button class="btn">💬 回覆</button>
+      <button class="btn primary">➡️ 看詳情</button>
+    </div>
+  </article>
+
+  <!-- 安心留痕｜斡旋提出 -->
+  <article class="post">
+    <div class="head">
+      <div class="avatar">安</div>
+      <div class="hgroup">
+        <b>安心留痕</b>
+        <div class="sub">斡旋提出 · 惠宇上晴 12F A2 · 30 分鐘前</div>
+      </div>
+    </div>
+    <div class="body">
+      <p><b>買方已提交斡旋金，文件與對話摘要已留存。</b>涉及個資之內容已自動遮罩。</p>
+      <p><b>憑證號 MJ-2025-11-10-0008。</b>僅你與 買方 可見。</p>
+      <div class="tags">
+        <span class="tag ok">斡旋進度</span>
+        <span class="tag">留痕憑證</span>
+        <span class="tag">僅雙方可見</span>
+      </div>
+    </div>
+    <div class="actions">
+      <button class="btn">👍 讚</button>
+      <button class="btn">💬 回覆</button>
+      <button class="btn primary">➡️ 看詳情</button>
+    </div>
+  </article>
+
+  <!-- 安心留痕｜見面談預約 -->
+  <article class="post">
+    <div class="head">
+      <div class="avatar">安</div>
+      <div class="hgroup">
+        <b>安心留痕</b>
+        <div class="sub">見面談預約 · 惠宇上晴 12F A2 · 2 小時前</div>
+      </div>
+    </div>
+    <div class="body">
+      <p><b>已排定見面談時間。</b>行程、地點與參與人已留存，會前資料同步至雙方。</p>
+      <p><b>憑證號 MJ-2025-11-10-0009。</b>僅你與 買方 可見。</p>
+      <div class="tags">
+        <span class="tag ok">見面談</span>
+        <span class="tag">行程已排定</span>
+        <span class="tag">僅雙方可見</span>
+      </div>
+    </div>
+    <div class="actions">
+      <button class="btn">👍 讚</button>
+      <button class="btn">💬 回覆</button>
+      <button class="btn primary">➡️ 看詳情</button>
+    </div>
+  </article>
+  <!-- UAG 精準獲客：S×2 / A×1 -->
+  <!-- UAG 精準獲客（S×2／A×1） START -->
+<article class="post">
+  <div class="head">
+    <div class="avatar">U</div>
+    <div class="hgroup">
+      <b>UAG 精準獲客</b>
+      <div class="sub">S級 · 剛剛 · 來自 SmartAsk</div>
+    </div>
+  </div>
+  <div class="body">
+    <p><b>預測需求：</b>單元二三房｜總價 1,600–1,900 萬｜願看 12F 以上。</p>
+    <div class="tags">
+      <span class="tag">同商圈重訪 ×3</span>
+      <span class="tag">收藏等級 F3</span>
+      <span class="tag">商圈停留 310s</span>
+      <span class="tag ok">提出問題</span>
+    </div>
+  </div>
+  <div class="actions">
+    <span class="tag ok">已傳訊</span>
+    <button class="btn">回覆</button>
+    <button class="btn">設提醒</button>
+  </div>
+</article>
+
+<article class="post">
+  <div class="head">
+    <div class="avatar">U</div>
+    <div class="hgroup">
+      <b>UAG 精準獲客</b>
+      <div class="sub">S級 · 5 分鐘前 · 來自 社區牆互動</div>
+    </div>
+  </div>
+  <div class="body">
+    <p><b>預測需求：</b>南屯 30 坪｜電梯大樓｜預算 2,000 萬內。</p>
+    <div class="tags">
+      <span class="tag">同商圈重訪 ×2</span>
+      <span class="tag">收藏等級 F4</span>
+      <span class="tag">商圈停留 265s</span>
+      <span class="tag ok">已約看 11/12（四）18:30</span>
+    </div>
+  </div>
+  <div class="actions">
+    <button class="btn">回覆</button>
+    <button class="btn">設提醒</button>
+  </div>
+</article>
+
+<article class="post">
+  <div class="head">
+    <div class="avatar">U</div>
+    <div class="hgroup">
+      <b>UAG 精準獲客</b>
+      <div class="sub">A級 · 10 分鐘前 · 來自 名片匯入</div>
+    </div>
+  </div>
+  <div class="body">
+    <p><b>預測需求：</b>青海商圈｜景觀兩房｜可接受 15 年屋齡。</p>
+    <div class="tags">
+      <span class="tag">同商圈重訪 ×2</span>
+      <span class="tag">收藏等級 F2</span>
+      <span class="tag">商圈停留 120s</span>
+      <span class="tag warn">待回覆</span>
+    </div>
+  </div>
+  <div class="actions">
+    <span class="tag">追蹤中</span>
+    <button class="btn">回覆</button>
+    <button class="btn">設提醒</button>
+  </div>
+</article>
+<!-- UAG 精準獲客（S×2／A×1） END -->
+
+<article class="post">
+    <div class="head">
+      <div class="avatar">安</div>
+      <div class="hgroup">
+        <b>安心留痕</b>
+        <div class="sub">看屋已完成 · 惠宇上晴 12F A2 · 剛剛</div>
+      </div>
+    </div>
+    <div class="body">
+      <p><b>11:30–12:05 帶看完成。</b>簽到、位置軌跡、現場照片 3 張與對話摘要已留存。</p>
+      <p><b>憑證號 MJ-2025-11-10-0007。</b>僅你與 買方 可見（個資受保護）。</p>
+      <div class="tags">
+        <span class="tag ok">看屋完成</span>
+        <span class="tag">留痕憑證</span>
+        <span class="tag">隱私僅雙方</span>
+      </div>
+    </div>
+    <div class="actions">
+      <button class="btn">👍 讚</button>
+      <button class="btn">💬 回覆</button>
+      <button class="btn primary">➡️ 看詳情</button>
+    </div>
+  </article>
+<article class="post">
+    <div class="head">
+      <div class="avatar">社</div>
+      <div class="hgroup">
+        <b>社區熱帖 · 團購</b>
+        <div class="sub">20 分鐘前 · 來自社區熱帖</div>
+      </div>
+    </div>
+    <div class="body">
+      <p><b>有人要團購掃地機嗎？</b> 這款 iRobot 打折，滿 5 台有團購價～</p>
+      <div class="sub">❤️ 31 · 💬 14</div>
+    </div>
+    <div class="actions">
+      <button class="btn">❤️ 讚</button>
+      <button class="btn">💬 回覆</button>
+      <button class="btn">⭐ 收藏</button>
+    </div>
+  </article>
+<article class="post">
+    <div class="head">
+      <div class="avatar">王</div>
+      <div class="hgroup">
+        <b>王仲 · 在地房仲</b>
+        <div class="sub">3分鐘前 您追蹤的物件</div>
+      </div>
+    </div>
+    <div class="body">
+      <p>🏡 惠宇上晴 12F｜雙陽台視野戶，客廳光線很好。上週屋主剛降價 <b>50 萬</b>。</p>
+      <img loading="lazy" class="photo" alt="房源照片1" src="https://source.unsplash.com/1200x800/?apartment,living-room,bright"/>
+      <div class="sub">AI 體檢：屋況良好｜低公設比 31%｜社區評分 4.6★</div>
+    </div>
+    <div class="actions"><button class="btn">👍 讚</button><button class="btn">💬 留言</button><button class="btn primary">➡️ 看詳情</button></div>
+  </article>
+<article class="post">
+    <div class="head">
+      <div class="avatar">社</div>
+      <div class="hgroup">
+        <b>社區熱帖 · 停車交流</b>
+        <div class="sub">1 小時前 · 來自社區熱帖</div>
+      </div>
+    </div>
+    <div class="body">
+      <p><b>停車位交流</b> 我有 B2-128 想與 B1 交換，意者留言～</p>
+      <div class="sub">❤️ 16 · 💬 11</div>
+    </div>
+    <div class="actions">
+      <button class="btn">… 聯繫</button>
+      <button class="btn">⭐ 追蹤</button>
+    </div>
+  </article>
+<article class="post">
+    <div class="head">
+      <div class="avatar">AI</div>
+      <div class="hgroup">
+        <b>AI 體檢快訊</b>
+        <div class="sub">5 分鐘前 · 自動生成</div>
+      </div>
+    </div>
+    <div class="body">
+      <p>台中「單元二」新案公設比平均 <b>33%</b>，最低 <b>27%</b>（近學區）。建議留意朝向與車位動線。</p>
+      <div class="tags"><span class="tag">公設比</span><span class="tag">學區</span><span class="tag ok">實勘比對</span></div>
+    </div>
+    <div class="actions"><button class="btn">🔎 看完整報告</button><button class="btn">💬 討論</button></div>
+  </article>
+<article class="post">
+    <div class="head">
+      <div class="avatar">陳</div>
+      <div class="hgroup">
+        <b>陳小姐 · 永慶房屋</b>
+        <div class="sub">1小時前·來自智能推薦</div>
+      </div>
+    </div>
+    <div class="body">
+      <p>🏡 寶輝秋紅谷 15F｜雙平車，浴室剛整修完畢，通風比想像中好。</p>
+      <img loading="lazy" class="photo" alt="房源照片2" src="https://source.unsplash.com/1200x800/?bathroom,home,renovation"/>
+      <div class="sub">AI 體檢：採光佳｜西曬需處理｜安全評分 90</div>
+    </div>
+    <div class="actions"><button class="btn">👍 讚</button><button class="btn">💬 留言</button><button class="btn primary">➡️ 看詳情</button></div>
+  </article>
+<article class="post">
+    <div class="head">
+      <div class="avatar">仲</div>
+      <div class="hgroup">
+        <b>游杰倫 · 社區評價</b>
+        <div class="sub">昨天 · 來自房源發佈</div>
+      </div>
+    </div>
+    <div class="body">
+      <p>為什麼 12F 視野戶總是熱門？分享帶看心得：動線、採光與周遭噪音的實勘筆記。</p>
+      <div class="tags"><span class="tag ok">誠實揭露</span><span class="tag">帶看筆記</span></div>
+      <div class="sub">互動 23 · 收藏 9</div>
+    </div>
+    <div class="actions"><button class="btn">👍 讚</button><button class="btn">💬 留言</button></div>
+  </article>
+<article class="post">
+    <div class="head">
+      <div class="avatar">林</div>
+      <div class="hgroup">
+        <b>林先生 · 社區達人</b>
+        <div class="sub">2天前·分享社區售屋資訊</div>
+      </div>
+    </div>
+    <div class="body">
+      <p>🏡 惠宇青鳥 C棟邊間三房｜稀有釋出，學區步行可達。</p>
+      <img loading="lazy" class="photo" alt="房源照片3" src="https://source.unsplash.com/1200x800/?apartment,exterior,building"/>
+      <div class="sub">AI 體檢：通風佳｜學區近｜單價合理</div>
+    </div>
+    <div class="actions"><button class="btn">👍 讚</button><button class="btn">💬 留言</button><button class="btn primary">➡️ 看詳情</button></div>
+  </article></main>
+
+<!-- 黏底 CTA -->
+<div class="sticky">
+  <button class="cta">查看我的社區牆</button>
+  <button class="cta primary">加入社區</button>
+</div>
+
+
+<script>
+// ==== MVP behavior layer (no visual changes) ====
+(function(){
+  const $ = (sel, root=document) => root.querySelector(sel);
+  const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+
+  // 1) Event delegation for like / reply / details menus / notifications
+  document.addEventListener('click', function(e){
+    const btn = e.target.closest('button, a');
+    if(!btn) return;
+
+    // Like toggle
+    if(btn.classList.contains('btn') && /讚/.test(btn.textContent)){
+      e.preventDefault();
+      const liked = btn.getAttribute('aria-pressed') === 'true';
+      btn.setAttribute('aria-pressed', liked ? 'false' : 'true');
+      // lightweight feedback without new UI
+      const was = btn.textContent;
+      if(!liked){
+        btn.dataset._orig = was;
+        btn.textContent = '✅ 已讚';
+      }else{
+        btn.textContent = btn.dataset._orig || '👍 讚';
+      }
+      // throttle: ignore rapid double clicks
+      btn.disabled = true;
+      setTimeout(()=>{ btn.disabled = false; }, 300);
+      return;
+    }
+
+    // Publish handler (Composer)
+    if(btn.closest('.composer') && btn.classList.contains('btn')){
+      e.preventDefault();
+      const input = $('.composer input, .composer textarea');
+      if(!input) return;
+      const raw = input.value || '';
+      const sanitized = raw.replace(/[<>&"']/g, s => ({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;","'":"&#39;"}[s]));
+      // Minimal payload (console only; no backend)
+      const payload = {
+        content: sanitized.trim(),
+        userId: 'me',
+        communityId: 'default',
+        createdAt: new Date().toISOString(),
+        visibility: 'community',
+        source: 'mvp-v4.2'
+      };
+      if(!payload.content){
+        // non-intrusive feedback
+        console.log('內容為空，未發佈。');
+        return;
+      }
+      console.log('發佈成功（本地占位）：', payload);
+      try{ localStorage.removeItem('composerDraft:v4.2'); }catch{}
+      input.value='';
+      alert('發佈成功（示意，未上傳）');
+      return;
+    }
+
+    // Notifications/message placeholder
+    if(btn.classList.contains('icon') && /通知|訊息/.test(btn.textContent)){
+      e.preventDefault();
+      alert(btn.textContent.trim() + '：功能開發中（示意）。');
+      return;
+    }
+  }, {passive:true});
+
+  // 2) Composer progressive disclosure (expand on focus, collapse on blur)
+  (function(){
+    const comp = $('.composer');
+    if(!comp) return;
+    const input = $('.composer input, .composer textarea', comp);
+    if(!input) return;
+    function expand(){ comp.classList.add('expanded'); }
+    function collapse(){ if(!input.value) comp.classList.remove('expanded'); }
+    input.addEventListener('focus', expand);
+    input.addEventListener('blur', collapse);
+  })();
+
+  // 3) Local draft autosave (60s debounce)
+  (function(){
+    const input = document.querySelector('.composer input, .composer textarea');
+    if(!input) return;
+    const KEY = 'composerDraft:v4.2';
+    // restore
+    try{
+      const v = localStorage.getItem(KEY);
+      if(v) input.value = v;
+    }catch{}
+    let t=null;
+    function save(){
+      try{
+        localStorage.setItem(KEY, input.value || '');
+      }catch{}
+    }
+    input.addEventListener('input', ()=>{
+      clearTimeout(t);
+      t = setTimeout(save, 60000);
+    });
+  })();
+
+  // 4) Add loading="lazy" to images (safety if HTML missed)
+  (function(){
+    $$('img:not([loading])').forEach(img => img.loading = 'lazy');
+  })();
+
+  // 5) Sorting toggle (?sort=reco) — purely local, default off
+  (function(){
+    const params = new URLSearchParams(location.search);
+    if(params.get('sort') !== 'reco') return;
+    const container = document.querySelector('main.page');
+    if(!container) return;
+    const items = Array.from(container.querySelectorAll('article.post'));
+    if(items.length < 2) return;
+    function score(el){
+      const txt = el.textContent || '';
+      let s = 0;
+      // recency heuristic
+      if(/剛剛|分鐘前/.test(txt)) s += 0.5;
+      // locality (community token in your sample)
+      if(/惠宇上晴/.test(txt)) s += 0.2;
+      // event weight
+      if(/降價|售出|上新/.test(txt)) s += 0.3;
+      return s;
+      }
+    items.sort((a,b)=> score(b)-score(a));
+    items.forEach(el => container.appendChild(el));
+    console.log('已套用本地排序（reco）。');
+  })();
+
+  // 6) Details <summary> keyboard a11y enhancement
+  (function(){
+    document.querySelectorAll('details.menu > summary').forEach(sum=>{
+      sum.setAttribute('role','button');
+      sum.setAttribute('aria-expanded', sum.parentElement.hasAttribute('open') ? 'true' : 'false');
+      sum.addEventListener('click', ()=>{
+        const open = sum.parentElement.hasAttribute('open');
+        // toggle via native click; update aria after microtask
+        setTimeout(()=> sum.setAttribute('aria-expanded', open ? 'false' : 'true'), 0);
+      });
+      sum.addEventListener('keydown', (e)=>{
+        if(e.key === 'Enter' || e.key === ' '){
+          e.preventDefault();
+          sum.click();
+        }else if(e.key === 'Escape'){
+          const d = sum.parentElement;
+          if(d.hasAttribute('open')) d.removeAttribute('open');
+          sum.setAttribute('aria-expanded','false');
+        }
+      });
+    });
+    // close menu on outside click
+    document.addEventListener('click', (e)=>{
+      document.querySelectorAll('details.menu[open]').forEach(d=>{
+        if(!d.contains(e.target)) d.removeAttribute('open');
+      });
+    });
+  })();
+
+  // 7) Error monitoring (console only; no new UI)
+  (function(){
+    window.addEventListener('error', function(ev){
+      console.debug('[caught error]', ev.message);
+    });
+    window.addEventListener('unhandledrejection', function(ev){
+      console.debug('[unhandled rejection]', ev.reason);
+    });
+  })();
+
+})(); 
+</script>
+
+</body>
+</html>
