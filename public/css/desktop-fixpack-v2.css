@@ -14,6 +14,22 @@
     padding-right: 24px !important;
   }
 
+  /* 1.5) Header 文字與 icon 放大 */
+  header, .site-header, .topbar, .header-inner {
+    font-size: 16px !important;
+  }
+  header .brand, .topbar .brand, .logo {
+    font-size: 18px !important;
+  }
+  header .icon, .topbar .icon, .tools .icon, .chip {
+    font-size: 15px !important;
+    padding: 8px 12px !important;
+  }
+  header svg, .topbar svg, .icon svg, .tools svg {
+    width: 20px !important;
+    height: 20px !important;
+  }
+
   /* 2) 主欄寬度：避免卡片顯小（不改字級與顏色） */
   .feed, .timeline, .posts, .list, .stream {
     max-width: 880px !important; /* 覺得仍窄可調 920/960 */
