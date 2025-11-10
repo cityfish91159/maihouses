@@ -54,7 +54,9 @@
   .grid{display:grid;grid-template-columns:1fr;gap:12px;flex:1;min-height:0;overflow:hidden;}
   @media(min-width:900px){.grid{grid-template-columns:minmax(360px,420px) 1fr}}
   .card{background:var(--panel);border:1px solid var(--border);border-radius:10px;
-    padding:12px;display:flex;flex-direction:column;overflow-y:auto;min-height:0;}
+    padding:12px;display:flex;flex-direction:column;overflow-y:auto;min-height:0;
+    max-height:100%;}
+  .card:first-child{overflow-y:scroll;-webkit-overflow-scrolling:touch;}
   .btn{background:var(--btn);border:1px solid var(--border);color:#dff5ff;
     border-radius:8px;padding:8px 12px;font-weight:600;cursor:pointer;
     transition:all 0.15s;font-size:13px;min-height:44px;display:flex;
@@ -80,12 +82,15 @@
   .compareWrap{position:relative;border-radius:10px;overflow:hidden;
     background:#0a0f1a;display:flex;align-items:center;justify-content:center;
     flex:1;border:1px solid var(--border);cursor:zoom-in;touch-action:manipulation;
-    min-height:200px;}
-  #src,#dst{position:absolute;inset:0;width:100%;height:100%;display:block;
-    image-rendering:-webkit-optimize-contrast;image-rendering:crisp-edges;
-    -webkit-transform:translateZ(0);transform:translateZ(0);}
-  #dst{opacity:0;}
-  #afterWrap{position:absolute;inset:0;overflow:hidden;pointer-events:none;}
+    min-height:300px;aspect-ratio:auto;}
+  #src,#dst{max-width:100%;max-height:100%;width:auto;height:auto;
+    object-fit:contain;display:block;
+    image-rendering:auto;
+    -webkit-transform:translateZ(0);transform:translateZ(0);
+    position:relative;}
+  #dst{opacity:0;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) translateZ(0);}
+  #afterWrap{position:absolute;inset:0;overflow:hidden;pointer-events:none;
+    display:flex;align-items:center;justify-content:center;}
   #afterWrap #dst{opacity:1;}
   #divider{position:absolute;left:50%;top:0;bottom:0;width:2px;
     background:var(--brand);box-shadow:0 0 8px rgba(43,227,138,0.6);
@@ -130,6 +135,9 @@
   hr{border:none;border-top:1px solid var(--border);margin:10px 0}
   @media(max-width:600px){
     .wrap{padding:8px}
+    .grid{grid-template-columns:1fr !important;grid-template-rows:auto 1fr;}
+    .card:first-child{max-height:40vh;order:2;}
+    .card:last-child{order:1;min-height:50vh;}
     #ajDock{max-width:calc(100vw - 80px);max-height:50vh;right:8px;top:auto;
       bottom:max(70px,calc(70px + env(safe-area-inset-bottom)));transform:none;}
   }
