@@ -50,6 +50,23 @@ jobs:
           # 列出 docs 確認
           ls -lah docs | sed -n '1,120p'
 
+      - name: Copy tools directory (cake-reveal and other standalone tools)
+        run: |
+          set -eux
+          # 建立 tools 目錄
+          mkdir -p docs/tools
+          # 從 static-tools 複製到 docs/tools（這些不在 Vite build 中，需手動保留）
+          if [ -d "static-tools" ]; then
+            cp -rf static-tools/* docs/tools/
+          fi
+          # 列出確認
+          echo "=== docs/tools content ==="
+          ls -lah docs/tools || echo "No tools directory"
+          if [ -d "docs/tools/cake-reveal" ]; then
+            echo "=== cake-reveal files ==="
+            ls -lah docs/tools/cake-reveal
+          fi
+
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
