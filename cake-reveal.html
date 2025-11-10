@@ -79,9 +79,11 @@
   .toggle label{display:inline-flex;align-items:center;cursor:pointer;font-size:13px;}
   .compareWrap{position:relative;border-radius:10px;overflow:hidden;
     background:#0a0f1a;display:flex;align-items:center;justify-content:center;
-    flex:1;border:1px solid var(--border);cursor:zoom-in;touch-action:manipulation;}
+    flex:1;border:1px solid var(--border);cursor:zoom-in;touch-action:manipulation;
+    min-height:200px;}
   #src,#dst{position:absolute;inset:0;width:100%;height:100%;display:block;
-    image-rendering:-webkit-optimize-contrast;image-rendering:crisp-edges;}
+    image-rendering:-webkit-optimize-contrast;image-rendering:crisp-edges;
+    -webkit-transform:translateZ(0);transform:translateZ(0);}
   #dst{opacity:0;}
   #afterWrap{position:absolute;inset:0;overflow:hidden;pointer-events:none;}
   #afterWrap #dst{opacity:1;}
@@ -496,9 +498,9 @@
     
     try {
       let bitmap;
-      try {
-        bitmap = await createImageBitmap(file, {imageOrientation:'from-image'});
-      } catch(e) {
+      
+      // iOS 優先使用 Image 物件
+      if(isIOS) {
         const url = URL.createObjectURL(file);
         const img = new Image();
         await new Promise((res, rej) => {
@@ -506,33 +508,63 @@
           img.onerror = rej;
           img.src = url;
         });
-        bitmap = await createImageBitmap(img);
+        
+        let w = img.width, h = img.height;
+        if(w*h > MAX_CANVAS_PIXELS) {
+          const s = Math.sqrt(MAX_CANVAS_PIXELS/(w*h));
+          w = Math.floor(w*s);
+          h = Math.floor(h*s);
+        }
+        w = Math.min(w, MAX_CANVAS_SIDE);
+        h = Math.min(h, MAX_CANVAS_SIDE);
+        
+        // 直接用 Image 作為 bitmap
+        state.bitmap = img;
+        state.w = w;
+        state.h = h;
         URL.revokeObjectURL(url);
+        
+      } else {
+        // 桌機版用 createImageBitmap
+        try {
+          bitmap = await createImageBitmap(file, {imageOrientation:'from-image'});
+        } catch(e) {
+          const url = URL.createObjectURL(file);
+          const img = new Image();
+          await new Promise((res, rej) => {
+            img.onload = res;
+            img.onerror = rej;
+            img.src = url;
+          });
+          bitmap = await createImageBitmap(img);
+          URL.revokeObjectURL(url);
+        }
+        
+        let w = bitmap.width, h = bitmap.height;
+        if(w*h > MAX_CANVAS_PIXELS) {
+          const s = Math.sqrt(MAX_CANVAS_PIXELS/(w*h));
+          w = Math.floor(w*s);
+          h = Math.floor(h*s);
+        }
+        w = Math.min(w, MAX_CANVAS_SIDE);
+        h = Math.min(h, MAX_CANVAS_SIDE);
+        
+        state.bitmap = bitmap;
+        state.w = w;
+        state.h = h;
       }
       
-      let w = bitmap.width, h = bitmap.height;
-      if(w*h > MAX_CANVAS_PIXELS) {
-        const s = Math.sqrt(MAX_CANVAS_PIXELS/(w*h));
-        w = Math.floor(w*s);
-        h = Math.floor(h*s);
-      }
-      w = Math.min(w, MAX_CANVAS_SIDE);
-      h = Math.min(h, MAX_CANVAS_SIDE);
-      
-      state.bitmap = bitmap;
-      state.w = w;
-      state.h = h;
       state.loaded = true;
       enableBtn();
-      setInfo(`✅ ${w}×${h} px`);
+      setInfo(`✅ ${state.w}×${state.h} px ${isIOS ? '(iOS)' : ''}`);
       
       $('fileInput').value = '';
       
-      // 立即顯示預覽
-      run(true);
+      // 立即顯示預覽（延遲確保 DOM 更新）
+      setTimeout(() => run(true), 50);
       
       // 然後分析
-      analyze();
+      setTimeout(() => analyze(), 100);
       
     } catch(err) {
       console.error(err);
@@ -1324,10 +1356,19 @@
     }
     
     try {
+      // iOS: 先清空再繪製
+      if(isIOS) {
+        srcX.clearRect(0, 0, w, h);
+        dstX.clearRect(0, 0, w, h);
+      }
+      
       srcX.drawImage(state.bitmap, 0, 0, w, h);
       
-      // 強制 iOS 渲染
-      srcX.getImageData(0, 0, 1, 1);
+      // iOS: 強制同步渲染
+      if(isIOS) {
+        srcX.fillStyle = 'rgba(0,0,0,0)';
+        srcX.fillRect(0, 0, 1, 1);
+      }
       
       const imgData = srcX.getImageData(0, 0, w, h);
       
