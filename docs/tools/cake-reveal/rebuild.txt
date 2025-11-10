@@ -1,0 +1,2 @@
+rebuild-trigger: 2025-11-10T00:00:00Z
+(此文件用於觸發 GitHub Pages 缓存更新，非功能性)
