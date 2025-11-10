@@ -2,53 +2,15 @@
 <html lang="zh-Hant-TW">
   <head>
     <meta charset="UTF-8" />
-    <title>404 - 頁面不存在</title>
-    <style>
-      body {
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
-        background: #0b1220;
-        color: #e9f0ff;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        height: 100vh;
-        margin: 0;
-        text-align: center;
-      }
-      .container {
-        max-width: 500px;
-        padding: 40px;
-      }
-      h1 {
-        font-size: 72px;
-        margin: 0 0 20px 0;
-        color: #2be38a;
-      }
-      p {
-        font-size: 18px;
-        margin-bottom: 30px;
-        line-height: 1.6;
-      }
-      a {
-        display: inline-block;
-        background: #2be38a;
-        color: #072412;
-        padding: 12px 24px;
-        border-radius: 8px;
-        text-decoration: none;
-        font-weight: 600;
-        transition: opacity 0.2s;
-      }
-      a:hover {
-        opacity: 0.9;
-      }
-    </style>
+    <meta http-equiv="refresh" content="0; url=/maihouses/" />
+    <title>Redirecting...</title>
+    <script>
+      // 對於 BrowserRouter：將任何未知路徑導回到 /maihouses/ 首頁（不加 #）
+      // 如需保留原始路徑，可在此把 pathname 存入 sessionStorage 再由前端讀取處理
+      window.location.replace('/maihouses/');
+    </script>
   </head>
   <body>
-    <div class="container">
-      <h1>404</h1>
-      <p>抱歉，您要找的頁面不存在。</p>
-      <a href="/maihouses/">返回首頁</a>
-    </div>
+    <p>正在重定向...</p>
   </body>
 </html>
