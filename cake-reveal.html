@@ -58,11 +58,14 @@
     max-height:100%;}
   .card:first-child{overflow-y:scroll;-webkit-overflow-scrolling:touch;}
   .btn{background:var(--btn);border:1px solid var(--border);color:#dff5ff;
-    border-radius:8px;padding:8px 12px;font-weight:600;cursor:pointer;
-    transition:all 0.15s;font-size:13px;min-height:44px;display:flex;
-    align-items:center;justify-content:center;touch-action:manipulation;}
-  .btn.primary{background:var(--brand);border-color:#0b3c25;color:#072412}
-  .btn.warning{background:var(--warning);border-color:#cc7700;color:#fff}
+    border-radius:8px;padding:10px 16px;font-weight:600;cursor:pointer;
+    transition:all 0.15s;font-size:14px;min-height:48px;display:flex;
+    align-items:center;justify-content:center;touch-action:manipulation;
+    white-space:nowrap;}
+  .btn.primary{background:var(--brand);border-color:#0b3c25;color:#072412;
+    font-size:15px;font-weight:700;}
+  .btn.warning{background:var(--warning);border-color:#cc7700;color:#fff;
+    font-size:15px;}
   .btn:active:not(:disabled){opacity:0.8;transform:scale(0.95)}
   .btn:disabled{opacity:0.4;cursor:not-allowed;pointer-events:none;}
   .row{display:flex;flex-direction:column;gap:4px;margin:6px 0;}
@@ -129,8 +132,11 @@
   @media(max-width:600px){
     .wrap{padding:8px}
     .grid{grid-template-columns:1fr !important;grid-template-rows:auto 1fr;}
-    .card:first-child{max-height:50vh;order:2;overflow-y:scroll !important;-webkit-overflow-scrolling:touch;}
-    .card:last-child{order:1;min-height:45vh;}
+    .card:first-child{max-height:55vh;order:2;overflow-y:scroll !important;
+      -webkit-overflow-scrolling:touch;padding-bottom:40px;}
+    .card:last-child{order:1;min-height:40vh;}
+    .hflex{flex-wrap:wrap;}
+    .btn{min-height:52px;font-size:15px;padding:12px 16px;}
     #ajDock{max-width:calc(100vw - 80px);max-height:50vh;right:8px;top:auto;
       bottom:max(70px,calc(70px + env(safe-area-inset-bottom)));transform:none;}
   }
@@ -1736,7 +1742,7 @@
   $('btnSlot').addEventListener('click', () => {
     if(!state.loaded) return alert('請先載入圖片');
     
-    // 隨機參數（合理範圍）
+    // 隨機參數（合理範圍，確保選項顯示）
     const randomParams = {
       pv: 800,
       fbSigma: Math.random() * 3 + 0.5,
@@ -1752,10 +1758,10 @@
       heatA: Math.random() * 0.8 + 0.2,
       ckDeblock: Math.random() > 0.5,
       ckBilateral: Math.random() > 0.5,
-      ckEnh: Math.random() > 0.3,
+      ckEnh: true, // 總是開啟
       ckGuidedDetail: Math.random() > 0.4,
-      ckXray: Math.random() > 0.3,
-      ckHeat: Math.random() > 0.6,
+      ckXray: true, // 總是開啟以顯示選項
+      ckHeat: false, // 預設關閉以簡化
       xrayMode: ['gain-fast','neutral','adaptive','gradient','clahe'][Math.floor(Math.random()*5)]
     };
     
