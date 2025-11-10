@@ -795,7 +795,7 @@
   const errConfirm = document.getElementById('errConfirm');
   const errTerms = document.getElementById('errTerms');
 
-  const AFTER = '#/me';
+  const AFTER = '/maihouses/auth/after-login.html?role=consumer';
   let mode = qs('mode') || 'login';
 
   function syncMode(replace=true){
@@ -815,7 +815,10 @@
   function successRedirect(isLogin){
     const ret = qs('return');
     if(isLogin && ret){ go(ret); return; }
-    go(AFTER);
+    // 根據 localStorage 中的角色決定跳轉
+    const role = getLS('mh.auth.role') || 'member';
+    const roleParam = (role === 'agent' || role === '房仲') ? 'agent' : 'consumer';
+    go('/maihouses/auth/after-login.html?role=' + roleParam);
   }
 
   syncMode(true);
