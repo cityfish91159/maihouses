@@ -80,7 +80,8 @@
   .compareWrap{position:relative;border-radius:10px;overflow:hidden;
     background:#0a0f1a;display:flex;align-items:center;justify-content:center;
     flex:1;border:1px solid var(--border);cursor:zoom-in;touch-action:manipulation;}
-  #src,#dst{position:absolute;inset:0;width:100%;height:100%;display:block;}
+  #src,#dst{position:absolute;inset:0;width:100%;height:100%;display:block;
+    image-rendering:-webkit-optimize-contrast;image-rendering:crisp-edges;}
   #dst{opacity:0;}
   #afterWrap{position:absolute;inset:0;overflow:hidden;pointer-events:none;}
   #afterWrap #dst{opacity:1;}
@@ -168,6 +169,7 @@
           <input type="file" id="fileInput" accept="image/*" style="display:none">
           📂 選擇圖片
         </label>
+        <button class="btn warning" id="btnSlot">🎰 拉霸</button>
         <button class="btn" id="btnHQ">🔥 高畫質</button>
       </div>
       
@@ -1312,10 +1314,21 @@
       dstC.height = h;
       srcX.clearRect(0, 0, w, h);
       dstX.clearRect(0, 0, w, h);
+      
+      // 強制 iOS 重繪
+      srcC.style.display = 'none';
+      dstC.style.display = 'none';
+      void srcC.offsetHeight;
+      srcC.style.display = 'block';
+      dstC.style.display = 'block';
     }
     
     try {
       srcX.drawImage(state.bitmap, 0, 0, w, h);
+      
+      // 強制 iOS 渲染
+      srcX.getImageData(0, 0, 1, 1);
+      
       const imgData = srcX.getImageData(0, 0, w, h);
       
       state.latest = Date.now();
@@ -1694,6 +1707,36 @@
     if(!state.loaded) return alert('請先載入圖片');
     run(false);
     setInfo('⏳ 高畫質處理...');
+  });
+  
+  $('btnSlot').addEventListener('click', () => {
+    if(!state.loaded) return alert('請先載入圖片');
+    
+    // 隨機參數（合理範圍）
+    const randomParams = {
+      pv: 800,
+      fbSigma: Math.random() * 3 + 0.5,
+      bilatR: Math.floor(Math.random() * 50) + 20,
+      bilatS: Math.floor(Math.random() * 50) + 20,
+      usmK: Math.random() * 2 + 0.3,
+      edge: Math.random() * 0.6 + 0.2,
+      emboss: Math.random() * 0.5,
+      shadow: Math.random() * 0.6 + 0.2,
+      blur: Math.random() * 1.5,
+      xrayK: Math.random() * 6 + 2,
+      xrayDetail: Math.random() * 1.2 + 0.5,
+      heatA: Math.random() * 0.8 + 0.2,
+      ckDeblock: Math.random() > 0.5,
+      ckBilateral: Math.random() > 0.5,
+      ckEnh: Math.random() > 0.3,
+      ckGuidedDetail: Math.random() > 0.4,
+      ckXray: Math.random() > 0.3,
+      ckHeat: Math.random() > 0.6,
+      xrayMode: ['gain-fast','neutral','adaptive','gradient','clahe'][Math.floor(Math.random()*5)]
+    };
+    
+    applyParams(randomParams);
+    setInfo('🎰 拉霸！隨機參數已套用');
   });
   
   $('btnCancel').addEventListener('click', () => {
