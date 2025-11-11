@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-touch-fullscreen" content="yes">
-<title>🎂 Cake Reveal v12.2 - AI增強版 (智能測光+Guided Filter細節+性能優化)</title>
+<title>🎂 Cake Reveal v12.0 - AI增強版 (智能測光+Guided Filter細節+性能優化)</title>
 <style>
   *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
   :root{
@@ -155,10 +155,9 @@
 </div>
 
 <div class="wrap" id="mainApp" style="display:none;">
-  <!-- rebuild: bumped to v12.2 to force GitHub Pages redeploy -->
   <header>
     <h1>🎂 Cake Reveal</h1>
-    <span class="badge">v12.2 AI增強版</span>
+    <span class="badge">v12.0 AI增強版</span>
     <span class="badge">智能測光+細節增強</span>
   </header>
 
@@ -390,9 +389,9 @@
   function initMainApp() {
   
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-  const MAX_CANVAS_PIXELS = isIOS ? 4194304 : 268435456;  // iOS: 2048x2048
-  const MAX_CANVAS_SIDE = isIOS ? 2048 : 32767;
-  const numWorkers = Math.min(navigator.hardwareConcurrency || 4, isIOS ? 1 : 4);
+  const MAX_CANVAS_PIXELS = isIOS ? 16777216 : 268435456;
+  const MAX_CANVAS_SIDE = isIOS ? 4096 : 32767;
+  const numWorkers = Math.min(navigator.hardwareConcurrency || 4, isIOS ? 2 : 4);
   const PROCESS_TIMEOUT = 60000; // 60秒超時保護
   
   console.log(`🎂 v12.0 AI增強版 | iOS=${isIOS} | Workers=${numWorkers}`);
@@ -527,10 +526,6 @@
       
       $('fileInput').value = '';
       
-      // 立即顯示預覽
-      run(true);
-      
-      // 然後分析
       analyze();
       
     } catch(err) {
@@ -833,7 +828,6 @@
   
   // 主處理邏輯
   self.onmessage = (e) => {
-    try {
     const {type, jobId, w, h, buf, params, chunkId, startY, endY} = e.data;
     
     if(type === 'analyze') {
@@ -1185,9 +1179,6 @@
     
     postProgress(100);
     self.postMessage({type:'done', jobId, chunkId, buf:out.buffer, startY, endY}, [out.buffer]);
-    } catch(err) {
-      self.postMessage({type:'error', jobId, chunkId, error: err.message});
-    }
   };
   `;
   
@@ -1248,15 +1239,6 @@
       }
       
       if(jobId !== state.latest) return;
-      
-      if(type === 'error') {
-        console.error(`Worker ${workerId} processing error:`, e.data.error);
-        setInfo(`❌ 處理失敗: ${e.data.error}`);
-        processing.style.display = 'none';
-        state.processing = false;
-        enableBtn();
-        return;
-      }
       
       if(type === 'progress') {
         const avgPct = (pct + chunkId * 100) / numWorkers;
@@ -1723,8 +1705,7 @@
   }
   
   const defaultParams = {
-    pv: isIOS ? 512 : 800, 
-    ckDeblock:false, ckBilateral:false, fbSigma:1.2,
+    pv:800, ckDeblock:false, ckBilateral:false, fbSigma:1.2,
     bilatR:30, bilatS:30, ckEnh:true, usmK:1, edge:0.4, emboss:0.2,
     shadow:0.4, blur:0, ckXray:true, xrayMode:'neutral', xrayK:4.5,
     xrayDetail:1.0, ckHeat:false, heatA:0.6
@@ -1810,13 +1791,6 @@
   
   toggleGroups();
   enableBtn();
-  
-  // iOS 優化設置
-  if(isIOS) {
-    $('pv').value = 512;
-    $('pv').max = 1024;
-    $('pv_v').textContent = '512';
-  }
   
   console.log('✅ v12.0 AI增強版初始化完成');
   console.log('【新功能】');
