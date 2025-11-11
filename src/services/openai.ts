@@ -69,7 +69,7 @@ export async function callOpenAI(
       systemPrompt,
       ...recent.map(m => ({ role: m.role, content: m.content }))
     ],
-    stream: !!onChunk
+    stream: false  // 暫時關閉串流，使用標準 JSON 回應
   }
 
   const resp = await fetch(upstreamUrl, {
