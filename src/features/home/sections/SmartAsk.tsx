@@ -40,26 +40,8 @@ export default function SmartAsk() {
     setMessages([...newMessages, aiMsg])
 
     try {
-      // 呼叫 API，支援串流回傳
-      const res = await aiAsk(
-        { messages: newMessages },
-        (chunk: string) => {
-          // 串流逐段更新最後一則訊息
-          setMessages(prev => {
-            const updated = [...prev]
-            const lastMsg = updated[updated.length - 1]
-            if (lastMsg) {
-              const newMsg: AiMessage = {
-                role: lastMsg.role || 'assistant',
-                content: (lastMsg.content || '') + chunk
-              }
-              if (lastMsg.timestamp) newMsg.timestamp = lastMsg.timestamp
-              updated[updated.length - 1] = newMsg
-            }
-            return updated
-          })
-        }
-      )
+      // 呼叫 API（非串流模式）
+      const res = await aiAsk({ messages: newMessages })
 
       console.log('🟡 API 回應:', res)
       
@@ -76,7 +58,7 @@ export default function SmartAsk() {
               updated[updated.length - 1] = {
                 ...last,
                 role: 'assistant',
-                content: res.data!.answers[0]
+                content: res.data!.answers[0] || ''
               }
             }
             return updated
