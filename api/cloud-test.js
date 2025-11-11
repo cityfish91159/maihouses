@@ -1,10 +1,19 @@
 // 使用 Web API 風格 + 強制 Node.js Runtime，以便於載入 Cloudinary Node SDK
 export const config = {
-  runtime: "nodejs20.x",
+  runtime: "nodejs",
 };
 
 export default async function handler(request) {
   try {
+    const url = new URL(request.url);
+    const ping = url.searchParams.get("ping");
+    if (ping === "1") {
+      return new Response(
+        JSON.stringify({ ok: true, mode: "ping", note: "no cloudinary import" }),
+        { headers: { "content-type": "application/json" }, status: 200 }
+      );
+    }
+
     const { v2: cloudinary } = await import("cloudinary");
 
     function setupCloudinary() {
@@ -30,15 +39,6 @@ export default async function handler(request) {
 
     setupCloudinary();
     const cfg = cloudinary.config();
-
-    const url = new URL(request.url);
-    const ping = url.searchParams.get("ping");
-    if (ping === "1") {
-      return new Response(JSON.stringify({ ok: true, mode: "ping", cloud_name: cfg.cloud_name }), {
-        headers: { "content-type": "application/json" },
-        status: 200,
-      });
-    }
 
     const r = await cloudinary.uploader.upload(
       "https://res.cloudinary.com/demo/image/upload/sample.jpg",
