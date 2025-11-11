@@ -1,6 +1,4 @@
 {
-  "buildCommand": "npm run build",
-  "outputDirectory": "docs",
   "redirects": [
     { "source": "/", "destination": "/maihouses", "permanent": false }
   ],
