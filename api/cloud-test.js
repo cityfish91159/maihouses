@@ -1,37 +1,46 @@
-import { v2 as cloudinary } from "cloudinary";
+// CommonJS 版：符合 Vercel 通用 Serverless (非 Next.js pages router)
+const cloudinary = require("cloudinary").v2;
 
-export default async function handler(req, res) {
-  // 檢查必要的 Cloudinary 認證是否存在（CLOUDINARY_URL 或三變數）
+function setupCloudinary() {
   const hasUrl = !!process.env.CLOUDINARY_URL;
-  const hasTriple = !!(process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET);
-  if (!hasUrl && !hasTriple) {
-    return res.status(500).json({
-      ok: false,
-      error: 'Missing Cloudinary credentials',
-      hint: '請在 Vercel 設定 CLOUDINARY_URL 或 CLOUDINARY_CLOUD_NAME/API_KEY/API_SECRET 後重新部署'
-    });
-  }
+  const name = process.env.CLOUDINARY_CLOUD_NAME;
+  const key = process.env.CLOUDINARY_API_KEY;
+  const secret = process.env.CLOUDINARY_API_SECRET;
 
-  // 初始化（若設了 CLOUDINARY_URL，SDK 會自動讀；此處仍保留 secure 與三變數回填）
-  cloudinary.config({
-    secure: true,
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME || undefined,
-    api_key: process.env.CLOUDINARY_API_KEY || undefined,
-    api_secret: process.env.CLOUDINARY_API_SECRET || undefined,
-  });
-
-  try {
-    // 簡化為 server-side 簽名上傳，不依賴 upload_preset，降低誤設風險
-    const r = await cloudinary.uploader.upload(
-      "https://res.cloudinary.com/demo/image/upload/sample.jpg",
-      { folder: "raw" }
-    );
-    return res.status(200).json({ ok: true, url: r.secure_url, public_id: r.public_id });
-  } catch (e) {
-    return res.status(500).json({
-      ok: false,
-      error: String(e),
-      hint: '若仍失敗，請確認 CLOUDINARY_* 變數與雲端權限、來源 URL/FETCH 設定'
-    });
+  if (hasUrl) {
+    cloudinary.config({ secure: true }); // 直接讀 CLOUDINARY_URL
+  } else if (name && key && secret) {
+    cloudinary.config({ cloud_name: name, api_key: key, api_secret: secret, secure: true });
+  } else {
+    const miss = [];
+    if (!hasUrl) {
+      if (!name) miss.push("CLOUDINARY_CLOUD_NAME");
+      if (!key) miss.push("CLOUDINARY_API_KEY");
+      if (!secret) miss.push("CLOUDINARY_API_SECRET");
+    }
+    throw new Error("Missing Cloudinary env: " + miss.join(", "));
   }
 }
+
+module.exports = async (req, res) => {
+  try {
+    setupCloudinary();
+    const cfg = cloudinary.config(); // 不含 secret
+    const r = await cloudinary.uploader.upload(
+      "https://res.cloudinary.com/demo/image/upload/sample.jpg",
+      { folder: "raw", upload_preset: "server_signed" }
+    );
+    res.status(200).json({ ok: true, url: r.secure_url, public_id: r.public_id, cloud_name: cfg.cloud_name });
+  } catch (e) {
+    res.status(500).json({
+      ok: false,
+      error: String(e.message || e),
+      have: {
+        CLOUDINARY_URL: !!process.env.CLOUDINARY_URL,
+        CLOUDINARY_CLOUD_NAME: !!process.env.CLOUDINARY_CLOUD_NAME,
+        CLOUDINARY_API_KEY: !!process.env.CLOUDINARY_API_KEY,
+        CLOUDINARY_API_SECRET: !!process.env.CLOUDINARY_API_SECRET,
+      },
+    });
+  }
+};
