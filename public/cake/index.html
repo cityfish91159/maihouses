@@ -375,15 +375,15 @@
     }
   }
   
-  // 頁面載入時檢查
-  if (checkAuth()) {
+  // 頁面載入時檢查 - 暫時關閉密碼驗證，直接顯示主程序
+  // if (checkAuth()) {
     document.getElementById('loginScreen').classList.add('hidden');
     document.getElementById('mainApp').style.display = 'flex';
-  } else {
-    // 設置登入表單事件
-    document.getElementById('loginForm').addEventListener('submit', handleLogin);
-    document.getElementById('username').focus();
-  }
+  // } else {
+  //   // 設置登入表單事件
+  //   document.getElementById('loginForm').addEventListener('submit', handleLogin);
+  //   document.getElementById('username').focus();
+  // }
   
   // === 主程序初始化函數 ===
   function initMainApp() {
@@ -1807,10 +1807,10 @@
   
   } // initMainApp() 結束
   
-  // 如果已登入，立即初始化
-  if (checkAuth()) {
+  // 暫時關閉密碼驗證，直接初始化主程序
+  // if (checkAuth()) {
     initMainApp();
-  }
+  // }
   
 })();
 </script>
