@@ -62,6 +62,22 @@ export default function SmartAsk() {
       )
 
       if (res.ok && res.data) {
+        // 更新最後一則訊息的內容（非串流模式時需要）
+        if (res.data.answers && res.data.answers.length > 0) {
+          setMessages(prev => {
+            const updated = [...prev]
+            if (updated.length > 0) {
+              const last = updated[updated.length - 1]
+              updated[updated.length - 1] = {
+                ...last,
+                role: 'assistant',
+                content: res.data!.answers[0]
+              }
+            }
+            return updated
+          })
+        }
+        
         const r = res.data.recommends || []
         setReco(r)
         if (r[0]?.communityId) localStorage.setItem('recoCommunity', r[0].communityId)
