@@ -1,0 +1,1084 @@
+=== README (v1.1 warmfix) ===
+邁房子｜AI對話 P0 A1–A8 代碼包（2025-11-11 12:40, v1.1「warmfix」）
+
+更新重點（相對 v1.0）：
+- A1 安靜模式：文案更溫暖、加入快速預設；LLM 系統提示自動切到「Zen 模式」
+- A2 回訪暖啟條：讀取 lastMood 與 tags，回訪文案更個人化
+- A3 心情膠囊：文案口語化（今天還不錯／有點累／想放空）並把情緒寫入 Profile.lastMood
+- A4 收藏備註：加入「陪伴式」微文案（輸入時顯示「慢慢寫，我在」）
+- A5 禮貌改寫器：新增「對象/目的」選擇，生成更貼情境；採用後顯示「希望順利 🤞」
+- A6 ELI5：首次遇到關鍵術語會主動建議（每日一次）
+- A7 預算 Lite：新增月收入（可選）、負擔率提示與暖性建議
+- A8 看屋三問：輸出含 #tags，並自動寫入 Profile.tags（供 A2 使用）
+- ai.ts：依 Quiet/Mood/Profile 組合動態 System Prompt（Zen/Tone/Tags）
+
+怎麼用：
+1) 逐檔覆蓋到你的 Vite + React + TS 專案。
+2) 後端仍需提供 /api/openai-proxy 轉發。
+3) 若你已有自訂樣式，僅移植邏輯與 props 即可。
+
+—
+
+=== src/analytics/track.ts ===
+// 簡易埋點（事件命名更貼近用戶語意）
+export function track(event: string, payload?: Record<string, any>) {
+  try {
+    // eslint-disable-next-line no-console
+    console.debug("[track]", event, payload || {});
+  } catch {}
+}
+export const Events = {
+  QuietOn: "user.needs_quiet_space",
+  QuietOff: "user.back_to_explore",
+  QuietAutoOff: "user.quiet_space_timeout",
+  QuietTurnUsed: "user.quiet_space_turn_used",
+  WarmbarView: "ui.warmbar_view",
+  WarmbarContinue: "ui.warmbar_click_continue",
+  WarmbarDismiss: "ui.warmbar_click_dismiss",
+  MoodPick: "user.feeling_set",
+  NoteSaved: "user.reflects_on_viewing",
+  DebriefGen: "user.debrief_mna_generated",
+  DebriefSave: "user.debrief_saved",
+  BudgetCopy: "user.seeks_budget_clarity",
+  ELI5Open: "user.needs_plain_explain",
+  RewriteGen: "user.needs_polite_message_generated",
+  RewriteAdopt: "user.polite_message_adopted",
+};
+
+=== src/stores/profileStore.ts ===
+export type UserMilestones = {
+  birthday?: string;      // YYYY-MM-DD
+  move_in_date?: string;  // YYYY-MM-DD
+};
+export type UserProfile = {
+  tags: string[];
+  milestones?: UserMilestones;
+  lastSeenAt?: number;
+  lastMood?: "neutral" | "stress" | "rest";
+};
+
+const STORAGE_KEY = "mai-user-profile-v1";
+const FIRST_SEEN_KEY = "mai-first-seen-ts";
+const WARM_DISMISS_KEY = "mai-warmbar-dismissed-date"; // YYYY-MM-DD
+
+export function loadProfile(): UserProfile {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return { tags: [] };
+    return JSON.parse(raw) as UserProfile;
+  } catch {
+    return { tags: [] };
+  }
+}
+export function saveProfile(p: UserProfile) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(p));
+}
+export function upsertTags(newTags: string[]) {
+  const p = loadProfile();
+  const set = new Set([...(p.tags || []), ...newTags].filter(Boolean));
+  p.tags = Array.from(set).slice(0, 8);
+  saveProfile(p);
+}
+export function setMilestones(ms: UserMilestones) {
+  const p = loadProfile();
+  p.milestones = { ...(p.milestones || {}), ...ms };
+  saveProfile(p);
+}
+export function setLastMood(mood: "neutral" | "stress" | "rest") {
+  const p = loadProfile();
+  p.lastMood = mood;
+  saveProfile(p);
+}
+export function touchVisit() {
+  const p = loadProfile();
+  p.lastSeenAt = Date.now();
+  saveProfile(p);
+}
+export function ensureFirstSeen(): { isFirstVisit: boolean } {
+  const exist = localStorage.getItem(FIRST_SEEN_KEY);
+  if (exist) return { isFirstVisit: false };
+  localStorage.setItem(FIRST_SEEN_KEY, String(Date.now()));
+  return { isFirstVisit: true };
+}
+export function dismissWarmbarToday() {
+  localStorage.setItem(WARM_DISMISS_KEY, todayStr());
+}
+export function isWarmbarDismissedToday() {
+  return localStorage.getItem(WARM_DISMISS_KEY) === todayStr();
+}
+export function getWarmTags(max = 3): string[] {
+  const p = loadProfile();
+  return (p.tags || []).slice(0, max);
+}
+function todayStr(): string {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+function diffDays(a: Date, b: Date): number {
+  const MS = 24 * 60 * 60 * 1000;
+  const ad = new Date(a.getFullYear(), a.getMonth(), a.getDate()).getTime();
+  const bd = new Date(b.getFullYear(), b.getMonth(), b.getDate()).getTime();
+  return Math.round((ad - bd) / MS);
+}
+export function getMilestoneHint(ms?: UserMilestones): string | null {
+  if (!ms) return null;
+  const now = new Date();
+  if (ms.birthday) {
+    const hint = nearAnnual(ms.birthday, now, 7);
+    if (hint) return hint;
+  }
+  if (ms.move_in_date) {
+    const hint = nearAnnual(ms.move_in_date, now, 7, "搬家");
+    if (hint) return hint;
+  }
+  return null;
+}
+function nearAnnual(dateStr: string, now: Date, days = 7, label?: string): string | null {
+  const [y, m, d] = dateStr.split("-").map((x) => Number(x));
+  if (!y || !m || !d) return null;
+  const thisYear = new Date(now.getFullYear(), m - 1, d);
+  const delta = Math.abs(diffDays(thisYear, now));
+  if (delta <= days) {
+    if (label === "搬家") return "搬家一週年！";
+    return "生日快樂！";
+  }
+  return null;
+}
+
+=== src/context/QuietModeContext.tsx ===
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { Events, track } from "../analytics/track";
+
+type QuietState = {
+  isQuiet: boolean;
+  reason?: string;         // e.g. "只聊天"/"壓力大"
+  untilTs?: number | null; // 到期時間（毫秒）
+  remainingTurns?: number | null; // 剩餘回合（預設 10）
+};
+type QuietAPI = {
+  state: QuietState;
+  startQuiet: (opts?: { minutes?: number; turns?: number; reason?: string }) => void;
+  clearQuiet: () => void;
+  decrementTurn: () => void;
+  isActive: () => boolean;
+};
+const STORAGE_KEY = "mai-quiet-mode-v1";
+const QuietModeContext = createContext<QuietAPI | null>(null);
+
+function readStorage(): QuietState {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return { isQuiet: false, untilTs: null, remainingTurns: null };
+    const parsed = JSON.parse(raw) as QuietState;
+    return parsed;
+  } catch {
+    return { isQuiet: false, untilTs: null, remainingTurns: null };
+  }
+}
+function writeStorage(s: QuietState) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
+}
+
+export const QuietModeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [state, setState] = useState<QuietState>(() => readStorage());
+  const tickRef = useRef<number | null>(null);
+
+  const isActive = useCallback(() => {
+    if (!state.isQuiet) return false;
+    const now = Date.now();
+    if (state.untilTs && now > state.untilTs) return false;
+    if (state.remainingTurns !== null && (state.remainingTurns ?? 0) <= 0) return false;
+    return true;
+  }, [state]);
+
+  // 自動清理過期
+  useEffect(() => {
+    const now = Date.now();
+    if (state.isQuiet && state.untilTs && now > state.untilTs) {
+      setState({ isQuiet: false, untilTs: null, remainingTurns: null });
+      writeStorage({ isQuiet: false, untilTs: null, remainingTurns: null });
+    }
+  }, [state]);
+
+  // 心跳檢查（每 30 秒確認是否過期）
+  useEffect(() => {
+    if (tickRef.current) window.clearInterval(tickRef.current);
+    tickRef.current = window.setInterval(() => {
+      const now = Date.now();
+      const saved = readStorage();
+      if (saved.isQuiet && saved.untilTs && now > saved.untilTs) {
+        setState({ isQuiet: false, untilTs: null, remainingTurns: null });
+        writeStorage({ isQuiet: false, untilTs: null, remainingTurns: null });
+      }
+    }, 30000) as unknown as number;
+    return () => {
+      if (tickRef.current) window.clearInterval(tickRef.current);
+    };
+  }, []);
+
+  const startQuiet = useCallback((opts?: { minutes?: number; turns?: number; reason?: string }) => {
+    const minutes = opts?.minutes ?? null;
+    const turns = opts?.turns ?? 10; // 預設 10 回合
+    const reason = opts?.reason;
+    const untilTs = minutes ? Date.now() + minutes * 60_000 : null;
+    const next: QuietState = {
+      isQuiet: true,
+      reason,
+      untilTs,
+      remainingTurns: turns,
+    };
+    setState(next);
+    writeStorage(next);
+    track(Events.QuietOn, { reason, minutes, turns });
+  }, []);
+
+  const clearQuiet = useCallback(() => {
+    const next: QuietState = { isQuiet: false, untilTs: null, remainingTurns: null };
+    setState(next);
+    writeStorage(next);
+    track(Events.QuietOff, {});
+  }, []);
+
+  const decrementTurn = useCallback(() => {
+    setState(prev => {
+      if (!prev.isQuiet) return prev;
+      if (prev.remainingTurns === null) return prev;
+      const left = Math.max(0, (prev.remainingTurns ?? 0) - 1);
+      const next: QuietState = { ...prev, remainingTurns: left };
+      writeStorage(next);
+      if (left === 0) {
+        const cleared: QuietState = { isQuiet: false, untilTs: null, remainingTurns: null };
+        writeStorage(cleared);
+        track(Events.QuietAutoOff, { reason: "turns_exhausted" });
+        return cleared;
+      }
+      return next;
+    });
+  }, []);
+
+  const value = useMemo<QuietAPI>(() => ({
+    state,
+    startQuiet,
+    clearQuiet,
+    decrementTurn,
+    isActive,
+  }), [state, startQuiet, clearQuiet, decrementTurn, isActive]);
+
+  return (
+    <QuietModeContext.Provider value={value}>
+      {children}
+    </QuietModeContext.Provider>
+  );
+};
+export function useQuietMode() {
+  const ctx = useContext(QuietModeContext);
+  if (!ctx) throw new Error("useQuietMode must be used within QuietModeProvider");
+  return ctx;
+}
+export function isQuietActiveFromStorage(): boolean {
+  try {
+    const raw = localStorage.getItem("mai-quiet-mode-v1");
+    if (!raw) return false;
+    const s = JSON.parse(raw) as QuietState;
+    const now = Date.now();
+    if (!s.isQuiet) return false;
+    if (s.untilTs && now > s.untilTs) return false;
+    if (s.remainingTurns !== null && (s.remainingTurns ?? 0) <= 0) return false;
+    return true;
+  } catch { return false; }
+}
+
+=== src/components/QuietBanner.tsx ===
+import React from "react";
+import { useQuietMode } from "../context/QuietModeContext";
+
+const barStyle: React.CSSProperties = {
+  width: "100%",
+  background: "#0a2246",
+  color: "white",
+  fontSize: 14,
+  lineHeight: "36px",
+  height: 36,
+  textAlign: "center",
+  letterSpacing: "0.5px",
+};
+export const QuietBanner: React.FC = () => {
+  const { state, clearQuiet, isActive } = useQuietMode();
+  if (!isActive()) return null;
+
+  const minutesLeft =
+    state.untilTs ? Math.max(0, Math.ceil((state.untilTs - Date.now()) / 60000)) : null;
+  const turnsLeft = state.remainingTurns ?? null;
+
+  return (
+    <div style={barStyle} role="status" aria-live="polite">
+      <span>邁邁安靜陪你聊，不打擾 😊</span>
+      {state.reason ? <span>｜{state.reason}</span> : null}
+      {minutesLeft !== null ? <span>｜剩餘 {minutesLeft} 分</span> : null}
+      {turnsLeft !== null ? <span>｜剩餘 {turnsLeft} 回合</span> : null}
+      <button
+        onClick={clearQuiet}
+        aria-label="解除安靜模式"
+        style={{ marginLeft: 12, padding: "2px 8px", borderRadius: 6, border: "1px solid #fff", background: "transparent", color: "#fff", cursor: "pointer" }}
+      >
+        解除
+      </button>
+    </div>
+  );
+};
+
+=== src/components/QuietModeToggle.tsx ===
+import React, { useState } from "react";
+import { useQuietMode } from "../context/QuietModeContext";
+
+export const QuietModeToggle: React.FC = () => {
+  const { startQuiet, clearQuiet, isActive } = useQuietMode();
+  const [minutes, setMinutes] = useState<number | "">("");
+  const [turns, setTurns] = useState<number>(10);
+  const [reason, setReason] = useState<string>("只聊天");
+
+  if (isActive()) {
+    return (
+      <button
+        onClick={clearQuiet}
+        title="安靜模式已啟用，點擊解除"
+        className="btn-quiet on"
+        style={{ padding: "6px 10px", borderRadius: 8, border: "1px solid #1749D7", background: "#1749D7", color: "#fff" }}
+      >
+        安靜中（解除）
+      </button>
+    );
+  }
+
+  const handleStart = () => {
+    startQuiet({
+      minutes: typeof minutes === "number" && minutes > 0 ? minutes : undefined,
+      turns: turns > 0 ? turns : undefined,
+      reason: reason || undefined,
+    });
+  };
+
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+      <button
+        onClick={handleStart}
+        title="啟用安靜模式（預設 10 回合）"
+        className="btn-quiet off"
+        style={{ padding: "6px 10px", borderRadius: 8, border: "1px solid #1749D7", background: "#fff", color: "#1749D7" }}
+      >
+        開啟安靜模式
+      </button>
+      <button
+        onClick={() => startQuiet({ minutes: 20, turns: 999, reason: "只想聊 20 分鐘" })}
+        style={{ padding: "4px 8px", borderRadius: 999, border: "1px dashed #1749D7", background: "#F5F8FF", color: "#1749D7" }}
+      >
+        只想聊 20 分鐘
+      </button>
+      <button
+        onClick={() => startQuiet({ minutes: undefined, turns: 999, reason: "今天別推薦了" })}
+        style={{ padding: "4px 8px", borderRadius: 999, border: "1px dashed #1749D7", background: "#F5F8FF", color: "#1749D7" }}
+      >
+        今天別推薦了
+      </button>
+      <input
+        type="number"
+        min={0}
+        placeholder="分鐘(可選)"
+        value={typeof minutes === "number" ? minutes : ""}
+        onChange={(e) => {
+          const v = Number(e.target.value);
+          setMinutes(Number.isFinite(v) ? v : "");
+        }}
+        style={{ width: 90, padding: "4px 6px", borderRadius: 6, border: "1px solid #ddd" }}
+      />
+      <input
+        type="number"
+        min={1}
+        placeholder="回合(預設10)"
+        value={turns}
+        onChange={(e) => {
+          const v = Number(e.target.value);
+          setTurns(Number.isFinite(v) && v > 0 ? v : 10);
+        }}
+        style={{ width: 90, padding: "4px 6px", borderRadius: 6, border: "1px solid #ddd" }}
+      />
+      <input
+        type="text"
+        placeholder="原因(可選)"
+        value={reason}
+        onChange={(e) => setReason(e.target.value)}
+        style={{ width: 120, padding: "4px 6px", borderRadius: 6, border: "1px solid #ddd" }}
+      />
+    </div>
+  );
+};
+
+=== src/components/WarmWelcomeBar.tsx ===
+import React, { useEffect, useMemo, useState } from "react";
+import { getMilestoneHint, getWarmTags, ensureFirstSeen, isWarmbarDismissedToday, dismissWarmbarToday, loadProfile } from "../stores/profileStore";
+import { Events, track } from "../analytics/track";
+
+const barStyle: React.CSSProperties = {
+  width: "100%",
+  background: "#F5F8FF",
+  color: "#0a2246",
+  fontSize: 14,
+  lineHeight: "34px",
+  height: 34,
+  textAlign: "center",
+  letterSpacing: "0.3px",
+  borderBottom: "1px solid #E6ECFF",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: 12,
+};
+const linkBtn: React.CSSProperties = {
+  padding: "2px 10px",
+  borderRadius: 999,
+  border: "1px solid #1749D7",
+  background: "#1749D7",
+  color: "#fff",
+  cursor: "pointer",
+  lineHeight: "24px",
+  height: 26,
+};
+const ghostBtn: React.CSSProperties = {
+  padding: "2px 10px",
+  borderRadius: 999,
+  border: "1px solid #C9D5FF",
+  background: "#fff",
+  color: "#1749D7",
+  cursor: "pointer",
+  lineHeight: "24px",
+  height: 26,
+};
+
+export const WarmWelcomeBar: React.FC = () => {
+  const [shouldShow, setShouldShow] = useState(false);
+  const profile = loadProfile();
+  const tags = useMemo(() => getWarmTags(3), []);
+  const milestone = useMemo(() => getMilestoneHint(profile.milestones), [profile.milestones]);
+
+  useEffect(() => {
+    const { isFirstVisit } = ensureFirstSeen();
+    const hasContent = (tags && tags.length > 0) || !!milestone || !!profile.lastMood;
+    const ok = !isFirstVisit && !isWarmbarDismissedToday() && hasContent;
+    setShouldShow(ok);
+    if (ok) track(Events.WarmbarView, { tags, milestone: !!milestone, lastMood: profile.lastMood });
+  }, [tags, milestone, profile.lastMood]);
+
+  if (!shouldShow) return null;
+
+  const greetByMood = (m?: string) => {
+    if (m === "stress") return "最近辛苦了";
+    if (m === "rest") return "慢慢來就好";
+    return "好久不見";
+  };
+
+  const tagText = tags && tags.length > 0 ? `上次你提到「${tags.join("・")}」` : null;
+  const leftText = milestone ? milestone : (tagText ? `${greetByMood(profile.lastMood)}，${tagText}` : `${greetByMood(profile.lastMood)}，這幾天過得怎麼樣`);
+
+  const onContinue = () => {
+    track(Events.WarmbarContinue, { tags, milestone: !!milestone });
+    const seed = milestone
+      ? "最近有點紀念日的感覺，想輕鬆聊聊。"
+      : (tags && tags.length > 0 ? `還記得我們聊過 ${tags.join("、")}，你有新想法嗎？` : "想跟你聊聊近況～");
+    window.dispatchEvent(new CustomEvent("mai:chat:start", { detail: { text: seed } }));
+  };
+  const onDismissToday = () => {
+    dismissWarmbarToday();
+    setShouldShow(false);
+    track(Events.WarmbarDismiss, {});
+  };
+
+  return (
+    <div style={barStyle} role="status" aria-live="polite">
+      <span>{leftText}</span>
+      <button style={linkBtn} onClick={onContinue}>接著聊</button>
+      <button style={ghostBtn} onClick={onDismissToday}>今天不再顯示</button>
+    </div>
+  );
+};
+
+=== src/context/MoodContext.tsx ===
+import React, { createContext, useContext, useMemo, useState } from "react";
+import { Events, track } from "../analytics/track";
+import { setLastMood } from "../stores/profileStore";
+
+export type Mood = "neutral" | "stress" | "rest";
+type MoodAPI = {
+  mood: Mood;
+  setMood: (m: Mood) => void;
+  tone: "warm" | "soothe" | "light";
+  throttleLevel: 0 | 1 | 2; // 2=最節流
+};
+const MoodContext = createContext<MoodAPI | null>(null);
+
+export const MoodProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [mood, setMoodState] = useState<Mood>(() => {
+    const raw = localStorage.getItem("mai-mood-v1");
+    return (raw as Mood) || "neutral";
+  });
+
+  const setMood = (m: Mood) => {
+    setMoodState(m);
+    localStorage.setItem("mai-mood-v1", m);
+    setLastMood(m);
+    track(Events.MoodPick, { mood: m });
+  };
+
+  const tone: "warm" | "soothe" | "light" =
+    mood === "stress" ? "soothe" : mood === "rest" ? "warm" : "light";
+
+  const throttleLevel: 0 | 1 | 2 =
+    mood === "stress" ? 2 : mood === "rest" ? 1 : 0;
+
+  const value = useMemo<MoodAPI>(() => ({ mood, setMood, tone, throttleLevel }), [mood]);
+  return <MoodContext.Provider value={value}>{children}</MoodContext.Provider>;
+};
+export function useMood() {
+  const ctx = useContext(MoodContext);
+  if (!ctx) throw new Error("useMood must be used within MoodProvider");
+  return ctx;
+}
+
+=== src/components/MoodChips.tsx ===
+import React from "react";
+import { useMood } from "../context/MoodContext";
+
+const chipStyle = (active: boolean): React.CSSProperties => ({
+  padding: "6px 10px",
+  borderRadius: 999,
+  border: active ? "1px solid #1749D7" : "1px solid #ddd",
+  background: active ? "#EAF1FF" : "#fff",
+  color: "#0a2246",
+  cursor: "pointer",
+});
+
+export const FloatingMoodChips: React.FC = () => {
+  const { mood, setMood } = useMood();
+  return (
+    <div style={{ position: "fixed", right: 16, bottom: 16, background: "#fff", border: "1px solid #eee", borderRadius: 12, padding: 8, boxShadow: "0 6px 20px rgba(0,0,0,0.08)", zIndex: 40 }}>
+      <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 6 }}>心情</div>
+      <div style={{ display: "flex", gap: 6 }}>
+        <button onClick={() => setMood("neutral")} aria-label="今天還不錯" style={chipStyle(mood === "neutral")}>今天還不錯</button>
+        <button onClick={() => setMood("stress")} aria-label="有點累" style={chipStyle(mood === "stress")}>有點累</button>
+        <button onClick={() => setMood("rest")} aria-label="想放空" style={chipStyle(mood === "rest")}>想放空</button>
+      </div>
+    </div>
+  );
+};
+
+=== src/services/ai.ts ===
+import { isQuietActiveFromStorage } from "../context/QuietModeContext";
+import { loadProfile } from "../stores/profileStore";
+
+type ChatMessage = { role: "system" | "user" | "assistant"; content: string };
+
+const SYS_DEFAULT =
+  "你是邁房子的在地好鄰居助理（暱稱：邁邁）。語氣溫暖、尊重，台灣語境。回覆≤2行，先同理再資訊，避免推銷語。";
+const SYS_ZEN =
+  "你是邁邁。使用者啟用安靜模式，現在只想被陪伴。100% 傾聽與同理，回覆 1–2 句；嚴禁主動推薦任何房源/社區/廣告。";
+
+function composeSystemPrompt(): string {
+  const isZen = isQuietActiveFromStorage();
+  const mood = (localStorage.getItem("mai-mood-v1") as "neutral" | "stress" | "rest") || "neutral";
+  const profile = loadProfile();
+  const tags = (profile.tags || []).slice(0, 5);
+
+  const tone =
+    mood === "stress"
+      ? "偵測到對方壓力較大：降低資訊量、避免指示語、用安撫口吻。"
+      : mood === "rest"
+      ? "對方想放鬆：可以輕鬆、溫暖地聊天，不必急著提供建議。"
+      : "保持友善、清晰的語氣。";
+
+  const memory = tags.length ? `使用者在意：${tags.join("、")}。未被詢問時不要主動推任何清單，但可在相關話題出現時輕柔承接。` : "";
+
+  return [
+    isZen ? SYS_ZEN : SYS_DEFAULT,
+    tone,
+    memory,
+    "所有輸出需簡潔、真誠，拒絕銷售話術。",
+  ].filter(Boolean).join("\n");
+}
+
+export async function postLLM(messages: ChatMessage[], options?: { temperature?: number; max_tokens?: number }) {
+  const res = await fetch("/api/openai-proxy", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      messages: [
+        { role: "system", content: composeSystemPrompt() },
+        ...messages
+      ],
+      temperature: options?.temperature ?? 0.7,
+      max_tokens: options?.max_tokens ?? 300
+    }),
+  });
+  if (!res.ok) {
+    throw new Error(`LLM proxy error: ${res.status}`);
+  }
+  const data = await res.json();
+  const text = data?.choices?.[0]?.message?.content ?? "";
+  return text as string;
+}
+
+export async function politeRewrite(draft: string, opts?: { audience?: "owner" | "agent"; intent?: "view" | "detail" | "pet" | "price" }) {
+  const who = opts?.audience === "owner" ? "屋主" : "仲介";
+  const why = (() => {
+    switch (opts?.intent) {
+      case "view": return "預約看房";
+      case "detail": return "詢問物件細節";
+      case "pet": return "確認是否可養寵物";
+      case "price": return "詢問價格與議價空間";
+      default: return "一般詢問";
+    }
+  })();
+  const prompt = `請將以下訊息改寫成「禮貌、簡短、尊重」的兩個版本（V1/V2），情境：要發給「${who}」，目的：「${why}」。維持原意，避免命令語：\n---\n${draft}\n---\n格式：\nV1：...\nV2：...`;
+  return postLLM([{ role: "user", content: prompt }], { max_tokens: 220 });
+}
+
+export async function empathicEcho(note: string) {
+  const prompt = `以下是一段對物件的主觀感受，請以同理的語氣回聲，僅 1–2 句、避免建議：\n「${note}」`;
+  return postLLM([{ role: "user", content: prompt }], { max_tokens: 80 });
+}
+
+export async function eli5Term(termOrPara: string) {
+  const prompt = `請用白話、非法律意見的方式解釋這段名詞/條款，列出「重點」與「注意」各1–2點，總長≤2行：\n${termOrPara}`;
+  return postLLM([{ role: "user", content: prompt }], { max_tokens: 120 });
+}
+
+export async function debriefToMNA(like: string, pain: string, next: string) {
+  const prompt = `我看完一間房，請把重點分成「必要(Must)」「加分(Nice)」「不要(Avoid)」各2–3點，總長≤2行；並在最後一行輸出 #tags: 以逗號分隔 3–5 個關鍵字（避免人名/品牌）。\n喜歡：${like}\n困擾：${pain}\n下一步：${next}`;
+  return postLLM([{ role: "user", content: prompt }], { max_tokens: 160 });
+}
+
+=== src/components/ELI5Tooltip.tsx ===
+import React, { useEffect, useState } from "react";
+import { eli5Term } from "../services/ai";
+import { Events, track } from "../analytics/track";
+
+const KEYWORDS = ["持分", "使用分區", "公設比", "地上權", "都更", "容積率"];
+
+export const ELI5Tooltip: React.FC<{ text: string }> = ({ text }) => {
+  const [open, setOpen] = useState(false);
+  const [ans, setAns] = useState<string>("");
+  const [loading, setLoading] = useState(false);
+
+  const fetchAns = async () => {
+    if (ans) return;
+    setLoading(true);
+    try {
+      const out = await eli5Term(text);
+      setAns(out);
+      track(Events.ELI5Open, { term: text });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 每日一次的「主動建議」：遇到關鍵詞自動開啟
+  useEffect(() => {
+    const today = new Date().toISOString().slice(0,10);
+    const k = `mai-eli5-suggest-${today}`;
+    const shouldSuggest = KEYWORDS.some(w => text.includes(w)) && !localStorage.getItem(k);
+    if (shouldSuggest) {
+      localStorage.setItem(k, "1");
+      setOpen(true);
+      fetchAns();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const toggle = async () => {
+    const next = !open;
+    setOpen(next);
+    if (next) await fetchAns();
+  };
+
+  return (
+    <span style={{ display: "inline-flex", alignItems: "center", position: "relative" }}>
+      <button aria-label="白話解釋" onClick={toggle} style={{ marginLeft: 6, width: 18, height: 18, borderRadius: 999, border: "1px solid #C9D5FF", background: "#F5F8FF", color: "#1749D7", fontSize: 12, cursor: "pointer" }}>?</button>
+      {open && (
+        <div style={{ position: "absolute", top: "120%", left: 0, background: "#fff", border: "1px solid #E6ECFF", borderRadius: 8, padding: 10, width: 280, boxShadow: "0 10px 24px rgba(0,0,0,0.08)", zIndex: 50 }}>
+          <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 6 }}>白話解釋（僅供參考，非法律意見）</div>
+          <div style={{ whiteSpace: "pre-wrap" }}>{loading ? "生成中…" : ans}</div>
+        </div>
+      )}
+    </span>
+  );
+};
+
+=== src/components/BudgetLite.tsx ===
+import React, { useMemo, useState } from "react";
+import { Events, track } from "../analytics/track";
+
+function calcMonthlyPayment(principal: number, annualRate: number, years: number) {
+  const r = annualRate / 12 / 100;
+  const n = years * 12;
+  if (r === 0) return principal / n;
+  return (principal * r) / (1 - Math.pow(1 + r, -n));
+}
+
+export const BudgetLite: React.FC = () => {
+  const [total, setTotal] = useState<number>(1500);
+  const [down, setDown] = useState<number>(30);
+  const [rate, setRate] = useState<number>(2.25);
+  const [years, setYears] = useState<number>(20);
+  const [income, setIncome] = useState<number | "">("");
+
+  const principal = useMemo(() => Math.max(0, total * (1 - down / 100)), [total, down]);
+  const monthly = useMemo(() => Math.round(calcMonthlyPayment(principal * 10000, rate, years)), [principal, rate, years]); // 假設單位萬元
+  const mgmt = 3000; // 可調
+
+  const burden = useMemo(() => {
+    if (typeof income !== "number" || income <= 0) return null;
+    return Math.round((monthly + mgmt) / income * 100);
+  }, [income, monthly]);
+
+  const onCopy = () => {
+    const text = `概算（僅供參考）：\n總價${total}萬，頭期${down}% → 貸款約${principal.toFixed(0)}萬；${years}年利率${rate}% → 月付約 ${monthly} 元；管理費約 ${mgmt} 元。` + (burden !== null ? `\n月負擔率約 ${burden}%（含管理費）。` : "");
+    navigator.clipboard.writeText(text).then(() => track(Events.BudgetCopy, {}));
+  };
+
+  const warmTip = (() => {
+    if (burden === null) return "這個數字僅供參考，別給自己太大壓力。";
+    if (burden >= 50) return "負擔率偏高了，先別急著決定；我們可以討論更有彈性的做法。";
+    if (burden >= 35) return "負擔率有點高，可再看看地點/年限的權衡。";
+    return "看起來在可接受範圍內，但仍建議保留彈性。";
+  })();
+
+  return (
+    <div style={{ border: "1px solid #eee", borderRadius: 12, padding: 12, background: "#fff" }}>
+      <div style={{ fontWeight: 600, marginBottom: 8 }}>預算規劃（Lite）</div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 8 }}>
+        <label>總價(萬)<input type="number" value={total} onChange={e => setTotal(Number(e.target.value))} style={{ width: "100%", padding: 6, borderRadius: 8, border: "1px solid #ddd" }} /></label>
+        <label>頭期(%)<input type="number" value={down} onChange={e => setDown(Number(e.target.value))} style={{ width: "100%", padding: 6, borderRadius: 8, border: "1px solid #ddd" }} /></label>
+        <label>利率(%)<input type="number" value={rate} onChange={e => setRate(Number(e.target.value))} style={{ width: "100%", padding: 6, borderRadius: 8, border: "1px solid #ddd" }} /></label>
+        <label>年限<input type="number" value={years} onChange={e => setYears(Number(e.target.value))} style={{ width: "100%", padding: 6, borderRadius: 8, border: "1px solid #ddd" }} /></label>
+        <label>月收入(可選)<input type="number" value={typeof income === "number" ? income : ""} onChange={e => { const v = Number(e.target.value); setIncome(Number.isFinite(v) ? v : ""); }} style={{ width: "100%", padding: 6, borderRadius: 8, border: "1px solid #ddd" }} /></label>
+      </div>
+      <div style={{ marginTop: 10, fontSize: 14, color: "#0a2246" }}>
+        概算（僅供參考）：月付約 <b>{monthly.toLocaleString()}</b> 元；貸款本金約 <b>{principal.toFixed(0)}</b> 萬。
+        {burden !== null && <>　｜　月負擔率約 <b>{burden}%</b>（含管理費）</>}
+      </div>
+      <div style={{ marginTop: 8, color: "#6b7280" }}>{warmTip}</div>
+      <button onClick={onCopy} style={{ marginTop: 8, padding: "6px 10px", borderRadius: 8, border: "1px solid #1749D7", background: "#fff", color: "#1749D7" }}>複製概算模板</button>
+    </div>
+  );
+};
+
+=== src/stores/notesStore.ts ===
+export type NoteItem = {
+  id: string;
+  createdAt: number;
+  note: string;
+  echo?: string;
+};
+const KEY = "mai-notes-v1";
+function loadAll(): NoteItem[] {
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (!raw) return [];
+    return JSON.parse(raw) as NoteItem[];
+  } catch {
+    return [];
+  }
+}
+function saveAll(items: NoteItem[]) {
+  localStorage.setItem(KEY, JSON.stringify(items));
+}
+export function addNote(note: string, echo?: string): NoteItem {
+  const items = loadAll();
+  const item: NoteItem = {
+    id: Math.random().toString(36).slice(2),
+    createdAt: Date.now(),
+    note,
+    echo,
+  };
+  items.unshift(item);
+  saveAll(items);
+  return item;
+}
+export function listNotes(): NoteItem[] { return loadAll(); }
+export function clearNotes() { saveAll([]); }
+
+=== src/components/NoteWithEcho.tsx ===
+import React, { useState } from "react";
+import { empathicEcho } from "../services/ai";
+import { addNote } from "../stores/notesStore";
+import { Events, track } from "../analytics/track";
+
+export const NoteWithEcho: React.FC = () => {
+  const [text, setText] = useState("");
+  const [echo, setEcho] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [focused, setFocused] = useState(false);
+
+  const handleSave = async () => {
+    const v = text.trim();
+    if (!v) return;
+    setLoading(true);
+    try {
+      const echoText = await empathicEcho(v);
+      setEcho(echoText);
+      addNote(v, echoText);
+      track(Events.NoteSaved, {});
+    } catch (e) {
+      addNote(v);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div style={{ border: "1px solid #eee", borderRadius: 12, padding: 12, background: "#fff" }}>
+      <div style={{ fontWeight: 600, marginBottom: 6 }}>收藏備註（感受）</div>
+      <textarea
+        rows={3}
+        placeholder="寫下這間帶給你的感覺…"
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
+        style={{ width: "100%", padding: 8, borderRadius: 8, border: "1px solid #ddd" }}
+      />
+      {focused && <div style={{ fontSize: 12, color: "#6b7280", marginTop: 4 }}>慢慢寫，我在。</div>}
+      <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+        <button onClick={handleSave} disabled={loading} style={{ padding: "8px 12px", borderRadius: 8, background: "#1749D7", color: "#fff", border: "1px solid #1749D7" }}>
+          {loading ? "生成中…" : "存入便條（含回聲）"}
+        </button>
+        {echo && <span style={{ color: "#6b7280" }}>AI 回聲：{echo}</span>}
+      </div>
+    </div>
+  );
+};
+
+=== src/components/PoliteRewrite.tsx ===
+import React, { useState } from "react";
+import { politeRewrite } from "../services/ai";
+import { Events, track } from "../analytics/track";
+
+export const PoliteRewrite: React.FC<{ onAdopt?: (text: string) => void }> = ({ onAdopt }) => {
+  const [draft, setDraft] = useState("");
+  const [audience, setAudience] = useState<"owner" | "agent">("agent");
+  const [intent, setIntent] = useState<"view" | "detail" | "pet" | "price">("detail");
+  const [v1, setV1] = useState<string | null>(null);
+  const [v2, setV2] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [sent, setSent] = useState(false);
+
+  const handleRewrite = async () => {
+    const d = draft.trim();
+    if (!d) return;
+    setLoading(true);
+    try {
+      const out = await politeRewrite(d, { audience, intent });
+      const m = out.split(/\n+/).map(s => s.trim()).filter(Boolean);
+      const a = m.find(x => /^V1/.test(x)) || "";
+      const b = m.find(x => /^V2/.test(x)) || "";
+      setV1(a.replace(/^V1[:：]\s?/, ""));
+      setV2(b.replace(/^V2[:：]\s?/, ""));
+      track(Events.RewriteGen, { audience, intent });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const adopt = (text: string) => {
+    onAdopt?.(text);
+    setSent(true);
+    track(Events.RewriteAdopt, { audience, intent });
+    setTimeout(() => setSent(false), 2500);
+  };
+
+  return (
+    <div style={{ border: "1px solid #eee", borderRadius: 12, padding: 12, background: "#fff" }}>
+      <div style={{ fontWeight: 600, marginBottom: 6 }}>禮貌改寫小幫手</div>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 8 }}>
+        <label>對象
+          <select value={audience} onChange={e => setAudience(e.target.value as any)} style={{ marginLeft: 6, padding: 6, borderRadius: 8, border: "1px solid #ddd" }}>
+            <option value="agent">仲介</option>
+            <option value="owner">屋主</option>
+          </select>
+        </label>
+        <label>目的
+          <select value={intent} onChange={e => setIntent(e.target.value as any)} style={{ marginLeft: 6, padding: 6, borderRadius: 8, border: "1px solid #ddd" }}>
+            <option value="detail">詢問細節</option>
+            <option value="view">預約看房</option>
+            <option value="pet">可否養寵物</option>
+            <option value="price">價格/議價</option>
+          </select>
+        </label>
+      </div>
+      <textarea
+        rows={3}
+        placeholder="貼上你想發的訊息（我會根據對象/目的幫你潤飾）"
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        style={{ width: "100%", padding: 8, borderRadius: 8, border: "1px solid #ddd" }}
+      />
+      <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+        <button onClick={handleRewrite} disabled={loading} style={{ padding: "8px 12px", borderRadius: 8, background: "#1749D7", color: "#fff", border: "1px solid #1749D7" }}>
+          {loading ? "生成中…" : "禮貌改寫"}
+        </button>
+      </div>
+      {(v1 || v2) && (
+        <div style={{ marginTop: 10, display: "grid", gap: 8 }}>
+          {v1 && (
+            <div style={{ border: "1px solid #E6ECFF", borderRadius: 8, padding: 8 }}>
+              <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 4 }}>版本一</div>
+              <div style={{ marginBottom: 6 }}>{v1}</div>
+              <button onClick={() => adopt(v1)} style={{ padding: "6px 10px", borderRadius: 8, border: "1px solid #1749D7", background: "#fff", color: "#1749D7" }}>採用（複製/送出）</button>
+            </div>
+          )}
+          {v2 && (
+            <div style={{ border: "1px solid #E6ECFF", borderRadius: 8, padding: 8 }}>
+              <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 4 }}>版本二</div>
+              <div style={{ marginBottom: 6 }}>{v2}</div>
+              <button onClick={() => adopt(v2)} style={{ padding: "6px 10px", borderRadius: 8, border: "1px solid #1749D7", background: "#fff", color: "#1749D7" }}>採用（複製/送出）</button>
+            </div>
+          )}
+          {sent && <div style={{ color: "#16a34a" }}>已準備好訊息，祝溝通順利 🤞</div>}
+        </div>
+      )}
+    </div>
+  );
+};
+
+=== src/components/DebriefMini.tsx ===
+import React, { useState } from "react";
+import { debriefToMNA } from "../services/ai";
+import { addNote } from "../stores/notesStore";
+import { upsertTags } from "../stores/profileStore";
+import { Events, track } from "../analytics/track";
+
+function parseTags(text: string): string[] {
+  const m = text.split("\n").find(l => l.trim().startsWith("#tags"));
+  if (!m) return [];
+  const arr = m.replace(/^#tags\s*[:：]\s*/i, "").split(",").map(s => s.trim()).filter(Boolean);
+  return arr.slice(0, 5);
+}
+
+export const DebriefMini: React.FC = () => {
+  const [like, setLike] = useState("");
+  const [pain, setPain] = useState("");
+  const [next, setNext] = useState("");
+  const [out, setOut] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const handleGen = async () => {
+    setLoading(true);
+    try {
+      const text = await debriefToMNA(like, pain, next);
+      setOut(text);
+      const tags = parseTags(text);
+      if (tags.length) upsertTags(tags);
+      track(Events.DebriefGen, { tags });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSave = () => {
+    const md = `【看屋小結】\n喜歡：${like}\n困擾：${pain}\n下一步：${next}\n---\n${out ?? ""}`;
+    addNote(md);
+    track(Events.DebriefSave, {});
+  };
+
+  return (
+    <div style={{ border: "1px solid #eee", borderRadius: 12, padding: 12, background: "#fff" }}>
+      <div style={{ fontWeight: 600, marginBottom: 6 }}>看屋後三問（Mini Debrief）</div>
+      <div style={{ display: "grid", gap: 8 }}>
+        <input value={like} onChange={e => setLike(e.target.value)} placeholder="第一直覺如何？（例：採光很好）" style={{ padding: 8, borderRadius: 8, border: "1px solid #ddd" }} />
+        <input value={pain} onChange={e => setPain(e.target.value)} placeholder="哪裡卡卡的？（例：廚房太小）" style={{ padding: 8, borderRadius: 8, border: "1px solid #ddd" }} />
+        <input value={next} onChange={e => setNext(e.target.value)} placeholder="下一步想做什麼？（例：再看一間對比）" style={{ padding: 8, borderRadius: 8, border: "1px solid #ddd" }} />
+      </div>
+      <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+        <button onClick={handleGen} disabled={loading} style={{ padding: "8px 12px", borderRadius: 8, background: "#1749D7", color: "#fff", border: "1px solid #1749D7" }}>
+          {loading ? "整理中…" : "生成 Must/Nice/Avoid + #tags"}
+        </button>
+        {out && <button onClick={handleSave} style={{ padding: "8px 12px", borderRadius: 8, border: "1px solid #1749D7", background: "#fff", color: "#1749D7" }}>存到便條</button>}
+      </div>
+      {out && <div style={{ marginTop: 10, whiteSpace: "pre-wrap", color: "#0a2246" }}>{out}</div>}
+    </div>
+  );
+};
+
+=== src/components/chat/ChatInput.tsx ===
+import React, { useEffect, useRef, useState } from "react";
+import { useQuietMode } from "../../context/QuietModeContext";
+import { Events, track } from "../../analytics/track";
+
+type Props = { onSend: (text: string) => Promise<void> | void; };
+
+export const ChatInput: React.FC<Props> = ({ onSend }) => {
+  const { isActive, decrementTurn } = useQuietMode();
+  const [text, setText] = useState("");
+  const inputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const ce = e as CustomEvent<{ text?: string }>;
+      const seed = ce.detail?.text || "";
+      if (seed) {
+        setText(seed);
+        inputRef.current?.focus();
+        track("ui.warmbar_prefill", { from: "warmbar" });
+      }
+    };
+    window.addEventListener("mai:chat:start", handler as EventListener);
+    return () => window.removeEventListener("mai:chat:start", handler as EventListener);
+  }, []);
+
+  const handleSend = async () => {
+    const msg = text.trim();
+    if (!msg) return;
+    setText("");
+    try {
+      await onSend(msg);
+    } finally {
+      if (isActive()) {
+        decrementTurn();
+        track(Events.QuietTurnUsed, {});
+      }
+    }
+  };
+
+  return (
+    <div style={{ display: "flex", gap: 8 }}>
+      <input
+        ref={inputRef}
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        placeholder={isActive() ? "安靜模式：只聊天，不推內容" : "輸入訊息…"}
+        style={{ flex: 1, padding: "10px 12px", borderRadius: 10, border: "1px solid #ddd" }}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            handleSend();
+          }
+        }}
+      />
+      <button onClick={handleSend} style={{ padding: "8px 12px", borderRadius: 10, background: "#1749D7", color: "#fff", border: "1px solid #1749D7" }}>
+        發送
+      </button>
+    </div>
+  );
+};
+
+=== src/components/index.ts ===
+export * from "./QuietBanner";
+export * from "./QuietModeToggle";
+export * from "./WarmWelcomeBar";
+export * from "./MoodChips";
+export * from "./NoteWithEcho";
+export * from "./PoliteRewrite";
+export * from "./ELI5Tooltip";
+export * from "./BudgetLite";
+export * from "./DebriefMini";
