@@ -1,0 +1,6 @@
+{
+  "rewrites": [
+    { "source": "/maihouses", "destination": "/" },
+    { "source": "/maihouses/(.*)", "destination": "/$1" }
+  ]
+}
