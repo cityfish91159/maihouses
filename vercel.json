@@ -1,4 +1,7 @@
 {
+  "buildCommand": "npm run build",
+  "outputDirectory": "docs",
+
   "redirects": [
     { "source": "/", "destination": "/maihouses", "permanent": false }
   ],
@@ -8,7 +11,7 @@
   ],
   "functions": {
     "api/*.js": {
-      "runtime": "nodejs20.x",
+      "runtime": "nodejs22.x",
       "memory": 256,
       "maxDuration": 30
     }
