@@ -1,27 +1,18 @@
-// 通用回應工具：同時支援 Vercel 傳統 res.json 與 Web Response（保留但使用 req,res）
-const reply = (res, body, status = 200) => {
-  if (res && typeof res.status === "function") {
-    return res.status(status).json(body);
-  }
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { "content-type": "application/json" },
-  });
-};
+import { v2 as cloudinary } from 'cloudinary';
 
 export default async function handler(req, res) {
-  // CORS（與 openai-proxy 一致）
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  // CORS
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-  if (req.method === "OPTIONS") {
+  if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
 
-  // 健康檢查（GET ?ping=1）
-  if (req.method === "GET" && req.query?.ping === "1") {
-    return res.status(200).json({ ok: true, mode: "ping" });
+  // 健康檢查
+  if (req.method === 'GET' && req.query?.ping === '1') {
+    return res.status(200).json({ ok: true, mode: 'ping' });
   }
 
   // 檢查環境變數
@@ -32,23 +23,17 @@ export default async function handler(req, res) {
 
   if (!hasUrl && !(name && key && secret)) {
     const miss = [];
-    if (!hasUrl) {
-      if (!name) miss.push("CLOUDINARY_CLOUD_NAME");
-      if (!key) miss.push("CLOUDINARY_API_KEY");
-      if (!secret) miss.push("CLOUDINARY_API_SECRET");
-    }
+    if (!name) miss.push('CLOUDINARY_CLOUD_NAME');
+    if (!key) miss.push('CLOUDINARY_API_KEY');
+    if (!secret) miss.push('CLOUDINARY_API_SECRET');
     return res.status(500).json({
       ok: false,
-      error: "Missing Cloudinary credentials",
-      missing: miss,
-      hint: "Set CLOUDINARY_URL or all three variables in Vercel",
+      error: 'Missing Cloudinary credentials',
+      missing: miss
     });
   }
 
-  // 延後載入 cloudinary 以避免頂層載入時在 Vercel 發生 runtime 衝突
   try {
-    const { v2: cloudinary } = await import("cloudinary");
-
     // 設定 Cloudinary
     if (hasUrl) {
       cloudinary.config({ secure: true });
@@ -57,23 +42,30 @@ export default async function handler(req, res) {
     }
 
     const cfg = cloudinary.config();
-    // 不使用 upload_preset，直接伺服器端上傳
-    const r = await cloudinary.uploader.upload(
-      "https://res.cloudinary.com/demo/image/upload/sample.jpg",
-      { folder: "raw" }
+    
+    // 上傳測試圖片（不使用 upload_preset）
+    const result = await cloudinary.uploader.upload(
+      'https://res.cloudinary.com/demo/image/upload/sample.jpg',
+      { folder: 'raw' }
     );
 
-    return res.status(200).json({ ok: true, url: r.secure_url, public_id: r.public_id, cloud_name: cfg.cloud_name });
-  } catch (e) {
+    return res.status(200).json({
+      ok: true,
+      url: result.secure_url,
+      public_id: result.public_id,
+      cloud_name: cfg.cloud_name
+    });
+
+  } catch (error) {
     return res.status(500).json({
       ok: false,
-      error: String(e && e.stack ? e.stack : e && e.message ? e.message : e),
+      error: error.message || String(error),
       have: {
         CLOUDINARY_URL: !!process.env.CLOUDINARY_URL,
         CLOUDINARY_CLOUD_NAME: !!process.env.CLOUDINARY_CLOUD_NAME,
         CLOUDINARY_API_KEY: !!process.env.CLOUDINARY_API_KEY,
-        CLOUDINARY_API_SECRET: !!process.env.CLOUDINARY_API_SECRET,
-      },
+        CLOUDINARY_API_SECRET: !!process.env.CLOUDINARY_API_SECRET
+      }
     });
   }
 }
