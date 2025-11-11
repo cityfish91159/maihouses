@@ -85,13 +85,13 @@ export default function Header() {
     </svg>
     <span>房地產表列</span>
   </a>
-  <a class="mh-pill" href="./auth.html?mode=login">
+  <a class="mh-pill" href="/maihouses/auth.html?mode=login">
     <svg class="mh-icon" viewBox="0 0 24 24" aria-hidden="true">
       <path d="M10 17l5-5-5-5v3H3v4h7v3zm9-12h-8v2h8v10h-8v2h8a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2z"/>
     </svg>
     <span>登入</span>
   </a>
-  <a class="mh-pill mh-pill--primary" href="./auth.html?mode=signup">
+  <a class="mh-pill mh-pill--primary" href="/maihouses/auth.html?mode=signup">
     <svg class="mh-icon" viewBox="0 0 24 24" aria-hidden="true">
       <path d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5zm-9 9a9 9 0 0 1 18 0z"/>
     </svg>
