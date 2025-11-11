@@ -2,11 +2,5 @@
   "rewrites": [
     { "source": "/maihouses", "destination": "/" },
     { "source": "/maihouses/(.*)", "destination": "/$1" }
-  ],
-  "functions": {
-    "api/**": {
-      "runtime": "nodejs20.x",
-      "regions": ["hnd1"]
-    }
-  }
+  ]
 }
