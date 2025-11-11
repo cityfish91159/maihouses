@@ -31,7 +31,15 @@ function composeSystemPrompt(): string {
   ].filter(Boolean).join("\n");
 }
 
-export async function postLLM(messages: ChatMessage[], options?: { temperature?: number; max_tokens?: number }) {
+export async function postLLM(
+  messages: ChatMessage[], 
+  optionsOrCallback?: { temperature?: number; max_tokens?: number } | ((chunk: string) => void),
+  maybeOptions?: { temperature?: number; max_tokens?: number }
+) {
+  // Determine if streaming is requested
+  const onChunk = typeof optionsOrCallback === 'function' ? optionsOrCallback : undefined;
+  const options = typeof optionsOrCallback === 'object' ? optionsOrCallback : maybeOptions;
+
   const res = await fetch("/api/openai-proxy", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -41,12 +49,51 @@ export async function postLLM(messages: ChatMessage[], options?: { temperature?:
         ...messages
       ],
       temperature: options?.temperature ?? 0.7,
-      max_tokens: options?.max_tokens ?? 300
+      max_tokens: options?.max_tokens ?? 300,
+      stream: !!onChunk
     }),
   });
+  
   if (!res.ok) {
     throw new Error(`LLM proxy error: ${res.status}`);
   }
+
+  // Handle streaming response
+  if (onChunk && res.body) {
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let fullText = '';
+    
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      
+      const chunk = decoder.decode(value, { stream: true });
+      const lines = chunk.split('\n');
+      
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          const data = line.slice(6);
+          if (data === '[DONE]') continue;
+          
+          try {
+            const parsed = JSON.parse(data);
+            const content = parsed?.choices?.[0]?.delta?.content;
+            if (content) {
+              fullText += content;
+              onChunk(content);
+            }
+          } catch (e) {
+            // Skip parse errors
+          }
+        }
+      }
+    }
+    
+    return fullText;
+  }
+
+  // Handle non-streaming response
   const data = await res.json();
   const text = data?.choices?.[0]?.message?.content ?? "";
   return text as string;

@@ -1,6 +1,6 @@
 import { v4 as uuidv4 } from 'uuid'
 import { getConfig } from '../app/config'
-import { callOpenAI } from './openai'
+import { postLLM } from './ai'
 import type { ApiResponse, Paginated, PropertyCard, ReviewSnippet, AiAskReq, AiAskRes, CommunityPreview } from '../types'
 
 let sessionId = uuidv4()
@@ -83,9 +83,9 @@ export const aiAsk = async (req: AiAskReq, onChunk?: (chunk: string) => void): P
   try {
     const messages = req.messages.map(m => ({ role: m.role as 'user' | 'assistant', content: m.content }))
     console.log('🟢 發送訊息:', messages)
-    const result = await callOpenAI(messages, onChunk)
-    console.log('🟢 callOpenAI 回傳:', result)
-    const aiResult: AiAskRes = { answers: [result.content], recommends: [] }
+    const result = await postLLM(messages, onChunk)
+    console.log('🟢 postLLM 回傳:', result)
+    const aiResult: AiAskRes = { answers: [result], recommends: [] }
     console.log('🟢 最終 aiResult:', aiResult)
     return { ok: true, data: aiResult }
   } catch (error) {
