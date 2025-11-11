@@ -2,8 +2,6 @@ import { useState, useRef, useEffect } from 'react'
 import { aiAsk } from '../../../services/api'
 import { trackEvent } from '../../../services/uag'
 import type { AiMessage, PropertyCard } from '../../../types'
-import { QuietModeToggle } from '../../../components/QuietModeToggle'
-import { QuietBanner } from '../../../components/QuietBanner'
 
 const QUICK = ['3房以內', '30坪以下', '近捷運', '新成屋']
 
@@ -13,6 +11,7 @@ export default function SmartAsk() {
   const [reco, setReco] = useState<PropertyCard[]>([])
   const [loading, setLoading] = useState(false)
   const [totalTokens, setTotalTokens] = useState(0)
+  const [mood, setMood] = useState<'neutral' | 'stress' | 'rest'>('neutral')
   const chatRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -138,24 +137,20 @@ export default function SmartAsk() {
 
   return (
     <section 
-      className="gradient-ask ai-card space-y-6 rounded-[32px] p-6 shadow-lg transition-shadow hover:shadow-xl md:p-8"
-      style={{ background: 'linear-gradient(135deg, #D8E9FF 0%, #EAF4FF 100%)' }}
+      className="gradient-ask ai-card space-y-4 rounded-[32px] p-4 shadow-lg transition-shadow hover:shadow-xl md:p-8"
+      style={{ background: 'linear-gradient(135deg, #D8E9FF 0%, #EAF4FF 100%)', maxHeight: 'min(85vh, 800px)', display: 'flex', flexDirection: 'column' }}
     >
-      {/* Quiet Mode Banner */}
-      <QuietBanner />
-
-      <div className="mb-2 flex flex-wrap items-center gap-2">
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
         <div className="flex min-w-0 items-center gap-2">
           <div className="size-2.5 rounded-full bg-[var(--brand)]" style={{ animation: 'pulse-subtle 2s ease-in-out infinite' }} />
           <h3
             className="truncate font-bold text-[var(--text-primary)]"
-            style={{ fontSize: 'clamp(19px, 2.4vw, 22px)', fontWeight: 900 }}
+            style={{ fontSize: 'clamp(17px, 2.4vw, 22px)', fontWeight: 900 }}
           >
             AI 找房助理
           </h3>
         </div>
-  <div style={{ width: '3.5rem' }} aria-hidden="true" />
-        <div className="flex flex-wrap items-center gap-1 md:flex-nowrap" style={{ minWidth: 'fit-content' }}>
+        <div className="flex flex-wrap items-center gap-1" style={{ minWidth: 'fit-content' }}>
           {QUICK.map((q) => (
             <button
               key={q}
@@ -167,45 +162,61 @@ export default function SmartAsk() {
             </button>
           ))}
         </div>
-        <div className="ml-auto min-w-[150px] text-right text-xs font-medium text-[var(--text-secondary)]">
-          {import.meta.env.DEV && totalTokens > 0 ? `${totalTokens} tokens` : '多輪對話・智能推薦'}
-        </div>
-      </div>
-
-      {/* Quiet Mode Toggle */}
-      <div className="flex items-center justify-between gap-4 rounded-lg bg-white/50 p-3">
-        <QuietModeToggle />
       </div>
 
       <div
         ref={chatRef}
         role="log"
         aria-live="polite"
-  className="max-h-[620px] min-h-[380px] space-y-3 overflow-y-auto rounded-[var(--r-lg)] border border-[var(--border-default)] bg-white p-4 shadow-inner md:max-h-[540px] md:min-h-[340px]"
+        className="flex-1 space-y-3 overflow-y-auto rounded-[var(--r-lg)] border border-[var(--border-default)] bg-white shadow-inner"
+        style={{ minHeight: '320px', maxHeight: '520px' }}
       >
+        {/* 心情選項 - 移到對話框內頂部 */}
+        <div className="sticky top-0 z-10 flex items-center gap-2 border-b border-gray-100 bg-white/95 px-3 py-2 backdrop-blur-sm">
+          <span className="text-xs text-gray-500">今天心情：</span>
+          <button 
+            onClick={() => setMood('neutral')} 
+            className={`rounded-full px-3 py-1 text-xs transition-all ${mood === 'neutral' ? 'bg-blue-50 border border-blue-500 text-blue-700' : 'bg-gray-50 border border-gray-200 text-gray-600'}`}
+          >
+            還不錯
+          </button>
+          <button 
+            onClick={() => setMood('stress')} 
+            className={`rounded-full px-3 py-1 text-xs transition-all ${mood === 'stress' ? 'bg-blue-50 border border-blue-500 text-blue-700' : 'bg-gray-50 border border-gray-200 text-gray-600'}`}
+          >
+            有點累
+          </button>
+          <button 
+            onClick={() => setMood('rest')} 
+            className={`rounded-full px-3 py-1 text-xs transition-all ${mood === 'rest' ? 'bg-blue-50 border border-blue-500 text-blue-700' : 'bg-gray-50 border border-gray-200 text-gray-600'}`}
+          >
+            想放空
+          </button>
+        </div>
+
+        <div className="px-4 pb-4">
         {messages.length === 0 ? (
-          <div className="flex h-full items-center justify-center text-[var(--text-tertiary)]" style={{ fontSize: 'var(--fs-sm)' }}>
+          <div className="flex min-h-[240px] items-center justify-center text-[var(--text-tertiary)]" style={{ fontSize: 'var(--fs-sm)' }}>
             <div className="text-center">
-              <p className="mb-2 text-2xl">💬</p>
-              <p className="mb-2 font-medium text-[var(--text-primary)]">您好！我是邁房子 AI 助理</p>
-              <p className="mx-auto max-w-[280px] text-xs leading-relaxed">
-                <span className="font-semibold text-[var(--brand)]">邁鄰居</span>：買房前先查社區口碑<br/>
-                <span className="font-semibold text-[var(--brand)]">邁房子</span>：安心陪跑全程留痕
+              <p className="mb-3 text-3xl">🏠</p>
+              <p className="mb-2 text-lg font-semibold text-[var(--text-primary)]">找房不孤單，我陪你</p>
+              <p className="mx-auto max-w-[280px] text-sm leading-relaxed text-gray-600">
+                專業建議 • 社區口碑 • 全程記錄<br/>
+                讓我們一起找到理想的家
               </p>
             </div>
           </div>
         ) : (
           messages.map((m, i) => (
-            <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'} animate-[fadeIn_0.3s_ease-out]`}>
+            <div key={i} className={`mb-3 flex ${m.role === 'user' ? 'justify-end' : 'justify-start'} animate-[fadeIn_0.3s_ease-out]`}>
               <div
-                className={`max-w-[85%] rounded-[var(--r-lg)] px-4 py-2.5 shadow-sm md:max-w-[75%] ${
+                className={`max-w-[85%] rounded-2xl px-4 py-2.5 shadow-sm md:max-w-[75%] ${
                   m.role === 'user'
                     ? 'user-bubble text-white'
                     : 'bg-[var(--neutral-100)] text-[var(--text-primary)]'
                 }`}
                 style={{
                   fontSize: 'var(--fs-sm)',
-                  // 若變數不存在提供後備漸層，避免白字配白底看起來空白
                   background:
                     m.role === 'user'
                       ? 'var(--gradient-button, linear-gradient(135deg, #1749D7 0%, #1E90FF 100%))'
@@ -224,7 +235,7 @@ export default function SmartAsk() {
         )}
         {loading && (
           <div className="flex justify-start">
-            <div className="max-w-[80%] rounded-[var(--r-lg)] bg-[var(--neutral-100)] px-4 py-2.5 text-[var(--text-primary)]" style={{ fontSize: 'var(--fs-sm)' }}>
+            <div className="max-w-[80%] rounded-2xl bg-[var(--neutral-100)] px-4 py-2.5 text-[var(--text-primary)]" style={{ fontSize: 'var(--fs-sm)' }}>
               <div className="flex items-center gap-1">
                 <span>正在思考</span>
                 <span className="animate-pulse">...</span>
@@ -232,13 +243,14 @@ export default function SmartAsk() {
             </div>
           </div>
         )}
+        </div>
       </div>
 
       <div className="flex gap-2">
         <input
-          className="flex-1 rounded-full border-2 border-gray-300 px-5 transition-colors focus:border-blue-500 focus:outline-none"
-          style={{ fontSize: 'var(--fs-sm)', paddingTop: '0.625rem', paddingBottom: '0.625rem' }}
-          placeholder="輸入需求（例:西屯區 2房 預算1500萬）"
+          className="flex-1 rounded-full border-2 border-gray-300 px-4 py-2.5 transition-colors focus:border-blue-500 focus:outline-none"
+          style={{ fontSize: 'var(--fs-sm)' }}
+          placeholder="說說你的需求…"
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyPress={handleKeyPress}
@@ -248,7 +260,16 @@ export default function SmartAsk() {
         <button
           onClick={send}
           disabled={loading || !input.trim()}
-          className="rounded-full px-5 py-2 font-medium text-white shadow-md transition-all hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50"
+          className="rounded-full px-6 py-2.5 font-medium text-white shadow-md transition-all hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50"
+          style={{
+            background: 'var(--gradient-button, linear-gradient(135deg, #1749D7 0%, #1E90FF 100%))',
+            fontSize: 'var(--fs-sm)'
+          }}
+          aria-label="發送訊息"
+        >
+          發送
+        </button>
+      </div>
           style={{
             background: 'linear-gradient(135deg, #1749D7 0%, #1E90FF 100%)',
             fontSize: 'var(--fs-sm)'
