@@ -52,3 +52,8 @@ module.exports = async (req, res) => {
     });
   }
 };
+
+// 強制使用 Node.js Serverless Runtime（避免在 Edge 環境中無法使用 require/res）
+module.exports.config = {
+  runtime: "nodejs20.x",
+};
