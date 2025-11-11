@@ -35,20 +35,26 @@ export async function callOpenAI(
   // 僅保留最近少量訊息（避免無限增長）
   const recent = messages.slice(-6)
 
-  // 直接使用前端金鑰直連 OpenAI；若未提供金鑰則回退為既有相對路徑（避免破壞其他情境）
+  // 優先使用 Vercel serverless API，不再直連 OpenAI
   const envAny = (import.meta as any).env || {}
-  const clientKey: string | undefined = envAny.VITE_OPENAI_API_KEY
-
-  const upstreamUrl = clientKey
-    ? 'https://api.openai.com/v1/chat/completions'
-    : (envAny.VITE_AI_PROXY_URL || '/api/chat')
+  
+  // 根據環境自動選擇 API 端點
+  let upstreamUrl: string
+  if (window.location.hostname.includes('vercel.app')) {
+    upstreamUrl = '/api/openai-proxy'
+  } else if (window.location.hostname.includes('github.io')) {
+    upstreamUrl = 'https://maihouses.vercel.app/api/openai-proxy'
+  } else {
+    // 本地開發：預設用 Vercel
+    upstreamUrl = envAny.VITE_AI_PROXY_URL || 'https://maihouses.vercel.app/api/openai-proxy'
+  }
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     // 提示代理或上游服務以繁體中文處理
     'Accept-Language': 'zh-Hant-TW'
   }
-  if (clientKey) headers['Authorization'] = `Bearer ${clientKey}`
+  // 不再需要 Authorization header，由 Vercel serverless 處理
 
   // 在最前面插入 system prompt：統一繁體中文，不輸出簡體
   const systemPrompt = {
