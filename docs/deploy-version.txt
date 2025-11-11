@@ -1,0 +1,2 @@
+build-version: 2025-11-11T12:50:00Z
+note: cache-bust to force Vercel build pickup
