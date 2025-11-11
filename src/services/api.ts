@@ -82,8 +82,11 @@ export const getCommunities = () => apiFetch<CommunityPreview[]>('/api/v1/commun
 export const aiAsk = async (req: AiAskReq, onChunk?: (chunk: string) => void): Promise<ApiResponse<AiAskRes>> => {
   try {
     const messages = req.messages.map(m => ({ role: m.role as 'user' | 'assistant', content: m.content }))
+    console.log('🟢 發送訊息:', messages)
     const result = await callOpenAI(messages, onChunk)
+    console.log('🟢 callOpenAI 回傳:', result)
     const aiResult: AiAskRes = { answers: [result.content], recommends: [] }
+    console.log('🟢 最終 aiResult:', aiResult)
     return { ok: true, data: aiResult }
   } catch (error) {
     console.error('AI Ask 失敗:', error)

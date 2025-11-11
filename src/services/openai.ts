@@ -116,7 +116,9 @@ export async function callOpenAI(
   let text = ''
   try {
     const data: OpenAIResponse = await resp.json()
+    console.log('🔵 OpenAI 完整回應:', data)
     text = data?.choices?.[0]?.message?.content || ''
+    console.log('🔵 提取的文字內容:', text)
   } catch (_) {
     text = ''
   }

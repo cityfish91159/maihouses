@@ -61,9 +61,14 @@ export default function SmartAsk() {
         }
       )
 
+      console.log('🟡 API 回應:', res)
+      
       if (res.ok && res.data) {
+        console.log('🟡 res.data.answers:', res.data.answers)
+        
         // 更新最後一則訊息的內容（非串流模式時需要）
         if (res.data.answers && res.data.answers.length > 0) {
+          console.log('🟡 更新 AI 訊息內容:', res.data.answers[0])
           setMessages(prev => {
             const updated = [...prev]
             if (updated.length > 0) {
