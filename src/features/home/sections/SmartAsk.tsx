@@ -2,6 +2,9 @@ import { useState, useRef, useEffect } from 'react'
 import { aiAsk } from '../../../services/api'
 import { trackEvent } from '../../../services/uag'
 import type { AiMessage, PropertyCard } from '../../../types'
+import { QuietModeToggle } from '../../../components/QuietModeToggle'
+import { PoliteRewrite } from '../../../components/PoliteRewrite'
+import { ELI5Tooltip } from '../../../components/ELI5Tooltip'
 
 const QUICK = ['3房以內', '30坪以下', '近捷運', '新成屋']
 
@@ -222,6 +225,13 @@ export default function SmartAsk() {
             </div>
           </div>
         )}
+      </div>
+
+      {/* A1: 安靜模式控制 + A5: 禮貌改寫 + A6: ELI5 */}
+      <div className="flex flex-wrap gap-3 border-t border-gray-200 pt-4">
+        <QuietModeToggle />
+        <PoliteRewrite onAdopt={(text: string) => setInput(text)} />
+        <ELI5Tooltip text="預售屋" />
       </div>
 
       <div className="flex gap-2">

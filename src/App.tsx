@@ -13,6 +13,7 @@ import AssureDetail from './pages/Assure/Detail'
 import ChatStandalone from './pages/Chat/Standalone'
 import ErrorBoundary from './app/ErrorBoundary'
 import { QuietModeProvider } from './context/QuietModeContext'
+import { MoodProvider } from './context/MoodContext'
 
 export default function App() {
   const [config, setConfig] = useState<(AppConfig & RuntimeOverrides) | null>(null)
@@ -34,7 +35,8 @@ export default function App() {
 
   return (
     <QuietModeProvider>
-      <Routes key={loc.pathname}>
+      <MoodProvider>
+        <Routes key={loc.pathname}>
         <Route
           path="/"
           element={
@@ -101,6 +103,7 @@ export default function App() {
         />
       </Routes>
       {config.devtools === '1' && <DevTools config={config} />}
+      </MoodProvider>
     </QuietModeProvider>
   )
 }

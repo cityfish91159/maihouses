@@ -7,6 +7,9 @@ import CommunityTeaser from '../features/home/sections/CommunityTeaser'
 import { getMeta } from '../services/api'
 import { trackEvent } from '../services/uag'
 import type { AppConfig, RuntimeOverrides } from '../app/config'
+import { WarmWelcomeBar } from '../components/WarmWelcomeBar'
+import { QuietBanner } from '../components/QuietBanner'
+import { FloatingMoodChips } from '../components/MoodChips'
 
 const cmp = (a: string, b: string) => {
   const pa = a.split('.').map((n) => +n || 0)
@@ -55,6 +58,15 @@ export default function Home({ config }: { config: AppConfig & RuntimeOverrides 
         <div className="mx-auto mt-4 max-w-container rounded-[var(--r-md)] bg-[var(--warning)] p-3 text-[var(--fs-sm)] text-white">{banner}</div>
       )}
       <main className="mx-auto max-w-container space-y-6 p-4 md:space-y-8 md:p-6">
+        {/* A2: 溫暖再訪歡迎條 */}
+        <WarmWelcomeBar />
+        
+        {/* A1: 安靜模式橫幅 */}
+        <QuietBanner />
+        
+        {/* A3: 心情選擇器 - Floating */}
+        <FloatingMoodChips />
+
         {features.heroAssure !== false && (
           <section className="rounded-lg bg-white p-6 shadow-[0_2px_8px_rgba(0,0,0,0.08)] transition-all duration-200 hover:shadow-[0_4px_12px_rgba(0,0,0,0.12)] md:p-8">
             <HeroAssure />
