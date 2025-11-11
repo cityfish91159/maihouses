@@ -1,4 +1,4 @@
-export default async function handler(req, res) {
+module.exports = async (req, res) => {
   res.setHeader('Content-Type', 'application/json');
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
 
@@ -19,7 +19,7 @@ export default async function handler(req, res) {
     });
     const data = await r.json();
     return res.status(r.ok ? 200 : r.status).json(data);
-  } catch (e) {
-    return res.status(500).json({ error: e?.message ?? 'Unknown error' });
+  } catch (e) { 
+    return res.status(500).json({ error: e?.message ?? 'Unknown error' }); 
   }
-}
+};
