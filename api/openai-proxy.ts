@@ -1,7 +1,7 @@
 // api/openai-proxy.ts
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+// Vercel serverless function - 不需要 @vercel/node，型別在部署時自動提供
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(req: any, res: any) {
   res.setHeader('Content-Type', 'application/json');
 
   if (req.method !== 'POST') {
