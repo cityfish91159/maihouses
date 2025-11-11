@@ -11,6 +11,8 @@ export default async function handler(req, res) {
   res.status(200).json({
     ok: true,
     hasToken: !!process.env.REPLICATE_API_TOKEN,
-    tokenPrefix: process.env.REPLICATE_API_TOKEN ? process.env.REPLICATE_API_TOKEN.substring(0, 8) + '...' : 'missing'
+    hasDeployment: !!process.env.REPLICATE_DEPLOYMENT,
+    tokenPrefix: process.env.REPLICATE_API_TOKEN ? process.env.REPLICATE_API_TOKEN.substring(0, 8) + '...' : 'missing',
+    deployment: process.env.REPLICATE_DEPLOYMENT || 'missing'
   });
 }
