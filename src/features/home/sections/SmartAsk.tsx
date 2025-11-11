@@ -270,14 +270,6 @@ export default function SmartAsk() {
           發送
         </button>
       </div>
-          style={{
-            background: 'linear-gradient(135deg, #1749D7 0%, #1E90FF 100%)',
-            fontSize: 'var(--fs-sm)'
-          }}
-        >
-          送出
-        </button>
-      </div>
 
       {!!reco.length && (
         <div className="mt-4 border-t border-[var(--border-default)] pt-4">
