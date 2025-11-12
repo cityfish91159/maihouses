@@ -1,445 +1,1117 @@
-<!DOCTYPE html><!DOCTYPE html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no,maximum-scale=1"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-touch-fullscreen" content="yes"><title>🎂 Cake Reveal v12.0 - AI增強版 (智能測光+Guided Filter細節+性能優化)</title><style>*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}:root{--bg:#0b1220;--panel:#0f1b2e;--text:#e9f0ff;--brand:#2be38a;--border:#1b2a45;--btn:#20314f;--warning:#ff9500}body,html{width:100%;height:100%;background:var(--bg);color:var(--text);font-family:-apple-system,system-ui,sans-serif;overflow:hidden;position:fixed;-webkit-user-select:none;-webkit-font-smoothing:antialiased}#loginScreen{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:10000}#loginScreen.hidden{display:none}.loginBox{background:var(--panel);border:2px solid var(--border);border-radius:16px;padding:32px;max-width:360px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,.6)}.loginBox h2{font-size:24px;margin-bottom:8px;text-align:center;color:var(--brand)}.loginBox .subtitle{font-size:12px;color:#7a92c0;text-align:center;margin-bottom:24px}.loginBox .inputGroup{margin-bottom:16px}.loginBox .inputGroup label{display:block;font-size:12px;color:#b7c7e6;margin-bottom:6px;font-weight:600}.loginBox .inputGroup input{width:100%;background:var(--btn);border:1px solid var(--border);border-radius:8px;padding:12px;color:var(--text);font-size:14px;outline:0;transition:all .2s}.loginBox .inputGroup input:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(43,227,138,.1)}.loginBox .loginBtn{width:100%;background:var(--brand);border:none;border-radius:8px;padding:14px;font-weight:700;font-size:14px;color:#072412;cursor:pointer;transition:all .2s;margin-top:8px}.loginBox .loginBtn:hover{opacity:.9;transform:translateY(-1px)}.loginBox .loginBtn:active{transform:translateY(0);opacity:.8}.loginBox .errorMsg{background:#ff550055;border:1px solid #f50;border-radius:6px;padding:10px;font-size:12px;color:#fa8;margin-top:12px;display:none}.loginBox .errorMsg.show{display:block}.wrap{position:fixed;inset:0;display:flex;flex-direction:column;padding:max(12px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-left)) max(12px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-right))}header{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:8px 0;flex-shrink:0}h1{font-size:18px;font-weight:600}.badge{padding:3px 6px;border:1px solid var(--border);border-radius:999px;background:#0d1a30;color:#cde1ff;font-size:10px}.grid{display:grid;grid-template-columns:1fr;gap:12px;flex:1;min-height:0;overflow:hidden}@media(min-width:900px){.grid{grid-template-columns:minmax(360px,420px) 1fr}}.card{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:12px;display:flex;flex-direction:column;overflow-y:auto;min-height:0}.btn{background:var(--btn);border:1px solid var(--border);color:#dff5ff;border-radius:8px;padding:8px 12px;font-weight:600;cursor:pointer;transition:all .15s;font-size:13px;min-height:44px;display:flex;align-items:center;justify-content:center;touch-action:manipulation}.btn.primary{background:var(--brand);border-color:#0b3c25;color:#072412}.btn.warning{background:var(--warning);border-color:#c70;color:#fff}.btn:active:not(:disabled){opacity:.8;transform:scale(.95)}.btn:disabled{opacity:.4;cursor:not-allowed;pointer-events:none}.row{display:flex;flex-direction:column;gap:4px;margin:6px 0}label{font-size:12px;color:#b7c7e6;font-weight:500}input[type=range]{width:100%;height:4px;-webkit-appearance:none;background:#1b2a45;border-radius:99px;cursor:pointer}input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--brand)}input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:var(--brand);border:none}input[type=checkbox]{width:18px;height:18px;margin-right:6px}select{background:var(--btn);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:8px;font-size:12px;min-height:40px}.hflex{display:flex;gap:8px;flex-wrap:wrap}.toggle{display:flex;flex-wrap:wrap;gap:12px;margin:6px 0}.toggle label{display:inline-flex;align-items:center;cursor:pointer;font-size:13px}.compareWrap{position:relative;border-radius:10px;overflow:hidden;background:#0a0f1a;display:flex;align-items:center;justify-content:center;flex:1;border:1px solid var(--border);cursor:zoom-in;touch-action:manipulation}#dst,#src{position:absolute;inset:0;width:100%;height:100%;display:block}#dst{opacity:0}#afterWrap{position:absolute;inset:0;overflow:hidden;pointer-events:none}#afterWrap #dst{opacity:1}#divider{position:absolute;left:50%;top:0;bottom:0;width:2px;background:var(--brand);box-shadow:0 0 8px rgba(43,227,138,.6);cursor:col-resize;z-index:50;transform:translateX(-50%);pointer-events:auto;touch-action:none}#info{font-size:11px;color:#7a92c0;margin:6px 0;line-height:1.4;min-height:32px}.autoHint{background:var(--warning);color:#fff;padding:6px 10px;border-radius:6px;font-size:11px;margin:6px 0;display:none;align-items:center;gap:6px}.autoHint.show{display:flex}#processing{position:fixed;inset:0;background:rgba(8,12,20,.95);display:none;align-items:center;justify-content:center;z-index:9999}#processing .content{text-align:center;padding:20px;background:var(--panel);border:1px solid var(--border);border-radius:12px;max-width:85vw}#procMeter{width:260px;height:6px;background:#1b2a45;border-radius:99px;overflow:hidden;margin:12px auto}#procMeter .bar{height:100%;background:linear-gradient(90deg,var(--brand),#20a96f);width:0%;transition:width .2s}#ajDock{position:fixed;right:max(12px,env(safe-area-inset-right));top:50%;transform:translateY(-50%);display:none;background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:12px;box-shadow:0 4px 20px rgba(0,0,0,.6);max-width:340px;max-height:70vh;overflow-y:auto;z-index:98}#ajDock.show{display:block}#ajDock h3{margin:0 0 4px 0;font-size:13px;font-weight:600}.ajMeta{font-size:10px;color:#6a7fa0;margin-bottom:8px;line-height:1.4}.ajList{display:flex;flex-direction:column;gap:6px}.ajItem{background:var(--btn);border:1px solid var(--border);border-radius:8px;padding:8px 10px;cursor:pointer;font-size:12px;transition:all .15s;word-break:break-word}.ajItem:active{background:#2a3d5a;transform:scale(.98)}.ajItem strong{display:block;margin-bottom:2px;font-size:13px}.ajItem span{color:#8aa2d2;font-size:11px;display:block}#ajToggle{position:fixed;right:max(12px,env(safe-area-inset-right));bottom:max(12px,calc(12px + env(safe-area-inset-bottom)));width:50px;height:50px;border-radius:50%;background:var(--brand);border:2px solid #0b3c25;color:#072412;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(43,227,138,.5);z-index:99;transition:all .2s;touch-action:manipulation}#ajToggle:active{transform:scale(.9)}#ajToggle.active{background:var(--warning);border-color:#c70;color:#fff}.heat-group,.xray-group{transition:all .2s}.heat-group.hidden,.xray-group.hidden{display:none}hr{border:none;border-top:1px solid var(--border);margin:10px 0}@media(max-width:600px){.wrap{padding:8px}#ajDock{max-width:calc(100vw - 80px);max-height:50vh;right:8px;top:auto;bottom:max(70px,calc(70px + env(safe-area-inset-bottom)));transform:none}}</style></head><body><div id="loginScreen"><div class="loginBox"><h2>🎂 Cake Reveal</h2><div class="subtitle">請輸入帳號密碼以繼續</div><form id="loginForm" onsubmit="return!1"><div class="inputGroup"><label for="username">帳號</label> <input type="text" id="username" placeholder="請輸入帳號" autocomplete="off" required></div><div class="inputGroup"><label for="password">密碼</label> <input type="password" id="password" placeholder="請輸入密碼" autocomplete="off" required></div><button type="submit" class="loginBtn">🔓 登入</button><div class="errorMsg" id="errorMsg">❌ 帳號或密碼錯誤，請重試</div></form></div></div><div class="wrap" id="mainApp" style="display:none"><header><h1>🎂 Cake Reveal</h1><span class="badge">v12.0 AI增強版</span> <span class="badge">智能測光+細節增強</span></header><div class="grid"><div class="card"><div class="hflex"><label class="btn primary" style="flex:1"><input type="file" id="fileInput" accept="image/*" style="display:none"> 📂 選擇圖片</label> <button class="btn" id="btnHQ">🔥 高畫質</button></div><div class="autoHint" id="autoHint">⚠️ AI 建議已套用 <button class="btn warning" id="btnUndoAuto" style="padding:4px 8px;font-size:11px;margin-left:auto">↩ 還原</button></div><div class="hflex" style="margin-top:8px"><button class="btn" id="btnDL" style="flex:1">💾 下載</button> <button class="btn" id="btnDLMask" style="flex:1">🎭 遮罩</button> <button class="btn" id="btnShare" style="flex:1;display:none">📤 分享</button></div><div id="info">⏳ 等待圖片...</div><hr><div class="hflex"><button class="btn" id="btnReset" style="flex:1">⚙️ 重置</button> <button class="btn" id="btnCopy" style="flex:1">📋 複製</button> <button class="btn" id="btnPaste" style="flex:1">📌 貼上</button></div><div class="row"><label>預覽邊長 (px) • 完整範圍 300-1536px</label> <input type="range" id="pv" min="300" max="1536" step="50" value="800"> <span id="pv_v" style="font-size:11px;color:#8aa2d2">800</span></div><div class="toggle"><label><input type="checkbox" id="ckDeblock"> 去塊狀</label> <label><input type="checkbox" id="ckBilateral"> 雙邊濾波</label> <label><input type="checkbox" id="ckEnh" checked="checked"> 增強</label> <label><input type="checkbox" id="ckGuidedDetail"> 🎯 細節增強</label></div><div class="toggle"><label><input type="checkbox" id="ckXray" checked="checked"> 🔍 透視</label> <label><input type="checkbox" id="ckHeat"> 🔥 熱區</label></div><div class="row"><label>去塊平滑 σ • 完整範圍 0-5</label> <input type="range" id="fbSigma" min="0" max="5" step="0.1" value="1.2"> <span id="fbSigma_v" style="font-size:11px;color:#8aa2d2">1.2</span></div><div class="row"><label>雙邊濾波範圍 • 完整 1-100</label> <input type="range" id="bilatR" min="1" max="100" step="1" value="30"> <span id="bilatR_v" style="font-size:11px;color:#8aa2d2">30</span></div><div class="row"><label>雙邊濾波強度 • 完整 1-100</label> <input type="range" id="bilatS" min="1" max="100" step="1" value="30"> <span id="bilatS_v" style="font-size:11px;color:#8aa2d2">30</span></div><div class="row xray-group"><label>透視模式 • 完整5種</label> <select id="xrayMode"><option value="gain-fast">⚡ 快速增益</option><option value="neutral" selected="selected">🎯 標準透視</option><option value="adaptive">🧠 自適應</option><option value="gradient">🌈 梯度熱圖</option><option value="clahe">🔬 CLAHE對比</option></select></div><div class="row xray-group"><label>透視強度 • 完整 0-12</label> <input type="range" id="xrayK" min="0" max="12" step="0.1" value="4.5"> <span id="xrayK_v" style="font-size:11px;color:#8aa2d2">4.5</span></div><div class="row xray-group"><label>透視細節 • 完整 0-2</label> <input type="range" id="xrayDetail" min="0" max="2" step="0.05" value="1.0"> <span id="xrayDetail_v" style="font-size:11px;color:#8aa2d2">1.0</span></div><div class="row heat-group"><label>熱區覆蓋 • 完整 0-1</label> <input type="range" id="heatA" min="0" max="1" step="0.05" value="0.6"> <span id="heatA_v" style="font-size:11px;color:#8aa2d2">0.6</span></div><div class="row"><label>銳化 • 完整 0-3</label> <input type="range" id="usmK" min="0" max="3" step="0.05" value="1.0"> <span id="usmK_v" style="font-size:11px;color:#8aa2d2">1.0</span></div><div class="row"><label>邊緣強度 • 精度 0.05</label> <input type="range" id="edge" min="0" max="1" step="0.05" value="0.4"> <span id="edge_v" style="font-size:11px;color:#8aa2d2">0.4</span></div><div class="row"><label>浮雕 • 完整 0-1</label> <input type="range" id="emboss" min="0" max="1" step="0.05" value="0.2"> <span id="emboss_v" style="font-size:11px;color:#8aa2d2">0.2</span></div><div class="row"><label>陰影 • 完整 0-1</label> <input type="range" id="shadow" min="0" max="1" step="0.05" value="0.4"> <span id="shadow_v" style="font-size:11px;color:#8aa2d2">0.4</span></div><div class="row"><label>去霧/柔化 • 完整 0-3</label> <input type="range" id="blur" min="0" max="3" step="0.1" value="0"> <span id="blur_v" style="font-size:11px;color:#8aa2d2">0</span></div></div><div class="card"><div class="compareWrap" id="compareWrap"><canvas id="src"></canvas><div id="afterWrap"><canvas id="dst"></canvas></div><div id="divider"></div></div><div style="margin-top:6px;font-size:10px;color:#6a7fa0">💡 拖動中線查看對比 | 快捷鍵: O=開啟 H=高畫質 S=儲存</div></div></div></div><div id="processing"><div class="content"><div style="font-size:14px;margin-bottom:10px;font-weight:600">⏳ 處理中...</div><div id="procMeta" style="font-size:11px;color:#8aa2d2;margin-bottom:8px"></div><div id="procMeter"><div class="bar"></div></div><button class="btn" id="btnCancel" style="margin-top:12px">⏹️ 取消</button></div></div><div id="ajDock"><h3>🧠 AI 完整智能分析</h3><div class="ajMeta" id="ajMeta"></div><div class="ajList" id="ajList"></div></div><button id="ajToggle" title="AI智能建議">🧠</button><script>!function(){"use strict";const e="1234",t="cakeRevealAuth";function n(){const n=sessionStorage.getItem(t);if(n)try{const t=JSON.parse(n);if(t.username===e&&t.timestamp&&Date.now()-t.timestamp<864e5)return!0}catch(e){}return!1}function a(){const e=/iPad|iPhone|iPod/.test(navigator.userAgent),t=e?16777216:268435456,n=e?4096:32767,a=Math.min(navigator.hardwareConcurrency||4,e?2:4);console.log(`🎂 v12.0 AI增強版 | iOS=${e} | Workers=${a}`),console.log("✅ 智能測光分析 + Guided Filter細節增強 + 8種AI推薦 + 性能優化");const s=e=>document.getElementById(e),o=s("src"),r=s("dst"),i=o.getContext("2d",{willReadFrequently:!0}),c=r.getContext("2d"),l=s("compareWrap"),d=s("divider"),m=s("afterWrap"),y=s("processing"),h=s("procMeter").querySelector(".bar"),u=s("ajDock"),g=s("ajList"),x=s("ajMeta"),p=s("ajToggle"),f=s("autoHint"),w=s("btnUndoAuto"),b={latest:0,loaded:!1,bitmap:null,w:0,h:0,processing:!1,isDragging:!1,ajOpen:!1,scheduleTimer:null,clipboard:null,workers:[],autoApplied:!1,prevParams:null,analysisCache:null,bufferPool:new Map,processTimeout:null};function v(e,t,n){return Math.max(t,Math.min(n,e))}const k=e=>{s("info").textContent=e};function M(){return{pv:+s("pv").value,ckDeblock:s("ckDeblock").checked,ckBilateral:s("ckBilateral").checked,fbSigma:+s("fbSigma").value,bilatR:+s("bilatR").value,bilatS:+s("bilatS").value,ckEnh:s("ckEnh").checked,ckGuidedDetail:s("ckGuidedDetail").checked,usmK:+s("usmK").value,edge:+s("edge").value,emboss:+s("emboss").value,shadow:+s("shadow").value,blur:+s("blur").value,ckXray:s("ckXray").checked,xrayMode:s("xrayMode").value,xrayK:+s("xrayK").value,xrayDetail:+s("xrayDetail").value,ckHeat:s("ckHeat").checked,heatA:+s("heatA").value}}function A(e,t=!1,n=!1){n&&(b.prevParams=M(),b.autoApplied=!0,f.classList.add("show"));const a={pv:"pv",fbSigma:"fbSigma",bilatR:"bilatR",bilatS:"bilatS",usmK:"usmK",edge:"edge",emboss:"emboss",shadow:"shadow",blur:"blur",xrayK:"xrayK",xrayDetail:"xrayDetail",heatA:"heatA"};for(const t in a)if(null!=e[t]){s(a[t]).value=e[t];const n=s(a[t]+"_v");n&&(n.textContent=e[t])}null!=e.ckDeblock&&(s("ckDeblock").checked=!!e.ckDeblock),null!=e.ckBilateral&&(s("ckBilateral").checked=!!e.ckBilateral),null!=e.ckEnh&&(s("ckEnh").checked=!!e.ckEnh),null!=e.ckXray&&(s("ckXray").checked=!!e.ckXray),null!=e.ckHeat&&(s("ckHeat").checked=!!e.ckHeat),e.xrayMode&&(s("xrayMode").value=e.xrayMode),E(),t||Y()}function E(){document.querySelectorAll(".xray-group").forEach(e=>{e.classList.toggle("hidden",!s("ckXray").checked)}),document.querySelectorAll(".heat-group").forEach(e=>{e.classList.toggle("hidden",!s("ckHeat").checked)})}w.addEventListener("click",()=>{b.prevParams&&(A(b.prevParams),b.autoApplied=!1,f.classList.remove("show"),k("↩ 已還原"))}),s("fileInput").addEventListener("change",e=>async function(e){if(e){$(),k("📸 載入中...");try{let a;try{a=await createImageBitmap(e,{imageOrientation:"from-image"})}catch(t){const n=URL.createObjectURL(e),s=new Image;await new Promise((e,t)=>{s.onload=e,s.onerror=t,s.src=n}),a=await createImageBitmap(s),URL.revokeObjectURL(n)}let o=a.width,r=a.height;if(o*r>t){const e=Math.sqrt(t/(o*r));o=Math.floor(o*e),r=Math.floor(r*e)}o=Math.min(o,n),r=Math.min(r,n),b.bitmap=a,b.w=o,b.h=r,b.loaded=!0,R(),k(`✅ ${o}×${r} px`),s("fileInput").value="",S()}catch(e){console.error(e),k(`❌ ${e.message}`),R()}}}(e.target.files[0]));const L=new Blob(["\n  'use strict';\n  \n  self.clamp = (v,a,b) => Math.max(a, Math.min(b, v));\n  \n  // 優化的 Stack Blur (完整邊界處理)\n  function stackBlur(src, w, h, r) {\n    if(r < 1) return new Float32Array(src);\n    \n    const dst = new Float32Array(w*h);\n    const div = (r+1) * (r+1);\n    \n    // 水平\n    for(let y=0; y<h; y++) {\n      let sum = src[y*w] * (r+1);\n      for(let i=1; i<=r; i++) {\n        sum += src[y*w + self.clamp(i, 0, w-1)];\n      }\n      \n      dst[y*w] = sum / div;\n      \n      for(let x=1; x<w; x++) {\n        const left = self.clamp(x-r-1, 0, w-1);\n        const right = self.clamp(x+r, 0, w-1);\n        sum -= src[y*w + left];\n        sum += src[y*w + right];\n        dst[y*w + x] = sum / div;\n      }\n    }\n    \n    // 垂直\n    const tmp = dst.slice();\n    for(let x=0; x<w; x++) {\n      let sum = tmp[x] * (r+1);\n      for(let i=1; i<=r; i++) {\n        sum += tmp[self.clamp(i, 0, h-1)*w + x];\n      }\n      \n      dst[x] = sum / div;\n      \n      for(let y=1; y<h; y++) {\n        const top = self.clamp(y-r-1, 0, h-1);\n        const bottom = self.clamp(y+r, 0, h-1);\n        sum -= tmp[top*w + x];\n        sum += tmp[bottom*w + x];\n        dst[y*w + x] = sum / div;\n      }\n    }\n    \n    return dst;\n  }\n  \n  // 優化的 Subsampling Bilateral\n  function fastBilateral(src, w, h, spatialSigma, colorSigma) {\n    const r = Math.ceil(spatialSigma);\n    const dst = new Float32Array(w*h);\n    const r2 = 2*spatialSigma*spatialSigma;\n    const c2 = 2*colorSigma*colorSigma;\n    \n    for(let y=0; y<h; y++) {\n      for(let x=0; x<w; x++) {\n        let sum=0, wsum=0;\n        const centerVal = src[y*w+x];\n        \n        for(let dy=-r; dy<=r; dy++) {\n          for(let dx=-r; dx<=r; dx++) {\n            const nx=self.clamp(x+dx,0,w-1), ny=self.clamp(y+dy,0,h-1);\n            const val = src[ny*w+nx];\n            const cd = (val - centerVal) * (val - centerVal);\n            const sd = dx*dx + dy*dy;\n            \n            const gw = Math.exp(-sd/r2 - cd/c2);\n            sum += val * gw;\n            wsum += gw;\n          }\n        }\n        dst[y*w+x] = wsum > 0 ? sum/wsum : centerVal;\n      }\n    }\n    return dst;\n  }\n  \n  // CLAHE with 邊界平滑\n  function clahe(gray, w, h, clipLimit=2.0, tileSize=8) {\n    const tilesX = Math.ceil(w / tileSize);\n    const tilesY = Math.ceil(h / tileSize);\n    const cdfs = [];\n    \n    for(let ty=0; ty<tilesY; ty++) {\n      for(let tx=0; tx<tilesX; tx++) {\n        const x0 = tx * tileSize;\n        const y0 = ty * tileSize;\n        const x1 = Math.min(x0 + tileSize, w);\n        const y1 = Math.min(y0 + tileSize, h);\n        const tilePixels = (x1-x0) * (y1-y0);\n        \n        const hist = new Array(256).fill(0);\n        for(let y=y0; y<y1; y++) {\n          for(let x=x0; x<x1; x++) {\n            hist[Math.floor(gray[y*w+x])]++;\n          }\n        }\n        \n        const limit = Math.max(1, Math.floor(clipLimit * tilePixels / 256));\n        let excess = 0;\n        for(let i=0; i<256; i++) {\n          if(hist[i] > limit) {\n            excess += hist[i] - limit;\n            hist[i] = limit;\n          }\n        }\n        for(let i=0; i<256; i++) hist[i] += Math.floor(excess / 256);\n        \n        const cdf = new Array(256);\n        cdf[0] = hist[0];\n        for(let i=1; i<256; i++) cdf[i] = cdf[i-1] + hist[i];\n        \n        cdfs.push(cdf);\n      }\n    }\n    \n    const out = new Float32Array(w*h);\n    for(let y=0; y<h; y++) {\n      for(let x=0; x<w; x++) {\n        const tx = Math.min(Math.floor(x / tileSize), tilesX-1);\n        const ty = Math.min(Math.floor(y / tileSize), tilesY-1);\n        const tileIdx = ty * tilesX + tx;\n        const val = Math.floor(gray[y*w+x]);\n        const cdf = cdfs[tileIdx];\n        out[y*w+x] = (cdf[val] / cdf[255]) * 255;\n      }\n    }\n    return out;\n  }\n  \n  // Guided Filter - 邊緣保持平滑\n  function guidedFilter(input, guide, w, h, radius, eps) {\n    const r = radius;\n    const N = boxFilter(createOnes(w, h), w, h, r);\n    \n    const meanI = boxFilterDivide(boxFilter(input, w, h, r), N, w, h);\n    const meanP = boxFilterDivide(boxFilter(guide, w, h, r), N, w, h);\n    const corrI = boxFilterDivide(boxFilter(multiply(input, input, w, h), w, h, r), N, w, h);\n    const corrIp = boxFilterDivide(boxFilter(multiply(input, guide, w, h), w, h, r), N, w, h);\n    \n    const varI = subtract(corrI, multiply(meanI, meanI, w, h), w, h);\n    const covIp = subtract(corrIp, multiply(meanI, meanP, w, h), w, h);\n    \n    const a = new Float32Array(w * h);\n    const b = new Float32Array(w * h);\n    for(let i=0; i<w*h; i++) {\n      a[i] = covIp[i] / (varI[i] + eps);\n      b[i] = meanP[i] - a[i] * meanI[i];\n    }\n    \n    const meanA = boxFilterDivide(boxFilter(a, w, h, r), N, w, h);\n    const meanB = boxFilterDivide(boxFilter(b, w, h, r), N, w, h);\n    \n    const q = new Float32Array(w * h);\n    for(let i=0; i<w*h; i++) {\n      q[i] = meanA[i] * input[i] + meanB[i];\n    }\n    return q;\n  }\n  \n  // Box Filter 輔助函數\n  function boxFilter(src, w, h, r) {\n    const dst = new Float32Array(w * h);\n    const temp = new Float32Array(w * h);\n    \n    // 水平\n    for(let y=0; y<h; y++) {\n      let sum = 0;\n      for(let x=-r; x<=r; x++) {\n        const px = self.clamp(x, 0, w-1);\n        sum += src[y*w + px];\n      }\n      temp[y*w] = sum;\n      \n      for(let x=1; x<w; x++) {\n        const left = self.clamp(x-r-1, 0, w-1);\n        const right = self.clamp(x+r, 0, w-1);\n        sum = sum - src[y*w + left] + src[y*w + right];\n        temp[y*w + x] = sum;\n      }\n    }\n    \n    // 垂直\n    for(let x=0; x<w; x++) {\n      let sum = 0;\n      for(let y=-r; y<=r; y++) {\n        const py = self.clamp(y, 0, h-1);\n        sum += temp[py*w + x];\n      }\n      dst[x] = sum;\n      \n      for(let y=1; y<h; y++) {\n        const top = self.clamp(y-r-1, 0, h-1);\n        const bottom = self.clamp(y+r, 0, h-1);\n        sum = sum - temp[top*w + x] + temp[bottom*w + x];\n        dst[y*w + x] = sum;\n      }\n    }\n    return dst;\n  }\n  \n  function createOnes(w, h) {\n    return new Float32Array(w * h).fill(1);\n  }\n  \n  function boxFilterDivide(src, divisor, w, h) {\n    const dst = new Float32Array(w * h);\n    for(let i=0; i<w*h; i++) {\n      dst[i] = src[i] / divisor[i];\n    }\n    return dst;\n  }\n  \n  function multiply(a, b, w, h) {\n    const dst = new Float32Array(w * h);\n    for(let i=0; i<w*h; i++) {\n      dst[i] = a[i] * b[i];\n    }\n    return dst;\n  }\n  \n  function subtract(a, b, w, h) {\n    const dst = new Float32Array(w * h);\n    for(let i=0; i<w*h; i++) {\n      dst[i] = a[i] - b[i];\n    }\n    return dst;\n  }\n  \n  // 多尺度細節增強（Adobe Lightroom 風格）\n  function enhanceDetailMultiScale(src, w, h, gains) {\n    const scales = [4, 8, 16];\n    const details = [];\n    \n    // 提取每個尺度的細節\n    for(let i=0; i<scales.length; i++) {\n      const r = scales[i];\n      const base = guidedFilter(src, src, w, h, r, 0.04);\n      const detail = new Float32Array(w * h);\n      for(let j=0; j<w*h; j++) {\n        detail[j] = src[j] - base[j];\n      }\n      details.push(detail);\n    }\n    \n    // 根據增益組合細節\n    const combined = new Float32Array(w * h);\n    for(let i=0; i<w*h; i++) {\n      combined[i] = src[i] + \n        details[0][i] * gains.fine +\n        details[1][i] * gains.mid +\n        details[2][i] * gains.coarse;\n    }\n    \n    return combined;\n  }\n  \n  // GLCM 完整分析\n  function calcGLCM(gray, w, h, d=1) {\n    const glcm = Array(256).fill(0).map(() => Array(256).fill(0));\n    for(let y=0; y<h-d; y++) {\n      for(let x=0; x<w-d; x++) {\n        const i = Math.floor(gray[y*w+x]);\n        const j = Math.floor(gray[(y+d)*w+(x+d)]);\n        glcm[i][j]++;\n      }\n    }\n    let sum = 0;\n    for(let i=0; i<256; i++) for(let j=0; j<256; j++) sum += glcm[i][j];\n    if(sum > 0) for(let i=0; i<256; i++) for(let j=0; j<256; j++) glcm[i][j] /= sum;\n    \n    let contrast=0, energy=0, homogeneity=0;\n    for(let i=0; i<256; i++) {\n      for(let j=0; j<256; j++) {\n        const p = glcm[i][j];\n        contrast += (i-j)*(i-j) * p;\n        energy += p * p;\n        homogeneity += p / (1 + Math.abs(i-j));\n      }\n    }\n    return {contrast, energy, homogeneity};\n  }\n  \n  // 主處理邏輯\n  self.onmessage = (e) => {\n    const {type, jobId, w, h, buf, params, chunkId, startY, endY} = e.data;\n    \n    if(type === 'analyze') {\n      const d = new Uint8ClampedArray(buf);\n      const gray = new Float32Array(w*h);\n      for(let i=0; i<w*h; i++) {\n        gray[i] = d[i*4]*0.299 + d[i*4+1]*0.587 + d[i*4+2]*0.114;\n      }\n      \n      const glcm = calcGLCM(gray, w, h, 1);\n      \n      let indent=0, bump=0, vshape=0, entropy=0;\n      for(let y=1; y<h-1; y++) {\n        for(let x=1; x<w-1; x++) {\n          const c = gray[y*w+x];\n          const t = gray[(y-1)*w+x], b = gray[(y+1)*w+x];\n          const l = gray[y*w+(x-1)], r = gray[y*w+(x+1)];\n          \n          const lap = Math.abs(4*c - t - b - l - r);\n          if(lap > 20) bump += lap;\n          if(c < Math.min(t,b,l,r) - 10) indent += 1;\n          \n          const gx = r - l, gy = b - t;\n          if(Math.abs(gx) > 10 && Math.abs(gy) > 10) vshape += 1;\n        }\n      }\n      \n      const hist = new Array(256).fill(0);\n      let sum = 0;\n      for(let i=0; i<gray.length; i++) {\n        const val = Math.floor(gray[i]);\n        hist[val]++;\n        sum += gray[i];\n      }\n      for(let i=0; i<256; i++) {\n        const p = hist[i] / gray.length;\n        if(p > 0) entropy -= p * Math.log2(p);\n      }\n      \n      indent = indent / (w * h);\n      bump = bump / (w * h * 100);\n      vshape = vshape / (w * h);\n      \n      let meanEdge = 0;\n      for(let y=1; y<h-1; y++) {\n        for(let x=1; x<w-1; x++) {\n          const gx = gray[y*w+(x+1)] - gray[y*w+(x-1)];\n          const gy = gray[(y+1)*w+x] - gray[(y-1)*w+x];\n          meanEdge += Math.sqrt(gx*gx + gy*gy);\n        }\n      }\n      meanEdge /= (w-2)*(h-2);\n      \n      // 曝光分析\n      const mean = sum / gray.length;\n      const sorted = Array.from(gray).sort((a,b) => a-b);\n      const median = sorted[Math.floor(sorted.length/2)];\n      \n      let variance = 0;\n      for(let i=0; i<gray.length; i++) {\n        variance += Math.pow(gray[i] - mean, 2);\n      }\n      const stdDev = Math.sqrt(variance / gray.length);\n      \n      const clipLow = hist.slice(0, 10).reduce((a,b)=>a+b, 0) / gray.length;\n      const clipHigh = hist.slice(245).reduce((a,b)=>a+b, 0) / gray.length;\n      \n      const exposure = {\n        mean: mean,\n        median: median,\n        stdDev: stdDev,\n        clipLow: clipLow,\n        clipHigh: clipHigh,\n        isUnderexposed: mean < 80 && clipLow > 0.02,\n        isOverexposed: mean > 180 && clipHigh > 0.02,\n        isDynamic: Math.max(clipLow, clipHigh) < 0.01 && mean > 100 && mean < 150,\n        isLowContrast: stdDev < 30,\n        isHighContrast: stdDev > 70\n      };\n      \n      self.postMessage({type:'analyze-done', jobId, metrics: {indent, bump, vshape, entropy, meanEdge, glcm, exposure}});\n      return;\n    }\n    \n    if(type === 'mask') {\n      const d = new Uint8ClampedArray(buf);\n      const out = new Uint8ClampedArray(w*h*4);\n      \n      for(let y=1; y<h-1; y++) {\n        for(let x=1; x<w-1; x++) {\n          let sum = 0;\n          for(let c=0; c<3; c++) {\n            const idx = (y*w+x)*4+c;\n            const dx = d[idx+4] - d[idx-4];\n            const dy = d[idx+w*4] - d[idx-w*4];\n            sum += Math.sqrt(dx*dx + dy*dy);\n          }\n          const intensity = self.clamp(sum / 3, 0, 255);\n          const idx = (y*w+x)*4;\n          out[idx] = out[idx+1] = out[idx+2] = intensity;\n          out[idx+3] = 255;\n        }\n      }\n      self.postMessage({type:'mask-done', jobId, buf:out.buffer}, [out.buffer]);\n      return;\n    }\n    \n    if(type !== 'job') return;\n    \n    const postProgress = (pct) => self.postMessage({type:'progress', jobId, chunkId, pct});\n    postProgress(5);\n    \n    const d = new Uint8ClampedArray(buf);\n    const out = new Uint8ClampedArray((endY-startY)*w*4);\n    \n    const getAt = (x,y,c) => {\n      if(x<0||x>=w||y<startY||y>=endY) return 0;\n      return d[((y-startY)*w+x)*4+c];\n    };\n    const setAt = (x,y,c,v) => {\n      if(x<0||x>=w||y<startY||y>=endY) return;\n      out[((y-startY)*w+x)*4+c] = self.clamp(v, 0, 255);\n    };\n    \n    for(let i=0; i<d.length; i++) out[i] = d[i];\n    \n    postProgress(10);\n    \n    if(params.ckDeblock && params.fbSigma > 0) {\n      const r = Math.ceil(params.fbSigma);\n      for(let c=0; c<3; c++) {\n        const channel = new Float32Array((endY-startY)*w);\n        for(let i=0; i<channel.length; i++) {\n          const y = Math.floor(i/w) + startY;\n          const x = i%w;\n          channel[i] = getAt(x,y,c);\n        }\n        const blurred = stackBlur(channel, w, endY-startY, r);\n        for(let i=0; i<channel.length; i++) {\n          const y = Math.floor(i/w) + startY;\n          const x = i%w;\n          setAt(x,y,c, blurred[i]);\n        }\n      }\n      for(let i=0; i<out.length; i++) d[i] = out[i];\n    }\n    \n    postProgress(20);\n    \n    if(params.ckBilateral && params.bilatR > 0) {\n      const spatialSigma = params.bilatR / 3;\n      const colorSigma = params.bilatS;\n      for(let c=0; c<3; c++) {\n        const channel = new Float32Array((endY-startY)*w);\n        for(let i=0; i<channel.length; i++) {\n          const y = Math.floor(i/w) + startY;\n          const x = i%w;\n          channel[i] = getAt(x,y,c);\n        }\n        const filtered = fastBilateral(channel, w, endY-startY, spatialSigma, colorSigma);\n        for(let i=0; i<channel.length; i++) {\n          const y = Math.floor(i/w) + startY;\n          const x = i%w;\n          setAt(x,y,c, filtered[i]);\n        }\n      }\n      for(let i=0; i<out.length; i++) d[i] = out[i];\n    }\n    \n    postProgress(35);\n    \n    let edgeMap = null;\n    if(params.ckXray) {\n      edgeMap = new Float32Array((endY-startY)*w);\n      \n      for(let y=startY+1; y<endY-1; y++) {\n        for(let x=1; x<w-1; x++) {\n          let gx=0, gy=0;\n          for(let c=0; c<3; c++) {\n            gx += getAt(x+1,y,c) - getAt(x-1,y,c);\n            gy += getAt(x,y+1,c) - getAt(x,y-1,c);\n          }\n          edgeMap[(y-startY)*w+x] = Math.sqrt(gx*gx + gy*gy);\n        }\n      }\n      \n      postProgress(55);\n      \n      let maxE = 0;\n      for(let i=0; i<edgeMap.length; i++) maxE = Math.max(maxE, edgeMap[i]);\n      \n      const mode = params.xrayMode;\n      const k = params.xrayK;\n      const detail = params.xrayDetail;\n      \n      if(mode === 'clahe') {\n        const gray = new Float32Array((endY-startY)*w);\n        for(let i=0; i<gray.length; i++) {\n          const y = Math.floor(i/w) + startY;\n          const x = i%w;\n          gray[i] = (getAt(x,y,0)+getAt(x,y,1)+getAt(x,y,2))/3;\n        }\n        const enhanced = clahe(gray, w, endY-startY, 2.0, 8);\n        for(let y=startY; y<endY; y++) {\n          for(let x=0; x<w; x++) {\n            const idx = (y-startY)*w+x;\n            const boost = enhanced[idx] - gray[idx];\n            for(let c=0; c<3; c++) {\n              setAt(x,y,c, getAt(x,y,c) + boost + edgeMap[idx]/maxE*k*40);\n            }\n          }\n        }\n      } else {\n        for(let y=startY; y<endY; y++) {\n          for(let x=0; x<w; x++) {\n            const idx = (y-startY)*w+x;\n            let edge = edgeMap[idx];\n            edge = Math.pow(edge / maxE, 0.7 - detail*0.2) * maxE;\n            \n            if(mode === 'gain-fast') {\n              const gain = 1 + edge / 255 * k * 2.0;\n              for(let c=0; c<3; c++) setAt(x,y,c, getAt(x,y,c) * gain);\n            } else if(mode === 'neutral') {\n              const boost = edge / maxE * k * 120;\n              for(let c=0; c<3; c++) setAt(x,y,c, getAt(x,y,c) + boost);\n            } else if(mode === 'adaptive') {\n              const localVar = Math.abs(edge - (maxE * 0.3));\n              const adaptiveGain = 1 + (edge / 255) * k * (1 + localVar / maxE * detail);\n              for(let c=0; c<3; c++) setAt(x,y,c, getAt(x,y,c) * adaptiveGain);\n            } else if(mode === 'gradient') {\n              const intensity = self.clamp(edge / maxE * k * 120, 0, 255);\n              for(let c=0; c<3; c++) setAt(x,y,c, getAt(x,y,c) * 0.6 + intensity * 0.4);\n            }\n          }\n        }\n      }\n      for(let i=0; i<out.length; i++) d[i] = out[i];\n    }\n    \n    postProgress(70);\n    \n    // Guided Filter 細節增強（新增）\n    if(params.ckGuidedDetail) {\n      for(let c=0; c<3; c++) {\n        const channel = new Float32Array((endY-startY)*w);\n        for(let i=0; i<channel.length; i++) {\n          const y = Math.floor(i/w) + startY;\n          const x = i%w;\n          channel[i] = getAt(x,y,c);\n        }\n        \n        // 使用多尺度細節增強\n        const enhanced = enhanceDetailMultiScale(channel, w, endY-startY, {\n          fine: 1.5,   // 細小紋理強化\n          mid: 1.2,    // 中等紋理\n          coarse: 0.8  // 粗糙紋理略降\n        });\n        \n        for(let i=0; i<channel.length; i++) {\n          const y = Math.floor(i/w) + startY;\n          const x = i%w;\n          setAt(x,y,c, enhanced[i]);\n        }\n      }\n      for(let i=0; i<out.length; i++) d[i] = out[i];\n    }\n    \n    if(params.ckEnh) {\n      if(params.usmK > 0) {\n        for(let c=0; c<3; c++) {\n          const channel = new Float32Array((endY-startY)*w);\n          for(let i=0; i<channel.length; i++) {\n            const y = Math.floor(i/w) + startY;\n            const x = i%w;\n            channel[i] = getAt(x,y,c);\n          }\n          const blurred = stackBlur(channel, w, endY-startY, 2);\n          for(let i=0; i<channel.length; i++) {\n            const y = Math.floor(i/w) + startY;\n            const x = i%w;\n            const orig = getAt(x,y,c);\n            setAt(x,y,c, orig + (orig - blurred[i]) * params.usmK);\n          }\n        }\n        for(let i=0; i<out.length; i++) d[i] = out[i];\n      }\n      \n      if(params.edge > 0 || params.emboss > 0 || params.shadow > 0) {\n        for(let y=startY+1; y<endY-1; y++) {\n          for(let x=1; x<w-1; x++) {\n            for(let c=0; c<3; c++) {\n              const v = getAt(x,y,c);\n              const dx = getAt(x+1,y,c) - getAt(x-1,y,c);\n              const dy = getAt(x,y+1,c) - getAt(x,y-1,c);\n              \n              const embossVal = (-2*getAt(x-1,y-1,c) - getAt(x,y-1,c) - getAt(x-1,y,c) +\n                                 getAt(x,y,c) + getAt(x+1,y,c) + getAt(x,y+1,c) +\n                                 getAt(x-1,y+1,c) + 2*getAt(x+1,y+1,c)) / 9;\n              \n              const edgeMag = Math.sqrt(dx*dx + dy*dy);\n              const edge = edgeMag * params.edge;\n              const emboss = embossVal * params.emboss * 100;\n              const shadow = -Math.abs(dx + dy) * params.shadow;\n              setAt(x,y,c, v + edge + emboss + shadow);\n            }\n          }\n        }\n        for(let i=0; i<out.length; i++) d[i] = out[i];\n      }\n    }\n    \n    postProgress(85);\n    \n    if(params.ckHeat && edgeMap) {\n      const alpha = params.heatA;\n      let maxE = 0;\n      for(let i=0; i<edgeMap.length; i++) maxE = Math.max(maxE, edgeMap[i]);\n      for(let y=startY; y<endY; y++) {\n        for(let x=0; x<w; x++) {\n          const e = maxE > 0 ? edgeMap[(y-startY)*w+x] / maxE : 0;\n          const heat = e > 0.5 ? [255, (1-e)*510, 0] : [e*510, 255, 0];\n          for(let c=0; c<3; c++) {\n            const v = getAt(x,y,c);\n            setAt(x,y,c, v*(1-alpha) + heat[c]*alpha);\n          }\n        }\n      }\n      for(let i=0; i<out.length; i++) d[i] = out[i];\n    }\n    \n    if(params.blur > 0) {\n      const r = Math.ceil(params.blur);\n      for(let c=0; c<3; c++) {\n        const channel = new Float32Array((endY-startY)*w);\n        for(let i=0; i<channel.length; i++) {\n          const y = Math.floor(i/w) + startY;\n          const x = i%w;\n          channel[i] = getAt(x,y,c);\n        }\n        const blurred = stackBlur(channel, w, endY-startY, r);\n        for(let i=0; i<channel.length; i++) {\n          const y = Math.floor(i/w) + startY;\n          const x = i%w;\n          setAt(x,y,c, blurred[i]);\n        }\n      }\n      for(let i=0; i<out.length; i++) d[i] = out[i];\n    }\n    \n    postProgress(100);\n    self.postMessage({type:'done', jobId, chunkId, buf:out.buffer, startY, endY}, [out.buffer]);\n  };\n  "],{type:"application/javascript"}),D=URL.createObjectURL(L);function F(e,t){e.onerror=e=>{console.error(`Worker ${t} error:`,e),k("❌ Worker 錯誤，重啟中..."),clearTimeout(b.processTimeout),b.workers[t].terminate(),b.workers[t]=new Worker(D),F(b.workers[t],t)},e.onmessage=e=>{const{type:t,jobId:n,pct:s,buf:o,metrics:i,chunkId:l,startY:d,endY:m}=e.data;if("analyze-done"===t)return b.analysisCache=i,j(),void Y();if("mask-done"===t){const e=new Uint8ClampedArray(o),t=document.createElement("canvas");t.width=r.width,t.height=r.height;return t.getContext("2d").putImageData(new ImageData(e,t.width,t.height),0,0),t.toBlob(e=>{const t=URL.createObjectURL(e),n=document.createElement("a");n.href=t,n.download="mask.png",document.body.appendChild(n),n.click(),document.body.removeChild(n),setTimeout(()=>URL.revokeObjectURL(t),100)},"image/png",.95),void k("✅ 已下載遮罩")}if(n===b.latest)if("progress"===t){const e=(s+100*l)/a;h.style.width=e+"%"}else if("done"===t){const e=new Uint8ClampedArray(o);if(c.putImageData(new ImageData(e,r.width,m-d),0,d),b.workers[l].done=!0,b.workers.every(e=>e.done)){clearTimeout(b.processTimeout);const e=Date.now()-b.startTime;console.log(`✅ 完成: ${e}ms`),y.style.display="none",b.processing=!1,h.style.width="0%",R(),b.workers.forEach(e=>e.done=!1),k(`✅ ${e}ms`)}}}}function Y(){b.scheduleTimer&&clearTimeout(b.scheduleTimer),b.scheduleTimer=setTimeout(()=>I(!0),150)}async function I(e=!0){if(!b.loaded)return;$();const t=M();let l=b.w,d=b.h;if(e){const e=t.pv,n=Math.min(1,e/Math.max(l,d));l=Math.round(l*n),d=Math.round(d*n)}l=Math.min(l,n),d=Math.min(d,n),o.width===l&&o.height===d||(o.width=l,o.height=d,r.width=l,r.height=d,i.clearRect(0,0,l,d),c.clearRect(0,0,l,d));try{i.drawImage(b.bitmap,0,0,l,d);const n=i.getImageData(0,0,l,d);b.latest=Date.now(),b.startTime=b.latest,e||(y.style.display="flex",b.processing=!0,s("procMeta").textContent=`${l}×${d} px | ${a} Workers`,clearTimeout(b.processTimeout),b.processTimeout=setTimeout(()=>{console.error("❌ 處理超時"),k("❌ 處理超時，已取消"),b.latest=Date.now()+1e5,y.style.display="none",b.processing=!1,R()},6e4));const o=Math.ceil(d/a);for(let e=0;e<a;e++){const a=e*o,s=Math.min((e+1)*o,d),r=new Uint8ClampedArray(n.data.buffer,a*l*4,(s-a)*l*4);b.workers[e].postMessage({type:"job",jobId:b.latest,chunkId:e,w:l,h:d,startY:a,endY:s,buf:r.buffer,params:t},[r.buffer])}}catch(e){console.error(e),k("❌ 處理失敗"),R()}}function S(){if(!b.loaded)return;const e=document.createElement("canvas"),t=Math.min(b.w,512),n=Math.min(b.h,512);e.width=t,e.height=n;const a=e.getContext("2d");a.drawImage(b.bitmap,0,0,t,n);const s=a.getImageData(0,0,t,n);e.width=e.height=1,b.workers[0].postMessage({type:"analyze",jobId:Date.now(),w:t,h:n,buf:s.data.buffer},[s.data.buffer])}function j(){if(!b.loaded||!b.analysisCache)return;const e=b.w,t=b.h,n=(e*t/1e6).toFixed(1),{indent:a,bump:s,vshape:o,entropy:r,meanEdge:i,glcm:c,exposure:l}=b.analysisCache;x.innerHTML=`\n      📊 ${e}×${t}px (${n}MP) | 熵: ${r.toFixed(1)}<br>\n      曝光: ${l.mean.toFixed(0)} | 標準差: ${l.stdDev.toFixed(1)} | 中位數: ${l.median.toFixed(0)}<br>\n      壓痕: ${(1e3*a).toFixed(1)} | 凸起: ${s.toFixed(2)} | 邊緣: ${i.toFixed(1)}<br>\n      GLCM → 對比: ${c.contrast.toFixed(1)} | 能量: ${c.energy.toFixed(3)}\n    `;const d=[];l.isUnderexposed&&d.push({label:"🌙 曝光不足修復",desc:`提亮暗部（平均 ${l.mean.toFixed(0)}，暗部 ${(100*l.clipLow).toFixed(1)}%）`,params:{xrayMode:"clahe",xrayK:10,xrayDetail:1.8,edge:.7,usmK:2.2,shadow:.65,ckDeblock:!0,fbSigma:2},badges:["AI推薦","曝光"]}),l.isOverexposed&&d.push({label:"☀️ 過曝修復",desc:`壓縮高光（平均 ${l.mean.toFixed(0)}，亮部 ${(100*l.clipHigh).toFixed(1)}%）`,params:{xrayMode:"neutral",xrayK:3.5,xrayDetail:.8,edge:.3,shadow:.2,ckBilateral:!0,fbSigma:1.8},badges:["高光"]}),a>.018&&s>1.8&&c.contrast>80&&d.push({label:"🎂 極高紋理",desc:`豐富氣孔（壓痕 ${(1e3*a).toFixed(1)}，凸起 ${s.toFixed(2)}）`,params:{xrayMode:"adaptive",xrayK:8.5,xrayDetail:1.6,edge:.85,emboss:.4,usmK:2.5,ckDeblock:!0,fbSigma:2.4,ckBilateral:!0},badges:["AI推薦","🔥"]}),c.energy<.008&&d.push({label:"🧹 強力降噪",desc:`高噪點檢測（能量 ${c.energy.toFixed(4)}）`,params:{ckBilateral:!0,fbSigma:3.5,ckDeblock:!0,xrayMode:"neutral",xrayK:3,xrayDetail:.6,edge:.3,usmK:.8},badges:["降噪"]}),l.isDynamic&&c.contrast>60&&!l.isUnderexposed&&!l.isOverexposed&&d.push({label:"✨ 完美曝光增強",desc:`動態範圍優秀，強化細節（對比 ${c.contrast.toFixed(1)}）`,params:{xrayMode:"adaptive",xrayK:6.5,xrayDetail:1.4,edge:.7,usmK:2.2,emboss:.25,ckBilateral:!1},badges:["AI推薦","最佳"]}),(c.contrast<40||l.isLowContrast)&&d.push({label:"🧊 低對比增強",desc:`CLAHE 強化（對比 ${c.contrast.toFixed(1)}，σ ${l.stdDev.toFixed(1)}）`,params:{xrayMode:"clahe",xrayK:9,xrayDetail:1.8,edge:.95,usmK:2.8,emboss:.15},badges:["對比"]}),a>.02&&s>2&&r>6&&d.push({label:"🔬 極限解析",desc:`氣孔專用（壓痕 ${(1e3*a).toFixed(1)}，熵 ${r.toFixed(1)}）`,params:{xrayMode:"adaptive",xrayK:10,xrayDetail:2,edge:1,emboss:.6,usmK:3,ckDeblock:!1},badges:["極限","🚀"]}),d.push({label:"🎯 標準",desc:"平衡效果",params:{xrayMode:"neutral",xrayK:4.5,xrayDetail:1,edge:.4,usmK:1,ckBilateral:!1},badges:["預設"]}),g.innerHTML="",d.forEach(e=>{const t=document.createElement("div");t.className="ajItem";const n=e.badges?e.badges.map(e=>`<span class="badge">${e}</span>`).join(" "):"";t.innerHTML=`\n        <strong>${e.label}</strong>\n        <span>${e.desc}</span>\n        ${n}\n      `,t.addEventListener("click",()=>{A(e.params,!1,!0),k(`✅ 已套用 ${e.label}`),u.classList.remove("show"),p.classList.remove("active"),b.ajOpen=!1}),g.appendChild(t)}),b.ajOpen||setTimeout(()=>{u.classList.add("show"),p.classList.add("active"),b.ajOpen=!0},900)}!function(){b.workers.forEach(e=>{try{e.terminate()}catch(e){}}),b.workers=[];for(let e=0;e<a;e++){const t=new Worker(D);F(t,e),b.workers.push(t)}}(),p.addEventListener("click",()=>{if(b.ajOpen)u.classList.remove("show"),p.classList.remove("active"),b.ajOpen=!1;else{if(!b.loaded)return void k("📸 請先載入圖片");b.analysisCache?j():(k("⏳ 正在分析..."),S()),u.classList.add("show"),p.classList.add("active"),b.ajOpen=!0}});let B=.5;d.addEventListener("mousedown",()=>{b.isDragging=!0}),d.addEventListener("touchstart",e=>{b.isDragging=!0,e.preventDefault()},{passive:!1}),document.addEventListener("mousemove",e=>{if(!b.isDragging)return;const t=l.getBoundingClientRect();B=v((e.clientX-t.left)/t.width,0,1),d.style.left=100*B+"%",m.style.clipPath=`inset(0 ${100*(1-B)}% 0 0)`}),document.addEventListener("touchmove",e=>{if(!b.isDragging||!e.touches[0])return;const t=l.getBoundingClientRect();B=v((e.touches[0].clientX-t.left)/t.width,0,1),d.style.left=100*B+"%",m.style.clipPath=`inset(0 ${100*(1-B)}% 0 0)`},{passive:!0}),document.addEventListener("mouseup",()=>{b.isDragging=!1}),document.addEventListener("touchend",()=>{b.isDragging=!1}),l.addEventListener("click",()=>{l.requestFullscreen?l.requestFullscreen():l.webkitRequestFullscreen&&l.webkitRequestFullscreen()});s("btnDL").addEventListener("click",()=>{if(!b.loaded)return alert("請先載入圖片");var e;e="result.png",r.toBlob(t=>{const n=URL.createObjectURL(t),a=document.createElement("a");a.href=n,a.download=e,document.body.appendChild(a),a.click(),document.body.removeChild(a),setTimeout(()=>URL.revokeObjectURL(n),100)},"image/png",.95),k("✅ 已下載")}),s("btnDLMask").addEventListener("click",()=>{if(!b.loaded)return alert("請先載入圖片");const e=r.width,t=r.height,n=c.getImageData(0,0,e,t);b.workers[0].postMessage({type:"mask",jobId:Date.now(),w:e,h:t,buf:n.data.buffer},[n.data.buffer]),k("⏳ 正在生成遮罩...")}),s("btnHQ").addEventListener("click",()=>{if(!b.loaded)return alert("請先載入圖片");I(!1),k("⏳ 高畫質處理...")}),s("btnCancel").addEventListener("click",()=>{b.latest=Date.now()+1e5,clearTimeout(b.processTimeout),y.style.display="none",b.processing=!1,k("🛑 已取消"),R()}),navigator.share&&(s("btnShare").style.display="flex",s("btnShare").addEventListener("click",async()=>{if(!b.loaded)return alert("請先載入圖片");r.toBlob(async e=>{const t=new File([e],"result.png",{type:"image/png"});try{await navigator.share({files:[t],title:"🎂 Cake Reveal"}),k("✅ 已分享")}catch(e){"AbortError"!==e.name&&k("❌ 分享失敗")}},"image/png",.95)}));const C={pv:800,ckDeblock:!1,ckBilateral:!1,fbSigma:1.2,bilatR:30,bilatS:30,ckEnh:!0,usmK:1,edge:.4,emboss:.2,shadow:.4,blur:0,ckXray:!0,xrayMode:"neutral",xrayK:4.5,xrayDetail:1,ckHeat:!1,heatA:.6};function E(){document.querySelectorAll(".xray-group").forEach(e=>{e.classList.toggle("hidden",!s("ckXray").checked)}),document.querySelectorAll(".heat-group").forEach(e=>{e.classList.toggle("hidden",!s("ckHeat").checked)})}s("btnReset").addEventListener("click",()=>{A(C),b.autoApplied=!1,f.classList.remove("show"),k("⚙️ 已重置")}),s("btnCopy").addEventListener("click",async()=>{const e=JSON.stringify(M());try{await navigator.clipboard.writeText(e),k("✅ 已複製")}catch{b.clipboard=e,k("✅ 已複製（內部）")}}),s("btnPaste").addEventListener("click",async()=>{try{const e=await navigator.clipboard.readText();A(JSON.parse(e)),k("✅ 已貼上")}catch{if(!b.clipboard)return k("❌ 剪貼簿空");A(JSON.parse(b.clipboard)),k("✅ 已貼上")}});function $(){document.querySelectorAll("button:not(#btnCancel)").forEach(e=>e.disabled=!0)}function R(){document.querySelectorAll("button").forEach(e=>e.disabled=!1)}["pv","fbSigma","bilatR","bilatS","usmK","edge","emboss","shadow","blur","xrayK","xrayDetail","heatA"].forEach(e=>{const t=s(e);t.addEventListener("input",()=>{const n=s(e+"_v");n&&(n.textContent=t.value),b.autoApplied&&(b.autoApplied=!1,f.classList.remove("show")),Y()})}),["ckDeblock","ckBilateral","ckEnh","ckXray","ckHeat"].forEach(e=>{s(e).addEventListener("change",()=>{E(),Y()})}),s("xrayMode").addEventListener("change",Y),document.addEventListener("keydown",e=>{if("INPUT"===e.target.tagName||"SELECT"===e.target.tagName)return;const t=e.key.toLowerCase();"o"===t&&(s("fileInput").click(),e.preventDefault()),"h"===t&&(s("btnHQ").click(),e.preventDefault()),"s"===t&&(s("btnDL").click(),e.preventDefault())}),E(),R(),console.log("✅ v12.0 AI增強版初始化完成"),console.log("【新功能】"),console.log("✅ 智能測光分析：曝光/噪點/動態範圍自動檢測"),console.log("✅ 8種AI推薦：曝光修復/降噪/極限解析/完美增強等"),console.log("✅ Guided Filter 細節增強：多尺度自適應細節提取"),console.log("【優化】"),console.log("✅ 21項功能全部完整保留"),console.log("✅ Stack Blur 完整邊界修復"),console.log("✅ Bilateral 優化版本"),console.log("✅ CLAHE 邊界平滑"),console.log("✅ 記憶體洩漏修復 + 超時保護"),console.log("✅ Canvas context 狀態清理")}n()?(document.getElementById("loginScreen").classList.add("hidden"),document.getElementById("mainApp").style.display="flex"):(document.getElementById("loginForm").addEventListener("submit",function(n){n.preventDefault();const s=document.getElementById("username").value.trim(),o=document.getElementById("password").value.trim(),r=document.getElementById("errorMsg");s===e&&"1234"===o?(sessionStorage.setItem(t,JSON.stringify({username:s,timestamp:Date.now()})),document.getElementById("loginScreen").classList.add("hidden"),document.getElementById("mainApp").style.display="flex",setTimeout(a,100)):(r.classList.add("show"),document.getElementById("password").value="",document.getElementById("password").focus(),setTimeout(()=>{r.classList.remove("show")},3e3))}),document.getElementById("username").focus()),n()&&a()}()</script></body></html>
-<html lang="zh-Hant">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no,maximum-scale=1">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-touch-fullscreen" content="yes">
-<title>🎂 蛋糕頁 v13.0 - 全 API 整合 + iOS 優化</title>
-<style>
-  /* iOS 優化: 減少重繪、硬體加速、觸控優化 */
-  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-  :root{
-    --bg:#0b1220;--panel:#0f1b2e;--text:#e9f0ff;--brand:#2be38a;
-    --border:#1b2a45;--btn:#20314f;--warning:#ff9500;
-  }
-  html,body{
-    width:100%;height:100%;background:var(--bg);color:var(--text);
-    font-family:-apple-system,system-ui,sans-serif;overflow:hidden;position:fixed;
-    -webkit-user-select:none;-webkit-font-smoothing:antialiased;
-    /* iOS 優化: 禁止彈跳、優化渲染 */
-    overscroll-behavior:none;-webkit-overflow-scrolling:touch;
-  }
-  
-  .wrap{
-    position:fixed;inset:0;display:flex;flex-direction:column;
-    padding:max(12px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-left)) 
-            max(12px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-right));
-    /* iOS 優化: GPU 加速 */
-    will-change:transform;transform:translateZ(0);
-  }
-  
-  header{
-    display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:8px 0;flex-shrink:0;
-  }
-  
-  h1{font-size:18px;font-weight:600;}
-  
-  .badge{
-    padding:3px 6px;border:1px solid var(--border);border-radius:999px;
-    background:#0d1a30;color:#cde1ff;font-size:10px;
-  }
-  
-  .grid{
-    display:grid;grid-template-columns:1fr;gap:12px;flex:1;min-height:0;overflow:hidden;
-  }
-  
-  @media(min-width:900px){
-    .grid{grid-template-columns:minmax(360px,420px) 1fr}
-  }
-  
-  .card{
-    background:var(--panel);border:1px solid var(--border);border-radius:10px;
-    padding:12px;display:flex;flex-direction:column;overflow-y:auto;min-height:0;
-    /* iOS 優化: 平滑滾動 */
-    -webkit-overflow-scrolling:touch;
-  }
-  
-  .btn{
-    background:var(--btn);border:1px solid var(--border);color:#dff5ff;
-    border-radius:8px;padding:8px 12px;font-weight:600;cursor:pointer;
-    transition:all 0.15s;font-size:13px;min-height:44px;display:flex;
-    align-items:center;justify-content:center;
-    /* iOS 優化: 防止雙擊縮放、觸控延遲 */
-    touch-action:manipulation;-webkit-user-drag:none;
-  }
-  
-  .btn.primary{background:var(--brand);border-color:#0b3c25;color:#072412}
-  .btn.warning{background:var(--warning);border-color:#cc7700;color:#fff}
-  .btn:active:not(:disabled){opacity:0.8;transform:scale(0.95)}
-  .btn:disabled{opacity:0.4;cursor:not-allowed;pointer-events:none;}
-  
-  .row{display:flex;flex-direction:column;gap:4px;margin:6px 0;}
-  
-  label{font-size:12px;color:#b7c7e6;font-weight:500;}
-  
-  input[type="range"]{
-    width:100%;height:4px;-webkit-appearance:none;
-    background:#1b2a45;border-radius:99px;cursor:pointer;
-    /* iOS 優化: 觸控區域增大 */
-    padding:8px 0;margin:-8px 0;
-  }
-  
-  input[type="range"]::-webkit-slider-thumb{
-    -webkit-appearance:none;width:20px;height:20px;border-radius:50%;
-    background:var(--brand);box-shadow:0 2px 4px rgba(0,0,0,0.3);
-  }
-  
-  input[type="range"]::-moz-range-thumb{
-    width:20px;height:20px;border-radius:50%;background:var(--brand);border:none;
-  }
-  
-  select{
-    background:var(--btn);color:var(--text);border:1px solid var(--border);
-    border-radius:6px;padding:8px;font-size:12px;min-height:40px;
-  }
-  
-  .hflex{display:flex;gap:8px;flex-wrap:wrap;}
-  
-  .compareWrap{
-    position:relative;border-radius:10px;overflow:hidden;
-    background:#0a0f1a;display:flex;align-items:center;justify-content:center;
-    flex:1;border:1px solid var(--border);cursor:zoom-in;
-    /* iOS 優化: 觸控區域、GPU 加速 */
-    touch-action:manipulation;will-change:transform;transform:translateZ(0);
-  }
-  
-  #src,#dst{
-    position:absolute;inset:0;width:100%;height:100%;display:block;
-    /* iOS 優化: 圖片渲染優化 */
-    image-rendering:-webkit-optimize-contrast;object-fit:contain;
-  }
-  
-  #dst{opacity:0;}
-  
-  #afterWrap{
-    position:absolute;inset:0;overflow:hidden;pointer-events:none;
-    /* iOS 優化: GPU 加速 */
-    will-change:clip-path;transform:translateZ(0);
-  }
-  
-  #afterWrap #dst{opacity:1;}
-  
+<!DOCTYPE html><!DOCTYPE html><!DOCTYPE html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no,maximum-scale=1"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-touch-fullscreen" content="yes"><title>🎂 Cake Reveal v12.0 - AI增強版 (智能測光+Guided Filter細節+性能優化)</title><style>*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}:root{--bg:#0b1220;--panel:#0f1b2e;--text:#e9f0ff;--brand:#2be38a;--border:#1b2a45;--btn:#20314f;--warning:#ff9500}body,html{width:100%;height:100%;background:var(--bg);color:var(--text);font-family:-apple-system,system-ui,sans-serif;overflow:hidden;position:fixed;-webkit-user-select:none;-webkit-font-smoothing:antialiased}#loginScreen{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:10000}#loginScreen.hidden{display:none}.loginBox{background:var(--panel);border:2px solid var(--border);border-radius:16px;padding:32px;max-width:360px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,.6)}.loginBox h2{font-size:24px;margin-bottom:8px;text-align:center;color:var(--brand)}.loginBox .subtitle{font-size:12px;color:#7a92c0;text-align:center;margin-bottom:24px}.loginBox .inputGroup{margin-bottom:16px}.loginBox .inputGroup label{display:block;font-size:12px;color:#b7c7e6;margin-bottom:6px;font-weight:600}.loginBox .inputGroup input{width:100%;background:var(--btn);border:1px solid var(--border);border-radius:8px;padding:12px;color:var(--text);font-size:14px;outline:0;transition:all .2s}.loginBox .inputGroup input:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(43,227,138,.1)}.loginBox .loginBtn{width:100%;background:var(--brand);border:none;border-radius:8px;padding:14px;font-weight:700;font-size:14px;color:#072412;cursor:pointer;transition:all .2s;margin-top:8px}.loginBox .loginBtn:hover{opacity:.9;transform:translateY(-1px)}.loginBox .loginBtn:active{transform:translateY(0);opacity:.8}.loginBox .errorMsg{background:#ff550055;border:1px solid #f50;border-radius:6px;padding:10px;font-size:12px;color:#fa8;margin-top:12px;display:none}.loginBox .errorMsg.show{display:block}.wrap{position:fixed;inset:0;display:flex;flex-direction:column;padding:max(12px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-left)) max(12px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-right))}header{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:8px 0;flex-shrink:0}h1{font-size:18px;font-weight:600}.badge{padding:3px 6px;border:1px solid var(--border);border-radius:999px;background:#0d1a30;color:#cde1ff;font-size:10px}.grid{display:grid;grid-template-columns:1fr;gap:12px;flex:1;min-height:0;overflow:hidden}@media(min-width:900px){.grid{grid-template-columns:minmax(360px,420px) 1fr}}.card{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:12px;display:flex;flex-direction:column;overflow-y:auto;min-height:0}.btn{background:var(--btn);border:1px solid var(--border);color:#dff5ff;border-radius:8px;padding:8px 12px;font-weight:600;cursor:pointer;transition:all .15s;font-size:13px;min-height:44px;display:flex;align-items:center;justify-content:center;touch-action:manipulation}.btn.primary{background:var(--brand);border-color:#0b3c25;color:#072412}.btn.warning{background:var(--warning);border-color:#c70;color:#fff}.btn:active:not(:disabled){opacity:.8;transform:scale(.95)}.btn:disabled{opacity:.4;cursor:not-allowed;pointer-events:none}.row{display:flex;flex-direction:column;gap:4px;margin:6px 0}label{font-size:12px;color:#b7c7e6;font-weight:500}input[type=range]{width:100%;height:4px;-webkit-appearance:none;background:#1b2a45;border-radius:99px;cursor:pointer}input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--brand)}input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:var(--brand);border:none}input[type=checkbox]{width:18px;height:18px;margin-right:6px}select{background:var(--btn);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:8px;font-size:12px;min-height:40px}.hflex{display:flex;gap:8px;flex-wrap:wrap}.toggle{display:flex;flex-wrap:wrap;gap:12px;margin:6px 0}.toggle label{display:inline-flex;align-items:center;cursor:pointer;font-size:13px}.compareWrap{position:relative;border-radius:10px;overflow:hidden;background:#0a0f1a;display:flex;align-items:center;justify-content:center;flex:1;border:1px solid var(--border);cursor:zoom-in;touch-action:manipulation}#dst,#src{position:absolute;inset:0;width:100%;height:100%;display:block}#dst{opacity:0}#afterWrap{position:absolute;inset:0;overflow:hidden;pointer-events:none}#afterWrap #dst{opacity:1}#divider{position:absolute;left:50%;top:0;bottom:0;width:2px;background:var(--brand);box-shadow:0 0 8px rgba(43,227,138,.6);cursor:col-resize;z-index:50;transform:translateX(-50%);pointer-events:auto;touch-action:none}#info{font-size:11px;color:#7a92c0;margin:6px 0;line-height:1.4;min-height:32px}.autoHint{background:var(--warning);color:#fff;padding:6px 10px;border-radius:6px;font-size:11px;margin:6px 0;display:none;align-items:center;gap:6px}.autoHint.show{display:flex}#processing{position:fixed;inset:0;background:rgba(8,12,20,.95);display:none;align-items:center;justify-content:center;z-index:9999}#processing .content{text-align:center;padding:20px;background:var(--panel);border:1px solid var(--border);border-radius:12px;max-width:85vw}#procMeter{width:260px;height:6px;background:#1b2a45;border-radius:99px;overflow:hidden;margin:12px auto}#procMeter .bar{height:100%;background:linear-gradient(90deg,var(--brand),#20a96f);width:0%;transition:width .2s}#ajDock{position:fixed;right:max(12px,env(safe-area-inset-right));top:50%;transform:translateY(-50%);display:none;background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:12px;box-shadow:0 4px 20px rgba(0,0,0,.6);max-width:340px;max-height:70vh;overflow-y:auto;z-index:98}#ajDock.show{display:block}#ajDock h3{margin:0 0 4px 0;font-size:13px;font-weight:600}.ajMeta{font-size:10px;color:#6a7fa0;margin-bottom:8px;line-height:1.4}.ajList{display:flex;flex-direction:column;gap:6px}.ajItem{background:var(--btn);border:1px solid var(--border);border-radius:8px;padding:8px 10px;cursor:pointer;font-size:12px;transition:all .15s;word-break:break-word}.ajItem:active{background:#2a3d5a;transform:scale(.98)}.ajItem strong{display:block;margin-bottom:2px;font-size:13px}.ajItem span{color:#8aa2d2;font-size:11px;display:block}#ajToggle{position:fixed;right:max(12px,env(safe-area-inset-right));bottom:max(12px,calc(12px + env(safe-area-inset-bottom)));width:50px;height:50px;border-radius:50%;background:var(--brand);border:2px solid #0b3c25;color:#072412;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(43,227,138,.5);z-index:99;transition:all .2s;touch-action:manipulation}#ajToggle:active{transform:scale(.9)}#ajToggle.active{background:var(--warning);border-color:#c70;color:#fff}.heat-group,.xray-group{transition:all .2s}.heat-group.hidden,.xray-group.hidden{display:none}hr{border:none;border-top:1px solid var(--border);margin:10px 0}@media(max-width:600px){.wrap{padding:8px}#ajDock{max-width:calc(100vw - 80px);max-height:50vh;right:8px;top:auto;bottom:max(70px,calc(70px + env(safe-area-inset-bottom)));transform:none}}</style></head><body><div id="loginScreen"><div class="loginBox"><h2>🎂 Cake Reveal</h2><div class="subtitle">請輸入帳號密碼以繼續</div><form id="loginForm" onsubmit="return!1"><div class="inputGroup"><label for="username">帳號</label> <input type="text" id="username" placeholder="請輸入帳號" autocomplete="off" required></div><div class="inputGroup"><label for="password">密碼</label> <input type="password" id="password" placeholder="請輸入密碼" autocomplete="off" required></div><button type="submit" class="loginBtn">🔓 登入</button><div class="errorMsg" id="errorMsg">❌ 帳號或密碼錯誤，請重試</div></form></div></div><div class="wrap" id="mainApp" style="display:none"><header><h1>🎂 Cake Reveal</h1><span class="badge">v12.0 AI增強版</span> <span class="badge">智能測光+細節增強</span></header><div class="grid"><div class="card"><div class="hflex"><label class="btn primary" style="flex:1"><input type="file" id="fileInput" accept="image/*" style="display:none"> 📂 選擇圖片</label> <button class="btn" id="btnHQ">🔥 高畫質</button></div><div class="autoHint" id="autoHint">⚠️ AI 建議已套用 <button class="btn warning" id="btnUndoAuto" style="padding:4px 8px;font-size:11px;margin-left:auto">↩ 還原</button></div><div class="hflex" style="margin-top:8px"><button class="btn" id="btnDL" style="flex:1">💾 下載</button> <button class="btn" id="btnDLMask" style="flex:1">🎭 遮罩</button> <button class="btn" id="btnShare" style="flex:1;display:none">📤 分享</button></div><div id="info">⏳ 等待圖片...</div><hr><div class="hflex"><button class="btn" id="btnReset" style="flex:1">⚙️ 重置</button> <button class="btn" id="btnCopy" style="flex:1">📋 複製</button> <button class="btn" id="btnPaste" style="flex:1">📌 貼上</button></div><div class="row"><label>預覽邊長 (px) • 完整範圍 300-1536px</label> <input type="range" id="pv" min="300" max="1536" step="50" value="800"> <span id="pv_v" style="font-size:11px;color:#8aa2d2">800</span></div><div class="toggle"><label><input type="checkbox" id="ckDeblock"> 去塊狀</label> <label><input type="checkbox" id="ckBilateral"> 雙邊濾波</label> <label><input type="checkbox" id="ckEnh" checked="checked"> 增強</label> <label><input type="checkbox" id="ckGuidedDetail"> 🎯 細節增強</label></div><div class="toggle"><label><input type="checkbox" id="ckXray" checked="checked"> 🔍 透視</label> <label><input type="checkbox" id="ckHeat"> 🔥 熱區</label></div><div class="row"><label>去塊平滑 σ • 完整範圍 0-5</label> <input type="range" id="fbSigma" min="0" max="5" step="0.1" value="1.2"> <span id="fbSigma_v" style="font-size:11px;color:#8aa2d2">1.2</span></div><div class="row"><label>雙邊濾波範圍 • 完整 1-100</label> <input type="range" id="bilatR" min="1" max="100" step="1" value="30"> <span id="bilatR_v" style="font-size:11px;color:#8aa2d2">30</span></div><div class="row"><label>雙邊濾波強度 • 完整 1-100</label> <input type="range" id="bilatS" min="1" max="100" step="1" value="30"> <span id="bilatS_v" style="font-size:11px;color:#8aa2d2">30</span></div><div class="row xray-group"><label>透視模式 • 完整5種</label> <select id="xrayMode"><option value="gain-fast">⚡ 快速增益</option><option value="neutral" selected="selected">🎯 標準透視</option><option value="adaptive">🧠 自適應</option><option value="gradient">🌈 梯度熱圖</option><option value="clahe">🔬 CLAHE對比</option></select></div><div class="row xray-group"><label>透視強度 • 完整 0-12</label> <input type="range" id="xrayK" min="0" max="12" step="0.1" value="4.5"> <span id="xrayK_v" style="font-size:11px;color:#8aa2d2">4.5</span></div><div class="row xray-group"><label>透視細節 • 完整 0-2</label> <input type="range" id="xrayDetail" min="0" max="2" step="0.05" value="1.0"> <span id="xrayDetail_v" style="font-size:11px;color:#8aa2d2">1.0</span></div><div class="row heat-group"><label>熱區覆蓋 • 完整 0-1</label> <input type="range" id="heatA" min="0" max="1" step="0.05" value="0.6"> <span id="heatA_v" style="font-size:11px;color:#8aa2d2">0.6</span></div><div class="row"><label>銳化 • 完整 0-3</label> <input type="range" id="usmK" min="0" max="3" step="0.05" value="1.0"> <span id="usmK_v" style="font-size:11px;color:#8aa2d2">1.0</span></div><div class="row"><label>邊緣強度 • 精度 0.05</label> <input type="range" id="edge" min="0" max="1" step="0.05" value="0.4"> <span id="edge_v" style="font-size:11px;color:#8aa2d2">0.4</span></div><div class="row"><label>浮雕 • 完整 0-1</label> <input type="range" id="emboss" min="0" max="1" step="0.05" value="0.2"> <span id="emboss_v" style="font-size:11px;color:#8aa2d2">0.2</span></div><div class="row"><label>陰影 • 完整 0-1</label> <input type="range" id="shadow" min="0" max="1" step="0.05" value="0.4"> <span id="shadow_v" style="font-size:11px;color:#8aa2d2">0.4</span></div><div class="row"><label>去霧/柔化 • 完整 0-3</label> <input type="range" id="blur" min="0" max="3" step="0.1" value="0"> <span id="blur_v" style="font-size:11px;color:#8aa2d2">0</span></div></div><div class="card"><div class="compareWrap" id="compareWrap"><canvas id="src"></canvas><div id="afterWrap"><canvas id="dst"></canvas></div><div id="divider"></div></div><div style="margin-top:6px;font-size:10px;color:#6a7fa0">💡 拖動中線查看對比 | 快捷鍵: O=開啟 H=高畫質 S=儲存</div></div></div></div><div id="processing"><div class="content"><div style="font-size:14px;margin-bottom:10px;font-weight:600">⏳ 處理中...</div><div id="procMeta" style="font-size:11px;color:#8aa2d2;margin-bottom:8px"></div><div id="procMeter"><div class="bar"></div></div><button class="btn" id="btnCancel" style="margin-top:12px">⏹️ 取消</button></div></div><div id="ajDock"><h3>🧠 AI 完整智能分析</h3><div class="ajMeta" id="ajMeta"></div><div class="ajList" id="ajList"></div></div><button id="ajToggle" title="AI智能建議">🧠</button><script>!function(){"use strict";const e="1234",t="cakeRevealAuth";function n(){const n=sessionStorage.getItem(t);if(n)try{const t=JSON.parse(n);if(t.username===e&&t.timestamp&&Date.now()-t.timestamp<864e5)return!0}catch(e){}return!1}function a(){const e=/iPad|iPhone|iPod/.test(navigator.userAgent),t=e?16777216:268435456,n=e?4096:32767,a=Math.min(navigator.hardwareConcurrency||4,e?2:4);console.log(`🎂 v12.0 AI增強版 | iOS=${e} | Workers=${a}`),console.log("✅ 智能測光分析 + Guided Filter細節增強 + 8種AI推薦 + 性能優化");const s=e=>document.getElementById(e),o=s("src"),r=s("dst"),i=o.getContext("2d",{willReadFrequently:!0}),c=r.getContext("2d"),l=s("compareWrap"),d=s("divider"),m=s("afterWrap"),y=s("processing"),h=s("procMeter").querySelector(".bar"),u=s("ajDock"),g=s("ajList"),x=s("ajMeta"),p=s("ajToggle"),f=s("autoHint"),w=s("btnUndoAuto"),b={latest:0,loaded:!1,bitmap:null,w:0,h:0,processing:!1,isDragging:!1,ajOpen:!1,scheduleTimer:null,clipboard:null,workers:[],autoApplied:!1,prevParams:null,analysisCache:null,bufferPool:new Map,processTimeout:null};function v(e,t,n){return Math.max(t,Math.min(n,e))}const k=e=>{s("info").textContent=e};function M(){return{pv:+s("pv").value,ckDeblock:s("ckDeblock").checked,ckBilateral:s("ckBilateral").checked,fbSigma:+s("fbSigma").value,bilatR:+s("bilatR").value,bilatS:+s("bilatS").value,ckEnh:s("ckEnh").checked,ckGuidedDetail:s("ckGuidedDetail").checked,usmK:+s("usmK").value,edge:+s("edge").value,emboss:+s("emboss").value,shadow:+s("shadow").value,blur:+s("blur").value,ckXray:s("ckXray").checked,xrayMode:s("xrayMode").value,xrayK:+s("xrayK").value,xrayDetail:+s("xrayDetail").value,ckHeat:s("ckHeat").checked,heatA:+s("heatA").value}}function A(e,t=!1,n=!1){n&&(b.prevParams=M(),b.autoApplied=!0,f.classList.add("show"));const a={pv:"pv",fbSigma:"fbSigma",bilatR:"bilatR",bilatS:"bilatS",usmK:"usmK",edge:"edge",emboss:"emboss",shadow:"shadow",blur:"blur",xrayK:"xrayK",xrayDetail:"xrayDetail",heatA:"heatA"};for(const t in a)if(null!=e[t]){s(a[t]).value=e[t];const n=s(a[t]+"_v");n&&(n.textContent=e[t])}null!=e.ckDeblock&&(s("ckDeblock").checked=!!e.ckDeblock),null!=e.ckBilateral&&(s("ckBilateral").checked=!!e.ckBilateral),null!=e.ckEnh&&(s("ckEnh").checked=!!e.ckEnh),null!=e.ckXray&&(s("ckXray").checked=!!e.ckXray),null!=e.ckHeat&&(s("ckHeat").checked=!!e.ckHeat),e.xrayMode&&(s("xrayMode").value=e.xrayMode),E(),t||Y()}function E(){document.querySelectorAll(".xray-group").forEach(e=>{e.classList.toggle("hidden",!s("ckXray").checked)}),document.querySelectorAll(".heat-group").forEach(e=>{e.classList.toggle("hidden",!s("ckHeat").checked)})}w.addEventListener("click",()=>{b.prevParams&&(A(b.prevParams),b.autoApplied=!1,f.classList.remove("show"),k("↩ 已還原"))}),s("fileInput").addEventListener("change",e=>async function(e){if(e){$(),k("📸 載入中...");try{let a;try{a=await createImageBitmap(e,{imageOrientation:"from-image"})}catch(t){const n=URL.createObjectURL(e),s=new Image;await new Promise((e,t)=>{s.onload=e,s.onerror=t,s.src=n}),a=await createImageBitmap(s),URL.revokeObjectURL(n)}let o=a.width,r=a.height;if(o*r>t){const e=Math.sqrt(t/(o*r));o=Math.floor(o*e),r=Math.floor(r*e)}o=Math.min(o,n),r=Math.min(r,n),b.bitmap=a,b.w=o,b.h=r,b.loaded=!0,R(),k(`✅ ${o}×${r} px`),s("fileInput").value="",S()}catch(e){console.error(e),k(`❌ ${e.message}`),R()}}}(e.target.files[0]));const L=new Blob(["\n  'use strict';\n  \n  self.clamp = (v,a,b) => Math.max(a, Math.min(b, v));\n  \n  // 優化的 Stack Blur (完整邊界處理)\n  function stackBlur(src, w, h, r) {\n    if(r < 1) return new Float32Array(src);\n    \n    const dst = new Float32Array(w*h);\n    const div = (r+1) * (r+1);\n    \n    // 水平\n    for(let y=0; y<h; y++) {\n      let sum = src[y*w] * (r+1);\n      for(let i=1; i<=r; i++) {\n        sum += src[y*w + self.clamp(i, 0, w-1)];\n      }\n      \n      dst[y*w] = sum / div;\n      \n      for(let x=1; x<w; x++) {\n        const left = self.clamp(x-r-1, 0, w-1);\n        const right = self.clamp(x+r, 0, w-1);\n        sum -= src[y*w + left];\n        sum += src[y*w + right];\n        dst[y*w + x] = sum / div;\n      }\n    }\n    \n    // 垂直\n    const tmp = dst.slice();\n    for(let x=0; x<w; x++) {\n      let sum = tmp[x] * (r+1);\n      for(let i=1; i<=r; i++) {\n        sum += tmp[self.clamp(i, 0, h-1)*w + x];\n      }\n      \n      dst[x] = sum / div;\n      \n      for(let y=1; y<h; y++) {\n        const top = self.clamp(y-r-1, 0, h-1);\n        const bottom = self.clamp(y+r, 0, h-1);\n        sum -= tmp[top*w + x];\n        sum += tmp[bottom*w + x];\n        dst[y*w + x] = sum / div;\n      }\n    }\n    \n    return dst;\n  }\n  \n  // 優化的 Subsampling Bilateral\n  function fastBilateral(src, w, h, spatialSigma, colorSigma) {\n    const r = Math.ceil(spatialSigma);\n    const dst = new Float32Array(w*h);\n    const r2 = 2*spatialSigma*spatialSigma;\n    const c2 = 2*colorSigma*colorSigma;\n    \n    for(let y=0; y<h; y++) {\n      for(let x=0; x<w; x++) {\n        let sum=0, wsum=0;\n        const centerVal = src[y*w+x];\n        \n        for(let dy=-r; dy<=r; dy++) {\n          for(let dx=-r; dx<=r; dx++) {\n            const nx=self.clamp(x+dx,0,w-1), ny=self.clamp(y+dy,0,h-1);\n            const val = src[ny*w+nx];\n            const cd = (val - centerVal) * (val - centerVal);\n            const sd = dx*dx + dy*dy;\n            \n            const gw = Math.exp(-sd/r2 - cd/c2);\n            sum += val * gw;\n            wsum += gw;\n          }\n        }\n        dst[y*w+x] = wsum > 0 ? sum/wsum : centerVal;\n      }\n    }\n    return dst;\n  }\n  \n  // CLAHE with 邊界平滑\n  function clahe(gray, w, h, clipLimit=2.0, tileSize=8) {\n    const tilesX = Math.ceil(w / tileSize);\n    const tilesY = Math.ceil(h / tileSize);\n    const cdfs = [];\n    \n    for(let ty=0; ty<tilesY; ty++) {\n      for(let tx=0; tx<tilesX; tx++) {\n        const x0 = tx * tileSize;\n        const y0 = ty * tileSize;\n        const x1 = Math.min(x0 + tileSize, w);\n        const y1 = Math.min(y0 + tileSize, h);\n        const tilePixels = (x1-x0) * (y1-y0);\n        \n        const hist = new Array(256).fill(0);\n        for(let y=y0; y<y1; y++) {\n          for(let x=x0; x<x1; x++) {\n            hist[Math.floor(gray[y*w+x])]++;\n          }\n        }\n        \n        const limit = Math.max(1, Math.floor(clipLimit * tilePixels / 256));\n        let excess = 0;\n        for(let i=0; i<256; i++) {\n          if(hist[i] > limit) {\n            excess += hist[i] - limit;\n            hist[i] = limit;\n          }\n        }\n        for(let i=0; i<256; i++) hist[i] += Math.floor(excess / 256);\n        \n        const cdf = new Array(256);\n        cdf[0] = hist[0];\n        for(let i=1; i<256; i++) cdf[i] = cdf[i-1] + hist[i];\n        \n        cdfs.push(cdf);\n      }\n    }\n    \n    const out = new Float32Array(w*h);\n    for(let y=0; y<h; y++) {\n      for(let x=0; x<w; x++) {\n        const tx = Math.min(Math.floor(x / tileSize), tilesX-1);\n        const ty = Math.min(Math.floor(y / tileSize), tilesY-1);\n        const tileIdx = ty * tilesX + tx;\n        const val = Math.floor(gray[y*w+x]);\n        const cdf = cdfs[tileIdx];\n        out[y*w+x] = (cdf[val] / cdf[255]) * 255;\n      }\n    }\n    return out;\n  }\n  \n  // Guided Filter - 邊緣保持平滑\n  function guidedFilter(input, guide, w, h, radius, eps) {\n    const r = radius;\n    const N = boxFilter(createOnes(w, h), w, h, r);\n    \n    const meanI = boxFilterDivide(boxFilter(input, w, h, r), N, w, h);\n    const meanP = boxFilterDivide(boxFilter(guide, w, h, r), N, w, h);\n    const corrI = boxFilterDivide(boxFilter(multiply(input, input, w, h), w, h, r), N, w, h);\n    const corrIp = boxFilterDivide(boxFilter(multiply(input, guide, w, h), w, h, r), N, w, h);\n    \n    const varI = subtract(corrI, multiply(meanI, meanI, w, h), w, h);\n    const covIp = subtract(corrIp, multiply(meanI, meanP, w, h), w, h);\n    \n    const a = new Float32Array(w * h);\n    const b = new Float32Array(w * h);\n    for(let i=0; i<w*h; i++) {\n      a[i] = covIp[i] / (varI[i] + eps);\n      b[i] = meanP[i] - a[i] * meanI[i];\n    }\n    \n    const meanA = boxFilterDivide(boxFilter(a, w, h, r), N, w, h);\n    const meanB = boxFilterDivide(boxFilter(b, w, h, r), N, w, h);\n    \n    const q = new Float32Array(w * h);\n    for(let i=0; i<w*h; i++) {\n      q[i] = meanA[i] * input[i] + meanB[i];\n    }\n    return q;\n  }\n  \n  // Box Filter 輔助函數\n  function boxFilter(src, w, h, r) {\n    const dst = new Float32Array(w * h);\n    const temp = new Float32Array(w * h);\n    \n    // 水平\n    for(let y=0; y<h; y++) {\n      let sum = 0;\n      for(let x=-r; x<=r; x++) {\n        const px = self.clamp(x, 0, w-1);\n        sum += src[y*w + px];\n      }\n      temp[y*w] = sum;\n      \n      for(let x=1; x<w; x++) {\n        const left = self.clamp(x-r-1, 0, w-1);\n        const right = self.clamp(x+r, 0, w-1);\n        sum = sum - src[y*w + left] + src[y*w + right];\n        temp[y*w + x] = sum;\n      }\n    }\n    \n    // 垂直\n    for(let x=0; x<w; x++) {\n      let sum = 0;\n      for(let y=-r; y<=r; y++) {\n        const py = self.clamp(y, 0, h-1);\n        sum += temp[py*w + x];\n      }\n      dst[x] = sum;\n      \n      for(let y=1; y<h; y++) {\n        const top = self.clamp(y-r-1, 0, h-1);\n        const bottom = self.clamp(y+r, 0, h-1);\n        sum = sum - temp[top*w + x] + temp[bottom*w + x];\n        dst[y*w + x] = sum;\n      }\n    }\n    return dst;\n  }\n  \n  function createOnes(w, h) {\n    return new Float32Array(w * h).fill(1);\n  }\n  \n  function boxFilterDivide(src, divisor, w, h) {\n    const dst = new Float32Array(w * h);\n    for(let i=0; i<w*h; i++) {\n      dst[i] = src[i] / divisor[i];\n    }\n    return dst;\n  }\n  \n  function multiply(a, b, w, h) {\n    const dst = new Float32Array(w * h);\n    for(let i=0; i<w*h; i++) {\n      dst[i] = a[i] * b[i];\n    }\n    return dst;\n  }\n  \n  function subtract(a, b, w, h) {\n    const dst = new Float32Array(w * h);\n    for(let i=0; i<w*h; i++) {\n      dst[i] = a[i] - b[i];\n    }\n    return dst;\n  }\n  \n  // 多尺度細節增強（Adobe Lightroom 風格）\n  function enhanceDetailMultiScale(src, w, h, gains) {\n    const scales = [4, 8, 16];\n    const details = [];\n    \n    // 提取每個尺度的細節\n    for(let i=0; i<scales.length; i++) {\n      const r = scales[i];\n      const base = guidedFilter(src, src, w, h, r, 0.04);\n      const detail = new Float32Array(w * h);\n      for(let j=0; j<w*h; j++) {\n        detail[j] = src[j] - base[j];\n      }\n      details.push(detail);\n    }\n    \n    // 根據增益組合細節\n    const combined = new Float32Array(w * h);\n    for(let i=0; i<w*h; i++) {\n      combined[i] = src[i] + \n        details[0][i] * gains.fine +\n        details[1][i] * gains.mid +\n        details[2][i] * gains.coarse;\n    }\n    \n    return combined;\n  }\n  \n  // GLCM 完整分析\n  function calcGLCM(gray, w, h, d=1) {\n    const glcm = Array(256).fill(0).map(() => Array(256).fill(0));\n    for(let y=0; y<h-d; y++) {\n      for(let x=0; x<w-d; x++) {\n        const i = Math.floor(gray[y*w+x]);\n        const j = Math.floor(gray[(y+d)*w+(x+d)]);\n        glcm[i][j]++;\n      }\n    }\n    let sum = 0;\n    for(let i=0; i<256; i++) for(let j=0; j<256; j++) sum += glcm[i][j];\n    if(sum > 0) for(let i=0; i<256; i++) for(let j=0; j<256; j++) glcm[i][j] /= sum;\n    \n    let contrast=0, energy=0, homogeneity=0;\n    for(let i=0; i<256; i++) {\n      for(let j=0; j<256; j++) {\n        const p = glcm[i][j];\n        contrast += (i-j)*(i-j) * p;\n        energy += p * p;\n        homogeneity += p / (1 + Math.abs(i-j));\n      }\n    }\n    return {contrast, energy, homogeneity};\n  }\n  \n  // 主處理邏輯\n  self.onmessage = (e) => {\n    const {type, jobId, w, h, buf, params, chunkId, startY, endY} = e.data;\n    \n    if(type === 'analyze') {\n      const d = new Uint8ClampedArray(buf);\n      const gray = new Float32Array(w*h);\n      for(let i=0; i<w*h; i++) {\n        gray[i] = d[i*4]*0.299 + d[i*4+1]*0.587 + d[i*4+2]*0.114;\n      }\n      \n      const glcm = calcGLCM(gray, w, h, 1);\n      \n      let indent=0, bump=0, vshape=0, entropy=0;\n      for(let y=1; y<h-1; y++) {\n        for(let x=1; x<w-1; x++) {\n          const c = gray[y*w+x];\n          const t = gray[(y-1)*w+x], b = gray[(y+1)*w+x];\n          const l = gray[y*w+(x-1)], r = gray[y*w+(x+1)];\n          \n          const lap = Math.abs(4*c - t - b - l - r);\n          if(lap > 20) bump += lap;\n          if(c < Math.min(t,b,l,r) - 10) indent += 1;\n          \n          const gx = r - l, gy = b - t;\n          if(Math.abs(gx) > 10 && Math.abs(gy) > 10) vshape += 1;\n        }\n      }\n      \n      const hist = new Array(256).fill(0);\n      let sum = 0;\n      for(let i=0; i<gray.length; i++) {\n        const val = Math.floor(gray[i]);\n        hist[val]++;\n        sum += gray[i];\n      }\n      for(let i=0; i<256; i++) {\n        const p = hist[i] / gray.length;\n        if(p > 0) entropy -= p * Math.log2(p);\n      }\n      \n      indent = indent / (w * h);\n      bump = bump / (w * h * 100);\n      vshape = vshape / (w * h);\n      \n      let meanEdge = 0;\n      for(let y=1; y<h-1; y++) {\n        for(let x=1; x<w-1; x++) {\n          const gx = gray[y*w+(x+1)] - gray[y*w+(x-1)];\n          const gy = gray[(y+1)*w+x] - gray[(y-1)*w+x];\n          meanEdge += Math.sqrt(gx*gx + gy*gy);\n        }\n      }\n      meanEdge /= (w-2)*(h-2);\n      \n      // 曝光分析\n      const mean = sum / gray.length;\n      const sorted = Array.from(gray).sort((a,b) => a-b);\n      const median = sorted[Math.floor(sorted.length/2)];\n      \n      let variance = 0;\n      for(let i=0; i<gray.length; i++) {\n        variance += Math.pow(gray[i] - mean, 2);\n      }\n      const stdDev = Math.sqrt(variance / gray.length);\n      \n      const clipLow = hist.slice(0, 10).reduce((a,b)=>a+b, 0) / gray.length;\n      const clipHigh = hist.slice(245).reduce((a,b)=>a+b, 0) / gray.length;\n      \n      const exposure = {\n        mean: mean,\n        median: median,\n        stdDev: stdDev,\n        clipLow: clipLow,\n        clipHigh: clipHigh,\n        isUnderexposed: mean < 80 && clipLow > 0.02,\n        isOverexposed: mean > 180 && clipHigh > 0.02,\n        isDynamic: Math.max(clipLow, clipHigh) < 0.01 && mean > 100 && mean < 150,\n        isLowContrast: stdDev < 30,\n        isHighContrast: stdDev > 70\n      };\n      \n      self.postMessage({type:'analyze-done', jobId, metrics: {indent, bump, vshape, entropy, meanEdge, glcm, exposure}});\n      return;\n    }\n    \n    if(type === 'mask') {\n      const d = new Uint8ClampedArray(buf);\n      const out = new Uint8ClampedArray(w*h*4);\n      \n      for(let y=1; y<h-1; y++) {\n        for(let x=1; x<w-1; x++) {\n          let sum = 0;\n          for(let c=0; c<3; c++) {\n            const idx = (y*w+x)*4+c;\n            const dx = d[idx+4] - d[idx-4];\n            const dy = d[idx+w*4] - d[idx-w*4];\n            sum += Math.sqrt(dx*dx + dy*dy);\n          }\n          const intensity = self.clamp(sum / 3, 0, 255);\n          const idx = (y*w+x)*4;\n          out[idx] = out[idx+1] = out[idx+2] = intensity;\n          out[idx+3] = 255;\n        }\n      }\n      self.postMessage({type:'mask-done', jobId, buf:out.buffer}, [out.buffer]);\n      return;\n    }\n    \n    if(type !== 'job') return;\n    \n    const postProgress = (pct) => self.postMessage({type:'progress', jobId, chunkId, pct});\n    postProgress(5);\n    \n    const d = new Uint8ClampedArray(buf);\n    const out = new Uint8ClampedArray((endY-startY)*w*4);\n    \n    const getAt = (x,y,c) => {\n      if(x<0||x>=w||y<startY||y>=endY) return 0;\n      return d[((y-startY)*w+x)*4+c];\n    };\n    const setAt = (x,y,c,v) => {\n      if(x<0||x>=w||y<startY||y>=endY) return;\n      out[((y-startY)*w+x)*4+c] = self.clamp(v, 0, 255);\n    };\n    \n    for(let i=0; i<d.length; i++) out[i] = d[i];\n    \n    postProgress(10);\n    \n    if(params.ckDeblock && params.fbSigma > 0) {\n      const r = Math.ceil(params.fbSigma);\n      for(let c=0; c<3; c++) {\n        const channel = new Float32Array((endY-startY)*w);\n        for(let i=0; i<channel.length; i++) {\n          const y = Math.floor(i/w) + startY;\n          const x = i%w;\n          channel[i] = getAt(x,y,c);\n        }\n        const blurred = stackBlur(channel, w, endY-startY, r);\n        for(let i=0; i<channel.length; i++) {\n          const y = Math.floor(i/w) + startY;\n          const x = i%w;\n          setAt(x,y,c, blurred[i]);\n        }\n      }\n      for(let i=0; i<out.length; i++) d[i] = out[i];\n    }\n    \n    postProgress(20);\n    \n    if(params.ckBilateral && params.bilatR > 0) {\n      const spatialSigma = params.bilatR / 3;\n      const colorSigma = params.bilatS;\n      for(let c=0; c<3; c++) {\n        const channel = new Float32Array((endY-startY)*w);\n        for(let i=0; i<channel.length; i++) {\n          const y = Math.floor(i/w) + startY;\n          const x = i%w;\n          channel[i] = getAt(x,y,c);\n        }\n        const filtered = fastBilateral(channel, w, endY-startY, spatialSigma, colorSigma);\n        for(let i=0; i<channel.length; i++) {\n          const y = Math.floor(i/w) + startY;\n          const x = i%w;\n          setAt(x,y,c, filtered[i]);\n        }\n      }\n      for(let i=0; i<out.length; i++) d[i] = out[i];\n    }\n    \n    postProgress(35);\n    \n    let edgeMap = null;\n    if(params.ckXray) {\n      edgeMap = new Float32Array((endY-startY)*w);\n      \n      for(let y=startY+1; y<endY-1; y++) {\n        for(let x=1; x<w-1; x++) {\n          let gx=0, gy=0;\n          for(let c=0; c<3; c++) {\n            gx += getAt(x+1,y,c) - getAt(x-1,y,c);\n            gy += getAt(x,y+1,c) - getAt(x,y-1,c);\n          }\n          edgeMap[(y-startY)*w+x] = Math.sqrt(gx*gx + gy*gy);\n        }\n      }\n      \n      postProgress(55);\n      \n      let maxE = 0;\n      for(let i=0; i<edgeMap.length; i++) maxE = Math.max(maxE, edgeMap[i]);\n      \n      const mode = params.xrayMode;\n      const k = params.xrayK;\n      const detail = params.xrayDetail;\n      \n      if(mode === 'clahe') {\n        const gray = new Float32Array((endY-startY)*w);\n        for(let i=0; i<gray.length; i++) {\n          const y = Math.floor(i/w) + startY;\n          const x = i%w;\n          gray[i] = (getAt(x,y,0)+getAt(x,y,1)+getAt(x,y,2))/3;\n        }\n        const enhanced = clahe(gray, w, endY-startY, 2.0, 8);\n        for(let y=startY; y<endY; y++) {\n          for(let x=0; x<w; x++) {\n            const idx = (y-startY)*w+x;\n            const boost = enhanced[idx] - gray[idx];\n            for(let c=0; c<3; c++) {\n              setAt(x,y,c, getAt(x,y,c) + boost + edgeMap[idx]/maxE*k*40);\n            }\n          }\n        }\n      } else {\n        for(let y=startY; y<endY; y++) {\n          for(let x=0; x<w; x++) {\n            const idx = (y-startY)*w+x;\n            let edge = edgeMap[idx];\n            edge = Math.pow(edge / maxE, 0.7 - detail*0.2) * maxE;\n            \n            if(mode === 'gain-fast') {\n              const gain = 1 + edge / 255 * k * 2.0;\n              for(let c=0; c<3; c++) setAt(x,y,c, getAt(x,y,c) * gain);\n            } else if(mode === 'neutral') {\n              const boost = edge / maxE * k * 120;\n              for(let c=0; c<3; c++) setAt(x,y,c, getAt(x,y,c) + boost);\n            } else if(mode === 'adaptive') {\n              const localVar = Math.abs(edge - (maxE * 0.3));\n              const adaptiveGain = 1 + (edge / 255) * k * (1 + localVar / maxE * detail);\n              for(let c=0; c<3; c++) setAt(x,y,c, getAt(x,y,c) * adaptiveGain);\n            } else if(mode === 'gradient') {\n              const intensity = self.clamp(edge / maxE * k * 120, 0, 255);\n              for(let c=0; c<3; c++) setAt(x,y,c, getAt(x,y,c) * 0.6 + intensity * 0.4);\n            }\n          }\n        }\n      }\n      for(let i=0; i<out.length; i++) d[i] = out[i];\n    }\n    \n    postProgress(70);\n    \n    // Guided Filter 細節增強（新增）\n    if(params.ckGuidedDetail) {\n      for(let c=0; c<3; c++) {\n        const channel = new Float32Array((endY-startY)*w);\n        for(let i=0; i<channel.length; i++) {\n          const y = Math.floor(i/w) + startY;\n          const x = i%w;\n          channel[i] = getAt(x,y,c);\n        }\n        \n        // 使用多尺度細節增強\n        const enhanced = enhanceDetailMultiScale(channel, w, endY-startY, {\n          fine: 1.5,   // 細小紋理強化\n          mid: 1.2,    // 中等紋理\n          coarse: 0.8  // 粗糙紋理略降\n        });\n        \n        for(let i=0; i<channel.length; i++) {\n          const y = Math.floor(i/w) + startY;\n          const x = i%w;\n          setAt(x,y,c, enhanced[i]);\n        }\n      }\n      for(let i=0; i<out.length; i++) d[i] = out[i];\n    }\n    \n    if(params.ckEnh) {\n      if(params.usmK > 0) {\n        for(let c=0; c<3; c++) {\n          const channel = new Float32Array((endY-startY)*w);\n          for(let i=0; i<channel.length; i++) {\n            const y = Math.floor(i/w) + startY;\n            const x = i%w;\n            channel[i] = getAt(x,y,c);\n          }\n          const blurred = stackBlur(channel, w, endY-startY, 2);\n          for(let i=0; i<channel.length; i++) {\n            const y = Math.floor(i/w) + startY;\n            const x = i%w;\n            const orig = getAt(x,y,c);\n            setAt(x,y,c, orig + (orig - blurred[i]) * params.usmK);\n          }\n        }\n        for(let i=0; i<out.length; i++) d[i] = out[i];\n      }\n      \n      if(params.edge > 0 || params.emboss > 0 || params.shadow > 0) {\n        for(let y=startY+1; y<endY-1; y++) {\n          for(let x=1; x<w-1; x++) {\n            for(let c=0; c<3; c++) {\n              const v = getAt(x,y,c);\n              const dx = getAt(x+1,y,c) - getAt(x-1,y,c);\n              const dy = getAt(x,y+1,c) - getAt(x,y-1,c);\n              \n              const embossVal = (-2*getAt(x-1,y-1,c) - getAt(x,y-1,c) - getAt(x-1,y,c) +\n                                 getAt(x,y,c) + getAt(x+1,y,c) + getAt(x,y+1,c) +\n                                 getAt(x-1,y+1,c) + 2*getAt(x+1,y+1,c)) / 9;\n              \n              const edgeMag = Math.sqrt(dx*dx + dy*dy);\n              const edge = edgeMag * params.edge;\n              const emboss = embossVal * params.emboss * 100;\n              const shadow = -Math.abs(dx + dy) * params.shadow;\n              setAt(x,y,c, v + edge + emboss + shadow);\n            }\n          }\n        }\n        for(let i=0; i<out.length; i++) d[i] = out[i];\n      }\n    }\n    \n    postProgress(85);\n    \n    if(params.ckHeat && edgeMap) {\n      const alpha = params.heatA;\n      let maxE = 0;\n      for(let i=0; i<edgeMap.length; i++) maxE = Math.max(maxE, edgeMap[i]);\n      for(let y=startY; y<endY; y++) {\n        for(let x=0; x<w; x++) {\n          const e = maxE > 0 ? edgeMap[(y-startY)*w+x] / maxE : 0;\n          const heat = e > 0.5 ? [255, (1-e)*510, 0] : [e*510, 255, 0];\n          for(let c=0; c<3; c++) {\n            const v = getAt(x,y,c);\n            setAt(x,y,c, v*(1-alpha) + heat[c]*alpha);\n          }\n        }\n      }\n      for(let i=0; i<out.length; i++) d[i] = out[i];\n    }\n    \n    if(params.blur > 0) {\n      const r = Math.ceil(params.blur);\n      for(let c=0; c<3; c++) {\n        const channel = new Float32Array((endY-startY)*w);\n        for(let i=0; i<channel.length; i++) {\n          const y = Math.floor(i/w) + startY;\n          const x = i%w;\n          channel[i] = getAt(x,y,c);\n        }\n        const blurred = stackBlur(channel, w, endY-startY, r);\n        for(let i=0; i<channel.length; i++) {\n          const y = Math.floor(i/w) + startY;\n          const x = i%w;\n          setAt(x,y,c, blurred[i]);\n        }\n      }\n      for(let i=0; i<out.length; i++) d[i] = out[i];\n    }\n    \n    postProgress(100);\n    self.postMessage({type:'done', jobId, chunkId, buf:out.buffer, startY, endY}, [out.buffer]);\n  };\n  "],{type:"application/javascript"}),D=URL.createObjectURL(L);function F(e,t){e.onerror=e=>{console.error(`Worker ${t} error:`,e),k("❌ Worker 錯誤，重啟中..."),clearTimeout(b.processTimeout),b.workers[t].terminate(),b.workers[t]=new Worker(D),F(b.workers[t],t)},e.onmessage=e=>{const{type:t,jobId:n,pct:s,buf:o,metrics:i,chunkId:l,startY:d,endY:m}=e.data;if("analyze-done"===t)return b.analysisCache=i,j(),void Y();if("mask-done"===t){const e=new Uint8ClampedArray(o),t=document.createElement("canvas");t.width=r.width,t.height=r.height;return t.getContext("2d").putImageData(new ImageData(e,t.width,t.height),0,0),t.toBlob(e=>{const t=URL.createObjectURL(e),n=document.createElement("a");n.href=t,n.download="mask.png",document.body.appendChild(n),n.click(),document.body.removeChild(n),setTimeout(()=>URL.revokeObjectURL(t),100)},"image/png",.95),void k("✅ 已下載遮罩")}if(n===b.latest)if("progress"===t){const e=(s+100*l)/a;h.style.width=e+"%"}else if("done"===t){const e=new Uint8ClampedArray(o);if(c.putImageData(new ImageData(e,r.width,m-d),0,d),b.workers[l].done=!0,b.workers.every(e=>e.done)){clearTimeout(b.processTimeout);const e=Date.now()-b.startTime;console.log(`✅ 完成: ${e}ms`),y.style.display="none",b.processing=!1,h.style.width="0%",R(),b.workers.forEach(e=>e.done=!1),k(`✅ ${e}ms`)}}}}function Y(){b.scheduleTimer&&clearTimeout(b.scheduleTimer),b.scheduleTimer=setTimeout(()=>I(!0),150)}async function I(e=!0){if(!b.loaded)return;$();const t=M();let l=b.w,d=b.h;if(e){const e=t.pv,n=Math.min(1,e/Math.max(l,d));l=Math.round(l*n),d=Math.round(d*n)}l=Math.min(l,n),d=Math.min(d,n),o.width===l&&o.height===d||(o.width=l,o.height=d,r.width=l,r.height=d,i.clearRect(0,0,l,d),c.clearRect(0,0,l,d));try{i.drawImage(b.bitmap,0,0,l,d);const n=i.getImageData(0,0,l,d);b.latest=Date.now(),b.startTime=b.latest,e||(y.style.display="flex",b.processing=!0,s("procMeta").textContent=`${l}×${d} px | ${a} Workers`,clearTimeout(b.processTimeout),b.processTimeout=setTimeout(()=>{console.error("❌ 處理超時"),k("❌ 處理超時，已取消"),b.latest=Date.now()+1e5,y.style.display="none",b.processing=!1,R()},6e4));const o=Math.ceil(d/a);for(let e=0;e<a;e++){const a=e*o,s=Math.min((e+1)*o,d),r=new Uint8ClampedArray(n.data.buffer,a*l*4,(s-a)*l*4);b.workers[e].postMessage({type:"job",jobId:b.latest,chunkId:e,w:l,h:d,startY:a,endY:s,buf:r.buffer,params:t},[r.buffer])}}catch(e){console.error(e),k("❌ 處理失敗"),R()}}function S(){if(!b.loaded)return;const e=document.createElement("canvas"),t=Math.min(b.w,512),n=Math.min(b.h,512);e.width=t,e.height=n;const a=e.getContext("2d");a.drawImage(b.bitmap,0,0,t,n);const s=a.getImageData(0,0,t,n);e.width=e.height=1,b.workers[0].postMessage({type:"analyze",jobId:Date.now(),w:t,h:n,buf:s.data.buffer},[s.data.buffer])}function j(){if(!b.loaded||!b.analysisCache)return;const e=b.w,t=b.h,n=(e*t/1e6).toFixed(1),{indent:a,bump:s,vshape:o,entropy:r,meanEdge:i,glcm:c,exposure:l}=b.analysisCache;x.innerHTML=`\n      📊 ${e}×${t}px (${n}MP) | 熵: ${r.toFixed(1)}<br>\n      曝光: ${l.mean.toFixed(0)} | 標準差: ${l.stdDev.toFixed(1)} | 中位數: ${l.median.toFixed(0)}<br>\n      壓痕: ${(1e3*a).toFixed(1)} | 凸起: ${s.toFixed(2)} | 邊緣: ${i.toFixed(1)}<br>\n      GLCM → 對比: ${c.contrast.toFixed(1)} | 能量: ${c.energy.toFixed(3)}\n    `;const d=[];l.isUnderexposed&&d.push({label:"🌙 曝光不足修復",desc:`提亮暗部（平均 ${l.mean.toFixed(0)}，暗部 ${(100*l.clipLow).toFixed(1)}%）`,params:{xrayMode:"clahe",xrayK:10,xrayDetail:1.8,edge:.7,usmK:2.2,shadow:.65,ckDeblock:!0,fbSigma:2},badges:["AI推薦","曝光"]}),l.isOverexposed&&d.push({label:"☀️ 過曝修復",desc:`壓縮高光（平均 ${l.mean.toFixed(0)}，亮部 ${(100*l.clipHigh).toFixed(1)}%）`,params:{xrayMode:"neutral",xrayK:3.5,xrayDetail:.8,edge:.3,shadow:.2,ckBilateral:!0,fbSigma:1.8},badges:["高光"]}),a>.018&&s>1.8&&c.contrast>80&&d.push({label:"🎂 極高紋理",desc:`豐富氣孔（壓痕 ${(1e3*a).toFixed(1)}，凸起 ${s.toFixed(2)}）`,params:{xrayMode:"adaptive",xrayK:8.5,xrayDetail:1.6,edge:.85,emboss:.4,usmK:2.5,ckDeblock:!0,fbSigma:2.4,ckBilateral:!0},badges:["AI推薦","🔥"]}),c.energy<.008&&d.push({label:"🧹 強力降噪",desc:`高噪點檢測（能量 ${c.energy.toFixed(4)}）`,params:{ckBilateral:!0,fbSigma:3.5,ckDeblock:!0,xrayMode:"neutral",xrayK:3,xrayDetail:.6,edge:.3,usmK:.8},badges:["降噪"]}),l.isDynamic&&c.contrast>60&&!l.isUnderexposed&&!l.isOverexposed&&d.push({label:"✨ 完美曝光增強",desc:`動態範圍優秀，強化細節（對比 ${c.contrast.toFixed(1)}）`,params:{xrayMode:"adaptive",xrayK:6.5,xrayDetail:1.4,edge:.7,usmK:2.2,emboss:.25,ckBilateral:!1},badges:["AI推薦","最佳"]}),(c.contrast<40||l.isLowContrast)&&d.push({label:"🧊 低對比增強",desc:`CLAHE 強化（對比 ${c.contrast.toFixed(1)}，σ ${l.stdDev.toFixed(1)}）`,params:{xrayMode:"clahe",xrayK:9,xrayDetail:1.8,edge:.95,usmK:2.8,emboss:.15},badges:["對比"]}),a>.02&&s>2&&r>6&&d.push({label:"🔬 極限解析",desc:`氣孔專用（壓痕 ${(1e3*a).toFixed(1)}，熵 ${r.toFixed(1)}）`,params:{xrayMode:"adaptive",xrayK:10,xrayDetail:2,edge:1,emboss:.6,usmK:3,ckDeblock:!1},badges:["極限","🚀"]}),d.push({label:"🎯 標準",desc:"平衡效果",params:{xrayMode:"neutral",xrayK:4.5,xrayDetail:1,edge:.4,usmK:1,ckBilateral:!1},badges:["預設"]}),g.innerHTML="",d.forEach(e=>{const t=document.createElement("div");t.className="ajItem";const n=e.badges?e.badges.map(e=>`<span class="badge">${e}</span>`).join(" "):"";t.innerHTML=`\n        <strong>${e.label}</strong>\n        <span>${e.desc}</span>\n        ${n}\n      `,t.addEventListener("click",()=>{A(e.params,!1,!0),k(`✅ 已套用 ${e.label}`),u.classList.remove("show"),p.classList.remove("active"),b.ajOpen=!1}),g.appendChild(t)}),b.ajOpen||setTimeout(()=>{u.classList.add("show"),p.classList.add("active"),b.ajOpen=!0},900)}!function(){b.workers.forEach(e=>{try{e.terminate()}catch(e){}}),b.workers=[];for(let e=0;e<a;e++){const t=new Worker(D);F(t,e),b.workers.push(t)}}(),p.addEventListener("click",()=>{if(b.ajOpen)u.classList.remove("show"),p.classList.remove("active"),b.ajOpen=!1;else{if(!b.loaded)return void k("📸 請先載入圖片");b.analysisCache?j():(k("⏳ 正在分析..."),S()),u.classList.add("show"),p.classList.add("active"),b.ajOpen=!0}});let B=.5;d.addEventListener("mousedown",()=>{b.isDragging=!0}),d.addEventListener("touchstart",e=>{b.isDragging=!0,e.preventDefault()},{passive:!1}),document.addEventListener("mousemove",e=>{if(!b.isDragging)return;const t=l.getBoundingClientRect();B=v((e.clientX-t.left)/t.width,0,1),d.style.left=100*B+"%",m.style.clipPath=`inset(0 ${100*(1-B)}% 0 0)`}),document.addEventListener("touchmove",e=>{if(!b.isDragging||!e.touches[0])return;const t=l.getBoundingClientRect();B=v((e.touches[0].clientX-t.left)/t.width,0,1),d.style.left=100*B+"%",m.style.clipPath=`inset(0 ${100*(1-B)}% 0 0)`},{passive:!0}),document.addEventListener("mouseup",()=>{b.isDragging=!1}),document.addEventListener("touchend",()=>{b.isDragging=!1}),l.addEventListener("click",()=>{l.requestFullscreen?l.requestFullscreen():l.webkitRequestFullscreen&&l.webkitRequestFullscreen()});s("btnDL").addEventListener("click",()=>{if(!b.loaded)return alert("請先載入圖片");var e;e="result.png",r.toBlob(t=>{const n=URL.createObjectURL(t),a=document.createElement("a");a.href=n,a.download=e,document.body.appendChild(a),a.click(),document.body.removeChild(a),setTimeout(()=>URL.revokeObjectURL(n),100)},"image/png",.95),k("✅ 已下載")}),s("btnDLMask").addEventListener("click",()=>{if(!b.loaded)return alert("請先載入圖片");const e=r.width,t=r.height,n=c.getImageData(0,0,e,t);b.workers[0].postMessage({type:"mask",jobId:Date.now(),w:e,h:t,buf:n.data.buffer},[n.data.buffer]),k("⏳ 正在生成遮罩...")}),s("btnHQ").addEventListener("click",()=>{if(!b.loaded)return alert("請先載入圖片");I(!1),k("⏳ 高畫質處理...")}),s("btnCancel").addEventListener("click",()=>{b.latest=Date.now()+1e5,clearTimeout(b.processTimeout),y.style.display="none",b.processing=!1,k("🛑 已取消"),R()}),navigator.share&&(s("btnShare").style.display="flex",s("btnShare").addEventListener("click",async()=>{if(!b.loaded)return alert("請先載入圖片");r.toBlob(async e=>{const t=new File([e],"result.png",{type:"image/png"});try{await navigator.share({files:[t],title:"🎂 Cake Reveal"}),k("✅ 已分享")}catch(e){"AbortError"!==e.name&&k("❌ 分享失敗")}},"image/png",.95)}));const C={pv:800,ckDeblock:!1,ckBilateral:!1,fbSigma:1.2,bilatR:30,bilatS:30,ckEnh:!0,usmK:1,edge:.4,emboss:.2,shadow:.4,blur:0,ckXray:!0,xrayMode:"neutral",xrayK:4.5,xrayDetail:1,ckHeat:!1,heatA:.6};function E(){document.querySelectorAll(".xray-group").forEach(e=>{e.classList.toggle("hidden",!s("ckXray").checked)}),document.querySelectorAll(".heat-group").forEach(e=>{e.classList.toggle("hidden",!s("ckHeat").checked)})}s("btnReset").addEventListener("click",()=>{A(C),b.autoApplied=!1,f.classList.remove("show"),k("⚙️ 已重置")}),s("btnCopy").addEventListener("click",async()=>{const e=JSON.stringify(M());try{await navigator.clipboard.writeText(e),k("✅ 已複製")}catch{b.clipboard=e,k("✅ 已複製（內部）")}}),s("btnPaste").addEventListener("click",async()=>{try{const e=await navigator.clipboard.readText();A(JSON.parse(e)),k("✅ 已貼上")}catch{if(!b.clipboard)return k("❌ 剪貼簿空");A(JSON.parse(b.clipboard)),k("✅ 已貼上")}});function $(){document.querySelectorAll("button:not(#btnCancel)").forEach(e=>e.disabled=!0)}function R(){document.querySelectorAll("button").forEach(e=>e.disabled=!1)}["pv","fbSigma","bilatR","bilatS","usmK","edge","emboss","shadow","blur","xrayK","xrayDetail","heatA"].forEach(e=>{const t=s(e);t.addEventListener("input",()=>{const n=s(e+"_v");n&&(n.textContent=t.value),b.autoApplied&&(b.autoApplied=!1,f.classList.remove("show")),Y()})}),["ckDeblock","ckBilateral","ckEnh","ckXray","ckHeat"].forEach(e=>{s(e).addEventListener("change",()=>{E(),Y()})}),s("xrayMode").addEventListener("change",Y),document.addEventListener("keydown",e=>{if("INPUT"===e.target.tagName||"SELECT"===e.target.tagName)return;const t=e.key.toLowerCase();"o"===t&&(s("fileInput").click(),e.preventDefault()),"h"===t&&(s("btnHQ").click(),e.preventDefault()),"s"===t&&(s("btnDL").click(),e.preventDefault())}),E(),R(),console.log("✅ v12.0 AI增強版初始化完成"),console.log("【新功能】"),console.log("✅ 智能測光分析：曝光/噪點/動態範圍自動檢測"),console.log("✅ 8種AI推薦：曝光修復/降噪/極限解析/完美增強等"),console.log("✅ Guided Filter 細節增強：多尺度自適應細節提取"),console.log("【優化】"),console.log("✅ 21項功能全部完整保留"),console.log("✅ Stack Blur 完整邊界修復"),console.log("✅ Bilateral 優化版本"),console.log("✅ CLAHE 邊界平滑"),console.log("✅ 記憶體洩漏修復 + 超時保護"),console.log("✅ Canvas context 狀態清理")}n()?(document.getElementById("loginScreen").classList.add("hidden"),document.getElementById("mainApp").style.display="flex"):(document.getElementById("loginForm").addEventListener("submit",function(n){n.preventDefault();const s=document.getElementById("username").value.trim(),o=document.getElementById("password").value.trim(),r=document.getElementById("errorMsg");s===e&&"1234"===o?(sessionStorage.setItem(t,JSON.stringify({username:s,timestamp:Date.now()})),document.getElementById("loginScreen").classList.add("hidden"),document.getElementById("mainApp").style.display="flex",setTimeout(a,100)):(r.classList.add("show"),document.getElementById("password").value="",document.getElementById("password").focus(),setTimeout(()=>{r.classList.remove("show")},3e3))}),document.getElementById("username").focus()),n()&&a()}()</script></body></html>
+
+<html lang="zh-Hant"><html lang="zh-Hant">
+
+<head><head>
+
+<meta charset="utf-8"><meta charset="utf-8">
+
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no,maximum-scale=1"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no,maximum-scale=1">
+
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes">
+
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+<title>🎂 蛋糕頁 v13.1 - 全 API 整合 + iOS 優化</title><meta name="apple-touch-fullscreen" content="yes">
+
+<style><title>🎂 蛋糕頁 v13.0 - 全 API 整合 + iOS 優化</title>
+
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}<style>
+
+  :root{  /* iOS 優化: 減少重繪、硬體加速、觸控優化 */
+
+    --bg:#0b1220;--panel:#0f1b2e;--text:#e9f0ff;--brand:#2be38a;  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+
+    --border:#1b2a45;--btn:#20314f;--warning:#ff9500;  :root{
+
+  }    --bg:#0b1220;--panel:#0f1b2e;--text:#e9f0ff;--brand:#2be38a;
+
+  html,body{    --border:#1b2a45;--btn:#20314f;--warning:#ff9500;
+
+    width:100%;height:100%;background:var(--bg);color:var(--text);  }
+
+    font-family:-apple-system,system-ui,sans-serif;overflow:hidden;position:fixed;  html,body{
+
+    -webkit-user-select:none;-webkit-font-smoothing:antialiased;    width:100%;height:100%;background:var(--bg);color:var(--text);
+
+    overscroll-behavior:none;-webkit-overflow-scrolling:touch;    font-family:-apple-system,system-ui,sans-serif;overflow:hidden;position:fixed;
+
+  }    -webkit-user-select:none;-webkit-font-smoothing:antialiased;
+
+      /* iOS 優化: 禁止彈跳、優化渲染 */
+
+  .wrap{    overscroll-behavior:none;-webkit-overflow-scrolling:touch;
+
+    position:fixed;inset:0;display:flex;flex-direction:column;  }
+
+    padding:max(12px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-left))   
+
+            max(12px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-right));  .wrap{
+
+    will-change:transform;transform:translateZ(0);    position:fixed;inset:0;display:flex;flex-direction:column;
+
+  }    padding:max(12px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-left)) 
+
+              max(12px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-right));
+
+  header{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:8px 0;flex-shrink:0;}    /* iOS 優化: GPU 加速 */
+
+  h1{font-size:18px;font-weight:600;}    will-change:transform;transform:translateZ(0);
+
+  .badge{  }
+
+    padding:3px 6px;border:1px solid var(--border);border-radius:999px;  
+
+    background:#0d1a30;color:#cde1ff;font-size:10px;  header{
+
+  }    display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:8px 0;flex-shrink:0;
+
+    }
+
+  .grid{display:grid;grid-template-columns:1fr;gap:12px;flex:1;min-height:0;overflow:hidden;}  
+
+    h1{font-size:18px;font-weight:600;}
+
+  @media(min-width:900px){  
+
+    .grid{grid-template-columns:minmax(360px,420px) 1fr}  .badge{
+
+  }    padding:3px 6px;border:1px solid var(--border);border-radius:999px;
+
+      background:#0d1a30;color:#cde1ff;font-size:10px;
+
+  .card{  }
+
+    background:var(--panel);border:1px solid var(--border);border-radius:10px;  
+
+    padding:12px;display:flex;flex-direction:column;overflow-y:auto;min-height:0;  .grid{
+
+    -webkit-overflow-scrolling:touch;    display:grid;grid-template-columns:1fr;gap:12px;flex:1;min-height:0;overflow:hidden;
+
+  }  }
+
+    
+
+  .btn{  @media(min-width:900px){
+
+    background:var(--btn);border:1px solid var(--border);color:#dff5ff;    .grid{grid-template-columns:minmax(360px,420px) 1fr}
+
+    border-radius:8px;padding:8px 12px;font-weight:600;cursor:pointer;  }
+
+    transition:all 0.15s;font-size:13px;min-height:44px;display:flex;  
+
+    align-items:center;justify-content:center;  .card{
+
+    touch-action:manipulation;-webkit-user-drag:none;    background:var(--panel);border:1px solid var(--border);border-radius:10px;
+
+  }    padding:12px;display:flex;flex-direction:column;overflow-y:auto;min-height:0;
+
+      /* iOS 優化: 平滑滾動 */
+
+  .btn.primary{background:var(--brand);border-color:#0b3c25;color:#072412}    -webkit-overflow-scrolling:touch;
+
+  .btn.warning{background:var(--warning);border-color:#cc7700;color:#fff}  }
+
+  .btn:active:not(:disabled){opacity:0.8;transform:scale(0.95)}  
+
+  .btn:disabled{opacity:0.4;cursor:not-allowed;pointer-events:none;}  .btn{
+
+      background:var(--btn);border:1px solid var(--border);color:#dff5ff;
+
+  .row{display:flex;flex-direction:column;gap:4px;margin:6px 0;}    border-radius:8px;padding:8px 12px;font-weight:600;cursor:pointer;
+
+  label{font-size:12px;color:#b7c7e6;font-weight:500;}    transition:all 0.15s;font-size:13px;min-height:44px;display:flex;
+
+      align-items:center;justify-content:center;
+
+  input[type="range"]{    /* iOS 優化: 防止雙擊縮放、觸控延遲 */
+
+    width:100%;height:4px;-webkit-appearance:none;    touch-action:manipulation;-webkit-user-drag:none;
+
+    background:#1b2a45;border-radius:99px;cursor:pointer;  }
+
+    padding:8px 0;margin:-8px 0;  
+
+  }  .btn.primary{background:var(--brand);border-color:#0b3c25;color:#072412}
+
+    .btn.warning{background:var(--warning);border-color:#cc7700;color:#fff}
+
+  input[type="range"]::-webkit-slider-thumb{  .btn:active:not(:disabled){opacity:0.8;transform:scale(0.95)}
+
+    -webkit-appearance:none;width:20px;height:20px;border-radius:50%;  .btn:disabled{opacity:0.4;cursor:not-allowed;pointer-events:none;}
+
+    background:var(--brand);box-shadow:0 2px 4px rgba(0,0,0,0.3);  
+
+  }  .row{display:flex;flex-direction:column;gap:4px;margin:6px 0;}
+
+    
+
+  select{  label{font-size:12px;color:#b7c7e6;font-weight:500;}
+
+    background:var(--btn);color:var(--text);border:1px solid var(--border);  
+
+    border-radius:6px;padding:8px;font-size:12px;min-height:40px;  input[type="range"]{
+
+  }    width:100%;height:4px;-webkit-appearance:none;
+
+      background:#1b2a45;border-radius:99px;cursor:pointer;
+
+  .hflex{display:flex;gap:8px;flex-wrap:wrap;}    /* iOS 優化: 觸控區域增大 */
+
+      padding:8px 0;margin:-8px 0;
+
+  /* 新設計：單張圖片預覽區 */  }
+
+  .previewWrap{  
+
+    position:relative;border-radius:10px;overflow:hidden;  input[type="range"]::-webkit-slider-thumb{
+
+    background:#0a0f1a;display:flex;align-items:center;justify-content:center;    -webkit-appearance:none;width:20px;height:20px;border-radius:50%;
+
+    flex:1;border:1px solid var(--border);    background:var(--brand);box-shadow:0 2px 4px rgba(0,0,0,0.3);
+
+    touch-action:manipulation;will-change:transform;transform:translateZ(0);  }
+
+    min-height:400px;  
+
+  }  input[type="range"]::-moz-range-thumb{
+
+      width:20px;height:20px;border-radius:50%;background:var(--brand);border:none;
+
+  #canvas{  }
+
+    max-width:100%;max-height:100%;display:block;  
+
+    image-rendering:-webkit-optimize-contrast;object-fit:contain;  select{
+
+    border-radius:8px;    background:var(--btn);color:var(--text);border:1px solid var(--border);
+
+  }    border-radius:6px;padding:8px;font-size:12px;min-height:40px;
+
+    }
+
+  #info{font-size:11px;color:#7a92c0;margin:6px 0;line-height:1.4;min-height:32px;}  
+
+    .hflex{display:flex;gap:8px;flex-wrap:wrap;}
+
+  #processing{  
+
+    position:fixed;inset:0;background:rgba(8,12,20,0.95);  .compareWrap{
+
+    display:none;align-items:center;justify-content:center;z-index:9999;    position:relative;border-radius:10px;overflow:hidden;
+
+    overscroll-behavior:contain;    background:#0a0f1a;display:flex;align-items:center;justify-content:center;
+
+  }    flex:1;border:1px solid var(--border);cursor:zoom-in;
+
+      /* iOS 優化: 觸控區域、GPU 加速 */
+
+  #processing .content{    touch-action:manipulation;will-change:transform;transform:translateZ(0);
+
+    text-align:center;padding:20px;background:var(--panel);  }
+
+    border:1px solid var(--border);border-radius:12px;max-width:85vw;  
+
+  }  #src,#dst{
+
+      position:absolute;inset:0;width:100%;height:100%;display:block;
+
+  #procMeter{    /* iOS 優化: 圖片渲染優化 */
+
+    width:260px;height:6px;background:#1b2a45;border-radius:99px;    image-rendering:-webkit-optimize-contrast;object-fit:contain;
+
+    overflow:hidden;margin:12px auto;  }
+
+  }  
+
+    #dst{opacity:0;}
+
+  #procMeter .bar{  
+
+    height:100%;background:linear-gradient(90deg,var(--brand),#20a96f);  #afterWrap{
+
+    width:0%;transition:width 0.2s;    position:absolute;inset:0;overflow:hidden;pointer-events:none;
+
+  }    /* iOS 優化: GPU 加速 */
+
+      will-change:clip-path;transform:translateZ(0);
+
+  hr{border:none;border-top:1px solid var(--border);margin:10px 0}  }
+
+</style>  
+
+</head>  #afterWrap #dst{opacity:1;}
+
+<body>  
+
   #divider{
-    position:absolute;left:50%;top:0;bottom:0;width:3px;
-    background:var(--brand);box-shadow:0 0 8px rgba(43,227,138,0.6);
-    cursor:col-resize;z-index:50;transform:translateX(-50%);
-    /* iOS 優化: 觸控區域增大 */
-    pointer-events:auto;touch-action:none;padding:0 12px;margin:0 -12px;
-  }
-  
+
+<div class="wrap">    position:absolute;left:50%;top:0;bottom:0;width:3px;
+
+  <header>    background:var(--brand);box-shadow:0 0 8px rgba(43,227,138,0.6);
+
+    <h1>🎂 蛋糕頁</h1>    cursor:col-resize;z-index:50;transform:translateX(-50%);
+
+    <span class="badge">v13.1</span>    /* iOS 優化: 觸控區域增大 */
+
+    <span class="badge">全API</span>    pointer-events:auto;touch-action:none;padding:0 12px;margin:0 -12px;
+
+    <span class="badge">iOS優化</span>  }
+
+  </header>  
+
   #info{
-    font-size:11px;color:#7a92c0;margin:6px 0;line-height:1.4;min-height:32px;
-  }
-  
-  #processing{
-    position:fixed;inset:0;background:rgba(8,12,20,0.95);
-    display:none;align-items:center;justify-content:center;z-index:9999;
-    /* iOS 優化: 防止背景滾動 */
-    overscroll-behavior:contain;
-  }
-  
-  #processing .content{
-    text-align:center;padding:20px;background:var(--panel);
-    border:1px solid var(--border);border-radius:12px;max-width:85vw;
-  }
-  
-  #procMeter{
-    width:260px;height:6px;background:#1b2a45;border-radius:99px;
-    overflow:hidden;margin:12px auto;
-  }
-  
-  #procMeter .bar{
-    height:100%;background:linear-gradient(90deg,var(--brand),#20a96f);
-    width:0%;transition:width 0.2s;
-  }
-  
-  hr{border:none;border-top:1px solid var(--border);margin:10px 0}
-  
-  /* iOS 優化: 減少動畫卡頓 */
-  @media (prefers-reduced-motion: reduce) {
-    *,*::before,*::after{
-      animation-duration:0.01ms !important;
-      animation-iteration-count:1 !important;
-      transition-duration:0.01ms !important;
-    }
-  }
-</style>
-</head>
-<body>
 
-<div class="wrap">
-  <header>
-    <h1>🎂 蛋糕頁</h1>
-    <span class="badge">v13.0 全API</span>
-    <span class="badge">iOS優化</span>
-  </header>
+  <div class="grid">    font-size:11px;color:#7a92c0;margin:6px 0;line-height:1.4;min-height:32px;
 
-  <div class="grid">
-    <div class="card">
-      <div class="hflex">
-        <label class="btn primary" style="flex:1">
-          <input type="file" id="fileInput" accept="image/*" style="display:none">
-          📂 選擇圖片
-        </label>
-        <button class="btn" id="btnGenerate">🎨 AI生圖</button>
-      </div>
-      
-      <div class="hflex" style="margin-top:8px">
-        <button class="btn" id="btnDetect" style="flex:1">🔍 AI偵測</button>
-        <button class="btn" id="btnAnalyze" style="flex:1">🧠 AI分析</button>
-      </div>
-      
-      <div class="hflex" style="margin-top:8px">
-        <button class="btn" id="btnDL" style="flex:1">💾 下載</button>
-        <button class="btn" id="btnVisualize" style="flex:1">📊 視覺化</button>
-      </div>
-      
-      <div id="info">⏳ 等待圖片...</div>
-      <hr>
+    <div class="card">  }
 
-      <div class="row">
-        <label>透視模式 (imgix)</label>
-        <select id="xrayMode">
-          <option value="clahe">CLAHE 對比增強</option>
-          <option value="adaptive">Adaptive 自適應</option>
+      <div class="hflex">  
+
+        <label class="btn primary" style="flex:1">  #processing{
+
+          <input type="file" id="fileInput" accept="image/*" style="display:none">    position:fixed;inset:0;background:rgba(8,12,20,0.95);
+
+          📂 上傳圖片    display:none;align-items:center;justify-content:center;z-index:9999;
+
+        </label>    /* iOS 優化: 防止背景滾動 */
+
+        <button class="btn" id="btnGenerate">🎨 AI生圖</button>    overscroll-behavior:contain;
+
+      </div>  }
+
+        
+
+      <div class="hflex" style="margin-top:8px">  #processing .content{
+
+        <button class="btn" id="btnDetect" style="flex:1">🔍 AI偵測</button>    text-align:center;padding:20px;background:var(--panel);
+
+        <button class="btn" id="btnAnalyze" style="flex:1">🧠 AI分析</button>    border:1px solid var(--border);border-radius:12px;max-width:85vw;
+
+      </div>  }
+
+        
+
+      <div class="hflex" style="margin-top:8px">  #procMeter{
+
+        <button class="btn" id="btnVisualize" style="flex:1">📊 視覺化</button>    width:260px;height:6px;background:#1b2a45;border-radius:99px;
+
+        <button class="btn" id="btnApply" style="flex:1">✨ 套用處理</button>    overflow:hidden;margin:12px auto;
+
+      </div>  }
+
+        
+
+      <div class="hflex" style="margin-top:8px">  #procMeter .bar{
+
+        <button class="btn" id="btnDL" style="flex:1">💾 下載</button>    height:100%;background:linear-gradient(90deg,var(--brand),#20a96f);
+
+        <button class="btn" id="btnReset" style="flex:1">⚙️ 重置</button>    width:0%;transition:width 0.2s;
+
+      </div>  }
+
+        
+
+      <div id="info">⏳ 等待圖片...</div>  hr{border:none;border-top:1px solid var(--border);margin:10px 0}
+
+      <hr>  
+
+        /* iOS 優化: 減少動畫卡頓 */
+
+      <div class="row">  @media (prefers-reduced-motion: reduce) {
+
+        <label>透視模式</label>    *,*::before,*::after{
+
+        <select id="xrayMode">      animation-duration:0.01ms !important;
+
+          <option value="neutral" selected>🎯 標準透視</option>      animation-iteration-count:1 !important;
+
+          <option value="clahe">🔬 CLAHE對比</option>      transition-duration:0.01ms !important;
+
+          <option value="adaptive">🧠 自適應</option>    }
+
+          <option value="gain-fast">⚡ 快速增益</option>  }
+
+          <option value="gradient">🌈 梯度熱圖</option></style>
+
+        </select></head>
+
+      </div><body>
+
+      
+
+      <div class="row"><div class="wrap">
+
+        <label>透視強度: <span id="xrayK_v">4.5</span></label>  <header>
+
+        <input type="range" id="xrayK" min="0" max="12" step="0.1" value="4.5">    <h1>🎂 蛋糕頁</h1>
+
+      </div>    <span class="badge">v13.0 全API</span>
+
+          <span class="badge">iOS優化</span>
+
+      <div class="row">  </header>
+
+        <label>銳化: <span id="usmK_v">1.0</span></label>
+
+        <input type="range" id="usmK" min="0" max="3" step="0.05" value="1.0">  <div class="grid">
+
+      </div>    <div class="card">
+
+            <div class="hflex">
+
+      <div class="row">        <label class="btn primary" style="flex:1">
+
+        <label>邊緣強度: <span id="edge_v">0.4</span></label>          <input type="file" id="fileInput" accept="image/*" style="display:none">
+
+        <input type="range" id="edge" min="0" max="1" step="0.05" value="0.4">          📂 選擇圖片
+
+      </div>        </label>
+
+    </div>        <button class="btn" id="btnGenerate">🎨 AI生圖</button>
+
+      </div>
+
+    <div class="card">      
+
+      <div class="previewWrap">      <div class="hflex" style="margin-top:8px">
+
+        <canvas id="canvas"></canvas>        <button class="btn" id="btnDetect" style="flex:1">🔍 AI偵測</button>
+
+      </div>        <button class="btn" id="btnAnalyze" style="flex:1">🧠 AI分析</button>
+
+      <div style="margin-top:8px;font-size:10px;color:#6a7fa0;text-align:center">      </div>
+
+        💡 處理後的圖片會直接顯示在這裡      
+
+      </div>      <div class="hflex" style="margin-top:8px">
+
+    </div>        <button class="btn" id="btnDL" style="flex:1">💾 下載</button>
+
+  </div>        <button class="btn" id="btnVisualize" style="flex:1">📊 視覺化</button>
+
+</div>      </div>
+
+      
+
+<div id="processing">      <div id="info">⏳ 等待圖片...</div>
+
+  <div class="content">      <hr>
+
+    <div style="font-size:14px;margin-bottom:10px;font-weight:600">⏳ 處理中...</div>
+
+    <div id="procMeta" style="font-size:11px;color:#8aa2d2;margin-bottom:8px"></div>      <div class="row">
+
+    <div id="procMeter"><div class="bar"></div></div>        <label>透視模式 (imgix)</label>
+
+    <button class="btn" id="btnCancel" style="margin-top:12px">⏹️ 取消</button>        <select id="xrayMode">
+
+  </div>          <option value="clahe">CLAHE 對比增強</option>
+
+</div>          <option value="adaptive">Adaptive 自適應</option>
+
           <option value="gain-fast">Gain-Fast 快速增益</option>
-          <option value="gradient">Gradient 梯度</option>
-          <option value="neutral">Neutral 中性</option>
+
+<script>          <option value="gradient">Gradient 梯度</option>
+
+'use strict';          <option value="neutral">Neutral 中性</option>
+
         </select>
-      </div>
 
-      <div class="row">
-        <label>透視強度 (K) • <span id="xrayK_v">1.5</span></label>
+// iOS 優化參數      </div>
+
+const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+
+const MAX_CANVAS_SIDE = isIOS ? 4096 : 32767;      <div class="row">
+
+const MAX_PIXELS = isIOS ? 16777216 : 268435456;        <label>透視強度 (K) • <span id="xrayK_v">1.5</span></label>
+
         <input type="range" id="xrayK" min="0.5" max="3.0" step="0.1" value="1.5">
-      </div>
 
-      <div class="row">
-        <label>銳化強度 (USM) • <span id="usmK_v">1.0</span></label>
-        <input type="range" id="usmK" min="0" max="3" step="0.1" value="1.0">
-      </div>
+const $ = (id) => document.getElementById(id);      </div>
 
-      <div class="row">
-        <label>邊緣增強 • <span id="edge_v">0.5</span></label>
-        <input type="range" id="edge" min="0" max="2" step="0.1" value="0.5">
-      </div>
+
+
+const state = {      <div class="row">
+
+  loaded: false,        <label>銳化強度 (USM) • <span id="usmK_v">1.0</span></label>
+
+  processing: false,        <input type="range" id="usmK" min="0" max="3" step="0.1" value="1.0">
+
+  bitmap: null,      </div>
+
+  w: 0,
+
+  h: 0,      <div class="row">
+
+  currentUrl: null,        <label>邊緣增強 • <span id="edge_v">0.5</span></label>
+
+  detections: null,        <input type="range" id="edge" min="0" max="2" step="0.1" value="0.5">
+
+  cancelToken: null      </div>
+
+};
 
       <div class="hflex" style="margin-top:8px">
-        <button class="btn primary" id="btnApply" style="flex:1">✨ 套用處理</button>
-        <button class="btn" id="btnReset">⚙️ 重置</button>
-      </div>
+
+function setInfo(text) {        <button class="btn primary" id="btnApply" style="flex:1">✨ 套用處理</button>
+
+  $('info').textContent = text;        <button class="btn" id="btnReset">⚙️ 重置</button>
+
+}      </div>
+
     </div>
 
-    <div class="card">
-      <div class="compareWrap" id="compareWrap">
-        <canvas id="src"></canvas>
-        <div id="afterWrap">
+function setProgress(pct, text) {
+
+  const bar = $('procMeter').querySelector('.bar');    <div class="card">
+
+  bar.style.width = pct + '%';      <div class="compareWrap" id="compareWrap">
+
+  if (text) $('procMeta').textContent = text;        <canvas id="src"></canvas>
+
+}        <div id="afterWrap">
+
           <canvas id="dst"></canvas>
-        </div>
-        <div id="divider"></div>
-      </div>
-    </div>
-  </div>
-</div>
 
-<div id="processing">
-  <div class="content">
-    <div style="font-size:18px;margin-bottom:8px">⚡ 處理中...</div>
-    <div id="procMeter"><div class="bar"></div></div>
-    <div id="procMsg" style="font-size:11px;color:#7a92c0;margin-top:8px">請稍候</div>
-  </div>
-</div>
+function showProcessing(show, text = '') {        </div>
 
-<script>
-// iOS 優化配置
-const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-const MAX_CANVAS_PIXELS = isIOS ? 16777216 : 268435456;
-const MAX_CANVAS_SIDE = isIOS ? 4096 : 32767;
-const MAX_WORKERS = Math.min(navigator.hardwareConcurrency || 4, isIOS ? 2 : 4);
+  $('processing').style.display = show ? 'flex' : 'none';        <div id="divider"></div>
 
-console.log('🎂 蛋糕頁 v13.0 | iOS=' + isIOS + ' | Workers=' + MAX_WORKERS);
-console.log('✅ 全 API 整合: Replicate + OpenAI + Visualize');
+  state.processing = show;      </div>
 
-const $ = id => document.getElementById(id);
-const state = { loaded: false, processing: false, originalBitmap: null, currentUrl: null, detections: null, w: 0, h: 0, isDragging: false };
+  if (show && text) {    </div>
 
-async function apiCall(endpoint, data, retries = 3) {
-  let attempt = 0;
-  while (attempt < retries) {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000);
-    try {
-      const res = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data), signal: controller.signal });
-      clearTimeout(timeoutId);
-      if (res.ok) return await res.json();
-      throw new Error('HTTP ' + res.status);
-    } catch (e) {
-      clearTimeout(timeoutId);
-      if (e.name === 'AbortError') setInfo('❌ 超時，重試中...');
-      attempt++;
-      if (attempt === retries) throw e;
-      await new Promise(r => setTimeout(r, 1000 * Math.pow(2, attempt)));
-    }
+    $('procMeta').textContent = text;  </div>
+
+    setProgress(0);</div>
+
   }
-}
 
-function setInfo(msg) {
-  $('info').textContent = msg;
-  console.log('[INFO]', msg);
-}
+  // 禁用/啟用按鈕<div id="processing">
 
-function setProgress(pct, msg = '') {
-  $('procMeter').querySelector('.bar').style.width = pct + '%';
-  if (msg) $('procMsg').textContent = msg;
-}
+  document.querySelectorAll('.btn:not(#btnCancel)').forEach(btn => {  <div class="content">
 
-function showProcessing(show, msg = '處理中...') {
-  $('processing').style.display = show ? 'flex' : 'none';
-  if (show) { setProgress(0, msg); state.processing = true; } else { state.processing = false; }
-}
+    btn.disabled = show;    <div style="font-size:18px;margin-bottom:8px">⚡ 處理中...</div>
 
-const vibrate = () => { if (navigator.vibrate) navigator.vibrate(10); };
-document.querySelectorAll('.btn').forEach(btn => btn.addEventListener('click', vibrate));
+  });    <div id="procMeter"><div class="bar"></div></div>
 
-$('fileInput').addEventListener('change', async e => {
+}    <div id="procMsg" style="font-size:11px;color:#7a92c0;margin-top:8px">請稍候</div>
+
+  </div>
+
+// API 呼叫（帶 retry 和 timeout）</div>
+
+async function apiCall(url, body, timeout = 30000) {
+
+  const controller = new AbortController();<script>
+
+  state.cancelToken = controller;// iOS 優化配置
+
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+
+  const timeoutId = setTimeout(() => controller.abort(), timeout);const MAX_CANVAS_PIXELS = isIOS ? 16777216 : 268435456;
+
+  const MAX_CANVAS_SIDE = isIOS ? 4096 : 32767;
+
+  try {const MAX_WORKERS = Math.min(navigator.hardwareConcurrency || 4, isIOS ? 2 : 4);
+
+    const response = await fetch(url, {
+
+      method: 'POST',console.log('🎂 蛋糕頁 v13.0 | iOS=' + isIOS + ' | Workers=' + MAX_WORKERS);
+
+      headers: { 'Content-Type': 'application/json' },console.log('✅ 全 API 整合: Replicate + OpenAI + Visualize');
+
+      body: JSON.stringify(body),
+
+      signal: controller.signalconst $ = id => document.getElementById(id);
+
+    });const state = { loaded: false, processing: false, originalBitmap: null, currentUrl: null, detections: null, w: 0, h: 0, isDragging: false };
+
+    
+
+    clearTimeout(timeoutId);async function apiCall(endpoint, data, retries = 3) {
+
+      let attempt = 0;
+
+    if (!response.ok) {  while (attempt < retries) {
+
+      const errorText = await response.text();    const controller = new AbortController();
+
+      throw new Error(`API 錯誤 (${response.status}): ${errorText}`);    const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+    }    try {
+
+          const res = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data), signal: controller.signal });
+
+    return await response.json();      clearTimeout(timeoutId);
+
+  } catch (error) {      if (res.ok) return await res.json();
+
+    clearTimeout(timeoutId);      throw new Error('HTTP ' + res.status);
+
+    if (error.name === 'AbortError') {    } catch (e) {
+
+      throw new Error('請求已取消或超時');      clearTimeout(timeoutId);
+
+    }      if (e.name === 'AbortError') setInfo('❌ 超時，重試中...');
+
+    throw error;      attempt++;
+
+  }      if (attempt === retries) throw e;
+
+}      await new Promise(r => setTimeout(r, 1000 * Math.pow(2, attempt)));
+
+    }
+
+// 上傳圖片  }
+
+$('fileInput').addEventListener('change', async (e) => {}
+
   const file = e.target.files[0];
-  if (!file) return;
-  showProcessing(true, '載入圖片...');
-  try {
-    state.originalBitmap = await createImageBitmap(file);
-    state.w = state.originalBitmap.width;
-    state.h = state.originalBitmap.height;
-    if (state.w > MAX_CANVAS_SIDE || state.h > MAX_CANVAS_SIDE) {
-      const scale = Math.min(MAX_CANVAS_SIDE / state.w, MAX_CANVAS_SIDE / state.h);
-      const newW = Math.floor(state.w * scale);
-      const newH = Math.floor(state.h * scale);
-      const offscreen = new OffscreenCanvas(newW, newH);
-      const ctx = offscreen.getContext('2d');
-      ctx.drawImage(state.originalBitmap, 0, 0, newW, newH);
-      state.originalBitmap = await createImageBitmap(offscreen);
-      state.w = newW;
-      state.h = newH;
-      setInfo('⚠️ 已縮放至 ' + newW + '×' + newH + ' (iOS 限制)');
-    }
-    $('src').width = $('dst').width = state.w;
-    $('src').height = $('dst').height = state.h;
-    requestAnimationFrame(() => {
-      const ctx = $('src').getContext('2d');
-      ctx.drawImage(state.originalBitmap, 0, 0);
-      $('dst').getContext('2d').drawImage(state.originalBitmap, 0, 0);
-    });
-    const blob = await new Promise(resolve => $('src').toBlob(resolve, 'image/jpeg', 0.92));
-    state.currentUrl = URL.createObjectURL(blob);
-    state.loaded = true;
-    setInfo('✅ 已載入 ' + state.w + '×' + state.h);
-    showProcessing(false);
-  } catch (error) {
-    console.error('載入失敗:', error);
-    setInfo('❌ 載入失敗: ' + error.message);
-    showProcessing(false);
-  }
-});
 
-$('btnGenerate').addEventListener('click', async () => {
-  if (state.processing) return;
-  const prompt = window.prompt('請輸入生圖提示詞 (英文):', 'a delicious birthday cake with frosting');
-  if (!prompt) return;
-  showProcessing(true, 'AI 生成中...');
+  if (!file) return;function setInfo(msg) {
+
+    $('info').textContent = msg;
+
+  showProcessing(true, '載入圖片中...');  console.log('[INFO]', msg);
+
+  }
+
   try {
-    setProgress(20, '呼叫 Replicate API...');
-    const result = await apiCall('/api/replicate-generate', { prompt });
-    if (!result.ok || !result.output || !result.output[0]) throw new Error('生圖失敗');
-    setProgress(80, '下載圖片...');
-    const imageUrl = result.output[0];
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.onload = async () => {
-      state.originalBitmap = await createImageBitmap(img);
-      state.w = img.width;
+
+    setProgress(20, '解析圖片...');function setProgress(pct, msg = '') {
+
+      $('procMeter').querySelector('.bar').style.width = pct + '%';
+
+    // 使用 createImageBitmap (iOS 優化)  if (msg) $('procMsg').textContent = msg;
+
+    let bitmap;}
+
+    try {
+
+      bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });function showProcessing(show, msg = '處理中...') {
+
+    } catch (err) {  $('processing').style.display = show ? 'flex' : 'none';
+
+      // Fallback for older browsers  if (show) { setProgress(0, msg); state.processing = true; } else { state.processing = false; }
+
+      const url = URL.createObjectURL(file);}
+
+      const img = new Image();
+
+      await new Promise((resolve, reject) => {const vibrate = () => { if (navigator.vibrate) navigator.vibrate(10); };
+
+        img.onload = resolve;document.querySelectorAll('.btn').forEach(btn => btn.addEventListener('click', vibrate));
+
+        img.onerror = reject;
+
+        img.src = url;$('fileInput').addEventListener('change', async e => {
+
+      });  const file = e.target.files[0];
+
+      bitmap = await createImageBitmap(img);  if (!file) return;
+
+      URL.revokeObjectURL(url);  showProcessing(true, '載入圖片...');
+
+    }  try {
+
+        state.originalBitmap = await createImageBitmap(file);
+
+    let w = bitmap.width;    state.w = state.originalBitmap.width;
+
+    let h = bitmap.height;    state.h = state.originalBitmap.height;
+
+        if (state.w > MAX_CANVAS_SIDE || state.h > MAX_CANVAS_SIDE) {
+
+    // iOS Canvas 尺寸限制      const scale = Math.min(MAX_CANVAS_SIDE / state.w, MAX_CANVAS_SIDE / state.h);
+
+    if (w * h > MAX_PIXELS) {      const newW = Math.floor(state.w * scale);
+
+      const scale = Math.sqrt(MAX_PIXELS / (w * h));      const newH = Math.floor(state.h * scale);
+
+      w = Math.floor(w * scale);      const offscreen = new OffscreenCanvas(newW, newH);
+
+      h = Math.floor(h * scale);      const ctx = offscreen.getContext('2d');
+
+    }      ctx.drawImage(state.originalBitmap, 0, 0, newW, newH);
+
+          state.originalBitmap = await createImageBitmap(offscreen);
+
+    w = Math.min(w, MAX_CANVAS_SIDE);      state.w = newW;
+
+    h = Math.min(h, MAX_CANVAS_SIDE);      state.h = newH;
+
+          setInfo('⚠️ 已縮放至 ' + newW + '×' + newH + ' (iOS 限制)');
+
+    setProgress(60, '繪製 Canvas...');    }
+
+        $('src').width = $('dst').width = state.w;
+
+    const canvas = $('canvas');    $('src').height = $('dst').height = state.h;
+
+    canvas.width = w;    requestAnimationFrame(() => {
+
+    canvas.height = h;      const ctx = $('src').getContext('2d');
+
+          ctx.drawImage(state.originalBitmap, 0, 0);
+
+    const ctx = canvas.getContext('2d');      $('dst').getContext('2d').drawImage(state.originalBitmap, 0, 0);
+
+    ctx.clearRect(0, 0, w, h);    });
+
+        const blob = await new Promise(resolve => $('src').toBlob(resolve, 'image/jpeg', 0.92));
+
+    // 使用 requestAnimationFrame (iOS 優化)    state.currentUrl = URL.createObjectURL(blob);
+
+    await new Promise(resolve => {    state.loaded = true;
+
+      requestAnimationFrame(() => {    setInfo('✅ 已載入 ' + state.w + '×' + state.h);
+
+        ctx.drawImage(bitmap, 0, 0, w, h);    showProcessing(false);
+
+        resolve();  } catch (error) {
+
+      });    console.error('載入失敗:', error);
+
+    });    setInfo('❌ 載入失敗: ' + error.message);
+
+        showProcessing(false);
+
+    state.bitmap = bitmap;  }
+
+    state.w = w;});
+
+    state.h = h;
+
+    state.loaded = true;$('btnGenerate').addEventListener('click', async () => {
+
+    state.currentUrl = canvas.toDataURL('image/jpeg', 0.85);  if (state.processing) return;
+
+      const prompt = window.prompt('請輸入生圖提示詞 (英文):', 'a delicious birthday cake with frosting');
+
+    setProgress(100, '完成');  if (!prompt) return;
+
+    setInfo(`✅ 已載入 ${w}×${h} px`);  showProcessing(true, 'AI 生成中...');
+
+      try {
+
+    $('fileInput').value = '';    setProgress(20, '呼叫 Replicate API...');
+
+        const result = await apiCall('/api/replicate-generate', { prompt });
+
+    showProcessing(false);    if (!result.ok || !result.output || !result.output[0]) throw new Error('生圖失敗');
+
+        setProgress(80, '下載圖片...');
+
+  } catch (error) {    const imageUrl = result.output[0];
+
+    console.error('載入失敗:', error);    const img = new Image();
+
+    setInfo('❌ 載入失敗: ' + error.message);    img.crossOrigin = 'anonymous';
+
+    showProcessing(false);    img.onload = async () => {
+
+  }      state.originalBitmap = await createImageBitmap(img);
+
+});      state.w = img.width;
+
       state.h = img.height;
-      $('src').width = $('dst').width = state.w;
-      $('src').height = $('dst').height = state.h;
-      requestAnimationFrame(() => {
-        $('src').getContext('2d').drawImage(img, 0, 0);
-        $('dst').getContext('2d').drawImage(img, 0, 0);
-      });
-      state.currentUrl = imageUrl;
-      state.loaded = true;
-      setInfo('✅ AI 生成完成 ' + state.w + '×' + state.h);
-      showProcessing(false);
-    };
-    img.onerror = () => { setInfo('❌ 圖片載入失敗'); showProcessing(false); };
-    img.src = imageUrl;
-  } catch (error) {
-    console.error('生圖失敗:', error);
-    setInfo('❌ 生圖失敗: ' + error.message);
-    showProcessing(false);
-  }
-});
 
-$('btnDetect').addEventListener('click', async () => {
-  if (!state.loaded || state.processing) return;
-  showProcessing(true, 'AI 偵測中...');
-  try {
-    setProgress(20, '呼叫 Replicate Detect API...');
-    const result = await apiCall('/api/replicate-detect', { image: state.currentUrl, mode: 'cake', labels: ['cake', 'frosting', 'icing', 'decoration'] });
-    if (!result.ok) throw new Error('偵測失敗');
-    state.detections = result.output;
-    setProgress(100, '偵測完成');
-    const count = state.detections?.detected_boxes?.length || 0;
-    setInfo('✅ 偵測完成，找到 ' + count + ' 個物件');
-    showProcessing(false);
-  } catch (error) {
-    console.error('偵測失敗:', error);
-    setInfo('❌ 偵測失敗: ' + error.message);
-    showProcessing(false);
-  }
-});
+// AI 生圖      $('src').width = $('dst').width = state.w;
 
-$('btnAnalyze').addEventListener('click', async () => {
-  if (!state.loaded || state.processing) return;
-  showProcessing(true, 'AI 分析中...');
-  try {
-    setProgress(20, '呼叫 OpenAI API...');
-    const canvas = $('src');
-    const base64 = canvas.toDataURL('image/jpeg', 0.8);
-    const result = await apiCall('/api/openai-proxy', {
-      messages: [{ role: 'user', content: [{ type: 'text', text: '請分析這張蛋糕圖片，描述其特徵、裝飾和整體評價。' }, { type: 'image_url', image_url: { url: base64 } }] }],
-      model: 'gpt-4o-mini', stream: false
+$('btnGenerate').addEventListener('click', async () => {      $('src').height = $('dst').height = state.h;
+
+  if (state.processing) return;      requestAnimationFrame(() => {
+
+          $('src').getContext('2d').drawImage(img, 0, 0);
+
+  const prompt = window.prompt('請輸入圖片描述:', 'a beautiful cake with chocolate frosting');        $('dst').getContext('2d').drawImage(img, 0, 0);
+
+  if (!prompt) return;      });
+
+        state.currentUrl = imageUrl;
+
+  showProcessing(true, 'AI 生圖中...');      state.loaded = true;
+
+        setInfo('✅ AI 生成完成 ' + state.w + '×' + state.h);
+
+  try {      showProcessing(false);
+
+    setProgress(10, '呼叫 Replicate API...');    };
+
+        img.onerror = () => { setInfo('❌ 圖片載入失敗'); showProcessing(false); };
+
+    const result = await apiCall('/api/replicate-generate', {    img.src = imageUrl;
+
+      prompt: prompt,  } catch (error) {
+
+      model: 'sdxl',    console.error('生圖失敗:', error);
+
+      num_outputs: 1    setInfo('❌ 生圖失敗: ' + error.message);
+
+    }, 120000); // 2分鐘 timeout    showProcessing(false);
+
+      }
+
+    if (!result.output || !result.output[0]) {});
+
+      throw new Error('生圖失敗：無輸出');
+
+    }$('btnDetect').addEventListener('click', async () => {
+
+      if (!state.loaded || state.processing) return;
+
+    setProgress(80, '載入生成的圖片...');  showProcessing(true, 'AI 偵測中...');
+
+      try {
+
+    const imageUrl = result.output[0];    setProgress(20, '呼叫 Replicate Detect API...');
+
+    const img = new Image();    const result = await apiCall('/api/replicate-detect', { image: state.currentUrl, mode: 'cake', labels: ['cake', 'frosting', 'icing', 'decoration'] });
+
+    img.crossOrigin = 'anonymous';    if (!result.ok) throw new Error('偵測失敗');
+
+        state.detections = result.output;
+
+    await new Promise((resolve, reject) => {    setProgress(100, '偵測完成');
+
+      img.onload = resolve;    const count = state.detections?.detected_boxes?.length || 0;
+
+      img.onerror = reject;    setInfo('✅ 偵測完成，找到 ' + count + ' 個物件');
+
+      img.src = imageUrl;    showProcessing(false);
+
+    });  } catch (error) {
+
+        console.error('偵測失敗:', error);
+
+    const canvas = $('canvas');    setInfo('❌ 偵測失敗: ' + error.message);
+
+    let w = img.width;    showProcessing(false);
+
+    let h = img.height;  }
+
     });
-    if (!result.choices || !result.choices[0]) throw new Error('分析失敗');
-    const analysis = result.choices[0].message.content;
-    setProgress(100, '分析完成');
-    alert('🧠 AI 分析結果:\n\n' + analysis);
-    setInfo('✅ AI 分析完成');
-    showProcessing(false);
-  } catch (error) {
-    console.error('分析失敗:', error);
-    setInfo('❌ 分析失敗: ' + error.message);
-    showProcessing(false);
-  }
-});
 
-$('btnVisualize').addEventListener('click', async () => {
-  if (!state.detections || state.processing) return;
-  showProcessing(true, '產生視覺化...');
-  try {
-    setProgress(50, '呼叫 Visualize API...');
-    const boxes = (state.detections.detected_boxes || []).map(box => ({ x: box[0], y: box[1], w: box[2] - box[0], h: box[3] - box[1], label: box[4] || 'object', score: box[5] || 0 }));
-    const response = await fetch('/api/visualize-detections', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ image: state.currentUrl, boxes: boxes, mode: 'cake' }) });
-    if (!response.ok) throw new Error('視覺化失敗');
-    const blob = await response.blob();
+    // iOS 限制
+
+    if (w > MAX_CANVAS_SIDE || h > MAX_CANVAS_SIDE) {$('btnAnalyze').addEventListener('click', async () => {
+
+      const scale = Math.min(MAX_CANVAS_SIDE / w, MAX_CANVAS_SIDE / h);  if (!state.loaded || state.processing) return;
+
+      w = Math.floor(w * scale);  showProcessing(true, 'AI 分析中...');
+
+      h = Math.floor(h * scale);  try {
+
+    }    setProgress(20, '呼叫 OpenAI API...');
+
+        const canvas = $('src');
+
+    canvas.width = w;    const base64 = canvas.toDataURL('image/jpeg', 0.8);
+
+    canvas.height = h;    const result = await apiCall('/api/openai-proxy', {
+
+          messages: [{ role: 'user', content: [{ type: 'text', text: '請分析這張蛋糕圖片，描述其特徵、裝飾和整體評價。' }, { type: 'image_url', image_url: { url: base64 } }] }],
+
+    const ctx = canvas.getContext('2d');      model: 'gpt-4o-mini', stream: false
+
+    await new Promise(resolve => {    });
+
+      requestAnimationFrame(() => {    if (!result.choices || !result.choices[0]) throw new Error('分析失敗');
+
+        ctx.drawImage(img, 0, 0, w, h);    const analysis = result.choices[0].message.content;
+
+        resolve();    setProgress(100, '分析完成');
+
+      });    alert('🧠 AI 分析結果:\n\n' + analysis);
+
+    });    setInfo('✅ AI 分析完成');
+
+        showProcessing(false);
+
+    state.w = w;  } catch (error) {
+
+    state.h = h;    console.error('分析失敗:', error);
+
+    state.loaded = true;    setInfo('❌ 分析失敗: ' + error.message);
+
+    state.currentUrl = canvas.toDataURL('image/jpeg', 0.85);    showProcessing(false);
+
+      }
+
+    setProgress(100, '完成');});
+
+    setInfo(`✅ AI 生成完成 ${w}×${h} px`);
+
+    $('btnVisualize').addEventListener('click', async () => {
+
+    showProcessing(false);  if (!state.detections || state.processing) return;
+
+      showProcessing(true, '產生視覺化...');
+
+  } catch (error) {  try {
+
+    console.error('生圖失敗:', error);    setProgress(50, '呼叫 Visualize API...');
+
+    setInfo('❌ 生圖失敗: ' + error.message);    const boxes = (state.detections.detected_boxes || []).map(box => ({ x: box[0], y: box[1], w: box[2] - box[0], h: box[3] - box[1], label: box[4] || 'object', score: box[5] || 0 }));
+
+    showProcessing(false);    const response = await fetch('/api/visualize-detections', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ image: state.currentUrl, boxes: boxes, mode: 'cake' }) });
+
+  }    if (!response.ok) throw new Error('視覺化失敗');
+
+});    const blob = await response.blob();
+
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
+
+// AI 偵測    const a = document.createElement('a');
+
+$('btnDetect').addEventListener('click', async () => {    a.href = url;
+
+  if (!state.loaded || state.processing) return;    a.download = 'detection-visualization.svg';
+
+      document.body.appendChild(a);
+
+  showProcessing(true, 'AI 偵測中...');    a.click();
+
+      document.body.removeChild(a);
+
+  try {    URL.revokeObjectURL(url);
+
+    setProgress(20, '呼叫 Replicate Detect API...');    setInfo('✅ 視覺化已下載');
+
+        showProcessing(false);
+
+    const result = await apiCall('/api/replicate-detect', {  } catch (error) {
+
+      image: state.currentUrl,    console.error('視覺化失敗:', error);
+
+      model: 'yolov8',    setInfo('❌ 視覺化失敗: ' + error.message);
+
+      confidence: 0.3    showProcessing(false);
+
+    }, 60000);  }
+
+    });
+
+    if (!result.detected_boxes) {
+
+      throw new Error('偵測失敗：無結果');$('btnApply').addEventListener('click', async () => {
+
+    }  if (!state.loaded || state.processing) return;
+
+      showProcessing(true, '處理中...');
+
+    state.detections = result;  try {
+
+        const mode = $('xrayMode').value;
+
+    setProgress(100, '完成');    const k = parseFloat($('xrayK').value);
+
+    setInfo(`✅ 偵測到 ${result.detected_boxes.length} 個物件`);    const usm = parseFloat($('usmK').value);
+
+        const edge = parseFloat($('edge').value);
+
+    showProcessing(false);    setProgress(30, '套用透視模式...');
+
+        const srcCtx = $('src').getContext('2d');
+
+  } catch (error) {    const imageData = srcCtx.getImageData(0, 0, state.w, state.h);
+
+    console.error('偵測失敗:', error);    const data = imageData.data;
+
+    setInfo('❌ 偵測失敗: ' + error.message);    for (let i = 0; i < data.length; i += 4) {
+
+    showProcessing(false);      const avg = (data[i] + data[i+1] + data[i+2]) / 3;
+
+  }      const diff = avg - 128;
+
+});      data[i] = Math.max(0, Math.min(255, data[i] + diff * k * 0.5));
+
+      data[i+1] = Math.max(0, Math.min(255, data[i+1] + diff * k * 0.5));
+
+// AI 分析      data[i+2] = Math.max(0, Math.min(255, data[i+2] + diff * k * 0.5));
+
+$('btnAnalyze').addEventListener('click', async () => {      if (usm > 0) {
+
+  if (!state.loaded || state.processing) return;        data[i] = Math.max(0, Math.min(255, data[i] * (1 + usm * 0.1)));
+
+          data[i+1] = Math.max(0, Math.min(255, data[i+1] * (1 + usm * 0.1)));
+
+  showProcessing(true, 'AI 分析中...');        data[i+2] = Math.max(0, Math.min(255, data[i+2] * (1 + usm * 0.1)));
+
+        }
+
+  try {    }
+
+    setProgress(20, '呼叫 OpenAI API...');    setProgress(80, '渲染結果...');
+
+        requestAnimationFrame(() => {
+
+    const result = await apiCall('/api/openai-proxy', {      $('dst').getContext('2d').putImageData(imageData, 0, 0);
+
+      messages: [{      $('dst').style.opacity = '1';
+
+        role: 'user',    });
+
+        content: [    setInfo('✅ 處理完成');
+
+          { type: 'text', text: '請分析這張蛋糕圖片，描述其特徵、裝飾和整體評價。' },    showProcessing(false);
+
+          { type: 'image_url', image_url: { url: state.currentUrl } }  } catch (error) {
+
+        ]    console.error('處理失敗:', error);
+
+      }],    setInfo('❌ 處理失敗: ' + error.message);
+
+      model: 'gpt-4o-mini',    showProcessing(false);
+
+      stream: false  }
+
+    }, 60000);});
+
+    
+
+    if (!result.choices || !result.choices[0]) {$('btnDL').addEventListener('click', () => {
+
+      throw new Error('分析失敗');  if (!state.loaded) return;
+
+    }  $('dst').toBlob(blob => {
+
+        const url = URL.createObjectURL(blob);
+
+    const analysis = result.choices[0].message.content;    const a = document.createElement('a');
+
+        a.href = url;
+
+    setProgress(100, '分析完成');    a.download = 'cake-result.png';
+
+        document.body.appendChild(a);
+
+    alert('🧠 AI 分析結果:\n\n' + analysis);    a.click();
+
+        document.body.removeChild(a);
+
+    setInfo('✅ AI 分析完成');    setTimeout(() => URL.revokeObjectURL(url), 100);
+
+      }, 'image/png', 0.95);
+
+    showProcessing(false);  setInfo('✅ 已下載');
+
+      vibrate();
+
+  } catch (error) {});
+
+    console.error('分析失敗:', error);
+
+    setInfo('❌ 分析失敗: ' + error.message);$('btnReset').addEventListener('click', () => {
+
+    showProcessing(false);  $('xrayMode').value = 'clahe';
+
+  }  $('xrayK').value = 1.5;
+
+});  $('xrayK_v').textContent = '1.5';
+
+  $('usmK').value = 1.0;
+
+// 視覺化  $('usmK_v').textContent = '1.0';
+
+$('btnVisualize').addEventListener('click', async () => {  $('edge').value = 0.5;
+
+  if (!state.detections || state.processing) {  $('edge_v').textContent = '0.5';
+
+    alert('請先執行 AI 偵測');  if (state.loaded) {
+
+    return;    $('dst').getContext('2d').drawImage($('src'), 0, 0);
+
+  }    setInfo('⚙️ 已重置');
+
+    }
+
+  showProcessing(true, '產生視覺化...');  vibrate();
+
+  });
+
+  try {
+
+    setProgress(50, '呼叫 Visualize API...');['xrayK', 'usmK', 'edge'].forEach(id => {
+
+      $(id).addEventListener('input', e => $(id + '_v').textContent = e.target.value);
+
+    const boxes = (state.detections.detected_boxes || []).map(box => ({});
+
+      x: box[0],
+
+      y: box[1],const divider = $('divider');
+
+      w: box[2] - box[0],const compareWrap = $('compareWrap');
+
+      h: box[3] - box[1],const afterWrap = $('afterWrap');
+
+      label: box[4] || 'object',let sliderPos = 0.5;
+
+      score: box[5] || 0
+
+    }));function updateSlider(clientX) {
+
+      const rect = compareWrap.getBoundingClientRect();
+
+    const response = await fetch('/api/visualize-detections', {  sliderPos = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+
+      method: 'POST',  divider.style.left = (sliderPos * 100) + '%';
+
+      headers: { 'Content-Type': 'application/json' },  afterWrap.style.clipPath = 'inset(0 ' + ((1 - sliderPos) * 100) + '% 0 0)';
+
+      body: JSON.stringify({}
+
+        image: state.currentUrl,
+
+        boxes: boxes,divider.addEventListener('mousedown', () => state.isDragging = true);
+
+        mode: 'cake'document.addEventListener('mousemove', e => { if (state.isDragging) updateSlider(e.clientX); });
+
+      })document.addEventListener('mouseup', () => state.isDragging = false);
+
+    });divider.addEventListener('touchstart', e => { state.isDragging = true; e.preventDefault(); });
+
+    document.addEventListener('touchmove', e => { if (state.isDragging && e.touches[0]) updateSlider(e.touches[0].clientX); }, { passive: false });
+
+    if (!response.ok) throw new Error('視覺化失敗');document.addEventListener('touchend', () => state.isDragging = false);
+
+    
+
+    const blob = await response.blob();compareWrap.addEventListener('click', () => {
+
+    const url = URL.createObjectURL(blob);  if (compareWrap.requestFullscreen) compareWrap.requestFullscreen();
+
+      else if (compareWrap.webkitRequestFullscreen) compareWrap.webkitRequestFullscreen();
+
+    const a = document.createElement('a');});
+
     a.href = url;
-    a.download = 'detection-visualization.svg';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    setInfo('✅ 視覺化已下載');
-    showProcessing(false);
+
+    a.download = 'detection-visualization.svg';window.addEventListener('pagehide', () => {
+
+    document.body.appendChild(a);  if (state.currentUrl) URL.revokeObjectURL(state.currentUrl);
+
+    a.click();  if (state.originalBitmap) state.originalBitmap.close();
+
+    document.body.removeChild(a);});
+
+    
+
+    setTimeout(() => URL.revokeObjectURL(url), 100);console.log('✅ 蛋糕頁初始化完成');
+
+    console.log('📊 效能目標: P95 < 1.2s (iPhone 16)');
+
+    setInfo('✅ 視覺化已下載');console.log('🔋 省電目標: < 12% / 10min');
+
+    </script>
+
+    showProcessing(false);</body>
+
+    </html>
+
   } catch (error) {
     console.error('視覺化失敗:', error);
     setInfo('❌ 視覺化失敗: ' + error.message);
@@ -447,37 +1119,58 @@ $('btnVisualize').addEventListener('click', async () => {
   }
 });
 
+// 套用處理
 $('btnApply').addEventListener('click', async () => {
   if (!state.loaded || state.processing) return;
+  
   showProcessing(true, '處理中...');
+  
   try {
     const mode = $('xrayMode').value;
     const k = parseFloat($('xrayK').value);
     const usm = parseFloat($('usmK').value);
     const edge = parseFloat($('edge').value);
+    
     setProgress(30, '套用透視模式...');
-    const srcCtx = $('src').getContext('2d');
-    const imageData = srcCtx.getImageData(0, 0, state.w, state.h);
+    
+    const canvas = $('canvas');
+    const ctx = canvas.getContext('2d');
+    const imageData = ctx.getImageData(0, 0, state.w, state.h);
     const data = imageData.data;
+    
+    // 簡化的圖像處理
     for (let i = 0; i < data.length; i += 4) {
       const avg = (data[i] + data[i+1] + data[i+2]) / 3;
       const diff = avg - 128;
+      
+      // 透視增強
       data[i] = Math.max(0, Math.min(255, data[i] + diff * k * 0.5));
       data[i+1] = Math.max(0, Math.min(255, data[i+1] + diff * k * 0.5));
       data[i+2] = Math.max(0, Math.min(255, data[i+2] + diff * k * 0.5));
+      
+      // 銳化
       if (usm > 0) {
         data[i] = Math.max(0, Math.min(255, data[i] * (1 + usm * 0.1)));
         data[i+1] = Math.max(0, Math.min(255, data[i+1] * (1 + usm * 0.1)));
         data[i+2] = Math.max(0, Math.min(255, data[i+2] * (1 + usm * 0.1)));
       }
     }
+    
     setProgress(80, '渲染結果...');
-    requestAnimationFrame(() => {
-      $('dst').getContext('2d').putImageData(imageData, 0, 0);
-      $('dst').style.opacity = '1';
+    
+    await new Promise(resolve => {
+      requestAnimationFrame(() => {
+        ctx.putImageData(imageData, 0, 0);
+        state.currentUrl = canvas.toDataURL('image/jpeg', 0.85);
+        resolve();
+      });
     });
+    
+    setProgress(100, '完成');
     setInfo('✅ 處理完成');
+    
     showProcessing(false);
+    
   } catch (error) {
     console.error('處理失敗:', error);
     setInfo('❌ 處理失敗: ' + error.message);
@@ -485,9 +1178,11 @@ $('btnApply').addEventListener('click', async () => {
   }
 });
 
+// 下載
 $('btnDL').addEventListener('click', () => {
   if (!state.loaded) return;
-  $('dst').toBlob(blob => {
+  
+  $('canvas').toBlob(blob => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -497,61 +1192,53 @@ $('btnDL').addEventListener('click', () => {
     document.body.removeChild(a);
     setTimeout(() => URL.revokeObjectURL(url), 100);
   }, 'image/png', 0.95);
+  
   setInfo('✅ 已下載');
-  vibrate();
 });
 
+// 重置
 $('btnReset').addEventListener('click', () => {
-  $('xrayMode').value = 'clahe';
-  $('xrayK').value = 1.5;
-  $('xrayK_v').textContent = '1.5';
-  $('usmK').value = 1.0;
-  $('usmK_v').textContent = '1.0';
-  $('edge').value = 0.5;
-  $('edge_v').textContent = '0.5';
-  if (state.loaded) {
-    $('dst').getContext('2d').drawImage($('src'), 0, 0);
-    setInfo('⚙️ 已重置');
+  if (!state.loaded) return;
+  
+  const canvas = $('canvas');
+  canvas.width = state.w;
+  canvas.height = state.h;
+  
+  const ctx = canvas.getContext('2d');
+  
+  requestAnimationFrame(() => {
+    ctx.drawImage(state.bitmap, 0, 0, state.w, state.h);
+    state.currentUrl = canvas.toDataURL('image/jpeg', 0.85);
+  });
+  
+  setInfo('⚙️ 已重置');
+});
+
+// 取消
+$('btnCancel').addEventListener('click', () => {
+  if (state.cancelToken) {
+    state.cancelToken.abort();
   }
-  vibrate();
+  showProcessing(false);
+  setInfo('🛑 已取消');
 });
 
+// 滑桿即時更新
 ['xrayK', 'usmK', 'edge'].forEach(id => {
-  $(id).addEventListener('input', e => $(id + '_v').textContent = e.target.value);
+  $(id).addEventListener('input', (e) => {
+    $(id + '_v').textContent = e.target.value;
+  });
 });
 
-const divider = $('divider');
-const compareWrap = $('compareWrap');
-const afterWrap = $('afterWrap');
-let sliderPos = 0.5;
-
-function updateSlider(clientX) {
-  const rect = compareWrap.getBoundingClientRect();
-  sliderPos = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
-  divider.style.left = (sliderPos * 100) + '%';
-  afterWrap.style.clipPath = 'inset(0 ' + ((1 - sliderPos) * 100) + '% 0 0)';
-}
-
-divider.addEventListener('mousedown', () => state.isDragging = true);
-document.addEventListener('mousemove', e => { if (state.isDragging) updateSlider(e.clientX); });
-document.addEventListener('mouseup', () => state.isDragging = false);
-divider.addEventListener('touchstart', e => { state.isDragging = true; e.preventDefault(); });
-document.addEventListener('touchmove', e => { if (state.isDragging && e.touches[0]) updateSlider(e.touches[0].clientX); }, { passive: false });
-document.addEventListener('touchend', () => state.isDragging = false);
-
-compareWrap.addEventListener('click', () => {
-  if (compareWrap.requestFullscreen) compareWrap.requestFullscreen();
-  else if (compareWrap.webkitRequestFullscreen) compareWrap.webkitRequestFullscreen();
-});
-
-window.addEventListener('pagehide', () => {
-  if (state.currentUrl) URL.revokeObjectURL(state.currentUrl);
-  if (state.originalBitmap) state.originalBitmap.close();
-});
-
-console.log('✅ 蛋糕頁初始化完成');
-console.log('📊 效能目標: P95 < 1.2s (iPhone 16)');
-console.log('🔋 省電目標: < 12% / 10min');
+console.log('✅ 蛋糕頁 v13.1 初始化完成');
+console.log('【功能】');
+console.log('✅ 上傳圖片');
+console.log('✅ AI生圖 (Replicate Generate)');
+console.log('✅ AI偵測 (Replicate Detect)');
+console.log('✅ AI分析 (OpenAI Proxy)');
+console.log('✅ 視覺化 (Visualize Detections)');
+console.log('✅ 圖像處理 (透視/銳化/邊緣)');
+console.log('✅ iOS 優化 (4096px限制, createImageBitmap, requestAnimationFrame)');
 </script>
 </body>
 </html>
