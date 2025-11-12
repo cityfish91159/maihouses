@@ -1041,15 +1041,19 @@ function drawToCanvas(bitmap, useAnimationFrame = true) {
     let w = bitmap.width;
     let h = bitmap.height;
 
-    // iOS 限制
+    // iOS 限制 - 保持比例
     if (w * h > MAX_PIXELS) {
       const scale = Math.sqrt(MAX_PIXELS / (w * h));
       w = Math.floor(w * scale);
       h = Math.floor(h * scale);
     }
 
-    w = Math.min(w, MAX_CANVAS_SIDE);
-    h = Math.min(h, MAX_CANVAS_SIDE);
+    // 保持比例限制最大邊
+    if (w > MAX_CANVAS_SIDE || h > MAX_CANVAS_SIDE) {
+      const scale = Math.min(MAX_CANVAS_SIDE / w, MAX_CANVAS_SIDE / h);
+      w = Math.floor(w * scale);
+      h = Math.floor(h * scale);
+    }
 
     canvas.width = w;
     canvas.height = h;
