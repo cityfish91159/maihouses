@@ -663,6 +663,16 @@ hr {
       <div class="tab-content active" id="basicTab" style="margin-top: 16px;">
         <div class="control-group">
           <div class="control-label">
+            <span>處理引擎</span>
+          </div>
+          <select id="xrayEngine">
+            <option value="local">⚡ 快速本地處理 (Web Worker)</option>
+            <option value="api">🔬 高質量 API (X-Ray Mike)</option>
+          </select>
+        </div>
+
+        <div class="control-group">
+          <div class="control-label">
             <span>透視模式</span>
           </div>
           <select id="xrayMode">
@@ -782,13 +792,14 @@ hr {
         <div><strong>Canvas 限制:</strong> <span id="canvasLimit">--</span></div>
         <div><strong>API 狀態:</strong> <span id="apiStatus">✅ 就緒</span></div>
         <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border);">
-          <strong>已整合 API:</strong>
+          <strong>已整合 API (6個):</strong>
           <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px;">
             <span class="chip">Replicate Generate</span>
             <span class="chip">Replicate Detect</span>
             <span class="chip">OpenAI Proxy</span>
             <span class="chip">Visualize</span>
             <span class="chip">Upload Imgix</span>
+            <span class="chip">X-Ray Mike</span>
           </div>
         </div>
       </div>
@@ -1462,59 +1473,115 @@ $('btnUploadImgix').addEventListener('click', async () => {
 $('btnApply').addEventListener('click', async () => {
   if (!state.loaded || state.processing) return;
 
-  initWorker(); // 確保 Worker 已初始化
-
-  showLoading(true, '處理中...');
+  const engine = $('xrayEngine').value;
   const startTime = performance.now();
 
-  try {
-    const params = getParams();
+  if (engine === 'local') {
+    // ========== 本地 Worker 處理 ==========
+    initWorker(); // 確保 Worker 已初始化
 
-    setProgress(20, '準備處理...');
+    showLoading(true, '本地處理中...');
 
-    const canvas = $('canvas');
-    const ctx = canvas.getContext('2d', { willReadFrequently: true });
-    const imageData = ctx.getImageData(0, 0, state.w, state.h);
+    try {
+      const params = getParams();
 
-    setProgress(40, '執行學術級透視處理...');
+      setProgress(20, '準備處理...');
 
-    // 使用 Worker 處理（iOS 優化）
-    await new Promise((resolve, reject) => {
-      state.worker.onmessage = (e) => {
-        if (e.data.type === 'result') {
-          setProgress(70, '渲染結果...');
+      const canvas = $('canvas');
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+      const imageData = ctx.getImageData(0, 0, state.w, state.h);
 
-          ctx.putImageData(e.data.imageData, 0, 0);
-          state.currentUrl = canvas.toDataURL('image/jpeg', 0.85);
+      setProgress(40, '執行學術級透視處理...');
 
-          setProgress(90, '保存歷史...');
-          pushHistory();
+      // 使用 Worker 處理（iOS 優化）
+      await new Promise((resolve, reject) => {
+        state.worker.onmessage = (e) => {
+          if (e.data.type === 'result') {
+            setProgress(70, '渲染結果...');
 
-          resolve();
-        }
-      };
+            ctx.putImageData(e.data.imageData, 0, 0);
+            state.currentUrl = canvas.toDataURL('image/jpeg', 0.85);
 
-      state.worker.onerror = reject;
+            setProgress(90, '保存歷史...');
+            pushHistory();
 
-      // 發送到 Worker（transferable）
-      state.worker.postMessage({
-        type: 'process',
-        imageData: imageData,
-        params: params
-      }, [imageData.data.buffer]);
-    });
+            resolve();
+          }
+        };
 
-    setProgress(100, '完成');
-    const elapsed = performance.now() - startTime;
-    updatePerformanceInfo(elapsed);
-    setInfo(`✅ 處理完成 (${elapsed.toFixed(0)}ms)`);
+        state.worker.onerror = reject;
 
-    setTimeout(() => showLoading(false), 300);
+        // 發送到 Worker（transferable）
+        state.worker.postMessage({
+          type: 'process',
+          imageData: imageData,
+          params: params
+        }, [imageData.data.buffer]);
+      });
 
-  } catch (error) {
-    console.error('處理失敗:', error);
-    setInfo('❌ 處理失敗: ' + error.message);
-    showLoading(false);
+      setProgress(100, '完成');
+      const elapsed = performance.now() - startTime;
+      updatePerformanceInfo(elapsed);
+      setInfo(`✅ 本地處理完成 (${elapsed.toFixed(0)}ms)`);
+
+      setTimeout(() => showLoading(false), 300);
+
+    } catch (error) {
+      console.error('處理失敗:', error);
+      setInfo('❌ 處理失敗: ' + error.message);
+      showLoading(false);
+    }
+
+  } else if (engine === 'api') {
+    // ========== X-Ray Mike API 處理 (真實圖像處理，非生成式) ==========
+    showLoading(true, '調用 X-Ray Mike API...');
+
+    try {
+      if (!state.currentUrl) {
+        throw new Error('沒有圖片可處理');
+      }
+
+      const params = getParams();
+
+      setProgress(20, '上傳圖片到 API...');
+
+      const result = await apiCall('/api/x-raymike', {
+        image: state.currentUrl,
+        mode: params.xrayMode,
+        intensity: params.xrayK,
+        sharpen: params.usmK,
+        edge: params.edge,
+        contrast: params.contrast,
+        brightness: params.brightness,
+        saturation: params.saturation
+      });
+
+      setProgress(60, '接收處理結果...');
+
+      if (!result.success || !result.output) {
+        throw new Error(result.error || 'API 返回無效結果');
+      }
+
+      setProgress(80, '加載處理後圖片...');
+
+      // 加載 API 返回的圖片
+      await loadImage(result.output);
+
+      setProgress(90, '保存歷史...');
+      pushHistory();
+
+      setProgress(100, '完成');
+      const elapsed = performance.now() - startTime;
+      updatePerformanceInfo(elapsed);
+      setInfo(`✅ API 處理完成 (${elapsed.toFixed(0)}ms)`);
+
+      setTimeout(() => showLoading(false), 300);
+
+    } catch (error) {
+      console.error('API 處理失敗:', error);
+      setInfo('❌ API 處理失敗: ' + error.message);
+      showLoading(false);
+    }
   }
 });
 
