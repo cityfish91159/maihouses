@@ -5,10 +5,10 @@
     { "source": "/", "destination": "/maihouses/", "permanent": false }
   ],
   "functions": {
-    "api/*.js": {
-      "runtime": "nodejs20.x",
+    "api/**/*.js": {
+      "runtime": "nodejs18.x",
       "memory": 256,
-      "maxDuration": 30
+      "maxDuration": 10
     }
   }
 }

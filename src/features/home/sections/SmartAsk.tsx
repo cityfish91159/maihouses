@@ -2,8 +2,6 @@ import { useState, useRef, useEffect } from 'react'
 import { aiAsk } from '../../../services/api'
 import { trackEvent } from '../../../services/uag'
 import type { AiMessage, PropertyCard } from '../../../types'
-import { QuietModeToggle } from '../../../components/QuietModeToggle'
-import { QuietBanner } from '../../../components/QuietBanner'
 
 const QUICK = ['3房以內', '30坪以下', '近捷運', '新成屋']
 
@@ -141,9 +139,6 @@ export default function SmartAsk() {
       className="gradient-ask ai-card space-y-6 rounded-[32px] p-6 shadow-lg transition-shadow hover:shadow-xl md:p-8"
       style={{ background: 'linear-gradient(135deg, #D8E9FF 0%, #EAF4FF 100%)' }}
     >
-      {/* Quiet Mode Banner */}
-      <QuietBanner />
-
       <div className="mb-2 flex flex-wrap items-center gap-2">
         <div className="flex min-w-0 items-center gap-2">
           <div className="size-2.5 rounded-full bg-[var(--brand)]" style={{ animation: 'pulse-subtle 2s ease-in-out infinite' }} />
@@ -170,11 +165,6 @@ export default function SmartAsk() {
         <div className="ml-auto min-w-[150px] text-right text-xs font-medium text-[var(--text-secondary)]">
           {import.meta.env.DEV && totalTokens > 0 ? `${totalTokens} tokens` : '多輪對話・智能推薦'}
         </div>
-      </div>
-
-      {/* Quiet Mode Toggle */}
-      <div className="flex items-center justify-between gap-4 rounded-lg bg-white/50 p-3">
-        <QuietModeToggle />
       </div>
 
       <div

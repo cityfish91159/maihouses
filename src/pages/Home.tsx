@@ -8,7 +8,6 @@ import { getMeta } from '../services/api'
 import { trackEvent } from '../services/uag'
 import type { AppConfig, RuntimeOverrides } from '../app/config'
 import { WarmWelcomeBar } from '../components/WarmWelcomeBar'
-import { FloatingMoodChips } from '../components/MoodChips'
 
 const cmp = (a: string, b: string) => {
   const pa = a.split('.').map((n) => +n || 0)
@@ -54,7 +53,6 @@ export default function Home({ config }: { config: AppConfig & RuntimeOverrides 
     <>
       <Header />
       <WarmWelcomeBar />
-      <FloatingMoodChips />
       {banner && (
         <div className="mx-auto mt-4 max-w-container rounded-[var(--r-md)] bg-[var(--warning)] p-3 text-[var(--fs-sm)] text-white">{banner}</div>
       )}
