@@ -1,0 +1,254 @@
+╔═══════════════════════════════════════════════════════════════════════════╗
+║                   🔧 API 缺失項目與修正報告                               ║
+╚═══════════════════════════════════════════════════════════════════════════╝
+
+檢查日期: 2025-11-12
+狀態: ✅ 已修正
+
+═══════════════════════════════════════════════════════════════════════════
+
+📋 發現的問題
+───────────────────────────────────────────────────────────────────────────
+
+❌ 問題 1: API 路徑不一致
+   前端呼叫: /api/upload
+   後端檔案: /api/upload-imgix.js
+   
+   ✅ 已修正:
+   - 更新前端 HTML 呼叫 /api/upload-imgix
+   - uploadToImgix() 函數已更新
+
+❌ 問題 2: 資料格式不匹配
+   前端傳送: FormData (multipart/form-data)
+   後端期待: JSON { imageData: "data:image/..." }
+   
+   ✅ 已修正:
+   - 前端改用 FileReader 轉 base64
+   - 以 JSON 格式傳送 imageData
+
+❌ 問題 3: AWS SDK 版本問題
+   原本使用: aws-sdk (v2, 已過時)
+   Vercel 建議: @aws-sdk/client-s3 (v3)
+   
+   ✅ 已修正:
+   - 更新為 AWS SDK v3
+   - 使用 S3Client 和 PutObjectCommand
+   - 添加錯誤處理和降級機制
+
+❌ 問題 4: 缺少 npm 依賴
+   需要但未安裝: @aws-sdk/client-s3
+   
+   ⚠️  需要手動操作:
+   npm install @aws-sdk/client-s3
+
+═══════════════════════════════════════════════════════════════════════════
+
+✅ 已修正的檔案
+───────────────────────────────────────────────────────────────────────────
+
+1. /workspaces/maihouses/public/tools/cake-reveal/ai-color-recolor-m.html
+   - uploadToImgix() 改用 FileReader 讀取 blob
+   - 改呼叫 /api/upload-imgix
+   - 使用 JSON 格式傳送資料
+
+2. /workspaces/maihouses/api/upload-imgix.js
+   - 升級到 AWS SDK v3
+   - 改用 S3Client 和 PutObjectCommand
+   - 添加降級機制 (S3 失敗時返回 base64)
+   - 更好的錯誤處理
+
+═══════════════════════════════════════════════════════════════════════════
+
+📦 需要安裝的 npm 套件
+───────────────────────────────────────────────────────────────────────────
+
+必要套件 (用於 S3 上傳):
+
+npm install @aws-sdk/client-s3
+
+或一次安裝所有建議套件:
+
+npm install @aws-sdk/client-s3 aws-sdk
+
+注意: 
+- @aws-sdk/client-s3 是 v3 版本 (Vercel 推薦)
+- aws-sdk 是 v2 版本 (向後相容，但較大)
+- 建議只安裝 @aws-sdk/client-s3
+
+═══════════════════════════════════════════════════════════════════════════
+
+🔄 API 端點完整清單 (已確認)
+───────────────────────────────────────────────────────────────────────────
+
+✅ /api/openai-proxy.js
+   功能: OpenAI GPT-4 Vision 圖像分析
+   狀態: 正常，無需修改
+   前端呼叫: API_ENDPOINTS.openai
+
+✅ /api/replicate-detect.js
+   功能: Replicate GroundingDINO 物體檢測
+   狀態: 正常，無需修改
+   前端呼叫: API_ENDPOINTS.replicateDetect
+
+✅ /api/replicate-generate.js
+   功能: Replicate Flux Pro 圖像增強
+   狀態: 正常，無需修改
+   前端呼叫: API_ENDPOINTS.replicateGenerate
+
+✅ /api/upload-imgix.js (已修正)
+   功能: 上傳圖片到 imgix/S3
+   狀態: ✅ 已更新為 AWS SDK v3
+   前端呼叫: uploadToImgix() 函數
+   
+   支援兩種模式:
+   1. S3 模式 (需要 AWS 環境變數)
+   2. Base64 模式 (降級，適合開發)
+
+其他現有 API (非必要):
+- /api/health-replicate.js (健康檢查)
+- /api/hello.js (測試用)
+- /api/visualize-detections.js (視覺化檢測結果)
+
+═══════════════════════════════════════════════════════════════════════════
+
+🚀 立即執行步驟
+───────────────────────────────────────────────────────────────────────────
+
+1. 安裝 AWS SDK v3:
+   
+   npm install @aws-sdk/client-s3
+
+2. 確認環境變數設定 (.env.local):
+   
+   OPENAI_API_KEY=sk-proj-xxx
+   REPLICATE_API_TOKEN=r8_xxx
+   REPLICATE_DEPLOYMENT=username/flux-pro
+   REPLICATE_DEPLOYMENT_DETECT=username/grounding-dino
+   IMGIX_DOMAIN=your-domain.imgix.net
+   AWS_S3_BUCKET=your-bucket
+   AWS_S3_REGION=us-east-1
+   AWS_ACCESS_KEY_ID=AKIA...
+   AWS_SECRET_ACCESS_KEY=xxx...
+
+3. 測試 API 連接:
+   
+   ./test-ai-recolor-apis.sh
+
+4. 啟動開發伺服器:
+   
+   npm run dev
+
+5. 測試上傳功能:
+   
+   開啟頁面並上傳測試圖片
+   檢查瀏覽器 Console 是否有錯誤
+
+═══════════════════════════════════════════════════════════════════════════
+
+🧪 測試上傳 API
+───────────────────────────────────────────────────────────────────────────
+
+測試指令:
+
+# 測試 base64 模式 (不需要 S3)
+curl -X POST http://localhost:3000/api/upload-imgix \
+  -H "Content-Type: application/json" \
+  -d '{
+    "imageData": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+  }'
+
+預期回應 (無 S3 時):
+{
+  "success": true,
+  "url": "data:image/png;base64,iVBORw0...",
+  "filename": "inline-base64",
+  "method": "base64",
+  "warning": "建議設定 S3 以獲得更好的效能和穩定性"
+}
+
+預期回應 (有 S3 時):
+{
+  "success": true,
+  "url": "https://your-domain.imgix.net/uploads/1699876543-abc123.png",
+  "filename": "uploads/1699876543-abc123.png",
+  "method": "s3"
+}
+
+═══════════════════════════════════════════════════════════════════════════
+
+📝 降級策略
+───────────────────────────────────────────────────────────────────────────
+
+upload-imgix.js 實作了智能降級機制:
+
+1. 優先使用 S3 上傳
+   - 檢查環境變數 (S3_BUCKET, AWS_ACCESS_KEY_ID, etc.)
+   - 使用 AWS SDK v3 上傳
+   - 返回 imgix URL
+
+2. S3 失敗或未設定時
+   - 捕獲錯誤並記錄
+   - 自動降級為 base64 模式
+   - 直接返回 data URL
+   - 前端仍可正常運作
+
+優點:
+✓ 開發環境無需 S3 即可測試
+✓ 生產環境可使用完整 imgix 功能
+✓ 降低設定門檻
+✓ 提升開發體驗
+
+═══════════════════════════════════════════════════════════════════════════
+
+⚡ 效能考量
+───────────────────────────────────────────────────────────────────────────
+
+Base64 模式:
+- 優點: 無需額外設定，立即可用
+- 缺點: 
+  • 圖片大小增加 ~33%
+  • 無法使用 imgix 優化功能
+  • API 回應較大
+  • 不適合生產環境
+
+S3 + imgix 模式:
+- 優點:
+  • 圖片儲存在雲端
+  • 可使用 imgix 優化 (壓縮、調整大小、格式轉換)
+  • API 回應輕量
+  • 適合生產環境
+- 缺點:
+  • 需要設定 AWS S3
+  • 需要設定 imgix
+  • 有額外成本
+
+建議:
+- 開發/測試: 使用 base64 模式
+- 生產環境: 使用 S3 + imgix 模式
+
+═══════════════════════════════════════════════════════════════════════════
+
+✅ 總結
+───────────────────────────────────────────────────────────────────────────
+
+所有問題已修正:
+✅ API 路徑已對齊
+✅ 資料格式已統一
+✅ AWS SDK 已升級到 v3
+✅ 添加降級機制
+✅ 改善錯誤處理
+
+仍需手動操作:
+□ npm install @aws-sdk/client-s3
+□ 設定環境變數 (可選，用於 S3 模式)
+□ 測試上傳功能
+
+無 API 缺失，所有端點已完整實作！
+
+═══════════════════════════════════════════════════════════════════════════
+
+如有問題，請參考:
+- 完整指南: AI_COLOR_RECOLOR_API_GUIDE.txt
+- 快速參考: AI_RECOLOR_QUICK_REF.txt
+
+═══════════════════════════════════════════════════════════════════════════
