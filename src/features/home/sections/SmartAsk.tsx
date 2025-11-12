@@ -146,7 +146,7 @@ export default function SmartAsk() {
             className="truncate font-bold text-[var(--text-primary)]"
             style={{ fontSize: 'clamp(18px, 2.2vw, 21px)', fontWeight: 900 }}
           >
-            AI 找房助理
+            智能客服邁邁
           </h3>
         </div>
   <div style={{ width: '3.5rem' }} aria-hidden="true" />
@@ -182,9 +182,9 @@ export default function SmartAsk() {
           <div className="flex h-full items-center justify-center text-[var(--text-tertiary)]" style={{ fontSize: 'var(--fs-sm)' }}>
             <div className="text-center">
               <p className="mb-2 text-2xl">💬</p>
-              <p className="mb-2 font-medium text-[var(--text-primary)]">您好！我是邁房子 AI 助理</p>
+              <p className="mb-2 font-medium text-[var(--text-primary)]">您好！我是智能客服邁邁</p>
               <p className="mx-auto max-w-[280px] text-xs leading-relaxed">
-                <span className="font-semibold text-[var(--brand)]">邁鄰居</span>：買房前先查社區口碑<br/>
+                <span className="font-semibold text-[var(--brand)]">貼心留客</span>：隨時為您解答疑問<br/>
                 <span className="font-semibold text-[var(--brand)]">邁房子</span>：安心陪跑全程留痕
               </p>
             </div>
