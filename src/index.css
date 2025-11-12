@@ -4,39 +4,7 @@
 @tailwind utilities;
 /* stylelint-enable at-rule-no-unknown */
 
-/* === [TOKENS] home color unification === */
-:root{
-  /* 底色與文字 */
-  --surface: #ffffff;
-  --surface-weak: #f6f9ff;           /* 超淺分區底 */
-  --on-surface: #0a2246;             /* 現站正文色，保留 */
-
-  /* 品牌主色（藍/綠）與新增橘色重點 */
-  --brand-blue: #1749d7;             /* 既有品牌藍 */
-  --brand-green: #2be38a;            /* 既有亮綠（保留給 CTA 等） */
-  --accent-orange: #ff7a1a;          /* 新增：橘色 */
-
-  /* 導出本次角色 */
-  --primary: var(--brand-blue);
-  --primary-50: color-mix(in srgb, var(--brand-blue) 8%, #fff 92%);
-  --secondary: var(--brand-green);
-  --secondary-50: color-mix(in srgb, var(--brand-green) 8%, #fff 92%);
-  --accent: var(--accent-orange);
-  --accent-50: color-mix(in srgb, var(--accent-orange) 10%, #fff 90%);
-
-  /* 細邊與陰影 */
-  --outline: color-mix(in srgb, var(--on-surface) 24%, #000 0%);
-  --hairline: color-mix(in srgb, var(--on-surface) 14%, #000 0%);
-  --shadow-soft: 0 1px 3px rgba(10,34,70,.06), 0 1px 2px rgba(10,34,70,.04);
-
-  /* 流體字級與 8pt 間距（不動 DOM 也能平衡手機/桌機） */
-  --fs-sm: clamp(12px, 0.82vw, 14px);
-  --fs-md: clamp(14px, 0.95vw, 16px);
-  --fs-lg: clamp(18px, 1.25vw, 20px);
-  --fs-xl: clamp(20px, 1.6vw, 22px);
-  --fs-2xl: clamp(24px, 2.1vw, 28px);
-  --sp-1: 8px; --sp-2: 16px; --sp-3: 24px; --sp-4: 32px;
-
+:root {
   /* 新擬物風格色彩系統 */
   --brand: #1749D7;
   --bg: #EEF2F7;
@@ -51,16 +19,6 @@
   --shadow-neu-pill: 8px 8px 18px rgba(9,15,30,.14), -8px -8px 18px rgba(255,255,255,.9);
   --shadow-neu-pill-active: inset 6px 6px 12px rgba(9,15,30,.14), inset -6px -6px 12px rgba(255,255,255,.9);
   --shadow-neu-badge: inset 4px 4px 10px rgba(9,15,30,.08), inset -4px -4px 10px rgba(255,255,255,.85);
-  
-  /* orange tokens for outline pills */
-  --orange-700: #C2410C;  /* 深橘：文字/描邊（AA 合格） */
-  --orange-800: #9A3412;  /* 備用更深 */
-  --orange-100: #FFF5E9;  /* hover/active 薄底 */
-  
-  /* green tokens for outline pills */
-  --green-700: #15803D;  /* 深綠：文字/描邊（AA 合格） */
-  --green-800: #166534;  /* 備用更深 */
-  --green-100: #F0FDF4;  /* hover/active 薄底 */
   
   /* 品牌色 - 保留舊變數以兼容 */
   --brand-primary: #1749D7;
@@ -833,22 +791,3 @@ section.gradient-ask.ai-card h3 {
   95% { transform: scaleY(0.1); }
 }
 .bot-eye{transform-origin:center;animation:botBlink 6s infinite}
-
-/* === [OPT-IN-COLORS] Optional pill color classes === */
-/* 在需要的元素手動加上這些 class: pill-primary / pill-accent / pill-secondary */
-.pill-primary{ color: var(--primary) !important; }
-.pill-secondary{ color: var(--secondary) !important; }
-.pill-accent,
-.pill-warning,
-.pill-hot{ color: var(--accent) !important; }
-
-/* === [SAFE-CARD-GLASS] Only apply to non-community sections === */
-/* 用 :not() 排除社區小卡所在的第3個 section */
-body > main > section.rounded-lg.bg-white:not(:nth-child(3)){
-  background: color-mix(in srgb, #ffffff 94%, #1749d7 6%);
-  backdrop-filter: saturate(120%) blur(2px);
-  -webkit-backdrop-filter: saturate(120%) blur(2px);
-}
-body > main > section.rounded-lg.bg-white:not(:nth-child(3)):hover{
-  filter: brightness(1.01);
-}
