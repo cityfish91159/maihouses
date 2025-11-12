@@ -1,14 +1,4 @@
 {
-  "framework": "vite",
   "buildCommand": "npm run build",
-  "outputDirectory": "docs",
-  "devCommand": "npm run dev",
-  "installCommand": "npm install",
-  "redirects": [
-    {
-      "source": "/maihouses/:path*",
-      "destination": "/:path*",
-      "permanent": false
-    }
-  ]
+  "outputDirectory": "docs"
 }
