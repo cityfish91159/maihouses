@@ -834,6 +834,41 @@ section.gradient-ask.ai-card h3 {
 }
 .bot-eye{transform-origin:center;animation:botBlink 6s infinite}
 
+/* === [PILL-VARIANTS] Orange & Green outline pills === */
+/* 橘色膠囊 (outline 風格) */
+.pill[data-variant="orange"]{
+  color: var(--orange-700);
+  border: 1px solid var(--orange-700);
+  background: transparent;
+  font-weight: 600;
+}
+.pill[data-variant="orange"]:hover{
+  background: var(--orange-100);
+  border-color: var(--orange-800);
+}
+.pill[data-variant="orange"][aria-current="true"]{
+  background: var(--orange-100);
+  outline: 2px solid var(--orange-700);
+  outline-offset: 2px;
+}
+
+/* 綠色膠囊 (outline 風格) */
+.pill[data-variant="green"]{
+  color: var(--green-700);
+  border: 1px solid var(--green-700);
+  background: transparent;
+  font-weight: 600;
+}
+.pill[data-variant="green"]:hover{
+  background: var(--green-100);
+  border-color: var(--green-800);
+}
+.pill[data-variant="green"][aria-current="true"]{
+  background: var(--green-100);
+  outline: 2px solid var(--green-700);
+  outline-offset: 2px;
+}
+
 /* === [OPT-IN-COLORS] Optional pill color classes === */
 /* 在需要的元素手動加上這些 class: pill-primary / pill-accent / pill-secondary */
 .pill-primary{ color: var(--primary) !important; }
