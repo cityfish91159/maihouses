@@ -149,7 +149,7 @@ export default function SmartAsk() {
           <div className="size-2.5 rounded-full bg-[var(--brand)]" style={{ animation: 'pulse-subtle 2s ease-in-out infinite' }} />
           <h3
             className="truncate font-bold text-[var(--text-primary)]"
-            style={{ fontSize: 'clamp(19px, 2.4vw, 22px)', fontWeight: 900 }}
+            style={{ fontSize: 'clamp(18px, 2.2vw, 21px)', fontWeight: 900 }}
           >
             AI 找房助理
           </h3>
@@ -182,6 +182,11 @@ export default function SmartAsk() {
         role="log"
         aria-live="polite"
   className="max-h-[620px] min-h-[380px] space-y-3 overflow-y-auto rounded-[var(--r-lg)] border border-[var(--border-default)] bg-white p-4 shadow-inner md:max-h-[540px] md:min-h-[340px]"
+        style={{ 
+          WebkitOverflowScrolling: 'touch',
+          overscrollBehavior: 'contain',
+          touchAction: 'pan-y'
+        }}
       >
         {messages.length === 0 ? (
           <div className="flex h-full items-center justify-center text-[var(--text-tertiary)]" style={{ fontSize: 'var(--fs-sm)' }}>
@@ -205,6 +210,9 @@ export default function SmartAsk() {
                 }`}
                 style={{
                   fontSize: 'var(--fs-sm)',
+                  wordBreak: 'break-word',
+                  overflowWrap: 'break-word',
+                  minWidth: 0,
                   // 若變數不存在提供後備漸層，避免白字配白底看起來空白
                   background:
                     m.role === 'user'

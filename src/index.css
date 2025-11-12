@@ -20,6 +20,11 @@
   --shadow-neu-pill-active: inset 6px 6px 12px rgba(9,15,30,.14), inset -6px -6px 12px rgba(255,255,255,.9);
   --shadow-neu-badge: inset 4px 4px 10px rgba(9,15,30,.08), inset -4px -4px 10px rgba(255,255,255,.85);
   
+  /* orange tokens for outline pills */
+  --orange-700: #C2410C;  /* 深橘：文字/描邊（AA 合格） */
+  --orange-800: #9A3412;  /* 備用更深 */
+  --orange-100: #FFF5E9;  /* hover/active 薄底 */
+  
   /* 品牌色 - 保留舊變數以兼容 */
   --brand-primary: #1749D7;
   --brand-600: #1550C0;
@@ -82,6 +87,33 @@
     -moz-osx-font-smoothing: grayscale;
     background-color: #EEF2F7;
     color: var(--ink);
+  }
+  
+  /* 防止手機版點擊輸入框時畫面異常縮放 */
+  input,
+  textarea,
+  select,
+  button {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+  
+  /* 防止雙擊縮放 */
+  * {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  
+  /* 但允許輸入框、文本區域、可編輯元素選擇文字 */
+  input,
+  textarea,
+  [contenteditable="true"],
+  .user-bubble,
+  p,
+  span:not(.pill) {
+    -webkit-user-select: text;
+    user-select: text;
   }
 }
 
@@ -433,6 +465,23 @@ html,body{margin:0;padding:0;background:#f6f9ff;color:#0a2246;
 .story p{margin:6px 0 0 0;font-size:13px;line-height:1.5}
 .story-foot{display:flex;justify-content:space-between;align-items:center;margin-top:6px}
 .pill{font-size:12px;font-weight:800;color:#1749d7;background:#eef3ff;border:1px solid #e6edf7;border-radius:999px;padding:2px 8px}
+
+/* Pill: orange variant (outline) */
+.pill[data-variant="orange"]{
+  color: var(--orange-700);
+  border: 1px solid var(--orange-700);
+  background: transparent;
+  font-weight: 600;
+}
+.pill[data-variant="orange"]:hover{
+  background: var(--orange-100);
+  border-color: var(--orange-700);
+}
+.pill[data-variant="orange"][aria-current="true"],
+.pill[data-variant="orange"].is-active{
+  outline: 2px solid var(--orange-700);
+  outline-offset: 1px;
+}
 .link{font-size:12px;font-weight:800;color:#1749d7;text-decoration:none}
 /* Filter */
 .controls{display:grid;gap:8px;grid-template-columns:repeat(auto-fit,minmax(140px,1fr))}
