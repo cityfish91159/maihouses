@@ -2,7 +2,11 @@
   "buildCommand": "npm run build",
   "outputDirectory": "docs",
   "routes": [
+    { "src": "/p/cake.html", "dest": "/p/cake.html" },
+    { "src": "/maihouses/p/cake.html", "dest": "/p/cake.html" },
     { "src": "/maihouses/(.*)", "dest": "/$1" },
-    { "src": "/maihouses", "dest": "/index.html" }
+    { "src": "/maihouses", "dest": "/index.html" },
+    { "handle": "filesystem" },
+    { "src": "/(.*)", "dest": "/index.html" }
   ]
 }
