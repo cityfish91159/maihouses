@@ -1,4 +1,8 @@
 {
   "buildCommand": "npm run build",
-  "outputDirectory": "docs"
+  "outputDirectory": "docs",
+  "routes": [
+    { "src": "/maihouses/(.*)", "dest": "/$1" },
+    { "src": "/maihouses", "dest": "/index.html" }
+  ]
 }
