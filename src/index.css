@@ -25,6 +25,11 @@
   --orange-800: #9A3412;  /* 備用更深 */
   --orange-100: #FFF5E9;  /* hover/active 薄底 */
   
+  /* green tokens for outline pills */
+  --green-700: #15803D;  /* 深綠：文字/描邊（AA 合格） */
+  --green-800: #166534;  /* 備用更深 */
+  --green-100: #F0FDF4;  /* hover/active 薄底 */
+  
   /* 品牌色 - 保留舊變數以兼容 */
   --brand-primary: #1749D7;
   --brand-600: #1550C0;
@@ -480,6 +485,23 @@ html,body{margin:0;padding:0;background:#f6f9ff;color:#0a2246;
 .pill[data-variant="orange"][aria-current="true"],
 .pill[data-variant="orange"].is-active{
   outline: 2px solid var(--orange-700);
+  outline-offset: 1px;
+}
+
+/* Pill: green variant (outline) */
+.pill[data-variant="green"]{
+  color: var(--green-700);
+  border: 1px solid var(--green-700);
+  background: transparent;
+  font-weight: 600;
+}
+.pill[data-variant="green"]:hover{
+  background: var(--green-100);
+  border-color: var(--green-700);
+}
+.pill[data-variant="green"][aria-current="true"],
+.pill[data-variant="green"].is-active{
+  outline: 2px solid var(--green-700);
   outline-offset: 1px;
 }
 .link{font-size:12px;font-weight:800;color:#1749d7;text-decoration:none}

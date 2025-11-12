@@ -184,8 +184,8 @@ export default function SmartAsk() {
               <p className="mb-2 text-2xl">💬</p>
               <p className="mb-2 font-medium text-[var(--text-primary)]">您好！我是智能客服邁邁</p>
               <p className="mx-auto max-w-[280px] text-xs leading-relaxed">
-                <span className="font-semibold text-[var(--brand)]">貼心留客</span>：隨時為您解答疑問<br/>
-                <span className="font-semibold text-[var(--brand)]">邁房子</span>：安心陪跑全程留痕
+                <span className="font-semibold text-[var(--brand)]">即時解答</span>：隨時為您排憂解惑<br/>
+                <span className="font-semibold text-[var(--brand)]">全程留痕</span>：安心記錄每一步
               </p>
             </div>
           </div>
