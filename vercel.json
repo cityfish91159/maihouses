@@ -2,10 +2,13 @@
   "buildCommand": "npm run build",
   "outputDirectory": "docs",
   "redirects": [
-    { "source": "/", "destination": "/maihouses", "permanent": false }
+    { "source": "/", "destination": "/maihouses/", "permanent": false }
   ],
-  "rewrites": [
-    { "source": "/maihouses", "destination": "/" },
-    { "source": "/maihouses/(.*)", "destination": "/$1" }
-  ]
+  "functions": {
+    "api/*.js": {
+      "runtime": "nodejs20.x",
+      "memory": 256,
+      "maxDuration": 30
+    }
+  }
 }
