@@ -13,7 +13,7 @@ const hmrHost = inCodespaces
 
 export default defineConfig({
   plugins: [react()],
-  base: '/',
+  base: '/maihouses/',
   build: {
     outDir: 'docs',
     sourcemap: false,
