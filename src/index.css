@@ -834,3 +834,21 @@ section.gradient-ask.ai-card h3 {
 }
 .bot-eye{transform-origin:center;animation:botBlink 6s infinite}
 
+/* === [OPT-IN-COLORS] Optional pill color classes === */
+/* 在需要的元素手動加上這些 class: pill-primary / pill-accent / pill-secondary */
+.pill-primary{ color: var(--primary) !important; }
+.pill-secondary{ color: var(--secondary) !important; }
+.pill-accent,
+.pill-warning,
+.pill-hot{ color: var(--accent) !important; }
+
+/* === [SAFE-CARD-GLASS] Only apply to non-community sections === */
+/* 用 :not() 排除社區小卡所在的第3個 section */
+body > main > section.rounded-lg.bg-white:not(:nth-child(3)){
+  background: color-mix(in srgb, #ffffff 94%, #1749d7 6%);
+  backdrop-filter: saturate(120%) blur(2px);
+  -webkit-backdrop-filter: saturate(120%) blur(2px);
+}
+body > main > section.rounded-lg.bg-white:not(:nth-child(3)):hover{
+  filter: brightness(1.01);
+}
