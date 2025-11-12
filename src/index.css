@@ -118,32 +118,11 @@
 }
 
 @layer base {
-  /* === [BASE] neutralize deep blocks without changing layout === */
-  html,body{ background: var(--surface); color: var(--on-surface); }
-  body{ -webkit-text-size-adjust:100%; }
-
-  /* 常見頂區：全部改白底＋髮絲線底框（不動 DOM 名稱） */
-  [class*="header"], [class*="hero"], [class*="topbar"]{
-    background: var(--surface) !important;
-    color: var(--on-surface) !important;
-    border-bottom: 1px solid var(--hairline);
-  }
-
-  /* 原先深底的說明/AI 區塊→改為超淺分區底 */
-  [class*="section--alt"], [data-section="ai"], [class*="ai"], [class*="intro"]{
-    background: var(--surface-weak) !important;
-    color: var(--on-surface) !important;
-  }
-
-  /* 流體字級（不改任何一個標題 DOM） */
-  .h1{ font-size: var(--fs-2xl); margin-block: var(--sp-3) var(--sp-2); }
-  .h2{ font-size: var(--fs-xl);  margin-block: var(--sp-2) var(--sp-1); }
-  .p { font-size: var(--fs-md);  line-height: 1.6; }
-
   body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    background-color: #EEF2F7;
     color: var(--ink);
   }
   
@@ -479,10 +458,10 @@ section[class*="hover:shadow"]{
 
 /* A. Base & Home（重建頁面基礎與首頁元件）*/
 /* Reset & Base */
-html,body{margin:0;padding:0;background:var(--surface-weak);color:var(--on-surface);
+html,body{margin:0;padding:0;background:#f6f9ff;color:#0a2246;
   font-family:"Noto Sans TC","PingFang TC",Arial,sans-serif;}
 .container{max-width:1080px;margin:0 auto;padding:8px;}
-.card{background:var(--surface);border:1px solid var(--hairline);border-radius:10px;
+.card{background:#fff;border:1px solid #e6edf7;border-radius:10px;
   box-shadow:0 2px 8px rgba(10,34,70,.04);padding:10px;margin:8px 0;}
 .card.hero{background:#f7faff;}
 /* Topbar */
@@ -560,7 +539,7 @@ html,body{margin:0;padding:0;background:var(--surface-weak);color:var(--on-surfa
 .link{font-size:12px;font-weight:800;color:#1749d7;text-decoration:none}
 /* Filter */
 .controls{display:grid;gap:8px;grid-template-columns:repeat(auto-fit,minmax(140px,1fr))}
-.select,.chip{border:1px solid #1749d7;background:var(--surface);color:var(--on-surface);border-radius:8px;padding:7px 10px;font-size:13px}
+.select,.chip{border:1px solid #1749d7;background:#fff;color:#0a2246;border-radius:8px;padding:7px 10px;font-size:13px}
 .tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:2px}
 .chip{cursor:pointer}
 .chip.active{background:#1749d7;color:#fff}
@@ -643,9 +622,9 @@ html,body{margin:0;padding:0;background:var(--surface-weak);color:var(--on-surfa
 }
 
 /* ask-card（有問題直接問）*/
-:root{--ask-brand:#1749d7;--ask-brand2:#6aa4ff;--ask-ink:var(--on-surface);--ask-stroke:#e6edf7;--ask-chip:#f6f9ff;--ask-shadow:0 10px 24px rgba(10,34,70,.10)}
+:root{--ask-brand:#1749d7;--ask-brand2:#6aa4ff;--ask-ink:#0a2246;--ask-stroke:#e6edf7;--ask-chip:#f6f9ff;--ask-shadow:0 10px 24px rgba(10,34,70,.10)}
 section.ask-card{width:100%;max-width:1024px;margin:16px auto 20px;border:1px solid var(--ask-stroke);
-  border-radius:20px;background:linear-gradient(180deg,var(--surface) 0%, #f7faff 100%);box-shadow:var(--ask-shadow);overflow:hidden}
+  border-radius:20px;background:linear-gradient(180deg,#ffffff 0%, #f7faff 100%);box-shadow:var(--ask-shadow);overflow:hidden}
 section.ask-card .ask-head{display:flex;align-items:center;gap:10px;padding:10px 14px 0 14px}
 section.ask-card .dot{width:14px;height:14px;border-radius:50%;background:linear-gradient(135deg,var(--ask-brand),var(--ask-brand2));box-shadow:0 6px 16px rgba(23,73,215,.25);flex:0 0 14px}
 section.ask-card .ttl{font-weight:900;letter-spacing:.3px;color:var(--ask-brand);font-size:16px}
@@ -835,77 +814,6 @@ section.gradient-ask.ai-card h3 {
 .reviews-mini__text{font-size:13px;line-height:1.55;color:rgba(0,0,0,.85)}
 .reviews-mini__more{margin-top:10px;width:100%;padding:9px 12px;border-radius:10px;border:1px solid rgba(23,73,215,.25);background:#fff;cursor:pointer;font-size:13px;font-weight:900;color:#1749D7;transition:background .15s ease,transform .06s ease}
 .reviews-mini__more:hover{background:rgba(23,73,215,.06)}
-
-/* === [PILL] unify to outline variant + add orange === */
-[class*="pill"], [class*="chip"], [class*="tag"], [class*="badge"]{
-  background: transparent !important;
-  border: 1px solid currentColor !important;
-  border-radius: 999px !important;
-  padding: 6px 10px !important;
-  font-size: var(--fs-sm) !important;
-  line-height:1 !important;
-  display:inline-flex; align-items:center; gap:6px;
-  box-shadow: none !important;
-  transition: filter .2s ease, background .2s ease, border-color .2s ease;
-}
-
-/* 藍（預設主色） */
-[class*="pill"].primary,
-[class*="chip"].primary,
-[class*="tag"].primary,
-[class*="badge"].primary{ color: var(--primary) !important; }
-
-/* 綠（副色/正向語意） */
-[class*="pill"].secondary,
-[class*="chip"].secondary,
-[class*="tag"].secondary,
-[class*="badge"].secondary{ color: var(--secondary) !important; }
-
-/* 橘（提醒/熱門；沿用常見語義） */
-[class*="pill"].accent,    [class*="chip"].accent,
-[class*="tag"].accent,     [class*="badge"].accent,
-[class*="pill"].warning,   [class*="chip"].warning,
-[class*="tag"].warning,    [class*="badge"].warning,
-[class*="pill"].hot,       [class*="chip"].hot,
-[class*="tag"].hot,        [class*="badge"].hot{
-  color: var(--accent) !important;
-}
-
-/* hover：極淡同色底、微亮；focus：外圈 */
-[class*="pill"]:hover,
-[class*="chip"]:hover,
-[class*="tag"]:hover,
-[class*="badge"]:hover{
-  background: color-mix(in srgb, currentColor 8%, #fff 92%) !important;
-  filter: brightness(1.02);
-}
-[class*="pill"]:focus-visible,
-[class*="chip"]:focus-visible,
-[class*="tag"]:focus-visible,
-[class*="badge"]:focus-visible{
-  outline:2px solid currentColor; outline-offset:2px;
-}
-
-/* === [CARD] unify glassy look within home scope === */
-body :where(section.rounded-lg.bg-white[class*="shadow"]){
-  background: color-mix(in srgb, var(--surface) 92%, var(--primary-50) 8%);
-  border: 1px solid var(--hairline);
-  border-radius: 12px;
-  padding: 8px;
-  box-shadow: var(--shadow-soft);
-  backdrop-filter: saturate(140%) blur(4px);
-  -webkit-backdrop-filter: saturate(140%) blur(4px);
-}
-body :where(section.rounded-lg.bg-white[class*="shadow"]):hover{
-  filter: brightness(1.02);
-}
-
-/* === [LOCK] keep community teaser card EXACTLY as-is === */
-section:has(> [class*="CommunityTeaser"]),
-section:has([class*="community"]),
-body > main > section:nth-child(3){
-  /* 不貼新屬性；此區塊的目的：提高 specificity + 排在通用卡片規則後面，讓原站樣式生效 */
-}
 .reviews-mini__more:active{transform:translateY(1px)}
 .bot-avatar{
   --bot-ring:#dbe6ff;
