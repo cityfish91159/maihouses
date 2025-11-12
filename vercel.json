@@ -1,11 +1,4 @@
 {
   "buildCommand": "npm run build",
-  "outputDirectory": "docs",
-  "functions": {
-    "api/*.js": {
-      "runtime": "nodejs22.x",
-      "memory": 256,
-      "maxDuration": 30
-    }
-  }
+  "outputDirectory": "docs"
 }
