@@ -1,11 +1,4 @@
 {
   "buildCommand": "npm run build",
-  "outputDirectory": "docs",
-  "redirects": [
-    { "source": "/", "destination": "/maihouses", "permanent": false }
-  ],
-  "rewrites": [
-    { "source": "/maihouses", "destination": "/" },
-    { "source": "/maihouses/(.*)", "destination": "/$1" }
-  ]
+  "outputDirectory": "docs"
 }
