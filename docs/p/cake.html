@@ -520,15 +520,28 @@ $('btnDetect').addEventListener('click', async () => {
     
     const result = await apiCall('/api/replicate-detect', {
       image: state.currentUrl,
-      model: 'yolov8',
-      confidence: 0.3
+      labels: ['cake', 'frosting', 'decoration'],
+      mode: 'cake'
     });
     
-    state.detections = result;
+    // 解析 Replicate 輸出格式
+    let detectedBoxes = [];
+    if (result.output) {
+      // Replicate GroundingDINO 輸出格式: { "boxes": [[x1,y1,x2,y2], ...], "labels": [...], "scores": [...] }
+      if (result.output.boxes && result.output.labels && result.output.scores) {
+        detectedBoxes = result.output.boxes.map((box, i) => [
+          box[0], box[1], box[2], box[3],
+          result.output.labels[i],
+          result.output.scores[i]
+        ]);
+      }
+    }
+    
+    state.detections = { detected_boxes: detectedBoxes };
     
     setProgress(100, '完成');
     
-    const count = result.detected_boxes ? result.detected_boxes.length : 0;
+    const count = detectedBoxes.length;
     setInfo(`✅ 偵測到 ${count} 個物件`);
     
     showLoading(false);
