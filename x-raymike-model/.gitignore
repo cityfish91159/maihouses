@@ -1,0 +1,50 @@
+# Cog
+.cog/
+*.tar
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# 測試圖片
+test_*.jpg
+test_*.png
+output_*.png
+
+# 環境
+.env
+.venv
+env/
+venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 模型權重（如果有大文件）
+*.pth
+*.pt
+*.ckpt
+weights/
+checkpoints/
