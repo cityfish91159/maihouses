@@ -1,0 +1,55 @@
+{
+  "name": "Cake Reveal M - AI 顏色回填",
+  "short_name": "Cake Reveal M",
+  "description": "AI 驅動的圖像顏色回填工具，整合 OpenAI + Replicate + imgix",
+  "start_url": "/tools/cake-reveal/ai-color-recolor-m.html",
+  "display": "standalone",
+  "background_color": "#0b1220",
+  "theme_color": "#2be38a",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/assets/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/assets/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["photo", "productivity", "utilities"],
+  "screenshots": [
+    {
+      "src": "/assets/screenshot-mobile.png",
+      "sizes": "540x720",
+      "type": "image/png",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "/assets/screenshot-desktop.png",
+      "sizes": "1920x1080",
+      "type": "image/png",
+      "form_factor": "wide"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "開啟 AI 回填",
+      "short_name": "AI 回填",
+      "description": "快速啟動 AI 顏色回填功能",
+      "url": "/tools/cake-reveal/ai-color-recolor-m.html",
+      "icons": [
+        {
+          "src": "/assets/shortcut-ai.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false
+}
