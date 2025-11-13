@@ -3,7 +3,12 @@ import { aiAsk } from '../../../services/api'
 import { trackEvent } from '../../../services/uag'
 import type { AiMessage, PropertyCard } from '../../../types'
 
-const QUICK = ['剛搬來台北', '想了解這個社區', '有養寵物', '在意管理品質']
+const QUICK = [
+  { text: '剛搬來台北', emoji: '🎒', color: '#FF6B6B' },
+  { text: '想了解這個社區', emoji: '🏘️', color: '#4ECDC4' },
+  { text: '有養寵物', emoji: '🐕', color: '#FFB84D' },
+  { text: '在意管理品質', emoji: '⭐', color: '#A8E6CF' }
+]
 
 export default function SmartAsk() {
   const [messages, setMessages] = useState<AiMessage[]>([])
@@ -149,18 +154,34 @@ export default function SmartAsk() {
             社區鄰居管家
           </h3>
         </div>
-  <div style={{ width: '3.5rem' }} aria-hidden="true" />
-        <div className="flex flex-wrap items-center gap-1 md:flex-nowrap" style={{ minWidth: 'fit-content' }}>
+  <div className="w-full md:w-auto">
+        <div className="grid grid-cols-2 gap-2 md:flex md:flex-wrap md:gap-1.5">
           {QUICK.map((q) => (
             <button
-              key={q}
-              className="cursor-pointer whitespace-nowrap rounded-[var(--r-pill)] border border-[var(--border-default)] bg-white px-2 py-[0.35rem] text-xs font-medium text-[var(--text-secondary)] transition-all duration-200 hover:border-[var(--brand)] hover:shadow-sm"
-              onClick={() => setInput(q)}
-              aria-label={`快速輸入 ${q}`}
+              key={q.text}
+              className="group relative cursor-pointer overflow-hidden rounded-xl border-2 bg-white px-3 py-2.5 text-xs font-semibold shadow-sm transition-all duration-300 active:scale-95 md:whitespace-nowrap md:rounded-full md:py-1.5"
+              style={{
+                borderColor: q.color + '40',
+                color: q.color
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = q.color
+                e.currentTarget.style.boxShadow = `0 4px 12px ${q.color}30`
+                e.currentTarget.style.transform = 'translateY(-2px)'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = q.color + '40'
+                e.currentTarget.style.boxShadow = '0 1px 2px rgba(0,0,0,0.05)'
+                e.currentTarget.style.transform = 'none'
+              }}
+              onClick={() => setInput(q.text)}
+              aria-label={`快速輸入 ${q.text}`}
             >
-              {q}
+              <span className="mr-1.5 text-base">{q.emoji}</span>
+              <span className="text-[11px] leading-tight md:text-xs">{q.text}</span>
             </button>
           ))}
+        </div>
         </div>
         <div className="ml-auto min-w-[150px] text-right text-xs font-medium text-[var(--text-secondary)]">
           {import.meta.env.DEV && totalTokens > 0 ? `${totalTokens} tokens` : '多輪對話・智能推薦'}
@@ -183,15 +204,21 @@ export default function SmartAsk() {
       >
         {messages.length === 0 ? (
           <div className="flex h-full items-center justify-center" style={{ fontSize: 'var(--fs-sm)', color: '#5A6C7D' }}>
-            <div className="text-center" style={{ maxWidth: '340px' }}>
-              <p className="mb-3 text-3xl">🏡</p>
-              <p className="mb-3 font-semibold leading-relaxed" style={{ fontSize: '15px', color: '#2C3E50' }}>
+            <div className="text-center" style={{ maxWidth: '380px' }}>
+              <p className="mb-4 animate-bounce text-4xl">🏡</p>
+              <p className="mb-3 font-bold leading-relaxed" style={{ fontSize: '16px', color: '#2C3E50' }}>
                 歡迎來到邁房子 ☺️
               </p>
-              <p className="mx-auto text-sm leading-relaxed" style={{ color: '#5A6C7D' }}>
-                買房不只看物件，更要看生活。<br/>
+              <p className="mx-auto mb-4 text-sm leading-relaxed" style={{ color: '#5A6C7D' }}>
+                買房不只看物件，更要看生活<br/>
                 這裡有真實住戶分享，我們一起慢慢看
               </p>
+              <div className="mx-auto mt-4 rounded-lg bg-gradient-to-r from-blue-50 to-purple-50 px-4 py-3" style={{ maxWidth: '320px' }}>
+                <p className="text-xs leading-relaxed" style={{ color: '#667085' }}>
+                  💬 也可以聊聊您的生活需求<br/>
+                  <span className="text-[11px]" style={{ color: '#98A2B3' }}>我會自然引導到適合的社區喔</span>
+                </p>
+              </div>
             </div>
           </div>
         ) : (
