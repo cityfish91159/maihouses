@@ -16,14 +16,27 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { prompt, deployment } = req.body || {};
+    const { prompt, model, deployment } = req.body || {};
     
     if (!prompt) {
       return res.status(400).json({ error: 'Missing prompt' });
     }
 
     const token = process.env.REPLICATE_API_TOKEN;
-    const deploymentPath = deployment || process.env.REPLICATE_DEPLOYMENT;
+    
+    // 優先順序：前端傳的 model > deployment > 環境變數
+    let deploymentPath;
+    if (model) {
+      // 前端傳 model: 'flux' → 轉換為完整路徑
+      const modelMap = {
+        'flux': 'cityfish91159/maihouses-flux-dev',
+        'flux-dev': 'cityfish91159/maihouses-flux-dev',
+        'sdxl': 'cityfish91159/maihouses-sdxl'
+      };
+      deploymentPath = modelMap[model] || model; // 如果傳完整路徑就直接用
+    } else {
+      deploymentPath = deployment || process.env.REPLICATE_DEPLOYMENT;
+    }
 
     if (!token) {
       return res.status(500).json({ error: 'Missing REPLICATE_API_TOKEN (server)' });

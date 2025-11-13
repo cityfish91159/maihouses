@@ -16,20 +16,33 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { image, labels, mode = 'general' } = req.body || {};
+    const { image, labels, mode = 'general', model } = req.body || {};
     
     if (!image) {
       return res.status(400).json({ error: 'Missing image URL' });
     }
 
     const token = process.env.REPLICATE_API_TOKEN;
-    const deployment = process.env.REPLICATE_DEPLOYMENT_DETECT;
-
+    
+    // 優先順序：前端傳的 model > 環境變數
+    let deploymentPath;
+    if (model) {
+      // 前端傳 model: 'yolov8' → 轉換為完整路徑
+      const modelMap = {
+        'yolov8': 'cityfish91159/maihouses-yoloworld',
+        'grounding-dino': 'cityfish91159/maihouses-grounding-dino',
+        'dino': 'cityfish91159/maihouses-grounding-dino'
+      };
+      deploymentPath = modelMap[model] || model;
+    } else {
+      deploymentPath = process.env.REPLICATE_DEPLOYMENT_DETECT;
+    }
+    
     if (!token) {
       return res.status(500).json({ error: 'Missing REPLICATE_API_TOKEN' });
     }
-    if (!deployment) {
-      return res.status(500).json({ error: 'Missing REPLICATE_DEPLOYMENT_DETECT' });
+    if (!deploymentPath) {
+      return res.status(500).json({ error: 'Missing model or REPLICATE_DEPLOYMENT_DETECT' });
     }
 
     // 模式參數（與前端 detection-labels.ts 同步）
@@ -51,10 +64,10 @@ export default async function handler(req, res) {
     const config = modeConfigs[mode] || modeConfigs.general;
     const inputLabels = labels || (mode === 'cake' ? ['cake', 'frosting', 'icing'] : mode === 'curtain' ? ['curtain', 'fabric fold'] : ['object']);
 
-    console.log('Detecting with mode:', mode, 'labels:', inputLabels);
+    console.log('Detecting with mode:', mode, 'labels:', inputLabels, 'deployment:', deploymentPath);
 
     // 建立 prediction
-    const createUrl = `https://api.replicate.com/v1/deployments/${deployment}/predictions`;
+    const createUrl = `https://api.replicate.com/v1/deployments/${deploymentPath}/predictions`;
     const createRes = await fetch(createUrl, {
       method: 'POST',
       headers: {
