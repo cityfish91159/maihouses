@@ -5,6 +5,15 @@
 /* stylelint-enable at-rule-no-unknown */
 
 :root {
+  /* orange tokens for outline pills */
+  --orange-700: #C2410C;  /* 深橘：文字/描邊（AA 合格） */
+  --orange-800: #9A3412;  /* 備用更深 */
+  --orange-100: #FFF5E9;  /* hover/active 薄底 */
+
+  /* green tokens for outline pills */
+  --green-700: #15803D;   /* 深綠：文字/描邊（AA 合格） */
+  --green-100: #F0FDF4;   /* hover/active 薄底 */
+
   /* 新擬物風格色彩系統 */
   --brand: #1749D7;
   --bg: #EEF2F7;
