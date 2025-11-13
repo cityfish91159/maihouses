@@ -2,7 +2,9 @@
 # 自動加速腳本 - 每2小時執行一次清理
 # 運行時間: 10:00 - 22:00
 
-WORK_DIR="/workspaces/maihouses"
+# 動態獲取工作目錄（支持 /workspaces 和 /home/user 兩種環境）
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+WORK_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 LOG_FILE="$WORK_DIR/.speedup.log"
 
 log() {
