@@ -8,7 +8,7 @@ export function parseAiAction(content: string): AiAction | null {
   try {
     // 嘗試從 markdown code block 中提取 JSON
     const jsonBlockMatch = content.match(/```json\s*\n([\s\S]*?)\n```/)
-    if (jsonBlockMatch) {
+    if (jsonBlockMatch && jsonBlockMatch[1]) {
       const jsonStr = jsonBlockMatch[1].trim()
       const parsed = JSON.parse(jsonStr)
 

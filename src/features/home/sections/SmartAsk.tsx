@@ -210,7 +210,7 @@ export default function SmartAsk() {
                 ...last,
                 role: 'assistant',
                 content: displayContent,
-                action: action || undefined
+                ...(action && { action })
               }
             }
             return updated
