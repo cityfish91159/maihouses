@@ -73,36 +73,37 @@ function ActionRenderer({ action }: { action: AiAction }) {
         <div className="mb-3 flex items-center gap-2">
           <span className="text-lg">🏠</span>
           <h4 className="font-bold text-gray-800">
-            {target === 'community' ? '社區物件列表' : '區域物件列表'}
+            {target === 'community' ? '社區物件整理' : '區域物件整理'}
           </h4>
         </div>
         <p className="mb-3 text-sm text-gray-600">
           {target === 'community'
-            ? `即將前往「${params.community}」的物件列表`
-            : `即將前往「${params.area}」的物件列表`}
+            ? `幫您整理好「${params.community}」的物件了`
+            : `幫您整理好「${params.area}」的物件了`}
         </p>
         <button
           onClick={() => handleNavigate(url)}
           className="w-full rounded-full bg-green-500 py-2 font-medium text-white transition hover:bg-green-600 active:scale-95"
         >
-          立即前往 →
+          去看看 →
         </button>
       </div>
     )
   }
 
   if (action.type === 'scroll_to') {
+    const targetName = action.data.target === 'community-wall' ? '社區牆' : action.data.target
     return (
       <div className="mx-auto w-full max-w-md rounded-xl border-2 border-purple-200 bg-gradient-to-br from-purple-50 to-pink-50 p-4 shadow-lg">
         <div className="mb-3 flex items-center gap-2">
           <span className="text-lg">📍</span>
-          <h4 className="font-bold text-gray-800">頁面導航</h4>
+          <h4 className="font-bold text-gray-800">帶您過去</h4>
         </div>
         <button
           onClick={() => handleScrollTo(action.data.target)}
           className="w-full rounded-full bg-purple-500 py-2 font-medium text-white transition hover:bg-purple-600 active:scale-95"
         >
-          前往 {action.data.target} 區塊 ↓
+          前往{targetName} ↓
         </button>
       </div>
     )
@@ -113,7 +114,7 @@ function ActionRenderer({ action }: { action: AiAction }) {
       <div className="mx-auto w-full max-w-md rounded-xl border-2 border-orange-200 bg-gradient-to-br from-orange-50 to-amber-50 p-4 shadow-lg">
         <div className="mb-3 flex items-center gap-2">
           <span className="text-lg">💌</span>
-          <h4 className="font-bold text-gray-800">分享文案</h4>
+          <h4 className="font-bold text-gray-800">幫您寫好了</h4>
         </div>
         <div className="mb-3 rounded-lg bg-white p-3 text-sm leading-relaxed text-gray-700 shadow-inner">
           {action.data.text}
@@ -122,7 +123,7 @@ function ActionRenderer({ action }: { action: AiAction }) {
           onClick={() => handleCopy(action.data.text, 'invite')}
           className="w-full rounded-full bg-orange-500 py-2 font-medium text-white transition hover:bg-orange-600 active:scale-95"
         >
-          {copied === 'invite' ? '✓ 已複製' : '複製文案'}
+          {copied === 'invite' ? '✓ 已複製' : '複製使用'}
         </button>
       </div>
     )
@@ -341,10 +342,10 @@ export default function SmartAsk() {
                 買房不只看物件，更要看生活<br/>
                 這裡有真實住戶分享，我們一起慢慢看
               </p>
-              <div className="mx-auto mt-4 rounded-lg bg-gradient-to-r from-blue-50 to-purple-50 px-4 py-3" style={{ maxWidth: '320px' }}>
+              <div className="mx-auto mt-4 rounded-lg bg-gradient-to-r from-blue-50 to-purple-50 px-4 py-3" style={{ maxWidth: '340px' }}>
                 <p className="text-xs leading-relaxed" style={{ color: '#667085' }}>
-                  💬 也可以聊聊您的生活需求<br/>
-                  <span className="text-[11px]" style={{ color: '#98A2B3' }}>我會自然引導到適合的社區喔</span>
+                  💬 隨時聊聊您的需求與困擾<br/>
+                  <span className="text-[11px]" style={{ color: '#98A2B3' }}>不只是房子，更關心您的生活</span>
                 </p>
               </div>
             </div>
