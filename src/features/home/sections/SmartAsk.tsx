@@ -3,7 +3,7 @@ import { aiAsk } from '../../../services/api'
 import { trackEvent } from '../../../services/uag'
 import type { AiMessage, PropertyCard } from '../../../types'
 
-const QUICK = ['3房以內', '30坪以下', '近捷運', '新成屋']
+const QUICK = ['剛搬來台北', '想了解這個社區', '有養寵物', '在意管理品質']
 
 export default function SmartAsk() {
   const [messages, setMessages] = useState<AiMessage[]>([])
