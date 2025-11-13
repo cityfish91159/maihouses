@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect } from 'react'
 import { aiAsk } from '../../../services/api'
 import { trackEvent } from '../../../services/uag'
-import type { AiMessage, PropertyCard } from '../../../types'
+import type { AiMessage, PropertyCard, AiAction } from '../../../types'
+import { parseAiAction, stripJsonFromContent } from '../../../lib/aiParser'
 
 const QUICK = [
   { text: '剛搬來台北', emoji: '🎒', color: '#FF6B6B' },
@@ -9,6 +10,126 @@ const QUICK = [
   { text: '有養寵物', emoji: '🐕', color: '#FFB84D' },
   { text: '在意管理品質', emoji: '⭐', color: '#A8E6CF' }
 ]
+
+// ActionRenderer 組件：根據不同的 action 類型渲染對應 UI
+function ActionRenderer({ action }: { action: AiAction }) {
+  const [copied, setCopied] = useState<string | null>(null)
+
+  const handleCopy = (text: string, id: string) => {
+    navigator.clipboard.writeText(text)
+    setCopied(id)
+    setTimeout(() => setCopied(null), 2000)
+  }
+
+  const handleNavigate = (url: string) => {
+    window.location.hash = url
+  }
+
+  const handleScrollTo = (targetId: string) => {
+    const element = document.getElementById(targetId)
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+  }
+
+  if (action.type === 'community_post_refine') {
+    return (
+      <div className="mx-auto w-full max-w-2xl rounded-xl border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50 p-4 shadow-lg">
+        <div className="mb-3 flex items-center gap-2">
+          <span className="text-lg">📝</span>
+          <h4 className="font-bold text-gray-800">貼文草稿建議</h4>
+        </div>
+
+        <div className="space-y-4">
+          {action.data.options.map((opt, idx) => (
+            <div key={idx} className="rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
+              <div className="mb-2 flex items-center justify-between">
+                <span className="text-xs font-semibold text-gray-500">
+                  {opt.style === 'normal' ? '✨ 誠懇版' : '🧘 冷靜版'}
+                </span>
+                <button
+                  onClick={() => handleCopy(`${opt.title}\n\n${opt.body}`, `post-${idx}`)}
+                  className="rounded-full bg-blue-500 px-3 py-1 text-xs font-medium text-white transition hover:bg-blue-600 active:scale-95"
+                >
+                  {copied === `post-${idx}` ? '✓ 已複製' : '複製'}
+                </button>
+              </div>
+              <div className="mb-1 font-semibold text-gray-800">{opt.title}</div>
+              <div className="text-sm leading-relaxed text-gray-600">{opt.body}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  if (action.type === 'navigate_listings') {
+    const { target, params } = action.data
+    const paramStr = new URLSearchParams(params).toString()
+    const url = `/listings?${paramStr}`
+
+    return (
+      <div className="mx-auto w-full max-w-md rounded-xl border-2 border-green-200 bg-gradient-to-br from-green-50 to-emerald-50 p-4 shadow-lg">
+        <div className="mb-3 flex items-center gap-2">
+          <span className="text-lg">🏠</span>
+          <h4 className="font-bold text-gray-800">
+            {target === 'community' ? '社區物件列表' : '區域物件列表'}
+          </h4>
+        </div>
+        <p className="mb-3 text-sm text-gray-600">
+          {target === 'community'
+            ? `即將前往「${params.community}」的物件列表`
+            : `即將前往「${params.area}」的物件列表`}
+        </p>
+        <button
+          onClick={() => handleNavigate(url)}
+          className="w-full rounded-full bg-green-500 py-2 font-medium text-white transition hover:bg-green-600 active:scale-95"
+        >
+          立即前往 →
+        </button>
+      </div>
+    )
+  }
+
+  if (action.type === 'scroll_to') {
+    return (
+      <div className="mx-auto w-full max-w-md rounded-xl border-2 border-purple-200 bg-gradient-to-br from-purple-50 to-pink-50 p-4 shadow-lg">
+        <div className="mb-3 flex items-center gap-2">
+          <span className="text-lg">📍</span>
+          <h4 className="font-bold text-gray-800">頁面導航</h4>
+        </div>
+        <button
+          onClick={() => handleScrollTo(action.data.target)}
+          className="w-full rounded-full bg-purple-500 py-2 font-medium text-white transition hover:bg-purple-600 active:scale-95"
+        >
+          前往 {action.data.target} 區塊 ↓
+        </button>
+      </div>
+    )
+  }
+
+  if (action.type === 'invite_text') {
+    return (
+      <div className="mx-auto w-full max-w-md rounded-xl border-2 border-orange-200 bg-gradient-to-br from-orange-50 to-amber-50 p-4 shadow-lg">
+        <div className="mb-3 flex items-center gap-2">
+          <span className="text-lg">💌</span>
+          <h4 className="font-bold text-gray-800">分享文案</h4>
+        </div>
+        <div className="mb-3 rounded-lg bg-white p-3 text-sm leading-relaxed text-gray-700 shadow-inner">
+          {action.data.text}
+        </div>
+        <button
+          onClick={() => handleCopy(action.data.text, 'invite')}
+          className="w-full rounded-full bg-orange-500 py-2 font-medium text-white transition hover:bg-orange-600 active:scale-95"
+        >
+          {copied === 'invite' ? '✓ 已複製' : '複製文案'}
+        </button>
+      </div>
+    )
+  }
+
+  return null
+}
 
 export default function SmartAsk() {
   const [messages, setMessages] = useState<AiMessage[]>([])
@@ -74,6 +195,12 @@ export default function SmartAsk() {
         // 更新最後一則訊息的內容（非串流模式時需要）
         if (res.data.answers && res.data.answers.length > 0) {
           console.log('🟡 更新 AI 訊息內容:', res.data.answers[0])
+          const fullContent = res.data.answers[0] || ''
+
+          // 解析是否包含特殊操作指令
+          const action = parseAiAction(fullContent)
+          const displayContent = action ? stripJsonFromContent(fullContent) : fullContent
+
           setMessages(prev => {
             const updated = [...prev]
             if (updated.length > 0) {
@@ -81,7 +208,8 @@ export default function SmartAsk() {
               updated[updated.length - 1] = {
                 ...last,
                 role: 'assistant',
-                content: res.data!.answers[0] || ''
+                content: displayContent,
+                action: action || undefined
               }
             }
             return updated
@@ -223,32 +351,35 @@ export default function SmartAsk() {
           </div>
         ) : (
           messages.map((m, i) => (
-            <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'} animate-[fadeIn_0.3s_ease-out]`}>
-              <div
-                className={`max-w-[85%] rounded-[12px] px-4 py-2.5 shadow-sm md:max-w-[75%] ${
-                  m.role === 'user'
-                    ? 'text-white'
-                    : 'text-[var(--text-primary)]'
-                }`}
-                style={{
-                  fontSize: 'var(--fs-sm)',
-                  wordBreak: 'break-word',
-                  overflowWrap: 'break-word',
-                  minWidth: 0,
-                  background:
+            <div key={i} className="flex flex-col gap-3 animate-[fadeIn_0.3s_ease-out]">
+              <div className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                <div
+                  className={`max-w-[85%] rounded-[12px] px-4 py-2.5 shadow-sm md:max-w-[75%] ${
                     m.role === 'user'
-                      ? 'linear-gradient(135deg, #4A90E2 0%, #5BA3F5 100%)'
-                      : '#F8FAFC',
-                  border: m.role === 'user' ? 'none' : '1px solid #E5EDF5'
-                }}
-              >
-                <div className="whitespace-pre-wrap leading-relaxed">{m.content}</div>
-                {m.timestamp && (
-                  <div className={`mt-1.5 text-xs ${m.role === 'user' ? 'text-white/70' : 'text-[var(--text-tertiary)]'}`}>
-                    {new Date(m.timestamp).toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' })}
-                  </div>
-                )}
+                      ? 'text-white'
+                      : 'text-[var(--text-primary)]'
+                  }`}
+                  style={{
+                    fontSize: 'var(--fs-sm)',
+                    wordBreak: 'break-word',
+                    overflowWrap: 'break-word',
+                    minWidth: 0,
+                    background:
+                      m.role === 'user'
+                        ? 'linear-gradient(135deg, #4A90E2 0%, #5BA3F5 100%)'
+                        : '#F8FAFC',
+                    border: m.role === 'user' ? 'none' : '1px solid #E5EDF5'
+                  }}
+                >
+                  <div className="whitespace-pre-wrap leading-relaxed">{m.content}</div>
+                  {m.timestamp && (
+                    <div className={`mt-1.5 text-xs ${m.role === 'user' ? 'text-white/70' : 'text-[var(--text-tertiary)]'}`}>
+                      {new Date(m.timestamp).toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' })}
+                    </div>
+                  )}
+                </div>
               </div>
+              {m.action && <ActionRenderer action={m.action} />}
             </div>
           ))
         )}

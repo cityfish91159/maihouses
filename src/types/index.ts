@@ -42,6 +42,7 @@ export type AiMessage = {
   role: 'user' | 'assistant'
   content: string
   timestamp?: string
+  action?: AiAction
 }
 
 export type AiAskReq = {
@@ -56,4 +57,34 @@ export type AiAskRes = {
     completionTokens: number
     totalTokens: number
   }
+}
+
+// AI 特殊操作類型
+export type AiAction =
+  | { type: 'community_post_refine'; data: PostRefineData }
+  | { type: 'navigate_listings'; data: NavigateData }
+  | { type: 'scroll_to'; data: ScrollToData }
+  | { type: 'invite_text'; data: InviteTextData }
+
+export type PostRefineData = {
+  original: string
+  options: Array<{
+    style: 'normal' | 'calm'
+    title: string
+    body: string
+  }>
+}
+
+export type NavigateData = {
+  target: 'community' | 'area'
+  params: Record<string, string>
+}
+
+export type ScrollToData = {
+  target: string
+}
+
+export type InviteTextData = {
+  text: string
+  propertyId?: string
 }
