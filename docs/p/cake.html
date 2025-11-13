@@ -762,6 +762,16 @@ hr {
         </button>
       </div>
 
+      <!-- 顏色控制按鈕 -->
+      <div class="btn-grid" style="margin-top: 12px;">
+        <button class="btn" id="btnGrayscale">
+          <span>⚫</span> 去色
+        </button>
+        <button class="btn" id="btnRecolor">
+          <span>🎨</span> 上色
+        </button>
+      </div>
+
       <button class="btn accent" id="btnDL" style="margin-top: 12px;">
         <span>💾</span> 下載圖片
       </button>
@@ -1612,6 +1622,154 @@ $('btnDL').addEventListener('click', () => {
 
   setInfo('✅ 已下載');
   vibrate();
+});
+
+// 去色 (轉換為灰階)
+$('btnGrayscale').addEventListener('click', () => {
+  if (!state.loaded || state.processing) return;
+
+  const startTime = performance.now();
+
+  try {
+    const canvas = $('canvas');
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    const imageData = ctx.getImageData(0, 0, state.w, state.h);
+    const data = imageData.data;
+
+    // 使用加權平均法轉換為灰階 (保留亮度感知)
+    for (let i = 0; i < data.length; i += 4) {
+      const gray = Math.round(
+        data[i] * 0.299 +       // Red
+        data[i + 1] * 0.587 +   // Green
+        data[i + 2] * 0.114     // Blue
+      );
+      data[i] = gray;       // R
+      data[i + 1] = gray;   // G
+      data[i + 2] = gray;   // B
+      // data[i + 3] 保持不變 (Alpha)
+    }
+
+    ctx.putImageData(imageData, 0, 0);
+    state.currentUrl = canvas.toDataURL('image/jpeg', 0.85);
+
+    pushHistory();
+
+    const elapsed = performance.now() - startTime;
+    updatePerformanceInfo(elapsed);
+    setInfo(`⚫ 已轉為灰階 (${elapsed.toFixed(0)}ms)`);
+    vibrate();
+
+  } catch (error) {
+    console.error('去色失敗:', error);
+    setInfo('❌ 去色失敗: ' + error.message);
+  }
+});
+
+// 上色 (從灰階恢復顏色 - 使用原始圖片的色相和飽和度)
+$('btnRecolor').addEventListener('click', () => {
+  if (!state.loaded || state.processing || !state.originalBitmap) return;
+
+  const startTime = performance.now();
+
+  try {
+    const canvas = $('canvas');
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+
+    // 獲取當前圖片 (灰階)
+    const currentImageData = ctx.getImageData(0, 0, state.w, state.h);
+    const currentData = currentImageData.data;
+
+    // 獲取原始圖片的顏色資訊
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = state.w;
+    tempCanvas.height = state.h;
+    const tempCtx = tempCanvas.getContext('2d', { willReadFrequently: true });
+    tempCtx.drawImage(state.originalBitmap, 0, 0, state.w, state.h);
+    const originalImageData = tempCtx.getImageData(0, 0, state.w, state.h);
+    const originalData = originalImageData.data;
+
+    // RGB 轉 HSL
+    function rgbToHsl(r, g, b) {
+      r /= 255; g /= 255; b /= 255;
+      const max = Math.max(r, g, b), min = Math.min(r, g, b);
+      let h, s, l = (max + min) / 2;
+
+      if (max === min) {
+        h = s = 0;
+      } else {
+        const d = max - min;
+        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+        switch (max) {
+          case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+          case g: h = (b - r) / d + 2; break;
+          case b: h = (r - g) / d + 4; break;
+        }
+        h /= 6;
+      }
+      return [h, s, l];
+    }
+
+    // HSL 轉 RGB
+    function hslToRgb(h, s, l) {
+      let r, g, b;
+
+      if (s === 0) {
+        r = g = b = l;
+      } else {
+        const hue2rgb = (p, q, t) => {
+          if (t < 0) t += 1;
+          if (t > 1) t -= 1;
+          if (t < 1/6) return p + (q - p) * 6 * t;
+          if (t < 1/2) return q;
+          if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+          return p;
+        };
+
+        const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+        const p = 2 * l - q;
+        r = hue2rgb(p, q, h + 1/3);
+        g = hue2rgb(p, q, h);
+        b = hue2rgb(p, q, h - 1/3);
+      }
+
+      return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
+    }
+
+    // 逐像素處理：使用當前亮度 + 原始色相和飽和度
+    for (let i = 0; i < currentData.length; i += 4) {
+      // 獲取當前灰階值 (亮度)
+      const currentL = currentData[i] / 255;
+
+      // 獲取原始圖片的色相和飽和度
+      const [h, s] = rgbToHsl(
+        originalData[i],
+        originalData[i + 1],
+        originalData[i + 2]
+      );
+
+      // 合成：原始色相飽和度 + 當前亮度
+      const [r, g, b] = hslToRgb(h, s, currentL);
+
+      currentData[i] = r;       // R
+      currentData[i + 1] = g;   // G
+      currentData[i + 2] = b;   // B
+      // data[i + 3] 保持不變 (Alpha)
+    }
+
+    ctx.putImageData(currentImageData, 0, 0);
+    state.currentUrl = canvas.toDataURL('image/jpeg', 0.85);
+
+    pushHistory();
+
+    const elapsed = performance.now() - startTime;
+    updatePerformanceInfo(elapsed);
+    setInfo(`🎨 已上色 (${elapsed.toFixed(0)}ms)`);
+    vibrate();
+
+  } catch (error) {
+    console.error('上色失敗:', error);
+    setInfo('❌ 上色失敗: ' + error.message);
+  }
 });
 
 // 重置
