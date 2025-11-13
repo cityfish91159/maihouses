@@ -136,17 +136,17 @@ export default function SmartAsk() {
 
   return (
     <section 
-      className="gradient-ask ai-card space-y-6 rounded-[32px] p-6 shadow-lg transition-shadow hover:shadow-xl md:p-8"
-      style={{ background: 'linear-gradient(135deg, #D8E9FF 0%, #EAF4FF 100%)' }}
+      className="gradient-ask ai-card space-y-6 rounded-[12px] p-6 shadow-[0_2px_8px_rgba(74,144,226,0.15)] transition-shadow hover:shadow-[0_4px_16px_rgba(74,144,226,0.2)] md:p-8"
+      style={{ background: 'linear-gradient(135deg, #EBF4FF 0%, #F8FBFF 100%)' }}
     >
       <div className="mb-2 flex flex-wrap items-center gap-2">
         <div className="flex min-w-0 items-center gap-2">
-          <div className="size-2.5 rounded-full bg-[var(--brand)]" style={{ animation: 'pulse-subtle 2s ease-in-out infinite' }} />
+          <div className="size-2.5 rounded-full" style={{ background: '#4A90E2', animation: 'pulse-subtle 2s ease-in-out infinite' }} />
           <h3
-            className="truncate font-bold text-[var(--text-primary)]"
-            style={{ fontSize: 'clamp(18px, 2.2vw, 21px)', fontWeight: 900 }}
+            className="truncate font-bold"
+            style={{ fontSize: 'clamp(18px, 2.2vw, 21px)', fontWeight: 900, color: '#2C3E50' }}
           >
-            AI 找房助理
+            社區鄰居管家
           </h3>
         </div>
   <div style={{ width: '3.5rem' }} aria-hidden="true" />
@@ -171,21 +171,26 @@ export default function SmartAsk() {
         ref={chatRef}
         role="log"
         aria-live="polite"
-  className="max-h-[620px] min-h-[380px] space-y-3 overflow-y-auto rounded-[var(--r-lg)] border border-[var(--border-default)] bg-white p-4 shadow-inner md:max-h-[540px] md:min-h-[340px]"
+  className="max-h-[620px] min-h-[380px] overflow-y-auto rounded-[12px] border border-[#E5EDF5] bg-white p-4 shadow-inner md:max-h-[540px] md:min-h-[340px]"
         style={{ 
+          gap: '16px', 
+          display: 'flex', 
+          flexDirection: 'column',
           WebkitOverflowScrolling: 'touch',
           overscrollBehavior: 'contain',
           touchAction: 'pan-y'
         }}
       >
         {messages.length === 0 ? (
-          <div className="flex h-full items-center justify-center text-[var(--text-tertiary)]" style={{ fontSize: 'var(--fs-sm)' }}>
-            <div className="text-center">
-              <p className="mb-2 text-2xl">💬</p>
-              <p className="mb-2 font-medium text-[var(--text-primary)]">您好！我是邁房子 AI 助理</p>
-              <p className="mx-auto max-w-[280px] text-xs leading-relaxed">
-                <span className="font-semibold text-[var(--brand)]">邁鄰居</span>：買房前先查社區口碑<br/>
-                <span className="font-semibold text-[var(--brand)]">邁房子</span>：安心陪跑全程留痕
+          <div className="flex h-full items-center justify-center" style={{ fontSize: 'var(--fs-sm)', color: '#5A6C7D' }}>
+            <div className="text-center" style={{ maxWidth: '340px' }}>
+              <p className="mb-3 text-3xl">🏡</p>
+              <p className="mb-3 font-semibold leading-relaxed" style={{ fontSize: '15px', color: '#2C3E50' }}>
+                歡迎來到邁房子 ☺️
+              </p>
+              <p className="mx-auto text-sm leading-relaxed" style={{ color: '#5A6C7D' }}>
+                買房不只看物件，更要看生活。<br/>
+                這裡有真實住戶分享，我們一起慢慢看
               </p>
             </div>
           </div>
@@ -193,21 +198,21 @@ export default function SmartAsk() {
           messages.map((m, i) => (
             <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'} animate-[fadeIn_0.3s_ease-out]`}>
               <div
-                className={`max-w-[85%] rounded-[var(--r-lg)] px-4 py-2.5 shadow-sm md:max-w-[75%] ${
+                className={`max-w-[85%] rounded-[12px] px-4 py-2.5 shadow-sm md:max-w-[75%] ${
                   m.role === 'user'
-                    ? 'user-bubble text-white'
-                    : 'bg-[var(--neutral-100)] text-[var(--text-primary)]'
+                    ? 'text-white'
+                    : 'text-[var(--text-primary)]'
                 }`}
                 style={{
                   fontSize: 'var(--fs-sm)',
                   wordBreak: 'break-word',
                   overflowWrap: 'break-word',
                   minWidth: 0,
-                  // 若變數不存在提供後備漸層，避免白字配白底看起來空白
                   background:
                     m.role === 'user'
-                      ? 'var(--gradient-button, linear-gradient(135deg, #1749D7 0%, #1E90FF 100%))'
-                      : undefined
+                      ? 'linear-gradient(135deg, #4A90E2 0%, #5BA3F5 100%)'
+                      : '#F8FAFC',
+                  border: m.role === 'user' ? 'none' : '1px solid #E5EDF5'
                 }}
               >
                 <div className="whitespace-pre-wrap leading-relaxed">{m.content}</div>
@@ -222,7 +227,7 @@ export default function SmartAsk() {
         )}
         {loading && (
           <div className="flex justify-start">
-            <div className="max-w-[80%] rounded-[var(--r-lg)] bg-[var(--neutral-100)] px-4 py-2.5 text-[var(--text-primary)]" style={{ fontSize: 'var(--fs-sm)' }}>
+            <div className="max-w-[80%] rounded-[12px] px-4 py-2.5" style={{ fontSize: 'var(--fs-sm)', background: '#F8FAFC', border: '1px solid #E5EDF5', color: '#5A6C7D' }}>
               <div className="flex items-center gap-1">
                 <span>正在思考</span>
                 <span className="animate-pulse">...</span>
@@ -234,8 +239,16 @@ export default function SmartAsk() {
 
       <div className="flex gap-2">
         <input
-          className="flex-1 rounded-full border-2 border-gray-300 px-5 transition-colors focus:border-blue-500 focus:outline-none"
-          style={{ fontSize: 'var(--fs-sm)', paddingTop: '0.625rem', paddingBottom: '0.625rem' }}
+          className="flex-1 rounded-full px-5 transition-colors focus:outline-none"
+          style={{ 
+            fontSize: 'var(--fs-sm)', 
+            paddingTop: '0.625rem', 
+            paddingBottom: '0.625rem',
+            border: '2px solid #E5EDF5',
+            background: '#FFFFFF'
+          }}
+          onFocus={(e) => e.target.style.borderColor = '#4A90E2'}
+          onBlur={(e) => e.target.style.borderColor = '#E5EDF5'}
           placeholder="輸入需求（例:西屯區 2房 預算1500萬）"
           value={input}
           onChange={(e) => setInput(e.target.value)}
@@ -248,7 +261,7 @@ export default function SmartAsk() {
           disabled={loading || !input.trim()}
           className="rounded-full px-5 py-2 font-medium text-white shadow-md transition-all hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50"
           style={{
-            background: 'linear-gradient(135deg, #1749D7 0%, #1E90FF 100%)',
+            background: 'linear-gradient(135deg, #4A90E2 0%, #5BA3F5 100%)',
             fontSize: 'var(--fs-sm)'
           }}
         >
@@ -257,15 +270,18 @@ export default function SmartAsk() {
       </div>
 
       {!!reco.length && (
-        <div className="mt-4 border-t border-[var(--border-default)] pt-4">
-          <div className="mb-3 font-semibold text-[var(--text-secondary)]" style={{ fontSize: 'var(--fs-base)' }}>
-            🎯 為您推薦
+        <div className="mt-4 border-t pt-4" style={{ borderColor: '#E5EDF5' }}>
+          <div className="mb-3 font-semibold" style={{ fontSize: 'var(--fs-base)', color: '#5A6C7D' }}>
+            🏠 為您推薦
           </div>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {reco.map((p) => (
               <article
                 key={p.id}
-                className="rounded-[var(--r-lg)] border-2 border-[var(--border-default)] bg-white p-3 transition-all hover:-translate-y-1 hover:border-[var(--brand)] hover:shadow-[var(--shadow-hover)]"
+                className="rounded-[12px] bg-white p-3 transition-all hover:-translate-y-1 hover:shadow-lg"
+                style={{ border: '1px solid #E5EDF5' }}
+                onMouseEnter={(e) => e.currentTarget.style.borderColor = '#4A90E2'}
+                onMouseLeave={(e) => e.currentTarget.style.borderColor = '#E5EDF5'}
               >
                 <div
                   className="mb-2 h-28 rounded-[var(--r-md)] bg-cover bg-center"
@@ -281,7 +297,8 @@ export default function SmartAsk() {
                 </div>
                 <a
                   href={`#/community/${p.communityId}/wall`}
-                  className="inline-block rounded-[var(--r-pill)] bg-[var(--neutral-800)] px-3 py-1.5 text-xs font-medium text-white transition-all hover:-translate-y-0.5 hover:bg-[var(--neutral-900)]"
+                  className="inline-block rounded-full px-3 py-1.5 text-xs font-medium text-white transition-all hover:-translate-y-0.5"
+                  style={{ background: 'linear-gradient(135deg, #4A90E2 0%, #5BA3F5 100%)' }}
                   aria-label="前往社區牆"
                 >
                   看社區牆 →
