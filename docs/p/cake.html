@@ -1034,6 +1034,25 @@ async function apiCall(url, body, retries = 3, timeout = 30000) {
   }
 }
 
+// ==================== 輔助函數 ====================
+/**
+ * 從 URL 載入圖片
+ * @param {string} url - 圖片 URL
+ * @param {boolean} crossOrigin - 是否設置 crossOrigin
+ * @returns {Promise<HTMLImageElement>}
+ */
+async function loadImage(url, crossOrigin = true) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    if (crossOrigin) {
+      img.crossOrigin = 'anonymous';
+    }
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error(`Failed to load image: ${url}`));
+    img.src = url;
+  });
+}
+
 // ==================== Canvas 繪製 (iOS 優化) ====================
 function drawToCanvas(bitmap, useAnimationFrame = true) {
   const draw = () => {
@@ -1123,13 +1142,7 @@ async function restoreHistory(index) {
   showLoading(true, '恢復歷史...');
 
   try {
-    const img = new Image();
-    img.src = item.url;
-    await new Promise((resolve, reject) => {
-      img.onload = resolve;
-      img.onerror = reject;
-    });
-
+    const img = await loadImage(item.url, false);
     const bitmap = await createImageBitmap(img);
     drawToCanvas(bitmap);
     applyParams(item.params);
@@ -1255,18 +1268,11 @@ $('btnGenerate').addEventListener('click', async () => {
 
     setProgress(60, '載入生成圖片...');
 
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-
-    await new Promise((resolve, reject) => {
-      img.onload = resolve;
-      img.onerror = reject;
-      img.src = result.output[0];
-    });
+    const img = await loadImage(result.output[0]);
+    const bitmap = await createImageBitmap(img);
 
     setProgress(80, '繪製 Canvas...');
 
-    const bitmap = await createImageBitmap(img);
     drawToCanvas(bitmap, true);
 
     state.originalBitmap = bitmap;
