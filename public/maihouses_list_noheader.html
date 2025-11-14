@@ -1,435 +1,1209 @@
 <!doctype html>
-<html lang="zh-Hant">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>房源表列</title>
-  <meta name="color-scheme" content="light">
-  <style>
-    :root{
-      --brand-700:#0F3EBE;
-      --brand-600:#1749D7;
-      --brand-500:#2E63EE;
-      --brand-300:#7EA5FF;
-      --brand-50:#F6F9FF;
-      --ink-900:#0A2246;
-      --ink-700:#2A2F3A;
-      --ink-600:#6C7B91;
-      --line:#E6EDF7;
-      --accent-rose:#E88282;
-      --accent-peach:#FFD9C7;
-      --bg:#F5F7FC;
-      --card:#fff;
-    }
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    body{
-      margin:0;background:linear-gradient(180deg, #F8FAFF 0%, #F5F7FC 100%);
-      color:var(--ink-900);
-      font-family: system-ui,-apple-system,"PingFang TC","Noto Sans TC","Microsoft JhengHei",Segoe UI,Roboto,Helvetica,Arial,sans-serif;
-      -webkit-font-smoothing:antialiased;
-      -moz-osx-font-smoothing:grayscale;
-    }
-    .container{max-width:1120px;margin:0 auto;padding:16px}
+<html lang="zh-Hant-TW">
+  <head>
+    <meta charset="utf-8" />
+    <title>邁房子｜社區口碑房源列表</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- 字體 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        /* 主色：邁房子清爽藍 */
+        --primary: #1749d7;
+        --primary-light: #e3edff;
+        --primary-dark: #1239a7;
 
-    /* Grid */
-    .grid{display:grid;grid-template-columns:1fr;gap:18px}
-    @media (min-width:720px){ .grid{grid-template-columns:1fr 1fr} }
-    @media (min-width:1024px){ .grid{grid-template-columns:1fr 1fr 1fr} }
+        /* 背景色系 */
+        --bg-base: #f6f9ff;
+        --bg-card: #ffffff;
 
-    /* House Card */
-    .house-card{
-      background:var(--card);
-      border:1px solid var(--line);
-      border-radius:16px;
-      overflow:hidden;
-      position:relative;
-      transition: box-shadow .18s ease, transform .08s ease, border-color .2s ease;
-      box-shadow: 0 0 0 rgba(0,0,0,0);
-      isolation:isolate;
-    }
-    .house-card::after{
-      content:"";
-      position:absolute; inset:0; pointer-events:none;
-      background: radial-gradient(60% 60% at 80% -10%, rgba(23,73,215,0.12), transparent 60%);
-      opacity:.8;
-    }
-    .house-card:hover{
-      box-shadow:0 10px 26px rgba(13,39,94,0.12);
-      transform:translateY(-2px);
-      border-color: rgba(23,73,215,0.22);
-    }
-    .house-cover{aspect-ratio:4/3;background:#e9ecf5;display:block;position:relative;overflow:hidden}
-    .house-cover img{width:100%;height:100%;object-fit:cover;display:block;transform:scale(1.0);transition: transform .6s cubic-bezier(.2,.65,.2,1)}
-    .house-card:hover .house-cover img{transform:scale(1.04)}
-    .badge{
-      position:absolute;left:10px;top:10px;
-      background:rgba(0,0,0,0.76);color:#fff;font-size:12px;font-weight:800;
-      padding:4px 8px;border-radius:999px;letter-spacing:.2px;
-      box-shadow:0 4px 10px rgba(0,0,0,.18);
-    }
+        /* 文字色 */
+        --text-primary: #1f2933;
+        --text-secondary: #5b6b7b;
+        --text-tertiary: #9aa5b1;
 
-  .house-body{padding:12px 12px 14px}
-  /* 房源卡標題：對齊社區評價主標題尺寸（16px / 800） */
-    .title{font-weight:800;font-size:16px;line-height:1.35;margin:2px 0 8px;letter-spacing:.3px;color:var(--ink-900)}
-    @media(min-width:1024px){
-      .title{font-size:21px}
-    }
-    /* 智能房源推薦：標題（品牌藍，僅此區塊樣式） */
-    .mh-reco-title{display:flex;align-items:center;gap:10px;margin:18px 0 12px}
-    .mh-reco-title__pill{
-      display:inline-flex;align-items:center;gap:8px;
-      padding:6px 12px;border:1px solid #E6EDF7;border-radius:999px;
-      background:linear-gradient(180deg,#FFFFFF,#F6F9FF);
-      color:#1749D7;font-weight:900;font-size:14px;letter-spacing:.2px;
-    }
-    .mh-reco-title__icon{
-      width:18px;height:18px;border-radius:6px;display:grid;place-items:center;
-      background:linear-gradient(180deg,#1749D7,#2E63EE);color:#fff;font-size:12px;font-weight:900;
-      box-shadow:0 2px 6px rgba(23,73,215,.18)
-    }
-    .mh-reco-title__text{line-height:1}
-    .mh-reco-title__sub{margin-left:6px;font-size:12px;color:#6C7B91;font-weight:700}
-    .mh-reco-title__underline{
-      height:6px;border-radius:999px;flex:1;
-      background:linear-gradient(90deg,#1749D7,#2E63EE,#7EA5FF);
-      background-size:200% 100%;opacity:.25;margin-left:10px;
-      animation:mhRecoBar 6s linear infinite;
-    }
-    @keyframes mhRecoBar{0%{background-position:0% 0}100%{background-position:200% 0}}
-    .meta{display:flex;flex-wrap:wrap;gap:8px;align-items:center;color:var(--ink-600);font-size:13px;margin-bottom:6px}
-    .pill{
-      padding:2px 10px;border-radius:999px;
-      background:var(--brand-50);
-      border:1px solid var(--line);font-weight:800;color:#2a2f3a;
-      transition: transform .12s ease, box-shadow .12s ease, background .2s ease;
-    }
-    .house-card:hover .pill{ transform: translateY(-1px); box-shadow:0 4px 10px rgba(23,73,215,.10) }
+        /* 邊框 */
+        --border-light: #dde5f0;
 
-    .price{font-size:19px;font-weight:900;color:#111;margin:8px 0 4px;letter-spacing:.2px}
-    .loc{font-size:13px;color:var(--ink-600)}
+        /* 評價綠 */
+        --review-green: #28a38a;
+        --review-green-bg: rgba(40, 163, 138, 0.07);
+        --review-green-border: rgba(40, 163, 138, 0.3);
 
-    /* Reviews */
-    .reviews-mini{
-      margin-top:10px;padding:10px 12px;border:1px solid var(--line);
-      border-radius:12px;background:linear-gradient(180deg, var(--brand-50), #ffffff);
-    }
-    .reviews-mini__title{
-      display:flex;align-items:center;gap:8px;
-      font-size:13px;font-weight:900;margin-bottom:8px;color:rgba(0,0,0,.86);
-    }
-    .reviews-mini__title::before{
-      content:"★";font-size:12px;line-height:1;
-      color:var(--brand-600);
-      filter: drop-shadow(0 1px 0 rgba(23,73,215,.12));
-    }
-    .reviews-mini__item{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-top:1px dashed rgba(0,0,0,.08)}
-    .reviews-mini__item:first-of-type{border-top:none}
-    .reviews-mini__avatar{
-      width:30px;height:30px;border-radius:50%;
-      display:grid;place-items:center;font-size:12px;font-weight:900;
-      background:linear-gradient(180deg,#EAF0FF,#DCE7FF);color:var(--brand-600);flex:0 0 auto;
-      box-shadow: inset 0 0 0 1px rgba(23,73,215,.15);
-    }
-    .reviews-mini__content{flex:1 1 auto}
-    .reviews-mini__head{display:flex;align-items:center;gap:6px;margin-bottom:2px;font-size:12px;color:rgba(0,0,0,.62)}
-    .reviews-mini__name{font-weight:900;color:rgba(0,0,0,.86)}
-    .reviews-mini__dot{width:4px;height:4px;border-radius:50%;background:rgba(0,0,0,.18);display:inline-block}
-    .reviews-mini__tag{padding:2px 8px;border-radius:999px;background:rgba(23,73,215,.10);color:var(--brand-700);font-weight:900}
-    .reviews-mini__text{font-size:13px;line-height:1.6;color:rgba(0,0,0,.86)}
+        /* 圓角 */
+        --radius-sm: 8px;
+        --radius-md: 12px;
+        --radius-lg: 16px;
+        --radius-full: 999px;
 
-    .reviews-mini__more{
-      margin-top:10px;width:100%;padding:10px 12px;border-radius:12px;
-      border:1px solid rgba(23,73,215,.28);
-      background:linear-gradient(180deg,#ffffff, #F0F5FF);
-      cursor:pointer;font-size:13px;font-weight:900;color:var(--brand-600);
-      transition: background .15s ease, transform .06s ease, box-shadow .18s ease;
-    }
-    .reviews-mini__more:hover{background:linear-gradient(180deg,#fff, #E8F0FF);box-shadow:0 6px 14px rgba(23,73,215,.18)}
-    .reviews-mini__more:active{transform:translateY(1px)}
+        /* 陰影 */
+        --shadow-sm: 0 1px 4px rgba(15, 23, 42, 0.05);
+        --shadow-md: 0 2px 10px rgba(15, 23, 42, 0.08);
+        --shadow-lg: 0 4px 24px rgba(15, 23, 42, 0.12);
+      }
 
-  </style>
-</head>
-<body>
-  <div class="container">
-    <!-- 貼在房源清單上方 -->
-    <div class="mh-reco-title" aria-label="智能房源推薦">
-      <div class="mh-reco-title__pill">
-        <span class="mh-reco-title__icon">★</span>
-        <span class="mh-reco-title__text">〔智能房源推薦〕</span>
-        <span class="mh-reco-title__sub">依瀏覽行為與社區口碑輔助排序</span>
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: "Noto Sans TC", -apple-system, BlinkMacSystemFont,
+          "PingFang TC", "Hiragino Sans", "Microsoft JhengHei", sans-serif;
+        font-size: 15px;
+        line-height: 1.5;
+        color: var(--text-primary);
+        background: var(--bg-base);
+        -webkit-font-smoothing: antialiased;
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin: 0;
+      }
+
+      .small-text {
+        font-size: 13px;
+        color: var(--text-secondary);
+      }
+
+      .tiny-text {
+        font-size: 11px;
+        color: var(--text-tertiary);
+      }
+
+      /* HEADER */
+      header {
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        background: #ffffff;
+        box-shadow: var(--shadow-sm);
+        padding: 0 40px;
+        height: 56px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .logo {
+        font-size: 19px;
+        font-weight: 600;
+        color: var(--primary);
+        letter-spacing: 0.08em;
+        cursor: pointer;
+      }
+
+      .logo-sub {
+        font-size: 11px;
+        color: var(--text-tertiary);
+        margin-left: 8px;
+      }
+
+      .auth-btn {
+        font-size: 13px;
+        color: var(--text-secondary);
+        padding: 6px 14px;
+        border-radius: 20px;
+        border: 1px solid var(--border-light);
+        background: #ffffff;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .auth-btn:hover {
+        border-color: var(--primary);
+        color: var(--primary-dark);
+        background: var(--primary-light);
+      }
+
+      /* PAGE WRAPPER */
+      .page {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px 20px 40px;
+      }
+
+      /* 頁面標題 */
+      .page-header {
+        margin-bottom: 16px;
+      }
+
+      .page-title-row {
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+      }
+
+      .page-title {
+        font-size: 22px;
+        font-weight: 600;
+      }
+
+      .page-sub {
+        font-size: 12px;
+        color: var(--text-tertiary);
+      }
+
+      .page-desc {
+        margin-top: 4px;
+        font-size: 13px;
+        color: var(--text-secondary);
+      }
+
+      /* 搜索框 */
+      .search-container {
+        margin: 12px 0 20px;
+      }
+
+      .search-box {
+        display: flex;
+        align-items: center;
+        background: #ffffff;
+        border-radius: 999px;
+        border: 1px solid var(--border-light);
+        padding: 8px 14px;
+        box-shadow: var(--shadow-sm);
+      }
+
+      .search-icon {
+        font-size: 18px;
+      }
+
+      .search-input {
+        flex: 1;
+        border: none;
+        outline: none;
+        font-size: 14px;
+        padding: 0 10px;
+        background: transparent;
+        color: var(--text-primary);
+      }
+
+      .search-input::placeholder {
+        color: var(--text-tertiary);
+      }
+
+      .search-btn {
+        border: none;
+        border-radius: 999px;
+        padding: 6px 14px;
+        font-size: 13px;
+        font-weight: 600;
+        background: var(--primary);
+        color: #ffffff;
+        cursor: pointer;
+        white-space: nowrap;
+      }
+
+      .search-hint {
+        margin-top: 6px;
+        font-size: 12px;
+        color: var(--text-tertiary);
+      }
+
+      /* ===== 重新設計的 Featured Section ===== */
+      .featured-section {
+        margin: 24px 0 32px;
+      }
+
+      .featured-header {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        margin-bottom: 16px;
+      }
+
+      .featured-header h2 {
+        font-size: 18px;
+        font-weight: 600;
+      }
+
+      .featured-header .tiny-text {
+        font-size: 12px;
+      }
+
+      /* 主容器：單欄Grid */
+      .featured-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 16px;
+        min-height: 500px;
+      }
+
+      /* 上排：左大60% + 右側容器40% */
+      .featured-top-row {
+        display: grid;
+        grid-template-columns: 1.5fr 1fr; /* 6:4 比例 */
+        gap: 10px;
+        min-height: 360px;
+      }
+
+      /* 左大卡容器 */
+      .featured-main {
+        display: flex;
+        min-width: 0;
+      }
+
+      /* 右側容器：上下兩張小卡 */
+      .featured-side-container {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        min-width: 0;
+      }
+
+      /* 右上小卡 */
+      .featured-side-top {
+        display: flex;
+        flex: 1;
+        min-width: 0;
+      }
+
+      /* 右下小卡 */
+      .featured-side-bottom {
+        display: flex;
+        flex: 1;
+        min-width: 0;
+      }
+
+      /* 共用卡片樣式 */
+      .property-card {
+        background: var(--bg-card);
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+        box-shadow: var(--shadow-md);
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        transition: all 0.25s ease;
+        min-width: 0;
+      }
+
+      .property-card:hover {
+        box-shadow: var(--shadow-lg);
+        transform: translateY(-4px);
+      }
+
+      .property-media {
+        position: relative;
+        width: 100%;
+        padding-top: 56.25%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        overflow: hidden;
+      }
+
+      .property-media img {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .property-badge {
+        position: absolute;
+        top: 12px;
+        left: 12px;
+        background: rgba(255, 255, 255, 0.95);
+        color: var(--primary);
+        padding: 4px 10px;
+        border-radius: var(--radius-full);
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.03em;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      }
+
+      .property-content {
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        flex: 1;
+      }
+
+      .property-title {
+        font-size: 17px;
+        font-weight: 600;
+        color: var(--text-primary);
+        line-height: 1.3;
+      }
+
+      .property-location {
+        font-size: 13px;
+        color: var(--text-secondary);
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+
+      .property-rating {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px;
+        color: var(--text-secondary);
+      }
+
+      .property-rating .star {
+        color: #fbbf24;
+        font-size: 14px;
+      }
+
+      .property-reviews {
+        background: var(--review-green-bg);
+        border: 1px solid var(--review-green-border);
+        border-radius: var(--radius-sm);
+        padding: 10px;
+        font-size: 12px;
+        color: var(--text-secondary);
+        line-height: 1.5;
+        flex: 1;
+      }
+
+      .property-reviews strong {
+        color: var(--review-green);
+        font-weight: 600;
+      }
+
+      .property-price {
+        font-size: 19px;
+        font-weight: 700;
+        color: var(--primary);
+        display: flex;
+        align-items: baseline;
+        gap: 6px;
+      }
+
+      .property-price span {
+        font-size: 12px;
+        font-weight: 400;
+        color: var(--text-tertiary);
+      }
+
+      .property-cta {
+        display: flex;
+        gap: 8px;
+        margin-top: 4px;
+      }
+
+      .btn-primary {
+        flex: 1;
+        padding: 9px 16px;
+        background: var(--primary);
+        color: #ffffff;
+        border: none;
+        border-radius: var(--radius-sm);
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .btn-primary:hover {
+        background: var(--primary-dark);
+      }
+
+      .btn-outline {
+        flex: 1;
+        padding: 9px 16px;
+        background: transparent;
+        color: var(--primary);
+        border: 1px solid var(--primary);
+        border-radius: var(--radius-sm);
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .btn-outline:hover {
+        background: var(--primary-light);
+      }
+
+      .heart-btn {
+        width: 40px;
+        height: 38px;
+        border: 1px solid var(--border-light);
+        background: #ffffff;
+        border-radius: var(--radius-sm);
+        cursor: pointer;
+        font-size: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+      }
+
+      .heart-btn:hover {
+        border-color: #ef4444;
+        color: #ef4444;
+        background: #fef2f2;
+      }
+
+      /* ===== 下方列表區 ===== */
+      .listing-section {
+        margin-top: 40px;
+      }
+
+      .listing-header {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        margin-bottom: 20px;
+      }
+
+      .listing-header h2 {
+        font-size: 18px;
+        font-weight: 600;
+      }
+
+      .listing-header .small-text {
+        font-size: 13px;
+      }
+
+      .listing-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      /* 橫式卡片 */
+      .horizontal-card {
+        background: var(--bg-card);
+        border-radius: var(--radius-md);
+        box-shadow: var(--shadow-md);
+        display: flex;
+        overflow: hidden;
+        transition: all 0.25s ease;
+        min-height: 180px;
+      }
+
+      .horizontal-card:hover {
+        box-shadow: var(--shadow-lg);
+        transform: translateY(-2px);
+      }
+
+      .horizontal-left {
+        display: flex;
+        flex: 1;
+        min-width: 0;
+      }
+
+      .horizontal-thumb {
+        width: 180px;
+        flex-shrink: 0;
+        overflow: hidden;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      }
+
+      .horizontal-thumb img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .horizontal-main {
+        flex: 1;
+        padding: 16px 18px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        min-width: 0;
+      }
+
+      .horizontal-title-row {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 16px;
+      }
+
+      .horizontal-title-row strong {
+        font-weight: 600;
+        color: var(--text-primary);
+      }
+
+      .horizontal-tag {
+        background: var(--primary-light);
+        color: var(--primary);
+        padding: 2px 8px;
+        border-radius: var(--radius-full);
+        font-size: 11px;
+        font-weight: 500;
+        white-space: nowrap;
+      }
+
+      .horizontal-rating {
+        font-size: 13px;
+        color: var(--text-secondary);
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+
+      .horizontal-rating .star {
+        color: #fbbf24;
+        font-size: 14px;
+      }
+
+      .horizontal-reviews {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        margin-top: 2px;
+      }
+
+      .one-line-review {
+        font-size: 12px;
+        color: var(--text-secondary);
+        line-height: 1.4;
+        margin: 0;
+      }
+
+      .horizontal-bottom-note {
+        margin-top: auto;
+        padding-top: 6px;
+        font-size: 11px;
+        color: var(--text-tertiary);
+        border-top: 1px solid var(--border-light);
+      }
+
+      .horizontal-right {
+        width: 220px;
+        flex-shrink: 0;
+        padding: 16px 18px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        gap: 12px;
+        background: linear-gradient(to bottom, #fafbfc 0%, #ffffff 100%);
+        border-left: 1px solid var(--border-light);
+      }
+
+      .horizontal-price {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--primary);
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+
+      .horizontal-price span {
+        font-size: 12px;
+        font-weight: 400;
+        color: var(--text-tertiary);
+      }
+
+      .lock-row {
+        background: rgba(255, 243, 205, 0.4);
+        border: 1px solid rgba(251, 191, 36, 0.3);
+        border-radius: var(--radius-sm);
+        padding: 8px 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .lock-label {
+        font-size: 11px;
+        color: #92400e;
+        font-weight: 500;
+      }
+
+      .lock-btn {
+        padding: 5px 12px;
+        background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+        color: #ffffff;
+        border: none;
+        border-radius: var(--radius-sm);
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        box-shadow: 0 2px 4px rgba(251, 191, 36, 0.3);
+        transition: all 0.2s ease;
+      }
+
+      .lock-btn:hover {
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        box-shadow: 0 3px 6px rgba(251, 191, 36, 0.4);
+      }
+
+      .horizontal-cta-row {
+        display: flex;
+        gap: 8px;
+      }
+
+      /* 響應式設計 */
+      @media (max-width: 768px) {
+        header {
+          padding: 0 20px;
+        }
+
+        .page {
+          padding: 16px 16px 32px;
+        }
+
+        .featured-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .featured-top-row {
+          grid-template-columns: 1fr;
+          gap: 16px;
+        }
+
+        .horizontal-card {
+          flex-direction: column;
+        }
+
+        .horizontal-thumb {
+          width: 100%;
+          height: 160px;
+        }
+
+        .horizontal-right {
+          width: 100%;
+          border-left: none;
+          border-top: 1px solid var(--border-light);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="logo">
+        邁房子<span class="logo-sub">MaiHouses</span>
       </div>
-      <div class="mh-reco-title__underline" aria-hidden="true"></div>
-    </div>
-    <main id="listings">
-      <section class="grid" aria-label="房源清單">
+      <button class="auth-btn">登入/註冊</button>
+    </header>
 
-        <!-- 1 -->
-        <article class="house-card">
-          <a class="house-cover" href="#">
-            <img src="https://images.unsplash.com/photo-1600585154526-990dced4db0d?q=80&w=1600&auto=format&fit=crop" alt="物件封面">
-            <span class="badge">捷運 5 分鐘</span>
-          </a>
-          <div class="house-body">
-            <div class="title">新板特區｜三房含車位，採光面中庭</div>
-            <div class="meta">
-              <span class="pill">34.2 坪</span>
-              <span class="pill">3 房 2 廳</span>
-              <span class="pill">高樓層</span>
+    <main class="page">
+      <!-- 頁面標題 -->
+      <div class="page-header">
+        <div class="page-title-row">
+          <h1 class="page-title">社區口碑房源</h1>
+          <span class="page-sub">真實評價・透明資訊</span>
+        </div>
+        <p class="page-desc">
+          這些社區是居民們真心推薦的，每則評價都來自真實住戶的生活體驗。
+        </p>
+      </div>
+
+      <!-- 搜索框 -->
+      <div class="search-container">
+        <div class="search-box">
+          <span class="search-icon">🔍</span>
+          <input
+            type="text"
+            class="search-input"
+            placeholder="搜尋社區名稱、區域或建案關鍵字..."
+          />
+          <button class="search-btn">搜尋</button>
+        </div>
+        <p class="search-hint">
+          例如：「林口」、「捷運」、「學區」、「公園」...
+        </p>
+      </div>
+
+      <!-- Featured 區塊 -->
+      <section class="featured-section">
+        <div class="featured-header">
+          <h2>本週精選社區</h2>
+          <span class="tiny-text">每週五更新</span>
+        </div>
+
+        <div class="featured-grid">
+          <!-- 上排：左大卡 + 右側容器（上下兩張小卡） -->
+          <div class="featured-top-row">
+            <!-- 左大卡 -->
+            <div class="featured-main">
+              <article class="property-card">
+                <div class="property-media">
+                  <span class="property-badge">★ 本週精選</span>
+                  <img
+                    src="https://images.pexels.com/photos/323780/pexels-photo-323780.jpeg?auto=compress&cs=tinysrgb&w=1200"
+                    alt="遠雄大未來 外觀"
+                  />
+                </div>
+                <div class="property-content">
+                  <h3 class="property-title">遠雄大未來</h3>
+                  <div class="property-location">📍 汐止區・東湖生活圈</div>
+                  <div class="property-rating">
+                    <span class="star">★</span>4.6 分（124 則評價）
+                  </div>
+                  <div class="property-reviews">
+                    <strong>「通勤族首選！」</strong
+                    ><br />距離汐科站僅 8
+                    分鐘步行，社區管理完善，住戶素質整齊。公設維護良好，且鄰近科學園區，生活機能極佳。
+                  </div>
+                  <div class="property-price">
+                    3 房 1,350 萬<span>約 28 坪</span>
+                  </div>
+                  <div class="property-cta">
+                    <button class="btn-primary">查看詳情</button>
+                    <button class="heart-btn" aria-label="加入收藏">♡</button>
+                  </div>
+                </div>
+              </article>
             </div>
-            <div class="price">NT$ 1,288 萬</div>
-            <div class="loc">新北市板橋區 · 中山路一段</div>
-            <div class="reviews-mini">
-              <div class="reviews-mini__title">住戶真實留言</div>
-              <div class="reviews-mini__item">
-                <div class="reviews-mini__avatar">A</div>
-                <div class="reviews-mini__content">
-                  <div class="reviews-mini__head">
-                    <span class="reviews-mini__name">王小姐 · 3年住戶</span>
-                    <span class="reviews-mini__dot"></span>
-                    <span class="reviews-mini__tag">管理到位</span>
+
+            <!-- 右側容器：上下兩張小卡 -->
+            <div class="featured-side-container">
+              <!-- 右上小卡 -->
+              <div class="featured-side-top">
+                <article class="property-card">
+                  <div class="property-media">
+                    <span class="property-badge">高評價</span>
+                    <img
+                      src="https://images.pexels.com/photos/1642125/pexels-photo-1642125.jpeg?auto=compress&cs=tinysrgb&w=800"
+                      alt="興富發巨蛋 外觀"
+                    />
                   </div>
-                  <div class="reviews-mini__text">管委反應快，公設打理乾淨，晚上也安靜好睡。</div>
-                </div>
-              </div>
-              <div class="reviews-mini__item">
-                <div class="reviews-mini__avatar">B</div>
-                <div class="reviews-mini__content">
-                  <div class="reviews-mini__head">
-                    <span class="reviews-mini__name">林先生 · 屋主</span>
-                    <span class="reviews-mini__dot"></span>
-                    <span class="reviews-mini__tag">車位好停</span>
+                  <div class="property-content">
+                    <h3 class="property-title">興富發巨蛋</h3>
+                    <div class="property-location">📍 鼓山區・巨蛋商圈</div>
+                    <div class="property-rating">
+                      <span class="star">★</span>4.4 分（89 則評價）
+                    </div>
+                    <div class="property-reviews">
+                      <strong>「地段超優！」</strong
+                      ><br />巨蛋旁邊看演唱會超方便，捷運紅線到哪都快。
+                    </div>
+                    <div class="property-price">
+                      2 房 1,680 萬<span>約 25 坪</span>
+                    </div>
+                    <div class="property-cta">
+                      <button class="btn-primary">查看詳情</button>
+                      <button class="heart-btn" aria-label="加入收藏">♡</button>
+                    </div>
                   </div>
-                  <div class="reviews-mini__text">坡道寬、指示清楚，下班回家不太需要繞圈找位。</div>
-                </div>
+                </article>
               </div>
-              <button class="reviews-mini__more" type="button">註冊後看更多評價</button>
+
+              <!-- 右下小卡 -->
+              <div class="featured-side-bottom">
+                <article class="property-card">
+                  <div class="property-media">
+                    <span class="property-badge">新上架</span>
+                    <img
+                      src="https://images.pexels.com/photos/1546168/pexels-photo-1546168.jpeg?auto=compress&cs=tinysrgb&w=800"
+                      alt="華固新天地 外觀"
+                    />
+                  </div>
+                  <div class="property-content">
+                    <h3 class="property-title">華固新天地</h3>
+                    <div class="property-location">📍 內湖區・科學園區</div>
+                    <div class="property-rating">
+                      <span class="star">★</span>4.3 分（67 則評價）
+                    </div>
+                    <div class="property-reviews">
+                      <strong>「科技人最愛！」</strong
+                      ><br />走路上班省通勤時間，社區新穎公設維護佳。
+                    </div>
+                    <div class="property-price">
+                      3 房 2,180 萬<span>約 32 坪</span>
+                    </div>
+                    <div class="property-cta">
+                      <button class="btn-primary">查看詳情</button>
+                      <button class="heart-btn" aria-label="加入收藏">♡</button>
+                    </div>
+                  </div>
+                </article>
+              </div>
             </div>
           </div>
-        </article>
+        </div>
+      </section>
 
-        <!-- 2 -->
-        <article class="house-card">
-          <a class="house-cover" href="#">
-            <img src="https://images.unsplash.com/photo-1575517111478-7f6afd0973db?q=80&w=1600&auto=format&fit=crop" alt="物件封面">
-            <span class="badge">社區中庭</span>
-          </a>
-          <div class="house-body">
-            <div class="title">松山民生社區｜邊間大兩房，採光佳</div>
-            <div class="meta">
-              <span class="pill">28.6 坪</span>
-              <span class="pill">2 房 2 廳</span>
-              <span class="pill">可寵物</span>
-            </div>
-            <div class="price">NT$ 1,052 萬</div>
-            <div class="loc">台北市松山區 · 民生東路五段</div>
-            <div class="reviews-mini">
-              <div class="reviews-mini__title">住戶真實留言</div>
-              <div class="reviews-mini__item">
-                <div class="reviews-mini__avatar">C</div>
-                <div class="reviews-mini__content">
-                  <div class="reviews-mini__head">
-                    <span class="reviews-mini__name">陳太太 · 5年住戶</span>
-                    <span class="reviews-mini__dot"></span>
-                    <span class="reviews-mini__tag">鄰里友善</span>
-                  </div>
-                  <div class="reviews-mini__text">警衛熱心、包裹代收確實，社區群組很活躍。</div>
-                </div>
-              </div>
-              <div class="reviews-mini__item">
-                <div class="reviews-mini__avatar">D</div>
-                <div class="reviews-mini__content">
-                  <div class="reviews-mini__head">
-                    <span class="reviews-mini__name">賴先生 · 上班族</span>
-                    <span class="reviews-mini__dot"></span>
-                    <span class="reviews-mini__tag">生活便利</span>
-                  </div>
-                  <div class="reviews-mini__text">走路 3 分鐘有超市與市場，下班買菜很方便。</div>
-                </div>
-              </div>
-              <button class="reviews-mini__more" type="button">註冊後看更多評價</button>
-            </div>
-          </div>
-        </article>
+      <!-- 下方列表區 (8張橫式卡片) -->
+      <section class="listing-section">
+        <div class="listing-header">
+          <h2>更多精選房源</h2>
+          <span class="small-text">共 248 個社區</span>
+        </div>
 
-        <!-- 3 -->
-        <article class="house-card">
-          <a class="house-cover" href="#">
-            <img src="https://images.unsplash.com/photo-1515263487990-61b07816b324?q=80&w=1600&auto=format&fit=crop" alt="物件封面">
-            <span class="badge">學區宅</span>
-          </a>
-          <div class="house-body">
-            <div class="title">新店七張｜電梯二房，附機車位</div>
-            <div class="meta">
-              <span class="pill">22.1 坪</span>
-              <span class="pill">2 房 1 廳</span>
-              <span class="pill">低公設比</span>
-            </div>
-            <div class="price">NT$ 838 萬</div>
-            <div class="loc">新北市新店區 · 北新路二段</div>
-            <div class="reviews-mini">
-              <div class="reviews-mini__title">住戶真實留言</div>
-              <div class="reviews-mini__item">
-                <div class="reviews-mini__avatar">E</div>
-                <div class="reviews-mini__content">
-                  <div class="reviews-mini__head">
-                    <span class="reviews-mini__name">張小姐 · 上班族</span>
-                    <span class="reviews-mini__dot"></span>
-                    <span class="reviews-mini__tag">通勤方便</span>
-                  </div>
-                  <div class="reviews-mini__text">步行到捷運七張站約 6 分鐘，雨天也有騎樓遮蔽。</div>
+        <div class="listing-grid">
+          <!-- 卡片 1: 冠德美麗大直 -->
+          <article class="horizontal-card">
+            <div class="horizontal-left">
+              <div class="horizontal-thumb">
+                <img
+                  src="https://images.pexels.com/photos/1732414/pexels-photo-1732414.jpeg?auto=compress&cs=tinysrgb&w=600"
+                  alt="冠德美麗大直 外觀"
+                />
+              </div>
+              <div class="horizontal-main">
+                <div class="horizontal-title-row">
+                  <span>📍</span>
+                  <strong>冠德美麗大直・中山區</strong>
+                  <span class="horizontal-tag">捷運劍南路站</span>
+                </div>
+                <div class="horizontal-rating">
+                  <span class="star">★</span>4.5 分（92 則評價）・豪宅精選
+                </div>
+                <div class="horizontal-reviews">
+                  <p class="one-line-review">
+                    「社區環境優美,管理嚴謹。」— J***
+                  </p>
+                  <p class="one-line-review">
+                    「交通便利,距離捷運站約 5 分鐘。」— K***
+                  </p>
+                </div>
+                <div class="horizontal-bottom-note">
+                  近美麗華商圈・適合高階主管家庭,生活品質佳。
                 </div>
               </div>
-              <div class="reviews-mini__item">
-                <div class="reviews-mini__avatar">F</div>
-                <div class="reviews-mini__content">
-                  <div class="reviews-mini__head">
-                    <span class="reviews-mini__name">李先生 · 家長</span>
-                    <span class="reviews-mini__dot"></span>
-                    <span class="reviews-mini__tag">學區完整</span>
-                  </div>
-                  <div class="reviews-mini__text">附近幼兒園到國中選擇多，放學接送動線順。</div>
-                </div>
-              </div>
-              <button class="reviews-mini__more" type="button">註冊後看更多評價</button>
             </div>
-          </div>
-        </article>
+            <div class="horizontal-right">
+              <div class="horizontal-price">
+                4 房 3,980 萬<span>約 45 坪</span>
+              </div>
+              <div class="lock-row">
+                <span class="lock-label">🔒 豪宅住戶真實評價</span>
+                <button class="lock-btn">註冊看更多</button>
+              </div>
+              <div class="horizontal-cta-row">
+                <button class="btn-outline">查看</button>
+                <button class="heart-btn" aria-label="加入收藏">♡</button>
+              </div>
+            </div>
+          </article>
 
-        <!-- 4 -->
-        <article class="house-card">
-          <a class="house-cover" href="#">
-            <img src="https://images.unsplash.com/photo-1564013799919-ab600027ffc6?q=80&w=1600&auto=format&fit=crop" alt="物件封面">
-            <span class="badge">河岸景觀</span>
-          </a>
-          <div class="house-body">
-            <div class="title">大直美堤｜景觀三房，沁涼通風</div>
-            <div class="meta">
-              <span class="pill">36.8 坪</span>
-              <span class="pill">3 房 2 廳</span>
-              <span class="pill">邊間</span>
-            </div>
-            <div class="price">NT$ 1,560 萬</div>
-            <div class="loc">台北市中山區 · 敦化北路</div>
-            <div class="reviews-mini">
-              <div class="reviews-mini__title">住戶真實留言</div>
-              <div class="reviews-mini__item">
-                <div class="reviews-mini__avatar">G</div>
-                <div class="reviews-mini__content">
-                  <div class="reviews-mini__head">
-                    <span class="reviews-mini__name">蘇先生 · 住戶</span>
-                    <span class="reviews-mini__dot"></span>
-                    <span class="reviews-mini__tag">景觀佳</span>
-                  </div>
-                  <div class="reviews-mini__text">客廳看河景很放鬆，夏天自然風就很涼。</div>
+          <!-- 卡片 2: 日勝幸福 -->
+          <article class="horizontal-card">
+            <div class="horizontal-left">
+              <div class="horizontal-thumb">
+                <img
+                  src="https://images.pexels.com/photos/2635038/pexels-photo-2635038.jpeg?auto=compress&cs=tinysrgb&w=600"
+                  alt="日勝幸福 外觀"
+                />
+              </div>
+              <div class="horizontal-main">
+                <div class="horizontal-title-row">
+                  <span>📍</span>
+                  <strong>日勝幸福・三重區</strong>
+                  <span class="horizontal-tag">機捷 A2</span>
+                </div>
+                <div class="horizontal-rating">
+                  <span class="star">★</span>4.0 分（58 則評價）・首購族最愛
+                </div>
+                <div class="horizontal-reviews">
+                  <p class="one-line-review">
+                    「價格親民,適合年輕夫妻。」— C***
+                  </p>
+                  <p class="one-line-review">
+                    「社區中庭有遊戲區,小孩很喜歡。」— P***
+                  </p>
+                </div>
+                <div class="horizontal-bottom-note">
+                  近機場捷運・生活機能完善,適合首購與換屋族。
                 </div>
               </div>
-              <div class="reviews-mini__item">
-                <div class="reviews-mini__avatar">H</div>
-                <div class="reviews-mini__content">
-                  <div class="reviews-mini__head">
-                    <span class="reviews-mini__name">高小姐 · 通勤族</span>
-                    <span class="reviews-mini__dot"></span>
-                    <span class="reviews-mini__tag">交通便利</span>
-                  </div>
-                  <div class="reviews-mini__text">離公車站 2 分鐘，轉乘捷運時間可控。</div>
-                </div>
-              </div>
-              <button class="reviews-mini__more" type="button">註冊後看更多評價</button>
             </div>
-          </div>
-        </article>
+            <div class="horizontal-right">
+              <div class="horizontal-price">
+                3 房 1,280 萬<span>約 30 坪</span>
+              </div>
+              <div class="lock-row">
+                <span class="lock-label">🔒 解鎖首購族心得</span>
+                <button class="lock-btn">註冊看更多</button>
+              </div>
+              <div class="horizontal-cta-row">
+                <button class="btn-outline">查看</button>
+                <button class="heart-btn" aria-label="加入收藏">♡</button>
+              </div>
+            </div>
+          </article>
 
-        <!-- 5 -->
-        <article class="house-card">
-          <a class="house-cover" href="#">
-            <img src="https://images.unsplash.com/photo-1501183638710-841dd1904471?q=80&w=1600&auto=format&fit=crop" alt="物件封面">
-            <span class="badge">社區花園</span>
-          </a>
-          <div class="house-body">
-            <div class="title">內湖東湖｜雙面採光，小家庭首選</div>
-            <div class="meta">
-              <span class="pill">27.4 坪</span>
-              <span class="pill">2 房 2 廳</span>
-              <span class="pill">含機車位</span>
-            </div>
-            <div class="price">NT$ 968 萬</div>
-            <div class="loc">台北市內湖區 · 康寧路三段</div>
-            <div class="reviews-mini">
-              <div class="reviews-mini__title">住戶真實留言</div>
-              <div class="reviews-mini__item">
-                <div class="reviews-mini__avatar">I</div>
-                <div class="reviews-mini__content">
-                  <div class="reviews-mini__head">
-                    <span class="reviews-mini__name">許太太 · 家長</span>
-                    <span class="reviews-mini__dot"></span>
-                    <span class="reviews-mini__tag">公園多</span>
-                  </div>
-                  <div class="reviews-mini__text">社區旁邊就有親子公園，假日散步很方便。</div>
+          <!-- 卡片 3: 宏國世界 -->
+          <article class="horizontal-card">
+            <div class="horizontal-left">
+              <div class="horizontal-thumb">
+                <img
+                  src="https://images.pexels.com/photos/1370704/pexels-photo-1370704.jpeg?auto=compress&cs=tinysrgb&w=600"
+                  alt="宏國世界 外觀"
+                />
+              </div>
+              <div class="horizontal-main">
+                <div class="horizontal-title-row">
+                  <span>📍</span>
+                  <strong>宏國世界・林口區</strong>
+                  <span class="horizontal-tag">機捷 A9</span>
+                </div>
+                <div class="horizontal-rating">
+                  <span class="star">★</span>4.3 分（47 則評價）・收租比例略高
+                </div>
+                <div class="horizontal-reviews">
+                  <p class="one-line-review">
+                    「下樓有商場,生活很方便。」— D***
+                  </p>
+                  <p class="one-line-review">
+                    「假日人潮多,喜歡熱鬧的人會喜歡。」— S***
+                  </p>
+                </div>
+                <div class="horizontal-bottom-note">
+                  可選包租管理・投報率與空租期需再評估。
                 </div>
               </div>
-              <div class="reviews-mini__item">
-                <div class="reviews-mini__avatar">J</div>
-                <div class="reviews-mini__content">
-                  <div class="reviews-mini__head">
-                    <span class="reviews-mini__name">黃先生 · 工程師</span>
-                    <span class="reviews-mini__dot"></span>
-                    <span class="reviews-mini__tag">環境安靜</span>
-                  </div>
-                  <div class="reviews-mini__text">臨巷內，夜間車流少，對面鄰居素質也不錯。</div>
-                </div>
-              </div>
-              <button class="reviews-mini__more" type="button">註冊後看更多評價</button>
             </div>
-          </div>
-        </article>
+            <div class="horizontal-right">
+              <div class="horizontal-price">
+                2 房 980 萬<span>約 21 坪</span>
+              </div>
+              <div class="lock-row">
+                <span class="lock-label">🔒 收租族完整心得</span>
+                <button class="lock-btn">註冊看更多</button>
+              </div>
+              <div class="horizontal-cta-row">
+                <button class="btn-outline">查看</button>
+                <button class="heart-btn" aria-label="加入收藏">♡</button>
+              </div>
+            </div>
+          </article>
 
-        <!-- 6 -->
-        <article class="house-card">
-          <a class="house-cover" href="#">
-            <img src="https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?q=80&w=1600&auto=format&fit=crop" alt="物件封面">
-            <span class="badge">捷運生活圈</span>
-          </a>
-          <div class="house-body">
-            <div class="title">中和橋和站｜採光兩房，低管理費</div>
-            <div class="meta">
-              <span class="pill">24.9 坪</span>
-              <span class="pill">2 房 1 廳</span>
-              <span class="pill">社區新</span>
-            </div>
-            <div class="price">NT$ 898 萬</div>
-            <div class="loc">新北市中和區 · 中和路</div>
-            <div class="reviews-mini">
-              <div class="reviews-mini__title">住戶真實留言</div>
-              <div class="reviews-mini__item">
-                <div class="reviews-mini__avatar">K</div>
-                <div class="reviews-mini__content">
-                  <div class="reviews-mini__head">
-                    <span class="reviews-mini__name">簡小姐 · 新婚</span>
-                    <span class="reviews-mini__dot"></span>
-                    <span class="reviews-mini__tag">費用透明</span>
-                  </div>
-                  <div class="reviews-mini__text">管委會公告清楚，管理費與車位費用都公開透明。</div>
+          <!-- 卡片 4: 合環青田 -->
+          <article class="horizontal-card">
+            <div class="horizontal-left">
+              <div class="horizontal-thumb">
+                <img
+                  src="https://images.pexels.com/photos/259580/pexels-photo-259580.jpeg?auto=compress&cs=tinysrgb&w=600"
+                  alt="合環青田 外觀"
+                />
+              </div>
+              <div class="horizontal-main">
+                <div class="horizontal-title-row">
+                  <span>📍</span>
+                  <strong>合環青田・新莊區</strong>
+                  <span class="horizontal-tag">副都心生活圈</span>
+                </div>
+                <div class="horizontal-rating">
+                  <span class="star">★</span>4.2 分（35 則評價）・首購 / 換屋混合
+                </div>
+                <div class="horizontal-reviews">
+                  <p class="one-line-review">
+                    「大廳氣派但不浮誇,親友來訪印象好。」— N***
+                  </p>
+                  <p class="one-line-review">
+                    「機能逐漸成熟中,未來看好。」— R***
+                  </p>
+                </div>
+                <div class="horizontal-bottom-note">
+                  有少量店面戶・需留意樓下使用型態。
                 </div>
               </div>
-              <div class="reviews-mini__item">
-                <div class="reviews-mini__avatar">L</div>
-                <div class="reviews-mini__content">
-                  <div class="reviews-mini__head">
-                    <span class="reviews-mini__name">羅先生 · 通勤族</span>
-                    <span class="reviews-mini__dot"></span>
-                    <span class="reviews-mini__tag">通勤穩定</span>
-                  </div>
-                  <div class="reviews-mini__text">尖峰等車可控，公車轉乘動線順，延誤較少。</div>
-                </div>
-              </div>
-              <button class="reviews-mini__more" type="button">註冊後看更多評價</button>
             </div>
-          </div>
-        </article>
+            <div class="horizontal-right">
+              <div class="horizontal-price">
+                3 房 1,180 萬<span>約 28 坪</span>
+              </div>
+              <div class="lock-row">
+                <span class="lock-label">🔒 看更多換屋族評價</span>
+                <button class="lock-btn">註冊看更多</button>
+              </div>
+              <div class="horizontal-cta-row">
+                <button class="btn-outline">查看</button>
+                <button class="heart-btn" aria-label="加入收藏">♡</button>
+              </div>
+            </div>
+          </article>
 
+          <!-- 卡片 5: 世界花園 -->
+          <article class="horizontal-card">
+            <div class="horizontal-left">
+              <div class="horizontal-thumb">
+                <img
+                  src="https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg?auto=compress&cs=tinysrgb&w=600"
+                  alt="世界花園 外觀"
+                />
+              </div>
+              <div class="horizontal-main">
+                <div class="horizontal-title-row">
+                  <span>📍</span>
+                  <strong>世界花園・蘆洲區</strong>
+                  <span class="horizontal-tag">捷運蘆洲站</span>
+                </div>
+                <div class="horizontal-rating">
+                  <span class="star">★</span>3.9 分（29 則評價）・交通便利
+                </div>
+                <div class="horizontal-reviews">
+                  <p class="one-line-review">
+                    「走路就到捷運,通勤很省時間。」— T***
+                  </p>
+                  <p class="one-line-review">
+                    「附近機車多,晚上會有一點吵。」— B***
+                  </p>
+                </div>
+                <div class="horizontal-bottom-note">
+                  低樓層面馬路需留意噪音,高樓層相對安靜。
+                </div>
+              </div>
+            </div>
+            <div class="horizontal-right">
+              <div class="horizontal-price">
+                2 房 880 萬<span>約 20 坪</span>
+              </div>
+              <div class="lock-row">
+                <span class="lock-label">🔒 解鎖更多通勤與噪音心得</span>
+                <button class="lock-btn">註冊看更多</button>
+              </div>
+              <div class="horizontal-cta-row">
+                <button class="btn-outline">查看</button>
+                <button class="heart-btn" aria-label="加入收藏">♡</button>
+              </div>
+            </div>
+          </article>
+
+          <!-- 卡片 6: 遠雄大未來 -->
+          <article class="horizontal-card">
+            <div class="horizontal-left">
+              <div class="horizontal-thumb">
+                <img
+                  src="https://images.pexels.com/photos/323780/pexels-photo-323780.jpeg?auto=compress&cs=tinysrgb&w=600"
+                  alt="遠雄大未來 外觀"
+                />
+              </div>
+              <div class="horizontal-main">
+                <div class="horizontal-title-row">
+                  <span>📍</span>
+                  <strong>遠雄大未來・汐止區</strong>
+                  <span class="horizontal-tag">東湖生活圈</span>
+                </div>
+                <div class="horizontal-rating">
+                  <span class="star">★</span>4.1 分（44 則評價）・通勤族首選
+                </div>
+                <div class="horizontal-reviews">
+                  <p class="one-line-review">
+                    「台鐵汐科站走路 8 分鐘,很方便。」— W***
+                  </p>
+                  <p class="one-line-review">
+                    「社區管理不錯,住戶素質整齊。」— E***
+                  </p>
+                </div>
+                <div class="horizontal-bottom-note">
+                  近科學園區・適合上班族,週邊機能完善。
+                </div>
+              </div>
+            </div>
+            <div class="horizontal-right">
+              <div class="horizontal-price">
+                3 房 1,350 萬<span>約 28 坪</span>
+              </div>
+              <div class="lock-row">
+                <span class="lock-label">🔒 看更多通勤族評價</span>
+                <button class="lock-btn">註冊看更多</button>
+              </div>
+              <div class="horizontal-cta-row">
+                <button class="btn-outline">查看</button>
+                <button class="heart-btn" aria-label="加入收藏">♡</button>
+              </div>
+            </div>
+          </article>
+
+          <!-- 卡片 7: 興富發巨蛋 -->
+          <article class="horizontal-card">
+            <div class="horizontal-left">
+              <div class="horizontal-thumb">
+                <img
+                  src="https://images.pexels.com/photos/280222/pexels-photo-280222.jpeg?auto=compress&cs=tinysrgb&w=600"
+                  alt="興富發巨蛋 外觀"
+                />
+              </div>
+              <div class="horizontal-main">
+                <div class="horizontal-title-row">
+                  <span>📍</span>
+                  <strong>興富發巨蛋・鼓山區</strong>
+                  <span class="horizontal-tag">巨蛋商圈</span>
+                </div>
+                <div class="horizontal-rating">
+                  <span class="star">★</span>4.4 分（51 則評價）・投資自住兩相宜
+                </div>
+                <div class="horizontal-reviews">
+                  <p class="one-line-review">
+                    「巨蛋旁邊,看演唱會超方便。」— Q***
+                  </p>
+                  <p class="one-line-review">
+                    「捷運紅線,去哪裡都很快。」— H***
+                  </p>
+                </div>
+                <div class="horizontal-bottom-note">
+                  緊鄰巨蛋商圈・生活機能極佳,房價抗跌。
+                </div>
+              </div>
+            </div>
+            <div class="horizontal-right">
+              <div class="horizontal-price">
+                2 房 1,680 萬<span>約 25 坪</span>
+              </div>
+              <div class="lock-row">
+                <span class="lock-label">🔒 看完整商圈分析</span>
+                <button class="lock-btn">註冊看更多</button>
+              </div>
+              <div class="horizontal-cta-row">
+                <button class="btn-outline">查看</button>
+                <button class="heart-btn" aria-label="加入收藏">♡</button>
+              </div>
+            </div>
+          </article>
+
+          <!-- 卡片 8: 華固新天地 -->
+          <article class="horizontal-card">
+            <div class="horizontal-left">
+              <div class="horizontal-thumb">
+                <img
+                  src="https://images.pexels.com/photos/1643383/pexels-photo-1643383.jpeg?auto=compress&cs=tinysrgb&w=600"
+                  alt="華固新天地 外觀"
+                />
+              </div>
+              <div class="horizontal-main">
+                <div class="horizontal-title-row">
+                  <span>📍</span>
+                  <strong>華固新天地・內湖區</strong>
+                  <span class="horizontal-tag">內湖科學園區</span>
+                </div>
+                <div class="horizontal-rating">
+                  <span class="star">★</span>4.3 分（48 則評價）・科技人最愛
+                </div>
+                <div class="horizontal-reviews">
+                  <p class="one-line-review">
+                    「走路上班,省下通勤時間和費用。」— X***
+                  </p>
+                  <p class="one-line-review">
+                    「社區新穎,公設維護得很好。」— V***
+                  </p>
+                </div>
+                <div class="horizontal-bottom-note">
+                  步行至園區・適合科技業,投報穩定。
+                </div>
+              </div>
+            </div>
+            <div class="horizontal-right">
+              <div class="horizontal-price">
+                3 房 2,180 萬<span>約 32 坪</span>
+              </div>
+              <div class="lock-row">
+                <span class="lock-label">🔒 看科技人置產心得</span>
+                <button class="lock-btn">註冊看更多</button>
+              </div>
+              <div class="horizontal-cta-row">
+                <button class="btn-outline">查看</button>
+                <button class="heart-btn" aria-label="加入收藏">♡</button>
+              </div>
+            </div>
+          </article>
+        </div>
       </section>
     </main>
-  </div>
-</body>
+  </body>
 </html>
