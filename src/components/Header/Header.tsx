@@ -129,13 +129,14 @@ export default function Header() {
           
           {/* 快速篩選膠囊按鈕 */}
           <div className="filter-pills">
-            <button 
+            <a 
+              href="/maihouses/community-wall_mvp.html"
               className="pill pill-community"
-              onClick={() => openModal('社區評價', '查看真實住戶的社區評價與回饋')}
+              style={{ textDecoration: 'none' }}
             >
               <span className="pill-icon">●</span>
               社區評價
-            </button>
+            </a>
             <button 
               className="pill pill-location"
               onClick={() => openModal('房仲專區', '專業房仲服務與物件推薦')}
