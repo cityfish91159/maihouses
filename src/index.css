@@ -1080,17 +1080,17 @@ body {
     0 0 0 2px rgba(var(--info-rgb), 0.5);
 }
 
-/* 圖標顏色 */
+/* 圖標顏色 - 統一藍色 */
 .pill-community .pill-icon {
-  color: var(--success);
+  color: var(--brand-primary);
 }
 
 .pill-location .pill-icon {
-  color: var(--warning);
+  color: var(--brand-primary);
 }
 
 .pill-transit .pill-icon {
-  color: var(--info);
+  color: var(--brand-primary);
 }
 
 /* ========================================
