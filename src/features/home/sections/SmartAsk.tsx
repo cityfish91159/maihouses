@@ -161,6 +161,13 @@ export default function SmartAsk() {
               {q}
             </button>
           ))}
+          <a
+            href="/maihouses/community-wall_mvp.html"
+            className="cursor-pointer whitespace-nowrap rounded-[var(--r-pill)] border border-[#34c759] bg-[#34c759]/10 px-2 py-[0.35rem] text-xs font-bold text-[#0f6a23] transition-all duration-200 hover:bg-[#34c759]/20 hover:shadow-sm"
+            aria-label="前往社區評價"
+          >
+            📋 社區評價
+          </a>
         </div>
         <div className="ml-auto min-w-[150px] text-right text-xs font-medium text-[var(--text-secondary)]">
           {import.meta.env.DEV && totalTokens > 0 ? `${totalTokens} tokens` : '多輪對話・智能推薦'}

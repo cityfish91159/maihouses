@@ -33,7 +33,7 @@ export default function CommunityTeaser() {
 				<article className="review"><div className="av2">H</div><div><div className="name">H***｜寶輝花園廣場 住戶 <span className="rating"><span className="star">★★★☆☆</span></span></div><div className="tags"><span className="tag">#停車/車位</span></div><p>地下室車位轉彎半徑偏小，新手要多注意；平日夜間社區整體很安靜。</p></div></article>
 				<article className="review"><div className="av2">K</div><div><div className="name">K***｜潤泰峰匯 住戶 <span className="rating"><span className="star">★★★★☆</span></span></div><div className="tags"><span className="tag">#採光/日照</span></div><p>採光好、通風佳，夏天不會太悶熱；但西曬戶下午還是會稍微熱一些。</p></div></article>
 			</div>
-			<a className="cta" href="#" aria-label="點我看更多社區評價"><span className="text">👉 點我看更多社區評價</span><span className="pill">前往社區牆</span></a>
+			<a className="cta" href="/maihouses/community-wall_mvp.html" aria-label="點我看更多社區評價"><span className="text">👉 點我看更多社區評價</span><span className="pill">前往社區牆</span></a>
 		</section>
 	)
 }
