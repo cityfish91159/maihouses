@@ -1,4 +1,12 @@
-# MaiHouses
+# Maihouses - 社區找房平台
+
+## 官方網址
+
+**首頁（唯一）**: https://maihouses.vercel.app/maihouses/
+
+**社區牆**: https://maihouses.vercel.app/maihouses/community-wall_mvp.html
+
+---
 
 房產社區資訊與 AI 找房助理。此 README 補充 AI 介面維運與防止回歸錯誤的要點。
 
