@@ -680,6 +680,308 @@
           border-top: 1px solid var(--border-light);
         }
       }
+
+      /* ===== C 檔原有樣式（相容舊 HTML 結構） ===== */
+      .container {
+        max-width: 1120px;
+        margin: 0 auto;
+        padding: 16px;
+      }
+
+      /* Grid */
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 18px;
+      }
+      @media (min-width: 720px) {
+        .grid {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+      @media (min-width: 1024px) {
+        .grid {
+          grid-template-columns: 1fr 1fr 1fr;
+        }
+      }
+
+      /* House Card */
+      .house-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-light);
+        border-radius: 16px;
+        overflow: hidden;
+        position: relative;
+        transition: box-shadow 0.18s ease, transform 0.08s ease,
+          border-color 0.2s ease;
+        box-shadow: 0 0 0 rgba(0, 0, 0, 0);
+        isolation: isolate;
+      }
+      .house-card::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background: radial-gradient(
+          60% 60% at 80% -10%,
+          rgba(23, 73, 215, 0.12),
+          transparent 60%
+        );
+        opacity: 0.8;
+      }
+      .house-card:hover {
+        box-shadow: 0 10px 26px rgba(13, 39, 94, 0.12);
+        transform: translateY(-2px);
+        border-color: rgba(23, 73, 215, 0.22);
+      }
+      .house-cover {
+        aspect-ratio: 4/3;
+        background: #e9ecf5;
+        display: block;
+        position: relative;
+        overflow: hidden;
+      }
+      .house-cover img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        transform: scale(1);
+        transition: transform 0.6s cubic-bezier(0.2, 0.65, 0.2, 1);
+      }
+      .house-card:hover .house-cover img {
+        transform: scale(1.04);
+      }
+      .badge {
+        position: absolute;
+        left: 10px;
+        top: 10px;
+        background: rgba(0, 0, 0, 0.76);
+        color: #fff;
+        font-size: 12px;
+        font-weight: 800;
+        padding: 4px 8px;
+        border-radius: 999px;
+        letter-spacing: 0.2px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.18);
+      }
+
+      .house-body {
+        padding: 12px 12px 14px;
+      }
+      .title {
+        font-weight: 800;
+        font-size: 16px;
+        line-height: 1.35;
+        margin: 2px 0 8px;
+        letter-spacing: 0.3px;
+        color: var(--text-primary);
+      }
+      @media (min-width: 1024px) {
+        .title {
+          font-size: 21px;
+        }
+      }
+
+      /* 智能房源推薦標題 */
+      .mh-reco-title {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 18px 0 12px;
+      }
+      .mh-reco-title__pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 12px;
+        border: 1px solid var(--border-light);
+        border-radius: 999px;
+        background: linear-gradient(180deg, #ffffff, #f6f9ff);
+        color: var(--primary);
+        font-weight: 900;
+        font-size: 14px;
+        letter-spacing: 0.2px;
+      }
+      .mh-reco-title__icon {
+        width: 18px;
+        height: 18px;
+        border-radius: 6px;
+        display: grid;
+        place-items: center;
+        background: linear-gradient(180deg, var(--primary), var(--primary-dark));
+        color: #fff;
+        font-size: 12px;
+        font-weight: 900;
+        box-shadow: 0 2px 6px rgba(23, 73, 215, 0.18);
+      }
+      .mh-reco-title__text {
+        line-height: 1;
+      }
+      .mh-reco-title__sub {
+        margin-left: 6px;
+        font-size: 12px;
+        color: var(--text-secondary);
+        font-weight: 700;
+      }
+      .mh-reco-title__underline {
+        height: 6px;
+        border-radius: 999px;
+        flex: 1;
+        background: linear-gradient(90deg, var(--primary), var(--primary-dark), var(--primary-light));
+        background-size: 200% 100%;
+        opacity: 0.25;
+        margin-left: 10px;
+        animation: mhRecoBar 6s linear infinite;
+      }
+      @keyframes mhRecoBar {
+        0% {
+          background-position: 0% 0;
+        }
+        100% {
+          background-position: 200% 0;
+        }
+      }
+
+      .meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+        color: var(--text-secondary);
+        font-size: 13px;
+        margin-bottom: 6px;
+      }
+      .pill {
+        padding: 2px 10px;
+        border-radius: 999px;
+        background: var(--primary-light);
+        border: 1px solid var(--border-light);
+        font-weight: 800;
+        color: var(--text-primary);
+        transition: transform 0.12s ease, box-shadow 0.12s ease,
+          background 0.2s ease;
+      }
+      .house-card:hover .pill {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 10px rgba(23, 73, 215, 0.1);
+      }
+
+      .price {
+        font-size: 19px;
+        font-weight: 900;
+        color: var(--primary);
+        margin: 8px 0 4px;
+        letter-spacing: 0.2px;
+      }
+      .loc {
+        font-size: 13px;
+        color: var(--text-secondary);
+      }
+
+      /* Reviews Mini */
+      .reviews-mini {
+        margin-top: 10px;
+        padding: 10px 12px;
+        border: 1px solid var(--border-light);
+        border-radius: 12px;
+        background: linear-gradient(180deg, var(--primary-light), #ffffff);
+      }
+      .reviews-mini__title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        font-weight: 900;
+        margin-bottom: 8px;
+        color: var(--text-primary);
+      }
+      .reviews-mini__title::before {
+        content: "★";
+        font-size: 12px;
+        line-height: 1;
+        color: var(--primary);
+        filter: drop-shadow(0 1px 0 rgba(23, 73, 215, 0.12));
+      }
+      .reviews-mini__item {
+        display: flex;
+        gap: 10px;
+        align-items: flex-start;
+        padding: 8px 0;
+        border-top: 1px dashed rgba(0, 0, 0, 0.08);
+      }
+      .reviews-mini__item:first-of-type {
+        border-top: none;
+      }
+      .reviews-mini__avatar {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        font-size: 12px;
+        font-weight: 900;
+        background: linear-gradient(180deg, #eaf0ff, #dce7ff);
+        color: var(--primary);
+        flex: 0 0 auto;
+        box-shadow: inset 0 0 0 1px rgba(23, 73, 215, 0.15);
+      }
+      .reviews-mini__content {
+        flex: 1 1 auto;
+      }
+      .reviews-mini__head {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 2px;
+        font-size: 12px;
+        color: var(--text-secondary);
+      }
+      .reviews-mini__name {
+        font-weight: 900;
+        color: var(--text-primary);
+      }
+      .reviews-mini__dot {
+        width: 4px;
+        height: 4px;
+        border-radius: 50%;
+        background: rgba(0, 0, 0, 0.18);
+        display: inline-block;
+      }
+      .reviews-mini__tag {
+        padding: 2px 8px;
+        border-radius: 999px;
+        background: rgba(23, 73, 215, 0.1);
+        color: var(--primary-dark);
+        font-weight: 900;
+      }
+      .reviews-mini__text {
+        font-size: 13px;
+        line-height: 1.6;
+        color: var(--text-primary);
+      }
+
+      .reviews-mini__more {
+        margin-top: 10px;
+        width: 100%;
+        padding: 10px 12px;
+        border-radius: 12px;
+        border: 1px solid rgba(23, 73, 215, 0.28);
+        background: linear-gradient(180deg, #ffffff, #f0f5ff);
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 900;
+        color: var(--primary);
+        transition: background 0.15s ease, transform 0.06s ease,
+          box-shadow 0.18s ease;
+      }
+      .reviews-mini__more:hover {
+        background: linear-gradient(180deg, #fff, #e8f0ff);
+        box-shadow: 0 6px 14px rgba(23, 73, 215, 0.18);
+      }
+      .reviews-mini__more:active {
+        transform: translateY(1px);
+      }
     </style>
 </head>
 <body>
