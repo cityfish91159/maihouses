@@ -12074,3 +12074,8 @@
       while (attempt < retries) {
         const controller
 ```
+
+=== 官方首頁網址（唯一） ===
+https://maihouses.vercel.app/maihouses/
+
+此網址為系統唯一首頁，所有相關配置與部署必須指向此網址。
