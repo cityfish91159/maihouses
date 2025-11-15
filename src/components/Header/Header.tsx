@@ -79,7 +79,7 @@ export default function Header() {
                 __html: `
 <!-- 右上三欄（房地產表列｜登入｜註冊） START -->
 <nav class="mh-nav-right" aria-label="主要動作">
-  <a class="mh-pill" href="#/list">
+  <a class="mh-pill" href="/maihouses/property.html">
     <svg class="mh-icon" viewBox="0 0 24 24" aria-hidden="true">
       <path d="M3 4h18v2H3V4zm0 7h18v2H3v-2zm0 7h18v2H3v-2z"/>
     </svg>
