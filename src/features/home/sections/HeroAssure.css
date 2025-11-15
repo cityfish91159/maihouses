@@ -229,12 +229,8 @@
   white-space: nowrap;
 }
 
-/* 手機版：兩個膠囊上下排列 */
+/* 手機版：縮小 1px，保持並排 */
 @media (max-width: 480px) {
-  .hero-assure-card .chips {
-    flex-direction: column;
-    gap: 6px;
-  }
   .hero-assure-card .chip {
     font-size: 10px;
   }
