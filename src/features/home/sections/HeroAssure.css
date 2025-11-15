@@ -229,6 +229,17 @@
   white-space: nowrap;
 }
 
+/* 手機版：兩個膠囊上下排列 */
+@media (max-width: 480px) {
+  .hero-assure-card .chips {
+    flex-direction: column;
+    gap: 6px;
+  }
+  .hero-assure-card .chip {
+    font-size: 10px;
+  }
+}
+
 .hero-assure-card .foot {
   padding: 16px 20px;
   border-top: 1px solid var(--line);
