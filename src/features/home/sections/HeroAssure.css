@@ -120,7 +120,9 @@
 
 .hero-assure-card .body {
   padding: 20px 24px;
-  display: grid;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   gap: 16px;
 }
 
@@ -129,8 +131,8 @@
   gap: 14px;
   position: relative;
   padding-left: var(--steps-offset);
+  width: 100%;
   max-width: 500px;
-  margin: 0 auto;
 }
 
 .hero-assure-card .step {
@@ -198,8 +200,8 @@
   padding: 10px 12px;
   background: #fff;
   display: block;
+  width: 100%;
   max-width: 500px;
-  margin: 0 auto;
 }
 
 .hero-assure-card .info > div {
