@@ -349,8 +349,13 @@
   .hero-assure-card .steps {
     gap: 10px;
   }
+  .hero-assure-card .chips {
+    flex-wrap: nowrap;
+    gap: 6px;
+  }
   .hero-assure-card .chip {
     font-size: 10px;
+    padding: 3px 8px;
   }
   .hero-assure-card .foot {
     padding: 12px 14px;
