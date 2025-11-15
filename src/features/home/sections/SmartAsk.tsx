@@ -210,7 +210,7 @@ export default function SmartAsk() {
                   minWidth: 0,
                   background:
                     m.role === 'user'
-                      ? 'linear-gradient(135deg, #4A90E2 0%, #5BA3F5 100%)'
+                      ? 'linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%)'
                       : '#F8FAFC',
                   border: m.role === 'user' ? 'none' : '1px solid #E5EDF5'
                 }}
