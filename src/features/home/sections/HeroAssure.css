@@ -349,6 +349,9 @@
   .hero-assure-card .steps {
     gap: 10px;
   }
+  .hero-assure-card .info {
+    padding-left: calc(14px + var(--steps-offset));
+  }
   .hero-assure-card .chips {
     flex-wrap: nowrap;
     gap: 6px;
