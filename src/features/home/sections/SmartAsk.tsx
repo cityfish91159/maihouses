@@ -141,7 +141,7 @@ export default function SmartAsk() {
     >
       <div className="mb-2 flex flex-wrap items-center gap-2">
         <div className="flex min-w-0 items-center gap-2">
-          <div className="size-2.5 rounded-full" style={{ background: '#4A90E2', animation: 'pulse-subtle 2s ease-in-out infinite' }} />
+          <div className="ai-avatar-glow size-2.5 rounded-full" style={{ background: '#4A90E2' }} />
           <h3
             className="truncate font-bold"
             style={{ fontSize: 'clamp(18px, 2.2vw, 21px)', fontWeight: 900, color: '#2C3E50' }}
@@ -228,9 +228,13 @@ export default function SmartAsk() {
         {loading && (
           <div className="flex justify-start">
             <div className="max-w-[80%] rounded-[12px] px-4 py-2.5" style={{ fontSize: 'var(--fs-sm)', background: '#F8FAFC', border: '1px solid #E5EDF5', color: '#5A6C7D' }}>
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-2">
                 <span>正在思考</span>
-                <span className="animate-pulse">...</span>
+                <div className="flex gap-1">
+                  <span className="typing-dot inline-block h-1.5 w-1.5 rounded-full bg-[#5A6C7D]"></span>
+                  <span className="typing-dot inline-block h-1.5 w-1.5 rounded-full bg-[#5A6C7D]"></span>
+                  <span className="typing-dot inline-block h-1.5 w-1.5 rounded-full bg-[#5A6C7D]"></span>
+                </div>
               </div>
             </div>
           </div>
