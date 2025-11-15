@@ -229,13 +229,6 @@
   white-space: nowrap;
 }
 
-/* 手機版：縮小 1px，保持並排 */
-@media (max-width: 480px) {
-  .hero-assure-card .chip {
-    font-size: 10px;
-  }
-}
-
 .hero-assure-card .foot {
   padding: 16px 20px;
   border-top: 1px solid var(--line);
@@ -355,6 +348,9 @@
   }
   .hero-assure-card .steps {
     gap: 10px;
+  }
+  .hero-assure-card .chip {
+    font-size: 10px;
   }
   .hero-assure-card .foot {
     padding: 12px 14px;
