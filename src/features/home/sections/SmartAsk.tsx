@@ -275,8 +275,16 @@ export default function SmartAsk() {
 
       {!!reco.length && (
         <div className="mt-4 border-t pt-4" style={{ borderColor: '#E5EDF5' }}>
-          <div className="mb-3 font-semibold" style={{ fontSize: 'var(--fs-base)', color: '#5A6C7D' }}>
-            🏠 為您推薦
+          <div className="mb-3">
+            <div 
+              className="font-semibold text-[calc(var(--fs-base)+4px)] md:text-[calc(var(--fs-base)+8px)]" 
+              style={{ color: '#5A6C7D' }}
+            >
+              🏠 智能房源推薦
+            </div>
+            <div className="mt-1 text-xs" style={{ color: '#8A95A5' }}>
+              依瀏覽行為與社區口碑輔助排序
+            </div>
           </div>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {reco.map((p) => (
