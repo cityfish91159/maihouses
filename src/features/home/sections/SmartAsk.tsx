@@ -137,7 +137,7 @@ export default function SmartAsk() {
   return (
     <section 
       className="gradient-ask ai-card space-y-6 rounded-[12px] p-6 shadow-[0_2px_8px_rgba(74,144,226,0.15)] transition-shadow hover:shadow-[0_4px_16px_rgba(74,144,226,0.2)] md:p-8"
-      style={{ background: 'linear-gradient(135deg, #D6E8FF 0%, #E8F2FF 100%)' }}
+      style={{ background: 'linear-gradient(135deg, #CCE0FF 0%, #E0EEFF 100%)' }}
     >
       <div className="mb-2 flex flex-wrap items-center gap-2">
         <div className="flex min-w-0 items-center gap-2">
