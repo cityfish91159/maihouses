@@ -265,7 +265,7 @@ export default function SmartAsk() {
           disabled={loading || !input.trim()}
           className="rounded-full px-5 py-2 font-medium text-white shadow-md transition-all hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50"
           style={{
-            background: 'linear-gradient(135deg, #4A90E2 0%, #5BA3F5 100%)',
+            background: 'var(--brand)',
             fontSize: 'var(--fs-sm)'
           }}
         >
