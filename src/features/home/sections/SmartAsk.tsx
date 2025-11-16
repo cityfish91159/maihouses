@@ -137,7 +137,7 @@ export default function SmartAsk() {
   return (
     <section 
       className="gradient-ask ai-card space-y-6 rounded-[12px] p-6 shadow-[0_2px_8px_rgba(74,144,226,0.15)] transition-shadow hover:shadow-[0_4px_16px_rgba(74,144,226,0.2)] md:p-8"
-      style={{ background: 'linear-gradient(135deg, #EBF4FF 0%, #F8FBFF 100%)' }}
+      style={{ background: 'linear-gradient(135deg, #CCE0FF 0%, #E0EEFF 100%)' }}
     >
       <div className="mb-2 flex flex-wrap items-center gap-2">
         <div className="flex min-w-0 items-center gap-2">
@@ -265,7 +265,7 @@ export default function SmartAsk() {
           disabled={loading || !input.trim()}
           className="rounded-full px-5 py-2 font-medium text-white shadow-md transition-all hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50"
           style={{
-            background: 'linear-gradient(135deg, #4A90E2 0%, #5BA3F5 100%)',
+            background: 'var(--brand)',
             fontSize: 'var(--fs-sm)'
           }}
         >
