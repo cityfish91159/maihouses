@@ -277,7 +277,7 @@ export default function SmartAsk() {
         <div className="mt-4 border-t pt-4" style={{ borderColor: '#E5EDF5' }}>
           <div className="mb-3">
             <div 
-              className="font-semibold text-[calc(var(--fs-base)+4px)] md:text-[calc(var(--fs-base)+8px)]" 
+              className="text-[calc(var(--fs-base)+6px)] font-semibold md:text-[calc(var(--fs-base)+12px)] md:font-bold" 
               style={{ color: '#5A6C7D' }}
             >
               🏠 智能房源推薦
