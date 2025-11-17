@@ -60,7 +60,7 @@ export default function Header() {
   .mh-icon path{ fill:currentColor; }
   /* 手機版縮小30% (高度/字級/padding/icon) */
   @media (max-width:640px){
-    .mh-pill{ font-size:10px; --x:10px; --y:7px; min-height:31px; gap:6px; }
+    .mh-pill{ font-size:12px; --x:12px; --y:9px; min-height:33px; gap:6px; }
     .mh-icon{ width:14px; height:14px; }
   }
   /* 桌機版放大字級 +4px，增 padding 與 icon 尺寸 */
