@@ -691,21 +691,11 @@
         border-left: 1px solid var(--border-light);
         display: flex;
         flex-direction: column;
-        justify-content: space-between;
+        justify-content: center;
       }
 
       .horizontal-price {
-        font-size: 1.0625rem; /* 17px */
-        font-weight: 700;
-        color: var(--primary);
-        margin-bottom: 0.5rem;
-      }
-
-      .horizontal-price span {
-        font-size: 0.75rem; /* 12px */
-        font-weight: 400;
-        color: var(--text-tertiary);
-        margin-left: 0.25rem;
+        display: none; /* 隱藏右側價格，左側已有顯示 */
       }
 
       .lock-row {
