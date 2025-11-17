@@ -57,7 +57,7 @@
 .brand-name {
   color: var(--brand);
   font-weight: 900;
-  font-size: 24px;
+  font-size: 26px;
   letter-spacing: 1.5px;
   position: relative;
   animation: colorPulse 3s ease-in-out infinite;
@@ -84,7 +84,7 @@
 .brand-slogan {
   margin-left: 12px;
   color: var(--text-secondary);
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 600;
   font-style: italic;
   opacity: 0.85;
@@ -420,6 +420,12 @@
   
   .marquee-container {
     padding: 10px 14px;
+  }
+  
+  /* 中等螢幕 (641-760px) pills 樣式 */
+  .filter-pills .pill {
+    font-size: 15px;
+    padding: 22px 18px;
   }
 }
 
