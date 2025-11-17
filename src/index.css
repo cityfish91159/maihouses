@@ -1018,32 +1018,8 @@ body {
 }
 
 /* ========================================
-   Filter Pills - 搜尋按鈕組
-   ⚠️ font-size 和 padding 已移至 Header.css,避免與 media query 衝突
+   Filter Pills - 所有樣式已移至 Header.css
    ======================================== */
-.filter-pills .pill {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  /* font-size: 由 Header.css 控制 */
-  font-weight: var(--font-medium);
-  /* padding: 由 Header.css 控制 */
-  border-radius: var(--radius-lg);
-  background: #ffffff;
-  color: var(--neutral-900);
-  border: 1px solid rgba(10, 34, 70, 0.08);
-  box-shadow: var(--shadow-pill);
-  cursor: pointer;
-  transition: all var(--transition-bounce);
-  position: relative;
-  overflow: hidden;
-  will-change: transform;
-}
-
-.filter-pills .pill:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-pill-hover);
-}
 
 /* 圖標呼吸動畫 */
 .pill-community .pill-icon {
