@@ -642,6 +642,7 @@
         display: flex;
         flex-direction: column;
         gap: 0.5rem;
+        margin-bottom: -0.125rem; /* 抵消 horizontal-main 的 gap */
       }
 
       .review-item-compact {
@@ -914,7 +915,10 @@
         .one-line-review:nth-of-type(n+2) {
           display: none;
         }
+      }
 
+      /* 640px 以下 - 手機 */
+      @media (max-width: 640px) {
         /* A5. 隱藏補充說明 */
         .horizontal-bottom-note {
           display: none;
