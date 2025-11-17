@@ -422,12 +422,11 @@ html,body{margin:0;padding:0;background:#f6f9ff;color:#0a2246;
 .card{background:#fff;border:1px solid #e6edf7;border-radius:10px;
   box-shadow:0 2px 8px rgba(10,34,70,.04);padding:10px;margin:8px 0;}
 .card.hero{background:#f7faff;}
-/* Topbar */
+/* Topbar - brand-name 已移至 Header.css,避免衝突 */
 .topbar{display:flex;justify-content:space-between;align-items:center;padding:6px 4px}
 .logo-dot{width:20px;height:20px;border-radius:50%;
   background:linear-gradient(135deg,#1749d7,#6aa4ff);
   box-shadow:0 4px 10px rgba(23,73,215,.2);margin-right:6px}
-.brand-name{font-weight:900;letter-spacing:.5px;color:#1749d7;font-size:14px}
 .icon-btn{border:1px solid #e6edf7;background:#fff;border-radius:8px;padding:6px 8px;font-size:12px}
 /* Card header */
 .card-title{display:flex;justify-content:space-between;align-items:center;
