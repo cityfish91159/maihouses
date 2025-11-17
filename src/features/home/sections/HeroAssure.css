@@ -34,7 +34,7 @@
   gap: 16px;
   padding: 16px 20px;
   background: linear-gradient(135deg, #e8f0ff, #d9e6ff); /* 加深一個色階 */
-  border-radius: 16px 16px 0 0; /* 只有上方兩個角圓角 */
+  border-radius: 16px; /* 四個角都圓角 */
 }
 
 .hero-assure-card .ttl {
