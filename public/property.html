@@ -641,7 +641,35 @@
         flex: 1;
         display: flex;
         flex-direction: column;
-        gap: 0.25rem;
+        gap: 0.5rem;
+        padding: 0.25rem 0;
+      }
+
+      .review-item-compact {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.5rem;
+      }
+
+      .review-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.125rem 0.375rem;
+        background: var(--primary-light);
+        color: var(--primary);
+        font-size: 0.625rem; /* 10px */
+        font-weight: 600;
+        border-radius: 0.25rem;
+        white-space: nowrap;
+        flex-shrink: 0;
+      }
+
+      .review-text {
+        font-size: 0.75rem; /* 12px */
+        color: var(--text-secondary);
+        line-height: 1.4;
+        margin: 0;
+        flex: 1;
       }
 
       .one-line-review {
@@ -685,34 +713,66 @@
       .lock-row {
         display: flex;
         flex-direction: column;
-        gap: 0.375rem;
-        padding: 0.5rem;
+        gap: 0.5rem;
+        padding: 0.625rem;
         background: var(--primary-light);
+        border: 1px solid rgba(23, 73, 215, 0.2);
         border-radius: var(--radius-sm);
         margin-bottom: 0.625rem;
       }
 
+      .lock-header {
+        display: flex;
+        align-items: center;
+        gap: 0.375rem;
+      }
+
+      .lock-icon {
+        font-size: 0.875rem;
+        color: var(--primary);
+      }
+
+      .lock-text {
+        flex: 1;
+      }
+
       .lock-label {
         font-size: 0.6875rem; /* 11px */
-        color: var(--text-secondary);
+        color: var(--primary);
+        font-weight: 600;
+        display: block;
+      }
+
+      .lock-count {
+        font-size: 0.625rem; /* 10px */
+        color: var(--text-tertiary);
+        display: block;
+        margin-top: 0.125rem;
       }
 
       .lock-btn {
-        padding: 0.75rem 1rem; /* 增加到至少 12px 16px */
+        padding: 0.625rem 1rem;
         font-size: 0.75rem; /* 12px */
         font-weight: 600;
         background: var(--primary);
         color: #ffffff;
         border: none;
-        border-radius: 0.875rem;
+        border-radius: var(--radius-sm);
         cursor: pointer;
-        transition: opacity 0.2s ease;
+        transition: all 0.2s ease;
         touch-action: manipulation;
-        min-height: 3rem; /* 48px */
+        min-height: 2.5rem; /* 40px */
+      }
+
+      .lock-btn:hover {
+        background: var(--primary-dark);
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(23, 73, 215, 0.3);
       }
 
       .lock-btn:active {
-        opacity: 0.8;
+        opacity: 0.9;
+        transform: translateY(0);
       }
 
       .horizontal-cta-row {
@@ -1435,14 +1495,14 @@
                   <span class="star">★</span>4.5 分(92 則評價)・豪宅精選
                 </div>
                 <div class="horizontal-reviews">
-                  <!-- A5. 第一則評論保留 -->
-                  <p class="one-line-review">
-                    「社區環境優美,管理嚴謹。」— J***
-                  </p>
-                  <!-- A5. 第二則評論在手機版會被隱藏 -->
-                  <p class="one-line-review">
-                    「交通便利,距離捷運站約 5 分鐘。」— K***
-                  </p>
+                  <div class="review-item-compact">
+                    <span class="review-badge">內湖區第1名</span>
+                    <p class="review-text">「社區環境優美,管理嚴謹,中庭花園很棒。」— J***</p>
+                  </div>
+                  <div class="review-item-compact">
+                    <span class="review-badge">影片房源</span>
+                    <p class="review-text">「交通便利,距離捷運劍南路站步行約 5 分鐘。」— K***</p>
+                  </div>
                 </div>
                 <!-- A5. 補充說明在手機版會被隱藏 -->
                 <div class="horizontal-bottom-note">
@@ -1455,8 +1515,14 @@
                 4 房 3,980 萬<span>約 45 坪</span>
               </div>
               <div class="lock-row">
-                <span class="lock-label">🔒 豪宅住戶真實評價</span>
-                <button class="lock-btn">註冊看更多</button>
+                <div class="lock-header">
+                  <span class="lock-icon">🔒</span>
+                  <div class="lock-text">
+                    <span class="lock-label">豪宅住戶真實評價</span>
+                    <span class="lock-count">還有 90 則評價</span>
+                  </div>
+                </div>
+                <button class="lock-btn">註冊查看更多評價</button>
               </div>
               <div class="horizontal-cta-row">
                 <button class="btn-outline">查看</button>
@@ -1488,12 +1554,14 @@
                   <span class="star">★</span>4.0 分(58 則評價)・首購族最愛
                 </div>
                 <div class="horizontal-reviews">
-                  <p class="one-line-review">
-                    「空間設計實用,適合小家庭。」— A***
-                  </p>
-                  <p class="one-line-review">
-                    「走路就到機捷站,去機場很方便。」— G***
-                  </p>
+                  <div class="review-item-compact">
+                    <span class="review-badge">影片房源</span>
+                    <p class="review-text">「空間設計實用,適合小家庭,傢俱也不錯。」— A***</p>
+                  </div>
+                  <div class="review-item-compact">
+                    <span class="review-badge">三重區第1名</span>
+                    <p class="review-text">「走路就到機捷站,去機場很方便。」— G***</p>
+                  </div>
                 </div>
                 <div class="horizontal-bottom-note">
                   建議留意樓層高度,低樓層可能會有噪音問題。
@@ -1505,8 +1573,14 @@
                 2 房 750 萬<span>約 18 坪</span>
               </div>
               <div class="lock-row">
-                <span class="lock-label">🔒 看更多首購族評價</span>
-                <button class="lock-btn">註冊看更多</button>
+                <div class="lock-header">
+                  <span class="lock-icon">🔒</span>
+                  <div class="lock-text">
+                    <span class="lock-label">首購族完整評價</span>
+                    <span class="lock-count">還有 56 則評價</span>
+                  </div>
+                </div>
+                <button class="lock-btn">註冊查看更多評價</button>
               </div>
               <div class="horizontal-cta-row">
                 <button class="btn-outline">查看</button>
@@ -1538,12 +1612,14 @@
                   <span class="star">★</span>4.3 分(47 則評價)・收租比例略高
                 </div>
                 <div class="horizontal-reviews">
-                  <p class="one-line-review">
-                    「下樓有商場,生活很方便。」— D***
-                  </p>
-                  <p class="one-line-review">
-                    「假日人潮多,喜歡熱鬧的人會喜歡。」— S***
-                  </p>
+                  <div class="review-item-compact">
+                    <span class="review-badge">中正區第1名</span>
+                    <p class="review-text">「下樓有商場,生活很方便,購物用餐都方便。」— D***</p>
+                  </div>
+                  <div class="review-item-compact">
+                    <span class="review-badge">影片房源</span>
+                    <p class="review-text">「假日人潮多,喜歡熱鬧的人會喜歡。」— S***</p>
+                  </div>
                 </div>
                 <div class="horizontal-bottom-note">
                   可選包租管理・投報率與空租期需再評估。
@@ -1555,8 +1631,14 @@
                 2 房 980 萬<span>約 21 坪</span>
               </div>
               <div class="lock-row">
-                <span class="lock-label">🔒 收租族完整心得</span>
-                <button class="lock-btn">註冊看更多</button>
+                <div class="lock-header">
+                  <span class="lock-icon">🔒</span>
+                  <div class="lock-text">
+                    <span class="lock-label">收租族完整心得</span>
+                    <span class="lock-count">還有 45 則評價</span>
+                  </div>
+                </div>
+                <button class="lock-btn">註冊查看更多評價</button>
               </div>
               <div class="horizontal-cta-row">
                 <button class="btn-outline">查看</button>
@@ -1588,12 +1670,14 @@
                   <span class="star">★</span>4.2 分(35 則評價)・首購 / 換屋混合
                 </div>
                 <div class="horizontal-reviews">
-                  <p class="one-line-review">
-                    「大廳氣派但不浮誇,親友來訪印象好。」— N***
-                  </p>
-                  <p class="one-line-review">
-                    「機能逐漸成熟中,未來看好。」— R***
-                  </p>
+                  <div class="review-item-compact">
+                    <span class="review-badge">影片房源</span>
+                    <p class="review-text">「大廳氣派但不浮誇,親友來訪印象好。」— N***</p>
+                  </div>
+                  <div class="review-item-compact">
+                    <span class="review-badge">新莊區第1名</span>
+                    <p class="review-text">「機能逐漸成熟中,未來看好,發展潛力大。」— R***</p>
+                  </div>
                 </div>
                 <div class="horizontal-bottom-note">
                   有少量店面戶・需留意樓下使用型態。
@@ -1605,8 +1689,14 @@
                 3 房 1,180 萬<span>約 28 坪</span>
               </div>
               <div class="lock-row">
-                <span class="lock-label">🔒 看更多換屋族評價</span>
-                <button class="lock-btn">註冊看更多</button>
+                <div class="lock-header">
+                  <span class="lock-icon">🔒</span>
+                  <div class="lock-text">
+                    <span class="lock-label">換屋族完整評價</span>
+                    <span class="lock-count">還有 33 則評價</span>
+                  </div>
+                </div>
+                <button class="lock-btn">註冊查看更多評價</button>
               </div>
               <div class="horizontal-cta-row">
                 <button class="btn-outline">查看</button>
@@ -1638,12 +1728,14 @@
                   <span class="star">★</span>3.9 分(29 則評價)・交通便利
                 </div>
                 <div class="horizontal-reviews">
-                  <p class="one-line-review">
-                    「走路就到捷運,通勤很省時間。」— T***
-                  </p>
-                  <p class="one-line-review">
-                    「附近機車多,晚上會有一點吵。」— B***
-                  </p>
+                  <div class="review-item-compact">
+                    <span class="review-badge">影片房源</span>
+                    <p class="review-text">「走路就到捷運,通勤很省時間,上下班方便。」— T***</p>
+                  </div>
+                  <div class="review-item-compact">
+                    <span class="review-badge">蘆洲區第1名</span>
+                    <p class="review-text">「附近機車多,晚上會有一點吵,建議選高樓層。」— B***</p>
+                  </div>
                 </div>
                 <div class="horizontal-bottom-note">
                   低樓層面馬路需留意噪音,高樓層相對安靜。
@@ -1655,8 +1747,14 @@
                 2 房 880 萬<span>約 20 坪</span>
               </div>
               <div class="lock-row">
-                <span class="lock-label">🔒 解鎖更多通勤與噪音心得</span>
-                <button class="lock-btn">註冊看更多</button>
+                <div class="lock-header">
+                  <span class="lock-icon">🔒</span>
+                  <div class="lock-text">
+                    <span class="lock-label">更多通勤與噪音心得</span>
+                    <span class="lock-count">還有 27 則評價</span>
+                  </div>
+                </div>
+                <button class="lock-btn">註冊查看更多評價</button>
               </div>
               <div class="horizontal-cta-row">
                 <button class="btn-outline">查看</button>
@@ -1688,12 +1786,14 @@
                   <span class="star">★</span>4.1 分(44 則評價)・通勤族首選
                 </div>
                 <div class="horizontal-reviews">
-                  <p class="one-line-review">
-                    「台鐵汐科站走路 8 分鐘,很方便。」— W***
-                  </p>
-                  <p class="one-line-review">
-                    「社區管理不錯,住戶素質整齊。」— E***
-                  </p>
+                  <div class="review-item-compact">
+                    <span class="review-badge">影片房源</span>
+                    <p class="review-text">「台鐵汐科站走路 8 分鐘,很方便,適合通勤族。」— W***</p>
+                  </div>
+                  <div class="review-item-compact">
+                    <span class="review-badge">汐止區第1名</span>
+                    <p class="review-text">「社區管理不錯,住戶素質整齊,環境維護好。」— E***</p>
+                  </div>
                 </div>
                 <div class="horizontal-bottom-note">
                   近科學園區・適合上班族,週邊機能完善。
@@ -1705,8 +1805,14 @@
                 3 房 1,350 萬<span>約 28 坪</span>
               </div>
               <div class="lock-row">
-                <span class="lock-label">🔒 看更多通勤族評價</span>
-                <button class="lock-btn">註冊看更多</button>
+                <div class="lock-header">
+                  <span class="lock-icon">🔒</span>
+                  <div class="lock-text">
+                    <span class="lock-label">通勤族完整評價</span>
+                    <span class="lock-count">還有 42 則評價</span>
+                  </div>
+                </div>
+                <button class="lock-btn">註冊查看更多評價</button>
               </div>
               <div class="horizontal-cta-row">
                 <button class="btn-outline">查看</button>
@@ -1738,12 +1844,14 @@
                   <span class="star">★</span>4.4 分(51 則評價)・投資自住兩相宜
                 </div>
                 <div class="horizontal-reviews">
-                  <p class="one-line-review">
-                    「巨蛋旁邊,看演唱會超方便。」— Q***
-                  </p>
-                  <p class="one-line-review">
-                    「捷運紅線,去哪裡都很快。」— H***
-                  </p>
+                  <div class="review-item-compact">
+                    <span class="review-badge">影片房源</span>
+                    <p class="review-text">「巨蛋旁邊,看演唱會超方便,生活機能極佳。」— Q***</p>
+                  </div>
+                  <div class="review-item-compact">
+                    <span class="review-badge">鼓山區第1名</span>
+                    <p class="review-text">「捷運紅線,去哪裡都很快,交通非常便利。」— H***</p>
+                  </div>
                 </div>
                 <div class="horizontal-bottom-note">
                   緊鄰巨蛋商圈・生活機能極佳,房價抗跌。
@@ -1755,8 +1863,14 @@
                 2 房 1,680 萬<span>約 25 坪</span>
               </div>
               <div class="lock-row">
-                <span class="lock-label">🔒 看完整商圈分析</span>
-                <button class="lock-btn">註冊看更多</button>
+                <div class="lock-header">
+                  <span class="lock-icon">🔒</span>
+                  <div class="lock-text">
+                    <span class="lock-label">完整商圈分析</span>
+                    <span class="lock-count">還有 49 則評價</span>
+                  </div>
+                </div>
+                <button class="lock-btn">註冊查看更多評價</button>
               </div>
               <div class="horizontal-cta-row">
                 <button class="btn-outline">查看</button>
@@ -1788,12 +1902,14 @@
                   <span class="star">★</span>4.3 分(48 則評價)・科技人最愛
                 </div>
                 <div class="horizontal-reviews">
-                  <p class="one-line-review">
-                    「走路上班,省下通勤時間和費用。」— X***
-                  </p>
-                  <p class="one-line-review">
-                    「社區新穎,公設維護得很好。」— V***
-                  </p>
+                  <div class="review-item-compact">
+                    <span class="review-badge">影片房源</span>
+                    <p class="review-text">「走路上班,省下通勤時間和費用,工程師好選擇。」— X***</p>
+                  </div>
+                  <div class="review-item-compact">
+                    <span class="review-badge">內湖區第1名</span>
+                    <p class="review-text">「社區新穎,公設維護得很好,住起來舒適。」— V***</p>
+                  </div>
                 </div>
                 <div class="horizontal-bottom-note">
                   步行至園區・適合科技業,投報穩定。
@@ -1805,8 +1921,14 @@
                 3 房 2,180 萬<span>約 32 坪</span>
               </div>
               <div class="lock-row">
-                <span class="lock-label">🔒 看科技人置產心得</span>
-                <button class="lock-btn">註冊看更多</button>
+                <div class="lock-header">
+                  <span class="lock-icon">🔒</span>
+                  <div class="lock-text">
+                    <span class="lock-label">科技人置產心得</span>
+                    <span class="lock-count">還有 46 則評價</span>
+                  </div>
+                </div>
+                <button class="lock-btn">註冊查看更多評價</button>
               </div>
               <div class="horizontal-cta-row">
                 <button class="btn-outline">查看</button>
