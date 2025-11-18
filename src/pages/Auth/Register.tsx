@@ -12,6 +12,8 @@ export default function Register() {
       <h1 className="mb-4 text-xl font-semibold">註冊</h1>
       <form onSubmit={onSubmit} className="space-y-3">
         <input
+          id="register-email"
+          name="email"
           className="w-full rounded-[var(--r-md)] border border-[var(--border-default)] p-2"
           type="email"
           placeholder="Email"
@@ -19,6 +21,8 @@ export default function Register() {
           required
         />
         <input
+          id="register-password"
+          name="password"
           className="w-full rounded-[var(--r-md)] border border-[var(--border-default)] p-2"
           type="password"
           placeholder="密碼"
@@ -26,6 +30,9 @@ export default function Register() {
           required
         />
         <input
+          id="register-verification-code"
+          name="verification-code"
+          type="text"
           className="w-full rounded-[var(--r-md)] border border-[var(--border-default)] p-2"
           placeholder="驗證碼"
           aria-label="驗證碼"

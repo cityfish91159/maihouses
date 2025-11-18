@@ -119,6 +119,7 @@ export default function Header() {
             <input 
               type="text" 
               id="search-input"
+              name="search-query"
               className="search-input" 
               placeholder="輸入社區名稱、地址或捷運站..."
               aria-label="搜尋框"

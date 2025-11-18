@@ -41,9 +41,12 @@ export const ChatInput: React.FC<Props> = ({ onSend }) => {
     <div style={{ display: "flex", gap: 8 }}>
       <input
         ref={inputRef}
+        type="text"
+        id="chat-input"
+        name="chat-message"
         value={text}
         onChange={(e) => setText(e.target.value)}
-        placeholder={isActive() ? "安靜模式：只聊天，不推內容" : "輸入訊息…"}
+        placeholder={isActive() ? "安靜模式：只聊天,不推內容" : "輸入訊息…"}
         style={{ flex: 1, padding: "10px 12px", borderRadius: 10, border: "1px solid #ddd" }}
         onKeyDown={(e) => {
           if (e.key === "Enter" && !e.shiftKey) {

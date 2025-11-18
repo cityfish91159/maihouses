@@ -12,6 +12,8 @@ export default function Login() {
       <h1 className="mb-4 text-xl font-semibold">登入</h1>
       <form onSubmit={onSubmit} className="space-y-3">
         <input
+          id="login-email"
+          name="email"
           className="w-full rounded-[var(--r-md)] border border-[var(--border-default)] p-2"
           type="email"
           placeholder="Email"
@@ -19,6 +21,8 @@ export default function Login() {
           required
         />
         <input
+          id="login-password"
+          name="password"
           className="w-full rounded-[var(--r-md)] border border-[var(--border-default)] p-2"
           type="password"
           placeholder="密碼"

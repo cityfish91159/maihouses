@@ -243,6 +243,9 @@ export default function SmartAsk() {
 
       <div className="flex gap-2">
         <input
+          id="smart-ask-input"
+          name="smart-ask-query"
+          type="text"
           className="flex-1 rounded-full px-5 transition-colors focus:outline-none"
           style={{ 
             fontSize: 'var(--fs-sm)', 
