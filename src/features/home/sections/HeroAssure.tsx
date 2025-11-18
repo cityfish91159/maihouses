@@ -1,9 +1,29 @@
-import { useState, useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import './HeroAssure.css'
 
+type StepStatus = 'done' | 'active' | 'upcoming'
+
+type AssureStep = {
+  title: string
+  subtitle: string
+  status: StepStatus
+}
+
+const progressValue = 62
+
+const assureSteps: AssureStep[] = [
+  { title: '已看屋', subtitle: '完成現場帶看與基本紀錄', status: 'done' },
+  { title: '已出價', subtitle: '要約與條件已留痕', status: 'done' },
+  { title: '雙向簽署', subtitle: '平台簽署，雙方可回溯查驗', status: 'active' },
+  { title: '身分驗證', subtitle: 'KYC 驗證與黑名單檢核', status: 'upcoming' },
+  { title: '金流通知', subtitle: '代收代付與異常監控', status: 'upcoming' },
+  { title: '交屋驗屋', subtitle: '交付清單與驗屋紀錄', status: 'upcoming' },
+]
+
+const assureChips = ['流程即時更新', '可疑變更自動警示']
+
 export default function HeroAssure() {
-  const [progress] = useState(62)
   const [isVisible, setIsVisible] = useState(false)
   const cardRef = useRef<HTMLElement>(null)
 
@@ -44,37 +64,33 @@ export default function HeroAssure() {
           </div>
         </div>
         <div className="pct">
-          <div className="pct-chip" aria-label={`Progress: ${progress}%`}><b>{progress}</b><span>%</span></div>
-          <div className="pct-bar" aria-hidden="true"><i style={{ width: `${progress}%` }}></i></div>
+          <div className="pct-chip" aria-label={`Progress: ${progressValue}%`}>
+            <b>{progressValue}</b>
+            <span>%</span>
+          </div>
+          <div className="pct-bar" aria-hidden="true">
+            <i style={{ width: `${progressValue}%` }}></i>
+          </div>
         </div>
       </header>
 
       <div className="body">
         <div className="steps">
-          <div className="step done">
-            <div className="dot-wrap"><div className="dot"></div><div className="line"></div></div>
-            <div className="cap"><div className="t">已看屋</div><div className="s">完成現場帶看與基本紀錄</div></div>
-          </div>
-          <div className="step done">
-            <div className="dot-wrap"><div className="dot"></div><div className="line"></div></div>
-            <div className="cap"><div className="t">已出價</div><div className="s">要約與條件已留痕</div></div>
-          </div>
-          <div className="step active">
-            <div className="dot-wrap"><div className="dot"></div><div className="line"></div></div>
-            <div className="cap"><div className="t">雙向簽署</div><div className="s">平台簽署，雙方可回溯查驗</div></div>
-          </div>
-          <div className="step">
-            <div className="dot-wrap"><div className="dot"></div><div className="line"></div></div>
-            <div className="cap"><div className="t">身分驗證</div><div className="s">KYC 驗證與黑名單檢核</div></div>
-          </div>
-          <div className="step">
-            <div className="dot-wrap"><div className="dot"></div><div className="line"></div></div>
-            <div className="cap"><div className="t">金流通知</div><div className="s">代收代付與異常監控</div></div>
-          </div>
-          <div className="step">
-            <div className="dot-wrap"><div className="dot"></div></div>
-            <div className="cap"><div className="t">交屋驗屋</div><div className="s">交付清單與驗屋紀錄</div></div>
-          </div>
+          {assureSteps.map((step, index) => (
+            <div
+              className={`step${step.status !== 'upcoming' ? ` ${step.status}` : ''}`}
+              key={`${step.title}-${step.status}`}
+            >
+              <div className="dot-wrap">
+                <div className="dot"></div>
+                {index < assureSteps.length - 1 && <div className="line"></div>}
+              </div>
+              <div className="cap">
+                <div className="t">{step.title}</div>
+                <div className="s">{step.subtitle}</div>
+              </div>
+            </div>
+          ))}
         </div>
 
         <div className="info">
@@ -83,8 +99,11 @@ export default function HeroAssure() {
             <b style={{ color: 'var(--brand)' }}>你的權益：</b>
             完成<b>身分驗證</b>並開啟<b>金流通知</b>；所有簽署與溝通都在平台留痕，可回溯可查證。
             <div className="chips">
-              <span className="chip">流程即時更新</span>
-              <span className="chip">可疑變更自動警示</span>
+              {assureChips.map((chip) => (
+                <span className="chip" key={chip}>
+                  {chip}
+                </span>
+              ))}
             </div>
           </div>
         </div>
