@@ -1,36 +1,23 @@
-:root {
-  --brand: #1A5FDB;
-  --brand2: #1749D7;
-  --brand-600: #1549C5;
-  --brand-light: #6aa4ff;
-  --mh-brand: #1749D7;
-  --mh-text: #0b1220;
-  --mh-hair: rgba(11, 18, 32, 0.08);
+/* Header specific variables */
+.site-header {
+  --mh-brand: var(--brand);
+  --mh-text: var(--text-primary);
+  --mh-hair: rgba(10, 34, 70, 0.08);
   --mh-pill-bg: rgba(255, 255, 255, 0.72);
   --mh-pill-hover: rgba(255, 255, 255, 0.9);
-  --mh-blur: 12px;
+  --mh-blur: 16px;
   --mh-radius: 14px;
-  --mh-transition: 150ms ease;
-  --text-primary: #333;
-  --text-secondary: #666;
-  --text-tertiary: #999;
-  --neutral-100: #f5f5f5;
-  --border-default: #e5e7eb;
-  --background: #fdf6e3;
-  --highlight: #ffcc33;
-  --cream: #fef9f1;
-}
-
-.site-header {
+  --mh-transition: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  
   position: sticky;
   top: 0;
   z-index: 1000;
-  background: rgba(255, 255, 255, 0.98);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border-bottom: 1px solid rgba(26, 95, 219, 0.08);
   transition: all 0.3s ease;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 4px 20px rgba(26, 95, 219, 0.06);
 }
 
 .header-inner {

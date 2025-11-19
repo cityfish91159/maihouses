@@ -5,11 +5,34 @@
 /* stylelint-enable at-rule-no-unknown */
 
 :root {
-  /* 新擬物風格色彩系統 */
-  --brand: #1749D7;
-  --bg: #EEF2F7;
-  --ink: #0e1530;
-  --muted: #6b7280;
+  /* 新擬物風格色彩系統 - 統一使用設計稿色碼 */
+  --brand: #1A5FDB;
+  --brand-600: #0d3399;
+  --brand-light: #6aa4ff;
+  --brand-lighter: #eef3ff;
+  --brand-fg: #FFFFFF;
+  
+  /* 兼容舊變數 */
+  --brand-primary: var(--brand);
+  
+  /* 背景色 */
+  --bg: #f6f9ff;
+  --bg-page: #f6f9ff;
+  --bg-card: rgba(255, 255, 255, 0.92);
+  
+  /* 文字色 */
+  --ink: #0a2246;
+  --muted: #2d3748;
+  --text-primary: var(--ink);
+  --text-secondary: var(--muted);
+  --text-tertiary: #8a95a5;
+  
+  /* 中性色 */
+  --neutral-50: #f6f9ff;
+  --neutral-100: #f0f5ff;
+  --neutral-200: #d1e3ff;
+  --neutral-800: #2d3748;
+  --neutral-900: #0a2246;
   
   /* 新擬物陰影系統 */
   --shadow-neu-raised: 10px 10px 24px rgba(9,15,30,.16), -10px -10px 24px rgba(255,255,255,.9);
@@ -20,34 +43,11 @@
   --shadow-neu-pill-active: inset 6px 6px 12px rgba(9,15,30,.14), inset -6px -6px 12px rgba(255,255,255,.9);
   --shadow-neu-badge: inset 4px 4px 10px rgba(9,15,30,.08), inset -4px -4px 10px rgba(255,255,255,.85);
   
-  /* 品牌色 - 保留舊變數以兼容 */
-  --brand-primary: #1749D7;
-  --brand-600: #1550C0;
-  --brand-light: #6aa4ff;
-  --brand-lighter: #eef3ff;
-  --brand-fg: #FFFFFF;
-  
   /* 漸層 */
-  --gradient-button: linear-gradient(135deg, #1749D7 0%, #1550C0 100%);
-  --gradient-ask: linear-gradient(135deg, #f0f4ff 0%, #e8f0fe 100%);
+  --gradient-button: linear-gradient(135deg, #1A5FDB 0%, #0d3399 100%);
+  --gradient-ask: linear-gradient(135deg, #f0f5ff 0%, #e8f1ff 100%);
   
-  /* 中性色 */
-  --neutral-50: #f9fafb;
-  --neutral-100: #f3f4f6;
-  --neutral-800: #1f2937;
-  --neutral-900: #111827;
-  
-  /* 背景色 */
-  --bg-page: #EEF2F7;
-  --bg-card: #EEF2F7;
-  --bg-card-hero: #EEF2F7;
-  
-  /* 文字色 */
-  --text-primary: #0e1530;
-  --text-secondary: #6b7280;
-  --text-tertiary: #8a95a5;
-  
-  /* 圓角系統 - 新擬物風格 */
+  /* 圓角系統 */
   --r-sm: 12px;
   --r-md: 16px;
   --r-lg: 20px;
