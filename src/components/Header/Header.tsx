@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import './Header.css'
 
 type QuickAction = {
@@ -38,13 +39,13 @@ const quickActions: QuickAction[] = [
   },
   {
     label: '登入',
-    href: '/maihouses/auth.html?mode=login',
+    href: '/auth/login',
     iconPath:
       'M10 17l5-5-5-5v3H3v4h7v3zm9-12h-8v2h8v10h-8v2h8a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2z',
   },
   {
     label: '註冊',
-    href: '/maihouses/auth.html?mode=signup',
+    href: '/auth/register',
     iconPath: 'M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5zm-9 9a9 9 0 0 1 18 0z',
     primary: true,
   },
@@ -94,18 +95,32 @@ export default function Header() {
           </div>
           <div className="auth">
             <nav className="mh-nav-right" aria-label="主要動作">
-              {quickActions.map((action) => (
-                <a
-                  key={action.label}
-                  className={`mh-pill${action.primary ? ' mh-pill--primary' : ''}`}
-                  href={action.href}
-                >
-                  <svg className="mh-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                    <path d={action.iconPath} />
-                  </svg>
-                  <span>{action.label}</span>
-                </a>
-              ))}
+              {quickActions.map((action) => {
+                const isStatic = action.href.endsWith('.html')
+                const className = `mh-pill${action.primary ? ' mh-pill--primary' : ''}`
+                const content = (
+                  <>
+                    <svg className="mh-icon" viewBox="0 0 24 24" aria-hidden="true">
+                      <path d={action.iconPath} />
+                    </svg>
+                    <span className="mh-label">{action.label}</span>
+                  </>
+                )
+
+                if (isStatic) {
+                  return (
+                    <a key={action.label} className={className} href={action.href}>
+                      {content}
+                    </a>
+                  )
+                }
+
+                return (
+                  <Link key={action.label} className={className} to={action.href}>
+                    {content}
+                  </Link>
+                )
+              })}
             </nav>
           </div>
         </div>
