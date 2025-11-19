@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import checker from 'vite-plugin-checker'
 
 // 為避免在 TS 下找不到 process 型別，這裡做最小宣告（不影響執行）
 // 若需要更嚴謹的型別，可另行安裝 @types/node 並在 tsconfig 中啟用
@@ -12,11 +13,22 @@ const hmrHost = inCodespaces
   : 'localhost'
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    checker({
+      typescript: true,
+      overlay: { initialIsOpen: false },
+    }),
+  ],
   base: '/maihouses/',
   build: {
     outDir: 'docs',
-    sourcemap: false,
+    sourcemap: true, // Enable sourcemaps for debugging
+  },
+  test: {
+    globals: true,
+    environment: 'jsdom',
+    setupFiles: './src/test/setup.ts',
   },
   server: {
     host: true,
