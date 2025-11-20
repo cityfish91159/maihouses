@@ -41,9 +41,17 @@ export default function UAGPage() {
       // setTimeout(() => setAppData({ ...MOCK_DB }), 500);
       setAppData({ ...MOCK_DB }); // Direct load for now
     } else {
-      // Live API implementation would go here
-      console.log('Live API not implemented, falling back to mock');
-      setAppData({ ...MOCK_DB });
+      // Live API implementation
+      try {
+        const res = await fetch('/api/uag/dashboard');
+        if (!res.ok) throw new Error('API request failed');
+        const data = await res.json();
+        setAppData(data);
+      } catch (e) {
+        console.warn('Live API failed, falling back to mock', e);
+        alert('目前無法連接後端 API (Live Mode)，系統自動降級顯示 Mock 資料。');
+        setAppData({ ...MOCK_DB });
+      }
     }
   };
 
