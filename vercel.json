@@ -2,8 +2,6 @@
   "buildCommand": "npm run build",
   "outputDirectory": "docs",
   "routes": [
-    { "src": "/p/cake.html", "dest": "/p/cake.html" },
-    { "src": "/maihouses/p/cake.html", "dest": "/p/cake.html" },
     { "src": "/maihouses/community-wall_mvp.html", "dest": "/maihouses/community-wall_mvp.html" },
     { "src": "/maihouses/(.*)", "dest": "/$1" },
     { "src": "/maihouses", "dest": "/index.html" },
