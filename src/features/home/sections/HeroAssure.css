@@ -1,7 +1,7 @@
 /* HeroAssure Component Styles */
 .hero-assure-card {
-  --brand: #1749d7;
-  --brand2: #4aa1ff;
+  /* --brand: #1749d7; Removed to use global Deep Blue */
+  --brand2: var(--brand-light); /* Use global Cyan */
   --muted: #6c7b91;
   --line: #e6edf7;
   --soft: #f7f9fe;
@@ -33,7 +33,7 @@
   justify-content: space-between;
   gap: 16px;
   padding: 16px 20px;
-  background: linear-gradient(135deg, #e8f0ff, #d9e6ff); /* 加深一個色階 */
+  background: linear-gradient(135deg, #f0f5fa, #e6f0ff); /* Lighter background */
   border-radius: 16px; /* 四個角都圓角 */
 }
 
@@ -53,7 +53,7 @@
   color: #fff;
   font-weight: 900;
   font-size: 18px;
-  box-shadow: 0 6px 14px rgba(23, 73, 215, 0.25);
+  box-shadow: 0 6px 14px rgba(0, 78, 124, 0.25);
 }
 
 .hero-assure-card .title {
@@ -86,7 +86,7 @@
   background: var(--brand);
   padding: 6px 10px;
   border-radius: 12px 0 0 12px;
-  box-shadow: 0 2px 6px rgba(23, 73, 215, 0.15);
+  box-shadow: 0 2px 6px rgba(0, 78, 124, 0.15);
 }
 
 .hero-assure-card .pct-chip {
@@ -99,7 +99,7 @@
   border-left: none;
   border-radius: 0 12px 12px 0;
   padding: 6px 12px 6px 10px;
-  box-shadow: 0 2px 6px rgba(23, 73, 215, 0.15);
+  box-shadow: 0 2px 6px rgba(0, 78, 124, 0.15);
 }
 
 .hero-assure-card .pct-chip b {
@@ -157,7 +157,7 @@
   border-radius: 50%;
   background: #fff;
   border: var(--dot-border) solid #cfe1ff;
-  box-shadow: 0 0 0 8px #4aa1ff22, 0 4px 10px rgba(23, 73, 215, 0.12);
+  box-shadow: 0 0 0 8px rgba(0, 159, 232, 0.15), 0 4px 10px rgba(0, 78, 124, 0.12);
   position: relative;
   z-index: 2;
 }
@@ -196,7 +196,7 @@
 }
 
 .hero-assure-card .info {
-  border: 1px dashed rgba(23, 73, 215, 0.45);
+  border: 1px dashed rgba(0, 78, 124, 0.45);
   border-radius: 12px;
   padding: 10px 16px;
   background: #fff;
@@ -231,7 +231,7 @@
   background: #eef3ff;
   color: var(--brand);
   font-weight: 800;
-  box-shadow: 0 1px 3px rgba(23, 73, 215, 0.1);
+  box-shadow: 0 1px 3px rgba(0, 78, 124, 0.1);
   white-space: nowrap;
 }
 
@@ -265,7 +265,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 8px rgba(23, 73, 215, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 78, 124, 0.1);
   transition: all 0.2s ease;
 }
 
@@ -273,7 +273,7 @@
   background: linear-gradient(to bottom, #eaf0ff, #e3edff);
   border-color: var(--brand);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(23, 73, 215, 0.15);
+  box-shadow: 0 4px 12px rgba(0, 78, 124, 0.15);
 }
 
 @media (max-width: 768px) {
