@@ -460,3 +460,133 @@ Based on the code review feedback, the following optimizations were applied to e
 - [x] Mutation Validation
 
 **Current Version**: v11.1 (Optimized)
+
+## 13. 最終代碼快照 (Final Code Snapshot)
+
+**日期**: 2025-11-20
+**版本**: v11.1
+
+以下是本次重構與優化後的關鍵檔案內容快照，供後續維護參考。
+
+### 13.1 src/pages/UAG/index.tsx
+```tsx
+import React, { useState, useRef, useEffect } from 'react';
+import { Toaster, toast } from 'react-hot-toast';
+import { ErrorBoundary } from 'react-error-boundary';
+import { QueryErrorResetBoundary } from '@tanstack/react-query';
+
+import styles from './UAG.module.css';
+import { useUAG } from './hooks/useUAG';
+import { useLeadSelection } from './hooks/useLeadSelection';
+import { Lead } from './types/uag.types';
+
+import { UAGHeader } from './components/UAGHeader';
+import { UAGFooter } from './components/UAGFooter';
+import { UAGLoadingSkeleton } from './components/UAGLoadingSkeleton';
+import { UAGErrorState } from './components/UAGErrorState';
+
+import RadarCluster from './components/RadarCluster';
+import ActionPanel from './components/ActionPanel';
+import AssetMonitor from './components/AssetMonitor';
+import ListingFeed from './components/ListingFeed';
+import MaiCard from './components/MaiCard';
+import TrustFlow from './components/TrustFlow';
+
+function UAGPageContent() {
+  const { data: appData, isLoading, error, buyLead, isBuying, useMock, toggleMode } = useUAG();
+  const { selectedLead, selectLead, close } = useLeadSelection();
+  const actionPanelRef = useRef<HTMLDivElement>(null);
+
+  const onBuyLead = async (leadId: string) => {
+    if (!appData || isBuying) return;
+    buyLead(leadId);
+    close();
+  };
+
+  if (isLoading) return <UAGLoadingSkeleton />;
+  if (!appData) return null;
+
+  return (
+    <div className={styles['uag-page']}>
+      <Toaster position="top-center" />
+      <UAGHeader />
+      <main className={styles['uag-container']}>
+        <div className={styles['uag-grid']}>
+          <RadarCluster leads={appData.leads} onSelectLead={selectLead} />
+          <ActionPanel 
+            ref={actionPanelRef}
+            selectedLead={selectedLead} 
+            onBuyLead={onBuyLead} 
+            isProcessing={isBuying} 
+          />
+          <AssetMonitor leads={appData.leads} />
+          <ListingFeed listings={appData.listings} feed={appData.feed} />
+          <MaiCard />
+          <TrustFlow />
+        </div>
+      </main>
+      <UAGFooter user={appData.user} useMock={useMock} toggleMode={toggleMode} />
+    </div>
+  );
+}
+
+export default function UAGPage() {
+  return (
+    <QueryErrorResetBoundary>
+      {({ reset }) => (
+        <ErrorBoundary
+          onReset={reset}
+          FallbackComponent={UAGErrorState}
+        >
+          <UAGPageContent />
+        </ErrorBoundary>
+      )}
+    </QueryErrorResetBoundary>
+  );
+}
+```
+
+### 13.2 src/pages/UAG/hooks/useUAG.ts (Partial)
+```typescript
+// ... imports ...
+export function useUAG() {
+  // ... setup ...
+  const buyLeadMutation = useMutation({
+    mutationFn: async ({ leadId, cost, grade }: { leadId: string; cost: number; grade: Grade }) => {
+      // ... implementation ...
+    },
+    onMutate: async ({ leadId, cost, grade }) => {
+      await queryClient.cancelQueries({ queryKey: ['uagData'] });
+      const previousData = queryClient.getQueryData<AppData>(['uagData', useMock, session?.user?.id]);
+
+      if (previousData) {
+        // Optimistic validation
+        const lead = previousData.leads.find(l => l.id === leadId);
+        if (lead) {
+           const { valid, error } = validateQuota(lead, previousData.user);
+           if (!valid) {
+             throw new Error(error || "配額不足 (Optimistic Check)");
+           }
+        }
+        // ... optimistic update ...
+      }
+      return { previousData };
+    },
+    // ... onError, onSettled ...
+  });
+  // ... return ...
+}
+```
+
+## 14. 未來優化建議 (Future Roadmap / v12)
+
+以下建議已記錄，可作為 v12 版本的開發目標：
+
+1.  **QueryClient 單例化**: 將 `QueryClient` 配置提取至 `src/lib/queryClient.ts`，避免潛在的重複實例化問題。
+2.  **Service Layer 增強**: 引入快取 (Cache) 與重試 (Retry) 機制，提升 API 穩定性。
+3.  **Zod Schema 嚴格化**: 增加更細緻的驗證規則 (如台灣手機號碼格式)。
+4.  **效能進階優化**: 針對大量 Leads 列表引入虛擬化 (Virtualization) 技術。
+5.  **狀態持久化**: 使用 `lz-string` 壓縮並持久化應用狀態。
+
+---
+**End of Report**
