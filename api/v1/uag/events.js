@@ -16,6 +16,29 @@ const supabase = SUPABASE_URL && SUPABASE_SERVICE_KEY
   ? createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY)
   : null
 
+const MAX_EVENTS_PER_BATCH = 200
+
+const normalizeBody = body => {
+  if (!body) return []
+  if (typeof body === 'string') {
+    try {
+      return JSON.parse(body)
+    } catch (err) {
+      console.warn('[UAG] Failed to parse body as JSON', err)
+      return []
+    }
+  }
+  return body
+}
+
+const isValidEvent = e =>
+  e && typeof e === 'object' &&
+  typeof e.event === 'string' && e.event.trim() !== '' &&
+  typeof e.page === 'string' && e.page.trim() !== '' &&
+  typeof e.sessionId === 'string' && e.sessionId.trim() !== '' &&
+  typeof e.ts === 'string' && e.ts.trim() !== '' &&
+  typeof e.requestId === 'string' && e.requestId.trim() !== ''
+
 export default async function handler(req, res) {
   // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*')
@@ -36,15 +59,22 @@ export default async function handler(req, res) {
   }
 
   try {
-    const events = Array.isArray(req.body) ? req.body : [req.body]
-    
+    const rawBody = normalizeBody(req.body)
+    const events = Array.isArray(rawBody) ? rawBody : [rawBody]
+
+    if (events.length > MAX_EVENTS_PER_BATCH) {
+      return res.status(413).json({ error: `Too many events: max ${MAX_EVENTS_PER_BATCH}` })
+    }
+
     // 驗證事件格式
-    const validEvents = events.filter(e => 
-      e.event && e.page && e.sessionId && e.ts && e.requestId
-    )
+    const validEvents = events.filter(isValidEvent)
 
     if (validEvents.length === 0) {
       return res.status(400).json({ error: 'Invalid event format' })
+    }
+
+    if (validEvents.length !== events.length) {
+      console.warn(`[UAG] Dropped ${events.length - validEvents.length} invalid events from batch`)
     }
 
     // 轉換格式以符合資料庫 schema
@@ -55,12 +85,12 @@ export default async function handler(req, res) {
       session_id: e.sessionId,
       user_id: e.userId || null,
       ts: e.ts,
-      meta: e.meta || {},
+      meta: e.meta && typeof e.meta === 'object' ? e.meta : {},
       request_id: e.requestId
     }))
 
     // 批次插入 Supabase (使用 upsert 避免重複)
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from('uag_events')
       .upsert(dbEvents, { 
         onConflict: 'request_id',
@@ -72,9 +102,11 @@ export default async function handler(req, res) {
       
       // 如果是速率限制,返回 retry 時間
       if (error.code === '42P05' || error.message?.includes('rate limit')) {
+        const retryAfterMs = 60000
+        res.setHeader('Retry-After', Math.ceil(retryAfterMs / 1000))
         return res.status(429).json({ 
           error: 'Rate limit exceeded',
-          retryAfterMs: 60000 
+          retryAfterMs
         })
       }
       

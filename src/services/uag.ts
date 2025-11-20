@@ -13,14 +13,13 @@ type Uag = {
 
 const KEY = 'uag_queue'
 const CAP = 10000
+const MAX_BATCH = 200
 
 declare global {
-  interface Window {
-    __UAG__?: { queue: Uag[]; timer?: number; backoff: number; attempts: number }
-  }
+  var __UAG__: { queue: Uag[]; timer?: number; backoff: number; attempts: number } | undefined
 }
 
-const G = window.__UAG__ || (window.__UAG__ = { queue: [], backoff: 10_000, attempts: 0 })
+const G = globalThis.__UAG__ || (globalThis.__UAG__ = { queue: [], backoff: 10_000, attempts: 0 })
 
 try {
   G.queue = JSON.parse(localStorage.getItem(KEY) || '[]')
@@ -52,7 +51,7 @@ async function flush(batch: Uag[]) {
   } else {
     G.attempts++
     const ra = (r as any)?.data?.retryAfterMs
-    G.backoff = Math.min(ra ? ra : G.backoff * 2, MAX)
+    G.backoff = Math.min(ra ?? (G.backoff * 2), MAX)
   }
 }
 
@@ -63,7 +62,8 @@ function schedule() {
 
 function tick() {
   if (G.queue.length) {
-    flush(G.queue.slice())
+    const batch = G.queue.slice(0, MAX_BATCH)
+    flush(batch)
       .catch(() => {
         G.attempts++
         G.backoff = Math.min(G.backoff * 2, MAX)
@@ -77,6 +77,11 @@ function tick() {
 schedule()
 
 export function trackEvent(event: string, page: string, targetId?: string) {
+  if (!event?.trim() || !page?.trim()) {
+    console.warn('[UAG] 無效的事件或頁面名稱，已忽略上報')
+    return
+  }
+
   const ev: Uag = {
     event,
     page,

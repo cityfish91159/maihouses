@@ -282,17 +282,20 @@ app.get('/api/v1/dashboard',
           supabase.from('listings')
             .select('id, title, tags, view_count, click_count, fav_count, thumb_color')
             .order('created_at', { ascending: false }).limit(50)
-        ).catch(() => ({ data: [] })),
+        ),
         // Feed (Top 50, specific fields)
         queryWithTimeout(() => 
           supabase.from('feed')
             .select('id, title, meta, body, created_at')
             .order('created_at', { ascending: false }).limit(50)
-        ).catch(() => ({ data: [] }))
+        )
       ]);
 
-      if (userRes.error) throw httpError(ERR.NOT_FOUND, '使用者不存在');
-      if (leadsRes.error) throw httpError(ERR.DB_ERROR, '讀取客戶失敗');
+      // B0: Check all errors explicitly
+      if (userRes.error) { logger.error({ err: userRes.error }, 'User Query Failed'); throw httpError(ERR.DB_ERROR, 'User Query Failed'); }
+      if (leadsRes.error) { logger.error({ err: leadsRes.error }, 'Leads Query Failed'); throw httpError(ERR.DB_ERROR, 'Leads Query Failed'); }
+      if (listingsRes.error) { logger.error({ err: listingsRes.error }, 'Listings Query Failed'); throw httpError(ERR.DB_ERROR, 'Listings Query Failed'); }
+      if (feedRes.error) { logger.error({ err: feedRes.error }, 'Feed Query Failed'); throw httpError(ERR.DB_ERROR, 'Feed Query Failed'); }
 
       const payload = {
         user: mapUser(userRes.data),
@@ -341,7 +344,14 @@ app.post('/api/v1/leads/:id/purchase',
 
       if (error) {
         logger.error({ error, leadId, userId }, 'Purchase RPC Failed');
-        throw httpError(ERR.RPC_ERROR, '交易處理失敗');
+        // B1: Return clean error code to client, keep raw error in logs
+        return sendResponse(res, {
+          success: false,
+          code: error.code || 'BUY_LEAD_ERROR',
+          message: 'Transaction Failed',
+          status: 400,
+          requestId: req.requestId
+        });
       }
 
       if (!data || data.success === false) {

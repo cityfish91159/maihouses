@@ -1,6 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import './UAG.css';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Toaster, toast } from 'react-hot-toast';
+import styles from './UAG.module.css';
 import { MOCK_DB, AppData, Lead } from './mockData';
+import { GRADE_HOURS } from './constants';
 import RadarCluster from './components/RadarCluster';
 import ActionPanel from './components/ActionPanel';
 import AssetMonitor from './components/AssetMonitor';
@@ -9,34 +11,30 @@ import MaiCard from './components/MaiCard';
 import TrustFlow from './components/TrustFlow';
 import { supabase } from '../../lib/supabase';
 
+// Custom hook for interval
+function useInterval(callback: () => void, delay: number | null) {
+  const savedCallback = useRef(callback);
+
+  useEffect(() => {
+    savedCallback.current = callback;
+  }, [callback]);
+
+  useEffect(() => {
+    if (delay !== null) {
+      const id = setInterval(() => savedCallback.current(), delay);
+      return () => clearInterval(id);
+    }
+  }, [delay]);
+}
+
 export default function UAGPage() {
   const [appData, setAppData] = useState<AppData | null>(null);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [useMock, setUseMock] = useState(true);
+  const actionPanelRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    // Initialize mode from localStorage or URL
-    const params = new URLSearchParams(window.location.search);
-    const urlMode = params.get('mode');
-    let initialMock = true;
-    
-    if (urlMode === 'mock' || urlMode === 'live') {
-      initialMock = urlMode === 'mock';
-      localStorage.setItem('uag_mode', urlMode);
-    } else {
-      const saved = localStorage.getItem('uag_mode');
-      if (saved === 'mock' || saved === 'live') {
-        initialMock = saved === 'mock';
-      }
-    }
-    setUseMock(initialMock);
-    
-    // Initial Load
-    loadData(initialMock);
-  }, []);
-
-  const loadData = async (mockMode: boolean) => {
+  const loadData = useCallback(async (mockMode: boolean) => {
     if (mockMode) {
       // Simulate API delay
       // setTimeout(() => setAppData({ ...MOCK_DB }), 500);
@@ -100,25 +98,67 @@ export default function UAGPage() {
 
       } catch (e) {
         console.warn('Live API failed, falling back to mock', e);
-        alert('目前無法連接 Supabase 資料庫，或資料表尚未建立。系統自動降級顯示 Mock 資料。');
+        toast.error('目前無法連接 Supabase 資料庫，或資料表尚未建立。系統自動降級顯示 Mock 資料。');
         setAppData({ ...MOCK_DB });
       }
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    // Initialize mode from localStorage or URL
+    const params = new URLSearchParams(window.location.search);
+    const urlMode = params.get('mode');
+    let initialMock = true;
+    
+    if (urlMode === 'mock' || urlMode === 'live') {
+      initialMock = urlMode === 'mock';
+      localStorage.setItem('uag_mode', urlMode);
+    } else {
+      const saved = localStorage.getItem('uag_mode');
+      if (saved === 'mock' || saved === 'live') {
+        initialMock = saved === 'mock';
+      }
+    }
+    setUseMock(initialMock);
+  }, []);
+
+  useEffect(() => {
+    loadData(useMock).catch(err => {
+      console.error(err);
+      toast.error("載入失敗，請重試");
+    });
+  }, [useMock, loadData]);
+
+  // Simulate countdown for mock data
+  useInterval(() => {
+    if (useMock && appData) {
+      setAppData(prev => {
+        if (!prev) return null;
+        return {
+          ...prev,
+          leads: prev.leads.map(lead => {
+            if (lead.remainingHours > 0) {
+              return { ...lead, remainingHours: Math.max(0, lead.remainingHours - 0.1) };
+            }
+            return lead;
+          })
+        };
+      });
+    }
+  }, 36000); // Check every 36s (0.01h)
 
   const toggleMode = () => {
     const newMode = !useMock;
     setUseMock(newMode);
     localStorage.setItem('uag_mode', newMode ? 'mock' : 'live');
-    loadData(newMode);
+    // loadData is triggered by useEffect
   };
 
   const handleSelectLead = (lead: Lead) => {
     setSelectedLead(lead);
     // Scroll to action panel on mobile
     if (window.innerWidth <= 1024) {
-      const el = document.getElementById('action-panel-container');
-      el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      actionPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   };
 
@@ -129,41 +169,54 @@ export default function UAGPage() {
     if (useMock) {
       // Simulate API call
       setTimeout(() => {
-        // Deep copy to avoid direct mutation of state before setAppData
-        const newAppData = JSON.parse(JSON.stringify(appData));
-        const lead = newAppData.leads.find((l: Lead) => l.id === leadId);
+        setAppData(prev => {
+          if (!prev) return null;
+          
+          const leadIndex = prev.leads.findIndex(l => l.id === leadId);
+          if (leadIndex === -1) {
+            toast.error("客戶不存在");
+            return prev;
+          }
+
+          const lead = prev.leads[leadIndex];
+          if (lead.status !== 'new') {
+            toast.error("此客戶已被購買");
+            return prev;
+          }
+
+          if (prev.user.points < lead.price) {
+            toast.error("點數不足 (Mock)");
+            return prev;
+          }
+
+          // Immutable update
+          const updatedUser = {
+            ...prev.user,
+            points: prev.user.points - lead.price,
+            quota: {
+              ...prev.user.quota,
+              s: lead.grade === 'S' ? prev.user.quota.s - 1 : prev.user.quota.s,
+              a: lead.grade === 'A' ? prev.user.quota.a - 1 : prev.user.quota.a
+            }
+          };
+
+          const updatedLeads = [...prev.leads];
+          updatedLeads[leadIndex] = {
+            ...lead,
+            status: 'purchased',
+            purchasedAt: Date.now(),
+            remainingHours: GRADE_HOURS[lead.grade] || 336
+          };
+
+          toast.success("交易成功 (Mock)");
+          return {
+            ...prev,
+            user: updatedUser,
+            leads: updatedLeads
+          };
+        });
         
-        if (!lead) {
-          alert("客戶不存在");
-          setIsProcessing(false);
-          return;
-        }
-
-        if (lead.status !== 'new') {
-          alert("此客戶已被購買");
-          setIsProcessing(false);
-          return;
-        }
-
-        if (newAppData.user.points < lead.price) {
-          alert("點數不足 (Mock)");
-          setIsProcessing(false);
-          return;
-        }
-
-        // Execute transaction
-        newAppData.user.points -= lead.price;
-        if (lead.grade === 'S') newAppData.user.quota.s--;
-        if (lead.grade === 'A') newAppData.user.quota.a--;
-
-        lead.status = 'purchased';
-        lead.purchasedAt = Date.now();
-        const total = lead.grade === 'S' ? 120 : lead.grade === 'A' ? 72 : 336;
-        lead.remainingHours = total;
-
-        setAppData(newAppData);
-        setSelectedLead(null); // Deselect or update selection
-        alert("交易成功 (Mock)");
+        setSelectedLead(null);
         setIsProcessing(false);
       }, 800);
     } else {
@@ -181,14 +234,14 @@ export default function UAGPage() {
 
         if (error) throw error;
 
-        alert("交易成功 (Live)");
+        toast.success("交易成功 (Live)");
         // Reload data to reflect changes
         loadData(false);
         setSelectedLead(null);
 
       } catch (e: any) {
         console.error('Buy lead failed', e);
-        alert(`交易失敗: ${e.message || '未知錯誤'}`);
+        toast.error(`交易失敗: ${e.message || '未知錯誤'}`);
       } finally {
         setIsProcessing(false);
       }
@@ -198,21 +251,23 @@ export default function UAGPage() {
   if (!appData) return <div className="p-6 text-center">載入中...</div>;
 
   return (
-    <div className="uag-page">
-      <header className="uag-header">
-        <div className="uag-header-inner">
-          <div className="uag-logo"><div className="uag-logo-badge">邁</div><span>邁房子廣告後台</span></div>
-          <div className="uag-breadcrumb"><span>游杰倫 21世紀不動產河南店</span><span className="uag-badge pro">專業版 PRO</span></div>
+    <div className={styles['uag-page']}>
+      <Toaster position="top-center" />
+      <header className={styles['uag-header']}>
+        <div className={styles['uag-header-inner']}>
+          <div className={styles['uag-logo']}><div className={styles['uag-logo-badge']}>邁</div><span>邁房子廣告後台</span></div>
+          <div className={styles['uag-breadcrumb']}><span>游杰倫 21世紀不動產河南店</span><span className={`${styles['uag-badge']} ${styles['pro']}`}>專業版 PRO</span></div>
         </div>
       </header>
 
-      <main className="uag-container">
-        <div className="uag-grid">
+      <main className={styles['uag-container']}>
+        <div className={styles['uag-grid']}>
           {/* [1] UAG Radar */}
           <RadarCluster leads={appData.leads} onSelectLead={handleSelectLead} />
 
           {/* [Action Panel] */}
           <ActionPanel 
+            ref={actionPanelRef}
             selectedLead={selectedLead} 
             onBuyLead={handleBuyLead} 
             isProcessing={isProcessing} 
@@ -232,14 +287,14 @@ export default function UAGPage() {
         </div>
       </main>
 
-      <div className="uag-footer-bar">
+      <div className={styles['uag-footer-bar']}>
         <div style={{ marginRight: 'auto', fontSize: '12px', color: 'var(--ink-300)' }}>
           系統模式：<strong style={{ color: useMock ? '#f59e0b' : '#16a34a' }}>{useMock ? "Local Mock" : "Live API"}</strong>
           <button onClick={toggleMode} style={{ marginLeft: '10px', fontSize: '10px', cursor: 'pointer', border: '1px solid #ccc', padding: '2px 6px', borderRadius: '4px' }}>切換模式</button>
         </div>
-        <button className="uag-btn">方案設定</button>
-        <button className="uag-btn primary">加值點數</button>
-        <span className="uag-badge" style={{ fontSize: '14px', background: '#fff8dc', color: '#92400e', borderColor: '#fcd34d' }}>
+        <button className={styles['uag-btn']}>方案設定</button>
+        <button className={`${styles['uag-btn']} ${styles['primary']}`}>加值點數</button>
+        <span className={styles['uag-badge']} style={{ fontSize: '14px', background: '#fff8dc', color: '#92400e', borderColor: '#fcd34d' }}>
           點數 <span id="user-points">{appData.user.points}</span>
         </span>
       </div>

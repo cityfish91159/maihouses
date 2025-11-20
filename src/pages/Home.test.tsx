@@ -4,6 +4,23 @@ import Home from './Home'
 import { MemoryRouter } from 'react-router-dom'
 import type { AppConfig, RuntimeOverrides } from '../app/config'
 
+// Mock services to prevent network calls
+vi.mock('../services/api', () => ({
+  getMeta: vi.fn().mockResolvedValue({ 
+    ok: true, 
+    data: { 
+      maintenance: false, 
+      backendVersion: '1.0.0',
+      apiVersion: 'v1'
+    } 
+  }),
+  apiFetch: vi.fn().mockResolvedValue({ ok: true, data: {} })
+}))
+
+vi.mock('../services/uag', () => ({
+  trackEvent: vi.fn()
+}))
+
 // Mock child components to isolate Home logic
 vi.mock('../components/Header/Header', () => ({
   default: () => <div data-testid="mock-header">Header</div>

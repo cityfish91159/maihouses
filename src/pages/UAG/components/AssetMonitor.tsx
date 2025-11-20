@@ -1,5 +1,6 @@
 import React from 'react';
 import { Lead } from '../mockData';
+import styles from '../UAG.module.css';
 
 interface AssetMonitorProps {
   leads: Lead[];
@@ -9,16 +10,16 @@ export default function AssetMonitor({ leads }: AssetMonitorProps) {
   const boughtLeads = leads.filter(l => l.status === 'purchased');
 
   return (
-    <section className="uag-card k-span-6">
-      <div className="uag-card-header">
+    <section className={`${styles['uag-card']} ${styles['k-span-6']}`}>
+      <div className={styles['uag-card-header']}>
         <div>
-          <div className="uag-card-title">已購客戶資產與保護監控</div>
-          <div className="uag-card-sub">S 級 120hr / A 級 72hr 獨家倒數｜B/C/F 級 14 天防撞</div>
+          <div className={styles['uag-card-title']}>已購客戶資產與保護監控</div>
+          <div className={styles['uag-card-sub']}>S 級 120hr / A 級 72hr 獨家倒數｜B/C/F 級 14 天防撞</div>
         </div>
-        <div className="uag-actions"><button className="uag-btn">匯出報表</button></div>
+        <div className={styles['uag-actions']}><button className={styles['uag-btn']}>匯出報表</button></div>
       </div>
       <div style={{ overflowX: 'auto' }}>
-        <table className="monitor-table">
+        <table className={styles['monitor-table']}>
           <thead>
             <tr>
               <th style={{ width: '25%' }}>客戶等級/名稱</th>
@@ -61,12 +62,12 @@ export default function AssetMonitor({ leads }: AssetMonitorProps) {
                     <td data-label="保護期倒數">
                       <div style={{ fontSize: '11px', fontWeight: 700, marginBottom: '2px', display: 'flex', justifyContent: 'space-between' }}>
                         <span style={{ color: colorVar }}>{protectText}</span>
-                        <span className="t-countdown">{timeDisplay}</span>
+                        <span className={styles['t-countdown']}>{timeDisplay}</span>
                       </div>
-                      <div className="progress-bg"><div className="progress-fill" style={{ width: `${percent}%`, background: colorVar }}></div></div>
+                      <div className={styles['progress-bg']}><div className={styles['progress-fill']} style={{ width: `${percent}%`, background: colorVar }}></div></div>
                     </td>
-                    <td data-label="目前狀態"><span className="uag-badge" style={{ background: '#f0fdf4', color: '#16a34a', border: 'none' }}>簡訊已發送</span></td>
-                    <td data-label="操作"><button className="uag-btn primary" style={{ padding: '4px 12px', fontSize: '12px' }}>寫紀錄 / 預約</button></td>
+                    <td data-label="目前狀態"><span className={styles['uag-badge']} style={{ background: '#f0fdf4', color: '#16a34a', border: 'none' }}>簡訊已發送</span></td>
+                    <td data-label="操作"><button className={`${styles['uag-btn']} ${styles['primary']}`} style={{ padding: '4px 12px', fontSize: '12px' }}>寫紀錄 / 預約</button></td>
                   </tr>
                 );
               })
