@@ -1,0 +1,142 @@
+// api/analyze-behavior.js
+// UAG Grading Engine v5.0 (Optimization Update)
+// Implements: SQL Aggregation, uag_leads Upsert, Per-Property Scoring
+
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY;
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+export default async function handler(req, res) {
+  // CORS
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  if (req.method === 'OPTIONS') return res.status(200).end();
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+  try {
+    const { sessionId, agentId } = req.body;
+    if (!sessionId) return res.status(400).json({ error: 'Missing sessionId' });
+
+    // 1. Aggregate Stats from uag_event_logs (Single Source of Truth)
+    // We query the logs directly to get the latest state for this session
+    // Optimization: Only look at the last 7 days for anonymous sessions to prevent stale data skewing
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    const { data: events, error } = await supabase
+      .from('uag_event_logs')
+      .select('pid, district, duration, meta, created_at')
+      .eq('session_id', sessionId)
+      .gte('created_at', sevenDaysAgo.toISOString());
+
+    if (error) throw error;
+    if (!events || events.length === 0) return res.status(200).json({ message: 'No recent events to analyze' });
+
+    // 2. Process Events into Prop Stats
+    const propStats = {};
+    const districtTotalDuration = {};
+
+    events.forEach(e => {
+      const pid = e.pid;
+      if (!pid) return;
+
+      if (!propStats[pid]) {
+        propStats[pid] = {
+          pid,
+          district: e.district || 'unknown',
+          duration: 0,
+          visits: 0,
+          maxScroll: 0,
+          strongSignal: false,
+          lastSeen: 0
+        };
+      }
+
+      const meta = typeof e.meta === 'string' ? JSON.parse(e.meta) : e.meta;
+      const duration = e.duration || 0;
+      
+      propStats[pid].duration += duration;
+      propStats[pid].visits += 1;
+      propStats[pid].maxScroll = Math.max(propStats[pid].maxScroll, meta?.scroll_depth || 0);
+      propStats[pid].lastSeen = Math.max(propStats[pid].lastSeen, new Date(e.created_at).getTime());
+      
+      if (meta?.click_line > 0 || meta?.click_call > 0) {
+        propStats[pid].strongSignal = true;
+      }
+
+      // District Totals
+      const dist = e.district || 'unknown';
+      districtTotalDuration[dist] = (districtTotalDuration[dist] || 0) + duration;
+    });
+
+    // 3. Compute Grades & Prepare Upsert
+    const upsertData = [];
+
+    Object.values(propStats).forEach(p => {
+      const competitorDuration = (districtTotalDuration[p.district] || 0) - p.duration;
+      
+      let grade = 'F';
+      let score = 0;
+      
+      // --- S Grade Rules ---
+      if (p.strongSignal) {
+        if (p.duration >= 120) grade = 'S';
+        else if (competitorDuration >= 300) grade = 'S'; // Competitor Weighting
+      }
+
+      // --- A Grade Rules ---
+      if (grade === 'F') {
+        if (p.duration >= 120) grade = 'A';
+        else if (p.visits >= 3 && p.duration >= 60) grade = 'A';
+        else if (p.strongSignal) grade = 'A';
+      }
+
+      // --- B Grade Rules ---
+      if (grade === 'F') {
+        if (p.duration >= 60) grade = 'B';
+        else if (p.visits >= 2) grade = 'B';
+      }
+
+      // --- C Grade Rules ---
+      if (grade === 'F') {
+        if (p.duration >= 30) grade = 'C';
+      }
+
+      // Score Mapping
+      const scoreMap = { 'S': 100, 'A': 80, 'B': 50, 'C': 20, 'F': 5 };
+      score = scoreMap[grade];
+
+      upsertData.push({
+        session_id: sessionId,
+        agent_id: agentId || 'unknown',
+        pid: p.pid,
+        grade,
+        score,
+        last_visit_ts: new Date(p.lastSeen).toISOString(),
+        total_duration: p.duration,
+        visit_count: p.visits,
+        district: p.district,
+        updated_at: new Date().toISOString()
+      });
+    });
+
+    // 4. Batch Upsert to uag_leads
+    if (upsertData.length > 0) {
+      const { error: upsertError } = await supabase
+        .from('uag_leads')
+        .upsert(upsertData, { onConflict: 'session_id, agent_id, pid' });
+      
+      if (upsertError) throw upsertError;
+    }
+
+    return res.status(200).json({ success: true, processed: upsertData.length });
+
+  } catch (err) {
+    console.error('Analysis Error:', err);
+    return res.status(500).json({ error: err.message });
+  }
+}

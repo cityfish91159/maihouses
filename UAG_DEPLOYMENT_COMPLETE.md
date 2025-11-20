@@ -1,27 +1,28 @@
-# ✅ UAG 業務廣告後台部署完成!
+# ✅ UAG v8.0 業務廣告後台部署完成!
 
 ## 📦 已建立的檔案
 
-1. **`supabase-schema.sql`** - Supabase 資料庫 Schema
-   - `uag_events` 資料表
-   - 索引優化
-   - Views: `uag_daily_stats`, `uag_user_journey`
-   - RLS 安全策略
+1. **`supabase-uag-v8.sql`** - Supabase 資料庫 Schema (v8.0)
+   - `uag_sessions` (熱數據摘要)
+   - `uag_events` (熱數據日誌)
+   - `uag_events_archive` (冷數據歸檔)
+   - `uag_lead_rankings` (Materialized View 智慧快取)
+   - RPC: `track_uag_event_v8` (原子化更新)
 
-2. **`api/v1/uag/events.js`** - Vercel Serverless API
-   - 接收前端追蹤事件
-   - 批次寫入 Supabase
-   - 重複防護 (request_id)
-   - 錯誤處理 & 重試機制
+2. **`api/uag-track.js`** - Vercel Serverless API
+   - 呼叫 v8 RPC 進行原子化寫入
+   - 支援指紋識別與 Session 恢復
 
-3. **`public/p/uag-dashboard.html`** - UAG 後台管理介面
-   - 即時數據總覽
-   - 熱門事件/頁面排行
-   - 最近事件記錄
-   - 時間範圍篩選
+3. **`api/archive-handler.js`** - 自動歸檔 API
+   - Cron Job 專用，定期將舊資料移至 Archive 表
 
-4. **`UAG_DEPLOYMENT_GUIDE.md`** - 完整部署文件
-5. **`UAG_QUICK_START.md`** - 快速啟動指南
+4. **`api/quick-filter.js`** - 極速篩選 API
+   - 直接查詢 Materialized View，提供秒級儀表板體驗
+
+5. **`public/js/tracker.js`** - 前端追蹤器 (EnhancedTracker)
+   - 支援指紋識別 (Fingerprinting)
+   - 多重儲存 (LocalStorage/Session/Cookie)
+   - 事件批次處理 (EventBatcher)
 
 ## 🚀 下一步操作 (必須手動完成)
 
@@ -33,22 +34,24 @@ open https://supabase.com/dashboard
 
 # 1. 選擇專案
 # 2. 點選 SQL Editor
-# 3. 複製 supabase-schema.sql 的內容
+# 3. 複製 supabase-uag-v8.sql 的內容
 # 4. 貼上並執行
-# 5. 確認 uag_events 資料表已建立
+# 5. 確認所有 v8 表格與函數已建立
 ```
 
-### 2️⃣ 設定 Vercel 環境變數 (3 分鐘)
+### 2️⃣ 設定 Vercel Cron Job (3 分鐘)
 
 ```bash
-# 前往 Vercel 設定頁
-open https://vercel.com/cityfish91159/maihouses/settings/environment-variables
-
-# 新增以下 3 個變數:
-# 1. VITE_SUPABASE_URL = https://你的專案.supabase.co
-# 2. VITE_SUPABASE_ANON_KEY = eyJhbG...你的anon_key
-# 3. SUPABASE_SERVICE_KEY = eyJhbG...你的service_role_key (僅 Production)
+# 在 vercel.json 中確認已有 crons 設定:
+# {
+#   "crons": [{
+#     "path": "/api/archive-handler",
+#     "schedule": "0 * * * *"
+#   }]
+# }
+# 部署後 Vercel 會自動啟用 Cron Job
 ```
+
 
 **如何取得 Supabase Keys:**
 ```

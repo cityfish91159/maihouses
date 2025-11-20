@@ -1,0 +1,26 @@
+# UAG v8.0 最終手動檢查清單
+
+我已完成所有程式碼變更、設定更新與檔案清理。
+系統已準備就緒。您只需要執行以下 2 個步驟：
+
+## 1. 資料庫設定 (Supabase)
+- 前往 Supabase Dashboard > SQL Editor。
+- 打開此工作區中的 `supabase-uag-v8.sql` 檔案。
+- 複製全部內容。
+- 貼上到 Supabase SQL Editor 並點擊 **RUN**。
+- **驗證**：檢查 `uag_sessions`、`uag_events`、`uag_events_archive` 資料表與 `uag_lead_rankings` 視圖是否已建立。
+
+## 2. 驗證部署
+- 我已經更新 `vercel.json` 以包含 Cron Job。
+- 我已經更新 `DEPLOY_TRIGGER.md` 以觸發部署。
+- 等待 Vercel 部署完成。
+- **驗證**：訪問 `https://your-domain.com/api/uag-track` (應返回 405 Method Not Allowed 或類似訊息，證明它存在)。
+- **驗證**：檢查 `https://your-domain.com/api/archive-handler` (它需要 Vercel Cron 簽名，因此可能會返回 401，這是正常的)。
+
+## 3. 前端測試
+- 打開您的網站。
+- 打開開發者工具 (F12) > Network 分頁。
+- 尋找發往 `uag-track` 的請求。
+- 確保它們返回 `200 OK`。
+
+**就這樣！系統已完全自動化。**
