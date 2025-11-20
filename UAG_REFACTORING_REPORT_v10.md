@@ -425,3 +425,38 @@ Based on the code review feedback, the following optimizations were applied to e
 
 ### 11.2 部署指令 (Deployment Command)
 `npm run build && git push origin main`
+
+## 12. 最終代碼審查與優化 (Final Code Review & Optimization)
+
+**日期**: 2025-11-20
+**狀態**: 部署完成 (Deployed)
+
+### 12.1 衝突與重複檢測修復 (Conflict & Duplication Fixes)
+根據詳細的代碼審查，執行了以下修復：
+
+1.  **ErrorBoundary 雙重包裹**:
+    - 確認已在第 9 步修復，移除了 `App.tsx` 中的外層 ErrorBoundary。
+
+2.  **QueryClient 配置**:
+    - 目前 `App.tsx` 為唯一創建點，暫無衝突。未來可考慮提取為單例。
+
+3.  **型別與常數重複**:
+    - 確認 `types/uag.types.ts` 與 `uag-config.ts` 為單一真理來源 (Single Source of Truth)。
+
+### 12.2 效能優化 (Performance Optimizations)
+1.  **useWindowSize 防抖 (Debounce)**:
+    - 為 `useWindowSize` 加入了 150ms 的防抖機制，避免 Resize 時頻繁觸發重繪，提升效能。
+
+2.  **useLeadSelection 穩定化**:
+    - 使用 `useCallback` 包裹 `selectLead` 與 `close` 函式。
+    - 改用 `requestAnimationFrame` 處理滾動邏輯，確保 DOM 更新後的流暢度。
+
+### 12.3 部署狀態 (Deployment Status)
+所有優化皆已應用並推送到 main 分支。
+
+- [x] useWindowSize Debounce
+- [x] useLeadSelection useCallback
+- [x] ErrorBoundary Cleanup
+- [x] Mutation Validation
+
+**Current Version**: v11.1 (Optimized)

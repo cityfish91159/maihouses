@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Lead } from '../types/uag.types';
 import { useWindowSize } from './useWindowSize';
 import { BREAKPOINTS } from '../uag-config';
@@ -14,17 +14,18 @@ export function useLeadSelection() {
     }
   }, [width, selectedLead]);
 
-  const selectLead = (lead: Lead) => {
+  const selectLead = useCallback((lead: Lead) => {
     setSelectedLead(lead);
     // Scroll to action panel on mobile
-    if (width <= BREAKPOINTS.TABLET) {
-      setTimeout(() => {
+    // Using requestAnimationFrame for better timing
+    requestAnimationFrame(() => {
+      if (window.innerWidth <= BREAKPOINTS.TABLET) {
         document.getElementById('action-panel-container')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }, 100);
-    }
-  };
+      }
+    });
+  }, []);
 
-  const close = () => setSelectedLead(null);
+  const close = useCallback(() => setSelectedLead(null), []);
 
   return { selectedLead, selectLead, close };
 }
