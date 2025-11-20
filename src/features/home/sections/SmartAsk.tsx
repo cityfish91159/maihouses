@@ -254,7 +254,7 @@ export default function SmartAsk() {
             border: '2px solid #E5EDF5',
             background: '#FFFFFF'
           }}
-          onFocus={(e) => e.target.style.borderColor = 'var(--brand-light)'}
+          onFocus={(e) => e.target.style.borderColor = '#4A90E2'}
           onBlur={(e) => e.target.style.borderColor = '#E5EDF5'}
           placeholder="輸入需求（例:西屯區 2房 預算1500萬）"
           value={input}
@@ -268,7 +268,7 @@ export default function SmartAsk() {
           disabled={loading || !input.trim()}
           className="rounded-full px-5 py-2 font-medium text-white shadow-md transition-all hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50"
           style={{
-            background: 'var(--brand-light)',
+            background: 'var(--brand)',
             fontSize: 'var(--fs-sm)'
           }}
         >
@@ -295,7 +295,7 @@ export default function SmartAsk() {
                 key={p.id}
                 className="rounded-[12px] bg-white p-3 transition-all hover:-translate-y-1 hover:shadow-lg"
                 style={{ border: '1px solid #E5EDF5' }}
-                onMouseEnter={(e) => e.currentTarget.style.borderColor = 'var(--brand-light)'}
+                onMouseEnter={(e) => e.currentTarget.style.borderColor = '#4A90E2'}
                 onMouseLeave={(e) => e.currentTarget.style.borderColor = '#E5EDF5'}
               >
                 <div
@@ -313,7 +313,7 @@ export default function SmartAsk() {
                 <a
                   href={`#/community/${p.communityId}/wall`}
                   className="inline-block rounded-full px-3 py-1.5 text-xs font-medium text-white transition-all hover:-translate-y-0.5"
-                  style={{ background: 'linear-gradient(135deg, var(--brand-light) 0%, #0080C0 100%)' }}
+                  style={{ background: 'linear-gradient(135deg, #4A90E2 0%, #5BA3F5 100%)' }}
                   aria-label="前往社區牆"
                 >
                   看社區牆 →
