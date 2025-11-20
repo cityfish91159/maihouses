@@ -48,6 +48,14 @@ export default function App() {
           }
         />
         <Route
+          path="/maihouses"
+          element={
+            <ErrorBoundary>
+              <Home config={config} />
+            </ErrorBoundary>
+          }
+        />
+        <Route
           path="/uag"
           element={
             <ErrorBoundary>
