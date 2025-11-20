@@ -2,7 +2,7 @@ import React from 'react';
 import { Lead } from '../mockData';
 import styles from '../UAG.module.css';
 
-interface RadarClusterProps {
+export interface RadarClusterProps {
   leads: Lead[];
   onSelectLead: (lead: Lead) => void;
 }
@@ -56,12 +56,12 @@ export default function RadarCluster({ leads, onSelectLead }: RadarClusterProps)
                 }
               }}
             >
-              <div className={styles['grade-tag']} style={{ background: `var(--grade-${lead.grade.toLowerCase()})`, color: '#fff' }}>{lead.grade}</div>
+              <div className={styles['uag-bubble-grade']} style={{ background: `var(--grade-${lead.grade.toLowerCase()})`, color: '#fff' }}>{lead.grade}</div>
               <div style={{ textAlign: 'center', lineHeight: 1.2 }}>
                 <div style={{ fontWeight: 800, fontSize: '14px' }}>{lead.id}</div>
                 <div style={{ fontSize: '11px', color: '#64748b' }}>{lead.intent}%</div>
               </div>
-              <div className={styles['label']}>{lead.prop}</div>
+              <div className={styles['uag-bubble-label']}>{lead.prop}</div>
             </div>
           );
         })}

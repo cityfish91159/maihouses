@@ -82,7 +82,7 @@ git push origin main
 ### 5. 測試 UAG 追蹤
 
 #### 5.1 開啟網站並打開瀏覽器開發者工具
-https://maihouses.vercel.app/
+https://maihouses.vercel.app/maihouses/
 
 #### 5.2 檢查 Console
 應該看到:

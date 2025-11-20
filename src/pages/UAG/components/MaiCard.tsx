@@ -44,7 +44,7 @@ export default function MaiCard({
           <div className={styles['mai-body']}>
             <div className={styles['mai-left']}>
               <div className={styles['mai-price']}>
-                <div className={styles['k']}>開價</div><div className={styles['v']}>{price}</div><div className={styles['u']}>{pricePerPing}</div>
+                <div className={styles['mai-price-label']}>開價</div><div className={styles['mai-price-value']}>{price}</div><div className={styles['mai-price-unit']}>{pricePerPing}</div>
               </div>
               <ul className={styles['mai-stats']}>
                 {stats.map((stat, index) => (

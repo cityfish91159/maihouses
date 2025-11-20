@@ -81,12 +81,25 @@ export default function UAGPage() {
             points: userData.points,
             quota: { s: userData.quota_s, a: userData.quota_a }
           },
-          leads: leadsData.map((l: any) => ({
-            ...l,
-            // Ensure types match
-            grade: l.grade as 'S' | 'A' | 'B' | 'C' | 'F',
-            status: l.status as 'new' | 'purchased'
-          })),
+          leads: leadsData.map((l: any) => {
+            // [Item 4] Calculate remainingHours if backend doesn't provide it
+            let remainingHours = l.remaining_hours;
+            if (remainingHours == null && l.purchased_at && l.status === 'purchased') {
+              const grade = l.grade as 'S' | 'A' | 'B' | 'C' | 'F';
+              const totalHours = GRADE_HOURS[grade] || 336;
+              const purchasedAt = new Date(l.purchased_at).getTime();
+              const elapsedHours = (Date.now() - purchasedAt) / (1000 * 60 * 60);
+              remainingHours = Math.max(0, totalHours - elapsedHours);
+            }
+
+            return {
+              ...l,
+              // Ensure types match
+              grade: l.grade as 'S' | 'A' | 'B' | 'C' | 'F',
+              status: l.status as 'new' | 'purchased',
+              remainingHours
+            };
+          }),
           listings: listingsData.map((l: any) => ({
             ...l,
             thumbColor: l.thumb_color // Map snake_case to camelCase
@@ -191,6 +204,16 @@ export default function UAGPage() {
             return prev;
           }
 
+          // [Item 5] Quota Check
+          if (lead.grade === 'S' && prev.user.quota.s <= 0) {
+            toast.error("S 級配額已用完");
+            return prev;
+          }
+          if (lead.grade === 'A' && prev.user.quota.a <= 0) {
+            toast.error("A 級配額已用完");
+            return prev;
+          }
+
           // Immutable update
           const updatedUser = {
             ...prev.user,
@@ -224,6 +247,21 @@ export default function UAGPage() {
     } else {
       // Live API implementation with Supabase RPC
       try {
+        // [Item 5] Quota Check (Frontend pre-check)
+        const lead = appData.leads.find(l => l.id === leadId);
+        if (lead) {
+          if (lead.grade === 'S' && appData.user.quota.s <= 0) {
+            toast.error("S 級配額已用完");
+            setIsProcessing(false);
+            return;
+          }
+          if (lead.grade === 'A' && appData.user.quota.a <= 0) {
+            toast.error("A 級配額已用完");
+            setIsProcessing(false);
+            return;
+          }
+        }
+
         // Assuming we have a logged in user. For now, we might need a hardcoded user ID or auth context.
         // const { data: { user } } = await supabase.auth.getUser();
         // if (!user) throw new Error('Not authenticated');
@@ -236,9 +274,49 @@ export default function UAGPage() {
 
         if (error) throw error;
 
+        // [Item 6] RPC Return Check
+        const result = data as any;
+        if (result && !result.success) {
+          throw new Error(result.message || 'Transaction failed');
+        }
+
         toast.success("交易成功 (Live)");
-        // Reload data to reflect changes
-        loadData(false);
+        
+        // Update local state directly without reloading
+        setAppData(prev => {
+          if (!prev) return null;
+          
+          // Update User
+          const updatedUser = {
+            ...prev.user,
+            points: result.new_points,
+            quota: {
+              s: result.new_quota_s,
+              a: result.new_quota_a
+            }
+          };
+
+          // Update Leads
+          const updatedLeads = prev.leads.map(l => {
+            if (l.id === leadId) {
+              return {
+                ...l,
+                status: 'purchased',
+                purchasedAt: new Date(result.purchased_at).getTime(),
+                // Recalculate remaining hours or use default full duration since it's just bought
+                remainingHours: GRADE_HOURS[l.grade] || 336 
+              } as Lead;
+            }
+            return l;
+          });
+
+          return {
+            ...prev,
+            user: updatedUser,
+            leads: updatedLeads
+          };
+        });
+        
         setSelectedLead(null);
 
       } catch (e: any) {
@@ -258,7 +336,7 @@ export default function UAGPage() {
       <header className={styles['uag-header']}>
         <div className={styles['uag-header-inner']}>
           <div className={styles['uag-logo']}><div className={styles['uag-logo-badge']}>邁</div><span>邁房子廣告後台</span></div>
-          <div className={styles['uag-breadcrumb']}><span>游杰倫 21世紀不動產河南店</span><span className={`${styles['uag-badge']} ${styles['pro']}`}>專業版 PRO</span></div>
+          <div className={styles['uag-breadcrumb']}><span>游杰倫 21世紀不動產河南店</span><span className={`${styles['uag-badge']} ${styles['uag-badge--pro']}`}>專業版 PRO</span></div>
         </div>
       </header>
 

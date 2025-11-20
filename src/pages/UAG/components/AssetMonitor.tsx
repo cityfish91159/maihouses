@@ -6,6 +6,23 @@ interface AssetMonitorProps {
   leads: Lead[];
 }
 
+const calculateProtection = (lead: Lead) => {
+  const total = lead.grade === 'S' ? 120 : lead.grade === 'A' ? 72 : 336;
+  const remaining = lead.remainingHours != null ? lead.remainingHours : total;
+  const percent = Math.max(0, Math.min(100, (remaining / total) * 100));
+  const isExclusive = (lead.grade === 'S' || lead.grade === 'A');
+  
+  let timeDisplay = '';
+  if (isExclusive) {
+    timeDisplay = `${remaining.toFixed(1)} 小時`;
+  } else {
+    const days = (remaining / 24).toFixed(1);
+    timeDisplay = `${days} 天`;
+  }
+
+  return { total, remaining, percent, isExclusive, timeDisplay };
+};
+
 export default function AssetMonitor({ leads }: AssetMonitorProps) {
   const boughtLeads = leads.filter(l => l.status === 'purchased');
 
@@ -33,20 +50,9 @@ export default function AssetMonitor({ leads }: AssetMonitorProps) {
               <tr><td colSpan={4} style={{ textAlign: 'center', padding: '20px', color: '#94a3b8' }}>尚無已購資產，請從上方雷達進攻。</td></tr>
             ) : (
               boughtLeads.map(lead => {
-                const total = lead.grade === 'S' ? 120 : lead.grade === 'A' ? 72 : 336;
-                const remaining = lead.remainingHours != null ? lead.remainingHours : total;
-                const percent = Math.max(0, Math.min(100, (remaining / total) * 100));
+                const { percent, isExclusive, timeDisplay } = calculateProtection(lead);
                 const colorVar = `var(--grade-${lead.grade.toLowerCase()})`;
-                const isExclusive = (lead.grade === 'S' || lead.grade === 'A');
                 const protectText = isExclusive ? '獨家鎖定中' : '去重保護中';
-
-                let timeDisplay = '';
-                if (isExclusive) {
-                  timeDisplay = `${remaining.toFixed(1)} 小時`;
-                } else {
-                  const days = (remaining / 24).toFixed(1);
-                  timeDisplay = `${days} 天`;
-                }
 
                 return (
                   <tr key={lead.id}>

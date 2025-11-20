@@ -94,8 +94,13 @@ DECLARE
     v_user_id UUID;
     v_lead_price INTEGER;
     v_user_points INTEGER;
+    v_user_quota_s INTEGER;
+    v_user_quota_a INTEGER;
     v_lead_grade TEXT;
     v_lead_status TEXT;
+    v_new_points INTEGER;
+    v_new_quota_s INTEGER;
+    v_new_quota_a INTEGER;
 BEGIN
     -- Get current user ID
     v_user_id := auth.uid();
@@ -118,7 +123,7 @@ BEGIN
     END IF;
 
     -- Lock user row for update
-    SELECT points INTO v_user_points
+    SELECT points, quota_s, quota_a INTO v_user_points, v_user_quota_s, v_user_quota_a
     FROM public.users
     WHERE id = v_user_id
     FOR UPDATE;
@@ -127,11 +132,24 @@ BEGIN
         RAISE EXCEPTION 'Insufficient points';
     END IF;
 
+    -- [FIX] Add Quota Check
+    IF v_lead_grade = 'S' AND v_user_quota_s <= 0 THEN
+        RAISE EXCEPTION 'Insufficient S-Grade Quota';
+    END IF;
+    IF v_lead_grade = 'A' AND v_user_quota_a <= 0 THEN
+        RAISE EXCEPTION 'Insufficient A-Grade Quota';
+    END IF;
+
+    -- Calculate new values
+    v_new_points := v_user_points - v_lead_price;
+    v_new_quota_s := CASE WHEN v_lead_grade = 'S' THEN v_user_quota_s - 1 ELSE v_user_quota_s END;
+    v_new_quota_a := CASE WHEN v_lead_grade = 'A' THEN v_user_quota_a - 1 ELSE v_user_quota_a END;
+
     -- Deduct points
     UPDATE public.users
-    SET points = points - v_lead_price,
-        quota_s = CASE WHEN v_lead_grade = 'S' THEN quota_s - 1 ELSE quota_s END,
-        quota_a = CASE WHEN v_lead_grade = 'A' THEN quota_a - 1 ELSE quota_a END
+    SET points = v_new_points,
+        quota_s = v_new_quota_s,
+        quota_a = v_new_quota_a
     WHERE id = v_user_id;
 
     -- Update lead status
@@ -146,9 +164,20 @@ BEGIN
         END
     WHERE id = p_lead_id;
 
-    RETURN jsonb_build_object('success', true, 'message', 'Transaction completed');
+    RETURN jsonb_build_object(
+        'success', true, 
+        'message', 'Transaction completed',
+        'new_points', v_new_points,
+        'new_quota_s', v_new_quota_s,
+        'new_quota_a', v_new_quota_a,
+        'purchased_at', NOW()
+    );
 END;
 $$;
+
+-- Indexes for performance
+CREATE INDEX IF NOT EXISTS idx_leads_status ON public.leads(status);
+CREATE INDEX IF NOT EXISTS idx_leads_purchased_by ON public.leads(purchased_by);
 
 -- ==============================================================================
 -- Seed Data (Initial Mock Data for Live DB)
