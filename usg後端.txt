@@ -1,0 +1,413 @@
+// server_supabase.js v3.1 - Optimized Production Backend
+// 優化內容：平行查詢、精確欄位、冪等性檢查
+
+require('dotenv').config();
+const express = require('express');
+const cors = require('cors');
+const helmet = require('helmet');
+const jwt = require('jsonwebtoken');
+const jwksRsa = require('jwks-rsa');
+const { randomUUID } = require('crypto');
+const { createClient } = require('@supabase/supabase-js');
+const { body, param, query, validationResult } = require('express-validator');
+const LRU = require('lru-cache');
+const pino = require('pino');
+
+// ----------------------------
+// Environment Configuration
+// ----------------------------
+const NODE_ENV = process.env.NODE_ENV || 'development';
+const isProd = NODE_ENV === 'production';
+const PORT = process.env.PORT || 3000;
+
+const ENV = {
+  SUPABASE_URL: process.env.SUPABASE_URL,
+  SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
+  SUPABASE_JWT_SECRET: process.env.SUPABASE_JWT_SECRET,
+  SUPABASE_PROJECT_REF: process.env.SUPABASE_PROJECT_REF,
+  FRONTEND_ORIGINS: process.env.FRONTEND_ORIGINS,
+  LOG_LEVEL: process.env.LOG_LEVEL || (isProd ? 'info' : 'debug')
+};
+
+// Check Required Envs
+const requiredEnvs = ['SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY'];
+const missingEnvs = requiredEnvs.filter(key => !ENV[key]);
+if (isProd && missingEnvs.length > 0) {
+  console.error(`[FATAL] Missing required env vars: ${missingEnvs.join(', ')}`);
+  process.exit(1);
+}
+
+// ----------------------------
+// Logger
+// ----------------------------
+const logger = pino({
+  level: ENV.LOG_LEVEL,
+  transport: isProd ? undefined : { target: 'pino-pretty', options: { colorize: true } },
+  redact: ['req.headers.authorization', 'token'],
+  serializers: { req: (req) => ({ method: req.method, url: req.url, requestId: req.requestId }) }
+});
+
+// ----------------------------
+// Constants
+// ----------------------------
+const PROTECTION_HOURS = { S: 120, A: 72, B: 336, C: 336, F: 336, default: 336 };
+
+const ERR = {
+  UNAUTHORIZED: 'UNAUTHORIZED',
+  TOKEN_EXPIRED: 'TOKEN_EXPIRED',
+  FORBIDDEN: 'FORBIDDEN',
+  BAD_REQUEST: 'BAD_REQUEST',
+  VALIDATION_ERROR: 'VALIDATION_ERROR',
+  NOT_FOUND: 'NOT_FOUND',
+  DB_ERROR: 'DB_ERROR',
+  RPC_ERROR: 'RPC_ERROR',
+  SERVER_ERROR: 'SERVER_ERROR',
+  SERVICE_UNAVAILABLE: 'SERVICE_UNAVAILABLE',
+  CORS_NOT_ALLOWED: 'CORS_NOT_ALLOWED',
+  RATE_LIMIT: 'RATE_LIMIT',
+  TIMEOUT: 'TIMEOUT',
+  IDEMPOTENCY_CONFLICT: 'IDEMPOTENCY_CONFLICT'
+};
+
+const STATUS = {
+  [ERR.UNAUTHORIZED]: 401, [ERR.TOKEN_EXPIRED]: 401, [ERR.FORBIDDEN]: 403,
+  [ERR.BAD_REQUEST]: 400, [ERR.VALIDATION_ERROR]: 422, [ERR.NOT_FOUND]: 404,
+  [ERR.DB_ERROR]: 500, [ERR.RPC_ERROR]: 500, [ERR.SERVER_ERROR]: 500,
+  [ERR.SERVICE_UNAVAILABLE]: 503, [ERR.RATE_LIMIT]: 429, [ERR.TIMEOUT]: 504
+};
+
+// ----------------------------
+// Clients (Supabase & Cache)
+// ----------------------------
+let supabase = null;
+if (ENV.SUPABASE_URL && ENV.SUPABASE_SERVICE_ROLE_KEY) {
+  supabase = createClient(ENV.SUPABASE_URL, ENV.SUPABASE_SERVICE_ROLE_KEY, {
+    auth: { autoRefreshToken: false, persistSession: false },
+    db: { schema: 'public' }
+  });
+}
+
+// LRU Cache (In Serverless, use Redis instead)
+const cache = new LRU({ max: 500, ttl: 1000 * 60 });
+const idempotencyCache = new LRU({ max: 1000, ttl: 1000 * 60 * 5 }); // 5 mins
+
+// Rate Limiter State
+const rateLimitCache = new LRU({ max: 5000, ttl: 1000 * 60 });
+
+// ----------------------------
+// Middleware & Utilities
+// ----------------------------
+
+// Response Helper
+const sendResponse = (res, { success, code, message, data = null, status = 200, requestId }) => {
+  res.status(status).json({
+    success, code, message, data,
+    timestamp: new Date().toISOString(),
+    requestId
+  });
+};
+
+const httpError = (code, message, extra = {}) => {
+  const err = new Error(message);
+  err.code = code;
+  err.status = STATUS[code] || 500;
+  Object.assign(err, extra);
+  return err;
+};
+
+// Rate Limiter Middleware
+const createRateLimiter = ({ max = 100, windowMs = 60000, keyGenerator = (req) => req.ip }) => {
+  return (req, res, next) => {
+    const key = `rl:${keyGenerator(req)}`;
+    const now = Date.now();
+    let record = rateLimitCache.get(key) || { count: 0, resetAt: now + windowMs };
+
+    if (now > record.resetAt) {
+      record = { count: 0, resetAt: now + windowMs };
+    }
+
+    if (record.count >= max) {
+      res.set('Retry-After', Math.ceil((record.resetAt - now) / 1000));
+      return sendResponse(res, {
+        success: false, code: ERR.RATE_LIMIT, message: '請求過於頻繁', status: 429, requestId: req.requestId
+      });
+    }
+
+    record.count++;
+    rateLimitCache.set(key, record);
+    res.set({
+      'X-RateLimit-Limit': max,
+      'X-RateLimit-Remaining': max - record.count
+    });
+    next();
+  };
+};
+
+// Authentication Middleware (RS256 + HS256 fallback)
+const getSigningKey = (header, callback) => {
+  if (!ENV.SUPABASE_PROJECT_REF) return callback(null, ENV.SUPABASE_JWT_SECRET);
+  const client = jwksRsa({
+    jwksUri: `https://${ENV.SUPABASE_PROJECT_REF}.supabase.co/auth/v1/.well-known/jwks.json`,
+    cache: true
+  });
+  client.getSigningKey(header.kid, (err, key) => {
+    if (err) return callback(null, ENV.SUPABASE_JWT_SECRET); // Fallback
+    callback(null, key.getPublicKey());
+  });
+};
+
+const requireAuth = async (req, res, next) => {
+  try {
+    const authHeader = req.headers.authorization || '';
+    const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
+    if (!token) throw httpError(ERR.UNAUTHORIZED, '缺少存取權杖');
+
+    const decoded = await new Promise((resolve, reject) => {
+      jwt.verify(token, getSigningKey, { algorithms: ['RS256', 'HS256'] }, (err, decoded) => {
+        if (err) return reject(httpError(err.name === 'TokenExpiredError' ? ERR.TOKEN_EXPIRED : ERR.UNAUTHORIZED, '權杖無效'));
+        resolve(decoded);
+      });
+    });
+
+    req.auth = { userId: decoded.sub, role: decoded.role, email: decoded.email };
+    next();
+  } catch (err) { next(err); }
+};
+
+// Validation Helper
+const validate = (validations) => async (req, res, next) => {
+  await Promise.all(validations.map(v => v.run(req)));
+  const errors = validationResult(req);
+  if (errors.isEmpty()) return next();
+  sendResponse(res, {
+    success: false, code: ERR.VALIDATION_ERROR, message: '輸入驗證失敗',
+    data: { errors: errors.array().map(e => e.msg) }, status: 422, requestId: req.requestId
+  });
+};
+
+// Timeout Wrapper
+const queryWithTimeout = (queryFn, ms = 5000) => Promise.race([
+  queryFn(),
+  new Promise((_, reject) => setTimeout(() => reject(httpError(ERR.TIMEOUT, '資料庫查詢逾時')), ms))
+]);
+
+// ----------------------------
+// Express App Setup
+// ----------------------------
+const app = express();
+app.set('trust proxy', 1);
+app.use(helmet({ contentSecurityPolicy: false }));
+// [Optimization] Secure CORS setup
+const allowedOrigins = (ENV.FRONTEND_ORIGINS || '').split(',').filter(Boolean);
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.length === 0 || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true
+}));
+app.use(express.json({ limit: '1mb' }));
+
+// Global Request ID & Logger
+app.use((req, res, next) => {
+  req.requestId = req.headers['x-request-id'] || randomUUID();
+  res.setHeader('X-Request-ID', req.requestId);
+  next();
+});
+
+// ----------------------------
+// Data Mappers
+// ----------------------------
+const mapUser = (row) => (!row ? null : {
+  id: row.id, name: row.name || 'Unknown', points: row.points || 0, quota: { s: row.quota_s || 0, a: row.quota_a || 0 }
+});
+
+const mapLead = (row) => {
+  if (!row) return null;
+  const total = PROTECTION_HOURS[row.grade] || PROTECTION_HOURS.default;
+  let remaining = total;
+  if (row.purchased_at) {
+    const elapsed = (Date.now() - new Date(row.purchased_at).getTime()) / 36e5;
+    remaining = Math.max(0, total - elapsed);
+  }
+  return {
+    id: row.id, name: row.name, grade: row.grade, intent: row.intent, prop: row.prop,
+    visit: row.visit || 0, price: row.price, status: row.status,
+    purchasedAt: row.purchased_at, ai: row.ai_suggestion,
+    x: row.bubble_data?.x ?? null, y: row.bubble_data?.y ?? null,
+    remainingHours: remaining, protectionExpired: remaining === 0
+  };
+};
+
+// ----------------------------
+// API Routes
+// ----------------------------
+
+// 1. Dashboard (Optimized with Parallel Queries)
+app.get('/api/v1/dashboard',
+  requireAuth,
+  createRateLimiter({ max: 60, keyGenerator: req => req.auth.userId }),
+  async (req, res, next) => {
+    const { userId } = req.auth;
+    const cacheKey = `dash:${userId}`;
+
+    // Cache Check
+    if (cache.has(cacheKey)) {
+      return sendResponse(res, { ...cache.get(cacheKey), requestId: req.requestId });
+    }
+
+    try {
+      // [Optimization] Parallel Execution (Promise.all)
+      // [Optimization] Select specific fields to reduce payload
+      const [userRes, leadsRes, listingsRes, feedRes] = await Promise.all([
+        // User
+        queryWithTimeout(() => 
+          supabase.from('users').select('id, name, points, quota_s, quota_a').eq('id', userId).single()
+        ),
+        // Leads (New + Purchased by User)
+        // [Optimization] Select specific fields, order by date, and limit results
+        queryWithTimeout(() => 
+          supabase.from('leads')
+            .select('id, name, grade, intent, prop, visit, price, status, purchased_at, ai_suggestion, bubble_data')
+            .or(`status.eq.new,purchased_by.eq.${userId}`)
+            .order('created_at', { ascending: false })
+            .limit(200)
+        ),
+        // Listings (Top 50, specific fields)
+        queryWithTimeout(() => 
+          supabase.from('listings')
+            .select('id, title, tags, view_count, click_count, fav_count, thumb_color')
+            .order('created_at', { ascending: false }).limit(50)
+        ).catch(() => ({ data: [] })),
+        // Feed (Top 50, specific fields)
+        queryWithTimeout(() => 
+          supabase.from('feed')
+            .select('id, title, meta, body, created_at')
+            .order('created_at', { ascending: false }).limit(50)
+        ).catch(() => ({ data: [] }))
+      ]);
+
+      if (userRes.error) throw httpError(ERR.NOT_FOUND, '使用者不存在');
+      if (leadsRes.error) throw httpError(ERR.DB_ERROR, '讀取客戶失敗');
+
+      const payload = {
+        user: mapUser(userRes.data),
+        leads: (leadsRes.data || []).map(mapLead),
+        listings: (listingsRes.data || []).map(row => ({
+          id: row.id, title: row.title, tags: row.tags || [],
+          view: row.view_count, click: row.click_count, fav: row.fav_count, thumbColor: row.thumb_color
+        })),
+        feed: (feedRes.data || []).map(row => ({
+          id: row.id, title: row.title, meta: row.meta, body: row.body, createdAt: row.created_at
+        }))
+      };
+
+      // Cache Set (1 min)
+      cache.set(cacheKey, { success: true, code: 'OK', message: 'Loaded', data: payload });
+
+      sendResponse(res, { success: true, code: 'OK', message: 'Dashboard 載入成功', data: payload, requestId: req.requestId });
+    } catch (err) { next(err); }
+  }
+);
+
+// 2. Purchase Lead (Atomic RPC + Idempotency)
+app.post('/api/v1/leads/:id/purchase',
+  requireAuth,
+  createRateLimiter({ max: 10 }), // Strict limit
+  // [Optimization] Add UUID validation
+  validate([param('id').notEmpty().isUUID().withMessage('無效的 Lead ID')]),
+  async (req, res, next) => {
+    const { userId } = req.auth;
+    const leadId = req.params.id;
+    const idempotencyKey = req.headers['idempotency-key'];
+
+    // [Optimization] Idempotency Check
+    if (idempotencyKey) {
+      const cachedResp = idempotencyCache.get(`idem:${idempotencyKey}`);
+      if (cachedResp) {
+        return sendResponse(res, { ...cachedResp, requestId: req.requestId });
+      }
+    }
+
+    try {
+      // Call Database RPC (Atomic Transaction)
+      const { data, error } = await queryWithTimeout(() => 
+        supabase.rpc('purchase_lead_transaction', { p_lead_id: leadId, p_user_id: userId })
+      );
+
+      if (error) {
+        logger.error({ error, leadId, userId }, 'Purchase RPC Failed');
+        throw httpError(ERR.RPC_ERROR, '交易處理失敗');
+      }
+
+      if (!data || data.success === false) {
+        const code = data?.code || ERR.BAD_REQUEST;
+        return sendResponse(res, { success: false, code, message: data?.message || '交易失敗', status: 400, requestId: req.requestId });
+      }
+
+      const responseData = {
+        success: true, code: 'OK', message: data.message,
+        data: { user: mapUser(data.data?.user) }
+      };
+
+      // Clear Caches
+      cache.delete(`dash:${userId}`);
+      
+      // Store Idempotency Result
+      if (idempotencyKey) idempotencyCache.set(`idem:${idempotencyKey}`, responseData);
+
+      sendResponse(res, { ...responseData, requestId: req.requestId });
+    } catch (err) { next(err); }
+  }
+);
+
+// Health Check
+app.get('/api/v1/health', async (req, res) => {
+  const dbCheck = supabase ? await supabase.from('users').select('id').limit(1) : { error: 'No DB' };
+  sendResponse(res, {
+    success: !dbCheck.error,
+    code: !dbCheck.error ? 'OK' : 'DEGRADED',
+    message: 'System Status',
+    data: { db: !dbCheck.error ? 'connected' : 'disconnected', version: '3.1.0' },
+    requestId: req.requestId
+  });
+});
+
+// Global Error Handler
+app.use((err, req, res, next) => {
+  logger.error({ err, requestId: req.requestId }, 'Request Failed');
+  sendResponse(res, {
+    success: false,
+    code: err.code || ERR.SERVER_ERROR,
+    message: isProd ? '伺服器發生錯誤' : err.message,
+    status: err.status || 500,
+    requestId: req.requestId
+  });
+});
+
+// Server Start
+if (require.main === module) {
+  app.listen(PORT, () => logger.info(`Server running on port ${PORT} [${NODE_ENV}]`));
+}
+
+module.exports = app;
+
+/* ================================================================================
+[必讀] SQL 優化指令 (請在 Supabase SQL Editor 執行)
+================================================================================
+
+-- 1. 為 Dashboard 查詢建立索引 (大幅提升速度)
+CREATE INDEX IF NOT EXISTS idx_leads_dashboard ON public.leads (purchased_by, status);
+
+-- 2. 確保 transactions 查詢效率
+CREATE INDEX IF NOT EXISTS idx_transactions_user ON public.transactions (user_id, created_at DESC);
+
+-- 3. 確保 listings/feed 排序效率
+CREATE INDEX IF NOT EXISTS idx_listings_created ON public.listings (created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_feed_created ON public.feed (created_at DESC);
+
+*/
