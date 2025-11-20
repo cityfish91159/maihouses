@@ -12,21 +12,31 @@ import TrustFlow from './components/TrustFlow';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
 
-// Custom hook for interval
-function useInterval(callback: () => void, delay: number | null) {
-  const savedCallback = useRef(callback);
+// Helper function for remaining hours calculation
+const calculateRemainingHours = (
+  purchasedAt: number | string | undefined,
+  grade: 'S' | 'A' | 'B' | 'C' | 'F'
+): number => {
+  if (!purchasedAt) return 0;
+  
+  const totalHours = GRADE_HOURS[grade] || 336;
+  const purchasedTime = new Date(purchasedAt).getTime();
+  const elapsedHours = (Date.now() - purchasedTime) / (1000 * 60 * 60);
+  
+  // Guard: ensure not out of range or negative
+  return Math.max(0, Math.min(totalHours, totalHours - elapsedHours));
+};
 
-  useEffect(() => {
-    savedCallback.current = callback;
-  }, [callback]);
-
-  useEffect(() => {
-    if (delay !== null) {
-      const id = setInterval(() => savedCallback.current(), delay);
-      return () => clearInterval(id);
-    }
-  }, [delay]);
-}
+// Helper for quota validation
+const validateQuota = (lead: Lead, user: { quota: { s: number; a: number } }): { valid: boolean; error?: string } => {
+  if (lead.grade === 'S' && user.quota.s <= 0) {
+    return { valid: false, error: 'S 級配額已用完' };
+  }
+  if (lead.grade === 'A' && user.quota.a <= 0) {
+    return { valid: false, error: 'A 級配額已用完' };
+  }
+  return { valid: true };
+};
 
 export default function UAGPage() {
   const [appData, setAppData] = useState<AppData | null>(null);
@@ -34,9 +44,10 @@ export default function UAGPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [useMock, setUseMock] = useState(true);
   const actionPanelRef = useRef<HTMLDivElement>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
   const { session, user } = useAuth();
 
-  const loadData = useCallback(async (mockMode: boolean) => {
+  const loadData = useCallback(async (mockMode: boolean, signal?: AbortSignal) => {
     if (mockMode) {
       // Simulate API delay
       // setTimeout(() => setAppData({ ...MOCK_DB }), 500);
@@ -45,45 +56,39 @@ export default function UAGPage() {
       // Live API implementation with Supabase
       if (!session) {
         // Wait for session or show error if not authenticated
-        // For now, we just return to avoid errors, assuming auth is handled elsewhere or we wait
         return;
       }
 
       try {
-        // 1. Fetch User Data
-        const { data: userData, error: userError } = await supabase
-          .from('users')
-          .select('points, quota_s, quota_a')
-          .single();
-          
-        if (userError) throw userError;
+        // 1. Parallel Fetch
+        const [userRes, leadsRes, listingsRes, feedRes] = await Promise.all([
+          supabase
+            .from('users')
+            .select('points, quota_s, quota_a')
+            .single(),
+          supabase
+            .from('leads')
+            .select('*'),
+          supabase
+            .from('listings')
+            .select('*')
+            .eq('agent_id', session.user.id),
+          supabase
+            .from('feed')
+            .select('*')
+            .order('created_at', { ascending: false })
+            .limit(5)
+        ]);
 
-        // 2. Fetch Leads (New + Purchased by me)
-        // Note: In a real app, you'd filter by user ID. For now, we fetch all relevant leads.
-        const { data: leadsData, error: leadsError } = await supabase
-          .from('leads')
-          .select('*')
-          .or('status.eq.new,status.eq.purchased');
+        if (userRes.error) throw userRes.error;
+        if (leadsRes.error) throw leadsRes.error;
+        if (listingsRes.error) throw listingsRes.error;
+        if (feedRes.error) throw feedRes.error;
 
-        if (leadsError) throw leadsError;
-
-        // 3. Fetch Listings
-        const { data: listingsData, error: listingsError } = await supabase
-          .from('listings')
-          .select('*');
-
-        if (listingsError) throw listingsError;
-
-        // 4. Fetch Feed
-        const { data: feedData, error: feedError } = await supabase
-          .from('feed')
-          .select('*')
-          .order('created_at', { ascending: false })
-          .limit(5);
-
-        if (feedError) throw feedError;
-
-        // Transform data to match AppData interface
+        const userData = userRes.data;
+        const leadsData = leadsRes.data;
+        const listingsData = listingsRes.data;
+        const feedData = feedRes.data;        // Transform data to match AppData interface
         const transformedData: AppData = {
           user: {
             points: userData.points,
@@ -94,11 +99,7 @@ export default function UAGPage() {
             let remainingHours = l.remaining_hours != null ? Number(l.remaining_hours) : null;
 
             if (remainingHours == null && l.purchased_at && l.status === 'purchased') {
-              const grade = l.grade as 'S' | 'A' | 'B' | 'C' | 'F';
-              const totalHours = GRADE_HOURS[grade] || 336;
-              const purchasedAt = new Date(l.purchased_at).getTime();
-              const elapsedHours = (Date.now() - purchasedAt) / (1000 * 60 * 60);
-              remainingHours = Math.max(0, totalHours - elapsedHours);
+              remainingHours = calculateRemainingHours(l.purchased_at, l.grade as 'S' | 'A' | 'B' | 'C' | 'F');
             }
 
             return {
@@ -106,7 +107,7 @@ export default function UAGPage() {
               // Ensure types match
               grade: l.grade as 'S' | 'A' | 'B' | 'C' | 'F',
               status: l.status as 'new' | 'purchased',
-              remainingHours: remainingHours ?? undefined
+              ...(remainingHours != null ? { remainingHours } : {})
             };
           }),
           listings: listingsData.map((l: any) => ({
@@ -123,16 +124,19 @@ export default function UAGPage() {
         setAppData(transformedData);
 
       } catch (e: any) {
+        if (e.name === 'AbortError') return;
         console.warn('Live API failed, falling back to mock', e);
         if (import.meta.env.DEV) {
           toast.error(`Live API Error: ${e.message || 'Unknown error'}`);
         } else {
           toast.error('目前無法連接 Supabase 資料庫，或資料表尚未建立。系統自動降級顯示 Mock 資料。');
         }
+        setUseMock(true);
+        localStorage.setItem('uag_mode', 'mock');
         setAppData({ ...MOCK_DB });
       }
     }
-  }, []);
+  }, [session]);
 
   useEffect(() => {
     // Initialize mode from localStorage or URL
@@ -154,11 +158,18 @@ export default function UAGPage() {
 
   useEffect(() => {
     if (session || useMock) {
-      loadData(useMock).catch(err => {
-        console.error(err);
-        toast.error("載入失敗，請重試");
+      abortControllerRef.current?.abort();
+      abortControllerRef.current = new AbortController();
+      const signal = abortControllerRef.current.signal;
+
+      loadData(useMock, signal).catch(err => {
+        if (err.name !== 'AbortError') {
+          console.error(err);
+          toast.error("載入失敗，請重試");
+        }
       });
     }
+    return () => abortControllerRef.current?.abort();
   }, [useMock, loadData, session]);
 
   // Realtime subscription
@@ -171,23 +182,31 @@ export default function UAGPage() {
     }
   }, [useMock, session, loadData]);
 
-  // Simulate countdown for mock data
-  useInterval(() => {
-    if (useMock && appData) {
+  // Simulate countdown for mock data using useEffect instead of useInterval
+  useEffect(() => {
+    if (!useMock || !appData) return;
+
+    const intervalId = setInterval(() => {
       setAppData(prev => {
         if (!prev) return null;
         return {
           ...prev,
           leads: prev.leads.map(lead => {
-            if ((lead.remainingHours || 0) > 0) {
-              return { ...lead, remainingHours: Math.max(0, (lead.remainingHours || 0) - 0.1) };
+            if (lead.remainingHours !== undefined) {
+              return { ...lead, remainingHours: Math.max(0, lead.remainingHours - 0.01) };
             }
             return lead;
           })
         };
       });
-    }
-  }, 36000); // Check every 36s (0.01h)
+    }, 36000); // Check every 36s (0.01h)
+
+    return () => clearInterval(intervalId);
+  }, [useMock, appData]); // appData dependency ensures we have latest data, but might cause re-renders. 
+  // Ideally we use functional update which we do, so we might not need appData in dependency if we trust functional update.
+  // However, the user requested this specific pattern.
+  // Wait, if we put appData in dependency, the interval resets every time appData changes (every 36s).
+  // This is actually fine for this use case as long as we cleanup.
 
   const toggleMode = () => {
     const newMode = !useMock;
@@ -205,155 +224,84 @@ export default function UAGPage() {
   };
 
   const handleBuyLead = async (leadId: string) => {
-    if (!appData) return;
+    if (!appData || isProcessing) return;
+
+    // 1. Optimistic Update Setup
+    const previousAppData = appData;
+    const lead = appData.leads.find(l => l.id === leadId);
+    
+    if (!lead) {
+      toast.error("客戶不存在");
+      return;
+    }
+    if (lead.status !== 'new') {
+      toast.error("此客戶已被購買");
+      return;
+    }
+    
+    // Quota Check
+    const quotaCheck = validateQuota(lead, appData.user);
+    if (!quotaCheck.valid) {
+      toast.error(quotaCheck.error || '配額不足');
+      return;
+    }
+
+    if (appData.user.points < lead.price) {
+      toast.error("點數不足");
+      return;
+    }
+
     setIsProcessing(true);
 
-    if (useMock) {
-      // Simulate API call
-      setTimeout(() => {
-        setAppData(prev => {
-          if (!prev) return null;
-          
-          const leadIndex = prev.leads.findIndex(l => l.id === leadId);
-          if (leadIndex === -1) {
-            toast.error("客戶不存在");
-            return prev;
-          }
+    // 2. Apply Optimistic Update
+    const optimisticUser = {
+      ...appData.user,
+      points: appData.user.points - lead.price,
+      quota: {
+        ...appData.user.quota,
+        s: lead.grade === 'S' ? appData.user.quota.s - 1 : appData.user.quota.s,
+        a: lead.grade === 'A' ? appData.user.quota.a - 1 : appData.user.quota.a
+      }
+    };
 
-          const lead = prev.leads[leadIndex];
-          if (!lead) return prev;
+    const optimisticLeads = appData.leads.map(l => 
+      l.id === leadId 
+        ? { ...l, status: 'purchased' as const, purchasedAt: Date.now(), remainingHours: GRADE_HOURS[l.grade] || 336 } 
+        : l
+    );
 
-          if (lead.status !== 'new') {
-            toast.error("此客戶已被購買");
-            return prev;
-          }
+    setAppData({ ...appData, user: optimisticUser, leads: optimisticLeads });
+    setSelectedLead(null);
 
-          if (prev.user.points < lead.price) {
-            toast.error("點數不足 (Mock)");
-            return prev;
-          }
-
-          // [Item 5] Quota Check
-          if (lead.grade === 'S' && prev.user.quota.s <= 0) {
-            toast.error("S 級配額已用完");
-            return prev;
-          }
-          if (lead.grade === 'A' && prev.user.quota.a <= 0) {
-            toast.error("A 級配額已用完");
-            return prev;
-          }
-
-          // Immutable update
-          const updatedUser = {
-            ...prev.user,
-            points: prev.user.points - lead.price,
-            quota: {
-              ...prev.user.quota,
-              s: lead.grade === 'S' ? prev.user.quota.s - 1 : prev.user.quota.s,
-              a: lead.grade === 'A' ? prev.user.quota.a - 1 : prev.user.quota.a
-            }
-          };
-
-          const updatedLeads = [...prev.leads];
-          updatedLeads[leadIndex] = {
-            ...lead,
-            status: 'purchased',
-            purchasedAt: Date.now(),
-            remainingHours: GRADE_HOURS[lead.grade] || 336
-          };
-
-          toast.success("交易成功 (Mock)");
-          return {
-            ...prev,
-            user: updatedUser,
-            leads: updatedLeads
-          };
-        });
-        
-        setSelectedLead(null);
-        setIsProcessing(false);
-      }, 800);
-    } else {
-      // Live API implementation with Supabase RPC
-      try {
-        // [Item 5] Quota Check (Frontend pre-check)
-        const lead = appData.leads.find(l => l.id === leadId);
-        if (lead) {
-          if (lead.grade === 'S' && appData.user.quota.s <= 0) {
-            toast.error("S 級配額已用完");
-            setIsProcessing(false);
-            return;
-          }
-          if (lead.grade === 'A' && appData.user.quota.a <= 0) {
-            toast.error("A 級配額已用完");
-            setIsProcessing(false);
-            return;
-          }
-        }
-
-        // Assuming we have a logged in user. For now, we might need a hardcoded user ID or auth context.
-        // const { data: { user } } = await supabase.auth.getUser();
+    try {
+      if (useMock) {
+        // Simulate API delay
+        await new Promise(resolve => setTimeout(resolve, 800));
+        toast.success("交易成功 (Mock)");
+      } else {
+        // Live API
         if (!user) throw new Error('Not authenticated');
 
-        // Call the stored procedure 'buy_lead_transaction'
         const { data, error } = await supabase.rpc('buy_lead_transaction', {
           p_lead_id: leadId
-          // p_user_id is usually handled by auth.uid() in RLS/RPC, but depends on implementation
         });
 
         if (error) throw error;
 
-        // [Item 6] RPC Return Check
         const result = data as any;
-        if (result && !result.success) {
+        if (!result.success) {
           throw new Error(result.message || 'Transaction failed');
         }
 
-        toast.success("交易成功 (Live)");
-        
-        // Update local state directly without reloading
-        setAppData(prev => {
-          if (!prev) return null;
-          
-          // Update User
-          const updatedUser = {
-            ...prev.user,
-            points: result.new_points,
-            quota: {
-              s: result.new_quota_s,
-              a: result.new_quota_a
-            }
-          };
-
-          // Update Leads
-          const updatedLeads = prev.leads.map(l => {
-            if (l.id === leadId) {
-              return {
-                ...l,
-                status: 'purchased',
-                purchasedAt: new Date(result.purchased_at).getTime(),
-                // Recalculate remaining hours or use default full duration since it's just bought
-                remainingHours: GRADE_HOURS[l.grade] || 336 
-              } as Lead;
-            }
-            return l;
-          });
-
-          return {
-            ...prev,
-            user: updatedUser,
-            leads: updatedLeads
-          };
-        });
-        
-        setSelectedLead(null);
-
-      } catch (e: any) {
-        console.error('Buy lead failed', e);
-        toast.error(`交易失敗: ${e.message || '未知錯誤'}`);
-      } finally {
-        setIsProcessing(false);
+        toast.success("交易成功");
       }
+    } catch (error: any) {
+      console.error('Transaction failed:', error);
+      toast.error(`交易失敗: ${error.message}`);
+      // 3. Rollback on Error
+      setAppData(previousAppData);
+    } finally {
+      setIsProcessing(false);
     }
   };
 

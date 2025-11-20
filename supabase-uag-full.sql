@@ -23,7 +23,7 @@ SECURITY DEFINER SET search_path = public
 AS $$
 BEGIN
   INSERT INTO public.users (id, email, points, quota_s, quota_a)
-  VALUES (NEW.id, NEW.email, 1000, 0, 0);
+  VALUES (NEW.id, NEW.email, 1000, 5, 10);
   RETURN NEW;
 END;
 $$;
@@ -133,7 +133,7 @@ BEGIN
         RAISE EXCEPTION 'Insufficient points';
     END IF;
 
-    -- [FIX] Add Quota Check
+    -- Quota Check
     IF v_lead_grade = 'S' AND v_user_quota_s <= 0 THEN
         RAISE EXCEPTION 'Insufficient S-Grade Quota';
     END IF;
@@ -179,6 +179,8 @@ $$;
 -- Indexes for performance
 CREATE INDEX IF NOT EXISTS idx_leads_status ON public.leads(status);
 CREATE INDEX IF NOT EXISTS idx_leads_purchased_by ON public.leads(purchased_by);
+CREATE INDEX IF NOT EXISTS idx_listings_agent_id ON public.listings(agent_id);
+CREATE INDEX IF NOT EXISTS idx_feed_created_at ON public.feed(created_at DESC);
 
 -- ==============================================================================
 -- Seed Data (Initial Mock Data for Live DB)
