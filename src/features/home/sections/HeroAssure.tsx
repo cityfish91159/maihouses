@@ -93,14 +93,22 @@ export default function HeroAssure() {
           ))}
         </div>
 
-        <div className="info">
+        <div className="info" style={{ border: '1px dashed #00385a' }}>
           <div className="lock">✔</div>
           <div>
-            <b style={{ color: 'var(--brand)' }}>你的權益：</b>
+            <b style={{ color: '#00385a' }}>你的權益：</b>
             完成<b>身分驗證</b>並開啟<b>金流通知</b>；所有簽署與溝通都在平台留痕，可回溯可查證。
             <div className="chips">
               {assureChips.map((chip) => (
-                <span className="chip" key={chip}>
+                <span 
+                  className="chip" 
+                  key={chip}
+                  style={{ 
+                    border: '1.5px solid #00385a',
+                    color: '#00385a',
+                    backgroundColor: 'rgba(0, 56, 90, 0.08)'
+                  }}
+                >
                   {chip}
                 </span>
               ))}
