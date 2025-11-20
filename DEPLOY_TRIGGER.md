@@ -2,6 +2,10 @@ Redeploy trigger
 
 This file was updated to force a new Vercel deployment.
 
+Timestamp: 2025-11-20T18:10:00Z
+Deploy: UAG v10.1 Fix - Add QueryClientProvider
+- Fix: Added missing QueryClientProvider to App.tsx to support React Query in UAG Dashboard.
+
 Timestamp: 2025-11-20T18:00:00Z
 Deploy: UAG v10 Ultimate Architecture
 - Architecture: Full Refactor to Container/Presenter Pattern

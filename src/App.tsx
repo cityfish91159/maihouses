@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Routes, Route, useLocation } from 'react-router-dom'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { getConfig, type AppConfig, type RuntimeOverrides } from './app/config'
 import DevTools from './app/devtools'
 import { trackEvent } from './services/uag'
@@ -16,6 +17,15 @@ import { QuietModeProvider } from './context/QuietModeContext'
 import { MoodProvider } from './context/MoodContext'
 
 import UAGPage from './pages/UAG'
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      retry: 1,
+    },
+  },
+})
 
 export default function App() {
   const [config, setConfig] = useState<(AppConfig & RuntimeOverrides) | null>(null)
@@ -36,18 +46,19 @@ export default function App() {
   }
 
   return (
-    <QuietModeProvider>
-      <MoodProvider>
-        <Routes key={loc.pathname}>
-        <Route
-          path="/"
-          element={
-            <ErrorBoundary>
-              <Home config={config} />
-            </ErrorBoundary>
-          }
-        />
-        <Route
+    <QueryClientProvider client={queryClient}>
+      <QuietModeProvider>
+        <MoodProvider>
+          <Routes key={loc.pathname}>
+          <Route
+            path="/"
+            element={
+              <ErrorBoundary>
+                <Home config={config} />
+              </ErrorBoundary>
+            }
+          />
+          <Route
           path="/maihouses"
           element={
             <ErrorBoundary>
@@ -123,5 +134,6 @@ export default function App() {
       {config.devtools === '1' && <DevTools config={config} />}
       </MoodProvider>
     </QuietModeProvider>
+    </QueryClientProvider>
   )
 }
