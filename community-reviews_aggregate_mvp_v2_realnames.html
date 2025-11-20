@@ -10,7 +10,7 @@
 @keyframes float { 0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)} }
 
 :root{
-  --primary:#1749d7;--primary-dark:#0d2d8f;--primary-light:#5ba3ff;
+  --primary:#00385a;--primary-dark:#002a44;--primary-light:#33607b;
   --secondary:#34c759;--secondary-light:#50d167;--tertiary:#a78bfa;
   --accent:#ff9b4a;--warning:#ef4444;--heart:#ff3b30;
   --bg-base:#f8fafb;--bg-alt:#f0f4fa;--bg-elevated:#ffffff;
@@ -34,13 +34,13 @@ html,body{height:100%;margin:0;background:linear-gradient(180deg,var(--bg-base)0
 .review::before{content:'';position:absolute;inset:0;border-radius:13px;background:linear-gradient(135deg,rgba(52,199,89,0.05),transparent);opacity:0;transition:opacity .3s ease}
 .review:hover{border-color:var(--secondary-light);background:#fff;box-shadow:0 2px 8px rgba(52,199,89,0.08)}
 .review:hover::before{opacity:1}
-.av2{width:34px;height:34px;border-radius:50%;background:rgba(230,240,255,.8);border:2px solid var(--primary);display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--primary);font-size:15px;flex-shrink:0;animation:float 3.5s ease-in-out infinite}
+.av2{width:34px;height:34px;border-radius:50%;background:rgba(0,56,90,.08);border:2px solid var(--primary);display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--primary);font-size:15px;flex-shrink:0;animation:float 3.5s ease-in-out infinite}
 .review .name{font-weight:800;font-size:12.5px;color:var(--text-primary)}
 .tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:3px}
 .tag{font-size:10px;padding:3px 8px;border-radius:999px;background:rgba(52,199,89,.12);border:1px solid rgba(52,199,89,.40);color:#0f6a23;font-weight:700;transition:all .2s ease}
 .tag:hover{background:rgba(52,199,89,.20);border-color:rgba(52,199,89,.55)}
 .tag.fallback{opacity:.85;filter:grayscale(.35)}
-.review p{margin:4px 0 0;font-size:12.5px;line-height:1.48;color:#1a3a62;font-weight:500}
+.review p{margin:4px 0 0;font-size:12.5px;line-height:1.48;color:#00385a;font-weight:500}
 
 /* CTA（更大、可點、醒目） */
 .cta{margin:4px 0 0;display:flex;align-items:center;gap:10px;background:linear-gradient(90deg,rgba(52,199,89,.25),rgba(52,199,89,.12));border:1px solid rgba(52,199,89,.40);padding:12px 14px;border-radius:14px;font-weight:900;color:#0e3d1c;text-decoration:none;cursor:pointer;box-shadow:0 2px 8px rgba(52,199,89,.10)}

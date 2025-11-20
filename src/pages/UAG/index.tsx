@@ -137,8 +137,8 @@ export default function UAGPage() {
         return {
           ...prev,
           leads: prev.leads.map(lead => {
-            if (lead.remainingHours > 0) {
-              return { ...lead, remainingHours: Math.max(0, lead.remainingHours - 0.1) };
+            if ((lead.remainingHours || 0) > 0) {
+              return { ...lead, remainingHours: Math.max(0, (lead.remainingHours || 0) - 0.1) };
             }
             return lead;
           })
@@ -179,6 +179,8 @@ export default function UAGPage() {
           }
 
           const lead = prev.leads[leadIndex];
+          if (!lead) return prev;
+
           if (lead.status !== 'new') {
             toast.error("此客戶已被購買");
             return prev;

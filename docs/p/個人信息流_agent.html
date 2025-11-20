@@ -8,9 +8,8 @@
 <link rel="stylesheet" href="/maihouses/css/desktop-fixpack-v2.css">
 <style>
 :root{
-  --ink:#0b214a; --muted:#6c7b91; --brand:#1749d7; --brand-2:#4aa1ff; --line:#e6edf7; --card:#fff;
-  --bg1:#f6f9ff; --bg2:#eef3ff;
-  --pill-border:#cbead4; --pill-bg1:#f3fff8; --pill-bg2:#e8faef; --pill-ink:#0e8d52;
+  --ink:#0b214a; --muted:#6c7b91; --brand:#00385a; --brand-2:#33607b; --line:#e6edf7; --card:#fff;
+  --bg:#f4f7fb; --nav-h:56px; --safe-b:env(safe-area-inset-bottom);
 }
 *{box-sizing:border-box}
 html,body{margin:0;background:linear-gradient(180deg,var(--bg1),var(--bg2));color:var(--ink);
@@ -83,14 +82,14 @@ html,body{margin:0;background:linear-gradient(180deg,var(--bg1),var(--bg2));colo
 .tag.ok{border-color:#cbead4;color:#107a39;background:#e8faef}
 .actions{display:flex;gap:8px}
 .btn{border:1px solid var(--line);border-radius:8px;background:#fff;padding:8px 12px;font-weight:800}
-.btn.primary{background:#1749d7;color:#fff;border-color:#1749d7}
+.btn.primary{background:#00385a;color:#fff;border-color:#00385a}
 .photo{width:100%;height:auto;border-radius:10px;border:1px solid var(--line);background:#f5f8ff}
 
 /* 黏底 CTA */
 .sticky{position:fixed;left:0;right:0;bottom:0;background:rgba(255,255,255,.9);backdrop-filter:blur(8px);
   border-top:1px solid var(--line);padding:10px;display:flex;gap:10px;justify-content:center}
-.sticky .cta{border:1.5px solid var(--brand);border-radius:999px;padding:10px 14px;font-weight:900;background:#fff;color:#1749d7}
-.sticky .cta.primary{background:#1749d7;color:#fff}
+.sticky .cta{border:1.5px solid var(--brand);border-radius:999px;padding:10px 14px;font-weight:900;background:#fff;color:#00385a}
+.sticky .cta.primary{background:#00385a;color:#fff}
 
 /* 定位調整：將個人卡中的「查看我的社區牆」膠囊，平行往右移 30px */
 .links a[href="#my-community"]{ margin-left: 0; }
