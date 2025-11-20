@@ -7,6 +7,7 @@ import AssetMonitor from './components/AssetMonitor';
 import ListingFeed from './components/ListingFeed';
 import MaiCard from './components/MaiCard';
 import TrustFlow from './components/TrustFlow';
+import { supabase } from '../../lib/supabase';
 
 export default function UAGPage() {
   const [appData, setAppData] = useState<AppData | null>(null);
@@ -41,15 +42,65 @@ export default function UAGPage() {
       // setTimeout(() => setAppData({ ...MOCK_DB }), 500);
       setAppData({ ...MOCK_DB }); // Direct load for now
     } else {
-      // Live API implementation
+      // Live API implementation with Supabase
       try {
-        const res = await fetch('/api/uag/dashboard');
-        if (!res.ok) throw new Error('API request failed');
-        const data = await res.json();
-        setAppData(data);
+        // 1. Fetch User Data
+        const { data: userData, error: userError } = await supabase
+          .from('users')
+          .select('points, quota_s, quota_a')
+          .single();
+          
+        if (userError) throw userError;
+
+        // 2. Fetch Leads (New + Purchased by me)
+        // Note: In a real app, you'd filter by user ID. For now, we fetch all relevant leads.
+        const { data: leadsData, error: leadsError } = await supabase
+          .from('leads')
+          .select('*')
+          .or('status.eq.new,status.eq.purchased');
+
+        if (leadsError) throw leadsError;
+
+        // 3. Fetch Listings
+        const { data: listingsData, error: listingsError } = await supabase
+          .from('listings')
+          .select('*');
+
+        if (listingsError) throw listingsError;
+
+        // 4. Fetch Feed
+        const { data: feedData, error: feedError } = await supabase
+          .from('feed')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(5);
+
+        if (feedError) throw feedError;
+
+        // Transform data to match AppData interface
+        const transformedData: AppData = {
+          user: {
+            points: userData.points,
+            quota: { s: userData.quota_s, a: userData.quota_a }
+          },
+          leads: leadsData.map((l: any) => ({
+            ...l,
+            // Ensure types match
+            grade: l.grade as 'S' | 'A' | 'B' | 'C' | 'F',
+            status: l.status as 'new' | 'purchased'
+          })),
+          listings: listingsData.map((l: any) => ({
+            ...l,
+            thumbColor: l.thumb_color // Map snake_case to camelCase
+          })),
+          feed: feedData
+        };
+
+        setAppData(transformedData);
+
       } catch (e) {
         console.warn('Live API failed, falling back to mock', e);
-        alert('目前無法連接後端 API (Live Mode)，系統自動降級顯示 Mock 資料。');
+        alert('目前無法連接 Supabase 資料庫，或資料表尚未建立。系統自動降級顯示 Mock 資料。');
         setAppData({ ...MOCK_DB });
       }
     }
@@ -75,9 +126,9 @@ export default function UAGPage() {
     if (!appData) return;
     setIsProcessing(true);
 
-    // Simulate API call
-    setTimeout(() => {
-      if (useMock) {
+    if (useMock) {
+      // Simulate API call
+      setTimeout(() => {
         // Deep copy to avoid direct mutation of state before setAppData
         const newAppData = JSON.parse(JSON.stringify(appData));
         const lead = newAppData.leads.find((l: Lead) => l.id === leadId);
@@ -113,11 +164,35 @@ export default function UAGPage() {
         setAppData(newAppData);
         setSelectedLead(null); // Deselect or update selection
         alert("交易成功 (Mock)");
-      } else {
-        alert("Live API buy not implemented");
+        setIsProcessing(false);
+      }, 800);
+    } else {
+      // Live API implementation with Supabase RPC
+      try {
+        // Assuming we have a logged in user. For now, we might need a hardcoded user ID or auth context.
+        // const { data: { user } } = await supabase.auth.getUser();
+        // if (!user) throw new Error('Not authenticated');
+
+        // Call the stored procedure 'buy_lead_transaction'
+        const { data, error } = await supabase.rpc('buy_lead_transaction', {
+          p_lead_id: leadId
+          // p_user_id is usually handled by auth.uid() in RLS/RPC, but depends on implementation
+        });
+
+        if (error) throw error;
+
+        alert("交易成功 (Live)");
+        // Reload data to reflect changes
+        loadData(false);
+        setSelectedLead(null);
+
+      } catch (e: any) {
+        console.error('Buy lead failed', e);
+        alert(`交易失敗: ${e.message || '未知錯誤'}`);
+      } finally {
+        setIsProcessing(false);
       }
-      setIsProcessing(false);
-    }, 800);
+    }
   };
 
   if (!appData) return <div className="p-6 text-center">載入中...</div>;
