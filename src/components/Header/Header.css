@@ -388,7 +388,7 @@
 
 /* 搜索按鈕 - 新擬物風格 */
 .search-btn-primary {
-  background: var(--brand); /* Deep Blue Secondary */
+  background: var(--brand-light); /* Cyan */
   color: #fff;
   border: none;
   border-radius: 14px;
@@ -397,18 +397,15 @@
   font-weight: 800;
   letter-spacing: 0.02em;
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(0, 78, 124, 0.3);
-  transition: all 0.15s ease;
+  box-shadow: 0 4px 12px rgba(0, 159, 232, 0.3);
+  transition: all 0.2s ease;
+  white-space: nowrap;
 }
 
 .search-btn-primary:hover {
-  background: var(--brand-600);
+  background: #008ecc; /* Slightly darker cyan */
   transform: translateY(-1px);
-}
-
-.search-btn-primary:active {
-  transform: translateY(1px);
-  box-shadow: 0 2px 6px rgba(0, 78, 124, 0.2);
+  box-shadow: 0 6px 16px rgba(0, 159, 232, 0.4);
 }
 
 /* 膠囊按鈕 - 新擬物風格 */
