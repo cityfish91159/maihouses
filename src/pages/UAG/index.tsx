@@ -5,9 +5,8 @@ import { QueryErrorResetBoundary } from '@tanstack/react-query';
 
 import styles from './UAG.module.css';
 import { useUAG } from './hooks/useUAG';
-import { useWindowSize } from './hooks/useWindowSize';
+import { useLeadSelection } from './hooks/useLeadSelection';
 import { Lead } from './types/uag.types';
-import { BREAKPOINTS } from './uag-config';
 
 import { UAGHeader } from './components/UAGHeader';
 import { UAGFooter } from './components/UAGFooter';
@@ -23,27 +22,8 @@ import TrustFlow from './components/TrustFlow';
 
 function UAGPageContent() {
   const { data: appData, isLoading, error, buyLead, isBuying, useMock, toggleMode } = useUAG();
-  const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
+  const { selectedLead, selectLead, close } = useLeadSelection();
   const actionPanelRef = useRef<HTMLDivElement>(null);
-  const { width } = useWindowSize();
-
-  // Handle window resize to close panel on desktop
-  useEffect(() => {
-    if (width > BREAKPOINTS.TABLET && selectedLead) {
-      setSelectedLead(null);
-    }
-  }, [width, selectedLead]);
-
-  const handleSelectLead = (lead: Lead) => {
-    setSelectedLead(lead);
-    // Scroll to action panel on mobile
-    if (width <= BREAKPOINTS.TABLET) {
-      // Improved scroll behavior
-      setTimeout(() => {
-        actionPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }, 100);
-    }
-  };
 
   const onBuyLead = async (leadId: string) => {
     if (!appData || isBuying) return;
@@ -51,11 +31,11 @@ function UAGPageContent() {
     // Validation logic is now handled inside useUAG's buyLead
     // Confirmation is handled in ActionPanel UI
     buyLead(leadId);
-    setSelectedLead(null);
+    close();
   };
 
   if (isLoading) return <UAGLoadingSkeleton />;
-  if (error) throw error; // Let ErrorBoundary handle it
+  // if (error) throw error; // Handled by ErrorBoundary
   if (!appData) return null;
 
   return (
@@ -66,7 +46,7 @@ function UAGPageContent() {
       <main className={styles['uag-container']}>
         <div className={styles['uag-grid']}>
           {/* [1] UAG Radar */}
-          <RadarCluster leads={appData.leads} onSelectLead={handleSelectLead} />
+          <RadarCluster leads={appData.leads} onSelectLead={selectLead} />
 
           {/* [Action Panel] */}
           <ActionPanel 

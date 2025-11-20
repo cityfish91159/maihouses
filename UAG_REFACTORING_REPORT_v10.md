@@ -400,3 +400,28 @@ Based on the code review feedback, the following optimizations were applied to e
 
 ---
 **現在可以安全地推送到 main 分支進行部署。**
+
+## 11. v11 優化與部署 (v11 Optimization & Deployment)
+
+**日期**: 2025-11-20
+**狀態**: 部署中 (Deploying)
+
+### 11.1 變更摘要 (Change Summary)
+根據 v11 的優化建議，執行了以下關鍵改動：
+
+1.  **移除冗餘錯誤拋出**:
+    - 刪除了 `index.tsx` 中的 `if (error) throw error;`，完全依賴 `ErrorBoundary` 處理錯誤，淨化 Call Stack。
+
+2.  **Hook 封裝選取邏輯**:
+    - 新增 `useLeadSelection.ts` Hook，將 `selectedLead` 狀態管理與 RWD 自動滾動/關閉邏輯封裝起來。
+    - `index.tsx` 現在只負責呼叫 `selectLead` 與 `close`，大幅簡化。
+
+3.  **Mutation 層級驗證**:
+    - 在 `useUAG.ts` 的 `onMutate` 中加入了 `validateQuota` 檢查。
+    - 實現了「防禦性樂觀更新」：如果配額不足，直接在前端攔截並拋出錯誤，不執行樂觀更新，避免 UI 閃爍。
+
+4.  **確認機制**:
+    - 確認 `ActionPanel.tsx` 已實作內嵌式確認 UI (Inline Confirmation)，取代了過時的 `window.confirm`。
+
+### 11.2 部署指令 (Deployment Command)
+`npm run build && git push origin main`

@@ -73,6 +73,15 @@ export function useUAG() {
       const previousData = queryClient.getQueryData<AppData>(['uagData', useMock, session?.user?.id]);
 
       if (previousData) {
+        // Optimistic validation
+        const lead = previousData.leads.find(l => l.id === leadId);
+        if (lead) {
+           const { valid, error } = validateQuota(lead, previousData.user);
+           if (!valid) {
+             throw new Error(error || "配額不足 (Optimistic Check)");
+           }
+        }
+
         const newData = {
           ...previousData,
           user: {
