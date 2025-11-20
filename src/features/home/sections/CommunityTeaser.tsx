@@ -4,15 +4,15 @@ export default function CommunityTeaser() {
 			<style>{`
 				.reviews-agg{background:rgba(255,255,255,.96);backdrop-filter:blur(8px);border:1px solid #e8f0f8;border-radius:18px;padding:10px}
 				.reviews-agg .header{display:flex;justify-content:space-between;align-items:center;gap:6px;margin-bottom:6px}
-				.reviews-agg .title{font-size:18px;font-weight:800;margin:0;color:#0d2d8f;letter-spacing:.3px}
+				.reviews-agg .title{font-size:18px;font-weight:800;margin:0;color:#00385a;letter-spacing:.3px}
 				.reviews-agg .grid{display:grid;grid-template-columns:1fr;gap:8px}
 				@media(min-width:560px){.reviews-agg .grid{grid-template-columns:1fr 1fr}}
 				.reviews-agg .review{display:flex;gap:8px;border:1px solid #e8f0f8;border-radius:13px;padding:7px;background:#fff;position:relative}
-				.reviews-agg .av2{width:34px;height:34px;border-radius:50%;background:rgba(230,240,255,.8);border:2px solid #1749d7;display:flex;align-items:center;justify-content:center;font-weight:800;color:#1749d7;font-size:17px;flex-shrink:0}
+				.reviews-agg .av2{width:34px;height:34px;border-radius:50%;background:rgba(0,56,90,.08);border:2px solid #00385a;display:flex;align-items:center;justify-content:center;font-weight:800;color:#00385a;font-size:17px;flex-shrink:0}
 				.reviews-agg .name{font-weight:800;font-size:14.5px;color:#0a1f3f}
 				.reviews-agg .tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:3px}
 				.reviews-agg .tag{font-size:12px;padding:3px 8px;border-radius:999px;background:rgba(52,199,89,.12);border:1px solid rgba(52,199,89,.40);color:#0f6a23;font-weight:700}
-				.reviews-agg p{margin:4px 0 0;font-size:14.5px;line-height:1.48;color:#1a3a62;font-weight:500}
+				.reviews-agg p{margin:4px 0 0;font-size:14.5px;line-height:1.48;color:#00385a;font-weight:500}
 				.reviews-agg .cta{margin-top:8px;display:flex;align-items:center;gap:10px;background:linear-gradient(90deg,rgba(52,199,89,.25),rgba(52,199,89,.12));border:1px solid rgba(52,199,89,.40);padding:12px 14px;border-radius:14px;font-weight:900;color:#0e3d1c;text-decoration:none;position:relative}
 				.reviews-agg .cta .text{font-size:17px;letter-spacing:.3px}
 				.reviews-agg .cta .pill{margin-left:auto;background:#0f6a23;color:#fff;border-radius:999px;font-size:14px;padding:8px 12px}

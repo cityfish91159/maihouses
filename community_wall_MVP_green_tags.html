@@ -13,7 +13,7 @@
 @keyframes like-float { 0%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-30px) scale(1.5)} }
 
 :root{
-  --primary:#1749d7;--primary-dark:#0d2d8f;--primary-light:#5ba3ff;
+  --primary:#00385a;--primary-dark:#00385a;--primary-light:#33607b;
   --secondary:#34c759;--secondary-light:#50d167;--tertiary:#a78bfa;
   --accent:#ff9b4a;--warning:#ef4444;--heart:#ff3b30;
   --bg-base:#f8fafb;--bg-alt:#f0f4fa;--bg-elevated:#ffffff;
@@ -32,20 +32,20 @@ html,body{height:100%;margin:0;background:linear-gradient(180deg,var(--bg-base)0
 .sub{margin:0;font-size:11px;color:var(--text-secondary);font-weight:500}
 
 /* 徽章 */
-.badge{display:inline-flex;align-items:center;gap:6px;background:rgba(23,73,215,.08);border:1.2px solid var(--primary-light);color:var(--primary);border-radius:999px;padding:5px 12px;font-size:10.5px;font-weight:750;position:relative;overflow:hidden}
-.badge:hover{background:rgba(23,73,215,.12);border-color:var(--primary)}
+.badge{display:inline-flex;align-items:center;gap:6px;background:rgba(0,56,90,.08);border:1.2px solid var(--primary-light);color:var(--primary);border-radius:999px;padding:5px 12px;font-size:10.5px;font-weight:750;position:relative;overflow:hidden}
+.badge:hover{background:rgba(0,56,90,.12);border-color:var(--primary)}
 
 /* 分頁標籤 */
 .tabs{display:flex;gap:6px;flex-wrap:wrap}
 .tab{padding:5px 11px;border-radius:999px;border:1px solid transparent;font-size:10.5px;background:rgba(240,244,250,.8);color:var(--text-secondary);cursor:pointer;transition:all .25s ease;font-weight:600;position:relative}
-.tab:hover{background:rgba(230,240,255,.9);color:var(--primary)}
-.tab.active{background:rgba(23,73,215,.1);border-color:var(--primary-light);color:var(--primary);font-weight:700}
+.tab:hover{background:rgba(0,56,90,.12);color:var(--primary)}
+.tab.active{background:rgba(0,56,90,.1);border-color:var(--primary-light);color:var(--primary);font-weight:700}
 .tab.active::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--primary),transparent);animation:slideRight .3s ease}
 
 /* 貼文 */
 .post{display:flex;align-items:flex-start;gap:6px;padding:7px;border:1px solid var(--border-light);border-radius:13px;background:rgba(255,255,255,.96);backdrop-filter:blur(8px);transition:all .3s ease;position:relative}
 .post::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(180deg,var(--primary),transparent);border-radius:13px 0 0 13px;opacity:0;transition:opacity .3s ease}
-.post:hover{border-color:var(--primary-light);background:rgba(255,255,255,1);box-shadow:0 2px 8px rgba(23,73,215,0.08)}
+.post:hover{border-color:var(--primary-light);background:rgba(255,255,255,1);box-shadow:0 2px 8px rgba(0,56,90,0.08)}
 .post:hover::before{opacity:1}
 .post .dot{width:7px;height:7px;border-radius:50%;background:var(--primary);margin-top:5px;flex-shrink:0;animation:float 3s ease-in-out infinite}
 .post .content{flex:1;font-size:13px;line-height:1.48}
@@ -53,8 +53,8 @@ html,body{height:100%;margin:0;background:linear-gradient(180deg,var(--bg-base)0
 
 /* 互動按鈕 */
 .post-actions{display:flex;gap:8px;align-items:center;margin-top:6px;padding-top:6px;border-top:1px solid rgba(0,0,0,0.04);flex-wrap:wrap}
-.action-btn{display:flex;align-items:center;gap:4px;font-size:11px;padding:4px 8px;border-radius:6px;background:rgba(23,73,215,0.06);border:1px solid rgba(23,73,215,0.12);color:var(--primary);font-weight:700;cursor:pointer;transition:all .2s ease;user-select:none;position:relative}
-.action-btn:hover{background:rgba(23,73,215,0.12);transform:scale(1.05)}
+.action-btn{display:flex;align-items:center;gap:4px;font-size:11px;padding:4px 8px;border-radius:6px;background:rgba(0,56,90,0.06);border:1px solid rgba(0,56,90,0.12);color:var(--primary);font-weight:700;cursor:pointer;transition:all .2s ease;user-select:none;position:relative}
+.action-btn:hover{background:rgba(0,56,90,0.12);transform:scale(1.05)}
 .action-btn.liked{background:rgba(255,59,48,0.15);border-color:rgba(255,59,48,0.3);color:var(--heart);animation:heart-pop .4s ease}
 .action-btn.liked::after{content:'';position:absolute;inset:0;background:var(--heart);border-radius:6px;opacity:0;animation:like-float .6s ease-out forwards}
 .meta{display:flex;gap:8px;font-size:10.5px;color:var(--text-secondary);align-items:center;margin-top:3px;flex-wrap:wrap;font-weight:500}
@@ -64,17 +64,17 @@ html,body{height:100%;margin:0;background:linear-gradient(180deg,var(--bg-base)0
 .review::before{content:'';position:absolute;inset:0;border-radius:13px;background:linear-gradient(135deg,rgba(52,199,89,0.05),transparent);opacity:0;transition:opacity .3s ease}
 .review:hover{border-color:var(--secondary-light);background:#fff;box-shadow:0 2px 8px rgba(52,199,89,0.08)}
 .review:hover::before{opacity:1}
-.av2{width:34px;height:34px;border-radius:50%;background:rgba(230,240,255,.8);border:2px solid var(--primary);display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--primary);font-size:15px;flex-shrink:0;animation:float 3.5s ease-in-out infinite}
+.av2{width:34px;height:34px;border-radius:50%;background:rgba(0,56,90,.08);border:2px solid var(--primary);display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--primary);font-size:15px;flex-shrink:0;animation:float 3.5s ease-in-out infinite}
 .review .name{font-weight:800;font-size:12.5px;color:var(--text-primary)}
 .tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:3px}
 .tag{font-size:10px;padding:3px 8px;border-radius:999px;background:rgba(52,199,89,.12);border:1px solid rgba(52,199,89,.40);color:#0f6a23;font-weight:700;transition:all .2s ease}
 .tag:hover{background:rgba(52,199,89,.20);border-color:rgba(52,199,89,.55)}
 .tag.fallback{opacity:.85;filter:grayscale(.35)}
-.review p{margin:4px 0 0;font-size:12.5px;line-height:1.48;color:#1a3a62;font-weight:500}
+.review p{margin:4px 0 0;font-size:12.5px;line-height:1.48;color:#00385a;font-weight:500}
 
 /* 互動指標 */
 .engagement-meter{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--text-secondary)}
-.meter-bar{flex:1;height:4px;background:rgba(200,220,255,.3);border-radius:999px;overflow:hidden}
+.meter-bar{flex:1;height:4px;background:rgba(0,56,90,.15);border-radius:999px;overflow:hidden}
 .meter-fill{height:100%;background:linear-gradient(90deg,var(--secondary),var(--accent));border-radius:999px}
 
 .hint{margin:0;color:var(--text-secondary);font-size:11px}
