@@ -5,7 +5,7 @@ import SmartAsk from '../features/home/sections/SmartAsk'
 import CommunityTeaser from '../features/home/sections/CommunityTeaser'
 // import PropertyGrid from '../features/home/sections/PropertyGrid'
 import { getMeta } from '../services/api'
-import { trackEvent } from '../services/uag'
+import { trackEvent } from '../services/analytics'
 import type { AppConfig, RuntimeOverrides } from '../app/config'
 import { WarmWelcomeBar } from '../components/WarmWelcomeBar'
 

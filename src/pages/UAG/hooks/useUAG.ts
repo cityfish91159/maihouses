@@ -6,6 +6,7 @@ import { MOCK_DB } from '../mockData';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '../../../hooks/useAuth';
 import { GRADE_HOURS } from '../uag-config';
+import { validateQuota } from '../utils/validation';
 
 export function useUAG() {
   const { session } = useAuth();
@@ -32,6 +33,10 @@ export function useUAG() {
   }, []);
 
   const toggleMode = () => {
+    if (import.meta.env.PROD) {
+      toast.error("生產環境無法切換模式");
+      return;
+    }
     const newMode = !useMock;
     setUseMock(newMode);
     localStorage.setItem('uag_mode', newMode ? 'mock' : 'live');
@@ -50,6 +55,7 @@ export function useUAG() {
       return UAGService.fetchAppData(session.user.id);
     },
     enabled: useMock || !!session?.user?.id,
+    staleTime: 1000 * 10, // 10 seconds for leads
     refetchInterval: useMock ? false : 30000, // Auto refresh every 30s for live data
   });
 
@@ -98,16 +104,46 @@ export function useUAG() {
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['uagData'] });
     },
-    onSuccess: () => {
-      toast.success(useMock ? "購買成功 (Mock)" : "購買成功");
-    }
   });
+
+  const buyLead = async (leadId: string) => {
+    if (!data || buyLeadMutation.isPending) return;
+
+    const lead = data.leads.find(l => l.id === leadId);
+    if (!lead) {
+      toast.error("客戶不存在");
+      return;
+    }
+
+    if (lead.status !== 'new') {
+      toast.error("此客戶已被購買");
+      return;
+    }
+
+    const { valid, error } = validateQuota(lead, data.user);
+    if (!valid) {
+      toast.error(error || "配額不足");
+      return;
+    }
+
+    const cost = lead.price || 10;
+    if (data.user.points < cost) {
+      toast.error("點數不足");
+      return;
+    }
+
+    buyLeadMutation.mutate({ leadId, cost, grade: lead.grade }, {
+      onSuccess: () => {
+        toast.success("購買成功");
+      }
+    });
+  };
 
   return {
     data,
     isLoading,
     error,
-    buyLead: buyLeadMutation.mutate,
+    buyLead, // Expose the wrapper function
     isBuying: buyLeadMutation.isPending,
     useMock,
     toggleMode,

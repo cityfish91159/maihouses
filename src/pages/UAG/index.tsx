@@ -7,7 +7,7 @@ import styles from './UAG.module.css';
 import { useUAG } from './hooks/useUAG';
 import { useWindowSize } from './hooks/useWindowSize';
 import { Lead } from './types/uag.types';
-import { validateQuota } from './utils/validation';
+import { BREAKPOINTS } from './uag-config';
 
 import { UAGHeader } from './components/UAGHeader';
 import { UAGFooter } from './components/UAGFooter';
@@ -29,48 +29,28 @@ function UAGPageContent() {
 
   // Handle window resize to close panel on desktop
   useEffect(() => {
-    if (width > 768 && selectedLead) {
-      // Optional: auto-close or adjust layout
+    if (width > BREAKPOINTS.TABLET && selectedLead) {
+      setSelectedLead(null);
     }
   }, [width, selectedLead]);
 
   const handleSelectLead = (lead: Lead) => {
     setSelectedLead(lead);
     // Scroll to action panel on mobile
-    if (width <= 1024) {
-      actionPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (width <= BREAKPOINTS.TABLET) {
+      // Improved scroll behavior
+      setTimeout(() => {
+        actionPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 100);
     }
   };
 
   const onBuyLead = async (leadId: string) => {
     if (!appData || isBuying) return;
 
-    const lead = appData.leads.find(l => l.id === leadId);
-    if (!lead) {
-      toast.error("客戶不存在");
-      return;
-    }
-
-    if (lead.status !== 'new') {
-      toast.error("此客戶已被購買");
-      return;
-    }
-
-    const { valid, error } = validateQuota(lead, appData.user);
-    if (!valid) {
-      toast.error(error || "配額不足");
-      return;
-    }
-
-    const cost = lead.price || 10;
-    if (appData.user.points < cost) {
-      toast.error("點數不足");
-      return;
-    }
-
-    if (!confirm(`確定要花費 ${cost} 點購買此客戶資料嗎？`)) return;
-
-    buyLead({ leadId, cost, grade: lead.grade });
+    // Validation logic is now handled inside useUAG's buyLead
+    // Confirmation is handled in ActionPanel UI
+    buyLead(leadId);
     setSelectedLead(null);
   };
 

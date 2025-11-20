@@ -1,7 +1,7 @@
-import { Component, type ReactNode } from 'react'
-import { trackEvent } from '../services/uag'
+import { Component, ErrorInfo, ReactNode } from 'react'
+import { trackEvent } from '../services/analytics'
 
-type Props = { children: ReactNode }
+interface Props { children: ReactNode }
 type State = { hasError: boolean }
 
 export default class ErrorBoundary extends Component<Props, State> {

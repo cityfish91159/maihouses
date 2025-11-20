@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { aiAsk } from '../../../services/api'
-import { trackEvent } from '../../../services/uag'
+import { trackEvent } from '../../../services/analytics'
 import type { AiMessage, PropertyCard } from '../../../types'
 
 const QUICK = ['3房以內', '30坪以下', '近捷運', '新成屋']

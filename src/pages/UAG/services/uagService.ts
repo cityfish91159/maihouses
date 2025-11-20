@@ -1,11 +1,11 @@
 import { supabase } from '../../../lib/supabase';
 import { 
   AppData, 
-  AppDataSchema, 
   Grade, 
-  Lead, 
-  LeadStatus, 
-  LeadSchema 
+  LeadSchema, 
+  ListingSchema,
+  FeedPostSchema,
+  UserDataSchema
 } from '../types/uag.types';
 import { GRADE_HOURS } from '../uag-config';
 
@@ -29,48 +29,75 @@ const transformSupabaseData = (
   listingsData: any[],
   feedData: any[]
 ): AppData => {
-  const rawData = {
-    user: {
-      points: userData.points,
-      quota: { s: userData.quota_s, a: userData.quota_a }
-    },
-    leads: leadsData.map((l: any) => {
-      let remainingHours = l.remaining_hours != null ? Number(l.remaining_hours) : null;
-
-      if (remainingHours == null && l.purchased_at && l.status === 'purchased') {
-        remainingHours = calculateRemainingHours(l.purchased_at, l.grade as Grade);
-      }
-
-      return {
-        ...l,
-        grade: l.grade,
-        status: l.status,
-        ...(remainingHours != null ? { remainingHours } : {})
-      };
-    }),
-    listings: listingsData.map((l: any) => ({
-      ...l,
-      title: l.title,
-      tags: l.tags ?? [],
-      view: l.view_count ?? 0,
-      click: l.click_count ?? 0,
-      fav: l.fav_count ?? 0,
-      thumbColor: l.thumb_color ?? '#e5e7eb'
-    })),
-    feed: feedData
+  // 1. Validate User Data (Critical)
+  const userRaw = {
+    points: userData.points,
+    quota: { s: userData.quota_s, a: userData.quota_a }
   };
-
-  // Runtime validation with Zod
-  const result = AppDataSchema.safeParse(rawData);
   
-  if (!result.success) {
-    console.error('UAG Data Validation Error:', result.error);
-    // In a real app, you might want to throw or return a fallback
-    // For now, we return the raw data but cast it, or throw if critical
-    throw new Error('Data validation failed: ' + result.error.message);
+  const userResult = UserDataSchema.safeParse(userRaw);
+  if (!userResult.success) {
+    console.error('Critical: User Data Validation Failed', userResult.error);
+    throw new Error('Failed to load user profile');
   }
 
-  return result.data;
+  // 2. Transform and Validate Leads (Resilient)
+  const validLeads = leadsData.map((l: any) => {
+    let remainingHours = l.remaining_hours != null ? Number(l.remaining_hours) : null;
+
+    if (remainingHours == null && l.purchased_at && l.status === 'purchased') {
+      remainingHours = calculateRemainingHours(l.purchased_at, l.grade as Grade);
+    }
+
+    return {
+      ...l,
+      grade: l.grade,
+      status: l.status,
+      ...(remainingHours != null ? { remainingHours } : {})
+    };
+  }).filter(lead => {
+    const result = LeadSchema.safeParse(lead);
+    if (!result.success) {
+      console.warn(`Skipping invalid lead (${lead.id}):`, result.error.flatten());
+      return false;
+    }
+    return true;
+  });
+
+  // 3. Transform and Validate Listings
+  const validListings = listingsData.map((l: any) => ({
+    ...l,
+    title: l.title,
+    tags: l.tags ?? [],
+    view: l.view_count ?? 0,
+    click: l.click_count ?? 0,
+    fav: l.fav_count ?? 0,
+    thumbColor: l.thumb_color ?? '#e5e7eb'
+  })).filter(listing => {
+    const result = ListingSchema.safeParse(listing);
+    if (!result.success) {
+      console.warn('Skipping invalid listing:', result.error.flatten());
+      return false;
+    }
+    return true;
+  });
+
+  // 4. Validate Feed
+  const validFeed = feedData.filter(post => {
+    const result = FeedPostSchema.safeParse(post);
+    if (!result.success) {
+      console.warn('Skipping invalid feed post:', result.error.flatten());
+      return false;
+    }
+    return true;
+  });
+
+  return {
+    user: userResult.data,
+    leads: validLeads,
+    listings: validListings,
+    feed: validFeed
+  };
 };
 
 export class UAGService {

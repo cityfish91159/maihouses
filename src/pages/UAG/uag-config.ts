@@ -1,5 +1,10 @@
 import { Grade } from './types/uag.types';
 
+export const BREAKPOINTS = {
+  MOBILE: 768,
+  TABLET: 1024,
+};
+
 export const UAG_GRADE_PRICE: Record<Grade, number> = {
   S: 500,
   A: 300,

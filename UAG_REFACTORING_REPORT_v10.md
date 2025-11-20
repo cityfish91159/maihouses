@@ -71,3 +71,332 @@ src/pages/UAG/
 - 執行 `tsc` 檢查型別錯誤。
 - 執行 `npm run build` 確保建置成功。
 - 進行功能測試 (Mock Mode & Live Mode)。
+
+## 6. 完整程式碼 (Complete Code)
+
+### 6.1 src/App.tsx (Fix: Added QueryClientProvider)
+```tsx
+import { useEffect, useState } from 'react'
+import { Routes, Route, useLocation } from 'react-router-dom'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { getConfig, type AppConfig, type RuntimeOverrides } from './app/config'
+import DevTools from './app/devtools'
+import { trackEvent } from './services/uag'
+import Home from './pages/Home'
+import Register from './pages/Auth/Register'
+import Login from './pages/Auth/Login'
+import Wall from './pages/Community/Wall'
+import Suggested from './pages/Community/Suggested'
+import Detail from './pages/Property/Detail'
+import AssureDetail from './pages/Assure/Detail'
+import ChatStandalone from './pages/Chat/Standalone'
+import ErrorBoundary from './app/ErrorBoundary'
+import { QuietModeProvider } from './context/QuietModeContext'
+import { MoodProvider } from './context/MoodContext'
+
+import UAGPage from './pages/UAG'
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      retry: 1,
+    },
+  },
+})
+
+export default function App() {
+  const [config, setConfig] = useState<(AppConfig & RuntimeOverrides) | null>(null)
+  const loc = useLocation()
+
+  useEffect(() => {
+    getConfig().then(setConfig)
+  }, [])
+
+  useEffect(() => {
+    if (config) trackEvent('page_view', loc.pathname)
+  }, [loc, config])
+
+  if (!config) {
+    return (
+      <div className="p-6 text-sm text-[var(--text-secondary)]">載入中…</div>
+    )
+  }
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <QuietModeProvider>
+        <MoodProvider>
+          <Routes key={loc.pathname}>
+          <Route
+            path="/"
+            element={
+              <ErrorBoundary>
+                <Home config={config} />
+              </ErrorBoundary>
+            }
+          />
+          {/* ... other routes ... */}
+          <Route
+            path="/uag"
+            element={
+              <ErrorBoundary>
+                <UAGPage />
+              </ErrorBoundary>
+            }
+          />
+          {/* ... other routes ... */}
+      </Routes>
+      {config.devtools === '1' && <DevTools config={config} />}
+      </MoodProvider>
+    </QuietModeProvider>
+    </QueryClientProvider>
+  )
+}
+```
+
+### 6.2 src/pages/UAG/index.tsx (Main Container)
+```tsx
+import React, { useState, useRef, useEffect } from 'react';
+import { Toaster, toast } from 'react-hot-toast';
+import { ErrorBoundary } from 'react-error-boundary';
+import { QueryErrorResetBoundary } from '@tanstack/react-query';
+
+import styles from './UAG.module.css';
+import { useUAG } from './hooks/useUAG';
+import { useWindowSize } from './hooks/useWindowSize';
+import { Lead } from './types/uag.types';
+import { validateQuota } from './utils/validation';
+
+import { UAGHeader } from './components/UAGHeader';
+import { UAGFooter } from './components/UAGFooter';
+import { UAGLoadingSkeleton } from './components/UAGLoadingSkeleton';
+import { UAGErrorState } from './components/UAGErrorState';
+
+import RadarCluster from './components/RadarCluster';
+import ActionPanel from './components/ActionPanel';
+import AssetMonitor from './components/AssetMonitor';
+import ListingFeed from './components/ListingFeed';
+import MaiCard from './components/MaiCard';
+import TrustFlow from './components/TrustFlow';
+
+function UAGPageContent() {
+  const { data: appData, isLoading, error, buyLead, isBuying, useMock, toggleMode } = useUAG();
+  const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
+  const actionPanelRef = useRef<HTMLDivElement>(null);
+  const { width } = useWindowSize();
+
+  // Handle window resize to close panel on desktop
+  useEffect(() => {
+    if (width > 768 && selectedLead) {
+      // Optional: auto-close or adjust layout
+    }
+  }, [width, selectedLead]);
+
+  const handleSelectLead = (lead: Lead) => {
+    setSelectedLead(lead);
+    // Scroll to action panel on mobile
+    if (width <= 1024) {
+      actionPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
+  const onBuyLead = async (leadId: string) => {
+    if (!appData || isBuying) return;
+
+    const lead = appData.leads.find(l => l.id === leadId);
+    if (!lead) {
+      toast.error("客戶不存在");
+      return;
+    }
+
+    if (lead.status !== 'new') {
+      toast.error("此客戶已被購買");
+      return;
+    }
+
+    const { valid, error } = validateQuota(lead, appData.user);
+    if (!valid) {
+      toast.error(error || "配額不足");
+      return;
+    }
+
+    const cost = lead.price || 10;
+    if (appData.user.points < cost) {
+      toast.error("點數不足");
+      return;
+    }
+
+    if (!confirm(`確定要花費 ${cost} 點購買此客戶資料嗎？`)) return;
+
+    buyLead({ leadId, cost, grade: lead.grade });
+    setSelectedLead(null);
+  };
+
+  if (isLoading) return <UAGLoadingSkeleton />;
+  if (error) throw error; // Let ErrorBoundary handle it
+  if (!appData) return null;
+
+  return (
+    <div className={styles['uag-page']}>
+      <Toaster position="top-center" />
+      <UAGHeader />
+
+      <main className={styles['uag-container']}>
+        <div className={styles['uag-grid']}>
+          {/* [1] UAG Radar */}
+          <RadarCluster leads={appData.leads} onSelectLead={handleSelectLead} />
+
+          {/* [Action Panel] */}
+          <ActionPanel 
+            ref={actionPanelRef}
+            selectedLead={selectedLead} 
+            onBuyLead={onBuyLead} 
+            isProcessing={isBuying} 
+          />
+
+          {/* [2] Asset Monitor */}
+          <AssetMonitor leads={appData.leads} />
+
+          {/* [3] Listings & [4] Feed */}
+          <ListingFeed listings={appData.listings} feed={appData.feed} />
+
+          {/* [5] Mai Card */}
+          <MaiCard />
+
+          {/* [6] Trust Flow */}
+          <TrustFlow />
+        </div>
+      </main>
+
+      <UAGFooter user={appData.user} useMock={useMock} toggleMode={toggleMode} />
+    </div>
+  );
+}
+
+export default function UAGPage() {
+  return (
+    <QueryErrorResetBoundary>
+      {({ reset }) => (
+        <ErrorBoundary
+          onReset={reset}
+          FallbackComponent={UAGErrorState}
+        >
+          <UAGPageContent />
+        </ErrorBoundary>
+      )}
+    </QueryErrorResetBoundary>
+  );
+}
+```
+
+## 7. Optimization Phase (Post-Review)
+
+Based on the code review feedback, the following optimizations were applied to ensure production readiness:
+
+### 7.1 Security & Safety
+- **Mock Mode Protection**: Added `import.meta.env.PROD` check in `useUAG.ts` to strictly disable Mock Mode in production builds.
+- **Validation Logic**: Moved business logic (Quota/Point validation) from `index.tsx` (UI layer) to `useUAG.ts` (Hook layer) to prevent bypass.
+
+### 7.2 Performance & Stability
+- **Stale Time Optimization**: Reduced `staleTime` from 5 minutes to **10 seconds** for `useQuery` to handle high-concurrency lead purchasing scenarios.
+- **Error Handling**: Enhanced `uagService.ts` to use `safeParse` with error filtering. Invalid items are now logged and skipped instead of crashing the entire application.
+
+### 7.3 UI/UX Improvements
+- **Responsive Design**: Replaced hardcoded pixel values with a centralized `BREAKPOINTS` constant in `uag-config.ts`.
+- **Interaction**: Replaced the native `window.confirm` dialog with an inline confirmation UI in `ActionPanel.tsx` for a smoother user experience.
+- **Code Cleanup**: Removed redundant validation logic from `index.tsx`, making the container component cleaner and focused on layout.
+
+## 8. 重新部署紀錄 (Redeployment Log)
+
+**日期**: 2025-11-20
+**狀態**: 準備就緒 (Ready for Deployment)
+
+### 8.1 變更摘要 (Change Summary)
+本次部署包含針對 v10 架構的關鍵優化與安全性修復：
+1.  **安全性增強**: 強制生產環境禁用 Mock Mode，並將驗證邏輯移至 Hook 層。
+2.  **效能優化**: 將 React Query 的 `staleTime` 調整為 10 秒，並優化錯誤處理機制 (`safeParse`)。
+3.  **使用者體驗**: 引入 `BREAKPOINTS` 統一響應式設計，並將 `window.confirm` 替換為內嵌式確認 UI。
+4.  **程式碼清理**: 大幅簡化 `index.tsx`，移除冗餘邏輯。
+
+### 8.2 部署檢核點 (Deployment Checklist)
+- [x] `useUAG.ts` 邏輯驗證完成。
+- [x] `uagService.ts` 錯誤處理增強完成。
+- [x] `ActionPanel.tsx` UI 互動優化完成。
+- [x] `index.tsx` 程式碼重構完成。
+- [ ] 執行 Build 測試 (`npm run build`)。
+- [ ] 部署至 Vercel。
+
+---
+**下一步**: 請執行 `npm run build` 確認建置無誤後，推送到 main branch 觸發 Vercel 部署。
+
+## 9. 最終部署前修正 (Final Pre-Deployment Fixes)
+
+**日期**: 2025-11-20
+**狀態**: 修正完成 (Fixes Applied)
+
+### 9.1 修正項目 (Fix Items)
+根據最後的代碼審查，執行了以下修正以解決衝突與重複問題：
+
+1.  **路由衝突修復**:
+    - 移除了 `App.tsx` 中 `/uag` 路由外層的 `ErrorBoundary`，保留 `UAGPage` 內部的 `QueryErrorResetBoundary` + `ErrorBoundary` 組合，避免錯誤被雙重攔截。
+
+2.  **命名混淆修復**:
+    - 將 `src/services/uag.ts` (Tracking Service) 重命名為 `src/services/analytics.ts`，明確區分其與 `src/pages/UAG/services/uagService.ts` (Business Logic) 的職責。
+    - 更新了 `App.tsx` 中的引用路徑。
+
+3.  **斷點與響應式邏輯統一**:
+    - 在 `uag-config.ts` 中定義了 `BREAKPOINTS` (MOBILE: 768, TABLET: 1024)。
+    - 修正 `index.tsx` 中的 `useEffect` 死碼，現在當視窗寬度大於 TABLET (1024px) 時，會自動關閉選中的 Lead 面板。
+    - 統一使用 `BREAKPOINTS.TABLET` 作為 Mobile/Desktop 的行為分界點。
+
+4.  **業務邏輯集中化**:
+    - 確認 `useUAG.ts` 中的 `buyLead` 函式已包含完整的驗證邏輯 (Status, Quota, Points)。
+    - `index.tsx` 僅負責 UI 呈現與呼叫 `buyLead`，不再處理業務規則。
+
+### 9.2 部署準備 (Deployment Readiness)
+所有已知問題皆已修復，程式碼庫已準備好進行最終建置與部署。
+
+- [x] 移除重複的 ErrorBoundary。
+- [x] 重命名 Analytics Service。
+- [x] 統一 Breakpoints 與修復無效 useEffect。
+- [x] 驗證業務邏輯集中化。
+
+---
+**執行部署**:
+`npm run build`
+`git push origin main`
+
+## 10. Build 修復紀錄 (Build Fix Log)
+
+**日期**: 2025-11-20
+**狀態**: 建置成功 (Build Success)
+
+### 10.1 錯誤修復 (Error Fixes)
+在執行 `npm run build` 時遇到了以下錯誤並已修復：
+
+1.  **模組找不到錯誤 (Module Not Found)**:
+    - 原因：重命名 `services/uag.ts` 為 `services/analytics.ts` 後，部分檔案仍引用舊路徑。
+    - 修復：更新了以下檔案的引用路徑：
+        - `src/app/ErrorBoundary.tsx`
+        - `src/features/home/sections/PropertyGrid.tsx`
+        - `src/features/home/sections/SmartAsk.tsx`
+        - `src/pages/Auth/Login.tsx`
+        - `src/pages/Auth/Register.tsx`
+        - `src/pages/Home.tsx`
+
+2.  **語法錯誤 (Syntax Error)**:
+    - 原因：在編輯 `ErrorBoundary.tsx` 時意外引入了語法錯誤。
+    - 修復：修正了 `interface Props` 的定義。
+
+3.  **匯出錯誤 (Export Error)**:
+    - 原因：`SmartAsk.tsx` 的 `export default` 被意外移除。
+    - 修復：恢復了 `export default function SmartAsk`。
+
+### 10.2 建置結果 (Build Result)
+- **Command**: `npm run build`
+- **Result**: Success
+- **Output**: `docs/assets/index-*.js` generated.
+
+---
+**現在可以安全地推送到 main 分支進行部署。**

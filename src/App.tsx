@@ -3,7 +3,7 @@ import { Routes, Route, useLocation } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { getConfig, type AppConfig, type RuntimeOverrides } from './app/config'
 import DevTools from './app/devtools'
-import { trackEvent } from './services/uag'
+import { trackEvent } from './services/analytics'
 import Home from './pages/Home'
 import Register from './pages/Auth/Register'
 import Login from './pages/Auth/Login'
@@ -69,9 +69,7 @@ export default function App() {
         <Route
           path="/uag"
           element={
-            <ErrorBoundary>
-              <UAGPage />
-            </ErrorBoundary>
+            <UAGPage />
           }
         />
         <Route

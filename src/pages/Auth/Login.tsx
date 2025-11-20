@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { trackEvent } from '../../services/uag'
+import { useNavigate, Link } from 'react-router-dom'
+import { trackEvent } from '../../services/analytics'
+import { useAuth } from '../../hooks/useAuth'
 import { signIn } from '../../services/auth'
 
 export default function Login() {
