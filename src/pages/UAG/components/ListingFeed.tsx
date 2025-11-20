@@ -1,5 +1,5 @@
 import React from 'react';
-import { Listing, FeedPost } from '../mockData';
+import { Listing, FeedPost } from '../types/uag.types';
 import styles from '../UAG.module.css';
 
 interface ListingFeedProps {
@@ -25,7 +25,7 @@ export default function ListingFeed({ listings, feed }: ListingFeedProps) {
                 <div>
                   <div className={styles['l-title']}>{item.title}</div>
                   <div className={styles['l-tags']}>
-                    {item.tags.map((t, i) => <span className={styles['l-tag']} key={i}>{t}</span>)}
+                    {item.tags?.map((t, i) => <span className={styles['l-tag']} key={i}>{t}</span>)}
                   </div>
                   <div className={styles['l-kpi']}>
                     <span>曝光 <b>{item.view}</b></span>

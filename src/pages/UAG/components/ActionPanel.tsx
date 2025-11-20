@@ -1,5 +1,5 @@
 import React, { forwardRef } from 'react';
-import { Lead } from '../mockData';
+import { Lead } from '../types/uag.types';
 import styles from '../UAG.module.css';
 
 export interface ActionPanelProps {
