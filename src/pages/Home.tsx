@@ -53,12 +53,15 @@ export default function Home({ config }: { config: AppConfig & RuntimeOverrides 
     <>
       <Header />
       <WarmWelcomeBar />
+      {/* Blue background layer for top section */}
+      <div className="absolute top-0 left-0 w-full h-[320px] bg-[var(--brand)] -z-10" />
+      
       {banner && (
         <div className="mx-auto mt-4 max-w-container rounded-[var(--r-md)] bg-[var(--warning)] p-3 text-[var(--fs-sm)] text-white">{banner}</div>
       )}
-      <main className="mx-auto max-w-container space-y-6 p-4 md:space-y-8 md:p-6">
+      <main className="mx-auto max-w-container space-y-6 p-4 md:space-y-8 md:p-6 relative">
         {features.heroAssure !== false && (
-          <section className="rounded-lg bg-white p-6 shadow-[0_2px_8px_rgba(0,0,0,0.08)] transition-all duration-200 hover:shadow-[0_4px_12px_rgba(0,0,0,0.12)] md:p-8">
+          <section className="rounded-lg bg-white p-6 shadow-[0_12px_32px_rgba(0,78,124,0.15)] transition-all duration-200 hover:shadow-[0_16px_40px_rgba(0,78,124,0.2)] md:p-8">
             <HeroAssure />
           </section>
         )}

@@ -6,10 +6,10 @@
 
 :root {
   /* 新擬物風格色彩系統 - 統一使用設計稿色碼 */
-  --brand: #1A5FDB;
-  --brand-600: #0d3399;
-  --brand-light: #6aa4ff;
-  --brand-lighter: #eef3ff;
+  --brand: #004E7C; /* Deep Blue from image */
+  --brand-600: #00385a;
+  --brand-light: #009FE8; /* Cyan from image */
+  --brand-lighter: #e0f4ff;
   --brand-fg: #FFFFFF;
   
   /* 兼容舊變數 */
