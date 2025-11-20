@@ -13,10 +13,11 @@
     />
     <style>
       :root {
-        /* 主色：邁房子清爽藍 */
-        --primary: #1749d7;
-        --primary-light: #e3edff;
-        --primary-dark: #1239a7;
+        /* 主色：邁房子深藍 (Deep Blue) */
+        --primary: #00385a;
+        --primary-light: #e0f4ff; /* 淺藍背景 */
+        --primary-dark: #002a44;
+        --primary-cyan: #009FE8; /* 亮藍/青色 (保留部分淺藍) */
 
         /* 背景色系 */
         --bg-base: #f6f9ff;
@@ -319,7 +320,7 @@
         padding: 0.25rem 0.625rem;
         font-size: 0.75rem; /* 12px */
         font-weight: 600;
-        background: rgba(23, 73, 215, 0.92);
+        background: rgba(0, 56, 90, 0.92);
         color: #ffffff;
         border-radius: 1rem;
         z-index: 2;
@@ -706,7 +707,7 @@
         gap: 0.5rem;
         padding: 0.5rem 0.625rem;
         background: var(--primary-light);
-        border: 1px solid rgba(23, 73, 215, 0.2);
+        border: 1px solid rgba(0, 56, 90, 0.2);
         border-radius: var(--radius-sm);
         margin-bottom: 0.625rem;
       }
@@ -757,7 +758,7 @@
       .lock-btn:hover {
         background: var(--primary-dark);
         transform: translateY(-1px);
-        box-shadow: 0 2px 8px rgba(23, 73, 215, 0.3);
+        box-shadow: 0 2px 8px rgba(0, 56, 90, 0.3);
       }
 
       .lock-btn:active {
