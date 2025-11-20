@@ -2,6 +2,15 @@ Redeploy trigger
 
 This file was updated to force a new Vercel deployment.
 
+Timestamp: 2025-11-20T16:00:00Z
+Deploy: UAG Auth Integration & Security Hardening
+- Frontend: Added useAuth hook for Supabase session management.
+- Frontend: Integrated Realtime subscription for live updates.
+- Frontend: Fixed data mapping (snake_case to camelCase) for Listings.
+- Backend: Added Quota checks to buy_lead_transaction RPC.
+- Backend: Tightened RLS policies for Listings and Leads.
+- Backend: Added performance indexes.
+
 Timestamp: 2025-11-20T15:30:00Z
 Deploy: UAG AssetMonitor Fix & Documentation Sync
 - Frontend: Fixed AssetMonitor to use shared GRADE_HOURS constant instead of hardcoded values.

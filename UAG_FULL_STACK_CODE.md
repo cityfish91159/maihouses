@@ -20,6 +20,7 @@ import ListingFeed from './components/ListingFeed';
 import MaiCard from './components/MaiCard';
 import TrustFlow from './components/TrustFlow';
 import { supabase } from '../../lib/supabase';
+import { useAuth } from '../../hooks/useAuth';
 
 // Custom hook for interval
 function useInterval(callback: () => void, delay: number | null) {
@@ -43,6 +44,7 @@ export default function UAGPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [useMock, setUseMock] = useState(true);
   const actionPanelRef = useRef<HTMLDivElement>(null);
+  const { session, user } = useAuth();
 
   const loadData = useCallback(async (mockMode: boolean) => {
     if (mockMode) {
@@ -51,6 +53,11 @@ export default function UAGPage() {
       setAppData({ ...MOCK_DB }); // Direct load for now
     } else {
       // Live API implementation with Supabase
+      if (!session) {
+        // Wait for session or show error if not authenticated
+        return;
+      }
+
       try {
         // 1. Fetch User Data
         const { data: userData, error: userError } = await supabase
@@ -155,11 +162,23 @@ export default function UAGPage() {
   }, []);
 
   useEffect(() => {
-    loadData(useMock).catch(err => {
-      console.error(err);
-      toast.error("載入失敗，請重試");
-    });
-  }, [useMock, loadData]);
+    if (session || useMock) {
+      loadData(useMock).catch(err => {
+        console.error(err);
+        toast.error("載入失敗，請重試");
+      });
+    }
+  }, [useMock, loadData, session]);
+
+  // Realtime subscription
+  useEffect(() => {
+    if (!useMock && session) {
+      const channel = supabase.channel('leads-changes')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'leads' }, () => loadData(false))
+        .subscribe();
+      return () => { supabase.removeChannel(channel); };
+    }
+  }, [useMock, session, loadData]);
 
   // Simulate countdown for mock data
   useInterval(() => {
@@ -283,7 +302,7 @@ export default function UAGPage() {
 
         // Assuming we have a logged in user. For now, we might need a hardcoded user ID or auth context.
         // const { data: { user } } = await supabase.auth.getUser();
-        // if (!user) throw new Error('Not authenticated');
+        if (!user) throw new Error('Not authenticated');
 
         // Call the stored procedure 'buy_lead_transaction'
         const { data, error } = await supabase.rpc('buy_lead_transaction', {
@@ -794,6 +813,7 @@ ALTER TABLE public.leads ENABLE ROW LEVEL SECURITY;
 -- Everyone can see 'new' leads, Users can see their own 'purchased' leads
 CREATE POLICY "View leads" ON public.leads FOR SELECT 
 USING (status = 'new' OR purchased_by = auth.uid());
+CREATE POLICY "No direct update on leads" ON public.leads FOR UPDATE USING (false);
 
 -- 3. Listings Table (My Properties)
 CREATE TABLE IF NOT EXISTS public.listings (
@@ -808,7 +828,7 @@ CREATE TABLE IF NOT EXISTS public.listings (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 ALTER TABLE public.listings ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "View listings" ON public.listings FOR SELECT USING (true);
+CREATE POLICY "View own listings" ON public.listings FOR SELECT USING (agent_id = auth.uid());
 
 -- 4. Feed Table (Community Wall)
 CREATE TABLE IF NOT EXISTS public.feed (
@@ -917,4 +937,41 @@ $$;
 -- Indexes for performance
 CREATE INDEX IF NOT EXISTS idx_leads_status ON public.leads(status);
 CREATE INDEX IF NOT EXISTS idx_leads_purchased_by ON public.leads(purchased_by);
+```
+
+### 1.4 Hooks
+
+#### `src/hooks/useAuth.ts`
+```typescript
+import { useEffect, useState } from 'react';
+import { Session, User } from '@supabase/supabase-js';
+import { supabase } from '../lib/supabase';
+
+export function useAuth() {
+  const [session, setSession] = useState<Session | null>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      setLoading(false);
+    });
+
+    // Listen for changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      setLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  return { session, user, loading };
+}
 ```

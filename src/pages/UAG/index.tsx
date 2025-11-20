@@ -10,6 +10,7 @@ import ListingFeed from './components/ListingFeed';
 import MaiCard from './components/MaiCard';
 import TrustFlow from './components/TrustFlow';
 import { supabase } from '../../lib/supabase';
+import { useAuth } from '../../hooks/useAuth';
 
 // Custom hook for interval
 function useInterval(callback: () => void, delay: number | null) {
@@ -33,6 +34,7 @@ export default function UAGPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [useMock, setUseMock] = useState(true);
   const actionPanelRef = useRef<HTMLDivElement>(null);
+  const { session, user } = useAuth();
 
   const loadData = useCallback(async (mockMode: boolean) => {
     if (mockMode) {
@@ -41,6 +43,12 @@ export default function UAGPage() {
       setAppData({ ...MOCK_DB }); // Direct load for now
     } else {
       // Live API implementation with Supabase
+      if (!session) {
+        // Wait for session or show error if not authenticated
+        // For now, we just return to avoid errors, assuming auth is handled elsewhere or we wait
+        return;
+      }
+
       try {
         // 1. Fetch User Data
         const { data: userData, error: userError } = await supabase
@@ -145,11 +153,23 @@ export default function UAGPage() {
   }, []);
 
   useEffect(() => {
-    loadData(useMock).catch(err => {
-      console.error(err);
-      toast.error("載入失敗，請重試");
-    });
-  }, [useMock, loadData]);
+    if (session || useMock) {
+      loadData(useMock).catch(err => {
+        console.error(err);
+        toast.error("載入失敗，請重試");
+      });
+    }
+  }, [useMock, loadData, session]);
+
+  // Realtime subscription
+  useEffect(() => {
+    if (!useMock && session) {
+      const channel = supabase.channel('leads-changes')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'leads' }, () => loadData(false))
+        .subscribe();
+      return () => { supabase.removeChannel(channel); };
+    }
+  }, [useMock, session, loadData]);
 
   // Simulate countdown for mock data
   useInterval(() => {
@@ -273,7 +293,7 @@ export default function UAGPage() {
 
         // Assuming we have a logged in user. For now, we might need a hardcoded user ID or auth context.
         // const { data: { user } } = await supabase.auth.getUser();
-        // if (!user) throw new Error('Not authenticated');
+        if (!user) throw new Error('Not authenticated');
 
         // Call the stored procedure 'buy_lead_transaction'
         const { data, error } = await supabase.rpc('buy_lead_transaction', {

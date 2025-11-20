@@ -55,6 +55,7 @@ ALTER TABLE public.leads ENABLE ROW LEVEL SECURITY;
 -- Everyone can see 'new' leads, Users can see their own 'purchased' leads
 CREATE POLICY "View leads" ON public.leads FOR SELECT 
 USING (status = 'new' OR purchased_by = auth.uid());
+CREATE POLICY "No direct update on leads" ON public.leads FOR UPDATE USING (false);
 
 -- 3. Listings Table (My Properties)
 CREATE TABLE IF NOT EXISTS public.listings (
@@ -69,7 +70,7 @@ CREATE TABLE IF NOT EXISTS public.listings (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 ALTER TABLE public.listings ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "View listings" ON public.listings FOR SELECT USING (true);
+CREATE POLICY "View own listings" ON public.listings FOR SELECT USING (agent_id = auth.uid());
 
 -- 4. Feed Table (Community Wall)
 CREATE TABLE IF NOT EXISTS public.feed (
