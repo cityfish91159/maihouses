@@ -82,7 +82,26 @@
   .uag-grid { gap: 16px; grid-template-columns: 1fr; }
   .k-span-2, .k-span-3, .k-span-4, .k-span-6 { grid-column: span 1; } 
   .uag-header-inner { padding: 12px 16px; }
-  .uag-breadcrumb { display: none; }
+  
+  /* Mobile Header Adjustments */
+  .uag-breadcrumb { 
+    display: flex; 
+    flex-direction: column; 
+    align-items: flex-end; 
+    gap: 2px;
+    font-size: 12px;
+  }
+  .uag-breadcrumb > span:first-child {
+    max-width: 140px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: right;
+  }
+  .uag-badge.pro {
+    padding: 2px 6px;
+    font-size: 10px;
+  }
 }
 
 /* ====== Cards ====== */
@@ -441,6 +460,16 @@
     padding:10px 12px;
     gap:8px;
     flex-wrap:wrap;
-    justify-content:flex-start;
+    justify-content:space-between; /* Ensure items are spread out */
+  }
+  /* Ensure points badge is visible and distinct */
+  .uag-footer-bar .uag-badge {
+    order: -1; /* Move points to top/left on mobile if needed, or keep as is */
+    margin-left: auto; /* Push to right if space allows */
+  }
+  /* Adjust buttons size for mobile */
+  .uag-footer-bar .uag-btn {
+    padding: 4px 10px;
+    font-size: 12px;
   }
 }
