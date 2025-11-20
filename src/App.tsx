@@ -15,6 +15,8 @@ import ErrorBoundary from './app/ErrorBoundary'
 import { QuietModeProvider } from './context/QuietModeContext'
 import { MoodProvider } from './context/MoodContext'
 
+import UAGPage from './pages/UAG'
+
 export default function App() {
   const [config, setConfig] = useState<(AppConfig & RuntimeOverrides) | null>(null)
   const loc = useLocation()
@@ -42,6 +44,14 @@ export default function App() {
           element={
             <ErrorBoundary>
               <Home config={config} />
+            </ErrorBoundary>
+          }
+        />
+        <Route
+          path="/uag"
+          element={
+            <ErrorBoundary>
+              <UAGPage />
             </ErrorBoundary>
           }
         />
