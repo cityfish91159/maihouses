@@ -21,10 +21,10 @@ export default function AssetMonitor({ leads }: AssetMonitorProps) {
         <table className="monitor-table">
           <thead>
             <tr>
-              <th width="25%">客戶等級/名稱</th>
-              <th width="35%">保護期倒數</th>
-              <th width="20%">目前狀態</th>
-              <th width="20%">操作</th>
+              <th style={{ width: '25%' }}>客戶等級/名稱</th>
+              <th style={{ width: '35%' }}>保護期倒數</th>
+              <th style={{ width: '20%' }}>目前狀態</th>
+              <th style={{ width: '20%' }}>操作</th>
             </tr>
           </thead>
           <tbody id="asset-list">

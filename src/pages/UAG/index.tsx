@@ -70,16 +70,16 @@ export default function UAGPage() {
     // Simulate API call
     setTimeout(() => {
       if (useMock) {
-        const newAppData = { ...appData };
-        const leadIndex = newAppData.leads.findIndex(l => l.id === leadId);
+        // Deep copy to avoid direct mutation of state before setAppData
+        const newAppData = JSON.parse(JSON.stringify(appData));
+        const lead = newAppData.leads.find((l: Lead) => l.id === leadId);
         
-        if (leadIndex === -1) {
+        if (!lead) {
           alert("客戶不存在");
           setIsProcessing(false);
           return;
         }
 
-        const lead = newAppData.leads[leadIndex];
         if (lead.status !== 'new') {
           alert("此客戶已被購買");
           setIsProcessing(false);
