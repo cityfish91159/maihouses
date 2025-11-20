@@ -254,7 +254,7 @@
   height: 44px;
   padding: 0 24px;
   border-radius: 12px;
-  border: 1px solid #dfe7ff;
+  border: 1.5px solid var(--brand);
   background: linear-gradient(to bottom, #f3f6ff, #eef3ff);
   color: var(--brand);
   font-weight: 900;
