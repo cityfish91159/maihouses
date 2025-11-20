@@ -83,7 +83,8 @@ export default function UAGPage() {
           },
           leads: leadsData.map((l: any) => {
             // [Item 4] Calculate remainingHours if backend doesn't provide it
-            let remainingHours = l.remaining_hours;
+            let remainingHours = l.remaining_hours != null ? Number(l.remaining_hours) : null;
+
             if (remainingHours == null && l.purchased_at && l.status === 'purchased') {
               const grade = l.grade as 'S' | 'A' | 'B' | 'C' | 'F';
               const totalHours = GRADE_HOURS[grade] || 336;
@@ -97,21 +98,29 @@ export default function UAGPage() {
               // Ensure types match
               grade: l.grade as 'S' | 'A' | 'B' | 'C' | 'F',
               status: l.status as 'new' | 'purchased',
-              remainingHours
+              remainingHours: remainingHours ?? undefined
             };
           }),
           listings: listingsData.map((l: any) => ({
-            ...l,
-            thumbColor: l.thumb_color // Map snake_case to camelCase
+            title: l.title,
+            tags: l.tags ?? [],
+            view: l.view_count ?? 0,
+            click: l.click_count ?? 0,
+            fav: l.fav_count ?? 0,
+            thumbColor: l.thumb_color ?? '#e5e7eb'
           })),
           feed: feedData
         };
 
         setAppData(transformedData);
 
-      } catch (e) {
+      } catch (e: any) {
         console.warn('Live API failed, falling back to mock', e);
-        toast.error('目前無法連接 Supabase 資料庫，或資料表尚未建立。系統自動降級顯示 Mock 資料。');
+        if (import.meta.env.DEV) {
+          toast.error(`Live API Error: ${e.message || 'Unknown error'}`);
+        } else {
+          toast.error('目前無法連接 Supabase 資料庫，或資料表尚未建立。系統自動降級顯示 Mock 資料。');
+        }
         setAppData({ ...MOCK_DB });
       }
     }
