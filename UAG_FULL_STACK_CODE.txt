@@ -1,0 +1,1303 @@
+================================================================================
+FILE: src/pages/UAG/index.tsx
+================================================================================
+import React, { useState, useEffect } from 'react';
+import './UAG.css';
+import { MOCK_DB, AppData, Lead } from './mockData';
+import RadarCluster from './components/RadarCluster';
+import ActionPanel from './components/ActionPanel';
+import AssetMonitor from './components/AssetMonitor';
+import ListingFeed from './components/ListingFeed';
+import MaiCard from './components/MaiCard';
+import TrustFlow from './components/TrustFlow';
+
+export default function UAGPage() {
+  const [appData, setAppData] = useState<AppData | null>(null);
+  const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [useMock, setUseMock] = useState(true);
+
+  useEffect(() => {
+    // Initialize mode from localStorage or URL
+    const params = new URLSearchParams(window.location.search);
+    const urlMode = params.get('mode');
+    let initialMock = true;
+    
+    if (urlMode === 'mock' || urlMode === 'live') {
+      initialMock = urlMode === 'mock';
+      localStorage.setItem('uag_mode', urlMode);
+    } else {
+      const saved = localStorage.getItem('uag_mode');
+      if (saved === 'mock' || saved === 'live') {
+        initialMock = saved === 'mock';
+      }
+    }
+    setUseMock(initialMock);
+    
+    // Initial Load
+    loadData(initialMock);
+  }, []);
+
+  const loadData = async (mockMode: boolean) => {
+    if (mockMode) {
+      // Simulate API delay
+      // setTimeout(() => setAppData({ ...MOCK_DB }), 500);
+      setAppData({ ...MOCK_DB }); // Direct load for now
+    } else {
+      // Live API implementation would go here
+      console.log('Live API not implemented, falling back to mock');
+      setAppData({ ...MOCK_DB });
+    }
+  };
+
+  const toggleMode = () => {
+    const newMode = !useMock;
+    setUseMock(newMode);
+    localStorage.setItem('uag_mode', newMode ? 'mock' : 'live');
+    loadData(newMode);
+  };
+
+  const handleSelectLead = (lead: Lead) => {
+    setSelectedLead(lead);
+    // Scroll to action panel on mobile
+    if (window.innerWidth <= 1024) {
+      const el = document.getElementById('action-panel-container');
+      el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
+  const handleBuyLead = async (leadId: string) => {
+    if (!appData) return;
+    setIsProcessing(true);
+
+    // Simulate API call
+    setTimeout(() => {
+      if (useMock) {
+        // Deep copy to avoid direct mutation of state before setAppData
+        const newAppData = JSON.parse(JSON.stringify(appData));
+        const lead = newAppData.leads.find((l: Lead) => l.id === leadId);
+        
+        if (!lead) {
+          alert("客戶不存在");
+          setIsProcessing(false);
+          return;
+        }
+
+        if (lead.status !== 'new') {
+          alert("此客戶已被購買");
+          setIsProcessing(false);
+          return;
+        }
+
+        if (newAppData.user.points < lead.price) {
+          alert("點數不足 (Mock)");
+          setIsProcessing(false);
+          return;
+        }
+
+        // Execute transaction
+        newAppData.user.points -= lead.price;
+        if (lead.grade === 'S') newAppData.user.quota.s--;
+        if (lead.grade === 'A') newAppData.user.quota.a--;
+
+        lead.status = 'purchased';
+        lead.purchasedAt = Date.now();
+        const total = lead.grade === 'S' ? 120 : lead.grade === 'A' ? 72 : 336;
+        lead.remainingHours = total;
+
+        setAppData(newAppData);
+        setSelectedLead(null); // Deselect or update selection
+        alert("交易成功 (Mock)");
+      } else {
+        alert("Live API buy not implemented");
+      }
+      setIsProcessing(false);
+    }, 800);
+  };
+
+  if (!appData) return <div className="p-6 text-center">載入中...</div>;
+
+  return (
+    <div className="uag-page">
+      <header className="uag-header">
+        <div className="uag-header-inner">
+          <div className="uag-logo"><div className="uag-logo-badge">邁</div><span>邁房子廣告後台</span></div>
+          <div className="uag-breadcrumb"><span>游杰倫 21世紀不動產河南店</span><span className="uag-badge pro">專業版 PRO</span></div>
+        </div>
+      </header>
+
+      <main className="uag-container">
+        <div className="uag-grid">
+          {/* [1] UAG Radar */}
+          <RadarCluster leads={appData.leads} onSelectLead={handleSelectLead} />
+
+          {/* [Action Panel] */}
+          <ActionPanel 
+            selectedLead={selectedLead} 
+            onBuyLead={handleBuyLead} 
+            isProcessing={isProcessing} 
+          />
+
+          {/* [2] Asset Monitor */}
+          <AssetMonitor leads={appData.leads} />
+
+          {/* [3] Listings & [4] Feed */}
+          <ListingFeed listings={appData.listings} feed={appData.feed} />
+
+          {/* [5] Mai Card */}
+          <MaiCard />
+
+          {/* [6] Trust Flow */}
+          <TrustFlow />
+        </div>
+      </main>
+
+      <div className="uag-footer-bar">
+        <div style={{ marginRight: 'auto', fontSize: '12px', color: 'var(--ink-300)' }}>
+          系統模式：<strong style={{ color: useMock ? '#f59e0b' : '#16a34a' }}>{useMock ? "Local Mock" : "Live API"}</strong>
+          <button onClick={toggleMode} style={{ marginLeft: '10px', fontSize: '10px', cursor: 'pointer', border: '1px solid #ccc', padding: '2px 6px', borderRadius: '4px' }}>切換模式</button>
+        </div>
+        <button className="uag-btn">方案設定</button>
+        <button className="uag-btn primary">加值點數</button>
+        <span className="uag-badge" style={{ fontSize: '14px', background: '#fff8dc', color: '#92400e', borderColor: '#fcd34d' }}>
+          點數 <span id="user-points">{appData.user.points}</span>
+        </span>
+      </div>
+    </div>
+  );
+}
+
+================================================================================
+FILE: src/pages/UAG/mockData.ts
+================================================================================
+export interface Lead {
+  id: string;
+  name: string;
+  grade: 'S' | 'A' | 'B' | 'C' | 'F';
+  intent: number;
+  prop: string;
+  visit: number;
+  price: number;
+  status: 'new' | 'purchased';
+  purchasedAt?: number;
+  ai: string;
+  remainingHours?: number;
+  x?: number;
+  y?: number;
+}
+
+export interface Listing {
+  title: string;
+  tags: string[];
+  view: number;
+  click: number;
+  fav: number;
+  thumbColor: string;
+}
+
+export interface FeedPost {
+  title: string;
+  meta: string;
+  body: string;
+}
+
+export interface UserData {
+  points: number;
+  quota: {
+    s: number;
+    a: number;
+  };
+}
+
+export interface AppData {
+  user: UserData;
+  leads: Lead[];
+  listings: Listing[];
+  feed: FeedPost[];
+}
+
+export const MOCK_DB: AppData = {
+  user: { points: 1280, quota: { s: 2, a: 3 } },
+  leads: [
+    // 已購：只保留 S/A 四則
+    { id: 'S-5566', name: '買家 S-5566', grade: 'S', intent: 98, prop: '捷運宅',     visit: 15, price: 20, status: 'purchased', purchasedAt: Date.now() - 2 * 3600000,   ai: 'S 級熱度拉滿，請優先處理。', remainingHours: 118 },
+    { id: 'S-9011', name: '買家 S-9011', grade: 'S', intent: 93, prop: '高樓景觀宅', visit: 11, price: 20, status: 'purchased', purchasedAt: Date.now() - 6 * 3600000,   ai: '已連續三天造訪同社區。',   remainingHours: 114 },
+    { id: 'A-7788', name: '買家 A-7788', grade: 'A', intent: 79, prop: '學區房',     visit:  6, price: 10, status: 'purchased', purchasedAt: Date.now() - 20 * 3600000,  ai: 'A 級學區需求穩定。',        remainingHours: 52 },
+    { id: 'A-6600', name: '買家 A-6600', grade: 'A', intent: 74, prop: '預售捷運宅', visit:  5, price: 10, status: 'purchased', purchasedAt: Date.now() - 10 * 3600000,  ai: '適合搭配預售案一次推薦。',  remainingHours: 62 },
+
+    // 雷達：更多可購買的模擬圓點 (status = new)
+    { id: 'B218', name: '買家 B218', grade: 'S', intent: 92, prop: '捷運共構 3 房', visit: 7, price: 20, status: 'new', ai: '🔥 強烈建議立即聯繫！',           x: 25, y: 25 },
+    { id: 'A103', name: '買家 A103', grade: 'S', intent: 88, prop: '惠宇上晴 12F',   visit:12, price: 20, status: 'new', ai: '建議立即發送獨家邀約！',         x: 15, y: 45 },
+    { id: 'S901', name: '買家 S901', grade: 'S', intent: 94, prop: '高樓景觀宅',     visit: 9, price: 20, status: 'new', ai: '重複詢問同一社區，請電話跟進。', x: 40, y: 32 },
+    { id: 'S880', name: '買家 S880', grade: 'S', intent: 90, prop: '預售捷運宅',     visit: 8, price: 20, status: 'new', ai: '對捷運沿線有強烈偏好。',         x: 60, y: 40 },
+
+    { id: 'C055', name: '買家 C055', grade: 'A', intent: 75, prop: '南屯學區宅',     visit: 4, price: 10, status: 'new', ai: 'A 級學區需求明確。',             x: 60, y: 20 },
+    { id: 'A230', name: '買家 A230', grade: 'A', intent: 71, prop: '次高樓層 3 房', visit: 3, price: 10, status: 'new', ai: '已追蹤兩個以上相似物件。',       x: 70, y: 30 },
+    { id: 'A550', name: '買家 A550', grade: 'A', intent: 69, prop: '公園首排',       visit: 3, price: 10, status: 'new', ai: '假日時段瀏覽頻繁。',             x: 50, y: 15 },
+
+    { id: 'D330', name: '買家 D330', grade: 'B', intent: 62, prop: '捷運生活圈', visit: 3, price: 3, status: 'new', ai: '建議主動聯繫提供車位資訊。', x: 40, y: 60 },
+    { id: 'B778', name: '買家 B778', grade: 'B', intent: 58, prop: '小坪數投資宅', visit: 2, price: 3, status: 'new', ai: '屬於投資族群，可搭配多案推薦。', x: 30, y: 70 },
+
+    { id: 'C021', name: '買家 C021', grade: 'C', intent: 48, prop: '老屋翻新',   visit: 2, price: 1, status: 'new', ai: '對低總價物件有興趣。', x: 75, y: 55 },
+    { id: 'C990', name: '買家 C990', grade: 'C', intent: 42, prop: '套房',       visit: 1, price: 1, status: 'new', ai: '瀏覽時間短，建議先以訊息觸及。', x: 82, y: 65 },
+
+    { id: 'H009', name: '買家 H009', grade: 'F', intent: 28, prop: '小坪數',    visit: 1, price: 0.5, status: 'new', ai: '潛在客戶。', x: 70, y: 75 },
+    { id: 'F778', name: '買家 F778', grade: 'F', intent: 22, prop: '套房出租', visit: 1, price: 0.5, status: 'new', ai: '互動較少，可作為備選追蹤。', x: 55, y: 80 }
+  ],
+  listings: [
+    { title: '惠宇上晴｜12/15F 視野戶・雙平車', tags: ['南屯區','近捷運','雙平車'], view: 1284, click: 214, fav: 37, thumbColor: '#eef2ff' },
+    { title: '捷運共構 3 房｜視野棟距佳',        tags: ['捷運共構','次高樓層'],        view:  986, click: 163, fav: 22, thumbColor: '#f0fdf4' },
+    { title: '南屯捷運宅｜3房・高樓層',          tags: ['近學區','雙衛浴'],            view:  846, click: 128, fav: 15, thumbColor: '#fff7ed' }
+  ],
+  feed: [
+    { title: '成交故事｜12F 視野戶為什麼受歡迎', meta: '來自：社區牆・成交故事', body: '買方看重的是採光、棟距與公設使用率。' },
+    { title: '住戶心得｜公設使用率與噪音表現',   meta: '本週一・互動 41',           body: '晚間 9 點後社區安靜。' }
+  ]
+};
+
+================================================================================
+FILE: src/pages/UAG/UAG.css
+================================================================================
+/* ====== Design Tokens ====== */
+:root {
+  --uag-brand: #1749D7; --uag-brand-light: #3b6bf0; --uag-brand-dark: #0f36a6;
+  --uag-accent: #10B981; --uag-danger: #ef4444; --uag-warning: #f59e0b;
+  
+  /* Grade Colors */
+  --grade-s: #ea580c; --grade-s-bg: linear-gradient(135deg, #fff7ed, #ffedd5);
+  --grade-a: #16a34a; --grade-a-bg: linear-gradient(135deg, #f0fdf4, #dcfce7);
+  --grade-b: #2563eb; --grade-b-bg: linear-gradient(135deg, #eff6ff, #dbeafe);
+  --grade-c: #64748b; --grade-c-bg: linear-gradient(135deg, #f8fafc, #f1f5f9);
+  --grade-f: #94a3b8; --grade-f-bg: linear-gradient(135deg, #f8fafc, #e2e8f0);
+
+  --ink-100: #0f172a; --ink-200: #334155; --ink-300: #64748b;
+  --bg-page: #F8FAFC; --bg-card: #FFFFFF; --bg-alt: #F1F5F9;
+  --line: rgba(23, 73, 215, 0.12);
+  --line-soft: #e2e8f0;
+  
+  --radius-md: 10px; --radius-lg: 16px; --radius-full: 9999px;
+  --shadow-lg: 0 18px 40px rgba(15, 23, 42, 0.08);
+  --shadow-glow: 0 0 20px rgba(23, 73, 215, 0.25);
+
+  --font: -apple-system, BlinkMacSystemFont, "Inter", "Noto Sans TC", sans-serif;
+}
+
+/* ====== Base ====== */
+.uag-page {
+  font-family: var(--font);
+  background: var(--bg-page);
+  color: var(--ink-100);
+  line-height: 1.5;
+  padding-bottom: 80px;
+  position: relative;
+  background:
+    radial-gradient(circle at top, rgba(23,73,215,0.08), transparent 55%),
+    var(--bg-page);
+}
+
+.uag-page::before {
+  content:"";
+  position:fixed;
+  inset:0;
+  background-image:
+    linear-gradient(to right, rgba(148,163,184,0.10) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(148,163,184,0.10) 1px, transparent 1px);
+  background-size: 40px 40px;
+  opacity:0.22;
+  pointer-events:none;
+  z-index:0;
+}
+
+.uag-header{
+  position:sticky; top:0; z-index:50;
+  background: rgba(255,255,255,0.96);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--line-soft);
+  box-shadow: 0 10px 30px rgba(15,23,42,0.06);
+}
+.uag-header-inner{
+  max-width:1280px; margin:auto;
+  padding:12px 24px;
+  display:flex; align-items:center; justify-content:space-between;
+}
+.uag-logo{display:flex; align-items:center; gap:10px; font-weight:800; font-size:16px;}
+.uag-logo-badge{
+  background: linear-gradient(135deg, #1749D7, #3b82f6);
+  color:#fff; padding:4px 8px; border-radius:6px;
+  box-shadow:0 6px 16px rgba(23,73,215,0.35);
+}
+
+.uag-container{max-width:1280px; margin:0 auto; padding:24px; position: relative; z-index: 1;}
+.uag-grid{display:grid; grid-template-columns:repeat(6,1fr); gap:24px; align-items: start;}
+
+/* Grid System */
+.k-span-2{grid-column:span 2}
+.k-span-3{grid-column:span 3}
+.k-span-4{grid-column:span 4}
+.k-span-6{grid-column:span 6} /* Full Width */
+
+/* RWD Optimizations */
+@media (max-width: 1024px) { 
+  .uag-container { padding: 16px; }
+  .uag-grid { gap: 16px; grid-template-columns: 1fr; }
+  .k-span-2, .k-span-3, .k-span-4, .k-span-6 { grid-column: span 1; } 
+  .uag-header-inner { padding: 12px 16px; }
+  .uag-breadcrumb { display: none; }
+}
+
+/* ====== Cards ====== */
+.uag-card{
+  background:var(--bg-card);
+  border-radius:var(--radius-lg);
+  padding:24px;
+  box-shadow:var(--shadow-lg), 0 0 0 1px rgba(15,23,42,0.02);
+  border:1px solid var(--line);
+  display: flex; flex-direction: column; gap: 16px;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+.uag-card:hover{
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg), 0 0 0 1px rgba(23,73,215,0.18);
+  border-color: rgba(23,73,215,0.2);
+}
+.uag-card-header{display:flex; align-items:center; justify-content:space-between; flex-wrap: wrap; gap: 10px;}
+.uag-card-title{
+  font-weight:800; font-size:16px;
+  border-left:4px solid var(--uag-brand);
+  padding-left:10px;
+}
+.uag-card-sub{font-size:13px; color:var(--ink-300); margin-top:4px; margin-left:14px;}
+
+@media (max-width: 768px) {
+  .uag-card { padding: 16px; }
+  .uag-card-header { flex-direction: column; align-items: flex-start; gap: 8px; }
+  .uag-actions {
+    width: 100%;
+    justify-content: flex-start;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    display:flex;
+    gap:6px;
+  }
+}
+
+/* ====== Buttons & Badges ====== */
+.uag-btn{
+  border:1px solid var(--line-soft); background:#fff; padding:6px 14px; border-radius:var(--radius-md);
+  font-size:13px; font-weight:600; cursor:pointer; color:var(--ink-200); transition:0.2s; white-space: nowrap;
+}
+.uag-btn:hover{
+  border-color:var(--uag-brand);
+  color:var(--uag-brand);
+  background:linear-gradient(135deg,#f9fbff,#eef2ff);
+  box-shadow:0 8px 18px rgba(15,23,42,0.08);
+}
+.uag-btn.primary{
+  background:linear-gradient(135deg, var(--uag-brand), #2563eb);
+  color:#fff;
+  border-color:transparent;
+  box-shadow: 0 8px 18px rgba(23,73,215,0.35);
+}
+.uag-btn.primary:hover{
+  background:linear-gradient(135deg, var(--uag-brand-light), #3b82f6);
+}
+.uag-btn:disabled{opacity: 0.6; cursor: not-allowed; background: #cbd5e1; border-color: #cbd5e1;}
+
+.uag-badge{
+  padding:4px 10px; border-radius:999px; font-size:12px; font-weight:700; border:1px solid var(--line-soft); white-space: nowrap;
+  background:rgba(255,255,255,0.9);
+}
+.uag-badge.s{background:var(--grade-s-bg); color:var(--grade-s); border-color:var(--grade-s);}
+.uag-badge.a{background:var(--grade-a-bg); color:var(--grade-a); border-color:var(--grade-a);}
+
+/* ====== UAG Radar (Cluster) ====== */
+.uag-cluster{
+  position:relative; min-height:450px;
+  border:1px solid rgba(148,163,184,0.35);
+  border-radius:var(--radius-lg);
+  background:
+    radial-gradient(circle at 50% 50%, #ffffff 0%, #e5edff 55%, #eef2ff 100%);
+  overflow:hidden;
+  box-shadow:0 0 0 1px rgba(148,163,184,0.25), 0 24px 60px rgba(15,23,42,0.28);
+}
+.uag-cluster::before,
+.uag-cluster::after {
+  content:"";
+  position:absolute;
+  left:50%; top:50%;
+  width:140%; height:1px;
+  background:linear-gradient(90deg, transparent, rgba(148,163,184,0.45), transparent);
+  transform:translate(-50%, -50%);
+  pointer-events:none;
+}
+.uag-cluster::after {
+  transform:translate(-50%, -50%) rotate(90deg);
+}
+@media (max-width: 768px) {
+  .uag-cluster { min-height: 320px; } 
+}
+
+.uag-bubble{
+  position:absolute; width:var(--w); height:var(--w); border-radius:50%;
+  background:#fff; border:2px solid rgba(226,232,240,0.9);
+  display:grid; place-items:center; cursor:pointer;
+  will-change: transform, box-shadow;
+  backface-visibility: hidden;
+  transform-origin:center;
+  transition: transform 0.3s, box-shadow 0.3s, border-color 0.3s;
+  animation: float var(--float) ease-in-out infinite, pulse 2.6s ease-out infinite;
+  z-index: 10;
+}
+.uag-bubble:hover, .uag-bubble.selected{
+  transform: scale(1.15);
+  z-index: 20;
+  box-shadow: 0 0 0 4px rgba(59,130,246,0.35), 0 18px 36px rgba(15,23,42,0.32);
+  border-color:var(--uag-brand);
+}
+.uag-bubble[data-grade="S"] { background:var(--grade-s-bg); border-color:var(--grade-s); }
+.uag-bubble[data-grade="A"] { background:var(--grade-a-bg); border-color:var(--grade-a); }
+.uag-bubble[data-grade="B"] { background:var(--grade-b-bg); border-color:var(--grade-b); }
+.uag-bubble[data-grade="C"] { background:var(--grade-c-bg); border-color:var(--grade-c); }
+.uag-bubble[data-grade="F"] { background:var(--grade-f-bg); border-color:var(--grade-f); opacity:0.9; }
+
+.uag-bubble .grade-tag {
+  position:absolute; top:0; right:0; width:24px; height:24px; border-radius:50%;
+  background:#fff; color:#000; display:grid; place-items:center; font-weight:900; font-size:12px;
+  border:1px solid #eee; box-shadow:0 2px 5px rgba(0,0,0,0.1);
+}
+.uag-bubble .label {
+  position:absolute; bottom:-24px; left:50%; transform:translateX(-50%);
+  background:#fff; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:700;
+  white-space:nowrap; border:1px solid var(--line-soft); pointer-events:none;
+}
+@keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
+@keyframes pulse {
+  0%   { box-shadow:0 0 0 0 rgba(59,130,246,0.30); }
+  70%  { box-shadow:0 0 0 26px rgba(59,130,246,0); }
+  100% { box-shadow:0 0 0 0 rgba(59,130,246,0); }
+}
+
+/* ====== Action Panel ====== */
+.uag-action-panel {
+  background:linear-gradient(135deg,#f8fafc,#eef2ff);
+  border:2px solid rgba(37,99,235,0.45);
+  border-radius:var(--radius-lg);
+  display:flex; flex-direction:column; overflow:hidden; box-shadow:var(--shadow-lg), 0 0 0 1px rgba(59,130,246,0.18);
+  min-height: 280px;
+}
+.ap-head {
+  background:linear-gradient(135deg,#e5edff,#eef2ff);
+  padding:16px; border-bottom:1px solid var(--line-soft);
+  font-weight:800; font-size:16px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.ap-body { padding:20px; flex:1; display:flex; flex-direction:column; gap:16px; }
+
+@media (min-width: 1025px) {
+  .ap-body { 
+    display: grid; 
+    grid-template-columns: 1fr 1fr 220px; 
+    gap: 20px;
+    align-items: center;
+  }
+  .ap-stats-group { display: flex; flex-direction: column; gap: 8px; }
+  .ai-box { height: 100%; display: flex; align-items: center; }
+  .action-zone { display: flex; flex-direction: column; justify-content: center; }
+}
+@media (max-width:1024px){
+  .ap-body{
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+  }
+}
+
+.ap-stat { display:flex; justify-content:space-between; font-size:13px; border-bottom:1px dashed var(--line-soft); padding-bottom:8px;}
+.ap-stat b { font-size:15px; color:var(--ink-100); }
+
+.ai-box {
+  background:#f0fdf4;
+  border:1px solid #bbf7d0;
+  padding:12px;
+  border-radius:8px;
+  font-size:13px;
+  color:#15803d;
+  font-weight:700;
+  line-height:1.4;
+  box-shadow:0 10px 24px rgba(22,163,74,0.16);
+}
+.ai-box.urgent {
+  background:#fef2f2;
+  border-color:#fecaca;
+  color:#b91c1c;
+  box-shadow:0 10px 24px rgba(185,28,28,0.20);
+}
+
+.btn-attack {
+  width:100%; padding:16px; border:none; border-radius:12px;
+  background: linear-gradient(135deg, var(--uag-brand), #2563eb); color:#fff;
+  font-weight:800; font-size:16px; cursor:pointer;
+  box-shadow: 0 16px 36px rgba(37,99,235,0.45);
+  display:flex; align-items:center; justify-content:center; gap:8px;
+  transition: transform 0.1s, box-shadow 0.15s ease-out;
+  position:relative;
+  overflow:hidden;
+}
+.btn-attack::before{
+  content:"";
+  position:absolute;
+  top:0;
+  left:-150%;
+  width:50%;
+  height:100%;
+  background:linear-gradient(120deg, rgba(255,255,255,0), rgba(255,255,255,0.85), rgba(255,255,255,0));
+  transform:skewX(-20deg);
+  animation: shimmer 2.4s infinite;
+  pointer-events:none;
+}
+@keyframes shimmer {
+  0% { left:-150%; }
+  100% { left:150%; }
+}
+.btn-attack:active {
+  transform:scale(0.98);
+  box-shadow:0 10px 22px rgba(37,99,235,0.32);
+}
+.btn-attack:disabled {
+  background: #cbd5e1;
+  box-shadow:none;
+  cursor:not-allowed;
+}
+.btn-attack:disabled::before{
+  display:none;
+}
+
+/* ====== Asset Monitor Table ====== */
+.monitor-table { width:100%; border-collapse:collapse; font-size:13px; }
+.monitor-table th { text-align:left; padding:12px; background:var(--bg-alt); color:var(--ink-300); font-size:12px; white-space: nowrap; }
+.monitor-table td { padding:12px; border-bottom:1px dashed var(--line-soft); vertical-align:middle; }
+.monitor-table tr:last-child td { border-bottom:none; }
+
+@media (max-width: 768px) {
+  .monitor-table, .monitor-table tbody, .monitor-table tr, .monitor-table td { display: block; width: 100%; }
+  .monitor-table thead { display: none; }
+  .monitor-table tr { 
+    margin-bottom: 12px; border: 1px solid var(--line-soft); border-radius: 12px; 
+    background: #fff; padding: 12px; box-shadow: 0 8px 20px rgba(15,23,42,0.06);
+  }
+  .monitor-table td { 
+    padding: 8px 0; border-bottom: 1px dashed var(--line-soft); display: flex; 
+    justify-content: space-between; align-items: center; text-align: right;
+  }
+  .monitor-table td:last-child { border-bottom: none; padding-bottom: 0; }
+  .monitor-table td::before { 
+    content: attr(data-label); float: left; font-weight: 700; color: var(--ink-300); font-size: 12px;
+  }
+  .monitor-table td[data-label="操作"] { justify-content: flex-end; padding-top: 12px; }
+}
+
+.progress-bg { width:100%; height:6px; background:var(--line-soft); border-radius:99px; overflow:hidden; margin-top:6px; }
+.progress-fill { height:100%; border-radius:99px; transition: width 1s linear; }
+.t-countdown { font-size:12px; font-weight:700; font-variant-numeric: tabular-nums; }
+
+/* ====== Listings & Feed ====== */
+.listing-item {
+  display:grid; grid-template-columns:88px 1fr; gap:10px; padding:10px;
+  border:1px solid var(--line-soft); border-radius:12px; margin-bottom:10px; background: #fff;
+  box-shadow:0 10px 22px rgba(15,23,42,0.06);
+}
+.listing-item:hover { border-color: var(--uag-brand-light); box-shadow:0 16px 32px rgba(37,99,235,0.26); }
+.l-thumb { width:100%; height:66px; background:var(--bg-alt); border-radius:10px; border:1px solid var(--line-soft); }
+.l-title { font-weight:800; font-size:15px; margin-bottom:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color: var(--ink-100); }
+.l-tags { display:flex; gap:6px; flex-wrap:wrap; margin-top:6px; }
+.l-tag { padding:2px 8px; border-radius:999px; border:1px solid #e5edff; font-size:11px; background:#f3f6ff; color:#1e293b; }
+.l-kpi { display:flex; gap:12px; color:var(--ink-200); margin-top:6px; font-size: 12px; flex-wrap:wrap; }
+.l-kpi b { color:var(--ink-100); font-weight: 700; }
+@media(max-width:768px){
+  .listing-item{
+    grid-template-columns:72px 1fr;
+    padding:10px 8px;
+  }
+}
+
+.feed-post { padding-bottom:12px; border-bottom:1px dashed var(--line-soft); margin-bottom:12px; }
+.feed-post:last-child { border-bottom:none; margin-bottom:0; }
+.fp-title { font-weight:700; font-size:15px; margin-bottom:2px; color: var(--ink-100); }
+.fp-meta { font-size:12px; color:var(--ink-300); margin-bottom:6px; }
+.fp-body { font-size:13px; color:var(--ink-200); line-height:1.6; }
+
+/* ====== Mai Card ====== */
+.mai-card {
+  width:100%;
+  height:min(50vh, 420px);
+  min-height:360px;
+  background:#fff;
+  border:1px solid var(--line-soft);
+  border-radius:16px;
+  padding:14px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  overflow:hidden;
+  box-shadow:0 18px 40px rgba(15,23,42,0.10);
+}
+.mai-head {
+  background:linear-gradient(135deg,#f8fbff,#eef4ff);
+  border-radius:12px;
+  padding:10px 12px;
+}
+.mai-tag { display:inline-block; font-size:12px; color:#fff; background:linear-gradient(135deg,var(--uag-brand),#3ed0e6); padding:3px 8px; border-radius:999px; }
+.mai-title { margin:8px 0 2px; font-size:16px; font-weight:900; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.mai-sub { margin:0; font-size:12.5px; color:var(--ink-300); }
+.mai-body { display:flex; gap:12px; flex:1; min-height:0; }
+.mai-left { flex:1.05; display:flex; flex-direction:column; gap:10px; }
+.mai-price { border:1px dashed var(--line-soft); border-radius:12px; padding:10px; background:#fff; }
+.mai-price .k { font-size:12px; color:var(--ink-300); }
+.mai-price .v { font-size:18px; font-weight:900; color:var(--ink-100); }
+.mai-price .u { font-size:12px; color:var(--ink-300); }
+.mai-stats { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:8px; }
+.mai-stats li { display:flex; justify-content:space-between; gap:12px; font-size:12.5px; border-bottom:1px dashed var(--line-soft); padding-bottom:6px; }
+.mai-stats li:last-child { border-bottom:none; }
+.mai-right { flex:0.95; display:flex; flex-direction:column; gap:10px; }
+.mai-thumb { flex:1; border-radius:12px; border:1px solid var(--line-soft); background:#e5edff; display:grid; place-items:center; }
+.mai-mini { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; }
+.mai-mini img { width:100%; border-radius:8px; border:1px solid var(--line-soft); background:#f0f4ff; }
+.mai-actions { display:flex; gap:8px; margin-top:10px; }
+.mai-btn { flex:1; height:36px; border-radius:999px; border:1px solid var(--line-soft); background:#fff; font-size:13px; display:inline-flex; align-items:center; justify-content:center; gap:6px; cursor:pointer; }
+.mai-btn.primary { background:linear-gradient(135deg,#1749d7,#3ed0e6); color:#fff; border-color:transparent; }
+@media(max-width:768px){
+  .mai-card{
+    height:auto;
+    min-height:auto;
+  }
+  .mai-body{
+    flex-direction:column;
+  }
+  .mai-right, .mai-left{
+    flex:none;
+    width:100%;
+  }
+  .mai-actions{
+    flex-direction:column;
+  }
+}
+
+/* ====== 安心流程 ====== */
+.flow-stage {width:28px;height:28px;margin:0 auto 4px;border-radius:999px;display:grid;place-items:center;font-weight:900;font-size:11px;}
+
+/* ====== Footer ====== */
+.uag-footer-bar {
+  position:fixed;
+  bottom:0; left:0; right:0;
+  padding:12px 24px;
+  background: rgba(255,255,255,0.96);
+  border-top:1px solid var(--line-soft);
+  display:flex; align-items:center; justify-content:flex-end; gap:16px;
+  box-shadow: 0 -10px 30px rgba(15,23,42,0.10);
+  z-index:100;
+}
+@media(max-width:768px){
+  .uag-footer-bar{
+    padding:10px 12px;
+    gap:8px;
+    flex-wrap:wrap;
+    justify-content:flex-start;
+  }
+}
+
+================================================================================
+FILE: src/pages/UAG/components/RadarCluster.tsx
+================================================================================
+import React from 'react';
+import { Lead } from '../mockData';
+
+interface RadarClusterProps {
+  leads: Lead[];
+  onSelectLead: (lead: Lead) => void;
+}
+
+export default function RadarCluster({ leads, onSelectLead }: RadarClusterProps) {
+  const liveLeads = leads.filter(l => l.status === 'new');
+
+  return (
+    <section className="uag-card k-span-6" id="radar-section" style={{ minHeight: '450px' }}>
+      <div className="uag-card-header">
+        <div>
+          <div className="uag-card-title">UAG 精準導客雷達</div>
+          <div className="uag-card-sub">S/A 級獨家聯絡權｜B/C/F 級點數兌換</div>
+        </div>
+        <div className="uag-actions" style={{ gap: '4px' }}>
+          {/* Quota display is handled in parent or separate component, but for now static or passed props */}
+        </div>
+      </div>
+      <div className="uag-cluster" id="radar-container">
+        <div style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%,-50%)', width: '300px', height: '300px', border: '1px dashed #cbd5e1', borderRadius: '50%', pointerEvents: 'none' }}></div>
+        <div style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%,-50%)', width: '150px', height: '150px', border: '1px dashed #cbd5e1', borderRadius: '50%', pointerEvents: 'none' }}></div>
+        <div style={{ position: 'absolute', left: '16px', top: '16px', background: 'rgba(255,255,255,0.9)', padding: '6px 12px', borderRadius: '20px', fontSize: '12px', color: '#0f172a', boxShadow: '0 1px 2px rgba(0,0,0,0.05)', border: '1px solid #e2e8f0', zIndex: 5 }}>
+          <span style={{ width: '8px', height: '8px', background: '#22c55e', borderRadius: '50%', display: 'inline-block', marginRight: '4px' }}></span>
+          <span style={{ fontWeight: 700 }}>Live 監控中</span>
+        </div>
+
+        {liveLeads.map(lead => {
+          const x = lead.x != null ? lead.x : 50;
+          const y = lead.y != null ? lead.y : 50;
+          const size = lead.grade === 'S' ? 120 : lead.grade === 'A' ? 100 : lead.grade === 'B' ? 90 : lead.grade === 'C' ? 80 : 60;
+          const floatDuration = (5 + Math.random() * 3) + 's';
+
+          return (
+            <div
+              key={lead.id}
+              className="uag-bubble"
+              data-grade={lead.grade}
+              style={{
+                '--w': size + 'px',
+                '--float': floatDuration,
+                left: x + '%',
+                top: y + '%'
+              } as React.CSSProperties}
+              onClick={() => onSelectLead(lead)}
+            >
+              <div className="grade-tag" style={{ background: `var(--grade-${lead.grade.toLowerCase()})`, color: '#fff' }}>{lead.grade}</div>
+              <div style={{ textAlign: 'center', lineHeight: 1.2 }}>
+                <div style={{ fontWeight: 800, fontSize: '14px' }}>{lead.id}</div>
+                <div style={{ fontSize: '11px', color: '#64748b' }}>{lead.intent}%</div>
+              </div>
+              <div className="label">{lead.prop}</div>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+================================================================================
+FILE: src/pages/UAG/components/ActionPanel.tsx
+================================================================================
+import React from 'react';
+import { Lead } from '../mockData';
+
+interface ActionPanelProps {
+  selectedLead: Lead | null;
+  onBuyLead: (leadId: string) => void;
+  isProcessing: boolean;
+}
+
+export default function ActionPanel({ selectedLead, onBuyLead, isProcessing }: ActionPanelProps) {
+  if (!selectedLead) {
+    return (
+      <section className="k-span-6" id="action-panel-container">
+        <div className="uag-action-panel" id="action-panel">
+          <div style={{ height: '100%', minHeight: '200px', display: 'grid', placeItems: 'center', color: 'var(--ink-300)', textAlign: 'center', padding: '40px 20px' }}>
+            <div>
+              <div style={{ fontSize: '40px', marginBottom: '10px' }}>👆</div>
+              <div>請點擊上方雷達泡泡<br />查看分析與購買</div>
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  const isExclusive = (selectedLead.grade === 'S' || selectedLead.grade === 'A');
+
+  return (
+    <section className="k-span-6" id="action-panel-container">
+      <div className="uag-action-panel" id="action-panel">
+        <div className="ap-head">
+          <span className={`uag-badge ${selectedLead.grade.toLowerCase()}`}>{selectedLead.grade}級｜{selectedLead.name}</span>
+        </div>
+        <div className="ap-body">
+          <div className="ap-stats-group">
+            <div className="ap-stat"><span>關注房源</span><b>{selectedLead.prop}</b></div>
+            <div className="ap-stat"><span>意向分數</span><b style={{ color: 'var(--uag-brand)' }}>{selectedLead.intent}%</b></div>
+            <div className="ap-stat"><span>瀏覽次數</span><b>{selectedLead.visit} 次</b></div>
+            <div className="ap-stat"><span>購買成本</span><b>{selectedLead.price} 點</b></div>
+          </div>
+
+          <div className="ai-box urgent">
+            <div>{selectedLead.ai}</div>
+          </div>
+
+          <div className="action-zone">
+            {isExclusive && (
+              <div style={{ background: '#fff7ed', color: '#ea580c', fontWeight: 700, fontSize: '12px', textAlign: 'center', padding: '6px', borderRadius: '4px', border: '1px solid #ffedd5', marginBottom: '10px' }}>
+                ✨ 此客戶包含獨家聯絡權 ✨
+              </div>
+            )}
+            <button
+              className="btn-attack"
+              onClick={() => onBuyLead(selectedLead.id)}
+              disabled={isProcessing}
+            >
+              {isProcessing ? '處理中...' : '🚀 立即購買聯絡'}
+            </button>
+            <div style={{ textAlign: 'center', fontSize: '11px', color: '#94a3b8', marginTop: '8px' }}>符合個資法規範</div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+================================================================================
+FILE: src/pages/UAG/components/AssetMonitor.tsx
+================================================================================
+import React from 'react';
+import { Lead } from '../mockData';
+
+interface AssetMonitorProps {
+  leads: Lead[];
+}
+
+export default function AssetMonitor({ leads }: AssetMonitorProps) {
+  const boughtLeads = leads.filter(l => l.status === 'purchased');
+
+  return (
+    <section className="uag-card k-span-6">
+      <div className="uag-card-header">
+        <div>
+          <div className="uag-card-title">已購客戶資產與保護監控</div>
+          <div className="uag-card-sub">S 級 120hr / A 級 72hr 獨家倒數｜B/C/F 級 14 天防撞</div>
+        </div>
+        <div className="uag-actions"><button className="uag-btn">匯出報表</button></div>
+      </div>
+      <div style={{ overflowX: 'auto' }}>
+        <table className="monitor-table">
+          <thead>
+            <tr>
+              <th style={{ width: '25%' }}>客戶等級/名稱</th>
+              <th style={{ width: '35%' }}>保護期倒數</th>
+              <th style={{ width: '20%' }}>目前狀態</th>
+              <th style={{ width: '20%' }}>操作</th>
+            </tr>
+          </thead>
+          <tbody id="asset-list">
+            {boughtLeads.length === 0 ? (
+              <tr><td colSpan={4} style={{ textAlign: 'center', padding: '20px', color: '#94a3b8' }}>尚無已購資產，請從上方雷達進攻。</td></tr>
+            ) : (
+              boughtLeads.map(lead => {
+                const total = lead.grade === 'S' ? 120 : lead.grade === 'A' ? 72 : 336;
+                const remaining = lead.remainingHours != null ? lead.remainingHours : total;
+                const percent = Math.max(0, Math.min(100, (remaining / total) * 100));
+                const colorVar = `var(--grade-${lead.grade.toLowerCase()})`;
+                const isExclusive = (lead.grade === 'S' || lead.grade === 'A');
+                const protectText = isExclusive ? '獨家鎖定中' : '去重保護中';
+
+                let timeDisplay = '';
+                if (isExclusive) {
+                  timeDisplay = `${remaining.toFixed(1)} 小時`;
+                } else {
+                  const days = (remaining / 24).toFixed(1);
+                  timeDisplay = `${days} 天`;
+                }
+
+                return (
+                  <tr key={lead.id}>
+                    <td data-label="客戶等級/名稱">
+                      <div style={{ display: 'flex', alignItems: 'center' }}>
+                        <span style={{ display: 'inline-grid', placeItems: 'center', width: '24px', height: '24px', borderRadius: '50%', fontSize: '11px', fontWeight: 900, color: '#fff', marginRight: '8px', background: colorVar }}>{lead.grade}</span>
+                        <div>
+                          <div style={{ fontWeight: 800, color: 'var(--ink-100)' }}>{lead.name}</div>
+                          <div style={{ fontSize: '11px', color: 'var(--ink-300)' }}>{lead.prop}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td data-label="保護期倒數">
+                      <div style={{ fontSize: '11px', fontWeight: 700, marginBottom: '2px', display: 'flex', justifyContent: 'space-between' }}>
+                        <span style={{ color: colorVar }}>{protectText}</span>
+                        <span className="t-countdown">{timeDisplay}</span>
+                      </div>
+                      <div className="progress-bg"><div className="progress-fill" style={{ width: `${percent}%`, background: colorVar }}></div></div>
+                    </td>
+                    <td data-label="目前狀態"><span className="uag-badge" style={{ background: '#f0fdf4', color: '#16a34a', border: 'none' }}>簡訊已發送</span></td>
+                    <td data-label="操作"><button className="uag-btn primary" style={{ padding: '4px 12px', fontSize: '12px' }}>寫紀錄 / 預約</button></td>
+                  </tr>
+                );
+              })
+            )}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  );
+}
+
+================================================================================
+FILE: src/pages/UAG/components/ListingFeed.tsx
+================================================================================
+import React from 'react';
+import { Listing, FeedPost } from '../mockData';
+
+interface ListingFeedProps {
+  listings: Listing[];
+  feed: FeedPost[];
+}
+
+export default function ListingFeed({ listings, feed }: ListingFeedProps) {
+  return (
+    <>
+      {/* [3] Listings */}
+      <section className="uag-card k-span-3">
+        <div className="uag-card-header">
+          <div><div className="uag-card-title">我的房源總覽</div><div className="uag-card-sub">即時掌握曝光、點擊與收藏</div></div>
+        </div>
+        <div id="listing-container">
+          {listings.length === 0 ? (
+            <div style={{ padding: '12px', fontSize: '13px', color: '#94a3b8' }}>尚無房源資料。</div>
+          ) : (
+            listings.map((item, idx) => (
+              <article className="listing-item" key={idx}>
+                <div className="l-thumb" style={{ background: item.thumbColor }}></div>
+                <div>
+                  <div className="l-title">{item.title}</div>
+                  <div className="l-tags">
+                    {item.tags.map((t, i) => <span className="l-tag" key={i}>{t}</span>)}
+                  </div>
+                  <div className="l-kpi">
+                    <span>曝光 <b>{item.view}</b></span>
+                    <span>點擊 <b>{item.click}</b></span>
+                    <span>收藏 <b>{item.fav}</b></span>
+                  </div>
+                </div>
+              </article>
+            ))
+          )}
+        </div>
+      </section>
+
+      {/* [4] Feed */}
+      <section className="uag-card k-span-3">
+        <div className="uag-card-header">
+          <div><div className="uag-card-title">社區牆＆真實口碑</div><div className="uag-card-sub">用真實交流建立信任</div></div>
+          <div className="uag-actions"><button className="uag-btn">貼文</button></div>
+        </div>
+        <div id="feed-container">
+          {feed.length === 0 ? (
+            <div style={{ padding: '12px', fontSize: '13px', color: '#94a3b8' }}>尚無社區牆互動。</div>
+          ) : (
+            feed.map((post, idx) => (
+              <article className="feed-post" key={idx}>
+                <div className="fp-title">{post.title}</div>
+                <div className="fp-meta">{post.meta}</div>
+                <div className="fp-body">{post.body}</div>
+              </article>
+            ))
+          )}
+        </div>
+      </section>
+    </>
+  );
+}
+
+================================================================================
+FILE: src/pages/UAG/components/MaiCard.tsx
+================================================================================
+import React from 'react';
+
+export default function MaiCard() {
+  return (
+    <section className="uag-card k-span-3">
+      <div className="uag-card-header">
+        <div><div className="uag-card-title">手機報告生成器</div><div className="uag-card-sub">半屏小卡・行動優先</div></div>
+        <div className="uag-actions"><button className="uag-btn primary" onClick={() => alert('系統提示：報告生成中...')}>生成報告</button></div>
+      </div>
+      <div className="card-body">
+        <section aria-label="手機報告生成小卡" className="mai-card">
+          <header className="mai-head">
+            <span className="mai-tag">快速報告</span>
+            <h3 className="mai-title">惠宇上晴 12F｜3房2廳2衛</h3>
+            <p className="mai-sub">南屯區 · 67.3 坪 · 屋齡 5 年</p>
+          </header>
+          <div className="mai-body">
+            <div className="mai-left">
+              <div className="mai-price">
+                <div className="k">開價</div><div className="v">NT$ 32,880,000</div><div className="u">參考：52.1 萬/坪</div>
+              </div>
+              <ul className="mai-stats">
+                <li><span>議價建議</span><b>-2% ~ -6%</b></li>
+                <li><span>貸款月付</span><b>≈ 8.6 萬</b></li>
+                <li><span>近三筆實登</span><b>52.8 / 51.5 / 50.9</b></li>
+              </ul>
+            </div>
+            <div className="mai-right">
+              <div className="mai-thumb"><img alt="物件主圖" src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='200'%3E%3Crect width='100%25' height='100%25' fill='%23e5edff'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' fill='%231749d7'%3EMAIN%3C/text%3E%3C/svg%3E" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /></div>
+              <div className="mai-mini">
+                <div style={{ background: '#f0f4ff', borderRadius: '8px', aspectRatio: '3/2' }}></div>
+                <div style={{ background: '#f0f4ff', borderRadius: '8px', aspectRatio: '3/2' }}></div>
+                <div style={{ background: '#f0f4ff', borderRadius: '8px', aspectRatio: '3/2' }}></div>
+              </div>
+            </div>
+          </div>
+          <div className="mai-actions">
+            <button className="mai-btn primary">一鍵生成報告</button>
+            <button className="mai-btn line">LINE 分享</button>
+          </div>
+        </section>
+      </div>
+    </section>
+  );
+}
+
+================================================================================
+FILE: src/pages/UAG/components/TrustFlow.tsx
+================================================================================
+import React from 'react';
+
+export default function TrustFlow() {
+  return (
+    <section className="uag-card k-span-3">
+      <div className="uag-card-header">
+        <div className="uag-card-title">安心流程管理</div>
+        <div className="uag-card-sub">五階段・交易留痕</div>
+      </div>
+      <div className="card-body">
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: '8px', marginBottom: '8px' }}>
+          <div style={{ textAlign: 'center' }}><div className="flow-stage" style={{ background: '#16a34a', color: '#fff' }}>✓</div><div className="small" style={{ fontWeight: 700, color: '#16a34a' }}>M1 接洽</div></div>
+          <div style={{ textAlign: 'center' }}><div className="flow-stage" style={{ background: '#16a34a', color: '#fff' }}>✓</div><div className="small" style={{ fontWeight: 700, color: '#16a34a' }}>M2 帶看</div></div>
+          <div style={{ textAlign: 'center' }}><div className="flow-stage" style={{ background: '#1749d7', color: '#fff' }}>●</div><div className="small" style={{ fontWeight: 700, color: '#1749d7' }}>M3 出價</div></div>
+          <div style={{ textAlign: 'center' }}><div className="flow-stage" style={{ background: '#e5e7eb', color: '#6b7280' }}>・</div><div className="small" style={{ color: '#6b7a90' }}>M4 簽約</div></div>
+          <div style={{ textAlign: 'center' }}><div className="flow-stage" style={{ background: '#e5e7eb', color: '#6b7280' }}>・</div><div className="small" style={{ color: '#6b7a90' }}>M5 交屋</div></div>
+        </div>
+        <div className="timeline-wrap">
+          <div className="timeline-header" style={{ display: 'grid', gridTemplateColumns: '90px 1fr 96px', gap: 0, padding: '8px 12px', fontSize: '13px' }}>
+            <div>時間</div><div>事件與參與者</div><div>留痕</div>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '90px 1fr 96px', alignItems: 'start', borderBottom: '1px solid var(--line-soft)', padding: '8px 12px' }}>
+            <div className="small">10/30 22:10</div>
+            <div><div className="small" style={{ color: 'var(--ink-100)' }}><b>M1 初次接洽建立</b>｜買方 A103</div><div className="small" style={{ color: 'var(--ink-300)' }}>房源：惠宇上晴 12F</div></div>
+            <div><div className="uag-badge" style={{ fontSize: '10px' }}>hash: 9f2a…</div></div>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '90px 1fr 96px', alignItems: 'start', borderBottom: '1px solid var(--line-soft)', padding: '8px 12px' }}>
+            <div className="small">10/31 09:20</div>
+            <div><div className="small" style={{ color: 'var(--ink-100)' }}><b>M2 帶看雙方到場</b>｜買方 A103</div><div className="small" style={{ color: 'var(--ink-300)' }}>GeoTag: 南屯社區大廳</div></div>
+            <div><div className="uag-badge" style={{ fontSize: '10px' }}>sig: b7aa…</div></div>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '90px 1fr 96px', alignItems: 'start', background: '#fefce8', padding: '8px 12px' }}>
+            <div className="small">10/31 10:40</div>
+            <div><div className="small" style={{ color: 'var(--ink-100)' }}><b>M3 買方出價</b>｜買方 A103</div><div className="small" style={{ color: 'var(--ink-300)' }}>出價 NT$31,500,000</div></div>
+            <div><div className="uag-badge" style={{ fontSize: '10px', background: '#fef3c7', color: '#92400e', border: '1px solid #f6d88a' }}>hash: 1a7c…</div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+================================================================================
+FILE: usg後端.txt
+================================================================================
+// server_supabase.js v3.1 - Optimized Production Backend
+// 優化內容：平行查詢、精確欄位、冪等性檢查
+
+require('dotenv').config();
+const express = require('express');
+const cors = require('cors');
+const helmet = require('helmet');
+const jwt = require('jsonwebtoken');
+const jwksRsa = require('jwks-rsa');
+const { randomUUID } = require('crypto');
+const { createClient } = require('@supabase/supabase-js');
+const { body, param, query, validationResult } = require('express-validator');
+const LRU = require('lru-cache');
+const pino = require('pino');
+
+// ----------------------------
+// Environment Configuration
+// ----------------------------
+const NODE_ENV = process.env.NODE_ENV || 'development';
+const isProd = NODE_ENV === 'production';
+const PORT = process.env.PORT || 3000;
+
+const ENV = {
+  SUPABASE_URL: process.env.SUPABASE_URL,
+  SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
+  SUPABASE_JWT_SECRET: process.env.SUPABASE_JWT_SECRET,
+  SUPABASE_PROJECT_REF: process.env.SUPABASE_PROJECT_REF,
+  FRONTEND_ORIGINS: process.env.FRONTEND_ORIGINS,
+  LOG_LEVEL: process.env.LOG_LEVEL || (isProd ? 'info' : 'debug')
+};
+
+// Check Required Envs
+const requiredEnvs = ['SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY'];
+const missingEnvs = requiredEnvs.filter(key => !ENV[key]);
+if (isProd && missingEnvs.length > 0) {
+  console.error(`[FATAL] Missing required env vars: ${missingEnvs.join(', ')}`);
+  process.exit(1);
+}
+
+// ----------------------------
+// Logger
+// ----------------------------
+const logger = pino({
+  level: ENV.LOG_LEVEL,
+  transport: isProd ? undefined : { target: 'pino-pretty', options: { colorize: true } },
+  redact: ['req.headers.authorization', 'token'],
+  serializers: { req: (req) => ({ method: req.method, url: req.url, requestId: req.requestId }) }
+});
+
+// ----------------------------
+// Supabase Client
+// ----------------------------
+const supabase = createClient(ENV.SUPABASE_URL, ENV.SUPABASE_SERVICE_ROLE_KEY, {
+  auth: { autoRefreshToken: false, persistSession: false }
+});
+
+// ----------------------------
+// Cache Strategy (LRU)
+// ----------------------------
+const cache = new LRU({
+  max: 500,
+  ttl: 1000 * 60 * 5, // 5 minutes
+});
+
+// ----------------------------
+// Express App Setup
+// ----------------------------
+const app = express();
+
+app.use(helmet());
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin || !isProd) return callback(null, true);
+    const allowed = ENV.FRONTEND_ORIGINS ? ENV.FRONTEND_ORIGINS.split(',') : [];
+    if (allowed.includes(origin)) return callback(null, true);
+    callback(new Error('Not allowed by CORS'));
+  },
+  methods: ['GET', 'POST'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+app.use(express.json());
+
+// Request ID Middleware
+app.use((req, res, next) => {
+  req.requestId = randomUUID();
+  next();
+});
+
+// Request Logger Middleware
+app.use((req, res, next) => {
+  logger.info({ req }, 'Incoming Request');
+  next();
+});
+
+// ----------------------------
+// Auth Middleware (JWT)
+// ----------------------------
+const authenticate = async (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader?.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Missing or invalid token' });
+  }
+
+  const token = authHeader.split(' ')[1];
+  try {
+    // Verify Supabase JWT
+    const { data: { user }, error } = await supabase.auth.getUser(token);
+    if (error || !user) throw new Error('Invalid Supabase Token');
+    
+    req.user = user;
+    next();
+  } catch (err) {
+    logger.warn({ err, requestId: req.requestId }, 'Auth Failed');
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+};
+
+// ----------------------------
+// API Routes
+// ----------------------------
+
+// Health Check
+app.get('/health', (req, res) => res.status(200).json({ status: 'ok', version: '3.1' }));
+
+/**
+ * GET /api/uag/dashboard
+ * Fetch all dashboard data in parallel
+ */
+app.get('/api/uag/dashboard', authenticate, async (req, res) => {
+  const userId = req.user.id;
+  const cacheKey = `dashboard:${userId}`;
+
+  if (cache.has(cacheKey)) {
+    return res.json(cache.get(cacheKey));
+  }
+
+  try {
+    // Parallel Queries
+    const [userRes, leadsRes, listingsRes, feedRes] = await Promise.all([
+      supabase.from('users').select('points, quota_s, quota_a').eq('id', userId).single(),
+      supabase.from('leads').select('*').or(`status.eq.new,purchased_by.eq.${userId}`),
+      supabase.from('listings').select('*').eq('agent_id', userId),
+      supabase.from('feed').select('*').order('created_at', { ascending: false }).limit(5)
+    ]);
+
+    if (userRes.error) throw userRes.error;
+
+    const responseData = {
+      user: {
+        points: userRes.data.points,
+        quota: { s: userRes.data.quota_s, a: userRes.data.quota_a }
+      },
+      leads: leadsRes.data || [],
+      listings: listingsRes.data || [],
+      feed: feedRes.data || []
+    };
+
+    cache.set(cacheKey, responseData);
+    res.json(responseData);
+
+  } catch (err) {
+    logger.error({ err, requestId: req.requestId }, 'Dashboard Fetch Error');
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+/**
+ * POST /api/uag/buy-lead
+ * Atomic Transaction for buying a lead
+ */
+app.post('/api/uag/buy-lead', 
+  authenticate,
+  [body('leadId').isString().notEmpty()],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
+
+    const { leadId } = req.body;
+    const userId = req.user.id;
+
+    try {
+      // Call Supabase RPC (Stored Procedure) for Atomicity
+      const { data, error } = await supabase.rpc('buy_lead_transaction', {
+        p_user_id: userId,
+        p_lead_id: leadId
+      });
+
+      if (error) throw error;
+
+      // Invalidate Cache
+      cache.delete(`dashboard:${userId}`);
+
+      res.json({ success: true, data });
+
+    } catch (err) {
+      logger.error({ err, requestId: req.requestId }, 'Buy Lead Error');
+      res.status(400).json({ error: err.message || 'Transaction Failed' });
+    }
+});
+
+// ----------------------------
+// Error Handling
+// ----------------------------
+app.use((err, req, res, next) => {
+  logger.error({ err, requestId: req.requestId }, 'Unhandled Error');
+  res.status(500).json({ error: 'Something went wrong' });
+});
+
+// ----------------------------
+// Start Server
+// ----------------------------
+app.listen(PORT, () => {
+  logger.info(`Server running on port ${PORT} in ${NODE_ENV} mode`);
+});
