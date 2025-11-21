@@ -73,8 +73,9 @@ Deploy: UAG v11.2 Code Quality & SonarLint Fixes
 
 Timestamp: 2025-11-21T07:00:45Z
 Deploy: Homepage Refactor & Optimization
-- Refactor: Split monolithic sections (CommunityTeaser, HeroAssure, SmartAsk) into smaller components.
+- Refactor: Split monolithic sections (CommunityTeaser, HeroAssure, SmartAsk, PropertyGrid) into smaller components.
 - Components: Created HomeCard, ReviewCard, HeroStep, ChatBubble, SuggestionChips, RecommendationCard.
 - Logic: Extracted SmartAsk logic to useSmartAsk hook.
 - Styling: Standardized styles using Tailwind and HomeCard wrapper; removed obsolete CSS files.
 - Fix: Added cn utility for class merging.
+- Cleanup: Removed LegacyPropertyGrid.
