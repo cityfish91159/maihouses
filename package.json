@@ -22,7 +22,7 @@
     "dev:force": "vite --force"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.83.0",
+    "@supabase/supabase-js": "^2.84.0",
     "@tanstack/react-query": "^5.90.10",
     "cloudinary": "^1.41.0",
     "clsx": "^2.1.1",
