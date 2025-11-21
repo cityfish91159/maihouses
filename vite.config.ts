@@ -22,7 +22,7 @@ export default defineConfig({
   ],
   base: '/maihouses/',
   build: {
-    outDir: 'docs',
+    outDir: 'dist',
     sourcemap: true, // Enable sourcemaps for debugging
   },
   test: {
