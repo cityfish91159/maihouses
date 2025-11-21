@@ -1,0 +1,8 @@
+{
+  "name": "Maihouses Prebuild",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "postCreateCommand": "npm ci --prefer-offline --no-audit && npm run build",
+  "remoteUser": "node"
+}

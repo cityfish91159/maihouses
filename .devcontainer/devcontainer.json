@@ -1,0 +1,99 @@
+{
+  "name": "Maihouses Development",
+  "image": "mcr.microsoft.com/devcontainers/typescript-node:1-22-bookworm",
+
+  // 🚀 性能优化配置
+  "features": {
+    "ghcr.io/devcontainers/features/github-cli:1": {},
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "installZsh": false,
+      "configureZshAsDefaultShell": false
+    }
+  },
+
+  // ⚡ 容器优化
+  "runArgs": [
+    "--memory=4g",
+    "--memory-swap=6g",
+    "--cpus=2"
+  ],
+
+  // 📦 自动安装依赖（使用缓存）
+  "postCreateCommand": "npm ci --prefer-offline --no-audit",
+
+  // 🔧 启动后优化
+  "postStartCommand": "bash .devcontainer/startup-optimize.sh",
+
+  // 🎯 VSCode 设置优化
+  "customizations": {
+    "vscode": {
+      "settings": {
+        // TypeScript 性能优化
+        "typescript.tsserver.maxTsServerMemory": 4096,
+        "typescript.disableAutomaticTypeAcquisition": true,
+
+        // 文件监控优化
+        "files.watcherExclude": {
+          "**/node_modules/**": true,
+          "**/.git/**": true,
+          "**/dist/**": true,
+          "**/.cache/**": true,
+          "**/.vite/**": true
+        },
+
+        // 搜索优化
+        "search.exclude": {
+          "**/node_modules": true,
+          "**/dist": true,
+          "**/.cache": true,
+          "**/.vite": true
+        },
+
+        // 编辑器性能优化
+        "editor.quickSuggestions": {
+          "other": true,
+          "comments": false,
+          "strings": false
+        },
+        "editor.suggestOnTriggerCharacters": true,
+        "editor.acceptSuggestionOnEnter": "on",
+        "editor.snippetSuggestions": "top",
+
+        // Git 优化
+        "git.autofetch": false,
+        "git.autorefresh": false
+      },
+
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "bradlc.vscode-tailwindcss",
+        "formulahendry.auto-rename-tag"
+      ]
+    }
+  },
+
+  // 🌐 端口转发
+  "forwardPorts": [5173, 4173],
+  "portsAttributes": {
+    "5173": {
+      "label": "Vite Dev Server",
+      "onAutoForward": "notify"
+    },
+    "4173": {
+      "label": "Vite Preview",
+      "onAutoForward": "notify"
+    }
+  },
+
+  // 🔐 挂载点优化（使用命名卷加速）
+  "mounts": [
+    "source=maihouses-node_modules,target=${containerWorkspaceFolder}/node_modules,type=volume"
+  ],
+
+  // ⚙️ 环境变量
+  "remoteEnv": {
+    "NODE_OPTIONS": "--max-old-space-size=4096",
+    "VITE_HOST": "0.0.0.0"
+  }
+}

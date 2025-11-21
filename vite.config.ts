@@ -59,5 +59,18 @@ export default defineConfig({
   preview: { port: 5173, strictPort: true },
   optimizeDeps: {
     entries: ['src/main.tsx'],
+    include: [
+      'react',
+      'react-dom',
+      'react-router-dom',
+      '@tanstack/react-query',
+      'zustand',
+      'immer',
+    ],
+  },
+  // ⚡ Codespace 性能优化
+  cacheDir: 'node_modules/.vite',
+  resolve: {
+    dedupe: ['react', 'react-dom'],
   },
 })
