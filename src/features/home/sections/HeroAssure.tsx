@@ -30,7 +30,7 @@ export default function HeroAssure() {
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry && entry.isIntersecting) {
+        if (entry?.isIntersecting) {
           setIsVisible(true)
           observer.disconnect()
         }
@@ -78,7 +78,7 @@ export default function HeroAssure() {
         <div className="steps">
           {assureSteps.map((step, index) => (
             <div
-              className={`step${step.status !== 'upcoming' ? ` ${step.status}` : ''}`}
+              className={`step ${step.status !== 'upcoming' ? step.status : ''}`.trim()}
               key={`${step.title}-${step.status}`}
             >
               <div className="dot-wrap">
