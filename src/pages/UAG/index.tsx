@@ -1,12 +1,11 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Toaster, toast } from 'react-hot-toast';
+import React, { useRef } from 'react';
+import { Toaster } from 'react-hot-toast';
 import { ErrorBoundary } from 'react-error-boundary';
 import { QueryErrorResetBoundary } from '@tanstack/react-query';
 
 import styles from './UAG.module.css';
 import { useUAG } from './hooks/useUAG';
 import { useLeadSelection } from './hooks/useLeadSelection';
-import { Lead } from './types/uag.types';
 
 import { UAGHeader } from './components/UAGHeader';
 import { UAGFooter } from './components/UAGFooter';
@@ -21,7 +20,7 @@ import MaiCard from './components/MaiCard';
 import TrustFlow from './components/TrustFlow';
 
 function UAGPageContent() {
-  const { data: appData, isLoading, error, buyLead, isBuying, useMock, toggleMode } = useUAG();
+  const { data: appData, isLoading, buyLead, isBuying, useMock, toggleMode } = useUAG();
   const { selectedLead, selectLead, close } = useLeadSelection();
   const actionPanelRef = useRef<HTMLDivElement>(null);
 
@@ -35,7 +34,6 @@ function UAGPageContent() {
   };
 
   if (isLoading) return <UAGLoadingSkeleton />;
-  // if (error) throw error; // Handled by ErrorBoundary
   if (!appData) return null;
 
   return (
