@@ -1,11 +1,13 @@
 import React from 'react';
-import { ShieldCheck, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { ShieldCheck, ArrowRight } from 'lucide-react';
 import MascotHouse from '../../../components/MascotHouse';
 import { HERO_STEPS } from '../../../constants/data';
+import { HomeCard } from '../components/HomeCard';
+import { HeroStep } from '../components/HeroStep';
 
 export default function HeroAssure() {
   return (
-    <section className="mh-card mh-card--hero bg-gradient-to-br from-white to-brand-50 border border-border-light p-6 md:p-10 relative overflow-hidden group/container">
+    <HomeCard variant="hero" className="relative overflow-hidden group/container">
       
       {/* Header Area */}
       <div className="relative z-10 mb-10 flex flex-col items-center gap-6 md:flex-row md:gap-10">
@@ -47,37 +49,15 @@ export default function HeroAssure() {
 
         <div className="grid grid-cols-1 md:grid-cols-6 gap-6 md:gap-2">
           {HERO_STEPS.map((step, index) => (
-            <div key={step.id} className="group relative flex md:flex-col items-center md:items-center gap-4 md:gap-4 p-2 rounded-xl hover:bg-bg-soft transition-colors duration-300 cursor-default">
-                
-                {/* Icon Circle */}
-                <div className="relative z-10 flex-shrink-0">
-                    <div className="w-12 h-12 rounded-full bg-white border-2 border-border-light text-text-muted flex items-center justify-center group-hover:border-brand group-hover:text-brand group-hover:scale-110 transition-all duration-300 shadow-sm">
-                        <step.icon size={20} />
-                    </div>
-                    {/* Step Number Badge */}
-                    <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-brand text-white text-[10px] font-bold flex items-center justify-center ring-2 ring-white">
-                        {index + 1}
-                    </div>
-                </div>
-
-                {/* Content */}
-                <div className="flex-1 md:text-center">
-                    <h4 className="text-base font-black text-text-ink mb-1 group-hover:text-brand transition-colors">
-                        {step.title}
-                    </h4>
-                    <p className="text-xs text-text-muted font-medium leading-relaxed">
-                        {step.desc}
-                    </p>
-                </div>
-
-                {/* Mobile Arrow (Visual aid) */}
-                <div className="md:hidden ml-auto text-border-light group-hover:text-brand transition-colors">
-                     {index < HERO_STEPS.length - 1 && <CheckCircle2 size={16} className="opacity-0 group-hover:opacity-20"/>}
-                </div>
-            </div>
+            <HeroStep 
+              key={step.id} 
+              {...step} 
+              index={index} 
+              isLast={index === HERO_STEPS.length - 1} 
+            />
           ))}
         </div>
       </div>
-    </section>
+    </HomeCard>
   );
 }

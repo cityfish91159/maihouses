@@ -1,0 +1,905 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>邁房子帳號</title>
+  <meta name="color-scheme" content="light">
+  <style>
+    /* ===== 設計 Token（沿用邁房子色系）===== */
+    :root{
+      /* 品牌色 - 邁房子主色 */
+      --brand:#00385a; 
+      --brand-dark:#00385a; 
+      --brand-light:#33607b;
+      --brand-lighter:#eef3ff;
+      
+      /* 背景色 */
+      --bg-page:#f6f9ff;
+      --bg-card:#ffffff;
+      --bg-glass:rgba(255,255,255,0.88);
+      
+      /* 漸層 - 統一使用深藍色，避免過黑 */
+      --gradient-brand:linear-gradient(135deg, #00385a 0%, #004E7C 100%);
+      --gradient-bg:linear-gradient(135deg, #eef3ff 0%, #e3f0ff 100%);
+      --gradient-hero:radial-gradient(1200px 800px at 50% -10%, #e9f0ff, transparent 50%);
+      
+      /* 文字色 */
+      --text-primary:#0a2246;
+      --text-secondary:#6c7b91;
+      --text-tertiary:#8a95a5;
+      
+      /* 中性色 */
+      --neutral-100:#F3F4F6;
+      --neutral-200:#E5E7EB;
+      --neutral-800:#1F2937;
+      
+      /* 邊框 */
+      --border:#e6edf7;
+      --border-light:#eef3ff;
+      
+      /* 圓角 */
+      --r-sm:10px;
+      --r-md:14px;
+      --r-lg:18px;
+      --r-xl:24px;
+      --r-pill:999px;
+      
+      /* 陰影 */
+      --shadow-sm:0 2px 8px rgba(10, 34, 70, 0.04);
+      --shadow-md:0 4px 16px rgba(10, 34, 70, 0.08);
+      --shadow-lg:0 8px 24px rgba(0, 56, 90, 0.12);
+      
+      /* 過渡 */
+      --transition:200ms cubic-bezier(0.2, 0.7, 0.2, 1);
+    }
+
+    /* ===== 動畫 ===== */
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+    
+    @keyframes pulse-glow {
+      0%, 100% { box-shadow: 0 0 20px rgba(0, 56, 90, 0.3); }
+      50% { box-shadow: 0 0 30px rgba(0, 56, 90, 0.5); }
+    }
+    
+    @keyframes slide {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    /* ===== 基礎樣式 ===== */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    html, body {
+      height: 100%;
+      font-family: 'Noto Sans TC', 'PingFang TC', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      color: var(--text-primary);
+      background: var(--bg-page);
+      -webkit-font-smoothing: antialiased;
+      position: relative;
+      overflow-x: hidden;
+    }
+    
+    /* 背景裝飾 */
+    body::before {
+      content: '';
+      position: fixed;
+      top: -50%;
+      left: -10%;
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(0, 56, 90, 0.08) 0%, transparent 70%);
+      border-radius: 50%;
+      animation: float 8s ease-in-out infinite;
+      pointer-events: none;
+      z-index: 0;
+    }
+    
+    body::after {
+      content: '';
+      position: fixed;
+      bottom: -30%;
+      right: -10%;
+      width: 500px;
+      height: 500px;
+      background: radial-gradient(circle, rgba(106, 164, 255, 0.06) 0%, transparent 70%);
+      border-radius: 50%;
+      animation: float 10s ease-in-out infinite reverse;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ===== Header ===== */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(12px) saturate(120%);
+      border-bottom: 1px solid var(--border);
+      animation: fadeInUp 0.6s ease-out;
+    }
+    
+    .header-wrap {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 900;
+      font-size: 16px;
+      letter-spacing: 0.3px;
+      color: var(--brand);
+      text-decoration: none;
+      transition: all var(--transition);
+    }
+    
+    .logo:hover {
+      transform: scale(1.02);
+    }
+    
+    .logo-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 10px;
+      background: var(--gradient-brand);
+      display: grid;
+      place-items: center;
+      color: white;
+      font-weight: 900;
+      box-shadow: var(--shadow-sm);
+      animation: pulse-glow 3s ease-in-out infinite;
+    }
+    
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 18px;
+      border-radius: var(--r-pill);
+      background: var(--bg-glass);
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 14px;
+      transition: all var(--transition);
+    }
+    
+    .back-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+      border-color: var(--brand-light);
+      color: var(--brand);
+    }
+
+    /* ===== Main Container ===== */
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 40px 20px 60px;
+      position: relative;
+      z-index: 1;
+    }
+    
+    @media (max-width: 768px) {
+      .container { padding: 24px 16px 40px; }
+    }
+
+    /* ===== Auth Card ===== */
+    .auth-card {
+      background: var(--bg-card);
+      border-radius: var(--r-xl);
+      box-shadow: var(--shadow-lg);
+      overflow: hidden;
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      grid-template-rows: auto 1fr;
+      grid-template-areas: 
+        "accent accent"
+        "form feature";
+      max-width: 1080px;
+      margin: 0 auto;
+      border: 1px solid var(--border-light);
+      animation: fadeInUp 0.8s ease-out;
+    }
+    
+    @media (max-width: 980px) {
+      .auth-card { 
+        grid-template-columns: 1fr;
+        grid-template-areas: 
+          "accent"
+          "form"
+          "feature";
+      }
+    }
+
+    /* ===== 頂部裝飾條 ===== */
+    .accent-bar {
+      grid-area: accent;
+      height: 5px;
+      background: var(--gradient-brand);
+      background-size: 200% 100%;
+      animation: slide 4s linear infinite;
+    }
+
+    /* ===== Left Panel (表單) ===== */
+    .form-panel {
+      grid-area: form;
+      padding: 44px 48px;
+      position: relative;
+    }
+    
+    @media (max-width: 768px) {
+      .form-panel { padding: 32px 24px; }
+    }
+    
+    .form-header {
+      margin-bottom: 32px;
+    }
+    
+    .form-title {
+      font-size: 30px;
+      font-weight: 900;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+      letter-spacing: 0.3px;
+    }
+    
+    .form-subtitle {
+      font-size: 15px;
+      color: var(--text-secondary);
+    }
+
+    /* ===== Tabs ===== */
+    .tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 28px;
+      padding: 4px;
+      background: var(--bg-glass);
+      border-radius: var(--r-lg);
+      border: 1px solid var(--border);
+    }
+    
+    .tab {
+      flex: 1;
+      padding: 12px 20px;
+      border: none;
+      background: transparent;
+      border-radius: var(--r-md);
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all var(--transition);
+      position: relative;
+    }
+    
+    .tab:hover {
+      color: var(--brand);
+      background: rgba(0, 56, 90, 0.04);
+    }
+    
+    .tab.active {
+      background: var(--gradient-brand);
+      color: white;
+      box-shadow: var(--shadow-sm);
+      font-weight: 700;
+    }
+
+    /* ===== Buttons ===== */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      min-height: 52px;
+      padding: 14px 20px;
+      border-radius: var(--r-md);
+      font-size: 15px;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      transition: all var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .btn::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.2), transparent);
+      opacity: 0;
+      transition: opacity var(--transition);
+    }
+    
+    .btn:hover::before {
+      opacity: 1;
+    }
+    
+    .btn:active {
+      transform: scale(0.98);
+    }
+    
+    .btn-primary {
+      background: var(--gradient-brand);
+      color: white;
+      box-shadow: var(--shadow-sm);
+    }
+    
+    .btn-primary:hover {
+      box-shadow: var(--shadow-md);
+      transform: translateY(-2px);
+    }
+    
+    .btn-google {
+      background: white;
+      border: 2px solid var(--border);
+      color: var(--text-primary);
+    }
+    
+    .btn-google:hover {
+      border-color: var(--brand-light);
+      box-shadow: var(--shadow-md);
+      transform: translateY(-2px);
+    }
+    
+    .google-icon {
+      width: 22px;
+      height: 22px;
+      background: white;
+      border-radius: 6px;
+      display: grid;
+      place-items: center;
+    }
+
+    /* ===== Form Fields ===== */
+    .field-group {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+    
+    @media (max-width: 640px) {
+      .field-group { grid-template-columns: 1fr; }
+    }
+    
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    
+    .field.full {
+      grid-column: 1 / -1;
+    }
+    
+    .field label {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    
+    .field input[type="text"],
+    .field input[type="email"],
+    .field input[type="password"] {
+      height: 50px;
+      padding: 12px 16px;
+      border-radius: var(--r-md);
+      border: 2px solid var(--border);
+      background: white;
+      font-size: 16px;
+      color: var(--text-primary);
+      transition: all var(--transition);
+    }
+    
+    .field input:focus {
+      outline: none;
+      border-color: var(--brand);
+      box-shadow: 0 0 0 4px rgba(0, 56, 90, 0.1);
+    }
+    
+    .field input::placeholder {
+      color: var(--text-tertiary);
+    }
+    
+    .field .error {
+      display: none;
+      font-size: 13px;
+      color: #e11d48;
+      font-weight: 500;
+    }
+    
+    .field .error.show {
+      display: block;
+    }
+
+    /* ===== Checkbox ===== */
+    .checkbox-field {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin: 16px 0;
+    }
+    
+    .checkbox-field input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+      margin-top: 2px;
+      accent-color: var(--brand);
+      cursor: pointer;
+    }
+    
+    .checkbox-field label {
+      font-size: 14px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      line-height: 1.5;
+    }
+    
+    .checkbox-field a {
+      color: var(--brand);
+      text-decoration: none;
+      font-weight: 600;
+    }
+    
+    .checkbox-field a:hover {
+      text-decoration: underline;
+    }
+
+    /* ===== Divider ===== */
+    .divider {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      gap: 16px;
+      margin: 24px 0;
+    }
+    
+    .divider::before,
+    .divider::after {
+      content: '';
+      height: 1px;
+      background: var(--border);
+    }
+    
+    .divider span {
+      font-size: 13px;
+      color: var(--text-tertiary);
+      font-weight: 500;
+    }
+
+    /* ===== Right Panel (功能介紹) ===== */
+    .feature-panel {
+      grid-area: feature;
+      background: var(--gradient-bg);
+      padding: 44px 40px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      border-left: 1px solid var(--border-light);
+    }
+    
+    @media (max-width: 980px) {
+      .feature-panel {
+        border-left: none;
+        border-top: 1px solid var(--border-light);
+        padding: 32px 24px;
+      }
+    }
+    
+    .tagline {
+      display: inline-block;
+      padding: 8px 16px;
+      background: rgba(0, 56, 90, 0.08);
+      border: 1px solid rgba(0, 56, 90, 0.2);
+      border-radius: var(--r-pill);
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--brand);
+      margin-bottom: 8px;
+    }
+    
+    .feature-card {
+      background: white;
+      padding: 24px;
+      border-radius: var(--r-lg);
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border-light);
+      transition: all var(--transition);
+    }
+    
+    .feature-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-md);
+    }
+    
+    .feature-card h3 {
+      font-size: 17px;
+      font-weight: 800;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+    }
+    
+    .feature-card p {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+    
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 16px;
+    }
+    
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: var(--r-pill);
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--brand);
+      transition: all var(--transition);
+    }
+    
+    .chip:hover {
+      border-color: var(--brand-light);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-sm);
+    }
+    
+    .chip-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--brand);
+      box-shadow: 0 0 8px rgba(0, 56, 90, 0.4);
+    }
+
+    /* ===== Footer ===== */
+    footer {
+      text-align: center;
+      padding: 32px 20px;
+      color: var(--text-tertiary);
+      font-size: 14px;
+    }
+    
+    .forgot-link {
+      display: inline-block;
+      margin-top: 12px;
+      font-size: 14px;
+      color: var(--brand);
+      text-decoration: none;
+      font-weight: 600;
+      transition: all var(--transition);
+    }
+    
+    .forgot-link:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header>
+    <div class="header-wrap">
+      <a href="/maihouses/" class="logo">
+        <div class="logo-icon">邁</div>
+        <span>邁房子</span>
+      </a>
+      <a href="/maihouses/" class="back-btn">
+        <span>←</span>
+        <span>返回首頁</span>
+      </a>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="container">
+    <div class="auth-card">
+      <div class="accent-bar"></div>
+      
+      <!-- Left: Form Panel -->
+      <div class="form-panel">
+        <div class="form-header">
+          <h1 class="form-title">邁房子帳號</h1>
+          <p class="form-subtitle" id="subtitle">回到你的邁房子</p>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs">
+          <button class="tab active" id="tabLogin">登入</button>
+          <button class="tab" id="tabSignup">註冊</button>
+        </div>
+
+        <!-- Google Button -->
+        <button class="btn btn-google" id="btnGoogle">
+          <span class="google-icon">
+            <svg width="18" height="18" viewBox="0 0 48 48">
+              <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.6 31.8 29.3 35 24 35c-6.6 0-12-5.4-12-12s5.4-12 12-12c3 0 5.7 1.1 7.7 2.9l5.7-5.7C34.9 5.7 29.7 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20c10 0 19-7.3 19-20 0-1.2-.1-2.3-.4-3.5z"/>
+              <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 16.2 19 13 24 13c3 0 5.7 1.1 7.7 2.9l5.7-5.7C34.9 5.7 29.7 4 24 4c-7.7 0-14.4 4.3-17.7 10.7z"/>
+              <path fill="#4CAF50" d="M24 44c5.2 0 10-1.7 13.8-4.7l-6.4-5.2C29.3 35 26.8 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.7 16.2 44 24 44z"/>
+              <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-1 2.9-3.2 5.2-5.9 6.6l.1.1 6.4 5.2C37 41.7 43 36 43 24c0-1.2-.1-2.3-.4-3.5z"/>
+            </svg>
+          </span>
+          <span id="googleText">使用 Google 登入</span>
+        </button>
+
+        <!-- Divider -->
+        <div class="divider"><span>或使用 Email</span></div>
+
+        <!-- Form Fields -->
+        <form id="authForm">
+          <div class="field-group">
+            <div class="field full">
+              <label for="email">Email</label>
+              <input type="email" id="email" placeholder="name@example.com" autocomplete="email" />
+              <span class="error" id="errEmail">請輸入有效的 Email</span>
+            </div>
+            <div class="field full">
+              <label for="password">密碼</label>
+              <input type="password" id="password" placeholder="至少 8 碼" autocomplete="current-password" />
+              <span class="error" id="errPassword">密碼需至少 8 碼</span>
+            </div>
+            <div class="field full" id="confirmField" style="display:none">
+              <label for="confirmPassword">確認密碼</label>
+              <input type="password" id="confirmPassword" placeholder="請再輸入一次" autocomplete="new-password" />
+              <span class="error" id="errConfirm">兩次密碼不一致</span>
+            </div>
+          </div>
+
+          
+          <!-- Role Select (Only for Signup) -->
+          <div class="field full" id="roleField" style="display:none">
+            <label>選擇身分</label>
+            <div style="display:flex; gap:12px; flex-wrap:wrap;">
+              <label style="display:flex;align-items:center;gap:8px;padding:10px 14px;border:1px solid var(--border);border-radius:12px;cursor:pointer;user-select:none;">
+                <input type="radio" name="role" value="member" checked style="accent-color: var(--brand);" />
+                <span>我是消費者</span>
+              </label>
+              <label style="display:flex;align-items:center;gap:8px;padding:10px 14px;border:1px solid var(--border);border-radius:12px;cursor:pointer;user-select:none;">
+                <input type="radio" name="role" value="agent" style="accent-color: var(--brand);" />
+                <span>我是房仲（業務）</span>
+              </label>
+            </div>
+            <span class="error" id="errRole" style="display:none">請選擇身分</span>
+          </div>
+
+          <!-- Terms Checkbox (Only for Signup) -->
+          <div class="checkbox-field" id="termsField" style="display:none">
+            <input type="checkbox" id="terms" />
+            <label for="terms">
+              我同意<a href="#/terms">《服務條款》</a>與<a href="#/privacy">《隱私權政策》</a>
+            </label>
+          </div>
+          <span class="error" id="errTerms" style="display:none;margin-top:-8px;margin-bottom:12px">請先同意條款</span>
+
+          <!-- Submit Button -->
+          <button type="submit" class="btn btn-primary" id="btnSubmit">
+            使用 Email 繼續
+          </button>
+
+          <!-- Forgot Password (Only for Login) -->
+          <a href="#/forgot" class="forgot-link" id="forgotLink">忘記密碼？</a>
+        </form>
+      </div>
+
+      <!-- Right: Feature Panel -->
+      <aside class="feature-panel">
+        <span class="tagline">讓家，不只是地址</span>
+        
+        <div class="feature-card">
+          <h3>🏘️ 社區情報，一目了然</h3>
+          <p>社區牆精選兩則公開評論，帶看前就掌握氛圍與優缺點。</p>
+        </div>
+
+        <div class="feature-card">
+          <h3>🛡️ 安心留痕，交易更放心</h3>
+          <p>通話、帶看、要約、斡旋，每一步都留痕備查。</p>
+        </div>
+
+        <div class="chips">
+          <span class="chip">
+            <span class="chip-dot"></span>
+            真實評價
+          </span>
+          <span class="chip">
+            <span class="chip-dot"></span>
+            精準線索
+          </span>
+          <span class="chip">
+            <span class="chip-dot"></span>
+            一鍵收藏
+          </span>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer>© 邁房子 2024</footer>
+
+  
+<!-- Firebase Auth integration (CDN modular v10) -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
+  import { 
+    getAuth, setPersistence, browserLocalPersistence,
+    GoogleAuthProvider, signInWithPopup,
+    createUserWithEmailAndPassword, signInWithEmailAndPassword,
+    sendEmailVerification, onAuthStateChanged
+  } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
+
+  // === Replace with your Firebase web app config ===
+  const firebaseConfig = {
+    apiKey: "AIzaSyCGbukAPBLjDyA2Wa8vAjdZRXo_d2arpHM",
+    authDomain: "maihouses-6ab90.firebaseapp.com",
+    projectId: "maihouses-6ab90",
+    appId: "1:419601150365:web:80071e422e4f957af7bf74"
+  };
+
+  // Init
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  await setPersistence(auth, browserLocalPersistence);
+
+  // Helpers
+  const qs = (k)=> new URLSearchParams(location.search).get(k);
+  const setLS = (k,v)=> localStorage.setItem(k, typeof v==='string'? v : JSON.stringify(v));
+  const getLS = (k,d=null)=> { try{const v=localStorage.getItem(k); return v ?? d;}catch(_){return d;} };
+  const go = (u)=> location.href = u;
+
+  // Elements (match your DOM)
+  const tabLogin = document.getElementById('tabLogin');
+  const tabSignup = document.getElementById('tabSignup');
+  const subtitle = document.getElementById('subtitle');
+  const googleText = document.getElementById('googleText');
+  const btnGoogle = document.getElementById('btnGoogle');
+  const authForm = document.getElementById('authForm');
+
+  const confirmField = document.getElementById('confirmField');
+  const termsField = document.getElementById('termsField');
+  const roleField = document.getElementById('roleField');
+  const errRole = document.getElementById('errRole');
+  const terms = document.getElementById('terms');
+  const forgotLink = document.getElementById('forgotLink');
+
+  const errEmail = document.getElementById('errEmail');
+  const errPassword = document.getElementById('errPassword');
+  const errConfirm = document.getElementById('errConfirm');
+  const errTerms = document.getElementById('errTerms');
+
+  const AFTER = '/maihouses/auth/after-login.html?role=consumer';
+  let mode = qs('mode') || 'login';
+
+  function syncMode(replace=true){
+    const isLogin = mode === 'login';
+    tabLogin?.classList.toggle('active', isLogin);
+    tabSignup?.classList.toggle('active', !isLogin);
+    if(subtitle) subtitle.textContent = isLogin ? '回到你的邁房子' : '30 秒建立新帳號';
+    if(googleText) googleText.textContent = isLogin ? '使用 Google 登入' : '用 Google 快速註冊';
+    if(confirmField) confirmField.style.display = isLogin ? 'none' : 'block';
+    if(termsField) termsField.style.display = isLogin ? 'none' : 'flex';
+    if(roleField) roleField.style.display = isLogin ? 'none' : 'block';
+    if(forgotLink) forgotLink.style.display = isLogin ? 'inline-block' : 'none';
+    const url = new URL(location.href); url.searchParams.set('mode', mode);
+    replace ? history.replaceState(null,'',url) : history.pushState(null,'',url);
+  }
+  function clearErrors(){ [errEmail,errPassword,errConfirm,errTerms,errRole].forEach(el=>{ if(el){ el.style.display='none'; }}); }
+  function successRedirect(isLogin){
+    const ret = qs('return');
+    if(isLogin && ret){ go(ret); return; }
+    // 根據 localStorage 中的角色決定跳轉
+    const role = getLS('mh.auth.role') || 'member';
+    const roleParam = (role === 'agent' || role === '房仲') ? 'agent' : 'consumer';
+    go('/maihouses/auth/after-login.html?role=' + roleParam);
+  }
+
+  syncMode(true);
+  window.onpopstate = ()=>{ mode = qs('mode') || 'login'; syncMode(true); };
+  tabLogin?.addEventListener('click', ()=>{ mode='login'; syncMode(false); clearErrors(); });
+  tabSignup?.addEventListener('click', ()=>{ mode='signup'; syncMode(false); clearErrors(); });
+
+  // Google sign-in (auto links existing account)
+  const provider = new GoogleAuthProvider();
+  btnGoogle?.addEventListener('click', async ()=>{
+    try{
+      await signInWithPopup(auth, provider);
+      // On Google sign-in, respect selected role if current mode is signup
+      if(mode==='signup'){
+        const roleSel = (document.querySelector('input[name="role"]:checked')||{}).value || 'member';
+        setLS('mh.auth.role', roleSel);
+      } else if(!getLS('mh.auth.role')) {
+        setLS('mh.auth.role','member');
+      }
+      successRedirect(mode==='login');
+    }catch(e){
+      console.error(e);
+      alert('Google 連線失敗，請再試一次');
+    }
+  });
+
+  // Email form
+  authForm?.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    clearErrors();
+    const email = document.getElementById('email')?.value.trim();
+    const password = document.getElementById('password')?.value;
+    const confirmPassword = document.getElementById('confirmPassword')?.value || '';
+
+    const isLogin = (mode==='login');
+    let ok = true;
+    if(!email || !email.includes('@')){ if(errEmail){ errEmail.style.display='block'; } ok=false; }
+    if(!password || password.length<8){ if(errPassword){ errPassword.style.display='block'; } ok=false; }
+    if(!isLogin){
+      if(password!==confirmPassword){ if(errConfirm){ errConfirm.style.display='block'; } ok=false; }
+      if(terms && !terms.checked){ if(errTerms){ errTerms.style.display='block'; } ok=false; }
+      const role = (document.querySelector('input[name="role"]:checked')||{}).value;
+      if(!role){ if(errRole){ errRole.style.display='block'; } ok=false; }
+    }
+    if(!ok) return;
+
+    try{
+      if(isLogin){
+        await signInWithEmailAndPassword(auth, email, password);
+      }else{
+        const { user } = await createUserWithEmailAndPassword(auth, email, password);
+        try{ await sendEmailVerification(user); }catch(_){}
+      }
+      // Save selected role on signup; default member on login
+      if(!isLogin){
+        const roleSel = (document.querySelector('input[name="role"]:checked')||{}).value || 'member';
+        setLS('mh.auth.role', roleSel);
+      } else {
+        if(!getLS('mh.auth.role')) setLS('mh.auth.role','member');
+      }
+      successRedirect(isLogin);
+    }catch(e){
+      console.error(e);
+      const code = e?.code || '';
+      if(code.includes('email-already-in-use')){
+        if(errEmail){ errEmail.textContent='帳號已存在'; errEmail.style.display='block'; }
+      }else if(code.includes('user-not-found')){
+        if(errEmail){ errEmail.textContent='帳號不存在'; errEmail.style.display='block'; }
+      }else if(code.includes('wrong-password')){
+        if(errPassword){ errPassword.textContent='密碼錯誤'; errPassword.style.display='block'; }
+      }else{
+        if(errEmail){ errEmail.textContent='登入失敗，請稍後再試'; errEmail.style.display='block'; }
+      }
+    }
+  });
+
+  // Optional: auto-redirect if already signed-in (keep user on /auth if needed)
+  onAuthStateChanged(auth, (user)=>{
+    // 可在這裡讀 user.email 顯示，但 MVP 可先不動
+  });
+</script>
+
+</body>
+</html>

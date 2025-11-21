@@ -11,8 +11,7 @@ node_modules
 .env.*.local
 
 # 編譯輸出 (包含環境變數,不應進 git)
-dist/
-docs/
+# dist/
 # 註：此專案以 GitHub Pages 直接使用 docs 作為網站根目錄，需保留版本控管
 .auto-speedup.pid
 .speedup.log
