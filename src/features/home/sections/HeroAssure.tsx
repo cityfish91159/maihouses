@@ -42,14 +42,14 @@ export default function HeroAssure() {
   ];
 
   return (
-    <section className="bg-gradient-to-br from-white to-[#f0f7ff] border border-[#E6EDF7] rounded-[32px] p-6 md:p-10 shadow-sm relative overflow-hidden group/container">
+    <section className="group/container relative overflow-hidden rounded-[32px] border border-[#E6EDF7] bg-gradient-to-br from-white to-[#f0f7ff] p-6 shadow-sm md:p-10">
       
       {/* Header Area */}
-      <div className="flex flex-col md:flex-row items-center gap-6 md:gap-10 mb-10 relative z-10">
+      <div className="relative z-10 mb-10 flex flex-col items-center gap-6 md:flex-row md:gap-10">
         
         {/* Mascot: Wireframe House */}
-        <div className="w-28 h-32 shrink-0 relative">
-             <svg viewBox="0 0 200 240" className="w-full h-full drop-shadow-sm transform hover:scale-105 transition-transform duration-300">
+        <div className="relative h-32 w-28 shrink-0">
+             <svg viewBox="0 0 200 240" className="size-full drop-shadow-sm transition-transform duration-300 hover:scale-105">
                {/* M-Antenna */}
                <path d="M 85 40 L 85 15 L 100 30 L 115 15 L 115 40" 
                      stroke="#00385a" strokeWidth="5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
@@ -79,62 +79,62 @@ export default function HeroAssure() {
         </div>
 
         {/* Text Content */}
-        <div className="text-center md:text-left flex-1">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-[#00385a]/20 bg-[#F6F9FF] text-[#00385a] text-xs font-bold mb-3">
+        <div className="flex-1 text-center md:text-left">
+          <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-[#00385a]/20 bg-[#F6F9FF] px-3 py-1 text-xs font-bold text-[#00385a]">
             <ShieldCheck size={14} />
             <span>全程透明．安心留痕</span>
           </div>
-          <h3 className="text-2xl md:text-3xl font-black text-[#00385a] mb-3 tracking-tight">
+          <h3 className="mb-3 text-2xl font-black tracking-tight text-[#00385a] md:text-3xl">
             安心留痕保障
           </h3>
-          <p className="text-[#6C7B91] font-medium text-sm md:text-base leading-relaxed max-w-2xl">
+          <p className="max-w-2xl text-sm font-medium leading-relaxed text-[#6C7B91] md:text-base">
             介紹改從第一次電話聯絡開始，買賣雙方的每一通聯絡紀錄、每一句承諾與每項協議，
             都會經過雙方確認並完整留痕。<br className="hidden md:block"/>
             讓整個交易過程都有跡可循，保障雙方權益，直到圓滿交屋。
           </p>
         </div>
         
-        <a href="#" className="hidden md:flex shrink-0 items-center gap-2 px-5 py-2.5 rounded-xl bg-white border-2 border-[#00385a] text-[#00385a] font-bold text-sm hover:bg-[#00385a] hover:text-white transition-all shadow-sm">
+        <button type="button" className="hidden shrink-0 items-center gap-2 rounded-xl border-2 border-[#00385a] bg-white px-5 py-2.5 text-sm font-bold text-[#00385a] shadow-sm transition-all hover:bg-[#00385a] hover:text-white md:flex">
           履保規範 <ArrowRight size={16} />
-        </a>
+        </button>
       </div>
 
       {/* Process Timeline */}
       <div className="relative mt-4 pl-2 md:pl-0">
         
         {/* Connecting Line (Desktop Horizontal) - Centered at top-8 (32px) to align with 48px circle center + 8px padding */}
-        <div className="hidden md:block absolute top-8 left-0 w-full h-0.5 bg-[#E6EDF7] -z-0"></div>
+        <div className="hidden h-0.5 w-full bg-[#E6EDF7] md:absolute md:left-0 md:top-8 md:-z-0 md:block"></div>
         
         {/* Connecting Line (Mobile Vertical) - Centered at left-8 (32px) */}
-        <div className="md:hidden absolute left-8 top-0 bottom-0 w-0.5 bg-[#E6EDF7] -z-0"></div>
+        <div className="absolute inset-y-0 left-8 -z-0 w-0.5 bg-[#E6EDF7] md:hidden"></div>
 
-        <div className="grid grid-cols-1 md:grid-cols-6 gap-6 md:gap-2">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-6 md:gap-2">
           {steps.map((step, index) => (
-            <div key={step.id} className="group relative flex md:flex-col items-center md:items-center gap-4 md:gap-4 p-2 rounded-xl hover:bg-[#F6F9FF] transition-colors duration-300 cursor-default">
+            <div key={step.id} className="group relative flex cursor-default items-center gap-4 rounded-xl p-2 transition-colors duration-300 hover:bg-[#F6F9FF] md:flex-col md:items-center md:gap-4">
                 
                 {/* Icon Circle */}
-                <div className="relative z-10 flex-shrink-0">
-                    <div className="w-12 h-12 rounded-full bg-white border-2 border-[#E6EDF7] text-[#6C7B91] flex items-center justify-center group-hover:border-[#00385a] group-hover:text-[#00385a] group-hover:scale-110 transition-all duration-300 shadow-sm">
+                <div className="relative z-10 shrink-0">
+                    <div className="flex size-12 items-center justify-center rounded-full border-2 border-[#E6EDF7] bg-white text-[#6C7B91] shadow-sm transition-all duration-300 group-hover:scale-110 group-hover:border-[#00385a] group-hover:text-[#00385a]">
                         {step.icon}
                     </div>
                     {/* Step Number Badge */}
-                    <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-[#00385a] text-white text-[10px] font-bold flex items-center justify-center ring-2 ring-white">
+                    <div className="absolute -right-1 -top-1 flex size-5 items-center justify-center rounded-full bg-[#00385a] text-[10px] font-bold text-white ring-2 ring-white">
                         {index + 1}
                     </div>
                 </div>
 
                 {/* Content */}
                 <div className="flex-1 md:text-center">
-                    <h4 className="text-base font-black text-[#0A2246] mb-1 group-hover:text-[#00385a] transition-colors">
+                    <h4 className="mb-1 text-base font-black text-[#0A2246] transition-colors group-hover:text-[#00385a]">
                         {step.title}
                     </h4>
-                    <p className="text-xs text-[#6C7B91] font-medium leading-relaxed">
+                    <p className="text-xs font-medium leading-relaxed text-[#6C7B91]">
                         {step.desc}
                     </p>
                 </div>
 
                 {/* Mobile Arrow (Visual aid) */}
-                <div className="md:hidden ml-auto text-[#E6EDF7] group-hover:text-[#00385a] transition-colors">
+                <div className="ml-auto text-[#E6EDF7] transition-colors group-hover:text-[#00385a] md:hidden">
                      {index < steps.length - 1 && <CheckCircle2 size={16} className="opacity-0 group-hover:opacity-20"/>}
                 </div>
             </div>
