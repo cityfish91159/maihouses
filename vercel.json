@@ -1,6 +1,12 @@
 {
   "buildCommand": "npm run build",
   "outputDirectory": "docs",
+  "crons": [
+    {
+      "path": "/api/archive-handler",
+      "schedule": "0 * * * *"
+    }
+  ],
   "routes": [
     { "src": "^/$", "status": 308, "headers": { "Location": "/maihouses/" } },
     { "src": "/maihouses/community-wall_mvp.html", "dest": "/maihouses/community-wall_mvp.html" },

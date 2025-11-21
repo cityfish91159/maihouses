@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { getProperties } from '../../../services/api'
-import { trackEvent } from '../../../services/uag'
+import { trackEvent } from '../../../services/analytics'
 import type { PropertyCard } from '../../../types'
 
 export default function PropertyGrid({ q }: { q?: string }) {

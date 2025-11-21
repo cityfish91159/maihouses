@@ -88,7 +88,27 @@ bash scripts/check-ai.sh
 - 將 system prompt 外部化為 `src/config/chat.ts` 便於 A/B 測試
 
 ---
+
 維運備忘：聊天請求目標 = 直連 OpenAI 或設定的代理域名；禁止最終指向 `/api/chat`（GitHub Pages 靜態環境無該端點）。
+
+## 🚀 UAG v8.0 業務廣告後台 (Ultimate Optimization)
+
+UAG (User Activity & Growth) 系統已升級至 v8.0，採用「增量更新」與「智慧快取」架構，解決高流量下的效能瓶頸。
+
+**核心功能：**
+- **前端追蹤 (EnhancedTracker)**：支援指紋識別 (Fingerprinting)、斷線重連、事件批次處理。
+- **後端處理 (Atomic RPC)**：使用 Supabase RPC 進行原子化更新，避免 Race Condition。
+- **資料架構 (Hot/Cold Separation)**：
+  - **熱數據**：`uag_sessions` (摘要) + `uag_events` (3小時內日誌)。
+  - **冷數據**：`uag_events_archive` (歷史歸檔)。
+  - **快取層**：`uag_lead_rankings` (Materialized View) 提供秒級儀表板查詢。
+
+**相關文件：**
+- [完整程式碼文件 (Full Stack Code)](./UAG_FULL_STACK_CODE.md)
+- [系統規格書 (System Spec)](./UAG_SYSTEM_SPEC.md)
+- [部署完成報告](./UAG_v8_COMPLETION_REPORT.md)
+
+---
 
 ## 🗓 更新日誌 / Changelog
 

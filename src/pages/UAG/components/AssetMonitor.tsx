@@ -1,7 +1,7 @@
 import React from 'react';
-import { Lead } from '../mockData';
+import { Lead } from '../types/uag.types';
 import styles from '../UAG.module.css';
-import { GRADE_HOURS } from '../constants';
+import { GRADE_HOURS } from '../uag-config';
 
 interface AssetMonitorProps {
   leads: Lead[];

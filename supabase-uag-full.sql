@@ -83,6 +83,76 @@ CREATE TABLE IF NOT EXISTS public.feed (
 ALTER TABLE public.feed ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "View feed" ON public.feed FOR SELECT USING (true);
 
+-- 5. UAG Sessions (New Tracking System)
+CREATE TABLE IF NOT EXISTS public.uag_sessions (
+    session_id TEXT PRIMARY KEY,
+    agent_id TEXT,
+    last_seen TIMESTAMPTZ DEFAULT NOW(),
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE public.uag_sessions ENABLE ROW LEVEL SECURITY;
+-- Allow anonymous inserts/updates for tracking (or restrict to service role if using API proxy)
+CREATE POLICY "Enable insert for all" ON public.uag_sessions FOR INSERT WITH CHECK (true);
+CREATE POLICY "Enable update for all" ON public.uag_sessions FOR UPDATE USING (true);
+CREATE POLICY "Enable select for own session" ON public.uag_sessions FOR SELECT USING (session_id = current_setting('request.headers')::json->>'uag-session-id');
+
+-- 6. UAG Event Logs (Normalized Table for High Performance)
+CREATE TABLE IF NOT EXISTS public.uag_event_logs (
+    id BIGSERIAL PRIMARY KEY,
+    session_id TEXT NOT NULL, -- No FK constraint for faster inserts, or use loose coupling
+    agent_id TEXT,
+    pid TEXT,
+    district TEXT,
+    action_type TEXT, -- 'view', 'click_line', 'scroll', etc.
+    duration INTEGER DEFAULT 0,
+    meta JSONB DEFAULT '{}', -- Store extra details like scroll depth
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX idx_uag_logs_session ON public.uag_event_logs(session_id);
+CREATE INDEX idx_uag_logs_pid ON public.uag_event_logs(pid);
+ALTER TABLE public.uag_event_logs ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Enable insert for all" ON public.uag_event_logs FOR INSERT WITH CHECK (true);
+-- Only allow agents to see logs related to their own leads (if needed) or restrict to service role
+CREATE POLICY "Service role only" ON public.uag_event_logs FOR SELECT USING (auth.role() = 'service_role');
+
+-- 5.1 RPC for Atomic Tracking (Upsert + Append)
+-- REFACTORED: Now writes to event_logs instead of appending to JSONB
+CREATE OR REPLACE FUNCTION track_uag_event(
+  p_session_id TEXT,
+  p_agent_id TEXT,
+  p_page_data JSONB
+)
+RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+  -- 1. Update Session Summary (Last Seen, Agent Ownership)
+  INSERT INTO public.uag_sessions (session_id, agent_id, last_seen)
+  VALUES (p_session_id, p_agent_id, NOW())
+  ON CONFLICT (session_id)
+  DO UPDATE SET
+    last_seen = NOW(),
+    agent_id = CASE 
+      WHEN p_agent_id IS NOT NULL AND p_agent_id != 'unknown' THEN p_agent_id
+      WHEN public.uag_sessions.agent_id IS NULL OR public.uag_sessions.agent_id = 'unknown' THEN p_agent_id
+      ELSE public.uag_sessions.agent_id
+    END;
+
+  -- 2. Insert Raw Event Log (Fast Append)
+  INSERT INTO public.uag_event_logs (session_id, agent_id, pid, district, action_type, duration, meta)
+  VALUES (
+    p_session_id, 
+    p_agent_id, 
+    p_page_data->>'pid', 
+    p_page_data->>'district', 
+    'view', -- Default type, can be refined based on p_page_data content
+    (p_page_data->>'duration')::INTEGER,
+    p_page_data
+  );
+END;
+$$;
+
 -- ==============================================================================
 -- Stored Procedure: Buy Lead Transaction (RPC)
 -- ==============================================================================

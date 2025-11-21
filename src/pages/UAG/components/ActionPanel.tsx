@@ -1,5 +1,5 @@
-import React, { forwardRef } from 'react';
-import { Lead } from '../mockData';
+import React, { forwardRef, useState, useEffect } from 'react';
+import { Lead } from '../types/uag.types';
 import styles from '../UAG.module.css';
 
 export interface ActionPanelProps {
@@ -16,6 +16,13 @@ const StatItem = ({ label, value, highlight = false }: { label: string; value: R
 );
 
 const ActionPanel = forwardRef<HTMLDivElement, ActionPanelProps>(({ selectedLead, onBuyLead, isProcessing }, ref) => {
+  const [isConfirming, setIsConfirming] = useState(false);
+
+  // Reset confirmation state when lead changes
+  useEffect(() => {
+    setIsConfirming(false);
+  }, [selectedLead]);
+
   if (!selectedLead) {
     return (
       <section className={styles['k-span-6']} id="action-panel-container" ref={ref}>
@@ -32,6 +39,19 @@ const ActionPanel = forwardRef<HTMLDivElement, ActionPanelProps>(({ selectedLead
   }
 
   const isExclusive = (selectedLead.grade === 'S' || selectedLead.grade === 'A');
+
+  const handleBuyClick = () => {
+    setIsConfirming(true);
+  };
+
+  const handleConfirm = () => {
+    onBuyLead(selectedLead.id);
+    setIsConfirming(false);
+  };
+
+  const handleCancel = () => {
+    setIsConfirming(false);
+  };
 
   return (
     <section className={styles['k-span-6']} id="action-panel-container" ref={ref}>
@@ -57,13 +77,36 @@ const ActionPanel = forwardRef<HTMLDivElement, ActionPanelProps>(({ selectedLead
                 ✨ 此客戶包含獨家訊息聯絡權 ✨
               </div>
             )}
-            <button
-              className={styles['btn-attack']}
-              onClick={() => onBuyLead(selectedLead.id)}
-              disabled={isProcessing}
-            >
-              {isProcessing ? '處理中...' : '🚀 獲取聯絡權限 (簡訊/站內信)'}
-            </button>
+            
+            {!isConfirming ? (
+              <button
+                className={styles['btn-attack']}
+                onClick={handleBuyClick}
+                disabled={isProcessing}
+              >
+                {isProcessing ? '處理中...' : '🚀 獲取聯絡權限 (簡訊/站內信)'}
+              </button>
+            ) : (
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button
+                  className={styles['btn-attack']}
+                  style={{ background: '#ef4444', flex: 1 }}
+                  onClick={handleConfirm}
+                  disabled={isProcessing}
+                >
+                  {isProcessing ? '處理中...' : `確定花費 ${selectedLead.price} 點?`}
+                </button>
+                <button
+                  className={styles['btn-attack']}
+                  style={{ background: '#94a3b8', flex: 1 }}
+                  onClick={handleCancel}
+                  disabled={isProcessing}
+                >
+                  取消
+                </button>
+              </div>
+            )}
+
             <div style={{ textAlign: 'center', fontSize: '11px', color: '#94a3b8', marginTop: '8px' }}>
               符合個資法規範：僅能以簡訊/站內信聯繫<br />
               系統將自動發送您的名片與電話給客戶
