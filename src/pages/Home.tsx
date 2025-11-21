@@ -10,7 +10,7 @@ import type { AppConfig, RuntimeOverrides } from '../app/config'
 import { WarmWelcomeBar } from '../components/WarmWelcomeBar'
 import { cmp } from '../lib/utils'
 
-export default function Home({ config }: { config: AppConfig & RuntimeOverrides }) {
+export default function Home({ config }: { readonly config: AppConfig & RuntimeOverrides }) {
   const [banner, setBanner] = useState<string | null>(null)
 
   useEffect(() => {
@@ -30,8 +30,8 @@ export default function Home({ config }: { config: AppConfig & RuntimeOverrides 
         trackEvent('unhandled_promise_rejection', '/', e.reason?.message || String(e.reason))
       } catch {}
     }
-    window.addEventListener('unhandledrejection', onRej)
-    return () => window.removeEventListener('unhandledrejection', onRej)
+    globalThis.addEventListener('unhandledrejection', onRej)
+    return () => globalThis.removeEventListener('unhandledrejection', onRej)
   }, [])
 
   const features = config.features || {}
@@ -41,12 +41,12 @@ export default function Home({ config }: { config: AppConfig & RuntimeOverrides 
       <Header />
       <WarmWelcomeBar />
       {/* Blue background layer for top section */}
-      <div className="absolute top-0 left-0 w-full h-[420px] bg-gradient-to-b from-brand to-brand-light -z-10" />
+      <div className="absolute left-0 top-0 -z-10 h-[420px] w-full bg-gradient-to-b from-brand to-brand-light" />
       
       {banner && (
         <div className="mx-auto mt-4 max-w-container rounded-md bg-yellow-500 p-3 text-sm text-white">{banner}</div>
       )}
-      <main className="mx-auto max-w-container space-y-6 p-4 md:space-y-8 md:p-6 relative">
+      <main className="relative mx-auto max-w-container space-y-6 p-4 md:space-y-8 md:p-6">
         {features.heroAssure !== false && (
           <HeroAssure />
         )}

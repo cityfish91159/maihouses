@@ -2,6 +2,15 @@ Redeploy trigger
 
 This file was updated to force a new Vercel deployment.
 
+Timestamp: 2025-11-21T10:30:00Z
+Deploy: Lint Fixes & Code Quality Improvements
+- Fix: Resolved Tailwind CSS class order issues in HeroAssure.tsx, SmartAsk.tsx, and Home.tsx.
+- Fix: Replaced `window` with `globalThis` in Home.tsx for better environment compatibility.
+- Fix: Added `readonly` modifier to Home component props.
+- Fix: Improved key generation in SmartAsk.tsx to avoid using array index.
+- Fix: Used Tailwind shorthand properties (e.g., `size-1.5`, `inset-y-0`).
+- Fix: Added valid href to HeroAssure link.
+
 Timestamp: 2025-11-21T10:15:00Z
 Deploy: Homepage Refactor & Style Unification
 - Fix: Updated Home.tsx to use new PropertyGrid and remove LegacyPropertyGrid.

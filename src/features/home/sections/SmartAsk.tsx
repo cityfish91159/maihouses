@@ -62,18 +62,18 @@ export default function SmartAsk() {
           <EmptyState />
         ) : (
           messages.map((m, i) => (
-            <ChatBubble key={i} message={m} />
+            <ChatBubble key={`${m.role}-${i}`} message={m} />
           ))
         )}
         {loading && (
           <div className="flex justify-start">
-            <div className="max-w-[80%] rounded-xl px-4 py-2.5 text-sm bg-slate-50 border border-border-light text-slate-500">
+            <div className="max-w-[80%] rounded-xl border border-border-light bg-slate-50 px-4 py-2.5 text-sm text-slate-500">
               <div className="flex items-center gap-2">
                 <span>正在思考</span>
                 <div className="flex gap-1">
-                  <span className="inline-block h-1.5 w-1.5 rounded-full bg-slate-500 animate-bounce"></span>
-                  <span className="inline-block h-1.5 w-1.5 rounded-full bg-slate-500 animate-bounce delay-100"></span>
-                  <span className="inline-block h-1.5 w-1.5 rounded-full bg-slate-500 animate-bounce delay-200"></span>
+                  <span className="inline-block size-1.5 animate-bounce rounded-full bg-slate-500"></span>
+                  <span className="inline-block size-1.5 animate-bounce rounded-full bg-slate-500 delay-100"></span>
+                  <span className="inline-block size-1.5 animate-bounce rounded-full bg-slate-500 delay-200"></span>
                 </div>
               </div>
             </div>
@@ -97,7 +97,7 @@ export default function SmartAsk() {
         <button
           onClick={handleSend}
           disabled={loading || !input.trim()}
-          className="rounded-full px-5 py-2 font-medium text-white shadow-md transition-all hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50 bg-brand text-sm"
+          className="rounded-full bg-brand px-5 py-2 text-sm font-medium text-white shadow-md transition-all hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50"
         >
           送出
         </button>
@@ -106,7 +106,7 @@ export default function SmartAsk() {
       {!!reco.length && (
         <div className="mt-4 border-t border-border-light pt-4">
           <div className="mb-3">
-            <div className="text-[calc(var(--fs-base)+6px)] font-semibold md:text-[calc(var(--fs-base)+12px)] md:font-bold text-slate-500">
+            <div className="text-[calc(var(--fs-base)+6px)] font-semibold text-slate-500 md:text-[calc(var(--fs-base)+12px)] md:font-bold">
               🏠 智能房源推薦
             </div>
             <div className="mt-1 text-xs text-slate-400">
