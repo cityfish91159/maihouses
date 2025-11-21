@@ -81,6 +81,7 @@ export default function Home({ config }: { config: AppConfig & RuntimeOverrides 
               src={`${baseUrl}maihouses_list_noheader.html`}
               style={{ width: '100%', border: 0, minHeight: '1400px' }}
               loading="lazy"
+              sandbox="allow-scripts allow-same-origin"
             />
           </section>
         )}

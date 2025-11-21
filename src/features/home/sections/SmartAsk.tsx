@@ -263,6 +263,7 @@ export default function SmartAsk() {
           onKeyPress={handleKeyPress}
           disabled={loading}
           aria-label="輸入詢問"
+          maxLength={500}
         />
         <button
           onClick={send}
