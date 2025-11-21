@@ -1,39 +1,46 @@
-export default function CommunityTeaser() {
-	return (
-		<section className="reviews-agg">
-			<style>{`
-				.reviews-agg{background:rgba(255,255,255,.96);backdrop-filter:blur(8px);border:1px solid #e8f0f8;border-radius:18px;padding:10px}
-				.reviews-agg .header{display:flex;justify-content:space-between;align-items:center;gap:6px;margin-bottom:6px}
-				.reviews-agg .title{font-size:18px;font-weight:800;margin:0;color:#00385a;letter-spacing:.3px}
-				.reviews-agg .grid{display:grid;grid-template-columns:1fr;gap:8px}
-				@media(min-width:560px){.reviews-agg .grid{grid-template-columns:1fr 1fr}}
-				.reviews-agg .review{display:flex;gap:8px;border:1px solid #e8f0f8;border-radius:13px;padding:7px;background:#fff;position:relative}
-				.reviews-agg .av2{width:34px;height:34px;border-radius:50%;background:rgba(0,56,90,.08);border:2px solid #00385a;display:flex;align-items:center;justify-content:center;font-weight:800;color:#00385a;font-size:17px;flex-shrink:0}
-				.reviews-agg .name{font-weight:800;font-size:14.5px;color:#0a1f3f}
-				.reviews-agg .tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:3px}
-				.reviews-agg .tag{font-size:12px;padding:3px 8px;border-radius:999px;background:rgba(52,199,89,.12);border:1px solid rgba(52,199,89,.40);color:#0f6a23;font-weight:700}
-				.reviews-agg p{margin:4px 0 0;font-size:14.5px;line-height:1.48;color:#00385a;font-weight:500}
-				.reviews-agg .cta{margin-top:8px;display:flex;align-items:center;gap:10px;background:linear-gradient(90deg,rgba(52,199,89,.25),rgba(52,199,89,.12));border:1px solid rgba(52,199,89,.40);padding:12px 14px;border-radius:14px;font-weight:900;color:#0e3d1c;text-decoration:none;position:relative}
-				.reviews-agg .cta .text{font-size:17px;letter-spacing:.3px}
-				.reviews-agg .cta .pill{margin-left:auto;background:#0f6a23;color:#fff;border-radius:999px;font-size:14px;padding:8px 12px}
-				/* 桌機：文字置中，膠囊固定最右側 */
-				@media(min-width:900px){.reviews-agg .cta{justify-content:center}.reviews-agg .cta .text{margin:0 auto}.reviews-agg .cta .pill{position:absolute;right:14px;top:50%;transform:translateY(-50%);margin-left:0}}
-				/* 桌機版置中：移除 margin-left:auto 改為水平置中；保留原本順序 */
-				@media(min-width:900px){.reviews-agg .cta{text-align:center}}
-				/* 手機版縮小字體 2px */
-				@media(max-width:560px){.reviews-agg .cta .text{font-size:15px}.reviews-agg .cta .pill{font-size:12px;padding:7px 10px}}
-			`}</style>
+import { COMMUNITY_REVIEWS } from '../../../constants/data'
 
-			<div className="header"><h3 className="title">社區評價（聚合）</h3></div>
-			<div className="grid">
-				<article className="review"><div className="av2">J</div><div><div className="name">J***｜景安和院 住戶 <span className="rating"><span className="star">★★★★★</span></span></div><div className="tags"><span className="tag">#物業/管理</span></div><p>公設維護得乾淨，假日草皮有人整理。之前反映停車動線，管委會一週內就公告改善。</p></div></article>
-				<article className="review"><div className="av2">W</div><div><div className="name">W***｜松濤苑 住戶 <span className="rating"><span className="star">★★★★☆</span></span></div><div className="tags"><span className="tag">#噪音</span></div><p>住起來整體舒服，但臨路面向在上下班尖峰車聲明顯，喜靜者建議考慮中高樓層。</p></div></article>
-				<article className="review"><div className="av2">L</div><div><div className="name">L***｜遠揚柏悅 住戶 <span className="rating"><span className="star">★★★★☆</span></span></div><div className="tags"><span className="tag">#漏水/壁癌</span></div><p>頂樓排水設計不錯，颱風天沒有積水。不過垃圾車時間稍晚，偶爾有下水道味。</p></div></article>
-				<article className="review"><div className="av2">A</div><div><div className="name">A***｜華固名邸 住戶 <span className="rating"><span className="star">★★★★★</span></span></div><div className="tags"><span className="tag">#物業/管理</span></div><p>管理員很負責，包裹收發與公告都有效率；電梯偶爾故障但維修速度快。</p></div></article>
-				<article className="review"><div className="av2">H</div><div><div className="name">H***｜寶輝花園廣場 住戶 <span className="rating"><span className="star">★★★☆☆</span></span></div><div className="tags"><span className="tag">#停車/車位</span></div><p>地下室車位轉彎半徑偏小，新手要多注意；平日夜間社區整體很安靜。</p></div></article>
-				<article className="review"><div className="av2">K</div><div><div className="name">K***｜潤泰峰匯 住戶 <span className="rating"><span className="star">★★★★☆</span></span></div><div className="tags"><span className="tag">#採光/日照</span></div><p>採光好、通風佳，夏天不會太悶熱；但西曬戶下午還是會稍微熱一些。</p></div></article>
-			</div>
-			<a className="cta" href="/maihouses/community-wall_mvp.html" aria-label="點我看更多社區評價"><span className="text">👉 點我看更多社區評價</span><span className="pill">前往社區牆</span></a>
-		</section>
-	)
+export default function CommunityTeaser() {
+  return (
+    <section className="mh-card bg-white/96 backdrop-blur-md border border-border-light p-2.5">
+      <div className="flex justify-between items-center gap-1.5 mb-1.5">
+        <h3 className="text-lg font-extrabold m-0 text-brand tracking-wide">社區評價（聚合）</h3>
+      </div>
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        {COMMUNITY_REVIEWS.map((review) => (
+          <article key={review.id} className="flex gap-2 border border-border-light rounded-[var(--r-sm)] p-1.5 bg-white relative">
+            <div className="w-[34px] h-[34px] rounded-full bg-brand/10 border-2 border-brand flex items-center justify-center font-extrabold text-brand text-[17px] shrink-0">
+              {review.id}
+            </div>
+            <div>
+              <div className="font-extrabold text-sm text-text-ink">
+                {review.name} <span className="text-yellow-400">{'★'.repeat(review.rating)}{'☆'.repeat(5 - review.rating)}</span>
+              </div>
+              <div className="flex flex-wrap gap-1 mt-0.5">
+                {review.tags.map(tag => (
+                  <span key={tag} className="text-xs px-2 py-[3px] rounded-full bg-green-500/10 border border-green-500/40 text-green-800 font-bold">
+                    {tag}
+                  </span>
+                ))}
+              </div>
+              <p className="mt-1 text-sm leading-relaxed text-brand font-medium">
+                {review.content}
+              </p>
+            </div>
+          </article>
+        ))}
+      </div>
+      <a 
+        className="mt-2 flex items-center gap-2.5 bg-gradient-to-r from-green-500/25 to-green-500/10 border border-green-500/40 p-3 rounded-[var(--r-sm)] font-black text-green-900 no-underline relative lg:justify-center lg:text-center group" 
+        href="/maihouses/community-wall_mvp.html" 
+        aria-label="點我看更多社區評價"
+      >
+        <span className="text-[17px] tracking-wide lg:mx-auto max-sm:text-[15px]">👉 點我看更多社區評價</span>
+        <span className="ml-auto bg-green-800 text-white rounded-full text-sm px-3 py-2 lg:absolute lg:right-[14px] lg:top-1/2 lg:-translate-y-1/2 lg:ml-0 max-sm:text-xs max-sm:px-2.5 max-sm:py-[7px] group-hover:bg-green-900 transition-colors">
+          前往社區牆
+        </span>
+      </a>
+    </section>
+  )
 }
+
