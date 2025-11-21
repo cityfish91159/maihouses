@@ -39,20 +39,24 @@ jobs:
         run: |
           set -eux
           test -f community_wall_MVP_green_tags.html
+          # 原檔雜湊（證明未改）
+          (sha256sum community_wall_MVP_green_tags.html || shasum -a 256 community_wall_MVP_green_tags.html) 2>/dev/null || true
           # 目標目錄存在
-          test -d dist
+          test -d docs
           # 複製並改名為指定發佈檔名
-          cp -f community_wall_MVP_green_tags.html dist/community-wall_mvp.html
-          # 列出 dist 確認
-          ls -lah dist | sed -n '1,120p'
+          cp -f community_wall_MVP_green_tags.html docs/community-wall_mvp.html
+          # 複製後雜湊再印一次
+          (cd docs && (sha256sum community-wall_mvp.html || shasum -a 256 community-wall_mvp.html)) 2>/dev/null || true
+          # 列出 docs 確認
+          ls -lah docs | sed -n '1,120p'
 
       - name: Copy cake reveal page
         run: |
           set -eux
-          if [ -f cake-reveal.html ]; then
-            cp -f cake-reveal.html dist/cake-reveal.html
-            echo "✓ Cake reveal 已複製到 dist/cake-reveal.html"
-          fi
+          test -f cake-reveal.html
+          test -d docs
+          cp -f cake-reveal.html docs/cake-reveal.html
+          echo "✓ Cake reveal 已複製到 docs/cake-reveal.html"
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
@@ -60,7 +64,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: './dist'
+          path: './docs'
 
   deploy:
     environment:

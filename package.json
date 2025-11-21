@@ -10,6 +10,7 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview --port 4173",
+    "deploy": "npm run build && gh-pages -d docs",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -24,6 +25,7 @@
     "@supabase/supabase-js": "^2.83.0",
     "@tanstack/react-query": "^5.90.10",
     "cloudinary": "^1.41.0",
+    "clsx": "^2.1.1",
     "immer": "^10.2.0",
     "lucide-react": "^0.554.0",
     "react": "^18.3.1",
@@ -33,6 +35,7 @@
     "react-icons": "^5.5.0",
     "react-router-dom": "^6.26.2",
     "react-window": "^2.2.3",
+    "tailwind-merge": "^3.4.0",
     "uuid": "^9.0.1",
     "zod": "^4.1.12",
     "zustand": "^5.0.8"
