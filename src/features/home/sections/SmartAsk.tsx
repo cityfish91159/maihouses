@@ -37,9 +37,11 @@ export default function SmartAsk() {
     setMessages([...newMessages, aiMsg])
 
     try {
+      let isStreamingComplete = false
       const res = await aiAsk(
         { messages: newMessages },
         (chunk: string) => {
+          isStreamingComplete = true
           setMessages(prev => {
             const updated = [...prev]
             const lastMsg = updated[updated.length - 1]
@@ -57,7 +59,7 @@ export default function SmartAsk() {
       )
 
       if (res.ok && res.data) {
-        if (res.data.answers && res.data.answers.length > 0) {
+        if (!isStreamingComplete && res.data.answers && res.data.answers.length > 0) {
           setMessages(prev => {
             const updated = [...prev]
             if (updated.length > 0) {
@@ -138,8 +140,9 @@ export default function SmartAsk() {
           {QUICK_QUESTIONS.map((q) => (
             <button
               key={q}
+              data-text={q}
               className="cursor-pointer whitespace-nowrap rounded-full border border-border-default bg-white px-2 py-1.5 text-xs font-medium text-text-secondary transition-all duration-200 hover:border-brand hover:shadow-sm"
-              onClick={() => setInput(q)}
+              onClick={(e) => setInput(e.currentTarget.dataset.text!)}
               aria-label={`快速輸入 ${q}`}
             >
               {q}

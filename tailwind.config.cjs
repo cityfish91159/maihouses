@@ -4,14 +4,16 @@ module.exports = {
     extend: {
       colors: {
         brand: {
-          DEFAULT: 'var(--brand)',
-          light: 'var(--brand-light)',
-          dark: 'var(--brand-600)',
+          DEFAULT: '#00385a', // Unified brand color
+          light: '#009FE8',
+          dark: '#00385a',
           50: '#f0f7ff',
         },
+        primary: '#0A2246',
+        success: '#0f6a23',
         bg: {
-          base: 'var(--bg-page)',
-          card: 'var(--bg-card)',
+          base: '#f6f9ff',
+          card: 'rgba(255, 255, 255, 0.92)',
           soft: '#F6F9FF',
         },
         border: {

@@ -1,14 +1,14 @@
-# MaiHouses Homepage Code (v11.4 Optimized)
+# MaiHouses Homepage Code (v11.5 Critical Fixes)
 
-> **Version**: 11.4
+> **Version**: 11.5
 > **Date**: 2025-11-21
 > **Changes**:
-> - Unified style system with global CSS classes (`.mh-card`, `.mh-ai-card`, etc.)
-> - Removed inline styles and hard-coded hex values
-> - Standardized border radius and shadows via CSS variables
-> - Refactored `Home.tsx` to delegate styling to components
-> - Updated `HeroAssure`, `SmartAsk`, `CommunityTeaser`, `LegacyPropertyGrid` to use new classes
-> - Decoupled `MascotHouse` SVG colors using `currentColor`
+> - Fixed critical streaming bug in `SmartAsk.tsx` (race condition between streaming and fallback)
+> - Optimized `SmartAsk.tsx` re-rendering issues (onClick handler)
+> - Fixed `LegacyPropertyGrid.tsx` iframe height responsiveness (mobile crash fix)
+> - Updated `CommunityTeaser.tsx` to use unified Tailwind colors (success green)
+> - Enforced strict Tailwind color system in `tailwind.config.cjs`
+> - Verified `HeroAssure.tsx` uses extracted SVG component
 
 ## 1. Global Styles (`src/index.css`)
 
@@ -356,9 +356,11 @@ export default function SmartAsk() {
     setMessages([...newMessages, aiMsg])
 
     try {
+      let isStreamingComplete = false
       const res = await aiAsk(
         { messages: newMessages },
         (chunk: string) => {
+          isStreamingComplete = true
           setMessages(prev => {
             const updated = [...prev]
             const lastMsg = updated[updated.length - 1]
@@ -376,7 +378,7 @@ export default function SmartAsk() {
       )
 
       if (res.ok && res.data) {
-        if (res.data.answers && res.data.answers.length > 0) {
+        if (!isStreamingComplete && res.data.answers && res.data.answers.length > 0) {
           setMessages(prev => {
             const updated = [...prev]
             if (updated.length > 0) {
@@ -457,8 +459,9 @@ export default function SmartAsk() {
           {QUICK_QUESTIONS.map((q) => (
             <button
               key={q}
+              data-text={q}
               className="cursor-pointer whitespace-nowrap rounded-full border border-border-default bg-white px-2 py-1.5 text-xs font-medium text-text-secondary transition-all duration-200 hover:border-brand hover:shadow-sm"
-              onClick={() => setInput(q)}
+              onClick={(e) => setInput(e.currentTarget.dataset.text!)}
               aria-label={`快速輸入 ${q}`}
             >
               {q}
@@ -617,7 +620,7 @@ export default function CommunityTeaser() {
               </div>
               <div className="flex flex-wrap gap-1 mt-0.5">
                 {review.tags.map(tag => (
-                  <span key={tag} className="text-xs px-2 py-[3px] rounded-full bg-green-500/10 border border-green-500/40 text-green-800 font-bold">
+                  <span key={tag} className="text-xs px-2 py-[3px] rounded-full bg-success/10 border border-success/40 text-success font-bold">
                     {tag}
                   </span>
                 ))}
@@ -630,12 +633,12 @@ export default function CommunityTeaser() {
         ))}
       </div>
       <a 
-        className="mt-2 flex items-center gap-2.5 bg-gradient-to-r from-green-500/25 to-green-500/10 border border-green-500/40 p-3 rounded-[var(--r-sm)] font-black text-green-900 no-underline relative lg:justify-center lg:text-center group" 
+        className="mt-2 flex items-center gap-2.5 bg-gradient-to-r from-success/25 to-success/10 border border-success/40 p-3 rounded-[var(--r-sm)] font-black text-success no-underline relative lg:justify-center lg:text-center group" 
         href="/maihouses/community-wall_mvp.html" 
         aria-label="點我看更多社區評價"
       >
         <span className="text-[17px] tracking-wide lg:mx-auto max-sm:text-[15px]">👉 點我看更多社區評價</span>
-        <span className="ml-auto bg-green-800 text-white rounded-full text-sm px-3 py-2 lg:absolute lg:right-[14px] lg:top-1/2 lg:-translate-y-1/2 lg:ml-0 max-sm:text-xs max-sm:px-2.5 max-sm:py-[7px] group-hover:bg-green-900 transition-colors">
+        <span className="ml-auto bg-success text-white rounded-full text-sm px-3 py-2 lg:absolute lg:right-[14px] lg:top-1/2 lg:-translate-y-1/2 lg:ml-0 max-sm:text-xs max-sm:px-2.5 max-sm:py-[7px] group-hover:bg-success/90 transition-colors">
           前往社區牆
         </span>
       </a>
@@ -650,7 +653,7 @@ export default function CommunityTeaser() {
 import React from 'react'
 
 export default function LegacyPropertyGrid() {
-  const baseUrl = (import.meta as any).env?.BASE_URL || '/'
+  const baseUrl = import.meta.env.BASE_URL || '/'
   
   return (
     <section className="mh-card p-0 overflow-hidden">
@@ -658,8 +661,9 @@ export default function LegacyPropertyGrid() {
       <iframe
         title="房源清單"
         src={`${baseUrl}maihouses_list_noheader.html`}
-        style={{ width: '100%', border: 0, minHeight: '1400px' }}
+        className="w-full border-0 h-[1200px] sm:h-[1400px] md:h-screen md:max-h-[1600px]"
         loading="lazy"
+        sandbox="allow-scripts allow-same-origin allow-popups"
       />
     </section>
   )
