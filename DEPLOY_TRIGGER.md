@@ -2,6 +2,12 @@ Redeploy trigger
 
 This file was updated to force a new Vercel deployment.
 
+Timestamp: 2025-11-21T11:00:00Z
+Deploy: Force Vercel Build (Source Change)
+- Reason: Previous commit only affected generated `docs/` assets, which Vercel likely ignored.
+- Action: Updating this file (source) to bypass Vercel's ignore build step and force a fresh deployment.
+- Context: Vite build optimization (manualChunks) was applied, but Vercel needs to see a source change to rebuild.
+
 Timestamp: 2025-11-21T10:45:00Z
 Deploy: Build Optimization & Chunk Splitting
 - Config: Updated vite.config.ts to implement manualChunks splitting.
