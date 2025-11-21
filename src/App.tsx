@@ -15,6 +15,7 @@ import ChatStandalone from './pages/Chat/Standalone'
 import ErrorBoundary from './app/ErrorBoundary'
 import { QuietModeProvider } from './context/QuietModeContext'
 import { MoodProvider } from './context/MoodContext'
+import { CookieConsent } from './components/CookieConsent'
 
 import UAGPage from './pages/UAG'
 
@@ -130,6 +131,7 @@ export default function App() {
         />
       </Routes>
       {config.devtools === '1' && <DevTools config={config} />}
+      <CookieConsent />
       </MoodProvider>
     </QuietModeProvider>
     </QueryClientProvider>
