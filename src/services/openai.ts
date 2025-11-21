@@ -41,12 +41,12 @@ export async function callOpenAI(
   // 根據環境自動選擇 API 端點
   let upstreamUrl: string
   if (window.location.hostname.includes('vercel.app')) {
-    upstreamUrl = '/api/openai-proxy'
+    upstreamUrl = '/api/chat'
   } else if (window.location.hostname.includes('github.io')) {
-    upstreamUrl = 'https://maihouses.vercel.app/api/openai-proxy'
+    upstreamUrl = 'https://maihouses.vercel.app/api/chat'
   } else {
     // 本地開發：預設用 Vercel
-    upstreamUrl = envAny.VITE_AI_PROXY_URL || 'https://maihouses.vercel.app/api/openai-proxy'
+    upstreamUrl = envAny.VITE_AI_PROXY_URL || 'https://maihouses.vercel.app/api/chat'
   }
 
   const headers: Record<string, string> = {

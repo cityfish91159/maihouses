@@ -92,6 +92,7 @@ export default function SmartAsk() {
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
           disabled={loading}
+          maxLength={500}
           aria-label="輸入詢問"
         />
         <button

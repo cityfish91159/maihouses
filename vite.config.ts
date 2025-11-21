@@ -12,6 +12,9 @@ const hmrHost = inCodespaces
   ? `${process.env.CODESPACE_NAME}-5173.app.github.dev`
   : 'localhost'
 
+// 判斷是否為 Vercel 環境
+const isVercel = process.env.VERCEL === '1'
+
 export default defineConfig({
   plugins: [
     react(),
@@ -20,9 +23,10 @@ export default defineConfig({
       overlay: { initialIsOpen: false },
     }),
   ],
-  base: '/maihouses/',
+  // Vercel 使用根路徑，GitHub Pages 使用 /maihouses/
+  base: isVercel ? '/' : '/maihouses/',
   build: {
-    outDir: 'docs',
+    outDir: 'dist', // Standardize to dist for Vercel
     sourcemap: true, // Enable sourcemaps for debugging
     chunkSizeWarningLimit: 1000, // Increase warning limit to 1000kB
     rollupOptions: {
