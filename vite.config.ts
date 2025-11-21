@@ -24,6 +24,16 @@ export default defineConfig({
   build: {
     outDir: 'docs',
     sourcemap: true, // Enable sourcemaps for debugging
+    chunkSizeWarningLimit: 1000, // Increase warning limit to 1000kB
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          'supabase': ['@supabase/supabase-js'],
+          'ui-libs': ['lucide-react', 'react-icons', 'react-hot-toast'],
+        },
+      },
+    },
   },
   test: {
     globals: true,

@@ -2,6 +2,13 @@ Redeploy trigger
 
 This file was updated to force a new Vercel deployment.
 
+Timestamp: 2025-11-21T10:45:00Z
+Deploy: Build Optimization & Chunk Splitting
+- Config: Updated vite.config.ts to implement manualChunks splitting.
+- Config: Separated 'react-vendor', 'supabase', and 'ui-libs' into distinct chunks.
+- Config: Increased chunkSizeWarningLimit to 1000kB to reduce build noise.
+- Goal: Resolve "Some chunks are larger than 500 kB" warning and improve load performance.
+
 Timestamp: 2025-11-21T10:30:00Z
 Deploy: Lint Fixes & Code Quality Improvements
 - Fix: Resolved Tailwind CSS class order issues in HeroAssure.tsx, SmartAsk.tsx, and Home.tsx.
