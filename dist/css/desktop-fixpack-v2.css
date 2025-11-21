@@ -1,0 +1,78 @@
+@media (min-width: 1200px){
+  /* 1) Header 與主內容：max-width 對齊、置中、收斂左右邊距 */
+  .container, .content-wrap, main {
+    max-width: 1200px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    padding-left: 24px !important;
+    padding-right: 24px !important;
+  }
+  header, .site-header, .topbar, .header-inner, nav {
+    max-width: 1200px !important;
+    margin-inline: auto !important;
+    padding-left: 24px !important;
+    padding-right: 24px !important;
+  }
+
+  /* 1.5) Header 文字與 icon 放大 */
+  header, .site-header, .topbar, .header-inner {
+    font-size: 17px !important;
+  }
+  header .brand, .topbar .brand, .logo {
+    font-size: 20px !important;
+    font-weight: 900 !important;
+  }
+  header .icon, .topbar .icon, .tools .icon, .chip {
+    font-size: 16px !important;
+    padding: 10px 14px !important;
+  }
+  header svg, .topbar svg, .icon svg, .tools svg {
+    width: 22px !important;
+    height: 22px !important;
+  }
+  .home-link {
+    font-size: 14px !important;
+    padding: 6px 12px !important;
+  }
+
+  /* 2) 主欄寬度：避免卡片顯小（不改字級與顏色） */
+  .feed, .timeline, .posts, .list, .stream {
+    max-width: 880px !important; /* 覺得仍窄可調 920/960 */
+  }
+
+  /* 3) 卡片視覺放大：加內距/圓角/行高，提升可讀性 */
+  .card, .post, .module, .entry, .panel, .msg-item, [class*="bubble"] {
+    padding: 22px !important;
+    border-radius: 16px !important;
+    line-height: 1.6 !important;
+    min-height: 80px !important;
+    box-shadow: 0 2px 12px rgba(10,34,70,.06), 0 1px 3px rgba(10,34,70,.05) !important;
+  }
+
+  /* 4) 卡片間距一致（桌機更鬆一點） */
+  .feed .card, .timeline .post, .list .entry, .stream .panel, .msg-item + .msg-item {
+    margin-bottom: 24px !important;
+  }
+
+  /* 5) 按鈕群組呼吸感（避免擁擠與誤觸） */
+  .actions button, .actions .btn, [class*="actions"] .btn, [class*="actions"] button {
+    padding: 10px 16px !important;
+    margin-right: 12px !important;
+    font-size: 1rem !important;
+  }
+}
+
+/* ——更寬螢幕加強檔（選用）：1440+ 再放大一級—— */
+@media (min-width: 1440px){
+  .container, .content-wrap, main,
+  header, .site-header, .topbar, .header-inner, nav {
+    max-width: 1280px !important;  /* 需要更開闊可調 1320/1400 */
+    padding-left: 32px !important;
+    padding-right: 32px !important;
+  }
+  .feed, .timeline, .posts, .list, .stream { max-width: 960px !important; }
+  .card, .post, .module, .entry, .panel, .msg-item, [class*="bubble"] {
+    padding: 24px !important; border-radius: 18px !important;
+    box-shadow: 0 3px 14px rgba(10,34,70,.07), 0 1px 3px rgba(10,34,70,.05) !important;
+  }
+}
