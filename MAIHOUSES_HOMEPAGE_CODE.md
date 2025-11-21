@@ -1,11 +1,167 @@
-# MaiHouses Homepage Code (v11.3 - Optimized)
+# MaiHouses Homepage Code (v11.4 Optimized)
 
-This file contains the complete source code for the MaiHouses homepage and its key sections as of November 21, 2025, after refactoring for style consistency and performance.
+> **Version**: 11.4
+> **Date**: 2025-11-21
+> **Changes**:
+> - Unified style system with global CSS classes (`.mh-card`, `.mh-ai-card`, etc.)
+> - Removed inline styles and hard-coded hex values
+> - Standardized border radius and shadows via CSS variables
+> - Refactored `Home.tsx` to delegate styling to components
+> - Updated `HeroAssure`, `SmartAsk`, `CommunityTeaser`, `LegacyPropertyGrid` to use new classes
+> - Decoupled `MascotHouse` SVG colors using `currentColor`
 
-## 1. Main Page (`src/pages/Home.tsx`)
+## 1. Global Styles (`src/index.css`)
+
+```css
+/* stylelint-disable at-rule-no-unknown */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+/* stylelint-enable at-rule-no-unknown */
+
+:root {
+  /* 新擬物風格色彩系統 - 統一使用設計稿色碼 */
+  --brand: #00385a; /* Deep Blue - Unified */
+  --brand-600: #00385a;
+  --brand-light: #009FE8; /* Cyan from image */
+  --brand-lighter: #e0f4ff;
+  --brand-fg: #FFFFFF;
+  
+  /* 兼容舊變數 */
+  --brand-primary: var(--brand);
+  
+  /* 背景色 */
+  --bg: #f6f9ff;
+  --bg-page: #f6f9ff;
+  --bg-card: rgba(255, 255, 255, 0.92);
+  
+  /* 文字色 */
+  --ink: #0a2246;
+  --muted: #2d3748;
+  --text-primary: var(--ink);
+  --text-secondary: var(--muted);
+  --text-tertiary: #8a95a5;
+  
+  /* 中性色 */
+  --neutral-50: #f6f9ff;
+  --neutral-100: #f0f5ff;
+  --neutral-200: #d1e3ff;
+  --neutral-800: #2d3748;
+  --neutral-900: #0a2246;
+  
+  /* 新擬物陰影系統 */
+  --shadow-neu-raised: 10px 10px 24px rgba(9,15,30,.16), -10px -10px 24px rgba(255,255,255,.9);
+  --shadow-neu-inset: inset 8px 8px 16px rgba(9,15,30,.12), inset -8px -8px 16px rgba(255,255,255,.9);
+  --shadow-neu-inset-subtle: inset 6px 6px 12px rgba(9,15,30,.08), inset -6px -6px 12px rgba(255,255,255,.8);
+  --shadow-neu-button: 6px 6px 16px rgba(9,15,30,.18), -4px -4px 12px rgba(255,255,255,.8);
+  --shadow-neu-pill: 8px 8px 18px rgba(9,15,30,.14), -8px -8px 18px rgba(255,255,255,.9);
+  --shadow-neu-pill-active: inset 6px 6px 12px rgba(9,15,30,.14), inset -6px -6px 12px rgba(255,255,255,.9);
+  --shadow-neu-badge: inset 4px 4px 10px rgba(9,15,30,.08), inset -4px -4px 10px rgba(255,255,255,.85);
+  
+  /* 漸層 */
+  --gradient-button: linear-gradient(135deg, #1A5FDB 0%, #0d3399 100%);
+  --gradient-ask: linear-gradient(135deg, #f0f5ff 0%, #e8f1ff 100%);
+  
+  /* 圓角系統 */
+  --r-sm: 12px;
+  --r-md: 16px;
+  --r-lg: 20px;
+  --r-xl: 28px;
+  --r-2xl: 32px;
+  --r-pill: 999px;
+  
+  /* 間距 */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-6: 24px;
+  --sp-8: 32px;
+  --sp-12: 48px;
+  
+  /* 字體尺寸 */
+  --fs-xs: 12px;
+  --fs-sm: 13px;
+  --fs-md: 14px;
+  --fs-base: 16px;
+  --fs-lg: 18px;
+  --fs-xl: 20px;
+  --fs-2xl: 24px;
+  --fs-3xl: 28px;
+
+  /* MH Component Classes Variables */
+  --ai-bg-from: #dbeafe; /* blue-100/200 mix */
+  --ai-bg-to: #eff6ff;
+}
+
+@layer components {
+  .mh-card {
+    @apply rounded-[var(--r-sm)] bg-white transition-all duration-200;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+  }
+  
+  .mh-card:hover {
+    box-shadow: 0 4px 16px rgba(15, 23, 42, 0.12);
+  }
+
+  .mh-card--hero {
+    @apply rounded-[var(--r-2xl)];
+    box-shadow: 0 12px 32px rgba(0, 78, 124, 0.15);
+  }
+  
+  .mh-card--hero:hover {
+    box-shadow: 0 16px 40px rgba(0, 78, 124, 0.2);
+  }
+
+  .mh-ai-card {
+    @apply rounded-[var(--r-sm)] p-6 md:p-8 space-y-6;
+    background: linear-gradient(135deg, var(--ai-bg-from) 0%, var(--ai-bg-to) 100%);
+    box-shadow: 0 2px 8px rgba(74, 144, 226, 0.15);
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+  }
+
+  .mh-ai-card:hover {
+    box-shadow: 0 4px 16px rgba(74, 144, 226, 0.2);
+  }
+
+  .mh-ai-chat {
+    @apply flex flex-col gap-4 max-h-[620px] min-h-[380px] overflow-y-auto rounded-[var(--r-sm)] border border-border-light bg-white p-4 shadow-inner md:max-h-[540px] md:min-h-[340px] touch-pan-y overscroll-contain;
+  }
+
+  .mh-ai-bubble-user {
+    @apply text-white border-none rounded-[var(--r-sm)] px-4 py-2.5 text-sm break-words max-w-[85%] md:max-w-[75%];
+    background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+  }
+
+  .mh-ai-bubble-assistant {
+    @apply text-text-primary bg-slate-50 border border-border-light rounded-[var(--r-sm)] px-4 py-2.5 text-sm break-words max-w-[85%] md:max-w-[75%];
+  }
+
+  .mh-ai-input {
+    @apply flex-1 rounded-full border-2 border-border-light bg-white px-5 py-2.5 text-[length:var(--fs-sm)] outline-none transition-all duration-150;
+  }
+  
+  .mh-ai-input:focus-visible {
+    @apply border-brand shadow-[0_0_0_1px_rgba(0,56,90,0.2)];
+  }
+}
+
+@layer base {
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background-color: #EEF2F7;
+    color: var(--ink);
+  }
+  /* ... rest of base styles ... */
+}
+```
+
+## 2. Page Layout (`src/pages/Home.tsx`)
 
 ```tsx
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Header from '../components/Header/Header'
 import HeroAssure from '../features/home/sections/HeroAssure'
 import SmartAsk from '../features/home/sections/SmartAsk'
@@ -55,18 +211,12 @@ export default function Home({ config }: { config: AppConfig & RuntimeOverrides 
       )}
       <main className="mx-auto max-w-container space-y-6 p-4 md:space-y-8 md:p-6 relative">
         {features.heroAssure !== false && (
-          <section className="rounded-lg bg-white p-6 shadow-[0_12px_32px_rgba(0,78,124,0.15)] transition-all duration-200 hover:shadow-[0_16px_40px_rgba(0,78,124,0.2)] md:p-8">
-            <HeroAssure />
-          </section>
+          <HeroAssure />
         )}
         {features.smartAsk !== false && (
-          <section className="rounded-lg bg-white p-6 shadow-[0_2px_8px_rgba(0,0,0,0.08)] transition-all duration-200 hover:shadow-[0_4px_12px_rgba(0,0,0,0.12)] md:p-8">
-            <SmartAsk />
-          </section>
+          <SmartAsk />
         )}
-        <section className="rounded-lg bg-white p-6 shadow-[0_2px_8px_rgba(0,0,0,0.08)] transition-all duration-200 hover:shadow-[0_4px_12px_rgba(0,0,0,0.12)] md:p-8">
-          <CommunityTeaser />
-        </section>
+        <CommunityTeaser />
         {features.propertyGrid !== false && (
           <LegacyPropertyGrid />
         )}
@@ -76,7 +226,7 @@ export default function Home({ config }: { config: AppConfig & RuntimeOverrides 
 }
 ```
 
-## 2. Hero Section (`src/features/home/sections/HeroAssure.tsx`)
+## 3. Hero Section (`src/features/home/sections/HeroAssure.tsx`)
 
 ```tsx
 import React from 'react';
@@ -86,10 +236,10 @@ import { HERO_STEPS } from '../../../constants/data';
 
 export default function HeroAssure() {
   return (
-    <section className="bg-gradient-to-br from-white to-brand-50 border border-border-light rounded-[32px] p-6 md:p-10 shadow-sm relative overflow-hidden group/container">
+    <section className="mh-card mh-card--hero bg-gradient-to-br from-white to-brand-50 border border-border-light p-6 md:p-10 relative overflow-hidden group/container">
       
       {/* Header Area */}
-      <div className="flex flex-col md:flex-row items-center gap-6 md:gap-10 mb-10 relative z-10">
+      <div className="relative z-10 mb-10 flex flex-col items-center gap-6 md:flex-row md:gap-10">
         
         {/* Mascot: Wireframe House */}
         <div className="w-28 h-32 shrink-0 relative">
@@ -164,7 +314,7 @@ export default function HeroAssure() {
 }
 ```
 
-## 3. Smart Ask (`src/features/home/sections/SmartAsk.tsx`)
+## 4. Smart Ask Section (`src/features/home/sections/SmartAsk.tsx`)
 
 ```tsx
 import { useState, useRef, useEffect } from 'react'
@@ -282,7 +432,7 @@ export default function SmartAsk() {
     }
   }
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
       send()
@@ -291,7 +441,7 @@ export default function SmartAsk() {
 
   return (
     <section 
-      className="bg-gradient-to-br from-blue-200 to-blue-100 space-y-6 rounded-xl p-6 shadow-[0_2px_8px_rgba(74,144,226,0.15)] transition-shadow hover:shadow-[0_4px_16px_rgba(74,144,226,0.2)] md:p-8"
+      className="mh-ai-card"
     >
       <div className="mb-2 flex flex-wrap items-center gap-2">
         <div className="flex min-w-0 items-center gap-2">
@@ -324,7 +474,7 @@ export default function SmartAsk() {
         ref={chatRef}
         role="log"
         aria-live="polite"
-        className="flex flex-col gap-4 max-h-[620px] min-h-[380px] overflow-y-auto rounded-xl border border-border-light bg-white p-4 shadow-inner md:max-h-[540px] md:min-h-[340px] touch-pan-y overscroll-contain"
+        className="mh-ai-chat"
       >
         {messages.length === 0 ? (
           <div className="flex h-full items-center justify-center text-sm text-slate-500">
@@ -343,10 +493,10 @@ export default function SmartAsk() {
           messages.map((m, i) => (
             <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'} animate-[fadeIn_0.3s_ease-out]`}>
               <div
-                className={`max-w-[85%] rounded-xl px-4 py-2.5 shadow-sm md:max-w-[75%] text-sm break-words min-w-0 ${
+                className={`shadow-sm min-w-0 ${
                   m.role === 'user'
-                    ? 'text-white bg-gradient-to-br from-blue-800 to-blue-700 border-none'
-                    : 'text-text-primary bg-slate-50 border border-border-light'
+                    ? 'mh-ai-bubble-user'
+                    : 'mh-ai-bubble-assistant'
                 }`}
               >
                 <div className="whitespace-pre-wrap leading-relaxed">{m.content}</div>
@@ -380,11 +530,11 @@ export default function SmartAsk() {
           id="smart-ask-input"
           name="smart-ask-query"
           type="text"
-          className="flex-1 rounded-full px-5 py-2.5 text-sm border-2 border-border-light bg-white transition-colors focus:outline-none focus:border-[#4A90E2]"
+          className="mh-ai-input"
           placeholder="輸入需求（例:西屯區 2房 預算1500萬）"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          onKeyPress={handleKeyPress}
+          onKeyDown={handleKeyDown}
           disabled={loading}
           aria-label="輸入詢問"
         />
@@ -444,25 +594,25 @@ export default function SmartAsk() {
 }
 ```
 
-## 4. Community Teaser (`src/features/home/sections/CommunityTeaser.tsx`)
+## 5. Community Teaser (`src/features/home/sections/CommunityTeaser.tsx`)
 
 ```tsx
 import { COMMUNITY_REVIEWS } from '../../../constants/data'
 
 export default function CommunityTeaser() {
   return (
-    <section className="bg-white/96 backdrop-blur-md border border-border-light rounded-[18px] p-2.5">
+    <section className="mh-card bg-white/96 backdrop-blur-md border border-border-light p-2.5">
       <div className="flex justify-between items-center gap-1.5 mb-1.5">
         <h3 className="text-lg font-extrabold m-0 text-brand tracking-wide">社區評價（聚合）</h3>
       </div>
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         {COMMUNITY_REVIEWS.map((review) => (
-          <article key={review.id} className="flex gap-2 border border-border-light rounded-[13px] p-1.5 bg-white relative">
+          <article key={review.id} className="flex gap-2 border border-border-light rounded-[var(--r-sm)] p-1.5 bg-white relative">
             <div className="w-[34px] h-[34px] rounded-full bg-brand/10 border-2 border-brand flex items-center justify-center font-extrabold text-brand text-[17px] shrink-0">
               {review.id}
             </div>
             <div>
-              <div className="font-extrabold text-[14.5px] text-text-ink">
+              <div className="font-extrabold text-sm text-text-ink">
                 {review.name} <span className="text-yellow-400">{'★'.repeat(review.rating)}{'☆'.repeat(5 - review.rating)}</span>
               </div>
               <div className="flex flex-wrap gap-1 mt-0.5">
@@ -472,7 +622,7 @@ export default function CommunityTeaser() {
                   </span>
                 ))}
               </div>
-              <p className="mt-1 text-[14.5px] leading-relaxed text-brand font-medium">
+              <p className="mt-1 text-sm leading-relaxed text-brand font-medium">
                 {review.content}
               </p>
             </div>
@@ -480,7 +630,7 @@ export default function CommunityTeaser() {
         ))}
       </div>
       <a 
-        className="mt-2 flex items-center gap-2.5 bg-gradient-to-r from-green-500/25 to-green-500/10 border border-green-500/40 p-3 rounded-[14px] font-black text-green-900 no-underline relative lg:justify-center lg:text-center group" 
+        className="mt-2 flex items-center gap-2.5 bg-gradient-to-r from-green-500/25 to-green-500/10 border border-green-500/40 p-3 rounded-[var(--r-sm)] font-black text-green-900 no-underline relative lg:justify-center lg:text-center group" 
         href="/maihouses/community-wall_mvp.html" 
         aria-label="點我看更多社區評價"
       >
@@ -494,138 +644,8 @@ export default function CommunityTeaser() {
 }
 ```
 
-## 5. New Utility & Data Files
+## 6. Legacy Property Grid (`src/features/home/sections/LegacyPropertyGrid.tsx`)
 
-### `src/constants/data.ts`
-```tsx
-import React from 'react';
-import { ScanEye, HandCoins, Phone, MessageSquareText, Landmark, KeyRound } from 'lucide-react';
-
-export const HERO_STEPS = [
-  { 
-    id: '01',
-    title: '已電聯', 
-    desc: '紀錄談話內容',
-    icon: Phone,
-  },
-  { 
-    id: '02',
-    title: '已帶看', 
-    desc: '賞屋重點紀錄',
-    icon: ScanEye,
-  },
-  { 
-    id: '03',
-    title: '已出價', 
-    desc: '紀錄價格條件',
-    icon: HandCoins,
-  },
-  { 
-    id: '04',
-    title: '已斡旋', 
-    desc: '議價過程紀錄',
-    icon: MessageSquareText,
-  },
-  { 
-    id: '05',
-    title: '已成交', 
-    desc: '貸款相關事項',
-    icon: Landmark,
-  },
-  { 
-    id: '06',
-    title: '已交屋', 
-    desc: '確認圓滿交屋',
-    icon: KeyRound,
-  },
-];
-
-export const COMMUNITY_REVIEWS = [
-  {
-    id: 'J',
-    name: 'J***｜景安和院 住戶',
-    rating: 5,
-    tags: ['#物業/管理'],
-    content: '公設維護得乾淨，假日草皮有人整理。之前反映停車動線，管委會一週內就公告改善。'
-  },
-  {
-    id: 'W',
-    name: 'W***｜松濤苑 住戶',
-    rating: 4,
-    tags: ['#噪音'],
-    content: '住起來整體舒服，但臨路面向在上下班尖峰車聲明顯，喜靜者建議考慮中高樓層。'
-  },
-  {
-    id: 'L',
-    name: 'L***｜遠揚柏悅 住戶',
-    rating: 4,
-    tags: ['#漏水/壁癌'],
-    content: '頂樓排水設計不錯，颱風天沒有積水。不過垃圾車時間稍晚，偶爾有下水道味。'
-  },
-  {
-    id: 'A',
-    name: 'A***｜華固名邸 住戶',
-    rating: 5,
-    tags: ['#物業/管理'],
-    content: '管理員很負責，包裹收發與公告都有效率；電梯偶爾故障但維修速度快。'
-  },
-  {
-    id: 'H',
-    name: 'H***｜寶輝花園廣場 住戶',
-    rating: 3,
-    tags: ['#停車/車位'],
-    content: '地下室車位轉彎半徑偏小，新手要多注意；平日夜間社區整體很安靜。'
-  },
-  {
-    id: 'K',
-    name: 'K***｜潤泰峰匯 住戶',
-    rating: 4,
-    tags: ['#採光/日照'],
-    content: '採光好、通風佳，夏天不會太悶熱；但西曬戶下午還是會稍微熱一些。'
-  }
-];
-
-export const QUICK_QUESTIONS = ['3房以內', '30坪以下', '近捷運', '新成屋'];
-```
-
-### `src/components/MascotHouse.tsx`
-```tsx
-import React from 'react';
-
-export default function MascotHouse() {
-  return (
-    <svg viewBox="0 0 200 240" className="w-full h-full drop-shadow-sm transform hover:scale-105 transition-transform duration-300">
-      {/* M-Antenna */}
-      <path d="M 85 40 L 85 15 L 100 30 L 115 15 L 115 40" 
-            stroke="#00385a" strokeWidth="5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
-
-      {/* House Body & Roof */}
-      <path d="M 40 80 L 100 40 L 160 80" 
-            stroke="#00385a" strokeWidth="6" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
-      <rect x="55" y="80" width="90" height="100" 
-            stroke="#00385a" strokeWidth="6" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
-
-      {/* Eyebrows (Small) */}
-      <path d="M 78 110 Q 85 105 92 110" stroke="#00385a" strokeWidth="4" fill="none" strokeLinecap="round" />
-      <path d="M 108 110 Q 115 105 122 110" stroke="#00385a" strokeWidth="4" fill="none" strokeLinecap="round" />
-      
-      {/* Eyes (Hollow circles) */}
-      <circle cx="85" cy="125" r="4" stroke="#00385a" strokeWidth="3" fill="none" />
-      <circle cx="115" cy="125" r="4" stroke="#00385a" strokeWidth="3" fill="none" />
-
-      {/* Hands (Sticking out from sides) */}
-      <path d="M 55 130 L 25 110" stroke="#00385a" strokeWidth="5" fill="none" strokeLinecap="round" />
-      <path d="M 145 130 L 175 110" stroke="#00385a" strokeWidth="5" fill="none" strokeLinecap="round" />
-
-      {/* Legs (Walking) */}
-      <path d="M 85 180 L 85 215 L 75 215" stroke="#00385a" strokeWidth="5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M 115 180 L 115 215 L 125 215" stroke="#00385a" strokeWidth="5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-```
-
-### `src/features/home/sections/LegacyPropertyGrid.tsx`
 ```tsx
 import React from 'react'
 
@@ -633,7 +653,7 @@ export default function LegacyPropertyGrid() {
   const baseUrl = (import.meta as any).env?.BASE_URL || '/'
   
   return (
-    <section className="rounded-lg bg-white p-0 shadow-[0_2px_8px_rgba(0,0,0,0.08)] transition-all duration-200 hover:shadow-[0_4px_12px_rgba(0,0,0,0.12)] overflow-hidden">
+    <section className="mh-card p-0 overflow-hidden">
       {/* 以 iframe 方式嵌入你上傳的完整房源清單 HTML，完全不改動其內文與排版 */}
       <iframe
         title="房源清單"
@@ -643,5 +663,43 @@ export default function LegacyPropertyGrid() {
       />
     </section>
   )
+}
+```
+
+## 7. Mascot House (`src/components/MascotHouse.tsx`)
+
+```tsx
+import React from 'react';
+
+export default function MascotHouse() {
+  return (
+    <svg viewBox="0 0 200 240" className="w-full h-full drop-shadow-sm transform hover:scale-105 transition-transform duration-300 text-brand">
+      {/* M-Antenna */}
+      <path d="M 85 40 L 85 15 L 100 30 L 115 15 L 115 40" 
+            stroke="currentColor" strokeWidth="5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+
+      {/* House Body & Roof */}
+      <path d="M 40 80 L 100 40 L 160 80" 
+            stroke="currentColor" strokeWidth="6" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+      <rect x="55" y="80" width="90" height="100" 
+            stroke="currentColor" strokeWidth="6" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+
+      {/* Eyebrows (Small) */}
+      <path d="M 78 110 Q 85 105 92 110" stroke="currentColor" strokeWidth="4" fill="none" strokeLinecap="round" />
+      <path d="M 108 110 Q 115 105 122 110" stroke="currentColor" strokeWidth="4" fill="none" strokeLinecap="round" />
+      
+      {/* Eyes (Hollow circles) */}
+      <circle cx="85" cy="125" r="4" stroke="currentColor" strokeWidth="3" fill="none" />
+      <circle cx="115" cy="125" r="4" stroke="currentColor" strokeWidth="3" fill="none" />
+
+      {/* Hands (Sticking out from sides) */}
+      <path d="M 55 130 L 25 110" stroke="currentColor" strokeWidth="5" fill="none" strokeLinecap="round" />
+      <path d="M 145 130 L 175 110" stroke="currentColor" strokeWidth="5" fill="none" strokeLinecap="round" />
+
+      {/* Legs (Walking) */}
+      <path d="M 85 180 L 85 215 L 75 215" stroke="currentColor" strokeWidth="5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M 115 180 L 115 215 L 125 215" stroke="currentColor" strokeWidth="5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
 }
 ```

@@ -5,7 +5,7 @@ import { HERO_STEPS } from '../../../constants/data';
 
 export default function HeroAssure() {
   return (
-    <section className="bg-gradient-to-br from-white to-brand-50 border border-border-light rounded-[32px] p-6 md:p-10 shadow-sm relative overflow-hidden group/container">
+    <section className="mh-card mh-card--hero bg-gradient-to-br from-white to-brand-50 border border-border-light p-6 md:p-10 relative overflow-hidden group/container">
       
       {/* Header Area */}
       <div className="relative z-10 mb-10 flex flex-col items-center gap-6 md:flex-row md:gap-10">

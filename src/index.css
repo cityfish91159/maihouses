@@ -73,6 +73,62 @@
   --fs-xl: 20px;
   --fs-2xl: 24px;
   --fs-3xl: 28px;
+
+  /* MH Component Classes Variables */
+  --ai-bg-from: #dbeafe; /* blue-100/200 mix */
+  --ai-bg-to: #eff6ff;
+}
+
+@layer components {
+  .mh-card {
+    @apply rounded-[var(--r-sm)] bg-white transition-all duration-200;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+  }
+  
+  .mh-card:hover {
+    box-shadow: 0 4px 16px rgba(15, 23, 42, 0.12);
+  }
+
+  .mh-card--hero {
+    @apply rounded-[var(--r-2xl)];
+    box-shadow: 0 12px 32px rgba(0, 78, 124, 0.15);
+  }
+  
+  .mh-card--hero:hover {
+    box-shadow: 0 16px 40px rgba(0, 78, 124, 0.2);
+  }
+
+  .mh-ai-card {
+    @apply rounded-[var(--r-sm)] p-6 md:p-8 space-y-6;
+    background: linear-gradient(135deg, var(--ai-bg-from) 0%, var(--ai-bg-to) 100%);
+    box-shadow: 0 2px 8px rgba(74, 144, 226, 0.15);
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+  }
+
+  .mh-ai-card:hover {
+    box-shadow: 0 4px 16px rgba(74, 144, 226, 0.2);
+  }
+
+  .mh-ai-chat {
+    @apply flex flex-col gap-4 max-h-[620px] min-h-[380px] overflow-y-auto rounded-[var(--r-sm)] border border-border-light bg-white p-4 shadow-inner md:max-h-[540px] md:min-h-[340px] touch-pan-y overscroll-contain;
+  }
+
+  .mh-ai-bubble-user {
+    @apply text-white border-none rounded-[var(--r-sm)] px-4 py-2.5 text-sm break-words max-w-[85%] md:max-w-[75%];
+    background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+  }
+
+  .mh-ai-bubble-assistant {
+    @apply text-text-primary bg-slate-50 border border-border-light rounded-[var(--r-sm)] px-4 py-2.5 text-sm break-words max-w-[85%] md:max-w-[75%];
+  }
+
+  .mh-ai-input {
+    @apply flex-1 rounded-full border-2 border-border-light bg-white px-5 py-2.5 text-[length:var(--fs-sm)] outline-none transition-all duration-150;
+  }
+  
+  .mh-ai-input:focus-visible {
+    @apply border-brand shadow-[0_0_0_1px_rgba(0,56,90,0.2)];
+  }
 }
 
 @layer base {

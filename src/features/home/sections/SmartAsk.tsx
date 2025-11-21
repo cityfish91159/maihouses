@@ -113,7 +113,7 @@ export default function SmartAsk() {
     }
   }
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
       send()
@@ -122,7 +122,7 @@ export default function SmartAsk() {
 
   return (
     <section 
-      className="bg-gradient-to-br from-blue-200 to-blue-100 space-y-6 rounded-xl p-6 shadow-[0_2px_8px_rgba(74,144,226,0.15)] transition-shadow hover:shadow-[0_4px_16px_rgba(74,144,226,0.2)] md:p-8"
+      className="mh-ai-card"
     >
       <div className="mb-2 flex flex-wrap items-center gap-2">
         <div className="flex min-w-0 items-center gap-2">
@@ -155,7 +155,7 @@ export default function SmartAsk() {
         ref={chatRef}
         role="log"
         aria-live="polite"
-        className="flex flex-col gap-4 max-h-[620px] min-h-[380px] overflow-y-auto rounded-xl border border-border-light bg-white p-4 shadow-inner md:max-h-[540px] md:min-h-[340px] touch-pan-y overscroll-contain"
+        className="mh-ai-chat"
       >
         {messages.length === 0 ? (
           <div className="flex h-full items-center justify-center text-sm text-slate-500">
@@ -174,10 +174,10 @@ export default function SmartAsk() {
           messages.map((m, i) => (
             <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'} animate-[fadeIn_0.3s_ease-out]`}>
               <div
-                className={`max-w-[85%] rounded-xl px-4 py-2.5 shadow-sm md:max-w-[75%] text-sm break-words min-w-0 ${
+                className={`shadow-sm min-w-0 ${
                   m.role === 'user'
-                    ? 'text-white bg-gradient-to-br from-blue-800 to-blue-700 border-none'
-                    : 'text-text-primary bg-slate-50 border border-border-light'
+                    ? 'mh-ai-bubble-user'
+                    : 'mh-ai-bubble-assistant'
                 }`}
               >
                 <div className="whitespace-pre-wrap leading-relaxed">{m.content}</div>
@@ -211,11 +211,11 @@ export default function SmartAsk() {
           id="smart-ask-input"
           name="smart-ask-query"
           type="text"
-          className="flex-1 rounded-full px-5 py-2.5 text-sm border-2 border-border-light bg-white transition-colors focus:outline-none focus:border-[#4A90E2]"
+          className="mh-ai-input"
           placeholder="輸入需求（例:西屯區 2房 預算1500萬）"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          onKeyPress={handleKeyPress}
+          onKeyDown={handleKeyDown}
           disabled={loading}
           aria-label="輸入詢問"
         />
