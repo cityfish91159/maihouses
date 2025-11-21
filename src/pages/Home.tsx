@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import Header from '../components/Header/Header'
 import HeroAssure from '../features/home/sections/HeroAssure'
 import SmartAsk from '../features/home/sections/SmartAsk'
 import CommunityTeaser from '../features/home/sections/CommunityTeaser'
-import LegacyPropertyGrid from '../features/home/sections/LegacyPropertyGrid'
+import PropertyGrid from '../features/home/sections/PropertyGrid'
 import { getMeta } from '../services/api'
 import { trackEvent } from '../services/analytics'
 import type { AppConfig, RuntimeOverrides } from '../app/config'
@@ -41,7 +41,7 @@ export default function Home({ config }: { config: AppConfig & RuntimeOverrides 
       <Header />
       <WarmWelcomeBar />
       {/* Blue background layer for top section */}
-      <div className="absolute top-0 left-0 w-full h-80 bg-brand -z-10" />
+      <div className="absolute top-0 left-0 w-full h-[420px] bg-gradient-to-b from-brand to-brand-light -z-10" />
       
       {banner && (
         <div className="mx-auto mt-4 max-w-container rounded-md bg-yellow-500 p-3 text-sm text-white">{banner}</div>
@@ -55,7 +55,7 @@ export default function Home({ config }: { config: AppConfig & RuntimeOverrides 
         )}
         <CommunityTeaser />
         {features.propertyGrid !== false && (
-          <LegacyPropertyGrid />
+          <PropertyGrid />
         )}
       </main>
     </>

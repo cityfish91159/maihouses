@@ -2,6 +2,18 @@ Redeploy trigger
 
 This file was updated to force a new Vercel deployment.
 
+Timestamp: 2025-11-21T10:15:00Z
+Deploy: Homepage Refactor & Style Unification
+- Fix: Updated Home.tsx to use new PropertyGrid and remove LegacyPropertyGrid.
+- Fix: Unified style system (Tailwind) across HeroAssure, SmartAsk, CommunityTeaser.
+- Cleanup: Removed LegacyPropertyGrid.tsx.
+- Config: Verified tailwind.config.cjs colors.
+
+Timestamp: 2025-11-21T10:00:00Z
+Deploy: Vercel Configuration Fix & Refactor
+- Fix: Updated vercel.json outputDirectory from 'dist' to 'docs' to match vite.config.ts build output.
+- Refactor: Updated MAIHOUSES_HOMEPAGE_CODE.md and switched to new PropertyGrid.
+
 Timestamp: 2025-11-21T12:05:00Z
 Deploy: Force Vercel Trigger (Manual Docs Mode)
 - Action: Force update to trigger Vercel webhook.
