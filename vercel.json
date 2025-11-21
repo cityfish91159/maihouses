@@ -38,12 +38,13 @@
       "schedule": "0 * * * *"
     }
   ],
-  "routes": [
-    { "src": "^/$", "status": 308, "headers": { "Location": "/maihouses/" } },
-    { "src": "/maihouses/community-wall_mvp.html", "dest": "/maihouses/community-wall_mvp.html" },
-    { "src": "/maihouses/(.*)", "dest": "/$1" },
-    { "src": "/maihouses", "dest": "/index.html" },
-    { "handle": "filesystem" },
-    { "src": "/(.*)", "dest": "/index.html" }
+  "rewrites": [
+    { "source": "/maihouses/community-wall_mvp.html", "destination": "/maihouses/community-wall_mvp.html" },
+    { "source": "/maihouses/(.*)", "destination": "/$1" },
+    { "source": "/maihouses", "destination": "/index.html" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ],
+  "redirects": [
+    { "source": "^/$", "destination": "/maihouses/", "permanent": true }
   ]
 }
