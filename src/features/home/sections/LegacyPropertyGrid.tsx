@@ -1,7 +1,7 @@
 import React from 'react'
 
 export default function LegacyPropertyGrid() {
-  const baseUrl = (import.meta as any).env?.BASE_URL || '/'
+  const baseUrl = import.meta.env.BASE_URL || '/'
   
   return (
     <section className="mh-card p-0 overflow-hidden">
@@ -9,8 +9,9 @@ export default function LegacyPropertyGrid() {
       <iframe
         title="房源清單"
         src={`${baseUrl}maihouses_list_noheader.html`}
-        style={{ width: '100%', border: 0, minHeight: '1400px' }}
+        className="w-full border-0 h-[1200px] sm:h-[1400px] md:h-screen md:max-h-[1600px]"
         loading="lazy"
+        sandbox="allow-scripts allow-same-origin allow-popups"
       />
     </section>
   )

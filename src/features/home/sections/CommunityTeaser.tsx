@@ -18,7 +18,7 @@ export default function CommunityTeaser() {
               </div>
               <div className="flex flex-wrap gap-1 mt-0.5">
                 {review.tags.map(tag => (
-                  <span key={tag} className="text-xs px-2 py-[3px] rounded-full bg-green-500/10 border border-green-500/40 text-green-800 font-bold">
+                  <span key={tag} className="text-xs px-2 py-[3px] rounded-full bg-success/10 border border-success/40 text-success font-bold">
                     {tag}
                   </span>
                 ))}
@@ -31,12 +31,12 @@ export default function CommunityTeaser() {
         ))}
       </div>
       <a 
-        className="mt-2 flex items-center gap-2.5 bg-gradient-to-r from-green-500/25 to-green-500/10 border border-green-500/40 p-3 rounded-[var(--r-sm)] font-black text-green-900 no-underline relative lg:justify-center lg:text-center group" 
+        className="mt-2 flex items-center gap-2.5 bg-gradient-to-r from-success/25 to-success/10 border border-success/40 p-3 rounded-[var(--r-sm)] font-black text-success no-underline relative lg:justify-center lg:text-center group" 
         href="/maihouses/community-wall_mvp.html" 
         aria-label="點我看更多社區評價"
       >
         <span className="text-[17px] tracking-wide lg:mx-auto max-sm:text-[15px]">👉 點我看更多社區評價</span>
-        <span className="ml-auto bg-green-800 text-white rounded-full text-sm px-3 py-2 lg:absolute lg:right-[14px] lg:top-1/2 lg:-translate-y-1/2 lg:ml-0 max-sm:text-xs max-sm:px-2.5 max-sm:py-[7px] group-hover:bg-green-900 transition-colors">
+        <span className="ml-auto bg-success text-white rounded-full text-sm px-3 py-2 lg:absolute lg:right-[14px] lg:top-1/2 lg:-translate-y-1/2 lg:ml-0 max-sm:text-xs max-sm:px-2.5 max-sm:py-[7px] group-hover:bg-success/90 transition-colors">
           前往社區牆
         </span>
       </a>
