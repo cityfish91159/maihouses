@@ -75,7 +75,7 @@ export default function Header({ onOpenAIStudio }: { onOpenAIStudio?: () => void
             <div className="absolute -top-[44px] right-[5%] md:right-[10%] z-0 pointer-events-none select-none animate-float md:animate-float-desktop">
                  
                  {/* Speech Bubble */}
-                 <div className="absolute bottom-[100%] right-[55%] w-[260px] whitespace-normal md:w-auto md:max-w-none md:whitespace-nowrap md:bottom-[94%] md:right-[65%] bg-white border-2 border-brand-100 px-5 py-3 rounded-2xl rounded-br-none shadow-lg animate-fadeIn origin-bottom-right">
+                 <div className="absolute bottom-[92%] right-[55%] w-[260px] whitespace-normal md:w-auto md:max-w-none md:whitespace-nowrap md:bottom-[94%] md:right-[65%] bg-white border-2 border-brand-100 px-5 py-2 md:py-3 rounded-2xl rounded-br-none shadow-lg animate-fadeIn origin-bottom-right">
                     <p className="text-[11px] md:text-sm font-bold text-ink-700 leading-relaxed text-left">
                         買房這麼大的事，先到 <span className="text-brand-700 font-black">邁鄰居</span>，為未來的家查口碑、找評價，最放心！
                     </p>
