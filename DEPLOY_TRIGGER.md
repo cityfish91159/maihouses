@@ -221,3 +221,4 @@ Deploy: Restore Legacy Auth Page with Supabase
 - Refactor: Migrated `auth.html` from Firebase to Supabase Auth to maintain compatibility with the React app.
 - Config: Updated `Header.tsx` to link to `/maihouses/auth.html`.
 - Goal: Restore the "Blue Modal" design while keeping the backend on Supabase.
+Deploy trigger Sat Nov 22 07:28:29 UTC 2025
