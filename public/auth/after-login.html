@@ -8,10 +8,10 @@
   if (role === '房仲') role = 'agent';
   var BASE = '/maihouses/';
   var target = (role === 'agent')
-    ? BASE + 'p/個人信息流_agent.html'
-    : BASE + 'p/個人信息流_consumer.html';
+    ? BASE + 'feed-agent.html'
+    : BASE + 'feed-consumer.html';
   window.location.replace(target);
 })();
 </script>
-<noscript><meta http-equiv="refresh" content="0; url=/maihouses/p/個人信息流_consumer.html"></noscript>
+<noscript><meta http-equiv="refresh" content="0; url=/maihouses/feed-consumer.html"></noscript>
 </html>
