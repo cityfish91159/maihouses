@@ -222,3 +222,4 @@ Deploy: Restore Legacy Auth Page with Supabase
 - Config: Updated `Header.tsx` to link to `/maihouses/auth.html`.
 - Goal: Restore the "Blue Modal" design while keeping the backend on Supabase.
 Deploy trigger Sat Nov 22 07:28:29 UTC 2025
+Deploy trigger Sat Nov 22 07:36:15 UTC 2025
