@@ -187,3 +187,8 @@ Deploy: Fix SonarLint Issues & Redeploy
 - Fix: Cleaned up unused imports in `Register.tsx`.
 - Fix: Replaced `window` with `globalThis` in `auth.ts`.
 - Goal: Ensure clean build and successful deployment.
+
+Timestamp: 2025-11-22T06:00:00Z
+Deploy: Fix Build Errors (TS & Missing Deps)
+- Fix: Replaced `replaceAll` with `replace` in `analytics.ts` for better compatibility and fixed implicit any type.
+- Fix: Installed missing dependencies `clsx` and `tailwind-merge` required by `utils.ts`.
