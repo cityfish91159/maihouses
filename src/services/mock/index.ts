@@ -1,6 +1,6 @@
 import { getConfig } from '../../app/config'
 import { makePropertiesDeterministic, makeProperties, makeReview, makeCommunities, COMMUNITY_REVIEWS } from './fixtures'
-import type { ApiResponse, Paginated, PropertyCard, AiAskRes, CommunityPreview } from '../../types'
+import type { ApiResponse, Paginated, PropertyCard, AiAskRes } from '../../types'
 
 const idempotent = new Map<string, ApiResponse<AiAskRes>>()
 const delay = (ms: number) => new Promise((r) => setTimeout(r, ms))
@@ -13,7 +13,7 @@ function header(options: RequestInit, key: string) {
   if (!h) return
   if (h instanceof Headers) return h.get(key) || undefined
   if (Array.isArray(h)) return h.find(([k]) => k.toLowerCase() === key.toLowerCase())?.[1]
-  const o = h as Record<string, string>
+  const o = h
   return o[key] ?? o[key.toLowerCase()]
 }
 
@@ -27,7 +27,7 @@ export async function mockHandler<T = unknown>(endpoint: string, options: Reques
   if (/^\/api\/v1\/meta$/.test(endpoint))
     return { ok: true, data: { backendVersion: '1.0.7', apiVersion: 'v1', maintenance: false } as any }
 
-  if (/^\/api\/v1\/properties\?/.test(endpoint)) {
+  if (endpoint.startsWith('/api/v1/properties?')) {
     const sp = new URLSearchParams(endpoint.split('?')[1] || '')
     const page = +sp.get('page')! || 1
     const pageSize = +sp.get('pageSize')! || 8
@@ -54,7 +54,7 @@ export async function mockHandler<T = unknown>(endpoint: string, options: Reques
 
   if (/^\/api\/v1\/communities\/.+\/reviews\?/.test(endpoint)) {
     // 解析 communityId
-    const m = endpoint.match(/^\/api\/v1\/communities\/([^/?]+)\/reviews\?/)!
+    const m = /^\/api\/v1\/communities\/([^/?]+)\/reviews\?/.exec(endpoint)!
     const communityId = m?.[1] ?? ''
     const sp = new URLSearchParams(endpoint.split('?')[1] || '')
     const limit = +sp.get('limit')! || 2

@@ -2,6 +2,31 @@ Redeploy trigger
 
 This file was updated to force a new Vercel deployment.
 
+Timestamp: 2025-11-22T05:00:00Z
+Deploy: Fix Login Redirect & Analytics Stability
+- Fix: Resolved `vite.config.ts` type error by adding `vitest` reference.
+- Fix: Fixed Login page not redirecting correctly after sign-in in `Login.tsx`.
+- Fix: Added fallback for `crypto.randomUUID` in `analytics.ts` to prevent crashes in non-secure contexts.
+
+Timestamp: 2025-11-22T05:15:00Z
+Deploy: Fix Vercel Routing & Login Redirect
+- Config: Updated `vite.config.ts` to use `/maihouses/` base path unconditionally, aligning with `vercel.json` redirects.
+- Refactor: Removed redundant `/maihouses` route in `App.tsx` as `basename` now handles the prefix.
+- Fix: This resolves the login redirect failure caused by path mismatch between Vercel rewrites and client-side router.
+
+Timestamp: 2025-11-22T05:30:00Z
+Deploy: Fix Header Links for Auth
+- Fix: Updated `Header.tsx` to point Login/Register links to React routes (`/auth/login`, `/auth/register`) instead of legacy static HTML files (`/auth.html`).
+- Context: This ensures users are directed to the correct React-based auth pages which handle the login logic and redirects properly.
+
+Timestamp: 2025-11-22T05:45:00Z
+Deploy: Force Redeploy for Auth Fixes
+- Action: Manual redeploy trigger requested by user.
+- Verification: Confirmed `vite.config.ts` base path is `/maihouses/`.
+- Verification: Confirmed `Header.tsx` links point to `/auth/login` and `/auth/register`.
+- Verification: Confirmed `App.tsx` routes are clean.
+- Goal: Ensure all recent auth and routing fixes are live on Vercel.
+
 Timestamp: 2025-11-22T04:30:00Z
 Deploy: Rollback to Stable Version (4d029b5)
 - Action: Forced rollback to commit 4d029b5 (2025-11-21 08:37:47)
@@ -125,3 +150,25 @@ Deploy: Homepage Refactor & Optimization
 - Styling: Standardized styles using Tailwind and HomeCard wrapper; removed obsolete CSS files.
 - Fix: Added cn utility for class merging.
 - Cleanup: Removed LegacyPropertyGrid.
+
+Timestamp: 2025-11-22T06:00:00Z
+Deploy: Fix SonarLint Issues & Redeploy
+- Fix: Resolved accessibility issues in `Header.tsx` modal (added `role`, `tabIndex`, `onKeyDown`).
+- Fix: Replaced `String.replace` with `String.replaceAll` in `analytics.ts` as per SonarLint recommendation.
+- Goal: Ensure clean build and successful deployment.
+
+Timestamp: 2025-11-22T06:15:00Z
+Deploy: Add Google Auth & Fix Login Redirect
+- Feature: Added Google OAuth login/register buttons to `Login.tsx` and `Register.tsx`.
+- Fix: Implemented `signInWithGoogle` in `auth.ts` using `globalThis.location.origin` for correct redirect URI.
+- Fix: Enhanced error handling and logging in Login/Register forms to debug redirect issues.
+- Context: This addresses user feedback about missing Google registration and login redirect failures.
+
+Timestamp: 2025-11-22T06:30:00Z
+Deploy: Fix SonarLint Issues & Redeploy
+- Fix: Removed duplicate CSS selector in `Header.css`.
+- Fix: Improved accessibility in `Header.tsx` modal (using `div` with `role="dialog"` correctly).
+- Fix: Cleaned up unused imports in `Register.tsx`.
+- Fix: Extracted nested ternary operator in `Register.tsx` for better readability.
+- Fix: Replaced `window` with `globalThis` in `auth.ts`.
+- Goal: Ensure clean build and successful deployment.

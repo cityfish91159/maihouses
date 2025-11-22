@@ -25,11 +25,13 @@ export async function apiFetch<T = unknown>(endpoint: string, options: RequestIn
     if (!h) return {}
     if (h instanceof Headers) {
       const o: Record<string, string> = {}
-      h.forEach((v, k) => (o[k] = v))
+      for (const [k, v] of h) {
+        o[k] = v
+      }
       return o
     }
-    if (Array.isArray(h)) return h.reduce((a, [k, v]) => ((a[k] = v), a), {} as Record<string, string>)
-    return h as Record<string, string>
+    if (Array.isArray(h)) return Object.fromEntries(h)
+    return h
   })()
 
   if (method === 'POST' && !userHeaders['Idempotency-Key'] && !userHeaders['idempotency-key']) {
@@ -81,7 +83,7 @@ export const getCommunities = () => apiFetch<CommunityPreview[]>('/api/v1/commun
 
 export const aiAsk = async (req: AiAskReq, onChunk?: (chunk: string) => void): Promise<ApiResponse<AiAskRes>> => {
   try {
-    const messages = req.messages.map(m => ({ role: m.role as 'user' | 'assistant', content: m.content }))
+    const messages = req.messages.map(m => ({ role: m.role, content: m.content }))
     console.log('🟢 發送訊息:', messages)
     const result = await postLLM(messages, onChunk)
     console.log('🟢 postLLM 回傳:', result)

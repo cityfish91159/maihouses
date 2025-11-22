@@ -45,7 +45,8 @@ export default function HeroAssure() {
         <div className="absolute left-0 top-8 -z-0 hidden h-0.5 w-full bg-border-light md:block"></div>
         
         {/* Connecting Line (Mobile Vertical) - Centered at left-8 (32px) */}
-        <div className="absolute bottom-0 left-8 top-0 -z-0 w-0.5 bg-border-light md:hidden"></div>
+                {/* Connecting Line (Mobile Vertical) - Centered at left-8 (32px) */}
+        <div className="absolute inset-y-0 left-8 -z-0 w-0.5 bg-border-light md:hidden"></div>
 
         <div className="grid grid-cols-1 gap-6 md:grid-cols-6 md:gap-2">
           {HERO_STEPS.map((step, index) => (

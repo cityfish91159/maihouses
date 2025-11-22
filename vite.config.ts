@@ -1,3 +1,4 @@
+/// <reference types="vitest" />
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import checker from 'vite-plugin-checker'
@@ -23,8 +24,8 @@ export default defineConfig({
       overlay: { initialIsOpen: false },
     }),
   ],
-  // Vercel 使用根路徑，GitHub Pages 使用 /maihouses/
-  base: isVercel ? '/' : '/maihouses/',
+  // 統一使用 /maihouses/ 路徑，以配合 vercel.json 的重定向設定
+  base: '/maihouses/',
   build: {
     outDir: 'dist', // Standardize to dist for Vercel
     sourcemap: true, // Enable sourcemaps for debugging

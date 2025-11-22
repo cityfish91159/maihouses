@@ -76,6 +76,17 @@ function tick() {
 
 schedule()
 
+function uuidv4() {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replaceAll(/[xy]/g, (c) => {
+    const r = Math.floor(Math.random() * 16);
+    const v = c === 'x' ? r : ((r & 0x3) | 0x8);
+    return v.toString(16);
+  });
+}
+
 export function trackEvent(event: string, page: string, targetId?: string) {
   if (!event?.trim() || !page?.trim()) {
     console.warn('[UAG] 無效的事件或頁面名稱，已忽略上報')
@@ -89,7 +100,7 @@ export function trackEvent(event: string, page: string, targetId?: string) {
     userId: null,
     ts: new Date().toISOString(),
     meta: { origin: 'gh-pages' },
-    requestId: crypto.randomUUID()
+    requestId: uuidv4()
   }
   
   if (targetId) ev.targetId = targetId

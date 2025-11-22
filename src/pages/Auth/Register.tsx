@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { trackEvent } from '../../services/analytics'
-import { useAuth } from '../../hooks/useAuth'
 import { signUp } from '../../services/auth'
 
 export default function Register() {
@@ -18,7 +17,12 @@ export default function Register() {
     setLoading(true)
     
     try {
-      trackEvent('register_submit', '/auth/register')
+      try {
+        trackEvent('register_submit', '/auth/register')
+      } catch (e) {
+        console.warn('Analytics failed', e)
+      }
+      
       await signUp(email, password)
       setSuccess(true)
       setTimeout(() => navigate('/auth/login'), 2000)
@@ -30,7 +34,7 @@ export default function Register() {
   }
 
   return (
-    <section className="mx-auto mt-8 max-w-md rounded-[var(--r-lg)] bg-white p-6 shadow-[var(--shadow-card)]">
+    <section className="relative z-10 mx-auto mt-8 max-w-md rounded-[var(--r-lg)] bg-white p-6 shadow-[var(--shadow-card)]">
       <h1 className="mb-4 text-xl font-semibold">註冊</h1>
       
       {error && (
@@ -56,6 +60,7 @@ export default function Register() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
+          autoComplete="email"
         />
         <input
           id="register-password"
@@ -68,13 +73,18 @@ export default function Register() {
           onChange={(e) => setPassword(e.target.value)}
           minLength={6}
           required
+          autoComplete="new-password"
         />
         <button 
           type="submit"
           disabled={loading || success}
-          className="w-full rounded-[var(--r-pill)] bg-[var(--brand)] px-4 py-2 text-[var(--brand-fg)] disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full cursor-pointer rounded-[var(--r-pill)] bg-[var(--brand)] px-4 py-2 text-[var(--brand-fg)] disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
         >
-          {loading ? '註冊中...' : success ? '註冊成功' : '註冊'}
+          {(() => {
+            if (loading) return '註冊中...'
+            if (success) return '註冊成功'
+            return '註冊'
+          })()}
         </button>
       </form>
     </section>

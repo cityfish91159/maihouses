@@ -5,7 +5,7 @@ import type { PropertyCard } from '../../../types';
 import { HomeCard } from '../components/HomeCard';
 import { RecommendationCard } from '../components/RecommendationCard';
 
-export default function PropertyGrid({ q }: { q?: string }) {
+export default function PropertyGrid({ q }: { readonly q?: string }) {
   const [items, setItems] = useState<PropertyCard[]>([]);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
@@ -27,11 +27,6 @@ export default function PropertyGrid({ q }: { q?: string }) {
       }
     });
   }, [page, q]);
-
-  const memberCTA = (id: string) => {
-    trackEvent('card_member_cta', '/', id);
-    location.hash = '#/auth/register';
-  };
 
   return (
     <HomeCard>

@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { trackEvent } from '../../services/analytics'
-import { useAuth } from '../../hooks/useAuth'
 import { signIn } from '../../services/auth'
 
 export default function Login() {
@@ -17,18 +16,22 @@ export default function Login() {
     setLoading(true)
     
     try {
-      trackEvent('login_submit', '/auth/login')
+      try {
+        trackEvent('login_submit', '/auth/login')
+      } catch (e) {
+        console.warn('Analytics failed', e)
+      }
+      
       await signIn(email, password)
       navigate('/')
     } catch (err: any) {
       setError(err.message || '登入失敗')
-    } finally {
       setLoading(false)
     }
   }
 
   return (
-    <section className="mx-auto mt-8 max-w-md rounded-[var(--r-lg)] bg-white p-6 shadow-[var(--shadow-card)]">
+    <section className="relative z-10 mx-auto mt-8 max-w-md rounded-[var(--r-lg)] bg-white p-6 shadow-[var(--shadow-card)]">
       <h1 className="mb-4 text-xl font-semibold">登入</h1>
       
       {error && (
@@ -48,6 +51,7 @@ export default function Login() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
+          autoComplete="email"
         />
         <input
           id="login-password"
@@ -59,15 +63,20 @@ export default function Login() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
+          autoComplete="current-password"
         />
         <button 
           type="submit"
           disabled={loading}
-          className="w-full rounded-[var(--r-pill)] bg-[var(--brand)] px-4 py-2 text-[var(--brand-fg)] disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full cursor-pointer rounded-[var(--r-pill)] bg-[var(--brand)] px-4 py-2 text-[var(--brand-fg)] disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
         >
           {loading ? '登入中...' : '登入'}
         </button>
       </form>
+
+      <div className="mt-4 text-center text-sm text-[var(--text-secondary)]">
+        還沒有帳號？ <Link to="/auth/register" className="text-[var(--brand)] hover:underline">立即註冊</Link>
+      </div>
     </section>
   )
 }

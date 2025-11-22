@@ -60,14 +60,11 @@ export default function App() {
               </ErrorBoundary>
             }
           />
-          <Route
-          path="/maihouses"
-          element={
-            <ErrorBoundary>
-              <Home config={config} />
-            </ErrorBoundary>
-          }
-        />
+          {/* 
+            由於 basename 已統一設定為 /maihouses/，
+            此處不需要額外的 /maihouses 路由，
+            否則會變成匹配 /maihouses/maihouses 
+          */}
         <Route
           path="/uag"
           element={
