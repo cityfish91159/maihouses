@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { trackEvent } from '../../services/analytics'
 import { signUp } from '../../services/auth'
 
@@ -34,7 +34,7 @@ export default function Register() {
   }
 
   return (
-    <section className="relative z-10 mx-auto mt-8 max-w-md rounded-[var(--r-lg)] bg-white p-6 shadow-[var(--shadow-card)]">
+    <section className="mx-auto mt-8 max-w-md rounded-[var(--r-lg)] bg-white p-6 shadow-[var(--shadow-card)]">
       <h1 className="mb-4 text-xl font-semibold">註冊</h1>
       
       {error && (
@@ -78,7 +78,7 @@ export default function Register() {
         <button 
           type="submit"
           disabled={loading || success}
-          className="w-full cursor-pointer rounded-[var(--r-pill)] bg-[var(--brand)] px-4 py-2 text-[var(--brand-fg)] disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
+          className="w-full rounded-[var(--r-pill)] bg-[var(--brand)] px-4 py-2 text-[var(--brand-fg)] disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {(() => {
             if (loading) return '註冊中...'
