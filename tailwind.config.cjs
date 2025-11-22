@@ -43,6 +43,7 @@ module.exports = {
       animation: {
         'fadeIn': 'fadeIn 0.3s ease-out forwards',
         'float': 'float 3s ease-in-out infinite',
+        'float-desktop': 'floatDesktop 3s ease-in-out infinite',
       },
       keyframes: {
         fadeIn: {
@@ -52,6 +53,10 @@ module.exports = {
         float: {
           '0%, 100%': { transform: 'translateY(0)' },
           '50%': { transform: 'translateY(-7px)' },
+        },
+        floatDesktop: {
+          '0%, 100%': { transform: 'translateY(0)' },
+          '50%': { transform: 'translateY(-10px)' },
         }
       },
     }
