@@ -214,3 +214,10 @@ Deploy: Restore Google Auth & Fix Login Styles
 - Fix: Added `z-10` and `relative` positioning to forms to ensure buttons are clickable (fixing previous regression).
 - Fix: Updated `auth.ts` to include `signInWithGoogle` with correct redirect URI.
 - Goal: Restore the requested Google Auth functionality and ensure a working login flow.
+
+Timestamp: 2025-11-22T10:00:00Z
+Deploy: Restore Legacy Auth Page with Supabase
+- Feature: Restored `public/auth.html` as the primary login/register page (matching user request for specific design).
+- Refactor: Migrated `auth.html` from Firebase to Supabase Auth to maintain compatibility with the React app.
+- Config: Updated `Header.tsx` to link to `/maihouses/auth.html`.
+- Goal: Restore the "Blue Modal" design while keeping the backend on Supabase.

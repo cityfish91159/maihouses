@@ -746,28 +746,12 @@
   <footer>© 邁房子 2024</footer>
 
   
-<!-- Firebase Auth integration (CDN modular v10) -->
+<!-- Supabase Auth integration -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
-  import { 
-    getAuth, setPersistence, browserLocalPersistence,
-    GoogleAuthProvider, signInWithPopup,
-    createUserWithEmailAndPassword, signInWithEmailAndPassword,
-    sendEmailVerification, onAuthStateChanged
-  } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
-
-  // === Replace with your Firebase web app config ===
-  const firebaseConfig = {
-    apiKey: "AIzaSyCGbukAPBLjDyA2Wa8vAjdZRXo_d2arpHM",
-    authDomain: "maihouses-6ab90.firebaseapp.com",
-    projectId: "maihouses-6ab90",
-    appId: "1:419601150365:web:80071e422e4f957af7bf74"
-  };
-
-  // Init
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  await setPersistence(auth, browserLocalPersistence);
+  const supabaseUrl = 'https://mtqnjmoisrvjofdxhwhi.supabase.co';
+  const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im10cW5qbW9pc3J2am9mZHhod2hpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1MjE1MDEsImV4cCI6MjA3OTA5NzUwMX0.P2o5n09PQChfryl-WLT7v6wRVWhDK6Oik7ajjcwyNrc';
+  const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
   // Helpers
   const qs = (k)=> new URLSearchParams(location.search).get(k);
@@ -775,7 +759,7 @@
   const getLS = (k,d=null)=> { try{const v=localStorage.getItem(k); return v ?? d;}catch(_){return d;} };
   const go = (u)=> location.href = u;
 
-  // Elements (match your DOM)
+  // Elements
   const tabLogin = document.getElementById('tabLogin');
   const tabSignup = document.getElementById('tabSignup');
   const subtitle = document.getElementById('subtitle');
@@ -795,7 +779,6 @@
   const errConfirm = document.getElementById('errConfirm');
   const errTerms = document.getElementById('errTerms');
 
-  const AFTER = '/maihouses/auth/after-login.html?role=consumer';
   let mode = qs('mode') || 'login';
 
   function syncMode(replace=true){
@@ -812,13 +795,12 @@
     replace ? history.replaceState(null,'',url) : history.pushState(null,'',url);
   }
   function clearErrors(){ [errEmail,errPassword,errConfirm,errTerms,errRole].forEach(el=>{ if(el){ el.style.display='none'; }}); }
+  
   function successRedirect(isLogin){
     const ret = qs('return');
-    if(isLogin && ret){ go(ret); return; }
-    // 根據 localStorage 中的角色決定跳轉
-    const role = getLS('mh.auth.role') || 'member';
-    const roleParam = (role === 'agent' || role === '房仲') ? 'agent' : 'consumer';
-    go('/maihouses/auth/after-login.html?role=' + roleParam);
+    if(ret){ go(ret); return; }
+    // Default redirect to home
+    go('/maihouses/');
   }
 
   syncMode(true);
@@ -826,19 +808,20 @@
   tabLogin?.addEventListener('click', ()=>{ mode='login'; syncMode(false); clearErrors(); });
   tabSignup?.addEventListener('click', ()=>{ mode='signup'; syncMode(false); clearErrors(); });
 
-  // Google sign-in (auto links existing account)
-  const provider = new GoogleAuthProvider();
+  // Google sign-in
   btnGoogle?.addEventListener('click', async ()=>{
     try{
-      await signInWithPopup(auth, provider);
-      // On Google sign-in, respect selected role if current mode is signup
-      if(mode==='signup'){
-        const roleSel = (document.querySelector('input[name="role"]:checked')||{}).value || 'member';
-        setLS('mh.auth.role', roleSel);
-      } else if(!getLS('mh.auth.role')) {
-        setLS('mh.auth.role','member');
-      }
-      successRedirect(mode==='login');
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: window.location.origin + '/maihouses/',
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
+        },
+      });
+      if(error) throw error;
     }catch(e){
       console.error(e);
       alert('Google 連線失敗，請再試一次');
@@ -856,7 +839,7 @@
     const isLogin = (mode==='login');
     let ok = true;
     if(!email || !email.includes('@')){ if(errEmail){ errEmail.style.display='block'; } ok=false; }
-    if(!password || password.length<8){ if(errPassword){ errPassword.style.display='block'; } ok=false; }
+    if(!password || password.length<6){ if(errPassword){ errPassword.style.display='block'; } ok=false; }
     if(!isLogin){
       if(password!==confirmPassword){ if(errConfirm){ errConfirm.style.display='block'; } ok=false; }
       if(terms && !terms.checked){ if(errTerms){ errTerms.style.display='block'; } ok=false; }
@@ -867,37 +850,32 @@
 
     try{
       if(isLogin){
-        await signInWithEmailAndPassword(auth, email, password);
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if(error) throw error;
       }else{
-        const { user } = await createUserWithEmailAndPassword(auth, email, password);
-        try{ await sendEmailVerification(user); }catch(_){}
+        const { error } = await supabase.auth.signUp({ email, password });
+        if(error) throw error;
+        alert('註冊成功！請檢查您的信箱以驗證帳號。');
       }
-      // Save selected role on signup; default member on login
+      
+      // Save selected role on signup
       if(!isLogin){
         const roleSel = (document.querySelector('input[name="role"]:checked')||{}).value || 'member';
         setLS('mh.auth.role', roleSel);
-      } else {
-        if(!getLS('mh.auth.role')) setLS('mh.auth.role','member');
       }
+      
       successRedirect(isLogin);
     }catch(e){
       console.error(e);
-      const code = e?.code || '';
-      if(code.includes('email-already-in-use')){
-        if(errEmail){ errEmail.textContent='帳號已存在'; errEmail.style.display='block'; }
-      }else if(code.includes('user-not-found')){
-        if(errEmail){ errEmail.textContent='帳號不存在'; errEmail.style.display='block'; }
-      }else if(code.includes('wrong-password')){
-        if(errPassword){ errPassword.textContent='密碼錯誤'; errPassword.style.display='block'; }
-      }else{
-        if(errEmail){ errEmail.textContent='登入失敗，請稍後再試'; errEmail.style.display='block'; }
+      const msg = e.message || '';
+      if(msg.includes('Invalid login credentials')){
+         if(errPassword){ errPassword.textContent='帳號或密碼錯誤'; errPassword.style.display='block'; }
+      } else if(msg.includes('User already registered')){
+         if(errEmail){ errEmail.textContent='帳號已存在'; errEmail.style.display='block'; }
+      } else {
+         if(errEmail){ errEmail.textContent='操作失敗：' + msg; errEmail.style.display='block'; }
       }
     }
-  });
-
-  // Optional: auto-redirect if already signed-in (keep user on /auth if needed)
-  onAuthStateChanged(auth, (user)=>{
-    // 可在這裡讀 user.email 顯示，但 MVP 可先不動
   });
 </script>
 
