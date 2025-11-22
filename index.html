@@ -11,8 +11,14 @@
     <link rel="dns-prefetch" href="https://api.openai.com" />
     
     <title>邁房子｜讓家,不只是地址</title>
-    <script type="module" crossorigin src="/maihouses/assets/index-Domx94MA.js"></script>
-    <link rel="stylesheet" crossorigin href="/maihouses/assets/index-Ds-DL9xK.css">
+    <script>
+      // Fix routing issue: Redirect /uag to /maihouses/uag to match basename
+      if (globalThis.window.location.pathname === '/uag') {
+        globalThis.window.location.replace('/maihouses/uag' + globalThis.window.location.search);
+      }
+    </script>
+    <script type="module" crossorigin src="/maihouses/assets/index-D-sREixm.js"></script>
+    <link rel="stylesheet" crossorigin href="/maihouses/assets/index-HHEHWZHy.css">
   </head>
   <body>
     <div id="root"></div>
