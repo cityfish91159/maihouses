@@ -40,8 +40,7 @@ export default function Home({ config }: { readonly config: AppConfig & RuntimeO
     <>
       <Header />
       <WarmWelcomeBar />
-      {/* Blue background layer for top section */}
-      <div className="absolute left-0 top-0 -z-10 h-[420px] w-full bg-gradient-to-b from-brand to-brand-light" />
+      {/* Blue background layer removed as it is now part of the Header component */}
       
       {banner && (
         <div className="mx-auto mt-4 max-w-container rounded-md bg-yellow-500 p-3 text-sm text-white">{banner}</div>
