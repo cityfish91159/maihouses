@@ -5,11 +5,11 @@
 <meta content="width=device-width, initial-scale=1, viewport-fit=cover" name="viewport"/>
 <title>邁房子｜個人信息流（MVP・消費者版 v4.2）</title>
 <meta name="description" content="Profile 卡移除「我的」大按鈕；統計膠囊改為綠色樣式。Header 維持：我的（下拉）｜通知｜訊息。"/>
-<link rel="stylesheet" href="/maihouses/css/desktop-fixpack-v2.css">
 <style>
 :root{
-  --ink:#0b214a; --muted:#6c7b91; --brand:#00385a; --brand-2:#33607b; --line:#e6edf7; --card:#fff;
-  --bg:#f4f7fb; --nav-h:56px; --safe-b:env(safe-area-inset-bottom);
+  --ink:#0b214a; --muted:#6c7b91; --brand:#1749d7; --brand-2:#4aa1ff; --line:#e6edf7; --card:#fff;
+  --bg1:#f6f9ff; --bg2:#eef3ff;
+  --pill-border:#cbead4; --pill-bg1:#f3fff8; --pill-bg2:#e8faef; --pill-ink:#0e8d52;
 }
 *{box-sizing:border-box}
 html,body{margin:0;background:linear-gradient(180deg,var(--bg1),var(--bg2));color:var(--ink);
@@ -69,7 +69,7 @@ html,body{margin:0;background:linear-gradient(180deg,var(--bg1),var(--bg2));colo
 .composer .btn{border:1px solid var(--line);border-radius:8px;background:#fff;padding:8px 12px;font-weight:800}
 
 
-@media (max-width: 375px){ .links a[href="#my-community"]{ margin-left:20px; } }
+@media (max-width: 375px){ .links a[href="#my-community"]{ margin-left: 0; } }
 /* 帖文 */
 .post{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:10px}
 .head{display:flex;gap:10px;align-items:center}
@@ -82,17 +82,17 @@ html,body{margin:0;background:linear-gradient(180deg,var(--bg1),var(--bg2));colo
 .tag.ok{border-color:#cbead4;color:#107a39;background:#e8faef}
 .actions{display:flex;gap:8px}
 .btn{border:1px solid var(--line);border-radius:8px;background:#fff;padding:8px 12px;font-weight:800}
-.btn.primary{background:#00385a;color:#fff;border-color:#00385a}
+.btn.primary{background:#1749d7;color:#fff;border-color:#1749d7}
 .photo{width:100%;height:auto;border-radius:10px;border:1px solid var(--line);background:#f5f8ff}
 
 /* 黏底 CTA */
 .sticky{position:fixed;left:0;right:0;bottom:0;background:rgba(255,255,255,.9);backdrop-filter:blur(8px);
   border-top:1px solid var(--line);padding:10px;display:flex;gap:10px;justify-content:center}
-.sticky .cta{border:1.5px solid var(--brand);border-radius:999px;padding:10px 14px;font-weight:900;background:#fff;color:#00385a}
-.sticky .cta.primary{background:#00385a;color:#fff}
+.sticky .cta{border:1.5px solid var(--brand);border-radius:999px;padding:10px 14px;font-weight:900;background:#fff;color:#1749d7}
+.sticky .cta.primary{background:#1749d7;color:#fff}
 
 /* 定位調整：將個人卡中的「查看我的社區牆」膠囊，平行往右移 30px */
-.links a[href="#my-community"]{ margin-left: 60px; }
+.links a[href="#my-community"]{ margin-left: 0; }
 
 /* MVP add-ons: non-visual, robustness tweaks */
 .composer .btn{
@@ -106,6 +106,23 @@ html,body{margin:0;background:linear-gradient(180deg,var(--bg1),var(--bg2));colo
 /* GPU hint for sticky zones */
 .topbar, .sticky { transform: translateZ(0); will-change: transform; }
 
+
+/* 客戶池摘要卡（統一膠囊尺寸） */
+#uag-summary .tags{display:flex;flex-wrap:wrap;gap:8px 10px;margin-top:6px}
+#uag-summary .tags .tag{font-size:14px;padding:6px 12px;border-radius:999px;line-height:1.1}
+#uag-summary .tags .tag.ok{border-color:#cbead4;background:#e8faef;color:#107a39}
+#uag-summary .actions .btn.primary{font-size:16px;padding:10px 14px;border-radius:14px}
+
+/* 客戶池摘要卡：緊湊網格版本（僅作用於 #uag-summary） */
+#uag-summary .body{padding-top:10px}
+#uag-summary .metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+#uag-summary .metric{display:flex;align-items:center;justify-content:center;height:34px;border:1px solid var(--line);border-radius:999px;font-size:14px;font-weight:600}
+#uag-summary .metric.ok{background:#e8faef;border-color:#cbead4;color:#107a39}
+#uag-summary .actions{display:flex;justify-content:flex-end}
+#uag-summary .actions .btn.primary{font-size:14px;padding:8px 12px;border-radius:12px}
+@media (min-width:480px){
+  #uag-summary .metrics{grid-template-columns:repeat(6,minmax(0,1fr))}
+}
 </style>
 </head>
 <body>
@@ -132,10 +149,10 @@ html,body{margin:0;background:linear-gradient(180deg,var(--bg1),var(--bg2));colo
 <main class="page">
 <section class="profile-card">
     <div class="row">
-      <div class="avatar">你</div>
+      <div class="avatar">游</div>
       <div class="hgroup">
-        <h3>Mike</h3>
-        <p>來自【惠宇上晴社區】｜<span class="level">黃金住戶</span></p>
+        <h3>游杰倫</h3>
+        <p>來自21世紀河南店｜<span class="level">黃金住戶</span> <span class="level">認證房仲</span></p>
       </div>
     </div>
     <div class="stats">
@@ -144,14 +161,186 @@ html,body{margin:0;background:linear-gradient(180deg,var(--bg1),var(--bg2));colo
       <span class="pill">被感謝 73</span>
     </div>
     <!-- 主要按鈕：只保留「查看我的社區牆」 -->
-    <div class="links">
-      <a class="link" href="#my-community">🧱 查看我的社區牆</a>
-    </div></section>
+    <div class="links"><a href="#agent" class="btn primary">🏷️ 房仲專區</a>
+  <a href="#my-community" class="btn">🧱 前往我的社區牆</a></div>
+  </section>
 <div class="composer">
     <div class="avatar">你</div>
     <input placeholder="分享社區想法、上傳物件或提出提問…"/>
     <button class="btn">發佈</button>
   </div>
+
+  
+
+  <!-- 安心留痕｜帶看完成 -->
+  <!-- 客戶池摘要卡 -->
+<article class="post" id="uag-summary">
+  <div class="head">
+    <div class="avatar">客</div>
+    <div class="hgroup">
+      <b>客戶池摘要</b>
+      <div class="sub">UAG 精準獲客 · 即時</div>
+    </div>
+  </div>
+  <div class="body"><div class="metrics">
+      <div class="metric ok">S 2</div>
+      <div class="metric ok">A 1</div>
+      <div class="metric">B 0</div>
+      <div class="metric">未回覆 1</div>
+      <div class="metric">逾時 0</div>
+      <div class="metric">近7日新增 3</div>
+    </div></div>
+  <div class="actions">
+    <a href="#workbench" class="btn primary">查看全部（進工作臺）</a>
+  </div>
+</article>
+<article class="post">
+    <div class="head">
+      <div class="avatar">安</div>
+      <div class="hgroup">
+        <b>安心留痕</b>
+        <div class="sub">帶看完成 · 惠宇上晴 12F A2 · 剛剛</div>
+      </div>
+    </div>
+    <div class="body">
+      <p><b>11:30–12:05 帶看完成。</b>簽到、位置軌跡、現場照片 3 張與對話摘要已留存。</p>
+      <p><b>憑證號 MJ-2025-11-10-0007。</b>僅你與 買方 可見（個資受保護）。</p>
+      <div class="tags">
+        <span class="tag ok">帶看完成</span>
+        <span class="tag">留痕憑證</span>
+        <span class="tag">僅雙方可見</span>
+      </div>
+    </div>
+    <div class="actions">
+      <button class="btn">👍 讚</button>
+      <button class="btn">💬 回覆</button>
+      <button class="btn primary">➡️ 看詳情</button>
+    </div>
+  </article>
+
+  <!-- 安心留痕｜斡旋提出 -->
+  <article class="post">
+    <div class="head">
+      <div class="avatar">安</div>
+      <div class="hgroup">
+        <b>安心留痕</b>
+        <div class="sub">斡旋提出 · 惠宇上晴 12F A2 · 30 分鐘前</div>
+      </div>
+    </div>
+    <div class="body">
+      <p><b>買方已提交斡旋金，文件與對話摘要已留存。</b>涉及個資之內容已自動遮罩。</p>
+      <p><b>憑證號 MJ-2025-11-10-0008。</b>僅你與 買方 可見。</p>
+      <div class="tags">
+        <span class="tag ok">斡旋進度</span>
+        <span class="tag">留痕憑證</span>
+        <span class="tag">僅雙方可見</span>
+      </div>
+    </div>
+    <div class="actions">
+      <button class="btn">👍 讚</button>
+      <button class="btn">💬 回覆</button>
+      <button class="btn primary">➡️ 看詳情</button>
+    </div>
+  </article>
+
+  <!-- 安心留痕｜見面談預約 -->
+  <article class="post">
+    <div class="head">
+      <div class="avatar">安</div>
+      <div class="hgroup">
+        <b>安心留痕</b>
+        <div class="sub">見面談預約 · 惠宇上晴 12F A2 · 2 小時前</div>
+      </div>
+    </div>
+    <div class="body">
+      <p><b>已排定見面談時間。</b>行程、地點與參與人已留存，會前資料同步至雙方。</p>
+      <p><b>憑證號 MJ-2025-11-10-0009。</b>僅你與 買方 可見。</p>
+      <div class="tags">
+        <span class="tag ok">見面談</span>
+        <span class="tag">行程已排定</span>
+        <span class="tag">僅雙方可見</span>
+      </div>
+    </div>
+    <div class="actions">
+      <button class="btn">👍 讚</button>
+      <button class="btn">💬 回覆</button>
+      <button class="btn primary">➡️ 看詳情</button>
+    </div>
+  </article>
+  <!-- UAG 精準獲客：S×2 / A×1 -->
+  <!-- UAG 精準獲客（S×2／A×1） START -->
+<article class="post">
+  <div class="head">
+    <div class="avatar">U</div>
+    <div class="hgroup">
+      <b>UAG 精準獲客</b>
+      <div class="sub">S級 · 剛剛 · 來自 SmartAsk</div>
+    </div>
+  </div>
+  <div class="body">
+    <p><b>預測需求：</b>單元二三房｜總價 1,600–1,900 萬｜願看 12F 以上。</p>
+    <div class="tags">
+      <span class="tag">同商圈重訪 ×3</span>
+      <span class="tag">收藏等級 F3</span>
+      <span class="tag">商圈停留 310s</span>
+      <span class="tag ok">提出問題</span>
+    </div>
+  </div>
+  <div class="actions">
+    <span class="tag ok">已傳訊</span>
+    <button class="btn">回覆</button>
+    <button class="btn">設提醒</button>
+  </div>
+</article>
+
+<article class="post">
+  <div class="head">
+    <div class="avatar">U</div>
+    <div class="hgroup">
+      <b>UAG 精準獲客</b>
+      <div class="sub">S級 · 5 分鐘前 · 來自 社區牆互動</div>
+    </div>
+  </div>
+  <div class="body">
+    <p><b>預測需求：</b>南屯 30 坪｜電梯大樓｜預算 2,000 萬內。</p>
+    <div class="tags">
+      <span class="tag">同商圈重訪 ×2</span>
+      <span class="tag">收藏等級 F4</span>
+      <span class="tag">商圈停留 265s</span>
+      <span class="tag ok">已約看 11/12（四）18:30</span>
+    </div>
+  </div>
+  <div class="actions">
+    <button class="btn">回覆</button>
+    <button class="btn">設提醒</button>
+  </div>
+</article>
+
+<article class="post">
+  <div class="head">
+    <div class="avatar">U</div>
+    <div class="hgroup">
+      <b>UAG 精準獲客</b>
+      <div class="sub">A級 · 10 分鐘前 · 來自 名片匯入</div>
+    </div>
+  </div>
+  <div class="body">
+    <p><b>預測需求：</b>青海商圈｜景觀兩房｜可接受 15 年屋齡。</p>
+    <div class="tags">
+      <span class="tag">同商圈重訪 ×2</span>
+      <span class="tag">收藏等級 F2</span>
+      <span class="tag">商圈停留 120s</span>
+      <span class="tag warn">待回覆</span>
+    </div>
+  </div>
+  <div class="actions">
+    <span class="tag">追蹤中</span>
+    <button class="btn">回覆</button>
+    <button class="btn">設提醒</button>
+  </div>
+</article>
+<!-- UAG 精準獲客（S×2／A×1） END -->
+
 <article class="post">
     <div class="head">
       <div class="avatar">安</div>
@@ -162,7 +351,7 @@ html,body{margin:0;background:linear-gradient(180deg,var(--bg1),var(--bg2));colo
     </div>
     <div class="body">
       <p><b>11:30–12:05 帶看完成。</b>簽到、位置軌跡、現場照片 3 張與對話摘要已留存。</p>
-      <p><b>憑證號 MJ-2025-11-10-0007。</b>僅你與 <b>王仲</b> 可見（個資受保護）。</p>
+      <p><b>憑證號 MJ-2025-11-10-0007。</b>僅你與 買方 可見（個資受保護）。</p>
       <div class="tags">
         <span class="tag ok">看屋完成</span>
         <span class="tag">留痕憑證</span>
