@@ -810,9 +810,23 @@
     
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (user && user.user_metadata && user.user_metadata.role) {
-          role = user.user_metadata.role;
-          setLS('mh.auth.role', role);
+      if (user) {
+          // 1. Check metadata
+          if (user.user_metadata && user.user_metadata.role) {
+              role = user.user_metadata.role;
+          } 
+          // 2. If no metadata role, check pending role from localStorage (for Google Signup)
+          else {
+              const pending = getLS('mh.auth.pending_role');
+              if(pending){
+                  role = pending;
+                  // Try to update metadata for future
+                  supabase.auth.updateUser({ data: { role: pending } });
+                  localStorage.removeItem('mh.auth.pending_role');
+              }
+          }
+          
+          if(role) setLS('mh.auth.role', role);
       }
     } catch(e) { console.error('Error fetching user role', e); }
     
@@ -830,13 +844,29 @@
   tabLogin?.addEventListener('click', ()=>{ mode='login'; syncMode(false); clearErrors(); });
   tabSignup?.addEventListener('click', ()=>{ mode='signup'; syncMode(false); clearErrors(); });
 
+  // Listen for auth state changes (Handle OAuth Redirect)
+  supabase.auth.onAuthStateChange((event, session) => {
+    if (event === 'SIGNED_IN' && session) {
+       // Avoid redirect loop if we are just loading the page and not in a special flow?
+       // But this is the login page. If you are signed in, you should go to the app.
+       successRedirect(true);
+    }
+  });
+
   // Google sign-in
   btnGoogle?.addEventListener('click', async ()=>{
     try{
+      // Capture selected role if in signup mode
+      if(mode === 'signup'){
+          const roleSel = (document.querySelector('input[name="role"]:checked')||{}).value;
+          if(roleSel) setLS('mh.auth.pending_role', roleSel);
+      }
+
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: window.location.origin + '/maihouses/個人信息流_consumer.html',
+          // Redirect back to this page to handle role routing via onAuthStateChange
+          redirectTo: window.location.href.split('?')[0],
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',
