@@ -801,11 +801,28 @@
   }
   function clearErrors(){ [errEmail,errPassword,errConfirm,errTerms,errRole].forEach(el=>{ if(el){ el.style.display='none'; }}); }
   
-  function successRedirect(isLogin){
+  async function successRedirect(isLogin){
     const ret = qs('return');
     if(ret){ go(ret); return; }
-    // Default redirect to home
-    go('/maihouses/');
+
+    // Determine role
+    let role = getLS('mh.auth.role');
+    
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user && user.user_metadata && user.user_metadata.role) {
+          role = user.user_metadata.role;
+          setLS('mh.auth.role', role);
+      }
+    } catch(e) { console.error('Error fetching user role', e); }
+    
+    role = role || 'member'; // Default to consumer
+
+    if (role === 'agent') {
+        go('/maihouses/個人信息流_agent.html');
+    } else {
+        go('/maihouses/個人信息流_consumer.html');
+    }
   }
 
   syncMode(true);
@@ -819,7 +836,7 @@
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: window.location.origin + '/maihouses/',
+          redirectTo: window.location.origin + '/maihouses/個人信息流_consumer.html',
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',
@@ -858,18 +875,24 @@
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if(error) throw error;
       }else{
-        const { error } = await supabase.auth.signUp({ email, password });
+        const role = (document.querySelector('input[name="role"]:checked')||{}).value || 'member';
+        const { error } = await supabase.auth.signUp({ 
+          email, 
+          password,
+          options: { data: { role } } 
+        });
         if(error) throw error;
         alert('註冊成功！請檢查您的信箱以驗證帳號。');
+        setLS('mh.auth.role', role);
       }
       
-      // Save selected role on signup
+      // Save selected role on signup (already handled above for signup, but good for redundancy)
       if(!isLogin){
         const roleSel = (document.querySelector('input[name="role"]:checked')||{}).value || 'member';
         setLS('mh.auth.role', roleSel);
       }
       
-      successRedirect(isLogin);
+      await successRedirect(isLogin);
     }catch(e){
       console.error(e);
       const msg = e.message || '';
