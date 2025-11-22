@@ -187,3 +187,10 @@ Deploy: Fix SonarLint Issues & Redeploy
 - Fix: Cleaned up unused imports in `Register.tsx`.
 - Fix: Replaced `window` with `globalThis` in `auth.ts`.
 - Goal: Ensure clean build and successful deployment.
+
+Timestamp: 2025-11-22T08:00:00Z
+Deploy: Revert to Stable Login Logic
+- Revert: Removed recent CSS fixes (z-10, relative) that user reported as problematic.
+- Fix: Restored `useAuth` hook and `useEffect` redirect logic in `Login.tsx` (the "fix from a few days ago").
+- Fix: Cleaned up `Register.tsx` to match stable state.
+- Goal: Restore functional login redirect without introducing new UI regressions.
