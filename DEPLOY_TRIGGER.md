@@ -194,3 +194,9 @@ Deploy: Revert to Stable Login Logic
 - Fix: Restored `useAuth` hook and `useEffect` redirect logic in `Login.tsx` (the "fix from a few days ago").
 - Fix: Cleaned up `Register.tsx` to match stable state.
 - Goal: Restore functional login redirect without introducing new UI regressions.
+
+Timestamp: 2025-11-22T08:30:00Z
+Deploy: Fix Build Error (TS2550 & TS7006)
+- Fix: Replaced `replaceAll` with `replace` in `analytics.ts` to resolve TS2550 (target library compatibility).
+- Fix: Added type annotation `(c: string)` to callback parameter to resolve TS7006 (implicit any).
+- Goal: Fix build failure and ensure successful deployment.
