@@ -677,8 +677,8 @@
           
           <!-- Role Select (Only for Signup) -->
           <div class="field full" id="roleField" style="display:none">
-            <label>選擇身分</label>
-            <div style="display:flex; gap:12px; flex-wrap:wrap;">
+            <label id="roleLabel">選擇身分</label>
+            <div style="display:flex; gap:12px; flex-wrap:wrap;" aria-labelledby="roleLabel">
               <label style="display:flex;align-items:center;gap:8px;padding:10px 14px;border:1px solid var(--border);border-radius:12px;cursor:pointer;user-select:none;">
                 <input type="radio" name="role" value="member" checked style="accent-color: var(--brand);" />
                 <span>我是消費者</span>
@@ -788,18 +788,38 @@
 
   function syncMode(replace=true){
     const isLogin = mode === 'login';
+    
+    // Update UI classes
     tabLogin?.classList.toggle('active', isLogin);
     tabSignup?.classList.toggle('active', !isLogin);
+    
+    // Update text content
     if(subtitle) subtitle.textContent = isLogin ? '回到你的邁房子' : '30 秒建立新帳號';
     if(googleText) googleText.textContent = isLogin ? '使用 Google 登入' : '用 Google 快速註冊';
-    if(confirmField) confirmField.style.display = isLogin ? 'none' : 'block';
+    
+    // Toggle visibility
+    const displayStyle = isLogin ? 'none' : 'block';
+    if(confirmField) confirmField.style.display = displayStyle;
+    if(roleField) roleField.style.display = displayStyle;
+    
     if(termsField) termsField.style.display = isLogin ? 'none' : 'flex';
-    if(roleField) roleField.style.display = isLogin ? 'none' : 'block';
     if(forgotLink) forgotLink.style.display = isLogin ? 'inline-block' : 'none';
-    const url = new URL(location.href); url.searchParams.set('mode', mode);
-    replace ? history.replaceState(null,'',url) : history.pushState(null,'',url);
+    
+    // Update URL
+    const url = new URL(location.href); 
+    url.searchParams.set('mode', mode);
+    if (replace) {
+      history.replaceState(null,'',url);
+    } else {
+      history.pushState(null,'',url);
+    }
   }
-  function clearErrors(){ [errEmail,errPassword,errConfirm,errTerms,errRole].forEach(el=>{ if(el){ el.style.display='none'; }}); }
+  
+  function clearErrors(){ 
+    for (const el of [errEmail,errPassword,errConfirm,errTerms,errRole]) {
+      if(el){ el.style.display='none'; }
+    }
+  }
   
   async function successRedirect(isLogin){
     const ret = qs('return');
@@ -828,7 +848,10 @@
           
           if(role) setLS('mh.auth.role', role);
       }
-    } catch(e) { console.error('Error fetching user role', e); }
+    } catch(e) { 
+      // Log error but continue with default role or stored role
+      console.error('Error fetching user role', e); 
+    }
     
     role = role || 'member'; // Default to consumer
 
@@ -847,8 +870,6 @@
   // Listen for auth state changes (Handle OAuth Redirect)
   supabase.auth.onAuthStateChange((event, session) => {
     if (event === 'SIGNED_IN' && session) {
-       // Avoid redirect loop if we are just loading the page and not in a special flow?
-       // But this is the login page. If you are signed in, you should go to the app.
        successRedirect(true);
     }
   });
@@ -890,14 +911,33 @@
 
     const isLogin = (mode==='login');
     let ok = true;
-    if(!email || !email.includes('@')){ if(errEmail){ errEmail.style.display='block'; } ok=false; }
-    if(!password || password.length<6){ if(errPassword){ errPassword.style.display='block'; } ok=false; }
-    if(!isLogin){
-      if(password!==confirmPassword){ if(errConfirm){ errConfirm.style.display='block'; } ok=false; }
-      if(terms && !terms.checked){ if(errTerms){ errTerms.style.display='block'; } ok=false; }
-      const role = (document.querySelector('input[name="role"]:checked')||{}).value;
-      if(!role){ if(errRole){ errRole.style.display='block'; } ok=false; }
+    
+    // Validation
+    if(!email || !email.includes('@')){ 
+      if(errEmail){ errEmail.style.display='block'; } 
+      ok=false; 
     }
+    if(!password || password.length<6){ 
+      if(errPassword){ errPassword.style.display='block'; } 
+      ok=false; 
+    }
+    
+    if(!isLogin){
+      if(password!==confirmPassword){ 
+        if(errConfirm){ errConfirm.style.display='block'; } 
+        ok=false; 
+      }
+      if(terms && !terms.checked){ 
+        if(errTerms){ errTerms.style.display='block'; } 
+        ok=false; 
+      }
+      const role = (document.querySelector('input[name="role"]:checked')||{}).value;
+      if(!role){ 
+        if(errRole){ errRole.style.display='block'; } 
+        ok=false; 
+      }
+    }
+    
     if(!ok) return;
 
     try{
