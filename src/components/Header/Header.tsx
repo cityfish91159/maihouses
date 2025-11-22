@@ -63,6 +63,7 @@ export default function Header({ onOpenAIStudio }: { onOpenAIStudio?: () => void
       </header>
 
       {/* Hero Section */}
+            {/* Hero Section */}
       <div className="relative bg-brand-50 border-b border-brand-100/50">
         
         {/* Content Container */}
@@ -72,10 +73,10 @@ export default function Header({ onOpenAIStudio }: { onOpenAIStudio?: () => void
           <div className="max-w-3xl mx-auto relative">
             
             {/* Mascot & Bubble Group */}
-            <div className="absolute -top-[44px] right-[5%] md:right-[10%] z-0 pointer-events-none select-none animate-float md:animate-float-desktop">
+            <div className="absolute top-0 md:-top-[44px] right-[5%] md:right-[10%] z-10 md:z-0 pointer-events-none select-none md:animate-float-desktop">
                  
                  {/* Speech Bubble */}
-                 <div className="absolute bottom-[100%] right-[55%] w-[170px] whitespace-normal md:w-auto md:max-w-none md:whitespace-nowrap md:bottom-[94%] md:right-[65%] bg-white border-2 border-brand-100 px-5 py-3 rounded-2xl rounded-br-none shadow-lg animate-fadeIn origin-bottom-right">
+                 <div className="absolute bottom-[100%] right-[55%] w-[170px] whitespace-normal md:w-auto md:max-w-none md:whitespace-nowrap md:bottom-[94%] md:right-[65%] bg-white border-2 border-brand-100 px-5 py-3 rounded-2xl rounded-br-none shadow-lg animate-fadeIn origin-bottom-right animate-float md:animate-none">
                     <p className="text-xs md:text-sm font-bold text-ink-700 leading-relaxed text-left">
                         買房這麼大的事，先到 <span className="text-brand-700 font-black">邁鄰居</span>，為未來的家查口碑、找評價，最放心！
                     </p>
@@ -84,7 +85,7 @@ export default function Header({ onOpenAIStudio }: { onOpenAIStudio?: () => void
                  </div>
 
                  {/* Mascot SVG */}
-                 <div className="w-20 h-20 md:w-24 md:h-24 relative z-10">
+                 <div className="w-20 h-20 md:w-24 md:h-24 relative z-10 animate-float md:animate-none">
                      <svg viewBox="0 0 200 240" className="w-full h-full drop-shadow-sm">
                        {/* M-Antenna */}
                        <path d="M 85 40 L 85 15 L 100 30 L 115 15 L 115 40" 
