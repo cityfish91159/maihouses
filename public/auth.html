@@ -883,10 +883,8 @@
           if(roleSel) setLS('mh.auth.pending_role', roleSel);
       }
 
-      // Determine redirect URL based on environment
-      // If we are on localhost, use origin. If on Vercel, use origin.
-      // The issue is likely that Supabase is configured to redirect to localhost:3000 by default
-      // We need to be explicit.
+      // Determine redirect URL
+      // Use dynamic origin to support both localhost and production
       const redirectUrl = window.location.origin + '/maihouses/auth.html';
 
       const { error } = await supabase.auth.signInWithOAuth({

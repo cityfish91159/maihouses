@@ -278,7 +278,7 @@ html,body{margin:0;background:linear-gradient(180deg,var(--bg1),var(--bg2));colo
       </div>
     </div>
     <div class="body">
-      <p>🏡 惠宇青鳥 C棟邊間三房｜稀有釋出，學區步行可達。</p>
+      <p>🏡 惠宇青鳥 C棠邊間三房｜稀有釋出，學區步行可達。</p>
       <img loading="lazy" class="photo" alt="房源照片3" src="https://source.unsplash.com/1200x800/?apartment,exterior,building"/>
       <div class="sub">AI 體檢：通風佳｜學區近｜單價合理</div>
     </div>
@@ -292,175 +292,194 @@ html,body{margin:0;background:linear-gradient(180deg,var(--bg1),var(--bg2));colo
 </div>
 
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
-// ==== MVP behavior layer (no visual changes) ====
 (function(){
-  const $ = (sel, root=document) => root.querySelector(sel);
-  const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
-
-  // 1) Event delegation for like / reply / details menus / notifications
-  document.addEventListener('click', function(e){
-    const btn = e.target.closest('button, a');
-    if(!btn) return;
-
-    // Like toggle
-    if(btn.classList.contains('btn') && /讚/.test(btn.textContent)){
-      e.preventDefault();
-      const liked = btn.getAttribute('aria-pressed') === 'true';
-      btn.setAttribute('aria-pressed', liked ? 'false' : 'true');
-      // lightweight feedback without new UI
-      const was = btn.textContent;
-      if(!liked){
-        btn.dataset._orig = was;
-        btn.textContent = '✅ 已讚';
-      }else{
-        btn.textContent = btn.dataset._orig || '👍 讚';
+  // Supabase Auth Check
+  const supabaseUrl = 'https://mtqnjmoisrvjofdxhwhi.supabase.co';
+  const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im10cW5qbW9pc3J2am9mZHhod2hpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1MjE1MDEsImV4cCI6MjA3OTA5NzUwMX0.P2o5n09PQChfryl-WLT7v6wRVWhDK6Oik7ajjcwyNrc';
+  
+  if (typeof window.supabase !== 'undefined') {
+    const sb = window.supabase.createClient(supabaseUrl, supabaseKey);
+    sb.auth.getSession().then(({ data: { session } }) => {
+      if (!session) {
+        // Not logged in, redirect to login
+        window.location.href = '/maihouses/auth.html?return=' + encodeURIComponent(window.location.pathname);
       }
-      // throttle: ignore rapid double clicks
-      btn.disabled = true;
-      setTimeout(()=>{ btn.disabled = false; }, 300);
-      return;
-    }
+    });
+  } else {
+     console.warn('Supabase client not loaded');
+  }
 
-    // Publish handler (Composer)
-    if(btn.closest('.composer') && btn.classList.contains('btn')){
-      e.preventDefault();
-      const input = $('.composer input, .composer textarea');
-      if(!input) return;
-      const raw = input.value || '';
-      const sanitized = raw.replace(/[<>&"']/g, s => ({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;","'":"&#39;"}[s]));
-      // Minimal payload (console only; no backend)
-      const payload = {
-        content: sanitized.trim(),
-        userId: 'me',
-        communityId: 'default',
-        createdAt: new Date().toISOString(),
-        visibility: 'community',
-        source: 'mvp-v4.2'
-      };
-      if(!payload.content){
-        // non-intrusive feedback
-        console.log('內容為空，未發佈。');
+  // ==== MVP behavior layer (no visual changes) ====
+  (function(){
+    const $ = (sel, root=document) => root.querySelector(sel);
+    const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+
+    // 1) Event delegation for like / reply / details menus / notifications
+    document.addEventListener('click', function(e){
+      const btn = e.target.closest('button, a');
+      if(!btn) return;
+
+      // Like toggle
+      if(btn.classList.contains('btn') && /讚/.test(btn.textContent)){
+        e.preventDefault();
+        const liked = btn.getAttribute('aria-pressed') === 'true';
+        btn.setAttribute('aria-pressed', liked ? 'false' : 'true');
+        // lightweight feedback without new UI
+        const was = btn.textContent;
+        if(!liked){
+          btn.dataset._orig = was;
+          btn.textContent = '✅ 已讚';
+        }else{
+          btn.textContent = btn.dataset._orig || '👍 讚';
+        }
+        // throttle: ignore rapid double clicks
+        btn.disabled = true;
+        setTimeout(()=>{ btn.disabled = false; }, 300);
         return;
       }
-      console.log('發佈成功（本地占位）：', payload);
-      try{ localStorage.removeItem('composerDraft:v4.2'); }catch{}
-      input.value='';
-      alert('發佈成功（示意，未上傳）');
-      return;
-    }
 
-    // Notifications/message placeholder
-    if(btn.classList.contains('icon') && /通知|訊息/.test(btn.textContent)){
-      e.preventDefault();
-      alert(btn.textContent.trim() + '：功能開發中（示意）。');
-      return;
-    }
-  }, {passive:true});
-
-  // 2) Composer progressive disclosure (expand on focus, collapse on blur)
-  (function(){
-    const comp = $('.composer');
-    if(!comp) return;
-    const input = $('.composer input, .composer textarea', comp);
-    if(!input) return;
-    function expand(){ comp.classList.add('expanded'); }
-    function collapse(){ if(!input.value) comp.classList.remove('expanded'); }
-    input.addEventListener('focus', expand);
-    input.addEventListener('blur', collapse);
-  })();
-
-  // 3) Local draft autosave (60s debounce)
-  (function(){
-    const input = document.querySelector('.composer input, .composer textarea');
-    if(!input) return;
-    const KEY = 'composerDraft:v4.2';
-    // restore
-    try{
-      const v = localStorage.getItem(KEY);
-      if(v) input.value = v;
-    }catch{}
-    let t=null;
-    function save(){
-      try{
-        localStorage.setItem(KEY, input.value || '');
-      }catch{}
-    }
-    input.addEventListener('input', ()=>{
-      clearTimeout(t);
-      t = setTimeout(save, 60000);
-    });
-  })();
-
-  // 4) Add loading="lazy" to images (safety if HTML missed)
-  (function(){
-    $$('img:not([loading])').forEach(img => img.loading = 'lazy');
-  })();
-
-  // 5) Sorting toggle (?sort=reco) — purely local, default off
-  (function(){
-    const params = new URLSearchParams(location.search);
-    if(params.get('sort') !== 'reco') return;
-    const container = document.querySelector('main.page');
-    if(!container) return;
-    const items = Array.from(container.querySelectorAll('article.post'));
-    if(items.length < 2) return;
-    function score(el){
-      const txt = el.textContent || '';
-      let s = 0;
-      // recency heuristic
-      if(/剛剛|分鐘前/.test(txt)) s += 0.5;
-      // locality (community token in your sample)
-      if(/惠宇上晴/.test(txt)) s += 0.2;
-      // event weight
-      if(/降價|售出|上新/.test(txt)) s += 0.3;
-      return s;
-      }
-    items.sort((a,b)=> score(b)-score(a));
-    items.forEach(el => container.appendChild(el));
-    console.log('已套用本地排序（reco）。');
-  })();
-
-  // 6) Details <summary> keyboard a11y enhancement
-  (function(){
-    document.querySelectorAll('details.menu > summary').forEach(sum=>{
-      sum.setAttribute('role','button');
-      sum.setAttribute('aria-expanded', sum.parentElement.hasAttribute('open') ? 'true' : 'false');
-      sum.addEventListener('click', ()=>{
-        const open = sum.parentElement.hasAttribute('open');
-        // toggle via native click; update aria after microtask
-        setTimeout(()=> sum.setAttribute('aria-expanded', open ? 'false' : 'true'), 0);
-      });
-      sum.addEventListener('keydown', (e)=>{
-        if(e.key === 'Enter' || e.key === ' '){
-          e.preventDefault();
-          sum.click();
-        }else if(e.key === 'Escape'){
-          const d = sum.parentElement;
-          if(d.hasAttribute('open')) d.removeAttribute('open');
-          sum.setAttribute('aria-expanded','false');
+      // Publish handler (Composer)
+      if(btn.closest('.composer') && btn.classList.contains('btn')){
+        e.preventDefault();
+        const input = $('.composer input, .composer textarea');
+        if(!input) return;
+        const raw = input.value || '';
+        const sanitized = raw.replace(/[<>&"']/g, s => ({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;","'":"&#39;"}[s]));
+        // Minimal payload (console only; no backend)
+        const payload = {
+          content: sanitized.trim(),
+          userId: 'me',
+          communityId: 'default',
+          createdAt: new Date().toISOString(),
+          visibility: 'community',
+          source: 'mvp-v4.2'
+        };
+        if(!payload.content){
+          // non-intrusive feedback
+          console.log('內容為空，未發佈。');
+          return;
         }
-      });
-    });
-    // close menu on outside click
-    document.addEventListener('click', (e)=>{
-      document.querySelectorAll('details.menu[open]').forEach(d=>{
-        if(!d.contains(e.target)) d.removeAttribute('open');
-      });
-    });
-  })();
+        console.log('發佈成功（本地占位）：', payload);
+        try{ localStorage.removeItem('composerDraft:v4.2'); }catch{}
+        input.value='';
+        alert('發佈成功（示意，未上傳）');
+        return;
+      }
 
-  // 7) Error monitoring (console only; no new UI)
-  (function(){
-    window.addEventListener('error', function(ev){
-      console.debug('[caught error]', ev.message);
-    });
-    window.addEventListener('unhandledrejection', function(ev){
-      console.debug('[unhandled rejection]', ev.reason);
-    });
-  })();
+      // Notifications/message placeholder
+      if(btn.classList.contains('icon') && /通知|訊息/.test(btn.textContent)){
+        e.preventDefault();
+        alert(btn.textContent.trim() + '：功能開發中（示意）。');
+        return;
+      }
+    }, {passive:true});
 
-})(); 
+    // 2) Composer progressive disclosure (expand on focus, collapse on blur)
+    (function(){
+      const comp = $('.composer');
+      if(!comp) return;
+      const input = $('.composer input, .composer textarea', comp);
+      if(!input) return;
+      function expand(){ comp.classList.add('expanded'); }
+      function collapse(){ if(!input.value) comp.classList.remove('expanded'); }
+      input.addEventListener('focus', expand);
+      input.addEventListener('blur', collapse);
+    })();
+
+    // 3) Local draft autosave (60s debounce)
+    (function(){
+      const input = document.querySelector('.composer input, .composer textarea');
+      if(!input) return;
+      const KEY = 'composerDraft:v4.2';
+      // restore
+      try{
+        const v = localStorage.getItem(KEY);
+        if(v) input.value = v;
+      }catch{}
+      let t=null;
+      function save(){
+        try{
+          localStorage.setItem(KEY, input.value || '');
+        }catch{}
+      }
+      input.addEventListener('input', ()=>{
+        clearTimeout(t);
+        t = setTimeout(save, 60000);
+      });
+    })();
+
+    // 4) Add loading="lazy" to images (safety if HTML missed)
+    (function(){
+      $$('img:not([loading])').forEach(img => img.loading = 'lazy');
+    })();
+
+    // 5) Sorting toggle (?sort=reco) — purely local, default off
+    (function(){
+      const params = new URLSearchParams(location.search);
+      if(params.get('sort') !== 'reco') return;
+      const container = document.querySelector('main.page');
+      if(!container) return;
+      const items = Array.from(container.querySelectorAll('article.post'));
+      if(items.length < 2) return;
+      function score(el){
+        const txt = el.textContent || '';
+        let s = 0;
+        // recency heuristic
+        if(/剛剛|分鐘前/.test(txt)) s += 0.5;
+        // locality (community token in your sample)
+        if(/惠宇上晴/.test(txt)) s += 0.2;
+        // event weight
+        if(/降價|售出|上新/.test(txt)) s += 0.3;
+        return s;
+        }
+      items.sort((a,b)=> score(b)-score(a));
+      items.forEach(el => container.appendChild(el));
+      console.log('已套用本地排序（reco）。');
+    })();
+
+    // 6) Details <summary> keyboard a11y enhancement
+    (function(){
+      document.querySelectorAll('details.menu > summary').forEach(sum=>{
+        sum.setAttribute('role','button');
+        sum.setAttribute('aria-expanded', sum.parentElement.hasAttribute('open') ? 'true' : 'false');
+        sum.addEventListener('click', ()=>{
+          const open = sum.parentElement.hasAttribute('open');
+          // toggle via native click; update aria after microtask
+          setTimeout(()=> sum.setAttribute('aria-expanded', open ? 'false' : 'true'), 0);
+        });
+        sum.addEventListener('keydown', (e)=>{
+          if(e.key === 'Enter' || e.key === ' '){
+            e.preventDefault();
+            sum.click();
+          }else if(e.key === 'Escape'){
+            const d = sum.parentElement;
+            if(d.hasAttribute('open')) d.removeAttribute('open');
+            sum.setAttribute('aria-expanded','false');
+          }
+        });
+      });
+      // close menu on outside click
+      document.addEventListener('click', (e)=>{
+        document.querySelectorAll('details.menu[open]').forEach(d=>{
+          if(!d.contains(e.target)) d.removeAttribute('open');
+        });
+      });
+    })();
+
+    // 7) Error monitoring (console only; no new UI)
+    (function(){
+      window.addEventListener('error', function(ev){
+        console.debug('[caught error]', ev.message);
+      });
+      window.addEventListener('unhandledrejection', function(ev){
+        console.debug('[unhandled rejection]', ev.reason);
+      });
+    })();
+
+  })();
+})();
 </script>
 
 </body>
