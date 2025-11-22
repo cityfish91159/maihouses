@@ -172,3 +172,11 @@ Deploy: Fix SonarLint Issues & Redeploy
 - Fix: Extracted nested ternary operator in `Register.tsx` for better readability.
 - Fix: Replaced `window` with `globalThis` in `auth.ts`.
 - Goal: Ensure clean build and successful deployment.
+
+Timestamp: 2025-11-22T07:00:00Z
+Deploy: Revert Recent Changes & Fix Login
+- Revert: Removed recent SonarLint accessibility fixes and Google Auth integration to isolate login issues.
+- Fix: Added `z-10` and `relative` positioning to Login/Register forms to ensure buttons are clickable.
+- Fix: Wrapped analytics tracking in try-catch to prevent blocking the login flow.
+- Fix: Restored `autoComplete` attributes for better browser compatibility.
+- Goal: Restore basic login functionality and fix the "unclickable button" issue.
