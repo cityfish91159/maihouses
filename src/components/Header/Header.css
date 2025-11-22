@@ -460,13 +460,6 @@
   align-items: center;
 }
 
-.pill-icon {
-  font-size: 16px;
-  line-height: 1;
-  display: inline-flex;
-  align-items: center;
-}
-
 /* 響應式設計 */
 @media (max-width: 760px) {
   .panel {

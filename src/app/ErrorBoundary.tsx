@@ -1,4 +1,4 @@
-import { Component, ErrorInfo, ReactNode } from 'react'
+import { Component, ReactNode } from 'react'
 import { trackEvent } from '../services/analytics'
 
 interface Props { children: ReactNode }

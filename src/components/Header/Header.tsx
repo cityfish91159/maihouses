@@ -193,8 +193,23 @@ export default function Header() {
       </div>
 
       {modalOpen && (
-        <div className="modal-overlay" onClick={() => setModalOpen(false)}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="modal-overlay"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setModalOpen(false)
+            }
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') {
+              setModalOpen(false)
+            }
+          }}
+          role="dialog"
+          aria-modal="true"
+          tabIndex={-1}
+        >
+          <div className="modal">
             <div className="modal-header">
               <h3>{modalContent.title}</h3>
               <button className="modal-close" onClick={() => setModalOpen(false)}>
