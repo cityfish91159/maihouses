@@ -38,6 +38,25 @@ export async function signIn(email: string, password: string) {
 }
 
 /**
+ * Google 登入
+ */
+export async function signInWithGoogle() {
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: `${globalThis.location.origin}/`,
+      queryParams: {
+        access_type: 'offline',
+        prompt: 'consent',
+      },
+    },
+  })
+  
+  if (error) throw error
+  return data
+}
+
+/**
  * 登出
  */
 export async function signOut() {

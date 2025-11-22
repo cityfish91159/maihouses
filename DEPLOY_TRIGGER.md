@@ -199,3 +199,10 @@ Deploy: Finalize Homepage Refactor (Gold Standard)
 - Components: HeroAssure, SmartAsk, CommunityTeaser, and PropertyGrid are now fully refactored.
 - UI: Verified pixel-perfect design match with legacy HTML/CSS.
 - Status: This deployment represents the "Gold Standard" baseline for the modernized frontend.
+
+Timestamp: 2025-11-22T09:30:00Z
+Deploy: Restore Google Auth & Fix Login Styles
+- Feature: Re-implemented Google OAuth login/register in `Login.tsx` and `Register.tsx`.
+- Fix: Added `z-10` and `relative` positioning to forms to ensure buttons are clickable (fixing previous regression).
+- Fix: Updated `auth.ts` to include `signInWithGoogle` with correct redirect URI.
+- Goal: Restore the requested Google Auth functionality and ensure a working login flow.
