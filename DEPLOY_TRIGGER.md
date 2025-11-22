@@ -2,6 +2,13 @@ Redeploy trigger
 
 This file was updated to force a new Vercel deployment.
 
+Timestamp: 2025-11-22T04:30:00Z
+Deploy: Rollback to Stable Version (4d029b5)
+- Action: Forced rollback to commit 4d029b5 (2025-11-21 08:37:47)
+- Reason: Homepage visual regression - Header format and HeroAssure card reverted to old design
+- Fix: Restored to last known stable state with correct package.json structure
+- Status: Forcing deployment trigger
+
 Timestamp: 2025-11-21T11:00:00Z
 Deploy: Force Vercel Build (Source Change)
 - Reason: Previous commit only affected generated `docs/` assets, which Vercel likely ignored.
