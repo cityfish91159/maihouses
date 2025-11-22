@@ -856,9 +856,9 @@
     role = role || 'member'; // Default to consumer
 
     if (role === 'agent') {
-        go('/maihouses/' + encodeURIComponent('個人信息流_agent.html'));
+        go('/maihouses/p/feed-agent.html');
     } else {
-        go('/maihouses/' + encodeURIComponent('個人信息流_consumer.html'));
+        go('/maihouses/p/feed-consumer.html');
     }
   }
 
