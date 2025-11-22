@@ -884,10 +884,11 @@
       }
 
       // Determine redirect URL based on environment
-      // If we are on localhost, use origin. If on Vercel, use origin.
-      // The issue is likely that Supabase is configured to redirect to localhost:3000 by default
-      // We need to be explicit.
-      const redirectUrl = window.location.origin + '/maihouses/auth.html';
+      let redirectUrl = window.location.origin + '/maihouses/auth.html';
+      // Force production URL if not on localhost to ensure it matches Supabase whitelist
+      if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+          redirectUrl = 'https://maihouses.vercel.app/maihouses/auth.html';
+      }
 
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -975,6 +976,8 @@
          if(errPassword){ errPassword.textContent='帳號或密碼錯誤'; errPassword.style.display='block'; }
       } else if(msg.includes('User already registered')){
          if(errEmail){ errEmail.textContent='帳號已存在'; errEmail.style.display='block'; }
+      } else if(msg.includes('Email not confirmed')){
+         if(errEmail){ errEmail.textContent='請先至信箱收取驗證信啟用帳號'; errEmail.style.display='block'; }
       } else {
          if(errEmail){ errEmail.textContent='操作失敗：' + msg; errEmail.style.display='block'; }
       }
