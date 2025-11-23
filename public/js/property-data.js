@@ -4,12 +4,14 @@ window.propertyMockData = {
       main: {
         badge: "熱門社區",
         image: "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=1260&auto=format&fit=crop",
-        title: "新光晴川",
-        location: "📍 板橋區・江翠北側重劃區",
+        title: "新光晴川 B棟 12樓",
+        location: "📍 板橋區・江子翠生活圈",
         details: [
-          "2房2廳1衛・室內 23坪",
-          "🏢 2021年完工・128戶",
-          "👥 自住85%・年輕家庭"
+          "3房2廳2衛 + 平面車位・室內 23坪 / 主建物 26坪",
+          "🏢 2020年完工・7棟・420戶",
+          "👥 自住85%・首購換屋族群",
+          "🚗 平面車位為主(好停)",
+          "💰 管理費約 80元/坪"
         ],
         highlights: "🏪 5分鐘全聯・10分鐘捷運",
         rating: "4.4 分(63 則評價)",
