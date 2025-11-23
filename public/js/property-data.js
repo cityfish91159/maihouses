@@ -147,7 +147,7 @@ window.propertyMockData = {
         lockCount: 27
       },
       {
-        image: "https://images.unsplash.com/photo-1600596542815-6ad4c7213aa5?w=600&auto=format&fit=crop",
+        image: "https://images.unsplash.com/photo-1600585154526-990dced4db0d?w=600&auto=format&fit=crop",
         title: "遠雄大未來・汐止區",
         tag: "東湖生活圈",
         price: "3 房 1,350 萬",
@@ -162,7 +162,7 @@ window.propertyMockData = {
         lockCount: 42
       },
       {
-        image: "https://images.pexels.com/photos/280222/pexels-photo-280222.jpeg?auto=compress&cs=tinysrgb&w=600",
+        image: "https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=600&auto=format&fit=crop",
         title: "興富發巨蛋・鼓山區",
         tag: "巨蛋商圈",
         price: "2 房 1,680 萬",
@@ -177,7 +177,7 @@ window.propertyMockData = {
         lockCount: 49
       },
       {
-        image: "https://images.pexels.com/photos/1643383/pexels-photo-1643383.jpeg?auto=compress&cs=tinysrgb&w=600",
+        image: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=600&auto=format&fit=crop",
         title: "華固新天地・內湖區",
         tag: "內湖科學園區",
         price: "3 房 2,180 萬",
