@@ -4,9 +4,9 @@ import { ReviewCard } from '../components/ReviewCard'
 
 export default function CommunityTeaser() {
   return (
-    <HomeCard className="bg-brand-700 backdrop-blur-md p-2.5">
+    <HomeCard className="bg-white/96 backdrop-blur-md p-2.5">
       <div className="flex justify-between items-center gap-1.5 mb-3 px-1">
-        <h3 className="text-lg font-extrabold m-0 text-white tracking-wide">社區評價（聚合）</h3>
+        <h3 className="text-lg font-extrabold m-0 text-brand tracking-wide">社區評價（聚合）</h3>
       </div>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         {COMMUNITY_REVIEWS.map((review) => (
@@ -14,7 +14,7 @@ export default function CommunityTeaser() {
         ))}
       </div>
       <a 
-        className="mt-3 flex items-center gap-2.5 bg-white border border-success/40 p-3 rounded-[var(--r-sm)] font-black text-success no-underline relative lg:justify-center lg:text-center group hover:shadow-md transition-all duration-200" 
+        className="mt-3 flex items-center gap-2.5 bg-gradient-to-r from-success/25 to-success/10 border border-success/40 p-3 rounded-[var(--r-sm)] font-black text-success no-underline relative lg:justify-center lg:text-center group hover:shadow-md transition-all duration-200" 
         href="/maihouses/community-wall_mvp.html" 
         aria-label="點我看更多社區評價"
       >
