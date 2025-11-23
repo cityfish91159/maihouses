@@ -97,8 +97,15 @@ export default function SmartAsk() {
         }
     };
 
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            send();
+        }
+    };
+
     return (
-        <section className="group relative bg-gradient-to-br from-white via-[#F8FAFC] to-[#00385a08] rounded-[24px] border border-brand-100 shadow-[0_8px_24px_rgba(0,56,90,0.06)] overflow-hidden hover:shadow-[0_12px_32px_rgba(0,56,90,0.1)] transition-all duration-300 isolate">
+        <section className="mh-ai-card group relative isolate overflow-hidden">
         
         {/* --- Background Elements --- */}
         <div className="absolute -top-24 -right-24 w-80 h-80 bg-brand-100/30 rounded-full blur-3xl pointer-events-none mix-blend-multiply"></div>
@@ -106,9 +113,9 @@ export default function SmartAsk() {
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#00385a08_1px,transparent_1px),linear-gradient(to_bottom,#00385a08_1px,transparent_1px)] bg-[size:24px_24px] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000_70%,transparent_100%)] pointer-events-none z-0"></div>
 
         {/* Decorative Top Bar */}
-        <div className="h-1.5 w-full bg-gradient-to-r from-brand-700 via-brand-600 to-brand-500 relative z-20"></div>
+        <div className="h-1.5 w-full bg-gradient-to-r from-brand-700 via-brand-600 to-brand-500 relative z-20 absolute top-0 left-0"></div>
 
-        <div className="p-5 md:p-8 md:pt-6 relative z-10">
+        <div className="relative z-10">
             {/* Header Section */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-3">
             <div className="flex items-center gap-3">
@@ -147,7 +154,7 @@ export default function SmartAsk() {
             {/* Chat Display Area */}
             <div
             ref={chatRef}
-            className="h-[380px] overflow-y-auto rounded-2xl bg-white/50 border border-brand-100/60 p-5 shadow-inner mb-4 flex flex-col gap-4 scroll-smooth backdrop-blur-md"
+            className="mh-ai-chat mb-4"
             role="log" 
             aria-live="polite"
             >
@@ -195,11 +202,11 @@ export default function SmartAsk() {
                 messages.map((m, i) => (
                 <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'} animate-fadeIn`}>
                     <div
-                    className={`max-w-[85%] rounded-2xl px-5 py-3.5 text-[15px] font-medium leading-relaxed shadow-sm ${
+                    className={
                         m.role === 'user'
-                        ? 'bg-brand-700 text-white rounded-br-sm'
-                        : 'bg-white text-ink-900 border border-brand-100 rounded-bl-sm'
-                    }`}
+                        ? 'mh-ai-bubble-user'
+                        : 'mh-ai-bubble-assistant'
+                    }
                     >
                     <div className="whitespace-pre-wrap">{m.content}</div>
                     {m.timestamp && (
@@ -226,20 +233,20 @@ export default function SmartAsk() {
             </div>
 
             {/* Input Area */}
-            <div className="relative group/input">
+            <div className="relative group/input flex gap-2">
             <input
                 type="text"
-                className="w-full pl-5 pr-14 py-4 rounded-xl border-2 border-brand-100 bg-white/80 text-ink-900 font-bold text-[15px] placeholder:text-ink-400/80 transition-all focus:outline-none focus:border-brand-500 focus:ring-4 focus:ring-brand-50/50 hover:border-brand-300 shadow-sm backdrop-blur-sm"
+                className="mh-ai-input"
                 placeholder="輸入需求，例如：新北板橋 2000萬內 3房..."
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && send()}
+                onKeyDown={handleKeyDown}
                 disabled={loading}
             />
             <button
                 onClick={() => send()}
                 disabled={loading || !input.trim()}
-                className="absolute right-2 top-2 bottom-2 aspect-square rounded-lg bg-brand-700 text-white flex items-center justify-center shadow-md transition-all hover:bg-brand-600 hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:transform-none disabled:shadow-none"
+                className="aspect-square rounded-full bg-brand-700 text-white flex items-center justify-center shadow-md transition-all hover:bg-brand-600 hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:transform-none disabled:shadow-none w-[46px] h-[46px]"
             >
                 <Send size={20} strokeWidth={2.5} className="-ml-0.5 translate-y-[1px]" />
             </button>

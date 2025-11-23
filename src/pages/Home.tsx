@@ -47,7 +47,9 @@ export default function Home({ config }: { readonly config: AppConfig & RuntimeO
       )}
       <main className="relative mx-auto max-w-container space-y-6 p-4 md:space-y-8 md:p-6">
         {features.heroAssure !== false && (
-          <HeroAssure />
+          <section className="mh-card mh-card--hero">
+            <HeroAssure />
+          </section>
         )}
         {features.smartAsk !== false && (
           <SmartAsk />
