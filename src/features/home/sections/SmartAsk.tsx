@@ -97,13 +97,6 @@ export default function SmartAsk() {
         }
     };
 
-    const handleKeyDown = (e: React.KeyboardEvent) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            send();
-        }
-    };
-
     return (
         <section className="group relative bg-gradient-to-br from-white via-[#F8FAFC] to-[#00385a08] rounded-[24px] border border-brand-100 shadow-[0_8px_24px_rgba(0,56,90,0.06)] overflow-hidden hover:shadow-[0_12px_32px_rgba(0,56,90,0.1)] transition-all duration-300 isolate">
         
@@ -240,7 +233,7 @@ export default function SmartAsk() {
                 placeholder="輸入需求，例如：新北板橋 2000萬內 3房..."
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                onKeyDown={handleKeyDown}
+                onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && send()}
                 disabled={loading}
             />
             <button
@@ -250,10 +243,6 @@ export default function SmartAsk() {
             >
                 <Send size={20} strokeWidth={2.5} className="-ml-0.5 translate-y-[1px]" />
             </button>
-            </div>
-        </div>
-        </section>
-    );
             </div>
         </div>
         </section>
