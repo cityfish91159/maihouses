@@ -39,7 +39,7 @@ const PropertyRenderer = {
     const html = `
       <article class="property-card">
         <div class="property-media">
-          <img src="${item.image}" alt="${item.title}" loading="lazy" />
+          <img src="${item.image}" alt="${item.title}" />
           <span class="property-badge">${item.badge}</span>
         </div>
         <div class="property-content">
@@ -148,7 +148,6 @@ const PropertyRenderer = {
               <img
                 src="${item.image}"
                 alt="${item.title} 外觀"
-                loading="lazy"
               />
             </div>
             <div class="horizontal-main">
