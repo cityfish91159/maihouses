@@ -34,7 +34,7 @@ export default function Header({ onOpenAIStudio }: { onOpenAIStudio?: () => void
                
                {/* Vertical Divider & Slogan */}
                <div className="hidden sm:flex items-center ml-3 pl-3 border-l-2 border-brand-100/80 h-5">
-                   <span className="text-[13px] font-bold text-brand-500 tracking-[0.15em] uppercase group-hover:text-brand-700 transition-colors leading-none pt-[1px]">讓家，不只是地址</span>
+                   <span className="text-[15px] font-bold text-brand-500 tracking-[0.15em] uppercase group-hover:text-brand-700 transition-colors leading-none pt-[1px]">讓家，不只是地址</span>
                </div>
             </div>
           </div>
