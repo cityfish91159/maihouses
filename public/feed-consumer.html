@@ -34,7 +34,7 @@ html,body{margin:0;background:linear-gradient(180deg,var(--bg1),var(--bg2));colo
 .menu > summary::-webkit-details-marker{display:none}
 .chip{border:1px solid var(--line);border-radius:14px;padding:6px 10px;font-size:13px;color:#173a7c;background:#fff;display:inline-flex;align-items:center;gap:6px;line-height:1}
 .menu[open] > summary .chip{box-shadow:0 3px 10px rgba(23,73,215,.08)}
-.menu-list{display:none;position:absolute;right:0;top:calc(100% + 6px);min-width:176px;background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:0 10px 24px rgba(23,73,215,.12);padding:4px}
+.menu-list{display:none;position:absolute;right:0;top:calc(100% + 6px);min-width:176px;background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:0 10px 24px rgba(23,73,215,.12);padding:4px;z-index:20}
 .menu[open] .menu-list{display:block}
 .menu-list a{display:flex;align-items:center;gap:8px;padding:9px;border-radius:8px;color:#173a7c;text-decoration:none;font-weight:800;font-size:13px}
 .menu-list a:hover{background:#f6f9ff}
@@ -122,6 +122,7 @@ html,body{margin:0;background:linear-gradient(180deg,var(--bg1),var(--bg2));colo
       <div class="menu-list" role="menu" aria-label="我的選單">
         <a href="#fav" role="menuitem">⭐ 我的收藏</a>
         <a href="#trust" role="menuitem">🛡️ 安心留痕</a>
+        <a href="auth.html?action=logout" role="menuitem">🚪 登出</a>
       </div>
     </details>
     <button type="button" class="icon badge" data-badge="2" aria-label="通知">🔔 通知</button>
