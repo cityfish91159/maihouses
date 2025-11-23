@@ -98,11 +98,11 @@ export default function SmartAsk() {
     };
 
     return (
-        <section className="group relative bg-gradient-to-br from-white via-[#F8FAFC] to-[#F0F6FF] rounded-[24px] border border-brand-100 shadow-[0_8px_24px_rgba(0,56,90,0.06)] overflow-hidden hover:shadow-[0_12px_32px_rgba(0,56,90,0.1)] transition-all duration-300 isolate">
+        <section className="group relative bg-gradient-to-br from-white via-[#F8FAFC] to-[#00385a08] rounded-[24px] border border-brand-100 shadow-[0_8px_24px_rgba(0,56,90,0.06)] overflow-hidden hover:shadow-[0_12px_32px_rgba(0,56,90,0.1)] transition-all duration-300 isolate">
         
         {/* --- Background Elements --- */}
         <div className="absolute -top-24 -right-24 w-80 h-80 bg-brand-100/30 rounded-full blur-3xl pointer-events-none mix-blend-multiply"></div>
-        <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-[#E0F2FE]/50 rounded-full blur-3xl pointer-events-none mix-blend-multiply"></div>
+        <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-brand-700/5 rounded-full blur-3xl pointer-events-none mix-blend-multiply"></div>
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#00385a08_1px,transparent_1px),linear-gradient(to_bottom,#00385a08_1px,transparent_1px)] bg-[size:24px_24px] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000_70%,transparent_100%)] pointer-events-none z-0"></div>
 
         {/* Decorative Top Bar */}
