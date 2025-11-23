@@ -18,6 +18,7 @@ module.exports = {
           900: '#0A2246',
           700: '#2A2F3A',
           600: '#6C7B91',
+          400: '#94A3B8',
         },
         primary: '#0A2246',
         success: '#0f6a23',
@@ -44,6 +45,7 @@ module.exports = {
         'fadeIn': 'fadeIn 0.3s ease-out forwards',
         'float': 'float 3s ease-in-out infinite',
         'float-desktop': 'floatDesktop 3s ease-in-out infinite',
+        'bounce-slow': 'bounce 2s infinite',
       },
       keyframes: {
         fadeIn: {
