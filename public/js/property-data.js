@@ -3,7 +3,7 @@ window.propertyMockData = {
     featured: {
       main: {
         badge: "熱門社區",
-        image: "https://images.unsplash.com/photo-1600596542815-6ad4c7213aa5?w=1260&auto=format&fit=crop",
+        image: "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=1260&auto=format&fit=crop",
         title: "新光晴川",
         location: "📍 板橋區・江翠北側重劃區",
         details: [
