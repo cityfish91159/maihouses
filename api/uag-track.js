@@ -23,10 +23,16 @@ export default async function handler(req, res) {
     const { session_id, agent_id, event, fingerprint } = data;
 
     if (!session_id || !event) {
-      return res.status(400).json({ error: 'Missing required fields' });
+      return res.status(400).json({ error: 'Missing required fields: session_id or event' });
+    }
+
+    // Basic Event Validation
+    if (typeof event !== 'object' || !event.property_id || !event.duration) {
+       return res.status(400).json({ error: 'Invalid event structure' });
     }
 
     // Call v8 RPC for atomic incremental update
+    // Note: Function name includes version 'v8' to match deployed database schema
     const { data: result, error } = await supabase.rpc('track_uag_event_v8', {
       p_session_id: session_id,
       p_agent_id: agent_id || 'unknown',
