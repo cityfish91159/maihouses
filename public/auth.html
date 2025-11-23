@@ -867,8 +867,24 @@
   tabLogin?.addEventListener('click', ()=>{ mode='login'; syncMode(false); clearErrors(); });
   tabSignup?.addEventListener('click', ()=>{ mode='signup'; syncMode(false); clearErrors(); });
 
+  // Handle Logout Action
+  const isLogout = qs('action') === 'logout';
+  if(isLogout) {
+      // Clear session immediately
+      supabase.auth.signOut().then(()=>{
+          localStorage.removeItem('mh.auth.role');
+          // Clean URL
+          const url = new URL(location.href);
+          url.searchParams.delete('action');
+          history.replaceState(null, '', url);
+      });
+  }
+
   // Listen for auth state changes (Handle OAuth Redirect)
   supabase.auth.onAuthStateChange((event, session) => {
+    // If we are in logout mode, ignore any session presence to prevent auto-redirect
+    if (isLogout) return;
+
     if (event === 'SIGNED_IN' && session) {
        successRedirect(true);
     }
