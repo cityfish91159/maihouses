@@ -2,42 +2,6 @@ import React, { useEffect, useMemo, useState } from "react";
 import { getMilestoneHint, getWarmTags, ensureFirstSeen, isWarmbarDismissedToday, dismissWarmbarToday, loadProfile } from "../stores/profileStore";
 import { Events, track } from "../analytics/track";
 
-const barStyle: React.CSSProperties = {
-  width: "100%",
-  background: "#F5F8FF",
-  color: "#0a2246",
-  fontSize: 14,
-  lineHeight: "34px",
-  height: 34,
-  textAlign: "center",
-  letterSpacing: "0.3px",
-  borderBottom: "1px solid #E6ECFF",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  gap: 12,
-};
-const linkBtn: React.CSSProperties = {
-  padding: "2px 10px",
-  borderRadius: 999,
-  border: "1px solid #1749D7",
-  background: "#1749D7",
-  color: "#fff",
-  cursor: "pointer",
-  lineHeight: "24px",
-  height: 26,
-};
-const ghostBtn: React.CSSProperties = {
-  padding: "2px 10px",
-  borderRadius: 999,
-  border: "1px solid #C9D5FF",
-  background: "#fff",
-  color: "#1749D7",
-  cursor: "pointer",
-  lineHeight: "24px",
-  height: 26,
-};
-
 export const WarmWelcomeBar: React.FC = () => {
   const [shouldShow, setShouldShow] = useState(false);
   const profile = loadProfile();
@@ -77,10 +41,20 @@ export const WarmWelcomeBar: React.FC = () => {
   };
 
   return (
-    <div style={barStyle} role="status" aria-live="polite">
+    <div className="w-full bg-[#F5F8FF] text-[#0a2246] text-sm leading-[34px] h-[34px] text-center tracking-wide border-b border-[#E6ECFF] flex items-center justify-center gap-3" role="status" aria-live="polite">
       <span>{leftText}</span>
-      <button style={linkBtn} onClick={onContinue}>接著聊</button>
-      <button style={ghostBtn} onClick={onDismissToday}>今天不再顯示</button>
+      <button 
+        className="px-2.5 py-0.5 rounded-full border border-[#1749D7] bg-[#1749D7] text-white cursor-pointer leading-6 h-[26px] hover:bg-[#123cb3] transition-colors"
+        onClick={onContinue}
+      >
+        接著聊
+      </button>
+      <button 
+        className="px-2.5 py-0.5 rounded-full border border-[#C9D5FF] bg-white text-[#1749D7] cursor-pointer leading-6 h-[26px] hover:bg-gray-50 transition-colors"
+        onClick={onDismissToday}
+      >
+        今天不再顯示
+      </button>
     </div>
   );
 };

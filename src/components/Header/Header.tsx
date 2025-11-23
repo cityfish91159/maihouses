@@ -1,7 +1,6 @@
 import React from 'react';
 import { Search, LogIn, UserPlus, List } from 'lucide-react';
 import { Logo } from '../Logo/Logo';
-// import './Header.css' // Replaced by Tailwind styles
 
 export default function Header({ onOpenAIStudio }: { onOpenAIStudio?: () => void }) {
   return (
