@@ -10,7 +10,7 @@ export default function CommunityTeaser() {
         <div className="absolute -right-6 -top-6 w-24 h-24 bg-white/5 rounded-full blur-2xl pointer-events-none" />
 
         <div className="flex items-center gap-2.5 relative z-10">
-          <div className="w-1.5 h-1.5 rounded-full bg-[#40C7A6] shadow-[0_0_8px_rgba(64,199,166,0.6)]" />
+          <div className="w-1.5 h-1.5 rounded-full bg-[#E63946] shadow-[0_0_8px_rgba(230,57,70,0.6)]" />
           <h3 className="text-lg font-black m-0 text-white tracking-wide text-shadow-sm">社區評價</h3>
           <span className="text-[11px] font-bold text-[#00385a] bg-white/95 backdrop-blur-sm px-2.5 py-0.5 rounded-full shadow-sm border border-white/20">
             聚合
