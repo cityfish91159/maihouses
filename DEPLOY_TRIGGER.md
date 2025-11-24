@@ -230,3 +230,9 @@ Deploy trigger Sat Nov 22 08:12:43 UTC 2025
 Deploy trigger Sat Nov 22 08:16:08 UTC 2025
 Deploy trigger Sat Nov 22 08:38:50 UTC 2025
 Deploy trigger Sat Nov 22 08:45:33 UTC 2025
+
+Timestamp: 2025-11-24T10:40:00+08:00
+Deploy: Homepage Refactoring Complete
+- Refactor: SmartAsk (Extracted Mascot & ChatMessage, used postLLM service).
+- Refactor: PropertyGrid (Extracted PropertyCard, moved data to constants, cleaned styling).
+- Verification: Maintained 100% visual fidelity.

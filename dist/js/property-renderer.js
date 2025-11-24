@@ -22,7 +22,7 @@ const PropertyRenderer = {
     const container = document.getElementById('featured-main-container');
     if (!container) return;
 
-    const detailsHtml = item.details.map(detail => `<span>${detail}</span>`).join('・');
+    const detailsHtml = item.details.map(detail => `<div style="margin-bottom: 0.25rem;">${detail}</div>`).join('');
     const reviewsHtml = item.reviews.map(review => `
       <div class="property-review-item">
         <div class="review-header">

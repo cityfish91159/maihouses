@@ -9,17 +9,17 @@
     /* ===== 設計 Token（沿用邁房子色系）===== */
     :root{
       /* 品牌色 - 邁房子主色 */
-      --brand:#00385a; 
-      --brand-dark:#00385a; 
-      --brand-light:#33607b;
-      --brand-lighter:#eef3ff;
-      
+      --brand:#00385a;
+      --brand-dark:#002a42;
+      --brand-light:#009FE8;
+      --brand-lighter:#F6F9FF;
+
       /* 背景色 */
       --bg-page:#f6f9ff;
       --bg-card:#ffffff;
       --bg-glass:rgba(255,255,255,0.88);
-      
-      /* 漸層 - 統一使用深藍色，避免過黑 */
+
+      /* 漸層 */
       --gradient-brand:linear-gradient(135deg, #00385a 0%, #004E7C 100%);
       --gradient-bg:linear-gradient(135deg, #eef3ff 0%, #e3f0ff 100%);
       --gradient-hero:radial-gradient(1200px 800px at 50% -10%, #e9f0ff, transparent 50%);
@@ -609,9 +609,26 @@
   <!-- Header -->
   <header>
     <div class="header-wrap">
-      <a href="/maihouses/" class="logo">
-        <div class="logo-icon">邁</div>
-        <span>邁房子</span>
+      <a href="/maihouses/" class="logo" style="text-decoration: none; display: flex; align-items: center; gap: 12px;">
+        <!-- Logo Icon -->
+        <div style="position: relative; width: 42px; height: 42px; background: linear-gradient(135deg, #00385a, #005282); border-radius: 12px; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 15px -3px rgba(0, 56, 90, 0.2); overflow: hidden;">
+          <!-- Icon SVG -->
+          <svg style="width: 22px; height: 22px; color: white; position: relative; z-index: 10; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.1));" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 9.5L12 3L21 9.5V20.5C21 21.0523 20.5523 21.5 20 21.5H4C3.44772 21.5 3 21.0523 3 20.5V9.5Z" />
+            <path d="M9 21.5V13H15V21.5" />
+          </svg>
+          <!-- Notification Badge -->
+          <div style="position: absolute; top: 8px; right: 8px; width: 6px; height: 6px; background: #FF6B6B; border-radius: 50%; box-shadow: 0 0 0 1.5px #004E7C;"></div>
+        </div>
+
+        <div style="display: flex; align-items: center;">
+          <div style="display: flex; align-items: baseline; gap: 4px;">
+            <span style="font-size: 24px; font-weight: 700; font-family: serif; color: #00385a; letter-spacing: 0.025em; line-height: 1;">邁房子</span>
+          </div>
+          <div style="display: flex; align-items: center; margin-left: 12px; padding-left: 12px; border-left: 2px solid rgba(230, 237, 247, 0.8); height: 20px;">
+            <span style="font-size: 15px; font-weight: 700; color: #00629B; letter-spacing: 0.15em; text-transform: uppercase; line-height: 1; padding-top: 1px;">讓家，不只是地址</span>
+          </div>
+        </div>
       </a>
       <a href="/maihouses/" class="back-btn">
         <span>←</span>
@@ -677,8 +694,8 @@
           
           <!-- Role Select (Only for Signup) -->
           <div class="field full" id="roleField" style="display:none">
-            <label>選擇身分</label>
-            <div style="display:flex; gap:12px; flex-wrap:wrap;">
+            <label id="roleLabel">選擇身分</label>
+            <div style="display:flex; gap:12px; flex-wrap:wrap;" aria-labelledby="roleLabel">
               <label style="display:flex;align-items:center;gap:8px;padding:10px 14px;border:1px solid var(--border);border-radius:12px;cursor:pointer;user-select:none;">
                 <input type="radio" name="role" value="member" checked style="accent-color: var(--brand);" />
                 <span>我是消費者</span>
@@ -746,28 +763,17 @@
   <footer>© 邁房子 2024</footer>
 
   
-<!-- Firebase Auth integration (CDN modular v10) -->
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
-  import { 
-    getAuth, setPersistence, browserLocalPersistence,
-    GoogleAuthProvider, signInWithPopup,
-    createUserWithEmailAndPassword, signInWithEmailAndPassword,
-    sendEmailVerification, onAuthStateChanged
-  } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
+<!-- Supabase Auth integration -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+  // Ensure Supabase is loaded
+  if (typeof window.supabase === 'undefined') {
+    alert('系統載入失敗 (Supabase Client Missing)，請重新整理頁面或檢查網路連線。');
+  }
 
-  // === Replace with your Firebase web app config ===
-  const firebaseConfig = {
-    apiKey: "AIzaSyCGbukAPBLjDyA2Wa8vAjdZRXo_d2arpHM",
-    authDomain: "maihouses-6ab90.firebaseapp.com",
-    projectId: "maihouses-6ab90",
-    appId: "1:419601150365:web:80071e422e4f957af7bf74"
-  };
-
-  // Init
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  await setPersistence(auth, browserLocalPersistence);
+  const supabaseUrl = 'https://mtqnjmoisrvjofdxhwhi.supabase.co';
+  const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im10cW5qbW9pc3J2am9mZHhod2hpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1MjE1MDEsImV4cCI6MjA3OTA5NzUwMX0.P2o5n09PQChfryl-WLT7v6wRVWhDK6Oik7ajjcwyNrc';
+  const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
   // Helpers
   const qs = (k)=> new URLSearchParams(location.search).get(k);
@@ -775,7 +781,7 @@
   const getLS = (k,d=null)=> { try{const v=localStorage.getItem(k); return v ?? d;}catch(_){return d;} };
   const go = (u)=> location.href = u;
 
-  // Elements (match your DOM)
+  // Elements
   const tabLogin = document.getElementById('tabLogin');
   const tabSignup = document.getElementById('tabSignup');
   const subtitle = document.getElementById('subtitle');
@@ -795,30 +801,82 @@
   const errConfirm = document.getElementById('errConfirm');
   const errTerms = document.getElementById('errTerms');
 
-  const AFTER = '/maihouses/auth/after-login.html?role=consumer';
   let mode = qs('mode') || 'login';
 
   function syncMode(replace=true){
     const isLogin = mode === 'login';
+    
+    // Update UI classes
     tabLogin?.classList.toggle('active', isLogin);
     tabSignup?.classList.toggle('active', !isLogin);
+    
+    // Update text content
     if(subtitle) subtitle.textContent = isLogin ? '回到你的邁房子' : '30 秒建立新帳號';
     if(googleText) googleText.textContent = isLogin ? '使用 Google 登入' : '用 Google 快速註冊';
-    if(confirmField) confirmField.style.display = isLogin ? 'none' : 'block';
+    
+    // Toggle visibility
+    const displayStyle = isLogin ? 'none' : 'block';
+    if(confirmField) confirmField.style.display = displayStyle;
+    if(roleField) roleField.style.display = displayStyle;
+    
     if(termsField) termsField.style.display = isLogin ? 'none' : 'flex';
-    if(roleField) roleField.style.display = isLogin ? 'none' : 'block';
     if(forgotLink) forgotLink.style.display = isLogin ? 'inline-block' : 'none';
-    const url = new URL(location.href); url.searchParams.set('mode', mode);
-    replace ? history.replaceState(null,'',url) : history.pushState(null,'',url);
+    
+    // Update URL
+    const url = new URL(location.href); 
+    url.searchParams.set('mode', mode);
+    if (replace) {
+      history.replaceState(null,'',url);
+    } else {
+      history.pushState(null,'',url);
+    }
   }
-  function clearErrors(){ [errEmail,errPassword,errConfirm,errTerms,errRole].forEach(el=>{ if(el){ el.style.display='none'; }}); }
-  function successRedirect(isLogin){
+  
+  function clearErrors(){ 
+    for (const el of [errEmail,errPassword,errConfirm,errTerms,errRole]) {
+      if(el){ el.style.display='none'; }
+    }
+  }
+  
+  async function successRedirect(isLogin){
     const ret = qs('return');
-    if(isLogin && ret){ go(ret); return; }
-    // 根據 localStorage 中的角色決定跳轉
-    const role = getLS('mh.auth.role') || 'member';
-    const roleParam = (role === 'agent' || role === '房仲') ? 'agent' : 'consumer';
-    go('/maihouses/auth/after-login.html?role=' + roleParam);
+    if(ret){ go(ret); return; }
+
+    // Determine role
+    let role = getLS('mh.auth.role');
+    
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+          // 1. Check metadata
+          if (user.user_metadata && user.user_metadata.role) {
+              role = user.user_metadata.role;
+          } 
+          // 2. If no metadata role, check pending role from localStorage (for Google Signup)
+          else {
+              const pending = getLS('mh.auth.pending_role');
+              if(pending){
+                  role = pending;
+                  // Try to update metadata for future
+                  supabase.auth.updateUser({ data: { role: pending } });
+                  localStorage.removeItem('mh.auth.pending_role');
+              }
+          }
+          
+          if(role) setLS('mh.auth.role', role);
+      }
+    } catch(e) { 
+      // Log error but continue with default role or stored role
+      console.error('Error fetching user role', e); 
+    }
+    
+    role = role || 'member'; // Default to consumer
+
+    if (role === 'agent') {
+        go('/maihouses/feed-agent.html');
+    } else {
+        go('/maihouses/feed-consumer.html');
+    }
   }
 
   syncMode(true);
@@ -826,19 +884,53 @@
   tabLogin?.addEventListener('click', ()=>{ mode='login'; syncMode(false); clearErrors(); });
   tabSignup?.addEventListener('click', ()=>{ mode='signup'; syncMode(false); clearErrors(); });
 
-  // Google sign-in (auto links existing account)
-  const provider = new GoogleAuthProvider();
+  // Handle Logout Action
+  const isLogout = qs('action') === 'logout';
+  if(isLogout) {
+      if(subtitle) subtitle.textContent = '已成功登出';
+      // Clear session immediately
+      supabase.auth.signOut().then(()=>{
+          localStorage.removeItem('mh.auth.role');
+      });
+  }
+
+  // Listen for auth state changes (Handle OAuth Redirect)
+  supabase.auth.onAuthStateChange((event, session) => {
+    // If we are in logout mode, ignore any session presence to prevent auto-redirect
+    if (isLogout) return;
+
+    if (event === 'SIGNED_IN' && session) {
+       successRedirect(true);
+    }
+  });
+
+  // Google sign-in
   btnGoogle?.addEventListener('click', async ()=>{
     try{
-      await signInWithPopup(auth, provider);
-      // On Google sign-in, respect selected role if current mode is signup
-      if(mode==='signup'){
-        const roleSel = (document.querySelector('input[name="role"]:checked')||{}).value || 'member';
-        setLS('mh.auth.role', roleSel);
-      } else if(!getLS('mh.auth.role')) {
-        setLS('mh.auth.role','member');
+      // Capture selected role if in signup mode
+      if(mode === 'signup'){
+          const roleSel = (document.querySelector('input[name="role"]:checked')||{}).value;
+          if(roleSel) setLS('mh.auth.pending_role', roleSel);
       }
-      successRedirect(mode==='login');
+
+      // Determine redirect URL based on environment
+      let redirectUrl = window.location.origin + '/maihouses/auth.html';
+      // Force production URL if not on localhost to ensure it matches Supabase whitelist
+      if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+          redirectUrl = 'https://maihouses.vercel.app/maihouses/auth.html';
+      }
+
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: redirectUrl,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
+        },
+      });
+      if(error) throw error;
     }catch(e){
       console.error(e);
       alert('Google 連線失敗，請再試一次');
@@ -855,49 +947,71 @@
 
     const isLogin = (mode==='login');
     let ok = true;
-    if(!email || !email.includes('@')){ if(errEmail){ errEmail.style.display='block'; } ok=false; }
-    if(!password || password.length<8){ if(errPassword){ errPassword.style.display='block'; } ok=false; }
-    if(!isLogin){
-      if(password!==confirmPassword){ if(errConfirm){ errConfirm.style.display='block'; } ok=false; }
-      if(terms && !terms.checked){ if(errTerms){ errTerms.style.display='block'; } ok=false; }
-      const role = (document.querySelector('input[name="role"]:checked')||{}).value;
-      if(!role){ if(errRole){ errRole.style.display='block'; } ok=false; }
+    
+    // Validation
+    if(!email || !email.includes('@')){ 
+      if(errEmail){ errEmail.style.display='block'; } 
+      ok=false; 
     }
+    if(!password || password.length<6){ 
+      if(errPassword){ errPassword.style.display='block'; } 
+      ok=false; 
+    }
+    
+    if(!isLogin){
+      if(password!==confirmPassword){ 
+        if(errConfirm){ errConfirm.style.display='block'; } 
+        ok=false; 
+      }
+      if(terms && !terms.checked){ 
+        if(errTerms){ errTerms.style.display='block'; } 
+        ok=false; 
+      }
+      const role = (document.querySelector('input[name="role"]:checked')||{}).value;
+      if(!role){ 
+        if(errRole){ errRole.style.display='block'; } 
+        ok=false; 
+      }
+    }
+    
     if(!ok) return;
 
     try{
       if(isLogin){
-        await signInWithEmailAndPassword(auth, email, password);
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if(error) throw error;
       }else{
-        const { user } = await createUserWithEmailAndPassword(auth, email, password);
-        try{ await sendEmailVerification(user); }catch(_){}
+        const role = (document.querySelector('input[name="role"]:checked')||{}).value || 'member';
+        const { error } = await supabase.auth.signUp({ 
+          email, 
+          password,
+          options: { data: { role } } 
+        });
+        if(error) throw error;
+        alert('註冊成功！請檢查您的信箱以驗證帳號。');
+        setLS('mh.auth.role', role);
       }
-      // Save selected role on signup; default member on login
+      
+      // Save selected role on signup (already handled above for signup, but good for redundancy)
       if(!isLogin){
         const roleSel = (document.querySelector('input[name="role"]:checked')||{}).value || 'member';
         setLS('mh.auth.role', roleSel);
-      } else {
-        if(!getLS('mh.auth.role')) setLS('mh.auth.role','member');
       }
-      successRedirect(isLogin);
+      
+      await successRedirect(isLogin);
     }catch(e){
       console.error(e);
-      const code = e?.code || '';
-      if(code.includes('email-already-in-use')){
-        if(errEmail){ errEmail.textContent='帳號已存在'; errEmail.style.display='block'; }
-      }else if(code.includes('user-not-found')){
-        if(errEmail){ errEmail.textContent='帳號不存在'; errEmail.style.display='block'; }
-      }else if(code.includes('wrong-password')){
-        if(errPassword){ errPassword.textContent='密碼錯誤'; errPassword.style.display='block'; }
-      }else{
-        if(errEmail){ errEmail.textContent='登入失敗，請稍後再試'; errEmail.style.display='block'; }
+      const msg = e.message || '';
+      if(msg.includes('Invalid login credentials')){
+         if(errPassword){ errPassword.textContent='帳號或密碼錯誤'; errPassword.style.display='block'; }
+      } else if(msg.includes('User already registered')){
+         if(errEmail){ errEmail.textContent='帳號已存在'; errEmail.style.display='block'; }
+      } else if(msg.includes('Email not confirmed')){
+         if(errEmail){ errEmail.textContent='請先至信箱收取驗證信啟用帳號'; errEmail.style.display='block'; }
+      } else {
+         if(errEmail){ errEmail.textContent='操作失敗：' + msg; errEmail.style.display='block'; }
       }
     }
-  });
-
-  // Optional: auto-redirect if already signed-in (keep user on /auth if needed)
-  onAuthStateChanged(auth, (user)=>{
-    // 可在這裡讀 user.email 顯示，但 MVP 可先不動
   });
 </script>
 
