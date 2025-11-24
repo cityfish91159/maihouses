@@ -128,7 +128,7 @@ export default function Header({ onOpenAIStudio }: { onOpenAIStudio?: () => void
       </div>
 
     </div >
-    </div >
+      </div >
     </>
   );
 }
