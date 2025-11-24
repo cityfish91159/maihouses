@@ -79,56 +79,54 @@ export default function Header({ onOpenAIStudio }: { onOpenAIStudio?: () => void
                 </svg>
               </div>
             </div>
-          </div>
-        </div>
 
-        {/* Search Box */}
-        <div className="relative group z-20">
-          <div className="flex items-center h-[60px] pl-[28px] pr-2 rounded-full transition-all duration-300 bg-white border border-brand-100 shadow-[0_8px_30px_rgba(0,56,90,0.08)] group-hover:shadow-[0_12px_40px_rgba(0,56,90,0.12)] focus-within:border-brand-300 focus-within:ring-4 focus-within:ring-brand-50">
+            {/* Search Box */}
+            <div className="relative group z-20">
+              <div className="flex items-center h-[60px] pl-[28px] pr-2 rounded-full transition-all duration-300 bg-white border border-brand-100 shadow-[0_8px_30px_rgba(0,56,90,0.08)] group-hover:shadow-[0_12px_40px_rgba(0,56,90,0.12)] focus-within:border-brand-300 focus-within:ring-4 focus-within:ring-brand-50">
 
-            {/* Search Icon */}
-            <div className="pr-4 text-gray-400 group-focus-within:text-gray-600 transition-colors">
-              <Search size={22} strokeWidth={2.5} />
+                {/* Search Icon */}
+                <div className="pr-4 text-gray-400 group-focus-within:text-gray-600 transition-colors">
+                  <Search size={22} strokeWidth={2.5} />
+                </div>
+
+                {/* Input */}
+                <input
+                  type="text"
+                  placeholder="找評價最高的社區、捷運站周邊好屋..."
+                  className="w-full h-full bg-transparent text-gray-700 font-bold text-lg placeholder:text-gray-400 placeholder:font-medium outline-none"
+                />
+
+                {/* Button */}
+                <button className="h-[46px] px-8 bg-brand-700 text-white rounded-full font-bold text-base hover:bg-brand-600 transition-colors flex items-center justify-center tracking-wide shadow-md hover:shadow-lg active:translate-y-px whitespace-nowrap">
+                  搜尋
+                </button>
+              </div>
             </div>
 
-            {/* Input */}
-            <input
-              type="text"
-              placeholder="找評價最高的社區、捷運站周邊好屋..."
-              className="w-full h-full bg-transparent text-gray-700 font-bold text-lg placeholder:text-gray-400 placeholder:font-medium outline-none"
-            />
+            {/* Capsules */}
+            <div className="grid grid-cols-3 gap-2 mt-6 relative z-10">
+              {['社區評價', '房仲專區', '邁鄰居'].map((text) => {
+                const href = text === '社區評價' ? '/maihouses/community-wall_mvp.html' :
+                  text === '房仲專區' ? 'https://maihouses.vercel.app/maihouses/uag' : '#';
+                const target = text === '房仲專區' ? '_blank' : undefined;
 
-            {/* Button */}
-            <button className="h-[46px] px-8 bg-brand-700 text-white rounded-full font-bold text-base hover:bg-brand-600 transition-colors flex items-center justify-center tracking-wide shadow-md hover:shadow-lg active:translate-y-px whitespace-nowrap">
-              搜尋
-            </button>
+                return (
+                  <a
+                    key={text}
+                    href={href}
+                    target={target}
+                    rel={target ? "noopener noreferrer" : undefined}
+                    className="flex items-center justify-center py-3 rounded-2xl bg-brand-700 border border-brand-700 text-white font-bold text-lg tracking-wide shadow-sm transition-all duration-200 hover:bg-brand-600 hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98]"
+                  >
+                    {text}
+                  </a>
+                );
+              })}
+            </div>
           </div>
-        </div>
 
-        {/* Capsules */}
-        <div className="grid grid-cols-3 gap-2 mt-6 relative z-10">
-          {['社區評價', '房仲專區', '邁鄰居'].map((text) => {
-            const href = text === '社區評價' ? '/maihouses/community-wall_mvp.html' :
-              text === '房仲專區' ? 'https://maihouses.vercel.app/maihouses/uag' : '#';
-            const target = text === '房仲專區' ? '_blank' : undefined;
-
-            return (
-              <a
-                key={text}
-                href={href}
-                target={target}
-                rel={target ? "noopener noreferrer" : undefined}
-                className="flex items-center justify-center py-3 rounded-2xl bg-brand-700 border border-brand-700 text-white font-bold text-lg tracking-wide shadow-sm transition-all duration-200 hover:bg-brand-600 hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98]"
-              >
-                {text}
-              </a>
-            );
-          })}
         </div>
       </div>
-
-    </div >
-      </div >
     </>
   );
 }
