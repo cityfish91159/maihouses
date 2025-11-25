@@ -112,6 +112,14 @@ export default function App() {
           }
         />
         <Route
+          path="/maihouses/trust/room"
+          element={
+            <ErrorBoundary>
+              <AssureDetail />
+            </ErrorBoundary>
+          }
+        />
+        <Route
           path="/assure"
           element={
             <ErrorBoundary>

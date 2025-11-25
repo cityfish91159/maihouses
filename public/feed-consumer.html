@@ -119,7 +119,7 @@ html,body{margin:0;background:linear-gradient(180deg,var(--bg1),var(--bg2));colo
   <div class="tools">
     <details class="menu">
       <summary><span class="chip">👤 我的</span></summary>
-      <div class="menu-list" role="menu" aria-label="我的選單">
+      <div class="menu-list" role="menu" aria-label="我的選單" id="myMenu">
         <a href="#fav" role="menuitem">⭐ 我的收藏</a>
         <a href="#trust" role="menuitem">🛡️ 安心留痕</a>
         <a href="auth.html?action=logout" role="menuitem">🚪 登出</a>
@@ -129,6 +129,45 @@ html,body{margin:0;background:linear-gradient(180deg,var(--bg1),var(--bg2));colo
     <button type="button" class="icon" aria-label="訊息">💬 訊息</button>
   </div>
 </header>
+
+<script>
+(async function() {
+  try {
+    // 1. Auto Login as Buyer for Demo Case
+    const caseId = 'demo-v10';
+    const res = await fetch('/api/trust/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ role: 'buyer', caseId })
+    });
+    const { token } = await res.json();
+    
+    if (token) {
+      // 2. Check Status
+      const statusRes = await fetch(`/api/trust/status?id=${caseId}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const tx = await statusRes.json();
+      
+      // 3. If case exists (it always does with our mock backend), show link
+      // In a real app, you might check if tx.currentStep > 0 or similar
+      if (tx && tx.id) {
+        const menu = document.getElementById('myMenu');
+        const link = document.createElement('a');
+        link.href = `/maihouses/trust/room#token=${token}`;
+        link.role = 'menuitem';
+        link.innerHTML = '🏠 <b>安心戰情室</b> <span style="font-size:10px;background:#e0f2fe;color:#0284c7;padding:2px 6px;border-radius:99px">進行中</span>';
+        link.style.color = '#0284c7';
+        
+        // Insert as the first item
+        menu.insertBefore(link, menu.firstChild);
+      }
+    }
+  } catch (e) {
+    console.error('Trust Room Link Error:', e);
+  }
+})();
+</script>
 
 <main class="page">
 <section class="profile-card">
