@@ -1,14 +1,5 @@
 // src/lib/detection-labels.ts
-// 蛋糕/窗簾專用 20 個精簡標籤 ontology
-
-export const CAKE_LABELS = [
-  // 結構
-  'cake', 'cake layer', 'cake tier', 'wedding cake',
-  // 表面
-  'frosting', 'frosting texture', 'icing', 'cream',
-  // 裝飾
-  'cake decoration', 'cake topper', 'fondant', 'piping'
-];
+// 窗簾專用精簡標籤 ontology
 
 export const CURTAIN_LABELS = [
   // 結構
@@ -22,18 +13,6 @@ export const GENERAL_LABELS = [
 ];
 
 export const MODE_CONFIGS = {
-  cake: {
-    labels: CAKE_LABELS,
-    params: {
-      score_threshold: 0.08,
-      nms_threshold: 0.4,
-      box_threshold: 0.15,
-      iou_threshold: 0.4
-    },
-    color: '#ff69b4', // 粉紅
-    tag: '🎂',
-    name: 'CAKE DETAIL'
-  },
   curtain: {
     labels: CURTAIN_LABELS,
     params: {

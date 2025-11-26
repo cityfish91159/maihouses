@@ -47,10 +47,6 @@ export default async function handler(req, res) {
 
     // 模式參數（與前端 detection-labels.ts 同步）
     const modeConfigs = {
-      cake: {
-        score_threshold: 0.08,
-        box_threshold: 0.15
-      },
       curtain: {
         score_threshold: 0.06,
         box_threshold: 0.12
@@ -62,7 +58,7 @@ export default async function handler(req, res) {
     };
 
     const config = modeConfigs[mode] || modeConfigs.general;
-    const inputLabels = labels || (mode === 'cake' ? ['cake', 'frosting', 'icing'] : mode === 'curtain' ? ['curtain', 'fabric fold'] : ['object']);
+    const inputLabels = labels || (mode === 'curtain' ? ['curtain', 'fabric fold'] : ['object']);
 
     console.log('Detecting with mode:', mode, 'labels:', inputLabels, 'deployment:', deploymentPath);
 

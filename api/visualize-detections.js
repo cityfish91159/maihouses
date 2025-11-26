@@ -35,7 +35,6 @@ export default async function handler(req, res) {
 
     // 模式顏色配置
     const modeStyles = {
-      cake: { color: '#ff69b4', stroke: 6, opacity: 0.35, fontSize: 24, tag: '🎂' },
       curtain: { color: '#9370db', stroke: 5, opacity: 0.4, fontSize: 22, tag: '🪟' },
       general: { color: '#4ade80', stroke: 4, opacity: 0.3, fontSize: 20, tag: '📦' }
     };
