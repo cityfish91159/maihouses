@@ -15,8 +15,8 @@ const createMockState = (id: string): Transaction => ({
     2: { name: "已帶看", agentStatus: 'pending', buyerStatus: 'pending', locked: false, data: { risks: { water: false, wall: false, structure: false, other: false } } },
     3: { name: "已出價", agentStatus: 'pending', buyerStatus: 'pending', data: {}, locked: false },
     4: { name: "已斡旋", agentStatus: 'pending', buyerStatus: 'pending', data: {}, locked: false },
-    5: { name: "已成交", agentStatus: 'pending', buyerStatus: 'pending', locked: false, paymentStatus: 'pending', paymentDeadline: null },
-    6: { name: "已交屋", agentStatus: 'pending', buyerStatus: 'pending', locked: false, checklist: [] }
+    5: { name: "已成交", agentStatus: 'pending', buyerStatus: 'pending', locked: false, paymentStatus: 'pending', paymentDeadline: null, data: {} },
+    6: { name: "已交屋", agentStatus: 'pending', buyerStatus: 'pending', locked: false, checklist: [], data: {} }
   },
   supplements: []
 });
@@ -145,11 +145,13 @@ export default function AssureDetail() {
         if (diff <= 0) {
             setTimeLeft("已逾期")
             // Mock 模式下自動處理過期
-            if (isMock && tx.steps[5].paymentStatus !== 'expired') {
+            if (isMock) {
                 setTx(prev => {
                     if (!prev) return null
                     const next = {...prev}
-                    next.steps[5].paymentStatus = 'expired'
+                    if (next.steps[5]) {
+                        next.steps[5].paymentStatus = 'expired'
+                    }
                     return next
                 })
             }
@@ -203,7 +205,7 @@ export default function AssureDetail() {
                     if (stepNum === 5) {
                         if (newTx.steps[5]) {
                             newTx.steps[5].paymentStatus = 'initiated';
-                            newTx.steps[5].paymentDeadline = Date.now() + MOCK_TIMEOUTS[5];
+                            newTx.steps[5].paymentDeadline = Date.now() + (MOCK_TIMEOUTS[5] || 30000);
                         }
                     } else if (stepNum === 6) {
                         // 交屋檢查
@@ -238,8 +240,12 @@ export default function AssureDetail() {
                     break;
                 
                 case 'checklist':
-                    if (newTx.steps[6]?.checklist) {
-                        newTx.steps[6].checklist[body.index].checked = body.checked;
+                    const step6 = newTx.steps[6];
+                    if (step6 && step6.checklist) {
+                        const item = step6.checklist[body.index];
+                        if (item) {
+                            item.checked = body.checked;
+                        }
                     }
                     break;
 
@@ -264,9 +270,6 @@ export default function AssureDetail() {
         } catch(e: any) {
             toast.error(e.message);
         }
-        setIsBusy(false);
-        return;
-    }
         setIsBusy(false);
         return;
     }
