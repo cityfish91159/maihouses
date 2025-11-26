@@ -42,13 +42,15 @@ export function useTrustRoom() {
       const hash = window.location.hash;
       if (hash.includes('token=')) {
         const t = hash.split('token=')[1];
+        // Clear immediately to prevent history leak
+        window.history.replaceState(null, '', window.location.pathname);
+        
         try {
           await fetch('/api/trust/session', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ token: t })
           });
-          window.location.hash = ''; // Clear token from URL
         } catch (e) {
           console.error("Session exchange failed", e);
           toast.error("無效的連結或憑證");

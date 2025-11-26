@@ -1,7 +1,7 @@
 import { verifyToken, cors } from './_utils';
 
 export default async function handler(req: any, res: any) {
-    cors(res);
+    cors(req, res);
     if (req.method === 'OPTIONS') return res.status(200).end();
     
     try {

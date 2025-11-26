@@ -1,7 +1,7 @@
 import { getTx, saveTx, logAudit, verifyToken, cors } from './_utils';
 
 export default async function handler(req: any, res: any) {
-    cors(res);
+    cors(req, res);
     if (req.method === 'OPTIONS') return res.status(200).end();
     if (req.method !== 'POST') return res.status(405).end();
 
@@ -9,12 +9,16 @@ export default async function handler(req: any, res: any) {
         const user = verifyToken(req);
         const { id } = req.query;
 
-        if (user.role !== 'buyer') return res.status(403).json({ error: "Forbidden" });
+        if (user.role !== 'agent') return res.status(403).json({ error: "Forbidden: Only agent can initiate payment" });
         if (user.caseId && user.caseId !== id) return res.status(403).json({ error: "Access denied" });
 
         const tx = await getTx(id);
         const s5 = tx.steps[5];
 
+        // Agent pays, so we check if payment is initiated (which means buyer confirmed contract)
+        // Actually, if Agent pays, maybe we don't need buyer confirmation?
+        // But the flow is: Agent submits contract -> Buyer confirms -> Payment initiated -> Agent pays.
+        // So s5.buyerStatus === 'confirmed' is still correct.
         if (s5.buyerStatus !== 'confirmed') return res.status(400).json({ error: "Contract not confirmed" });
         if (s5.paymentStatus !== 'initiated') return res.status(400).json({ error: "Invalid status" });
         if (Date.now() > s5.paymentDeadline) return res.status(400).json({ error: "Expired" });

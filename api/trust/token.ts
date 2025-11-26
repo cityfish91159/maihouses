@@ -1,8 +1,8 @@
-import { JWT_SECRET, SYSTEM_API_KEY, cors } from './_utils';
+import { JWT_SECRET, cors } from './_utils';
 import jwt from 'jsonwebtoken';
 
 export default async function handler(req: any, res: any) {
-    cors(res);
+    cors(req, res);
     if (req.method === 'OPTIONS') return res.status(200).end();
     if (req.method !== 'POST') return res.status(405).end();
 
