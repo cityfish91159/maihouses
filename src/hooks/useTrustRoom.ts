@@ -31,6 +31,7 @@ export function useTrustRoom() {
   const [loading, setLoading] = useState(true);
   const [isBusy, setIsBusy] = useState(false);
   const [timeLeft, setTimeLeft] = useState('--:--:--');
+  const [authError, setAuthError] = useState(false);
 
   // Init / Session Check
   useEffect(() => {
@@ -50,6 +51,7 @@ export function useTrustRoom() {
           window.location.hash = ''; // Clear token from URL
         } catch (e) {
           console.error("Session exchange failed", e);
+          toast.error("無效的連結或憑證");
         }
       }
 
@@ -61,6 +63,7 @@ export function useTrustRoom() {
           setRole(user.role);
           setCaseId(user.caseId);
           setIsMock(false);
+          setAuthError(false);
           await fetchData(user.caseId);
         } else {
           // Not logged in
@@ -78,6 +81,7 @@ export function useTrustRoom() {
   // Mock Mode Toggle
   const startMockMode = useCallback(async () => {
     setIsMock(true);
+    setAuthError(false);
     const mockId = 'MOCK-DEMO-01';
     setCaseId(mockId);
     setRole('agent');
@@ -91,6 +95,9 @@ export function useTrustRoom() {
     const targetId = id || caseId;
     if (!targetId) return;
 
+    // Don't fetch if we already know auth is bad, unless forcing a retry (which would reset authError elsewhere)
+    if (authError && !isMock) return;
+
     setLoading(true);
     try {
       let data;
@@ -102,23 +109,28 @@ export function useTrustRoom() {
       
       if (data) {
         setTx(data);
+        setAuthError(false);
       } else if (!isMock) {
         // If real mode and no data/error, maybe session expired
-        // But we handle that in init mostly.
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
+      if (e.message === "UNAUTHORIZED") {
+        setAuthError(true);
+        toast.error("連線逾時，請重新登入");
+      }
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
-  }, [isMock, caseId]);
+  }, [isMock, caseId, authError]);
 
   // Polling
   useEffect(() => {
-    if (!isMock && caseId) {
+    if (!isMock && caseId && !authError) {
       const interval = setInterval(() => fetchData(), 5000);
       return () => clearInterval(interval);
     }
-  }, [caseId, isMock, fetchData]);
+  }, [caseId, isMock, fetchData, authError]);
 
   // Payment Timer
   useEffect(() => {
@@ -149,27 +161,38 @@ export function useTrustRoom() {
     if (isBusy) return;
     setIsBusy(true);
 
-    const service = isMock ? mockService : realService;
-    // For mock service, we map endpoint names to dispatch action
-    // For real service, we pass endpoint name directly
-    
-    let result;
-    if (isMock) {
-        result = await mockService.dispatch(endpoint, caseId, role, body);
-    } else {
-        result = await realService.dispatch(endpoint, caseId, '', body);
-    }
+    try {
+      const service = isMock ? mockService : realService;
+      // For mock service, we map endpoint names to dispatch action
+      // For real service, we pass endpoint name directly
+      
+      let result;
+      if (isMock) {
+          result = await mockService.dispatch(endpoint, caseId, role, body);
+      } else {
+          result = await realService.dispatch(endpoint, caseId, '', body);
+      }
 
-    if (result.success) {
-        if (result.tx) setTx(result.tx); // Update local state immediately if returned
-        await fetchData(); // Refresh to be sure
-        toast.success('成功');
-        setIsBusy(false);
-        return true;
-    } else {
-        toast.error(result.error || '操作失敗');
-        setIsBusy(false);
-        return false;
+      if (result.success) {
+          if (result.tx) setTx(result.tx); // Update local state immediately if returned
+          await fetchData(); // Refresh to be sure
+          toast.success('成功');
+          return true;
+      } else {
+          if (result.error === "UNAUTHORIZED") {
+             setAuthError(true);
+             toast.error("連線逾時，請重新登入");
+          } else {
+             toast.error(result.error || '操作失敗');
+          }
+          return false;
+      }
+    } catch (e) {
+      console.error(e);
+      toast.error('發生未預期的錯誤');
+      return false;
+    } finally {
+      setIsBusy(false);
     }
   }, [isMock, caseId, role, fetchData, isBusy]);
 

@@ -36,13 +36,14 @@ const createMockState = (id: string): Transaction => ({
 
 const getMockTx = (id: string): Transaction => {
   if (typeof window === 'undefined') return createMockState(id);
-  const saved = localStorage.getItem(`mock_tx_${id}`);
+  // Use sessionStorage to avoid polluting global localStorage and keep it session-based
+  const saved = sessionStorage.getItem(`mock_tx_${id}`);
   return saved ? JSON.parse(saved) : createMockState(id);
 };
 
 const saveMockTx = (tx: Transaction) => {
   if (typeof window !== 'undefined') {
-    localStorage.setItem(`mock_tx_${tx.id}`, JSON.stringify(tx));
+    sessionStorage.setItem(`mock_tx_${tx.id}`, JSON.stringify(tx));
   }
 };
 
@@ -145,14 +146,16 @@ export const mockService = {
 export const realService = {
   fetchData: async (caseId: string, token: string) => {
     try {
-      const res = await fetch(`/api/trust/status?id=${caseId}`, {
-        // headers: { 'Authorization': `Bearer ${token}` } // Removed for Cookie-based auth
-      });
+      const res = await fetch(`/api/trust/status?id=${caseId}`);
       if (res.ok) {
         return await res.json();
       }
+      if (res.status === 401 || res.status === 403) {
+        throw new Error("UNAUTHORIZED");
+      }
       return null;
-    } catch (e) {
+    } catch (e: any) {
+      if (e.message === "UNAUTHORIZED") throw e;
       console.error(e);
       return null;
     }
@@ -164,10 +167,14 @@ export const realService = {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          // 'Authorization': `Bearer ${token}` // Removed for Cookie-based auth
         },
         body: JSON.stringify(body)
       });
+      
+      if (res.status === 401 || res.status === 403) {
+         return { success: false, error: "UNAUTHORIZED" };
+      }
+
       const d = await res.json();
       if (d.error) {
         return { success: false, error: d.error };
