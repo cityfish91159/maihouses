@@ -1,8 +1,25 @@
 import { useEffect, useState } from 'react'
+import { Routes, Route, useLocation } from 'react-router-dom'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { getConfig, type AppConfig, type RuntimeOverrides } from './app/config'
+import DevTools from './app/devtools'
+import { trackEvent } from './services/analytics'
+import Home from './pages/Home'
+import Register from './pages/Auth/Register'
+import Login from './pages/Auth/Login'
+import Wall from './pages/Community/Wall'
+import Suggested from './pages/Community/Suggested'
+import Detail from './pages/Property/Detail'
+import AssureDetail from './pages/Assure/Detail'
+import ChatStandalone from './pages/Chat/Standalone'
+import ErrorBoundary from './app/ErrorBoundary'
+import { QuietModeProvider } from './context/QuietModeContext'
 import { MoodProvider } from './context/MoodContext'
 import { CookieConsent } from './components/CookieConsent'
 
 import UAGPage from './pages/UAG'
+import TrustRoom from './pages/TrustRoom'
+import TrustManager from './components/TrustManager'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -44,11 +61,6 @@ export default function App() {
                 </ErrorBoundary>
               }
             />
-            {/* 
-            由於 basename 已統一設定為 /maihouses/，
-            此處不需要額外的 /maihouses 路由，
-            否則會變成匹配 /maihouses/maihouses 
-          */}
             <Route
               path="/uag"
               element={
@@ -79,6 +91,62 @@ export default function App() {
                 </ErrorBoundary>
               }
             />
+            <Route
+              path="/community/suggested"
+              element={
+                <ErrorBoundary>
+                  <Suggested />
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="/property/:id"
+              element={
+                <ErrorBoundary>
+                  <Detail />
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="/assure"
+              element={
+                <ErrorBoundary>
+                  <AssureDetail />
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="/chat"
+              element={
+                <ErrorBoundary>
+                  <ChatStandalone />
+                </ErrorBoundary>
+              }
+            />
+
+            {/* Trust Room V26 Routes */}
+            <Route
+              path="/trust"
+              element={
+                <ErrorBoundary>
+                  <TrustRoom />
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="/agent/trust"
+              element={
+                <ErrorBoundary>
+                  <div className="p-8">
+                    <h1 className="text-2xl font-bold mb-4">房仲後台</h1>
+                    <TrustManager />
+                  </div>
+                </ErrorBoundary>
+              }
+            />
+          </Routes>
+          {config.devtools === '1' && <DevTools config={config} />}
+          <CookieConsent />
         </MoodProvider>
       </QuietModeProvider>
     </QueryClientProvider>
