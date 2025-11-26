@@ -180,16 +180,16 @@ export default function AssureDetail() {
                   <div className="mb-4 text-center p-4 bg-orange-50 rounded-lg border border-orange-200">
                     <div className="text-2xl font-mono text-orange-600 font-bold mb-1">{timeLeft}</div>
                     <div className="text-xs text-orange-400 mb-3">付款截止</div>
-                    {role === 'buyer' ? (
+                    {role === 'agent' ? (
                       <button 
                         onClick={pay} 
                         disabled={isBusy || timeLeft === '已逾期'} 
                         className={`w-full text-white font-bold py-2 rounded shadow ${timeLeft === '已逾期' ? 'bg-gray-400 cursor-not-allowed' : 'bg-gradient-to-r from-orange-500 to-red-500 hover:shadow-lg'}`}
                       >
-                        {timeLeft === '已逾期' ? '付款已截止' : (isBusy ? '處理中...' : '立即支付 NT$ 2,000')}
+                        {timeLeft === '已逾期' ? '付款已截止' : (isBusy ? '處理中...' : '房仲代付 NT$ 2,000')}
                       </button>
                     ) : (
-                      <div className="text-xs text-gray-400">等待買方付款...</div>
+                      <div className="text-xs text-gray-400">等待房仲付款...</div>
                     )}
                   </div>
                 )}

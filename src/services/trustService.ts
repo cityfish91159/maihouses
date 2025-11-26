@@ -92,6 +92,7 @@ export const mockService = {
           break;
 
         case 'payment':
+          if (role !== 'agent') throw new Error("權限不足");
           if (newTx.steps[5]?.paymentStatus !== 'initiated') throw new Error("非付款狀態");
           newTx.isPaid = true;
           if (newTx.steps[5]) {
