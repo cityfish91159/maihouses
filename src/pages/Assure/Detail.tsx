@@ -200,6 +200,10 @@ export default function AssureDetail() {
                     if (role !== 'buyer') throw new Error("權限不足");
                     if (newTx.steps[stepNum]) {
                         newTx.steps[stepNum].buyerStatus = 'confirmed';
+                        // Save buyer's note if provided
+                        if (body.note) {
+                            newTx.steps[stepNum].data = { ...newTx.steps[stepNum].data, buyerNote: body.note };
+                        }
                     }
                     
                     if (stepNum === 5) {
@@ -301,7 +305,7 @@ export default function AssureDetail() {
 
   // Actions wrappers
   const submitAgent = (step: string) => action('submit', { step, data: step === '2' ? { risks: tx?.steps['2']?.data?.risks } : { note: inputBuffer } })
-  const confirmStep = (step: string) => action('confirm', { step })
+  const confirmStep = (step: string) => action('confirm', { step, note: inputBuffer })
   const pay = () => { if (confirm('確認模擬付款？')) action('payment') }
   const toggleCheck = (index: number, checked: boolean) => { if (role === 'buyer') action('checklist', { index, checked }) }
   const addSupplement = () => action('supplement', { content: supplementInput })
@@ -543,8 +547,17 @@ export default function AssureDetail() {
                         <div>
                           <p className="text-xs text-gray-500 mb-2">房仲已提交，請核對：</p>
                           <div className="p-2 bg-gray-50 rounded border text-sm mb-2 whitespace-pre-wrap">{step.data.note || '（已提交表單）'}</div>
+                          
+                          {/* Buyer Note Input */}
+                          <textarea 
+                              value={inputBuffer}
+                              onChange={(e) => setInputBuffer(e.target.value)}
+                              className="w-full border p-2 rounded text-sm mb-2 focus:ring-2 ring-green-200 outline-none" 
+                              placeholder="留言給房仲 (選填)..."
+                          />
+                          
                           <button onClick={() => confirmStep(key)} disabled={isBusy} className="w-full bg-green-600 text-white py-2 rounded text-sm">
-                            {isBusy ? '...' : '確認無誤'}
+                            {isBusy ? '...' : '確認無誤並送出'}
                           </button>
                         </div>
                       ) : (
@@ -552,6 +565,13 @@ export default function AssureDetail() {
                       )
                     )}
                   </div>
+                )}
+
+                {/* Display Buyer Note if exists (for history) */}
+                {step.data.buyerNote && (
+                    <div className="mt-2 p-2 bg-green-50 rounded border border-green-100 text-xs">
+                        <span className="font-bold text-green-700">買方留言：</span> {step.data.buyerNote}
+                    </div>
                 )}
 
                 {/* Step 5 Actions */}
@@ -584,7 +604,8 @@ export default function AssureDetail() {
 
         {/* Add Supplement */}
         <div className="mt-8 bg-white p-4 rounded-xl shadow-sm border">
-          <h4 className="text-xs font-bold text-gray-500 mb-2">📝 新增補充紀錄</h4>
+          <h4 className="text-xs font-bold text-gray-500 mb-2">📝 新增補充紀錄 (修正/勘誤)</h4>
+          <p className="text-[10px] text-gray-400 mb-2">若之前的留言有誤，請在此新增補充說明。已送出的內容無法修改。</p>
           <div className="flex gap-2">
             <input 
               value={supplementInput}
