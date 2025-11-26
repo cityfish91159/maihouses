@@ -10,7 +10,7 @@ export interface Step {
   data: any;
   paymentStatus?: 'pending' | 'initiated' | 'completed' | 'expired';
   paymentDeadline?: number | null;
-  checklist?: { label: string; checked: boolean }[];
+  checklist?: { id: string; label: string; checked: boolean }[];
 }
 
 export interface Transaction {
@@ -30,7 +30,7 @@ const createMockState = (id: string): Transaction => ({
   isPaid: false,
   steps: {
     1: { name: "已電聯", agentStatus: 'pending', buyerStatus: 'pending', data: {}, locked: false },
-    2: { name: "已帶看", agentStatus: 'pending', buyerStatus: 'pending', locked: false, data: {} },
+    2: { name: "已帶看", agentStatus: 'pending', buyerStatus: 'pending', locked: false, data: { risks: { water: false, wall: false, structure: false, other: false } } },
     3: { name: "已出價", agentStatus: 'pending', buyerStatus: 'pending', data: {}, locked: false },
     4: { name: "已斡旋", agentStatus: 'pending', buyerStatus: 'pending', data: {}, locked: false },
     5: { name: "已成交", agentStatus: 'pending', buyerStatus: 'pending', locked: false, paymentStatus: 'pending', paymentDeadline: null, data: {} },
@@ -51,13 +51,20 @@ export function useTrustRoom() {
   const [timeLeft, setTimeLeft] = useState('--:--:--');
 
   // Helper to save mock state
+  const persistMockState = (newState: Transaction) => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(`mock_tx_${newState.id}`, JSON.stringify(newState));
+    }
+  };
+
   const saveMockState = (newState: Transaction) => {
     setTx(newState);
-    localStorage.setItem(`mock_tx_${newState.id}`, JSON.stringify(newState));
+    persistMockState(newState);
   };
 
   // Helper to load mock state
   const loadMockState = (id: string) => {
+    if (typeof window === 'undefined') return createMockState(id);
     const saved = localStorage.getItem(`mock_tx_${id}`);
     return saved ? JSON.parse(saved) : createMockState(id);
   };
@@ -118,7 +125,7 @@ export function useTrustRoom() {
               if (next.steps[5]) {
                 next.steps[5].paymentStatus = 'expired';
               }
-              saveMockState(next); // Persist
+              persistMockState(next); // Persist only
               return next;
             });
           } else {
@@ -152,13 +159,6 @@ export function useTrustRoom() {
       
       const newTx = JSON.parse(JSON.stringify(tx)) as Transaction; // Deep Clone
       const stepNum = parseInt(body.step || tx.currentStep);
-
-      // Ensure step exists
-      if (!newTx.steps[stepNum]) {
-        // Some actions like 'reset' or 'supplement' might not need step validation in the same way, 
-        // but for flow actions it's needed.
-        // We'll handle specific endpoints below.
-      }
 
       try {
         switch (endpoint) {
@@ -204,10 +204,10 @@ export function useTrustRoom() {
             newTx.currentStep = 6;
             if (newTx.steps[6]) {
               newTx.steps[6].checklist = [
-                { label: "🚰 水電瓦斯功能正常", checked: false },
-                { label: "🪟 門窗鎖具開關正常", checked: false },
-                { label: "🔑 鑰匙門禁卡點交", checked: false },
-                { label: "🧱 房屋現況確認 (漏水/壁癌等)", checked: false }
+                { id: 'utilities', label: "🚰 水電瓦斯功能正常", checked: false },
+                { id: 'security', label: "🪟 門窗鎖具開關正常", checked: false },
+                { id: 'keys', label: "🔑 鑰匙門禁卡點交", checked: false },
+                { id: 'condition', label: "🧱 房屋現況確認 (漏水/壁癌等)", checked: false }
               ];
             }
             break;
@@ -215,7 +215,7 @@ export function useTrustRoom() {
           case 'checklist':
             const step6 = newTx.steps[6];
             if (step6 && step6.checklist) {
-              const item = step6.checklist[body.index];
+              const item = step6.checklist.find(i => i.id === body.itemId);
               if (item) {
                 item.checked = body.checked;
               }

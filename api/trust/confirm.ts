@@ -12,13 +12,17 @@ export default async function handler(req: any, res: any) {
         if (user.role !== 'buyer') return res.status(403).json({ error: "Forbidden" });
         if (user.caseId && user.caseId !== id) return res.status(403).json({ error: "Access denied" });
 
-        const { step } = req.body;
+        const { step, note } = req.body;
         const stepNum = parseInt(step);
         const tx = await getTx(id);
 
         if (stepNum !== tx.currentStep) return res.status(400).json({ error: "Invalid Step" });
         if (tx.steps[stepNum].agentStatus !== 'submitted') return res.status(400).json({ error: "Agent not submitted" });
         if (stepNum === 6 && (!tx.isPaid || tx.steps[5].paymentStatus !== 'completed')) return res.status(400).json({ error: "Unpaid" });
+
+        if (note) {
+            tx.steps[stepNum].data = { ...tx.steps[stepNum].data, buyerNote: note };
+        }
 
         tx.steps[stepNum].buyerStatus = 'confirmed';
 

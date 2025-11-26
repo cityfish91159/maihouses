@@ -103,7 +103,7 @@ const createMockState = (id: string): Transaction => ({
   isPaid: false,
   steps: {
     1: { name: "已電聯", agentStatus: 'pending', buyerStatus: 'pending', data: {}, locked: false },
-    2: { name: "已帶看", agentStatus: 'pending', buyerStatus: 'pending', locked: false, data: {} },
+    2: { name: "已帶看", agentStatus: 'pending', buyerStatus: 'pending', locked: false, data: { risks: { water: false, wall: false, structure: false, other: false } } },
     3: { name: "已出價", agentStatus: 'pending', buyerStatus: 'pending', data: {}, locked: false },
     4: { name: "已斡旋", agentStatus: 'pending', buyerStatus: 'pending', data: {}, locked: false },
     5: { name: "已成交", agentStatus: 'pending', buyerStatus: 'pending', locked: false, paymentStatus: 'pending', paymentDeadline: null, data: {} },
@@ -124,13 +124,20 @@ export function useTrustRoom() {
   const [timeLeft, setTimeLeft] = useState('--:--:--');
 
   // Helper to save mock state
+  const persistMockState = (newState: Transaction) => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(`mock_tx_${newState.id}`, JSON.stringify(newState));
+    }
+  };
+
   const saveMockState = (newState: Transaction) => {
     setTx(newState);
-    localStorage.setItem(`mock_tx_${newState.id}`, JSON.stringify(newState));
+    persistMockState(newState);
   };
 
   // Helper to load mock state
   const loadMockState = (id: string) => {
+    if (typeof window === 'undefined') return createMockState(id);
     const saved = localStorage.getItem(`mock_tx_${id}`);
     return saved ? JSON.parse(saved) : createMockState(id);
   };
@@ -191,7 +198,7 @@ export function useTrustRoom() {
               if (next.steps[5]) {
                 next.steps[5].paymentStatus = 'expired';
               }
-              saveMockState(next); // Persist
+              persistMockState(next); // Persist only
               return next;
             });
           } else {
@@ -394,10 +401,12 @@ export default function AssureDetail() {
   const [supplementInput, setSupplementInput] = useState('')
   
   // Dev Helper
-  const isDev = window.location.hostname === 'localhost' || window.location.hostname.includes('127.0.0.1')
+  const isDev = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname.includes('127.0.0.1'));
 
   // 初始化：檢查 Token 或 啟動 Mock
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+
     const hash = location.hash
     let t = ''
     
@@ -718,8 +727,8 @@ export default function AssureDetail() {
 import { createClient } from '@supabase/supabase-js';
 import jwt from 'jsonwebtoken';
 
-const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY;
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!supabaseUrl || !supabaseKey) {
     console.error("Missing Supabase credentials");
@@ -742,8 +751,8 @@ export const createInitialState = (id: string) => ({
         2: { name: "已帶看", agentStatus: 'pending', buyerStatus: 'pending', locked: false, data: { risks: { water: false, wall: false, structure: false, other: false } } },
         3: { name: "已出價", agentStatus: 'pending', buyerStatus: 'pending', data: {}, locked: false },
         4: { name: "已斡旋", agentStatus: 'pending', buyerStatus: 'pending', data: {}, locked: false },
-        5: { name: "已成交", agentStatus: 'pending', buyerStatus: 'pending', locked: false, paymentStatus: 'pending', paymentDeadline: null },
-        6: { name: "已交屋", agentStatus: 'pending', buyerStatus: 'pending', locked: false, checklist: [] }
+        5: { name: "已成交", agentStatus: 'pending', buyerStatus: 'pending', locked: false, paymentStatus: 'pending', paymentDeadline: null, data: {} },
+        6: { name: "已交屋", agentStatus: 'pending', buyerStatus: 'pending', locked: false, checklist: [], data: {} }
     },
     supplements: []
 });
@@ -885,13 +894,17 @@ export default async function handler(req: any, res: any) {
         if (user.role !== 'buyer') return res.status(403).json({ error: "Forbidden" });
         if (user.caseId && user.caseId !== id) return res.status(403).json({ error: "Access denied" });
 
-        const { step } = req.body;
+        const { step, note } = req.body;
         const stepNum = parseInt(step);
         const tx = await getTx(id);
 
         if (stepNum !== tx.currentStep) return res.status(400).json({ error: "Invalid Step" });
         if (tx.steps[stepNum].agentStatus !== 'submitted') return res.status(400).json({ error: "Agent not submitted" });
         if (stepNum === 6 && (!tx.isPaid || tx.steps[5].paymentStatus !== 'completed')) return res.status(400).json({ error: "Unpaid" });
+
+        if (note) {
+            tx.steps[stepNum].data = { ...tx.steps[stepNum].data, buyerNote: note };
+        }
 
         tx.steps[stepNum].buyerStatus = 'confirmed';
 
@@ -1034,7 +1047,7 @@ export default async function handler(req: any, res: any) {
 ### 8. 登入 API (`api/trust/login.ts`)
 
 ```typescript
-import { JWT_SECRET, cors } from './_utils';
+import { JWT_SECRET, SYSTEM_API_KEY, cors } from './_utils';
 import jwt from 'jsonwebtoken';
 
 export default async function handler(req: any, res: any) {
@@ -1043,6 +1056,12 @@ export default async function handler(req: any, res: any) {
     if (req.method !== 'POST') return res.status(405).end();
     
     try {
+        // Security Check
+        const systemKey = req.headers['x-system-key'];
+        if (systemKey !== SYSTEM_API_KEY) {
+            return res.status(401).json({ error: "Unauthorized System Access" });
+        }
+
         const { role, caseId } = req.body;
         const token = jwt.sign({ role, caseId: caseId || 'demo' }, JWT_SECRET, { expiresIn: '24h' });
         res.json({ token });

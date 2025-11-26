@@ -1,11 +1,8 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
 import { useTrustRoom } from '../../hooks/useTrustRoom'
 import { Phone, ClipboardCheck, HandCoins, MessageSquare, FileSignature, Home, Lock, Check, RotateCcw, Info, User, Briefcase, Zap } from 'lucide-react'
-import toast, { Toaster } from 'react-hot-toast'
-
-// --- MOCK DATA & UTILS (Moved to useTrustRoom hook) ---
-
+import { Toaster } from 'react-hot-toast'
 
 export default function AssureDetail() {
   const location = useLocation()
@@ -16,7 +13,6 @@ export default function AssureDetail() {
     setCaseId,
     role,
     setRole,
-    token,
     setToken,
     tx,
     loading,
@@ -31,14 +27,15 @@ export default function AssureDetail() {
   const [supplementInput, setSupplementInput] = useState('')
   
   // Dev Helper
-  const isDev = window.location.hostname === 'localhost' || window.location.hostname.includes('127.0.0.1')
+  const isDev = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname.includes('127.0.0.1'));
 
   // 初始化：檢查 Token 或 啟動 Mock
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+
     const hash = location.hash
     let t = ''
     
-    // 1. 嘗試從 URL Hash 獲取 Token
     if (hash.includes('token=')) {
       t = hash.split('token=')[1] ?? ''
       localStorage.setItem('mh_token', t)
@@ -47,7 +44,6 @@ export default function AssureDetail() {
       t = localStorage.getItem('mh_token') || ''
     }
 
-    // 2. 如果有 Token，走正常流程
     if (t) {
       setToken(t)
       try {
@@ -58,18 +54,14 @@ export default function AssureDetail() {
         setCaseId(payload.caseId)
       } catch (e) {
         console.error('Token invalid', e)
-        localStorage.removeItem('mh_token') // 清除無效 Token
+        localStorage.removeItem('mh_token')
       }
     } 
-    // 3. 如果沒 Token 且是本地開發，自動登入演示帳號
     else if (isDev) {
-        // 本地開發依然可以走 API 測試
         setCaseId('demo-v10')
-        // devLogin('agent', 'demo-v10') // 暫時註解，改用 Mock 優先
     }
   }, [location, isDev, setToken, setRole, setCaseId])
 
-  // Wrapper for dispatchAction to handle UI state
   const handleAction = async (endpoint: string, body: any = {}) => {
       const success = await dispatchAction(endpoint, body);
       if (success) {
@@ -78,24 +70,20 @@ export default function AssureDetail() {
       }
   }
 
-  // Actions wrappers
   const submitAgent = (step: string) => handleAction('submit', { step, data: { note: inputBuffer } })
   const confirmStep = (step: string) => handleAction('confirm', { step, note: inputBuffer })
   const pay = () => { if (confirm('確認模擬付款？')) handleAction('payment') }
-  const toggleCheck = (index: number, checked: boolean) => { if (role === 'buyer') handleAction('checklist', { index, checked }) }
+  const toggleCheck = (itemId: string, checked: boolean) => { if (role === 'buyer') handleAction('checklist', { itemId, checked }) }
   const addSupplement = () => handleAction('supplement', { content: supplementInput })
   const reset = () => { if (confirm('重置所有進度？')) handleAction('reset') }
   
   const toggleRole = () => {
-      // Mock 模式下直接切換
       const newRole = role === 'agent' ? 'buyer' : 'agent'
       setRole(newRole)
-      toast('切換身份為: ' + (newRole === 'agent' ? '房仲' : '買方'), { icon: newRole === 'agent' ? '👨‍💼' : '👤' })
   }
 
   // --- RENDERING ---
 
-  // 1. 如果沒有資料且不在 Loading，顯示 Mock 入口
   if (!tx && !loading) {
       return (
           <div className="flex flex-col items-center justify-center min-h-screen bg-slate-100 p-4 font-sans">
@@ -149,7 +137,6 @@ export default function AssureDetail() {
           </div>
         </div>
         <div className="flex gap-2">
-            {/* 總是顯示重置與切換角色按鈕，方便測試 */}
             <button onClick={reset} className="bg-white/10 hover:bg-white/20 w-8 h-8 rounded flex items-center justify-center transition">
                 <RotateCcw size={14} />
             </button>
@@ -210,7 +197,7 @@ export default function AssureDetail() {
                   {step.locked && <Lock size={14} className="text-green-600" />}
                 </div>
 
-                {/* Step 2: Viewing (Replaced Risks with Note) */}
+                {/* Step 2: Viewing */}
                 {key === '2' && step.data.note && (
                   <div className="mb-3 p-3 bg-gray-50 rounded border border-gray-100">
                     <p className="text-xs font-bold text-gray-500 mb-2 border-b pb-1">📢 房仲帶看紀錄</p>
@@ -240,11 +227,11 @@ export default function AssureDetail() {
                 {/* Step 6: Checklist */}
                 {key === '6' && !step.locked && tx.isPaid && (
                   <div className="space-y-2 mt-2">
-                    {step.checklist?.map((item, idx) => (
+                    {step.checklist?.map((item) => (
                       <div 
-                        key={idx} 
-                        onClick={() => toggleCheck(idx, !item.checked)} 
-                        className={`flex items-center p-3 border rounded transition cursor-pointer ${item.checked ? 'bg-indigo-50 border-indigo-200' : 'hover:bg-gray-50'}`}
+                        key={item.id} 
+                        onClick={() => toggleCheck(item.id, !item.checked)} 
+                        className={`flex items-center p-4 border rounded transition cursor-pointer ${item.checked ? 'bg-indigo-50 border-indigo-200' : 'hover:bg-gray-50'}`}
                       >
                         <div className={`w-5 h-5 border rounded flex items-center justify-center bg-white ${item.checked ? 'bg-indigo-600 border-indigo-600' : ''}`}>
                           {item.checked && <Check size={12} className="text-white" />}
