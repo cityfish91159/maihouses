@@ -52,7 +52,9 @@ export default function AssureDetail() {
 
     if (t) {
       try {
-        const payload = JSON.parse(atob(t.split('.')[1]))
+        const part = t.split('.')[1]
+        if (!part) throw new Error('Invalid token')
+        const payload = JSON.parse(atob(part))
         setRole(payload.role)
         setCaseId(payload.caseId)
       } catch (e) {
@@ -153,7 +155,7 @@ export default function AssureDetail() {
     setIsBusy(false)
   }
 
-  const submitAgent = (step: string) => action('submit', { step, data: step === '2' ? { risks: tx?.steps[2].data.risks } : { note: inputBuffer } })
+  const submitAgent = (step: string) => action('submit', { step, data: step === '2' ? { risks: tx?.steps['2']?.data?.risks } : { note: inputBuffer } })
   const confirmStep = (step: string) => action('confirm', { step })
   const pay = () => { if (confirm('確認付款？')) action('payment') }
   const toggleCheck = (index: number, checked: boolean) => { if (role === 'buyer') action('checklist', { index, checked }) }
@@ -272,8 +274,11 @@ export default function AssureDetail() {
                           onChange={(e) => {
                             if (tx) {
                               const newTx = { ...tx }
-                              newTx.steps[2].data.risks.water = e.target.checked
-                              setTx(newTx)
+                              const risks = newTx.steps['2']?.data?.risks
+                              if (risks) {
+                                risks.water = e.target.checked
+                                setTx(newTx)
+                              }
                             }
                           }}
                           disabled={step.locked || role !== 'agent'} 
@@ -288,8 +293,11 @@ export default function AssureDetail() {
                           onChange={(e) => {
                             if (tx) {
                               const newTx = { ...tx }
-                              newTx.steps[2].data.risks.wall = e.target.checked
-                              setTx(newTx)
+                              const risks = newTx.steps['2']?.data?.risks
+                              if (risks) {
+                                risks.wall = e.target.checked
+                                setTx(newTx)
+                              }
                             }
                           }}
                           disabled={step.locked || role !== 'agent'} 
