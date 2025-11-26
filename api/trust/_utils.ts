@@ -10,8 +10,11 @@ if (!supabaseUrl || !supabaseKey) {
 
 export const supabase = createClient(supabaseUrl!, supabaseKey!);
 
-export const JWT_SECRET = process.env.JWT_SECRET || 'mh_trust_v10_secure_key_8829102';
-export const SYSTEM_API_KEY = process.env.SYSTEM_API_KEY || 'bridge_key_main_site_access_001';
+export const JWT_SECRET = process.env.JWT_SECRET!;
+if (!JWT_SECRET) throw new Error("Missing JWT_SECRET env var");
+
+export const SYSTEM_API_KEY = process.env.SYSTEM_API_KEY!;
+if (!SYSTEM_API_KEY) throw new Error("Missing SYSTEM_API_KEY env var");
 
 export const TIMEOUTS: Record<number, number> = { 5: 12 * 3600 * 1000 }; // 12 hours
 

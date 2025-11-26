@@ -1,7 +1,25 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useLocation } from 'react-router-dom'
-import { Phone, ClipboardCheck, HandCoins, MessageSquare, FileSignature, Home, Lock, Check, RotateCcw, Info, User, Briefcase } from 'lucide-react'
+import { Phone, ClipboardCheck, HandCoins, MessageSquare, FileSignature, Home, Lock, Check, RotateCcw, Info, User, Briefcase, Zap } from 'lucide-react'
 import toast, { Toaster } from 'react-hot-toast'
+
+// --- MOCK DATA & UTILS (內建模擬數據，不依賴後端) ---
+const MOCK_TIMEOUTS: Record<number, number> = { 5: 30 * 1000 }; // Demo模式下縮短為30秒方便測試
+
+const createMockState = (id: string): Transaction => ({
+  id,
+  currentStep: 1,
+  isPaid: false,
+  steps: {
+    1: { name: "已電聯", agentStatus: 'pending', buyerStatus: 'pending', data: {}, locked: false },
+    2: { name: "已帶看", agentStatus: 'pending', buyerStatus: 'pending', locked: false, data: { risks: { water: false, wall: false, structure: false, other: false } } },
+    3: { name: "已出價", agentStatus: 'pending', buyerStatus: 'pending', data: {}, locked: false },
+    4: { name: "已斡旋", agentStatus: 'pending', buyerStatus: 'pending', data: {}, locked: false },
+    5: { name: "已成交", agentStatus: 'pending', buyerStatus: 'pending', locked: false, paymentStatus: 'pending', paymentDeadline: null },
+    6: { name: "已交屋", agentStatus: 'pending', buyerStatus: 'pending', locked: false, checklist: [] }
+  },
+  supplements: []
+});
 
 // Types
 interface Step {
@@ -11,7 +29,7 @@ interface Step {
   locked: boolean
   data: any
   paymentStatus?: 'pending' | 'initiated' | 'completed' | 'expired'
-  paymentDeadline?: number
+  paymentDeadline?: number | null
   checklist?: { label: string; checked: boolean }[]
 }
 
@@ -25,22 +43,30 @@ interface Transaction {
 
 export default function AssureDetail() {
   const location = useLocation()
+  
+  // States
+  const [isMock, setIsMock] = useState(false) // 核心：Mock模式開關
   const [caseId, setCaseId] = useState('')
   const [role, setRole] = useState<'agent' | 'buyer'>('agent')
   const [token, setToken] = useState('')
   const [tx, setTx] = useState<Transaction | null>(null)
   const [loading, setLoading] = useState(false)
   const [isBusy, setIsBusy] = useState(false)
+  
+  // Inputs
   const [inputBuffer, setInputBuffer] = useState('')
   const [supplementInput, setSupplementInput] = useState('')
   const [timeLeft, setTimeLeft] = useState('--:--:--')
   
+  // Dev Helper
   const isDev = window.location.hostname === 'localhost' || window.location.hostname.includes('127.0.0.1')
 
-  // Init Auth
+  // 初始化：檢查 Token 或 啟動 Mock
   useEffect(() => {
     const hash = location.hash
     let t = ''
+    
+    // 1. 嘗試從 URL Hash 獲取 Token
     if (hash.includes('token=')) {
       t = hash.split('token=')[1] ?? ''
       localStorage.setItem('mh_token', t)
@@ -48,9 +74,10 @@ export default function AssureDetail() {
     } else {
       t = localStorage.getItem('mh_token') || ''
     }
-    setToken(t)
 
+    // 2. 如果有 Token，走正常流程
     if (t) {
+      setToken(t)
       try {
         const part = t.split('.')[1]
         if (!part) throw new Error('Invalid token')
@@ -58,34 +85,32 @@ export default function AssureDetail() {
         setRole(payload.role)
         setCaseId(payload.caseId)
       } catch (e) {
-        console.error('Token invalid')
+        console.error('Token invalid', e)
+        localStorage.removeItem('mh_token') // 清除無效 Token
       }
-    } else if (isDev) {
-      setCaseId('demo-v10')
-      devLogin('agent', 'demo-v10')
+    } 
+    // 3. 如果沒 Token 且是本地開發，自動登入演示帳號
+    else if (isDev) {
+        // 本地開發依然可以走 API 測試
+        setCaseId('demo-v10')
+        // devLogin('agent', 'demo-v10') // 暫時註解，改用 Mock 優先
     }
   }, [location, isDev])
 
-  const devLogin = async (r: string, c: string) => {
-    try {
-      const res = await fetch('/api/trust/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ role: r, caseId: c })
-      })
-      const d = await res.json()
-      if (d.token) {
-        setToken(d.token)
-        setRole(r as any)
-        setCaseId(c)
-      }
-    } catch (e) {
-      console.error(e)
-    }
+  // Mock 模式切換邏輯
+  const startMockMode = () => {
+    setIsMock(true)
+    setCaseId('MOCK-DEMO-01')
+    setRole('agent')
+    setTx(createMockState('MOCK-DEMO-01'))
+    toast.success('已進入演示模式 (資料僅暫存於瀏覽器)')
   }
 
+  // 統一的數據獲取 (分辨 Real API vs Mock)
   const fetchData = async () => {
+    if (isMock) return // Mock 模式不需要 fetch，數據在本地 state
     if (!token || !caseId) return
+
     setLoading(true)
     try {
       const res = await fetch(`/api/trust/status?id=${caseId}`, {
@@ -95,7 +120,7 @@ export default function AssureDetail() {
         const data = await res.json()
         setTx(data)
       } else {
-        if (res.status === 401 || res.status === 403) toast.error('憑證失效')
+        if (res.status === 401 || res.status === 403) toast.error('憑證失效，請重新登入')
       }
     } catch (e) {
       console.error(e)
@@ -103,21 +128,32 @@ export default function AssureDetail() {
     setLoading(false)
   }
 
+  // 定時輪詢 (僅在非 Mock 模式下)
   useEffect(() => {
-    if (token && caseId) {
+    if (!isMock && token && caseId) {
       fetchData()
       const interval = setInterval(fetchData, 5000)
       return () => clearInterval(interval)
     }
-  }, [token, caseId])
+  }, [token, caseId, isMock])
 
-  // Timer
+  // 付款倒數計時器
   useEffect(() => {
     const timer = setInterval(() => {
       if (tx?.steps?.[5]?.paymentStatus === 'initiated' && tx.steps[5].paymentDeadline) {
         const diff = tx.steps[5].paymentDeadline - Date.now()
-        if (diff <= 0) setTimeLeft("已逾期")
-        else {
+        if (diff <= 0) {
+            setTimeLeft("已逾期")
+            // Mock 模式下自動處理過期
+            if (isMock && tx.steps[5].paymentStatus !== 'expired') {
+                setTx(prev => {
+                    if (!prev) return null
+                    const next = {...prev}
+                    next.steps[5].paymentStatus = 'expired'
+                    return next
+                })
+            }
+        } else {
           const h = Math.floor(diff / 3600000)
           const m = Math.floor((diff % 3600000) / 60000)
           const s = Math.floor((diff % 60000) / 1000)
@@ -126,11 +162,97 @@ export default function AssureDetail() {
       }
     }, 1000)
     return () => clearInterval(timer)
-  }, [tx])
+  }, [tx, isMock])
 
+  // 核心動作處理器 (支援 Real API 與 Mock Logic)
   const action = async (endpoint: string, body: any = {}) => {
     if (isBusy) return
     setIsBusy(true)
+
+    // --- MOCK MODE LOGIC (模擬後端行為) ---
+    if (isMock) {
+        await new Promise(r => setTimeout(r, 600)); // 假裝延遲
+        
+        if (!tx) return;
+        const newTx = JSON.parse(JSON.stringify(tx)) as Transaction; // Deep Clone
+        const stepNum = parseInt(body.step || tx.currentStep);
+        const currentS = newTx.steps[stepNum];
+
+        try {
+            switch(endpoint) {
+                case 'submit':
+                    if (role !== 'agent') throw new Error("權限不足");
+                    newTx.steps[stepNum].data = { ...newTx.steps[stepNum].data, ...body.data };
+                    newTx.steps[stepNum].agentStatus = 'submitted';
+                    break;
+
+                case 'confirm':
+                    if (role !== 'buyer') throw new Error("權限不足");
+                    newTx.steps[stepNum].buyerStatus = 'confirmed';
+                    
+                    if (stepNum === 5) {
+                        newTx.steps[5].paymentStatus = 'initiated';
+                        newTx.steps[5].paymentDeadline = Date.now() + MOCK_TIMEOUTS[5];
+                    } else if (stepNum === 6) {
+                        // 交屋檢查
+                        const allChecked = newTx.steps[6].checklist?.every(i => i.checked);
+                        if (!allChecked) throw new Error("檢查項目未完成");
+                        newTx.steps[6].locked = true;
+                    } else {
+                        newTx.steps[stepNum].locked = true;
+                        newTx.currentStep += 1;
+                    }
+                    break;
+
+                case 'payment':
+                     if (newTx.steps[5].paymentStatus !== 'initiated') throw new Error("非付款狀態");
+                     newTx.isPaid = true;
+                     newTx.steps[5].paymentStatus = 'completed';
+                     newTx.steps[5].locked = true;
+                     newTx.currentStep = 6;
+                     // 生成交屋清單
+                     const risks = newTx.steps[2].data.risks || {};
+                     newTx.steps[6].checklist = [
+                        { label: "🚰 水電瓦斯功能正常", checked: false },
+                        { label: "🪟 門窗鎖具開關正常", checked: false },
+                        { label: "🔑 鑰匙門禁卡點交", checked: false },
+                        { label: `🧱 驗證房仲承諾：${risks.water ? '有' : '無'}漏水`, checked: false },
+                        { label: `🧱 驗證房仲承諾：${risks.wall ? '有' : '無'}壁癌`, checked: false }
+                    ];
+                    break;
+                
+                case 'checklist':
+                    if (newTx.steps[6].checklist) {
+                        newTx.steps[6].checklist[body.index].checked = body.checked;
+                    }
+                    break;
+
+                case 'supplement':
+                    newTx.supplements.push({
+                        role,
+                        content: body.content,
+                        timestamp: Date.now()
+                    });
+                    break;
+
+                case 'reset':
+                    setTx(createMockState(caseId));
+                    toast.success('已重置 (Mock)');
+                    setIsBusy(false);
+                    return;
+            }
+            setTx(newTx);
+            toast.success('操作成功 (Mock)');
+            setInputBuffer('');
+            setSupplementInput('');
+        } catch(e: any) {
+            toast.error(e.message);
+        }
+        setIsBusy(false);
+        return;
+    }
+
+    // --- REAL API LOGIC ---
     try {
       const res = await fetch(`/api/trust/${endpoint}?id=${caseId}`, {
         method: 'POST',
@@ -155,15 +277,45 @@ export default function AssureDetail() {
     setIsBusy(false)
   }
 
+  // Actions wrappers
   const submitAgent = (step: string) => action('submit', { step, data: step === '2' ? { risks: tx?.steps['2']?.data?.risks } : { note: inputBuffer } })
   const confirmStep = (step: string) => action('confirm', { step })
-  const pay = () => { if (confirm('確認付款？')) action('payment') }
+  const pay = () => { if (confirm('確認模擬付款？')) action('payment') }
   const toggleCheck = (index: number, checked: boolean) => { if (role === 'buyer') action('checklist', { index, checked }) }
   const addSupplement = () => action('supplement', { content: supplementInput })
-  const reset = () => { if (confirm('重置？')) action('reset') }
+  const reset = () => { if (confirm('重置所有進度？')) action('reset') }
+  
   const toggleRole = () => {
-    const newRole = role === 'agent' ? 'buyer' : 'agent'
-    devLogin(newRole, caseId)
+      // Mock 模式下直接切換
+      const newRole = role === 'agent' ? 'buyer' : 'agent'
+      setRole(newRole)
+      toast('切換身份為: ' + (newRole === 'agent' ? '房仲' : '買方'), { icon: newRole === 'agent' ? '👨‍💼' : '👤' })
+  }
+
+  // --- RENDERING ---
+
+  // 1. 如果沒有資料且不在 Loading，顯示 Mock 入口
+  if (!tx && !loading) {
+      return (
+          <div className="flex flex-col items-center justify-center min-h-screen bg-slate-100 p-4 font-sans">
+              <div className="bg-white p-8 rounded-2xl shadow-xl max-w-sm w-full text-center">
+                <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Zap size={32} />
+                </div>
+                <h2 className="text-xl font-bold text-gray-800 mb-2">安心留痕 Trust Room</h2>
+                <p className="text-sm text-gray-500 mb-6">目前未檢測到有效的登入憑證 (Token)。您可以進入演示模式來測試功能。</p>
+                
+                <button 
+                    onClick={startMockMode}
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition shadow-lg flex items-center justify-center gap-2"
+                >
+                    <Zap size={18} />
+                    啟動演示模式 (Demo Mode)
+                </button>
+                <p className="text-xs text-gray-400 mt-4">此模式下資料不會保存到資料庫。</p>
+              </div>
+          </div>
+      )
   }
 
   if (!tx) return <div className="p-8 text-center">載入中...</div>
@@ -182,13 +334,13 @@ export default function AssureDetail() {
 
   return (
     <div className="max-w-md mx-auto min-h-screen bg-white shadow-2xl relative pb-24 font-sans text-gray-800">
-      <Toaster />
+      <Toaster position="top-center" />
       
       {/* Header */}
-      <header className="bg-slate-900 text-white p-4 sticky top-0 z-50 flex justify-between items-center shadow-lg">
+      <header className={`${isMock ? 'bg-indigo-900' : 'bg-slate-900'} text-white p-4 sticky top-0 z-50 flex justify-between items-center shadow-lg transition-colors`}>
         <div>
           <h1 className="font-bold text-lg tracking-wide flex items-center gap-2">
-            MaiHouses <span className="text-xs bg-blue-600 px-1 rounded">V10</span>
+            MaiHouses <span className={`text-xs px-1 rounded ${isMock ? 'bg-yellow-500 text-black' : 'bg-blue-600'}`}>{isMock ? 'DEMO' : 'V10'}</span>
           </h1>
           <div className="flex items-center text-[10px] text-gray-400 gap-2">
             <span>案號: {caseId}</span>
@@ -196,22 +348,17 @@ export default function AssureDetail() {
           </div>
         </div>
         <div className="flex gap-2">
-          {isDev && (
-            <>
-              <button onClick={reset} className="bg-red-600 w-7 h-7 rounded flex items-center justify-center">
-                <RotateCcw size={12} />
-              </button>
-              <button onClick={toggleRole} className={`px-2 py-1 rounded text-xs border ${role === 'agent' ? 'bg-blue-600' : 'bg-green-600'}`}>
+            {/* 總是顯示重置與切換角色按鈕，方便測試 */}
+            <button onClick={reset} className="bg-white/10 hover:bg-white/20 w-8 h-8 rounded flex items-center justify-center transition">
+                <RotateCcw size={14} />
+            </button>
+            <button 
+                onClick={toggleRole} 
+                className={`px-3 py-1 rounded-md text-xs font-bold border border-white/20 flex items-center gap-1 transition ${role === 'agent' ? 'bg-blue-600' : 'bg-green-600'}`}
+            >
+                {role === 'agent' ? <Briefcase size={12} /> : <User size={12} />}
                 {role === 'agent' ? '房仲' : '買方'}
-              </button>
-            </>
-          )}
-          {!isDev && (
-            <div className="px-2 py-1 bg-slate-800 rounded text-xs border border-slate-600 flex items-center gap-1">
-              {role === 'agent' ? <Briefcase size={12} /> : <User size={12} />}
-              {role === 'agent' ? '房仲' : '買方'}
-            </div>
-          )}
+            </button>
         </div>
       </header>
 
