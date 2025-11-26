@@ -1,4 +1,4 @@
-import { JWT_SECRET, SYSTEM_API_KEY, cors } from './_utils';
+import { JWT_SECRET, cors } from './_utils';
 import jwt from 'jsonwebtoken';
 import { serialize } from 'cookie';
 
@@ -8,14 +8,15 @@ export default async function handler(req: any, res: any) {
     if (req.method !== 'POST') return res.status(405).end();
     
     try {
-        // Security Check
-        const systemKey = req.headers['x-system-key'];
-        if (systemKey !== SYSTEM_API_KEY) {
-            return res.status(401).json({ error: "Unauthorized System Access" });
-        }
+        const { token } = req.body;
+        if (!token) return res.status(400).json({ error: "Token required" });
 
-        const { role, caseId } = req.body;
-        const token = jwt.sign({ role, caseId: caseId || 'demo' }, JWT_SECRET, { expiresIn: '24h' });
+        // Verify token
+        try {
+            jwt.verify(token, JWT_SECRET);
+        } catch (e) {
+            return res.status(401).json({ error: "Invalid token" });
+        }
 
         // Set HttpOnly Cookie
         res.setHeader('Set-Cookie', serialize('mh_token', token, {
@@ -26,7 +27,7 @@ export default async function handler(req: any, res: any) {
             path: '/'
         }));
 
-        res.json({ token });
+        res.json({ success: true });
     } catch (e: any) {
         res.status(500).json({ error: e.message });
     }

@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import jwt from 'jsonwebtoken';
+import { parse } from 'cookie';
 
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -64,8 +65,20 @@ export async function logAudit(txId: string, action: string, user: any) {
 }
 
 export function verifyToken(req: any) {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
+    let token = '';
+    
+    // 1. Try Cookie
+    if (req.headers.cookie) {
+        const cookies = parse(req.headers.cookie);
+        token = cookies.mh_token;
+    }
+
+    // 2. Try Authorization Header (Fallback)
+    if (!token) {
+        const authHeader = req.headers['authorization'];
+        token = authHeader && authHeader.split(' ')[1];
+    }
+
     if (!token) throw new Error("Unauthorized");
 
     try {
@@ -80,4 +93,5 @@ export function cors(res: any) {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
 }

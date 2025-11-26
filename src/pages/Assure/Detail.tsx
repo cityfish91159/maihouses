@@ -29,38 +29,8 @@ export default function AssureDetail() {
   // Dev Helper
   const isDev = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname.includes('127.0.0.1'));
 
-  // 初始化：檢查 Token 或 啟動 Mock
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    const hash = location.hash
-    let t = ''
-    
-    if (hash.includes('token=')) {
-      t = hash.split('token=')[1] ?? ''
-      localStorage.setItem('mh_token', t)
-      window.location.hash = ''
-    } else {
-      t = localStorage.getItem('mh_token') || ''
-    }
-
-    if (t) {
-      setToken(t)
-      try {
-        const part = t.split('.')[1]
-        if (!part) throw new Error('Invalid token')
-        const payload = JSON.parse(atob(part))
-        setRole(payload.role)
-        setCaseId(payload.caseId)
-      } catch (e) {
-        console.error('Token invalid', e)
-        localStorage.removeItem('mh_token')
-      }
-    } 
-    else if (isDev) {
-        setCaseId('demo-v10')
-    }
-  }, [location, isDev, setToken, setRole, setCaseId])
+  // Note: Token handling and initialization is now managed by useTrustRoom hook
+  // We just need to handle the "No Token" state in the UI
 
   const handleAction = async (endpoint: string, body: any = {}) => {
       const success = await dispatchAction(endpoint, body);
