@@ -1,6 +1,6 @@
-# 安心留痕 (Trust Room) 完整代碼打包
+# 安心留痕 (Trust Room) 完整開發手冊
 
-> **版本**: V10 Demo Mode  
+> **版本**: V11 (Mock + Real Hybrid)  
 > **最後更新**: 2025-11-26  
 > **專案**: MaiHouses (邁房子)
 
@@ -9,12 +9,12 @@
 ## 📋 目錄
 
 1. [功能概述](#功能概述)
-2. [線上網址](#線上網址)
-3. [前端代碼](#前端代碼)
-4. [後端 API 代碼](#後端-api-代碼)
-5. [資料庫 Schema](#資料庫-schema)
-6. [環境變數](#環境變數)
-7. [部署說明](#部署說明)
+2. [快速上手](#快速上手)
+3. [系統架構](#系統架構)
+4. [前端代碼 (React)](#前端代碼-react)
+5. [後端 API (Vercel)](#後端-api-vercel)
+6. [資料庫 (Supabase)](#資料庫-supabase)
+7. [環境變數](#環境變數)
 
 ---
 
@@ -30,43 +30,71 @@
 - **付款倒數**: 成交階段有付款期限倒數
 - **交屋檢查清單**: 最後階段提供檢查項目
 
-### 演示模式 (Demo Mode)
-- 無需後端、無需資料庫、無需登入
-- 純前端模擬完整流程
-- 可切換「房仲」與「買方」角色
+### 雙模並行 (Hybrid Mode)
+1. **演示模式 (Mock Mode)**: 
+   - 預設模式，無需後端、無需資料庫。
+   - 資料暫存於瀏覽器 `localStorage`，重整頁面不丟失。
+   - 適合展示與 UI 測試。
+2. **正式模式 (Real Mode)**:
+   - 需透過 Token 登入。
+   - 資料儲存於 Supabase 資料庫。
+   - 完整稽核紀錄 (Audit Logs)。
 
 ---
 
-## 線上網址
+## 快速上手
 
-### Trust Room 主頁面
-```
-https://maihouses.vercel.app/maihouses/assure
-```
+### 1. 啟動演示模式
+直接訪問 `/assure` 頁面，點擊「啟動演示模式」即可。
 
-### UAG 後台（含 Trust Room 入口）
-```
-https://maihouses.vercel.app/maihouses/uag
-```
+### 2. 啟動正式模式
+1. 確保 Supabase 資料庫已建立 (見下方 SQL)。
+2. 確保 Vercel 環境變數已設定。
+3. 取得 Token (可透過 `/api/trust/login` 產生)。
+4. 訪問帶 Token 的網址：`/assure#token=YOUR_JWT_TOKEN`。
 
 ---
 
-## 前端代碼
+## 系統架構
 
-### 檔案位置
-```
-src/pages/Assure/Detail.tsx
-```
+- **前端**: React + TypeScript + Tailwind CSS
+- **狀態管理**: Custom Hook (`useTrustRoom`)
+- **後端**: Vercel Serverless Functions (`/api/trust/*`)
+- **資料庫**: Supabase (PostgreSQL)
 
-### 完整代碼
+---
 
-```tsx
-import { useState, useEffect, useRef } from 'react'
-import { useLocation } from 'react-router-dom'
-import { Phone, ClipboardCheck, HandCoins, MessageSquare, FileSignature, Home, Lock, Check, RotateCcw, Info, User, Briefcase, Zap } from 'lucide-react'
-import toast, { Toaster } from 'react-hot-toast'
+## 前端代碼 (React)
 
-// --- MOCK DATA & UTILS (內建模擬數據，不依賴後端) ---
+### 1. 核心邏輯 Hook (`src/hooks/useTrustRoom.ts`)
+
+此 Hook 封裝了所有的狀態管理、Mock 邏輯與 API 呼叫。
+
+```typescript
+import { useState, useEffect, useCallback } from 'react';
+import toast from 'react-hot-toast';
+
+// --- TYPES ---
+export interface Step {
+  name: string;
+  agentStatus: 'pending' | 'submitted';
+  buyerStatus: 'pending' | 'confirmed';
+  locked: boolean;
+  data: any;
+  paymentStatus?: 'pending' | 'initiated' | 'completed' | 'expired';
+  paymentDeadline?: number | null;
+  checklist?: { id: string; label: string; checked: boolean }[];
+}
+
+export interface Transaction {
+  id: string;
+  currentStep: number;
+  isPaid: boolean;
+  steps: Record<string, Step>;
+  supplements: { role: string; content: string; timestamp: number }[];
+}
+
+// --- MOCK DATA & UTILS ---
 const MOCK_TIMEOUTS: Record<number, number> = { 5: 30 * 1000 }; // Demo模式下縮短為30秒方便測試
 
 const createMockState = (id: string): Transaction => ({
@@ -84,259 +112,206 @@ const createMockState = (id: string): Transaction => ({
   supplements: []
 });
 
-// Types
-interface Step {
-  name: string
-  agentStatus: 'pending' | 'submitted'
-  buyerStatus: 'pending' | 'confirmed'
-  locked: boolean
-  data: any
-  paymentStatus?: 'pending' | 'initiated' | 'completed' | 'expired'
-  paymentDeadline?: number | null
-  checklist?: { label: string; checked: boolean }[]
-}
-
-interface Transaction {
-  id: string
-  currentStep: number
-  isPaid: boolean
-  steps: Record<string, Step>
-  supplements: { role: string; content: string; timestamp: number }[]
-}
-
-export default function AssureDetail() {
-  const location = useLocation()
-  
+export function useTrustRoom() {
   // States
-  const [isMock, setIsMock] = useState(false) // 核心：Mock模式開關
-  const [caseId, setCaseId] = useState('')
-  const [role, setRole] = useState<'agent' | 'buyer'>('agent')
-  const [token, setToken] = useState('')
-  const [tx, setTx] = useState<Transaction | null>(null)
-  const [loading, setLoading] = useState(false)
-  const [isBusy, setIsBusy] = useState(false)
-  
-  // Inputs
-  const [inputBuffer, setInputBuffer] = useState('')
-  const [supplementInput, setSupplementInput] = useState('')
-  const [timeLeft, setTimeLeft] = useState('--:--:--')
-  
-  // Dev Helper
-  const isDev = window.location.hostname === 'localhost' || window.location.hostname.includes('127.0.0.1')
+  const [isMock, setIsMock] = useState(false);
+  const [caseId, setCaseId] = useState('');
+  const [role, setRole] = useState<'agent' | 'buyer'>('agent');
+  const [token, setToken] = useState('');
+  const [tx, setTx] = useState<Transaction | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [isBusy, setIsBusy] = useState(false);
+  const [timeLeft, setTimeLeft] = useState('--:--:--');
 
-  // 初始化：檢查 Token 或 啟動 Mock
-  useEffect(() => {
-    const hash = location.hash
-    let t = ''
-    
-    // 1. 嘗試從 URL Hash 獲取 Token
-    if (hash.includes('token=')) {
-      t = hash.split('token=')[1] ?? ''
-      localStorage.setItem('mh_token', t)
-      window.location.hash = ''
-    } else {
-      t = localStorage.getItem('mh_token') || ''
-    }
+  // Helper to save mock state
+  const saveMockState = (newState: Transaction) => {
+    setTx(newState);
+    localStorage.setItem(`mock_tx_${newState.id}`, JSON.stringify(newState));
+  };
 
-    // 2. 如果有 Token，走正常流程
-    if (t) {
-      setToken(t)
-      try {
-        const part = t.split('.')[1]
-        if (!part) throw new Error('Invalid token')
-        const payload = JSON.parse(atob(part))
-        setRole(payload.role)
-        setCaseId(payload.caseId)
-      } catch (e) {
-        console.error('Token invalid', e)
-        localStorage.removeItem('mh_token') // 清除無效 Token
-      }
-    } 
-    // 3. 如果沒 Token 且是本地開發，自動登入演示帳號
-    else if (isDev) {
-        // 本地開發依然可以走 API 測試
-        setCaseId('demo-v10')
-        // devLogin('agent', 'demo-v10') // 暫時註解，改用 Mock 優先
-    }
-  }, [location, isDev])
+  // Helper to load mock state
+  const loadMockState = (id: string) => {
+    const saved = localStorage.getItem(`mock_tx_${id}`);
+    return saved ? JSON.parse(saved) : createMockState(id);
+  };
 
-  // Mock 模式切換邏輯
-  const startMockMode = () => {
-    setIsMock(true)
-    setCaseId('MOCK-DEMO-01')
-    setRole('agent')
-    setTx(createMockState('MOCK-DEMO-01'))
-    toast.success('已進入演示模式 (資料僅暫存於瀏覽器)')
-  }
+  // Mock Mode Toggle
+  const startMockMode = useCallback(() => {
+    setIsMock(true);
+    const mockId = 'MOCK-DEMO-01';
+    setCaseId(mockId);
+    setRole('agent');
+    setTx(loadMockState(mockId));
+    toast.success('已進入演示模式 (資料僅暫存於瀏覽器)');
+  }, []);
 
-  // 統一的數據獲取 (分辨 Real API vs Mock)
-  const fetchData = async () => {
-    if (isMock) return // Mock 模式不需要 fetch，數據在本地 state
-    if (!token || !caseId) return
+  // Fetch Data (Real API)
+  const fetchData = useCallback(async () => {
+    if (isMock) return; // Mock mode uses local state
+    if (!token || !caseId) return;
 
-    setLoading(true)
+    setLoading(true);
     try {
       const res = await fetch(`/api/trust/status?id=${caseId}`, {
         headers: { 'Authorization': `Bearer ${token}` }
-      })
+      });
       if (res.ok) {
-        const data = await res.json()
-        setTx(data)
+        const data = await res.json();
+        setTx(data);
       } else {
-        if (res.status === 401 || res.status === 403) toast.error('憑證失效，請重新登入')
+        if (res.status === 401 || res.status === 403) toast.error('憑證失效，請重新登入');
       }
     } catch (e) {
-      console.error(e)
+      console.error(e);
     }
-    setLoading(false)
-  }
+    setLoading(false);
+  }, [isMock, token, caseId]);
 
-  // 定時輪詢 (僅在非 Mock 模式下)
+  // Polling
   useEffect(() => {
     if (!isMock && token && caseId) {
-      fetchData()
-      const interval = setInterval(fetchData, 5000)
-      return () => clearInterval(interval)
+      fetchData();
+      const interval = setInterval(fetchData, 5000);
+      return () => clearInterval(interval);
     }
-  }, [token, caseId, isMock])
+  }, [token, caseId, isMock, fetchData]);
 
-  // 付款倒數計時器
+  // Payment Timer
   useEffect(() => {
     const timer = setInterval(() => {
       if (tx?.steps?.[5]?.paymentStatus === 'initiated' && tx.steps[5].paymentDeadline) {
-        const diff = tx.steps[5].paymentDeadline - Date.now()
+        const diff = tx.steps[5].paymentDeadline - Date.now();
         if (diff <= 0) {
-            setTimeLeft("已逾期")
-            // Mock 模式下自動處理過期
-            if (isMock) {
-                setTx(prev => {
-                    if (!prev) return null
-                    const next = {...prev}
-                    if (next.steps[5]) {
-                        next.steps[5].paymentStatus = 'expired'
-                    }
-                    return next
-                })
-            }
+          setTimeLeft("已逾期");
+          // Mock Mode Auto Expiration
+          if (isMock) {
+            setTx(prev => {
+              if (!prev) return null;
+              const next = { ...prev };
+              if (next.steps[5]) {
+                next.steps[5].paymentStatus = 'expired';
+              }
+              saveMockState(next); // Persist
+              return next;
+            });
+          } else {
+             // Real Mode: Trigger status check to update backend state (Lazy Expiration)
+             fetchData();
+          }
         } else {
-          const h = Math.floor(diff / 3600000)
-          const m = Math.floor((diff % 3600000) / 60000)
-          const s = Math.floor((diff % 60000) / 1000)
-          setTimeLeft(`${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`)
+          const h = Math.floor(diff / 3600000);
+          const m = Math.floor((diff % 3600000) / 60000);
+          const s = Math.floor((diff % 60000) / 1000);
+          setTimeLeft(`${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`);
         }
       }
-    }, 1000)
-    return () => clearInterval(timer)
-  }, [tx, isMock])
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [tx, isMock, fetchData]);
 
-  // 核心動作處理器 (支援 Real API 與 Mock Logic)
-  const action = async (endpoint: string, body: any = {}) => {
-    if (isBusy) return
-    setIsBusy(true)
+  // Unified Action Handler
+  const dispatchAction = useCallback(async (endpoint: string, body: any = {}) => {
+    if (isBusy) return;
+    setIsBusy(true);
 
-    // --- MOCK MODE LOGIC (模擬後端行為) ---
+    // --- MOCK MODE LOGIC ---
     if (isMock) {
-        await new Promise(r => setTimeout(r, 600)); // 假裝延遲
-        
-        if (!tx) return;
-        const newTx = JSON.parse(JSON.stringify(tx)) as Transaction; // Deep Clone
-        const stepNum = parseInt(body.step || tx.currentStep);
-        
-        // Ensure step exists
-        if (!newTx.steps[stepNum]) {
-             toast.error("Invalid step");
-             setIsBusy(false);
-             return;
-        }
+      await new Promise(r => setTimeout(r, 600)); // Simulate delay
 
-        try {
-            switch(endpoint) {
-                case 'submit':
-                    if (role !== 'agent') throw new Error("權限不足");
-                    if (newTx.steps[stepNum]) {
-                        newTx.steps[stepNum].data = { ...newTx.steps[stepNum].data, ...body.data };
-                        newTx.steps[stepNum].agentStatus = 'submitted';
-                    }
-                    break;
+      if (!tx) {
+          setIsBusy(false);
+          return;
+      }
+      
+      const newTx = JSON.parse(JSON.stringify(tx)) as Transaction; // Deep Clone
+      const stepNum = parseInt(body.step || tx.currentStep);
 
-                case 'confirm':
-                    if (role !== 'buyer') throw new Error("權限不足");
-                    if (newTx.steps[stepNum]) {
-                        newTx.steps[stepNum].buyerStatus = 'confirmed';
-                        // Save buyer's note if provided
-                        if (body.note) {
-                            newTx.steps[stepNum].data = { ...newTx.steps[stepNum].data, buyerNote: body.note };
-                        }
-                    }
-                    
-                    if (stepNum === 5) {
-                        if (newTx.steps[5]) {
-                            newTx.steps[5].paymentStatus = 'initiated';
-                            newTx.steps[5].paymentDeadline = Date.now() + (MOCK_TIMEOUTS[5] || 30000);
-                        }
-                    } else if (stepNum === 6) {
-                        // 交屋檢查
-                        const allChecked = newTx.steps[6]?.checklist?.every(i => i.checked);
-                        if (!allChecked) throw new Error("檢查項目未完成");
-                        if (newTx.steps[6]) newTx.steps[6].locked = true;
-                    } else {
-                        if (newTx.steps[stepNum]) newTx.steps[stepNum].locked = true;
-                        newTx.currentStep += 1;
-                    }
-                    break;
-
-                case 'payment':
-                     if (newTx.steps[5]?.paymentStatus !== 'initiated') throw new Error("非付款狀態");
-                     newTx.isPaid = true;
-                     if (newTx.steps[5]) {
-                        newTx.steps[5].paymentStatus = 'completed';
-                        newTx.steps[5].locked = true;
-                     }
-                     newTx.currentStep = 6;
-                     // 生成交屋清單
-                     if (newTx.steps[6]) {
-                        newTx.steps[6].checklist = [
-                            { label: "🚰 水電瓦斯功能正常", checked: false },
-                            { label: "🪟 門窗鎖具開關正常", checked: false },
-                            { label: "🔑 鑰匙門禁卡點交", checked: false },
-                            { label: "🧱 房屋現況確認 (漏水/壁癌等)", checked: false }
-                        ];
-                     }
-                    break;
-                
-                case 'checklist':
-                    const step6 = newTx.steps[6];
-                    if (step6 && step6.checklist) {
-                        const item = step6.checklist[body.index];
-                        if (item) {
-                            item.checked = body.checked;
-                        }
-                    }
-                    break;
-
-                case 'supplement':
-                    newTx.supplements.push({
-                        role,
-                        content: body.content,
-                        timestamp: Date.now()
-                    });
-                    break;
-
-                case 'reset':
-                    setTx(createMockState(caseId));
-                    toast.success('已重置 (Mock)');
-                    setIsBusy(false);
-                    return;
+      try {
+        switch (endpoint) {
+          case 'submit':
+            if (role !== 'agent') throw new Error("權限不足");
+            if (newTx.steps[stepNum]) {
+              newTx.steps[stepNum].data = { ...newTx.steps[stepNum].data, ...body.data };
+              newTx.steps[stepNum].agentStatus = 'submitted';
             }
-            setTx(newTx);
-            toast.success('操作成功 (Mock)');
-            setInputBuffer('');
-            setSupplementInput('');
-        } catch(e: any) {
-            toast.error(e.message);
+            break;
+
+          case 'confirm':
+            if (role !== 'buyer') throw new Error("權限不足");
+            if (newTx.steps[stepNum]) {
+              newTx.steps[stepNum].buyerStatus = 'confirmed';
+              if (body.note) {
+                newTx.steps[stepNum].data = { ...newTx.steps[stepNum].data, buyerNote: body.note };
+              }
+            }
+
+            if (stepNum === 5) {
+              if (newTx.steps[5]) {
+                newTx.steps[5].paymentStatus = 'initiated';
+                newTx.steps[5].paymentDeadline = Date.now() + (MOCK_TIMEOUTS[5] || 30000);
+              }
+            } else if (stepNum === 6) {
+              const allChecked = newTx.steps[6]?.checklist?.every(i => i.checked);
+              if (!allChecked) throw new Error("檢查項目未完成");
+              if (newTx.steps[6]) newTx.steps[6].locked = true;
+            } else {
+              if (newTx.steps[stepNum]) newTx.steps[stepNum].locked = true;
+              newTx.currentStep += 1;
+            }
+            break;
+
+          case 'payment':
+            if (newTx.steps[5]?.paymentStatus !== 'initiated') throw new Error("非付款狀態");
+            newTx.isPaid = true;
+            if (newTx.steps[5]) {
+              newTx.steps[5].paymentStatus = 'completed';
+              newTx.steps[5].locked = true;
+            }
+            newTx.currentStep = 6;
+            if (newTx.steps[6]) {
+              newTx.steps[6].checklist = [
+                { id: 'utilities', label: "🚰 水電瓦斯功能正常", checked: false },
+                { id: 'security', label: "🪟 門窗鎖具開關正常", checked: false },
+                { id: 'keys', label: "🔑 鑰匙門禁卡點交", checked: false },
+                { id: 'condition', label: "🧱 房屋現況確認 (漏水/壁癌等)", checked: false }
+              ];
+            }
+            break;
+
+          case 'checklist':
+            const step6 = newTx.steps[6];
+            if (step6 && step6.checklist) {
+              const item = step6.checklist.find(i => i.id === body.itemId);
+              if (item) {
+                item.checked = body.checked;
+              }
+            }
+            break;
+
+          case 'supplement':
+            newTx.supplements.push({
+              role,
+              content: body.content,
+              timestamp: Date.now()
+            });
+            break;
+
+          case 'reset':
+            const resetState = createMockState(caseId);
+            saveMockState(resetState);
+            toast.success('已重置 (Mock)');
+            setIsBusy(false);
+            return;
         }
+        saveMockState(newTx);
+        toast.success('操作成功 (Mock)');
         setIsBusy(false);
-        return;
+        return true;
+      } catch (e: any) {
+        toast.error(e.message);
+        setIsBusy(false);
+        return false;
+      }
     }
 
     // --- REAL API LOGIC ---
@@ -348,40 +323,132 @@ export default function AssureDetail() {
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(body)
-      })
-      const d = await res.json()
+      });
+      const d = await res.json();
       if (d.error) {
-        toast.error(d.error)
+        toast.error(d.error);
+        setIsBusy(false);
+        return false;
       } else {
-        setInputBuffer('')
-        setSupplementInput('')
-        await fetchData()
-        toast.success('成功')
+        await fetchData();
+        toast.success('成功');
+        setIsBusy(false);
+        return true;
       }
     } catch (e: any) {
-      toast.error(e.message)
+      toast.error(e.message);
+      setIsBusy(false);
+      return false;
     }
-    setIsBusy(false)
+  }, [isMock, tx, role, caseId, token, fetchData]);
+
+  return {
+    isMock,
+    caseId,
+    setCaseId,
+    role,
+    setRole,
+    token,
+    setToken,
+    tx,
+    setTx,
+    loading,
+    isBusy,
+    timeLeft,
+    startMockMode,
+    dispatchAction,
+    fetchData
+  };
+}
+```
+
+### 2. UI 組件 (`src/pages/Assure/Detail.tsx`)
+
+```tsx
+import { useState, useEffect } from 'react'
+import { useLocation } from 'react-router-dom'
+import { useTrustRoom } from '../../hooks/useTrustRoom'
+import { Phone, ClipboardCheck, HandCoins, MessageSquare, FileSignature, Home, Lock, Check, RotateCcw, Info, User, Briefcase, Zap } from 'lucide-react'
+import { Toaster } from 'react-hot-toast'
+
+export default function AssureDetail() {
+  const location = useLocation()
+  
+  const {
+    isMock,
+    caseId,
+    setCaseId,
+    role,
+    setRole,
+    setToken,
+    tx,
+    loading,
+    isBusy,
+    timeLeft,
+    startMockMode,
+    dispatchAction
+  } = useTrustRoom()
+  
+  // Inputs
+  const [inputBuffer, setInputBuffer] = useState('')
+  const [supplementInput, setSupplementInput] = useState('')
+  
+  // Dev Helper
+  const isDev = window.location.hostname === 'localhost' || window.location.hostname.includes('127.0.0.1')
+
+  // 初始化：檢查 Token 或 啟動 Mock
+  useEffect(() => {
+    const hash = location.hash
+    let t = ''
+    
+    if (hash.includes('token=')) {
+      t = hash.split('token=')[1] ?? ''
+      localStorage.setItem('mh_token', t)
+      window.location.hash = ''
+    } else {
+      t = localStorage.getItem('mh_token') || ''
+    }
+
+    if (t) {
+      setToken(t)
+      try {
+        const part = t.split('.')[1]
+        if (!part) throw new Error('Invalid token')
+        const payload = JSON.parse(atob(part))
+        setRole(payload.role)
+        setCaseId(payload.caseId)
+      } catch (e) {
+        console.error('Token invalid', e)
+        localStorage.removeItem('mh_token')
+      }
+    } 
+    else if (isDev) {
+        setCaseId('demo-v10')
+    }
+  }, [location, isDev, setToken, setRole, setCaseId])
+
+  const handleAction = async (endpoint: string, body: any = {}) => {
+      const success = await dispatchAction(endpoint, body);
+      if (success) {
+          setInputBuffer('');
+          setSupplementInput('');
+      }
   }
 
-  // Actions wrappers
-  const submitAgent = (step: string) => action('submit', { step, data: { note: inputBuffer } })
-  const confirmStep = (step: string) => action('confirm', { step, note: inputBuffer })
-  const pay = () => { if (confirm('確認模擬付款？')) action('payment') }
-  const toggleCheck = (index: number, checked: boolean) => { if (role === 'buyer') action('checklist', { index, checked }) }
-  const addSupplement = () => action('supplement', { content: supplementInput })
-  const reset = () => { if (confirm('重置所有進度？')) action('reset') }
+  const submitAgent = (step: string) => handleAction('submit', { step, data: { note: inputBuffer } })
+  const confirmStep = (step: string) => handleAction('confirm', { step, note: inputBuffer })
+  const pay = () => { if (confirm('確認模擬付款？')) handleAction('payment') }
+  const toggleCheck = (itemId: string, checked: boolean) => { if (role === 'buyer') handleAction('checklist', { itemId, checked }) }
+  const addSupplement = () => handleAction('supplement', { content: supplementInput })
+  const reset = () => { if (confirm('重置所有進度？')) handleAction('reset') }
   
   const toggleRole = () => {
-      // Mock 模式下直接切換
       const newRole = role === 'agent' ? 'buyer' : 'agent'
       setRole(newRole)
-      toast('切換身份為: ' + (newRole === 'agent' ? '房仲' : '買方'), { icon: newRole === 'agent' ? '👨‍💼' : '👤' })
   }
 
   // --- RENDERING ---
 
-  // 1. 如果沒有資料且不在 Loading，顯示 Mock 入口
   if (!tx && !loading) {
       return (
           <div className="flex flex-col items-center justify-center min-h-screen bg-slate-100 p-4 font-sans">
@@ -435,7 +502,6 @@ export default function AssureDetail() {
           </div>
         </div>
         <div className="flex gap-2">
-            {/* 總是顯示重置與切換角色按鈕，方便測試 */}
             <button onClick={reset} className="bg-white/10 hover:bg-white/20 w-8 h-8 rounded flex items-center justify-center transition">
                 <RotateCcw size={14} />
             </button>
@@ -496,7 +562,7 @@ export default function AssureDetail() {
                   {step.locked && <Lock size={14} className="text-green-600" />}
                 </div>
 
-                {/* Step 2: Viewing (Replaced Risks with Note) */}
+                {/* Step 2: Viewing */}
                 {key === '2' && step.data.note && (
                   <div className="mb-3 p-3 bg-gray-50 rounded border border-gray-100">
                     <p className="text-xs font-bold text-gray-500 mb-2 border-b pb-1">📢 房仲帶看紀錄</p>
@@ -513,7 +579,7 @@ export default function AssureDetail() {
                       <button 
                         onClick={pay} 
                         disabled={isBusy || timeLeft === '已逾期'} 
-                        className={`w-full text-white font-bold py-2 rounded shadow transition ${timeLeft === '已逾期' ? 'bg-gray-400 cursor-not-allowed' : 'bg-gradient-to-r from-orange-500 to-red-500 hover:shadow-lg'}`}
+                        className={`w-full text-white font-bold py-2 rounded shadow ${timeLeft === '已逾期' ? 'bg-gray-400 cursor-not-allowed' : 'bg-gradient-to-r from-orange-500 to-red-500 hover:shadow-lg'}`}
                       >
                         {timeLeft === '已逾期' ? '付款已截止' : (isBusy ? '處理中...' : '立即支付 NT$ 2,000')}
                       </button>
@@ -526,11 +592,11 @@ export default function AssureDetail() {
                 {/* Step 6: Checklist */}
                 {key === '6' && !step.locked && tx.isPaid && (
                   <div className="space-y-2 mt-2">
-                    {step.checklist?.map((item, idx) => (
+                    {step.checklist?.map((item) => (
                       <div 
-                        key={idx} 
-                        onClick={() => toggleCheck(idx, !item.checked)} 
-                        className={`flex items-center p-3 border rounded transition cursor-pointer ${item.checked ? 'bg-indigo-50 border-indigo-200' : 'hover:bg-gray-50'}`}
+                        key={item.id} 
+                        onClick={() => toggleCheck(item.id, !item.checked)} 
+                        className={`flex items-center p-4 border rounded transition cursor-pointer ${item.checked ? 'bg-indigo-50 border-indigo-200' : 'hover:bg-gray-50'}`}
                       >
                         <div className={`w-5 h-5 border rounded flex items-center justify-center bg-white ${item.checked ? 'bg-indigo-600 border-indigo-600' : ''}`}>
                           {item.checked && <Check size={12} className="text-white" />}
@@ -644,24 +710,9 @@ export default function AssureDetail() {
 
 ---
 
-## 後端 API 代碼
+## 後端 API (Vercel)
 
-### 檔案結構
-```
-api/trust/
-├── _utils.ts       # 共用工具函數
-├── status.ts       # 獲取交易狀態
-├── submit.ts       # 房仲提交
-├── confirm.ts      # 買方確認
-├── payment.ts      # 付款處理
-├── checklist.ts    # 交屋清單
-├── supplement.ts   # 補充紀錄
-├── reset.ts        # 重置交易
-├── login.ts        # 開發登入
-└── token.ts        # 系統發行 Token
-```
-
-### _utils.ts (共用工具)
+### 1. 共用工具 (`api/trust/_utils.ts`)
 
 ```typescript
 import { createClient } from '@supabase/supabase-js';
@@ -735,7 +786,7 @@ export function verifyToken(req: any) {
     if (!token) throw new Error("Unauthorized");
 
     try {
-        const user = jwt.verify(token, JWT_SECRET) as any;
+        const user = jwt.verify(token, JWT_SECRET, { algorithms: ['HS256'] }) as any;
         return { ...user, ip: req.headers['x-forwarded-for'] || 'unknown', agent: req.headers['user-agent'] };
     } catch (e) {
         throw new Error("Token expired or invalid");
@@ -749,7 +800,7 @@ export function cors(res: any) {
 }
 ```
 
-### status.ts
+### 2. 狀態查詢 (`api/trust/status.ts`)
 
 ```typescript
 import { getTx, saveTx, verifyToken, cors } from './_utils';
@@ -781,7 +832,7 @@ export default async function handler(req: any, res: any) {
 }
 ```
 
-### submit.ts
+### 3. 房仲提交 (`api/trust/submit.ts`)
 
 ```typescript
 import { getTx, saveTx, logAudit, verifyToken, cors } from './_utils';
@@ -817,7 +868,7 @@ export default async function handler(req: any, res: any) {
 }
 ```
 
-### confirm.ts
+### 4. 買方確認 (`api/trust/confirm.ts`)
 
 ```typescript
 import { getTx, saveTx, logAudit, verifyToken, cors, TIMEOUTS } from './_utils';
@@ -867,7 +918,7 @@ export default async function handler(req: any, res: any) {
 }
 ```
 
-### payment.ts
+### 5. 付款處理 (`api/trust/payment.ts`)
 
 ```typescript
 import { getTx, saveTx, logAudit, verifyToken, cors } from './_utils';
@@ -889,6 +940,7 @@ export default async function handler(req: any, res: any) {
 
         if (s5.buyerStatus !== 'confirmed') return res.status(400).json({ error: "Contract not confirmed" });
         if (s5.paymentStatus !== 'initiated') return res.status(400).json({ error: "Invalid status" });
+        if (s5.paymentStatus === 'expired') return res.status(400).json({ error: "Expired" });
         if (Date.now() > s5.paymentDeadline) return res.status(400).json({ error: "Expired" });
 
         tx.isPaid = true;
@@ -898,11 +950,11 @@ export default async function handler(req: any, res: any) {
 
         const risks = tx.steps[2].data.risks || {};
         tx.steps[6].checklist = [
-            { label: "🚰 水電瓦斯功能正常", checked: false },
-            { label: "🪟 門窗鎖具開關正常", checked: false },
-            { label: "🔑 鑰匙門禁卡點交", checked: false },
-            { label: `🧱 驗證房仲承諾：${risks.water ? '有' : '無'}漏水`, checked: false },
-            { label: `🧱 驗證房仲承諾：${risks.wall ? '有' : '無'}壁癌`, checked: false }
+            { id: 'utilities', label: "🚰 水電瓦斯功能正常", checked: false },
+            { id: 'security', label: "🪟 門窗鎖具開關正常", checked: false },
+            { id: 'keys', label: "🔑 鑰匙門禁卡點交", checked: false },
+            { id: 'leak', label: `🧱 驗證房仲承諾：${risks.water ? '有' : '無'}漏水`, checked: false },
+            { id: 'wall', label: `🧱 驗證房仲承諾：${risks.wall ? '有' : '無'}壁癌`, checked: false }
         ];
 
         await saveTx(id, tx);
@@ -914,7 +966,7 @@ export default async function handler(req: any, res: any) {
 }
 ```
 
-### checklist.ts
+### 6. 交屋清單 (`api/trust/checklist.ts`)
 
 ```typescript
 import { getTx, saveTx, verifyToken, cors } from './_utils';
@@ -931,20 +983,25 @@ export default async function handler(req: any, res: any) {
         if (user.role !== 'buyer') return res.status(403).json({ error: "Forbidden" });
         if (user.caseId && user.caseId !== id) return res.status(403).json({ error: "Access denied" });
 
-        const { index, checked } = req.body;
+        const { itemId, checked } = req.body;
         const tx = await getTx(id);
         if (tx.currentStep !== 6) return res.status(400).json({ error: "Invalid step" });
         
-        tx.steps[6].checklist[index].checked = checked;
-        await saveTx(id, tx);
-        res.json({ success: true, state: tx });
+        const item = tx.steps[6].checklist.find((i: any) => i.id === itemId);
+        if (item) {
+            item.checked = checked;
+            await saveTx(id, tx);
+            res.json({ success: true, state: tx });
+        } else {
+            res.status(400).json({ error: "Item not found" });
+        }
     } catch (e: any) {
         res.status(500).json({ error: e.message });
     }
 }
 ```
 
-### supplement.ts
+### 7. 補充紀錄 (`api/trust/supplement.ts`)
 
 ```typescript
 import { getTx, saveTx, logAudit, verifyToken, cors } from './_utils';
@@ -974,31 +1031,7 @@ export default async function handler(req: any, res: any) {
 }
 ```
 
-### reset.ts
-
-```typescript
-import { createInitialState, saveTx, verifyToken, cors } from './_utils';
-
-export default async function handler(req: any, res: any) {
-    cors(res);
-    if (req.method === 'OPTIONS') return res.status(200).end();
-    if (req.method !== 'POST') return res.status(405).end();
-
-    try {
-        const user = verifyToken(req);
-        const { id } = req.query;
-        
-        if (user.caseId && user.caseId !== id) return res.status(403).json({ error: "Access denied" });
-
-        await saveTx(id, createInitialState(id));
-        res.json({ success: true });
-    } catch (e: any) {
-        res.status(500).json({ error: e.message });
-    }
-}
-```
-
-### login.ts (開發用)
+### 8. 登入 API (`api/trust/login.ts`)
 
 ```typescript
 import { JWT_SECRET, cors } from './_utils';
@@ -1019,96 +1052,11 @@ export default async function handler(req: any, res: any) {
 }
 ```
 
-### token.ts (系統用)
-
-```typescript
-import { JWT_SECRET, SYSTEM_API_KEY, cors } from './_utils';
-import jwt from 'jsonwebtoken';
-
-export default async function handler(req: any, res: any) {
-    cors(res);
-    if (req.method === 'OPTIONS') return res.status(200).end();
-    if (req.method !== 'POST') return res.status(405).end();
-
-    try {
-        const { apiKey, caseId, role } = req.body;
-        if (apiKey !== SYSTEM_API_KEY) return res.status(403).json({ error: "Forbidden" });
-        
-        const token = jwt.sign({ role, caseId }, JWT_SECRET, { expiresIn: '12h' });
-        res.json({ token });
-    } catch (e: any) {
-        res.status(500).json({ error: e.message });
-    }
-}
-```
-
 ---
 
-## UAG 入口元件
+## 資料庫 (Supabase)
 
-### 檔案位置
-```
-src/pages/UAG/components/TrustFlow.tsx
-```
-
-### 完整代碼
-
-```tsx
-import React from 'react';
-import { Link } from 'react-router-dom';
-import styles from '../UAG.module.css';
-
-export default function TrustFlow() {
-  return (
-    <section className={`${styles['uag-card']} ${styles['k-span-3']}`}>
-      <div className={styles['uag-card-header']}>
-        <div className={styles['uag-card-title']}>安心流程管理</div>
-        <div className={styles['uag-card-sub']}>五階段・交易留痕</div>
-      </div>
-      <div className={styles['card-body']}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: '8px', marginBottom: '8px' }}>
-          <div style={{ textAlign: 'center' }}><div className={styles['flow-stage']} style={{ background: '#16a34a', color: '#fff' }}>✓</div><div className="small" style={{ fontWeight: 700, color: '#16a34a' }}>M1 接洽</div></div>
-          <div style={{ textAlign: 'center' }}><div className={styles['flow-stage']} style={{ background: '#16a34a', color: '#fff' }}>✓</div><div className="small" style={{ fontWeight: 700, color: '#16a34a' }}>M2 帶看</div></div>
-          <div style={{ textAlign: 'center' }}><div className={styles['flow-stage']} style={{ background: '#1749d7', color: '#fff' }}>●</div><div className="small" style={{ fontWeight: 700, color: '#1749d7' }}>M3 出價</div></div>
-          <div style={{ textAlign: 'center' }}><div className={styles['flow-stage']} style={{ background: '#e5e7eb', color: '#6b7280' }}>・</div><div className="small" style={{ color: '#6b7a90' }}>M4 簽約</div></div>
-          <div style={{ textAlign: 'center' }}><div className={styles['flow-stage']} style={{ background: '#e5e7eb', color: '#6b7280' }}>・</div><div className="small" style={{ color: '#6b7a90' }}>M5 交屋</div></div>
-        </div>
-        <div className="timeline-wrap">
-          <div className="timeline-header" style={{ display: 'grid', gridTemplateColumns: '90px 1fr 96px', gap: 0, padding: '8px 12px', fontSize: '13px' }}>
-            <div>時間</div><div>事件與參與者</div><div>留痕</div>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '90px 1fr 96px', alignItems: 'start', borderBottom: '1px solid var(--line-soft)', padding: '8px 12px' }}>
-            <div className="small">10/30 22:10</div>
-            <div><div className="small" style={{ color: 'var(--ink-100)' }}><b>M1 初次接洽建立</b>｜買方 A103</div><div className="small" style={{ color: 'var(--ink-300)' }}>房源：惠宇上晴 12F</div></div>
-            <div><div className={styles['uag-badge']} style={{ fontSize: '10px' }}>hash: 9f2a…</div></div>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '90px 1fr 96px', alignItems: 'start', borderBottom: '1px solid var(--line-soft)', padding: '8px 12px' }}>
-            <div className="small">10/31 09:20</div>
-            <div><div className="small" style={{ color: 'var(--ink-100)' }}><b>M2 帶看雙方到場</b>｜買方 A103</div><div className="small" style={{ color: 'var(--ink-300)' }}>GeoTag: 南屯社區大廳</div></div>
-            <div><div className={styles['uag-badge']} style={{ fontSize: '10px' }}>sig: b7aa…</div></div>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '90px 1fr 96px', alignItems: 'start', background: '#fefce8', padding: '8px 12px' }}>
-            <div className="small">10/31 10:40</div>
-            <div><div className="small" style={{ color: 'var(--ink-100)' }}><b>M3 買方出價</b>｜買方 A103</div><div className="small" style={{ color: 'var(--ink-300)' }}>出價 NT$31,500,000</div></div>
-            <div><div className={styles['uag-badge']} style={{ fontSize: '10px', background: '#fef3c7', color: '#92400e', border: '1px solid #f6d88a' }}>hash: 1a7c…</div></div>
-          </div>
-        </div>
-        <div style={{ padding: '12px', borderTop: '1px solid var(--line-soft)', textAlign: 'center' }}>
-            <Link to="/assure" className={`${styles['uag-btn']} ${styles['primary']}`} style={{ width: '100%', display: 'block', textAlign: 'center', textDecoration: 'none' }}>
-                進入安心留痕 (Trust Room)
-            </Link>
-        </div>
-      </div>
-    </section>
-  );
-}
-```
-
----
-
-## 資料庫 Schema
-
-### SQL 建表語句
+### SQL Schema (`supabase-trust-schema.sql`)
 
 ```sql
 -- 交易狀態表
@@ -1139,99 +1087,26 @@ ALTER TABLE transactions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
 
 -- 允許 Service Role 完全存取
-CREATE POLICY "Service role full access" ON transactions FOR ALL USING (true);
-CREATE POLICY "Service role full access" ON audit_logs FOR ALL USING (true);
+CREATE POLICY "Service role full access" ON transactions FOR ALL TO service_role USING (true);
+CREATE POLICY "Service role full access" ON audit_logs FOR ALL TO service_role USING (true);
 ```
 
 ---
 
 ## 環境變數
 
-### Vercel 環境變數設定
+請在 Vercel 設定以下變數：
 
 ```bash
-# Supabase
+# Supabase 連線資訊
 SUPABASE_URL=https://xxxxx.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=eyJxxxxx
+SUPABASE_SERVICE_ROLE_KEY=eyJxxxxx  # 必須使用 Service Role Key
 
-# JWT
+# JWT 密鑰 (用於簽署 Token)
 JWT_SECRET=your-super-secret-jwt-key-at-least-32-chars
 
-# System API Key (用於後端對後端)
+# 系統 API Key (選填，用於後端對後端)
 SYSTEM_API_KEY=your-system-api-key
-```
-
----
-
-## 部署說明
-
-### 1. 前端部署 (Vercel)
-
-已自動部署，推送到 `main` 分支即可。
-
-### 2. 資料庫設定 (Supabase)
-
-1. 登入 Supabase Dashboard
-2. 進入 SQL Editor
-3. 執行上方的 SQL 建表語句
-4. 複製 URL 和 Service Role Key 到 Vercel 環境變數
-
-### 3. 環境變數設定
-
-在 Vercel Dashboard → Settings → Environment Variables 設定所需變數。
-
----
-
-## 路由設定
-
-### App.tsx 路由配置
-
-```tsx
-<Route
-  path="/maihouses/trust/room"
-  element={
-    <ErrorBoundary>
-      <AssureDetail />
-    </ErrorBoundary>
-  }
-/>
-<Route
-  path="/assure"
-  element={
-    <ErrorBoundary>
-      <AssureDetail />
-    </ErrorBoundary>
-  }
-/>
-```
-
----
-
-## 依賴套件
-
-### 前端 (package.json)
-
-```json
-{
-  "dependencies": {
-    "react": "^18.x",
-    "react-dom": "^18.x",
-    "react-router-dom": "^6.x",
-    "lucide-react": "^0.x",
-    "react-hot-toast": "^2.x"
-  }
-}
-```
-
-### 後端 (Vercel Serverless)
-
-```json
-{
-  "dependencies": {
-    "@supabase/supabase-js": "^2.x",
-    "jsonwebtoken": "^9.x"
-  }
-}
 ```
 
 ---

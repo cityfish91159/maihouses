@@ -1,28 +1,30 @@
--- Create Transactions Table
+-- 交易狀態表
 CREATE TABLE IF NOT EXISTS transactions (
     id TEXT PRIMARY KEY,
     state JSONB NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Create Audit Logs Table
+-- 審計日誌表
 CREATE TABLE IF NOT EXISTS audit_logs (
-    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    transaction_id TEXT REFERENCES transactions(id),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    transaction_id TEXT NOT NULL REFERENCES transactions(id),
     action TEXT NOT NULL,
-    role TEXT,
+    role TEXT NOT NULL,
     ip TEXT,
     user_agent TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Enable RLS (Row Level Security)
+-- 索引
+CREATE INDEX idx_transactions_updated ON transactions(updated_at DESC);
+CREATE INDEX idx_audit_logs_tx ON audit_logs(transaction_id);
+
+-- RLS (Row Level Security)
 ALTER TABLE transactions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
 
--- Create Policy: Service Role only (since we use custom JWT in API functions)
--- We will access these tables via the Service Role Key in the Vercel API functions.
--- So we don't strictly need public policies if we don't expose them via Supabase Client directly.
--- However, if we want to allow reading via Supabase Client with the custom token, it's complicated.
--- Let's stick to the "Golden Master" architecture where the API handles the logic and DB access.
--- So we don't need permissive policies for 'anon' or 'authenticated' roles.
+-- 允許 Service Role 完全存取
+CREATE POLICY "Service role full access" ON transactions FOR ALL TO service_role USING (true);
+CREATE POLICY "Service role full access" ON audit_logs FOR ALL TO service_role USING (true);
