@@ -1,62 +1,34 @@
 import { useState, useEffect, useRef } from 'react'
 import { useLocation } from 'react-router-dom'
+import { useTrustRoom } from '../../hooks/useTrustRoom'
 import { Phone, ClipboardCheck, HandCoins, MessageSquare, FileSignature, Home, Lock, Check, RotateCcw, Info, User, Briefcase, Zap } from 'lucide-react'
 import toast, { Toaster } from 'react-hot-toast'
 
-// --- MOCK DATA & UTILS (內建模擬數據，不依賴後端) ---
-const MOCK_TIMEOUTS: Record<number, number> = { 5: 30 * 1000 }; // Demo模式下縮短為30秒方便測試
+// --- MOCK DATA & UTILS (Moved to useTrustRoom hook) ---
 
-const createMockState = (id: string): Transaction => ({
-  id,
-  currentStep: 1,
-  isPaid: false,
-  steps: {
-    1: { name: "已電聯", agentStatus: 'pending', buyerStatus: 'pending', data: {}, locked: false },
-    2: { name: "已帶看", agentStatus: 'pending', buyerStatus: 'pending', locked: false, data: {} },
-    3: { name: "已出價", agentStatus: 'pending', buyerStatus: 'pending', data: {}, locked: false },
-    4: { name: "已斡旋", agentStatus: 'pending', buyerStatus: 'pending', data: {}, locked: false },
-    5: { name: "已成交", agentStatus: 'pending', buyerStatus: 'pending', locked: false, paymentStatus: 'pending', paymentDeadline: null, data: {} },
-    6: { name: "已交屋", agentStatus: 'pending', buyerStatus: 'pending', locked: false, checklist: [], data: {} }
-  },
-  supplements: []
-});
-
-// Types
-interface Step {
-  name: string
-  agentStatus: 'pending' | 'submitted'
-  buyerStatus: 'pending' | 'confirmed'
-  locked: boolean
-  data: any
-  paymentStatus?: 'pending' | 'initiated' | 'completed' | 'expired'
-  paymentDeadline?: number | null
-  checklist?: { label: string; checked: boolean }[]
-}
-
-interface Transaction {
-  id: string
-  currentStep: number
-  isPaid: boolean
-  steps: Record<string, Step>
-  supplements: { role: string; content: string; timestamp: number }[]
-}
 
 export default function AssureDetail() {
   const location = useLocation()
   
-  // States
-  const [isMock, setIsMock] = useState(false) // 核心：Mock模式開關
-  const [caseId, setCaseId] = useState('')
-  const [role, setRole] = useState<'agent' | 'buyer'>('agent')
-  const [token, setToken] = useState('')
-  const [tx, setTx] = useState<Transaction | null>(null)
-  const [loading, setLoading] = useState(false)
-  const [isBusy, setIsBusy] = useState(false)
+  const {
+    isMock,
+    caseId,
+    setCaseId,
+    role,
+    setRole,
+    token,
+    setToken,
+    tx,
+    loading,
+    isBusy,
+    timeLeft,
+    startMockMode,
+    dispatchAction
+  } = useTrustRoom()
   
   // Inputs
   const [inputBuffer, setInputBuffer] = useState('')
   const [supplementInput, setSupplementInput] = useState('')
-  const [timeLeft, setTimeLeft] = useState('--:--:--')
   
   // Dev Helper
   const isDev = window.location.hostname === 'localhost' || window.location.hostname.includes('127.0.0.1')
@@ -95,220 +67,24 @@ export default function AssureDetail() {
         setCaseId('demo-v10')
         // devLogin('agent', 'demo-v10') // 暫時註解，改用 Mock 優先
     }
-  }, [location, isDev])
+  }, [location, isDev, setToken, setRole, setCaseId])
 
-  // Mock 模式切換邏輯
-  const startMockMode = () => {
-    setIsMock(true)
-    setCaseId('MOCK-DEMO-01')
-    setRole('agent')
-    setTx(createMockState('MOCK-DEMO-01'))
-    toast.success('已進入演示模式 (資料僅暫存於瀏覽器)')
-  }
-
-  // 統一的數據獲取 (分辨 Real API vs Mock)
-  const fetchData = async () => {
-    if (isMock) return // Mock 模式不需要 fetch，數據在本地 state
-    if (!token || !caseId) return
-
-    setLoading(true)
-    try {
-      const res = await fetch(`/api/trust/status?id=${caseId}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      })
-      if (res.ok) {
-        const data = await res.json()
-        setTx(data)
-      } else {
-        if (res.status === 401 || res.status === 403) toast.error('憑證失效，請重新登入')
+  // Wrapper for dispatchAction to handle UI state
+  const handleAction = async (endpoint: string, body: any = {}) => {
+      const success = await dispatchAction(endpoint, body);
+      if (success) {
+          setInputBuffer('');
+          setSupplementInput('');
       }
-    } catch (e) {
-      console.error(e)
-    }
-    setLoading(false)
-  }
-
-  // 定時輪詢 (僅在非 Mock 模式下)
-  useEffect(() => {
-    if (!isMock && token && caseId) {
-      fetchData()
-      const interval = setInterval(fetchData, 5000)
-      return () => clearInterval(interval)
-    }
-  }, [token, caseId, isMock])
-
-  // 付款倒數計時器
-  useEffect(() => {
-    const timer = setInterval(() => {
-      if (tx?.steps?.[5]?.paymentStatus === 'initiated' && tx.steps[5].paymentDeadline) {
-        const diff = tx.steps[5].paymentDeadline - Date.now()
-        if (diff <= 0) {
-            setTimeLeft("已逾期")
-            // Mock 模式下自動處理過期
-            if (isMock) {
-                setTx(prev => {
-                    if (!prev) return null
-                    const next = {...prev}
-                    if (next.steps[5]) {
-                        next.steps[5].paymentStatus = 'expired'
-                    }
-                    return next
-                })
-            }
-        } else {
-          const h = Math.floor(diff / 3600000)
-          const m = Math.floor((diff % 3600000) / 60000)
-          const s = Math.floor((diff % 60000) / 1000)
-          setTimeLeft(`${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`)
-        }
-      }
-    }, 1000)
-    return () => clearInterval(timer)
-  }, [tx, isMock])
-
-  // 核心動作處理器 (支援 Real API 與 Mock Logic)
-  const action = async (endpoint: string, body: any = {}) => {
-    if (isBusy) return
-    setIsBusy(true)
-
-    // --- MOCK MODE LOGIC (模擬後端行為) ---
-    if (isMock) {
-        await new Promise(r => setTimeout(r, 600)); // 假裝延遲
-        
-        if (!tx) return;
-        const newTx = JSON.parse(JSON.stringify(tx)) as Transaction; // Deep Clone
-        const stepNum = parseInt(body.step || tx.currentStep);
-        
-        // Ensure step exists
-        if (!newTx.steps[stepNum]) {
-             toast.error("Invalid step");
-             setIsBusy(false);
-             return;
-        }
-
-        try {
-            switch(endpoint) {
-                case 'submit':
-                    if (role !== 'agent') throw new Error("權限不足");
-                    if (newTx.steps[stepNum]) {
-                        newTx.steps[stepNum].data = { ...newTx.steps[stepNum].data, ...body.data };
-                        newTx.steps[stepNum].agentStatus = 'submitted';
-                    }
-                    break;
-
-                case 'confirm':
-                    if (role !== 'buyer') throw new Error("權限不足");
-                    if (newTx.steps[stepNum]) {
-                        newTx.steps[stepNum].buyerStatus = 'confirmed';
-                        // Save buyer's note if provided
-                        if (body.note) {
-                            newTx.steps[stepNum].data = { ...newTx.steps[stepNum].data, buyerNote: body.note };
-                        }
-                    }
-                    
-                    if (stepNum === 5) {
-                        if (newTx.steps[5]) {
-                            newTx.steps[5].paymentStatus = 'initiated';
-                            newTx.steps[5].paymentDeadline = Date.now() + (MOCK_TIMEOUTS[5] || 30000);
-                        }
-                    } else if (stepNum === 6) {
-                        // 交屋檢查
-                        const allChecked = newTx.steps[6]?.checklist?.every(i => i.checked);
-                        if (!allChecked) throw new Error("檢查項目未完成");
-                        if (newTx.steps[6]) newTx.steps[6].locked = true;
-                    } else {
-                        if (newTx.steps[stepNum]) newTx.steps[stepNum].locked = true;
-                        newTx.currentStep += 1;
-                    }
-                    break;
-
-                case 'payment':
-                     if (newTx.steps[5]?.paymentStatus !== 'initiated') throw new Error("非付款狀態");
-                     newTx.isPaid = true;
-                     if (newTx.steps[5]) {
-                        newTx.steps[5].paymentStatus = 'completed';
-                        newTx.steps[5].locked = true;
-                     }
-                     newTx.currentStep = 6;
-                     // 生成交屋清單
-                     // const risks = newTx.steps[2]?.data?.risks || {}; // Removed risks logic
-                     if (newTx.steps[6]) {
-                        newTx.steps[6].checklist = [
-                            { label: "🚰 水電瓦斯功能正常", checked: false },
-                            { label: "🪟 門窗鎖具開關正常", checked: false },
-                            { label: "🔑 鑰匙門禁卡點交", checked: false },
-                            { label: "🧱 房屋現況確認 (漏水/壁癌等)", checked: false }
-                        ];
-                     }
-                    break;
-                
-                case 'checklist':
-                    const step6 = newTx.steps[6];
-                    if (step6 && step6.checklist) {
-                        const item = step6.checklist[body.index];
-                        if (item) {
-                            item.checked = body.checked;
-                        }
-                    }
-                    break;
-
-                case 'supplement':
-                    newTx.supplements.push({
-                        role,
-                        content: body.content,
-                        timestamp: Date.now()
-                    });
-                    break;
-
-                case 'reset':
-                    setTx(createMockState(caseId));
-                    toast.success('已重置 (Mock)');
-                    setIsBusy(false);
-                    return;
-            }
-            setTx(newTx);
-            toast.success('操作成功 (Mock)');
-            setInputBuffer('');
-            setSupplementInput('');
-        } catch(e: any) {
-            toast.error(e.message);
-        }
-        setIsBusy(false);
-        return;
-    }
-
-    // --- REAL API LOGIC ---
-    try {
-      const res = await fetch(`/api/trust/${endpoint}?id=${caseId}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(body)
-      })
-      const d = await res.json()
-      if (d.error) {
-        toast.error(d.error)
-      } else {
-        setInputBuffer('')
-        setSupplementInput('')
-        await fetchData()
-        toast.success('成功')
-      }
-    } catch (e: any) {
-      toast.error(e.message)
-    }
-    setIsBusy(false)
   }
 
   // Actions wrappers
-  const submitAgent = (step: string) => action('submit', { step, data: { note: inputBuffer } })
-  const confirmStep = (step: string) => action('confirm', { step, note: inputBuffer })
-  const pay = () => { if (confirm('確認模擬付款？')) action('payment') }
-  const toggleCheck = (index: number, checked: boolean) => { if (role === 'buyer') action('checklist', { index, checked }) }
-  const addSupplement = () => action('supplement', { content: supplementInput })
-  const reset = () => { if (confirm('重置所有進度？')) action('reset') }
+  const submitAgent = (step: string) => handleAction('submit', { step, data: { note: inputBuffer } })
+  const confirmStep = (step: string) => handleAction('confirm', { step, note: inputBuffer })
+  const pay = () => { if (confirm('確認模擬付款？')) handleAction('payment') }
+  const toggleCheck = (index: number, checked: boolean) => { if (role === 'buyer') handleAction('checklist', { index, checked }) }
+  const addSupplement = () => handleAction('supplement', { content: supplementInput })
+  const reset = () => { if (confirm('重置所有進度？')) handleAction('reset') }
   
   const toggleRole = () => {
       // Mock 模式下直接切換
@@ -451,7 +227,7 @@ export default function AssureDetail() {
                       <button 
                         onClick={pay} 
                         disabled={isBusy || timeLeft === '已逾期'} 
-                        className={`w-full text-white font-bold py-2 rounded shadow transition ${timeLeft === '已逾期' ? 'bg-gray-400 cursor-not-allowed' : 'bg-gradient-to-r from-orange-500 to-red-500 hover:shadow-lg'}`}
+                        className={`w-full text-white font-bold py-2 rounded shadow ${timeLeft === '已逾期' ? 'bg-gray-400 cursor-not-allowed' : 'bg-gradient-to-r from-orange-500 to-red-500 hover:shadow-lg'}`}
                       >
                         {timeLeft === '已逾期' ? '付款已截止' : (isBusy ? '處理中...' : '立即支付 NT$ 2,000')}
                       </button>
