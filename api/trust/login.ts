@@ -12,15 +12,7 @@ export default async function handler(req: any, res: any) {
     // For now, let's allow it as it generates a token for testing.
     
     try {
-        const { role, caseId, password } = req.body;
-
-        // Security check for production
-        if (process.env.VERCEL_ENV === 'production') {
-             if (password !== process.env.ADMIN_PASSWORD) {
-                 return res.status(403).json({ error: "Forbidden in Production" });
-             }
-        }
-
+        const { role, caseId } = req.body;
         const token = jwt.sign({ role, caseId: caseId || 'demo' }, JWT_SECRET, { expiresIn: '24h' });
         res.json({ token });
     } catch (e: any) {
