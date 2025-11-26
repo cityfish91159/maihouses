@@ -176,53 +176,69 @@ export default function AssureDetail() {
         if (!tx) return;
         const newTx = JSON.parse(JSON.stringify(tx)) as Transaction; // Deep Clone
         const stepNum = parseInt(body.step || tx.currentStep);
-        const currentS = newTx.steps[stepNum];
+        
+        // Ensure step exists
+        if (!newTx.steps[stepNum]) {
+             toast.error("Invalid step");
+             setIsBusy(false);
+             return;
+        }
 
         try {
             switch(endpoint) {
                 case 'submit':
                     if (role !== 'agent') throw new Error("權限不足");
-                    newTx.steps[stepNum].data = { ...newTx.steps[stepNum].data, ...body.data };
-                    newTx.steps[stepNum].agentStatus = 'submitted';
+                    if (newTx.steps[stepNum]) {
+                        newTx.steps[stepNum].data = { ...newTx.steps[stepNum].data, ...body.data };
+                        newTx.steps[stepNum].agentStatus = 'submitted';
+                    }
                     break;
 
                 case 'confirm':
                     if (role !== 'buyer') throw new Error("權限不足");
-                    newTx.steps[stepNum].buyerStatus = 'confirmed';
+                    if (newTx.steps[stepNum]) {
+                        newTx.steps[stepNum].buyerStatus = 'confirmed';
+                    }
                     
                     if (stepNum === 5) {
-                        newTx.steps[5].paymentStatus = 'initiated';
-                        newTx.steps[5].paymentDeadline = Date.now() + MOCK_TIMEOUTS[5];
+                        if (newTx.steps[5]) {
+                            newTx.steps[5].paymentStatus = 'initiated';
+                            newTx.steps[5].paymentDeadline = Date.now() + MOCK_TIMEOUTS[5];
+                        }
                     } else if (stepNum === 6) {
                         // 交屋檢查
-                        const allChecked = newTx.steps[6].checklist?.every(i => i.checked);
+                        const allChecked = newTx.steps[6]?.checklist?.every(i => i.checked);
                         if (!allChecked) throw new Error("檢查項目未完成");
-                        newTx.steps[6].locked = true;
+                        if (newTx.steps[6]) newTx.steps[6].locked = true;
                     } else {
-                        newTx.steps[stepNum].locked = true;
+                        if (newTx.steps[stepNum]) newTx.steps[stepNum].locked = true;
                         newTx.currentStep += 1;
                     }
                     break;
 
                 case 'payment':
-                     if (newTx.steps[5].paymentStatus !== 'initiated') throw new Error("非付款狀態");
+                     if (newTx.steps[5]?.paymentStatus !== 'initiated') throw new Error("非付款狀態");
                      newTx.isPaid = true;
-                     newTx.steps[5].paymentStatus = 'completed';
-                     newTx.steps[5].locked = true;
+                     if (newTx.steps[5]) {
+                        newTx.steps[5].paymentStatus = 'completed';
+                        newTx.steps[5].locked = true;
+                     }
                      newTx.currentStep = 6;
                      // 生成交屋清單
-                     const risks = newTx.steps[2].data.risks || {};
-                     newTx.steps[6].checklist = [
-                        { label: "🚰 水電瓦斯功能正常", checked: false },
-                        { label: "🪟 門窗鎖具開關正常", checked: false },
-                        { label: "🔑 鑰匙門禁卡點交", checked: false },
-                        { label: `🧱 驗證房仲承諾：${risks.water ? '有' : '無'}漏水`, checked: false },
-                        { label: `🧱 驗證房仲承諾：${risks.wall ? '有' : '無'}壁癌`, checked: false }
-                    ];
+                     const risks = newTx.steps[2]?.data?.risks || {};
+                     if (newTx.steps[6]) {
+                        newTx.steps[6].checklist = [
+                            { label: "🚰 水電瓦斯功能正常", checked: false },
+                            { label: "🪟 門窗鎖具開關正常", checked: false },
+                            { label: "🔑 鑰匙門禁卡點交", checked: false },
+                            { label: `🧱 驗證房仲承諾：${risks.water ? '有' : '無'}漏水`, checked: false },
+                            { label: `🧱 驗證房仲承諾：${risks.wall ? '有' : '無'}壁癌`, checked: false }
+                        ];
+                     }
                     break;
                 
                 case 'checklist':
-                    if (newTx.steps[6].checklist) {
+                    if (newTx.steps[6]?.checklist) {
                         newTx.steps[6].checklist[body.index].checked = body.checked;
                     }
                     break;
@@ -248,6 +264,9 @@ export default function AssureDetail() {
         } catch(e: any) {
             toast.error(e.message);
         }
+        setIsBusy(false);
+        return;
+    }
         setIsBusy(false);
         return;
     }
