@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import styles from '../UAG.module.css';
 
 export default function TrustFlow() {
@@ -35,6 +36,11 @@ export default function TrustFlow() {
             <div><div className="small" style={{ color: 'var(--ink-100)' }}><b>M3 買方出價</b>｜買方 A103</div><div className="small" style={{ color: 'var(--ink-300)' }}>出價 NT$31,500,000</div></div>
             <div><div className={styles['uag-badge']} style={{ fontSize: '10px', background: '#fef3c7', color: '#92400e', border: '1px solid #f6d88a' }}>hash: 1a7c…</div></div>
           </div>
+        </div>
+        <div style={{ padding: '12px', borderTop: '1px solid var(--line-soft)', textAlign: 'center' }}>
+            <Link to="/assure" className={`${styles['uag-btn']} ${styles['primary']}`} style={{ width: '100%', display: 'block', textAlign: 'center', textDecoration: 'none' }}>
+                進入安心留痕 (Trust Room)
+            </Link>
         </div>
       </div>
     </section>
