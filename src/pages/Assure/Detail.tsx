@@ -12,7 +12,7 @@ const createMockState = (id: string): Transaction => ({
   isPaid: false,
   steps: {
     1: { name: "已電聯", agentStatus: 'pending', buyerStatus: 'pending', data: {}, locked: false },
-    2: { name: "已帶看", agentStatus: 'pending', buyerStatus: 'pending', locked: false, data: { risks: { water: false, wall: false, structure: false, other: false } } },
+    2: { name: "已帶看", agentStatus: 'pending', buyerStatus: 'pending', locked: false, data: {} },
     3: { name: "已出價", agentStatus: 'pending', buyerStatus: 'pending', data: {}, locked: false },
     4: { name: "已斡旋", agentStatus: 'pending', buyerStatus: 'pending', data: {}, locked: false },
     5: { name: "已成交", agentStatus: 'pending', buyerStatus: 'pending', locked: false, paymentStatus: 'pending', paymentDeadline: null, data: {} },
@@ -231,14 +231,13 @@ export default function AssureDetail() {
                      }
                      newTx.currentStep = 6;
                      // 生成交屋清單
-                     const risks = newTx.steps[2]?.data?.risks || {};
+                     // const risks = newTx.steps[2]?.data?.risks || {}; // Removed risks logic
                      if (newTx.steps[6]) {
                         newTx.steps[6].checklist = [
                             { label: "🚰 水電瓦斯功能正常", checked: false },
                             { label: "🪟 門窗鎖具開關正常", checked: false },
                             { label: "🔑 鑰匙門禁卡點交", checked: false },
-                            { label: `🧱 驗證房仲承諾：${risks.water ? '有' : '無'}漏水`, checked: false },
-                            { label: `🧱 驗證房仲承諾：${risks.wall ? '有' : '無'}壁癌`, checked: false }
+                            { label: "🧱 房屋現況確認 (漏水/壁癌等)", checked: false }
                         ];
                      }
                     break;
@@ -304,7 +303,7 @@ export default function AssureDetail() {
   }
 
   // Actions wrappers
-  const submitAgent = (step: string) => action('submit', { step, data: step === '2' ? { risks: tx?.steps['2']?.data?.risks } : { note: inputBuffer } })
+  const submitAgent = (step: string) => action('submit', { step, data: { note: inputBuffer } })
   const confirmStep = (step: string) => action('confirm', { step, note: inputBuffer })
   const pay = () => { if (confirm('確認模擬付款？')) action('payment') }
   const toggleCheck = (index: number, checked: boolean) => { if (role === 'buyer') action('checklist', { index, checked }) }
@@ -435,50 +434,11 @@ export default function AssureDetail() {
                   {step.locked && <Lock size={14} className="text-green-600" />}
                 </div>
 
-                {/* Step 2: Risks */}
-                {key === '2' && (
+                {/* Step 2: Viewing (Replaced Risks with Note) */}
+                {key === '2' && step.data.note && (
                   <div className="mb-3 p-3 bg-gray-50 rounded border border-gray-100">
-                    <p className="text-xs font-bold text-gray-500 mb-2 border-b pb-1">📢 房仲屋況聲明</p>
-                    <div className="grid grid-cols-2 gap-2">
-                      <label className="flex items-center space-x-2 text-xs cursor-pointer">
-                        <input 
-                          type="checkbox" 
-                          checked={step.data.risks?.water || false}
-                          onChange={(e) => {
-                            if (tx) {
-                              const newTx = { ...tx }
-                              const risks = newTx.steps['2']?.data?.risks
-                              if (risks) {
-                                risks.water = e.target.checked
-                                setTx(newTx)
-                              }
-                            }
-                          }}
-                          disabled={step.locked || role !== 'agent'} 
-                          className="rounded text-blue-600" 
-                        /> 
-                        <span>漏水/滲水</span>
-                      </label>
-                      <label className="flex items-center space-x-2 text-xs cursor-pointer">
-                        <input 
-                          type="checkbox" 
-                          checked={step.data.risks?.wall || false}
-                          onChange={(e) => {
-                            if (tx) {
-                              const newTx = { ...tx }
-                              const risks = newTx.steps['2']?.data?.risks
-                              if (risks) {
-                                risks.wall = e.target.checked
-                                setTx(newTx)
-                              }
-                            }
-                          }}
-                          disabled={step.locked || role !== 'agent'} 
-                          className="rounded text-blue-600" 
-                        /> 
-                        <span>壁癌/白華</span>
-                      </label>
-                    </div>
+                    <p className="text-xs font-bold text-gray-500 mb-2 border-b pb-1">📢 房仲帶看紀錄</p>
+                    <div className="text-sm whitespace-pre-wrap">{step.data.note}</div>
                   </div>
                 )}
 
@@ -526,14 +486,12 @@ export default function AssureDetail() {
                     {role === 'agent' && (
                       step.agentStatus === 'pending' ? (
                         <div>
-                          {key !== '2' && (
-                            <textarea 
-                              value={inputBuffer}
-                              onChange={(e) => setInputBuffer(e.target.value)}
-                              className="w-full border p-2 rounded text-sm mb-2 focus:ring-2 ring-blue-200 outline-none" 
-                              placeholder="輸入紀錄..."
-                            />
-                          )}
+                          <textarea 
+                            value={inputBuffer}
+                            onChange={(e) => setInputBuffer(e.target.value)}
+                            className="w-full border p-2 rounded text-sm mb-2 focus:ring-2 ring-blue-200 outline-none" 
+                            placeholder="輸入紀錄..."
+                          />
                           <button onClick={() => submitAgent(key)} disabled={isBusy} className="w-full bg-slate-800 text-white py-2 rounded text-sm">
                             {isBusy ? '...' : '送出'}
                           </button>
