@@ -12,6 +12,30 @@ export interface PropertyData {
   images: string[];
   agent: Agent;
   sourcePlatform?: 'MH' | '591';
+  // 結構化評價欄位
+  advantage1?: string;
+  advantage2?: string;
+  disadvantage?: string;
+}
+
+// 上傳表單輸入介面
+export interface PropertyFormInput {
+  title: string;
+  price: string;
+  address: string;
+  size: string;
+  age: string;
+  floorCurrent: string;
+  floorTotal: string;
+  rooms: string;
+  halls: string;
+  bathrooms: string;
+  type: string;
+  description: string;
+  advantage1: string;
+  advantage2: string;
+  disadvantage: string;
+  sourceExternalId: string;
 }
 
 // 預設資料 (Fallback Data) - 用於初始化或錯誤時，確保畫面不崩壞
@@ -85,7 +109,7 @@ export const propertyService = {
     }
   },
 
-  // 2. 上傳物件
+  // 2. 上傳物件 (舊版 - 保留相容性)
   createProperty: async (data: Imported591Data, agentId: string) => {
     // 不再前端生成 public_id，改由資料庫 Trigger 自動生成 (MH-100002, MH-100003...)
     const { data: result, error } = await supabase
@@ -106,5 +130,75 @@ export const propertyService = {
 
     if (error) throw error;
     return result;
+  },
+
+  // 3. 上傳圖片 (UUID 防撞)
+  uploadImages: async (files: File[]): Promise<string[]> => {
+    const uploadPromises = files.map(async (file) => {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${crypto.randomUUID()}.${fileExt}`;
+      
+      const { error } = await supabase.storage
+        .from('property-images')
+        .upload(fileName, file);
+
+      if (error) {
+        console.error('Image upload error:', error);
+        return null;
+      }
+
+      const { data } = supabase.storage
+        .from('property-images')
+        .getPublicUrl(fileName);
+        
+      return data.publicUrl;
+    });
+
+    const results = await Promise.all(uploadPromises);
+    return results.filter((url): url is string => !!url);
+  },
+
+  // 4. 建立物件 (新版 - 含結構化欄位)
+  createPropertyWithForm: async (form: PropertyFormInput, images: string[]) => {
+    // 確認登入狀態
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    // 若未登入，使用預設 agent_id (開發模式)
+    const agentId = user?.id || 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
+
+    const { data, error } = await supabase
+      .from('properties')
+      .insert({
+        agent_id: agentId,
+        title: form.title,
+        price: Number(form.price),
+        address: form.address,
+        size: Number(form.size || 0),
+        age: Number(form.age || 0),
+        
+        rooms: Number(form.rooms),
+        halls: Number(form.halls),
+        bathrooms: Number(form.bathrooms),
+        floor_current: form.floorCurrent,
+        floor_total: Number(form.floorTotal || 0),
+        property_type: form.type,
+        
+        // 結構化儲存 (關鍵)
+        advantage_1: form.advantage1,
+        advantage_2: form.advantage2,
+        disadvantage: form.disadvantage,
+        
+        description: form.description,
+        images: images,
+        features: [form.type, form.advantage1, form.advantage2].filter(Boolean),
+        
+        source_platform: form.sourceExternalId ? '591' : 'MH',
+        source_external_id: form.sourceExternalId || null
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
   }
 };
