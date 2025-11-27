@@ -74,7 +74,7 @@ INSERT INTO public.properties (
     3680,
     '台北市信義區',
     '這是一間位於信義區的優質好房，擁有絕佳的101景觀...',
-    ARRAY['https://picsum.photos/800/600'],
+    ARRAY['https://images.unsplash.com/photo-1600596542815-27b88e54e6d1?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'],
     'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'
 )
 ON CONFLICT (public_id) DO NOTHING;
