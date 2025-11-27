@@ -22,7 +22,7 @@ export const DEFAULT_PROPERTY: PropertyData = {
   price: 3680,
   address: '台北市信義區',
   description: '這是一間位於信義區的優質好房，擁有絕佳的101景觀，全新裝潢，即可入住。周邊生活機能完善，交通便利，是您成家的最佳選擇。',
-  images: ['https://images.unsplash.com/photo-1600596542815-27b88e54e6d1?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'],
+  images: ['https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'],
   agent: {
     id: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
     internalCode: 1,

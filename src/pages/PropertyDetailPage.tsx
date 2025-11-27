@@ -29,7 +29,7 @@ export const PropertyDetailPage: React.FC = () => {
   }, [id]);
 
   // [Safety] 確保有圖片可顯示，防止空陣列導致破圖
-  const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1600596542815-27b88e54e6d1?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80';
+  const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80';
 
   let displayImage = (property.images && property.images.length > 0 && property.images[0]) 
     ? property.images[0] 
