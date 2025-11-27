@@ -45,11 +45,6 @@ export const PropertyDetailPage: React.FC = () => {
     displayImage = FALLBACK_IMAGE;
   }
 
-  // [Double Safety] 前端攔截 picsum (因為 picsum 不穩定)
-  if (displayImage && displayImage.includes('picsum')) {
-    displayImage = FALLBACK_IMAGE;
-  }
-
   if (isLoading) {
     return (
       <div className="min-h-screen bg-[#f8fafc] font-sans text-slate-800">
