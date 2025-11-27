@@ -34,7 +34,6 @@ export const PropertyDetailPage: React.FC = () => {
 
   // [Safety] 確保有圖片可顯示，防止空陣列導致破圖
   const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1600596542815-27b88e54e6d1?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80';
-  const BACKUP_IMAGE = 'https://placehold.co/800x600/e2e8f0/475569?text=Image+Not+Found';
 
   let displayImage = (property.images && property.images.length > 0 && property.images[0]) 
     ? property.images[0] 
@@ -112,14 +111,9 @@ export const PropertyDetailPage: React.FC = () => {
             src={displayImage} 
             alt={property.title}
             onError={(e) => {
-              const target = e.currentTarget;
-              // 如果當前已經是 FALLBACK，就退守到 BACKUP
-              // 注意：瀏覽器可能會自動將相對路徑轉為絕對路徑，所以用 includes 判斷比較保險
-              if (target.src.includes('unsplash')) {
-                 target.src = BACKUP_IMAGE;
-              } else if (target.src !== FALLBACK_IMAGE && target.src !== BACKUP_IMAGE) {
-                 // 如果是其他圖片壞掉，先試試 FALLBACK
-                 target.src = FALLBACK_IMAGE;
+              // [Safety] 出錯時統一換成 fallback，不再重複試同一張外部圖
+              if (e.currentTarget.src !== FALLBACK_IMAGE) {
+                 e.currentTarget.src = FALLBACK_IMAGE;
               }
             }}
             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
@@ -159,7 +153,7 @@ export const PropertyDetailPage: React.FC = () => {
 
             {/* Tags */}
             <div className="flex flex-wrap gap-2">
-              {(property.tags || ['近捷運', '全新裝潢', '有車位', '高樓層']).map(tag => (
+              {['近捷運', '全新裝潢', '有車位', '高樓層'].map(tag => (
                 <span key={tag} className="px-3 py-1 bg-blue-50 text-[#003366] text-xs font-medium rounded-full">
                   {tag}
                 </span>
