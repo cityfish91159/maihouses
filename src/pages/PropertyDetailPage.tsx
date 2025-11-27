@@ -33,8 +33,8 @@ export const PropertyDetailPage: React.FC = () => {
   }, [id]);
 
   // [Safety] 確保有圖片可顯示，防止空陣列導致破圖
-  // [Optimization] 統一使用本地靜態圖片作為最終防線，不再依賴外部連結
-  const FALLBACK_IMAGE = DEFAULT_PROPERTY.images[0] || '/images/mock-property-main.jpg';
+  // [Revert] 回退到穩定的 Unsplash 圖片，避免本地路徑在不同部署環境下失效
+  const FALLBACK_IMAGE = DEFAULT_PROPERTY.images[0] || 'https://images.unsplash.com/photo-1600596542815-27b88e54e6d1?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80';
 
   let displayImage = (property.images && property.images.length > 0 && property.images[0]) 
     ? property.images[0] 
@@ -112,8 +112,8 @@ export const PropertyDetailPage: React.FC = () => {
             src={displayImage} 
             alt={property.title}
             onError={(e) => {
-              // [Optimization] 出錯時統一換成本地 fallback，不再重複試同一張外部圖
-              if (e.currentTarget.src !== window.location.origin + FALLBACK_IMAGE) {
+              // [Safety] 出錯時統一換成 fallback，不再重複試同一張外部圖
+              if (e.currentTarget.src !== FALLBACK_IMAGE) {
                  e.currentTarget.src = FALLBACK_IMAGE;
               }
             }}
