@@ -11,11 +11,6 @@ export const PropertyDetailPage: React.FC = () => {
   // 初始化直接使用 DEFAULT_PROPERTY，確保第一幀就有畫面，絕不留白
   const [property, setProperty] = useState<PropertyData>(DEFAULT_PROPERTY);
 
-  // [Debug] 監控 property 變化
-  useEffect(() => {
-    console.log('Current Property State:', property);
-  }, [property]);
-
   useEffect(() => {
     const fetchProperty = async () => {
       if (!id) return;
@@ -25,7 +20,6 @@ export const PropertyDetailPage: React.FC = () => {
       try {
         const data = await propertyService.getPropertyByPublicId(id);
         if (data) {
-          console.log('Fetched Data:', data);
           setProperty(data);
         }
       } catch (error) {
@@ -37,9 +31,14 @@ export const PropertyDetailPage: React.FC = () => {
   }, [id]);
 
   // [Safety] 確保有圖片可顯示，防止空陣列導致破圖
-  const displayImage = (property.images && property.images.length > 0 && property.images[0]) 
+  let displayImage = (property.images && property.images.length > 0 && property.images[0]) 
     ? property.images[0] 
     : DEFAULT_PROPERTY.images[0];
+
+  // [Double Safety] 前端攔截 picsum (因為 picsum 不穩定)
+  if (displayImage && displayImage.includes('picsum')) {
+    displayImage = DEFAULT_PROPERTY.images[0];
+  }
 
   return (
     <div className="min-h-screen bg-[#f8fafc] font-sans text-slate-800">

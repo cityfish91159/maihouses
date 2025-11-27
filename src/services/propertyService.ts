@@ -78,8 +78,10 @@ export const propertyService = {
         }
       };
 
-      // [Hotfix] 強制修復 MH-100001 的圖片，防止資料庫舊資料導致破圖
-      if (result.publicId === 'MH-100001') {
+      // [Hotfix] 強制修復 MH-100001 的圖片，以及任何使用 picsum 的圖片
+      // 防止資料庫舊資料導致破圖
+      if (result.publicId === 'MH-100001' || result.images[0]?.includes('picsum')) {
+        console.log('[PropertyService] Detected unstable image source, replacing with Unsplash fallback');
         result.images = DEFAULT_PROPERTY.images;
         result.agent.avatarUrl = DEFAULT_PROPERTY.agent.avatarUrl;
       }
