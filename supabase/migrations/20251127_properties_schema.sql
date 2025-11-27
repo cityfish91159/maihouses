@@ -56,7 +56,7 @@ ON public.properties FOR INSERT WITH CHECK (true);
 -- 先插入預設經紀人
 INSERT INTO public.agents (id, name, avatar_url, company, trust_score, encouragement_count)
 VALUES 
-    ('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', '王小明', 'https://picsum.photos/200', '邁房子信義店', 92, 156)
+    ('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', '王小明', 'https://images.unsplash.com/photo-1560250097-0b93528c311a?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80', '邁房子信義店', 92, 156)
 ON CONFLICT (id) DO NOTHING;
 
 -- 再插入預設房源 (MH-100001)

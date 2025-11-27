@@ -27,7 +27,7 @@ export const DEFAULT_PROPERTY: PropertyData = {
     id: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
     internalCode: 1,
     name: '王小明',
-    avatarUrl: 'https://picsum.photos/200',
+    avatarUrl: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80',
     company: '邁房子信義店',
     trustScore: 92,
     encouragementCount: 156,
