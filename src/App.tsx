@@ -18,6 +18,8 @@ import { MoodProvider } from './context/MoodContext'
 import { CookieConsent } from './components/CookieConsent'
 
 import UAGPage from './pages/UAG'
+import { PropertyDetailPage } from './pages/PropertyDetailPage'
+import { PropertyUploadPage } from './pages/PropertyUploadPage'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -103,7 +105,23 @@ export default function App() {
           }
         />
         <Route
+          path="/property/upload"
+          element={
+            <ErrorBoundary>
+              <PropertyUploadPage />
+            </ErrorBoundary>
+          }
+        />
+        <Route
           path="/property/:id"
+          element={
+            <ErrorBoundary>
+              <PropertyDetailPage />
+            </ErrorBoundary>
+          }
+        />
+        <Route
+          path="/p/:id"
           element={
             <ErrorBoundary>
               <Detail />
