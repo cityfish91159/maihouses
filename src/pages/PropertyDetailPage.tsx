@@ -7,7 +7,6 @@ import { propertyService, DEFAULT_PROPERTY, PropertyData } from '../services/pro
 export const PropertyDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [isFavorite, setIsFavorite] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
   
   // 初始化直接使用 DEFAULT_PROPERTY，確保第一幀就有畫面，絕不留白
   const [property, setProperty] = useState<PropertyData>(DEFAULT_PROPERTY);
@@ -16,7 +15,6 @@ export const PropertyDetailPage: React.FC = () => {
     const fetchProperty = async () => {
       if (!id) return;
       
-      setIsLoading(true);
       try {
         const data = await propertyService.getPropertyByPublicId(id);
         if (data) {
@@ -25,8 +23,6 @@ export const PropertyDetailPage: React.FC = () => {
       } catch (error) {
         console.error('Fetch error:', error);
         // 發生錯誤時，保持顯示預設資料，不讓畫面崩壞
-      } finally {
-        setIsLoading(false);
       }
     };
     fetchProperty();
@@ -42,43 +38,6 @@ export const PropertyDetailPage: React.FC = () => {
   // [Double Safety] 前端攔截 picsum
   if (displayImage && displayImage.includes('picsum')) {
     displayImage = FALLBACK_IMAGE;
-  }
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-[#f8fafc] font-sans text-slate-800">
-        <nav className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-100 h-16 flex items-center px-4 shadow-sm justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-slate-200 rounded-lg animate-pulse" />
-            <div className="h-6 w-24 bg-slate-200 rounded animate-pulse" />
-          </div>
-        </nav>
-        <main className="max-w-4xl mx-auto p-4 pb-24">
-          <div className="aspect-video bg-slate-200 rounded-2xl overflow-hidden mb-6 animate-pulse" />
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2 space-y-6">
-              <div className="h-8 bg-slate-200 rounded w-3/4 animate-pulse" />
-              <div className="h-4 bg-slate-200 rounded w-1/2 animate-pulse" />
-              <div className="h-10 bg-slate-200 rounded w-1/3 animate-pulse mt-4" />
-              <div className="flex gap-2 mt-4">
-                {[1, 2, 3, 4].map(i => (
-                  <div key={i} className="h-6 w-16 bg-slate-200 rounded-full animate-pulse" />
-                ))}
-              </div>
-              <div className="h-px bg-slate-100 my-6" />
-              <div className="space-y-2">
-                <div className="h-4 bg-slate-200 rounded w-full animate-pulse" />
-                <div className="h-4 bg-slate-200 rounded w-full animate-pulse" />
-                <div className="h-4 bg-slate-200 rounded w-2/3 animate-pulse" />
-              </div>
-            </div>
-            <div className="lg:col-span-1">
-              <div className="h-64 bg-slate-200 rounded-xl animate-pulse" />
-            </div>
-          </div>
-        </main>
-      </div>
-    );
   }
 
   return (
