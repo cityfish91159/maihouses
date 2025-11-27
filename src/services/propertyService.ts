@@ -85,10 +85,11 @@ export const propertyService = {
 
   // 2. 上傳物件
   createProperty: async (data: Imported591Data, agentId: string) => {
+    // 不再前端生成 public_id，改由資料庫 Trigger 自動生成 (MH-100002, MH-100003...)
     const { data: result, error } = await supabase
       .from('properties')
       .insert({
-        public_id: `MH-${Math.floor(100000 + Math.random() * 900000)}`, // 簡單產生隨機編號
+        // public_id: 由 DB 自動生成
         title: data.title,
         price: data.price,
         address: data.address,
