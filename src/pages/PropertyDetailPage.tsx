@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { Home, Heart, Phone, MessageCircle, Hash, MapPin, Share2, ArrowLeft, Shield } from 'lucide-react';
+import { Home, Heart, Phone, MessageCircle, Hash, MapPin, ArrowLeft, Shield } from 'lucide-react';
 import { AgentTrustCard } from '../components/AgentTrustCard';
 import { propertyService, DEFAULT_PROPERTY, PropertyData } from '../services/propertyService';
 
