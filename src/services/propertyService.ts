@@ -58,7 +58,7 @@ export const propertyService = {
       }
 
       // 轉換資料格式
-      return {
+      const result = {
         id: data.id,
         publicId: data.public_id,
         title: data.title,
@@ -77,6 +77,14 @@ export const propertyService = {
           encouragementCount: data.agent.encouragement_count
         }
       };
+
+      // [Hotfix] 強制修復 MH-100001 的圖片，防止資料庫舊資料導致破圖
+      if (result.publicId === 'MH-100001') {
+        result.images = DEFAULT_PROPERTY.images;
+        result.agent.avatarUrl = DEFAULT_PROPERTY.agent.avatarUrl;
+      }
+
+      return result;
     } catch (e) {
       console.error('Service Error:', e);
       return DEFAULT_PROPERTY;

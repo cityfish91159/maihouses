@@ -59,6 +59,9 @@ export const PropertyDetailPage: React.FC = () => {
           <img 
             src={property.images[0]} 
             alt={property.title}
+            onError={(e) => {
+              e.currentTarget.src = DEFAULT_PROPERTY.images[0] || 'https://images.unsplash.com/photo-1600596542815-27b88e54e6d1?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80';
+            }}
             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
           />
           <div className="absolute bottom-4 right-4 bg-black/50 backdrop-blur-md text-white text-xs px-3 py-1.5 rounded-full flex items-center gap-1">
