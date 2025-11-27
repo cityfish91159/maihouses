@@ -11,6 +11,11 @@ export const PropertyDetailPage: React.FC = () => {
   // 初始化直接使用 DEFAULT_PROPERTY，確保第一幀就有畫面，絕不留白
   const [property, setProperty] = useState<PropertyData>(DEFAULT_PROPERTY);
 
+  // [Debug] 監控 property 變化
+  useEffect(() => {
+    console.log('Current Property State:', property);
+  }, [property]);
+
   useEffect(() => {
     const fetchProperty = async () => {
       if (!id) return;
@@ -20,6 +25,7 @@ export const PropertyDetailPage: React.FC = () => {
       try {
         const data = await propertyService.getPropertyByPublicId(id);
         if (data) {
+          console.log('Fetched Data:', data);
           setProperty(data);
         }
       } catch (error) {
@@ -29,6 +35,11 @@ export const PropertyDetailPage: React.FC = () => {
     };
     fetchProperty();
   }, [id]);
+
+  // [Safety] 確保有圖片可顯示，防止空陣列導致破圖
+  const displayImage = (property.images && property.images.length > 0 && property.images[0]) 
+    ? property.images[0] 
+    : DEFAULT_PROPERTY.images[0];
 
   return (
     <div className="min-h-screen bg-[#f8fafc] font-sans text-slate-800">
@@ -57,7 +68,7 @@ export const PropertyDetailPage: React.FC = () => {
         {/* Image Gallery */}
         <div className="aspect-video bg-slate-200 rounded-2xl overflow-hidden mb-6 relative group">
           <img 
-            src={property.images[0]} 
+            src={displayImage} 
             alt={property.title}
             onError={(e) => {
               e.currentTarget.src = DEFAULT_PROPERTY.images[0] || 'https://images.unsplash.com/photo-1600596542815-27b88e54e6d1?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80';
@@ -66,7 +77,7 @@ export const PropertyDetailPage: React.FC = () => {
           />
           <div className="absolute bottom-4 right-4 bg-black/50 backdrop-blur-md text-white text-xs px-3 py-1.5 rounded-full flex items-center gap-1">
             <Home size={12} />
-            <span>共 {property.images.length} 張照片</span>
+            <span>共 {property.images?.length || 0} 張照片</span>
           </div>
         </div>
 
