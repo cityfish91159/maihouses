@@ -10,6 +10,7 @@ export interface PropertyData {
   address: string;
   description: string;
   images: string[];
+  tags?: string[]; // 新增 tags 欄位
   agent: Agent;
   sourcePlatform?: 'MH' | '591';
 }
@@ -22,7 +23,9 @@ export const DEFAULT_PROPERTY: PropertyData = {
   price: 3680,
   address: '台北市信義區',
   description: '這是一間位於信義區的優質好房，擁有絕佳的101景觀，全新裝潢，即可入住。周邊生活機能完善，交通便利，是您成家的最佳選擇。',
-  images: ['https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'],
+  // [Optimization] 使用本地靜態圖片作為最穩定的 Fallback，不再依賴外部連結
+  images: ['/images/mock-property-main.jpg'],
+  tags: ['近捷運', '全新裝潢', '有車位', '高樓層'],
   agent: {
     id: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
     internalCode: 1,
@@ -66,6 +69,7 @@ export const propertyService = {
         address: data.address,
         description: data.description,
         images: data.images || [],
+        tags: data.tags || ['近捷運', '全新裝潢', '有車位', '高樓層'], // 暫時使用預設 tags，未來可從 DB 讀取
         sourcePlatform: data.source_platform,
         agent: {
           id: data.agent.id,

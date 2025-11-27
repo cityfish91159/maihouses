@@ -33,13 +33,16 @@ export const PropertyDetailPage: React.FC = () => {
   }, [id]);
 
   // [Safety] 確保有圖片可顯示，防止空陣列導致破圖
+  // [Optimization] 統一使用本地靜態圖片作為最終防線，不再依賴外部連結
+  const FALLBACK_IMAGE = DEFAULT_PROPERTY.images[0] || '/images/mock-property-main.jpg';
+
   let displayImage = (property.images && property.images.length > 0 && property.images[0]) 
     ? property.images[0] 
-    : DEFAULT_PROPERTY.images[0];
+    : FALLBACK_IMAGE;
 
   // [Double Safety] 前端攔截 picsum (因為 picsum 不穩定)
   if (displayImage && displayImage.includes('picsum')) {
-    displayImage = DEFAULT_PROPERTY.images[0];
+    displayImage = FALLBACK_IMAGE;
   }
 
   if (isLoading) {
@@ -109,13 +112,9 @@ export const PropertyDetailPage: React.FC = () => {
             src={displayImage} 
             alt={property.title}
             onError={(e) => {
-              // 防止死循環：如果當前已經是備用圖，就不再重試
-              const fallbackUrl = 'https://placehold.co/800x600/e2e8f0/475569?text=No+Image';
-              if (e.currentTarget.src !== fallbackUrl && e.currentTarget.src !== DEFAULT_PROPERTY.images[0]) {
-                 // 優先嘗試 DEFAULT_PROPERTY，如果還是不行，最後退守到 placehold.co
-                 e.currentTarget.src = DEFAULT_PROPERTY.images[0] || fallbackUrl;
-              } else if (e.currentTarget.src === DEFAULT_PROPERTY.images[0]) {
-                 e.currentTarget.src = fallbackUrl;
+              // [Optimization] 出錯時統一換成本地 fallback，不再重複試同一張外部圖
+              if (e.currentTarget.src !== window.location.origin + FALLBACK_IMAGE) {
+                 e.currentTarget.src = FALLBACK_IMAGE;
               }
             }}
             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
@@ -155,7 +154,7 @@ export const PropertyDetailPage: React.FC = () => {
 
             {/* Tags */}
             <div className="flex flex-wrap gap-2">
-              {['近捷運', '全新裝潢', '有車位', '高樓層'].map(tag => (
+              {(property.tags || ['近捷運', '全新裝潢', '有車位', '高樓層']).map(tag => (
                 <span key={tag} className="px-3 py-1 bg-blue-50 text-[#003366] text-xs font-medium rounded-full">
                   {tag}
                 </span>
