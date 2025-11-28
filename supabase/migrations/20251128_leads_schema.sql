@@ -3,14 +3,12 @@
 -- 用於追蹤客戶諮詢、房仲回覆、看屋、斡旋等完整流程
 -- ==============================================================================
 
--- ⚠️ 清理舊物件（如果存在）
-DROP VIEW IF EXISTS public.agent_lead_stats CASCADE;
-DROP TRIGGER IF EXISTS lead_events_first_contact ON public.lead_events;
-DROP TRIGGER IF EXISTS leads_updated_at ON public.leads;
-DROP FUNCTION IF EXISTS update_first_contacted_at() CASCADE;
-DROP FUNCTION IF EXISTS update_leads_updated_at() CASCADE;
+-- ⚠️ 清理舊物件（如果存在）- 順序很重要
 DROP FUNCTION IF EXISTS public.get_agent_lead_overview(TEXT) CASCADE;
 DROP FUNCTION IF EXISTS public.get_agent_lead_overview(UUID) CASCADE;
+DROP FUNCTION IF EXISTS update_first_contacted_at() CASCADE;
+DROP FUNCTION IF EXISTS update_leads_updated_at() CASCADE;
+DROP VIEW IF EXISTS public.agent_lead_stats CASCADE;
 DROP TABLE IF EXISTS public.lead_events CASCADE;
 DROP TABLE IF EXISTS public.leads CASCADE;
 
