@@ -55,29 +55,17 @@ CREATE INDEX idx_leads_created ON public.leads(created_at DESC);
 -- RLS
 ALTER TABLE public.leads ENABLE ROW LEVEL SECURITY;
 
--- 經紀人只能看自己的 leads（透過 agents 表關聯 auth.uid）
-CREATE POLICY "Agents view own leads" ON public.leads
-    FOR SELECT USING (
-        EXISTS (
-            SELECT 1 FROM public.agents 
-            WHERE agents.id = leads.agent_id 
-            AND agents.user_id = auth.uid()
-        )
-    );
+-- 暫時允許所有認證用戶查看 leads（後續加入 agents.user_id 後可收緊）
+CREATE POLICY "Authenticated users view leads" ON public.leads
+    FOR SELECT USING (auth.role() = 'authenticated');
 
 -- 任何人都可以建立 lead（匿名詢問）
 CREATE POLICY "Anyone can create leads" ON public.leads
     FOR INSERT WITH CHECK (true);
 
--- 經紀人可以更新自己的 leads
-CREATE POLICY "Agents update own leads" ON public.leads
-    FOR UPDATE USING (
-        EXISTS (
-            SELECT 1 FROM public.agents 
-            WHERE agents.id = leads.agent_id 
-            AND agents.user_id = auth.uid()
-        )
-    );
+-- 認證用戶可以更新 leads
+CREATE POLICY "Authenticated users update leads" ON public.leads
+    FOR UPDATE USING (auth.role() = 'authenticated');
 
 -- ==============================================================================
 -- 2. Lead Events 表 (行為事件)
@@ -132,28 +120,13 @@ CREATE INDEX idx_lead_events_created ON public.lead_events(created_at DESC);
 -- RLS
 ALTER TABLE public.lead_events ENABLE ROW LEVEL SECURITY;
 
--- 經紀人可以查看自己 leads 的事件
-CREATE POLICY "Agents view own lead events" ON public.lead_events
-    FOR SELECT USING (
-        EXISTS (
-            SELECT 1 FROM public.leads 
-            JOIN public.agents ON agents.id = leads.agent_id
-            WHERE leads.id = lead_events.lead_id 
-            AND agents.user_id = auth.uid()
-        )
-    );
+-- 認證用戶可以查看 lead_events
+CREATE POLICY "Authenticated users view lead events" ON public.lead_events
+    FOR SELECT USING (auth.role() = 'authenticated');
 
--- 經紀人可以新增事件，或客戶也可以新增回饋
-CREATE POLICY "Agents insert lead events" ON public.lead_events
-    FOR INSERT WITH CHECK (
-        EXISTS (
-            SELECT 1 FROM public.leads 
-            JOIN public.agents ON agents.id = leads.agent_id
-            WHERE leads.id = lead_events.lead_id 
-            AND agents.user_id = auth.uid()
-        )
-        OR performed_by_role = 'customer'  -- 客戶也可以新增（如回饋）
-    );
+-- 任何人可以新增事件（含匿名客戶回饋）
+CREATE POLICY "Anyone can insert lead events" ON public.lead_events
+    FOR INSERT WITH CHECK (true);
 
 -- ==============================================================================
 -- 3. 經紀人統計 View
