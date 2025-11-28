@@ -1,15 +1,115 @@
-import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useParams, useSearchParams } from 'react-router-dom';
 import { Home, Heart, Phone, MessageCircle, Hash, MapPin, ArrowLeft, Shield } from 'lucide-react';
 import { AgentTrustCard } from '../components/AgentTrustCard';
 import { propertyService, DEFAULT_PROPERTY, PropertyData } from '../services/propertyService';
 
+// UAG Tracker Hook - 追蹤用戶行為
+const usePropertyTracker = (propertyId: string, agentId: string) => {
+  const enterTime = useRef(Date.now());
+  const actions = useRef({ click_photos: 0, click_line: 0, click_call: 0, scroll_depth: 0 });
+  const hasSent = useRef(false);
+
+  // 取得或建立 session_id
+  const getSessionId = useCallback(() => {
+    let sid = localStorage.getItem('uag_session');
+    if (!sid) {
+      sid = `u_${Math.random().toString(36).substring(2, 11)}`;
+      localStorage.setItem('uag_session', sid);
+    }
+    return sid;
+  }, []);
+
+  // 發送追蹤事件
+  const sendEvent = useCallback((eventType: string) => {
+    const payload = {
+      session_id: getSessionId(),
+      agent_id: agentId,
+      fingerprint: btoa(JSON.stringify({
+        screen: `${screen.width}x${screen.height}`,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        language: navigator.language
+      })),
+      event: {
+        type: eventType,
+        property_id: propertyId,
+        district: 'unknown',
+        duration: Math.round((Date.now() - enterTime.current) / 1000),
+        actions: { ...actions.current },
+        focus: []
+      }
+    };
+
+    // 使用 sendBeacon 確保離開頁面時也能送出
+    const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+    navigator.sendBeacon('/api/uag-track', blob);
+  }, [propertyId, agentId, getSessionId]);
+
+  // 追蹤滾動深度
+  useEffect(() => {
+    const handleScroll = () => {
+      const depth = Math.round((window.scrollY + window.innerHeight) / document.body.scrollHeight * 100);
+      if (depth > actions.current.scroll_depth) {
+        actions.current.scroll_depth = depth;
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // 初始化：發送 page_view，離開時發送 page_exit
+  useEffect(() => {
+    if (!propertyId) return;
+
+    // 發送 page_view
+    sendEvent('page_view');
+
+    // 離開頁面時發送 page_exit
+    const handleUnload = () => {
+      if (!hasSent.current) {
+        hasSent.current = true;
+        sendEvent('page_exit');
+      }
+    };
+
+    window.addEventListener('pagehide', handleUnload);
+    window.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') handleUnload();
+    });
+
+    return () => {
+      window.removeEventListener('pagehide', handleUnload);
+      handleUnload();
+    };
+  }, [propertyId, sendEvent]);
+
+  // 暴露追蹤方法
+  return {
+    trackPhotoClick: () => { actions.current.click_photos++; },
+    trackLineClick: () => { actions.current.click_line = 1; sendEvent('click_line'); },
+    trackCallClick: () => { actions.current.click_call = 1; sendEvent('click_call'); }
+  };
+};
+
 export const PropertyDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
+  const [searchParams] = useSearchParams();
   const [isFavorite, setIsFavorite] = useState(false);
   
   // 初始化直接使用 DEFAULT_PROPERTY，確保第一幀就有畫面，絕不留白
   const [property, setProperty] = useState<PropertyData>(DEFAULT_PROPERTY);
+
+  // 取得 agent_id (從 URL 參數或 localStorage)
+  const getAgentId = () => {
+    let aid = searchParams.get('aid');
+    if (!aid) aid = localStorage.getItem('uag_last_aid');
+    if (aid && aid !== 'unknown') localStorage.setItem('uag_last_aid', aid);
+    return aid || 'unknown';
+  };
+
+  // 初始化追蹤器
+  const tracker = usePropertyTracker(id || '', getAgentId());
 
   useEffect(() => {
     const fetchProperty = async () => {
@@ -162,11 +262,17 @@ export const PropertyDetailPage: React.FC = () => {
 
       {/* Mobile Bottom Bar */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 p-3 lg:hidden flex gap-3 z-50 pb-safe">
-        <button className="flex-1 bg-[#003366] text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-blue-900/20">
+        <button 
+          onClick={tracker.trackCallClick}
+          className="flex-1 bg-[#003366] text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-blue-900/20"
+        >
           <Phone size={20} />
           聯絡經紀人
         </button>
-        <button className="w-12 bg-slate-50 text-slate-600 rounded-xl flex items-center justify-center border border-slate-200">
+        <button 
+          onClick={tracker.trackLineClick}
+          className="w-12 bg-slate-50 text-slate-600 rounded-xl flex items-center justify-center border border-slate-200"
+        >
           <MessageCircle size={20} />
         </button>
       </div>

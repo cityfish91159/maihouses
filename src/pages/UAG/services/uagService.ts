@@ -100,6 +100,16 @@ const transformSupabaseData = (
   };
 };
 
+// 房源瀏覽統計介面
+export interface PropertyViewStats {
+  property_id: string;
+  view_count: number;
+  unique_sessions: number;
+  total_duration: number;
+  line_clicks: number;
+  call_clicks: number;
+}
+
 export class UAGService {
   static async fetchAppData(userId: string): Promise<AppData> {
     const [userRes, leadsRes, listingsRes, feedRes] = await Promise.all([
@@ -115,6 +125,88 @@ export class UAGService {
     if (feedRes.error) throw feedRes.error;
 
     return transformSupabaseData(userRes.data, leadsRes.data, listingsRes.data, feedRes.data);
+  }
+
+  // 獲取某房仲所有房源的瀏覽統計
+  static async fetchPropertyViewStats(agentId: string): Promise<PropertyViewStats[]> {
+    try {
+      // 從 uag_events 表聚合統計
+      // 注意：這裡用的是 property_id 對應 properties.public_id
+      const { data, error } = await supabase
+        .rpc('get_agent_property_stats', { p_agent_id: agentId });
+
+      if (error) {
+        console.warn('PropertyViewStats RPC error, using fallback:', error);
+        // Fallback：直接查詢 (效能較差但可用)
+        return await UAGService.fetchPropertyViewStatsFallback(agentId);
+      }
+
+      return data || [];
+    } catch (e) {
+      console.error('fetchPropertyViewStats error:', e);
+      return [];
+    }
+  }
+
+  // Fallback 方法：直接從 uag_events 查詢
+  private static async fetchPropertyViewStatsFallback(agentId: string): Promise<PropertyViewStats[]> {
+    // 先取得該房仲的所有房源 public_id
+    const { data: properties, error: propError } = await supabase
+      .from('properties')
+      .select('public_id')
+      .eq('agent_id', agentId);
+
+    if (propError || !properties?.length) return [];
+
+    const publicIds = properties.map(p => p.public_id);
+
+    // 查詢這些房源的事件統計
+    const { data: events, error: evtError } = await supabase
+      .from('uag_events')
+      .select('property_id, session_id, duration, actions')
+      .in('property_id', publicIds);
+
+    if (evtError || !events) return [];
+
+    // 手動聚合
+    const statsMap = new Map<string, PropertyViewStats>();
+    
+    for (const evt of events) {
+      const pid = evt.property_id;
+      if (!statsMap.has(pid)) {
+        statsMap.set(pid, {
+          property_id: pid,
+          view_count: 0,
+          unique_sessions: 0,
+          total_duration: 0,
+          line_clicks: 0,
+          call_clicks: 0
+        });
+      }
+      const stat = statsMap.get(pid)!;
+      stat.view_count++;
+      stat.total_duration += evt.duration || 0;
+      
+      const actions = evt.actions as Record<string, number> | null;
+      if (actions?.click_line) stat.line_clicks++;
+      if (actions?.click_call) stat.call_clicks++;
+    }
+
+    // 計算 unique sessions
+    const sessionsByProperty = new Map<string, Set<string>>();
+    for (const evt of events) {
+      if (!sessionsByProperty.has(evt.property_id)) {
+        sessionsByProperty.set(evt.property_id, new Set());
+      }
+      sessionsByProperty.get(evt.property_id)!.add(evt.session_id);
+    }
+
+    for (const [pid, sessions] of sessionsByProperty) {
+      const stat = statsMap.get(pid);
+      if (stat) stat.unique_sessions = sessions.size;
+    }
+
+    return Array.from(statsMap.values());
   }
 
   static async purchaseLead(
