@@ -3,6 +3,7 @@ import { useParams, useSearchParams } from 'react-router-dom';
 import { Home, Heart, Phone, MessageCircle, Hash, MapPin, ArrowLeft, Shield, Eye, Users, Calendar, Flame } from 'lucide-react';
 import { AgentTrustCard } from '../components/AgentTrustCard';
 import { propertyService, DEFAULT_PROPERTY, PropertyData } from '../services/propertyService';
+import { ContactModal } from '../components/ContactModal';
 
 // UAG Tracker Hook - 追蹤用戶行為
 const usePropertyTracker = (propertyId: string, agentId: string) => {
@@ -97,6 +98,10 @@ export const PropertyDetailPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const [isFavorite, setIsFavorite] = useState(false);
   
+  // ContactModal 狀態
+  const [showContactModal, setShowContactModal] = useState(false);
+  const [contactSource, setContactSource] = useState<'sidebar' | 'mobile_bar' | 'booking'>('sidebar');
+  
   // 初始化直接使用 DEFAULT_PROPERTY，確保第一幀就有畫面，絕不留白
   const [property, setProperty] = useState<PropertyData>(DEFAULT_PROPERTY);
 
@@ -110,6 +115,18 @@ export const PropertyDetailPage: React.FC = () => {
 
   // 初始化追蹤器
   const tracker = usePropertyTracker(id || '', getAgentId());
+
+  // 開啟聯絡 Modal 的處理函數
+  const openContactModal = (source: 'sidebar' | 'mobile_bar' | 'booking') => {
+    setContactSource(source);
+    setShowContactModal(true);
+    // 同時追蹤點擊事件
+    if (source === 'mobile_bar') {
+      tracker.trackLineClick();
+    } else {
+      tracker.trackCallClick();
+    }
+  };
 
   // 社會證明數據 - 模擬即時瀏覽人數與預約組數
   const socialProof = useMemo(() => {
@@ -264,8 +281,9 @@ export const PropertyDetailPage: React.FC = () => {
             <div className="sticky top-24 space-y-4">
               <AgentTrustCard 
                 agent={property.agent} 
-                onLineClick={tracker.trackLineClick}
-                onCallClick={tracker.trackCallClick}
+                onLineClick={() => openContactModal('sidebar')}
+                onCallClick={() => openContactModal('sidebar')}
+                onBookingClick={() => openContactModal('booking')}
               />
               
               <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
@@ -313,16 +331,16 @@ export const PropertyDetailPage: React.FC = () => {
         <div className="flex gap-2">
           {/* 左按鈕：加 LINE（低門檻）*/}
           <button 
-            onClick={tracker.trackLineClick}
+            onClick={() => openContactModal('mobile_bar')}
             className="flex-[4] bg-[#06C755] text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-green-500/20"
           >
             <MessageCircle size={20} />
             加 LINE 諮詢
           </button>
           
-          {/* 右按鈕：致電（高意圖）*/}
+          {/* 右按鈕：預約看屋（高意圖）*/}
           <button 
-            onClick={tracker.trackCallClick}
+            onClick={() => openContactModal('booking')}
             className="flex-[6] bg-[#003366] text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-blue-900/20"
           >
             <Calendar size={20} />
@@ -330,6 +348,17 @@ export const PropertyDetailPage: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {/* 統一聯絡入口 Modal */}
+      <ContactModal
+        isOpen={showContactModal}
+        onClose={() => setShowContactModal(false)}
+        propertyId={property.publicId}
+        propertyTitle={property.title}
+        agentId={getAgentId()}
+        agentName={property.agent?.name || '專屬業務'}
+        source={contactSource}
+      />
     </div>
   );
 };

@@ -6,6 +6,7 @@ interface AgentTrustCardProps {
   agent: Agent;
   onLineClick?: () => void;
   onCallClick?: () => void;
+  onBookingClick?: () => void;  // 新增：預約看屋回調
 }
 
 // 信任分數構成說明
@@ -149,7 +150,7 @@ const BookingModal: React.FC<{ isOpen: boolean; onClose: () => void; agentName: 
   );
 };
 
-export const AgentTrustCard: React.FC<AgentTrustCardProps> = ({ agent, onLineClick, onCallClick }) => {
+export const AgentTrustCard: React.FC<AgentTrustCardProps> = ({ agent, onLineClick, onCallClick, onBookingClick }) => {
   const [showTrustTooltip, setShowTrustTooltip] = useState(false);
   const [showBookingModal, setShowBookingModal] = useState(false);
   
@@ -268,7 +269,7 @@ export const AgentTrustCard: React.FC<AgentTrustCardProps> = ({ agent, onLineCli
           {/* 次要 CTA */}
           <div className="flex gap-2">
             <button 
-              onClick={() => setShowBookingModal(true)}
+              onClick={() => onBookingClick ? onBookingClick() : setShowBookingModal(true)}
               className="flex-1 bg-[#003366] text-white text-sm font-medium py-2 rounded-lg hover:bg-[#004488] transition-colors flex items-center justify-center gap-1.5"
             >
               <Calendar size={16} />
