@@ -380,15 +380,19 @@ export const PropertyDetailPage: React.FC = () => {
 
       {/* Mobile Bottom Bar - 雙主按鈕設計 */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 p-3 lg:hidden z-50 pb-safe">
-        {/* 社會證明提示 */}
-        <div className="flex items-center justify-center gap-3 mb-2 text-xs">
-          <span className="flex items-center gap-1 text-slate-500">
-            <Eye size={12} className="text-blue-500" />
-            {socialProof.currentViewers} 人正在瀏覽
+        {/* 經紀人驗證資訊 */}
+        <div className="flex items-center justify-center gap-4 mb-2 text-[10px] text-slate-500">
+          <span className="flex items-center gap-1">
+            <Shield size={10} className="text-green-500" />
+            認證經紀人
+          </span>
+          <span className="flex items-center gap-1">
+            <Eye size={10} className="text-blue-500" />
+            {socialProof.currentViewers} 人瀏覽中
           </span>
           {socialProof.isHot && (
             <span className="flex items-center gap-1 text-orange-500 font-medium">
-              <Flame size={12} />
+              <Flame size={10} />
               熱門
             </span>
           )}

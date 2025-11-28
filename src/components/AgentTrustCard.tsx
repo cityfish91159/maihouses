@@ -157,6 +157,14 @@ export const AgentTrustCard: React.FC<AgentTrustCardProps> = ({ agent, onLineCli
   // 模擬在線狀態 (實際應從後端獲取)
   const isOnline = useMemo(() => Math.random() > 0.3, []); // 70% 機率在線
   const trustBreakdown = getTrustBreakdown(agent.trustScore);
+  
+  // 經紀人績效指標（模擬數據，後續從後端獲取）
+  const agentMetrics = useMemo(() => ({
+    responseTime: isOnline ? '5 分鐘' : '2 小時',
+    closureRate: Math.min(95, 60 + (agent.trustScore % 30)),
+    totalDeals: agent.encouragementCount * 2 + 10,
+    experience: Math.floor(agent.trustScore / 25) + 1
+  }), [agent.trustScore, agent.encouragementCount, isOnline]);
 
   return (
     <>
@@ -249,9 +257,25 @@ export const AgentTrustCard: React.FC<AgentTrustCardProps> = ({ agent, onLineCli
             {isOnline && (
               <div className="mt-3 text-xs text-green-600 bg-green-50 px-2 py-1 rounded-lg inline-flex items-center gap-1">
                 <Clock size={12} />
-                平均 5 分鐘內回覆
+                平均 {agentMetrics.responseTime} 內回覆
               </div>
             )}
+          </div>
+        </div>
+        
+        {/* 經紀人績效指標 */}
+        <div className="mt-4 grid grid-cols-3 gap-2 py-3 border-y border-slate-100">
+          <div className="text-center">
+            <div className="text-lg font-bold text-[#003366]">{agentMetrics.closureRate}%</div>
+            <div className="text-[10px] text-slate-500">成交率</div>
+          </div>
+          <div className="text-center border-x border-slate-100">
+            <div className="text-lg font-bold text-slate-800">{agentMetrics.totalDeals}</div>
+            <div className="text-[10px] text-slate-500">累積成交</div>
+          </div>
+          <div className="text-center">
+            <div className="text-lg font-bold text-slate-800">{agentMetrics.experience}年</div>
+            <div className="text-[10px] text-slate-500">服務經驗</div>
           </div>
         </div>
         

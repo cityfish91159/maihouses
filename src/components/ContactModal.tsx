@@ -180,6 +180,28 @@ export const ContactModal: React.FC<ContactModalProps> = ({
             /* 表單 */
             <form onSubmit={handleSubmit} className="space-y-5">
               
+              {/* 📋 聯絡前須知 - SLA 承諾 */}
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-3">
+                <p className="font-bold text-amber-900 text-sm mb-2 flex items-center gap-1.5">
+                  <Clock size={14} />
+                  聯絡前須知
+                </p>
+                <ul className="text-amber-800 text-xs space-y-1">
+                  <li className="flex items-center gap-1.5">
+                    <CheckCircle size={12} className="text-green-600 flex-shrink-0" />
+                    經紀人 {agentName} 承諾 <strong>10 分鐘內</strong> 回應
+                  </li>
+                  <li className="flex items-center gap-1.5">
+                    <CheckCircle size={12} className="text-green-600 flex-shrink-0" />
+                    您的聯絡資訊受隱私保護，僅供本次諮詢使用
+                  </li>
+                  <li className="flex items-center gap-1.5">
+                    <CheckCircle size={12} className="text-green-600 flex-shrink-0" />
+                    可隨時取消後續聯絡，無任何義務
+                  </li>
+                </ul>
+              </div>
+              
               {/* 基本資料 */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
