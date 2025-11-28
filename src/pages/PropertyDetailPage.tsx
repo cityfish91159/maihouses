@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
-import { Home, Heart, Phone, MessageCircle, Hash, MapPin, ArrowLeft, Shield } from 'lucide-react';
+import { Home, Heart, Phone, MessageCircle, Hash, MapPin, ArrowLeft, Shield, Eye, Users, Calendar, Flame } from 'lucide-react';
 import { AgentTrustCard } from '../components/AgentTrustCard';
 import { propertyService, DEFAULT_PROPERTY, PropertyData } from '../services/propertyService';
 
@@ -111,6 +111,17 @@ export const PropertyDetailPage: React.FC = () => {
   // 初始化追蹤器
   const tracker = usePropertyTracker(id || '', getAgentId());
 
+  // 社會證明數據 - 模擬即時瀏覽人數與預約組數
+  const socialProof = useMemo(() => {
+    // 基於 property.publicId 產生穩定的隨機數
+    const seed = property.publicId?.charCodeAt(3) || 0;
+    return {
+      currentViewers: Math.floor(seed % 5) + 2,      // 2-6 人正在瀏覽
+      weeklyBookings: Math.floor(seed % 8) + 5,      // 5-12 組預約
+      isHot: seed % 3 === 0                           // 1/3 機率顯示為熱門
+    };
+  }, [property.publicId]);
+
   useEffect(() => {
     const fetchProperty = async () => {
       if (!id) return;
@@ -208,6 +219,24 @@ export const PropertyDetailPage: React.FC = () => {
                 <span className="text-3xl font-extrabold text-[#003366]">{property.price}</span>
                 <span className="text-lg text-slate-500 font-medium">萬</span>
               </div>
+
+              {/* 社會證明提示 - FOMO */}
+              <div className="mt-3 flex flex-wrap gap-2">
+                {socialProof.isHot && (
+                  <div className="inline-flex items-center gap-1 text-xs font-medium text-orange-600 bg-orange-50 px-2 py-1 rounded-full animate-pulse">
+                    <Flame size={12} />
+                    熱門物件
+                  </div>
+                )}
+                <div className="inline-flex items-center gap-1 text-xs text-slate-600 bg-slate-50 px-2 py-1 rounded-full">
+                  <Eye size={12} className="text-blue-500" />
+                  {socialProof.currentViewers} 人正在瀏覽
+                </div>
+                <div className="inline-flex items-center gap-1 text-xs text-slate-600 bg-slate-50 px-2 py-1 rounded-full">
+                  <Users size={12} className="text-green-500" />
+                  本週 {socialProof.weeklyBookings} 組預約看屋
+                </div>
+              </div>
             </div>
 
             {/* Tags */}
@@ -233,7 +262,11 @@ export const PropertyDetailPage: React.FC = () => {
           {/* Sidebar / Agent Card */}
           <div className="lg:col-span-1">
             <div className="sticky top-24 space-y-4">
-              <AgentTrustCard agent={property.agent} />
+              <AgentTrustCard 
+                agent={property.agent} 
+                onLineClick={tracker.trackLineClick}
+                onCallClick={tracker.trackCallClick}
+              />
               
               <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
                 <h4 className="font-bold text-[#003366] text-sm mb-2 flex items-center gap-2">
@@ -260,21 +293,42 @@ export const PropertyDetailPage: React.FC = () => {
         </div>
       </main>
 
-      {/* Mobile Bottom Bar */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 p-3 lg:hidden flex gap-3 z-50 pb-safe">
-        <button 
-          onClick={tracker.trackCallClick}
-          className="flex-1 bg-[#003366] text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-blue-900/20"
-        >
-          <Phone size={20} />
-          聯絡經紀人
-        </button>
-        <button 
-          onClick={tracker.trackLineClick}
-          className="w-12 bg-slate-50 text-slate-600 rounded-xl flex items-center justify-center border border-slate-200"
-        >
-          <MessageCircle size={20} />
-        </button>
+      {/* Mobile Bottom Bar - 雙主按鈕設計 */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 p-3 lg:hidden z-50 pb-safe">
+        {/* 社會證明提示 */}
+        <div className="flex items-center justify-center gap-3 mb-2 text-xs">
+          <span className="flex items-center gap-1 text-slate-500">
+            <Eye size={12} className="text-blue-500" />
+            {socialProof.currentViewers} 人正在瀏覽
+          </span>
+          {socialProof.isHot && (
+            <span className="flex items-center gap-1 text-orange-500 font-medium">
+              <Flame size={12} />
+              熱門
+            </span>
+          )}
+        </div>
+        
+        {/* 雙主按鈕 */}
+        <div className="flex gap-2">
+          {/* 左按鈕：加 LINE（低門檻）*/}
+          <button 
+            onClick={tracker.trackLineClick}
+            className="flex-[4] bg-[#06C755] text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-green-500/20"
+          >
+            <MessageCircle size={20} />
+            加 LINE 諮詢
+          </button>
+          
+          {/* 右按鈕：致電（高意圖）*/}
+          <button 
+            onClick={tracker.trackCallClick}
+            className="flex-[6] bg-[#003366] text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-blue-900/20"
+          >
+            <Calendar size={20} />
+            預約看屋
+          </button>
+        </div>
       </div>
     </div>
   );
