@@ -29,13 +29,13 @@ const BookingModal: React.FC<{ isOpen: boolean; onClose: () => void; agentName: 
   // 生成未來 7 天的可用時段
   const timeSlots = useMemo(() => {
     const slots: { date: string; day: string; times: string[] }[] = [];
-    const days = ['日', '一', '二', '三', '四', '五', '六'];
+    const days: string[] = ['日', '一', '二', '三', '四', '五', '六'];
     
     for (let i = 1; i <= 7; i++) {
       const date = new Date();
       date.setDate(date.getDate() + i);
       const dayStr = `${date.getMonth() + 1}/${date.getDate()}`;
-      const dayName = days[date.getDay()];
+      const dayName = days[date.getDay()] ?? '日';
       
       // 週末有更多時段
       const times = date.getDay() === 0 || date.getDay() === 6
