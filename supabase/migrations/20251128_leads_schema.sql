@@ -3,8 +3,19 @@
 -- 用於追蹤客戶諮詢、房仲回覆、看屋、斡旋等完整流程
 -- ==============================================================================
 
+-- ⚠️ 清理舊物件（如果存在）
+DROP VIEW IF EXISTS public.agent_lead_stats CASCADE;
+DROP TRIGGER IF EXISTS lead_events_first_contact ON public.lead_events;
+DROP TRIGGER IF EXISTS leads_updated_at ON public.leads;
+DROP FUNCTION IF EXISTS update_first_contacted_at() CASCADE;
+DROP FUNCTION IF EXISTS update_leads_updated_at() CASCADE;
+DROP FUNCTION IF EXISTS public.get_agent_lead_overview(TEXT) CASCADE;
+DROP FUNCTION IF EXISTS public.get_agent_lead_overview(UUID) CASCADE;
+DROP TABLE IF EXISTS public.lead_events CASCADE;
+DROP TABLE IF EXISTS public.leads CASCADE;
+
 -- 1. Leads 表 (客戶諮詢)
-CREATE TABLE IF NOT EXISTS public.leads (
+CREATE TABLE public.leads (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     
     -- 關聯
@@ -70,7 +81,7 @@ CREATE POLICY "Authenticated users update leads" ON public.leads
 -- ==============================================================================
 -- 2. Lead Events 表 (行為事件)
 -- ==============================================================================
-CREATE TABLE IF NOT EXISTS public.lead_events (
+CREATE TABLE public.lead_events (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     lead_id UUID NOT NULL REFERENCES public.leads(id) ON DELETE CASCADE,
     
