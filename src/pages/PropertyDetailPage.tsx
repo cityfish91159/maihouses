@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
-import { Home, Heart, Phone, MessageCircle, Hash, MapPin, ArrowLeft, Shield, Eye, Users, Calendar, Flame } from 'lucide-react';
+import { Home, Heart, Phone, MessageCircle, Hash, MapPin, ArrowLeft, Shield, Eye, Users, Calendar, Flame, Star, Lock, ChevronRight } from 'lucide-react';
 import { AgentTrustCard } from '../components/AgentTrustCard';
 import { propertyService, DEFAULT_PROPERTY, PropertyData } from '../services/propertyService';
 import { ContactModal } from '../components/ContactModal';
@@ -330,6 +330,109 @@ export const PropertyDetailPage: React.FC = () => {
               <p className="text-slate-600 leading-relaxed whitespace-pre-line">
                 {property.description}
               </p>
+            </div>
+            
+            {/* 🏠 社區評價 - 兩好一公道 */}
+            <div className="bg-white rounded-2xl border border-slate-100 p-4 shadow-sm">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                  <Star size={18} className="text-yellow-500" fill="currentColor" />
+                  社區評價
+                </h3>
+                <span className="text-xs text-slate-500 bg-slate-50 px-2 py-1 rounded-full">
+                  88 位住戶加入
+                </span>
+              </div>
+              
+              {/* 前兩則評價（公開顯示） */}
+              <div className="space-y-3">
+                <div className="flex gap-3 p-3 bg-slate-50 rounded-xl">
+                  <div className="w-10 h-10 rounded-full bg-[#003366] text-white flex items-center justify-center font-bold text-lg flex-shrink-0">
+                    J
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="font-bold text-slate-800 text-sm">J***</span>
+                      <span className="text-xs text-slate-500">B棟住戶</span>
+                      <span className="text-yellow-500 text-xs">★★★★★</span>
+                    </div>
+                    <p className="text-sm text-slate-600 leading-relaxed">
+                      公設維護得乾淨，假日草皮有人整理。之前反映停車動線，管委會一週內就公告改善。
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="flex gap-3 p-3 bg-slate-50 rounded-xl">
+                  <div className="w-10 h-10 rounded-full bg-[#00A8E8] text-white flex items-center justify-center font-bold text-lg flex-shrink-0">
+                    W
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="font-bold text-slate-800 text-sm">W***</span>
+                      <span className="text-xs text-slate-500">12F住戶</span>
+                      <span className="text-yellow-500 text-xs">★★★★☆</span>
+                    </div>
+                    <p className="text-sm text-slate-600 leading-relaxed">
+                      住起來整體舒服，但面向上路的低樓層在上下班尖峰車聲明顯，喜靜的買家可考慮中高樓層。
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              {/* 第三則（模糊隱藏） */}
+              <div className="relative mt-3 overflow-hidden rounded-xl">
+                <div className="flex gap-3 p-3 bg-slate-50 blur-sm select-none">
+                  <div className="w-10 h-10 rounded-full bg-green-500 text-white flex items-center justify-center font-bold text-lg flex-shrink-0">
+                    L
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="font-bold text-slate-800 text-sm">L***</span>
+                      <span className="text-xs text-slate-500">C棟住戶</span>
+                    </div>
+                    <p className="text-sm text-slate-600">
+                      頂樓排水設計不錯，颱風天也沒有積水問題...
+                    </p>
+                  </div>
+                </div>
+                
+                {/* 遮罩層 */}
+                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/80 to-white flex items-end justify-center pb-3">
+                  <button 
+                    onClick={() => {
+                      // TODO: 檢查登入狀態
+                      // 如果已登入 → 跳轉社區牆
+                      // 如果未登入 → 跳轉註冊頁
+                      const isLoggedIn = false; // 後續從 auth context 取得
+                      if (isLoggedIn) {
+                        // 正式版：跳轉到該社區的社區牆 /community/{communityId}
+                        window.location.href = '/maihouses/community-wall_mvp.html';
+                      } else {
+                        window.location.href = '/auth.html?redirect=community';
+                      }
+                    }}
+                    className="flex items-center gap-2 bg-[#003366] text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg hover:bg-[#004488] transition-colors"
+                  >
+                    <Lock size={14} />
+                    註冊查看全部 6 則評價
+                    <ChevronRight size={14} />
+                  </button>
+                </div>
+              </div>
+              
+              {/* 社區牆入口提示 */}
+              <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+                <p className="text-xs text-slate-500">
+                  💬 加入社區牆，與現任住戶交流
+                </p>
+                <button 
+                  onClick={() => window.location.href = '/maihouses/community-wall_mvp.html'}
+                  className="text-xs text-[#003366] font-bold hover:underline flex items-center gap-1"
+                >
+                  前往社區牆
+                  <ChevronRight size={12} />
+                </button>
+              </div>
             </div>
           </div>
 
