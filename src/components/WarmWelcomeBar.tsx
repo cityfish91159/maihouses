@@ -1,10 +1,10 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { getMilestoneHint, getWarmTags, ensureFirstSeen, isWarmbarDismissedToday, dismissWarmbarToday, loadProfile } from "../stores/profileStore";
 import { Events, track } from "../analytics/track";
 
-export const WarmWelcomeBar: React.FC = () => {
+export const WarmWelcomeBar = () => {
   const [shouldShow, setShouldShow] = useState(false);
-  const profile = loadProfile();
+  const profile = useMemo(() => loadProfile(), []);
   const tags = useMemo(() => getWarmTags(3), []);
   const milestone = useMemo(() => getMilestoneHint(profile.milestones), [profile.milestones]);
 

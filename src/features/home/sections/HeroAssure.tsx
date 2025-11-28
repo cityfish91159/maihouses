@@ -1,4 +1,3 @@
-import React from 'react';
 import { ShieldCheck, ArrowRight } from 'lucide-react';
 import MascotHouse from '../../../components/MascotHouse';
 import { HERO_STEPS } from '../../../constants/data';

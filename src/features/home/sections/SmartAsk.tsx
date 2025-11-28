@@ -1,14 +1,15 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Send, Sparkles, Bot } from 'lucide-react';
 import { postLLM } from '../../../services/ai';
 import MascotMaiMai from '../../../components/MascotMaiMai';
 import ChatMessage from '../components/ChatMessage';
 
-// --- SmartAsk Component ---
+type ChatMsg = { role: 'user' | 'assistant'; content: string; timestamp: string };
+
 const QUICK_TAGS = ['3房以內', '30坪以下', '近捷運', '新成屋'];
 
 export default function SmartAsk() {
-    const [messages, setMessages] = useState<any[]>([]);
+    const [messages, setMessages] = useState<ChatMsg[]>([]);
     const [input, setInput] = useState('');
     const [loading, setLoading] = useState(false);
     const chatRef = useRef<HTMLDivElement>(null);
@@ -22,23 +23,22 @@ export default function SmartAsk() {
     const send = async (text = input) => {
         if (!text.trim() || loading) return;
 
-        const userMsg = { role: 'user', content: text.trim(), timestamp: new Date().toISOString() };
+        const userMsg: ChatMsg = { role: 'user', content: text.trim(), timestamp: new Date().toISOString() };
         setMessages(prev => [...prev, userMsg]);
         setInput('');
         setLoading(true);
 
-        // Placeholder for streaming response
-        setMessages(prev => [...prev, { role: 'assistant', content: '', timestamp: new Date().toISOString() }]);
+        const assistantMsg: ChatMsg = { role: 'assistant', content: '', timestamp: new Date().toISOString() };
+        setMessages(prev => [...prev, assistantMsg]);
 
         try {
-            // Use the centralized AI service
             await postLLM(
                 [...messages, userMsg],
                 (chunk) => {
                     setMessages(prev => {
                         const newMsgs = [...prev];
                         const last = newMsgs[newMsgs.length - 1];
-                        if (last.role === 'assistant') {
+                        if (last && last.role === 'assistant') {
                             last.content += chunk;
                         }
                         return newMsgs;
@@ -50,7 +50,9 @@ export default function SmartAsk() {
             setMessages(prev => {
                 const newMsgs = [...prev];
                 const last = newMsgs[newMsgs.length - 1];
-                last.content = "抱歉，AI 服務目前暫時不可用，請稍後再試。";
+                if (last) {
+                    last.content = "抱歉，AI 服務目前暫時不可用，請稍後再試。";
+                }
                 return newMsgs;
             });
         } finally {
