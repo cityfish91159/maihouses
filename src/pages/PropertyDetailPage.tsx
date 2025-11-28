@@ -98,6 +98,9 @@ export const PropertyDetailPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const [isFavorite, setIsFavorite] = useState(false);
   
+  // Mock: 固定未登入狀態（正式版改用 useAuth）
+  const isLoggedIn = false;
+  
   // 圖片瀏覽狀態
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   
@@ -379,9 +382,9 @@ export const PropertyDetailPage: React.FC = () => {
                 </div>
               </div>
               
-              {/* 第三則（模糊隱藏） */}
+              {/* 第三則（未登入時模糊隱藏，登入後正常顯示） */}
               <div className="relative mt-3 overflow-hidden rounded-xl">
-                <div className="flex gap-3 p-3 bg-slate-50 blur-sm select-none">
+                <div className={`flex gap-3 p-3 bg-slate-50 ${!isLoggedIn ? 'blur-sm select-none' : ''}`}>
                   <div className="w-10 h-10 rounded-full bg-green-500 text-white flex items-center justify-center font-bold text-lg flex-shrink-0">
                     L
                   </div>
@@ -389,35 +392,31 @@ export const PropertyDetailPage: React.FC = () => {
                     <div className="flex items-center gap-2 mb-1">
                       <span className="font-bold text-slate-800 text-sm">L***</span>
                       <span className="text-xs text-slate-500">C棟住戶</span>
+                      {isLoggedIn && <span className="text-yellow-500 text-xs">★★★★★</span>}
                     </div>
                     <p className="text-sm text-slate-600">
-                      頂樓排水設計不錯，颱風天也沒有積水問題...
+                      {isLoggedIn 
+                        ? '頂樓排水設計不錯，颱風天也沒有積水問題。管委會有固定請人清理排水孔，很放心。'
+                        : '頂樓排水設計不錯，颱風天也沒有積水問題...'}
                     </p>
                   </div>
                 </div>
                 
-                {/* 遮罩層 */}
-                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/80 to-white flex items-end justify-center pb-3">
-                  <button 
-                    onClick={() => {
-                      // TODO: 檢查登入狀態
-                      // 如果已登入 → 跳轉社區牆
-                      // 如果未登入 → 跳轉註冊頁
-                      const isLoggedIn = false; // 後續從 auth context 取得
-                      if (isLoggedIn) {
-                        // 正式版：跳轉到該社區的社區牆 /community/{communityId}
-                        window.location.href = '/maihouses/community-wall_mvp.html';
-                      } else {
+                {/* 遮罩層 - 已登入則直接看到，未登入顯示註冊按鈕 */}
+                {!isLoggedIn && (
+                  <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/80 to-white flex items-end justify-center pb-3">
+                    <button 
+                      onClick={() => {
                         window.location.href = '/auth.html?redirect=community';
-                      }
-                    }}
-                    className="flex items-center gap-2 bg-[#003366] text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg hover:bg-[#004488] transition-colors"
-                  >
-                    <Lock size={14} />
-                    註冊查看全部 6 則評價
-                    <ChevronRight size={14} />
-                  </button>
-                </div>
+                      }}
+                      className="flex items-center gap-2 bg-[#003366] text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg hover:bg-[#004488] transition-colors"
+                    >
+                      <Lock size={14} />
+                      註冊查看全部 6 則評價
+                      <ChevronRight size={14} />
+                    </button>
+                  </div>
+                )}
               </div>
               
               {/* 社區牆入口提示 */}
