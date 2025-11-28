@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS public.leads (
     
     -- 關聯
     property_id TEXT NOT NULL,                    -- 對應 properties.public_id
-    agent_id UUID REFERENCES public.agents(id),   -- 負責經紀人
+    agent_id TEXT,                                -- 經紀人 ID (字串，不強制外鍵)
     
     -- 客戶資訊
     customer_name TEXT NOT NULL,
@@ -105,7 +105,7 @@ CREATE TABLE IF NOT EXISTS public.lead_events (
     */
     
     -- 執行者
-    performed_by UUID REFERENCES public.agents(id),  -- 通常是經紀人
+    performed_by TEXT,                               -- 執行者 ID (字串)
     performed_by_role TEXT DEFAULT 'agent',          -- 'agent', 'customer', 'system'
     
     -- 時間
@@ -201,7 +201,7 @@ CREATE TRIGGER lead_events_first_contact
 -- ==============================================================================
 -- 6. RPC 函數：獲取經紀人的 Lead 統計
 -- ==============================================================================
-CREATE OR REPLACE FUNCTION public.get_agent_lead_overview(p_agent_id UUID)
+CREATE OR REPLACE FUNCTION public.get_agent_lead_overview(p_agent_id TEXT)
 RETURNS JSON
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -230,4 +230,4 @@ BEGIN
 END;
 $$;
 
-GRANT EXECUTE ON FUNCTION public.get_agent_lead_overview(UUID) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.get_agent_lead_overview(TEXT) TO authenticated;
