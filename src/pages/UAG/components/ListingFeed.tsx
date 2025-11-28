@@ -1,4 +1,6 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
+import { Plus } from 'lucide-react';
 import { Listing, FeedPost } from '../types/uag.types';
 import styles from '../UAG.module.css';
 
@@ -14,6 +16,12 @@ export default function ListingFeed({ listings, feed }: ListingFeedProps) {
       <section className={`${styles['uag-card']} ${styles['k-span-3']}`}>
         <div className={styles['uag-card-header']}>
           <div><div className={styles['uag-card-title']}>我的房源總覽</div><div className={styles['uag-card-sub']}>即時掌握曝光、點擊與收藏</div></div>
+          <div className={styles['uag-actions']}>
+            <Link to="/property/upload" className={styles['uag-btn']} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', textDecoration: 'none' }}>
+              <Plus size={14} />
+              上傳房源
+            </Link>
+          </div>
         </div>
         <div id="listing-container">
           {listings.length === 0 ? (
@@ -21,18 +29,37 @@ export default function ListingFeed({ listings, feed }: ListingFeedProps) {
           ) : (
             listings.map((item, idx) => (
               <article className={styles['listing-item']} key={idx}>
-                <div className={styles['l-thumb']} style={{ background: item.thumbColor }}></div>
-                <div>
-                  <div className={styles['l-title']}>{item.title}</div>
-                  <div className={styles['l-tags']}>
-                    {item.tags?.map((t, i) => <span className={styles['l-tag']} key={i}>{t}</span>)}
-                  </div>
-                  <div className={styles['l-kpi']}>
-                    <span>曝光 <b>{item.view}</b></span>
-                    <span>點擊 <b>{item.click}</b></span>
-                    <span>收藏 <b>{item.fav}</b></span>
-                  </div>
-                </div>
+                {idx === 0 ? (
+                  <Link to="/property/MH-100001" style={{ display: 'contents', textDecoration: 'none', color: 'inherit' }}>
+                    <div className={styles['l-thumb']} style={{ background: item.thumbColor }}></div>
+                    <div>
+                      <div className={styles['l-title']}>{item.title}</div>
+                      <div className={styles['l-tags']}>
+                        {item.tags?.map((t, i) => <span className={styles['l-tag']} key={i}>{t}</span>)}
+                      </div>
+                      <div className={styles['l-kpi']}>
+                        <span>曝光 <b>{item.view}</b></span>
+                        <span>點擊 <b>{item.click}</b></span>
+                        <span>收藏 <b>{item.fav}</b></span>
+                      </div>
+                    </div>
+                  </Link>
+                ) : (
+                  <>
+                    <div className={styles['l-thumb']} style={{ background: item.thumbColor }}></div>
+                    <div>
+                      <div className={styles['l-title']}>{item.title}</div>
+                      <div className={styles['l-tags']}>
+                        {item.tags?.map((t, i) => <span className={styles['l-tag']} key={i}>{t}</span>)}
+                      </div>
+                      <div className={styles['l-kpi']}>
+                        <span>曝光 <b>{item.view}</b></span>
+                        <span>點擊 <b>{item.click}</b></span>
+                        <span>收藏 <b>{item.fav}</b></span>
+                      </div>
+                    </div>
+                  </>
+                )}
               </article>
             ))
           )}
