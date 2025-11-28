@@ -694,8 +694,8 @@
           
           <!-- Role Select (Only for Signup) -->
           <div class="field full" id="roleField" style="display:none">
-            <label id="roleLabel">選擇身分</label>
-            <div style="display:flex; gap:12px; flex-wrap:wrap;" aria-labelledby="roleLabel">
+            <span id="roleLabel" class="field-label">選擇身分</span>
+            <div role="radiogroup" style="display:flex; gap:12px; flex-wrap:wrap;" aria-labelledby="roleLabel">
               <label style="display:flex;align-items:center;gap:8px;padding:10px 14px;border:1px solid var(--border);border-radius:12px;cursor:pointer;user-select:none;">
                 <input type="radio" name="role" value="member" checked style="accent-color: var(--brand);" />
                 <span>我是消費者</span>
@@ -778,7 +778,7 @@
   // Helpers
   const qs = (k)=> new URLSearchParams(location.search).get(k);
   const setLS = (k,v)=> localStorage.setItem(k, typeof v==='string'? v : JSON.stringify(v));
-  const getLS = (k,d=null)=> { try{const v=localStorage.getItem(k); return v ?? d;}catch(_){return d;} };
+  const getLS = (k,d=null)=> { try{const v=localStorage.getItem(k); return v ?? d;}catch(e){console.debug('localStorage read error:', e); return d;} };
   const go = (u)=> location.href = u;
 
   // Elements
@@ -865,9 +865,8 @@
           
           if(role) setLS('mh.auth.role', role);
       }
-    } catch(e) { 
-      // Log error but continue with default role or stored role
-      console.error('Error fetching user role', e); 
+    } catch(err) { 
+      console.error('Error fetching user role:', err.message || err); 
     }
     
     role = role || 'member'; // Default to consumer
