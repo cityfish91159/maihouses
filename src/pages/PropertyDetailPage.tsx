@@ -98,6 +98,9 @@ export const PropertyDetailPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const [isFavorite, setIsFavorite] = useState(false);
   
+  // 圖片瀏覽狀態
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  
   // ContactModal 狀態
   const [showContactModal, setShowContactModal] = useState(false);
   const [contactSource, setContactSource] = useState<'sidebar' | 'mobile_bar' | 'booking'>('sidebar');
@@ -192,22 +195,75 @@ export const PropertyDetailPage: React.FC = () => {
       </nav>
 
       <main className="max-w-4xl mx-auto p-4 pb-24">
-        {/* Image Gallery */}
-        <div className="aspect-video bg-slate-200 rounded-2xl overflow-hidden mb-6 relative group">
-          <img 
-            src={displayImage} 
-            alt={property.title}
-            onError={(e) => {
-              // [Safety] 出錯時統一換成 fallback，不再重複試同一張外部圖
-              if (e.currentTarget.src !== FALLBACK_IMAGE) {
-                 e.currentTarget.src = FALLBACK_IMAGE;
-              }
-            }}
-            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-          />
-          <div className="absolute bottom-4 right-4 bg-black/50 backdrop-blur-md text-white text-xs px-3 py-1.5 rounded-full flex items-center gap-1">
-            <Home size={12} />
-            <span>共 {property.images?.length || 0} 張照片</span>
+        {/* Image Gallery - 橫向滾動多圖 */}
+        <div className="mb-4">
+          {/* 主圖 */}
+          <div className="aspect-video bg-slate-200 rounded-2xl overflow-hidden relative group">
+            <img 
+              src={property.images?.[currentImageIndex] || displayImage} 
+              alt={property.title}
+              onError={(e) => {
+                if (e.currentTarget.src !== FALLBACK_IMAGE) {
+                  e.currentTarget.src = FALLBACK_IMAGE;
+                }
+              }}
+              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+            />
+            <div className="absolute bottom-4 right-4 bg-black/50 backdrop-blur-md text-white text-xs px-3 py-1.5 rounded-full flex items-center gap-1">
+              <Home size={12} />
+              <span>{currentImageIndex + 1} / {property.images?.length || 1}</span>
+            </div>
+          </div>
+          
+          {/* 縮圖橫向滾動 */}
+          {property.images && property.images.length > 1 && (
+            <div className="flex gap-2 overflow-x-auto pb-2 mt-3 -mx-4 px-4 scrollbar-hide">
+              {property.images.map((img, i) => (
+                <button
+                  key={i}
+                  onClick={() => {
+                    setCurrentImageIndex(i);
+                    tracker.trackPhotoClick();
+                  }}
+                  className={`flex-shrink-0 w-20 h-14 rounded-lg overflow-hidden border-2 transition-all ${
+                    i === currentImageIndex 
+                      ? 'border-[#003366] ring-2 ring-[#003366]/20' 
+                      : 'border-transparent opacity-70 hover:opacity-100'
+                  }`}
+                >
+                  <img 
+                    src={img} 
+                    alt={`照片 ${i + 1}`}
+                    onError={(e) => { e.currentTarget.src = FALLBACK_IMAGE; }}
+                    className="w-full h-full object-cover"
+                  />
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* 📱 行動端首屏 CTA - 高轉換設計 */}
+        <div className="lg:hidden mb-6">
+          <div className="bg-white rounded-2xl shadow-lg border border-slate-100 p-4">
+            <div className="flex gap-3">
+              <button 
+                onClick={() => openContactModal('mobile_bar')}
+                className="flex-1 bg-[#003366] text-white font-bold py-4 rounded-xl text-base shadow-lg flex items-center justify-center gap-2"
+              >
+                <Phone size={20} />
+                立即聯絡經紀人
+              </button>
+              <button 
+                onClick={() => openContactModal('mobile_bar')}
+                className="w-14 bg-[#06C755] text-white rounded-xl flex items-center justify-center shadow-lg"
+              >
+                <MessageCircle size={22} />
+              </button>
+            </div>
+            <p className="text-center text-xs text-slate-500 mt-2">
+              🔥 本物件 {socialProof.weeklyBookings} 組預約中，把握機會！
+            </p>
           </div>
         </div>
 
@@ -235,6 +291,7 @@ export const PropertyDetailPage: React.FC = () => {
               <div className="mt-4 flex items-baseline gap-2">
                 <span className="text-3xl font-extrabold text-[#003366]">{property.price}</span>
                 <span className="text-lg text-slate-500 font-medium">萬</span>
+                <span className="text-sm text-red-500 font-medium ml-2">可議價</span>
               </div>
 
               {/* 社會證明提示 - FOMO */}
@@ -310,6 +367,16 @@ export const PropertyDetailPage: React.FC = () => {
           </div>
         </div>
       </main>
+
+      {/* 📱 30秒回電浮動按鈕 - 高轉換 */}
+      <button 
+        onClick={() => openContactModal('booking')}
+        className="fixed right-4 bottom-28 lg:bottom-8 z-40 bg-orange-500 hover:bg-orange-600 text-white w-16 h-16 rounded-full shadow-2xl flex flex-col items-center justify-center text-xs font-bold transition-transform hover:scale-110 animate-bounce"
+        style={{ animationDuration: '2s' }}
+      >
+        <Phone size={22} />
+        <span className="text-[10px] mt-0.5">30秒回電</span>
+      </button>
 
       {/* Mobile Bottom Bar - 雙主按鈕設計 */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 p-3 lg:hidden z-50 pb-safe">
