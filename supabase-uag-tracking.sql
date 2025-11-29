@@ -78,6 +78,7 @@ WITH DATA;
 CREATE INDEX idx_lead_ranking ON public.uag_lead_rankings(agent_id, grade, rank);
 
 -- 5. PL/pgSQL Function: Calculate Lead Grade
+-- 🔧 修復: 改用 >= 1 判斷，支援旗標制
 CREATE OR REPLACE FUNCTION calculate_lead_grade(
   p_duration INTEGER,
   p_actions JSONB,
@@ -87,14 +88,18 @@ CREATE OR REPLACE FUNCTION calculate_lead_grade(
 ) RETURNS CHAR(1) AS $$
 BEGIN
   -- S Grade: Strong Signal + (Long Duration OR Competitor Heavy User)
-  IF (p_actions->>'click_line' = '1' OR p_actions->>'click_call' = '1') THEN
+  -- 🔧 修復: 改成 >= 1 判斷，不是 = '1'
+  IF COALESCE((p_actions->>'click_line')::INT, 0) >= 1 
+     OR COALESCE((p_actions->>'click_call')::INT, 0) >= 1 THEN
      IF p_duration >= 120 OR p_competitor_duration >= 300 THEN
         RETURN 'S';
      END IF;
+     -- 🔧 新增: 即使時長不夠，有強信號也給 A
+     RETURN 'A';
   END IF;
   
   -- A Grade
-  IF p_duration >= 90 AND (p_actions->>'scroll_depth')::INT >= 80 THEN
+  IF p_duration >= 90 AND COALESCE((p_actions->>'scroll_depth')::INT, 0) >= 80 THEN
     RETURN 'A';
   END IF;
   IF p_competitor_duration >= 180 AND p_duration >= 10 THEN
@@ -102,7 +107,8 @@ BEGIN
   END IF;
   
   -- B Grade (with District Bonus)
-  IF p_duration >= 60 OR (p_revisits >= 2 AND p_duration >= 30) THEN
+  -- 🔧 修復: revisits 現在是「回訪次數」不是「總訪問次數」
+  IF p_duration >= 60 OR (p_revisits >= 1 AND p_duration >= 30) THEN
     IF p_district_count >= 3 THEN
       RETURN 'A'; -- Bonus B->A
     END IF;
@@ -200,15 +206,6 @@ BEGIN
     -- 3. 🚀 優化核心：直接用 UPDATE 累加，避免 SELECT SUM() 全表掃描
     v_new_summary := COALESCE(v_session.summary, '{}'::jsonb);
     
-    -- 更新 district_counts (原地累加)
-    IF v_district IS NOT NULL AND v_district != 'unknown' THEN
-        v_new_summary := jsonb_set(
-            v_new_summary, 
-            ARRAY['district_counts', v_district], 
-            to_jsonb(COALESCE((v_new_summary->'district_counts'->>v_district)::INT, 0) + 1)
-        );
-    END IF;
-    
     -- 更新 property 停留時間 (原地累加)
     IF v_pid IS NOT NULL THEN
         v_new_summary := jsonb_set(
@@ -221,14 +218,25 @@ BEGIN
             ARRAY['props', v_pid, 'visits'],
             to_jsonb(COALESCE((v_new_summary->'props'->v_pid->>'visits')::INT, 0) + 1)
         );
+        -- 🔧 修復: 記錄物件所屬區域 (用於計算 distinct district count)
+        IF v_district IS NOT NULL AND v_district != 'unknown' THEN
+            v_new_summary := jsonb_set(
+                v_new_summary,
+                ARRAY['props', v_pid, 'district'],
+                to_jsonb(v_district)
+            );
+        END IF;
     END IF;
     
-    -- 記錄強信號
-    IF (v_actions->>'click_line')::INT > 0 THEN
+    -- 記錄強信號 (改成 >= 1 判斷)
+    IF COALESCE((v_actions->>'click_line')::INT, 0) >= 1 THEN
         v_new_summary := jsonb_set(v_new_summary, ARRAY['signals', 'click_line'], 'true'::jsonb);
     END IF;
-    IF (v_actions->>'click_call')::INT > 0 THEN
+    IF COALESCE((v_actions->>'click_call')::INT, 0) >= 1 THEN
         v_new_summary := jsonb_set(v_new_summary, ARRAY['signals', 'click_call'], 'true'::jsonb);
+    END IF;
+    IF COALESCE((v_actions->>'click_map')::INT, 0) >= 1 THEN
+        v_new_summary := jsonb_set(v_new_summary, ARRAY['signals', 'click_map'], 'true'::jsonb);
     END IF;
 
     -- 累加總時長
@@ -236,7 +244,8 @@ BEGIN
 
     -- 4. 判斷是否需要重新計算等級 (只在關鍵節點計算，避免每次都跑)
     -- 條件：觸發強信號 / 累計時長超過閾值 / 當前等級較低
-    IF (v_actions->>'click_line')::INT > 0 OR (v_actions->>'click_call')::INT > 0 THEN
+    IF COALESCE((v_actions->>'click_line')::INT, 0) >= 1 
+       OR COALESCE((v_actions->>'click_call')::INT, 0) >= 1 THEN
         v_should_calculate := TRUE;
     ELSIF v_new_total_duration >= 20 AND v_current_grade = 'F' THEN
         v_should_calculate := TRUE;
@@ -250,8 +259,13 @@ BEGIN
     IF v_should_calculate THEN
         -- 從 summary 快速取得數據，避免掃描 events 表
         v_property_duration := COALESCE((v_new_summary->'props'->v_pid->>'duration')::INT, v_duration);
-        v_revisits := COALESCE((v_new_summary->'props'->v_pid->>'visits')::INT, 1);
-        v_district_count := COALESCE(jsonb_object_keys_count(v_new_summary->'district_counts'), 1);
+        -- 🔧 修復: visits - 1 = 真實回訪次數 (第一次不算回訪)
+        v_revisits := GREATEST(COALESCE((v_new_summary->'props'->v_pid->>'visits')::INT, 1) - 1, 0);
+        -- 🔧 修復: 計算不重複的區域數量 (從 props 裡的 district 統計)
+        SELECT COUNT(DISTINCT value->>'district') INTO v_district_count
+        FROM jsonb_each(v_new_summary->'props')
+        WHERE value->>'district' IS NOT NULL AND value->>'district' != 'unknown';
+        v_district_count := GREATEST(COALESCE(v_district_count, 1), 1);
         
         -- 計算同區競品時長 (從 summary 快速估算)
         SELECT COALESCE(SUM((value->>'duration')::INT), 0) - v_property_duration
@@ -539,14 +553,6 @@ BEGIN
     -- 3. 累加 Summary
     v_new_summary := COALESCE(v_session.summary, '{}'::jsonb);
     
-    IF v_district IS NOT NULL AND v_district != 'unknown' THEN
-        v_new_summary := jsonb_set(
-            v_new_summary, 
-            ARRAY['district_counts', v_district], 
-            to_jsonb(COALESCE((v_new_summary->'district_counts'->>v_district)::INT, 0) + 1)
-        );
-    END IF;
-    
     IF v_pid IS NOT NULL THEN
         v_new_summary := jsonb_set(
             v_new_summary,
@@ -558,28 +564,32 @@ BEGIN
             ARRAY['props', v_pid, 'visits'],
             to_jsonb(COALESCE((v_new_summary->'props'->v_pid->>'visits')::INT, 0) + 1)
         );
-        v_new_summary := jsonb_set(
-            v_new_summary,
-            ARRAY['props', v_pid, 'district'],
-            to_jsonb(v_district)
-        );
+        -- 🔧 修復: 記錄區域用於計算 distinct district count
+        IF v_district IS NOT NULL AND v_district != 'unknown' THEN
+            v_new_summary := jsonb_set(
+                v_new_summary,
+                ARRAY['props', v_pid, 'district'],
+                to_jsonb(v_district)
+            );
+        END IF;
     END IF;
     
-    -- 記錄強信號
-    IF (v_actions->>'click_line')::INT > 0 THEN
+    -- 記錄強信號 (🔧 修復: 改成 >= 1 判斷)
+    IF COALESCE((v_actions->>'click_line')::INT, 0) >= 1 THEN
         v_new_summary := jsonb_set(v_new_summary, ARRAY['signals', 'click_line'], 'true'::jsonb);
     END IF;
-    IF (v_actions->>'click_call')::INT > 0 THEN
+    IF COALESCE((v_actions->>'click_call')::INT, 0) >= 1 THEN
         v_new_summary := jsonb_set(v_new_summary, ARRAY['signals', 'click_call'], 'true'::jsonb);
     END IF;
-    IF (v_actions->>'click_map')::INT > 0 THEN
+    IF COALESCE((v_actions->>'click_map')::INT, 0) >= 1 THEN
         v_new_summary := jsonb_set(v_new_summary, ARRAY['signals', 'click_map'], 'true'::jsonb);
     END IF;
 
     v_new_total_duration := COALESCE(v_session.total_duration, 0) + v_duration;
 
-    -- 4. 判斷是否需要計算等級
-    IF (v_actions->>'click_line')::INT > 0 OR (v_actions->>'click_call')::INT > 0 THEN
+    -- 4. 判斷是否需要計算等級 (🔧 修復: 改成 >= 1)
+    IF COALESCE((v_actions->>'click_line')::INT, 0) >= 1 
+       OR COALESCE((v_actions->>'click_call')::INT, 0) >= 1 THEN
         v_should_calculate := TRUE;
     ELSIF v_event_type = 'page_exit' AND v_duration > 0 THEN
         v_should_calculate := TRUE;
@@ -594,8 +604,13 @@ BEGIN
     -- 5. 計算等級
     IF v_should_calculate THEN
         v_property_duration := COALESCE((v_new_summary->'props'->v_pid->>'duration')::INT, v_duration);
-        v_revisits := COALESCE((v_new_summary->'props'->v_pid->>'visits')::INT, 1);
-        v_district_count := COALESCE(jsonb_object_keys_count(v_new_summary->'district_counts'), 1);
+        -- 🔧 修復: visits - 1 = 真實回訪次數
+        v_revisits := GREATEST(COALESCE((v_new_summary->'props'->v_pid->>'visits')::INT, 1) - 1, 0);
+        -- 🔧 修復: 計算不重複的區域數量
+        SELECT COUNT(DISTINCT value->>'district') INTO v_district_count
+        FROM jsonb_each(v_new_summary->'props')
+        WHERE value->>'district' IS NOT NULL AND value->>'district' != 'unknown';
+        v_district_count := GREATEST(COALESCE(v_district_count, 1), 1);
         
         SELECT COALESCE(SUM((value->>'duration')::INT), 0) - v_property_duration
         INTO v_competitor_duration

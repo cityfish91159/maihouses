@@ -1,4 +1,5 @@
-// UAG Tracker v8.2 - Production Optimized
+// UAG Tracker v8.3 - Critical Bug Fixes
+// Fixes: click_line/call flag, page_exit duplicate, event batching
 // Implements: Enhanced Session Recovery, Event Batching, Fingerprinting, Entry Tracking
 
 class EnhancedTracker {
@@ -6,11 +7,12 @@ class EnhancedTracker {
     this.sessionId = this.getOrCreateSessionId();
     this.fingerprint = this.generateFingerprint();
     this.agentId = this.getAgentId();
-    this.entryRef = this.getEntryRef(); // 新增: 來源追蹤
+    this.entryRef = this.getEntryRef();
     this.batcher = new EventBatcher(this);
     this.enterTime = Date.now();
+    // 🔧 修復: 改成旗標制 (0 或 1)，不計次數，避免 SQL 判斷失效
     this.actions = { click_photos: 0, click_map: 0, click_line: 0, click_call: 0, scroll_depth: 0 };
-    this.hasExited = false; // 新增: 防止重複送出 page_exit
+    this.hasExited = false;
     
     this.initListeners();
     this.recoverSession();
@@ -18,13 +20,9 @@ class EnhancedTracker {
   }
 
   getOrCreateSessionId() {
-    // 1. LocalStorage
     let sid = localStorage.getItem('uag_session');
-    // 2. SessionStorage
     if (!sid) sid = sessionStorage.getItem('uag_session_temp');
-    // 3. Cookie
     if (!sid) sid = this.getCookie('uag_sid');
-    // 4. New
     if (!sid) {
       sid = `u_${Math.random().toString(36).substr(2, 9)}`;
       this.persistSession(sid);
@@ -57,13 +55,11 @@ class EnhancedTracker {
     return aid || 'unknown';
   }
 
-  // 新增: 取得流量來源
   getEntryRef() {
     const params = new URLSearchParams(location.search);
     const src = params.get('src');
     const sid = params.get('sid');
     
-    // 記錄到 sessionStorage（同一頁面 session 內保持一致）
     if (src) {
       sessionStorage.setItem('uag_entry_ref', src);
       if (sid) sessionStorage.setItem('uag_share_id', sid);
@@ -83,7 +79,10 @@ class EnhancedTracker {
         language: navigator.language,
         platform: navigator.platform,
         cores: navigator.hardwareConcurrency,
-        memory: navigator.deviceMemory
+        memory: navigator.deviceMemory,
+        // 🔧 強化: 加入更多識別資訊
+        colorDepth: screen.colorDepth,
+        touch: navigator.maxTouchPoints > 0
       };
       return btoa(JSON.stringify(fp));
     } catch (e) {
@@ -92,7 +91,6 @@ class EnhancedTracker {
   }
 
   async recoverSession() {
-    // If this is a fresh session (just created), try to recover from backend
     if (!localStorage.getItem('uag_session_recovered')) {
       try {
         const res = await fetch('/api/session-recovery', {
@@ -105,11 +103,9 @@ class EnhancedTracker {
           this.sessionId = data.session_id;
           this.persistSession(this.sessionId);
           localStorage.setItem('uag_session_recovered', 'true');
-          console.log('[UAG] Session Recovered:', this.sessionId);
         }
       } catch (e) { 
-        // 靜默處理，不影響用戶體驗
-        console.warn('[UAG] Recovery skipped:', e.message); 
+        // 靜默處理
       }
     }
   }
@@ -121,32 +117,42 @@ class EnhancedTracker {
       if (!t) return;
       const text = (t.innerText || '').toLowerCase();
       const classList = t.classList || [];
+      const href = t.href || '';
       
-      // LINE 點擊
-      if (text.includes('line') || t.href?.includes('line.me')) {
-        this.actions.click_line++;
-        this.trackImmediate('click_line');
+      // 🔧 修復: LINE 點擊改成旗標制 (=1)，不是 ++
+      if (text.includes('line') || href.includes('line.me')) {
+        if (this.actions.click_line === 0) {
+          this.actions.click_line = 1;
+          this.trackImmediate('click_line');  // 強信號立即送出
+        }
       }
-      // 電話點擊
-      if (text.includes('電話') || text.includes('撥打') || t.href?.includes('tel:')) {
-        this.actions.click_call++;
-        this.trackImmediate('click_call');
+      
+      // 🔧 修復: 電話點擊改成旗標制
+      if (text.includes('電話') || text.includes('撥打') || text.includes('call') || href.includes('tel:')) {
+        if (this.actions.click_call === 0) {
+          this.actions.click_call = 1;
+          this.trackImmediate('click_call');  // 強信號立即送出
+        }
       }
-      // 地圖點擊（新增）
+      
+      // 地圖點擊
       if (text.includes('地圖') || text.includes('map') || 
           classList.contains('open-map') || classList.contains('map-btn') ||
-          t.closest('.map-container, [data-map]')) {
-        this.actions.click_map++;
-        this.trackImmediate('click_map');
+          t.id?.includes('map') || t.closest('.map-container, [data-map]')) {
+        if (this.actions.click_map === 0) {
+          this.actions.click_map = 1;
+          this.trackImmediate('click_map');
+        }
       }
-      // 照片點擊
+      
+      // 照片點擊 (這個可以累計，用於計算互動深度)
       if (t.tagName === 'IMG' || classList.contains('photo') || 
           classList.contains('gallery') || t.closest('.photo-gallery, .image-slider')) {
         this.actions.click_photos++;
       }
     });
 
-    // Scroll Tracking
+    // Scroll Tracking (with debounce)
     let scrollTimeout;
     window.addEventListener('scroll', () => {
       clearTimeout(scrollTimeout);
@@ -156,7 +162,7 @@ class EnhancedTracker {
       }, 100);
     });
 
-    // Visibility & Unload - 使用 hasExited 防重複
+    // 🔧 修復: page_exit 防重複送出 (hasExited flag)
     const sendFinal = () => {
       if (this.hasExited) return;
       this.hasExited = true;
@@ -168,6 +174,22 @@ class EnhancedTracker {
     });
     window.addEventListener('pagehide', sendFinal);
     window.addEventListener('beforeunload', sendFinal);
+    
+    // 🔧 新增: 每 30 秒發送 heartbeat (解決 duration 不準問題)
+    setInterval(() => {
+      if (!this.hasExited) {
+        this.batcher.add({
+          type: 'heartbeat',
+          property_id: window.propertyId || location.pathname.split('/').pop(),
+          district: window.propertyDistrict || 'unknown',
+          duration: Math.round((Date.now() - this.enterTime) / 1000),
+          actions: { ...this.actions },
+          entry_ref: this.entryRef.source,
+          share_id: this.entryRef.shareId,
+          focus: []
+        }, false);  // heartbeat 不需要 immediate
+      }
+    }, 30000);
   }
 
   trackImmediate(type) {
@@ -177,8 +199,8 @@ class EnhancedTracker {
       district: window.propertyDistrict || 'unknown',
       duration: Math.round((Date.now() - this.enterTime) / 1000),
       actions: { ...this.actions },
-      entry_ref: this.entryRef.source,    // 新增: 流量來源
-      share_id: this.entryRef.shareId,    // 新增: 分享連結 ID
+      entry_ref: this.entryRef.source,
+      share_id: this.entryRef.shareId,
       focus: []
     }, true);
   }
@@ -189,9 +211,22 @@ class EventBatcher {
     this.tracker = tracker;
     this.queue = [];
     this.timer = null;
+    this.strongSignalsSent = new Set();  // 🔧 記錄已送出的強信號
   }
 
   add(event, immediate = false) {
+    // 🔧 修復: 強信號 (click_line, click_call, click_map) 一定要送，不進 queue
+    const isStrongSignal = ['click_line', 'click_call', 'click_map'].includes(event.type);
+    
+    if (isStrongSignal) {
+      // 強信號只送一次
+      if (!this.strongSignalsSent.has(event.type)) {
+        this.strongSignalsSent.add(event.type);
+        this.sendEvent(event);
+      }
+      return;
+    }
+    
     this.queue.push(event);
     if (immediate || this.queue.length >= 5) {
       this.flush();
@@ -208,23 +243,18 @@ class EventBatcher {
   flush() {
     if (this.queue.length === 0) return;
     
-    // Take the last state of actions/duration for the "current" event if multiple are queued for same page
-    // But here we just send the batch.
-    // For v8.0, we send single event payload or batch. The API supports single event in the spec example, 
-    // but let's support batching by sending the last state as the "event" to update.
-    // Actually, the API `track_uag_event_v8` takes a single event. 
-    // So we should iterate or send the most significant one.
-    // To keep it simple and robust: We send the LATEST state of the page as ONE event update.
-    // Because `duration` and `actions` are cumulative on the client side.
-    
+    // 送最新狀態 (累計的 duration 和 actions)
     const latestEvent = this.queue[this.queue.length - 1];
-    this.queue = []; // Clear queue
-
+    this.queue = [];
+    this.sendEvent(latestEvent);
+  }
+  
+  sendEvent(event) {
     const payload = {
       session_id: this.tracker.sessionId,
       agent_id: this.tracker.agentId,
       fingerprint: this.tracker.fingerprint,
-      event: latestEvent
+      event: event
     };
 
     const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
