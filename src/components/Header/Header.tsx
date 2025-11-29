@@ -1,5 +1,5 @@
-import React from 'react';
-import { Search, LogIn, UserPlus, List } from 'lucide-react';
+import React, { useState } from 'react';
+import { Search, LogIn, UserPlus, List, Menu, X } from 'lucide-react';
 import { Logo } from '../Logo/Logo';
 
 interface HeaderProps {
@@ -7,6 +7,8 @@ interface HeaderProps {
 }
 
 export default function Header({ onOpenAIStudio }: HeaderProps) {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   return (
     <>
       {/* Navigation Bar */}
@@ -15,18 +17,16 @@ export default function Header({ onOpenAIStudio }: HeaderProps) {
           {/* Logo Section */}
           <Logo showSlogan={true} onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} />
 
-          {/* Nav Actions - Redesigned 3 Columns */}
-
-          {/* Nav Actions - Redesigned 3 Columns */}
-          <nav className="flex items-center gap-1 md:gap-2" aria-label="主要動作">
+          {/* Desktop Nav - 桌面版 */}
+          <nav className="hidden items-center gap-1 md:flex md:gap-2" aria-label="主要動作">
             {/* Column 1: List */}
-            <a href="/maihouses/property.html" className="hidden items-center gap-2 rounded-xl px-4 py-2.5 text-[15px] font-bold text-brand-700 transition-all hover:bg-brand-50/80 hover:text-brand-600 active:scale-[0.98] md:flex">
+            <a href="/maihouses/property.html" className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-[15px] font-bold text-brand-700 transition-all hover:bg-brand-50/80 hover:text-brand-600 active:scale-[0.98]">
               <List size={18} strokeWidth={2.5} className="opacity-80" />
               <span>房地產列表</span>
             </a>
 
             {/* Column 2: Login */}
-            <a href="/maihouses/auth.html?mode=login" className="hidden items-center gap-2 rounded-xl px-4 py-2.5 text-[15px] font-bold text-brand-700 transition-all hover:bg-brand-50/80 hover:text-brand-600 active:scale-[0.98] md:flex">
+            <a href="/maihouses/auth.html?mode=login" className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-[15px] font-bold text-brand-700 transition-all hover:bg-brand-50/80 hover:text-brand-600 active:scale-[0.98]">
               <LogIn size={18} strokeWidth={2.5} className="opacity-80" />
               <span>登入</span>
             </a>
@@ -37,7 +37,79 @@ export default function Header({ onOpenAIStudio }: HeaderProps) {
               <span>免費註冊</span>
             </a>
           </nav>
+
+          {/* Mobile Nav - 手機版 */}
+          <div className="flex items-center gap-2 md:hidden">
+            {/* 登入按鈕 - 手機版精簡 */}
+            <a 
+              href="/maihouses/auth.html?mode=login" 
+              className="flex items-center justify-center rounded-lg px-3 py-2 text-sm font-bold text-brand-700 transition-all hover:bg-brand-50 active:scale-95"
+            >
+              <LogIn size={18} strokeWidth={2.5} />
+            </a>
+
+            {/* 註冊按鈕 - 手機版精簡 */}
+            <a 
+              href="/maihouses/auth.html?mode=signup" 
+              className="flex items-center gap-1.5 rounded-lg bg-brand-700 px-3 py-2 text-sm font-bold text-white shadow-sm transition-all hover:bg-brand-600 active:scale-95"
+            >
+              <UserPlus size={16} strokeWidth={2.5} />
+              <span>註冊</span>
+            </a>
+
+            {/* 漢堡選單按鈕 */}
+            <button 
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="flex items-center justify-center rounded-lg p-2 text-brand-700 transition-all hover:bg-brand-50 active:scale-95"
+              aria-label="開啟選單"
+            >
+              {mobileMenuOpen ? <X size={22} strokeWidth={2.5} /> : <Menu size={22} strokeWidth={2.5} />}
+            </button>
+          </div>
         </div>
+
+        {/* Mobile Dropdown Menu - 手機版下拉選單 */}
+        {mobileMenuOpen && (
+          <div className="absolute left-0 right-0 top-full border-b border-brand-100 bg-white shadow-lg md:hidden">
+            <nav className="mx-auto max-w-[1120px] px-4 py-3">
+              <a 
+                href="/maihouses/property.html" 
+                className="flex items-center gap-3 rounded-xl px-4 py-3 text-[15px] font-bold text-brand-700 transition-all hover:bg-brand-50"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <List size={20} strokeWidth={2.5} className="opacity-80" />
+                <span>房地產列表</span>
+              </a>
+              <a 
+                href="/maihouses/community-wall_mvp.html" 
+                className="flex items-center gap-3 rounded-xl px-4 py-3 text-[15px] font-bold text-brand-700 transition-all hover:bg-brand-50"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <svg className="size-5 opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                  <circle cx="9" cy="7" r="4"/>
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                </svg>
+                <span>社區評價</span>
+              </a>
+              <a 
+                href="https://maihouses.vercel.app/maihouses/uag" 
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-3 rounded-xl px-4 py-3 text-[15px] font-bold text-brand-700 transition-all hover:bg-brand-50"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <svg className="size-5 opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+                  <line x1="8" y1="21" x2="16" y2="21"/>
+                  <line x1="12" y1="17" x2="12" y2="21"/>
+                </svg>
+                <span>房仲專區</span>
+              </a>
+            </nav>
+          </div>
+        )}
       </header>
 
       {/* Hero Section */}
