@@ -65,31 +65,7 @@ export default async function handler(req, res) {
     // Realtime Trigger - S-Grade Alert
     if (result && result.grade === 'S') {
       console.log(`[UAG] 🎯 S-Grade Lead! Session: ${session_id}, Score: ${result.score}, Reason: ${result.reason}`);
-      
-      // 發送 LINE Notify 通知
-      try {
-        const notifyUrl = process.env.VERCEL_URL 
-          ? `https://${process.env.VERCEL_URL}/api/uag-notify`
-          : '/api/uag-notify';
-        
-        // 使用 fire-and-forget 方式呼叫，不阻塞回應
-        fetch(notifyUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            agent_id,
-            session_id,
-            grade: result.grade,
-            reason: result.reason,
-            score: result.score,
-            property_id: event.property_id,
-            district: event.district
-          })
-        }).catch(e => console.error('[UAG] Notify failed:', e.message));
-      } catch (e) {
-        // 通知失敗不影響主流程
-        console.error('[UAG] Notify error:', e);
-      }
+      // MVP: 業務自己看 Dashboard，之後再加推播
     }
 
     return res.status(200).json(result);
