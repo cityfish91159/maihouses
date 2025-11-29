@@ -1,11 +1,13 @@
 /**
- * URL 工具函數 - 統一管理物件連結
+ * URL 工具函數 - 統一管理物件連結 (UAG v8.4)
  * 
- * URL Pattern: /props/:propertyId?aid=:agentId&src=:channel&sid=:shareId
+ * URL Pattern: /props/:propertyId?aid=:agentId&src=:channel&sid=:shareId&lid=:listingId&q=:searchQuery
  * - propertyId: 物件主鍵
  * - aid: 房仲 ID
  * - src: 流量來源 (首頁卡片、社區牆、LINE 分享、EDM...)
  * - sid: 分享鏈結 ID (追蹤哪條分享帶來的流量)
+ * - lid: 列表來源 ID (從哪個列表頁點進來)
+ * - q: 搜尋關鍵字 (用戶搜尋了什麼)
  */
 
 // 來源類型定義
@@ -13,18 +15,24 @@ export type TrafficSource =
   | 'list_home'          // 首頁列表
   | 'list_community'     // 社區牆
   | 'list_search'        // 搜尋結果
+  | 'list_recommend'     // AI 推薦
+  | 'list_favorite'      // 收藏列表
   | 'agent_share'        // 業務分享
   | 'line_share'         // LINE 分享
   | 'fb_share'           // Facebook 分享
   | 'edm'                // Email 行銷
   | 'qrcode'             // QR Code
+  | 'sms'                // 簡訊推播
+  | 'push'               // 推播通知
   | 'direct';            // 直接訪問
 
 export interface PropertyUrlParams {
   propertyId: string;
-  agentId?: string;
-  source?: TrafficSource;
-  shareId?: string;
+  agentId?: string | undefined;
+  source?: TrafficSource | undefined;
+  shareId?: string | undefined;
+  listingId?: string | undefined;      // 列表來源 ID
+  searchQuery?: string | undefined;    // 搜尋關鍵字
 }
 
 /**
@@ -34,7 +42,9 @@ export function buildPropertyUrl({
   propertyId,
   agentId,
   source,
-  shareId
+  shareId,
+  listingId,
+  searchQuery
 }: PropertyUrlParams): string {
   const params = new URLSearchParams();
   
@@ -46,6 +56,12 @@ export function buildPropertyUrl({
   }
   if (shareId) {
     params.set('sid', shareId);
+  }
+  if (listingId) {
+    params.set('lid', listingId);
+  }
+  if (searchQuery) {
+    params.set('q', searchQuery);
   }
   
   const queryString = params.toString();
@@ -107,9 +123,11 @@ export function parseTrackingParams(): {
   agentId: string;
   source: TrafficSource;
   shareId: string | null;
+  listingId: string | null;
+  searchQuery: string | null;
 } {
   if (typeof window === 'undefined') {
-    return { agentId: 'unknown', source: 'direct', shareId: null };
+    return { agentId: 'unknown', source: 'direct', shareId: null, listingId: null, searchQuery: null };
   }
   
   const params = new URLSearchParams(window.location.search);
@@ -127,8 +145,39 @@ export function parseTrackingParams(): {
   const source: TrafficSource = srcParam || 'direct';
   
   const shareId = params.get('sid');
+  const listingId = params.get('lid');
+  const searchQuery = params.get('q');
   
-  return { agentId, source, shareId };
+  return { agentId, source, shareId, listingId, searchQuery };
+}
+
+/**
+ * 從列表頁進入詳情頁的 URL 建立（包含來源追蹤）
+ */
+export function buildListingClickUrl(
+  propertyId: string,
+  listingType: 'home' | 'community' | 'search' | 'recommend' | 'favorite',
+  agentId?: string,
+  searchQuery?: string
+): string {
+  const sourceMap: Record<string, TrafficSource> = {
+    home: 'list_home',
+    community: 'list_community',
+    search: 'list_search',
+    recommend: 'list_recommend',
+    favorite: 'list_favorite'
+  };
+  
+  // 產生列表來源 ID（用於追蹤哪個列表帶來流量）
+  const listingId = `${listingType}_${Date.now().toString(36)}`;
+  
+  return buildPropertyUrl({
+    propertyId,
+    agentId,
+    source: sourceMap[listingType],
+    listingId,
+    searchQuery
+  });
 }
 
 /**

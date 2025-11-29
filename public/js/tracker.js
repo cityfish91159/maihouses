@@ -1,6 +1,6 @@
-// UAG Tracker v8.3 - Critical Bug Fixes
+// UAG Tracker v8.4 - Link Tracking Enhancement
 // Fixes: click_line/call flag, page_exit duplicate, event batching
-// Implements: Enhanced Session Recovery, Event Batching, Fingerprinting, Entry Tracking
+// New: listing_id, search_query tracking for source attribution
 
 class EnhancedTracker {
   constructor() {
@@ -59,15 +59,21 @@ class EnhancedTracker {
     const params = new URLSearchParams(location.search);
     const src = params.get('src');
     const sid = params.get('sid');
+    const lid = params.get('lid');  // listing_id (從列表頁來)
+    const q = params.get('q');      // search_query (搜尋關鍵字)
     
     if (src) {
       sessionStorage.setItem('uag_entry_ref', src);
       if (sid) sessionStorage.setItem('uag_share_id', sid);
+      if (lid) sessionStorage.setItem('uag_listing_id', lid);
+      if (q) sessionStorage.setItem('uag_search_query', q);
     }
     
     return {
       source: src || sessionStorage.getItem('uag_entry_ref') || 'direct',
-      shareId: sid || sessionStorage.getItem('uag_share_id') || null
+      shareId: sid || sessionStorage.getItem('uag_share_id') || null,
+      listingId: lid || sessionStorage.getItem('uag_listing_id') || null,
+      searchQuery: q || sessionStorage.getItem('uag_search_query') || null
     };
   }
 
@@ -186,6 +192,8 @@ class EnhancedTracker {
           actions: { ...this.actions },
           entry_ref: this.entryRef.source,
           share_id: this.entryRef.shareId,
+          listing_id: this.entryRef.listingId,
+          search_query: this.entryRef.searchQuery,
           focus: []
         }, false);  // heartbeat 不需要 immediate
       }
@@ -201,6 +209,8 @@ class EnhancedTracker {
       actions: { ...this.actions },
       entry_ref: this.entryRef.source,
       share_id: this.entryRef.shareId,
+      listing_id: this.entryRef.listingId,
+      search_query: this.entryRef.searchQuery,
       focus: []
     }, true);
   }
