@@ -306,3 +306,367 @@ BEGIN
     RETURN (SELECT COUNT(*) FROM jsonb_object_keys(j));
 END;
 $$ LANGUAGE plpgsql IMMUTABLE;
+
+-- ==============================================================================
+-- UAG v8.2 業務導向升級
+-- 新增: lead_score 連續分數、grade_reason 人話描述、entry_ref 流量來源
+-- ==============================================================================
+
+-- 8. 升級 uag_sessions 表 (新增欄位)
+-- 執行前請先確認表已存在
+DO $$ 
+BEGIN
+    -- 新增 lead_score 欄位
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name = 'uag_sessions' AND column_name = 'lead_score') THEN
+        ALTER TABLE public.uag_sessions ADD COLUMN lead_score INTEGER DEFAULT 10;
+    END IF;
+    
+    -- 新增 grade_reason 欄位
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name = 'uag_sessions' AND column_name = 'grade_reason') THEN
+        ALTER TABLE public.uag_sessions ADD COLUMN grade_reason TEXT DEFAULT '';
+    END IF;
+    
+    -- 新增 entry_ref 欄位
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name = 'uag_sessions' AND column_name = 'entry_ref') THEN
+        ALTER TABLE public.uag_sessions ADD COLUMN entry_ref TEXT DEFAULT 'direct';
+    END IF;
+    
+    -- 新增 share_id 欄位
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name = 'uag_sessions' AND column_name = 'share_id') THEN
+        ALTER TABLE public.uag_sessions ADD COLUMN share_id TEXT;
+    END IF;
+END $$;
+
+-- 9. 新增欄位到 uag_events
+DO $$ 
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name = 'uag_events' AND column_name = 'entry_ref') THEN
+        ALTER TABLE public.uag_events ADD COLUMN entry_ref TEXT;
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name = 'uag_events' AND column_name = 'share_id') THEN
+        ALTER TABLE public.uag_events ADD COLUMN share_id TEXT;
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name = 'uag_events' AND column_name = 'event_type') THEN
+        ALTER TABLE public.uag_events ADD COLUMN event_type TEXT DEFAULT 'view';
+    END IF;
+END $$;
+
+-- 10. 產生等級人話描述的函數
+CREATE OR REPLACE FUNCTION generate_grade_reason(
+    p_grade CHAR(1),
+    p_duration INTEGER,
+    p_click_line BOOLEAN,
+    p_click_call BOOLEAN,
+    p_district_count INTEGER,
+    p_revisits INTEGER,
+    p_scroll_depth INTEGER,
+    p_district TEXT DEFAULT NULL
+) RETURNS TEXT AS $$
+DECLARE
+    v_reason TEXT := '';
+BEGIN
+    CASE p_grade
+        WHEN 'S' THEN
+            IF p_click_line THEN
+                v_reason := '點擊 LINE';
+            ELSIF p_click_call THEN
+                v_reason := '點擊電話';
+            END IF;
+            
+            IF p_duration >= 120 THEN
+                v_reason := v_reason || ' + 深度瀏覽 ' || (p_duration / 60) || ' 分鐘';
+            END IF;
+            
+            IF p_district_count >= 3 THEN
+                v_reason := v_reason || ' + 同區比較 ' || p_district_count || ' 間';
+            END IF;
+            
+        WHEN 'A' THEN
+            IF p_duration >= 90 AND p_scroll_depth >= 80 THEN
+                v_reason := '深度瀏覽 ' || (p_duration / 60) || ' 分鐘，捲動 ' || p_scroll_depth || '%';
+            ELSIF p_district_count >= 3 THEN
+                v_reason := '同區比較 ' || p_district_count || ' 間物件';
+            ELSE
+                v_reason := '高度興趣行為';
+            END IF;
+            
+        WHEN 'B' THEN
+            IF p_revisits >= 2 THEN
+                v_reason := '回訪 ' || p_revisits || ' 次';
+            END IF;
+            v_reason := v_reason || CASE WHEN v_reason != '' THEN '，' ELSE '' END;
+            v_reason := v_reason || '停留 ' || p_duration || ' 秒';
+            
+        WHEN 'C' THEN
+            v_reason := '初步瀏覽 ' || p_duration || ' 秒';
+            
+        ELSE
+            v_reason := '快速略過';
+    END CASE;
+    
+    -- 加上區域資訊
+    IF p_district IS NOT NULL AND p_district != 'unknown' AND p_district != '' THEN
+        v_reason := '【' || p_district || '】' || v_reason;
+    END IF;
+    
+    RETURN v_reason;
+END;
+$$ LANGUAGE plpgsql IMMUTABLE;
+
+-- 11. 等級轉分數函數
+CREATE OR REPLACE FUNCTION grade_to_score(
+    p_grade CHAR(1),
+    p_district_count INTEGER DEFAULT 1,
+    p_revisits INTEGER DEFAULT 1,
+    p_click_map BOOLEAN DEFAULT FALSE
+) RETURNS INTEGER AS $$
+DECLARE
+    v_base_score INTEGER;
+    v_bonus INTEGER := 0;
+BEGIN
+    -- 基礎分數
+    v_base_score := CASE p_grade
+        WHEN 'S' THEN 90
+        WHEN 'A' THEN 75
+        WHEN 'B' THEN 55
+        WHEN 'C' THEN 30
+        ELSE 10
+    END;
+    
+    -- 加分項
+    IF p_district_count >= 5 THEN
+        v_bonus := v_bonus + 5;
+    ELSIF p_district_count >= 3 THEN
+        v_bonus := v_bonus + 3;
+    END IF;
+    
+    IF p_revisits >= 3 THEN
+        v_bonus := v_bonus + 5;
+    ELSIF p_revisits >= 2 THEN
+        v_bonus := v_bonus + 2;
+    END IF;
+    
+    IF p_click_map THEN
+        v_bonus := v_bonus + 2;
+    END IF;
+    
+    RETURN LEAST(v_base_score + v_bonus, 100);
+END;
+$$ LANGUAGE plpgsql IMMUTABLE;
+
+-- 12. 升級版 Track RPC v8.2 (含 reason + score)
+CREATE OR REPLACE FUNCTION track_uag_event_v8_2(
+  p_session_id TEXT,
+  p_agent_id TEXT,
+  p_fingerprint TEXT,
+  p_event_data JSONB
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+    v_session public.uag_sessions%ROWTYPE;
+    v_new_summary JSONB;
+    v_new_total_duration INTEGER;
+    v_new_grade CHAR(1);
+    v_new_score INTEGER;
+    v_new_reason TEXT;
+    v_current_grade CHAR(1);
+    v_district TEXT;
+    v_pid TEXT;
+    v_duration INTEGER;
+    v_actions JSONB;
+    v_district_count INTEGER;
+    v_revisits INTEGER;
+    v_competitor_duration INTEGER;
+    v_property_duration INTEGER;
+    v_should_calculate BOOLEAN := FALSE;
+    v_entry_ref TEXT;
+    v_share_id TEXT;
+    v_event_type TEXT;
+    v_scroll_depth INTEGER;
+BEGIN
+    -- Extract event data
+    v_pid := p_event_data->>'property_id';
+    v_district := p_event_data->>'district';
+    v_duration := COALESCE((p_event_data->>'duration')::INTEGER, 0);
+    v_actions := COALESCE(p_event_data->'actions', '{}'::jsonb);
+    v_entry_ref := COALESCE(p_event_data->>'entry_ref', 'direct');
+    v_share_id := p_event_data->>'share_id';
+    v_event_type := COALESCE(p_event_data->>'type', 'view');
+    v_scroll_depth := COALESCE((v_actions->>'scroll_depth')::INTEGER, 0);
+
+    -- 1. Upsert Session
+    INSERT INTO public.uag_sessions (
+        session_id, agent_id, fingerprint, last_active, total_duration, 
+        summary, entry_ref, share_id
+    )
+    VALUES (
+        p_session_id, p_agent_id, p_fingerprint, NOW(), 0, 
+        '{}'::jsonb, v_entry_ref, v_share_id
+    )
+    ON CONFLICT (session_id) DO UPDATE SET
+        last_active = NOW(),
+        agent_id = COALESCE(NULLIF(p_agent_id, 'unknown'), public.uag_sessions.agent_id),
+        fingerprint = COALESCE(p_fingerprint, public.uag_sessions.fingerprint),
+        entry_ref = COALESCE(NULLIF(public.uag_sessions.entry_ref, 'direct'), v_entry_ref)
+    RETURNING * INTO v_session;
+    
+    v_current_grade := COALESCE(v_session.grade, 'F');
+
+    -- 2. Insert Event
+    INSERT INTO public.uag_events (
+        session_id, agent_id, property_id, district, duration, 
+        actions, focus, entry_ref, share_id, event_type
+    )
+    VALUES (
+        p_session_id, p_agent_id, v_pid, v_district, v_duration, 
+        v_actions, 
+        ARRAY(SELECT jsonb_array_elements_text(COALESCE(p_event_data->'focus', '[]'::jsonb))),
+        v_entry_ref, v_share_id, v_event_type
+    );
+
+    -- 3. 累加 Summary
+    v_new_summary := COALESCE(v_session.summary, '{}'::jsonb);
+    
+    IF v_district IS NOT NULL AND v_district != 'unknown' THEN
+        v_new_summary := jsonb_set(
+            v_new_summary, 
+            ARRAY['district_counts', v_district], 
+            to_jsonb(COALESCE((v_new_summary->'district_counts'->>v_district)::INT, 0) + 1)
+        );
+    END IF;
+    
+    IF v_pid IS NOT NULL THEN
+        v_new_summary := jsonb_set(
+            v_new_summary,
+            ARRAY['props', v_pid, 'duration'],
+            to_jsonb(COALESCE((v_new_summary->'props'->v_pid->>'duration')::INT, 0) + v_duration)
+        );
+        v_new_summary := jsonb_set(
+            v_new_summary,
+            ARRAY['props', v_pid, 'visits'],
+            to_jsonb(COALESCE((v_new_summary->'props'->v_pid->>'visits')::INT, 0) + 1)
+        );
+        v_new_summary := jsonb_set(
+            v_new_summary,
+            ARRAY['props', v_pid, 'district'],
+            to_jsonb(v_district)
+        );
+    END IF;
+    
+    -- 記錄強信號
+    IF (v_actions->>'click_line')::INT > 0 THEN
+        v_new_summary := jsonb_set(v_new_summary, ARRAY['signals', 'click_line'], 'true'::jsonb);
+    END IF;
+    IF (v_actions->>'click_call')::INT > 0 THEN
+        v_new_summary := jsonb_set(v_new_summary, ARRAY['signals', 'click_call'], 'true'::jsonb);
+    END IF;
+    IF (v_actions->>'click_map')::INT > 0 THEN
+        v_new_summary := jsonb_set(v_new_summary, ARRAY['signals', 'click_map'], 'true'::jsonb);
+    END IF;
+
+    v_new_total_duration := COALESCE(v_session.total_duration, 0) + v_duration;
+
+    -- 4. 判斷是否需要計算等級
+    IF (v_actions->>'click_line')::INT > 0 OR (v_actions->>'click_call')::INT > 0 THEN
+        v_should_calculate := TRUE;
+    ELSIF v_event_type = 'page_exit' AND v_duration > 0 THEN
+        v_should_calculate := TRUE;
+    ELSIF v_new_total_duration >= 20 AND v_current_grade = 'F' THEN
+        v_should_calculate := TRUE;
+    ELSIF v_new_total_duration >= 60 AND v_current_grade IN ('F', 'C') THEN
+        v_should_calculate := TRUE;
+    ELSIF v_new_total_duration >= 90 AND v_current_grade IN ('F', 'C', 'B') THEN
+        v_should_calculate := TRUE;
+    END IF;
+
+    -- 5. 計算等級
+    IF v_should_calculate THEN
+        v_property_duration := COALESCE((v_new_summary->'props'->v_pid->>'duration')::INT, v_duration);
+        v_revisits := COALESCE((v_new_summary->'props'->v_pid->>'visits')::INT, 1);
+        v_district_count := COALESCE(jsonb_object_keys_count(v_new_summary->'district_counts'), 1);
+        
+        SELECT COALESCE(SUM((value->>'duration')::INT), 0) - v_property_duration
+        INTO v_competitor_duration
+        FROM jsonb_each(v_new_summary->'props') 
+        WHERE key != v_pid;
+        
+        v_new_grade := calculate_lead_grade(
+            v_property_duration,
+            v_actions,
+            v_revisits,
+            v_district_count,
+            GREATEST(v_competitor_duration, 0)
+        );
+        
+        -- 產生人話描述
+        v_new_reason := generate_grade_reason(
+            v_new_grade,
+            v_property_duration,
+            COALESCE((v_new_summary->'signals'->>'click_line')::BOOLEAN, FALSE),
+            COALESCE((v_new_summary->'signals'->>'click_call')::BOOLEAN, FALSE),
+            v_district_count,
+            v_revisits,
+            v_scroll_depth,
+            v_district
+        );
+        
+        -- 計算分數
+        v_new_score := grade_to_score(
+            v_new_grade,
+            v_district_count,
+            v_revisits,
+            COALESCE((v_new_summary->'signals'->>'click_map')::BOOLEAN, FALSE)
+        );
+    ELSE
+        v_new_grade := v_current_grade;
+        v_new_score := COALESCE(v_session.lead_score, 10);
+        v_new_reason := COALESCE(v_session.grade_reason, '');
+    END IF;
+
+    -- 6. 更新 Session
+    UPDATE public.uag_sessions
+    SET 
+        total_duration = v_new_total_duration,
+        property_count = COALESCE(jsonb_object_keys_count(v_new_summary->'props'), 1),
+        summary = v_new_summary,
+        last_active = NOW()
+    WHERE session_id = p_session_id;
+    
+    -- 等級升級 + 更新 reason/score
+    UPDATE public.uag_sessions
+    SET 
+        grade = v_new_grade,
+        lead_score = v_new_score,
+        grade_reason = v_new_reason
+    WHERE session_id = p_session_id 
+      AND (
+        CASE grade WHEN 'S' THEN 5 WHEN 'A' THEN 4 WHEN 'B' THEN 3 WHEN 'C' THEN 2 ELSE 1 END
+      ) < (
+        CASE v_new_grade WHEN 'S' THEN 5 WHEN 'A' THEN 4 WHEN 'B' THEN 3 WHEN 'C' THEN 2 ELSE 1 END
+      );
+
+    -- 取得最終結果
+    SELECT grade, lead_score, grade_reason 
+    INTO v_new_grade, v_new_score, v_new_reason 
+    FROM public.uag_sessions WHERE session_id = p_session_id;
+
+    RETURN jsonb_build_object(
+        'success', true, 
+        'grade', v_new_grade,
+        'score', v_new_score,
+        'reason', v_new_reason
+    );
+END;
+$$;

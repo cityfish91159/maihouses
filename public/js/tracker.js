@@ -1,14 +1,16 @@
-// UAG Tracker v8.0 - Ultimate Optimization
-// Implements: Enhanced Session Recovery, Event Batching, Fingerprinting
+// UAG Tracker v8.2 - Production Optimized
+// Implements: Enhanced Session Recovery, Event Batching, Fingerprinting, Entry Tracking
 
 class EnhancedTracker {
   constructor() {
     this.sessionId = this.getOrCreateSessionId();
     this.fingerprint = this.generateFingerprint();
     this.agentId = this.getAgentId();
+    this.entryRef = this.getEntryRef(); // 新增: 來源追蹤
     this.batcher = new EventBatcher(this);
     this.enterTime = Date.now();
     this.actions = { click_photos: 0, click_map: 0, click_line: 0, click_call: 0, scroll_depth: 0 };
+    this.hasExited = false; // 新增: 防止重複送出 page_exit
     
     this.initListeners();
     this.recoverSession();
@@ -55,6 +57,24 @@ class EnhancedTracker {
     return aid || 'unknown';
   }
 
+  // 新增: 取得流量來源
+  getEntryRef() {
+    const params = new URLSearchParams(location.search);
+    const src = params.get('src');
+    const sid = params.get('sid');
+    
+    // 記錄到 sessionStorage（同一頁面 session 內保持一致）
+    if (src) {
+      sessionStorage.setItem('uag_entry_ref', src);
+      if (sid) sessionStorage.setItem('uag_share_id', sid);
+    }
+    
+    return {
+      source: src || sessionStorage.getItem('uag_entry_ref') || 'direct',
+      shareId: sid || sessionStorage.getItem('uag_share_id') || null
+    };
+  }
+
   generateFingerprint() {
     try {
       const fp = {
@@ -87,38 +107,67 @@ class EnhancedTracker {
           localStorage.setItem('uag_session_recovered', 'true');
           console.log('[UAG] Session Recovered:', this.sessionId);
         }
-      } catch (e) { console.error('Recovery failed', e); }
+      } catch (e) { 
+        // 靜默處理，不影響用戶體驗
+        console.warn('[UAG] Recovery skipped:', e.message); 
+      }
     }
   }
 
   initListeners() {
     // Click Tracking
     document.addEventListener('click', e => {
-      const t = e.target.closest('a, button, div');
+      const t = e.target.closest('a, button, div, img');
       if (!t) return;
       const text = (t.innerText || '').toLowerCase();
+      const classList = t.classList || [];
       
+      // LINE 點擊
       if (text.includes('line') || t.href?.includes('line.me')) {
         this.actions.click_line++;
         this.trackImmediate('click_line');
       }
-      if (text.includes('電話') || t.href?.includes('tel:')) {
+      // 電話點擊
+      if (text.includes('電話') || text.includes('撥打') || t.href?.includes('tel:')) {
         this.actions.click_call++;
         this.trackImmediate('click_call');
       }
-      if (t.tagName === 'IMG' || t.classList.contains('photo')) this.actions.click_photos++;
+      // 地圖點擊（新增）
+      if (text.includes('地圖') || text.includes('map') || 
+          classList.contains('open-map') || classList.contains('map-btn') ||
+          t.closest('.map-container, [data-map]')) {
+        this.actions.click_map++;
+        this.trackImmediate('click_map');
+      }
+      // 照片點擊
+      if (t.tagName === 'IMG' || classList.contains('photo') || 
+          classList.contains('gallery') || t.closest('.photo-gallery, .image-slider')) {
+        this.actions.click_photos++;
+      }
     });
 
     // Scroll Tracking
+    let scrollTimeout;
     window.addEventListener('scroll', () => {
-      const depth = Math.round((window.scrollY + window.innerHeight) / document.body.scrollHeight * 100);
-      if (depth > this.actions.scroll_depth) this.actions.scroll_depth = depth;
+      clearTimeout(scrollTimeout);
+      scrollTimeout = setTimeout(() => {
+        const depth = Math.round((window.scrollY + window.innerHeight) / document.body.scrollHeight * 100);
+        if (depth > this.actions.scroll_depth) this.actions.scroll_depth = depth;
+      }, 100);
     });
 
-    // Visibility & Unload
-    const sendFinal = () => this.trackImmediate('page_exit');
-    window.addEventListener('visibilitychange', () => document.visibilityState === 'hidden' && sendFinal());
+    // Visibility & Unload - 使用 hasExited 防重複
+    const sendFinal = () => {
+      if (this.hasExited) return;
+      this.hasExited = true;
+      this.trackImmediate('page_exit');
+    };
+    
+    window.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') sendFinal();
+    });
     window.addEventListener('pagehide', sendFinal);
+    window.addEventListener('beforeunload', sendFinal);
   }
 
   trackImmediate(type) {
@@ -128,7 +177,9 @@ class EnhancedTracker {
       district: window.propertyDistrict || 'unknown',
       duration: Math.round((Date.now() - this.enterTime) / 1000),
       actions: { ...this.actions },
-      focus: [] // Can implement IntersectionObserver here
+      entry_ref: this.entryRef.source,    // 新增: 流量來源
+      share_id: this.entryRef.shareId,    // 新增: 分享連結 ID
+      focus: []
     }, true);
   }
 }

@@ -5,6 +5,9 @@ const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
+// RPC 版本選擇 (可透過環境變數切換)
+const UAG_RPC_VERSION = process.env.UAG_RPC_VERSION || 'v8_2';
+
 export default async function handler(req, res) {
   // CORS Headers
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -26,14 +29,16 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Missing required fields: session_id or event' });
     }
 
-    // Basic Event Validation
-    if (typeof event !== 'object' || !event.property_id || !event.duration) {
+    // Basic Event Validation - 放寬驗證，duration 可以是 0 (page_view)
+    if (typeof event !== 'object' || !event.property_id) {
        return res.status(400).json({ error: 'Invalid event structure' });
     }
 
-    // Call v8 RPC for atomic incremental update
-    // Note: Function name includes version 'v8' to match deployed database schema
-    const { data: result, error } = await supabase.rpc('track_uag_event_v8', {
+    // 選擇 RPC 版本
+    const rpcName = UAG_RPC_VERSION === 'v8_2' ? 'track_uag_event_v8_2' : 'track_uag_event_v8';
+
+    // Call RPC for atomic incremental update
+    const { data: result, error } = await supabase.rpc(rpcName, {
       p_session_id: session_id,
       p_agent_id: agent_id || 'unknown',
       p_fingerprint: fingerprint || null,
@@ -42,13 +47,26 @@ export default async function handler(req, res) {
 
     if (error) {
       console.error('Supabase RPC Error:', error);
+      // Fallback 到舊版 RPC
+      if (UAG_RPC_VERSION === 'v8_2') {
+        const { data: fallbackResult, error: fallbackError } = await supabase.rpc('track_uag_event_v8', {
+          p_session_id: session_id,
+          p_agent_id: agent_id || 'unknown',
+          p_fingerprint: fingerprint || null,
+          p_event_data: event
+        });
+        if (!fallbackError) {
+          return res.status(200).json(fallbackResult);
+        }
+      }
       return res.status(500).json({ error: error.message });
     }
 
-    // Realtime Trigger (Optional: If Grade is S, send webhook or push)
+    // Realtime Trigger - S-Grade Alert
     if (result && result.grade === 'S') {
-      console.log(`[UAG] S-Grade Lead Detected! Session: ${session_id}`);
-      // await sendWebhookToAgent(agent_id, session_id);
+      console.log(`[UAG] 🎯 S-Grade Lead! Session: ${session_id}, Score: ${result.score}, Reason: ${result.reason}`);
+      // TODO: 發送即時通知給業務
+      // await sendWebhookToAgent(agent_id, session_id, result);
     }
 
     return res.status(200).json(result);
