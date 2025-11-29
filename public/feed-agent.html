@@ -75,6 +75,9 @@ body{margin:0;background:linear-gradient(180deg,var(--bg1),var(--bg2));color:var
   border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-weight:900;color:var(--brand);font-size:22px}
 .profile-card .hgroup h3{margin:0 0 4px 0;font-size:18px;font-weight:900}
 .profile-card .hgroup p{margin:0;font-size:13px;color:var(--muted)}
+/* Flexbox 響應式按鈕布局 */
+.link.push-right{margin-left:auto;background:#eff6ff;border-color:#bfdbfe;border-style:solid;opacity:1}
+@media(max-width:400px){.link.push-right{margin-left:0;width:100%}}
 .level{display:inline-flex;align-items:center;padding:3px 8px;border-radius:6px;font-weight:800;
   font-size:11px;color:#854d0e;background:#fef9c3;border:1px solid #fde047;vertical-align:middle}
 .stats{display:flex;gap:8px;flex-wrap:wrap}
@@ -129,17 +132,14 @@ body{margin:0;background:linear-gradient(180deg,var(--bg1),var(--bg2));color:var
 .sticky .cta.primary{background:var(--brand);color:#fff}
 @media (min-width:768px){ .sticky{display:none} }
 
-/* ── 側邊欄卡片 (Sidebar) ────────────────────── */
-.sidebar-card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:12px;
-  box-shadow:0 4px 14px rgba(12,34,80,.04)}
-.sidebar-card h4{margin:0;font-size:15px;color:#0f172a;border-bottom:1px solid #f1f5f9;padding-bottom:10px}
-.sidebar-card ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
-.sidebar-card li{display:flex;align-items:center;gap:10px;font-size:14px;color:#334155}
-.sidebar-card li svg{width:18px;height:18px;color:var(--brand)}
-.sidebar-card a{color:var(--brand);text-decoration:none;font-weight:600}
-.sidebar-card a:hover{text-decoration:underline}
-.sidebar-card .stat-row{display:flex;justify-content:space-between;font-size:14px;color:#334155}
-.sidebar-card .stat-row span:last-child{font-weight:700;color:#0f172a}
+/* ── 桌機版 Sidebar（與消費者版一致）─────────────────── */
+.sidebar-card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px;box-shadow:0 4px 14px rgba(0,51,102,.04)}
+.sidebar-card h4{margin:0 0 10px 0;font-size:14px;font-weight:700;color:var(--brand)}
+.sidebar-card .link-list{display:flex;flex-direction:column;gap:6px}
+.sidebar-card .link-list a{display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:10px;text-decoration:none;color:var(--ink);font-size:13px;font-weight:600;transition:all .15s}
+.sidebar-card .link-list a:hover{background:#f0f7ff}
+.sidebar-card .link-list a.active{background:linear-gradient(135deg,var(--brand),var(--brand-2));color:#fff}
+.sidebar-card p{font-size:13px;color:var(--muted);margin:0;line-height:1.8}
 
 /* MVP add-ons: non-visual, robustness tweaks */
 .composer .btn{white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;min-width:64px;flex-shrink:0}
@@ -200,22 +200,23 @@ body{margin:0;background:linear-gradient(180deg,var(--bg1),var(--bg2));color:var
 <div class="layout">
 <main class="feed-main">
 <section class="profile-card">
-    <div class="feed-avatar">游</div>
-    <div class="feed-hgroup">
-      <h3>游杰倫</h3>
-      <p>來自21世紀河南店｜<span class="level">黃金住戶</span> <span class="level">認證房仲</span></p>
-      <div class="stats">
-        <span class="pill">積分 2,560</span>
-        <span class="pill">互動 128 天</span>
-        <span class="pill">被感謝 73</span>
+      <div class="row">
+        <div class="avatar" aria-hidden="true">游</div>
+        <div class="hgroup">
+          <h3>游杰倫</h3>
+          <p>來自21世紀河南店｜<span class="level">黃金住戶</span> <span class="level">認證房仲</span></p>
+        </div>
       </div>
-    </div>
-    <!-- 主要按鈕 -->
-    <div class="links">
-      <a href="/maihouses/feed-agent.html" class="link primary">🏷️ 業務後台</a>
-      <a href="#my-community" class="link push-right">🧱 前往我的社區牆</a>
-    </div>
-  </section>
+      <div class="stats">
+        <span class="pill">📊 積分 2,560</span>
+        <span class="pill">📅 互動 128 天</span>
+        <span class="pill">❤️ 被感謝 73</span>
+      </div>
+      <div class="links">
+        <a class="link primary" href="#workbench">🏷️ 業務後台</a>
+        <a class="link push-right" href="#my-community">🧱 前往我的社區牆 ➡️</a>
+      </div>
+    </section>
 <div class="composer">
     <div class="avatar">你</div>
     <input placeholder="分享社區想法、上傳物件或提出提問…"/>
@@ -527,40 +528,43 @@ body{margin:0;background:linear-gradient(180deg,var(--bg1),var(--bg2));color:var
   </article>
 </main>
 
-<!-- 業務版側邊欄 - 僅桌機顯示 -->
+<!-- 業務版側欄 - 緊湊設計 -->
 <aside class="feed-sidebar">
   <div class="sidebar-card">
-    <h4>📊 業績總覽</h4>
-    <div class="stat-row"><span>本月成交</span><span>2 件</span></div>
-    <div class="stat-row"><span>成交金額</span><span>$3,280萬</span></div>
-    <div class="stat-row"><span>服務中客戶</span><span>18 位</span></div>
-    <a href="#stats" style="margin-top:8px;display:block;text-align:center">查看完整報表 →</a>
+    <h4>🧭 快速導航</h4>
+    <div class="link-list">
+      <a href="#workbench" class="active">📊 客戶工作臺</a>
+      <a href="#stats">📈 業績統計</a>
+      <a href="#trust">🛡️ 安心留痕</a>
+      <a href="#my-community">🧱 我的社區牆</a>
+    </div>
   </div>
+  
+  <div class="sidebar-card">
+    <h4>📊 業績總覽</h4>
+    <p>
+      本月成交 <b style="color:var(--brand)">2</b> 件<br>
+      成交金額 <b style="color:var(--brand)">$3,280萬</b><br>
+      服務中客戶 <b style="color:var(--brand)">18</b> 位
+    </p>
+  </div>
+  
   <div class="sidebar-card">
     <h4>🎯 今日待辦</h4>
-    <ul>
-      <li>🔔 王先生約 14:00 看房</li>
-      <li>📞 陳小姐 回電確認斡旋</li>
-      <li>📄 惠宇上晴合約待簽</li>
-    </ul>
-    <a href="#workbench" style="margin-top:8px;display:block;text-align:center">進入工作臺 →</a>
-  </div>
-  <div class="sidebar-card">
-    <h4>🏆 社區排行</h4>
-    <ul>
-      <li>🥇 惠宇上晴 · 熱度 98</li>
-      <li>🥈 惠宇青鳥 · 熱度 82</li>
-      <li>🥉 大毅琢白 · 熱度 76</li>
-    </ul>
+    <p>
+      🔔 王先生約 14:00 看房<br>
+      📞 陳小姐 回電確認斡旋<br>
+      📄 惠宇上晴合約待簽
+    </p>
   </div>
 </aside>
 </div><!-- /.layout -->
 
 <!-- 黏底 CTA (僅手機) -->
-<div class="sticky">
+<nav class="sticky">
   <button class="cta">查看我的社區牆</button>
-  <button class="cta primary">加入社區</button>
-</div>
+  <button class="cta primary">進入工作臺</button>
+</nav>
 
 
 <script>
@@ -573,14 +577,6 @@ body{margin:0;background:linear-gradient(180deg,var(--bg1),var(--bg2));color:var
   (function(){
     const posts = document.querySelectorAll('.post');
     if (!posts.length) return;
-    
-    // 初始化所有貼文為可見（防止動畫失效時完全隱藏）
-    posts.forEach(p => {
-      if (!p.classList.contains('visible')) {
-        p.style.opacity = '0';
-        p.style.transform = 'translateY(20px)';
-      }
-    });
     
     const observer = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
