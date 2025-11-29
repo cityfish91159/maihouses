@@ -264,7 +264,7 @@ export const PropertyDetailPage: React.FC = () => {
 
       <main className="max-w-4xl mx-auto p-4 pb-24">
         {/* Image Gallery - 橫向滾動多圖 */}
-        <div className="mb-4">
+        <div className="mb-4" data-track-section="photos">
           {/* 主圖 */}
           <div className="aspect-video bg-slate-200 rounded-2xl overflow-hidden relative group">
             <img 
@@ -338,7 +338,7 @@ export const PropertyDetailPage: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
-            <div>
+            <div data-track-section="price-info">
               <div className="flex items-start justify-between gap-4">
                 <h1 className="text-2xl font-bold text-slate-900 leading-tight">
                   {property.title}
@@ -393,7 +393,7 @@ export const PropertyDetailPage: React.FC = () => {
             <div className="h-px bg-slate-100" />
 
             {/* Description */}
-            <div className="prose prose-slate max-w-none">
+            <div className="prose prose-slate max-w-none" data-track-section="description">
               <h3 className="text-lg font-bold text-slate-900 mb-3">物件特色</h3>
               <p className="text-slate-600 leading-relaxed whitespace-pre-line">
                 {property.description}
@@ -401,7 +401,7 @@ export const PropertyDetailPage: React.FC = () => {
             </div>
             
             {/* 🏠 社區評價 - 兩好一公道 */}
-            <div className="bg-white rounded-2xl border border-slate-100 p-4 shadow-sm">
+            <div className="bg-white rounded-2xl border border-slate-100 p-4 shadow-sm" data-track-section="community-reviews">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
                   <Star size={18} className="text-yellow-500" fill="currentColor" />
@@ -501,7 +501,7 @@ export const PropertyDetailPage: React.FC = () => {
           </div>
 
           {/* Sidebar / Agent Card */}
-          <div className="lg:col-span-1">
+          <div className="lg:col-span-1" data-track-section="agent-sidebar">
             <div className="sticky top-24 space-y-4">
               <AgentTrustCard 
                 agent={property.agent} 
@@ -510,7 +510,7 @@ export const PropertyDetailPage: React.FC = () => {
                 onBookingClick={() => openContactModal('booking')}
               />
               
-              <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
+              <div className="bg-blue-50 rounded-xl p-4 border border-blue-100" data-track-section="trust-guarantee">
                 <h4 className="font-bold text-[#003366] text-sm mb-2 flex items-center gap-2">
                   <Shield size={16} />
                   安心交易保障

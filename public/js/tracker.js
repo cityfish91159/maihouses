@@ -1,6 +1,6 @@
-// UAG Tracker v8.4 - Link Tracking Enhancement
+// UAG Tracker v8.5 - Focus Tracking with IntersectionObserver
 // Fixes: click_line/call flag, page_exit duplicate, event batching
-// New: listing_id, search_query tracking for source attribution
+// New: listing_id, search_query, IntersectionObserver focus tracking
 
 class EnhancedTracker {
   constructor() {
@@ -13,8 +13,11 @@ class EnhancedTracker {
     // 🔧 修復: 改成旗標制 (0 或 1)，不計次數，避免 SQL 判斷失效
     this.actions = { click_photos: 0, click_map: 0, click_line: 0, click_call: 0, scroll_depth: 0 };
     this.hasExited = false;
+    // 🔧 新增: focus 追蹤 - 記錄用戶實際閱讀過的區塊
+    this.focus = new Set();
     
     this.initListeners();
+    this.initFocusTracking();
     this.recoverSession();
     this.trackImmediate('page_view');
   }
@@ -194,10 +197,62 @@ class EnhancedTracker {
           share_id: this.entryRef.shareId,
           listing_id: this.entryRef.listingId,
           search_query: this.entryRef.searchQuery,
-          focus: []
+          focus: Array.from(this.focus)
         }, false);  // heartbeat 不需要 immediate
       }
     }, 30000);
+  }
+
+  // 🔧 新增: IntersectionObserver 追蹤用戶閱讀區塊
+  initFocusTracking() {
+    // 可追蹤的區塊選擇器
+    const trackableSelectors = [
+      '[data-track-section]',  // 明確標記的區塊
+      '.property-photos',       // 照片區
+      '.property-info',         // 基本資訊
+      '.property-price',        // 價格區
+      '.property-location',     // 位置區
+      '.property-features',     // 特色區
+      '.property-description',  // 描述區
+      '.property-agent',        // 業務資訊
+      '.property-contact',      // 聯絡區
+      '.property-similar',      // 相似房源
+      '.property-community',    // 社區資訊
+      '#photos', '#info', '#price', '#location', '#features', 
+      '#description', '#agent', '#contact', '#similar'
+    ];
+
+    // 等待 DOM 載入
+    const setupObserver = () => {
+      const elements = document.querySelectorAll(trackableSelectors.join(','));
+      if (elements.length === 0) return;
+
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting && entry.intersectionRatio >= 0.5) {
+            const sectionName = entry.target.dataset.trackSection || 
+                               entry.target.id || 
+                               entry.target.className.split(' ')[0];
+            if (sectionName && !this.focus.has(sectionName)) {
+              this.focus.add(sectionName);
+              console.log('[UAG] Focus:', sectionName);
+            }
+          }
+        });
+      }, {
+        threshold: 0.5,  // 至少 50% 可見才算閱讀
+        rootMargin: '0px'
+      });
+
+      elements.forEach(el => observer.observe(el));
+    };
+
+    // 確保 DOM 完成後再設置
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', setupObserver);
+    } else {
+      setupObserver();
+    }
   }
 
   trackImmediate(type) {
@@ -211,7 +266,7 @@ class EnhancedTracker {
       share_id: this.entryRef.shareId,
       listing_id: this.entryRef.listingId,
       search_query: this.entryRef.searchQuery,
-      focus: []
+      focus: Array.from(this.focus)
     }, true);
   }
 }
