@@ -1358,7 +1358,11 @@
         <div class="listing-grid" id="listing-grid-container"></div>
       </section>
     </main>
-    <script src="js/property-data.js"></script>
+    <!-- 新架構：Config → Mock Data → Adapter → API → Renderer -->
+    <script src="js/config/property-config.js"></script>
+    <script src="js/data/mock-properties.js"></script>
+    <script src="js/data/data-adapter.js"></script>
+    <script src="js/services/property-api.js"></script>
     <script src="js/property-renderer.js"></script>
     <script src="js/tracker.js"></script>
   </body>

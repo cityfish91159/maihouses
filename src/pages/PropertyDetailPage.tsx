@@ -1,15 +1,22 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
-import { Home, Heart, Phone, MessageCircle, Hash, MapPin, ArrowLeft, Shield, Eye, Users, Calendar, Flame, Star, Lock, ChevronRight } from 'lucide-react';
+import { Home, Heart, Phone, MessageCircle, Hash, MapPin, ArrowLeft, Shield, Eye, Users, Calendar, Flame, Star, Lock, ChevronRight, CheckCircle } from 'lucide-react';
 import { AgentTrustCard } from '../components/AgentTrustCard';
 import { propertyService, DEFAULT_PROPERTY, PropertyData } from '../services/propertyService';
 import { ContactModal } from '../components/ContactModal';
 
-// UAG Tracker Hook - 追蹤用戶行為
-const usePropertyTracker = (propertyId: string, agentId: string) => {
+// UAG Tracker Hook v8.1 - 追蹤用戶行為 + S級攔截
+// 優化: 1.修正district傳遞 2.S級即時回調 3.互動事件用fetch獲取等級
+const usePropertyTracker = (
+  propertyId: string, 
+  agentId: string, 
+  district: string,
+  onGradeUpgrade?: (newGrade: string) => void
+) => {
   const enterTime = useRef(Date.now());
   const actions = useRef({ click_photos: 0, click_line: 0, click_call: 0, scroll_depth: 0 });
   const hasSent = useRef(false);
+  const currentGrade = useRef<string>('F');
 
   // 取得或建立 session_id
   const getSessionId = useCallback(() => {
@@ -21,30 +28,66 @@ const usePropertyTracker = (propertyId: string, agentId: string) => {
     return sid;
   }, []);
 
-  // 發送追蹤事件
-  const sendEvent = useCallback((eventType: string) => {
-    const payload = {
-      session_id: getSessionId(),
-      agent_id: agentId,
-      fingerprint: btoa(JSON.stringify({
-        screen: `${screen.width}x${screen.height}`,
-        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-        language: navigator.language
-      })),
-      event: {
-        type: eventType,
-        property_id: propertyId,
-        district: 'unknown',
-        duration: Math.round((Date.now() - enterTime.current) / 1000),
-        actions: { ...actions.current },
-        focus: []
-      }
-    };
+  // 建構 payload
+  const buildPayload = useCallback((eventType: string) => ({
+    session_id: getSessionId(),
+    agent_id: agentId,
+    fingerprint: btoa(JSON.stringify({
+      screen: `${screen.width}x${screen.height}`,
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      language: navigator.language
+    })),
+    event: {
+      type: eventType,
+      property_id: propertyId,
+      district: district || 'unknown', // 修正: 使用傳入的 district
+      duration: Math.round((Date.now() - enterTime.current) / 1000),
+      actions: { ...actions.current },
+      focus: []
+    }
+  }), [propertyId, agentId, district, getSessionId]);
 
-    // 使用 sendBeacon 確保離開頁面時也能送出
-    const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
-    navigator.sendBeacon('/api/uag-track', blob);
-  }, [propertyId, agentId, getSessionId]);
+  // 發送追蹤事件 (支援 S 級回調)
+  const sendEvent = useCallback(async (eventType: string, useBeacon = false) => {
+    const payload = buildPayload(eventType);
+
+    // page_exit 或強制使用 beacon (確保離開頁面也能送出)
+    if (useBeacon || eventType === 'page_exit') {
+      const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+      navigator.sendBeacon('/api/uag-track', blob);
+      return;
+    }
+
+    // 互動事件用 fetch，以便獲取等級回傳
+    try {
+      const res = await fetch('/api/uag-track', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+        keepalive: true // 防止頁面切換時中斷
+      });
+      const data = await res.json();
+      
+      // 檢查是否升級到 S 級
+      if (data.success && data.grade) {
+        const gradeRank: Record<string, number> = { S: 5, A: 4, B: 3, C: 2, F: 1 };
+        const newRank = gradeRank[data.grade] || 1;
+        const oldRank = gradeRank[currentGrade.current] || 1;
+        
+        if (newRank > oldRank) {
+          currentGrade.current = data.grade;
+          // S 級即時通知
+          if (data.grade === 'S' && onGradeUpgrade) {
+            onGradeUpgrade('S');
+          }
+        }
+      }
+    } catch (e) {
+      // 失敗時 fallback 到 beacon
+      const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+      navigator.sendBeacon('/api/uag-track', blob);
+    }
+  }, [buildPayload, onGradeUpgrade]);
 
   // 追蹤滾動深度
   useEffect(() => {
@@ -63,14 +106,14 @@ const usePropertyTracker = (propertyId: string, agentId: string) => {
   useEffect(() => {
     if (!propertyId) return;
 
-    // 發送 page_view
-    sendEvent('page_view');
+    // 發送 page_view (用 beacon，不需等回應)
+    sendEvent('page_view', true);
 
     // 離開頁面時發送 page_exit
     const handleUnload = () => {
       if (!hasSent.current) {
         hasSent.current = true;
-        sendEvent('page_exit');
+        sendEvent('page_exit', true);
       }
     };
 
@@ -108,6 +151,9 @@ export const PropertyDetailPage: React.FC = () => {
   const [showContactModal, setShowContactModal] = useState(false);
   const [contactSource, setContactSource] = useState<'sidebar' | 'mobile_bar' | 'booking'>('sidebar');
   
+  // S 級 VIP 攔截 Modal
+  const [showVipModal, setShowVipModal] = useState(false);
+  
   // 初始化直接使用 DEFAULT_PROPERTY，確保第一幀就有畫面，絕不留白
   const [property, setProperty] = useState<PropertyData>(DEFAULT_PROPERTY);
 
@@ -119,8 +165,27 @@ export const PropertyDetailPage: React.FC = () => {
     return aid || 'unknown';
   };
 
-  // 初始化追蹤器
-  const tracker = usePropertyTracker(id || '', getAgentId());
+  // S 級客戶即時攔截回調
+  const handleGradeUpgrade = useCallback((grade: string) => {
+    if (grade === 'S') {
+      // 延遲 500ms 顯示，避免太突兀
+      setTimeout(() => setShowVipModal(true), 500);
+    }
+  }, []);
+
+  // 從 address 提取行政區 (例如 "台北市信義區..." -> "信義區")
+  const extractDistrict = (address: string): string => {
+    const match = address.match(/[市縣](.{2,3}[區鄉鎮市])/);
+    return match?.[1] ?? 'unknown';
+  };
+
+  // 初始化追蹤器 (傳入 district + S級回調)
+  const tracker = usePropertyTracker(
+    id || '', 
+    getAgentId(), 
+    extractDistrict(property.address),
+    handleGradeUpgrade
+  );
 
   // 開啟聯絡 Modal 的處理函數
   const openContactModal = (source: 'sidebar' | 'mobile_bar' | 'booking') => {
@@ -532,6 +597,76 @@ export const PropertyDetailPage: React.FC = () => {
         agentName={property.agent?.name || '專屬業務'}
         source={contactSource}
       />
+
+      {/* VIP 高意願客戶攔截彈窗 (S-Grade) */}
+      {showVipModal && (
+        <div 
+          className="fixed inset-0 z-[60] bg-black/60 flex items-center justify-center p-4"
+          onClick={() => setShowVipModal(false)}
+        >
+          <div 
+            className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl animate-in zoom-in-95 duration-300"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="text-center mb-4">
+              <div className="w-16 h-16 bg-gradient-to-br from-orange-400 to-red-500 rounded-full flex items-center justify-center mx-auto mb-3">
+                <Flame size={32} className="text-white" />
+              </div>
+              <h3 className="text-xl font-bold text-slate-800">發現您對此物件很有興趣！</h3>
+              <p className="text-sm text-slate-500 mt-1">專屬 VIP 服務為您優先安排</p>
+            </div>
+
+            {/* Benefits */}
+            <div className="bg-slate-50 rounded-xl p-4 mb-4 space-y-2">
+              <div className="flex items-center gap-2 text-sm">
+                <CheckCircle size={16} className="text-green-500 flex-shrink-0" />
+                <span>優先安排專人帶看</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <CheckCircle size={16} className="text-green-500 flex-shrink-0" />
+                <span>獨家議價空間資訊</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <CheckCircle size={16} className="text-green-500 flex-shrink-0" />
+                <span>相似物件即時通知</span>
+              </div>
+            </div>
+
+            {/* CTA Buttons */}
+            <div className="space-y-2">
+              <button
+                onClick={() => {
+                  tracker.trackLineClick();
+                  setShowVipModal(false);
+                  openContactModal('mobile_bar');
+                }}
+                className="w-full bg-[#06C755] text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 shadow-lg"
+              >
+                <MessageCircle size={20} />
+                立即加 LINE 諮詢
+              </button>
+              <button
+                onClick={() => {
+                  tracker.trackCallClick();
+                  setShowVipModal(false);
+                  openContactModal('booking');
+                }}
+                className="w-full bg-[#003366] text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2"
+              >
+                <Calendar size={20} />
+                VIP 預約看屋
+              </button>
+              <button
+                onClick={() => setShowVipModal(false)}
+                className="w-full text-slate-400 text-sm py-2 hover:text-slate-600"
+              >
+                稍後再說
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

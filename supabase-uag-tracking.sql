@@ -148,6 +148,7 @@ END;
 $$;
 
 -- 7. RPC: Track Event & Incremental Update (The Core Logic)
+-- v8.1 優化: 使用累加更新避免全表掃描，只在關鍵節點計算等級
 CREATE OR REPLACE FUNCTION track_uag_event_v8(
   p_session_id TEXT,
   p_agent_id TEXT,
@@ -163,6 +164,7 @@ DECLARE
     v_new_summary JSONB;
     v_new_total_duration INTEGER;
     v_new_grade CHAR(1);
+    v_current_grade CHAR(1);
     v_district TEXT;
     v_pid TEXT;
     v_duration INTEGER;
@@ -170,99 +172,137 @@ DECLARE
     v_district_count INTEGER;
     v_revisits INTEGER;
     v_competitor_duration INTEGER;
+    v_property_duration INTEGER;
+    v_should_calculate BOOLEAN := FALSE;
 BEGIN
     -- Extract event data
     v_pid := p_event_data->>'property_id';
     v_district := p_event_data->>'district';
-    v_duration := (p_event_data->>'duration')::INTEGER;
-    v_actions := p_event_data->'actions';
+    v_duration := COALESCE((p_event_data->>'duration')::INTEGER, 0);
+    v_actions := COALESCE(p_event_data->'actions', '{}'::jsonb);
 
     -- 1. Upsert Session (Ensure it exists)
-    INSERT INTO public.uag_sessions (session_id, agent_id, fingerprint, last_active)
-    VALUES (p_session_id, p_agent_id, p_fingerprint, NOW())
+    INSERT INTO public.uag_sessions (session_id, agent_id, fingerprint, last_active, total_duration, summary)
+    VALUES (p_session_id, p_agent_id, p_fingerprint, NOW(), 0, '{}'::jsonb)
     ON CONFLICT (session_id) DO UPDATE SET
         last_active = NOW(),
-        agent_id = COALESCE(EXCLUDED.agent_id, public.uag_sessions.agent_id),
-        fingerprint = COALESCE(EXCLUDED.fingerprint, public.uag_sessions.fingerprint)
+        agent_id = COALESCE(NULLIF(p_agent_id, 'unknown'), public.uag_sessions.agent_id),
+        fingerprint = COALESCE(p_fingerprint, public.uag_sessions.fingerprint)
     RETURNING * INTO v_session;
+    
+    v_current_grade := COALESCE(v_session.grade, 'F');
 
     -- 2. Insert Event
     INSERT INTO public.uag_events (session_id, agent_id, property_id, district, duration, actions, focus)
-    VALUES (p_session_id, p_agent_id, v_pid, v_district, v_duration, v_actions, ARRAY(SELECT jsonb_array_elements_text(p_event_data->'focus')));
+    VALUES (p_session_id, p_agent_id, v_pid, v_district, v_duration, v_actions, 
+            ARRAY(SELECT jsonb_array_elements_text(COALESCE(p_event_data->'focus', '[]'::jsonb))));
 
-    -- 3. Update Summary (Incremental Calculation)
-    -- Initialize summary if null
-    IF v_session.summary IS NULL THEN
-        v_session.summary := '{}'::jsonb;
-    END IF;
-
-    -- Update District Counts
-    v_new_summary := v_session.summary;
-    IF v_district IS NOT NULL THEN
+    -- 3. 🚀 優化核心：直接用 UPDATE 累加，避免 SELECT SUM() 全表掃描
+    v_new_summary := COALESCE(v_session.summary, '{}'::jsonb);
+    
+    -- 更新 district_counts (原地累加)
+    IF v_district IS NOT NULL AND v_district != 'unknown' THEN
         v_new_summary := jsonb_set(
             v_new_summary, 
             ARRAY['district_counts', v_district], 
             to_jsonb(COALESCE((v_new_summary->'district_counts'->>v_district)::INT, 0) + 1)
         );
     END IF;
-
-    -- Update Property Stats (Duration, Visits)
-    -- Structure: summary.props = { "pid": { "duration": 100, "visits": 2, "actions": {...} } }
-    -- This part can get complex in SQL JSONB, simplified here for core logic
-    -- In a real high-perf scenario, we might rely on the 'uag_events' for recalculation or keep a leaner summary
     
-    -- For v8.0, let's do a quick aggregation from uag_events for this session to be accurate (since we have indices)
-    -- Or stick to pure incremental if we trust the summary. Let's do aggregation for accuracy on Grade.
+    -- 更新 property 停留時間 (原地累加)
+    IF v_pid IS NOT NULL THEN
+        v_new_summary := jsonb_set(
+            v_new_summary,
+            ARRAY['props', v_pid, 'duration'],
+            to_jsonb(COALESCE((v_new_summary->'props'->v_pid->>'duration')::INT, 0) + v_duration)
+        );
+        v_new_summary := jsonb_set(
+            v_new_summary,
+            ARRAY['props', v_pid, 'visits'],
+            to_jsonb(COALESCE((v_new_summary->'props'->v_pid->>'visits')::INT, 0) + 1)
+        );
+    END IF;
     
-    SELECT 
-        SUM(duration), 
-        COUNT(DISTINCT property_id),
-        COUNT(*) FILTER (WHERE property_id = v_pid) -- revisits
-    INTO v_new_total_duration, v_district_count, v_revisits
-    FROM public.uag_events
-    WHERE session_id = p_session_id;
+    -- 記錄強信號
+    IF (v_actions->>'click_line')::INT > 0 THEN
+        v_new_summary := jsonb_set(v_new_summary, ARRAY['signals', 'click_line'], 'true'::jsonb);
+    END IF;
+    IF (v_actions->>'click_call')::INT > 0 THEN
+        v_new_summary := jsonb_set(v_new_summary, ARRAY['signals', 'click_call'], 'true'::jsonb);
+    END IF;
 
-    -- Calculate Competitor Duration (Total duration in district - current prop duration)
-    SELECT SUM(duration) INTO v_competitor_duration
-    FROM public.uag_events
-    WHERE session_id = p_session_id AND district = v_district AND property_id != v_pid;
+    -- 累加總時長
+    v_new_total_duration := COALESCE(v_session.total_duration, 0) + v_duration;
 
-    -- 4. Calculate Grade
-    v_new_grade := calculate_lead_grade(
-        (SELECT SUM(duration) FROM public.uag_events WHERE session_id = p_session_id AND property_id = v_pid)::INT, -- Total duration for THIS property
-        v_actions, -- Current actions (or aggregated actions if we tracked them)
-        v_revisits,
-        (SELECT COUNT(DISTINCT property_id) FROM public.uag_events WHERE session_id = p_session_id AND district = v_district)::INT, -- District count
-        COALESCE(v_competitor_duration, 0)
-    );
+    -- 4. 判斷是否需要重新計算等級 (只在關鍵節點計算，避免每次都跑)
+    -- 條件：觸發強信號 / 累計時長超過閾值 / 當前等級較低
+    IF (v_actions->>'click_line')::INT > 0 OR (v_actions->>'click_call')::INT > 0 THEN
+        v_should_calculate := TRUE;
+    ELSIF v_new_total_duration >= 20 AND v_current_grade = 'F' THEN
+        v_should_calculate := TRUE;
+    ELSIF v_new_total_duration >= 60 AND v_current_grade IN ('F', 'C') THEN
+        v_should_calculate := TRUE;
+    ELSIF v_new_total_duration >= 90 AND v_current_grade IN ('F', 'C', 'B') THEN
+        v_should_calculate := TRUE;
+    END IF;
 
-    -- 5. Update Session Final State
+    -- 5. 計算等級 (只在需要時執行)
+    IF v_should_calculate THEN
+        -- 從 summary 快速取得數據，避免掃描 events 表
+        v_property_duration := COALESCE((v_new_summary->'props'->v_pid->>'duration')::INT, v_duration);
+        v_revisits := COALESCE((v_new_summary->'props'->v_pid->>'visits')::INT, 1);
+        v_district_count := COALESCE(jsonb_object_keys_count(v_new_summary->'district_counts'), 1);
+        
+        -- 計算同區競品時長 (從 summary 快速估算)
+        SELECT COALESCE(SUM((value->>'duration')::INT), 0) - v_property_duration
+        INTO v_competitor_duration
+        FROM jsonb_each(v_new_summary->'props') 
+        WHERE key != v_pid;
+        
+        v_new_grade := calculate_lead_grade(
+            v_property_duration,
+            v_actions,
+            v_revisits,
+            v_district_count,
+            GREATEST(v_competitor_duration, 0)
+        );
+    ELSE
+        v_new_grade := v_current_grade;
+    END IF;
+
+    -- 6. 更新 Session (等級只升不降)
     UPDATE public.uag_sessions
     SET 
         total_duration = v_new_total_duration,
-        property_count = (SELECT COUNT(DISTINCT property_id) FROM public.uag_events WHERE session_id = p_session_id),
-        grade = CASE WHEN v_new_grade < grade THEN v_new_grade ELSE grade END, -- Keep the best grade (S < A < B < C < F in char comparison? No. S > A. We need custom logic)
-        -- Actually, we usually want the "Current Best Grade" or "Latest Grade". 
-        -- Let's assume we overwrite with the grade of the CURRENT interaction if it's better, or keep the session's max grade.
-        -- Simplified: Update to the calculated grade of this interaction.
-        -- Better: Update if new grade is 'better' (S > A > B > C > F)
-        summary = v_new_summary
+        property_count = COALESCE(jsonb_object_keys_count(v_new_summary->'props'), 1),
+        summary = v_new_summary,
+        last_active = NOW()
     WHERE session_id = p_session_id;
     
-    -- Fix Grade Update Logic (S is best)
+    -- 等級升級檢查 (S=5, A=4, B=3, C=2, F=1)
     UPDATE public.uag_sessions
     SET grade = v_new_grade
     WHERE session_id = p_session_id 
       AND (
-        CASE grade 
-          WHEN 'S' THEN 5 WHEN 'A' THEN 4 WHEN 'B' THEN 3 WHEN 'C' THEN 2 ELSE 1 
-        END
+        CASE grade WHEN 'S' THEN 5 WHEN 'A' THEN 4 WHEN 'B' THEN 3 WHEN 'C' THEN 2 ELSE 1 END
       ) < (
-        CASE v_new_grade 
-          WHEN 'S' THEN 5 WHEN 'A' THEN 4 WHEN 'B' THEN 3 WHEN 'C' THEN 2 ELSE 1 
-        END
+        CASE v_new_grade WHEN 'S' THEN 5 WHEN 'A' THEN 4 WHEN 'B' THEN 3 WHEN 'C' THEN 2 ELSE 1 END
       );
+
+    -- 取得最終等級
+    SELECT grade INTO v_new_grade FROM public.uag_sessions WHERE session_id = p_session_id;
 
     RETURN jsonb_build_object('success', true, 'grade', v_new_grade);
 END;
 $$;
+
+-- 輔助函數：計算 JSONB 物件的 key 數量
+CREATE OR REPLACE FUNCTION jsonb_object_keys_count(j JSONB)
+RETURNS INTEGER AS $$
+BEGIN
+    IF j IS NULL OR jsonb_typeof(j) != 'object' THEN
+        RETURN 0;
+    END IF;
+    RETURN (SELECT COUNT(*) FROM jsonb_object_keys(j));
+END;
+$$ LANGUAGE plpgsql IMMUTABLE;

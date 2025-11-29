@@ -3,6 +3,8 @@
  * Property Page Renderer
  * Handles rendering of property cards based on the provided data set.
  * Optimized for performance with DocumentFragment and template literals.
+ * 
+ * v2.0 - 支援新的資料架構 (PropertyAPI + DataAdapter)
  */
 
 const PropertyRenderer = {
@@ -18,6 +20,50 @@ const PropertyRenderer = {
     };
   },
 
+  /**
+   * v2 渲染方法 - 使用 PropertyAPI
+   */
+  async renderAsync() {
+    if (!this.containers) this.init();
+    
+    try {
+      // 並行取得精選和列表資料
+      const [featured, listings] = await Promise.all([
+        window.PropertyAPI.getFeatured(),
+        window.PropertyAPI.getListings()
+      ]);
+      
+      // 使用 requestAnimationFrame 確保渲染效能
+      requestAnimationFrame(() => {
+        if (featured.main) this.renderFeaturedMain(featured.main);
+        if (featured.sideTop) this.renderFeaturedSide(featured.sideTop, 'sideTop');
+        if (featured.sideBottom) this.renderFeaturedSide(featured.sideBottom, 'sideBottom');
+        if (listings.items) this.renderListings(listings.items);
+        
+        // 更新列表計數
+        this.updateListingCount(listings.total);
+      });
+    } catch (error) {
+      console.error('[PropertyRenderer] renderAsync error:', error);
+      // Fallback 到舊版渲染
+      this.render('default');
+    }
+  },
+
+  /**
+   * 更新列表計數顯示
+   */
+  updateListingCount(total) {
+    const countEl = document.querySelector('.listing-header .small-text');
+    if (countEl && total) {
+      countEl.textContent = `共 ${total} 個社區`;
+    }
+  },
+
+  /**
+   * v1 渲染方法 - 保留向下相容 (使用舊版 propertyMockData)
+   * @deprecated 請使用 renderAsync()
+   */
   render(dataSetKey = 'default') {
     const data = window.propertyMockData?.[dataSetKey];
     if (!data) {
@@ -174,11 +220,21 @@ const PropertyRenderer = {
   }
 };
 
-// Initialize with default data
+// Initialize with new async method (v2)
 document.addEventListener('DOMContentLoaded', () => {
   PropertyRenderer.init();
-  PropertyRenderer.render('default');
+  
+  // 優先使用新架構
+  if (window.PropertyAPI && window.MockProperties) {
+    PropertyRenderer.renderAsync();
+  } else {
+    // Fallback 到舊版
+    PropertyRenderer.render('default');
+  }
 });
 
-// Expose for switching datasets
+// Expose for switching datasets (保留向下相容)
 window.renderPropertyPage = (key) => PropertyRenderer.render(key);
+
+// Expose async render method
+window.renderPropertyPageAsync = () => PropertyRenderer.renderAsync();
