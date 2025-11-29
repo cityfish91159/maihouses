@@ -131,8 +131,8 @@ td { font-size: 14px; }
 
 <div class="container">
   <header>
-    <h1>📊 UAG 業務廣告後台</h1>
-    <div class="subtitle">User Activity & Growth Analytics Dashboard</div>
+    <h1>📊 UAG 業務分析後台 v8.3</h1>
+    <div class="subtitle">User Activity & Grade - 客戶意向追蹤系統</div>
   </header>
 
   <div id="error-message"></div>
@@ -162,48 +162,72 @@ td { font-size: 14px; }
         <div class="value" id="total-sessions">-</div>
         <div class="change" id="sessions-change">-</div>
       </div>
-      <div class="stat-card">
-        <h3>註冊用戶</h3>
-        <div class="value" id="total-users">-</div>
-        <div class="change" id="users-change">-</div>
+      <div class="stat-card" style="background: linear-gradient(135deg, #fef3c7 0%, #fffbeb 100%);">
+        <h3>⭐ S 級客戶</h3>
+        <div class="value" id="s-grade-count">-</div>
+        <div class="change" id="s-grade-change">-</div>
       </div>
       <div class="stat-card">
-        <h3>轉換率</h3>
-        <div class="value" id="conversion-rate">-</div>
-        <div class="change" id="conversion-change">-</div>
+        <h3>平均停留時間</h3>
+        <div class="value" id="avg-duration">-</div>
+        <div class="change" id="duration-change">秒</div>
       </div>
     </div>
 
-    <!-- 熱門事件 -->
+    <!-- 第二排統計 -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <h3>強信號率 (LINE/電話)</h3>
+        <div class="value" id="strong-signal-rate">-</div>
+        <div class="change" id="signal-change">-</div>
+      </div>
+      <div class="stat-card">
+        <h3>熱門行政區</h3>
+        <div class="value" id="top-district" style="font-size: 24px;">-</div>
+        <div class="change" id="district-count">-</div>
+      </div>
+      <div class="stat-card">
+        <h3>回訪客戶</h3>
+        <div class="value" id="revisit-count">-</div>
+        <div class="change" id="revisit-rate">-</div>
+      </div>
+      <div class="stat-card">
+        <h3>瀏覽房源數</h3>
+        <div class="value" id="property-count">-</div>
+        <div class="change" id="property-change">-</div>
+      </div>
+    </div>
+
+    <!-- 熱門房源 -->
     <div class="chart-card">
-      <h2>🔥 熱門事件</h2>
-      <table id="top-events-table">
+      <h2>🏠 熱門房源</h2>
+      <table id="top-properties-table">
         <thead>
           <tr>
-            <th>事件名稱</th>
-            <th>觸發次數</th>
-            <th>獨立會話</th>
-            <th>獨立用戶</th>
+            <th>房源 ID</th>
+            <th>瀏覽次數</th>
+            <th>平均停留</th>
+            <th>LINE 點擊</th>
           </tr>
         </thead>
-        <tbody id="top-events-body">
+        <tbody id="top-properties-body">
           <tr><td colspan="4" style="text-align:center;color:#999;">載入中...</td></tr>
         </tbody>
       </table>
     </div>
 
-    <!-- 熱門頁面 -->
+    <!-- 行政區分佈 -->
     <div class="chart-card">
-      <h2>📄 熱門頁面</h2>
-      <table id="top-pages-table">
+      <h2>📍 行政區分佈</h2>
+      <table id="districts-table">
         <thead>
           <tr>
-            <th>頁面路徑</th>
+            <th>行政區</th>
             <th>瀏覽次數</th>
             <th>獨立會話</th>
           </tr>
         </thead>
-        <tbody id="top-pages-body">
+        <tbody id="districts-body">
           <tr><td colspan="3" style="text-align:center;color:#999;">載入中...</td></tr>
         </tbody>
       </table>
@@ -216,13 +240,33 @@ td { font-size: 14px; }
         <thead>
           <tr>
             <th>時間</th>
-            <th>事件</th>
-            <th>頁面</th>
+            <th>房源</th>
+            <th>行政區</th>
+            <th>停留時間</th>
+            <th>動作</th>
             <th>會話 ID</th>
-            <th>用戶 ID</th>
           </tr>
         </thead>
         <tbody id="recent-events-body">
+          <tr><td colspan="6" style="text-align:center;color:#999;">載入中...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- S 級客戶列表 -->
+    <div class="chart-card">
+      <h2>⭐ S 級高意向客戶</h2>
+      <table id="s-grade-table">
+        <thead>
+          <tr>
+            <th>會話 ID</th>
+            <th>最後活躍</th>
+            <th>總時長</th>
+            <th>房源數</th>
+            <th>強信號</th>
+          </tr>
+        </thead>
+        <tbody id="s-grade-body">
           <tr><td colspan="5" style="text-align:center;color:#999;">載入中...</td></tr>
         </tbody>
       </table>
@@ -279,107 +323,192 @@ window.loadData = async function() {
     const since = new Date()
     since.setDate(since.getDate() - days)
 
-    // 查詢數據
-    const { data: events, error } = await supabase
+    // 查詢事件數據 (使用新欄位 created_at, property_id, actions, district, duration)
+    const { data: events, error: eventsError } = await supabase
       .from('uag_events')
       .select('*')
-      .gte('ts', since.toISOString())
-      .order('ts', { ascending: false })
+      .gte('created_at', since.toISOString())
+      .order('created_at', { ascending: false })
 
-    if (error) throw error
+    if (eventsError) throw eventsError
 
-    // 計算總覽統計
+    // 查詢會話數據 (用於 S 級統計)
+    const { data: sessions, error: sessionsError } = await supabase
+      .from('uag_sessions')
+      .select('*')
+      .gte('last_active', since.toISOString())
+      .order('last_active', { ascending: false })
+
+    if (sessionsError) throw sessionsError
+
+    // ====== 計算總覽統計 ======
     const totalEvents = events.length
     const uniqueSessions = new Set(events.map(e => e.session_id)).size
-    const uniqueUsers = new Set(events.filter(e => e.user_id).map(e => e.user_id)).size
-    const conversionRate = uniqueSessions > 0 
-      ? ((uniqueUsers / uniqueSessions) * 100).toFixed(1) + '%'
+    
+    // S 級客戶數
+    const sGradeCount = sessions.filter(s => s.grade === 'S').length
+    
+    // 平均停留時間
+    const totalDuration = events.reduce((sum, e) => sum + (e.duration || 0), 0)
+    const avgDuration = events.length > 0 ? Math.round(totalDuration / events.length) : 0
+    
+    // 強信號率 (LINE 或電話點擊)
+    const strongSignals = events.filter(e => {
+      const actions = e.actions || {}
+      return (actions.click_line >= 1) || (actions.click_call >= 1)
+    }).length
+    const strongSignalRate = events.length > 0 
+      ? ((strongSignals / events.length) * 100).toFixed(1) + '%'
       : '0%'
 
+    // 行政區統計
+    const districtCounts = {}
+    const districtSessions = {}
+    events.forEach(e => {
+      if (e.district && e.district !== 'unknown') {
+        districtCounts[e.district] = (districtCounts[e.district] || 0) + 1
+        if (!districtSessions[e.district]) districtSessions[e.district] = new Set()
+        districtSessions[e.district].add(e.session_id)
+      }
+    })
+    const topDistrictEntry = Object.entries(districtCounts).sort((a, b) => b[1] - a[1])[0]
+    const topDistrict = topDistrictEntry ? topDistrictEntry[0] : '-'
+    const topDistrictCount = topDistrictEntry ? `${topDistrictEntry[1]} 次` : '-'
+
+    // 回訪客戶 (session 的 visits > 1)
+    const revisitSessions = sessions.filter(s => {
+      const summary = s.summary || {}
+      return (summary.visits || 0) > 1
+    }).length
+    const revisitRate = sessions.length > 0 
+      ? ((revisitSessions / sessions.length) * 100).toFixed(1) + '%'
+      : '0%'
+
+    // 獨立房源數
+    const uniqueProperties = new Set(events.filter(e => e.property_id).map(e => e.property_id)).size
+
+    // 更新 DOM
     document.getElementById('total-events').textContent = totalEvents.toLocaleString()
     document.getElementById('total-sessions').textContent = uniqueSessions.toLocaleString()
-    document.getElementById('total-users').textContent = uniqueUsers.toLocaleString()
-    document.getElementById('conversion-rate').textContent = conversionRate
+    document.getElementById('s-grade-count').textContent = sGradeCount.toLocaleString()
+    document.getElementById('avg-duration').textContent = avgDuration.toLocaleString()
+    document.getElementById('strong-signal-rate').textContent = strongSignalRate
+    document.getElementById('top-district').textContent = topDistrict
+    document.getElementById('district-count').textContent = topDistrictCount
+    document.getElementById('revisit-count').textContent = revisitSessions.toLocaleString()
+    document.getElementById('revisit-rate').textContent = revisitRate
+    document.getElementById('property-count').textContent = uniqueProperties.toLocaleString()
 
-    // 熱門事件
-    const eventCounts = {}
-    const eventSessions = {}
-    const eventUsers = {}
+    // ====== 熱門房源 ======
+    const propertyCounts = {}
+    const propertyDurations = {}
+    const propertyLineClicks = {}
     
     events.forEach(e => {
-      eventCounts[e.event] = (eventCounts[e.event] || 0) + 1
-      
-      if (!eventSessions[e.event]) eventSessions[e.event] = new Set()
-      eventSessions[e.event].add(e.session_id)
-      
-      if (e.user_id) {
-        if (!eventUsers[e.event]) eventUsers[e.event] = new Set()
-        eventUsers[e.event].add(e.user_id)
+      if (e.property_id) {
+        propertyCounts[e.property_id] = (propertyCounts[e.property_id] || 0) + 1
+        propertyDurations[e.property_id] = (propertyDurations[e.property_id] || 0) + (e.duration || 0)
+        if ((e.actions?.click_line || 0) >= 1) {
+          propertyLineClicks[e.property_id] = (propertyLineClicks[e.property_id] || 0) + 1
+        }
       }
     })
 
-    const topEvents = Object.entries(eventCounts)
+    const topProperties = Object.entries(propertyCounts)
       .sort((a, b) => b[1] - a[1])
       .slice(0, 10)
 
-    const topEventsHTML = topEvents.map(([event, count]) => `
-      <tr>
-        <td><span class="badge primary">${event}</span></td>
-        <td>${count.toLocaleString()}</td>
-        <td>${eventSessions[event].size.toLocaleString()}</td>
-        <td>${(eventUsers[event]?.size || 0).toLocaleString()}</td>
-      </tr>
-    `).join('')
+    const topPropertiesHTML = topProperties.map(([propId, count]) => {
+      const avgPropDuration = Math.round(propertyDurations[propId] / count)
+      const lineClicks = propertyLineClicks[propId] || 0
+      return `
+        <tr>
+          <td><code>${propId.substring(0, 12)}...</code></td>
+          <td>${count.toLocaleString()}</td>
+          <td>${avgPropDuration}s</td>
+          <td>${lineClicks > 0 ? `<span class="badge success">${lineClicks}</span>` : '-'}</td>
+        </tr>
+      `
+    }).join('')
 
-    document.getElementById('top-events-body').innerHTML = topEventsHTML || 
+    document.getElementById('top-properties-body').innerHTML = topPropertiesHTML || 
       '<tr><td colspan="4" style="text-align:center;color:#999;">無數據</td></tr>'
 
-    // 熱門頁面
-    const pageCounts = {}
-    const pageSessions = {}
-    
-    events.forEach(e => {
-      pageCounts[e.page] = (pageCounts[e.page] || 0) + 1
-      if (!pageSessions[e.page]) pageSessions[e.page] = new Set()
-      pageSessions[e.page].add(e.session_id)
-    })
-
-    const topPages = Object.entries(pageCounts)
+    // ====== 行政區分佈 ======
+    const topDistricts = Object.entries(districtCounts)
       .sort((a, b) => b[1] - a[1])
       .slice(0, 10)
 
-    const topPagesHTML = topPages.map(([page, count]) => `
+    const districtsHTML = topDistricts.map(([district, count]) => `
       <tr>
-        <td><code>${page}</code></td>
+        <td><span class="badge primary">${district}</span></td>
         <td>${count.toLocaleString()}</td>
-        <td>${pageSessions[page].size.toLocaleString()}</td>
+        <td>${districtSessions[district].size.toLocaleString()}</td>
       </tr>
     `).join('')
 
-    document.getElementById('top-pages-body').innerHTML = topPagesHTML ||
+    document.getElementById('districts-body').innerHTML = districtsHTML ||
       '<tr><td colspan="3" style="text-align:center;color:#999;">無數據</td></tr>'
 
-    // 最近事件
+    // ====== 最近事件 ======
     const recentHTML = events.slice(0, 20).map(e => {
-      const time = new Date(e.ts).toLocaleString('zh-TW', {
+      const time = new Date(e.created_at).toLocaleString('zh-TW', {
         month: '2-digit',
         day: '2-digit',
         hour: '2-digit',
         minute: '2-digit'
       })
+      const actions = e.actions || {}
+      const actionBadges = []
+      if (actions.click_line >= 1) actionBadges.push('<span class="badge success">LINE</span>')
+      if (actions.click_call >= 1) actionBadges.push('<span class="badge warning">電話</span>')
+      if (actions.click_photos > 0) actionBadges.push(`📷${actions.click_photos}`)
+      if (actions.scroll_depth > 0) actionBadges.push(`⬇${actions.scroll_depth}%`)
+      
       return `
         <tr>
           <td>${time}</td>
-          <td><span class="badge success">${e.event}</span></td>
-          <td><code style="font-size:12px;">${e.page}</code></td>
+          <td><code style="font-size:12px;">${e.property_id?.substring(0, 12) || '-'}...</code></td>
+          <td>${e.district || '-'}</td>
+          <td>${e.duration || 0}s</td>
+          <td>${actionBadges.join(' ') || '-'}</td>
           <td><code style="font-size:11px;">${e.session_id.substring(0, 8)}...</code></td>
-          <td>${e.user_id ? `<code style="font-size:11px;">${e.user_id.substring(0, 8)}...</code>` : '-'}</td>
         </tr>
       `
     }).join('')
 
     document.getElementById('recent-events-body').innerHTML = recentHTML ||
-      '<tr><td colspan="5" style="text-align:center;color:#999;">無數據</td></tr>'
+      '<tr><td colspan="6" style="text-align:center;color:#999;">無數據</td></tr>'
+
+    // ====== S 級客戶列表 ======
+    const sGradeSessions = sessions.filter(s => s.grade === 'S').slice(0, 10)
+    const sGradeHTML = sGradeSessions.map(s => {
+      const lastActive = new Date(s.last_active).toLocaleString('zh-TW', {
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+      })
+      const summary = s.summary || {}
+      const hasLine = (summary.click_line || 0) >= 1
+      const hasCall = (summary.click_call || 0) >= 1
+      const signals = []
+      if (hasLine) signals.push('<span class="badge success">LINE</span>')
+      if (hasCall) signals.push('<span class="badge warning">電話</span>')
+      
+      return `
+        <tr>
+          <td><code style="font-size:11px;">${s.session_id.substring(0, 12)}...</code></td>
+          <td>${lastActive}</td>
+          <td>${s.total_duration || 0}s</td>
+          <td>${s.property_count || 0}</td>
+          <td>${signals.join(' ') || '-'}</td>
+        </tr>
+      `
+    }).join('')
+
+    document.getElementById('s-grade-body').innerHTML = sGradeHTML ||
+      '<tr><td colspan="5" style="text-align:center;color:#999;">目前沒有 S 級客戶</td></tr>'
 
     loading.style.display = 'none'
     dashboard.style.display = 'block'
@@ -389,7 +518,7 @@ window.loadData = async function() {
     errorMsg.innerHTML = `
       <div class="error">
         <strong>載入失敗:</strong> ${err.message}<br>
-        <small>請確認 Supabase 設定是否正確,並已執行 schema.sql</small>
+        <small>請確認 Supabase 設定是否正確,並已執行 uag-tracking.sql</small>
       </div>
     `
     loading.style.display = 'none'
