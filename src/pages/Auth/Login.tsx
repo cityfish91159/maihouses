@@ -4,6 +4,7 @@ import { trackEvent } from '../../services/analytics'
 import { useAuth } from '../../hooks/useAuth'
 import { signIn, signInWithGoogle } from '../../services/auth'
 import Header from '../../components/Header/Header'
+import MascotInteractive from '../../components/MascotInteractive'
 
 export default function Login() {
   const navigate = useNavigate()
@@ -12,6 +13,11 @@ export default function Login() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [loginSuccess, setLoginSuccess] = useState(false)
+  
+  // 追蹤輸入狀態
+  const [isTypingEmail, setIsTypingEmail] = useState(false)
+  const [isTypingPassword, setIsTypingPassword] = useState(false)
 
   useEffect(() => {
     if (user) {
@@ -32,6 +38,7 @@ export default function Login() {
       }
 
       await signIn(email, password)
+      setLoginSuccess(true)
     } catch (err: any) {
       setError(err.message || '登入失敗')
       setLoading(false)
@@ -42,6 +49,7 @@ export default function Login() {
     try {
       setLoading(true)
       await signInWithGoogle()
+      setLoginSuccess(true)
     } catch (err: any) {
       setError(err.message || 'Google 登入失敗')
       setLoading(false)
@@ -53,8 +61,21 @@ export default function Login() {
       <Header />
 
       <main className="container mx-auto px-4 py-12 md:py-20 flex justify-center items-center">
-        <div className="w-full max-w-[420px] bg-white rounded-[24px] shadow-[0_20px_40px_-12px_rgba(0,0,0,0.1)] p-8 md:p-10 border border-slate-100">
-          <div className="text-center mb-8">
+        <div className="w-full max-w-[420px] bg-white rounded-[24px] shadow-[0_20px_40px_-12px_rgba(0,0,0,0.1)] p-8 md:p-10 border border-slate-100 relative overflow-hidden">
+          
+          {/* 互動公仔 */}
+          <div className="flex justify-center -mt-4 mb-4">
+            <MascotInteractive
+              size="md"
+              isTypingEmail={isTypingEmail}
+              isTypingPassword={isTypingPassword}
+              hasError={!!error}
+              isLoading={loading}
+              isSuccess={loginSuccess}
+            />
+          </div>
+
+          <div className="text-center mb-6">
             <h1 className="text-2xl font-bold text-[var(--brand)] mb-2">歡迎回來</h1>
             <p className="text-[var(--text-secondary)] text-sm">登入以繼續使用邁房子服務</p>
           </div>
@@ -80,6 +101,8 @@ export default function Login() {
                 aria-label="Email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                onFocus={() => { setIsTypingEmail(true); setIsTypingPassword(false); }}
+                onBlur={() => setIsTypingEmail(false)}
                 required
                 autoComplete="email"
               />
@@ -99,6 +122,8 @@ export default function Login() {
                 aria-label="密碼"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                onFocus={() => { setIsTypingPassword(true); setIsTypingEmail(false); }}
+                onBlur={() => setIsTypingPassword(false)}
                 required
                 autoComplete="current-password"
               />
