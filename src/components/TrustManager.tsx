@@ -138,7 +138,7 @@ export default function TrustManager({ defaultCaseName = '', showList = true, li
             <div style={{ ...styles.container, ...style, textAlign: 'center', padding: '40px 20px' }}>
                 <h3 style={styles.title}>請先登入</h3>
                 <p style={{ ...styles.subtitle, marginBottom: 20 }}>您需要登入才能管理案件</p>
-                <a href="/auth/login" style={{ ...styles.createButton, background: COLORS.primary, textDecoration: 'none', display: 'inline-block' }}>
+                <a href="/maihouses/auth.html?mode=login" style={{ ...styles.createButton, background: COLORS.primary, textDecoration: 'none', display: 'inline-block' }}>
                     前往登入
                 </a>
             </div>

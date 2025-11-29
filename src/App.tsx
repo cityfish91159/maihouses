@@ -5,8 +5,6 @@ import { getConfig, type AppConfig, type RuntimeOverrides } from './app/config'
 import DevTools from './app/devtools'
 import { trackEvent } from './services/analytics'
 import Home from './pages/Home'
-import Register from './pages/Auth/Register'
-import Login from './pages/Auth/Login'
 import Wall from './pages/Community/Wall'
 import Suggested from './pages/Community/Suggested'
 import Detail from './pages/Property/Detail'
@@ -71,22 +69,6 @@ export default function App() {
           path="/uag"
           element={
             <UAGPage />
-          }
-        />
-        <Route
-          path="/auth/register"
-          element={
-            <ErrorBoundary>
-              <Register />
-            </ErrorBoundary>
-          }
-        />
-        <Route
-          path="/auth/login"
-          element={
-            <ErrorBoundary>
-              <Login />
-            </ErrorBoundary>
           }
         />
         <Route
