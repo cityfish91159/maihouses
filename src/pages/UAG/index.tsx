@@ -16,7 +16,7 @@ import RadarCluster from './components/RadarCluster';
 import ActionPanel from './components/ActionPanel';
 import AssetMonitor from './components/AssetMonitor';
 import ListingFeed from './components/ListingFeed';
-import MaiCard from './components/MaiCard';
+import ReportGenerator from './components/ReportGenerator';
 import TrustFlow from './components/TrustFlow';
 
 function UAGPageContent() {
@@ -60,8 +60,8 @@ function UAGPageContent() {
           {/* [3] Listings & [4] Feed */}
           <ListingFeed listings={appData.listings} feed={appData.feed} />
 
-          {/* [5] Mai Card */}
-          <MaiCard />
+          {/* [5] 手機報告生成器 */}
+          <ReportGenerator listings={appData.listings} />
 
           {/* [6] Trust Flow */}
           <TrustFlow />

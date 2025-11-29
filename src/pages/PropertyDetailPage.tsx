@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
-import { Home, Heart, Phone, MessageCircle, Hash, MapPin, ArrowLeft, Shield, Eye, Users, Calendar, Flame, Star, Lock, ChevronRight, CheckCircle } from 'lucide-react';
+import { Home, Heart, Phone, MessageCircle, Hash, MapPin, ArrowLeft, Shield, Eye, Users, Calendar, Flame, Star, Lock, ChevronRight, CheckCircle, FileText } from 'lucide-react';
 import { AgentTrustCard } from '../components/AgentTrustCard';
 import { propertyService, DEFAULT_PROPERTY, PropertyData } from '../services/propertyService';
 import { ContactModal } from '../components/ContactModal';
+import { ReportGenerator } from './Report';
 
 // UAG Tracker Hook v8.1 - 追蹤用戶行為 + S級攔截
 // 優化: 1.修正district傳遞 2.S級即時回調 3.互動事件用fetch獲取等級
@@ -154,6 +155,9 @@ export const PropertyDetailPage: React.FC = () => {
   // S 級 VIP 攔截 Modal
   const [showVipModal, setShowVipModal] = useState(false);
   const [vipReason, setVipReason] = useState<string>('');
+  
+  // 報告生成器 Modal
+  const [showReportGenerator, setShowReportGenerator] = useState(false);
   
   // 初始化直接使用 DEFAULT_PROPERTY，確保第一幀就有畫面，絕不留白
   const [property, setProperty] = useState<PropertyData>(DEFAULT_PROPERTY);
@@ -671,6 +675,41 @@ export const PropertyDetailPage: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* 報告生成 FAB 按鈕 */}
+      <button
+        onClick={() => setShowReportGenerator(true)}
+        className="fixed right-4 bottom-24 z-40 w-14 h-14 bg-gradient-to-br from-[#003366] to-[#00A8E8] text-white rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-105 flex items-center justify-center group"
+        title="生成物件報告"
+      >
+        <FileText size={24} />
+        <span className="absolute right-full mr-3 px-3 py-1.5 bg-slate-800 text-white text-sm font-medium rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+          生成報告
+        </span>
+      </button>
+
+      {/* 報告生成器 Modal */}
+      <ReportGenerator
+        property={{
+          id: property.id,
+          publicId: property.publicId,
+          title: property.title,
+          price: property.price,
+          address: property.address,
+          description: property.description,
+          images: property.images,
+          agent: {
+            id: property.agent.id,
+            name: property.agent.name,
+            avatarUrl: property.agent.avatarUrl,
+            company: property.agent.company,
+            trustScore: property.agent.trustScore,
+            reviewCount: property.agent.encouragementCount
+          }
+        }}
+        isOpen={showReportGenerator}
+        onClose={() => setShowReportGenerator(false)}
+      />
     </div>
   );
 };

@@ -20,6 +20,7 @@ import { CookieConsent } from './components/CookieConsent'
 import UAGPage from './pages/UAG'
 import { PropertyDetailPage } from './pages/PropertyDetailPage'
 import { PropertyUploadPage } from './pages/PropertyUploadPage'
+import { ReportPage } from './pages/Report'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -149,6 +150,14 @@ export default function App() {
           element={
             <ErrorBoundary>
               <ChatStandalone />
+            </ErrorBoundary>
+          }
+        />
+        <Route
+          path="/r/:id"
+          element={
+            <ErrorBoundary>
+              <ReportPage />
             </ErrorBoundary>
           }
         />
