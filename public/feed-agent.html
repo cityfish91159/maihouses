@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1, viewport-fit=cover" name="viewport"/>
-<title>邁房子｜個人信息流（MVP・消費者版 v4.2）</title>
-<meta name="description" content="Profile 卡移除「我的」大按鈕；統計膠囊改為綠色樣式。Header 維持：我的（下拉）｜通知｜訊息。"/>
+<title>邁房子｜個人信息流（MVP・業務端 v4.2）</title>
+<meta name="description" content="業務端個人信息流：UAG 精準獲客、安心留痕、客戶池管理。Header 維持：我的（下拉）｜通知｜訊息。"/>
 <style>
 :root{
   --ink:#0b214a; --muted:#6c7b91; --brand:#1749d7; --brand-2:#4aa1ff; --line:#e6edf7; --card:#fff;
@@ -17,17 +17,26 @@ html,body{margin:0;background:linear-gradient(180deg,var(--bg1),var(--bg2));colo
 .page{max-width:560px;margin:0 auto;padding:10px 10px 64px;display:flex;flex-direction:column;gap:10px}
 
 /* ── 頂部（品牌＋右上工具） ───────────────────────────── */
-.topbar{position:sticky;top:0;z-index:10;background:rgba(246,249,255,.95);backdrop-filter:blur(8px);
-  border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;padding:6px 10px}
-.brand{display:flex;align-items:center;gap:10px;font-weight:900;color:var(--brand)}
-.brand a{color:var(--brand);text-decoration:none}
+.topbar{position:sticky;top:0;z-index:100;background:rgba(246,249,255,.95);backdrop-filter:blur(12px);
+  border-bottom:1px solid rgba(230,237,247,0.8);display:flex;align-items:center;gap:10px;padding:8px 16px;transform:translateZ(0)}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none}
+.brand .logo-icon{width:42px;height:42px;background:linear-gradient(135deg,#1749d7,#4aa1ff);border-radius:12px;
+  display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(23,73,215,.2);position:relative;overflow:hidden}
+.brand .logo-icon svg{width:22px;height:22px;color:#fff}
+.brand .logo-icon::after{content:'';position:absolute;top:2px;right:2px;width:6px;height:6px;background:#10b981;border-radius:50%;border:1.5px solid #1749d7}
+.brand .logo-text{font-size:24px;font-weight:700;font-family:serif;color:var(--brand);letter-spacing:0.5px}
+.brand .logo-badge{display:inline-block;margin-left:8px;padding:2px 8px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;
+  font-size:10px;font-weight:800;border-radius:4px;letter-spacing:0.5px}
 .home-link{font-size:12px;color:#355; text-decoration:none; border:1px solid var(--line); padding:3px 8px; border-radius:999px}
 .home-link:hover{ text-decoration:underline}
-.tools{margin-left:auto;display:flex;gap:6px;align-items:center}
-.icon{border:1px solid var(--line);border-radius:12px;background:#fff;padding:6px 10px;font-size:13px;color:#173a7c;
-  display:inline-flex;align-items:center;gap:6px;line-height:1}
-.icon.badge::after{content:attr(data-badge);display:inline-flex;align-items:center;justify-content:center;
-  margin-left:6px;min-width:18px;height:18px;border-radius:999px;background:#e02626;color:#fff;font-size:11px;padding:0 5px}
+.tools{margin-left:auto;display:flex;gap:8px;align-items:center}
+.icon{border:1px solid var(--line);border-radius:12px;background:#fff;padding:8px;font-size:14px;color:#173a7c;
+  display:inline-flex;align-items:center;gap:6px;line-height:1;cursor:pointer;transition:transform 0.1s}
+.icon:active{transform:scale(0.95)}
+.icon.badge{position:relative}
+.icon.badge::after{content:attr(data-badge);position:absolute;top:-6px;right:-6px;
+  min-width:18px;height:18px;border-radius:999px;background:#e02626;color:#fff;font-size:11px;
+  display:flex;align-items:center;justify-content:center;border:2px solid #fff;font-weight:700}
 /* 「我的」下拉 */
 .menu{position:relative;display:inline-block}
 .menu > summary{list-style:none;cursor:pointer}
@@ -129,21 +138,31 @@ html,body{margin:0;background:linear-gradient(180deg,var(--bg1),var(--bg2));colo
 
 <!-- 頂部 -->
 <header class="topbar">
-  <div class="brand">
-    <a href="/maihouses/" aria-label="邁房子首頁">邁房子</a>
-    <a class="home-link" href="/maihouses/">首頁</a>
-  </div>
+  <a href="/maihouses/" class="brand" aria-label="邁房子首頁">
+    <div class="logo-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 9.5L12 3L21 9.5V20.5C21 21.0523 20.5523 21.5 20 21.5H4C3.44772 21.5 3 21.0523 3 20.5V9.5Z"/>
+        <path d="M9 21.5V13H15V21.5"/>
+      </svg>
+    </div>
+    <span class="logo-text">邁房子</span>
+    <span class="logo-badge">業務版</span>
+  </a>
   <div class="tools">
     <details class="menu">
-      <summary><span class="chip">👤 我的</span></summary>
-      <div class="menu-list" role="menu" aria-label="我的選單">
-        <a href="#fav" role="menuitem">⭐ 我的收藏</a>
+      <summary aria-haspopup="menu" role="button"><span class="chip">👤 我的</span></summary>
+      <div class="menu-list" role="menu" id="myMenu" aria-label="我的選單">
+        <a href="#workbench" role="menuitem">📊 客戶工作臺</a>
+        <a href="#stats" role="menuitem">📈 業績統計</a>
         <a href="#trust" role="menuitem">🛡️ 安心留痕</a>
-        <a href="auth.html?action=logout" role="menuitem">🚪 登出</a>
+        <a href="#fav" role="menuitem">⭐ 我的收藏</a>
+        <hr style="border:0;border-top:1px solid #f1f5f9;margin:4px 0">
+        <a href="/maihouses/feed-consumer.html" role="menuitem" style="color:#64748b">👤 切換消費者版</a>
+        <!-- 登出功能開發中 -->
       </div>
     </details>
-    <button type="button" class="icon badge" data-badge="2" aria-label="通知">🔔 通知</button>
-    <button type="button" class="icon" aria-label="訊息">💬 訊息</button>
+    <button type="button" class="icon badge" data-badge="3" aria-label="通知：3 則未讀">🔔</button>
+    <button type="button" class="icon" aria-label="訊息">💬</button>
   </div>
 </header>
 
@@ -161,9 +180,11 @@ html,body{margin:0;background:linear-gradient(180deg,var(--bg1),var(--bg2));colo
       <span class="pill">互動 128 天</span>
       <span class="pill">被感謝 73</span>
     </div>
-    <!-- 主要按鈕：只保留「查看我的社區牆」 -->
-    <div class="links"><a href="#agent" class="btn primary">🏷️ 房仲專區</a>
-  <a href="#my-community" class="btn">🧱 前往我的社區牆</a></div>
+    <!-- 主要按鈕 -->
+    <div class="links">
+      <a href="/maihouses/feed-agent.html" class="btn primary">🏷️ 業務後台</a>
+      <a href="#my-community" class="btn">🧱 前往我的社區牆</a>
+    </div>
   </section>
 <div class="composer">
     <div class="avatar">你</div>
