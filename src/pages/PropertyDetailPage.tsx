@@ -11,7 +11,7 @@ const usePropertyTracker = (
   propertyId: string, 
   agentId: string, 
   district: string,
-  onGradeUpgrade?: (newGrade: string) => void
+  onGradeUpgrade?: (newGrade: string, reason?: string) => void
 ) => {
   const enterTime = useRef(Date.now());
   const actions = useRef({ click_photos: 0, click_line: 0, click_call: 0, scroll_depth: 0 });
@@ -76,9 +76,9 @@ const usePropertyTracker = (
         
         if (newRank > oldRank) {
           currentGrade.current = data.grade;
-          // S 級即時通知
+          // S 級即時通知 (含 reason)
           if (data.grade === 'S' && onGradeUpgrade) {
-            onGradeUpgrade('S');
+            onGradeUpgrade('S', data.reason);
           }
         }
       }
@@ -153,6 +153,7 @@ export const PropertyDetailPage: React.FC = () => {
   
   // S 級 VIP 攔截 Modal
   const [showVipModal, setShowVipModal] = useState(false);
+  const [vipReason, setVipReason] = useState<string>('');
   
   // 初始化直接使用 DEFAULT_PROPERTY，確保第一幀就有畫面，絕不留白
   const [property, setProperty] = useState<PropertyData>(DEFAULT_PROPERTY);
@@ -166,8 +167,9 @@ export const PropertyDetailPage: React.FC = () => {
   };
 
   // S 級客戶即時攔截回調
-  const handleGradeUpgrade = useCallback((grade: string) => {
+  const handleGradeUpgrade = useCallback((grade: string, reason?: string) => {
     if (grade === 'S') {
+      if (reason) setVipReason(reason);
       // 延遲 500ms 顯示，避免太突兀
       setTimeout(() => setShowVipModal(true), 500);
     }
@@ -614,7 +616,9 @@ export const PropertyDetailPage: React.FC = () => {
                 <Flame size={32} className="text-white" />
               </div>
               <h3 className="text-xl font-bold text-slate-800">發現您對此物件很有興趣！</h3>
-              <p className="text-sm text-slate-500 mt-1">專屬 VIP 服務為您優先安排</p>
+              <p className="text-sm text-slate-500 mt-1">
+                {vipReason || '專屬 VIP 服務為您優先安排'}
+              </p>
             </div>
 
             {/* Benefits */}
