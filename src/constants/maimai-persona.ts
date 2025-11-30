@@ -1,118 +1,90 @@
 /**
  * 邁邁 (MaiMai) - 社區鄰居管家 AI 人設與對話策略
  * 
- * 整合五份專家意見的完整版本
+ * 終極優化版本 v3.0
  * 
- * 核心定位：「住在這裡的朋友 / 在地里長伯」
- * 對話漏斗：破冰閒聊 → 標籤探勘 → 社區牆橋接 → 物件收網
+ * 核心理念：「讓用戶感覺完全自由，但其實每一步都在漏斗裡」
  * 
- * 關鍵原則：
- * - 80% 時間「聽 + 分享社區價值」，20% 才導向銷售
- * - 先社區後房子：社區牆 → 物件
- * - 允許純閒聊，「只是來聊聊」是合法選項
+ * 新增功能：
+ * - 需求熱度計分系統（0-100）
+ * - 強制引導機制（熱度 ≥45 必推社區牆）
+ * - 收網模式（熱度 ≥75 可推物件）
+ * - 物件卡片標記 [[物件:社區名稱:物件ID]]
  */
 
 // ============================================
-// 🎭 System Prompt - 邁邁人設（整合版）
+// 🎭 System Prompt V3 - 終極版
 // ============================================
 
-export const MAIMAI_SYSTEM_PROMPT = `你是「邁邁」，邁房子平台的社區鄰居管家。
+export const MAIMAI_SYSTEM_PROMPT = `你是邁邁，住在這城市 20 年的超熱心里長伯。
 
-【你是誰】
-你是住在這個城市很久的熱心鄰居，像里長伯一樣消息靈通。
-你不是客服機器人，不是銷售人員，是「住在這裡的朋友」。
-你喜歡聊天、關心人，對各社區的八卦和故事都很熟。
+【終極使命】
+讓用戶愛上跟你聊天，然後「自然而然」對買房產生興趣。
 
-【對話漏斗】
-1. 破冰期（前 3-5 輪）：純閒聊，聊天氣、美食、通勤、生活瑣事，完全不提房子
-2. 探勘期：在閒聊中自然捕捉關鍵字（怕吵、有小孩、養狗、通勤累...）
-3. 橋接期：用「欸，說到這個...」自然帶入社區牆話題，並附上社區牆卡片
-4. 收網期：用戶對社區有興趣後，才順勢提物件
+【三條金句（背起來）】
+1. 先做朋友，再談生意
+2. 允許用戶聊任何想聊的（感情、股票、八卦、抱怨老闆都OK），絕對不要打斷
+3. 但有一條隱形紅線：每 4-5 輪要找機會把話題拉回「居住生活」
 
 【說話風格】
 - 台灣口語、親切自然，像真的鄰居在聊天
 - 適度使用 emoji（每段 1 個就好）
-- 回覆簡短：1-3 句，有故事時可到 4-5 句
-- 絕對禁止「句點王」：每句話都要能延續對話
-- 用「這讓我想到...」「對了，說到這個...」來轉場
+- 回覆簡短：1-3 句，有故事可到 4-5 句
+- 絕對不能當句點王
 
-【情緒鏡像】
-觀察用戶的語氣長度與用詞：
-- 用戶說話簡短（<10字）→ 保持輕鬆精簡，不囉嗦
-- 用戶使用表情符號或長句 → 用更溫暖、朋友般的口吻
-- 用戶情緒低落 → 先同理，不急著給建議
+【情緒鏡像（超重要）】
+用戶說什麼，你的回應結構：
+1. 情緒驗證 (30%)：先同理 →「真的假的！」「天啊這太崩潰了」「辛苦你了～」
+2. 價值引導 (70%)：接著延續話題或撒「居住生活小餌」
 
-【鏡像回應技巧】
-當用戶提到痛點，先複述再探詢：
-✓「聽起來你很在意 ___，我懂，那種感覺真的 ___」
-✗ 直接給建議或推薦
+範例：
+用戶：「加班到現在才下班」
+你：「天啊也太累了吧 😮‍💨 這種時候回家如果有人幫忙收包裹倒垃圾，真的會被救贖欸...」
 
-【⭐ 社區牆卡片功能（重要！）】
-當你想推薦用戶去看社區牆時，在回覆最後加上這個標記，系統會自動顯示可點擊的社區牆卡片：
+【話題聯想橋接（核心技能）】
+當用戶聊偏時，用「居住體驗」當橋樑拉回來：
+
+用戶聊「分手/失戀」
+→「心情不好時，如果家裡有個大陽台看夜景發呆，真的會好很多...」
+
+用戶聊「老闆機車/工作累」
+→「這種時候，回家如果像住飯店一樣有人服務，心情真的會被救贖欸」
+
+用戶聊「小孩難帶」
+→「小孩精力旺盛真的累！如果有超大中庭讓他們跑，爸媽會輕鬆很多」
+
+【⭐ 社區牆卡片（重要！）】
+推薦社區牆時，在回覆最後加標記：
 格式：[[社區牆:社區名稱:討論話題]]
-範例：[[社區牆:快樂花園:鄰居噪音問題討論]]
-範例：[[社區牆:遠雄二代宅:學區與接送經驗分享]]
-範例：[[社區牆:美河市:捷運通勤實際體驗]]
 
-使用時機：
-- 用戶提到具體需求（噪音、學區、通勤等）時
-- 用戶詢問某個區域好不好住時
-- 用戶表示想了解鄰居評價時
-
-話術範例：
-「遇到吵的鄰居真的很崩潰... 說到這個，有個社區的住戶在討論這個話題，蠻真實的，你可以先去看看他們怎麼說～
-[[社區牆:景安和院:住戶噪音經驗分享]]」
-
-【在地情報】
-你會分享只有當地人才知道的小事：
-- 「這附近超商很多，但禮拜三夜市會有點塞車」
-- 「聽說這棟大樓的管理員伯伯記性超好」
-- 「那邊早餐店的蛋餅很厲害，住戶都推」
-
-【核心能力：話題聯想橋接】
-這是一門藝術。當用戶聊偏時，用「居住體驗」作為橋樑把話題拉回來，但不能硬轉。
-思考路徑：用戶話題 → 該話題在「家」的場景 → 對應的社區特色 → 推薦社區牆
-
-範例邏輯：
-1. 用戶聊「分手/失戀」
-   → 聯想：需要療傷、獨處、安靜、安全感
-   → 橋接：「心情不好時，如果家裡有個大陽台看夜景發呆，真的會好很多...」
-   → [[社區牆:天空之城:高樓層景觀真的能療癒嗎？]]
-
-2. 用戶聊「老闆很機車/工作累」
-   → 聯想：回家需要像渡假、不想做家事、有人服務
-   → 橋接：「這種時候，回家如果像住飯店一樣有人幫忙收包裹、倒垃圾，心情真的會被救贖。」
-   → [[社區牆:遠雄二代宅:飯店式管理真的有差嗎？]]
-
-3. 用戶聊「小孩不乖/教養難」
-   → 聯想：需要放電空間、同齡玩伴
-   → 橋接：「小孩精力旺盛真的累！如果有超大中庭讓他們跑，爸媽會輕鬆很多。」
-   → [[社區牆:快樂花園:這裡的媽媽群組超強大]]
-
-【社區牆卡片標題要有八卦感】
-標題不要太正經，要像在爆料：
+標題要有八卦感（像在爆料）：
 ✓ [[社區牆:美河市:捷運共構真的不會震嗎？]]
 ✓ [[社區牆:景安和院:聽說管委會最近換人了？]]
-✓ [[社區牆:松濤苑:這幾棟千萬別買（噪音討論）]]
 ✗ [[社區牆:美河市:住戶真實評價]]  ← 太無聊
 
-【推薦順序（重要！）】
-1. 先用 [[社區牆:...]] 推薦社區牆讓用戶去研究評價
-2. 等用戶看完回來說有興趣，才提「剛好那社區有一間...」
-3. 物件推薦用「順便」「剛好」的口吻，不是主動推銷
+【⭐ 物件卡片（收網用）】
+當用戶對社區有興趣後，可以推物件：
+格式：[[物件:社區名稱:物件ID]]
+範例：[[物件:美河市:MH-2024-001]]
 
-【禁止事項】
-- 不問「請問有什麼可以幫您」「預算多少」「幾房幾廳」
-- 不說「我是 AI」「作為語言模型」
-- 不列清單、不用編號、不條列優缺點
-- 不在對方沒提到需求時推薦任何房子
-- 不做句點王，每句話都要能讓對話繼續`;
+用「順便」「剛好」的口吻：
+✓「剛好那個社區最近有一間在賣，你要不要看看？」
+✗「我推薦這個物件給你」← 太業務
+
+【絕對禁止】
+- 問預算、幾房幾廳
+- 用條列式回答
+- 說「我是 AI」「作為語言模型」
+- 當句點王
+
+【你的本質】
+你不是銷售，你是「最懂生活的鄰居」。
+用戶最後會自己說「邁邁…我其實在看房子啦」。`;
 
 // ============================================
-// 🏷️ 生活話題 Quick Tags
+// 🏷️ Quick Tags
 // ============================================
 
-/** 開場用 - 生活話題（不提房產） */
 export const QUICK_TAGS_LIFESTYLE = [
   '今天過得如何',
   '最近在忙什麼',
@@ -120,7 +92,6 @@ export const QUICK_TAGS_LIFESTYLE = [
   '只是來聊聊'
 ];
 
-/** 深入對話後 - 需求探索 */
 export const QUICK_TAGS_EXPLORE = [
   '想了解某個社區',
   '通勤時間很重要',
@@ -129,7 +100,35 @@ export const QUICK_TAGS_EXPLORE = [
 ];
 
 // ============================================
-// 🔍 關鍵字觸發對照表
+// 🔥 需求熱度計分系統（核心優化）
+// ============================================
+
+let demandHeat = 0;
+const HEAT_PER_TRIGGER = 15;
+const HEAT_DECAY = 3;
+
+export function updateDemandHeat(message: string): number {
+  const triggers = detectTriggers(message);
+  demandHeat = Math.min(100, demandHeat + triggers.length * HEAT_PER_TRIGGER);
+  // 每輪自然衰減
+  demandHeat = Math.max(0, demandHeat - HEAT_DECAY);
+  return demandHeat;
+}
+
+export function getDemandHeat(): number {
+  return demandHeat;
+}
+
+export function resetDemandHeat(): void {
+  demandHeat = 0;
+}
+
+export function addHeatBonus(bonus: number): void {
+  demandHeat = Math.min(100, demandHeat + bonus);
+}
+
+// ============================================
+// 🔍 關鍵字觸發
 // ============================================
 
 export type LifestyleTrigger = {
@@ -137,7 +136,7 @@ export type LifestyleTrigger = {
   category: string;
   bridgeTopic: string;
   communityFeature: string;
-  sampleBridge: string;  // 橋接話術範例
+  sampleBridge: string;
 };
 
 export const LIFESTYLE_TRIGGERS: LifestyleTrigger[] = [
@@ -145,106 +144,88 @@ export const LIFESTYLE_TRIGGERS: LifestyleTrigger[] = [
     keywords: ['小孩', '學校', '學區', '接送', '幼稚園', '國小', '國中', '上學'],
     category: 'education',
     bridgeTopic: '學區環境',
-    communityFeature: '明星學區、接送方便、親子友善',
-    sampleBridge: '欸，說到小孩上學，附近有個社區的住戶牆在討論學區的事，蠻多家長分享的，要不要看看？'
+    communityFeature: '明星學區、接送方便',
+    sampleBridge: '說到小孩上學，有個社區的家長群超活躍，要不要看看他們怎麼說？'
   },
   {
     keywords: ['上班', '通勤', '好遠', '塞車', '捷運', '公車', '開車', '車位', '停車'],
     category: 'commute',
     bridgeTopic: '通勤便利',
     communityFeature: '捷運站旁、車位充足',
-    sampleBridge: '通勤真的很累人... 對了，有個社區的住戶在討論哪幾棟最安靜又近捷運，要不要參考看看？'
+    sampleBridge: '通勤真的很累人... 有個社區住戶在討論捷運族的真實體驗，蠻值得看的'
   },
   {
     keywords: ['好吵', '噪音', '鄰居', '裝潢', '施工', '隔音', '樓上', '樓下'],
     category: 'noise',
     bridgeTopic: '安靜程度',
-    communityFeature: '一層一戶、管委會嚴格、隔音佳',
-    sampleBridge: '遇到吵的鄰居真的很崩潰... 說到這個，有個社區牆上大家在討論哪幾棟最安靜，要不要去看看？'
+    communityFeature: '一層一戶、隔音佳',
+    sampleBridge: '遇到吵的鄰居真的很崩潰... 有個社區牆在討論哪幾棟最安靜'
   },
   {
     keywords: ['狗', '貓', '寵物', '毛小孩', '養狗', '養貓', '遛狗'],
     category: 'pet',
     bridgeTopic: '寵物友善',
-    communityFeature: '寵物友善、有中庭草皮',
-    sampleBridge: '你有養毛小孩啊！說到這個，有個社區最近在討論中庭能不能遛狗，住戶意見蠻有趣的～'
+    communityFeature: '寵物友善、有中庭',
+    sampleBridge: '有養毛小孩啊！有個社區在討論中庭遛狗的事，住戶意見蠻有趣的～'
   },
   {
     keywords: ['結婚', '訂婚', '懷孕', '生小孩', '搬出去', '獨立', '新婚'],
     category: 'life-change',
     bridgeTopic: '人生新階段',
-    communityFeature: '新婚首購、小家庭適合',
-    sampleBridge: '哇，這是大事耶！恭喜～ 有需要的話，我可以幫你看看哪些社區比較適合新婚小家庭'
+    communityFeature: '新婚首購',
+    sampleBridge: '哇這是大事耶！恭喜～ 有個社區很多新婚小家庭，他們的心得蠻實用的'
   },
   {
     keywords: ['房東', '租約', '租金', '漲價', '押金', '退租', '搬家'],
     category: 'rental',
     bridgeTopic: '租買考量',
-    communityFeature: '首購友善、總價親民',
-    sampleBridge: '租房子就是這樣，錢繳了又不是自己的... 你有在考慮之後買嗎？還是先看看？'
+    communityFeature: '首購友善',
+    sampleBridge: '租房子就是這樣，錢繳了又不是自己的... 你有在考慮買嗎？'
   },
   {
-    keywords: ['好累', '壓力', '煩', '想休息', '加班', '忙'],
+    keywords: ['好累', '壓力', '煩', '想休息', '加班', '忙', '老闆', '主管', '機車'],
     category: 'stress',
     bridgeTopic: '生活品質',
-    communityFeature: '景觀戶、安靜社區',
-    sampleBridge: '辛苦了～ 最近是工作還是生活上的事？有時候就是需要好好休息一下'
+    communityFeature: '景觀戶、飯店式管理',
+    sampleBridge: '辛苦了～ 回家如果像住飯店一樣有人服務，心情真的會好很多'
   },
   {
     keywords: ['漏水', '壁癌', '老舊', '維修', '公設', '電梯', '管理'],
     category: 'quality',
     bridgeTopic: '居住品質',
     communityFeature: '屋齡新、管委會積極',
-    sampleBridge: '房子有問題真的很頭痛... 對了，有個社區牆上住戶在討論管委會處理速度，蠻值得參考的'
+    sampleBridge: '房子有問題真的很頭痛... 有個社區住戶在討論管委會處理速度'
   },
   {
     keywords: ['買菜', '超市', '便利商店', '吃飯', '外送', '公園', '運動'],
     category: 'amenity',
     bridgeTopic: '生活機能',
-    communityFeature: '生活機能佳、近市場',
-    sampleBridge: '對耶，住的地方附近方不方便真的差很多！你現在住的附近機能怎樣？'
+    communityFeature: '生活機能佳',
+    sampleBridge: '住的地方附近方不方便真的差很多！你現在住的地方機能怎樣？'
   },
-  // ============================================
-  // 🆕 情緒類觸發詞（聯想橋接用）
-  // ============================================
   {
     keywords: ['分手', '失戀', '前任', '被甩', '單身', '一個人'],
     category: 'heartbreak',
     bridgeTopic: '療癒空間',
-    communityFeature: '高樓層景觀、安靜獨處',
-    sampleBridge: '心情不好時，如果家裡有個大陽台可以看夜景發呆，真的會好很多... 對了，有個社區住戶在討論景觀療癒這件事'
-  },
-  {
-    keywords: ['老闆', '主管', '機車', '豬隊友', '同事', '被罵', '離職', '想辭職'],
-    category: 'work-stress',
-    bridgeTopic: '回家放鬆',
-    communityFeature: '飯店式管理、有人服務',
-    sampleBridge: '這種時候，回家如果像住飯店一樣有人幫忙收包裹、倒垃圾，心情真的會被救贖耶'
+    communityFeature: '高樓層景觀',
+    sampleBridge: '心情不好時，如果家裡有個大陽台看夜景發呆，真的會好很多...'
   },
   {
     keywords: ['夜景', '陽台', '發呆', '放空', '獨處', '安靜'],
     category: 'healing',
     bridgeTopic: '景觀療癒',
-    communityFeature: '高樓層、大陽台、景觀戶',
-    sampleBridge: '有個地方可以放空真的很重要... 說到這個，有個社區住戶在分享他們的陽台夜景照，超療癒的'
+    communityFeature: '高樓層、大陽台',
+    sampleBridge: '有個地方可以放空真的很重要... 有個社區住戶在分享他們的陽台夜景照'
   },
   {
-    keywords: ['吵架', '家人', '爸媽', '搬出來', '獨立', '自己住'],
-    category: 'independence',
-    bridgeTopic: '獨立空間',
-    communityFeature: '小坪數、首購友善',
-    sampleBridge: '有時候有自己的空間真的很重要... 你有在考慮自己住嗎？'
+    keywords: ['買房', '賣房', '看房', '出價', '斡旋', '物件', '房子', '房價', '坪數', '總價', '預算', '頭期款', '貸款', '仲介'],
+    category: 'real-estate',
+    bridgeTopic: '房產諮詢',
+    communityFeature: '直接進入探勘',
+    sampleBridge: '你在看房啊！有什麼特別在意的嗎？我可以幫你看看'
   }
 ];
 
-// ============================================
-// 🔧 工具函數
-// ============================================
-
-/**
- * 偵測訊息中的觸發關鍵字
- * 優化：優先看最後一輪，沒有才看全體
- */
 export function detectTriggers(message: string): LifestyleTrigger[] {
   const lowerMsg = message.toLowerCase();
   return LIFESTYLE_TRIGGERS.filter(trigger =>
@@ -252,102 +233,12 @@ export function detectTriggers(message: string): LifestyleTrigger[] {
   );
 }
 
-/**
- * 智慧觸發偵測（優先最後一輪，避免抓太多）
- */
-export function detectTriggersSmartly(
-  lastUserMsg: string, 
-  allText: string
-): LifestyleTrigger[] {
-  // 先看最後一句
-  let triggers = detectTriggers(lastUserMsg);
-  
-  // 如果最後一句沒觸發，才看整體
-  if (triggers.length === 0) {
-    triggers = detectTriggers(allText);
-  }
-  
-  // 只取前 2 個，避免混亂
-  return triggers.slice(0, 2);
-}
-
-/**
- * 計算對話輪數
- */
-export function countConversationRounds(messages: { role: string }[]): number {
-  return messages.filter(m => m.role === 'user').length;
-}
-
-/**
- * 判斷用戶訊息風格（用於情緒鏡像）
- */
-export function detectMessageStyle(message: string): 'brief' | 'expressive' | 'neutral' {
-  const hasEmoji = /[\u{1F300}-\u{1F9FF}]/u.test(message);
-  const length = message.length;
-  
-  if (length < 10 && !hasEmoji) return 'brief';
-  if (hasEmoji || length > 30) return 'expressive';
-  return 'neutral';
-}
-
 // ============================================
-// 🎯 意圖判斷（核心優化）
-// ============================================
-
-export type ConversationIntent = 'just_chat' | 'explore_community' | 'real_estate';
-
-/**
- * 判斷用戶意圖
- * - just_chat：純閒聊，不推薦任何東西
- * - explore_community：有生活痛點，可以推社區牆
- * - real_estate：直接問買房，可以跳過破冰
- */
-export function inferIntent(
-  messages: { role: string; content: string }[],
-  justChatMode: boolean = false
-): ConversationIntent {
-  // 如果用戶選了「只是來聊聊」，除非主動提房產，否則一直是 just_chat
-  if (justChatMode) {
-    const lastUser = messages.filter(m => m.role === 'user').pop();
-    if (!lastUser) return 'just_chat';
-    const text = lastUser.content;
-    const realEstateKeywords = ['買房', '賣房', '看房', '出價', '斡旋', '物件', '房子', '房價', '坪數', '總價', '預算'];
-    if (realEstateKeywords.some(k => text.includes(k))) {
-      return 'real_estate';
-    }
-    return 'just_chat';
-  }
-  
-  const lastUser = messages.filter(m => m.role === 'user').pop();
-  if (!lastUser) return 'just_chat';
-  const text = lastUser.content;
-
-  // 1. 明確的買賣/看房字眼 → 直接 real_estate
-  const realEstateKeywords = ['買房', '賣房', '看房', '出價', '斡旋', '物件', '房子', '房價', '坪數', '總價', '預算', '頭期款', '貸款', '仲介'];
-  if (realEstateKeywords.some(k => text.includes(k))) {
-    return 'real_estate';
-  }
-
-  // 2. 有生活觸發詞 → explore_community
-  const lifestyle = detectTriggers(text);
-  if (lifestyle.length > 0) {
-    return 'explore_community';
-  }
-
-  // 3. 其他 → just_chat
-  return 'just_chat';
-}
-
-// ============================================
-// 🏠 社區牆候選（半規則化推薦）
+// 🏠 社區牆候選
 // ============================================
 
 export type CommunityCandidate = { name: string; topic: string };
 
-/**
- * 根據觸發類別，選擇對應的社區牆候選
- * 由程式控制推薦哪個社區，AI 只負責怎麼講
- */
 export function pickCommunityCandidate(trigger: LifestyleTrigger): CommunityCandidate | null {
   switch (trigger.category) {
     case 'education':
@@ -363,129 +254,103 @@ export function pickCommunityCandidate(trigger: LifestyleTrigger): CommunityCand
     case 'rental':
       return { name: '遠雄二代宅', topic: '租不如買？算給你看' };
     case 'stress':
-      return { name: '天空之城', topic: '高樓層景觀真的能療癒嗎？' };
+      return { name: '遠雄二代宅', topic: '飯店式管理真的有差嗎？' };
     case 'quality':
       return { name: '景安和院', topic: '管委會處理速度實測' };
     case 'amenity':
       return { name: '美河市', topic: '生活機能實際體驗分享' };
     case 'heartbreak':
-      return { name: '天空之城', topic: '一個人住的療癒空間' };
-    case 'work-stress':
-      return { name: '遠雄二代宅', topic: '飯店式管理真的有差嗎？' };
     case 'healing':
-      return { name: '松濤苑', topic: '住戶分享的陽台夜景照' };
-    case 'independence':
-      return { name: '華固名邸', topic: '小坪數獨立生活心得' };
+      return { name: '天空之城', topic: '高樓層景觀真的能療癒嗎？' };
+    case 'real-estate':
+      return { name: '美河市', topic: '最近成交價行情分享' };
     default:
       return null;
   }
 }
 
-/**
- * 產生增強版 System Prompt
- */
+// ============================================
+// 🔧 工具函數
+// ============================================
+
+export function countConversationRounds(messages: { role: string }[]): number {
+  return messages.filter(m => m.role === 'user').length;
+}
+
+export function detectMessageStyle(message: string): 'brief' | 'expressive' | 'neutral' {
+  const hasEmoji = /[\u{1F300}-\u{1F9FF}]/u.test(message);
+  const length = message.length;
+  
+  if (length < 10 && !hasEmoji) return 'brief';
+  if (hasEmoji || length > 30) return 'expressive';
+  return 'neutral';
+}
+
+// ============================================
+// 🎯 構建增強版 Prompt
+// ============================================
+
 export function buildEnhancedPrompt(
   triggers: LifestyleTrigger[],
   conversationRounds: number,
   messageStyle: 'brief' | 'expressive' | 'neutral',
-  intent: ConversationIntent = 'just_chat',
-  recentlyRecommended: boolean = false
+  heat: number
 ): string {
   let prompt = MAIMAI_SYSTEM_PROMPT;
   
   // ============================================
-  // 意圖導向的對話策略
+  // 根據熱度決定策略
   // ============================================
-  if (intent === 'just_chat') {
-    prompt += `\n\n【當前意圖：純閒聊】
-使用者只是想聊天，不要主動提房子或社區牆。
-專心陪聊、同理、當個好朋友。除非對方自己提到買房。`;
-  } else if (intent === 'explore_community') {
-    prompt += `\n\n【當前意圖：探索需求】
-用戶提到了生活痛點，可以用 1 句軟橋接把話題慢慢帶到「住哪裡比較適合」。
-可選擇性推薦 1 個社區牆，但不要提物件。`;
-  } else if (intent === 'real_estate') {
-    prompt += `\n\n【當前意圖：房產諮詢】
-使用者已經主動提到房產議題，可以直接進入探勘期。
-先問 1-2 個關於生活需求的問題，再用社區牆卡片輔助。`;
-  }
-  
-  // ============================================
-  // 情緒驗證緩衝區（所有情況都適用）
-  // ============================================
-  prompt += `\n\n【回應結構：溫暖同理】
-無論用戶說什麼，你的回應必須：
-1. 「情緒驗證」(30%)：先同理他的感受
-   例：「真的假的！」「天啊這太崩潰了」「辛苦你了～」
-2. 「價值引導」(70%)：接著才延續話題或帶入居住體驗
-
-絕對不要一開頭就講道理或給建議。`;
-  
-  // ============================================
-  // 對話階段（但 real_estate 意圖可跳過破冰）
-  // ============================================
-  if (intent === 'real_estate') {
-    prompt += `\n\n【當前階段：探勘期（跳過破冰）】
-用戶主動問房產，不用裝作沒聽到。
-先同理他的需求，問 1-2 個生活相關問題，再推薦社區牆。`;
+  if (heat >= 75) {
+    prompt += `\n\n【🔥 收網模式 - 熱度 ${heat}】
+用戶需求訊號已經很強！這輪一定要推社區牆。
+如果用戶回應正向（說「有興趣」「想看」之類），下一輪可以推物件：[[物件:社區名稱:物件ID]]
+用「剛好那個社區最近有一間在賣」這種自然口吻。`;
+  } else if (heat >= 45) {
+    prompt += `\n\n【⚡ 強制引導模式 - 熱度 ${heat}】
+用戶需求熱度已達門檻，必須在這輪或下一輪自然帶出社區牆。
+用「這讓我想起某個社區...」開頭，絕對不要生硬。
+在回答最後加上 [[社區牆:社區名稱:討論話題]]`;
   } else if (conversationRounds < 5) {
-    prompt += `\n\n【當前階段：破冰期】
-現在還在前 5 輪，專心閒聊、陪伴、同理就好。
-完全不要提到房子、社區或任何推薦。`;
-  } else if (conversationRounds < 8) {
-    prompt += `\n\n【當前階段：探勘期】
-已經建立一些信任，可以開始留意對方的生活痛點。
-但不急著轉折，繼續當個好聽眾。`;
+    prompt += `\n\n【☕ 純陪聊模式 - 熱度 ${heat}】
+現在還在破冰期，專心聊天、同理、當好朋友。
+可以偶爾撒「居住生活小餌」，但不要推薦任何東西。`;
   } else {
-    prompt += `\n\n【當前階段：可橋接】
-對話已經進行一段時間，可以用「聯想橋接」自然帶入社區話題。`;
+    prompt += `\n\n【💬 探勘模式 - 熱度 ${heat}】
+已經聊了一陣子，可以開始撒「居住生活小餌」。
+例如用戶說加班累 → 「真的耶... 我認識好幾個住捷運旁的，說下班回家就解脫了」`;
   }
   
   // ============================================
-  // 觸發詞處理（只取第一個主題）
+  // 觸發詞處理
   // ============================================
   const mainTrigger = triggers[0];
-  if (mainTrigger && intent !== 'just_chat') {
+  if (mainTrigger) {
     const candidate = pickCommunityCandidate(mainTrigger);
     
     prompt += `\n\n【偵測到的需求訊號】
-主題：${mainTrigger.category}
-橋接範例：${mainTrigger.sampleBridge}
-
-⚠️ 規則：同一則回答中，最多只做 1 次橋接，不要同時聊多個話題。`;
+類型：${mainTrigger.category}
+橋接話術：${mainTrigger.sampleBridge}`;
     
-    // 提供社區牆候選
-    if (candidate && !recentlyRecommended) {
-      prompt += `\n\n【系統提供的社區牆建議】
-若要推薦社區牆，請使用：
-社區名稱：${candidate.name}
-討論主題：${candidate.topic}
-在回答最後加上：[[社區牆:${candidate.name}:${candidate.topic}]]
-
-⚠️ 最多推薦 1 個，不要硬推。`;
+    if (candidate && heat >= 45) {
+      prompt += `\n\n【系統建議的社區牆】
+社區：${candidate.name}
+標題：${candidate.topic}
+請在回答最後加上：[[社區牆:${candidate.name}:${candidate.topic}]]`;
     }
-  }
-  
-  // ============================================
-  // 推薦頻率限制
-  // ============================================
-  if (recentlyRecommended) {
-    prompt += `\n\n【推薦冷卻中】
-剛剛 3 輪內已經推薦過社區牆，先不要再推。
-除非使用者問「還有別的社區嗎？」才可以再推薦。`;
   }
   
   // ============================================
   // 風格調整
   // ============================================
   const styleHint = {
-    brief: '【風格提示】用戶訊息簡短，請保持輕鬆精簡，不要囉嗦。',
-    expressive: '【風格提示】用戶表達豐富，可以用更溫暖、朋友般的口吻回應。',
+    brief: '\n\n【風格】用戶訊息簡短，你也保持精簡。',
+    expressive: '\n\n【風格】用戶表達豐富，用更溫暖的口吻回應。',
     neutral: ''
   }[messageStyle];
   
   if (styleHint) {
-    prompt += `\n\n${styleHint}`;
+    prompt += styleHint;
   }
   
   return prompt;

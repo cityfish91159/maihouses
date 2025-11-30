@@ -1,9 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
 import { Send, Sparkles, MessageCircle } from 'lucide-react';
-import { postLLM, setJustChatMode, markRecommendationMade } from '../../../services/ai';
+import { postLLM, setJustChatMode } from '../../../services/ai';
 import MascotMaiMai from '../../../components/MascotMaiMai';
 import ChatMessage from '../components/ChatMessage';
-import { QUICK_TAGS_LIFESTYLE, QUICK_TAGS_EXPLORE, countConversationRounds } from '../../../constants/maimai-persona';
+import { QUICK_TAGS_LIFESTYLE, QUICK_TAGS_EXPLORE } from '../../../constants/maimai-persona';
 
 type ChatMsg = { role: 'user' | 'assistant'; content: string; timestamp: string };
 
@@ -23,16 +23,11 @@ export default function SmartAsk() {
         }
     }, [messages]);
 
-    // 檢查 AI 回覆是否包含社區牆卡片
-    const checkForCommunityWallCard = (content: string): boolean => {
-        return /\[\[社區牆:[^:]+:[^\]]+\]\]/.test(content);
-    };
-
     const send = async (text = input) => {
         if (!text.trim() || loading) return;
 
         // ============================================
-        // 優化：追蹤「只是來聊聊」模式
+        // 優化：追蹤「只是來聊聊」模式（會重設熱度）
         // ============================================
         if (text === '只是來聊聊') {
             setJustChatMode(true);
@@ -61,13 +56,8 @@ export default function SmartAsk() {
                 }
             );
             
-            // ============================================
-            // 優化：追蹤社區牆推薦（用於冷卻計算）
-            // ============================================
-            if (fullResponse && checkForCommunityWallCard(fullResponse)) {
-                const currentRound = countConversationRounds([...messages, userMsg]);
-                markRecommendationMade(currentRound);
-            }
+            // 熱度系統在 ai.ts 中自動追蹤，不需要額外處理
+            void fullResponse; // 使用變數避免 lint 警告
         } catch (e) {
             console.error(e);
             setMessages(prev => {
