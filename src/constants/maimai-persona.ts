@@ -1610,3 +1610,299 @@ export function shouldOfferSingleStartPoint(
 ): boolean {
   return (recommendationPhase === 'pave' || recommendationPhase === 'card') && topCategory !== null;
 }
+
+// ============================================
+// 🏘️ 需求→社區對照表（v5.6 精準鋪墊）
+// ============================================
+
+export const NEED_COMMUNITY_MAP: Record<string, { communities: string[]; features: string[] }> = {
+  'commute': {
+    communities: ['美河市', '合康雲極', '遠雄左岸', '南港車站共構'],
+    features: ['捷運共構', '交通便利', '通勤省時']
+  },
+  'education': {
+    communities: ['國泰森林觀道', '潤泰敦仁', '信義計畫區'],
+    features: ['明星學區', '學校近', '教育資源']
+  },
+  'noise': {
+    communities: ['松濤苑', '華固名邸', '大安森林公園周邊'],
+    features: ['安靜環境', '棟距大', '隔音好']
+  },
+  'pet': {
+    communities: ['大安區寵物友善社區', '美河市', '中和區部分社區'],
+    features: ['寵物友善', '有遛狗區', '管委會開放']
+  },
+  'rental': {
+    communities: ['美河市', '三重新案', '淡水新市鎮'],
+    features: ['租售比高', '首購友善', '房價相對親民']
+  },
+  'quality': {
+    communities: ['華固名邸', '潤泰敦仁', '陶朱隱園'],
+    features: ['建材頂級', '管理嚴謹', '品牌建商']
+  },
+  'life-change': {
+    communities: ['國泰森林觀道', '新婚首購社區', '三房格局為主'],
+    features: ['適合小家庭', '格局方正', '生活機能佳']
+  }
+};
+
+export function getSuggestedCommunities(category: TagCategory | null): { communities: string[]; features: string[] } | null {
+  if (!category) return null;
+  return NEED_COMMUNITY_MAP[category] || null;
+}
+
+// ============================================
+// 😢 負面情緒偵測（v5.6 適時關心）
+// ============================================
+
+const NEGATIVE_EMOTION_PATTERNS = [
+  /好累/, /好煩/, /崩潰/, /不想/, /算了/, /沒錢/, /買不起/,
+  /壓力好大/, /心情不好/, /很煩/, /煩死/, /受不了/, /想放棄/,
+  /沒意思/, /無聊/, /低落/, /沮喪/, /失望/, /難過/, /傷心/
+];
+
+export function detectNegativeEmotion(message: string): boolean {
+  return NEGATIVE_EMOTION_PATTERNS.some(p => p.test(message));
+}
+
+export function generateCareResponse(): string {
+  const responses: string[] = [
+    '聽起來最近壓力蠻大的... 要不要聊聊？不一定要聊房子的事 ☕',
+    '欸，聽你這樣說我有點擔心你欸... 還好嗎？',
+    '辛苦了～有時候就是會這樣，要不要先放鬆一下？',
+    '這種心情我懂... 先不管房子的事，有什麼想說的嗎？',
+    '嘿，你還好嗎？需要聊聊嗎？我在這裡 💙'
+  ];
+  const idx = Math.floor(Math.random() * responses.length);
+  const response = responses[idx];
+  if (response === undefined) {
+    return '辛苦了～有什麼想聊的嗎？';
+  }
+  return response;
+}
+
+// ============================================
+// 📊 購買準備度追蹤（v5.6 內部指標）
+// ============================================
+
+export interface BuyingReadiness {
+  hasArea: boolean;           // 知道想住哪
+  hasBudget: boolean;         // 知道預算
+  hasTimeline: boolean;       // 知道什麼時候要買
+  hasViewedCommunity: boolean; // 看過社區牆
+  hasViewedListing: boolean;   // 看過物件
+  hasFamilyNeeds: boolean;    // 有家庭需求（小孩/寵物）
+}
+
+let buyingReadiness: BuyingReadiness = {
+  hasArea: false,
+  hasBudget: false,
+  hasTimeline: false,
+  hasViewedCommunity: false,
+  hasViewedListing: false,
+  hasFamilyNeeds: false
+};
+
+export function updateBuyingReadiness(message: string): void {
+  const msg = message.toLowerCase();
+  
+  // 區域偏好
+  if (/住.*?區|想住|偏好|喜歡.*區|在.*找/.test(msg)) {
+    buyingReadiness.hasArea = true;
+  }
+  
+  // 預算
+  if (/預算|萬|千萬|頭期|貸款/.test(msg)) {
+    buyingReadiness.hasBudget = true;
+  }
+  
+  // 時間線
+  if (/明年|今年|最近|急|不急|慢慢|什麼時候/.test(msg)) {
+    buyingReadiness.hasTimeline = true;
+  }
+  
+  // 家庭需求
+  if (/小孩|孩子|寵物|狗|貓|父母|長輩/.test(msg)) {
+    buyingReadiness.hasFamilyNeeds = true;
+  }
+  
+  saveBuyingReadinessToStorage();
+}
+
+export function markViewedCommunity(): void {
+  buyingReadiness.hasViewedCommunity = true;
+  saveBuyingReadinessToStorage();
+}
+
+export function markViewedListing(): void {
+  buyingReadiness.hasViewedListing = true;
+  saveBuyingReadinessToStorage();
+}
+
+export function getBuyingReadiness(): BuyingReadiness {
+  return buyingReadiness;
+}
+
+export function getBuyingReadinessScore(): number {
+  let score = 0;
+  if (buyingReadiness.hasArea) score++;
+  if (buyingReadiness.hasBudget) score++;
+  if (buyingReadiness.hasTimeline) score++;
+  if (buyingReadiness.hasViewedCommunity) score++;
+  if (buyingReadiness.hasViewedListing) score++;
+  if (buyingReadiness.hasFamilyNeeds) score++;
+  return score;
+}
+
+export function isReadyToBook(): boolean {
+  // 達成 4 項以上就可以問是否預約看房
+  return getBuyingReadinessScore() >= 4;
+}
+
+export function saveBuyingReadinessToStorage(): void {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('maimai_buying_readiness', JSON.stringify(buyingReadiness));
+  }
+}
+
+export function loadBuyingReadinessFromStorage(): void {
+  if (typeof window !== 'undefined') {
+    const stored = localStorage.getItem('maimai_buying_readiness');
+    if (stored) {
+      try {
+        buyingReadiness = { ...buyingReadiness, ...JSON.parse(stored) };
+      } catch {
+        // 保持預設
+      }
+    }
+  }
+}
+
+// ============================================
+// 🎮 輕量小測驗（v5.6 增加黏性）
+// ============================================
+
+export interface QuizQuestion {
+  id: string;
+  question: string;
+  options: { key: string; text: string; category: TagCategory }[];
+  followUp: string;
+}
+
+export const MINI_QUIZZES: QuizQuestion[] = [
+  {
+    id: 'priority',
+    question: '來玩個小測驗！買房你最在意什麼？',
+    options: [
+      { key: 'A', text: '通勤時間', category: 'commute' },
+      { key: 'B', text: '學區品質', category: 'education' },
+      { key: 'C', text: '環境安靜', category: 'noise' },
+      { key: 'D', text: '價格實惠', category: 'rental' }
+    ],
+    followUp: '果然是{type}派！那你應該會喜歡這幾個社區...'
+  },
+  {
+    id: 'lifestyle',
+    question: '如果週末在家，你最常做什麼？',
+    options: [
+      { key: 'A', text: '追劇耍廢', category: 'noise' },
+      { key: 'B', text: '健身運動', category: 'amenity' },
+      { key: 'C', text: '陪小孩玩', category: 'education' },
+      { key: 'D', text: '遛狗散步', category: 'pet' }
+    ],
+    followUp: '原來如此！那選房子的時候{feature}對你來說很重要喔～'
+  },
+  {
+    id: 'dealbreaker',
+    question: '選房子最不能接受什麼？',
+    options: [
+      { key: 'A', text: '通勤超過 1 小時', category: 'commute' },
+      { key: 'B', text: '樓上吵死人', category: 'noise' },
+      { key: 'C', text: '管理費超貴', category: 'rental' },
+      { key: 'D', text: '沒有電梯', category: 'quality' }
+    ],
+    followUp: '這點超重要！我幫你記住了，推薦社區的時候會避開這個問題 📝'
+  }
+];
+
+let hasShownQuiz = false;
+
+export function shouldShowQuiz(chitchatRounds: number): boolean {
+  // 聊了 4-6 輪，隨機決定是否出題
+  if (hasShownQuiz) return false;
+  if (chitchatRounds < 4 || chitchatRounds > 6) return false;
+  return Math.random() > 0.6; // 40% 機率出題
+}
+
+export function getRandomQuiz(): QuizQuestion {
+  const idx = Math.floor(Math.random() * MINI_QUIZZES.length);
+  const quiz = MINI_QUIZZES[idx];
+  hasShownQuiz = true;
+  if (quiz === undefined) {
+    // fallback to first quiz
+    const firstQuiz = MINI_QUIZZES[0];
+    if (firstQuiz === undefined) {
+      // 極端情況：返回預設測驗
+      return {
+        id: 'default',
+        question: '買房你最在意什麼？',
+        options: [
+          { key: 'A', text: '通勤時間', category: 'commute' },
+          { key: 'B', text: '學區品質', category: 'education' },
+          { key: 'C', text: '環境安靜', category: 'noise' },
+          { key: 'D', text: '價格實惠', category: 'rental' }
+        ],
+        followUp: '了解！'
+      };
+    }
+    return firstQuiz;
+  }
+  return quiz;
+}
+
+export function processQuizAnswer(quizId: string, answer: string): { category: TagCategory; response: string } | null {
+  const quiz = MINI_QUIZZES.find(q => q.id === quizId);
+  if (!quiz) return null;
+  
+  const selected = quiz.options.find(o => o.key.toLowerCase() === answer.toLowerCase());
+  if (!selected) return null;
+  
+  // 累積對應標籤
+  accumulateTags(selected.text);
+  
+  return {
+    category: selected.category,
+    response: quiz.followUp
+      .replace('{type}', selected.text)
+      .replace('{feature}', selected.text)
+  };
+}
+
+export function resetQuizState(): void {
+  hasShownQuiz = false;
+}
+
+// ============================================
+// 🎲 隨機生活錨點觸發（v5.6 避免機械感）
+// ============================================
+
+let seedThreshold: number | null = null;
+
+export function shouldTriggerLifeAnchor(chitchatRounds: number, timing: TimingQuality): boolean {
+  // 第一次呼叫時隨機決定閾值（3-7 輪）
+  if (seedThreshold === null) {
+    seedThreshold = 3 + Math.floor(Math.random() * 5);
+  }
+  
+  // 達到閾值 + 時機不差 → 觸發
+  if (chitchatRounds >= seedThreshold && timing !== 'bad') {
+    seedThreshold = null; // 重置，下次重新隨機
+    return true;
+  }
+  
+  return false;
+}
+
+export function resetSeedThreshold(): void {
+  seedThreshold = null;
+}

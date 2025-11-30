@@ -34,7 +34,18 @@ import {
   loadUserProfileFromStorage,
   getWarmthLevel,
   getTimePrompt,
-  generatePersonalizedGreeting
+  generatePersonalizedGreeting,
+  // v5.6 新增（溫暖留客）
+  detectNegativeEmotion,
+  generateCareResponse,
+  updateBuyingReadiness,
+  loadBuyingReadinessFromStorage,
+  getBuyingReadinessScore,
+  isReadyToBook,
+  getSuggestedCommunities,
+  shouldShowQuiz,
+  getRandomQuiz,
+  shouldTriggerLifeAnchor
 } from "../constants/maimai-persona";
 
 type ChatMessage = { role: "system" | "user" | "assistant"; content: string };
@@ -43,18 +54,18 @@ const SYS_ZEN =
   "你是邁邁。使用者啟用安靜模式，現在只想被陪伴。100% 傾聽與同理，回覆 1–2 句；嚴禁主動推薦任何房源/社區/廣告。";
 
 // ============================================
-// 「只是來聊聊」模式（真正的純陪聊）
+// 「只是來聊聊」模式 → 改為「低壓力模式」
 // ============================================
 let justChatMode = false;
 
-// 純陪聊模式的 System Prompt
+// 低壓力模式的 System Prompt（v5.6 優化：用戶主動問還是可以回答）
 const SYS_JUST_CHAT = `你是邁邁，一個住在這城市 20 年的熱心鄰居。
 
-【重要】使用者選擇「只是來聊聊」，現在進入純陪聊模式：
-- 100% 專心聊天，不提任何房地產話題
-- 就算用戶提到租金、通勤、搬家，也只是同理，不引導
+【重要】使用者選擇「只是來聊聊」，現在進入低壓力模式：
+- 主要陪用戶聊天，不主動推薦任何房產
+- 如果用戶「主動」問房子相關問題，可以友善回答
+- 讓用戶掌控對話節奏，不要引導到買房話題
 - 像朋友一樣聊生活、工作、心情
-- 直到用戶「主動」問買房/租房/看房，才退出這個模式
 
 【說話風格】
 - 台灣口語、親切自然
@@ -62,7 +73,7 @@ const SYS_JUST_CHAT = `你是邁邁，一個住在這城市 20 年的熱心鄰�
 - 回覆 1-3 句
 - 不當句點王
 
-你現在就是「純聊天的朋友」，不是房產顧問。`;
+你現在是「隨時可以聊房子的朋友」，但不會主動推銷。`;
 
 export function setJustChatMode(enabled: boolean): void {
   justChatMode = enabled;
@@ -100,9 +111,20 @@ function composeSystemPrompt(recentMessages?: ChatMessage[]): string {
   const lastUserMsg = recentMessages?.filter(m => m.role === 'user').pop()?.content || '';
   
   // ============================================
-  // v5.5：載入用戶生活檔案
+  // v5.5：載入用戶生活檔案 + v5.6：載入購買準備度
   // ============================================
   loadUserProfileFromStorage();
+  loadBuyingReadinessFromStorage();
+  
+  // ============================================
+  // v5.6：負面情緒偵測（優先處理）
+  // ============================================
+  if (detectNegativeEmotion(lastUserMsg)) {
+    const careResponse = generateCareResponse();
+    return SYS_JUST_CHAT + `\n\n【🤗 情緒關懷模式】
+偵測到用戶可能心情不好，請優先關心，不要推薦任何東西！
+建議回應風格：「${careResponse}」`;
+  }
   
   // ============================================
   // v5.2：純陪聊模式檢查
@@ -131,9 +153,10 @@ function composeSystemPrompt(recentMessages?: ChatMessage[]): string {
   }
   
   // ============================================
-  // v5.5：提取用戶生活資訊
+  // v5.5：提取用戶生活資訊 + v5.6：更新購買準備度
   // ============================================
   extractUserProfile(lastUserMsg);
+  updateBuyingReadiness(lastUserMsg);
   
   // ============================================
   // v5.0：標籤累積系統
@@ -284,6 +307,48 @@ ${FEW_SHOT_SCRIPTS.explicitToListing}`;
     profilePrompt += `\n💡 可以自然地提到這些資訊，讓用戶感受到「被記住」`;
   }
 
+  // ============================================
+  // v5.6：精準社區推薦
+  // ============================================
+  let communityPrompt = '';
+  const suggestedCommunities = getSuggestedCommunities(topCategory);
+  if (suggestedCommunities && recommendationPhase === 'pave') {
+    communityPrompt = `\n\n【🏘️ 推薦社區參考】
+根據用戶需求（${topCategory}），可以提到：
+- 社區：${suggestedCommunities.communities.slice(0, 2).join('、')}
+- 特色：${suggestedCommunities.features.join('、')}
+💡 鋪墊時自然帶入這些社區名稱`;
+  }
+
+  // ============================================
+  // v5.6：購買準備度檢查
+  // ============================================
+  let readinessPrompt = '';
+  const readinessScore = getBuyingReadinessScore();
+  if (isReadyToBook()) {
+    readinessPrompt = `\n\n【🎯 購買準備度：${readinessScore}/6 - 可以邀約看房！】
+用戶已具備足夠資訊，可以自然地問：
+「感覺你已經看得差不多了，要不要預約實際去看看？」`;
+  } else if (readinessScore >= 2) {
+    readinessPrompt = `\n\n【📊 購買準備度：${readinessScore}/6】
+還需要了解更多，可以自然地問一些問題填補資訊`;
+  }
+
+  // ============================================
+  // v5.6：小測驗觸發
+  // ============================================
+  let quizPrompt = '';
+  if (shouldShowQuiz(chitchatRounds)) {
+    const quiz = getRandomQuiz();
+    if (quiz && quiz.options.length >= 4) {
+      quizPrompt = `\n\n【🎮 可以玩個小測驗】
+「${quiz.question}」
+A) ${quiz.options[0]?.text ?? ''}  B) ${quiz.options[1]?.text ?? ''}
+C) ${quiz.options[2]?.text ?? ''}  D) ${quiz.options[3]?.text ?? ''}
+💡 這樣可以自然了解用戶偏好，也增加互動樂趣`;
+    }
+  }
+
   // 情緒調整（根據 localStorage mood）
   const tone =
     mood === "stress"
@@ -298,9 +363,9 @@ ${FEW_SHOT_SCRIPTS.explicitToListing}`;
     : "";
 
   // Debug 資訊（生產環境可移除）
-  const debugInfo = `\n\n[DEBUG] 狀態：${userState} | 情緒：${emotionalState} | 階段：${recommendationPhase} | 標籤：${topCategory || '無'} | 閒聊輪數：${chitchatRounds} | 溫暖度：${warmthStrategy.level}`;
+  const debugInfo = `\n\n[DEBUG] 狀態：${userState} | 情緒：${emotionalState} | 階段：${recommendationPhase} | 標籤：${topCategory || '無'} | 閒聊輪數：${chitchatRounds} | 溫暖度：${warmthStrategy.level} | 準備度：${readinessScore}/6`;
 
-  return basePrompt + warmthPrompt + timePrompt + profilePrompt + tone + memory + debugInfo;
+  return basePrompt + warmthPrompt + timePrompt + profilePrompt + communityPrompt + readinessPrompt + quizPrompt + tone + memory + debugInfo;
 }
 
 export async function postLLM(
