@@ -1,9 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
 import { Send, Sparkles, MessageCircle } from 'lucide-react';
-import { postLLM } from '../../../services/ai';
+import { postLLM, setJustChatMode, markRecommendationMade } from '../../../services/ai';
 import MascotMaiMai from '../../../components/MascotMaiMai';
 import ChatMessage from '../components/ChatMessage';
-import { QUICK_TAGS_LIFESTYLE, QUICK_TAGS_EXPLORE } from '../../../constants/maimai-persona';
+import { QUICK_TAGS_LIFESTYLE, QUICK_TAGS_EXPLORE, countConversationRounds } from '../../../constants/maimai-persona';
 
 type ChatMsg = { role: 'user' | 'assistant'; content: string; timestamp: string };
 
@@ -23,8 +23,20 @@ export default function SmartAsk() {
         }
     }, [messages]);
 
+    // 檢查 AI 回覆是否包含社區牆卡片
+    const checkForCommunityWallCard = (content: string): boolean => {
+        return /\[\[社區牆:[^:]+:[^\]]+\]\]/.test(content);
+    };
+
     const send = async (text = input) => {
         if (!text.trim() || loading) return;
+
+        // ============================================
+        // 優化：追蹤「只是來聊聊」模式
+        // ============================================
+        if (text === '只是來聊聊') {
+            setJustChatMode(true);
+        }
 
         const userMsg: ChatMsg = { role: 'user', content: text.trim(), timestamp: new Date().toISOString() };
         setMessages(prev => [...prev, userMsg]);
@@ -35,7 +47,7 @@ export default function SmartAsk() {
         setMessages(prev => [...prev, assistantMsg]);
 
         try {
-            await postLLM(
+            const fullResponse = await postLLM(
                 [...messages, userMsg],
                 (chunk) => {
                     setMessages(prev => {
@@ -48,6 +60,14 @@ export default function SmartAsk() {
                     });
                 }
             );
+            
+            // ============================================
+            // 優化：追蹤社區牆推薦（用於冷卻計算）
+            // ============================================
+            if (fullResponse && checkForCommunityWallCard(fullResponse)) {
+                const currentRound = countConversationRounds([...messages, userMsg]);
+                markRecommendationMade(currentRound);
+            }
         } catch (e) {
             console.error(e);
             setMessages(prev => {

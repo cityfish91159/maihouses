@@ -1,16 +1,44 @@
 import { isQuietActiveFromStorage } from "../context/QuietModeContext";
 import { loadProfile } from "../stores/profileStore";
 import { 
-  detectTriggers, 
+  detectTriggersSmartly, 
   buildEnhancedPrompt, 
   countConversationRounds, 
-  detectMessageStyle 
+  detectMessageStyle,
+  inferIntent,
+  type ConversationIntent
 } from "../constants/maimai-persona";
 
 type ChatMessage = { role: "system" | "user" | "assistant"; content: string };
 
 const SYS_ZEN =
   "你是邁邁。使用者啟用安靜模式，現在只想被陪伴。100% 傾聽與同理，回覆 1–2 句；嚴禁主動推薦任何房源/社區/廣告。";
+
+// ============================================
+// 推薦冷卻追蹤（避免連續轟炸社區牆卡片）
+// ============================================
+let lastRecommendationRound = -10;
+
+function checkRecentlyRecommended(currentRound: number): boolean {
+  return (currentRound - lastRecommendationRound) < 3;
+}
+
+export function markRecommendationMade(currentRound: number): void {
+  lastRecommendationRound = currentRound;
+}
+
+// ============================================
+// 「只是來聊聊」模式追蹤
+// ============================================
+let justChatMode = false;
+
+export function setJustChatMode(enabled: boolean): void {
+  justChatMode = enabled;
+}
+
+export function isJustChatMode(): boolean {
+  return justChatMode;
+}
 
 function composeSystemPrompt(recentMessages?: ChatMessage[]): string {
   const isZen = isQuietActiveFromStorage();
@@ -26,8 +54,10 @@ function composeSystemPrompt(recentMessages?: ChatMessage[]): string {
   const allText = recentMessages?.map(m => m.content).join(' ') || '';
   const lastUserMsg = recentMessages?.filter(m => m.role === 'user').pop()?.content || '';
   
-  // 偵測觸發關鍵字
-  const triggers = detectTriggers(allText);
+  // ============================================
+  // 優化 1：使用智慧觸發偵測（優先最後一輪）
+  // ============================================
+  const triggers = detectTriggersSmartly(lastUserMsg, allText);
   
   // 計算對話輪數
   const rounds = countConversationRounds(recentMessages || []);
@@ -35,8 +65,18 @@ function composeSystemPrompt(recentMessages?: ChatMessage[]): string {
   // 偵測用戶訊息風格
   const style = detectMessageStyle(lastUserMsg);
   
-  // 使用增強版 prompt（整合五份意見）
-  let basePrompt = buildEnhancedPrompt(triggers, rounds, style);
+  // ============================================
+  // 優化 2：意圖判斷
+  // ============================================
+  const intent: ConversationIntent = inferIntent(recentMessages || [], justChatMode);
+  
+  // ============================================
+  // 優化 3：推薦冷卻檢查
+  // ============================================
+  const recentlyRecommended = checkRecentlyRecommended(rounds);
+  
+  // 使用增強版 prompt（整合所有優化）
+  let basePrompt = buildEnhancedPrompt(triggers, rounds, style, intent, recentlyRecommended);
 
   // 情緒調整
   const tone =
@@ -51,7 +91,12 @@ function composeSystemPrompt(recentMessages?: ChatMessage[]): string {
     ? `\n【用戶記憶】使用者曾提到在意：${tags.join("、")}。可在相關話題出現時輕柔承接，但不主動提起。` 
     : "";
 
-  return basePrompt + tone + memory;
+  // 「只是來聊聊」模式額外提醒
+  const justChatReminder = justChatMode 
+    ? "\n【特別提醒】使用者一開始選擇『只是來聊聊』，除非對方主動提到買房/賣房/社區，否則請不要主動推薦社區牆或物件。"
+    : "";
+
+  return basePrompt + tone + memory + justChatReminder;
 }
 
 export async function postLLM(
