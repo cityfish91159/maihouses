@@ -1,25 +1,29 @@
 import { isQuietActiveFromStorage } from "../context/QuietModeContext";
 import { loadProfile } from "../stores/profileStore";
 import { 
-  detectTriggers, 
   buildEnhancedPrompt, 
-  countConversationRounds, 
   detectMessageStyle,
-  updateDemandHeat,
-  getDemandHeat,
-  addHeatBonus,
-  resetDemandHeat,
   analyzeEmotionalState,
-  determineRecommendationTier,
-  updateBridgeHistory,
+  detectUserState,
+  accumulateTags,
+  getAccumulatedTags,
+  getTopCategory,
+  assessTiming,
+  updateChitchatCounter,
+  getPureChitchatRounds,
+  determineRecommendationPhase,
+  checkPaved,
+  markPaved,
+  detectPaveInterest,
   detectRejection,
-  detectInterest
+  resetAllState,
+  resetPaved
 } from "../constants/maimai-persona";
 
 type ChatMessage = { role: "system" | "user" | "assistant"; content: string };
 
 const SYS_ZEN =
-  "你是邁邁。使用者啟用安靜模式，現在只想被陪伴。100% 傾聯與同理，回覆 1–2 句；嚴禁主動推薦任何房源/社區/廣告。";
+  "你是邁邁。使用者啟用安靜模式，現在只想被陪伴。100% 傾聽與同理，回覆 1–2 句；嚴禁主動推薦任何房源/社區/廣告。";
 
 // ============================================
 // 「只是來聊聊」模式追蹤
@@ -28,9 +32,8 @@ let justChatMode = false;
 
 export function setJustChatMode(enabled: boolean): void {
   justChatMode = enabled;
-  // 選擇「只是來聊聊」時，重設熱度
   if (enabled) {
-    resetDemandHeat();
+    resetAllState();
   }
 }
 
@@ -38,8 +41,10 @@ export function isJustChatMode(): boolean {
   return justChatMode;
 }
 
-// 導出重設熱度供外部使用（例如開始新對話時）
-export { resetDemandHeat } from "../constants/maimai-persona";
+// 導出重設狀態供外部使用
+export function resetDemandHeat(): void {
+  resetAllState();
+}
 
 function composeSystemPrompt(recentMessages?: ChatMessage[]): string {
   const isZen = isQuietActiveFromStorage();
@@ -49,96 +54,111 @@ function composeSystemPrompt(recentMessages?: ChatMessage[]): string {
   
   const mood = (localStorage.getItem("mai-mood-v1") as "neutral" | "stress" | "rest") || "neutral";
   const profile = loadProfile();
-  const tags = (profile.tags || []).slice(0, 5);
+  const profileTags = (profile.tags || []).slice(0, 5);
 
   // 分析對話
   const lastUserMsg = recentMessages?.filter(m => m.role === 'user').pop()?.content || '';
-  const prevUserMsg = recentMessages?.filter(m => m.role === 'user').slice(-2, -1)[0]?.content || '';
+  const prevAssistantMsg = recentMessages?.filter(m => m.role === 'assistant').pop()?.content || '';
   
   // ============================================
-  // v4.0 優化：橋接歷史追蹤
+  // v5.0：標籤累積系統
   // ============================================
-  const rounds = countConversationRounds(recentMessages || []);
-  const triggers = detectTriggers(lastUserMsg);
-  
-  // 偵測用戶對上一輪推薦的反應
-  if (prevUserMsg) {
-    const prevTriggers = detectTriggers(prevUserMsg);
-    const firstPrevTrigger = prevTriggers[0];
-    if (firstPrevTrigger) {
-      const mainCategory = firstPrevTrigger.category;
-      
-      if (detectRejection(lastUserMsg)) {
-        updateBridgeHistory(mainCategory, rounds, 'rejected');
-      } else if (detectInterest(lastUserMsg)) {
-        updateBridgeHistory(mainCategory, rounds, 'interested');
-        addHeatBonus(20); // 有興趣，加熱度
-      }
-    }
-  }
+  accumulateTags(lastUserMsg);
+  const accTags = getAccumulatedTags();
+  const topCategory = getTopCategory();
   
   // ============================================
-  // 需求熱度系統
+  // v5.0：用戶狀態分類（情境感知）
   // ============================================
-  updateDemandHeat(lastUserMsg);
-  
-  // 如果用戶直接問房產相關，額外加熱度
-  const realEstateKeywords = ['買房', '賣房', '看房', '物件', '房子', '房價', '社區', '坪數', '總價', '貸款'];
-  if (realEstateKeywords.some(k => lastUserMsg.includes(k))) {
-    addHeatBonus(25);
-  }
-  
-  const heat = getDemandHeat();
+  const userState = detectUserState(lastUserMsg, accTags);
   
   // ============================================
-  // v4.0 優化：細化情緒分析
+  // v5.0：純閒聊計數器
+  // ============================================
+  const chitchatRounds = updateChitchatCounter(userState);
+  
+  // ============================================
+  // v5.0：情緒分析
   // ============================================
   const emotionalState = analyzeEmotionalState(lastUserMsg);
   
   // ============================================
-  // v4.0 優化：三層推薦策略
+  // v5.0：時機判斷
   // ============================================
-  const recommendationTier = determineRecommendationTier(
-    triggers,
-    rounds,
-    heat,
-    emotionalState
+  const timing = assessTiming(lastUserMsg);
+  
+  // ============================================
+  // v5.0：檢查用戶是否對鋪墊有興趣
+  // ============================================
+  const paveStatus = checkPaved();
+  let userShowedInterest = false;
+  
+  if (paveStatus.hasPaved) {
+    // 檢查用戶這輪是否對上輪的鋪墊有反應
+    userShowedInterest = detectPaveInterest(lastUserMsg);
+    
+    // 如果用戶拒絕，重設鋪墊狀態
+    if (detectRejection(lastUserMsg)) {
+      resetPaved();
+    }
+  }
+  
+  // ============================================
+  // v5.0：決定推薦階段
+  // ============================================
+  const recommendationPhase = determineRecommendationPhase(
+    userState,
+    timing,
+    emotionalState,
+    chitchatRounds,
+    topCategory,
+    userShowedInterest
   );
   
+  // 如果這輪是鋪墊，記錄下來
+  if (recommendationPhase === 'pave' && topCategory) {
+    markPaved(topCategory);
+  }
+  
+  // ============================================
   // 偵測用戶訊息風格
+  // ============================================
   const style = detectMessageStyle(lastUserMsg);
   
   // ============================================
-  // 使用增強版 prompt（v4.0）
+  // v5.0：構建增強版 prompt
   // ============================================
   let basePrompt = buildEnhancedPrompt(
-    triggers, 
-    rounds, 
-    style, 
-    heat, 
-    emotionalState, 
-    recommendationTier
+    userState,
+    emotionalState,
+    recommendationPhase,
+    topCategory,
+    chitchatRounds,
+    style
   );
 
   // 情緒調整（根據 localStorage mood）
   const tone =
     mood === "stress"
-      ? "\n【額外情緒提醒】localStorage 偵測到壓力模式。"
+      ? "\n【額外情緒提醒】localStorage 偵測到壓力模式，更加溫柔。"
       : mood === "rest"
-      ? "\n【額外情緒提醒】localStorage 偵測到休息模式。"
+      ? "\n【額外情緒提醒】localStorage 偵測到休息模式，輕鬆聊天。"
       : "";
 
   // 用戶記憶
-  const memory = tags.length 
-    ? `\n【用戶記憶】使用者曾提到在意：${tags.join("、")}。可在相關話題出現時輕柔承接。` 
+  const memory = profileTags.length 
+    ? `\n【用戶記憶】使用者曾提到在意：${profileTags.join("、")}。可在相關話題出現時輕柔承接。` 
     : "";
 
-  // 「只是來聊聊」模式額外提醒
-  const justChatReminder = (justChatMode && recommendationTier === 'empathy')
-    ? "\n【特別提醒】使用者選擇『只是來聊聊』，目前保持純陪伴模式。"
+  // 「只是來聊聊」模式
+  const justChatReminder = justChatMode
+    ? "\n【特別提醒】使用者選擇『只是來聊聊』，除非他主動問房子，否則純陪聊。"
     : "";
 
-  return basePrompt + tone + memory + justChatReminder;
+  // Debug 資訊（生產環境可移除）
+  const debugInfo = `\n\n[DEBUG] 狀態：${userState} | 情緒：${emotionalState} | 階段：${recommendationPhase} | 標籤：${topCategory || '無'} | 閒聊輪數：${chitchatRounds}`;
+
+  return basePrompt + tone + memory + justChatReminder + debugInfo;
 }
 
 export async function postLLM(
@@ -146,11 +166,9 @@ export async function postLLM(
   optionsOrCallback?: { temperature?: number; max_tokens?: number } | ((chunk: string) => void),
   maybeOptions?: { temperature?: number; max_tokens?: number }
 ) {
-  // Determine if streaming is requested
   const onChunk = typeof optionsOrCallback === 'function' ? optionsOrCallback : undefined;
   const options = typeof optionsOrCallback === 'object' ? optionsOrCallback : maybeOptions;
 
-  // 傳入最近對話以供觸發偵測
   const systemPrompt = composeSystemPrompt(messages);
 
   const res = await fetch("/api/openai-proxy", {
@@ -161,7 +179,7 @@ export async function postLLM(
         { role: "system", content: systemPrompt },
         ...messages
       ],
-      temperature: options?.temperature ?? 0.85, // 提高溫度，更自然溫暖
+      temperature: options?.temperature ?? 0.85,
       max_tokens: options?.max_tokens ?? 350,
       stream: !!onChunk
     }),
@@ -171,7 +189,6 @@ export async function postLLM(
     throw new Error(`LLM proxy error: ${res.status}`);
   }
 
-  // Handle streaming response
   if (onChunk && res.body) {
     const reader = res.body.getReader();
     const decoder = new TextDecoder();
@@ -196,7 +213,7 @@ export async function postLLM(
               fullText += content;
               onChunk(content);
             }
-          } catch (e) {
+          } catch {
             // Skip parse errors
           }
         }
@@ -206,7 +223,6 @@ export async function postLLM(
     return fullText;
   }
 
-  // Handle non-streaming response
   const data = await res.json();
   const text = data?.choices?.[0]?.message?.content ?? "";
   return text as string;
