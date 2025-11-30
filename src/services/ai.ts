@@ -1,34 +1,57 @@
 import { isQuietActiveFromStorage } from "../context/QuietModeContext";
 import { loadProfile } from "../stores/profileStore";
+import { 
+  detectTriggers, 
+  buildEnhancedPrompt, 
+  countConversationRounds, 
+  detectMessageStyle 
+} from "../constants/maimai-persona";
 
 type ChatMessage = { role: "system" | "user" | "assistant"; content: string };
 
-const SYS_DEFAULT =
-  "你是邁房子的在地好鄰居助理（暱稱：邁邁）。語氣溫暖、尊重，台灣語境。回覆≤2行，先同理再資訊，避免推銷語。";
 const SYS_ZEN =
   "你是邁邁。使用者啟用安靜模式，現在只想被陪伴。100% 傾聽與同理，回覆 1–2 句；嚴禁主動推薦任何房源/社區/廣告。";
 
-function composeSystemPrompt(): string {
+function composeSystemPrompt(recentMessages?: ChatMessage[]): string {
   const isZen = isQuietActiveFromStorage();
+  
+  // 安靜模式優先
+  if (isZen) return SYS_ZEN;
+  
   const mood = (localStorage.getItem("mai-mood-v1") as "neutral" | "stress" | "rest") || "neutral";
   const profile = loadProfile();
   const tags = (profile.tags || []).slice(0, 5);
 
+  // 分析對話
+  const allText = recentMessages?.map(m => m.content).join(' ') || '';
+  const lastUserMsg = recentMessages?.filter(m => m.role === 'user').pop()?.content || '';
+  
+  // 偵測觸發關鍵字
+  const triggers = detectTriggers(allText);
+  
+  // 計算對話輪數
+  const rounds = countConversationRounds(recentMessages || []);
+  
+  // 偵測用戶訊息風格
+  const style = detectMessageStyle(lastUserMsg);
+  
+  // 使用增強版 prompt（整合五份意見）
+  let basePrompt = buildEnhancedPrompt(triggers, rounds, style);
+
+  // 情緒調整
   const tone =
     mood === "stress"
-      ? "偵測到對方壓力較大：降低資訊量、避免指示語、用安撫口吻。"
+      ? "\n【情緒提醒】偵測到對方壓力較大：降低資訊量、避免指示語、用安撫口吻。"
       : mood === "rest"
-      ? "對方想放鬆：可以輕鬆、溫暖地聊天，不必急著提供建議。"
-      : "保持友善、清晰的語氣。";
+      ? "\n【情緒提醒】對方想放鬆：可以輕鬆、溫暖地聊天，不必急著提供建議。"
+      : "";
 
-  const memory = tags.length ? `使用者在意：${tags.join("、")}。未被詢問時不要主動推任何清單，但可在相關話題出現時輕柔承接。` : "";
+  // 用戶記憶
+  const memory = tags.length 
+    ? `\n【用戶記憶】使用者曾提到在意：${tags.join("、")}。可在相關話題出現時輕柔承接，但不主動提起。` 
+    : "";
 
-  return [
-    isZen ? SYS_ZEN : SYS_DEFAULT,
-    tone,
-    memory,
-    "所有輸出需簡潔、真誠，拒絕銷售話術。",
-  ].filter(Boolean).join("\n");
+  return basePrompt + tone + memory;
 }
 
 export async function postLLM(
@@ -40,12 +63,15 @@ export async function postLLM(
   const onChunk = typeof optionsOrCallback === 'function' ? optionsOrCallback : undefined;
   const options = typeof optionsOrCallback === 'object' ? optionsOrCallback : maybeOptions;
 
+  // 傳入最近對話以供觸發偵測
+  const systemPrompt = composeSystemPrompt(messages);
+
   const res = await fetch("/api/openai-proxy", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       messages: [
-        { role: "system", content: composeSystemPrompt() },
+        { role: "system", content: systemPrompt },
         ...messages
       ],
       temperature: options?.temperature ?? 0.7,

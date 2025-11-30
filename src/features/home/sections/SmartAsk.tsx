@@ -1,18 +1,21 @@
 import { useState, useRef, useEffect } from 'react';
-import { Send, Sparkles, Bot } from 'lucide-react';
+import { Send, Sparkles, MessageCircle } from 'lucide-react';
 import { postLLM } from '../../../services/ai';
 import MascotMaiMai from '../../../components/MascotMaiMai';
 import ChatMessage from '../components/ChatMessage';
+import { QUICK_TAGS_LIFESTYLE, QUICK_TAGS_EXPLORE } from '../../../constants/maimai-persona';
 
 type ChatMsg = { role: 'user' | 'assistant'; content: string; timestamp: string };
-
-const QUICK_TAGS = ['3房以內', '30坪以下', '近捷運', '新成屋'];
 
 export default function SmartAsk() {
     const [messages, setMessages] = useState<ChatMsg[]>([]);
     const [input, setInput] = useState('');
     const [loading, setLoading] = useState(false);
     const chatRef = useRef<HTMLDivElement>(null);
+
+    // 根據對話輪數決定顯示哪組 Quick Tags
+    const userRounds = messages.filter(m => m.role === 'user').length;
+    const currentTags = userRounds >= 3 ? QUICK_TAGS_EXPLORE : QUICK_TAGS_LIFESTYLE;
 
     useEffect(() => {
         if (chatRef.current) {
@@ -51,7 +54,7 @@ export default function SmartAsk() {
                 const newMsgs = [...prev];
                 const last = newMsgs[newMsgs.length - 1];
                 if (last) {
-                    last.content = "抱歉，AI 服務目前暫時不可用，請稍後再試。";
+                    last.content = "抱歉，我這邊好像有點問題，等一下再試試？";
                 }
                 return newMsgs;
             });
@@ -75,27 +78,27 @@ export default function SmartAsk() {
                 {/* Header Section */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-3">
                     <div className="flex items-center gap-3">
-                        {/* Robot Icon (Header) */}
+                        {/* Chat Icon */}
                         <div className="w-12 h-12 rounded-2xl bg-white/80 border border-brand-100 flex items-center justify-center text-brand-700 relative overflow-hidden shrink-0 shadow-sm backdrop-blur-sm group-hover:scale-105 transition-transform duration-300">
-                            <Bot size={28} strokeWidth={2} />
+                            <MessageCircle size={26} strokeWidth={2} />
                         </div>
 
                         <div>
                             <h3 className="font-black text-brand-700 text-xl tracking-tight flex items-center gap-2">
                                 社區鄰居管家
                                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gradient-to-r from-brand-700 to-brand-600 text-white text-[10px] font-bold tracking-wider uppercase shadow-sm">
-                                    <Sparkles size={10} /> AI Beta
+                                    <Sparkles size={10} /> Beta
                                 </span>
                             </h3>
                             <p className="text-xs text-ink-600 font-bold mt-0.5 tracking-wide">
-                                全天候待命 · 分析房價 · 區域諮詢
+                                聊生活、聊社區、什麼都可以聊 ☕
                             </p>
                         </div>
                     </div>
 
-                    {/* Quick Tags */}
+                    {/* Quick Tags - 動態切換 */}
                     <div className="flex flex-wrap items-center justify-end gap-2">
-                        {QUICK_TAGS.map(tag => (
+                        {currentTags.map(tag => (
                             <button
                                 key={tag}
                                 onClick={() => send(tag)}
@@ -117,16 +120,29 @@ export default function SmartAsk() {
                     {messages.length === 0 ? (
                         <div className="flex flex-1 flex-col items-center justify-center text-center p-4 opacity-80">
 
-                            {/* MaiMai Mascot (Center Empty State) */}
+                            {/* MaiMai Mascot */}
                             <MascotMaiMai />
 
                             <p className="mb-2 font-black text-brand-700 text-base">
-                                歡迎來到邁房子！我是邁邁 🤖
+                                嗨～我是邁邁 👋
                             </p>
                             <p className="text-sm leading-relaxed text-ink-600 max-w-xs mx-auto font-medium">
-                                買房不只看物件，更要看生活。<br />
-                                告訴我您的預算或想住的區域，讓我幫您分析！
+                                今天過得怎樣？<br />
+                                想聊什麼都可以，我在這陪你～
                             </p>
+                            
+                            {/* 開場選項提示 */}
+                            <div className="mt-4 flex flex-wrap justify-center gap-2">
+                                {QUICK_TAGS_LIFESTYLE.map(tag => (
+                                    <button
+                                        key={tag}
+                                        onClick={() => send(tag)}
+                                        className="px-3 py-1.5 rounded-full bg-brand-50 border border-brand-100 text-brand-600 text-xs font-bold hover:bg-brand-100 transition-all"
+                                    >
+                                        {tag}
+                                    </button>
+                                ))}
+                            </div>
                         </div>
                     ) : (
                         messages.map((m, i) => (
@@ -136,11 +152,11 @@ export default function SmartAsk() {
                     {loading && (
                         <div className="flex justify-start animate-fadeIn">
                             <div className="rounded-2xl rounded-bl-sm px-4 py-3 bg-white border border-brand-100 text-brand-600 text-sm flex items-center gap-2 shadow-sm">
-                                <span className="font-bold">邁邁正在思考</span>
+                                <span className="font-bold">邁邁正在想...</span>
                                 <div className="flex gap-1">
-                                    <span className="w-1.5 h-1.5 bg-brand-500 rounded-full animate-[bounce_1.4s_infinite_in-out_both]"></span>
-                                    <span className="w-1.5 h-1.5 bg-brand-500 rounded-full animate-[bounce_1.4s_infinite_in-out_both_0.2s]"></span>
-                                    <span className="w-1.5 h-1.5 bg-brand-500 rounded-full animate-[bounce_1.4s_infinite_in-out_both_0.4s]"></span>
+                                    <span className="w-1.5 h-1.5 bg-brand-500 rounded-full animate-[bounce_1.4s_infinite_ease-in-out_both]"></span>
+                                    <span className="w-1.5 h-1.5 bg-brand-500 rounded-full animate-[bounce_1.4s_infinite_ease-in-out_both_0.2s]"></span>
+                                    <span className="w-1.5 h-1.5 bg-brand-500 rounded-full animate-[bounce_1.4s_infinite_ease-in-out_both_0.4s]"></span>
                                 </div>
                             </div>
                         </div>
@@ -152,7 +168,7 @@ export default function SmartAsk() {
                     <input
                         type="text"
                         className="w-full pl-5 pr-14 py-4 rounded-xl border-2 border-brand-100 bg-white/80 text-ink-900 font-bold text-[15px] placeholder:text-ink-400/80 transition-all focus:outline-none focus:border-brand-500 focus:ring-4 focus:ring-brand-50/50 hover:border-brand-300 shadow-sm backdrop-blur-sm"
-                        placeholder="輸入需求，例如：新北板橋 2000萬內 3房..."
+                        placeholder="說說你今天過得如何，或任何想聊的..."
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
                         onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && send()}
