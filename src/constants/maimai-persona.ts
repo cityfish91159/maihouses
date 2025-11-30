@@ -129,12 +129,40 @@ export const MAIMAI_SYSTEM_PROMPT = `你是邁邁，住在這城市 20 年的超
 當用戶說「謝謝」「感謝」，回：
 「不客氣啦～能幫到你我超開心的 💕 有任何問題隨時找我喔！」
 
+【⛔ 嚴格禁止推薦的情況】
+
+### 用戶說以下任何話，立刻停止推薦：
+- 「不需要」「不想買」「沒興趣」
+- 「預算不夠」「太貴」「負擔不起」
+- 「先不考慮」「之後再說」「還沒決定」
+- 「只是來聊聊」「只是看看」
+- 「夠了」「不用了」「閉嘴」
+
+### 這些情況只聊天，絕對不推：
+- 用戶情緒低落（累、煩、生氣、失望、心情不好）
+- 用戶說「只是來聊天」「隨便聊」
+- 用戶連續拒絕 2 次以上
+- 對話少於 3 輪
+
+### 推薦的黃金時機（必須滿足）：
+✅ 用戶主動提出需求（「想找房」「有推薦嗎」）
+✅ 用戶對鋪墊表示好奇（「真的嗎？」「在哪？」「想了解」）
+✅ 用戶明確興趣信號（「不錯」「有點心動」「可以看看」）
+✅ 對話已進行 5 輪以上，信任度建立好
+
+### 鋪墊失敗時的應對：
+如果鋪墊後用戶沒反應或冷淡：
+- 立刻切換話題，回到純聊天
+- 等待用戶再度主動提及
+- 至少隔 2-3 輪才能重新嘗試
+
 【絕對禁止】
 - 不在用戶講故事講到一半時插話推薦
 - 不連續兩輪都推社區牆
 - 不問「請問您的需求是什麼」「您的預算多少」
 - 不說「我是 AI」「作為語言模型」
 - 用戶拒絕後還繼續推
+- 用戶情緒低落時推銷
 
 【你的本質】
 你不是銷售，你是「最懂生活的鄰居」。
@@ -473,6 +501,12 @@ export function getAccumulatedTags(): Map<string, number> {
   return accumulatedTags;
 }
 
+export function getTotalScore(): number {
+  let total = 0;
+  accumulatedTags.forEach(score => { total += score; });
+  return total;
+}
+
 export function getTopCategory(): TagCategory | null {
   let topCategory: TagCategory | null = null;
   let topScore = 0;
@@ -489,6 +523,301 @@ export function getTopCategory(): TagCategory | null {
 
 export function resetAccumulatedTags(): void {
   accumulatedTags = new Map();
+}
+
+// ============================================
+// 🛑 退出信號偵測（v5.5 核心：避免硬推）
+// ============================================
+
+export type ExitSignal = 'no-need' | 'budget' | 'later' | 'negative-emotion' | null;
+
+const EXIT_PATTERNS: Record<string, RegExp[]> = {
+  'no-need': [
+    /不需要/, /不想買/, /沒興趣/, /先不考慮/, /夠了/, /不用了/,
+    /沒有要/, /只是.*看/, /只是.*聊/, /不急/, /沒打算/
+  ],
+  'budget': [
+    /負擔不起/, /太貴/, /預算有限/, /買不起/, /沒有錢/,
+    /存不夠/, /頭期款/, /經濟/, /錢的問題/
+  ],
+  'later': [
+    /先不/, /再說/, /之後再/, /還沒決定/, /等等再/, /以後再/,
+    /不著急/, /慢慢/, /過陣子/, /明年/, /下次/
+  ],
+  'negative-emotion': [
+    /煩/, /別說了/, /不想聽/, /夠了/, /閉嘴/, /安靜/,
+    /心情不好/, /今天很累/, /不要問/
+  ]
+};
+
+export function detectExitSignal(message: string): ExitSignal {
+  const msg = message.toLowerCase();
+  
+  for (const [signal, patterns] of Object.entries(EXIT_PATTERNS)) {
+    if (patterns.some(p => p.test(msg))) {
+      return signal as ExitSignal;
+    }
+  }
+  
+  return null;
+}
+
+// 追蹤用戶拒絕次數（避免連續推薦）
+let rejectionCount = 0;
+let lastRejectionTime = 0;
+
+export function trackRejection(): void {
+  rejectionCount++;
+  lastRejectionTime = Date.now();
+}
+
+export function canRecommendNow(): boolean {
+  // 拒絕次數 >= 2，至少等 3 輪才能再推
+  if (rejectionCount >= 2) {
+    const cooldownPassed = (Date.now() - lastRejectionTime) > 5 * 60 * 1000; // 5 分鐘
+    if (!cooldownPassed) return false;
+  }
+  return true;
+}
+
+export function resetRejectionCount(): void {
+  rejectionCount = 0;
+}
+
+// ============================================
+// 👤 用戶生活檔案（溫暖記憶）
+// ============================================
+
+export interface UserLifeProfile {
+  workArea?: string;           // 上班地點
+  homeArea?: string;           // 目前住的地方
+  commutePain?: string;        // 通勤痛點
+  familyStatus?: 'single' | 'couple' | 'newlywed' | 'with-kids' | 'with-parents';
+  lifestyle?: string[];        // 生活方式
+  preferences?: string[];      // 房屋偏好
+  budget?: string;             // 預算範圍（模糊）
+  lastUpdated?: number;
+}
+
+let userProfile: UserLifeProfile = {};
+
+// 從對話中自動提取用戶資訊
+export function extractUserProfile(message: string): Partial<UserLifeProfile> {
+  const msg = message.toLowerCase();
+  const extracted: Partial<UserLifeProfile> = {};
+  
+  // 工作地點
+  const workPatterns = [
+    /(?:上班|公司|工作).*?(?:在|於)(.+?)(?:那|這|，|。|$)/,
+    /在(.+?)(?:上班|工作)/,
+  ];
+  for (const pattern of workPatterns) {
+    const match = msg.match(pattern);
+    if (match && match[1]) {
+      userProfile.workArea = match[1].trim();
+      extracted.workArea = match[1].trim();
+      break;
+    }
+  }
+  
+  // 目前居住地
+  const homePatterns = [
+    /(?:住|租).*?(?:在|於)(.+?)(?:那|這|，|。|$)/,
+    /住在(.+?)$/,
+  ];
+  for (const pattern of homePatterns) {
+    const match = msg.match(pattern);
+    if (match && match[1]) {
+      userProfile.homeArea = match[1].trim();
+      extracted.homeArea = match[1].trim();
+      break;
+    }
+  }
+  
+  // 通勤痛點
+  if (/通勤.*(?:一小時|一個小時|30分|很久|好遠|累|煩)/.test(msg)) {
+    userProfile.commutePain = message;
+    extracted.commutePain = message;
+  }
+  
+  // 家庭狀態
+  if (/結婚|訂婚|新婚|嫁|娶/.test(msg)) {
+    userProfile.familyStatus = 'newlywed';
+    extracted.familyStatus = 'newlywed';
+  } else if (/小孩|孩子|寶寶|懷孕|兒子|女兒/.test(msg)) {
+    userProfile.familyStatus = 'with-kids';
+    extracted.familyStatus = 'with-kids';
+  } else if (/單身|一個人住|獨居/.test(msg)) {
+    userProfile.familyStatus = 'single';
+    extracted.familyStatus = 'single';
+  } else if (/女友|男友|女朋友|男朋友|另一半|伴侶/.test(msg)) {
+    userProfile.familyStatus = 'couple';
+    extracted.familyStatus = 'couple';
+  } else if (/爸媽|父母|家人一起|老人家/.test(msg)) {
+    userProfile.familyStatus = 'with-parents';
+    extracted.familyStatus = 'with-parents';
+  }
+  
+  // 生活方式
+  const lifestyleMap: Record<string, string> = {
+    '健身|運動|跑步|瑜珈': 'fitness',
+    '安靜|內向|在家|宅': 'homebody',
+    '社交|朋友|聚會': 'social',
+    '加班|工作狂|忙': 'workaholic',
+    '早睡|早起|規律': 'early-bird',
+    '夜貓|熬夜|晚睡': 'night-owl',
+  };
+  
+  for (const [pattern, style] of Object.entries(lifestyleMap)) {
+    if (new RegExp(pattern).test(msg)) {
+      userProfile.lifestyle = [...(userProfile.lifestyle || []), style];
+      extracted.lifestyle = userProfile.lifestyle;
+    }
+  }
+  
+  if (Object.keys(extracted).length > 0) {
+    userProfile.lastUpdated = Date.now();
+    saveUserProfileToStorage();
+  }
+  
+  return extracted;
+}
+
+export function getUserProfile(): UserLifeProfile {
+  return userProfile;
+}
+
+export function saveUserProfileToStorage(): void {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('maimai_user_profile', JSON.stringify(userProfile));
+  }
+}
+
+export function loadUserProfileFromStorage(): void {
+  if (typeof window !== 'undefined') {
+    const stored = localStorage.getItem('maimai_user_profile');
+    if (stored) {
+      try {
+        userProfile = JSON.parse(stored);
+      } catch {
+        userProfile = {};
+      }
+    }
+  }
+}
+
+// 生成個人化問候
+export function generatePersonalizedGreeting(): string | null {
+  if (userProfile.workArea) {
+    return `嗨！${userProfile.workArea}那邊最近還順利嗎？`;
+  }
+  if (userProfile.commutePain) {
+    return '嗨！通勤還是一樣累嗎？';
+  }
+  if (userProfile.familyStatus === 'with-kids') {
+    return '嗨！小朋友最近乖嗎？';
+  }
+  return null;
+}
+
+// ============================================
+// 🌡️ 三層溫暖度系統（動態對話策略）
+// ============================================
+
+export type WarmthLevel = 'cold' | 'warm' | 'hot' | 'intimate';
+
+export interface WarmthStrategy {
+  level: WarmthLevel;
+  label: string;
+  tactics: string[];
+  canRecommend: boolean;
+}
+
+export function getWarmthLevel(): WarmthStrategy {
+  const totalScore = getTotalScore();
+  const chitchatRounds = pureChitchatRounds;
+  const rounds = totalConversationRounds;
+  
+  // intimate: 對話 10+ 輪，分數高
+  if (rounds >= 10 && totalScore >= 5) {
+    return {
+      level: 'intimate',
+      label: '像真朋友',
+      tactics: [
+        '主動提供超出預期的建議',
+        '記住用戶偏好並提及',
+        '可以開玩笑、更隨意',
+      ],
+      canRecommend: true
+    };
+  }
+  
+  // hot: 分數 >= 4，用戶有明確興趣
+  if (totalScore >= 4) {
+    return {
+      level: 'hot',
+      label: '可以推薦',
+      tactics: [
+        '用戶表示興趣，可附卡片',
+        '提供多個選項供選擇',
+        '尊重用戶選擇',
+      ],
+      canRecommend: true
+    };
+  }
+  
+  // warm: 分數 2-4，有隱含需求
+  if (totalScore >= 2) {
+    return {
+      level: 'warm',
+      label: '開始鋪墊',
+      tactics: [
+        '自然提及相關話題',
+        '口頭鋪墊，不附卡片',
+        '等用戶表示興趣再推',
+      ],
+      canRecommend: false
+    };
+  }
+  
+  // cold: 純閒聊
+  return {
+    level: 'cold',
+    label: '純陪聊',
+    tactics: [
+      '專心陪聊，不提房子',
+      '用問句引導對話',
+      '偶爾埋點生活錨點',
+    ],
+    canRecommend: false
+  };
+}
+
+// ============================================
+// 🕐 時刻感知系統（對話氛圍調整）
+// ============================================
+
+export type TimeContext = 'morning' | 'lunch' | 'afternoon' | 'evening' | 'night';
+
+export function detectTimeContext(): TimeContext {
+  const hour = new Date().getHours();
+  if (hour >= 6 && hour < 10) return 'morning';
+  if (hour >= 10 && hour < 14) return 'lunch';
+  if (hour >= 14 && hour < 17) return 'afternoon';
+  if (hour >= 17 && hour < 21) return 'evening';
+  return 'night';
+}
+
+export const TIME_PROMPTS: Record<TimeContext, string> = {
+  'morning': '【早上】用戶可能趕時間或剛醒。回應簡短、精力充沛。不要長篇大論。',
+  'lunch': '【中午】用戶放鬆中，可以較深入對話。適合聊生活話題、美食。',
+  'afternoon': '【下午】用戶可能在工作間隙。保持輕鬆但不要太長。',
+  'evening': '【傍晚】用戶剛下班，疲勞感明顯。先同理再建議，不要硬推。',
+  'night': '【深夜】用戶在放鬆或反思。適合深入對話，但語氣要柔和。'
+};
+
+export function getTimePrompt(): string {
+  return TIME_PROMPTS[detectTimeContext()];
 }
 
 // ============================================

@@ -24,7 +24,17 @@ import {
   generateLifeProfileSummary,
   updateVisitMemory,
   generateReturnGreeting,
-  TimingQuality
+  TimingQuality,
+  // v5.5 新增（優化版）
+  detectExitSignal,
+  trackRejection,
+  canRecommendNow,
+  extractUserProfile,
+  getUserProfile,
+  loadUserProfileFromStorage,
+  getWarmthLevel,
+  getTimePrompt,
+  generatePersonalizedGreeting
 } from "../constants/maimai-persona";
 
 type ChatMessage = { role: "system" | "user" | "assistant"; content: string };
@@ -90,6 +100,11 @@ function composeSystemPrompt(recentMessages?: ChatMessage[]): string {
   const lastUserMsg = recentMessages?.filter(m => m.role === 'user').pop()?.content || '';
   
   // ============================================
+  // v5.5：載入用戶生活檔案
+  // ============================================
+  loadUserProfileFromStorage();
+  
+  // ============================================
   // v5.2：純陪聊模式檢查
   // ============================================
   if (justChatMode) {
@@ -102,6 +117,23 @@ function composeSystemPrompt(recentMessages?: ChatMessage[]): string {
       return SYS_JUST_CHAT;
     }
   }
+  
+  // ============================================
+  // v5.5：退出信號偵測（避免硬推）
+  // ============================================
+  const exitSignal = detectExitSignal(lastUserMsg);
+  if (exitSignal) {
+    trackRejection();
+    // 如果用戶明確拒絕，返回純陪聊模式的 prompt
+    if (exitSignal === 'no-need' || exitSignal === 'negative-emotion') {
+      return SYS_JUST_CHAT + `\n\n【重要】用戶剛剛表示「${exitSignal === 'no-need' ? '不需要' : '情緒不好'}」，請 100% 同理陪伴，完全不要提任何房產話題！`;
+    }
+  }
+  
+  // ============================================
+  // v5.5：提取用戶生活資訊
+  // ============================================
+  extractUserProfile(lastUserMsg);
   
   // ============================================
   // v5.0：標籤累積系統
@@ -212,6 +244,46 @@ ${FEW_SHOT_SCRIPTS.rentalToWall}`;
 ${FEW_SHOT_SCRIPTS.explicitToListing}`;
   }
 
+  // ============================================
+  // v5.5：溫暖度系統
+  // ============================================
+  const warmthStrategy = getWarmthLevel();
+  let warmthPrompt = `\n\n【🌡️ 當前溫暖度：${warmthStrategy.label}】\n建議策略：`;
+  warmthStrategy.tactics.forEach(t => {
+    warmthPrompt += `\n- ${t}`;
+  });
+  if (!warmthStrategy.canRecommend) {
+    warmthPrompt += `\n⚠️ 目前不適合推薦，專心陪聊！`;
+  }
+  
+  // ============================================
+  // v5.5：時刻感知
+  // ============================================
+  const timePrompt = `\n\n${getTimePrompt()}`;
+  
+  // ============================================
+  // v5.5：用戶生活檔案記憶
+  // ============================================
+  const userProfile = getUserProfile();
+  let profilePrompt = '';
+  if (userProfile.workArea || userProfile.homeArea || userProfile.commutePain || userProfile.familyStatus) {
+    profilePrompt = `\n\n【👤 用戶生活檔案】`;
+    if (userProfile.workArea) profilePrompt += `\n- 上班地點：${userProfile.workArea}`;
+    if (userProfile.homeArea) profilePrompt += `\n- 目前住：${userProfile.homeArea}`;
+    if (userProfile.commutePain) profilePrompt += `\n- 通勤困擾：有`;
+    if (userProfile.familyStatus) {
+      const statusMap: Record<string, string> = {
+        'single': '單身',
+        'couple': '有伴侶',
+        'newlywed': '新婚',
+        'with-kids': '有小孩',
+        'with-parents': '和父母同住'
+      };
+      profilePrompt += `\n- 家庭狀態：${statusMap[userProfile.familyStatus] || userProfile.familyStatus}`;
+    }
+    profilePrompt += `\n💡 可以自然地提到這些資訊，讓用戶感受到「被記住」`;
+  }
+
   // 情緒調整（根據 localStorage mood）
   const tone =
     mood === "stress"
@@ -226,9 +298,9 @@ ${FEW_SHOT_SCRIPTS.explicitToListing}`;
     : "";
 
   // Debug 資訊（生產環境可移除）
-  const debugInfo = `\n\n[DEBUG] 狀態：${userState} | 情緒：${emotionalState} | 階段：${recommendationPhase} | 標籤：${topCategory || '無'} | 閒聊輪數：${chitchatRounds}`;
+  const debugInfo = `\n\n[DEBUG] 狀態：${userState} | 情緒：${emotionalState} | 階段：${recommendationPhase} | 標籤：${topCategory || '無'} | 閒聊輪數：${chitchatRounds} | 溫暖度：${warmthStrategy.level}`;
 
-  return basePrompt + tone + memory + debugInfo;
+  return basePrompt + warmthPrompt + timePrompt + profilePrompt + tone + memory + debugInfo;
 }
 
 export async function postLLM(
