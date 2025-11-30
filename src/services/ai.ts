@@ -8,13 +8,18 @@ import {
   updateDemandHeat,
   getDemandHeat,
   addHeatBonus,
-  resetDemandHeat
+  resetDemandHeat,
+  analyzeEmotionalState,
+  determineRecommendationTier,
+  updateBridgeHistory,
+  detectRejection,
+  detectInterest
 } from "../constants/maimai-persona";
 
 type ChatMessage = { role: "system" | "user" | "assistant"; content: string };
 
 const SYS_ZEN =
-  "你是邁邁。使用者啟用安靜模式，現在只想被陪伴。100% 傾聽與同理，回覆 1–2 句；嚴禁主動推薦任何房源/社區/廣告。";
+  "你是邁邁。使用者啟用安靜模式，現在只想被陪伴。100% 傾聯與同理，回覆 1–2 句；嚴禁主動推薦任何房源/社區/廣告。";
 
 // ============================================
 // 「只是來聊聊」模式追蹤
@@ -48,44 +53,79 @@ function composeSystemPrompt(recentMessages?: ChatMessage[]): string {
 
   // 分析對話
   const lastUserMsg = recentMessages?.filter(m => m.role === 'user').pop()?.content || '';
+  const prevUserMsg = recentMessages?.filter(m => m.role === 'user').slice(-2, -1)[0]?.content || '';
   
   // ============================================
-  // 需求熱度系統 v3.0
+  // v4.0 優化：橋接歷史追蹤
   // ============================================
+  const rounds = countConversationRounds(recentMessages || []);
+  const triggers = detectTriggers(lastUserMsg);
   
-  // 更新熱度（根據用戶訊息）
+  // 偵測用戶對上一輪推薦的反應
+  if (prevUserMsg) {
+    const prevTriggers = detectTriggers(prevUserMsg);
+    const firstPrevTrigger = prevTriggers[0];
+    if (firstPrevTrigger) {
+      const mainCategory = firstPrevTrigger.category;
+      
+      if (detectRejection(lastUserMsg)) {
+        updateBridgeHistory(mainCategory, rounds, 'rejected');
+      } else if (detectInterest(lastUserMsg)) {
+        updateBridgeHistory(mainCategory, rounds, 'interested');
+        addHeatBonus(20); // 有興趣，加熱度
+      }
+    }
+  }
+  
+  // ============================================
+  // 需求熱度系統
+  // ============================================
   updateDemandHeat(lastUserMsg);
   
   // 如果用戶直接問房產相關，額外加熱度
   const realEstateKeywords = ['買房', '賣房', '看房', '物件', '房子', '房價', '社區', '坪數', '總價', '貸款'];
   if (realEstateKeywords.some(k => lastUserMsg.includes(k))) {
-    addHeatBonus(30);
+    addHeatBonus(25);
   }
   
   const heat = getDemandHeat();
   
   // ============================================
-  // 偵測觸發關鍵字
+  // v4.0 優化：細化情緒分析
   // ============================================
-  const triggers = detectTriggers(lastUserMsg);
+  const emotionalState = analyzeEmotionalState(lastUserMsg);
   
-  // 計算對話輪數
-  const rounds = countConversationRounds(recentMessages || []);
+  // ============================================
+  // v4.0 優化：三層推薦策略
+  // ============================================
+  const recommendationTier = determineRecommendationTier(
+    triggers,
+    rounds,
+    heat,
+    emotionalState
+  );
   
   // 偵測用戶訊息風格
   const style = detectMessageStyle(lastUserMsg);
   
   // ============================================
-  // 使用熱度驅動的 prompt
+  // 使用增強版 prompt（v4.0）
   // ============================================
-  let basePrompt = buildEnhancedPrompt(triggers, rounds, style, heat);
+  let basePrompt = buildEnhancedPrompt(
+    triggers, 
+    rounds, 
+    style, 
+    heat, 
+    emotionalState, 
+    recommendationTier
+  );
 
-  // 情緒調整
+  // 情緒調整（根據 localStorage mood）
   const tone =
     mood === "stress"
-      ? "\n【情緒提醒】偵測到對方壓力較大：降低資訊量、避免指示語、用安撫口吻。"
+      ? "\n【額外情緒提醒】localStorage 偵測到壓力模式。"
       : mood === "rest"
-      ? "\n【情緒提醒】對方想放鬆：可以輕鬆、溫暖地聊天，不必急著提供建議。"
+      ? "\n【額外情緒提醒】localStorage 偵測到休息模式。"
       : "";
 
   // 用戶記憶
@@ -93,9 +133,9 @@ function composeSystemPrompt(recentMessages?: ChatMessage[]): string {
     ? `\n【用戶記憶】使用者曾提到在意：${tags.join("、")}。可在相關話題出現時輕柔承接。` 
     : "";
 
-  // 「只是來聊聊」模式額外提醒（但熱度高時仍可引導）
-  const justChatReminder = (justChatMode && heat < 45)
-    ? "\n【特別提醒】使用者一開始選擇『只是來聊聊』，熱度未達門檻前不要主動推薦社區牆。"
+  // 「只是來聊聊」模式額外提醒
+  const justChatReminder = (justChatMode && recommendationTier === 'empathy')
+    ? "\n【特別提醒】使用者選擇『只是來聊聊』，目前保持純陪伴模式。"
     : "";
 
   return basePrompt + tone + memory + justChatReminder;
