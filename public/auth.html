@@ -367,7 +367,7 @@
       animation: float 3s ease-in-out infinite;
     }
     
-    /* ===== 吉祥物樣式 ===== */
+    /* ===== 吉祥物樣式（使用首頁原版公仔）===== */
     .mascot-container {
       display: flex;
       justify-content: center;
@@ -375,204 +375,71 @@
       position: relative;
     }
     
-    .mascot {
-      width: 120px;
-      height: 120px;
+    .mascot-wrapper {
       position: relative;
+      width: 100px;
+      height: 120px;
       cursor: pointer;
-      transition: transform 0.3s ease;
     }
     
-    .mascot:hover {
+    .mascot-wrapper:hover {
       transform: scale(1.05);
     }
     
-    .mascot.idle {
+    .mascot-svg {
+      width: 100%;
+      height: 100%;
+      color: var(--brand);
+      filter: drop-shadow(0 2px 4px rgba(0, 56, 90, 0.15));
+      transition: transform 0.3s ease;
+    }
+    
+    /* 狀態動畫 */
+    .mascot-wrapper.idle .mascot-svg {
       animation: mascot-float 3s ease-in-out infinite;
     }
     
-    .mascot.wave .mascot-arm-right {
+    .mascot-wrapper.wave .mascot-svg {
+      animation: mascot-wiggle 0.5s ease-in-out infinite;
+    }
+    
+    .mascot-wrapper.wave .mascot-arm-right {
       animation: mascot-wave 0.6s ease-in-out infinite;
-      transform-origin: bottom center;
+      transform-origin: 145px 130px;
     }
     
-    .mascot.peek .mascot-hands {
-      opacity: 1;
-      transform: translateY(0);
+    .mascot-wrapper.happy .mascot-svg {
+      animation: mascot-happy-bounce 0.6s ease-in-out;
     }
     
-    .mascot.peek .mascot-eye {
-      opacity: 0;
-    }
-    
-    .mascot.happy {
-      animation: mascot-happy-bounce 0.5s ease-in-out;
-    }
-    
-    .mascot.thinking {
+    .mascot-wrapper.thinking .mascot-svg {
       animation: mascot-wiggle 2s ease-in-out infinite;
     }
     
-    .mascot.shy {
+    .mascot-wrapper.shy .mascot-svg {
       animation: mascot-shy-sway 1s ease-in-out infinite;
     }
     
-    .mascot-body {
-      position: absolute;
-      width: 80px;
-      height: 70px;
-      left: 50%;
-      top: 30px;
-      transform: translateX(-50%);
+    /* 遮眼狀態 - 手臂移到眼睛位置 */
+    .mascot-wrapper.peek .mascot-arm-left {
+      transform: translate(35px, -15px) rotate(45deg);
+      transition: transform 0.3s ease;
     }
     
-    .mascot-roof {
-      fill: var(--brand);
-      filter: drop-shadow(0 2px 4px rgba(0, 56, 90, 0.2));
+    .mascot-wrapper.peek .mascot-arm-right {
+      transform: translate(-35px, -15px) rotate(-45deg);
+      transition: transform 0.3s ease;
     }
     
-    .mascot-house {
-      fill: #fff;
-      stroke: var(--brand);
-      stroke-width: 2;
-    }
-    
-    .mascot-door {
-      fill: var(--brand-light);
-    }
-    
-    .mascot-antenna {
-      position: absolute;
-      top: 8px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 20px;
-      height: 24px;
-    }
-    
-    .mascot-antenna-stem {
-      stroke: var(--brand);
-      stroke-width: 3;
-      stroke-linecap: round;
-    }
-    
-    .mascot-antenna-ball {
-      fill: #FF6B6B;
-      filter: drop-shadow(0 0 4px rgba(255, 107, 107, 0.5));
-    }
-    
-    .mascot-face {
-      position: absolute;
-      top: 50px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 60px;
-      height: 30px;
-      display: flex;
-      justify-content: center;
-      gap: 16px;
-    }
-    
-    .mascot-eye {
-      width: 12px;
-      height: 12px;
-      background: var(--brand);
-      border-radius: 50%;
-      position: relative;
-      animation: mascot-blink 4s ease-in-out infinite;
-    }
-    
-    .mascot-eye::after {
-      content: '';
-      position: absolute;
-      width: 4px;
-      height: 4px;
-      background: white;
-      border-radius: 50%;
-      top: 2px;
-      right: 2px;
-    }
-    
-    .mascot-mouth {
-      position: absolute;
-      bottom: -8px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 16px;
-      height: 8px;
-      border: 2px solid var(--brand);
-      border-top: none;
-      border-radius: 0 0 10px 10px;
-      background: transparent;
-    }
-    
-    .mascot.happy .mascot-mouth {
-      border-color: #FF6B6B;
-      height: 10px;
-    }
-    
-    .mascot-hands {
-      position: absolute;
-      top: 45px;
-      left: 50%;
-      transform: translateX(-50%) translateY(20px);
-      display: flex;
-      gap: 30px;
-      opacity: 0;
-      transition: all 0.3s ease;
-      pointer-events: none;
-    }
-    
-    .mascot-hand {
-      width: 18px;
-      height: 18px;
-      background: var(--brand-light);
-      border-radius: 50%;
-      border: 2px solid var(--brand);
-    }
-    
-    .mascot-arm {
-      position: absolute;
-      width: 14px;
-      height: 28px;
-    }
-    
-    .mascot-arm-left {
-      left: 12px;
-      top: 60px;
-    }
-    
+    .mascot-arm-left,
     .mascot-arm-right {
-      right: 12px;
-      top: 60px;
+      transition: transform 0.3s ease;
     }
     
-    .mascot-arm svg {
-      fill: var(--brand-light);
-      stroke: var(--brand);
-      stroke-width: 1.5;
-    }
-    
-    .mascot-legs {
-      position: absolute;
-      bottom: 0;
-      left: 50%;
-      transform: translateX(-50%);
-      display: flex;
-      gap: 20px;
-    }
-    
-    .mascot-leg {
-      width: 16px;
-      height: 20px;
-      background: var(--brand-light);
-      border-radius: 8px 8px 4px 4px;
-      border: 2px solid var(--brand);
-    }
-    
+    /* 愛心動畫 */
     .mascot-hearts {
       position: absolute;
-      top: 0;
+      top: -10px;
       left: 50%;
       transform: translateX(-50%);
       pointer-events: none;
@@ -580,40 +447,22 @@
     
     .mascot-heart {
       position: absolute;
-      font-size: 16px;
+      font-size: 14px;
       opacity: 0;
     }
     
-    .mascot.happy .mascot-heart {
+    .mascot-wrapper.happy .mascot-heart {
       animation: heart-float 1s ease-out forwards;
     }
     
-    .mascot.happy .mascot-heart:nth-child(1) { left: -10px; animation-delay: 0s; }
-    .mascot.happy .mascot-heart:nth-child(2) { left: 10px; animation-delay: 0.2s; }
-    .mascot.happy .mascot-heart:nth-child(3) { left: 0; animation-delay: 0.1s; }
+    .mascot-wrapper.happy .mascot-heart:nth-child(1) { left: -15px; animation-delay: 0s; }
+    .mascot-wrapper.happy .mascot-heart:nth-child(2) { left: 5px; animation-delay: 0.15s; }
+    .mascot-wrapper.happy .mascot-heart:nth-child(3) { left: -5px; animation-delay: 0.3s; }
     
-    .mascot-blush {
-      position: absolute;
-      width: 14px;
-      height: 8px;
-      background: rgba(255, 107, 107, 0.4);
-      border-radius: 50%;
-      top: 58px;
-      opacity: 0;
-      transition: opacity 0.3s;
-    }
-    
-    .mascot-blush-left { left: 22px; }
-    .mascot-blush-right { right: 22px; }
-    
-    .mascot.shy .mascot-blush,
-    .mascot.happy .mascot-blush {
-      opacity: 1;
-    }
-    
+    /* 對話泡泡 */
     .mascot-speech {
       position: absolute;
-      top: -40px;
+      top: -35px;
       left: 50%;
       transform: translateX(-50%);
       background: white;
@@ -627,6 +476,7 @@
       opacity: 0;
       transition: opacity 0.3s, transform 0.3s;
       pointer-events: none;
+      z-index: 10;
     }
     
     .mascot-speech::after {
@@ -1014,9 +864,9 @@
         <div class="card-content">
           <!-- Header -->
           <div class="card-header">
-            <!-- 互動吉祥物 -->
+            <!-- 互動吉祥物（使用首頁原版公仔）-->
             <div class="mascot-container">
-              <div class="mascot idle" id="mascot">
+              <div class="mascot-wrapper idle" id="mascot">
                 <!-- 對話泡泡 -->
                 <div class="mascot-speech" id="mascotSpeech">嗨！歡迎回來 👋</div>
                 
@@ -1027,60 +877,34 @@
                   <span class="mascot-heart">💙</span>
                 </div>
                 
-                <!-- 天線 -->
-                <div class="mascot-antenna">
-                  <svg viewBox="0 0 20 24" fill="none">
-                    <line class="mascot-antenna-stem" x1="10" y1="24" x2="10" y2="8"/>
-                    <circle class="mascot-antenna-ball" cx="10" cy="6" r="5"/>
-                  </svg>
-                </div>
-                
-                <!-- 身體 -->
-                <div class="mascot-body">
-                  <svg viewBox="0 0 80 70" fill="none">
-                    <!-- 屋頂 -->
-                    <path class="mascot-roof" d="M40 0 L80 30 L0 30 Z"/>
-                    <!-- 房屋主體 -->
-                    <rect class="mascot-house" x="8" y="30" width="64" height="40" rx="4"/>
-                    <!-- 門 -->
-                    <rect class="mascot-door" x="32" y="45" width="16" height="25" rx="2"/>
-                  </svg>
-                </div>
-                
-                <!-- 臉部 -->
-                <div class="mascot-face">
-                  <div class="mascot-eye"></div>
-                  <div class="mascot-eye"></div>
-                  <div class="mascot-mouth"></div>
-                </div>
-                
-                <!-- 臉紅 -->
-                <div class="mascot-blush mascot-blush-left"></div>
-                <div class="mascot-blush mascot-blush-right"></div>
-                
-                <!-- 遮眼的手（輸入密碼時顯示） -->
-                <div class="mascot-hands">
-                  <div class="mascot-hand"></div>
-                  <div class="mascot-hand"></div>
-                </div>
-                
-                <!-- 手臂 -->
-                <div class="mascot-arm mascot-arm-left">
-                  <svg viewBox="0 0 14 28">
-                    <ellipse cx="7" cy="14" rx="6" ry="12"/>
-                  </svg>
-                </div>
-                <div class="mascot-arm mascot-arm-right">
-                  <svg viewBox="0 0 14 28">
-                    <ellipse cx="7" cy="14" rx="6" ry="12"/>
-                  </svg>
-                </div>
-                
-                <!-- 腿 -->
-                <div class="mascot-legs">
-                  <div class="mascot-leg"></div>
-                  <div class="mascot-leg"></div>
-                </div>
+                <!-- 首頁原版公仔 SVG -->
+                <svg class="mascot-svg" viewBox="0 0 200 240">
+                  <!-- M-Antenna（M字天線）-->
+                  <path d="M 85 40 L 85 15 L 100 30 L 115 15 L 115 40" 
+                        stroke="currentColor" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+
+                  <!-- House Body & Roof（房屋與屋頂）-->
+                  <path d="M 40 80 L 100 40 L 160 80" 
+                        stroke="currentColor" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                  <rect x="55" y="80" width="90" height="100" 
+                        stroke="currentColor" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+
+                  <!-- Eyebrows（眉毛）-->
+                  <path d="M 78 110 Q 85 105 92 110" stroke="currentColor" stroke-width="4" fill="none" stroke-linecap="round" />
+                  <path d="M 108 110 Q 115 105 122 110" stroke="currentColor" stroke-width="4" fill="none" stroke-linecap="round" />
+                  
+                  <!-- Eyes（眼睛 - 空心圓）-->
+                  <circle cx="85" cy="125" r="4" stroke="currentColor" stroke-width="3" fill="none" />
+                  <circle cx="115" cy="125" r="4" stroke="currentColor" stroke-width="3" fill="none" />
+
+                  <!-- Hands（手 - 從側邊伸出）-->
+                  <path class="mascot-arm-left" d="M 55 130 L 25 110" stroke="currentColor" stroke-width="5" fill="none" stroke-linecap="round" />
+                  <path class="mascot-arm-right" d="M 145 130 L 175 110" stroke="currentColor" stroke-width="5" fill="none" stroke-linecap="round" />
+
+                  <!-- Legs（腳 - 走路姿勢）-->
+                  <path d="M 85 180 L 85 215 L 75 215" stroke="currentColor" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+                  <path d="M 115 180 L 115 215 L 125 215" stroke="currentColor" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
               </div>
             </div>
             
@@ -1259,7 +1083,7 @@
   
   function setMascotMood(mood, duration = 0) {
     if (!mascot) return;
-    mascot.className = 'mascot ' + mood;
+    mascot.className = 'mascot-wrapper ' + mood;
     mascotMood = mood;
     
     if (duration > 0) {
