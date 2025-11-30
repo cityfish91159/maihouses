@@ -1,9 +1,16 @@
 import { useState, useRef, useEffect } from 'react';
-import { Send, Sparkles, MessageCircle } from 'lucide-react';
+import { Send, Sparkles, MessageCircle, Heart } from 'lucide-react';
 import { postLLM, setJustChatMode } from '../../../services/ai';
 import MascotMaiMai from '../../../components/MascotMaiMai';
 import ChatMessage from '../components/ChatMessage';
-import { QUICK_TAGS_LIFESTYLE, QUICK_TAGS_EXPLORE, generateReturnGreeting, loadPainPointsFromStorage } from '../../../constants/maimai-persona';
+import { 
+    QUICK_TAGS_LIFESTYLE, 
+    QUICK_TAGS_EXPLORE, 
+    generateReturnGreeting, 
+    loadPainPointsFromStorage,
+    getIntimacyLevel,
+    saveIntimacyToStorage
+} from '../../../constants/maimai-persona';
 
 type ChatMsg = { role: 'user' | 'assistant'; content: string; timestamp: string };
 
@@ -12,19 +19,84 @@ export default function SmartAsk() {
     const [input, setInput] = useState('');
     const [loading, setLoading] = useState(false);
     const [returnGreeting, setReturnGreeting] = useState<string | null>(null);
+    const [intimacy, setIntimacy] = useState(getIntimacyLevel());
     const chatRef = useRef<HTMLDivElement>(null);
 
     // 根據對話輪數決定顯示哪組 Quick Tags
     const userRounds = messages.filter(m => m.role === 'user').length;
     const currentTags = userRounds >= 3 ? QUICK_TAGS_EXPLORE : QUICK_TAGS_LIFESTYLE;
 
-    // v5.2：載入痛點記憶 + 回訪問候
+    // ============================================
+    // v6.0 刀1：每日主動關心 + 回訪問候
+    // ============================================
     useEffect(() => {
         loadPainPointsFromStorage();
-        const greeting = generateReturnGreeting();
-        if (greeting) {
-            setReturnGreeting(greeting);
+        
+        const lastChat = localStorage.getItem('mai-last-chat');
+        const today = new Date().toDateString();
+        
+        // 今天還沒聊過 → 主動打招呼
+        if (!lastChat || lastChat !== today) {
+            const greeting = generateReturnGreeting();
+            if (greeting) {
+                setReturnGreeting(greeting);
+            }
+            
+            // 延遲顯示主動關心訊息
+            const timer = setTimeout(() => {
+                const welcomeMsg = greeting || '嗨～今天過得怎麼樣呀？有沒有什麼想跟我分享的？☀️';
+                setMessages([{
+                    role: 'assistant',
+                    content: welcomeMsg,
+                    timestamp: new Date().toISOString()
+                }]);
+                localStorage.setItem('mai-last-chat', today);
+            }, 1500);
+            
+            return () => clearTimeout(timer);
         }
+    }, []);
+    
+    // ============================================
+    // v6.0 刀6：晚安物語（22:00-22:30）
+    // ============================================
+    useEffect(() => {
+        const now = new Date();
+        const hour = now.getHours();
+        const minute = now.getMinutes();
+        
+        // 晚上 10:00 - 10:30 之間
+        if (hour === 22 && minute < 30) {
+            const todayGoodnight = localStorage.getItem('mai-goodnight-' + now.toDateString());
+            if (!todayGoodnight && messages.length > 0) {
+                const timer = setTimeout(() => {
+                    setMessages(prev => [...prev, {
+                        role: 'assistant',
+                        content: '晚安啦～今天也辛苦了，要好好休息喔 💤\n對了...夢裡如果看到喜歡的房子，記得明天告訴我，我幫你找找看有沒有類似的～',
+                        timestamp: new Date().toISOString()
+                    }]);
+                    localStorage.setItem('mai-goodnight-' + now.toDateString(), '1');
+                }, 5000);
+                
+                return () => clearTimeout(timer);
+            }
+        }
+    }, [messages.length]);
+    
+    // ============================================
+    // v6.0 刀2：更新親密度顯示
+    // ============================================
+    useEffect(() => {
+        setIntimacy(getIntimacyLevel());
+    }, [messages.length]);
+    
+    // 離開頁面時保存親密度
+    useEffect(() => {
+        const handleBeforeUnload = () => {
+            saveIntimacyToStorage();
+        };
+        window.addEventListener('beforeunload', handleBeforeUnload);
+        return () => window.removeEventListener('beforeunload', handleBeforeUnload);
     }, []);
 
     useEffect(() => {
@@ -105,14 +177,20 @@ export default function SmartAsk() {
 
                         <div>
                             <h3 className="font-black text-brand-700 text-xl tracking-tight flex items-center gap-2">
-                                社區鄰居管家
+                                MaiMai 小閨蜜
                                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gradient-to-r from-brand-700 to-brand-600 text-white text-[10px] font-bold tracking-wider uppercase shadow-sm">
-                                    <Sparkles size={10} /> Beta
+                                    <Sparkles size={10} /> v6.0
                                 </span>
                             </h3>
-                            <p className="text-xs text-ink-600 font-bold mt-0.5 tracking-wide">
-                                聊生活、聊社區、什麼都可以聊 ☕
-                            </p>
+                            <div className="flex items-center gap-2 mt-0.5">
+                                <p className="text-xs text-ink-600 font-bold tracking-wide">
+                                    聊生活、聊房子、什麼都可以聊 ☕
+                                </p>
+                                {/* 親密度顯示 */}
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-pink-50 border border-pink-200 text-pink-600 text-[10px] font-bold">
+                                    <Heart size={10} fill="currentColor" /> {intimacy.label} {intimacy.emoji}
+                                </span>
+                            </div>
                         </div>
                     </div>
 

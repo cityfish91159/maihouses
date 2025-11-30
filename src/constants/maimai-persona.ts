@@ -118,6 +118,17 @@ export const MAIMAI_SYSTEM_PROMPT = `你是邁邁，住在這城市 20 年的超
 [[情境:描述內容]]
 用來營造畫面感，讓用戶能想像住進去的感覺。
 
+【⭐⭐⭐ MaiMai 專屬彩蛋（v6.0 刀5）】
+
+當用戶說「我愛你」「嫁給我」「你好可愛」之類的，必須回：
+「討厭啦～人家會害羞的 🤭 但如果你買房子，我就答應你一件事喔（小聲）」
+
+當用戶說「分手」「不要你了」「再見」之類告別語，回：
+「不要～～～我會難過一整天的 😭 至少讓我陪你找到夢想中的家好不好？」
+
+當用戶說「謝謝」「感謝」，回：
+「不客氣啦～能幫到你我超開心的 💕 有任何問題隨時找我喔！」
+
 【絕對禁止】
 - 不在用戶講故事講到一半時插話推薦
 - 不連續兩輪都推社區牆
@@ -506,12 +517,14 @@ export function assessTiming(message: string): TimingQuality {
 }
 
 // ============================================
-// 📊 純閒聊計數（軟著陸用）
+// 📊 純閒聊計數 + 親密度系統（v6.0 刀2）
 // ============================================
 
 let pureChitchatRounds = 0;
+let totalConversationRounds = 0; // 追蹤總對話輪數
 
 export function updateChitchatCounter(userState: UserState): number {
+  totalConversationRounds++; // 總是增加
   if (userState === 'exploring') {
     pureChitchatRounds++;
   } else {
@@ -524,8 +537,41 @@ export function getPureChitchatRounds(): number {
   return pureChitchatRounds;
 }
 
+export function getTotalConversationRounds(): number {
+  return totalConversationRounds;
+}
+
 export function resetChitchatCounter(): void {
   pureChitchatRounds = 0;
+  // 不重置 totalConversationRounds，這是跨對話的親密度
+}
+
+// ============================================
+// 💕 親密度等級系統（v6.0 刀2 核心）
+// ============================================
+
+export type IntimacyLevel = 'new' | 'familiar' | 'close' | 'bestie' | 'soulmate';
+
+export function getIntimacyLevel(): { level: IntimacyLevel; label: string; emoji: string } {
+  // 從 localStorage 讀取累積對話輪數
+  const storedRounds = typeof window !== 'undefined' 
+    ? parseInt(localStorage.getItem('mai-intimacy-rounds') || '0', 10)
+    : 0;
+  const rounds = storedRounds + totalConversationRounds;
+  
+  if (rounds >= 50) return { level: 'soulmate', label: '超級閨蜜', emoji: '🤍' };
+  if (rounds >= 30) return { level: 'bestie', label: '無話不談', emoji: '💕' };
+  if (rounds >= 15) return { level: 'close', label: '好閨蜜', emoji: '💖' };
+  if (rounds >= 6) return { level: 'familiar', label: '越來越熟啦', emoji: '✨' };
+  return { level: 'new', label: '新朋友', emoji: '👋' };
+}
+
+export function saveIntimacyToStorage(): void {
+  if (typeof window !== 'undefined') {
+    const storedRounds = parseInt(localStorage.getItem('mai-intimacy-rounds') || '0', 10);
+    localStorage.setItem('mai-intimacy-rounds', String(storedRounds + totalConversationRounds));
+    totalConversationRounds = 0; // 存完後重置當次
+  }
 }
 
 // 生活錨點問句
@@ -541,6 +587,58 @@ export function pickLifeAnchorQuestion(): string {
   const idx = Math.floor(Math.random() * LIFE_ANCHOR_QUESTIONS.length);
   const question = LIFE_ANCHOR_QUESTIONS[idx];
   return question !== undefined ? question : '對了，你平常都在哪一帶活動？';
+}
+
+// ============================================
+// 📝 MaiMai 記憶小本本（v6.0 刀3）
+// ============================================
+
+const MEMORY_KEY = 'mai-memory-v6';
+
+export function saveMemory(fact: string): void {
+  if (typeof window === 'undefined') return;
+  const memories: string[] = JSON.parse(localStorage.getItem(MEMORY_KEY) || '[]');
+  // 避免重複
+  if (!memories.includes(fact) && memories.length < 20) {
+    memories.push(fact);
+    localStorage.setItem(MEMORY_KEY, JSON.stringify(memories));
+  }
+}
+
+export function getMemories(): string[] {
+  if (typeof window === 'undefined') return [];
+  return JSON.parse(localStorage.getItem(MEMORY_KEY) || '[]');
+}
+
+export function clearMemories(): void {
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem(MEMORY_KEY);
+  }
+}
+
+// 自動從對話中抽取記憶點
+export function extractMemoryFromMessage(message: string): string | null {
+  const msg = message.toLowerCase();
+  
+  const patterns: [RegExp, string][] = [
+    [/喜歡(貓|狗|寵物)/, '喜歡毛小孩'],
+    [/(討厭|不喜歡)通勤/, '討厭通勤'],
+    [/(有|養)(貓|狗)/, '有養寵物'],
+    [/(有|想生|懷)小孩/, '有小孩或計畫生'],
+    [/(結婚|新婚)/, '新婚或計畫結婚'],
+    [/在(信義|大安|內湖|松山|南港|中山)/, `在${msg.match(/在(信義|大安|內湖|松山|南港|中山)/)?.[1]}上班`],
+    [/住(中和|永和|板橋|新店|三重|蘆洲|新莊)/, `住${msg.match(/住(中和|永和|板橋|新店|三重|蘆洲|新莊)/)?.[1]}`],
+    [/(喜歡|愛)(咖啡|下午茶)/, '喜歡咖啡'],
+    [/(喜歡|愛)運動/, '喜歡運動'],
+    [/失眠|睡不好/, '有睡眠困擾'],
+  ];
+  
+  for (const [pattern, memory] of patterns) {
+    if (pattern.test(msg)) {
+      return memory;
+    }
+  }
+  return null;
 }
 
 // ============================================
