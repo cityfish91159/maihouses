@@ -17,10 +17,14 @@ function parseCommunityWallTags(content: string): { text: string; cards: { name:
     let match;
     
     while ((match = regex.exec(content)) !== null) {
-        cards.push({
-            name: match[1].trim(),
-            topic: match[2].trim()
-        });
+        const name = match[1];
+        const topic = match[2];
+        if (name && topic) {
+            cards.push({
+                name: name.trim(),
+                topic: topic.trim()
+            });
+        }
     }
     
     // 移除標記，保留純文字
