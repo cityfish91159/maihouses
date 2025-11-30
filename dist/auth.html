@@ -80,6 +80,51 @@
       100% { background-position: 200% 0; }
     }
 
+    /* ===== 吉祥物動畫 ===== */
+    @keyframes mascot-float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+    
+    @keyframes mascot-wave {
+      0%, 100% { transform: rotate(0deg); }
+      25% { transform: rotate(20deg); }
+      75% { transform: rotate(-10deg); }
+    }
+    
+    @keyframes mascot-wiggle {
+      0%, 100% { transform: rotate(0deg); }
+      25% { transform: rotate(-3deg); }
+      75% { transform: rotate(3deg); }
+    }
+    
+    @keyframes mascot-blink {
+      0%, 45%, 55%, 100% { transform: scaleY(1); }
+      50% { transform: scaleY(0.1); }
+    }
+    
+    @keyframes mascot-peek {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(4px); }
+    }
+    
+    @keyframes mascot-happy-bounce {
+      0%, 100% { transform: translateY(0) scale(1); }
+      50% { transform: translateY(-12px) scale(1.05); }
+    }
+    
+    @keyframes mascot-shy-sway {
+      0%, 100% { transform: translateX(0) rotate(0deg); }
+      25% { transform: translateX(-3px) rotate(-2deg); }
+      75% { transform: translateX(3px) rotate(2deg); }
+    }
+    
+    @keyframes heart-float {
+      0% { opacity: 0; transform: translate(-50%, 0) scale(0); }
+      20% { opacity: 1; transform: translate(-50%, -10px) scale(1); }
+      100% { opacity: 0; transform: translate(-50%, -30px) scale(0.5); }
+    }
+
     /* ===== 基礎樣式 ===== */
     * { box-sizing: border-box; margin: 0; padding: 0; }
     
@@ -320,6 +365,134 @@
       margin-bottom: 16px;
       display: inline-block;
       animation: float 3s ease-in-out infinite;
+    }
+    
+    /* ===== 吉祥物樣式（使用首頁原版公仔）===== */
+    .mascot-container {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 16px;
+      position: relative;
+    }
+    
+    .mascot-wrapper {
+      position: relative;
+      width: 100px;
+      height: 120px;
+      cursor: pointer;
+    }
+    
+    .mascot-wrapper:hover {
+      transform: scale(1.05);
+    }
+    
+    .mascot-svg {
+      width: 100%;
+      height: 100%;
+      color: var(--brand);
+      filter: drop-shadow(0 2px 4px rgba(0, 56, 90, 0.15));
+      transition: transform 0.3s ease;
+    }
+    
+    /* 狀態動畫 */
+    .mascot-wrapper.idle .mascot-svg {
+      animation: mascot-float 3s ease-in-out infinite;
+    }
+    
+    .mascot-wrapper.wave .mascot-svg {
+      animation: mascot-wiggle 0.5s ease-in-out infinite;
+    }
+    
+    .mascot-wrapper.wave .mascot-arm-right {
+      animation: mascot-wave 0.6s ease-in-out infinite;
+      transform-origin: 145px 130px;
+    }
+    
+    .mascot-wrapper.happy .mascot-svg {
+      animation: mascot-happy-bounce 0.6s ease-in-out;
+    }
+    
+    .mascot-wrapper.thinking .mascot-svg {
+      animation: mascot-wiggle 2s ease-in-out infinite;
+    }
+    
+    .mascot-wrapper.shy .mascot-svg {
+      animation: mascot-shy-sway 1s ease-in-out infinite;
+    }
+    
+    /* 遮眼狀態 - 手臂移到眼睛位置 */
+    .mascot-wrapper.peek .mascot-arm-left {
+      transform: translate(35px, -15px) rotate(45deg);
+      transition: transform 0.3s ease;
+    }
+    
+    .mascot-wrapper.peek .mascot-arm-right {
+      transform: translate(-35px, -15px) rotate(-45deg);
+      transition: transform 0.3s ease;
+    }
+    
+    .mascot-arm-left,
+    .mascot-arm-right {
+      transition: transform 0.3s ease;
+    }
+    
+    /* 愛心動畫 */
+    .mascot-hearts {
+      position: absolute;
+      top: -10px;
+      left: 50%;
+      transform: translateX(-50%);
+      pointer-events: none;
+    }
+    
+    .mascot-heart {
+      position: absolute;
+      font-size: 14px;
+      opacity: 0;
+    }
+    
+    .mascot-wrapper.happy .mascot-heart {
+      animation: heart-float 1s ease-out forwards;
+    }
+    
+    .mascot-wrapper.happy .mascot-heart:nth-child(1) { left: -15px; animation-delay: 0s; }
+    .mascot-wrapper.happy .mascot-heart:nth-child(2) { left: 5px; animation-delay: 0.15s; }
+    .mascot-wrapper.happy .mascot-heart:nth-child(3) { left: -5px; animation-delay: 0.3s; }
+    
+    /* 對話泡泡 */
+    .mascot-speech {
+      position: absolute;
+      top: -35px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: white;
+      padding: 6px 12px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--brand);
+      box-shadow: var(--shadow-md);
+      white-space: nowrap;
+      opacity: 0;
+      transition: opacity 0.3s, transform 0.3s;
+      pointer-events: none;
+      z-index: 10;
+    }
+    
+    .mascot-speech::after {
+      content: '';
+      position: absolute;
+      bottom: -6px;
+      left: 50%;
+      transform: translateX(-50%);
+      border-left: 6px solid transparent;
+      border-right: 6px solid transparent;
+      border-top: 6px solid white;
+    }
+    
+    .mascot-speech.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(-4px);
     }
     
     .card-title {
@@ -691,7 +864,50 @@
         <div class="card-content">
           <!-- Header -->
           <div class="card-header">
-            <div class="card-emoji" id="cardEmoji">🏠</div>
+            <!-- 互動吉祥物（使用首頁原版公仔）-->
+            <div class="mascot-container">
+              <div class="mascot-wrapper idle" id="mascot">
+                <!-- 對話泡泡 -->
+                <div class="mascot-speech" id="mascotSpeech">嗨！歡迎回來 👋</div>
+                
+                <!-- 愛心動畫 -->
+                <div class="mascot-hearts">
+                  <span class="mascot-heart">💙</span>
+                  <span class="mascot-heart">💙</span>
+                  <span class="mascot-heart">💙</span>
+                </div>
+                
+                <!-- 首頁原版公仔 SVG -->
+                <svg class="mascot-svg" viewBox="0 0 200 240">
+                  <!-- M-Antenna（M字天線）-->
+                  <path d="M 85 40 L 85 15 L 100 30 L 115 15 L 115 40" 
+                        stroke="currentColor" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+
+                  <!-- House Body & Roof（房屋與屋頂）-->
+                  <path d="M 40 80 L 100 40 L 160 80" 
+                        stroke="currentColor" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                  <rect x="55" y="80" width="90" height="100" 
+                        stroke="currentColor" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+
+                  <!-- Eyebrows（眉毛）-->
+                  <path d="M 78 110 Q 85 105 92 110" stroke="currentColor" stroke-width="4" fill="none" stroke-linecap="round" />
+                  <path d="M 108 110 Q 115 105 122 110" stroke="currentColor" stroke-width="4" fill="none" stroke-linecap="round" />
+                  
+                  <!-- Eyes（眼睛 - 空心圓）-->
+                  <circle cx="85" cy="125" r="4" stroke="currentColor" stroke-width="3" fill="none" />
+                  <circle cx="115" cy="125" r="4" stroke="currentColor" stroke-width="3" fill="none" />
+
+                  <!-- Hands（手 - 從側邊伸出）-->
+                  <path class="mascot-arm-left" d="M 55 130 L 25 110" stroke="currentColor" stroke-width="5" fill="none" stroke-linecap="round" />
+                  <path class="mascot-arm-right" d="M 145 130 L 175 110" stroke="currentColor" stroke-width="5" fill="none" stroke-linecap="round" />
+
+                  <!-- Legs（腳 - 走路姿勢）-->
+                  <path d="M 85 180 L 85 215 L 75 215" stroke="currentColor" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+                  <path d="M 115 180 L 115 215 L 125 215" stroke="currentColor" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </div>
+            </div>
+            
             <h1 class="card-title" id="cardTitle">歡迎回來</h1>
             <p class="card-subtitle" id="cardSubtitle">登入你的邁房子帳號</p>
           </div>
@@ -833,13 +1049,19 @@
   // Elements
   const tabLogin = document.getElementById('tabLogin');
   const tabSignup = document.getElementById('tabSignup');
-  const cardEmoji = document.getElementById('cardEmoji');
   const cardTitle = document.getElementById('cardTitle');
   const cardSubtitle = document.getElementById('cardSubtitle');
   const googleText = document.getElementById('googleText');
   const submitText = document.getElementById('submitText');
   const btnGoogle = document.getElementById('btnGoogle');
   const authForm = document.getElementById('authForm');
+  
+  // 吉祥物元素
+  const mascot = document.getElementById('mascot');
+  const mascotSpeech = document.getElementById('mascotSpeech');
+  const emailInput = document.getElementById('email');
+  const passwordInput = document.getElementById('password');
+  const confirmPasswordInput = document.getElementById('confirmPassword');
 
   const confirmField = document.getElementById('confirmField');
   const termsField = document.getElementById('termsField');
@@ -854,6 +1076,86 @@
   const errTerms = document.getElementById('errTerms');
 
   let mode = qs('mode') || 'login';
+  
+  // 吉祥物狀態管理
+  let mascotMood = 'idle';
+  let speechTimeout = null;
+  
+  function setMascotMood(mood, duration = 0) {
+    if (!mascot) return;
+    mascot.className = 'mascot-wrapper ' + mood;
+    mascotMood = mood;
+    
+    if (duration > 0) {
+      setTimeout(() => {
+        if (mascotMood === mood) {
+          setMascotMood('idle');
+        }
+      }, duration);
+    }
+  }
+  
+  function showSpeech(text, duration = 2500) {
+    if (!mascotSpeech) return;
+    if (speechTimeout) clearTimeout(speechTimeout);
+    
+    mascotSpeech.textContent = text;
+    mascotSpeech.classList.add('show');
+    
+    speechTimeout = setTimeout(() => {
+      mascotSpeech.classList.remove('show');
+    }, duration);
+  }
+  
+  // 點擊吉祥物互動
+  mascot?.addEventListener('click', () => {
+    const moods = ['wave', 'happy', 'shy'];
+    const speeches = ['嗨！👋', '很高興見到你！💙', '(*´∀`*)'];
+    const idx = Math.floor(Math.random() * moods.length);
+    setMascotMood(moods[idx], 1500);
+    showSpeech(speeches[idx]);
+  });
+  
+  // Email 輸入時 - 思考
+  emailInput?.addEventListener('focus', () => {
+    setMascotMood('thinking');
+    showSpeech('輸入你的 Email...', 2000);
+  });
+  
+  emailInput?.addEventListener('blur', () => {
+    if (document.activeElement !== passwordInput && 
+        document.activeElement !== confirmPasswordInput) {
+      setMascotMood('idle');
+    }
+  });
+  
+  // 密碼輸入時 - 遮眼
+  passwordInput?.addEventListener('focus', () => {
+    setMascotMood('peek');
+    showSpeech('我不偷看 🙈', 2000);
+  });
+  
+  passwordInput?.addEventListener('blur', () => {
+    if (document.activeElement !== confirmPasswordInput) {
+      setMascotMood('idle');
+    }
+  });
+  
+  // 確認密碼時 - 繼續遮眼
+  confirmPasswordInput?.addEventListener('focus', () => {
+    setMascotMood('peek');
+    showSpeech('再輸入一次～', 2000);
+  });
+  
+  confirmPasswordInput?.addEventListener('blur', () => {
+    setMascotMood('idle');
+  });
+  
+  // 頁面載入時揮手
+  setTimeout(() => {
+    setMascotMood('wave', 2000);
+    showSpeech(mode === 'login' ? '嗨！歡迎回來 👋' : '歡迎加入！✨', 2500);
+  }, 500);
 
   function syncMode(replace=true){
     const isLogin = mode === 'login';
@@ -863,11 +1165,14 @@
     tabSignup?.classList.toggle('active', !isLogin);
     
     // Update header
-    if(cardEmoji) cardEmoji.textContent = isLogin ? '🏠' : '✨';
     if(cardTitle) cardTitle.textContent = isLogin ? '歡迎回來' : '加入邁房子';
     if(cardSubtitle) cardSubtitle.textContent = isLogin ? '登入你的邁房子帳號' : '30 秒建立新帳號';
     if(googleText) googleText.textContent = isLogin ? '使用 Google 繼續' : '用 Google 快速註冊';
     if(submitText) submitText.textContent = isLogin ? '登入' : '建立帳號';
+    
+    // 吉祥物反應
+    setMascotMood('wave', 1500);
+    showSpeech(isLogin ? '歡迎回來！👋' : '來加入我們吧！✨', 2000);
     
     // Toggle visibility
     confirmField?.classList.toggle('hidden', isLogin);
@@ -892,6 +1197,13 @@
   }
   
   async function successRedirect(isLogin){
+    // 吉祥物慶祝
+    setMascotMood('happy', 3000);
+    showSpeech(isLogin ? '登入成功！🎉' : '歡迎加入！💙', 2500);
+    
+    // 稍等讓動畫播放
+    await new Promise(r => setTimeout(r, 800));
+    
     const ret = qs('return');
     if(ret){ go(ret); return; }
 
