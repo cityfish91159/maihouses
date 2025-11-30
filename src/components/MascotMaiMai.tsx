@@ -28,7 +28,7 @@ export default function MascotMaiMai() {
   const arms = getArms();
 
   return (
-    <div className="w-32 h-40 mb-4 text-brand-600 relative">
+    <div className="w-32 h-40 mb-4 text-brand relative">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 bg-brand-100/50 rounded-full blur-2xl -z-10"></div>
         
         <svg viewBox="0 0 200 240" className="w-full h-full drop-shadow-sm animate-float">
