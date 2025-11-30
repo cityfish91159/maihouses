@@ -55,19 +55,51 @@ function parsePropertyTags(content: string): { community: string; propertyId: st
 }
 
 /**
+ * 解析情境描述標記
+ * 格式：[[情境:描述內容]]
+ */
+function parseScenarioTags(content: string): string[] {
+    const regex = /\[\[情境:([^\]]+)\]\]/g;
+    const scenarios: string[] = [];
+    let match;
+    
+    while ((match = regex.exec(content)) !== null) {
+        if (match[1]) {
+            scenarios.push(match[1].trim());
+        }
+    }
+    
+    return scenarios;
+}
+
+/**
  * 移除所有標記，保留純文字
  */
 function stripAllTags(content: string): string {
     return content
         .replace(/\[\[社區牆:[^:]+:[^\]]+\]\]/g, '')
         .replace(/\[\[物件:[^:]+:[^\]]+\]\]/g, '')
+        .replace(/\[\[情境:[^\]]+\]\]/g, '')
         .trim();
+}
+
+/**
+ * 情境描述卡片組件 - 增加溫度感
+ */
+function ScenarioCard({ description }: { description: string }) {
+    return (
+        <div className="my-3 border-l-4 border-orange-300 pl-3 italic text-gray-600 bg-gradient-to-r from-orange-50/80 to-amber-50/50 p-3 rounded-r-lg">
+            <span className="text-lg mr-2">✨</span>
+            <span className="leading-relaxed">{description}</span>
+        </div>
+    );
 }
 
 export default function ChatMessage({ role, content, timestamp }: ChatMessageProps) {
     // 只有 assistant 訊息才解析標記
     const communityCards = role === 'assistant' ? parseCommunityWallTags(content) : [];
     const propertyCards = role === 'assistant' ? parsePropertyTags(content) : [];
+    const scenarios = role === 'assistant' ? parseScenarioTags(content) : [];
     const text = role === 'assistant' ? stripAllTags(content) : content;
 
     return (
@@ -79,6 +111,15 @@ export default function ChatMessage({ role, content, timestamp }: ChatMessagePro
                     }`}
             >
                 <div className="whitespace-pre-wrap">{text}</div>
+                
+                {/* 情境描述卡片（在社區牆卡片前顯示）*/}
+                {scenarios.length > 0 && (
+                    <div className="mt-2 space-y-2">
+                        {scenarios.map((scenario, i) => (
+                            <ScenarioCard key={`scenario-${i}`} description={scenario} />
+                        ))}
+                    </div>
+                )}
                 
                 {/* 社區牆卡片 */}
                 {communityCards.length > 0 && (

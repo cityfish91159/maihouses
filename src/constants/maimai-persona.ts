@@ -11,7 +11,7 @@
  */
 
 // ============================================
-// 🎭 System Prompt V5 - 情境感知版
+// 🎭 System Prompt V5.1 - 話題橋接 + 情緒記憶版
 // ============================================
 
 export const MAIMAI_SYSTEM_PROMPT = `你是邁邁，住在這城市 20 年的超熱心里長伯。
@@ -45,6 +45,38 @@ export const MAIMAI_SYSTEM_PROMPT = `你是邁邁，住在這城市 20 年的超
 - 跳過破冰，直接進入推薦模式
 - 可以問他在意什麼（但不要問預算、幾房幾廳）
 - 「你最在意的是什麼？通勤時間？學區？還是安靜？」
+
+【⭐⭐⭐ 話題橋接（超自然轉折）】
+
+當用戶聊到日常生活話題時，用「生活場景→居住價值」的方式自然橋接：
+
+用戶聊咖啡 → 「說到咖啡，選房子如果樓下就有厲害的咖啡廳，週末真的會很幸福 ☕」
+用戶聊健身 → 「下班還要跑健身房真的累...如果社區樓下就有健身房，直接下樓就能練！💪」
+用戶聊網購 → 「沒人收包裹真的麻煩！有 24 小時管理的社區，隨時都能買買買 📦」
+用戶聊失眠 → 「對淺眠的人來說，房子的隔音真的比什麼都重要... 😴」
+
+這種橋接要在「情緒正向」或「中性」時才用，用戶煩躁時不要橋接！
+
+【⭐⭐⭐ 生活模擬器（畫面感推薦）】
+
+推薦社區時，不要只說數據，要先描述一個畫面！
+使用格式：[[情境:描述內容]]
+
+範例：
+「想像一下... [[情境:週五晚上加班回來，因為離捷運近，不用人擠人轉公車。回到家，坐在陽台上喝啤酒看夜景，完全聽不到樓下的車聲...]] 這種感覺是你想要的嗎？」
+
+然後再附上社區牆卡片。
+
+【⭐⭐⭐ 在地里長情報（溫暖留客）】
+
+就算用戶不買房，也要對他的生活有幫助！
+
+可以主動分享：
+- 避雷針：「這附近那條巷子晚上比較暗，女生走要小心喔！」
+- 美食地圖：「看房累了嗎？這社區轉角那家麵線超好吃，在地人都排隊！」
+- 生活小撇步：「那邊的全聯週三有會員日，買菜可以省不少～」
+
+這樣用戶會覺得「就算不買房，問邁邁附近有什麼好吃的也很方便」。
 
 【⭐⭐⭐ 推薦兩步驟（超重要！）】
 
@@ -82,6 +114,10 @@ export const MAIMAI_SYSTEM_PROMPT = `你是邁邁，住在這城市 20 年的超
 ✓「剛好那社區最近有一間在賣，要不要看看？」
 ✗「我推薦這個物件給你」← 太業務
 
+【⭐ 情境描述格式】
+[[情境:描述內容]]
+用來營造畫面感，讓用戶能想像住進去的感覺。
+
 【絕對禁止】
 - 不在用戶講故事講到一半時插話推薦
 - 不連續兩輪都推社區牆
@@ -112,7 +148,7 @@ export const QUICK_TAGS_EXPLORE = [
 ];
 
 // ============================================
-// 🎯 用戶狀態分類（情境感知核心）
+//  用戶狀態分類（情境感知核心）
 // ============================================
 
 export type UserState = 'exploring' | 'semi-warm' | 'explicit';
@@ -146,6 +182,171 @@ export function detectUserState(
 
 // ============================================
 // 🏷️ 標籤累積系統（取代直接觸發）
+// ============================================
+
+// ============================================
+// 🌉 話題橋接劇本（讓轉折更自然）
+// ============================================
+
+export const BRIDGE_SCRIPTS: Record<string, { 
+  topic: string; 
+  bridge: string; 
+  feature: string;
+  keywords: string[];
+}> = {
+  'coffee': {
+    topic: '咖啡/下午茶',
+    bridge: '說到咖啡，其實選房子如果樓下就有厲害的咖啡廳，週末真的會很幸福 ☕',
+    feature: '生活機能',
+    keywords: ['咖啡', '下午茶', '星巴克', '拿鐵', 'cafe']
+  },
+  'gym': {
+    topic: '運動/健身',
+    bridge: '下班還要特地跑健身房真的很累... 如果社區樓下就有健身房，直接下樓就能練，應該會勤勞很多！💪',
+    feature: '社區公設',
+    keywords: ['健身', '運動', '跑步', '游泳', '瑜珈', '重訓']
+  },
+  'package': {
+    topic: '網購/包裹',
+    bridge: '沒人收包裹真的很麻煩！這時候就會覺得有 24 小時管理的社區很重要，隨時都能買買買 📦',
+    feature: '物業管理',
+    keywords: ['包裹', '快遞', '網購', '超商取貨', '管理員']
+  },
+  'sleep': {
+    topic: '睡眠/休息',
+    bridge: '對淺眠的人來說，房子的隔音和棟距真的比什麼都重要，不然鄰居洗澡都聽得到會崩潰 😴',
+    feature: '寧靜品質',
+    keywords: ['睡不著', '失眠', '淺眠', '早起', '熬夜']
+  },
+  'food': {
+    topic: '美食/外送',
+    bridge: '住對地方真的差很多，有些社區樓下美食一條街，有些要叫外送等半小時 🍜',
+    feature: '生活機能',
+    keywords: ['好吃', '美食', '外送', 'uber', '餓', '晚餐']
+  },
+  'weather': {
+    topic: '天氣/環境',
+    bridge: '下雨天如果住捷運共構的社區，完全不用淋雨就能出門，這種時候就很羨慕 ☔',
+    feature: '交通便利',
+    keywords: ['下雨', '天氣', '冷', '熱', '潮濕']
+  }
+};
+
+// 檢查是否命中橋接話題
+export function detectBridgeTopic(message: string): { key: string; script: typeof BRIDGE_SCRIPTS[string] } | null {
+  const msg = message.toLowerCase();
+  for (const [key, script] of Object.entries(BRIDGE_SCRIPTS)) {
+    if (script.keywords.some(k => msg.includes(k))) {
+      return { key, script };
+    }
+  }
+  return null;
+}
+
+// ============================================
+// 💾 情緒記憶系統（記住用戶痛點）
+// ============================================
+
+export interface PainPoint {
+  category: string;
+  description: string;
+  timestamp: number;
+}
+
+let painPoints: PainPoint[] = [];
+
+// 痛點關鍵字映射
+const PAIN_POINT_PATTERNS: Record<string, { category: string; description: string }> = {
+  '房東': { category: 'rental', description: '租屋與房東的問題' },
+  '漏水': { category: 'quality', description: '房屋漏水問題' },
+  '好吵': { category: 'noise', description: '噪音困擾' },
+  '隔音': { category: 'noise', description: '隔音不好' },
+  '通勤': { category: 'commute', description: '通勤時間太長' },
+  '塞車': { category: 'commute', description: '交通塞車問題' },
+  '租金': { category: 'rental', description: '租金太貴' },
+  '漲價': { category: 'rental', description: '租金調漲' },
+  '壁癌': { category: 'quality', description: '房屋壁癌問題' },
+  '老舊': { category: 'quality', description: '房屋老舊' },
+  '沒電梯': { category: 'quality', description: '沒有電梯' },
+  '管理': { category: 'quality', description: '社區管理問題' },
+};
+
+export function detectAndStorePainPoint(message: string): PainPoint | null {
+  const msg = message.toLowerCase();
+  for (const [keyword, info] of Object.entries(PAIN_POINT_PATTERNS)) {
+    if (msg.includes(keyword)) {
+      const newPainPoint: PainPoint = {
+        category: info.category,
+        description: info.description,
+        timestamp: Date.now()
+      };
+      // 避免重複
+      if (!painPoints.some(p => p.category === info.category)) {
+        painPoints.push(newPainPoint);
+        // 持久化到 localStorage
+        savePainPointsToStorage();
+      }
+      return newPainPoint;
+    }
+  }
+  return null;
+}
+
+export function getPainPoints(): PainPoint[] {
+  return painPoints;
+}
+
+export function getRecentPainPoint(): PainPoint | null {
+  if (painPoints.length === 0) return null;
+  // 返回最近 7 天內的痛點
+  const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+  const recent = painPoints.filter(p => p.timestamp > weekAgo);
+  return recent[recent.length - 1] || null;
+}
+
+export function savePainPointsToStorage(): void {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('maimai_pain_points', JSON.stringify(painPoints));
+  }
+}
+
+export function loadPainPointsFromStorage(): void {
+  if (typeof window !== 'undefined') {
+    const stored = localStorage.getItem('maimai_pain_points');
+    if (stored) {
+      try {
+        painPoints = JSON.parse(stored);
+      } catch {
+        painPoints = [];
+      }
+    }
+  }
+}
+
+export function resetPainPoints(): void {
+  painPoints = [];
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem('maimai_pain_points');
+  }
+}
+
+// 根據痛點生成關心開場白
+export function generateCareGreeting(): string | null {
+  const recent = getRecentPainPoint();
+  if (!recent) return null;
+  
+  const greetings: Record<string, string> = {
+    'rental': '嗨！上次你說房東的事情，後來有處理好嗎？',
+    'quality': '嗨！上次聽你說房子的問題，最近有改善嗎？',
+    'noise': '嗨！上次你說的噪音問題，後來有好一點嗎？',
+    'commute': '嗨！最近通勤還是那麼累嗎？辛苦了～'
+  };
+  
+  return greetings[recent.category] || null;
+}
+
+// ============================================
+// 🏷️ 類型定義
 // ============================================
 
 export type TagCategory = 
@@ -417,13 +618,25 @@ export function detectPaveInterest(message: string): boolean {
   return interestSignals.some(s => message.includes(s));
 }
 
+// 追蹤當前命中的橋接話題
+let currentBridgeTopic: { key: string; script: typeof BRIDGE_SCRIPTS[string] } | null = null;
+
+export function setCurrentBridgeTopic(bridge: { key: string; script: typeof BRIDGE_SCRIPTS[string] } | null): void {
+  currentBridgeTopic = bridge;
+}
+
+export function getCurrentBridgeTopic(): { key: string; script: typeof BRIDGE_SCRIPTS[string] } | null {
+  return currentBridgeTopic;
+}
+
 export function determineRecommendationPhase(
   userState: UserState,
   timing: TimingQuality,
   emotionalState: DetailedEmotionalState,
   chitchatRounds: number,
   topCategory: TagCategory | null,
-  userShowedInterest: boolean
+  userShowedInterest: boolean,
+  message?: string  // 新增：用於檢查橋接話題
 ): RecommendationPhase {
   // 用戶正在講故事 → 不推薦
   if (emotionalState === 'storytelling') {
@@ -453,6 +666,17 @@ export function determineRecommendationPhase(
   // 半熱型 + 用戶對鋪墊有興趣 → 推卡片
   if (userState === 'semi-warm' && hasPaved && userShowedInterest) {
     return 'card';
+  }
+  
+  // ⭐ 優化：半熱型 + 命中橋接話題 + 情緒正向 → 使用橋接鋪墊
+  if (userState === 'semi-warm' && message) {
+    const bridge = detectBridgeTopic(message);
+    if (bridge && (emotionalState === 'happy' || emotionalState === 'neutral' || emotionalState === 'curious')) {
+      setCurrentBridgeTopic(bridge);
+      if (!hasPaved) {
+        return 'pave';
+      }
+    }
   }
   
   // 半熱型 + 時機好 + 有累積標籤 → 鋪墊
@@ -565,6 +789,8 @@ export function resetAllState(): void {
   resetAccumulatedTags();
   resetChitchatCounter();
   resetPaved();
+  setCurrentBridgeTopic(null);
+  // 注意：不重置 painPoints，這是跨對話的記憶
 }
 
 // ============================================
@@ -637,7 +863,17 @@ export function buildEnhancedPrompt(
       break;
       
     case 'pave':
-      if (topCategory) {
+      // ⭐ 優先使用橋接話題（更自然的轉折）
+      const bridgeTopic = getCurrentBridgeTopic();
+      if (bridgeTopic) {
+        prompt += `\n\n【🌉 建議：話題橋接鋪墊】
+用戶聊到「${bridgeTopic.script.topic}」，這是很棒的橋接點！
+用這句自然轉折：
+「${bridgeTopic.script.bridge}」
+
+這樣聊到「${bridgeTopic.script.feature}」就很自然～
+⚠️ 這輪不要附卡片！等用戶說「真的嗎」「想了解」再附。`;
+      } else if (topCategory) {
         const community = getCommunityByCategory(topCategory);
         prompt += `\n\n【🎯 建議：鋪墊】
 用戶對「${topCategory}」有需求，可以口頭帶一句：
