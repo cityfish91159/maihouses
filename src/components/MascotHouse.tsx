@@ -25,10 +25,10 @@ export default function MascotHouse({ animated = true }: MascotHouseProps) {
         return { leftArm: 'M 55 130 L 25 100', rightArm: 'M 145 130 L 175 90', eyeY: 125, mouthCurve: 'smile' };
       case 1: // 帶看 - 驚喜睜大眼
         return { leftArm: 'M 55 130 L 30 130', rightArm: 'M 145 130 L 170 130', eyeY: 123, eyeSize: 6, mouthCurve: 'wow' };
-      case 2: // 出價 - 認真思考
-        return { leftArm: 'M 55 130 L 35 145', rightArm: 'M 145 130 L 165 145', eyeY: 127, mouthCurve: 'think' };
-      case 3: // 斡旋 - 緊張握拳
-        return { leftArm: 'M 55 130 L 40 110', rightArm: 'M 145 130 L 160 110', eyeY: 125, mouthCurve: 'nervous' };
+      case 2: // 出價 - 專注認真（托下巴思考）
+        return { leftArm: 'M 55 130 L 45 150', rightArm: 'M 145 130 L 155 145', eyeY: 125, mouthCurve: 'focused' };
+      case 3: // 斡旋 - 期待加油（握拳打氣）
+        return { leftArm: 'M 55 130 L 30 105', rightArm: 'M 145 130 L 170 105', eyeY: 124, mouthCurve: 'hopeful' };
       case 4: // 成交 - 開心跳躍
         return { leftArm: 'M 55 130 L 20 95', rightArm: 'M 145 130 L 180 95', eyeY: 122, mouthCurve: 'happy', bounce: true };
       case 5: // 交屋 - 滿足微笑
@@ -48,10 +48,10 @@ export default function MascotHouse({ animated = true }: MascotHouseProps) {
         return <path d="M 90 145 Q 100 155 110 145" stroke="currentColor" strokeWidth="3" fill="none" strokeLinecap="round" />;
       case 'wow':
         return <ellipse cx="100" cy="148" rx="6" ry="8" stroke="currentColor" strokeWidth="3" fill="none" />;
-      case 'think':
-        return <path d="M 92 148 L 108 148" stroke="currentColor" strokeWidth="3" fill="none" strokeLinecap="round" />;
-      case 'nervous':
-        return <path d="M 90 150 Q 95 145 100 150 Q 105 145 110 150" stroke="currentColor" strokeWidth="3" fill="none" strokeLinecap="round" />;
+      case 'focused':
+        return <path d="M 92 145 Q 100 152 108 145" stroke="currentColor" strokeWidth="3" fill="none" strokeLinecap="round" />;
+      case 'hopeful':
+        return <path d="M 90 144 Q 100 156 110 144" stroke="currentColor" strokeWidth="3" fill="none" strokeLinecap="round" />;
       case 'happy':
         return <path d="M 85 142 Q 100 165 115 142" stroke="currentColor" strokeWidth="3" fill="none" strokeLinecap="round" />;
       case 'proud':
@@ -114,16 +114,16 @@ export default function MascotHouse({ animated = true }: MascotHouseProps) {
           <path d="M 105 105 Q 115 98 125 105" stroke="currentColor" strokeWidth="4" fill="none" strokeLinecap="round" />
         </>
       ) : phase === 2 ? (
-        // 思考 - 皺眉
+        // 專注 - 單邊微挑眉（認真樣）
         <>
-          <path d="M 78 108 L 92 112" stroke="currentColor" strokeWidth="4" fill="none" strokeLinecap="round" />
-          <path d="M 108 112 L 122 108" stroke="currentColor" strokeWidth="4" fill="none" strokeLinecap="round" />
+          <path d="M 78 108 Q 85 105 92 109" stroke="currentColor" strokeWidth="4" fill="none" strokeLinecap="round" />
+          <path d="M 108 107 Q 115 104 122 109" stroke="currentColor" strokeWidth="4" fill="none" strokeLinecap="round" />
         </>
       ) : phase === 3 ? (
-        // 緊張 - 擔心眉
+        // 期待 - 開心挑眉（加油樣）
         <>
-          <path d="M 76 112 Q 85 106 94 112" stroke="currentColor" strokeWidth="4" fill="none" strokeLinecap="round" />
-          <path d="M 106 112 Q 115 106 124 112" stroke="currentColor" strokeWidth="4" fill="none" strokeLinecap="round" />
+          <path d="M 76 108 Q 85 103 94 108" stroke="currentColor" strokeWidth="4" fill="none" strokeLinecap="round" />
+          <path d="M 106 108 Q 115 103 124 108" stroke="currentColor" strokeWidth="4" fill="none" strokeLinecap="round" />
         </>
       ) : (
         // 正常/開心
