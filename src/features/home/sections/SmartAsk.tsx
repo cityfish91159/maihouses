@@ -150,19 +150,6 @@ export default function SmartAsk() {
                                 今天過得怎樣？<br />
                                 想聊什麼都可以，我在這陪你～
                             </p>
-                            
-                            {/* 開場選項提示 */}
-                            <div className="mt-4 flex flex-wrap justify-center gap-2">
-                                {QUICK_TAGS_LIFESTYLE.map(tag => (
-                                    <button
-                                        key={tag}
-                                        onClick={() => send(tag)}
-                                        className="px-3 py-1.5 rounded-full bg-brand-50 border border-brand-100 text-brand-600 text-xs font-bold hover:bg-brand-100 transition-all"
-                                    >
-                                        {tag}
-                                    </button>
-                                ))}
-                            </div>
                         </div>
                     ) : (
                         messages.map((m, i) => (
