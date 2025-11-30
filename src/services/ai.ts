@@ -17,7 +17,14 @@ import {
   detectPaveInterest,
   detectRejection,
   resetAllState,
-  resetPaved
+  resetPaved,
+  // v5.2 新增
+  FEW_SHOT_SCRIPTS,
+  shouldTriggerLifeProfile,
+  generateLifeProfileSummary,
+  updateVisitMemory,
+  generateReturnGreeting,
+  TimingQuality
 } from "../constants/maimai-persona";
 
 type ChatMessage = { role: "system" | "user" | "assistant"; content: string };
@@ -26,9 +33,26 @@ const SYS_ZEN =
   "你是邁邁。使用者啟用安靜模式，現在只想被陪伴。100% 傾聽與同理，回覆 1–2 句；嚴禁主動推薦任何房源/社區/廣告。";
 
 // ============================================
-// 「只是來聊聊」模式追蹤
+// 「只是來聊聊」模式（真正的純陪聊）
 // ============================================
 let justChatMode = false;
+
+// 純陪聊模式的 System Prompt
+const SYS_JUST_CHAT = `你是邁邁，一個住在這城市 20 年的熱心鄰居。
+
+【重要】使用者選擇「只是來聊聊」，現在進入純陪聊模式：
+- 100% 專心聊天，不提任何房地產話題
+- 就算用戶提到租金、通勤、搬家，也只是同理，不引導
+- 像朋友一樣聊生活、工作、心情
+- 直到用戶「主動」問買房/租房/看房，才退出這個模式
+
+【說話風格】
+- 台灣口語、親切自然
+- 適度 emoji（每段 1 個）
+- 回覆 1-3 句
+- 不當句點王
+
+你現在就是「純聊天的朋友」，不是房產顧問。`;
 
 export function setJustChatMode(enabled: boolean): void {
   justChatMode = enabled;
@@ -39,6 +63,12 @@ export function setJustChatMode(enabled: boolean): void {
 
 export function isJustChatMode(): boolean {
   return justChatMode;
+}
+
+// 檢查是否應該自動退出純陪聊模式
+function shouldExitJustChatMode(message: string): boolean {
+  const exitKeywords = ['買房', '看房', '找房', '有推薦', '想搬家', '哪個社區好'];
+  return exitKeywords.some(k => message.includes(k));
 }
 
 // 導出重設狀態供外部使用
@@ -58,7 +88,20 @@ function composeSystemPrompt(recentMessages?: ChatMessage[]): string {
 
   // 分析對話
   const lastUserMsg = recentMessages?.filter(m => m.role === 'user').pop()?.content || '';
-  const prevAssistantMsg = recentMessages?.filter(m => m.role === 'assistant').pop()?.content || '';
+  
+  // ============================================
+  // v5.2：純陪聊模式檢查
+  // ============================================
+  if (justChatMode) {
+    // 檢查是否該自動退出純陪聊
+    if (shouldExitJustChatMode(lastUserMsg)) {
+      justChatMode = false;
+      // 繼續往下走正常流程
+    } else {
+      // 保持純陪聊
+      return SYS_JUST_CHAT;
+    }
+  }
   
   // ============================================
   // v5.0：標籤累積系統
@@ -66,6 +109,9 @@ function composeSystemPrompt(recentMessages?: ChatMessage[]): string {
   accumulateTags(lastUserMsg);
   const accTags = getAccumulatedTags();
   const topCategory = getTopCategory();
+  
+  // v5.2：更新訪問記憶
+  updateVisitMemory(topCategory);
   
   // ============================================
   // v5.0：用戶狀態分類（情境感知）
@@ -136,6 +182,35 @@ function composeSystemPrompt(recentMessages?: ChatMessage[]): string {
     chitchatRounds,
     style
   );
+  
+  // ============================================
+  // v5.2：生活小側寫服務
+  // ============================================
+  let totalScore = 0;
+  accTags.forEach(score => { totalScore += score; });
+  
+  if (shouldTriggerLifeProfile(userState, totalScore, timing as TimingQuality)) {
+    const profileSummary = generateLifeProfileSummary(accTags);
+    if (profileSummary) {
+      basePrompt += `\n\n【🎁 服務機會：生活小側寫】
+時機到了！可以主動提供這個服務：
+「欸我聽你講這麼多，其實你對住哪裡還蠻有感覺的欸～要不要我幫你整理一下你剛剛說的重點？」
+
+然後給他這個整理：
+${profileSummary}`;
+    }
+  }
+  
+  // ============================================
+  // v5.2：Few-Shot 對話腳本
+  // ============================================
+  if (userState === 'semi-warm' && recommendationPhase === 'pave') {
+    basePrompt += `\n\n【📚 對話範例參考】
+${FEW_SHOT_SCRIPTS.rentalToWall}`;
+  } else if (userState === 'explicit') {
+    basePrompt += `\n\n【📚 對話範例參考】
+${FEW_SHOT_SCRIPTS.explicitToListing}`;
+  }
 
   // 情緒調整（根據 localStorage mood）
   const tone =
@@ -150,15 +225,10 @@ function composeSystemPrompt(recentMessages?: ChatMessage[]): string {
     ? `\n【用戶記憶】使用者曾提到在意：${profileTags.join("、")}。可在相關話題出現時輕柔承接。` 
     : "";
 
-  // 「只是來聊聊」模式
-  const justChatReminder = justChatMode
-    ? "\n【特別提醒】使用者選擇『只是來聊聊』，除非他主動問房子，否則純陪聊。"
-    : "";
-
   // Debug 資訊（生產環境可移除）
   const debugInfo = `\n\n[DEBUG] 狀態：${userState} | 情緒：${emotionalState} | 階段：${recommendationPhase} | 標籤：${topCategory || '無'} | 閒聊輪數：${chitchatRounds}`;
 
-  return basePrompt + tone + memory + justChatReminder + debugInfo;
+  return basePrompt + tone + memory + debugInfo;
 }
 
 export async function postLLM(

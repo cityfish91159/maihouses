@@ -3,7 +3,7 @@ import { Send, Sparkles, MessageCircle } from 'lucide-react';
 import { postLLM, setJustChatMode } from '../../../services/ai';
 import MascotMaiMai from '../../../components/MascotMaiMai';
 import ChatMessage from '../components/ChatMessage';
-import { QUICK_TAGS_LIFESTYLE, QUICK_TAGS_EXPLORE } from '../../../constants/maimai-persona';
+import { QUICK_TAGS_LIFESTYLE, QUICK_TAGS_EXPLORE, generateReturnGreeting, loadPainPointsFromStorage } from '../../../constants/maimai-persona';
 
 type ChatMsg = { role: 'user' | 'assistant'; content: string; timestamp: string };
 
@@ -11,11 +11,21 @@ export default function SmartAsk() {
     const [messages, setMessages] = useState<ChatMsg[]>([]);
     const [input, setInput] = useState('');
     const [loading, setLoading] = useState(false);
+    const [returnGreeting, setReturnGreeting] = useState<string | null>(null);
     const chatRef = useRef<HTMLDivElement>(null);
 
     // 根據對話輪數決定顯示哪組 Quick Tags
     const userRounds = messages.filter(m => m.role === 'user').length;
     const currentTags = userRounds >= 3 ? QUICK_TAGS_EXPLORE : QUICK_TAGS_LIFESTYLE;
+
+    // v5.2：載入痛點記憶 + 回訪問候
+    useEffect(() => {
+        loadPainPointsFromStorage();
+        const greeting = generateReturnGreeting();
+        if (greeting) {
+            setReturnGreeting(greeting);
+        }
+    }, []);
 
     useEffect(() => {
         if (chatRef.current) {
@@ -134,11 +144,13 @@ export default function SmartAsk() {
                             <MascotMaiMai />
 
                             <p className="mb-2 font-black text-brand-700 text-base">
-                                嗨～我是邁邁 👋
+                                {returnGreeting ? returnGreeting.split('！')[0] + '！' : '嗨～我是邁邁 👋'}
                             </p>
                             <p className="text-sm leading-relaxed text-ink-600 max-w-xs mx-auto font-medium">
-                                今天過得怎樣？<br />
-                                想聊什麼都可以，我在這陪你～
+                                {returnGreeting 
+                                    ? returnGreeting.includes('！') ? returnGreeting.split('！').slice(1).join('！') : '最近過得怎樣？'
+                                    : <>今天過得怎樣？<br />想聊什麼都可以，我在這陪你～</>
+                                }
                             </p>
                         </div>
                     ) : (
