@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { propertyService, PropertyFormInput } from '../services/propertyService';
+import { CommunityPicker } from '../components/ui/CommunityPicker';
 import { 
   Loader2, Upload, X, Sparkles, ThumbsUp, ThumbsDown, 
   Download, Check, Home, MapPin, Shield, ArrowLeft
@@ -15,6 +16,7 @@ export const PropertyUploadPage: React.FC = () => {
   const [images, setImages] = useState<string[]>([]);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [user, setUser] = useState<any>(null);
+  const [selectedCommunityId, setSelectedCommunityId] = useState<string | undefined>();
 
   const [form, setForm] = useState<PropertyFormInput>({
     title: '', price: '', address: '', communityName: '', size: '', age: '', 
@@ -24,10 +26,6 @@ export const PropertyUploadPage: React.FC = () => {
     sourceExternalId: ''
   });
 
-  // 社區名稱驗證狀態
-  const [communityStatus, setCommunityStatus] = useState<'empty' | 'checking' | 'exists' | 'new' | 'incomplete'>('empty');
-  const [suggestedCommunity, setSuggestedCommunity] = useState<string | null>(null);
-
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
       setUser(data.user);
@@ -36,6 +34,12 @@ export const PropertyUploadPage: React.FC = () => {
 
   const handleInput = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  // 社區選擇處理
+  const handleCommunityChange = (name: string, communityId?: string) => {
+    setForm({ ...form, communityName: name });
+    setSelectedCommunityId(communityId);
   };
 
   // 驗證邏輯
@@ -90,7 +94,8 @@ export const PropertyUploadPage: React.FC = () => {
     setLoading(true);
     try {
       const uploadedUrls = await propertyService.uploadImages(imageFiles);
-      const result = await propertyService.createPropertyWithForm(form, uploadedUrls);
+      // 傳入已選擇的社區 ID（如果有的話）
+      const result = await propertyService.createPropertyWithForm(form, uploadedUrls, selectedCommunityId);
       
       alert('🎉 刊登成功！物件編號：' + result.public_id);
       navigate('/property/' + result.public_id);
@@ -150,48 +155,16 @@ export const PropertyUploadPage: React.FC = () => {
               </div>
             </div>
 
-            {/* 社區名稱欄位 - 智能偵測 */}
+            {/* 社區名稱 - 智能選擇器 */}
             <div>
               <label className="block text-xs font-medium text-slate-600 mb-1">
                 社區名稱 <span className="text-slate-400">(選填，將自動建立社區牆)</span>
               </label>
-              <div className="relative">
-                <input 
-                  name="communityName" 
-                  value={form.communityName} 
-                  onChange={(e) => {
-                    handleInput(e);
-                    const val = e.target.value.trim();
-                    if (!val) {
-                      setCommunityStatus('empty');
-                      setSuggestedCommunity(null);
-                    } else if (val.length < 2) {
-                      setCommunityStatus('incomplete');
-                    } else if (/社區|大樓|花園|莊園|雅築|官邸|華廈|別墅|山莊|天廈/.test(val)) {
-                      setCommunityStatus('new'); // 完整社區名
-                    } else if (/路|街|巷|號/.test(val) && !/社區|大樓/.test(val)) {
-                      setCommunityStatus('incomplete'); // 只填地址
-                      setSuggestedCommunity(null);
-                    } else {
-                      setCommunityStatus('new');
-                    }
-                  }}
-                  className={inputClass + (
-                    communityStatus === 'new' ? ' border-green-300 bg-green-50/50' :
-                    communityStatus === 'incomplete' ? ' border-yellow-300 bg-yellow-50/50' : ''
-                  )} 
-                  placeholder="例如：信義之星、惠宇上晴" 
-                />
-                {communityStatus === 'new' && (
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-green-600 text-xs font-medium">✓ 將建立新社區牆</span>
-                )}
-              </div>
-              {communityStatus === 'incomplete' && (
-                <p className="text-xs text-yellow-600 mt-1">💡 建議填寫正式社區名稱（如「XX社區」），方便建立社區牆</p>
-              )}
-              {communityStatus === 'empty' && form.address && (
-                <p className="text-xs text-slate-400 mt-1">填寫社區名稱可自動建立社區牆，讓買家看到社區評價</p>
-              )}
+              <CommunityPicker
+                value={form.communityName}
+                address={form.address}
+                onChange={handleCommunityChange}
+              />
             </div>
 
             <div className="grid grid-cols-4 gap-3">

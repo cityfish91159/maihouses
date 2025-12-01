@@ -3,13 +3,41 @@
 -- 說明：為社區資料表新增「氛圍故事」相關欄位
 
 -- ============================================
--- 1. 新增社區故事欄位
+-- 1. 先確保 communities 表存在
 -- ============================================
 
--- 如果 communities 表已存在，使用 ALTER TABLE
--- 如果還沒有 communities 表，請使用下面的 CREATE TABLE
+CREATE TABLE IF NOT EXISTS communities (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT NOT NULL UNIQUE,
+  
+  -- 基本資訊
+  address TEXT,
+  district TEXT,
+  city TEXT DEFAULT '台北市',
+  building_age INTEGER,
+  total_units INTEGER,
+  management_fee INTEGER,
+  
+  -- 評價統計
+  score DECIMAL(2,1) DEFAULT 0,
+  review_count INTEGER DEFAULT 0,
+  
+  -- 社區特色標籤
+  features TEXT[],
+  
+  -- 媒體
+  cover_image TEXT,
+  gallery TEXT[],
+  
+  -- 時間戳記
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
 
--- 方案 A: 新增欄位到現有表
+-- ============================================
+-- 2. 新增社區故事欄位
+-- ============================================
+
 ALTER TABLE communities ADD COLUMN IF NOT EXISTS story_vibe TEXT;
 ALTER TABLE communities ADD COLUMN IF NOT EXISTS two_good TEXT[];       -- 兩個優點
 ALTER TABLE communities ADD COLUMN IF NOT EXISTS one_fair TEXT;         -- 一個公道話（誠實缺點）
@@ -26,64 +54,31 @@ COMMENT ON COLUMN communities.best_for IS '最適合的客群描述';
 COMMENT ON COLUMN communities.lifestyle_tags IS '生活風格標籤，用於 AI 匹配';
 
 -- ============================================
--- 2. 或者：建立全新的 communities 表
+-- 3. RLS 政策
 -- ============================================
 
-/*
-CREATE TABLE IF NOT EXISTS communities (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  name TEXT NOT NULL,
-  
-  -- 基本資訊
-  address TEXT,
-  district TEXT,
-  city TEXT DEFAULT '台北市',
-  building_age INTEGER,              -- 屋齡
-  total_units INTEGER,               -- 總戶數
-  management_fee INTEGER,            -- 管理費/坪
-  
-  -- 評價統計
-  score DECIMAL(2,1) DEFAULT 0,      -- 平均評分 (0-5)
-  review_count INTEGER DEFAULT 0,    -- 評價數量
-  
-  -- 🌟 故事性推薦欄位 (新增)
-  story_vibe TEXT,                   -- 氛圍故事
-  two_good TEXT[],                   -- 兩個優點
-  one_fair TEXT,                     -- 一個公道話
-  resident_quote TEXT,               -- 住戶語錄
-  best_for TEXT[],                   -- 適合客群
-  lifestyle_tags TEXT[],             -- 生活標籤
-  
-  -- 社區特色標籤
-  features TEXT[],                   -- 如：['學區型', '捷運5分鐘', '寵物友善']
-  
-  -- 媒體
-  cover_image TEXT,
-  gallery TEXT[],
-  
-  -- 時間戳記
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- 索引
-CREATE INDEX IF NOT EXISTS idx_communities_district ON communities(district);
-CREATE INDEX IF NOT EXISTS idx_communities_score ON communities(score DESC);
-CREATE INDEX IF NOT EXISTS idx_communities_lifestyle_tags ON communities USING GIN(lifestyle_tags);
-
--- RLS
 ALTER TABLE communities ENABLE ROW LEVEL SECURITY;
 
 -- 所有人都可以讀取社區資料
+DROP POLICY IF EXISTS "Anyone can view communities" ON communities;
 CREATE POLICY "Anyone can view communities"
   ON communities FOR SELECT
   USING (true);
 
--- 只有管理員可以編輯
-CREATE POLICY "Admins can manage communities"
-  ON communities FOR ALL
-  USING (auth.jwt() ->> 'role' = 'admin');
-*/
+-- 登入用戶可以建立社區
+DROP POLICY IF EXISTS "Authenticated users can create communities" ON communities;
+CREATE POLICY "Authenticated users can create communities"
+  ON communities FOR INSERT
+  TO authenticated
+  WITH CHECK (true);
+
+-- ============================================
+-- 4. 索引
+-- ============================================
+
+CREATE INDEX IF NOT EXISTS idx_communities_district ON communities(district);
+CREATE INDEX IF NOT EXISTS idx_communities_score ON communities(score DESC);
+CREATE INDEX IF NOT EXISTS idx_communities_lifestyle_tags ON communities USING GIN(lifestyle_tags);
 
 -- ============================================
 -- 3. 範例資料

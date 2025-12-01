@@ -160,50 +160,71 @@ export const propertyService = {
   },
 
   // 4. 建立物件 (新版 - 含結構化欄位 + 社區自動建立)
-  createPropertyWithForm: async (form: PropertyFormInput, images: string[]) => {
+  createPropertyWithForm: async (form: PropertyFormInput, images: string[], existingCommunityId?: string) => {
     // 確認登入狀態
     const { data: { user } } = await supabase.auth.getUser();
     
     // 若未登入，使用預設 agent_id (開發模式)
     const agentId = user?.id || 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
 
-    // 🏢 如果有填社區名稱，檢查並自動建立社區牆
-    let communityId: string | null = null;
-    if (form.communityName && form.communityName.trim().length >= 2) {
+    // 🏢 社區處理邏輯
+    let communityId: string | null = existingCommunityId || null;
+    
+    // 如果沒有傳入 communityId，且有填社區名稱，才需要查詢或建立
+    if (!communityId && form.communityName && form.communityName.trim().length >= 2) {
       const communityName = form.communityName.trim();
       
-      // 檢查社區是否已存在
-      const { data: existingCommunity } = await supabase
+      // 計算地址指紋（去除樓層）
+      const addressFingerprint = form.address
+        .replace(/[之\-－—]/g, '')
+        .replace(/\d+樓.*$/, '')
+        .replace(/\s+/g, '');
+      
+      // 先用地址指紋找
+      const { data: existingByAddress } = await supabase
         .from('communities')
         .select('id')
-        .eq('name', communityName)
+        .eq('address_fingerprint', addressFingerprint)
         .single();
 
-      if (existingCommunity) {
-        communityId = existingCommunity.id;
+      if (existingByAddress) {
+        communityId = existingByAddress.id;
       } else {
-        // 自動建立新社區牆
-        const district = form.address.match(/([^市縣]+[區鄉鎮市])/)?.[1] || '';
-        const city = form.address.match(/^(.*?[市縣])/)?.[1] || '台北市';
-        
-        const { data: newCommunity, error: communityError } = await supabase
+        // 再用名稱找
+        const { data: existingByName } = await supabase
           .from('communities')
-          .insert({
-            name: communityName,
-            address: form.address,
-            district: district,
-            city: city,
-            // 初始兩好一公道來自物件資訊
-            two_good: [form.advantage1, form.advantage2].filter(Boolean),
-            one_fair: form.disadvantage || null,
-            features: [form.type].filter(Boolean),
-          })
           .select('id')
+          .eq('name', communityName)
           .single();
 
-        if (!communityError && newCommunity) {
-          communityId = newCommunity.id;
-          console.log('✅ 自動建立社區牆:', communityName);
+        if (existingByName) {
+          communityId = existingByName.id;
+        } else {
+          // 都找不到，建立新社區（影子模式）
+          const district = form.address.match(/([^市縣]+[區鄉鎮市])/)?.[1] || '';
+          const city = form.address.match(/^(.*?[市縣])/)?.[1] || '台北市';
+          
+          const { data: newCommunity, error: communityError } = await supabase
+            .from('communities')
+            .insert({
+              name: communityName,
+              address: form.address,
+              address_fingerprint: addressFingerprint,
+              district: district,
+              city: city,
+              is_verified: false,
+              // 初始兩好一公道來自物件資訊
+              two_good: [form.advantage1, form.advantage2].filter(Boolean),
+              one_fair: form.disadvantage || null,
+              features: [form.type].filter(Boolean),
+            })
+            .select('id')
+            .single();
+
+          if (!communityError && newCommunity) {
+            communityId = newCommunity.id;
+            console.log('✅ 自動建立社區牆:', communityName);
+          }
         }
       }
     }
