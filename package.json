@@ -42,7 +42,7 @@
     "tailwind-merge": "^3.4.0",
     "uuid": "^9.0.1",
     "zod": "^4.1.12",
-    "zustand": "^5.0.8"
+    "zustand": "^5.0.9"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.9.1",
