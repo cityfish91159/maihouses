@@ -65,6 +65,7 @@ WHERE p.community_id IS NOT NULL
 | 12/01 | 房仿身份寫死 | 改查 `agents` 表 |
 | 12/01 | 訪客可看私密牆 | 加入權限檢查 |
 | 12/01 | View建立失敗(已存在Table) | 先 DROP TABLE 再建 View |
+| 12/01 | 評價計數錯誤(2張卡=6則) | 改為每個✅/⚖️=1則，訪客只看2則 |
 
 ---
 
