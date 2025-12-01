@@ -40,6 +40,14 @@ export function CommunityPicker({ value, address, onChange, className = '' }: Co
     return match?.[1] || '';
   };
 
+  // 計算地址指紋（去除樓層、空白）
+  const computeAddressFingerprint = (addr: string): string => {
+    return addr
+      .replace(/[之\-－—]/g, '')
+      .replace(/\d+樓.*$/, '')
+      .replace(/\s+/g, '');
+  };
+
   // 搜尋社區
   const searchCommunities = async (term: string, addr: string) => {
     if (!term && !addr) {
@@ -50,18 +58,33 @@ export function CommunityPicker({ value, address, onChange, className = '' }: Co
     setLoading(true);
     try {
       const district = extractDistrict(addr);
+      const fingerprint = addr ? computeAddressFingerprint(addr) : '';
       
+      // 策略 1: 用地址指紋精準匹配
+      if (fingerprint) {
+        const { data: exactMatch } = await supabase
+          .from('communities')
+          .select('id, name, address, property_count, is_verified')
+          .eq('address_fingerprint', fingerprint)
+          .limit(1);
+        
+        if (exactMatch && exactMatch.length > 0) {
+          setSuggestions(exactMatch);
+          setLoading(false);
+          return;
+        }
+      }
+      
+      // 策略 2: 用名稱模糊搜尋
       let query = supabase
         .from('communities')
         .select('id, name, address, property_count, is_verified')
         .limit(5);
 
-      // 優先用名稱搜尋
       if (term) {
         query = query.ilike('name', `%${term}%`);
       }
       
-      // 如果有區域，優先顯示同區的
       if (district) {
         query = query.eq('district', district);
       }
@@ -114,18 +137,47 @@ export function CommunityPicker({ value, address, onChange, className = '' }: Co
   };
 
   // 判斷是否為完整社區名
-  const isValidCommunityName = (name: string): boolean => {
-    if (name.length < 2) return false;
-    // 包含社區相關關鍵字
-    if (/社區|大樓|花園|莊園|雅築|官邸|華廈|別墅|山莊|天廈|豪邸/.test(name)) return true;
-    // 不只是地址
-    if (/路|街|巷|號/.test(name) && !/社區|大樓/.test(name)) return false;
-    return name.length >= 2;
+  const isValidCommunityName = (name: string): { valid: boolean; reason?: string } => {
+    const trimmed = name.trim();
+    
+    // 長度檢查
+    if (trimmed.length < 2) {
+      return { valid: false, reason: '名稱太短' };
+    }
+    
+    // 排除過於泛用的詞
+    const genericWords = /^(透天|店面|華廈|公寓|套房|大樓|A棟|B棟|C區|[A-Z]\d*棟?)$/;
+    if (genericWords.test(trimmed)) {
+      return { valid: false, reason: '請輸入正式社區名稱' };
+    }
+    
+    // 排除純地址（只有路街巷號但沒有社區名）
+    if (/^.*[路街巷弄]\d+號?$/.test(trimmed) && !/社區|大樓|花園|莊園/.test(trimmed)) {
+      return { valid: false, reason: '這看起來是地址而非社區名' };
+    }
+    
+    // 排除廣告詞
+    if (/超便宜|稀有|唯一|急售|降價|特價/.test(trimmed)) {
+      return { valid: false, reason: '請輸入正式社區名稱' };
+    }
+    
+    // 包含社區相關關鍵字 → 優先通過
+    if (/社區|大樓|花園|莊園|雅築|官邸|華廈|別墅|山莊|天廈|豪邸|期$/.test(trimmed)) {
+      return { valid: true };
+    }
+    
+    // 其他情況：長度 >= 3 且為中文則通過
+    if (trimmed.length >= 3 && /^[\u4e00-\u9fa5\d]+$/.test(trimmed)) {
+      return { valid: true };
+    }
+    
+    return { valid: false, reason: '建議填寫正式社區名稱' };
   };
 
+  const nameValidation = isValidCommunityName(searchTerm);
   const showCreateOption = searchTerm.trim() && 
     !suggestions.some(s => s.name === searchTerm.trim()) &&
-    isValidCommunityName(searchTerm.trim());
+    nameValidation.valid;
 
   return (
     <div ref={wrapperRef} className={`relative ${className}`}>
@@ -169,14 +221,14 @@ export function CommunityPicker({ value, address, onChange, className = '' }: Co
           {selectedCommunity.property_count ? ` (${selectedCommunity.property_count} 個物件)` : ''}
         </p>
       )}
-      {!selectedCommunity && searchTerm && isValidCommunityName(searchTerm) && (
+      {!selectedCommunity && searchTerm && nameValidation.valid && (
         <p className="text-xs text-blue-600 mt-1">
-          💡 將自動建立新社區牆
+          💡 將自動建立「{searchTerm.trim()}」社區牆，同社區物件會自動串連
         </p>
       )}
-      {!selectedCommunity && searchTerm && !isValidCommunityName(searchTerm) && searchTerm.length >= 2 && (
-        <p className="text-xs text-yellow-600 mt-1">
-          ⚠️ 建議填寫正式社區名稱（如「XX社區」）
+      {!selectedCommunity && searchTerm && !nameValidation.valid && searchTerm.length >= 2 && (
+        <p className="text-xs text-amber-600 mt-1">
+          ⚠️ {nameValidation.reason || '建議填寫正式社區名稱'}（如：遠雄之星8期、惠文新象）
         </p>
       )}
 

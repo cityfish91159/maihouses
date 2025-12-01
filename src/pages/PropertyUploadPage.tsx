@@ -156,10 +156,14 @@ export const PropertyUploadPage: React.FC = () => {
             </div>
 
             {/* 社區名稱 - 智能選擇器 */}
-            <div>
-              <label className="block text-xs font-medium text-slate-600 mb-1">
-                社區名稱 <span className="text-slate-400">(選填，將自動建立社區牆)</span>
+            <div className="bg-blue-50/50 p-3 rounded-xl border border-blue-100">
+              <label className="block text-xs font-medium text-[#003366] mb-1 flex items-center gap-1">
+                <MapPin size={12} />
+                這間房子在哪個社區？
               </label>
+              <p className="text-[10px] text-blue-600 mb-2">
+                💡 填好社區名稱，同社區買方會優先看到你的物件
+              </p>
               <CommunityPicker
                 value={form.communityName}
                 address={form.address}
@@ -342,6 +346,22 @@ export const PropertyUploadPage: React.FC = () => {
                     <span key={i} className="px-2 py-0.5 bg-blue-50 text-[#003366] text-xs rounded-full">{tag}</span>
                   ))}
                 </div>
+                {/* 社區牆預覽提示 */}
+                {form.communityName && (
+                  <div className="mt-3 pt-2 border-t border-slate-100 text-xs text-slate-500">
+                    <span className="flex items-center gap-1">
+                      🏘️ 社區牆：
+                      <span className={selectedCommunityId ? 'text-green-600 font-medium' : 'text-blue-600 font-medium'}>
+                        {form.communityName}
+                      </span>
+                      {selectedCommunityId ? (
+                        <span className="text-green-600">（使用現有）</span>
+                      ) : (
+                        <span className="text-blue-600">（將自動建立）</span>
+                      )}
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
           </section>
