@@ -85,6 +85,7 @@ CREATE POLICY "Authenticated users can update communities"
 
 ALTER TABLE properties ADD COLUMN IF NOT EXISTS community_name TEXT;
 ALTER TABLE properties ADD COLUMN IF NOT EXISTS community_id UUID REFERENCES communities(id);
+ALTER TABLE properties ADD COLUMN IF NOT EXISTS address_fingerprint TEXT;
 
 -- ============================================
 -- 4. 索引 - 精準比對 + 模糊比對用
