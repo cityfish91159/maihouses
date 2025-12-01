@@ -158,6 +158,14 @@ body.role-agent .blur-cta{display:none !important}
 .fixed-bottom-cta.hidden{display:none}
 .fixed-bottom-cta p{font-size:12px;color:var(--text-secondary)}
 .fixed-bottom-cta button{background:linear-gradient(135deg,var(--primary),#005282);color:#fff;
+
+/* === Loading Skeleton === */
+.skeleton{animation:shimmer 1.5s infinite}
+.skeleton-avatar{width:40px;height:40px;border-radius:50%;background:linear-gradient(90deg,#f0f0f0 25%,#e8e8e8 50%,#f0f0f0 75%);background-size:200% 100%}
+.skeleton-line{height:12px;background:linear-gradient(90deg,#f0f0f0 25%,#e8e8e8 50%,#f0f0f0 75%);background-size:200% 100%;border-radius:6px;margin-bottom:8px}
+.skeleton-line.short{width:60%}
+.skeleton-line.medium{width:80%}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
   border:none;border-radius:999px;padding:10px 20px;font-size:13px;font-weight:700;cursor:pointer}
 </style>
 </head>
@@ -196,7 +204,7 @@ body.role-agent .blur-cta{display:none !important}
   <section class="section" id="reviews-section">
     <div class="section-header">
       <h2 class="section-title">⭐ 社區評價</h2>
-      <span class="section-sub">來自真實房仿的「兩好一公道」</span>
+      <span class="section-sub">來自真實房仲的「兩好一公道」</span>
     </div>
     <div id="reviews-list"></div>
   </section>
@@ -240,7 +248,7 @@ body.role-agent .blur-cta{display:none !important}
     <button class="active" data-role="guest" onclick="switchRole('guest')">👤 訪客（未登入）</button>
     <button data-role="member" onclick="switchRole('member')">👥 一般會員</button>
     <button data-role="resident" onclick="switchRole('resident')">🏠 已驗證住戶</button>
-    <button data-role="agent" onclick="switchRole('agent')">🏢 認證房仿</button>
+    <button data-role="agent" onclick="switchRole('agent')">🏢 認證房仲</button>
   </div>
 </div>
 
@@ -322,7 +330,7 @@ function switchRole(role) {
     guest: '訪客模式',
     member: '會員模式',
     resident: '住戶模式',
-    agent: '房仿模式'
+    agent: '房仲模式'
   };
   document.getElementById('current-role').textContent = roleNames[role];
   
@@ -350,12 +358,12 @@ function getPermissions() {
     isLoggedIn: !isGuest,                        // 會員以上
     canSeeAllReviews: !isGuest,                  // 會員以上可看全部評價
     canSeeAllPosts: !isGuest,                    // 會員以上可看全部公開牆
-    canAccessPrivate: isResident || isAgent,     // 只有住戶/房仿可看私密牆
-    canPostPublic: isResident || isAgent,        // 住戶/房仿可發公開牆
+    canAccessPrivate: isResident || isAgent,     // 只有住戶/房仲可看私密牆
+    canPostPublic: isResident || isAgent,        // 住戶/房仲可發公開牆
     canPostPrivate: isResident,                  // 只有住戶可發私密牆
     canAskQuestion: !isGuest,                    // 會員以上可發問
-    canAnswer: isResident || isAgent,            // 住戶/房仿可回答
-    showExpertBadge: isAgent                     // 房仿顯示專家標章
+    canAnswer: isResident || isAgent,            // 住戶/房仲可回答
+    showExpertBadge: isAgent                     // 房仲顯示專家標章
   };
 }
 
@@ -419,7 +427,7 @@ function renderReviews() {
         </div>
         <div class="blur-cta">
           <h4>🔒 還有 ${hiddenCount} 則評價</h4>
-          <p>註冊會員看全部房仿真實評價</p>
+          <p>註冊會員看全部房仲真實評價</p>
           <button onclick="showLoginModal()">免費註冊 / 登入</button>
         </div>
       </div>
@@ -469,7 +477,7 @@ function renderPublicWall() {
     `;
   }
   
-  // 發文按鈕（住戶/房仿）
+  // 發文按鈕（住戶/房仲）
   if (perm.canPostPublic) {
     html += `
       <div class="post-card" style="background:rgba(0,56,90,.03);border-style:dashed;justify-content:center;padding:20px">
@@ -488,7 +496,7 @@ function renderPostCard(post, perm) {
   const isOfficial = post.type === 'official';
   const avatarClass = isAgent ? 'agent' : '';
   const badgeHtml = isAgent 
-    ? '<span class="post-badge agent">認證房仿</span>'
+    ? '<span class="post-badge agent">認證房仲</span>'
     : isOfficial 
       ? '<span class="post-badge verified">官方公告</span>'
       : post.floor ? `<span class="post-badge resident">${post.floor} 住戶</span>` : '';
@@ -500,7 +508,7 @@ function renderPostCard(post, perm) {
       : '';
   
   const actionsHtml = isAgent
-    ? '<button class="action-btn">📩 私訊房仿</button>'
+    ? '<button class="action-btn">📩 私訊房仲</button>'
     : `<button class="action-btn">❤️ 讚</button><button class="action-btn">💬 回覆</button>`;
   
   return `
@@ -553,7 +561,7 @@ function renderPrivateWall() {
     return;
   }
   
-  // 住戶/房仿可看私密牆
+  // 住戶/房仲可看私密牆
   const posts = MOCK_DATA.posts.private;
   let html = '';
   
@@ -573,7 +581,7 @@ function renderPrivateWall() {
   } else if (perm.isAgent) {
     html += `
       <div style="text-align:center;padding:12px;font-size:11px;color:var(--text-secondary)">
-        💡 房仿可查看私密牆，但無法發文
+        💡 房仲可查看私密牆，但無法發文
       </div>
     `;
   }
@@ -610,7 +618,7 @@ function renderQuestions() {
             <div class="qa-answer">
               <div class="qa-answer-header">
                 <span class="qa-answer-badge" style="background:${a.type === 'agent' ? '#fff3e0' : a.type === 'official' ? '#e3f2fd' : '#e8faef'};color:${a.type === 'agent' ? '#e65100' : a.type === 'official' ? '#1565c0' : '#0e8d52'}">
-                  ${a.type === 'agent' ? '🏢 認證房仿' : a.type === 'official' ? '📋 ' + a.author : '🏠 ' + a.author}
+                  ${a.type === 'agent' ? '🏢 認證房仲' : a.type === 'official' ? '📋 ' + a.author : '🏠 ' + a.author}
                 </span>
                 ${a.expert ? '<span class="qa-answer-badge" style="background:#fce4ec;color:#c2185b">⭐ 專家回答</span>' : ''}
               </div>
@@ -666,7 +674,7 @@ function renderBottomCTA() {
   const cta = document.getElementById('bottom-cta');
   
   if (perm.canAccessPrivate) {
-    // 住戶/房仿：隱藏
+    // 住戶/房仲：隱藏
     cta.classList.add('hidden');
   } else if (perm.isMember) {
     // 會員：驗證住戶

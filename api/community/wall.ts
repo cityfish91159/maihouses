@@ -95,6 +95,9 @@ async function getPosts(
 
   if (error) throw error;
 
+  // 快取 60 秒，300 秒內可返回舊資料同時重新驗證
+  res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=300');
+
   return res.status(200).json({
     success: true,
     data,
