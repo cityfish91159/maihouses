@@ -3,107 +3,164 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover"/>
-<title>社區牆（MVP 綠色標籤版）</title>
-<meta name="description" content="MVP：名稱卡、社區熱帖、社區評價、準住戶提問；自動標籤（綠色）、膠囊：全部／公告／精華區。"/>
+<title>社區牆｜惠宇上晴</title>
+<meta name="description" content="社區熱帖、真實評價、準住戶問答 - 邁房子社區牆"/>
 <style>
+/* === 動畫 === */
 @keyframes fadeInUp { from { opacity: 0; transform: translateY(8px);} to { opacity: 1; transform: translateY(0);} }
-@keyframes slideRight { from{transform:translateX(-100%);opacity:0} to{transform:translateX(0);opacity:1} }
-@keyframes float { 0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)} }
-@keyframes heart-pop { 0%{transform:scale(1)}50%{transform:scale(1.3)}100%{transform:scale(1)} }
-@keyframes like-float { 0%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-30px) scale(1.5)} }
 
+/* === 基礎變數 === */
 :root{
   --primary:#00385a;--primary-dark:#002a44;--primary-light:#33607b;
-  --secondary:#34c759;--secondary-light:#50d167;--tertiary:#a78bfa;
+  --secondary:#34c759;--secondary-light:#50d167;
   --accent:#ff9b4a;--warning:#ef4444;--heart:#ff3b30;
   --bg-base:#f8fafb;--bg-alt:#f0f4fa;--bg-elevated:#ffffff;
   --text-primary:#0a1f3f;--text-secondary:#5a6b7f;
   --border:#d8e4f0;--border-light:#e8f0f8;
-  --brand:#003366;--brand-2:#00A8E8;--line:#e6edf7;--muted:#64748b;
+  --brand:#003366;--line:#e6edf7;
 }
-*{box-sizing:border-box}
-html,body{height:100%;margin:0;background:linear-gradient(180deg,var(--bg-base)0%,var(--bg-alt)50%,#fafbfc 100%);color:var(--text-primary);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC","PingFang TC",sans-serif;-webkit-font-smoothing:antialiased;letter-spacing:.2px}
-.page{min-height:100vh;max-width:520px;margin:0 auto;padding:8px 8px 24px;display:flex;flex-direction:column;gap:8px;animation:fadeInUp .6s ease-out}
 
-/* 頂部導航 - 來自 feed-consumer.html 原子材料 */
+/* === Reset === */
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{min-height:100%;background:linear-gradient(180deg,var(--bg-base)0%,var(--bg-alt)100%);
+  color:var(--text-primary);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC",sans-serif;
+  -webkit-font-smoothing:antialiased}
+
+/* === 頁面容器 === */
+.page{max-width:520px;margin:0 auto;padding:8px 8px 100px;display:flex;flex-direction:column;gap:12px;animation:fadeInUp .6s ease-out}
+
+/* === 頂部導航 === */
 .topbar{position:sticky;top:0;z-index:100;background:rgba(246,249,255,.95);backdrop-filter:blur(12px);
-  border-bottom:1px solid rgba(230,237,247,0.8);display:flex;align-items:center;gap:10px;padding:8px 16px;
-  margin:-8px -8px 0;transform:translateZ(0)}
+  border-bottom:1px solid rgba(230,237,247,0.8);display:flex;align-items:center;gap:10px;padding:8px 16px;margin:-8px -8px 0}
 .brand{display:flex;align-items:center;gap:10px;text-decoration:none}
 .brand .logo-icon{width:42px;height:42px;background:linear-gradient(135deg,var(--brand),#005282);border-radius:12px;
-  display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(0,51,102,.2);position:relative;overflow:hidden}
+  display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(0,51,102,.2)}
 .brand .logo-icon svg{width:22px;height:22px;color:#fff}
-.brand .logo-icon::after{content:'';position:absolute;top:8px;right:8px;width:6px;height:6px;background:#FF6B6B;border-radius:50%;box-shadow:0 0 0 1.5px #004E7C}
-.brand .logo-text{font-size:24px;font-weight:700;font-family:serif;color:var(--brand);letter-spacing:0.5px}
-.tools{margin-left:auto;display:flex;gap:8px;align-items:center}
-.icon{border:1px solid var(--line);border-radius:12px;background:#fff;padding:8px;font-size:13px;color:#173a7c;
-  display:inline-flex;align-items:center;gap:6px;line-height:1;cursor:pointer;transition:transform 0.1s}
-.icon:active{transform:scale(0.95)}
+.brand .logo-text{font-size:24px;font-weight:700;font-family:serif;color:var(--brand)}
+.tools{margin-left:auto;display:flex;gap:8px}
+.icon-btn{border:1px solid var(--line);border-radius:12px;background:#fff;padding:8px 12px;font-size:13px;color:#173a7c;
+  display:inline-flex;align-items:center;gap:6px;cursor:pointer;transition:all .15s}
+.icon-btn:hover{background:#f6f9ff}
+.icon-btn:active{transform:scale(0.95)}
 
-/* 玻璃態卡片 */
-.section{background:rgba(255,255,255,.92);backdrop-filter:blur(16px);border:1px solid var(--border-light);border-radius:18px;padding:8px;display:flex;flex-direction:column;gap:6px;box-shadow:0 1px 6px rgba(0,0,0,.04),0 4px 12px rgba(0,0,0,.02);transition:all .5s cubic-bezier(.34,1.56,.64,1)}
-.section:hover{background:rgba(255,255,255,.96);box-shadow:0 2px 12px rgba(0,0,0,.06),0 8px 24px rgba(0,0,0,.04);border-color:var(--border)}
-.header{display:flex;justify-content:space-between;align-items:center;gap:6px}
-.title{font-size:16px;font-weight:800;margin:0;color:var(--primary-dark);letter-spacing:.3px}
-.sub{margin:0;font-size:11px;color:var(--text-secondary);font-weight:500}
+/* === 區塊卡片 === */
+.section{background:rgba(255,255,255,.95);border:1px solid var(--border-light);
+  border-radius:18px;padding:12px;display:flex;flex-direction:column;gap:10px;
+  box-shadow:0 2px 8px rgba(0,0,0,.03)}
+.section-header{display:flex;justify-content:space-between;align-items:center}
+.section-title{font-size:16px;font-weight:800;color:var(--primary-dark)}
+.section-sub{font-size:11px;color:var(--text-secondary)}
+.badge{display:inline-flex;align-items:center;gap:4px;background:rgba(0,56,90,.08);border:1px solid var(--primary-light);
+  color:var(--primary);border-radius:999px;padding:4px 10px;font-size:10px;font-weight:700}
 
-/* 徽章 */
-.badge{display:inline-flex;align-items:center;gap:6px;background:rgba(0,56,90,.08);border:1.2px solid var(--primary-light);color:var(--primary);border-radius:999px;padding:5px 12px;font-size:10.5px;font-weight:750;position:relative;overflow:hidden}
-.badge:hover{background:rgba(0,56,90,.12);border-color:var(--primary)}
-
-/* 分頁標籤 */
+/* === Tabs === */
 .tabs{display:flex;gap:6px;flex-wrap:wrap}
-.tab{padding:5px 11px;border-radius:999px;border:1px solid transparent;font-size:10.5px;background:rgba(240,244,250,.8);color:var(--text-secondary);cursor:pointer;transition:all .25s ease;font-weight:600;position:relative}
-.tab:hover{background:rgba(0,56,90,.12);color:var(--primary)}
+.tab{padding:6px 14px;border-radius:999px;border:1px solid transparent;font-size:11px;font-weight:600;
+  background:rgba(240,244,250,.8);color:var(--text-secondary);cursor:pointer;transition:all .2s}
+.tab:hover{background:rgba(0,56,90,.08);color:var(--primary)}
 .tab.active{background:rgba(0,56,90,.1);border-color:var(--primary-light);color:var(--primary);font-weight:700}
-.tab.active::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--primary),transparent);animation:slideRight .3s ease}
+.tab.locked{opacity:.6}
+.tab .lock-icon{margin-left:4px}
 
-/* 貼文 */
-.post{display:flex;align-items:flex-start;gap:6px;padding:7px;border:1px solid var(--border-light);border-radius:13px;background:rgba(255,255,255,.96);backdrop-filter:blur(8px);transition:all .3s ease;position:relative}
-.post::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(180deg,var(--primary),transparent);border-radius:13px 0 0 13px;opacity:0;transition:opacity .3s ease}
-.post:hover{border-color:var(--primary-light);background:rgba(255,255,255,1);box-shadow:0 2px 8px rgba(0,56,90,0.08)}
-.post:hover::before{opacity:1}
-.post .dot{width:7px;height:7px;border-radius:50%;background:var(--primary);margin-top:5px;flex-shrink:0;animation:float 3s ease-in-out infinite}
-.post .content{flex:1;font-size:13px;line-height:1.48}
-.post b{color:var(--primary-dark);font-weight:800;letter-spacing:.3px}
+/* === 貼文卡片 === */
+.post-card{display:flex;gap:10px;padding:12px;border:1px solid var(--border-light);border-radius:14px;
+  background:#fff;transition:all .2s}
+.post-card:hover{border-color:var(--primary-light);box-shadow:0 2px 8px rgba(0,56,90,.06)}
+.post-avatar{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#eef3ff,#fff);
+  border:2px solid var(--primary);display:flex;align-items:center;justify-content:center;
+  font-weight:800;color:var(--primary);font-size:16px;flex-shrink:0}
+.post-avatar.agent{border-color:var(--secondary);color:var(--secondary)}
+.post-body{flex:1;display:flex;flex-direction:column;gap:6px}
+.post-header{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.post-author{font-weight:700;font-size:13px;color:var(--text-primary)}
+.post-badge{font-size:9px;padding:2px 6px;border-radius:4px;font-weight:700}
+.post-badge.resident{background:#e8faef;color:#0e8d52}
+.post-badge.agent{background:#fff3e0;color:#e65100}
+.post-badge.verified{background:#e3f2fd;color:#1565c0}
+.post-time{font-size:11px;color:var(--text-secondary)}
+.post-content{font-size:13px;line-height:1.55;color:var(--text-primary)}
+.post-stats{display:flex;gap:12px;font-size:11px;color:var(--text-secondary)}
+.post-stat{display:flex;align-items:center;gap:4px}
+.post-actions{display:flex;gap:8px;margin-top:4px}
+.action-btn{display:flex;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;
+  background:rgba(0,56,90,.06);border:1px solid rgba(0,56,90,.1);color:var(--primary);
+  font-size:11px;font-weight:600;cursor:pointer;transition:all .15s}
+.action-btn:hover{background:rgba(0,56,90,.12)}
 
-/* 互動按鈕 */
-.post-actions{display:flex;gap:8px;align-items:center;margin-top:6px;padding-top:6px;border-top:1px solid rgba(0,0,0,0.04);flex-wrap:wrap}
-.action-btn{display:flex;align-items:center;gap:4px;font-size:11px;padding:4px 8px;border-radius:6px;background:rgba(0,56,90,0.06);border:1px solid rgba(0,56,90,0.12);color:var(--primary);font-weight:700;cursor:pointer;transition:all .2s ease;user-select:none;position:relative}
-.action-btn:hover{background:rgba(0,56,90,0.12);transform:scale(1.05)}
-.action-btn.liked{background:rgba(255,59,48,0.15);border-color:rgba(255,59,48,0.3);color:var(--heart);animation:heart-pop .4s ease}
-.action-btn.liked::after{content:'';position:absolute;inset:0;background:var(--heart);border-radius:6px;opacity:0;animation:like-float .6s ease-out forwards}
-.meta{display:flex;gap:8px;font-size:10.5px;color:var(--text-secondary);align-items:center;margin-top:3px;flex-wrap:wrap;font-weight:500}
+/* === 評價卡片 === */
+.review-card{padding:12px;border:1px solid var(--border-light);border-radius:14px;background:#fff}
+.review-header{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.review-avatar{width:36px;height:36px;border-radius:50%;background:rgba(0,56,90,.08);
+  display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--primary);font-size:14px}
+.review-meta{flex:1}
+.review-author{font-weight:700;font-size:12px}
+.review-sub{font-size:10px;color:var(--text-secondary)}
+.review-content{display:flex;flex-direction:column;gap:6px}
+.review-item{display:flex;align-items:flex-start;gap:8px;font-size:12px;line-height:1.5}
+.review-icon{font-size:14px;flex-shrink:0}
+.review-text{color:var(--text-primary)}
 
-/* 評價卡 */
-.review{display:flex;gap:8px;border:1px solid var(--border-light);border-radius:13px;padding:7px;background:rgba(255,255,255,.96);backdrop-filter:blur(8px);transition:all .3s ease;position:relative}
-.review::before{content:'';position:absolute;inset:0;border-radius:13px;background:linear-gradient(135deg,rgba(52,199,89,0.05),transparent);opacity:0;transition:opacity .3s ease}
-.review:hover{border-color:var(--secondary-light);background:#fff;box-shadow:0 2px 8px rgba(52,199,89,0.08)}
-.review:hover::before{opacity:1}
-.av2{width:34px;height:34px;border-radius:50%;background:rgba(0,56,90,.08);border:2px solid var(--primary);display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--primary);font-size:15px;flex-shrink:0;animation:float 3.5s ease-in-out infinite}
-.review .name{font-weight:800;font-size:12.5px;color:var(--text-primary)}
-.tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:3px}
-.tag{font-size:10px;padding:3px 8px;border-radius:999px;background:rgba(52,199,89,.12);border:1px solid rgba(52,199,89,.40);color:#0f6a23;font-weight:700;transition:all .2s ease}
-.tag:hover{background:rgba(52,199,89,.20);border-color:rgba(52,199,89,.55)}
-.tag.fallback{opacity:.85;filter:grayscale(.35)}
-.review p{margin:4px 0 0;font-size:12.5px;line-height:1.48;color:#00385a;font-weight:500}
+/* === 問答卡片 === */
+.qa-card{padding:12px;border:1px solid var(--border-light);border-radius:14px;background:#fff}
+.qa-question{font-weight:700;font-size:13px;color:var(--primary-dark);margin-bottom:8px}
+.qa-meta{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--text-secondary);margin-bottom:10px}
+.qa-answers{display:flex;flex-direction:column;gap:8px;padding-left:12px;border-left:2px solid var(--border)}
+.qa-answer{font-size:12px;line-height:1.5}
+.qa-answer-header{display:flex;align-items:center;gap:6px;margin-bottom:4px}
+.qa-answer-badge{font-size:9px;padding:2px 6px;border-radius:4px;font-weight:700}
 
-/* 互動指標 */
-.engagement-meter{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--text-secondary)}
-.meter-bar{flex:1;height:4px;background:rgba(0,56,90,.15);border-radius:999px;overflow:hidden}
-.meter-fill{height:100%;background:linear-gradient(90deg,var(--secondary),var(--accent));border-radius:999px}
+/* === 模糊遮罩 === */
+.blur-overlay{position:relative}
+.blur-overlay .blur-content{filter:blur(4px);pointer-events:none;user-select:none}
+.blur-overlay .blur-cta{position:absolute;inset:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;background:rgba(255,255,255,.85);border-radius:14px;
+  text-align:center;padding:20px}
+.blur-cta h4{font-size:14px;font-weight:800;color:var(--primary-dark);margin-bottom:8px}
+.blur-cta p{font-size:12px;color:var(--text-secondary);margin-bottom:12px}
+.blur-cta button{background:linear-gradient(135deg,var(--primary),#005282);color:#fff;
+  border:none;border-radius:999px;padding:10px 24px;font-size:13px;font-weight:700;cursor:pointer}
+.blur-cta button:hover{transform:scale(1.02)}
 
-.hint{margin:0;color:var(--text-secondary);font-size:11px}
+/* === 私密牆鎖定 === */
+.private-lock{display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:40px 20px;text-align:center;background:rgba(0,56,90,.03);border-radius:14px}
+.private-lock .lock-icon-big{font-size:48px;margin-bottom:12px;opacity:.5}
+.private-lock h4{font-size:14px;font-weight:700;color:var(--primary-dark);margin-bottom:6px}
+.private-lock p{font-size:12px;color:var(--text-secondary);margin-bottom:16px}
+.private-lock button{background:var(--primary);color:#fff;border:none;border-radius:999px;
+  padding:10px 20px;font-size:12px;font-weight:700;cursor:pointer}
+
+/* === 身份切換器（Mock 用）=== */
+.role-switcher{position:fixed;bottom:20px;right:20px;z-index:1000}
+.role-switcher-btn{background:linear-gradient(135deg,#1a1a2e,#16213e);color:#fff;
+  border:none;border-radius:12px;padding:10px 16px;font-size:12px;font-weight:700;
+  cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,.3);display:flex;align-items:center;gap:6px}
+.role-switcher-menu{position:absolute;bottom:50px;right:0;background:#fff;border:1px solid var(--border);
+  border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,.15);padding:8px;min-width:180px;display:none}
+.role-switcher-menu.open{display:block}
+.role-switcher-menu button{display:block;width:100%;text-align:left;padding:10px 12px;
+  border:none;background:none;border-radius:8px;font-size:12px;cursor:pointer;color:var(--text-primary)}
+.role-switcher-menu button:hover{background:#f6f9ff}
+.role-switcher-menu button.active{background:rgba(0,56,90,.1);color:var(--primary);font-weight:700}
+
+/* === 固定底部 CTA === */
+.fixed-bottom-cta{position:fixed;bottom:0;left:0;right:0;background:rgba(255,255,255,.95);
+  backdrop-filter:blur(12px);border-top:1px solid var(--border);padding:12px 16px;
+  display:flex;align-items:center;justify-content:center;gap:12px;z-index:90}
+.fixed-bottom-cta.hidden{display:none}
+.fixed-bottom-cta p{font-size:12px;color:var(--text-secondary)}
+.fixed-bottom-cta button{background:linear-gradient(135deg,var(--primary),#005282);color:#fff;
+  border:none;border-radius:999px;padding:10px 20px;font-size:13px;font-weight:700;cursor:pointer}
 </style>
 </head>
 <body>
 <main class="page">
 
-  <!-- 🔝 頂部 Header - 使用 feed-consumer.html 原子材料 -->
+  <!-- 頂部導航 -->
   <header class="topbar">
-    <a href="/maihouses/" class="brand" aria-label="邁房子首頁">
+    <a href="/maihouses/" class="brand">
       <div class="logo-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
           <polyline points="9 22 9 12 15 12 15 22"/>
         </svg>
@@ -111,251 +168,592 @@ html,body{height:100%;margin:0;background:linear-gradient(180deg,var(--bg-base)0
       <span class="logo-text">邁房子</span>
     </a>
     <div class="tools">
-      <button class="icon" onclick="history.back()" aria-label="返回">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M15 18l-6-6 6-6"/>
-        </svg>
-        返回
-      </button>
-      <button class="icon" aria-label="分享">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
-          <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
-        </svg>
-      </button>
+      <button class="icon-btn" onclick="history.back()">← 返回</button>
+      <button class="icon-btn">📤</button>
     </div>
   </header>
 
-  <!-- 第一張：名稱卡 -->
+  <!-- 社區資訊卡 -->
   <section class="section">
-    <div class="header">
+    <div class="section-header">
       <div>
-        <h2 class="title">惠宇上晴｜社區牆</h2>
-        <p class="sub">真實住戶互動 × 社區口碑</p>
+        <h1 class="section-title">惠宇上晴｜社區牆</h1>
+        <p class="section-sub">真實住戶互動 × 社區口碑</p>
       </div>
-      <span class="badge">已加入 88 位</span>
-    </div>
-    <div class="tabs">
-      <div class="tab active">全部</div>
-      <div class="tab">公告</div>
-      <div class="tab" id="third-tab">精華區</div>
+      <span class="badge">👥 已加入 88 位</span>
     </div>
   </section>
 
-  <!-- 社區熱帖 -->
-  <section class="section">
-    <div class="header"><h3 class="title">社區熱帖</h3></div>
-    <div class="tabs" style="margin-top: 2px">
-      <div class="tab active">全部</div>
-      <div class="tab">公開牆</div>
-      <div class="tab">私密牆</div>
+  <!-- 區塊一：社區評價（放最上面作為 Hook）-->
+  <section class="section" id="reviews-section">
+    <div class="section-header">
+      <h2 class="section-title">⭐ 社區評價</h2>
+      <span class="section-sub">來自真實房仿的「兩好一公道」</span>
     </div>
-
-    <div class="post">
-      <div class="dot"></div>
-      <div class="content">
-        <b>有人要團購掃地機嗎？</b> 這款 iRobot 打折，滿 5 台有團購價～
-        <div class="meta">
-          <span>❤️ 31</span><span>💬 14</span>
-          <span class="engagement-meter"><span class="meter-bar"><div class="meter-fill" style="width: 85%;"></div></span></span>
-        </div>
-        <div class="post-actions">
-          <button class="action-btn" onclick="this.classList.toggle('liked')">❤️ 讚</button>
-          <button class="action-btn">💬 回覆</button>
-          <button class="action-btn">⭐ 收藏</button>
-        </div>
-      </div>
-    </div>
-
-    <div class="post">
-      <div class="dot"></div>
-      <div class="content">
-        <b>漏水處理已完成</b> 昨天 12F-B 的浴室滲水，已由管委會協助修復與記錄。
-        <div class="meta"><span>僅本人可見</span></div>
-        <div class="post-actions">
-          <button class="action-btn">👍 有幫助</button>
-        </div>
-      </div>
-    </div>
-
-    <div class="post">
-      <div class="dot"></div>
-      <div class="content">
-        <b>停車位交流</b> 我有 B2-128 想與 B1 交換，意者留言～
-        <div class="meta">
-          <span>❤️ 16</span><span>💬 11</span>
-          <span class="engagement-meter"><span class="meter-bar"><div class="meter-fill" style="width: 65%;"></div></span></span>
-        </div>
-        <div class="post-actions">
-          <button class="action-btn">💬 聯繫</button>
-          <button class="action-btn">⭐ 追蹤</button>
-        </div>
-      </div>
-    </div>
+    <div id="reviews-list"></div>
   </section>
 
-  <!-- 社區評價 -->
-  <section class="section">
-    <div class="header"><h3 class="title">社區評價</h3></div>
-
-    <article class="review">
-      <div class="av2">J</div>
-      <div>
-        <div class="name">J***｜B 棟住戶 <span class="rating"><span class="star">★★★★★</span></span></div>
-        <div class="tags"></div>
-        <p>公設維護得乾淨，假日草皮有人整理。之前反映停車動線，管委會一週內就公告改善。</p>
+  <!-- 區塊二：社區熱帖 -->
+  <section class="section" id="hot-posts-section">
+    <div class="section-header">
+      <h2 class="section-title">🔥 社區熱帖</h2>
+    </div>
+    <div class="tabs" id="wall-tabs">
+      <div class="tab active" data-wall="public" onclick="switchWall('public')">公開牆</div>
+      <div class="tab" data-wall="private" onclick="switchWall('private')">
+        私密牆 <span class="lock-icon">🔒</span>
       </div>
-    </article>
+    </div>
+    
+    <!-- 公開牆內容 -->
+    <div id="public-wall"></div>
 
-    <article class="review">
-      <div class="av2">W</div>
-      <div>
-        <div class="name">W***｜12F 住戶 <span class="rating"><span class="star">★★★★☆</span></span></div>
-        <div class="tags"></div>
-        <p>住起來整體舒服，但面向上路的低樓層在上下班尖峰車聲明顯，喜靜的買家可考慮中高樓層。</p>
-      </div>
-    </article>
-
-    <article class="review">
-      <div class="av2">L</div>
-      <div>
-        <div class="name">L***｜C 棟住戶 <span class="rating"><span class="star">★★★★☆</span></span></div>
-        <div class="tags"></div>
-        <p>頂樓排水設計不錯，颱風天也沒有積水問題。不過垃圾車時間稍晚，家裡偶爾會有下水道味。</p>
-      </div>
-    </article>
-
-    <p class="hint">還有 3 則評價未顯示，<b>註冊會員看全部評價</b>。</p>
+    <!-- 私密牆內容 -->
+    <div id="private-wall" style="display:none"></div>
   </section>
 
-  <!-- 準住戶提問 -->
-  <section class="section">
-    <div class="header"><h3 class="title">準住戶提問</h3></div>
-    <div class="post">
-      <div class="dot"></div>
-      <div class="content">
-        12J 視野好嗎？
-        <div class="meta" style="justify-content: space-between; align-items: center;">
-          <div class="tab" style="background: rgba(230, 240, 255, 0.6); border-color: var(--border-light); color: var(--primary); height: 24px; padding: 0 10px; display: inline-flex; align-items: center; border-radius: 999px;">幫忙回覆</div>
-        </div>
-      </div>
+  <!-- 區塊三：準住戶問答 -->
+  <section class="section" id="qa-section">
+    <div class="section-header">
+      <h2 class="section-title">🙋 準住戶問答</h2>
+      <span class="section-sub">買房前，先問問鄰居怎麼說</span>
     </div>
-    <div class="post">
-      <div class="dot"></div>
-      <div class="content">
-        頂樓會有漏水問題嗎？
-        <div class="meta" style="justify-content: space-between; align-items: center;">
-          <div class="tab" style="background: rgba(230, 240, 255, 0.6); border-color: var(--border-light); color: var(--primary); height: 24px; padding: 0 10px; display: inline-flex; align-items: center; border-radius: 999px;">幫忙回覆</div>
-        </div>
-      </div>
-    </div>
-    <div class="post">
-      <div class="dot"></div>
-      <div class="content">
-        管委會收垃圾時間是幾點？
-        <div class="meta" style="justify-content: space-between; align-items: center;">
-          <div class="tab" style="background: rgba(230, 240, 255, 0.6); border-color: var(--border-light); color: var(--primary); height: 24px; padding: 0 10px; display: inline-flex; align-items: center; border-radius: 999px;">幫忙回覆</div>
-        </div>
-      </div>
-    </div>
+    <div id="qa-list"></div>
   </section>
 
 </main>
 
+<!-- 身份切換器（Mock 用）-->
+<div class="role-switcher">
+  <button class="role-switcher-btn" onclick="toggleRoleSwitcher()">
+    🕶️ <span id="current-role">訪客模式</span> ▾
+  </button>
+  <div class="role-switcher-menu" id="role-menu">
+    <button class="active" data-role="guest" onclick="switchRole('guest')">👤 訪客（未登入）</button>
+    <button data-role="member" onclick="switchRole('member')">👥 一般會員</button>
+    <button data-role="resident" onclick="switchRole('resident')">🏠 已驗證住戶</button>
+    <button data-role="agent" onclick="switchRole('agent')">🏢 認證房仿</button>
+  </div>
+</div>
+
+<!-- 固定底部 CTA -->
+<div class="fixed-bottom-cta" id="bottom-cta"></div>
+
 <script>
-// A) 頂部膠囊：已在 HTML 直接改名為「精華區」，不顯示「生活」
+// ============================
+// 狀態管理
+// ============================
+let currentRole = 'guest'; // guest | member | resident | agent
+let currentWall = 'public'; // public | private
 
-// B) 自動產生標籤（100%覆蓋：強規則 -> 弱相似 -> #一般）
-const TAG_SEEDS = {
-  "#噪音": ["噪音","吵","施工","臨路","樓上","震動","管道間","夜間","喧嘩"],
-  "#氣味/菸味": ["菸味","油煙","臭","異味","下水道","潮味","煙味"],
-  "#採光/日照": ["採光","通風","西曬","陰暗","潮濕","日照","太熱","悶"],
-  "#物業/管理": ["管理員","管委會","警衛","收發","態度","效率","管理費","公告"],
-  "#漏水/壁癌": ["漏水","滲水","壁癌","發霉","霉味","修繕","維修","潮濕斑點","排水"],
-  "#停車/車位": ["車位","機械車位","平面車位","坡道","B1","B2","格","好停","難停","停車"]
+// 權限常數
+const GUEST_VISIBLE_COUNT = 2; // 訪客可見數量
+
+// ============================
+// Mock 資料
+// ============================
+const MOCK_DATA = {
+  posts: {
+    public: [
+      { id: 1, author: '陳小姐', floor: '12F', type: 'resident', time: '2小時前', title: '有人要團購掃地機嗎？🤖', content: '這款 iRobot 打折，滿 5 台有團購價～', likes: 31, comments: 14 },
+      { id: 2, author: '游杰倫', type: 'agent', time: '昨天', title: '🏡 惠宇上晴 12F｜雙陽台視野戶', content: '客廳光線很好，上週屋主剛降價 50 萬，有興趣可私訊。', views: 89, comments: 5 },
+      { id: 3, author: '李先生', floor: '8F', type: 'resident', time: '3天前', title: '停車位交流 🚗', content: '我有 B2-128 想與 B1 交換，方便接送小孩', likes: 12, comments: 8 },
+      { id: 4, author: '王太太', floor: '5F', type: 'resident', time: '1週前', title: '推薦水電師傅', content: '上次找的師傅很專業，價格公道，需要的鄰居私訊我', likes: 25, comments: 6 },
+      { id: 5, author: '林經理', type: 'agent', time: '1週前', title: '🏡 惠宇上晴 8F｜三房車位', content: '屋況極新，前屋主自住保養好', views: 156, comments: 12 }
+    ],
+    private: [
+      { id: 101, author: '管委會', type: 'official', time: '3天前', title: '📢 年度消防演練通知', content: '12/15（日）上午 10:00 將進行全社區消防演練，届時警報器會響，請勿驚慌。', pinned: true },
+      { id: 102, author: '15F 住戶', type: 'resident', time: '1週前', title: '管理費調漲討論', content: '想問大家覺得管理費調漲合理嗎？從 2,800 調到 3,200，漲幅有點大...', comments: 28, private: true },
+      { id: 103, author: '3F 住戶', type: 'resident', time: '2週前', title: '頂樓漏水問題', content: '最近下雨頂樓好像有漏水，管委會有要處理嗎？', comments: 15, private: true }
+    ]
+  },
+  reviews: [
+    { id: 1, author: '游杰倫', company: '21世紀', visits: 12, deals: 3, pros: ['公設維護得乾淨，假日草皮有人整理', '反映停車動線，管委會一週內就公告改善'], cons: '面向大馬路低樓層車聲明顯，喜靜者選中高樓層' },
+    { id: 2, author: '林美玲', company: '信義房屋', visits: 8, deals: 2, pros: ['頂樓排水設計不錯，颱風天也沒有積水問題', '中庭花園維護用心，住戶反應都很正面'], cons: '垃圾車時間稍晚，家裡偶爾會有下水道味' },
+    { id: 3, author: '陳志明', company: '永慶房屋', visits: 6, deals: 1, pros: ['管理員服務態度很好，代收包裹很方便', '社區有健身房，設備維護不錯'], cons: '電梯尖峰時段要等比較久' },
+    { id: 4, author: '黃小華', company: '住商不動產', visits: 10, deals: 2, pros: ['學區不錯，走路到國小只要5分鐘', '附近生活機能完善'], cons: '部分戶型採光稍弱' },
+    { id: 5, author: '張大明', company: '台灣房屋', visits: 5, deals: 1, pros: ['建商口碑好，用料實在', '公設比合理，實坪數划算'], cons: '車道坡度較陡，新手要小心' }
+  ],
+  questions: [
+    { id: 1, question: '請問社區停車位好停嗎？會不會常客滿？', time: '2天前', answersCount: 3, answers: [
+      { author: '8F 住戶', type: 'resident', content: '平日白天都有位，假日偶爾要等一下，但不會太久。' },
+      { author: '12F 住戶', type: 'resident', content: 'B2 比較容易有位，B1 要碰運氣。' },
+      { author: '游杰倫', type: 'agent', content: '這社區車位配比是 1:1.2，算充裕的。', expert: true }
+    ]},
+    { id: 2, question: '晚上會不會很吵？我看物件時是白天', time: '5天前', answersCount: 2, answers: [
+      { author: '3F 住戶', type: 'resident', content: '面大馬路那側確實有車聲，但習慣就好。內側安靜很多。' },
+      { author: '10F 住戶', type: 'resident', content: '我住內側，晚上很安靜，睡眠品質不錯。' }
+    ]},
+    { id: 3, question: '管理費多少？有包含哪些服務？', time: '1週前', answersCount: 1, answers: [
+      { author: '管委會', type: 'official', content: '目前每坪 85 元，含 24 小時保全、公設維護、垃圾代收。' }
+    ]}
+  ]
 };
-const FALLBACK_TAG = "#一般";
 
-function normalize(t){
-  if(!t) return "";
-  const toHalf = s => s.replace(/[\uFF01-\uFF5E]/g, ch => String.fromCharCode(ch.charCodeAt(0)-0xFEE0)).replace(/\u3000/g," ");
-  return toHalf(t).toLowerCase().replace(/[~`!@#$%^&*()_+\-={}[\]|\\:;"'<>?,.，。！？、／]/g," ").replace(/\s+/g," ").trim();
+// ============================
+// 身份切換
+// ============================
+function toggleRoleSwitcher() {
+  document.getElementById('role-menu').classList.toggle('open');
 }
-function strongScore(text, words){
-  let score = 0;
-  const sentences = text.split(/[。.!?？]/);
-  words.forEach(w=>{ if(text.includes(w)) score += 1; });
-  sentences.forEach(s=>{
-    let hit = 0;
-    words.forEach(w=>{ if(s.includes(w)) hit += 1; });
-    if(hit>=2) score += 1;
+
+function switchRole(role) {
+  currentRole = role;
+  
+  // 更新按鈕狀態
+  document.querySelectorAll('.role-switcher-menu button').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.role === role);
   });
-  return score;
+  
+  // 更新顯示文字
+  const roleNames = {
+    guest: '訪客模式',
+    member: '會員模式',
+    resident: '住戶模式',
+    agent: '房仿模式'
+  };
+  document.getElementById('current-role').textContent = roleNames[role];
+  
+  // 關閉選單
+  document.getElementById('role-menu').classList.remove('open');
+  
+  // 完整重新渲染
+  renderAll();
 }
-function weakSimilarity(text, words){
-  let hit = 0;
-  words.forEach(w=>{ if(text.includes(w)) hit += 1; });
-  return hit / Math.max(1, words.length);
-}
-function suggestTags(raw){
-  const text = normalize(raw);
-  if(text.length < 2) return [FALLBACK_TAG];
 
-  const strong = [];
-  Object.entries(TAG_SEEDS).forEach(([tag, words])=>{
-    const s = strongScore(text, words);
-    if(s>=2) strong.push({tag, s});
+// ============================
+// 權限判斷
+// ============================
+function getPermissions() {
+  const isGuest = currentRole === 'guest';
+  const isMember = currentRole === 'member';
+  const isResident = currentRole === 'resident';
+  const isAgent = currentRole === 'agent';
+  
+  return {
+    isGuest,
+    isMember,
+    isResident,
+    isAgent,
+    isLoggedIn: !isGuest,                        // 會員以上
+    canSeeAllReviews: !isGuest,                  // 會員以上可看全部評價
+    canSeeAllPosts: !isGuest,                    // 會員以上可看全部公開牆
+    canAccessPrivate: isResident || isAgent,     // 只有住戶/房仿可看私密牆
+    canPostPublic: isResident || isAgent,        // 住戶/房仿可發公開牆
+    canPostPrivate: isResident,                  // 只有住戶可發私密牆
+    canAskQuestion: !isGuest,                    // 會員以上可發問
+    canAnswer: isResident || isAgent,            // 住戶/房仿可回答
+    showExpertBadge: isAgent                     // 房仿顯示專家標章
+  };
+}
+
+// ============================
+// 渲染：評價區
+// ============================
+function renderReviews() {
+  const perm = getPermissions();
+  const reviews = MOCK_DATA.reviews;
+  const container = document.getElementById('reviews-list');
+  
+  const visibleCount = perm.canSeeAllReviews ? reviews.length : GUEST_VISIBLE_COUNT;
+  const hiddenCount = reviews.length - visibleCount;
+  
+  let html = '';
+  
+  reviews.slice(0, visibleCount).forEach(review => {
+    html += `
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar">${review.author.charAt(0)}</div>
+          <div class="review-meta">
+            <div class="review-author">${review.author}｜${review.company}</div>
+            <div class="review-sub">帶看 ${review.visits} 次 · 成交 ${review.deals} 戶</div>
+          </div>
+        </div>
+        <div class="review-content">
+          ${review.pros.map(p => `<div class="review-item"><span class="review-icon">✅</span><span class="review-text">${p}</span></div>`).join('')}
+          <div class="review-item"><span class="review-icon">⚖️</span><span class="review-text">${review.cons}</span></div>
+        </div>
+      </div>
+    `;
   });
-  strong.sort((a,b)=>b.s-a.s);
-  let final = strong.slice(0,2).map(x=>x.tag);
-
-  if(final.length===0){
-    let best={tag:null,sim:-1};
-    Object.entries(TAG_SEEDS).forEach(([tag,words])=>{
-      const sim = weakSimilarity(text, words);
-      if(sim>best.sim) best={tag,sim};
-    });
-    if(best.tag) final=[best.tag];
+  
+  // blur 遮罩
+  if (hiddenCount > 0 && !perm.canSeeAllReviews) {
+    html += `
+      <div class="blur-overlay">
+        <div class="review-card blur-content">
+          <div class="review-header">
+            <div class="review-avatar">${reviews[visibleCount]?.author?.charAt(0) || '?'}</div>
+            <div class="review-meta">
+              <div class="review-author">${reviews[visibleCount]?.author || ''}｜***</div>
+            </div>
+          </div>
+          <div class="review-content">
+            <div class="review-item"><span class="review-icon">✅</span><span class="review-text">管理員服務態度很好...</span></div>
+          </div>
+        </div>
+        <div class="blur-cta">
+          <h4>🔒 還有 ${hiddenCount} 則評價</h4>
+          <p>註冊會員看全部房仿真實評價</p>
+          <button onclick="showLoginModal()">免費註冊 / 登入</button>
+        </div>
+      </div>
+    `;
   }
-  if(final.length===0) final=[FALLBACK_TAG];
-  if(final.length===1 && final[0]!==FALLBACK_TAG){
-    const sim = weakSimilarity(text, TAG_SEEDS[final[0]]);
-    if(sim<0.05) final=[FALLBACK_TAG];
-  }
-  return final;
+  
+  container.innerHTML = html;
 }
-function renderTags(containerEl, tags){
-  containerEl.innerHTML = "";
-  tags.forEach(t=>{
-    const span = document.createElement("span");
-    span.className = "tag" + (t===FALLBACK_TAG ? " fallback" : "");
-    span.textContent = t;
-    containerEl.appendChild(span);
+
+// ============================
+// 渲染：公開牆
+// ============================
+function renderPublicWall() {
+  const perm = getPermissions();
+  const posts = MOCK_DATA.posts.public;
+  const container = document.getElementById('public-wall');
+  
+  const visibleCount = perm.canSeeAllPosts ? posts.length : GUEST_VISIBLE_COUNT;
+  const hiddenCount = posts.length - visibleCount;
+  
+  let html = '';
+  
+  // 顯示可見的貼文
+  posts.slice(0, visibleCount).forEach(post => {
+    html += renderPostCard(post, perm);
   });
+  
+  // 如果有隱藏的，顯示 blur 遮罩
+  if (hiddenCount > 0 && !perm.canSeeAllPosts) {
+    html += `
+      <div class="blur-overlay">
+        <div class="post-card blur-content">
+          <div class="post-avatar">${posts[visibleCount]?.author?.charAt(0) || '?'}</div>
+          <div class="post-body">
+            <div class="post-header">
+              <span class="post-author">${posts[visibleCount]?.author || ''}</span>
+            </div>
+            <div class="post-content">${posts[visibleCount]?.title || ''}</div>
+          </div>
+        </div>
+        <div class="blur-cta">
+          <h4>🔒 還有 ${hiddenCount} 則熱帖</h4>
+          <p>登入後查看完整社區動態</p>
+          <button onclick="showLoginModal()">免費註冊 / 登入</button>
+        </div>
+      </div>
+    `;
+  }
+  
+  // 發文按鈕（住戶/房仿）
+  if (perm.canPostPublic) {
+    html += `
+      <div class="post-card" style="background:rgba(0,56,90,.03);border-style:dashed;justify-content:center;padding:20px">
+        <button class="action-btn" style="width:100%;justify-content:center" onclick="showCreatePostModal('public')">
+          ✏️ 發布貼文
+        </button>
+      </div>
+    `;
+  }
+  
+  container.innerHTML = html;
 }
 
-// 套用在「社區評價」：每個 .review 的 <p> 為內文、.tags 為渲染區
-document.querySelectorAll('.section .review').forEach(card=>{
-  const text = card.querySelector("p")?.innerText || "";
-  let tagBox = card.querySelector(".tags");
-  if(!tagBox){
-    tagBox = document.createElement("div");
-    tagBox.className = "tags";
-    const nameRow = card.querySelector(".name");
-    if(nameRow) nameRow.insertAdjacentElement("afterend", tagBox);
-    else card.appendChild(tagBox);
-  }
-  const tags = suggestTags(text);
-  renderTags(tagBox, tags);
-});
+function renderPostCard(post, perm) {
+  const isAgent = post.type === 'agent';
+  const isOfficial = post.type === 'official';
+  const avatarClass = isAgent ? 'agent' : '';
+  const badgeHtml = isAgent 
+    ? '<span class="post-badge agent">認證房仿</span>'
+    : isOfficial 
+      ? '<span class="post-badge verified">官方公告</span>'
+      : post.floor ? `<span class="post-badge resident">${post.floor} 住戶</span>` : '';
+  
+  const statsHtml = post.likes 
+    ? `<span class="post-stat">❤️ ${post.likes}</span>` 
+    : post.views 
+      ? `<span class="post-stat">👁️ ${post.views}</span>` 
+      : '';
+  
+  const actionsHtml = isAgent
+    ? '<button class="action-btn">📩 私訊房仿</button>'
+    : `<button class="action-btn">❤️ 讚</button><button class="action-btn">💬 回覆</button>`;
+  
+  return `
+    <div class="post-card">
+      <div class="post-avatar ${avatarClass}">${post.author.charAt(0)}</div>
+      <div class="post-body">
+        <div class="post-header">
+          <span class="post-author">${post.author}</span>
+          ${badgeHtml}
+          <span class="post-time">${post.time}</span>
+        </div>
+        <div class="post-content">
+          <b>${post.title}</b><br>
+          ${post.content}
+        </div>
+        <div class="post-stats">
+          ${statsHtml}
+          <span class="post-stat">💬 ${post.comments || 0}</span>
+          ${post.private ? '<span class="post-stat">🔒 僅社區可見</span>' : ''}
+        </div>
+        <div class="post-actions">
+          ${actionsHtml}
+        </div>
+      </div>
+    </div>
+  `;
+}
 
-// 原本按讚動畫
-document.querySelectorAll('.action-btn').forEach(btn=>{
-  btn.addEventListener('click', function(){
-    if (this.classList.contains('liked')) {
-      this.textContent = '❤️ 已讚';
+// ============================
+// 渲染：私密牆
+// ============================
+function renderPrivateWall() {
+  const perm = getPermissions();
+  const container = document.getElementById('private-wall');
+  
+  if (!perm.canAccessPrivate) {
+    // 訪客/會員看到鎖定畫面
+    const ctaText = perm.isGuest 
+      ? '<button onclick="showLoginModal()">免費註冊 / 登入</button>'
+      : '<button onclick="showVerifyModal()">我是住戶，驗證身份</button>';
+    
+    container.innerHTML = `
+      <div class="private-lock">
+        <div class="lock-icon-big">🔐</div>
+        <h4>私密牆僅限本社區住戶查看</h4>
+        <p>${perm.isGuest ? '請先登入或註冊' : '驗證住戶身份後即可加入討論'}</p>
+        ${ctaText}
+      </div>
+    `;
+    return;
+  }
+  
+  // 住戶/房仿可看私密牆
+  const posts = MOCK_DATA.posts.private;
+  let html = '';
+  
+  posts.forEach(post => {
+    html += renderPostCard(post, perm);
+  });
+  
+  // 發文按鈕（只有住戶可發）
+  if (perm.canPostPrivate) {
+    html += `
+      <div class="post-card" style="background:rgba(0,56,90,.03);border-style:dashed;justify-content:center;padding:20px">
+        <button class="action-btn" style="width:100%;justify-content:center" onclick="showCreatePostModal('private')">
+          ✏️ 發布私密貼文
+        </button>
+      </div>
+    `;
+  } else if (perm.isAgent) {
+    html += `
+      <div style="text-align:center;padding:12px;font-size:11px;color:var(--text-secondary)">
+        💡 房仿可查看私密牆，但無法發文
+      </div>
+    `;
+  }
+  
+  container.innerHTML = html;
+}
+
+// ============================
+// 渲染：問答區
+// ============================
+function renderQuestions() {
+  const perm = getPermissions();
+  const questions = MOCK_DATA.questions;
+  const container = document.getElementById('qa-list');
+  
+  let html = '';
+  
+  questions.forEach((q, idx) => {
+    // 訪客只能看問題和部分回答
+    const showAllAnswers = perm.isLoggedIn;
+    const visibleAnswers = showAllAnswers ? q.answers : q.answers.slice(0, 1);
+    const hiddenAnswerCount = q.answers.length - visibleAnswers.length;
+    
+    html += `
+      <div class="qa-card">
+        <div class="qa-question">Q: ${q.question}</div>
+        <div class="qa-meta">
+          <span>👤 準住戶</span>
+          <span>· ${q.time}</span>
+          <span>· ${q.answersCount} 則回覆</span>
+        </div>
+        <div class="qa-answers">
+          ${visibleAnswers.map(a => `
+            <div class="qa-answer">
+              <div class="qa-answer-header">
+                <span class="qa-answer-badge" style="background:${a.type === 'agent' ? '#fff3e0' : a.type === 'official' ? '#e3f2fd' : '#e8faef'};color:${a.type === 'agent' ? '#e65100' : a.type === 'official' ? '#1565c0' : '#0e8d52'}">
+                  ${a.type === 'agent' ? '🏢 認證房仿' : a.type === 'official' ? '📋 ' + a.author : '🏠 ' + a.author}
+                </span>
+                ${a.expert ? '<span class="qa-answer-badge" style="background:#fce4ec;color:#c2185b">⭐ 專家回答</span>' : ''}
+              </div>
+              ${a.content}
+            </div>
+          `).join('')}
+        </div>
+        ${!showAllAnswers && hiddenAnswerCount > 0 ? `
+          <div style="text-align:center;padding:12px;background:rgba(255,255,255,.9);border-radius:8px;margin-top:8px">
+            <p style="font-size:11px;color:var(--text-secondary);margin:0 0 8px">🔒 還有 ${hiddenAnswerCount} 則回覆</p>
+            <button class="action-btn" style="font-size:11px" onclick="showLoginModal()">登入查看</button>
+          </div>
+        ` : ''}
+        ${perm.canAnswer ? `
+          <div style="margin-top:10px">
+            <button class="action-btn" style="width:100%;justify-content:center" onclick="showAnswerModal(${q.id})">
+              💬 我來回答${perm.isAgent ? '（專家）' : ''}
+            </button>
+          </div>
+        ` : ''}
+      </div>
+    `;
+  });
+  
+  // 發問區塊
+  html += `
+    <div class="qa-card" style="background:rgba(0,56,90,.03);border-style:dashed">
+      <div class="qa-question" style="color:var(--text-secondary)">💬 你也有問題想問？</div>
+      <p style="font-size:12px;color:var(--text-secondary);margin:8px 0">問題會通知該社區住戶，通常 24 小時內會有回覆</p>
+      ${perm.canAskQuestion 
+        ? '<button class="action-btn" style="width:100%;justify-content:center" onclick="showAskModal()">我想問問題</button>'
+        : '<button class="action-btn" style="width:100%;justify-content:center" onclick="showLoginModal()">登入後發問</button>'
+      }
+    </div>
+  `;
+  
+  container.innerHTML = html;
+}
+
+// ============================
+// 渲染：底部 CTA
+// ============================
+function renderBottomCTA() {
+  const perm = getPermissions();
+  const cta = document.getElementById('bottom-cta');
+  
+  if (perm.canAccessPrivate) {
+    // 住戶/房仿：隱藏
+    cta.classList.add('hidden');
+  } else if (perm.isMember) {
+    // 會員：驗證住戶
+    cta.classList.remove('hidden');
+    cta.innerHTML = `
+      <p>🏠 驗證住戶身份，解鎖私密牆</p>
+      <button onclick="showVerifyModal()">驗證住戶</button>
+    `;
+  } else {
+    // 訪客：註冊
+    cta.classList.remove('hidden');
+    cta.innerHTML = `
+      <p>🔓 登入解鎖完整評價 + 更多功能</p>
+      <button onclick="showLoginModal()">免費註冊</button>
+    `;
+  }
+}
+
+// ============================
+// 渲染：私密牆 Tab 狀態
+// ============================
+function renderPrivateTab() {
+  const perm = getPermissions();
+  const privateTab = document.querySelector('.tab[data-wall="private"]');
+  
+  if (privateTab) {
+    privateTab.classList.toggle('locked', !perm.canAccessPrivate);
+    privateTab.innerHTML = perm.canAccessPrivate 
+      ? '私密牆'
+      : '私密牆 <span class="lock-icon">🔒</span>';
+  }
+}
+
+// ============================
+// 全部渲染
+// ============================
+function renderAll() {
+  renderReviews();
+  renderPublicWall();
+  renderPrivateWall();
+  renderQuestions();
+  renderBottomCTA();
+  renderPrivateTab();
+  
+  // 如果目前在私密牆但沒權限，切回公開牆
+  if (currentWall === 'private') {
+    const perm = getPermissions();
+    if (!perm.canAccessPrivate) {
+      switchWall('public');
+    }
+  }
+}
+
+// ============================
+// 牆切換
+// ============================
+function switchWall(wall) {
+  const perm = getPermissions();
+  
+  // 如果要切到私密牆但沒權限
+  if (wall === 'private' && !perm.canAccessPrivate) {
+    if (perm.isGuest) {
+      showLoginModal();
+    } else {
+      showVerifyModal();
+    }
+    return;
+  }
+  
+  currentWall = wall;
+  
+  // 更新 Tab 狀態
+  document.querySelectorAll('#wall-tabs .tab').forEach(tab => {
+    tab.classList.toggle('active', tab.dataset.wall === wall);
+  });
+  
+  // 切換內容
+  document.getElementById('public-wall').style.display = wall === 'public' ? 'block' : 'none';
+  document.getElementById('private-wall').style.display = wall === 'private' ? 'block' : 'none';
+}
+
+// ============================
+// Modal（簡易版）
+// ============================
+function showLoginModal() {
+  alert('🔐 登入/註冊\n\n這裡會跳出登入視窗\n（實際接 Supabase Auth）');
+}
+
+function showVerifyModal() {
+  alert('🏠 住戶驗證\n\n請上傳水電帳單或管理費收據\n或輸入社區專屬驗證碼');
+}
+
+function showCreatePostModal(visibility) {
+  alert(`✏️ 發布${visibility === 'private' ? '私密' : '公開'}貼文\n\n（這裡會跳出發文表單）`);
+}
+
+function showAskModal() {
+  alert('💬 發問\n\n（這裡會跳出發問表單）');
+}
+
+function showAnswerModal(questionId) {
+  alert(`💬 回答問題 #${questionId}\n\n（這裡會跳出回答表單）`);
+}
+
+// ============================
+// 初始化
+// ============================
+document.addEventListener('DOMContentLoaded', () => {
+  renderAll();
+  
+  // 點擊外部關閉選單
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.role-switcher')) {
+      document.getElementById('role-menu').classList.remove('open');
     }
   });
+  
+  console.log('✅ 社區牆初始化完成');
+  console.log('🔧 切換身份: 點擊右下角 [🕶️ 訪客模式]');
 });
 </script>
 </body>
