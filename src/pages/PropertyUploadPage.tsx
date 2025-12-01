@@ -155,20 +155,19 @@ export const PropertyUploadPage: React.FC = () => {
               </div>
             </div>
 
-            {/* 社區名稱 - 智能選擇器 */}
-            <div className="bg-blue-50/50 p-3 rounded-xl border border-blue-100">
-              <label className="block text-xs font-medium text-[#003366] mb-1 flex items-center gap-1">
-                <MapPin size={12} />
-                這間房子在哪個社區？
+            {/* 社區名稱 - 選填，系統會用地址自動判斷 */}
+            <div>
+              <label className="block text-xs font-medium text-slate-600 mb-1">
+                社區名稱 <span className="text-slate-400">(選填，知道就填)</span>
               </label>
-              <p className="text-[10px] text-blue-600 mb-2">
-                💡 填好社區名稱，同社區買方會優先看到你的物件
-              </p>
               <CommunityPicker
                 value={form.communityName}
                 address={form.address}
                 onChange={handleCommunityChange}
               />
+              <p className="text-[10px] text-slate-400 mt-1">
+                💡 不填也沒關係，系統會用地址自動判斷
+              </p>
             </div>
 
             <div className="grid grid-cols-4 gap-3">

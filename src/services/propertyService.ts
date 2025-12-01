@@ -167,64 +167,62 @@ export const propertyService = {
     // 若未登入，使用預設 agent_id (開發模式)
     const agentId = user?.id || 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
 
-    // 🏢 社區處理邏輯
+    // 🏢 社區處理邏輯 - 地址優先！
     let communityId: string | null = existingCommunityId || null;
+    let finalCommunityName = form.communityName?.trim() || null;
     
-    // 如果沒有傳入 communityId，且有填社區名稱，才需要查詢或建立
-    if (!communityId && form.communityName && form.communityName.trim().length >= 2) {
-      const communityName = form.communityName.trim();
-      
-      // 計算地址指紋（去除樓層）
-      const addressFingerprint = form.address
-        .replace(/[之\-－—]/g, '')
-        .replace(/\d+樓.*$/, '')
-        .replace(/\s+/g, '');
-      
-      // 先用地址指紋找
+    // 計算地址指紋（去除樓層、之、空白）
+    const addressFingerprint = form.address
+      .replace(/[之\-－—]/g, '')
+      .replace(/\d+樓.*$/, '')
+      .replace(/\s+/g, '');
+    
+    // 只要有地址，就嘗試找或建社區
+    if (!communityId && form.address && addressFingerprint.length >= 5) {
+      // 用地址指紋找現有社區
       const { data: existingByAddress } = await supabase
         .from('communities')
-        .select('id')
+        .select('id, name')
         .eq('address_fingerprint', addressFingerprint)
         .single();
 
       if (existingByAddress) {
+        // 找到了！用現有社區
         communityId = existingByAddress.id;
+        // 如果房仲沒填社區名，用已有的
+        if (!finalCommunityName) {
+          finalCommunityName = existingByAddress.name;
+        }
+        console.log('✅ 地址比對成功，使用現有社區:', existingByAddress.name);
       } else {
-        // 再用名稱找
-        const { data: existingByName } = await supabase
+        // 地址沒找到，建立新社區
+        const district = form.address.match(/([^市縣]+[區鄉鎮市])/)?.[1] || '';
+        const city = form.address.match(/^(.*?[市縣])/)?.[1] || '台北市';
+        
+        // 社區名：用房仲填的，或用地址當預設名
+        const communityName = finalCommunityName || addressFingerprint;
+        
+        const { data: newCommunity, error: communityError } = await supabase
           .from('communities')
+          .insert({
+            name: communityName,
+            address: form.address,
+            address_fingerprint: addressFingerprint,
+            district: district,
+            city: city,
+            is_verified: false,
+            completeness_score: finalCommunityName ? 30 : 10, // 有名字多給分
+            two_good: [form.advantage1, form.advantage2].filter(Boolean),
+            one_fair: form.disadvantage || null,
+            features: [form.type].filter(Boolean),
+          })
           .select('id')
-          .eq('name', communityName)
           .single();
 
-        if (existingByName) {
-          communityId = existingByName.id;
-        } else {
-          // 都找不到，建立新社區（影子模式）
-          const district = form.address.match(/([^市縣]+[區鄉鎮市])/)?.[1] || '';
-          const city = form.address.match(/^(.*?[市縣])/)?.[1] || '台北市';
-          
-          const { data: newCommunity, error: communityError } = await supabase
-            .from('communities')
-            .insert({
-              name: communityName,
-              address: form.address,
-              address_fingerprint: addressFingerprint,
-              district: district,
-              city: city,
-              is_verified: false,
-              // 初始兩好一公道來自物件資訊
-              two_good: [form.advantage1, form.advantage2].filter(Boolean),
-              one_fair: form.disadvantage || null,
-              features: [form.type].filter(Boolean),
-            })
-            .select('id')
-            .single();
-
-          if (!communityError && newCommunity) {
-            communityId = newCommunity.id;
-            console.log('✅ 自動建立社區牆:', communityName);
-          }
+        if (!communityError && newCommunity) {
+          communityId = newCommunity.id;
+          finalCommunityName = communityName;
+          console.log('✅ 自動建立社區:', communityName);
         }
       }
     }
@@ -236,7 +234,7 @@ export const propertyService = {
         title: form.title,
         price: Number(form.price),
         address: form.address,
-        community_name: form.communityName?.trim() || null,
+        community_name: finalCommunityName,  // 用最終確定的社區名
         community_id: communityId,
         size: Number(form.size || 0),
         age: Number(form.age || 0),
