@@ -4,15 +4,11 @@
 -- 說明：將 View 設為 SECURITY INVOKER 以遵循查詢者的 RLS 權限
 -- ==============================================================================
 
--- 方法 1：重建 View 並明確設定 security_invoker = true
--- PostgreSQL 15+ 支援 CREATE VIEW ... WITH (security_invoker = true)
-
 -- 先 DROP 再重建
 DROP VIEW IF EXISTS public.agent_lead_stats CASCADE;
 
-CREATE VIEW public.agent_lead_stats 
-WITH (security_invoker = true)
-AS
+-- 建立 View（不使用 SECURITY DEFINER）
+CREATE VIEW public.agent_lead_stats AS
 SELECT 
     agent_id,
     COUNT(*) FILTER (WHERE status = 'new') as new_leads,
@@ -39,13 +35,8 @@ SELECT
 FROM public.leads
 GROUP BY agent_id;
 
+-- 設定為 SECURITY INVOKER（PostgreSQL 15+ 語法）
+ALTER VIEW public.agent_lead_stats SET (security_invoker = true);
+
 -- 授權給 authenticated 用戶
 GRANT SELECT ON public.agent_lead_stats TO authenticated;
-
--- ==============================================================================
--- 驗證設定
--- ==============================================================================
--- 執行後可用以下 SQL 確認：
--- SELECT schemaname, viewname, definition 
--- FROM pg_views 
--- WHERE viewname = 'agent_lead_stats';
