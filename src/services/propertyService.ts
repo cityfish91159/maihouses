@@ -185,11 +185,22 @@ export const propertyService = {
     }
     // 需要查找或建立社區
     else if (form.address && finalCommunityName) {
-      // 計算地址指紋（去除樓層、之、空白）
-      const addressFingerprint = form.address
-        .replace(/[之\-－—]/g, '')
-        .replace(/\d+樓.*$/, '')
-        .replace(/\s+/g, '');
+      // 🔧 強化版台灣地址指紋（針對巷弄、郵遞區號、戶號）
+      const computeAddressFingerprint = (addr: string): string => {
+        let clean = addr;
+        // 1. 移除郵遞區號 (3-5碼開頭)
+        clean = clean.replace(/^\d{3,5}/, '');
+        // 2. 移除「樓」「F」之後的所有字元
+        clean = clean.replace(/(\d+[fF樓].*)$/, '');
+        // 3. 移除「之X」「-X」戶號
+        clean = clean.replace(/[之\-－—]\d+/g, '');
+        // 4. 移除「號」字但保留數字
+        clean = clean.replace(/號/g, '');
+        // 5. 移除空白
+        clean = clean.replace(/\s+/g, '');
+        return clean;
+      };
+      const addressFingerprint = computeAddressFingerprint(form.address);
       
       // Step 1: 用地址指紋精準比對
       if (addressFingerprint.length >= 5) {
@@ -236,11 +247,8 @@ export const propertyService = {
       if (!communityId) {
         const district = form.address.match(/([^市縣]+[區鄉鎮市])/)?.[1] || '';
         const city = form.address.match(/^(.*?[市縣])/)?.[1] || '台北市';
-        const addressFingerprint = form.address
-          .replace(/[之\-－—]/g, '')
-          .replace(/\d+樓.*$/, '')
-          .replace(/\s+/g, '');
         
+        // 🔧 新社區不直接存評價，交給 AI 處理
         const { data: newCommunity, error: communityError } = await supabase
           .from('communities')
           .insert({
@@ -249,11 +257,8 @@ export const propertyService = {
             address_fingerprint: addressFingerprint,
             district: district,
             city: city,
-            is_verified: false,  // 新建社區待審核
-            completeness_score: 30,
-            // 房仲填的兩好一公道存到社區
-            two_good: [form.advantage1, form.advantage2].filter(Boolean),
-            one_fair: form.disadvantage || null,
+            is_verified: false,
+            completeness_score: 20,  // AI 優化後會提升
             features: [form.type].filter(Boolean),
           })
           .select('id')
@@ -304,6 +309,25 @@ export const propertyService = {
       .single();
 
     if (error) throw error;
+    
+    // 🤖 非同步觸發 AI 優化社區牆（不阻塞 UI）
+    if (communityId && finalCommunityName !== '無') {
+      supabase.functions.invoke('generate-community-profile', {
+        body: {
+          communityId,
+          communityName: finalCommunityName,
+          address: form.address,
+          newReview: {
+            pros: [form.advantage1, form.advantage2].filter(Boolean),
+            cons: form.disadvantage
+          },
+          isNew: isNewCommunity
+        }
+      }).then(({ error: aiError }) => {
+        if (aiError) console.error('AI Community Gen Failed:', aiError);
+        else console.log('🤖 AI 社區優化已觸發');
+      });
+    }
     
     // 回傳包含社區資訊
     return {

@@ -51,6 +51,10 @@ CREATE TABLE IF NOT EXISTS communities (
   review_count INTEGER DEFAULT 0,
   property_count INTEGER DEFAULT 0,
   
+  -- AI 處理紀錄
+  ai_metadata JSONB DEFAULT '{}'::jsonb,
+  -- 範例: { "last_analysis": "2024-12-01", "review_count": 5, "model": "gpt-4o-mini" }
+  
   -- 時間戳記
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
