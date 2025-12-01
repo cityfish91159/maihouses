@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabase';
 import { Agent, Imported591Data } from '../lib/types';
+import { computeAddressFingerprint } from '../utils/address';
 
 // 定義物件資料介面
 export interface PropertyData {
@@ -185,21 +186,7 @@ export const propertyService = {
     }
     // 需要查找或建立社區
     else if (form.address && finalCommunityName) {
-      // 🔧 強化版台灣地址指紋（針對巷弄、郵遞區號、戶號）
-      const computeAddressFingerprint = (addr: string): string => {
-        let clean = addr;
-        // 1. 移除郵遞區號 (3-5碼開頭)
-        clean = clean.replace(/^\d{3,5}/, '');
-        // 2. 移除「樓」「F」之後的所有字元
-        clean = clean.replace(/(\d+[fF樓].*)$/, '');
-        // 3. 移除「之X」「-X」戶號
-        clean = clean.replace(/[之\-－—]\d+/g, '');
-        // 4. 移除「號」字但保留數字
-        clean = clean.replace(/號/g, '');
-        // 5. 移除空白
-        clean = clean.replace(/\s+/g, '');
-        return clean;
-      };
+      // 用共用函數計算地址指紋
       const addressFingerprint = computeAddressFingerprint(form.address);
       
       // Step 1: 用地址指紋精準比對
@@ -274,6 +261,9 @@ export const propertyService = {
       }
     }
 
+    // 計算地址指紋（不管有沒有社區都存）
+    const addressFingerprint = form.address ? computeAddressFingerprint(form.address) : null;
+
     const { data, error } = await supabase
       .from('properties')
       .insert({
@@ -281,6 +271,7 @@ export const propertyService = {
         title: form.title,
         price: Number(form.price),
         address: form.address,
+        address_fingerprint: addressFingerprint,  // 存起來方便查詢
         community_name: finalCommunityName,
         community_id: communityId,
         size: Number(form.size || 0),
@@ -310,25 +301,16 @@ export const propertyService = {
 
     if (error) throw error;
     
-    // 🤖 只有新建社區才觸發 AI（節省成本）
-    if (isNewCommunity && communityId) {
-      fetch('/api/generate-community-profile', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          communityId,
-          communityName: finalCommunityName,
-          address: form.address,
-          newReview: {
-            pros: [form.advantage1, form.advantage2].filter(Boolean),
-            cons: form.disadvantage
-          },
-          isNew: true
-        })
-      }).then(r => r.json()).then(data => {
-        if (data.error) console.error('AI Community Gen Failed:', data.error);
-        else console.log('🤖 AI 社區優化完成');
-      }).catch(err => console.error('AI call failed:', err));
+    // 📝 把兩好一公道存進 community_reviews（不管新舊社區）
+    if (communityId && (form.advantage1 || form.advantage2 || form.disadvantage)) {
+      await supabase.from('community_reviews').insert({
+        community_id: communityId,
+        property_id: data.id,
+        source: 'agent',
+        advantage_1: form.advantage1 || null,
+        advantage_2: form.advantage2 || null,
+        disadvantage: form.disadvantage || null,
+      });
     }
     
     // 回傳包含社區資訊

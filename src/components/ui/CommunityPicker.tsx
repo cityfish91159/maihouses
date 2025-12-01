@@ -10,6 +10,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../lib/supabase';
 import { Building2, Search, Plus, Check, Loader2, Home } from 'lucide-react';
+import { computeAddressFingerprint } from '../../utils/address';
 
 interface Community {
   id: string;
@@ -42,14 +43,6 @@ export function CommunityPicker({ value, address, onChange, className = '', requ
   const extractDistrict = (addr: string): string => {
     const match = addr.match(/([^市縣]+[區鄉鎮市])/);
     return match?.[1] || '';
-  };
-
-  // 計算地址指紋（去除樓層、空白）
-  const computeAddressFingerprint = (addr: string): string => {
-    return addr
-      .replace(/[之\-－—]/g, '')
-      .replace(/\d+樓.*$/, '')
-      .replace(/\s+/g, '');
   };
 
   // 搜尋社區
