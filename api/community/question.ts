@@ -112,9 +112,18 @@ async function handleAnswer(
     return res.status(400).json({ error: '回答至少需要 10 個字' });
   }
 
-  // 判斷回答者類型（這裡簡化處理，實際需查詢用戶身份）
-  // TODO: 查詢用戶是否為該社區住戶或房仲
-  const authorType = 'resident'; // 預設為住戶
+  // 判斷回答者類型：查詢是否為房仲
+  let authorType: 'resident' | 'agent' = 'resident';
+  
+  const { data: agentProfile } = await supabase
+    .from('agents')
+    .select('id')
+    .eq('user_id', userId)
+    .maybeSingle();
+  
+  if (agentProfile) {
+    authorType = 'agent';
+  }
 
   const { data, error } = await supabase
     .from('community_answers')

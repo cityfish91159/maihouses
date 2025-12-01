@@ -119,7 +119,10 @@ CREATE POLICY "Public posts visible to all"
   ON community_posts FOR SELECT
   USING (visibility = 'public');
 
--- 私密貼文：登入用戶可讀（實際權限由前端控制，這裡先開放給登入用戶）
+-- 私密貼文：登入用戶可讀
+-- ⚠️ TECH DEBT: MVP 權宜之計
+-- 目前任何登入用戶都能看私密牆，正式版需加入 user_communities 關聯表
+-- 檢查用戶是否為該社區住戶 (WHERE auth.uid() IN (SELECT user_id FROM user_communities WHERE community_id = ...))
 DROP POLICY IF EXISTS "Private posts visible to authenticated" ON community_posts;
 CREATE POLICY "Private posts visible to authenticated"
   ON community_posts FOR SELECT
@@ -197,3 +200,27 @@ CREATE TRIGGER trigger_update_answers_count
 -- ============================================
 
 -- 預留給 post_comments 表使用
+
+-- ============================================
+-- 8. community_reviews View（對接 properties 表）
+-- ============================================
+-- 說明：評價資料存在 properties 表的 advantage_1, advantage_2, disadvantage 欄位
+-- 建立 View 讓 API 可以統一查詢
+
+CREATE OR REPLACE VIEW community_reviews AS
+SELECT 
+  p.id,
+  p.community_id,
+  p.agent_id AS author_id,
+  p.created_at,
+  -- 組合成評價內容
+  jsonb_build_object(
+    'pros', ARRAY[p.advantage_1, p.advantage_2],
+    'cons', p.disadvantage,
+    'property_title', p.title
+  ) AS content,
+  p.source_platform,
+  p.source_external_id
+FROM properties p
+WHERE p.community_id IS NOT NULL
+  AND (p.advantage_1 IS NOT NULL OR p.advantage_2 IS NOT NULL OR p.disadvantage IS NOT NULL);

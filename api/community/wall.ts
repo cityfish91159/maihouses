@@ -105,14 +105,15 @@ async function getPosts(
 }
 
 // 取得評價
+// 注意：community_reviews 是 View，資料來源為 properties 表的兩好一公道欄位
 async function getReviews(
   res: VercelResponse,
   communityId: string,
   isAuthenticated: boolean
 ) {
   let query = supabase
-    .from('community_reviews')
-    .select('*, properties(title, agent_id)', { count: 'exact' })
+    .from('community_reviews') // 這是 View，對接 properties 表
+    .select('*', { count: 'exact' })
     .eq('community_id', communityId)
     .order('created_at', { ascending: false });
 
