@@ -138,9 +138,11 @@ CREATE POLICY "Anyone can insert lead events" ON public.lead_events
     FOR INSERT WITH CHECK (true);
 
 -- ==============================================================================
--- 3. 經紀人統計 View
+-- 3. 經紀人統計 View (security_invoker = true 遵循 RLS)
 -- ==============================================================================
-CREATE OR REPLACE VIEW public.agent_lead_stats AS
+CREATE OR REPLACE VIEW public.agent_lead_stats 
+WITH (security_invoker = true)
+AS
 SELECT 
     agent_id,
     COUNT(*) FILTER (WHERE status = 'new') as new_leads,
