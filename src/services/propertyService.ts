@@ -160,6 +160,7 @@ export const propertyService = {
   },
 
   // 4. 建立物件 (新版 - 含結構化欄位 + 社區自動建立)
+  // 核心邏輯：地址優先比對 → 社區名模糊比對輔助 → 建新社區(待審核)
   createPropertyWithForm: async (form: PropertyFormInput, images: string[], existingCommunityId?: string) => {
     // 確認登入狀態
     const { data: { user } } = await supabase.auth.getUser();
@@ -167,51 +168,90 @@ export const propertyService = {
     // 若未登入，使用預設 agent_id (開發模式)
     const agentId = user?.id || 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
 
-    // 🏢 社區處理邏輯 - 地址優先！
+    // 🏢 社區處理邏輯
     let communityId: string | null = existingCommunityId || null;
     let finalCommunityName = form.communityName?.trim() || null;
+    let isNewCommunity = false;
     
-    // 計算地址指紋（去除樓層、之、空白）
-    const addressFingerprint = form.address
-      .replace(/[之\-－—]/g, '')
-      .replace(/\d+樓.*$/, '')
-      .replace(/\s+/g, '');
-    
-    // 只要有地址，就嘗試找或建社區
-    if (!communityId && form.address && addressFingerprint.length >= 5) {
-      // 用地址指紋找現有社區
-      const { data: existingByAddress } = await supabase
-        .from('communities')
-        .select('id, name')
-        .eq('address_fingerprint', addressFingerprint)
-        .single();
+    // 「無社區」直接跳過社區處理
+    if (finalCommunityName === '無') {
+      communityId = null;
+      finalCommunityName = '無';
+      console.log('✅ 透天/店面，不歸入社區牆');
+    }
+    // 已選擇現有社區，直接使用
+    else if (existingCommunityId) {
+      console.log('✅ 使用已選擇的社區 ID:', existingCommunityId);
+    }
+    // 需要查找或建立社區
+    else if (form.address && finalCommunityName) {
+      // 計算地址指紋（去除樓層、之、空白）
+      const addressFingerprint = form.address
+        .replace(/[之\-－—]/g, '')
+        .replace(/\d+樓.*$/, '')
+        .replace(/\s+/g, '');
+      
+      // Step 1: 用地址指紋精準比對
+      if (addressFingerprint.length >= 5) {
+        const { data: existingByAddress } = await supabase
+          .from('communities')
+          .select('id, name')
+          .eq('address_fingerprint', addressFingerprint)
+          .single();
 
-      if (existingByAddress) {
-        // 找到了！用現有社區
-        communityId = existingByAddress.id;
-        // 如果房仲沒填社區名，用已有的
-        if (!finalCommunityName) {
-          finalCommunityName = existingByAddress.name;
+        if (existingByAddress) {
+          communityId = existingByAddress.id;
+          console.log('✅ 地址比對成功，使用現有社區:', existingByAddress.name);
         }
-        console.log('✅ 地址比對成功，使用現有社區:', existingByAddress.name);
-      } else {
-        // 地址沒找到，建立新社區
+      }
+      
+      // Step 2: 地址沒找到，用社區名稱模糊比對
+      if (!communityId && finalCommunityName.length >= 2) {
+        // 先精準比對
+        const { data: exactMatch } = await supabase
+          .from('communities')
+          .select('id, name')
+          .eq('name', finalCommunityName)
+          .single();
+
+        if (exactMatch) {
+          communityId = exactMatch.id;
+          console.log('✅ 社區名精準比對成功:', exactMatch.name);
+        } else {
+          // 模糊比對 (用 ILIKE)
+          const { data: fuzzyMatches } = await supabase
+            .from('communities')
+            .select('id, name')
+            .ilike('name', `%${finalCommunityName}%`)
+            .limit(1);
+
+          if (fuzzyMatches && fuzzyMatches.length > 0 && fuzzyMatches[0]) {
+            // 找到相似的，但房仲沒選擇，所以建新的
+            console.log('⚠️ 有相似社區但未選擇:', fuzzyMatches[0].name);
+          }
+        }
+      }
+      
+      // Step 3: 都沒找到，建立新社區（待審核）
+      if (!communityId) {
         const district = form.address.match(/([^市縣]+[區鄉鎮市])/)?.[1] || '';
         const city = form.address.match(/^(.*?[市縣])/)?.[1] || '台北市';
-        
-        // 社區名：用房仲填的，或用地址當預設名
-        const communityName = finalCommunityName || addressFingerprint;
+        const addressFingerprint = form.address
+          .replace(/[之\-－—]/g, '')
+          .replace(/\d+樓.*$/, '')
+          .replace(/\s+/g, '');
         
         const { data: newCommunity, error: communityError } = await supabase
           .from('communities')
           .insert({
-            name: communityName,
+            name: finalCommunityName,
             address: form.address,
             address_fingerprint: addressFingerprint,
             district: district,
             city: city,
-            is_verified: false,
-            completeness_score: finalCommunityName ? 30 : 10, // 有名字多給分
+            is_verified: false,  // 新建社區待審核
+            completeness_score: 30,
+            // 房仲填的兩好一公道存到社區
             two_good: [form.advantage1, form.advantage2].filter(Boolean),
             one_fair: form.disadvantage || null,
             features: [form.type].filter(Boolean),
@@ -221,8 +261,10 @@ export const propertyService = {
 
         if (!communityError && newCommunity) {
           communityId = newCommunity.id;
-          finalCommunityName = communityName;
-          console.log('✅ 自動建立社區:', communityName);
+          isNewCommunity = true;
+          console.log('✅ 建立新社區（待審核）:', finalCommunityName);
+        } else {
+          console.error('❌ 建立社區失敗:', communityError);
         }
       }
     }
@@ -234,7 +276,7 @@ export const propertyService = {
         title: form.title,
         price: Number(form.price),
         address: form.address,
-        community_name: finalCommunityName,  // 用最終確定的社區名
+        community_name: finalCommunityName,
         community_id: communityId,
         size: Number(form.size || 0),
         age: Number(form.age || 0),
@@ -262,7 +304,12 @@ export const propertyService = {
       .single();
 
     if (error) throw error;
-    return data;
+    
+    // 回傳包含社區資訊
+    return {
+      ...data,
+      is_new_community: isNewCommunity
+    };
   },
 
   // 5. 檢查社區是否存在 (供前端即時驗證)

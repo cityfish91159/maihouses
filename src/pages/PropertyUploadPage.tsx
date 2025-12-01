@@ -1,12 +1,20 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { propertyService, PropertyFormInput } from '../services/propertyService';
 import { CommunityPicker } from '../components/ui/CommunityPicker';
 import { 
   Loader2, Upload, X, Sparkles, ThumbsUp, ThumbsDown, 
-  Download, Check, Home, MapPin, Shield, ArrowLeft
+  Download, Check, Home, MapPin, Shield, ArrowLeft, Building2, AlertTriangle, Edit3
 } from 'lucide-react';
+
+// 上傳結果介面
+interface UploadResult {
+  public_id: string;
+  community_id: string | null;
+  community_name: string | null;
+  is_new_community: boolean;
+}
 
 export const PropertyUploadPage: React.FC = () => {
   const navigate = useNavigate();
@@ -17,6 +25,10 @@ export const PropertyUploadPage: React.FC = () => {
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [user, setUser] = useState<any>(null);
   const [selectedCommunityId, setSelectedCommunityId] = useState<string | undefined>();
+  
+  // 上傳成功後的確認狀態
+  const [uploadResult, setUploadResult] = useState<UploadResult | null>(null);
+  const [showConfirmation, setShowConfirmation] = useState(false);
 
   const [form, setForm] = useState<PropertyFormInput>({
     title: '', price: '', address: '', communityName: '', size: '', age: '', 
@@ -47,9 +59,11 @@ export const PropertyUploadPage: React.FC = () => {
     adv1Valid: form.advantage1.length >= 5,
     adv2Valid: form.advantage2.length >= 5,
     disValid: form.disadvantage.length >= 10,
+    // 社區名稱必填（除非選了「無社區」）
+    communityValid: form.communityName.length >= 2 || form.communityName === '無',
     get allValid() { return this.adv1Valid && this.adv2Valid && this.disValid; }
   };
-  const basicValid = form.title.length > 0 && form.price.length > 0 && form.address.length > 0;
+  const basicValid = form.title.length > 0 && form.price.length > 0 && form.address.length > 0 && validation.communityValid;
   const canSubmit = basicValid && validation.allValid && imageFiles.length > 0;
 
   // 591 搬家
@@ -87,7 +101,7 @@ export const PropertyUploadPage: React.FC = () => {
 
   // 發布
   const publish = async () => {
-    if (!basicValid) return alert('請填寫標題、價格、地址');
+    if (!basicValid) return alert('請填寫標題、價格、地址、社區名稱');
     if (!validation.allValid) return alert('兩好一公道字數不足！');
     if (imageFiles.length === 0) return alert('請至少上傳一張照片');
     
@@ -97,8 +111,15 @@ export const PropertyUploadPage: React.FC = () => {
       // 傳入已選擇的社區 ID（如果有的話）
       const result = await propertyService.createPropertyWithForm(form, uploadedUrls, selectedCommunityId);
       
-      alert('🎉 刊登成功！物件編號：' + result.public_id);
-      navigate('/property/' + result.public_id);
+      // 顯示確認頁而不是直接跳轉
+      setUploadResult({
+        public_id: result.public_id,
+        community_id: result.community_id,
+        community_name: result.community_name || form.communityName,
+        is_new_community: !selectedCommunityId && result.community_id !== null
+      });
+      setShowConfirmation(true);
+      
     } catch (e: any) {
       alert('失敗：' + e.message);
     } finally {
@@ -107,6 +128,126 @@ export const PropertyUploadPage: React.FC = () => {
   };
 
   const inputClass = "w-full p-3 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-[#003366] focus:border-transparent outline-none text-sm";
+
+  // ========================================
+  // 上傳成功確認頁
+  // ========================================
+  if (showConfirmation && uploadResult) {
+    return (
+      <div className="min-h-screen bg-[#f8fafc] font-sans text-slate-800">
+        <nav className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-100 h-16 flex items-center px-4 shadow-sm">
+          <div className="flex items-center text-[#003366] font-extrabold text-xl gap-2">
+            <div className="w-8 h-8 bg-gradient-to-br from-[#003366] to-[#00A8E8] rounded-lg flex items-center justify-center text-white">
+              <Home size={18} />
+            </div>
+            邁房子
+          </div>
+        </nav>
+
+        <main className="max-w-lg mx-auto p-6 py-12">
+          {/* 成功圖示 */}
+          <div className="text-center mb-8">
+            <div className="w-20 h-20 mx-auto bg-green-100 rounded-full flex items-center justify-center mb-4">
+              <Check size={40} className="text-green-600" />
+            </div>
+            <h1 className="text-2xl font-bold text-slate-800">🎉 刊登成功！</h1>
+            <p className="text-slate-500 mt-2">物件編號：{uploadResult.public_id}</p>
+          </div>
+
+          {/* 社區歸屬確認 */}
+          {uploadResult.community_name && uploadResult.community_name !== '無' && (
+            <section className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm mb-6">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <Building2 size={20} className="text-blue-600" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-bold text-slate-800">社區牆歸屬</h3>
+                  <p className="text-lg font-medium text-[#003366] mt-1">
+                    {uploadResult.community_name}
+                  </p>
+                  {uploadResult.is_new_community ? (
+                    <p className="text-sm text-amber-600 mt-1 flex items-center gap-1">
+                      <AlertTriangle size={14} />
+                      新建立的社區牆，待審核後公開
+                    </p>
+                  ) : (
+                    <p className="text-sm text-green-600 mt-1 flex items-center gap-1">
+                      <Check size={14} />
+                      已歸入現有社區牆
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* 社區牆預覽連結 */}
+              {uploadResult.community_id && (
+                <Link 
+                  to={`/community/${uploadResult.community_id}`}
+                  className="mt-4 block w-full text-center py-2 bg-blue-50 text-blue-600 rounded-xl text-sm font-medium hover:bg-blue-100 transition"
+                >
+                  🏘️ 查看社區牆
+                </Link>
+              )}
+            </section>
+          )}
+
+          {/* 發現社區有誤？修正區塊 */}
+          {uploadResult.community_name && uploadResult.community_name !== '無' && (
+            <section className="bg-amber-50 p-4 rounded-2xl border border-amber-200 mb-6">
+              <div className="flex items-center gap-2 text-amber-800">
+                <AlertTriangle size={18} />
+                <span className="font-medium">社區歸屬有誤？</span>
+              </div>
+              <p className="text-sm text-amber-700 mt-2">
+                如果發現物件歸入了錯誤的社區牆，可以立即修正。
+              </p>
+              <button
+                onClick={() => {
+                  // 跳轉到物件編輯頁的社區修正功能
+                  navigate(`/property/${uploadResult.public_id}/edit?fix=community`);
+                }}
+                className="mt-3 w-full py-2 bg-amber-100 text-amber-800 rounded-xl text-sm font-medium hover:bg-amber-200 transition flex items-center justify-center gap-2"
+              >
+                <Edit3 size={16} />
+                修正社區歸屬
+              </button>
+            </section>
+          )}
+
+          {/* 操作按鈕 */}
+          <div className="space-y-3">
+            <Link
+              to={`/property/${uploadResult.public_id}`}
+              className="block w-full py-4 bg-gradient-to-r from-[#003366] to-[#00A8E8] text-white rounded-xl font-bold text-center shadow-lg"
+            >
+              查看物件頁面
+            </Link>
+            <button
+              onClick={() => {
+                setShowConfirmation(false);
+                setUploadResult(null);
+                // 清空表單
+                setForm({
+                  title: '', price: '', address: '', communityName: '', size: '', age: '', 
+                  floorCurrent: '', floorTotal: '', rooms: '3', halls: '2', bathrooms: '2', 
+                  type: '電梯大樓', description: '',
+                  advantage1: '', advantage2: '', disadvantage: '',
+                  sourceExternalId: ''
+                });
+                setImages([]);
+                setImageFiles([]);
+                setSelectedCommunityId(undefined);
+              }}
+              className="block w-full py-3 bg-slate-100 text-slate-600 rounded-xl font-medium text-center hover:bg-slate-200 transition"
+            >
+              繼續上傳新物件
+            </button>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#f8fafc] font-sans text-slate-800">
@@ -155,19 +296,22 @@ export const PropertyUploadPage: React.FC = () => {
               </div>
             </div>
 
-            {/* 社區名稱 - 選填，系統會用地址自動判斷 */}
+            {/* 社區名稱 - 必填 */}
             <div>
               <label className="block text-xs font-medium text-slate-600 mb-1">
-                社區名稱 <span className="text-slate-400">(選填，知道就填)</span>
+                社區名稱 * <span className="text-slate-400">(透天/店面請選「無社區」)</span>
               </label>
               <CommunityPicker
                 value={form.communityName}
                 address={form.address}
                 onChange={handleCommunityChange}
+                required={true}
               />
-              <p className="text-[10px] text-slate-400 mt-1">
-                💡 不填也沒關係，系統會用地址自動判斷
-              </p>
+              {!validation.communityValid && form.communityName.length > 0 && (
+                <p className="text-[10px] text-red-500 mt-1">
+                  請輸入完整社區名稱（至少2字）
+                </p>
+              )}
             </div>
 
             <div className="grid grid-cols-4 gap-3">

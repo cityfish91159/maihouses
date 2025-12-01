@@ -9,7 +9,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../lib/supabase';
-import { Building2, Search, Plus, Check, Loader2 } from 'lucide-react';
+import { Building2, Search, Plus, Check, Loader2, Home } from 'lucide-react';
 
 interface Community {
   id: string;
@@ -24,9 +24,13 @@ interface CommunityPickerProps {
   address: string;  // 物件地址，用於智能比對
   onChange: (name: string, communityId?: string) => void;
   className?: string;
+  required?: boolean;  // 是否必填
 }
 
-export function CommunityPicker({ value, address, onChange, className = '' }: CommunityPickerProps) {
+// 無社區選項（透天、店面用）
+const NO_COMMUNITY_OPTION = { id: 'NONE', name: '無', address: '透天/店面/獨棟' };
+
+export function CommunityPicker({ value, address, onChange, className = '', required = false }: CommunityPickerProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState(value);
   const [suggestions, setSuggestions] = useState<Community[]>([]);
@@ -124,7 +128,17 @@ export function CommunityPicker({ value, address, onChange, className = '' }: Co
   const handleSelect = (community: Community) => {
     setSelectedCommunity(community);
     setSearchTerm(community.name);
-    onChange(community.name, community.id);
+    // 「無」社區不傳 ID
+    const communityId = community.id === 'NONE' ? undefined : community.id;
+    onChange(community.name, communityId);
+    setIsOpen(false);
+  };
+
+  // 選擇「無社區」
+  const handleSelectNoCommunity = () => {
+    setSelectedCommunity(NO_COMMUNITY_OPTION as Community);
+    setSearchTerm('無');
+    onChange('無', undefined);
     setIsOpen(false);
   };
 
@@ -214,16 +228,21 @@ export function CommunityPicker({ value, address, onChange, className = '' }: Co
       </div>
 
       {/* 狀態提示 */}
-      {selectedCommunity && (
+      {selectedCommunity && selectedCommunity.name !== '無' && (
         <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
           <Check size={12} />
           已選擇「{selectedCommunity.name}」
           {selectedCommunity.property_count ? ` (${selectedCommunity.property_count} 個物件)` : ''}
         </p>
       )}
+      {selectedCommunity && selectedCommunity.name === '無' && (
+        <p className="text-xs text-slate-500 mt-1 flex items-center gap-1">
+          🏠 此物件為透天/店面，不歸入社區牆
+        </p>
+      )}
       {!selectedCommunity && searchTerm && nameValidation.valid && (
-        <p className="text-xs text-blue-600 mt-1">
-          💡 將自動建立「{searchTerm.trim()}」社區牆，同社區物件會自動串連
+        <p className="text-xs text-amber-600 mt-1">
+          ⚠️ 將建立新社區「{searchTerm.trim()}」，請確認名稱正確（系統會比對相似名稱）
         </p>
       )}
       {!selectedCommunity && searchTerm && !nameValidation.valid && searchTerm.length >= 2 && (
@@ -233,8 +252,22 @@ export function CommunityPicker({ value, address, onChange, className = '' }: Co
       )}
 
       {/* 下拉選單 */}
-      {isOpen && (suggestions.length > 0 || showCreateOption) && (
-        <div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden">
+      {isOpen && (
+        <div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden max-h-80 overflow-y-auto">
+          {/* 無社區選項 - 放最上面 */}
+          <button
+            onClick={handleSelectNoCommunity}
+            className="w-full px-4 py-3 text-left hover:bg-slate-50 flex items-center gap-3 border-b border-slate-100 bg-slate-50/50"
+          >
+            <div className="w-8 h-8 rounded-lg bg-slate-200 flex items-center justify-center flex-shrink-0">
+              <Home size={16} className="text-slate-500" />
+            </div>
+            <div>
+              <span className="font-medium text-slate-600">無社區</span>
+              <span className="text-xs text-slate-400 ml-2">（透天、店面、獨棟）</span>
+            </div>
+          </button>
+
           {/* 現有社區 */}
           {suggestions.map((community) => (
             <button
@@ -266,16 +299,24 @@ export function CommunityPicker({ value, address, onChange, className = '' }: Co
           {showCreateOption && (
             <button
               onClick={handleCreateNew}
-              className="w-full px-4 py-3 text-left hover:bg-blue-50 flex items-center gap-3 bg-blue-50/50"
+              className="w-full px-4 py-3 text-left hover:bg-amber-50 flex items-center gap-3 bg-amber-50/50 border-t border-amber-100"
             >
-              <div className="w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center flex-shrink-0">
+              <div className="w-8 h-8 rounded-lg bg-amber-500 flex items-center justify-center flex-shrink-0">
                 <Plus size={16} className="text-white" />
               </div>
               <div>
-                <span className="font-medium text-blue-700">建立新社區：</span>
-                <span className="text-blue-600 ml-1">{searchTerm.trim()}</span>
+                <span className="font-medium text-amber-700">建立新社區：</span>
+                <span className="text-amber-600 ml-1">{searchTerm.trim()}</span>
+                <p className="text-xs text-amber-600 mt-0.5">⚠️ 請確認找不到才建立</p>
               </div>
             </button>
+          )}
+
+          {/* 沒有結果提示 */}
+          {suggestions.length === 0 && !showCreateOption && searchTerm.length >= 2 && !loading && (
+            <div className="px-4 py-3 text-center text-slate-400 text-sm">
+              找不到相似社區，請確認名稱後建立新的
+            </div>
           )}
         </div>
       )}

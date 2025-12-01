@@ -18,6 +18,7 @@ import { CookieConsent } from './components/CookieConsent'
 import UAGPage from './pages/UAG'
 import { PropertyDetailPage } from './pages/PropertyDetailPage'
 import { PropertyUploadPage } from './pages/PropertyUploadPage'
+import { PropertyEditPage } from './pages/PropertyEditPage'
 import { ReportPage } from './pages/Report'
 
 const queryClient = new QueryClient({
@@ -92,6 +93,14 @@ export default function App() {
           element={
             <ErrorBoundary>
               <PropertyUploadPage />
+            </ErrorBoundary>
+          }
+        />
+        <Route
+          path="/property/:publicId/edit"
+          element={
+            <ErrorBoundary>
+              <PropertyEditPage />
             </ErrorBoundary>
           }
         />
