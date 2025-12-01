@@ -310,8 +310,8 @@ export const propertyService = {
 
     if (error) throw error;
     
-    // 🤖 非同步觸發 AI 優化社區牆（不阻塞 UI）
-    if (communityId && finalCommunityName !== '無') {
+    // 🤖 只有新建社區才觸發 AI（節省成本）
+    if (isNewCommunity && communityId) {
       fetch('/api/generate-community-profile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -323,7 +323,7 @@ export const propertyService = {
             pros: [form.advantage1, form.advantage2].filter(Boolean),
             cons: form.disadvantage
           },
-          isNew: isNewCommunity
+          isNew: true
         })
       }).then(r => r.json()).then(data => {
         if (data.error) console.error('AI Community Gen Failed:', data.error);
