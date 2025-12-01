@@ -355,24 +355,35 @@ function renderReviews() {
   const reviews = MOCK_DATA.reviews;
   const container = document.getElementById('reviews-list');
   
-  const visibleCount = perm.canSeeAllReviews ? reviews.length : GUEST_VISIBLE_COUNT;
-  const hiddenCount = reviews.length - visibleCount;
+  // 把所有評價拆成單項：每個 ✅ 是一則，每個 ⚖️ 也是一則
+  const allItems = [];
+  reviews.forEach(review => {
+    review.pros.forEach(pro => {
+      allItems.push({ type: 'pro', text: pro, author: review.author, company: review.company, visits: review.visits, deals: review.deals });
+    });
+    allItems.push({ type: 'con', text: review.cons, author: review.author, company: review.company, visits: review.visits, deals: review.deals });
+  });
+  
+  const totalCount = allItems.length;
+  const visibleCount = perm.canSeeAllReviews ? totalCount : GUEST_VISIBLE_COUNT;
+  const hiddenCount = totalCount - visibleCount;
   
   let html = '';
   
-  reviews.slice(0, visibleCount).forEach(review => {
+  // 顯示可見的評價項目
+  allItems.slice(0, visibleCount).forEach(item => {
+    const icon = item.type === 'pro' ? '✅' : '⚖️';
     html += `
       <div class="review-card">
         <div class="review-header">
-          <div class="review-avatar">${review.author.charAt(0)}</div>
+          <div class="review-avatar">${item.author.charAt(0)}</div>
           <div class="review-meta">
-            <div class="review-author">${review.author}｜${review.company}</div>
-            <div class="review-sub">帶看 ${review.visits} 次 · 成交 ${review.deals} 戶</div>
+            <div class="review-author">${item.author}｜${item.company}</div>
+            <div class="review-sub">帶看 ${item.visits} 次 · 成交 ${item.deals} 戶</div>
           </div>
         </div>
         <div class="review-content">
-          ${review.pros.map(p => `<div class="review-item"><span class="review-icon">✅</span><span class="review-text">${p}</span></div>`).join('')}
-          <div class="review-item"><span class="review-icon">⚖️</span><span class="review-text">${review.cons}</span></div>
+          <div class="review-item"><span class="review-icon">${icon}</span><span class="review-text">${item.text}</span></div>
         </div>
       </div>
     `;
@@ -380,17 +391,18 @@ function renderReviews() {
   
   // blur 遮罩
   if (hiddenCount > 0 && !perm.canSeeAllReviews) {
+    const nextItem = allItems[visibleCount];
     html += `
       <div class="blur-overlay">
         <div class="review-card blur-content">
           <div class="review-header">
-            <div class="review-avatar">${reviews[visibleCount]?.author?.charAt(0) || '?'}</div>
+            <div class="review-avatar">${nextItem?.author?.charAt(0) || '?'}</div>
             <div class="review-meta">
-              <div class="review-author">${reviews[visibleCount]?.author || ''}｜***</div>
+              <div class="review-author">${nextItem?.author || ''}｜***</div>
             </div>
           </div>
           <div class="review-content">
-            <div class="review-item"><span class="review-icon">✅</span><span class="review-text">管理員服務態度很好...</span></div>
+            <div class="review-item"><span class="review-icon">✅</span><span class="review-text">${nextItem?.text?.substring(0, 10) || '...'}...</span></div>
           </div>
         </div>
         <div class="blur-cta">
