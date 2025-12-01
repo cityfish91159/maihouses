@@ -21,3 +21,19 @@ export const computeAddressFingerprint = (addr: string): string => {
   clean = clean.replace(/\s+/g, '');
   return clean;
 };
+
+/**
+ * 社區名正規化（統一格式，解決「惠宇上晴」vs「惠宇 上晴」問題）
+ * 用於比對時，不改變實際儲存的名稱
+ */
+export const normalizeCommunityName = (name: string): string => {
+  return name
+    .trim()
+    .replace(/\s+/g, '')           // 移除半形空格
+    .replace(/[　]/g, '')          // 移除全形空格
+    .replace(/[（）]/g, s => s === '（' ? '(' : ')')  // 全形括號→半形
+    .replace(/[「」『』]/g, '')    // 移除書名號
+    .replace(/[．·]/g, '')         // 移除中間點
+    .toLowerCase();                 // 統一小寫（處理英文社區名）
+};
+

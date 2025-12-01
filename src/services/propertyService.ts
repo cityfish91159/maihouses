@@ -1,6 +1,6 @@
 import { supabase } from '../lib/supabase';
 import { Agent, Imported591Data } from '../lib/types';
-import { computeAddressFingerprint } from '../utils/address';
+import { computeAddressFingerprint, normalizeCommunityName } from '../utils/address';
 
 // 定義物件資料介面
 export interface PropertyData {
@@ -203,29 +203,41 @@ export const propertyService = {
         }
       }
       
-      // Step 2: 地址沒找到，用社區名稱模糊比對
+      // Step 2: 地址沒找到，用社區名稱比對（正規化後比對）
       if (!communityId && finalCommunityName.length >= 2) {
-        // 先精準比對
-        const { data: exactMatch } = await supabase
+        const normalizedInput = normalizeCommunityName(finalCommunityName);
+        
+        // 撈同區域的社區，用正規化後的名稱比對
+        const district = form.address.match(/([^市縣]+[區鄉鎮市])/)?.[1] || '';
+        const { data: candidates } = await supabase
           .from('communities')
           .select('id, name')
-          .eq('name', finalCommunityName)
-          .single();
+          .eq('district', district)
+          .limit(50);
 
-        if (exactMatch) {
-          communityId = exactMatch.id;
-          console.log('✅ 社區名精準比對成功:', exactMatch.name);
-        } else {
-          // 模糊比對 (用 ILIKE)
-          const { data: fuzzyMatches } = await supabase
+        if (candidates && candidates.length > 0) {
+          // 找正規化後完全相同的
+          const matched = candidates.find(c => 
+            normalizeCommunityName(c.name) === normalizedInput
+          );
+          if (matched) {
+            communityId = matched.id;
+            finalCommunityName = matched.name; // 用資料庫的名稱
+            console.log('✅ 社區名正規化比對成功:', matched.name);
+          }
+        }
+
+        // 如果還是沒找到，試試精確比對（跨區域）
+        if (!communityId) {
+          const { data: exactMatch } = await supabase
             .from('communities')
             .select('id, name')
-            .ilike('name', `%${finalCommunityName}%`)
-            .limit(1);
+            .eq('name', finalCommunityName)
+            .single();
 
-          if (fuzzyMatches && fuzzyMatches.length > 0 && fuzzyMatches[0]) {
-            // 找到相似的，但房仲沒選擇，所以建新的
-            console.log('⚠️ 有相似社區但未選擇:', fuzzyMatches[0].name);
+          if (exactMatch) {
+            communityId = exactMatch.id;
+            console.log('✅ 社區名精準比對成功:', exactMatch.name);
           }
         }
       }
