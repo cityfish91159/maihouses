@@ -27,6 +27,7 @@ CREATE TABLE IF NOT EXISTS community_posts (
   -- 互動數據
   likes_count INTEGER DEFAULT 0,
   comments_count INTEGER DEFAULT 0,
+  liked_by UUID[] DEFAULT '{}',  -- 按讚的用戶 ID 陣列
   
   -- 時間戳記
   created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -228,3 +229,41 @@ SELECT
 FROM properties p
 WHERE p.community_id IS NOT NULL
   AND (p.advantage_1 IS NOT NULL OR p.advantage_2 IS NOT NULL OR p.disadvantage IS NOT NULL);
+
+-- ============================================
+-- 9. toggle_like 函數（按讚/取消讚）
+-- ============================================
+
+CREATE OR REPLACE FUNCTION toggle_like(post_id UUID)
+RETURNS JSON AS $$
+DECLARE
+  current_liked_by UUID[];
+  new_liked_by UUID[];
+  is_liked BOOLEAN;
+BEGIN
+  -- 取得目前按讚清單
+  SELECT liked_by INTO current_liked_by FROM community_posts WHERE id = post_id;
+  
+  -- 判斷是否已按過讚
+  is_liked := auth.uid() = ANY(current_liked_by);
+  
+  IF is_liked THEN
+    -- 取消讚
+    new_liked_by := array_remove(current_liked_by, auth.uid());
+  ELSE
+    -- 按讚
+    new_liked_by := array_append(current_liked_by, auth.uid());
+  END IF;
+  
+  -- 更新
+  UPDATE community_posts 
+  SET liked_by = new_liked_by,
+      likes_count = cardinality(new_liked_by)
+  WHERE id = post_id;
+  
+  RETURN json_build_object(
+    'liked', NOT is_liked,
+    'likes_count', cardinality(new_liked_by)
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
