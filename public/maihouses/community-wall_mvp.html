@@ -109,9 +109,17 @@ html,body{min-height:100%;background:linear-gradient(180deg,var(--bg-base)0%,var
 .qa-answer-header{display:flex;align-items:center;gap:6px;margin-bottom:4px}
 .qa-answer-badge{font-size:9px;padding:2px 6px;border-radius:4px;font-weight:700}
 
-/* === 模糊遮罩 === */
+/* === 模糊遮罩（用 body class 控制，避免切換身份後壞掉）=== */
 .blur-overlay{position:relative}
-.blur-overlay .blur-content{filter:blur(4px);pointer-events:none;user-select:none}
+.blur-overlay .blur-target{filter:blur(4px);pointer-events:none;user-select:none}
+/* 會員以上：解除模糊 */
+body.role-member .blur-overlay .blur-target,
+body.role-resident .blur-overlay .blur-target,
+body.role-agent .blur-overlay .blur-target{filter:none;pointer-events:auto;user-select:auto}
+/* 會員以上：隱藏 blur CTA */
+body.role-member .blur-cta,
+body.role-resident .blur-cta,
+body.role-agent .blur-cta{display:none !important}
 .blur-overlay .blur-cta{position:absolute;inset:0;display:flex;flex-direction:column;
   align-items:center;justify-content:center;background:rgba(255,255,255,.85);border-radius:14px;
   text-align:center;padding:20px}
@@ -300,6 +308,10 @@ function toggleRoleSwitcher() {
 function switchRole(role) {
   currentRole = role;
   
+  // 更新 body class（用於 CSS 控制 blur）
+  document.body.classList.remove('role-guest', 'role-member', 'role-resident', 'role-agent');
+  document.body.classList.add('role-' + role);
+  
   // 更新按鈕狀態
   document.querySelectorAll('.role-switcher-menu button').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.role === role);
@@ -389,12 +401,12 @@ function renderReviews() {
     `;
   });
   
-  // blur 遮罩
-  if (hiddenCount > 0 && !perm.canSeeAllReviews) {
+  // blur 遮罩（使用 blur-target，由 body class 控制）
+  if (hiddenCount > 0) {
     const nextItem = allItems[visibleCount];
     html += `
       <div class="blur-overlay">
-        <div class="review-card blur-content">
+        <div class="review-card blur-target">
           <div class="review-header">
             <div class="review-avatar">${nextItem?.author?.charAt(0) || '?'}</div>
             <div class="review-meta">
@@ -435,11 +447,11 @@ function renderPublicWall() {
     html += renderPostCard(post, perm);
   });
   
-  // 如果有隱藏的，顯示 blur 遮罩
-  if (hiddenCount > 0 && !perm.canSeeAllPosts) {
+  // 如果有隱藏的，顯示 blur 遮罩（使用 blur-target）
+  if (hiddenCount > 0) {
     html += `
       <div class="blur-overlay">
-        <div class="post-card blur-content">
+        <div class="post-card blur-target">
           <div class="post-avatar">${posts[visibleCount]?.author?.charAt(0) || '?'}</div>
           <div class="post-body">
             <div class="post-header">
@@ -606,10 +618,18 @@ function renderQuestions() {
             </div>
           `).join('')}
         </div>
-        ${!showAllAnswers && hiddenAnswerCount > 0 ? `
-          <div style="text-align:center;padding:12px;background:rgba(255,255,255,.9);border-radius:8px;margin-top:8px">
-            <p style="font-size:11px;color:var(--text-secondary);margin:0 0 8px">🔒 還有 ${hiddenAnswerCount} 則回覆</p>
-            <button class="action-btn" style="font-size:11px" onclick="showLoginModal()">登入查看</button>
+        ${hiddenAnswerCount > 0 ? `
+          <div class="blur-overlay" style="margin-top:8px">
+            <div class="qa-answer blur-target" style="padding:12px;background:#f8f8f8;border-radius:8px">
+              <div class="qa-answer-header">
+                <span class="qa-answer-badge" style="background:#e8faef;color:#0e8d52">🏠 住戶</span>
+              </div>
+              還有更多住戶回覆...
+            </div>
+            <div class="blur-cta" style="padding:16px">
+              <h4 style="margin-bottom:6px">🔒 還有 ${hiddenAnswerCount} 則回覆</h4>
+              <button onclick="showLoginModal()">登入查看</button>
+            </div>
           </div>
         ` : ''}
         ${perm.canAnswer ? `
@@ -755,6 +775,9 @@ function showAnswerModal(questionId) {
 // 初始化
 // ============================
 document.addEventListener('DOMContentLoaded', () => {
+  // 初始化 body class（訪客模式）
+  document.body.classList.add('role-guest');
+  
   renderAll();
   
   // 點擊外部關閉選單

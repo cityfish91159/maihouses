@@ -77,7 +77,7 @@ async function getPosts(
 ) {
   let query = supabase
     .from('community_posts')
-    .select('*')
+    .select('*', { count: 'exact' })
     .eq('community_id', communityId)
     .order('is_pinned', { ascending: false })
     .order('created_at', { ascending: false });
