@@ -312,8 +312,10 @@ export const propertyService = {
     
     // 🤖 非同步觸發 AI 優化社區牆（不阻塞 UI）
     if (communityId && finalCommunityName !== '無') {
-      supabase.functions.invoke('generate-community-profile', {
-        body: {
+      fetch('/api/generate-community-profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
           communityId,
           communityName: finalCommunityName,
           address: form.address,
@@ -322,11 +324,11 @@ export const propertyService = {
             cons: form.disadvantage
           },
           isNew: isNewCommunity
-        }
-      }).then(({ error: aiError }) => {
-        if (aiError) console.error('AI Community Gen Failed:', aiError);
-        else console.log('🤖 AI 社區優化已觸發');
-      });
+        })
+      }).then(r => r.json()).then(data => {
+        if (data.error) console.error('AI Community Gen Failed:', data.error);
+        else console.log('🤖 AI 社區優化完成');
+      }).catch(err => console.error('AI call failed:', err));
     }
     
     // 回傳包含社區資訊
