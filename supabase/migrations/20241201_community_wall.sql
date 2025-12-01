@@ -207,7 +207,11 @@ CREATE TRIGGER trigger_update_answers_count
 -- 說明：評價資料存在 properties 表的 advantage_1, advantage_2, disadvantage 欄位
 -- 建立 View 讓 API 可以統一查詢
 
-CREATE OR REPLACE VIEW community_reviews AS
+-- 先刪除（無論是 Table 還是 View）
+DROP TABLE IF EXISTS community_reviews CASCADE;
+DROP VIEW IF EXISTS community_reviews CASCADE;
+
+CREATE VIEW community_reviews AS
 SELECT 
   p.id,
   p.community_id,
