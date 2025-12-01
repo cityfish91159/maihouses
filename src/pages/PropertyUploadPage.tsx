@@ -17,12 +17,16 @@ export const PropertyUploadPage: React.FC = () => {
   const [user, setUser] = useState<any>(null);
 
   const [form, setForm] = useState<PropertyFormInput>({
-    title: '', price: '', address: '', size: '', age: '', 
+    title: '', price: '', address: '', communityName: '', size: '', age: '', 
     floorCurrent: '', floorTotal: '', rooms: '3', halls: '2', bathrooms: '2', 
     type: '電梯大樓', description: '',
     advantage1: '', advantage2: '', disadvantage: '',
     sourceExternalId: ''
   });
+
+  // 社區名稱驗證狀態
+  const [communityStatus, setCommunityStatus] = useState<'empty' | 'checking' | 'exists' | 'new' | 'incomplete'>('empty');
+  const [suggestedCommunity, setSuggestedCommunity] = useState<string | null>(null);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -144,6 +148,50 @@ export const PropertyUploadPage: React.FC = () => {
                 <label className="block text-xs font-medium text-slate-600 mb-1">地址 *</label>
                 <input name="address" value={form.address} onChange={handleInput} className={inputClass} placeholder="台北市信義區..." />
               </div>
+            </div>
+
+            {/* 社區名稱欄位 - 智能偵測 */}
+            <div>
+              <label className="block text-xs font-medium text-slate-600 mb-1">
+                社區名稱 <span className="text-slate-400">(選填，將自動建立社區牆)</span>
+              </label>
+              <div className="relative">
+                <input 
+                  name="communityName" 
+                  value={form.communityName} 
+                  onChange={(e) => {
+                    handleInput(e);
+                    const val = e.target.value.trim();
+                    if (!val) {
+                      setCommunityStatus('empty');
+                      setSuggestedCommunity(null);
+                    } else if (val.length < 2) {
+                      setCommunityStatus('incomplete');
+                    } else if (/社區|大樓|花園|莊園|雅築|官邸|華廈|別墅|山莊|天廈/.test(val)) {
+                      setCommunityStatus('new'); // 完整社區名
+                    } else if (/路|街|巷|號/.test(val) && !/社區|大樓/.test(val)) {
+                      setCommunityStatus('incomplete'); // 只填地址
+                      setSuggestedCommunity(null);
+                    } else {
+                      setCommunityStatus('new');
+                    }
+                  }}
+                  className={inputClass + (
+                    communityStatus === 'new' ? ' border-green-300 bg-green-50/50' :
+                    communityStatus === 'incomplete' ? ' border-yellow-300 bg-yellow-50/50' : ''
+                  )} 
+                  placeholder="例如：信義之星、惠宇上晴" 
+                />
+                {communityStatus === 'new' && (
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-green-600 text-xs font-medium">✓ 將建立新社區牆</span>
+                )}
+              </div>
+              {communityStatus === 'incomplete' && (
+                <p className="text-xs text-yellow-600 mt-1">💡 建議填寫正式社區名稱（如「XX社區」），方便建立社區牆</p>
+              )}
+              {communityStatus === 'empty' && form.address && (
+                <p className="text-xs text-slate-400 mt-1">填寫社區名稱可自動建立社區牆，讓買家看到社區評價</p>
+              )}
             </div>
 
             <div className="grid grid-cols-4 gap-3">

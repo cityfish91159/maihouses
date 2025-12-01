@@ -23,6 +23,7 @@ export interface PropertyFormInput {
   title: string;
   price: string;
   address: string;
+  communityName: string;  // 社區名稱
   size: string;
   age: string;
   floorCurrent: string;
@@ -158,13 +159,54 @@ export const propertyService = {
     return results.filter((url): url is string => !!url);
   },
 
-  // 4. 建立物件 (新版 - 含結構化欄位)
+  // 4. 建立物件 (新版 - 含結構化欄位 + 社區自動建立)
   createPropertyWithForm: async (form: PropertyFormInput, images: string[]) => {
     // 確認登入狀態
     const { data: { user } } = await supabase.auth.getUser();
     
     // 若未登入，使用預設 agent_id (開發模式)
     const agentId = user?.id || 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
+
+    // 🏢 如果有填社區名稱，檢查並自動建立社區牆
+    let communityId: string | null = null;
+    if (form.communityName && form.communityName.trim().length >= 2) {
+      const communityName = form.communityName.trim();
+      
+      // 檢查社區是否已存在
+      const { data: existingCommunity } = await supabase
+        .from('communities')
+        .select('id')
+        .eq('name', communityName)
+        .single();
+
+      if (existingCommunity) {
+        communityId = existingCommunity.id;
+      } else {
+        // 自動建立新社區牆
+        const district = form.address.match(/([^市縣]+[區鄉鎮市])/)?.[1] || '';
+        const city = form.address.match(/^(.*?[市縣])/)?.[1] || '台北市';
+        
+        const { data: newCommunity, error: communityError } = await supabase
+          .from('communities')
+          .insert({
+            name: communityName,
+            address: form.address,
+            district: district,
+            city: city,
+            // 初始兩好一公道來自物件資訊
+            two_good: [form.advantage1, form.advantage2].filter(Boolean),
+            one_fair: form.disadvantage || null,
+            features: [form.type].filter(Boolean),
+          })
+          .select('id')
+          .single();
+
+        if (!communityError && newCommunity) {
+          communityId = newCommunity.id;
+          console.log('✅ 自動建立社區牆:', communityName);
+        }
+      }
+    }
 
     const { data, error } = await supabase
       .from('properties')
@@ -173,6 +215,8 @@ export const propertyService = {
         title: form.title,
         price: Number(form.price),
         address: form.address,
+        community_name: form.communityName?.trim() || null,
+        community_id: communityId,
         size: Number(form.size || 0),
         age: Number(form.age || 0),
         
@@ -200,5 +244,19 @@ export const propertyService = {
 
     if (error) throw error;
     return data;
+  },
+
+  // 5. 檢查社區是否存在 (供前端即時驗證)
+  checkCommunityExists: async (name: string): Promise<{ exists: boolean; community?: { id: string; name: string } }> => {
+    if (!name || name.trim().length < 2) return { exists: false };
+    
+    const { data } = await supabase
+      .from('communities')
+      .select('id, name')
+      .ilike('name', `%${name.trim()}%`)
+      .limit(1)
+      .single();
+
+    return data ? { exists: true, community: data } : { exists: false };
   }
 };
