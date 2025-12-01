@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover"/>
+<title>社區牆｜惠宇上晴</title>
+<meta name="description" content="社區熱帖、真實評價、準住戶問答 - 邁房子社區牆"/>
+<style>
+/* === 基礎變數 === */
+:root{
+  --primary:#00385a;--primary-dark:#002a44;--primary-light:#33607b;
+  --secondary:#34c759;--secondary-light:#50d167;
+  --accent:#ff9b4a;--warning:#ef4444;--heart:#ff3b30;
+  --bg-base:#f8fafb;--bg-alt:#f0f4fa;--bg-elevated:#ffffff;
+  --text-primary:#0a1f3f;--text-secondary:#5a6b7f;
+  --border:#d8e4f0;--border-light:#e8f0f8;
+  --brand:#003366;--line:#e6edf7;
+}
+
+/* === Reset === */
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{min-height:100%;background:linear-gradient(180deg,var(--bg-base)0%,var(--bg-alt)100%);
+  color:var(--text-primary);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC",sans-serif;
+  -webkit-font-smoothing:antialiased}
+
+/* === 頁面容器 === */
+.page{max-width:520px;margin:0 auto;padding:8px 8px 100px;display:flex;flex-direction:column;gap:12px}
+
+/* === 頂部導航 === */
+.topbar{position:sticky;top:0;z-index:100;background:rgba(246,249,255,.95);backdrop-filter:blur(12px);
+  border-bottom:1px solid rgba(230,237,247,0.8);display:flex;align-items:center;gap:10px;padding:8px 16px;margin:-8px -8px 0}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none}
+.brand .logo-icon{width:42px;height:42px;background:linear-gradient(135deg,var(--brand),#005282);border-radius:12px;
+  display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(0,51,102,.2)}
+.brand .logo-icon svg{width:22px;height:22px;color:#fff}
+.brand .logo-text{font-size:24px;font-weight:700;font-family:serif;color:var(--brand)}
+.tools{margin-left:auto;display:flex;gap:8px}
+.icon-btn{border:1px solid var(--line);border-radius:12px;background:#fff;padding:8px 12px;font-size:13px;color:#173a7c;
+  display:inline-flex;align-items:center;gap:6px;cursor:pointer;transition:all .15s}
+.icon-btn:hover{background:#f6f9ff}
+.icon-btn:active{transform:scale(0.95)}
+
+/* === 區塊卡片 === */
+.section{background:rgba(255,255,255,.95);backdrop-filter:blur(16px);border:1px solid var(--border-light);
+  border-radius:18px;padding:12px;display:flex;flex-direction:column;gap:10px;
+  box-shadow:0 2px 8px rgba(0,0,0,.03)}
+.section-header{display:flex;justify-content:space-between;align-items:center}
+.section-title{font-size:16px;font-weight:800;color:var(--primary-dark)}
+.section-sub{font-size:11px;color:var(--text-secondary)}
+.badge{display:inline-flex;align-items:center;gap:4px;background:rgba(0,56,90,.08);border:1px solid var(--primary-light);
+  color:var(--primary);border-radius:999px;padding:4px 10px;font-size:10px;font-weight:700}
+
+/* === Tabs === */
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tab{padding:6px 14px;border-radius:999px;border:1px solid transparent;font-size:11px;font-weight:600;
+  background:rgba(240,244,250,.8);color:var(--text-secondary);cursor:pointer;transition:all .2s}
+.tab:hover{background:rgba(0,56,90,.08);color:var(--primary)}
+.tab.active{background:rgba(0,56,90,.1);border-color:var(--primary-light);color:var(--primary);font-weight:700}
+.tab.locked{opacity:.6}
+.tab .lock-icon{margin-left:4px}
+
+/* === 貼文卡片 === */
+.post-card{display:flex;gap:10px;padding:12px;border:1px solid var(--border-light);border-radius:14px;
+  background:#fff;transition:all .2s}
+.post-card:hover{border-color:var(--primary-light);box-shadow:0 2px 8px rgba(0,56,90,.06)}
+.post-avatar{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#eef3ff,#fff);
+  border:2px solid var(--primary);display:flex;align-items:center;justify-content:center;
+  font-weight:800;color:var(--primary);font-size:16px;flex-shrink:0}
+.post-avatar.agent{border-color:var(--secondary);color:var(--secondary)}
+.post-body{flex:1;display:flex;flex-direction:column;gap:6px}
+.post-header{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.post-author{font-weight:700;font-size:13px;color:var(--text-primary)}
+.post-badge{font-size:9px;padding:2px 6px;border-radius:4px;font-weight:700}
+.post-badge.resident{background:#e8faef;color:#0e8d52}
+.post-badge.agent{background:#fff3e0;color:#e65100}
+.post-badge.verified{background:#e3f2fd;color:#1565c0}
+.post-time{font-size:11px;color:var(--text-secondary)}
+.post-content{font-size:13px;line-height:1.55;color:var(--text-primary)}
+.post-stats{display:flex;gap:12px;font-size:11px;color:var(--text-secondary)}
+.post-stat{display:flex;align-items:center;gap:4px}
+.post-actions{display:flex;gap:8px;margin-top:4px}
+.action-btn{display:flex;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;
+  background:rgba(0,56,90,.06);border:1px solid rgba(0,56,90,.1);color:var(--primary);
+  font-size:11px;font-weight:600;cursor:pointer;transition:all .15s}
+.action-btn:hover{background:rgba(0,56,90,.12)}
+
+/* === 評價卡片 === */
+.review-card{padding:12px;border:1px solid var(--border-light);border-radius:14px;background:#fff}
+.review-header{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.review-avatar{width:36px;height:36px;border-radius:50%;background:rgba(0,56,90,.08);
+  display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--primary);font-size:14px}
+.review-meta{flex:1}
+.review-author{font-weight:700;font-size:12px}
+.review-sub{font-size:10px;color:var(--text-secondary)}
+.review-content{display:flex;flex-direction:column;gap:6px}
+.review-item{display:flex;align-items:flex-start;gap:8px;font-size:12px;line-height:1.5}
+.review-icon{font-size:14px;flex-shrink:0}
+.review-text{color:var(--text-primary)}
+
+/* === 問答卡片 === */
+.qa-card{padding:12px;border:1px solid var(--border-light);border-radius:14px;background:#fff}
+.qa-question{font-weight:700;font-size:13px;color:var(--primary-dark);margin-bottom:8px}
+.qa-meta{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--text-secondary);margin-bottom:10px}
+.qa-answers{display:flex;flex-direction:column;gap:8px;padding-left:12px;border-left:2px solid var(--border)}
+.qa-answer{font-size:12px;line-height:1.5}
+.qa-answer-header{display:flex;align-items:center;gap:6px;margin-bottom:4px}
+.qa-answer-badge{font-size:9px;padding:2px 6px;border-radius:4px;font-weight:700}
+
+/* === 模糊遮罩 === */
+.blur-overlay{position:relative}
+.blur-overlay .blur-content{filter:blur(4px);pointer-events:none;user-select:none}
+.blur-overlay .blur-cta{position:absolute;inset:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;background:rgba(255,255,255,.85);border-radius:14px;
+  text-align:center;padding:20px}
+.blur-cta h4{font-size:14px;font-weight:800;color:var(--primary-dark);margin-bottom:8px}
+.blur-cta p{font-size:12px;color:var(--text-secondary);margin-bottom:12px}
+.blur-cta button{background:linear-gradient(135deg,var(--primary),#005282);color:#fff;
+  border:none;border-radius:999px;padding:10px 24px;font-size:13px;font-weight:700;cursor:pointer}
+.blur-cta button:hover{transform:scale(1.02)}
+
+/* === 私密牆鎖定 === */
+.private-lock{display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:40px 20px;text-align:center;background:rgba(0,56,90,.03);border-radius:14px}
+.private-lock .lock-icon-big{font-size:48px;margin-bottom:12px;opacity:.5}
+.private-lock h4{font-size:14px;font-weight:700;color:var(--primary-dark);margin-bottom:6px}
+.private-lock p{font-size:12px;color:var(--text-secondary);margin-bottom:16px}
+.private-lock button{background:var(--primary);color:#fff;border:none;border-radius:999px;
+  padding:10px 20px;font-size:12px;font-weight:700;cursor:pointer}
+
+/* === 身份切換器（Mock 用）=== */
+.role-switcher{position:fixed;bottom:20px;right:20px;z-index:1000}
+.role-switcher-btn{background:linear-gradient(135deg,#1a1a2e,#16213e);color:#fff;
+  border:none;border-radius:12px;padding:10px 16px;font-size:12px;font-weight:700;
+  cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,.3);display:flex;align-items:center;gap:6px}
+.role-switcher-menu{position:absolute;bottom:50px;right:0;background:#fff;border:1px solid var(--border);
+  border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,.15);padding:8px;min-width:180px;display:none}
+.role-switcher-menu.open{display:block}
+.role-switcher-menu button{display:block;width:100%;text-align:left;padding:10px 12px;
+  border:none;background:none;border-radius:8px;font-size:12px;cursor:pointer;color:var(--text-primary)}
+.role-switcher-menu button:hover{background:#f6f9ff}
+.role-switcher-menu button.active{background:rgba(0,56,90,.1);color:var(--primary);font-weight:700}
+
+/* === 固定底部 CTA === */
+.fixed-bottom-cta{position:fixed;bottom:0;left:0;right:0;background:rgba(255,255,255,.95);
+  backdrop-filter:blur(12px);border-top:1px solid var(--border);padding:12px 16px;
+  display:flex;align-items:center;justify-content:center;gap:12px;z-index:90}
+.fixed-bottom-cta.hidden{display:none}
+.fixed-bottom-cta p{font-size:12px;color:var(--text-secondary)}
+.fixed-bottom-cta button{background:linear-gradient(135deg,var(--primary),#005282);color:#fff;
+  border:none;border-radius:999px;padding:10px 20px;font-size:13px;font-weight:700;cursor:pointer}
+</style>
+</head>
+<body>
+<main class="page">
+
+  <!-- 頂部導航 -->
+  <header class="topbar">
+    <a href="/maihouses/" class="brand">
+      <div class="logo-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+          <polyline points="9 22 9 12 15 12 15 22"/>
+        </svg>
+      </div>
+      <span class="logo-text">邁房子</span>
+    </a>
+    <div class="tools">
+      <button class="icon-btn" onclick="history.back()">← 返回</button>
+      <button class="icon-btn">📤</button>
+    </div>
+  </header>
+
+  <!-- 社區資訊卡 -->
+  <section class="section">
+    <div class="section-header">
+      <div>
+        <h1 class="section-title">惠宇上晴｜社區牆</h1>
+        <p class="section-sub">真實住戶互動 × 社區口碑</p>
+      </div>
+      <span class="badge">👥 已加入 88 位</span>
+    </div>
+  </section>
+
+  <!-- 區塊一：社區熱帖 -->
+  <section class="section" id="hot-posts-section">
+    <div class="section-header">
+      <h2 class="section-title">🔥 社區熱帖</h2>
+    </div>
+    <div class="tabs" id="wall-tabs">
+      <div class="tab active" data-wall="public" onclick="switchWall('public')">公開牆</div>
+      <div class="tab" data-wall="private" onclick="switchWall('private')">
+        私密牆 <span class="lock-icon">🔒</span>
+      </div>
+    </div>
+    
+    <!-- 公開牆內容 -->
+    <div id="public-wall">
+      <div class="post-card" data-visible="all">
+        <div class="post-avatar">陳</div>
+        <div class="post-body">
+          <div class="post-header">
+            <span class="post-author">陳小姐</span>
+            <span class="post-badge resident">12F 住戶</span>
+            <span class="post-time">2小時前</span>
+          </div>
+          <div class="post-content">
+            <b>有人要團購掃地機嗎？🤖</b><br>
+            這款 iRobot 打折，滿 5 台有團購價～
+          </div>
+          <div class="post-stats">
+            <span class="post-stat">❤️ 31</span>
+            <span class="post-stat">💬 14</span>
+          </div>
+          <div class="post-actions">
+            <button class="action-btn">❤️ 讚</button>
+            <button class="action-btn">💬 回覆</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="post-card" data-visible="all">
+        <div class="post-avatar agent">游</div>
+        <div class="post-body">
+          <div class="post-header">
+            <span class="post-author">游杰倫</span>
+            <span class="post-badge agent">認證房仲</span>
+            <span class="post-time">昨天</span>
+          </div>
+          <div class="post-content">
+            <b>🏡 惠宇上晴 12F｜雙陽台視野戶</b><br>
+            客廳光線很好，上週屋主剛降價 50 萬，有興趣可私訊。
+          </div>
+          <div class="post-stats">
+            <span class="post-stat">👁️ 89</span>
+            <span class="post-stat">💬 5</span>
+          </div>
+          <div class="post-actions">
+            <button class="action-btn">📩 私訊房仲</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 第三則（非會員模糊）-->
+      <div class="blur-overlay" data-visible="member">
+        <div class="post-card blur-content">
+          <div class="post-avatar">李</div>
+          <div class="post-body">
+            <div class="post-header">
+              <span class="post-author">李先生</span>
+              <span class="post-badge resident">8F 住戶</span>
+            </div>
+            <div class="post-content">
+              停車位交流 🚗 我有 B2-128 想與 B1 交換...
+            </div>
+          </div>
+        </div>
+        <div class="blur-cta" id="posts-blur-cta">
+          <h4>🔒 還有 12 則熱帖</h4>
+          <p>登入後查看完整社區動態</p>
+          <button onclick="showLoginModal()">免費註冊 / 登入</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 私密牆內容（預設隱藏）-->
+    <div id="private-wall" style="display:none">
+      <div class="private-lock" id="private-lock">
+        <div class="lock-icon-big">🔐</div>
+        <h4>私密牆僅限本社區住戶查看</h4>
+        <p>驗證住戶身份後即可加入討論</p>
+        <button onclick="showVerifyModal()">我是住戶，驗證身份</button>
+      </div>
+
+      <!-- 住戶看到的私密牆內容 -->
+      <div id="private-content" style="display:none">
+        <div class="post-card">
+          <div class="post-avatar">管</div>
+          <div class="post-body">
+            <div class="post-header">
+              <span class="post-author">管委會</span>
+              <span class="post-badge verified">官方公告</span>
+              <span class="post-time">3天前</span>
+            </div>
+            <div class="post-content">
+              <b>📢 年度消防演練通知</b><br>
+              12/15（日）上午 10:00 將進行全社區消防演練，届時警報器會響，請勿驚慌。
+            </div>
+          </div>
+        </div>
+        <div class="post-card">
+          <div class="post-avatar">王</div>
+          <div class="post-body">
+            <div class="post-header">
+              <span class="post-author">15F 住戶</span>
+              <span class="post-time">1週前</span>
+            </div>
+            <div class="post-content">
+              想問大家覺得管理費調漲合理嗎？從 2,800 調到 3,200，漲幅有點大...
+            </div>
+            <div class="post-stats">
+              <span class="post-stat">💬 28</span>
+              <span class="post-stat">🔒 僅社區可見</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 區塊二：社區評價 -->
+  <section class="section" id="reviews-section">
+    <div class="section-header">
+      <h2 class="section-title">⭐ 社區評價</h2>
+      <span class="section-sub">來自真實房仲的「兩好一公道」</span>
+    </div>
+
+    <div class="review-card" data-visible="all">
+      <div class="review-header">
+        <div class="review-avatar">游</div>
+        <div class="review-meta">
+          <div class="review-author">游杰倫｜21世紀</div>
+          <div class="review-sub">帶看 12 次 · 成交 3 戶</div>
+        </div>
+      </div>
+      <div class="review-content">
+        <div class="review-item"><span class="review-icon">✅</span><span class="review-text">公設維護得乾淨，假日草皮有人整理</span></div>
+        <div class="review-item"><span class="review-icon">✅</span><span class="review-text">反映停車動線，管委會一週內就公告改善</span></div>
+        <div class="review-item"><span class="review-icon">⚖️</span><span class="review-text">面向大馬路低樓層車聲明顯，喜靜者選中高樓層</span></div>
+      </div>
+    </div>
+
+    <div class="review-card" data-visible="all">
+      <div class="review-header">
+        <div class="review-avatar">林</div>
+        <div class="review-meta">
+          <div class="review-author">林美玲｜信義房屋</div>
+          <div class="review-sub">帶看 8 次 · 成交 2 戶</div>
+        </div>
+      </div>
+      <div class="review-content">
+        <div class="review-item"><span class="review-icon">✅</span><span class="review-text">頂樓排水設計不錯，颱風天也沒有積水問題</span></div>
+        <div class="review-item"><span class="review-icon">✅</span><span class="review-text">中庭花園維護用心，住戶反應都很正面</span></div>
+        <div class="review-item"><span class="review-icon">⚖️</span><span class="review-text">垃圾車時間稍晚，家裡偶爾會有下水道味</span></div>
+      </div>
+    </div>
+
+    <!-- 第三則（非會員模糊）-->
+    <div class="blur-overlay" data-visible="member" id="reviews-blur">
+      <div class="review-card blur-content">
+        <div class="review-header">
+          <div class="review-avatar">陳</div>
+          <div class="review-meta">
+            <div class="review-author">陳***｜永慶房屋</div>
+          </div>
+        </div>
+        <div class="review-content">
+          <div class="review-item"><span class="review-icon">✅</span><span class="review-text">管理員服務態度很好...</span></div>
+        </div>
+      </div>
+      <div class="blur-cta" id="reviews-blur-cta">
+        <h4>🔒 還有 3 則評價</h4>
+        <p>註冊會員看全部房仲真實評價</p>
+        <button onclick="showLoginModal()">免費註冊 / 登入</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 區塊三：準住戶問答 -->
+  <section class="section" id="qa-section">
+    <div class="section-header">
+      <h2 class="section-title">🙋 準住戶問答</h2>
+      <span class="section-sub">買房前，先問問鄰居怎麼說</span>
+    </div>
+
+    <div class="qa-card" data-visible="all">
+      <div class="qa-question">Q: 請問社區停車位好停嗎？會不會常客滿？</div>
+      <div class="qa-meta">
+        <span>👤 準住戶</span>
+        <span>· 2天前</span>
+        <span>· 3 則回覆</span>
+      </div>
+      <div class="qa-answers">
+        <div class="qa-answer">
+          <div class="qa-answer-header">
+            <span class="qa-answer-badge" style="background:#e8faef;color:#0e8d52">🏠 8F 住戶</span>
+          </div>
+          平日白天都有位，假日偶爾要等一下，但不會太久。
+        </div>
+        <div class="qa-answer">
+          <div class="qa-answer-header">
+            <span class="qa-answer-badge" style="background:#e8faef;color:#0e8d52">🏠 12F 住戶</span>
+          </div>
+          B2 比較容易有位，B1 要碰運氣。
+        </div>
+      </div>
+    </div>
+
+    <div class="qa-card" data-visible="all">
+      <div class="qa-question">Q: 晚上會不會很吵？我看物件時是白天</div>
+      <div class="qa-meta">
+        <span>👤 準住戶</span>
+        <span>· 5天前</span>
+        <span>· 2 則回覆</span>
+      </div>
+      <div class="qa-answers" data-visible="member">
+        <div class="qa-answer blur-content">
+          <div class="qa-answer-header">
+            <span class="qa-answer-badge" style="background:#e8faef;color:#0e8d52">🏠 3F 住戶</span>
+          </div>
+          面大馬路那側確實有車聲...
+        </div>
+      </div>
+      <div class="blur-cta" id="qa-blur-cta" style="position:relative;background:rgba(255,255,255,.9);padding:12px;border-radius:8px;margin-top:8px">
+        <p style="font-size:11px;color:var(--text-secondary);margin:0">🔒 登入查看完整回覆</p>
+      </div>
+    </div>
+
+    <div class="qa-card" style="background:rgba(0,56,90,.03);border-style:dashed">
+      <div class="qa-question" style="color:var(--text-secondary)">💬 你也有問題想問？</div>
+      <p style="font-size:12px;color:var(--text-secondary);margin:8px 0">問題會通知該社區住戶，通常 24 小時內會有回覆</p>
+      <button class="action-btn" style="width:100%;justify-content:center" onclick="showLoginModal()">我想問問題</button>
+    </div>
+  </section>
+
+</main>
+
+<!-- 身份切換器（Mock 用）-->
+<div class="role-switcher">
+  <button class="role-switcher-btn" onclick="toggleRoleSwitcher()">
+    🕶️ <span id="current-role">訪客模式</span> ▾
+  </button>
+  <div class="role-switcher-menu" id="role-menu">
+    <button class="active" data-role="guest" onclick="switchRole('guest')">👤 訪客（未登入）</button>
+    <button data-role="member" onclick="switchRole('member')">👥 一般會員</button>
+    <button data-role="resident" onclick="switchRole('resident')">🏠 已驗證住戶</button>
+    <button data-role="agent" onclick="switchRole('agent')">🏢 認證房仲</button>
+  </div>
+</div>
+
+<!-- 固定底部 CTA（訪客顯示）-->
+<div class="fixed-bottom-cta" id="bottom-cta">
+  <p>🔓 登入解鎖私密牆 + 完整評價</p>
+  <button onclick="showLoginModal()">免費註冊</button>
+</div>
+
+<script>
+// ============================
+// 狀態管理
+// ============================
+let currentRole = 'guest'; // guest | member | resident | agent
+let currentWall = 'public'; // public | private
+
+// Mock 社區 ID（實際接 API 時用 URL 參數）
+const COMMUNITY_ID = 'mock-community-001';
+
+// ============================
+// 身份切換（Mock）
+// ============================
+function toggleRoleSwitcher() {
+  document.getElementById('role-menu').classList.toggle('open');
+}
+
+function switchRole(role) {
+  currentRole = role;
+  
+  // 更新按鈕狀態
+  document.querySelectorAll('.role-switcher-menu button').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.role === role);
+  });
+  
+  // 更新顯示文字
+  const roleNames = {
+    guest: '訪客模式',
+    member: '會員模式',
+    resident: '住戶模式',
+    agent: '房仲模式'
+  };
+  document.getElementById('current-role').textContent = roleNames[role];
+  
+  // 關閉選單
+  document.getElementById('role-menu').classList.remove('open');
+  
+  // 更新 UI
+  updateUIByRole();
+}
+
+function updateUIByRole() {
+  const isGuest = currentRole === 'guest';
+  const isMember = ['member', 'resident', 'agent'].includes(currentRole);
+  const isResident = currentRole === 'resident';
+  const isAgent = currentRole === 'agent';
+  const canAccessPrivate = isResident || isAgent;
+  
+  // 底部 CTA
+  document.getElementById('bottom-cta').classList.toggle('hidden', isMember);
+  
+  // 模糊遮罩
+  document.querySelectorAll('.blur-overlay').forEach(el => {
+    const blurCta = el.querySelector('.blur-cta');
+    const blurContent = el.querySelector('.blur-content');
+    if (isMember) {
+      if (blurCta) blurCta.style.display = 'none';
+      if (blurContent) blurContent.classList.remove('blur-content');
+    } else {
+      if (blurCta) blurCta.style.display = 'flex';
+      if (blurContent) blurContent.classList.add('blur-content');
+    }
+  });
+  
+  // QA blur
+  const qaBlur = document.getElementById('qa-blur-cta');
+  if (qaBlur) qaBlur.style.display = isMember ? 'none' : 'block';
+  
+  // 私密牆
+  updatePrivateWall(canAccessPrivate);
+  
+  // 私密牆 Tab 鎖定狀態
+  const privateTab = document.querySelector('.tab[data-wall="private"]');
+  if (privateTab) {
+    privateTab.classList.toggle('locked', !canAccessPrivate);
+  }
+}
+
+// ============================
+// 牆切換
+// ============================
+function switchWall(wall) {
+  currentWall = wall;
+  
+  // 更新 Tab 狀態
+  document.querySelectorAll('#wall-tabs .tab').forEach(tab => {
+    tab.classList.toggle('active', tab.dataset.wall === wall);
+  });
+  
+  // 切換內容
+  document.getElementById('public-wall').style.display = wall === 'public' ? 'block' : 'none';
+  document.getElementById('private-wall').style.display = wall === 'private' ? 'block' : 'none';
+  
+  // 如果切到私密牆，檢查權限
+  if (wall === 'private') {
+    const canAccess = ['resident', 'agent'].includes(currentRole);
+    updatePrivateWall(canAccess);
+  }
+}
+
+function updatePrivateWall(canAccess) {
+  document.getElementById('private-lock').style.display = canAccess ? 'none' : 'flex';
+  document.getElementById('private-content').style.display = canAccess ? 'block' : 'none';
+}
+
+// ============================
+// Modal（簡易版）
+// ============================
+function showLoginModal() {
+  alert('🔐 登入/註冊\n\n這裡會跳出登入視窗\n（實際接 Supabase Auth）');
+}
+
+function showVerifyModal() {
+  alert('🏠 住戶驗證\n\n請上傳水電帳單或管理費收據\n或輸入社區專屬驗證碼');
+}
+
+// ============================
+// API 接口（真實資料）
+// ============================
+const API = {
+  // 取得社區貼文
+  async getPosts(communityId, visibility = 'public', limit = 10) {
+    // Mock 模式直接返回
+    if (typeof supabase === 'undefined') {
+      console.log('[Mock] getPosts:', { communityId, visibility, limit });
+      return { data: [], error: null };
+    }
+    
+    let query = supabase
+      .from('community_posts')
+      .select('*')
+      .eq('community_id', communityId)
+      .order('created_at', { ascending: false })
+      .limit(limit);
+    
+    if (visibility === 'public') {
+      query = query.eq('visibility', 'public');
+    } else if (visibility === 'private') {
+      query = query.eq('visibility', 'private');
+    }
+    
+    return await query;
+  },
+  
+  // 取得社區評價
+  async getReviews(communityId, limit = 10) {
+    if (typeof supabase === 'undefined') {
+      console.log('[Mock] getReviews:', { communityId, limit });
+      return { data: [], error: null };
+    }
+    
+    return await supabase
+      .from('community_reviews')
+      .select('*')
+      .eq('community_id', communityId)
+      .order('created_at', { ascending: false })
+      .limit(limit);
+  },
+  
+  // 取得準住戶問答
+  async getQuestions(communityId, limit = 5) {
+    if (typeof supabase === 'undefined') {
+      console.log('[Mock] getQuestions:', { communityId, limit });
+      return { data: [], error: null };
+    }
+    
+    return await supabase
+      .from('community_questions')
+      .select(`
+        *,
+        answers:community_answers(*)
+      `)
+      .eq('community_id', communityId)
+      .order('created_at', { ascending: false })
+      .limit(limit);
+  },
+  
+  // 發布貼文
+  async createPost(communityId, content, visibility = 'public') {
+    if (typeof supabase === 'undefined') {
+      console.log('[Mock] createPost:', { communityId, content, visibility });
+      return { data: { id: 'mock-post-id' }, error: null };
+    }
+    
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { data: null, error: { message: '請先登入' } };
+    
+    return await supabase
+      .from('community_posts')
+      .insert({
+        community_id: communityId,
+        author_id: user.id,
+        content,
+        visibility
+      })
+      .select()
+      .single();
+  },
+  
+  // 發布問題
+  async createQuestion(communityId, question) {
+    if (typeof supabase === 'undefined') {
+      console.log('[Mock] createQuestion:', { communityId, question });
+      return { data: { id: 'mock-question-id' }, error: null };
+    }
+    
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { data: null, error: { message: '請先登入' } };
+    
+    return await supabase
+      .from('community_questions')
+      .insert({
+        community_id: communityId,
+        author_id: user.id,
+        question
+      })
+      .select()
+      .single();
+  },
+  
+  // 回答問題
+  async createAnswer(questionId, answer, authorType = 'resident') {
+    if (typeof supabase === 'undefined') {
+      console.log('[Mock] createAnswer:', { questionId, answer, authorType });
+      return { data: { id: 'mock-answer-id' }, error: null };
+    }
+    
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { data: null, error: { message: '請先登入' } };
+    
+    return await supabase
+      .from('community_answers')
+      .insert({
+        question_id: questionId,
+        author_id: user.id,
+        answer,
+        author_type: authorType
+      })
+      .select()
+      .single();
+  }
+};
+
+// ============================
+// 初始化
+// ============================
+document.addEventListener('DOMContentLoaded', () => {
+  updateUIByRole();
+  
+  // 點擊外部關閉選單
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.role-switcher')) {
+      document.getElementById('role-menu').classList.remove('open');
+    }
+  });
+  
+  console.log('✅ 社區牆初始化完成');
+  console.log('📌 當前模式: Mock（無 Supabase）');
+  console.log('🔧 切換身份: 點擊右下角 [🕶️ 訪客模式]');
+});
+</script>
+</body>
+</html>
