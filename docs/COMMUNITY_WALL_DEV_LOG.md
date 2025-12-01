@@ -66,6 +66,9 @@ WHERE p.community_id IS NOT NULL
 | 12/01 | 訪客可看私密牆 | 加入權限檢查 |
 | 12/01 | View建立失敗(已存在Table) | 先 DROP TABLE 再建 View |
 | 12/01 | 評價計數錯誤(2張卡=6則) | 改為每個✅/⚖️=1則，訪客只看2則 |
+| 12/01 | blur切換身份後壞掉 | 改用 body.role-xxx class，CSS統一控制 |
+| 12/01 | API getPosts缺count | 加上 { count: 'exact' } |
+| 12/01 | QA區blur沒控制到 | 改用 blur-overlay + blur-target 統一 |
 
 ---
 
