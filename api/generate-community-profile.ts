@@ -57,26 +57,41 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: '該社區還沒有評價' });
     }
 
-    // 3. 組成 AI Prompt
-    const reviewsText = reviews
-      .map((r, i) => `${i + 1}. 優點=[${r.advantage_1 || ''}, ${r.advantage_2 || ''}]，缺點=[${r.disadvantage || ''}]`)
-      .join('\n');
+    // 3. 組成 AI Prompt（毒舌真實風格，統計頻率選出最常見的）
+    const allAdvantages = reviews
+      .flatMap(r => [r.advantage_1, r.advantage_2])
+      .filter(Boolean);
+    const allDisadvantages = reviews
+      .map(r => r.disadvantage)
+      .filter(Boolean);
 
-    const prompt = `你是台灣房地產專家。根據以下房仲評價，歸納出社區介紹。
+    const prompt = `你是台北最毒舌的信義房屋王牌經紀人，專門寫社區牆。
 
 社區：${community.name}
 地址：${community.address}
 
-房仲評價（${reviews.length} 筆）：
-${reviewsText}
+以下是 ${reviews.length} 位房仲的真實評價（可能有重複，請統計頻率）：
 
-請用 JSON 格式回覆（只要 JSON）：
+【優點清單】
+${allAdvantages.join('、') || '無'}
+
+【缺點清單】
+${allDisadvantages.join('、') || '無'}
+
+請從中總結：
+1. 最常被提到的兩個優點（用房客會信的口吻，每句12字內）
+2. 最常被提到的那一個缺點（一定要有，哪怕要挖也要挖出來，講真話房客才信）
+3. 居住氛圍總結（50字內，毒舌但真實風格）
+4. 生活標籤（2-3個，如「捷運宅」「學區優」「公園綠地」）
+5. 適合族群（1-2個，如「小資首購」「退休養老」）
+
+回傳純 JSON（只要 JSON，不要其他文字）：
 {
-  "story_vibe": "一句話社區氛圍（15字內）",
-  "two_good": ["精選優點1", "精選優點2"],
-  "one_fair": "客觀中肯的一句話",
-  "lifestyle_tags": ["標籤1", "標籤2"],
-  "best_for": ["適合族群1", "適合族群2"]
+  "story_vibe": "...",
+  "two_good": ["...", "..."],
+  "one_fair": "...",
+  "lifestyle_tags": ["...", "..."],
+  "best_for": ["...", "..."]
 }`;
 
     // 4. 呼叫 OpenAI

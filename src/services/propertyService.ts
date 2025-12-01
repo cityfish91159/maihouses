@@ -311,6 +311,14 @@ export const propertyService = {
         advantage_2: form.advantage2 || null,
         disadvantage: form.disadvantage || null,
       });
+      
+      // 🤖 Fire-and-forget：自動觸發 AI 重新總結社區牆（不擋主流程）
+      // 每次有新評價進來都會重新聚合，確保 two_good / one_fair 永遠是最新的
+      fetch('/api/generate-community-profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ communityId })
+      }).catch(err => console.warn('AI 總結背景執行中:', err));
     }
     
     // 回傳包含社區資訊
