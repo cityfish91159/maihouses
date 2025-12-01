@@ -69,6 +69,7 @@ WHERE p.community_id IS NOT NULL
 | 12/01 | blur切換身份後壞掉 | 改用 body.role-xxx class，CSS統一控制 |
 | 12/01 | API getPosts缺count | 加上 { count: 'exact' } |
 | 12/01 | QA區blur沒控制到 | 改用 blur-overlay + blur-target 統一 |
+| 12/01 | likes功能缺失 | 新增 liked_by[] + toggle_like() + /api/community/like |
 
 ---
 
