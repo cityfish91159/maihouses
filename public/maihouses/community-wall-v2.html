@@ -41,7 +41,7 @@ html,body{min-height:100%;background:linear-gradient(180deg,var(--bg-base)0%,var
 .icon-btn:active{transform:scale(0.95)}
 
 /* === 區塊卡片 === */
-.section{background:rgba(255,255,255,.95);backdrop-filter:blur(16px);border:1px solid var(--border-light);
+.section{background:rgba(255,255,255,.95);border:1px solid var(--border-light);
   border-radius:18px;padding:12px;display:flex;flex-direction:column;gap:10px;
   box-shadow:0 2px 8px rgba(0,0,0,.03)}
 .section-header{display:flex;justify-content:space-between;align-items:center}
@@ -181,7 +181,16 @@ html,body{min-height:100%;background:linear-gradient(180deg,var(--bg-base)0%,var
     </div>
   </section>
 
-  <!-- 區塊一：社區熱帖 -->
+  <!-- 區塊一：社區評價（放最上面作為 Hook）-->
+  <section class="section" id="reviews-section">
+    <div class="section-header">
+      <h2 class="section-title">⭐ 社區評價</h2>
+      <span class="section-sub">來自真實房仿的「兩好一公道」</span>
+    </div>
+    <div id="reviews-list"></div>
+  </section>
+
+  <!-- 區塊二：社區熱帖 -->
   <section class="section" id="hot-posts-section">
     <div class="section-header">
       <h2 class="section-title">🔥 社區熱帖</h2>
@@ -194,175 +203,10 @@ html,body{min-height:100%;background:linear-gradient(180deg,var(--bg-base)0%,var
     </div>
     
     <!-- 公開牆內容 -->
-    <div id="public-wall">
-      <div class="post-card" data-visible="all">
-        <div class="post-avatar">陳</div>
-        <div class="post-body">
-          <div class="post-header">
-            <span class="post-author">陳小姐</span>
-            <span class="post-badge resident">12F 住戶</span>
-            <span class="post-time">2小時前</span>
-          </div>
-          <div class="post-content">
-            <b>有人要團購掃地機嗎？🤖</b><br>
-            這款 iRobot 打折，滿 5 台有團購價～
-          </div>
-          <div class="post-stats">
-            <span class="post-stat">❤️ 31</span>
-            <span class="post-stat">💬 14</span>
-          </div>
-          <div class="post-actions">
-            <button class="action-btn">❤️ 讚</button>
-            <button class="action-btn">💬 回覆</button>
-          </div>
-        </div>
-      </div>
+    <div id="public-wall"></div>
 
-      <div class="post-card" data-visible="all">
-        <div class="post-avatar agent">游</div>
-        <div class="post-body">
-          <div class="post-header">
-            <span class="post-author">游杰倫</span>
-            <span class="post-badge agent">認證房仲</span>
-            <span class="post-time">昨天</span>
-          </div>
-          <div class="post-content">
-            <b>🏡 惠宇上晴 12F｜雙陽台視野戶</b><br>
-            客廳光線很好，上週屋主剛降價 50 萬，有興趣可私訊。
-          </div>
-          <div class="post-stats">
-            <span class="post-stat">👁️ 89</span>
-            <span class="post-stat">💬 5</span>
-          </div>
-          <div class="post-actions">
-            <button class="action-btn">📩 私訊房仲</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- 第三則（非會員模糊）-->
-      <div class="blur-overlay" data-visible="member">
-        <div class="post-card blur-content">
-          <div class="post-avatar">李</div>
-          <div class="post-body">
-            <div class="post-header">
-              <span class="post-author">李先生</span>
-              <span class="post-badge resident">8F 住戶</span>
-            </div>
-            <div class="post-content">
-              停車位交流 🚗 我有 B2-128 想與 B1 交換...
-            </div>
-          </div>
-        </div>
-        <div class="blur-cta" id="posts-blur-cta">
-          <h4>🔒 還有 12 則熱帖</h4>
-          <p>登入後查看完整社區動態</p>
-          <button onclick="showLoginModal()">免費註冊 / 登入</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- 私密牆內容（預設隱藏）-->
-    <div id="private-wall" style="display:none">
-      <div class="private-lock" id="private-lock">
-        <div class="lock-icon-big">🔐</div>
-        <h4>私密牆僅限本社區住戶查看</h4>
-        <p>驗證住戶身份後即可加入討論</p>
-        <button onclick="showVerifyModal()">我是住戶，驗證身份</button>
-      </div>
-
-      <!-- 住戶看到的私密牆內容 -->
-      <div id="private-content" style="display:none">
-        <div class="post-card">
-          <div class="post-avatar">管</div>
-          <div class="post-body">
-            <div class="post-header">
-              <span class="post-author">管委會</span>
-              <span class="post-badge verified">官方公告</span>
-              <span class="post-time">3天前</span>
-            </div>
-            <div class="post-content">
-              <b>📢 年度消防演練通知</b><br>
-              12/15（日）上午 10:00 將進行全社區消防演練，届時警報器會響，請勿驚慌。
-            </div>
-          </div>
-        </div>
-        <div class="post-card">
-          <div class="post-avatar">王</div>
-          <div class="post-body">
-            <div class="post-header">
-              <span class="post-author">15F 住戶</span>
-              <span class="post-time">1週前</span>
-            </div>
-            <div class="post-content">
-              想問大家覺得管理費調漲合理嗎？從 2,800 調到 3,200，漲幅有點大...
-            </div>
-            <div class="post-stats">
-              <span class="post-stat">💬 28</span>
-              <span class="post-stat">🔒 僅社區可見</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- 區塊二：社區評價 -->
-  <section class="section" id="reviews-section">
-    <div class="section-header">
-      <h2 class="section-title">⭐ 社區評價</h2>
-      <span class="section-sub">來自真實房仲的「兩好一公道」</span>
-    </div>
-
-    <div class="review-card" data-visible="all">
-      <div class="review-header">
-        <div class="review-avatar">游</div>
-        <div class="review-meta">
-          <div class="review-author">游杰倫｜21世紀</div>
-          <div class="review-sub">帶看 12 次 · 成交 3 戶</div>
-        </div>
-      </div>
-      <div class="review-content">
-        <div class="review-item"><span class="review-icon">✅</span><span class="review-text">公設維護得乾淨，假日草皮有人整理</span></div>
-        <div class="review-item"><span class="review-icon">✅</span><span class="review-text">反映停車動線，管委會一週內就公告改善</span></div>
-        <div class="review-item"><span class="review-icon">⚖️</span><span class="review-text">面向大馬路低樓層車聲明顯，喜靜者選中高樓層</span></div>
-      </div>
-    </div>
-
-    <div class="review-card" data-visible="all">
-      <div class="review-header">
-        <div class="review-avatar">林</div>
-        <div class="review-meta">
-          <div class="review-author">林美玲｜信義房屋</div>
-          <div class="review-sub">帶看 8 次 · 成交 2 戶</div>
-        </div>
-      </div>
-      <div class="review-content">
-        <div class="review-item"><span class="review-icon">✅</span><span class="review-text">頂樓排水設計不錯，颱風天也沒有積水問題</span></div>
-        <div class="review-item"><span class="review-icon">✅</span><span class="review-text">中庭花園維護用心，住戶反應都很正面</span></div>
-        <div class="review-item"><span class="review-icon">⚖️</span><span class="review-text">垃圾車時間稍晚，家裡偶爾會有下水道味</span></div>
-      </div>
-    </div>
-
-    <!-- 第三則（非會員模糊）-->
-    <div class="blur-overlay" data-visible="member" id="reviews-blur">
-      <div class="review-card blur-content">
-        <div class="review-header">
-          <div class="review-avatar">陳</div>
-          <div class="review-meta">
-            <div class="review-author">陳***｜永慶房屋</div>
-          </div>
-        </div>
-        <div class="review-content">
-          <div class="review-item"><span class="review-icon">✅</span><span class="review-text">管理員服務態度很好...</span></div>
-        </div>
-      </div>
-      <div class="blur-cta" id="reviews-blur-cta">
-        <h4>🔒 還有 3 則評價</h4>
-        <p>註冊會員看全部房仲真實評價</p>
-        <button onclick="showLoginModal()">免費註冊 / 登入</button>
-      </div>
-    </div>
+    <!-- 私密牆內容 -->
+    <div id="private-wall" style="display:none"></div>
   </section>
 
   <!-- 區塊三：準住戶問答 -->
@@ -371,55 +215,7 @@ html,body{min-height:100%;background:linear-gradient(180deg,var(--bg-base)0%,var
       <h2 class="section-title">🙋 準住戶問答</h2>
       <span class="section-sub">買房前，先問問鄰居怎麼說</span>
     </div>
-
-    <div class="qa-card" data-visible="all">
-      <div class="qa-question">Q: 請問社區停車位好停嗎？會不會常客滿？</div>
-      <div class="qa-meta">
-        <span>👤 準住戶</span>
-        <span>· 2天前</span>
-        <span>· 3 則回覆</span>
-      </div>
-      <div class="qa-answers">
-        <div class="qa-answer">
-          <div class="qa-answer-header">
-            <span class="qa-answer-badge" style="background:#e8faef;color:#0e8d52">🏠 8F 住戶</span>
-          </div>
-          平日白天都有位，假日偶爾要等一下，但不會太久。
-        </div>
-        <div class="qa-answer">
-          <div class="qa-answer-header">
-            <span class="qa-answer-badge" style="background:#e8faef;color:#0e8d52">🏠 12F 住戶</span>
-          </div>
-          B2 比較容易有位，B1 要碰運氣。
-        </div>
-      </div>
-    </div>
-
-    <div class="qa-card" data-visible="all">
-      <div class="qa-question">Q: 晚上會不會很吵？我看物件時是白天</div>
-      <div class="qa-meta">
-        <span>👤 準住戶</span>
-        <span>· 5天前</span>
-        <span>· 2 則回覆</span>
-      </div>
-      <div class="qa-answers" data-visible="member">
-        <div class="qa-answer blur-content">
-          <div class="qa-answer-header">
-            <span class="qa-answer-badge" style="background:#e8faef;color:#0e8d52">🏠 3F 住戶</span>
-          </div>
-          面大馬路那側確實有車聲...
-        </div>
-      </div>
-      <div class="blur-cta" id="qa-blur-cta" style="position:relative;background:rgba(255,255,255,.9);padding:12px;border-radius:8px;margin-top:8px">
-        <p style="font-size:11px;color:var(--text-secondary);margin:0">🔒 登入查看完整回覆</p>
-      </div>
-    </div>
-
-    <div class="qa-card" style="background:rgba(0,56,90,.03);border-style:dashed">
-      <div class="qa-question" style="color:var(--text-secondary)">💬 你也有問題想問？</div>
-      <p style="font-size:12px;color:var(--text-secondary);margin:8px 0">問題會通知該社區住戶，通常 24 小時內會有回覆</p>
-      <button class="action-btn" style="width:100%;justify-content:center" onclick="showLoginModal()">我想問問題</button>
-    </div>
+    <div id="qa-list"></div>
   </section>
 
 </main>
@@ -433,15 +229,12 @@ html,body{min-height:100%;background:linear-gradient(180deg,var(--bg-base)0%,var
     <button class="active" data-role="guest" onclick="switchRole('guest')">👤 訪客（未登入）</button>
     <button data-role="member" onclick="switchRole('member')">👥 一般會員</button>
     <button data-role="resident" onclick="switchRole('resident')">🏠 已驗證住戶</button>
-    <button data-role="agent" onclick="switchRole('agent')">🏢 認證房仲</button>
+    <button data-role="agent" onclick="switchRole('agent')">🏢 認證房仿</button>
   </div>
 </div>
 
-<!-- 固定底部 CTA（訪客顯示）-->
-<div class="fixed-bottom-cta" id="bottom-cta">
-  <p>🔓 登入解鎖私密牆 + 完整評價</p>
-  <button onclick="showLoginModal()">免費註冊</button>
-</div>
+<!-- 固定底部 CTA -->
+<div class="fixed-bottom-cta" id="bottom-cta"></div>
 
 <script>
 // ============================
@@ -450,11 +243,52 @@ html,body{min-height:100%;background:linear-gradient(180deg,var(--bg-base)0%,var
 let currentRole = 'guest'; // guest | member | resident | agent
 let currentWall = 'public'; // public | private
 
-// Mock 社區 ID（實際接 API 時用 URL 參數）
-const COMMUNITY_ID = 'mock-community-001';
+// 權限常數
+const GUEST_VISIBLE_COUNT = 2; // 訪客可見數量
 
 // ============================
-// 身份切換（Mock）
+// Mock 資料
+// ============================
+const MOCK_DATA = {
+  posts: {
+    public: [
+      { id: 1, author: '陳小姐', floor: '12F', type: 'resident', time: '2小時前', title: '有人要團購掃地機嗎？🤖', content: '這款 iRobot 打折，滿 5 台有團購價～', likes: 31, comments: 14 },
+      { id: 2, author: '游杰倫', type: 'agent', time: '昨天', title: '🏡 惠宇上晴 12F｜雙陽台視野戶', content: '客廳光線很好，上週屋主剛降價 50 萬，有興趣可私訊。', views: 89, comments: 5 },
+      { id: 3, author: '李先生', floor: '8F', type: 'resident', time: '3天前', title: '停車位交流 🚗', content: '我有 B2-128 想與 B1 交換，方便接送小孩', likes: 12, comments: 8 },
+      { id: 4, author: '王太太', floor: '5F', type: 'resident', time: '1週前', title: '推薦水電師傅', content: '上次找的師傅很專業，價格公道，需要的鄰居私訊我', likes: 25, comments: 6 },
+      { id: 5, author: '林經理', type: 'agent', time: '1週前', title: '🏡 惠宇上晴 8F｜三房車位', content: '屋況極新，前屋主自住保養好', views: 156, comments: 12 }
+    ],
+    private: [
+      { id: 101, author: '管委會', type: 'official', time: '3天前', title: '📢 年度消防演練通知', content: '12/15（日）上午 10:00 將進行全社區消防演練，届時警報器會響，請勿驚慌。', pinned: true },
+      { id: 102, author: '15F 住戶', type: 'resident', time: '1週前', title: '管理費調漲討論', content: '想問大家覺得管理費調漲合理嗎？從 2,800 調到 3,200，漲幅有點大...', comments: 28, private: true },
+      { id: 103, author: '3F 住戶', type: 'resident', time: '2週前', title: '頂樓漏水問題', content: '最近下雨頂樓好像有漏水，管委會有要處理嗎？', comments: 15, private: true }
+    ]
+  },
+  reviews: [
+    { id: 1, author: '游杰倫', company: '21世紀', visits: 12, deals: 3, pros: ['公設維護得乾淨，假日草皮有人整理', '反映停車動線，管委會一週內就公告改善'], cons: '面向大馬路低樓層車聲明顯，喜靜者選中高樓層' },
+    { id: 2, author: '林美玲', company: '信義房屋', visits: 8, deals: 2, pros: ['頂樓排水設計不錯，颱風天也沒有積水問題', '中庭花園維護用心，住戶反應都很正面'], cons: '垃圾車時間稍晚，家裡偶爾會有下水道味' },
+    { id: 3, author: '陳志明', company: '永慶房屋', visits: 6, deals: 1, pros: ['管理員服務態度很好，代收包裹很方便', '社區有健身房，設備維護不錯'], cons: '電梯尖峰時段要等比較久' },
+    { id: 4, author: '黃小華', company: '住商不動產', visits: 10, deals: 2, pros: ['學區不錯，走路到國小只要5分鐘', '附近生活機能完善'], cons: '部分戶型採光稍弱' },
+    { id: 5, author: '張大明', company: '台灣房屋', visits: 5, deals: 1, pros: ['建商口碑好，用料實在', '公設比合理，實坪數划算'], cons: '車道坡度較陡，新手要小心' }
+  ],
+  questions: [
+    { id: 1, question: '請問社區停車位好停嗎？會不會常客滿？', time: '2天前', answersCount: 3, answers: [
+      { author: '8F 住戶', type: 'resident', content: '平日白天都有位，假日偶爾要等一下，但不會太久。' },
+      { author: '12F 住戶', type: 'resident', content: 'B2 比較容易有位，B1 要碰運氣。' },
+      { author: '游杰倫', type: 'agent', content: '這社區車位配比是 1:1.2，算充裕的。', expert: true }
+    ]},
+    { id: 2, question: '晚上會不會很吵？我看物件時是白天', time: '5天前', answersCount: 2, answers: [
+      { author: '3F 住戶', type: 'resident', content: '面大馬路那側確實有車聲，但習慣就好。內側安靜很多。' },
+      { author: '10F 住戶', type: 'resident', content: '我住內側，晚上很安靜，睡眠品質不錯。' }
+    ]},
+    { id: 3, question: '管理費多少？有包含哪些服務？', time: '1週前', answersCount: 1, answers: [
+      { author: '管委會', type: 'official', content: '目前每坪 85 元，含 24 小時保全、公設維護、垃圾代收。' }
+    ]}
+  ]
+};
+
+// ============================
+// 身份切換
 // ============================
 function toggleRoleSwitcher() {
   document.getElementById('role-menu').classList.toggle('open');
@@ -473,51 +307,381 @@ function switchRole(role) {
     guest: '訪客模式',
     member: '會員模式',
     resident: '住戶模式',
-    agent: '房仲模式'
+    agent: '房仿模式'
   };
   document.getElementById('current-role').textContent = roleNames[role];
   
   // 關閉選單
   document.getElementById('role-menu').classList.remove('open');
   
-  // 更新 UI
-  updateUIByRole();
+  // 完整重新渲染
+  renderAll();
 }
 
-function updateUIByRole() {
+// ============================
+// 權限判斷
+// ============================
+function getPermissions() {
   const isGuest = currentRole === 'guest';
-  const isMember = ['member', 'resident', 'agent'].includes(currentRole);
+  const isMember = currentRole === 'member';
   const isResident = currentRole === 'resident';
   const isAgent = currentRole === 'agent';
-  const canAccessPrivate = isResident || isAgent;
   
-  // 底部 CTA
-  document.getElementById('bottom-cta').classList.toggle('hidden', isMember);
+  return {
+    isGuest,
+    isMember,
+    isResident,
+    isAgent,
+    isLoggedIn: !isGuest,                        // 會員以上
+    canSeeAllReviews: !isGuest,                  // 會員以上可看全部評價
+    canSeeAllPosts: !isGuest,                    // 會員以上可看全部公開牆
+    canAccessPrivate: isResident || isAgent,     // 只有住戶/房仿可看私密牆
+    canPostPublic: isResident || isAgent,        // 住戶/房仿可發公開牆
+    canPostPrivate: isResident,                  // 只有住戶可發私密牆
+    canAskQuestion: !isGuest,                    // 會員以上可發問
+    canAnswer: isResident || isAgent,            // 住戶/房仿可回答
+    showExpertBadge: isAgent                     // 房仿顯示專家標章
+  };
+}
+
+// ============================
+// 渲染：評價區
+// ============================
+function renderReviews() {
+  const perm = getPermissions();
+  const reviews = MOCK_DATA.reviews;
+  const container = document.getElementById('reviews-list');
   
-  // 模糊遮罩
-  document.querySelectorAll('.blur-overlay').forEach(el => {
-    const blurCta = el.querySelector('.blur-cta');
-    const blurContent = el.querySelector('.blur-content');
-    if (isMember) {
-      if (blurCta) blurCta.style.display = 'none';
-      if (blurContent) blurContent.classList.remove('blur-content');
-    } else {
-      if (blurCta) blurCta.style.display = 'flex';
-      if (blurContent) blurContent.classList.add('blur-content');
-    }
+  const visibleCount = perm.canSeeAllReviews ? reviews.length : GUEST_VISIBLE_COUNT;
+  const hiddenCount = reviews.length - visibleCount;
+  
+  let html = '';
+  
+  reviews.slice(0, visibleCount).forEach(review => {
+    html += `
+      <div class="review-card">
+        <div class="review-header">
+          <div class="review-avatar">${review.author.charAt(0)}</div>
+          <div class="review-meta">
+            <div class="review-author">${review.author}｜${review.company}</div>
+            <div class="review-sub">帶看 ${review.visits} 次 · 成交 ${review.deals} 戶</div>
+          </div>
+        </div>
+        <div class="review-content">
+          ${review.pros.map(p => `<div class="review-item"><span class="review-icon">✅</span><span class="review-text">${p}</span></div>`).join('')}
+          <div class="review-item"><span class="review-icon">⚖️</span><span class="review-text">${review.cons}</span></div>
+        </div>
+      </div>
+    `;
   });
   
-  // QA blur
-  const qaBlur = document.getElementById('qa-blur-cta');
-  if (qaBlur) qaBlur.style.display = isMember ? 'none' : 'block';
+  // blur 遮罩
+  if (hiddenCount > 0 && !perm.canSeeAllReviews) {
+    html += `
+      <div class="blur-overlay">
+        <div class="review-card blur-content">
+          <div class="review-header">
+            <div class="review-avatar">${reviews[visibleCount]?.author?.charAt(0) || '?'}</div>
+            <div class="review-meta">
+              <div class="review-author">${reviews[visibleCount]?.author || ''}｜***</div>
+            </div>
+          </div>
+          <div class="review-content">
+            <div class="review-item"><span class="review-icon">✅</span><span class="review-text">管理員服務態度很好...</span></div>
+          </div>
+        </div>
+        <div class="blur-cta">
+          <h4>🔒 還有 ${hiddenCount} 則評價</h4>
+          <p>註冊會員看全部房仿真實評價</p>
+          <button onclick="showLoginModal()">免費註冊 / 登入</button>
+        </div>
+      </div>
+    `;
+  }
   
-  // 私密牆
-  updatePrivateWall(canAccessPrivate);
+  container.innerHTML = html;
+}
+
+// ============================
+// 渲染：公開牆
+// ============================
+function renderPublicWall() {
+  const perm = getPermissions();
+  const posts = MOCK_DATA.posts.public;
+  const container = document.getElementById('public-wall');
   
-  // 私密牆 Tab 鎖定狀態
+  const visibleCount = perm.canSeeAllPosts ? posts.length : GUEST_VISIBLE_COUNT;
+  const hiddenCount = posts.length - visibleCount;
+  
+  let html = '';
+  
+  // 顯示可見的貼文
+  posts.slice(0, visibleCount).forEach(post => {
+    html += renderPostCard(post, perm);
+  });
+  
+  // 如果有隱藏的，顯示 blur 遮罩
+  if (hiddenCount > 0 && !perm.canSeeAllPosts) {
+    html += `
+      <div class="blur-overlay">
+        <div class="post-card blur-content">
+          <div class="post-avatar">${posts[visibleCount]?.author?.charAt(0) || '?'}</div>
+          <div class="post-body">
+            <div class="post-header">
+              <span class="post-author">${posts[visibleCount]?.author || ''}</span>
+            </div>
+            <div class="post-content">${posts[visibleCount]?.title || ''}</div>
+          </div>
+        </div>
+        <div class="blur-cta">
+          <h4>🔒 還有 ${hiddenCount} 則熱帖</h4>
+          <p>登入後查看完整社區動態</p>
+          <button onclick="showLoginModal()">免費註冊 / 登入</button>
+        </div>
+      </div>
+    `;
+  }
+  
+  // 發文按鈕（住戶/房仿）
+  if (perm.canPostPublic) {
+    html += `
+      <div class="post-card" style="background:rgba(0,56,90,.03);border-style:dashed;justify-content:center;padding:20px">
+        <button class="action-btn" style="width:100%;justify-content:center" onclick="showCreatePostModal('public')">
+          ✏️ 發布貼文
+        </button>
+      </div>
+    `;
+  }
+  
+  container.innerHTML = html;
+}
+
+function renderPostCard(post, perm) {
+  const isAgent = post.type === 'agent';
+  const isOfficial = post.type === 'official';
+  const avatarClass = isAgent ? 'agent' : '';
+  const badgeHtml = isAgent 
+    ? '<span class="post-badge agent">認證房仿</span>'
+    : isOfficial 
+      ? '<span class="post-badge verified">官方公告</span>'
+      : post.floor ? `<span class="post-badge resident">${post.floor} 住戶</span>` : '';
+  
+  const statsHtml = post.likes 
+    ? `<span class="post-stat">❤️ ${post.likes}</span>` 
+    : post.views 
+      ? `<span class="post-stat">👁️ ${post.views}</span>` 
+      : '';
+  
+  const actionsHtml = isAgent
+    ? '<button class="action-btn">📩 私訊房仿</button>'
+    : `<button class="action-btn">❤️ 讚</button><button class="action-btn">💬 回覆</button>`;
+  
+  return `
+    <div class="post-card">
+      <div class="post-avatar ${avatarClass}">${post.author.charAt(0)}</div>
+      <div class="post-body">
+        <div class="post-header">
+          <span class="post-author">${post.author}</span>
+          ${badgeHtml}
+          <span class="post-time">${post.time}</span>
+        </div>
+        <div class="post-content">
+          <b>${post.title}</b><br>
+          ${post.content}
+        </div>
+        <div class="post-stats">
+          ${statsHtml}
+          <span class="post-stat">💬 ${post.comments || 0}</span>
+          ${post.private ? '<span class="post-stat">🔒 僅社區可見</span>' : ''}
+        </div>
+        <div class="post-actions">
+          ${actionsHtml}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// ============================
+// 渲染：私密牆
+// ============================
+function renderPrivateWall() {
+  const perm = getPermissions();
+  const container = document.getElementById('private-wall');
+  
+  if (!perm.canAccessPrivate) {
+    // 訪客/會員看到鎖定畫面
+    const ctaText = perm.isGuest 
+      ? '<button onclick="showLoginModal()">免費註冊 / 登入</button>'
+      : '<button onclick="showVerifyModal()">我是住戶，驗證身份</button>';
+    
+    container.innerHTML = `
+      <div class="private-lock">
+        <div class="lock-icon-big">🔐</div>
+        <h4>私密牆僅限本社區住戶查看</h4>
+        <p>${perm.isGuest ? '請先登入或註冊' : '驗證住戶身份後即可加入討論'}</p>
+        ${ctaText}
+      </div>
+    `;
+    return;
+  }
+  
+  // 住戶/房仿可看私密牆
+  const posts = MOCK_DATA.posts.private;
+  let html = '';
+  
+  posts.forEach(post => {
+    html += renderPostCard(post, perm);
+  });
+  
+  // 發文按鈕（只有住戶可發）
+  if (perm.canPostPrivate) {
+    html += `
+      <div class="post-card" style="background:rgba(0,56,90,.03);border-style:dashed;justify-content:center;padding:20px">
+        <button class="action-btn" style="width:100%;justify-content:center" onclick="showCreatePostModal('private')">
+          ✏️ 發布私密貼文
+        </button>
+      </div>
+    `;
+  } else if (perm.isAgent) {
+    html += `
+      <div style="text-align:center;padding:12px;font-size:11px;color:var(--text-secondary)">
+        💡 房仿可查看私密牆，但無法發文
+      </div>
+    `;
+  }
+  
+  container.innerHTML = html;
+}
+
+// ============================
+// 渲染：問答區
+// ============================
+function renderQuestions() {
+  const perm = getPermissions();
+  const questions = MOCK_DATA.questions;
+  const container = document.getElementById('qa-list');
+  
+  let html = '';
+  
+  questions.forEach((q, idx) => {
+    // 訪客只能看問題和部分回答
+    const showAllAnswers = perm.isLoggedIn;
+    const visibleAnswers = showAllAnswers ? q.answers : q.answers.slice(0, 1);
+    const hiddenAnswerCount = q.answers.length - visibleAnswers.length;
+    
+    html += `
+      <div class="qa-card">
+        <div class="qa-question">Q: ${q.question}</div>
+        <div class="qa-meta">
+          <span>👤 準住戶</span>
+          <span>· ${q.time}</span>
+          <span>· ${q.answersCount} 則回覆</span>
+        </div>
+        <div class="qa-answers">
+          ${visibleAnswers.map(a => `
+            <div class="qa-answer">
+              <div class="qa-answer-header">
+                <span class="qa-answer-badge" style="background:${a.type === 'agent' ? '#fff3e0' : a.type === 'official' ? '#e3f2fd' : '#e8faef'};color:${a.type === 'agent' ? '#e65100' : a.type === 'official' ? '#1565c0' : '#0e8d52'}">
+                  ${a.type === 'agent' ? '🏢 認證房仿' : a.type === 'official' ? '📋 ' + a.author : '🏠 ' + a.author}
+                </span>
+                ${a.expert ? '<span class="qa-answer-badge" style="background:#fce4ec;color:#c2185b">⭐ 專家回答</span>' : ''}
+              </div>
+              ${a.content}
+            </div>
+          `).join('')}
+        </div>
+        ${!showAllAnswers && hiddenAnswerCount > 0 ? `
+          <div style="text-align:center;padding:12px;background:rgba(255,255,255,.9);border-radius:8px;margin-top:8px">
+            <p style="font-size:11px;color:var(--text-secondary);margin:0 0 8px">🔒 還有 ${hiddenAnswerCount} 則回覆</p>
+            <button class="action-btn" style="font-size:11px" onclick="showLoginModal()">登入查看</button>
+          </div>
+        ` : ''}
+        ${perm.canAnswer ? `
+          <div style="margin-top:10px">
+            <button class="action-btn" style="width:100%;justify-content:center" onclick="showAnswerModal(${q.id})">
+              💬 我來回答${perm.isAgent ? '（專家）' : ''}
+            </button>
+          </div>
+        ` : ''}
+      </div>
+    `;
+  });
+  
+  // 發問區塊
+  html += `
+    <div class="qa-card" style="background:rgba(0,56,90,.03);border-style:dashed">
+      <div class="qa-question" style="color:var(--text-secondary)">💬 你也有問題想問？</div>
+      <p style="font-size:12px;color:var(--text-secondary);margin:8px 0">問題會通知該社區住戶，通常 24 小時內會有回覆</p>
+      ${perm.canAskQuestion 
+        ? '<button class="action-btn" style="width:100%;justify-content:center" onclick="showAskModal()">我想問問題</button>'
+        : '<button class="action-btn" style="width:100%;justify-content:center" onclick="showLoginModal()">登入後發問</button>'
+      }
+    </div>
+  `;
+  
+  container.innerHTML = html;
+}
+
+// ============================
+// 渲染：底部 CTA
+// ============================
+function renderBottomCTA() {
+  const perm = getPermissions();
+  const cta = document.getElementById('bottom-cta');
+  
+  if (perm.canAccessPrivate) {
+    // 住戶/房仿：隱藏
+    cta.classList.add('hidden');
+  } else if (perm.isMember) {
+    // 會員：驗證住戶
+    cta.classList.remove('hidden');
+    cta.innerHTML = `
+      <p>🏠 驗證住戶身份，解鎖私密牆</p>
+      <button onclick="showVerifyModal()">驗證住戶</button>
+    `;
+  } else {
+    // 訪客：註冊
+    cta.classList.remove('hidden');
+    cta.innerHTML = `
+      <p>🔓 登入解鎖完整評價 + 更多功能</p>
+      <button onclick="showLoginModal()">免費註冊</button>
+    `;
+  }
+}
+
+// ============================
+// 渲染：私密牆 Tab 狀態
+// ============================
+function renderPrivateTab() {
+  const perm = getPermissions();
   const privateTab = document.querySelector('.tab[data-wall="private"]');
+  
   if (privateTab) {
-    privateTab.classList.toggle('locked', !canAccessPrivate);
+    privateTab.classList.toggle('locked', !perm.canAccessPrivate);
+    privateTab.innerHTML = perm.canAccessPrivate 
+      ? '私密牆'
+      : '私密牆 <span class="lock-icon">🔒</span>';
+  }
+}
+
+// ============================
+// 全部渲染
+// ============================
+function renderAll() {
+  renderReviews();
+  renderPublicWall();
+  renderPrivateWall();
+  renderQuestions();
+  renderBottomCTA();
+  renderPrivateTab();
+  
+  // 如果目前在私密牆但沒權限，切回公開牆
+  if (currentWall === 'private') {
+    const perm = getPermissions();
+    if (!perm.canAccessPrivate) {
+      switchWall('public');
+    }
   }
 }
 
@@ -525,6 +689,18 @@ function updateUIByRole() {
 // 牆切換
 // ============================
 function switchWall(wall) {
+  const perm = getPermissions();
+  
+  // 如果要切到私密牆但沒權限
+  if (wall === 'private' && !perm.canAccessPrivate) {
+    if (perm.isGuest) {
+      showLoginModal();
+    } else {
+      showVerifyModal();
+    }
+    return;
+  }
+  
   currentWall = wall;
   
   // 更新 Tab 狀態
@@ -535,17 +711,6 @@ function switchWall(wall) {
   // 切換內容
   document.getElementById('public-wall').style.display = wall === 'public' ? 'block' : 'none';
   document.getElementById('private-wall').style.display = wall === 'private' ? 'block' : 'none';
-  
-  // 如果切到私密牆，檢查權限
-  if (wall === 'private') {
-    const canAccess = ['resident', 'agent'].includes(currentRole);
-    updatePrivateWall(canAccess);
-  }
-}
-
-function updatePrivateWall(canAccess) {
-  document.getElementById('private-lock').style.display = canAccess ? 'none' : 'flex';
-  document.getElementById('private-content').style.display = canAccess ? 'block' : 'none';
 }
 
 // ============================
@@ -559,138 +724,23 @@ function showVerifyModal() {
   alert('🏠 住戶驗證\n\n請上傳水電帳單或管理費收據\n或輸入社區專屬驗證碼');
 }
 
-// ============================
-// API 接口（真實資料）
-// ============================
-const API = {
-  // 取得社區貼文
-  async getPosts(communityId, visibility = 'public', limit = 10) {
-    // Mock 模式直接返回
-    if (typeof supabase === 'undefined') {
-      console.log('[Mock] getPosts:', { communityId, visibility, limit });
-      return { data: [], error: null };
-    }
-    
-    let query = supabase
-      .from('community_posts')
-      .select('*')
-      .eq('community_id', communityId)
-      .order('created_at', { ascending: false })
-      .limit(limit);
-    
-    if (visibility === 'public') {
-      query = query.eq('visibility', 'public');
-    } else if (visibility === 'private') {
-      query = query.eq('visibility', 'private');
-    }
-    
-    return await query;
-  },
-  
-  // 取得社區評價
-  async getReviews(communityId, limit = 10) {
-    if (typeof supabase === 'undefined') {
-      console.log('[Mock] getReviews:', { communityId, limit });
-      return { data: [], error: null };
-    }
-    
-    return await supabase
-      .from('community_reviews')
-      .select('*')
-      .eq('community_id', communityId)
-      .order('created_at', { ascending: false })
-      .limit(limit);
-  },
-  
-  // 取得準住戶問答
-  async getQuestions(communityId, limit = 5) {
-    if (typeof supabase === 'undefined') {
-      console.log('[Mock] getQuestions:', { communityId, limit });
-      return { data: [], error: null };
-    }
-    
-    return await supabase
-      .from('community_questions')
-      .select(`
-        *,
-        answers:community_answers(*)
-      `)
-      .eq('community_id', communityId)
-      .order('created_at', { ascending: false })
-      .limit(limit);
-  },
-  
-  // 發布貼文
-  async createPost(communityId, content, visibility = 'public') {
-    if (typeof supabase === 'undefined') {
-      console.log('[Mock] createPost:', { communityId, content, visibility });
-      return { data: { id: 'mock-post-id' }, error: null };
-    }
-    
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { data: null, error: { message: '請先登入' } };
-    
-    return await supabase
-      .from('community_posts')
-      .insert({
-        community_id: communityId,
-        author_id: user.id,
-        content,
-        visibility
-      })
-      .select()
-      .single();
-  },
-  
-  // 發布問題
-  async createQuestion(communityId, question) {
-    if (typeof supabase === 'undefined') {
-      console.log('[Mock] createQuestion:', { communityId, question });
-      return { data: { id: 'mock-question-id' }, error: null };
-    }
-    
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { data: null, error: { message: '請先登入' } };
-    
-    return await supabase
-      .from('community_questions')
-      .insert({
-        community_id: communityId,
-        author_id: user.id,
-        question
-      })
-      .select()
-      .single();
-  },
-  
-  // 回答問題
-  async createAnswer(questionId, answer, authorType = 'resident') {
-    if (typeof supabase === 'undefined') {
-      console.log('[Mock] createAnswer:', { questionId, answer, authorType });
-      return { data: { id: 'mock-answer-id' }, error: null };
-    }
-    
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { data: null, error: { message: '請先登入' } };
-    
-    return await supabase
-      .from('community_answers')
-      .insert({
-        question_id: questionId,
-        author_id: user.id,
-        answer,
-        author_type: authorType
-      })
-      .select()
-      .single();
-  }
-};
+function showCreatePostModal(visibility) {
+  alert(`✏️ 發布${visibility === 'private' ? '私密' : '公開'}貼文\n\n（這裡會跳出發文表單）`);
+}
+
+function showAskModal() {
+  alert('💬 發問\n\n（這裡會跳出發問表單）');
+}
+
+function showAnswerModal(questionId) {
+  alert(`💬 回答問題 #${questionId}\n\n（這裡會跳出回答表單）`);
+}
 
 // ============================
 // 初始化
 // ============================
 document.addEventListener('DOMContentLoaded', () => {
-  updateUIByRole();
+  renderAll();
   
   // 點擊外部關閉選單
   document.addEventListener('click', (e) => {
@@ -700,7 +750,6 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   
   console.log('✅ 社區牆初始化完成');
-  console.log('📌 當前模式: Mock（無 Supabase）');
   console.log('🔧 切換身份: 點擊右下角 [🕶️ 訪客模式]');
 });
 </script>
