@@ -108,6 +108,9 @@ WHERE p.community_id IS NOT NULL
 | 12/01 | API getPosts缺count | 加上 { count: 'exact' } |
 | 12/01 | QA區blur沒控制到 | 改用 blur-overlay + blur-target |
 | 12/01 | likes功能缺失 | 新增 liked_by[] + API |
+| 12/01 | 錯別字（房仿→房仲） | 全站統一用詞 |
+| 12/01 | 無載入動畫 | 新增 skeleton loading CSS |
+| 12/01 | API 無快取 | 加入 Cache-Control header |
 
 ---
 
