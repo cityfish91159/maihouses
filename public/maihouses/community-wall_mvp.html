@@ -187,9 +187,9 @@ body.role-agent .blur-cta{display:none !important}
 .blur-overlay .blur-cta{position:absolute;inset:0;display:flex;flex-direction:column;
   align-items:center;justify-content:center;background:rgba(255,255,255,.85);border-radius:14px;
   text-align:center;padding:20px}
-.blur-cta .mascot{width:60px;height:72px;color:var(--brand);margin-bottom:6px}
-.blur-cta .mascot .mascot-hand{transform-origin:145px 130px;animation:wave-hand 1s ease-in-out infinite}
-@keyframes wave-hand{0%,100%{transform:rotate(0deg)}50%{transform:rotate(-20deg)}}
+.blur-cta .mascot{margin-bottom:6px}
+.mascot-hand{transform-origin:85% 60%;animation:wave-hand 2.5s ease-in-out infinite}
+@keyframes wave-hand{0%,100%{transform:rotate(0deg)}20%{transform:rotate(-25deg)}40%{transform:rotate(10deg)}60%{transform:rotate(-20deg)}80%{transform:rotate(5deg)}}
 .blur-cta h4{font-size:14px;font-weight:800;color:var(--primary-dark);margin-bottom:4px}
 .blur-cta p{font-size:12px;color:var(--text-secondary);margin-bottom:10px}
 .blur-cta button{background:linear-gradient(135deg,var(--primary),#005282);color:#fff;
@@ -811,7 +811,7 @@ function renderQuestions() {
           </div>
         </div>
         <div class="blur-cta">
-          <svg class="mascot" viewBox="0 0 200 240">
+          <svg class="mascot" style="width:60px;height:72px;color:#00385a" viewBox="0 0 200 240">
             <path d="M 85 40 L 85 15 L 100 30 L 115 15 L 115 40" stroke="currentColor" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
             <path d="M 40 80 L 100 40 L 160 80" stroke="currentColor" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
             <rect x="55" y="80" width="90" height="100" stroke="currentColor" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>

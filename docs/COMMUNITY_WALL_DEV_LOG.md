@@ -118,6 +118,93 @@ WHERE p.community_id IS NOT NULL
 | 12/01 | 無載入動畫 | 新增 skeleton loading CSS |
 | 12/01 | API 無快取 | 加入 Cache-Control header |
 | 12/01 | SonarLint: feed-consumer.html | 多項修正（見下方） |
+| 12/02 | 🐛 **公仔 SVG 無法顯示** | 待解決（見下方詳細說明） |
+
+---
+
+## 🐛 公仔 SVG 無法顯示問題 (12/02 進行中)
+
+### 做了什麼
+
+#### 1. 參考來源
+從 `public/auth.html` (第 880-907 行) 複製「房屋公仔」SVG 圖案。這個公仔在登入頁顯示正常。
+
+#### 2. 加入的 CSS (第 190-192 行)
+```css
+.blur-cta .mascot{width:60px;height:72px;color:var(--brand);margin-bottom:6px}
+.blur-cta .mascot .mascot-hand{transform-origin:145px 130px;animation:wave-hand 1s ease-in-out infinite}
+@keyframes wave-hand{0%,100%{transform:rotate(0deg)}50%{transform:rotate(-20deg)}}
+```
+
+#### 3. 加入的 HTML (renderQA() 函數內，約第 814 行)
+```html
+<div class="blur-cta">
+  <svg class="mascot" viewBox="0 0 200 240">
+    <path d="M 85 40 L 85 15 L 100 30 L 115 15 L 115 40" stroke="currentColor" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M 40 80 L 100 40 L 160 80" stroke="currentColor" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="55" y="80" width="90" height="100" stroke="currentColor" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <!-- ... 眼睛、嘴巴、手、腳等 ... -->
+    <path class="mascot-hand" d="M 145 130 L 175 100" stroke="currentColor" stroke-width="5" fill="none" stroke-linecap="round"/>
+    <circle class="mascot-hand" cx="180" cy="95" r="6" stroke="currentColor" stroke-width="3" fill="none"/>
+    <!-- ... -->
+  </svg>
+  <h4>🔒 還有 X 則問答</h4>
+  <!-- ... -->
+</div>
+```
+
+#### 4. 結構說明
+- `.blur-overlay`：包覆層
+  - `.blur-target`：會被模糊的內容
+  - `.blur-cta`：CTA 區塊（絕對定位覆蓋在上面）
+    - `.mascot`：SVG 圖案
+    - `h4`、`p`、`button`：文字和按鈕
+
+### 目前狀態
+- ✅ CSS 動畫 `@keyframes wave-hand` 有定義
+- ✅ `.mascot` 和 `.mascot-hand` class 有設定
+- ✅ SVG 使用 `viewBox="0 0 200 240"` 和 `currentColor`
+- ❌ **公仔在瀏覽器完全不顯示**
+
+### 疑問（請幫忙詢問）
+
+1. **SVG 是否有被渲染？**
+   - DevTools 中是否看得到 `<svg class="mascot">` 元素？
+   - 元素有沒有被其他 CSS 隱藏（`display:none`、`visibility:hidden`、`opacity:0`）？
+
+2. **尺寸問題？**
+   - 我設定 `width:60px; height:72px`，在 DevTools 中實際尺寸是多少？
+   - `viewBox="0 0 200 240"` 是否與實際 path 座標匹配？
+
+3. **顏色問題？**
+   - `color:var(--brand)` 是 `#00385a`（深藍色）
+   - `stroke="currentColor"` 會繼承這個顏色
+   - 背景是白色，應該看得到才對
+
+4. **JavaScript 渲染問題？**
+   - 這個 SVG 是用 JavaScript 動態插入的（在 `renderQA()` 函數內）
+   - 是否有 JavaScript 錯誤導致沒有執行到這段？
+
+5. **快取問題？**
+   - 瀏覽器是否有快取到舊版本？
+   - 可以試試 Ctrl+Shift+R 強制刷新
+
+### 可能的排查步驟
+
+```javascript
+// 在 Console 執行，看是否能找到元素
+document.querySelector('.blur-cta .mascot')
+document.querySelectorAll('.mascot').length
+```
+
+### 對比：auth.html 的寫法
+```html
+<!-- auth.html 的公仔（可正常顯示） -->
+<svg viewBox="0 0 200 240" style="width:160px; height:192px; color:#00385a;">
+  <!-- 相同的 path -->
+</svg>
+```
+差異：auth.html 用 inline style，我用 CSS class
 
 ---
 
