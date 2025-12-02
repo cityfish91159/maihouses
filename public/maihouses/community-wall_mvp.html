@@ -187,6 +187,9 @@ body.role-agent .blur-cta{display:none !important}
 .blur-overlay .blur-cta{position:absolute;inset:0;display:flex;flex-direction:column;
   align-items:center;justify-content:center;background:rgba(255,255,255,.85);border-radius:14px;
   text-align:center;padding:20px}
+.blur-cta .mascot{width:60px;height:72px;color:var(--brand);margin-bottom:8px;animation:mascot-wave 2s ease-in-out infinite}
+@keyframes mascot-wave{0%,100%{transform:rotate(0deg)}25%{transform:rotate(-5deg)}75%{transform:rotate(5deg)}}
+@keyframes wave-hand{0%,100%{transform:rotate(0deg)}50%{transform:rotate(-20deg)}}
 .blur-cta h4{font-size:14px;font-weight:800;color:var(--primary-dark);margin-bottom:8px}
 .blur-cta p{font-size:12px;color:var(--text-secondary);margin-bottom:12px}
 .blur-cta button{background:linear-gradient(135deg,var(--primary),#005282);color:#fff;
@@ -566,6 +569,20 @@ function renderReviews() {
           </div>
         </div>
         <div class="blur-cta">
+          <svg class="mascot" viewBox="0 0 200 240">
+            <path d="M 85 40 L 85 15 L 100 30 L 115 15 L 115 40" stroke="currentColor" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M 40 80 L 100 40 L 160 80" stroke="currentColor" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+            <rect x="55" y="80" width="90" height="100" stroke="currentColor" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M 78 110 Q 85 105 92 110" stroke="currentColor" stroke-width="4" fill="none" stroke-linecap="round"/>
+            <path d="M 108 110 Q 115 105 122 110" stroke="currentColor" stroke-width="4" fill="none" stroke-linecap="round"/>
+            <circle cx="85" cy="125" r="4" stroke="currentColor" stroke-width="3" fill="none"/>
+            <circle cx="115" cy="125" r="4" stroke="currentColor" stroke-width="3" fill="none"/>
+            <path d="M 90 145 Q 100 155 110 145" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round"/>
+            <path d="M 55 130 L 25 110" stroke="currentColor" stroke-width="5" fill="none" stroke-linecap="round"/>
+            <g style="transform-origin:145px 130px;animation:wave-hand 1s ease-in-out infinite"><path d="M 145 130 L 175 100" stroke="currentColor" stroke-width="5" fill="none" stroke-linecap="round"/><circle cx="180" cy="95" r="6" stroke="currentColor" stroke-width="3" fill="none"/></g>
+            <path d="M 85 180 L 85 210 L 75 210" stroke="currentColor" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M 115 180 L 115 210 L 125 210" stroke="currentColor" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
           <h4>🔒 還有 ${hiddenCount} 則評價</h4>
           <p>免費加入會員<br>✓ 查看全部房仲真實評價<br>✓ 收到新回答即時通知</p>
           <button onclick="showLoginModal()">免費註冊 / 登入</button>
@@ -609,6 +626,20 @@ function renderPublicWall() {
           </div>
         </div>
         <div class="blur-cta">
+          <svg class="mascot" viewBox="0 0 200 240">
+            <path d="M 85 40 L 85 15 L 100 30 L 115 15 L 115 40" stroke="currentColor" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M 40 80 L 100 40 L 160 80" stroke="currentColor" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+            <rect x="55" y="80" width="90" height="100" stroke="currentColor" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M 78 110 Q 85 105 92 110" stroke="currentColor" stroke-width="4" fill="none" stroke-linecap="round"/>
+            <path d="M 108 110 Q 115 105 122 110" stroke="currentColor" stroke-width="4" fill="none" stroke-linecap="round"/>
+            <circle cx="85" cy="125" r="4" stroke="currentColor" stroke-width="3" fill="none"/>
+            <circle cx="115" cy="125" r="4" stroke="currentColor" stroke-width="3" fill="none"/>
+            <path d="M 90 145 Q 100 155 110 145" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round"/>
+            <path d="M 55 130 L 25 110" stroke="currentColor" stroke-width="5" fill="none" stroke-linecap="round"/>
+            <g style="transform-origin:145px 130px;animation:wave-hand 1s ease-in-out infinite"><path d="M 145 130 L 175 100" stroke="currentColor" stroke-width="5" fill="none" stroke-linecap="round"/><circle cx="180" cy="95" r="6" stroke="currentColor" stroke-width="3" fill="none"/></g>
+            <path d="M 85 180 L 85 210 L 75 210" stroke="currentColor" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M 115 180 L 115 210 L 125 210" stroke="currentColor" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
           <h4>🔒 還有 ${hiddenCount} 則熱帖</h4>
           <p>免費加入會員<br>✓ 查看完整社區動態<br>✓ 收到新回答即時通知</p>
           <button onclick="showLoginModal()">免費註冊 / 登入</button>
@@ -808,6 +839,20 @@ function renderQuestions() {
           </div>
         </div>
         <div class="blur-cta">
+          <svg class="mascot" viewBox="0 0 200 240">
+            <path d="M 85 40 L 85 15 L 100 30 L 115 15 L 115 40" stroke="currentColor" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M 40 80 L 100 40 L 160 80" stroke="currentColor" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+            <rect x="55" y="80" width="90" height="100" stroke="currentColor" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M 78 110 Q 85 105 92 110" stroke="currentColor" stroke-width="4" fill="none" stroke-linecap="round"/>
+            <path d="M 108 110 Q 115 105 122 110" stroke="currentColor" stroke-width="4" fill="none" stroke-linecap="round"/>
+            <circle cx="85" cy="125" r="4" stroke="currentColor" stroke-width="3" fill="none"/>
+            <circle cx="115" cy="125" r="4" stroke="currentColor" stroke-width="3" fill="none"/>
+            <path d="M 90 145 Q 100 155 110 145" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round"/>
+            <path d="M 55 130 L 25 110" stroke="currentColor" stroke-width="5" fill="none" stroke-linecap="round"/>
+            <g style="transform-origin:145px 130px;animation:wave-hand 1s ease-in-out infinite"><path d="M 145 130 L 175 100" stroke="currentColor" stroke-width="5" fill="none" stroke-linecap="round"/><circle cx="180" cy="95" r="6" stroke="currentColor" stroke-width="3" fill="none"/></g>
+            <path d="M 85 180 L 85 210 L 75 210" stroke="currentColor" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M 115 180 L 115 210 L 125 210" stroke="currentColor" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
           <h4>🔒 還有 ${hiddenAnswered} 則問答</h4>
           <p>免費加入會員<br>✓ 查看完整問答內容<br>✓ 收到新回答即時通知</p>
           <button onclick="showLoginModal()">免費註冊 / 登入</button>
