@@ -304,7 +304,7 @@ body.role-agent .blur-cta{display:none !important}
     <section class="section" id="qa-section">
       <div class="section-header">
         <div>
-          <h2 class="section-title">🙋 準住戶問答</h2>
+          <h2 class="section-title">🙋 準住戶問答 <span id="qa-pending-badge" style="display:none;font-size:12px;font-weight:700;color:#004E7C;background:#e0f4ff;padding:2px 8px;border-radius:999px;margin-left:6px"></span></h2>
           <p class="section-sub">買房前，先問問鄰居怎麼說</p>
         </div>
       </div>
@@ -763,6 +763,17 @@ function renderQuestions() {
   
   // blur 遮罩（訪客看不到的「有回答」問答）
   const unansweredQuestions = questions.filter(q => !q.answers || q.answers.length === 0);
+  
+  // 更新待回答數量 badge
+  const pendingBadge = document.getElementById('qa-pending-badge');
+  if (pendingBadge) {
+    if (unansweredQuestions.length > 0) {
+      pendingBadge.textContent = `${unansweredQuestions.length} 題待回答`;
+      pendingBadge.style.display = 'inline';
+    } else {
+      pendingBadge.style.display = 'none';
+    }
+  }
   
   const visibleAnswered = perm.isLoggedIn ? answeredQuestions.length : Math.min(GUEST_VISIBLE_COUNT, answeredQuestions.length);
   const hiddenAnswered = answeredQuestions.length - visibleAnswered;
