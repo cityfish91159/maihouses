@@ -1,7 +1,7 @@
 # 社區牆開發紀錄
 
-> **最後更新**: 2025/12/02 13:22 (台北時間)  
-> **狀態**: MVP 完成 + Layout 重構 + 配色修正 + 問答區邏輯修正
+> **最後更新**: 2025/12/02 15:30 (台北時間)  
+> **狀態**: MVP 完成 + Layout 重構 + 配色修正 + 問答區邏輯修正 + 公仔卡片
 
 ---
 
@@ -118,93 +118,46 @@ WHERE p.community_id IS NOT NULL
 | 12/01 | 無載入動畫 | 新增 skeleton loading CSS |
 | 12/01 | API 無快取 | 加入 Cache-Control header |
 | 12/01 | SonarLint: feed-consumer.html | 多項修正（見下方） |
-| 12/02 | 🐛 **公仔 SVG 無法顯示** | 待解決（見下方詳細說明） |
+| 12/02 | 公仔 SVG 顯示問題 | 改用 inline style + 移到側邊欄（已解決） |
+| 12/02 | 側邊欄加入公仔卡片 | 「有問題？問問鄰居！」導引至問答區 |
 
 ---
 
-## 🐛 公仔 SVG 無法顯示問題 (12/02 進行中)
+## 🏠 公仔卡片 (12/02 已完成)
 
-### 做了什麼
+### 最終方案
+將公仔從 blur-cta 移除，改放在**側邊欄最下方**獨立卡片：
 
-#### 1. 參考來源
-從 `public/auth.html` (第 880-907 行) 複製「房屋公仔」SVG 圖案。這個公仔在登入頁顯示正常。
-
-#### 2. 加入的 CSS (第 190-192 行)
-```css
-.blur-cta .mascot{width:60px;height:72px;color:var(--brand);margin-bottom:6px}
-.blur-cta .mascot .mascot-hand{transform-origin:145px 130px;animation:wave-hand 1s ease-in-out infinite}
-@keyframes wave-hand{0%,100%{transform:rotate(0deg)}50%{transform:rotate(-20deg)}}
-```
-
-#### 3. 加入的 HTML (renderQA() 函數內，約第 814 行)
 ```html
-<div class="blur-cta">
-  <svg class="mascot" viewBox="0 0 200 240">
-    <path d="M 85 40 L 85 15 L 100 30 L 115 15 L 115 40" stroke="currentColor" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-    <path d="M 40 80 L 100 40 L 160 80" stroke="currentColor" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-    <rect x="55" y="80" width="90" height="100" stroke="currentColor" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-    <!-- ... 眼睛、嘴巴、手、腳等 ... -->
-    <path class="mascot-hand" d="M 145 130 L 175 100" stroke="currentColor" stroke-width="5" fill="none" stroke-linecap="round"/>
-    <circle class="mascot-hand" cx="180" cy="95" r="6" stroke="currentColor" stroke-width="3" fill="none"/>
-    <!-- ... -->
+<!-- 側邊欄公仔卡片 -->
+<div class="sidebar-card" style="text-align:center;background:linear-gradient(135deg,#f0f7ff,#e8f4ff)">
+  <svg style="width:80px;height:96px;color:#00385a" viewBox="0 0 200 240">
+    <!-- 房屋公仔 SVG -->
   </svg>
-  <h4>🔒 還有 X 則問答</h4>
-  <!-- ... -->
+  <p>有問題？問問鄰居！</p>
+  <a href="#qa-section">前往問答區 →</a>
 </div>
 ```
 
-#### 4. 結構說明
-- `.blur-overlay`：包覆層
-  - `.blur-target`：會被模糊的內容
-  - `.blur-cta`：CTA 區塊（絕對定位覆蓋在上面）
-    - `.mascot`：SVG 圖案
-    - `h4`、`p`、`button`：文字和按鈕
+### 效果
+- ✅ 桌面版：側邊欄底部顯示公仔揮手 + 導引按鈕
+- ✅ 手機版：側邊欄隱藏，公仔也隱藏（不佔空間）
+- ✅ 揮手動畫：升級為 5 段變化，更生動
 
-### 目前狀態
-- ✅ CSS 動畫 `@keyframes wave-hand` 有定義
-- ✅ `.mascot` 和 `.mascot-hand` class 有設定
-- ✅ SVG 使用 `viewBox="0 0 200 240"` 和 `currentColor`
-- ❌ **公仔在瀏覽器完全不顯示**
-
-### 疑問（請幫忙詢問）
-
-1. **SVG 是否有被渲染？**
-   - DevTools 中是否看得到 `<svg class="mascot">` 元素？
-   - 元素有沒有被其他 CSS 隱藏（`display:none`、`visibility:hidden`、`opacity:0`）？
-
-2. **尺寸問題？**
-   - 我設定 `width:60px; height:72px`，在 DevTools 中實際尺寸是多少？
-   - `viewBox="0 0 200 240"` 是否與實際 path 座標匹配？
-
-3. **顏色問題？**
-   - `color:var(--brand)` 是 `#00385a`（深藍色）
-   - `stroke="currentColor"` 會繼承這個顏色
-   - 背景是白色，應該看得到才對
-
-4. **JavaScript 渲染問題？**
-   - 這個 SVG 是用 JavaScript 動態插入的（在 `renderQA()` 函數內）
-   - 是否有 JavaScript 錯誤導致沒有執行到這段？
-
-5. **快取問題？**
-   - 瀏覽器是否有快取到舊版本？
-   - 可以試試 Ctrl+Shift+R 強制刷新
-
-### 可能的排查步驟
-
-```javascript
-// 在 Console 執行，看是否能找到元素
-document.querySelector('.blur-cta .mascot')
-document.querySelectorAll('.mascot').length
+### CSS 動畫
+```css
+@keyframes wave-hand {
+  0%, 100% { transform: rotate(0deg); }
+  20% { transform: rotate(-25deg); }
+  40% { transform: rotate(10deg); }
+  60% { transform: rotate(-20deg); }
+  80% { transform: rotate(5deg); }
+}
+.mascot-hand {
+  transform-origin: 85% 60%;
+  animation: wave-hand 2.5s ease-in-out infinite;
+}
 ```
-
-### 對比：auth.html 的寫法
-```html
-<!-- auth.html 的公仔（可正常顯示） -->
-<svg viewBox="0 0 200 240" style="width:160px; height:192px; color:#00385a;">
-  <!-- 相同的 path -->
-</svg>
-```
-差異：auth.html 用 inline style，我用 CSS class
 
 ---
 
@@ -236,7 +189,8 @@ https://maihouses.vercel.app/maihouses/community-wall_mvp.html
 ### 🎯 體驗與易用性
 - [x] **問答區會員轉換漏斗**：遮罩加入「加入會員後可收到新回答通知」等利益點，A/B 測試 CTA 文案與色彩（品牌藍系）
 - [x] **無回答問題誘因**：列表頂部加「待回答數量」摘要 ~~「搶先回答」增加徽章/積分回饋~~ (徽章系統暫緩)
-- [ ] **雙欄布局資訊密度**：側欄加入「最新問答摘要」與「最高評價貼文」卡片
+- [x] **雙欄布局資訊密度**：側欄加入「最新問答摘要」與「熱門貼文」卡片
+- [x] **公仔品牌識別**：側邊欄底部加入公仔卡片，導引至問答區
 - [ ] **品牌一致性**：Toast、按鈕、骨架屏背景全面套用同一組 token
 
 ### 🛠️ 前端工程
