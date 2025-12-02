@@ -1,7 +1,7 @@
 # 社區牆開發紀錄
 
-> **最後更新**: 2025/12/02 15:30 (台北時間)  
-> **狀態**: MVP 完成 + Layout 重構 + 配色修正 + 問答區邏輯修正 + 公仔卡片
+> **最後更新**: 2025/12/02 23:30 (台北時間)  
+> **狀態**: MVP 完成 + React 版完成 + Mock 切換
 
 ---
 
@@ -9,7 +9,8 @@
 
 | 檔案 | 用途 |
 |------|------|
-| `public/maihouses/community-wall_mvp.html` | 前端頁面 (796行) |
+| `public/maihouses/community-wall_mvp.html` | MVP 前端頁面 (1047行) |
+| `src/pages/Community/Wall.tsx` | **React 版社區牆 (748行)** |
 | `api/community/wall.ts` | API: 讀取資料 |
 | `api/community/question.ts` | API: 問答功能 |
 | `api/community/like.ts` | API: 按讚功能 |
@@ -20,6 +21,16 @@
 | `src/utils/contentCheck.ts` | 內容審核工具 (新增) |
 | `src/services/communityService.ts` | 社區牆 API 封裝 (新增) |
 | `src/hooks/useCommunityWall.ts` | 社區牆資料 Hook (新增) |
+
+---
+
+## 🌐 網址
+
+| 版本 | 網址 |
+|------|------|
+| **首頁** | `https://maihouses.vercel.app/maihouses/` |
+| MVP HTML | `https://maihouses.vercel.app/maihouses/community-wall_mvp.html` |
+| **React 版** | `https://maihouses.vercel.app/maihouses/community/{uuid}/wall` |
 
 ---
 
@@ -45,6 +56,60 @@
 5. **問答區**：訪客看1則回答，房仲回答顯示專家標章
 6. **按讚功能**：liked_by[] + /api/community/like
 7. **Mock 身份切換器**：右下角即時切換測試
+8. **React 版社區牆**：完整拆解 MVP HTML 為 React 組件
+
+---
+
+## ⚛️ React 版社區牆 (2025/12/02)
+
+### 路由
+```
+/community/:id/wall
+```
+實際網址：`https://maihouses.vercel.app/maihouses/community/{uuid}/wall`
+
+### 組件結構
+```
+Wall.tsx (748行)
+├── Topbar          - 頂部導航（回首頁、通知、我的）
+├── ReviewsSection  - 評價區（blur 遮罩）
+├── PostsSection    - 貼文區（公開牆/私密牆 Tab）
+├── QASection       - 問答區（有回答/無回答分開）
+├── Sidebar         - 側邊欄（社區資訊、數據、公仔）
+├── BottomCTA       - 底部 CTA（訪客/會員顯示）
+├── MockToggle      - Mock 切換按鈕（左下角）
+└── RoleSwitcher    - 身份切換器（右下角）
+```
+
+### Mock 切換
+- **左下角按鈕**：`🧪 Mock 資料` ↔ `🌐 API 資料`
+- Mock 模式：使用內建假資料（惠宇上晴）
+- API 模式：呼叫 `/api/community/wall?communityId=xxx`
+
+### 身份切換器
+- **右下角按鈕**：`🕶️ 訪客模式`
+- 可切換：訪客 / 會員 / 住戶 / 房仲
+- 切換後立即更新所有區塊的權限狀態
+
+### CSS 變數
+React 版需要以下 CSS 變數（已加入 `src/index.css`）：
+```css
+--primary: #00385a;
+--primary-dark: #002a44;
+--primary-light: #005282;
+--border: #E6EDF7;
+--line: #e6edf7;
+--bg-base: #f6f9ff;
+--bg-alt: #eef3ff;
+```
+
+### Commits
+| Hash | 說明 |
+|------|------|
+| `e474faa` | feat(社區牆): React 版完成 - MVP HTML 轉換 |
+| `b788dd7` | fix: 首頁連結修正為 /maihouses/ |
+| `cef78e7` | fix: Mock 按鈕改為深藍黑色（與 MVP 一致） |
+| `e2c023e` | fix: 加入缺少的 CSS 變數 |
 
 ---
 
