@@ -412,8 +412,7 @@ const MOCK_DATA = {
     { id: 5, author: '張大明', company: '台灣房屋', visits: 5, deals: 1, pros: ['建商口碑好，用料實在', '公設比合理，實坪數划算'], cons: '車道坡度較陡，新手要小心' }
   ],
   questions: [
-    { id: 1, question: '請問社區停車位好停嗎？會不會常客滿？', time: '2天前', answersCount: 3, answers: [
-      { author: '8F 住戶', type: 'resident', content: '平日白天都有位，假日偶爾要等一下，但不會太久。' },
+    { id: 1, question: '請問社區停車位好停嗎？會不會常客滿？', time: '2天前', answersCount: 2, answers: [
       { author: '12F 住戶', type: 'resident', content: 'B2 比較容易有位，B1 要碰運氣。' },
       { author: '游杰倫', type: 'agent', content: '這社區車位配比是 1:1.2，算充裕的。', expert: true }
     ]},
@@ -423,7 +422,8 @@ const MOCK_DATA = {
     ]},
     { id: 3, question: '管理費多少？有包含哪些服務？', time: '1週前', answersCount: 1, answers: [
       { author: '管委會', type: 'official', content: '目前每坪 85 元，含 24 小時保全、公設維護、垃圾代收。' }
-    ]}
+    ]},
+    { id: 4, question: '社區有健身房嗎？設備新不新？', time: '3天前', answersCount: 0, answers: [] }
   ]
 };
 
@@ -727,6 +727,7 @@ function renderQuestions() {
   
   // 顯示可見的問答卡片
   questions.slice(0, visibleCount).forEach((q, idx) => {
+    const hasAnswers = q.answers && q.answers.length > 0;
     html += `
       <div class="qa-card">
         <div class="qa-question">Q: ${q.question}</div>
@@ -735,23 +736,29 @@ function renderQuestions() {
           <span>· ${q.time}</span>
           <span>· ${q.answersCount} 則回覆</span>
         </div>
-        <div class="qa-answers">
-          ${q.answers.map(a => `
-            <div class="qa-answer">
-              <div class="qa-answer-header">
-                <span class="qa-answer-badge" style="background:${a.type === 'agent' ? '#e0f4ff' : a.type === 'official' ? '#f6f9ff' : '#e6edf7'};color:${a.type === 'agent' ? '#004E7C' : a.type === 'official' ? '#00385a' : '#00385a'}">
-                  ${a.type === 'agent' ? '🏢 認證房仲' : a.type === 'official' ? '📋 ' + a.author : '🏠 ' + a.author}
-                </span>
-                ${a.expert ? '<span class="qa-answer-badge" style="background:#f0f5ff;color:#004E7C">⭐ 專家回答</span>' : ''}
+        ${hasAnswers ? `
+          <div class="qa-answers">
+            ${q.answers.map(a => `
+              <div class="qa-answer">
+                <div class="qa-answer-header">
+                  <span class="qa-answer-badge" style="background:${a.type === 'agent' ? '#e0f4ff' : a.type === 'official' ? '#f6f9ff' : '#e6edf7'};color:${a.type === 'agent' ? '#004E7C' : a.type === 'official' ? '#00385a' : '#00385a'}">
+                    ${a.type === 'agent' ? '🏢 認證房仲' : a.type === 'official' ? '📋 ' + a.author : '🏠 ' + a.author}
+                  </span>
+                  ${a.expert ? '<span class="qa-answer-badge" style="background:#f0f5ff;color:#004E7C">⭐ 專家回答</span>' : ''}
+                </div>
+                ${a.content}
               </div>
-              ${a.content}
-            </div>
-          `).join('')}
-        </div>
+            `).join('')}
+          </div>
+        ` : `
+          <div style="padding:16px;text-align:center;color:var(--text-secondary);font-size:13px;background:rgba(0,56,90,.02);border-radius:10px;margin-top:8px">
+            🙋 還沒有人回答，成為第一個回答的人！
+          </div>
+        `}
         ${perm.canAnswer ? `
           <div style="margin-top:10px">
             <button class="action-btn" style="width:100%;justify-content:center" onclick="showAnswerModal(${q.id})">
-              💬 我來回答${perm.isAgent ? '（專家）' : ''}
+              💬 ${hasAnswers ? '我來回答' : '搶先回答'}${perm.isAgent ? '（專家）' : ''}
             </button>
           </div>
         ` : ''}
