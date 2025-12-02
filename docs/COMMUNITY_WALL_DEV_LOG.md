@@ -1,7 +1,7 @@
 # 社區牆開發紀錄
 
-> **最後更新**: 2025/12/02 23:30 (台北時間)  
-> **狀態**: MVP 完成 + React 版完成 + Mock 切換
+> **最後更新**: 2025/12/03 01:00 (台北時間)  
+> **狀態**: MVP 完成 + React 版完成 + **重構優化完成**
 
 ---
 
@@ -10,17 +10,31 @@
 | 檔案 | 用途 |
 |------|------|
 | `public/maihouses/community-wall_mvp.html` | MVP 前端頁面 (1047行) |
-| `src/pages/Community/Wall.tsx` | **React 版社區牆 (748行)** |
+| `src/pages/Community/Wall.tsx` | **React 版社區牆 (重構版, ~120行)** |
+| `src/pages/Community/Wall.backup.tsx` | 重構前備份 (748行) |
+| `src/pages/Community/types.ts` | **共用型別定義 (新增)** |
+| `src/pages/Community/mockData.ts` | **Mock 資料 (新增)** |
+| `src/pages/Community/components/` | **組件目錄 (新增)** |
+| `src/pages/Community/components/index.ts` | 組件匯出 |
+| `src/pages/Community/components/Topbar.tsx` | 頂部導航列 |
+| `src/pages/Community/components/ReviewsSection.tsx` | 評價區塊 |
+| `src/pages/Community/components/PostsSection.tsx` | 貼文區塊（公開牆/私密牆） |
+| `src/pages/Community/components/QASection.tsx` | 問答區塊 |
+| `src/pages/Community/components/Sidebar.tsx` | 側邊欄 |
+| `src/pages/Community/components/RoleSwitcher.tsx` | 身份切換器 |
+| `src/pages/Community/components/MockToggle.tsx` | Mock 切換按鈕 |
+| `src/pages/Community/components/BottomCTA.tsx` | 底部 CTA |
 | `api/community/wall.ts` | API: 讀取資料 |
 | `api/community/question.ts` | API: 問答功能 |
 | `api/community/like.ts` | API: 按讚功能 |
 | `supabase/migrations/20241201_community_wall.sql` | 資料庫 Schema |
-| `src/hooks/usePropertyFormValidation.ts` | 表單驗證 Hook (新增+敏感詞) |
-| `src/components/ui/Toast.tsx` | Toast 通知組件 (新增) |
-| `src/components/ui/CommunityPicker.tsx` | 社區選擇器 (優化+AbortController) |
-| `src/utils/contentCheck.ts` | 內容審核工具 (新增) |
-| `src/services/communityService.ts` | 社區牆 API 封裝 (新增) |
-| `src/hooks/useCommunityWall.ts` | 社區牆資料 Hook (新增) |
+| `src/hooks/usePropertyFormValidation.ts` | 表單驗證 Hook |
+| `src/hooks/useCommunityWall.ts` | 社區牆資料 Hook (原版) |
+| `src/hooks/useCommunityWallQuery.ts` | **社區牆 Hook (React Query 版, 新增)** |
+| `src/components/ui/Toast.tsx` | Toast 通知組件 |
+| `src/components/ui/CommunityPicker.tsx` | 社區選擇器 |
+| `src/utils/contentCheck.ts` | 內容審核工具 |
+| `src/services/communityService.ts` | 社區牆 API 封裝 | |
 
 ---
 
@@ -57,6 +71,78 @@
 6. **按讚功能**：liked_by[] + /api/community/like
 7. **Mock 身份切換器**：右下角即時切換測試
 8. **React 版社區牆**：完整拆解 MVP HTML 為 React 組件
+9. **🆕 組件化重構**：將 748 行單檔拆分為 8 個獨立組件
+10. **🆕 React Query 整合**：使用 @tanstack/react-query 實現 SWR 策略
+11. **🆕 樂觀更新**：按讚操作支援即時 UI 更新與失敗回滾
+12. **🆕 無障礙優化**：添加 aria-label、aria-hidden、role 等屬性
+
+---
+
+## 🔧 重構優化 (2025/12/03)
+
+### 架構變更
+
+**原架構**（單一 748 行檔案）：
+```
+Wall.tsx (748行)
+├── Types 定義
+├── Mock 資料
+├── Permission Helper
+└── 所有組件 (inline)
+```
+
+**新架構**（組件化 + 獨立模組）：
+```
+src/pages/Community/
+├── Wall.tsx (~120行)           # 主容器，只負責組合
+├── types.ts                     # 共用型別 + Permission Helper
+├── mockData.ts                  # Mock 資料獨立管理
+└── components/
+    ├── index.ts                 # 統一匯出
+    ├── Topbar.tsx              # 頂部導航
+    ├── ReviewsSection.tsx      # 評價區
+    ├── PostsSection.tsx        # 貼文區
+    ├── QASection.tsx           # 問答區
+    ├── Sidebar.tsx             # 側邊欄
+    ├── RoleSwitcher.tsx        # 身份切換器
+    ├── MockToggle.tsx          # Mock 切換
+    └── BottomCTA.tsx           # 底部 CTA
+```
+
+### React Query Hook
+
+新增 `src/hooks/useCommunityWallQuery.ts`：
+- 使用 `@tanstack/react-query` 實現 SWR 策略
+- staleTime 預設 5 分鐘
+- 支援 refetchOnWindowFocus
+- 樂觀更新 + 失敗回滾機制
+
+```typescript
+const { data, isLoading, toggleLike, createPost } = useCommunityWall(communityId, {
+  includePrivate: true,
+  staleTime: 5 * 60 * 1000,
+  refetchOnWindowFocus: true,
+});
+```
+
+### 無障礙 (a11y) 改進
+
+| 元素 | 改進 |
+|------|------|
+| 按鈕 | 加入 `aria-label` 說明功能 |
+| 模糊區塊 | 加入 `aria-hidden="true"` |
+| Tab 切換 | 加入 `role="tablist"` / `role="tab"` |
+| 區塊標題 | 加入 `aria-labelledby` |
+| 身份選單 | 加入 `role="listbox"` / `role="option"` |
+| 裝飾元素 | 加入 `aria-hidden="true"` |
+
+### 型別統一
+
+從 `types.ts` 統一匯入：
+```typescript
+import type { Role, WallTab, Post, Review, Question, Permissions } from './types';
+import { getPermissions, GUEST_VISIBLE_COUNT } from './types';
+```
 
 ---
 
