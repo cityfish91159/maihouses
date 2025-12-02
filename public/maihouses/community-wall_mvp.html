@@ -719,15 +719,16 @@ function renderQuestions() {
   const questions = MOCK_DATA.questions;
   const container = document.getElementById('qa-list');
   
-  // 訪客只看 2 則問答，其他 blur
-  const visibleCount = perm.isLoggedIn ? questions.length : GUEST_VISIBLE_COUNT;
-  const hiddenCount = questions.length - visibleCount;
+  // 分開處理：有回答的問題 vs 無回答的問題
+  const answeredQuestions = questions.filter(q => q.answers && q.answers.length > 0);
+  
+  // 訪客只看 2 則「有回答」的問答，其他 blur
+  const visibleCount = perm.isLoggedIn ? answeredQuestions.length : Math.min(GUEST_VISIBLE_COUNT, answeredQuestions.length);
   
   let html = '';
   
-  // 顯示可見的問答卡片
-  questions.slice(0, visibleCount).forEach((q, idx) => {
-    const hasAnswers = q.answers && q.answers.length > 0;
+  // 顯示可見的問答卡片（有回答的）
+  answeredQuestions.slice(0, visibleCount).forEach((q, idx) => {
     html += `
       <div class="qa-card">
         <div class="qa-question">Q: ${q.question}</div>
@@ -736,8 +737,7 @@ function renderQuestions() {
           <span>· ${q.time}</span>
           <span>· ${q.answersCount} 則回覆</span>
         </div>
-        ${hasAnswers ? `
-          <div class="qa-answers">
+        <div class="qa-answers">
             ${q.answers.map(a => `
               <div class="qa-answer">
                 <div class="qa-answer-header">
@@ -749,16 +749,11 @@ function renderQuestions() {
                 ${a.content}
               </div>
             `).join('')}
-          </div>
-        ` : `
-          <div style="padding:16px;text-align:center;color:var(--text-secondary);font-size:13px;background:rgba(0,56,90,.02);border-radius:10px;margin-top:8px">
-            🙋 還沒有人回答，成為第一個回答的人！
-          </div>
-        `}
+        </div>
         ${perm.canAnswer ? `
           <div style="margin-top:10px">
             <button class="action-btn" style="width:100%;justify-content:center" onclick="showAnswerModal(${q.id})">
-              💬 ${hasAnswers ? '我來回答' : '搶先回答'}${perm.isAgent ? '（專家）' : ''}
+              💬 我來回答${perm.isAgent ? '（專家）' : ''}
             </button>
           </div>
         ` : ''}
@@ -766,9 +761,14 @@ function renderQuestions() {
     `;
   });
   
-  // blur 遮罩（訪客看不到的問答）
-  if (hiddenCount > 0) {
-    const nextQ = questions[visibleCount];
+  // blur 遮罩（訪客看不到的「有回答」問答）
+  const unansweredQuestions = questions.filter(q => !q.answers || q.answers.length === 0);
+  
+  const visibleAnswered = perm.isLoggedIn ? answeredQuestions.length : Math.min(GUEST_VISIBLE_COUNT, answeredQuestions.length);
+  const hiddenAnswered = answeredQuestions.length - visibleAnswered;
+  
+  if (hiddenAnswered > 0) {
+    const nextQ = answeredQuestions[visibleAnswered];
     html += `
       <div class="blur-overlay">
         <div class="qa-card blur-target">
@@ -779,13 +779,37 @@ function renderQuestions() {
           </div>
         </div>
         <div class="blur-cta">
-          <h4>🔒 還有 ${hiddenCount} 則問答</h4>
+          <h4>🔒 還有 ${hiddenAnswered} 則問答</h4>
           <p>註冊會員查看完整問答</p>
           <button onclick="showLoginModal()">免費註冊 / 登入</button>
         </div>
       </div>
     `;
   }
+  
+  // 無回答的問題（都顯示，不 blur，吸引人回答）
+  unansweredQuestions.forEach(q => {
+    html += `
+      <div class="qa-card" style="border-color:rgba(0,159,232,.3);background:linear-gradient(135deg,#f6f9ff,#eef5ff)">
+        <div class="qa-question">Q: ${q.question}</div>
+        <div class="qa-meta">
+          <span>👤 準住戶</span>
+          <span>· ${q.time}</span>
+          <span style="color:var(--brand-light);font-weight:700">· 等待回答中</span>
+        </div>
+        <div style="padding:16px;text-align:center;color:var(--text-secondary);font-size:13px;background:rgba(0,56,90,.02);border-radius:10px;margin-top:8px">
+          🙋 還沒有人回答，成為第一個回答的人！
+        </div>
+        ${perm.canAnswer ? `
+          <div style="margin-top:10px">
+            <button class="action-btn" style="width:100%;justify-content:center;background:rgba(0,159,232,.1);border-color:rgba(0,159,232,.3);color:#004E7C" onclick="showAnswerModal(${q.id})">
+              💬 搶先回答${perm.isAgent ? '（專家）' : ''}
+            </button>
+          </div>
+        ` : ''}
+      </div>
+    `;
+  });
   
   // 發問區塊
   html += `
