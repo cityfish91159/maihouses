@@ -5,17 +5,16 @@
  * 重構：使用 LockedOverlay + Tailwind brand 色系
  */
 
-import type { Role, Post, WallTab, Permissions } from '../types';
+import type { Role, Post, WallTab } from '../types';
 import { getPermissions, GUEST_VISIBLE_COUNT } from '../types';
 import { LockedOverlay } from './LockedOverlay';
 
 interface PostCardProps {
   post: Post;
-  perm: Permissions;
   onLike?: ((postId: number) => void) | undefined;
 }
 
-function PostCard({ post, perm, onLike }: PostCardProps) {
+function PostCard({ post, onLike }: PostCardProps) {
   const isAgent = post.type === 'agent';
   const isOfficial = post.type === 'official';
 
@@ -27,9 +26,10 @@ function PostCard({ post, perm, onLike }: PostCardProps) {
         ? <span className="rounded bg-brand-100 px-1.5 py-0.5 text-[9px] font-bold text-brand">{post.floor} 住戶</span>
         : null;
 
-  const stats = post.likes 
+  // 修復：likes=0 時也應顯示（不再被當成 falsy）
+  const stats = post.likes !== undefined 
     ? <span className="flex items-center gap-1">❤️ {post.likes}</span>
-    : post.views 
+    : post.views !== undefined
       ? <span className="flex items-center gap-1">👁️ {post.views}</span>
       : null;
 
@@ -118,7 +118,7 @@ export function PostsSection({
   };
 
   return (
-    <section className="overflow-hidden rounded-[18px] border border-border-light bg-white/98 shadow-[0_2px_12px_rgba(0,51,102,0.04)]" aria-labelledby="posts-heading">
+    <section id="public-wall" className="overflow-hidden rounded-[18px] border border-border-light bg-white/98 shadow-[0_2px_12px_rgba(0,51,102,0.04)]" aria-labelledby="posts-heading">
       <div className="flex items-center justify-between border-b border-brand/5 bg-gradient-to-br from-brand/3 to-brand-600/1 px-4 py-3.5">
         <h2 id="posts-heading" className="flex items-center gap-1.5 text-[15px] font-extrabold text-brand-700">🔥 社區熱帖</h2>
       </div>
@@ -148,7 +148,7 @@ export function PostsSection({
         {currentTab === 'public' ? (
           <>
             {visiblePublic.map(post => (
-              <PostCard key={post.id} post={post} perm={perm} onLike={onLike} />
+              <PostCard key={post.id} post={post} onLike={onLike} />
             ))}
             
             {/* 使用 LockedOverlay 組件 */}
@@ -159,7 +159,7 @@ export function PostsSection({
               benefits={['查看完整動態', '新回答通知']}
             >
               {publicPosts[GUEST_VISIBLE_COUNT] && (
-                <PostCard post={publicPosts[GUEST_VISIBLE_COUNT]} perm={perm} />
+                <PostCard post={publicPosts[GUEST_VISIBLE_COUNT]} />
               )}
             </LockedOverlay>
             
@@ -174,7 +174,7 @@ export function PostsSection({
         ) : perm.canAccessPrivate ? (
           <>
             {privatePosts.map(post => (
-              <PostCard key={post.id} post={post} perm={perm} onLike={onLike} />
+              <PostCard key={post.id} post={post} onLike={onLike} />
             ))}
             {perm.canPostPrivate ? (
               <div className="flex justify-center rounded-[14px] border border-dashed border-border-light bg-brand/3 p-5">

@@ -75,7 +75,7 @@ export function QASection({ role, questions }: QASectionProps) {
   const unansweredQuestions = questions.filter(q => q.answers.length === 0);
 
   const visibleCount = perm.isLoggedIn ? answeredQuestions.length : Math.min(GUEST_VISIBLE_COUNT, answeredQuestions.length);
-  const hiddenCount = answeredQuestions.length - visibleCount;
+  const hiddenCount = Math.max(0, answeredQuestions.length - visibleCount);
 
   return (
     <section className="overflow-hidden rounded-[18px] border border-border-light bg-white/98 shadow-[0_2px_12px_rgba(0,51,102,0.04)]" aria-labelledby="qa-heading" id="qa-section">

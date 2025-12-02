@@ -78,6 +78,77 @@
 12. **🆕 無障礙優化**：添加 aria-label、aria-hidden、role 等屬性
 13. **🆕 LockedOverlay 組件**：統一的模糊鎖定遮罩，減少 60 行重複代碼
 14. **🆕 Tailwind 品牌色統一**：所有硬編碼顏色改為品牌色系統
+15. **🆕 Code Review 修復**：解決 React 規範問題與邊界情況
+
+---
+
+## 🔧 Code Review 修復 (2025/12/04)
+
+根據完整 Code Review 修復以下問題：
+
+### 1. Render 中 setState 問題
+
+**問題**：在 `Wall.tsx` 中，切換角色導致無權限時的 tab 重設邏輯直接寫在 render 函式裡
+
+**解決**：改用 `useEffect` 監聽 `role` / `perm` 變化
+
+```typescript
+// 修正前（會造成 React warning）
+if (currentTab === 'private' && !perm.canAccessPrivate) {
+  setCurrentTab('public');
+}
+
+// 修正後
+useEffect(() => {
+  if (currentTab === 'private' && !perm.canAccessPrivate) {
+    setCurrentTab('public');
+  }
+}, [currentTab, perm.canAccessPrivate]);
+```
+
+### 2. Anchor 目標缺失
+
+**問題**：Sidebar 連結 `#public-wall`、`#qa-section` 指向的 id 不存在
+
+**解決**：
+- `PostsSection` 加上 `id="public-wall"`
+- `QASection` 已有 `id="qa-section"` ✅
+
+### 3. 未使用的 perm prop
+
+**問題**：`PostCard` 元件接收 `perm` prop 但從未使用
+
+**解決**：移除 `perm` prop，清理死碼
+
+### 4. likes=0 被當成 falsy
+
+**問題**：`post.likes` 為 0 時，判斷式 `post.likes ? ... : ...` 會跳到 else 分支
+
+**解決**：改用 `post.likes !== undefined` 判斷
+
+```typescript
+// 修正前
+const stats = post.likes 
+  ? <span>❤️ {post.likes}</span>
+  : post.views 
+    ? <span>👁️ {post.views}</span>
+    : null;
+
+// 修正後
+const stats = post.likes !== undefined 
+  ? <span>❤️ {post.likes}</span>
+  : post.views !== undefined
+    ? <span>👁️ {post.views}</span>
+    : null;
+```
+
+### 5. hiddenCount 負數問題
+
+**問題**：當總筆數小於 `GUEST_VISIBLE_COUNT` 時，`hiddenCount` 會變成負數
+
+**解決**：
+- `visibleCount` 加上 `Math.min(GUEST_VISIBLE_COUNT, totalCount)`
+- `hiddenCount` 加上 `Math.max(0, ...)`
 
 ---
 

@@ -5,7 +5,7 @@
  * 重構版 - 組件化、React Query、a11y 優化
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 
 // Components
@@ -56,10 +56,12 @@ export default function Wall() {
     setCurrentTab(tab);
   }, [perm.canAccessPrivate]);
 
-  // 如果身份變更導致無法存取私密牆，切回公開牆
-  if (currentTab === 'private' && !perm.canAccessPrivate) {
-    setCurrentTab('public');
-  }
+  // 如果身份變更導致無法存取私密牆，切回公開牆（使用 useEffect 避免 render 中 setState）
+  useEffect(() => {
+    if (currentTab === 'private' && !perm.canAccessPrivate) {
+      setCurrentTab('public');
+    }
+  }, [currentTab, perm.canAccessPrivate]);
 
   // 按讚處理（目前只支援 Mock）
   const handleLike = useCallback((postId: number) => {
