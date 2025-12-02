@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useCommunityWall } from '../../hooks/useCommunityWall';
 
 // ============ Types ============
@@ -126,15 +126,15 @@ function getPermissions(role: Role) {
 function Topbar({ communityName }: { communityName: string }) {
   return (
     <header className="sticky top-0 z-50 flex items-center gap-2.5 border-b border-[rgba(230,237,247,0.8)] bg-[rgba(246,249,255,0.95)] px-4 py-2 backdrop-blur-[12px]">
-      <Link 
-        to="/maihouses/feed-consumer.html" 
+      <a 
+        href="/maihouses/" 
         className="flex items-center gap-2 rounded-[10px] px-2.5 py-1.5 text-sm font-bold text-[var(--primary)] no-underline transition-colors hover:bg-[rgba(0,56,90,0.06)]"
       >
         <svg className="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
           <path d="M19 12H5M12 19l-7-7 7-7"/>
         </svg>
-        <span>我的動態</span>
-      </Link>
+        <span>回首頁</span>
+      </a>
       <div className="flex-1 text-center">
         <h1 className="m-0 text-base font-extrabold text-[var(--primary-dark)]">{communityName}</h1>
         <p className="m-0 text-[11px] text-[var(--text-secondary)]">社區牆</p>
