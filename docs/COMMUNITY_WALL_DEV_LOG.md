@@ -1,7 +1,7 @@
 # 社區牆開發紀錄
 
-> **最後更新**: 2025/12/03 01:00 (台北時間)  
-> **狀態**: MVP 完成 + React 版完成 + **重構優化完成**
+> **最後更新**: 2025/12/04 (台北時間)  
+> **狀態**: MVP 完成 + React 版完成 + **重構優化完成** + **代碼品質優化**
 
 ---
 
@@ -24,6 +24,7 @@
 | `src/pages/Community/components/RoleSwitcher.tsx` | 身份切換器 |
 | `src/pages/Community/components/MockToggle.tsx` | Mock 切換按鈕 |
 | `src/pages/Community/components/BottomCTA.tsx` | 底部 CTA |
+| `src/pages/Community/components/LockedOverlay.tsx` | **🆕 模糊鎖定遮罩組件** |
 | `api/community/wall.ts` | API: 讀取資料 |
 | `api/community/question.ts` | API: 問答功能 |
 | `api/community/like.ts` | API: 按讚功能 |
@@ -75,6 +76,94 @@
 10. **🆕 React Query 整合**：使用 @tanstack/react-query 實現 SWR 策略
 11. **🆕 樂觀更新**：按讚操作支援即時 UI 更新與失敗回滾
 12. **🆕 無障礙優化**：添加 aria-label、aria-hidden、role 等屬性
+13. **🆕 LockedOverlay 組件**：統一的模糊鎖定遮罩，減少 60 行重複代碼
+14. **🆕 Tailwind 品牌色統一**：所有硬編碼顏色改為品牌色系統
+
+---
+
+## 🎨 代碼品質優化 (2025/12/04)
+
+### 1. LockedOverlay 組件
+
+**問題**：ReviewsSection、PostsSection、QASection 都有相似的 blur 遮罩代碼 (~60 行重複)
+
+**解決**：抽取為可重用的 `LockedOverlay` 組件
+
+```typescript
+// src/pages/Community/components/LockedOverlay.tsx
+interface LockedOverlayProps {
+  children: React.ReactNode;
+  hiddenCount?: number;
+  countLabel?: string;
+  benefits?: string[];
+  ctaText?: string;
+  onCtaClick?: () => void;
+  visible?: boolean;
+}
+
+export function LockedOverlay({
+  children,
+  hiddenCount = 0,
+  countLabel = '則內容',
+  benefits = ['查看完整評價', '發表問題與回覆', '參與社區討論'],
+  ctaText = '加入查看完整內容',
+  onCtaClick,
+  visible = false,
+}: LockedOverlayProps) { ... }
+```
+
+**使用方式**：
+```tsx
+<LockedOverlay
+  visible={!permissions.canViewAllReviews}
+  hiddenCount={totalHidden}
+  countLabel="則評價"
+  benefits={['查看完整社區評價', '瀏覽所有住戶心得']}
+  ctaText="加入查看完整內容"
+>
+  {/* 內容 */}
+</LockedOverlay>
+```
+
+### 2. Tailwind 品牌色統一
+
+**問題**：組件中混用硬編碼顏色和 CSS 變數
+
+**解決**：統一使用 Tailwind 品牌色系統
+
+| 原本 | 改為 |
+|------|------|
+| `text-[#00385a]` | `text-brand` |
+| `bg-[#e0f4ff]` | `bg-brand-100` |
+| `text-[var(--primary-dark)]` | `text-brand-700` |
+| `text-[var(--text-secondary)]` | `text-ink-600` |
+| `text-[var(--text-primary)]` | `text-ink-900` |
+| `border-[var(--border-light)]` | `border-border-light` |
+
+**受影響檔案**：
+- `ReviewsSection.tsx`
+- `PostsSection.tsx`
+- `QASection.tsx`
+
+### 3. 資料來源邏輯修正
+
+**問題**：`useMock=false` 時，UI 仍顯示空陣列
+
+**解決**：修正 Wall.tsx 資料映射邏輯
+
+```typescript
+// 修正前
+const reviews = useMock ? MOCK_DATA.reviews : [];
+
+// 修正後
+const reviews = useMock 
+  ? MOCK_DATA.reviews 
+  : (apiData?.reviews?.items || []);
+```
+
+**同時新增**：
+- Loading 狀態 UI（API 模式）
+- Error 狀態 UI + 自動切換 Mock 按鈕
 
 ---
 

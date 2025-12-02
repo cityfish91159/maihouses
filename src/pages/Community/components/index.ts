@@ -12,3 +12,4 @@ export { Sidebar } from './Sidebar';
 export { RoleSwitcher } from './RoleSwitcher';
 export { MockToggle } from './MockToggle';
 export { BottomCTA } from './BottomCTA';
+export { LockedOverlay } from './LockedOverlay';

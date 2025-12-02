@@ -2,11 +2,13 @@
  * ReviewsSection Component
  * 
  * 社區評價區塊
+ * 重構：使用 LockedOverlay + Tailwind brand 色系
  */
 
 import { useMemo } from 'react';
-import type { Role, Review, Permissions } from '../types';
+import type { Role, Review } from '../types';
 import { getPermissions, GUEST_VISIBLE_COUNT } from '../types';
+import { LockedOverlay } from './LockedOverlay';
 
 interface ReviewCardProps {
   item: { 
@@ -21,22 +23,27 @@ interface ReviewCardProps {
 
 function ReviewCard({ item, type }: ReviewCardProps) {
   const icon = type === 'pro' ? '✅' : '⚖️';
-  const bgClass = type === 'pro' ? 'bg-gradient-to-br from-[#f6f9ff] to-[#eef3ff]' : 'bg-gradient-to-br from-[#f0f5ff] to-[#e6edf7]';
+  const bgClass = type === 'pro' 
+    ? 'bg-gradient-to-br from-brand-50 to-brand-100/50' 
+    : 'bg-gradient-to-br from-brand-100/30 to-brand-100';
   
   return (
-    <div className="rounded-[14px] border border-[var(--border-light)] bg-white p-3.5 transition-all hover:border-[rgba(0,56,90,0.15)] hover:shadow-[0_2px_8px_rgba(0,56,90,0.04)]">
+    <div className="rounded-[14px] border border-border-light bg-white p-3.5 transition-all hover:border-brand/15 hover:shadow-[0_2px_8px_rgba(0,56,90,0.04)]">
       <div className="mb-2.5 flex items-center gap-2.5">
-        <div className="flex h-[38px] w-[38px] items-center justify-center rounded-full border-2 border-[var(--primary)] bg-gradient-to-br from-[#eef3ff] to-white text-sm font-extrabold text-[var(--primary)]" aria-hidden="true">
+        <div 
+          className="flex h-[38px] w-[38px] items-center justify-center rounded-full border-2 border-brand bg-gradient-to-br from-brand-100/50 to-white text-sm font-extrabold text-brand" 
+          aria-hidden="true"
+        >
           {item.author.charAt(0)}
         </div>
         <div className="flex-1">
-          <div className="text-[13px] font-bold">{item.author}｜{item.company}</div>
-          <div className="text-[11px] text-[var(--text-secondary)]">帶看 {item.visits} 次 · 成交 {item.deals} 戶</div>
+          <div className="text-[13px] font-bold text-ink-900">{item.author}｜{item.company}</div>
+          <div className="text-[11px] text-ink-600">帶看 {item.visits} 次 · 成交 {item.deals} 戶</div>
         </div>
       </div>
       <div className={`flex items-start gap-2.5 rounded-[10px] p-2 text-[13px] leading-relaxed ${bgClass}`}>
         <span className="flex h-6 w-6 shrink-0 items-center justify-center text-base" aria-hidden="true">{icon}</span>
-        <span className="flex-1 text-[var(--text-primary)]">{item.text}</span>
+        <span className="flex-1 text-ink-900">{item.text}</span>
       </div>
     </div>
   );
@@ -67,13 +74,13 @@ export function ReviewsSection({ role, reviews }: ReviewsSectionProps) {
   const hiddenCount = totalCount - visibleCount;
 
   return (
-    <section className="overflow-hidden rounded-[18px] border border-[var(--border-light)] bg-[rgba(255,255,255,0.98)] shadow-[0_2px_12px_rgba(0,51,102,0.04)]" aria-labelledby="reviews-heading">
-      <div className="flex items-center justify-between border-b border-[rgba(0,56,90,0.05)] bg-gradient-to-br from-[rgba(0,56,90,0.08)] to-[rgba(0,82,130,0.04)] px-4 py-3.5">
+    <section className="overflow-hidden rounded-[18px] border border-border-light bg-white/98 shadow-[0_2px_12px_rgba(0,51,102,0.04)]" aria-labelledby="reviews-heading">
+      <div className="flex items-center justify-between border-b border-brand/5 bg-gradient-to-br from-brand/8 to-brand-600/4 px-4 py-3.5">
         <div>
-          <h2 id="reviews-heading" className="flex items-center gap-1.5 text-[15px] font-extrabold text-[var(--primary-dark)]">⭐ 社區評價</h2>
-          <p className="mt-0.5 text-[11px] text-[var(--text-secondary)]">來自最真實的評價</p>
+          <h2 id="reviews-heading" className="flex items-center gap-1.5 text-[15px] font-extrabold text-brand-700">⭐ 社區評價</h2>
+          <p className="mt-0.5 text-[11px] text-ink-600">來自最真實的評價</p>
         </div>
-        <span className="flex items-center gap-1 rounded-full border border-[var(--primary-light)] bg-[rgba(0,56,90,0.08)] px-2.5 py-1 text-[10px] font-bold text-[var(--primary)]">
+        <span className="flex items-center gap-1 rounded-full border border-brand-600 bg-brand/8 px-2.5 py-1 text-[10px] font-bold text-brand">
           {totalCount} 則評價
         </span>
       </div>
@@ -82,20 +89,17 @@ export function ReviewsSection({ role, reviews }: ReviewsSectionProps) {
           <ReviewCard key={idx} item={item} type={item.type} />
         ))}
         
-        {hiddenCount > 0 && allItems[visibleCount] && (
-          <div className="relative">
-            <div className="pointer-events-none select-none blur-[4px]" aria-hidden="true">
-              <ReviewCard item={allItems[visibleCount]} type={allItems[visibleCount].type} />
-            </div>
-            <div className="absolute inset-0 flex flex-col items-center justify-center rounded-[14px] bg-[rgba(255,255,255,0.85)] p-5 text-center">
-              <h4 className="mb-1 text-sm font-extrabold text-[var(--primary-dark)]">🔒 還有 {hiddenCount} 則評價</h4>
-              <p className="mb-2.5 text-xs text-[var(--text-secondary)]">✓ 查看全部評價　✓ 新回答通知</p>
-              <button className="rounded-full bg-gradient-to-br from-[var(--primary)] to-[#005282] px-6 py-2.5 text-[13px] font-bold text-white transition-transform hover:scale-[1.02]">
-                免費註冊 / 登入
-              </button>
-            </div>
-          </div>
-        )}
+        {/* 使用 LockedOverlay 組件 */}
+        <LockedOverlay
+          visible={hiddenCount > 0 && !!allItems[visibleCount]}
+          hiddenCount={hiddenCount}
+          countLabel="則評價"
+          benefits={['查看全部評價', '新回答通知']}
+        >
+          {allItems[visibleCount] && (
+            <ReviewCard item={allItems[visibleCount]} type={allItems[visibleCount].type} />
+          )}
+        </LockedOverlay>
       </div>
     </section>
   );

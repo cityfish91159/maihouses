@@ -69,16 +69,60 @@ export default function Wall() {
     // Mock 模式下暫不處理
   }, [useMock, apiToggleLike]);
 
-  // 資料來源（Mock 或 API）
+  // 資料來源（Mock 或 API）- 動態切換
   const communityName = useMock 
     ? MOCK_DATA.communityInfo.name 
-    : (apiData?.posts?.public?.[0]?.community_id || '社區牆');
+    : (apiData?.communityName || '社區牆');
     
-  const reviews = useMock ? MOCK_DATA.reviews : [];
-  const publicPosts = useMock ? MOCK_DATA.posts.public : [];
-  const privatePosts = useMock ? MOCK_DATA.posts.private : [];
-  const questions = useMock ? MOCK_DATA.questions : [];
-  const communityInfo = useMock ? MOCK_DATA.communityInfo : null;
+  const reviews = useMock 
+    ? MOCK_DATA.reviews 
+    : (apiData?.reviews?.items || []);
+    
+  const publicPosts = useMock 
+    ? MOCK_DATA.posts.public 
+    : (apiData?.posts?.public || []);
+    
+  const privatePosts = useMock 
+    ? MOCK_DATA.posts.private 
+    : (apiData?.posts?.private || []);
+    
+  const questions = useMock 
+    ? MOCK_DATA.questions 
+    : (apiData?.questions?.items || []);
+    
+  const communityInfo = useMock 
+    ? MOCK_DATA.communityInfo 
+    : apiData?.communityInfo || null;
+
+  // Loading 狀態（僅 API 模式）
+  if (!useMock && isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-bg-base to-bg-soft">
+        <div className="text-center">
+          <div className="mb-2 text-2xl">🏠</div>
+          <div className="text-sm text-ink-600">載入中...</div>
+        </div>
+      </div>
+    );
+  }
+
+  // Error 狀態（僅 API 模式）
+  if (!useMock && error) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-bg-base to-bg-soft">
+        <div className="text-center">
+          <div className="mb-2 text-2xl">😢</div>
+          <div className="mb-2 text-sm text-ink-600">載入失敗</div>
+          <button 
+            onClick={() => setUseMock(true)}
+            className="rounded-lg bg-brand px-4 py-2 text-sm text-white"
+          >
+            切換 Mock 模式
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[var(--bg-base)] to-[var(--bg-alt)]">
