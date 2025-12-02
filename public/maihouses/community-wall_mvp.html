@@ -719,14 +719,14 @@ function renderQuestions() {
   const questions = MOCK_DATA.questions;
   const container = document.getElementById('qa-list');
   
+  // 訪客只看 2 則問答，其他 blur
+  const visibleCount = perm.isLoggedIn ? questions.length : GUEST_VISIBLE_COUNT;
+  const hiddenCount = questions.length - visibleCount;
+  
   let html = '';
   
-  questions.forEach((q, idx) => {
-    // 訪客只能看問題和部分回答
-    const showAllAnswers = perm.isLoggedIn;
-    const visibleAnswers = showAllAnswers ? q.answers : q.answers.slice(0, 1);
-    const hiddenAnswerCount = q.answers.length - visibleAnswers.length;
-    
+  // 顯示可見的問答卡片
+  questions.slice(0, visibleCount).forEach((q, idx) => {
     html += `
       <div class="qa-card">
         <div class="qa-question">Q: ${q.question}</div>
@@ -736,7 +736,7 @@ function renderQuestions() {
           <span>· ${q.answersCount} 則回覆</span>
         </div>
         <div class="qa-answers">
-          ${visibleAnswers.map(a => `
+          ${q.answers.map(a => `
             <div class="qa-answer">
               <div class="qa-answer-header">
                 <span class="qa-answer-badge" style="background:${a.type === 'agent' ? '#e0f4ff' : a.type === 'official' ? '#f6f9ff' : '#e6edf7'};color:${a.type === 'agent' ? '#004E7C' : a.type === 'official' ? '#00385a' : '#00385a'}">
@@ -748,21 +748,6 @@ function renderQuestions() {
             </div>
           `).join('')}
         </div>
-        ${hiddenAnswerCount > 0 ? `
-          <div class="blur-overlay" style="margin-top:8px">
-            <div class="qa-answer blur-target" style="padding:12px;background:#f8f8f8;border-radius:8px">
-              <div class="qa-answer-header">
-                <span class="qa-answer-badge" style="background:#e6edf7;color:#00385a">🏠 住戶</span>
-              </div>
-              還有更多住戶回覆...
-            </div>
-            </div>
-            <div class="blur-cta" style="padding:16px">
-              <h4 style="margin-bottom:6px">🔒 還有 ${hiddenAnswerCount} 則回覆</h4>
-              <button onclick="showLoginModal()">登入查看</button>
-            </div>
-          </div>
-        ` : ''}
         ${perm.canAnswer ? `
           <div style="margin-top:10px">
             <button class="action-btn" style="width:100%;justify-content:center" onclick="showAnswerModal(${q.id})">
@@ -773,6 +758,27 @@ function renderQuestions() {
       </div>
     `;
   });
+  
+  // blur 遮罩（訪客看不到的問答）
+  if (hiddenCount > 0) {
+    const nextQ = questions[visibleCount];
+    html += `
+      <div class="blur-overlay">
+        <div class="qa-card blur-target">
+          <div class="qa-question">Q: ${nextQ?.question?.substring(0, 15) || '...'}...</div>
+          <div class="qa-meta">
+            <span>👤 準住戶</span>
+            <span>· ${nextQ?.answersCount || 0} 則回覆</span>
+          </div>
+        </div>
+        <div class="blur-cta">
+          <h4>🔒 還有 ${hiddenCount} 則問答</h4>
+          <p>註冊會員查看完整問答</p>
+          <button onclick="showLoginModal()">免費註冊 / 登入</button>
+        </div>
+      </div>
+    `;
+  }
   
   // 發問區塊
   html += `
