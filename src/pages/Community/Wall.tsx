@@ -652,7 +652,7 @@ function MockToggle({ useMock, onToggle }: { useMock: boolean; onToggle: () => v
   return (
     <button
       onClick={onToggle}
-      className={`fixed bottom-5 left-5 z-[1000] flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-xs font-bold shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all ${useMock ? 'bg-amber-500 text-white' : 'bg-green-600 text-white'}`}
+      className="fixed bottom-5 left-5 z-[1000] flex items-center gap-1.5 rounded-xl bg-gradient-to-br from-[#1a1a2e] to-[#16213e] px-4 py-2.5 text-xs font-bold text-white shadow-[0_4px_20px_rgba(0,0,0,0.3)]"
     >
       {useMock ? '🧪 Mock 資料' : '🌐 API 資料'}
     </button>
