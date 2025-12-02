@@ -8,12 +8,22 @@
     /* === 統一色票系統 (以 Tailwind Config 為準) === */
     --brand: #00385a;        /* 深藍 */
     --brand-light: #009FE8;  /* 亮藍 */
+    --brand-600: #004E7C;
+    --primary: #00385a;
+    --primary-dark: #002a44;
+    --primary-light: #005282;
     --text-primary: #0a2246;
-    --text-secondary: #2d3748;
+    --text-secondary: #526070;
     --text-tertiary: #8a95a5;
+    --text-muted: #6C7B91;
     --bg-page: #EEF2F7;
+    --bg-base: #f6f9ff;
+    --bg-alt: #eef3ff;
+    --bg-elevated: #ffffff;
     --success: #0f6a23;
-    --border-light: #E6EDF7;
+    --border: #E6EDF7;
+    --border-light: #e8f0f8;
+    --line: #e6edf7;
     
     /* === 常用參數 === */
     --r-sm: 12px;
