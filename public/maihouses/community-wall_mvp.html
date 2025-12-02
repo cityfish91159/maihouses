@@ -378,6 +378,27 @@ body.role-agent .blur-cta{display:none !important}
       </div>
       <a href="#public-tab" style="display:block;text-align:center;font-size:12px;color:var(--brand-light);margin-top:8px;text-decoration:none">查看全部貼文 →</a>
     </div>
+    
+    <!-- 小邁公仔 -->
+    <div class="sidebar-card" style="text-align:center;background:linear-gradient(135deg,#f0f7ff,#e8f4ff)">
+      <svg style="width:80px;height:96px;color:#00385a;margin-bottom:8px" viewBox="0 0 200 240">
+        <path d="M 85 40 L 85 15 L 100 30 L 115 15 L 115 40" stroke="currentColor" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M 40 80 L 100 40 L 160 80" stroke="currentColor" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        <rect x="55" y="80" width="90" height="100" stroke="currentColor" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M 78 110 Q 85 105 92 110" stroke="currentColor" stroke-width="4" fill="none" stroke-linecap="round"/>
+        <path d="M 108 110 Q 115 105 122 110" stroke="currentColor" stroke-width="4" fill="none" stroke-linecap="round"/>
+        <circle cx="85" cy="125" r="4" stroke="currentColor" stroke-width="3" fill="none"/>
+        <circle cx="115" cy="125" r="4" stroke="currentColor" stroke-width="3" fill="none"/>
+        <path d="M 90 145 Q 100 155 110 145" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <path d="M 55 130 L 25 110" stroke="currentColor" stroke-width="5" fill="none" stroke-linecap="round"/>
+        <path class="mascot-hand" d="M 145 130 L 175 100" stroke="currentColor" stroke-width="5" fill="none" stroke-linecap="round"/>
+        <circle class="mascot-hand" cx="180" cy="95" r="6" stroke="currentColor" stroke-width="3" fill="none"/>
+        <path d="M 85 180 L 85 210 L 75 210" stroke="currentColor" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M 115 180 L 115 210 L 125 210" stroke="currentColor" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <p style="font-size:13px;font-weight:700;color:var(--brand);margin-bottom:10px">有問題？問問鄰居！</p>
+      <a href="#qa-section" style="display:inline-block;background:var(--brand);color:#fff;padding:8px 16px;border-radius:999px;font-size:12px;font-weight:700;text-decoration:none">前往問答區 →</a>
+    </div>
   </aside>
 </div>
 
@@ -811,21 +832,6 @@ function renderQuestions() {
           </div>
         </div>
         <div class="blur-cta">
-          <svg class="mascot" style="width:60px;height:72px;color:#00385a" viewBox="0 0 200 240">
-            <path d="M 85 40 L 85 15 L 100 30 L 115 15 L 115 40" stroke="currentColor" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M 40 80 L 100 40 L 160 80" stroke="currentColor" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-            <rect x="55" y="80" width="90" height="100" stroke="currentColor" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M 78 110 Q 85 105 92 110" stroke="currentColor" stroke-width="4" fill="none" stroke-linecap="round"/>
-            <path d="M 108 110 Q 115 105 122 110" stroke="currentColor" stroke-width="4" fill="none" stroke-linecap="round"/>
-            <circle cx="85" cy="125" r="4" stroke="currentColor" stroke-width="3" fill="none"/>
-            <circle cx="115" cy="125" r="4" stroke="currentColor" stroke-width="3" fill="none"/>
-            <path d="M 90 145 Q 100 155 110 145" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round"/>
-            <path d="M 55 130 L 25 110" stroke="currentColor" stroke-width="5" fill="none" stroke-linecap="round"/>
-            <path class="mascot-hand" d="M 145 130 L 175 100" stroke="currentColor" stroke-width="5" fill="none" stroke-linecap="round"/>
-            <circle class="mascot-hand" cx="180" cy="95" r="6" stroke="currentColor" stroke-width="3" fill="none"/>
-            <path d="M 85 180 L 85 210 L 75 210" stroke="currentColor" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M 115 180 L 115 210 L 125 210" stroke="currentColor" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
           <h4>🔒 還有 ${hiddenAnswered} 則問答</h4>
           <p>✓ 查看完整問答　✓ 新回答通知</p>
           <button onclick="showLoginModal()">免費註冊 / 登入</button>
