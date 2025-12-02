@@ -2,10 +2,11 @@
  * usePropertyFormValidation
  * 
  * 表單驗證 Hook - 用於物件上傳頁的即時驗證
- * 包含：基本欄位、兩好一公道字數、圖片驗證
+ * 包含：基本欄位、兩好一公道字數、圖片驗證、敏感詞檢測
  */
 
 import { useState, useCallback, useMemo } from 'react';
+import { checkContent, ContentCheckResult } from '../utils/contentCheck';
 
 // 驗證規則配置
 export const VALIDATION_RULES = {
@@ -51,16 +52,29 @@ export interface ValidationState {
   price: { valid: boolean; message: string };
   address: { valid: boolean; message: string };
   communityName: { valid: boolean; message: string };
-  advantage1: { valid: boolean; message: string; charCount: number };
-  advantage2: { valid: boolean; message: string; charCount: number };
-  disadvantage: { valid: boolean; message: string; charCount: number };
+  advantage1: { valid: boolean; message: string; charCount: number; contentWarning?: string };
+  advantage2: { valid: boolean; message: string; charCount: number; contentWarning?: string };
+  disadvantage: { valid: boolean; message: string; charCount: number; contentWarning?: string };
   images: { valid: boolean; message: string; count: number };
+  
+  // 向後兼容別名（舊版命名）
+  adv1Valid: boolean;
+  adv2Valid: boolean;
+  disValid: boolean;
+  communityValid: boolean;
   
   // 整體狀態
   basicValid: boolean;
   twoGoodOneFairValid: boolean;
   allValid: boolean;
   canSubmit: boolean;
+  
+  // 內容審核
+  contentCheck: {
+    hasIssues: boolean;
+    blockSubmit: boolean;
+    warnings: string[];
+  };
   
   // 錯誤列表
   errors: ValidationError[];
@@ -189,6 +203,61 @@ export function usePropertyFormValidation(
       errors.push({ field: 'disadvantage', message: `公道話${disMessage}` });
     }
     
+    // 敏感詞檢測 - 檢查三個文字欄位
+    const contentWarnings: string[] = [];
+    let blockByContent = false;
+    
+    const adv1ContentCheck = form.advantage1.length > 0 ? checkContent(form.advantage1) : null;
+    const adv2ContentCheck = form.advantage2.length > 0 ? checkContent(form.advantage2) : null;
+    const disContentCheck = form.disadvantage.length > 0 ? checkContent(form.disadvantage) : null;
+    
+    // 計算各欄位的內容警告訊息
+    const adv1ContentWarning = (!adv1ContentCheck || adv1ContentCheck.passed) 
+      ? undefined 
+      : adv1ContentCheck.issues.map(i => i.message).join('、');
+    
+    const adv2ContentWarning = (!adv2ContentCheck || adv2ContentCheck.passed) 
+      ? undefined 
+      : adv2ContentCheck.issues.map(i => i.message).join('、');
+    
+    const disContentWarning = (!disContentCheck || disContentCheck.passed) 
+      ? undefined 
+      : disContentCheck.issues.map(i => i.message).join('、');
+    
+    // 輔助函數：判斷是否為嚴重問題（敏感詞阻擋送出）
+    const hasSensitiveIssue = (result: ContentCheckResult | null): boolean => {
+      if (!result) return false;
+      return result.issues.some(i => i.type === 'sensitive');
+    };
+    
+    // 收集警告
+    if (adv1ContentCheck && !adv1ContentCheck.passed) {
+      const warning = `優點1：${adv1ContentWarning}`;
+      contentWarnings.push(warning);
+      if (hasSensitiveIssue(adv1ContentCheck)) {
+        blockByContent = true;
+        errors.push({ field: 'advantage1', message: adv1ContentWarning! });
+      }
+    }
+    
+    if (adv2ContentCheck && !adv2ContentCheck.passed) {
+      const warning = `優點2：${adv2ContentWarning}`;
+      contentWarnings.push(warning);
+      if (hasSensitiveIssue(adv2ContentCheck)) {
+        blockByContent = true;
+        errors.push({ field: 'advantage2', message: adv2ContentWarning! });
+      }
+    }
+    
+    if (disContentCheck && !disContentCheck.passed) {
+      const warning = `公道話：${disContentWarning}`;
+      contentWarnings.push(warning);
+      if (hasSensitiveIssue(disContentCheck)) {
+        blockByContent = true;
+        errors.push({ field: 'disadvantage', message: disContentWarning! });
+      }
+    }
+    
     // 圖片驗證
     const imagesValid = imageCount >= VALIDATION_RULES.images.minCount;
     const imagesMessage = imagesValid ? '' : '請至少上傳一張照片';
@@ -201,21 +270,50 @@ export function usePropertyFormValidation(
     const twoGoodOneFairValid = adv1Valid && adv2Valid && disValid;
     const allValid = basicValid && twoGoodOneFairValid && imagesValid;
     
+    // 考慮敏感詞：block 等級會阻止送出
+    const canSubmit = allValid && !blockByContent;
+    
     return {
       title: { valid: titleValid, message: titleMessage },
       price: { valid: priceValid, message: priceMessage },
       address: { valid: addressValid, message: addressMessage },
       communityName: { valid: communityValid, message: communityMessage },
-      advantage1: { valid: adv1Valid, message: adv1Message, charCount: adv1Length },
-      advantage2: { valid: adv2Valid, message: adv2Message, charCount: adv2Length },
-      disadvantage: { valid: disValid, message: disMessage, charCount: disLength },
+      advantage1: { 
+        valid: adv1Valid, 
+        message: adv1Message, 
+        charCount: adv1Length,
+        ...(adv1ContentWarning && { contentWarning: adv1ContentWarning }),
+      },
+      advantage2: { 
+        valid: adv2Valid, 
+        message: adv2Message, 
+        charCount: adv2Length,
+        ...(adv2ContentWarning && { contentWarning: adv2ContentWarning }),
+      },
+      disadvantage: { 
+        valid: disValid, 
+        message: disMessage, 
+        charCount: disLength,
+        ...(disContentWarning && { contentWarning: disContentWarning }),
+      },
       images: { valid: imagesValid, message: imagesMessage, count: imageCount },
+      // 向後兼容別名
+      adv1Valid,
+      adv2Valid,
+      disValid,
+      communityValid,
+      // 整體狀態
       basicValid,
       twoGoodOneFairValid,
       allValid,
-      canSubmit: allValid,
+      canSubmit,
+      contentCheck: {
+        hasIssues: contentWarnings.length > 0,
+        blockSubmit: blockByContent,
+        warnings: contentWarnings,
+      },
       errors,
-    };
+    } as ValidationState;
   }, [form, imageCount]);
   
   return validation;

@@ -38,6 +38,8 @@ export function CommunityPicker({ value, address, onChange, className = '', requ
   const [loading, setLoading] = useState(false);
   const [selectedCommunity, setSelectedCommunity] = useState<Community | null>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const searchIdRef = useRef<number>(0); // 用於識別最新請求
 
   // 從地址提取區域
   const extractDistrict = (addr: string): string => {
@@ -45,12 +47,19 @@ export function CommunityPicker({ value, address, onChange, className = '', requ
     return match?.[1] || '';
   };
 
-  // 搜尋社區
+  // 搜尋社區（含 race condition 防護）
   const searchCommunities = async (term: string, addr: string) => {
     if (!term && !addr) {
       setSuggestions([]);
       return;
     }
+
+    // 取消前一個請求
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    abortControllerRef.current = new AbortController();
+    const currentSearchId = ++searchIdRef.current;
 
     setLoading(true);
     try {
@@ -63,7 +72,11 @@ export function CommunityPicker({ value, address, onChange, className = '', requ
           .from('communities')
           .select('id, name, address, property_count, is_verified')
           .eq('address_fingerprint', fingerprint)
-          .limit(1);
+          .limit(1)
+          .abortSignal(abortControllerRef.current.signal);
+        
+        // 確保是最新請求的結果
+        if (currentSearchId !== searchIdRef.current) return;
         
         if (exactMatch && exactMatch.length > 0) {
           setSuggestions(exactMatch);
@@ -76,7 +89,7 @@ export function CommunityPicker({ value, address, onChange, className = '', requ
       let query = supabase
         .from('communities')
         .select('id, name, address, property_count, is_verified')
-        .limit(5);
+        .limit(8); // 增加到 8 筆
 
       if (term) {
         query = query.ilike('name', `%${term}%`);
@@ -86,15 +99,25 @@ export function CommunityPicker({ value, address, onChange, className = '', requ
         query = query.eq('district', district);
       }
 
-      const { data, error } = await query.order('property_count', { ascending: false });
+      const { data, error } = await query
+        .order('property_count', { ascending: false })
+        .abortSignal(abortControllerRef.current.signal);
+
+      // 確保是最新請求的結果
+      if (currentSearchId !== searchIdRef.current) return;
 
       if (error) throw error;
       setSuggestions(data || []);
-    } catch (err) {
+    } catch (err: any) {
+      // 忽略 abort 錯誤
+      if (err?.name === 'AbortError') return;
       console.error('搜尋社區失敗:', err);
       setSuggestions([]);
     } finally {
-      setLoading(false);
+      // 只有最新請求才更新 loading 狀態
+      if (currentSearchId === searchIdRef.current) {
+        setLoading(false);
+      }
     }
   };
 
@@ -105,6 +128,15 @@ export function CommunityPicker({ value, address, onChange, className = '', requ
     }, 300);
     return () => clearTimeout(timer);
   }, [searchTerm, address]);
+
+  // 清理 AbortController
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, []);
 
   // 點擊外部關閉
   useEffect(() => {

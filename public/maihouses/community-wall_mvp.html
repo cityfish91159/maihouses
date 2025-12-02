@@ -5,62 +5,120 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover"/>
 <title>社區牆｜惠宇上晴</title>
 <meta name="description" content="社區熱帖、真實評價、準住戶問答 - 邁房子社區牆"/>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap">
 <style>
 /* === 動畫 === */
 @keyframes fadeInUp { from { opacity: 0; transform: translateY(8px);} to { opacity: 1; transform: translateY(0);} }
+@keyframes slideDown{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
 
-/* === 基礎變數 === */
+/* === 基礎變數（與首頁統一）=== */
 :root{
-  --primary:#00385a;--primary-dark:#002a44;--primary-light:#33607b;
-  --secondary:#34c759;--secondary-light:#50d167;
+  --brand:#00385a;--brand-light:#009FE8;--brand-600:#004E7C;
+  --primary:#00385a;--primary-dark:#002a44;--primary-light:#005282;
+  --success:#0f6a23;
   --accent:#ff9b4a;--warning:#ef4444;--heart:#ff3b30;
-  --bg-base:#f8fafb;--bg-alt:#f0f4fa;--bg-elevated:#ffffff;
-  --text-primary:#0a1f3f;--text-secondary:#5a6b7f;
-  --border:#d8e4f0;--border-light:#e8f0f8;
-  --brand:#003366;--line:#e6edf7;
+  --bg-base:#f6f9ff;--bg-alt:#eef3ff;--bg-elevated:#ffffff;
+  --text-primary:#0a2246;--text-secondary:#526070;--text-muted:#6C7B91;
+  --border:#E6EDF7;--border-light:#e8f0f8;
+  --line:#e6edf7;
+  --safe-bottom: env(safe-area-inset-bottom, 20px);
 }
 
 /* === Reset === */
-*{box-sizing:border-box;margin:0;padding:0}
-html,body{min-height:100%;background:linear-gradient(180deg,var(--bg-base)0%,var(--bg-alt)100%);
-  color:var(--text-primary);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC",sans-serif;
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth}
+body{min-height:100%;background:linear-gradient(180deg,var(--bg-base)0%,var(--bg-alt)100%);
+  color:var(--text-primary);font-family:"Noto Sans TC",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
   -webkit-font-smoothing:antialiased}
 
-/* === 頁面容器 === */
-.page{max-width:520px;margin:0 auto;padding:8px 8px 100px;display:flex;flex-direction:column;gap:12px;animation:fadeInUp .6s ease-out}
-
-/* === 頂部導航 === */
+/* === 頂部導航（與 Feed 一致）=== */
 .topbar{position:sticky;top:0;z-index:100;background:rgba(246,249,255,.95);backdrop-filter:blur(12px);
-  border-bottom:1px solid rgba(230,237,247,0.8);display:flex;align-items:center;gap:10px;padding:8px 16px;margin:-8px -8px 0}
-.brand{display:flex;align-items:center;gap:10px;text-decoration:none}
-.brand .logo-icon{width:42px;height:42px;background:linear-gradient(135deg,var(--brand),#005282);border-radius:12px;
-  display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(0,51,102,.2)}
-.brand .logo-icon svg{width:22px;height:22px;color:#fff}
-.brand .logo-text{font-size:24px;font-weight:700;font-family:serif;color:var(--brand)}
-.tools{margin-left:auto;display:flex;gap:8px}
-.icon-btn{border:1px solid var(--line);border-radius:12px;background:#fff;padding:8px 12px;font-size:13px;color:#173a7c;
-  display:inline-flex;align-items:center;gap:6px;cursor:pointer;transition:all .15s}
+  border-bottom:1px solid rgba(230,237,247,0.8);display:flex;align-items:center;gap:10px;padding:8px 16px;
+  transform:translateZ(0);will-change:transform}
+.topbar-back{display:flex;align-items:center;gap:8px;text-decoration:none;color:var(--primary);
+  font-weight:700;font-size:14px;padding:6px 10px;border-radius:10px;transition:background .15s}
+.topbar-back:hover{background:rgba(0,56,90,.06)}
+.topbar-back svg{width:18px;height:18px}
+.topbar-title{flex:1;text-align:center}
+.topbar-title h1{font-size:16px;font-weight:800;color:var(--primary-dark);margin:0}
+.topbar-title .sub{font-size:11px;color:var(--text-secondary);margin:0}
+.topbar-tools{display:flex;gap:8px;align-items:center}
+.icon-btn{border:1px solid var(--line);border-radius:12px;background:#fff;padding:8px;font-size:14px;color:#173a7c;
+  display:inline-flex;align-items:center;gap:6px;cursor:pointer;transition:all .15s;line-height:1}
 .icon-btn:hover{background:#f6f9ff}
 .icon-btn:active{transform:scale(0.95)}
+.icon-btn.badge{position:relative}
+.icon-btn.badge::after{content:attr(data-badge);position:absolute;top:-6px;right:-6px;
+  min-width:18px;height:18px;border-radius:999px;background:#e02626;color:#fff;font-size:11px;
+  display:flex;align-items:center;justify-content:center;border:2px solid #fff;font-weight:700}
 
-/* === 區塊卡片 === */
-.section{background:rgba(255,255,255,.95);border:1px solid var(--border-light);
-  border-radius:18px;padding:12px;display:flex;flex-direction:column;gap:10px;
-  box-shadow:0 2px 8px rgba(0,0,0,.03)}
-.section-header{display:flex;justify-content:space-between;align-items:center}
-.section-title{font-size:16px;font-weight:800;color:var(--primary-dark)}
-.section-sub{font-size:11px;color:var(--text-secondary)}
+/* 下拉選單 */
+.menu{position:relative}
+.menu summary{list-style:none;cursor:pointer}
+.menu summary::-webkit-details-marker{display:none}
+.chip{border:1px solid var(--line);border-radius:14px;padding:6px 10px;font-size:13px;color:#173a7c;background:#fff;display:flex;align-items:center;gap:4px;font-weight:700}
+.menu[open]::before{content:"";position:fixed;inset:0;background:rgba(0,0,0,0.1);z-index:10;cursor:default}
+.menu-list{display:none;position:absolute;right:0;top:calc(100% + 8px);width:180px;background:#fff;
+  border:1px solid var(--line);border-radius:12px;box-shadow:0 10px 30px rgba(11,33,74,.15);
+  padding:6px;z-index:20;animation:slideDown 0.2s cubic-bezier(0.16, 1, 0.3, 1)}
+.menu[open] .menu-list{display:block}
+.menu-list a,.menu-list button{display:flex;align-items:center;gap:10px;padding:10px;border-radius:8px;color:#173a7c;text-decoration:none;font-weight:700;font-size:13px;width:100%;border:none;background:none;cursor:pointer;text-align:left}
+.menu-list a:hover,.menu-list button:hover{background:#f6f9ff}
+.menu-list hr{border:0;border-top:1px solid #f1f5f9;margin:4px 0}
+
+/* === 桌機版雙欄 Layout === */
+.layout{max-width:960px;margin:0 auto;display:flex;gap:20px;padding:10px}
+.main-content{flex:1;max-width:600px;display:flex;flex-direction:column;gap:12px;padding-bottom:calc(80px + var(--safe-bottom));animation:fadeInUp .5s ease-out}
+.sidebar{width:280px;flex-shrink:0;display:none;position:sticky;top:70px;align-self:flex-start}
+@media(min-width:860px){
+  .sidebar{display:flex;flex-direction:column;gap:12px}
+}
+@media(max-width:859px){
+  .layout{padding:10px 10px calc(80px + var(--safe-bottom))}
+  .main-content{max-width:100%}
+}
+
+/* === 側邊欄卡片 === */
+.sidebar-card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px;box-shadow:0 4px 14px rgba(0,51,102,.04)}
+.sidebar-card h4{margin:0 0 10px 0;font-size:14px;font-weight:800;color:var(--brand);display:flex;align-items:center;gap:6px}
+.sidebar-card .info-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f1f5f9;font-size:13px}
+.sidebar-card .info-row:last-child{border-bottom:none}
+.sidebar-card .info-row .label{color:var(--text-secondary)}
+.sidebar-card .info-row .value{font-weight:700;color:var(--text-primary)}
+.sidebar-card .stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.sidebar-card .stat-item{background:linear-gradient(135deg,#f8faff,#f0f5ff);border-radius:10px;padding:12px;text-align:center}
+.sidebar-card .stat-item .num{font-size:20px;font-weight:900;color:var(--brand)}
+.sidebar-card .stat-item .lbl{font-size:11px;color:var(--text-secondary);margin-top:2px}
+.sidebar-card .link-list{display:flex;flex-direction:column;gap:4px}
+.sidebar-card .link-list a{display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:10px;text-decoration:none;color:var(--text-primary);font-size:13px;font-weight:600;transition:all .15s}
+.sidebar-card .link-list a:hover{background:#f0f7ff}
+
+/* === 區塊卡片（解決太白）=== */
+.section{background:rgba(255,255,255,.98);border:1px solid var(--border-light);
+  border-radius:18px;padding:0;display:flex;flex-direction:column;
+  box-shadow:0 2px 12px rgba(0,51,102,.04);overflow:hidden}
+.section-header{display:flex;justify-content:space-between;align-items:center;
+  padding:14px 16px;background:linear-gradient(135deg,rgba(0,56,90,.03),rgba(0,82,130,.01));
+  border-bottom:1px solid rgba(0,56,90,.05)}
+.section-header.accent{background:linear-gradient(135deg,rgba(0,56,90,.08),rgba(0,82,130,.04))}
+.section-body{padding:14px}
+.section-title{font-size:15px;font-weight:800;color:var(--primary-dark);display:flex;align-items:center;gap:6px}
+.section-sub{font-size:11px;color:var(--text-secondary);margin-top:2px}
 .badge{display:inline-flex;align-items:center;gap:4px;background:rgba(0,56,90,.08);border:1px solid var(--primary-light);
   color:var(--primary);border-radius:999px;padding:4px 10px;font-size:10px;font-weight:700}
 
 /* === Tabs === */
-.tabs{display:flex;gap:6px;flex-wrap:wrap}
-.tab{padding:6px 14px;border-radius:999px;border:1px solid transparent;font-size:11px;font-weight:600;
+.tabs{display:flex;gap:6px;flex-wrap:wrap;padding:0 14px 14px}
+.tab{padding:6px 14px;border-radius:999px;border:1px solid transparent;font-size:12px;font-weight:600;
   background:rgba(240,244,250,.8);color:var(--text-secondary);cursor:pointer;transition:all .2s}
 .tab:hover{background:rgba(0,56,90,.08);color:var(--primary)}
 .tab.active{background:rgba(0,56,90,.1);border-color:var(--primary-light);color:var(--primary);font-weight:700}
 .tab.locked{opacity:.6}
 .tab .lock-icon{margin-left:4px}
+
+/* === 貼文列表容器 === */
+.posts-list{display:flex;flex-direction:column;gap:10px;padding:0 14px 14px}
 
 /* === 貼文卡片 === */
 .post-card{display:flex;gap:10px;padding:12px;border:1px solid var(--border-light);border-radius:14px;
@@ -69,14 +127,14 @@ html,body{min-height:100%;background:linear-gradient(180deg,var(--bg-base)0%,var
 .post-avatar{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#eef3ff,#fff);
   border:2px solid var(--primary);display:flex;align-items:center;justify-content:center;
   font-weight:800;color:var(--primary);font-size:16px;flex-shrink:0}
-.post-avatar.agent{border-color:var(--secondary);color:var(--secondary)}
+.post-avatar.agent{border-color:var(--brand-light);color:var(--brand-600)}
 .post-body{flex:1;display:flex;flex-direction:column;gap:6px}
 .post-header{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .post-author{font-weight:700;font-size:13px;color:var(--text-primary)}
 .post-badge{font-size:9px;padding:2px 6px;border-radius:4px;font-weight:700}
-.post-badge.resident{background:#e8faef;color:#0e8d52}
-.post-badge.agent{background:#fff3e0;color:#e65100}
-.post-badge.verified{background:#e3f2fd;color:#1565c0}
+.post-badge.resident{background:#e6edf7;color:#00385a}
+.post-badge.agent{background:#e0f4ff;color:#004E7C}
+.post-badge.verified{background:#f6f9ff;color:#00385a}
 .post-time{font-size:11px;color:var(--text-secondary)}
 .post-content{font-size:13px;line-height:1.55;color:var(--text-primary)}
 .post-stats{display:flex;gap:12px;font-size:11px;color:var(--text-secondary)}
@@ -88,26 +146,32 @@ html,body{min-height:100%;background:linear-gradient(180deg,var(--bg-base)0%,var
 .action-btn:hover{background:rgba(0,56,90,.12)}
 
 /* === 評價卡片 === */
-.review-card{padding:12px;border:1px solid var(--border-light);border-radius:14px;background:#fff}
-.review-header{display:flex;align-items:center;gap:10px;margin-bottom:8px}
-.review-avatar{width:36px;height:36px;border-radius:50%;background:rgba(0,56,90,.08);
+.reviews-list{display:flex;flex-direction:column;gap:10px;padding:0 14px 14px}
+.review-card{padding:14px;border:1px solid var(--border-light);border-radius:14px;background:#fff;transition:all .2s}
+.review-card:hover{border-color:rgba(0,56,90,.15);box-shadow:0 2px 8px rgba(0,56,90,.04)}
+.review-header{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.review-avatar{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#eef3ff,#fff);border:2px solid var(--primary);
   display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--primary);font-size:14px}
 .review-meta{flex:1}
-.review-author{font-weight:700;font-size:12px}
-.review-sub{font-size:10px;color:var(--text-secondary)}
-.review-content{display:flex;flex-direction:column;gap:6px}
-.review-item{display:flex;align-items:flex-start;gap:8px;font-size:12px;line-height:1.5}
-.review-icon{font-size:14px;flex-shrink:0}
-.review-text{color:var(--text-primary)}
+.review-author{font-weight:700;font-size:13px}
+.review-sub{font-size:11px;color:var(--text-secondary)}
+.review-content{display:flex;flex-direction:column;gap:8px}
+.review-item{display:flex;align-items:flex-start;gap:10px;font-size:13px;line-height:1.5;padding:8px 10px;border-radius:10px}
+.review-item.good{background:linear-gradient(135deg,#f6f9ff,#eef3ff)}
+.review-item.fair{background:linear-gradient(135deg,#f0f5ff,#e6edf7)}
+.review-icon{font-size:16px;flex-shrink:0;width:24px;height:24px;display:flex;align-items:center;justify-content:center}
+.review-text{color:var(--text-primary);flex:1}
 
 /* === 問答卡片 === */
-.qa-card{padding:12px;border:1px solid var(--border-light);border-radius:14px;background:#fff}
-.qa-question{font-weight:700;font-size:13px;color:var(--primary-dark);margin-bottom:8px}
+.qa-list{display:flex;flex-direction:column;gap:10px;padding:0 14px 14px}
+.qa-card{padding:14px;border:1px solid var(--border-light);border-radius:14px;background:#fff;transition:all .2s}
+.qa-card:hover{border-color:rgba(0,56,90,.15)}
+.qa-question{font-weight:700;font-size:14px;color:var(--primary-dark);margin-bottom:8px;line-height:1.4}
 .qa-meta{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--text-secondary);margin-bottom:10px}
-.qa-answers{display:flex;flex-direction:column;gap:8px;padding-left:12px;border-left:2px solid var(--border)}
-.qa-answer{font-size:12px;line-height:1.5}
+.qa-answers{display:flex;flex-direction:column;gap:8px;padding-left:14px;border-left:3px solid var(--border)}
+.qa-answer{font-size:13px;line-height:1.5;padding:8px 0}
 .qa-answer-header{display:flex;align-items:center;gap:6px;margin-bottom:4px}
-.qa-answer-badge{font-size:9px;padding:2px 6px;border-radius:4px;font-weight:700}
+.qa-answer-badge{font-size:10px;padding:2px 8px;border-radius:4px;font-weight:700}
 
 /* === 模糊遮罩（用 body class 控制，避免切換身份後壞掉）=== */
 .blur-overlay{position:relative}
@@ -170,74 +234,131 @@ body.role-agent .blur-cta{display:none !important}
 </style>
 </head>
 <body>
-<main class="page">
 
-  <!-- 頂部導航 -->
-  <header class="topbar">
-    <a href="/maihouses/" class="brand">
-      <div class="logo-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-          <polyline points="9 22 9 12 15 12 15 22"/>
-        </svg>
+<!-- 頂部導航（與 Feed 一致）-->
+<header class="topbar">
+  <a href="javascript:history.back()" class="topbar-back" aria-label="返回上一頁">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M19 12H5M12 19l-7-7 7-7"/>
+    </svg>
+    <span>返回</span>
+  </a>
+  <div class="topbar-title">
+    <h1>惠宇上晴</h1>
+    <p class="sub">社區牆</p>
+  </div>
+  <div class="topbar-tools">
+    <button type="button" class="icon-btn badge" data-badge="2" aria-label="通知：2 則未讀">🔔</button>
+    <details class="menu">
+      <summary aria-haspopup="menu"><span class="chip">👤 我的</span></summary>
+      <div class="menu-list" role="menu">
+        <a href="#fav" role="menuitem">⭐ 我的收藏</a>
+        <a href="#history" role="menuitem">📋 瀏覽紀錄</a>
+        <hr>
+        <a href="/maihouses/feed-consumer.html" role="menuitem">🏠 回到動態</a>
+        <hr>
+        <button role="menuitem" style="color:#ef4444">🚪 登出</button>
       </div>
-      <span class="logo-text">邁房子</span>
-    </a>
-    <div class="tools">
-      <button class="icon-btn" onclick="history.back()">← 返回</button>
-      <button class="icon-btn">📤</button>
-    </div>
-  </header>
+    </details>
+  </div>
+</header>
 
-  <!-- 社區資訊卡 -->
-  <section class="section">
-    <div class="section-header">
-      <div>
-        <h1 class="section-title">惠宇上晴｜社區牆</h1>
-        <p class="section-sub">真實住戶互動 × 社區口碑</p>
+<div class="layout">
+  <!-- 主內容區 -->
+  <main class="main-content">
+
+    <!-- 區塊一：社區評價（兩好一公道）-->
+    <section class="section" id="reviews-section">
+      <div class="section-header accent">
+        <div>
+          <h2 class="section-title">⭐ 社區評價</h2>
+          <p class="section-sub">來自真實房仲的「兩好一公道」</p>
+        </div>
+        <span class="badge">5 則評價</span>
       </div>
-      <span class="badge">👥 已加入 88 位</span>
-    </div>
-  </section>
+      <div class="reviews-list" id="reviews-list"></div>
+    </section>
 
-  <!-- 區塊一：社區評價（放最上面作為 Hook）-->
-  <section class="section" id="reviews-section">
-    <div class="section-header">
-      <h2 class="section-title">⭐ 社區評價</h2>
-      <span class="section-sub">來自真實房仲的「兩好一公道」</span>
-    </div>
-    <div id="reviews-list"></div>
-  </section>
+    <!-- 區塊二：社區熱帖 -->
+    <section class="section" id="hot-posts-section">
+      <div class="section-header">
+        <div>
+          <h2 class="section-title">🔥 社區熱帖</h2>
+        </div>
+      </div>
+      <div class="tabs" id="wall-tabs">
+        <div class="tab active" data-wall="public" onclick="switchWall('public')" onkeydown="if(event.key==='Enter')switchWall('public')" tabindex="0" role="tab" aria-selected="true">公開牆</div>
+        <div class="tab" data-wall="private" onclick="switchWall('private')" onkeydown="if(event.key==='Enter')switchWall('private')" tabindex="0" role="tab" aria-selected="false">
+          私密牆 <span class="lock-icon">🔒</span>
+        </div>
+      </div>
+      
+      <!-- 公開牆內容 -->
+      <div class="posts-list" id="public-wall"></div>
 
-  <!-- 區塊二：社區熱帖 -->
-  <section class="section" id="hot-posts-section">
-    <div class="section-header">
-      <h2 class="section-title">🔥 社區熱帖</h2>
+      <!-- 私密牆內容 -->
+      <div class="posts-list" id="private-wall" style="display:none"></div>
+    </section>
+
+    <!-- 區塊三：準住戶問答 -->
+    <section class="section" id="qa-section">
+      <div class="section-header">
+        <div>
+          <h2 class="section-title">🙋 準住戶問答</h2>
+          <p class="section-sub">買房前，先問問鄰居怎麼說</p>
+        </div>
+      </div>
+      <div class="qa-list" id="qa-list"></div>
+    </section>
+
+  </main>
+
+  <!-- 側邊欄（桌面版顯示）-->
+  <aside class="sidebar">
+    <!-- 社區資訊卡 -->
+    <div class="sidebar-card">
+      <h4>📍 社區資訊</h4>
+      <div class="info-row"><span class="label">社區名稱</span><span class="value">惠宇上晴</span></div>
+      <div class="info-row"><span class="label">完工年份</span><span class="value">2018 年</span></div>
+      <div class="info-row"><span class="label">總戶數</span><span class="value">280 戶</span></div>
+      <div class="info-row"><span class="label">管理費</span><span class="value">85 元/坪</span></div>
+      <div class="info-row"><span class="label">建設公司</span><span class="value">惠宇建設</span></div>
     </div>
-    <div class="tabs" id="wall-tabs">
-      <div class="tab active" data-wall="public" onclick="switchWall('public')">公開牆</div>
-      <div class="tab" data-wall="private" onclick="switchWall('private')">
-        私密牆 <span class="lock-icon">🔒</span>
+    
+    <!-- 社區數據卡 -->
+    <div class="sidebar-card">
+      <h4>📊 社區數據</h4>
+      <div class="stat-grid">
+        <div class="stat-item">
+          <div class="num">88</div>
+          <div class="lbl">已加入成員</div>
+        </div>
+        <div class="stat-item">
+          <div class="num">4.2</div>
+          <div class="lbl">平均評分</div>
+        </div>
+        <div class="stat-item">
+          <div class="num">156</div>
+          <div class="lbl">本月互動</div>
+        </div>
+        <div class="stat-item">
+          <div class="num">23</div>
+          <div class="lbl">待售物件</div>
+        </div>
       </div>
     </div>
     
-    <!-- 公開牆內容 -->
-    <div id="public-wall"></div>
-
-    <!-- 私密牆內容 -->
-    <div id="private-wall" style="display:none"></div>
-  </section>
-
-  <!-- 區塊三：準住戶問答 -->
-  <section class="section" id="qa-section">
-    <div class="section-header">
-      <h2 class="section-title">🙋 準住戶問答</h2>
-      <span class="section-sub">買房前，先問問鄰居怎麼說</span>
+    <!-- 快速連結 -->
+    <div class="sidebar-card">
+      <h4>🔗 快速連結</h4>
+      <div class="link-list">
+        <a href="#listings">🏠 查看此社區物件</a>
+        <a href="#compare">📊 與其他社區比較</a>
+        <a href="#subscribe">🔔 追蹤此社區</a>
+      </div>
     </div>
-    <div id="qa-list"></div>
-  </section>
-
-</main>
+  </aside>
+</div>
 
 <!-- 身份切換器（Mock 用）-->
 <div class="role-switcher">
@@ -393,6 +514,7 @@ function renderReviews() {
   // 顯示可見的評價項目
   allItems.slice(0, visibleCount).forEach(item => {
     const icon = item.type === 'pro' ? '✅' : '⚖️';
+    const itemClass = item.type === 'pro' ? 'good' : 'fair';
     html += `
       <div class="review-card">
         <div class="review-header">
@@ -403,7 +525,7 @@ function renderReviews() {
           </div>
         </div>
         <div class="review-content">
-          <div class="review-item"><span class="review-icon">${icon}</span><span class="review-text">${item.text}</span></div>
+          <div class="review-item ${itemClass}"><span class="review-icon">${icon}</span><span class="review-text">${item.text}</span></div>
         </div>
       </div>
     `;
@@ -617,10 +739,10 @@ function renderQuestions() {
           ${visibleAnswers.map(a => `
             <div class="qa-answer">
               <div class="qa-answer-header">
-                <span class="qa-answer-badge" style="background:${a.type === 'agent' ? '#fff3e0' : a.type === 'official' ? '#e3f2fd' : '#e8faef'};color:${a.type === 'agent' ? '#e65100' : a.type === 'official' ? '#1565c0' : '#0e8d52'}">
+                <span class="qa-answer-badge" style="background:${a.type === 'agent' ? '#e0f4ff' : a.type === 'official' ? '#f6f9ff' : '#e6edf7'};color:${a.type === 'agent' ? '#004E7C' : a.type === 'official' ? '#00385a' : '#00385a'}">
                   ${a.type === 'agent' ? '🏢 認證房仲' : a.type === 'official' ? '📋 ' + a.author : '🏠 ' + a.author}
                 </span>
-                ${a.expert ? '<span class="qa-answer-badge" style="background:#fce4ec;color:#c2185b">⭐ 專家回答</span>' : ''}
+                ${a.expert ? '<span class="qa-answer-badge" style="background:#f0f5ff;color:#004E7C">⭐ 專家回答</span>' : ''}
               </div>
               ${a.content}
             </div>
@@ -630,9 +752,10 @@ function renderQuestions() {
           <div class="blur-overlay" style="margin-top:8px">
             <div class="qa-answer blur-target" style="padding:12px;background:#f8f8f8;border-radius:8px">
               <div class="qa-answer-header">
-                <span class="qa-answer-badge" style="background:#e8faef;color:#0e8d52">🏠 住戶</span>
+                <span class="qa-answer-badge" style="background:#e6edf7;color:#00385a">🏠 住戶</span>
               </div>
               還有更多住戶回覆...
+            </div>
             </div>
             <div class="blur-cta" style="padding:16px">
               <h4 style="margin-bottom:6px">🔒 還有 ${hiddenAnswerCount} 則回覆</h4>

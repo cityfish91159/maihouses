@@ -106,7 +106,7 @@ export const PropertyUploadPage: React.FC = () => {
           showToast({
             type: 'warning',
             title: `${file.name} 無法上傳`,
-            message: error,
+            message: error || '檔案格式或大小不符合要求',
             duration: 5000,
           });
         });
@@ -459,12 +459,19 @@ export const PropertyUploadPage: React.FC = () => {
                 name="advantage1" 
                 value={form.advantage1} 
                 onChange={handleInput} 
-                className={inputClass + (validation.adv1Valid ? ' border-green-300 bg-green-50/50' : '')} 
+                className={inputClass + (validation.adv1Valid ? ' border-green-300 bg-green-50/50' : '') + (validation.advantage1.contentWarning ? ' border-red-300' : '')} 
                 placeholder="例如：格局方正，採光極佳" 
               />
-              <span className={"text-xs mt-0.5 block " + (validation.adv1Valid ? 'text-green-600' : 'text-slate-400')}>
-                {form.advantage1.length}/5 字 {validation.adv1Valid && '✓'}
-              </span>
+              <div className="flex items-center justify-between mt-0.5">
+                <span className={"text-xs " + (validation.adv1Valid ? 'text-green-600' : 'text-slate-400')}>
+                  {form.advantage1.length}/5 字 {validation.adv1Valid && '✓'}
+                </span>
+                {validation.advantage1.contentWarning && (
+                  <span className="text-xs text-red-500 flex items-center gap-1">
+                    <AlertTriangle size={12} /> {validation.advantage1.contentWarning}
+                  </span>
+                )}
+              </div>
             </div>
 
             <div>
@@ -475,12 +482,19 @@ export const PropertyUploadPage: React.FC = () => {
                 name="advantage2" 
                 value={form.advantage2} 
                 onChange={handleInput} 
-                className={inputClass + (validation.adv2Valid ? ' border-green-300 bg-green-50/50' : '')} 
+                className={inputClass + (validation.adv2Valid ? ' border-green-300 bg-green-50/50' : '') + (validation.advantage2.contentWarning ? ' border-red-300' : '')} 
                 placeholder="例如：近捷運站，生活機能好" 
               />
-              <span className={"text-xs mt-0.5 block " + (validation.adv2Valid ? 'text-green-600' : 'text-slate-400')}>
-                {form.advantage2.length}/5 字 {validation.adv2Valid && '✓'}
-              </span>
+              <div className="flex items-center justify-between mt-0.5">
+                <span className={"text-xs " + (validation.adv2Valid ? 'text-green-600' : 'text-slate-400')}>
+                  {form.advantage2.length}/5 字 {validation.adv2Valid && '✓'}
+                </span>
+                {validation.advantage2.contentWarning && (
+                  <span className="text-xs text-red-500 flex items-center gap-1">
+                    <AlertTriangle size={12} /> {validation.advantage2.contentWarning}
+                  </span>
+                )}
+              </div>
             </div>
 
             <div>
@@ -491,14 +505,38 @@ export const PropertyUploadPage: React.FC = () => {
                 name="disadvantage" 
                 value={form.disadvantage} 
                 onChange={handleInput} 
-                className={inputClass + (validation.disValid ? ' border-orange-300 bg-orange-50/50' : '')} 
+                className={inputClass + (validation.disValid ? ' border-orange-300 bg-orange-50/50' : '') + (validation.disadvantage.contentWarning ? ' border-red-300' : '')} 
                 placeholder="例如：臨路有車流聲，建議加裝氣密窗" 
               />
-              <span className={"text-xs mt-0.5 block " + (validation.disValid ? 'text-orange-600' : 'text-red-400')}>
-                {form.disadvantage.length}/10 字 {validation.disValid ? '✓' : '(請更詳細描述)'}
-              </span>
+              <div className="flex items-center justify-between mt-0.5">
+                <span className={"text-xs " + (validation.disValid ? 'text-orange-600' : 'text-red-400')}>
+                  {form.disadvantage.length}/10 字 {validation.disValid ? '✓' : '(請更詳細描述)'}
+                </span>
+                {validation.disadvantage.contentWarning && (
+                  <span className="text-xs text-red-500 flex items-center gap-1">
+                    <AlertTriangle size={12} /> {validation.disadvantage.contentWarning}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
+          
+          {/* 敏感詞警告區塊 */}
+          {validation.contentCheck.hasIssues && (
+            <div className={`mt-4 p-3 rounded-lg flex items-start gap-2 ${validation.contentCheck.blockSubmit ? 'bg-red-50 border border-red-200' : 'bg-yellow-50 border border-yellow-200'}`}>
+              <AlertTriangle className={validation.contentCheck.blockSubmit ? 'text-red-500' : 'text-yellow-600'} size={18} />
+              <div>
+                <p className={`text-sm font-medium ${validation.contentCheck.blockSubmit ? 'text-red-700' : 'text-yellow-700'}`}>
+                  {validation.contentCheck.blockSubmit ? '內容不符合發布規範' : '內容需要注意'}
+                </p>
+                <ul className="text-xs text-slate-600 mt-1 space-y-0.5">
+                  {validation.contentCheck.warnings.map((w, i) => (
+                    <li key={i}>• {w}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
         </section>
 
         {/* 區塊 3: 文案與照片 */}
@@ -619,11 +657,11 @@ export const PropertyUploadPage: React.FC = () => {
           
           {!canSubmit && (
             <div className="flex justify-center gap-4 mt-2 text-xs text-slate-400">
-              <span className={basicValid ? 'text-green-600' : ''}>
-                {basicValid ? '✓ 基本資料' : '○ 基本資料'}
+              <span className={validation.basicValid ? 'text-green-600' : ''}>
+                {validation.basicValid ? '✓ 基本資料' : '○ 基本資料'}
               </span>
-              <span className={validation.allValid ? 'text-green-600' : ''}>
-                {validation.allValid ? '✓ 兩好一公道' : '○ 兩好一公道'}
+              <span className={validation.twoGoodOneFairValid ? 'text-green-600' : ''}>
+                {validation.twoGoodOneFairValid ? '✓ 兩好一公道' : '○ 兩好一公道'}
               </span>
               <span className={imageFiles.length > 0 ? 'text-green-600' : ''}>
                 {imageFiles.length > 0 ? '✓ 照片' : '○ 照片'}

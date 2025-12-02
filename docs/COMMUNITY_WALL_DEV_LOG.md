@@ -1,7 +1,7 @@
 # 社區牆開發紀錄
 
-> **最後更新**: 2024/12/02 10:00  
-> **狀態**: MVP 完成 + 前後端優化中
+> **最後更新**: 2024/12/02 18:00  
+> **狀態**: MVP 完成 + Layout 重構 + 配色修正
 
 ---
 
@@ -14,9 +14,12 @@
 | `api/community/question.ts` | API: 問答功能 |
 | `api/community/like.ts` | API: 按讚功能 |
 | `supabase/migrations/20241201_community_wall.sql` | 資料庫 Schema |
-| `src/hooks/usePropertyFormValidation.ts` | 表單驗證 Hook (新增) |
+| `src/hooks/usePropertyFormValidation.ts` | 表單驗證 Hook (新增+敏感詞) |
 | `src/components/ui/Toast.tsx` | Toast 通知組件 (新增) |
-| `src/components/ui/CommunityPicker.tsx` | 社區選擇器 (優化) |
+| `src/components/ui/CommunityPicker.tsx` | 社區選擇器 (優化+AbortController) |
+| `src/utils/contentCheck.ts` | 內容審核工具 (新增) |
+| `src/services/communityService.ts` | 社區牆 API 封裝 (新增) |
+| `src/hooks/useCommunityWall.ts` | 社區牆資料 Hook (新增) |
 
 ---
 
@@ -160,6 +163,11 @@ https://maihouses.vercel.app/maihouses/community-wall_mvp.html
   - 優點：至少 5 字
   - 公道話：至少 10 字
   - 圖片：至少 1 張，最大 10MB，僅 JPG/PNG/WebP
+- **敏感詞檢測整合**：
+  - 整合 `contentCheck.ts` 內容審核
+  - 即時顯示內容警告（黃色：需注意；紅色：禁止送出）
+  - 敏感詞會阻擋送出（`canSubmit = false`）
+  - 廣告詞僅警告不阻擋
 
 ### 2. Toast 通知組件
 - 替代所有 `alert()` 呼叫
@@ -177,9 +185,87 @@ https://maihouses.vercel.app/maihouses/community-wall_mvp.html
 - 新增搜尋失敗提示（圖示 + 文字引導）
 - Loading skeleton 動畫
 - 「無社區」選項更清楚（透天/店面用）
+- **AbortController 防止 Race Condition**：
+  - 快速輸入時取消前次請求
+  - 避免舊結果覆蓋新結果
 
-### 5. 安全性改進
+### 5. 內容審核工具 (`contentCheck.ts`)
+- 前端初步過濾敏感內容，後端仍需複審
+- 敏感詞列表：辱罵類、詐騙類、不當內容
+- 廣告詞列表：加LINE、限時優惠、折扣碼等
+- 社區名稱黑名單：透天、店面、急售等非正式名稱
+- 格式檢查：純地址、純數字等
+
+### 6. PropertyUploadPage 整合
+- 使用驗證 Hook + Toast 替代 alert
+- 敏感詞警告區塊（紅色/黃色區塊）
+- 各欄位獨立顯示內容警告
+
+### 7. Community Wall API 封裝 (`communityService.ts`)
+- 統一所有社區牆 API 請求
+- 內建記憶體快取（posts 5分鐘、reviews 10分鐘）
+- Auth token 自動附加
+- 錯誤處理標準化
+- 支援功能：
+  - `getCommunityWall()` - 取得完整資料
+  - `getPublicPosts()` / `getPrivatePosts()` - 分頁取得貼文
+  - `createPost()` - 發布貼文
+  - `toggleLike()` - 按讚
+  - `askQuestion()` / `answerQuestion()` - 問答
+
+### 8. Community Wall Hook (`useCommunityWall.ts`)
+- SWR 風格的資料獲取
+- 樂觀更新（按讚即時反映）
+- 自動刷新（可設定間隔）
+- 視窗聚焦時刷新
+- 分頁載入 Hook (`useCommunityPosts`)
+
+### 9. 安全性改進
 - 待處理：agentId 預設值移除，改由後端判斷登入態
+
+---
+
+## 2024/12/02 - Layout 重構 + 配色修正
+
+### 🎨 配色修正（重要）
+
+**問題**：之前用了不屬於品牌的顏色（淺綠、橘色等）
+
+**已移除**：
+- `--secondary: #34c759` (綠)
+- `#e8faef` / `#0e8d52` (淺綠/深綠)
+- `#fff3e0` / `#e65100` (橘)
+- `#fce4ec` / `#c2185b` (粉紅)
+
+**統一配色（與 tailwind.config.cjs 一致）**：
+```css
+--brand: #00385a;        /* 深藍主色 */
+--brand-light: #009FE8;  /* 亮藍 */
+--brand-600: #004E7C;
+--success: #0f6a23;      /* 只用於成功狀態 */
+--bg-base: #f6f9ff;
+--bg-alt: #eef3ff;
+--border: #E6EDF7;
+--text-primary: #0a2246;
+```
+
+### 🏗️ Header 重構
+- 左：`← 返回` 按鈕
+- 中：社區名稱 + 「社區牆」副標題
+- 右：🔔通知 + 👤我的 下拉選單
+- 與 Feed 頁面風格一致
+
+### 🖥️ 桌機版雙欄 Layout
+- 主內容 `max-width: 600px`
+- 側邊欄 `width: 280px`（860px+ 顯示）
+- 側邊欄卡片：
+  - 📍 社區資訊
+  - 📊 社區數據
+  - 🔗 快速連結
+
+### Badge 顏色
+- 全部改藍色調：`#e6edf7`、`#e0f4ff`、`#f6f9ff`
+- 文字：`#00385a`、`#004E7C`
 
 ---
 
