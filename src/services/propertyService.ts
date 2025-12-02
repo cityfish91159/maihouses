@@ -134,30 +134,72 @@ export const propertyService = {
     return result;
   },
 
-  // 3. 上傳圖片 (UUID 防撞)
-  uploadImages: async (files: File[]): Promise<string[]> => {
-    const uploadPromises = files.map(async (file) => {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${crypto.randomUUID()}.${fileExt}`;
+  // 3. 上傳圖片 (UUID 防撞 + 並發限制 + 詳細錯誤回報)
+  uploadImages: async (files: File[], options?: { 
+    concurrency?: number;
+    onProgress?: (completed: number, total: number) => void;
+  }): Promise<{ 
+    urls: string[]; 
+    failed: { file: File; error: string }[];
+    allSuccess: boolean;
+  }> => {
+    const concurrency = options?.concurrency || 3; // 預設並發 3
+    const results: string[] = [];
+    const failed: { file: File; error: string }[] = [];
+    let completed = 0;
+    
+    // 分批上傳（控制並發數）
+    for (let i = 0; i < files.length; i += concurrency) {
+      const batch = files.slice(i, i + concurrency);
       
-      const { error } = await supabase.storage
-        .from('property-images')
-        .upload(fileName, file);
+      const batchPromises = batch.map(async (file) => {
+        try {
+          const fileExt = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+          const fileName = `${crypto.randomUUID()}.${fileExt}`;
+          
+          const { error } = await supabase.storage
+            .from('property-images')
+            .upload(fileName, file, {
+              contentType: file.type,
+              cacheControl: '31536000', // 1 年快取
+            });
 
-      if (error) {
-        console.error('Image upload error:', error);
-        return null;
-      }
+          if (error) {
+            console.error('Image upload error:', error);
+            failed.push({ file, error: error.message });
+            return null;
+          }
 
-      const { data } = supabase.storage
-        .from('property-images')
-        .getPublicUrl(fileName);
-        
-      return data.publicUrl;
-    });
+          const { data } = supabase.storage
+            .from('property-images')
+            .getPublicUrl(fileName);
+          
+          return data.publicUrl;
+        } catch (e: any) {
+          console.error('Image upload exception:', e);
+          failed.push({ file, error: e.message || '上傳失敗' });
+          return null;
+        } finally {
+          completed++;
+          options?.onProgress?.(completed, files.length);
+        }
+      });
 
-    const results = await Promise.all(uploadPromises);
-    return results.filter((url): url is string => !!url);
+      const batchResults = await Promise.all(batchPromises);
+      results.push(...batchResults.filter((url): url is string => !!url));
+    }
+
+    return {
+      urls: results,
+      failed,
+      allSuccess: failed.length === 0,
+    };
+  },
+
+  // 舊版相容：回傳純 URL 陣列
+  uploadImagesLegacy: async (files: File[]): Promise<string[]> => {
+    const result = await propertyService.uploadImages(files);
+    return result.urls;
   },
 
   // 4. 建立物件 (新版 - 含結構化欄位 + 社區自動建立)

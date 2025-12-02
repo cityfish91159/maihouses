@@ -1,7 +1,7 @@
 # 社區牆開發紀錄
 
-> **最後更新**: 2024/12/01 17:00  
-> **狀態**: MVP 完成，待執行 SQL
+> **最後更新**: 2024/12/02 10:00  
+> **狀態**: MVP 完成 + 前後端優化中
 
 ---
 
@@ -14,6 +14,9 @@
 | `api/community/question.ts` | API: 問答功能 |
 | `api/community/like.ts` | API: 按讚功能 |
 | `supabase/migrations/20241201_community_wall.sql` | 資料庫 Schema |
+| `src/hooks/usePropertyFormValidation.ts` | 表單驗證 Hook (新增) |
+| `src/components/ui/Toast.tsx` | Toast 通知組件 (新增) |
+| `src/components/ui/CommunityPicker.tsx` | 社區選擇器 (優化) |
 
 ---
 
@@ -143,6 +146,40 @@ https://maihouses.vercel.app/maihouses/community-wall_mvp.html
 - [ ] 私密牆住戶驗證（需定義 community_members 表）
 - [ ] RLS 改進（只有本社區成員可看私密牆）
 - [ ] 前端接真實 API（目前是 Mock 資料）
+- [ ] 統一社區牆路由（成功頁→/community/{id}，詳情頁→/maihouses/...）
+- [ ] 地址指紋計算移到後端 API（防止客端操控）
+
+---
+
+## 🚀 12/02 前後端優化
+
+### 1. 表單驗證 Hook (`usePropertyFormValidation`)
+- 抽取驗證邏輯為獨立 Hook，便於單元測試與重用
+- 即時顯示字數計算與錯誤訊息（取代 alert）
+- 驗證規則：
+  - 優點：至少 5 字
+  - 公道話：至少 10 字
+  - 圖片：至少 1 張，最大 10MB，僅 JPG/PNG/WebP
+
+### 2. Toast 通知組件
+- 替代所有 `alert()` 呼叫
+- 支援 4 種類型：success / error / warning / info
+- 錯誤訊息加入「重試」與「聯絡客服」按鈕
+- 自動消失（success 3 秒，error 不消失需手動關閉）
+
+### 3. 圖片上傳優化 (`propertyService.uploadImages`)
+- 前端驗證：檔案類型 (MIME whitelist) + 大小限制 (10MB)
+- 並發控制：預設 3 張同時上傳（可調整）
+- 進度回報：`onProgress` callback
+- 詳細錯誤：回傳失敗檔案列表，告知使用者哪些未上傳
+
+### 4. CommunityPicker 優化
+- 新增搜尋失敗提示（圖示 + 文字引導）
+- Loading skeleton 動畫
+- 「無社區」選項更清楚（透天/店面用）
+
+### 5. 安全性改進
+- 待處理：agentId 預設值移除，改由後端判斷登入態
 
 ---
 

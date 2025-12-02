@@ -307,8 +307,27 @@ export function CommunityPicker({ value, address, onChange, className = '', requ
 
           {/* 沒有結果提示 */}
           {suggestions.length === 0 && !showCreateOption && searchTerm.length >= 2 && !loading && (
-            <div className="px-4 py-3 text-center text-slate-400 text-sm">
-              找不到相似社區，請確認名稱後建立新的
+            <div className="px-4 py-6 text-center">
+              <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-slate-100 flex items-center justify-center">
+                <Search size={20} className="text-slate-400" />
+              </div>
+              <p className="text-slate-600 text-sm font-medium">未找到相似社區</p>
+              <p className="text-slate-400 text-xs mt-1">請確認名稱後選擇「建立新社區」</p>
+            </div>
+          )}
+
+          {/* Loading Skeleton */}
+          {loading && suggestions.length === 0 && (
+            <div className="p-4 space-y-3">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="flex items-center gap-3 animate-pulse">
+                  <div className="w-8 h-8 rounded-lg bg-slate-200" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-4 bg-slate-200 rounded w-3/4" />
+                    <div className="h-3 bg-slate-100 rounded w-1/2" />
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>

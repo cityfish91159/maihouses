@@ -14,6 +14,7 @@ import ErrorBoundary from './app/ErrorBoundary'
 import { QuietModeProvider } from './context/QuietModeContext'
 import { MoodProvider } from './context/MoodContext'
 import { CookieConsent } from './components/CookieConsent'
+import { ToastProvider } from './components/ui/Toast'
 
 import UAGPage from './pages/UAG'
 import { PropertyDetailPage } from './pages/PropertyDetailPage'
@@ -50,9 +51,10 @@ export default function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <QuietModeProvider>
-        <MoodProvider>
-          <Routes key={loc.pathname}>
+      <ToastProvider>
+        <QuietModeProvider>
+          <MoodProvider>
+            <Routes key={loc.pathname}>
           <Route
             path="/"
             element={
@@ -155,8 +157,9 @@ export default function App() {
       </Routes>
       {config.devtools === '1' && <DevTools config={config} />}
       <CookieConsent />
-      </MoodProvider>
-    </QuietModeProvider>
+          </MoodProvider>
+        </QuietModeProvider>
+      </ToastProvider>
     </QueryClientProvider>
   )
 }

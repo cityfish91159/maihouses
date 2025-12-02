@@ -3,6 +3,8 @@ import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { propertyService, PropertyFormInput } from '../services/propertyService';
 import { CommunityPicker } from '../components/ui/CommunityPicker';
+import { usePropertyFormValidation, validateImages, VALIDATION_RULES } from '../hooks/usePropertyFormValidation';
+import { useToast } from '../components/ui/Toast';
 import { 
   Loader2, Upload, X, Sparkles, ThumbsUp, ThumbsDown, 
   Download, Check, Home, MapPin, Shield, ArrowLeft, Building2, AlertTriangle, Edit3
@@ -19,8 +21,10 @@ interface UploadResult {
 export const PropertyUploadPage: React.FC = () => {
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { showToast } = useToast();
   
   const [loading, setLoading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<{ current: number; total: number } | null>(null);
   const [images, setImages] = useState<string[]>([]);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [user, setUser] = useState<any>(null);
@@ -54,17 +58,21 @@ export const PropertyUploadPage: React.FC = () => {
     setSelectedCommunityId(communityId);
   };
 
-  // 驗證邏輯
-  const validation = {
-    adv1Valid: form.advantage1.length >= 5,
-    adv2Valid: form.advantage2.length >= 5,
-    disValid: form.disadvantage.length >= 10,
-    // 社區名稱必填（除非選了「無社區」）
-    communityValid: form.communityName.length >= 2 || form.communityName === '無',
-    get allValid() { return this.adv1Valid && this.adv2Valid && this.disValid; }
-  };
-  const basicValid = form.title.length > 0 && form.price.length > 0 && form.address.length > 0 && validation.communityValid;
-  const canSubmit = basicValid && validation.allValid && imageFiles.length > 0;
+  // 使用驗證 Hook
+  const validation = usePropertyFormValidation(
+    {
+      title: form.title,
+      price: form.price,
+      address: form.address,
+      communityName: form.communityName,
+      advantage1: form.advantage1,
+      advantage2: form.advantage2,
+      disadvantage: form.disadvantage,
+    },
+    imageFiles.length
+  );
+
+  const canSubmit = validation.canSubmit;
 
   // 591 搬家
   const handleImport591 = () => {
@@ -84,13 +92,32 @@ export const PropertyUploadPage: React.FC = () => {
     }, 1000);
   };
 
-  // 圖片處理
+  // 圖片處理（含驗證）
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const files = Array.from(e.target.files);
-      setImageFiles(prev => [...prev, ...files]);
-      const urls = files.map(file => URL.createObjectURL(file));
-      setImages(prev => [...prev, ...urls]);
+      
+      // 驗證圖片
+      const { validFiles, invalidFiles, allValid } = validateImages(files);
+      
+      // 顯示無效檔案的錯誤
+      if (!allValid) {
+        invalidFiles.forEach(({ file, error }) => {
+          showToast({
+            type: 'warning',
+            title: `${file.name} 無法上傳`,
+            message: error,
+            duration: 5000,
+          });
+        });
+      }
+      
+      // 只加入有效檔案
+      if (validFiles.length > 0) {
+        setImageFiles(prev => [...prev, ...validFiles]);
+        const urls = validFiles.map(file => URL.createObjectURL(file));
+        setImages(prev => [...prev, ...urls]);
+      }
     }
   };
 
@@ -101,17 +128,70 @@ export const PropertyUploadPage: React.FC = () => {
 
   // 發布
   const publish = async () => {
-    if (!basicValid) return alert('請填寫標題、價格、地址、社區名稱');
-    if (!validation.allValid) return alert('兩好一公道字數不足！');
-    if (imageFiles.length === 0) return alert('請至少上傳一張照片');
+    // 使用驗證結果檢查
+    if (!validation.basicValid) {
+      showToast({
+        type: 'error',
+        title: '請完成必填欄位',
+        message: validation.errors.filter(e => ['title', 'price', 'address', 'communityName'].includes(e.field)).map(e => e.message).join('、'),
+      });
+      return;
+    }
+    if (!validation.twoGoodOneFairValid) {
+      showToast({
+        type: 'error',
+        title: '兩好一公道字數不足',
+        message: `優點至少各 ${VALIDATION_RULES.advantage.minLength} 字，公道話至少 ${VALIDATION_RULES.disadvantage.minLength} 字`,
+      });
+      return;
+    }
+    if (!validation.images.valid) {
+      showToast({
+        type: 'error',
+        title: '請上傳照片',
+        message: '至少需要一張物件照片',
+      });
+      return;
+    }
     
     setLoading(true);
+    setUploadProgress({ current: 0, total: imageFiles.length });
+    
     try {
-      const uploadedUrls = await propertyService.uploadImages(imageFiles);
-      // 傳入已選擇的社區 ID（如果有的話）
-      const result = await propertyService.createPropertyWithForm(form, uploadedUrls, selectedCommunityId);
+      // 上傳圖片（含進度回報）
+      const uploadResult = await propertyService.uploadImages(imageFiles, {
+        concurrency: 3,
+        onProgress: (current, total) => setUploadProgress({ current, total }),
+      });
       
-      // 顯示確認頁而不是直接跳轉
+      // 檢查是否有失敗的圖片
+      if (!uploadResult.allSuccess) {
+        const failedNames = uploadResult.failed.map(f => f.file.name).join('、');
+        showToast({
+          type: 'warning',
+          title: '部分圖片上傳失敗',
+          message: `${failedNames} 未能上傳，其他照片已成功`,
+          duration: 5000,
+        });
+      }
+      
+      // 如果所有圖片都失敗
+      if (uploadResult.urls.length === 0) {
+        throw new Error('所有圖片上傳失敗，請檢查網路連線後重試');
+      }
+      
+      // 建立物件
+      const result = await propertyService.createPropertyWithForm(form, uploadResult.urls, selectedCommunityId);
+      
+      // 顯示成功 Toast
+      showToast({
+        type: 'success',
+        title: '🎉 刊登成功！',
+        message: `物件編號：${result.public_id}`,
+        duration: 3000,
+      });
+      
+      // 顯示確認頁
       setUploadResult({
         public_id: result.public_id,
         community_id: result.community_id,
@@ -121,9 +201,18 @@ export const PropertyUploadPage: React.FC = () => {
       setShowConfirmation(true);
       
     } catch (e: any) {
-      alert('失敗：' + e.message);
+      console.error('Publish error:', e);
+      showToast({
+        type: 'error',
+        title: '刊登失敗',
+        message: e.message || '發生未知錯誤',
+        showRetry: true,
+        onRetry: publish,
+        showContactSupport: true,
+      });
     } finally {
       setLoading(false);
+      setUploadProgress(null);
     }
   };
 
