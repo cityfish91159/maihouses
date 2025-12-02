@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>邁房子 V10 - 安心戰情室</title>
     <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -151,7 +151,7 @@
             const toast = ref({ show: false, msg: '' });
             const API = '/api';
             // 判斷是否為本地開發環境，用來顯示測試按鈕
-            const isDev = window.location.hostname === 'localhost';
+            const isDev = globalThis.location.hostname === 'localhost';
 
             const showToast = (msg) => { toast.value = { show: true, msg }; setTimeout(() => toast.value.show = false, 3000); };
             
@@ -159,11 +159,11 @@
 
             // 核心邏輯：從 URL Hash 或 LocalStorage 獲取 Token
             const initAuth = () => {
-                const hash = window.location.hash;
+                const hash = globalThis.location.hash;
                 if (hash.includes('token=')) {
                     token.value = hash.split('token=')[1];
                     localStorage.setItem('mh_token', token.value);
-                    window.location.hash = ''; // 清除 hash
+                    globalThis.location.hash = ''; // 清除 hash
                 } else {
                     token.value = localStorage.getItem('mh_token') || '';
                 }
@@ -174,7 +174,10 @@
                         const payload = JSON.parse(atob(token.value.split('.')[1]));
                         role.value = payload.role;
                         caseId.value = payload.caseId;
-                    } catch (e) { console.error('Token invalid'); }
+                    } catch (e) {
+                        console.error('Token invalid:', e.message);
+                        showToast('憑證格式錯誤');
+                    }
                 } else if (isDev) {
                     caseId.value = 'demo-v10'; // Dev default
                     devLogin();
@@ -234,8 +237,17 @@
             const reset = () => { if(confirm('重置？')) action(`${API}/reset/${caseId.value}`); };
             const toggleRole = () => { role.value = role.value === 'agent' ? 'buyer' : 'agent'; devLogin(); };
             
-            const getStepColor = (k) => { k=parseInt(k); if(k < tx.value.currentStep || tx.value.steps[k].locked) return 'bg-green-500 border-green-500'; if(k === tx.value.currentStep) return 'bg-blue-600 border-blue-600'; return 'bg-gray-300 border-gray-300'; };
-            const getCardStyle = (k) => parseInt(k) === tx.value.currentStep ? 'border-blue-500 ring-2 ring-blue-50' : 'border-gray-200';
+            const getStepColor = (k) => {
+                const step = Number.parseInt(k, 10);
+                if (step < tx.value.currentStep || tx.value.steps[step].locked) {
+                    return 'bg-green-500 border-green-500';
+                }
+                if (step === tx.value.currentStep) {
+                    return 'bg-blue-600 border-blue-600';
+                }
+                return 'bg-gray-300 border-gray-300';
+            };
+            const getCardStyle = (k) => Number.parseInt(k, 10) === tx.value.currentStep ? 'border-blue-500 ring-2 ring-blue-50' : 'border-gray-200';
             const getStepIcon = (k) => { const m={1:'fa-phone',2:'fa-clipboard-check',3:'fa-hand-holding-usd',4:'fa-comments',5:'fa-file-signature',6:'fa-home'}; return `fas ${m[k]}`; };
 
             return { caseId, role, tx, inputBuffer, supplementInput, isBusy, loading, timeLeft, toast, isDev, displayId, submitAgent, confirmStep, pay, toggleCheck, addSupplement, reset, toggleRole, getStepColor, getCardStyle, getStepIcon };
