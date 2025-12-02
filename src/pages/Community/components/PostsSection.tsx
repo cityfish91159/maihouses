@@ -11,7 +11,7 @@ import { LockedOverlay } from './LockedOverlay';
 
 interface PostCardProps {
   post: Post;
-  onLike?: ((postId: number) => void) | undefined;
+  onLike?: ((postId: number | string) => void) | undefined;
 }
 
 function PostCard({ post, onLike }: PostCardProps) {
@@ -93,7 +93,8 @@ interface PostsSectionProps {
   onTabChange: (tab: WallTab) => void;
   publicPosts: Post[];
   privatePosts: Post[];
-  onLike?: (postId: number) => void;
+  onLike?: (postId: number | string) => void;
+  onCreatePost?: (content: string, visibility: 'public' | 'private') => void;
 }
 
 export function PostsSection({ 
@@ -102,7 +103,8 @@ export function PostsSection({
   onTabChange, 
   publicPosts, 
   privatePosts,
-  onLike 
+  onLike,
+  onCreatePost,
 }: PostsSectionProps) {
   const perm = getPermissions(role);
 
@@ -118,7 +120,7 @@ export function PostsSection({
   };
 
   return (
-    <section id="public-wall" className="overflow-hidden rounded-[18px] border border-border-light bg-white/98 shadow-[0_2px_12px_rgba(0,51,102,0.04)]" aria-labelledby="posts-heading">
+    <section id="public-wall" className="scroll-mt-20 overflow-hidden rounded-[18px] border border-border-light bg-white/98 shadow-[0_2px_12px_rgba(0,51,102,0.04)]" aria-labelledby="posts-heading">
       <div className="flex items-center justify-between border-b border-brand/5 bg-gradient-to-br from-brand/3 to-brand-600/1 px-4 py-3.5">
         <h2 id="posts-heading" className="flex items-center gap-1.5 text-[15px] font-extrabold text-brand-700">🔥 社區熱帖</h2>
       </div>
@@ -165,7 +167,13 @@ export function PostsSection({
             
             {perm.canPostPublic && (
               <div className="flex justify-center rounded-[14px] border border-dashed border-border-light bg-brand/3 p-5">
-                <button className="flex w-full items-center justify-center gap-1 rounded-lg border border-brand/10 bg-brand/6 px-2.5 py-1.5 text-[11px] font-semibold text-brand">
+                <button 
+                  onClick={() => {
+                    const content = prompt('輸入貼文內容：');
+                    if (content) onCreatePost?.(content, 'public');
+                  }}
+                  className="flex w-full items-center justify-center gap-1 rounded-lg border border-brand/10 bg-brand/6 px-2.5 py-1.5 text-[11px] font-semibold text-brand hover:bg-brand/12"
+                >
                   ✏️ 發布貼文
                 </button>
               </div>
@@ -178,7 +186,13 @@ export function PostsSection({
             ))}
             {perm.canPostPrivate ? (
               <div className="flex justify-center rounded-[14px] border border-dashed border-border-light bg-brand/3 p-5">
-                <button className="flex w-full items-center justify-center gap-1 rounded-lg border border-brand/10 bg-brand/6 px-2.5 py-1.5 text-[11px] font-semibold text-brand">
+                <button 
+                  onClick={() => {
+                    const content = prompt('輸入私密貼文內容：');
+                    if (content) onCreatePost?.(content, 'private');
+                  }}
+                  className="flex w-full items-center justify-center gap-1 rounded-lg border border-brand/10 bg-brand/6 px-2.5 py-1.5 text-[11px] font-semibold text-brand hover:bg-brand/12"
+                >
                   ✏️ 發布私密貼文
                 </button>
               </div>

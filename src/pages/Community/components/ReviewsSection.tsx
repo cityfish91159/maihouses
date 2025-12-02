@@ -64,7 +64,13 @@ export function ReviewsSection({ role, reviews }: ReviewsSectionProps) {
       review.pros.forEach(pro => {
         items.push({ type: 'pro', text: pro, author: review.author, company: review.company, visits: review.visits, deals: review.deals });
       });
-      items.push({ type: 'con', text: review.cons, author: review.author, company: review.company, visits: review.visits, deals: review.deals });
+      // cons 可能是 string 或 array
+      const consArray = Array.isArray(review.cons) ? review.cons : [review.cons];
+      consArray.forEach(con => {
+        if (con) {
+          items.push({ type: 'con', text: con, author: review.author, company: review.company, visits: review.visits, deals: review.deals });
+        }
+      });
     });
     return items;
   }, [reviews]);

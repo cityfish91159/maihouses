@@ -2,7 +2,7 @@
  * Community Wall Page
  * 
  * 社區牆主頁面
- * 重構版 - 組件化、React Query、a11y 優化
+ * 重構版 - 統一資料來源、組件化、React Query、a11y 優化
  */
 
 import { useState, useCallback, useEffect } from 'react';
@@ -20,35 +20,35 @@ import {
   BottomCTA,
 } from './components';
 
-// Types & Data
+// Types
 import type { Role, WallTab } from './types';
 import { getPermissions } from './types';
-import { MOCK_DATA } from './mockData';
 
-// Hooks
-import { useCommunityWall } from '../../hooks/useCommunityWallQuery';
+// Hooks - 統一資料來源
+import { useCommunityWallData } from '../../hooks/useCommunityWallData';
 
 // ============ Main Component ============
 export default function Wall() {
   const { id } = useParams<{ id: string }>();
   const [role, setRole] = useState<Role>('guest');
   const [currentTab, setCurrentTab] = useState<WallTab>('public');
-  const [useMock, setUseMock] = useState(true);
 
-  // React Query Hook（API 模式時使用）
+  // 統一資料來源 Hook
   const { 
-    data: apiData, 
-    isLoading, 
+    data,
+    useMock,
+    setUseMock,
+    isLoading,
     error,
-    toggleLike: apiToggleLike,
-  } = useCommunityWall(useMock ? undefined : id, {
+    toggleLike,
+    createPost,
+  } = useCommunityWallData(id, {
     includePrivate: getPermissions(role).canAccessPrivate,
-    enabled: !useMock && !!id,
   });
 
-  // 當切換到私密牆但沒權限時，自動切回公開牆
   const perm = getPermissions(role);
   
+  // Tab 切換
   const handleTabChange = useCallback((tab: WallTab) => {
     if (tab === 'private' && !perm.canAccessPrivate) {
       return;
@@ -56,37 +56,25 @@ export default function Wall() {
     setCurrentTab(tab);
   }, [perm.canAccessPrivate]);
 
-  // 如果身份變更導致無法存取私密牆，切回公開牆（使用 useEffect 避免 render 中 setState）
+  // 如果身份變更導致無法存取私密牆，切回公開牆
   useEffect(() => {
     if (currentTab === 'private' && !perm.canAccessPrivate) {
       setCurrentTab('public');
     }
   }, [currentTab, perm.canAccessPrivate]);
 
-  // 按讚處理（目前只支援 Mock）
-  const handleLike = useCallback((postId: number) => {
-    if (!useMock && apiToggleLike) {
-      apiToggleLike(String(postId));
-    }
-    // Mock 模式下暫不處理
-  }, [useMock, apiToggleLike]);
+  // 按讚處理
+  const handleLike = useCallback((postId: number | string) => {
+    toggleLike(postId);
+  }, [toggleLike]);
 
-  // 資料來源（Mock 或 API）
-  // Mock 模式：使用本地假資料
-  // API 模式：使用真實 API 資料（需轉換格式）
-  
-  // 社區名稱
-  const communityName = MOCK_DATA.communityInfo.name; // TODO: 從 API 取得
-  
-  // 根據模式選擇資料來源
-  const reviews = MOCK_DATA.reviews;
-  const publicPosts = MOCK_DATA.posts.public;
-  const privatePosts = MOCK_DATA.posts.private;
-  const questions = MOCK_DATA.questions;
-  const communityInfo = MOCK_DATA.communityInfo;
-  
+  // 發文處理
+  const handleCreatePost = useCallback((content: string, visibility: 'public' | 'private' = 'public') => {
+    createPost(content, visibility);
+  }, [createPost]);
+
   // Loading 狀態（僅 API 模式）
-  if (!useMock && isLoading) {
+  if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-bg-base to-bg-soft">
         <div className="text-center">
@@ -98,7 +86,7 @@ export default function Wall() {
   }
 
   // Error 狀態（僅 API 模式）
-  if (!useMock && error) {
+  if (error) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-bg-base to-bg-soft">
         <div className="text-center">
@@ -115,9 +103,12 @@ export default function Wall() {
     );
   }
 
+  // 從統一資料來源取得資料
+  const { communityInfo, posts, reviews, questions } = data;
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-[var(--bg-base)] to-[var(--bg-alt)]">
-      <Topbar communityName={communityName} />
+      <Topbar communityName={communityInfo.name} />
       
       <div className="mx-auto flex max-w-[960px] gap-5 p-2.5 pb-[calc(80px+env(safe-area-inset-bottom,20px))] lg:p-2.5">
         {/* 主內容區 */}
@@ -127,31 +118,32 @@ export default function Wall() {
             role={role} 
             currentTab={currentTab} 
             onTabChange={handleTabChange}
-            publicPosts={publicPosts}
-            privatePosts={privatePosts}
+            publicPosts={posts.public}
+            privatePosts={posts.private}
             onLike={handleLike}
+            onCreatePost={handleCreatePost}
           />
           <QASection role={role} questions={questions} />
         </main>
 
-        {/* 側邊欄 */}
-        {communityInfo && (
-          <Sidebar 
-            info={communityInfo} 
-            questions={questions}
-            posts={publicPosts}
-          />
-        )}
+        {/* 側邊欄 - 使用同一個資料來源 */}
+        <Sidebar 
+          info={communityInfo} 
+          questions={questions}
+          posts={posts.public}
+        />
       </div>
 
       {/* 底部 CTA */}
       <BottomCTA role={role} />
 
-      {/* Mock 切換按鈕 */}
-      <MockToggle useMock={useMock} onToggle={() => setUseMock(!useMock)} />
-
-      {/* 身份切換器 */}
-      <RoleSwitcher role={role} onRoleChange={setRole} />
+      {/* 開發工具：僅開發環境顯示 */}
+      {import.meta.env.DEV && (
+        <>
+          <MockToggle useMock={useMock} onToggle={() => setUseMock(!useMock)} />
+          <RoleSwitcher role={role} onRoleChange={setRole} />
+        </>
+      )}
 
       {/* 動畫 keyframes */}
       <style>{`

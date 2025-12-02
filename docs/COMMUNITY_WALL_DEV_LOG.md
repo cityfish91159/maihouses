@@ -31,7 +31,8 @@
 | `supabase/migrations/20241201_community_wall.sql` | 資料庫 Schema |
 | `src/hooks/usePropertyFormValidation.ts` | 表單驗證 Hook |
 | `src/hooks/useCommunityWall.ts` | 社區牆資料 Hook (原版) |
-| `src/hooks/useCommunityWallQuery.ts` | **社區牆 Hook (React Query 版, 新增)** |
+| `src/hooks/useCommunityWallQuery.ts` | **社區牆 Hook (React Query 版)** |
+| `src/hooks/useCommunityWallData.ts` | **🆕 統一資料來源 Hook (Mock/API 整合)** |
 | `src/components/ui/Toast.tsx` | Toast 通知組件 |
 | `src/components/ui/CommunityPicker.tsx` | 社區選擇器 |
 | `src/utils/contentCheck.ts` | 內容審核工具 |
@@ -79,6 +80,89 @@
 13. **🆕 LockedOverlay 組件**：統一的模糊鎖定遮罩，減少 60 行重複代碼
 14. **🆕 Tailwind 品牌色統一**：所有硬編碼顏色改為品牌色系統
 15. **🆕 Code Review 修復**：解決 React 規範問題與邊界情況
+16. **🆕 統一資料來源 Hook**：`useCommunityWallData` 整合 Mock/API 資料，自動類型轉換
+
+---
+
+## 🔄 統一資料來源架構 (2025/12/04)
+
+### 問題
+
+原本 Mock 資料與 API 資料類型不兼容：
+- Mock: `Post`, `Question`, `Review` (本地定義)
+- API: `CommunityPost`, `CommunityQuestion`, `CommunityReview` (服務定義)
+
+導致切換 `useMock=false` 時，UI 無法正確顯示 API 資料。
+
+### 解決方案
+
+新增 `src/hooks/useCommunityWallData.ts`：
+
+```typescript
+// 統一輸出介面
+export interface UseCommunityWallDataReturn {
+  data: UnifiedWallData;       // 統一格式資料
+  useMock: boolean;            // 是否使用 Mock
+  setUseMock: (v: boolean) => void;
+  isLoading: boolean;
+  error: Error | null;
+  toggleLike: (postId: string | number) => Promise<void>;
+  createPost: (content: string, visibility?: 'public' | 'private') => Promise<void>;
+  askQuestion: (question: string) => Promise<void>;
+  answerQuestion: (questionId: string, content: string) => Promise<void>;
+}
+
+// 資料轉換函數
+function convertApiPost(post: CommunityPost): Post { ... }
+function convertApiReview(review: CommunityReview): Review { ... }
+function convertApiQuestion(question: CommunityQuestion): Question { ... }
+```
+
+### 架構圖
+
+```
+                    useCommunityWallData
+                           │
+           ┌───────────────┴───────────────┐
+           ▼                               ▼
+     Mock (useMock=true)           API (useMock=false)
+           │                               │
+           ▼                               ▼
+      MOCK_DATA                   useCommunityWall
+    (mockData.ts)                (useCommunityWallQuery.ts)
+           │                               │
+           └───────────────┬───────────────┘
+                           ▼
+                    UnifiedWallData
+                    (統一格式輸出)
+                           │
+                           ▼
+                       Wall.tsx
+                           │
+           ┌───────┬───────┼───────┬───────┐
+           ▼       ▼       ▼       ▼       ▼
+        Posts   Reviews   QA   Sidebar  BottomCTA
+```
+
+### 改動清單
+
+| 檔案 | 變更 |
+|------|------|
+| `src/hooks/useCommunityWallData.ts` | **新增** - 統一資料來源 Hook |
+| `src/pages/Community/Wall.tsx` | 改用 `useCommunityWallData` |
+| `src/pages/Community/types.ts` | `Post.id`, `Question.id` 改為 `number \| string` |
+| `src/pages/Community/components/PostsSection.tsx` | 新增 `onCreatePost` prop |
+| `src/pages/Community/components/BottomCTA.tsx` | 修正 member/guest CTA 邏輯 |
+
+### 私密牆置頂排序
+
+Mock 和 API 模式都會對私密牆貼文進行置頂排序：
+
+```typescript
+const sortedPrivate = [...privatePosts].sort((a, b) => 
+  (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0)
+);
+```
 
 ---
 

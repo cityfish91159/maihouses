@@ -10,7 +10,7 @@ export type WallTab = 'public' | 'private';
 
 // ============ Data Types ============
 export interface Post {
-  id: number;
+  id: number | string;
   author: string;
   floor?: string;
   type: 'resident' | 'agent' | 'official';
@@ -25,17 +25,17 @@ export interface Post {
 }
 
 export interface Review {
-  id: number;
+  id: number | string;
   author: string;
   company: string;
   visits: number;
   deals: number;
   pros: string[];
-  cons: string;
+  cons: string | string[];  // 支援 string 或 array
 }
 
 export interface Question {
-  id: number;
+  id: number | string;
   question: string;
   time: string;
   answersCount: number;

@@ -78,7 +78,7 @@ export function QASection({ role, questions }: QASectionProps) {
   const hiddenCount = Math.max(0, answeredQuestions.length - visibleCount);
 
   return (
-    <section className="overflow-hidden rounded-[18px] border border-border-light bg-white/98 shadow-[0_2px_12px_rgba(0,51,102,0.04)]" aria-labelledby="qa-heading" id="qa-section">
+    <section className="scroll-mt-20 overflow-hidden rounded-[18px] border border-border-light bg-white/98 shadow-[0_2px_12px_rgba(0,51,102,0.04)]" aria-labelledby="qa-heading" id="qa-section">
       <div className="flex items-center justify-between border-b border-brand/5 bg-gradient-to-br from-brand/3 to-brand-600/1 px-4 py-3.5">
         <div>
           <h2 id="qa-heading" className="flex items-center gap-1.5 text-[15px] font-extrabold text-brand-700">
