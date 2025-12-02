@@ -357,6 +357,24 @@ body.role-agent .blur-cta{display:none !important}
         <a href="#subscribe">🔔 追蹤此社區</a>
       </div>
     </div>
+    
+    <!-- 最新問答摘要 -->
+    <div class="sidebar-card" id="sidebar-qa-summary">
+      <h4>❓ 最新問答</h4>
+      <div class="link-list" id="sidebar-qa-list">
+        <!-- 由 JS 動態填入 -->
+      </div>
+      <a href="#qa-section" style="display:block;text-align:center;font-size:12px;color:var(--brand-light);margin-top:8px;text-decoration:none">查看全部問答 →</a>
+    </div>
+    
+    <!-- 熱門貼文 -->
+    <div class="sidebar-card" id="sidebar-hot-posts">
+      <h4>🔥 熱門貼文</h4>
+      <div class="link-list" id="sidebar-hot-list">
+        <!-- 由 JS 動態填入 -->
+      </div>
+      <a href="#public-tab" style="display:block;text-align:center;font-size:12px;color:var(--brand-light);margin-top:8px;text-decoration:none">查看全部貼文 →</a>
+    </div>
   </aside>
 </div>
 
@@ -889,6 +907,7 @@ function renderAll() {
   renderQuestions();
   renderBottomCTA();
   renderPrivateTab();
+  renderSidebarSummary();
   
   // 如果目前在私密牆但沒權限，切回公開牆
   if (currentWall === 'private') {
@@ -896,6 +915,35 @@ function renderAll() {
     if (!perm.canAccessPrivate) {
       switchWall('public');
     }
+  }
+}
+
+// ============================
+// 側欄摘要渲染
+// ============================
+function renderSidebarSummary() {
+  // 最新問答（取前 3 則）
+  const qaList = document.getElementById('sidebar-qa-list');
+  if (qaList) {
+    const questions = MOCK_DATA.questions.slice(0, 3);
+    qaList.innerHTML = questions.map(q => `
+      <a href="#qa-section" style="display:flex;align-items:flex-start;gap:8px">
+        <span style="flex-shrink:0">💬</span>
+        <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${q.question.length > 18 ? q.question.substring(0, 18) + '...' : q.question}</span>
+      </a>
+    `).join('');
+  }
+  
+  // 熱門貼文（按讚數排序，取前 2 則）
+  const hotList = document.getElementById('sidebar-hot-list');
+  if (hotList) {
+    const posts = [...MOCK_DATA.posts.public].sort((a, b) => b.likes - a.likes).slice(0, 2);
+    hotList.innerHTML = posts.map(p => `
+      <a href="#public-wall" style="display:flex;align-items:flex-start;gap:8px">
+        <span style="flex-shrink:0">❤️ ${p.likes}</span>
+        <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.title.length > 15 ? p.title.substring(0, 15) + '...' : p.title}</span>
+      </a>
+    `).join('');
   }
 }
 
