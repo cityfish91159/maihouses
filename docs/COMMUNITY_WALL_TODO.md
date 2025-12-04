@@ -291,3 +291,10 @@ const handleCreatePost = useCallback(async (content: string, visibility: 'public
 - [x] Mock 資料統一來源
 - [x] 2025/12/05：P0 & P1 fix（queryKey、缺 ID 錯誤處理、LockedOverlay CTA、QA 串接驗證、Sidebar 排序、LockedOverlay 文案、操作錯誤提示）
 - [x] 2025/12/05：測試/驗證 — `npx tsc --noEmit`、`npx vitest run src/hooks/__tests__/useCommunityWallQuery.test.tsx`、`npm run build`
+
+## 🧪 2025/12/05 執行紀錄
+
+1. 依 TODO 條列逐項實作，對 `useCommunityWallQuery` 與 `Wall`/各 Section 加上查詢鍵、CTA、錯誤提示、熱帖排序等調整，並於 `docs/COMMUNITY_WALL_TODO.md` 更新狀態。
+2. 本地測試：`npx tsc --noEmit`、`npx vitest run src/hooks/__tests__/useCommunityWallQuery.test.tsx`、`npm run build` 全數通過。
+3. 部署：`git push origin main` 觸發 Vercel，自動產出 `index-DvRlKQMf.js`/`index-CzFhcG4W.css` 等新版 bundle。
+4. 線上驗證：`curl -s https://maihouses.vercel.app/maihouses/assets/index-DvRlKQMf.js | grep "追蹤這題的最新回答"` 可看到新版 LockedOverlay 文案，代表 `/maihouses/community/test-uuid/wall` 已套用本次變更。
