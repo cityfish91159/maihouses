@@ -121,7 +121,7 @@ ${allDisadvantages.join('、') || '無'}
       throw new Error(`OpenAI API error: ${aiResponse.status}`);
     }
 
-    const aiData = await aiResponse.json();
+    const aiData: any = await aiResponse.json();
     const aiContent = aiData.choices?.[0]?.message?.content || '';
 
     // 5. 解析 JSON

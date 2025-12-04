@@ -96,7 +96,7 @@ export function verifyToken(req: any) {
 
 export function cors(req: any, res: any) {
     const allowedOrigins = ['https://maihouses.com', 'http://localhost:5173', 'http://127.0.0.1:5173'];
-    const origin = req.headers.origin;
+    const origin = req?.headers?.origin;
     
     if (origin && allowedOrigins.includes(origin)) {
         res.setHeader('Access-Control-Allow-Origin', origin);
@@ -108,25 +108,4 @@ export function cors(req: any, res: any) {
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-system-key');
     res.setHeader('Access-Control-Allow-Credentials', 'true');
-}
-}
-
-export function cors(res: any) {
-    const allowedOrigins = ['https://maihouses.com', 'http://localhost:5173', 'http://127.0.0.1:5173'];
-    // In a real serverless function, we might need to check req.headers.origin
-    // But here we are passing 'res'. We can't easily check 'req' inside this helper unless we pass it.
-    // For now, let's set a safe default or check if we can modify the signature.
-    // Since we can't easily change all call sites, let's use a safer wildcard approach or just hardcode localhost for dev.
-    
-    // Actually, to support multiple origins with credentials, we must echo the origin.
-    // But we don't have 'req' here.
-    // Let's assume we can change the signature or just set it to the production domain + localhost.
-    
-    res.setHeader('Access-Control-Allow-Origin', 'https://maihouses.com'); // Strict for prod
-    // Note: For local dev, this might break. 
-    // Let's try to be smarter. If we can't access req, we might have to stick to * or disable credentials.
-    // But we need credentials for Cookies.
-    // So we MUST echo origin.
-    
-    // Let's change the signature of cors to accept req.
 }
