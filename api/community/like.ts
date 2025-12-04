@@ -46,16 +46,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: '缺少 postId' });
     }
 
-    // 取得目前按讚狀態
+    // 取得貼文（含 visibility 以檢查權限）
     const { data: post, error: fetchError } = await supabase
       .from('community_posts')
-      .select('liked_by, likes_count')
+      .select('liked_by, likes_count, visibility')
       .eq('id', postId)
       .single();
 
     if (fetchError || !post) {
       return res.status(404).json({ error: '找不到此貼文' });
     }
+
+    // 權限驗證：私密貼文需已登入（已在上方驗證）
+    // MVP：登入用戶都能操作私密牆，未來可加社區成員驗證
+    // if (post.visibility === 'private') { ... }
 
     const likedBy: string[] = post.liked_by || [];
     const isLiked = likedBy.includes(user.id);

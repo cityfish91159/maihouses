@@ -127,16 +127,15 @@ export function convertApiData(
   const communityInfo: CommunityInfo = apiData.communityInfo
     ? {
         name: apiData.communityInfo.name ?? '未知社區',
-        year: apiData.communityInfo.year,  // null 則前端顯示「未知」
-        units: apiData.communityInfo.units,
-        managementFee: apiData.communityInfo.managementFee,
-        builder: apiData.communityInfo.builder ?? '未知建商',
-        members: apiData.communityInfo.members ?? mockFallback.members ?? 0,
-        avgRating: apiData.communityInfo.avgRating ?? mockFallback.avgRating ?? 0,
-        monthlyInteractions:
-          apiData.communityInfo.monthlyInteractions ??
-          mockFallback.monthlyInteractions ?? 0,
-        forSale: apiData.communityInfo.forSale ?? mockFallback.forSale ?? 0,
+        year: apiData.communityInfo.year ?? null,  // null 則前端顯示「未知」
+        units: apiData.communityInfo.units ?? null,
+        managementFee: apiData.communityInfo.managementFee ?? null,
+        builder: apiData.communityInfo.builder ?? null,
+        // 真實統計資料，若 API 回傳 undefined/null 則顯示 null（前端會顯示「-」）
+        members: apiData.communityInfo.members ?? null,
+        avgRating: apiData.communityInfo.avgRating ?? null,
+        monthlyInteractions: apiData.communityInfo.monthlyInteractions ?? null,
+        forSale: apiData.communityInfo.forSale ?? null,
       }
     : mockFallback;
 

@@ -225,18 +225,56 @@ async function getAll(
     publicPostsQuery,
     privatePostsQuery,
     
+    // Reviews: 從 community_reviews 取得 advantage_1/advantage_2/disadvantage
+    // 並關聯 properties 取得 agent 資訊
     supabase
       .from('community_reviews')
-      .select('*', { count: 'exact' })
+      .select(`
+        id,
+        community_id,
+        property_id,
+        source,
+        advantage_1,
+        advantage_2,
+        disadvantage,
+        created_at,
+        property:properties!property_id (
+          agent_id,
+          agent:agents!agent_id (
+            id,
+            name,
+            company,
+            total_visits,
+            total_deals
+          )
+        )
+      `, { count: 'exact' })
       .eq('community_id', communityId)
       .order('created_at', { ascending: false })
       .limit(isAuthenticated ? 20 : GUEST_LIMIT),
     
+    // Questions: 取得問答與回覆
     supabase
       .from('community_questions')
       .select(`
-        *,
-        answers:community_answers(id, answer, author_type, is_best)
+        id,
+        community_id,
+        author_id,
+        question,
+        is_anonymous,
+        status,
+        answers_count,
+        views_count,
+        created_at,
+        answers:community_answers(
+          id,
+          author_id,
+          answer,
+          author_type,
+          is_best,
+          likes_count,
+          created_at
+        )
       `, { count: 'exact' })
       .eq('community_id', communityId)
       .order('created_at', { ascending: false })
@@ -264,6 +302,53 @@ async function getAll(
     forSale: null,
   } : null;
 
+  // 轉換 reviews 格式：DB 的 advantage_1/advantage_2/disadvantage → 前端的 pros/cons
+  const transformedReviews = (reviewsResult.data || []).map((review: any) => {
+    const pros: string[] = [];
+    if (review.advantage_1?.trim()) pros.push(review.advantage_1.trim());
+    if (review.advantage_2?.trim()) pros.push(review.advantage_2.trim());
+    
+    const agent = review.property?.agent;
+    
+    return {
+      id: review.id,
+      community_id: review.community_id,
+      author_id: agent?.id || null,
+      content: {
+        pros,
+        cons: review.disadvantage?.trim() || '',
+      },
+      created_at: review.created_at,
+      agent: agent ? {
+        name: agent.name || '匿名房仲',
+        company: agent.company || '',
+        stats: {
+          visits: agent.total_visits ?? 0,
+          deals: agent.total_deals ?? 0,
+        },
+      } : null,
+    };
+  });
+
+  // 轉換 questions 格式：確保 answers 的 content 欄位正確
+  const transformedQuestions = (questionsResult.data || []).map((q: any) => ({
+    ...q,
+    answers: (q.answers || []).map((a: any) => ({
+      id: a.id,
+      author_id: a.author_id,
+      content: a.answer, // DB 欄位是 answer，前端期望 content
+      author_type: a.author_type,
+      is_best: a.is_best,
+      is_expert: a.author_type === 'agent', // 房仲回答標記為專家
+      likes_count: a.likes_count,
+      created_at: a.created_at,
+      author: {
+        name: a.author_type === 'agent' ? '認證房仲' : '住戶',
+        role: a.author_type,
+      },
+    })),
+  }));
+
   return res.status(200).json({
     success: true,
     communityInfo,
@@ -274,11 +359,11 @@ async function getAll(
       privateTotal: privatePostsResult.count || 0,
     },
     reviews: {
-      items: reviewsResult.data || [],
+      items: transformedReviews,
       total: reviewsResult.count || 0,
     },
     questions: {
-      items: questionsResult.data || [],
+      items: transformedQuestions,
       total: questionsResult.count || 0,
     },
     isAuthenticated

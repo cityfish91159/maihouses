@@ -241,14 +241,15 @@ export async function askQuestion(
 
 /**
  * 回答問題
+ * 注意：API 使用 POST + action=answer，而非 PUT
  */
 export async function answerQuestion(
   questionId: string,
   content: string
 ): Promise<{ id: string; content: string }> {
   return fetchAPI('/question', {
-    method: 'PUT',
-    body: JSON.stringify({ questionId, content }),
+    method: 'POST',
+    body: JSON.stringify({ action: 'answer', questionId, content }),
   });
 }
 
