@@ -45,6 +45,11 @@ export function useGuestVisibleItems<T>(
 ```
 **檔案**：`src/hooks/useGuestVisibleItems.ts`（新增 62 行）
 
+**2025-12-04 20:45 補正**：之前只建了 hook 檔案沒有使用，現在三個 Section 都改用：
+- `ReviewsSection.tsx`：改用 `useGuestVisibleItems(reviews, perm.canSeeAllReviews)`
+- `PostsSection.tsx`：改用 `useGuestVisibleItems(publicPosts, perm.canSeeAllPosts)`
+- `QASection.tsx`：改用 `useGuestVisibleItems(answeredQuestions, perm.isLoggedIn)`
+
 ---
 
 ### 修復 D：prompt() 改 PostModal ✅
