@@ -13,7 +13,7 @@ import { supabase } from '../lib/supabase';
 import type { CommunityWallData } from '../services/communityService';
 import type { CommunityInfo, Post, Review, Question } from '../pages/Community/types';
 import { MOCK_DATA, createMockPost, createMockQuestion, createMockAnswer } from '../pages/Community/mockData';
-import { convertApiData } from './communityWallConverters';
+import { convertApiData, sortPostsWithPinned } from './communityWallConverters';
 import type { UnifiedWallData } from './communityWallConverters';
 
 // ============ 統一輸出型別 ============
@@ -221,17 +221,25 @@ export function useCommunityWallData(
     currentUserId,
   });
 
-  // 統一資料來源
+  // 統一資料來源（無論 Mock 或 API，都套用 pinned 排序）
   const data = useMemo<UnifiedWallData>(() => {
     if (useMock) {
-      return mockData;
+      // Mock 模式：套用置頂排序
+      return {
+        ...mockData,
+        posts: {
+          ...mockData.posts,
+          public: sortPostsWithPinned(mockData.posts.public),
+          private: sortPostsWithPinned(mockData.posts.private),
+        },
+      };
     }
 
     if (!apiData) {
       return initialMockData;
     }
 
-    // API 模式：轉換資料格式，API 有 communityInfo 就用，沒有才 fallback Mock
+    // API 模式：轉換資料格式（內含 pinned 排序），API 有 communityInfo 就用，沒有才 fallback Mock
     return convertApiData(apiData, MOCK_DATA.communityInfo);
   }, [useMock, apiData, mockData, initialMockData]);
 

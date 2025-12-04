@@ -55,14 +55,56 @@
 ### 2025/12/04 18:10 - 再部署驗證 & 二次審計啟動
 
 **動作**：
-- 重新執行 `npm run build`（`tsc` + `vite build`），產出最新 `dist/` 套件：`react-vendor-BABxjSf5.js` 162.86 kB gzip、`index-DZBDo5ya.js` 436.84 kB gzip。
-- 建置全程 18.77s 無錯誤，確認可隨時推送觸發 Vercel 再部署。
 
 **目的**：
-- 在進行第二輪 TODO vs. 實作審計前，先確保生產構建穩定，避免文件更新後才發現構建失敗。
 
 **後續**：
-- 文檔對齊與缺失補列完成後即可 push 觸發 Vercel 自動部署（本次未推送，等待審計報告一併提交）。
+
+## 2025-12-04 G~K 審計收尾 & includePrivate 真正修復
+
+### 1. 修補之前自查發現的「敷衍點」
+
+- **K：樂觀更新在未登入時的行為**
+  - 之前：`useCommunityWallQuery` 內使用 `currentUserId ?? 'anonymous-user'` 當樂觀更新使用者 ID，導致未登入也會先看到讚數跳動，再被回滾，UX 很差。
+  - 現在：
+    - 新增 `canOptimisticUpdate = !!currentUserId`，未登入時直接跳過樂觀更新，交由 API 實際回應決定。
+    - 只有在 `currentUserId` 存在時才會在 `liked_by` 陣列中加入/移除該 ID。
+  - 相關檔案：
+    - `src/hooks/useCommunityWallQuery.ts`
+
+### 2. J：includePrivate 後端實作補齊
+
+- 問題：
+  - 先前只在前端 `getCommunityWall()` 把 `includePrivate` 帶進查詢字串，後端 `/api/community/wall` 並沒有讀取或使用這個參數；`getAll()` 永遠只查 `visibility='public'`，導致「前端看起來有 includePrivate 參數，實際上後端完全忽略」。
+- 修復內容：
+  1. 在 handler 解析查詢參數時加入 `includePrivate`，並轉為布林：
+     - `const { communityId, type, visibility, includePrivate } = req.query;`
+     - `const wantsPrivate = includePrivate === '1' || includePrivate === 'true';`
+  2. `getAll()` 函式簽名改為接受 `includePrivate: boolean`：
+     - `async function getAll(res, communityId, isAuthenticated, includePrivate = false)`
+  3. 僅當「已登入且明確要求 includePrivate」時才查詢私密貼文：
+     - `const canAccessPrivate = isAuthenticated && includePrivate;`
+     - 公開牆：固定查 `visibility='public'`
+     - 私密牆：`canAccessPrivate === true` 時，額外查一個 `visibility='private'` 的 query；否則回傳空陣列與 0。
+  4. 調整 `getAll` 回傳格式，與前端 `CommunityWallData` 對齊：
+     - `posts.public` / `posts.private` / `posts.publicTotal` / `posts.privateTotal`
+     - 保留原有 reviews / questions / community 結構。
+  5. 保留 reviews/communities 既有邏輯，只修正 `communities` 查詢條件誤改後又還原為 `eq('id', communityId)`。
+- 相關檔案：
+  - `api/community/wall.ts`
+
+### 3. 驗證與部署
+
+- 指令紀錄：
+  - `npm run typecheck` → ✓ 無錯誤
+  - `npm run test` → ✓ 29 passed / 7 test files
+  - `npm run build` → ✓ 生產構建成功
+- Git：
+  - Commit：`ae35d31` – 修正 K：未登入不做樂觀更新，避免「假成功再回滾」。
+  - Commit：`9530544` – 修正 J：後端 `includePrivate` 支援 + `getAll` 分離 public/private 貼文。
+  - Branch：`main`（已推送至 GitHub，觸發 Vercel 自動部署）。
+
+> 備註：`docs/COMMUNITY_WALL_TODO.md` 已在本次作業結尾清空，只保留簡單標題，準備接收新的審計與 TODO 規劃。
 
 ### 2025/12/04 17:45 - 首席審計收尾 & 全面驗證
 

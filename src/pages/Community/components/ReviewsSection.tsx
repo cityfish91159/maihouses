@@ -67,14 +67,19 @@ export function ReviewsSection({ role, reviews: reviewsProp, onUnlock }: Reviews
   const reviews = Array.isArray(reviewsProp) ? reviewsProp : (reviewsProp?.items || []);
   const perm = getPermissions(role);
 
-  // 拆成單項
-  const allItems = useMemo(() => {
+  // 先以「完整 review」為單位做 slice，再展開成單項
+  const visibleReviews = perm.canSeeAllReviews 
+    ? reviews 
+    : reviews.slice(0, GUEST_VISIBLE_COUNT);
+  const hiddenReviewCount = Math.max(0, reviews.length - visibleReviews.length);
+  
+  // 把可見的 reviews 拆成單項（pros/cons）
+  const visibleItems = useMemo(() => {
     const items: { type: 'pro' | 'con'; text: string; author: string; company: string; visits: number; deals: number }[] = [];
-    reviews.forEach(review => {
+    visibleReviews.forEach(review => {
       review.pros.forEach(pro => {
         items.push({ type: 'pro', text: pro, author: review.author, company: review.company, visits: review.visits, deals: review.deals });
       });
-      // cons 可能是 string 或 array
       const consArray = Array.isArray(review.cons) ? review.cons : [review.cons];
       consArray.forEach(con => {
         if (con) {
@@ -83,11 +88,25 @@ export function ReviewsSection({ role, reviews: reviewsProp, onUnlock }: Reviews
       });
     });
     return items;
-  }, [reviews]);
+  }, [visibleReviews]);
 
-  const totalCount = allItems.length;
-  const visibleCount = perm.canSeeAllReviews ? totalCount : Math.min(GUEST_VISIBLE_COUNT, totalCount);
-  const hiddenCount = Math.max(0, totalCount - visibleCount);
+  // 取得下一則被隱藏的 review 的第一個項目（用於 LockedOverlay 預覽）
+  const nextHiddenItem = useMemo(() => {
+    if (hiddenReviewCount === 0) return null;
+    const nextReview = reviews[visibleReviews.length];
+    if (!nextReview) return null;
+    // 優先顯示 pros 的第一項
+    const firstPro = nextReview.pros[0];
+    if (firstPro) {
+      return { type: 'pro' as const, text: firstPro, author: nextReview.author, company: nextReview.company, visits: nextReview.visits, deals: nextReview.deals };
+    }
+    const consArray = Array.isArray(nextReview.cons) ? nextReview.cons : [nextReview.cons];
+    const firstCon = consArray[0];
+    if (firstCon) {
+      return { type: 'con' as const, text: firstCon, author: nextReview.author, company: nextReview.company, visits: nextReview.visits, deals: nextReview.deals };
+    }
+    return null;
+  }, [reviews, visibleReviews.length, hiddenReviewCount]);
 
   return (
     <section className="overflow-hidden rounded-[18px] border border-border-light bg-white/98 shadow-[0_2px_12px_rgba(0,51,102,0.04)]" aria-labelledby="reviews-heading">
@@ -97,24 +116,24 @@ export function ReviewsSection({ role, reviews: reviewsProp, onUnlock }: Reviews
           <p className="mt-0.5 text-[11px] text-ink-600">來自最真實的評價</p>
         </div>
         <span className="flex items-center gap-1 rounded-full border border-brand-600 bg-brand/8 px-2.5 py-1 text-[10px] font-bold text-brand">
-          {totalCount} 則評價
+          {reviews.length} 則評價
         </span>
       </div>
       <div className="flex flex-col gap-2.5 p-3.5">
-        {allItems.slice(0, visibleCount).map((item, idx) => (
+        {visibleItems.map((item, idx) => (
           <ReviewCard key={idx} item={item} type={item.type} />
         ))}
         
         {/* 使用 LockedOverlay 組件 */}
         <LockedOverlay
-          visible={hiddenCount > 0 && !!allItems[visibleCount]}
-          hiddenCount={hiddenCount}
+          visible={hiddenReviewCount > 0 && !!nextHiddenItem}
+          hiddenCount={hiddenReviewCount}
           countLabel="則評價"
           benefits={['看完所有鄰居真實評價', '社區有新評論時通知你']}
           {...(onUnlock ? { onCtaClick: onUnlock } : {})}
         >
-          {allItems[visibleCount] && (
-            <ReviewCard item={allItems[visibleCount]} type={allItems[visibleCount].type} />
+          {nextHiddenItem && (
+            <ReviewCard item={nextHiddenItem} type={nextHiddenItem.type} />
           )}
         </LockedOverlay>
       </div>

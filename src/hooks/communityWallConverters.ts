@@ -8,6 +8,11 @@ import type { Post, Review, Question, CommunityInfo, UnifiedWallData } from '../
 
 export type { UnifiedWallData };
 
+/** 統一排序邏輯：pinned 優先，然後按原有順序（API 已按時間排序） */
+export function sortPostsWithPinned(posts: Post[]): Post[] {
+  return [...posts].sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0));
+}
+
 export function formatTimeAgo(dateStr: string): string {
   const date = new Date(dateStr);
   if (Number.isNaN(date.getTime())) {
@@ -88,10 +93,11 @@ export function convertApiData(
   apiData: CommunityWallData,
   mockFallback: CommunityInfo
 ): UnifiedWallData {
+  const convertedPublic = (apiData.posts?.public ?? []).map(convertApiPost);
   const convertedPrivate = (apiData.posts?.private ?? []).map(convertApiPost);
-  const sortedPrivate = [...convertedPrivate].sort(
-    (a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0)
-  );
+  
+  const sortedPublic = sortPostsWithPinned(convertedPublic);
+  const sortedPrivate = sortPostsWithPinned(convertedPrivate);
 
   const communityInfo: CommunityInfo = apiData.communityInfo
     ? {
@@ -112,7 +118,7 @@ export function convertApiData(
   return {
     communityInfo,
     posts: {
-      public: (apiData.posts?.public ?? []).map(convertApiPost),
+      public: sortedPublic,
       private: sortedPrivate,
       publicTotal: apiData.posts?.publicTotal ?? 0,
       privateTotal: apiData.posts?.privateTotal ?? 0,

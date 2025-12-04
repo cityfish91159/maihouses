@@ -244,14 +244,31 @@ async function getAll(
     
     supabase
       .from('communities')
-      .select('id, name, address, two_good, one_fair, story_vibe, completeness_score')
+      .select('id, name, address, two_good, one_fair, story_vibe, completeness_score, year_built, total_units, management_fee, builder')
       .eq('id', communityId)
       .single()
   ]);
 
+  // 組裝 communityInfo（對齊前端 CommunityInfo 型別）
+  // 注意：year_built, total_units, management_fee, builder 欄位需要在 DB 補齊
+  // 目前若 DB 無該欄位，使用合理預設值
+  const rawCommunity = communityResult.data;
+  const communityInfo = rawCommunity ? {
+    name: rawCommunity.name || '未知社區',
+    year: rawCommunity.year_built || new Date().getFullYear(),
+    units: rawCommunity.total_units || 0,
+    managementFee: rawCommunity.management_fee || 0,
+    builder: rawCommunity.builder || '未知建商',
+    // 以下為可選欄位，從 DB 取得或給預設值
+    members: 0,          // TODO: 需要另開 View 或欄位統計
+    avgRating: 0,        // TODO: 需要另開 View 或欄位統計
+    monthlyInteractions: 0,
+    forSale: 0,
+  } : null;
+
   return res.status(200).json({
     success: true,
-    community: communityResult.data,
+    communityInfo,
     posts: {
       public: publicPostsResult.data || [],
       private: privatePostsResult.data || [],
@@ -259,16 +276,12 @@ async function getAll(
       privateTotal: privatePostsResult.count || 0,
     },
     reviews: {
-      data: reviewsResult.data || [],
+      items: reviewsResult.data || [],
       total: reviewsResult.count || 0,
-      limited: !isAuthenticated,
-      hiddenCount: !isAuthenticated && reviewsResult.count 
-        ? Math.max(0, reviewsResult.count - GUEST_LIMIT) 
-        : 0
     },
     questions: {
-      data: questionsResult.data || [],
-      total: questionsResult.count || 0
+      items: questionsResult.data || [],
+      total: questionsResult.count || 0,
     },
     isAuthenticated
   });
