@@ -65,7 +65,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
   } catch (error: any) {
     console.error('API Error:', error);
-    return res.status(500).json({ error: error.message });
+    // 返回更詳細的錯誤訊息用於除錯
+    return res.status(500).json({ 
+      error: error.message,
+      hint: error.hint || null,
+      details: error.details || null,
+      code: error.code || null
+    });
   }
 }
 
