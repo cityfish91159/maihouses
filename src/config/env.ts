@@ -35,15 +35,17 @@ export const env = readEnv();
 
 function resolveCommunityApiBase(envShape: EnvShape): string {
   if (!envShape.VITE_API_BASE_URL) {
+    // 正式環境使用同 origin 的 /api/community
     if (import.meta.env.PROD) {
-      throw new Error('VITE_API_BASE_URL 未設定，正式環境無法使用預設 /api/community');
+      console.warn('[env] VITE_API_BASE_URL 未設定，使用預設 /api/community');
     }
     return DEFAULT_COMMUNITY_API_BASE;
   }
 
   const normalized = envShape.VITE_API_BASE_URL.trim();
   if (!normalized) {
-    throw new Error('VITE_API_BASE_URL 不可為空字串');
+    console.warn('[env] VITE_API_BASE_URL 為空字串，使用預設 /api/community');
+    return DEFAULT_COMMUNITY_API_BASE;
   }
 
   return `${trimTrailingSlash(normalized)}/community`;

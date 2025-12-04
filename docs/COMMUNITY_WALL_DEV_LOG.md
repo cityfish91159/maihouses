@@ -52,6 +52,20 @@
 
 ## 📝 重要更新紀錄
 
+### 2025/12/04 17:15 - 首席審計完成
+
+**審計結果**：對已宣稱完成的代碼進行嚴苛檢視，發現 6 處「文檔宣稱完成但代碼未落地或便宜行事」：
+- A: `env.ts` 缺 URL 格式驗證 + PROD throw 只會白屏
+- B: `QASection` Focus Trap 還原焦點可能跳到 `<body>`
+- C: `PostsSection` Tab 的 End 鍵未處理無權限情況
+- D: `WallErrorBoundary` 未處理 `error.cause`
+- E: `toggleLike` 沒有實作 Optimistic Update（#10 只說待做沒給代碼）
+- F: `PostSkeleton` 的 `aria-hidden` 與 `WallSkeleton` 的 `role="status"` 衝突
+
+**產出**：`docs/COMMUNITY_WALL_TODO.md` 新增審計區塊，每項缺失皆附最佳實作代碼。
+
+---
+
 ### 2025/12/04 17:00 - TODO 文檔精簡 + 審計前部署
 
 **變更**：
