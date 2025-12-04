@@ -52,13 +52,30 @@
 
 ## 📝 重要更新紀錄
 
-### 2025/12/04 18:10 - 再部署驗證 & 二次審計啟動
+### 2025/12/04 19:30 - 全端診斷報告修復完成
 
-**動作**：
+**修改的檔案**：
+| 檔案 | 變更內容 |
+|------|----------|
+| `api/community/wall.ts` | 回傳 `communityInfo` 取代 `community`，`reviews.items`/`questions.items` 格式對齊 |
+| `src/pages/Community/types.ts` | `GUEST_VISIBLE_COUNT = 4`，加註「以完整物件為單位」 |
+| `src/pages/Community/components/ReviewsSection.tsx` | 重寫 slice 邏輯：先 slice reviews 再展開 pros/cons |
+| `src/hooks/communityWallConverters.ts` | 新增並導出 `sortPostsWithPinned()`，統一排序邏輯 |
+| `src/hooks/useCommunityWallData.ts` | Mock 模式也套用 `sortPostsWithPinned` |
+| `src/pages/Community/Wall.backup.tsx` | **已刪除** (消除重複 MOCK_DATA) |
 
-**目的**：
+**驗證結果**：
+```bash
+npm run typecheck  ✓ 無錯誤
+npm run test       ✓ 29 passed / 7 test files
+npm run build      ✓ 17.14s
+```
 
-**後續**：
+**Git**：
+- Commit：`3f961f3` → 推送 main
+- Vercel：自動部署成功，HTTP 200 確認
+
+---
 
 ## 2025-12-04 G~K 審計收尾 & includePrivate 真正修復
 
