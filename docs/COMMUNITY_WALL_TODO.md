@@ -16,6 +16,7 @@
 - [x] `MockToggle` 改為所有環境顯示，QA 不需另外進入 DEV 也能改 Mock/API。
 - [x] `GUEST_VISIBLE_COUNT` 調整為 2，訪客再次受到鎖定提示，引導登入註冊。
 - [x] `Wall.tsx` 檢測 API 500 時自動切換 Mock，避免頁面卡在錯誤畫面。
+- [x] `api/package.json` 指定 `type=commonjs`，修復 Vercel serverless 執行 CommonJS bundle 時的 `exports is not defined` 崩潰。
 
 ### 已完成修改
 

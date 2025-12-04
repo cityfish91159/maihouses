@@ -6,6 +6,11 @@
 - 說明：Vercel 目前缺少 `SUPABASE_URL/SUPABASE_SERVICE_ROLE_KEY`，造成 API 500。此保護讓訪客預設看到 Mock 資料，直到後端環境補齊為止。
 - 驗證：`npm run typecheck`, `npm run test`, `npm run build` 全數通過。
 
+## 2025-12-05 23:40 - Serverless ESM/CJS 衝突熱修
+
+- `api/package.json`：在 API 子目錄加入 `{"type":"commonjs"}`，覆蓋 root `type: module`，修正 Vercel 將 CommonJS bundle 當 ESM 執行而導致 `exports is not defined` 的錯誤。
+- 驗證：重新部署（Vercel build log `Build Completed in /vercel/output [33s]`）後，`/api/community/wall` 不再因 module 類型衝突而於載入階段崩潰，現在會進入實際 Supabase 連線程式碼。
+
 ## 2025-12-05 22:10 - 權限同步＆Mock 熱修
 
 - `api/community/wall.ts`：API 回傳 `viewerRole` 與 `isAuthenticated` metadata，前端可依後端實際登入狀態決定 CTA 與鎖定邏輯。
