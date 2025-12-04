@@ -2,11 +2,12 @@
  * PostSkeleton Component
  * 
  * 載入中的骨架屏動畫
+ * 注意：不設 aria-hidden，讓父層 WallSkeleton 統一管理 a11y
  */
 
 export function PostSkeleton() {
   return (
-    <div className="flex gap-2.5 rounded-[14px] border border-border-light bg-white p-3 animate-pulse" aria-hidden="true">
+    <div className="flex gap-2.5 rounded-[14px] border border-border-light bg-white p-3 animate-pulse">
       <div className="h-10 w-10 shrink-0 rounded-full bg-gray-200" />
       <div className="flex flex-1 flex-col gap-2">
         <div className="flex items-center gap-2">

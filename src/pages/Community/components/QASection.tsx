@@ -233,7 +233,19 @@ export function QASection({ role, questions: questionsProp, onAskQuestion, onAns
       document.body.style.overflow = '';
       document.removeEventListener('keydown', handleKeyDown);
       document.removeEventListener('focusin', ensureFocusStaysInside);
-      restoreFocusRef.current?.focus();
+
+      // 確保還原焦點到仍存在於 DOM 的元素
+      const target = restoreFocusRef.current;
+      if (target && document.body.contains(target)) {
+        target.focus();
+      } else {
+        // Fallback: focus 到主要內容區或 body
+        const main = document.querySelector('main');
+        if (main instanceof HTMLElement) {
+          main.tabIndex = -1;
+          main.focus();
+        }
+      }
       restoreFocusRef.current = null;
     };
   }, [askModalOpen, answerModalOpen, submitting]);

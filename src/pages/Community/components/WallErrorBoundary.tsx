@@ -21,8 +21,21 @@ interface CategorizedError {
   onAction?: () => void;
 }
 
+/**
+ * 遞迴收集 error.message 與 error.cause.message（ES2022 cause chain）
+ */
+const getErrorMessage = (error: Error): string => {
+  const messages: string[] = [error.message];
+  let current: unknown = error.cause;
+  while (current instanceof Error) {
+    messages.push(current.message);
+    current = current.cause;
+  }
+  return messages.join(' ').toLowerCase();
+};
+
 const categorizeError = (error: Error): CategorizedError => {
-  const message = error.message.toLowerCase();
+  const message = getErrorMessage(error);
 
   if (message.includes('401') || message.includes('403') || message.includes('unauthorized')) {
     return {

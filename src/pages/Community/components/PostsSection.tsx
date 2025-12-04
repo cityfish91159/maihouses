@@ -167,6 +167,8 @@ export function PostsSection({
     }
     event.preventDefault();
 
+    const lastAvailableTab = activeTabs[activeTabs.length - 1];
+
     if (event.key === 'Home') {
       focusTab('public');
       if (currentTab !== 'public') {
@@ -175,10 +177,13 @@ export function PostsSection({
       return;
     }
 
-    if (event.key === 'End' && perm.canAccessPrivate) {
-      focusTab('private');
-      if (currentTab !== 'private') {
-        onTabChange('private');
+    if (event.key === 'End') {
+      // 無論權限如何，跳到最後一個可用 Tab
+      if (lastAvailableTab && lastAvailableTab !== currentTab) {
+        focusTab(lastAvailableTab);
+        onTabChange(lastAvailableTab);
+      } else if (lastAvailableTab) {
+        focusTab(lastAvailableTab);
       }
       return;
     }
