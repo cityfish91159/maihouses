@@ -7,14 +7,14 @@
 
 ---
 
-## 2024-12-04 執行紀錄
+## 2025-12-04 執行紀錄
 
 ### 已完成修改
 
 1. **`api/community/wall.ts`**
    - `getAll()` 將 reviews 從 DB 欄位 `advantage_1/advantage_2/disadvantage` 轉換為前端期望的 `pros/cons` 格式
-   - 關聯 `properties` → `agents` 取得房仲名稱、公司、帶看次數、成交數
    - questions 的 answers 加入 `content`（取自 DB `answer` 欄位）、`author`、`is_expert` 欄位
+   - 增加詳細錯誤訊息（error/hint/details/code）
 
 2. **`api/community/like.ts`**
    - 查詢貼文時新增 `visibility` 欄位，為未來權限驗證預留擴充點
@@ -26,14 +26,29 @@
    - `communityInfo` 不再 fallback 到 mock 數據，直接使用 API 回傳的 `null` 值
    - 前端顯示邏輯：null → 顯示「-」或「未知」
 
+5. **附帶修復 API TypeScript 錯誤**
+   - `api/trust/_utils.ts`: 移除重複的 cors 函數定義
+   - `api/trust/status.ts`: 添加 saveTx import
+   - `api/trust/token.ts`: 添加 SYSTEM_API_KEY import
+   - `api/generate-community-profile.ts`: 明確 aiData 型別為 any
+
 ### 驗證結果
-- ✅ TypeScript 編譯通過
+- ✅ TypeScript 編譯通過（前端 + API）
 - ✅ 29 個單元測試全部通過
 - ✅ `git push` 觸發 Vercel 部署
+- ✅ 前端頁面正常載入（/maihouses/ 和 /maihouses/community/test-uuid/wall 均返回 200）
+- ⚠️ API 端點返回 500 錯誤（可能是 Vercel 環境變數未設定 SUPABASE_URL/SUPABASE_SERVICE_ROLE_KEY）
+
+### 部署連結
+- 首頁: https://maihouses.vercel.app/maihouses/
+- 社區牆: https://maihouses.vercel.app/maihouses/community/test-uuid/wall
 
 ---
 
 ## 剩餘待辦（未來迭代）
+
+### 環境設定
+- [ ] 確認 Vercel 環境變數已設定 `SUPABASE_URL` 和 `SUPABASE_SERVICE_ROLE_KEY`
 
 ### 首頁
 - [ ] 啟用虛擬滾動避免首屏渲染阻塞（目前貼文數量尚可）
