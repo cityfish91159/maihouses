@@ -76,7 +76,9 @@ export function useCommunityWall(
 
   const queryClient = useQueryClient();
   const [isOptimisticUpdating, setIsOptimisticUpdating] = useState(false);
-  const optimisticUserId = currentUserId ?? 'anonymous-user';
+  // K: 若未登入則不使用樂觀更新（避免假成功再回滾的差 UX）
+  const canOptimisticUpdate = !!currentUserId;
+  const optimisticUserId = currentUserId ?? '';
 
   // 主要查詢
   const { 
@@ -105,6 +107,11 @@ export function useCommunityWall(
   const likeMutation = useMutation({
     mutationFn: apiToggleLike,
     onMutate: async (postId: string) => {
+      // K: 若未登入則跳過樂觀更新，直接讓 API 回應決定
+      if (!canOptimisticUpdate) {
+        return { previousData: undefined };
+      }
+      
       setIsOptimisticUpdating(true);
       
       // 取消任何正在進行的查詢
