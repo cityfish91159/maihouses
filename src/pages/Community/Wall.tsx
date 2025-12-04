@@ -6,7 +6,7 @@
  */
 
 import { useState, useCallback, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 
 // Components
 import {
@@ -19,6 +19,7 @@ import {
   MockToggle,
   BottomCTA,
   WallSkeleton,
+  WallErrorBoundary,
 } from './components';
 
 // Types
@@ -28,9 +29,11 @@ import { getPermissions } from './types';
 // Hooks - 統一資料來源
 import { useCommunityWallData } from '../../hooks/useCommunityWallData';
 
-// ============ Main Component ============
-export default function Wall() {
+// ============ Inner Component (Wrapped by ErrorBoundary) ============
+function WallInner() {
   const params = useParams<{ id: string }>();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const communityId = params.id;
 
   if (!communityId) {
@@ -51,17 +54,44 @@ export default function Wall() {
     );
   }
 
-  const [role, setRole] = useState<Role>('guest');
+  // 初始化 useMock：優先順序 URL > localStorage > false
+  const initialUseMock = (() => {
+    const urlParam = searchParams.get('mock');
+    if (urlParam !== null) return urlParam === 'true';
+    try {
+      const stored = localStorage.getItem('community-wall-use-mock');
+      return stored === 'true';
+    } catch {
+      return false;
+    }
+  })();
+
+  // 初始化 role：僅開發環境從 URL/localStorage 讀取
+  const initialRole = (() => {
+    if (!import.meta.env.DEV) return 'guest';
+    const urlRole = searchParams.get('role') as Role | null;
+    if (urlRole && ['guest', 'member', 'resident', 'agent'].includes(urlRole)) {
+      return urlRole;
+    }
+    try {
+      const stored = localStorage.getItem('community-wall-dev-role') as Role | null;
+      if (stored && ['guest', 'member', 'resident', 'agent'].includes(stored)) {
+        return stored;
+      }
+    } catch {}
+    return 'guest';
+  })();
+
+  const [role, setRoleInternal] = useState<Role>(initialRole);
   const [currentTab, setCurrentTab] = useState<WallTab>('public');
   const [isReloading, setIsReloading] = useState(false);
   const perm = getPermissions(role);
-  const navigate = useNavigate();
 
   // 統一資料來源 Hook
   const { 
     data,
     useMock,
-    setUseMock,
+    setUseMock: setUseMockInternal,
     isLoading,
     error,
     refresh,
@@ -71,7 +101,39 @@ export default function Wall() {
     answerQuestion,
   } = useCommunityWallData(communityId, {
     includePrivate: perm.canAccessPrivate,
+    initialUseMock, // 傳入初始值
   });
+
+  // 包裝 setUseMock，同步 URL 和 localStorage
+  const setUseMock = useCallback((value: boolean) => {
+    setUseMockInternal(value);
+    const newParams = new URLSearchParams(searchParams);
+    if (value) {
+      newParams.set('mock', 'true');
+    } else {
+      newParams.delete('mock');
+    }
+    setSearchParams(newParams, { replace: true });
+    try {
+      localStorage.setItem('community-wall-use-mock', String(value));
+    } catch (e) {
+      console.warn('Failed to save mock preference', e);
+    }
+  }, [setUseMockInternal, searchParams, setSearchParams]);
+
+  // 包裝 setRole，同步 URL 和 localStorage（僅開發環境）
+  const setRole = useCallback((newRole: Role) => {
+    if (!import.meta.env.DEV) return;
+    setRoleInternal(newRole);
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set('role', newRole);
+    setSearchParams(newParams, { replace: true });
+    try {
+      localStorage.setItem('community-wall-dev-role', newRole);
+    } catch (e) {
+      console.warn('Failed to save role preference', e);
+    }
+  }, [searchParams, setSearchParams]);
 
   const handleUnlock = useCallback(() => {
     navigate('/auth');
@@ -262,5 +324,14 @@ export default function Wall() {
         }
       `}</style>
     </div>
+  );
+}
+
+// ============ Main Export with ErrorBoundary ============
+export default function Wall() {
+  return (
+    <WallErrorBoundary>
+      <WallInner />
+    </WallErrorBoundary>
   );
 }

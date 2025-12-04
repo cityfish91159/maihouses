@@ -87,6 +87,8 @@ export interface UseCommunityWallDataOptions {
   initialMockData?: UnifiedWallData;
   /** 是否持久化 Mock 狀態 */
   persistMockState?: boolean;
+  /** 初始是否使用 Mock 模式（支援 URL/localStorage 同步） */
+  initialUseMock?: boolean;
 }
 
 export interface UseCommunityWallDataReturn {
@@ -121,8 +123,9 @@ export function useCommunityWallData(
     includePrivate = false,
     initialMockData = MOCK_DATA,
     persistMockState = true,
+    initialUseMock = false,
   } = options;
-  const [useMock, setUseMock] = useState(true);
+  const [useMock, setUseMock] = useState(initialUseMock);
   // Mock 模式的本地狀態（使用 immer 會更好，但這裡用簡單的 state）
   const [mockData, setMockData] = useState<UnifiedWallData>(() =>
     persistMockState ? loadPersistedMockState(initialMockData) : initialMockData

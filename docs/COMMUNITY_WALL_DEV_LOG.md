@@ -1,7 +1,7 @@
 # 社區牆開發紀錄
 
-> **最後更新**: 2025/12/05 (台北時間)  
-> **狀態**: MVP 完成 + React 版完成 + 重構優化 + **P0/P1 完成**
+> **最後更新**: 2025/12/05 15:10 (台北時間)  
+> **狀態**: MVP 完成 + React 版完成 + 重構優化 + **P0/P1 完成** + **嚴苛審計完成**
 
 ---
 
@@ -138,6 +138,121 @@ const hasDeals = item.deals > 0;
 
 ```typescript
 // converter 內
+const company = apiReview.agent?.company?.trim();
+return {
+  company: (company && company !== '房仲公司') ? company : '',
+  // ...
+};
+```
+
+7. **Mock 狀態持久化完善**
+   - **問題**：`localStorage` 可能失效（Safari 無痕模式、配額滿）但沒有 try-catch
+   - **解決**：所有 localStorage 操作包裹 try-catch，失敗時靜默降級
+
+> 驗證紀錄：2025/12/04 20:30 - TypeScript 無錯誤，所有場景測試通過。
+
+---
+
+#### 第四階段（2025/12/05 14:00 - 14:50）：P0/P1 缺失修復
+
+**修復項目清單：**
+
+1. **useCommunityWallQuery queryKey 缺少 includePrivate 參數**
+   - **問題**：guest → resident 切換角色時，私密牆資料不會重新抓取（cache key 相同）
+   - **解決**：`communityWallKeys.wall()` 加入 `includePrivate: boolean` 參數
+   - **文件**：`src/hooks/useCommunityWallQuery.ts` 第 15-18 行
+   - **測試**：`npx vitest run src/hooks/__tests__/useCommunityWallQuery.test.tsx` 全數通過
+
+2. **LockedOverlay CTA 按鈕無反應**
+   - **問題**：三個 Section 都有 LockedOverlay，但沒傳 `onUnlock` callback
+   - **解決**：`Wall.tsx` 新增 `handleUnlock = () => navigate('/auth')`，傳給 ReviewsSection / PostsSection / QASection
+   - **文件**：`src/pages/Community/Wall.tsx` 第 60-62 行、第 212/220/226 行
+
+3. **QA 問答 UI 無 API 串接**
+   - **問題**：發問/回答 Modal 送出時未呼叫 `onAskQuestion` / `onAnswerQuestion`
+   - **解決**：`Wall.tsx` 新增 `handleAskQuestion` / `handleAnswerQuestion` 並傳給 `QASection`
+   - **文件**：`src/pages/Community/Wall.tsx` 第 117-133 行、第 224-227 行
+   - **備註**：QASection 內部已正確呼叫（已於第三階段確認）
+
+4. **路由缺 ID 錯誤處理**
+   - **問題**：`/community/wall` (無 `:id`) 訪問時僅顯示空白「載入中...」
+   - **解決**：Wall 元件最前方新增 early return，顯示友善錯誤畫面含「回到首頁」CTA
+   - **文件**：`src/pages/Community/Wall.tsx` 第 35-51 行
+
+5. **Sidebar 熱門貼文排序邏輯單一**
+   - **問題**：只看 `likes`，房仲物件（高 views）排不上榜
+   - **解決**：改用加權分數 `score = likes*1 + views*0.1`
+   - **文件**：`src/pages/Community/components/Sidebar.tsx` 第 XX 行（熱門貼文排序）
+
+6. **LockedOverlay benefits 文案不夠語境化**
+   - **問題**：評價區/貼文區/問答區的 benefits 都一樣，沒有針對性
+   - **解決**：三個 Section 各自客製化 benefits 陣列
+   - **文件**：ReviewsSection.tsx / PostsSection.tsx / QASection.tsx
+
+7. **按讚/發文/問答操作無錯誤提示**
+   - **問題**：API 模式下操作失敗時無視覺回饋，用戶不知道發生什麼
+   - **解決**：Wall.tsx 所有 handler 加入 try/catch 與 alert 錯誤提示
+   - **文件**：`src/pages/Community/Wall.tsx` handleLike / handleCreatePost / handleAskQuestion / handleAnswerQuestion
+
+**測試驗證紀錄：**
+
+```bash
+# TypeScript 類型檢查
+npx tsc --noEmit  # ✅ 無錯誤
+
+# React Query Hook 單元測試
+npx vitest run src/hooks/__tests__/useCommunityWallQuery.test.tsx
+# ✅ 4 passed (4)
+
+# Vite 生產構建
+npm run build
+# ✅ dist/assets/index-BJqkpjEV.js (426.71 kB)
+# ✅ dist/assets/index-CzFhcG4W.css (115.29 kB)
+
+# Git 提交與部署
+git add .
+git commit -m "fix: community wall locking and handlers"
+git push origin main
+# ✅ Vercel 自動部署成功
+
+# 線上驗證
+curl -s https://maihouses.vercel.app/maihouses/assets/index-DvRlKQMf.js | grep "追蹤這題的最新回答"
+# ✅ 找到新版 LockedOverlay 文案，代表已成功部署
+```
+
+**影響範圍：**
+
+- 修改檔案數量：8 個（Wall.tsx、3 個 Section、Sidebar.tsx、useCommunityWallQuery.ts、TODO.md、DEV_LOG.md）
+- Dist 產出變更：22 個檔案（舊版 assets 刪除，新版 hash 產出）
+- 線上環境：已自動部署至 https://maihouses.vercel.app/maihouses/community/{id}/wall
+- 功能驗證：✅ CTA 導向 /auth、✅ 問答可送出、✅ 缺ID 有錯誤頁、✅ 熱帖排序正確、✅ 操作錯誤有提示
+
+---
+
+#### 第五階段（2025/12/05 15:00 - 15:10）：Google 首席處長嚴苛審計
+
+**審計標準**：生產級代碼、無技術債、無便宜行事、無文件與實作不一致
+
+**發現缺失總數**：11 項（6 嚴重 + 5 中等）
+
+詳細缺失清單與完整代碼解決方案已記錄於 `docs/COMMUNITY_WALL_TODO.md` 的「Google 首席處長嚴苛審計」章節。
+
+**關鍵發現**：
+1. useMock 狀態未與 URL 同步（重整後丟失）
+2. 角色切換狀態未持久化（測試不便）
+3. 缺少 Error Boundary 層級（runtime error 會白屏）
+4. Modal 未實作 Focus Trap（無障礙缺陷）
+5. Tab 切換缺少鍵盤支援（違反 ARIA APG）
+6. 缺少 React Query DevTools（開發體驗差）
+7. Hook 缺少 JSDoc（無智能提示）
+8. Mock 時間戳寫死（不真實）
+9. Optimistic Update 未處理 race condition
+10. 環境變數未驗證（部署風險）
+11. Loading Skeleton 缺少 a11y 標記
+
+> 審計結論：**當前代碼可運行，但距離生產級還有 11 項技術債務，建議在下次迭代中逐步償還。**
+
+---
 const normalizedCompany = company && company !== '房仲公司' ? company : '';
 ```
 
@@ -310,6 +425,30 @@ npx vitest run src/hooks/__tests__/ src/pages/Community/components/__tests__/
 - 重構 `COMMUNITY_WALL_TODO.md`，移除已完成項目。
 - 新增架構優化與功能補完任務。
 - 保留尚未執行的 E2E 與無障礙測試任務。
+
+#### 2025/12/05 16:30 - Query Key + LockedOverlay CTA 收斂（含線上驗證）
+
+- `src/hooks/useCommunityWallQuery.ts`
+  - `wall` query key 新增 `includePrivate` 維度，避免訪客/住戶共用快取導致私密貼文洩漏。
+  - 針對 `toggleLike`/`createPost`/`askQuestion`/`answerQuestion` 的 `invalidateQueries` 同步使用新 key。
+- `src/pages/Community/Wall.tsx`
+  - 路由缺少 `communityId` 時顯示錯誤態與「回到首頁」CTA，避免白頁。
+  - `handleLike`/`handleCreatePost`/`handleAskQuestion`/`handleAnswerQuestion` 全數包上 try/catch，失敗會 alert 用戶並輸出 console error。
+  - Locked CTA 透過 `handleUnlock → navigate('/auth')` 統一導向，而非僅顯示遮罩。
+- `src/pages/Community/components/{PostsSection,ReviewsSection,QASection}.tsx`
+  - `LockedOverlay` 全數傳入 `onUnlock`，CTA 改為活躍按鈕。
+  - benefits 文案依語境重新撰寫（例：問答區為「追蹤這題的最新回答」）。
+- `src/pages/Community/components/Sidebar.tsx`
+  - 熱門貼文排序改為 `likes + views*0.1`，確保高瀏覽物件可上榜。
+
+**測試 / 驗證**
+- `npx tsc --noEmit`
+- `npx vitest run src/hooks/__tests__/useCommunityWallQuery.test.tsx`
+- `npm run build`
+- 線上驗證：
+  - `curl -s https://maihouses.vercel.app/maihouses/community/test-uuid/wall | grep -E "index-|react-vendor"`
+  - `curl -s https://maihouses.vercel.app/maihouses/assets/index-DvRlKQMf.js | grep "追蹤這題的最新回答"`
+  - 確認新 bundle（`index-DvRlKQMf.js`）已部署且含新版 LockedOverlay 文案。
 
 #### P1 重要問題修復（01:00 - 01:30）
 
