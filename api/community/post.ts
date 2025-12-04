@@ -5,12 +5,24 @@
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+// 延遲初始化 Supabase client
+let supabase: SupabaseClient | null = null;
+
+function getSupabase(): SupabaseClient {
+  if (supabase) return supabase;
+  
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  
+  if (!url || !key) {
+    throw new Error('缺少 SUPABASE_URL 或 SUPABASE_SERVICE_ROLE_KEY 環境變數');
+  }
+  
+  supabase = createClient(url, key);
+  return supabase;
+}
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // CORS
@@ -33,7 +45,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   const token = authHeader.slice(7);
-  const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+  const { data: { user }, error: authError } = await getSupabase().auth.getUser(token);
   
   if (authError || !user) {
     return res.status(401).json({ error: '登入已過期，請重新登入' });
@@ -57,7 +69,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       // 暫時跳過，實際上線需要加驗證
     }
 
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('community_posts')
       .insert({
         community_id: communityId,

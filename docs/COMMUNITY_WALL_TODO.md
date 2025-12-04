@@ -1,7 +1,7 @@
 ## 總改進事項
-- [x] 實作 `implementation_guide.md` 規劃的後端 API routes（/wall, /post, /like, /question），完成資料庫串接並能服務前端現有的 React Query hook。
+- [ ] 實作 `implementation_guide.md` 規劃的後端 API routes（/wall, /post, /like, /question），完成資料庫串接並能服務前端現有的 React Query hook。 **⚠️ API 返回 500，尚未完成**
 - [x] 建立 API ↔ 前端 adapter 層，統一 `ApiPost`、`Post`、`CommunityInfo` 等型別，移除 `communityService.ts` 與 `useCommunityWallData.ts` 之間的 mock fallback。
-- [x] 讓 Review 與 CommunityInfo 走真實來源：依 `code_analysis.md` 的建議補齊 join 與統計欄位，消除假值與固定 0 的欄位。
+- [ ] 讓 Review 與 CommunityInfo 走真實來源：依 `code_analysis.md` 的建議補齊 join 與統計欄位，消除假值與固定 0 的欄位。 **⚠️ API 無法驗證**
 - [x] 強化權限/同步流程：修復樂觀更新的 private tab、補上後端權限 middleware、調整 `LockedOverlay` 以避免佈局跳動。
 - [x] 套用性能優化（Sidebar 排序 useMemo）確保大社區場景仍順暢。
 

@@ -6,12 +6,24 @@
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+// 延遲初始化 Supabase client，避免模組載入時因環境變數缺失而崩潰
+let supabase: SupabaseClient | null = null;
+
+function getSupabase(): SupabaseClient {
+  if (supabase) return supabase;
+  
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  
+  if (!url || !key) {
+    throw new Error('缺少 SUPABASE_URL 或 SUPABASE_SERVICE_ROLE_KEY 環境變數');
+  }
+  
+  supabase = createClient(url, key);
+  return supabase;
+}
 
 // 非會員可見數量
 const GUEST_LIMIT = 2;
@@ -41,7 +53,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (authHeader?.startsWith('Bearer ')) {
     const token = authHeader.slice(7);
     try {
-      const { data: { user } } = await supabase.auth.getUser(token);
+      const { data: { user } } = await getSupabase().auth.getUser(token);
       if (user) {
         userId = user.id;
         isAuthenticated = true;
@@ -82,7 +94,7 @@ async function getPosts(
   visibility: string = 'public',
   isAuthenticated: boolean
 ) {
-  let query = supabase
+  let query = getSupabase()
     .from('community_posts')
     .select('*', { count: 'exact' })
     .eq('community_id', communityId)
@@ -121,7 +133,7 @@ async function getReviews(
   communityId: string,
   isAuthenticated: boolean
 ) {
-  let query = supabase
+  let query = getSupabase()
     .from('community_reviews') // 這是 View，對接 properties 表
     .select('*', { count: 'exact' })
     .eq('community_id', communityId)
@@ -136,7 +148,7 @@ async function getReviews(
   if (error) throw error;
 
   // 取得社區的 AI 總結
-  const { data: community } = await supabase
+  const { data: community } = await getSupabase()
     .from('communities')
     .select('two_good, one_fair, story_vibe')
     .eq('id', communityId)
@@ -158,7 +170,7 @@ async function getQuestions(
   communityId: string,
   isAuthenticated: boolean
 ) {
-  const { data, error, count } = await supabase
+  const { data, error, count } = await getSupabase()
     .from('community_questions')
     .select(`
       *,
@@ -205,7 +217,7 @@ async function getAll(
   const canAccessPrivate = isAuthenticated && includePrivate;
 
   // 公開貼文查詢
-  const publicPostsQuery = supabase
+  const publicPostsQuery = getSupabase()
     .from('community_posts')
     .select('*', { count: 'exact' })
     .eq('community_id', communityId)
@@ -216,7 +228,7 @@ async function getAll(
 
   // 私密貼文查詢（僅登入且要求時）
   const privatePostsQuery = canAccessPrivate
-    ? supabase
+    ? getSupabase()
         .from('community_posts')
         .select('*', { count: 'exact' })
         .eq('community_id', communityId)
@@ -232,7 +244,7 @@ async function getAll(
     privatePostsQuery,
     
     // Reviews: 從 community_reviews 取得 advantage_1/advantage_2/disadvantage
-    supabase
+    getSupabase()
       .from('community_reviews')
       .select(`
         id,
@@ -249,7 +261,7 @@ async function getAll(
       .limit(isAuthenticated ? 20 : GUEST_LIMIT),
     
     // Questions: 取得問答與回覆
-    supabase
+    getSupabase()
       .from('community_questions')
       .select(`
         id,
@@ -275,7 +287,7 @@ async function getAll(
       .order('created_at', { ascending: false })
       .limit(5),
     
-    supabase
+    getSupabase()
       .from('communities')
       .select('id, name, address, two_good, one_fair, story_vibe, completeness_score, year_built, total_units, management_fee, builder')
       .eq('id', communityId)
