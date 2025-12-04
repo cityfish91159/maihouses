@@ -5,31 +5,22 @@
  * 重構：使用 LockedOverlay + Tailwind brand 色系
  */
 
-import { useMemo } from 'react';
 import type { Role, Review } from '../types';
 import { getPermissions } from '../types';
 import { useGuestVisibleItems } from '../../../hooks/useGuestVisibleItems';
 import { LockedOverlay } from './LockedOverlay';
 
 interface ReviewCardProps {
-  item: { 
-    text: string; 
-    author: string; 
-    company: string; 
-    visits: number; 
-    deals: number;
-  };
-  type: 'pro' | 'con';
+  review: Review;
 }
 
-function ReviewCard({ item, type }: ReviewCardProps) {
-  const icon = type === 'pro' ? '✅' : '⚖️';
-  const bgClass = type === 'pro' 
-    ? 'bg-gradient-to-br from-brand-50 to-brand-100/50' 
-    : 'bg-gradient-to-br from-brand-100/30 to-brand-100';
-  const hasVisits = item.visits > 0;
-  const hasDeals = item.deals > 0;
-  
+function ReviewCard({ review }: ReviewCardProps) {
+  const pros = review.pros.filter(Boolean);
+  const consArray = Array.isArray(review.cons) ? review.cons : [review.cons];
+  const cons = consArray.filter(Boolean);
+  const hasVisits = review.visits > 0;
+  const hasDeals = review.deals > 0;
+
   return (
     <div className="rounded-[14px] border border-border-light bg-white p-3.5 transition-all hover:border-brand/15 hover:shadow-[0_2px_8px_rgba(0,56,90,0.04)]">
       <div className="mb-2.5 flex items-center gap-2.5">
@@ -37,22 +28,40 @@ function ReviewCard({ item, type }: ReviewCardProps) {
           className="flex h-[38px] w-[38px] items-center justify-center rounded-full border-2 border-brand bg-gradient-to-br from-brand-100/50 to-white text-sm font-extrabold text-brand" 
           aria-hidden="true"
         >
-          {item.author.charAt(0)}
+          {review.author.charAt(0)}
         </div>
         <div className="flex-1">
-          <div className="text-[13px] font-bold text-ink-900">{item.author}{item.company ? `｜${item.company}` : ''}</div>
+          <div className="text-[13px] font-bold text-ink-900">{review.author}{review.company ? `｜${review.company}` : ''}</div>
           {(hasVisits || hasDeals) && (
             <div className="text-[11px] text-ink-600">
-              {hasVisits && `帶看 ${item.visits} 次`}
+              {hasVisits && `帶看 ${review.visits} 次`}
               {hasVisits && hasDeals && ' · '}
-              {hasDeals && `成交 ${item.deals} 戶`}
+              {hasDeals && `成交 ${review.deals} 戶`}
             </div>
           )}
         </div>
       </div>
-      <div className={`flex items-start gap-2.5 rounded-[10px] p-2 text-[13px] leading-relaxed ${bgClass}`}>
-        <span className="flex h-6 w-6 shrink-0 items-center justify-center text-base" aria-hidden="true">{icon}</span>
-        <span className="flex-1 text-ink-900">{item.text}</span>
+      <div className="flex flex-col gap-2">
+        {pros.length > 0 && (
+          <div className="flex items-start gap-2.5 rounded-[10px] bg-gradient-to-br from-brand-50 to-brand-100/50 p-2 text-[13px] leading-relaxed text-ink-900">
+            <span className="flex h-6 w-6 shrink-0 items-center justify-center text-base" aria-hidden="true">✅</span>
+            <span className="flex-1">
+              {pros.map((text, idx) => (
+                <span key={idx} className="block">{text}</span>
+              ))}
+            </span>
+          </div>
+        )}
+        {cons.length > 0 && (
+          <div className="flex items-start gap-2.5 rounded-[10px] bg-gradient-to-br from-brand-100/30 to-brand-100 p-2 text-[13px] leading-relaxed text-ink-900">
+            <span className="flex h-6 w-6 shrink-0 items-center justify-center text-base" aria-hidden="true">⚖️</span>
+            <span className="flex-1">
+              {cons.map((text, idx) => (
+                <span key={idx} className="block">{text}</span>
+              ))}
+            </span>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -71,39 +80,6 @@ export function ReviewsSection({ role, reviews: reviewsProp, onUnlock }: Reviews
   // 使用統一的 hook 處理訪客可見項目
   const { visible: visibleReviews, hiddenCount: hiddenReviewCount, nextHidden: nextHiddenReview } = 
     useGuestVisibleItems(reviews, perm.canSeeAllReviews);
-  
-  // 把可見的 reviews 拆成單項（pros/cons）
-  const visibleItems = useMemo(() => {
-    const items: { type: 'pro' | 'con'; text: string; author: string; company: string; visits: number; deals: number }[] = [];
-    visibleReviews.forEach(review => {
-      review.pros.forEach(pro => {
-        items.push({ type: 'pro', text: pro, author: review.author, company: review.company, visits: review.visits, deals: review.deals });
-      });
-      const consArray = Array.isArray(review.cons) ? review.cons : [review.cons];
-      consArray.forEach(con => {
-        if (con) {
-          items.push({ type: 'con', text: con, author: review.author, company: review.company, visits: review.visits, deals: review.deals });
-        }
-      });
-    });
-    return items;
-  }, [visibleReviews]);
-
-  // 取得下一則被隱藏的 review 的第一個項目（用於 LockedOverlay 預覽）
-  const nextHiddenItem = useMemo(() => {
-    if (!nextHiddenReview) return null;
-    // 優先顯示 pros 的第一項
-    const firstPro = nextHiddenReview.pros[0];
-    if (firstPro) {
-      return { type: 'pro' as const, text: firstPro, author: nextHiddenReview.author, company: nextHiddenReview.company, visits: nextHiddenReview.visits, deals: nextHiddenReview.deals };
-    }
-    const consArray = Array.isArray(nextHiddenReview.cons) ? nextHiddenReview.cons : [nextHiddenReview.cons];
-    const firstCon = consArray[0];
-    if (firstCon) {
-      return { type: 'con' as const, text: firstCon, author: nextHiddenReview.author, company: nextHiddenReview.company, visits: nextHiddenReview.visits, deals: nextHiddenReview.deals };
-    }
-    return null;
-  }, [nextHiddenReview]);
 
   return (
     <section className="overflow-hidden rounded-[18px] border border-border-light bg-white/98 shadow-[0_2px_12px_rgba(0,51,102,0.04)]" aria-labelledby="reviews-heading">
@@ -117,20 +93,20 @@ export function ReviewsSection({ role, reviews: reviewsProp, onUnlock }: Reviews
         </span>
       </div>
       <div className="flex flex-col gap-2.5 p-3.5">
-        {visibleItems.map((item, idx) => (
-          <ReviewCard key={idx} item={item} type={item.type} />
+        {visibleReviews.map(review => (
+          <ReviewCard key={review.id} review={review} />
         ))}
         
         {/* 使用 LockedOverlay 組件 */}
         <LockedOverlay
-          visible={hiddenReviewCount > 0 && !!nextHiddenItem}
+          visible={hiddenReviewCount > 0 && !!nextHiddenReview}
           hiddenCount={hiddenReviewCount}
           countLabel="則評價"
           benefits={['看完所有鄰居真實評價', '社區有新評論時通知你']}
           {...(onUnlock ? { onCtaClick: onUnlock } : {})}
         >
-          {nextHiddenItem && (
-            <ReviewCard item={nextHiddenItem} type={nextHiddenItem.type} />
+          {nextHiddenReview && (
+            <ReviewCard review={nextHiddenReview} />
           )}
         </LockedOverlay>
       </div>
