@@ -26,7 +26,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(200).end();
   }
 
-  const { communityId, type, visibility } = req.query;
+  const { communityId, type, visibility, includePrivate } = req.query;
+  const wantsPrivate = includePrivate === '1' || includePrivate === 'true';
 
   if (!communityId) {
     return res.status(400).json({ error: '缺少 communityId' });
@@ -60,7 +61,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return await getQuestions(res, communityId as string, isAuthenticated);
       case 'all':
       default:
-        return await getAll(res, communityId as string, isAuthenticated);
+        return await getAll(res, communityId as string, isAuthenticated, wantsPrivate);
     }
   } catch (error: any) {
     console.error('API Error:', error);
@@ -191,17 +192,38 @@ async function getQuestions(
 async function getAll(
   res: VercelResponse,
   communityId: string,
-  isAuthenticated: boolean
+  isAuthenticated: boolean,
+  includePrivate: boolean = false
 ) {
+  // 只有已登入且明確要求才能取得私密貼文
+  const canAccessPrivate = isAuthenticated && includePrivate;
+
+  // 公開貼文查詢
+  const publicPostsQuery = supabase
+    .from('community_posts')
+    .select('*', { count: 'exact' })
+    .eq('community_id', communityId)
+    .eq('visibility', 'public')
+    .order('is_pinned', { ascending: false })
+    .order('created_at', { ascending: false })
+    .limit(isAuthenticated ? 20 : GUEST_LIMIT);
+
+  // 私密貼文查詢（僅登入且要求時）
+  const privatePostsQuery = canAccessPrivate
+    ? supabase
+        .from('community_posts')
+        .select('*', { count: 'exact' })
+        .eq('community_id', communityId)
+        .eq('visibility', 'private')
+        .order('is_pinned', { ascending: false })
+        .order('created_at', { ascending: false })
+        .limit(20)
+    : Promise.resolve({ data: [], count: 0, error: null });
+
   // 並行請求
-  const [postsResult, reviewsResult, questionsResult, communityResult] = await Promise.all([
-    supabase
-      .from('community_posts')
-      .select('*', { count: 'exact' })
-      .eq('community_id', communityId)
-      .eq('visibility', 'public')
-      .order('created_at', { ascending: false })
-      .limit(isAuthenticated ? 20 : GUEST_LIMIT),
+  const [publicPostsResult, privatePostsResult, reviewsResult, questionsResult, communityResult] = await Promise.all([
+    publicPostsQuery,
+    privatePostsQuery,
     
     supabase
       .from('community_reviews')
@@ -231,9 +253,10 @@ async function getAll(
     success: true,
     community: communityResult.data,
     posts: {
-      data: postsResult.data || [],
-      total: postsResult.count || 0,
-      limited: !isAuthenticated
+      public: publicPostsResult.data || [],
+      private: privatePostsResult.data || [],
+      publicTotal: publicPostsResult.count || 0,
+      privateTotal: privatePostsResult.count || 0,
     },
     reviews: {
       data: reviewsResult.data || [],
