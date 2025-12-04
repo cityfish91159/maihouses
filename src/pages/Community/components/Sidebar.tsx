@@ -4,6 +4,7 @@
  * 側邊欄（社區資訊、數據、快速連結、問答、熱門貼文、公仔）
  */
 
+import { useMemo } from 'react';
 import type { CommunityInfo, Question, Post } from '../types';
 
 /** 格式化可能為 null 的數值 */
@@ -19,15 +20,26 @@ interface SidebarProps {
 }
 
 export function Sidebar({ info, questions: questionsProp, posts }: SidebarProps) {
-  const questions = Array.isArray(questionsProp) ? questionsProp : (questionsProp?.items || []);
-  const displayQuestions = questions.slice(0, 3);
-  const hotPosts = [...posts]
-    .sort((a, b) => {
-      const scoreA = (a.likes || 0) + (a.views || 0) * 0.1;
-      const scoreB = (b.likes || 0) + (b.views || 0) * 0.1;
-      return scoreB - scoreA;
-    })
-    .slice(0, 2);
+  // 統一 questions 格式
+  const questions = useMemo(
+    () => Array.isArray(questionsProp) ? questionsProp : (questionsProp?.items || []),
+    [questionsProp]
+  );
+
+  // 只在 questions 變化時重新計算
+  const displayQuestions = useMemo(() => questions.slice(0, 3), [questions]);
+
+  // 只在 posts 變化時重新排序，避免每次 render 都 sort
+  const hotPosts = useMemo(
+    () => [...posts]
+      .sort((a, b) => {
+        const scoreA = (a.likes || 0) + (a.views || 0) * 0.1;
+        const scoreB = (b.likes || 0) + (b.views || 0) * 0.1;
+        return scoreB - scoreA;
+      })
+      .slice(0, 2),
+    [posts]
+  );
 
   return (
     <aside className="hidden w-[280px] shrink-0 flex-col gap-3 self-start lg:sticky lg:top-[70px] lg:flex">

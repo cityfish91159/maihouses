@@ -33,12 +33,21 @@ export function LockedOverlay({
   onCtaClick,
   visible = true,
 }: LockedOverlayProps) {
-  if (!visible || hiddenCount <= 0) {
+  // 當沒有隱藏內容時完全移除（不佔空間）
+  if (hiddenCount <= 0) {
     return null;
   }
 
+  // 使用 CSS transition 控制顯示/隱藏，保留佈局空間避免跳動
+  const isHidden = !visible;
+
   return (
-    <div className="relative">
+    <div 
+      className={`relative transition-opacity duration-200 ${
+        isHidden ? 'pointer-events-none opacity-0' : 'opacity-100'
+      }`}
+      aria-hidden={isHidden}
+    >
       {/* 模糊的背景內容 */}
       <div className="pointer-events-none select-none blur-[4px]" aria-hidden="true">
         {children}
