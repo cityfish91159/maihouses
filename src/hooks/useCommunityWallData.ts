@@ -145,7 +145,7 @@ export function useCommunityWallData(
     setUseMock(resolvedInitialUseMock);
   }, [resolvedInitialUseMock]);
 
-  // 取得當前登入使用者 ID（供樂觀更新使用）
+  // K: 取得當前登入使用者 ID（供樂觀更新使用）
   const [currentUserId, setCurrentUserId] = useState<string | undefined>(undefined);
   useEffect(() => {
     let mounted = true;

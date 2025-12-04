@@ -172,7 +172,7 @@ export function QASection({ role, questions: questionsProp, onAskQuestion, onAns
 
   /**
    * 安全聚焦 helper：依序嘗試 main、[data-app-root]、#root、body
-   * 若全部失敗則在 dev 環境警告
+   * 會暫存原本的 tabIndex 並在聚焦後還原，避免永久污染 DOM
    */
   const focusSafeElement = (): void => {
     const candidates = [
@@ -183,7 +183,6 @@ export function QASection({ role, questions: questionsProp, onAskQuestion, onAns
     ];
     for (const el of candidates) {
       if (el instanceof HTMLElement) {
-        // 暫存原本的 tabIndex
         const prevTabIndex = el.getAttribute('tabindex');
         el.dataset.prevTabindex = prevTabIndex ?? '';
         el.tabIndex = -1;
