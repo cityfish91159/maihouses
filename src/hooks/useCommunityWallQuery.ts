@@ -20,8 +20,8 @@ import {
 // Query Keys
 export const communityWallKeys = {
   all: ['communityWall'] as const,
-  wall: (communityId: string, includePrivate?: boolean) => 
-    [...communityWallKeys.all, 'wall', communityId, { includePrivate }] as const,
+  wall: (communityId: string, includePrivate: boolean) => 
+    [...communityWallKeys.all, 'wall', communityId, includePrivate] as const,
   posts: (communityId: string, visibility: 'public' | 'private') => 
     [...communityWallKeys.all, 'posts', communityId, visibility] as const,
 };

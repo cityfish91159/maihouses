@@ -15,7 +15,13 @@ interface SidebarProps {
 export function Sidebar({ info, questions: questionsProp, posts }: SidebarProps) {
   const questions = Array.isArray(questionsProp) ? questionsProp : (questionsProp?.items || []);
   const displayQuestions = questions.slice(0, 3);
-  const hotPosts = [...posts].sort((a, b) => (b.likes || 0) - (a.likes || 0)).slice(0, 2);
+  const hotPosts = [...posts]
+    .sort((a, b) => {
+      const scoreA = (a.likes || 0) + (a.views || 0) * 0.1;
+      const scoreB = (b.likes || 0) + (b.views || 0) * 0.1;
+      return scoreB - scoreA;
+    })
+    .slice(0, 2);
 
   return (
     <aside className="hidden w-[280px] shrink-0 flex-col gap-3 self-start lg:sticky lg:top-[70px] lg:flex">

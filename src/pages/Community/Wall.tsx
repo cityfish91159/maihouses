@@ -30,10 +30,32 @@ import { useCommunityWallData } from '../../hooks/useCommunityWallData';
 
 // ============ Main Component ============
 export default function Wall() {
-  const { id } = useParams<{ id: string }>();
+  const params = useParams<{ id: string }>();
+  const communityId = params.id;
+
+  if (!communityId) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-[var(--bg-base)] to-[var(--bg-alt)]">
+        <div className="rounded-2xl border border-brand/10 bg-white px-8 py-10 text-center shadow-[0_10px_30px_rgba(0,34,73,0.08)]">
+          <div className="mb-3 text-4xl">🧭</div>
+          <p className="mb-4 text-base font-semibold text-ink-900">找不到指定的社區牆</p>
+          <p className="mb-6 text-sm text-ink-600">請確認網址是否正確，或回到首頁重新選擇社區。</p>
+          <a
+            href="/maihouses/"
+            className="inline-flex items-center justify-center rounded-full bg-brand px-5 py-2.5 text-sm font-bold text-white shadow hover:bg-brand-600"
+          >
+            回到首頁
+          </a>
+        </div>
+      </div>
+    );
+  }
+
   const [role, setRole] = useState<Role>('guest');
   const [currentTab, setCurrentTab] = useState<WallTab>('public');
   const [isReloading, setIsReloading] = useState(false);
+  const perm = getPermissions(role);
+  const navigate = useNavigate();
 
   // 統一資料來源 Hook
   const { 
@@ -47,12 +69,9 @@ export default function Wall() {
     createPost,
     askQuestion,
     answerQuestion,
-  } = useCommunityWallData(id, {
-    includePrivate: getPermissions(role).canAccessPrivate,
+  } = useCommunityWallData(communityId, {
+    includePrivate: perm.canAccessPrivate,
   });
-
-  const perm = getPermissions(role);
-  const navigate = useNavigate();
 
   const handleUnlock = useCallback(() => {
     navigate('/auth');
@@ -74,21 +93,43 @@ export default function Wall() {
   }, [currentTab, perm.canAccessPrivate]);
 
   // 按讚處理
-  const handleLike = useCallback((postId: number | string) => {
-    toggleLike(postId);
+  const handleLike = useCallback(async (postId: number | string) => {
+    try {
+      await toggleLike(postId);
+    } catch (err) {
+      console.error('Failed to toggle like', err);
+      alert('按讚失敗，請稍後再試');
+    }
   }, [toggleLike]);
 
   // 發文處理
-  const handleCreatePost = useCallback((content: string, visibility: 'public' | 'private' = 'public') => {
-    createPost(content, visibility);
+  const handleCreatePost = useCallback(async (content: string, visibility: 'public' | 'private' = 'public') => {
+    try {
+      await createPost(content, visibility);
+    } catch (err) {
+      console.error('Failed to create post', err);
+      alert('發文失敗，請稍後再試');
+    }
   }, [createPost]);
 
   const handleAskQuestion = useCallback(async (question: string) => {
-    await askQuestion(question);
+    try {
+      await askQuestion(question);
+    } catch (err) {
+      console.error('Failed to submit question', err);
+      alert('提問失敗，請稍後再試');
+      throw err;
+    }
   }, [askQuestion]);
 
   const handleAnswerQuestion = useCallback(async (questionId: string, content: string) => {
-    await answerQuestion(questionId, content);
+    try {
+      await answerQuestion(questionId, content);
+    } catch (err) {
+      console.error('Failed to submit answer', err);
+      alert('回答失敗，請稍後再試');
+      throw err;
+    }
   }, [answerQuestion]);
 
   const handleReload = useCallback(async () => {

@@ -316,7 +316,7 @@ export function QASection({ role, questions: questionsProp, onAskQuestion, onAns
           visible={hiddenCount > 0 && !!answeredQuestions[visibleCount]}
           hiddenCount={hiddenCount}
           countLabel="則問答"
-          benefits={['查看完整問答', '新回答通知']}
+          benefits={['追蹤這題的最新回答', '看更多準住戶關心的問題']}
           {...(onUnlock ? { onCtaClick: onUnlock } : {})}
         >
           {answeredQuestions[visibleCount] && (
