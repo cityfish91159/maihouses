@@ -6,7 +6,7 @@
  */
 
 import { useState, useCallback, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 
 // Components
 import {
@@ -18,6 +18,7 @@ import {
   RoleSwitcher,
   MockToggle,
   BottomCTA,
+  WallSkeleton,
 } from './components';
 
 // Types
@@ -32,6 +33,7 @@ export default function Wall() {
   const { id } = useParams<{ id: string }>();
   const [role, setRole] = useState<Role>('guest');
   const [currentTab, setCurrentTab] = useState<WallTab>('public');
+  const [isReloading, setIsReloading] = useState(false);
 
   // 統一資料來源 Hook
   const { 
@@ -40,13 +42,21 @@ export default function Wall() {
     setUseMock,
     isLoading,
     error,
+    refresh,
     toggleLike,
     createPost,
+    askQuestion,
+    answerQuestion,
   } = useCommunityWallData(id, {
     includePrivate: getPermissions(role).canAccessPrivate,
   });
 
   const perm = getPermissions(role);
+  const navigate = useNavigate();
+
+  const handleUnlock = useCallback(() => {
+    navigate('/auth');
+  }, [navigate]);
   
   // Tab 切換
   const handleTabChange = useCallback((tab: WallTab) => {
@@ -73,13 +83,33 @@ export default function Wall() {
     createPost(content, visibility);
   }, [createPost]);
 
+  const handleAskQuestion = useCallback(async (question: string) => {
+    await askQuestion(question);
+  }, [askQuestion]);
+
+  const handleAnswerQuestion = useCallback(async (questionId: string, content: string) => {
+    await answerQuestion(questionId, content);
+  }, [answerQuestion]);
+
+  const handleReload = useCallback(async () => {
+    if (isReloading) return;
+    setIsReloading(true);
+    try {
+      await refresh();
+    } catch (err) {
+      console.error('Failed to refresh community wall', err);
+    } finally {
+      setIsReloading(false);
+    }
+  }, [isReloading, refresh]);
+
   // Loading 狀態（僅 API 模式）
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-bg-base to-bg-soft">
-        <div className="text-center">
-          <div className="mb-2 text-2xl">🏠</div>
-          <div className="text-sm text-ink-600">載入中...</div>
+      <div className="min-h-screen bg-gradient-to-b from-[var(--bg-base)] to-[var(--bg-alt)]">
+        <Topbar communityName="載入中..." />
+        <div className="mx-auto max-w-[960px] p-2.5">
+          <WallSkeleton />
         </div>
       </div>
     );
@@ -87,17 +117,41 @@ export default function Wall() {
 
   // Error 狀態（僅 API 模式）
   if (error) {
+    const errorMsg = error.message || '';
+    const isAuthError = errorMsg.includes('401') || errorMsg.includes('403') || errorMsg.includes('權限');
+
     return (
       <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-bg-base to-bg-soft">
         <div className="text-center">
-          <div className="mb-2 text-2xl">😢</div>
-          <div className="mb-2 text-sm text-ink-600">載入失敗</div>
-          <button 
-            onClick={() => setUseMock(true)}
-            className="rounded-lg bg-brand px-4 py-2 text-sm text-white"
-          >
-            切換 Mock 模式
-          </button>
+          <div className="mb-2 text-2xl">{isAuthError ? '🔐' : '😢'}</div>
+          <div className="mb-2 text-sm text-ink-600">
+            {isAuthError ? '請先登入' : '載入失敗，請稍後再試'}
+          </div>
+          {isAuthError ? (
+            <button 
+              onClick={() => window.location.href = '/auth'}
+              className="rounded-lg bg-brand px-4 py-2 text-sm text-white"
+            >
+              前往登入
+            </button>
+          ) : (
+            <div className="flex flex-col gap-2 sm:flex-row sm:justify-center">
+              <button 
+                onClick={handleReload}
+                disabled={isReloading}
+                aria-busy={isReloading}
+                className={`rounded-lg border border-brand/40 px-4 py-2 text-sm font-semibold transition hover:bg-brand/10 ${isReloading ? 'cursor-not-allowed text-brand/60' : 'text-brand'}`}
+              >
+                {isReloading ? '⏳ 重新整理中…' : '🔄 重新整理'}
+              </button>
+              <button 
+                onClick={() => setUseMock(true)}
+                className="rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white shadow hover:bg-brand-600"
+              >
+                🧪 切換 Mock 模式
+              </button>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -113,7 +167,7 @@ export default function Wall() {
       <div className="mx-auto flex max-w-[960px] gap-5 p-2.5 pb-[calc(80px+env(safe-area-inset-bottom,20px))] lg:p-2.5">
         {/* 主內容區 */}
         <main className="flex max-w-[600px] flex-1 animate-[fadeInUp_0.5s_ease-out] flex-col gap-3">
-          <ReviewsSection role={role} reviews={reviews} />
+          <ReviewsSection role={role} reviews={reviews} onUnlock={handleUnlock} />
           <PostsSection 
             role={role} 
             currentTab={currentTab} 
@@ -122,8 +176,15 @@ export default function Wall() {
             privatePosts={posts.private}
             onLike={handleLike}
             onCreatePost={handleCreatePost}
+            onUnlock={handleUnlock}
           />
-          <QASection role={role} questions={questions} />
+          <QASection 
+            role={role} 
+            questions={questions}
+            onAskQuestion={handleAskQuestion}
+            onAnswerQuestion={handleAnswerQuestion}
+            onUnlock={handleUnlock}
+          />
         </main>
 
         {/* 側邊欄 - 使用同一個資料來源 */}

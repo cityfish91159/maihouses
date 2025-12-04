@@ -14,7 +14,6 @@ import {
   createPost as apiCreatePost,
   CommunityWallData,
   CommunityPost,
-  clearCommunityCache,
 } from '../services/communityService';
 
 export interface UseCommunityWallOptions {
@@ -24,6 +23,8 @@ export interface UseCommunityWallOptions {
   refreshInterval?: number;
   /** 是否在視窗聚焦時刷新 */
   refreshOnFocus?: boolean;
+  /** 目前使用者 ID（供樂觀更新使用） */
+  currentUserId?: string;
 }
 
 export interface UseCommunityWallReturn {
@@ -51,6 +52,7 @@ export function useCommunityWall(
     includePrivate = false,
     refreshInterval = 0,
     refreshOnFocus = true,
+    currentUserId,
   } = options;
 
   const [data, setData] = useState<CommunityWallData | null>(null);
@@ -62,7 +64,7 @@ export function useCommunityWall(
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // 獲取資料
-  const fetchData = useCallback(async (force = false) => {
+  const fetchData = useCallback(async (_force = false) => {
     if (!communityId) {
       setIsLoading(false);
       return;
@@ -72,8 +74,8 @@ export function useCommunityWall(
       setIsLoading(true);
       setError(null);
       
+      // 註：forceRefresh 參數已移除，快取由 React Query 管理
       const wallData = await getCommunityWall(communityId, {
-        forceRefresh: force,
         includePrivate,
       });
       
@@ -96,25 +98,25 @@ export function useCommunityWall(
     }
   }, [communityId, includePrivate]);
 
-  // 手動刷新
+  // 手動刷新（註：快取已改由 React Query 管理，此處只觸發重新 fetch）
   const refresh = useCallback(async () => {
-    clearCommunityCache(communityId);
     await fetchData(true);
-  }, [communityId, fetchData]);
+  }, [fetchData]);
 
   // 按讚（樂觀更新）
   const toggleLike = useCallback(async (postId: string) => {
     // 樂觀更新 UI
+    const userId = currentUserId ?? 'anonymous-user';
     setOptimisticPosts(prev => 
       prev.map(post => {
         if (post.id !== postId) return post;
-        const isLiked = post.liked_by.includes('current-user'); // 暫時用假 ID
+        const isLiked = post.liked_by.includes(userId);
         return {
           ...post,
-          likes_count: isLiked ? post.likes_count - 1 : post.likes_count + 1,
+          likes_count: isLiked ? Math.max(0, post.likes_count - 1) : post.likes_count + 1,
           liked_by: isLiked 
-            ? post.liked_by.filter(id => id !== 'current-user')
-            : [...post.liked_by, 'current-user'],
+            ? post.liked_by.filter(id => id !== userId)
+            : [...post.liked_by, userId],
         };
       })
     );
@@ -126,7 +128,7 @@ export function useCommunityWall(
       // 失敗時回滾
       await refresh();
     }
-  }, [refresh]);
+  }, [refresh, currentUserId]);
 
   // 發布貼文
   const createPost = useCallback(async (

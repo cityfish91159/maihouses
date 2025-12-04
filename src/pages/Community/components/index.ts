@@ -13,3 +13,4 @@ export { RoleSwitcher } from './RoleSwitcher';
 export { MockToggle } from './MockToggle';
 export { BottomCTA } from './BottomCTA';
 export { LockedOverlay } from './LockedOverlay';
+export { PostSkeleton, WallSkeleton } from './PostSkeleton';

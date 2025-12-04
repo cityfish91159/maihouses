@@ -26,6 +26,8 @@ function ReviewCard({ item, type }: ReviewCardProps) {
   const bgClass = type === 'pro' 
     ? 'bg-gradient-to-br from-brand-50 to-brand-100/50' 
     : 'bg-gradient-to-br from-brand-100/30 to-brand-100';
+  const hasVisits = item.visits > 0;
+  const hasDeals = item.deals > 0;
   
   return (
     <div className="rounded-[14px] border border-border-light bg-white p-3.5 transition-all hover:border-brand/15 hover:shadow-[0_2px_8px_rgba(0,56,90,0.04)]">
@@ -37,8 +39,14 @@ function ReviewCard({ item, type }: ReviewCardProps) {
           {item.author.charAt(0)}
         </div>
         <div className="flex-1">
-          <div className="text-[13px] font-bold text-ink-900">{item.author}｜{item.company}</div>
-          <div className="text-[11px] text-ink-600">帶看 {item.visits} 次 · 成交 {item.deals} 戶</div>
+          <div className="text-[13px] font-bold text-ink-900">{item.author}{item.company ? `｜${item.company}` : ''}</div>
+          {(hasVisits || hasDeals) && (
+            <div className="text-[11px] text-ink-600">
+              {hasVisits && `帶看 ${item.visits} 次`}
+              {hasVisits && hasDeals && ' · '}
+              {hasDeals && `成交 ${item.deals} 戶`}
+            </div>
+          )}
         </div>
       </div>
       <div className={`flex items-start gap-2.5 rounded-[10px] p-2 text-[13px] leading-relaxed ${bgClass}`}>
@@ -51,10 +59,12 @@ function ReviewCard({ item, type }: ReviewCardProps) {
 
 interface ReviewsSectionProps {
   role: Role;
-  reviews: Review[];
+  reviews: Review[] | { items: Review[] };
+  onUnlock?: () => void;
 }
 
-export function ReviewsSection({ role, reviews }: ReviewsSectionProps) {
+export function ReviewsSection({ role, reviews: reviewsProp, onUnlock }: ReviewsSectionProps) {
+  const reviews = Array.isArray(reviewsProp) ? reviewsProp : (reviewsProp?.items || []);
   const perm = getPermissions(role);
 
   // 拆成單項
@@ -101,6 +111,7 @@ export function ReviewsSection({ role, reviews }: ReviewsSectionProps) {
           hiddenCount={hiddenCount}
           countLabel="則評價"
           benefits={['查看全部評價', '新回答通知']}
+          {...(onUnlock ? { onCtaClick: onUnlock } : {})}
         >
           {allItems[visibleCount] && (
             <ReviewCard item={allItems[visibleCount]} type={allItems[visibleCount].type} />

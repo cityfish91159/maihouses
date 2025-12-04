@@ -5,16 +5,18 @@
  * 重構：使用 LockedOverlay + Tailwind brand 色系
  */
 
+import { useState } from 'react';
 import type { Role, Post, WallTab } from '../types';
 import { getPermissions, GUEST_VISIBLE_COUNT } from '../types';
 import { LockedOverlay } from './LockedOverlay';
 
 interface PostCardProps {
   post: Post;
-  onLike?: ((postId: number | string) => void) | undefined;
+  onLike?: (postId: number | string) => Promise<void> | void;
 }
 
 function PostCard({ post, onLike }: PostCardProps) {
+  const [isLiking, setIsLiking] = useState(false);
   const isAgent = post.type === 'agent';
   const isOfficial = post.type === 'official';
 
@@ -26,12 +28,27 @@ function PostCard({ post, onLike }: PostCardProps) {
         ? <span className="rounded bg-brand-100 px-1.5 py-0.5 text-[9px] font-bold text-brand">{post.floor} 住戶</span>
         : null;
 
-  // 修復：likes=0 時也應顯示（不再被當成 falsy）
+  // 修復：likes=0 / comments=0 時也應顯示，不再依賴 truthy 判斷
   const stats = post.likes !== undefined 
     ? <span className="flex items-center gap-1">❤️ {post.likes}</span>
     : post.views !== undefined
       ? <span className="flex items-center gap-1">👁️ {post.views}</span>
       : null;
+  const commentsStat = post.comments !== undefined
+    ? <span className="flex items-center gap-1">💬 {post.comments}</span>
+    : null;
+
+  const handleLike = async () => {
+    if (!onLike || isLiking) return;
+    setIsLiking(true);
+    try {
+      await onLike(post.id);
+    } catch (error) {
+      console.error('Failed to toggle like', error);
+    } finally {
+      setIsLiking(false);
+    }
+  };
 
   return (
     <article className="flex gap-2.5 rounded-[14px] border border-border-light bg-white p-3 transition-all hover:border-brand-600 hover:shadow-[0_2px_8px_rgba(0,56,90,0.06)]">
@@ -53,7 +70,7 @@ function PostCard({ post, onLike }: PostCardProps) {
         </div>
         <div className="flex gap-3 text-[11px] text-ink-600">
           {stats}
-          <span className="flex items-center gap-1">💬 {post.comments}</span>
+          {commentsStat}
           {post.private && <span className="flex items-center gap-1">🔒 僅社區可見</span>}
         </div>
         <div className="mt-1 flex gap-2">
@@ -67,15 +84,19 @@ function PostCard({ post, onLike }: PostCardProps) {
           ) : (
             <>
               <button 
-                className="flex items-center gap-1 rounded-lg border border-brand/10 bg-brand/6 px-2.5 py-1.5 text-[11px] font-semibold text-brand transition-all hover:bg-brand/12"
-                onClick={() => onLike?.(post.id)}
+                className="flex items-center gap-1 rounded-lg border border-brand/10 bg-brand/6 px-2.5 py-1.5 text-[11px] font-semibold text-brand transition-all hover:bg-brand/12 disabled:cursor-not-allowed disabled:opacity-60"
+                onClick={handleLike}
                 aria-label="按讚這則貼文"
+                aria-busy={isLiking}
+                disabled={isLiking}
               >
-                ❤️ 讚
+                {isLiking ? '⏳ 處理中' : '❤️ 讚'}
               </button>
               <button 
-                className="flex items-center gap-1 rounded-lg border border-brand/10 bg-brand/6 px-2.5 py-1.5 text-[11px] font-semibold text-brand transition-all hover:bg-brand/12"
-                aria-label="回覆這則貼文"
+                className="flex items-center gap-1 rounded-lg border border-brand/10 bg-brand/6 px-2.5 py-1.5 text-[11px] font-semibold text-brand/50 cursor-not-allowed opacity-60 transition-all"
+                aria-label="回覆功能開發中"
+                title="🚧 功能開發中，敬請期待"
+                disabled
               >
                 💬 回覆
               </button>
@@ -93,8 +114,9 @@ interface PostsSectionProps {
   onTabChange: (tab: WallTab) => void;
   publicPosts: Post[];
   privatePosts: Post[];
-  onLike?: (postId: number | string) => void;
+  onLike?: (postId: number | string) => Promise<void> | void;
   onCreatePost?: (content: string, visibility: 'public' | 'private') => void;
+  onUnlock?: () => void;
 }
 
 export function PostsSection({ 
@@ -105,6 +127,7 @@ export function PostsSection({
   privatePosts,
   onLike,
   onCreatePost,
+  onUnlock,
 }: PostsSectionProps) {
   const perm = getPermissions(role);
 
@@ -150,7 +173,7 @@ export function PostsSection({
         {currentTab === 'public' ? (
           <>
             {visiblePublic.map(post => (
-              <PostCard key={post.id} post={post} onLike={onLike} />
+              <PostCard key={post.id} post={post} {...(onLike ? { onLike } : {})} />
             ))}
             
             {/* 使用 LockedOverlay 組件 */}
@@ -159,6 +182,7 @@ export function PostsSection({
               hiddenCount={hiddenPublicCount}
               countLabel="則熱帖"
               benefits={['查看完整動態', '新回答通知']}
+              {...(onUnlock ? { onCtaClick: onUnlock } : {})}
             >
               {publicPosts[GUEST_VISIBLE_COUNT] && (
                 <PostCard post={publicPosts[GUEST_VISIBLE_COUNT]} />
@@ -182,7 +206,7 @@ export function PostsSection({
         ) : perm.canAccessPrivate ? (
           <>
             {privatePosts.map(post => (
-              <PostCard key={post.id} post={post} onLike={onLike} />
+              <PostCard key={post.id} post={post} {...(onLike ? { onLike } : {})} />
             ))}
             {perm.canPostPrivate ? (
               <div className="flex justify-center rounded-[14px] border border-dashed border-border-light bg-brand/3 p-5">
@@ -205,7 +229,10 @@ export function PostsSection({
             <div className="mb-3 text-5xl opacity-50" aria-hidden="true">🔐</div>
             <h4 className="mb-1.5 text-sm font-bold text-brand-700">私密牆僅限本社區住戶查看</h4>
             <p className="mb-4 text-xs text-ink-600">{perm.isGuest ? '請先登入或註冊' : '驗證住戶身份後即可加入討論'}</p>
-            <button className="rounded-full bg-brand px-5 py-2.5 text-xs font-bold text-white">
+            <button 
+              onClick={onUnlock}
+              className="rounded-full bg-brand px-5 py-2.5 text-xs font-bold text-white"
+            >
               {perm.isGuest ? '免費註冊 / 登入' : '我是住戶，驗證身份'}
             </button>
           </div>

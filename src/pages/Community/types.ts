@@ -2,72 +2,21 @@
  * Community Wall Types
  * 
  * 社區牆共用型別定義
+ * (Re-export from domain types)
  */
 
-// ============ Role Types ============
-export type Role = 'guest' | 'member' | 'resident' | 'agent';
-export type WallTab = 'public' | 'private';
+import { 
+  Role, 
+  WallTab, 
+  Post, 
+  Review, 
+  Question, 
+  CommunityInfo, 
+  UnifiedWallData 
+} from '../../types/community';
 
-// ============ Data Types ============
-export interface Post {
-  id: number | string;
-  author: string;
-  floor?: string;
-  type: 'resident' | 'agent' | 'official';
-  time: string;
-  title: string;
-  content: string;
-  likes?: number;
-  views?: number;
-  comments: number;
-  pinned?: boolean;
-  private?: boolean;
-}
-
-export interface Review {
-  id: number | string;
-  author: string;
-  company: string;
-  visits: number;
-  deals: number;
-  pros: string[];
-  cons: string | string[];  // 支援 string 或 array
-}
-
-export interface Question {
-  id: number | string;
-  question: string;
-  time: string;
-  answersCount: number;
-  answers: {
-    author: string;
-    type: 'resident' | 'agent' | 'official';
-    content: string;
-    expert?: boolean;
-  }[];
-}
-
-export interface CommunityInfo {
-  name: string;
-  year: number;
-  units: number;
-  managementFee: number;
-  builder: string;
-  members: number;
-  avgRating: number;
-  monthlyInteractions: number;
-  forSale: number;
-}
-
-export interface MockData {
-  communityInfo: CommunityInfo;
-  posts: {
-    public: Post[];
-    private: Post[];
-  };
-  reviews: Review[];
-  questions: Question[];
-}
+export type { Role, WallTab, Post, Review, Question, CommunityInfo };
+export type MockData = UnifiedWallData;
 
 // ============ Permission Types ============
 export interface Permissions {

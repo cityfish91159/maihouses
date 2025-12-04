@@ -8,11 +8,12 @@ import type { CommunityInfo, Question, Post } from '../types';
 
 interface SidebarProps {
   info: CommunityInfo;
-  questions: Question[];
+  questions: Question[] | { items: Question[] };
   posts: Post[];
 }
 
-export function Sidebar({ info, questions, posts }: SidebarProps) {
+export function Sidebar({ info, questions: questionsProp, posts }: SidebarProps) {
+  const questions = Array.isArray(questionsProp) ? questionsProp : (questionsProp?.items || []);
   const displayQuestions = questions.slice(0, 3);
   const hotPosts = [...posts].sort((a, b) => (b.likes || 0) - (a.likes || 0)).slice(0, 2);
 

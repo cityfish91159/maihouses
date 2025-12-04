@@ -7,209 +7,86 @@
  * - 統一資料格式：不管來源是 Mock 還是 API，輸出格式一致
  */
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { useCommunityWall } from './useCommunityWallQuery';
-import type { 
-  CommunityWallData, 
-  CommunityPost, 
-  CommunityQuestion, 
-  CommunityReview 
-} from '../services/communityService';
+import type { CommunityWallData } from '../services/communityService';
+import type { CommunityInfo, Post, Review, Question } from '../pages/Community/types';
+import { MOCK_DATA, createMockPost, createMockQuestion, createMockAnswer } from '../pages/Community/mockData';
+import { convertApiData } from './communityWallConverters';
+import type { UnifiedWallData } from './communityWallConverters';
 
 // ============ 統一輸出型別 ============
-export interface Post {
-  id: number | string;
-  author: string;
-  floor?: string;
-  type: 'resident' | 'agent' | 'official';
-  time: string;
-  title: string;
-  content: string;
-  likes?: number;
-  views?: number;
-  comments: number;
-  pinned?: boolean;
-  private?: boolean;
-}
+export type { Post, Review, Question, CommunityInfo };
+export type { UnifiedWallData };
 
-export interface Review {
-  id: number | string;
-  author: string;
-  company: string;
-  visits: number;
-  deals: number;
-  pros: string[];
-  cons: string | string[];
-}
 
-export interface Question {
-  id: number | string;
-  question: string;
-  time: string;
-  answersCount: number;
-  answers: {
-    author: string;
-    type: 'resident' | 'agent' | 'official';
-    content: string;
-    expert?: boolean;
-  }[];
-}
+const MOCK_STORAGE_KEY = 'community-wall-mock-state-v1';
+const MOCK_LATENCY_MS = 250;
 
-export interface CommunityInfo {
-  name: string;
-  year: number;
-  units: number;
-  managementFee: number;
-  builder: string;
-  members: number;
-  avgRating: number;
-  monthlyInteractions: number;
-  forSale: number;
-}
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-export interface UnifiedWallData {
-  communityInfo: CommunityInfo;
-  posts: {
-    public: Post[];
-    private: Post[];
-  };
-  reviews: Review[];
-  questions: Question[];
-}
-
-// ============ Mock 資料 ============
-const MOCK_DATA: UnifiedWallData = {
-  communityInfo: {
-    name: '惠宇上晴',
-    year: 2018,
-    units: 280,
-    managementFee: 85,
-    builder: '惠宇建設',
-    members: 88,
-    avgRating: 4.2,
-    monthlyInteractions: 156,
-    forSale: 23,
-  },
-  posts: {
-    public: [
-      { id: 1, author: '陳小姐', floor: '12F', type: 'resident', time: '2小時前', title: '有人要團購掃地機嗎？🤖', content: '這款 iRobot 打折，滿 5 台有團購價～', likes: 31, comments: 14 },
-      { id: 2, author: '游杰倫', type: 'agent', time: '昨天', title: '🏡 惠宇上晴 12F｜雙陽台視野戶', content: '客廳光線很好，上週屋主剛降價 50 萬，有興趣可私訊。', views: 89, comments: 5 },
-      { id: 3, author: '李先生', floor: '8F', type: 'resident', time: '3天前', title: '停車位交流 🚗', content: '我有 B2-128 想與 B1 交換，方便接送小孩', likes: 12, comments: 8 },
-      { id: 4, author: '王太太', floor: '5F', type: 'resident', time: '1週前', title: '推薦水電師傅', content: '上次找的師傅很專業，價格公道，需要的鄰居私訊我', likes: 25, comments: 6 },
-      { id: 5, author: '林經理', type: 'agent', time: '1週前', title: '🏡 惠宇上晴 8F｜三房車位', content: '屋況極新，前屋主自住保養好', views: 156, comments: 12 },
-    ],
-    private: [
-      { id: 101, author: '管委會', type: 'official', time: '3天前', title: '📢 年度消防演練通知', content: '12/15（日）上午 10:00 將進行全社區消防演練，届時警報器會響，請勿驚慌。', pinned: true, comments: 0 },
-      { id: 102, author: '15F 住戶', type: 'resident', time: '1週前', title: '管理費調漲討論', content: '想問大家覺得管理費調漲合理嗎？從 2,800 調到 3,200，漲幅有點大...', comments: 28, private: true },
-      { id: 103, author: '3F 住戶', type: 'resident', time: '2週前', title: '頂樓漏水問題', content: '最近下雨頂樓好像有漏水，管委會有要處理嗎？', comments: 15, private: true },
-    ],
-  },
-  reviews: [
-    { id: 1, author: '游杰倫', company: '21世紀', visits: 12, deals: 3, pros: ['公設維護得乾淨，假日草皮有人整理', '反映停車動線，管委會一週內就公告改善'], cons: '面向大馬路低樓層車聲明顯，喜靜者選中高樓層' },
-    { id: 2, author: '林美玲', company: '信義房屋', visits: 8, deals: 2, pros: ['頂樓排水設計不錯，颱風天也沒有積水問題', '中庭花園維護用心，住戶反應都很正面'], cons: '垃圾車時間稍晚，家裡偶爾會有下水道味' },
-    { id: 3, author: '陳志明', company: '永慶房屋', visits: 6, deals: 1, pros: ['管理員服務態度很好，代收包裹很方便', '社區有健身房，設備維護不錯'], cons: '電梯尖峰時段要等比較久' },
-    { id: 4, author: '黃小華', company: '住商不動產', visits: 10, deals: 2, pros: ['學區不錯，走路到國小只要5分鐘', '附近生活機能完善'], cons: '部分戶型採光稍弱' },
-    { id: 5, author: '張大明', company: '台灣房屋', visits: 5, deals: 1, pros: ['建商口碑好，用料實在', '公設比合理，實坪數划算'], cons: '車道坡度較陡，新手要小心' },
-  ],
-  questions: [
-    { id: 1, question: '請問社區停車位好停嗎？會不會常客滿？', time: '2天前', answersCount: 2, answers: [
-      { author: '12F 住戶', type: 'resident', content: 'B2 比較容易有位，B1 要碰運氣。' },
-      { author: '游杰倫', type: 'agent', content: '這社區車位配比是 1:1.2，算充裕的。', expert: true },
-    ]},
-    { id: 2, question: '晚上會不會很吵？我看物件時是白天', time: '5天前', answersCount: 2, answers: [
-      { author: '3F 住戶', type: 'resident', content: '面大馬路那側確實有車聲，但習慣就好。內側安靜很多。' },
-      { author: '10F 住戶', type: 'resident', content: '我住內側，晚上很安靜，睡眠品質不錯。' },
-    ]},
-    { id: 3, question: '管理費多少？有包含哪些服務？', time: '1週前', answersCount: 1, answers: [
-      { author: '管委會', type: 'official', content: '目前每坪 85 元，含 24 小時保全、公設維護、垃圾代收。' },
-    ]},
-    { id: 4, question: '社區有健身房嗎？設備新不新？', time: '3天前', answersCount: 0, answers: [] },
-  ],
+const canUseMockStorage = (): boolean => {
+  try {
+    return typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
+  } catch {
+    return false;
+  }
 };
 
-// ============ API 資料轉換函數 ============
-
-function formatTimeAgo(dateStr: string): string {
-  const date = new Date(dateStr);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffMins = Math.floor(diffMs / 60000);
-  const diffHours = Math.floor(diffMins / 60);
-  const diffDays = Math.floor(diffHours / 24);
-  const diffWeeks = Math.floor(diffDays / 7);
-
-  if (diffMins < 60) return `${diffMins}分鐘前`;
-  if (diffHours < 24) return `${diffHours}小時前`;
-  if (diffDays < 7) return `${diffDays}天前`;
-  if (diffWeeks < 4) return `${diffWeeks}週前`;
-  return date.toLocaleDateString('zh-TW');
-}
-
-function convertApiPost(post: CommunityPost): Post {
-  // 建立基本物件，API 來源沒有 floor 資訊
+const mergeMockState = (
+  fallback: UnifiedWallData,
+  stored: Partial<UnifiedWallData> | null
+): UnifiedWallData => {
+  if (!stored) return fallback;
   return {
-    id: post.id,
-    author: post.author?.name || '匿名',
-    type: (post.author?.role as 'resident' | 'agent') || 'resident',
-    time: formatTimeAgo(post.created_at),
-    title: post.content.substring(0, 20) + (post.content.length > 20 ? '...' : ''),
-    content: post.content,
-    likes: post.likes_count,
-    comments: 0, // API 沒有這個欄位
-    pinned: false,
-    private: post.visibility === 'private',
-  };
-}
-
-function convertApiReview(review: CommunityReview): Review {
-  return {
-    id: review.id,
-    author: '匿名房仲', // API 需要 join author 資料
-    company: '房仲公司',
-    visits: 0,
-    deals: 0,
-    pros: review.content.pros || [],
-    cons: review.content.cons || '',
-  };
-}
-
-function convertApiQuestion(question: CommunityQuestion): Question {
-  return {
-    id: question.id,
-    question: question.question,
-    time: formatTimeAgo(question.created_at),
-    answersCount: question.answers.length,
-    answers: question.answers.map(a => ({
-      author: '匿名',
-      type: 'resident' as const,
-      content: a.content,
-      expert: a.is_expert,
-    })),
-  };
-}
-
-function convertApiData(apiData: CommunityWallData): Omit<UnifiedWallData, 'communityInfo'> {
-  // 轉換私密貼文
-  const convertedPrivate = apiData.posts.private.map(convertApiPost);
-  // 排序：pinned 優先（目前 API 沒有 pinned，但轉換後的 Post 有）
-  const sortedPrivate = [...convertedPrivate].sort((a, b) => 
-    (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0)
-  );
-
-  return {
-    posts: {
-      public: apiData.posts.public.map(convertApiPost),
-      private: sortedPrivate, // 已經轉換過的 Post[]
+    ...fallback,
+    ...stored,
+    communityInfo: {
+      ...fallback.communityInfo,
+      ...(stored.communityInfo ?? {}),
     },
-    reviews: apiData.reviews.items.map(convertApiReview),
-    questions: apiData.questions.items.map(convertApiQuestion),
+    posts: {
+      public: stored.posts?.public ?? fallback.posts.public,
+      private: stored.posts?.private ?? fallback.posts.private,
+      publicTotal: stored.posts?.publicTotal ?? fallback.posts.publicTotal,
+      privateTotal: stored.posts?.privateTotal ?? fallback.posts.privateTotal,
+    },
+    reviews: stored.reviews ?? fallback.reviews,
+    questions: stored.questions ?? fallback.questions,
   };
-}
+};
+
+const loadPersistedMockState = (fallback: UnifiedWallData): UnifiedWallData => {
+  if (!canUseMockStorage()) return fallback;
+  try {
+    const raw = window.localStorage.getItem(MOCK_STORAGE_KEY);
+    if (!raw) return fallback;
+    const parsed = JSON.parse(raw);
+    return mergeMockState(fallback, parsed);
+  } catch (err) {
+    console.error('Failed to load community wall mock state', err);
+    return fallback;
+  }
+};
+
+const saveMockState = (data: UnifiedWallData) => {
+  if (!canUseMockStorage()) return;
+  try {
+    window.localStorage.setItem(MOCK_STORAGE_KEY, JSON.stringify(data));
+  } catch (err) {
+    console.error('Failed to persist community wall mock state', err);
+  }
+};
+
 
 // ============ Hook 選項 ============
 export interface UseCommunityWallDataOptions {
   /** 是否包含私密貼文（需登入） */
   includePrivate?: boolean;
+  /** 測試或客製化可覆寫初始 Mock 資料 */
+  initialMockData?: UnifiedWallData;
+  /** 是否持久化 Mock 狀態 */
+  persistMockState?: boolean;
 }
 
 export interface UseCommunityWallDataReturn {
@@ -223,6 +100,8 @@ export interface UseCommunityWallDataReturn {
   isLoading: boolean;
   /** 錯誤訊息 */
   error: Error | null;
+  /** 手動刷新資料 */
+  refresh: () => Promise<void>;
   /** 按讚 */
   toggleLike: (postId: string | number) => Promise<void>;
   /** 發文 */
@@ -238,79 +117,134 @@ export function useCommunityWallData(
   communityId: string | undefined,
   options: UseCommunityWallDataOptions = {}
 ): UseCommunityWallDataReturn {
-  const { includePrivate = false } = options;
-  const [useMock, setUseMock] = useState(true);
-
-  // API Hook（只在非 Mock 模式且有 communityId 時啟用）
   const {
-    data: apiData,
-    isLoading: apiLoading,
+    includePrivate = false,
+    initialMockData = MOCK_DATA,
+    persistMockState = true,
+  } = options;
+  const [useMock, setUseMock] = useState(true);
+  // Mock 模式的本地狀態（使用 immer 會更好，但這裡用簡單的 state）
+  const [mockData, setMockData] = useState<UnifiedWallData>(() =>
+    persistMockState ? loadPersistedMockState(initialMockData) : initialMockData
+  );
+  const hasRestoredFromStorage = useRef(false);
+  const [likedPosts, setLikedPosts] = useState<Set<string | number>>(() => new Set());
+
+  // 切換至 API 模式時重置 Mock 按讚狀態，避免污染真實資料
+  useEffect(() => {
+    if (!useMock) {
+      setLikedPosts(new Set());
+    }
+  }, [useMock]);
+
+  useEffect(() => {
+    if (!persistMockState || !useMock) return;
+    if (!hasRestoredFromStorage.current) {
+      hasRestoredFromStorage.current = true;
+      return;
+    }
+    setMockData(loadPersistedMockState(initialMockData));
+  }, [useMock, persistMockState, initialMockData]);
+
+  useEffect(() => {
+    if (!persistMockState || !useMock) return;
+    saveMockState(mockData);
+  }, [mockData, persistMockState, useMock]);
+
+  // API 查詢
+  const { 
+    data: apiData, 
+    isLoading: apiLoading, 
     error: apiError,
+    refresh: apiRefresh,
     toggleLike: apiToggleLike,
     createPost: apiCreatePost,
     askQuestion: apiAskQuestion,
     answerQuestion: apiAnswerQuestion,
-  } = useCommunityWall(communityId, {
+  } = useCommunityWall(communityId, { 
+    enabled: !useMock,
     includePrivate,
-    enabled: !useMock && !!communityId,
   });
 
-  // 統一資料：Mock 或轉換後的 API 資料
+  // 統一資料來源
   const data = useMemo<UnifiedWallData>(() => {
     if (useMock) {
-      // Mock 模式：私密牆排序 pinned 優先
-      return {
-        ...MOCK_DATA,
-        posts: {
-          ...MOCK_DATA.posts,
-          private: [...MOCK_DATA.posts.private].sort((a, b) => 
-            (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0)
-          ),
-        },
-      };
+      return mockData;
     }
 
     if (!apiData) {
-      // API 模式但還沒資料：回傳空資料 + 預設 communityInfo
-      return {
-        communityInfo: {
-          name: '載入中...',
-          year: 0,
-          units: 0,
-          managementFee: 0,
-          builder: '',
-          members: 0,
-          avgRating: 0,
-          monthlyInteractions: 0,
-          forSale: 0,
-        },
-        posts: { public: [], private: [] },
-        reviews: [],
-        questions: [],
-      };
+      return initialMockData;
     }
 
-    // API 模式：轉換資料格式
-    const converted = convertApiData(apiData);
-    return {
-      // TODO: API 需要回傳 communityInfo，目前用 fallback
-      communityInfo: MOCK_DATA.communityInfo,
-      ...converted,
-    };
-  }, [useMock, apiData]);
+    // API 模式：轉換資料格式，API 有 communityInfo 就用，沒有才 fallback Mock
+    return convertApiData(apiData, MOCK_DATA.communityInfo);
+  }, [useMock, apiData, mockData, initialMockData]);
 
   // 封裝操作函數
+  const refresh = useCallback(async () => {
+    if (useMock) {
+      setMockData(prev => ({ ...prev }));
+      return;
+    }
+    await apiRefresh();
+  }, [useMock, apiRefresh]);
+
   const toggleLike = useCallback(async (postId: string | number) => {
     if (useMock) {
-      console.log('[Mock] toggleLike:', postId);
+      await delay(MOCK_LATENCY_MS);
+      // Mock 模式：實際更新本地狀態
+      const isLiked = likedPosts.has(postId);
+      setMockData(prev => {
+        const updatePosts = (posts: Post[]): Post[] => 
+          posts.map(post => {
+            if (post.id !== postId) return post;
+            const currentLikes = post.likes ?? 0;
+            return {
+              ...post,
+              likes: isLiked ? Math.max(0, currentLikes - 1) : currentLikes + 1,
+            };
+          });
+
+        return {
+          ...prev,
+          posts: {
+            ...prev.posts,
+            public: updatePosts(prev.posts.public),
+            private: updatePosts(prev.posts.private),
+          },
+        };
+      });
+      setLikedPosts(prev => {
+        const next = new Set(prev);
+        if (next.has(postId)) {
+          next.delete(postId);
+        } else {
+          next.add(postId);
+        }
+        return next;
+      });
       return;
     }
     await apiToggleLike(String(postId));
-  }, [useMock, apiToggleLike]);
+  }, [useMock, apiToggleLike, likedPosts]);
 
   const createPost = useCallback(async (content: string, visibility: 'public' | 'private' = 'public') => {
     if (useMock) {
-      console.log('[Mock] createPost:', content, visibility);
+      // Mock 模式：新增貼文到本地狀態
+      const newPost = createMockPost(content, visibility);
+
+      setMockData(prev => {
+        const target = visibility === 'private' ? 'private' : 'public';
+        const targetTotal = visibility === 'private' ? 'privateTotal' : 'publicTotal';
+        return {
+          ...prev,
+          posts: {
+            ...prev.posts,
+            [target]: [newPost, ...prev.posts[target]],
+            [targetTotal]: prev.posts[targetTotal] + 1,
+          },
+        };
+      });
       return;
     }
     await apiCreatePost(content, visibility);
@@ -318,7 +252,17 @@ export function useCommunityWallData(
 
   const askQuestion = useCallback(async (question: string) => {
     if (useMock) {
-      console.log('[Mock] askQuestion:', question);
+      // Mock 模式：新增問題到本地狀態
+      const newQuestion = createMockQuestion(question);
+
+      setMockData(prev => ({
+        ...prev,
+        questions: {
+          ...prev.questions,
+          items: [newQuestion, ...prev.questions.items],
+          total: prev.questions.total + 1,
+        },
+      }));
       return;
     }
     await apiAskQuestion(question);
@@ -326,7 +270,24 @@ export function useCommunityWallData(
 
   const answerQuestion = useCallback(async (questionId: string, content: string) => {
     if (useMock) {
-      console.log('[Mock] answerQuestion:', questionId, content);
+      // Mock 模式：新增回答到本地狀態
+      setMockData(prev => ({
+        ...prev,
+        questions: {
+          ...prev.questions,
+          items: prev.questions.items.map(q => {
+            if (q.id.toString() !== questionId) return q;
+            
+            const newAnswer = createMockAnswer(content);
+
+            return {
+              ...q,
+              answers: [...q.answers, newAnswer],
+              answersCount: q.answersCount + 1,
+            };
+          }),
+        },
+      }));
       return;
     }
     await apiAnswerQuestion(questionId, content);
@@ -338,6 +299,7 @@ export function useCommunityWallData(
     setUseMock,
     isLoading: !useMock && apiLoading,
     error: useMock ? null : apiError,
+    refresh,
     toggleLike,
     createPost,
     askQuestion,

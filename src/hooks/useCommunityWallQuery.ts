@@ -13,7 +13,6 @@ import {
   createPost as apiCreatePost,
   askQuestion as apiAskQuestion,
   answerQuestion as apiAnswerQuestion,
-  clearCommunityCache,
   type CommunityWallData,
   type CommunityPost,
 } from '../services/communityService';
@@ -21,7 +20,8 @@ import {
 // Query Keys
 export const communityWallKeys = {
   all: ['communityWall'] as const,
-  wall: (communityId: string) => [...communityWallKeys.all, 'wall', communityId] as const,
+  wall: (communityId: string, includePrivate?: boolean) => 
+    [...communityWallKeys.all, 'wall', communityId, { includePrivate }] as const,
   posts: (communityId: string, visibility: 'public' | 'private') => 
     [...communityWallKeys.all, 'posts', communityId, visibility] as const,
 };
@@ -35,6 +35,8 @@ export interface UseCommunityWallOptions {
   refetchOnWindowFocus?: boolean;
   /** 是否啟用 */
   enabled?: boolean;
+  /** 目前使用者 ID（供樂觀更新使用） */
+  currentUserId?: string;
 }
 
 export interface UseCommunityWallReturn {
@@ -69,10 +71,12 @@ export function useCommunityWall(
     staleTime = 5 * 60 * 1000, // 5 分鐘
     refetchOnWindowFocus = true,
     enabled = true,
+    currentUserId,
   } = options;
 
   const queryClient = useQueryClient();
   const [isOptimisticUpdating, setIsOptimisticUpdating] = useState(false);
+  const optimisticUserId = currentUserId ?? 'anonymous-user';
 
   // 主要查詢
   const { 
@@ -82,7 +86,7 @@ export function useCommunityWall(
     error, 
     refetch 
   } = useQuery({
-    queryKey: communityWallKeys.wall(communityId || ''),
+    queryKey: communityWallKeys.wall(communityId || '', includePrivate),
     queryFn: () => getCommunityWall(communityId!, { includePrivate }),
     enabled: enabled && !!communityId,
     staleTime,
@@ -90,10 +94,9 @@ export function useCommunityWall(
     retry: 2,
   });
 
-  // 手動刷新
+  // 手動刷新（註：快取由 React Query invalidateQueries 處理）
   const refresh = useCallback(async () => {
     if (communityId) {
-      clearCommunityCache(communityId);
       await refetch();
     }
   }, [communityId, refetch]);
@@ -106,12 +109,12 @@ export function useCommunityWall(
       
       // 取消任何正在進行的查詢
       await queryClient.cancelQueries({ 
-        queryKey: communityWallKeys.wall(communityId || '') 
+        queryKey: communityWallKeys.wall(communityId || '', includePrivate) 
       });
 
       // 保存舊資料用於回滾
       const previousData = queryClient.getQueryData<CommunityWallData>(
-        communityWallKeys.wall(communityId || '')
+        communityWallKeys.wall(communityId || '', includePrivate)
       );
 
       // 樂觀更新
@@ -119,18 +122,18 @@ export function useCommunityWall(
         const updatePosts = (posts: CommunityPost[]): CommunityPost[] => 
           posts.map(post => {
             if (post.id !== postId) return post;
-            const isLiked = post.liked_by.includes('current-user');
+            const isLiked = post.liked_by.includes(optimisticUserId);
             return {
               ...post,
-              likes_count: isLiked ? post.likes_count - 1 : post.likes_count + 1,
+              likes_count: isLiked ? Math.max(0, post.likes_count - 1) : post.likes_count + 1,
               liked_by: isLiked 
-                ? post.liked_by.filter(id => id !== 'current-user')
-                : [...post.liked_by, 'current-user'],
+                ? post.liked_by.filter(id => id !== optimisticUserId)
+                : [...post.liked_by, optimisticUserId],
             };
           });
 
         queryClient.setQueryData<CommunityWallData>(
-          communityWallKeys.wall(communityId || ''),
+          communityWallKeys.wall(communityId || '', includePrivate),
           {
             ...previousData,
             posts: {
@@ -148,7 +151,7 @@ export function useCommunityWall(
       // 失敗時回滾
       if (context?.previousData) {
         queryClient.setQueryData(
-          communityWallKeys.wall(communityId || ''),
+          communityWallKeys.wall(communityId || '', includePrivate),
           context.previousData
         );
       }
@@ -157,7 +160,7 @@ export function useCommunityWall(
       setIsOptimisticUpdating(false);
       // 重新驗證資料
       queryClient.invalidateQueries({ 
-        queryKey: communityWallKeys.wall(communityId || '') 
+        queryKey: communityWallKeys.wall(communityId || '', includePrivate) 
       });
     },
   });
@@ -168,7 +171,7 @@ export function useCommunityWall(
       apiCreatePost(communityId!, content, visibility),
     onSuccess: () => {
       queryClient.invalidateQueries({ 
-        queryKey: communityWallKeys.wall(communityId || '') 
+        queryKey: communityWallKeys.wall(communityId || '', includePrivate) 
       });
     },
   });
@@ -178,7 +181,7 @@ export function useCommunityWall(
     mutationFn: (question: string) => apiAskQuestion(communityId!, question),
     onSuccess: () => {
       queryClient.invalidateQueries({ 
-        queryKey: communityWallKeys.wall(communityId || '') 
+        queryKey: communityWallKeys.wall(communityId || '', includePrivate) 
       });
     },
   });
@@ -189,7 +192,7 @@ export function useCommunityWall(
       apiAnswerQuestion(questionId, content),
     onSuccess: () => {
       queryClient.invalidateQueries({ 
-        queryKey: communityWallKeys.wall(communityId || '') 
+        queryKey: communityWallKeys.wall(communityId || '', includePrivate) 
       });
     },
   });

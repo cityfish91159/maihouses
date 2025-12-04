@@ -10,28 +10,7 @@ import { supabase } from '../lib/supabase';
 // API 基礎路徑
 const API_BASE = '/api/community';
 
-// 快取時間（毫秒）
-const CACHE_TTL = {
-  posts: 5 * 60 * 1000,     // 5 分鐘
-  reviews: 10 * 60 * 1000,  // 10 分鐘
-  questions: 5 * 60 * 1000, // 5 分鐘
-};
-
-// 簡易記憶體快取
-const cache = new Map<string, { data: unknown; timestamp: number }>();
-
-function getCachedData<T>(key: string, ttl: number): T | null {
-  const cached = cache.get(key);
-  if (cached && Date.now() - cached.timestamp < ttl) {
-    return cached.data as T;
-  }
-  cache.delete(key);
-  return null;
-}
-
-function setCachedData(key: string, data: unknown): void {
-  cache.set(key, { data, timestamp: Date.now() });
-}
+// 註：快取已移除，改由 React Query 統一管理
 
 // Types
 export interface CommunityPost {
@@ -43,10 +22,13 @@ export interface CommunityPost {
   likes_count: number;
   liked_by: string[];
   created_at: string;
+  comments_count?: number;  // 新增：留言數
+  is_pinned?: boolean;      // 新增：是否置頂
   author?: {
     name: string;
     avatar_url?: string;
     role?: 'resident' | 'agent' | 'member';
+    floor?: string;         // 新增：樓層資訊
   };
 }
 
@@ -60,6 +42,14 @@ export interface CommunityReview {
     property_title?: string;
   };
   created_at: string;
+  agent?: {                   // 新增：房仲資訊
+    name: string;
+    company?: string;
+    stats?: {
+      visits: number;         // 帶看次數
+      deals: number;          // 成交數
+    };
+  };
 }
 
 export interface CommunityQuestion {
@@ -73,11 +63,26 @@ export interface CommunityQuestion {
     content: string;
     is_expert: boolean;
     created_at: string;
+    author?: {                // 新增：回答者資訊
+      name: string;
+      role?: 'resident' | 'agent' | 'official';
+    };
   }[];
   created_at: string;
 }
 
 export interface CommunityWallData {
+  communityInfo?: {           // 新增：社區資訊
+    name: string;
+    year: number;
+    units: number;
+    managementFee: number;
+    builder: string;
+    members?: number;
+    avgRating?: number;
+    monthlyInteractions?: number;
+    forSale?: number;
+  };
   posts: {
     public: CommunityPost[];
     private: CommunityPost[];
@@ -128,27 +133,17 @@ async function fetchAPI<T>(
 
 /**
  * 取得社區牆完整資料
+ * 註：快取由 React Query 管理，此處直接 fetch
  */
 export async function getCommunityWall(
   communityId: string,
   options: { 
-    forceRefresh?: boolean;
     includePrivate?: boolean;
   } = {}
 ): Promise<CommunityWallData> {
-  const cacheKey = `wall:${communityId}:${options.includePrivate}`;
-  
-  if (!options.forceRefresh) {
-    const cached = getCachedData<CommunityWallData>(cacheKey, CACHE_TTL.posts);
-    if (cached) return cached;
-  }
-
-  const data = await fetchAPI<CommunityWallData>(
+  return fetchAPI<CommunityWallData>(
     `/wall?communityId=${communityId}&type=all`
   );
-  
-  setCachedData(cacheKey, data);
-  return data;
 }
 
 /**
@@ -179,20 +174,14 @@ export async function getPrivatePosts(
 
 /**
  * 取得評價（來自 properties 的兩好一公道）
+ * 註：快取由 React Query 管理
  */
 export async function getReviews(
   communityId: string
 ): Promise<{ items: CommunityReview[]; total: number }> {
-  const cacheKey = `reviews:${communityId}`;
-  const cached = getCachedData<{ items: CommunityReview[]; total: number }>(cacheKey, CACHE_TTL.reviews);
-  if (cached) return cached;
-
-  const data = await fetchAPI<{ items: CommunityReview[]; total: number }>(
+  return fetchAPI<{ items: CommunityReview[]; total: number }>(
     `/wall?communityId=${communityId}&type=reviews`
   );
-  
-  setCachedData(cacheKey, data);
-  return data;
 }
 
 /**
@@ -201,30 +190,20 @@ export async function getReviews(
 export async function getQuestions(
   communityId: string
 ): Promise<{ items: CommunityQuestion[]; total: number }> {
-  const cacheKey = `questions:${communityId}`;
-  const cached = getCachedData<{ items: CommunityQuestion[]; total: number }>(cacheKey, CACHE_TTL.questions);
-  if (cached) return cached;
-
-  const data = await fetchAPI<{ items: CommunityQuestion[]; total: number }>(
+  return fetchAPI<{ items: CommunityQuestion[]; total: number }>(
     `/wall?communityId=${communityId}&type=questions`
   );
-  
-  setCachedData(cacheKey, data);
-  return data;
 }
 
 /**
  * 發布貼文
+ * 註：快取由 React Query invalidateQueries 處理
  */
 export async function createPost(
   communityId: string,
   content: string,
   visibility: 'public' | 'private' = 'public'
 ): Promise<CommunityPost> {
-  // 清除快取
-  cache.delete(`wall:${communityId}:false`);
-  cache.delete(`wall:${communityId}:true`);
-
   return fetchAPI('/post', {
     method: 'POST',
     body: JSON.stringify({ communityId, content, visibility }),
@@ -245,14 +224,12 @@ export async function toggleLike(
 
 /**
  * 提問
+ * 註：快取由 React Query invalidateQueries 處理
  */
 export async function askQuestion(
   communityId: string,
   question: string
 ): Promise<CommunityQuestion> {
-  // 清除快取
-  cache.delete(`questions:${communityId}`);
-
   return fetchAPI('/question', {
     method: 'POST',
     body: JSON.stringify({ communityId, question }),
@@ -273,20 +250,11 @@ export async function answerQuestion(
 }
 
 /**
- * 清除快取（例如發文後強制刷新）
+ * 清除快取（已棄用，保留函數簽名以相容現有代碼）
+ * 實際快取由 React Query 管理，使用 invalidateQueries
  */
-export function clearCommunityCache(communityId?: string): void {
-  if (communityId) {
-    // 清除特定社區的快取
-    for (const key of cache.keys()) {
-      if (key.includes(communityId)) {
-        cache.delete(key);
-      }
-    }
-  } else {
-    // 清除所有快取
-    cache.clear();
-  }
+export function clearCommunityCache(_communityId?: string): void {
+  // 空實作 - 快取已改由 React Query 管理
 }
 
 export default {
