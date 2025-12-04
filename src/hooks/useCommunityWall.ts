@@ -61,7 +61,7 @@ export function useCommunityWall(
   const [optimisticPosts, setOptimisticPosts] = useState<CommunityPost[]>([]);
   
   const mountedRef = useRef(true);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // 獲取資料
   const fetchData = useCallback(async (_force = false) => {

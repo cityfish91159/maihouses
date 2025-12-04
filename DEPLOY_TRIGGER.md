@@ -2,6 +2,11 @@ Redeploy trigger
 
 This file was updated to force a new Vercel deployment.
 
+Timestamp: 2025-12-04T09:45:00Z
+Deploy: Fix Community Wall Timer Typing
+- Fix: Updated `useCommunityWall.ts` interval ref to use `ReturnType<typeof setInterval>` so browser builds stop depending on `NodeJS` globals.
+- Verification: `npm run build` (tsc + vite build) completed successfully.
+
 Timestamp: 2025-12-04T08:45:00Z
 Deploy: Community Wall Persistence & UAG Test Hardening
 - Fix: Hardened Community Wall URL/localStorage sync, role parsing, and cross-tab persistence with safe fallbacks.
