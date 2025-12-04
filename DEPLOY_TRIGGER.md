@@ -1,3 +1,9 @@
+Timestamp: 2025-12-05T23:10:00Z
+Deploy: Community Wall Auto-Fallback to Mock
+- Fix: `Wall.tsx` 監聽 API 模式錯誤，遇到 500/網路異常立即切回 Mock，確保頁面永遠可以開啟。
+- Context: 生產環境尚未配置 `SUPABASE_URL/SUPABASE_SERVICE_ROLE_KEY`，此修復確保 QA 能先看到 Mock 資料。
+- Verification: `npm run typecheck`, `npm run test`, `npm run build`。
+
 Redeploy trigger
 
 This file was updated to force a new Vercel deployment.

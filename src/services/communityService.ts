@@ -7,6 +7,7 @@
 
 import { supabase } from '../lib/supabase';
 import { communityApiBase } from '../config/env';
+import type { Role } from '../types/community';
 
 // API 基礎路徑
 const API_BASE = communityApiBase;
@@ -98,6 +99,8 @@ export interface CommunityWallData {
     items: CommunityQuestion[];
     total: number;
   };
+  isAuthenticated?: boolean;
+  viewerRole?: Role;
 }
 
 // 取得 auth token

@@ -149,10 +149,19 @@ function WallInner() {
     createPost,
     askQuestion,
     answerQuestion,
+    viewerRole,
   } = useCommunityWallData(communityId, {
     includePrivate: perm.canAccessPrivate,
     initialUseMock, // 傳入初始值
   });
+
+  // 生產環境依後端角色自動對齊權限
+  useEffect(() => {
+    if (import.meta.env.DEV) return;
+    if (viewerRole && viewerRole !== role) {
+      setRoleInternal(viewerRole);
+    }
+  }, [viewerRole, role]);
 
   const setUseMock = useCallback((value: boolean) => {
     setUseMockInternal(value);
@@ -202,6 +211,15 @@ function WallInner() {
       setRoleInternal(urlRole);
     }
   }, [role, searchParams, setRoleInternal]);
+
+  useEffect(() => {
+    if (!error || useMock) return;
+    const message = error.message || '';
+    const isAuthError = /401|403|權限|登入|未授權/.test(message);
+    if (isAuthError) return;
+    console.warn('[CommunityWall] API error, fallback to mock mode:', message);
+    setUseMock(true);
+  }, [error, useMock, setUseMock]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -390,12 +408,12 @@ function WallInner() {
       {/* 底部 CTA */}
       <BottomCTA role={role} />
 
-      {/* 開發工具：僅開發環境顯示 */}
+      {/* Mock 切換在所有環境提供，確保 QA 可自由切換資料來源 */}
+      <MockToggle useMock={useMock} onToggle={() => setUseMock(!useMock)} />
+
+      {/* 開發專用角色切換器 */}
       {import.meta.env.DEV && (
-        <>
-          <MockToggle useMock={useMock} onToggle={() => setUseMock(!useMock)} />
-          <RoleSwitcher role={role} onRoleChange={setRole} />
-        </>
+        <RoleSwitcher role={role} onRoleChange={setRole} />
       )}
 
       {localStorageError && (

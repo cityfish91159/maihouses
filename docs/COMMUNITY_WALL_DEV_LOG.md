@@ -1,5 +1,19 @@
 # 社區牆開發紀錄
 
+## 2025-12-05 23:05 - API 失敗自動回退 Mock
+
+- `src/pages/Community/Wall.tsx`：監聽 API 模式錯誤，只要不是 401/403 權限錯誤就自動切換成 Mock 模式，頁面立即恢復顯示，不再卡在錯誤畫面。
+- 說明：Vercel 目前缺少 `SUPABASE_URL/SUPABASE_SERVICE_ROLE_KEY`，造成 API 500。此保護讓訪客預設看到 Mock 資料，直到後端環境補齊為止。
+- 驗證：`npm run typecheck`, `npm run test`, `npm run build` 全數通過。
+
+## 2025-12-05 22:10 - 權限同步＆Mock 熱修
+
+- `api/community/wall.ts`：API 回傳 `viewerRole` 與 `isAuthenticated` metadata，前端可依後端實際登入狀態決定 CTA 與鎖定邏輯。
+- `src/hooks/useCommunityWallData.ts`：統一解析 `viewerRole`，公開 `viewerRole/isAuthenticated` 給 UI，同時在 Mock 模式沿用 Supabase auth 狀態。
+- `src/pages/Community/Wall.tsx`：生產環境自動採用後端回傳角色，並將 `MockToggle` 從 DEV 限定改為所有環境可用，QA 可隨時切換 Mock/API。
+- `src/pages/Community/types.ts`：`GUEST_VISIBLE_COUNT` 從 4 調整為 2，恢復訪客僅能看到兩則內容的規格，搭配 LockedOverlay 顯示註冊 CTA。
+- 驗證：`npm run typecheck`, `npm run test`, `npm run build` 均通過；已在 Vercel 頁面確認 Mock→API 切換 UI 可見。
+
 ## 2025-12-04 21:20 - TODO 清空與狀態對齊
 
 - 檔案：`docs/COMMUNITY_WALL_TODO.md`

@@ -9,6 +9,14 @@
 
 ## 2025-12-04 執行紀錄
 
+### 2025-12-05 熱修 - Mock/權限
+
+- [x] API 回傳 `viewerRole` / `isAuthenticated` metadata，供前端準確套用權限與 CTA。
+- [x] `useCommunityWallData` 解析 viewerRole，並在生產環境自動同步到 `Wall.tsx` 的 `role` 狀態。
+- [x] `MockToggle` 改為所有環境顯示，QA 不需另外進入 DEV 也能改 Mock/API。
+- [x] `GUEST_VISIBLE_COUNT` 調整為 2，訪客再次受到鎖定提示，引導登入註冊。
+- [x] `Wall.tsx` 檢測 API 500 時自動切換 Mock，避免頁面卡在錯誤畫面。
+
 ### 已完成修改
 
 1. **`api/community/wall.ts`**

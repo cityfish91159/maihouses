@@ -11,7 +11,7 @@ import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { useCommunityWall } from './useCommunityWallQuery';
 import { supabase } from '../lib/supabase';
 import type { CommunityWallData } from '../services/communityService';
-import type { CommunityInfo, Post, Review, Question } from '../pages/Community/types';
+import type { CommunityInfo, Post, Review, Question, Role } from '../pages/Community/types';
 import { MOCK_DATA, createMockPost, createMockQuestion, createMockAnswer } from '../pages/Community/mockData';
 import { convertApiData, sortPostsWithPinned } from './communityWallConverters';
 import type { UnifiedWallData } from './communityWallConverters';
@@ -79,6 +79,14 @@ const saveMockState = (data: UnifiedWallData) => {
   }
 };
 
+const VALID_VIEWER_ROLES: Role[] = ['guest', 'member', 'resident', 'agent'];
+const resolveViewerRole = (rawRole: unknown, hasAuthenticatedUser: boolean): Role => {
+  if (typeof rawRole === 'string' && VALID_VIEWER_ROLES.includes(rawRole as Role)) {
+    return rawRole as Role;
+  }
+  return hasAuthenticatedUser ? 'member' : 'guest';
+};
+
 
 // ============ Hook 選項 ============
 export interface UseCommunityWallDataOptions {
@@ -113,6 +121,10 @@ export interface UseCommunityWallDataReturn {
   askQuestion: (question: string) => Promise<void>;
   /** 回答 */
   answerQuestion: (questionId: string, content: string) => Promise<void>;
+  /** 後端判定的使用者身份（訪客/會員/住戶/房仲） */
+  viewerRole: Role;
+  /** 是否登入 */
+  isAuthenticated: boolean;
 }
 
 // ============ Main Hook ============
@@ -183,6 +195,7 @@ export function useCommunityWallData(
   );
   const hasRestoredFromStorage = useRef(false);
   const [likedPosts, setLikedPosts] = useState<Set<string | number>>(() => new Set());
+  const hasAuthenticatedUser = Boolean(currentUserId);
 
   // 切換至 API 模式時重置 Mock 按讚狀態，避免污染真實資料
   useEffect(() => {
@@ -251,6 +264,14 @@ export function useCommunityWallData(
     }
     await apiRefresh();
   }, [useMock, apiRefresh]);
+
+  const viewerRole = useMemo<Role>(() => {
+    if (useMock) {
+      return hasAuthenticatedUser ? 'member' : 'guest';
+    }
+    return resolveViewerRole(apiData?.viewerRole, hasAuthenticatedUser);
+  }, [useMock, apiData?.viewerRole, hasAuthenticatedUser]);
+  const isAuthenticated = viewerRole !== 'guest';
 
   // Mock 模式下用於按讚的使用者 ID（若未登入，使用 localStorage 產生假 ID）
   const getMockUserId = useCallback((): string => {
@@ -385,6 +406,8 @@ export function useCommunityWallData(
     createPost,
     askQuestion,
     answerQuestion,
+    viewerRole,
+    isAuthenticated,
   };
 }
 

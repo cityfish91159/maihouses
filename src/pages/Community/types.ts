@@ -61,4 +61,4 @@ export function getPermissions(role: Role): Permissions {
 
 // ============ Constants ============
 /** 訪客（未登入）可見的項目數，以「完整物件」為單位（review/post/question） */
-export const GUEST_VISIBLE_COUNT = 4;
+export const GUEST_VISIBLE_COUNT = 2;

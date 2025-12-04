@@ -215,6 +215,7 @@ async function getAll(
 ) {
   // 只有已登入且明確要求才能取得私密貼文
   const canAccessPrivate = isAuthenticated && includePrivate;
+  const viewerRole = isAuthenticated ? 'member' : 'guest';
 
   // 公開貼文查詢
   const publicPostsQuery = getSupabase()
@@ -373,6 +374,7 @@ async function getAll(
       items: transformedQuestions,
       total: questionsResult.count || 0,
     },
-    isAuthenticated
+    isAuthenticated,
+    viewerRole
   });
 }
