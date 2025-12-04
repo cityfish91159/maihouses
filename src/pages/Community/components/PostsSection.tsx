@@ -8,7 +8,8 @@
 import { useState, useCallback, useId, useMemo, useRef } from 'react';
 import type { KeyboardEvent } from 'react';
 import type { Role, Post, WallTab } from '../types';
-import { getPermissions, GUEST_VISIBLE_COUNT } from '../types';
+import { getPermissions } from '../types';
+import { useGuestVisibleItems } from '../../../hooks/useGuestVisibleItems';
 import { LockedOverlay } from './LockedOverlay';
 import { PostModal } from './PostModal';
 import { formatRelativeTimeLabel } from '../../../lib/time';
@@ -158,8 +159,9 @@ export function PostsSection({
     }
   };
 
-  const visiblePublic = perm.canSeeAllPosts ? publicPosts : publicPosts.slice(0, GUEST_VISIBLE_COUNT);
-  const hiddenPublicCount = publicPosts.length - visiblePublic.length;
+  // 使用統一的 hook 處理訪客可見項目
+  const { visible: visiblePublic, hiddenCount: hiddenPublicCount, nextHidden: nextHiddenPost } = 
+    useGuestVisibleItems(publicPosts, perm.canSeeAllPosts);
 
   const focusTab = useCallback((tab: WallTab) => {
     tabRefs.current[tab]?.focus();
@@ -277,14 +279,14 @@ export function PostsSection({
             
             {/* 使用 LockedOverlay 組件 */}
             <LockedOverlay
-              visible={hiddenPublicCount > 0 && !!publicPosts[GUEST_VISIBLE_COUNT]}
+              visible={hiddenPublicCount > 0 && !!nextHiddenPost}
               hiddenCount={hiddenPublicCount}
               countLabel="則熱帖"
               benefits={['看到更多鄰居的生活日常', '有新團購 / 公告時通知你']}
               {...(onUnlock ? { onCtaClick: onUnlock } : {})}
             >
-              {publicPosts[GUEST_VISIBLE_COUNT] && (
-                <PostCard post={publicPosts[GUEST_VISIBLE_COUNT]} />
+              {nextHiddenPost && (
+                <PostCard post={nextHiddenPost} />
               )}
             </LockedOverlay>
             

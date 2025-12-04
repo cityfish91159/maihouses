@@ -7,7 +7,8 @@
 
 import { useState, useEffect, useRef } from 'react';
 import type { Role, Question, Permissions } from '../types';
-import { getPermissions, GUEST_VISIBLE_COUNT } from '../types';
+import { getPermissions } from '../types';
+import { useGuestVisibleItems } from '../../../hooks/useGuestVisibleItems';
 import { LockedOverlay } from './LockedOverlay';
 import { formatRelativeTimeLabel } from '../../../lib/time';
 
@@ -103,8 +104,9 @@ export function QASection({ role, questions: questionsProp, onAskQuestion, onAns
   const answeredQuestions = questions.filter(q => q.answers.length > 0);
   const unansweredQuestions = questions.filter(q => q.answers.length === 0);
 
-  const visibleCount = perm.isLoggedIn ? answeredQuestions.length : Math.min(GUEST_VISIBLE_COUNT, answeredQuestions.length);
-  const hiddenCount = Math.max(0, answeredQuestions.length - visibleCount);
+  // 使用統一的 hook 處理訪客可見項目
+  const { visible: visibleAnswered, hiddenCount, nextHidden: nextHiddenQuestion } = 
+    useGuestVisibleItems(answeredQuestions, perm.isLoggedIn);
 
   const MIN_QUESTION_LENGTH = 10;
   const MIN_ANSWER_LENGTH = 5;
@@ -405,7 +407,7 @@ export function QASection({ role, questions: questionsProp, onAskQuestion, onAns
       </div>
       <div className="flex flex-col gap-2.5 p-3.5">
         {/* 有回答的問題 */}
-        {answeredQuestions.slice(0, visibleCount).map(q => (
+        {visibleAnswered.map(q => (
           <QACard
             key={q.id}
             q={q}
@@ -417,18 +419,18 @@ export function QASection({ role, questions: questionsProp, onAskQuestion, onAns
 
         {/* 使用 LockedOverlay 組件 */}
         <LockedOverlay
-          visible={hiddenCount > 0 && !!answeredQuestions[visibleCount]}
+          visible={hiddenCount > 0 && !!nextHiddenQuestion}
           hiddenCount={hiddenCount}
           countLabel="則問答"
           benefits={['追蹤這題的最新回答', '看更多準住戶關心的問題']}
           {...(onUnlock ? { onCtaClick: onUnlock } : {})}
         >
-          {answeredQuestions[visibleCount] && (
+          {nextHiddenQuestion && (
             <QACard
-              q={answeredQuestions[visibleCount]}
+              q={nextHiddenQuestion}
               perm={perm}
               onAnswer={openAnswerModal}
-              isAnswering={submitting === 'answer' && activeQuestion?.id === answeredQuestions[visibleCount]?.id}
+              isAnswering={submitting === 'answer' && activeQuestion?.id === nextHiddenQuestion.id}
             />
           )}
         </LockedOverlay>

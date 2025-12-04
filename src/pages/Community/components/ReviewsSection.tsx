@@ -7,7 +7,8 @@
 
 import { useMemo } from 'react';
 import type { Role, Review } from '../types';
-import { getPermissions, GUEST_VISIBLE_COUNT } from '../types';
+import { getPermissions } from '../types';
+import { useGuestVisibleItems } from '../../../hooks/useGuestVisibleItems';
 import { LockedOverlay } from './LockedOverlay';
 
 interface ReviewCardProps {
@@ -64,14 +65,12 @@ interface ReviewsSectionProps {
 }
 
 export function ReviewsSection({ role, reviews: reviewsProp, onUnlock }: ReviewsSectionProps) {
-  const reviews = Array.isArray(reviewsProp) ? reviewsProp : (reviewsProp?.items || []);
+  const reviews = Array.isArray(reviewsProp) ? reviewsProp : (reviewsProp?.items ?? []);
   const perm = getPermissions(role);
 
-  // 先以「完整 review」為單位做 slice，再展開成單項
-  const visibleReviews = perm.canSeeAllReviews 
-    ? reviews 
-    : reviews.slice(0, GUEST_VISIBLE_COUNT);
-  const hiddenReviewCount = Math.max(0, reviews.length - visibleReviews.length);
+  // 使用統一的 hook 處理訪客可見項目
+  const { visible: visibleReviews, hiddenCount: hiddenReviewCount, nextHidden: nextHiddenReview } = 
+    useGuestVisibleItems(reviews, perm.canSeeAllReviews);
   
   // 把可見的 reviews 拆成單項（pros/cons）
   const visibleItems = useMemo(() => {
@@ -92,21 +91,19 @@ export function ReviewsSection({ role, reviews: reviewsProp, onUnlock }: Reviews
 
   // 取得下一則被隱藏的 review 的第一個項目（用於 LockedOverlay 預覽）
   const nextHiddenItem = useMemo(() => {
-    if (hiddenReviewCount === 0) return null;
-    const nextReview = reviews[visibleReviews.length];
-    if (!nextReview) return null;
+    if (!nextHiddenReview) return null;
     // 優先顯示 pros 的第一項
-    const firstPro = nextReview.pros[0];
+    const firstPro = nextHiddenReview.pros[0];
     if (firstPro) {
-      return { type: 'pro' as const, text: firstPro, author: nextReview.author, company: nextReview.company, visits: nextReview.visits, deals: nextReview.deals };
+      return { type: 'pro' as const, text: firstPro, author: nextHiddenReview.author, company: nextHiddenReview.company, visits: nextHiddenReview.visits, deals: nextHiddenReview.deals };
     }
-    const consArray = Array.isArray(nextReview.cons) ? nextReview.cons : [nextReview.cons];
+    const consArray = Array.isArray(nextHiddenReview.cons) ? nextHiddenReview.cons : [nextHiddenReview.cons];
     const firstCon = consArray[0];
     if (firstCon) {
-      return { type: 'con' as const, text: firstCon, author: nextReview.author, company: nextReview.company, visits: nextReview.visits, deals: nextReview.deals };
+      return { type: 'con' as const, text: firstCon, author: nextHiddenReview.author, company: nextHiddenReview.company, visits: nextHiddenReview.visits, deals: nextHiddenReview.deals };
     }
     return null;
-  }, [reviews, visibleReviews.length, hiddenReviewCount]);
+  }, [nextHiddenReview]);
 
   return (
     <section className="overflow-hidden rounded-[18px] border border-border-light bg-white/98 shadow-[0_2px_12px_rgba(0,51,102,0.04)]" aria-labelledby="reviews-heading">
