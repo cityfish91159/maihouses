@@ -4,6 +4,18 @@ import { useCommunityWallData } from '../useCommunityWallData';
 import type { UnifiedWallData } from '../useCommunityWallData';
 import type { UseCommunityWallReturn } from '../useCommunityWallQuery';
 
+// Mock supabase 以避免環境變數錯誤
+vi.mock('../../lib/supabase', () => ({
+  supabase: {
+    auth: {
+      getUser: vi.fn().mockResolvedValue({ data: { user: null }, error: null }),
+      onAuthStateChange: vi.fn().mockReturnValue({
+        data: { subscription: { unsubscribe: vi.fn() } },
+      }),
+    },
+  },
+}));
+
 vi.mock('../useCommunityWallQuery', () => ({
   useCommunityWall: () => ({
     data: undefined,

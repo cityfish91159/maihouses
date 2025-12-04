@@ -1,7 +1,7 @@
 # 社區牆開發紀錄
 
-> **最後更新**: 2025/12/04 16:45  
-> **狀態**: React 版完成 + 嚴重缺失已修復 (9/11)
+> **最後更新**: 2025/12/04 17:45  
+> **狀態**: React 版完成 + 首席審計全數結案 (11/11)
 
 ---
 
@@ -52,7 +52,37 @@
 
 ## 📝 重要更新紀錄
 
-### 2025/12/04 17:15 - 首席審計完成
+### 2025/12/04 18:10 - 再部署驗證 & 二次審計啟動
+
+**動作**：
+- 重新執行 `npm run build`（`tsc` + `vite build`），產出最新 `dist/` 套件：`react-vendor-BABxjSf5.js` 162.86 kB gzip、`index-DZBDo5ya.js` 436.84 kB gzip。
+- 建置全程 18.77s 無錯誤，確認可隨時推送觸發 Vercel 再部署。
+
+**目的**：
+- 在進行第二輪 TODO vs. 實作審計前，先確保生產構建穩定，避免文件更新後才發現構建失敗。
+
+**後續**：
+- 文檔對齊與缺失補列完成後即可 push 觸發 Vercel 自動部署（本次未推送，等待審計報告一併提交）。
+
+### 2025/12/04 17:45 - 首席審計收尾 & 全面驗證
+
+**修復總結**：完成審計 A ~ F 所列提升，所有缺失實際落地。
+
+- `src/config/env.ts`：新增 `isValidHttpUrl` 驗證、PROD 顯示友善錯誤頁面、`VITE_API_BASE_URL` 格式警示。
+- `src/pages/Community/components/QASection.tsx`：Focus Trap cleanup 檢查 DOM 是否仍存在，fallback 聚焦 `<main>`。
+- `src/pages/Community/components/PostsSection.tsx`：End 鍵改為跳到最後可用 tab，訪客體驗一致。
+- `src/pages/Community/components/WallErrorBoundary.tsx`：支援 `error.cause` 逐層判讀，避免包裝後判斷失準。
+- `tsconfig.json`：提升 lib 至 ES2022 以使用 Error Cause 類型。
+- `src/pages/Community/components/PostSkeleton.tsx`：移除 `aria-hidden`，統一由 `WallSkeleton` 宣告無障礙資訊。
+
+**驗證**：
+```bash
+npm run typecheck
+npm run test       # 29 passed
+npm run build
+```
+
+**部署**：commit `05951b9` 已推送，Vercel 自動建置中。
 
 **審計結果**：對已宣稱完成的代碼進行嚴苛檢視，發現 6 處「文檔宣稱完成但代碼未落地或便宜行事」：
 - A: `env.ts` 缺 URL 格式驗證 + PROD throw 只會白屏

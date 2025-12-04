@@ -142,8 +142,10 @@ export async function getCommunityWall(
     includePrivate?: boolean;
   } = {}
 ): Promise<CommunityWallData> {
+  const { includePrivate = false } = options;
+  const includePrivateParam = includePrivate ? '1' : '0';
   return fetchAPI<CommunityWallData>(
-    `/wall?communityId=${communityId}&type=all`
+    `/wall?communityId=${communityId}&type=all&includePrivate=${includePrivateParam}`
   );
 }
 

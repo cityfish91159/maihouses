@@ -9,6 +9,7 @@
 
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { useCommunityWall } from './useCommunityWallQuery';
+import { supabase } from '../lib/supabase';
 import type { CommunityWallData } from '../services/communityService';
 import type { CommunityInfo, Post, Review, Question } from '../pages/Community/types';
 import { MOCK_DATA, createMockPost, createMockQuestion, createMockAnswer } from '../pages/Community/mockData';
@@ -143,6 +144,39 @@ export function useCommunityWallData(
   useEffect(() => {
     setUseMock(resolvedInitialUseMock);
   }, [resolvedInitialUseMock]);
+
+  // 取得當前登入使用者 ID（供樂觀更新使用）
+  const [currentUserId, setCurrentUserId] = useState<string | undefined>(undefined);
+  useEffect(() => {
+    let mounted = true;
+    const fetchUserId = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (mounted && user?.id) {
+          setCurrentUserId(user.id);
+        }
+      } catch (err) {
+        // 未登入或取得失敗，維持 undefined
+        if (import.meta.env.DEV) {
+          console.warn('[useCommunityWallData] 無法取得使用者 ID:', err);
+        }
+      }
+    };
+    fetchUserId();
+
+    // 監聽登入狀態變化
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (mounted) {
+        setCurrentUserId(session?.user?.id);
+      }
+    });
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
+  }, []);
+
   // Mock 模式的本地狀態（使用 immer 會更好，但這裡用簡單的 state）
   const [mockData, setMockData] = useState<UnifiedWallData>(() =>
     persistMockState ? loadPersistedMockState(initialMockData) : initialMockData
@@ -171,7 +205,7 @@ export function useCommunityWallData(
     saveMockState(mockData);
   }, [mockData, persistMockState, useMock]);
 
-  // API 查詢
+  // API 查詢（傳入 currentUserId 供樂觀更新使用）
   const { 
     data: apiData, 
     isLoading: apiLoading, 
@@ -184,6 +218,7 @@ export function useCommunityWallData(
   } = useCommunityWall(communityId, { 
     enabled: !useMock,
     includePrivate,
+    currentUserId,
   });
 
   // 統一資料來源

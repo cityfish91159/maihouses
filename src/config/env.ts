@@ -23,17 +23,47 @@ const isValidHttpUrl = (str: string): boolean => {
 };
 
 /**
+ * 取得應用程式的基底路徑（用於連結導向）
+ * 優先順序：import.meta.env.BASE_URL → document.baseURI → /maihouses/
+ */
+const resolveAppBaseHref = (): string => {
+  // Vite 在 build 時會根據 vite.config.ts 的 base 設定注入 BASE_URL
+  const viteBase = import.meta.env.BASE_URL;
+  if (viteBase && viteBase !== '/') {
+    // 確保結尾只有一個 /
+    return viteBase.endsWith('/') ? viteBase : `${viteBase}/`;
+  }
+
+  // SSR 或特殊情境下從 document.baseURI 取得
+  if (typeof document !== 'undefined' && document.baseURI) {
+    try {
+      const baseUrl = new URL(document.baseURI);
+      const pathname = baseUrl.pathname;
+      if (pathname && pathname !== '/') {
+        return pathname.endsWith('/') ? pathname : `${pathname}/`;
+      }
+    } catch {
+      // 解析失敗則繼續 fallback
+    }
+  }
+
+  // 最終 fallback：本專案部署於 /maihouses/
+  return '/maihouses/';
+};
+
+/**
  * 顯示友善錯誤頁面（用於 PROD 環境關鍵錯誤）
  */
 const showFriendlyErrorPage = (title: string, message: string): void => {
   if (typeof document !== 'undefined' && document.body) {
+    const homeHref = resolveAppBaseHref();
     document.body.innerHTML = `
       <div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:system-ui,-apple-system,sans-serif;background:#f8fafc;">
         <div style="text-align:center;max-width:400px;padding:2rem;">
           <div style="font-size:3rem;margin-bottom:1rem;">⚠️</div>
           <h1 style="font-size:1.25rem;font-weight:600;color:#1e293b;margin-bottom:0.5rem;">${title}</h1>
           <p style="color:#64748b;margin-bottom:1.5rem;">${message}</p>
-          <a href="/" style="display:inline-block;padding:0.75rem 1.5rem;background:#3b82f6;color:white;border-radius:0.5rem;text-decoration:none;font-weight:500;">回到首頁</a>
+          <a href="${homeHref}" style="display:inline-block;padding:0.75rem 1.5rem;background:#3b82f6;color:white;border-radius:0.5rem;text-decoration:none;font-weight:500;">回到首頁</a>
         </div>
       </div>
     `;

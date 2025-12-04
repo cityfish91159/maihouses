@@ -35,8 +35,8 @@ export interface UseCommunityWallOptions {
   refetchOnWindowFocus?: boolean;
   /** 是否啟用 */
   enabled?: boolean;
-  /** 目前使用者 ID（供樂觀更新使用） */
-  currentUserId?: string;
+  /** 目前使用者 ID（供樂觀更新使用），可為 undefined 表示未登入 */
+  currentUserId?: string | undefined;
 }
 
 export interface UseCommunityWallReturn {

@@ -170,12 +170,58 @@ export function QASection({ role, questions: questionsProp, onAskQuestion, onAns
     });
   };
 
+  /**
+   * 安全聚焦 helper：依序嘗試 main、[data-app-root]、#root、body
+   * 若全部失敗則在 dev 環境警告
+   */
+  const focusSafeElement = (): void => {
+    const candidates = [
+      document.querySelector('main'),
+      document.querySelector('[data-app-root]'),
+      document.getElementById('root'),
+      document.body,
+    ];
+    for (const el of candidates) {
+      if (el instanceof HTMLElement) {
+        // 暫存原本的 tabIndex
+        const prevTabIndex = el.getAttribute('tabindex');
+        el.dataset.prevTabindex = prevTabIndex ?? '';
+        el.tabIndex = -1;
+        el.focus();
+        // 還原 tabIndex（使用 setTimeout 確保 focus 完成）
+        setTimeout(() => {
+          const stored = el.dataset.prevTabindex;
+          if (stored === '') {
+            el.removeAttribute('tabindex');
+          } else if (stored !== undefined) {
+            el.tabIndex = Number(stored);
+          }
+          delete el.dataset.prevTabindex;
+        }, 0);
+        return;
+      }
+    }
+    if (import.meta.env.DEV) {
+      console.warn('[QASection] focusSafeElement: 找不到可聚焦的 fallback 元素');
+    }
+  };
+
   const trapFocusWithinModal = (event: KeyboardEvent) => {
     if (event.key !== 'Tab') return;
     const container = getActiveDialog();
     if (!container) return;
     const focusable = getFocusableElements(container);
-    if (!focusable.length) return;
+    
+    // 若無可聚焦元素，將焦點設到對話框本身
+    if (!focusable.length) {
+      const prevTabIndex = container.getAttribute('tabindex');
+      container.dataset.prevTabindex = prevTabIndex ?? '';
+      container.tabIndex = -1;
+      container.focus();
+      event.preventDefault();
+      return;
+    }
+    
     const [first] = focusable;
     const last = focusable[focusable.length - 1];
     const active = document.activeElement as HTMLElement | null;
@@ -234,17 +280,24 @@ export function QASection({ role, questions: questionsProp, onAskQuestion, onAns
       document.removeEventListener('keydown', handleKeyDown);
       document.removeEventListener('focusin', ensureFocusStaysInside);
 
+      // 還原對話框的 tabIndex（若之前被設為 -1）
+      if (activeDialog && activeDialog.dataset.prevTabindex !== undefined) {
+        const stored = activeDialog.dataset.prevTabindex;
+        if (stored === '') {
+          activeDialog.removeAttribute('tabindex');
+        } else {
+          activeDialog.tabIndex = Number(stored);
+        }
+        delete activeDialog.dataset.prevTabindex;
+      }
+
       // 確保還原焦點到仍存在於 DOM 的元素
       const target = restoreFocusRef.current;
       if (target && document.body.contains(target)) {
         target.focus();
       } else {
-        // Fallback: focus 到主要內容區或 body
-        const main = document.querySelector('main');
-        if (main instanceof HTMLElement) {
-          main.tabIndex = -1;
-          main.focus();
-        }
+        // Fallback: 使用安全聚焦 helper
+        focusSafeElement();
       }
       restoreFocusRef.current = null;
     };
