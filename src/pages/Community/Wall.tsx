@@ -5,7 +5,7 @@
  * 重構版 - 統一資料來源、組件化、React Query、a11y 優化
  */
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 
 // Components
@@ -29,12 +29,66 @@ import { getPermissions } from './types';
 // Hooks - 統一資料來源
 import { useCommunityWallData } from '../../hooks/useCommunityWallData';
 
+// ============ URL / Storage Helpers ============
+const MOCK_PARAM = 'mock';
+const ROLE_PARAM = 'role';
+const MOCK_STORAGE_KEY = 'community-wall-use-mock';
+const ROLE_STORAGE_KEY = 'community-wall-dev-role';
+const VALID_ROLES: Role[] = ['guest', 'member', 'resident', 'agent'];
+
+const parseBoolParam = (value: string | null): boolean | null => {
+  if (value === null) return null;
+  const normalized = value.trim().toLowerCase();
+  if (['true', '1', 'yes'].includes(normalized)) return true;
+  if (['false', '0', 'no'].includes(normalized)) return false;
+  return null;
+};
+
+const parseRoleParam = (value: string | null): Role | null => {
+  if (!value) return null;
+  return VALID_ROLES.includes(value as Role) ? (value as Role) : null;
+};
+
+const safeGetBoolean = (key: string, fallback: boolean): boolean => {
+  try {
+    const stored = localStorage.getItem(key);
+    const parsed = parseBoolParam(stored);
+    return parsed ?? fallback;
+  } catch {
+    return fallback;
+  }
+};
+
+const safeSetBoolean = (key: string, value: boolean): { success: boolean; error?: string } => {
+  try {
+    localStorage.setItem(key, String(value));
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+  }
+};
+
+const updateURLParam = (params: URLSearchParams, key: string, value: string | null) => {
+  const next = new URLSearchParams(params);
+  if (!value) {
+    next.delete(key);
+  } else {
+    next.set(key, value);
+  }
+  return next;
+};
+
 // ============ Inner Component (Wrapped by ErrorBoundary) ============
 function WallInner() {
   const params = useParams<{ id: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const communityId = params.id;
+  const searchParamsRef = useRef(searchParams);
+
+  useEffect(() => {
+    searchParamsRef.current = searchParams;
+  }, [searchParams]);
 
   if (!communityId) {
     return (
@@ -55,36 +109,32 @@ function WallInner() {
   }
 
   // 初始化 useMock：優先順序 URL > localStorage > false
-  const initialUseMock = (() => {
-    const urlParam = searchParams.get('mock');
-    if (urlParam !== null) return urlParam === 'true';
-    try {
-      const stored = localStorage.getItem('community-wall-use-mock');
-      return stored === 'true';
-    } catch {
-      return false;
-    }
-  })();
+  const initialUseMock = useMemo(() => {
+    const urlParam = parseBoolParam(searchParamsRef.current.get(MOCK_PARAM));
+    if (urlParam !== null) return urlParam;
+    return safeGetBoolean(MOCK_STORAGE_KEY, false);
+  }, []);
 
   // 初始化 role：僅開發環境從 URL/localStorage 讀取
-  const initialRole = (() => {
+  const initialRole = useMemo<Role>(() => {
     if (!import.meta.env.DEV) return 'guest';
-    const urlRole = searchParams.get('role') as Role | null;
-    if (urlRole && ['guest', 'member', 'resident', 'agent'].includes(urlRole)) {
+    const urlRole = parseRoleParam(searchParamsRef.current.get(ROLE_PARAM));
+    if (urlRole) {
       return urlRole;
     }
     try {
-      const stored = localStorage.getItem('community-wall-dev-role') as Role | null;
-      if (stored && ['guest', 'member', 'resident', 'agent'].includes(stored)) {
+      const stored = localStorage.getItem(ROLE_STORAGE_KEY) as Role | null;
+      if (stored && VALID_ROLES.includes(stored)) {
         return stored;
       }
     } catch {}
     return 'guest';
-  })();
+  }, []);
 
   const [role, setRoleInternal] = useState<Role>(initialRole);
   const [currentTab, setCurrentTab] = useState<WallTab>('public');
   const [isReloading, setIsReloading] = useState(false);
+  const [localStorageError, setLocalStorageError] = useState<string | null>(null);
   const perm = getPermissions(role);
 
   // 統一資料來源 Hook
@@ -104,36 +154,75 @@ function WallInner() {
     initialUseMock, // 傳入初始值
   });
 
-  // 包裝 setUseMock，同步 URL 和 localStorage
   const setUseMock = useCallback((value: boolean) => {
     setUseMockInternal(value);
-    const newParams = new URLSearchParams(searchParams);
-    if (value) {
-      newParams.set('mock', 'true');
-    } else {
-      newParams.delete('mock');
+    const nextParams = updateURLParam(searchParamsRef.current, MOCK_PARAM, value ? 'true' : null);
+    setSearchParams(nextParams, { replace: true });
+    const result = safeSetBoolean(MOCK_STORAGE_KEY, value);
+    if (!result.success) {
+      setLocalStorageError(`無法儲存 Mock 偏好：${result.error}`);
+      if (import.meta.env.PROD) {
+        console.error('[CommunityWall] Failed to persist mock preference', result.error);
+      }
     }
-    setSearchParams(newParams, { replace: true });
-    try {
-      localStorage.setItem('community-wall-use-mock', String(value));
-    } catch (e) {
-      console.warn('Failed to save mock preference', e);
-    }
-  }, [setUseMockInternal, searchParams, setSearchParams]);
+  }, [setUseMockInternal, setSearchParams]);
 
   // 包裝 setRole，同步 URL 和 localStorage（僅開發環境）
   const setRole = useCallback((newRole: Role) => {
     if (!import.meta.env.DEV) return;
     setRoleInternal(newRole);
-    const newParams = new URLSearchParams(searchParams);
-    newParams.set('role', newRole);
-    setSearchParams(newParams, { replace: true });
+    const nextParams = updateURLParam(searchParamsRef.current, ROLE_PARAM, newRole);
+    setSearchParams(nextParams, { replace: true });
     try {
-      localStorage.setItem('community-wall-dev-role', newRole);
-    } catch (e) {
-      console.warn('Failed to save role preference', e);
+      localStorage.setItem(ROLE_STORAGE_KEY, newRole);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      console.warn('[CommunityWall] Failed to persist role preference', message);
+      setLocalStorageError(`無法儲存角色設定：${message}`);
     }
-  }, [searchParams, setSearchParams]);
+  }, [setSearchParams]);
+
+  useEffect(() => {
+    if (!localStorageError) return;
+    const timer = window.setTimeout(() => setLocalStorageError(null), 5000);
+    return () => window.clearTimeout(timer);
+  }, [localStorageError]);
+
+  useEffect(() => {
+    const urlValue = parseBoolParam(searchParams.get(MOCK_PARAM));
+    if (urlValue !== null && urlValue !== useMock) {
+      setUseMockInternal(urlValue);
+    }
+  }, [searchParams, setUseMockInternal, useMock]);
+
+  useEffect(() => {
+    if (!import.meta.env.DEV) return;
+    const urlRole = parseRoleParam(searchParams.get(ROLE_PARAM));
+    if (urlRole && urlRole !== role) {
+      setRoleInternal(urlRole);
+    }
+  }, [role, searchParams, setRoleInternal]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const handleStorage = (event: StorageEvent) => {
+      if (event.storageArea !== window.localStorage || event.newValue === null) return;
+      if (event.key === MOCK_STORAGE_KEY) {
+        const parsed = parseBoolParam(event.newValue);
+        if (parsed !== null && parsed !== useMock) {
+          setUseMockInternal(parsed);
+        }
+      }
+      if (import.meta.env.DEV && event.key === ROLE_STORAGE_KEY) {
+        const parsedRole = parseRoleParam(event.newValue);
+        if (parsedRole && parsedRole !== role) {
+          setRoleInternal(parsedRole);
+        }
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
+  }, [role, setRoleInternal, setUseMockInternal, useMock]);
 
   const handleUnlock = useCallback(() => {
     navigate('/auth');
@@ -307,6 +396,17 @@ function WallInner() {
           <MockToggle useMock={useMock} onToggle={() => setUseMock(!useMock)} />
           <RoleSwitcher role={role} onRoleChange={setRole} />
         </>
+      )}
+
+      {localStorageError && (
+        <div
+          role="status"
+          aria-live="assertive"
+          className="fixed bottom-5 right-5 z-50 max-w-sm rounded-xl border border-error-200 bg-error-50/95 p-4 text-left shadow-lg"
+        >
+          <p className="text-sm font-semibold text-error-900">⚠️ 儲存偏好失敗</p>
+          <p className="mt-1 text-xs text-error-700">{localStorageError}</p>
+        </div>
       )}
 
       {/* 動畫 keyframes */}

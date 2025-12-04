@@ -10,77 +10,209 @@
 
 import React from 'react';
 
+type ErrorCategory = 'network' | 'permission' | 'notFound' | 'runtime' | 'unknown';
+
+interface CategorizedError {
+  category: ErrorCategory;
+  title: string;
+  message: string;
+  actionText: string;
+  actionHref?: string;
+  onAction?: () => void;
+}
+
+const categorizeError = (error: Error): CategorizedError => {
+  const message = error.message.toLowerCase();
+
+  if (message.includes('401') || message.includes('403') || message.includes('unauthorized')) {
+    return {
+      category: 'permission',
+      title: '需要登入',
+      message: '請先登入後再查看社區牆內容',
+      actionText: '前往登入',
+      actionHref: '/auth',
+    };
+  }
+
+  if (message.includes('404') || message.includes('not found')) {
+    return {
+      category: 'notFound',
+      title: '找不到社區牆',
+      message: '此社區不存在或已被移除',
+      actionText: '回到首頁',
+      actionHref: '/maihouses/',
+    };
+  }
+
+  if (message.includes('network') || message.includes('fetch') || message.includes('timeout')) {
+    return {
+      category: 'network',
+      title: '連線異常',
+      message: '目前無法連接到伺服器，請稍後重試',
+      actionText: '重新載入',
+      onAction: () => window.location.reload(),
+    };
+  }
+
+  return {
+    category: 'runtime',
+    title: '載入失敗',
+    message: error.message || '發生未預期的錯誤，我們正在處理中',
+    actionText: '重試',
+  };
+};
+
 interface Props {
   children: React.ReactNode;
   fallback?: React.ReactNode;
+  onError?: (error: Error, errorInfo: React.ErrorInfo) => void;
 }
 
 interface State {
   hasError: boolean;
   error: Error | null;
+  errorInfo: React.ErrorInfo | null;
+  errorId: string | null;
 }
 
 export class WallErrorBoundary extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
-    this.state = { hasError: false, error: null };
+    this.state = {
+      hasError: false,
+      error: null,
+      errorInfo: null,
+      errorId: null,
+    };
   }
 
-  static getDerivedStateFromError(error: Error): State {
+  static getDerivedStateFromError(error: Error): Partial<State> {
     return { hasError: true, error };
   }
 
   override componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    // 記錄錯誤到 console
-    console.error('Community Wall Error:', error, errorInfo);
-    
-    // TODO: 整合 Sentry 或其他監控服務
-    // if (import.meta.env.PROD) {
-    //   Sentry.captureException(error, { 
-    //     contexts: { react: errorInfo },
-    //     tags: { component: 'CommunityWall' }
-    //   });
-    // }
+    this.setState({ errorInfo });
+
+    if (import.meta.env.DEV) {
+      console.groupCollapsed('🔴 Community Wall Error');
+      console.error(error);
+      console.error(errorInfo.componentStack);
+      console.groupEnd();
+    }
+
+    if (import.meta.env.PROD && typeof window !== 'undefined') {
+      fetch('/api/log-error', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          error: {
+            message: error.message,
+            stack: error.stack,
+            name: error.name,
+          },
+          componentStack: errorInfo.componentStack,
+          url: window.location.href,
+          userAgent: navigator.userAgent,
+          timestamp: new Date().toISOString(),
+        }),
+      }).catch((reportError) => {
+        console.error('[WallErrorBoundary] Failed to report error', reportError);
+      });
+    }
+
+    this.props.onError?.(error, errorInfo);
   }
 
+  resetErrorBoundary = () => {
+    this.setState({ hasError: false, error: null, errorInfo: null, errorId: null });
+  };
+
+  copyErrorToClipboard = () => {
+    if (!this.state.error) return;
+    const { error, errorInfo, errorId } = this.state;
+    const payload = [
+      `Message: ${error.message}`,
+      `Stack: ${error.stack ?? 'N/A'}`,
+      `Component Stack: ${errorInfo?.componentStack ?? 'N/A'}`,
+      `URL: ${typeof window !== 'undefined' ? window.location.href : 'N/A'}`,
+      `Timestamp: ${new Date().toISOString()}`,
+      errorId ? `Error ID: ${errorId}` : null,
+    ].filter(Boolean).join('\n');
+
+    if (navigator?.clipboard) {
+      navigator.clipboard.writeText(payload).catch(() => {
+        console.warn('[WallErrorBoundary] Failed to copy error details');
+      });
+    }
+  };
+
   override render() {
-    if (this.state.hasError) {
-      // 如果有自定義 fallback，使用它
+    if (this.state.hasError && this.state.error) {
       if (this.props.fallback) return this.props.fallback;
 
-      // 預設錯誤 UI
+      const categorized = categorizeError(this.state.error);
+
       return (
-        <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-bg-base to-bg-soft">
+        <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-bg-base to-bg-soft px-4">
           <div className="max-w-md rounded-2xl border border-error-200 bg-white p-8 text-center shadow-xl">
-            <div className="mb-4 text-5xl">💥</div>
-            <h2 className="mb-2 text-xl font-bold text-ink-900">社區牆載入失敗</h2>
-            <p className="mb-6 text-sm text-ink-600">
-              {this.state.error?.message || '發生未預期的錯誤，請稍後再試'}
-            </p>
-            <div className="flex flex-col gap-2 sm:flex-row sm:justify-center">
-              <button
-                onClick={() => window.location.reload()}
-                className="rounded-lg border border-brand/40 px-4 py-2 text-sm font-semibold text-brand transition hover:bg-brand/10"
-              >
-                🔄 重新載入
-              </button>
-              <a
-                href="/maihouses/"
-                className="inline-flex items-center justify-center rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white shadow hover:bg-brand-600"
-              >
-                回到首頁
-              </a>
+            <div className="mb-4 text-5xl">
+              {categorized.category === 'network' && '📡'}
+              {categorized.category === 'permission' && '🔒'}
+              {categorized.category === 'notFound' && '🔍'}
+              {categorized.category === 'runtime' && '💥'}
+              {categorized.category === 'unknown' && '⚠️'}
             </div>
-            
-            {/* 開發環境顯示錯誤詳情 */}
-            {import.meta.env.DEV && this.state.error && (
+            <h2 className="mb-2 text-xl font-bold text-ink-900">{categorized.title}</h2>
+            <p className="mb-6 text-sm text-ink-600">{categorized.message}</p>
+            <div className="flex flex-col gap-2 sm:flex-row sm:justify-center">
+              {categorized.onAction && (
+                <button
+                  onClick={categorized.onAction ?? this.resetErrorBoundary}
+                  className="rounded-lg border border-brand/40 px-4 py-2 text-sm font-semibold text-brand transition hover:bg-brand/10"
+                >
+                  {categorized.actionText}
+                </button>
+              )}
+              {categorized.actionHref && (
+                <a
+                  href={categorized.actionHref}
+                  className="inline-flex items-center justify-center rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white shadow hover:bg-brand-600"
+                >
+                  {categorized.actionText}
+                </a>
+              )}
+              {!categorized.onAction && !categorized.actionHref && (
+                <button
+                  onClick={this.resetErrorBoundary}
+                  className="rounded-lg border border-brand/40 px-4 py-2 text-sm font-semibold text-brand transition hover:bg-brand/10"
+                >
+                  🔄 重試
+                </button>
+              )}
+            </div>
+
+            {import.meta.env.DEV && (
               <details className="mt-6 text-left">
                 <summary className="cursor-pointer text-xs text-ink-500 hover:text-ink-700">
-                  顯示錯誤詳情
+                  🛠️ 開發者除錯資訊
                 </summary>
-                <pre className="mt-2 max-h-60 overflow-auto rounded bg-ink-50 p-3 text-xs text-error-600">
-                  {this.state.error.stack}
-                </pre>
+                <div className="mt-2 space-y-2">
+                  <button
+                    type="button"
+                    onClick={this.copyErrorToClipboard}
+                    className="w-full rounded border border-ink-200 px-2 py-1 text-xs text-ink-700 hover:bg-ink-50"
+                  >
+                    📋 複製錯誤資訊
+                  </button>
+                  <pre className="max-h-60 overflow-auto rounded bg-ink-50 p-3 text-xs text-error-600">
+                    {this.state.error.stack}
+                  </pre>
+                  {this.state.errorInfo?.componentStack && (
+                    <pre className="max-h-40 overflow-auto rounded bg-ink-50 p-3 text-xs text-ink-700">
+                      {this.state.errorInfo.componentStack}
+                    </pre>
+                  )}
+                </div>
               </details>
             )}
           </div>
@@ -90,4 +222,10 @@ export class WallErrorBoundary extends React.Component<Props, State> {
 
     return this.props.children;
   }
+}
+
+if (import.meta.env.DEV) {
+  (window as any).__triggerCommunityWallError = () => {
+    throw new Error('手動觸發社區牆 ErrorBoundary 測試錯誤');
+  };
 }

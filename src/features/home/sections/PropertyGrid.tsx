@@ -20,7 +20,11 @@ export default function PropertyGrid() {
       </div>
 
       {/* Grid Section */}
-      <div className="grid grid-cols-1 gap-[18px] md:grid-cols-2 lg:grid-cols-3" aria-label="房源清單">
+      <div
+        className="grid grid-cols-1 gap-[18px] md:grid-cols-2 lg:grid-cols-3"
+        aria-label="房源清單"
+        title="房源清單"
+      >
         {PROPERTIES.map((property) => (
           <PropertyCard key={property.id} property={property} />
         ))}

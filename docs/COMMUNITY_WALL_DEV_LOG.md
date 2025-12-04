@@ -1,7 +1,7 @@
 # 社區牆開發紀錄
 
-> **最後更新**: 2025/12/05 15:35  
-> **狀態**: React 版完成 + 嚴重缺失已修復 (2/11)
+> **最後更新**: 2025/12/04 16:45  
+> **狀態**: React 版完成 + 嚴重缺失已修復 (9/11)
 
 ---
 
@@ -51,6 +51,36 @@
 ---
 
 ## 📝 重要更新紀錄
+
+### 2025/12/04 17:00 - TODO 文檔精簡 + 審計前部署
+
+**變更**：
+- `docs/COMMUNITY_WALL_TODO.md` 從 1382 行精簡至 40 行，僅保留已完成/待辦摘要，移除所有範例代碼。
+- 部署前觸發：`DEPLOY_TRIGGER.md` 已更新，Vercel 重新構建中。
+
+**後續任務**：對 Wall.tsx、QASection、PostsSection、env.ts 進行首席審計，找出文檔宣稱完成但代碼未落地的缺失。
+
+---
+
+### 2025/12/04 16:45 - 狀態持久化、無障礙與環境驗證全面完成
+
+**重點修復**：
+- RoleSwitcher 與 Mock 模式共用的 URL/localStorage helper（`Wall.tsx`）全面防呆，支援 cross-tab 同步與錯誤提示，P0 #2 關閉。
+- QA Modal (P0 #5) 實作 Focus Trap/Escape 守則；Posts Tab (P0 #6) 補齊 ARIA `tablist` 語意與方向鍵導覽。
+- `env.ts` 驗證 `VITE_SUPABASE_URL/VITE_SUPABASE_ANON_KEY/VITE_COMMUNITY_API_BASE`，`supabase.ts`、`communityService.ts` 全數移除硬編碼，P0 #11 關閉。
+- `ReactQueryDevtools` 僅在開發模式載入、`useCommunityWallData` 加上 JSDoc 與 mock fallback、`mockData` + `time.ts` 導入動態 timestamp，完成 P1 #7/#8/#9。
+- 針對 UAG Dashboard 測試新增 QueryClientProvider/MemoryRouter/Toast mock，確保 `vitest run` 全數通過。
+
+**測試 / 構建 / 部署**：
+```bash
+npm run typecheck
+npm run test
+npm run build
+```
+- `DEPLOY_TRIGGER.md` 新增記錄，已觸發 Vercel 重新部署。
+- 產出文檔證明：`docs/COMMUNITY_WALL_TODO.md`, `docs/COMMUNITY_WALL_DEV_LOG.md` 更新完成。
+
+---
 
 ### 2025/12/05 15:35 - 文檔精簡部署
 
@@ -186,20 +216,14 @@ git push origin main     # 推送至 GitHub, Vercel 自動部署
 
 ## 🐛 已知問題 (待修復)
 
-詳見 `docs/COMMUNITY_WALL_TODO.md` (2/11 完成)
+詳見 `docs/COMMUNITY_WALL_TODO.md` (9/11 完成)
 
 **待修復嚴重缺失 (P0)**：
-- #2: 角色切換持久化測試
-- #5: QA Modal Focus Trap (無障礙)
-- #6: Tab 鍵盤支援 (ARIA)
-- #11: 環境變數驗證
+- 無（#1～#6、#11 已全部關閉）
 
 **待修復中等缺失 (P1)**：
-- #4: Loading Skeleton a11y
-- #7: React Query DevTools
-- #8: Hook JSDoc 註解
-- #9: Mock 時間戳動態化
-- #10: Optimistic Update race condition
+- #4: Loading Skeleton a11y（需加入 `role="status"` 與 `sr-only`）
+- #10: Optimistic Update race condition（按讚/留言需 rollback 防競態）
 
 ---
 

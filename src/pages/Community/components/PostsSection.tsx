@@ -5,10 +5,12 @@
  * 重構：使用 LockedOverlay + Tailwind brand 色系
  */
 
-import { useState } from 'react';
+import { useState, useCallback, useId, useMemo, useRef } from 'react';
+import type { KeyboardEvent } from 'react';
 import type { Role, Post, WallTab } from '../types';
 import { getPermissions, GUEST_VISIBLE_COUNT } from '../types';
 import { LockedOverlay } from './LockedOverlay';
+import { formatRelativeTimeLabel } from '../../../lib/time';
 
 interface PostCardProps {
   post: Post;
@@ -19,6 +21,7 @@ function PostCard({ post, onLike }: PostCardProps) {
   const [isLiking, setIsLiking] = useState(false);
   const isAgent = post.type === 'agent';
   const isOfficial = post.type === 'official';
+  const displayTime = formatRelativeTimeLabel(post.time);
 
   const badge = isAgent 
     ? <span className="rounded bg-brand-100 px-1.5 py-0.5 text-[9px] font-bold text-brand-600">認證房仲</span>
@@ -62,7 +65,7 @@ function PostCard({ post, onLike }: PostCardProps) {
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-[13px] font-bold text-ink-900">{post.author}</span>
           {badge}
-          <span className="text-[11px] text-ink-600">{post.time}</span>
+          <span className="text-[11px] text-ink-600">{displayTime}</span>
         </div>
         <div className="text-[13px] leading-relaxed text-ink-900">
           <b>{post.title}</b><br/>
@@ -130,9 +133,25 @@ export function PostsSection({
   onUnlock,
 }: PostsSectionProps) {
   const perm = getPermissions(role);
+  const tabListId = useId();
+  const publicTabId = `${tabListId}-public`;
+  const privateTabId = `${tabListId}-private`;
+  const panelId = `${tabListId}-panel`;
+  const tabRefs = useRef<Record<WallTab, HTMLButtonElement | null>>({
+    public: null,
+    private: null,
+  });
 
   const visiblePublic = perm.canSeeAllPosts ? publicPosts : publicPosts.slice(0, GUEST_VISIBLE_COUNT);
   const hiddenPublicCount = publicPosts.length - visiblePublic.length;
+
+  const focusTab = useCallback((tab: WallTab) => {
+    tabRefs.current[tab]?.focus();
+  }, []);
+
+  const activeTabs = useMemo<WallTab[]>(() => {
+    return perm.canAccessPrivate ? ['public', 'private'] : ['public'];
+  }, [perm.canAccessPrivate]);
 
   const handlePrivateClick = () => {
     if (!perm.canAccessPrivate) {
@@ -142,6 +161,48 @@ export function PostsSection({
     onTabChange('private');
   };
 
+  const handleTabKeyDown = useCallback((event: KeyboardEvent<HTMLButtonElement>, current: WallTab) => {
+    if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) {
+      return;
+    }
+    event.preventDefault();
+
+    if (event.key === 'Home') {
+      focusTab('public');
+      if (currentTab !== 'public') {
+        onTabChange('public');
+      }
+      return;
+    }
+
+    if (event.key === 'End' && perm.canAccessPrivate) {
+      focusTab('private');
+      if (currentTab !== 'private') {
+        onTabChange('private');
+      }
+      return;
+    }
+
+    const currentIndex = activeTabs.indexOf(current);
+    if (currentIndex === -1) return;
+
+    const delta = event.key === 'ArrowLeft' ? -1 : 1;
+    const nextIndex = (currentIndex + delta + activeTabs.length) % activeTabs.length;
+    const nextTab = activeTabs[nextIndex];
+    if (!nextTab) {
+      return;
+    }
+
+    if (nextTab === 'private' && !perm.canAccessPrivate) {
+      focusTab('public');
+      onTabChange('public');
+      return;
+    }
+
+    focusTab(nextTab);
+    onTabChange(nextTab);
+  }, [activeTabs, currentTab, focusTab, onTabChange, perm.canAccessPrivate]);
+
   return (
     <section id="public-wall" className="scroll-mt-20 overflow-hidden rounded-[18px] border border-border-light bg-white/98 shadow-[0_2px_12px_rgba(0,51,102,0.04)]" aria-labelledby="posts-heading">
       <div className="flex items-center justify-between border-b border-brand/5 bg-gradient-to-br from-brand/3 to-brand-600/1 px-4 py-3.5">
@@ -149,19 +210,30 @@ export function PostsSection({
       </div>
       
       {/* Tabs */}
-      <div className="flex flex-wrap gap-1.5 px-3.5 pb-3.5 pt-2" role="tablist">
+      <div className="flex flex-wrap gap-1.5 px-3.5 pb-3.5 pt-2" role="tablist" aria-label="社區牆分類">
         <button 
           role="tab"
+          id={publicTabId}
+          ref={(node) => { tabRefs.current.public = node; }}
           aria-selected={currentTab === 'public'}
+          aria-controls={panelId}
           onClick={() => onTabChange('public')}
+          onKeyDown={(event) => handleTabKeyDown(event, 'public')}
+          tabIndex={currentTab === 'public' ? 0 : -1}
           className={`rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-all ${currentTab === 'public' ? 'border-brand-600 bg-brand/10 font-bold text-brand' : 'border-transparent bg-brand-100/80 text-ink-600 hover:bg-brand/8 hover:text-brand'}`}
         >
           公開牆
         </button>
         <button 
           role="tab"
+          id={privateTabId}
+          ref={(node) => { tabRefs.current.private = node; }}
           aria-selected={currentTab === 'private'}
+          aria-controls={panelId}
+          aria-disabled={!perm.canAccessPrivate}
           onClick={handlePrivateClick}
+          onKeyDown={(event) => handleTabKeyDown(event, 'private')}
+          tabIndex={perm.canAccessPrivate ? (currentTab === 'private' ? 0 : -1) : -1}
           className={`rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-all ${currentTab === 'private' ? 'border-brand-600 bg-brand/10 font-bold text-brand' : 'border-transparent bg-brand-100/80 text-ink-600 hover:bg-brand/8 hover:text-brand'} ${!perm.canAccessPrivate ? 'opacity-60' : ''}`}
         >
           私密牆 {!perm.canAccessPrivate && '🔒'}
@@ -169,7 +241,13 @@ export function PostsSection({
       </div>
 
       {/* Content */}
-      <div className="flex flex-col gap-2.5 px-3.5 pb-3.5" role="tabpanel">
+      <div
+        id={panelId}
+        role="tabpanel"
+        aria-labelledby={currentTab === 'public' ? publicTabId : privateTabId}
+        tabIndex={0}
+        className="flex flex-col gap-2.5 px-3.5 pb-3.5"
+      >
         {currentTab === 'public' ? (
           <>
             {visiblePublic.map(post => (

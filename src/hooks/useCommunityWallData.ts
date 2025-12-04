@@ -115,6 +115,17 @@ export interface UseCommunityWallDataReturn {
 }
 
 // ============ Main Hook ============
+/**
+ * 社區牆統一資料來源 Hook。根據 useMock 旗標自動切換 Mock 與 API 模式，
+ * 並提供發文、提問、按讚等操作的單一出入口。
+ *
+ * @param communityId - 社區 UUID，必須存在才會發出 API 請求
+ * @param options.includePrivate - 是否載入私密牆資料
+ * @param options.initialMockData - 自訂初始 Mock 資料（測試用）
+ * @param options.persistMockState - 是否將 Mock 狀態寫入 localStorage
+ * @param options.initialUseMock - 初始是否啟用 Mock 模式（支援 URL / localStorage）
+ * @returns 統一資料、操作方法與錯誤/載入狀態
+ */
 export function useCommunityWallData(
   communityId: string | undefined,
   options: UseCommunityWallDataOptions = {}
@@ -123,9 +134,15 @@ export function useCommunityWallData(
     includePrivate = false,
     initialMockData = MOCK_DATA,
     persistMockState = true,
-    initialUseMock = false,
+    initialUseMock: requestedInitialUseMock,
   } = options;
-  const [useMock, setUseMock] = useState(initialUseMock);
+  const resolvedInitialUseMock = typeof requestedInitialUseMock === 'boolean'
+    ? requestedInitialUseMock
+    : !communityId;
+  const [useMock, setUseMock] = useState(resolvedInitialUseMock);
+  useEffect(() => {
+    setUseMock(resolvedInitialUseMock);
+  }, [resolvedInitialUseMock]);
   // Mock 模式的本地狀態（使用 immer 會更好，但這裡用簡單的 state）
   const [mockData, setMockData] = useState<UnifiedWallData>(() =>
     persistMockState ? loadPersistedMockState(initialMockData) : initialMockData

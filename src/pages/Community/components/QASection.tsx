@@ -9,6 +9,7 @@ import { useState, useEffect, useRef } from 'react';
 import type { Role, Question, Permissions } from '../types';
 import { getPermissions, GUEST_VISIBLE_COUNT } from '../types';
 import { LockedOverlay } from './LockedOverlay';
+import { formatRelativeTimeLabel } from '../../../lib/time';
 
 interface QACardProps {
   q: Question;
@@ -19,12 +20,13 @@ interface QACardProps {
 }
 
 function QACard({ q, perm, isUnanswered = false, onAnswer, isAnswering }: QACardProps) {
+  const displayTime = formatRelativeTimeLabel(q.time);
   return (
     <article className={`rounded-[14px] border p-3.5 transition-all hover:border-brand/15 ${isUnanswered ? 'border-brand-light/30 bg-gradient-to-br from-brand-50 to-brand-100/30' : 'border-border-light bg-white'}`}>
       <div className="mb-2 text-sm font-bold leading-snug text-brand-700">Q: {q.question}</div>
       <div className="mb-2.5 flex flex-wrap items-center gap-2 text-[11px] text-ink-600">
         <span>👤 準住戶</span>
-        <span>· {q.time}</span>
+        <span>· {displayTime}</span>
         {isUnanswered ? (
           <span className="font-bold text-brand-light">· 等待回答中</span>
         ) : (
@@ -96,6 +98,7 @@ export function QASection({ role, questions: questionsProp, onAskQuestion, onAns
   const askTextareaRef = useRef<HTMLTextAreaElement | null>(null);
   const answerTextareaRef = useRef<HTMLTextAreaElement | null>(null);
   const feedbackTimeoutRef = useRef<number | null>(null);
+  const restoreFocusRef = useRef<HTMLElement | null>(null);
 
   const answeredQuestions = questions.filter(q => q.answers.length > 0);
   const unansweredQuestions = questions.filter(q => q.answers.length === 0);
@@ -117,6 +120,10 @@ export function QASection({ role, questions: questionsProp, onAskQuestion, onAns
     setActiveQuestion(null);
   };
 
+  const rememberTriggerFocus = () => {
+    restoreFocusRef.current = document.activeElement as HTMLElement | null;
+  };
+
   const openAskModal = () => {
     if (!perm.canAskQuestion) {
       if (onUnlock) {
@@ -126,6 +133,7 @@ export function QASection({ role, questions: questionsProp, onAskQuestion, onAns
       setFeedback('⚠️ 請登入後再發問。');
       return;
     }
+    rememberTriggerFocus();
     resetAskModal();
     setAskModalOpen(true);
   };
@@ -139,45 +147,62 @@ export function QASection({ role, questions: questionsProp, onAskQuestion, onAns
       setFeedback('⚠️ 只有住戶或房仲可以回答問題。');
       return;
     }
+    rememberTriggerFocus();
     resetAnswerModal();
     setActiveQuestion(question);
     setAnswerModalOpen(true);
   };
 
+  const getActiveDialog = (): HTMLDivElement | null => {
+    return askModalOpen ? askDialogRef.current : answerModalOpen ? answerDialogRef.current : null;
+  };
+
+  const getFocusableElements = (container: HTMLElement | null) => {
+    if (!container) return [] as HTMLElement[];
+    const selector = 'a[href], button, textarea, input, select, [tabindex]';
+    return Array.from(container.querySelectorAll<HTMLElement>(selector)).filter(el => {
+      const tabIndexAttr = el.getAttribute('tabindex');
+      const tabIndex = typeof tabIndexAttr === 'string' ? Number(tabIndexAttr) : undefined;
+      const isDisabled = el.hasAttribute('disabled') || el.getAttribute('aria-disabled') === 'true';
+      const isHidden = el.hasAttribute('aria-hidden');
+      const isNegativeTabIndex = typeof tabIndex === 'number' && tabIndex < 0;
+      return !isDisabled && !isHidden && !isNegativeTabIndex;
+    });
+  };
+
   const trapFocusWithinModal = (event: KeyboardEvent) => {
-    const container = askModalOpen ? askDialogRef.current : answerModalOpen ? answerDialogRef.current : null;
-    if (event.key !== 'Tab' || !container) return;
-    const focusable = Array.from(
-      container.querySelectorAll<HTMLElement>(
-        'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
-      )
-    ).filter(el => !el.hasAttribute('aria-hidden'));
+    if (event.key !== 'Tab') return;
+    const container = getActiveDialog();
+    if (!container) return;
+    const focusable = getFocusableElements(container);
     if (!focusable.length) return;
-    const first = focusable[0];
+    const [first] = focusable;
     const last = focusable[focusable.length - 1];
-    if (!first || !last) return;
     const active = document.activeElement as HTMLElement | null;
     if (!active || !container.contains(active)) {
-      first.focus();
+      first?.focus();
       event.preventDefault();
       return;
     }
     if (!event.shiftKey && active === last) {
-      first.focus();
+      first?.focus();
       event.preventDefault();
     }
     if (event.shiftKey && active === first) {
-      last.focus();
+      last?.focus();
       event.preventDefault();
     }
   };
 
   useEffect(() => {
-    if (!askModalOpen && !answerModalOpen) {
+    const activeDialog = getActiveDialog();
+    if (!activeDialog) {
       document.body.style.overflow = '';
       return;
     }
+
     document.body.style.overflow = 'hidden';
+
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape' && submitting !== 'ask' && submitting !== 'answer') {
         if (askModalOpen) {
@@ -191,10 +216,25 @@ export function QASection({ role, questions: questionsProp, onAskQuestion, onAns
       }
       trapFocusWithinModal(event);
     };
+
+    const ensureFocusStaysInside = (event: FocusEvent) => {
+      if (!activeDialog.contains(event.target as Node)) {
+        const focusable = getFocusableElements(activeDialog);
+        focusable[0]?.focus();
+        event.preventDefault();
+        event.stopPropagation();
+      }
+    };
+
     document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('focusin', ensureFocusStaysInside);
+
     return () => {
       document.body.style.overflow = '';
       document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('focusin', ensureFocusStaysInside);
+      restoreFocusRef.current?.focus();
+      restoreFocusRef.current = null;
     };
   }, [askModalOpen, answerModalOpen, submitting]);
 

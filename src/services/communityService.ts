@@ -6,9 +6,10 @@
  */
 
 import { supabase } from '../lib/supabase';
+import { communityApiBase } from '../config/env';
 
 // API 基礎路徑
-const API_BASE = '/api/community';
+const API_BASE = communityApiBase;
 
 // 註：快取已移除，改由 React Query 統一管理
 

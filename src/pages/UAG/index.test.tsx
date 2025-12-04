@@ -1,6 +1,18 @@
-import { act, fireEvent, render, screen } from '@testing-library/react';
-import { beforeAll, describe, expect, it, vi } from 'vitest';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { MemoryRouter } from 'react-router-dom';
 import UAGPage from './index';
+
+const mockedToast = vi.hoisted(() => ({
+  success: vi.fn(),
+  error: vi.fn(),
+}));
+
+vi.mock('react-hot-toast', () => ({
+  Toaster: () => null,
+  toast: mockedToast,
+}));
 
 // Mock Supabase client to avoid environment variable issues
 vi.mock('../../lib/supabase', () => ({
@@ -13,6 +25,16 @@ vi.mock('../../lib/supabase', () => ({
       })),
     })),
     rpc: vi.fn(),
+    auth: {
+      getSession: vi.fn().mockResolvedValue({ data: { session: null } }),
+      onAuthStateChange: vi.fn(() => ({
+        data: {
+          subscription: {
+            unsubscribe: vi.fn(),
+          },
+        },
+      })),
+    },
   },
 }));
 
@@ -36,9 +58,25 @@ beforeAll(() => {
   });
 });
 
+beforeEach(() => {
+  mockedToast.success.mockClear();
+  mockedToast.error.mockClear();
+});
+
+const renderWithQueryClient = () => {
+  const queryClient = new QueryClient();
+  return render(
+    <MemoryRouter>
+      <QueryClientProvider client={queryClient}>
+        <UAGPage />
+      </QueryClientProvider>
+    </MemoryRouter>
+  );
+};
+
 describe('UAGPage', () => {
   it('renders radar layout and default action panel', async () => {
-    render(<UAGPage />);
+    renderWithQueryClient();
 
     expect(await screen.findByText('UAG 精準導客雷達')).toBeInTheDocument();
     expect(screen.getByText(/請點擊上方雷達泡泡/)).toBeInTheDocument();
@@ -46,32 +84,24 @@ describe('UAGPage', () => {
   });
 
   it('allows selecting and purchasing a lead', async () => {
-    // Mock toast instead of alert since we switched to react-hot-toast
-    // But wait, the component uses toast.success/error. We can mock the module.
+    renderWithQueryClient();
+
+    // Wait for data to load (mock mode is default)
+    const leadBubble = await screen.findByText('B218');
+    fireEvent.click(leadBubble);
     
-    try {
-      render(<UAGPage />);
+    expect(screen.getByText('S級｜買家 B218')).toBeInTheDocument();
 
-      // Wait for data to load (mock mode is default)
-      const leadBubble = await screen.findByText('B218');
-      fireEvent.click(leadBubble);
-      
-      expect(screen.getByText('S級｜買家 B218')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /獲取聯絡權限/ }));
+    const confirmButton = await screen.findByRole('button', { name: /確定花費 20 點\?/ });
+    fireEvent.click(confirmButton);
 
-      await act(async () => {
-        vi.useFakeTimers();
-        // Updated button text regex
-        fireEvent.click(screen.getByRole('button', { name: /獲取聯絡權限/ }));
-        await vi.runAllTimersAsync();
-        vi.useRealTimers();
-      });
+    await waitFor(() => {
+      expect(mockedToast.success).toHaveBeenCalledWith('購買成功');
+    });
 
-      // Initial points 1280, price 20 -> 1260
-      expect(await screen.findByText('1260')).toBeInTheDocument();
-      // B218 should be removed from radar (status changed to purchased)
-      expect(screen.queryByText('B218')).not.toBeInTheDocument();
-    } finally {
-      vi.useRealTimers();
-    }
+    await waitFor(() => {
+      expect(screen.queryByText('S級｜買家 B218')).not.toBeInTheDocument();
+    });
   });
 });

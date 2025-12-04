@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Routes, Route, useLocation } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { getConfig, type AppConfig, type RuntimeOverrides } from './app/config'
 import DevTools from './app/devtools'
 import { trackEvent } from './services/analytics'
@@ -155,6 +156,9 @@ export default function App() {
           }
         />
       </Routes>
+      {import.meta.env.DEV && (
+        <ReactQueryDevtools initialIsOpen={false} />
+      )}
       {config.devtools === '1' && <DevTools config={config} />}
       <CookieConsent />
           </MoodProvider>

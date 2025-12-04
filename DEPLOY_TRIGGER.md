@@ -2,6 +2,13 @@ Redeploy trigger
 
 This file was updated to force a new Vercel deployment.
 
+Timestamp: 2025-12-04T08:45:00Z
+Deploy: Community Wall Persistence & UAG Test Hardening
+- Fix: Hardened Community Wall URL/localStorage sync, role parsing, and cross-tab persistence with safe fallbacks.
+- Fix: Upgraded WallErrorBoundary categorization plus QA/Posts accessibility to satisfy recent audit.
+- Fix: Stabilized UAG mock purchase flow test with toast harness and MemoryRouter/QueryClient wiring.
+- Verification: `npm run typecheck`, `npm run test`, and `npm run build` all passed locally.
+
 Timestamp: 2025-11-22T05:00:00Z
 Deploy: Fix Login Redirect & Analytics Stability
 - Fix: Resolved `vite.config.ts` type error by adding `vitest` reference.

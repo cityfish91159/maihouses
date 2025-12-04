@@ -5,19 +5,20 @@
  */
 
 import type { MockData } from './types';
+import { mockTimestampMinutesAgo } from '../../lib/time';
 
 const publicPosts = [
-  { id: 1, author: '陳小姐', floor: '12F', type: 'resident' as const, time: '2小時前', title: '有人要團購掃地機嗎？🤖', content: '這款 iRobot 打折，滿 5 台有團購價～', likes: 31, comments: 14 },
-  { id: 2, author: '游杰倫', type: 'agent' as const, time: '昨天', title: '🏡 惠宇上晴 12F｜雙陽台視野戶', content: '客廳光線很好，上週屋主剛降價 50 萬，有興趣可私訊。', views: 89, likes: 0, comments: 5 },
-  { id: 3, author: '李先生', floor: '8F', type: 'resident' as const, time: '3天前', title: '停車位交流 🚗', content: '我有 B2-128 想與 B1 交換，方便接送小孩', likes: 12, comments: 8 },
-  { id: 4, author: '王太太', floor: '5F', type: 'resident' as const, time: '1週前', title: '推薦水電師傅', content: '上次找的師傅很專業，價格公道，需要的鄰居私訊我', likes: 25, comments: 6 },
-  { id: 5, author: '林經理', type: 'agent' as const, time: '1週前', title: '🏡 惠宇上晴 8F｜三房車位', content: '屋況極新，前屋主自住保養好', views: 156, likes: 0, comments: 12 },
+  { id: 1, author: '陳小姐', floor: '12F', type: 'resident' as const, time: mockTimestampMinutesAgo(120), title: '有人要團購掃地機嗎？🤖', content: '這款 iRobot 打折，滿 5 台有團購價～', likes: 31, comments: 14 },
+  { id: 2, author: '游杰倫', type: 'agent' as const, time: mockTimestampMinutesAgo(1440), title: '🏡 惠宇上晴 12F｜雙陽台視野戶', content: '客廳光線很好，上週屋主剛降價 50 萬，有興趣可私訊。', views: 89, likes: 0, comments: 5 },
+  { id: 3, author: '李先生', floor: '8F', type: 'resident' as const, time: mockTimestampMinutesAgo(3 * 24 * 60), title: '停車位交流 🚗', content: '我有 B2-128 想與 B1 交換，方便接送小孩', likes: 12, comments: 8 },
+  { id: 4, author: '王太太', floor: '5F', type: 'resident' as const, time: mockTimestampMinutesAgo(7 * 24 * 60), title: '推薦水電師傅', content: '上次找的師傅很專業，價格公道，需要的鄰居私訊我', likes: 25, comments: 6 },
+  { id: 5, author: '林經理', type: 'agent' as const, time: mockTimestampMinutesAgo(8 * 24 * 60), title: '🏡 惠宇上晴 8F｜三房車位', content: '屋況極新，前屋主自住保養好', views: 156, likes: 0, comments: 12 },
 ];
 
 const privatePosts = [
-  { id: 101, author: '管委會', type: 'official' as const, time: '3天前', title: '📢 年度消防演練通知', content: '12/15（日）上午 10:00 將進行全社區消防演練，届時警報器會響，請勿驚慌。', pinned: true, likes: 0, comments: 0 },
-  { id: 102, author: '15F 住戶', floor: '15F', type: 'resident' as const, time: '1週前', title: '管理費調漲討論', content: '想問大家覺得管理費調漲合理嗎？從 2,800 調到 3,200，漲幅有點大...', likes: 0, comments: 28, private: true },
-  { id: 103, author: '3F 住戶', floor: '3F', type: 'resident' as const, time: '2週前', title: '頂樓漏水問題', content: '最近下雨頂樓好像有漏水，管委會有要處理嗎？', likes: 0, comments: 15, private: true },
+  { id: 101, author: '管委會', type: 'official' as const, time: mockTimestampMinutesAgo(3 * 24 * 60), title: '📢 年度消防演練通知', content: '12/15（日）上午 10:00 將進行全社區消防演練，届時警報器會響，請勿驚慌。', pinned: true, likes: 0, comments: 0 },
+  { id: 102, author: '15F 住戶', floor: '15F', type: 'resident' as const, time: mockTimestampMinutesAgo(8 * 24 * 60), title: '管理費調漲討論', content: '想問大家覺得管理費調漲合理嗎？從 2,800 調到 3,200，漲幅有點大...', likes: 0, comments: 28, private: true },
+  { id: 103, author: '3F 住戶', floor: '3F', type: 'resident' as const, time: mockTimestampMinutesAgo(14 * 24 * 60), title: '頂樓漏水問題', content: '最近下雨頂樓好像有漏水，管委會有要處理嗎？', likes: 0, comments: 15, private: true },
 ];
 
 const reviews = [
@@ -29,18 +30,18 @@ const reviews = [
 ];
 
 const questions = [
-  { id: 1, question: '請問社區停車位好停嗎？會不會常客滿？', time: '2天前', answersCount: 2, answers: [
+  { id: 1, question: '請問社區停車位好停嗎？會不會常客滿？', time: mockTimestampMinutesAgo(2 * 24 * 60), answersCount: 2, answers: [
     { author: '12F 住戶', type: 'resident' as const, content: 'B2 比較容易有位，B1 要碰運氣。' },
     { author: '游杰倫', type: 'agent' as const, content: '這社區車位配比是 1:1.2，算充裕的。', expert: true },
   ]},
-  { id: 2, question: '晚上會不會很吵？我看物件時是白天', time: '5天前', answersCount: 2, answers: [
+  { id: 2, question: '晚上會不會很吵？我看物件時是白天', time: mockTimestampMinutesAgo(5 * 24 * 60), answersCount: 2, answers: [
     { author: '3F 住戶', type: 'resident' as const, content: '面大馬路那側確實有車聲，但習慣就好。內側安靜很多。' },
     { author: '10F 住戶', type: 'resident' as const, content: '我住內側，晚上很安靜，睡眠品質不錯。' },
   ]},
-  { id: 3, question: '管理費多少？有包含哪些服務？', time: '1週前', answersCount: 1, answers: [
+  { id: 3, question: '管理費多少？有包含哪些服務？', time: mockTimestampMinutesAgo(7 * 24 * 60), answersCount: 1, answers: [
     { author: '管委會', type: 'official' as const, content: '目前每坪 85 元，含 24 小時保全、公設維護、垃圾代收。' },
   ]},
-  { id: 4, question: '社區有健身房嗎？設備新不新？', time: '3天前', answersCount: 0, answers: [] },
+  { id: 4, question: '社區有健身房嗎？設備新不新？', time: mockTimestampMinutesAgo(3 * 24 * 60), answersCount: 0, answers: [] },
 ];
 
 export const MOCK_DATA: MockData = {
@@ -79,7 +80,7 @@ export const createMockPost = (content: string, visibility: 'public' | 'private'
   id: Date.now(),
   author: '測試用戶',
   type: 'resident',
-  time: '剛剛',
+  time: new Date().toISOString(),
   title: content.substring(0, 20) + (content.length > 20 ? '...' : ''),
   content,
   likes: 0,
@@ -91,7 +92,7 @@ export const createMockPost = (content: string, visibility: 'public' | 'private'
 export const createMockQuestion = (question: string): Question => ({
   id: Date.now(),
   question,
-  time: '剛剛',
+  time: new Date().toISOString(),
   answersCount: 0,
   answers: [],
 });
