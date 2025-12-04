@@ -49,14 +49,14 @@ export interface Question {
 
 export interface CommunityInfo {
   name: string;
-  year: number;
-  units: number;
-  managementFee: number;
-  builder: string;
-  members?: number;
-  avgRating?: number;
-  monthlyInteractions?: number;
-  forSale?: number;
+  year: number | null;           // null = 尚未知道，前端顯示「未知」
+  units: number | null;          // null = 尚未知道，前端顯示「-」
+  managementFee: number | null;  // null = 尚未知道，前端顯示「-」
+  builder: string | null;        // null = 尚未知道，前端顯示「未知建商」
+  members?: number | null;
+  avgRating?: number | null;
+  monthlyInteractions?: number | null;
+  forSale?: number | null;
 }
 
 export interface UnifiedWallData {

@@ -250,20 +250,18 @@ async function getAll(
   ]);
 
   // 組裝 communityInfo（對齊前端 CommunityInfo 型別）
-  // 注意：year_built, total_units, management_fee, builder 欄位需要在 DB 補齊
-  // 目前若 DB 無該欄位，使用合理預設值
+  // 若 DB 欄位不存在，回傳 null 讓前端處理顯示邏輯
   const rawCommunity = communityResult.data;
   const communityInfo = rawCommunity ? {
     name: rawCommunity.name || '未知社區',
-    year: rawCommunity.year_built || new Date().getFullYear(),
-    units: rawCommunity.total_units || 0,
-    managementFee: rawCommunity.management_fee || 0,
-    builder: rawCommunity.builder || '未知建商',
-    // 以下為可選欄位，從 DB 取得或給預設值
-    members: 0,          // TODO: 需要另開 View 或欄位統計
-    avgRating: 0,        // TODO: 需要另開 View 或欄位統計
-    monthlyInteractions: 0,
-    forSale: 0,
+    year: rawCommunity.year_built ?? null,           // null = 前端顯示「未知」
+    units: rawCommunity.total_units ?? null,         // null = 前端顯示「-」
+    managementFee: rawCommunity.management_fee ?? null,
+    builder: rawCommunity.builder || null,           // null = 前端顯示「未知建商」
+    members: null,          // 尚未實作統計，誠實回傳 null
+    avgRating: null,        // 尚未實作統計，誠實回傳 null
+    monthlyInteractions: null,
+    forSale: null,
   } : null;
 
   return res.status(200).json({

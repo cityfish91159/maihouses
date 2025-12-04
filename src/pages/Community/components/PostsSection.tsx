@@ -10,6 +10,7 @@ import type { KeyboardEvent } from 'react';
 import type { Role, Post, WallTab } from '../types';
 import { getPermissions, GUEST_VISIBLE_COUNT } from '../types';
 import { LockedOverlay } from './LockedOverlay';
+import { PostModal } from './PostModal';
 import { formatRelativeTimeLabel } from '../../../lib/time';
 
 interface PostCardProps {
@@ -141,6 +142,21 @@ export function PostsSection({
     public: null,
     private: null,
   });
+
+  // PostModal 狀態
+  const [postModalOpen, setPostModalOpen] = useState(false);
+  const [postModalVisibility, setPostModalVisibility] = useState<'public' | 'private'>('public');
+
+  const openPostModal = (visibility: 'public' | 'private') => {
+    setPostModalVisibility(visibility);
+    setPostModalOpen(true);
+  };
+
+  const handlePostSubmit = async (content: string) => {
+    if (onCreatePost) {
+      onCreatePost(content, postModalVisibility);
+    }
+  };
 
   const visiblePublic = perm.canSeeAllPosts ? publicPosts : publicPosts.slice(0, GUEST_VISIBLE_COUNT);
   const hiddenPublicCount = publicPosts.length - visiblePublic.length;
@@ -275,10 +291,7 @@ export function PostsSection({
             {perm.canPostPublic && (
               <div className="flex justify-center rounded-[14px] border border-dashed border-border-light bg-brand/3 p-5">
                 <button 
-                  onClick={() => {
-                    const content = prompt('輸入貼文內容：');
-                    if (content) onCreatePost?.(content, 'public');
-                  }}
+                  onClick={() => openPostModal('public')}
                   className="flex w-full items-center justify-center gap-1 rounded-lg border border-brand/10 bg-brand/6 px-2.5 py-1.5 text-[11px] font-semibold text-brand hover:bg-brand/12"
                 >
                   ✏️ 發布貼文
@@ -294,10 +307,7 @@ export function PostsSection({
             {perm.canPostPrivate ? (
               <div className="flex justify-center rounded-[14px] border border-dashed border-border-light bg-brand/3 p-5">
                 <button 
-                  onClick={() => {
-                    const content = prompt('輸入私密貼文內容：');
-                    if (content) onCreatePost?.(content, 'private');
-                  }}
+                  onClick={() => openPostModal('private')}
                   className="flex w-full items-center justify-center gap-1 rounded-lg border border-brand/10 bg-brand/6 px-2.5 py-1.5 text-[11px] font-semibold text-brand hover:bg-brand/12"
                 >
                   ✏️ 發布私密貼文
@@ -321,6 +331,14 @@ export function PostsSection({
           </div>
         )}
       </div>
+
+      {/* 發文 Modal */}
+      <PostModal
+        isOpen={postModalOpen}
+        onClose={() => setPostModalOpen(false)}
+        onSubmit={handlePostSubmit}
+        visibility={postModalVisibility}
+      />
     </section>
   );
 }

@@ -252,19 +252,37 @@ export function useCommunityWallData(
     await apiRefresh();
   }, [useMock, apiRefresh]);
 
+  // Mock 模式下用於按讚的使用者 ID（若未登入，使用 localStorage 產生假 ID）
+  const getMockUserId = useCallback((): string => {
+    if (currentUserId) return currentUserId;
+    // 未登入時，從 localStorage 取得或建立假 ID
+    const storageKey = 'mock_user_id';
+    let mockId = localStorage.getItem(storageKey);
+    if (!mockId) {
+      mockId = `mock-user-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+      localStorage.setItem(storageKey, mockId);
+    }
+    return mockId;
+  }, [currentUserId]);
+
   const toggleLike = useCallback(async (postId: string | number) => {
     if (useMock) {
       await delay(MOCK_LATENCY_MS);
-      // Mock 模式：實際更新本地狀態
+      const mockUserId = getMockUserId();
+      // Mock 模式：實際更新本地狀態（包含 likes 和 liked_by）
       const isLiked = likedPosts.has(postId);
       setMockData(prev => {
         const updatePosts = (posts: Post[]): Post[] => 
           posts.map(post => {
             if (post.id !== postId) return post;
             const currentLikes = post.likes ?? 0;
+            const currentLikedBy = post.liked_by ?? [];
             return {
               ...post,
               likes: isLiked ? Math.max(0, currentLikes - 1) : currentLikes + 1,
+              liked_by: isLiked
+                ? currentLikedBy.filter(id => id !== mockUserId)
+                : [...currentLikedBy, mockUserId],
             };
           });
 
@@ -289,7 +307,7 @@ export function useCommunityWallData(
       return;
     }
     await apiToggleLike(String(postId));
-  }, [useMock, apiToggleLike, likedPosts]);
+  }, [useMock, apiToggleLike, likedPosts, getMockUserId]);
 
   const createPost = useCallback(async (content: string, visibility: 'public' | 'private' = 'public') => {
     if (useMock) {

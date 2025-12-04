@@ -6,6 +6,12 @@
 
 import type { CommunityInfo, Question, Post } from '../types';
 
+/** 格式化可能為 null 的數值 */
+function formatValue(value: number | null | undefined, suffix = ''): string {
+  if (value === null || value === undefined) return '-';
+  return `${value}${suffix}`;
+}
+
 interface SidebarProps {
   info: CommunityInfo;
   questions: Question[] | { items: Question[] };
@@ -30,10 +36,10 @@ export function Sidebar({ info, questions: questionsProp, posts }: SidebarProps)
         <h4 className="mb-2.5 flex items-center gap-1.5 text-sm font-extrabold text-[var(--brand)]">📍 社區資訊</h4>
         {[
           ['社區名稱', info.name],
-          ['完工年份', `${info.year} 年`],
-          ['總戶數', `${info.units} 戶`],
-          ['管理費', `${info.managementFee} 元/坪`],
-          ['建設公司', info.builder],
+          ['完工年份', formatValue(info.year, ' 年')],
+          ['總戶數', formatValue(info.units, ' 戶')],
+          ['管理費', formatValue(info.managementFee, ' 元/坪')],
+          ['建設公司', info.builder ?? '-'],
         ].map(([label, value]) => (
           <div key={label} className="flex justify-between border-b border-[#f1f5f9] py-2 text-[13px] last:border-b-0">
             <span className="text-[var(--text-secondary)]">{label}</span>
@@ -47,10 +53,10 @@ export function Sidebar({ info, questions: questionsProp, posts }: SidebarProps)
         <h4 className="mb-2.5 flex items-center gap-1.5 text-sm font-extrabold text-[var(--brand)]">📊 社區數據</h4>
         <div className="mt-2.5 grid grid-cols-2 gap-2">
           {[
-            [info.members, '已加入成員'],
-            [info.avgRating, '平均評分'],
-            [info.monthlyInteractions, '本月互動'],
-            [info.forSale, '待售物件'],
+            [formatValue(info.members), '已加入成員'],
+            [formatValue(info.avgRating), '平均評分'],
+            [formatValue(info.monthlyInteractions), '本月互動'],
+            [formatValue(info.forSale), '待售物件'],
           ].map(([num, lbl]) => (
             <div key={lbl as string} className="rounded-[10px] bg-gradient-to-br from-[#f8faff] to-[#f0f5ff] p-3 text-center">
               <div className="text-xl font-black text-[var(--brand)]">{num}</div>
