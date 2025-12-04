@@ -226,7 +226,6 @@ async function getAll(
     privatePostsQuery,
     
     // Reviews: 從 community_reviews 取得 advantage_1/advantage_2/disadvantage
-    // 並關聯 properties 取得 agent 資訊
     supabase
       .from('community_reviews')
       .select(`
@@ -237,17 +236,7 @@ async function getAll(
         advantage_1,
         advantage_2,
         disadvantage,
-        created_at,
-        property:properties!property_id (
-          agent_id,
-          agent:agents!agent_id (
-            id,
-            name,
-            company,
-            total_visits,
-            total_deals
-          )
-        )
+        created_at
       `, { count: 'exact' })
       .eq('community_id', communityId)
       .order('created_at', { ascending: false })
@@ -303,30 +292,30 @@ async function getAll(
   } : null;
 
   // 轉換 reviews 格式：DB 的 advantage_1/advantage_2/disadvantage → 前端的 pros/cons
+  // 暫時不關聯 agent 資訊（DB schema 需要調整後再支援）
   const transformedReviews = (reviewsResult.data || []).map((review: any) => {
     const pros: string[] = [];
     if (review.advantage_1?.trim()) pros.push(review.advantage_1.trim());
     if (review.advantage_2?.trim()) pros.push(review.advantage_2.trim());
     
-    const agent = review.property?.agent;
-    
     return {
       id: review.id,
       community_id: review.community_id,
-      author_id: agent?.id || null,
+      author_id: null,
       content: {
         pros,
         cons: review.disadvantage?.trim() || '',
       },
       created_at: review.created_at,
-      agent: agent ? {
-        name: agent.name || '匿名房仲',
-        company: agent.company || '',
+      // MVP: agent 資訊暫時用 source 欄位判斷
+      agent: {
+        name: review.source === 'agent' ? '認證房仲' : '住戶',
+        company: '',
         stats: {
-          visits: agent.total_visits ?? 0,
-          deals: agent.total_deals ?? 0,
+          visits: 0,
+          deals: 0,
         },
-      } : null,
+      },
     };
   });
 
