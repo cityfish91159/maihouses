@@ -18,6 +18,12 @@
 - [x] `Wall.tsx` 檢測 API 500 時自動切換 Mock，避免頁面卡在錯誤畫面。
 - [x] `api/package.json` 指定 `type=commonjs`，修復 Vercel serverless 執行 CommonJS bundle 時的 `exports is not defined` 崩潰。
 
+### 2025-12-05 Supabase Mock 資料
+
+- [x] 新增 `supabase/mock_wall_seed.sql`，生成 `communityId=6c60721c-6bff-4e79-9f4d-0d3ccb3168f2` 專用示範資料（社區 + 貼文 + 評價 + 問答）。
+- [x] 腳本會自動清掉同 ID 舊資料並重建，確保與 API 測試資料隔離。
+- [x] Supabase SQL Editor 執行腳本後，即可在 API 模式使用該 ID 看到真實內容。
+
 ### 已完成修改
 
 1. **`api/community/wall.ts`**
@@ -57,7 +63,7 @@
 ## 剩餘待辦（未來迭代）
 
 ### 環境設定
-- [ ] 確認 Vercel 環境變數已設定 `SUPABASE_URL` 和 `SUPABASE_SERVICE_ROLE_KEY`
+- [x] 確認 Vercel 環境變數已設定 `SUPABASE_URL` 和 `SUPABASE_SERVICE_ROLE_KEY`
 
 ### 首頁
 - [ ] 啟用虛擬滾動避免首屏渲染阻塞（目前貼文數量尚可）
