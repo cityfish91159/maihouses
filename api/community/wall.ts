@@ -26,8 +26,10 @@ function getSupabase(): SupabaseClient {
   return supabase;
 }
 
-// 非會員可見數量
+// 非會員可見數量（前端再做 slicing 與鎖定 CTA）
 const GUEST_LIMIT = 2;
+// API 回傳的最大筆數（避免 guest 只拿到 2 筆，導致前端無法顯示鎖定 CTA）
+const DEFAULT_LIST_LIMIT = 50;
 
 const WALL_QUERY_TYPES = ['posts', 'reviews', 'questions', 'all'] as const;
 type WallQueryType = (typeof WALL_QUERY_TYPES)[number];
@@ -557,11 +559,11 @@ async function getPosts(
     .order('is_pinned', { ascending: false })
     .order('created_at', { ascending: false });
 
-  // 非登入用戶只能看公開牆
+  // 非登入用戶只能看公開牆，但仍回傳足夠筆數讓前端自行鎖定可見數
   if (!isAuthenticated) {
-    query = query.eq('visibility', 'public').limit(GUEST_LIMIT);
+    query = query.eq('visibility', 'public').limit(DEFAULT_LIST_LIMIT);
   } else if (visibility === 'public') {
-    query = query.eq('visibility', 'public');
+    query = query.eq('visibility', 'public').limit(DEFAULT_LIST_LIMIT);
   } else if (visibility === 'private') {
     if (!canAccessPrivate) {
       return res.status(403).json({
@@ -570,7 +572,7 @@ async function getPosts(
         code: 'FORBIDDEN_PRIVATE_POSTS'
       });
     }
-    query = query.eq('visibility', 'private');
+    query = query.eq('visibility', 'private').limit(DEFAULT_LIST_LIMIT);
   }
 
   const { data, error, count } = await query;
@@ -596,7 +598,8 @@ async function getReviews(
   communityId: string,
   isAuthenticated: boolean
 ) {
-  const limit = isAuthenticated ? undefined : GUEST_LIMIT;
+  // 回傳足夠筆數讓前端做「僅顯示 2 則 + CTA」
+  const limit = DEFAULT_LIST_LIMIT;
   const [reviewResult, communityResult] = await Promise.all([
     fetchReviewsWithAgents(communityId, limit),
     getSupabase()
@@ -680,7 +683,7 @@ async function getAll(
     .eq('visibility', 'public')
     .order('is_pinned', { ascending: false })
     .order('created_at', { ascending: false })
-    .limit(isAuthenticated ? 20 : GUEST_LIMIT);
+    .limit(DEFAULT_LIST_LIMIT);
 
   // 私密貼文查詢（僅登入且要求時）
   const privatePostsQuery = allowPrivate
@@ -691,11 +694,11 @@ async function getAll(
         .eq('visibility', 'private')
         .order('is_pinned', { ascending: false })
         .order('created_at', { ascending: false })
-        .limit(20)
+        .limit(DEFAULT_LIST_LIMIT)
     : Promise.resolve({ data: [], count: 0, error: null });
 
   // 並行請求
-  const reviewLimit = isAuthenticated ? 20 : GUEST_LIMIT;
+  const reviewLimit = DEFAULT_LIST_LIMIT;
 
   const [publicPostsResult, privatePostsResult, reviewsResult, questionsResult, communityResult] = await Promise.all([
     publicPostsQuery,
