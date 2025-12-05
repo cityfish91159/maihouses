@@ -431,7 +431,7 @@ export function QASection({ role, questions: questionsProp, onAskQuestion, onAns
             perm={perm}
             onAnswer={openAnswerModal}
             isAnswering={submitting === 'answer' && activeQuestion?.id === q.id}
-            onUnlock={onUnlock}
+            {...(onUnlock && { onUnlock })}
           />
         ))}
 
@@ -449,7 +449,7 @@ export function QASection({ role, questions: questionsProp, onAskQuestion, onAns
               perm={perm}
               onAnswer={openAnswerModal}
               isAnswering={submitting === 'answer' && activeQuestion?.id === nextHiddenQuestion.id}
-              onUnlock={onUnlock}
+              {...(onUnlock && { onUnlock })}
             />
           )}
         </LockedOverlay>
@@ -463,7 +463,7 @@ export function QASection({ role, questions: questionsProp, onAskQuestion, onAns
             isUnanswered
             onAnswer={openAnswerModal}
             isAnswering={submitting === 'answer' && activeQuestion?.id === q.id}
-            onUnlock={onUnlock}
+            {...(onUnlock && { onUnlock })}
           />
         ))}
 
