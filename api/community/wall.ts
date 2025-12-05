@@ -754,23 +754,35 @@ async function getAll(
   } : null;
 
   // 轉換 questions 格式：確保 answers 的 content 欄位正確
-  const transformedQuestions = (questionsResult.data || []).map((q: any) => ({
-    ...q,
-    answers: (q.answers || []).map((a: any) => ({
-      id: a.id,
-      author_id: a.author_id,
-      content: a.answer, // DB 欄位是 answer，前端期望 content
-      author_type: a.author_type,
-      is_best: a.is_best,
-      is_expert: a.author_type === 'agent', // 房仲回答標記為專家
-      likes_count: a.likes_count,
-      created_at: a.created_at,
-      author: {
-        name: a.author_type === 'agent' ? '認證房仲' : '住戶',
-        role: a.author_type,
-      },
-    })),
-  }));
+  // 非會員：每個問題只顯示前 2 則回答
+  const GUEST_ANSWERS_LIMIT = 2;
+  const transformedQuestions = (questionsResult.data || []).map((q: any) => {
+    const allAnswers = q.answers || [];
+    const limitedAnswers = !isAuthenticated && allAnswers.length > GUEST_ANSWERS_LIMIT
+      ? allAnswers.slice(0, GUEST_ANSWERS_LIMIT)
+      : allAnswers;
+    const hasMoreAnswers = !isAuthenticated && allAnswers.length > GUEST_ANSWERS_LIMIT;
+    
+    return {
+      ...q,
+      answers: limitedAnswers.map((a: any) => ({
+        id: a.id,
+        author_id: a.author_id,
+        content: a.answer, // DB 欄位是 answer，前端期望 content
+        author_type: a.author_type,
+        is_best: a.is_best,
+        is_expert: a.author_type === 'agent', // 房仲回答標記為專家
+        likes_count: a.likes_count,
+        created_at: a.created_at,
+        author: {
+          name: a.author_type === 'agent' ? '認證房仲' : '住戶',
+          role: a.author_type,
+        },
+      })),
+      hasMoreAnswers,
+      totalAnswers: allAnswers.length,
+    };
+  });
 
   return res.status(200).json({
     success: true,

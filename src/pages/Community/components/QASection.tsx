@@ -13,14 +13,15 @@ import { LockedOverlay } from './LockedOverlay';
 import { formatRelativeTimeLabel } from '../../../lib/time';
 
 interface QACardProps {
-  q: Question;
+  q: Question & { hasMoreAnswers?: boolean; totalAnswers?: number };
   perm: Permissions;
   isUnanswered?: boolean;
   onAnswer?: (question: Question) => void;
   isAnswering?: boolean;
+  onUnlock?: () => void;
 }
 
-function QACard({ q, perm, isUnanswered = false, onAnswer, isAnswering }: QACardProps) {
+function QACard({ q, perm, isUnanswered = false, onAnswer, isAnswering, onUnlock }: QACardProps) {
   const displayTime = formatRelativeTimeLabel(q.time);
   return (
     <article className={`rounded-[14px] border p-3.5 transition-all hover:border-brand/15 ${isUnanswered ? 'border-brand-light/30 bg-gradient-to-br from-brand-50 to-brand-100/30' : 'border-border-light bg-white'}`}>
@@ -52,6 +53,22 @@ function QACard({ q, perm, isUnanswered = false, onAnswer, isAnswering }: QACard
               {a.content}
             </div>
           ))}
+          
+          {/* 非會員：顯示「還有 X 則回答」+ 註冊按鈕 */}
+          {q.hasMoreAnswers && q.totalAnswers && (
+            <div className="mt-2 rounded-lg border border-brand/10 bg-gradient-to-r from-brand-50 to-brand-100/50 p-3 text-center">
+              <p className="mb-2 text-[13px] text-ink-700">
+                🔒 還有 <span className="font-bold text-brand">{q.totalAnswers - q.answers.length}</span> 則回答
+              </p>
+              <button
+                type="button"
+                onClick={onUnlock}
+                className="rounded-lg bg-brand px-4 py-2 text-[12px] font-bold text-white shadow-sm transition-all hover:bg-brand-dark hover:shadow-md"
+              >
+                免費註冊 / 登入 解鎖全部
+              </button>
+            </div>
+          )}
         </div>
       )}
 
@@ -414,6 +431,7 @@ export function QASection({ role, questions: questionsProp, onAskQuestion, onAns
             perm={perm}
             onAnswer={openAnswerModal}
             isAnswering={submitting === 'answer' && activeQuestion?.id === q.id}
+            onUnlock={onUnlock}
           />
         ))}
 
@@ -431,6 +449,7 @@ export function QASection({ role, questions: questionsProp, onAskQuestion, onAns
               perm={perm}
               onAnswer={openAnswerModal}
               isAnswering={submitting === 'answer' && activeQuestion?.id === nextHiddenQuestion.id}
+              onUnlock={onUnlock}
             />
           )}
         </LockedOverlay>
@@ -444,6 +463,7 @@ export function QASection({ role, questions: questionsProp, onAskQuestion, onAns
             isUnanswered
             onAnswer={openAnswerModal}
             isAnswering={submitting === 'answer' && activeQuestion?.id === q.id}
+            onUnlock={onUnlock}
           />
         ))}
 
