@@ -1,10 +1,44 @@
 # 社區牆開發紀錄
 
+## 2025-12-05 11:15 - P0 修復：權限、Mock、log-error
+
+### 本次變更
+
+| 變更項目 | 檔案 | 說明 |
+|----------|------|------|
+| **community_members schema** | `supabase/migrations/20251205_community_members.sql` | 新增 `community_members` 表，支援 resident/agent/moderator 三種角色與社區的綁定關係 |
+| **seed 更新** | `supabase/mock_wall_seed.sql`, `mock_wall_seed_min.sql` | 在示範社區自動寫入兩筆 membership（resident、agent），供 API 權限測試 |
+| **後端權限** | `api/community/wall.ts` | 新增 `resolveViewerContext()` 函式查詢 `community_members` 決定 `viewerRole`，私密貼文僅 resident/agent 可讀 |
+| **移除自動 Mock** | `src/pages/Community/Wall.tsx` | 刪除 `useEffect` 監聯 API error 後自動 `setUseMock(true)` 的邏輯 |
+| **Mock 開關控制** | `Wall.tsx`, `MockToggle.tsx` | 新增 `GLOBAL_MOCK_TOGGLE_ENABLED` 常數，只在 DEV 或 `VITE_COMMUNITY_WALL_ALLOW_MOCK=true` 時可切換 Mock |
+| **/api/log-error** | `api/log-error.ts` | 新增 Error Reporting 端點，`WallErrorBoundary` 可正常上報 |
+
+### 驗證
+
+```bash
+npm run typecheck   # ✓ 無錯誤
+git push origin main # ✓ Vercel 自動部署
+```
+
+### 部署前置需求（需人工操作）
+
+1. Supabase SQL Editor 執行：
+   - `supabase/migrations/20251205_community_members.sql`
+   - `supabase/mock_wall_seed_min.sql`
+2. Vercel Environment Variables 確認：
+   - `SUPABASE_URL`
+   - `SUPABASE_SERVICE_ROLE_KEY`
+   - （選填）`VITE_COMMUNITY_WALL_ALLOW_MOCK=true`
+
+---
+
 ## 2025-12-05 23:05 - API 失敗自動回退 Mock
 
 - `src/pages/Community/Wall.tsx`：監聽 API 模式錯誤，只要不是 401/403 權限錯誤就自動切換成 Mock 模式，頁面立即恢復顯示，不再卡在錯誤畫面。
 - 說明：Vercel 目前缺少 `SUPABASE_URL/SUPABASE_SERVICE_ROLE_KEY`，造成 API 500。此保護讓訪客預設看到 Mock 資料，直到後端環境補齊為止。
 - 驗證：`npm run typecheck`, `npm run test`, `npm run build` 全數通過。
+
+---
 
 ## 2025-12-05 23:40 - Serverless ESM/CJS 衝突熱修
 
