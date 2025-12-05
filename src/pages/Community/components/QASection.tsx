@@ -128,10 +128,10 @@ export function QASection({ role, questions: questionsProp, onAskQuestion, onAns
   // 使用統一的 hook 處理訪客可見項目
   const { visible: visibleAnswered, hiddenCount, nextHidden: nextHiddenQuestion } = 
     useGuestVisibleItems(answeredQuestions, perm.isLoggedIn);
+  const remainingAnsweredCount = answeredQuestions.length - visibleAnswered.length;
 
   const showGuestUnlockCta = !perm.isLoggedIn;
   const shouldShowUnlockCta = !!onUnlock && (showGuestUnlockCta || hiddenCount > 0 || remainingAnsweredCount > 0);
-  const remainingAnsweredCount = answeredQuestions.length - visibleAnswered.length;
 
   const MIN_QUESTION_LENGTH = 10;
   const MIN_ANSWER_LENGTH = 5;
@@ -481,21 +481,9 @@ export function QASection({ role, questions: questionsProp, onAskQuestion, onAns
           </div>
         )}
 
-        {/* 底部 CTA + 未回答問題列表（模仿 mock：上半段 CTA，下半段未回答題） */}
+        {/* 未回答列表在前，CTA 置於下方，避免按鈕遮住問題列表 */}
         <div className="rounded-[14px] border border-dashed border-border-light bg-brand/3 p-3.5">
-          <div className="mb-3 flex flex-col gap-1">
-            <div className="text-sm font-bold text-ink-600">💬 你也有問題想問？</div>
-            <p className="text-xs text-ink-600">問題會通知該社區住戶，通常 24 小時內會有回覆</p>
-            <button
-              type="button"
-              onClick={openAskModal}
-              className="flex w-full items-center justify-center gap-1 rounded-lg border border-brand/10 bg-brand/6 px-2.5 py-1.5 text-[11px] font-semibold text-brand transition hover:bg-brand/12"
-            >
-              {perm.canAskQuestion ? '我想問問題' : '登入後發問'}
-            </button>
-          </div>
-
-          <div className="mt-3 space-y-2">
+          <div className="space-y-2">
             <div className="text-[12px] font-semibold text-brand-700">還沒人回答的問題</div>
             {unansweredQuestions.length > 0 ? (
               unansweredQuestions.map(q => (
@@ -514,6 +502,18 @@ export function QASection({ role, questions: questionsProp, onAskQuestion, onAns
                 目前沒有待回答的問題，登入後可解鎖更多或發問。
               </div>
             )}
+          </div>
+
+          <div className="mt-3 flex flex-col gap-1">
+            <div className="text-sm font-bold text-ink-600">💬 你也有問題想問？</div>
+            <p className="text-xs text-ink-600">問題會通知該社區住戶，通常 24 小時內會有回覆</p>
+            <button
+              type="button"
+              onClick={openAskModal}
+              className="flex w-full items-center justify-center gap-1 rounded-lg border border-brand/10 bg-brand/6 px-2.5 py-1.5 text-[11px] font-semibold text-brand transition hover:bg-brand/12"
+            >
+              {perm.canAskQuestion ? '我想問問題' : '登入後發問'}
+            </button>
           </div>
         </div>
 

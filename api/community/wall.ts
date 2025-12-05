@@ -37,14 +37,22 @@ type WallQueryType = (typeof WALL_QUERY_TYPES)[number];
 const VISIBILITY_FILTERS = ['public', 'private'] as const;
 type VisibilityFilter = (typeof VISIBILITY_FILTERS)[number];
 
+// slug / alias 對應表：非 UUID 的 communityId 會先查這裡
+const COMMUNITY_ID_ALIAS: Record<string, string> = {
+  'test-uuid': '6c60721c-6bff-4e79-9f4d-0d3ccb3168f2',
+};
+
 // UUID v4 正則（第 13 位 = 4，第 17 位 = 8/9/a/b）
 const UUID_V4_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 const CommunityWallQuerySchema = z.object({
-  communityId: z.string().min(1).refine(
-    (val) => UUID_V4_REGEX.test(val),
-    { message: 'communityId 必須是有效的 UUID 格式' }
-  ),
+  // 允許 slug（例如 test-uuid）或 UUID，並在後續轉成實際的 community UUID
+  communityId: z
+    .preprocess(value => (typeof value === 'string' ? value.trim() : value), z.string().min(1))
+    .refine(
+      value => UUID_V4_REGEX.test(value) || Boolean(COMMUNITY_ID_ALIAS[value]),
+      'communityId 必須是有效的 UUID 或已知的測試 slug'
+    ),
   type: z.enum(WALL_QUERY_TYPES).optional().default('all'),
   visibility: z.enum(VISIBILITY_FILTERS).optional().default('public'),
   includePrivate: z.preprocess(
@@ -60,6 +68,14 @@ const CommunityWallQuerySchema = z.object({
     z.boolean().optional().default(false)
   ),
 });
+
+function resolveCommunityId(raw: string): string | null {
+  const normalized = raw.trim().toLowerCase();
+  if (UUID_V4_REGEX.test(normalized)) return normalized;
+  const alias = COMMUNITY_ID_ALIAS[normalized];
+  if (alias) return alias;
+  return null;
+}
 
 const REVIEW_SELECT_FIELDS = buildReviewSelectFields();
 
@@ -488,6 +504,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   const { communityId: communityIdStr, includePrivate: wantsPrivate } = queryParseResult.data;
+  const resolvedCommunityId = resolveCommunityId(communityIdStr);
+
+  if (!resolvedCommunityId) {
+    return res.status(400).json({
+      success: false,
+      error: '找不到對應的社區，請確認網址是否正確',
+      code: 'COMMUNITY_NOT_FOUND',
+    });
+  }
   const requestType: WallQueryType = queryParseResult.data.type;
   const visibilityFilter: VisibilityFilter = queryParseResult.data.visibility;
 
@@ -507,20 +532,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
   }
 
-  const { role: viewerRole, canAccessPrivate } = await resolveViewerContext(communityIdStr, userId);
+  const { role: viewerRole, canAccessPrivate } = await resolveViewerContext(resolvedCommunityId, userId);
   const isAuthenticated = viewerRole !== 'guest';
 
   try {
     switch (requestType) {
       case 'posts':
-        return await getPosts(res, communityIdStr, visibilityFilter, viewerRole, canAccessPrivate);
+        return await getPosts(res, resolvedCommunityId, visibilityFilter, viewerRole, canAccessPrivate);
       case 'reviews':
-        return await getReviews(res, communityIdStr, isAuthenticated);
+        return await getReviews(res, resolvedCommunityId, isAuthenticated);
       case 'questions':
-        return await getQuestions(res, communityIdStr, isAuthenticated);
+        return await getQuestions(res, resolvedCommunityId, isAuthenticated);
       case 'all':
       default:
-        return await getAll(res, communityIdStr, viewerRole, wantsPrivate, canAccessPrivate);
+        return await getAll(res, resolvedCommunityId, viewerRole, wantsPrivate, canAccessPrivate);
     }
   } catch (error: unknown) {
     if (error instanceof ReviewFetchError) {
