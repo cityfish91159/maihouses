@@ -28,6 +28,56 @@ function getSupabase(): SupabaseClient {
 // 非會員可見數量
 const GUEST_LIMIT = 2;
 
+type ViewerRole = 'guest' | 'member' | 'resident' | 'agent';
+
+interface ViewerContext {
+  role: ViewerRole;
+  canAccessPrivate: boolean;
+}
+
+const PRIVATE_ACCESS_ROLES: ViewerRole[] = ['resident', 'agent'];
+
+async function resolveViewerContext(communityId: string, userId: string | null): Promise<ViewerContext> {
+  if (!userId) {
+    return { role: 'guest', canAccessPrivate: false };
+  }
+
+  const { data, error } = await getSupabase()
+    .from('community_members')
+    .select('role')
+    .eq('community_id', communityId)
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (error && error.code !== 'PGRST116') {
+    throw error;
+  }
+
+  const membershipRole = (data?.role ?? '').toLowerCase();
+  let viewerRole: ViewerRole;
+
+  switch (membershipRole) {
+    case 'resident':
+      viewerRole = 'resident';
+      break;
+    case 'agent':
+      viewerRole = 'agent';
+      break;
+    case 'moderator':
+      // 尚未在前端公開 moderator 角色，暫時視同 resident 權限
+      viewerRole = 'resident';
+      break;
+    default:
+      viewerRole = 'member';
+      break;
+  }
+
+  return {
+    role: viewerRole,
+    canAccessPrivate: PRIVATE_ACCESS_ROLES.includes(viewerRole),
+  };
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -44,11 +94,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (!communityId) {
     return res.status(400).json({ error: '缺少 communityId' });
   }
+  const communityIdStr = communityId as string;
 
   // 檢查登入狀態
   const authHeader = req.headers.authorization;
   let userId: string | null = null;
-  let isAuthenticated = false;
 
   if (authHeader?.startsWith('Bearer ')) {
     const token = authHeader.slice(7);
@@ -56,24 +106,26 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const { data: { user } } = await getSupabase().auth.getUser(token);
       if (user) {
         userId = user.id;
-        isAuthenticated = true;
       }
     } catch (e) {
       console.warn('Token 驗證失敗');
     }
   }
 
+  const { role: viewerRole, canAccessPrivate } = await resolveViewerContext(communityIdStr, userId);
+  const isAuthenticated = viewerRole !== 'guest';
+
   try {
     switch (type) {
       case 'posts':
-        return await getPosts(res, communityId as string, visibility as string, isAuthenticated);
+        return await getPosts(res, communityIdStr, visibility as string, viewerRole, canAccessPrivate);
       case 'reviews':
-        return await getReviews(res, communityId as string, isAuthenticated);
+        return await getReviews(res, communityIdStr, isAuthenticated);
       case 'questions':
-        return await getQuestions(res, communityId as string, isAuthenticated);
+        return await getQuestions(res, communityIdStr, isAuthenticated);
       case 'all':
       default:
-        return await getAll(res, communityId as string, isAuthenticated, wantsPrivate);
+        return await getAll(res, communityIdStr, viewerRole, wantsPrivate, canAccessPrivate);
     }
   } catch (error: any) {
     console.error('API Error:', error);
@@ -92,8 +144,10 @@ async function getPosts(
   res: VercelResponse,
   communityId: string,
   visibility: string = 'public',
-  isAuthenticated: boolean
+  viewerRole: ViewerRole,
+  canAccessPrivate: boolean
 ) {
+  const isAuthenticated = viewerRole !== 'guest';
   let query = getSupabase()
     .from('community_posts')
     .select('*', { count: 'exact' })
@@ -107,6 +161,13 @@ async function getPosts(
   } else if (visibility === 'public') {
     query = query.eq('visibility', 'public');
   } else if (visibility === 'private') {
+    if (!canAccessPrivate) {
+      return res.status(403).json({
+        success: false,
+        error: '無權限檢視私密貼文',
+        code: 'FORBIDDEN_PRIVATE_POSTS'
+      });
+    }
     query = query.eq('visibility', 'private');
   }
 
@@ -210,12 +271,13 @@ async function getQuestions(
 async function getAll(
   res: VercelResponse,
   communityId: string,
-  isAuthenticated: boolean,
-  includePrivate: boolean = false
+  viewerRole: ViewerRole,
+  includePrivate: boolean = false,
+  canAccessPrivate: boolean
 ) {
-  // 只有已登入且明確要求才能取得私密貼文
-  const canAccessPrivate = isAuthenticated && includePrivate;
-  const viewerRole = isAuthenticated ? 'member' : 'guest';
+  const isAuthenticated = viewerRole !== 'guest';
+  // 只有已登入且具有社區身分並且有參數要求才回傳私密貼文
+  const allowPrivate = includePrivate && canAccessPrivate;
 
   // 公開貼文查詢
   const publicPostsQuery = getSupabase()
@@ -228,7 +290,7 @@ async function getAll(
     .limit(isAuthenticated ? 20 : GUEST_LIMIT);
 
   // 私密貼文查詢（僅登入且要求時）
-  const privatePostsQuery = canAccessPrivate
+  const privatePostsQuery = allowPrivate
     ? getSupabase()
         .from('community_posts')
         .select('*', { count: 'exact' })

@@ -1,21 +1,5 @@
--- Supabase mock dataset for Community Wall manual verification
--- -------------------------------------------------------------
--- 目的：為「社區牆」API 提供一組固定的範例資料，確保前端可以在
---       Vercel 環境改用 API 模式時看到真實內容，而不會干擾到現有
---       測試／資料。所有記錄都綁定在單一 community_id 上，重覆執行
---       此腳本會先清除舊資料再重新寫入。
--- 使用方式：
---   1. 打開 Supabase Dashboard → SQL Editor。
---   2. 貼上整份 SQL，按下 RUN。需要 service role / Owner 權限。
---   3. API 查詢時改用 communityId=6c60721c-6bff-4e79-9f4d-0d3ccb3168f2。
---      例如：https://maihouses.vercel.app/api/community/wall?communityId=6c60721c-6bff-4e79-9f4d-0d3ccb3168f2&type=all
---
--- 注意：腳本會抓現有 auth.users 前兩位使用者作為 mock 住戶／房仲。
--- 如系統目前沒有使用者，請先註冊至少一組帳號再執行。
-
 BEGIN;
 
--- 確保 communities 表存在必要欄位（不同環境有可能尚未套用最新 migration）
 ALTER TABLE communities ADD COLUMN IF NOT EXISTS district TEXT;
 ALTER TABLE communities ADD COLUMN IF NOT EXISTS city TEXT;
 ALTER TABLE communities ADD COLUMN IF NOT EXISTS story_vibe TEXT;
@@ -26,10 +10,11 @@ ALTER TABLE communities ADD COLUMN IF NOT EXISTS completeness_score INTEGER;
 ALTER TABLE communities ADD COLUMN IF NOT EXISTS total_units INTEGER;
 ALTER TABLE communities ADD COLUMN IF NOT EXISTS management_fee INTEGER;
 ALTER TABLE communities ADD COLUMN IF NOT EXISTS builder TEXT;
-
--- 確保 community_posts 表存在 liked_by 欄位
-ALTER TABLE community_posts ADD COLUMN IF NOT EXISTS liked_by UUID[] DEFAULT '{}';
+ALTER TABLE communities ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
+ALTER TABLE properties ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
+ALTER TABLE properties ADD COLUMN IF NOT EXISTS community_name TEXT;
 ALTER TABLE community_posts ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
+ALTER TABLE community_posts ADD COLUMN IF NOT EXISTS liked_by UUID[] DEFAULT '{}';
 
 DO $$
 DECLARE
@@ -47,7 +32,7 @@ DECLARE
 BEGIN
   SELECT id INTO resident_user FROM auth.users ORDER BY created_at LIMIT 1;
   IF resident_user IS NULL THEN
-    RAISE EXCEPTION 'Supabase 至少需要一名 auth 使用者才可建立 mock 資料';
+    RAISE EXCEPTION '需要至少一名 auth 使用者';
   END IF;
 
   SELECT id INTO agent_user FROM auth.users ORDER BY created_at OFFSET 1 LIMIT 1;
@@ -55,7 +40,6 @@ BEGIN
     agent_user := resident_user;
   END IF;
 
-  -- 清空舊資料以確保腳本可重覆執行
   DELETE FROM community_answers WHERE question_id IN (
     SELECT id FROM community_questions WHERE community_id = mock_community_id
   );
@@ -65,7 +49,6 @@ BEGIN
   DELETE FROM properties WHERE id = mock_property_id;
   DELETE FROM communities WHERE id = mock_community_id;
 
-  -- 建立示範社區
   INSERT INTO communities (
     id, name, address, district, city, story_vibe,
     two_good, one_fair, lifestyle_tags, completeness_score,
@@ -100,7 +83,6 @@ BEGIN
     builder = EXCLUDED.builder,
     updated_at = NOW();
 
-  -- 建立房源（供 community_reviews view 產生 pros/cons）
   INSERT INTO properties (
     id, public_id, title, price, address, description, images,
     source_platform, source_external_id,
@@ -114,7 +96,7 @@ BEGIN
     '台北市信義區松壽路 9 號 20F',
     '高樓層景觀＋雙車位，全天候門廳管理。',
     ARRAY['https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=80'],
-    'maihouses',
+    'MH',
     'demo-property-888001',
     mock_community_id,
     '榮耀城示範社區',
@@ -147,10 +129,9 @@ BEGIN
     status = EXCLUDED.status,
     joined_at = EXCLUDED.joined_at;
 
-  -- 建立貼文（2 公開 + 1 私密）
   INSERT INTO community_posts (
     id, community_id, author_id, content, images, visibility,
-    post_type, is_pinned, likes_count, comments_count, liked_by, created_at
+    post_type, is_pinned, likes_count, comments_count, created_at
   ) VALUES
     (
       post_public_pin_id,
@@ -163,7 +144,6 @@ BEGIN
       TRUE,
       18,
       4,
-      ARRAY[resident_user],
       NOW() - INTERVAL '2 days'
     ),
     (
@@ -177,7 +157,6 @@ BEGIN
       FALSE,
       7,
       2,
-      ARRAY[resident_user, agent_user],
       NOW() - INTERVAL '16 hours'
     ),
     (
@@ -191,7 +170,6 @@ BEGIN
       FALSE,
       3,
       1,
-      ARRAY[agent_user],
       NOW() - INTERVAL '8 hours'
     )
   ON CONFLICT (id) DO UPDATE SET
@@ -201,11 +179,9 @@ BEGIN
     is_pinned = EXCLUDED.is_pinned,
     likes_count = EXCLUDED.likes_count,
     comments_count = EXCLUDED.comments_count,
-    liked_by = EXCLUDED.liked_by,
     images = EXCLUDED.images,
     updated_at = NOW();
 
-  -- 建立問答
   INSERT INTO community_questions (
     id, community_id, author_id, question, is_anonymous, status,
     answers_count, views_count, created_at
@@ -238,7 +214,6 @@ BEGIN
     status = EXCLUDED.status,
     views_count = EXCLUDED.views_count;
 
-  -- 建立回答（trigger 會自動更新 answers_count）
   INSERT INTO community_answers (
     id, question_id, author_id, answer, author_type, is_best, likes_count, created_at
   ) VALUES
@@ -267,7 +242,6 @@ BEGIN
     author_type = EXCLUDED.author_type,
     is_best = EXCLUDED.is_best,
     likes_count = EXCLUDED.likes_count;
-
 END $$;
 
 COMMIT;

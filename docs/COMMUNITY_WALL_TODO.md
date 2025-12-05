@@ -474,3 +474,24 @@ if (!parsed.success) {
 ---
 
 > **審計結論**: 此專案存在嚴重的「文檔驅動開發」問題 - 文檔寫得很漂亮，但代碼沒跟上。建議團隊建立 PR Review 流程，確保「文檔聲稱完成的功能必須有對應的代碼變更」。
+
+---
+
+## 🛠️ 2025-12-05 修復紀錄（GPT-5.1-Codex）
+
+- [x] 新增 `community_members` Schema（`supabase/migrations/20251205_community_members.sql`）並更新兩份 seed 檔，確保預設住戶/房仲身分一起寫入、支援 API 權限查詢。
+- [x] `api/community/wall.ts` 以 `community_members` 決定 `viewerRole`，私密貼文僅允許 resident/agent 讀取，API 回應不再回傳假角色。
+- [x] 移除自動切換 Mock 的隱藏邏輯，MockToggle 只在開發或顯式設定 `VITE_COMMUNITY_WALL_ALLOW_MOCK=true` 時可見，生產錯誤改為明確顯示並提供重新整理（`Wall.tsx` + `MockToggle.tsx`）。
+- [x] 建立 `/api/log-error` 端點，`WallErrorBoundary` 上報會寫入伺服器 log，避免打到不存在的 API。
+- [x] `npm run typecheck`（tsc --noEmit）通過，確認前後端 TypeScript 均無型別錯誤。
+
+### 驗證與待部署
+
+- ✅ 本地 `npm run typecheck`
+- ✅ 手動檢查 `Wall.tsx` 初始狀態改為真實 API；Mock 僅能透過 DEV 或 `VITE_COMMUNITY_WALL_ALLOW_MOCK` 切換。
+- ⚠️ Supabase 需執行 `supabase/migrations/20251205_community_members.sql` 並重新執行 `supabase/mock_wall_seed_min.sql`，否則 API 會查不到 membership。
+- ⚠️ 需在 Vercel 重新部署（包含 `api/log-error.ts`）並設定必要環境變數：
+  - `SUPABASE_URL`
+  - `SUPABASE_SERVICE_ROLE_KEY`
+  - （選填）`VITE_COMMUNITY_WALL_ALLOW_MOCK=true` 若 QA 需要遠端 Mock 切換
+- ⚠️ 無權限直接觸發部署；請在 Vercel Dashboard Redeploy，確認 https://maihouses.vercel.app/maihouses/community/test-uuid/wall 讀到新 API 行為。

@@ -35,6 +35,7 @@ const ROLE_PARAM = 'role';
 const MOCK_STORAGE_KEY = 'community-wall-use-mock';
 const ROLE_STORAGE_KEY = 'community-wall-dev-role';
 const VALID_ROLES: Role[] = ['guest', 'member', 'resident', 'agent'];
+const GLOBAL_MOCK_TOGGLE_ENABLED = import.meta.env.DEV || import.meta.env.VITE_COMMUNITY_WALL_ALLOW_MOCK === 'true';
 
 const parseBoolParam = (value: string | null): boolean | null => {
   if (value === null) return null;
@@ -110,6 +111,9 @@ function WallInner() {
 
   // 初始化 useMock：優先順序 URL > localStorage > false
   const initialUseMock = useMemo(() => {
+    if (!GLOBAL_MOCK_TOGGLE_ENABLED) {
+      return false;
+    }
     const urlParam = parseBoolParam(searchParamsRef.current.get(MOCK_PARAM));
     if (urlParam !== null) return urlParam;
     return safeGetBoolean(MOCK_STORAGE_KEY, false);
@@ -136,6 +140,7 @@ function WallInner() {
   const [isReloading, setIsReloading] = useState(false);
   const [localStorageError, setLocalStorageError] = useState<string | null>(null);
   const perm = getPermissions(role);
+  const allowManualMockToggle = GLOBAL_MOCK_TOGGLE_ENABLED;
 
   // 統一資料來源 Hook
   const { 
@@ -154,6 +159,7 @@ function WallInner() {
     includePrivate: perm.canAccessPrivate,
     initialUseMock, // 傳入初始值
   });
+  const mockToggleDisabled = !allowManualMockToggle && !useMock;
 
   // 生產環境依後端角色自動對齊權限
   useEffect(() => {
@@ -164,9 +170,22 @@ function WallInner() {
   }, [viewerRole, role]);
 
   const setUseMock = useCallback((value: boolean) => {
+    if (value && !allowManualMockToggle) {
+      setLocalStorageError('Mock 模式僅限內部測試使用');
+      return;
+    }
+
     setUseMockInternal(value);
     const nextParams = updateURLParam(searchParamsRef.current, MOCK_PARAM, value ? 'true' : null);
     setSearchParams(nextParams, { replace: true });
+
+    if (!allowManualMockToggle) {
+      if (!value) {
+        safeSetBoolean(MOCK_STORAGE_KEY, false);
+      }
+      return;
+    }
+
     const result = safeSetBoolean(MOCK_STORAGE_KEY, value);
     if (!result.success) {
       setLocalStorageError(`無法儲存 Mock 偏好：${result.error}`);
@@ -174,7 +193,7 @@ function WallInner() {
         console.error('[CommunityWall] Failed to persist mock preference', result.error);
       }
     }
-  }, [setUseMockInternal, setSearchParams]);
+  }, [allowManualMockToggle, setUseMockInternal, setSearchParams]);
 
   // 包裝 setRole，同步 URL 和 localStorage（僅開發環境）
   const setRole = useCallback((newRole: Role) => {
@@ -198,11 +217,12 @@ function WallInner() {
   }, [localStorageError]);
 
   useEffect(() => {
+    if (!allowManualMockToggle) return;
     const urlValue = parseBoolParam(searchParams.get(MOCK_PARAM));
     if (urlValue !== null && urlValue !== useMock) {
       setUseMockInternal(urlValue);
     }
-  }, [searchParams, setUseMockInternal, useMock]);
+  }, [allowManualMockToggle, searchParams, setUseMockInternal, useMock]);
 
   useEffect(() => {
     if (!import.meta.env.DEV) return;
@@ -213,19 +233,13 @@ function WallInner() {
   }, [role, searchParams, setRoleInternal]);
 
   useEffect(() => {
-    if (!error || useMock) return;
-    const message = error.message || '';
-    const isAuthError = /401|403|權限|登入|未授權/.test(message);
-    if (isAuthError) return;
-    console.warn('[CommunityWall] API error, fallback to mock mode:', message);
-    setUseMock(true);
-  }, [error, useMock, setUseMock]);
-
-  useEffect(() => {
     if (typeof window === 'undefined') return;
     const handleStorage = (event: StorageEvent) => {
       if (event.storageArea !== window.localStorage || event.newValue === null) return;
       if (event.key === MOCK_STORAGE_KEY) {
+        if (!allowManualMockToggle) {
+          return;
+        }
         const parsed = parseBoolParam(event.newValue);
         if (parsed !== null && parsed !== useMock) {
           setUseMockInternal(parsed);
@@ -240,7 +254,7 @@ function WallInner() {
     };
     window.addEventListener('storage', handleStorage);
     return () => window.removeEventListener('storage', handleStorage);
-  }, [role, setRoleInternal, setUseMockInternal, useMock]);
+  }, [allowManualMockToggle, role, setRoleInternal, setUseMockInternal, useMock]);
 
   const handleUnlock = useCallback(() => {
     navigate('/auth');
@@ -354,12 +368,14 @@ function WallInner() {
               >
                 {isReloading ? '⏳ 重新整理中…' : '🔄 重新整理'}
               </button>
-              <button 
-                onClick={() => setUseMock(true)}
-                className="rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white shadow hover:bg-brand-600"
-              >
-                🧪 切換 Mock 模式
-              </button>
+              {allowManualMockToggle && (
+                <button 
+                  onClick={() => setUseMock(true)}
+                  className="rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white shadow hover:bg-brand-600"
+                >
+                  🧪 切換 Mock 模式
+                </button>
+              )}
             </div>
           )}
         </div>
@@ -408,8 +424,14 @@ function WallInner() {
       {/* 底部 CTA */}
       <BottomCTA role={role} />
 
-      {/* Mock 切換在所有環境提供，確保 QA 可自由切換資料來源 */}
-      <MockToggle useMock={useMock} onToggle={() => setUseMock(!useMock)} />
+      {/* Mock 切換僅於開發或白名單環境顯示 */}
+      {(allowManualMockToggle || useMock) && (
+        <MockToggle
+          useMock={useMock}
+          onToggle={() => setUseMock(!useMock)}
+          disabled={mockToggleDisabled}
+        />
+      )}
 
       {/* 開發專用角色切換器 */}
       {import.meta.env.DEV && (
