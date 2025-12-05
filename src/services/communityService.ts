@@ -128,8 +128,24 @@ async function fetchAPI<T>(
   });
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: '請求失敗' }));
-    throw new Error(error.error || `HTTP ${response.status}`);
+    const errorData = await response.json().catch(() => ({ error: '請求失敗' }));
+    // 處理各種錯誤格式
+    let errorMessage = '請求失敗';
+    if (typeof errorData.error === 'string') {
+      errorMessage = errorData.error;
+    } else if (errorData.error?.message) {
+      errorMessage = errorData.error.message;
+    } else if (errorData.message) {
+      errorMessage = errorData.message;
+    } else if (Array.isArray(errorData.error)) {
+      // Zod 錯誤是 array
+      errorMessage = errorData.error.map((e: any) => e.message || e).join(', ');
+    }
+    
+    const error = new Error(errorMessage || `HTTP ${response.status}`);
+    (error as any).status = response.status;
+    (error as any).code = errorData.code;
+    throw error;
   }
 
   return response.json();

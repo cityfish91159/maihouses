@@ -93,7 +93,16 @@ export function useCommunityWall(
     enabled: enabled && !!communityId,
     staleTime,
     refetchOnWindowFocus,
-    retry: 2,
+    // 降低 retry 次數和延遲，避免用戶等待太久
+    retry: (failureCount, error) => {
+      // 400/401/403/404 錯誤不重試
+      const status = (error as any)?.status;
+      if (status && [400, 401, 403, 404].includes(status)) {
+        return false;
+      }
+      return failureCount < 1; // 最多重試 1 次
+    },
+    retryDelay: 1000, // 1 秒後重試
   });
 
   // 手動刷新（註：快取由 React Query invalidateQueries 處理）

@@ -35,8 +35,14 @@ type WallQueryType = (typeof WALL_QUERY_TYPES)[number];
 const VISIBILITY_FILTERS = ['public', 'private'] as const;
 type VisibilityFilter = (typeof VISIBILITY_FILTERS)[number];
 
+// UUID v4 正則（第 13 位 = 4，第 17 位 = 8/9/a/b）
+const UUID_V4_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
 const CommunityWallQuerySchema = z.object({
-  communityId: z.string().min(1),
+  communityId: z.string().min(1).refine(
+    (val) => UUID_V4_REGEX.test(val),
+    { message: 'communityId 必須是有效的 UUID 格式' }
+  ),
   type: z.enum(WALL_QUERY_TYPES).optional().default('all'),
   visibility: z.enum(VISIBILITY_FILTERS).optional().default('public'),
   includePrivate: z.preprocess(
@@ -276,6 +282,7 @@ async function fetchReviewsWithAgents(
 
 /**
  * 取得原始評價列表，並以 Zod 驗證資料。
+ * 單筆驗證失敗不影響其他資料，僅記錄警告。
  */
 async function fetchReviewRows(communityId: string, limit?: number) {
   let query = getSupabase()
@@ -293,10 +300,34 @@ async function fetchReviewRows(communityId: string, limit?: number) {
     throw new ReviewFetchError('REVIEW_FETCH_FAILED', '無法載入社區評價資料', error);
   }
 
-  const rows = ReviewRowSchema.array().parse(data ?? []);
+  // 單筆驗證：失敗的資料跳過，不影響其他資料
+  const rawData = (data ?? []) as unknown[];
+  const validRows: ReviewRow[] = [];
+  const invalidCount = { total: 0, ids: [] as string[] };
+
+  for (const item of rawData) {
+    const result = ReviewRowSchema.safeParse(item);
+    if (result.success) {
+      validRows.push(result.data);
+    } else {
+      invalidCount.total++;
+      if (item && typeof item === 'object' && 'id' in item) {
+        invalidCount.ids.push(String((item as Record<string, unknown>).id));
+      }
+      // 只在開發時記錄詳細錯誤
+      if (process.env.NODE_ENV !== 'production') {
+        console.warn('ReviewRow validation failed:', item, result.error.flatten());
+      }
+    }
+  }
+
+  if (invalidCount.total > 0) {
+    console.warn(`fetchReviewRows: ${invalidCount.total} rows failed validation, skipped. IDs: ${invalidCount.ids.slice(0, 5).join(', ')}${invalidCount.ids.length > 5 ? '...' : ''}`);
+  }
+
   return {
-    rows,
-    total: typeof count === 'number' ? count : rows.length,
+    rows: validRows,
+    total: typeof count === 'number' ? count : validRows.length,
   };
 }
 
@@ -383,40 +414,54 @@ async function resolveViewerContext(communityId: string, userId: string | null):
     return { role: 'guest', canAccessPrivate: false };
   }
 
-  const { data, error } = await getSupabase()
-    .from('community_members')
-    .select('role')
-    .eq('community_id', communityId)
-    .eq('user_id', userId)
-    .maybeSingle();
+  try {
+    const { data, error } = await getSupabase()
+      .from('community_members')
+      .select('role')
+      .eq('community_id', communityId)
+      .eq('user_id', userId)
+      .maybeSingle();
 
-  if (error && error.code !== 'PGRST116') {
-    throw error;
+    // PGRST116 = 查無資料，42P01 = 表不存在
+    if (error && error.code !== 'PGRST116' && error.code !== '42P01') {
+      console.warn('resolveViewerContext error:', error.code, error.message);
+      // 不 throw，降級為 member 權限
+      return { role: 'member', canAccessPrivate: false };
+    }
+
+    // 若表不存在或查無資料，給予 member 權限（已登入但未加入社區）
+    if (error?.code === '42P01' || !data) {
+      return { role: 'member', canAccessPrivate: false };
+    }
+
+    const membershipRole = (data?.role ?? '').toLowerCase();
+    let viewerRole: ViewerRole;
+
+    switch (membershipRole) {
+      case 'resident':
+        viewerRole = 'resident';
+        break;
+      case 'agent':
+        viewerRole = 'agent';
+        break;
+      case 'moderator':
+        // 尚未在前端公開 moderator 角色，暫時視同 resident 權限
+        viewerRole = 'resident';
+        break;
+      default:
+        viewerRole = 'member';
+        break;
+    }
+
+    return {
+      role: viewerRole,
+      canAccessPrivate: PRIVATE_ACCESS_ROLES.includes(viewerRole),
+    };
+  } catch (err) {
+    // 任何未預期的錯誤都降級為 member
+    console.warn('resolveViewerContext unexpected error:', err);
+    return { role: 'member', canAccessPrivate: false };
   }
-
-  const membershipRole = (data?.role ?? '').toLowerCase();
-  let viewerRole: ViewerRole;
-
-  switch (membershipRole) {
-    case 'resident':
-      viewerRole = 'resident';
-      break;
-    case 'agent':
-      viewerRole = 'agent';
-      break;
-    case 'moderator':
-      // 尚未在前端公開 moderator 角色，暫時視同 resident 權限
-      viewerRole = 'resident';
-      break;
-    default:
-      viewerRole = 'member';
-      break;
-  }
-
-  return {
-    role: viewerRole,
-    canAccessPrivate: PRIVATE_ACCESS_ROLES.includes(viewerRole),
-  };
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
