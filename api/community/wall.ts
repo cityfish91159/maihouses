@@ -28,6 +28,154 @@ function getSupabase(): SupabaseClient {
 // 非會員可見數量
 const GUEST_LIMIT = 2;
 
+const REVIEW_SELECT_FIELDS = `
+  id,
+  community_id,
+  property_id,
+  source,
+  advantage_1,
+  advantage_2,
+  disadvantage,
+  created_at,
+  property:properties!community_reviews_property_id_fkey (
+    title,
+    agent:agents!properties_agent_id_fkey (
+      id,
+      name,
+      company,
+      visit_count,
+      deal_count
+    )
+  )
+`;
+
+type ReviewAgentRow = {
+  id?: string | null;
+  name?: string | null;
+  company?: string | null;
+  visit_count?: number | null;
+  deal_count?: number | null;
+};
+
+type ReviewPropertyRow = {
+  title?: string | null;
+  agent?: ReviewAgentRow | null;
+};
+
+type ReviewRecord = {
+  id: string;
+  community_id: string;
+  property_id: string | null;
+  source: string | null;
+  advantage_1: string | null;
+  advantage_2: string | null;
+  disadvantage: string | null;
+  created_at: string;
+  property?: ReviewPropertyRow | null;
+};
+
+interface ReviewResponseItem {
+  id: string;
+  community_id: string;
+  property_id: string | null;
+  author_id: string | null;
+  source: string;
+  content: {
+    pros: string[];
+    cons: string;
+    property_title: string | null;
+  };
+  created_at: string;
+  agent?: {
+    name: string;
+    company?: string;
+    stats?: {
+      visits: number;
+      deals: number;
+    };
+  };
+}
+
+const cleanText = (value: string | null | undefined): string => (value ?? '').trim();
+
+const normalizeCount = (value: number | null | undefined): number => {
+  if (typeof value !== 'number' || Number.isNaN(value)) {
+    return 0;
+  }
+  return value < 0 ? 0 : value;
+};
+
+const buildAgentPayload = (agentRow?: ReviewAgentRow | null) => {
+  if (!agentRow) {
+    return undefined;
+  }
+
+  return {
+    name: agentRow.name || '認證房仲',
+    company: agentRow.company || '',
+    stats: {
+      visits: normalizeCount(agentRow.visit_count),
+      deals: normalizeCount(agentRow.deal_count),
+    },
+  };
+};
+
+const transformReviewRecord = (record: ReviewRecord): ReviewResponseItem => {
+  const pros = [record.advantage_1, record.advantage_2]
+    .map(value => cleanText(value))
+    .filter(value => Boolean(value));
+
+  const cons = cleanText(record.disadvantage);
+  const propertyTitle = record.property?.title ?? null;
+  const source = record.source || 'agent';
+  const agentPayload = buildAgentPayload(record.property?.agent);
+  const fallbackAgent = agentPayload ?? (source === 'resident'
+    ? { name: '住戶', company: '' }
+    : undefined);
+
+  return {
+    id: record.id,
+    community_id: record.community_id,
+    property_id: record.property_id,
+    author_id: record.property?.agent?.id ?? null,
+    source,
+    content: {
+      pros,
+      cons,
+      property_title: propertyTitle,
+    },
+    created_at: record.created_at,
+    agent: fallbackAgent,
+  };
+};
+
+async function fetchReviewsWithAgents(
+  communityId: string,
+  limit?: number
+): Promise<{ items: ReviewResponseItem[]; total: number }> {
+  let query = getSupabase()
+    .from('community_reviews')
+    .select(REVIEW_SELECT_FIELDS, { count: 'exact' })
+    .eq('community_id', communityId)
+    .order('created_at', { ascending: false });
+
+  if (typeof limit === 'number') {
+    query = query.limit(limit);
+  }
+
+  const { data, error, count } = await query;
+
+  if (error) {
+    throw error;
+  }
+
+  const items = (data as ReviewRecord[] | null)?.map(transformReviewRecord) ?? [];
+  return {
+    items,
+    total: typeof count === 'number' ? count : items.length,
+  };
+}
+
 type ViewerRole = 'guest' | 'member' | 'resident' | 'agent';
 
 interface ViewerContext {
@@ -194,34 +342,25 @@ async function getReviews(
   communityId: string,
   isAuthenticated: boolean
 ) {
-  let query = getSupabase()
-    .from('community_reviews') // 這是 View，對接 properties 表
-    .select('*', { count: 'exact' })
-    .eq('community_id', communityId)
-    .order('created_at', { ascending: false });
+  const limit = isAuthenticated ? undefined : GUEST_LIMIT;
+  const [reviewResult, communityResult] = await Promise.all([
+    fetchReviewsWithAgents(communityId, limit),
+    getSupabase()
+      .from('communities')
+      .select('two_good, one_fair, story_vibe')
+      .eq('id', communityId)
+      .single()
+  ]);
 
-  if (!isAuthenticated) {
-    query = query.limit(GUEST_LIMIT);
-  }
-
-  const { data, error, count } = await query;
-
-  if (error) throw error;
-
-  // 取得社區的 AI 總結
-  const { data: community } = await getSupabase()
-    .from('communities')
-    .select('two_good, one_fair, story_vibe')
-    .eq('id', communityId)
-    .single();
+  const hiddenCount = !isAuthenticated ? Math.max(0, reviewResult.total - reviewResult.items.length) : 0;
 
   return res.status(200).json({
     success: true,
-    data,
-    summary: community || null,
-    total: count || 0,
+    data: reviewResult.items,
+    summary: communityResult.data || null,
+    total: reviewResult.total,
     limited: !isAuthenticated,
-    hiddenCount: !isAuthenticated && count ? Math.max(0, count - GUEST_LIMIT) : 0
+    hiddenCount,
   });
 }
 
@@ -302,26 +441,14 @@ async function getAll(
     : Promise.resolve({ data: [], count: 0, error: null });
 
   // 並行請求
+  const reviewLimit = isAuthenticated ? 20 : GUEST_LIMIT;
+
   const [publicPostsResult, privatePostsResult, reviewsResult, questionsResult, communityResult] = await Promise.all([
     publicPostsQuery,
     privatePostsQuery,
     
-    // Reviews: 從 community_reviews 取得 advantage_1/advantage_2/disadvantage
-    getSupabase()
-      .from('community_reviews')
-      .select(`
-        id,
-        community_id,
-        property_id,
-        source,
-        advantage_1,
-        advantage_2,
-        disadvantage,
-        created_at
-      `, { count: 'exact' })
-      .eq('community_id', communityId)
-      .order('created_at', { ascending: false })
-      .limit(isAuthenticated ? 20 : GUEST_LIMIT),
+    // Reviews: 取得帶房仲統計資訊的評價
+    fetchReviewsWithAgents(communityId, reviewLimit),
     
     // Questions: 取得問答與回覆
     getSupabase()
@@ -372,34 +499,6 @@ async function getAll(
     forSale: null,
   } : null;
 
-  // 轉換 reviews 格式：DB 的 advantage_1/advantage_2/disadvantage → 前端的 pros/cons
-  // 暫時不關聯 agent 資訊（DB schema 需要調整後再支援）
-  const transformedReviews = (reviewsResult.data || []).map((review: any) => {
-    const pros: string[] = [];
-    if (review.advantage_1?.trim()) pros.push(review.advantage_1.trim());
-    if (review.advantage_2?.trim()) pros.push(review.advantage_2.trim());
-    
-    return {
-      id: review.id,
-      community_id: review.community_id,
-      author_id: null,
-      content: {
-        pros,
-        cons: review.disadvantage?.trim() || '',
-      },
-      created_at: review.created_at,
-      // MVP: agent 資訊暫時用 source 欄位判斷
-      agent: {
-        name: review.source === 'agent' ? '認證房仲' : '住戶',
-        company: '',
-        stats: {
-          visits: 0,
-          deals: 0,
-        },
-      },
-    };
-  });
-
   // 轉換 questions 格式：確保 answers 的 content 欄位正確
   const transformedQuestions = (questionsResult.data || []).map((q: any) => ({
     ...q,
@@ -429,8 +528,8 @@ async function getAll(
       privateTotal: privatePostsResult.count || 0,
     },
     reviews: {
-      items: transformedReviews,
-      total: reviewsResult.count || 0,
+      items: reviewsResult.items,
+      total: reviewsResult.total,
     },
     questions: {
       items: transformedQuestions,

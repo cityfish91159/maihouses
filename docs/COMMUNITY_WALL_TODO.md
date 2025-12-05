@@ -1,15 +1,22 @@
 # 社區牆 - 審計報告與待辦清單
 
-> **最後更新**: 2025-12-05 11:20
+> **最後更新**: 2025-12-05 14:30
 > **審計者**: Google 首席前後端處長
 
 ---
+
+## 摘要
+- **要做什麼**：維持所有 P0 項目（尤其 P0-5）處於可隨時上線的狀態，讓評價區顯示真實房仲統計，而非硬編碼數字。
+- **做了什麼**：新增 `visit_count`/`deal_count` 欄位、補齊測試房仲種子資料，後端 `/api/community/wall` 透過 `fetchReviewsWithAgents` JOIN `agents` 表輸出真實帶看/成交次數，同時修正 `getReviews`/`getAll` 流程共用新資料。
+- **什麼沒做好**：P0-1（Vercel 服務端環境變數）與 community_members seed 仍需人工執行；其餘 P1/P2 項目尚未處理。
+- **再來要做**：依排程優先處理 P1-3（樂觀更新）、P1-4（按讚 debounce）與 P1-1（移除 mockFallback），並完成 Vercel 環境變數驗證。
 
 ## 📊 一眼摘要
 
 ### ✅ 已完成（本次修復）
 | # | 項目 | 狀態 |
 |---|------|------|
+| P0-5 | 評價區 agent stats 硬編碼 0 | ✅ 已改為 JOIN `agents`（回傳真實 visits/deals） |
 | P0-2 | 移除 API 錯誤自動切換 Mock | ✅ 已修復 |
 | P0-3 | `/api/log-error` 端點不存在 | ✅ 已建立 |
 | P0-4 | 後端權限只判斷「有沒有登入」 | ✅ 已查詢 `community_members` |
@@ -24,7 +31,6 @@
 ### 🔴 未修復 P0（需程式碼變更）
 | # | 項目 | 說明 |
 |---|------|------|
-| P0-5 | 評價區 agent stats 硬編碼 0 | 需 JOIN `agents` 表取真實數據 |
 
 ### 🟠 未修復 P1（本週內）
 | # | 項目 | 說明 |
@@ -51,6 +57,11 @@
 ---
 
 ## 🔍 本次修復自查（Google 首席複審）
+
+### 修復紀錄（2025-12-05）
+1. **資料層**：建立 `20251205_add_agent_stats_columns.sql`，為 `agents` 表新增 `visit_count`/`deal_count` 欄位，並在 `20251205_test_community_seed.sql` 內插入具備 27 次帶看、9 戶成交的測試房仲，同步讓 `properties` 種子綁定該房仲。
+2. **API 層**：`/api/community/wall.ts` 新增 `fetchReviewsWithAgents`，透過 Supabase 連結 `community_reviews → properties → agents`，統一給 `type=reviews` 與 `type=all` 使用，回傳真實統計數字並保留訪客限制邏輯。
+3. **驗證**：以 `GUEST_LIMIT` 與登入狀態雙情境測試 API 回傳結構、總筆數與 `hiddenCount`，確認 `reviews.items` 已包含 `agent.stats`。
 
 ### 修復品質評估
 
