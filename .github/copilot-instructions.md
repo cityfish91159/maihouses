@@ -379,5 +379,54 @@ const messages = {
 
 ---
 
-*最後更新：2024/12/01*
+---
+
+## 🚨 待修復缺失清單 (2025-12-05 審計)
+
+> ⚠️ **重要**：以下問題必須優先處理，不要新增功能直到這些問題解決。
+
+### 🔴 P0 致命缺失 (必須立即修復)
+
+| # | 問題 | 檔案 | 修復方向 |
+|---|------|------|----------|
+| P0-1 | API 返回 500，環境變數未設定 | `api/community/wall.ts` | 設定 Vercel 環境變數 `SUPABASE_URL` 和 `SUPABASE_SERVICE_ROLE_KEY` |
+| P0-2 | API 錯誤自動切換 Mock，掩蓋問題 | `src/pages/Community/Wall.tsx:215-222` | 移除自動切換邏輯，顯示明確錯誤 UI |
+| P0-3 | `/api/log-error` 端點不存在 | `src/pages/Community/components/WallErrorBoundary.tsx:117` | 建立端點或整合 Sentry |
+| P0-4 | 後端權限只判斷「有沒有登入」 | `api/community/wall.ts:48-64` | 查詢 `community_members` 表驗證 resident/agent |
+| P0-5 | 評價區 agent stats 硬編碼 0 | `api/community/wall.ts:329-336` | JOIN `agents` 表取得真實數據 |
+
+### 🟠 P1 嚴重缺失 (本週修復)
+
+| # | 問題 | 檔案 | 修復方向 |
+|---|------|------|----------|
+| P1-1 | `convertApiData` 用 mockFallback 掩蓋 | `src/hooks/communityWallConverters.ts:111-140` | 移除 fallback，null 就是 null |
+| P1-2 | `useCommunityWallData` 近 400 行 | `src/hooks/useCommunityWallData.ts` | 拆分成 3 個 Hook |
+| P1-3 | 樂觀更新後立即 invalidateQueries | `src/hooks/useCommunityWallQuery.ts:166-172` | 只在 onError 時 invalidate |
+| P1-4 | 按讚沒有 debounce | `src/pages/Community/components/PostsSection.tsx:46-56` | 加入 debounce/throttle |
+| P1-5 | 回覆按鈕永遠 disabled | `src/pages/Community/components/PostsSection.tsx:100-107` | 建立 GitHub Issue 追蹤 |
+| P1-6 | communityInfo 統計欄位全返回 null | `api/community/wall.ts:301-311` | 建立真實統計查詢 |
+| P1-7 | 評價區 pros/cons 展平導致重複 | `src/pages/Community/components/ReviewsSection.tsx:71-101` | 以完整評價為單位顯示 |
+| P1-8 | `clearCommunityCache` 是空函數 | `src/services/communityService.ts:263-265` | 移除或加 @deprecated |
+
+### 🟡 P2 中等缺失 (兩週內修復)
+
+| # | 問題 | 修復方向 |
+|---|------|----------|
+| P2-1 | 類型定義散落 4 個檔案 | 統一在 `src/types/community.ts` |
+| P2-2 | PostSkeleton 依賴父層 a11y | 自己加 `aria-hidden="true"` |
+| P2-3 | Mock 數據存 localStorage | 改用 sessionStorage |
+| P2-4 | 虛擬滾動未實作 | 用 `react-window` 或刪除 TODO |
+| P2-5 | `useGuestVisibleItems` 沒測試 | 補單元測試 |
+| P2-6 | 環境變數錯誤只 warn | 關鍵變數應 throw Error |
+
+### 📌 修復時的注意事項
+
+1. **不要用 Mock 數據掩蓋 API 問題** - 用戶應該知道數據來源
+2. **權限判斷必須在後端** - 前端權限只是 UI 優化，不是安全措施
+3. **null 就是 null** - 不要用假數據 fallback，前端應顯示「無資料」
+4. **文檔與代碼必須一致** - 改了代碼就更新文檔，反之亦然
+
+---
+
+*最後更新：2025/12/05*
 *專案維護者：Mike*
