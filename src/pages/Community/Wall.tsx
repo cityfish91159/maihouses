@@ -37,7 +37,8 @@ const MOCK_STORAGE_KEY = 'community-wall-use-mock';
 const MOCK_OVERRIDE_KEY = 'community-wall-mock-override';
 const ROLE_STORAGE_KEY = 'community-wall-dev-role';
 const VALID_ROLES: Role[] = ['guest', 'member', 'resident', 'agent'];
-const GLOBAL_MOCK_TOGGLE_ENABLED = import.meta.env.DEV || import.meta.env.VITE_COMMUNITY_WALL_ALLOW_MOCK === 'true';
+const rawMockFlag = `${import.meta.env.VITE_COMMUNITY_WALL_ALLOW_MOCK ?? ''}`.trim().toLowerCase();
+const GLOBAL_MOCK_TOGGLE_ENABLED = rawMockFlag !== 'false';
 
 const parseBoolParam = (value: string | null): boolean | null => {
   if (value === null) return null;
