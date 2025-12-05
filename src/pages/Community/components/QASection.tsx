@@ -462,26 +462,7 @@ export function QASection({ role, questions: questionsProp, onAskQuestion, onAns
           )}
         </LockedOverlay>
 
-        {/* 訪客固定顯示註冊 CTA，即使沒有隱藏項目，提示可解鎖更多問答 */}
-        {shouldShowUnlockCta && (
-          <div className="rounded-[12px] border border-brand/10 bg-brand/4 p-3 text-center">
-            <div className="text-sm font-bold text-brand-700">免費註冊 / 登入</div>
-            <p className="mt-1 text-[12px] text-ink-600">
-              {remainingAnsweredCount > 0
-                ? `還有 ${remainingAnsweredCount} 則問答可解鎖，追蹤最新回覆`
-                : '解鎖更多問答、追蹤最新回覆'}
-            </p>
-            <button
-              type="button"
-              onClick={onUnlock}
-              className="mt-2 w-full rounded-lg bg-brand px-3 py-2 text-[12px] font-semibold text-white shadow-sm transition hover:bg-brand-dark"
-            >
-              立即解鎖
-            </button>
-          </div>
-        )}
-
-        {/* 未回答列表在前，CTA 置於下方，避免按鈕遮住問題列表 */}
+        {/* 還沒人回答區塊 - 移至註冊 CTA 上方 */}
         <div className="rounded-[14px] border border-dashed border-border-light bg-brand/3 p-3.5">
           <div className="space-y-2">
             <div className="text-[12px] font-semibold text-brand-700">還沒人回答的問題</div>
@@ -516,6 +497,25 @@ export function QASection({ role, questions: questionsProp, onAskQuestion, onAns
             </button>
           </div>
         </div>
+
+        {/* 訪客固定顯示註冊 CTA，放在還沒人回答區塊下方 */}
+        {shouldShowUnlockCta && (
+          <div className="rounded-[12px] border border-brand/10 bg-brand/4 p-3 text-center">
+            <div className="text-sm font-bold text-brand-700">免費註冊 / 登入</div>
+            <p className="mt-1 text-[12px] text-ink-600">
+              {remainingAnsweredCount > 0
+                ? `還有 ${remainingAnsweredCount} 則問答可解鎖，追蹤最新回覆`
+                : '解鎖更多問答、追蹤最新回覆'}
+            </p>
+            <button
+              type="button"
+              onClick={onUnlock}
+              className="mt-2 w-full rounded-lg bg-brand px-3 py-2 text-[12px] font-semibold text-white shadow-sm transition hover:bg-brand-dark"
+            >
+              立即解鎖
+            </button>
+          </div>
+        )}
 
         {feedback && (
           <p className="text-center text-[11px] text-brand-600" role="status" aria-live="polite">
