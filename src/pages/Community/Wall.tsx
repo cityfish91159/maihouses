@@ -20,6 +20,7 @@ import {
   BottomCTA,
   WallSkeleton,
   WallErrorBoundary,
+  VersionBadge,
 } from './components';
 
 // Types
@@ -111,12 +112,18 @@ function WallInner() {
 
   // 初始化 useMock：優先順序 URL > localStorage > false
   const initialUseMock = useMemo(() => {
+    const urlParam = parseBoolParam(searchParamsRef.current.get(MOCK_PARAM));
+    if (urlParam !== null) {
+      return urlParam;
+    }
+    const storedPreference = safeGetBoolean(MOCK_STORAGE_KEY, false);
+    if (storedPreference) {
+      return true;
+    }
     if (!GLOBAL_MOCK_TOGGLE_ENABLED) {
       return false;
     }
-    const urlParam = parseBoolParam(searchParamsRef.current.get(MOCK_PARAM));
-    if (urlParam !== null) return urlParam;
-    return safeGetBoolean(MOCK_STORAGE_KEY, false);
+    return storedPreference;
   }, []);
 
   // 初始化 role：僅開發環境從 URL/localStorage 讀取
@@ -169,31 +176,32 @@ function WallInner() {
     }
   }, [viewerRole, role]);
 
-  const setUseMock = useCallback((value: boolean) => {
-    if (value && !allowManualMockToggle) {
-      setLocalStorageError('Mock 模式僅限內部測試使用');
-      return;
-    }
-
+  const persistMockPreference = useCallback((value: boolean) => {
     setUseMockInternal(value);
     const nextParams = updateURLParam(searchParamsRef.current, MOCK_PARAM, value ? 'true' : null);
     setSearchParams(nextParams, { replace: true });
-
-    if (!allowManualMockToggle) {
-      if (!value) {
-        safeSetBoolean(MOCK_STORAGE_KEY, false);
-      }
-      return;
-    }
-
     const result = safeSetBoolean(MOCK_STORAGE_KEY, value);
     if (!result.success) {
       setLocalStorageError(`無法儲存 Mock 偏好：${result.error}`);
       if (import.meta.env.PROD) {
         console.error('[CommunityWall] Failed to persist mock preference', result.error);
       }
+    } else {
+      setLocalStorageError(null);
     }
-  }, [allowManualMockToggle, setUseMockInternal, setSearchParams]);
+  }, [setUseMockInternal, setSearchParams]);
+
+  const setUseMock = useCallback((value: boolean) => {
+    if (value && !allowManualMockToggle) {
+      setLocalStorageError('Mock 模式僅限內部測試使用');
+      return;
+    }
+    persistMockPreference(value);
+  }, [allowManualMockToggle, persistMockPreference]);
+
+  const forceEnableMock = useCallback(() => {
+    persistMockPreference(true);
+  }, [persistMockPreference]);
 
   // 包裝 setRole，同步 URL 和 localStorage（僅開發環境）
   const setRole = useCallback((newRole: Role) => {
@@ -368,17 +376,16 @@ function WallInner() {
               >
                 {isReloading ? '⏳ 重新整理中…' : '🔄 重新整理'}
               </button>
-              {allowManualMockToggle && (
-                <button 
-                  onClick={() => setUseMock(true)}
-                  className="rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white shadow hover:bg-brand-600"
-                >
-                  🧪 切換 Mock 模式
-                </button>
-              )}
+              <button 
+                onClick={forceEnableMock}
+                className="rounded-lg bg-[#1a1a2e] px-4 py-2 text-sm font-semibold text-white shadow hover:brightness-110"
+              >
+                🧪 改用示範資料
+              </button>
             </div>
           )}
         </div>
+        <VersionBadge />
       </div>
     );
   }
@@ -442,12 +449,14 @@ function WallInner() {
         <div
           role="status"
           aria-live="assertive"
-          className="fixed bottom-5 right-5 z-50 max-w-sm rounded-xl border border-error-200 bg-error-50/95 p-4 text-left shadow-lg"
+          className="fixed bottom-24 right-5 z-50 max-w-sm rounded-xl border border-error-200 bg-error-50/95 p-4 text-left shadow-lg"
         >
           <p className="text-sm font-semibold text-error-900">⚠️ 儲存偏好失敗</p>
           <p className="mt-1 text-xs text-error-700">{localStorageError}</p>
         </div>
       )}
+
+      <VersionBadge />
 
       {/* 動畫 keyframes */}
       <style>{`

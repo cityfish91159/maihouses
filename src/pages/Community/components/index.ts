@@ -15,3 +15,4 @@ export { BottomCTA } from './BottomCTA';
 export { LockedOverlay } from './LockedOverlay';
 export { WallSkeleton } from './PostSkeleton';
 export { WallErrorBoundary } from './WallErrorBoundary';
+export { VersionBadge } from './VersionBadge';

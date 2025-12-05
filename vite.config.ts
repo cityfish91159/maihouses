@@ -2,6 +2,7 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import checker from 'vite-plugin-checker'
+import { execSync } from 'node:child_process'
 
 // 為避免在 TS 下找不到 process 型別，這裡做最小宣告（不影響執行）
 // 若需要更嚴謹的型別，可另行安裝 @types/node 並在 tsconfig 中啟用
@@ -16,6 +17,20 @@ const hmrHost = inCodespaces
 // 判斷是否為 Vercel 環境
 const isVercel = process.env.VERCEL === '1'
 
+const resolveGitSha = (): string => {
+  try {
+    if (process.env.VERCEL_GIT_COMMIT_SHA) {
+      return process.env.VERCEL_GIT_COMMIT_SHA.slice(0, 7)
+    }
+    return execSync('git rev-parse --short HEAD').toString().trim()
+  } catch {
+    return 'dev'
+  }
+}
+
+const buildTimestamp = new Date().toISOString()
+const gitSha = resolveGitSha()
+
 export default defineConfig({
   plugins: [
     react(),
@@ -24,6 +39,10 @@ export default defineConfig({
       overlay: { initialIsOpen: false },
     }),
   ],
+  define: {
+    __APP_VERSION__: JSON.stringify(gitSha),
+    __BUILD_TIME__: JSON.stringify(buildTimestamp),
+  },
   // 統一使用 /maihouses/ 路徑，以配合 vercel.json 的重定向設定
   base: '/maihouses/',
   build: {
