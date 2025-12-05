@@ -430,7 +430,7 @@ export function QASection({ role, questions: questionsProp, onAskQuestion, onAns
           <p className="mt-0.5 text-[11px] text-ink-600">買房前，先問問鄰居怎麼說</p>
         </div>
       </div>
-      <div className="flex flex-col gap-2.5 p-3.5">
+      <div className="flex flex-col gap-2.5 p-3.5 pb-6">
         {/* 有回答的問題 */}
         {visibleAnswered.map(q => (
           <QACard
