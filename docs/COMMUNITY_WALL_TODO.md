@@ -1,29 +1,29 @@
 # 社區牆 - 審計報告與待辦清單
 
-> **最後更新**: 2025-12-05 14:30
+> **最後更新**: 2025-12-05 23:55
 > **審計者**: Google 首席前後端處長
 
 ---
 
 ## 摘要
 - **要做什麼**：維持所有 P0 項目（尤其 P0-5）處於可隨時上線的狀態，讓評價區顯示真實房仲統計，而非硬編碼數字。
-- **做了什麼**：新增 `visit_count`/`deal_count` 欄位、補齊測試房仲種子資料，後端 `/api/community/wall` 透過 `fetchReviewsWithAgents` JOIN `agents` 表輸出真實帶看/成交次數，同時修正 `getReviews`/`getAll` 流程共用新資料。**代碼層已全數完成並部署**（commit `e92a921`）。
+- **做了什麼**：新增 `visit_count`/`deal_count` 欄位、補齊測試房仲種子資料，後端 `/api/community/wall` 透過 `fetchReviewsWithAgents` JOIN `agents` 表輸出真實帶看/成交次數，同時修正 `getReviews`/`getAll` 流程共用新資料。12/05 深夜再追加 `CommunityWallQuerySchema` + `ReviewFetchError` + `buildReviewSelectFields()`，並建立 `api/community/__tests__/wall.test.ts` 覆蓋 `cleanText` / `normalizeCount` / `buildAgentPayload` / `transformReviewRecord`，`npx vitest run api/community/__tests__/wall.test.ts` 全數通過。
 - **什麼沒做好**：
   1. **DB Migration 未執行**：`20251205_add_agent_stats_columns.sql` 與 `20251205_test_community_seed.sql` 需在 Supabase Dashboard 手動執行
   2. **環境變數未驗證**：P0-1（Vercel `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY`）與 `community_members` seed 仍待人工確認
-  3. **P0-5 技術債**：Type assertion (`as`)、無 JSDoc、無單元測試、JOIN 深度過深、硬編碼 FK 名稱
+  3. **線上 API 仍 500**：`curl https://maihouses.vercel.app/api/community/wall?communityId=00000000-0000-0000-0000-000000000001&type=reviews` 回傳 `code=PGRST200`，PostgREST 日誌顯示 `community_reviews_property_id_fkey` 不存在 → 需在 Supabase 重建 FK 或重新建立 `community_reviews` View。
   4. 其餘 P1/P2 項目尚未處理
 - **再來要做**：
-  1. **立即**：執行 DB migrations、驗證 `https://maihouses.vercel.app/maihouses/community/00000000-0000-0000-0000-000000000001/wall?mock=false` 評價區顯示真實統計
-  2. **本週**：重構 `fetchReviewsWithAgents` 解決技術債（型別安全、測試覆蓋、錯誤處理）
-  3. **下週**：依排程處理 P1-3（樂觀更新）、P1-4（按讚 debounce）、P1-1（移除 mockFallback）
+  1. **立即**：在 Supabase 依序執行 `20251205_add_agent_stats_columns.sql`、`20251205_test_community_seed.sql`，並重建 `community_reviews_property_id_fkey`（或重新建立 View）後，再次以 `curl` 驗證 `/api/community/wall` 正常回應。
+  2. **本週**：檢查 Vercel `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` 是否填寫、確認 `community_members` 種子同步至實際專案。
+  3. **下週**：依排程處理 P1-3（樂觀更新）、P1-4（按讚 debounce）、P1-1（移除 mockFallback）。
 
 ## 📊 一眼摘要
 
 ### ✅ 已完成（本次修復）
 | # | 項目 | 狀態 |
 |---|------|------|
-| P0-5 | 評價區 agent stats 硬編碼 0 | ✅ 已改為 JOIN `agents`（回傳真實 visits/deals） |
+| P0-5 | 評價區 agent stats 硬編碼 0 | ✅ 已改為 JOIN `agents` 回傳真實 visits/deals，並補上 Zod 驗證、`ReviewFetchError`、`buildReviewSelectFields()` 與 `vitest` 單元測試 |
 | P0-2 | 移除 API 錯誤自動切換 Mock | ✅ 已修復 |
 | P0-3 | `/api/log-error` 端點不存在 | ✅ 已建立 |
 | P0-4 | 後端權限只判斷「有沒有登入」 | ✅ 已查詢 `community_members` |
@@ -36,10 +36,12 @@
 | DB-1 | community_members 表不存在 | 需在 Supabase 執行 `20251205_community_members.sql` + seed | 🔴 高 |
 | **DB-2** | **Agent stats 欄位未建立** | **需在 Supabase 執行 `20251205_add_agent_stats_columns.sql`** | 🔴 **高** |
 | **DB-3** | **測試社區資料未建立** | **需在 Supabase 執行 `20251205_test_community_seed.sql`** | 🟡 **中** |
+| API-1 | `community_reviews_property_id_fkey` 遺失 | Supabase Table Editor 建立 `community_reviews.property_id → properties.id` FK 或重建 View，清完 schema cache 後再重新測 | 🔴 高 |
 
 ### 🔴 未修復 P0（需程式碼變更）
 | # | 項目 | 說明 |
 |---|------|------|
+| P0-6 | 生產 `/api/community/wall` 仍回傳 `PGRST200` | 需要在 Supabase 補上 `community_reviews_property_id_fkey`（或改成不依賴 FK 的 View），否則 PostgREST 無法幫忙 JOIN `properties`，前端仍然空白 |
 
 ### 🟠 未修復 P1（本週內）
 | # | 項目 | 說明 |
@@ -72,6 +74,11 @@
 2. **API 層**：`/api/community/wall.ts` 新增 `fetchReviewsWithAgents`，透過 Supabase 連結 `community_reviews → properties → agents`，統一給 `type=reviews` 與 `type=all` 使用，回傳真實統計數字並保留訪客限制邏輯。
 3. **驗證**：以 `GUEST_LIMIT` 與登入狀態雙情境測試 API 回傳結構、總筆數與 `hiddenCount`，確認 `reviews.items` 已包含 `agent.stats`。
 
+### 線上錯誤診斷（2025-12-05 23:40）
+- 指令：`curl -s -w "\n%{http_code}\n" "https://maihouses.vercel.app/api/community/wall?communityId=00000000-0000-0000-0000-000000000001&type=reviews"`
+- 回應：`{"error":"Could not find a relationship between 'community_reviews' and 'properties'...","code":"PGRST200"}` + HTTP 500。
+- 結論：生產 Supabase schema 缺少 `community_reviews_property_id_fkey`，導致舊部署仍試圖進行 nested select 時失敗；需在 DB 端建立 FK 或執行最新 View/migration 後再重新部署。
+
 ---
 
 ### 🔎 P0-5 審計發現（Google 首席前後端處長）
@@ -92,6 +99,7 @@ const items = (data as ReviewRecord[] | null)?.map(transformReviewRecord) ?? [];
   2. 引入 `Database['public']['Views']['community_reviews']['Row']`
   3. 建立 Zod schema 驗證 runtime 資料：`const ReviewRecordSchema = z.object({ id: z.string().uuid(), ... })`
   4. 改為 `const validated = ReviewRecordSchema.array().parse(data)`
+- **修復狀態（2025-12-05 23:55）**：`api/community/wall.ts` 以 `CommunityWallQuerySchema`、`ReviewRowSchema`、`PropertyRowSchema`、`AgentRowSchema` 驗證所有 Supabase 回傳資料，並移除 `communityId as string` 等 assertion。
 
 **問題 2: 硬編碼 Foreign Key 名稱**
 ```typescript
@@ -104,6 +112,7 @@ property:properties!community_reviews_property_id_fkey (
   1. 改用 Supabase 預設 `property:properties(*)` 語法（不指定 FK 名稱）
   2. 若需明確指定，定義常數 `const PROPERTY_FK = 'community_reviews_property_id_fkey' as const`
   3. 加入單元測試驗證 FK 存在性：`SELECT constraint_name FROM information_schema.table_constraints WHERE ...`
+- **修復狀態（2025-12-05 23:55）**：程式端已改為分段查詢 `community_reviews` → `properties` → `agents`，完全移除 `properties!community_reviews_property_id_fkey` 依賴；線上 500 仍須在 Supabase 重建實際 FK 才能讓舊部署恢復。
 
 **問題 3: JOIN 深度過深 (N+1 風險)**
 ```typescript
@@ -120,6 +129,7 @@ community_reviews → properties → agents  // 3 層 JOIN
      // 手動 merge
      ```
   3. **方案 C**: 使用 Supabase Edge Function + `JOIN` SQL，避免 PostgREST 限制
+- **修復狀態（2025-12-05 23:55）**：採 `方案 B`，`fetchReviewsWithAgents` 以三段查詢配合 Map merge，代理 `community_reviews → properties → agents`，降低 PostgREST JOIN 難度。
 
 #### ⚠️ 中等問題（下週修復）
 
@@ -138,6 +148,7 @@ const normalizeCount = (value: number | null | undefined): number => { ... }
    * @example normalizeCount(-5)  // 0
    */
   ```
+- **修復狀態（2025-12-05 23:55）**：`cleanText`、`normalizeCount`、`buildAgentPayload`、`transformReviewRecord`、`fetchReviewsWithAgents` 等 helper 已補完整 JSDoc，說明緣由與範例。
 
 **問題 5: 無單元測試**
 - **現況**: `transformReviewRecord` / `buildAgentPayload` 無測試覆蓋
@@ -148,6 +159,7 @@ const normalizeCount = (value: number | null | undefined): number => { ... }
      - `buildAgentPayload(null)` → `undefined`
      - `buildAgentPayload({ visit_count: -5 })` → `{ stats: { visits: 0 } }`
   3. 使用 `vitest` 或 `jest`
+- **修復狀態（2025-12-05 23:55）**：新增 `api/community/__tests__/wall.test.ts`，涵蓋 `cleanText`、`normalizeCount`、`buildAgentPayload`、`transformReviewRecord`，`npx vitest run api/community/__tests__/wall.test.ts` ✅。
 
 **問題 6: Error Handling 不完整**
 ```typescript
@@ -172,6 +184,7 @@ if (error) {
     );
   }
   ```
+- **修復狀態（2025-12-05 23:55）**：新建 `ReviewFetchError` 類別，`fetchReviewRows` / `fetchPropertyMap` / `fetchAgentMap` 若出錯即拋出該類別，handler 會統一回傳 `502 + code + hint/details`。
 
 #### 📝 輕微問題（有空時改）
 
@@ -190,6 +203,7 @@ const REVIEW_SELECT_FIELDS = `...`;  // 42 行字串硬編碼
     ')'
   ].join('\n');
   ```
+- **修復狀態（2025-12-05 23:55）**：新增 `buildReviewSelectFields()` 建立 `REVIEW_SELECT_FIELDS`，避免未來欄位增加時需要直接碰長字串。
 
 ### 修復品質評估
 

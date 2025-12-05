@@ -6,7 +6,8 @@
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient, type PostgrestError } from '@supabase/supabase-js';
+import { z } from 'zod';
 
 // 延遲初始化 Supabase client，避免模組載入時因環境變數缺失而崩潰
 let supabase: SupabaseClient | null = null;
@@ -28,53 +29,129 @@ function getSupabase(): SupabaseClient {
 // 非會員可見數量
 const GUEST_LIMIT = 2;
 
-const REVIEW_SELECT_FIELDS = `
-  id,
-  community_id,
-  property_id,
-  source,
-  advantage_1,
-  advantage_2,
-  disadvantage,
-  created_at,
-  property:properties!community_reviews_property_id_fkey (
-    title,
-    agent:agents!properties_agent_id_fkey (
-      id,
-      name,
-      company,
-      visit_count,
-      deal_count
-    )
-  )
-`;
+const WALL_QUERY_TYPES = ['posts', 'reviews', 'questions', 'all'] as const;
+type WallQueryType = (typeof WALL_QUERY_TYPES)[number];
 
-type ReviewAgentRow = {
-  id?: string | null;
-  name?: string | null;
-  company?: string | null;
-  visit_count?: number | null;
-  deal_count?: number | null;
-};
+const VISIBILITY_FILTERS = ['public', 'private'] as const;
+type VisibilityFilter = (typeof VISIBILITY_FILTERS)[number];
 
-type ReviewPropertyRow = {
-  title?: string | null;
-  agent?: ReviewAgentRow | null;
-};
+const CommunityWallQuerySchema = z.object({
+  communityId: z.string().uuid(),
+  type: z.enum(WALL_QUERY_TYPES).optional().default('all'),
+  visibility: z.enum(VISIBILITY_FILTERS).optional().default('public'),
+  includePrivate: z.preprocess(
+    value => {
+      if (typeof value === 'string') {
+        return value === '1' || value.toLowerCase() === 'true';
+      }
+      if (Array.isArray(value)) {
+        return value[0] === '1' || value[0]?.toLowerCase() === 'true';
+      }
+      return Boolean(value);
+    },
+    z.boolean().optional().default(false)
+  ),
+});
 
-type ReviewRecord = {
-  id: string;
-  community_id: string;
-  property_id: string | null;
-  source: string | null;
-  advantage_1: string | null;
-  advantage_2: string | null;
-  disadvantage: string | null;
-  created_at: string;
-  property?: ReviewPropertyRow | null;
-};
+const REVIEW_SELECT_FIELDS = buildReviewSelectFields();
 
-interface ReviewResponseItem {
+class ReviewFetchError extends Error {
+  constructor(
+    public code: string,
+    message: string,
+    public originalError?: PostgrestError | Error
+  ) {
+    super(message);
+    this.name = 'ReviewFetchError';
+  }
+}
+
+function coerceQueryValue(value: string | string[] | undefined): string | undefined {
+  if (Array.isArray(value)) {
+    return value[0];
+  }
+  return value;
+}
+
+function normalizeQueryParams(query: VercelRequest['query']) {
+  return {
+    communityId: coerceQueryValue(query.communityId),
+    type: coerceQueryValue(query.type),
+    visibility: coerceQueryValue(query.visibility),
+    includePrivate: coerceQueryValue(query.includePrivate),
+  };
+}
+
+function resolveSupabaseErrorDetails(error: unknown) {
+  if (error && typeof error === 'object' && 'code' in error) {
+    const supabaseError = error as PostgrestError;
+    return {
+      code: supabaseError.code ?? null,
+      details: supabaseError.details ?? null,
+      hint: supabaseError.hint ?? null,
+      message: supabaseError.message ?? null,
+    };
+  }
+
+  if (error instanceof Error) {
+    return {
+      code: null,
+      details: error.message,
+      hint: null,
+      message: error.message,
+    };
+  }
+
+  return {
+    code: null,
+    details: null,
+    hint: null,
+    message: null,
+  };
+}
+
+function buildReviewSelectFields(): string {
+  return [
+    'id',
+    'community_id',
+    'property_id',
+    'source',
+    'advantage_1',
+    'advantage_2',
+    'disadvantage',
+    'created_at',
+  ].join(', ');
+}
+
+const ReviewRowSchema = z.object({
+  id: z.string().uuid(),
+  community_id: z.string().uuid(),
+  property_id: z.string().uuid().nullable(),
+  source: z.string().nullable(),
+  advantage_1: z.string().nullable(),
+  advantage_2: z.string().nullable(),
+  disadvantage: z.string().nullable(),
+  created_at: z.string(),
+});
+export type ReviewRow = z.infer<typeof ReviewRowSchema>;
+
+const PropertyRowSchema = z.object({
+  id: z.string().uuid(),
+  title: z.string().nullable(),
+  agent_id: z.string().uuid().nullable(),
+});
+export type PropertyRow = z.infer<typeof PropertyRowSchema>;
+
+const AgentRowSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string().nullable(),
+  company: z.string().nullable(),
+  visit_count: z.number().nullable().optional(),
+  deal_count: z.number().nullable().optional(),
+});
+export type AgentRow = z.infer<typeof AgentRowSchema>;
+
+export interface ReviewResponseItem {
   id: string;
   community_id: string;
   property_id: string | null;
@@ -89,23 +166,34 @@ interface ReviewResponseItem {
   agent?: {
     name: string;
     company?: string;
-    stats?: {
+    stats: {
       visits: number;
       deals: number;
     };
   };
 }
 
+/**
+ * 移除前後空白並確保回傳字串永遠存在，避免前端渲染 undefined。
+ */
 const cleanText = (value: string | null | undefined): string => (value ?? '').trim();
 
+/**
+ * 正規化房仲統計數字，遇到 null / NaN / 負值時回傳 0，避免 UI 出現異常數據。
+ */
 const normalizeCount = (value: number | null | undefined): number => {
-  if (typeof value !== 'number' || Number.isNaN(value)) {
+  if (typeof value !== 'number' || Number.isNaN(value) || value < 0) {
     return 0;
   }
-  return value < 0 ? 0 : value;
+  return value;
 };
 
-const buildAgentPayload = (agentRow?: ReviewAgentRow | null) => {
+/**
+ * 建立前端使用的房仲資訊 payload，確保缺漏欄位也能顯示友善文字。
+ * @param agentRow Supabase agents 資料列
+ * @returns 房仲資訊（含 stats）或 undefined
+ */
+const buildAgentPayload = (agentRow?: AgentRow | null) => {
   if (!agentRow) {
     return undefined;
   }
@@ -114,45 +202,82 @@ const buildAgentPayload = (agentRow?: ReviewAgentRow | null) => {
     name: agentRow.name || '認證房仲',
     company: agentRow.company || '',
     stats: {
-      visits: normalizeCount(agentRow.visit_count),
-      deals: normalizeCount(agentRow.deal_count),
+      visits: normalizeCount(agentRow.visit_count ?? undefined),
+      deals: normalizeCount(agentRow.deal_count ?? undefined),
     },
   };
 };
 
-const transformReviewRecord = (record: ReviewRecord): ReviewResponseItem => {
+/**
+ * 將單筆 review row 合併 property / agent map，輸出給前端的結構。
+ * @param record 原始評價資料列
+ * @param propertyMap 查詢後的房源快取
+ * @param agentMap 查詢後的房仲快取
+ */
+const transformReviewRecord = (
+  record: ReviewRow,
+  propertyMap: Map<string, PropertyRow>,
+  agentMap: Map<string, AgentRow>
+): ReviewResponseItem => {
   const pros = [record.advantage_1, record.advantage_2]
     .map(value => cleanText(value))
-    .filter(value => Boolean(value));
+    .filter(Boolean);
 
   const cons = cleanText(record.disadvantage);
-  const propertyTitle = record.property?.title ?? null;
+  const property = record.property_id ? propertyMap.get(record.property_id) : undefined;
+  const agent = property?.agent_id ? agentMap.get(property.agent_id) : undefined;
   const source = record.source || 'agent';
-  const agentPayload = buildAgentPayload(record.property?.agent);
+  const agentPayload = buildAgentPayload(agent);
   const fallbackAgent = agentPayload ?? (source === 'resident'
-    ? { name: '住戶', company: '' }
+    ? {
+        name: '住戶',
+        company: '',
+        stats: {
+          visits: 0,
+          deals: 0,
+        },
+      }
     : undefined);
 
   return {
     id: record.id,
     community_id: record.community_id,
     property_id: record.property_id,
-    author_id: record.property?.agent?.id ?? null,
+    author_id: property?.agent_id ?? null,
     source,
     content: {
       pros,
       cons,
-      property_title: propertyTitle,
+      property_title: property?.title ?? null,
     },
     created_at: record.created_at,
     agent: fallbackAgent,
   };
 };
 
+/**
+ * 以多階段查詢取得評價與對應房仲資訊，確保未建好關聯時也能回傳資料。
+ * @throws ReviewFetchError 當任一步驟查詢失敗時拋出
+ */
 async function fetchReviewsWithAgents(
   communityId: string,
   limit?: number
 ): Promise<{ items: ReviewResponseItem[]; total: number }> {
+  const { rows, total } = await fetchReviewRows(communityId, limit);
+  if (!rows.length) {
+    return { items: [], total };
+  }
+
+  const propertyMap = await fetchPropertyMap(rows);
+  const agentMap = await fetchAgentMap(propertyMap);
+  const items = rows.map(row => transformReviewRecord(row, propertyMap, agentMap));
+  return { items, total };
+}
+
+/**
+ * 取得原始評價列表，並以 Zod 驗證資料。
+ */
+async function fetchReviewRows(communityId: string, limit?: number) {
   let query = getSupabase()
     .from('community_reviews')
     .select(REVIEW_SELECT_FIELDS, { count: 'exact' })
@@ -164,17 +289,85 @@ async function fetchReviewsWithAgents(
   }
 
   const { data, error, count } = await query;
-
   if (error) {
-    throw error;
+    throw new ReviewFetchError('REVIEW_FETCH_FAILED', '無法載入社區評價資料', error);
   }
 
-  const items = (data as ReviewRecord[] | null)?.map(transformReviewRecord) ?? [];
+  const rows = ReviewRowSchema.array().parse(data ?? []);
   return {
-    items,
-    total: typeof count === 'number' ? count : items.length,
+    rows,
+    total: typeof count === 'number' ? count : rows.length,
   };
 }
+
+/**
+ * 查詢與評價相關的房源，並建成快取 map。
+ */
+async function fetchPropertyMap(rows: ReviewRow[]): Promise<Map<string, PropertyRow>> {
+  const propertyIds = Array.from(
+    new Set(rows.map(row => row.property_id).filter((id): id is string => Boolean(id)))
+  );
+
+  if (!propertyIds.length) {
+    return new Map();
+  }
+
+  const { data, error } = await getSupabase()
+    .from('properties')
+    .select('id, title, agent_id')
+    .in('id', propertyIds);
+
+  if (error) {
+    throw new ReviewFetchError('PROPERTY_FETCH_FAILED', '無法載入房源資料', error);
+  }
+
+  const parsed = PropertyRowSchema.array().parse(data ?? []);
+  return new Map(parsed.map(property => [property.id, property]));
+}
+
+/**
+ * 查詢房仲資訊並處理欄位尚未建立時的降級情境。
+ */
+async function fetchAgentMap(propertyMap: Map<string, PropertyRow>): Promise<Map<string, AgentRow>> {
+  const agentIds = Array.from(
+    new Set(
+      Array.from(propertyMap.values())
+        .map(property => property.agent_id)
+        .filter((id): id is string => Boolean(id))
+    )
+  );
+
+  if (!agentIds.length) {
+    return new Map();
+  }
+
+  const selectAgents = (fields: string) =>
+    getSupabase()
+      .from('agents')
+      .select(fields)
+      .in('id', agentIds);
+
+  let { data, error } = await selectAgents('id, name, company, visit_count, deal_count');
+
+  if (error?.code === '42703') {
+    // DB 尚未加入 visit/deal 欄位時的容錯：降級為不含統計的查詢
+    ({ data, error } = await selectAgents('id, name, company'));
+  }
+
+  if (error) {
+    throw new ReviewFetchError('AGENT_FETCH_FAILED', '無法載入房仲資料', error);
+  }
+
+  const parsed = AgentRowSchema.array().parse(data ?? []);
+  return new Map(parsed.map(agent => [agent.id, agent]));
+}
+
+export const __reviewTestHelpers = {
+  cleanText,
+  normalizeCount,
+  buildAgentPayload,
+  transformReviewRecord,
+};
 
 type ViewerRole = 'guest' | 'member' | 'resident' | 'agent';
 
@@ -236,13 +429,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(200).end();
   }
 
-  const { communityId, type, visibility, includePrivate } = req.query;
-  const wantsPrivate = includePrivate === '1' || includePrivate === 'true';
+  const queryParseResult = CommunityWallQuerySchema.safeParse(normalizeQueryParams(req.query));
 
-  if (!communityId) {
-    return res.status(400).json({ error: '缺少 communityId' });
+  if (!queryParseResult.success) {
+    return res.status(400).json({
+      success: false,
+      error: '查詢參數格式錯誤',
+      code: 'INVALID_QUERY',
+      details: queryParseResult.error.flatten(),
+    });
   }
-  const communityIdStr = communityId as string;
+
+  const { communityId: communityIdStr, includePrivate: wantsPrivate } = queryParseResult.data;
+  const requestType: WallQueryType = queryParseResult.data.type;
+  const visibilityFilter: VisibilityFilter = queryParseResult.data.visibility;
 
   // 檢查登入狀態
   const authHeader = req.headers.authorization;
@@ -264,9 +464,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const isAuthenticated = viewerRole !== 'guest';
 
   try {
-    switch (type) {
+    switch (requestType) {
       case 'posts':
-        return await getPosts(res, communityIdStr, visibility as string, viewerRole, canAccessPrivate);
+        return await getPosts(res, communityIdStr, visibilityFilter, viewerRole, canAccessPrivate);
       case 'reviews':
         return await getReviews(res, communityIdStr, isAuthenticated);
       case 'questions':
@@ -275,14 +475,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       default:
         return await getAll(res, communityIdStr, viewerRole, wantsPrivate, canAccessPrivate);
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
+    if (error instanceof ReviewFetchError) {
+      const formatted = resolveSupabaseErrorDetails(error.originalError);
+      return res.status(502).json({
+        success: false,
+        error: error.message,
+        code: error.code,
+        hint: formatted.hint,
+        details: formatted.details,
+        cause: formatted.message,
+      });
+    }
+
     console.error('API Error:', error);
-    // 返回更詳細的錯誤訊息用於除錯
-    return res.status(500).json({ 
-      error: error.message,
-      hint: error.hint || null,
-      details: error.details || null,
-      code: error.code || null
+    return res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : '未知錯誤',
     });
   }
 }
@@ -291,7 +500,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 async function getPosts(
   res: VercelResponse,
   communityId: string,
-  visibility: string = 'public',
+  visibility: VisibilityFilter,
   viewerRole: ViewerRole,
   canAccessPrivate: boolean
 ) {
@@ -411,7 +620,7 @@ async function getAll(
   res: VercelResponse,
   communityId: string,
   viewerRole: ViewerRole,
-  includePrivate: boolean = false,
+  includePrivate: boolean,
   canAccessPrivate: boolean
 ) {
   const isAuthenticated = viewerRole !== 'guest';
