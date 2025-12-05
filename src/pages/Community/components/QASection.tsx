@@ -26,9 +26,9 @@ interface QACardProps {
 function QACard({ q, perm, isUnanswered = false, onAnswer, isAnswering, onUnlock, hideUnlockButton = false }: QACardProps) {
   const displayTime = formatRelativeTimeLabel(q.time);
   return (
-    <article className={`rounded-[14px] border p-3.5 transition-all hover:border-brand/15 ${isUnanswered ? 'border-brand-light/30 bg-gradient-to-br from-brand-50 to-brand-100/30' : 'border-border-light bg-white'}`}>
-      <div className="mb-2 text-sm font-bold leading-snug text-brand-700">Q: {q.question}</div>
-      <div className="mb-2.5 flex flex-wrap items-center gap-2 text-[11px] text-ink-600">
+    <article className={`rounded-[12px] border p-3 transition-all hover:border-brand/15 ${isUnanswered ? 'border-brand-light/30 bg-gradient-to-br from-brand-50 to-brand-100/30' : 'border-border-light bg-white'}`}>
+      <div className="mb-1.5 text-[13px] font-bold leading-snug text-brand-700">Q: {q.question}</div>
+      <div className="mb-2 flex flex-wrap items-center gap-1.5 text-[11px] text-ink-600">
         <span>👤 準住戶</span>
         <span>· {displayTime}</span>
         {isUnanswered ? (
@@ -43,10 +43,10 @@ function QACard({ q, perm, isUnanswered = false, onAnswer, isAnswering, onUnlock
           🙋 還沒有人回答，成為第一個回答的人！
         </div>
       ) : (
-        <div className="flex flex-col gap-2 border-l-[3px] border-border-light pl-3.5">
+        <div className="flex flex-col gap-1.5 border-l-[3px] border-border-light pl-3">
           {q.answers.map((a, idx) => (
-            <div key={idx} className="py-2 text-[13px] leading-relaxed">
-              <div className="mb-1 flex flex-wrap items-center gap-1.5">
+            <div key={idx} className="py-1.5 text-[12px] leading-relaxed">
+              <div className="mb-1 flex flex-wrap items-center gap-1">
                 <span className={`rounded px-2 py-0.5 text-[10px] font-bold ${a.type === 'agent' ? 'bg-brand-100 text-brand-600' : a.type === 'official' ? 'bg-brand-50 text-brand' : 'bg-brand-100 text-brand'}`}>
                   {a.type === 'agent' ? '🏢 認證房仲' : a.type === 'official' ? `📋 ${a.author}` : `🏠 ${a.author}`}
                 </span>
@@ -75,7 +75,7 @@ function QACard({ q, perm, isUnanswered = false, onAnswer, isAnswering, onUnlock
       )}
 
       {perm.canAnswer && (
-        <div className="mt-2.5">
+        <div className="mt-2">
           <button 
             type="button"
             className={`flex w-full items-center justify-center gap-1 rounded-lg border px-2.5 py-1.5 text-[11px] font-semibold transition-all ${isUnanswered ? 'border-brand-light/30 bg-brand-light/10 text-brand-600' : 'border-brand/10 bg-brand/6 text-brand'} hover:bg-brand/12`}
@@ -463,7 +463,7 @@ export function QASection({ role, questions: questionsProp, onAskQuestion, onAns
 
         {/* 訪客固定顯示註冊 CTA，即使沒有隱藏項目，提示可解鎖更多問答 */}
         {showGuestUnlockCta && onUnlock && (
-          <div className="rounded-[14px] border border-brand/10 bg-brand/4 p-3.5 text-center">
+          <div className="rounded-[12px] border border-brand/10 bg-brand/4 p-3 text-center">
             <div className="text-sm font-bold text-brand-700">免費註冊 / 登入</div>
             <p className="mt-1 text-[12px] text-ink-600">
               {remainingAnsweredCount > 0
