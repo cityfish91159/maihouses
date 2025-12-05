@@ -641,20 +641,6 @@ async function getQuestions(
 
   if (error) throw error;
 
-  // 非會員：隱藏部分回答內容
-  if (!isAuthenticated && data) {
-    data.forEach((q: any) => {
-      if (q.answers && q.answers.length > 1) {
-        // 只顯示第一則回答，其餘截斷
-        q.answers = q.answers.slice(0, 1).map((a: any) => ({
-          ...a,
-          answer: a.answer.slice(0, 50) + '...'
-        }));
-        q.hasMoreAnswers = true;
-      }
-    });
-  }
-
   return res.status(200).json({
     success: true,
     data,
@@ -756,19 +742,12 @@ async function getAll(
     forSale: null,
   } : null;
 
-  // 轉換 questions 格式：確保 answers 的 content 欄位正確
-  // 非會員：每個問題只顯示前 2 則回答
-  const GUEST_ANSWERS_LIMIT = 2;
+  // 轉換 questions 格式：確保 answers 的 content 欄位正確（不再對未登入者截斷回答）
   const transformedQuestions = (questionsResult.data || []).map((q: any) => {
     const allAnswers = q.answers || [];
-    const limitedAnswers = !isAuthenticated && allAnswers.length > GUEST_ANSWERS_LIMIT
-      ? allAnswers.slice(0, GUEST_ANSWERS_LIMIT)
-      : allAnswers;
-    const hasMoreAnswers = !isAuthenticated && allAnswers.length > GUEST_ANSWERS_LIMIT;
-    
     return {
       ...q,
-      answers: limitedAnswers.map((a: any) => ({
+      answers: allAnswers.map((a: any) => ({
         id: a.id,
         author_id: a.author_id,
         content: a.answer, // DB 欄位是 answer，前端期望 content
@@ -782,7 +761,7 @@ async function getAll(
           role: a.author_type,
         },
       })),
-      hasMoreAnswers,
+      hasMoreAnswers: false,
       totalAnswers: allAnswers.length,
     };
   });
