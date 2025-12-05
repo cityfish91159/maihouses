@@ -19,9 +19,11 @@ interface QACardProps {
   onAnswer?: (question: Question) => void;
   isAnswering?: boolean;
   onUnlock?: () => void;
+  /** 當卡片在 LockedOverlay 內時，不顯示內部的解鎖按鈕 */
+  hideUnlockButton?: boolean;
 }
 
-function QACard({ q, perm, isUnanswered = false, onAnswer, isAnswering, onUnlock }: QACardProps) {
+function QACard({ q, perm, isUnanswered = false, onAnswer, isAnswering, onUnlock, hideUnlockButton = false }: QACardProps) {
   const displayTime = formatRelativeTimeLabel(q.time);
   return (
     <article className={`rounded-[14px] border p-3.5 transition-all hover:border-brand/15 ${isUnanswered ? 'border-brand-light/30 bg-gradient-to-br from-brand-50 to-brand-100/30' : 'border-border-light bg-white'}`}>
@@ -54,8 +56,8 @@ function QACard({ q, perm, isUnanswered = false, onAnswer, isAnswering, onUnlock
             </div>
           ))}
           
-          {/* 非會員：顯示「還有 X 則回答」+ 註冊按鈕 */}
-          {q.hasMoreAnswers && q.totalAnswers && (
+          {/* 非會員：顯示「還有 X 則回答」+ 註冊按鈕（但在 LockedOverlay 內不顯示） */}
+          {!hideUnlockButton && q.hasMoreAnswers && q.totalAnswers && (
             <div className="mt-2 rounded-lg border border-brand/10 bg-gradient-to-r from-brand-50 to-brand-100/50 p-3 text-center">
               <p className="mb-2 text-[13px] text-ink-700">
                 🔒 還有 <span className="font-bold text-brand">{q.totalAnswers - q.answers.length}</span> 則回答
@@ -451,7 +453,7 @@ export function QASection({ role, questions: questionsProp, onAskQuestion, onAns
               perm={perm}
               onAnswer={openAnswerModal}
               isAnswering={submitting === 'answer' && activeQuestion?.id === nextHiddenQuestion.id}
-              {...(onUnlock && { onUnlock })}
+              hideUnlockButton
             />
           )}
         </LockedOverlay>
