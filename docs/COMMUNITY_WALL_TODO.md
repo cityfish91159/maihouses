@@ -13,7 +13,7 @@
 | P0-2 | 移除 API 錯誤自動切換 Mock | ✅ 已修復 |
 | P0-3 | `/api/log-error` 端點不存在 | ✅ 已建立 |
 | P0-4 | 後端權限只判斷「有沒有登入」 | ✅ 已查詢 `community_members` |
-| UI-1 | 版本浮水印 + 手動 Mock fallback CTA | ✅ `VersionBadge` + 「改用示範資料」鈕 |
+| UI-1 | 版本浮水印 + 手動 Mock fallback CTA | ✅ `VersionBadge` + 「改用示範資料」鈕（新增 override，切回 API 後仍可再啟用 Mock） |
 
 ### ⏳ 待人工操作
 | # | 項目 | 動作 |

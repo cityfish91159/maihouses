@@ -34,6 +34,7 @@ import { useCommunityWallData } from '../../hooks/useCommunityWallData';
 const MOCK_PARAM = 'mock';
 const ROLE_PARAM = 'role';
 const MOCK_STORAGE_KEY = 'community-wall-use-mock';
+const MOCK_OVERRIDE_KEY = 'community-wall-mock-override';
 const ROLE_STORAGE_KEY = 'community-wall-dev-role';
 const VALID_ROLES: Role[] = ['guest', 'member', 'resident', 'agent'];
 const GLOBAL_MOCK_TOGGLE_ENABLED = import.meta.env.DEV || import.meta.env.VITE_COMMUNITY_WALL_ALLOW_MOCK === 'true';
@@ -110,21 +111,35 @@ function WallInner() {
     );
   }
 
-  // 初始化 useMock：優先順序 URL > localStorage > false
-  const initialUseMock = useMemo(() => {
+  // 初始化 mock/override：URL > override > 儲存偏好
+  const initialMockState = useMemo(() => {
     const urlParam = parseBoolParam(searchParamsRef.current.get(MOCK_PARAM));
-    if (urlParam !== null) {
-      return urlParam;
-    }
+    const storedOverride = safeGetBoolean(MOCK_OVERRIDE_KEY, false);
     const storedPreference = safeGetBoolean(MOCK_STORAGE_KEY, false);
+
+    if (urlParam !== null) {
+      return {
+        useMock: urlParam,
+        override: storedOverride || urlParam,
+      };
+    }
+
+    if (storedOverride) {
+      return { useMock: true, override: true };
+    }
+
     if (storedPreference) {
-      return true;
+      const treatAsOverride = !GLOBAL_MOCK_TOGGLE_ENABLED;
+      return {
+        useMock: true,
+        override: treatAsOverride,
+      };
     }
-    if (!GLOBAL_MOCK_TOGGLE_ENABLED) {
-      return false;
-    }
-    return storedPreference;
+
+    return { useMock: false, override: false };
   }, []);
+
+  const initialUseMock = initialMockState.useMock;
 
   // 初始化 role：僅開發環境從 URL/localStorage 讀取
   const initialRole = useMemo<Role>(() => {
@@ -143,11 +158,13 @@ function WallInner() {
   }, []);
 
   const [role, setRoleInternal] = useState<Role>(initialRole);
+  const [hasMockOverride, setHasMockOverride] = useState(initialMockState.override);
   const [currentTab, setCurrentTab] = useState<WallTab>('public');
   const [isReloading, setIsReloading] = useState(false);
   const [localStorageError, setLocalStorageError] = useState<string | null>(null);
   const perm = getPermissions(role);
   const allowManualMockToggle = GLOBAL_MOCK_TOGGLE_ENABLED;
+  const canToggleMock = allowManualMockToggle || hasMockOverride;
 
   // 統一資料來源 Hook
   const { 
@@ -166,7 +183,7 @@ function WallInner() {
     includePrivate: perm.canAccessPrivate,
     initialUseMock, // 傳入初始值
   });
-  const mockToggleDisabled = !allowManualMockToggle && !useMock;
+  const mockToggleDisabled = !canToggleMock && !useMock;
 
   // 生產環境依後端角色自動對齊權限
   useEffect(() => {
@@ -191,17 +208,36 @@ function WallInner() {
     }
   }, [setUseMockInternal, setSearchParams]);
 
+  const persistMockOverride = useCallback((value: boolean) => {
+    setHasMockOverride(value);
+    const result = safeSetBoolean(MOCK_OVERRIDE_KEY, value);
+    if (!result.success) {
+      setLocalStorageError(`無法更新 Mock 權限：${result.error}`);
+      if (import.meta.env.PROD) {
+        console.error('[CommunityWall] Failed to persist mock override', result.error);
+      }
+    } else {
+      setLocalStorageError(null);
+    }
+  }, [setLocalStorageError]);
+
   const setUseMock = useCallback((value: boolean) => {
-    if (value && !allowManualMockToggle) {
+    if (value && !canToggleMock) {
       setLocalStorageError('Mock 模式僅限內部測試使用');
       return;
     }
     persistMockPreference(value);
-  }, [allowManualMockToggle, persistMockPreference]);
+    if (value && !hasMockOverride) {
+      persistMockOverride(true);
+    }
+  }, [canToggleMock, persistMockPreference, hasMockOverride, persistMockOverride]);
 
   const forceEnableMock = useCallback(() => {
+    if (!hasMockOverride) {
+      persistMockOverride(true);
+    }
     persistMockPreference(true);
-  }, [persistMockPreference]);
+  }, [hasMockOverride, persistMockOverride, persistMockPreference]);
 
   // 包裝 setRole，同步 URL 和 localStorage（僅開發環境）
   const setRole = useCallback((newRole: Role) => {
@@ -225,12 +261,20 @@ function WallInner() {
   }, [localStorageError]);
 
   useEffect(() => {
-    if (!allowManualMockToggle) return;
     const urlValue = parseBoolParam(searchParams.get(MOCK_PARAM));
-    if (urlValue !== null && urlValue !== useMock) {
+    if (urlValue === null) {
+      return;
+    }
+    if (urlValue && !hasMockOverride) {
+      persistMockOverride(true);
+    }
+    if (!urlValue && hasMockOverride) {
+      persistMockOverride(false);
+    }
+    if (urlValue !== useMock) {
       setUseMockInternal(urlValue);
     }
-  }, [allowManualMockToggle, searchParams, setUseMockInternal, useMock]);
+  }, [hasMockOverride, persistMockOverride, searchParams, setUseMockInternal, useMock]);
 
   useEffect(() => {
     if (!import.meta.env.DEV) return;
@@ -245,13 +289,16 @@ function WallInner() {
     const handleStorage = (event: StorageEvent) => {
       if (event.storageArea !== window.localStorage || event.newValue === null) return;
       if (event.key === MOCK_STORAGE_KEY) {
-        if (!allowManualMockToggle) {
-          return;
-        }
         const parsed = parseBoolParam(event.newValue);
         if (parsed !== null && parsed !== useMock) {
           setUseMockInternal(parsed);
         }
+        return;
+      }
+      if (event.key === MOCK_OVERRIDE_KEY) {
+        const parsedOverride = parseBoolParam(event.newValue);
+        setHasMockOverride(Boolean(parsedOverride));
+        return;
       }
       if (import.meta.env.DEV && event.key === ROLE_STORAGE_KEY) {
         const parsedRole = parseRoleParam(event.newValue);
@@ -262,7 +309,7 @@ function WallInner() {
     };
     window.addEventListener('storage', handleStorage);
     return () => window.removeEventListener('storage', handleStorage);
-  }, [allowManualMockToggle, role, setRoleInternal, setUseMockInternal, useMock]);
+  }, [role, setRoleInternal, setUseMockInternal, useMock]);
 
   const handleUnlock = useCallback(() => {
     navigate('/auth');

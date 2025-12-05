@@ -8,7 +8,7 @@
 |----------|------|------|
 | Build metadata | `vite.config.ts`, `src/types/global.d.ts`, `src/lib/version.ts` | 建置時注入 `__APP_VERSION__` / `__BUILD_TIME__`，供版本徽章顯示 commit 與建置時間。 |
 | VersionBadge | `src/pages/Community/components/VersionBadge.tsx`, `components/index.ts` | 新增固定在畫面右下角的版本徽章（含 inline 變體），QA 可立即辨識目前部署。 |
-| 手動 fallback CTA | `src/pages/Community/Wall.tsx` | API 錯誤畫面加入「🧪 改用示範資料」按鈕、版本徽章，並調整 `initialUseMock` / localStorage 邏輯讓生產環境也可手動切換 Mock。 |
+| 手動 fallback CTA | `src/pages/Community/Wall.tsx` | API 錯誤畫面加入「🧪 改用示範資料」按鈕、版本徽章，並調整 `initialUseMock` / localStorage / override 邏輯：即使切換回 API，也能再次啟用 Mock。 |
 | 文件同步 | `docs/COMMUNITY_WALL_TODO.md`, `docs/COMMUNITY_WALL_DEV_LOG.md` | TODO 加註 UI-1 完成，DEV LOG 記錄本次修補。 |
 
 ### 驗證
