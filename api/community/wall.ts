@@ -36,7 +36,7 @@ const VISIBILITY_FILTERS = ['public', 'private'] as const;
 type VisibilityFilter = (typeof VISIBILITY_FILTERS)[number];
 
 const CommunityWallQuerySchema = z.object({
-  communityId: z.string().uuid(),
+  communityId: z.string().min(1),
   type: z.enum(WALL_QUERY_TYPES).optional().default('all'),
   visibility: z.enum(VISIBILITY_FILTERS).optional().default('public'),
   includePrivate: z.preprocess(
