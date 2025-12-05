@@ -458,30 +458,35 @@ export function QASection({ role, questions: questionsProp, onAskQuestion, onAns
           )}
         </LockedOverlay>
 
-        {/* 無回答的問題 */}
-        {unansweredQuestions.map(q => (
-          <QACard
-            key={q.id}
-            q={q}
-            perm={perm}
-            isUnanswered
-            onAnswer={openAnswerModal}
-            isAnswering={submitting === 'answer' && activeQuestion?.id === q.id}
-            {...(onUnlock && { onUnlock })}
-          />
-        ))}
-
-        {/* 發問區塊 */}
+        {/* 底部 CTA + 未回答問題列表（模仿 mock：上半段 CTA，下半段未回答題） */}
         <div className="rounded-[14px] border border-dashed border-border-light bg-brand/3 p-3.5">
-          <div className="mb-2 text-sm font-bold text-ink-600">💬 你也有問題想問？</div>
-          <p className="mb-2 text-xs text-ink-600">問題會通知該社區住戶，通常 24 小時內會有回覆</p>
-          <button
-            type="button"
-            onClick={openAskModal}
-            className="flex w-full items-center justify-center gap-1 rounded-lg border border-brand/10 bg-brand/6 px-2.5 py-1.5 text-[11px] font-semibold text-brand transition hover:bg-brand/12"
-          >
-            {perm.canAskQuestion ? '我想問問題' : '登入後發問'}
-          </button>
+          <div className="mb-3 flex flex-col gap-1">
+            <div className="text-sm font-bold text-ink-600">💬 你也有問題想問？</div>
+            <p className="text-xs text-ink-600">問題會通知該社區住戶，通常 24 小時內會有回覆</p>
+            <button
+              type="button"
+              onClick={openAskModal}
+              className="flex w-full items-center justify-center gap-1 rounded-lg border border-brand/10 bg-brand/6 px-2.5 py-1.5 text-[11px] font-semibold text-brand transition hover:bg-brand/12"
+            >
+              {perm.canAskQuestion ? '我想問問題' : '登入後發問'}
+            </button>
+          </div>
+
+          {unansweredQuestions.length > 0 && (
+            <div className="mt-3 space-y-2">
+              {unansweredQuestions.map(q => (
+                <QACard
+                  key={q.id}
+                  q={q}
+                  perm={perm}
+                  isUnanswered
+                  onAnswer={openAnswerModal}
+                  isAnswering={submitting === 'answer' && activeQuestion?.id === q.id}
+                  {...(onUnlock && { onUnlock })}
+                />
+              ))}
+            </div>
+          )}
         </div>
 
         {feedback && (
