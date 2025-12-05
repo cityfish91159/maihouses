@@ -691,7 +691,11 @@ async function getAll(
     privatePostsQuery,
     
     // Reviews: 取得帶房仲統計資訊的評價
-    fetchReviewsWithAgents(communityId, reviewLimit),
+    // 若評價表缺資料或異常，不要整個 API 502，回傳空列表即可
+    fetchReviewsWithAgents(communityId, reviewLimit).catch(err => {
+      console.error('[community/wall] fetchReviewsWithAgents failed:', err);
+      return { items: [], total: 0 };
+    }),
     
     // Questions: 取得問答與回覆
     getSupabase()
