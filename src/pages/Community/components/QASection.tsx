@@ -129,6 +129,8 @@ export function QASection({ role, questions: questionsProp, onAskQuestion, onAns
   const { visible: visibleAnswered, hiddenCount, nextHidden: nextHiddenQuestion } = 
     useGuestVisibleItems(answeredQuestions, perm.isLoggedIn);
 
+  const showGuestUnlockCta = !perm.isLoggedIn;
+
   const MIN_QUESTION_LENGTH = 10;
   const MIN_ANSWER_LENGTH = 5;
 
@@ -457,6 +459,21 @@ export function QASection({ role, questions: questionsProp, onAskQuestion, onAns
             />
           )}
         </LockedOverlay>
+
+        {/* 訪客固定顯示註冊 CTA，即使沒有隱藏項目，提示可解鎖更多問答 */}
+        {showGuestUnlockCta && onUnlock && (
+          <div className="rounded-[14px] border border-brand/10 bg-brand/4 p-3.5 text-center">
+            <div className="text-sm font-bold text-brand-700">免費註冊 / 登入</div>
+            <p className="mt-1 text-[12px] text-ink-600">解鎖更多問答、追蹤最新回覆</p>
+            <button
+              type="button"
+              onClick={onUnlock}
+              className="mt-2 w-full rounded-lg bg-brand px-3 py-2 text-[12px] font-semibold text-white shadow-sm transition hover:bg-brand-dark"
+            >
+              立即解鎖
+            </button>
+          </div>
+        )}
 
         {/* 底部 CTA + 未回答問題列表（模仿 mock：上半段 CTA，下半段未回答題） */}
         <div className="rounded-[14px] border border-dashed border-border-light bg-brand/3 p-3.5">

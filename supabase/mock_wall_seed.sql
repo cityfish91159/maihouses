@@ -114,7 +114,7 @@ BEGIN
     '台北市信義區松壽路 9 號 20F',
     '高樓層景觀＋雙車位，全天候門廳管理。',
     ARRAY['https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=80'],
-    'maihouses',
+    'MH',
     'demo-property-888001',
     mock_community_id,
     '榮耀城示範社區',
