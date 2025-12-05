@@ -130,6 +130,7 @@ export function QASection({ role, questions: questionsProp, onAskQuestion, onAns
     useGuestVisibleItems(answeredQuestions, perm.isLoggedIn);
 
   const showGuestUnlockCta = !perm.isLoggedIn;
+  const shouldShowUnlockCta = !!onUnlock && (showGuestUnlockCta || hiddenCount > 0 || remainingAnsweredCount > 0);
   const remainingAnsweredCount = answeredQuestions.length - visibleAnswered.length;
 
   const MIN_QUESTION_LENGTH = 10;
@@ -462,7 +463,7 @@ export function QASection({ role, questions: questionsProp, onAskQuestion, onAns
         </LockedOverlay>
 
         {/* 訪客固定顯示註冊 CTA，即使沒有隱藏項目，提示可解鎖更多問答 */}
-        {showGuestUnlockCta && onUnlock && (
+        {shouldShowUnlockCta && (
           <div className="rounded-[12px] border border-brand/10 bg-brand/4 p-3 text-center">
             <div className="text-sm font-bold text-brand-700">免費註冊 / 登入</div>
             <p className="mt-1 text-[12px] text-ink-600">
@@ -494,10 +495,10 @@ export function QASection({ role, questions: questionsProp, onAskQuestion, onAns
             </button>
           </div>
 
-          {unansweredQuestions.length > 0 && (
-            <div className="mt-3 space-y-2">
-              <div className="text-[12px] font-semibold text-brand-700">還沒人回答的問題</div>
-              {unansweredQuestions.map(q => (
+          <div className="mt-3 space-y-2">
+            <div className="text-[12px] font-semibold text-brand-700">還沒人回答的問題</div>
+            {unansweredQuestions.length > 0 ? (
+              unansweredQuestions.map(q => (
                 <QACard
                   key={q.id}
                   q={q}
@@ -507,9 +508,13 @@ export function QASection({ role, questions: questionsProp, onAskQuestion, onAns
                   isAnswering={submitting === 'answer' && activeQuestion?.id === q.id}
                   {...(onUnlock && { onUnlock })}
                 />
-              ))}
-            </div>
-          )}
+              ))
+            ) : (
+              <div className="rounded-[10px] border border-dashed border-border-light bg-white/80 p-3 text-center text-[12px] text-ink-600">
+                目前沒有待回答的問題，登入後可解鎖更多或發問。
+              </div>
+            )}
+          </div>
         </div>
 
         {feedback && (
