@@ -130,6 +130,7 @@ export function QASection({ role, questions: questionsProp, onAskQuestion, onAns
     useGuestVisibleItems(answeredQuestions, perm.isLoggedIn);
 
   const showGuestUnlockCta = !perm.isLoggedIn;
+  const remainingAnsweredCount = answeredQuestions.length - visibleAnswered.length;
 
   const MIN_QUESTION_LENGTH = 10;
   const MIN_ANSWER_LENGTH = 5;
@@ -464,7 +465,11 @@ export function QASection({ role, questions: questionsProp, onAskQuestion, onAns
         {showGuestUnlockCta && onUnlock && (
           <div className="rounded-[14px] border border-brand/10 bg-brand/4 p-3.5 text-center">
             <div className="text-sm font-bold text-brand-700">免費註冊 / 登入</div>
-            <p className="mt-1 text-[12px] text-ink-600">解鎖更多問答、追蹤最新回覆</p>
+            <p className="mt-1 text-[12px] text-ink-600">
+              {remainingAnsweredCount > 0
+                ? `還有 ${remainingAnsweredCount} 則問答可解鎖，追蹤最新回覆`
+                : '解鎖更多問答、追蹤最新回覆'}
+            </p>
             <button
               type="button"
               onClick={onUnlock}
@@ -491,6 +496,7 @@ export function QASection({ role, questions: questionsProp, onAskQuestion, onAns
 
           {unansweredQuestions.length > 0 && (
             <div className="mt-3 space-y-2">
+              <div className="text-[12px] font-semibold text-brand-700">還沒人回答的問題</div>
               {unansweredQuestions.map(q => (
                 <QACard
                   key={q.id}
