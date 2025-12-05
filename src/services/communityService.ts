@@ -71,6 +71,12 @@ export interface CommunityQuestion {
     };
   }[];
   created_at: string;
+  /** API 回傳：是否還有更多回答（非會員限流時） */
+  hasMoreAnswers?: boolean;
+  /** API 回傳：回答總數 */
+  totalAnswers?: number;
+  /** 資料庫欄位：回答數（冗餘，用於顯示） */
+  answers_count?: number;
 }
 
 export interface CommunityWallData {

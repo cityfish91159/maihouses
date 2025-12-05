@@ -45,6 +45,10 @@ export interface Question {
     content: string;
     expert?: boolean;
   }[];
+  /** 非會員限流時，是否還有更多回答未顯示 */
+  hasMoreAnswers?: boolean;
+  /** 回答總數（包含未顯示的） */
+  totalAnswers?: number;
 }
 
 export interface CommunityInfo {

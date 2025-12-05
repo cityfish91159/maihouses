@@ -118,8 +118,10 @@ export function QASection({ role, questions: questionsProp, onAskQuestion, onAns
   const feedbackTimeoutRef = useRef<number | null>(null);
   const restoreFocusRef = useRef<HTMLElement | null>(null);
 
-  const answeredQuestions = questions.filter(q => q.answers.length > 0);
-  const unansweredQuestions = questions.filter(q => q.answers.length === 0);
+  // 使用 totalAnswers（API 回傳總數）或 answersCount 判斷是否有回答
+  // 這樣即使 API 對非會員限流，也能正確分類
+  const answeredQuestions = questions.filter(q => (q.totalAnswers ?? q.answersCount ?? q.answers.length) > 0);
+  const unansweredQuestions = questions.filter(q => (q.totalAnswers ?? q.answersCount ?? q.answers.length) === 0);
 
   // 使用統一的 hook 處理訪客可見項目
   const { visible: visibleAnswered, hiddenCount, nextHidden: nextHiddenQuestion } = 

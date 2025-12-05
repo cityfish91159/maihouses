@@ -105,6 +105,9 @@ export function convertApiQuestion(question: CommunityQuestion): Question {
       content: answer.content,
       expert: answer.is_expert,
     })),
+    // 非會員限流相關欄位
+    hasMoreAnswers: question.hasMoreAnswers ?? false,
+    totalAnswers: question.totalAnswers ?? question.answers_count ?? answers.length,
   };
 }
 
