@@ -1,5 +1,48 @@
 # 社區牆開發紀錄
 
+## 2025-12-05 16:30 - P0-5 修復：評價區 agent stats 真實化
+
+### 本次變更
+
+| 變更項目 | 檔案 | 說明 |
+|----------|------|------|
+| **Agent stats schema** | `supabase/migrations/20251205_add_agent_stats_columns.sql` | 為 `agents` 表新增 `visit_count` / `deal_count` INTEGER 欄位，預設值 0，含註解說明 |
+| **測試種子資料** | `supabase/migrations/20251205_test_community_seed.sql` | 建立測試房仲（27 次帶看、9 戶成交）與測試社區、3 筆物件、公開/私密貼文、問答、回答，並綁定 `agent_id` |
+| **API JOIN agents** | `api/community/wall.ts` | 新增 `fetchReviewsWithAgents()`，透過 `community_reviews → properties → agents` LEFT JOIN 取得真實統計，並在 `type=reviews` / `type=all` 統一使用 |
+| **型別與轉換** | `api/community/wall.ts` | 定義 `ReviewRecord` / `ReviewResponseItem` / `ReviewAgentRow` 型別，新增 `buildAgentPayload()` / `transformReviewRecord()` 確保回傳格式正確 |
+| **文件更新** | `docs/COMMUNITY_WALL_TODO.md` | 在摘要區加入 P0-5 修復紀錄，將 P0-5 從未修復清單移除，補充修復細節與時間戳 |
+
+### 驗證
+
+```bash
+npm run build       # ✓ TypeScript 編譯通過，無錯誤
+git push origin main # ✓ Vercel 自動部署觸發（commit e92a921）
+```
+
+### 部署後需執行（人工操作）
+
+1. **Supabase SQL Editor** 依序執行：
+   ```sql
+   -- 1. 新增欄位
+   supabase/migrations/20251205_add_agent_stats_columns.sql
+   
+   -- 2. 建立測試資料
+   supabase/migrations/20251205_test_community_seed.sql
+   ```
+
+2. **驗證測試網址**（部署完成後）：
+   - https://maihouses.vercel.app/maihouses/community/00000000-0000-0000-0000-000000000001/wall?mock=false
+   - 評價區應顯示「測試房仲 Lily｜邁房子信義旗艦店」帶看 27 次、成交 9 戶
+
+### 技術細節
+
+- **SELECT 策略**：使用 Supabase nested select `property:properties!fkey(agent:agents!fkey(...))`，一次 query 取得 review + property + agent 完整資料
+- **NULL 處理**：`normalizeCount()` 確保 `visit_count`/`deal_count` 為 NULL 時回傳 0，避免前端顯示 `NaN`
+- **Fallback 邏輯**：若無 agent 資料但 `source='resident'`，回傳 `{ name: '住戶', company: '' }` 避免 UI 崩潰
+- **向下相容**：舊資料（無 `visit_count`/`deal_count`）預設為 0，不影響既有評價顯示
+
+---
+
 ## 2025-12-05 15:45 - 版本浮水印 + Mock fallback CTA
 
 ### 本次變更
