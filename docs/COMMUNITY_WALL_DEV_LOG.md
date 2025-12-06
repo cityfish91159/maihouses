@@ -1,5 +1,36 @@
 # 社區牆開發紀錄
 
+## 2025-12-06 20:30 - 前端 Fallback 作者名稱優化
+
+### 本次變更
+
+| 變更項目 | 檔案 | 說明 |
+|----------|------|------|
+| **Post 作者 fallback 角色感知** | `src/hooks/communityWallConverters.ts` | `convertApiPost()` 現在根據 `author.role` 決定 fallback 標籤（用戶/房仲/官方），並取 `author_id` 前 6 碼組成如 `用戶-7865f1` |
+| **Review 作者 fallback** | `src/hooks/communityWallConverters.ts` | `convertApiReview()` 若無 `agent.name` 則顯示 `房仲-xxxxxx` |
+| **QA Answer 作者 fallback** | `src/hooks/communityWallConverters.ts` | `convertApiQuestion()` 內 answers mapping 套用相同角色感知邏輯 |
+| **型別補充** | `src/services/communityService.ts` | `CommunityPost.author.role` 新增 `'official'` 選項以通過 TypeScript 編譯 |
+
+### 變更原因
+
+API 回傳的 `community_posts` 只有 `author_id`，沒有 JOIN 用戶表取得 `author.name`。在後端尚未修改前，前端需要優雅的 fallback：
+
+- **之前**：顯示「匿名」→ 用戶體驗差，無法區分不同作者
+- **之後**：顯示「用戶-7865f1」→ 可區分不同作者、可區分角色
+
+### 驗證
+
+```bash
+npm run build   # ✓ TypeScript 編譯通過
+git push origin main  # ✓ Vercel 自動部署 (commit 2678234)
+```
+
+### 後續說明
+
+此為**前端暫時解決方案**，當後端 API 開始 JOIN 用戶表並回傳 `author.name` 時，前端會自動顯示真實名稱（fallback 邏輯僅在 `name` 為空時觸發）。
+
+---
+
 ## 2025-12-06 15:40 - QASection 底部 padding 再次調整
 
 ### 本次變更
