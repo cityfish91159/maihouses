@@ -283,9 +283,19 @@ export function useCommunityWallData(
 
     if (apiData) {
       const converted = convertApiData(apiData);
-      // 若後端缺 communityInfo，使用 mock 的 communityInfo 兜底，避免 Sidebar 全空
+      // 若後端缺 communityInfo，顯示「尚無資料」而非假資料，避免誤導使用者
       if (!converted.communityInfo || !converted.communityInfo.name) {
-        converted.communityInfo = MOCK_DATA.communityInfo;
+        converted.communityInfo = {
+          name: '尚無社區資料',
+          year: null,
+          units: null,
+          managementFee: null,
+          builder: null,
+          members: null,
+          avgRating: null,
+          monthlyInteractions: null,
+          forSale: null,
+        };
       }
       lastApiDataRef.current = converted;
       return converted;
