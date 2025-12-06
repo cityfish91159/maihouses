@@ -1,6 +1,44 @@
 # 🏠 社區牆 待辦清單
 
-> 最後更新：2025-12-06 14:15
+> 本文件供 AI Agent 與開發者協作使用，請嚴格遵循以下格式。
+
+---
+
+## 📋 工作流程指引（給 AI Agent）
+
+### 🔴 收到新任務時
+
+1. **先讀取本文件**，了解目前待處理項目
+2. **新增任務到「待處理」區塊**，格式如下：
+   ```markdown
+   ### [編號] 任務標題
+   - **狀態**：🔴 待處理
+   - **檔案**：`相關檔案路徑`
+   - **描述**：任務說明
+   - **驗收條件**：
+     - [ ] 條件 1
+     - [ ] 條件 2
+   ```
+3. 開始執行任務
+
+### 🟡 執行任務中
+
+1. 將任務狀態改為 `🟡 進行中`
+2. 每完成一個驗收條件，打勾 `[x]`
+3. 若發現新問題，新增子任務或獨立任務
+
+### ✅ 完成任務時
+
+1. 將任務**整個區塊移到「已完成」區塊**
+2. 狀態改為 `✅ 已完成`
+3. 補上完成日期：`- **完成日期**：YYYY-MM-DD`
+4. **更新 DEV_LOG.md**，紀錄變更內容
+
+### ⚠️ 任務受阻時
+
+1. 狀態改為 `⚠️ 受阻`
+2. 補上受阻原因：`- **受阻原因**：說明`
+3. 通知開發者處理
 
 ---
 
@@ -8,49 +46,77 @@
 
 | 狀態 | 數量 |
 |------|------|
-| ✅ 已完成 | 17 |
-| 🔴 待處理（程式碼） | 0 |
-| 🟡 待處理（人工操作） | 0 |
+| ✅ 已完成 | 0 |
+| 🟡 進行中 | 0 |
+| 🔴 待處理 | 0 |
+| ⚠️ 受阻 | 0 |
 
 ---
 
-## ✅ 已審計 - 樂觀更新無需修改
+## 🔴 待處理
 
-### 樂觀更新 invalidate 時機（2025-12-06 審計結論：已符合最佳實踐）
+<!-- 
+範例格式：
+### 1️⃣ 任務標題
+- **狀態**：🔴 待處理
+- **檔案**：`src/xxx.ts`
+- **描述**：任務說明
+- **驗收條件**：
+  - [ ] 條件 1
+  - [ ] 條件 2
+-->
 
-- **檔案**：`src/hooks/useCommunityWallQuery.ts`
-- **原疑慮**：樂觀更新後立即 invalidate，可能在 API 回應前就重新 fetch
-- **審計結論**：❌ 非問題。現有實作已正確：
-  1. ✅ `onMutate` 先 `cancelQueries` 取消進行中 queries（第 111 行）
-  2. ✅ `onMutate` 備份 `previousData` 用於回滾（第 116 行）
-  3. ✅ `onMutate` 用 `setQueryData` 設置樂觀狀態（第 122 行）
-  4. ✅ `onError` 用備份回滾（第 145 行）
-  5. ✅ `onSettled`（而非 `onSuccess`）才 `invalidateQueries`（第 153 行）
-
-這正是 **TanStack Query 官方推薦的樂觀更新模式**，無需修改。
+_目前無待處理任務_
 
 ---
 
-## ✅ Supabase 人工操作（2025-12-06 執行完成）
+## 🟡 進行中
 
-| # | 項目 | 結果 |
-|---|------|------|
-| 1 | community_members 表 | ✅ 已存在（約束 `community_members_unique` 已建立） |
-| 2 | Agent stats 欄位 | ✅ 已執行 `20251205_add_agent_stats_columns.sql` |
-| 3 | community_reviews FK | ⚠️ 不適用（`community_reviews` 是 View 不是 Table，無法加 FK） |
+_目前無進行中任務_
+
+---
+
+## ⚠️ 受阻
+
+_目前無受阻任務_
 
 ---
 
 ## ✅ 已完成
 
-| 日期 | 項目 |
+<!--
+完成的任務移到這裡，格式：
+### [編號] 任務標題
+- **狀態**：✅ 已完成
+- **完成日期**：YYYY-MM-DD
+- **檔案**：`src/xxx.ts`
+- **描述**：任務說明
+-->
+
+_歷史任務請參閱 DEV_LOG.md_
+
+---
+
+## 📁 相關檔案
+
+| 檔案 | 說明 |
 |------|------|
-| 12/06 | Supabase：community_members 表確認存在 |
-| 12/06 | Supabase：agents 表新增 visit_count/deal_count 欄位 |
-| 12/06 | Supabase：community_reviews FK 確認不適用（是 View） |
-| 12/06 | 審計樂觀更新流程：確認已符合 TanStack Query 最佳實踐，無需修改 |
-| 12/06 | 後端 `attachAuthorsToPosts` 型別化＋Zod 驗證 profiles |
-| 12/06 | 後端問答 answers 加入作者 profiles 合併（API `getQuestions`/`getAll`） |
+| `docs/COMMUNITY_WALL_DEV_LOG.md` | 開發紀錄（每次變更必須更新） |
+| `api/community/wall.ts` | 後端 API |
+| `src/hooks/useCommunityWallQuery.ts` | React Query Hook |
+| `src/hooks/communityWallConverters.ts` | 資料轉換器 |
+| `src/pages/Community/` | 社區牆頁面組件 |
+
+---
+
+## 🏷️ 狀態圖例
+
+| 圖示 | 狀態 | 說明 |
+|------|------|------|
+| 🔴 | 待處理 | 尚未開始 |
+| 🟡 | 進行中 | 正在執行 |
+| ✅ | 已完成 | 已完成並驗證 |
+| ⚠️ | 受阻 | 需要人工介入 |
 | 12/06 | `PostsSection` 按讚節流加入 isMounted 防呆，避免卸載後 setState |
 | 12/06 | `communityWallConverters` 測試擴充（formatTimeAgo、sortPostsWithPinned、防禦） |
 | 12/06 | 抽出 `resolveAuthorDisplay` 統一作者 fallback（含 member、安全切片） |

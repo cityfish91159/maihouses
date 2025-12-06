@@ -1,5 +1,21 @@
 # 社區牆開發紀錄
 
+## 2025-12-06 14:15 - Supabase 人工操作完成，TODO 歸零
+
+### 執行項目
+
+| 項目 | SQL 檔案 | 執行結果 |
+|------|----------|----------|
+| community_members 表 | `20251205_community_members.sql` | ✅ 已存在（約束 `community_members_unique` 報重複） |
+| Agent stats 欄位 | `20251205_add_agent_stats_columns.sql` | ✅ 執行成功 |
+| community_reviews FK | N/A | ⚠️ 不適用（`community_reviews` 是 View，無法加 FK） |
+
+### 結論
+- TODO.md 全部歸零：程式碼 0 項、人工操作 0 項
+- 社區牆功能開發階段完成
+
+---
+
 ## 2025-12-06 14:00 - 樂觀更新審計（結論：無需修改）
 
 ### 審計對象
