@@ -182,12 +182,18 @@ function resolveSupabaseErrorDetails(error: unknown) {
 }
 
 function buildReviewSelectFields(): string {
+  // 同時選出新舊欄位以相容舊版 View
   return [
     'id',
     'community_id',
     'author_id',
     'content',
     'source_platform',
+    'property_id',
+    'source',
+    'advantage_1',
+    'advantage_2',
+    'disadvantage',
     'created_at',
   ].join(', ');
 }
@@ -201,12 +207,24 @@ const ReviewContentSchema = z.object({
 const ReviewRowSchema = z.object({
   id: z.string().uuid(),
   community_id: z.string().uuid(),
-  author_id: z.string().uuid().nullable(),
+  author_id: z.string().uuid().nullable().optional(),
+  property_id: z.string().uuid().nullable().optional(),
   content: z.union([ReviewContentSchema, z.null()]).optional(),
-  source_platform: z.string().nullable(),
+  source_platform: z.string().nullable().optional(),
+  source: z.string().nullable().optional(),
+  advantage_1: z.string().nullable().optional(),
+  advantage_2: z.string().nullable().optional(),
+  disadvantage: z.string().nullable().optional(),
   created_at: z.string(),
 });
 export type ReviewRow = z.infer<typeof ReviewRowSchema>;
+
+const PropertyRowSchema = z.object({
+  id: z.string().uuid(),
+  title: z.string().nullable(),
+  agent_id: z.string().uuid().nullable(),
+});
+export type PropertyRow = z.infer<typeof PropertyRowSchema>;
 
 const AgentRowSchema = z.object({
   id: z.string().uuid(),
@@ -289,25 +307,34 @@ const RESIDENT_AGENT_PLACEHOLDER = {
 
 const transformReviewRecord = (
   record: ReviewRow,
+  propertyMap: Map<string, PropertyRow>,
   agentMap: Map<string, AgentRow>
 ): ReviewResponseItem => {
+  // 解析新舊欄位的內容
   const content = record.content ?? null;
-  const rawPros = Array.isArray(content?.pros) ? content?.pros : [];
-  const pros = rawPros
+  const rawProsFromJson = Array.isArray(content?.pros) ? content?.pros : [];
+  const legacyPros = [record.advantage_1, record.advantage_2];
+  const pros = [...rawProsFromJson, ...legacyPros]
     .map(value => cleanText(typeof value === 'string' ? value : null))
     .filter(Boolean);
 
-  const cons = cleanText(content?.cons);
-  const propertyTitle = cleanText(content?.property_title) || null;
-  const agent = record.author_id ? agentMap.get(record.author_id) : undefined;
-  const source = record.source_platform || (agent ? 'agent' : 'resident');
+  const cons = cleanText(content?.cons ?? record.disadvantage);
+
+  const property = record.property_id ? propertyMap.get(record.property_id) : undefined;
+  const propertyTitle = cleanText(content?.property_title) || property?.title || null;
+
+  // author_id 若缺失，回退為 property.agent_id（舊版 View 未回傳 author_id 時的兼容）
+  const authorId = record.author_id ?? property?.agent_id ?? null;
+  const agent = authorId ? agentMap.get(authorId) : undefined;
+
+  const source = record.source_platform || record.source || (agent ? 'agent' : 'resident');
   const agentPayload = buildAgentPayload(agent);
   const fallbackAgent = agentPayload ?? (source === 'resident' ? RESIDENT_AGENT_PLACEHOLDER : undefined);
 
   return {
     id: record.id,
     community_id: record.community_id,
-    author_id: record.author_id ?? null,
+    author_id: authorId,
     source,
     content: {
       pros,
@@ -332,8 +359,9 @@ async function fetchReviewsWithAgents(
     return { items: [], total };
   }
 
-  const agentMap = await fetchAgentMap(rows);
-  const items = rows.map(row => transformReviewRecord(row, agentMap));
+  const propertyMap = await fetchPropertyMap(rows);
+  const agentMap = await fetchAgentMap(rows, propertyMap);
+  const items = rows.map(row => transformReviewRecord(row, propertyMap, agentMap));
   return { items, total };
 }
 
@@ -389,12 +417,39 @@ async function fetchReviewRows(communityId: string, limit?: number) {
 }
 
 /**
+ * 查詢與評價相關的房源，並建成快取 map（兼容舊版 View 只帶 property_id）。
+ */
+async function fetchPropertyMap(rows: ReviewRow[]): Promise<Map<string, PropertyRow>> {
+  const propertyIds = Array.from(
+    new Set(rows.map(row => row.property_id).filter((id): id is string => Boolean(id)))
+  );
+
+  if (!propertyIds.length) {
+    return new Map();
+  }
+
+  const { data, error } = await getSupabase()
+    .from('properties')
+    .select('id, title, agent_id')
+    .in('id', propertyIds);
+
+  if (error) {
+    throw new ReviewFetchError('PROPERTY_FETCH_FAILED', '無法載入房源資料', error);
+  }
+
+  const parsed = PropertyRowSchema.array().parse(data ?? []);
+  return new Map(parsed.map(property => [property.id, property]));
+}
+
 /**
  * 查詢房仲資訊並處理欄位尚未建立時的降級情境。
  */
-async function fetchAgentMap(rows: ReviewRow[]): Promise<Map<string, AgentRow>> {
+async function fetchAgentMap(rows: ReviewRow[], propertyMap: Map<string, PropertyRow>): Promise<Map<string, AgentRow>> {
   const agentIds = Array.from(
-    new Set(rows.map(row => row.author_id).filter((id): id is string => Boolean(id)))
+    new Set([
+      ...rows.map(row => row.author_id),
+      ...Array.from(propertyMap.values()).map(p => p.agent_id),
+    ].filter((id): id is string => Boolean(id)))
   );
 
   if (!agentIds.length) {
@@ -662,15 +717,12 @@ async function getReviews(
       .single()
   ]);
 
-  const hiddenCount = !isAuthenticated ? Math.max(0, reviewResult.total - reviewResult.items.length) : 0;
-
   return res.status(200).json({
     success: true,
     data: reviewResult.items,
     summary: communityResult.data || null,
     total: reviewResult.total,
     limited: !isAuthenticated,
-    hiddenCount,
   });
 }
 

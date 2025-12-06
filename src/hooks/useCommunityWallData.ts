@@ -26,7 +26,7 @@ const MOCK_LATENCY_MS = 250;
 
 const EMPTY_WALL_DATA: UnifiedWallData = {
   communityInfo: {
-    name: '尚未載入',
+    name: '載入中...',
     year: null,
     units: null,
     managementFee: null,
@@ -283,10 +283,15 @@ export function useCommunityWallData(
 
     if (apiData) {
       const converted = convertApiData(apiData);
+      // 若後端缺 communityInfo，使用 mock 的 communityInfo 兜底，避免 Sidebar 全空
+      if (!converted.communityInfo || !converted.communityInfo.name) {
+        converted.communityInfo = MOCK_DATA.communityInfo;
+      }
       lastApiDataRef.current = converted;
       return converted;
     }
 
+    // API 尚未返回或失敗時：優先使用上一份成功資料，其次顯示載入中佔位
     return lastApiDataRef.current ?? EMPTY_WALL_DATA;
   }, [useMock, apiData, mockData]);
 
