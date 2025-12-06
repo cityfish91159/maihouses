@@ -5,7 +5,7 @@
  * 重構：使用 LockedOverlay + Tailwind brand 色系
  */
 
-import { useState, useCallback, useId, useMemo, useRef } from 'react';
+import { useState, useCallback, useId, useMemo, useRef, useEffect } from 'react';
 import type { KeyboardEvent } from 'react';
 import type { Role, Post, WallTab } from '../types';
 import { getPermissions } from '../types';
@@ -21,6 +21,7 @@ interface PostCardProps {
 
 function PostCard({ post, onLike }: PostCardProps) {
   const [isLiking, setIsLiking] = useState(false);
+  const likeThrottleRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isAgent = post.type === 'agent';
   const isOfficial = post.type === 'official';
   const displayTime = formatRelativeTimeLabel(post.time);
@@ -43,17 +44,30 @@ function PostCard({ post, onLike }: PostCardProps) {
     ? <span className="flex items-center gap-1">💬 {post.comments}</span>
     : null;
 
-  const handleLike = async () => {
+  useEffect(() => {
+    return () => {
+      if (likeThrottleRef.current) {
+        clearTimeout(likeThrottleRef.current);
+      }
+    };
+  }, []);
+
+  const handleLike = useCallback(() => {
     if (!onLike || isLiking) return;
-    setIsLiking(true);
-    try {
-      await onLike(post.id);
-    } catch (error) {
-      console.error('Failed to toggle like', error);
-    } finally {
-      setIsLiking(false);
-    }
-  };
+    if (likeThrottleRef.current) return;
+
+    likeThrottleRef.current = setTimeout(async () => {
+      likeThrottleRef.current = null;
+      setIsLiking(true);
+      try {
+        await onLike(post.id);
+      } catch (error) {
+        console.error('Failed to toggle like', error);
+      } finally {
+        setIsLiking(false);
+      }
+    }, 250);
+  }, [onLike, post.id, isLiking]);
 
   return (
     <article className="flex gap-2.5 rounded-[14px] border border-border-light bg-white p-3 transition-all hover:border-brand-600 hover:shadow-[0_2px_8px_rgba(0,56,90,0.06)]">

@@ -12,7 +12,7 @@ export interface Post {
   id: number | string;
   author: string;
   floor?: string;
-  type: 'resident' | 'agent' | 'official';
+  type: 'resident' | 'member' | 'agent' | 'official';
   time: string;
   title: string;
   content: string;
@@ -41,7 +41,7 @@ export interface Question {
   answersCount: number;
   answers: {
     author: string;
-    type: 'resident' | 'agent' | 'official';
+    type: 'resident' | 'member' | 'agent' | 'official';
     content: string;
     expert?: boolean;
   }[];

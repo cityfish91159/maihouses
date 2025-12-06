@@ -568,6 +568,29 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 }
 
+async function attachAuthorsToPosts(posts: any[]): Promise<any[]> {
+  if (!posts?.length) return posts || [];
+
+  const authorIds = Array.from(new Set((posts || []).map((p: any) => p.author_id).filter(Boolean)));
+  if (authorIds.length === 0) return posts;
+
+  const { data: profiles, error } = await getSupabase()
+    .from('profiles')
+    .select('id, name, avatar_url, role, floor')
+    .in('id', authorIds);
+
+  if (error) {
+    console.error('[community/wall] attachAuthorsToPosts fetch profiles failed:', error);
+    return posts;
+  }
+
+  const profileMap = new Map((profiles || []).map((p: any) => [p.id, p]));
+  return posts.map(post => ({
+    ...post,
+    author: profileMap.get(post.author_id) || null,
+  }));
+}
+
 // 取得貼文
 async function getPosts(
   res: VercelResponse,
@@ -604,12 +627,14 @@ async function getPosts(
 
   if (error) throw error;
 
+  const dataWithAuthors = await attachAuthorsToPosts(data || []);
+
   // 快取 60 秒，300 秒內可返回舊資料同時重新驗證
   res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=300');
 
   return res.status(200).json({
     success: true,
-    data,
+    data: dataWithAuthors,
     total: count || data?.length || 0,
     limited: !isAuthenticated,
     visibleCount: isAuthenticated ? (data?.length || 0) : GUEST_LIMIT
@@ -756,6 +781,11 @@ async function getAll(
       .single()
   ]);
 
+  const [enrichedPublicPosts, enrichedPrivatePosts] = await Promise.all([
+    attachAuthorsToPosts(publicPostsResult.data || []),
+    attachAuthorsToPosts(privatePostsResult.data || []),
+  ]);
+
   // 組裝 communityInfo（對齊前端 CommunityInfo 型別）
   // 若 DB 欄位不存在，回傳 null 讓前端處理顯示邏輯
   const rawCommunity = communityResult.data;
@@ -799,8 +829,8 @@ async function getAll(
     success: true,
     communityInfo,
     posts: {
-      public: publicPostsResult.data || [],
-      private: privatePostsResult.data || [],
+      public: enrichedPublicPosts,
+      private: enrichedPrivatePosts,
       publicTotal: publicPostsResult.count || 0,
       privateTotal: privatePostsResult.count || 0,
     },

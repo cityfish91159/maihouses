@@ -14,6 +14,49 @@ export type { UnifiedWallData };
  */
 const PLACEHOLDER_COMPANY_NAMES = ['房仲公司', '未知公司', 'N/A', '無', '-'];
 
+type ResolvedAuthorRole = 'resident' | 'member' | 'agent' | 'official';
+
+const ROLE_LABELS: Record<ResolvedAuthorRole, string> = {
+  resident: '用戶',
+  member: '會員',
+  agent: '房仲',
+  official: '官方',
+};
+
+function normalizeAuthorRole(role?: string | null): ResolvedAuthorRole {
+  if (role === 'agent') return 'agent';
+  if (role === 'official') return 'official';
+  if (role === 'member') return 'member';
+  return 'resident';
+}
+
+function safeAuthorIdSuffix(authorId?: string | null): string {
+  if (!authorId) return '';
+  return authorId.length >= 6 ? authorId.slice(0, 6) : authorId;
+}
+
+function buildFallbackAuthor(role: ResolvedAuthorRole, authorId?: string | null): string {
+  const label = ROLE_LABELS[role];
+  const suffix = safeAuthorIdSuffix(authorId);
+  return suffix ? `${label}-${suffix}` : label;
+}
+
+export function resolveAuthorDisplay(
+  authorId?: string | null,
+  author?: { name?: string | null; role?: string | null; floor?: string | null }
+) {
+  const role = normalizeAuthorRole(author?.role);
+  const fallback = buildFallbackAuthor(role, authorId);
+  const name = author?.name?.trim() || fallback;
+  const floor = author?.floor?.trim();
+
+  return {
+    name,
+    role,
+    ...(floor ? { floor } : {}),
+  } as { name: string; role: ResolvedAuthorRole; floor?: string };
+}
+
 /**
  * 統一排序邏輯：pinned 優先，同 pinned 狀態則保持原始順序（穩定排序）
  * 使用 index 作為次要排序鍵確保穩定性
@@ -56,22 +99,13 @@ export function formatTimeAgo(dateStr: string): string {
 }
 
 export function convertApiPost(post: CommunityPost): Post {
-  const floor = post.author?.floor?.trim();
-  const role: 'resident' | 'agent' | 'official' =
-    post.author?.role === 'agent'
-      ? 'agent'
-      : post.author?.role === 'official'
-      ? 'official'
-      : 'resident';
-  const fallbackLabel = role === 'agent' ? '房仲' : role === 'official' ? '官方' : '用戶';
-  const fallbackAuthor = post.author_id ? `${fallbackLabel}-${post.author_id.slice(0, 6)}` : fallbackLabel;
-  const authorName = post.author?.name?.trim() || fallbackAuthor;
+  const authorInfo = resolveAuthorDisplay(post.author_id, post.author);
 
   return {
     id: post.id,
-    author: authorName,
-    ...(floor ? { floor } : {}),
-    type: role,
+    author: authorInfo.name,
+    ...(authorInfo.floor ? { floor: authorInfo.floor } : {}),
+    type: authorInfo.role,
     time: formatTimeAgo(post.created_at),
     title:
       post.content.substring(0, 20) + (post.content.length > 20 ? '...' : ''),
@@ -87,14 +121,13 @@ export function convertApiPost(post: CommunityPost): Post {
 export function convertApiReview(review: CommunityReview): Review {
   const agent = review.agent;
   const company = agent?.company?.trim() ?? '';
-  const fallbackAuthor = review.author_id ? `房仲-${review.author_id.slice(0, 6)}` : '房仲';
-  const authorName = agent?.name?.trim() || fallbackAuthor;
+  const authorInfo = resolveAuthorDisplay(review.author_id, { name: agent?.name ?? null, role: 'agent' });
   // 過濾 placeholder 公司名稱
   const normalizedCompany = PLACEHOLDER_COMPANY_NAMES.includes(company) ? '' : company;
 
   return {
     id: review.id,
-    author: authorName,
+    author: authorInfo.name,
     company: normalizedCompany,
     visits: agent?.stats?.visits ?? 0,
     deals: agent?.stats?.deals ?? 0,
@@ -111,19 +144,11 @@ export function convertApiQuestion(question: CommunityQuestion): Question {
     time: formatTimeAgo(question.created_at),
     answersCount: answers.length,
     answers: answers.map(answer => {
-      const type: 'resident' | 'agent' | 'official' =
-        answer.author?.role === 'agent'
-          ? 'agent'
-          : answer.author?.role === 'official'
-          ? 'official'
-          : 'resident';
-      const fallbackLabel = type === 'agent' ? '房仲' : type === 'official' ? '官方' : '用戶';
-      const fallbackAuthor = answer.author_id ? `${fallbackLabel}-${answer.author_id.slice(0, 6)}` : fallbackLabel;
-      const author = answer.author?.name?.trim() || fallbackAuthor;
+      const authorInfo = resolveAuthorDisplay(answer.author_id, answer.author);
 
       return {
-        author,
-        type,
+        author: authorInfo.name,
+        type: authorInfo.role,
         content: answer.content,
         expert: answer.is_expert,
       };
@@ -135,8 +160,7 @@ export function convertApiQuestion(question: CommunityQuestion): Question {
 }
 
 export function convertApiData(
-  apiData: CommunityWallData,
-  mockFallback: CommunityInfo
+  apiData: CommunityWallData
 ): UnifiedWallData {
   // 防禦性處理：確保 posts/reviews/questions 不為 null
   const publicPosts = apiData.posts?.public ?? [];
@@ -157,13 +181,22 @@ export function convertApiData(
         units: apiData.communityInfo.units ?? null,
         managementFee: apiData.communityInfo.managementFee ?? null,
         builder: apiData.communityInfo.builder ?? null,
-        // 真實統計資料，若 API 回傳 undefined/null 則顯示 null（前端會顯示「-」）
         members: apiData.communityInfo.members ?? null,
         avgRating: apiData.communityInfo.avgRating ?? null,
         monthlyInteractions: apiData.communityInfo.monthlyInteractions ?? null,
         forSale: apiData.communityInfo.forSale ?? null,
       }
-    : mockFallback;
+    : {
+        name: '未知社區',
+        year: null,
+        units: null,
+        managementFee: null,
+        builder: null,
+        members: null,
+        avgRating: null,
+        monthlyInteractions: null,
+        forSale: null,
+      };
 
   return {
     communityInfo,

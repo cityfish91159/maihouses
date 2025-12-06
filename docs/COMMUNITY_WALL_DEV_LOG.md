@@ -1,5 +1,40 @@
 # 社區牆開發紀錄
 
+## 2025-12-06 12:15 - 作者解析重構 + mockFallback 移除 + 按讚節流
+
+### 本次變更
+
+| 變更項目 | 檔案 | 說明 |
+|----------|------|------|
+| **統一作者解析函數** | `src/hooks/communityWallConverters.ts` | 新增 `resolveAuthorDisplay()`，支援 `resident/member/agent/official` 四種角色，安全切片 `author_id`（長度不足不會爆錯） |
+| **移除 mockFallback 假資料注入** | `src/hooks/communityWallConverters.ts` | `convertApiData()` 不再接受 fallback 參數，缺社區資訊時回傳中性佔位（名稱「未知社區」、數值 `null`） |
+| **更新呼叫端** | `src/hooks/useCommunityWallData.ts` | 配合新簽名，移除 `MOCK_DATA.communityInfo` 傳入 |
+| **型別擴充** | `src/types/community.ts`, `src/services/communityService.ts` | `Post.type` 與答案作者 `role` 加入 `member` |
+| **新增 converter 單元測試** | `src/hooks/__tests__/communityWallConverters.test.ts` | 覆蓋 `resolveAuthorDisplay`、post/review/question 轉換與安全切片 |
+| **調整既有測試** | `src/hooks/__tests__/useCommunityWallData.converters.test.ts` | 移除 `fallbackInfo`、期望值改為新 fallback 格式（如 `用戶-reside`） |
+| **按讚節流防抖** | `src/pages/Community/components/PostsSection.tsx` | `handleLike` 加入 250ms timeout 節流，避免連點多發請求；cleanup effect 確保 unmount 時清除 timer |
+
+### 變更原因
+
+1. **重複邏輯維護地獄**：三處 converter 各自實作 fallback，角色判斷與切片邏輯重複且不一致。
+2. **mockFallback 偷補假資料**：`convertApiData` 若後端沒回傳社區資訊就塞 mock，導致線上資料與假資料混雜，難以除錯。
+3. **按讚無節流**：連點觸發多次 API 請求，浪費資源且可能造成 race condition。
+4. **member 角色遺漏**：型別有 `member`，但轉換器沒處理，一律當 `resident`。
+
+### 驗證
+
+```bash
+npm run test   # ✓ 42/42 通過
+npm run build  # ✓ TypeScript 編譯通過
+```
+
+### 後續說明
+
+- 尚未 `git push`；推送 main 後 Vercel 自動部署，再驗證 https://maihouses.vercel.app/maihouses/community/test-uuid/wall
+- 後端已補 profiles 合併，前端會優先顯示真實姓名；缺資料時才 fallback
+
+---
+
 ## 2025-12-06 20:30 - 前端 Fallback 作者名稱優化
 
 ### 本次變更

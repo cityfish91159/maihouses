@@ -253,7 +253,7 @@ export function useCommunityWallData(
     }
 
     // API 模式：轉換資料格式（內含 pinned 排序），API 有 communityInfo 就用，沒有才 fallback Mock
-    return convertApiData(apiData, MOCK_DATA.communityInfo);
+    return convertApiData(apiData);
   }, [useMock, apiData, mockData, initialMockData]);
 
   // 封裝操作函數

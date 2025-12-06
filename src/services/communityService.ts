@@ -66,8 +66,8 @@ export interface CommunityQuestion {
     is_expert: boolean;
     created_at: string;
     author?: {                // 新增：回答者資訊
-      name: string;
-      role?: 'resident' | 'agent' | 'official';
+        name: string;
+        role?: 'resident' | 'member' | 'agent' | 'official';
     };
   }[];
   created_at: string;

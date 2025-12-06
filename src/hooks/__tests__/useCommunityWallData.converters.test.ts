@@ -163,7 +163,7 @@ describe('convertApiQuestion', () => {
       ],
     });
 
-    expect(converted.answers[0]?.author).toBe('匿名');
+    expect(converted.answers[0]?.author).toBe('用戶-reside');
     expect(converted.answers[0]?.type).toBe('resident');
     expect(converted.answersCount).toBe(1);
   });
@@ -181,27 +181,12 @@ describe('convertApiQuestion', () => {
 });
 
 describe('convertApiData', () => {
-  const fallbackInfo = {
-    name: 'Fallback 社區',
-    year: 2018,
-    units: 200,
-    managementFee: 90,
-    builder: 'Fallback 建商',
-    members: 50,
-    avgRating: 4.5,
-    monthlyInteractions: 120,
-    forSale: 10,
-  };
-
   it('falls back to empty arrays when reviews or questions are missing', () => {
-    const converted = convertApiData(
-      {
-        ...baseCommunityData,
-        reviews: { items: null as unknown as typeof baseCommunityData.reviews.items, total: 0 },
-        questions: { items: undefined as unknown as typeof baseCommunityData.questions.items, total: 0 },
-      },
-      fallbackInfo
-    );
+    const converted = convertApiData({
+      ...baseCommunityData,
+      reviews: { items: null as unknown as typeof baseCommunityData.reviews.items, total: 0 },
+      questions: { items: undefined as unknown as typeof baseCommunityData.questions.items, total: 0 },
+    });
 
     expect(converted.reviews).toEqual({ items: [], total: 0 });
     expect(converted.questions).toEqual({ items: [], total: 0 });
