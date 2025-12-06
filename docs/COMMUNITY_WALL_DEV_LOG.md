@@ -1,5 +1,57 @@
 # 社區牆開發紀錄
 
+## 2025-12-06 15:40 - QASection 底部 padding 再次調整
+
+### 本次變更
+
+| 變更項目 | 檔案 | 說明 |
+|----------|------|------|
+| **底部 padding 再增加** | `src/pages/Community/components/QASection.tsx` | 容器 padding 從 `pb-6` → `pb-12`，確保 CTA 完整浮出不被底部工具列遮擋 |
+| **刪除加速腳本** | `scripts/auto-speedup.sh` | 移除會導致 Codespace 當機的自動加速腳本 |
+| **新增簡化加速** | `scripts/speedup-control.sh` | 重新設計一次性執行的加速指令，不使用背景循環 |
+
+### 驗證
+
+```bash
+npm run build   # ✓ TypeScript 編譯通過
+git push origin main  # ✓ Vercel 自動部署
+```
+
+---
+
+## 2025-12-06 07:50 - QASection UI 佈局調整
+
+### 本次變更
+
+| 變更項目 | 檔案 | 說明 |
+|----------|------|------|
+| **區塊順序調整** | `src/pages/Community/components/QASection.tsx` | 將「還沒人回答的問題」區塊與「免費註冊/登入 CTA」順序對調，CTA 現在位於區塊底部 |
+| **底部 padding 增加** | `src/pages/Community/components/QASection.tsx` | 容器 padding 從 `pb-6` → `pb-12`，確保 CTA 不被底部工具列遮擋 |
+| **Sidebar JSX 修復** | `src/pages/Community/components/Sidebar.tsx` | 修正「最新問答」區塊 map 內未正確關閉的 JSX 標籤 |
+
+### 驗證
+
+```bash
+npm run build   # ✓ TypeScript 編譯通過
+git push origin main  # ✓ Vercel 自動部署 (commits 064a91f, 724e0f8, a0b2547)
+```
+
+### 佈局變更說明
+
+**變更前**：
+1. 有回答的問題
+2. LockedOverlay (模糊鎖定)
+3. 免費註冊/登入 CTA
+4. 還沒人回答的問題
+
+**變更後**：
+1. 有回答的問題
+2. LockedOverlay (模糊鎖定)
+3. 還沒人回答的問題
+4. 免費註冊/登入 CTA (底部 padding 加大)
+
+---
+
 ## 2025-12-05 23:55 - P0-5 技術債收尾 + API 故障揭露
 
 ### 本次變更
