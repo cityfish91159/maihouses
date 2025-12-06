@@ -1,5 +1,41 @@
 # 社區牆開發紀錄
 
+## 2025-12-06 13:45 - 後端作者 profiles 強化 + 測試擴充 + 節流防呆
+
+### 本次變更
+
+| 變更項目 | 檔案 | 說明 |
+|----------|------|------|
+| **後端 `attachAuthorsToPosts` 型別化** | `api/community/wall.ts` | 定義 `PostRow`、`ProfileRow`（Zod 驗證），函數簽名改為泛型 `<T extends PostRow>`，返回帶 `author: ProfileRow \| null` |
+| **共用 `buildProfileMap`** | `api/community/wall.ts` | 抽出批次撈 profiles 並 Zod 驗證的共用函數，避免重複程式碼 |
+| **新增 `attachAuthorsToAnswers`** | `api/community/wall.ts` | 為問答 answers 批次附加作者 profiles，`getQuestions`/`getAll` 回傳時 answer 帶真實 `author` |
+| **API select 補 `author_id`** | `api/community/wall.ts` | `community_answers` select 加入 `author_id` 欄位 |
+| **`getAll` 問答轉換調整** | `api/community/wall.ts` | 使用 `enrichedQuestions`，`author` 改用 `a.author ?? null`（profiles 來源） |
+| **節流 isMounted 防呆** | `src/pages/Community/components/PostsSection.tsx` | 新增 `isMountedRef`，`setIsLiking(false)` 前檢查避免卸載後 setState |
+| **測試擴充** | `src/hooks/__tests__/communityWallConverters.test.ts` | 新增 `formatTimeAgo`、`sortPostsWithPinned`、`convertApiData` 防禦空資料測試 |
+
+### 變更原因
+
+1. **型別安全**：原本 `attachAuthorsToPosts` 全用 `any`，喪失 TypeScript 檢查。
+2. **問答缺作者**：只處理 posts，answers 沒附 profiles，前端被迫 fallback。
+3. **競態風險**：按讚節流沒防卸載後 setState，會有 React warning。
+4. **測試不足**：缺時間格式、排序穩定性、防禦測試。
+
+### 驗證
+
+```bash
+npm run test   # ✓ 45/45 通過
+npm run build  # ✓ TypeScript 編譯通過
+git push origin main  # ✓ commit 721914b，Vercel 部署中
+```
+
+### 後續說明
+
+- 目前只剩「樂觀更新 invalidate 太快」尚未處理，已記錄於 TODO。
+- 驗證網址：https://maihouses.vercel.app/maihouses/community/test-uuid/wall
+
+---
+
 ## 2025-12-06 12:15 - 作者解析重構 + mockFallback 移除 + 按讚節流
 
 ### 本次變更
