@@ -52,23 +52,6 @@ export function Sidebar({ info, questions: questionsProp, posts }: SidebarProps)
 
   return (
     <aside className="hidden w-[280px] shrink-0 flex-col gap-3 self-start lg:sticky lg:top-[70px] lg:flex">
-      {/* 社區資訊 */}
-      <div className="rounded-[14px] border border-[var(--line)] bg-white p-3.5 shadow-[0_4px_14px_rgba(0,51,102,0.04)]">
-        <h4 className="mb-2.5 flex items-center gap-1.5 text-sm font-extrabold text-[var(--brand)]">📍 社區資訊</h4>
-        {[
-          ['社區名稱', info.name],
-          ['完工年份', formatValue(info.year, ' 年')],
-          ['總戶數', formatValue(info.units, ' 戶')],
-          ['管理費', formatValue(info.managementFee, ' 元/坪')],
-          ['建設公司', info.builder ?? '-'],
-        ].map(([label, value]) => (
-          <div key={label} className="flex justify-between border-b border-[#f1f5f9] py-2 text-[13px] last:border-b-0">
-            <span className="text-[var(--text-secondary)]">{label}</span>
-            <span className="font-bold text-[var(--text-primary)]">{value}</span>
-          </div>
-        ))}
-      </div>
-
       {/* 社區數據 */}
       <div className="rounded-[14px] border border-[var(--line)] bg-white p-3.5 shadow-[0_4px_14px_rgba(0,51,102,0.04)]">
         <h4 className="mb-2.5 flex items-center gap-1.5 text-sm font-extrabold text-[var(--brand)]">📊 社區數據</h4>
