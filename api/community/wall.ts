@@ -26,8 +26,6 @@ function getSupabase(): SupabaseClient {
   return supabase;
 }
 
-// 非會員可見數量（前端再做 slicing 與鎖定 CTA）
-const GUEST_LIMIT = 2;
 // API 回傳的最大筆數（避免 guest 只拿到 2 筆，導致前端無法顯示鎖定 CTA）
 const DEFAULT_LIST_LIMIT = 50;
 
@@ -187,33 +185,28 @@ function buildReviewSelectFields(): string {
   return [
     'id',
     'community_id',
-    'property_id',
-    'source',
-    'advantage_1',
-    'advantage_2',
-    'disadvantage',
+    'author_id',
+    'content',
+    'source_platform',
     'created_at',
   ].join(', ');
 }
 
+const ReviewContentSchema = z.object({
+  pros: z.array(z.string().nullable()).optional(),
+  cons: z.string().nullable().optional(),
+  property_title: z.string().nullable().optional(),
+});
+
 const ReviewRowSchema = z.object({
   id: z.string().uuid(),
   community_id: z.string().uuid(),
-  property_id: z.string().uuid().nullable(),
-  source: z.string().nullable(),
-  advantage_1: z.string().nullable(),
-  advantage_2: z.string().nullable(),
-  disadvantage: z.string().nullable(),
+  author_id: z.string().uuid().nullable(),
+  content: z.union([ReviewContentSchema, z.null()]).optional(),
+  source_platform: z.string().nullable(),
   created_at: z.string(),
 });
 export type ReviewRow = z.infer<typeof ReviewRowSchema>;
-
-const PropertyRowSchema = z.object({
-  id: z.string().uuid(),
-  title: z.string().nullable(),
-  agent_id: z.string().uuid().nullable(),
-});
-export type PropertyRow = z.infer<typeof PropertyRowSchema>;
 
 const AgentRowSchema = z.object({
   id: z.string().uuid(),
@@ -227,7 +220,6 @@ export type AgentRow = z.infer<typeof AgentRowSchema>;
 export interface ReviewResponseItem {
   id: string;
   community_id: string;
-  property_id: string | null;
   author_id: string | null;
   source: string;
   content: {
@@ -284,44 +276,43 @@ const buildAgentPayload = (agentRow?: AgentRow | null) => {
 /**
  * 將單筆 review row 合併 property / agent map，輸出給前端的結構。
  * @param record 原始評價資料列
- * @param propertyMap 查詢後的房源快取
  * @param agentMap 查詢後的房仲快取
  */
+const RESIDENT_AGENT_PLACEHOLDER = {
+  name: '住戶',
+  company: '',
+  stats: {
+    visits: 0,
+    deals: 0,
+  },
+} as const;
+
 const transformReviewRecord = (
   record: ReviewRow,
-  propertyMap: Map<string, PropertyRow>,
   agentMap: Map<string, AgentRow>
 ): ReviewResponseItem => {
-  const pros = [record.advantage_1, record.advantage_2]
-    .map(value => cleanText(value))
+  const content = record.content ?? null;
+  const rawPros = Array.isArray(content?.pros) ? content?.pros : [];
+  const pros = rawPros
+    .map(value => cleanText(typeof value === 'string' ? value : null))
     .filter(Boolean);
 
-  const cons = cleanText(record.disadvantage);
-  const property = record.property_id ? propertyMap.get(record.property_id) : undefined;
-  const agent = property?.agent_id ? agentMap.get(property.agent_id) : undefined;
-  const source = record.source || 'agent';
+  const cons = cleanText(content?.cons);
+  const propertyTitle = cleanText(content?.property_title) || null;
+  const agent = record.author_id ? agentMap.get(record.author_id) : undefined;
+  const source = record.source_platform || (agent ? 'agent' : 'resident');
   const agentPayload = buildAgentPayload(agent);
-  const fallbackAgent = agentPayload ?? (source === 'resident'
-    ? {
-        name: '住戶',
-        company: '',
-        stats: {
-          visits: 0,
-          deals: 0,
-        },
-      }
-    : undefined);
+  const fallbackAgent = agentPayload ?? (source === 'resident' ? RESIDENT_AGENT_PLACEHOLDER : undefined);
 
   return {
     id: record.id,
     community_id: record.community_id,
-    property_id: record.property_id,
-    author_id: property?.agent_id ?? null,
+    author_id: record.author_id ?? null,
     source,
     content: {
       pros,
       cons,
-      property_title: property?.title ?? null,
+      property_title: propertyTitle,
     },
     created_at: record.created_at,
     agent: fallbackAgent,
@@ -341,9 +332,8 @@ async function fetchReviewsWithAgents(
     return { items: [], total };
   }
 
-  const propertyMap = await fetchPropertyMap(rows);
-  const agentMap = await fetchAgentMap(propertyMap);
-  const items = rows.map(row => transformReviewRecord(row, propertyMap, agentMap));
+  const agentMap = await fetchAgentMap(rows);
+  const items = rows.map(row => transformReviewRecord(row, agentMap));
   return { items, total };
 }
 
@@ -399,40 +389,12 @@ async function fetchReviewRows(communityId: string, limit?: number) {
 }
 
 /**
- * 查詢與評價相關的房源，並建成快取 map。
- */
-async function fetchPropertyMap(rows: ReviewRow[]): Promise<Map<string, PropertyRow>> {
-  const propertyIds = Array.from(
-    new Set(rows.map(row => row.property_id).filter((id): id is string => Boolean(id)))
-  );
-
-  if (!propertyIds.length) {
-    return new Map();
-  }
-
-  const { data, error } = await getSupabase()
-    .from('properties')
-    .select('id, title, agent_id')
-    .in('id', propertyIds);
-
-  if (error) {
-    throw new ReviewFetchError('PROPERTY_FETCH_FAILED', '無法載入房源資料', error);
-  }
-
-  const parsed = PropertyRowSchema.array().parse(data ?? []);
-  return new Map(parsed.map(property => [property.id, property]));
-}
-
 /**
  * 查詢房仲資訊並處理欄位尚未建立時的降級情境。
  */
-async function fetchAgentMap(propertyMap: Map<string, PropertyRow>): Promise<Map<string, AgentRow>> {
+async function fetchAgentMap(rows: ReviewRow[]): Promise<Map<string, AgentRow>> {
   const agentIds = Array.from(
-    new Set(
-      Array.from(propertyMap.values())
-        .map(property => property.agent_id)
-        .filter((id): id is string => Boolean(id))
-    )
+    new Set(rows.map(row => row.author_id).filter((id): id is string => Boolean(id)))
   );
 
   if (!agentIds.length) {
@@ -679,7 +641,6 @@ async function getPosts(
     data: dataWithAuthors,
     total: count || data?.length || 0,
     limited: !isAuthenticated,
-    visibleCount: isAuthenticated ? (data?.length || 0) : GUEST_LIMIT
   });
 }
 

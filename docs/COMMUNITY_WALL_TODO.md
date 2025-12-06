@@ -29,9 +29,9 @@
 
 | 狀態 | 數量 |
 |------|------|
-| ✅ 已完成 | 1 |
+| ✅ 已完成 | 0 |
 | 🟡 進行中 | 0 |
-| 🔴 待處理 | 0 |
+| 🔴 待處理 | 3 |
 | ⚠️ 受阻 | 0 |
 
 ---
@@ -56,12 +56,32 @@ _目前無受阻任務_
 
 ## ✅ 已完成
 
-### 1️⃣ 魔術數字提取為常數
+### 2025-12-06 - 1️⃣ P0-1：修復 community_reviews VIEW 欄位查詢
 - **狀態**：✅ 已完成
-- **完成日期**：2025-12-06
-- **檔案**：`src/pages/Community/types.ts`、`src/pages/Community/components/Sidebar.tsx`
-- **描述**：將側邊欄的 `slice(0, 3)`、`slice(0, 2)` 提取為常數 `SIDEBAR_QUESTIONS_COUNT`、`SIDEBAR_HOT_POSTS_COUNT` 並引用。
-- **驗證**：`npm run build` ✓
+- **檔案**：`api/community/wall.ts`
+- **描述**：後端改為查詢 `author_id/content/source_platform`，並解析 JSONB 內容避免 500 錯誤
+- **驗收條件**：
+  - [x] 修改 API 查詢使用正確的 VIEW 欄位
+  - [x] 從 `content` JSONB 解析 pros/cons
+  - [x] API 模式不再回傳 500 錯誤
+
+### 2025-12-06 - 2️⃣ P0-2：移除 API 的 GUEST_LIMIT 限制
+- **狀態**：✅ 已完成
+- **檔案**：`api/community/wall.ts`
+- **描述**：移除 `GUEST_LIMIT` 常數與相關欄位，由前端 `useGuestVisibleItems` 控制顯示數量
+- **驗收條件**：
+  - [x] 移除 `wall.ts` 內 posts 的 GUEST_LIMIT 限制
+  - [x] 移除 reviews 查詢的 GUEST_LIMIT 限制
+  - [x] 非會員仍可取得完整資料供 LockedOverlay 顯示
+
+### 2025-12-06 - 3️⃣ P1-2：移除 API 錯誤自動 fallback 到 Mock
+- **狀態**：✅ 已完成
+- **檔案**：`src/hooks/useCommunityWallData.ts`
+- **描述**：API 模式僅在成功時更新資料，錯誤改顯示提示並保持使用者選擇
+- **驗收條件**：
+  - [x] 移除自動切換 Mock 的行為
+  - [x] API 錯誤時顯示錯誤訊息，不自動切換
+  - [x] 用戶可手動切換 Mock/API 模式
 
 ---
 

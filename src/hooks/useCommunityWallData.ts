@@ -24,6 +24,34 @@ export type { UnifiedWallData };
 const MOCK_STORAGE_KEY = 'community-wall-mock-state-v1';
 const MOCK_LATENCY_MS = 250;
 
+const EMPTY_WALL_DATA: UnifiedWallData = {
+  communityInfo: {
+    name: '尚未載入',
+    year: null,
+    units: null,
+    managementFee: null,
+    builder: null,
+    members: null,
+    avgRating: null,
+    monthlyInteractions: null,
+    forSale: null,
+  },
+  posts: {
+    public: [],
+    private: [],
+    publicTotal: 0,
+    privateTotal: 0,
+  },
+  reviews: {
+    items: [],
+    total: 0,
+  },
+  questions: {
+    items: [],
+    total: 0,
+  },
+};
+
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 const canUseMockStorage = (): boolean => {
@@ -196,6 +224,11 @@ export function useCommunityWallData(
   const hasRestoredFromStorage = useRef(false);
   const [likedPosts, setLikedPosts] = useState<Set<string | number>>(() => new Set());
   const hasAuthenticatedUser = Boolean(currentUserId);
+  const lastApiDataRef = useRef<UnifiedWallData | null>(null);
+
+  useEffect(() => {
+    lastApiDataRef.current = null;
+  }, [communityId]);
 
   // 切換至 API 模式時重置 Mock 按讚狀態，避免污染真實資料
   useEffect(() => {
@@ -248,13 +281,14 @@ export function useCommunityWallData(
       };
     }
 
-    if (!apiData) {
-      return initialMockData;
+    if (apiData) {
+      const converted = convertApiData(apiData);
+      lastApiDataRef.current = converted;
+      return converted;
     }
 
-    // API 模式：轉換資料格式（內含 pinned 排序），API 有 communityInfo 就用，沒有才 fallback Mock
-    return convertApiData(apiData);
-  }, [useMock, apiData, mockData, initialMockData]);
+    return lastApiDataRef.current ?? EMPTY_WALL_DATA;
+  }, [useMock, apiData, mockData]);
 
   // 封裝操作函數
   const refresh = useCallback(async () => {

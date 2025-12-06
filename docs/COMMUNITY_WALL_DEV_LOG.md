@@ -1,5 +1,24 @@
 # 社區牆開發紀錄
 
+## 2025-12-06 16:10 - VIEW 欄位修復 + Mock 切換行為調整
+
+### 本次變更
+
+| 變更項目 | 檔案 | 說明 |
+|----------|------|------|
+| 社區評價查詢修復 | `api/community/wall.ts` | 改用 `author_id/content/source_platform` 欄位、解析 JSONB pros/cons、移除 `PropertyRow` 快取與 `GUEST_LIMIT` 常數，並以 `author_id` 撈房仲資料 |
+| 自動 fallback 移除 | `src/hooks/useCommunityWallData.ts` | 新增 `EMPTY_WALL_DATA` 與 `lastApiDataRef`，僅在 API 取得資料後更新，錯誤時保持使用者模式選擇 |
+| 單元測試更新 | `api/community/__tests__/wall.test.ts` | 測試資料改用新的 view schema（content JSONB + agent map）|
+| 文檔同步 | `docs/COMMUNITY_WALL_TODO.md` | 三項 TODO 改為 ✅，記錄完成日期與驗收結果 |
+
+### 驗證
+
+```bash
+npm run build  # ✓
+```
+
+---
+
 ## 2025-12-06 14:30 - Sidebar 魔術數字提取
 
 ### 本次變更
@@ -26,7 +45,6 @@ npm run build  # ✓
 | community_members 表 | `20251205_community_members.sql` | ✅ 已存在（約束 `community_members_unique` 報重複） |
 | Agent stats 欄位 | `20251205_add_agent_stats_columns.sql` | ✅ 執行成功 |
 | community_reviews FK | N/A | ⚠️ 不適用（`community_reviews` 是 View，無法加 FK） |
-
 ### 結論
 - TODO.md 全部歸零：程式碼 0 項、人工操作 0 項
 - 社區牆功能開發階段完成

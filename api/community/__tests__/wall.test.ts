@@ -1,30 +1,24 @@
 import { describe, expect, it } from 'vitest';
-import { __reviewTestHelpers, type AgentRow, type PropertyRow, type ReviewRow } from '../wall';
+import { __reviewTestHelpers, type AgentRow, type ReviewRow } from '../wall';
 
 const { cleanText, normalizeCount, buildAgentPayload, transformReviewRecord } = __reviewTestHelpers;
 
 const REVIEW_ID = '11111111-1111-1111-1111-111111111111';
 const COMMUNITY_ID = '22222222-2222-2222-2222-222222222222';
-const PROPERTY_ID = '33333333-3333-3333-3333-333333333333';
 const AGENT_ID = '44444444-4444-4444-4444-444444444444';
 const ISO_DATE = '2024-01-01T00:00:00.000Z';
 
 const withDefaults = (overrides: Partial<ReviewRow> = {}): ReviewRow => ({
   id: REVIEW_ID,
   community_id: COMMUNITY_ID,
-  property_id: PROPERTY_ID,
-  source: 'agent',
-  advantage_1: '  交通便利  ',
-  advantage_2: null,
-  disadvantage: ' 管委會嚴謹 ',
+  author_id: AGENT_ID,
+  content: {
+    pros: ['  交通便利  '],
+    cons: ' 管委會嚴謹 ',
+    property_title: '示範社區',
+  },
+  source_platform: 'agent',
   created_at: ISO_DATE,
-  ...overrides,
-});
-
-const buildProperty = (overrides: Partial<PropertyRow> = {}): PropertyRow => ({
-  id: PROPERTY_ID,
-  title: '示範社區',
-  agent_id: AGENT_ID,
   ...overrides,
 });
 
@@ -59,12 +53,17 @@ describe('community wall helpers', () => {
     expect(payload?.stats).toEqual({ visits: 0, deals: 0 });
   });
 
-  it('merges review, property, and agent details', () => {
-    const record = withDefaults({ advantage_2: ' 有管理 ' });
-    const propertyMap = new Map([[PROPERTY_ID, buildProperty({ title: '華廈 A' })]]);
+  it('merges review content with agent details', () => {
+    const record = withDefaults({
+      content: {
+        pros: ['  交通便利  ', ' 有管理 '],
+        cons: ' 管委會嚴謹 ',
+        property_title: '華廈 A',
+      },
+    });
     const agentMap = new Map([[AGENT_ID, buildAgent({ visit_count: 5, deal_count: 2 })]]);
 
-    const result = transformReviewRecord(record, propertyMap, agentMap);
+    const result = transformReviewRecord(record, agentMap);
 
     expect(result.agent?.stats).toEqual({ visits: 5, deals: 2 });
     expect(result.content.pros).toEqual(['交通便利', '有管理']);
@@ -73,8 +72,16 @@ describe('community wall helpers', () => {
   });
 
   it('falls back to resident info when no agent is attached', () => {
-    const record = withDefaults({ source: 'resident', property_id: null });
-    const result = transformReviewRecord(record, new Map(), new Map());
+    const record = withDefaults({
+      author_id: null,
+      source_platform: 'resident',
+      content: {
+        pros: [],
+        cons: ' 管委會嚴謹 ',
+        property_title: null,
+      },
+    });
+    const result = transformReviewRecord(record, new Map());
 
     expect(result.agent?.name).toBe('住戶');
     expect(result.agent?.stats).toEqual({ visits: 0, deals: 0 });
