@@ -8,21 +8,26 @@
 
 | 狀態 | 數量 |
 |------|------|
-| ✅ 已完成 | 13 |
-| 🔴 待處理（程式碼） | 1 |
+| ✅ 已完成 | 14 |
+| 🔴 待處理（程式碼） | 0 |
 | 🟡 待處理（人工操作） | 3 |
 
 ---
 
-## 🔴 待處理 - 程式碼（Google 首席處長審計）
+## ✅ 已審計 - 樂觀更新無需修改
 
-### 1️⃣ 樂觀更新後 invalidate 太快（未處理）
+### 樂觀更新 invalidate 時機（2025-12-06 審計結論：已符合最佳實踐）
+
 - **檔案**：`src/hooks/useCommunityWallQuery.ts`
-- **問題**：樂觀更新後立即 invalidate，可能在 API 回應前就重新 fetch，導致閃回舊狀態
-- **引導**：
-  1. 在 `onMutate` 取消進行中的 queries
-  2. 在 `onSettled` 才 invalidate，不要在 `onSuccess`
-  3. 將樂觀 state 與 server 回應 reconcile，避免閃爍
+- **原疑慮**：樂觀更新後立即 invalidate，可能在 API 回應前就重新 fetch
+- **審計結論**：❌ 非問題。現有實作已正確：
+  1. ✅ `onMutate` 先 `cancelQueries` 取消進行中 queries（第 111 行）
+  2. ✅ `onMutate` 備份 `previousData` 用於回滾（第 116 行）
+  3. ✅ `onMutate` 用 `setQueryData` 設置樂觀狀態（第 122 行）
+  4. ✅ `onError` 用備份回滾（第 145 行）
+  5. ✅ `onSettled`（而非 `onSuccess`）才 `invalidateQueries`（第 153 行）
+
+這正是 **TanStack Query 官方推薦的樂觀更新模式**，無需修改。
 
 ---
 
@@ -40,6 +45,7 @@
 
 | 日期 | 項目 |
 |------|------|
+| 12/06 | 審計樂觀更新流程：確認已符合 TanStack Query 最佳實踐，無需修改 |
 | 12/06 | 後端 `attachAuthorsToPosts` 型別化＋Zod 驗證 profiles |
 | 12/06 | 後端問答 answers 加入作者 profiles 合併（API `getQuestions`/`getAll`） |
 | 12/06 | `PostsSection` 按讚節流加入 isMounted 防呆，避免卸載後 setState |

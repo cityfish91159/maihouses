@@ -1,5 +1,28 @@
 # 社區牆開發紀錄
 
+## 2025-12-06 14:00 - 樂觀更新審計（結論：無需修改）
+
+### 審計對象
+- `src/hooks/useCommunityWallQuery.ts` 的 `likeMutation` 樂觀更新流程
+
+### 審計結論
+原 TODO 疑慮「樂觀更新後立即 invalidate 導致閃回舊狀態」**並非問題**。
+
+現有實作已符合 TanStack Query 官方推薦的樂觀更新模式：
+1. ✅ `onMutate` 先 `cancelQueries` 取消進行中的 queries（第 111 行）
+2. ✅ `onMutate` 備份 `previousData` 用於失敗回滾（第 116 行）
+3. ✅ `onMutate` 用 `setQueryData` 設置樂觀狀態（第 122 行）
+4. ✅ `onError` 用備份回滾（第 145 行）
+5. ✅ `onSettled`（而非 `onSuccess`）才 `invalidateQueries`（第 153 行）
+
+`onSettled` 只會在 mutation 完成後（成功或失敗）才執行，不會在 API 回應前就 invalidate。
+
+### 狀態更新
+- TODO.md：程式碼待處理項目歸零（0/14）
+- 社區牆功能：程式碼層面已完成，剩餘 3 項人工操作（Supabase SQL）
+
+---
+
 ## 2025-12-06 13:45 - 後端作者 profiles 強化 + 測試擴充 + 節流防呆
 
 ### 本次變更
