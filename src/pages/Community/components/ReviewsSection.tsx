@@ -125,7 +125,7 @@ export function ReviewsSection({ role, reviews: reviewsProp, onUnlock }: Reviews
           visible={hiddenReviewCount > 0 && !!nextHiddenEntry}
           hiddenCount={hiddenReviewCount}
           countLabel="則評價"
-          benefits={['看完所有鄰居真實評價', '社區有新評論時通知你']}
+          benefits={['查看全部評價', '新回答通知']}
           {...(onUnlock ? { onCtaClick: onUnlock } : {})}
         >
           {nextHiddenEntry && (

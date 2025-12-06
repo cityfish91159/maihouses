@@ -118,6 +118,11 @@ function WallInner() {
     const storedOverride = safeGetBoolean(MOCK_OVERRIDE_KEY, false);
     const storedPreference = safeGetBoolean(MOCK_STORAGE_KEY, false);
 
+    // 特殊路徑：Demo 用 test-uuid 預設開啟 Mock，並允許權限切換
+    if (communityId === 'test-uuid') {
+      return { useMock: true, override: true };
+    }
+
     if (urlParam !== null) {
       return {
         useMock: urlParam,
@@ -138,7 +143,7 @@ function WallInner() {
     }
 
     return { useMock: false, override: false };
-  }, []);
+  }, [communityId]);
 
   const initialUseMock = initialMockState.useMock;
 
@@ -184,15 +189,16 @@ function WallInner() {
     includePrivate: perm.canAccessPrivate,
     initialUseMock, // 傳入初始值
   });
+  const allowManualRoleSwitch = import.meta.env.DEV || useMock;
   const mockToggleDisabled = !canToggleMock && !useMock;
 
   // 生產環境依後端角色自動對齊權限
   useEffect(() => {
-    if (import.meta.env.DEV) return;
+    if (import.meta.env.DEV || useMock) return;
     if (viewerRole && viewerRole !== role) {
       setRoleInternal(viewerRole);
     }
-  }, [viewerRole, role]);
+  }, [viewerRole, role, useMock]);
 
   const persistMockPreference = useCallback((value: boolean) => {
     setUseMockInternal(value);
@@ -242,8 +248,13 @@ function WallInner() {
 
   // 包裝 setRole，同步 URL 和 localStorage（僅開發環境）
   const setRole = useCallback((newRole: Role) => {
-    if (!import.meta.env.DEV) return;
+    if (!allowManualRoleSwitch) return;
     setRoleInternal(newRole);
+
+    if (!import.meta.env.DEV) {
+      return;
+    }
+
     const nextParams = updateURLParam(searchParamsRef.current, ROLE_PARAM, newRole);
     setSearchParams(nextParams, { replace: true });
     try {
@@ -253,7 +264,7 @@ function WallInner() {
       console.warn('[CommunityWall] Failed to persist role preference', message);
       setLocalStorageError(`無法儲存角色設定：${message}`);
     }
-  }, [setSearchParams]);
+  }, [allowManualRoleSwitch, setSearchParams]);
 
   useEffect(() => {
     if (!localStorageError) return;
@@ -489,7 +500,7 @@ function WallInner() {
       )}
 
       {/* 開發專用角色切換器 */}
-      {import.meta.env.DEV && (
+      {(import.meta.env.DEV || useMock) && (
         <RoleSwitcher role={role} onRoleChange={setRole} />
       )}
 

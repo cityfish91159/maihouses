@@ -282,7 +282,7 @@ export function PostsSection({
               visible={hiddenPublicCount > 0 && !!nextHiddenPost}
               hiddenCount={hiddenPublicCount}
               countLabel="則熱帖"
-              benefits={['看到更多鄰居的生活日常', '有新團購 / 公告時通知你']}
+              benefits={['查看完整動態', '新回答通知']}
               {...(onUnlock ? { onCtaClick: onUnlock } : {})}
             >
               {nextHiddenPost && (
