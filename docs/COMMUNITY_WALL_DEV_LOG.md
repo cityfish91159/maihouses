@@ -1,5 +1,22 @@
 # 社區牆開發紀錄
 
+## 2025-12-06 14:30 - Sidebar 魔術數字提取
+
+### 本次變更
+
+| 變更項目 | 檔案 | 說明 |
+|----------|------|------|
+| 提取 Sidebar 顯示數量常數 | `src/pages/Community/types.ts` | 新增 `SIDEBAR_QUESTIONS_COUNT = 3`、`SIDEBAR_HOT_POSTS_COUNT = 2` |
+| 套用常數取代硬編碼 | `src/pages/Community/components/Sidebar.tsx` | 使用新常數取代 `slice(0, 3)`、`slice(0, 2)` |
+
+### 驗證
+
+```bash
+npm run build  # ✓
+```
+
+---
+
 ## 2025-12-06 14:15 - Supabase 人工操作完成，TODO 歸零
 
 ### 執行項目

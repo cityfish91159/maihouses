@@ -5,7 +5,13 @@
  */
 
 import { useMemo } from 'react';
-import type { CommunityInfo, Question, Post } from '../types';
+import {
+  SIDEBAR_HOT_POSTS_COUNT,
+  SIDEBAR_QUESTIONS_COUNT,
+  type CommunityInfo,
+  type Post,
+  type Question,
+} from '../types';
 
 /** 格式化可能為 null 的數值 */
 function formatValue(value: number | null | undefined, suffix = ''): string {
@@ -27,7 +33,10 @@ export function Sidebar({ info, questions: questionsProp, posts }: SidebarProps)
   );
 
   // 只在 questions 變化時重新計算
-  const displayQuestions = useMemo(() => questions.slice(0, 3), [questions]);
+  const displayQuestions = useMemo(
+    () => questions.slice(0, SIDEBAR_QUESTIONS_COUNT),
+    [questions]
+  );
 
   // 只在 posts 變化時重新排序，避免每次 render 都 sort
   const hotPosts = useMemo(
@@ -37,7 +46,7 @@ export function Sidebar({ info, questions: questionsProp, posts }: SidebarProps)
         const scoreB = (b.likes || 0) + (b.views || 0) * 0.1;
         return scoreB - scoreA;
       })
-      .slice(0, 2),
+      .slice(0, SIDEBAR_HOT_POSTS_COUNT),
     [posts]
   );
 
