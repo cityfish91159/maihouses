@@ -57,12 +57,21 @@ export function formatTimeAgo(dateStr: string): string {
 
 export function convertApiPost(post: CommunityPost): Post {
   const floor = post.author?.floor?.trim();
+  const role: 'resident' | 'agent' | 'official' =
+    post.author?.role === 'agent'
+      ? 'agent'
+      : post.author?.role === 'official'
+      ? 'official'
+      : 'resident';
+  const fallbackLabel = role === 'agent' ? '房仲' : role === 'official' ? '官方' : '用戶';
+  const fallbackAuthor = post.author_id ? `${fallbackLabel}-${post.author_id.slice(0, 6)}` : fallbackLabel;
+  const authorName = post.author?.name?.trim() || fallbackAuthor;
 
   return {
     id: post.id,
-    author: post.author?.name || '匿名',
+    author: authorName,
     ...(floor ? { floor } : {}),
-    type: (post.author?.role as 'resident' | 'agent' | 'official') || 'resident',
+    type: role,
     time: formatTimeAgo(post.created_at),
     title:
       post.content.substring(0, 20) + (post.content.length > 20 ? '...' : ''),
@@ -78,12 +87,14 @@ export function convertApiPost(post: CommunityPost): Post {
 export function convertApiReview(review: CommunityReview): Review {
   const agent = review.agent;
   const company = agent?.company?.trim() ?? '';
+  const fallbackAuthor = review.author_id ? `房仲-${review.author_id.slice(0, 6)}` : '房仲';
+  const authorName = agent?.name?.trim() || fallbackAuthor;
   // 過濾 placeholder 公司名稱
   const normalizedCompany = PLACEHOLDER_COMPANY_NAMES.includes(company) ? '' : company;
 
   return {
     id: review.id,
-    author: agent?.name || '匿名房仲',
+    author: authorName,
     company: normalizedCompany,
     visits: agent?.stats?.visits ?? 0,
     deals: agent?.stats?.deals ?? 0,
@@ -99,12 +110,24 @@ export function convertApiQuestion(question: CommunityQuestion): Question {
     question: question.question,
     time: formatTimeAgo(question.created_at),
     answersCount: answers.length,
-    answers: answers.map(answer => ({
-      author: answer.author?.name || '匿名',
-      type: (answer.author?.role as 'resident' | 'agent' | 'official') || 'resident',
-      content: answer.content,
-      expert: answer.is_expert,
-    })),
+    answers: answers.map(answer => {
+      const type: 'resident' | 'agent' | 'official' =
+        answer.author?.role === 'agent'
+          ? 'agent'
+          : answer.author?.role === 'official'
+          ? 'official'
+          : 'resident';
+      const fallbackLabel = type === 'agent' ? '房仲' : type === 'official' ? '官方' : '用戶';
+      const fallbackAuthor = answer.author_id ? `${fallbackLabel}-${answer.author_id.slice(0, 6)}` : fallbackLabel;
+      const author = answer.author?.name?.trim() || fallbackAuthor;
+
+      return {
+        author,
+        type,
+        content: answer.content,
+        expert: answer.is_expert,
+      };
+    }),
     // 非會員限流相關欄位
     hasMoreAnswers: question.hasMoreAnswers ?? false,
     totalAnswers: question.totalAnswers ?? question.answers_count ?? answers.length,

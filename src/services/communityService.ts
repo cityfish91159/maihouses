@@ -29,7 +29,7 @@ export interface CommunityPost {
   author?: {
     name: string;
     avatar_url?: string;
-    role?: 'resident' | 'agent' | 'member';
+    role?: 'resident' | 'agent' | 'member' | 'official';
     floor?: string;         // 新增：樓層資訊
   };
 }
