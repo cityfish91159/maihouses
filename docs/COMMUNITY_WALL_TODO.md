@@ -29,16 +29,103 @@
 
 | 狀態 | 數量 |
 |------|------|
-| ✅ 已完成 | 0 |
+| ✅ 已完成 | 3 |
 | 🟡 進行中 | 0 |
-| 🔴 待處理 | 3 |
+| 🔴 待處理 | 6 |
 | ⚠️ 受阻 | 0 |
 
 ---
 
 ## 🔴 待處理
 
-_目前無待處理任務_
+> ⚠️ **以下為 2025-12-06 審計發現的遺漏與問題，由 Claude 首席工程師整理**
+
+### 4️⃣ P0-3：修復重複 JSDoc 註解語法錯誤
+- **狀態**：🔴 待處理
+- **嚴重度**：🔴 阻斷（潛在編譯警告）
+- **檔案**：`api/community/wall.ts`
+- **描述**：第 391-392 行出現連續兩個 `/**` 開頭的 JSDoc，中間沒有正確關閉
+- **問題原文**：
+  ```typescript
+  /**
+  /**
+   * 查詢房仲資訊並處理欄位尚未建立時的降級情境。
+  ```
+- **引導修正**：
+  1. 刪除第 391 行的孤立 `/**`
+  2. 只保留第 392-394 行正確的 JSDoc 區塊
+  3. 執行 `npm run build` 確認無 TS 警告
+
+---
+
+### 5️⃣ P1-3：測試涵蓋不足——缺少負面測試
+- **狀態**：🔴 待處理
+- **嚴重度**：🟡 中
+- **檔案**：`api/community/__tests__/wall.test.ts`
+- **描述**：現有測試只覆蓋 happy path，缺乏以下場景：
+  - `content` 為 `null` 或 `undefined`
+  - `content.pros` 非陣列（例如字串或數字）
+  - `source_platform` 缺失時的 fallback 邏輯
+- **引導修正**：
+  1. 新增 `it('handles null content gracefully')` 測試 `withDefaults({ content: null })`
+  2. 新增 `it('handles malformed pros array')` 測試 `content: { pros: '不是陣列' }`
+  3. 新增 `it('defaults source to resident when source_platform missing')` 確認 fallback
+  4. 執行 `npm run test` 確認所有測試通過
+
+---
+
+### 6️⃣ P1-4：移除 API 內殘留的 hiddenCount 計算
+- **狀態**：🔴 待處理
+- **嚴重度**：🟡 中
+- **檔案**：`api/community/wall.ts`
+- **描述**：`getReviews()` 第 656 行仍計算 `hiddenCount`，但 TODO 已說明由前端負責
+- **問題原文**：
+  ```typescript
+  const hiddenCount = !isAuthenticated ? Math.max(0, reviewResult.total - reviewResult.items.length) : 0;
+  ```
+- **引導修正**：
+  1. 移除 `hiddenCount` 變數計算
+  2. 移除 JSON 回傳中的 `hiddenCount` 欄位
+  3. 保持 `total` 讓前端自行計算 hidden
+  4. 確認前端 `useGuestVisibleItems` 已自行處理
+
+---
+
+### 7️⃣ P1-5：EMPTY_WALL_DATA 命名與邏輯問題
+- **狀態**：🔴 待處理
+- **嚴重度**：🟡 中
+- **檔案**：`src/hooks/useCommunityWallData.ts`
+- **描述**：`EMPTY_WALL_DATA.communityInfo.name = '尚未載入'` 語意不精確，且 API 錯誤時應顯示「載入失敗」而非「尚未載入」
+- **引導修正**：
+  1. 將 `EMPTY_WALL_DATA` 拆成兩個常數：
+     - `LOADING_WALL_DATA`（name: '載入中...'）
+     - `ERROR_WALL_DATA`（name: '載入失敗'）
+  2. `useMemo` 內根據 `apiError` 狀態選用正確的 fallback
+  3. 或者維持單一常數但 name 改為空字串，由 UI 層判斷顯示
+
+---
+
+### 8️⃣ P2-1：lastApiDataRef 可能造成 stale data
+- **狀態**：🔴 待處理
+- **嚴重度**：🟢 低
+- **檔案**：`src/hooks/useCommunityWallData.ts`
+- **描述**：切換社區時僅 `lastApiDataRef.current = null`，但若新社區 API 仍在載入，`useMemo` 會回傳 `EMPTY_WALL_DATA`；若 API 失敗，永遠卡在空資料
+- **引導修正**：
+  1. 考慮在 `communityId` 變化時同時 `apiRefresh()` 強制重載
+  2. 或在 `useMemo` 內加入 `apiLoading` 條件，載入中時回傳 loading 專用資料
+  3. 確保 UI 能正確顯示「重試」按鈕
+
+---
+
+### 9️⃣ P2-2：API 錯誤訊息未在前端充分顯示
+- **狀態**：🔴 待處理
+- **嚴重度**：🟢 低
+- **檔案**：`src/pages/Community/Wall.tsx`
+- **描述**：TODO 說「API 錯誤時顯示錯誤訊息」，但實際前端僅顯示「載入失敗，請稍後再試」，未呈現後端回傳的 `error.message`
+- **引導修正**：
+  1. 在錯誤區塊加入 `{import.meta.env.DEV && <pre>{error.message}</pre>}` 便於除錯
+  2. 生產環境可保持友善訊息，但 console 應 log 完整錯誤
+  3. 確認 `apiError` 有正確傳遞後端訊息
 
 ---
 

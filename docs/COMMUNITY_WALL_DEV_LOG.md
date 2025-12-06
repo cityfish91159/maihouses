@@ -1,5 +1,27 @@
 # 社區牆開發紀錄
 
+## 2025-12-06 16:30 - 審計先前修改 + 發現 6 項遺漏
+
+### 審計來源
+Claude 首席工程師審查 OpenAI 於同日所做的「VIEW 欄位修復 + Mock 切換行為調整」
+
+### 發現問題
+
+| 編號 | 嚴重度 | 問題 | 檔案 |
+|------|--------|------|------|
+| P0-3 | 🔴 | JSDoc 重複開頭 `/**\n/**` 語法錯誤 | `api/community/wall.ts:391-392` |
+| P1-3 | 🟡 | 測試只有 happy path，缺負面測試 | `api/community/__tests__/wall.test.ts` |
+| P1-4 | 🟡 | `getReviews()` 仍計算 `hiddenCount`，與「前端負責」矛盾 | `api/community/wall.ts:656` |
+| P1-5 | 🟡 | `EMPTY_WALL_DATA.name = '尚未載入'` 語意不精確 | `src/hooks/useCommunityWallData.ts` |
+| P2-1 | 🟢 | `lastApiDataRef` 切換社區時可能 stale | `src/hooks/useCommunityWallData.ts` |
+| P2-2 | 🟢 | 前端錯誤訊息未顯示後端 `error.message` | `src/pages/Community/Wall.tsx` |
+
+### 結論
+- TODO.md 已更新：待處理從 0 → 6
+- 詳細引導修正方案已寫入 TODO.md，供下一位 Agent 執行
+
+---
+
 ## 2025-12-06 16:10 - VIEW 欄位修復 + Mock 切換行為調整
 
 ### 本次變更
