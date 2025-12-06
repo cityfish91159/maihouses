@@ -4,6 +4,9 @@ import {
   convertApiPost,
   convertApiReview,
   convertApiQuestion,
+  formatTimeAgo,
+  sortPostsWithPinned,
+  convertApiData,
 } from '../communityWallConverters';
 import type { CommunityPost, CommunityReview, CommunityQuestion } from '../../services/communityService';
 
@@ -111,5 +114,43 @@ describe('convertApiQuestion', () => {
       author: '會員-abcd',
       type: 'member',
     });
+  });
+});
+
+describe('formatTimeAgo', () => {
+  it('handles key time windows', () => {
+    const now = Date.now();
+    expect(formatTimeAgo(new Date(now - 30 * 1000).toISOString())).toBe('剛剛');
+    expect(formatTimeAgo(new Date(now - 30 * 60 * 1000).toISOString())).toContain('分鐘前');
+    expect(formatTimeAgo(new Date(now - 3 * 24 * 60 * 60 * 1000).toISOString())).toContain('天前');
+    expect(formatTimeAgo(new Date(now - 2 * 7 * 24 * 60 * 60 * 1000).toISOString())).toContain('週前');
+  });
+});
+
+describe('sortPostsWithPinned', () => {
+  it('keeps pinned first and preserves relative order', () => {
+    const sorted = sortPostsWithPinned([
+      { id: 'b', author: 'B', type: 'resident', time: '', title: '', content: '', comments: 0, pinned: false },
+      { id: 'a', author: 'A', type: 'resident', time: '', title: '', content: '', comments: 0, pinned: true },
+      { id: 'c', author: 'C', type: 'resident', time: '', title: '', content: '', comments: 0, pinned: false },
+    ]);
+
+    expect(sorted.map(p => p.id)).toEqual(['a', 'b', 'c']);
+  });
+});
+
+describe('convertApiData', () => {
+  it('returns neutral placeholders when posts/reviews/questions missing', () => {
+    const converted = convertApiData({
+      // 故意省略 communityInfo，模擬後端缺資料
+      posts: { public: null as unknown as CommunityPost[], private: null as unknown as CommunityPost[], publicTotal: 0, privateTotal: 0 },
+      reviews: { items: null as unknown as CommunityReview[], total: 0 },
+      questions: { items: null as unknown as CommunityQuestion[], total: 0 },
+    } as any);
+
+    expect(converted.communityInfo.name).toBe('未知社區');
+    expect(converted.posts.public).toEqual([]);
+    expect(converted.reviews.items).toEqual([]);
+    expect(converted.questions.items).toEqual([]);
   });
 });

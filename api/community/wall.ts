@@ -79,6 +79,33 @@ function resolveCommunityId(raw: string): string | null {
 
 const REVIEW_SELECT_FIELDS = buildReviewSelectFields();
 
+// 型別定義：避免 any 汙染
+const ProfileRowSchema = z.object({
+  id: z.string(),
+  name: z.string().nullable(),
+  avatar_url: z.string().nullable(),
+  role: z.enum(['resident', 'member', 'agent', 'official']).nullable(),
+  floor: z.string().nullable(),
+});
+type ProfileRow = z.infer<typeof ProfileRowSchema>;
+
+type PostRow = {
+  id: string;
+  author_id: string | null;
+  [key: string]: unknown;
+};
+
+type AnswerRow = {
+  id: string;
+  author_id: string | null;
+  answer: string;
+  author_type: string | null;
+  is_best: boolean | null;
+  likes_count: number | null;
+  created_at: string;
+  [key: string]: unknown;
+};
+
 class ReviewFetchError extends Error {
   constructor(
     public code: string,
@@ -104,6 +131,28 @@ function normalizeQueryParams(query: VercelRequest['query']) {
     visibility: coerceQueryValue(query.visibility),
     includePrivate: coerceQueryValue(query.includePrivate),
   };
+}
+
+async function buildProfileMap(authorIds: string[]): Promise<Map<string, ProfileRow>> {
+  if (!authorIds.length) return new Map();
+
+  const { data, error } = await getSupabase()
+    .from('profiles')
+    .select('id, name, avatar_url, role, floor')
+    .in('id', authorIds);
+
+  if (error) {
+    console.error('[community/wall] fetch profiles failed:', error);
+    return new Map();
+  }
+
+  const parsed = ProfileRowSchema.array().safeParse(data || []);
+  if (!parsed.success) {
+    console.error('[community/wall] profiles schema validation failed:', parsed.error.flatten());
+    return new Map();
+  }
+
+  return new Map(parsed.data.map(profile => [profile.id, profile]));
 }
 
 function resolveSupabaseErrorDetails(error: unknown) {
@@ -568,26 +617,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 }
 
-async function attachAuthorsToPosts(posts: any[]): Promise<any[]> {
-  if (!posts?.length) return posts || [];
+async function attachAuthorsToPosts<T extends PostRow>(posts: T[]): Promise<Array<T & { author: ProfileRow | null }>> {
+  if (!posts?.length) return posts as Array<T & { author: ProfileRow | null }>;
 
-  const authorIds = Array.from(new Set((posts || []).map((p: any) => p.author_id).filter(Boolean)));
-  if (authorIds.length === 0) return posts;
-
-  const { data: profiles, error } = await getSupabase()
-    .from('profiles')
-    .select('id, name, avatar_url, role, floor')
-    .in('id', authorIds);
-
-  if (error) {
-    console.error('[community/wall] attachAuthorsToPosts fetch profiles failed:', error);
-    return posts;
+  const authorIds = Array.from(new Set(posts.map(p => p.author_id).filter((id): id is string => Boolean(id))));
+  if (authorIds.length === 0) {
+    return posts.map(post => ({ ...post, author: null }));
   }
 
-  const profileMap = new Map((profiles || []).map((p: any) => [p.id, p]));
+  const profileMap = await buildProfileMap(authorIds);
+
   return posts.map(post => ({
     ...post,
-    author: profileMap.get(post.author_id) || null,
+    author: post.author_id ? profileMap.get(post.author_id) ?? null : null,
   }));
 }
 
@@ -682,7 +724,7 @@ async function getQuestions(
     .select(`
       *,
       answers:community_answers(
-        id, answer, author_type, likes_count, is_best, created_at
+        id, answer, author_type, author_id, likes_count, is_best, created_at
       )
     `, { count: 'exact' })
     .eq('community_id', communityId)
@@ -691,12 +733,33 @@ async function getQuestions(
 
   if (error) throw error;
 
+  const answersWithAuthors = await attachAuthorsToAnswers(data || []);
+
   return res.status(200).json({
     success: true,
-    data,
+    data: answersWithAuthors,
     total: count || 0,
     limited: !isAuthenticated
   });
+}
+
+async function attachAuthorsToAnswers<T extends { answers?: AnswerRow[] }>(questions: T[]): Promise<T[]> {
+  if (!questions?.length) return questions;
+
+  const authorIds = Array.from(new Set(
+    questions.flatMap(q => (q.answers || []).map(a => a.author_id).filter((id): id is string => Boolean(id)))
+  ));
+
+  const profileMap = await buildProfileMap(authorIds);
+
+  return questions.map(question => ({
+    ...question,
+    answers: (question.answers || []).map(answer => ({
+      ...answer,
+      author: answer.author_id ? profileMap.get(answer.author_id) ?? null : null,
+      author_type: answer.author_type,
+    })),
+  }));
 }
 
 // 取得全部資料（首次載入用）
@@ -786,6 +849,8 @@ async function getAll(
     attachAuthorsToPosts(privatePostsResult.data || []),
   ]);
 
+  const enrichedQuestions = await attachAuthorsToAnswers(questionsResult.data || []);
+
   // 組裝 communityInfo（對齊前端 CommunityInfo 型別）
   // 若 DB 欄位不存在，回傳 null 讓前端處理顯示邏輯
   const rawCommunity = communityResult.data;
@@ -802,7 +867,7 @@ async function getAll(
   } : null;
 
   // 轉換 questions 格式：確保 answers 的 content 欄位正確（不再對未登入者截斷回答）
-  const transformedQuestions = (questionsResult.data || []).map((q: any) => {
+  const transformedQuestions = enrichedQuestions.map(q => {
     const allAnswers = q.answers || [];
     return {
       ...q,
@@ -815,10 +880,7 @@ async function getAll(
         is_expert: a.author_type === 'agent', // 房仲回答標記為專家
         likes_count: a.likes_count,
         created_at: a.created_at,
-        author: {
-          name: a.author_type === 'agent' ? '認證房仲' : '住戶',
-          role: a.author_type,
-        },
+        author: a.author ?? null,
       })),
       hasMoreAnswers: false,
       totalAnswers: allAnswers.length,

@@ -22,6 +22,7 @@ interface PostCardProps {
 function PostCard({ post, onLike }: PostCardProps) {
   const [isLiking, setIsLiking] = useState(false);
   const likeThrottleRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isMountedRef = useRef(true);
   const isAgent = post.type === 'agent';
   const isOfficial = post.type === 'official';
   const displayTime = formatRelativeTimeLabel(post.time);
@@ -45,7 +46,9 @@ function PostCard({ post, onLike }: PostCardProps) {
     : null;
 
   useEffect(() => {
+    isMountedRef.current = true;
     return () => {
+      isMountedRef.current = false;
       if (likeThrottleRef.current) {
         clearTimeout(likeThrottleRef.current);
       }
@@ -64,7 +67,9 @@ function PostCard({ post, onLike }: PostCardProps) {
       } catch (error) {
         console.error('Failed to toggle like', error);
       } finally {
-        setIsLiking(false);
+        if (isMountedRef.current) {
+          setIsLiking(false);
+        }
       }
     }, 250);
   }, [onLike, post.id, isLiking]);
