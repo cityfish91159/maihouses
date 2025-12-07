@@ -46,7 +46,7 @@ beforeAll(() => {
   // jsdom does not implement scrollIntoView by default
   Element.prototype.scrollIntoView = vi.fn();
   
-  // Mock matchMedia for react-hot-toast
+  // Mock matchMedia for components that expect it (jsdom lacks implementation)
   Object.defineProperty(globalThis, 'matchMedia', {
     writable: true,
     value: vi.fn().mockImplementation(query => ({

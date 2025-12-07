@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase';
 import { propertyService, PropertyFormInput } from '../services/propertyService';
 import { CommunityPicker } from '../components/ui/CommunityPicker';
 import { usePropertyFormValidation, validateImages, VALIDATION_RULES } from '../hooks/usePropertyFormValidation';
-import { useToast } from '../components/ui/Toast';
+import { notify } from '../lib/notify';
 import { 
   Loader2, Upload, X, Sparkles, ThumbsUp, ThumbsDown, 
   Download, Check, Home, MapPin, Shield, ArrowLeft, Building2, AlertTriangle, Edit3
@@ -21,7 +21,6 @@ interface UploadResult {
 export const PropertyUploadPage: React.FC = () => {
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { showToast } = useToast();
   
   const [loading, setLoading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<{ current: number; total: number } | null>(null);
@@ -103,12 +102,7 @@ export const PropertyUploadPage: React.FC = () => {
       // 顯示無效檔案的錯誤
       if (!allValid) {
         invalidFiles.forEach(({ file, error }) => {
-          showToast({
-            type: 'warning',
-            title: `${file.name} 無法上傳`,
-            message: error || '檔案格式或大小不符合要求',
-            duration: 5000,
-          });
+          notify.warning(`${file.name} 無法上傳`, error || '檔案格式或大小不符合要求', { duration: 5000 });
         });
       }
       
@@ -130,27 +124,24 @@ export const PropertyUploadPage: React.FC = () => {
   const publish = async () => {
     // 使用驗證結果檢查
     if (!validation.basicValid) {
-      showToast({
-        type: 'error',
-        title: '請完成必填欄位',
-        message: validation.errors.filter(e => ['title', 'price', 'address', 'communityName'].includes(e.field)).map(e => e.message).join('、'),
-      });
+      notify.error(
+        '請完成必填欄位',
+        validation.errors
+          .filter(e => ['title', 'price', 'address', 'communityName'].includes(e.field))
+          .map(e => e.message)
+          .join('、')
+      );
       return;
     }
     if (!validation.twoGoodOneFairValid) {
-      showToast({
-        type: 'error',
-        title: '兩好一公道字數不足',
-        message: `優點至少各 ${VALIDATION_RULES.advantage.minLength} 字，公道話至少 ${VALIDATION_RULES.disadvantage.minLength} 字`,
-      });
+      notify.error(
+        '兩好一公道字數不足',
+        `優點至少各 ${VALIDATION_RULES.advantage.minLength} 字，公道話至少 ${VALIDATION_RULES.disadvantage.minLength} 字`
+      );
       return;
     }
     if (!validation.images.valid) {
-      showToast({
-        type: 'error',
-        title: '請上傳照片',
-        message: '至少需要一張物件照片',
-      });
+      notify.error('請上傳照片', '至少需要一張物件照片');
       return;
     }
     
@@ -167,12 +158,7 @@ export const PropertyUploadPage: React.FC = () => {
       // 檢查是否有失敗的圖片
       if (!uploadResult.allSuccess) {
         const failedNames = uploadResult.failed.map(f => f.file.name).join('、');
-        showToast({
-          type: 'warning',
-          title: '部分圖片上傳失敗',
-          message: `${failedNames} 未能上傳，其他照片已成功`,
-          duration: 5000,
-        });
+        notify.warning('部分圖片上傳失敗', `${failedNames} 未能上傳，其他照片已成功`, { duration: 5000 });
       }
       
       // 如果所有圖片都失敗
@@ -184,12 +170,7 @@ export const PropertyUploadPage: React.FC = () => {
       const result = await propertyService.createPropertyWithForm(form, uploadResult.urls, selectedCommunityId);
       
       // 顯示成功 Toast
-      showToast({
-        type: 'success',
-        title: '🎉 刊登成功！',
-        message: `物件編號：${result.public_id}`,
-        duration: 3000,
-      });
+      notify.success('🎉 刊登成功！', `物件編號：${result.public_id}`, { duration: 3000 });
       
       // 顯示確認頁
       setUploadResult({
@@ -202,13 +183,10 @@ export const PropertyUploadPage: React.FC = () => {
       
     } catch (e: any) {
       console.error('Publish error:', e);
-      showToast({
-        type: 'error',
-        title: '刊登失敗',
-        message: e.message || '發生未知錯誤',
-        showRetry: true,
-        onRetry: publish,
-        showContactSupport: true,
+      notify.error('刊登失敗', e?.message || '發生未知錯誤', {
+        actionLabel: '重試',
+        onAction: publish,
+        duration: 5500,
       });
     } finally {
       setLoading(false);

@@ -54,7 +54,7 @@ export default defineConfig({
         manualChunks: {
           'react-vendor': ['react', 'react-dom', 'react-router-dom'],
           'supabase': ['@supabase/supabase-js'],
-          'ui-libs': ['lucide-react', 'react-icons', 'react-hot-toast'],
+          'ui-libs': ['lucide-react', 'react-icons'],
         },
       },
     },
