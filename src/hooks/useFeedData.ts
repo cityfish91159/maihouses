@@ -13,9 +13,9 @@
  */
 
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
-import { supabase } from '../lib/supabase';
 import { mhEnv } from '../lib/mhEnv';
 import type { Post, Role } from '../types/community';
+import { useAuth } from './useAuth';
 
 // ============ Feed 專用型別 ============
 export interface FeedPost extends Post {
@@ -36,6 +36,12 @@ const MOCK_LATENCY_MS = 250;
 const EMPTY_FEED_DATA: UnifiedFeedData = {
   posts: [],
   totalPosts: 0,
+};
+
+const COMMUNITY_NAME_MAP: Record<string, string> = {
+  'test-uuid': '惠宇上晴',
+  'community-2': '遠雄中央公園',
+  'community-3': '國泰建設',
 };
 
 // ============ Mock 資料 ============
@@ -112,6 +118,17 @@ const FEED_MOCK_DATA: UnifiedFeedData = {
   totalPosts: FEED_MOCK_POSTS.length,
 };
 
+const filterMockData = (source: UnifiedFeedData, targetCommunityId?: string): UnifiedFeedData => {
+  const filteredPosts = targetCommunityId
+    ? source.posts.filter(p => p.communityId === targetCommunityId)
+    : source.posts;
+
+  return {
+    posts: filteredPosts,
+    totalPosts: filteredPosts.length,
+  };
+};
+
 // ============ 工具函數 ============
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -148,13 +165,6 @@ const saveFeedMockState = (data: UnifiedFeedData): void => {
   }
 };
 
-const VALID_VIEWER_ROLES: Role[] = ['guest', 'member', 'resident', 'agent'];
-const resolveViewerRole = (rawRole: unknown, hasAuthenticatedUser: boolean): Role => {
-  if (typeof rawRole === 'string' && VALID_VIEWER_ROLES.includes(rawRole as Role)) {
-    return rawRole as Role;
-  }
-  return hasAuthenticatedUser ? 'member' : 'guest';
-};
 
 // ============ Mock Factory ============
 export const createFeedMockPost = (
@@ -221,6 +231,7 @@ export interface UseFeedDataReturn {
 export function useFeedData(
   options: UseFeedDataOptions = {}
 ): UseFeedDataReturn {
+  const { user: authUser, role: authRole, isAuthenticated, loading: authLoading } = useAuth();
   const {
     communityId,
     initialMockData = FEED_MOCK_DATA,
@@ -235,37 +246,7 @@ export function useFeedData(
     return unsubscribe;
   }, []);
 
-  // ============ 使用者 ID ============
-  const [currentUserId, setCurrentUserId] = useState<string | undefined>(undefined);
-  useEffect(() => {
-    let mounted = true;
-    const fetchUserId = async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (mounted && user?.id) {
-          setCurrentUserId(user.id);
-        }
-      } catch (err) {
-        if (import.meta.env.DEV) {
-          console.warn('[useFeedData] 無法取得使用者 ID:', err);
-        }
-      }
-    };
-    fetchUserId();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (mounted) {
-        setCurrentUserId(session?.user?.id);
-      }
-    });
-
-    return () => {
-      mounted = false;
-      subscription.unsubscribe();
-    };
-  }, []);
-
-  const hasAuthenticatedUser = Boolean(currentUserId);
+  const currentUserId = authUser?.id;
 
   // ============ Mock 狀態 ============
   const [mockData, setMockData] = useState<UnifiedFeedData>(() =>
@@ -314,14 +295,11 @@ export function useFeedData(
       // TODO: P5 時替換為真實 API 呼叫
       // const response = await fetch(`/api/feed?communityId=${communityId ?? ''}`);
       // const result = await response.json();
-      
-      // 目前暫時回傳空資料，待 P5 串接
+
+      // 暫時使用 Mock 資料作為 API fallback，避免空資料誤導
       await delay(MOCK_LATENCY_MS);
-      const result: UnifiedFeedData = {
-        posts: [],
-        totalPosts: 0,
-      };
-      
+      const result = filterMockData(mockData, communityId);
+
       setApiData(result);
       lastApiDataRef.current = result;
     } catch (err) {
@@ -333,7 +311,7 @@ export function useFeedData(
     } finally {
       setApiLoading(false);
     }
-  }, [useMock, communityId]);
+  }, [useMock, communityId, mockData]);
 
   // 初始載入
   useEffect(() => {
@@ -346,14 +324,7 @@ export function useFeedData(
   const data = useMemo<UnifiedFeedData>(() => {
     if (useMock) {
       // Mock 模式：根據 communityId 篩選
-      const filteredPosts = communityId
-        ? mockData.posts.filter(p => p.communityId === communityId)
-        : mockData.posts;
-      
-      return {
-        posts: filteredPosts,
-        totalPosts: filteredPosts.length,
-      };
+      return filterMockData(mockData, communityId);
     }
 
     if (apiData) {
@@ -366,11 +337,7 @@ export function useFeedData(
   }, [useMock, apiData, mockData, communityId]);
 
   // ============ viewerRole ============
-  const viewerRole = useMemo<Role>(() => {
-    return resolveViewerRole(undefined, hasAuthenticatedUser);
-  }, [hasAuthenticatedUser]);
-
-  const isAuthenticated = viewerRole !== 'guest';
+  const viewerRole = useMemo<Role>(() => authRole ?? 'guest', [authRole]);
 
   // ============ Mock 模式 userId ============
   const getMockUserId = useCallback((): string => {
@@ -395,6 +362,10 @@ export function useFeedData(
   }, [useMock, fetchApiData]);
 
   const toggleLike = useCallback(async (postId: string | number) => {
+    if (!useMock && !isAuthenticated) {
+      throw new Error('請先登入後再按讚');
+    }
+
     if (useMock) {
       await delay(MOCK_LATENCY_MS);
       const mockUserId = getMockUserId();
@@ -431,14 +402,21 @@ export function useFeedData(
     // TODO: P5 時串接真實 API
     // await apiToggleLike(String(postId));
     await fetchApiData(); // 暫時重新載入
-  }, [useMock, likedPosts, getMockUserId, fetchApiData]);
+  }, [useMock, likedPosts, getMockUserId, fetchApiData, isAuthenticated]);
 
   const createPost = useCallback(async (content: string, targetCommunityId?: string) => {
+    if (!useMock && !isAuthenticated) {
+      throw new Error('請先登入後再發文');
+    }
+
     if (useMock) {
       const newPost = createFeedMockPost(
         content,
         targetCommunityId ?? communityId,
-        targetCommunityId === 'test-uuid' ? '惠宇上晴' : '我的社區'
+        COMMUNITY_NAME_MAP[targetCommunityId ?? communityId ?? '']
+          ?? targetCommunityId
+          ?? communityId
+          ?? '我的社區'
       );
 
       setMockData(prev => ({
@@ -452,7 +430,7 @@ export function useFeedData(
     // TODO: P5 時串接真實 API
     // await apiCreatePost(content, targetCommunityId);
     await fetchApiData(); // 暫時重新載入
-  }, [useMock, communityId, fetchApiData]);
+  }, [useMock, communityId, fetchApiData, isAuthenticated]);
 
   const setUseMock = useCallback((value: boolean) => {
     const next = mhEnv.setMock(value);

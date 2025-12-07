@@ -632,6 +632,29 @@ communityName: COMMUNITY_NAME_MAP[targetCommunityId] ?? targetCommunityId ?? '�
 
 ---
 
+## ✅ P2-AUDIT-FIX：修復 6 項缺失（2025-12-07）
+
+| ID | 修復項目 | 檔案 | 說明 |
+|----|----------|------|------|
+| P2-A1 | toggleLike 加 auth guard | `src/hooks/useFeedData.ts` | API 模式未登入直接 throw Error，避免 401；Mock 模式仍可測試 |
+| P2-A2 | createPost 加 auth guard | `src/hooks/useFeedData.ts` | API 模式未登入直接 throw Error，與 P1.5 權限一致 |
+| P2-A3 | 移除重複 auth 訂閱 | `src/hooks/useFeedData.ts` | 改用 `useAuth()` 提供的 user/role/isAuthenticated，避免多重訂閱 supabase.auth |
+| P2-A4 | 精簡 viewerRole | `src/hooks/useFeedData.ts` | 移除 `resolveViewerRole`，直接使用 `authRole` |
+| P2-A5 | API 模式 fallback | `src/hooks/useFeedData.ts` | API 路徑暫時回傳 Mock 資料（含 communityId 篩選），避免空列表誤導；註記 P5 要改掉 |
+| P2-A6 | communityName map | `src/hooks/useFeedData.ts` | 新增 COMMUNITY_NAME_MAP，生成 Mock 貼文時不再硬編碼名稱 |
+
+### 驗證（2025-12-07）
+
+```bash
+npm run build   # ✓ exit 0
+```
+
+### 待辦提醒（後續任務）
+- P5 時替換 API fallback，接上真實 feed API
+- UI 層仍需做未登入提示（目前 Hook 丟 Error 由消費者處理）
+
+---
+
 ## 🔴 P3：GlobalHeader
 
 **目的**：三頁共用 Header，從 feed-agent.html 搬最完整版

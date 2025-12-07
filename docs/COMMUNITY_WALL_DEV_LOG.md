@@ -55,6 +55,30 @@ grep -E "^export" src/hooks/useFeedData.ts # ✓ 5 個 export
 
 ---
 
+## 2025-12-07 - P2-AUDIT-FIX 修復 6 項缺失
+
+### 本次變更
+
+| 變更項目 | 檔案 | 說明 |
+|----------|------|------|
+| toggleLike auth guard | `src/hooks/useFeedData.ts` | 未登入 API 模式直接 throw Error，Mock 模式可測試 |
+| createPost auth guard | `src/hooks/useFeedData.ts` | 未登入 API 模式直接 throw Error，與 P1.5 權限一致 |
+| 去重 auth 訂閱 | `src/hooks/useFeedData.ts` | 改用 `useAuth()`，移除 supabase 重複訂閱 |
+| viewerRole 精簡 | `src/hooks/useFeedData.ts` | 移除 `resolveViewerRole`，直接用 `authRole` |
+| API fallback 改用 Mock | `src/hooks/useFeedData.ts` | API 模式暫時回傳 Mock（含 communityId 篩選），避免空列表誤導（P5 需改回 API） |
+| communityName map | `src/hooks/useFeedData.ts` | COMMUNITY_NAME_MAP 提供名稱對照，避免硬編碼 |
+
+### 驗證
+
+```bash
+npm run build   # ✓ exit 0
+```
+
+### 部署
+- commit `973a9b1` → Vercel 自動部署
+
+---
+
 ## 2025-12-07 - P1.5-AUDIT-5 徹底重構 Hook 順序修復 React error #310
 
 ### 本次變更
