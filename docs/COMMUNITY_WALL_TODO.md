@@ -62,214 +62,49 @@
 
 ---
 
-## 🔴 P0.5-AUDIT：Google 首席審計 - 發現 7 項缺失
+## ✅ P0.5-AUDIT：審計發現 7 項缺失（已全數修復）
 
-> **審計時間**：2025-12-07 | **嚴重程度**：🔴 Critical / 🟡 Medium / 🟢 Low
+> **審計時間**：2025-12-07 | **修復完成**：2025-12-07
 
-### 🔴 A1：localStorage Key 命名衝突（Critical）
-
-**問題**：三個檔案用了三個不同的 `MOCK_STORAGE_KEY`
-
-| 檔案 | Key 值 | 狀態 |
-|------|--------|------|
-| `src/lib/mhEnv.ts` | `mh_mock_mode` | ✅ 新標準 |
-| `src/hooks/useCommunityWallData.ts` | `community-wall-mock-state-v1` | ❌ 舊遺留（存 Mock Data） |
-| `src/hooks/useMockState.ts` | `community-wall-use-mock` | ❌ 死碼未清 |
-
-**後果**：
-- 跨頁同步失效：`mhEnv.subscribe()` 只監聽 `mh_mock_mode`，但 `useMockState` 讀寫 `community-wall-use-mock`
-- 用戶困惑：切換 Mock 可能在某些頁面生效、某些不生效
-
-**引導修正**：
-1. `useMockState.ts` 已無 import → 整個檔案刪除（確認後執行 `rm src/hooks/useMockState.ts`）
-2. `useCommunityWallData.ts:25` 的 `MOCK_STORAGE_KEY` 是存 Mock「資料」而非「開關」→ rename 為 `MOCK_DATA_STORAGE_KEY` 避免誤解
-3. Mock 開關統一走 `mhEnv`，Mock 資料存 `community-wall-mock-data-v1`
+| ID | 嚴重度 | 問題摘要 | 狀態 |
+|----|--------|----------|------|
+| A1 | 🔴 | localStorage Key 命名衝突 → `MOCK_DATA_STORAGE_KEY` + 刪 `useMockState.ts` | ✅ |
+| A2 | 🔴 | `initialUseMock` 雙重呼叫 → Hook 單一來源 | ✅ |
+| A3 | 🟡 | `useEffect` 缺 cleanup → 加 `return unsubscribe` | ✅ |
+| A4 | 🟡 | `window.confirm()` 阻塞 → 直接移除 | ✅ |
+| A5 | 🟡 | `useMockState.ts` 死碼 → 刪除 | ✅ |
+| A6 | 🟡 | Wall.tsx 包裝 `setUseMock` → 直接用 Hook setter | ✅ |
+| A7 | 🟢 | `mhEnv` 缺型別 → 補 `MhEnv` interface | ✅ |
 
 ---
 
-### 🔴 A2：Wall.tsx 重複宣告 initialUseMock（Critical Logic Bug）
-
-**問題**：`Wall.tsx:87` 用 `useMemo` 呼叫 `mhEnv.isMockEnabled()`，然後傳給 Hook options
-
-```tsx
-// Wall.tsx:87
-const initialUseMock = useMemo(() => mhEnv.isMockEnabled(), []);
-
-// Wall.tsx:115
-} = useCommunityWallData(communityId, {
-    includePrivate: perm.canAccessPrivate,
-    initialUseMock, // 傳入初始值
-});
-```
-
-**但是 Hook 內部又重複判斷一次**：
-
-```tsx
-// useCommunityWallData.ts:181-183
-const resolvedInitialUseMock = typeof requestedInitialUseMock === 'boolean'
-  ? requestedInitialUseMock
-  : mhEnv.isMockEnabled(); // 又呼叫一次！
-```
-
-**後果**：
-- 雙重呼叫 `mhEnv.isMockEnabled()` → 時序問題，URL 可能已被清除
-- 語意混亂：到底誰決定 initial value？
-
-**引導修正**：
-1. `Wall.tsx` 刪除 `initialUseMock` 計算，不傳 options
-2. Hook 內部統一用 `mhEnv.isMockEnabled()` 作為唯一來源
-3. 若需要「頁面覆寫」行為，改用明確命名 `forceUseMock?: boolean`
-
----
-
-### 🟡 A3：useEffect 依賴陣列空缺（Memory Leak Risk）
-
-**問題**：`useCommunityWallData.ts:193`
-
-```tsx
-useEffect(() => mhEnv.subscribe((next) => setUseMockState(next)), []);
-```
-
-**後果**：
-- 如果 `setUseMockState` 被重新 bind，callback 仍持有舊 reference
-- ESLint `react-hooks/exhaustive-deps` 警告被忽略
-
-**引導修正**：
-```tsx
-useEffect(() => {
-  const unsub = mhEnv.subscribe(setUseMockState);
-  return unsub;
-}, []); // setUseMockState 是 useState 的 setter，React 保證 stable
-```
-- 顯式 return cleanup function
-- 加註解說明為何 deps 可為空
-
----
-
-### 🟡 A4：MockToggle confirm() 阻塞 UX
-
-**問題**：`MockToggle.tsx:17-20`
-
-```tsx
-if (useMock && typeof window !== 'undefined') {
-  const confirmed = window.confirm('切換到 API 資料會暫時關閉 Mock 狀態，確保重要內容已保存，是否繼續？');
-  if (!confirmed) return;
-}
-```
-
-**後果**：
-- `window.confirm()` 是同步阻塞，在 Electron/WebView 環境可能失效
-- UX 不佳：每次切換都跳對話框
-
-**引導修正**：
-1. 改用自訂 Confirm Modal（可用 sonner 的 `toast.promise` 或 headlessui `Dialog`）
-2. 或簡化為 tooltip 警告，不用 confirm
-
----
-
-### 🟡 A5：useMockState.ts 死碼未清除（Dead Code）
-
-**問題**：`src/hooks/useMockState.ts`（114 行）已完全無人 import
-
-**驗證**：
-```bash
-grep -r "useMockState" src/ --include="*.ts" --include="*.tsx" | grep "from"
-# 結果：0 match
-```
-
-**後果**：
-- 增加 bundle size（雖然 tree-shake 可能清除，但不保證）
-- 維護混亂：未來開發者不知道該用哪個
-
-**引導修正**：
-```bash
-rm src/hooks/useMockState.ts
-# 然後 build 驗證無副作用
-```
-
----
-
-### 🟡 A6：Wall.tsx setUseMock 包裝邏輯多餘
-
-**問題**：`Wall.tsx:138-141`
-
-```tsx
-const setUseMock = useCallback((value: boolean) => {
-  if (value && !canToggleMock) return;
-  const next = mhEnv.setMock(value);
-  setUseMockInternal(next);
-}, [canToggleMock, setUseMockInternal]);
-```
-
-**但 Hook 內部已有同名 `setUseMock`**：
-
-```tsx
-// useCommunityWallData.ts:444-447
-const setUseMock = useCallback((value: boolean) => {
-  const next = mhEnv.setMock(value);
-  setUseMockState(next);
-}, []);
-```
-
-**後果**：
-- Wall 用自己的 `setUseMock` 覆蓋 Hook 的 → 邏輯分散
-- `canToggleMock` 判斷應該在 Hook 層或 UI 層？目前兩邊都有
-
-**引導修正**：
-1. 權限判斷移到 UI 層（`MockToggle` 的 `disabled` prop）
-2. Hook 的 `setUseMock` 純粹負責寫入，不含業務邏輯
-3. Wall.tsx 刪除自己的 `setUseMock`，直接用 Hook 回傳的
-
----
-
-### 🟢 A7：mhEnv 缺少 TypeScript 型別導出
-
-**問題**：`mhEnv.ts` 沒有導出型別，未來難以 mock/擴充
-
-**引導修正**：
-```tsx
-export interface MhEnv {
-  isMockEnabled(): boolean;
-  setMock(next: boolean, opts?: { persist?: boolean; updateUrl?: boolean }): boolean;
-  subscribe(onChange: (value: boolean) => void): () => void;
-}
-
-export const mhEnv: MhEnv = { ... };
-```
-
----
-
-## 🔴 P0.5-FIX：審計修復任務（預估 30m）
-
-> **前置條件**：先讀完 P0.5-AUDIT 所有問題描述
+## ✅ P0.5-FIX：審計修復任務（40m 完成）
 
 ### 執行清單（2025-12-07 完成）
 
-| 序號 | 任務 | 檔案 | 優先級 | 狀態 |
-|------|------|------|--------|------|
-| FIX-1 | 刪除 `useMockState.ts` 死碼 | `src/hooks/useMockState.ts` | P0 | ✅ |
-| FIX-2 | `MOCK_STORAGE_KEY` → `MOCK_DATA_STORAGE_KEY` | `useCommunityWallData.ts:25` | P0 | ✅ |
-| FIX-3 | 刪除 Wall.tsx `initialUseMock` 計算 | `Wall.tsx:87` | P0 | ✅ |
-| FIX-4 | 刪除 Wall.tsx `setUseMock` 包裝 | `Wall.tsx:138-141` | P0 | ✅ |
-| FIX-5 | Hook 移除 `initialUseMock` option | `useCommunityWallData.ts:179-190` | P1 | ✅ |
-| FIX-6 | `useEffect` 加顯式 cleanup | `useCommunityWallData.ts:193` | P1 | ✅ |
-| FIX-7 | `MockToggle` 移除 `window.confirm()` | `MockToggle.tsx:17-20` | P2 | ✅ |
-| FIX-8 | `mhEnv` 加 TypeScript interface | `mhEnv.ts` | P2 | ✅ |
+| 序號 | 任務 | 檔案 | 狀態 |
+|------|------|------|------|
+| FIX-1 | 刪除 `useMockState.ts` 死碼 | `src/hooks/useMockState.ts` | ✅ |
+| FIX-2 | `MOCK_STORAGE_KEY` → `MOCK_DATA_STORAGE_KEY` | `useCommunityWallData.ts:25` | ✅ |
+| FIX-3 | 刪除 Wall.tsx `initialUseMock` | `Wall.tsx` | ✅ |
+| FIX-4 | 刪除 Wall.tsx `setUseMock` 包裝 | `Wall.tsx` | ✅ |
+| FIX-5 | Hook 移除 `initialUseMock` option | `useCommunityWallData.ts` | ✅ |
+| FIX-6 | `useEffect` 加顯式 cleanup | `useCommunityWallData.ts` | ✅ |
+| FIX-7 | `MockToggle` 移除 `window.confirm()` | `MockToggle.tsx` | ✅ |
+| FIX-8 | `mhEnv` 加 TypeScript interface | `mhEnv.ts` | ✅ |
 
-### 驗證步驟（已完成）
+### 驗證證據
 
-- [x] `grep -r "useMockState" src/` → 0 matches（檔案已刪除）
-- [x] `grep -r "MOCK_DATA_STORAGE_KEY" src/hooks/useCommunityWallData.ts` → 確認唯一來源
-- [x] `npm run build` → exit 0（2025-12-07）
-- [x] 手動邏輯驗證：MockToggle 不再 confirm；切換後重整仍保持 mock 狀態（URL/localStorage 同步）
+```bash
+grep -r "useMockState" src/        # 0 matches
+grep -r "initialUseMock" src/      # 0 matches
+grep -r "window.confirm" src/      # 0 matches
+npm run build                      # exit 0
+```
 
-### 修復紀錄（2025-12-07）
-- 移除 `useMockState.ts` 死碼，避免 Key 混亂
-- `useCommunityWallData`：初始 Mock 改由 `mhEnv` 單一來源，訂閱加 cleanup，storage key 改為 `MOCK_DATA_STORAGE_KEY`
-- `Wall.tsx`：移除 `initialUseMock` 及自定 `setUseMock` 包裝，直接使用 Hook setter
-- `MockToggle`：移除同步 `confirm` 阻塞
-- `mhEnv`：補上 `MhEnv` interface，方便 mock/擴充
-- 推送 commit `e8ad92f`，觸發 Vercel 部署（網址：https://maihouses.vercel.app/maihouses/community/test-uuid/wall）
+### 部署
+- commit `e8ad92f` → Vercel 部署
+- 網址：https://maihouses.vercel.app/maihouses/community/test-uuid/wall
 
 ---
 
