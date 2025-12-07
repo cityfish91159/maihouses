@@ -31,6 +31,7 @@ import { getPermissions } from './types';
 
 // Hooks - 統一資料來源
 import { useCommunityWallData } from '../../hooks/useCommunityWallData';
+import { useAuth } from '../../hooks/useAuth';
 
 // ============ URL / Storage Helpers ============
 const ROLE_PARAM = 'role';
@@ -103,7 +104,15 @@ function WallInner() {
   const [role, setRoleInternal] = useState<Role>(initialRole);
   const [currentTab, setCurrentTab] = useState<WallTab>('public');
   const [isReloading, setIsReloading] = useState(false);
-  const perm = getPermissions(role);
+  const { isAuthenticated, role: authRole } = useAuth();
+  const effectiveRole = useMemo<Role>(() => {
+    if (!isAuthenticated) return 'guest';
+    if (role === 'guest' && authRole !== 'guest') {
+      return authRole as Role;
+    }
+    return role;
+  }, [authRole, isAuthenticated, role]);
+  const perm = getPermissions(effectiveRole);
   const allowManualMockToggle = GLOBAL_MOCK_TOGGLE_ENABLED;
 
   // 統一資料來源 Hook

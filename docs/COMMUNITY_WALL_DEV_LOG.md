@@ -1,5 +1,27 @@
 # 社區牆開發紀錄
 
+## 2025-12-07 - P1.5 權限系統前端實作
+
+### 本次變更
+
+| 變更項目 | 檔案 | 說明 |
+|----------|------|------|
+| useAuth 擴充 | `src/hooks/useAuth.ts` | 新增 AuthRole type、role 推導（app_metadata → user_metadata fallback）、isAuthenticated、error 狀態、signOut helper |
+| PostsSection 權限防護 | `src/pages/Community/components/PostsSection.tsx` | 引入 useAuth，未登入一律視為 guest；發文按鈕防護（notify 提示）；公開牆無權限時顯示登入 CTA |
+| PostModal 訪客阻擋 | `src/pages/Community/components/PostModal.tsx` | 新增 role prop；guest 禁用 textarea/submit；提示「請先登入」 |
+| Wall 權限對齊 | `src/pages/Community/Wall.tsx` | 引入 useAuth；計算 effectiveRole（未登入 → guest，優先採用 authRole） |
+
+### 驗證
+
+```bash
+npm run build   # ✓ exit 0
+```
+
+### 待補強（本次審計發現）
+- 見下方 P1.5-AUDIT 區塊
+
+---
+
 ## 2025-12-07 - P0.5-FIX 審計修復（7 項缺失）
 
 ### 本次變更
@@ -360,8 +382,6 @@ git push origin main  # ✓ Vercel 自動部署 (commits 064a91f, 724e0f8, a0b25
 
 ### 本次變更
 
-| 變更項目 | 檔案 | 說明 |
-|----------|------|------|
 | 查詢驗證 | `api/community/wall.ts` | 新增 `CommunityWallQuerySchema`，統一解析 `communityId/type/visibility/includePrivate`，完全移除 `as string`。 |
 | 錯誤處理 | `api/community/wall.ts` | 導入 `ReviewFetchError`、`resolveSupabaseErrorDetails()`，失敗時回傳一致的 `502 + code/details`；並新增 `buildReviewSelectFields()` 避免硬編碼 SELECT。 |
 | 單元測試 | `api/community/__tests__/wall.test.ts` | 新增 `vitest` 覆蓋 `cleanText`/`normalizeCount`/`buildAgentPayload`/`transformReviewRecord`。 |
@@ -375,8 +395,6 @@ npx vitest run api/community/__tests__/wall.test.ts
 
 ### 線上診斷
 
-- 指令：`curl -s -w "\n%{http_code}\n" "https://maihouses.vercel.app/api/community/wall?communityId=00000000-0000-0000-0000-000000000001&type=reviews"`
-- 結果：HTTP 500，`{"code":"PGRST200","error":"Could not find a relationship between 'community_reviews' and 'properties'..."}`。
 - 結論：遠端 Supabase schema 缺少 `community_reviews_property_id_fkey`；需於 Dashboard 建立 FK（或重建 View）並執行最新 migrations 後再重新部署。
 
 ## 2025-12-05 16:30 - P0-5 修復：評價區 agent stats 真實化

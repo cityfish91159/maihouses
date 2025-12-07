@@ -6,6 +6,7 @@
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import type { Role } from '../types';
 
 interface PostModalProps {
   isOpen: boolean;
@@ -14,6 +15,7 @@ interface PostModalProps {
   visibility: 'public' | 'private';
   minLength?: number;
   maxLength?: number;
+  role: Role;
 }
 
 export function PostModal({
@@ -23,6 +25,7 @@ export function PostModal({
   visibility,
   minLength = 5,
   maxLength = 500,
+  role,
 }: PostModalProps) {
   const [content, setContent] = useState('');
   const [error, setError] = useState('');
@@ -36,6 +39,8 @@ export function PostModal({
   const placeholder = isPrivate 
     ? '分享只有住戶能看到的內容...' 
     : '分享你的想法、社區生活...';
+  const isGuest = role === 'guest';
+  const isDisabled = submitting || isGuest;
 
   const reset = useCallback(() => {
     setContent('');
@@ -61,6 +66,11 @@ export function PostModal({
   };
 
   const handleSubmit = async () => {
+    if (isGuest) {
+      setError('請先登入後再發文');
+      return;
+    }
+
     const validationError = validate();
     if (validationError) {
       setError(validationError);
@@ -189,7 +199,7 @@ export function PostModal({
               if (error) setError('');
             }}
             placeholder={placeholder}
-            disabled={submitting}
+            disabled={isDisabled}
             rows={5}
             className={`w-full resize-none rounded-xl border bg-brand/3 p-3 text-sm text-ink-900 placeholder:text-ink-400 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20 disabled:opacity-50 ${
               error ? 'border-red-400' : 'border-border-light'
@@ -206,6 +216,9 @@ export function PostModal({
             {isPrivate && (
               <span className="text-brand-600">🔐 僅住戶可見</span>
             )}
+            {isGuest && (
+              <span className="text-red-500">請先登入後再發文</span>
+            )}
           </div>
 
           {/* 錯誤訊息 */}
@@ -221,7 +234,7 @@ export function PostModal({
           <button
             type="button"
             onClick={handleClose}
-            disabled={submitting}
+            disabled={isDisabled}
             className="rounded-lg border border-border-light px-4 py-2 text-sm font-medium text-ink-600 hover:bg-brand/5 disabled:opacity-50"
           >
             取消
@@ -229,11 +242,11 @@ export function PostModal({
           <button
             type="button"
             onClick={handleSubmit}
-            disabled={submitting || isOverLimit}
+            disabled={isDisabled || isOverLimit}
             className="rounded-lg bg-brand px-4 py-2 text-sm font-bold text-white hover:bg-brand-700 disabled:opacity-50"
             aria-busy={submitting}
           >
-            {submitting ? '發布中...' : '發布'}
+            {submitting ? '發布中...' : isGuest ? '請先登入' : '發布'}
           </button>
         </div>
       </div>

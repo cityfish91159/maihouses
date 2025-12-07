@@ -14,6 +14,7 @@ import { LockedOverlay } from './LockedOverlay';
 import { PostModal } from './PostModal';
 import { formatRelativeTimeLabel } from '../../../lib/time';
 import { notify } from '../../../lib/notify';
+import { useAuth } from '../../../hooks/useAuth';
 
 interface PostCardProps {
   post: Post;
@@ -155,6 +156,8 @@ export function PostsSection({
   onUnlock,
 }: PostsSectionProps) {
   const perm = getPermissions(role);
+  const { isAuthenticated } = useAuth();
+  const effectiveIsGuest = !isAuthenticated || perm.isGuest;
   const tabListId = useId();
   const publicTabId = `${tabListId}-public`;
   const privateTabId = `${tabListId}-private`;
@@ -169,11 +172,27 @@ export function PostsSection({
   const [postModalVisibility, setPostModalVisibility] = useState<'public' | 'private'>('public');
 
   const openPostModal = (visibility: 'public' | 'private') => {
+    if (effectiveIsGuest) {
+      notify.error('請先登入或註冊', '登入後才能發布貼文');
+      return;
+    }
+    if (visibility === 'public' && !perm.canPostPublic) {
+      notify.error('目前無法發文', '請確認帳號權限或稍後再試');
+      return;
+    }
+    if (visibility === 'private' && !perm.canPostPrivate) {
+      notify.error('僅住戶可發佈私密貼文');
+      return;
+    }
     setPostModalVisibility(visibility);
     setPostModalOpen(true);
   };
 
   const handlePostSubmit = async (content: string) => {
+    if (effectiveIsGuest) {
+      notify.error('請先登入或註冊', '登入後才能發布貼文');
+      return;
+    }
     if (onCreatePost) {
       onCreatePost(content, postModalVisibility);
     }
@@ -313,13 +332,29 @@ export function PostsSection({
               )}
             </LockedOverlay>
             
-            {perm.canPostPublic && (
+            {perm.canPostPublic ? (
               <div className="flex justify-center rounded-[14px] border border-dashed border-border-light bg-brand/3 p-5">
                 <button 
                   onClick={() => openPostModal('public')}
                   className="flex w-full items-center justify-center gap-1 rounded-lg border border-brand/10 bg-brand/6 px-2.5 py-1.5 text-[11px] font-semibold text-brand hover:bg-brand/12"
                 >
                   ✏️ 發布貼文
+                </button>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-2 rounded-[14px] border border-dashed border-border-light bg-brand/3 p-4 text-center text-[11px] text-ink-700">
+                <span>✏️ 請先登入後再發文</span>
+                <button
+                  onClick={() => {
+                    if (onUnlock) {
+                      onUnlock();
+                    } else {
+                      notify.error('請先登入或註冊', '登入後才能發布貼文');
+                    }
+                  }}
+                  className="mx-auto rounded-full bg-brand px-4 py-2 font-bold text-white"
+                >
+                  立即登入 / 註冊
                 </button>
               </div>
             )}
@@ -363,6 +398,7 @@ export function PostsSection({
         onClose={() => setPostModalOpen(false)}
         onSubmit={handlePostSubmit}
         visibility={postModalVisibility}
+        role={effectiveIsGuest ? 'guest' : role}
       />
     </section>
   );
