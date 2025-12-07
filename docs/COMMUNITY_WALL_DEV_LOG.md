@@ -18,7 +18,18 @@ npm run build   # ✓ exit 0
 ```
 
 ### 待補強（本次審計發現）
-- 見下方 P1.5-AUDIT 區塊
+- 見 TODO.md `P1.5-AUDIT` 區塊（8 項缺失）
+
+| ID | 嚴重度 | 問題 |
+|----|--------|------|
+| B1 | 🔴 | `useAuth.loading` 沒被使用，auth 載入中會誤判為 guest |
+| B2 | 🔴 | `PostsSection` 同時用 prop role 和 useAuth()，來源衝突 |
+| B3 | 🔴 | `PostModal` 訪客不該能開，但只做 UI 禁用沒做阻擋 |
+| B4 | 🟡 | `effectiveRole` 計算散落多處，沒單一來源 |
+| B5 | 🟡 | `useAuth.error` 沒被消費，用戶看不到錯誤 |
+| B6 | 🟡 | 按讚沒 auth guard，未登入會 401 |
+| B7 | 🟢 | `signOut` 是死碼 |
+| B8 | 🟢 | `AuthRole` 和 `Role` 重複定義 |
 
 ---
 
