@@ -112,6 +112,38 @@ npm run build   # ✓ exit 0
 
 ---
 
+## 2025-12-07 - P2-AUDIT-3 三次審計發現 6 項嚴重問題
+
+### 審計結果
+
+| ID | 嚴重度 | 問題 | 狀態 |
+|----|--------|------|------|
+| P2-C1 | 🔴 | likedPosts useEffect 依賴 mockData 可能無限循環 | 待修復 |
+| P2-C2 | 🔴 | API toggleLike 無樂觀更新，體驗極差 | 待修復 |
+| P2-C3 | 🟡 | fetchApiData 依賴 mockData，依賴混亂 | 待修復 |
+| P2-C4 | 🟡 | API createPost 無樂觀更新 | 待修復 |
+| P2-C5 | 🟡 | likedPosts 未暴露，UI 無法判斷按讚狀態 | 待修復 |
+| P2-C6 | 🟢 | COMMUNITY_NAME_MAP 硬編碼 | 待修復 |
+
+### 說明
+
+對 P2-AUDIT-2 修復後的代碼進行第三次審計，發現 6 項問題，其中 2 項為嚴重的 React 狀態管理問題（P2-C1 無限循環風險、P2-C2 體驗問題）。
+
+### 關鍵發現
+
+1. **P2-C1 無限循環**：L347-354 的 useEffect 依賴 `mockData`，但 `toggleLike` 會 `setMockData`，形成潛在循環。雖然 React 的 batching 可能避免真正的無限循環，但會導致不必要的重複執行。
+
+2. **P2-C2/C4 無樂觀更新**：API 模式的 `toggleLike` 和 `createPost` 都只是呼叫 `fetchApiData()`，沒有樂觀更新。用戶操作後要等 250ms+ 才看到變化，這是 UX 災難。
+
+3. **P2-C5 狀態封閉**：`likedPosts` Set 是內部狀態，消費者無法直接知道某貼文是否已按讚，必須自己從 `post.liked_by` 推算，API 不夠友善。
+
+### 下一步
+- 修復 P2-C1（移除 mockData 依賴或加 ref 保護）
+- P5 串 API 時務必實作樂觀更新（P2-C2/C4）
+- 暴露 `isLiked(postId)` helper（P2-C5）
+
+---
+
 ## 2025-12-07 - P1.5-AUDIT-5 徹底重構 Hook 順序修復 React error #310
 
 ### 本次變更

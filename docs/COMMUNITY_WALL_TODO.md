@@ -655,7 +655,7 @@ npm run build   # ✓ exit 0
 
 ---
 
-## 🟡 P2-AUDIT-2：二次審計發現 3 項缺失
+## ✅ P2-AUDIT-2：二次審計發現 3 項缺失（已修復）
 
 > **審計時間**：2025-12-07 | **審計人**：Google 首席前後端處長
 > **狀態**：✅ 已修復（見 P2-AUDIT-2-FIX）
@@ -665,6 +665,242 @@ npm run build   # ✓ exit 0
 | P2-B1 | 🟡 | `authLoading` 解構後未使用 — 死變數警告風險 | `useFeedData.ts:234` | ✅ |
 | P2-B2 | 🟡 | `isLoading` 未考慮 auth loading — auth 載入中時會誤判為非 loading | `useFeedData.ts:445` | ✅ |
 | P2-B3 | 🟢 | Mock 資料 `liked_by` 與 `likes` 邏輯分離 — likedPosts Set 與貼文 liked_by 可能不同步 | `useFeedData.ts:375-401` | ✅ |
+
+---
+
+## 🔴 P2-AUDIT-3：三次審計發現 6 項問題與偷懶行為
+
+> **審計時間**：2025-12-07 | **審計人**：Google 首席前後端處長
+> **狀態**：待修復
+
+| ID | 嚴重度 | 問題摘要 | 位置 | 狀態 |
+|----|--------|----------|------|------|
+| P2-C1 | 🔴 | **likedPosts 同步 useEffect 會無限循環** — mockData 在依賴中，但 toggleLike 會更新 mockData | `useFeedData.ts:347-354` | 🔴 |
+| P2-C2 | 🔴 | **API 模式 toggleLike 不更新本地狀態** — 只呼叫 fetchApiData，用戶體驗差（需等 API 完成才看到變化） | `useFeedData.ts:416` | 🔴 |
+| P2-C3 | 🟡 | **fetchApiData 依賴 mockData** — API 模式應該獨立於 mock 資料，但目前 fallback 用 mock 導致 useCallback 依賴混亂 | `useFeedData.ts:297` | 🔴 |
+| P2-C4 | 🟡 | **createPost 沒有樂觀更新** — Mock 有即時顯示，API 模式卻要等 fetchApiData 完成才看到新貼文 | `useFeedData.ts:445` | 🔴 |
+| P2-C5 | 🟡 | **likedPosts 沒有暴露給消費者** — UI 無法直接判斷某貼文是否已按讚，要自己從 post.liked_by 推算 | `useFeedData.ts:459` 回傳值 | 🔴 |
+| P2-C6 | 🟢 | **COMMUNITY_NAME_MAP 應該從後端取或共用 constants** — 硬編碼在 Hook 中，與其他地方不同步 | `useFeedData.ts:41-45` | 🔴 |
+
+---
+
+### P2-C1 修復引導（🔴 最高優先）
+
+**問題**：第 347-354 行的 `useEffect` 依賴 `mockData`，但 `toggleLike` 會更新 `mockData`。用戶按讚 → mockData 變 → useEffect 重跑 → setLikedPosts 重設 → **可能造成閃爍或狀態不一致**。
+
+**實際風險**：
+- 按讚後 `setMockData` 觸發
+- `mockData` 變化觸發 useEffect
+- useEffect 重新掃描 `liked_by` 並 `setLikedPosts`
+- 若 `toggleLike` 的 `setLikedPosts` 和 useEffect 的 `setLikedPosts` 順序對撞，會出現按讚無效或閃爍
+
+**修法**：
+```
+// 方案 A：移除 mockData 依賴，只在 useMock 或 currentUserId 變化時執行
+useEffect(() => {
+  if (!useMock || !currentUserId) return;
+  // 只在初始化時執行一次
+}, [useMock, currentUserId]); // ❌ 移除 mockData
+
+// 方案 B：用 ref 追蹤是否已初始化，避免重複執行
+const hasInitializedLikedPosts = useRef(false);
+useEffect(() => {
+  if (!useMock || !currentUserId) return;
+  if (hasInitializedLikedPosts.current) return; // 已初始化就跳過
+  hasInitializedLikedPosts.current = true;
+  // 掃描 mockData.posts
+}, [useMock, currentUserId, mockData]);
+
+// 方案 C：toggleLike 內不另外 setLikedPosts，完全由 mockData.liked_by 驅動
+// （需同步修改 UI 層讀 liked_by 而非 likedPosts）
+```
+
+**建議**：方案 B，加 ref 保護初始化只跑一次。
+
+---
+
+### P2-C2 修復引導（🔴 高優先）
+
+**問題**：API 模式的 `toggleLike` 只有一行 `await fetchApiData()`，用戶點按讚後要等 250ms+ 才看到變化，體驗極差。
+
+**現況**：
+```typescript
+// API 模式 (L416)
+await fetchApiData(); // 暫時重新載入
+```
+
+**問題分析**：
+1. 沒有樂觀更新（optimistic update）
+2. 用戶按讚 → 等 API → 成功後重抓 → 再渲染，延遲 500ms+
+3. 若 API 失敗，用戶完全沒有回饋
+
+**修法**：
+```
+// 樂觀更新模式
+const toggleLike = useCallback(async (postId) => {
+  // 1. 先樂觀更新本地狀態
+  const previousData = apiData;
+  setApiData(prev => ({
+    ...prev,
+    posts: prev.posts.map(p => 
+      p.id === postId 
+        ? { ...p, likes: (p.likes ?? 0) + (isLiked ? -1 : 1) }
+        : p
+    )
+  }));
+  
+  try {
+    // 2. 呼叫 API
+    await apiToggleLike(postId);
+  } catch (err) {
+    // 3. 失敗時回滾
+    setApiData(previousData);
+    throw err;
+  }
+}, [...]);
+```
+
+**建議**：P5 正式串 API 時務必實作樂觀更新，否則 UX 會被用戶罵爆。
+
+---
+
+### P2-C3 修復引導（🟡 中優先）
+
+**問題**：`fetchApiData` 的 `useCallback` 依賴包含 `mockData`（L297），因為 API fallback 用 `filterMockData(mockData, ...)`。這導致：
+1. mockData 任何變化都會重建 fetchApiData
+2. fetchApiData 變化會觸發 L322 的 useEffect 重新載入
+
+**修法**：
+```
+// API fallback 應該用 initialMockData（常數）而非 mockData（狀態）
+const fetchApiData = useCallback(async () => {
+  // ...
+  const result = filterMockData(initialMockData, communityId); // ← 改用 initialMockData
+  // ...
+}, [useMock, communityId, initialMockData]); // ← 移除 mockData
+```
+
+**代價**：API fallback 不會反映 Mock 模式下的變更（例如新發的貼文）。但這是正確的，因為 API 模式本來就不應該讀 Mock 狀態。
+
+---
+
+### P2-C4 修復引導（🟡 中優先）
+
+**問題**：`createPost` 在 API 模式只呼叫 `await fetchApiData()`，沒有樂觀更新。用戶發文後要等重抓 API 才看到自己的貼文。
+
+**現況**（L445）：
+```typescript
+// TODO: P5 時串接真實 API
+// await apiCreatePost(content, targetCommunityId);
+await fetchApiData(); // 暫時重新載入
+```
+
+**修法**：與 P2-C2 類似，API 模式要有樂觀更新。
+
+```
+// 樂觀更新
+const tempPost = { id: `temp-${Date.now()}`, content, ... };
+setApiData(prev => ({
+  posts: [tempPost, ...prev.posts],
+  totalPosts: prev.totalPosts + 1,
+}));
+
+try {
+  const realPost = await apiCreatePost(content);
+  // 成功後用真實 id 替換 temp
+  setApiData(prev => ({
+    posts: prev.posts.map(p => p.id === tempPost.id ? realPost : p),
+    totalPosts: prev.totalPosts,
+  }));
+} catch (err) {
+  // 失敗時移除 temp
+  setApiData(prev => ({
+    posts: prev.posts.filter(p => p.id !== tempPost.id),
+    totalPosts: prev.totalPosts - 1,
+  }));
+  throw err;
+}
+```
+
+---
+
+### P2-C5 修復引導（🟡 中優先）
+
+**問題**：`likedPosts` Set 是內部狀態，沒有暴露給消費者。UI 層要判斷某貼文是否已按讚，必須：
+1. 自己從 `post.liked_by` 檢查
+2. 或維護自己的狀態
+
+**現況回傳值**（L453-467）：
+```typescript
+return {
+  data,
+  useMock,
+  setUseMock,
+  isLoading,
+  error,
+  refresh,
+  toggleLike,
+  createPost,
+  viewerRole,
+  isAuthenticated,
+  // ❌ 沒有 likedPosts 或 isLiked(postId) helper
+};
+```
+
+**修法**：
+```
+// 方案 A：直接暴露 likedPosts
+return {
+  ...existing,
+  likedPosts, // Set<string | number>
+};
+
+// 方案 B：提供 helper 函數
+const isLiked = useCallback((postId: string | number) => 
+  likedPosts.has(postId), [likedPosts]);
+
+return {
+  ...existing,
+  isLiked, // (postId) => boolean
+};
+```
+
+**建議**：方案 B，更清晰的 API。
+
+---
+
+### P2-C6 修復引導（🟢 低優先）
+
+**問題**：`COMMUNITY_NAME_MAP` 硬編碼在 Hook 中（L41-45），與其他地方可能不同步。
+
+**現況**：
+```typescript
+const COMMUNITY_NAME_MAP: Record<string, string> = {
+  'test-uuid': '惠宇上晴',
+  'community-2': '遠雄中央公園',
+  'community-3': '國泰建設',
+};
+```
+
+**問題**：
+- 若後端新增社區，前端需同步修改
+- 若社區名稱改了，要改多處
+- 與 `useCommunityWallData` 等其他 Hook 可能有不同的名稱對照
+
+**修法**：
+```
+// 方案 A：抽到共用 constants
+// src/constants/communities.ts
+export const COMMUNITY_NAME_MAP: Record<string, string> = { ... };
+
+// 方案 B：從 API 取得社區列表（含名稱）
+// 需要新的 API endpoint
+
+// 方案 C：傳入 options
+useFeedData({ communityNameMap: { ... } })
+```
+
+**建議**：短期用方案 A，長期用方案 B。
 
 ---
 
