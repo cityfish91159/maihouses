@@ -1,5 +1,32 @@
 # 社區牆開發紀錄
 
+## 2025-12-07 - P2-AUDIT-4 四次審計發現 5 項偷懶行為
+
+### 審計結果
+
+| ID | 嚴重度 | 問題 | 狀態 |
+|----|--------|------|------|
+| P2-D1 | 🔴 | API toggleLike 只更新 likes 數字，沒更新 liked_by 陣列 | 待修復 |
+| P2-D2 | 🟡 | isValidCommunityId 寫了但沒用 — 死代碼 | 待修復 |
+| P2-D3 | 🟡 | API createPost type 永遠是 resident — 應動態判斷 | 待修復 |
+| P2-D4 | 🟡 | tempId 是字串但 Mock id 是數字 — 類型不一致 | 待修復 |
+| P2-D5 | 🟢 | Mock toggleLike 有 delay 但無 loading — UX 不佳 | 待修復 |
+
+### 說明
+
+對 P2-AUDIT-3-FIX 後的代碼進行第四次審計。
+
+**P2-D1 是最嚴重的問題**：樂觀更新只改 `likes` 數字，沒改 `liked_by` 陣列。雖然 `isLiked()` 用 `apiLikedPosts` Set 判斷所以不受影響，但若 UI 直接讀 `post.liked_by` 會不一致。
+
+**P2-D2 是偷懶行為**：建立 `isValidCommunityId` helper 但沒有任何地方使用，純粹佔空間。
+
+### 下一步
+- 修復 P2-D1（API toggleLike 加入 liked_by 更新）
+- 移除或使用 P2-D2
+- 修復 P2-D3（type 根據 authRole 判斷）
+
+---
+
 ## 2025-12-07 - P2 useFeedData Hook 建立
 
 ### 目的

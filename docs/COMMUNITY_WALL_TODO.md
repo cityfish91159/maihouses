@@ -736,6 +736,176 @@ grep -n "getCommunityName" src/hooks/useFeedData.ts
 
 ---
 
+## 🟡 P2-AUDIT-4：四次審計發現 5 項偷懶與遺漏
+
+> **審計時間**：2025-12-07 | **審計人**：Google 首席前後端處長
+> **狀態**：待修復
+
+| ID | 嚴重度 | 問題摘要 | 位置 | 狀態 |
+|----|--------|----------|------|------|
+| P2-D1 | 🔴 | **API toggleLike 沒有更新 `liked_by` 陣列** — 只更新 `likes` 數字，但 `liked_by` 沒變，導致 `isLiked` 判斷與資料不一致 | `useFeedData.ts:444-459` | 🔴 |
+| P2-D2 | 🟡 | **`isValidCommunityId` 寫了但沒用** — 新建的 helper 沒有任何地方呼叫，純粹佔空間 | `constants/communities.ts:37` | 🔴 |
+| P2-D3 | 🟡 | **API createPost 的 `type` 永遠是 `'resident'`** — 應該根據 authRole 動態判斷 agent/resident | `useFeedData.ts:514` | 🔴 |
+| P2-D4 | 🟡 | **`tempId` 是字串但 Post.id 可能是數字** — 類型不一致可能導致後續比對問題 | `useFeedData.ts:507-509` | 🔴 |
+| P2-D5 | 🟢 | **Mock 模式按讚有 delay 但用戶看不到 loading** — 體驗不一致，可能讓用戶誤以為卡住 | `useFeedData.ts:407` | 🔴 |
+
+---
+
+### P2-D1 修復引導（🔴 最高優先）
+
+**問題**：API 模式的 `toggleLike` 樂觀更新只更新 `likes` 數字：
+
+```typescript
+// L450-456 — 只改 likes，沒改 liked_by！
+setApiData(prev => ({
+  ...prev,
+  posts: prev.posts.map(post => ({
+    ...post,
+    likes: currentlyLiked ? currentLikes - 1 : currentLikes + 1,
+    // ❌ 沒有更新 liked_by
+  })),
+}));
+```
+
+**後果**：
+1. `isLiked(postId)` 回傳正確（因為用 `apiLikedPosts` Set）
+2. 但 `post.liked_by` 陣列沒變
+3. 若 UI 層直接讀 `post.liked_by` 來顯示頭像列表，會不一致
+4. P5 真正串 API 時，後端回傳的 `liked_by` 會覆蓋本地狀態
+
+**修法**：
+```
+// 在 setApiData 內同時更新 liked_by
+return {
+  ...post,
+  likes: currentlyLiked ? Math.max(0, currentLikes - 1) : currentLikes + 1,
+  liked_by: currentlyLiked
+    ? (post.liked_by ?? []).filter(id => id !== currentUserId)
+    : [...(post.liked_by ?? []), currentUserId],
+};
+```
+
+**注意**：需要 `currentUserId` 在 callback 外先取得，因為 `setApiData` 內不能直接用 state。
+
+---
+
+### P2-D2 修復引導（🟡 中優先）
+
+**問題**：`src/constants/communities.ts` 定義了 `isValidCommunityId()`，但全專案沒有任何地方使用它。
+
+**現況**：
+```typescript
+// communities.ts L37-40
+export function isValidCommunityId(communityId: string | undefined): boolean {
+  if (!communityId) return false;
+  return communityId in COMMUNITY_NAME_MAP;
+}
+```
+
+```bash
+grep -rn "isValidCommunityId" src/
+# 只有定義處和 index.ts 的 export，沒有任何呼叫
+```
+
+**選項**：
+1. **刪除**：如果不需要就不要留
+2. **使用**：在 `createPost` 或 `fetchApiData` 中加入驗證
+
+**建議**：方案 2，在 `createPost` 中使用：
+```
+// createPost 開頭加驗證
+if (resolvedCommunityId && !isValidCommunityId(resolvedCommunityId)) {
+  console.warn(`[useFeedData] Unknown communityId: ${resolvedCommunityId}`);
+}
+```
+
+---
+
+### P2-D3 修復引導（🟡 中優先）
+
+**問題**：API 樂觀更新建立 `tempPost` 時，`type` 永遠是 `'resident'`：
+
+```typescript
+// L514
+const tempPost: FeedPost = {
+  // ...
+  type: 'resident', // ❌ 硬編碼
+};
+```
+
+**後果**：
+- 業務人員（agent）發文時，樂觀更新顯示為 resident
+- API 回傳後才會修正為 agent（但目前 API 是 placeholder）
+
+**修法**：
+```
+type: authRole === 'agent' ? 'agent' : 'resident',
+```
+
+**注意**：需要確認 `authRole` 的可能值，避免 `guest` 被當成 resident。
+
+---
+
+### P2-D4 修復引導（🟡 中優先）
+
+**問題**：`tempId` 是字串 `'temp-1733605123456'`，但 `FeedPost.id` 的型別是 `string | number`，而現有 Mock 資料的 id 都是數字（1001, 1002...）。
+
+```typescript
+// L507-509
+const tempId = `temp-${Date.now()}`; // string
+const tempPost: FeedPost = {
+  id: tempId, // string 傳給 string | number — 技術上沒錯，但不一致
+};
+```
+
+**風險**：
+- `post.id === tempId` 比對沒問題
+- 但若有人用 `post.id === 1001` 這種數字比對，可能漏掉 temp 貼文
+- 型別混用增加心智負擔
+
+**修法**：
+```
+// 方案 A：改用數字（負數避免衝突）
+const tempId = -Date.now();
+
+// 方案 B：統一 Mock 資料 id 為字串
+// 需修改 FEED_MOCK_POSTS 所有 id
+
+// 方案 C：保持現狀但加註解說明
+// tempId 為字串，正式 id 為數字，後端回傳後會替換
+```
+
+**建議**：方案 A，用負數區分臨時貼文。
+
+---
+
+### P2-D5 修復引導（🟢 低優先）
+
+**問題**：Mock 模式 `toggleLike` 開頭有 `await delay(MOCK_LATENCY_MS)`（250ms），但沒有任何 loading 狀態給 UI。
+
+```typescript
+// L407
+if (useMock) {
+  await delay(MOCK_LATENCY_MS); // 用戶等 250ms 看不到任何回饋
+  // ...
+}
+```
+
+**後果**：
+- 用戶按讚後卡 250ms 沒反應
+- 可能誤以為沒按到，重複點擊
+
+**修法**：
+```
+// 方案 A：移除 Mock 模式的 delay（Mock 本來就是假的，不需要模擬延遲）
+// 方案 B：加 loading 狀態（但會增加複雜度）
+// 方案 C：在 delay 前先做樂觀更新
+```
+
+**建議**：方案 A 或 C。Mock 模式應該是即時回饋，delay 留給 API 模式。
+
+---
+
 ### P2-C1 修復引導（🔴 最高優先）— ✅ 已完成
 
 **問題**：第 347-354 行的 `useEffect` 依賴 `mockData`，但 `toggleLike` 會更新 `mockData`。用戶按讚 → mockData 變 → useEffect 重跑 → setLikedPosts 重設 → **可能造成閃爍或狀態不一致**。
