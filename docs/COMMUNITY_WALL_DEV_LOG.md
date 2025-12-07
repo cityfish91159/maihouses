@@ -18,18 +18,45 @@ npm run build   # ✓ exit 0
 ```
 
 ### 待補強（本次審計發現）
-- 見 TODO.md `P1.5-AUDIT` 區塊（8 項缺失）
+- ✅ 見 TODO.md `P1.5-AUDIT` 區塊（8 項缺失已全數修復）
 
-| ID | 嚴重度 | 問題 |
-|----|--------|------|
-| B1 | 🔴 | `useAuth.loading` 沒被使用，auth 載入中會誤判為 guest |
-| B2 | 🔴 | `PostsSection` 同時用 prop role 和 useAuth()，來源衝突 |
-| B3 | 🔴 | `PostModal` 訪客不該能開，但只做 UI 禁用沒做阻擋 |
-| B4 | 🟡 | `effectiveRole` 計算散落多處，沒單一來源 |
-| B5 | 🟡 | `useAuth.error` 沒被消費，用戶看不到錯誤 |
-| B6 | 🟡 | 按讚沒 auth guard，未登入會 401 |
-| B7 | 🟢 | `signOut` 是死碼 |
-| B8 | 🟢 | `AuthRole` 和 `Role` 重複定義 |
+| ID | 嚴重度 | 問題 | 狀態 |
+|----|--------|------|------|
+| B1 | 🔴 | `useAuth.loading` 沒被使用，auth 載入中會誤判為 guest | ✅ |
+| B2 | 🔴 | `PostsSection` 同時用 prop role 和 useAuth()，來源衝突 | ✅ |
+| B3 | 🔴 | `PostModal` 訪客不該能開，但只做 UI 禁用沒做阻擋 | ✅ |
+| B4 | 🟡 | `effectiveRole` 計算散落多處，沒單一來源 | ✅ |
+| B5 | 🟡 | `useAuth.error` 沒被消費，用戶看不到錯誤 | ✅ |
+| B6 | 🟡 | 按讚沒 auth guard，未登入會 401 | ✅ |
+| B7 | 🟢 | `signOut` 是死碼 → 已加註解說明 P3 會使用 | ✅ |
+| B8 | 🟢 | `AuthRole` 和 `Role` 重複定義 → 統一到 community.ts | ✅ |
+
+---
+
+## 2025-12-07 - P1.5-AUDIT-FIX 修復 8 項缺失
+
+### 本次變更
+
+| 變更項目 | 檔案 | 說明 |
+|----------|------|------|
+| B1 auth loading | `Wall.tsx` | `if (authLoading) return <WallSkeleton />`，避免載入中誤判為 guest |
+| B2 移除重複 useAuth | `PostsSection.tsx` | 刪除 `useAuth()` 呼叫，改用 `isAuthenticated` prop |
+| B3 Modal 訪客阻擋 | `PostModal.tsx` | `if (isGuest) { onClose(); return null; }` 作為最後防線 |
+| B4 effectiveRole 單一來源 | `Wall.tsx` | 只在 Wall 計算，傳 `effectiveRole` 給 PostsSection |
+| B5 auth error 提示 | `Wall.tsx` | `if (authError) notify.error('登入狀態異常', ...)` |
+| B6 按讚 auth guard | `Wall.tsx` | `handleLike` 開頭加 `if (!isAuthenticated)` 檢查 |
+| B7 signOut 標記 | `useAuth.ts` | 加 JSDoc 說明 P3 GlobalHeader 會使用 |
+| B8 統一 Role type | `useAuth.ts` | 刪除 `AuthRole`，改用 `import { Role } from 'types/community'` |
+
+### 驗證
+
+```bash
+npm run build                           # ✓ exit 0
+grep -n "authLoading" Wall.tsx          # ✓ 使用於 109, 112 行
+grep -n "useAuth" PostsSection.tsx      # ✓ 0 呼叫
+grep -rn "effectiveRole" Community/     # ✓ 僅 Wall.tsx
+grep -rn "AuthRole" src/                # ✓ 0 結果
+```
 
 ---
 

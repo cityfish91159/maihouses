@@ -1,19 +1,18 @@
 import { useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
-
-export type AuthRole = 'guest' | 'member' | 'resident' | 'agent';
+import type { Role } from '../types/community';
 
 interface AuthState {
   session: Session | null;
   user: User | null;
-  role: AuthRole;
+  role: Role;
   isAuthenticated: boolean;
   loading: boolean;
   error: Error | null;
 }
 
-const deriveRole = (user: User | null): AuthRole => {
+const deriveRole = (user: User | null): Role => {
   if (!user) return 'guest';
   const metadataRole = (user.app_metadata as Record<string, unknown>)?.role ?? (user.user_metadata as Record<string, unknown>)?.role;
   if (metadataRole === 'resident' || metadataRole === 'agent' || metadataRole === 'member') {
@@ -76,6 +75,10 @@ export function useAuth() {
     };
   }, []);
 
+  /**
+   * 登出（供 GlobalHeader 等使用，P3 會接上）
+   * @throws {Error} 登出失敗時拋出錯誤
+   */
   const signOut = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) {

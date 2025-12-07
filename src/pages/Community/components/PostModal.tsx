@@ -39,8 +39,9 @@ export function PostModal({
   const placeholder = isPrivate 
     ? '分享只有住戶能看到的內容...' 
     : '分享你的想法、社區生活...';
+  // B3: guest 已在 render 前被擋，這裡 isGuest 理論上永遠 false
   const isGuest = role === 'guest';
-  const isDisabled = submitting || isGuest;
+  const isDisabled = submitting;
 
   const reset = useCallback(() => {
     setContent('');
@@ -66,6 +67,7 @@ export function PostModal({
   };
 
   const handleSubmit = async () => {
+    // B3: guest 已被擋在 render 前，此處保留作為防禦性程式碼
     if (isGuest) {
       setError('請先登入後再發文');
       return;
@@ -153,7 +155,13 @@ export function PostModal({
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, handleKeyDown]);
 
+  // B3: 訪客不該能打開 Modal，作為最後防線直接不渲染
   if (!isOpen) return null;
+  if (isGuest) {
+    // 若意外開啟，自動關閉
+    onClose();
+    return null;
+  }
 
   const charCount = content.length;
   const isOverLimit = charCount > maxLength;
@@ -216,9 +224,6 @@ export function PostModal({
             {isPrivate && (
               <span className="text-brand-600">🔐 僅住戶可見</span>
             )}
-            {isGuest && (
-              <span className="text-red-500">請先登入後再發文</span>
-            )}
           </div>
 
           {/* 錯誤訊息 */}
@@ -246,7 +251,7 @@ export function PostModal({
             className="rounded-lg bg-brand px-4 py-2 text-sm font-bold text-white hover:bg-brand-700 disabled:opacity-50"
             aria-busy={submitting}
           >
-            {submitting ? '發布中...' : isGuest ? '請先登入' : '發布'}
+            {submitting ? '發布中...' : '發布'}
           </button>
         </div>
       </div>

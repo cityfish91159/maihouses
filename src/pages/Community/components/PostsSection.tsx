@@ -14,7 +14,6 @@ import { LockedOverlay } from './LockedOverlay';
 import { PostModal } from './PostModal';
 import { formatRelativeTimeLabel } from '../../../lib/time';
 import { notify } from '../../../lib/notify';
-import { useAuth } from '../../../hooks/useAuth';
 
 interface PostCardProps {
   post: Post;
@@ -136,6 +135,8 @@ function PostCard({ post, onLike }: PostCardProps) {
 
 interface PostsSectionProps {
   role: Role;
+  /** B2/B4: 由父組件傳入，避免子組件重複呼叫 useAuth */
+  isAuthenticated: boolean;
   currentTab: WallTab;
   onTabChange: (tab: WallTab) => void;
   publicPosts: Post[];
@@ -147,6 +148,7 @@ interface PostsSectionProps {
 
 export function PostsSection({ 
   role, 
+  isAuthenticated,
   currentTab, 
   onTabChange, 
   publicPosts, 
@@ -156,8 +158,8 @@ export function PostsSection({
   onUnlock,
 }: PostsSectionProps) {
   const perm = getPermissions(role);
-  const { isAuthenticated } = useAuth();
-  const effectiveIsGuest = !isAuthenticated || perm.isGuest;
+  // B2/B4: 移除 useAuth，直接用 props 的 isAuthenticated
+  const isGuest = !isAuthenticated || perm.isGuest;
   const tabListId = useId();
   const publicTabId = `${tabListId}-public`;
   const privateTabId = `${tabListId}-private`;
@@ -172,7 +174,7 @@ export function PostsSection({
   const [postModalVisibility, setPostModalVisibility] = useState<'public' | 'private'>('public');
 
   const openPostModal = (visibility: 'public' | 'private') => {
-    if (effectiveIsGuest) {
+    if (isGuest) {
       notify.error('請先登入或註冊', '登入後才能發布貼文');
       return;
     }
@@ -189,7 +191,7 @@ export function PostsSection({
   };
 
   const handlePostSubmit = async (content: string) => {
-    if (effectiveIsGuest) {
+    if (isGuest) {
       notify.error('請先登入或註冊', '登入後才能發布貼文');
       return;
     }
@@ -392,13 +394,13 @@ export function PostsSection({
         )}
       </div>
 
-      {/* 發文 Modal */}
+      {/* 發文 Modal - B3: guest 時 openPostModal 已阻擋，此處傳 role 作為最後防線 */}
       <PostModal
         isOpen={postModalOpen}
         onClose={() => setPostModalOpen(false)}
         onSubmit={handlePostSubmit}
         visibility={postModalVisibility}
-        role={effectiveIsGuest ? 'guest' : role}
+        role={isGuest ? 'guest' : role}
       />
     </section>
   );

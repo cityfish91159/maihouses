@@ -104,11 +104,32 @@ function WallInner() {
   const [role, setRoleInternal] = useState<Role>(initialRole);
   const [currentTab, setCurrentTab] = useState<WallTab>('public');
   const [isReloading, setIsReloading] = useState(false);
-  const { isAuthenticated, role: authRole } = useAuth();
+  
+  // B1/B4/B5: 統一 auth 狀態，單一來源
+  const { isAuthenticated, role: authRole, loading: authLoading, error: authError } = useAuth();
+  
+  // B1: Auth 載入中時顯示 skeleton，避免誤判為 guest
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-[var(--bg-base)] to-[var(--bg-alt)]">
+        <Topbar communityName="載入中..." />
+        <div className="mx-auto max-w-[960px] p-2.5">
+          <WallSkeleton />
+        </div>
+      </div>
+    );
+  }
+  
+  // B5: Auth 錯誤時提示並允許重試
+  if (authError) {
+    notify.error('登入狀態異常', authError.message);
+  }
+  
+  // B4: 統一計算 effectiveRole，子組件不再自行計算
   const effectiveRole = useMemo<Role>(() => {
     if (!isAuthenticated) return 'guest';
     if (role === 'guest' && authRole !== 'guest') {
-      return authRole as Role;
+      return authRole;
     }
     return role;
   }, [authRole, isAuthenticated, role]);
@@ -209,15 +230,19 @@ function WallInner() {
     }
   }, [currentTab, perm.canAccessPrivate]);
 
-  // 按讚處理
+  // 按讚處理 - B6: 加入 auth guard
   const handleLike = useCallback(async (postId: number | string) => {
+    if (!isAuthenticated) {
+      notify.error('請先登入', '登入後才能按讚');
+      return;
+    }
     try {
       await toggleLike(postId);
     } catch (err) {
       console.error('Failed to toggle like', err);
       notify.error('按讚失敗', '請稍後再試');
     }
-  }, [toggleLike]);
+  }, [toggleLike, isAuthenticated]);
 
   // 發文處理
   const handleCreatePost = useCallback(async (content: string, visibility: 'public' | 'private' = 'public') => {
@@ -328,7 +353,8 @@ function WallInner() {
         <main className="flex max-w-[600px] flex-1 animate-[fadeInUp_0.5s_ease-out] flex-col gap-3">
           <ReviewsSection role={role} reviews={reviews} onUnlock={handleUnlock} />
           <PostsSection 
-            role={role} 
+            role={effectiveRole} 
+            isAuthenticated={isAuthenticated}
             currentTab={currentTab} 
             onTabChange={handleTabChange}
             publicPosts={posts.public}

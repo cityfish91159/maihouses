@@ -24,7 +24,7 @@
 | P0.5 環境控制層 | ✅ | 45m | `mhEnv` 已建立，審計缺失已修復 |
 | P0.5-FIX 審計修復 | ✅ | 40m | 清除死碼 + Key 統一 + 邏輯簡化 |
 | P1 Toast 系統 | ✅ | 55m | sonner+notify 全面收斂（含 PropertyUploadPage/依賴/死碼清理） |
-| P1.5 權限系統 | 🟡 | 1h | useAuth 已建立，審計發現 8 項缺失待修 |
+| P1.5 權限系統 | ✅ | 1h | useAuth + 角色判斷 + 審計 8 項缺失已全數修復 |
 | P2 useFeedData | 🔴 | 40m | 複製 useCommunityWallData（資料層先行） |
 | P3 GlobalHeader | 🔴 | 1.5h | 三頁共用 Header |
 | P4 Composer | 🔴 | 2h | headless + UI 統一 |
@@ -152,22 +152,49 @@ npm run build                      # exit 0
 
 ---
 
-## 🔴 P1.5-AUDIT：首席審計發現 8 項缺失
+## ✅ P1.5-AUDIT：首席審計發現 8 項缺失（已全數修復）
 
 > **審計時間**：2025-12-07 | **審計人**：Google 首席前後端處長
+> **修復完成**：2025-12-07
 
 | ID | 嚴重度 | 問題摘要 | 狀態 |
 |----|--------|----------|------|
-| B1 | 🔴 | `useAuth.loading` 沒被使用：頁面在 auth 載入中時沒有 loading 狀態，可能閃爍或錯誤判斷 | 🔴 |
-| B2 | 🔴 | `PostsSection` 雙重 hook 衝突：同時用 `role` prop 和 `useAuth()`，來源不一致 | 🔴 |
-| B3 | 🔴 | `PostModal` 沒有自己呼叫 `useAuth`，完全依賴外部 prop，但訪客理論上根本不該開 Modal | 🔴 |
-| B4 | 🟡 | `effectiveRole` 邏輯散落：Wall.tsx 和 PostsSection.tsx 各自計算，應單一來源 | 🔴 |
-| B5 | 🟡 | `useAuth.error` 沒被消費：錯誤發生時用戶看不到任何提示 | 🔴 |
-| B6 | 🟡 | 按讚沒有 auth guard：`handleLike` 未登入也能呼叫，API 會 401 | 🔴 |
-| B7 | 🟢 | `signOut` 沒被任何地方使用：寫了 helper 但死碼 | 🔴 |
-| B8 | 🟢 | `AuthRole` type 和 `types.ts` 的 `Role` 重複定義：應統一 | 🔴 |
+| B1 | 🔴 | `useAuth.loading` 沒被使用：頁面在 auth 載入中時沒有 loading 狀態 | ✅ |
+| B2 | 🔴 | `PostsSection` 雙重 hook 衝突：同時用 `role` prop 和 `useAuth()` | ✅ |
+| B3 | 🔴 | `PostModal` 訪客不該能開，但只做 UI 禁用沒做阻擋 | ✅ |
+| B4 | 🟡 | `effectiveRole` 邏輯散落：Wall.tsx 和 PostsSection.tsx 各自計算 | ✅ |
+| B5 | 🟡 | `useAuth.error` 沒被消費：錯誤發生時用戶看不到任何提示 | ✅ |
+| B6 | 🟡 | 按讚沒有 auth guard：`handleLike` 未登入也能呼叫 | ✅ |
+| B7 | 🟢 | `signOut` 沒被任何地方使用：已加註解說明 P3 會使用 | ✅ |
+| B8 | 🟢 | `AuthRole` type 和 `types.ts` 的 `Role` 重複定義 | ✅ |
 
-### B1 修復引導
+### 修復執行紀錄（2025-12-07）
+
+| 序號 | 修復項目 | 檔案 | 變更說明 |
+|------|----------|------|----------|
+| FIX-B1 | auth loading 判斷 | `Wall.tsx:112-120` | `if (authLoading) return <WallSkeleton />` |
+| FIX-B2 | 移除重複 useAuth | `PostsSection.tsx` | 刪除 import/呼叫，改用 `isAuthenticated` prop |
+| FIX-B3 | Modal 訪客阻擋 | `PostModal.tsx:153-158` | `if (isGuest) { onClose(); return null; }` |
+| FIX-B4 | effectiveRole 單一來源 | `Wall.tsx:128-135` | 只在 Wall 計算，傳 `effectiveRole` 給子組件 |
+| FIX-B5 | auth error 提示 | `Wall.tsx:124-126` | `if (authError) notify.error(...)` |
+| FIX-B6 | 按讚 auth guard | `Wall.tsx:211-215` | `if (!isAuthenticated) { notify.error(...); return; }` |
+| FIX-B7 | signOut 標記 | `useAuth.ts:79-82` | 加 JSDoc 說明 P3 會使用 |
+| FIX-B8 | 統一 Role type | `useAuth.ts:4` | 刪除 `AuthRole`，改 `import { Role } from 'types/community'` |
+
+### 驗證證據
+
+```bash
+npm run build                           # ✓ exit 0
+grep -n "authLoading" Wall.tsx          # ✓ 109, 112 行使用
+grep -n "useAuth" PostsSection.tsx      # ✓ 0 呼叫（僅註解）
+grep -rn "effectiveRole" Community/     # ✓ 僅 Wall.tsx 計算
+grep -n "authError" Wall.tsx            # ✓ 109, 124, 125 行使用
+grep -rn "AuthRole" src/                # ✓ 0 結果
+```
+
+---
+
+### B1 修復引導（已完成）
 **問題**：`useAuth()` 回傳 `loading: true` 期間，頁面已經在渲染，導致 `isAuthenticated=false` → 被當成訪客。
 
 **修法**：
