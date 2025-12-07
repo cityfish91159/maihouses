@@ -75,7 +75,22 @@ npm run build   # ✓ exit 0
 ```
 
 ### 部署
-- commit `973a9b1` → Vercel 自動部署
+- commit `9bb1b0b` → Vercel 自動部署
+
+---
+
+## 2025-12-07 - P2-AUDIT-2 二次審計發現 3 項缺失
+
+### 審計結果
+
+| ID | 嚴重度 | 問題 | 狀態 |
+|----|--------|------|------|
+| P2-B1 | 🟡 | `authLoading` 解構後未使用 — 死變數 | 待修復 |
+| P2-B2 | 🟡 | `isLoading` 未考慮 auth loading — 載入狀態不完整 | 待修復 |
+| P2-B3 | 🟢 | `likedPosts` 與 `liked_by` 初始不同步 | 待修復 |
+
+### 說明
+修復 P2-AUDIT 6 項問題後進行二次審計，發現 3 項遺漏。已記錄於 TODO.md P2-AUDIT-2 區塊，含修復引導。
 
 ---
 

@@ -521,19 +521,19 @@ grep -E "^export" src/hooks/useFeedData.ts # ✓ 5 個 export
 
 ---
 
-## 🟡 P2-AUDIT：首席審計發現 6 項缺失
+## ✅ P2-AUDIT：首席審計發現 6 項缺失（已修復）
 
 > **審計時間**：2025-12-07 | **審計人**：Google 首席前後端處長
-> **狀態**：待修復
+> **狀態**：✅ 已修復（見 P2-AUDIT-FIX）
 
 | ID | 嚴重度 | 問題摘要 | 位置 | 狀態 |
 |----|--------|----------|------|------|
-| P2-A1 | 🔴 | `toggleLike` 沒有 auth guard — 未登入按讚會呼叫 API | `useFeedData.ts:397` | 🔴 |
-| P2-A2 | 🔴 | `createPost` 沒有 auth guard — 未登入發文會呼叫 API | `useFeedData.ts:436` | 🔴 |
-| P2-A3 | 🟡 | 重複的 auth 訂閱邏輯 — 與 useAuth 重複實作 | `useFeedData.ts:240-268` | 🔴 |
-| P2-A4 | 🟡 | resolveViewerRole 第一參數永遠傳 undefined — 冗餘邏輯 | `useFeedData.ts:370` | 🔴 |
-| P2-A5 | 🟡 | API 模式回傳空陣列 — P5 未做時讓用戶誤以為無資料 | `useFeedData.ts:322-325` | 🔴 |
-| P2-A6 | 🟢 | Mock 資料 communityName 硬編碼 — 應從 lookup 取得 | `useFeedData.ts:445` | 🔴 |
+| P2-A1 | 🔴 | `toggleLike` 沒有 auth guard — 未登入按讚會呼叫 API | `useFeedData.ts:397` | ✅ |
+| P2-A2 | 🔴 | `createPost` 沒有 auth guard — 未登入發文會呼叫 API | `useFeedData.ts:436` | ✅ |
+| P2-A3 | 🟡 | 重複的 auth 訂閱邏輯 — 與 useAuth 重複實作 | `useFeedData.ts:240-268` | ✅ |
+| P2-A4 | 🟡 | resolveViewerRole 第一參數永遠傳 undefined — 冗餘邏輯 | `useFeedData.ts:370` | ✅ |
+| P2-A5 | 🟡 | API 模式回傳空陣列 — P5 未做時讓用戶誤以為無資料 | `useFeedData.ts:322-325` | ✅ |
+| P2-A6 | 🟢 | Mock 資料 communityName 硬編碼 — 應從 lookup 取得 | `useFeedData.ts:445` | ✅ |
 
 ---
 
@@ -652,6 +652,80 @@ npm run build   # ✓ exit 0
 ### 待辦提醒（後續任務）
 - P5 時替換 API fallback，接上真實 feed API
 - UI 層仍需做未登入提示（目前 Hook 丟 Error 由消費者處理）
+
+---
+
+## 🟡 P2-AUDIT-2：二次審計發現 3 項缺失
+
+> **審計時間**：2025-12-07 | **審計人**：Google 首席前後端處長
+> **狀態**：待修復
+
+| ID | 嚴重度 | 問題摘要 | 位置 | 狀態 |
+|----|--------|----------|------|------|
+| P2-B1 | 🟡 | `authLoading` 解構後未使用 — 死變數警告風險 | `useFeedData.ts:234` | 🔴 |
+| P2-B2 | 🟡 | `isLoading` 未考慮 auth loading — auth 載入中時會誤判為非 loading | `useFeedData.ts:445` | 🔴 |
+| P2-B3 | 🟢 | Mock 資料 `liked_by` 與 `likes` 邏輯分離 — likedPosts Set 與貼文 liked_by 可能不同步 | `useFeedData.ts:375-401` | 🔴 |
+
+---
+
+### P2-B1 修復引導（🟡 中優先）
+
+**問題**：從 `useAuth()` 解構出 `authLoading` 但從未使用，ESLint 會報 unused variable 警告。
+
+**修法**：
+```
+// 方案 A：移除解構（如果不需要）
+const { user: authUser, role: authRole, isAuthenticated } = useAuth();
+
+// 方案 B：使用 authLoading 於 isLoading 計算（見 P2-B2）
+```
+
+**建議**：方案 B，順便解決 P2-B2。
+
+---
+
+### P2-B2 修復引導（🟡 中優先）
+
+**問題**：`isLoading` 計算為 `!useMock && apiLoading`，但沒有考慮 `authLoading`。當 auth 仍在載入時，`isAuthenticated` 為 `false`，可能導致 auth guard 誤判。
+
+**修法**：
+```
+// 改為：
+isLoading: !useMock && (apiLoading || authLoading)
+
+// 或更嚴謹：
+isLoading: authLoading || (!useMock && apiLoading)
+```
+
+**建議**：使用第二種，auth loading 優先。
+
+---
+
+### P2-B3 修復引導（🟢 低優先）
+
+**問題**：`likedPosts` Set 是 local state，與貼文的 `liked_by` 陣列分開維護。理論上，當用戶按讚後，`likedPosts.has(postId)` 和 `post.liked_by.includes(userId)` 應該一致，但目前 `toggleLike` 同時更新兩邊，若有 race condition 可能不同步。
+
+**現況分析**：
+- Mock 模式：`toggleLike` 同時更新 `mockData.posts[].liked_by` 和 `likedPosts` Set ✓
+- 問題：初始化時沒有從 `mockData.posts[].liked_by` 建立 `likedPosts` Set
+
+**修法**：
+```
+// 初始化時同步 likedPosts（若使用者已登入）
+// 在 useEffect 中，當 currentUserId 變化時，掃描 mockData 重建 likedPosts
+useEffect(() => {
+  if (!currentUserId) return;
+  const initialLiked = new Set<string | number>();
+  mockData.posts.forEach(p => {
+    if (p.liked_by?.includes(currentUserId)) {
+      initialLiked.add(p.id);
+    }
+  });
+  setLikedPosts(initialLiked);
+}, [currentUserId, /* mockData 變化時不重跑，避免無限迴圈 */]);
+```
+
+**建議**：Mock 模式測試用，此問題優先級較低，但長期應修復以保持資料一致性。
 
 ---
 
