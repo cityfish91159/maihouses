@@ -1,5 +1,4 @@
 import React, { useRef } from 'react';
-import { Toaster } from 'react-hot-toast';
 import { ErrorBoundary } from 'react-error-boundary';
 import { QueryErrorResetBoundary } from '@tanstack/react-query';
 
@@ -38,7 +37,6 @@ function UAGPageContent() {
 
   return (
     <div className={styles['uag-page']}>
-      <Toaster position="top-center" />
       <UAGHeader />
 
       <main className={styles['uag-container']}>

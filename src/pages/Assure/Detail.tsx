@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
 import { useTrustRoom } from '../../hooks/useTrustRoom'
 import { Phone, ClipboardCheck, HandCoins, MessageSquare, FileSignature, Home, Lock, Check, RotateCcw, Info, User, Briefcase, Zap } from 'lucide-react'
-import { Toaster } from 'react-hot-toast'
 
 export default function AssureDetail() {
   const location = useLocation()
@@ -93,7 +92,7 @@ export default function AssureDetail() {
 
   return (
     <div className="max-w-md mx-auto min-h-screen bg-white shadow-2xl relative pb-24 font-sans text-gray-800">
-      <Toaster position="top-center" />
+      {/* Global Toaster is now used */}
       
       {/* Header */}
       <header className={`${isMock ? 'bg-indigo-900' : 'bg-slate-900'} text-white p-4 sticky top-0 z-50 flex justify-between items-center shadow-lg transition-colors`}>

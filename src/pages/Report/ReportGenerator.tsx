@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { X, ChevronRight, Check, Copy, Share2, FileText, Link2 } from 'lucide-react';
 import { PropertyReportData, ReportStyle, REPORT_STYLES, HIGHLIGHT_OPTIONS } from './types';
-import toast from 'react-hot-toast';
+import { notify } from '../../lib/notify';
 
 interface ReportGeneratorProps {
   property: PropertyReportData;
@@ -81,7 +81,7 @@ export default function ReportGenerator({ property, isOpen, onClose }: ReportGen
       setGeneratedUrl(url);
       setStep('preview');
     } catch (e) {
-      toast.error('生成失敗，請稍後再試');
+      notify.error('生成失敗，請稍後再試');
     } finally {
       setIsGenerating(false);
     }
@@ -92,9 +92,9 @@ export default function ReportGenerator({ property, isOpen, onClose }: ReportGen
     if (!generatedUrl) return;
     try {
       await navigator.clipboard.writeText(generatedUrl);
-      toast.success('連結已複製！');
+      notify.success('連結已複製！');
     } catch (e) {
-      toast.error('複製失敗');
+      notify.error('複製失敗');
     }
   };
 

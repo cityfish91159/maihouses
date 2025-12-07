@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { Phone, MessageCircle, Calendar, MapPin, Home, ChevronLeft, ChevronRight, Share2, ExternalLink } from 'lucide-react';
+import { notify } from '../../lib/notify';
 import { PropertyReportData, HIGHLIGHT_OPTIONS } from './types';
 
 // 預設報告資料
@@ -132,7 +133,7 @@ export default function ReportPage() {
       }
     } else {
       await navigator.clipboard.writeText(url);
-      alert('連結已複製！');
+      notify.success('連結已複製', '已複製報告連結，可直接分享');
     }
   };
 

@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import toast from 'react-hot-toast';
+import { notify } from '../../../lib/notify';
 import styles from '../UAG.module.css';
 
 interface MaiCardProps {
@@ -34,7 +34,7 @@ export default function MaiCard({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleGenerateReport = () => {
-    toast.success('系統提示：報告生成中...');
+    notify.success('系統提示：報告生成中...');
   };
 
   const handleImportClick = () => {
@@ -45,7 +45,7 @@ export default function MaiCard({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const toastId = toast.loading('正在分析房仲頁面...');
+    const toastId = notify.loading('正在分析房仲頁面...');
 
     try {
       const reader = new FileReader();
@@ -67,12 +67,12 @@ export default function MaiCard({
              { label: "貸款月付", value: "≈ 45.2 萬" },
              { label: "近三筆實登", value: "155.0 / 152.3 / 148.9" }
           ]);
-          toast.success('分析完成！已自動填入資訊', { id: toastId });
+          notify.success('分析完成！已自動填入資訊', undefined, { id: toastId });
         }, 1500);
       };
       reader.readAsDataURL(file);
     } catch (error) {
-      toast.error('分析失敗', { id: toastId });
+      notify.error('分析失敗', undefined, { id: toastId });
     }
   };
 

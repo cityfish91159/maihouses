@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import toast from 'react-hot-toast';
+import { notify } from '../lib/notify';
 import { mockService, realService } from '../services/trustService';
 
 // --- TYPES ---
@@ -53,7 +53,7 @@ export function useTrustRoom() {
           });
         } catch (e) {
           console.error("Session exchange failed", e);
-          toast.error("無效的連結或憑證");
+          notify.error('無效的連結或憑證');
         }
       }
 
@@ -89,7 +89,7 @@ export function useTrustRoom() {
     setRole('agent');
     const mockTx = await mockService.fetchData(mockId);
     setTx(mockTx);
-    toast.success('已進入演示模式 (資料僅暫存於瀏覽器)');
+    notify.success('已進入演示模式 (資料僅暫存於瀏覽器)');
   }, []);
 
   // Fetch Data
@@ -119,7 +119,7 @@ export function useTrustRoom() {
       console.error(e);
       if (e.message === "UNAUTHORIZED") {
         setAuthError(true);
-        toast.error("連線逾時，請重新登入");
+        notify.error('連線逾時，請重新登入');
       }
     } finally {
       setLoading(false);
@@ -178,20 +178,20 @@ export function useTrustRoom() {
       if (result.success) {
           if (result.tx) setTx(result.tx); // Update local state immediately if returned
           await fetchData(); // Refresh to be sure
-          toast.success('成功');
+         notify.success('成功');
           return true;
       } else {
           if (result.error === "UNAUTHORIZED") {
              setAuthError(true);
-             toast.error("連線逾時，請重新登入");
+           notify.error('連線逾時，請重新登入');
           } else {
-             toast.error(result.error || '操作失敗');
+           notify.error(result.error || '操作失敗');
           }
           return false;
       }
     } catch (e) {
       console.error(e);
-      toast.error('發生未預期的錯誤');
+      notify.error('發生未預期的錯誤');
       return false;
     } finally {
       setIsBusy(false);

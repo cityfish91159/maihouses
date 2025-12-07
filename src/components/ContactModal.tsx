@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X, Phone, MessageCircle, Mail, Calendar, Clock, CheckCircle, Loader2 } from 'lucide-react';
+import { notify } from '../lib/notify';
 import { createLead } from '../services/leadService';
 
 // 聯絡偏好
@@ -52,7 +53,7 @@ export const ContactModal: React.FC<ContactModalProps> = ({
     
     // 基本驗證
     if (!form.name.trim() || !form.phone.trim()) {
-      alert('請填寫姓名和電話');
+      notify.error('請填寫姓名和電話');
       return;
     }
 
@@ -87,11 +88,11 @@ export const ContactModal: React.FC<ContactModalProps> = ({
           });
         }, 3000);
       } else {
-        alert(result.error || '送出失敗，請稍後再試');
+        notify.error('送出失敗', result.error || '請稍後再試');
         setStep('form');
       }
     } catch {
-      alert('系統錯誤，請稍後再試');
+      notify.error('系統錯誤，請稍後再試');
       setStep('form');
     }
   };

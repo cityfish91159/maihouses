@@ -22,6 +22,7 @@ import {
   WallErrorBoundary,
   VersionBadge,
 } from './components';
+import { notify } from '../../lib/notify';
 
 // Types
 import type { Role, WallTab } from './types';
@@ -348,7 +349,7 @@ function WallInner() {
       await toggleLike(postId);
     } catch (err) {
       console.error('Failed to toggle like', err);
-      alert('按讚失敗，請稍後再試');
+      notify.error('按讚失敗', '請稍後再試');
     }
   }, [toggleLike]);
 
@@ -358,7 +359,7 @@ function WallInner() {
       await createPost(content, visibility);
     } catch (err) {
       console.error('Failed to create post', err);
-      alert('發文失敗，請稍後再試');
+      notify.error('發文失敗', '請稍後再試');
     }
   }, [createPost]);
 
@@ -367,7 +368,7 @@ function WallInner() {
       await askQuestion(question);
     } catch (err) {
       console.error('Failed to submit question', err);
-      alert('提問失敗，請稍後再試');
+      notify.error('提問失敗', '請稍後再試');
       throw err;
     }
   }, [askQuestion]);
@@ -377,7 +378,7 @@ function WallInner() {
       await answerQuestion(questionId, content);
     } catch (err) {
       console.error('Failed to submit answer', err);
-      alert('回答失敗，請稍後再試');
+      notify.error('回答失敗', '請稍後再試');
       throw err;
     }
   }, [answerQuestion]);

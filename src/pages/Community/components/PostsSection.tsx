@@ -13,6 +13,7 @@ import { useGuestVisibleItems } from '../../../hooks/useGuestVisibleItems';
 import { LockedOverlay } from './LockedOverlay';
 import { PostModal } from './PostModal';
 import { formatRelativeTimeLabel } from '../../../lib/time';
+import { notify } from '../../../lib/notify';
 
 interface PostCardProps {
   post: Post;
@@ -192,7 +193,10 @@ export function PostsSection({
 
   const handlePrivateClick = () => {
     if (!perm.canAccessPrivate) {
-      alert(perm.isGuest ? '🔐 登入/註冊\n\n請先登入或註冊' : '🏠 住戶驗證\n\n請上傳水電帳單或管理費收據');
+      notify.error(
+        perm.isGuest ? '請先登入或註冊' : '請完成住戶驗證',
+        perm.isGuest ? '🔐 登入/註冊後可查看私密牆' : '🏠 上傳水電帳單或管理費收據後即可查看'
+      );
       return;
     }
     onTabChange('private');

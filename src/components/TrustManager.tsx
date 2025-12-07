@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
+import { notify } from '../lib/notify';
 import type { TrustTransaction, TrustStep } from '../types/trust.types';
 import { STEP_NAMES, STEP_ICONS } from '../types/trust.types';
 
@@ -50,7 +51,7 @@ export default function TrustManager({ defaultCaseName = '', showList = true, li
     }, [showList, loadCases]);
 
     const createCase = async () => {
-        if (!newCaseName.trim() || !currentUserId) return alert('請輸入名稱或登入');
+        if (!newCaseName.trim() || !currentUserId) return notify.error('請輸入名稱或登入');
         setLoading(true);
         try {
             const { data: { user } } = await supabase.auth.getUser();
@@ -65,13 +66,13 @@ export default function TrustManager({ defaultCaseName = '', showList = true, li
             if (error) throw error;
             await copyLink(data as TrustTransaction);
             setNewCaseName(''); setShowForm(false); await loadCases(currentUserId);
-        } catch (err: any) { alert('建立失敗: ' + err.message); } finally { setLoading(false); }
+        } catch (err: any) { notify.error('建立失敗', err.message); } finally { setLoading(false); }
     };
 
     const copyLink = async (tx: TrustTransaction) => {
         const origin = import.meta.env.VITE_APP_URL || window.location.origin;
         const link = `${origin}${linkPath}?id=${tx.id}&token=${tx.guest_token}`;
-        try { await navigator.clipboard.writeText(link); alert('連結已複製！'); } catch { prompt('請手動複製:', link); }
+        try { await navigator.clipboard.writeText(link); notify.success('連結已複製', '已複製案件分享連結'); } catch { prompt('請手動複製:', link); }
     };
 
     const updateStep = async (tx: TrustTransaction, newStep: number) => {
@@ -92,7 +93,7 @@ export default function TrustManager({ defaultCaseName = '', showList = true, li
             }).eq('id', tx.id);
             if (error) throw error;
             await loadCases(currentUserId);
-        } catch (err) { alert('更新失敗'); } finally { setUpdatingStep(null); }
+        } catch (err) { notify.error('更新失敗'); } finally { setUpdatingStep(null); }
     };
 
     const toggleStepDone = async (tx: TrustTransaction, stepNum: number) => {
@@ -125,12 +126,12 @@ export default function TrustManager({ defaultCaseName = '', showList = true, li
             }).eq('id', tx.id);
             if (error) throw error;
             await loadCases(currentUserId);
-        } catch { alert('更新失敗'); } finally { setUpdatingStep(null); }
+        } catch { notify.error('更新失敗'); } finally { setUpdatingStep(null); }
     };
 
     const deleteCase = async (tx: TrustTransaction) => {
         if (!confirm(`刪除「${tx.case_name}」？`) || !currentUserId) return;
-        try { await supabase.from('trust_transactions').update({ status: 'cancelled' }).eq('id', tx.id); loadCases(currentUserId); } catch { alert('刪除失敗'); }
+        try { await supabase.from('trust_transactions').update({ status: 'cancelled' }).eq('id', tx.id); loadCases(currentUserId); } catch { notify.error('刪除失敗'); }
     };
 
     if (!currentUserId && !loading) {

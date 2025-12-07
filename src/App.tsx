@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Routes, Route, useLocation } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
+import { Toaster } from 'sonner'
 import { getConfig, type AppConfig, type RuntimeOverrides } from './app/config'
 import DevTools from './app/devtools'
 import { trackEvent } from './services/analytics'
@@ -15,7 +16,6 @@ import ErrorBoundary from './app/ErrorBoundary'
 import { QuietModeProvider } from './context/QuietModeContext'
 import { MoodProvider } from './context/MoodContext'
 import { CookieConsent } from './components/CookieConsent'
-import { ToastProvider } from './components/ui/Toast'
 
 import UAGPage from './pages/UAG'
 import { PropertyDetailPage } from './pages/PropertyDetailPage'
@@ -52,10 +52,16 @@ export default function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <ToastProvider>
-        <QuietModeProvider>
-          <MoodProvider>
-            <Routes key={loc.pathname}>
+      <QuietModeProvider>
+        <MoodProvider>
+          <Toaster
+            position="top-right"
+            theme="light"
+            richColors
+            closeButton
+            toastOptions={{ duration: 3200 }}
+          />
+          <Routes key={loc.pathname}>
           <Route
             path="/"
             element={
@@ -161,9 +167,8 @@ export default function App() {
       )}
       {config.devtools === '1' && <DevTools config={config} />}
       <CookieConsent />
-          </MoodProvider>
-        </QuietModeProvider>
-      </ToastProvider>
+        </MoodProvider>
+      </QuietModeProvider>
     </QueryClientProvider>
   )
 }

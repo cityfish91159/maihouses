@@ -1,5 +1,4 @@
 import { Transaction, Step } from '../hooks/useTrustRoom';
-import toast from 'react-hot-toast';
 
 // --- TYPES ---
 // Re-exporting or defining types if needed, but for now we use the ones from hook or define here

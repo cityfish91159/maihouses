@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { UAGService } from '../services/uagService';
 import { AppData, Grade, LeadStatus } from '../types/uag.types';
 import { MOCK_DB } from '../mockData';
-import { toast } from 'react-hot-toast';
+import { notify } from '../../../lib/notify';
 import { useAuth } from '../../../hooks/useAuth';
 import { GRADE_HOURS } from '../uag-config';
 import { validateQuota } from '../utils/validation';
@@ -34,7 +34,7 @@ export function useUAG() {
 
   const toggleMode = () => {
     if (import.meta.env.PROD) {
-      toast.error("生產環境無法切換模式");
+      notify.error('生產環境無法切換模式');
       return;
     }
     const newMode = !useMock;
@@ -78,6 +78,7 @@ export function useUAG() {
         if (lead) {
            const { valid, error } = validateQuota(lead, previousData.user);
            if (!valid) {
+             notify.error(error || '配額不足');
              throw new Error(error || "配額不足 (Optimistic Check)");
            }
         }
@@ -108,7 +109,7 @@ export function useUAG() {
       if (context?.previousData) {
         queryClient.setQueryData(['uagData', useMock, session?.user?.id], context.previousData);
       }
-      toast.error(`購買失敗: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      notify.error(`購買失敗: ${err instanceof Error ? err.message : 'Unknown error'}`);
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['uagData'] });
@@ -120,30 +121,30 @@ export function useUAG() {
 
     const lead = data.leads.find(l => l.id === leadId);
     if (!lead) {
-      toast.error("客戶不存在");
+      notify.error('客戶不存在');
       return;
     }
 
     if (lead.status !== 'new') {
-      toast.error("此客戶已被購買");
+      notify.error('此客戶已被購買');
       return;
     }
 
     const { valid, error } = validateQuota(lead, data.user);
     if (!valid) {
-      toast.error(error || "配額不足");
+      notify.error(error || '配額不足');
       return;
     }
 
     const cost = lead.price || 10;
     if (data.user.points < cost) {
-      toast.error("點數不足");
+      notify.error('點數不足');
       return;
     }
 
     buyLeadMutation.mutate({ leadId, cost, grade: lead.grade }, {
       onSuccess: () => {
-        toast.success("購買成功");
+        notify.success('購買成功');
       }
     });
   };

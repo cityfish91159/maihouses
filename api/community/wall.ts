@@ -708,19 +708,31 @@ async function getReviews(
 ) {
   // 回傳足夠筆數讓前端做「僅顯示 2 則 + CTA」
   const limit = DEFAULT_LIST_LIMIT;
-  const [reviewResult, communityResult] = await Promise.all([
-    fetchReviewsWithAgents(communityId, limit),
-    getSupabase()
+  let reviewResult: { items: ReviewResponseItem[]; total: number } = { items: [], total: 0 };
+  let communityData: Record<string, unknown> | null = null;
+
+  // 若 VIEW 缺欄位或查詢失敗，回傳空陣列避免 500
+  try {
+    reviewResult = await fetchReviewsWithAgents(communityId, limit);
+  } catch (err) {
+    console.error('[community/wall] getReviews fetchReviewsWithAgents failed:', err);
+  }
+
+  try {
+    const { data } = await getSupabase()
       .from('communities')
       .select('two_good, one_fair, story_vibe')
       .eq('id', communityId)
-      .single()
-  ]);
+      .single();
+    communityData = data ?? null;
+  } catch (err) {
+    console.error('[community/wall] getReviews fetch community summary failed:', err);
+  }
 
   return res.status(200).json({
     success: true,
     data: reviewResult.items,
-    summary: communityResult.data || null,
+    summary: communityData,
     total: reviewResult.total,
     limited: !isAuthenticated,
   });

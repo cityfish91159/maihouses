@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import toast from 'react-hot-toast';
+import { notify } from '../../../../lib/notify';
 import { 
   Upload, Copy, ChevronRight, ChevronLeft,
   Home, MapPin, Ruler, Calendar, Building, Compass, DollarSign,
@@ -186,7 +186,7 @@ export default function ReportGenerator({ listings = [] }: ReportGeneratorProps)
     setHighlights(prev => prev.map(h => {
       if (h.id === id) {
         if (!h.selected && selectedCount >= 3) {
-          toast.error('最多只能選擇 3 個亮點');
+          notify.error('最多只能選擇 3 個亮點');
           return h;
         }
         return { ...h, selected: !h.selected };
@@ -198,7 +198,7 @@ export default function ReportGenerator({ listings = [] }: ReportGeneratorProps)
   const confirmHighlights = () => {
     const selectedCount = highlights.filter(h => h.selected).length;
     if (selectedCount < 1) {
-      toast.error('請至少選擇 1 個亮點');
+      notify.error('請至少選擇 1 個亮點');
       return;
     }
     setStep(4);
@@ -208,7 +208,7 @@ export default function ReportGenerator({ listings = [] }: ReportGeneratorProps)
     if (!selectedProperty) return;
     
     setIsGenerating(true);
-    const toastId = toast.loading('正在生成精美報告...');
+    const toastId = notify.loading('正在生成精美報告...');
     
     try {
       await new Promise(resolve => setTimeout(resolve, 1500));
@@ -218,9 +218,9 @@ export default function ReportGenerator({ listings = [] }: ReportGeneratorProps)
       
       setReportUrl(url);
       setStep(5);
-      toast.success('報告生成成功！', { id: toastId });
+      notify.success('報告生成成功！', undefined, { id: toastId });
     } catch {
-      toast.error('生成失敗，請重試', { id: toastId });
+      notify.error('生成失敗，請重試', undefined, { id: toastId });
     } finally {
       setIsGenerating(false);
     }
@@ -229,9 +229,9 @@ export default function ReportGenerator({ listings = [] }: ReportGeneratorProps)
   const copyLink = async () => {
     try {
       await navigator.clipboard.writeText(reportUrl);
-      toast.success('連結已複製！可直接貼到 LINE');
+      notify.success('連結已複製！可直接貼到 LINE');
     } catch {
-      toast.error('複製失敗');
+      notify.error('複製失敗');
     }
   };
 
@@ -256,7 +256,7 @@ export default function ReportGenerator({ listings = [] }: ReportGeneratorProps)
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const toastId = toast.loading('AI 正在分析房仲頁面...');
+    const toastId = notify.loading('AI 正在分析房仲頁面...');
 
     try {
       await new Promise(resolve => setTimeout(resolve, 2000));
@@ -293,9 +293,9 @@ export default function ReportGenerator({ listings = [] }: ReportGeneratorProps)
       setSelectedProperty(detectedProperty);
       setHighlights(detectedProperty.highlights);
       setStep(2);
-      toast.success('AI 分析完成！已自動帶入物件資訊', { id: toastId });
+      notify.success('AI 分析完成！已自動帶入物件資訊', undefined, { id: toastId });
     } catch {
-      toast.error('分析失敗', { id: toastId });
+      notify.error('分析失敗', undefined, { id: toastId });
     }
   };
 

@@ -4,14 +4,18 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter } from 'react-router-dom';
 import UAGPage from './index';
 
-const mockedToast = vi.hoisted(() => ({
+const mockedNotify = vi.hoisted(() => ({
   success: vi.fn(),
   error: vi.fn(),
+  info: vi.fn(),
+  warning: vi.fn(),
+  loading: vi.fn(() => 'toast-id'),
+  dev: vi.fn(),
+  dismiss: vi.fn(),
 }));
 
-vi.mock('react-hot-toast', () => ({
-  Toaster: () => null,
-  toast: mockedToast,
+vi.mock('../../lib/notify', () => ({
+  notify: mockedNotify,
 }));
 
 // Mock Supabase client to avoid environment variable issues
@@ -59,8 +63,8 @@ beforeAll(() => {
 });
 
 beforeEach(() => {
-  mockedToast.success.mockClear();
-  mockedToast.error.mockClear();
+  mockedNotify.success.mockClear();
+  mockedNotify.error.mockClear();
 });
 
 const renderWithQueryClient = () => {
@@ -97,7 +101,7 @@ describe('UAGPage', () => {
     fireEvent.click(confirmButton);
 
     await waitFor(() => {
-      expect(mockedToast.success).toHaveBeenCalledWith('購買成功');
+      expect(mockedNotify.success).toHaveBeenCalledWith('購買成功');
     });
 
     await waitFor(() => {
