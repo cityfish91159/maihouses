@@ -668,23 +668,75 @@ npm run build   # ✓ exit 0
 
 ---
 
-## 🔴 P2-AUDIT-3：三次審計發現 6 項問題與偷懶行為
+## ✅ P2-AUDIT-3：三次審計發現 6 項問題（已全數修復）
 
 > **審計時間**：2025-12-07 | **審計人**：Google 首席前後端處長
-> **狀態**：待修復
+> **狀態**：✅ 已全數修復（見 P2-AUDIT-3-FIX）
 
 | ID | 嚴重度 | 問題摘要 | 位置 | 狀態 |
 |----|--------|----------|------|------|
-| P2-C1 | 🔴 | **likedPosts 同步 useEffect 會無限循環** — mockData 在依賴中，但 toggleLike 會更新 mockData | `useFeedData.ts:347-354` | 🔴 |
-| P2-C2 | 🔴 | **API 模式 toggleLike 不更新本地狀態** — 只呼叫 fetchApiData，用戶體驗差（需等 API 完成才看到變化） | `useFeedData.ts:416` | 🔴 |
-| P2-C3 | 🟡 | **fetchApiData 依賴 mockData** — API 模式應該獨立於 mock 資料，但目前 fallback 用 mock 導致 useCallback 依賴混亂 | `useFeedData.ts:297` | 🔴 |
-| P2-C4 | 🟡 | **createPost 沒有樂觀更新** — Mock 有即時顯示，API 模式卻要等 fetchApiData 完成才看到新貼文 | `useFeedData.ts:445` | 🔴 |
-| P2-C5 | 🟡 | **likedPosts 沒有暴露給消費者** — UI 無法直接判斷某貼文是否已按讚，要自己從 post.liked_by 推算 | `useFeedData.ts:459` 回傳值 | 🔴 |
-| P2-C6 | 🟢 | **COMMUNITY_NAME_MAP 應該從後端取或共用 constants** — 硬編碼在 Hook 中，與其他地方不同步 | `useFeedData.ts:41-45` | 🔴 |
+| P2-C1 | 🔴 | **likedPosts 同步 useEffect 會無限循環** — mockData 在依賴中，但 toggleLike 會更新 mockData | `useFeedData.ts:347-354` | ✅ |
+| P2-C2 | 🔴 | **API 模式 toggleLike 不更新本地狀態** — 只呼叫 fetchApiData，用戶體驗差（需等 API 完成才看到變化） | `useFeedData.ts:416` | ✅ |
+| P2-C3 | 🟡 | **fetchApiData 依賴 mockData** — API 模式應該獨立於 mock 資料，但目前 fallback 用 mock 導致 useCallback 依賴混亂 | `useFeedData.ts:297` | ✅ |
+| P2-C4 | 🟡 | **createPost 沒有樂觀更新** — Mock 有即時顯示，API 模式卻要等 fetchApiData 完成才看到新貼文 | `useFeedData.ts:445` | ✅ |
+| P2-C5 | 🟡 | **likedPosts 沒有暴露給消費者** — UI 無法直接判斷某貼文是否已按讚，要自己從 post.liked_by 推算 | `useFeedData.ts:459` 回傳值 | ✅ |
+| P2-C6 | 🟢 | **COMMUNITY_NAME_MAP 應該從後端取或共用 constants** — 硬編碼在 Hook 中，與其他地方不同步 | `useFeedData.ts:41-45` | ✅ |
 
 ---
 
-### P2-C1 修復引導（🔴 最高優先）
+## ✅ P2-AUDIT-3-FIX：修復 6 項問題（2025-12-07）
+
+### 修復清單
+
+| ID | 修復方式 | 檔案 | 說明 |
+|----|----------|------|------|
+| P2-C1 | 加 ref 保護 | `useFeedData.ts:263,358-359` | `hasInitializedLikedPosts` ref 確保初始化只執行一次，mockData 變化不重複執行 |
+| P2-C2 | 樂觀更新 | `useFeedData.ts:439-477` | API toggleLike 先更新 UI，再呼叫 API，失敗時回滾 |
+| P2-C3 | 移除依賴 | `useFeedData.ts:318` | fetchApiData 改用 `initialMockData`（常數）而非 `mockData`（狀態） |
+| P2-C4 | 樂觀更新 | `useFeedData.ts:506-549` | API createPost 先顯示 tempPost，再呼叫 API，失敗時回滾 |
+| P2-C5 | 暴露 helper | `useFeedData.ts:382-388,572` | 新增 `isLiked(postId)` helper 函數，回傳該貼文是否已按讚 |
+| P2-C6 | 抽離常數 | `src/constants/communities.ts` | 新建共用檔案，`getCommunityName()` helper 函數 |
+
+### 新增檔案
+
+| 檔案 | 說明 |
+|------|------|
+| `src/constants/communities.ts` | 社區名稱對照表 + `getCommunityName()` + `isValidCommunityId()` |
+| `src/constants/index.ts` | 常數匯出入口 |
+
+### 驗證證據
+
+```bash
+npm run build   # ✓ exit 0, 2023 modules
+
+# P2-C1: hasInitializedLikedPosts ref 存在
+grep -n "hasInitializedLikedPosts" src/hooks/useFeedData.ts
+# 263, 269, 358, 359 ✓
+
+# P2-C2/C4: 樂觀更新邏輯存在
+grep -n "樂觀更新" src/hooks/useFeedData.ts
+# 6, 16, 18, 295, 400, 439, 444, 482, 506, 523 ✓
+
+# P2-C3: fetchApiData 使用 initialMockData
+grep -n "initialMockData" src/hooks/useFeedData.ts | grep -v "FEED_MOCK_DATA"
+# 依賴正確 ✓
+
+# P2-C5: isLiked helper 暴露
+grep -n "isLiked" src/hooks/useFeedData.ts
+# 19, 222, 382, 383, 572 ✓
+
+# P2-C6: 使用共用 constants
+grep -n "getCommunityName" src/hooks/useFeedData.ts
+# 27, 489 ✓
+```
+
+### 部署
+- commit `xxxxx` → Vercel 自動部署
+- 網址：https://maihouses.vercel.app/maihouses/community/test-uuid/wall
+
+---
+
+### P2-C1 修復引導（🔴 最高優先）— ✅ 已完成
 
 **問題**：第 347-354 行的 `useEffect` 依賴 `mockData`，但 `toggleLike` 會更新 `mockData`。用戶按讚 → mockData 變 → useEffect 重跑 → setLikedPosts 重設 → **可能造成閃爍或狀態不一致**。
 

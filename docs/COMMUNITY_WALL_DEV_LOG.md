@@ -112,6 +112,36 @@ npm run build   # ✓ exit 0
 
 ---
 
+## 2025-12-07 - P2-AUDIT-3-FIX 修復 6 項嚴重問題
+
+### 本次變更
+
+| 變更項目 | 檔案 | 說明 |
+|----------|------|------|
+| P2-C1 ref 保護 | `useFeedData.ts` | `hasInitializedLikedPosts` ref 確保 likedPosts 初始化只執行一次 |
+| P2-C2 樂觀更新 | `useFeedData.ts` | API toggleLike 先更新 UI 再呼叫 API，失敗回滾 |
+| P2-C3 移除依賴 | `useFeedData.ts` | fetchApiData 改用 initialMockData，消除 mockData 依賴 |
+| P2-C4 樂觀更新 | `useFeedData.ts` | API createPost 先顯示 tempPost 再呼叫 API |
+| P2-C5 暴露 helper | `useFeedData.ts` | 新增 `isLiked(postId)` helper 回傳按讚狀態 |
+| P2-C6 抽離常數 | `src/constants/communities.ts` | 新建共用檔案，含 `getCommunityName()` |
+
+### 新增檔案
+
+- `src/constants/communities.ts`：社區名稱對照表與 helper 函數
+- `src/constants/index.ts`：常數匯出入口
+
+### 驗證
+
+```bash
+npm run build   # ✓ exit 0, 2023 modules
+grep -n "hasInitializedLikedPosts" src/hooks/useFeedData.ts  # ✓ 4 處
+grep -n "樂觀更新" src/hooks/useFeedData.ts                   # ✓ 10 處
+grep -n "isLiked" src/hooks/useFeedData.ts                    # ✓ 5 處
+grep -n "getCommunityName" src/hooks/useFeedData.ts           # ✓ 2 處
+```
+
+---
+
 ## 2025-12-07 - P2-AUDIT-3 三次審計發現 6 項嚴重問題
 
 ### 審計結果

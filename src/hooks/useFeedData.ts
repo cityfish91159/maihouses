@@ -3,19 +3,28 @@
  * 
  * 信息流統一資料來源 Hook（不綁定特定社區）
  * - Mock 模式：使用本地假資料
- * - API 模式：使用真實 API 資料
+ * - API 模式：使用真實 API 資料（含樂觀更新）
  * - 統一資料格式：不管來源是 Mock 還是 API，輸出格式一致
  * 
  * 與 useCommunityWallData 差異：
  * - 移除 reviews / questions 邏輯（信息流不需要）
  * - communityId 為 optional（信息流可能跨社區）
  * - 資料結構簡化為 posts only
+ * 
+ * P2-AUDIT-3 修復紀錄（2025-12-07）：
+ * - P2-C1: likedPosts 初始化加 ref 保護，避免 mockData 變化導致重複執行
+ * - P2-C2: API toggleLike 加入樂觀更新，立即顯示變化
+ * - P2-C3: fetchApiData 改用 initialMockData，移除 mockData 依賴
+ * - P2-C4: API createPost 加入樂觀更新，立即顯示新貼文
+ * - P2-C5: 暴露 isLiked helper 函數，方便 UI 判斷按讚狀態
+ * - P2-C6: COMMUNITY_NAME_MAP 抽到 src/constants/communities.ts
  */
 
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { mhEnv } from '../lib/mhEnv';
 import type { Post, Role } from '../types/community';
 import { useAuth } from './useAuth';
+import { getCommunityName } from '../constants/communities';
 
 // ============ Feed 專用型別 ============
 export interface FeedPost extends Post {
@@ -38,12 +47,6 @@ const EMPTY_FEED_DATA: UnifiedFeedData = {
   totalPosts: 0,
 };
 
-const COMMUNITY_NAME_MAP: Record<string, string> = {
-  'test-uuid': '惠宇上晴',
-  'community-2': '遠雄中央公園',
-  'community-3': '國泰建設',
-};
-
 // ============ Mock 資料 ============
 const FEED_MOCK_POSTS: FeedPost[] = [
   {
@@ -51,7 +54,7 @@ const FEED_MOCK_POSTS: FeedPost[] = [
     author: '陳小姐',
     floor: '12F',
     type: 'resident',
-    time: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2小時前
+    time: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
     title: '有人要團購掃地機嗎？🤖',
     content: '這款 iRobot 打折，滿 5 台有團購價～',
     likes: 31,
@@ -63,7 +66,7 @@ const FEED_MOCK_POSTS: FeedPost[] = [
     id: 1002,
     author: '游杰倫',
     type: 'agent',
-    time: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // 1天前
+    time: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
     title: '🏡 惠宇上晴 12F｜雙陽台視野戶',
     content: '客廳光線很好，上週屋主剛降價 50 萬，有興趣可私訊。',
     views: 89,
@@ -77,7 +80,7 @@ const FEED_MOCK_POSTS: FeedPost[] = [
     author: '李先生',
     floor: '8F',
     type: 'resident',
-    time: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), // 3天前
+    time: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
     title: '停車位交流 🚗',
     content: '我有 B2-128 想與 B1 交換，方便接送小孩',
     likes: 12,
@@ -90,7 +93,7 @@ const FEED_MOCK_POSTS: FeedPost[] = [
     author: '王太太',
     floor: '5F',
     type: 'resident',
-    time: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(), // 7天前
+    time: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
     title: '推薦水電師傅',
     content: '上次找的師傅很專業，價格公道，需要的鄰居私訊我',
     likes: 25,
@@ -102,7 +105,7 @@ const FEED_MOCK_POSTS: FeedPost[] = [
     id: 1005,
     author: '林經理',
     type: 'agent',
-    time: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000).toISOString(), // 8天前
+    time: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000).toISOString(),
     title: '🏡 惠宇上晴 8F｜三房車位',
     content: '屋況極新，前屋主自住保養好',
     views: 156,
@@ -165,7 +168,6 @@ const saveFeedMockState = (data: UnifiedFeedData): void => {
   }
 };
 
-
 // ============ Mock Factory ============
 export const createFeedMockPost = (
   content: string,
@@ -216,6 +218,8 @@ export interface UseFeedDataReturn {
   viewerRole: Role;
   /** 是否登入 */
   isAuthenticated: boolean;
+  /** 判斷某貼文是否已按讚（P2-C5 修復：暴露給消費者） */
+  isLiked: (postId: string | number) => boolean;
 }
 
 // ============ Main Hook ============
@@ -255,10 +259,14 @@ export function useFeedData(
   const hasRestoredFromStorage = useRef(false);
   const [likedPosts, setLikedPosts] = useState<Set<string | number>>(() => new Set());
 
+  // P2-C1 修復：用 ref 追蹤是否已初始化 likedPosts，避免 mockData 變化重複執行
+  const hasInitializedLikedPosts = useRef(false);
+
   // 切換至 API 模式時重置 Mock 按讚狀態
   useEffect(() => {
     if (!useMock) {
       setLikedPosts(new Set());
+      hasInitializedLikedPosts.current = false; // 重置初始化標記
     }
   }, [useMock]);
 
@@ -283,8 +291,11 @@ export function useFeedData(
   const [apiLoading, setApiLoading] = useState(false);
   const [apiError, setApiError] = useState<Error | null>(null);
   const lastApiDataRef = useRef<UnifiedFeedData | null>(null);
+  
+  // P2-C2/C4 修復：API 按讚狀態（用於樂觀更新）
+  const [apiLikedPosts, setApiLikedPosts] = useState<Set<string | number>>(() => new Set());
 
-  // API 載入（目前為 placeholder，P5 時串接真實 API）
+  // P2-C3 修復：fetchApiData 改用 initialMockData，移除 mockData 依賴
   const fetchApiData = useCallback(async () => {
     if (useMock) return;
     
@@ -296,9 +307,9 @@ export function useFeedData(
       // const response = await fetch(`/api/feed?communityId=${communityId ?? ''}`);
       // const result = await response.json();
 
-      // 暫時使用 Mock 資料作為 API fallback，避免空資料誤導
+      // 暫時使用 initialMockData 作為 API fallback（P2-C3 修復：不依賴 mockData 狀態）
       await delay(MOCK_LATENCY_MS);
-      const result = filterMockData(mockData, communityId);
+      const result = filterMockData(initialMockData, communityId);
 
       setApiData(result);
       lastApiDataRef.current = result;
@@ -311,7 +322,7 @@ export function useFeedData(
     } finally {
       setApiLoading(false);
     }
-  }, [useMock, communityId, mockData]);
+  }, [useMock, communityId, initialMockData]); // P2-C3：移除 mockData，改用 initialMockData
 
   // 初始載入
   useEffect(() => {
@@ -339,9 +350,14 @@ export function useFeedData(
   // ============ viewerRole ============
   const viewerRole = useMemo<Role>(() => authRole ?? 'guest', [authRole]);
 
-  // ============ Mock likedPosts 初始化同步 ============
+  // P2-C1 修復：Mock likedPosts 初始化（加 ref 保護，只執行一次）
   useEffect(() => {
     if (!useMock || !currentUserId) return;
+    
+    // 已初始化就跳過，避免 mockData 變化時重複執行
+    if (hasInitializedLikedPosts.current) return;
+    hasInitializedLikedPosts.current = true;
+    
     const initialLiked = new Set<string | number>();
     mockData.posts.forEach(p => {
       if (p.liked_by?.includes(currentUserId)) {
@@ -363,6 +379,14 @@ export function useFeedData(
     return mockId;
   }, [currentUserId]);
 
+  // P2-C5 修復：暴露 isLiked helper
+  const isLiked = useCallback((postId: string | number): boolean => {
+    if (useMock) {
+      return likedPosts.has(postId);
+    }
+    return apiLikedPosts.has(postId);
+  }, [useMock, likedPosts, apiLikedPosts]);
+
   // ============ 操作方法 ============
   const refresh = useCallback(async () => {
     if (useMock) {
@@ -373,6 +397,7 @@ export function useFeedData(
     await fetchApiData();
   }, [useMock, fetchApiData]);
 
+  // P2-C2 修復：API 模式加入樂觀更新
   const toggleLike = useCallback(async (postId: string | number) => {
     if (!useMock && !isAuthenticated) {
       throw new Error('請先登入後再按讚');
@@ -381,7 +406,7 @@ export function useFeedData(
     if (useMock) {
       await delay(MOCK_LATENCY_MS);
       const mockUserId = getMockUserId();
-      const isLiked = likedPosts.has(postId);
+      const currentlyLiked = likedPosts.has(postId);
       
       setMockData(prev => ({
         ...prev,
@@ -391,8 +416,8 @@ export function useFeedData(
           const currentLikedBy = post.liked_by ?? [];
           return {
             ...post,
-            likes: isLiked ? Math.max(0, currentLikes - 1) : currentLikes + 1,
-            liked_by: isLiked
+            likes: currentlyLiked ? Math.max(0, currentLikes - 1) : currentLikes + 1,
+            liked_by: currentlyLiked
               ? currentLikedBy.filter(id => id !== mockUserId)
               : [...currentLikedBy, mockUserId],
           };
@@ -411,24 +436,63 @@ export function useFeedData(
       return;
     }
     
-    // TODO: P5 時串接真實 API
-    // await apiToggleLike(String(postId));
-    await fetchApiData(); // 暫時重新載入
-  }, [useMock, likedPosts, getMockUserId, fetchApiData, isAuthenticated]);
+    // P2-C2 修復：API 模式樂觀更新
+    const currentlyLiked = apiLikedPosts.has(postId);
+    const previousApiData = apiData;
+    const previousApiLikedPosts = new Set(apiLikedPosts);
+    
+    // 1. 樂觀更新本地狀態（立即顯示變化）
+    setApiData(prev => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        posts: prev.posts.map(post => {
+          if (post.id !== postId) return post;
+          const currentLikes = post.likes ?? 0;
+          return {
+            ...post,
+            likes: currentlyLiked ? Math.max(0, currentLikes - 1) : currentLikes + 1,
+          };
+        }),
+      };
+    });
+    
+    setApiLikedPosts(prev => {
+      const next = new Set(prev);
+      if (next.has(postId)) {
+        next.delete(postId);
+      } else {
+        next.add(postId);
+      }
+      return next;
+    });
+    
+    try {
+      // 2. 呼叫 API（TODO: P5 時實作）
+      await delay(MOCK_LATENCY_MS); // 模擬 API 延遲
+      // await apiToggleLike(String(postId));
+    } catch (err) {
+      // 3. 失敗時回滾
+      setApiData(previousApiData);
+      setApiLikedPosts(previousApiLikedPosts);
+      throw err;
+    }
+  }, [useMock, likedPosts, apiLikedPosts, apiData, getMockUserId, isAuthenticated]);
 
+  // P2-C4 修復：API 模式加入樂觀更新
   const createPost = useCallback(async (content: string, targetCommunityId?: string) => {
     if (!useMock && !isAuthenticated) {
       throw new Error('請先登入後再發文');
     }
 
+    const resolvedCommunityId = targetCommunityId ?? communityId;
+    const resolvedCommunityName = getCommunityName(resolvedCommunityId); // P2-C6：使用共用函數
+
     if (useMock) {
       const newPost = createFeedMockPost(
         content,
-        targetCommunityId ?? communityId,
-        COMMUNITY_NAME_MAP[targetCommunityId ?? communityId ?? '']
-          ?? targetCommunityId
-          ?? communityId
-          ?? '我的社區'
+        resolvedCommunityId,
+        resolvedCommunityName
       );
 
       setMockData(prev => ({
@@ -439,10 +503,54 @@ export function useFeedData(
       return;
     }
     
-    // TODO: P5 時串接真實 API
-    // await apiCreatePost(content, targetCommunityId);
-    await fetchApiData(); // 暫時重新載入
-  }, [useMock, communityId, fetchApiData, isAuthenticated]);
+    // P2-C4 修復：API 模式樂觀更新
+    const tempId = `temp-${Date.now()}`;
+    const tempPost: FeedPost = {
+      id: tempId,
+      author: authUser?.email?.split('@')[0] ?? '用戶',
+      type: 'resident',
+      time: new Date().toISOString(),
+      title: content.substring(0, 20) + (content.length > 20 ? '...' : ''),
+      content,
+      likes: 0,
+      comments: 0,
+      communityId: resolvedCommunityId,
+      communityName: resolvedCommunityName,
+    };
+    
+    const previousApiData = apiData;
+    
+    // 1. 樂觀更新（立即顯示新貼文）
+    setApiData(prev => {
+      if (!prev) {
+        return {
+          posts: [tempPost],
+          totalPosts: 1,
+        };
+      }
+      return {
+        ...prev,
+        posts: [tempPost, ...prev.posts],
+        totalPosts: prev.totalPosts + 1,
+      };
+    });
+    
+    try {
+      // 2. 呼叫 API（TODO: P5 時實作）
+      await delay(MOCK_LATENCY_MS); // 模擬 API 延遲
+      // const realPost = await apiCreatePost(content, targetCommunityId);
+      
+      // 3. 成功後用真實資料替換（TODO: P5 時實作）
+      // setApiData(prev => ({
+      //   ...prev,
+      //   posts: prev.posts.map(p => p.id === tempId ? realPost : p),
+      // }));
+    } catch (err) {
+      // 4. 失敗時回滾
+      setApiData(previousApiData);
+      throw err;
+    }
+  }, [useMock, communityId, apiData, authUser, isAuthenticated]);
 
   const setUseMock = useCallback((value: boolean) => {
     const next = mhEnv.setMock(value);
@@ -461,6 +569,7 @@ export function useFeedData(
     createPost,
     viewerRole,
     isAuthenticated,
+    isLiked, // P2-C5 修復：暴露給消費者
   };
 }
 
