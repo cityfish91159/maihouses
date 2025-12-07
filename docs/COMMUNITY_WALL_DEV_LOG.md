@@ -1,5 +1,31 @@
 # 社區牆開發紀錄
 
+## 2025-12-07 - P1.5-AUDIT-5 徹底重構 Hook 順序修復 React error #310
+
+### 本次變更
+
+| 變更項目 | 檔案 | 說明 |
+|----------|------|------|
+| F1 Hook 完整重構 | `Wall.tsx` | **所有 Hooks 移到函數最上方**，任何 early return 之前；條件渲染區明確標記在 Hooks 之後 |
+| F2 useCommunityWallData 防禦 | `Wall.tsx` | 改用 `communityId ?? ''` 確保 Hook 無條件呼叫，後續再判斷顯示錯誤頁 |
+| F3 effectiveRole 依賴補齊 | `Wall.tsx` | `authLoading` 加入 useMemo 依賴，loading 時預設 guest |
+| F4 perm 改為 useMemo | `Wall.tsx` | `getPermissions(effectiveRole)` 包裝為 useMemo，避免每次 render 重算 |
+
+### 驗證
+
+```bash
+npm run build   # ✓ exit 0
+```
+
+### 審計發現（本次全數修復）
+
+| ID | 嚴重度 | 問題 | 狀態 |
+|----|--------|------|------|
+| F1 | 🔴 | 多個 Hooks（useMemo、useCommunityWallData、useCallback、useEffect）散落於 early return 之間，觸發 React error #310 | ✅ |
+| F2 | 🔴 | `useCommunityWallData(communityId, ...)` 在 `!communityId` early return 後呼叫，導致 Hook 數量不一致 | ✅ |
+
+---
+
 ## 2025-12-07 - P1.5-AUDIT-2 二次審計修復 4 項殘留問題
 
 ### 本次變更
