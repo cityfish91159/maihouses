@@ -107,6 +107,13 @@ function WallInner() {
   
   // B1/B4/B5: 統一 auth 狀態，單一來源
   const { isAuthenticated, role: authRole, loading: authLoading, error: authError } = useAuth();
+
+  // 提前處理 auth 錯誤 toast，避免在早退後跳過 Hook 觸發 React error 310
+  useEffect(() => {
+    if (authError) {
+      notify.error('登入狀態異常', authError.message);
+    }
+  }, [authError]);
   
   // B1: Auth 載入中時顯示 skeleton，避免誤判為 guest
   if (authLoading) {
@@ -119,12 +126,6 @@ function WallInner() {
       </div>
     );
   }
-  
-  useEffect(() => {
-    if (authError) {
-      notify.error('登入狀態異常', authError.message);
-    }
-  }, [authError]);
 
   // B5: Auth 錯誤時顯示可重試的錯誤畫面
   if (authError) {

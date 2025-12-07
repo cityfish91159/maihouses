@@ -176,6 +176,27 @@ npm run build                      # exit 0
 npm run build      # exit 0
 grep -n "effectiveRole" src/pages/Community/Wall.tsx | head -n 5
 grep -n "isAuthenticated" src/pages/Community/components/PostsSection.tsx  # 僅註解/無解構
+grep -n "authError" src/pages/Community/Wall.tsx  # Hook 先於早退，避免 React error 310
+```
+
+---
+
+## ✅ P1.5-AUDIT-4：React error 310（Hook 條件順序錯誤）
+
+> **審計時間**：2025-12-07 | **審計人**：Google 首席前後端處長
+> **狀態**：已修復（2025-12-07）
+
+| ID | 嚴重度 | 問題摘要 | 位置 | 狀態 |
+|----|--------|----------|------|------|
+| E1 | 🔴 | `authError` toast 的 useEffect 在 early return 後方，觸發條件式 Hook 違規，導致 React error #310 | `Wall.tsx:112-138` | ✅ |
+
+### 修復紀錄（2025-12-07）
+- E1：將 `authError` 的 `useEffect` 上移到任何早退之前，確保 Hook 呼叫順序固定；保留錯誤頁面早退。
+
+### 驗證證據
+
+```bash
+npm run build      # exit 0
 ```
 
 ## ✅ P1.5-AUDIT-2：二次審計發現 4 項殘留問題（已修復）
