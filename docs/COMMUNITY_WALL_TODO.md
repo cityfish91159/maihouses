@@ -56,7 +56,7 @@
 
 ---
 
-## ⚠️ P1：Toast 系統（需補完）
+## ✅ P1：Toast 系統（已完成）
 
 **結果**：sonner + `notify` 全面收斂，含 PropertyUploadPage、依賴與死碼清理
 
@@ -66,10 +66,13 @@
 - [x] P1-E3 `vite.config.ts` manualChunks 移除 `react-hot-toast`
 - [x] P1-E4 刪除舊 `src/components/ui/Toast.tsx` 死碼
 
-### 驗證證據
-- [x] `npm run build`（2025-12-07，退出碼 0）
-- [x] `grep useToast` / `grep react-hot-toast` → 無匹配（程式碼與 lock）
-- [x] Vercel 部署：git push main 觸發（commit `4710e1b`）
+### 驗證證據（2025-12-07 Google 首席審計通過）
+- [x] `npm run build`（退出碼 0）
+- [x] `grep alert\(` → 0 結果
+- [x] `grep useToast|showToast|ToastProvider` → 0 結果
+- [x] `grep react-hot-toast` → 0 結果（程式碼 + package-lock）
+- [x] `grep notify.` → 20+ 處覆蓋 Community/UAG/Report/PropertyUpload
+- [x] Vercel 部署成功（commit `1aa0887`）
 
 ---
 

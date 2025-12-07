@@ -1,5 +1,28 @@
 # 社區牆開發紀錄
 
+## 2025-12-07 - P1 Toast 系統二次補完
+
+### 本次變更
+
+| 變更項目 | 檔案 | 說明 |
+|----------|------|------|
+| PropertyUploadPage 改用 notify | `src/pages/PropertyUploadPage.tsx` | 7 處 showToast → notify，錯誤加重試 action |
+| 移除 react-hot-toast 依賴 | `package.json` | `npm uninstall react-hot-toast`，package-lock 同步 |
+| vite.config manualChunks 清理 | `vite.config.ts` | ui-libs 移除 react-hot-toast |
+| 刪除舊 Toast 死碼 | `src/components/ui/Toast.tsx` | 250 行死碼移除 |
+| 測試註解更新 | `src/pages/UAG/index.test.tsx` | 移除 react-hot-toast 相關註解 |
+
+### 驗證
+
+```bash
+npm run build          # ✓ exit 0
+grep useToast          # 0 match
+grep react-hot-toast   # 0 match (程式碼 + lock)
+git push origin main   # ✓ commit 1aa0887，Vercel 部署
+```
+
+---
+
 ## 2025-12-07 - P1 Toast 系統實作
 
 ### 本次變更
