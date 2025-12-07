@@ -155,13 +155,14 @@ export function PostModal({
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, handleKeyDown]);
 
-  // B3: 訪客不該能打開 Modal，作為最後防線直接不渲染
-  if (!isOpen) return null;
-  if (isGuest) {
-    // 若意外開啟，自動關閉
-    onClose();
-    return null;
-  }
+  // B3: 訪客若意外打開，透過 effect 關閉，避免 render 階段 side effect
+  useEffect(() => {
+    if (isOpen && isGuest) {
+      onClose();
+    }
+  }, [isOpen, isGuest, onClose]);
+
+  if (!isOpen || isGuest) return null;
 
   const charCount = content.length;
   const isOverLimit = charCount > maxLength;

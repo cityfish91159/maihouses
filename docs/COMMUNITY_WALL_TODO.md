@@ -152,6 +152,30 @@ npm run build                      # exit 0
 
 ---
 
+## ✅ P1.5-AUDIT-2：二次審計發現 4 項殘留問題（已修復）
+
+> **審計時間**：2025-12-07 | **審計人**：GitHub Copilot 二次覆核
+> **狀態**：已修復（2025-12-07）
+
+| ID | 嚴重度 | 問題摘要 | 位置 | 狀態 |
+|----|--------|----------|------|------|
+| C1 | 🔴 | PostModal render 中呼叫 onClose() — React side effect 違規 | `PostModal.tsx:161-164` | ✅ |
+| C2 | 🟡 | authError 只 notify 不阻擋 — 用戶可繼續以 guest 操作 | `Wall.tsx:124-126` | ✅ |
+| C3 | 🟡 | isGuest 計算邏輯重複 — `!isAuthenticated || perm.isGuest` 語意冗餘 | `PostsSection.tsx:163` | ✅ |
+| C4 | 🟢 | effectiveRole useMemo 過度複雜 — DEV 專用邏輯混入正式流程 | `Wall.tsx:128-135` | ✅ |
+
+### 修復紀錄（2025-12-07）
+- C1：PostModal 改用 `useEffect` 關閉訪客誤開，render 階段保持純函數，並以 `if (!isOpen || isGuest) return null` 防守。
+- C2：Auth error 改為專用錯誤畫面 + 重新載入按鈕，並用 `useEffect` 單次 toast 提醒。
+- C3：`isGuest` 單一來源 `perm.isGuest`，移除雙重條件，語意更清晰。
+- C4：`effectiveRole` 簡化，DEV mock 與正式邏輯分離，正式路徑直接使用 authRole。
+
+### 驗證證據
+
+```bash
+npm run build      # exit 0
+```
+
 ## ✅ P1.5-AUDIT：首席審計發現 8 項缺失（已全數修復）
 
 > **審計時間**：2025-12-07 | **審計人**：Google 首席前後端處長

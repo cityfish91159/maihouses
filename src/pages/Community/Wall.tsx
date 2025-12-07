@@ -120,18 +120,39 @@ function WallInner() {
     );
   }
   
-  // B5: Auth 錯誤時提示並允許重試
+  useEffect(() => {
+    if (authError) {
+      notify.error('登入狀態異常', authError.message);
+    }
+  }, [authError]);
+
+  // B5: Auth 錯誤時顯示可重試的錯誤畫面
   if (authError) {
-    notify.error('登入狀態異常', authError.message);
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-[var(--bg-base)] to-[var(--bg-alt)]">
+        <Topbar communityName="登入異常" />
+        <div className="mx-auto max-w-[960px] p-4">
+          <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-center shadow-sm">
+            <p className="text-lg font-semibold text-red-700">登入狀態異常</p>
+            <p className="mt-2 text-sm text-red-600">{authError.message}</p>
+            <button
+              type="button"
+              onClick={() => window.location.reload()}
+              className="mt-4 inline-flex items-center justify-center rounded-lg bg-brand px-4 py-2 text-sm font-bold text-white hover:bg-brand-700"
+            >
+              重新載入
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   }
   
   // B4: 統一計算 effectiveRole，子組件不再自行計算
   const effectiveRole = useMemo<Role>(() => {
-    if (!isAuthenticated) return 'guest';
-    if (role === 'guest' && authRole !== 'guest') {
-      return authRole;
-    }
-    return role;
+    const allowMockRole = import.meta.env.DEV && GLOBAL_MOCK_TOGGLE_ENABLED && role !== 'guest';
+    if (allowMockRole) return role;
+    return isAuthenticated ? authRole : 'guest';
   }, [authRole, isAuthenticated, role]);
   const perm = getPermissions(effectiveRole);
   const allowManualMockToggle = GLOBAL_MOCK_TOGGLE_ENABLED;

@@ -159,7 +159,7 @@ export function PostsSection({
 }: PostsSectionProps) {
   const perm = getPermissions(role);
   // B2/B4: 移除 useAuth，直接用 props 的 isAuthenticated
-  const isGuest = !isAuthenticated || perm.isGuest;
+  const isGuest = perm.isGuest;
   const tabListId = useId();
   const publicTabId = `${tabListId}-public`;
   const privateTabId = `${tabListId}-private`;

@@ -1,5 +1,33 @@
 # 社區牆開發紀錄
 
+## 2025-12-07 - P1.5-AUDIT-2 二次審計修復 4 項殘留問題
+
+### 本次變更
+
+| 變更項目 | 檔案 | 說明 |
+|----------|------|------|
+| C1 移除 render side effect | `PostModal.tsx` | `onClose()` 移到 `useEffect`，render 階段保持純函數 |
+| C2 auth error 可重試 UI | `Wall.tsx` | authError 時顯示錯誤畫面 + 重新載入按鈕，toast 改 useEffect 單次觸發 |
+| C3 isGuest 單一來源 | `PostsSection.tsx` | 移除 `!isAuthenticated || perm.isGuest`，改為 `perm.isGuest` |
+| C4 effectiveRole 簡化 | `Wall.tsx` | DEV mock 與正式邏輯分離，正式路徑直接用 `authRole` |
+
+### 驗證
+
+```bash
+npm run build   # ✓ exit 0
+```
+
+### 審計發現（本次全數修復）
+
+| ID | 嚴重度 | 問題 | 狀態 |
+|----|--------|------|------|
+| C1 | 🔴 | PostModal render 中呼叫 onClose() — React side effect 違規 | ✅ |
+| C2 | 🟡 | authError 只 notify 不阻擋 — 用戶可繼續以 guest 操作 | ✅ |
+| C3 | 🟡 | isGuest 計算邏輯重複 — `!isAuthenticated || perm.isGuest` 語意冗餘 | ✅ |
+| C4 | 🟢 | effectiveRole useMemo 過度複雜 — DEV 專用邏輯混入正式流程 | ✅ |
+
+---
+
 ## 2025-12-07 - P1.5 權限系統前端實作
 
 ### 本次變更
