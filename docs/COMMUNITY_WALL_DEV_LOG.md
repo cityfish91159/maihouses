@@ -1,5 +1,32 @@
 # 社區牆開發紀錄
 
+## 2025-12-07 - P1 Toast 系統實作
+
+### 本次變更
+
+| 變更項目 | 檔案 | 說明 |
+|----------|------|------|
+| 新增 notify 包裝 | `src/lib/notify.ts` | sonner 封裝，支援 success/error/warning/info/loading/dev/dismiss |
+| 全域 Toaster 置頂 | `src/App.tsx` | sonner `<Toaster>` position="top-right"，移除舊 ToastProvider |
+| 社區牆 alert 替換 | `src/pages/Community/Wall.tsx` | 4 處 alert → notify.error |
+| PostsSection alert 替換 | `src/pages/Community/components/PostsSection.tsx` | alert → notify.error |
+| ContactModal alert 替換 | `src/components/ContactModal.tsx` | alert → notify |
+| TrustManager alert 替換 | `src/components/TrustManager.tsx` | alert → notify |
+| UAG react-hot-toast 移除 | `src/pages/UAG/**` | toast → notify，移除 Toaster import |
+| Assure Toaster 移除 | `src/pages/Assure/Detail.tsx` | 移除舊 Toaster import |
+| useTrustRoom 改用 notify | `src/hooks/useTrustRoom.ts` | toast → notify |
+| ReportPage/ReportGenerator | `src/pages/Report/*.tsx` | alert → notify |
+| 測試 mock 更新 | `src/pages/UAG/index.test.tsx` | vi.mock notify |
+
+### 驗證
+
+```bash
+npm run build  # ✓
+git push       # ✓ Vercel 自動部署
+```
+
+---
+
 ## 2025-12-06 16:30 - 審計先前修改 + 發現 6 項遺漏
 
 ### 審計來源

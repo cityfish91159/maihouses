@@ -22,7 +22,7 @@
 |------|------|------|------|
 | P0 基礎設定 | ✅ | - | SQL VIEW + API 容錯 |
 | P0.5 環境控制層 | 🔴 | 30m | `env.ts` + MockToggle 統一 |
-| P1 Toast 系統 | ✅ | 40m | sonner + notify 完成（全站 alert/toast 收斂） |
+| P1 Toast 系統 | ⚠️ | 40m | 90% 完成，PropertyUploadPage 未改 + 依賴未清 |
 | P1.5 權限系統 | 🔴 | 1h | useAuth + 角色判斷（API 前置） |
 | P2 useFeedData | 🔴 | 40m | 複製 useCommunityWallData（資料層先行） |
 | P3 GlobalHeader | 🔴 | 1.5h | 三頁共用 Header |
@@ -56,15 +56,56 @@
 
 ---
 
-## ✅ P1：Toast 系統
+## ⚠️ P1：Toast 系統（需補完）
 
 **結果**：使用 sonner + `notify` 包裝，全站共用 Toaster
 
+### 已完成
 - [x] P1-1 建立 `src/lib/notify.ts`（sonner 包裝，支援 loading/dev/action）
 - [x] P1-2 `notify.success/error/warning/info/dev/loading/dismiss` 完整
-- [x] P1-3 全案移除 `alert()`、`react-hot-toast`，改用 `notify`
 - [x] App 全域 `<Toaster>` 置頂右，關閉舊 `ToastProvider`
 - [x] `npm run build` 通過（2025-12-07）
+
+### 🔴 審計發現：遺漏項目
+
+| 編號 | 嚴重度 | 問題 | 檔案 | 狀態 |
+|------|--------|------|------|------|
+| P1-E1 | 🔴 | `PropertyUploadPage` 仍用 `useToast` + 7 處 `showToast()` | `src/pages/PropertyUploadPage.tsx:7,24,106,133,141,149,170,187,205` | 🔴 |
+| P1-E2 | 🟡 | `package.json` 仍保留 `react-hot-toast` 依賴 | `package.json:38` | 🔴 |
+| P1-E3 | 🟡 | `vite.config.ts` chunk 分組仍含 `react-hot-toast` | `vite.config.ts:57` | 🔴 |
+| P1-E4 | 🟢 | 舊 `components/ui/Toast.tsx` 未刪除（250行死碼） | `src/components/ui/Toast.tsx` | 🔴 |
+
+### 🛠️ 修正引導（依順序執行）
+
+#### P1-E1：PropertyUploadPage 改用 notify
+```
+1. 刪除 import { useToast } from '../components/ui/Toast';
+2. 新增 import { notify } from '../lib/notify';
+3. 刪除 const { showToast } = useToast();
+4. 搜尋 showToast({ type: 'error', ... }) → notify.error(title, message)
+5. 搜尋 showToast({ type: 'warning', ... }) → notify.warning(title, message)
+6. 搜尋 showToast({ type: 'success', ... }) → notify.success(title, message)
+7. 注意：onRetry/showContactSupport 暫時移除或改用 notify action callback
+```
+
+#### P1-E2：移除 react-hot-toast
+```
+1. npm uninstall react-hot-toast
+2. 驗證 package.json 已移除
+3. 刪除 package-lock.json 中殘留（npm install 會自動處理）
+```
+
+#### P1-E3：vite.config.ts 清理
+```
+1. 找到 manualChunks → ui-libs 陣列
+2. 移除 'react-hot-toast'
+```
+
+#### P1-E4：刪除舊 Toast 組件
+```
+1. 確認全站無 import from 'components/ui/Toast'（除了 PropertyUploadPage）
+2. P1-E1 完成後，刪除 src/components/ui/Toast.tsx
+```
 
 ---
 
@@ -257,7 +298,11 @@
 ### 2025-12-07
 - [x] SQL VIEW 驗證通過
 - [x] getReviews() 加入 try-catch
-- [x] P1 Toast 系統完成：新增 `notify.ts`/sonner、全站移除 alert/react-hot-toast、App 全域 Toaster
+- [x] P1 Toast 系統部分完成：`notify.ts`/sonner、App 全域 Toaster
+- [x] 社區牆/UAG/TrustRoom/Report 已改用 notify
+- [ ] ⚠️ PropertyUploadPage 仍用舊 useToast（待補）
+- [ ] ⚠️ react-hot-toast 依賴未移除（待補）
+- [ ] ⚠️ 舊 Toast.tsx 死碼未清理（待補）
 - [x] npm run build 通過
 
 ### 2025-12-06
