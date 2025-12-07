@@ -372,10 +372,9 @@ function WallInner() {
       <div className="mx-auto flex max-w-[960px] gap-5 p-2.5 pb-[calc(80px+env(safe-area-inset-bottom,20px))] lg:p-2.5">
         {/* 主內容區 */}
         <main className="flex max-w-[600px] flex-1 animate-[fadeInUp_0.5s_ease-out] flex-col gap-3">
-          <ReviewsSection role={role} reviews={reviews} onUnlock={handleUnlock} />
+          <ReviewsSection role={effectiveRole} reviews={reviews} onUnlock={handleUnlock} />
           <PostsSection 
             role={effectiveRole} 
-            isAuthenticated={isAuthenticated}
             currentTab={currentTab} 
             onTabChange={handleTabChange}
             publicPosts={posts.public}
@@ -385,7 +384,7 @@ function WallInner() {
             onUnlock={handleUnlock}
           />
           <QASection 
-            role={role} 
+            role={effectiveRole} 
             questions={questions}
             onAskQuestion={handleAskQuestion}
             onAnswerQuestion={handleAnswerQuestion}
@@ -402,7 +401,7 @@ function WallInner() {
       </div>
 
       {/* 底部 CTA */}
-      <BottomCTA role={role} />
+      <BottomCTA role={effectiveRole} />
 
       {/* Mock 切換僅於開發或白名單環境顯示 */}
       {(allowManualMockToggle || useMock) && (

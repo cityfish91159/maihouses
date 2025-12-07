@@ -17,6 +17,34 @@
 npm run build   # ✓ exit 0
 ```
 
+---
+
+## 2025-12-07 - P1.5-AUDIT-3 三次審計修復 4 項殘留問題
+
+### 本次變更
+
+| 變更項目 | 檔案 | 說明 |
+|----------|------|------|
+| D1 角色一致性 | `Wall.tsx` | `ReviewsSection` 改用 `effectiveRole` |
+| D2 角色一致性 | `Wall.tsx` | `QASection` 改用 `effectiveRole` |
+| D3 角色一致性 | `Wall.tsx` | `BottomCTA` 改用 `effectiveRole` |
+| D4 死 prop 清除 | `PostsSection.tsx` | 移除未使用的 `isAuthenticated` prop（介面/解構/傳入點全刪）|
+
+### 驗證
+
+```bash
+npm run build   # ✓ exit 0
+```
+
+### 審計發現（本次全數修復）
+
+| ID | 嚴重度 | 問題 | 狀態 |
+|----|--------|------|------|
+| D1 | 🔴 | `ReviewsSection` 使用 `role` 而非 `effectiveRole` — 角色不一致 | ✅ |
+| D2 | 🔴 | `QASection` 使用 `role` 而非 `effectiveRole` — 角色不一致 | ✅ |
+| D3 | 🔴 | `BottomCTA` 使用 `role` 而非 `effectiveRole` — 角色不一致 | ✅ |
+| D4 | 🟡 | `isAuthenticated` prop 傳入 PostsSection 但未使用 — 死 prop | ✅ |
+
 ### 審計發現（本次全數修復）
 
 | ID | 嚴重度 | 問題 | 狀態 |

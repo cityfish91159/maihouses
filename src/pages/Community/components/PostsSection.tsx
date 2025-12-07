@@ -135,8 +135,6 @@ function PostCard({ post, onLike }: PostCardProps) {
 
 interface PostsSectionProps {
   role: Role;
-  /** B2/B4: 由父組件傳入，避免子組件重複呼叫 useAuth */
-  isAuthenticated: boolean;
   currentTab: WallTab;
   onTabChange: (tab: WallTab) => void;
   publicPosts: Post[];
@@ -148,7 +146,6 @@ interface PostsSectionProps {
 
 export function PostsSection({ 
   role, 
-  isAuthenticated,
   currentTab, 
   onTabChange, 
   publicPosts, 
@@ -158,7 +155,7 @@ export function PostsSection({
   onUnlock,
 }: PostsSectionProps) {
   const perm = getPermissions(role);
-  // B2/B4: 移除 useAuth，直接用 props 的 isAuthenticated
+  // 角色已由父層統一計算，直接使用 perm 判斷訪客狀態
   const isGuest = perm.isGuest;
   const tabListId = useId();
   const publicTabId = `${tabListId}-public`;

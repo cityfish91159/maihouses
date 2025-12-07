@@ -152,6 +152,32 @@ npm run build                      # exit 0
 
 ---
 
+## ✅ P1.5-AUDIT-3：三次審計發現 4 項殘留問題（已修復）
+
+> **審計時間**：2025-12-07 | **審計人**：Google 首席前後端處長
+> **狀態**：已修復（2025-12-07）
+
+| ID | 嚴重度 | 問題摘要 | 位置 | 狀態 |
+|----|--------|----------|------|------|
+| D1 | 🔴 | `ReviewsSection` 使用 `role` 而非 `effectiveRole` — 角色不一致 | `Wall.tsx:375` | ✅ |
+| D2 | 🔴 | `QASection` 使用 `role` 而非 `effectiveRole` — 角色不一致 | `Wall.tsx:388` | ✅ |
+| D3 | 🔴 | `BottomCTA` 使用 `role` 而非 `effectiveRole` — 角色不一致 | `Wall.tsx:405` | ✅ |
+| D4 | 🟡 | `isAuthenticated` prop 傳入 PostsSection 但未使用 — 死 prop | `PostsSection.tsx:139,151` | ✅ |
+
+### 修復紀錄（2025-12-07）
+- D1：`ReviewsSection` 改用 `effectiveRole`，確保與貼文/QA 一致。
+- D2：`QASection` 改用 `effectiveRole`，問答區權限與貼文區同步。
+- D3：`BottomCTA` 改用 `effectiveRole`，底部 CTA 與整頁角色一致。
+- D4：移除 `isAuthenticated` 死 prop（介面、解構、傳入點全刪），`PostsSection` 以 `perm.isGuest` 單一來源判斷訪客。
+
+### 驗證證據
+
+```bash
+npm run build      # exit 0
+grep -n "effectiveRole" src/pages/Community/Wall.tsx | head -n 5
+grep -n "isAuthenticated" src/pages/Community/components/PostsSection.tsx  # 僅註解/無解構
+```
+
 ## ✅ P1.5-AUDIT-2：二次審計發現 4 項殘留問題（已修復）
 
 > **審計時間**：2025-12-07 | **審計人**：GitHub Copilot 二次覆核
