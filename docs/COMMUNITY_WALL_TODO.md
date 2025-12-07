@@ -199,6 +199,24 @@ grep -n "authError" src/pages/Community/Wall.tsx  # Hook 先於早退，避免 R
 npm run build      # exit 0
 ```
 
+---
+
+## ✅ P1.5-AUDIT-5：五次審計通過
+
+> **審計時間**：2025-12-07 | **審計人**：Google 首席前後端處長
+> **狀態**：✅ 通過，無新問題
+
+### 審計範圍
+- `Wall.tsx`：Hook 順序、early return 與 useMemo/useCallback/useEffect 分布
+- `PostsSection.tsx`：props 介面、isGuest 計算邏輯
+- `PostModal.tsx`：guest 阻擋 useEffect、render 純函數
+- 角色傳遞一致性：ReviewsSection、QASection、BottomCTA、PostsSection
+
+### 審計結論
+所有 P1.5 權限相關修復已完成，代碼符合 React Hook 規範，無條件式 Hook、無死 prop、角色傳遞一致。
+
+---
+
 ## ✅ P1.5-AUDIT-2：二次審計發現 4 項殘留問題（已修復）
 
 > **審計時間**：2025-12-07 | **審計人**：GitHub Copilot 二次覆核

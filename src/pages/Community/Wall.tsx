@@ -67,24 +67,6 @@ function WallInner() {
     searchParamsRef.current = searchParams;
   }, [searchParams]);
 
-  if (!communityId) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-[var(--bg-base)] to-[var(--bg-alt)]">
-        <div className="rounded-2xl border border-brand/10 bg-white px-8 py-10 text-center shadow-[0_10px_30px_rgba(0,34,73,0.08)]">
-          <div className="mb-3 text-4xl">🧭</div>
-          <p className="mb-4 text-base font-semibold text-ink-900">找不到指定的社區牆</p>
-          <p className="mb-6 text-sm text-ink-600">請確認網址是否正確，或回到首頁重新選擇社區。</p>
-          <a
-            href="/maihouses/"
-            className="inline-flex items-center justify-center rounded-full bg-brand px-5 py-2.5 text-sm font-bold text-white shadow hover:bg-brand-600"
-          >
-            回到首頁
-          </a>
-        </div>
-      </div>
-    );
-  }
-
   // 初始化 role：僅開發環境從 URL/localStorage 讀取
   const initialRole = useMemo<Role>(() => {
     if (!import.meta.env.DEV) return 'guest';
@@ -108,57 +90,18 @@ function WallInner() {
   // B1/B4/B5: 統一 auth 狀態，單一來源
   const { isAuthenticated, role: authRole, loading: authLoading, error: authError } = useAuth();
 
-  // 提前處理 auth 錯誤 toast，避免在早退後跳過 Hook 觸發 React error 310
-  useEffect(() => {
-    if (authError) {
-      notify.error('登入狀態異常', authError.message);
-    }
-  }, [authError]);
-  
-  // B1: Auth 載入中時顯示 skeleton，避免誤判為 guest
-  if (authLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-[var(--bg-base)] to-[var(--bg-alt)]">
-        <Topbar communityName="載入中..." />
-        <div className="mx-auto max-w-[960px] p-2.5">
-          <WallSkeleton />
-        </div>
-      </div>
-    );
-  }
-
-  // B5: Auth 錯誤時顯示可重試的錯誤畫面
-  if (authError) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-[var(--bg-base)] to-[var(--bg-alt)]">
-        <Topbar communityName="登入異常" />
-        <div className="mx-auto max-w-[960px] p-4">
-          <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-center shadow-sm">
-            <p className="text-lg font-semibold text-red-700">登入狀態異常</p>
-            <p className="mt-2 text-sm text-red-600">{authError.message}</p>
-            <button
-              type="button"
-              onClick={() => window.location.reload()}
-              className="mt-4 inline-flex items-center justify-center rounded-lg bg-brand px-4 py-2 text-sm font-bold text-white hover:bg-brand-700"
-            >
-              重新載入
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-  
   // B4: 統一計算 effectiveRole，子組件不再自行計算
   const effectiveRole = useMemo<Role>(() => {
+    if (authLoading) return 'guest'; // loading 時預設 guest
     const allowMockRole = import.meta.env.DEV && GLOBAL_MOCK_TOGGLE_ENABLED && role !== 'guest';
     if (allowMockRole) return role;
     return isAuthenticated ? authRole : 'guest';
-  }, [authRole, isAuthenticated, role]);
-  const perm = getPermissions(effectiveRole);
+  }, [authRole, isAuthenticated, role, authLoading]);
+  
+  const perm = useMemo(() => getPermissions(effectiveRole), [effectiveRole]);
   const allowManualMockToggle = GLOBAL_MOCK_TOGGLE_ENABLED;
 
-  // 統一資料來源 Hook
+  // 統一資料來源 Hook - 必須在所有條件渲染之前呼叫
   const { 
     data,
     useMock,
@@ -171,12 +114,20 @@ function WallInner() {
     askQuestion,
     answerQuestion,
     viewerRole,
-  } = useCommunityWallData(communityId, {
+  } = useCommunityWallData(communityId ?? '', {
     includePrivate: perm.canAccessPrivate,
   });
+  
   const canToggleMock = allowManualMockToggle || useMock;
   const allowManualRoleSwitch = import.meta.env.DEV || useMock;
   const mockToggleDisabled = !canToggleMock && !useMock;
+
+  // 提前處理 auth 錯誤 toast
+  useEffect(() => {
+    if (authError) {
+      notify.error('登入狀態異常', authError.message);
+    }
+  }, [authError]);
 
   // 生產環境依後端角色自動對齊權限
   useEffect(() => {
@@ -307,6 +258,61 @@ function WallInner() {
       setIsReloading(false);
     }
   }, [isReloading, refresh]);
+
+  // ============ 條件渲染區（所有 Hooks 已在上方宣告完畢）============
+
+  // 無 communityId
+  if (!communityId) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-[var(--bg-base)] to-[var(--bg-alt)]">
+        <div className="rounded-2xl border border-brand/10 bg-white px-8 py-10 text-center shadow-[0_10px_30px_rgba(0,34,73,0.08)]">
+          <div className="mb-3 text-4xl">🧭</div>
+          <p className="mb-4 text-base font-semibold text-ink-900">找不到指定的社區牆</p>
+          <p className="mb-6 text-sm text-ink-600">請確認網址是否正確，或回到首頁重新選擇社區。</p>
+          <a
+            href="/maihouses/"
+            className="inline-flex items-center justify-center rounded-full bg-brand px-5 py-2.5 text-sm font-bold text-white shadow hover:bg-brand-600"
+          >
+            回到首頁
+          </a>
+        </div>
+      </div>
+    );
+  }
+
+  // Auth 載入中
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-[var(--bg-base)] to-[var(--bg-alt)]">
+        <Topbar communityName="載入中..." />
+        <div className="mx-auto max-w-[960px] p-2.5">
+          <WallSkeleton />
+        </div>
+      </div>
+    );
+  }
+
+  // Auth 錯誤
+  if (authError) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-[var(--bg-base)] to-[var(--bg-alt)]">
+        <Topbar communityName="登入異常" />
+        <div className="mx-auto max-w-[960px] p-4">
+          <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-center shadow-sm">
+            <p className="text-lg font-semibold text-red-700">登入狀態異常</p>
+            <p className="mt-2 text-sm text-red-600">{authError.message}</p>
+            <button
+              type="button"
+              onClick={() => window.location.reload()}
+              className="mt-4 inline-flex items-center justify-center rounded-lg bg-brand px-4 py-2 text-sm font-bold text-white hover:bg-brand-700"
+            >
+              重新載入
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Loading 狀態（僅 API 模式）
   if (isLoading) {
