@@ -731,7 +731,7 @@ grep -n "getCommunityName" src/hooks/useFeedData.ts
 ```
 
 ### 部署
-- commit `xxxxx` → Vercel 自動部署
+- commit `93d1251` → Vercel 自動部署
 - 網址：https://maihouses.vercel.app/maihouses/community/test-uuid/wall
 
 ---
