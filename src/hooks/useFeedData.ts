@@ -22,6 +22,7 @@
 
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { mhEnv } from '../lib/mhEnv';
+import { supabase } from '../lib/supabase';
 import type { Post, Role } from '../types/community';
 import { useAuth } from './useAuth';
 import { getCommunityName, isValidCommunityId } from '../constants';
@@ -121,6 +122,27 @@ const FEED_MOCK_DATA: UnifiedFeedData = {
   totalPosts: FEED_MOCK_POSTS.length,
 };
 
+type SupabasePostRow = {
+  id: string;
+  community_id: string;
+  author_id: string | null;
+  content: string;
+  visibility: string | null;
+  likes_count: number | null;
+  comments_count: number | null;
+  liked_by: string[] | null;
+  is_pinned: boolean | null;
+  created_at: string;
+  post_type: string | null;
+};
+
+type ProfileRow = {
+  id: string;
+  name: string | null;
+  floor: string | null;
+  role: Role | null;
+};
+
 const filterMockData = (source: UnifiedFeedData, targetCommunityId?: string): UnifiedFeedData => {
   const filteredPosts = targetCommunityId
     ? source.posts.filter(p => p.communityId === targetCommunityId)
@@ -134,6 +156,11 @@ const filterMockData = (source: UnifiedFeedData, targetCommunityId?: string): Un
 
 // ============ 工具函數 ============
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+const deriveTitleFromContent = (content: string): string => {
+  if (!content) return '（無標題）';
+  return content.length > 40 ? `${content.slice(0, 40)}...` : content;
+};
 
 const canUseMockStorage = (): boolean => {
   try {
@@ -166,6 +193,57 @@ const saveFeedMockState = (data: UnifiedFeedData): void => {
   } catch (err) {
     console.error('[useFeedData] Failed to persist mock state', err);
   }
+};
+
+const buildProfileMap = async (authorIds: string[]): Promise<Map<string, ProfileRow>> => {
+  if (!authorIds.length) return new Map();
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('id, name, floor, role')
+    .in('id', authorIds);
+
+  if (error) {
+    console.error('[useFeedData] Fetch profiles failed', error);
+    return new Map();
+  }
+
+  return new Map((data ?? []).map(profile => [profile.id, profile as ProfileRow]));
+};
+
+const mapSupabasePostsToFeed = async (rows: SupabasePostRow[]): Promise<UnifiedFeedData> => {
+  const authorIds = Array.from(new Set(rows.map(r => r.author_id).filter((id): id is string => Boolean(id))));
+  const profileMap = await buildProfileMap(authorIds);
+
+  const posts: FeedPost[] = rows.map(row => {
+    const profile = row.author_id ? profileMap.get(row.author_id) : undefined;
+    const likedBy = row.liked_by ?? [];
+    const normalizedRole: FeedPost['type'] = profile?.role === 'agent'
+      ? 'agent'
+      : profile?.role === 'resident'
+        ? 'resident'
+        : 'member';
+
+    const base: FeedPost = {
+      id: row.id,
+      author: profile?.name ?? '住戶',
+      type: normalizedRole,
+      time: row.created_at ?? new Date().toISOString(),
+      title: deriveTitleFromContent(row.content),
+      content: row.content,
+      likes: row.likes_count ?? likedBy.length ?? 0,
+      comments: row.comments_count ?? 0,
+      pinned: row.is_pinned ?? false,
+      communityId: row.community_id,
+      communityName: getCommunityName(row.community_id),
+      liked_by: likedBy,
+    };
+    return profile?.floor ? { ...base, floor: profile.floor } : base;
+  });
+
+  return {
+    posts,
+    totalPosts: posts.length,
+  };
 };
 
 // ============ Mock Factory ============
@@ -295,24 +373,43 @@ export function useFeedData(
   // P2-C2/C4 修復：API 按讚狀態（用於樂觀更新）
   const [apiLikedPosts, setApiLikedPosts] = useState<Set<string | number>>(() => new Set());
 
-  // P2-C3 修復：fetchApiData 改用 initialMockData，移除 mockData 依賴
+  // P2-C3 更新：API 模式使用 Supabase 真實資料
   const fetchApiData = useCallback(async () => {
     if (useMock) return;
-    
     setApiLoading(true);
     setApiError(null);
-    
+
     try {
-      // TODO: P5 時替換為真實 API 呼叫
-      // const response = await fetch(`/api/feed?communityId=${communityId ?? ''}`);
-      // const result = await response.json();
+      const query = supabase
+        .from('community_posts')
+        .select('id, community_id, author_id, content, visibility, likes_count, comments_count, liked_by, is_pinned, created_at, post_type')
+        .order('is_pinned', { ascending: false })
+        .order('created_at', { ascending: false })
+        .limit(50);
 
-      // 暫時使用 initialMockData 作為 API fallback（P2-C3 修復：不依賴 mockData 狀態）
-      await delay(MOCK_LATENCY_MS);
-      const result = filterMockData(initialMockData, communityId);
+      if (communityId) {
+        query.eq('community_id', communityId);
+      }
 
-      setApiData(result);
-      lastApiDataRef.current = result;
+      const { data, error } = await query;
+      if (error) {
+        throw error;
+      }
+
+      const mapped = await mapSupabasePostsToFeed((data ?? []) as SupabasePostRow[]);
+      setApiData(mapped);
+      lastApiDataRef.current = mapped;
+
+      if (currentUserId) {
+        const initialLiked = new Set<string | number>();
+        (data ?? []).forEach(row => {
+          const likedBy = (row as SupabasePostRow).liked_by ?? [];
+          if (likedBy.includes(currentUserId)) {
+            initialLiked.add((row as SupabasePostRow).id);
+          }
+        });
+        setApiLikedPosts(initialLiked);
+      }
     } catch (err) {
       const error = err instanceof Error ? err : new Error('載入信息流失敗');
       setApiError(error);
@@ -322,7 +419,7 @@ export function useFeedData(
     } finally {
       setApiLoading(false);
     }
-  }, [useMock, communityId, initialMockData]); // P2-C3：移除 mockData，改用 initialMockData
+  }, [useMock, communityId, currentUserId]);
 
   // 初始載入
   useEffect(() => {
@@ -441,6 +538,7 @@ export function useFeedData(
       throw new Error('缺少使用者身份');
     }
 
+    const postIdStr = String(postId);
     const currentlyLiked = apiLikedPosts.has(postId);
     const previousApiData = apiData;
     const previousApiLikedPosts = new Set(apiLikedPosts);
@@ -477,14 +575,37 @@ export function useFeedData(
     });
     
     try {
-      // 2. 呼叫 API（TODO: P5 時實作）
-      await delay(MOCK_LATENCY_MS); // 模擬 API 延遲
-      // await apiToggleLike(String(postId));
+      // 2. 呼叫 Supabase RPC（真實 API）
+      const { data, error } = await supabase.rpc('toggle_like', { post_id: postIdStr });
+      if (error) {
+        throw error;
+      }
+
+      // 3. 以伺服器結果校正 likes/liked_by（避免快取與伺服器不一致）
+      setApiData(prev => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          posts: prev.posts.map(post => {
+            if (post.id !== postId) return post;
+            const newLikes = typeof data?.likes_count === 'number' ? data.likes_count : post.likes ?? 0;
+            const likedBy = post.liked_by ?? [];
+            const nextLikedBy = data && 'liked' in data
+              ? (data.liked ? [...new Set([...likedBy, actingUserId])] : likedBy.filter(id => id !== actingUserId))
+              : likedBy;
+            return {
+              ...post,
+              likes: newLikes,
+              liked_by: nextLikedBy,
+            };
+          }),
+        };
+      });
     } catch (err) {
-      // 3. 失敗時回滾
+      // 4. 失敗時回滾
       setApiData(previousApiData);
       setApiLikedPosts(previousApiLikedPosts);
-      throw err;
+      throw err instanceof Error ? err : new Error('按讚失敗，請稍後再試');
     }
   }, [useMock, likedPosts, apiLikedPosts, apiData, getMockUserId, isAuthenticated, currentUserId]);
 
@@ -501,6 +622,9 @@ export function useFeedData(
     const safeCommunityId = resolvedCommunityId && isValidCommunityId(resolvedCommunityId)
       ? resolvedCommunityId
       : undefined;
+    if (!useMock && !safeCommunityId) {
+      throw new Error('請先選擇社區後再發文');
+    }
     const resolvedCommunityName = getCommunityName(safeCommunityId); // P2-C6：使用共用函數
 
     if (useMock) {
@@ -525,7 +649,7 @@ export function useFeedData(
       author: authUser?.email?.split('@')[0] ?? '用戶',
       type: authRole === 'agent' ? 'agent' : 'resident',
       time: new Date().toISOString(),
-      title: content.substring(0, 20) + (content.length > 20 ? '...' : ''),
+      title: deriveTitleFromContent(content),
       content,
       likes: 0,
       comments: 0,
@@ -551,21 +675,41 @@ export function useFeedData(
     });
     
     try {
-      // 2. 呼叫 API（TODO: P5 時實作）
-      await delay(MOCK_LATENCY_MS); // 模擬 API 延遲
-      // const realPost = await apiCreatePost(content, targetCommunityId);
-      
-      // 3. 成功後用真實資料替換（TODO: P5 時實作）
-      // setApiData(prev => ({
-      //   ...prev,
-      //   posts: prev.posts.map(p => p.id === tempId ? realPost : p),
-      // }));
+      // 2. 呼叫 Supabase 寫入真實資料
+      const { data, error } = await supabase
+        .from('community_posts')
+        .insert({
+          community_id: safeCommunityId,
+          author_id: currentUserId,
+          content,
+          visibility: 'public',
+          post_type: 'general',
+          is_pinned: false,
+        })
+        .select('id, community_id, author_id, content, visibility, likes_count, comments_count, liked_by, is_pinned, created_at, post_type')
+        .single();
+
+      if (error) {
+        throw error;
+      }
+
+      const mapped = await mapSupabasePostsToFeed([(data as SupabasePostRow)]);
+      const realPost = mapped.posts[0];
+
+      setApiData(prev => {
+        if (!prev || !realPost) return prev;
+        return {
+          ...prev,
+          posts: prev.posts.map(p => (p.id === tempId ? realPost : p)),
+          totalPosts: prev.totalPosts,
+        };
+      });
     } catch (err) {
-      // 4. 失敗時回滾
+      // 3. 失敗時回滾
       setApiData(previousApiData);
-      throw err;
+      throw err instanceof Error ? err : new Error('發文失敗，請稍後再試');
     }
-  }, [useMock, communityId, apiData, authUser, authRole, isAuthenticated]);
+  }, [useMock, communityId, apiData, authUser, authRole, isAuthenticated, currentUserId]);
 
   const setUseMock = useCallback((value: boolean) => {
     const next = mhEnv.setMock(value);

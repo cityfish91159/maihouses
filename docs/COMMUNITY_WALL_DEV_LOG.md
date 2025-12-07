@@ -1,5 +1,27 @@
 # 社區牆開發紀錄
 
+## 2025-12-07 - P2-AUDIT-5-FIX API 串接落地（Supabase）
+
+### 本次變更
+
+| 項目 | 檔案 | 說明 |
+|------|------|------|
+| API 資料來源改真實 Supabase | `src/hooks/useFeedData.ts` | `fetchApiData` 改查 `community_posts`，附加 profiles join，移除 mock fallback。 |
+| 按讚 RPC 串接 | `src/hooks/useFeedData.ts` | `toggleLike` 呼叫 `rpc('toggle_like')`，以伺服器回應校正 `likes/liked_by`，失敗回滾。 |
+| 發文強制社區 + 真實寫入 | `src/hooks/useFeedData.ts` | `createPost` 無社區直接丟錯；Supabase `insert` 後用後端回傳覆蓋 tempId。 |
+| Title 產生與資料映射 | `src/hooks/useFeedData.ts` | `deriveTitleFromContent` + `mapSupabasePostsToFeed` 統一轉換欄位。 |
+
+### 驗證
+
+```bash
+npm run build   # ✓ 2025-12-07，exit 0
+```
+
+### 部署
+- 即將 push main 觸發 Vercel 自動部署（本次修復包含 API 串接落地）。
+
+---
+
 ## 2025-12-07 - P2-AUDIT-4-FIX 實作完成 + 重新部署準備
 
 ### 本次變更

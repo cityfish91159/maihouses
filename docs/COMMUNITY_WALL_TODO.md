@@ -772,29 +772,28 @@ grep -n "getMockUserId" -n src/hooks/useFeedData.ts | head -n 1  # mock 路徑�
 ## 🟡 P2-AUDIT-5：P2-AUDIT-4-FIX 後覆核（聚焦 API 模式偷懶）
 
 > **審計時間**：2025-12-07 | **審計人**：Google 首席前後端處長
-> **狀態**：待修復
+> **狀態**：已修復（2025-12-07）
 
 | ID | 嚴重度 | 問題摘要 | 位置 | 狀態 |
 |----|--------|----------|------|------|
-| P2-E1 | 🔴 | **API 模式仍全數使用 Mock fallback** — `fetchApiData`/`toggleLike`/`createPost` 都只延遲 + mock，沒有真實 API 呼叫、錯誤提示或重試，正式環境資料永遠不會同步 | `useFeedData.ts:308-358,423-470,487-533` | 🔴 |
-| P2-E2 | 🟡 | **API createPost 未強制 communityId** — `safeCommunityId` 為 `undefined` 仍嘗試發文，API 可能 400，UI 也沒有告知用戶需要選擇社區 | `useFeedData.ts:487-519` | 🔴 |
-| P2-E3 | 🟡 | **API createPost 樂觀貼文不會被真實資料替換** — tempId 只加不換，沒有 retry/backoff/refresh，失敗只丟錯誤不提示，列表可能永遠卡住臨時貼文 | `useFeedData.ts:503-532` | 🔴 |
+| P2-E1 | 🔴 | **API 模式仍全數使用 Mock fallback** — `fetchApiData`/`toggleLike`/`createPost` 都只延遲 + mock，沒有真實 API 呼叫、錯誤提示或重試，正式環境資料永遠不會同步 | `useFeedData.ts:308-358,423-470,487-533` | ✅ |
+| P2-E2 | 🟡 | **API createPost 未強制 communityId** — `safeCommunityId` 為 `undefined` 仍嘗試發文，API 可能 400，UI 也沒有告知用戶需要選擇社區 | `useFeedData.ts:487-519` | ✅ |
+| P2-E3 | 🟡 | **API createPost 樂觀貼文不會被真實資料替換** — tempId 只加不換，沒有 retry/backoff/refresh，失敗只丟錯誤不提示，列表可能永遠卡住臨時貼文 | `useFeedData.ts:503-532` | ✅ |
 
-### 修復引導（請直接依序實作）
+### P2-AUDIT-5-FIX 紀錄（2025-12-07 完成）
 
-#### P2-E1 真實 API 串接與錯誤回饋
-1) 在 `fetchApiData`/`toggleLike`/`createPost` 三處接上實際 API（Supabase RPC 或 REST），避免再用 mock fallback。 
-2) 捕捉錯誤後：回滾樂觀狀態、觸發 `notify.error('...')`，並保留可重試的 `refresh()`。 
-3) 成功回應時更新 `apiData`/`lastApiDataRef`，確保 UI 與伺服器一致。
+- P2-E1：API 模式改用 Supabase `community_posts` 真實查詢 + profile join，按讚改呼叫 `rpc('toggle_like')`，失敗會回滾樂觀狀態並拋錯。 
+- P2-E2：API 模式沒有社區 ID 直接丟錯（阻擋送出），使用 `isValidCommunityId` 驗證並回退為 undefined。 
+- P2-E3：發文寫入 Supabase，成功後以後端回傳貼文覆蓋 tempId，失敗回滾。 
 
-#### P2-E2 API 發文社區防呆
-1) API 模式且 `safeCommunityId` 為 `undefined` 時，直接 `throw new Error('請先選擇社區後再發文')` 並讓 UI 顯示錯誤。 
-2) 若後端需要社區名稱，將 `communityId`、`communityName` 皆傳遞，避免再由前端推斷。
+#### 驗證指令
 
-#### P2-E3 樂觀貼文替換與重試
-1) API 回傳成功後以 `realPost.id` 替換 tempId（依 id 比對），並同步 `lastApiDataRef`。 
-2) 失敗時回滾列表、提示用戶可重試，必要時在貼文卡片顯示「重試送出」按鈕。 
-3) 建議在 `createPost` 中加入 `refresh()`（或重新拉取單筆）以確保與伺服器資料最終一致。
+```bash
+grep -n "from('community_posts')" src/hooks/useFeedData.ts
+grep -n "rpc('toggle_like'" src/hooks/useFeedData.ts
+grep -n "throw new Error('請先選擇社區" src/hooks/useFeedData.ts
+grep -n "mapSupabasePostsToFeed" src/hooks/useFeedData.ts
+```
 
 ---
 
