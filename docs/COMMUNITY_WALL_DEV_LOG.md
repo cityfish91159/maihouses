@@ -1,16 +1,40 @@
 # 社區牆開發紀錄
 
+## 2025-12-07 - P2-AUDIT-4-FIX 實作完成 + 重新部署準備
+
+### 本次變更
+
+| 項目 | 檔案 | 說明 |
+|------|------|------|
+| API toggleLike 樂觀更新補齊 | `src/hooks/useFeedData.ts` | 同步更新 `liked_by`，缺少 userId 時防守錯誤，保持 UI/資料一致。 |
+| Mock UX 提升 | `src/hooks/useFeedData.ts` | 移除 Mock 按讚延遲，回饋即時。 |
+| 社區 ID 驗證 | `src/hooks/useFeedData.ts` | `createPost` 入口使用 `isValidCommunityId`，無效 ID 退回並警告。 |
+| 角色感知貼文 | `src/hooks/useFeedData.ts` | 臨時貼文 type 跟隨 `authRole`（agent/resident）。 |
+| 臨時貼文 ID 一致性 | `src/hooks/useFeedData.ts` | 臨時 ID 改為負數，避免與數字 ID 混用。 |
+| 文檔同步 | `docs/COMMUNITY_WALL_TODO.md` | P2-AUDIT-4 狀態改為已修復，新增驗證指令。 |
+
+### 驗證
+
+```bash
+npm run build   # ✓ 2025-12-07，exit 0
+```
+
+### 部署
+- 待 push main 觸發 Vercel 自動部署。
+
+---
+
 ## 2025-12-07 - P2-AUDIT-4 四次審計發現 5 項偷懶行為
 
 ### 審計結果
 
 | ID | 嚴重度 | 問題 | 狀態 |
 |----|--------|------|------|
-| P2-D1 | 🔴 | API toggleLike 只更新 likes 數字，沒更新 liked_by 陣列 | 待修復 |
-| P2-D2 | 🟡 | isValidCommunityId 寫了但沒用 — 死代碼 | 待修復 |
-| P2-D3 | 🟡 | API createPost type 永遠是 resident — 應動態判斷 | 待修復 |
-| P2-D4 | 🟡 | tempId 是字串但 Mock id 是數字 — 類型不一致 | 待修復 |
-| P2-D5 | 🟢 | Mock toggleLike 有 delay 但無 loading — UX 不佳 | 待修復 |
+| P2-D1 | 🔴 | API toggleLike 只更新 likes 數字，沒更新 liked_by 陣列 | ✅ 已修復 |
+| P2-D2 | 🟡 | isValidCommunityId 寫了但沒用 — 死代碼 | ✅ 已修復 |
+| P2-D3 | 🟡 | API createPost type 永遠是 resident — 應動態判斷 | ✅ 已修復 |
+| P2-D4 | 🟡 | tempId 是字串但 Mock id 是數字 — 類型不一致 | ✅ 已修復 |
+| P2-D5 | 🟢 | Mock toggleLike 有 delay 但無 loading — UX 不佳 | ✅ 已修復 |
 
 ### 說明
 
@@ -20,10 +44,12 @@
 
 **P2-D2 是偷懶行為**：建立 `isValidCommunityId` helper 但沒有任何地方使用，純粹佔空間。
 
-### 下一步
-- 修復 P2-D1（API toggleLike 加入 liked_by 更新）
-- 移除或使用 P2-D2
-- 修復 P2-D3（type 根據 authRole 判斷）
+### 修復紀錄（已完成）
+- P2-D1：API 樂觀更新同步更新 `liked_by`，避免資料/判斷不一致。
+- P2-D2：`createPost` 入口驗證 `communityId`，無效值回退並警告。
+- P2-D3：臨時貼文 type 跟隨 `authRole`（agent/resident）。
+- P2-D4：臨時貼文 id 改為負數，避免與數字 id 混用。
+- P2-D5：Mock 按讚移除人工延遲，立即回饋。
 
 ---
 

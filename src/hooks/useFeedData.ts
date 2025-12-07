@@ -24,7 +24,7 @@ import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { mhEnv } from '../lib/mhEnv';
 import type { Post, Role } from '../types/community';
 import { useAuth } from './useAuth';
-import { getCommunityName } from '../constants/communities';
+import { getCommunityName, isValidCommunityId } from '../constants';
 
 // ============ Feed 專用型別 ============
 export interface FeedPost extends Post {
@@ -404,7 +404,6 @@ export function useFeedData(
     }
 
     if (useMock) {
-      await delay(MOCK_LATENCY_MS);
       const mockUserId = getMockUserId();
       const currentlyLiked = likedPosts.has(postId);
       
@@ -437,6 +436,11 @@ export function useFeedData(
     }
     
     // P2-C2 修復：API 模式樂觀更新
+    const actingUserId = currentUserId;
+    if (!actingUserId) {
+      throw new Error('缺少使用者身份');
+    }
+
     const currentlyLiked = apiLikedPosts.has(postId);
     const previousApiData = apiData;
     const previousApiLikedPosts = new Set(apiLikedPosts);
@@ -449,9 +453,14 @@ export function useFeedData(
         posts: prev.posts.map(post => {
           if (post.id !== postId) return post;
           const currentLikes = post.likes ?? 0;
+          const currentLikedBy = post.liked_by ?? [];
+          const nextLikedBy = currentlyLiked
+            ? currentLikedBy.filter(id => id !== actingUserId)
+            : [...currentLikedBy, actingUserId];
           return {
             ...post,
             likes: currentlyLiked ? Math.max(0, currentLikes - 1) : currentLikes + 1,
+            liked_by: nextLikedBy,
           };
         }),
       };
@@ -477,7 +486,7 @@ export function useFeedData(
       setApiLikedPosts(previousApiLikedPosts);
       throw err;
     }
-  }, [useMock, likedPosts, apiLikedPosts, apiData, getMockUserId, isAuthenticated]);
+  }, [useMock, likedPosts, apiLikedPosts, apiData, getMockUserId, isAuthenticated, currentUserId]);
 
   // P2-C4 修復：API 模式加入樂觀更新
   const createPost = useCallback(async (content: string, targetCommunityId?: string) => {
@@ -486,12 +495,18 @@ export function useFeedData(
     }
 
     const resolvedCommunityId = targetCommunityId ?? communityId;
-    const resolvedCommunityName = getCommunityName(resolvedCommunityId); // P2-C6：使用共用函數
+    if (resolvedCommunityId && !isValidCommunityId(resolvedCommunityId)) {
+      console.warn('[useFeedData] Invalid communityId provided, fallback to undefined');
+    }
+    const safeCommunityId = resolvedCommunityId && isValidCommunityId(resolvedCommunityId)
+      ? resolvedCommunityId
+      : undefined;
+    const resolvedCommunityName = getCommunityName(safeCommunityId); // P2-C6：使用共用函數
 
     if (useMock) {
       const newPost = createFeedMockPost(
         content,
-        resolvedCommunityId,
+        safeCommunityId,
         resolvedCommunityName
       );
 
@@ -504,17 +519,17 @@ export function useFeedData(
     }
     
     // P2-C4 修復：API 模式樂觀更新
-    const tempId = `temp-${Date.now()}`;
+    const tempId = -Date.now();
     const tempPost: FeedPost = {
       id: tempId,
       author: authUser?.email?.split('@')[0] ?? '用戶',
-      type: 'resident',
+      type: authRole === 'agent' ? 'agent' : 'resident',
       time: new Date().toISOString(),
       title: content.substring(0, 20) + (content.length > 20 ? '...' : ''),
       content,
       likes: 0,
       comments: 0,
-      communityId: resolvedCommunityId,
+      communityId: safeCommunityId,
       communityName: resolvedCommunityName,
     };
     
@@ -550,7 +565,7 @@ export function useFeedData(
       setApiData(previousApiData);
       throw err;
     }
-  }, [useMock, communityId, apiData, authUser, isAuthenticated]);
+  }, [useMock, communityId, apiData, authUser, authRole, isAuthenticated]);
 
   const setUseMock = useCallback((value: boolean) => {
     const next = mhEnv.setMock(value);
