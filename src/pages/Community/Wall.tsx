@@ -84,8 +84,6 @@ function WallInner() {
     );
   }
 
-    const initialUseMock = useMemo(() => mhEnv.isMockEnabled(), []);
-
   // 初始化 role：僅開發環境從 URL/localStorage 讀取
   const initialRole = useMemo<Role>(() => {
     if (!import.meta.env.DEV) return 'guest';
@@ -112,7 +110,7 @@ function WallInner() {
   const { 
     data,
     useMock,
-    setUseMock: setUseMockInternal,
+    setUseMock,
     isLoading,
     error,
     refresh,
@@ -123,7 +121,6 @@ function WallInner() {
     viewerRole,
   } = useCommunityWallData(communityId, {
     includePrivate: perm.canAccessPrivate,
-    initialUseMock, // 傳入初始值
   });
   const canToggleMock = allowManualMockToggle || useMock;
   const allowManualRoleSwitch = import.meta.env.DEV || useMock;
@@ -137,16 +134,10 @@ function WallInner() {
     }
   }, [viewerRole, role, useMock]);
 
-  const setUseMock = useCallback((value: boolean) => {
-    if (value && !canToggleMock) return;
-    const next = mhEnv.setMock(value);
-    setUseMockInternal(next);
-  }, [canToggleMock, setUseMockInternal]);
-
   const forceEnableMock = useCallback(() => {
     const next = mhEnv.setMock(true);
-    setUseMockInternal(next);
-  }, [setUseMockInternal]);
+    setUseMock(next);
+  }, [setUseMock]);
 
   // 包裝 setRole，同步 URL 和 localStorage（僅開發環境）
   const setRole = useCallback((newRole: Role) => {

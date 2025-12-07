@@ -22,7 +22,7 @@ export type { Post, Review, Question, CommunityInfo };
 export type { UnifiedWallData };
 
 
-const MOCK_STORAGE_KEY = 'community-wall-mock-state-v1';
+const MOCK_DATA_STORAGE_KEY = 'community-wall-mock-data-v1';
 const MOCK_LATENCY_MS = 250;
 
 const EMPTY_WALL_DATA: UnifiedWallData = {
@@ -89,7 +89,7 @@ const mergeMockState = (
 const loadPersistedMockState = (fallback: UnifiedWallData): UnifiedWallData => {
   if (!canUseMockStorage()) return fallback;
   try {
-    const raw = window.localStorage.getItem(MOCK_STORAGE_KEY);
+    const raw = window.localStorage.getItem(MOCK_DATA_STORAGE_KEY);
     if (!raw) return fallback;
     const parsed = JSON.parse(raw);
     return mergeMockState(fallback, parsed);
@@ -102,7 +102,7 @@ const loadPersistedMockState = (fallback: UnifiedWallData): UnifiedWallData => {
 const saveMockState = (data: UnifiedWallData) => {
   if (!canUseMockStorage()) return;
   try {
-    window.localStorage.setItem(MOCK_STORAGE_KEY, JSON.stringify(data));
+    window.localStorage.setItem(MOCK_DATA_STORAGE_KEY, JSON.stringify(data));
   } catch (err) {
     console.error('Failed to persist community wall mock state', err);
   }
@@ -125,8 +125,6 @@ export interface UseCommunityWallDataOptions {
   initialMockData?: UnifiedWallData;
   /** 是否持久化 Mock 狀態 */
   persistMockState?: boolean;
-  /** 初始是否使用 Mock 模式（支援 URL/localStorage 同步） */
-  initialUseMock?: boolean;
 }
 
 export interface UseCommunityWallDataReturn {
@@ -165,7 +163,6 @@ export interface UseCommunityWallDataReturn {
  * @param options.includePrivate - 是否載入私密牆資料
  * @param options.initialMockData - 自訂初始 Mock 資料（測試用）
  * @param options.persistMockState - 是否將 Mock 狀態寫入 localStorage
- * @param options.initialUseMock - 初始是否啟用 Mock 模式（支援 URL / localStorage）
  * @returns 統一資料、操作方法與錯誤/載入狀態
  */
 export function useCommunityWallData(
@@ -176,21 +173,13 @@ export function useCommunityWallData(
     includePrivate = false,
     initialMockData = MOCK_DATA,
     persistMockState = true,
-    initialUseMock: requestedInitialUseMock,
   } = options;
-  const resolvedInitialUseMock = typeof requestedInitialUseMock === 'boolean'
-    ? requestedInitialUseMock
-    : mhEnv.isMockEnabled();
-  const [useMock, setUseMockState] = useState(resolvedInitialUseMock);
+  const [useMock, setUseMockState] = useState<boolean>(() => mhEnv.isMockEnabled());
 
   useEffect(() => {
-    const next = typeof requestedInitialUseMock === 'boolean'
-      ? requestedInitialUseMock
-      : mhEnv.isMockEnabled();
-    setUseMockState(next);
-  }, [requestedInitialUseMock, communityId]);
-
-  useEffect(() => mhEnv.subscribe((next) => setUseMockState(next)), []);
+    const unsubscribe = mhEnv.subscribe(setUseMockState);
+    return unsubscribe;
+  }, []);
 
   // K: 取得當前登入使用者 ID（供樂觀更新使用）
   const [currentUserId, setCurrentUserId] = useState<string | undefined>(undefined);

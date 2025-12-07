@@ -12,10 +12,6 @@ interface MockToggleProps {
 export function MockToggle({ useMock, onToggle, disabled = false }: MockToggleProps) {
   const handleToggle = () => {
     if (disabled) return;
-    if (useMock && typeof window !== 'undefined') {
-      const confirmed = window.confirm('切換到 API 資料會暫時關閉 Mock 狀態，確保重要內容已保存，是否繼續？');
-      if (!confirmed) return;
-    }
     onToggle();
   };
 

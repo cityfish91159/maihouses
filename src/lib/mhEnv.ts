@@ -48,7 +48,13 @@ const persistToUrl = (value: boolean) => {
   }
 }
 
-export const mhEnv = {
+export interface MhEnv {
+  isMockEnabled(): boolean
+  setMock(next: boolean, opts?: { persist?: boolean; updateUrl?: boolean }): boolean
+  subscribe(onChange: (value: boolean) => void): () => void
+}
+
+export const mhEnv: MhEnv = {
   /** 讀取 Mock 開關：URL > localStorage > fallback(DEV=true, PROD=false) */
   isMockEnabled(): boolean {
     const urlValue = readFromUrl()
