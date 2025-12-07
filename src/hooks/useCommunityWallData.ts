@@ -10,6 +10,7 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { useCommunityWall } from './useCommunityWallQuery';
 import { supabase } from '../lib/supabase';
+import { mhEnv } from '../lib/mhEnv';
 import type { CommunityWallData } from '../services/communityService';
 import type { CommunityInfo, Post, Review, Question, Role } from '../pages/Community/types';
 import { MOCK_DATA, createMockPost, createMockQuestion, createMockAnswer } from '../pages/Community/mockData';
@@ -179,11 +180,17 @@ export function useCommunityWallData(
   } = options;
   const resolvedInitialUseMock = typeof requestedInitialUseMock === 'boolean'
     ? requestedInitialUseMock
-    : !communityId;
-  const [useMock, setUseMock] = useState(resolvedInitialUseMock);
+    : mhEnv.isMockEnabled();
+  const [useMock, setUseMockState] = useState(resolvedInitialUseMock);
+
   useEffect(() => {
-    setUseMock(resolvedInitialUseMock);
-  }, [resolvedInitialUseMock]);
+    const next = typeof requestedInitialUseMock === 'boolean'
+      ? requestedInitialUseMock
+      : mhEnv.isMockEnabled();
+    setUseMockState(next);
+  }, [requestedInitialUseMock, communityId]);
+
+  useEffect(() => mhEnv.subscribe((next) => setUseMockState(next)), []);
 
   // K: 取得當前登入使用者 ID（供樂觀更新使用）
   const [currentUserId, setCurrentUserId] = useState<string | undefined>(undefined);
@@ -433,6 +440,11 @@ export function useCommunityWallData(
     }
     await apiAnswerQuestion(questionId, content);
   }, [useMock, apiAnswerQuestion]);
+
+  const setUseMock = useCallback((value: boolean) => {
+    const next = mhEnv.setMock(value);
+    setUseMockState(next);
+  }, []);
 
   return {
     data,

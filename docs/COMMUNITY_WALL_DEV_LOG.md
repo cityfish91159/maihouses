@@ -1,5 +1,35 @@
 # 社區牆開發紀錄
 
+## 2025-12-07 - P0.5 環境控制層（mhEnv 中央化）
+
+### 本次變更
+
+| 變更項目 | 檔案 | 說明 |
+|----------|------|------|
+| 新增 mhEnv 工具 | `src/lib/mhEnv.ts` | 中央化 Mock 開關，支援 URL > localStorage > DEV fallback |
+| useCommunityWallData 改用 mhEnv | `src/hooks/useCommunityWallData.ts` | 初始 mock 來自 mhEnv，訂閱跨頁同步 |
+| MockToggle 移至 common | `src/components/common/MockToggle.tsx` | 從 Community/components 移出，供多頁共用 |
+| Wall.tsx 簡化 mock 流程 | `src/pages/Community/Wall.tsx` | 移除自行讀 localStorage override 邏輯，改用 mhEnv 單一來源 |
+| 舊 MockToggle 移除 | `src/pages/Community/components/MockToggle.tsx` | 刪除 + index.ts export 移除 |
+
+### mhEnv API 說明
+
+```typescript
+mhEnv.isMockEnabled()              // URL > localStorage > DEV
+mhEnv.setMock(value, { persist?, updateUrl? })
+mhEnv.subscribe(onChange)          // StorageEvent 跨頁同步
+```
+
+### 驗證
+
+```bash
+npm run build                      # ✓ exit 0
+grep MockToggle                    # 僅 src/components/common/MockToggle.tsx
+grep mhEnv                         # Wall.tsx + useCommunityWallData.ts 套用
+```
+
+---
+
 ## 2025-12-07 - P1 Toast 系統二次補完
 
 ### 本次變更

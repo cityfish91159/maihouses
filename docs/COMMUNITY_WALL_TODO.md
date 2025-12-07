@@ -21,7 +21,7 @@
 | 階段 | 狀態 | 時間 | 說明 |
 |------|------|------|------|
 | P0 基礎設定 | ✅ | - | SQL VIEW + API 容錯 |
-| P0.5 環境控制層 | 🔴 | 30m | `env.ts` + MockToggle 統一 |
+| P0.5 環境控制層 | ✅ | 45m | `mhEnv` 中央化 Mock 開關 + 全頁同步 |
 | P1 Toast 系統 | ✅ | 55m | sonner+notify 全面收斂（含 PropertyUploadPage/依賴/死碼清理） |
 | P1.5 權限系統 | 🔴 | 1h | useAuth + 角色判斷（API 前置） |
 | P2 useFeedData | 🔴 | 40m | 複製 useCommunityWallData（資料層先行） |
@@ -44,15 +44,23 @@
 
 ---
 
-## 🔴 P0.5：環境控制層
+## ✅ P0.5：環境控制層
 
-**目的**：統一 Mock/API 切換，避免三頁行為不一致
+**結果**：`mhEnv` 中央化 Mock/API 切換（URL + localStorage 同步），社區牆用戶流程已套用
 
-| 任務 | 檔案 | 說明 |
-|------|------|------|
-| P0.5-1 | `src/lib/env.ts` | 建立 `mhEnv.isMockEnabled()` / `setMock()` |
-| P0.5-2 | `useCommunityWallData.ts` | 改用 mhEnv |
-| P0.5-3 | `MockToggle.tsx` | 移到 common/，改用 mhEnv |
+### 完成項目（2025-12-07）
+- [x] `src/lib/mhEnv.ts`：`isMockEnabled` / `setMock` / `subscribe`，處理 URL 參數與 localStorage
+- [x] `useCommunityWallData.ts`：初始/切換改用 `mhEnv`，移除頁面自行存偏好
+- [x] `MockToggle` 移至 `src/components/common/MockToggle.tsx`，供多頁共用
+- [x] `Community/Wall.tsx`：簡化 Mock 流程，權限切換保留，mock 切換由 `mhEnv` 接管
+
+### 驗證證據
+- [x] `npm run build`（2025-12-07，exit 0）
+- [x] `grep MockToggle`：僅 common 版本
+- [x] `grep mhEnv`：Wall + useCommunityWallData 套用
+
+### 待辦/擴充建議
+- feed-consumer / feed-agent React 化時，直接共用 `mhEnv` + common `MockToggle`
 
 ---
 

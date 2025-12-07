@@ -10,7 +10,6 @@ export { PostsSection } from './PostsSection';
 export { QASection } from './QASection';
 export { Sidebar } from './Sidebar';
 export { RoleSwitcher } from './RoleSwitcher';
-export { MockToggle } from './MockToggle';
 export { BottomCTA } from './BottomCTA';
 export { LockedOverlay } from './LockedOverlay';
 export { WallSkeleton } from './PostSkeleton';
