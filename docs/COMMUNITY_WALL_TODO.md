@@ -25,7 +25,7 @@
 | P0.5-FIX 審計修復 | ✅ | 40m | 清除死碼 + Key 統一 + 邏輯簡化 |
 | P1 Toast 系統 | ✅ | 55m | sonner+notify 全面收斂（含 PropertyUploadPage/依賴/死碼清理） |
 | P1.5 權限系統 | ✅ | 1h | useAuth + 角色判斷 + 審計 8 項缺失已全數修復 |
-| P2 useFeedData | 🔴 | 40m | 複製 useCommunityWallData（資料層先行） |
+| P2 useFeedData | ✅ | 30m | 477 行 Hook，移除 reviews/questions，communityId optional |
 | P3 GlobalHeader | 🔴 | 1.5h | 三頁共用 Header |
 | P4 Composer | 🔴 | 2h | headless + UI 統一 |
 | P4.5 Loading/錯誤狀態 | 🔴 | 1h | Skeleton + Empty + Error + Retry |
@@ -467,16 +467,57 @@ grep -rn "AuthRole" src/                # ✓ 0 結果
 
 ---
 
-## 🔴 P2：useFeedData Hook（資料層先行）
+## ✅ P2：useFeedData Hook（資料層先行）
 
 **做法**：複製 `useCommunityWallData.ts` (454行) 改名，刪 reviews 邏輯
+**結果**：`src/hooks/useFeedData.ts` (477行)，專為信息流設計
 
-| 任務 | 說明 |
-|------|------|
-| P2-1 | 建立 `src/hooks/useFeedData.ts` |
-| P2-2 | communityId 來源：寫死 test-uuid 或從 session 抓 |
-| P2-3 | createPost / toggleLike / refresh |
-| P2-4 | 使用 mhEnv 控制 Mock/API |
+| 任務 | 說明 | 狀態 |
+|------|------|------|
+| P2-1 | 建立 `src/hooks/useFeedData.ts` | ✅ |
+| P2-2 | communityId 為 optional 參數（可篩選特定社區或全部） | ✅ |
+| P2-3 | createPost / toggleLike / refresh 方法 | ✅ |
+| P2-4 | 使用 mhEnv 控制 Mock/API | ✅ |
+
+### 與 useCommunityWallData 差異
+
+| 項目 | useCommunityWallData | useFeedData |
+|------|---------------------|-------------|
+| 資料範圍 | 單一社區 | 跨社區信息流 |
+| communityId | 必填 | **optional** |
+| reviews | ✅ 包含 | ❌ 移除 |
+| questions | ✅ 包含 | ❌ 移除 |
+| 資料結構 | UnifiedWallData | **UnifiedFeedData** (簡化) |
+| Mock 資料 | 社區牆貼文 | 跨社區貼文 |
+
+### 新增型別
+
+```typescript
+// FeedPost: 擴展 Post 加上社區資訊
+export interface FeedPost extends Post {
+  communityId?: string | undefined;
+  communityName?: string | undefined;
+}
+
+// UnifiedFeedData: 簡化的信息流資料
+export interface UnifiedFeedData {
+  posts: FeedPost[];
+  totalPosts: number;
+}
+```
+
+### 驗證證據（2025-12-07）
+
+```bash
+npm run build          # ✓ exit 0, 2023 modules
+ls src/hooks/useFeedData.ts   # ✓ 477 行
+grep -c "mhEnv" src/hooks/useFeedData.ts   # ✓ 4 處整合
+grep -E "^export" src/hooks/useFeedData.ts # ✓ 5 個 export
+```
+
+### 下一步
+- P5 feed-consumer React 化時串接真實 API（目前 placeholder）
+- P6 feed-agent React 化時共用此 Hook
 
 ---
 
