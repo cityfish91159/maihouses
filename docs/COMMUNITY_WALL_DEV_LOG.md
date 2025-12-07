@@ -94,6 +94,24 @@ npm run build   # ✓ exit 0
 
 ---
 
+## 2025-12-07 - P2-AUDIT-2-FIX 修復 3 項缺失
+
+### 本次變更
+
+| 變更項目 | 檔案 | 說明 |
+|----------|------|------|
+| isLoading 納入 authLoading | `src/hooks/useFeedData.ts` | 確保 auth 初始化期間仍為 loading，避免 UI 誤判 | 
+| authLoading 解構後使用 | `src/hooks/useFeedData.ts` | 移除死變數警告，狀態與 isLoading 串接 |
+| likedPosts 初始同步 liked_by | `src/hooks/useFeedData.ts` | Mock 模式會將初始 liked_by 寫入 likedPosts Set，避免按讚狀態不同步 |
+
+### 驗證
+
+```bash
+npm run build   # ✓ exit 0
+```
+
+---
+
 ## 2025-12-07 - P1.5-AUDIT-5 徹底重構 Hook 順序修復 React error #310
 
 ### 本次變更

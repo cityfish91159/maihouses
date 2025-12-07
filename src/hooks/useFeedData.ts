@@ -339,6 +339,18 @@ export function useFeedData(
   // ============ viewerRole ============
   const viewerRole = useMemo<Role>(() => authRole ?? 'guest', [authRole]);
 
+  // ============ Mock likedPosts 初始化同步 ============
+  useEffect(() => {
+    if (!useMock || !currentUserId) return;
+    const initialLiked = new Set<string | number>();
+    mockData.posts.forEach(p => {
+      if (p.liked_by?.includes(currentUserId)) {
+        initialLiked.add(p.id);
+      }
+    });
+    setLikedPosts(initialLiked);
+  }, [useMock, currentUserId, mockData]);
+
   // ============ Mock 模式 userId ============
   const getMockUserId = useCallback((): string => {
     if (currentUserId) return currentUserId;
@@ -442,7 +454,7 @@ export function useFeedData(
     data,
     useMock,
     setUseMock,
-    isLoading: !useMock && apiLoading,
+    isLoading: authLoading || (!useMock && apiLoading),
     error: useMock ? null : apiError,
     refresh,
     toggleLike,
