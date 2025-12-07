@@ -20,7 +20,7 @@ npm run build   # ✓ 2025-12-07，exit 0
 ```
 
 ### 部署
-- 待 push main 觸發 Vercel 自動部署。
+- commit `d6d4b97` push 到 main，已觸發 Vercel 自動部署（等待完成）。
 
 ---
 
