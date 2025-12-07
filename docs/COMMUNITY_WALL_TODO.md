@@ -5,22 +5,6 @@
 
 ---
 
-## 🚨 緊急修復項目（審計發現）
-
-> **來源**：P0.5 實作後 Google 首席審計 | **總計 7 項**
-
-| ID | 嚴重度 | 問題摘要 | 詳見 |
-|----|--------|----------|------|
-| A1 | 🔴 | localStorage Key 命名衝突，跨頁同步失效 | P0.5-AUDIT |
-| A2 | 🔴 | `initialUseMock` 雙重呼叫 `mhEnv.isMockEnabled()` | P0.5-AUDIT |
-| A3 | 🟡 | `useEffect` 缺少顯式 cleanup return | P0.5-AUDIT |
-| A4 | 🟡 | `window.confirm()` 阻塞 UX | P0.5-AUDIT |
-| A5 | 🟡 | `useMockState.ts` 114 行死碼未清除 | P0.5-AUDIT |
-| A6 | 🟡 | Wall.tsx 自己包裝 `setUseMock` 覆蓋 Hook | P0.5-AUDIT |
-| A7 | 🟢 | `mhEnv` 缺少 TypeScript 型別導出 | P0.5-AUDIT |
-
----
-
 ## 🎯 核心目標
 
 | # | 目標 | 說明 |

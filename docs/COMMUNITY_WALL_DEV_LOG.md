@@ -1,5 +1,31 @@
 # 社區牆開發紀錄
 
+## 2025-12-07 - P0.5-FIX 審計修復（7 項缺失）
+
+### 本次變更
+
+| 變更項目 | 檔案 | 說明 |
+|----------|------|------|
+| 刪除死碼 useMockState | `src/hooks/useMockState.ts` | 114 行死碼移除，避免 Key 混亂 |
+| Storage Key 重命名 | `src/hooks/useCommunityWallData.ts` | `MOCK_STORAGE_KEY` → `MOCK_DATA_STORAGE_KEY` |
+| 移除 initialUseMock | `src/pages/Community/Wall.tsx` | 刪除 `useMemo(() => mhEnv.isMockEnabled(), [])` |
+| 移除 setUseMock 包裝 | `src/pages/Community/Wall.tsx` | 直接使用 Hook setter，不再自己包一層 |
+| Hook 簡化初始值 | `src/hooks/useCommunityWallData.ts` | 移除 `initialUseMock` option，由 `mhEnv` 單一來源 |
+| 加顯式 cleanup | `src/hooks/useCommunityWallData.ts` | `useEffect` 訂閱加 `return unsubscribe` |
+| 移除 confirm 阻塞 | `src/components/common/MockToggle.tsx` | 刪除 `window.confirm()` |
+| 補 TypeScript interface | `src/lib/mhEnv.ts` | 新增 `MhEnv` interface 並導出 |
+
+### 驗證
+
+```bash
+grep -r "useMockState" src/        # 0 matches（檔案已刪）
+grep "MOCK_DATA_STORAGE_KEY" src/  # 僅 useCommunityWallData.ts
+npm run build                      # ✓ exit 0
+git push origin main               # commit e8ad92f → Vercel 部署
+```
+
+---
+
 ## 2025-12-07 - P0.5 環境控制層（mhEnv 中央化）
 
 ### 本次變更
