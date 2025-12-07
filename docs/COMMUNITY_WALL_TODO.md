@@ -521,6 +521,117 @@ grep -E "^export" src/hooks/useFeedData.ts # ✓ 5 個 export
 
 ---
 
+## 🟡 P2-AUDIT：首席審計發現 6 項缺失
+
+> **審計時間**：2025-12-07 | **審計人**：Google 首席前後端處長
+> **狀態**：待修復
+
+| ID | 嚴重度 | 問題摘要 | 位置 | 狀態 |
+|----|--------|----------|------|------|
+| P2-A1 | 🔴 | `toggleLike` 沒有 auth guard — 未登入按讚會呼叫 API | `useFeedData.ts:397` | 🔴 |
+| P2-A2 | 🔴 | `createPost` 沒有 auth guard — 未登入發文會呼叫 API | `useFeedData.ts:436` | 🔴 |
+| P2-A3 | 🟡 | 重複的 auth 訂閱邏輯 — 與 useAuth 重複實作 | `useFeedData.ts:240-268` | 🔴 |
+| P2-A4 | 🟡 | resolveViewerRole 第一參數永遠傳 undefined — 冗餘邏輯 | `useFeedData.ts:370` | 🔴 |
+| P2-A5 | 🟡 | API 模式回傳空陣列 — P5 未做時讓用戶誤以為無資料 | `useFeedData.ts:322-325` | 🔴 |
+| P2-A6 | 🟢 | Mock 資料 communityName 硬編碼 — 應從 lookup 取得 | `useFeedData.ts:445` | 🔴 |
+
+---
+
+### P2-A1 修復引導（🔴 高優先）
+
+**問題**：`toggleLike` 沒有檢查 `isAuthenticated`，未登入時直接呼叫 API 會得到 401。
+
+**修法**：
+```
+// toggleLike 開頭加 guard
+// 1. 檢查 hasAuthenticatedUser
+// 2. 若未登入，直接 return 並可選擇性拋出 Error 或 notify
+// 3. Mock 模式可略過（因為不會真的打 API）
+```
+
+**參考**：`useCommunityWallData.ts` 的 `toggleLike` 也沒有 guard，但 `Wall.tsx` 在 `handleLike` 有統一做，因此 useFeedData 的消費者（P5 feed-consumer）也必須在 UI 層做 guard。
+
+**建議**：
+- 方案 A：Hook 層加 guard，拋出 Error 讓 UI 層 catch
+- 方案 B：Hook 回傳 `canInteract: boolean`，UI 層判斷
+- **推薦方案 A**：與 P1.5 權限系統一致
+
+---
+
+### P2-A2 修復引導（🔴 高優先）
+
+**問題**：`createPost` 沒有檢查 `isAuthenticated`，未登入時直接呼叫 API 會得到 401。
+
+**修法**：與 P2-A1 相同模式，在 `createPost` 開頭加 guard。
+
+---
+
+### P2-A3 修復引導（🟡 中優先）
+
+**問題**：`useFeedData` 自己訂閱 `supabase.auth.onAuthStateChange`，與 `useAuth` 重複訂閱。如果 P5/P6 同時使用 `useAuth` 和 `useFeedData`，會有多餘的訂閱。
+
+**修法**：
+```
+// 方案 A：從 props 接收 currentUserId（由消費者從 useAuth 取得後傳入）
+// 方案 B：useFeedData 內部呼叫 useAuth() 取得 user.id
+// 方案 C（最佳）：建立 AuthContext，所有 Hook 共享同一訂閱
+```
+
+**建議**：
+- 短期：方案 A，保持解耦
+- 長期：方案 C，參考 TODO.md G1 建議
+
+---
+
+### P2-A4 修復引導（🟡 中優先）
+
+**問題**：`resolveViewerRole(undefined, hasAuthenticatedUser)` 第一參數永遠是 `undefined`，函數內的 `rawRole` 檢查永遠不會執行。
+
+**修法**：
+```
+// 選項 1：移除 rawRole 參數，簡化函數
+// 選項 2：從 API 回傳的 viewerRole 使用（但 useFeedData 目前沒有 viewerRole 欄位）
+// 選項 3：直接用三元運算 `hasAuthenticatedUser ? 'member' : 'guest'`
+```
+
+**建議**：選項 3，刪除 `resolveViewerRole` 函數，直接內聯邏輯。
+
+---
+
+### P2-A5 修復引導（🟡 中優先）
+
+**問題**：API 模式目前回傳空陣列 `{ posts: [], totalPosts: 0 }`，用戶會誤以為「沒有任何貼文」而非「功能未實作」。
+
+**修法**：
+```
+// 方案 A：API 模式暫時 fallback 到 Mock 資料
+// 方案 B：API 模式顯示「即將推出」提示
+// 方案 C：拋出特定 Error 讓 UI 層顯示對應訊息
+```
+
+**建議**：方案 A，在 `fetchApiData` 中暫時使用 Mock 資料，並加註解標記 P5 要移除。
+
+---
+
+### P2-A6 修復引導（🟢 低優先）
+
+**問題**：`createFeedMockPost` 中 `communityName` 使用硬編碼判斷 `'test-uuid' ? '惠宇上晴' : '我的社區'`，不夠彈性。
+
+**修法**：
+```
+// 建立社區名稱對照表
+const COMMUNITY_NAME_MAP: Record<string, string> = {
+  'test-uuid': '惠宇上晴',
+  'community-2': '遠雄中央公園',
+  'community-3': '國泰建設',
+};
+
+// 使用時查表
+communityName: COMMUNITY_NAME_MAP[targetCommunityId] ?? targetCommunityId ?? '我的社區'
+```
+
+---
+
 ## 🔴 P3：GlobalHeader
 
 **目的**：三頁共用 Header，從 feed-agent.html 搬最完整版

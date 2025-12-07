@@ -1,5 +1,60 @@
 # 社區牆開發紀錄
 
+## 2025-12-07 - P2 useFeedData Hook 建立
+
+### 目的
+為 P5 feed-consumer 和 P6 feed-agent React 化做資料層準備，建立專門用於信息流的 Hook。
+
+### 本次變更
+
+| 變更項目 | 檔案 | 說明 |
+|----------|------|------|
+| 新增 useFeedData | `src/hooks/useFeedData.ts` | 477 行，從 useCommunityWallData 簡化而來 |
+| 移除社區專屬邏輯 | - | 刪除 reviews、questions 相關功能 |
+| communityId optional | - | 信息流不綁定單一社區，支援跨社區瀏覽 |
+| 新增型別 | - | `FeedPost`、`UnifiedFeedData` 簡化結構 |
+| 整合 mhEnv | - | 4 處呼叫，與 useCommunityWallData 一致 |
+| Mock 資料 | - | 5 筆跨社區測試貼文 |
+
+### 與 useCommunityWallData 差異
+
+| 項目 | useCommunityWallData | useFeedData |
+|------|---------------------|-------------|
+| 行數 | 455 | 477 |
+| communityId | **必填** | **optional** |
+| reviews | ✅ | ❌ 移除 |
+| questions | ✅ | ❌ 移除 |
+| 資料型別 | `UnifiedWallData` | `UnifiedFeedData` |
+| 用途 | 社區牆 | 信息流 (feed-consumer/agent) |
+
+### 新增型別
+
+```typescript
+export interface FeedPost extends Post {
+  communityId?: string | undefined;
+  communityName?: string | undefined;
+}
+
+export interface UnifiedFeedData {
+  posts: FeedPost[];
+  totalPosts: number;
+}
+```
+
+### 驗證
+
+```bash
+npm run build          # ✓ exit 0, 2023 modules
+wc -l src/hooks/useFeedData.ts   # ✓ 477 行
+grep -c "mhEnv" src/hooks/useFeedData.ts   # ✓ 4 處整合
+grep -E "^export" src/hooks/useFeedData.ts # ✓ 5 個 export
+```
+
+### 部署
+- commit `554b9c7` → Vercel 自動部署
+
+---
+
 ## 2025-12-07 - P1.5-AUDIT-5 徹底重構 Hook 順序修復 React error #310
 
 ### 本次變更
