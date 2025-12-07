@@ -285,6 +285,7 @@ export const mhEnv: MhEnv = { ... };
 - `Wall.tsx`：移除 `initialUseMock` 及自定 `setUseMock` 包裝，直接使用 Hook setter
 - `MockToggle`：移除同步 `confirm` 阻塞
 - `mhEnv`：補上 `MhEnv` interface，方便 mock/擴充
+- 推送 commit `e8ad92f`，觸發 Vercel 部署（網址：https://maihouses.vercel.app/maihouses/community/test-uuid/wall）
 
 ---
 
