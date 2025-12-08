@@ -6,7 +6,7 @@
  * 注意：首頁 (Home) 使用獨立的 Header 組件，不在此組件管理範圍內。
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Bell, User, LogOut, ChevronDown, ArrowLeft } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { Logo } from '../Logo/Logo';
@@ -35,11 +35,39 @@ const STRINGS = {
   LABEL_NOTIFICATIONS: '通知',
   LABEL_AVATAR: '使用者選單',
   MENU_PROFILE: '個人檔案',
+  ROLE_AGENT: '認證房仲',
+  ROLE_RESIDENT: '住戶',
+  ROLE_MEMBER: '一般會員',
+  ROLE_GUEST: '訪客',
 };
 
 export function GlobalHeader({ mode, title, className = '' }: GlobalHeaderProps) {
-  const { isAuthenticated, user, signOut } = useAuth();
+  const { isAuthenticated, user, role, signOut } = useAuth();
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+
+  // 根據角色決定首頁連結 (Smart Home Link)
+  const homeLink = useMemo(() => {
+    if (role === 'agent') return '/maihouses/feed-agent.html';
+    if (role === 'resident' || role === 'member') return '/maihouses/feed-consumer.html';
+    return '/maihouses/';
+  }, [role]);
+
+  // 根據角色決定個人檔案連結 (Smart Profile Link)
+  const profileLink = useMemo(() => {
+    // 目前先導向對應的 Feed 頁面，未來可改為專屬 Profile 頁面
+    if (role === 'agent') return '/maihouses/feed-agent.html';
+    return '/maihouses/feed-consumer.html';
+  }, [role]);
+
+  // 取得角色顯示名稱
+  const roleLabel = useMemo(() => {
+    switch (role) {
+      case 'agent': return STRINGS.ROLE_AGENT;
+      case 'resident': return STRINGS.ROLE_RESIDENT;
+      case 'member': return STRINGS.ROLE_MEMBER;
+      default: return STRINGS.ROLE_GUEST;
+    }
+  }, [role]);
 
   // 處理登出
   const handleSignOut = async () => {
@@ -47,14 +75,15 @@ export function GlobalHeader({ mode, title, className = '' }: GlobalHeaderProps)
       await signOut();
       notify.success('已登出', '期待下次見面！');
       setUserMenuOpen(false);
-      window.location.reload();
+      // 優雅登出：導回首頁
+      window.location.href = '/maihouses/';
     } catch (error) {
       console.error('Logout failed:', error);
       notify.error('登出失敗', '請稍後再試');
     }
   };
 
-  // 點擊外部關閉選單
+  // 點擊外部或按 ESC 關閉選單
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
@@ -62,8 +91,19 @@ export function GlobalHeader({ mode, title, className = '' }: GlobalHeaderProps)
         setUserMenuOpen(false);
       }
     };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setUserMenuOpen(false);
+      }
+    };
+
     document.addEventListener('click', handleClickOutside);
-    return () => document.removeEventListener('click', handleClickOutside);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
   }, []);
 
   // 渲染左側區域 (Logo 或 返回按鈕)
@@ -71,7 +111,7 @@ export function GlobalHeader({ mode, title, className = '' }: GlobalHeaderProps)
     if (mode === 'community') {
       return (
         <a 
-          href="/maihouses/" 
+          href={homeLink}
           className="flex items-center gap-2 rounded-[10px] px-2.5 py-1.5 text-sm font-bold text-brand-700 no-underline transition-colors hover:bg-brand-50"
           aria-label={STRINGS.BACK_HOME}
         >
@@ -83,7 +123,7 @@ export function GlobalHeader({ mode, title, className = '' }: GlobalHeaderProps)
 
     return (
       <div className="flex items-center gap-2">
-        <Logo showSlogan={false} href="/maihouses/" />
+        <Logo showSlogan={false} href={homeLink} />
         {mode === 'agent' && (
           <span className="rounded bg-gradient-to-br from-amber-400 to-amber-600 px-2 py-0.5 text-[10px] font-extrabold text-white shadow-sm">
             {STRINGS.AGENT_BADGE}
@@ -116,13 +156,12 @@ export function GlobalHeader({ mode, title, className = '' }: GlobalHeaderProps)
 
       {/* Right: Actions */}
       <div className="flex items-center gap-2">
-        {/* Notifications (Mock) */}
+        {/* Notifications (Real Data or Hidden if 0) */}
         <button 
           className="relative inline-flex items-center justify-center rounded-xl border border-brand-100 bg-white p-2 text-brand-700 transition-all hover:bg-brand-50"
           aria-label={STRINGS.LABEL_NOTIFICATIONS}
         >
           <Bell size={18} strokeWidth={2.5} />
-          <span className="absolute -right-1 -top-1 flex h-[16px] min-w-[16px] items-center justify-center rounded-full border-2 border-white bg-red-600 text-[10px] font-bold text-white shadow-sm">2</span>
         </button>
 
         {/* User Menu */}
@@ -153,17 +192,17 @@ export function GlobalHeader({ mode, title, className = '' }: GlobalHeaderProps)
               >
                 <div className="px-3 py-2 border-b border-gray-50 mb-1">
                   <p className="truncate text-xs font-bold text-brand-900">{user?.email}</p>
-                  <p className="text-[10px] text-gray-500">一般會員</p>
+                  <p className="text-[10px] text-gray-500">{roleLabel}</p>
                 </div>
                 
-                <button
-                  className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-bold text-gray-700 hover:bg-brand-50 hover:text-brand-700 transition-colors"
+                <a
+                  href={profileLink}
+                  className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-bold text-gray-700 hover:bg-brand-50 hover:text-brand-700 transition-colors no-underline"
                   role="menuitem"
-                  onClick={() => {/* TODO: Profile Link */}}
                 >
                   <User size={16} />
                   {STRINGS.MENU_PROFILE}
-                </button>
+                </a>
                 
                 <button
                   onClick={handleSignOut}
