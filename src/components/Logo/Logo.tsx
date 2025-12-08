@@ -25,6 +25,9 @@ export const Logo: React.FC<LogoProps> = ({
           <path d="M3 9.5L12 3L21 9.5V20.5C21 21.0523 20.5523 21.5 20 21.5H4C3.44772 21.5 3 21.0523 3 20.5V9.5Z" />
           <path d="M9 21.5V13H15V21.5" />
         </svg>
+
+        {/* Design Accent Dot */}
+        <div className="absolute top-2 right-2 w-1.5 h-1.5 bg-red-400 rounded-full shadow-[0_0_0_1.5px] shadow-brand-600"></div>
       </div>
 
       <div className="flex items-center">
