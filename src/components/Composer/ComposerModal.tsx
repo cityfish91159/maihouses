@@ -1,8 +1,11 @@
 import { useEffect, useRef } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { useComposer, ComposerData } from '../../hooks/useComposer';
+import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 import { notify } from '../../lib/notify';
 import { FocusTrap } from '../ui/FocusTrap';
+
+const FOCUS_DELAY_MS = 50; // 延遲讓 textarea 正確聚焦
 
 interface ComposerModalProps {
   isOpen: boolean;
@@ -36,6 +39,8 @@ export function ComposerModal({
     reset,
     isValid,
     charCount,
+    maxLength,
+    minLength,
   } = useComposer({
     onSubmit,
     onSuccess: () => {
@@ -47,6 +52,9 @@ export function ComposerModal({
     },
     initialVisibility,
   });
+
+  // Body scroll lock & inert background
+  useBodyScrollLock(isOpen, { inertTargetId: 'root' });
 
   // Auto-resize textarea
   useEffect(() => {
@@ -81,6 +89,15 @@ export function ComposerModal({
     }
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose, isSubmitting, isValid, submit]);
+
+  // Focus on open
+  useEffect(() => {
+    if (isOpen && textareaRef.current) {
+      setTimeout(() => {
+        textareaRef.current?.focus();
+      }, FOCUS_DELAY_MS);
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -197,6 +214,9 @@ export function ComposerModal({
               placeholder={displayPlaceholder}
               className="w-full min-h-[150px] resize-none text-base text-gray-800 placeholder:text-gray-400 focus:outline-none"
               disabled={isSubmitting}
+              minLength={minLength}
+              maxLength={maxLength}
+              aria-describedby="composer-counter"
             />
 
             {/* Image Upload Placeholder (P4-5) */}
@@ -219,8 +239,11 @@ export function ComposerModal({
 
           {/* Footer */}
           <div className="border-t border-gray-100 px-4 py-3 flex items-center justify-between bg-gray-50 rounded-b-2xl">
-            <span className={`text-xs ${charCount > 2000 ? 'text-red-500' : 'text-gray-400'}`}>
-              {charCount} / 2000
+            <span
+              id="composer-counter"
+              className={`text-xs ${charCount > maxLength ? 'text-red-500' : 'text-gray-400'}`}
+            >
+              {charCount} / {maxLength}
             </span>
             <div className="flex gap-3">
               <button

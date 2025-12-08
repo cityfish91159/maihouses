@@ -105,5 +105,7 @@ export function useComposer({
     validate,
     isValid: !validate(),
     charCount: content.trim().length, // P4-A8: 使用 trimmed length
+    minLength,
+    maxLength,
   };
 }

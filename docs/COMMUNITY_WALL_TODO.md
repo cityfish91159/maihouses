@@ -86,14 +86,19 @@
 
 > **審查標準**：Google Engineering Level (L6+) - 關注可維護性、國際化、邊界情況與效能。
 
-| ID | 嚴重度 | 問題摘要 | 建議方案 (Best Practice) |
-|----|--------|----------|--------------------------|
-| P4-B1 | 🔴 | **Body Scroll Lock 缺失** | `FocusTrap` 僅鎖定焦點，但背景頁面仍可滾動。應在 Modal 開啟時對 `body` 設置 `overflow: hidden`，關閉時還原，防止移動端滾動穿透。建議實作 `useBodyScrollLock` hook。 |
-| P4-B2 | 🟡 | **Hardcoded Strings (i18n Debt)** | `ComposerModal` 內充斥中文硬編碼字串 ("發布成功", "請先登入"...)。應提取至 `src/constants/strings.ts` 或 `i18n` 字典，便於未來多語系擴展與文案統一管理。 |
-| P4-B3 | 🟡 | **Magic Numbers** | 存在 `setTimeout(..., 50)` 與 `z-50` 等魔術數字。應將 `z-index` 統一管理 (如 `z-modal`)，並將 timeout 封裝或說明原因 (e.g., `FOCUS_DELAY_MS`)。 |
-| P4-B4 | 🔴 | **Inert Attribute 缺失** | 雖然有 Focus Trap，但背景元素對螢幕閱讀器仍是 "可見" 的。應在 Modal 開啟時對 `#root` 或背景容器設置 `aria-hidden="true"` 或 `inert` 屬性，徹底隔離背景。 |
-| P4-B5 | 🟢 | **Mobile Viewport Issues** | `max-h-[90vh]` 在移動端軟鍵盤彈出時可能導致視窗被壓縮或遮擋。建議使用 `dvh` (Dynamic Viewport Height) 或監聽 `visualViewport` resize 事件來動態調整高度。 |
-| P4-B6 | 🟢 | **Component Composition** | `ComposerModal` 內部包含了 "未登入狀態" 的 UI 邏輯。建議將 `<LoginPrompt />` 拆分為獨立組件，保持 Modal 邏輯純粹 (Single Responsibility Principle)。 |
+| ID | 嚴重度 | 狀態 | 問題摘要 | 指導方案 / 進度 |
+|----|--------|------|----------|------------------|
+| P4-B1 | 🔴 | ✅ 已修復 | **Body Scroll Lock 缺失** | 新增 `useBodyScrollLock`，開啟 Modal 時鎖定 `body overflow:hidden`，並於關閉後還原。 |
+| P4-B2 | 🟡 | ⚠️ 待處理 | **Hardcoded Strings (i18n Debt)** | 指導：將中文文案提取至 `constants/strings.ts` 或 i18n 字典，避免分散硬編碼。 |
+| P4-B3 | 🟡 | ⚠️ 部分 | **Magic Numbers** | 已抽出 `FOCUS_DELAY_MS`；仍需統一 `z-index`（如 `z-modal` token）與其餘 timeout 常數。 |
+| P4-B4 | 🔴 | ✅ 已修復 | **Inert Attribute 缺失** | `useBodyScrollLock` 同步設定 `aria-hidden` + `inert` 於 `#root`，背景對 SR 變為不可訪問。 |
+| P4-B5 | 🟢 | ⚠️ 待處理 | **Mobile Viewport Issues** | 建議改用 `dvh` 或監聽 `visualViewport` 調整高度，避免軟鍵盤擠壓 Modal。 |
+| P4-B6 | 🟢 | ⚠️ 待處理 | **Component Composition** | 拆出 `<LoginPrompt />` 為獨立組件，保持 ComposerModal 單一職責。 |
+
+**執行紀錄 (2025-12-08)**
+- 新增 `useBodyScrollLock` 並套用至 `ComposerModal`：鎖定滾動 + 背景 inert。
+- 抽出 `FOCUS_DELAY_MS`，移除 setTimeout 魔術數字，字符統計改用 Hook 的 maxLength。
+- 重新執行 `ai-supervisor.sh audit`、`npm run typecheck`、`npm run build`（待下方驗證步驟完成）。
 
 ---
 
