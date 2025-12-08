@@ -1,3 +1,37 @@
+# 🚨 AI AGENT 最高規格執行協議 (MANDATORY STRICT PROTOCOL)
+
+> **警告**：本專案執行「零信任」與「極度嚴格」的開發標準。AI Agent 必須嚴格遵守以下 SOP，否則視為任務失敗。
+
+## 1. 必須執行的監督腳本
+你必須在每個階段主動執行 `./scripts/ai-supervisor.sh`：
+
+1.  **收到任務時**：
+    - 執行 `chmod +x scripts/ai-supervisor.sh && ./scripts/ai-supervisor.sh init`
+    - 執行 `./scripts/ai-supervisor.sh plan "任務描述"`
+    - **禁止**在沒有 Plan 的情況下開始寫代碼。
+
+2.  **修改代碼前**：
+    - **必須**使用 `read_file` 閱讀目標檔案完整內容（禁止只讀片段）。
+    - 確保理解上下文，不要腦補變數或函數。
+
+3.  **修改代碼後**：
+    - 執行 `./scripts/ai-supervisor.sh audit <修改的檔案路徑>`
+    - 檢查是否包含 `// ...` 偷懶省略（絕對禁止）。
+    - 檢查是否包含 `TODO` 或 `console.log`。
+    - 檢查是否使用了 `any` 類型。
+
+4.  **任務結束前**：
+    - 執行 `./scripts/ai-supervisor.sh verify`
+    - 確保 `npm run typecheck` 和 `npm run build` 通過。
+
+## 2. 心態與標準
+- **拒絕偷懶**：永遠寫出完整的代碼，不要省略任何細節。
+- **拒絕腦補**：不確定的變數名、API 格式，必須先 `grep_search` 或 `read_file` 確認。
+- **像素級完美**：UI 修改必須與設計稿或現有風格完全一致（檢查 Padding, Margin, Color）。
+- **自我質疑**：提交前問自己「這是最高規格的代碼嗎？」「我有沒有偷懶？」
+
+---
+
 # MaiHouses (邁房子) - GitHub Copilot 專案指令
 
 > 這是一個台灣房地產平台，提供 AI 智能推薦、信任交易系統、精準客戶管理等功能。

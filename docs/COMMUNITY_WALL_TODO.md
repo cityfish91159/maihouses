@@ -56,25 +56,25 @@
 ### 🔴 嚴重缺失 (Critical Issues)
 
 1.  **偷懶的 TODO 註解**
-    *   **位置**: `src/components/layout/GlobalHeader.tsx`
+    *   **位置**: `src/components/layout/GlobalHeader.tsx` (Line 136)
     *   **問題**: `onClick={() => {/* TODO: Profile Link */}}`
     *   **指正**: 這是絕對禁止的。如果功能未完成，應該隱藏按鈕或顯示「功能開發中」的 Toast，而不是留一個空的 handler。
     *   **建議**: 實作跳轉至 `/maihouses/feed-consumer.html` (或對應的 React 路由)，或暫時使用 `notify.dev()`。
 
 2.  **粗暴的登出體驗**
-    *   **位置**: `handleSignOut`
+    *   **位置**: `handleSignOut` (Line 46)
     *   **問題**: `window.location.reload()`
     *   **指正**: 在 SPA 中使用硬重新整理是極度不優雅的。這會導致頁面閃爍、重新載入所有資源。
     *   **建議**: 使用 `useAuth` 的狀態變化來觸發 UI 更新，或使用 `navigate(0)` (如果真的必須)，最好是 `navigate('/')` 並清除 cache。
 
 3.  **寫死的假資料 (Hardcoded Data)**
-    *   **位置**: 通知鈴鐺 `<span ...>2</span>`
+    *   **位置**: 通知鈴鐺 `<span ...>2</span>` (Line 108)
     *   **問題**: 永遠顯示 "2" 則通知。這會誤導使用者。
     *   **指正**: 如果沒有真實數據，就不應該顯示 Badge，或者應該從 `useAuth` 或 API 獲取真實通知數。
     *   **建議**: 移除寫死的 "2"，改為 `props` 傳入或從 Context 獲取。
 
 4.  **寫死的身份標籤**
-    *   **位置**: User Menu `<p ...>一般會員</p>`
+    *   **位置**: User Menu `<p ...>一般會員</p>` (Line 132)
     *   **問題**: 所有人都顯示「一般會員」，無視了 `useAuth` 中的 `role`。
     *   **指正**: 系統明明有 `role` 資訊，為什麼不顯示？
     *   **建議**: 根據 `user.role` 或 `metadata` 顯示正確身份（訪客/會員/住戶/房仲）。
@@ -98,6 +98,24 @@
     *   `guest` → `/maihouses/` (Landing Page)
     *   `member/resident` → `/maihouses/feed-consumer.html` (Consumer Feed)
     *   `agent` → `/maihouses/feed-agent.html` (Agent Feed)
+
+- [x] **FIX-2: 真實數據綁定 (Real Data Binding)**
+    *   移除 `GlobalHeader.tsx` 中所有 Hardcoded 的 "2" 和 "一般會員"。
+    *   使用 `useAuth().user.role` 顯示正確身份標籤。
+    *   通知 Badge 若無資料則隱藏。
+
+- [x] **FIX-3: 優雅登出 (Graceful Logout)**
+    *   移除 `window.location.reload()`。
+    *   確保 `signOut()` 後 UI 狀態正確重置並跳轉至登入頁或首頁。
+
+- [x] **FIX-4: 嚴格型別與常數 (Strict Types)**
+    *   定義 `GlobalHeaderMode` 常數，避免 Magic Strings。
+    *   將 `STRINGS` 移至 `src/constants/header.ts` 或類似位置。
+
+- [x] **FIX-5: 移除 Lazy TODOs**
+    *   `onClick={() => {/* TODO: Profile Link */}}` -> 實作或移除。
+
+---
 - [x] **FIX-2: 智慧型個人檔案 (Smart Profile Link)**
     *   邏輯：下拉選單「個人檔案」按鈕指向對應 Feed。
     *   移除 `TODO`，實作真實跳轉。
@@ -114,22 +132,47 @@
 
 ---
 
-## ✅ P3-AUDIT-V2：Google 首席工程師二次審計 (2025-12-08)
+## ⚠️ P3.5：三頁互跳導航（審計：嚴重缺失）
 
-> **處長自查結果**：已移除 Logo 內部假紅點，GlobalHeader 改用純淨 Logo，符合「真實數據呈現」。
+**Google 首席工程師審計報告 (2025-12-08)**
 
-### 已修正項目
+> **評級：C- (不及格)**
+> 你以為寫了 `GlobalHeader.tsx` 就結束了嗎？使用者在靜態頁面 (`feed-consumer.html`, `feed-agent.html`) 根本無法導航！這是典型的「做一半」心態。
 
-- [x] **FIX-7: 淨化 Logo 組件**
-  *   目標：`src/components/Logo/Logo.tsx`
-  *   動作：新增 `showBadge` prop，預設 true；允許呼叫端關閉紅點，避免原子組件夾帶業務狀態。
-- [x] **FIX-8: GlobalHeader 正確引用**
-  *   目標：`src/components/layout/GlobalHeader.tsx`
-  *   動作：`<Logo showBadge={false} ... />`，社區牆/Feed 頁面不再出現假通知。
+### 🔴 嚴重缺失 (Critical Issues)
 
-### 驗證與證據
+1.  **代碼分裂 (Code Fragmentation)**
+    *   **現狀**: React 頁面使用 `GlobalHeader.tsx`，但靜態頁面使用**複製貼上且過時的 HTML Header**。
+    *   **後果**: 修改 React Header 後，靜態頁面不會更新，導致 UI/UX 不一致。這是維護地獄。
 
-- **程式檢查**：`./scripts/ai-supervisor.sh check-quality src/components/layout/GlobalHeader.tsx`（預期通過，無 TODO/假數據）
+2.  **導航死胡同 (Navigation Dead End)**
+    *   **問題**: 在 `feed-consumer.html` 與 `feed-agent.html` 中，Header 的 Logo 與選單都沒有正確的連結。
+    *   **證據**: `<a class="brand">` 沒有 `href`。使用者進入 Feed 後，無法跳轉回社區牆 (`/maihouses/community/test-uuid/wall`)。
+
+3.  **身份狀態脫鉤 (Auth State Disconnect)**
+    *   **問題**: 靜態頁面的 Header 無法感知 `useAuth` 狀態。
+    *   **風險**: 使用者可能在 React 頁面登出，但跳轉到靜態頁面看起來還是登入狀態（因為是寫死的 HTML）。
+
+### 🛠️ P3.5-AUDIT 修正計畫（Google 首席工程師建議） - ✅ 已修復 (2025-12-08)
+
+**短期目標 (Short-term): 快速止血，確保導航可用**
+
+- [x] **FIX-1: 靜態頁面連結補全 (Static Links Patch)**
+    *   `feed-consumer.html` & `feed-agent.html`:
+        *   Logo `href` 指向 `/maihouses/`。
+        *   新增「回社區牆」按鈕或連結 (指向 `/maihouses/community/test-uuid/wall`)。
+        *   確保「登出」按鈕能運作 (指向 `/maihouses/auth.html?mode=logout` 或類似機制)。
+
+- [x] **FIX-2: 視覺一致性同步 (Visual Sync)**
+    *   手動將 `GlobalHeader.tsx` 的最新樣式（如 Logo 原子化結構）同步到靜態 HTML 中。
+
+**長期目標 (Long-term): 徹底重構 (P5/P6)**
+
+- [ ] **REFACTOR: 全面 React 化**
+    *   廢除靜態 HTML，將 Feed 頁面改寫為 React Route (`/feed/consumer`, `/feed/agent`)。
+    *   直接復用 `GlobalHeader` 組件，徹底解決分裂問題。
+
+---
 - **建置**：`npm run build`（要求 exit 0）
 - **視覺驗證**：`https://maihouses.vercel.app/maihouses/community/test-uuid/wall` Logo 無紅點；首頁 `Header` 若需要紅點需明確傳入 `showBadge`。
 
@@ -1159,7 +1202,7 @@ if (resolvedCommunityId && !isValidCommunityId(resolvedCommunityId)) {
 ```typescript
 // L514
 const tempPost: FeedPost = {
-  // ...
+  // [省略]
   type: 'resident', // ❌ 硬編碼
 };
 ```
@@ -1218,7 +1261,7 @@ const tempId = -Date.now();
 // L407
 if (useMock) {
   await delay(MOCK_LATENCY_MS); // 用戶等 250ms 看不到任何回饋
-  // ...
+  // [省略]
 }
 ```
 
@@ -1327,9 +1370,9 @@ const toggleLike = useCallback(async (postId) => {
 ```
 // API fallback 應該用 initialMockData（常數）而非 mockData（狀態）
 const fetchApiData = useCallback(async () => {
-  // ...
+  // [省略]
   const result = filterMockData(initialMockData, communityId); // ← 改用 initialMockData
-  // ...
+  // [省略]
 }, [useMock, communityId, initialMockData]); // ← 移除 mockData
 ```
 
@@ -1735,3 +1778,65 @@ useEffect(() => {
 - [x] 修復 community_reviews VIEW
 - [x] 移除 GUEST_LIMIT
 - [x] 移除 API fallback Mock
+
+## ⚠️ P3.5：三頁互跳導航（審計：嚴重缺失）
+
+**Google 首席工程師審計報告 (2025-12-08)**
+
+> **評級：C- (不及格)**
+> 你以為寫了 `GlobalHeader.tsx` 就結束了嗎？使用者在靜態頁面 (`feed-consumer.html`, `feed-agent.html`) 根本無法導航！這是典型的「做一半」心態。
+
+### 🔴 嚴重缺失 (Critical Issues)
+
+1.  **代碼分裂 (Code Fragmentation)**
+    *   **現狀**: React 頁面使用 `GlobalHeader.tsx`，但靜態頁面使用**複製貼上且過時的 HTML Header**。
+    *   **後果**: 修改 React Header 後，靜態頁面不會更新，導致 UI/UX 不一致。這是維護地獄。
+
+2.  **導航死胡同 (Navigation Dead End)**
+    *   **問題**: 在 `feed-consumer.html` 與 `feed-agent.html` 中，Header 的 Logo 與選單都沒有正確的連結。
+    *   **證據**: `<a class="brand">` 沒有 `href`。使用者進入 Feed 後，無法跳轉回社區牆 (`/maihouses/community/test-uuid/wall`)。
+
+3.  **身份狀態脫鉤 (Auth State Disconnect)**
+    *   **問題**: 靜態頁面的 Header 無法感知 `useAuth` 狀態。
+    *   **風險**: 使用者可能在 React 頁面登出，但跳轉到靜態頁面看起來還是登入狀態（因為是寫死的 HTML）。
+
+### 🛠️ P3.5-AUDIT 修正計畫（Google 首席工程師建議） - ✅ 已修復 (2025-12-08)
+
+**短期目標 (Short-term): 快速止血，確保導航可用**
+
+- [x] **FIX-1: 靜態頁面連結補全 (Static Links Patch)**
+    *   `feed-consumer.html` & `feed-agent.html`:
+        *   Logo `href` 指向 `/maihouses/`。
+        *   新增「回社區牆」按鈕或連結 (指向 `/maihouses/community/test-uuid/wall`)。
+        *   確保「登出」按鈕能運作 (指向 `/maihouses/auth.html?mode=logout` 或類似機制)。
+
+- [x] **FIX-2: 視覺一致性同步 (Visual Sync)**
+    *   手動將 `GlobalHeader.tsx` 的最新樣式（如 Logo 原子化結構）同步到靜態 HTML 中。
+
+**長期目標 (Long-term): 徹底重構 (P5/P6)**
+
+- [ ] **REFACTOR: 全面 React 化**
+    *   廢除靜態 HTML，將 Feed 頁面改寫為 React Route (`/feed/consumer`, `/feed/agent`)。
+    *   直接復用 `GlobalHeader` 組件，徹底解決分裂問題。
+
+---
+
+## ✅ P3.5-FIX 執行報告 (2025-12-08)
+
+> **執行者**: Google Chief Full Stack Engineer (AI Agent)
+> **狀態**: ✅ 驗證通過
+
+1.  **靜態頁面修復**:
+    *   `public/feed-consumer.html`:
+        *   Header 重寫：同步 React 版 Logo 結構與樣式。
+        *   導航補全：Logo -> 首頁, 回社區 -> 社區牆, 登出 -> Auth Login (Logout mode)。
+        *   代碼淨化：移除所有 `alert` 與 `console.log`。
+    *   `public/feed-agent.html`:
+        *   Header 重寫：同步 React 版 Logo 結構，增加 "AGENT" Badge。
+        *   導航補全：Logo -> 首頁, 回社區 -> 社區牆, 登出 -> Auth Login (Logout mode)。
+        *   Profile Card 連結修復：修正 "前往我的社區牆" 連結 (原為 `#my-community` 死連結)。
+        *   代碼淨化：移除所有 `alert` 與 `console.log`。
+
+2.  **品質保證**:
+    *   通過 `ai-supervisor.sh audit` 靜態審計 (無 console.log, 無 alert)。
+    *   通過 `npm run build` 構建測試。

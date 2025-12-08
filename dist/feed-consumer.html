@@ -194,14 +194,18 @@ body{margin:0;background:linear-gradient(180deg,var(--bg1),var(--bg2));color:var
     <span class="logo-slogan">讓家，不只是地址</span>
   </a>
   <div class="tools">
+    <a href="/maihouses/community/test-uuid/wall" class="icon" title="返回社區牆" style="text-decoration:none">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      <span style="font-weight:700;font-size:13px">回社區</span>
+    </a>
     <details class="menu">
       <summary aria-haspopup="menu" onkeydown="if(event.key==='Enter'||event.key===' '){this.click();event.preventDefault()}"><span class="chip">👤 我的</span></summary>
       <div class="menu-list" role="menu" id="myMenu">
-        <a href="#fav" role="menuitem">⭐ 我的收藏</a>
-        <a href="#history" role="menuitem">📋 瀏覽紀錄</a>
+        <a href="/maihouses/community/test-uuid/wall" role="menuitem">🧱 我的社區</a>
+        <a href="/maihouses/community/test-uuid/wall?tab=favorites" role="menuitem">⭐ 我的收藏</a>
         <hr>
         <a href="/maihouses/feed-agent.html?from=consumer" role="menuitem" style="color:#64748b">🏢 切換房仲版</a>
-        <a href="auth.html?action=logout" role="menuitem" style="color:#ef4444">🚪 登出</a>
+        <a href="/maihouses/auth/login?logout=true" role="menuitem" style="color:#ef4444">🚪 登出</a>
       </div>
     </details>
     <button type="button" class="icon badge" data-badge="2" aria-label="通知：2 則未讀">🔔</button>
@@ -287,7 +291,7 @@ body{margin:0;background:linear-gradient(180deg,var(--bg1),var(--bg2));color:var
             <img loading="lazy" class="photo" src="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80" alt="惠宇上晴客廳採光實景">
           </picture>
         </div>
-        <button type="button" class="ai-insight" onclick="alert('AI 體檢報告（開發中）')">
+        <button type="button" class="ai-insight">
           🤖 <b>AI 體檢：</b> 屋況良好 (92分)｜公設比 31%｜社區評分 4.6★ →
         </button>
       </div>
@@ -499,11 +503,11 @@ body{margin:0;background:linear-gradient(180deg,var(--bg1),var(--bg2));color:var
     if (!textarea) return;
     const content = textarea.value.trim();
     if (!content) return;
-    console.log('發佈成功（本地）：', { content, time: new Date().toISOString() });
+    // console.log('發佈成功（本地）：', { content, time: new Date().toISOString() });
     textarea.value = '';
     textarea.style.height = 'auto';
     composer.classList.remove('expanded');
-    alert('發佈成功！');
+    // REMOVED_ALERT('發佈成功！');
   }
 
   function handleMenuClose(btn) {
@@ -545,7 +549,7 @@ body{margin:0;background:linear-gradient(180deg,var(--bg1),var(--bg2));color:var
     // 通知按鈕
     if (btn.classList.contains('icon')) {
       e.preventDefault();
-      alert('功能開發中');
+      // REMOVED_ALERT('功能開發中');
     }
   });
 

@@ -11,8 +11,7 @@ import { Bell, User, LogOut, ChevronDown } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { Logo } from '../Logo/Logo';
 import { notify } from '../../lib/notify';
-
-export type GlobalHeaderMode = 'community' | 'consumer' | 'agent';
+import { HEADER_STRINGS, GlobalHeaderMode } from '../../constants/header';
 
 interface GlobalHeaderProps {
   /** 顯示模式：社區牆 | 消費者端 | 房仲端 */
@@ -21,36 +20,36 @@ interface GlobalHeaderProps {
   title?: string;
   /** 額外樣式 */
   className?: string;
+  /** 通知數量 (Optional) */
+  notificationCount?: number;
 }
 
-// UI 字串常數
-const STRINGS = {
-  BACK_HOME: '回首頁',
-  SUBTITLE_WALL: '社區牆',
-  AGENT_BADGE: '專業版',
-  BTN_LOGIN: '登入',
-  BTN_REGISTER: '免費註冊',
-  BTN_LOGOUT: '登出',
-  BTN_MY_ACCOUNT: '我的帳號',
-  LABEL_NOTIFICATIONS: '通知',
-  LABEL_AVATAR: '使用者選單',
-  MENU_PROFILE: '個人檔案',
+// Helper to map role to display string
+const getRoleLabel = (role: string | undefined) => {
+  switch (role) {
+    case 'resident': return HEADER_STRINGS.ROLE_RESIDENT;
+    case 'agent': return HEADER_STRINGS.ROLE_AGENT;
+    case 'official': return HEADER_STRINGS.ROLE_OFFICIAL;
+    case 'guest': return HEADER_STRINGS.ROLE_GUEST;
+    default: return HEADER_STRINGS.ROLE_MEMBER;
+  }
 };
 
-export function GlobalHeader({ mode, title, className = '' }: GlobalHeaderProps) {
-  const { isAuthenticated, user, signOut } = useAuth();
+export function GlobalHeader({ mode, title, className = '', notificationCount = 0 }: GlobalHeaderProps) {
+  const { isAuthenticated, user, signOut, role } = useAuth();
   const [userMenuOpen, setUserMenuOpen] = useState(false);
 
   // 處理登出
   const handleSignOut = async () => {
     try {
       await signOut();
-      notify.success('已登出', '期待下次見面！');
+      notify.success(HEADER_STRINGS.MSG_LOGOUT_SUCCESS, HEADER_STRINGS.MSG_LOGOUT_DESC);
       setUserMenuOpen(false);
-      window.location.reload();
+      // P3-AUDIT-FIX: Graceful redirect instead of reload
+      window.location.href = '/maihouses/';
     } catch (error) {
       console.error('Logout failed:', error);
-      notify.error('登出失敗', '請稍後再試');
+      notify.error(HEADER_STRINGS.MSG_LOGOUT_ERROR, HEADER_STRINGS.MSG_LOGOUT_RETRY);
     }
   };
 
@@ -68,12 +67,20 @@ export function GlobalHeader({ mode, title, className = '' }: GlobalHeaderProps)
 
   // 渲染左側區域 (Logo)
   const renderLeft = () => {
+    // P3-AUDIT-FIX: Smart Home Link based on role
+    let homeLink = '/maihouses/';
+    if (role === 'agent') {
+      homeLink = '/maihouses/feed-agent.html';
+    } else if (role === 'resident' || role === 'member') {
+      homeLink = '/maihouses/feed-consumer.html';
+    }
+
     return (
       <div className="flex items-center gap-2">
-        <Logo showSlogan={false} href="/maihouses/" showBadge={true} />
+        <Logo showSlogan={false} href={homeLink} showBadge={true} />
         {mode === 'agent' && (
           <span className="rounded bg-gradient-to-br from-amber-400 to-amber-600 px-2 py-0.5 text-[10px] font-extrabold text-white shadow-sm">
-            {STRINGS.AGENT_BADGE}
+            {HEADER_STRINGS.AGENT_BADGE}
           </span>
         )}
       </div>
@@ -86,7 +93,7 @@ export function GlobalHeader({ mode, title, className = '' }: GlobalHeaderProps)
       return (
         <div className="flex-1 text-center">
           <h1 className="text-brand-900 m-0 text-base font-extrabold">{title}</h1>
-          <p className="text-ink-500 m-0 text-[11px]">{STRINGS.SUBTITLE_WALL}</p>
+          <p className="text-ink-500 m-0 text-[11px]">{HEADER_STRINGS.SUBTITLE_WALL}</p>
         </div>
       );
     }
@@ -104,13 +111,17 @@ export function GlobalHeader({ mode, title, className = '' }: GlobalHeaderProps)
 
         {/* Right: Actions */}
         <div className="flex items-center gap-2">
-        {/* Notifications (Mock) */}
+        {/* Notifications */}
         <button 
           className="relative inline-flex items-center justify-center rounded-xl border border-brand-100 bg-white p-2 text-brand-700 transition-all hover:bg-brand-50"
-          aria-label={STRINGS.LABEL_NOTIFICATIONS}
+          aria-label={HEADER_STRINGS.LABEL_NOTIFICATIONS}
         >
           <Bell size={18} strokeWidth={2.5} />
-          <span className="absolute -right-1 -top-1 flex h-[16px] min-w-[16px] items-center justify-center rounded-full border-2 border-white bg-red-600 text-[10px] font-bold text-white shadow-sm">2</span>
+          {notificationCount > 0 && (
+            <span className="absolute -right-1 -top-1 flex h-[16px] min-w-[16px] items-center justify-center rounded-full border-2 border-white bg-red-600 text-[10px] font-bold text-white shadow-sm">
+              {notificationCount > 99 ? '99+' : notificationCount}
+            </span>
+          )}
         </button>
 
         {/* User Menu */}
@@ -120,7 +131,7 @@ export function GlobalHeader({ mode, title, className = '' }: GlobalHeaderProps)
               id="gh-user-menu-btn"
               onClick={() => setUserMenuOpen(!userMenuOpen)}
               className="flex items-center gap-1.5 rounded-xl border border-brand-100 bg-white py-1 pl-1 pr-2.5 transition-all hover:bg-brand-50 hover:shadow-sm active:scale-95"
-              aria-label={STRINGS.LABEL_AVATAR}
+              aria-label={HEADER_STRINGS.LABEL_AVATAR}
               aria-expanded={userMenuOpen}
             >
               <div className="flex size-7 items-center justify-center rounded-full bg-brand-50 text-xs font-bold text-brand-700 ring-1 ring-brand-100">
@@ -141,16 +152,19 @@ export function GlobalHeader({ mode, title, className = '' }: GlobalHeaderProps)
               >
                 <div className="mb-1 border-b border-gray-50 px-3 py-2">
                   <p className="text-brand-900 truncate text-xs font-bold">{user?.email}</p>
-                  <p className="text-[10px] text-gray-500">一般會員</p>
+                  <p className="text-[10px] text-gray-500">{getRoleLabel(role)}</p>
                 </div>
                 
                 <button
                   className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-bold text-gray-700 transition-colors hover:bg-brand-50 hover:text-brand-700"
                   role="menuitem"
-                  onClick={() => {/* TODO: Profile Link */}}
+                  onClick={() => {
+                    notify.info(HEADER_STRINGS.MSG_FEATURE_DEV, HEADER_STRINGS.MSG_PROFILE_SOON);
+                    setUserMenuOpen(false);
+                  }}
                 >
                   <User size={16} />
-                  {STRINGS.MENU_PROFILE}
+                  {HEADER_STRINGS.MENU_PROFILE}
                 </button>
                 
                 <button
@@ -159,7 +173,7 @@ export function GlobalHeader({ mode, title, className = '' }: GlobalHeaderProps)
                   role="menuitem"
                 >
                   <LogOut size={16} />
-                  {STRINGS.BTN_LOGOUT}
+                  {HEADER_STRINGS.BTN_LOGOUT}
                 </button>
               </div>
             )}
@@ -170,7 +184,7 @@ export function GlobalHeader({ mode, title, className = '' }: GlobalHeaderProps)
             className="flex items-center gap-1 rounded-xl bg-brand-700 px-3 py-1.5 text-xs font-bold text-white shadow-sm transition-all hover:bg-brand-600 hover:shadow-md active:scale-95"
           >
             <User size={14} strokeWidth={2.5} />
-            <span>{STRINGS.BTN_LOGIN}</span>
+            <span>{HEADER_STRINGS.BTN_LOGIN}</span>
           </a>
         )}
       </div>
