@@ -26,7 +26,10 @@ export function BottomCTA({ role }: BottomCTAProps) {
       <p className="text-xs text-[var(--text-secondary)]">
         {isMember ? '🏠 驗證住戶身份，解鎖私密牆' : '🔓 登入解鎖完整評價 + 更多功能'}
       </p>
-      <button className="rounded-full bg-gradient-to-br from-[var(--primary)] to-[#005282] px-5 py-2.5 text-[13px] font-bold text-white">
+      <button 
+        onClick={() => window.location.href = '/maihouses/auth.html'}
+        className="rounded-full bg-gradient-to-br from-[var(--primary)] to-[#005282] px-5 py-2.5 text-[13px] font-bold text-white shadow-lg transition-transform hover:scale-105 active:scale-95"
+      >
         {isMember ? '驗證住戶' : '免費註冊'}
       </button>
     </div>

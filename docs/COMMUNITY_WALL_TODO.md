@@ -1391,6 +1391,31 @@ useEffect(() => {
 
 ---
 
+## ✅ P2 useFeedData (已完成)
+
+- [x] P2-1: Hook 實作
+- [x] P2-2: Mock 資料
+- [x] P2-3: 移除 Reviews/Questions
+
+---
+
+## ⚠️ P2-UI-AUDIT：PostsSection 代碼審計發現 6 項缺失
+
+> **審計時間**：2025-12-08 | **審計者**：Google Chief Frontend/Backend Director
+
+針對 `PostsSection.tsx` 與 `LockedOverlay.tsx` 的深度代碼審查，發現以下技術債與優化空間。請務必修正以達到世界級代碼水準。
+
+| ID | 嚴重度 | 問題摘要 | 建議方案 |
+|----|--------|----------|----------|
+| UI-1 | 🟡 | **硬編碼字串 (Hardcoded Strings)**<br>大量 UI 文字直接寫死在組件中（如 "🔥 社區熱帖", "公開牆", "認證房仲"）。 | **建立常數/i18n 字典**：<br>即使目前僅支援繁中，也應將所有 UI 文字抽離至 `src/constants/strings.ts` 或 `locales/zh-TW.ts`。這能確保用語一致性並為未來多語系做準備。<br>`const STRINGS = { POSTS: { TITLE: '🔥 社區熱帖', ... } }` |
+| UI-2 | 🟡 | **Accessibility (a11y) 缺失**<br>Emoji 直接使用（如 `❤️`, `👁️`）且部分缺乏 `role="img"` 與 `aria-label`。 | **規範化 Emoji 組件**：<br>建立 `<Emoji label="按讚">❤️</Emoji>` 或確保所有裝飾性 Emoji 有 `aria-hidden="true"`，功能性 Emoji 有正確的 `aria-label`。 |
+| UI-3 | 🟢 | **手動 Throttle 實作**<br>`PostCard` 內使用 `useRef` + `setTimeout` 手刻 throttle。 | **使用標準 Hook**：<br>引入 `useThrottle` 或 `useDebounce` hook (如 `ahooks` 或自製通用 hook)，減少組件內樣板代碼，提高可讀性與測試性。 |
+| UI-4 | 🟢 | **邏輯重複 (DRY)**<br>`isAgent` / `isOfficial` 的判斷邏輯 (`post.type === 'agent'`) 散落在 render 中。 | **封裝領域邏輯**：<br>建立 `getPostBadgeType(post)` 或在 `Post` model 層增加 helper getter。避免字串比對邏輯散落。 |
+| UI-5 | 🟢 | **UX: Disabled Button**<br>"回覆" 按鈕被設為 disabled 且 `cursor-not-allowed`，但缺乏明確的 "即將推出" 提示或 Tooltip (僅有 title 屬性)。 | **增強使用者預期**：<br>使用 Tooltip 組件明確告知用戶該功能何時可用，或完全隱藏直到功能就緒（Feature Flag）。MVP 階段建議保留但優化提示。 |
+| UI-6 | 🟢 | **Props Override Duplication**<br>`PostsSection` 呼叫 `LockedOverlay` 時硬編碼了 `benefits`，這與 `LockedOverlay` 的預設值部分重複且易導致維護不一致。 | **Props 預設值優化**：<br>若 `benefits` 大多數情況相同，應依賴 `LockedOverlay` 的預設值，僅在確實需要不同時才傳入。 |
+
+---
+
 ## 📝 已完成紀錄
 
 ### 2025-12-07

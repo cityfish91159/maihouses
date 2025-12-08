@@ -15,6 +15,43 @@ import { PostModal } from './PostModal';
 import { formatRelativeTimeLabel } from '../../../lib/time';
 import { notify } from '../../../lib/notify';
 
+// P2-UI-1: 提取 UI 字串
+const STRINGS = {
+  AGENT_BADGE: '認證房仲',
+  OFFICIAL_BADGE: '官方公告',
+  RESIDENT_BADGE_SUFFIX: ' 住戶',
+  PRIVATE_POST_LABEL: '僅社區可見',
+  BTN_MSG_AGENT: '私訊房仲',
+  BTN_LIKE: '讚',
+  BTN_LIKING: '處理中',
+  BTN_REPLY: '回覆',
+  BTN_REPLY_TOOLTIP: '功能開發中，敬請期待',
+  BTN_REPLY_ARIA: '回覆功能開發中',
+  BTN_POST_PUBLIC: '發布貼文',
+  BTN_POST_PRIVATE: '發布私密貼文',
+  SECTION_TITLE: '社區熱帖',
+  TAB_PUBLIC: '公開牆',
+  TAB_PRIVATE: '私密牆',
+  MSG_AGENT_VIEW_ONLY: '房仲可查看私密牆，但無法發文',
+  LOCKED_TITLE: '私密牆僅限本社區住戶查看',
+  LOCKED_DESC_GUEST: '請先登入或註冊',
+  LOCKED_DESC_USER: '驗證住戶身份後即可加入討論',
+  BTN_UNLOCK_GUEST: '免費註冊 / 登入',
+  BTN_UNLOCK_USER: '我是住戶，驗證身份',
+  NOTIFY_LOGIN_TITLE: '請先登入或註冊',
+  NOTIFY_LOGIN_DESC: '登入後才能發布貼文',
+  NOTIFY_PERM_ERROR: '目前無法發文',
+  NOTIFY_PERM_CHECK: '請確認帳號權限或稍後再試',
+  NOTIFY_PRIVATE_ONLY: '僅住戶可發佈私密貼文',
+  NOTIFY_PRIVATE_ACCESS_DENIED: '請先登入或註冊',
+  NOTIFY_PRIVATE_ACCESS_DENIED_DESC: '登入/註冊後可查看私密牆',
+  NOTIFY_VERIFY_REQUIRED: '請完成住戶驗證',
+  NOTIFY_VERIFY_REQUIRED_DESC: '上傳水電帳單或管理費收據後即可查看',
+  LOCKED_OVERLAY_COUNT_LABEL: '則熱帖',
+  LOCKED_OVERLAY_BENEFIT_1: '查看完整動態',
+  LOCKED_OVERLAY_BENEFIT_2: '新回應通知',
+};
+
 interface PostCardProps {
   post: Post;
   onLike?: (postId: number | string) => Promise<void> | void;
@@ -29,21 +66,21 @@ function PostCard({ post, onLike }: PostCardProps) {
   const displayTime = formatRelativeTimeLabel(post.time);
 
   const badge = isAgent 
-    ? <span className="rounded bg-brand-100 px-1.5 py-0.5 text-[9px] font-bold text-brand-600">認證房仲</span>
+    ? <span className="rounded bg-brand-100 px-1.5 py-0.5 text-[9px] font-bold text-brand-600">{STRINGS.AGENT_BADGE}</span>
     : isOfficial 
-      ? <span className="rounded bg-brand-50 px-1.5 py-0.5 text-[9px] font-bold text-brand">官方公告</span>
+      ? <span className="rounded bg-brand-50 px-1.5 py-0.5 text-[9px] font-bold text-brand">{STRINGS.OFFICIAL_BADGE}</span>
       : post.floor 
-        ? <span className="rounded bg-brand-100 px-1.5 py-0.5 text-[9px] font-bold text-brand">{post.floor} 住戶</span>
+        ? <span className="rounded bg-brand-100 px-1.5 py-0.5 text-[9px] font-bold text-brand">{post.floor}{STRINGS.RESIDENT_BADGE_SUFFIX}</span>
         : null;
 
-  // 修復：likes=0 / comments=0 時也應顯示，不再依賴 truthy 判斷
+  // P2-UI-2: 優化 Emoji 可訪問性
   const stats = post.likes !== undefined 
-    ? <span className="flex items-center gap-1">❤️ {post.likes}</span>
+    ? <span className="flex items-center gap-1"><span role="img" aria-label="愛心">❤️</span> {post.likes}</span>
     : post.views !== undefined
-      ? <span className="flex items-center gap-1">👁️ {post.views}</span>
+      ? <span className="flex items-center gap-1"><span role="img" aria-label="觀看數">👁️</span> {post.views}</span>
       : null;
   const commentsStat = post.comments !== undefined
-    ? <span className="flex items-center gap-1">💬 {post.comments}</span>
+    ? <span className="flex items-center gap-1"><span role="img" aria-label="留言數">💬</span> {post.comments}</span>
     : null;
 
   useEffect(() => {
@@ -96,15 +133,15 @@ function PostCard({ post, onLike }: PostCardProps) {
         <div className="flex gap-3 text-[11px] text-ink-600">
           {stats}
           {commentsStat}
-          {post.private && <span className="flex items-center gap-1">🔒 僅社區可見</span>}
+          {post.private && <span className="flex items-center gap-1"><span role="img" aria-label="鎖頭">🔒</span> {STRINGS.PRIVATE_POST_LABEL}</span>}
         </div>
         <div className="mt-1 flex gap-2">
           {isAgent ? (
             <button 
               className="flex items-center gap-1 rounded-lg border border-brand/10 bg-brand/6 px-2.5 py-1.5 text-[11px] font-semibold text-brand transition-all hover:bg-brand/12"
-              aria-label="私訊房仲"
+              aria-label={STRINGS.BTN_MSG_AGENT}
             >
-              📩 私訊房仲
+              <span role="img" aria-label="信封">📩</span> {STRINGS.BTN_MSG_AGENT}
             </button>
           ) : (
             <>
@@ -115,15 +152,15 @@ function PostCard({ post, onLike }: PostCardProps) {
                 aria-busy={isLiking}
                 disabled={isLiking}
               >
-                {isLiking ? '⏳ 處理中' : '❤️ 讚'}
+                {isLiking ? <><span role="img" aria-label="沙漏">⏳</span> {STRINGS.BTN_LIKING}</> : <><span role="img" aria-label="愛心">❤️</span> {STRINGS.BTN_LIKE}</>}
               </button>
               <button 
                 className="flex items-center gap-1 rounded-lg border border-brand/10 bg-brand/6 px-2.5 py-1.5 text-[11px] font-semibold text-brand/50 cursor-not-allowed opacity-60 transition-all"
-                aria-label="回覆功能開發中"
-                title="🚧 功能開發中，敬請期待"
+                aria-label={STRINGS.BTN_REPLY_ARIA}
+                title={STRINGS.BTN_REPLY_TOOLTIP}
                 disabled
               >
-                💬 回覆
+                <span role="img" aria-label="對話框">💬</span> {STRINGS.BTN_REPLY}
               </button>
             </>
           )}
@@ -172,15 +209,15 @@ export function PostsSection({
 
   const openPostModal = (visibility: 'public' | 'private') => {
     if (isGuest) {
-      notify.error('請先登入或註冊', '登入後才能發布貼文');
+      notify.error(STRINGS.NOTIFY_LOGIN_TITLE, STRINGS.NOTIFY_LOGIN_DESC);
       return;
     }
     if (visibility === 'public' && !perm.canPostPublic) {
-      notify.error('目前無法發文', '請確認帳號權限或稍後再試');
+      notify.error(STRINGS.NOTIFY_PERM_ERROR, STRINGS.NOTIFY_PERM_CHECK);
       return;
     }
     if (visibility === 'private' && !perm.canPostPrivate) {
-      notify.error('僅住戶可發佈私密貼文');
+      notify.error(STRINGS.NOTIFY_PRIVATE_ONLY);
       return;
     }
     setPostModalVisibility(visibility);
@@ -189,7 +226,7 @@ export function PostsSection({
 
   const handlePostSubmit = async (content: string) => {
     if (isGuest) {
-      notify.error('請先登入或註冊', '登入後才能發布貼文');
+      notify.error(STRINGS.NOTIFY_LOGIN_TITLE, STRINGS.NOTIFY_LOGIN_DESC);
       return;
     }
     if (onCreatePost) {
@@ -212,8 +249,8 @@ export function PostsSection({
   const handlePrivateClick = () => {
     if (!perm.canAccessPrivate) {
       notify.error(
-        perm.isGuest ? '請先登入或註冊' : '請完成住戶驗證',
-        perm.isGuest ? '🔐 登入/註冊後可查看私密牆' : '🏠 上傳水電帳單或管理費收據後即可查看'
+        perm.isGuest ? STRINGS.NOTIFY_PRIVATE_ACCESS_DENIED : STRINGS.NOTIFY_VERIFY_REQUIRED,
+        perm.isGuest ? `🔐 ${STRINGS.NOTIFY_PRIVATE_ACCESS_DENIED_DESC}` : `🏠 ${STRINGS.NOTIFY_VERIFY_REQUIRED_DESC}`
       );
       return;
     }
@@ -270,7 +307,9 @@ export function PostsSection({
   return (
     <section id="public-wall" className="scroll-mt-20 overflow-hidden rounded-[18px] border border-border-light bg-white/98 shadow-[0_2px_12px_rgba(0,51,102,0.04)]" aria-labelledby="posts-heading">
       <div className="flex items-center justify-between border-b border-brand/5 bg-gradient-to-br from-brand/3 to-brand-600/1 px-4 py-3.5">
-        <h2 id="posts-heading" className="flex items-center gap-1.5 text-[15px] font-extrabold text-brand-700">🔥 社區熱帖</h2>
+        <h2 id="posts-heading" className="flex items-center gap-1.5 text-[15px] font-extrabold text-brand-700">
+          <span role="img" aria-label="火焰">🔥</span> {STRINGS.SECTION_TITLE}
+        </h2>
       </div>
       
       {/* Tabs */}
@@ -286,7 +325,7 @@ export function PostsSection({
           tabIndex={currentTab === 'public' ? 0 : -1}
           className={`rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-all ${currentTab === 'public' ? 'border-brand-600 bg-brand/10 font-bold text-brand' : 'border-transparent bg-brand-100/80 text-ink-600 hover:bg-brand/8 hover:text-brand'}`}
         >
-          公開牆
+          {STRINGS.TAB_PUBLIC}
         </button>
         <button 
           role="tab"
@@ -300,7 +339,7 @@ export function PostsSection({
           tabIndex={perm.canAccessPrivate ? (currentTab === 'private' ? 0 : -1) : -1}
           className={`rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-all ${currentTab === 'private' ? 'border-brand-600 bg-brand/10 font-bold text-brand' : 'border-transparent bg-brand-100/80 text-ink-600 hover:bg-brand/8 hover:text-brand'} ${!perm.canAccessPrivate ? 'opacity-60' : ''}`}
         >
-          私密牆 {!perm.canAccessPrivate && '🔒'}
+          {STRINGS.TAB_PRIVATE} {!perm.canAccessPrivate && <span role="img" aria-label="鎖頭">🔒</span>}
         </button>
       </div>
 
@@ -322,8 +361,8 @@ export function PostsSection({
             <LockedOverlay
               visible={hiddenPublicCount > 0 && !!nextHiddenPost}
               hiddenCount={hiddenPublicCount}
-              countLabel="則熱帖"
-              benefits={['查看完整動態', '新回應通知']}
+              countLabel={STRINGS.LOCKED_OVERLAY_COUNT_LABEL}
+              benefits={[STRINGS.LOCKED_OVERLAY_BENEFIT_1, STRINGS.LOCKED_OVERLAY_BENEFIT_2]}
               showCta
               {...(onUnlock ? { onCtaClick: onUnlock } : {})}
             >
@@ -338,7 +377,7 @@ export function PostsSection({
                   onClick={() => openPostModal('public')}
                   className="flex w-full items-center justify-center gap-1 rounded-lg border border-brand/10 bg-brand/6 px-2.5 py-1.5 text-[11px] font-semibold text-brand hover:bg-brand/12"
                 >
-                  ✏️ 發布貼文
+                  <span role="img" aria-label="鉛筆">✏️</span> {STRINGS.BTN_POST_PUBLIC}
                 </button>
               </div>
             )}
@@ -354,23 +393,23 @@ export function PostsSection({
                   onClick={() => openPostModal('private')}
                   className="flex w-full items-center justify-center gap-1 rounded-lg border border-brand/10 bg-brand/6 px-2.5 py-1.5 text-[11px] font-semibold text-brand hover:bg-brand/12"
                 >
-                  ✏️ 發布私密貼文
+                  <span role="img" aria-label="鉛筆">✏️</span> {STRINGS.BTN_POST_PRIVATE}
                 </button>
               </div>
             ) : (
-              <p className="py-3 text-center text-[11px] text-ink-600">💡 房仲可查看私密牆，但無法發文</p>
+              <p className="py-3 text-center text-[11px] text-ink-600">💡 {STRINGS.MSG_AGENT_VIEW_ONLY}</p>
             )}
           </>
         ) : (
           <div className="flex flex-col items-center justify-center rounded-[14px] bg-brand/3 px-5 py-10 text-center">
             <div className="mb-3 text-5xl opacity-50" aria-hidden="true">🔐</div>
-            <h4 className="mb-1.5 text-sm font-bold text-brand-700">私密牆僅限本社區住戶查看</h4>
-            <p className="mb-4 text-xs text-ink-600">{perm.isGuest ? '請先登入或註冊' : '驗證住戶身份後即可加入討論'}</p>
+            <h4 className="mb-1.5 text-sm font-bold text-brand-700">{STRINGS.LOCKED_TITLE}</h4>
+            <p className="mb-4 text-xs text-ink-600">{perm.isGuest ? STRINGS.LOCKED_DESC_GUEST : STRINGS.LOCKED_DESC_USER}</p>
             <button 
               onClick={onUnlock}
               className="rounded-full bg-brand px-5 py-2.5 text-xs font-bold text-white"
             >
-              {perm.isGuest ? '免費註冊 / 登入' : '我是住戶，驗證身份'}
+              {perm.isGuest ? STRINGS.BTN_UNLOCK_GUEST : STRINGS.BTN_UNLOCK_USER}
             </button>
           </div>
         )}
