@@ -2,11 +2,20 @@
   "hooks": {
     "PreToolUse": [
       {
-        "matcher": "Edit|Write|Bash",
+        "matcher": "Edit|Write",
         "hooks": [
           {
             "type": "command",
-            "command": "bash scripts/ai-supervisor.sh pre \"$TOOL_NAME\" \"$TOOL_INPUT\""
+            "command": "echo '\n🔍 [監督系統] 準備修改檔案 - 確認已閱讀原始碼？\n'"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '\n⚡ [監督系統] 執行命令前檢查...\n'"
           }
         ]
       }
@@ -17,7 +26,27 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash scripts/ai-supervisor.sh post \"$TOOL_NAME\" \"$TOOL_OUTPUT\""
+            "command": "bash scripts/ai-supervisor.sh post-edit"
+          }
+        ]
+      },
+      {
+        "matcher": "Read",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '\n✅ [監督系統] 已確認閱讀檔案\n'"
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '\n📋 [監督系統] 提醒：確保遵循 CLAUDE.md 規範\n'"
           }
         ]
       }
@@ -28,7 +57,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "echo '\\n[SUPERVISOR] 任務結束 - 請確認所有步驟已完成\\n'"
+            "command": "bash scripts/ai-supervisor.sh final-check"
           }
         ]
       }
