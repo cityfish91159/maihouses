@@ -114,31 +114,31 @@ export default function ChatPropertyCard({
       href={propertyUrl}
       target="_blank"
       rel="noopener noreferrer"
-      className="block mt-3 p-4 rounded-xl bg-gradient-to-br from-orange-50 to-white border-2 border-orange-100 hover:border-orange-300 hover:shadow-md transition-all group max-w-sm"
+      className="group mt-3 block max-w-sm rounded-xl border-2 border-orange-100 bg-gradient-to-br from-orange-50 to-white p-4 transition-all hover:border-orange-300 hover:shadow-md"
     >
       {/* Header */}
-      <div className="flex items-start justify-between mb-2">
+      <div className="mb-2 flex items-start justify-between">
         <div>
-          <div className="flex items-center gap-2 mb-1">
+          <div className="mb-1 flex items-center gap-2">
             <Building2 size={14} className="text-orange-500" />
-            <span className="text-[11px] text-ink-500 font-medium">{community}</span>
+            <span className="text-ink-500 text-[11px] font-medium">{community}</span>
           </div>
-          <p className="font-bold text-ink-800 text-sm group-hover:text-orange-600 transition-colors">
+          <p className="text-ink-800 text-sm font-bold transition-colors group-hover:text-orange-600">
             {property.title}
           </p>
         </div>
         <div className="flex items-center gap-2">
           {property.highlight && (
-            <span className="bg-orange-500 text-white text-[10px] px-2 py-0.5 rounded-full whitespace-nowrap font-medium">
+            <span className="whitespace-nowrap rounded-full bg-orange-500 px-2 py-0.5 text-[10px] font-medium text-white">
               {property.highlight}
             </span>
           )}
-          <ExternalLink size={14} className="text-orange-400 group-hover:text-orange-600 transition-colors" />
+          <ExternalLink size={14} className="text-orange-400 transition-colors group-hover:text-orange-600" />
         </div>
       </div>
       
       {/* 價格與坪數 */}
-      <div className="grid grid-cols-2 gap-2 mb-2">
+      <div className="mb-2 grid grid-cols-2 gap-2">
         <div className="flex items-center gap-1 text-sm">
           <DollarSign size={12} className="text-orange-400" />
           <span className="font-bold text-orange-600">{property.price}</span>
@@ -150,7 +150,7 @@ export default function ChatPropertyCard({
       </div>
 
       {/* 地址 */}
-      <div className="flex items-center gap-1 text-[11px] text-ink-500">
+      <div className="text-ink-500 flex items-center gap-1 text-[11px]">
         <MapPin size={11} />
         <span>{property.address}</span>
       </div>
@@ -161,7 +161,7 @@ export default function ChatPropertyCard({
       </div>
 
       {/* CTA */}
-      <div className="mt-3 pt-2 border-t border-orange-100 text-[11px] text-orange-500 font-medium opacity-0 group-hover:opacity-100 transition-opacity text-center">
+      <div className="mt-3 border-t border-orange-100 pt-2 text-center text-[11px] font-medium text-orange-500 opacity-0 transition-opacity group-hover:opacity-100">
         點擊查看詳情 →
       </div>
     </a>

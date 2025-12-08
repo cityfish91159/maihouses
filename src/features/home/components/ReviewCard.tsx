@@ -10,13 +10,13 @@ interface ReviewProps {
 
 export const ReviewCard = React.memo(({ id, name, rating, tags, content }: ReviewProps) => {
   return (
-    <article className="flex gap-3 border border-[#E6EDF7] rounded-2xl p-3.5 bg-white relative hover:shadow-[0_4px_12px_rgba(0,56,90,0.08)] transition-all duration-200 hover:-translate-y-0.5">
-      <div className="w-[38px] h-[38px] rounded-full bg-gradient-to-b from-[#F2F5F8] to-[#E1E6EB] border border-[#E6EDF7] flex items-center justify-center font-black text-[#00385a] text-[15px] shrink-0 shadow-[inset_0_1px_2px_rgba(255,255,255,0.8),0_2px_4px_rgba(0,56,90,0.05)]">
+    <article className="relative flex gap-3 rounded-2xl border border-[#E6EDF7] bg-white p-3.5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(0,56,90,0.08)]">
+      <div className="flex size-[38px] shrink-0 items-center justify-center rounded-full border border-[#E6EDF7] bg-gradient-to-b from-[#F2F5F8] to-[#E1E6EB] text-[15px] font-black text-[#00385a] shadow-[inset_0_1px_2px_rgba(255,255,255,0.8),0_2px_4px_rgba(0,56,90,0.05)]">
         {id}
       </div>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center justify-between mb-1.5">
-          <div className="font-black text-[15px] text-[#0A2246] flex items-center gap-1.5">
+      <div className="min-w-0 flex-1">
+        <div className="mb-1.5 flex items-center justify-between">
+          <div className="flex items-center gap-1.5 text-[15px] font-black text-primary">
             {name}
           </div>
           <div className="flex gap-0.5" aria-label={`${rating} stars`}>
@@ -26,15 +26,15 @@ export const ReviewCard = React.memo(({ id, name, rating, tags, content }: Revie
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-1.5 mb-2">
+        <div className="mb-2 flex flex-wrap gap-1.5">
           {tags.map(tag => (
-            <span key={tag} className="text-[11px] px-2 py-0.5 rounded-md bg-[#F6F9FF] border border-[#E6EDF7] text-[#00385a] font-bold tracking-wide">
+            <span key={tag} className="rounded-md border border-[#E6EDF7] bg-[#F6F9FF] px-2 py-0.5 text-[11px] font-bold tracking-wide text-[#00385a]">
               {tag}
             </span>
           ))}
         </div>
 
-        <p className="text-[13px] leading-relaxed text-[#4B5563] font-medium text-justify">
+        <p className="text-justify text-[13px] font-medium leading-relaxed text-[#4B5563]">
           {content}
         </p>
       </div>

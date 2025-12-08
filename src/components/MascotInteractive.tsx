@@ -97,16 +97,16 @@ export default function MascotInteractive({
       onClick={handleClick}
     >
       {/* 背景光暈 */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3/4 h-3/4 bg-[var(--brand)]/10 rounded-full blur-2xl -z-10 animate-pulse"></div>
+      <div className="bg-[var(--brand)]/10 absolute left-1/2 top-1/2 -z-10 size-3/4 -translate-x-1/2 -translate-y-1/2 animate-pulse rounded-full blur-2xl"></div>
       
       {/* 公仔 */}
-      <div className={`w-full h-full text-[var(--brand)] transition-transform duration-300 ${isHovered ? 'scale-110' : ''}`}>
+      <div className={`size-full text-[var(--brand)] transition-transform duration-300 ${isHovered ? 'scale-110' : ''}`}>
         {renderMascot()}
       </div>
 
       {/* 點擊特效 */}
       {clickCount > 0 && clickCount <= 5 && (
-        <div className="absolute -top-2 -right-2 text-lg animate-bounce">
+        <div className="absolute -right-2 -top-2 animate-bounce text-lg">
           {['💫', '✨', '🌟', '💖', '🎉'][Math.min(clickCount - 1, 4)]}
         </div>
       )}
@@ -119,7 +119,7 @@ export default function MascotInteractive({
 // 待機狀態 - 輕微呼吸動畫
 function MascotIdle() {
   return (
-    <svg viewBox="0 0 200 240" className="w-full h-full drop-shadow-sm animate-float">
+    <svg viewBox="0 0 200 240" className="size-full animate-float drop-shadow-sm">
       {/* M-Antenna */}
       <path d="M 85 40 L 85 15 L 100 30 L 115 15 L 115 40" 
             stroke="currentColor" strokeWidth="5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
@@ -157,7 +157,7 @@ function MascotIdle() {
 // 揮手打招呼
 function MascotWave() {
   return (
-    <svg viewBox="0 0 200 240" className="w-full h-full drop-shadow-sm">
+    <svg viewBox="0 0 200 240" className="size-full drop-shadow-sm">
       {/* M-Antenna - Wiggling */}
       <path d="M 85 40 L 85 15 L 100 30 L 115 15 L 115 40" 
             stroke="currentColor" strokeWidth="5" fill="none" strokeLinecap="round" strokeLinejoin="round"
@@ -206,7 +206,7 @@ function MascotWave() {
 // 偷看（輸入密碼時）
 function MascotPeek() {
   return (
-    <svg viewBox="0 0 200 240" className="w-full h-full drop-shadow-sm">
+    <svg viewBox="0 0 200 240" className="size-full drop-shadow-sm">
       {/* M-Antenna */}
       <path d="M 85 40 L 85 15 L 100 30 L 115 15 L 115 40" 
             stroke="currentColor" strokeWidth="5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
@@ -265,7 +265,7 @@ function MascotPeek() {
 // 開心（輸入 email 時）
 function MascotHappy() {
   return (
-    <svg viewBox="0 0 200 240" className="w-full h-full drop-shadow-sm animate-bounce-slow">
+    <svg viewBox="0 0 200 240" className="size-full animate-bounce-slow drop-shadow-sm">
       {/* M-Antenna - Happy bounce */}
       <path d="M 85 40 L 85 15 L 100 30 L 115 15 L 115 40" 
             stroke="currentColor" strokeWidth="5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
@@ -311,7 +311,7 @@ function MascotHappy() {
 // 思考（載入中）
 function MascotThinking() {
   return (
-    <svg viewBox="0 0 200 240" className="w-full h-full drop-shadow-sm">
+    <svg viewBox="0 0 200 240" className="size-full drop-shadow-sm">
       {/* M-Antenna */}
       <path d="M 85 40 L 85 15 L 100 30 L 115 15 L 115 40" 
             stroke="currentColor" strokeWidth="5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
@@ -363,7 +363,7 @@ function MascotThinking() {
 // 慶祝（登入成功）
 function MascotCelebrate() {
   return (
-    <svg viewBox="0 0 200 240" className="w-full h-full drop-shadow-sm animate-jump">
+    <svg viewBox="0 0 200 240" className="animate-jump size-full drop-shadow-sm">
       {/* Confetti */}
       <g className="animate-confetti">
         <text x="30" y="40" fontSize="14">🎉</text>
@@ -416,7 +416,7 @@ function MascotCelebrate() {
 // 睡覺（閒置）
 function MascotSleep() {
   return (
-    <svg viewBox="0 0 200 240" className="w-full h-full drop-shadow-sm">
+    <svg viewBox="0 0 200 240" className="size-full drop-shadow-sm">
       {/* M-Antenna - Droopy */}
       <path d="M 85 45 L 85 25 L 100 35 L 115 25 L 115 45" 
             stroke="currentColor" strokeWidth="5" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.7"/>
@@ -459,7 +459,7 @@ function MascotSleep() {
 // 害羞/錯誤
 function MascotShy() {
   return (
-    <svg viewBox="0 0 200 240" className="w-full h-full drop-shadow-sm animate-shake">
+    <svg viewBox="0 0 200 240" className="animate-shake size-full drop-shadow-sm">
       {/* M-Antenna - Droopy sad */}
       <path d="M 85 45 L 85 20 L 100 32 L 115 20 L 115 45" 
             stroke="currentColor" strokeWidth="5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>

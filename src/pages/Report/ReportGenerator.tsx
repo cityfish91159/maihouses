@@ -134,7 +134,7 @@ export default function ReportGenerator({ property, isOpen, onClose }: ReportGen
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
+    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
       {/* 背景遮罩 */}
       <div 
         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
@@ -142,25 +142,25 @@ export default function ReportGenerator({ property, isOpen, onClose }: ReportGen
       />
       
       {/* Modal */}
-      <div className="relative w-full max-w-lg bg-white rounded-t-3xl sm:rounded-2xl max-h-[90vh] overflow-hidden flex flex-col">
+      <div className="relative flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded-t-3xl bg-white sm:rounded-2xl">
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+        <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
           <h2 className="text-lg font-bold text-slate-800">生成物件報告</h2>
           <button 
             onClick={handleClose}
-            className="p-2 hover:bg-slate-100 rounded-full transition"
+            className="rounded-full p-2 transition hover:bg-slate-100"
           >
             <X size={20} className="text-slate-500" />
           </button>
         </div>
 
         {/* 進度指示 */}
-        <div className="px-5 py-3 bg-slate-50 border-b border-slate-100">
+        <div className="border-b border-slate-100 bg-slate-50 px-5 py-3">
           <div className="flex items-center gap-2 text-sm">
             {(['style', 'highlights', 'photos', 'preview'] as Step[]).map((s, i) => (
               <React.Fragment key={s}>
-                <div className={`flex items-center gap-1.5 ${step === s ? 'text-[#003366] font-bold' : 'text-slate-400'}`}>
-                  <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                <div className={`flex items-center gap-1.5 ${step === s ? 'font-bold text-[#003366]' : 'text-slate-400'}`}>
+                  <div className={`flex size-6 items-center justify-center rounded-full text-xs font-bold ${
                     step === s ? 'bg-[#003366] text-white' : 
                     (['style', 'highlights', 'photos', 'preview'].indexOf(step) > i) ? 'bg-green-500 text-white' : 'bg-slate-200'
                   }`}>
@@ -185,7 +185,7 @@ export default function ReportGenerator({ property, isOpen, onClose }: ReportGen
           {/* Step 1: 選擇樣式 */}
           {step === 'style' && (
             <div className="space-y-4">
-              <div className="text-sm text-slate-500 mb-4">
+              <div className="mb-4 text-sm text-slate-500">
                 選擇最適合這位客戶的報告樣式
               </div>
               
@@ -193,7 +193,7 @@ export default function ReportGenerator({ property, isOpen, onClose }: ReportGen
                 <button
                   key={style.id}
                   onClick={() => setSelectedStyle(style.id as ReportStyle)}
-                  className={`w-full p-4 rounded-xl border-2 text-left transition ${
+                  className={`w-full rounded-xl border-2 p-4 text-left transition ${
                     selectedStyle === style.id 
                       ? 'border-[#003366] bg-blue-50' 
                       : 'border-slate-200 hover:border-slate-300'
@@ -206,7 +206,7 @@ export default function ReportGenerator({ property, isOpen, onClose }: ReportGen
                       <div className="text-sm text-slate-500">{style.description}</div>
                     </div>
                     {selectedStyle === style.id && (
-                      <div className="w-6 h-6 bg-[#003366] rounded-full flex items-center justify-center">
+                      <div className="flex size-6 items-center justify-center rounded-full bg-[#003366]">
                         <Check size={14} className="text-white" />
                       </div>
                     )}
@@ -219,7 +219,7 @@ export default function ReportGenerator({ property, isOpen, onClose }: ReportGen
           {/* Step 2: 選擇亮點 */}
           {step === 'highlights' && (
             <div className="space-y-4">
-              <div className="text-sm text-slate-500 mb-4">
+              <div className="mb-4 text-sm text-slate-500">
                 選擇 3 個最能打動客戶的亮點（已選 {selectedHighlights.length}/3）
               </div>
               
@@ -227,7 +227,7 @@ export default function ReportGenerator({ property, isOpen, onClose }: ReportGen
                 <button
                   key={h.id}
                   onClick={() => toggleHighlight(h.id)}
-                  className={`w-full p-3 rounded-xl border-2 text-left transition ${
+                  className={`w-full rounded-xl border-2 p-3 text-left transition ${
                     selectedHighlights.includes(h.id)
                       ? 'border-[#003366] bg-blue-50' 
                       : 'border-slate-200 hover:border-slate-300'
@@ -240,7 +240,7 @@ export default function ReportGenerator({ property, isOpen, onClose }: ReportGen
                       <div className="text-xs text-slate-500">{h.subtitle}</div>
                     </div>
                     {selectedHighlights.includes(h.id) && (
-                      <div className="w-6 h-6 bg-[#003366] rounded-full flex items-center justify-center">
+                      <div className="flex size-6 items-center justify-center rounded-full bg-[#003366]">
                         <Check size={14} className="text-white" />
                       </div>
                     )}
@@ -253,7 +253,7 @@ export default function ReportGenerator({ property, isOpen, onClose }: ReportGen
           {/* Step 3: 選擇照片 */}
           {step === 'photos' && (
             <div className="space-y-4">
-              <div className="text-sm text-slate-500 mb-4">
+              <div className="mb-4 text-sm text-slate-500">
                 選擇要放入報告的照片（已選 {selectedPhotos.length}/5）
               </div>
               
@@ -262,15 +262,15 @@ export default function ReportGenerator({ property, isOpen, onClose }: ReportGen
                   <button
                     key={i}
                     onClick={() => togglePhoto(i)}
-                    className={`relative aspect-square rounded-lg overflow-hidden border-2 transition ${
+                    className={`relative aspect-square overflow-hidden rounded-lg border-2 transition ${
                       selectedPhotos.includes(i)
                         ? 'border-[#003366] ring-2 ring-[#003366]/20' 
                         : 'border-transparent'
                     }`}
                   >
-                    <img src={img} alt="" className="w-full h-full object-cover" />
+                    <img src={img} alt="" className="size-full object-cover" />
                     {selectedPhotos.includes(i) && (
-                      <div className="absolute top-1 right-1 w-5 h-5 bg-[#003366] rounded-full flex items-center justify-center">
+                      <div className="absolute right-1 top-1 flex size-5 items-center justify-center rounded-full bg-[#003366]">
                         <Check size={12} className="text-white" />
                       </div>
                     )}
@@ -284,32 +284,32 @@ export default function ReportGenerator({ property, isOpen, onClose }: ReportGen
           {step === 'preview' && generatedUrl && (
             <div className="space-y-5">
               {/* 成功提示 */}
-              <div className="text-center py-4">
-                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+              <div className="py-4 text-center">
+                <div className="mx-auto mb-3 flex size-16 items-center justify-center rounded-full bg-green-100">
                   <Check size={32} className="text-green-600" />
                 </div>
                 <h3 className="text-lg font-bold text-slate-800">報告已生成！</h3>
-                <p className="text-sm text-slate-500 mt-1">選擇分享方式發送給客戶</p>
+                <p className="mt-1 text-sm text-slate-500">選擇分享方式發送給客戶</p>
               </div>
 
               {/* 連結預覽 */}
-              <div className="bg-slate-50 rounded-xl p-3">
-                <div className="flex items-center gap-2 text-sm text-slate-600 mb-2">
+              <div className="rounded-xl bg-slate-50 p-3">
+                <div className="mb-2 flex items-center gap-2 text-sm text-slate-600">
                   <Link2 size={14} />
                   報告連結
                 </div>
-                <div className="bg-white rounded-lg p-2 text-xs text-slate-500 break-all border border-slate-200">
+                <div className="break-all rounded-lg border border-slate-200 bg-white p-2 text-xs text-slate-500">
                   {generatedUrl}
                 </div>
               </div>
 
               {/* 分享訊息 */}
               <div>
-                <label className="text-sm text-slate-600 mb-2 block">分享訊息（可編輯）</label>
+                <label className="mb-2 block text-sm text-slate-600">分享訊息（可編輯）</label>
                 <textarea
                   value={customMessage || defaultMessage}
                   onChange={e => setCustomMessage(e.target.value)}
-                  className="w-full p-3 border border-slate-200 rounded-xl text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#003366]/20 focus:border-[#003366]"
+                  className="w-full resize-none rounded-xl border border-slate-200 p-3 text-sm focus:border-[#003366] focus:outline-none focus:ring-2 focus:ring-[#003366]/20"
                   rows={3}
                 />
               </div>
@@ -318,7 +318,7 @@ export default function ReportGenerator({ property, isOpen, onClose }: ReportGen
               <div className="space-y-3">
                 <button
                   onClick={handleCopyLink}
-                  className="flex items-center justify-center gap-2 w-full py-3 bg-[#003366] hover:bg-[#002244] text-white font-bold rounded-xl transition"
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#003366] py-3 font-bold text-white transition hover:bg-[#002244]"
                 >
                   <Copy size={18} />
                   複製連結
@@ -326,9 +326,9 @@ export default function ReportGenerator({ property, isOpen, onClose }: ReportGen
                 
                 <button
                   onClick={handleLineShare}
-                  className="flex items-center justify-center gap-2 w-full py-3 bg-[#06C755] hover:bg-[#05a847] text-white font-bold rounded-xl transition"
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#06C755] py-3 font-bold text-white transition hover:bg-[#05a847]"
                 >
-                  <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current">
+                  <svg viewBox="0 0 24 24" className="size-5 fill-current">
                     <path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.346 0 .627.285.627.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63.346 0 .628.285.628.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.282.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314"/>
                   </svg>
                   LINE 分享
@@ -336,7 +336,7 @@ export default function ReportGenerator({ property, isOpen, onClose }: ReportGen
                 
                 <button
                   onClick={handleShare}
-                  className="flex items-center justify-center gap-2 w-full py-3 border-2 border-slate-200 hover:border-slate-300 text-slate-700 font-bold rounded-xl transition"
+                  className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-slate-200 py-3 font-bold text-slate-700 transition hover:border-slate-300"
                 >
                   <Share2 size={18} />
                   其他分享方式
@@ -359,7 +359,7 @@ export default function ReportGenerator({ property, isOpen, onClose }: ReportGen
 
         {/* Footer 按鈕 */}
         {step !== 'preview' && (
-          <div className="px-5 py-4 border-t border-slate-100 flex gap-3">
+          <div className="flex gap-3 border-t border-slate-100 px-5 py-4">
             {step !== 'style' && (
               <button
                 onClick={() => {
@@ -370,7 +370,7 @@ export default function ReportGenerator({ property, isOpen, onClose }: ReportGen
                     if (prevStep) setStep(prevStep);
                   }
                 }}
-                className="flex-1 py-3 border-2 border-slate-200 hover:border-slate-300 text-slate-700 font-bold rounded-xl transition"
+                className="flex-1 rounded-xl border-2 border-slate-200 py-3 font-bold text-slate-700 transition hover:border-slate-300"
               >
                 上一步
               </button>
@@ -383,11 +383,11 @@ export default function ReportGenerator({ property, isOpen, onClose }: ReportGen
                 else if (step === 'photos') handleGenerate();
               }}
               disabled={isGenerating || (step === 'highlights' && selectedHighlights.length === 0)}
-              className="flex-1 py-3 bg-[#003366] hover:bg-[#002244] disabled:bg-slate-300 text-white font-bold rounded-xl transition flex items-center justify-center gap-2"
+              className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#003366] py-3 font-bold text-white transition hover:bg-[#002244] disabled:bg-slate-300"
             >
               {isGenerating ? (
                 <>
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <div className="size-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
                   生成中...
                 </>
               ) : step === 'photos' ? (

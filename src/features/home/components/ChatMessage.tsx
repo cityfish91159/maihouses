@@ -88,8 +88,8 @@ function stripAllTags(content: string): string {
  */
 function ScenarioCard({ description }: { description: string }) {
     return (
-        <div className="my-3 border-l-4 border-orange-300 pl-3 italic text-gray-600 bg-gradient-to-r from-orange-50/80 to-amber-50/50 p-3 rounded-r-lg">
-            <span className="text-lg mr-2">✨</span>
+        <div className="my-3 rounded-r-lg border-l-4 border-orange-300 bg-gradient-to-r from-orange-50/80 to-amber-50/50 p-3 italic text-gray-600">
+            <span className="mr-2 text-lg">✨</span>
             <span className="leading-relaxed">{description}</span>
         </div>
     );
@@ -106,8 +106,8 @@ export default function ChatMessage({ role, content, timestamp }: ChatMessagePro
         <div className={`flex ${role === 'user' ? 'justify-end' : 'justify-start'} animate-fadeIn`}>
             <div
                 className={`max-w-[85%] rounded-2xl px-5 py-3.5 text-[15px] font-medium leading-relaxed shadow-sm ${role === 'user'
-                        ? 'bg-brand-700 text-white rounded-br-sm'
-                        : 'bg-white text-ink-900 border border-brand-100 rounded-bl-sm'
+                        ? 'rounded-br-sm bg-brand-700 text-white'
+                        : 'rounded-bl-sm border border-brand-100 bg-white text-ink-900'
                     }`}
             >
                 <div className="whitespace-pre-wrap">{text}</div>

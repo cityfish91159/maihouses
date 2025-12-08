@@ -64,15 +64,15 @@ export default function MascotHouse({ animated = true }: MascotHouseProps) {
   return (
     <svg 
       viewBox="0 0 200 240" 
-      className={`w-full h-full drop-shadow-sm text-brand transition-transform duration-500 ${
+      className={`size-full text-brand drop-shadow-sm transition-transform duration-500 ${
         animated ? 'hover:scale-105' : ''
       } ${expr.bounce ? 'animate-bounce' : ''}`}
     >
       {/* 開心時的愛心裝飾 */}
       {phase === 4 && (
         <>
-          <text x="25" y="70" className="text-xl animate-ping" fill="#FF6B9D">♥</text>
-          <text x="165" y="75" className="text-xl animate-ping" style={{ animationDelay: '0.3s' }} fill="#FF6B9D">♥</text>
+          <text x="25" y="70" className="animate-ping text-xl" fill="#FF6B9D">♥</text>
+          <text x="165" y="75" className="animate-ping text-xl" style={{ animationDelay: '0.3s' }} fill="#FF6B9D">♥</text>
         </>
       )}
 

@@ -39,7 +39,7 @@ function QACard({ q, perm, isUnanswered = false, onAnswer, isAnswering, onUnlock
       </div>
       
       {isUnanswered ? (
-        <div className="mt-2 rounded-[10px] bg-brand/2 p-4 text-center text-[13px] text-ink-600">
+        <div className="bg-brand/2 mt-2 rounded-[10px] p-4 text-center text-[13px] text-ink-600">
           🙋 還沒有人回答，成為第一個回答的人！
         </div>
       ) : (
@@ -78,7 +78,7 @@ function QACard({ q, perm, isUnanswered = false, onAnswer, isAnswering, onUnlock
         <div className="mt-2">
           <button 
             type="button"
-            className={`flex w-full items-center justify-center gap-1 rounded-lg border px-2.5 py-1.5 text-[11px] font-semibold transition-all ${isUnanswered ? 'border-brand-light/30 bg-brand-light/10 text-brand-600' : 'border-brand/10 bg-brand/6 text-brand'} hover:bg-brand/12`}
+            className={`flex w-full items-center justify-center gap-1 rounded-lg border px-2.5 py-1.5 text-[11px] font-semibold transition-all ${isUnanswered ? 'border-brand-light/30 bg-brand-light/10 text-brand-600' : 'bg-brand/6 border-brand/10 text-brand'} hover:bg-brand/12`}
             onClick={() => onAnswer?.(q)}
             disabled={isAnswering}
             aria-busy={isAnswering}
@@ -416,8 +416,8 @@ export function QASection({ role, questions: questionsProp, onAskQuestion, onAns
   };
 
   return (
-    <section className="scroll-mt-20 overflow-hidden rounded-[18px] border border-border-light bg-white/98 shadow-[0_2px_12px_rgba(0,51,102,0.04)]" aria-labelledby="qa-heading" id="qa-section">
-      <div className="flex items-center justify-between border-b border-brand/5 bg-gradient-to-br from-brand/3 to-brand-600/1 px-4 py-3.5">
+    <section className="bg-white/98 scroll-mt-20 overflow-hidden rounded-[18px] border border-border-light shadow-[0_2px_12px_rgba(0,51,102,0.04)]" aria-labelledby="qa-heading" id="qa-section">
+      <div className="from-brand/3 to-brand-600/1 flex items-center justify-between border-b border-brand/5 bg-gradient-to-br px-4 py-3.5">
         <div>
           <h2 id="qa-heading" className="flex items-center gap-1.5 text-[15px] font-extrabold text-brand-700">
             🙋 準住戶問答
@@ -463,7 +463,7 @@ export function QASection({ role, questions: questionsProp, onAskQuestion, onAns
         </LockedOverlay>
 
         {/* 還沒人回答區塊 - 移至註冊 CTA 上方 */}
-        <div className="rounded-[14px] border border-dashed border-border-light bg-brand/3 p-3.5">
+        <div className="bg-brand/3 rounded-[14px] border border-dashed border-border-light p-3.5">
           <div className="space-y-2">
             <div className="text-[12px] font-semibold text-brand-700">還沒人回答的問題</div>
             {unansweredQuestions.length > 0 ? (
@@ -491,7 +491,7 @@ export function QASection({ role, questions: questionsProp, onAskQuestion, onAns
             <button
               type="button"
               onClick={openAskModal}
-              className="flex w-full items-center justify-center gap-1 rounded-lg border border-brand/10 bg-brand/6 px-2.5 py-1.5 text-[11px] font-semibold text-brand transition hover:bg-brand/12"
+              className="bg-brand/6 hover:bg-brand/12 flex w-full items-center justify-center gap-1 rounded-lg border border-brand/10 px-2.5 py-1.5 text-[11px] font-semibold text-brand transition"
             >
               {perm.canAskQuestion ? '我想問問題' : '登入後發問'}
             </button>
@@ -500,7 +500,7 @@ export function QASection({ role, questions: questionsProp, onAskQuestion, onAns
 
         {/* 訪客固定顯示註冊 CTA，放在還沒人回答區塊下方 */}
         {shouldShowUnlockCta && (
-          <div className="rounded-[12px] border border-brand/10 bg-brand/4 p-3 text-center">
+          <div className="bg-brand/4 rounded-[12px] border border-brand/10 p-3 text-center">
             <div className="text-sm font-bold text-brand-700">免費註冊 / 登入</div>
             <p className="mt-1 text-[12px] text-ink-600">
               {remainingAnsweredCount > 0
@@ -537,7 +537,7 @@ export function QASection({ role, questions: questionsProp, onAskQuestion, onAns
             <div className="mb-3 flex items-center justify-between">
               <div>
                 <h3 id="ask-modal-title" className="text-base font-bold text-ink-700">提出你的問題</h3>
-                <p className="text-xs text-ink-500">請描述情境，方便住戶提供建議</p>
+                <p className="text-ink-500 text-xs">請描述情境，方便住戶提供建議</p>
               </div>
               <button
                 type="button"
@@ -557,14 +557,14 @@ export function QASection({ role, questions: questionsProp, onAskQuestion, onAns
               <textarea
                 ref={askTextareaRef}
                 id="qa-ask-textarea"
-                className="h-28 w-full rounded-xl border border-border-light bg-ink-50/40 p-3 text-sm outline-none focus:border-brand"
+                className="bg-ink-50/40 h-28 w-full rounded-xl border border-border-light p-3 text-sm outline-none focus:border-brand"
                 placeholder="例：晚上車流聲音大嗎？管理費包含哪些服務？"
                 value={askInput}
                 onChange={e => setAskInput(e.target.value)}
                 maxLength={500}
                 disabled={submitting === 'ask'}
               />
-              {askError && <p className="text-xs text-error-500" role="alert">{askError}</p>}
+              {askError && <p className="text-error-500 text-xs" role="alert">{askError}</p>}
               <div className="flex items-center justify-between text-[11px] text-ink-400">
                 <span>至少 {MIN_QUESTION_LENGTH} 個字</span>
                 <span>{askInput.length}/500</span>
@@ -595,7 +595,7 @@ export function QASection({ role, questions: questionsProp, onAskQuestion, onAns
             <div className="mb-3 flex items-center justify-between">
               <div>
                 <h3 id="answer-modal-title" className="text-base font-bold text-ink-700">回答問題</h3>
-                <p className="text-xs text-ink-500">{activeQuestion.question}</p>
+                <p className="text-ink-500 text-xs">{activeQuestion.question}</p>
               </div>
               <button
                 type="button"
@@ -615,14 +615,14 @@ export function QASection({ role, questions: questionsProp, onAskQuestion, onAns
               <textarea
                 ref={answerTextareaRef}
                 id="qa-answer-textarea"
-                className="h-32 w-full rounded-xl border border-border-light bg-ink-50/40 p-3 text-sm outline-none focus:border-brand"
+                className="bg-ink-50/40 h-32 w-full rounded-xl border border-border-light p-3 text-sm outline-none focus:border-brand"
                 placeholder="提供實際經驗、噪音狀況、交通建議等"
                 value={answerInput}
                 onChange={e => setAnswerInput(e.target.value)}
                 maxLength={800}
                 disabled={submitting === 'answer'}
               />
-              {answerError && <p className="text-xs text-error-500" role="alert">{answerError}</p>}
+              {answerError && <p className="text-error-500 text-xs" role="alert">{answerError}</p>}
               <div className="flex items-center justify-between text-[11px] text-ink-400">
                 <span>至少 {MIN_ANSWER_LENGTH} 個字</span>
                 <span>{answerInput.length}/800</span>

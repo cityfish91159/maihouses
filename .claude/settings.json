@@ -2,11 +2,20 @@
   "hooks": {
     "PreToolUse": [
       {
-        "matcher": "Edit|Write",
+        "matcher": "Edit",
         "hooks": [
           {
             "type": "command",
-            "command": "echo '\n🔍 [監督系統] 準備修改檔案 - 確認已閱讀原始碼？\n'"
+            "command": "echo '\n⚠️ [最高規格提醒]' && echo '  ✓ 確認已完整閱讀此檔案' && echo '  ✓ 確認修改符合現有架構風格' && echo '  ✓ 確認無 any 類型、無 console.log' && echo '  ✓ 確認有完整錯誤處理' && echo '  ✓ 確認變數命名有意義\n' && bash scripts/ai-supervisor.sh enforce-read \"$TOOL_INPUT\" Edit || echo '🚫 [監督系統] Edit 被阻止！必須先 Read 該檔案'"
+          }
+        ]
+      },
+      {
+        "matcher": "Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '\n⚠️ [最高規格提醒]' && echo '  ✓ 確認已完整閱讀此檔案' && echo '  ✓ 確認修改符合現有架構風格' && echo '  ✓ 確認無 any 類型、無 console.log' && echo '  ✓ 確認有完整錯誤處理' && echo '  ✓ 確認變數命名有意義\n' && bash scripts/ai-supervisor.sh enforce-read \"$TOOL_INPUT\" Write || echo '🚫 [監督系統] Write 被阻止！必須先 Read 該檔案'"
           }
         ]
       },
@@ -15,27 +24,36 @@
         "hooks": [
           {
             "type": "command",
-            "command": "echo '\n⚡ [監督系統] 執行命令前檢查...\n'"
+            "command": "echo '\n⚡ [監督系統] 執行 Bash 命令前檢查...\n'"
           }
         ]
       }
     ],
     "PostToolUse": [
       {
-        "matcher": "Edit|Write",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash scripts/ai-supervisor.sh post-edit"
-          }
-        ]
-      },
-      {
         "matcher": "Read",
         "hooks": [
           {
             "type": "command",
-            "command": "echo '\n✅ [監督系統] 已確認閱讀檔案\n'"
+            "command": "bash scripts/ai-supervisor.sh record-read \"$TOOL_INPUT\" && echo '\n✅ [監督系統] 已記錄閱讀檔案\n'"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '\n🔍 [驗證中]' && echo '  [1/3] TypeScript...' && (npm run typecheck --silent 2>/dev/null && echo '  ✅ TypeScript 通過' || echo '  ❌ TypeScript 失敗') && echo '  [2/3] ESLint...' && (npm run lint --silent 2>/dev/null && echo '  ✅ ESLint 通過' || echo '  ❌ ESLint 失敗') && echo '  [3/3] Build...' && (npm run build --silent 2>/dev/null && echo '  ✅ Build 通過' || echo '  ❌ Build 失敗')"
+          }
+        ]
+      },
+      {
+        "matcher": "Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '\n🔍 [驗證中]' && echo '  [1/3] TypeScript...' && (npm run typecheck --silent 2>/dev/null && echo '  ✅ TypeScript 通過' || echo '  ❌ TypeScript 失敗') && echo '  [2/3] ESLint...' && (npm run lint --silent 2>/dev/null && echo '  ✅ ESLint 通過' || echo '  ❌ ESLint 失敗') && echo '  [3/3] Build...' && (npm run build --silent 2>/dev/null && echo '  ✅ Build 通過' || echo '  ❌ Build 失敗')"
           }
         ]
       }
@@ -46,7 +64,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "echo '\n📋 [監督系統] 提醒：確保遵循 CLAUDE.md 規範\n'"
+            "command": "echo '\n📋 [監督系統] 提醒：嚴格遵循 CLAUDE.md - 先讀後寫、不便宜行事\n'"
           }
         ]
       }
@@ -57,7 +75,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash scripts/ai-supervisor.sh final-check"
+            "command": "bash scripts/ai-supervisor.sh final-check && bash scripts/ai-audit.sh"
           }
         ]
       }

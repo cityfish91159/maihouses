@@ -15,3 +15,9 @@ node_modules
 # 註：此專案以 GitHub Pages 直接使用 docs 作為網站根目錄，需保留版本控管
 .auto-speedup.pid
 .speedup.log
+
+# AI Supervisor tracking files
+.ai-execution.log
+.ai-current-task.json
+.ai-read-files.log
+.ai-task-plan.json
