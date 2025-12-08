@@ -1,5 +1,29 @@
 # 社區牆開發紀錄
 
+## 2025-12-08 - P4 i18n 收斂 + Routes 常數化 + 防禦誤報說明
+
+### 本次變更
+
+| 項目 | 檔案 | 說明 |
+|------|------|------|
+| i18n 收斂 | `src/pages/Community/components/PostsSection.tsx` | 將殘留的 `STRINGS.xxx` 改為 `S.xxx`，全數落在 `STRINGS.COMMUNITY` 命名空間，解除 33 個 TS 錯誤。 |
+| Hook 文案外移 | `src/hooks/useComposer.ts` | 驗證錯誤訊息改用 `STRINGS.VALIDATION`，消除邏輯層中文硬編碼。 |
+| 路由常數化 | `src/constants/routes.ts`，`src/components/Composer/LoginPrompt.tsx` | 建立路由常數，移除 `/maihouses/auth.html` 硬編碼，UI 改用 `ROUTES.AUTH`。 |
+| AI 防禦誤報 | `scripts/ai-supervisor.sh` | 完成部署後發現 `finish` 對 `dist/` 構建產物誤報「逃漏」，需在後續強化排除構建/依賴目錄並允許註解中文。 |
+
+### 驗證
+
+```bash
+npm run typecheck
+npm run build
+```
+
+### 部署
+
+- 已推送 `main` 觸發 Vercel 自動部署：`https://maihouses.vercel.app/maihouses/community/test-uuid/wall`
+
+---
+
 ## 2025-12-08 - AI Supervisor v6.0 ELITE ENFORCER 升級
 
 ### 本次變更
