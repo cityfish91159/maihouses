@@ -15,43 +15,10 @@ import { LockedOverlay } from './LockedOverlay';
 import { ComposerModal } from '../../../components/Composer/ComposerModal';
 import { formatRelativeTimeLabel } from '../../../lib/time';
 import { notify } from '../../../lib/notify';
+import { STRINGS } from '../../../constants/strings';
 
-// P2-UI-1: 提取 UI 字串
-const STRINGS = {
-  AGENT_BADGE: '認證房仲',
-  OFFICIAL_BADGE: '官方公告',
-  RESIDENT_BADGE_SUFFIX: ' 住戶',
-  PRIVATE_POST_LABEL: '僅社區可見',
-  BTN_MSG_AGENT: '私訊房仲',
-  BTN_LIKE: '讚',
-  BTN_LIKING: '處理中',
-  BTN_REPLY: '回覆',
-  BTN_REPLY_TOOLTIP: '功能開發中，敬請期待',
-  BTN_REPLY_ARIA: '回覆功能開發中',
-  BTN_POST_PUBLIC: '發布貼文',
-  BTN_POST_PRIVATE: '發布私密貼文',
-  SECTION_TITLE: '社區熱帖',
-  TAB_PUBLIC: '公開牆',
-  TAB_PRIVATE: '私密牆',
-  MSG_AGENT_VIEW_ONLY: '房仲可查看私密牆，但無法發文',
-  LOCKED_TITLE: '私密牆僅限本社區住戶查看',
-  LOCKED_DESC_GUEST: '請先登入或註冊',
-  LOCKED_DESC_USER: '驗證住戶身份後即可加入討論',
-  BTN_UNLOCK_GUEST: '免費註冊 / 登入',
-  BTN_UNLOCK_USER: '我是住戶，驗證身份',
-  NOTIFY_LOGIN_TITLE: '請先登入或註冊',
-  NOTIFY_LOGIN_DESC: '登入後才能發布貼文',
-  NOTIFY_PERM_ERROR: '目前無法發文',
-  NOTIFY_PERM_CHECK: '請確認帳號權限或稍後再試',
-  NOTIFY_PRIVATE_ONLY: '僅住戶可發佈私密貼文',
-  NOTIFY_PRIVATE_ACCESS_DENIED: '請先登入或註冊',
-  NOTIFY_PRIVATE_ACCESS_DENIED_DESC: '登入/註冊後可查看私密牆',
-  NOTIFY_VERIFY_REQUIRED: '請完成住戶驗證',
-  NOTIFY_VERIFY_REQUIRED_DESC: '上傳水電帳單或管理費收據後即可查看',
-  LOCKED_OVERLAY_COUNT_LABEL: '則熱帖',
-  LOCKED_OVERLAY_BENEFIT_1: '查看完整動態',
-  LOCKED_OVERLAY_BENEFIT_2: '新回應通知',
-};
+// 解構 COMMUNITY 命名空間以簡化引用
+const { COMMUNITY: S } = STRINGS;
 
 // P2-UI-4: 封裝 Badge 邏輯
 function PostBadge({ post }: { post: Post }) {
@@ -59,13 +26,13 @@ function PostBadge({ post }: { post: Post }) {
   const isOfficial = post.type === 'official';
 
   if (isAgent) {
-    return <span className="rounded bg-brand-100 px-1.5 py-0.5 text-[9px] font-bold text-brand-600">{STRINGS.AGENT_BADGE}</span>;
+    return <span className="rounded bg-brand-100 px-1.5 py-0.5 text-[9px] font-bold text-brand-600">{S.AGENT_BADGE}</span>;
   }
   if (isOfficial) {
-    return <span className="rounded bg-brand-50 px-1.5 py-0.5 text-[9px] font-bold text-brand">{STRINGS.OFFICIAL_BADGE}</span>;
+    return <span className="rounded bg-brand-50 px-1.5 py-0.5 text-[9px] font-bold text-brand">{S.OFFICIAL_BADGE}</span>;
   }
   if (post.floor) {
-    return <span className="rounded bg-brand-100 px-1.5 py-0.5 text-[9px] font-bold text-brand">{post.floor}{STRINGS.RESIDENT_BADGE_SUFFIX}</span>;
+    return <span className="rounded bg-brand-100 px-1.5 py-0.5 text-[9px] font-bold text-brand">{post.floor}{S.RESIDENT_BADGE_SUFFIX}</span>;
   }
   return null;
 }
@@ -140,15 +107,15 @@ function PostCard({ post, onLike }: PostCardProps) {
         <div className="flex gap-3 text-[11px] text-ink-600">
           {stats}
           {commentsStat}
-          {post.private && <span className="flex items-center gap-1"><span role="img" aria-label="鎖頭">🔒</span> {STRINGS.PRIVATE_POST_LABEL}</span>}
+          {post.private && <span className="flex items-center gap-1"><span role="img" aria-label="鎖頭">🔒</span> {S.PRIVATE_POST_LABEL}</span>}
         </div>
         <div className="mt-1 flex gap-2">
           {isAgent ? (
             <button 
               className="bg-brand/6 hover:bg-brand/12 flex items-center gap-1 rounded-lg border border-brand/10 px-2.5 py-1.5 text-[11px] font-semibold text-brand transition-all"
-              aria-label={STRINGS.BTN_MSG_AGENT}
+              aria-label={S.BTN_MSG_AGENT}
             >
-              <span role="img" aria-label="信封">📩</span> {STRINGS.BTN_MSG_AGENT}
+              <span role="img" aria-label="信封">📩</span> {S.BTN_MSG_AGENT}
             </button>
           ) : (
             <>
@@ -159,15 +126,15 @@ function PostCard({ post, onLike }: PostCardProps) {
                 aria-busy={isLiking}
                 disabled={isLiking}
               >
-                {isLiking ? <><span role="img" aria-label="沙漏">⏳</span> {STRINGS.BTN_LIKING}</> : <><span role="img" aria-label="愛心">❤️</span> {STRINGS.BTN_LIKE}</>}
+                {isLiking ? <><span role="img" aria-label="沙漏">⏳</span> {S.BTN_LIKING}</> : <><span role="img" aria-label="愛心">❤️</span> {S.BTN_LIKE}</>}
               </button>
               <button 
                 className="bg-brand/6 flex cursor-not-allowed items-center gap-1 rounded-lg border border-brand/10 px-2.5 py-1.5 text-[11px] font-semibold text-brand/50 opacity-60 transition-all"
-                aria-label={STRINGS.BTN_REPLY_ARIA}
-                title={STRINGS.BTN_REPLY_TOOLTIP}
+                aria-label={S.BTN_REPLY_ARIA}
+                title={S.BTN_REPLY_TOOLTIP}
                 disabled
               >
-                <span role="img" aria-label="對話框">💬</span> {STRINGS.BTN_REPLY}
+                <span role="img" aria-label="對話框">💬</span> {S.BTN_REPLY}
               </button>
             </>
           )}
@@ -216,15 +183,15 @@ export function PostsSection({
 
   const openPostModal = (visibility: 'public' | 'private') => {
     if (isGuest) {
-      notify.error(STRINGS.NOTIFY_LOGIN_TITLE, STRINGS.NOTIFY_LOGIN_DESC);
+      notify.error(S.NOTIFY_LOGIN_TITLE, S.NOTIFY_LOGIN_DESC);
       return;
     }
     if (visibility === 'public' && !perm.canPostPublic) {
-      notify.error(STRINGS.NOTIFY_PERM_ERROR, STRINGS.NOTIFY_PERM_CHECK);
+      notify.error(S.NOTIFY_PERM_ERROR, S.NOTIFY_PERM_CHECK);
       return;
     }
     if (visibility === 'private' && !perm.canPostPrivate) {
-      notify.error(STRINGS.NOTIFY_PRIVATE_ONLY);
+      notify.error(S.NOTIFY_PRIVATE_ONLY);
       return;
     }
     setPostModalVisibility(visibility);
@@ -246,8 +213,8 @@ export function PostsSection({
   const handlePrivateClick = () => {
     if (!perm.canAccessPrivate) {
       notify.error(
-        perm.isGuest ? STRINGS.NOTIFY_PRIVATE_ACCESS_DENIED : STRINGS.NOTIFY_VERIFY_REQUIRED,
-        perm.isGuest ? `🔐 ${STRINGS.NOTIFY_PRIVATE_ACCESS_DENIED_DESC}` : `🏠 ${STRINGS.NOTIFY_VERIFY_REQUIRED_DESC}`
+        perm.isGuest ? S.NOTIFY_PRIVATE_ACCESS_DENIED : S.NOTIFY_VERIFY_REQUIRED,
+        perm.isGuest ? `🔐 ${S.NOTIFY_PRIVATE_ACCESS_DENIED_DESC}` : `🏠 ${S.NOTIFY_VERIFY_REQUIRED_DESC}`
       );
       return;
     }
@@ -305,7 +272,7 @@ export function PostsSection({
     <section id="public-wall" className="bg-white/98 scroll-mt-20 overflow-hidden rounded-[18px] border border-border-light shadow-[0_2px_12px_rgba(0,51,102,0.04)]" aria-labelledby="posts-heading">
       <div className="from-brand/3 to-brand-600/1 flex items-center justify-between border-b border-brand/5 bg-gradient-to-br px-4 py-3.5">
         <h2 id="posts-heading" className="flex items-center gap-1.5 text-[15px] font-extrabold text-brand-700">
-          <span role="img" aria-label="火焰">🔥</span> {STRINGS.SECTION_TITLE}
+          <span role="img" aria-label="火焰">🔥</span> {S.SECTION_TITLE}
         </h2>
       </div>
       
@@ -322,7 +289,7 @@ export function PostsSection({
           tabIndex={currentTab === 'public' ? 0 : -1}
           className={`rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-all ${currentTab === 'public' ? 'border-brand-600 bg-brand/10 font-bold text-brand' : 'hover:bg-brand/8 border-transparent bg-brand-100/80 text-ink-600 hover:text-brand'}`}
         >
-          {STRINGS.TAB_PUBLIC}
+          {S.TAB_PUBLIC}
         </button>
         <button 
           role="tab"
@@ -336,7 +303,7 @@ export function PostsSection({
           tabIndex={perm.canAccessPrivate ? (currentTab === 'private' ? 0 : -1) : -1}
           className={`rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-all ${currentTab === 'private' ? 'border-brand-600 bg-brand/10 font-bold text-brand' : 'hover:bg-brand/8 border-transparent bg-brand-100/80 text-ink-600 hover:text-brand'} ${!perm.canAccessPrivate ? 'opacity-60' : ''}`}
         >
-          {STRINGS.TAB_PRIVATE} {!perm.canAccessPrivate && <span role="img" aria-label="鎖頭">🔒</span>}
+          {S.TAB_PRIVATE} {!perm.canAccessPrivate && <span role="img" aria-label="鎖頭">🔒</span>}
         </button>
       </div>
 
@@ -358,8 +325,8 @@ export function PostsSection({
             <LockedOverlay
               visible={hiddenPublicCount > 0 && !!nextHiddenPost}
               hiddenCount={hiddenPublicCount}
-              countLabel={STRINGS.LOCKED_OVERLAY_COUNT_LABEL}
-              benefits={[STRINGS.LOCKED_OVERLAY_BENEFIT_1, STRINGS.LOCKED_OVERLAY_BENEFIT_2]}
+              countLabel={S.LOCKED_OVERLAY_COUNT_LABEL}
+              benefits={[S.LOCKED_OVERLAY_BENEFIT_1, S.LOCKED_OVERLAY_BENEFIT_2]}
               showCta
               {...(onUnlock ? { onCtaClick: onUnlock } : {})}
             >
@@ -374,7 +341,7 @@ export function PostsSection({
                   onClick={() => openPostModal('public')}
                   className="bg-brand/6 hover:bg-brand/12 flex w-full items-center justify-center gap-1 rounded-lg border border-brand/10 px-2.5 py-1.5 text-[11px] font-semibold text-brand"
                 >
-                  <span role="img" aria-label="鉛筆">✏️</span> {STRINGS.BTN_POST_PUBLIC}
+                  <span role="img" aria-label="鉛筆">✏️</span> {S.BTN_POST_PUBLIC}
                 </button>
               </div>
             )}
@@ -390,23 +357,23 @@ export function PostsSection({
                   onClick={() => openPostModal('private')}
                   className="bg-brand/6 hover:bg-brand/12 flex w-full items-center justify-center gap-1 rounded-lg border border-brand/10 px-2.5 py-1.5 text-[11px] font-semibold text-brand"
                 >
-                  <span role="img" aria-label="鉛筆">✏️</span> {STRINGS.BTN_POST_PRIVATE}
+                  <span role="img" aria-label="鉛筆">✏️</span> {S.BTN_POST_PRIVATE}
                 </button>
               </div>
             ) : (
-              <p className="py-3 text-center text-[11px] text-ink-600">💡 {STRINGS.MSG_AGENT_VIEW_ONLY}</p>
+              <p className="py-3 text-center text-[11px] text-ink-600">💡 {S.MSG_AGENT_VIEW_ONLY}</p>
             )}
           </>
         ) : (
           <div className="bg-brand/3 flex flex-col items-center justify-center rounded-[14px] px-5 py-10 text-center">
             <div className="mb-3 text-5xl opacity-50" aria-hidden="true">🔐</div>
-            <h4 className="mb-1.5 text-sm font-bold text-brand-700">{STRINGS.LOCKED_TITLE}</h4>
-            <p className="mb-4 text-xs text-ink-600">{perm.isGuest ? STRINGS.LOCKED_DESC_GUEST : STRINGS.LOCKED_DESC_USER}</p>
+            <h4 className="mb-1.5 text-sm font-bold text-brand-700">{S.LOCKED_TITLE}</h4>
+            <p className="mb-4 text-xs text-ink-600">{perm.isGuest ? S.LOCKED_DESC_GUEST : S.LOCKED_DESC_USER}</p>
             <button 
               onClick={onUnlock}
               className="rounded-full bg-brand px-5 py-2.5 text-xs font-bold text-white"
             >
-              {perm.isGuest ? STRINGS.BTN_UNLOCK_GUEST : STRINGS.BTN_UNLOCK_USER}
+              {perm.isGuest ? S.BTN_UNLOCK_GUEST : S.BTN_UNLOCK_USER}
             </button>
           </div>
         )}
@@ -418,7 +385,7 @@ export function PostsSection({
         onClose={() => setPostModalOpen(false)}
         onSubmit={async (data) => {
           if (isGuest) {
-            notify.error(STRINGS.NOTIFY_LOGIN_TITLE, STRINGS.NOTIFY_LOGIN_DESC);
+            notify.error(S.NOTIFY_LOGIN_TITLE, S.NOTIFY_LOGIN_DESC);
             return;
           }
           if (onCreatePost) {

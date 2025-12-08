@@ -1,5 +1,63 @@
 # 社區牆開發紀錄
 
+## 2025-12-08 - AI Supervisor v6.0 ELITE ENFORCER 升級
+
+### 本次變更
+
+| 項目 | 檔案 | 說明 |
+|------|------|------|
+| 分數系統 | `scripts/ai-supervisor.sh` | 新增 `cmd_score` 函數，100-150 分評分，等級 S/A/B/C/F |
+| 代碼指導系統 | `scripts/ai-supervisor.sh` | 新增 `cmd_guidance` 函數，顯示 Google L6 等級最佳實踐 |
+| 即時指導 | `scripts/ai-supervisor.sh` | 新增 `provide_realtime_guidance`，依檔案類型提供 checklist |
+| v6.0 檢查項 1 | `scripts/ai-supervisor.sh` | Promise 必須有 .catch() 或 try/catch |
+| v6.0 檢查項 2 | `scripts/ai-supervisor.sh` | useEffect 空依賴數組警告 |
+| v6.0 檢查項 3 | `scripts/ai-supervisor.sh` | Tailwind 類別衝突檢查 (mt+mb → my) |
+| v6.0 檢查項 4 | `scripts/ai-supervisor.sh` | Barrel Export 檢查 (index.ts) |
+| v6.0 檢查項 5 | `scripts/ai-supervisor.sh` | 事件處理器 useCallback 包裝檢查 |
+| v6.0 檢查項 6 | `scripts/ai-supervisor.sh` | 自定義 Error 類別建議 |
+| v6.0 檢查項 7 | `scripts/ai-supervisor.sh` | 禁止直接 DOM 操作 (getElementById 等) |
+| v6.0 檢查項 8 | `scripts/ai-supervisor.sh` | Optional Chaining 建議 (obj && obj.prop → obj?.prop) |
+| v6.0 檢查項 9 | `scripts/ai-supervisor.sh` | Array 直接修改警告 (push/pop → spread) |
+| v6.0 檢查項 10 | `scripts/ai-supervisor.sh` | setTimeout/setInterval 清理檢查 |
+
+### 功能摘要
+
+```
+v6.0 ELITE ENFORCER 新增特性：
+├── 📊 分數系統 (100-150 分)
+│   ├── 審計通過 +2
+│   ├── 修復架構問題 +5
+│   ├── 完美完成任務 +10
+│   ├── 違規 -10
+│   └── 等級：S(140+)/A(120+)/B(100+)/C(80+)/F(<80)
+├── 💡 代碼指導系統
+│   ├── TypeScript 最佳實踐
+│   ├── React 最佳實踐
+│   ├── 架構最佳實踐
+│   ├── 錯誤處理最佳實踐
+│   └── 性能最佳實踐
+├── 🎯 即時指導 (依檔案類型)
+│   ├── .tsx → React 組件 checklist
+│   ├── .ts → TypeScript checklist
+│   └── .css/.scss → 樣式 checklist
+└── 🔍 10 項新增精英級審計檢查
+```
+
+### 驗證
+
+```bash
+./scripts/ai-supervisor.sh           # 顯示 v6.0 說明
+./scripts/ai-supervisor.sh guidance  # 顯示代碼指導
+./scripts/ai-supervisor.sh score     # 顯示當前分數
+bash -n scripts/ai-supervisor.sh     # 語法檢查通過
+```
+
+### 統計
+- 腳本總行數：1235 行
+- 審計檢查項：31 項 (v3.x: 21 項 + v6.0: 10 項)
+
+---
+
 ## 2025-12-08 - AI Supervisor 硬化 + 指令明確化
 
 ### 本次變更

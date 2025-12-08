@@ -1,0 +1,4 @@
+src/pages/Community/components/PostsSection.tsx
+src/hooks/useComposer.ts
+src/constants/routes.ts
+src/components/Composer/LoginPrompt.tsx

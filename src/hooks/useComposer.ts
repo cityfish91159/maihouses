@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
+import { STRINGS } from '../constants/strings';
 
 export interface ComposerData {
   content: string;
@@ -48,10 +49,10 @@ export function useComposer({
   const validate = useCallback(() => {
     const trimmed = content.trim();
     if (trimmed.length < minLength) {
-      return `內容至少需要 ${minLength} 個字`;
+      return STRINGS.VALIDATION.MIN_LENGTH(minLength);
     }
     if (trimmed.length > maxLength) {
-      return `內容不能超過 ${maxLength} 個字`;
+      return STRINGS.VALIDATION.MAX_LENGTH(maxLength);
     }
     return null;
   }, [content, minLength, maxLength]);
@@ -81,7 +82,7 @@ export function useComposer({
       onSuccess?.();
       reset();
     } catch (err) {
-      const message = err instanceof Error ? err.message : '發布失敗';
+      const message = err instanceof Error ? err.message : STRINGS.VALIDATION.SUBMIT_ERROR;
       setError(message);
       onError?.(err instanceof Error ? err : new Error(message));
     } finally {
