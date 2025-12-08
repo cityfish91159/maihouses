@@ -193,7 +193,7 @@ P4-C1, P4-C2, P4-C3 已修復，但仍有「便宜行事」的痕跡。
 | S1 | 🔴 | ⚠️ 未修復 | **逃漏誤報：構建產物被判為未追蹤修改** | `finish` 應忽略 `.gitignore` 內的目錄（`dist/`, `node_modules/`, `.git/`）。在 `cmd_finish` 逃漏檢查加入 `git status --porcelain --ignored` 過濾，僅對受控檔案執行。確保 pre-commit/finish 不掃描構建輸出。 |
 | S2 | 🔴 | ⚠️ 未修復 | **中文檢測過度：註解被誤判，迫使使用 --no-verify** | 在 Hook/tsx 中文檢測時排除註解行 (`grep -vE "^\s*//|^\s*/\*|\*/"`)，僅攔截實際字串常量。允許註解中文，阻擋字串中文。避免再逼迫繞過 hook。 |
 | S3 | 🟡 | ⚠️ 未修復 | **繞過管道：`--no-verify` 可跳過 hook** | 加上 CI/分支保護：要求 PR 必須跑 `npm run typecheck && npm run build && npm run test`；pre-push 或 GitHub Actions 執行 `scripts/ai-supervisor.sh verify`。在 hook 中記錄 `--no-verify` 提示並上傳到 CI log。 |
-| S4 | 🟡 | ⚠️ 未修復 | **Z-Index 語意化欠缺** | 在 `tailwind.config.cjs` `theme.extend.zIndex` 定義 `overlay: 40`, `modal: 50`, `dropdown: 30`，替換現有 `z-50` 類（含 `LoginPrompt`）。保留 TODO，避免層級衝突。 |
+| S4 | 🟡 | ✅ 已修復 | **Z-Index 語意化欠缺** | **[2025-12-08 修復]**：已在 `tailwind.config.cjs` 定義語意化 z-index (dropdown:30, overlay:40, modal:50)。已替換 15 個檔案中的 `z-50` 為語意化類別。成功消除層級地獄風險。 |
 | S5 | 🔴 | ⚠️ 未修復 | **測試覆蓋率為零（核心 Hook/組件）** | 為 `useComposer`、`LoginPrompt`、`ComposerModal` 補 `*.test.tsx`：1) 驗證長度與錯誤訊息顯示 2) 未登入彈窗與路由連結 3) submit 成功/失敗流程。使用 RTL+Vitest，模擬 `onSubmit`/`onError`。 |
 | S6 | 🟡 | ⚠️ 未修復 | **自動掃描不足 / 優質代碼推薦缺位** | 在 `cmd_quick_scan` 增加：1) 搜索 inline handler 長度、文件行數、魔數；2) 根據掃描結果給出對應 Best Practice 範本（片段模板）；3) 對常見模式提供「更優寫法」提示（e.g. useMemo/useCallback、barrel export）。 |
 | S7 | 🔴 | ⚠️ 未修復 | **作弊預判 / 作弊刪除機制缺失** | 增加「可疑模式」黑名單：`--no-verify` 次數、反覆變更同檔未跑 audit、刻意在 build 產物改動。偵測到時：1) 強制 rage_exit 2) 自動刪除未受控檔案的改動 (限 dist/node_modules/tmp) 3) 記錄 violation 並扣分。 |
@@ -202,6 +202,13 @@ P4-C1, P4-C2, P4-C3 已修復，但仍有「便宜行事」的痕跡。
 | S10 | 🟡 | ⚠️ 未修復 | **性能與安全優化缺位** | 在掃描與指引中加入：1) 建議 lazy import / code splitting；2) 建議 API 層自定義 Error 類；3) 建議加入 Sentry/Logging pipeline；4) 建議使用安全 headers/CSP。 |
 
 **執行紀錄 2025-12-08 (本輪)**
+- **S4 已完成**：定義語意化 z-index (dropdown:30/overlay:40/modal:50)，全面替換 15 個檔案的 `z-50` 硬編碼，消除層級衝突風險。修改清單：
+  - `tailwind.config.cjs`: 新增 zIndex 定義
+  - **Composer**: `LoginPrompt.tsx`, `ComposerModal.tsx` (z-modal)
+  - **Layout**: `GlobalHeader.tsx`, `Header.tsx` (z-overlay)
+  - **UI Components**: `CommunityPicker.tsx` (z-dropdown), `ContactModal.tsx`, `AgentTrustCard.tsx`, `CookieConsent.tsx` (z-modal/overlay)
+  - **Pages**: `BottomCTA.tsx`, `ReportGenerator.tsx`, `PropertyEditPage.tsx`, `PropertyDetailPage.tsx`, `PropertyUploadPage.tsx`, `Assure/Detail.tsx` (z-overlay/modal)
+  - **驗證**：typecheck ✅, build ✅ (18.12s), commits: c6eae0e + f52cbc8, pushed to GitHub
 - 已在 `scripts/ai-supervisor.sh` 新增 `IGNORE_PATTERNS`，`finish` 排除 `dist/`、`node_modules/`、`.git/` 並自動清理由 dist 未追蹤產物，降低誤報與作弊空間。（對應 S1/S7）
 - 強化 `quick_scan`：回報長 inline handler、超長檔案，提示 useCallback/拆分。（對應 S6）
 - 新增 `cmd_guidance_pro`：提供 React/Hook/API/路由最佳實踐片段與性能安全建議。（對應 S8/S10）
