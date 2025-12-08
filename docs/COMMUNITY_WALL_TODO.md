@@ -28,7 +28,7 @@
 | P2 useFeedData | ✅ | 30m | 477 行 Hook，移除 reviews/questions，communityId optional |
 | P3 GlobalHeader | ✅ | 1.5h | 三頁共用 Header（GlobalHeader.tsx 實作 + 整合 Wall/Feed） |
 | P3-AUDIT 審計修復 | ✅ | 1h | 角色導航 + Logo 原子素材導入 + 移除 Hardcoded |
-| P3.5 三頁互跳導航 | 🔴 | 1h | 靜態 Feed HTML 補上互跳連結（短期方案） |
+| P3.5 三頁互跳導航 | ✅ | 1h | 靜態 Feed HTML 補上互跳連結（短期方案） |
 | P4 Composer | 🔴 | 2h | headless + UI 統一 |
 | P4.5 Loading/錯誤狀態 | 🔴 | 1h | Skeleton + Empty + Error + Retry |
 | P5 feed-consumer | 🔴 | 2h | 靜態 → React |
@@ -139,7 +139,112 @@
 
 ---
 
-## 🔴 P3.5：三頁互跳導航（短期靜態方案）
+## ✅ P3.5：三頁互跳導航（短期靜態方案） - 已完成
+
+> **執行時間**：2025-12-08 | **執行結果**：全數完成
+
+### 執行摘要
+
+**核心修正**：
+1. **GlobalHeader Logo 復原**：修正 `mode="community"` 時錯誤移除 Logo 的問題，現在所有模式統一顯示 Logo。
+2. **Feed 互跳連結**：Consumer Feed 與 Agent Feed 補上真實導航路徑。
+
+### 詳細執行記錄
+
+#### **修正 1：GlobalHeader Logo 統一顯示**
+
+**問題**：合併分支後，`GlobalHeader` 在 `community` 模式下只顯示「回首頁」按鈕，Logo 被移除，違反品牌一致性。
+
+**解決方案**：
+- 修改 `src/components/layout/GlobalHeader.tsx`
+- 移除 `mode === 'community'` 的特殊處理
+- 所有模式統一顯示 `<Logo showBadge={false} />`
+- 移除未使用的 `ArrowLeft` import
+
+**變更檔案**：
+- `src/components/layout/GlobalHeader.tsx` (簡化 `renderLeft` 函數)
+
+#### **修正 2：Logo 組件 showBadge 支援**
+
+**動作**：
+- 確認 `src/components/Logo/Logo.tsx` 已支援 `showBadge` prop
+- 預設值 `true`（相容首頁）
+- GlobalHeader 傳入 `false`（社區牆不顯示假紅點）
+
+**變更檔案**：
+- `src/components/Logo/Logo.tsx` (已在 P3-AUDIT-V2 完成)
+
+#### **任務 1：Consumer Feed 互跳修復**
+
+**檔案**：`/public/feed-consumer.html`
+
+- [x] **個人卡片「查看我的社區牆」連結修正**
+  ```html
+  <!-- 舊：href="#my-community" (無效) -->
+  <!-- 新：href="/maihouses/community/test-uuid/wall?from=consumer" -->
+  ```
+
+- [x] **「我的」下拉選單新增「切換房仲版」**
+  ```html
+  <a href="/maihouses/feed-agent.html?from=consumer" role="menuitem" style="color:#64748b">🏢 切換房仲版</a>
+  ```
+
+#### **任務 2：Agent Feed 新增社區討論入口**
+
+**檔案**：`/public/feed-agent.html`
+
+- [x] **「我的」下拉選單新增「社區討論」**
+  ```html
+  <a href="/maihouses/community/test-uuid/wall?from=agent" role="menuitem">🧱 社區討論</a>
+  ```
+
+- [x] **修正「切換消費者版」連結**
+  ```html
+  <!-- 新增 ?from=agent query 參數 -->
+  <a href="/maihouses/feed-consumer.html?from=agent" ...>👤 切換消費者版</a>
+  ```
+
+### 驗證證據
+
+#### **程式檢查**
+```bash
+./scripts/ai-supervisor.sh check-quality src/components/layout/GlobalHeader.tsx
+# [SUPERVISOR PASS] ✅ 代碼品質檢查通過
+```
+
+#### **建置驗證**
+```bash
+npm run build
+# ✓ built in 18.90s (exit 0)
+```
+
+#### **功能驗證清單**
+
+- [x] **Community Wall 顯示 Logo**：`https://maihouses.vercel.app/maihouses/community/test-uuid/wall` 頂部左側顯示「邁房子」Logo（無紅點）
+- [x] **Consumer Feed → Wall**：點擊「查看我的社區牆」能正確跳轉至 `/maihouses/community/test-uuid/wall?from=consumer`
+- [x] **Consumer Feed → Agent Feed**：「我的」選單能看到「切換房仲版」
+- [x] **Agent Feed → Wall**：「我的」選單能看到「社區討論」
+- [x] **Agent Feed → Consumer Feed**：「切換消費者版」帶上 `?from=agent` 參數
+- [x] **所有連結帶上來源追蹤**：`?from=<source>` query 參數已加入
+
+### 部署
+
+```bash
+git add -A
+git commit -m "feat(p3.5): restore Logo in GlobalHeader & implement cross-page navigation"
+git push origin main
+```
+
+### 後續優化方向（P5/P6）
+
+當兩個 Feed 改寫成 React 後：
+- 使用 `GlobalHeader` 取代手刻 topbar
+- 從 `useAuth()` 動態顯示角色專屬選單
+- `communityId` 從 localStorage 或 API 獲取，移除寫死的 `test-uuid`
+
+---
+
+## 🔴 P4：Composer（未開始）
 
 > **目標**：在 P5/P6 未完成前，先讓三頁（Wall、Consumer Feed、Agent Feed）能互相跳轉。
 

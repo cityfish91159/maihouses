@@ -7,7 +7,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import { Bell, User, LogOut, ChevronDown, ArrowLeft } from 'lucide-react';
+import { Bell, User, LogOut, ChevronDown } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { Logo } from '../Logo/Logo';
 import { notify } from '../../lib/notify';
@@ -66,24 +66,11 @@ export function GlobalHeader({ mode, title, className = '' }: GlobalHeaderProps)
     return () => document.removeEventListener('click', handleClickOutside);
   }, []);
 
-  // 渲染左側區域 (Logo 或 返回按鈕)
+  // 渲染左側區域 (Logo)
   const renderLeft = () => {
-    if (mode === 'community') {
-      return (
-        <a 
-          href="/maihouses/" 
-          className="flex items-center gap-2 rounded-[10px] px-2.5 py-1.5 text-sm font-bold text-brand-700 no-underline transition-colors hover:bg-brand-50"
-          aria-label={STRINGS.BACK_HOME}
-        >
-          <ArrowLeft size={18} strokeWidth={2.5} />
-          <span>{STRINGS.BACK_HOME}</span>
-        </a>
-      );
-    }
-
     return (
       <div className="flex items-center gap-2">
-        <Logo showSlogan={false} href="/maihouses/" />
+        <Logo showSlogan={false} href="/maihouses/" showBadge={false} />
         {mode === 'agent' && (
           <span className="rounded bg-gradient-to-br from-amber-400 to-amber-600 px-2 py-0.5 text-[10px] font-extrabold text-white shadow-sm">
             {STRINGS.AGENT_BADGE}

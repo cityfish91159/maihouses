@@ -5,13 +5,15 @@ interface LogoProps {
   className?: string;
   onClick?: () => void;
   href?: string;
+  showBadge?: boolean;
 }
 
 export const Logo: React.FC<LogoProps> = ({ 
   showSlogan = true, 
   className = "", 
   onClick,
-  href = "/maihouses/"
+  href = "/maihouses/",
+  showBadge = true
 }) => {
   const Content = () => (
     <div className={`group flex cursor-pointer items-center gap-3 ${className}`}>
@@ -26,8 +28,10 @@ export const Logo: React.FC<LogoProps> = ({
           <path d="M9 21.5V13H15V21.5" />
         </svg>
 
-        {/* Design Accent Dot */}
-        <div className="absolute right-2 top-2 size-1.5 rounded-full bg-red-400 shadow-[0_0_0_1.5px] shadow-brand-600"></div>
+        {/* Design Accent Dot (opt-in) */}
+        {showBadge && (
+          <div className="absolute right-2 top-2 size-1.5 rounded-full bg-red-400 shadow-[0_0_0_1.5px] shadow-brand-600"></div>
+        )}
       </div>
 
       <div className="flex items-center">
