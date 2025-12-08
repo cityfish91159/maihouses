@@ -26,8 +26,8 @@
 | P1 Toast 系統 | ✅ | 55m | sonner+notify 全面收斂（含 PropertyUploadPage/依賴/死碼清理） |
 | P1.5 權限系統 | ✅ | 1h | useAuth + 角色判斷 + 審計 8 項缺失已全數修復 |
 | P2 useFeedData | ✅ | 30m | 477 行 Hook，移除 reviews/questions，communityId optional |
-| P3 GlobalHeader | ⚠️ | 1.5h | 三頁共用 Header（GlobalHeader.tsx 實作 + 整合 Wall/Feed） |
-| P3-AUDIT 審計修復 | 🔴 | 1h | 角色導航 + Logo 原子素材導入 + 移除 Hardcoded |
+| P3 GlobalHeader | ✅ | 1.5h | 三頁共用 Header（GlobalHeader.tsx 實作 + 整合 Wall/Feed） |
+| P3-AUDIT 審計修復 | ✅ | 1h | 角色導航 + Logo 原子素材導入 + 移除 Hardcoded |
 | P4 Composer | 🔴 | 2h | headless + UI 統一 |
 | P4.5 Loading/錯誤狀態 | 🔴 | 1h | Skeleton + Empty + Error + Retry |
 | P5 feed-consumer | 🔴 | 2h | 靜態 → React |
@@ -86,30 +86,55 @@
     *   **問題**: `GlobalHeaderMode` 是字串字面量，但沒有對應的常數定義，容易打錯。
     *   **建議**: 考慮使用 `enum` 或 `const assertion` 來管理這些模式。
 
-### 🛠️ P3-AUDIT 修正計畫（Google 首席工程師審計）
+### 🛠️ P3-AUDIT 修正計畫（Google 首席工程師審計） - ✅ 已完成
 
 **核心設計原則：角色導向情境導航 (Role-Based Contextual Navigation)**
 
 > 必須導入首頁 Logo 原子素材 (`src/components/Logo/Logo.tsx`)，確保視覺一致性。
 
-- [ ] **FIX-1: 智慧型首頁連結 (Smart Home Link)**
+- [x] **FIX-1: 智慧型首頁連結 (Smart Home Link)**
     *   邏輯：依據 `useAuth().role` 決定 Logo 點擊去向。
     *   `guest` → `/maihouses/` (Landing Page)
     *   `member/resident` → `/maihouses/feed-consumer.html` (Consumer Feed)
     *   `agent` → `/maihouses/feed-agent.html` (Agent Feed)
-- [ ] **FIX-2: 智慧型個人檔案 (Smart Profile Link)**
+- [x] **FIX-2: 智慧型個人檔案 (Smart Profile Link)**
     *   邏輯：下拉選單「個人檔案」按鈕指向對應 Feed。
     *   移除 `TODO`，實作真實跳轉。
-- [ ] **FIX-3: 真實數據呈現**
+- [x] **FIX-3: 真實數據呈現**
     *   移除寫死的通知 Badge ("2")，改為 `props` 或 Context。
     *   顯示真實身份標籤（如「認證房仲」、「已驗證住戶」），而非永遠顯示「一般會員」。
-- [ ] **FIX-4: 優雅登出**
+- [x] **FIX-4: 優雅登出**
     *   移除 `window.location.reload()`。
     *   登出後強制導向至 `/maihouses/`。
-- [ ] **FIX-5: Logo 原子設計導入**
+- [x] **FIX-5: Logo 原子設計導入**
     *   確保 `GlobalHeader` 使用與首頁完全相同的 Logo 組件與樣式變數。
-- [ ] **FIX-6: a11y 鍵盤導航**
+- [x] **FIX-6: a11y 鍵盤導航**
     *   支援 `Esc` 關閉選單，優化 Tab 順序。
+
+---
+
+## ✅ P3-AUDIT-V2：Google 首席工程師二次審計 (2025-12-08)
+
+> **處長自查結果**：已移除 Logo 內部假紅點，GlobalHeader 改用純淨 Logo，符合「真實數據呈現」。
+
+### 已修正項目
+
+- [x] **FIX-7: 淨化 Logo 組件**
+  *   目標：`src/components/Logo/Logo.tsx`
+  *   動作：新增 `showBadge` prop，預設 true；允許呼叫端關閉紅點，避免原子組件夾帶業務狀態。
+- [x] **FIX-8: GlobalHeader 正確引用**
+  *   目標：`src/components/layout/GlobalHeader.tsx`
+  *   動作：`<Logo showBadge={false} ... />`，社區牆/Feed 頁面不再出現假通知。
+
+### 驗證與證據
+
+- **程式檢查**：`./scripts/ai-supervisor.sh check-quality src/components/layout/GlobalHeader.tsx`（預期通過，無 TODO/假數據）
+- **建置**：`npm run build`（要求 exit 0）
+- **視覺驗證**：`https://maihouses.vercel.app/maihouses/community/test-uuid/wall` Logo 無紅點；首頁 `Header` 若需要紅點需明確傳入 `showBadge`。
+
+### 後續最佳實務指引
+
+- 若首頁仍需紅點，請在 `Header.tsx` 明確傳入 `showBadge={true}`，並改為來源於真實通知數據，而非寫死紅點。
 
 ---
 
