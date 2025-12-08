@@ -4,6 +4,9 @@
  * 三分頁共用頂部導航列 (P3)
  * 適用範圍：社區牆 (Community Wall)、消費者信息流 (Consumer Feed)、房仲信息流 (Agent Feed)
  * 注意：首頁 (Home) 使用獨立的 Header 組件，不在此組件管理範圍內。
+ * 
+ * ⚠️ WARNING: 修改此組件時，請務必同步更新 public/feed-consumer.html 與 public/feed-agent.html
+ * 靜態頁面的 Header 是手動複製的，若不同步會導致視覺與功能不一致。
  */
 
 import { useState, useEffect } from 'react';
