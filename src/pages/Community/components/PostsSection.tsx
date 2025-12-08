@@ -10,6 +10,7 @@ import type { KeyboardEvent } from 'react';
 import type { Role, Post, WallTab } from '../types';
 import { getPermissions } from '../types';
 import { useGuestVisibleItems } from '../../../hooks/useGuestVisibleItems';
+import { useThrottle } from '../../../hooks/useThrottle';
 import { LockedOverlay } from './LockedOverlay';
 import { PostModal } from './PostModal';
 import { formatRelativeTimeLabel } from '../../../lib/time';
@@ -52,6 +53,23 @@ const STRINGS = {
   LOCKED_OVERLAY_BENEFIT_2: '新回應通知',
 };
 
+// P2-UI-4: 封裝 Badge 邏輯
+function PostBadge({ post }: { post: Post }) {
+  const isAgent = post.type === 'agent';
+  const isOfficial = post.type === 'official';
+
+  if (isAgent) {
+    return <span className="rounded bg-brand-100 px-1.5 py-0.5 text-[9px] font-bold text-brand-600">{STRINGS.AGENT_BADGE}</span>;
+  }
+  if (isOfficial) {
+    return <span className="rounded bg-brand-50 px-1.5 py-0.5 text-[9px] font-bold text-brand">{STRINGS.OFFICIAL_BADGE}</span>;
+  }
+  if (post.floor) {
+    return <span className="rounded bg-brand-100 px-1.5 py-0.5 text-[9px] font-bold text-brand">{post.floor}{STRINGS.RESIDENT_BADGE_SUFFIX}</span>;
+  }
+  return null;
+}
+
 interface PostCardProps {
   post: Post;
   onLike?: (postId: number | string) => Promise<void> | void;
@@ -59,19 +77,9 @@ interface PostCardProps {
 
 function PostCard({ post, onLike }: PostCardProps) {
   const [isLiking, setIsLiking] = useState(false);
-  const likeThrottleRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isMountedRef = useRef(true);
   const isAgent = post.type === 'agent';
-  const isOfficial = post.type === 'official';
   const displayTime = formatRelativeTimeLabel(post.time);
-
-  const badge = isAgent 
-    ? <span className="rounded bg-brand-100 px-1.5 py-0.5 text-[9px] font-bold text-brand-600">{STRINGS.AGENT_BADGE}</span>
-    : isOfficial 
-      ? <span className="rounded bg-brand-50 px-1.5 py-0.5 text-[9px] font-bold text-brand">{STRINGS.OFFICIAL_BADGE}</span>
-      : post.floor 
-        ? <span className="rounded bg-brand-100 px-1.5 py-0.5 text-[9px] font-bold text-brand">{post.floor}{STRINGS.RESIDENT_BADGE_SUFFIX}</span>
-        : null;
 
   // P2-UI-2: 優化 Emoji 可訪問性
   const stats = post.likes !== undefined 
@@ -87,30 +95,24 @@ function PostCard({ post, onLike }: PostCardProps) {
     isMountedRef.current = true;
     return () => {
       isMountedRef.current = false;
-      if (likeThrottleRef.current) {
-        clearTimeout(likeThrottleRef.current);
-      }
     };
   }, []);
 
-  const handleLike = useCallback(() => {
+  // P2-UI-3: 使用標準 Throttle Hook
+  const handleLike = useThrottle(async () => {
     if (!onLike || isLiking) return;
-    if (likeThrottleRef.current) return;
-
-    likeThrottleRef.current = setTimeout(async () => {
-      likeThrottleRef.current = null;
-      setIsLiking(true);
-      try {
-        await onLike(post.id);
-      } catch (error) {
-        console.error('Failed to toggle like', error);
-      } finally {
-        if (isMountedRef.current) {
-          setIsLiking(false);
-        }
+    
+    setIsLiking(true);
+    try {
+      await onLike(post.id);
+    } catch (error) {
+      console.error('Failed to toggle like', error);
+    } finally {
+      if (isMountedRef.current) {
+        setIsLiking(false);
       }
-    }, 250);
-  }, [onLike, post.id, isLiking]);
+    }
+  }, 1000);
 
   return (
     <article className="flex gap-2.5 rounded-[14px] border border-border-light bg-white p-3 transition-all hover:border-brand-600 hover:shadow-[0_2px_8px_rgba(0,56,90,0.06)]">
@@ -123,7 +125,7 @@ function PostCard({ post, onLike }: PostCardProps) {
       <div className="flex flex-1 flex-col gap-1.5">
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-[13px] font-bold text-ink-900">{post.author}</span>
-          {badge}
+          <PostBadge post={post} />
           <span className="text-[11px] text-ink-600">{displayTime}</span>
         </div>
         <div className="text-[13px] leading-relaxed text-ink-900">

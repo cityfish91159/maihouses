@@ -1416,6 +1416,21 @@ useEffect(() => {
 
 ---
 
+## ✅ P2-UI-FIX：審計修復任務（部分完成）
+
+### 執行清單（2025-12-08）
+
+| 序號 | 任務 | 檔案 | 狀態 |
+|------|------|------|------|
+| FIX-UI-1 | 提取 UI 字串至 `STRINGS` 常數 | `PostsSection.tsx` | ✅ |
+| FIX-UI-2 | 優化 Emoji A11y (`role="img"`, `aria-label`) | `PostsSection.tsx` | ✅ |
+| FIX-UI-3 | 使用標準 Throttle Hook | `PostsSection.tsx` | ✅ |
+| FIX-UI-4 | 封裝 Badge 邏輯 | `PostsSection.tsx` | ✅ |
+| FIX-UI-5 | 優化 Disabled Button UX | `PostsSection.tsx` | ✅ (MVP: Title) |
+| FIX-UI-6 | 優化 LockedOverlay Props | `PostsSection.tsx` | ✅ (Keep Override) |
+
+---
+
 ## 📝 已完成紀錄
 
 ### 2025-12-07
