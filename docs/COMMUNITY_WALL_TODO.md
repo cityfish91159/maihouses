@@ -195,6 +195,11 @@ P4-C1, P4-C2, P4-C3 已修復，但仍有「便宜行事」的痕跡。
 | S3 | 🟡 | ⚠️ 未修復 | **繞過管道：`--no-verify` 可跳過 hook** | 加上 CI/分支保護：要求 PR 必須跑 `npm run typecheck && npm run build && npm run test`；pre-push 或 GitHub Actions 執行 `scripts/ai-supervisor.sh verify`。在 hook 中記錄 `--no-verify` 提示並上傳到 CI log。 |
 | S4 | 🟡 | ⚠️ 未修復 | **Z-Index 語意化欠缺** | 在 `tailwind.config.cjs` `theme.extend.zIndex` 定義 `overlay: 40`, `modal: 50`, `dropdown: 30`，替換現有 `z-50` 類（含 `LoginPrompt`）。保留 TODO，避免層級衝突。 |
 | S5 | 🔴 | ⚠️ 未修復 | **測試覆蓋率為零（核心 Hook/組件）** | 為 `useComposer`、`LoginPrompt`、`ComposerModal` 補 `*.test.tsx`：1) 驗證長度與錯誤訊息顯示 2) 未登入彈窗與路由連結 3) submit 成功/失敗流程。使用 RTL+Vitest，模擬 `onSubmit`/`onError`。 |
+| S6 | 🟡 | ⚠️ 未修復 | **自動掃描不足 / 優質代碼推薦缺位** | 在 `cmd_quick_scan` 增加：1) 搜索 inline handler 長度、文件行數、魔數；2) 根據掃描結果給出對應 Best Practice 範本（片段模板）；3) 對常見模式提供「更優寫法」提示（e.g. useMemo/useCallback、barrel export）。 |
+| S7 | 🔴 | ⚠️ 未修復 | **作弊預判 / 作弊刪除機制缺失** | 增加「可疑模式」黑名單：`--no-verify` 次數、反覆變更同檔未跑 audit、刻意在 build 產物改動。偵測到時：1) 強制 rage_exit 2) 自動刪除未受控檔案的改動 (限 dist/node_modules/tmp) 3) 記錄 violation 並扣分。 |
+| S8 | 🟡 | ⚠️ 未修復 | **最佳代碼代寫輔助未導入** | 在 supervisor 增加 `cmd_guidance pro`：根據檔案類型輸出「最佳寫法範例片段」，含 useCallback/useMemo、型別介面範本、錯誤處理模式；提供可直接貼用的模板但不自動改碼，避免越權。 |
+| S9 | 🟡 | ⚠️ 未修復 | **自動掃描覆蓋率不足（全域巡檢）** | 建立 `cmd_auto_scan`：結合 `cmd_deep_scan` + ESLint + TS incremental，對全 repo 週期掃描；生成報告存 `.ai_supervisor/scan-report.md`，按嚴重度排序並給出修復建議。 |
+| S10 | 🟡 | ⚠️ 未修復 | **性能與安全優化缺位** | 在掃描與指引中加入：1) 建議 lazy import / code splitting；2) 建議 API 層自定義 Error 類；3) 建議加入 Sentry/Logging pipeline；4) 建議使用安全 headers/CSP。 |
 
 ---
 
