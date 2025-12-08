@@ -323,27 +323,14 @@ export function PostsSection({
               visible={hiddenPublicCount > 0 && !!nextHiddenPost}
               hiddenCount={hiddenPublicCount}
               countLabel="則熱帖"
-              benefits={['查看完整動態', '新回答通知']}
-              showCta={false}
+              benefits={['查看完整動態', '新回應通知']}
+              showCta
               {...(onUnlock ? { onCtaClick: onUnlock } : {})}
             >
               {nextHiddenPost && (
                 <PostCard post={nextHiddenPost} />
               )}
             </LockedOverlay>
-
-            {/* 訪客提示膠囊：對齊 MVP 單一 CTA（不重複按鈕） */}
-            {perm.isGuest && onUnlock && (
-              <div className="mx-auto mt-2 flex items-center justify-center">
-                <button
-                  type="button"
-                  onClick={onUnlock}
-                  className="flex items-center gap-2 rounded-full border border-brand/15 bg-brand/8 px-3.5 py-2 text-[11px] font-semibold text-brand shadow-[0_4px_12px_rgba(0,56,90,0.08)] transition hover:border-brand/30 hover:bg-brand/12"
-                >
-                  🔓 解鎖完整熱帖
-                </button>
-              </div>
-            )}
             
             {perm.canPostPublic && (
               <div className="flex justify-center rounded-[14px] border border-dashed border-border-light bg-brand/3 p-5">
