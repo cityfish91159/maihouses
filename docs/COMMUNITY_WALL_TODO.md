@@ -27,7 +27,7 @@
 | P2 useFeedData | ✅ | 30m | Hook 實作 + 審計修復 (API 樂觀更新/Auth Guard) |
 | P3 GlobalHeader | ✅ | 1.5h | 三頁共用 Header + 審計修復 (角色導航/Logo) |
 | P3.5 三頁互跳導航 | ✅ | 1h | 靜態 Feed HTML 補上互跳連結 + Auth Check JS |
-| P4 Composer | 🔴 | 2h | headless + UI 統一 |
+| P4 Composer | ✅ | 2h | headless + UI 統一 |
 | P4.5 Loading/錯誤狀態 | 🔴 | 1h | Skeleton + Empty + Error + Retry |
 | P5 feed-consumer | 🔴 | 2h | 靜態 → React |
 | P6 feed-agent | 🔴 | 2h | 靜態 → React |
@@ -38,18 +38,31 @@
 
 ---
 
-## 🔴 P4：Composer 統一（未開始）
+## ✅ P4：Composer 統一（已完成）
 
-**做法**：`PostModal.tsx` → `ComposerModal.tsx`，加 mode prop
+**執行時間**：2025-12-08 | **狀態**：✅ 驗證通過
 
-| 任務 | 說明 |
-|------|------|
-| P4-1 | 建立 `useComposer()` headless hook |
-| P4-2 | 建立 `ComposerModal.tsx`（mode="feed" / "community"） |
-| P4-3 | textarea 自動展開 + 字數驗證 |
-| P4-4 | 發文後清空 + notify.success() |
-| P4-5 | 圖片上傳按鈕 UI（暫時 notify.dev()） |
-| P4-6 | 未登入時顯示「請先登入」（使用 useAuth） |
+**核心產出**：
+1.  **Headless Hook**: `src/hooks/useComposer.ts` (狀態管理、驗證、提交邏輯)
+2.  **UI Component**: `src/components/Composer/ComposerModal.tsx` (統一 UI、RWD、Auth Guard)
+3.  **Refactor**: `PostsSection` 改用 `ComposerModal`，移除舊 `PostModal`
+
+**執行細節**：
+- [x] **P4-1: useComposer Hook**
+    - 支援 `content`, `visibility`, `communityId`, `images` 狀態管理
+    - 內建 `validate()` (字數限制 1-2000)
+    - 統一錯誤處理與 Loading 狀態
+- [x] **P4-2: ComposerModal UI**
+    - 支援 `mode="community"` (顯示公開/私密切換) 與 `mode="feed"`
+    - 整合 `useAuth`，未登入時顯示友善提示與登入按鈕
+    - 使用 Tailwind Brand 色系，優化視覺體驗
+- [x] **P4-3: UX 優化**
+    - Textarea 自動高度調整 (Auto-resize)
+    - 字數統計與超限警示
+    - 圖片上傳按鈕 (目前顯示 notify.dev)
+- [x] **P4-4: 整合驗證**
+    - `PostsSection` 成功串接，發文功能正常
+    - `npm run typecheck` & `npm run build` 通過
 
 ---
 

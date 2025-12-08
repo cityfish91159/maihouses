@@ -12,7 +12,7 @@ import { getPermissions } from '../types';
 import { useGuestVisibleItems } from '../../../hooks/useGuestVisibleItems';
 import { useThrottle } from '../../../hooks/useThrottle';
 import { LockedOverlay } from './LockedOverlay';
-import { PostModal } from './PostModal';
+import { ComposerModal } from '../../../components/Composer/ComposerModal';
 import { formatRelativeTimeLabel } from '../../../lib/time';
 import { notify } from '../../../lib/notify';
 
@@ -231,16 +231,6 @@ export function PostsSection({
     setPostModalOpen(true);
   };
 
-  const handlePostSubmit = async (content: string) => {
-    if (isGuest) {
-      notify.error(STRINGS.NOTIFY_LOGIN_TITLE, STRINGS.NOTIFY_LOGIN_DESC);
-      return;
-    }
-    if (onCreatePost) {
-      onCreatePost(content, postModalVisibility);
-    }
-  };
-
   // 使用統一的 hook 處理訪客可見項目
   const { visible: visiblePublic, hiddenCount: hiddenPublicCount, nextHidden: nextHiddenPost } = 
     useGuestVisibleItems(publicPosts, perm.canSeeAllPosts);
@@ -423,12 +413,20 @@ export function PostsSection({
       </div>
 
       {/* 發文 Modal - B3: guest 時 openPostModal 已阻擋，此處傳 role 作為最後防線 */}
-      <PostModal
+      <ComposerModal
         isOpen={postModalOpen}
         onClose={() => setPostModalOpen(false)}
-        onSubmit={handlePostSubmit}
-        visibility={postModalVisibility}
-        role={isGuest ? 'guest' : role}
+        onSubmit={async (data) => {
+          if (isGuest) {
+            notify.error(STRINGS.NOTIFY_LOGIN_TITLE, STRINGS.NOTIFY_LOGIN_DESC);
+            return;
+          }
+          if (onCreatePost) {
+            await onCreatePost(data.content, data.visibility);
+          }
+        }}
+        mode="community"
+        initialVisibility={postModalVisibility}
       />
     </section>
   );
