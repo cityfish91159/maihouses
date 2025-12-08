@@ -1,6 +1,6 @@
 #!/bin/bash
 # ============================================================================
-# AI SUPERVISOR v7.1 - ULTIMATE ATTACK MODE (終極攻擊模式)
+# AI SUPERVISOR v7.2 - ULTIMATE ATTACK MODE (終極攻擊模式)
 # ============================================================================
 # 
 # ⛔️⛔️⛔️ AI AGENT 必讀 ⛔️⛔️⛔️
@@ -11,7 +11,16 @@
 # ❌ 沒執行 start 就修改代碼 = 怒罵 + 扣 20 分
 # ❌ 沒執行 start 就建立檔案 = 怒罵 + 扣 20 分  
 # ❌ 沒執行 start 就執行指令 = 怒罵 + 扣 20 分
+# ❌ 使用 --no-verify 繞過 = 每次扣 10 分
+# ❌ 修改檔案未審計 = finish 時怒罵 + 每個檔案扣 5 分
 #
+# ============================================================================
+# 🔥 v7.2 新增功能：
+# 1. audit-all: 批次審計所有待審計檔案
+# 2. 待審計堆積警告：track-modify 超過 3 個檔案未審計時警告
+# 3. --no-verify 偵測：post-commit hook 記錄作弊行為
+# 4. finish 作弊扣分：--no-verify 每次扣 10 分
+# 5. 未審計檔案詳細列表：finish 時顯示待審計命令
 # ============================================================================
 # 🔥 設計理念：不是被動防守，而是主動出擊！
 # 
@@ -592,9 +601,24 @@ function cmd_track_modify() {
         update_score -2 "跳過 pre-write: $file"
     fi
     
-    # 記錄修改的檔案
-    echo "$file" >> "$MODIFIED_FILES"
+    # 記錄修改的檔案（去重）
+    if ! grep -qF "$file" "$MODIFIED_FILES" 2>/dev/null; then
+        echo "$file" >> "$MODIFIED_FILES"
+    fi
     echo -e "${CYAN}📝 已記錄修改: $file${NC}"
+    
+    # ===== 🔥 v7.2 新增：追蹤待審計計數器 =====
+    local pending_count=$(comm -23 <(sort -u "$MODIFIED_FILES") <(sort -u "$AUDITED_FILES" 2>/dev/null || true) | wc -l)
+    pending_count=$(echo "$pending_count" | tr -d '[:space:]')
+    if [ "$pending_count" -gt 3 ]; then
+        echo ""
+        echo -e "${BG_RED}${WHITE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+        echo -e "${BG_RED}${WHITE}🚨 警告：你有 $pending_count 個檔案待審計！${NC}"
+        echo -e "${BG_RED}${WHITE}   不要繼續堆積！立即執行 audit！${NC}"
+        echo -e "${BG_RED}${WHITE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+        comm -23 <(sort -u "$MODIFIED_FILES") <(sort -u "$AUDITED_FILES" 2>/dev/null || true)
+        echo ""
+    fi
     
     # ===== ATTACK MODE: 即時代碼攔截（在審計前先掃一遍）=====
     echo ""
@@ -761,8 +785,23 @@ function cmd_finish() {
         exit 1
     fi
     
-    # 0. 逃漏檢查 - 檢測 Git 變更但未追蹤的檔案
-    echo "0️⃣  [逃漏封鎖] 檢查未追蹤的 Git 變更..."
+    # ===== 🔥 v7.2 新增：--no-verify 使用偵測 =====
+    echo "0️⃣  [作弊偵測] 檢查 --no-verify 使用記錄..."
+    local no_verify_count=0
+    if [ -f "$STATE_DIR/no_verify.log" ]; then
+        no_verify_count=$(wc -l < "$STATE_DIR/no_verify.log")
+        no_verify_count=$(echo "$no_verify_count" | tr -d '[:space:]')
+    fi
+    if [ "$no_verify_count" -gt 0 ]; then
+        echo -e "${BG_RED}${WHITE}🚨 偵測到 $no_verify_count 次 --no-verify 使用！${NC}"
+        echo -e "${RED}   這是作弊行為！每次扣 10 分！${NC}"
+        update_score $((no_verify_count * -10)) "作弊: 使用 --no-verify $no_verify_count 次"
+    else
+        echo -e "${GREEN}   ✅ 未偵測到 --no-verify 作弊${NC}"
+    fi
+    
+    # 1. 逃漏檢查 - 檢測 Git 變更但未追蹤的檔案
+    echo "1️⃣  [逃漏封鎖] 檢查未追蹤的 Git 變更..."
     # 包含未追蹤與修改檔案，但排除 ignored/構建/依賴目錄
     local git_changes
     git_changes=$(git status --porcelain 2>/dev/null | sed 's/^.. //' | grep -Ev "$IGNORE_PATTERNS" || true)
@@ -789,21 +828,28 @@ function cmd_finish() {
     fi
     echo -e "${GREEN}   ✅ 無未追蹤的修改（已排除 dist/node_modules/.git 等目錄）${NC}"
     
-    # 1. 檢查是否所有修改的檔案都已審計
-    echo "1️⃣  檢查審計覆蓋..."
+    # 2. 檢查是否所有修改的檔案都已審計
+    echo "2️⃣  檢查審計覆蓋..."
     
     if [ -f "$MODIFIED_FILES" ] && [ -s "$MODIFIED_FILES" ]; then
         local unaudited=""
+        local unaudited_count=0
         while IFS= read -r file; do
             if ! grep -qF "$file" "$AUDITED_FILES" 2>/dev/null; then
                 unaudited="$unaudited$file\n"
+                unaudited_count=$((unaudited_count + 1))
             fi
         done < "$MODIFIED_FILES"
         
         if [ -n "$unaudited" ]; then
-            echo -e "${RED}❌ 以下檔案修改後未經審計：${NC}"
+            echo -e "${RED}❌ 以下 $unaudited_count 個檔案修改後未經審計：${NC}"
             echo -e "$unaudited"
-            update_score -15 "未審計檔案"
+            echo ""
+            echo -e "${YELLOW}📋 立即執行以下命令來審計：${NC}"
+            echo -e "$unaudited" | while read -r f; do
+                [ -n "$f" ] && echo -e "${CYAN}   ./scripts/ai-supervisor.sh audit $f${NC}"
+            done
+            update_score $((unaudited_count * -5)) "未審計檔案: $unaudited_count 個"
             rage_exit "所有修改過的檔案必須經過 audit！"
         fi
         echo -e "${GREEN}   ✅ 所有修改檔案已審計${NC}"
@@ -811,17 +857,17 @@ function cmd_finish() {
         echo -e "${YELLOW}   ⚠️  未記錄到任何修改（請確認是否使用了 track-modify）${NC}"
     fi
     
-    # 2. 執行全系統驗證
-    echo "2️⃣  執行全系統驗證..."
+    # 3. 執行全系統驗證
+    echo "4️⃣  執行全系統驗證..."
     cmd_verify
     
-    # 3. 顯示最終分數
+    # 4. 顯示最終分數
     local final_score=100
     if [ -f "$SCORE_FILE" ]; then
         final_score=$(cat "$SCORE_FILE" | grep -o '"score":[0-9]*' | cut -d: -f2 || echo 100)
     fi
     
-    # 4. 結束 session
+    # 5. 結束 session
     local end_time=$(date +%s)
     local start_time=$(cat "$SESSION_FILE" | grep -o '"start_time":[0-9]*' | cut -d: -f2)
     local duration=$((end_time - start_time))
@@ -1452,6 +1498,18 @@ echo -e "${GREEN}✅ TypeScript 檢查通過${NC}"
 mkdir -p .ai_supervisor
 echo "[$(date '+%Y-%m-%d %H:%M:%S')] COMMIT APPROVED" >> ".ai_supervisor/commits.log"
 
+# ===== v7.2 新增：檢查待審計檔案 =====
+if [ -f ".ai_supervisor/modified_files.log" ] && [ -f ".ai_supervisor/audited_files.log" ]; then
+    UNAUDITED=$(comm -23 <(sort -u ".ai_supervisor/modified_files.log") <(sort -u ".ai_supervisor/audited_files.log") | wc -l)
+    UNAUDITED=$(echo "$UNAUDITED" | tr -d '[:space:]')
+    if [ "$UNAUDITED" -gt 0 ]; then
+        echo -e "${YELLOW}⚠️  警告：仍有 $UNAUDITED 個檔案待審計！${NC}"
+        echo -e "${YELLOW}   這些檔案已 track-modify 但尚未 audit：${NC}"
+        comm -23 <(sort -u ".ai_supervisor/modified_files.log") <(sort -u ".ai_supervisor/audited_files.log")
+        echo -e "${YELLOW}   建議在 finish 前完成所有審計！${NC}"
+    fi
+fi
+
 echo ""
 echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo -e "${GREEN}🏆 ATTACK MODE: 審計通過，允許提交！${NC}"
@@ -1459,7 +1517,39 @@ echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━
 HOOK_SCRIPT
     chmod +x "$hook_path"
     
+    # ===== v7.2 新增：安裝 post-commit hook 偵測 --no-verify =====
+    local post_hook_path=".git/hooks/post-commit"
+    cat > "$post_hook_path" << 'POST_HOOK'
+#!/bin/bash
+# ============================================================================
+# AI SUPERVISOR v7.2 - POST-COMMIT HOOK (--no-verify 偵測器)
+# ============================================================================
+
+# 檢查最後一次 commit 是否跳過了 pre-commit hook
+# 透過比對 commits.log 的時間戳判斷
+mkdir -p .ai_supervisor
+
+LAST_APPROVED=$(tail -1 ".ai_supervisor/commits.log" 2>/dev/null | grep -o '\[.*\]' | tr -d '[]' || echo "1970-01-01 00:00:00")
+COMMIT_TIME=$(git log -1 --format="%ci" | cut -d' ' -f1-2)
+
+# 將時間轉為秒數比較
+APPROVED_TS=$(date -d "$LAST_APPROVED" +%s 2>/dev/null || echo 0)
+COMMIT_TS=$(date -d "$COMMIT_TIME" +%s 2>/dev/null || echo 0)
+DIFF=$((COMMIT_TS - APPROVED_TS))
+
+# 如果差距超過 5 秒，表示 pre-commit 被跳過
+if [ "$DIFF" -gt 5 ] || [ "$DIFF" -lt -5 ]; then
+    echo ""
+    echo -e "\033[41m\033[1;37m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
+    echo -e "\033[41m\033[1;37m🚨 偵測到 --no-verify 使用！這是作弊行為！\033[0m"
+    echo -e "\033[41m\033[1;37m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] NO-VERIFY DETECTED" >> ".ai_supervisor/no_verify.log"
+fi
+POST_HOOK
+    chmod +x "$post_hook_path"
+    
     echo -e "${GREEN}✅ Pre-commit hook (ATTACK MODE) 已安裝${NC}"
+    echo -e "${GREEN}✅ Post-commit hook (--no-verify 偵測器) 已安裝${NC}"
     echo -e "${CYAN}   位置: $hook_path${NC}"
     echo ""
     echo -e "${WHITE}🔥 現在每次 git commit 前都會自動：${NC}"
@@ -1467,6 +1557,12 @@ HOOK_SCRIPT
     echo -e "   2. 檢查 any、eslint-disable、console.log 等"
     echo -e "   3. 檢查 Hook 中的硬編碼中文"
     echo -e "   4. 執行 TypeScript 類型檢查"
+    echo -e "   5. 警告待審計檔案"
+    echo ""
+    echo -e "${WHITE}🔥 每次 commit 後會自動：${NC}"
+    echo -e "   1. 偵測 --no-verify 使用"
+    echo -e "   2. 記錄到 no_verify.log"
+    echo -e "   3. finish 時扣分"
     echo ""
     echo -e "${BOLD_RED}⚠️  AI 無法繞過這個檢查！${NC}"
 }
@@ -1975,6 +2071,38 @@ case "${1:-}" in
     "audit")
         cmd_audit "${2:-}"
         ;;
+    "audit-all")
+        # 🔥 v7.2 新增：批次審計所有待審計檔案
+        print_header "🔥 批次審計所有待審計檔案"
+        if [ ! -f "$MODIFIED_FILES" ]; then
+            echo -e "${YELLOW}沒有待審計的檔案${NC}"
+            exit 0
+        fi
+        PENDING=$(comm -23 <(sort -u "$MODIFIED_FILES") <(sort -u "$AUDITED_FILES" 2>/dev/null || true))
+        if [ -z "$PENDING" ]; then
+            echo -e "${GREEN}✅ 所有檔案都已審計！${NC}"
+            exit 0
+        fi
+        echo -e "${CYAN}📋 待審計檔案：${NC}"
+        echo "$PENDING"
+        echo ""
+        FAILED=0
+        while IFS= read -r file; do
+            [ -z "$file" ] && continue
+            echo -e "${CYAN}━━━ 審計: $file ━━━${NC}"
+            if cmd_audit "$file"; then
+                echo -e "${GREEN}✅ $file 通過${NC}"
+            else
+                FAILED=1
+            fi
+            echo ""
+        done <<< "$PENDING"
+        if [ "$FAILED" -eq 1 ]; then
+            echo -e "${RED}❌ 部分檔案審計失敗！${NC}"
+            exit 1
+        fi
+        echo -e "${GREEN}🏆 所有檔案審計通過！${NC}"
+        ;;
     "finish")
         cmd_finish
         ;;
@@ -2036,6 +2164,7 @@ case "${1:-}" in
         echo "  ${GREEN}2. pre-write <file>${NC} 【建議】寫代碼前看規則"
         echo "  ${GREEN}3. track-modify <f>${NC} 【強制】修改後登記 (含即時掃描)"
         echo "  ${GREEN}4. audit <file>${NC}     【強制】審計代碼 (失敗=怒罵)"
+        echo "  ${GREEN}4a. audit-all${NC}       【推薦】批次審計所有待審計檔案"
         echo "  ${GREEN}5. finish${NC}           【強制】結束任務 (逃漏=怒罵)"
         echo ""
         echo -e "${CYAN}🔧 工具指令：${NC}"
@@ -2043,20 +2172,24 @@ case "${1:-}" in
         echo "  ${GREEN}score${NC}           查看分數 (0-150)"
         echo "  ${GREEN}code-score${NC}      執行 TypeScript/ESLint/Build 並給出最終代碼評分"
         echo "  ${GREEN}guidance${NC}        顯示最佳實踐指南"
+        echo "  ${GREEN}guidance-pro${NC}    進階代碼片段範本"
         echo "  ${GREEN}template-tsx${NC}    顯示 React 組件模板"
         echo "  ${GREEN}template-hook${NC}   顯示 Hook 模板"
         echo "  ${GREEN}verify${NC}          執行全系統測試"
         echo "  ${GREEN}deep-scan${NC}       全專案深度掃描"
+        echo "  ${GREEN}auto-scan${NC}       自動掃描並生成報告"
         echo "  ${RED}rage-log${NC}        查詢怒罵記錄"
         echo "  ${RED}violations${NC}      查詢違規記錄"
         echo ""
-        echo -e "${WHITE}🔥 ATTACK MODE 特性：${NC}"
+        echo -e "${WHITE}🔥 ATTACK MODE v7.2 特性：${NC}"
         echo "  - 🎯 先發制人：寫代碼前強制看規則"
         echo "  - 👁️ 逐字監控：track-modify 即時掃描"
         echo "  - 🤬 怒罵模式：違規時直接怒罵 AI"
         echo "  - 💀 重扣分：怒罵一次 -20 分"
         echo "  - 📚 強制學習：違規後顯示正確做法"
         echo "  - 🔍 逃漏封鎖：Git diff 比對"
+        echo "  - 🚨 作弊偵測：--no-verify 使用記錄"
+        echo "  - 📊 批次審計：audit-all 一次審完"
         echo ""
         echo -e "${BG_RED}${WHITE}⚠️  AI AGENT 必讀 (違反必死)：${NC}"
         echo -e "${YELLOW}   收到任務後，第一步必須執行：${NC}"
