@@ -191,7 +191,67 @@ check_hardcoded_strings() {
 }
 
 # ============================================================================
-# 檢查 7: 特定任務驗證 - Logo 原子素材
+# 檢查 7: 假數據檢測 (Fake Data Detection) - 嚴格！
+# ============================================================================
+check_fake_data() {
+  echo ""
+  echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+  echo -e "${BLUE}    🚨 檢查假數據 (Fake Data)                               ${NC}"
+  echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+  echo ""
+
+  local fake_data_found=0
+
+  # 1. 檢測 Notification Badge (原子組件不應有業務狀態)
+  local notification_badges=$(grep -rn 'Notification Badge\|notification-badge\|badge.*rounded-full' "$PROJECT_ROOT/src/components" --include="*.tsx" 2>/dev/null || true)
+  if [[ -n "$notification_badges" ]]; then
+    log_error "原子組件中發現 Notification Badge！原子組件不應包含業務狀態"
+    echo "$notification_badges"
+    echo ""
+    fake_data_found=1
+  fi
+
+  # 2. 檢測硬編碼數字 (可能是假的計數)
+  local hardcoded_counts=$(grep -rn '>\s*[0-9]\+\s*<\|"[0-9]\+"\|count.*[0-9]' "$PROJECT_ROOT/src/components" --include="*.tsx" 2>/dev/null | grep -v 'size=\|width=\|height=\|stroke\|viewBox\|key=\|index\|length\|px\|rem\|em' || true)
+  if [[ -n "$hardcoded_counts" ]]; then
+    log_warning "可能的硬編碼計數（假數據）:"
+    echo "$hardcoded_counts" | head -10
+    echo ""
+  fi
+
+  # 3. 檢測未連接真實數據的狀態指示器
+  local status_indicators=$(grep -rn 'bg-red-\|bg-green-\|bg-yellow-\|bg-\[#FF\|status\|indicator' "$PROJECT_ROOT/src/components" --include="*.tsx" 2>/dev/null | grep -v 'Props\|interface\|type ' || true)
+  if [[ -n "$status_indicators" ]]; then
+    log_warning "發現狀態指示器，請確認是否連接真實數據:"
+    echo "$status_indicators" | head -10
+    echo ""
+  fi
+
+  # 4. 檢測假的用戶資料
+  local fake_users=$(grep -rn 'user.*@\|example\.com\|test@\|demo@\|John Doe\|Jane\|Lorem ipsum' "$PROJECT_ROOT/src" --include="*.tsx" --include="*.ts" 2>/dev/null || true)
+  if [[ -n "$fake_users" ]]; then
+    log_error "發現假用戶資料！生產代碼不應有測試數據"
+    echo "$fake_users"
+    echo ""
+    fake_data_found=1
+  fi
+
+  # 5. 檢測 mock 數據
+  local mock_data=$(grep -rn 'mock\|Mock\|MOCK\|dummy\|Dummy\|fake\|Fake\|placeholder' "$PROJECT_ROOT/src" --include="*.tsx" --include="*.ts" 2>/dev/null | grep -v 'test\|spec\|\.test\.\|\.spec\.' || true)
+  if [[ -n "$mock_data" ]]; then
+    log_error "發現 mock/dummy/fake 數據在非測試檔案中！"
+    echo "$mock_data"
+    echo ""
+    fake_data_found=1
+  fi
+
+  if [[ "$fake_data_found" -eq 0 ]]; then
+    log_pass "沒有發現明顯的假數據"
+  fi
+}
+
+# ============================================================================
+# 檢查 8: 特定任務驗證 - Logo 原子素材
 # ============================================================================
 check_logo_atomic() {
   echo ""
@@ -213,6 +273,16 @@ check_logo_atomic() {
       echo "Logo 應該使用 Tailwind CSS 變數 (brand-*, ink-*)"
     else
       log_pass "Logo 組件沒有硬編碼顏色"
+    fi
+
+    # 檢查是否有假的通知徽章
+    local fake_badge=$(grep -n 'Badge\|badge\|rounded-full.*bg-\[#\|notification' "$logo_file" 2>/dev/null || true)
+    if [[ -n "$fake_badge" ]]; then
+      log_error "Logo 組件中發現假通知徽章！原子組件不應有業務狀態"
+      echo "$fake_badge"
+      echo ""
+    else
+      log_pass "Logo 組件沒有假通知徽章"
     fi
 
     # 檢查是否使用真正的圖片資源
@@ -263,6 +333,7 @@ main() {
   check_suppressions
   check_todo_completion
   check_hardcoded_strings
+  check_fake_data
   check_logo_atomic
 
   final_report
