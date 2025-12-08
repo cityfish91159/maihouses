@@ -156,38 +156,38 @@ export default function SmartAsk() {
     };
 
     return (
-        <section className="group relative bg-gradient-to-br from-white via-[#F8FAFC] to-[#00385a08] rounded-[24px] border border-brand-100 shadow-[0_8px_24px_rgba(0,56,90,0.06)] overflow-hidden hover:shadow-[0_12px_32px_rgba(0,56,90,0.1)] transition-all duration-300 isolate">
+        <section className="group relative isolate overflow-hidden rounded-[24px] border border-brand-100 bg-gradient-to-br from-white via-[#F8FAFC] to-[#00385a08] shadow-[0_8px_24px_rgba(0,56,90,0.06)] transition-all duration-300 hover:shadow-[0_12px_32px_rgba(0,56,90,0.1)]">
 
             {/* --- Background Elements --- */}
-            <div className="absolute -top-24 -right-24 w-80 h-80 bg-brand-100/30 rounded-full blur-3xl pointer-events-none mix-blend-multiply"></div>
-            <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-brand-700/5 rounded-full blur-3xl pointer-events-none mix-blend-multiply"></div>
-            <div className="absolute inset-0 bg-[linear-gradient(to_right,#00385a08_1px,transparent_1px),linear-gradient(to_bottom,#00385a08_1px,transparent_1px)] bg-[size:24px_24px] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000_70%,transparent_100%)] pointer-events-none z-0"></div>
+            <div className="pointer-events-none absolute -right-24 -top-24 size-80 rounded-full bg-brand-100/30 mix-blend-multiply blur-3xl"></div>
+            <div className="pointer-events-none absolute -bottom-24 -left-24 size-96 rounded-full bg-brand-700/5 mix-blend-multiply blur-3xl"></div>
+            <div className="pointer-events-none absolute inset-0 z-0 bg-[linear-gradient(to_right,#00385a08_1px,transparent_1px),linear-gradient(to_bottom,#00385a08_1px,transparent_1px)] [background-size:24px_24px] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000_70%,transparent_100%)]"></div>
 
             {/* Decorative Top Bar */}
-            <div className="h-1.5 w-full bg-gradient-to-r from-brand-700 via-brand-600 to-brand-500 relative z-20"></div>
+            <div className="relative z-20 h-1.5 w-full bg-gradient-to-r from-brand-700 via-brand-600 to-brand-500"></div>
 
-            <div className="p-5 md:p-8 md:pt-6 relative z-10">
+            <div className="relative z-10 p-5 md:p-8 md:pt-6">
                 {/* Header Section */}
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-3">
+                <div className="mb-3 flex flex-col justify-between gap-4 md:flex-row md:items-center">
                     <div className="flex items-center gap-3">
                         {/* Chat Icon */}
-                        <div className="w-12 h-12 rounded-2xl bg-white/80 border border-brand-100 flex items-center justify-center text-brand-700 relative overflow-hidden shrink-0 shadow-sm backdrop-blur-sm group-hover:scale-105 transition-transform duration-300">
+                        <div className="relative flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-brand-100 bg-white/80 text-brand-700 shadow-sm backdrop-blur-sm transition-transform duration-300 group-hover:scale-105">
                             <MessageCircle size={26} strokeWidth={2} />
                         </div>
 
                         <div>
-                            <h3 className="font-black text-brand-700 text-xl tracking-tight flex items-center gap-2">
+                            <h3 className="flex items-center gap-2 text-xl font-black tracking-tight text-brand-700">
                                 MaiMai 小閨蜜
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gradient-to-r from-brand-700 to-brand-600 text-white text-[10px] font-bold tracking-wider uppercase shadow-sm">
+                                <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-brand-700 to-brand-600 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white shadow-sm">
                                     <Sparkles size={10} /> v6.0
                                 </span>
                             </h3>
-                            <div className="flex items-center gap-2 mt-0.5">
-                                <p className="text-xs text-ink-600 font-bold tracking-wide">
+                            <div className="mt-0.5 flex items-center gap-2">
+                                <p className="text-xs font-bold tracking-wide text-ink-600">
                                     聊生活、聊房子、什麼都可以聊 ☕
                                 </p>
                                 {/* 親密度顯示 */}
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-pink-50 border border-pink-200 text-pink-600 text-[10px] font-bold">
+                                <span className="inline-flex items-center gap-1 rounded-full border border-pink-200 bg-pink-50 px-2 py-0.5 text-[10px] font-bold text-pink-600">
                                     <Heart size={10} fill="currentColor" /> {intimacy.label} {intimacy.emoji}
                                 </span>
                             </div>
@@ -200,7 +200,7 @@ export default function SmartAsk() {
                             <button
                                 key={tag}
                                 onClick={() => send(tag)}
-                                className="px-3.5 py-1.5 rounded-full bg-white border border-brand-100 text-brand-700 text-xs font-bold hover:bg-brand-700 hover:text-white hover:border-brand-700 transition-all active:scale-95 shadow-sm hover:shadow-md backdrop-blur-sm"
+                                className="rounded-full border border-brand-100 bg-white px-3.5 py-1.5 text-xs font-bold text-brand-700 shadow-sm backdrop-blur-sm transition-all hover:border-brand-700 hover:bg-brand-700 hover:text-white hover:shadow-md active:scale-95"
                             >
                                 {tag}
                             </button>
@@ -211,20 +211,20 @@ export default function SmartAsk() {
                 {/* Chat Display Area */}
                 <div
                     ref={chatRef}
-                    className="h-[380px] overflow-y-auto rounded-2xl bg-white/50 border border-brand-100/60 p-5 shadow-inner mb-4 flex flex-col gap-4 scroll-smooth backdrop-blur-md"
+                    className="mb-4 flex h-[380px] flex-col gap-4 overflow-y-auto scroll-smooth rounded-2xl border border-brand-100/60 bg-white/50 p-5 shadow-inner backdrop-blur-md"
                     role="log"
                     aria-live="polite"
                 >
                     {messages.length === 0 ? (
-                        <div className="flex flex-1 flex-col items-center justify-center text-center p-4 opacity-80">
+                        <div className="flex flex-1 flex-col items-center justify-center p-4 text-center opacity-80">
 
                             {/* MaiMai Mascot */}
                             <MascotMaiMai />
 
-                            <p className="mb-2 font-black text-brand-700 text-base">
+                            <p className="mb-2 text-base font-black text-brand-700">
                                 {returnGreeting ? returnGreeting.split('！')[0] + '！' : '嗨～我是邁邁 👋'}
                             </p>
-                            <p className="text-sm leading-relaxed text-ink-600 max-w-xs mx-auto font-medium">
+                            <p className="mx-auto max-w-xs text-sm font-medium leading-relaxed text-ink-600">
                                 {returnGreeting 
                                     ? returnGreeting.includes('！') ? returnGreeting.split('！').slice(1).join('！') : '最近過得怎樣？'
                                     : <>今天過得怎樣？<br />想聊什麼都可以，我在這陪你～</>
@@ -237,13 +237,13 @@ export default function SmartAsk() {
                         ))
                     )}
                     {loading && (
-                        <div className="flex justify-start animate-fadeIn">
-                            <div className="rounded-2xl rounded-bl-sm px-4 py-3 bg-white border border-brand-100 text-brand-600 text-sm flex items-center gap-2 shadow-sm">
+                        <div className="flex animate-fadeIn justify-start">
+                            <div className="flex items-center gap-2 rounded-2xl rounded-bl-sm border border-brand-100 bg-white px-4 py-3 text-sm text-brand-600 shadow-sm">
                                 <span className="font-bold">邁邁正在想...</span>
                                 <div className="flex gap-1">
-                                    <span className="w-1.5 h-1.5 bg-brand-500 rounded-full animate-[bounce_1.4s_infinite_ease-in-out_both]"></span>
-                                    <span className="w-1.5 h-1.5 bg-brand-500 rounded-full animate-[bounce_1.4s_infinite_ease-in-out_both_0.2s]"></span>
-                                    <span className="w-1.5 h-1.5 bg-brand-500 rounded-full animate-[bounce_1.4s_infinite_ease-in-out_both_0.4s]"></span>
+                                    <span className="size-1.5 animate-[bounce_1.4s_infinite_ease-in-out_both] rounded-full bg-brand-500"></span>
+                                    <span className="size-1.5 animate-[bounce_1.4s_infinite_ease-in-out_both_0.2s] rounded-full bg-brand-500"></span>
+                                    <span className="size-1.5 animate-[bounce_1.4s_infinite_ease-in-out_both_0.4s] rounded-full bg-brand-500"></span>
                                 </div>
                             </div>
                         </div>
@@ -251,10 +251,10 @@ export default function SmartAsk() {
                 </div>
 
                 {/* Input Area */}
-                <div className="relative group/input">
+                <div className="group/input relative">
                     <input
                         type="text"
-                        className="w-full pl-5 pr-14 py-4 rounded-xl border-2 border-brand-100 bg-white/80 text-ink-900 font-bold text-[15px] placeholder:text-ink-400/80 transition-all focus:outline-none focus:border-brand-500 focus:ring-4 focus:ring-brand-50/50 hover:border-brand-300 shadow-sm backdrop-blur-sm"
+                        className="w-full rounded-xl border-2 border-brand-100 bg-white/80 py-4 pl-5 pr-14 text-[15px] font-bold text-ink-900 shadow-sm backdrop-blur-sm transition-all placeholder:text-ink-400/80 hover:border-brand-300 focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-50/50"
                         placeholder="說說你今天過得如何，或任何想聊的..."
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
@@ -264,9 +264,9 @@ export default function SmartAsk() {
                     <button
                         onClick={() => send()}
                         disabled={loading || !input.trim()}
-                        className="absolute right-2 top-2 bottom-2 aspect-square rounded-lg bg-brand-700 text-white flex items-center justify-center shadow-md transition-all hover:bg-brand-600 hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:transform-none disabled:shadow-none"
+                        className="absolute inset-y-2 right-2 flex aspect-square items-center justify-center rounded-lg bg-brand-700 text-white shadow-md transition-all hover:-translate-y-0.5 hover:bg-brand-600 hover:shadow-lg active:translate-y-0 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none disabled:hover:transform-none"
                     >
-                        <Send size={20} strokeWidth={2.5} className="-ml-0.5 translate-y-[1px]" />
+                        <Send size={20} strokeWidth={2.5} className="-ml-0.5 translate-y-px" />
                     </button>
                 </div>
             </div>

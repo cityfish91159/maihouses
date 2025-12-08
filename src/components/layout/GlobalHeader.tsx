@@ -98,8 +98,8 @@ export function GlobalHeader({ mode, title, className = '' }: GlobalHeaderProps)
     if (mode === 'community' && title) {
       return (
         <div className="flex-1 text-center">
-          <h1 className="m-0 text-base font-extrabold text-brand-900">{title}</h1>
-          <p className="m-0 text-[11px] text-ink-500">{STRINGS.SUBTITLE_WALL}</p>
+          <h1 className="text-brand-900 m-0 text-base font-extrabold">{title}</h1>
+          <p className="text-ink-500 m-0 text-[11px]">{STRINGS.SUBTITLE_WALL}</p>
         </div>
       );
     }
@@ -131,11 +131,11 @@ export function GlobalHeader({ mode, title, className = '' }: GlobalHeaderProps)
             <button
               id="gh-user-menu-btn"
               onClick={() => setUserMenuOpen(!userMenuOpen)}
-              className="flex items-center gap-1.5 rounded-xl border border-brand-100 bg-white pl-1 pr-2.5 py-1 transition-all hover:bg-brand-50 hover:shadow-sm active:scale-95"
+              className="flex items-center gap-1.5 rounded-xl border border-brand-100 bg-white py-1 pl-1 pr-2.5 transition-all hover:bg-brand-50 hover:shadow-sm active:scale-95"
               aria-label={STRINGS.LABEL_AVATAR}
               aria-expanded={userMenuOpen}
             >
-              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-brand-50 text-xs font-bold text-brand-700 ring-1 ring-brand-100">
+              <div className="flex size-7 items-center justify-center rounded-full bg-brand-50 text-xs font-bold text-brand-700 ring-1 ring-brand-100">
                 {user?.email?.charAt(0).toUpperCase() || 'U'}
               </div>
               <span className="hidden max-w-[80px] truncate text-xs font-bold text-brand-700 md:block">
@@ -148,16 +148,16 @@ export function GlobalHeader({ mode, title, className = '' }: GlobalHeaderProps)
             {userMenuOpen && (
               <div 
                 id="gh-user-menu-dropdown"
-                className="absolute right-0 top-full mt-2 w-48 origin-top-right rounded-xl border border-brand-100 bg-white p-1 shadow-xl ring-1 ring-black/5 focus:outline-none animate-in fade-in zoom-in-95 duration-100"
+                className="animate-in fade-in zoom-in-95 absolute right-0 top-full mt-2 w-48 origin-top-right rounded-xl border border-brand-100 bg-white p-1 shadow-xl ring-1 ring-black/5 duration-100 focus:outline-none"
                 role="menu"
               >
-                <div className="px-3 py-2 border-b border-gray-50 mb-1">
-                  <p className="truncate text-xs font-bold text-brand-900">{user?.email}</p>
+                <div className="mb-1 border-b border-gray-50 px-3 py-2">
+                  <p className="text-brand-900 truncate text-xs font-bold">{user?.email}</p>
                   <p className="text-[10px] text-gray-500">一般會員</p>
                 </div>
                 
                 <button
-                  className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-bold text-gray-700 hover:bg-brand-50 hover:text-brand-700 transition-colors"
+                  className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-bold text-gray-700 transition-colors hover:bg-brand-50 hover:text-brand-700"
                   role="menuitem"
                   onClick={() => {/* TODO: Profile Link */}}
                 >
@@ -167,7 +167,7 @@ export function GlobalHeader({ mode, title, className = '' }: GlobalHeaderProps)
                 
                 <button
                   onClick={handleSignOut}
-                  className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-bold text-red-600 hover:bg-red-50 transition-colors"
+                  className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-bold text-red-600 transition-colors hover:bg-red-50"
                   role="menuitem"
                 >
                   <LogOut size={16} />

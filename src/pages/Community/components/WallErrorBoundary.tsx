@@ -167,7 +167,7 @@ export class WallErrorBoundary extends React.Component<Props, State> {
 
       return (
         <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-bg-base to-bg-soft px-4">
-          <div className="max-w-md rounded-2xl border border-error-200 bg-white p-8 text-center shadow-xl">
+          <div className="border-error-200 max-w-md rounded-2xl border bg-white p-8 text-center shadow-xl">
             <div className="mb-4 text-5xl">
               {categorized.category === 'network' && '📡'}
               {categorized.category === 'permission' && '🔒'}
@@ -206,22 +206,22 @@ export class WallErrorBoundary extends React.Component<Props, State> {
 
             {import.meta.env.DEV && (
               <details className="mt-6 text-left">
-                <summary className="cursor-pointer text-xs text-ink-500 hover:text-ink-700">
+                <summary className="text-ink-500 cursor-pointer text-xs hover:text-ink-700">
                   🛠️ 開發者除錯資訊
                 </summary>
                 <div className="mt-2 space-y-2">
                   <button
                     type="button"
                     onClick={this.copyErrorToClipboard}
-                    className="w-full rounded border border-ink-200 px-2 py-1 text-xs text-ink-700 hover:bg-ink-50"
+                    className="border-ink-200 hover:bg-ink-50 w-full rounded border px-2 py-1 text-xs text-ink-700"
                   >
                     📋 複製錯誤資訊
                   </button>
-                  <pre className="max-h-60 overflow-auto rounded bg-ink-50 p-3 text-xs text-error-600">
+                  <pre className="bg-ink-50 text-error-600 max-h-60 overflow-auto rounded p-3 text-xs">
                     {this.state.error.stack}
                   </pre>
                   {this.state.errorInfo?.componentStack && (
-                    <pre className="max-h-40 overflow-auto rounded bg-ink-50 p-3 text-xs text-ink-700">
+                    <pre className="bg-ink-50 max-h-40 overflow-auto rounded p-3 text-xs text-ink-700">
                       {this.state.errorInfo.componentStack}
                     </pre>
                   )}

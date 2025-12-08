@@ -122,7 +122,7 @@ function PostCard({ post, onLike }: PostCardProps) {
   return (
     <article className="flex gap-2.5 rounded-[14px] border border-border-light bg-white p-3 transition-all hover:border-brand-600 hover:shadow-[0_2px_8px_rgba(0,56,90,0.06)]">
       <div 
-        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 bg-gradient-to-br from-brand-100/50 to-white text-base font-extrabold ${isAgent ? 'border-brand-light text-brand-600' : 'border-brand text-brand'}`}
+        className={`flex size-10 shrink-0 items-center justify-center rounded-full border-2 bg-gradient-to-br from-brand-100/50 to-white text-base font-extrabold ${isAgent ? 'border-brand-light text-brand-600' : 'border-brand text-brand'}`}
         aria-hidden="true"
       >
         {post.author.charAt(0)}
@@ -145,7 +145,7 @@ function PostCard({ post, onLike }: PostCardProps) {
         <div className="mt-1 flex gap-2">
           {isAgent ? (
             <button 
-              className="flex items-center gap-1 rounded-lg border border-brand/10 bg-brand/6 px-2.5 py-1.5 text-[11px] font-semibold text-brand transition-all hover:bg-brand/12"
+              className="bg-brand/6 hover:bg-brand/12 flex items-center gap-1 rounded-lg border border-brand/10 px-2.5 py-1.5 text-[11px] font-semibold text-brand transition-all"
               aria-label={STRINGS.BTN_MSG_AGENT}
             >
               <span role="img" aria-label="信封">📩</span> {STRINGS.BTN_MSG_AGENT}
@@ -153,7 +153,7 @@ function PostCard({ post, onLike }: PostCardProps) {
           ) : (
             <>
               <button 
-                className="flex items-center gap-1 rounded-lg border border-brand/10 bg-brand/6 px-2.5 py-1.5 text-[11px] font-semibold text-brand transition-all hover:bg-brand/12 disabled:cursor-not-allowed disabled:opacity-60"
+                className="bg-brand/6 hover:bg-brand/12 flex items-center gap-1 rounded-lg border border-brand/10 px-2.5 py-1.5 text-[11px] font-semibold text-brand transition-all disabled:cursor-not-allowed disabled:opacity-60"
                 onClick={handleLike}
                 aria-label="按讚這則貼文"
                 aria-busy={isLiking}
@@ -162,7 +162,7 @@ function PostCard({ post, onLike }: PostCardProps) {
                 {isLiking ? <><span role="img" aria-label="沙漏">⏳</span> {STRINGS.BTN_LIKING}</> : <><span role="img" aria-label="愛心">❤️</span> {STRINGS.BTN_LIKE}</>}
               </button>
               <button 
-                className="flex items-center gap-1 rounded-lg border border-brand/10 bg-brand/6 px-2.5 py-1.5 text-[11px] font-semibold text-brand/50 cursor-not-allowed opacity-60 transition-all"
+                className="bg-brand/6 flex cursor-not-allowed items-center gap-1 rounded-lg border border-brand/10 px-2.5 py-1.5 text-[11px] font-semibold text-brand/50 opacity-60 transition-all"
                 aria-label={STRINGS.BTN_REPLY_ARIA}
                 title={STRINGS.BTN_REPLY_TOOLTIP}
                 disabled
@@ -312,8 +312,8 @@ export function PostsSection({
   }, [activeTabs, currentTab, focusTab, onTabChange, perm.canAccessPrivate]);
 
   return (
-    <section id="public-wall" className="scroll-mt-20 overflow-hidden rounded-[18px] border border-border-light bg-white/98 shadow-[0_2px_12px_rgba(0,51,102,0.04)]" aria-labelledby="posts-heading">
-      <div className="flex items-center justify-between border-b border-brand/5 bg-gradient-to-br from-brand/3 to-brand-600/1 px-4 py-3.5">
+    <section id="public-wall" className="bg-white/98 scroll-mt-20 overflow-hidden rounded-[18px] border border-border-light shadow-[0_2px_12px_rgba(0,51,102,0.04)]" aria-labelledby="posts-heading">
+      <div className="from-brand/3 to-brand-600/1 flex items-center justify-between border-b border-brand/5 bg-gradient-to-br px-4 py-3.5">
         <h2 id="posts-heading" className="flex items-center gap-1.5 text-[15px] font-extrabold text-brand-700">
           <span role="img" aria-label="火焰">🔥</span> {STRINGS.SECTION_TITLE}
         </h2>
@@ -330,7 +330,7 @@ export function PostsSection({
           onClick={() => onTabChange('public')}
           onKeyDown={(event) => handleTabKeyDown(event, 'public')}
           tabIndex={currentTab === 'public' ? 0 : -1}
-          className={`rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-all ${currentTab === 'public' ? 'border-brand-600 bg-brand/10 font-bold text-brand' : 'border-transparent bg-brand-100/80 text-ink-600 hover:bg-brand/8 hover:text-brand'}`}
+          className={`rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-all ${currentTab === 'public' ? 'border-brand-600 bg-brand/10 font-bold text-brand' : 'hover:bg-brand/8 border-transparent bg-brand-100/80 text-ink-600 hover:text-brand'}`}
         >
           {STRINGS.TAB_PUBLIC}
         </button>
@@ -344,7 +344,7 @@ export function PostsSection({
           onClick={handlePrivateClick}
           onKeyDown={(event) => handleTabKeyDown(event, 'private')}
           tabIndex={perm.canAccessPrivate ? (currentTab === 'private' ? 0 : -1) : -1}
-          className={`rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-all ${currentTab === 'private' ? 'border-brand-600 bg-brand/10 font-bold text-brand' : 'border-transparent bg-brand-100/80 text-ink-600 hover:bg-brand/8 hover:text-brand'} ${!perm.canAccessPrivate ? 'opacity-60' : ''}`}
+          className={`rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-all ${currentTab === 'private' ? 'border-brand-600 bg-brand/10 font-bold text-brand' : 'hover:bg-brand/8 border-transparent bg-brand-100/80 text-ink-600 hover:text-brand'} ${!perm.canAccessPrivate ? 'opacity-60' : ''}`}
         >
           {STRINGS.TAB_PRIVATE} {!perm.canAccessPrivate && <span role="img" aria-label="鎖頭">🔒</span>}
         </button>
@@ -379,10 +379,10 @@ export function PostsSection({
             </LockedOverlay>
             
             {perm.canPostPublic && (
-              <div className="flex justify-center rounded-[14px] border border-dashed border-border-light bg-brand/3 p-5">
+              <div className="bg-brand/3 flex justify-center rounded-[14px] border border-dashed border-border-light p-5">
                 <button 
                   onClick={() => openPostModal('public')}
-                  className="flex w-full items-center justify-center gap-1 rounded-lg border border-brand/10 bg-brand/6 px-2.5 py-1.5 text-[11px] font-semibold text-brand hover:bg-brand/12"
+                  className="bg-brand/6 hover:bg-brand/12 flex w-full items-center justify-center gap-1 rounded-lg border border-brand/10 px-2.5 py-1.5 text-[11px] font-semibold text-brand"
                 >
                   <span role="img" aria-label="鉛筆">✏️</span> {STRINGS.BTN_POST_PUBLIC}
                 </button>
@@ -395,10 +395,10 @@ export function PostsSection({
               <PostCard key={post.id} post={post} {...(onLike ? { onLike } : {})} />
             ))}
             {perm.canPostPrivate ? (
-              <div className="flex justify-center rounded-[14px] border border-dashed border-border-light bg-brand/3 p-5">
+              <div className="bg-brand/3 flex justify-center rounded-[14px] border border-dashed border-border-light p-5">
                 <button 
                   onClick={() => openPostModal('private')}
-                  className="flex w-full items-center justify-center gap-1 rounded-lg border border-brand/10 bg-brand/6 px-2.5 py-1.5 text-[11px] font-semibold text-brand hover:bg-brand/12"
+                  className="bg-brand/6 hover:bg-brand/12 flex w-full items-center justify-center gap-1 rounded-lg border border-brand/10 px-2.5 py-1.5 text-[11px] font-semibold text-brand"
                 >
                   <span role="img" aria-label="鉛筆">✏️</span> {STRINGS.BTN_POST_PRIVATE}
                 </button>
@@ -408,7 +408,7 @@ export function PostsSection({
             )}
           </>
         ) : (
-          <div className="flex flex-col items-center justify-center rounded-[14px] bg-brand/3 px-5 py-10 text-center">
+          <div className="bg-brand/3 flex flex-col items-center justify-center rounded-[14px] px-5 py-10 text-center">
             <div className="mb-3 text-5xl opacity-50" aria-hidden="true">🔐</div>
             <h4 className="mb-1.5 text-sm font-bold text-brand-700">{STRINGS.LOCKED_TITLE}</h4>
             <p className="mb-4 text-xs text-ink-600">{perm.isGuest ? STRINGS.LOCKED_DESC_GUEST : STRINGS.LOCKED_DESC_USER}</p>

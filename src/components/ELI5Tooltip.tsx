@@ -31,7 +31,6 @@ export const ELI5Tooltip: React.FC<{ text: string }> = ({ text }) => {
       setOpen(true);
       fetchAns();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const toggle = async () => {

@@ -52,7 +52,7 @@ export function LockedOverlay({
       aria-hidden={isHidden}
     >
       {/* 模糊的背景內容 */}
-      <div className="pointer-events-none select-none blur-[4px]" aria-hidden="true">
+      <div className="pointer-events-none select-none blur-sm" aria-hidden="true">
         {children}
       </div>
       

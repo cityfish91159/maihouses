@@ -248,13 +248,13 @@ export const PropertyDetailPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#f8fafc] font-sans text-slate-800">
       {/* Header */}
-      <nav className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-100 h-16 flex items-center px-4 shadow-sm justify-between">
+      <nav className="sticky top-0 z-50 flex h-16 items-center justify-between border-b border-slate-100 bg-white/90 px-4 shadow-sm backdrop-blur-md">
         <div className="flex items-center gap-3">
-          <button className="p-2 hover:bg-slate-100 rounded-full transition-colors">
+          <button className="rounded-full p-2 transition-colors hover:bg-slate-100">
             <ArrowLeft size={20} className="text-slate-600" />
           </button>
-          <div className="flex items-center text-[#003366] font-extrabold text-xl gap-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-[#003366] to-[#00A8E8] rounded-lg flex items-center justify-center text-white">
+          <div className="flex items-center gap-2 text-xl font-extrabold text-[#003366]">
+            <div className="flex size-8 items-center justify-center rounded-lg bg-gradient-to-br from-[#003366] to-[#00A8E8] text-white">
               <Home size={18} />
             </div>
             邁房子
@@ -262,17 +262,17 @@ export const PropertyDetailPage: React.FC = () => {
         </div>
         
         {/* 僅顯示公開編號 */}
-        <div className="flex items-center text-xs font-mono text-slate-500 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200">
+        <div className="flex items-center rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 font-mono text-xs text-slate-500">
           <Hash size={12} className="mr-1 text-gray-400"/>
-          編號：<span className="font-bold text-[#003366] ml-1">{property.publicId}</span>
+          編號：<span className="ml-1 font-bold text-[#003366]">{property.publicId}</span>
         </div>
       </nav>
 
-      <main className="max-w-4xl mx-auto p-4 pb-24">
+      <main className="mx-auto max-w-4xl p-4 pb-24">
         {/* Image Gallery - 橫向滾動多圖 */}
         <div className="mb-4">
           {/* 主圖 */}
-          <div className="aspect-video bg-slate-200 rounded-2xl overflow-hidden relative group">
+          <div className="group relative aspect-video overflow-hidden rounded-2xl bg-slate-200">
             <img 
               src={property.images?.[currentImageIndex] || displayImage} 
               alt={property.title}
@@ -281,9 +281,9 @@ export const PropertyDetailPage: React.FC = () => {
                   e.currentTarget.src = FALLBACK_IMAGE;
                 }
               }}
-              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+              className="size-full object-cover transition-transform duration-700 group-hover:scale-105"
             />
-            <div className="absolute bottom-4 right-4 bg-black/50 backdrop-blur-md text-white text-xs px-3 py-1.5 rounded-full flex items-center gap-1">
+            <div className="absolute bottom-4 right-4 flex items-center gap-1 rounded-full bg-black/50 px-3 py-1.5 text-xs text-white backdrop-blur-md">
               <Home size={12} />
               <span>{currentImageIndex + 1} / {property.images?.length || 1}</span>
             </div>
@@ -291,7 +291,7 @@ export const PropertyDetailPage: React.FC = () => {
           
           {/* 縮圖橫向滾動 */}
           {property.images && property.images.length > 1 && (
-            <div className="flex gap-2 overflow-x-auto pb-2 mt-3 -mx-4 px-4 scrollbar-hide">
+            <div className="scrollbar-hide -mx-4 mt-3 flex gap-2 overflow-x-auto px-4 pb-2">
               {property.images.map((img, i) => (
                 <button
                   key={i}
@@ -299,7 +299,7 @@ export const PropertyDetailPage: React.FC = () => {
                     setCurrentImageIndex(i);
                     tracker.trackPhotoClick();
                   }}
-                  className={`flex-shrink-0 w-20 h-14 rounded-lg overflow-hidden border-2 transition-all ${
+                  className={`h-14 w-20 shrink-0 overflow-hidden rounded-lg border-2 transition-all ${
                     i === currentImageIndex 
                       ? 'border-[#003366] ring-2 ring-[#003366]/20' 
                       : 'border-transparent opacity-70 hover:opacity-100'
@@ -309,7 +309,7 @@ export const PropertyDetailPage: React.FC = () => {
                     src={img} 
                     alt={`照片 ${i + 1}`}
                     onError={(e) => { e.currentTarget.src = FALLBACK_IMAGE; }}
-                    className="w-full h-full object-cover"
+                    className="size-full object-cover"
                   />
                 </button>
               ))}
@@ -318,69 +318,69 @@ export const PropertyDetailPage: React.FC = () => {
         </div>
 
         {/* 📱 行動端首屏 CTA - 高轉換設計 */}
-        <div className="lg:hidden mb-6">
-          <div className="bg-white rounded-2xl shadow-lg border border-slate-100 p-4">
+        <div className="mb-6 lg:hidden">
+          <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-lg">
             <div className="flex gap-3">
               <button 
                 onClick={() => openContactModal('mobile_bar')}
-                className="flex-1 bg-[#003366] text-white font-bold py-4 rounded-xl text-base shadow-lg flex items-center justify-center gap-2"
+                className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#003366] py-4 text-base font-bold text-white shadow-lg"
               >
                 <Phone size={20} />
                 立即聯絡經紀人
               </button>
               <button 
                 onClick={() => openContactModal('mobile_bar')}
-                className="w-14 bg-[#06C755] text-white rounded-xl flex items-center justify-center shadow-lg"
+                className="flex w-14 items-center justify-center rounded-xl bg-[#06C755] text-white shadow-lg"
               >
                 <MessageCircle size={22} />
               </button>
             </div>
-            <p className="text-center text-xs text-slate-500 mt-2">
+            <p className="mt-2 text-center text-xs text-slate-500">
               🔥 本物件 {socialProof.weeklyBookings} 組預約中，把握機會！
             </p>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
           {/* Main Content */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="space-y-6 lg:col-span-2">
             <div>
               <div className="flex items-start justify-between gap-4">
-                <h1 className="text-2xl font-bold text-slate-900 leading-tight">
+                <h1 className="text-2xl font-bold leading-tight text-slate-900">
                   {property.title}
                 </h1>
                 <button 
                   onClick={() => setIsFavorite(!isFavorite)}
-                  className={`p-2 rounded-full transition-all ${isFavorite ? 'bg-red-50 text-red-500' : 'bg-slate-50 text-slate-400 hover:bg-slate-100'}`}
+                  className={`rounded-full p-2 transition-all ${isFavorite ? 'bg-red-50 text-red-500' : 'bg-slate-50 text-slate-400 hover:bg-slate-100'}`}
                 >
                   <Heart size={24} fill={isFavorite ? "currentColor" : "none"} />
                 </button>
               </div>
               
-              <div className="flex items-center gap-2 text-slate-500 mt-2 text-sm">
+              <div className="mt-2 flex items-center gap-2 text-sm text-slate-500">
                 <MapPin size={16} />
                 {property.address}
               </div>
 
               <div className="mt-4 flex items-baseline gap-2">
                 <span className="text-3xl font-extrabold text-[#003366]">{property.price}</span>
-                <span className="text-lg text-slate-500 font-medium">萬</span>
-                <span className="text-sm text-red-500 font-medium ml-2">可議價</span>
+                <span className="text-lg font-medium text-slate-500">萬</span>
+                <span className="ml-2 text-sm font-medium text-red-500">可議價</span>
               </div>
 
               {/* 社會證明提示 - FOMO */}
               <div className="mt-3 flex flex-wrap gap-2">
                 {socialProof.isHot && (
-                  <div className="inline-flex items-center gap-1 text-xs font-medium text-orange-600 bg-orange-50 px-2 py-1 rounded-full animate-pulse">
+                  <div className="inline-flex animate-pulse items-center gap-1 rounded-full bg-orange-50 px-2 py-1 text-xs font-medium text-orange-600">
                     <Flame size={12} />
                     熱門物件
                   </div>
                 )}
-                <div className="inline-flex items-center gap-1 text-xs text-slate-600 bg-slate-50 px-2 py-1 rounded-full">
+                <div className="inline-flex items-center gap-1 rounded-full bg-slate-50 px-2 py-1 text-xs text-slate-600">
                   <Eye size={12} className="text-blue-500" />
                   {socialProof.currentViewers} 人正在瀏覽
                 </div>
-                <div className="inline-flex items-center gap-1 text-xs text-slate-600 bg-slate-50 px-2 py-1 rounded-full">
+                <div className="inline-flex items-center gap-1 rounded-full bg-slate-50 px-2 py-1 text-xs text-slate-600">
                   <Users size={12} className="text-green-500" />
                   本週 {socialProof.weeklyBookings} 組預約看屋
                 </div>
@@ -390,7 +390,7 @@ export const PropertyDetailPage: React.FC = () => {
             {/* Tags */}
             <div className="flex flex-wrap gap-2">
               {['近捷運', '全新裝潢', '有車位', '高樓層'].map(tag => (
-                <span key={tag} className="px-3 py-1 bg-blue-50 text-[#003366] text-xs font-medium rounded-full">
+                <span key={tag} className="rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-[#003366]">
                   {tag}
                 </span>
               ))}
@@ -400,53 +400,53 @@ export const PropertyDetailPage: React.FC = () => {
 
             {/* Description */}
             <div className="prose prose-slate max-w-none">
-              <h3 className="text-lg font-bold text-slate-900 mb-3">物件特色</h3>
-              <p className="text-slate-600 leading-relaxed whitespace-pre-line">
+              <h3 className="mb-3 text-lg font-bold text-slate-900">物件特色</h3>
+              <p className="whitespace-pre-line leading-relaxed text-slate-600">
                 {property.description}
               </p>
             </div>
             
             {/* 🏠 社區評價 - 兩好一公道 */}
-            <div className="bg-white rounded-2xl border border-slate-100 p-4 shadow-sm">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+            <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+              <div className="mb-4 flex items-center justify-between">
+                <h3 className="flex items-center gap-2 text-lg font-bold text-slate-900">
                   <Star size={18} className="text-yellow-500" fill="currentColor" />
                   社區評價
                 </h3>
-                <span className="text-xs text-slate-500 bg-slate-50 px-2 py-1 rounded-full">
+                <span className="rounded-full bg-slate-50 px-2 py-1 text-xs text-slate-500">
                   88 位住戶加入
                 </span>
               </div>
               
               {/* 前兩則評價（公開顯示） */}
               <div className="space-y-3">
-                <div className="flex gap-3 p-3 bg-slate-50 rounded-xl">
-                  <div className="w-10 h-10 rounded-full bg-[#003366] text-white flex items-center justify-center font-bold text-lg flex-shrink-0">
+                <div className="flex gap-3 rounded-xl bg-slate-50 p-3">
+                  <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#003366] text-lg font-bold text-white">
                     J
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="font-bold text-slate-800 text-sm">J***</span>
+                  <div className="min-w-0 flex-1">
+                    <div className="mb-1 flex items-center gap-2">
+                      <span className="text-sm font-bold text-slate-800">J***</span>
                       <span className="text-xs text-slate-500">B棟住戶</span>
-                      <span className="text-yellow-500 text-xs">★★★★★</span>
+                      <span className="text-xs text-yellow-500">★★★★★</span>
                     </div>
-                    <p className="text-sm text-slate-600 leading-relaxed">
+                    <p className="text-sm leading-relaxed text-slate-600">
                       公設維護得乾淨，假日草皮有人整理。之前反映停車動線，管委會一週內就公告改善。
                     </p>
                   </div>
                 </div>
                 
-                <div className="flex gap-3 p-3 bg-slate-50 rounded-xl">
-                  <div className="w-10 h-10 rounded-full bg-[#00A8E8] text-white flex items-center justify-center font-bold text-lg flex-shrink-0">
+                <div className="flex gap-3 rounded-xl bg-slate-50 p-3">
+                  <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#00A8E8] text-lg font-bold text-white">
                     W
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="font-bold text-slate-800 text-sm">W***</span>
+                  <div className="min-w-0 flex-1">
+                    <div className="mb-1 flex items-center gap-2">
+                      <span className="text-sm font-bold text-slate-800">W***</span>
                       <span className="text-xs text-slate-500">12F住戶</span>
-                      <span className="text-yellow-500 text-xs">★★★★☆</span>
+                      <span className="text-xs text-yellow-500">★★★★☆</span>
                     </div>
-                    <p className="text-sm text-slate-600 leading-relaxed">
+                    <p className="text-sm leading-relaxed text-slate-600">
                       住起來整體舒服，但面向上路的低樓層在上下班尖峰車聲明顯，喜靜的買家可考慮中高樓層。
                     </p>
                   </div>
@@ -455,15 +455,15 @@ export const PropertyDetailPage: React.FC = () => {
               
               {/* 第三則（未登入時模糊隱藏，登入後正常顯示） */}
               <div className="relative mt-3 overflow-hidden rounded-xl">
-                <div className={`flex gap-3 p-3 bg-slate-50 ${!isLoggedIn ? 'blur-sm select-none' : ''}`}>
-                  <div className="w-10 h-10 rounded-full bg-green-500 text-white flex items-center justify-center font-bold text-lg flex-shrink-0">
+                <div className={`flex gap-3 bg-slate-50 p-3 ${!isLoggedIn ? 'select-none blur-sm' : ''}`}>
+                  <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-green-500 text-lg font-bold text-white">
                     L
                   </div>
                   <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="font-bold text-slate-800 text-sm">L***</span>
+                    <div className="mb-1 flex items-center gap-2">
+                      <span className="text-sm font-bold text-slate-800">L***</span>
                       <span className="text-xs text-slate-500">C棟住戶</span>
-                      {isLoggedIn && <span className="text-yellow-500 text-xs">★★★★★</span>}
+                      {isLoggedIn && <span className="text-xs text-yellow-500">★★★★★</span>}
                     </div>
                     <p className="text-sm text-slate-600">
                       {isLoggedIn 
@@ -475,12 +475,12 @@ export const PropertyDetailPage: React.FC = () => {
                 
                 {/* 遮罩層 - 已登入則直接看到，未登入顯示註冊按鈕 */}
                 {!isLoggedIn && (
-                  <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/80 to-white flex items-end justify-center pb-3">
+                  <div className="absolute inset-0 flex items-end justify-center bg-gradient-to-b from-transparent via-white/80 to-white pb-3">
                     <button 
                       onClick={() => {
                         window.location.href = '/auth.html?redirect=community';
                       }}
-                      className="flex items-center gap-2 bg-[#003366] text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg hover:bg-[#004488] transition-colors"
+                      className="flex items-center gap-2 rounded-full bg-[#003366] px-4 py-2 text-sm font-bold text-white shadow-lg transition-colors hover:bg-[#004488]"
                     >
                       <Lock size={14} />
                       註冊查看全部 6 則評價
@@ -491,13 +491,13 @@ export const PropertyDetailPage: React.FC = () => {
               </div>
               
               {/* 社區牆入口提示 */}
-              <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+              <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3">
                 <p className="text-xs text-slate-500">
                   💬 加入社區牆，與現任住戶交流
                 </p>
                 <button 
                   onClick={() => window.location.href = '/maihouses/community-wall_mvp.html'}
-                  className="text-xs text-[#003366] font-bold hover:underline flex items-center gap-1"
+                  className="flex items-center gap-1 text-xs font-bold text-[#003366] hover:underline"
                 >
                   前往社區牆
                   <ChevronRight size={12} />
@@ -516,22 +516,22 @@ export const PropertyDetailPage: React.FC = () => {
                 onBookingClick={() => openContactModal('booking')}
               />
               
-              <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
-                <h4 className="font-bold text-[#003366] text-sm mb-2 flex items-center gap-2">
+              <div className="rounded-xl border border-blue-100 bg-blue-50 p-4">
+                <h4 className="mb-2 flex items-center gap-2 text-sm font-bold text-[#003366]">
                   <Shield size={16} />
                   安心交易保障
                 </h4>
                 <ul className="space-y-2">
-                  <li className="text-xs text-slate-600 flex items-center gap-2">
-                    <div className="w-1 h-1 bg-blue-400 rounded-full" />
+                  <li className="flex items-center gap-2 text-xs text-slate-600">
+                    <div className="size-1 rounded-full bg-blue-400" />
                     產權調查確認
                   </li>
-                  <li className="text-xs text-slate-600 flex items-center gap-2">
-                    <div className="w-1 h-1 bg-blue-400 rounded-full" />
+                  <li className="flex items-center gap-2 text-xs text-slate-600">
+                    <div className="size-1 rounded-full bg-blue-400" />
                     履約保證專戶
                   </li>
-                  <li className="text-xs text-slate-600 flex items-center gap-2">
-                    <div className="w-1 h-1 bg-blue-400 rounded-full" />
+                  <li className="flex items-center gap-2 text-xs text-slate-600">
+                    <div className="size-1 rounded-full bg-blue-400" />
                     凶宅查詢過濾
                   </li>
                 </ul>
@@ -544,17 +544,17 @@ export const PropertyDetailPage: React.FC = () => {
       {/* 📱 30秒回電浮動按鈕 - 高轉換 */}
       <button 
         onClick={() => openContactModal('booking')}
-        className="fixed right-4 bottom-28 lg:bottom-8 z-40 bg-orange-500 hover:bg-orange-600 text-white w-16 h-16 rounded-full shadow-2xl flex flex-col items-center justify-center text-xs font-bold transition-transform hover:scale-110 animate-bounce"
+        className="fixed bottom-28 right-4 z-40 flex size-16 animate-bounce flex-col items-center justify-center rounded-full bg-orange-500 text-xs font-bold text-white shadow-2xl transition-transform hover:scale-110 hover:bg-orange-600 lg:bottom-8"
         style={{ animationDuration: '2s' }}
       >
         <Phone size={22} />
-        <span className="text-[10px] mt-0.5">30秒回電</span>
+        <span className="mt-0.5 text-[10px]">30秒回電</span>
       </button>
 
       {/* Mobile Bottom Bar - 雙主按鈕設計 */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 p-3 lg:hidden z-50 pb-safe">
+      <div className="pb-safe fixed inset-x-0 bottom-0 z-50 border-t border-slate-100 bg-white p-3 lg:hidden">
         {/* 經紀人驗證資訊 */}
-        <div className="flex items-center justify-center gap-4 mb-2 text-[10px] text-slate-500">
+        <div className="mb-2 flex items-center justify-center gap-4 text-[10px] text-slate-500">
           <span className="flex items-center gap-1">
             <Shield size={10} className="text-green-500" />
             認證經紀人
@@ -564,7 +564,7 @@ export const PropertyDetailPage: React.FC = () => {
             {socialProof.currentViewers} 人瀏覽中
           </span>
           {socialProof.isHot && (
-            <span className="flex items-center gap-1 text-orange-500 font-medium">
+            <span className="flex items-center gap-1 font-medium text-orange-500">
               <Flame size={10} />
               熱門
             </span>
@@ -576,7 +576,7 @@ export const PropertyDetailPage: React.FC = () => {
           {/* 左按鈕：加 LINE（低門檻）*/}
           <button 
             onClick={() => openContactModal('mobile_bar')}
-            className="flex-[4] bg-[#06C755] text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-green-500/20"
+            className="flex flex-[4] items-center justify-center gap-2 rounded-xl bg-[#06C755] py-3 font-bold text-white shadow-lg shadow-green-500/20"
           >
             <MessageCircle size={20} />
             加 LINE 諮詢
@@ -585,7 +585,7 @@ export const PropertyDetailPage: React.FC = () => {
           {/* 右按鈕：預約看屋（高意圖）*/}
           <button 
             onClick={() => openContactModal('booking')}
-            className="flex-[6] bg-[#003366] text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-blue-900/20"
+            className="flex flex-[6] items-center justify-center gap-2 rounded-xl bg-[#003366] py-3 font-bold text-white shadow-lg shadow-blue-900/20"
           >
             <Calendar size={20} />
             預約看屋
@@ -607,36 +607,36 @@ export const PropertyDetailPage: React.FC = () => {
       {/* VIP 高意願客戶攔截彈窗 (S-Grade) */}
       {showVipModal && (
         <div 
-          className="fixed inset-0 z-[60] bg-black/60 flex items-center justify-center p-4"
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4"
           onClick={() => setShowVipModal(false)}
         >
           <div 
-            className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl animate-in zoom-in-95 duration-300"
+            className="animate-in zoom-in-95 w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl duration-300"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="text-center mb-4">
-              <div className="w-16 h-16 bg-gradient-to-br from-orange-400 to-red-500 rounded-full flex items-center justify-center mx-auto mb-3">
+            <div className="mb-4 text-center">
+              <div className="mx-auto mb-3 flex size-16 items-center justify-center rounded-full bg-gradient-to-br from-orange-400 to-red-500">
                 <Flame size={32} className="text-white" />
               </div>
               <h3 className="text-xl font-bold text-slate-800">發現您對此物件很有興趣！</h3>
-              <p className="text-sm text-slate-500 mt-1">
+              <p className="mt-1 text-sm text-slate-500">
                 {vipReason || '專屬 VIP 服務為您優先安排'}
               </p>
             </div>
 
             {/* Benefits */}
-            <div className="bg-slate-50 rounded-xl p-4 mb-4 space-y-2">
+            <div className="mb-4 space-y-2 rounded-xl bg-slate-50 p-4">
               <div className="flex items-center gap-2 text-sm">
-                <CheckCircle size={16} className="text-green-500 flex-shrink-0" />
+                <CheckCircle size={16} className="shrink-0 text-green-500" />
                 <span>優先安排專人帶看</span>
               </div>
               <div className="flex items-center gap-2 text-sm">
-                <CheckCircle size={16} className="text-green-500 flex-shrink-0" />
+                <CheckCircle size={16} className="shrink-0 text-green-500" />
                 <span>獨家議價空間資訊</span>
               </div>
               <div className="flex items-center gap-2 text-sm">
-                <CheckCircle size={16} className="text-green-500 flex-shrink-0" />
+                <CheckCircle size={16} className="shrink-0 text-green-500" />
                 <span>相似物件即時通知</span>
               </div>
             </div>
@@ -649,7 +649,7 @@ export const PropertyDetailPage: React.FC = () => {
                   setShowVipModal(false);
                   openContactModal('mobile_bar');
                 }}
-                className="w-full bg-[#06C755] text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 shadow-lg"
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#06C755] py-3 font-bold text-white shadow-lg"
               >
                 <MessageCircle size={20} />
                 立即加 LINE 諮詢
@@ -660,14 +660,14 @@ export const PropertyDetailPage: React.FC = () => {
                   setShowVipModal(false);
                   openContactModal('booking');
                 }}
-                className="w-full bg-[#003366] text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2"
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#003366] py-3 font-bold text-white"
               >
                 <Calendar size={20} />
                 VIP 預約看屋
               </button>
               <button
                 onClick={() => setShowVipModal(false)}
-                className="w-full text-slate-400 text-sm py-2 hover:text-slate-600"
+                className="w-full py-2 text-sm text-slate-400 hover:text-slate-600"
               >
                 稍後再說
               </button>
@@ -679,11 +679,11 @@ export const PropertyDetailPage: React.FC = () => {
       {/* 報告生成 FAB 按鈕 */}
       <button
         onClick={() => setShowReportGenerator(true)}
-        className="fixed right-4 bottom-24 z-40 w-14 h-14 bg-gradient-to-br from-[#003366] to-[#00A8E8] text-white rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-105 flex items-center justify-center group"
+        className="group fixed bottom-24 right-4 z-40 flex size-14 items-center justify-center rounded-full bg-gradient-to-br from-[#003366] to-[#00A8E8] text-white shadow-lg transition-all hover:scale-105 hover:shadow-xl"
         title="生成物件報告"
       >
         <FileText size={24} />
-        <span className="absolute right-full mr-3 px-3 py-1.5 bg-slate-800 text-white text-sm font-medium rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+        <span className="absolute right-full mr-3 whitespace-nowrap rounded-lg bg-slate-800 px-3 py-1.5 text-sm font-medium text-white opacity-0 transition-opacity group-hover:opacity-100">
           生成報告
         </span>
       </button>

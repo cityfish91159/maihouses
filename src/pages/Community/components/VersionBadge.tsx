@@ -16,11 +16,11 @@ const baseClasses = 'inline-flex items-center gap-2 rounded-full border border-i
 export function VersionBadge({ variant = 'floating', className = '' }: VersionBadgeProps) {
   const content = (
     <>
-      <span className="uppercase tracking-wider text-[10px] text-ink-400">版本</span>
+      <span className="text-[10px] uppercase tracking-wider text-ink-400">版本</span>
       <span className="font-mono text-sm text-ink-900" aria-label="build-version">
         {VERSION_LABEL}
       </span>
-      <span className="text-[10px] text-ink-500" aria-label="build-time">
+      <span className="text-ink-500 text-[10px]" aria-label="build-time">
         {BUILD_TIME_TW}
       </span>
     </>

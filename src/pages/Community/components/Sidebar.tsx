@@ -89,7 +89,7 @@ export function Sidebar({ info, questions: questionsProp, posts }: SidebarProps)
           {displayQuestions.map(q => (
             <a key={q.id} href="#qa-section" className="flex items-start gap-2 rounded-[10px] px-3 py-2.5 text-[13px] font-semibold text-[var(--text-primary)] no-underline transition-all hover:bg-[#f0f7ff]">
               <span className="shrink-0" aria-hidden="true">💬</span>
-              <span className="overflow-hidden text-ellipsis whitespace-nowrap">{q.question.length > 18 ? q.question.substring(0, 18) + '...' : q.question}</span>
+              <span className="truncate">{q.question.length > 18 ? q.question.substring(0, 18) + '...' : q.question}</span>
             </a>
           ))}
         </div>
@@ -103,7 +103,7 @@ export function Sidebar({ info, questions: questionsProp, posts }: SidebarProps)
           {hotPosts.map(p => (
             <a key={p.id} href="#public-wall" className="flex items-start gap-2 rounded-[10px] px-3 py-2.5 text-[13px] font-semibold text-[var(--text-primary)] no-underline transition-all hover:bg-[#f0f7ff]">
               <span className="shrink-0" aria-hidden="true">❤️ {p.likes}</span>
-              <span className="overflow-hidden text-ellipsis whitespace-nowrap">{p.title.length > 15 ? p.title.substring(0, 15) + '...' : p.title}</span>
+              <span className="truncate">{p.title.length > 15 ? p.title.substring(0, 15) + '...' : p.title}</span>
             </a>
           ))}
         </div>

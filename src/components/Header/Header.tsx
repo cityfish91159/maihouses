@@ -70,7 +70,7 @@ export default function Header({ onOpenAIStudio }: HeaderProps) {
 
         {/* Mobile Dropdown Menu - 手機版下拉選單 */}
         {mobileMenuOpen && (
-          <div className="absolute left-0 right-0 top-full border-b border-brand-100 bg-white shadow-lg md:hidden">
+          <div className="absolute inset-x-0 top-full border-b border-brand-100 bg-white shadow-lg md:hidden">
             <nav className="mx-auto max-w-[1120px] px-4 py-3">
               <a 
                 href="/maihouses/property.html" 
@@ -122,7 +122,7 @@ export default function Header({ onOpenAIStudio }: HeaderProps) {
           <div className="relative mx-auto max-w-3xl">
 
             {/* Mascot & Bubble Group */}
-            <div className="pointer-events-none absolute top-[-44px] right-[5%] z-0 animate-float select-none md:right-[10%] md:animate-float-desktop">
+            <div className="pointer-events-none absolute right-[5%] top-[-44px] z-0 animate-float select-none md:right-[10%] md:animate-float-desktop">
 
               {/* Speech Bubble */}
               <div className="absolute bottom-[92%] right-[55%] w-[260px] origin-bottom-right animate-fadeIn whitespace-normal rounded-2xl rounded-br-none border-2 border-brand-100 bg-white px-5 py-2 shadow-lg md:bottom-[94%] md:right-[65%] md:w-auto md:max-w-none md:whitespace-nowrap md:py-3">

@@ -55,22 +55,22 @@ export default function AssureDetail() {
 
   if (!tx && !loading) {
       return (
-          <div className="flex flex-col items-center justify-center min-h-screen bg-slate-100 p-4 font-sans">
-              <div className="bg-white p-8 rounded-2xl shadow-xl max-w-sm w-full text-center">
-                <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+          <div className="flex min-h-screen flex-col items-center justify-center bg-slate-100 p-4 font-sans">
+              <div className="w-full max-w-sm rounded-2xl bg-white p-8 text-center shadow-xl">
+                <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-full bg-blue-100 text-blue-600">
                     <Zap size={32} />
                 </div>
-                <h2 className="text-xl font-bold text-gray-800 mb-2">安心留痕 Trust Room</h2>
-                <p className="text-sm text-gray-500 mb-6">目前未檢測到有效的登入憑證 (Token)。您可以進入演示模式來測試功能。</p>
+                <h2 className="mb-2 text-xl font-bold text-gray-800">安心留痕 Trust Room</h2>
+                <p className="mb-6 text-sm text-gray-500">目前未檢測到有效的登入憑證 (Token)。您可以進入演示模式來測試功能。</p>
                 
                 <button 
                     onClick={startMockMode}
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition shadow-lg flex items-center justify-center gap-2"
+                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 py-3 font-bold text-white shadow-lg transition hover:bg-blue-700"
                 >
                     <Zap size={18} />
                     啟動演示模式 (Demo Mode)
                 </button>
-                <p className="text-xs text-gray-400 mt-4">此模式下資料不會保存到資料庫。</p>
+                <p className="mt-4 text-xs text-gray-400">此模式下資料不會保存到資料庫。</p>
               </div>
           </div>
       )
@@ -91,27 +91,27 @@ export default function AssureDetail() {
   }
 
   return (
-    <div className="max-w-md mx-auto min-h-screen bg-white shadow-2xl relative pb-24 font-sans text-gray-800">
+    <div className="relative mx-auto min-h-screen max-w-md bg-white pb-24 font-sans text-gray-800 shadow-2xl">
       {/* Global Toaster is now used */}
       
       {/* Header */}
-      <header className={`${isMock ? 'bg-indigo-900' : 'bg-slate-900'} text-white p-4 sticky top-0 z-50 flex justify-between items-center shadow-lg transition-colors`}>
+      <header className={`${isMock ? 'bg-indigo-900' : 'bg-slate-900'} sticky top-0 z-50 flex items-center justify-between p-4 text-white shadow-lg transition-colors`}>
         <div>
-          <h1 className="font-bold text-lg tracking-wide flex items-center gap-2">
-            MaiHouses <span className={`text-xs px-1 rounded ${isMock ? 'bg-yellow-500 text-black' : 'bg-blue-600'}`}>{isMock ? 'DEMO' : 'V10'}</span>
+          <h1 className="flex items-center gap-2 text-lg font-bold tracking-wide">
+            MaiHouses <span className={`rounded px-1 text-xs ${isMock ? 'bg-yellow-500 text-black' : 'bg-blue-600'}`}>{isMock ? 'DEMO' : 'V10'}</span>
           </h1>
-          <div className="flex items-center text-[10px] text-gray-400 gap-2">
+          <div className="flex items-center gap-2 text-[10px] text-gray-400">
             <span>案號: {caseId}</span>
             {loading && <span className="animate-pulse">●</span>}
           </div>
         </div>
         <div className="flex gap-2">
-            <button onClick={reset} className="bg-white/10 hover:bg-white/20 w-8 h-8 rounded flex items-center justify-center transition">
+            <button onClick={reset} className="flex size-8 items-center justify-center rounded bg-white/10 transition hover:bg-white/20">
                 <RotateCcw size={14} />
             </button>
             <button 
                 onClick={toggleRole} 
-                className={`px-3 py-1 rounded-md text-xs font-bold border border-white/20 flex items-center gap-1 transition ${role === 'agent' ? 'bg-blue-600' : 'bg-green-600'}`}
+                className={`flex items-center gap-1 rounded-md border border-white/20 px-3 py-1 text-xs font-bold transition ${role === 'agent' ? 'bg-blue-600' : 'bg-green-600'}`}
             >
                 {role === 'agent' ? <Briefcase size={12} /> : <User size={12} />}
                 {role === 'agent' ? '房仲' : '買方'}
@@ -120,18 +120,18 @@ export default function AssureDetail() {
       </header>
 
       {/* Progress Bar */}
-      <div className="p-4 bg-slate-50 border-b sticky top-[60px] z-40">
-        <div className="flex justify-between items-center mb-2">
+      <div className="sticky top-[60px] z-40 border-b bg-slate-50 p-4">
+        <div className="mb-2 flex items-center justify-between">
           <span className="text-xs font-bold text-slate-700">進度 {tx.currentStep}/6</span>
-          {tx.isPaid && <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full font-bold">已履約</span>}
+          {tx.isPaid && <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-bold text-green-800">已履約</span>}
         </div>
-        <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
-          <div className="bg-blue-600 h-2 rounded-full transition-all duration-700" style={{ width: `${(tx.currentStep / 6) * 100}%` }}></div>
+        <div className="h-2 w-full overflow-hidden rounded-full bg-gray-200">
+          <div className="h-2 rounded-full bg-blue-600 transition-all duration-700" style={{ width: `${(tx.currentStep / 6) * 100}%` }}></div>
         </div>
       </div>
 
       {/* Steps */}
-      <div className="p-4 space-y-0">
+      <div className="space-y-0 p-4">
         {Object.entries(tx.steps).map(([key, step]) => {
           const stepNum = parseInt(key)
           const isCurrent = stepNum === tx.currentStep
@@ -143,24 +143,24 @@ export default function AssureDetail() {
           else if (isCurrent) iconBg = 'bg-blue-600 border-blue-600'
 
           return (
-            <div key={key} className={`relative pl-14 py-3 ${isFuture ? 'opacity-50 grayscale' : ''}`}>
+            <div key={key} className={`relative py-3 pl-14 ${isFuture ? 'opacity-50 grayscale' : ''}`}>
               {/* Icon */}
-              <div className={`absolute left-0 top-3 z-10 w-10 h-10 rounded-full flex items-center justify-center border-4 border-white shadow-sm transition-colors text-white ${iconBg}`}>
+              <div className={`absolute left-0 top-3 z-10 flex size-10 items-center justify-center rounded-full border-4 border-white text-white shadow-sm transition-colors ${iconBg}`}>
                 {getStepIcon(key)}
               </div>
               {/* Line */}
-              {key !== '6' && <div className="absolute left-[24px] top-[50px] bottom-[-20px] w-[2px] bg-gray-200 z-0"></div>}
+              {key !== '6' && <div className="absolute bottom-[-20px] left-[24px] top-[50px] z-0 w-[2px] bg-gray-200"></div>}
               
               {/* Card */}
-              <div className={`bg-white border rounded-xl p-4 shadow-sm transition-all ${isCurrent ? 'border-blue-500 ring-2 ring-blue-50' : 'border-gray-200'}`}>
-                <div className="flex justify-between items-start mb-3">
-                  <h3 className="font-bold text-gray-800 flex items-center gap-2">
+              <div className={`rounded-xl border bg-white p-4 shadow-sm transition-all ${isCurrent ? 'border-blue-500 ring-2 ring-blue-50' : 'border-gray-200'}`}>
+                <div className="mb-3 flex items-start justify-between">
+                  <h3 className="flex items-center gap-2 font-bold text-gray-800">
                     {step.name}
                     {key === '5' && step.paymentStatus === 'initiated' && !step.locked && (
-                      <span className="text-[10px] text-orange-500 bg-orange-50 px-2 rounded animate-pulse">付款中</span>
+                      <span className="animate-pulse rounded bg-orange-50 px-2 text-[10px] text-orange-500">付款中</span>
                     )}
                     {key === '5' && step.paymentStatus === 'expired' && (
-                      <span className="text-[10px] text-red-500 bg-red-50 px-2 rounded">逾期</span>
+                      <span className="rounded bg-red-50 px-2 text-[10px] text-red-500">逾期</span>
                     )}
                   </h3>
                   {step.locked && <Lock size={14} className="text-green-600" />}
@@ -168,22 +168,22 @@ export default function AssureDetail() {
 
                 {/* Step 2: Viewing */}
                 {key === '2' && step.data.note && (
-                  <div className="mb-3 p-3 bg-gray-50 rounded border border-gray-100">
-                    <p className="text-xs font-bold text-gray-500 mb-2 border-b pb-1">📢 房仲帶看紀錄</p>
-                    <div className="text-sm whitespace-pre-wrap">{step.data.note}</div>
+                  <div className="mb-3 rounded border border-gray-100 bg-gray-50 p-3">
+                    <p className="mb-2 border-b pb-1 text-xs font-bold text-gray-500">📢 房仲帶看紀錄</p>
+                    <div className="whitespace-pre-wrap text-sm">{step.data.note}</div>
                   </div>
                 )}
 
                 {/* Step 5: Payment Timer */}
                 {key === '5' && step.paymentStatus === 'initiated' && !step.locked && (
-                  <div className="mb-4 text-center p-4 bg-orange-50 rounded-lg border border-orange-200">
-                    <div className="text-2xl font-mono text-orange-600 font-bold mb-1">{timeLeft}</div>
-                    <div className="text-xs text-orange-400 mb-3">付款截止</div>
+                  <div className="mb-4 rounded-lg border border-orange-200 bg-orange-50 p-4 text-center">
+                    <div className="mb-1 font-mono text-2xl font-bold text-orange-600">{timeLeft}</div>
+                    <div className="mb-3 text-xs text-orange-400">付款截止</div>
                     {role === 'agent' ? (
                       <button 
                         onClick={pay} 
                         disabled={isBusy || timeLeft === '已逾期'} 
-                        className={`w-full text-white font-bold py-2 rounded shadow ${timeLeft === '已逾期' ? 'bg-gray-400 cursor-not-allowed' : 'bg-gradient-to-r from-orange-500 to-red-500 hover:shadow-lg'}`}
+                        className={`w-full rounded py-2 font-bold text-white shadow ${timeLeft === '已逾期' ? 'cursor-not-allowed bg-gray-400' : 'bg-gradient-to-r from-orange-500 to-red-500 hover:shadow-lg'}`}
                       >
                         {timeLeft === '已逾期' ? '付款已截止' : (isBusy ? '處理中...' : '房仲代付 NT$ 2,000')}
                       </button>
@@ -195,20 +195,20 @@ export default function AssureDetail() {
 
                 {/* Step 6: Checklist */}
                 {key === '6' && !step.locked && tx.isPaid && (
-                  <div className="space-y-2 mt-2">
+                  <div className="mt-2 space-y-2">
                     {step.checklist?.map((item) => (
                       <div 
                         key={item.id} 
                         onClick={() => toggleCheck(item.id, !item.checked)} 
-                        className={`flex items-center p-4 border rounded transition cursor-pointer ${item.checked ? 'bg-indigo-50 border-indigo-200' : 'hover:bg-gray-50'}`}
+                        className={`flex cursor-pointer items-center rounded border p-4 transition ${item.checked ? 'border-indigo-200 bg-indigo-50' : 'hover:bg-gray-50'}`}
                       >
-                        <div className={`w-5 h-5 border rounded flex items-center justify-center bg-white ${item.checked ? 'bg-indigo-600 border-indigo-600' : ''}`}>
+                        <div className={`flex size-5 items-center justify-center rounded border bg-white ${item.checked ? 'border-indigo-600 bg-indigo-600' : ''}`}>
                           {item.checked && <Check size={12} className="text-white" />}
                         </div>
-                        <span className={`ml-3 text-sm ${item.checked ? 'text-indigo-800 font-bold' : ''}`}>{item.label}</span>
+                        <span className={`ml-3 text-sm ${item.checked ? 'font-bold text-indigo-800' : ''}`}>{item.label}</span>
                       </div>
                     ))}
-                    <button onClick={() => confirmStep('6')} className="w-full bg-indigo-600 text-white py-2 rounded font-bold mt-2">完成交屋</button>
+                    <button onClick={() => confirmStep('6')} className="mt-2 w-full rounded bg-indigo-600 py-2 font-bold text-white">完成交屋</button>
                   </div>
                 )}
 
@@ -221,37 +221,37 @@ export default function AssureDetail() {
                           <textarea 
                             value={inputBuffer}
                             onChange={(e) => setInputBuffer(e.target.value)}
-                            className="w-full border p-2 rounded text-sm mb-2 focus:ring-2 ring-blue-200 outline-none" 
+                            className="mb-2 w-full rounded border p-2 text-sm outline-none ring-blue-200 focus:ring-2" 
                             placeholder="輸入紀錄..."
                           />
-                          <button onClick={() => submitAgent(key)} disabled={isBusy} className="w-full bg-slate-800 text-white py-2 rounded text-sm">
+                          <button onClick={() => submitAgent(key)} disabled={isBusy} className="w-full rounded bg-slate-800 py-2 text-sm text-white">
                             {isBusy ? '...' : '送出'}
                           </button>
                         </div>
                       ) : (
-                        <div className="text-center text-xs text-gray-400 py-2 bg-gray-50 rounded">等待買方確認...</div>
+                        <div className="rounded bg-gray-50 py-2 text-center text-xs text-gray-400">等待買方確認...</div>
                       )
                     )}
                     {role === 'buyer' && (
                       step.agentStatus === 'submitted' ? (
                         <div>
-                          <p className="text-xs text-gray-500 mb-2">房仲已提交，請核對：</p>
-                          <div className="p-2 bg-gray-50 rounded border text-sm mb-2 whitespace-pre-wrap">{step.data.note || '（已提交表單）'}</div>
+                          <p className="mb-2 text-xs text-gray-500">房仲已提交，請核對：</p>
+                          <div className="mb-2 whitespace-pre-wrap rounded border bg-gray-50 p-2 text-sm">{step.data.note || '（已提交表單）'}</div>
                           
                           {/* Buyer Note Input */}
                           <textarea 
                               value={inputBuffer}
                               onChange={(e) => setInputBuffer(e.target.value)}
-                              className="w-full border p-2 rounded text-sm mb-2 focus:ring-2 ring-green-200 outline-none" 
+                              className="mb-2 w-full rounded border p-2 text-sm outline-none ring-green-200 focus:ring-2" 
                               placeholder="留言給房仲 (選填)..."
                           />
                           
-                          <button onClick={() => confirmStep(key)} disabled={isBusy} className="w-full bg-green-600 text-white py-2 rounded text-sm">
+                          <button onClick={() => confirmStep(key)} disabled={isBusy} className="w-full rounded bg-green-600 py-2 text-sm text-white">
                             {isBusy ? '...' : '確認無誤並送出'}
                           </button>
                         </div>
                       ) : (
-                        <div className="text-center text-xs text-gray-400 py-2">等待房仲提交...</div>
+                        <div className="py-2 text-center text-xs text-gray-400">等待房仲提交...</div>
                       )
                     )}
                   </div>
@@ -259,7 +259,7 @@ export default function AssureDetail() {
 
                 {/* Display Buyer Note if exists (for history) */}
                 {step.data.buyerNote && (
-                    <div className="mt-2 p-2 bg-green-50 rounded border border-green-100 text-xs">
+                    <div className="mt-2 rounded border border-green-100 bg-green-50 p-2 text-xs">
                         <span className="font-bold text-green-700">買方留言：</span> {step.data.buyerNote}
                     </div>
                 )}
@@ -268,19 +268,19 @@ export default function AssureDetail() {
                 {key === '5' && !step.locked && step.paymentStatus === 'pending' && (
                   <div>
                     {role === 'agent' && step.agentStatus === 'pending' && (
-                      <button onClick={() => submitAgent('5')} className="w-full bg-slate-800 text-white py-2 rounded">上傳合約並送出</button>
+                      <button onClick={() => submitAgent('5')} className="w-full rounded bg-slate-800 py-2 text-white">上傳合約並送出</button>
                     )}
                     {role === 'buyer' && step.agentStatus === 'submitted' && (
-                      <button onClick={() => confirmStep('5')} className="w-full bg-green-600 text-white py-2 rounded">確認合約 (將啟動付款)</button>
+                      <button onClick={() => confirmStep('5')} className="w-full rounded bg-green-600 py-2 text-white">確認合約 (將啟動付款)</button>
                     )}
                   </div>
                 )}
 
                 {/* Supplements */}
                 {tx.supplements.length > 0 && (
-                  <div className="mt-4 pt-4 border-t border-dashed">
+                  <div className="mt-4 border-t border-dashed pt-4">
                     {tx.supplements.map((s, i) => (
-                      <div key={i} className="text-xs mb-1 p-2 bg-gray-50 rounded border border-gray-100 flex gap-2">
+                      <div key={i} className="mb-1 flex gap-2 rounded border border-gray-100 bg-gray-50 p-2 text-xs">
                         <span className="font-bold">{s.role === 'agent' ? '👨‍💼' : '👤'}</span> 
                         <span className="flex-1">{s.content}</span>
                       </div>
@@ -293,17 +293,17 @@ export default function AssureDetail() {
         })}
 
         {/* Add Supplement */}
-        <div className="mt-8 bg-white p-4 rounded-xl shadow-sm border">
-          <h4 className="text-xs font-bold text-gray-500 mb-2">📝 新增補充紀錄 (修正/勘誤)</h4>
-          <p className="text-[10px] text-gray-400 mb-2">若之前的留言有誤，請在此新增補充說明。已送出的內容無法修改。</p>
+        <div className="mt-8 rounded-xl border bg-white p-4 shadow-sm">
+          <h4 className="mb-2 text-xs font-bold text-gray-500">📝 新增補充紀錄 (修正/勘誤)</h4>
+          <p className="mb-2 text-[10px] text-gray-400">若之前的留言有誤，請在此新增補充說明。已送出的內容無法修改。</p>
           <div className="flex gap-2">
             <input 
               value={supplementInput}
               onChange={(e) => setSupplementInput(e.target.value)}
-              className="flex-1 border rounded px-3 py-2 text-sm" 
+              className="flex-1 rounded border px-3 py-2 text-sm" 
               placeholder="輸入備註..." 
             />
-            <button onClick={addSupplement} disabled={!supplementInput} className="bg-gray-800 text-white px-4 rounded text-sm">送出</button>
+            <button onClick={addSupplement} disabled={!supplementInput} className="rounded bg-gray-800 px-4 text-sm text-white">送出</button>
           </div>
         </div>
       </div>

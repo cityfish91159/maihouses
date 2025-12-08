@@ -41,16 +41,16 @@ export const WarmWelcomeBar = () => {
   };
 
   return (
-    <div className="w-full bg-[#F5F8FF] text-[#0a2246] text-sm leading-[34px] h-[34px] text-center tracking-wide border-b border-[#E6ECFF] flex items-center justify-center gap-3" role="status" aria-live="polite">
+    <div className="flex h-[34px] w-full items-center justify-center gap-3 border-b border-[#E6ECFF] bg-[#F5F8FF] text-center text-sm leading-[34px] tracking-wide text-[#0a2246]" role="status" aria-live="polite">
       <span>{leftText}</span>
       <button 
-        className="px-2.5 py-0.5 rounded-full border border-[#1749D7] bg-[#1749D7] text-white cursor-pointer leading-6 h-[26px] hover:bg-[#123cb3] transition-colors"
+        className="h-[26px] cursor-pointer rounded-full border border-[#1749D7] bg-[#1749D7] px-2.5 py-0.5 leading-6 text-white transition-colors hover:bg-[#123cb3]"
         onClick={onContinue}
       >
         接著聊
       </button>
       <button 
-        className="px-2.5 py-0.5 rounded-full border border-[#C9D5FF] bg-white text-[#1749D7] cursor-pointer leading-6 h-[26px] hover:bg-gray-50 transition-colors"
+        className="h-[26px] cursor-pointer rounded-full border border-[#C9D5FF] bg-white px-2.5 py-0.5 leading-6 text-[#1749D7] transition-colors hover:bg-gray-50"
         onClick={onDismissToday}
       >
         今天不再顯示
