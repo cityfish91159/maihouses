@@ -20,6 +20,8 @@ interface LockedOverlayProps {
   ctaText?: string;
   /** CTA 按鈕點擊事件 */
   onCtaClick?: () => void;
+  /** 是否顯示 CTA 按鈕（預設顯示，貼文區可選擇隱藏以避免重複註冊按鈕） */
+  showCta?: boolean;
   /** 是否顯示（用於控制是否渲染） */
   visible?: boolean;
 }
@@ -31,6 +33,7 @@ export function LockedOverlay({
   benefits = ['查看完整內容', '新回答通知'],
   ctaText = '免費註冊 / 登入',
   onCtaClick,
+  showCta = true,
   visible = true,
 }: LockedOverlayProps) {
   // 當沒有隱藏內容時完全移除（不佔空間）
@@ -65,12 +68,14 @@ export function LockedOverlay({
             </span>
           ))}
         </p>
-        <button 
-          onClick={onCtaClick}
-          className="rounded-full bg-gradient-to-br from-brand to-brand-600 px-6 py-2.5 text-[13px] font-bold text-white transition-transform hover:scale-[1.02]"
-        >
-          {ctaText}
-        </button>
+        {showCta && (
+          <button 
+            onClick={onCtaClick}
+            className="rounded-full bg-gradient-to-br from-brand to-brand-600 px-6 py-2.5 text-[13px] font-bold text-white transition-transform hover:scale-[1.02]"
+          >
+            {ctaText}
+          </button>
+        )}
       </div>
     </div>
   );

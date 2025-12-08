@@ -324,6 +324,7 @@ export function PostsSection({
               hiddenCount={hiddenPublicCount}
               countLabel="則熱帖"
               benefits={['查看完整動態', '新回答通知']}
+              showCta={false}
               {...(onUnlock ? { onCtaClick: onUnlock } : {})}
             >
               {nextHiddenPost && (
