@@ -1510,3 +1510,25 @@ npm run build                       # ✓ Build Passed
 - `ai-supervisor.sh audit` 通過。
 - `npm run build` 通過。
 - 靜態頁面現在具備完整的導航能力，不再是死胡同。
+
+## 2025-12-08 - P4-AUDIT-ROUND2 Google Principal Engineer 深度修復
+
+### 本次變更
+
+| 項目 | 檔案 | 說明 |
+|------|------|------|
+| Body Scroll Lock | `src/hooks/useBodyScrollLock.ts` | 實作 `useBodyScrollLock` Hook，處理 Modal 開啟時的背景滾動鎖定與 `inert` 屬性。 |
+| Inert Attribute | `src/hooks/useBodyScrollLock.ts` | 自動對 `#root` 應用 `aria-hidden` 與 `inert`，確保 Screen Reader 無法訪問背景。 |
+| Magic Number Fix | `src/components/Composer/ComposerModal.tsx` | 提取 `FOCUS_DELAY_MS` 常數，移除 `setTimeout` 中的魔術數字。 |
+| Supervisor Update | `scripts/ai-supervisor.sh` | 升級至 v2.4，加入 Magic Number、i18n、Viewport Unit 偵測規則。 |
+
+### 驗證
+
+```bash
+./scripts/ai-supervisor.sh audit src/components/Composer/ComposerModal.tsx
+# ✅ Pass (Magic Number warning resolved for setTimeout)
+# ⚠️ Warning: i18n (Chinese characters) still present (Planned for Round 3)
+```
+
+### 部署
+- commit `2f625ba` -> 推送 main，觸發 Vercel 自動部署。

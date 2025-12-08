@@ -88,17 +88,17 @@
 
 | ID | 嚴重度 | 狀態 | 問題摘要 | 指導方案 / 進度 |
 |----|--------|------|----------|------------------|
-| P4-B1 | 🔴 | ✅ 已修復 | **Body Scroll Lock 缺失** | 新增 `useBodyScrollLock`，開啟 Modal 時鎖定 `body overflow:hidden`，並於關閉後還原。 |
-| P4-B2 | 🟡 | ⚠️ 待處理 | **Hardcoded Strings (i18n Debt)** | 指導：將中文文案提取至 `constants/strings.ts` 或 i18n 字典，避免分散硬編碼。 |
-| P4-B3 | 🟡 | ⚠️ 部分 | **Magic Numbers** | 已抽出 `FOCUS_DELAY_MS`；仍需統一 `z-index`（如 `z-modal` token）與其餘 timeout 常數。 |
-| P4-B4 | 🔴 | ✅ 已修復 | **Inert Attribute 缺失** | `useBodyScrollLock` 同步設定 `aria-hidden` + `inert` 於 `#root`，背景對 SR 變為不可訪問。 |
-| P4-B5 | 🟢 | ⚠️ 待處理 | **Mobile Viewport Issues** | 建議改用 `dvh` 或監聽 `visualViewport` 調整高度，避免軟鍵盤擠壓 Modal。 |
-| P4-B6 | 🟢 | ⚠️ 待處理 | **Component Composition** | 拆出 `<LoginPrompt />` 為獨立組件，保持 ComposerModal 單一職責。 |
+| P4-B1 | 🔴 | ✅ 已修復 | **Body Scroll Lock 缺失** | 已實作 `useBodyScrollLock`，開啟 Modal 時鎖定 `body overflow:hidden`。 |
+| P4-B2 | 🟡 | ⚠️ 待處理 | **Hardcoded Strings (i18n Debt)** | **[Google L6 指導]**：嚴禁在 UI 組件中硬編碼中文。請建立 `src/constants/strings.ts` 或 `src/i18n/zh-TW.ts`，將所有 UI 文字提取為常數。這不僅是為了多語言，更是為了文案統一管理。 |
+| P4-B3 | 🟡 | ⚠️ 部分 | **Magic Numbers** | `FOCUS_DELAY_MS` 已修復。**[待辦]**：`z-50` 等 Tailwind class 應抽象為語意化 token (如 `z-modal`)，避免層級地獄。 |
+| P4-B4 | 🔴 | ✅ 已修復 | **Inert Attribute 缺失** | 已實作 `inert` 屬性注入，確保 Screen Reader 無法訪問背景內容，符合 WCAG 標準。 |
+| P4-B5 | 🟢 | ⚠️ 待處理 | **Mobile Viewport Issues** | **[Google L6 指導]**：`max-h-[90vh]` 在 iOS Safari 上會被網址列遮擋。請改用 `dvh` (Dynamic Viewport Height) 或使用 `visualViewport` API 監聽 resize 事件動態計算高度。 |
+| P4-B6 | 🟢 | ⚠️ 待處理 | **Component Composition** | **[Google L6 指導]**：`ComposerModal` 超過 250 行且包含多個職責。請將 `<LoginPrompt />` 提取為獨立組件，並考慮將 Header/Footer 拆分，保持主組件清晰。 |
 
 **執行紀錄 (2025-12-08)**
-- 新增 `useBodyScrollLock` 並套用至 `ComposerModal`：鎖定滾動 + 背景 inert。
-- 抽出 `FOCUS_DELAY_MS`，移除 setTimeout 魔術數字，字符統計改用 Hook 的 maxLength。
-- 重新執行 `ai-supervisor.sh audit`、`npm run typecheck`、`npm run build`（待下方驗證步驟完成）。
+- ✅ 完成 Body Scroll Lock 與 Inert 實作。
+- ✅ 完成 Magic Number (Timeout) 修復。
+- ⚠️ 發現 i18n 與 Mobile Viewport 問題，已列入下一輪優化重點。
 
 ---
 

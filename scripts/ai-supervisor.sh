@@ -220,6 +220,12 @@ function cmd_audit() {
         warn "發現 h-screen 或 100vh。移動端建議使用 'dvh' (Dynamic Viewport Height) 避免被網址列遮擋。"
     fi
 
+    # 3.14 [v2.4 新增] Google Standard - Z-Index Magic Numbers
+    echo "🔍 檢查 Z-Index Magic Numbers..."
+    if grep -qE "z-\[[0-9]+\]" "$file"; then
+        warn "發現 z-[999] 等硬編碼層級。請使用 Tailwind 設定檔定義語意化 z-index (如 z-modal)。"
+    fi
+
     echo -e "${GREEN}✅ 檔案 $file 通過靜態審計。${NC}"
 }
 
