@@ -113,6 +113,31 @@
 
 ---
 
+## ✅ P3-AUDIT-V2：Google 首席工程師二次審計 (2025-12-08)
+
+> **處長自查結果**：已移除 Logo 內部假紅點，GlobalHeader 改用純淨 Logo，符合「真實數據呈現」。
+
+### 已修正項目
+
+- [x] **FIX-7: 淨化 Logo 組件**
+  *   目標：`src/components/Logo/Logo.tsx`
+  *   動作：新增 `showBadge` prop，預設 true；允許呼叫端關閉紅點，避免原子組件夾帶業務狀態。
+- [x] **FIX-8: GlobalHeader 正確引用**
+  *   目標：`src/components/layout/GlobalHeader.tsx`
+  *   動作：`<Logo showBadge={false} ... />`，社區牆/Feed 頁面不再出現假通知。
+
+### 驗證與證據
+
+- **程式檢查**：`./scripts/ai-supervisor.sh check-quality src/components/layout/GlobalHeader.tsx`（預期通過，無 TODO/假數據）
+- **建置**：`npm run build`（要求 exit 0）
+- **視覺驗證**：`https://maihouses.vercel.app/maihouses/community/test-uuid/wall` Logo 無紅點；首頁 `Header` 若需要紅點需明確傳入 `showBadge`。
+
+### 後續最佳實務指引
+
+- 若首頁仍需紅點，請在 `Header.tsx` 明確傳入 `showBadge={true}`，並改為來源於真實通知數據，而非寫死紅點。
+
+---
+
 ## ⚠️ P0.5：環境控制層（實作完成但有技術債）
 
 **結果**：`mhEnv` 中央化 Mock/API 切換（URL + localStorage 同步），社區牆用戶流程已套用

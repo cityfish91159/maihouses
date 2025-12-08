@@ -123,7 +123,7 @@ export function GlobalHeader({ mode, title, className = '' }: GlobalHeaderProps)
 
     return (
       <div className="flex items-center gap-2">
-        <Logo showSlogan={false} href={homeLink} />
+        <Logo showSlogan={false} href={homeLink} showBadge={false} />
         {mode === 'agent' && (
           <span className="rounded bg-gradient-to-br from-amber-400 to-amber-600 px-2 py-0.5 text-[10px] font-extrabold text-white shadow-sm">
             {STRINGS.AGENT_BADGE}
