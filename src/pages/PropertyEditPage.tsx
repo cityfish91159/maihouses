@@ -108,7 +108,7 @@ export const PropertyEditPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#f8fafc] flex items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center bg-[#f8fafc]">
         <Loader2 className="animate-spin text-[#003366]" size={40} />
       </div>
     );
@@ -116,9 +116,9 @@ export const PropertyEditPage: React.FC = () => {
 
   if (error || !property) {
     return (
-      <div className="min-h-screen bg-[#f8fafc] flex items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center bg-[#f8fafc]">
         <div className="text-center">
-          <AlertTriangle size={48} className="text-red-500 mx-auto mb-4" />
+          <AlertTriangle size={48} className="mx-auto mb-4 text-red-500" />
           <p className="text-red-600">{error || '找不到物件'}</p>
           <button
             onClick={() => navigate(-1)}
@@ -134,39 +134,39 @@ export const PropertyEditPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#f8fafc] font-sans text-slate-800">
       {/* Header */}
-      <nav className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-100 h-16 flex items-center px-4 shadow-sm">
+      <nav className="sticky top-0 z-50 flex h-16 items-center border-b border-slate-100 bg-white/90 px-4 shadow-sm backdrop-blur-md">
         <button 
           onClick={() => navigate(-1)} 
-          className="p-2 hover:bg-slate-100 rounded-full transition-colors mr-3"
+          className="mr-3 rounded-full p-2 transition-colors hover:bg-slate-100"
         >
           <ArrowLeft size={20} className="text-slate-600" />
         </button>
-        <div className="flex items-center text-[#003366] font-extrabold text-xl gap-2">
-          <div className="w-8 h-8 bg-gradient-to-br from-[#003366] to-[#00A8E8] rounded-lg flex items-center justify-center text-white">
+        <div className="flex items-center gap-2 text-xl font-extrabold text-[#003366]">
+          <div className="flex size-8 items-center justify-center rounded-lg bg-gradient-to-br from-[#003366] to-[#00A8E8] text-white">
             <Home size={18} />
           </div>
           {isFixCommunityMode ? '修正社區歸屬' : '編輯物件'}
         </div>
       </nav>
 
-      <main className="max-w-lg mx-auto p-6 py-8">
+      <main className="mx-auto max-w-lg p-6 py-8">
         {/* 物件資訊 */}
-        <section className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm mb-6">
-          <h2 className="font-bold text-slate-800 mb-2">{property.title}</h2>
+        <section className="mb-6 rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+          <h2 className="mb-2 font-bold text-slate-800">{property.title}</h2>
           <p className="text-sm text-slate-500">{property.address}</p>
-          <p className="text-xs text-slate-400 mt-1">物件編號：{property.public_id}</p>
+          <p className="mt-1 text-xs text-slate-400">物件編號：{property.public_id}</p>
         </section>
 
         {/* 社區修正區 */}
-        <section className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm mb-6">
-          <div className="flex items-center gap-2 mb-4">
+        <section className="mb-6 rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+          <div className="mb-4 flex items-center gap-2">
             <Building2 className="text-blue-600" size={20} />
             <h3 className="font-bold text-slate-800">社區歸屬</h3>
           </div>
 
           {/* 目前社區 */}
-          <div className="mb-4 p-3 bg-slate-50 rounded-xl">
-            <p className="text-xs text-slate-500 mb-1">目前歸屬</p>
+          <div className="mb-4 rounded-xl bg-slate-50 p-3">
+            <p className="mb-1 text-xs text-slate-500">目前歸屬</p>
             <p className="font-medium text-slate-700">
               {property.community_name || '（無社區）'}
             </p>
@@ -174,7 +174,7 @@ export const PropertyEditPage: React.FC = () => {
 
           {/* 修改社區 */}
           <div>
-            <label className="block text-xs font-medium text-slate-600 mb-2">
+            <label className="mb-2 block text-xs font-medium text-slate-600">
               重新選擇社區
             </label>
             <CommunityPicker
@@ -187,8 +187,8 @@ export const PropertyEditPage: React.FC = () => {
 
           {/* 變更提示 */}
           {hasChanges && (
-            <div className="mt-4 p-3 bg-amber-50 rounded-xl border border-amber-200">
-              <p className="text-sm text-amber-700 flex items-center gap-2">
+            <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3">
+              <p className="flex items-center gap-2 text-sm text-amber-700">
                 <AlertTriangle size={16} />
                 社區歸屬將變更為：
                 <span className="font-medium">{newCommunityName || '無'}</span>
@@ -202,10 +202,10 @@ export const PropertyEditPage: React.FC = () => {
           onClick={handleSave}
           disabled={!hasChanges || saving}
           className={`
-            w-full py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-2 transition-all
+            flex w-full items-center justify-center gap-2 rounded-xl py-4 text-lg font-bold transition-all
             ${hasChanges && !saving
               ? 'bg-gradient-to-r from-[#003366] to-[#00A8E8] text-white shadow-lg hover:scale-[1.01]'
-              : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+              : 'cursor-not-allowed bg-slate-200 text-slate-400'
             }
           `}
         >
@@ -225,7 +225,7 @@ export const PropertyEditPage: React.FC = () => {
         {/* 取消按鈕 */}
         <button
           onClick={() => navigate(-1)}
-          className="w-full mt-3 py-3 bg-slate-100 text-slate-600 rounded-xl font-medium hover:bg-slate-200 transition"
+          className="mt-3 w-full rounded-xl bg-slate-100 py-3 font-medium text-slate-600 transition hover:bg-slate-200"
         >
           取消
         </button>

@@ -6,7 +6,7 @@
  * 注意：首頁 (Home) 使用獨立的 Header 組件，不在此組件管理範圍內。
  */
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { Bell, User, LogOut, ChevronDown, ArrowLeft } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { Logo } from '../Logo/Logo';
@@ -35,39 +35,11 @@ const STRINGS = {
   LABEL_NOTIFICATIONS: '通知',
   LABEL_AVATAR: '使用者選單',
   MENU_PROFILE: '個人檔案',
-  ROLE_AGENT: '認證房仲',
-  ROLE_RESIDENT: '住戶',
-  ROLE_MEMBER: '一般會員',
-  ROLE_GUEST: '訪客',
 };
 
 export function GlobalHeader({ mode, title, className = '' }: GlobalHeaderProps) {
-  const { isAuthenticated, user, role, signOut } = useAuth();
+  const { isAuthenticated, user, signOut } = useAuth();
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-
-  // 根據角色決定首頁連結 (Smart Home Link)
-  const homeLink = useMemo(() => {
-    if (role === 'agent') return '/maihouses/feed-agent.html';
-    if (role === 'resident' || role === 'member') return '/maihouses/feed-consumer.html';
-    return '/maihouses/';
-  }, [role]);
-
-  // 根據角色決定個人檔案連結 (Smart Profile Link)
-  const profileLink = useMemo(() => {
-    // 目前先導向對應的 Feed 頁面，未來可改為專屬 Profile 頁面
-    if (role === 'agent') return '/maihouses/feed-agent.html';
-    return '/maihouses/feed-consumer.html';
-  }, [role]);
-
-  // 取得角色顯示名稱
-  const roleLabel = useMemo(() => {
-    switch (role) {
-      case 'agent': return STRINGS.ROLE_AGENT;
-      case 'resident': return STRINGS.ROLE_RESIDENT;
-      case 'member': return STRINGS.ROLE_MEMBER;
-      default: return STRINGS.ROLE_GUEST;
-    }
-  }, [role]);
 
   // 處理登出
   const handleSignOut = async () => {
@@ -75,15 +47,14 @@ export function GlobalHeader({ mode, title, className = '' }: GlobalHeaderProps)
       await signOut();
       notify.success('已登出', '期待下次見面！');
       setUserMenuOpen(false);
-      // 優雅登出：導回首頁
-      window.location.href = '/maihouses/';
+      window.location.reload();
     } catch (error) {
       console.error('Logout failed:', error);
       notify.error('登出失敗', '請稍後再試');
     }
   };
 
-  // 點擊外部或按 ESC 關閉選單
+  // 點擊外部關閉選單
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
@@ -91,19 +62,8 @@ export function GlobalHeader({ mode, title, className = '' }: GlobalHeaderProps)
         setUserMenuOpen(false);
       }
     };
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        setUserMenuOpen(false);
-      }
-    };
-
     document.addEventListener('click', handleClickOutside);
-    document.addEventListener('keydown', handleKeyDown);
-    return () => {
-      document.removeEventListener('click', handleClickOutside);
-      document.removeEventListener('keydown', handleKeyDown);
-    };
+    return () => document.removeEventListener('click', handleClickOutside);
   }, []);
 
   // 渲染左側區域 (Logo 或 返回按鈕)
@@ -111,7 +71,7 @@ export function GlobalHeader({ mode, title, className = '' }: GlobalHeaderProps)
     if (mode === 'community') {
       return (
         <a 
-          href={homeLink}
+          href="/maihouses/" 
           className="flex items-center gap-2 rounded-[10px] px-2.5 py-1.5 text-sm font-bold text-brand-700 no-underline transition-colors hover:bg-brand-50"
           aria-label={STRINGS.BACK_HOME}
         >
@@ -123,7 +83,7 @@ export function GlobalHeader({ mode, title, className = '' }: GlobalHeaderProps)
 
     return (
       <div className="flex items-center gap-2">
-        <Logo showSlogan={false} href={homeLink} showBadge={false} />
+        <Logo showSlogan={false} href="/maihouses/" />
         {mode === 'agent' && (
           <span className="rounded bg-gradient-to-br from-amber-400 to-amber-600 px-2 py-0.5 text-[10px] font-extrabold text-white shadow-sm">
             {STRINGS.AGENT_BADGE}
@@ -138,8 +98,8 @@ export function GlobalHeader({ mode, title, className = '' }: GlobalHeaderProps)
     if (mode === 'community' && title) {
       return (
         <div className="flex-1 text-center">
-          <h1 className="m-0 text-base font-extrabold text-brand-900">{title}</h1>
-          <p className="m-0 text-[11px] text-ink-500">{STRINGS.SUBTITLE_WALL}</p>
+          <h1 className="text-brand-900 m-0 text-base font-extrabold">{title}</h1>
+          <p className="text-ink-500 m-0 text-[11px]">{STRINGS.SUBTITLE_WALL}</p>
         </div>
       );
     }
@@ -156,12 +116,13 @@ export function GlobalHeader({ mode, title, className = '' }: GlobalHeaderProps)
 
       {/* Right: Actions */}
       <div className="flex items-center gap-2">
-        {/* Notifications (Real Data or Hidden if 0) */}
+        {/* Notifications (Mock) */}
         <button 
           className="relative inline-flex items-center justify-center rounded-xl border border-brand-100 bg-white p-2 text-brand-700 transition-all hover:bg-brand-50"
           aria-label={STRINGS.LABEL_NOTIFICATIONS}
         >
           <Bell size={18} strokeWidth={2.5} />
+          <span className="absolute -right-1 -top-1 flex h-[16px] min-w-[16px] items-center justify-center rounded-full border-2 border-white bg-red-600 text-[10px] font-bold text-white shadow-sm">2</span>
         </button>
 
         {/* User Menu */}
@@ -170,11 +131,11 @@ export function GlobalHeader({ mode, title, className = '' }: GlobalHeaderProps)
             <button
               id="gh-user-menu-btn"
               onClick={() => setUserMenuOpen(!userMenuOpen)}
-              className="flex items-center gap-1.5 rounded-xl border border-brand-100 bg-white pl-1 pr-2.5 py-1 transition-all hover:bg-brand-50 hover:shadow-sm active:scale-95"
+              className="flex items-center gap-1.5 rounded-xl border border-brand-100 bg-white py-1 pl-1 pr-2.5 transition-all hover:bg-brand-50 hover:shadow-sm active:scale-95"
               aria-label={STRINGS.LABEL_AVATAR}
               aria-expanded={userMenuOpen}
             >
-              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-brand-50 text-xs font-bold text-brand-700 ring-1 ring-brand-100">
+              <div className="flex size-7 items-center justify-center rounded-full bg-brand-50 text-xs font-bold text-brand-700 ring-1 ring-brand-100">
                 {user?.email?.charAt(0).toUpperCase() || 'U'}
               </div>
               <span className="hidden max-w-[80px] truncate text-xs font-bold text-brand-700 md:block">
@@ -187,26 +148,26 @@ export function GlobalHeader({ mode, title, className = '' }: GlobalHeaderProps)
             {userMenuOpen && (
               <div 
                 id="gh-user-menu-dropdown"
-                className="absolute right-0 top-full mt-2 w-48 origin-top-right rounded-xl border border-brand-100 bg-white p-1 shadow-xl ring-1 ring-black/5 focus:outline-none animate-in fade-in zoom-in-95 duration-100"
+                className="animate-in fade-in zoom-in-95 absolute right-0 top-full mt-2 w-48 origin-top-right rounded-xl border border-brand-100 bg-white p-1 shadow-xl ring-1 ring-black/5 duration-100 focus:outline-none"
                 role="menu"
               >
-                <div className="px-3 py-2 border-b border-gray-50 mb-1">
-                  <p className="truncate text-xs font-bold text-brand-900">{user?.email}</p>
-                  <p className="text-[10px] text-gray-500">{roleLabel}</p>
+                <div className="mb-1 border-b border-gray-50 px-3 py-2">
+                  <p className="text-brand-900 truncate text-xs font-bold">{user?.email}</p>
+                  <p className="text-[10px] text-gray-500">一般會員</p>
                 </div>
                 
-                <a
-                  href={profileLink}
-                  className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-bold text-gray-700 hover:bg-brand-50 hover:text-brand-700 transition-colors no-underline"
+                <button
+                  className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-bold text-gray-700 transition-colors hover:bg-brand-50 hover:text-brand-700"
                   role="menuitem"
+                  onClick={() => {/* TODO: Profile Link */}}
                 >
                   <User size={16} />
                   {STRINGS.MENU_PROFILE}
-                </a>
+                </button>
                 
                 <button
                   onClick={handleSignOut}
-                  className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-bold text-red-600 hover:bg-red-50 transition-colors"
+                  className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-bold text-red-600 transition-colors hover:bg-red-50"
                   role="menuitem"
                 >
                   <LogOut size={16} />

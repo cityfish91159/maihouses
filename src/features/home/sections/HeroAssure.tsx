@@ -18,7 +18,7 @@ export default function HeroAssure() {
 
         {/* Text Content */}
         <div className="flex-1 text-center md:text-left">
-          <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-[var(--brand)]/20 bg-[var(--bg-page)] px-3 py-1 text-xs font-bold text-[var(--brand)]">
+          <div className="border-[var(--brand)]/20 mb-3 inline-flex items-center gap-2 rounded-full border bg-[var(--bg-page)] px-3 py-1 text-xs font-bold text-[var(--brand)]">
             <ShieldCheck size={14} />
             <span>全程透明．安心留痕</span>
           </div>

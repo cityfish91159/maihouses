@@ -237,7 +237,7 @@ export function useCommunityPosts(
     if (communityId) {
       loadMore();
     }
-  }, [communityId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [communityId]);
 
   return {
     posts,

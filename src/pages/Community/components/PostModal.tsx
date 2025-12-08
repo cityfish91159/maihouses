@@ -210,7 +210,7 @@ export function PostModal({
             placeholder={placeholder}
             disabled={isDisabled}
             rows={5}
-            className={`w-full resize-none rounded-xl border bg-brand/3 p-3 text-sm text-ink-900 placeholder:text-ink-400 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20 disabled:opacity-50 ${
+            className={`bg-brand/3 w-full resize-none rounded-xl border p-3 text-sm text-ink-900 placeholder:text-ink-400 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20 disabled:opacity-50 ${
               error ? 'border-red-400' : 'border-border-light'
             }`}
             aria-describedby={error ? 'post-modal-error' : undefined}

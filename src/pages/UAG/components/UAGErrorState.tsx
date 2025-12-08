@@ -3,11 +3,11 @@ import { FallbackProps } from 'react-error-boundary';
 
 export const UAGErrorState: React.FC<FallbackProps> = ({ error, resetErrorBoundary }) => (
   <div role="alert" className="p-6 text-center text-red-600">
-    <p className="font-bold text-lg mb-2">系統發生錯誤</p>
-    <pre className="bg-red-50 p-4 rounded text-sm mb-4 overflow-auto max-w-lg mx-auto">{error.message}</pre>
+    <p className="mb-2 text-lg font-bold">系統發生錯誤</p>
+    <pre className="mx-auto mb-4 max-w-lg overflow-auto rounded bg-red-50 p-4 text-sm">{error.message}</pre>
     <button 
       onClick={resetErrorBoundary} 
-      className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+      className="rounded bg-red-600 px-4 py-2 text-white transition-colors hover:bg-red-700"
     >
       重試
     </button>

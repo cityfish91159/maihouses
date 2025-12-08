@@ -14,31 +14,31 @@ export const Logo: React.FC<LogoProps> = ({
   href = "/maihouses/"
 }) => {
   const Content = () => (
-    <div className={`flex items-center gap-3 group cursor-pointer ${className}`}>
+    <div className={`group flex cursor-pointer items-center gap-3 ${className}`}>
       {/* Logo Icon */}
-      <div className="relative w-[42px] h-[42px] bg-gradient-to-br from-brand-700 to-brand-600 rounded-xl flex items-center justify-center shadow-lg shadow-brand-700/20 overflow-hidden transition-all duration-300 group-hover:scale-105 group-hover:shadow-brand-700/30">
+      <div className="relative flex size-[42px] items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-brand-700 to-brand-600 shadow-lg shadow-brand-700/20 transition-all duration-300 group-hover:scale-105 group-hover:shadow-brand-700/30">
         {/* Shine Effect */}
-        <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-transparent translate-y-full group-hover:translate-y-0 transition-transform duration-700 ease-out"></div>
+        <div className="absolute inset-0 translate-y-full bg-gradient-to-tr from-transparent via-white/10 to-transparent transition-transform duration-700 ease-out group-hover:translate-y-0"></div>
         
         {/* Icon SVG */}
-        <svg className="w-[22px] h-[22px] text-white relative z-10 drop-shadow-sm transform transition-transform duration-300 group-hover:-translate-y-[1px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <svg className="relative z-10 size-[22px] text-white drop-shadow-sm transition-transform duration-300 group-hover:-translate-y-px" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
           <path d="M3 9.5L12 3L21 9.5V20.5C21 21.0523 20.5523 21.5 20 21.5H4C3.44772 21.5 3 21.0523 3 20.5V9.5Z" />
           <path d="M9 21.5V13H15V21.5" />
         </svg>
 
         {/* Design Accent Dot */}
-        <div className="absolute top-2 right-2 w-1.5 h-1.5 bg-red-400 rounded-full shadow-[0_0_0_1.5px] shadow-brand-600"></div>
+        <div className="absolute right-2 top-2 size-1.5 rounded-full bg-red-400 shadow-[0_0_0_1.5px] shadow-brand-600"></div>
       </div>
 
       <div className="flex items-center">
         <div className="flex items-baseline gap-1">
           {/* Font serif, Brand Dark Blue */}
-          <span className="text-[24px] font-bold font-serif text-brand-700 tracking-wide leading-none">邁房子</span>
+          <span className="font-serif text-[24px] font-bold leading-none tracking-wide text-brand-700">邁房子</span>
         </div>
         
         {showSlogan && (
-          <div className="hidden sm:flex items-center ml-3 pl-3 border-l-2 border-brand-100/80 h-5">
-            <span className="text-[15px] font-bold text-brand-500 tracking-[0.15em] uppercase group-hover:text-brand-700 transition-colors leading-none pt-[1px]">
+          <div className="ml-3 hidden h-5 items-center border-l-2 border-brand-100/80 pl-3 sm:flex">
+            <span className="pt-px text-[15px] font-bold uppercase leading-none tracking-[0.15em] text-brand-500 transition-colors group-hover:text-brand-700">
               讓家，不只是地址
             </span>
           </div>

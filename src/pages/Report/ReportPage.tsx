@@ -139,9 +139,9 @@ export default function ReportPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center bg-slate-50">
         <div className="text-center">
-          <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <div className="mx-auto mb-4 size-12 animate-spin rounded-full border-4 border-blue-600 border-t-transparent"></div>
           <p className="text-slate-500">載入報告中...</p>
         </div>
       </div>
@@ -152,11 +152,11 @@ export default function ReportPage() {
     <div className="min-h-screen bg-slate-50">
       {/* ① Hero 區 - 主圖輪播 */}
       <section className="relative">
-        <div className="aspect-[4/3] bg-slate-200 overflow-hidden">
+        <div className="aspect-[4/3] overflow-hidden bg-slate-200">
           <img 
             src={property.images[currentImageIndex]} 
             alt={property.title}
-            className="w-full h-full object-cover"
+            className="size-full object-cover"
           />
           
           {/* 圖片導航 */}
@@ -164,24 +164,24 @@ export default function ReportPage() {
             <>
               <button 
                 onClick={() => setCurrentImageIndex(i => i > 0 ? i - 1 : property.images.length - 1)}
-                className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/30 hover:bg-black/50 rounded-full flex items-center justify-center text-white transition"
+                className="absolute left-2 top-1/2 flex size-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/30 text-white transition hover:bg-black/50"
               >
                 <ChevronLeft size={24} />
               </button>
               <button 
                 onClick={() => setCurrentImageIndex(i => i < property.images.length - 1 ? i + 1 : 0)}
-                className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/30 hover:bg-black/50 rounded-full flex items-center justify-center text-white transition"
+                className="absolute right-2 top-1/2 flex size-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/30 text-white transition hover:bg-black/50"
               >
                 <ChevronRight size={24} />
               </button>
               
               {/* 圖片指示器 */}
-              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5">
+              <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-1.5">
                 {property.images.map((_, i) => (
                   <button 
                     key={i}
                     onClick={() => setCurrentImageIndex(i)}
-                    className={`w-2 h-2 rounded-full transition ${i === currentImageIndex ? 'bg-white' : 'bg-white/50'}`}
+                    className={`size-2 rounded-full transition ${i === currentImageIndex ? 'bg-white' : 'bg-white/50'}`}
                   />
                 ))}
               </div>
@@ -189,7 +189,7 @@ export default function ReportPage() {
           )}
           
           {/* 品牌浮水印 */}
-          <div className="absolute top-4 right-4 bg-white/90 backdrop-blur px-3 py-1.5 rounded-full text-sm font-bold text-[#003366] flex items-center gap-1.5">
+          <div className="absolute right-4 top-4 flex items-center gap-1.5 rounded-full bg-white/90 px-3 py-1.5 text-sm font-bold text-[#003366] backdrop-blur">
             <Home size={14} />
             邁房子
           </div>
@@ -197,41 +197,41 @@ export default function ReportPage() {
       </section>
 
       {/* ② 價格 + 地址 */}
-      <section className="bg-white px-4 py-5 border-b border-slate-100">
-        <div className="text-3xl font-black text-[#003366] mb-1">
+      <section className="border-b border-slate-100 bg-white px-4 py-5">
+        <div className="mb-1 text-3xl font-black text-[#003366]">
           NT$ {property.price.toLocaleString()} 萬
         </div>
-        <h1 className="text-lg font-bold text-slate-800 mb-2">{property.title}</h1>
-        <div className="flex items-center text-slate-500 text-sm">
+        <h1 className="mb-2 text-lg font-bold text-slate-800">{property.title}</h1>
+        <div className="flex items-center text-sm text-slate-500">
           <MapPin size={14} className="mr-1" />
           {property.address}
         </div>
       </section>
 
       {/* ③ 核心規格條 */}
-      <section className="bg-white px-4 py-4 border-b border-slate-100">
+      <section className="border-b border-slate-100 bg-white p-4">
         <div className="grid grid-cols-3 gap-3 text-center">
-          <div className="bg-slate-50 rounded-xl py-3">
+          <div className="rounded-xl bg-slate-50 py-3">
             <div className="text-lg font-bold text-slate-800">{property.rooms}房{property.halls}廳{property.bathrooms}衛</div>
             <div className="text-xs text-slate-500">格局</div>
           </div>
-          <div className="bg-slate-50 rounded-xl py-3">
+          <div className="rounded-xl bg-slate-50 py-3">
             <div className="text-lg font-bold text-slate-800">{property.size} 坪</div>
             <div className="text-xs text-slate-500">權狀坪數</div>
           </div>
-          <div className="bg-slate-50 rounded-xl py-3">
+          <div className="rounded-xl bg-slate-50 py-3">
             <div className="text-lg font-bold text-slate-800">{property.age} 年</div>
             <div className="text-xs text-slate-500">屋齡</div>
           </div>
-          <div className="bg-slate-50 rounded-xl py-3">
+          <div className="rounded-xl bg-slate-50 py-3">
             <div className="text-lg font-bold text-slate-800">{property.floorCurrent}/{property.floorTotal}F</div>
             <div className="text-xs text-slate-500">樓層</div>
           </div>
-          <div className="bg-slate-50 rounded-xl py-3">
+          <div className="rounded-xl bg-slate-50 py-3">
             <div className="text-lg font-bold text-slate-800">{property.direction}</div>
             <div className="text-xs text-slate-500">座向</div>
           </div>
-          <div className="bg-slate-50 rounded-xl py-3">
+          <div className="rounded-xl bg-slate-50 py-3">
             <div className="text-lg font-bold text-slate-800">{property.parking || '無'}</div>
             <div className="text-xs text-slate-500">車位</div>
           </div>
@@ -239,12 +239,12 @@ export default function ReportPage() {
       </section>
 
       {/* ④ 月付試算 */}
-      <section className="bg-white px-4 py-4 border-b border-slate-100">
-        <h2 className="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2">
+      <section className="border-b border-slate-100 bg-white p-4">
+        <h2 className="mb-3 flex items-center gap-2 text-sm font-bold text-slate-800">
           💰 月付試算
         </h2>
-        <div className="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl p-4 border border-blue-100">
-          <div className="flex justify-between items-center mb-2">
+        <div className="rounded-xl border border-blue-100 bg-gradient-to-r from-blue-50 to-cyan-50 p-4">
+          <div className="mb-2 flex items-center justify-between">
             <span className="text-sm text-slate-600">貸款 8 成・30 年期</span>
             <span className="text-xs text-slate-400">利率 2%</span>
           </div>
@@ -255,13 +255,13 @@ export default function ReportPage() {
       </section>
 
       {/* ⑤ 精選亮點 */}
-      <section className="bg-white px-4 py-4 border-b border-slate-100">
-        <h2 className="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2">
+      <section className="border-b border-slate-100 bg-white p-4">
+        <h2 className="mb-3 flex items-center gap-2 text-sm font-bold text-slate-800">
           ⭐ 為您精選的亮點
         </h2>
         <div className="space-y-3">
           {selectedHighlights.map(h => (
-            <div key={h.id} className="flex items-start gap-3 bg-slate-50 rounded-xl p-3">
+            <div key={h.id} className="flex items-start gap-3 rounded-xl bg-slate-50 p-3">
               <span className="text-2xl">{h.icon}</span>
               <div>
                 <div className="font-bold text-slate-800">{h.title}</div>
@@ -274,11 +274,11 @@ export default function ReportPage() {
 
       {/* ⑥ 社區資訊 */}
       {property.communityName && (
-        <section className="bg-white px-4 py-4 border-b border-slate-100">
-          <h2 className="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2">
+        <section className="border-b border-slate-100 bg-white p-4">
+          <h2 className="mb-3 flex items-center gap-2 text-sm font-bold text-slate-800">
             🏢 社區資訊
           </h2>
-          <div className="bg-slate-50 rounded-xl p-4 space-y-2">
+          <div className="space-y-2 rounded-xl bg-slate-50 p-4">
             <div className="flex justify-between">
               <span className="text-slate-500">社區名稱</span>
               <span className="font-medium text-slate-800">{property.communityName}</span>
@@ -301,8 +301,8 @@ export default function ReportPage() {
 
       {/* ⑦ 更多照片 */}
       {property.images.length > 1 && (
-        <section className="bg-white px-4 py-4 border-b border-slate-100">
-          <h2 className="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2">
+        <section className="border-b border-slate-100 bg-white p-4">
+          <h2 className="mb-3 flex items-center gap-2 text-sm font-bold text-slate-800">
             📸 更多照片
           </h2>
           <div className="grid grid-cols-3 gap-2">
@@ -310,9 +310,9 @@ export default function ReportPage() {
               <button 
                 key={i}
                 onClick={() => setCurrentImageIndex(i)}
-                className="aspect-square rounded-lg overflow-hidden bg-slate-100"
+                className="aspect-square overflow-hidden rounded-lg bg-slate-100"
               >
-                <img src={img} alt="" className="w-full h-full object-cover" />
+                <img src={img} alt="" className="size-full object-cover" />
               </button>
             ))}
           </div>
@@ -320,20 +320,20 @@ export default function ReportPage() {
       )}
 
       {/* ⑧ 經紀人小卡 */}
-      <section className="bg-white px-4 py-5 border-b border-slate-100">
-        <h2 className="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2">
+      <section className="border-b border-slate-100 bg-white px-4 py-5">
+        <h2 className="mb-4 flex items-center gap-2 text-sm font-bold text-slate-800">
           👤 您的專屬顧問
         </h2>
-        <div className="flex items-center gap-4 mb-4">
+        <div className="mb-4 flex items-center gap-4">
           <img 
             src={property.agent.avatarUrl} 
             alt={property.agent.name}
-            className="w-16 h-16 rounded-full object-cover border-2 border-slate-100"
+            className="size-16 rounded-full border-2 border-slate-100 object-cover"
           />
           <div className="flex-1">
-            <div className="font-bold text-lg text-slate-800">{property.agent.name}</div>
+            <div className="text-lg font-bold text-slate-800">{property.agent.name}</div>
             <div className="text-sm text-slate-500">{property.agent.company}</div>
-            <div className="flex items-center gap-2 mt-1">
+            <div className="mt-1 flex items-center gap-2">
               <span className="text-sm text-amber-500">⭐ {(property.agent.trustScore! / 20).toFixed(1)}</span>
               <span className="text-xs text-slate-400">({property.agent.reviewCount} 則評價)</span>
               {property.agent.experience && (
@@ -347,20 +347,20 @@ export default function ReportPage() {
         <div className="space-y-3">
           <a 
             href={`tel:${property.agent.phone}`}
-            className="flex items-center justify-center gap-2 w-full py-3.5 bg-[#003366] hover:bg-[#002244] text-white font-bold rounded-xl transition"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#003366] py-3.5 font-bold text-white transition hover:bg-[#002244]"
           >
             <Phone size={18} />
             立即撥打 {property.agent.phone}
           </a>
           <a 
             href={`https://line.me/R/ti/p/${property.agent.lineId}`}
-            className="flex items-center justify-center gap-2 w-full py-3.5 bg-[#06C755] hover:bg-[#05a847] text-white font-bold rounded-xl transition"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#06C755] py-3.5 font-bold text-white transition hover:bg-[#05a847]"
           >
             <MessageCircle size={18} />
             LINE 諮詢
           </a>
           <button 
-            className="flex items-center justify-center gap-2 w-full py-3.5 border-2 border-slate-200 hover:border-slate-300 text-slate-700 font-bold rounded-xl transition"
+            className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-slate-200 py-3.5 font-bold text-slate-700 transition hover:border-slate-300"
           >
             <Calendar size={18} />
             預約看屋
@@ -370,14 +370,14 @@ export default function ReportPage() {
 
       {/* ⑨ Footer */}
       <section className="bg-slate-100 px-4 py-6 text-center">
-        <div className="flex items-center justify-center gap-2 text-[#003366] font-bold mb-2">
+        <div className="mb-2 flex items-center justify-center gap-2 font-bold text-[#003366]">
           <Home size={18} />
           MaiHouses 邁房子
         </div>
-        <div className="text-sm text-slate-500 mb-3">讓家，不只是地址</div>
+        <div className="mb-3 text-sm text-slate-500">讓家，不只是地址</div>
         
         {viewCount > 0 && (
-          <div className="text-xs text-slate-400 mb-2">
+          <div className="mb-2 text-xs text-slate-400">
             📊 此報告已被瀏覽 {viewCount} 次
           </div>
         )}
@@ -389,7 +389,7 @@ export default function ReportPage() {
         {/* 分享按鈕 */}
         <button 
           onClick={handleShare}
-          className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-full text-sm text-slate-600 hover:bg-slate-50 transition"
+          className="mt-4 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm text-slate-600 transition hover:bg-slate-50"
         >
           <Share2 size={14} />
           分享此報告

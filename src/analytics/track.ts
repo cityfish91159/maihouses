@@ -1,7 +1,7 @@
 // 簡易埋點（事件命名更貼近用戶語意）
 export function track(event: string, payload?: Record<string, any>) {
   try {
-    // eslint-disable-next-line no-console
+     
     console.debug("[track]", event, payload || {});
   } catch {}
 }
