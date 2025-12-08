@@ -1,7 +1,7 @@
 # 🏠 社區牆 + 信息流 待辦清單
 
 > 供 AI Agent 與開發者協作使用  
-> 最後更新：2025-12-07
+> 最後更新：2025-12-08
 
 ---
 
@@ -1428,6 +1428,13 @@ useEffect(() => {
 | FIX-UI-4 | 封裝 Badge 邏輯 | `PostsSection.tsx` | ✅ |
 | FIX-UI-5 | 優化 Disabled Button UX | `PostsSection.tsx` | ✅ (MVP: Title) |
 | FIX-UI-6 | 優化 LockedOverlay Props | `PostsSection.tsx` | ✅ (Keep Override) |
+
+## ✅ P2-UI-POST-AUDIT：第二輪審核（2025-12-08）
+
+| ID | 嚴重度 | 問題摘要 | 建議方案 | 狀態 |
+|----|--------|----------|----------|------|
+| UI-7 | 🟡 | `useThrottle` 僅 leading edge，連點會吞按。 | 已為 `useThrottle` 加入 `trailing`/`leading` 選項與 `cancel`，`PostsSection` 以 `trailing: true` 使用，避免吞按並保留防重入。 | ✅ 已修復 |
+| UI-8 | 🟡 | 按讚失敗僅 console，缺少用戶提示/日誌。 | `handleLike` catch 加入 `notify.error('按讚失敗','請稍後重試')`，仍保留 console，確保 isLiking 回滾。若要聚合日誌，後續可接 `logClientError`。 | ✅ 已修復 |
 
 ---
 

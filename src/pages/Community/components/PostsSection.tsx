@@ -98,21 +98,26 @@ function PostCard({ post, onLike }: PostCardProps) {
     };
   }, []);
 
-  // P2-UI-3: 使用標準 Throttle Hook
-  const handleLike = useThrottle(async () => {
-    if (!onLike || isLiking) return;
-    
-    setIsLiking(true);
-    try {
-      await onLike(post.id);
-    } catch (error) {
-      console.error('Failed to toggle like', error);
-    } finally {
-      if (isMountedRef.current) {
-        setIsLiking(false);
+  // P2-UI-3: 使用標準 Throttle Hook（leading+trailing，避免吞按）
+  const handleLike = useThrottle(
+    async () => {
+      if (!onLike || isLiking) return;
+
+      setIsLiking(true);
+      try {
+        await onLike(post.id);
+      } catch (error) {
+        console.error('Failed to toggle like', error);
+        notify.error('按讚失敗', '請稍後重試');
+      } finally {
+        if (isMountedRef.current) {
+          setIsLiking(false);
+        }
       }
-    }
-  }, 1000);
+    },
+    1000,
+    { trailing: true }
+  );
 
   return (
     <article className="flex gap-2.5 rounded-[14px] border border-border-light bg-white p-3 transition-all hover:border-brand-600 hover:shadow-[0_2px_8px_rgba(0,56,90,0.06)]">

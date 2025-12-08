@@ -9,12 +9,20 @@ import { useCallback, useRef, useEffect } from 'react';
  * @param delay 冷卻時間 (ms)
  * @returns 節流後的函數
  */
+export interface UseThrottleOptions {
+  leading?: boolean;
+  trailing?: boolean;
+}
+
 export function useThrottle<T extends (...args: any[]) => any>(
   callback: T,
-  delay: number
-): (...args: Parameters<T>) => void {
+  delay: number,
+  options: UseThrottleOptions = {}
+): ((...args: Parameters<T>) => void) & { cancel: () => void } {
+  const { leading = true, trailing = false } = options;
   const lastRun = useRef(0);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastArgsRef = useRef<Parameters<T> | null>(null);
   const callbackRef = useRef(callback);
 
   // 保持 callback 最新
@@ -31,18 +39,55 @@ export function useThrottle<T extends (...args: any[]) => any>(
     };
   }, []);
 
-  return useCallback(
+  const cancel = useCallback(() => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+    lastArgsRef.current = null;
+  }, []);
+
+  const throttled = useCallback(
     (...args: Parameters<T>) => {
       const now = Date.now();
+      lastArgsRef.current = args;
 
-      if (now - lastRun.current >= delay) {
-        callbackRef.current(...args);
-        lastRun.current = now;
-      } else {
-        // 如果還在冷卻中，不執行 (Leading edge throttle)
-        // 如果需要 trailing edge，可以在這裡設置 timeout
+      const invoke = () => {
+        if (lastArgsRef.current) {
+          callbackRef.current(...lastArgsRef.current);
+          lastRun.current = Date.now();
+          lastArgsRef.current = null;
+        }
+      };
+
+      const remaining = delay - (now - lastRun.current);
+
+      if (remaining <= 0) {
+        if (timeoutRef.current) {
+          clearTimeout(timeoutRef.current);
+          timeoutRef.current = null;
+        }
+        if (leading) {
+          invoke();
+        } else if (trailing) {
+          timeoutRef.current = setTimeout(() => {
+            timeoutRef.current = null;
+            invoke();
+          }, delay);
+        }
+        return;
+      }
+
+      if (trailing && !timeoutRef.current) {
+        timeoutRef.current = setTimeout(() => {
+          timeoutRef.current = null;
+          invoke();
+        }, remaining);
       }
     },
-    [delay]
-  );
+    [delay, leading, trailing]
+  ) as ((...args: Parameters<T>) => void) & { cancel: () => void };
+
+  throttled.cancel = cancel;
+  return throttled;
 }

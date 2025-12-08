@@ -1,5 +1,27 @@
 # 社區牆開發紀錄
 
+## 2025-12-08 - P2-UI-FIX 節流 / Badge 封裝 / CTA 跳轉
+
+### 本次變更
+
+| 項目 | 檔案 | 說明 |
+|------|------|------|
+| 節流 Hook 導入 | `src/hooks/useThrottle.ts` | 新增通用 `useThrottle`，用於 PostCard 按讚節流（leading edge）。 |
+| PostCard 節流重構 | `src/pages/Community/components/PostsSection.tsx` | 按讚改用 `useThrottle`，移除手刻 `setTimeout`，保留 isLiking 狀態防重入。 |
+| Badge 邏輯封裝 | `src/pages/Community/components/PostsSection.tsx` | 新增 `PostBadge`，集中 agent/official/floor 判斷，減少重複字串。 |
+| CTA a11y/字串 | `src/pages/Community/components/PostsSection.tsx` | Emoji 全加 `role="img"`/`aria-label`，所有 UI 文案集中 `STRINGS`。 |
+| LockedOverlay 文案策略 | `src/pages/Community/components/PostsSection.tsx` | 維持自訂 `benefits` 以保留「查看完整動態/新回應通知」語意，不依賴預設。 |
+| Bottom CTA 跳轉 | `src/pages/Community/components/BottomCTA.tsx` | 註冊/登入按鈕改用 `window.location.href = '/maihouses/auth.html'`，避免白頁。 |
+
+### 驗證
+
+```bash
+npm run build   # ✓ 2025-12-08，exit 0
+```
+
+### 部署
+- commit `refactor: optimize posts section with throttle hook and badge component (P2-UI)` push 到 main，已觸發 Vercel 自動部署（等待完成）。
+
 ## 2025-12-08 - P2-UI-FIX 熱帖 CTA 樣式統一
 
 ### 本次變更
