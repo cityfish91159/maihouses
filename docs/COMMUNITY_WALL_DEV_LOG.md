@@ -1578,3 +1578,26 @@ npm run build                       # ✓ Build Passed
 
 ### 部署
 - commit `chore: upgrade supervisor to v3.2 (zero tolerance)` push 到 main。
+
+## 2025-12-08 - P4-AUDIT Composer 嚴格審計修復 (Google Standard)
+
+### 本次變更
+
+| 項目 | 檔案 | 說明 |
+|------|------|------|
+| Supervisor v3.2 | `scripts/ai-supervisor.sh` | 升級至零容忍模式，禁止 `eslint-disable`、`as any`，並安裝 Git Hooks。 |
+| i18n 基礎建設 | `src/constants/strings.ts` | 建立字串常數檔，提取 `ComposerModal` 所有中文文案。 |
+| 組件拆分 | `src/components/Composer/LoginPrompt.tsx` | 將登入提示 UI 獨立拆分，降低主組件複雜度。 |
+| Mobile Viewport | `src/components/Composer/ComposerModal.tsx` | `max-h-[90vh]` -> `max-h-[90dvh]`，修復 iOS Safari 遮擋問題。 |
+| A11y 嚴格修復 | `src/components/Composer/ComposerModal.tsx` | 重構 Backdrop 點擊層，移除所有 `eslint-disable` 規避標記。 |
+
+### 驗證
+
+```bash
+./scripts/ai-supervisor.sh audit src/components/Composer/ComposerModal.tsx
+npm run typecheck
+npm run build
+```
+
+### 部署
+- 待推送 main。

@@ -1,0 +1,23 @@
+export const STRINGS = {
+  COMPOSER: {
+    LOGIN_TITLE: '請先登入',
+    LOGIN_DESC: '登入後即可參與討論與發布貼文',
+    CANCEL: '取消',
+    GO_LOGIN: '前往登入',
+    TITLE_PRIVATE: '🔐 私密貼文',
+    TITLE_PUBLIC: '✏️ 發布貼文',
+    CLOSE: '關閉',
+    CLOSE_ICON: '✕',
+    VISIBILITY_PUBLIC: '🌍 公開牆',
+    VISIBILITY_PRIVATE: '🔐 住戶專屬',
+    PLACEHOLDER_COMMUNITY_PRIVATE: '分享只有住戶能看到的內容...',
+    PLACEHOLDER_COMMUNITY_PUBLIC: '分享你的想法、社區生活...',
+    PLACEHOLDER_FEED: '分享你的新鮮事...',
+    UPLOAD_IMAGE: '📷 上傳圖片',
+    UPLOAD_IMAGE_DEV: '圖片上傳功能開發中',
+    SUBMIT: '發布',
+    SUBMITTING: '發布中...',
+    SUCCESS: '發布成功！',
+    ERROR_TITLE: '發布失敗',
+  },
+};

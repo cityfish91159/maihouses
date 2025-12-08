@@ -4,6 +4,8 @@ import { useComposer, ComposerData } from '../../hooks/useComposer';
 import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 import { notify } from '../../lib/notify';
 import { FocusTrap } from '../ui/FocusTrap';
+import { LoginPrompt } from './LoginPrompt';
+import { STRINGS } from '../../constants/strings';
 
 const FOCUS_DELAY_MS = 50; // 延遲讓 textarea 正確聚焦
 
@@ -44,11 +46,11 @@ export function ComposerModal({
   } = useComposer({
     onSubmit,
     onSuccess: () => {
-      notify.success('發布成功！');
+      notify.success(STRINGS.COMPOSER.SUCCESS);
       onClose();
     },
     onError: (err) => {
-      notify.error('發布失敗', err.message);
+      notify.error(STRINGS.COMPOSER.ERROR_TITLE, err.message);
     },
     initialVisibility,
   });
@@ -103,77 +105,48 @@ export function ComposerModal({
 
   // Not logged in state
   if (!isAuthenticated) {
-    return (
-      <FocusTrap isActive={isOpen}>
-        <div 
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="login-title"
-        >
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl text-center">
-            <h3 id="login-title" className="text-xl font-bold text-gray-900 mb-2">請先登入</h3>
-            <p className="text-gray-600 mb-6">登入後即可參與討論與發布貼文</p>
-            <div className="flex justify-center gap-4">
-              <button
-                onClick={onClose}
-                className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                取消
-              </button>
-              <a
-                href="/maihouses/auth.html"
-                className="px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors"
-              >
-                前往登入
-              </a>
-            </div>
-          </div>
-        </div>
-      </FocusTrap>
-    );
+    return <LoginPrompt isOpen={isOpen} onClose={onClose} />;
   }
 
   const isPrivate = visibility === 'private';
   const displayPlaceholder = placeholder || (
     mode === 'community' 
-      ? (isPrivate ? '分享只有住戶能看到的內容...' : '分享你的想法、社區生活...')
-      : '分享你的新鮮事...'
+      ? (isPrivate ? STRINGS.COMPOSER.PLACEHOLDER_COMMUNITY_PRIVATE : STRINGS.COMPOSER.PLACEHOLDER_COMMUNITY_PUBLIC)
+      : STRINGS.COMPOSER.PLACEHOLDER_FEED
   );
 
   return (
     <FocusTrap isActive={isOpen} initialFocusRef={textareaRef}>
-      {/* Backdrop - Handle click outside */}
-      {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events */}
-      <div
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
-        onClick={(e) => {
-          // P4-A9: 確保點擊背景關閉
-          if (e.target === e.currentTarget && !isSubmitting) onClose();
-        }}
-      >
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        {/* Backdrop */}
+        <button
+          type="button"
+          className="absolute inset-0 w-full h-full bg-black/50 backdrop-blur-sm border-0 cursor-default"
+          onClick={() => !isSubmitting && onClose()}
+          aria-label={STRINGS.COMPOSER.CLOSE}
+          tabIndex={-1}
+        />
+
         {/* Dialog Content */}
-        {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions, jsx-a11y/click-events-have-key-events */}
         <div
           ref={dialogRef}
           role="dialog"
           aria-modal="true"
           aria-labelledby="composer-title"
-          className="w-full max-w-lg rounded-2xl bg-white shadow-2xl flex flex-col max-h-[90vh]"
-          onClick={(e) => e.stopPropagation()} // Prevent clicks inside from closing
+          className="relative z-10 w-full max-w-lg rounded-2xl bg-white shadow-2xl flex flex-col max-h-[90dvh]"
         >
           {/* Header */}
           <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
             <h2 id="composer-title" className="text-lg font-bold text-gray-800 flex items-center gap-2">
-              {mode === 'community' && isPrivate ? '🔐 私密貼文' : '✏️ 發布貼文'}
+              {mode === 'community' && isPrivate ? STRINGS.COMPOSER.TITLE_PRIVATE : STRINGS.COMPOSER.TITLE_PUBLIC}
             </h2>
             <button
               onClick={onClose}
               disabled={isSubmitting}
-              aria-label="關閉"
+              aria-label={STRINGS.COMPOSER.CLOSE}
               className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors disabled:opacity-50"
             >
-              ✕
+              {STRINGS.COMPOSER.CLOSE_ICON}
             </button>
           </div>
 
@@ -191,7 +164,7 @@ export function ComposerModal({
                       : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
                   }`}
                 >
-                  🌍 公開牆
+                  {STRINGS.COMPOSER.VISIBILITY_PUBLIC}
                 </button>
                 <button
                   type="button"
@@ -202,7 +175,7 @@ export function ComposerModal({
                       : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
                   }`}
                 >
-                  🔐 住戶專屬
+                  {STRINGS.COMPOSER.VISIBILITY_PRIVATE}
                 </button>
               </div>
             )}
@@ -223,10 +196,10 @@ export function ComposerModal({
             <div className="mt-4">
               <button
                 type="button"
-                onClick={() => notify.dev('圖片上傳功能開發中')}
+                onClick={() => notify.dev(STRINGS.COMPOSER.UPLOAD_IMAGE_DEV)}
                 className="inline-flex items-center gap-2 text-gray-500 hover:text-brand-600 transition-colors text-sm font-medium px-3 py-2 rounded-lg hover:bg-gray-50"
               >
-                📷 上傳圖片
+                {STRINGS.COMPOSER.UPLOAD_IMAGE}
               </button>
             </div>
 
@@ -252,7 +225,7 @@ export function ComposerModal({
                 disabled={isSubmitting}
                 className="px-4 py-2 text-gray-600 font-medium hover:bg-gray-200 rounded-lg transition-colors disabled:opacity-50"
               >
-                取消
+                {STRINGS.COMPOSER.CANCEL}
               </button>
               <button
                 type="button"
@@ -260,7 +233,7 @@ export function ComposerModal({
                 disabled={!isValid || isSubmitting}
                 className="px-6 py-2 bg-brand-600 text-white font-bold rounded-lg hover:bg-brand-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow"
               >
-                {isSubmitting ? '發布中...' : '發布'}
+                {isSubmitting ? STRINGS.COMPOSER.SUBMITTING : STRINGS.COMPOSER.SUBMIT}
               </button>
             </div>
           </div>
