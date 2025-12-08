@@ -1,5 +1,26 @@
 # 社區牆開發紀錄
 
+## 2025-12-08 - P2-UI-FIX 熱帖 CTA 樣式統一
+
+### 本次變更
+
+| 項目 | 檔案 | 說明 |
+|------|------|------|
+| 熱帖 CTA 樣式統一 | `src/pages/Community/components/PostsSection.tsx` | 移除自定義 Guest Capsule，改用 `LockedOverlay` 內建 CTA (`showCta={true}`)，確保與評價區/問答區樣式一致。 |
+| 移除重複 CTA | `src/pages/Community/components/PostsSection.tsx` | 移除原本手動刻的 "查看更多" 按鈕，統一由 Overlay 控制。 |
+| 部署 | - | 觸發 Vercel 部署以驗證線上樣式。 |
+
+### 驗證
+
+```bash
+npm run build   # ✓ 2025-12-08，exit 0
+```
+
+### 部署
+- commit `chore: deploy community hot posts cta` push 到 main，已觸發 Vercel 自動部署。
+
+---
+
 ## 2025-12-07 - P2-AUDIT-5-FIX API 串接落地（Supabase）
 
 ### 本次變更
