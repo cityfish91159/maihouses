@@ -1554,3 +1554,27 @@ npm run build                       # ✓ Build Passed
 
 ### 部署
 - commit `chore: upgrade supervisor to v3.0 (draconian mode)` push 到 main。
+
+## 2025-12-08 - AI Supervisor v3.2 (Zero Tolerance)
+
+### 🎯 目標
+回應「為什麼不會自動觸發」與「加強審查力度」的需求，導入 Git Hooks 自動化與更嚴格的代碼品質檢查。
+
+### 🛠️ 變更內容
+
+| 規則 ID | 類型 | 說明 |
+|---------|------|------|
+| **Auto Trigger** | ✨ 新增 | 新增 `install-hooks` 指令，建立 Git pre-commit hook，強制在提交前執行全系統驗證。 |
+| **Loose Types** | 🔴 阻擋 | 嚴禁使用 `Function`, `Object`, `{}` 等寬鬆類型，強制要求明確定義。 |
+| **Hidden Any** | 🔴 阻擋 | 擴大 Any 偵測範圍，包含 `as any` 與 `<any>`。 |
+| **React Keys** | 🟡 警告 | 偵測 `key={index}` 或 `key={i}`，防止渲染效能問題。 |
+| **Hardcoded Colors** | 🟡 警告 | 偵測 Hex/RGB 顏色碼，強制推動 Tailwind CSS 類別使用。 |
+
+### ✅ 驗證
+```bash
+./scripts/ai-supervisor.sh install-hooks
+# ✅ Pre-commit hook installed at .git/hooks/pre-commit
+```
+
+### 部署
+- commit `chore: upgrade supervisor to v3.2 (zero tolerance)` push 到 main。

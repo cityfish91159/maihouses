@@ -1,12 +1,13 @@
 #!/bin/bash
 # ============================================================================
-# AI SUPERVISOR - 極度嚴格的 AI 行為監督腳本 (v3.0 - Draconian Mode)
+# AI SUPERVISOR - 極度嚴格的 AI 行為監督腳本 (v3.2 - Zero Tolerance)
 # ============================================================================
 # 設計理念：
 # 1. 零信任 (Zero Trust)：假設 AI 會偷懶、會遺漏、會腦補。
 # 2. 強制程序 (Mandatory Procedure)：必須先讀後寫，必須先計畫後執行。
 # 3. 自動審計 (Auto Audit)：代碼提交前必須通過靜態分析。
 # 4. 反規避 (Anti-Evasion)：嚴禁使用 eslint-disable 或 ts-ignore 繞過檢查。
+# 5. 零容忍 (Zero Tolerance)：嚴禁寬鬆類型、隱藏 Any、硬編碼顏色。
 # ============================================================================
 
 set -euo pipefail
@@ -251,6 +252,30 @@ function cmd_audit() {
         fi
     fi
 
+    # 3.18 [v3.1 新增] Hardcoded Colors Check (硬編碼顏色檢查)
+    echo "🔍 檢查硬編碼顏色..."
+    if grep -qE "#[0-9a-fA-F]{3,6}|rgb\(" "$file"; then
+        warn "發現硬編碼顏色 (Hex/RGB)。請使用 Tailwind CSS 顏色類別 (如 bg-white, text-gray-900)。"
+    fi
+
+    # 3.19 [v3.2 新增] Loose Types Ban (寬鬆類型禁止)
+    echo "🔍 檢查寬鬆類型..."
+    if grep -qE ": Function|: Object|: \{\}" "$file"; then
+        error_exit "發現寬鬆類型 (Function, Object, {})。請使用具體的函數簽名或介面定義。"
+    fi
+
+    # 3.20 [v3.2 新增] React Key Index Check (React Key 檢查)
+    echo "🔍 檢查 React Key..."
+    if grep -qE "key=\{index\}|key=\{i\}" "$file"; then
+        warn "發現使用 index 作為 key。這可能導致渲染效能問題，請使用唯一 ID。"
+    fi
+
+    # 3.21 [v3.2 新增] Stricter Any Check (更嚴格的 Any 檢查)
+    echo "🔍 檢查隱藏的 Any..."
+    if grep -qE "as any|<any>" "$file"; then
+        error_exit "發現 'as any' 或 '<any>'。嚴格禁止使用 any！"
+    fi
+
     echo -e "${GREEN}✅ 檔案 $file 通過靜態審計。${NC}"
 }
 
@@ -276,6 +301,22 @@ function cmd_verify() {
 }
 
 # ============================================================================
+# 5. 安裝 Git Hooks (Install Hooks)
+# ============================================================================
+function cmd_install_hooks() {
+    print_header "安裝 Git Hooks"
+    local hook_path=".git/hooks/pre-commit"
+    
+    echo "#!/bin/bash" > "$hook_path"
+    echo "echo '🛡️  Running AI Supervisor Pre-commit Check...'" >> "$hook_path"
+    echo "./scripts/ai-supervisor.sh verify" >> "$hook_path"
+    chmod +x "$hook_path"
+    
+    echo -e "${GREEN}✅ Pre-commit hook installed at $hook_path${NC}"
+    echo "現在每次 commit 前都會自動執行全系統驗證。"
+}
+
+# ============================================================================
 # 主路由
 # ============================================================================
 case "${1:-}" in
@@ -294,12 +335,16 @@ case "${1:-}" in
     "verify")
         cmd_verify
         ;;
+    "install-hooks")
+        cmd_install_hooks
+        ;;
     *)
-        echo "用法: $0 {init|plan|audit|verify}"
-        echo "  init        : 初始化新任務"
-        echo "  plan <task> : 規劃任務並掃描檔案"
-        echo "  audit <file>: 審計單一檔案品質"
-        echo "  verify      : 執行全系統測試"
+        echo "用法: $0 {init|plan|audit|verify|install-hooks}"
+        echo "  init          : 初始化新任務"
+        echo "  plan <task>   : 規劃任務並掃描檔案"
+        echo "  audit <file>  : 審計單一檔案品質"
+        echo "  verify        : 執行全系統測試"
+        echo "  install-hooks : 安裝 Git pre-commit hook"
         exit 1
         ;;
 esac
