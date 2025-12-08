@@ -28,6 +28,7 @@
 | P2 useFeedData | ✅ | 30m | 477 行 Hook，移除 reviews/questions，communityId optional |
 | P3 GlobalHeader | ✅ | 1.5h | 三頁共用 Header（GlobalHeader.tsx 實作 + 整合 Wall/Feed） |
 | P3-AUDIT 審計修復 | ✅ | 1h | 角色導航 + Logo 原子素材導入 + 移除 Hardcoded |
+| P3.5 三頁互跳導航 | 🔴 | 1h | 靜態 Feed HTML 補上互跳連結（短期方案） |
 | P4 Composer | 🔴 | 2h | headless + UI 統一 |
 | P4.5 Loading/錯誤狀態 | 🔴 | 1h | Skeleton + Empty + Error + Retry |
 | P5 feed-consumer | 🔴 | 2h | 靜態 → React |
@@ -134,7 +135,93 @@
 
 ### 後續最佳實務指引
 
-- 若首頁仍需紅點，請在 `Header.tsx` 明確傳入 `showBadge={true}`，並改為來源於真實通知數據，而非寫死紅點。
+- 若首頁仍需紅點,請在 `Header.tsx` 明確傳入 `showBadge={true}`，並改為來源於真實通知數據，而非寫死紅點。
+
+---
+
+## 🔴 P3.5：三頁互跳導航（短期靜態方案）
+
+> **目標**：在 P5/P6 未完成前，先讓三頁（Wall、Consumer Feed、Agent Feed）能互相跳轉。
+
+### 背景分析
+
+| 頁面 | 路徑 | Header 狀態 | 現有互跳能力 |
+|------|------|-------------|--------------|
+| Community Wall | `/maihouses/community/:id/wall` | React `GlobalHeader` | ✅ Logo 已角色感知導航 |
+| Consumer Feed | `/maihouses/feed-consumer.html` | 靜態 HTML topbar | ⚠️ 僅有無效的「查看我的社區牆」`#my-community` |
+| Agent Feed | `/maihouses/feed-agent.html` | 靜態 HTML topbar | ✅ 有「切換消費者版」 |
+
+### 核心問題
+
+1. **Consumer Feed → Agent Feed**：無切換機制。
+2. **Agent Feed → Community Wall**：無導航連結。
+3. **Consumer Feed → Community Wall**：`href="#my-community"` 無效，需改為真實路徑。
+
+### 執行計畫
+
+#### **任務 1：修復 Consumer Feed 互跳**
+
+**檔案**：`/public/feed-consumer.html`
+
+- [ ] **個人卡片「查看我的社區牆」**
+  ```html
+  <!-- 舊：<a class="link push-right" href="#my-community">🧱 查看我的社區牆 ➡️</a> -->
+  <!-- 新： -->
+  <a class="link push-right" href="/maihouses/community/test-uuid/wall?from=consumer">🧱 查看我的社區牆 ➡️</a>
+  ```
+
+- [ ] **「我的」下拉選單新增「切換房仲版」**（放在「登出」上方）
+  ```html
+  <hr>
+  <a href="/maihouses/feed-agent.html?from=consumer" role="menuitem" style="color:#64748b">🏢 切換房仲版</a>
+  <a href="auth.html?action=logout" role="menuitem" style="color:#ef4444">🚪 登出</a>
+  ```
+
+#### **任務 2：Agent Feed 新增回社區牆**
+
+**檔案**：`/public/feed-agent.html`
+
+- [ ] **個人卡片或側邊欄新增「回社區討論」**
+  - **方案 A**：在個人卡片 `.links` 區塊新增（與「切換消費者版」並列）
+  - **方案 B**：在桌機版 Sidebar 快捷連結區新增
+  
+  ```html
+  <!-- 建議放在側邊欄 .sidebar-card .link-list -->
+  <a href="/maihouses/community/test-uuid/wall?from=agent" class="link">🧱 社區討論</a>
+  ```
+
+#### **任務 3：確保 Community Wall 不新增房源導航**
+
+- [x] **確認**：Wall.tsx 是社區討論區，**不應出現「看更多房源」或「房仲工作台」按鈕**。
+- [x] **原因**：社區牆專注於鄰里互動，不賣房子，避免混淆使用者心智模型。
+
+### 設計原則
+
+1. **單向導航優先**：
+   - Consumer Feed ⇄ Wall（住戶主要動線）
+   - Agent Feed ⇄ Wall（房仲參與社區討論）
+   - Agent Feed ⇄ Consumer Feed（角色切換）
+
+2. **避免循環干擾**：
+   - Wall 不主動推銷 Feed（保持社區純淨性）
+   - Feed 可主動導回 Wall（因為 Feed 是交易導向，Wall 是社交導向）
+
+3. **Query 參數追蹤**：
+   - 所有互跳連結帶上 `?from=<source>`，方便未來 Analytics 追蹤使用者動線。
+
+### 驗證標準
+
+- [ ] Consumer Feed 點擊「查看我的社區牆」能正確跳轉至 `/maihouses/community/test-uuid/wall`
+- [ ] Consumer Feed 「我的」選單能看到「切換房仲版」
+- [ ] Agent Feed 側邊欄或個人卡片能看到「回社區討論」
+- [ ] 所有連結帶上 `?from=<source>` query 參數
+
+### 後續優化方向（P5/P6）
+
+當兩個 Feed 改寫成 React 後：
+- 使用 `GlobalHeader`，動態顯示角色專屬選單
+- 從 `useAuth()` 讀取真實角色，隱藏/顯示對應 CTA
+- `communityId` 從 localStorage 或 API 獲取，而非寫死 `test-uuid`
 
 ---
 
