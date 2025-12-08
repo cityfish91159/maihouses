@@ -26,7 +26,8 @@
 | P1 Toast 系統 | ✅ | 55m | sonner+notify 全面收斂（含 PropertyUploadPage/依賴/死碼清理） |
 | P1.5 權限系統 | ✅ | 1h | useAuth + 角色判斷 + 審計 8 項缺失已全數修復 |
 | P2 useFeedData | ✅ | 30m | 477 行 Hook，移除 reviews/questions，communityId optional |
-| P3 GlobalHeader | ✅ | 1.5h | 三頁共用 Header（GlobalHeader.tsx 實作 + 整合 Wall/Feed） |
+| P3 GlobalHeader | ⚠️ | 1.5h | 三頁共用 Header（GlobalHeader.tsx 實作 + 整合 Wall/Feed） |
+| P3-AUDIT 審計修復 | 🔴 | 1h | 角色導航 + Logo 原子素材導入 + 移除 Hardcoded |
 | P4 Composer | 🔴 | 2h | headless + UI 統一 |
 | P4.5 Loading/錯誤狀態 | 🔴 | 1h | Skeleton + Empty + Error + Retry |
 | P5 feed-consumer | 🔴 | 2h | 靜態 → React |
@@ -42,6 +43,73 @@
 
 - [x] P0-0: SQL VIEW 驗證
 - [x] P0-1: getReviews() 容錯
+
+---
+
+## ⚠️ P3：GlobalHeader（實作完成但有嚴重缺失）
+
+**Google 首席工程師審計報告 (2025-12-08)**
+
+> 嚴厲批評：目前的實作雖然功能可用，但充滿了「交差了事」的痕跡。這不是 Google 等級的代碼，這是實習生的水準。請立即修正以下所有問題。
+
+### 🔴 嚴重缺失 (Critical Issues)
+
+1.  **偷懶的 TODO 註解**
+    *   **位置**: `src/components/layout/GlobalHeader.tsx`
+    *   **問題**: `onClick={() => {/* TODO: Profile Link */}}`
+    *   **指正**: 這是絕對禁止的。如果功能未完成，應該隱藏按鈕或顯示「功能開發中」的 Toast，而不是留一個空的 handler。
+    *   **建議**: 實作跳轉至 `/maihouses/feed-consumer.html` (或對應的 React 路由)，或暫時使用 `notify.dev()`。
+
+2.  **粗暴的登出體驗**
+    *   **位置**: `handleSignOut`
+    *   **問題**: `window.location.reload()`
+    *   **指正**: 在 SPA 中使用硬重新整理是極度不優雅的。這會導致頁面閃爍、重新載入所有資源。
+    *   **建議**: 使用 `useAuth` 的狀態變化來觸發 UI 更新，或使用 `navigate(0)` (如果真的必須)，最好是 `navigate('/')` 並清除 cache。
+
+3.  **寫死的假資料 (Hardcoded Data)**
+    *   **位置**: 通知鈴鐺 `<span ...>2</span>`
+    *   **問題**: 永遠顯示 "2" 則通知。這會誤導使用者。
+    *   **指正**: 如果沒有真實數據，就不應該顯示 Badge，或者應該從 `useAuth` 或 API 獲取真實通知數。
+    *   **建議**: 移除寫死的 "2"，改為 `props` 傳入或從 Context 獲取。
+
+4.  **寫死的身份標籤**
+    *   **位置**: User Menu `<p ...>一般會員</p>`
+    *   **問題**: 所有人都顯示「一般會員」，無視了 `useAuth` 中的 `role`。
+    *   **指正**: 系統明明有 `role` 資訊，為什麼不顯示？
+    *   **建議**: 根據 `user.role` 或 `metadata` 顯示正確身份（訪客/會員/住戶/房仲）。
+
+5.  **不完整的 Accessibility (a11y)**
+    *   **問題**: 下拉選單的 Focus 管理缺失。Tab 鍵導航時，焦點不會被困在選單內，也不會正確關閉。
+    *   **建議**: 雖然不要求完美，但至少要確保 `Esc` 鍵能關閉選單，且 Tab 順序合理。
+
+6.  **型別定義不夠嚴謹**
+    *   **問題**: `GlobalHeaderMode` 是字串字面量，但沒有對應的常數定義，容易打錯。
+    *   **建議**: 考慮使用 `enum` 或 `const assertion` 來管理這些模式。
+
+### 🛠️ P3-AUDIT 修正計畫（Google 首席工程師審計）
+
+**核心設計原則：角色導向情境導航 (Role-Based Contextual Navigation)**
+
+> 必須導入首頁 Logo 原子素材 (`src/components/Logo/Logo.tsx`)，確保視覺一致性。
+
+- [ ] **FIX-1: 智慧型首頁連結 (Smart Home Link)**
+    *   邏輯：依據 `useAuth().role` 決定 Logo 點擊去向。
+    *   `guest` → `/maihouses/` (Landing Page)
+    *   `member/resident` → `/maihouses/feed-consumer.html` (Consumer Feed)
+    *   `agent` → `/maihouses/feed-agent.html` (Agent Feed)
+- [ ] **FIX-2: 智慧型個人檔案 (Smart Profile Link)**
+    *   邏輯：下拉選單「個人檔案」按鈕指向對應 Feed。
+    *   移除 `TODO`，實作真實跳轉。
+- [ ] **FIX-3: 真實數據呈現**
+    *   移除寫死的通知 Badge ("2")，改為 `props` 或 Context。
+    *   顯示真實身份標籤（如「認證房仲」、「已驗證住戶」），而非永遠顯示「一般會員」。
+- [ ] **FIX-4: 優雅登出**
+    *   移除 `window.location.reload()`。
+    *   登出後強制導向至 `/maihouses/`。
+- [ ] **FIX-5: Logo 原子設計導入**
+    *   確保 `GlobalHeader` 使用與首頁完全相同的 Logo 組件與樣式變數。
+- [ ] **FIX-6: a11y 鍵盤導航**
+    *   支援 `Esc` 關閉選單，優化 Tab 順序。
 
 ---
 
