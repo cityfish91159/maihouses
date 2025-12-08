@@ -22,7 +22,7 @@ export function BottomCTA({ role }: BottomCTAProps) {
   const isMember = perm.isMember;
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-50 flex items-center justify-center gap-3 border-t border-[var(--border)] bg-[rgba(255,255,255,0.95)] px-4 py-3 backdrop-blur-md">
+    <div className="fixed inset-x-0 bottom-0 z-overlay flex items-center justify-center gap-3 border-t border-[var(--border)] bg-[rgba(255,255,255,0.95)] px-4 py-3 backdrop-blur-md">
       <p className="text-xs text-[var(--text-secondary)]">
         {isMember ? '🏠 驗證住戶身份，解鎖私密牆' : '🔓 登入解鎖完整評價 + 更多功能'}
       </p>

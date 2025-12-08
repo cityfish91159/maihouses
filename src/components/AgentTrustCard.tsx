@@ -63,7 +63,7 @@ const BookingModal: React.FC<{ isOpen: boolean; onClose: () => void; agentName: 
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-4 backdrop-blur-sm sm:items-center">
+    <div className="fixed inset-0 z-modal flex items-end justify-center bg-black/50 p-4 backdrop-blur-sm sm:items-center">
       <div className="max-h-[80vh] w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl">
         {/* Header */}
         <div className="bg-gradient-to-r from-[#003366] to-[#00A8E8] p-4 text-white">

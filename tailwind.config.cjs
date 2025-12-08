@@ -61,6 +61,11 @@ module.exports = {
           '50%': { transform: 'translateY(-10px)' },
         }
       },
+      zIndex: {
+        dropdown: '30',
+        overlay: '40',
+        modal: '50',
+      },
     }
   },
   plugins: []

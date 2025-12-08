@@ -12,7 +12,7 @@ export default function Header({ onOpenAIStudio }: HeaderProps) {
   return (
     <>
       {/* Navigation Bar */}
-      <header className="sticky top-0 z-50 border-b border-brand-100 bg-white/95 shadow-sm backdrop-blur-sm transition-all">
+      <header className="sticky top-0 z-overlay border-b border-brand-100 bg-white/95 shadow-sm backdrop-blur-sm transition-all">
         <div className="mx-auto flex h-16 max-w-[1120px] items-center justify-between px-4">
           {/* Logo Section */}
           <Logo showSlogan={true} onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} />

@@ -104,7 +104,7 @@ export function GlobalHeader({ mode, title, className = '', notificationCount = 
   };
 
   return (
-    <header className={`sticky top-0 z-50 border-b border-brand-100 bg-white/95 backdrop-blur-md transition-all ${className}`}>
+    <header className={`sticky top-0 z-overlay border-b border-brand-100 bg-white/95 backdrop-blur-md transition-all ${className}`}>
       <div className="mx-auto flex h-16 max-w-[1120px] items-center justify-between gap-2.5 px-4">
         {/* Left */}
         {renderLeft()}
