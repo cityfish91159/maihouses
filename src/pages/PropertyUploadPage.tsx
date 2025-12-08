@@ -202,7 +202,7 @@ export const PropertyUploadPage: React.FC = () => {
   if (showConfirmation && uploadResult) {
     return (
       <div className="min-h-screen bg-[#f8fafc] font-sans text-slate-800">
-        <nav className="sticky top-0 z-50 flex h-16 items-center border-b border-slate-100 bg-white/90 px-4 shadow-sm backdrop-blur-md">
+        <nav className="sticky top-0 z-overlay flex h-16 items-center border-b border-slate-100 bg-white/90 px-4 shadow-sm backdrop-blur-md">
           <div className="flex items-center gap-2 text-xl font-extrabold text-[#003366]">
             <div className="flex size-8 items-center justify-center rounded-lg bg-gradient-to-br from-[#003366] to-[#00A8E8] text-white">
               <Home size={18} />
@@ -319,7 +319,7 @@ export const PropertyUploadPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#f8fafc] font-sans text-slate-800">
       {/* Header */}
-      <nav className="sticky top-0 z-50 flex h-16 items-center justify-between border-b border-slate-100 bg-white/90 px-4 shadow-sm backdrop-blur-md">
+      <nav className="sticky top-0 z-overlay flex h-16 items-center justify-between border-b border-slate-100 bg-white/90 px-4 shadow-sm backdrop-blur-md">
         <div className="flex items-center gap-3">
           <button onClick={() => navigate(-1)} className="rounded-full p-2 transition-colors hover:bg-slate-100">
             <ArrowLeft size={20} className="text-slate-600" />
@@ -618,7 +618,7 @@ export const PropertyUploadPage: React.FC = () => {
       </main>
 
       {/* 底部發布按鈕 */}
-      <div className="fixed inset-x-0 bottom-0 z-50 border-t border-slate-100 bg-white p-4">
+      <div className="fixed inset-x-0 bottom-0 z-overlay border-t border-slate-100 bg-white p-4">
         <div className="mx-auto max-w-2xl">
           <button 
             onClick={publish} 

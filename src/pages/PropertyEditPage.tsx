@@ -134,7 +134,7 @@ export const PropertyEditPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#f8fafc] font-sans text-slate-800">
       {/* Header */}
-      <nav className="sticky top-0 z-50 flex h-16 items-center border-b border-slate-100 bg-white/90 px-4 shadow-sm backdrop-blur-md">
+      <nav className="sticky top-0 z-overlay flex h-16 items-center border-b border-slate-100 bg-white/90 px-4 shadow-sm backdrop-blur-md">
         <button 
           onClick={() => navigate(-1)} 
           className="mr-3 rounded-full p-2 transition-colors hover:bg-slate-100"

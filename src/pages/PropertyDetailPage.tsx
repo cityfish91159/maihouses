@@ -248,7 +248,7 @@ export const PropertyDetailPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#f8fafc] font-sans text-slate-800">
       {/* Header */}
-      <nav className="sticky top-0 z-50 flex h-16 items-center justify-between border-b border-slate-100 bg-white/90 px-4 shadow-sm backdrop-blur-md">
+      <nav className="sticky top-0 z-overlay flex h-16 items-center justify-between border-b border-slate-100 bg-white/90 px-4 shadow-sm backdrop-blur-md">
         <div className="flex items-center gap-3">
           <button className="rounded-full p-2 transition-colors hover:bg-slate-100">
             <ArrowLeft size={20} className="text-slate-600" />
@@ -552,7 +552,7 @@ export const PropertyDetailPage: React.FC = () => {
       </button>
 
       {/* Mobile Bottom Bar - 雙主按鈕設計 */}
-      <div className="pb-safe fixed inset-x-0 bottom-0 z-50 border-t border-slate-100 bg-white p-3 lg:hidden">
+      <div className="pb-safe fixed inset-x-0 bottom-0 z-overlay border-t border-slate-100 bg-white p-3 lg:hidden">
         {/* 經紀人驗證資訊 */}
         <div className="mb-2 flex items-center justify-center gap-4 text-[10px] text-slate-500">
           <span className="flex items-center gap-1">

@@ -95,7 +95,7 @@ export default function AssureDetail() {
       {/* Global Toaster is now used */}
       
       {/* Header */}
-      <header className={`${isMock ? 'bg-indigo-900' : 'bg-slate-900'} sticky top-0 z-50 flex items-center justify-between p-4 text-white shadow-lg transition-colors`}>
+      <header className={`${isMock ? 'bg-indigo-900' : 'bg-slate-900'} sticky top-0 z-overlay flex items-center justify-between p-4 text-white shadow-lg transition-colors`}>
         <div>
           <h1 className="flex items-center gap-2 text-lg font-bold tracking-wide">
             MaiHouses <span className={`rounded px-1 text-xs ${isMock ? 'bg-yellow-500 text-black' : 'bg-blue-600'}`}>{isMock ? 'DEMO' : 'V10'}</span>

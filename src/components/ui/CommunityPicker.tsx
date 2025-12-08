@@ -278,7 +278,7 @@ export function CommunityPicker({ value, address, onChange, className = '', requ
 
       {/* 下拉選單 */}
       {isOpen && (
-        <div className="absolute z-50 mt-1 max-h-80 w-full overflow-hidden overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-lg">
+        <div className="absolute z-dropdown mt-1 max-h-80 w-full overflow-hidden overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-lg">
           {/* 無社區選項 - 放最上面 */}
           <button
             onClick={handleSelectNoCommunity}
