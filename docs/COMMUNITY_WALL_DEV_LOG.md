@@ -65,6 +65,24 @@ npm run build # ✅ Pass
 ### 部署
 - commit `90dc4f8` -> 推送 main，觸發 Vercel 自動部署。
 
+## 2025-12-08 - AI Supervisor v2.4 升級 (Google Standard)
+
+### 本次變更
+
+| 項目 | 檔案 | 說明 |
+|------|------|------|
+| Magic Numbers 偵測 | `scripts/ai-supervisor.sh` | 新增規則：偵測 `setTimeout` 中的魔術數字，建議使用具名常數。 |
+| Hardcoded Strings 偵測 | `scripts/ai-supervisor.sh` | 新增規則：偵測非 ASCII 字元 (中文/Emoji)，推動 i18n 提取。 |
+| Mobile Viewport 偵測 | `scripts/ai-supervisor.sh` | 新增規則：偵測 `h-screen` / `100vh`，建議改用 `dvh` 優化移動端體驗。 |
+
+### 驗證
+
+```bash
+./scripts/ai-supervisor.sh audit src/components/Composer/ComposerModal.tsx
+# 成功觸發警告：
+# ⚠️ [警告] 發現非 ASCII 字元 (中文/Emoji)。
+# ⚠️ [警告] 發現 setTimeout 使用 Magic Number。
+```
 
 ## 2025-12-08 - P3 GlobalHeader 實作與整合 (Strict Mode)
 

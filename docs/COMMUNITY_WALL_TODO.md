@@ -82,6 +82,19 @@
 | P4-A10 | 🟢 | Feed 模式功能缺失 | ⚠️ 待處理 | 留待 P5/P6 階段實作。 |
 | P4-A11 | 🔴 | 競態條件 (Reset Order) | ✅ 已修復 | 調整 `submit` 流程，確保 `onSuccess` 執行完畢後才呼叫 `reset()`。 |
 
+### 🟠 P4-AUDIT-ROUND2：Google Principal Engineer 深度審查 (2025-12-08)
+
+> **審查標準**：Google Engineering Level (L6+) - 關注可維護性、國際化、邊界情況與效能。
+
+| ID | 嚴重度 | 問題摘要 | 建議方案 (Best Practice) |
+|----|--------|----------|--------------------------|
+| P4-B1 | 🔴 | **Body Scroll Lock 缺失** | `FocusTrap` 僅鎖定焦點，但背景頁面仍可滾動。應在 Modal 開啟時對 `body` 設置 `overflow: hidden`，關閉時還原，防止移動端滾動穿透。建議實作 `useBodyScrollLock` hook。 |
+| P4-B2 | 🟡 | **Hardcoded Strings (i18n Debt)** | `ComposerModal` 內充斥中文硬編碼字串 ("發布成功", "請先登入"...)。應提取至 `src/constants/strings.ts` 或 `i18n` 字典，便於未來多語系擴展與文案統一管理。 |
+| P4-B3 | 🟡 | **Magic Numbers** | 存在 `setTimeout(..., 50)` 與 `z-50` 等魔術數字。應將 `z-index` 統一管理 (如 `z-modal`)，並將 timeout 封裝或說明原因 (e.g., `FOCUS_DELAY_MS`)。 |
+| P4-B4 | 🔴 | **Inert Attribute 缺失** | 雖然有 Focus Trap，但背景元素對螢幕閱讀器仍是 "可見" 的。應在 Modal 開啟時對 `#root` 或背景容器設置 `aria-hidden="true"` 或 `inert` 屬性，徹底隔離背景。 |
+| P4-B5 | 🟢 | **Mobile Viewport Issues** | `max-h-[90vh]` 在移動端軟鍵盤彈出時可能導致視窗被壓縮或遮擋。建議使用 `dvh` (Dynamic Viewport Height) 或監聽 `visualViewport` resize 事件來動態調整高度。 |
+| P4-B6 | 🟢 | **Component Composition** | `ComposerModal` 內部包含了 "未登入狀態" 的 UI 邏輯。建議將 `<LoginPrompt />` 拆分為獨立組件，保持 Modal 邏輯純粹 (Single Responsibility Principle)。 |
+
 ---
 
 ---

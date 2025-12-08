@@ -200,6 +200,26 @@ function cmd_audit() {
         fi
     fi
 
+    # 3.11 [v2.4 新增] Google Standard - Magic Numbers
+    echo "🔍 檢查 Magic Numbers..."
+    if grep -qE "setTimeout\s*\([^,]+,\s*[0-9]{2,}\)" "$file"; then
+        warn "發現 setTimeout 使用 Magic Number (如 50, 1000)。請定義具名常數 (e.g. ANIMATION_DELAY_MS)。"
+    fi
+
+    # 3.12 [v2.4 新增] Google Standard - Hardcoded Strings (i18n)
+    echo "🔍 檢查硬編碼文字..."
+    # 排除註解行，檢查是否包含非 ASCII 字元 (通常是中文)
+    # 注意：這可能會誤判 Emoji，但作為警告是合適的
+    if grep -vE "^\s*//|^\s*/\*" "$file" | grep -qP "[^\x00-\x7F]"; then
+        warn "發現非 ASCII 字元 (中文/Emoji)。建議提取至 constants/strings.ts 或使用 i18n 字典。"
+    fi
+
+    # 3.13 [v2.4 新增] Google Standard - Mobile Viewport
+    echo "🔍 檢查 Mobile Viewport..."
+    if grep -qE "h-screen|100vh" "$file"; then
+        warn "發現 h-screen 或 100vh。移動端建議使用 'dvh' (Dynamic Viewport Height) 避免被網址列遮擋。"
+    fi
+
     echo -e "${GREEN}✅ 檔案 $file 通過靜態審計。${NC}"
 }
 
