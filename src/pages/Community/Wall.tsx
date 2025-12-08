@@ -8,9 +8,10 @@
 import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 
+import { GlobalHeader } from '../../components/layout/GlobalHeader';
+
 // Components
 import {
-  Topbar,
   ReviewsSection,
   PostsSection,
   QASection,
@@ -285,7 +286,7 @@ function WallInner() {
   if (authLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-[var(--bg-base)] to-[var(--bg-alt)]">
-        <Topbar communityName="載入中..." />
+        <GlobalHeader mode="community" title="載入中..." />
         <div className="mx-auto max-w-[960px] p-2.5">
           <WallSkeleton />
         </div>
@@ -297,7 +298,7 @@ function WallInner() {
   if (authError) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-[var(--bg-base)] to-[var(--bg-alt)]">
-        <Topbar communityName="登入異常" />
+        <GlobalHeader mode="community" title="登入異常" />
         <div className="mx-auto max-w-[960px] p-4">
           <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-center shadow-sm">
             <p className="text-lg font-semibold text-red-700">登入狀態異常</p>
@@ -319,7 +320,7 @@ function WallInner() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-[var(--bg-base)] to-[var(--bg-alt)]">
-        <Topbar communityName="載入中..." />
+        <GlobalHeader mode="community" title="載入中..." />
         <div className="mx-auto max-w-[960px] p-2.5">
           <WallSkeleton />
         </div>
@@ -375,7 +376,7 @@ function WallInner() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[var(--bg-base)] to-[var(--bg-alt)]">
-      <Topbar communityName={communityInfo.name} />
+      <GlobalHeader mode="community" title={communityInfo.name} />
       
       <div className="mx-auto flex max-w-[960px] gap-5 p-2.5 pb-[calc(80px+env(safe-area-inset-bottom,20px))] lg:p-2.5">
         {/* 主內容區 */}

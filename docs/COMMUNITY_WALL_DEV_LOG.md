@@ -1,5 +1,26 @@
 # 社區牆開發紀錄
 
+## 2025-12-08 - P3 GlobalHeader 實作與整合 (Strict Mode)
+
+### 本次變更
+
+| 項目 | 檔案 | 說明 |
+|------|------|------|
+| GlobalHeader 實作 | `src/components/layout/GlobalHeader.tsx` | 建立三分頁共用 Header，支援 `community`、`consumer`、`agent` 三種模式。 |
+| 社區牆整合 | `src/pages/Community/Wall.tsx` | 替換 Topbar 為 GlobalHeader，傳入 `mode="community"`。 |
+| 舊組件移除 | `src/pages/Community/components/Topbar.tsx` | 移除已廢棄的 Topbar 組件。 |
+| AI 監工系統 | `scripts/ai-supervisor.sh` | 導入強制自查腳本，防止修改禁區檔案 (Home.tsx) 並確保型別正確。 |
+
+### 驗證
+
+```bash
+./scripts/ai-supervisor.sh src/components/layout # ✓ 通過
+./scripts/ai-supervisor.sh src/pages/Community   # ✓ 通過
+```
+
+### 部署
+- commit `feat: implement P3 GlobalHeader for sub-pages (Strict Mode)` push 到 main。
+
 ## 2025-12-08 - P2-UI-FIX 節流 / Badge 封裝 / CTA 跳轉
 
 ### 本次變更

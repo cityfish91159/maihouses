@@ -26,7 +26,7 @@
 | P1 Toast 系統 | ✅ | 55m | sonner+notify 全面收斂（含 PropertyUploadPage/依賴/死碼清理） |
 | P1.5 權限系統 | ✅ | 1h | useAuth + 角色判斷 + 審計 8 項缺失已全數修復 |
 | P2 useFeedData | ✅ | 30m | 477 行 Hook，移除 reviews/questions，communityId optional |
-| P3 GlobalHeader | 🔴 | 1.5h | 三頁共用 Header |
+| P3 GlobalHeader | ✅ | 1.5h | 三頁共用 Header（GlobalHeader.tsx 實作 + 整合 Wall/Feed） |
 | P4 Composer | 🔴 | 2h | headless + UI 統一 |
 | P4.5 Loading/錯誤狀態 | 🔴 | 1h | Skeleton + Empty + Error + Retry |
 | P5 feed-consumer | 🔴 | 2h | 靜態 → React |
