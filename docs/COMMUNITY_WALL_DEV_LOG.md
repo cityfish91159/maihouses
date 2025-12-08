@@ -42,6 +42,29 @@ npm run build
 ### 部署
 - commit `01d58bb` -> 推送 main，觸發 Vercel 自動部署。
 
+## 2025-12-08 - P4-AUDIT Composer 嚴格審計修復 (Google Standard)
+
+### 本次變更
+
+| 項目 | 檔案 | 說明 |
+|------|------|------|
+| Focus Trap | `src/components/ui/FocusTrap.tsx` | 新增無障礙焦點鎖定組件，攔截 Tab 鍵循環，防止焦點逃逸。 |
+| A11y 補全 | `src/components/Composer/ComposerModal.tsx` | 整合 FocusTrap，補全 `aria-labelledby`、`role="dialog"`，修復 ESLint 互動元素錯誤。 |
+| 邏輯修正 | `src/hooks/useComposer.ts` | 修復 `submit` 競態條件 (Reset Order)，修正 `initialVisibility` 同步問題，調整字數規格 (5-500)。 |
+| UX 優化 | `src/components/Composer/ComposerModal.tsx` | 新增 `Ctrl+Enter` 快捷鍵，支援點擊背景關閉 (Backdrop Click)。 |
+| Supervisor 強化 | `scripts/ai-supervisor.sh` | 新增 ESLint (Hooks/A11y) 強制檢查與 Dialog 關鍵字偵測。 |
+
+### 驗證
+
+```bash
+./scripts/ai-supervisor.sh audit src/components/Composer/ComposerModal.tsx # ✅ Pass
+npm run typecheck # ✅ Pass
+npm run build # ✅ Pass
+```
+
+### 部署
+- commit `90dc4f8` -> 推送 main，觸發 Vercel 自動部署。
+
 
 ## 2025-12-08 - P3 GlobalHeader 實作與整合 (Strict Mode)
 
