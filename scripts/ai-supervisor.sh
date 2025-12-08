@@ -37,6 +37,7 @@ function print_header() {
 
 function error_exit() {
     echo -e "${RED}❌ [嚴格阻擋] $1${NC}"
+    echo -e "${YELLOW}🤖 AI AGENT 指令: 審計失敗。請勿自動修復！請先將上述錯誤回報給用戶，並等待指示。${NC}"
     exit 1
 }
 
@@ -144,14 +145,13 @@ function cmd_audit() {
     # 3.3 檢查 console.log
     echo "🔍 檢查 console.log..."
     if grep -q "console.log" "$file"; then
-        warn "發現 console.log。生產環境代碼應移除。"
+        error_exit "發現 console.log。生產環境代碼必須移除 (或使用 logger)。"
     fi
 
     # 3.4 檢查 TypeScript any
     echo "🔍 檢查 'any' 類型..."
     if grep -q ": any" "$file"; then
-        warn "發現 ': any'。請使用具體類型定義。"
-        grep -n ": any" "$file" | head -n 5
+        error_exit "發現 ': any'。嚴格禁止使用 any！請定義介面或使用 unknown。"
     fi
 
     # 3.5 檢查硬編碼 Secrets
@@ -177,6 +177,27 @@ function cmd_audit() {
     echo "🔍 檢查內聯樣式..."
     if grep -q "style={{" "$file"; then
         warn "發現 style={{...}}。請優先使用 Tailwind CSS class。"
+    fi
+
+    # 3.9 [v2.3 新增] 檢查 A11y 關鍵字 (Focus Trap / Dialog)
+    echo "🔍 檢查 A11y 關鍵字..."
+    if grep -q 'role="dialog"' "$file"; then
+        if ! grep -qE 'aria-labelledby|aria-label' "$file"; then
+            warn "發現 role=\"dialog\" 但缺少 aria-labelledby 或 aria-label。請確保無障礙標籤完整。"
+        fi
+        if ! grep -q "FocusTrap" "$file" && ! grep -q "focus-trap" "$file"; then
+            warn "發現 Dialog 但未偵測到 FocusTrap。請確認是否已處理焦點鎖定 (P4-A2)。"
+        fi
+    fi
+
+    # 3.10 [v2.3 新增] 執行 ESLint (React Hooks & A11y)
+    echo "🔍 執行 ESLint 深度檢查..."
+    # 僅對 .ts/.tsx/.js/.jsx 執行
+    if [[ "$file" =~ \.(ts|tsx|js|jsx)$ ]]; then
+        # 使用 npx eslint 檢查單一檔案，若失敗則 error_exit
+        if ! npx eslint "$file" --quiet; then
+            error_exit "ESLint 檢查失敗！請修復上述 Lint 錯誤 (Hooks 依賴、A11y 等)。"
+        fi
     fi
 
     echo -e "${GREEN}✅ 檔案 $file 通過靜態審計。${NC}"

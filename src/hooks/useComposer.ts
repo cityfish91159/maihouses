@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 
 export interface ComposerData {
   content: string;
@@ -21,8 +21,8 @@ export function useComposer({
   onSuccess,
   onError,
   initialVisibility = 'public',
-  minLength = 1,
-  maxLength = 2000,
+  minLength = 5, // P4-A3: 修正預設值為 5
+  maxLength = 500, // P4-A3: 修正預設值為 500
 }: UseComposerOptions) {
   const [content, setContent] = useState('');
   const [visibility, setVisibility] = useState<'public' | 'private'>(initialVisibility);
@@ -30,6 +30,11 @@ export function useComposer({
   const [images, setImages] = useState<File[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // P4-A1: 監聽 initialVisibility 變化
+  useEffect(() => {
+    setVisibility(initialVisibility);
+  }, [initialVisibility]);
 
   const reset = useCallback(() => {
     setContent('');
@@ -62,14 +67,19 @@ export function useComposer({
     setError(null);
 
     try {
+      // P4-A5: 傳遞 communityId 與 images
       await onSubmit({
         content: content.trim(),
         visibility,
         communityId,
         images,
       });
-      reset();
+      
+      // P4-A11: 修正競態條件，先執行 onSuccess 再 reset
+      // 注意：這裡假設 onSuccess 不需要依賴已清空的 state
+      // 如果 onSuccess 需要數據，應該從參數傳遞，而不是依賴 hook state
       onSuccess?.();
+      reset();
     } catch (err) {
       const message = err instanceof Error ? err.message : '發布失敗';
       setError(message);
@@ -94,6 +104,6 @@ export function useComposer({
     reset,
     validate,
     isValid: !validate(),
-    charCount: content.length,
+    charCount: content.trim().length, // P4-A8: 使用 trimmed length
   };
 }

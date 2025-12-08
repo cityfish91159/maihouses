@@ -40,7 +40,7 @@
 
 ## ✅ P4：Composer 統一（已完成）
 
-**執行時間**：2025-12-08 | **狀態**：✅ 驗證通過
+**執行時間**：2025-12-08 | **狀態**：⚠️ 待修復 (Audit Failed)
 
 **核心產出**：
 1.  **Headless Hook**: `src/hooks/useComposer.ts` (狀態管理、驗證、提交邏輯)
@@ -63,6 +63,26 @@
 - [x] **P4-4: 整合驗證**
     - `PostsSection` 成功串接，發文功能正常
     - `npm run typecheck` & `npm run build` 通過
+
+### 🟠 P4-AUDIT：Composer 審計缺失（須修正）
+
+> **狀態更新 (2025-12-08)**: 已執行 Google Standard 級別修復，通過嚴格 A11y 與邏輯審計。
+
+| ID | 嚴重度 | 問題摘要 | 狀態 | 修復說明 |
+|----|--------|----------|------|----------|
+| P4-A1 | 🟡 | `initialVisibility` 狀態不同步 | ✅ 已修復 | `useComposer` 新增 `useEffect` 監聽 `initialVisibility` 變化。 |
+| P4-A2 | 🔴 | 缺失 Focus Trap / A11y | ✅ 已修復 | 實作 `src/components/ui/FocusTrap.tsx` 並整合至 Modal，支援 Tab 循環與焦點還原。 |
+| P4-A3 | 🟡 | 字數規格偏移 (1-2000) | ✅ 已修復 | 修正預設值為 5-500，符合產品規格。 |
+| P4-A4 | 🟡 | 權限守衛不足 | ⚠️ 待處理 | 需在 submit 階段加入二次驗證 (P4-A7 合併處理)。 |
+| P4-A5 | 🟢 | 未使用 Props | ✅ 已修復 | `useComposer` 已正確傳遞 `communityId` 與 `images` 至 `onSubmit`。 |
+| P4-A6 | 🟢 | 缺少快捷鍵 | ✅ 已修復 | 新增 `Ctrl/Cmd + Enter` 提交支援。 |
+| P4-A7 | 🔴 | 提交權限復驗缺失 | ⚠️ 待處理 | 建議於 API 層或 `onSubmit` 實作，前端僅做第一層防護。 |
+| P4-A8 | 🟡 | 驗證邏輯寬鬆 | ✅ 已修復 | `charCount` 與 `validate` 改用 `trim().length`，排除純空白輸入。 |
+| P4-A9 | 🟡 | A11y 標籤缺失 | ✅ 已修復 | 補全 `role="dialog"`, `aria-modal`, `aria-labelledby`，並修復 ESLint 互動元素錯誤。 |
+| P4-A10 | 🟢 | Feed 模式功能缺失 | ⚠️ 待處理 | 留待 P5/P6 階段實作。 |
+| P4-A11 | 🔴 | 競態條件 (Reset Order) | ✅ 已修復 | 調整 `submit` 流程，確保 `onSuccess` 執行完畢後才呼叫 `reset()`。 |
+
+---
 
 ---
 

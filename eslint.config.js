@@ -1,5 +1,7 @@
 import tsParser from '@typescript-eslint/parser';
 import tailwindcss from 'eslint-plugin-tailwindcss';
+import reactHooks from 'eslint-plugin-react-hooks';
+import jsxA11y from 'eslint-plugin-jsx-a11y';
 
 export default [
   {
@@ -11,16 +13,30 @@ export default [
       ecmaVersion: 2022,
       sourceType: 'module',
       parser: tsParser,
+      parserOptions: {
+        ecmaFeatures: {
+          jsx: true,
+        },
+      },
     },
     plugins: {
       tailwindcss,
+      'react-hooks': reactHooks,
+      'jsx-a11y': jsxA11y,
     },
     rules: {
-      // start from recommended rules, but allow custom classnames used in this project
+      // Tailwind
       ...tailwindcss.configs.recommended.rules,
-      // project uses several custom utility-like classnames (e.g. menu-icon, pill-*)
-      // disable the no-custom-classname rule to avoid false positives
       'tailwindcss/no-custom-classname': 'off',
+
+      // React Hooks
+      ...reactHooks.configs.recommended.rules,
+
+      // JSX A11y (Strict)
+      ...jsxA11y.configs.recommended.rules,
+      'jsx-a11y/click-events-have-key-events': 'warn',
+      'jsx-a11y/no-static-element-interactions': 'warn',
+      'jsx-a11y/alt-text': 'error',
     },
     settings: {
       tailwindcss: {

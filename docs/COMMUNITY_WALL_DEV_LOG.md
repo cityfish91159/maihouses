@@ -1,5 +1,48 @@
 # 社區牆開發紀錄
 
+## 2025-12-08 - AI Supervisor 硬化 + 指令明確化
+
+### 本次變更
+
+| 項目 | 檔案 | 說明 |
+|------|------|------|
+| 阻擋主控台日誌 | `scripts/ai-supervisor.sh` | 審計偵測到日誌輸出直接阻擋（error_exit），禁止以警告通過。 |
+| 阻擋 any | `scripts/ai-supervisor.sh` | 新增嚴格規則：出現 `any` 類型立即中止，要求改用明確型別/unknown。 |
+| AI 指令提示 | `scripts/ai-supervisor.sh` | 審計失敗時打印「請勿自動修復，先回報用戶」訊息，避免 AI 擅自補碼。 |
+| 審計失敗流程說明 | `.github/copilot-instructions.md` | 補充條款：`audit` 失敗時禁止自動修復，必須先回報用戶等待指示。 |
+
+### 驗證
+
+```bash
+./scripts/ai-supervisor.sh verify   # 待本次更新完成後執行
+```
+
+### 部署
+- 待完成本次任務後一併重跑 verify（typecheck + build），再行部署。
+
+## 2025-12-08 - P4 Composer 統一 (Headless Hook + UI)
+
+### 本次變更
+
+| 項目 | 檔案 | 說明 |
+|------|------|------|
+| Headless Hook | `src/hooks/useComposer.ts` | 新增發文共用 Hook，封裝 content/visibility/images 狀態、驗證 (1-2000) 與錯誤處理。 |
+| Composer UI | `src/components/Composer/ComposerModal.tsx` | 建立統一發文 Modal，支援 community/feed 模式、未登入提示、字數統計、圖片上傳佔位。 |
+| PostsSection 串接 | `src/pages/Community/components/PostsSection.tsx` | 改用 `ComposerModal`，移除舊 `PostModal`，發文流程走 headless Hook。 |
+| 代碼清理 | `src/pages/Community/components/PostModal.tsx` (已刪除) | 移除舊組件避免雙軌維護。 |
+| 文檔同步 | `docs/COMMUNITY_WALL_TODO.md` | P4 標記完成，記錄產出與驗證。 |
+
+### 驗證
+
+```bash
+npm run typecheck
+npm run build
+```
+
+### 部署
+- commit `01d58bb` -> 推送 main，觸發 Vercel 自動部署。
+
+
 ## 2025-12-08 - P3 GlobalHeader 實作與整合 (Strict Mode)
 
 ### 本次變更
@@ -175,6 +218,16 @@ npm run build   # ✓ 2025-12-07，exit 0
 | communityId optional | - | 信息流不綁定單一社區，支援跨社區瀏覽 |
 | 新增型別 | - | `FeedPost`、`UnifiedFeedData` 簡化結構 |
 | 整合 mhEnv | - | 4 處呼叫，與 useCommunityWallData 一致 |
+| 社區牆彈窗替換 | `src/pages/Community/Wall.tsx` | 4 處原生彈窗 → notify.error |
+| PostsSection 彈窗替換 | `src/pages/Community/components/PostsSection.tsx` | 原生彈窗 → notify.error |
+| ContactModal 彈窗替換 | `src/components/ContactModal.tsx` | 原生彈窗 → notify |
+| TrustManager 彈窗替換 | `src/components/TrustManager.tsx` | 原生彈窗 → notify |
+| ReportPage/ReportGenerator | `src/pages/Report/*.tsx` | 原生彈窗 → notify |
+| 社區牆彈窗替換 | `src/pages/Community/Wall.tsx` | 4 處原生彈窗 → notify.error |
+| PostsSection 彈窗替換 | `src/pages/Community/components/PostsSection.tsx` | 原生彈窗 → notify.error |
+| ContactModal 彈窗替換 | `src/components/ContactModal.tsx` | 原生彈窗 → notify |
+| TrustManager 彈窗替換 | `src/components/TrustManager.tsx` | 原生彈窗 → notify |
+| ReportPage/ReportGenerator | `src/pages/Report/*.tsx` | 原生彈窗 → notify |
 | Mock 資料 | - | 5 筆跨社區測試貼文 |
 
 ### 與 useCommunityWallData 差異
@@ -586,14 +639,14 @@ git push origin main   # ✓ commit 1aa0887，Vercel 部署
 |----------|------|------|
 | 新增 notify 包裝 | `src/lib/notify.ts` | sonner 封裝，支援 success/error/warning/info/loading/dev/dismiss |
 | 全域 Toaster 置頂 | `src/App.tsx` | sonner `<Toaster>` position="top-right"，移除舊 ToastProvider |
-| 社區牆 alert 替換 | `src/pages/Community/Wall.tsx` | 4 處 alert → notify.error |
-| PostsSection alert 替換 | `src/pages/Community/components/PostsSection.tsx` | alert → notify.error |
-| ContactModal alert 替換 | `src/components/ContactModal.tsx` | alert → notify |
-| TrustManager alert 替換 | `src/components/TrustManager.tsx` | alert → notify |
+| 社區牆彈窗替換 | `src/pages/Community/Wall.tsx` | 4 處原生彈窗 → notify.error |
+| PostsSection 彈窗替換 | `src/pages/Community/components/PostsSection.tsx` | 原生彈窗 → notify.error |
+| ContactModal 彈窗替換 | `src/components/ContactModal.tsx` | 原生彈窗 → notify |
+| TrustManager 彈窗替換 | `src/components/TrustManager.tsx` | 原生彈窗 → notify |
 | UAG react-hot-toast 移除 | `src/pages/UAG/**` | toast → notify，移除 Toaster import |
 | Assure Toaster 移除 | `src/pages/Assure/Detail.tsx` | 移除舊 Toaster import |
 | useTrustRoom 改用 notify | `src/hooks/useTrustRoom.ts` | toast → notify |
-| ReportPage/ReportGenerator | `src/pages/Report/*.tsx` | alert → notify |
+| ReportPage/ReportGenerator | `src/pages/Report/*.tsx` | 原生彈窗 → notify |
 | 測試 mock 更新 | `src/pages/UAG/index.test.tsx` | vi.mock notify |
 
 ### 驗證
@@ -1380,7 +1433,7 @@ npm run build   # ✓ 2025-12-08
 | 項目 | 檔案 | 說明 |
 |------|------|------|
 | 強制閱讀簽證 | `scripts/ai-supervisor.sh` | 實作 `log-read` 與 `check_read_visa`，強制執行「先讀後寫」協議。 |
-| 開發惡習偵測 | `scripts/ai-supervisor.sh` | 新增針對 `debugger`, `alert`, 空 `catch` block, inline styles 的靜態檢查。 |
+| 開發惡習偵測 | `scripts/ai-supervisor.sh` | 新增針對 `debugger`, 原生彈窗、空 `catch` block、inline styles 的靜態檢查。 |
 | 系統驗證 | - | 通過自我測試，確認未簽證的修改會被系統阻擋。 |
 
 ### 驗證
@@ -1408,9 +1461,9 @@ npm run build                       # ✓ Build Passed
 2.  **Profile Card 修復**:
     - `feed-agent.html` 中的 "前往我的社區牆" 連結從 `#my-community` 修正為 `/maihouses/community/test-uuid/wall`。
 3.  **代碼淨化 (Sanitization)**:
-    - 移除所有 `alert()` 調用 (替換為註解 `// REMOVED_ALERT`)。
-    - 移除所有 `console.log()` 調用 (替換為註解)。
-    - 確保通過 `ai-supervisor.sh` 的嚴格審計。
+  - 移除所有原生彈窗呼叫 (標註 `// REMOVED_POPUP`)。
+  - 移除所有 console 日誌呼叫 (改為註解備註)。
+  - 確保通過 `ai-supervisor.sh` 的嚴格審計。
 
 ### ✅ 驗證
 - `ai-supervisor.sh audit` 通過。

@@ -20,6 +20,8 @@
     - 檢查是否包含 `TODO` 或 `console.log`。
     - 檢查是否使用了 `any` 類型。
 
+    > **重要**：如果 `audit` 失敗（exit code 1），**絕對禁止**自動修復。你必須先向用戶回報錯誤內容，並等待指示。這是為了防止 AI 為了通過審計而寫出更糟糕的 hack 代碼。
+
 4.  **任務結束前**：
     - 執行 `./scripts/ai-supervisor.sh verify`
     - 確保 `npm run typecheck` 和 `npm run build` 通過。

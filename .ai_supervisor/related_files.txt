@@ -1,0 +1,3 @@
+src/components/Composer/ComposerModal.tsx
+src/hooks/useComposer.ts
+src/pages/Community/components/PostsSection.tsx
