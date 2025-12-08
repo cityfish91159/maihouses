@@ -2,11 +2,20 @@
   "hooks": {
     "PreToolUse": [
       {
-        "matcher": "Edit|Write",
+        "matcher": "Edit",
         "hooks": [
           {
             "type": "command",
-            "command": "echo '\n🔍 [監督系統] 準備修改檔案 - 確認已閱讀原始碼？\n'"
+            "command": "bash scripts/ai-supervisor.sh enforce-read \"$TOOL_INPUT\" Edit || echo '🚫 [監督系統] Edit 被阻止！必須先 Read 該檔案'"
+          }
+        ]
+      },
+      {
+        "matcher": "Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash scripts/ai-supervisor.sh enforce-read \"$TOOL_INPUT\" Write || echo '🚫 [監督系統] Write 被阻止！必須先 Read 該檔案'"
           }
         ]
       },
@@ -15,14 +24,23 @@
         "hooks": [
           {
             "type": "command",
-            "command": "echo '\n⚡ [監督系統] 執行命令前檢查...\n'"
+            "command": "echo '\n⚡ [監督系統] 執行 Bash 命令前檢查...\n'"
           }
         ]
       }
     ],
     "PostToolUse": [
       {
-        "matcher": "Edit|Write",
+        "matcher": "Read",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash scripts/ai-supervisor.sh record-read \"$TOOL_INPUT\" && echo '\n✅ [監督系統] 已記錄閱讀檔案\n'"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit",
         "hooks": [
           {
             "type": "command",
@@ -31,11 +49,11 @@
         ]
       },
       {
-        "matcher": "Read",
+        "matcher": "Write",
         "hooks": [
           {
             "type": "command",
-            "command": "echo '\n✅ [監督系統] 已確認閱讀檔案\n'"
+            "command": "bash scripts/ai-supervisor.sh post-edit"
           }
         ]
       }
@@ -46,7 +64,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "echo '\n📋 [監督系統] 提醒：確保遵循 CLAUDE.md 規範\n'"
+            "command": "echo '\n📋 [監督系統] 提醒：嚴格遵循 CLAUDE.md - 先讀後寫、不便宜行事\n'"
           }
         ]
       }

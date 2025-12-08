@@ -10,6 +10,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 LOG_FILE="$PROJECT_ROOT/.ai-execution.log"
 TASK_FILE="$PROJECT_ROOT/.ai-current-task.json"
+READ_TRACKING_FILE="$PROJECT_ROOT/.ai-read-files.log"
 
 # 顏色定義
 RED='\033[0;31m'
@@ -32,7 +33,269 @@ log() {
     WARNING) echo -e "${YELLOW}[SUPERVISOR WARNING]${NC} $message" ;;
     CHECK)   echo -e "${BLUE}[SUPERVISOR CHECK]${NC} $message" ;;
     PASS)    echo -e "${GREEN}[SUPERVISOR PASS]${NC} $message" ;;
+    BLOCK)   echo -e "${RED}[SUPERVISOR BLOCK]${NC} $message" ;;
   esac
+}
+
+# ============================================================================
+# 強制先讀後寫機制 (Read Before Write Enforcement)
+# ============================================================================
+
+# 記錄已讀取的檔案
+record_file_read() {
+  local file_path="$1"
+  local timestamp=$(date '+%Y-%m-%d %H:%M:%S')
+
+  # 標準化路徑
+  local normalized_path=$(realpath "$file_path" 2>/dev/null || echo "$file_path")
+
+  # 記錄到追蹤檔案
+  echo "[$timestamp] READ: $normalized_path" >> "$READ_TRACKING_FILE"
+  log "PASS" "📖 已記錄閱讀: $file_path"
+}
+
+# 檢查檔案是否已被讀取
+check_file_was_read() {
+  local file_path="$1"
+
+  # 標準化路徑
+  local normalized_path=$(realpath "$file_path" 2>/dev/null || echo "$file_path")
+  local filename=$(basename "$file_path")
+
+  # 如果追蹤檔案不存在，表示沒有讀取任何檔案
+  if [[ ! -f "$READ_TRACKING_FILE" ]]; then
+    return 1
+  fi
+
+  # 檢查是否有讀取記錄 (檢查完整路徑或檔名)
+  if grep -q "READ:.*$filename" "$READ_TRACKING_FILE" 2>/dev/null; then
+    return 0
+  fi
+
+  return 1
+}
+
+# 獲取相關檔案清單 (前後端相關檔案)
+get_related_files() {
+  local file_path="$1"
+  local filename=$(basename "$file_path")
+  local dirname=$(dirname "$file_path")
+  local name_without_ext="${filename%.*}"
+
+  echo ""
+  echo -e "${BLUE}📁 相關檔案建議閱讀清單:${NC}"
+
+  # 1. 同目錄下的 index 檔案
+  if [[ -f "$dirname/index.ts" ]]; then
+    echo "  → $dirname/index.ts"
+  fi
+  if [[ -f "$dirname/index.tsx" ]]; then
+    echo "  → $dirname/index.tsx"
+  fi
+
+  # 2. 相關的類型定義檔案
+  if [[ -f "$dirname/types.ts" ]]; then
+    echo "  → $dirname/types.ts"
+  fi
+  if [[ -f "$dirname/${name_without_ext}.types.ts" ]]; then
+    echo "  → $dirname/${name_without_ext}.types.ts"
+  fi
+
+  # 3. 相關的測試檔案
+  if [[ -f "$dirname/${name_without_ext}.test.ts" ]]; then
+    echo "  → $dirname/${name_without_ext}.test.ts"
+  fi
+  if [[ -f "$dirname/${name_without_ext}.test.tsx" ]]; then
+    echo "  → $dirname/${name_without_ext}.test.tsx"
+  fi
+
+  # 4. 如果是組件，檢查相關的 hooks 和 utils
+  if [[ "$file_path" =~ components ]]; then
+    local hooks_dir="${dirname/components/hooks}"
+    if [[ -d "$hooks_dir" ]]; then
+      echo "  → $hooks_dir/ (相關 hooks)"
+    fi
+  fi
+
+  # 5. 如果是頁面，檢查相關的 API 路由
+  if [[ "$file_path" =~ pages ]]; then
+    echo "  → src/api/ (相關 API)"
+    echo "  → src/services/ (相關服務)"
+  fi
+
+  echo ""
+}
+
+# 強制先讀後寫檢查
+enforce_read_before_write() {
+  local file_path="$1"
+  local tool_name="$2"
+
+  echo ""
+  echo -e "${RED}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+  echo -e "${RED}    🚨 [監督系統] 強制先讀後寫檢查                          ${NC}"
+  echo -e "${RED}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+  echo ""
+
+  if check_file_was_read "$file_path"; then
+    log "PASS" "✅ 檔案已讀取，允許 $tool_name: $file_path"
+    return 0
+  else
+    log "BLOCK" "🚫 禁止 $tool_name！必須先 Read 檔案: $file_path"
+    echo ""
+    echo -e "${RED}❌ 操作被阻止！${NC}"
+    echo ""
+    echo -e "${YELLOW}AI Agent 違反規則：嘗試修改未閱讀的檔案${NC}"
+    echo ""
+    echo "必須執行以下步驟："
+    echo "  1. 先使用 Read 工具閱讀: $file_path"
+    echo "  2. 理解現有代碼結構和邏輯"
+    echo "  3. 確認修改位置和影響範圍"
+    echo "  4. 然後才能執行 $tool_name"
+
+    get_related_files "$file_path"
+
+    echo -e "${RED}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo ""
+
+    # 返回錯誤碼，阻止操作
+    return 1
+  fi
+}
+
+# 清除讀取記錄 (新任務開始時)
+clear_read_tracking() {
+  if [[ -f "$READ_TRACKING_FILE" ]]; then
+    rm -f "$READ_TRACKING_FILE"
+  fi
+  log "PASS" "🔄 已清除讀取追蹤記錄"
+}
+
+# ============================================================================
+# 強制任務計劃 - 必須先列出要修改的檔案
+# ============================================================================
+TASK_PLAN_FILE="$PROJECT_ROOT/.ai-task-plan.json"
+
+# 檢查是否有任務計劃
+check_task_plan_exists() {
+  if [[ ! -f "$TASK_PLAN_FILE" ]]; then
+    echo ""
+    echo -e "${RED}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "${RED}    🚨 [監督系統] 缺少任務計劃！                            ${NC}"
+    echo -e "${RED}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo ""
+    echo -e "${YELLOW}AI Agent 必須在開始前：${NC}"
+    echo ""
+    echo "  1. 完整理解用戶需求"
+    echo "  2. 列出所有需要修改的檔案"
+    echo "  3. 說明每個檔案的修改原因"
+    echo "  4. 確認前後端相關檔案都已識別"
+    echo ""
+    echo -e "${BLUE}範例任務計劃格式：${NC}"
+    echo '  {'
+    echo '    "task": "實作用戶登入功能",'
+    echo '    "files_to_modify": ['
+    echo '      {"path": "src/pages/Login.tsx", "reason": "新增登入表單"},'
+    echo '      {"path": "src/api/auth.ts", "reason": "新增登入 API 呼叫"},'
+    echo '      {"path": "src/types/auth.ts", "reason": "定義登入相關類型"}'
+    echo '    ],'
+    echo '    "files_to_read": ['
+    echo '      "src/context/AuthContext.tsx",'
+    echo '      "src/hooks/useAuth.ts"'
+    echo '    ]'
+    echo '  }'
+    echo ""
+    echo -e "${RED}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    return 1
+  fi
+  return 0
+}
+
+# 驗證要修改的檔案是否在計劃中
+validate_file_in_plan() {
+  local file_path="$1"
+  local filename=$(basename "$file_path")
+
+  if [[ ! -f "$TASK_PLAN_FILE" ]]; then
+    return 1
+  fi
+
+  # 檢查檔案是否在計劃的修改清單中
+  if jq -e ".files_to_modify[] | select(.path | contains(\"$filename\"))" "$TASK_PLAN_FILE" > /dev/null 2>&1; then
+    return 0
+  fi
+
+  return 1
+}
+
+# 顯示任務計劃
+show_task_plan() {
+  if [[ -f "$TASK_PLAN_FILE" ]]; then
+    echo ""
+    echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "${BLUE}    📋 當前任務計劃                                        ${NC}"
+    echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo ""
+
+    local task=$(jq -r '.task // "未定義"' "$TASK_PLAN_FILE")
+    echo -e "任務: ${GREEN}$task${NC}"
+    echo ""
+
+    echo -e "${YELLOW}需要修改的檔案:${NC}"
+    jq -r '.files_to_modify[]? | "  → \(.path) - \(.reason)"' "$TASK_PLAN_FILE" 2>/dev/null || echo "  (無)"
+    echo ""
+
+    echo -e "${YELLOW}需要閱讀的檔案:${NC}"
+    jq -r '.files_to_read[]? | "  → \(.)"' "$TASK_PLAN_FILE" 2>/dev/null || echo "  (無)"
+    echo ""
+
+    # 檢查哪些檔案已讀取
+    echo -e "${YELLOW}閱讀進度:${NC}"
+    local files_to_read=$(jq -r '.files_to_read[]?' "$TASK_PLAN_FILE" 2>/dev/null)
+    local files_to_modify=$(jq -r '.files_to_modify[].path?' "$TASK_PLAN_FILE" 2>/dev/null)
+    local all_files="$files_to_read $files_to_modify"
+
+    for file in $all_files; do
+      local filename=$(basename "$file")
+      if check_file_was_read "$file"; then
+        echo -e "  ✅ $file"
+      else
+        echo -e "  ❌ $file ${RED}(未讀取)${NC}"
+      fi
+    done
+
+    echo ""
+    echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+  fi
+}
+
+# 檢查是否所有計劃中的檔案都已讀取
+check_all_planned_files_read() {
+  if [[ ! -f "$TASK_PLAN_FILE" ]]; then
+    return 1
+  fi
+
+  local all_read=1
+  local files_to_read=$(jq -r '.files_to_read[]?' "$TASK_PLAN_FILE" 2>/dev/null)
+  local files_to_modify=$(jq -r '.files_to_modify[].path?' "$TASK_PLAN_FILE" 2>/dev/null)
+
+  # 檢查 files_to_read
+  for file in $files_to_read; do
+    if ! check_file_was_read "$file"; then
+      all_read=0
+      log "WARNING" "計劃中的檔案未讀取: $file"
+    fi
+  done
+
+  # 檢查 files_to_modify
+  for file in $files_to_modify; do
+    if ! check_file_was_read "$file"; then
+      all_read=0
+      log "WARNING" "要修改的檔案未讀取: $file"
+    fi
+  done
+
+  return $((1 - all_read))
 }
 
 # ============================================================================
@@ -398,6 +661,52 @@ main() {
       final_check
       ;;
 
+    # === 強制先讀後寫相關命令 ===
+
+    record-read)
+      # 記錄檔案已讀取
+      local file_path="${2:-}"
+      if [[ -n "$file_path" ]]; then
+        record_file_read "$file_path"
+      fi
+      ;;
+
+    check-read)
+      # 檢查檔案是否已讀取
+      local file_path="${2:-}"
+      if check_file_was_read "$file_path"; then
+        echo -e "${GREEN}✅ 檔案已讀取: $file_path${NC}"
+      else
+        echo -e "${RED}❌ 檔案未讀取: $file_path${NC}"
+        exit 1
+      fi
+      ;;
+
+    enforce-read)
+      # 強制先讀後寫檢查
+      local file_path="${2:-}"
+      local tool_name="${3:-Edit}"
+      enforce_read_before_write "$file_path" "$tool_name"
+      ;;
+
+    show-plan)
+      # 顯示任務計劃和閱讀進度
+      show_task_plan
+      ;;
+
+    check-all-read)
+      # 檢查所有計劃中的檔案是否已讀取
+      if check_all_planned_files_read; then
+        echo -e "${GREEN}✅ 所有計劃中的檔案都已讀取${NC}"
+      else
+        echo -e "${RED}❌ 還有檔案未讀取${NC}"
+        show_task_plan
+        exit 1
+      fi
+      ;;
+
+    # === 原有命令 ===
+
     check-plan)
       check_task_plan
       ;;
@@ -412,24 +721,52 @@ main() {
       ;;
 
     init)
-      # 初始化新任務
+      # 初始化新任務 - 清除所有追蹤記錄
+      clear_read_tracking
       echo '{"steps":[],"currentStep":0,"startTime":"'$(date -Iseconds)'"}' > "$TASK_FILE"
-      log "PASS" "任務追蹤已初始化"
-      print_quality_checklist
+      rm -f "$TASK_PLAN_FILE" 2>/dev/null || true
+      log "PASS" "🔄 任務追蹤已初始化"
+      echo ""
+      echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+      echo -e "${BLUE}    🚀 新任務開始 - AI Agent 必須遵守以下流程              ${NC}"
+      echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+      echo ""
+      echo "  1️⃣  完整理解用戶需求，不清楚就問"
+      echo "  2️⃣  列出所有要修改的檔案和原因"
+      echo "  3️⃣  先 Read 所有相關檔案（前端+後端+類型）"
+      echo "  4️⃣  確認理解後才能開始 Edit/Write"
+      echo "  5️⃣  每完成一步就標記完成"
+      echo "  6️⃣  最後執行驗證（typecheck, lint, test）"
+      echo ""
+      echo -e "${YELLOW}⚠️  禁止：跳過步驟、腦補需求、便宜行事、偷懶省略${NC}"
+      echo ""
+      echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
       ;;
 
     *)
-      echo "AI Supervisor - 嚴格執行過程檢查器"
+      echo "AI Supervisor - 嚴格執行過程檢查器 v2.0"
       echo ""
       echo "用法:"
-      echo "  $0 init                  初始化新任務"
-      echo "  $0 pre <tool> <input>    執行前檢查"
-      echo "  $0 post <tool> <output>  執行後驗證"
-      echo "  $0 post-edit             編輯後即時檢查"
-      echo "  $0 final-check           最終檢查"
-      echo "  $0 check-plan            檢查任務計畫"
-      echo "  $0 check-quality <file>  檢查代碼品質"
-      echo "  $0 checklist             顯示品質檢查清單"
+      echo ""
+      echo "  任務管理:"
+      echo "    $0 init                    初始化新任務（清除所有記錄）"
+      echo "    $0 show-plan               顯示任務計劃和閱讀進度"
+      echo "    $0 checklist               顯示品質檢查清單"
+      echo ""
+      echo "  先讀後寫強制機制:"
+      echo "    $0 record-read <file>      記錄檔案已讀取"
+      echo "    $0 check-read <file>       檢查檔案是否已讀取"
+      echo "    $0 enforce-read <file>     強制先讀後寫檢查"
+      echo "    $0 check-all-read          檢查所有計劃檔案是否已讀取"
+      echo ""
+      echo "  品質檢查:"
+      echo "    $0 check-quality <file>    檢查代碼品質"
+      echo "    $0 post-edit               編輯後即時檢查"
+      echo "    $0 final-check             最終檢查"
+      echo ""
+      echo "  Hook 觸發:"
+      echo "    $0 pre <tool> <input>      執行前檢查"
+      echo "    $0 post <tool> <output>    執行後驗證"
       ;;
   esac
 }
