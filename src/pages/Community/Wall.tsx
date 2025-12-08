@@ -185,8 +185,9 @@ function WallInner() {
   }, [role, setRoleInternal]);
 
   const handleUnlock = useCallback(() => {
-    navigate('/auth');
-  }, [navigate]);
+    // 由於 Auth 頁面是獨立的 HTML，使用 window.location 跳轉
+    window.location.href = '/maihouses/auth.html';
+  }, []);
   
   // Tab 切換
   const handleTabChange = useCallback((tab: WallTab) => {
