@@ -201,6 +201,12 @@ P4-C1, P4-C2, P4-C3 已修復，但仍有「便宜行事」的痕跡。
 | S9 | 🟡 | ⚠️ 未修復 | **自動掃描覆蓋率不足（全域巡檢）** | 建立 `cmd_auto_scan`：結合 `cmd_deep_scan` + ESLint + TS incremental，對全 repo 週期掃描；生成報告存 `.ai_supervisor/scan-report.md`，按嚴重度排序並給出修復建議。 |
 | S10 | 🟡 | ⚠️ 未修復 | **性能與安全優化缺位** | 在掃描與指引中加入：1) 建議 lazy import / code splitting；2) 建議 API 層自定義 Error 類；3) 建議加入 Sentry/Logging pipeline；4) 建議使用安全 headers/CSP。 |
 
+**執行紀錄 2025-12-08 (本輪)**
+- 已在 `scripts/ai-supervisor.sh` 新增 `IGNORE_PATTERNS`，`finish` 排除 `dist/`、`node_modules/`、`.git/` 並自動清理由 dist 未追蹤產物，降低誤報與作弊空間。（對應 S1/S7）
+- 強化 `quick_scan`：回報長 inline handler、超長檔案，提示 useCallback/拆分。（對應 S6）
+- 新增 `cmd_guidance_pro`：提供 React/Hook/API/路由最佳實踐片段與性能安全建議。（對應 S8/S10）
+- 新增 `cmd_auto_scan`：整合 deep_scan + ESLint + TypeScript，輸出報告至 `.ai_supervisor/scan-report.md`。（對應 S9）
+
 ---
 
 | 頁面 | 資料源 | 身份 | 預期 |

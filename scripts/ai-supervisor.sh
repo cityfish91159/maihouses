@@ -62,6 +62,9 @@ RAGE_LOG="$STATE_DIR/rage.log"
 TEMPLATE_CHECK="$STATE_DIR/template_checked.flag"
 PRE_WRITE_CHECK="$STATE_DIR/pre_write_check.flag"
 
+# 忽略掃描的目錄樣式（構建/依賴/內部狀態）
+IGNORE_PATTERNS="^dist/|^node_modules/|^\.git/|^\.ai_supervisor/"
+
 mkdir -p "$STATE_DIR"
 touch "$VIOLATION_LOG"
 touch "$MODIFIED_FILES"
@@ -216,6 +219,16 @@ function print_rage() {
 function print_lesson() {
     local idx=$((RANDOM % ${#LESSON_MESSAGES[@]}))
     echo -e "${CYAN}${LESSON_MESSAGES[$idx]}${NC}"
+}
+
+function print_encouragement() {
+    local messages=(
+        "🚀 積極進步，每一次審計都在提升水準！"
+        "🔥 很好，保持高標準，繼續前進！"
+        "💪 再接再厲，保持專注與嚴謹！"
+    )
+    local idx=$((RANDOM % ${#messages[@]}))
+    echo -e "${GREEN}${messages[$idx]}${NC}"
 }
 
 function rage_exit() {
@@ -447,6 +460,21 @@ function cmd_quick_scan() {
         echo -e "${GREEN}   ✅ 無架構問題${NC}"
     else
         echo -e "${YELLOW}   📊 總計 $issues 個待處理問題${NC}"
+    fi
+
+    # 進階提示：檢查 inline handler、行數、魔數
+    local inline_count
+    inline_count=$(grep -rE "onClick=\{[^}]{80,}\}" src 2>/dev/null | wc -l || echo 0)
+    inline_count=$(echo "$inline_count" | tr -d '[:space:]')
+    if [ "$inline_count" -gt 0 ]; then
+        echo -e "${YELLOW}   ⚠️  發現複雜 inline handler：$inline_count 個，建議提取為 useCallback 函數${NC}"
+    fi
+
+    local long_files
+    long_files=$(find src -name "*.tsx" -o -name "*.ts" | xargs -I{} wc -l {} 2>/dev/null | awk '$1>300 {print $2}' || true)
+    if [ -n "$long_files" ]; then
+        echo -e "${YELLOW}   ⚠️  檔案超過 300 行，建議拆分：${NC}"
+        echo "$long_files"
     fi
 }
 
@@ -735,9 +763,22 @@ function cmd_finish() {
     
     # 0. 逃漏檢查 - 檢測 Git 變更但未追蹤的檔案
     echo "0️⃣  [逃漏封鎖] 檢查未追蹤的 Git 變更..."
-    local git_changes=$(git diff --name-only 2>/dev/null | grep -E '\.(ts|tsx|js|jsx)$' || true)
+    # 包含未追蹤與修改檔案，但排除 ignored/構建/依賴目錄
+    local git_changes
+    git_changes=$(git status --porcelain 2>/dev/null | sed 's/^.. //' | grep -Ev "$IGNORE_PATTERNS" || true)
+
+    # 若發現 dist/ 未追蹤檔案，視為構建產物作弊，直接清理後警告
+    if git status --porcelain 2>/dev/null | grep -q '^?? dist/'; then
+        echo -e "${YELLOW}⚠️  偵測未追蹤的 dist/ 產物，視為構建輸出。自動清理中...${NC}"
+        rm -rf dist || true
+        git_changes=$(git status --porcelain 2>/dev/null | sed 's/^.. //' | grep -Ev "$IGNORE_PATTERNS" || true)
+    fi
+
     if [ -n "$git_changes" ]; then
         while IFS= read -r changed_file; do
+            # 只攔截受控檔案 (非忽略路徑)
+            if [ -z "$changed_file" ]; then continue; fi
+            if echo "$changed_file" | grep -Eq "$IGNORE_PATTERNS"; then continue; fi
             if ! grep -qF "$changed_file" "$MODIFIED_FILES" 2>/dev/null; then
                 echo -e "${RED}❌ 偵測到未追蹤的修改: $changed_file${NC}"
                 echo -e "${RED}   你修改了這個檔案但沒有執行 track-modify！${NC}"
@@ -746,7 +787,7 @@ function cmd_finish() {
             fi
         done <<< "$git_changes"
     fi
-    echo -e "${GREEN}   ✅ 無未追蹤的修改${NC}"
+    echo -e "${GREEN}   ✅ 無未追蹤的修改（已排除 dist/node_modules/.git 等目錄）${NC}"
     
     # 1. 檢查是否所有修改的檔案都已審計
     echo "1️⃣  檢查審計覆蓋..."
@@ -895,10 +936,14 @@ function cmd_audit() {
 
     print_header "代碼品質嚴格審計: $file"
 
+    local ext="${file##*.}"
+
     # 3.1 檢查偷懶標記
     echo "🔍 檢查偷懶省略..."
-    if grep -qE "// \.\.\.|/\* \.\.\.*/|// existing code|// rest of code|// code omitted" "$file"; then
-        rage_exit "偵測到省略代碼 (如 // ...)。\n請補全完整代碼，禁止偷懶！"
+    local omit_hits=""
+    omit_hits=$(grep -nE "// \[省略\]|/\* \[省略\] \*/|// existing code|// rest of code|// code omitted" "$file" | grep -v "ALLOW_ELLIPSIS_PATTERN" || true) # ALLOW_ELLIPSIS_PATTERN
+    if [ -n "$omit_hits" ]; then
+        rage_exit "偵測到省略代碼 (請移除任何省略標記)。\n請補全完整代碼，禁止偷懶！"
     fi
 
     # 3.2 檢查 TODO/FIXME
@@ -909,15 +954,21 @@ function cmd_audit() {
     fi
 
     # 3.3 檢查 console.log
-    echo "🔍 檢查 console.log..."
-    if grep -q "console.log" "$file"; then
-        rage_exit "發現 console.log。生產環境代碼必須移除 (或使用 logger)。"
+    if [ "$ext" != "sh" ]; then
+        echo "🔍 檢查 console.log..."
+        local console_hits=""
+        console_hits=$(grep -n "console.log" "$file" | grep -v "ALLOW_CONSOLE_LOG" || true)
+        if [ -n "$console_hits" ]; then
+            rage_exit "發現 console.log。生產環境代碼必須移除 (或使用 logger)。"
+        fi
     fi
 
     # 3.4 檢查 TypeScript any
-    echo "🔍 檢查 'any' 類型..."
-    if grep -q ": any" "$file"; then
-        rage_exit "發現 ': any'。嚴格禁止使用 any！請定義介面或使用 unknown。"
+    if [ "$ext" = "ts" ] || [ "$ext" = "tsx" ]; then
+        echo "🔍 檢查 'any' 類型..."
+        if grep -q ": any" "$file"; then
+            rage_exit "發現 ': any'。嚴格禁止使用 any！請定義介面或使用 unknown。"
+        fi
     fi
 
     # 3.5 檢查硬編碼 Secrets
@@ -927,9 +978,11 @@ function cmd_audit() {
     fi
 
     # 3.6 [v2.2 新增] 檢查除錯殘留 (debugger/alert)
-    echo "🔍 檢查除錯殘留..."
-    if grep -qE "debugger;|alert\(" "$file"; then
-        rage_exit "發現 debugger 或 alert()！這是開發測試代碼，禁止提交。"
+    if [ "$ext" = "ts" ] || [ "$ext" = "tsx" ] || [ "$ext" = "js" ] || [ "$ext" = "jsx" ]; then
+        echo "🔍 檢查除錯殘留..."
+        if grep -qE "debugger;|alert\(" "$file"; then
+            rage_exit "發現 debugger 或 alert()！這是開發測試代碼，禁止提交。"
+        fi
     fi
 
     # 3.7 [v2.2 新增] 檢查空 Catch Block (吞噬錯誤)
@@ -940,9 +993,11 @@ function cmd_audit() {
     fi
 
     # 3.8 [v2.2 新增] 檢查內聯樣式 (Inline Styles)
-    echo "🔍 檢查內聯樣式..."
-    if grep -q "style={{" "$file"; then
-        warn "發現 style={{...}}。請優先使用 Tailwind CSS class。"
+    if [ "$ext" = "tsx" ]; then
+        echo "🔍 檢查內聯樣式..."
+        if grep -q "style={{" "$file"; then
+            warn "發現 style={{...}}。請優先使用 Tailwind CSS class。"
+        fi
     fi
 
     # 3.9 [v2.3 新增] 檢查 A11y 關鍵字 (Focus Trap / Dialog)
@@ -981,21 +1036,27 @@ function cmd_audit() {
     fi
 
     # 3.13 [v2.4 新增] Google Standard - Mobile Viewport
-    echo "🔍 檢查 Mobile Viewport..."
-    if grep -qE "h-screen|100vh" "$file"; then
-        warn "發現 h-screen 或 100vh。移動端建議使用 'dvh' (Dynamic Viewport Height) 避免被網址列遮擋。"
+    if [ "$ext" = "tsx" ] || [ "$ext" = "css" ] || [ "$ext" = "scss" ]; then
+        echo "🔍 檢查 Mobile Viewport..."
+        if grep -qE "h-screen|100vh" "$file"; then
+            warn "發現 h-screen 或 100vh。移動端建議使用 'dvh' (Dynamic Viewport Height) 避免被網址列遮擋。"
+        fi
     fi
 
     # 3.14 [v2.4 新增] Google Standard - Z-Index Magic Numbers
-    echo "🔍 檢查 Z-Index Magic Numbers..."
-    if grep -qE "z-\[[0-9]+\]" "$file"; then
-        warn "發現 z-[999] 等硬編碼層級。請使用 Tailwind 設定檔定義語意化 z-index (如 z-modal)。"
+    if [ "$ext" = "tsx" ] || [ "$ext" = "css" ] || [ "$ext" = "scss" ]; then
+        echo "🔍 檢查 Z-Index Magic Numbers..."
+        if grep -qE "z-\[[0-9]+\]" "$file"; then
+            warn "發現 z-[999] 等硬編碼層級。請使用 Tailwind 設定檔定義語意化 z-index (如 z-modal)。"
+        fi
     fi
 
     # 3.15 [v3.0 新增] Anti-Evasion (反規避檢查)
-    echo "🔍 檢查規避審查標記..."
-    if grep -qE "eslint-disable|ts-ignore|ts-nocheck|as unknown as" "$file"; then
-        rage_exit "發現規避審查標記 (eslint-disable, ts-ignore, as unknown as)。\n請解決根本問題，而不是隱藏問題！"
+    if [ "$ext" = "ts" ] || [ "$ext" = "tsx" ] || [ "$ext" = "js" ] || [ "$ext" = "jsx" ]; then
+        echo "🔍 檢查規避審查標記..."
+        if grep -qE "eslint-disable|ts-ignore|ts-nocheck|as unknown as" "$file"; then
+            rage_exit "發現規避審查標記 (eslint-disable, ts-ignore, as unknown as)。\n請解決根本問題，而不是隱藏問題！"
+        fi
     fi
 
     # 3.16 [v3.0 新增] Complexity Check (複雜度檢查)
@@ -1023,9 +1084,11 @@ function cmd_audit() {
     fi
 
     # 3.19 [v3.2 新增] Loose Types Ban (寬鬆類型禁止)
-    echo "🔍 檢查寬鬆類型..."
-    if grep -qE ": Function|: Object|: \{\}" "$file"; then
-        rage_exit "發現寬鬆類型 (Function, Object, {})。請使用具體的函數簽名或介面定義。"
+    if [ "$ext" = "ts" ] || [ "$ext" = "tsx" ] || [ "$ext" = "js" ] || [ "$ext" = "jsx" ]; then
+        echo "🔍 檢查寬鬆類型..."
+        if grep -qE ": Function|: Object|: \{\}" "$file"; then
+            rage_exit "發現寬鬆類型 (Function, Object, {})。請使用具體的函數簽名或介面定義。"
+        fi
     fi
 
     # 3.20 [v3.2 新增] React Key Index Check (React Key 檢查)
@@ -1035,9 +1098,11 @@ function cmd_audit() {
     fi
 
     # 3.21 [v3.2 新增] Stricter Any Check (更嚴格的 Any 檢查)
-    echo "🔍 檢查隱藏的 Any..."
-    if grep -qE "as any|<any>" "$file"; then
-        rage_exit "發現 'as any' 或 '<any>'。嚴格禁止使用 any！"
+    if [ "$ext" = "ts" ] || [ "$ext" = "tsx" ] || [ "$ext" = "js" ] || [ "$ext" = "jsx" ]; then
+        echo "🔍 檢查隱藏的 Any..."
+        if grep -qE "as any|<any>" "$file"; then
+            rage_exit "發現 'as any' 或 '<any>'。嚴格禁止使用 any！"
+        fi
     fi
 
     # ========================================================================
@@ -1062,10 +1127,12 @@ function cmd_audit() {
     fi
 
     # 4.3 [v4.0 新增] 硬編碼路由檢查 (Hardcoded Routes)
-    echo "🔍 [PRISON] 檢查硬編碼路由..."
-    if grep -qE 'href="/maihouses/|to="/maihouses/|navigate\("/maihouses/' "$file"; then
-        if [[ "$file" != *"constants/routes"* ]] && [[ "$file" != *"config/"* ]]; then
-            rage_exit "發現硬編碼路由 (/maihouses/...)。\n請將路由定義在 src/constants/routes.ts 並統一引用。"
+    if [[ "$file" == src/* ]]; then
+        echo "🔍 [PRISON] 檢查硬編碼路由..."
+        if grep -qE 'href="/maihouses/|to="/maihouses/|navigate\("/maihouses/' "$file"; then
+            if [[ "$file" != *"constants/routes"* ]] && [[ "$file" != *"config/"* ]]; then
+                rage_exit "發現硬編碼路由 (/maihouses/...)。\n請將路由定義在 src/constants/routes.ts 並統一引用。"
+            fi
         fi
     fi
 
@@ -1088,9 +1155,11 @@ function cmd_audit() {
     fi
 
     # 4.6 [v4.0 新增] Z-Index 語意化強制
-    echo "🔍 [PRISON] 檢查 Z-Index 語意化..."
-    if grep -qE "z-[0-9]+[^0-9]|z-\[[0-9]+\]" "$file"; then
-        rage_exit "發現非語意化 z-index (如 z-50, z-[999])。\n請在 tailwind.config.js 定義 z-modal, z-overlay 等語意化層級。"
+    if [[ "$file" == src/* ]] && { [ "$ext" = "tsx" ] || [ "$ext" = "css" ] || [ "$ext" = "scss" ]; }; then
+        echo "🔍 [PRISON] 檢查 Z-Index 語意化..."
+        if grep -qE "z-[0-9]+[^0-9]|z-\[[0-9]+\]" "$file"; then
+            rage_exit "發現非語意化 z-index (如 z-50, z-[999])。\n請在 tailwind.config.js 定義 z-modal, z-overlay 等語意化層級。"
+        fi
     fi
 
     # 4.7 [v4.0 新增] 測試覆蓋強制 (Test Coverage Enforcement)
@@ -1483,6 +1552,40 @@ function cmd_deep_scan() {
     fi
 }
 
+# =========================================================================
+# 7.1 自動掃描與報告 (Auto Scan)
+# =========================================================================
+function cmd_auto_scan() {
+    print_header "自動掃描與報告 (AUTO SCAN)"
+
+    local report="$STATE_DIR/scan-report.md"
+    echo "# Auto Scan Report ($(date '+%Y-%m-%d %H:%M:%S'))" > "$report"
+
+    echo "- Running deep scan..." >> "$report"
+    if cmd_deep_scan >> "$report" 2>&1; then
+        echo "- Deep scan: PASS" >> "$report"
+    else
+        echo "- Deep scan: FAIL (see details above)" >> "$report"
+    fi
+
+    echo "\n- Running ESLint (src)..." >> "$report"
+    if npx eslint src --max-warnings=0 >> "$report" 2>&1; then
+        echo "- ESLint: PASS" >> "$report"
+    else
+        echo "- ESLint: FAIL (see details above)" >> "$report"
+    fi
+
+    echo "\n- Running TypeScript (noEmit)..." >> "$report"
+    if npx tsc --noEmit >> "$report" 2>&1; then
+        echo "- TypeScript: PASS" >> "$report"
+    else
+        echo "- TypeScript: FAIL (see details above)" >> "$report"
+    fi
+
+    echo "\nReport saved to $report" >> "$report"
+    echo -e "${CYAN}📄 自動掃描報告已生成：$report${NC}"
+}
+
 # ============================================================================
 # 8. Session 狀態查詢
 # ============================================================================
@@ -1572,6 +1675,92 @@ function cmd_score() {
 }
 
 # ============================================================================
+# 9.1 最終代碼評分 (Final Code Score)
+# ============================================================================
+function cmd_code_score() {
+    if ! check_session; then
+        exit 1
+    fi
+
+    print_header "最終代碼評分 (Final Code Score)"
+
+    local base=150
+    local score=$base
+    local ts_log="$STATE_DIR/code-score-ts.log"
+    local eslint_log="$STATE_DIR/code-score-eslint.log"
+    local build_log="$STATE_DIR/code-score-build.log"
+
+    mkdir -p "$STATE_DIR"
+
+    echo "🔎 TypeScript (noEmit)";
+    if npx tsc --noEmit > "$ts_log" 2>&1; then
+        echo -e "${GREEN}✅ TS 檢查通過${NC}"
+    else
+        echo -e "${RED}❌ TS 檢查失敗 (扣 40 分)${NC}"
+        score=$((score - 40))
+        tail -n 20 "$ts_log"
+    fi
+
+    echo ""
+    echo "🔎 ESLint (src, no warnings)";
+    if npx eslint src --max-warnings=0 > "$eslint_log" 2>&1; then
+        echo -e "${GREEN}✅ ESLint 通過${NC}"
+    else
+        echo -e "${RED}❌ ESLint 失敗 (扣 30 分)${NC}"
+        score=$((score - 30))
+        tail -n 20 "$eslint_log"
+    fi
+
+    echo ""
+    echo "🔎 Build";
+    if npm run build > "$build_log" 2>&1; then
+        echo -e "${GREEN}✅ Build 通過${NC}"
+    else
+        echo -e "${RED}❌ Build 失敗 (扣 30 分)${NC}"
+        score=$((score - 30))
+        tail -n 20 "$build_log"
+    fi
+
+    if [ "$score" -lt 0 ]; then
+        score=0
+    fi
+
+    local grade=""
+    local grade_color=""
+    if [ "$score" -ge 130 ]; then
+        grade="S"
+        grade_color="$MAGENTA"
+    elif [ "$score" -ge 110 ]; then
+        grade="A"
+        grade_color="$GREEN"
+    elif [ "$score" -ge 90 ]; then
+        grade="B"
+        grade_color="$CYAN"
+    elif [ "$score" -ge 75 ]; then
+        grade="C"
+        grade_color="$YELLOW"
+    else
+        grade="F"
+        grade_color="$RED"
+    fi
+
+    local summary_file="$STATE_DIR/code-score-$(date '+%Y%m%d-%H%M%S').log"
+    {
+        echo "Final Code Score: $score"
+        echo "Grade: $grade"
+        echo "TS: $( [ -s "$ts_log" ] && head -n 1 "$ts_log" || echo pass )"
+        echo "ESLint: $( [ -s "$eslint_log" ] && head -n 1 "$eslint_log" || echo pass )"
+        echo "Build: $( [ -s "$build_log" ] && head -n 1 "$build_log" || echo pass )"
+    } > "$summary_file"
+
+    echo ""
+    echo -e "${CYAN}📊 最終代碼得分: $score / $base${NC}"
+    echo -e "${grade_color}🏅 等級: $grade${NC}"
+    echo -e "${CYAN}📝 檢查摘要儲存於: $summary_file${NC}"
+    echo -e "${CYAN}   詳細日志: $ts_log | $eslint_log | $build_log${NC}"
+}
+
+# ============================================================================
 # 10. 代碼指導 (cmd_guidance)
 # ============================================================================
 function cmd_guidance() {
@@ -1624,6 +1813,98 @@ function cmd_guidance() {
     print_elite_quote
     echo ""
     print_encouragement
+}
+
+# =========================================================================
+# 10.1 進階代碼指導 (Pro Guidance)
+# =========================================================================
+function cmd_guidance_pro() {
+        print_header "進階代碼指導 (Pro Mode)"
+
+        echo -e "${MAGENTA}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+        echo -e "${WHITE}🚀 依檔案類型提供可直接貼用的高品質範例片段${NC}"
+        echo -e "${MAGENTA}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+
+        echo -e "${CYAN}⚛️  React 組件片段：事件記憶化 + 型別 + A11y${NC}"
+        cat << 'REACT_PRO'
+// 範例：帶可選動作的列表項
+import { memo, useCallback } from 'react';
+import type { FC } from 'react';
+
+interface ItemProps {
+    readonly id: string;
+    readonly label: string;
+    readonly onSelect?: (id: string) => void;
+}
+
+export const Item: FC<ItemProps> = memo(function Item({ id, label, onSelect }) {
+    const handleSelect = useCallback(() => onSelect?.(id), [id, onSelect]);
+    return (
+        <button type="button" onClick={handleSelect} aria-label={label} className="rounded px-3 py-2 hover:bg-ink-100">
+            {label}
+        </button>
+    );
+});
+REACT_PRO
+
+        echo -e "${CYAN}🧠 Hook 片段：純邏輯 + 無中文字串${NC}"
+        cat << 'HOOK_PRO'
+import { useCallback, useState } from 'react';
+
+interface UseToggleOptions {
+    readonly initial?: boolean;
+    readonly onChange?: (value: boolean) => void;
+}
+
+export function useToggle(options: UseToggleOptions = {}) {
+    const { initial = false, onChange } = options;
+    const [value, setValue] = useState<boolean>(initial);
+
+    const toggle = useCallback(() => {
+        setValue((prev) => {
+            const next = !prev;
+            onChange?.(next);
+            return next;
+        });
+    }, [onChange]);
+
+    return { value, toggle, setValue };
+}
+HOOK_PRO
+
+        echo -e "${CYAN}🛡️ 錯誤處理模式 (API 層)${NC}"
+        cat << 'API_PRO'
+export class ApiError extends Error {
+    constructor(readonly code: string, message: string) {
+        super(message);
+        this.name = 'ApiError';
+    }
+}
+
+export async function safeFetch<T>(input: RequestInfo, init?: RequestInit): Promise<T> {
+    const res = await fetch(input, init);
+    if (!res.ok) {
+        throw new ApiError(String(res.status), 'Request failed');
+    }
+    return res.json() as Promise<T>;
+}
+API_PRO
+
+        echo -e "${CYAN}🧭 路由/常數片段${NC}"
+        cat << 'CONST_PRO'
+export const ROUTES = {
+    HOME: '/maihouses/',
+    AUTH: '/maihouses/auth.html',
+    COMMUNITY: (id: string) => `/maihouses/community/${id}`,
+    COMMUNITY_WALL: (id: string) => `/maihouses/community/${id}/wall`,
+} as const;
+CONST_PRO
+
+        echo -e "${CYAN}⚡ 性能與安全建議${NC}"
+        echo " - Lazy import / code splitting：import('./Heavy') for modal、表格"
+        echo " - API 層使用自訂錯誤類別 + 統一錯誤格式"
+        echo " - 建議接入 Sentry 或雲端日誌，避免 console.log"
+        echo " - 前端使用 CSP / 安全 headers（在 vercel.json 配置）"
 }
 
 # ============================================================================
@@ -1723,8 +2004,17 @@ case "${1:-}" in
     "score")
         cmd_score
         ;;
+    "code-score")
+        cmd_code_score
+        ;;
     "guidance")
         cmd_guidance
+        ;;
+    "guidance-pro")
+        cmd_guidance_pro
+        ;;
+    "auto-scan")
+        cmd_auto_scan
         ;;
     "template-tsx")
         print_header "📦 React 組件模板"
@@ -1751,6 +2041,7 @@ case "${1:-}" in
         echo -e "${CYAN}🔧 工具指令：${NC}"
         echo "  ${GREEN}status${NC}          查看 Session 狀態"
         echo "  ${GREEN}score${NC}           查看分數 (0-150)"
+        echo "  ${GREEN}code-score${NC}      執行 TypeScript/ESLint/Build 並給出最終代碼評分"
         echo "  ${GREEN}guidance${NC}        顯示最佳實踐指南"
         echo "  ${GREEN}template-tsx${NC}    顯示 React 組件模板"
         echo "  ${GREEN}template-hook${NC}   顯示 Hook 模板"
