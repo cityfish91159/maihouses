@@ -44,7 +44,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash scripts/ai-supervisor.sh post-edit"
+            "command": "echo '\n🔍 [驗證中] 檢查 TypeScript...' && npm run typecheck --silent 2>/dev/null && echo '✅ TypeScript 通過' || echo '❌ TypeScript 失敗！請立即修復'"
           }
         ]
       },
@@ -53,7 +53,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash scripts/ai-supervisor.sh post-edit"
+            "command": "echo '\n🔍 [驗證中] 檢查 TypeScript...' && npm run typecheck --silent 2>/dev/null && echo '✅ TypeScript 通過' || echo '❌ TypeScript 失敗！請立即修復'"
           }
         ]
       }
