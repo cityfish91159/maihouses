@@ -1,11 +1,12 @@
 #!/bin/bash
 # ============================================================================
-# AI SUPERVISOR - 極度嚴格的 AI 行為監督腳本 (v2.0)
+# AI SUPERVISOR - 極度嚴格的 AI 行為監督腳本 (v3.0 - Draconian Mode)
 # ============================================================================
 # 設計理念：
 # 1. 零信任 (Zero Trust)：假設 AI 會偷懶、會遺漏、會腦補。
 # 2. 強制程序 (Mandatory Procedure)：必須先讀後寫，必須先計畫後執行。
 # 3. 自動審計 (Auto Audit)：代碼提交前必須通過靜態分析。
+# 4. 反規避 (Anti-Evasion)：嚴禁使用 eslint-disable 或 ts-ignore 繞過檢查。
 # ============================================================================
 
 set -euo pipefail
@@ -224,6 +225,30 @@ function cmd_audit() {
     echo "🔍 檢查 Z-Index Magic Numbers..."
     if grep -qE "z-\[[0-9]+\]" "$file"; then
         warn "發現 z-[999] 等硬編碼層級。請使用 Tailwind 設定檔定義語意化 z-index (如 z-modal)。"
+    fi
+
+    # 3.15 [v3.0 新增] Anti-Evasion (反規避檢查)
+    echo "🔍 檢查規避審查標記..."
+    if grep -qE "eslint-disable|ts-ignore|ts-nocheck|as unknown as" "$file"; then
+        error_exit "發現規避審查標記 (eslint-disable, ts-ignore, as unknown as)。\n請解決根本問題，而不是隱藏問題！"
+    fi
+
+    # 3.16 [v3.0 新增] Complexity Check (複雜度檢查)
+    echo "🔍 檢查檔案複雜度..."
+    local line_count=$(wc -l < "$file")
+    if [ "$line_count" -gt 300 ]; then
+        warn "檔案長度超過 300 行 ($line_count 行)。建議拆分組件以降低維護難度 (Single Responsibility Principle)。"
+    fi
+
+    # 3.17 [v3.0 新增] Test Presence Check (測試覆蓋檢查)
+    # 僅針對 src/components 下的 .tsx 檔案
+    if [[ "$file" == *"src/components"* ]] && [[ "$file" == *".tsx"* ]]; then
+        local dir=$(dirname "$file")
+        local filename=$(basename "$file" .tsx)
+        # 檢查同目錄下是否有 .test.tsx 或 __tests__
+        if [ ! -f "$dir/$filename.test.tsx" ] && [ ! -f "$dir/__tests__/$filename.test.tsx" ]; then
+            warn "未發現對應的測試檔案 ($filename.test.tsx)。Google 標準要求每個組件都必須有單元測試。"
+        fi
     fi
 
     echo -e "${GREEN}✅ 檔案 $file 通過靜態審計。${NC}"

@@ -100,6 +100,21 @@
 - ✅ 完成 Magic Number (Timeout) 修復。
 - ⚠️ 發現 i18n 與 Mobile Viewport 問題，已列入下一輪優化重點。
 
+### 🔴 P4-AUDIT-ROUND3：AI Supervisor v3.0 系統強化 (2025-12-08)
+
+> **目標**：解決「每次修復都是問題」的痛點，導入 Draconian Mode (嚴酷模式)。
+
+| ID | 嚴重度 | 狀態 | 問題摘要 | 解決方案 |
+|----|--------|------|----------|----------|
+| P4-C1 | 🔴 | ✅ 已實作 | **Anti-Evasion (反規避)** | Supervisor v3.0 新增規則：嚴禁 `eslint-disable`, `ts-ignore`, `as unknown as`。防止 AI 為了通過審計而隱藏問題。 |
+| P4-C2 | 🟡 | ✅ 已實作 | **Complexity Check (複雜度)** | Supervisor v3.0 新增規則：單一檔案超過 300 行觸發警告，強制拆分組件 (SRP)。 |
+| P4-C3 | 🔴 | ✅ 已實作 | **Test Mandate (測試強制)** | Supervisor v3.0 新增規則：修改 `src/components` 下的 `.tsx` 時，檢查是否存在對應測試檔案。 |
+| P4-C4 | 🟡 | ⚠️ 待處理 | **Import Cycle (循環依賴)** | 建議導入 `madge` 或類似工具進行靜態分析。 |
+
+---
+
+## 🔴 P4.5：Loading 與錯誤狀態
+
 ---
 
 ---
