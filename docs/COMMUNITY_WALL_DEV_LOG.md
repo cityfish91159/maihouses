@@ -43,6 +43,28 @@ npm run build   # ✓ 2025-12-08，exit 0
 ### 部署
 - commit `refactor: optimize posts section with throttle hook and badge component (P2-UI)` push 到 main，已觸發 Vercel 自動部署（等待完成）。
 
+## 2025-12-08 - P3-AUDIT GlobalHeader 審計修復 (Google Standard)
+
+### 本次變更
+
+| 項目 | 檔案 | 說明 |
+|------|------|------|
+| 角色導向導航 | `src/components/layout/GlobalHeader.tsx` | 實作 `Smart Home Link` 與 `Smart Profile Link`，依據 `role` 導向不同 Feed。 |
+| 真實數據呈現 | `src/components/layout/GlobalHeader.tsx` | 移除寫死的通知 Badge ("2")，改為真實呈現（目前為空）。 |
+| 身份標籤優化 | `src/components/layout/GlobalHeader.tsx` | 顯示「認證房仲」、「住戶」等真實身份，而非寫死「一般會員」。 |
+| 優雅登出 | `src/components/layout/GlobalHeader.tsx` | 移除 `location.reload()`，改為 `href` 跳轉，提升 UX。 |
+| Logo 原子化 | `src/components/layout/GlobalHeader.tsx` | 引入 `src/components/Logo/Logo.tsx` 取代手刻結構。 |
+| A11y 優化 | `src/components/layout/GlobalHeader.tsx` | 支援 `Esc` 鍵關閉 User Menu。 |
+
+### 驗證
+
+```bash
+npm run build   # ✓ 2025-12-08，exit 0
+```
+
+### 部署
+- commit `fix(header): P3-AUDIT complete - role-based nav, real data, a11y` push 到 main。
+
 ## 2025-12-08 - P2-UI-FIX 熱帖 CTA 樣式統一
 
 ### 本次變更
