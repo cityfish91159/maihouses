@@ -75,7 +75,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash scripts/ai-supervisor.sh final-check"
+            "command": "bash scripts/ai-supervisor.sh final-check && bash scripts/ai-audit.sh"
           }
         ]
       }
