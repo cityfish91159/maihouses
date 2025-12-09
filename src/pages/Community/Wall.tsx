@@ -221,6 +221,11 @@ function WallInner() {
     }
   }, [toggleLike, isAuthenticated]);
 
+  const handleUnlock = useCallback((id: string) => {
+    console.log('Unlock post:', id);
+    notify.info('功能開發中', '解鎖功能即將上線');
+  }, []);
+
   // 發文處理
   const handleCreatePost = useCallback(async (content: string, visibility: 'public' | 'private' = 'public') => {
     try {

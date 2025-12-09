@@ -95,6 +95,7 @@ export function analyzeDiff(): DiffResult {
   }
 
   return result;
+}
 
 // 主執行函數
 export function enforceDiffGate(taskId: string): void {
