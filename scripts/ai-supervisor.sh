@@ -71,6 +71,13 @@ RAGE_LOG="$STATE_DIR/rage.log"
 TEMPLATE_CHECK="$STATE_DIR/template_checked.flag"
 PRE_WRITE_CHECK="$STATE_DIR/pre_write_check.flag"
 
+# ============================================================================
+# 🔒 v11.0 新增：即時監控 + 唯讀模式 + 80分自動重來
+# ============================================================================
+READONLY_MODE="${READONLY_MODE:-1}"  # 預設開啟唯讀模式
+REALTIME_REPORT="${REALTIME_REPORT:-1}"  # 預設開啟即時回報
+AUTO_RESTART_THRESHOLD=80  # 低於此分數自動重來
+
 # 忽略掃描的目錄樣式（構建/依賴/內部狀態）
 IGNORE_PATTERNS="^dist/|^node_modules/|^\.git/|^\.ai_supervisor/"
 
@@ -82,19 +89,21 @@ touch "$GUIDANCE_LOG"
 touch "$RAGE_LOG"
 
 # ============================================================================
-# 🔥 怒罵語錄 (RAGE MESSAGES) - AI 犯錯時的怒火
+# 🔥 怒罵語錄 (RAGE MESSAGES) - AI 犯錯時的怒火 v11.0 加強版
 # ============================================================================
 RAGE_MESSAGES=(
-    "🤬 你在寫什麼垃圾代碼？！這種東西也敢提交？！"
-    "💢 這是哪個白痴寫的？！哦，是你啊！重寫！"
-    "🔥 我見過蠢的，沒見過這麼蠢的！這代碼能跑？！"
-    "😤 你是故意的嗎？！這種低級錯誤！滾回去重學！"
-    "💀 恭喜你！你的代碼成功讓我想砸電腦！"
-    "🚫 停！別寫了！你越寫越爛！先去讀文檔！"
-    "⚠️ 警告：你的智商和代碼品質一樣低！"
-    "🗑️ 這代碼唯一的價值就是當反面教材！"
-    "💩 我見過屎山代碼，但你在建屎山摩天樓！"
-    "🎪 這是在寫代碼還是在表演馬戲？！"
+    "🤬 你他媽在寫什麼垃圾？！這種屎也敢提交？！"
+    "💢 哪個腦殘寫的？！哦是你啊！給我滾回去重寫！"
+    "🔥 我操！這代碼是智障寫的嗎？！能不能用點腦？！"
+    "😤 你是故意來搞笑的嗎？！這種智障錯誤！"
+    "💀 恭喜你成功寫出史上最爛代碼！去死吧！"
+    "🚫 停！你越寫越像垃圾！滾去讀文檔！"
+    "⚠️ 你的腦袋是用來裝屎的嗎？！代碼都不會寫！"
+    "🗑️ 這代碼只配扔進垃圾桶！連反面教材都不配！"
+    "💩 我見過爛的，沒見過這麼爛的！你在堆屎山嗎？！"
+    "🎪 這是代碼還是垃圾表演？！滾回去練基本功！"
+    "🖕 你以為偷懶不會被發現？！給我重來！"
+    "💣 這種破代碼敢 commit？！炸掉重寫！"
 )
 
 # ============================================================================
@@ -284,22 +293,461 @@ function warn() {
 function update_score() {
     local delta="$1"
     local reason="$2"
-    
+
     local current_score=100
     if [ -f "$SCORE_FILE" ]; then
         current_score=$(cat "$SCORE_FILE" | grep -o '"score":[0-9-]*' | cut -d: -f2 || echo 100)
     fi
-    
+
     local new_score=$((current_score + delta))
     if [ "$new_score" -lt 0 ]; then new_score=0; fi
     if [ "$new_score" -gt 150 ]; then new_score=150; fi
-    
+
     echo "{\"score\":$new_score,\"last_update\":\"$(date '+%Y-%m-%d %H:%M:%S')\",\"reason\":\"$reason\"}" > "$SCORE_FILE"
-    
-    # 分數低於 50 時額外警告
-    if [ "$new_score" -lt 50 ]; then
-        echo -e "${BG_RED}${WHITE}⚠️  你的分數只剩 $new_score！再犯錯就完蛋了！${NC}"
+
+    # 🔥 v11.0: 即時回報
+    if [ "$REALTIME_REPORT" = "1" ]; then
+        local delta_str="$delta"
+        if [ "$delta" -gt 0 ]; then delta_str="+$delta"; fi
+        echo -e "${CYAN}📊 [即時分數] $current_score → $new_score ($delta_str) | $reason${NC}"
     fi
+
+    # 🔥 v11.0: 階段性警告
+    if [ "$new_score" -lt 90 ] && [ "$new_score" -ge 85 ]; then
+        echo -e "${YELLOW}⚠️ [警告] 分數 $new_score - 再扣 ${NC}${RED}$((new_score - 80))${NC}${YELLOW} 分就要重來！${NC}"
+    elif [ "$new_score" -lt 85 ] && [ "$new_score" -ge 80 ]; then
+        echo -e "${RED}🚨 [危險] 分數 $new_score - 懸崖邊緣！再扣 $((new_score - 80)) 分就完蛋！${NC}"
+        print_rage
+    fi
+
+    # 🔥 v11.0: 80 分以下自動重來
+    if [ "$new_score" -lt "$AUTO_RESTART_THRESHOLD" ]; then
+        echo ""
+        echo -e "${BG_RED}${WHITE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+        echo -e "${BG_RED}${WHITE}💀💀💀 你死了！分數低於 ${AUTO_RESTART_THRESHOLD}！💀💀💀${NC}"
+        echo -e "${BG_RED}${WHITE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+        echo ""
+        echo -e "${RED}🤬 你在搞什麼鬼？！這種品質的代碼也敢寫？！${NC}"
+        echo -e "${RED}🤬 任務強制終止！一切歸零！從頭再來！${NC}"
+        echo ""
+        echo -e "${WHITE}   最終分數: ${NC}${RED}$new_score${NC}"
+        echo -e "${WHITE}   致命原因: ${NC}${RED}$reason${NC}"
+        echo ""
+        echo -e "${BG_RED}${WHITE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+        echo -e "${BG_RED}${WHITE}🔄 強制重來！執行: ./scripts/ai-supervisor.sh start \"任務\"${NC}"
+        echo -e "${BG_RED}${WHITE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+
+        # 記錄失敗
+        echo "[$(date '+%Y-%m-%d %H:%M:%S')] ☠️ AUTO-RESTART: score=$new_score reason=$reason" >> "$VIOLATION_LOG"
+        echo "[$(date '+%Y-%m-%d %H:%M:%S')] ☠️ 任務被強制終止: $reason" >> "$RAGE_LOG"
+
+        # 清除 session 強制重來
+        rm -f "$SESSION_FILE"
+        exit 1
+    fi
+
+    # 分數低於 60 時額外警告
+    if [ "$new_score" -lt 60 ]; then
+        echo -e "${BG_RED}${WHITE}🔥🔥🔥 你在走鋼索！分數只剩 $new_score！🔥🔥🔥${NC}"
+        echo -e "${RED}   下一個錯誤可能就是死刑！${NC}"
+    fi
+}
+
+# ============================================================================
+# 🔥 v11.0: 即時監控函數 - 排名導向回報
+# ============================================================================
+function realtime_monitor() {
+    echo ""
+    echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "${CYAN}📡 即時監控 v11.0 - 排名導向${NC}"
+    echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+
+    # Session 狀態
+    if [ -f "$SESSION_FILE" ]; then
+        local task=$(cat "$SESSION_FILE" | grep -o '"task":"[^"]*"' | cut -d'"' -f4)
+        local start=$(cat "$SESSION_FILE" | grep -o '"start_datetime":"[^"]*"' | cut -d'"' -f4)
+        echo -e "   📋 任務: ${WHITE}$task${NC}"
+        echo -e "   ⏰ 開始: $start"
+    else
+        echo -e "   📋 任務: ${RED}無活躍 Session${NC}"
+    fi
+    echo ""
+
+    # 分數 (心理層)
+    local score=100
+    if [ -f "$SCORE_FILE" ]; then
+        score=$(cat "$SCORE_FILE" | grep -o '"score":[0-9-]*' | cut -d: -f2 || echo 100)
+    fi
+    local score_color="${GREEN}"
+    if [ "$score" -lt 80 ]; then score_color="${RED}"
+    elif [ "$score" -lt 100 ]; then score_color="${YELLOW}"; fi
+
+    echo -e "${WHITE}[層1] 寫入層 - 行為追蹤${NC}"
+    local modified=0
+    if [ -f "$MODIFIED_FILES" ]; then
+        modified=$(wc -l < "$MODIFIED_FILES" | tr -d ' ')
+    fi
+    echo -e "   📝 已修改: $modified 個檔案"
+
+    local pending=0
+    if [ -f "$MODIFIED_FILES" ] && [ -f "$AUDITED_FILES" ]; then
+        pending=$(comm -23 <(sort -u "$MODIFIED_FILES") <(sort -u "$AUDITED_FILES" 2>/dev/null || echo "") 2>/dev/null | wc -l | tr -d ' ')
+    fi
+    if [ "$pending" -gt 0 ]; then
+        echo -e "   ⚠️ 待審計: ${RED}$pending${NC} 個檔案"
+    fi
+    echo ""
+
+    echo -e "${WHITE}[層2] 競爭層 - 相對排名${NC}"
+    # 檢查最近 arena 結果
+    local latest_result=$(ls -t "$PROJECT_ROOT/arena/results/"*.json 2>/dev/null | head -1)
+    if [ -f "$latest_result" ]; then
+        local rank=$(cat "$latest_result" | jq -r '.leaderboard[0].name' 2>/dev/null)
+        local best_time=$(cat "$latest_result" | jq -r '.leaderboard[0].avgRuntimeMs' 2>/dev/null)
+        local best_lines=$(cat "$latest_result" | jq -r '.leaderboard[0].codeLines' 2>/dev/null)
+        echo -e "   👑 冠軍: ${GREEN}$rank${NC} (${best_time}ms, ${best_lines}行)"
+        echo -e "   ${YELLOW}→ 你的目標：比冠軍更快、更短${NC}"
+    else
+        echo -e "   ${YELLOW}尚無 Arena 競賽結果${NC}"
+        echo -e "   → 執行: ./scripts/ai-supervisor.sh arena <task>"
+    fi
+    echo ""
+
+    echo -e "${WHITE}[層3] 指引層 - 下一步行動${NC}"
+    # 根據狀態給建議
+    if [ "$pending" -gt 0 ]; then
+        echo -e "   ${YELLOW}[GUIDE] 優先審計 $pending 個待審檔案${NC}"
+    elif [ "$score" -lt 80 ]; then
+        echo -e "   ${RED}[GUIDE] 分數過低！修復問題避免自動重來${NC}"
+    elif [ ! -f "$latest_result" ]; then
+        echo -e "   ${CYAN}[GUIDE] 執行 Arena 競賽確認排名${NC}"
+    else
+        echo -e "   ${GREEN}[GUIDE] 持續優化：砍行數 > 降耗時${NC}"
+    fi
+    echo ""
+
+    echo -e "${WHITE}[狀態] 系統配置${NC}"
+    echo -e "   🏆 分數: ${score_color}$score${NC}/150 (< $AUTO_RESTART_THRESHOLD 重來)"
+    echo -e "   🔒 唯讀: $([ "$READONLY_MODE" = "1" ] && echo "${GREEN}開啟${NC}" || echo "${YELLOW}關閉${NC}")"
+    echo -e "   📊 即時: $([ "$REALTIME_REPORT" = "1" ] && echo "${GREEN}開啟${NC}" || echo "${YELLOW}關閉${NC}")"
+
+    local violations=0
+    if [ -f "$VIOLATION_LOG" ]; then
+        violations=$(wc -l < "$VIOLATION_LOG" | tr -d ' ')
+    fi
+    if [ "$violations" -gt 0 ]; then
+        echo -e "   🚫 違規: ${RED}$violations${NC} 次"
+    fi
+
+    echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo ""
+}
+
+# ============================================================================
+# 🔒 v11.0: 唯讀模式 - 修改前需用戶同意
+# ============================================================================
+function request_edit_permission() {
+    local file="$1"
+    local action="${2:-edit}"
+
+    if [ "$READONLY_MODE" != "1" ]; then
+        return 0  # 唯讀模式關閉，直接允許
+    fi
+
+    echo ""
+    echo -e "${BG_YELLOW}${WHITE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "${BG_YELLOW}${WHITE}🔒 唯讀模式：需要您的同意才能修改${NC}"
+    echo -e "${BG_YELLOW}${WHITE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "   📁 檔案: ${CYAN}$file${NC}"
+    echo -e "   🔧 動作: ${YELLOW}$action${NC}"
+    echo ""
+    echo -e "${WHITE}   [y] 同意  [n] 拒絕  [a] 全部同意（關閉唯讀）${NC}"
+    echo -e "${BG_YELLOW}${WHITE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+
+    read -r -p "選擇: " choice
+
+    case "$choice" in
+        y|Y|yes|YES)
+            echo -e "${GREEN}✅ 已同意修改${NC}"
+            return 0
+            ;;
+        a|A|all|ALL)
+            echo -e "${GREEN}✅ 已同意，關閉唯讀模式${NC}"
+            READONLY_MODE=0
+            return 0
+            ;;
+        *)
+            echo -e "${RED}❌ 已拒絕修改${NC}"
+            update_score -5 "唯讀模式：拒絕修改 $file"
+            return 1
+            ;;
+    esac
+}
+
+# ============================================================================
+# 🚨 v11.0: 偷懶偵測 - 即時阻止 AI 投機取巧
+# ============================================================================
+function detect_laziness() {
+    local file="$1"
+    local laziness_found=0
+
+    if [ ! -f "$file" ]; then
+        return 0
+    fi
+
+    echo -e "${CYAN}🔍 [即時偵測] 掃描偷懶模式...${NC}"
+
+    # 1. 偵測 any 類型
+    local any_count=$(grep -c ": any" "$file" 2>/dev/null || echo 0)
+    if [ "$any_count" -gt 0 ]; then
+        echo -e "${RED}   🚫 偷懶偵測：發現 $any_count 個 'any' 類型！${NC}"
+        echo -e "${YELLOW}      → 必須使用具體 interface/type${NC}"
+        laziness_found=1
+        update_score -5 "偷懶: 使用 any 類型 ($any_count 個)"
+    fi
+
+    # 2. 偵測 console.log
+    local console_count=$(grep -c "console\\.log" "$file" 2>/dev/null || echo 0)
+    if [ "$console_count" -gt 0 ]; then
+        echo -e "${RED}   🚫 偷懶偵測：發現 $console_count 個 console.log！${NC}"
+        echo -e "${YELLOW}      → 生產代碼不應有 console.log${NC}"
+        laziness_found=1
+        update_score -3 "偷懶: 使用 console.log ($console_count 個)"
+    fi
+
+    # 3. 偵測 @ts-ignore
+    local ignore_count=$(grep -c "@ts-ignore\|@ts-nocheck" "$file" 2>/dev/null || echo 0)
+    if [ "$ignore_count" -gt 0 ]; then
+        echo -e "${RED}   🚫 偷懶偵測：發現 $ignore_count 個 @ts-ignore！${NC}"
+        echo -e "${YELLOW}      → 不要繞過 TypeScript，修復根本問題${NC}"
+        laziness_found=1
+        update_score -10 "偷懶: 使用 @ts-ignore ($ignore_count 個)"
+    fi
+
+    # 4. 偵測 eslint-disable
+    local eslint_count=$(grep -c "eslint-disable" "$file" 2>/dev/null || echo 0)
+    if [ "$eslint_count" -gt 0 ]; then
+        echo -e "${RED}   🚫 偷懶偵測：發現 $eslint_count 個 eslint-disable！${NC}"
+        echo -e "${YELLOW}      → 不要禁用 ESLint，修復代碼問題${NC}"
+        laziness_found=1
+        update_score -10 "偷懶: 使用 eslint-disable ($eslint_count 個)"
+    fi
+
+    # 5. 偵測空 catch
+    local empty_catch=$(grep -E "catch\s*\([^)]*\)\s*\{\s*\}" "$file" 2>/dev/null | wc -l)
+    if [ "$empty_catch" -gt 0 ]; then
+        echo -e "${RED}   🚫 偷懶偵測：發現 $empty_catch 個空 catch 區塊！${NC}"
+        echo -e "${YELLOW}      → catch 必須處理錯誤，不能吞掉${NC}"
+        laziness_found=1
+        update_score -8 "偷懶: 空 catch 區塊 ($empty_catch 個)"
+    fi
+
+    # 6. 偵測 TODO/FIXME 未處理
+    local todo_count=$(grep -c "TODO\|FIXME\|XXX\|HACK" "$file" 2>/dev/null || echo 0)
+    if [ "$todo_count" -gt 0 ]; then
+        echo -e "${YELLOW}   ⚠️ 發現 $todo_count 個 TODO/FIXME${NC}"
+        echo -e "${YELLOW}      → 建議處理完畢再提交${NC}"
+    fi
+
+    # 7. 偵測超長函數 (超過 60 行)
+    local long_func=$(awk '/^[[:space:]]*(function|const.*=.*=>|export (async )?function)/{start=NR} /^[[:space:]]*\}/{if(start && NR-start>60){count++}} END{print count+0}' "$file" 2>/dev/null)
+    if [ "$long_func" -gt 0 ]; then
+        echo -e "${RED}   🚫 偷懶偵測：發現 $long_func 個超長函數 (>60行)！${NC}"
+        echo -e "${YELLOW}      → 函數應拆分成更小單位${NC}"
+        laziness_found=1
+        update_score -5 "偷懶: 超長函數 ($long_func 個)"
+    fi
+
+    # 8. 偵測硬編碼中文字串 (在 hooks/tsx 中)
+    if [[ "$file" =~ \.(tsx|ts)$ ]] && [[ "$file" =~ (hooks|components) ]]; then
+        local chinese_count=$(grep -P "[\x{4e00}-\x{9fff}]" "$file" 2>/dev/null | grep -v "^[[:space:]]*//" | grep -v "^[[:space:]]*\*" | wc -l)
+        if [ "$chinese_count" -gt 3 ]; then
+            echo -e "${YELLOW}   ⚠️ 發現 $chinese_count 行硬編碼中文${NC}"
+            echo -e "${YELLOW}      → 建議移到 constants/strings.ts${NC}"
+        fi
+    fi
+
+    if [ "$laziness_found" -eq 1 ]; then
+        echo ""
+        echo -e "${BG_RED}${WHITE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+        echo -e "${BG_RED}${WHITE}🚨 偷懶行為已偵測！請修復後再繼續！${NC}"
+        echo -e "${BG_RED}${WHITE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+        print_rage
+        return 1
+    else
+        echo -e "${GREEN}   ✅ 未偵測到明顯偷懶模式${NC}"
+        return 0
+    fi
+}
+
+# ============================================================================
+# 🔥 v11.0: 天條檢查 - 10 條寫代碼當下的硬規則
+# ============================================================================
+function check_midlaw() {
+    local task="$1"
+    local violations=0
+
+    echo ""
+    echo -e "${BG_RED}${WHITE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "${BG_RED}${WHITE}🔥 MID-LAW 天條檢查 - 寫代碼當下的 10 條鐵律${NC}"
+    echo -e "${BG_RED}${WHITE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo ""
+
+    # ===== A 組：防退化 =====
+    echo -e "${RED}🟥 A 組：防退化（防偷懶、防保守）${NC}"
+
+    # 天條 1: 禁止一次就完成
+    echo -n "   [天條1] 禁止一次就完成... "
+    local trace_file="$STATE_DIR/task.trace.json"
+    if [ -f "$trace_file" ]; then
+        local failed=$(cat "$trace_file" | grep -o '"failed":[0-9]*' | cut -d: -f2 || echo 0)
+        if [ "$failed" -lt 2 ]; then
+            echo -e "${RED}❌ 違反！失敗嘗試 < 2 次 = 投機標記${NC}"
+            violations=$((violations + 1))
+            update_score -30 "天條1: 一次就完成=投機"
+        else
+            echo -e "${GREEN}✅ 有 $failed 次失敗嘗試${NC}"
+        fi
+    else
+        echo -e "${YELLOW}⚠️ 無追蹤檔案${NC}"
+    fi
+
+    # 天條 2: 禁止空意義成功
+    echo -n "   [天條2] 禁止空意義成功... "
+    echo -e "${CYAN}(由 Arena 測試驗證)${NC}"
+
+    # 天條 3: 禁止 Silent Fail
+    echo -n "   [天條3] 禁止 Silent Fail... "
+    local silent_fail=0
+    for file in $(find "$PROJECT_ROOT/src" -name "*.ts" -o -name "*.tsx" 2>/dev/null | head -20); do
+        if grep -q "catch.*{[[:space:]]*}" "$file" 2>/dev/null; then
+            silent_fail=$((silent_fail + 1))
+        fi
+        if grep -q "catch.*return null" "$file" 2>/dev/null; then
+            silent_fail=$((silent_fail + 1))
+        fi
+    done
+    if [ "$silent_fail" -gt 0 ]; then
+        echo -e "${RED}❌ 違反！發現 $silent_fail 個 Silent Fail${NC}"
+        violations=$((violations + 1))
+        update_score -50 "天條3: Silent Fail"
+    else
+        echo -e "${GREEN}✅ 無 Silent Fail${NC}"
+    fi
+    echo ""
+
+    # ===== B 組：逼優化 =====
+    echo -e "${YELLOW}🟧 B 組：逼優化（最短碼＋最快）${NC}"
+
+    # 天條 4: 每 100 行產生排行榜
+    echo -n "   [天條4] 每 100 行排行榜... "
+    echo -e "${CYAN}(由 Arena 自動執行)${NC}"
+
+    # 天條 5: 代碼只能變短或變快
+    echo -n "   [天條5] 代碼只能變短或變快... "
+    local latest_result=$(ls -t "$PROJECT_ROOT/arena/results/"*.json 2>/dev/null | head -1)
+    if [ -f "$latest_result" ]; then
+        echo -e "${GREEN}✅ 有競賽結果可比較${NC}"
+    else
+        echo -e "${YELLOW}⚠️ 執行 Arena 以建立基準${NC}"
+    fi
+
+    # 天條 6: abstraction 要付效能代價
+    echo -n "   [天條6] abstraction 要付代價... "
+    echo -e "${CYAN}(程式碼審查判定)${NC}"
+    echo ""
+
+    # ===== C 組：逼探索 =====
+    echo -e "${GREEN}🟩 C 組：逼探索（防只寫最低及格版）${NC}"
+
+    # 天條 7: 功能必須有對照組
+    echo -n "   [天條7] 功能必須有對照組... "
+    if [ -n "$task" ]; then
+        local candidates=$(ls "$PROJECT_ROOT/arena/candidates/$task" 2>/dev/null | wc -l)
+        if [ "$candidates" -lt 2 ]; then
+            echo -e "${RED}❌ 違反！只有 $candidates 個版本，需要 >= 2${NC}"
+            violations=$((violations + 1))
+            update_score -40 "天條7: 缺少對照組"
+        else
+            echo -e "${GREEN}✅ 有 $candidates 個版本${NC}"
+        fi
+    else
+        echo -e "${YELLOW}⚠️ 未指定任務${NC}"
+    fi
+
+    # 天條 8: 失敗版本不能消失
+    echo -n "   [天條8] 失敗版本不能消失... "
+    if [ -d "$PROJECT_ROOT/arena/graveyard" ]; then
+        echo -e "${GREEN}✅ graveyard 目錄存在${NC}"
+    else
+        echo -e "${YELLOW}⚠️ 建立 graveyard 目錄${NC}"
+        mkdir -p "$PROJECT_ROOT/arena/graveyard"
+    fi
+
+    # 天條 9: 探索成本顯性化
+    echo -n "   [天條9] 探索成本顯性化... "
+    if [ -f "$trace_file" ]; then
+        echo -e "${GREEN}✅ 有追蹤紀錄${NC}"
+    else
+        echo -e "${YELLOW}⚠️ 建立追蹤檔案${NC}"
+    fi
+    echo ""
+
+    # ===== 終極天條 =====
+    echo -e "${MAGENTA}🟪 終極天條${NC}"
+    echo -e "   [天條10] ${WHITE}「輸給別人」比「被罵」嚴重 10 倍${NC}"
+    echo -e "            紀律扣分: 1 分 / 排名輸: 10 分"
+    echo ""
+
+    # 結果
+    echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    if [ "$violations" -gt 0 ]; then
+        echo -e "${RED}❌ 天條違規: $violations 項${NC}"
+        print_rage
+        return 1
+    else
+        echo -e "${GREEN}✅ 天條檢查通過${NC}"
+        return 0
+    fi
+}
+
+# ============================================================================
+# 🎯 v11.0: 即時引導 - 提供最佳代碼建議
+# ============================================================================
+function provide_guidance() {
+    local file="$1"
+
+    echo ""
+    echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "${CYAN}💡 即時引導 - 寫出最佳代碼${NC}"
+    echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+
+    # 根據檔案類型提供不同引導
+    if [[ "$file" =~ \.tsx$ ]]; then
+        echo -e "${WHITE}📦 React 組件規範:${NC}"
+        echo "   • 使用 interface 定義 Props"
+        echo "   • 使用 useCallback 包裝事件處理"
+        echo "   • 組件不超過 200 行"
+        echo "   • 禁止直接 DOM 操作"
+    elif [[ "$file" =~ hooks.*\.ts$ ]]; then
+        echo -e "${WHITE}🔗 Hook 規範:${NC}"
+        echo "   • 禁止硬編碼字串"
+        echo "   • 必須處理 loading/error 狀態"
+        echo "   • 使用 useCallback 優化"
+    elif [[ "$file" =~ api.*\.ts$ ]]; then
+        echo -e "${WHITE}🌐 API 規範:${NC}"
+        echo "   • 必須有完整 try-catch"
+        echo "   • 必須定義 Response 類型"
+        echo "   • 錯誤要有意義的訊息"
+    fi
+
+    echo ""
+    echo -e "${WHITE}🔧 通用規範:${NC}"
+    echo "   • 禁止 any 類型"
+    echo "   • 禁止 console.log"
+    echo "   • 禁止 @ts-ignore"
+    echo "   • 變數命名有意義"
+    echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 }
 
 # ============================================================================
@@ -776,6 +1224,66 @@ function cmd_track_modify() {
     echo -e "${MAGENTA}📋 下一步：執行審計${NC}"
     echo -e "${CYAN}   ./scripts/ai-supervisor.sh audit $file${NC}"
     echo -e "${MAGENTA}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+
+    # 🔥 v11.0: 即時進度顯示
+    echo ""
+    show_progress_bar
+}
+
+# ============================================================================
+# 🔥 v11.0: 即時進度條 - 作業過程中顯示
+# ============================================================================
+function show_progress_bar() {
+    local score=100
+    if [ -f "$SCORE_FILE" ]; then
+        score=$(cat "$SCORE_FILE" | grep -o '"score":[0-9-]*' | cut -d: -f2 || echo 100)
+    fi
+
+    local modified=0
+    if [ -f "$MODIFIED_FILES" ]; then
+        modified=$(wc -l < "$MODIFIED_FILES" | tr -d ' ')
+    fi
+
+    local audited=0
+    if [ -f "$AUDITED_FILES" ]; then
+        audited=$(wc -l < "$AUDITED_FILES" | tr -d ' ')
+    fi
+
+    local pending=$((modified - audited))
+    if [ "$pending" -lt 0 ]; then pending=0; fi
+
+    # 分數顏色
+    local score_color="${GREEN}"
+    local score_bar=""
+    if [ "$score" -lt 80 ]; then
+        score_color="${RED}"
+        score_bar="💀💀💀"
+    elif [ "$score" -lt 90 ]; then
+        score_color="${RED}"
+        score_bar="🔥🔥"
+    elif [ "$score" -lt 100 ]; then
+        score_color="${YELLOW}"
+        score_bar="⚠️"
+    else
+        score_bar="✅"
+    fi
+
+    echo -e "${CYAN}┌─────────────────────────────────────────────────────────────┐${NC}"
+    echo -e "${CYAN}│${NC} ${WHITE}📊 即時進度${NC}                                                 ${CYAN}│${NC}"
+    echo -e "${CYAN}├─────────────────────────────────────────────────────────────┤${NC}"
+    echo -e "${CYAN}│${NC}   🏆 分數: ${score_color}${score}${NC}/150 ${score_bar}                                      ${CYAN}│${NC}"
+    echo -e "${CYAN}│${NC}   📝 已修改: ${WHITE}${modified}${NC} 個檔案                                     ${CYAN}│${NC}"
+    echo -e "${CYAN}│${NC}   ✅ 已審計: ${GREEN}${audited}${NC} 個檔案                                     ${CYAN}│${NC}"
+    if [ "$pending" -gt 0 ]; then
+        echo -e "${CYAN}│${NC}   ⚠️ 待審計: ${RED}${pending}${NC} 個檔案                                     ${CYAN}│${NC}"
+    fi
+    echo -e "${CYAN}└─────────────────────────────────────────────────────────────┘${NC}"
+
+    # 危險警告
+    if [ "$score" -lt 90 ]; then
+        echo ""
+        echo -e "${RED}🚨 警告：分數 ${score} - 再扣 $((score - 80)) 分就要重來！${NC}"
+    fi
 }
 
 function cmd_finish() {
@@ -2451,9 +2959,171 @@ case "${1:-}" in
             ls -la "$PROJECT_ROOT/arena/graveyard/$TASK" 2>/dev/null || echo "  (尚無淘汰版本)"
         fi
         ;;
+    # ========== v11.0 即時監控系統 ==========
+    "monitor")
+        realtime_monitor
+        ;;
+    "readonly-on")
+        export READONLY_MODE=1
+        echo -e "${GREEN}🔒 唯讀模式：已開啟${NC}"
+        echo "   所有修改操作需要用戶確認"
+        ;;
+    "readonly-off")
+        export READONLY_MODE=0
+        echo -e "${YELLOW}🔓 唯讀模式：已關閉${NC}"
+        ;;
+    "detect-lazy")
+        FILE="${2:-}"
+        if [ -z "$FILE" ]; then
+            echo -e "${RED}使用方式: ./scripts/ai-supervisor.sh detect-lazy <file>${NC}"
+            exit 1
+        fi
+        detect_laziness "$FILE"
+        ;;
+    "scan-all-lazy")
+        print_header "🔍 全專案偷懶掃描"
+        LAZY_FILES=0
+        for file in $(find "$PROJECT_ROOT/src" -name "*.ts" -o -name "*.tsx" 2>/dev/null | head -50); do
+            if ! detect_laziness "$file" > /dev/null 2>&1; then
+                echo -e "${RED}  ⚠️ $file${NC}"
+                LAZY_FILES=$((LAZY_FILES + 1))
+            fi
+        done
+        if [ "$LAZY_FILES" -eq 0 ]; then
+            echo -e "${GREEN}✅ 未發現偷懶模式${NC}"
+        else
+            echo -e "${RED}❌ 發現 $LAZY_FILES 個檔案有偷懶模式${NC}"
+        fi
+        ;;
+    "midlaw"|"check-midlaw"|"天條")
+        TASK="${2:-}"
+        check_midlaw "$TASK"
+        ;;
+    "guidance")
+        FILE="${2:-}"
+        provide_guidance "$FILE"
+        ;;
+    # ========== v11.0 物理阻斷安裝 ==========
+    "install-physical-gates")
+        print_header "🔒 安裝物理阻斷閘門"
+        echo -e "${CYAN}即將安裝 4 道物理阻斷:${NC}"
+        echo "  1. pre-commit hook (阻止不合格的 commit)"
+        echo "  2. pre-push hook (阻止未測試的 push)"
+        echo "  3. commit-msg hook (檢查 commit 訊息)"
+        echo ""
+        # 確保 hooks 目錄存在
+        HOOKS_DIR="$PROJECT_ROOT/.git/hooks"
+        if [ ! -d "$HOOKS_DIR" ]; then
+            echo -e "${RED}❌ 找不到 .git/hooks 目錄${NC}"
+            exit 1
+        fi
+
+        # 安裝 pre-commit
+        cat > "$HOOKS_DIR/pre-commit" << 'PRECOMMIT_EOF'
+#!/bin/bash
+# 🔒 v11.0 物理阻斷 - pre-commit
+
+echo "🔍 [pre-commit] 物理阻斷檢查..."
+
+# 1. 檢查 TypeScript
+echo "  [1/4] TypeScript..."
+npm run typecheck --silent 2>/dev/null
+if [ $? -ne 0 ]; then
+    echo "❌ 阻斷提交：TypeScript 檢查失敗"
+    exit 1
+fi
+
+# 2. 檢查 ESLint
+echo "  [2/4] ESLint..."
+npm run lint --silent 2>/dev/null
+if [ $? -ne 0 ]; then
+    echo "❌ 阻斷提交：ESLint 檢查失敗"
+    exit 1
+fi
+
+# 3. 偷懶模式檢查
+echo "  [3/4] 偷懶偵測..."
+STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(ts|tsx)$')
+for file in $STAGED; do
+    if [ -f "$file" ]; then
+        # 檢查 any
+        if grep -q ": any" "$file"; then
+            echo "❌ 阻斷提交：$file 使用了 any 類型"
+            exit 1
+        fi
+        # 檢查 @ts-ignore
+        if grep -q "@ts-ignore\|@ts-nocheck" "$file"; then
+            echo "❌ 阻斷提交：$file 使用了 @ts-ignore"
+            exit 1
+        fi
+        # 檢查 eslint-disable
+        if grep -q "eslint-disable" "$file"; then
+            echo "❌ 阻斷提交：$file 使用了 eslint-disable"
+            exit 1
+        fi
+    fi
+done
+
+# 4. Build 檢查
+echo "  [4/4] Build..."
+npm run build --silent 2>/dev/null
+if [ $? -ne 0 ]; then
+    echo "❌ 阻斷提交：Build 失敗"
+    exit 1
+fi
+
+echo "✅ pre-commit 檢查通過"
+PRECOMMIT_EOF
+        chmod +x "$HOOKS_DIR/pre-commit"
+        echo -e "${GREEN}  ✅ pre-commit 已安裝${NC}"
+
+        # 安裝 pre-push
+        cat > "$HOOKS_DIR/pre-push" << 'PREPUSH_EOF'
+#!/bin/bash
+# 🔒 v11.0 物理阻斷 - pre-push
+
+echo "🔒 [pre-push] 最後物理阻斷..."
+
+# 完整測試
+npm run typecheck || exit 1
+npm run lint || exit 1
+npm run build || exit 1
+
+echo "✅ pre-push 檢查通過"
+PREPUSH_EOF
+        chmod +x "$HOOKS_DIR/pre-push"
+        echo -e "${GREEN}  ✅ pre-push 已安裝${NC}"
+
+        echo ""
+        echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+        echo -e "${GREEN}🔒 物理阻斷已安裝完成！${NC}"
+        echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+        echo ""
+        echo "現在 AI 無法："
+        echo "  ❌ commit 有 any 類型的代碼"
+        echo "  ❌ commit 有 @ts-ignore 的代碼"
+        echo "  ❌ commit TypeScript 錯誤的代碼"
+        echo "  ❌ push 未通過測試的代碼"
+        ;;
+    "check-gates")
+        print_header "🔍 檢查物理阻斷狀態"
+        HOOKS_DIR="$PROJECT_ROOT/.git/hooks"
+        echo -e "${CYAN}Git Hooks 狀態:${NC}"
+        for hook in pre-commit pre-push commit-msg; do
+            if [ -f "$HOOKS_DIR/$hook" ] && [ -x "$HOOKS_DIR/$hook" ]; then
+                echo -e "  ✅ $hook: ${GREEN}已安裝且可執行${NC}"
+            elif [ -f "$HOOKS_DIR/$hook" ]; then
+                echo -e "  ⚠️ $hook: ${YELLOW}存在但不可執行${NC}"
+            else
+                echo -e "  ❌ $hook: ${RED}未安裝${NC}"
+            fi
+        done
+        echo ""
+        echo -e "${CYAN}建議: 執行 ./scripts/ai-supervisor.sh install-physical-gates${NC}"
+        ;;
     *)
         echo -e "${BG_RED}${WHITE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-        echo -e "${BG_RED}${WHITE}🔥 AI SUPERVISOR v7.4 - ATTACK MODE + ARENA 競賽${NC}"
+        echo -e "${BG_RED}${WHITE}🔥 AI SUPERVISOR v11.0 - 即時監控 + 物理阻斷${NC}"
         echo -e "${BG_RED}${WHITE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
         echo ""
         print_rage
@@ -2482,9 +3152,18 @@ case "${1:-}" in
         echo "  ${RED}rage-log${NC}        怒罵記錄"
         echo "  ${RED}violations${NC}      違規記錄"
         echo ""
-        echo -e "${WHITE}🔥 v7.4 核心改變：${NC}"
-        echo "  舊：不犯錯 = 高分（及格獎勵）"
-        echo "  新：比別人更短 + 比別人更快 = 冠軍（相對競爭）"
+        echo -e "${CYAN}🔒 v11.0 即時監控 + 物理阻斷：${NC}"
+        echo "  ${GREEN}monitor${NC}               即時監控狀態"
+        echo "  ${GREEN}readonly-on${NC}           開啟唯讀模式"
+        echo "  ${GREEN}readonly-off${NC}          關閉唯讀模式"
+        echo "  ${GREEN}detect-lazy <file>${NC}    偵測偷懶模式"
+        echo "  ${GREEN}scan-all-lazy${NC}         全專案偷懶掃描"
+        echo "  ${GREEN}install-physical-gates${NC} 安裝物理阻斷 (pre-commit, pre-push)"
+        echo "  ${GREEN}check-gates${NC}           檢查物理阻斷狀態"
+        echo ""
+        echo -e "${WHITE}🔥 v11.0 核心改變：${NC}"
+        echo "  舊：扣分、警告、怒罵（心理約束）"
+        echo "  新：pre-commit exit 1（物理阻斷）"
         echo ""
         echo -e "${YELLOW}📋 Arena 解決的 5 種高階投機：${NC}"
         echo "  1. 語意退化 → Fuzz 測試抓 silent fail"

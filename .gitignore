@@ -21,3 +21,9 @@ node_modules
 .ai-current-task.json
 .ai-read-files.log
 .ai-task-plan.json
+
+# AI Supervisor runtime files
+.ai_supervisor/
+
+# Build output
+dist/
