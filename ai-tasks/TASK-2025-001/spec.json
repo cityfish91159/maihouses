@@ -1,0 +1,27 @@
+{
+  "taskId": "TASK-2025-001",
+  "title": "實作零信任 AI 監工系統",
+  "created": "2025-12-09T00:00:00Z",
+  "deadline": "2025-12-09T23:59:59Z",
+  "checklist": [
+    { "id": 1, "desc": "建立目錄結構", "required": true },
+    { "id": 2, "desc": "建立 spec.json", "required": true },
+    { "id": 3, "desc": "建立 status.json", "required": true },
+    { "id": 4, "desc": "建立 ai-heartbeat.ts", "required": true },
+    { "id": 5, "desc": "建立 ai-progress-verify.ts", "required": true },
+    { "id": 6, "desc": "建立 ai-spec-guard.ts", "required": true },
+    { "id": 7, "desc": "建立 ai-guard.yml", "required": true },
+    { "id": 8, "desc": "執行 typecheck 驗證", "required": true }
+  ],
+  "outputSpec": {
+    "requiredFiles": [
+      "ai-tasks/TASK-2025-001/spec.json",
+      "ai-tasks/TASK-2025-001/status.json",
+      "scripts/ai-heartbeat.ts",
+      "scripts/ai-progress-verify.ts",
+      "scripts/ai-spec-guard.ts",
+      ".github/workflows/ai-guard.yml"
+    ],
+    "mustPass": ["npm run typecheck"]
+  }
+}
