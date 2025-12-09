@@ -15,6 +15,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { Logo } from '../Logo/Logo';
 import { notify } from '../../lib/notify';
 import { HEADER_STRINGS, GlobalHeaderMode } from '../../constants/header';
+import { ROUTES } from '../../constants/routes';
 
 interface GlobalHeaderProps {
   /** 顯示模式：社區牆 | 消費者端 | 房仲端 */
@@ -49,7 +50,7 @@ export function GlobalHeader({ mode, title, className = '', notificationCount = 
       notify.success(HEADER_STRINGS.MSG_LOGOUT_SUCCESS, HEADER_STRINGS.MSG_LOGOUT_DESC);
       setUserMenuOpen(false);
       // P3-AUDIT-FIX: Graceful redirect instead of reload
-      window.location.href = '/maihouses/';
+      window.location.href = ROUTES.HOME;
     } catch (error) {
       console.error('Logout failed:', error);
       notify.error(HEADER_STRINGS.MSG_LOGOUT_ERROR, HEADER_STRINGS.MSG_LOGOUT_RETRY);
@@ -71,11 +72,11 @@ export function GlobalHeader({ mode, title, className = '', notificationCount = 
   // 渲染左側區域 (Logo)
   const renderLeft = () => {
     // P3-AUDIT-FIX: Smart Home Link based on role
-    let homeLink = '/maihouses/';
+    let homeLink: string = ROUTES.HOME;
     if (role === 'agent') {
-      homeLink = '/maihouses/feed-agent.html';
+      homeLink = ROUTES.FEED_AGENT;
     } else if (role === 'resident' || role === 'member') {
-      homeLink = '/maihouses/feed-consumer.html';
+      homeLink = ROUTES.FEED_CONSUMER;
     }
 
     return (

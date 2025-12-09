@@ -1,0 +1,297 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.4",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2025-12-09T11:51:06.234Z",
+    "component": {
+      "name": "maihouses",
+      "version": "1.0.7",
+      "type": "application"
+    }
+  },
+  "components": [
+    {
+      "name": "@supabase/supabase-js",
+      "version": "^2.83.0",
+      "type": "library",
+      "scope": "required"
+    },
+    {
+      "name": "@tanstack/react-query",
+      "version": "^5.90.10",
+      "type": "library",
+      "scope": "required"
+    },
+    {
+      "name": "@types/cookie",
+      "version": "^1.0.0",
+      "type": "library",
+      "scope": "required"
+    },
+    {
+      "name": "@types/jsonwebtoken",
+      "version": "^9.0.10",
+      "type": "library",
+      "scope": "required"
+    },
+    {
+      "name": "cloudinary",
+      "version": "^1.41.0",
+      "type": "library",
+      "scope": "required"
+    },
+    {
+      "name": "clsx",
+      "version": "^2.1.1",
+      "type": "library",
+      "scope": "required"
+    },
+    {
+      "name": "cookie",
+      "version": "^1.1.0",
+      "type": "library",
+      "scope": "required"
+    },
+    {
+      "name": "immer",
+      "version": "^10.2.0",
+      "type": "library",
+      "scope": "required"
+    },
+    {
+      "name": "jsonwebtoken",
+      "version": "^9.0.2",
+      "type": "library",
+      "scope": "required"
+    },
+    {
+      "name": "lucide-react",
+      "version": "^0.554.0",
+      "type": "library",
+      "scope": "required"
+    },
+    {
+      "name": "react",
+      "version": "^18.3.1",
+      "type": "library",
+      "scope": "required"
+    },
+    {
+      "name": "react-dom",
+      "version": "^18.3.1",
+      "type": "library",
+      "scope": "required"
+    },
+    {
+      "name": "react-error-boundary",
+      "version": "^6.0.0",
+      "type": "library",
+      "scope": "required"
+    },
+    {
+      "name": "react-icons",
+      "version": "^5.5.0",
+      "type": "library",
+      "scope": "required"
+    },
+    {
+      "name": "react-router-dom",
+      "version": "^6.26.2",
+      "type": "library",
+      "scope": "required"
+    },
+    {
+      "name": "react-window",
+      "version": "^2.2.3",
+      "type": "library",
+      "scope": "required"
+    },
+    {
+      "name": "sonner",
+      "version": "^2.0.7",
+      "type": "library",
+      "scope": "required"
+    },
+    {
+      "name": "tailwind-merge",
+      "version": "^3.4.0",
+      "type": "library",
+      "scope": "required"
+    },
+    {
+      "name": "uuid",
+      "version": "^9.0.1",
+      "type": "library",
+      "scope": "required"
+    },
+    {
+      "name": "zod",
+      "version": "^4.1.12",
+      "type": "library",
+      "scope": "required"
+    },
+    {
+      "name": "zustand",
+      "version": "^5.0.8",
+      "type": "library",
+      "scope": "required"
+    },
+    {
+      "name": "@tanstack/react-query-devtools",
+      "version": "^5.91.1",
+      "type": "library",
+      "scope": "optional"
+    },
+    {
+      "name": "@testing-library/jest-dom",
+      "version": "^6.9.1",
+      "type": "library",
+      "scope": "optional"
+    },
+    {
+      "name": "@testing-library/react",
+      "version": "^16.3.0",
+      "type": "library",
+      "scope": "optional"
+    },
+    {
+      "name": "@types/react",
+      "version": "^18.3.4",
+      "type": "library",
+      "scope": "optional"
+    },
+    {
+      "name": "@types/react-dom",
+      "version": "^18.3.0",
+      "type": "library",
+      "scope": "optional"
+    },
+    {
+      "name": "@types/uuid",
+      "version": "^9.0.8",
+      "type": "library",
+      "scope": "optional"
+    },
+    {
+      "name": "@typescript-eslint/parser",
+      "version": "^8.13.0",
+      "type": "library",
+      "scope": "optional"
+    },
+    {
+      "name": "@vercel/node",
+      "version": "^5.5.13",
+      "type": "library",
+      "scope": "optional"
+    },
+    {
+      "name": "@vitejs/plugin-react",
+      "version": "^4.3.2",
+      "type": "library",
+      "scope": "optional"
+    },
+    {
+      "name": "autoprefixer",
+      "version": "^10.4.20",
+      "type": "library",
+      "scope": "optional"
+    },
+    {
+      "name": "eslint",
+      "version": "^9.12.0",
+      "type": "library",
+      "scope": "optional"
+    },
+    {
+      "name": "eslint-plugin-jsx-a11y",
+      "version": "^6.10.2",
+      "type": "library",
+      "scope": "optional"
+    },
+    {
+      "name": "eslint-plugin-react-hooks",
+      "version": "^7.0.1",
+      "type": "library",
+      "scope": "optional"
+    },
+    {
+      "name": "eslint-plugin-tailwindcss",
+      "version": "^3.17.5",
+      "type": "library",
+      "scope": "optional"
+    },
+    {
+      "name": "gh-pages",
+      "version": "^6.1.1",
+      "type": "library",
+      "scope": "optional"
+    },
+    {
+      "name": "html-minifier-terser",
+      "version": "^7.2.0",
+      "type": "library",
+      "scope": "optional"
+    },
+    {
+      "name": "jsdom",
+      "version": "^27.2.0",
+      "type": "library",
+      "scope": "optional"
+    },
+    {
+      "name": "postcss",
+      "version": "^8.4.47",
+      "type": "library",
+      "scope": "optional"
+    },
+    {
+      "name": "stylelint",
+      "version": "^16.25.0",
+      "type": "library",
+      "scope": "optional"
+    },
+    {
+      "name": "stylelint-config-standard",
+      "version": "^39.0.1",
+      "type": "library",
+      "scope": "optional"
+    },
+    {
+      "name": "tailwindcss",
+      "version": "^3.4.13",
+      "type": "library",
+      "scope": "optional"
+    },
+    {
+      "name": "typescript",
+      "version": "^5.6.2",
+      "type": "library",
+      "scope": "optional"
+    },
+    {
+      "name": "vite",
+      "version": "^5.4.21",
+      "type": "library",
+      "scope": "optional"
+    },
+    {
+      "name": "vite-plugin-checker",
+      "version": "^0.11.0",
+      "type": "library",
+      "scope": "optional"
+    },
+    {
+      "name": "vitest",
+      "version": "^2.0.0",
+      "type": "library",
+      "scope": "optional"
+    },
+    {
+      "name": "ts-node",
+      "version": "^10.9.2",
+      "type": "library",
+      "scope": "optional"
+    }
+  ]
+}

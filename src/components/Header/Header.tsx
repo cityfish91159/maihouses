@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Search, LogIn, UserPlus, List, Menu, X } from 'lucide-react';
 import { Logo } from '../Logo/Logo';
+import { ROUTES } from '../../constants/routes';
 
 interface HeaderProps {
   readonly onOpenAIStudio?: () => void;
@@ -20,19 +21,19 @@ export default function Header({ onOpenAIStudio }: HeaderProps) {
           {/* Desktop Nav - 桌面版 */}
           <nav className="hidden items-center gap-1 md:flex md:gap-2" aria-label="主要動作">
             {/* Column 1: List */}
-            <a href="/maihouses/property.html" className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-[15px] font-bold text-brand-700 transition-all hover:bg-brand-50/80 hover:text-brand-600 active:scale-[0.98]">
+            <a href={ROUTES.PROPERTY_LIST} className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-[15px] font-bold text-brand-700 transition-all hover:bg-brand-50/80 hover:text-brand-600 active:scale-[0.98]">
               <List size={18} strokeWidth={2.5} className="opacity-80" />
               <span>房地產列表</span>
             </a>
 
             {/* Column 2: Login */}
-            <a href="/maihouses/auth.html?mode=login" className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-[15px] font-bold text-brand-700 transition-all hover:bg-brand-50/80 hover:text-brand-600 active:scale-[0.98]">
+            <a href={`${ROUTES.AUTH}?mode=login`} className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-[15px] font-bold text-brand-700 transition-all hover:bg-brand-50/80 hover:text-brand-600 active:scale-[0.98]">
               <LogIn size={18} strokeWidth={2.5} className="opacity-80" />
               <span>登入</span>
             </a>
 
             {/* Column 3: Register (CTA) */}
-            <a href="/maihouses/auth.html?mode=signup" className="ml-1 flex items-center gap-2 rounded-xl border border-transparent bg-brand-700 px-5 py-2.5 text-[15px] font-bold text-white shadow-md shadow-brand-700/10 transition-all hover:-translate-y-0.5 hover:bg-brand-600 hover:shadow-lg hover:shadow-brand-700/20 active:scale-[0.98]">
+            <a href={`${ROUTES.AUTH}?mode=signup`} className="ml-1 flex items-center gap-2 rounded-xl border border-transparent bg-brand-700 px-5 py-2.5 text-[15px] font-bold text-white shadow-md shadow-brand-700/10 transition-all hover:-translate-y-0.5 hover:bg-brand-600 hover:shadow-lg hover:shadow-brand-700/20 active:scale-[0.98]">
               <UserPlus size={18} strokeWidth={2.5} />
               <span>免費註冊</span>
             </a>
@@ -42,7 +43,7 @@ export default function Header({ onOpenAIStudio }: HeaderProps) {
           <div className="flex items-center gap-2 md:hidden">
             {/* 登入按鈕 - 手機版精簡 */}
             <a 
-              href="/maihouses/auth.html?mode=login" 
+              href={`${ROUTES.AUTH}?mode=login`} 
               className="flex items-center justify-center rounded-lg px-3 py-2 text-sm font-bold text-brand-700 transition-all hover:bg-brand-50 active:scale-95"
             >
               <LogIn size={18} strokeWidth={2.5} />
@@ -50,7 +51,7 @@ export default function Header({ onOpenAIStudio }: HeaderProps) {
 
             {/* 註冊按鈕 - 手機版精簡 */}
             <a 
-              href="/maihouses/auth.html?mode=signup" 
+              href={`${ROUTES.AUTH}?mode=signup`} 
               className="flex items-center gap-1.5 rounded-lg bg-brand-700 px-3 py-2 text-sm font-bold text-white shadow-sm transition-all hover:bg-brand-600 active:scale-95"
             >
               <UserPlus size={16} strokeWidth={2.5} />
@@ -73,7 +74,7 @@ export default function Header({ onOpenAIStudio }: HeaderProps) {
           <div className="absolute inset-x-0 top-full border-b border-brand-100 bg-white shadow-lg md:hidden">
             <nav className="mx-auto max-w-[1120px] px-4 py-3">
               <a 
-                href="/maihouses/property.html" 
+                href={ROUTES.PROPERTY_LIST} 
                 className="flex items-center gap-3 rounded-xl px-4 py-3 text-[15px] font-bold text-brand-700 transition-all hover:bg-brand-50"
                 onClick={() => setMobileMenuOpen(false)}
               >
@@ -81,7 +82,7 @@ export default function Header({ onOpenAIStudio }: HeaderProps) {
                 <span>房地產列表</span>
               </a>
               <a 
-                href="/maihouses/community-wall_mvp.html" 
+                href={ROUTES.COMMUNITY_WALL_MVP} 
                 className="flex items-center gap-3 rounded-xl px-4 py-3 text-[15px] font-bold text-brand-700 transition-all hover:bg-brand-50"
                 onClick={() => setMobileMenuOpen(false)}
               >
@@ -94,7 +95,7 @@ export default function Header({ onOpenAIStudio }: HeaderProps) {
                 <span>社區評價</span>
               </a>
               <a 
-                href="https://maihouses.vercel.app/maihouses/uag" 
+                href={ROUTES.UAG} 
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-3 rounded-xl px-4 py-3 text-[15px] font-bold text-brand-700 transition-all hover:bg-brand-50"
@@ -183,8 +184,8 @@ export default function Header({ onOpenAIStudio }: HeaderProps) {
             <div className="relative z-10 mt-6 grid grid-cols-3 gap-2">
               {['社區評價', '房仲專區', '邁鄰居'].map((text) => {
                 const getHref = (label: string) => {
-                  if (label === '社區評價') return '/maihouses/community-wall_mvp.html';
-                  if (label === '房仲專區') return 'https://maihouses.vercel.app/maihouses/uag';
+                  if (label === '社區評價') return ROUTES.COMMUNITY_WALL_MVP;
+                  if (label === '房仲專區') return ROUTES.UAG;
                   return '#';
                 };
                 const href = getHref(text);

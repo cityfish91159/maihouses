@@ -33,6 +33,7 @@ import { getPermissions } from './types';
 // Hooks - 統一資料來源
 import { useCommunityWallData } from '../../hooks/useCommunityWallData';
 import { useAuth } from '../../hooks/useAuth';
+import { ROUTES } from '../../constants/routes';
 
 // ============ URL / Storage Helpers ============
 const ROLE_PARAM = 'role';
@@ -185,10 +186,11 @@ function WallInner() {
     return () => window.removeEventListener('storage', handleStorage);
   }, [role, setRoleInternal]);
 
-  const handleUnlock = useCallback(() => {
-    // 由於 Auth 頁面是獨立的 HTML，使用 window.location 跳轉
-    window.location.href = '/maihouses/auth.html';
+  const handleLogin = useCallback(() => {
+    // 導向登入頁
+    window.location.href = ROUTES.AUTH;
   }, []);
+
   
   // Tab 切換
   const handleTabChange = useCallback((tab: WallTab) => {
@@ -272,7 +274,7 @@ function WallInner() {
           <p className="mb-4 text-base font-semibold text-ink-900">找不到指定的社區牆</p>
           <p className="mb-6 text-sm text-ink-600">請確認網址是否正確，或回到首頁重新選擇社區。</p>
           <a
-            href="/maihouses/"
+            href={ROUTES.HOME}
             className="inline-flex items-center justify-center rounded-full bg-brand px-5 py-2.5 text-sm font-bold text-white shadow hover:bg-brand-600"
           >
             回到首頁

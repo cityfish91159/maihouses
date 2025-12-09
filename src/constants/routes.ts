@@ -6,6 +6,24 @@ export const ROUTES = {
   /** 首頁 */
   HOME: '/maihouses/',
   
+  /** 房地產列表 */
+  PROPERTY_LIST: '/maihouses/property.html',
+
+  /** 房仲信息流 */
+  FEED_AGENT: '/maihouses/feed-agent.html',
+
+  /** 消費者信息流 */
+  FEED_CONSUMER: '/maihouses/feed-consumer.html',
+
+  /** 社區牆 MVP */
+  COMMUNITY_WALL_MVP: '/maihouses/community-wall_mvp.html',
+
+  /** UAG 評分系統 */
+  UAG: 'https://maihouses.vercel.app/maihouses/uag',
+
+  /** 信任交易 */
+  TRUST: '/trust',
+
   /** 認證頁面 */
   AUTH: '/maihouses/auth.html',
   

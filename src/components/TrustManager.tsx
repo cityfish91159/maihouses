@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase';
 import { notify } from '../lib/notify';
 import type { TrustTransaction, TrustStep } from '../types/trust.types';
 import { STEP_NAMES, STEP_ICONS } from '../types/trust.types';
+import { ROUTES } from '../constants/routes';
 
 const COLORS = {
     primary: '#1749D7', primaryLight: '#EBF0FF', success: '#10B981', successLight: '#D1FAE5', gray: '#6B7280', grayLight: '#F3F4F6',
@@ -16,7 +17,7 @@ interface TrustManagerProps {
     style?: React.CSSProperties;
 }
 
-export default function TrustManager({ defaultCaseName = '', showList = true, linkPath = '/trust', style }: TrustManagerProps) {
+export default function TrustManager({ defaultCaseName = '', showList = true, linkPath = ROUTES.TRUST, style }: TrustManagerProps) {
     const [loading, setLoading] = useState(false);
     const [cases, setCases] = useState<TrustTransaction[]>([]);
     const [listLoading, setListLoading] = useState(true);
