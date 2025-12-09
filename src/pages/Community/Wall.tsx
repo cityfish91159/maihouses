@@ -221,7 +221,7 @@ function WallInner() {
     }
   }, [toggleLike, isAuthenticated]);
 
-  const handleUnlock = useCallback((id: string) => {
+  const handleUnlock = useCallback((id?: string) => {
     console.log('Unlock post:', id);
     notify.info('功能開發中', '解鎖功能即將上線');
   }, []);
