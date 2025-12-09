@@ -2046,6 +2046,208 @@ function provide_realtime_guidance() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] Guidance provided for: $file" >> "$GUIDANCE_LOG"
 }
 
+# ============================================================================
+# 🔥 v7.3 新增功能：即時報告系統整合
+# ============================================================================
+
+# 即時報告 - 記錄 AI 操作
+function report_action() {
+    local action="$1"
+    local detail="${2:-}"
+    local status="${3:-INFO}"
+    
+    # 呼叫即時報告系統
+    if [ -x "$PROJECT_ROOT/scripts/ai-realtime-report.sh" ]; then
+        "$PROJECT_ROOT/scripts/ai-realtime-report.sh" log "$action" "$detail" "$status"
+    fi
+}
+
+# 更新進度
+function report_progress() {
+    local phase="$1"
+    local step="$2"
+    local total="$3"
+    local desc="$4"
+    
+    if [ -x "$PROJECT_ROOT/scripts/ai-realtime-report.sh" ]; then
+        "$PROJECT_ROOT/scripts/ai-realtime-report.sh" progress "$phase" "$step" "$total" "$desc"
+    fi
+}
+
+# 發送用戶通知
+function notify_user() {
+    local title="$1"
+    local message="$2"
+    local type="${3:-info}"
+    
+    if [ -x "$PROJECT_ROOT/scripts/ai-realtime-report.sh" ]; then
+        "$PROJECT_ROOT/scripts/ai-realtime-report.sh" notify "$title" "$message" "$type"
+    fi
+}
+
+# 自動檢查並安裝依賴
+function cmd_check_deps() {
+    print_header "🔧 檢查並安裝必要依賴"
+    
+    echo -e "${CYAN}🔍 檢查 npm 套件...${NC}"
+    
+    local missing=()
+    
+    # 檢查必要套件
+    local required_packages=(
+        "@stryker-mutator/core"
+        "zod"
+        "chalk"
+    )
+    
+    for pkg in "${required_packages[@]}"; do
+        if ! npm list "$pkg" &>/dev/null; then
+            missing+=("$pkg")
+        fi
+    done
+    
+    if [ ${#missing[@]} -gt 0 ]; then
+        echo -e "${YELLOW}⚠️  缺少以下依賴：${NC}"
+        printf '   - %s\n' "${missing[@]}"
+        echo ""
+        echo -e "${CYAN}🔧 正在自動安裝...${NC}"
+        npm install -D "${missing[@]}" 2>&1 | tail -10
+        echo -e "${GREEN}✅ 依賴安裝完成${NC}"
+    else
+        echo -e "${GREEN}✅ 所有依賴已就緒${NC}"
+    fi
+    
+    # 檢查腳本權限
+    echo ""
+    echo -e "${CYAN}🔍 檢查腳本權限...${NC}"
+    
+    local scripts=(
+        "scripts/ai-supervisor.sh"
+        "scripts/ai-realtime-report.sh"
+        "scripts/ai-reviewer.sh"
+    )
+    
+    for script in "${scripts[@]}"; do
+        if [ -f "$PROJECT_ROOT/$script" ]; then
+            if [ ! -x "$PROJECT_ROOT/$script" ]; then
+                chmod +x "$PROJECT_ROOT/$script"
+                echo -e "   ${GREEN}✅ 設定執行權限：$script${NC}"
+            else
+                echo -e "   ${GREEN}✅ $script${NC}"
+            fi
+        fi
+    done
+    
+    echo ""
+    echo -e "${GREEN}🏆 依賴檢查完成${NC}"
+}
+
+# 執行 AI Code Review
+function cmd_ai_review() {
+    print_header "🤖 AI Code Review"
+    
+    if [ -x "$PROJECT_ROOT/scripts/ai-reviewer.sh" ]; then
+        "$PROJECT_ROOT/scripts/ai-reviewer.sh" review
+    else
+        echo -e "${RED}❌ AI Reviewer 腳本不存在或無執行權限${NC}"
+        echo -e "${YELLOW}   請執行：chmod +x scripts/ai-reviewer.sh${NC}"
+    fi
+}
+
+# 生成完整報告
+function cmd_generate_report() {
+    local type="${1:-summary}"
+    
+    print_header "📊 生成作業報告"
+    
+    if [ -x "$PROJECT_ROOT/scripts/ai-realtime-report.sh" ]; then
+        "$PROJECT_ROOT/scripts/ai-realtime-report.sh" report "$type"
+    else
+        echo -e "${RED}❌ 報告系統不存在${NC}"
+    fi
+}
+
+# 啟動監控模式
+function cmd_watch() {
+    print_header "🔍 啟動即時監控"
+    
+    if [ -x "$PROJECT_ROOT/scripts/ai-realtime-report.sh" ]; then
+        "$PROJECT_ROOT/scripts/ai-realtime-report.sh" watch
+    else
+        echo -e "${RED}❌ 監控系統不存在${NC}"
+    fi
+}
+
+# 完整流程自動執行
+function cmd_full_check() {
+    print_header "🔥 完整檢查流程"
+    
+    report_action "FULL_CHECK_START" "開始完整檢查流程" "START"
+    
+    local step=1
+    local total=5
+    
+    # Step 1: TypeScript
+    report_progress "完整檢查" "$step" "$total" "TypeScript 檢查"
+    echo -e "${CYAN}[$step/$total] TypeScript 檢查...${NC}"
+    if npm run typecheck 2>/dev/null; then
+        echo -e "${GREEN}   ✅ TypeScript 通過${NC}"
+        report_action "TYPECHECK" "通過" "DONE"
+    else
+        echo -e "${RED}   ❌ TypeScript 失敗${NC}"
+        report_action "TYPECHECK" "失敗" "FAIL"
+    fi
+    step=$((step + 1))
+    
+    # Step 2: ESLint
+    report_progress "完整檢查" "$step" "$total" "ESLint 檢查"
+    echo -e "${CYAN}[$step/$total] ESLint 檢查...${NC}"
+    if npx eslint src --max-warnings=0 2>/dev/null; then
+        echo -e "${GREEN}   ✅ ESLint 通過${NC}"
+        report_action "ESLINT" "通過" "DONE"
+    else
+        echo -e "${RED}   ❌ ESLint 失敗${NC}"
+        report_action "ESLINT" "失敗" "FAIL"
+    fi
+    step=$((step + 1))
+    
+    # Step 3: Build
+    report_progress "完整檢查" "$step" "$total" "Production Build"
+    echo -e "${CYAN}[$step/$total] Build 檢查...${NC}"
+    if npm run build 2>/dev/null; then
+        echo -e "${GREEN}   ✅ Build 通過${NC}"
+        report_action "BUILD" "通過" "DONE"
+    else
+        echo -e "${RED}   ❌ Build 失敗${NC}"
+        report_action "BUILD" "失敗" "FAIL"
+    fi
+    step=$((step + 1))
+    
+    # Step 4: Deep Scan
+    report_progress "完整檢查" "$step" "$total" "架構深度掃描"
+    echo -e "${CYAN}[$step/$total] 架構深度掃描...${NC}"
+    cmd_deep_scan 2>/dev/null || true
+    report_action "DEEP_SCAN" "完成" "DONE"
+    step=$((step + 1))
+    
+    # Step 5: AI Review
+    report_progress "完整檢查" "$step" "$total" "AI Code Review"
+    echo -e "${CYAN}[$step/$total] AI Code Review...${NC}"
+    if [ -x "$PROJECT_ROOT/scripts/ai-reviewer.sh" ]; then
+        "$PROJECT_ROOT/scripts/ai-reviewer.sh" review
+    fi
+    report_action "AI_REVIEW" "完成" "DONE"
+    
+    report_action "FULL_CHECK_END" "完整檢查流程結束" "DONE"
+    
+    # 生成報告
+    echo ""
+    echo -e "${CYAN}📊 生成完整報告...${NC}"
+    cmd_generate_report "detailed"
+    
+    notify_user "完整檢查完成" "所有檢查已執行完畢，請查看報告" "success"
+}
+
 #
 # 主路由
 # ============================================================================
@@ -2152,9 +2354,106 @@ case "${1:-}" in
         print_header "🔗 Custom Hook 模板"
         show_template_hook
         ;;
+    # ========== v7.3 新增指令 ==========
+    "check-deps")
+        cmd_check_deps
+        ;;
+    "ai-review")
+        cmd_ai_review
+        ;;
+    "report")
+        cmd_generate_report "${2:-summary}"
+        ;;
+    "watch")
+        cmd_watch
+        ;;
+    "full-check")
+        cmd_full_check
+        ;;
+    # ========== v7.4 Arena 競賽系統 ==========
+    "arena")
+        print_header "🏟️ ARENA 競賽系統"
+        TASK="${2:-}"
+        if [ -z "$TASK" ]; then
+            echo -e "${CYAN}可用任務:${NC}"
+            ls -1 "$PROJECT_ROOT/arena/tasks" 2>/dev/null || echo "  (尚無任務)"
+            echo ""
+            echo -e "${YELLOW}使用方式: ./scripts/ai-supervisor.sh arena <task_name>${NC}"
+            exit 1
+        fi
+        echo -e "${CYAN}🎯 執行競賽: $TASK${NC}"
+        cd "$PROJECT_ROOT" && npx tsx arena/run_arena.ts "$TASK"
+        ;;
+    "arena-list")
+        print_header "🏟️ ARENA 任務列表"
+        echo -e "${CYAN}任務:${NC}"
+        for task in "$PROJECT_ROOT/arena/tasks"/*/; do
+            task_name=$(basename "$task")
+            candidates=$(ls "$PROJECT_ROOT/arena/candidates/$task_name" 2>/dev/null | wc -l)
+            echo "  📋 $task_name ($candidates candidates)"
+        done
+        ;;
+    "arena-add")
+        print_header "🏟️ 新增 Arena Candidate"
+        TASK="${2:-}"
+        FILE="${3:-}"
+        if [ -z "$TASK" ] || [ -z "$FILE" ]; then
+            echo -e "${RED}使用方式: ./scripts/ai-supervisor.sh arena-add <task> <file.ts>${NC}"
+            exit 1
+        fi
+        mkdir -p "$PROJECT_ROOT/arena/candidates/$TASK"
+        cp "$FILE" "$PROJECT_ROOT/arena/candidates/$TASK/"
+        echo -e "${GREEN}✅ 已新增 candidate: $FILE${NC}"
+        ;;
+    "arena-leaderboard")
+        print_header "🏆 ARENA 排行榜"
+        TASK="${2:-}"
+        if [ -z "$TASK" ]; then
+            echo -e "${RED}使用方式: ./scripts/ai-supervisor.sh arena-leaderboard <task>${NC}"
+            exit 1
+        fi
+        LATEST=$(ls -t "$PROJECT_ROOT/arena/results/${TASK}-"*.json 2>/dev/null | head -1)
+        if [ -z "$LATEST" ]; then
+            echo -e "${YELLOW}尚無競賽結果。先執行: ./scripts/ai-supervisor.sh arena $TASK${NC}"
+            exit 1
+        fi
+        echo -e "${CYAN}最新結果: $LATEST${NC}"
+        cat "$LATEST" | jq -r '.leaderboard[] | "  \(.name): \(.avgRuntimeMs)ms, \(.codeLines) lines, score=\(.score)"'
+        ;;
+    # ========== v7.5 Mid-Law 天條系統 ==========
+    "mid-law")
+        print_header "🔥 MID-LAW 天條檢查"
+        HOOK="${2:-}"
+        TASK="${3:-}"
+        if [ -z "$HOOK" ]; then
+            echo -e "${CYAN}使用方式:${NC}"
+            echo "  ./scripts/ai-supervisor.sh mid-law pre-write <task>  # 開始前檢查"
+            echo "  ./scripts/ai-supervisor.sh mid-law during <task>     # 即時排名"
+            echo "  ./scripts/ai-supervisor.sh mid-law finish <task>     # 生死裁決"
+            echo "  ./scripts/ai-supervisor.sh mid-law check-code <file> # 代碼品質"
+            exit 1
+        fi
+        cd "$PROJECT_ROOT" && npx tsx arena/mid-law-runner.ts "$HOOK" "$TASK"
+        ;;
+    "graveyard")
+        print_header "☠️ GRAVEYARD 淘汰版本"
+        TASK="${2:-}"
+        if [ -z "$TASK" ]; then
+            echo -e "${CYAN}所有任務的淘汰版本:${NC}"
+            for task in "$PROJECT_ROOT/arena/graveyard"/*/; do
+                [ -d "$task" ] || continue
+                task_name=$(basename "$task")
+                count=$(ls "$task" 2>/dev/null | wc -l)
+                echo "  ☠️ $task_name ($count 個淘汰版本)"
+            done
+        else
+            echo -e "${CYAN}$TASK 的淘汰版本:${NC}"
+            ls -la "$PROJECT_ROOT/arena/graveyard/$TASK" 2>/dev/null || echo "  (尚無淘汰版本)"
+        fi
+        ;;
     *)
         echo -e "${BG_RED}${WHITE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-        echo -e "${BG_RED}${WHITE}🔥 AI SUPERVISOR v7.0 - ATTACK MODE (主動攻擊模式)${NC}"
+        echo -e "${BG_RED}${WHITE}🔥 AI SUPERVISOR v7.4 - ATTACK MODE + ARENA 競賽${NC}"
         echo -e "${BG_RED}${WHITE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
         echo ""
         print_rage
@@ -2167,34 +2466,37 @@ case "${1:-}" in
         echo "  ${GREEN}4a. audit-all${NC}       【推薦】批次審計所有待審計檔案"
         echo "  ${GREEN}5. finish${NC}           【強制】結束任務 (逃漏=怒罵)"
         echo ""
+        echo -e "${CYAN}🏟️ ARENA 競賽系統 (相對排名淘汰制)：${NC}"
+        echo "  ${GREEN}arena <task>${NC}        執行競賽 (測試全過+最快+最短=冠軍)"
+        echo "  ${GREEN}arena-list${NC}          列出所有任務"
+        echo "  ${GREEN}arena-add <t> <f>${NC}   新增 candidate"
+        echo "  ${GREEN}arena-leaderboard <t>${NC} 查看排行榜"
+        echo ""
         echo -e "${CYAN}🔧 工具指令：${NC}"
         echo "  ${GREEN}status${NC}          查看 Session 狀態"
         echo "  ${GREEN}score${NC}           查看分數 (0-150)"
-        echo "  ${GREEN}code-score${NC}      執行 TypeScript/ESLint/Build 並給出最終代碼評分"
-        echo "  ${GREEN}guidance${NC}        顯示最佳實踐指南"
-        echo "  ${GREEN}guidance-pro${NC}    進階代碼片段範本"
-        echo "  ${GREEN}template-tsx${NC}    顯示 React 組件模板"
-        echo "  ${GREEN}template-hook${NC}   顯示 Hook 模板"
-        echo "  ${GREEN}verify${NC}          執行全系統測試"
+        echo "  ${GREEN}code-score${NC}      TypeScript/ESLint/Build 評分"
+        echo "  ${GREEN}guidance${NC}        最佳實踐指南"
+        echo "  ${GREEN}verify${NC}          全系統測試"
         echo "  ${GREEN}deep-scan${NC}       全專案深度掃描"
-        echo "  ${GREEN}auto-scan${NC}       自動掃描並生成報告"
-        echo "  ${RED}rage-log${NC}        查詢怒罵記錄"
-        echo "  ${RED}violations${NC}      查詢違規記錄"
+        echo "  ${RED}rage-log${NC}        怒罵記錄"
+        echo "  ${RED}violations${NC}      違規記錄"
         echo ""
-        echo -e "${WHITE}🔥 ATTACK MODE v7.2 特性：${NC}"
-        echo "  - 🎯 先發制人：寫代碼前強制看規則"
-        echo "  - 👁️ 逐字監控：track-modify 即時掃描"
-        echo "  - 🤬 怒罵模式：違規時直接怒罵 AI"
-        echo "  - 💀 重扣分：怒罵一次 -20 分"
-        echo "  - 📚 強制學習：違規後顯示正確做法"
-        echo "  - 🔍 逃漏封鎖：Git diff 比對"
-        echo "  - 🚨 作弊偵測：--no-verify 使用記錄"
-        echo "  - 📊 批次審計：audit-all 一次審完"
+        echo -e "${WHITE}🔥 v7.4 核心改變：${NC}"
+        echo "  舊：不犯錯 = 高分（及格獎勵）"
+        echo "  新：比別人更短 + 比別人更快 = 冠軍（相對競爭）"
         echo ""
-        echo -e "${BG_RED}${WHITE}⚠️  AI AGENT 必讀 (違反必死)：${NC}"
-        echo -e "${YELLOW}   收到任務後，第一步必須執行：${NC}"
-        echo -e "${CYAN}   ./scripts/ai-supervisor.sh start \"任務描述\"${NC}"
-        echo -e "${YELLOW}   沒有 Session 就寫代碼 = 怒罵 + 重扣分${NC}"
+        echo -e "${YELLOW}📋 Arena 解決的 5 種高階投機：${NC}"
+        echo "  1. 語意退化 → Fuzz 測試抓 silent fail"
+        echo "  2. 邊界省略 → 隨機測資 + 極端值"
+        echo "  3. 效能省略 → 效能排名（最快才是冠軍）"
+        echo "  4. 規模省略 → 壓力測試"
+        echo "  5. 設計省略 → 多版本競爭淘汰"
+        echo ""
+        echo -e "${BG_RED}${WHITE}⚠️  AI AGENT 必讀：${NC}"
+        echo -e "${YELLOW}   1. 收到任務 → ./scripts/ai-supervisor.sh start \"任務\"${NC}"
+        echo -e "${YELLOW}   2. 寫完代碼 → arena 競賽決定誰是冠軍${NC}"
+        echo -e "${YELLOW}   3. 偷懶 = 壓縮代碼 = 可能贏；亂寫 = 測試失敗 = 淘汰${NC}"
         echo ""
         exit 1
         ;;

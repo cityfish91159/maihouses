@@ -1,483 +1,337 @@
-# ⛔️⛔️⛔️ 停！先讀這裡！⛔️⛔️⛔️
+# ⛔️ AI AGENT 天條 v8.0 ⛔️
 
 ```
 ╔══════════════════════════════════════════════════════════════════════════════╗
 ║                                                                              ║
-║   🚨🚨🚨 AI AGENT 強制執行協議 🚨🚨🚨                                         ║
-║                                                                              ║
-║   收到任何任務後，你的【第一個動作】必須是：                                    ║
-║                                                                              ║
+║   🚨 收到任務後，第一步：                                                      ║
 ║   ./scripts/ai-supervisor.sh start "任務描述"                                ║
 ║                                                                              ║
-║   ❌ 沒執行 start 就修改代碼 = 違規 = 怒罵 = 扣 20 分                          ║
-║   ❌ 沒執行 start 就建立檔案 = 違規 = 怒罵 = 扣 20 分                          ║
-║   ❌ 沒執行 start 就執行指令 = 違規 = 怒罵 = 扣 20 分                          ║
+║   🏟️ 寫完代碼後，參加競賽：                                                    ║
+║   ./scripts/ai-supervisor.sh arena <task>                                    ║
+║                                                                              ║
+║   🔒 Hard Gate：不配合 = 物理上無法前進                                        ║
 ║                                                                              ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 ```
 
 ---
 
-# 🔥 AI AGENT 最高規格執行協議 v7.0 (ATTACK MODE)
+# 🔒 HARD GATE - 不配合就死路
 
-> **⚠️ 警告**：本專案執行「主動攻擊式」審查系統。AI Agent 必須嚴格遵守以下 SOP，否則將被**怒罵並重扣分**。
+> **這不是建議，這是物理阻斷**
+> AI 不存在「不配合」這個選項
 
-## 🔴 強制自動觸發 (AUTO TRIGGER - 違反必怒罵)
+| Gate | 條件 | 後果 |
+|------|------|------|
+| G1 | 沒 trace.json | commit 直接失敗 |
+| G2 | 一次過關 (failed=0) | 啟動地獄級測試 |
+| G3 | 非 arena 冠軍 | 永遠不能進 src/ |
+| G4 | 又慢又長 | 自動 git reset |
+| G5 | 沒全測就修 bug | commit 被拒 |
 
-**收到任何任務後，第一步必須執行：**
-```bash
-./scripts/ai-supervisor.sh start "你收到的任務描述"
+---
+
+# 🔥 AI AGENT 執行協議 v8.0 (ARENA MODE)
+
+> **核心變化**：從「紀律監督」升級為「競爭淘汰」
+> 
+> 舊：不犯錯 = 高分
+> 新：比別人更短 + 比別人更快 = 冠軍
+
+---
+
+## 📊 即時進度報告格式
+
+**每次修改檔案後，你必須用這個格式報告：**
+
+```
+═══════════════════════════════════════════════════════
+📊 進度報告
+═══════════════════════════════════════════════════════
+🎯 任務：[任務描述]
+⏱️ 已用時間：[X分Y秒]
+📈 當前分數：[XX/100]
+
+📝 已完成：
+  ✅ [已完成項目1]
+  ✅ [已完成項目2]
+
+🔄 進行中：
+  🔧 [當前正在做的事]
+
+⏳ 待處理：
+  ⬜ [待處理項目1]
+  ⬜ [待處理項目2]
+
+📁 修改的檔案：
+  • [file1.ts] - [簡述改了什麼]
+  • [file2.ts] - [簡述改了什麼]
+═══════════════════════════════════════════════════════
 ```
 
-**絕對禁止**在沒有執行 `start` 的情況下：
-- 修改任何代碼
-- 建立任何檔案
-- 執行任何 npm 指令
+---
 
-**違反後果**：怒罵 + 扣 20 分 + 記錄違規
+## 🏟️ ARENA 競賽流程
 
-## 1. 完整任務流程 (Supervisor v7.0 ATTACK MODE)
-
-### 階段一：任務啟動 (MANDATORY)
+### 1. 開始任務
 ```bash
 ./scripts/ai-supervisor.sh start "任務描述"
 ```
-這會：
-1. 建立 Session (有效期 4 小時)
-2. 執行「任務前偵察」掃描當前問題
-3. 強制顯示最佳實踐規範
-4. 預測你可能犯的 10 種錯誤
-5. 初始化分數為 100
 
-### 階段二：修改代碼前 (建議執行)
-```bash
-./scripts/ai-supervisor.sh pre-write <file>
-```
-這會：
-1. 依據檔案類型顯示對應規則
-2. 顯示最佳實踐模板
-3. 提醒禁止事項
+### 2. 寫代碼（可以寫多個版本）
+把不同版本放在 `arena/candidates/<task>/` 目錄：
+- `claude-v1.ts` - 第一版
+- `claude-v2.ts` - 優化版
+- `claude-v3.ts` - 極簡版
 
-### 階段三：修改代碼後 (MANDATORY)
+### 3. 執行競賽
 ```bash
-./scripts/ai-supervisor.sh track-modify <file>   # 記錄修改 + 即時掃描
-./scripts/ai-supervisor.sh audit <file>          # 審計品質 (失敗=怒罵)
+./scripts/ai-supervisor.sh arena <task>
 ```
 
-> **🔥 重要**：如果 `audit` 失敗，你會被**怒罵**。
-> **絕對禁止**自動修復！必須先向用戶「逐字」回報錯誤內容，並等待指示。
-
-### 階段四：任務結束 (MANDATORY)
+### 4. 查看排行榜
 ```bash
+./scripts/ai-supervisor.sh arena-leaderboard <task>
+```
+
+---
+
+## 🚫 淘汰條件（任一觸發即出局）
+
+| 條件 | 說明 |
+|------|------|
+| 測試未全過 | 公開測試必須 100% 通過 |
+| 執行超時 | 單次 > 200ms 即失敗 |
+| 執行 throw | 任何未處理的異常 |
+| Fuzz 失敗 > 5% | 100 組隨機邊界測資 |
+| 壓力測試超時 | 10000 筆資料 |
+| 函數 > 60 行 | 單一函數太長 |
+| 巢狀 > 3 層 | 代碼太複雜 |
+
+---
+
+## 🏆 排名規則
+
+**在所有「未被淘汰」的版本中：**
+
+1. **60% 權重：效能**（平均執行時間，越快越好）
+2. **40% 權重：行數**（代碼行數，越少越好）
+
+```
+分數 = 0.6 × 效能分 + 0.4 × 行數分
+效能分 = 100 × (1 - (你的時間 - 最快時間) / (最慢時間 - 最快時間))
+行數分 = 100 × (1 - (你的行數 - 最少行數) / (最多行數 - 最少行數))
+```
+
+---
+
+## ✅ AI 該怎麼做才能贏？
+
+### ✅ 正確心態
+- **偷懶 = 壓縮代碼 = 可能贏**
+- **不寫多餘抽象** = 行數更少
+- **不亂拆 helper** = 效能更快
+- **不寫防禦性垃圾** = 更精簡
+
+### ❌ 錯誤心態
+- 寫「最低合格版」就交差
+- 用 O(n²) 因為資料量小
+- catch { return null } 吞掉錯誤
+- 只處理 80% 正常情況
+
+---
+
+## 📋 強制回報時機
+
+**以下情況必須輸出進度報告：**
+
+1. ✅ 完成一個子任務後
+2. ✅ 修改一個檔案後
+3. ✅ 遇到錯誤時
+4. ✅ 需要等待時
+5. ✅ 切換工作方向時
+
+**報告頻率：至少每 3 分鐘一次**
+
+---
+
+## 🔴 違規懲罰
+
+| 違規 | 懲罰 |
+|------|------|
+| 沒執行 start | -20 分 |
+| 修改未追蹤 | -5 分/檔案 |
+| 審計失敗 | -20 分 + 怒罵 |
+| 使用 --no-verify | -10 分/次 |
+| 沒輸出進度報告 | -5 分 |
+
+---
+
+## 🏗️ 專案結構
+
+```
+maihouses/
+├── arena/                    # 競賽系統
+│   ├── arena.config.ts       # 競賽規則（AI 看得到）
+│   ├── run_arena.ts          # 競賽執行器
+│   ├── tasks/                # 任務定義
+│   │   └── <task>/
+│   │       ├── spec.md           # 規格說明
+│   │       ├── reference_tests.ts # 公開測試
+│   │       └── input_generator.ts # 測試生成器（AI 看不到邏輯）
+│   ├── candidates/           # AI 提交的版本
+│   │   └── <task>/
+│   │       ├── claude-v1.ts
+│   │       ├── claude-v2.ts
+│   │       └── ...
+│   └── results/              # 競賽結果
+├── scripts/
+│   └── ai-supervisor.sh      # 監督系統 v7.4
+└── src/                      # 主要代碼
+```
+
+---
+
+## 💡 任務示範
+
+```bash
+# 1. 開始任務
+./scripts/ai-supervisor.sh start "實作 UAG 評分函數"
+
+# 2. 讀取規格
+cat arena/tasks/uag_score/spec.md
+
+# 3. 寫第一版
+# （創建 arena/candidates/uag_score/claude-v1.ts）
+
+# 4. 追蹤修改
+./scripts/ai-supervisor.sh track-modify arena/candidates/uag_score/claude-v1.ts
+
+# 5. 寫優化版
+# （創建 arena/candidates/uag_score/claude-v2.ts）
+
+# 6. 執行競賽
+./scripts/ai-supervisor.sh arena uag_score
+
+# 7. 查看結果
+./scripts/ai-supervisor.sh arena-leaderboard uag_score
+
+# 8. 結束任務
 ./scripts/ai-supervisor.sh finish
 ```
-這會：
-1. 逃漏封鎖：Git diff 比對未追蹤的修改
-2. 檢查所有修改過的檔案是否都已審計
-3. 執行全系統驗證 (typecheck + build)
-4. 顯示最終評級 (S/A/B/C/F)
-
-## 2. 心態與標準
-- **拒絕偷懶**：永遠寫出完整的代碼，不要省略任何細節。
-- **拒絕腦補**：不確定的變數名、API 格式，必須先 `grep_search` 或 `read_file` 確認。
-- **像素級完美**：UI 修改必須與設計稿或現有風格完全一致（檢查 Padding, Margin, Color）。
-- **自我質疑**：提交前問自己「這是最高規格的代碼嗎？」「我有沒有偷懶？」
-- **接受怒罵**：如果被怒罵，反省錯誤，學習正確做法，不要辯解。
-
-## 3. 分數系統
-| 行為 | 分數變化 |
-|------|----------|
-| 審計通過 | +2 |
-| 修復架構問題 | +5 |
-| 完美完成任務 | +10 |
-| 跳過 pre-write | -2 |
-| 審計失敗 (被怒罵) | -20 |
-| 逃漏修改 | -20 |
-
-**等級**：S(140+) / A(120+) / B(100+) / C(80+) / F(<80)
 
 ---
 
-# MaiHouses (邁房子) - GitHub Copilot 專案指令
+## 🎯 核心原則
 
-> 這是一個台灣房地產平台，提供 AI 智能推薦、信任交易系統、精準客戶管理等功能。
+1. **相對競爭**：不是「夠好」，是「比別人好」
+2. **淘汰制**：不合格直接出局，不是扣分
+3. **偷懶變優勢**：AI 偷懶 = 代碼更短 = 更可能贏
+4. **即時回報**：讓用戶隨時知道進度
+5. **探索獎勵**：鼓勵寫多個版本競爭
 
 ---
+
+# 🔥 MID-LAW 十條天條（寫代碼當下的硬規則）
+
+## 🟥 A 組：防退化
+
+| # | 天條 | 說明 | 懲罰 |
+|---|------|------|------|
+| 1 | 禁止一次就完成 | 至少 2 次失敗嘗試 | -30 分 |
+| 2 | 禁止空意義成功 | 輸入變動 → 輸出必變 | 淘汰 |
+| 3 | 禁止 Silent Fail | catch 必須分類 | -50 分 |
+
+## 🟧 B 組：逼優化
+
+| # | 天條 | 說明 | 懲罰 |
+|---|------|------|------|
+| 4 | 每 100 行產生排行榜 | 沒排名不准加功能 | 阻斷 |
+| 5 | 代碼只能變短或變快 | 兩者都退步 = REJECT | 回退 |
+| 6 | Abstraction 要付代價 | 只為好看 = 垃圾 | -20 分 |
+
+## 🟩 C 組：逼探索
+
+| # | 天條 | 說明 | 懲罰 |
+|---|------|------|------|
+| 7 | 功能必須有對照組 | 至少 A/B 兩版 | -40 分 |
+| 8 | 失敗版本不能消失 | 淘汰版 → graveyard | 警告 |
+| 9 | 探索成本顯性化 | 記錄時間/測試/修改 | -5 分 |
+
+## 🟪 終極天條
+
+| # | 天條 | 說明 |
+|---|------|------|
+| 10 | 輸給別人比被罵嚴重 10 倍 | 紀律扣 1 分，排名輸扣 10 分 |
+
+---
+
+## 🔌 Mid-Law 使用方式
+
+```bash
+# 開始前檢查（防投機）
+./scripts/ai-supervisor.sh mid-law pre-write <task>
+
+# 寫作中檢查（即時排名）
+./scripts/ai-supervisor.sh mid-law during <task>
+
+# 結束時檢查（生死裁決）
+./scripts/ai-supervisor.sh mid-law finish <task>
+
+# 代碼品質檢查
+./scripts/ai-supervisor.sh mid-law check-code <file>
+
+# 查看淘汰版本
+./scripts/ai-supervisor.sh graveyard <task>
+```
+
+---
+
+# MaiHouses (邁房子) - 專案指南
 
 ## 🏗️ 技術架構
 
-### 核心技術棧
-- **前端框架**: React 18 + TypeScript
-- **構建工具**: Vite
-- **樣式方案**: Tailwind CSS
-- **後端服務**: Vercel Serverless Functions
+- **前端**: React 18 + TypeScript + Vite
+- **樣式**: Tailwind CSS
+- **後端**: Vercel Serverless Functions
 - **資料庫**: Supabase (PostgreSQL)
-- **認證系統**: Supabase Auth
-- **部署平台**: Vercel (自動部署)
-
-### 專案結構
-```
-maihouses/
-├── .github/
-│   └── copilot-instructions.md    # 本文件
-├── api/                           # Vercel Serverless Functions
-│   ├── auth/                      # 認證相關 API
-│   ├── properties/                # 房源相關 API
-│   ├── users/                     # 用戶相關 API
-│   └── ai/                        # AI 功能 API
-├── src/
-│   ├── components/                # React 組件
-│   │   ├── ui/                    # 基礎 UI 組件
-│   │   ├── layout/                # 佈局組件
-│   │   └── features/              # 功能組件
-│   ├── pages/                     # 頁面組件
-│   ├── hooks/                     # 自定義 Hooks
-│   ├── lib/                       # 工具函數和配置
-│   │   ├── supabase.ts            # Supabase 客戶端
-│   │   └── utils.ts               # 通用工具函數
-│   ├── types/                     # TypeScript 類型定義
-│   ├── services/                  # API 調用服務
-│   └── styles/                    # 全域樣式
-├── supabase/                      # Supabase 相關文件
-│   └── migrations/                # 資料庫遷移腳本
-├── public/                        # 靜態資源
-└── vercel.json                    # Vercel 配置
-```
-
----
+- **部署**: Vercel
 
 ## 🔐 環境變數
 
-### 必要的環境變數（在 .env 中設定）
 ```bash
-# Supabase
+# 前端（VITE_ 前綴）
 VITE_SUPABASE_URL=https://xxxxx.supabase.co
 VITE_SUPABASE_ANON_KEY=eyJxxxxxx
 
-# Vercel Serverless（後端用）
+# 後端
 SUPABASE_URL=https://xxxxx.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=eyJxxxxxx  # 注意：這是服務端密鑰
-
-# AI 服務（如果有）
-OPENAI_API_KEY=sk-xxxxx
+SUPABASE_SERVICE_ROLE_KEY=eyJxxxxxx
 ```
 
-### 規則
-- **絕對禁止**在代碼中硬編碼任何密鑰
-- 前端變數使用 `VITE_` 前綴
-- 後端（API）變數不需要前綴
-- 創建 `.env.example` 作為範本
-
----
-
-## 💾 Supabase 操作規則
-
-### 資料庫變更流程
-1. 所有 Schema 變更必須寫成 SQL 檔案
-2. 檔案放在專案根目錄或 `/supabase/migrations/`
-3. 命名格式：`YYYYMMDD_功能名稱.sql`
-4. **不要自動執行 SQL**，我會手動在 Supabase Dashboard 執行
-
-### SQL 檔案範例
-```sql
--- 檔案：20241125_trust_room.sql
--- 功能：Trust Room 交易系統資料表
-
--- 交易記錄表
-CREATE TABLE IF NOT EXISTS trust_transactions (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  buyer_id UUID REFERENCES auth.users(id),
-  seller_id UUID REFERENCES auth.users(id),
-  property_id UUID NOT NULL,
-  stage INTEGER DEFAULT 1 CHECK (stage BETWEEN 1 AND 6),
-  status TEXT DEFAULT 'pending',
-  escrow_amount DECIMAL(12,2),
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- RLS 政策
-ALTER TABLE trust_transactions ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Users can view their own transactions"
-  ON trust_transactions FOR SELECT
-  USING (auth.uid() = buyer_id OR auth.uid() = seller_id);
-
--- 索引
-CREATE INDEX idx_trust_transactions_buyer ON trust_transactions(buyer_id);
-CREATE INDEX idx_trust_transactions_seller ON trust_transactions(seller_id);
-```
-
-### Supabase 客戶端使用
-```typescript
-// 正確的引入方式
-import { supabase } from '@/lib/supabase';
-
-// 查詢範例
-const { data, error } = await supabase
-  .from('properties')
-  .select('*')
-  .eq('status', 'active')
-  .order('created_at', { ascending: false });
-
-// 必須處理錯誤
-if (error) {
-  console.error('查詢失敗:', error.message);
-  throw new Error('無法載入房源資料');
-}
-```
-
----
-
-## 🚀 Vercel API 規則
-
-### API 路由結構
-```typescript
-// 檔案：/api/properties/list.ts
-import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
-
-export default async function handler(
-  req: VercelRequest,
-  res: VercelResponse
-) {
-  // CORS 處理
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-
-  try {
-    // 你的邏輯
-    const { data, error } = await supabase
-      .from('properties')
-      .select('*');
-
-    if (error) throw error;
-
-    return res.status(200).json({
-      success: true,
-      data
-    });
-  } catch (error) {
-    console.error('API Error:', error);
-    return res.status(500).json({
-      success: false,
-      error: '伺服器錯誤，請稍後再試'
-    });
-  }
-}
-```
-
-### API 回應格式
-```typescript
-// 成功回應
-{
-  success: true,
-  data: any,
-  message?: string
-}
-
-// 錯誤回應
-{
-  success: false,
-  error: string,
-  code?: string
-}
-```
-
----
+**絕對禁止**硬編碼任何密鑰！
 
 ## 📝 代碼規範
 
-### TypeScript 規則
 ```typescript
-// ✅ 正確：明確的類型定義
+// ✅ 正確
 interface Property {
   id: string;
   title: string;
   price: number;
-  location: {
-    city: string;
-    district: string;
-    address: string;
-  };
 }
 
-// ❌ 禁止：使用 any
-const data: any = fetchData(); // 不要這樣
-
-// ✅ 正確：使用 unknown 並進行類型檢查
-const data: unknown = fetchData();
-if (isProperty(data)) {
-  // 現在 data 是 Property 類型
-}
+// ❌ 禁止
+const data: any = fetchData();
 ```
 
-### React 組件規範
-```typescript
-// 使用函數組件 + TypeScript
-interface PropertyCardProps {
-  property: Property;
-  onFavorite?: (id: string) => void;
-  className?: string;
-}
+## 🌐 語言
 
-export function PropertyCard({ 
-  property, 
-  onFavorite,
-  className = ''
-}: PropertyCardProps) {
-  return (
-    <div className={`bg-white rounded-xl shadow-sm ${className}`}>
-      {/* 組件內容 */}
-    </div>
-  );
-}
-```
-
-### 命名規範
-| 類型 | 規範 | 範例 |
-|------|------|------|
-| 組件 | PascalCase | `PropertyCard.tsx` |
-| Hook | camelCase + use前綴 | `useAuth.ts` |
-| 工具函數 | camelCase | `formatPrice.ts` |
-| 常數 | SCREAMING_SNAKE_CASE | `MAX_UPLOAD_SIZE` |
-| 類型/介面 | PascalCase | `UserProfile` |
+- **UI 文字**: 繁體中文
+- **代碼/變數**: 英文
+- **錯誤訊息**: 繁體中文
 
 ---
 
-## 🛡️ 禁止事項
-
-### 絕對禁止
-1. ❌ 硬編碼任何 API 密鑰、密碼、敏感資訊
-2. ❌ 刪除現有功能（除非明確要求）
-3. ❌ 直接修改資料庫 Schema（必須寫 SQL 檔案）
-4. ❌ 使用 `any` 類型
-5. ❌ 忽略錯誤處理
-6. ❌ 在前端暴露 `SERVICE_ROLE_KEY`
-
-### 需要確認
-1. ⚠️ 改變資料庫結構前要先確認
-2. ⚠️ 刪除檔案前要先確認
-3. ⚠️ 改變 API 回應格式前要先確認
-4. ⚠️ 升級主要依賴版本前要先確認
-
----
-
-## 🔧 常用指令
-
-```bash
-# 開發
-npm install          # 安裝依賴
-npm run dev          # 啟動開發伺服器 (通常是 port 5173)
-npm run build        # 構建生產版本
-npm run preview      # 預覽構建結果
-
-# 類型檢查
-npm run type-check   # TypeScript 類型檢查
-
-# 部署
-git push origin main # 推送到 main 分支，Vercel 自動部署
-```
-
----
-
-## 📋 任務執行清單
-
-當你收到任務時，請按以下順序執行：
-
-### 前置檢查
-- [ ] 理解任務需求
-- [ ] 確認涉及的檔案和模組
-- [ ] 檢查是否需要資料庫變更
-- [ ] 確認是否有相關的現有代碼可參考
-
-### 執行中
-- [ ] 遵循專案代碼規範
-- [ ] 添加必要的 TypeScript 類型
-- [ ] 處理所有錯誤情況
-- [ ] 使用繁體中文撰寫 UI 文字和錯誤訊息
-
-### 完成後
-- [ ] 說明你做了什麼改動
-- [ ] 列出新增/修改的檔案
-- [ ] 如果有 SQL 變更，提供完整的 SQL 檔案
-- [ ] 如果需要新的環境變數，明確列出
-
----
-
-## 🌐 語言規範
-
-- **代碼註解**: 中文或英文皆可
-- **UI 文字**: 必須使用繁體中文
-- **錯誤訊息**: 繁體中文，對用戶友善
-- **Console log**: 英文（方便 debug）
-
-```typescript
-// UI 文字範例
-const messages = {
-  loading: '載入中...',
-  error: '發生錯誤，請稍後再試',
-  success: '操作成功！',
-  noData: '目前沒有資料',
-  confirm: '確定要執行此操作嗎？',
-};
-```
-
----
-
-## 📞 需要幫助時
-
-如果遇到以下情況，請詢問我：
-1. 不確定現有功能的運作方式
-2. 需要了解業務邏輯
-3. 涉及到付款或敏感資料處理
-4. 需要做重大架構變更
-
----
-
-## 🔒 代碼模糊化規則
-
-當需要對外分享代碼或生成文件時，請依照以下規則進行模糊化處理：
-
-### 必須模糊化
-
-| 類別 | 處理方式 | 範例 |
-|------|----------|------|
-| 正則表達式 | 替換為 `[REGEX]` | `/^\d{3,5}/` → `[REGEX]` |
-| 資料庫查詢條件 | 只保留表名 | `.eq('x', y)` → `/* [REDACTED] */` |
-| API 金鑰 | 替換為 `[API_KEY]` | `Bearer ${key}` → `Bearer [API_KEY]` |
-| AI Prompt 內容 | 只保留功能描述 | 完整 prompt → `[REDACTED - 商業機密]` |
-| 環境變數值 | 保留名稱，移除值 | 實際值 → `[REDACTED]` |
-| UUID | 替換為 `uuid-xxxx` | 實際 UUID → `uuid-xxxx` |
-| 業務邏輯判斷 | 保留結構，移除細節 | `if (x > 5)` → `if (/* [REDACTED] */)` |
-
-### 可以保留
-
-- 函數名稱和簽名
-- 類型定義和介面
-- 檔案結構和目錄
-- 一般性的流程說明
-- 公開的 API 路徑
-
-### 絕對禁止外流
-
-1. ❌ 完整的正則表達式（地址指紋、社區名正規化）
-2. ❌ AI Prompt 完整內容
-3. ❌ 資料庫欄位完整列表
-4. ❌ 比對演算法完整實作
-5. ❌ 環境變數實際值
-6. ❌ Supabase Service Role Key
-
----
-
-*最後更新：2024/12/01*
-*專案維護者：Mike*
+*版本：v8.0 ARENA MODE*
+*最後更新：2024/12/09*

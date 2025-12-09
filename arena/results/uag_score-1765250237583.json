@@ -1,0 +1,30 @@
+{
+  "task": "uag_score",
+  "timestamp": "2025-12-09T03:17:17.582Z",
+  "candidates": [
+    {
+      "name": "claude-v1",
+      "status": "ELIMINATED",
+      "testsPassed": false,
+      "fuzzFailRate": 0,
+      "stressPassed": true,
+      "avgRuntimeMs": 0,
+      "codeLines": 49,
+      "score": 0,
+      "eliminationReason": "Tests failed: Test '中等房源': expected {\"score\":52,\"level\":\"C\",\"breakdown\":{\"verification\":15,\"quality\":17,\"responsiveness\":1,\"history\":7}}, got {\"score\":40,\"level\":\"C\",\"breakdown\":{\"verification\":15,\"quality\":17,\"responsiveness\":1,\"history\":7}}"
+    },
+    {
+      "name": "claude-v2",
+      "status": "ELIMINATED",
+      "testsPassed": false,
+      "fuzzFailRate": 0,
+      "stressPassed": true,
+      "avgRuntimeMs": 0,
+      "codeLines": 14,
+      "score": 0,
+      "eliminationReason": "Tests failed: Test '中等房源': expected {\"score\":52,\"level\":\"C\",\"breakdown\":{\"verification\":15,\"quality\":17,\"responsiveness\":1,\"history\":7}}, got {\"score\":40,\"level\":\"C\",\"breakdown\":{\"verification\":15,\"quality\":17,\"responsiveness\":1,\"history\":7}}"
+    }
+  ],
+  "champion": null,
+  "leaderboard": []
+}
