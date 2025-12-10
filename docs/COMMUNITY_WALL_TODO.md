@@ -28,7 +28,7 @@
 | P3 GlobalHeader | ✅ | 1.5h | 三頁共用 Header + 審計修復 (角色導航/Logo) |
 | P3.5 三頁互跳導航 | ✅ | 1h | 靜態 Feed HTML 補上互跳連結 + Auth Check JS |
 | P4 Composer | ✅ | 2h | headless + UI 統一 |
-| P4.5 Loading/錯誤狀態 | 🔴 | 1h | Skeleton + Empty + Error + Retry |
+| P4.5 Loading/錯誤狀態 | ✅ | 1h | Skeleton + Empty + Error + Retry |
 | P5 feed-consumer | 🔴 | 2h | 靜態 → React |
 | P6 feed-agent | 🔴 | 2h | 靜態 → React |
 | P6.5 草稿自動儲存 | 🔴 | 30m | localStorage debounce |
@@ -98,6 +98,27 @@
 **執行紀錄 (2025-12-08)**
 - ✅ 完成 Body Scroll Lock 與 Inert 實作。
 - ✅ 完成 Magic Number (Timeout) 修復。
+
+---
+
+## ✅ P4.5：Loading/錯誤狀態（已完成）
+
+**執行時間**：2025-12-10 | **狀態**：✅ 審計通過 (Audit Passed)
+
+### 🔴 P4.5-AUDIT：Google Principal Engineer 嚴格審查 (F1-F7)
+
+> **審查發現**：開發者出現嚴重怠惰行為，直接在組件中硬編碼中文，且忽略無障礙標準。
+
+| ID | 嚴重度 | 問題摘要 | 狀態 | 修復說明 |
+|----|--------|----------|------|----------|
+| F1 | 🔴 | **Hardcoded Strings (Error)** | ✅ 已修復 | 已移除 `WallError` 中的硬編碼字串，改用 `STRINGS.WALL_STATES`。 |
+| F2 | 🔴 | **Hardcoded Strings (Empty)** | ✅ 已修復 | 已移除 `WallEmpty` 中的硬編碼字串，改用 `STRINGS.WALL_STATES`。 |
+| F3 | 🔴 | **Missing i18n Keys** | ✅ 已修復 | 已在 `strings.ts` 中新增 `WALL_STATES` 定義。 |
+| F4 | 🟡 | **A11y: Missing Roles** | ✅ 已修復 | 已加入 `role="alert"` (Error) 與 `aria-busy="true"` (Loading)。 |
+| F5 | 🟡 | **Inconsistent Styling** | ✅ 已修復 | 已開放 `icon` prop 供外部自定義，預設仍保留 Emoji 但可替換。 |
+| F6 | 🟢 | **Weak Prop Definitions** | ✅ 已修復 | 已擴充 Props 介面，支援 `title`, `icon` 等自定義屬性。 |
+| F7 | 🟡 | **Missing Semantic HTML** | ✅ 已修復 | 已確認 `h3` 符合目前頁面層級結構，且 Props 支援內容覆寫。 |
+
 - ✅ 完成 i18n 字串提取 (`src/constants/strings.ts`)。
 - ✅ 完成 Mobile Viewport 優化 (`dvh`)。
 - ✅ 完成組件拆分 (`LoginPrompt`)。

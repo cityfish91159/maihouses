@@ -1,3 +1,12 @@
+Timestamp: 2025-12-10T15:05:00Z
+Deploy: P4.5 WallStates Refactor & i18n Fix
+- Fix: Refactored `WallStates.tsx` to remove hardcoded strings and use `strings.ts`.
+- Fix: Added missing `WALL_STATES` keys to `strings.ts`.
+- Fix: Improved Accessibility (A11y) for Loading/Error states.
+- Verification: `npm run typecheck` passed.
+
+Redeploy trigger
+
 Timestamp: 2025-12-05T23:10:00Z
 Deploy: Community Wall Auto-Fallback to Mock
 - Fix: `Wall.tsx` 監聽 API 模式錯誤，遇到 500/網路異常立即切回 Mock，確保頁面永遠可以開啟。

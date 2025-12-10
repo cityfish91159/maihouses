@@ -60,5 +60,13 @@ export const STRINGS = {
     MAX_LENGTH: (max: number) => `內容不能超過 ${max} 個字`,
     SUBMIT_ERROR: '發布失敗',
   },
+  WALL_STATES: {
+    ERROR_TITLE: '發生錯誤',
+    ERROR_DEFAULT: '載入失敗，請稍後再試',
+    RETRY: '重試',
+    EMPTY_TITLE: '這裡空空的',
+    EMPTY_DEFAULT: '目前沒有任何貼文',
+    LOADING_LABEL: '載入中...',
+  },
 };
 
