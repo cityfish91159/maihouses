@@ -114,7 +114,7 @@ audit_file() {
     echo -e "${RED}【A級】致命錯誤檢查${NC}"
 
     # 1. any 類型
-    local any_count=$(grep -c ": any" "$file" 2>/dev/null || echo 0)
+    local any_count=$(grep -c ": any" "$file" 2>/dev/null | tr -d '\n' || echo 0)
     if [ "$any_count" -gt 0 ]; then
         echo -e "${BG_RED}${WHITE}   💀 致命: 發現 $any_count 個 ': any' 類型${NC}"
         total_penalty=$((total_penalty + PENALTY_ANY_TYPE * any_count))
@@ -123,7 +123,7 @@ audit_file() {
     fi
 
     # 2. as any (更惡劣)
-    local as_any_count=$(grep -cE "as any|<any>" "$file" 2>/dev/null || echo 0)
+    local as_any_count=$(grep -cE "as any|<any>" "$file" 2>/dev/null | tr -d '\n' || echo 0)
     if [ "$as_any_count" -gt 0 ]; then
         echo -e "${BG_RED}${WHITE}   💀 致命: 發現 $as_any_count 個 'as any' 斷言${NC}"
         total_penalty=$((total_penalty + PENALTY_AS_ANY * as_any_count))
@@ -132,7 +132,7 @@ audit_file() {
     fi
 
     # 3. @ts-ignore
-    local ts_ignore_count=$(grep -c "@ts-ignore" "$file" 2>/dev/null || echo 0)
+    local ts_ignore_count=$(grep -c "@ts-ignore" "$file" 2>/dev/null | tr -d '\n' || echo 0)
     if [ "$ts_ignore_count" -gt 0 ]; then
         echo -e "${BG_RED}${WHITE}   💀 致命: 發現 $ts_ignore_count 個 @ts-ignore${NC}"
         total_penalty=$((total_penalty + PENALTY_TS_IGNORE * ts_ignore_count))
@@ -149,7 +149,7 @@ audit_file() {
     fi
 
     # 5. eslint-disable
-    local eslint_count=$(grep -c "eslint-disable" "$file" 2>/dev/null || echo 0)
+    local eslint_count=$(grep -c "eslint-disable" "$file" 2>/dev/null | tr -d '\n' || echo 0)
     if [ "$eslint_count" -gt 0 ]; then
         if grep -q "eslint-disable$" "$file" 2>/dev/null; then
             echo -e "${BG_RED}${WHITE}   💀💀 極致命: eslint-disable 整檔禁用！${NC}"
@@ -172,7 +172,7 @@ audit_file() {
     fi
 
     # 7. 空 catch
-    local empty_catch=$(grep -cE "catch\s*\([^)]*\)\s*\{\s*\}" "$file" 2>/dev/null || echo 0)
+    local empty_catch=$(grep -cE "catch\s*\([^)]*\)\s*\{\s*\}" "$file" 2>/dev/null | tr -d '\n' || echo 0)
     if [ "$empty_catch" -gt 0 ]; then
         echo -e "${BG_RED}${WHITE}   💀 致命: 發現 $empty_catch 個空 catch 區塊${NC}"
         total_penalty=$((total_penalty + PENALTY_EMPTY_CATCH * empty_catch))
@@ -181,7 +181,7 @@ audit_file() {
     fi
 
     # 8. Silent Fail (catch return null/undefined)
-    local silent_fail=$(grep -cE "catch.*return\s*(null|undefined|;)" "$file" 2>/dev/null || echo 0)
+    local silent_fail=$(grep -cE "catch.*return\s*(null|undefined|;)" "$file" 2>/dev/null | tr -d '\n' || echo 0)
     if [ "$silent_fail" -gt 0 ]; then
         echo -e "${BG_RED}${WHITE}   💀 致命: 發現 $silent_fail 個 Silent Fail${NC}"
         total_penalty=$((total_penalty + PENALTY_SILENT_FAIL * silent_fail))
@@ -195,7 +195,7 @@ audit_file() {
     echo -e "${RED}【B級】嚴重錯誤檢查${NC}"
 
     # 9. console.log
-    local console_log=$(grep -c "console\.log" "$file" 2>/dev/null || echo 0)
+    local console_log=$(grep -c "console\.log" "$file" 2>/dev/null | tr -d '\n' || echo 0)
     if [ "$console_log" -gt 0 ]; then
         echo -e "${RED}   🚨 嚴重: 發現 $console_log 個 console.log${NC}"
         total_penalty=$((total_penalty + PENALTY_CONSOLE_LOG * console_log))
@@ -204,7 +204,7 @@ audit_file() {
     fi
 
     # 10. console.error (比 log 輕一點)
-    local console_error=$(grep -c "console\.error" "$file" 2>/dev/null || echo 0)
+    local console_error=$(grep -c "console\.error" "$file" 2>/dev/null | tr -d '\n' || echo 0)
     if [ "$console_error" -gt 0 ]; then
         echo -e "${YELLOW}   ⚠️ 警告: 發現 $console_error 個 console.error${NC}"
         total_penalty=$((total_penalty + PENALTY_CONSOLE_ERROR * console_error))
@@ -212,7 +212,7 @@ audit_file() {
     fi
 
     # 11. 寬鬆類型
-    local loose_type=$(grep -cE ": Function|: Object[^.]|: \{\}" "$file" 2>/dev/null || echo 0)
+    local loose_type=$(grep -cE ": Function|: Object[^.]|: \{\}" "$file" 2>/dev/null | tr -d '\n' || echo 0)
     if [ "$loose_type" -gt 0 ]; then
         echo -e "${RED}   🚨 嚴重: 發現 $loose_type 個寬鬆類型 (Function/Object/{})${NC}"
         total_penalty=$((total_penalty + PENALTY_LOOSE_TYPE * loose_type))
@@ -312,7 +312,7 @@ audit_file() {
         fi
 
         # 21. inline style
-        local inline_style=$(grep -c 'style={{' "$file" 2>/dev/null || echo 0)
+        local inline_style=$(grep -c 'style={{' "$file" 2>/dev/null | tr -d '\n' || echo 0)
         if [ "$inline_style" -gt 0 ]; then
             echo -e "${YELLOW}   ⚠️ 一般: 發現 $inline_style 個 inline style${NC}"
             total_penalty=$((total_penalty + PENALTY_INLINE_STYLE * inline_style))
@@ -382,7 +382,7 @@ audit_file() {
 
     # 26. 深層巢狀 (簡易檢測：連續4個以上的開括號)
     if grep -qE "^\s{16,}" "$file" 2>/dev/null; then
-        local deep_nesting=$(grep -cE "^\s{16,}" "$file" 2>/dev/null || echo 0)
+        local deep_nesting=$(grep -cE "^\s{16,}" "$file" 2>/dev/null | tr -d '\n' || echo 0)
         if [ "$deep_nesting" -gt 5 ]; then
             echo -e "${YELLOW}   ⚠️ 一般: 發現深層巢狀 ($deep_nesting 處)${NC}"
             total_penalty=$((total_penalty + PENALTY_DEEP_NESTING))
@@ -391,7 +391,7 @@ audit_file() {
     fi
 
     # 27. TODO/FIXME
-    local todo_count=$(grep -cE "TODO|FIXME|XXX|HACK" "$file" 2>/dev/null || echo 0)
+    local todo_count=$(grep -cE "TODO|FIXME|XXX|HACK" "$file" 2>/dev/null | tr -d '\n' || echo 0)
     if [ "$todo_count" -gt 0 ]; then
         echo -e "${YELLOW}   ⚠️ 一般: 發現 $todo_count 個 TODO/FIXME${NC}"
         total_penalty=$((total_penalty + PENALTY_TODO_FIXME * todo_count))

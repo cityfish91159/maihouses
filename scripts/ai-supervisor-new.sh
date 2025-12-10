@@ -132,7 +132,7 @@ cmd_audit_all() {
     audit_all
 }
 
-# 追蹤修改
+# 追蹤修改 (自動即時分析)
 cmd_track() {
     local file="${1:-}"
     if [ -z "$file" ]; then
@@ -144,11 +144,12 @@ cmd_track() {
     check_session
     track_modify "$file"
 
-    # 即時偷懶偵測
-    if ! detect_laziness "$file" > /dev/null 2>&1; then
-        echo ""
-        warn "發現偷懶模式！建議立即修復。"
-    fi
+    # 🔴 自動即時分析（單終端機模式）
+    echo ""
+    analyze_file_realtime "$file"
+
+    # 顯示迷你狀態
+    show_mini_status
 }
 
 # 掃描偷懶
