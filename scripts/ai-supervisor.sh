@@ -117,7 +117,32 @@ cmd_finish() {
     fi
     echo -e "${GREEN}   ✅ 掃描完成${NC}"
 
-    # 5. 完成
+    # 5. 🔥 自動執行 TypeScript 和 ESLint 檢查 🔥
+    echo "5️⃣  執行 TypeScript 檢查..."
+    local ts_output
+    ts_output=$(npm run typecheck 2>&1) || true
+    if echo "$ts_output" | grep -qiE "error TS[0-9]+:|Cannot find module"; then
+        echo -e "${RED}   ❌ TypeScript 有錯誤！${NC}"
+        echo "$ts_output" | grep -iE "error TS[0-9]+:" | head -5
+        check_terminal_errors "$ts_output"
+    else
+        echo -e "${GREEN}   ✅ TypeScript 通過${NC}"
+        clear_error_remind "TypeScript" 2>/dev/null || true
+    fi
+
+    echo "6️⃣  執行 ESLint 檢查..."
+    local lint_output
+    lint_output=$(npm run lint 2>&1) || true
+    if echo "$lint_output" | grep -qiE "error|✖.*problems"; then
+        echo -e "${RED}   ❌ ESLint 有錯誤！${NC}"
+        echo "$lint_output" | grep -iE "error" | head -5
+        check_terminal_errors "$lint_output"
+    else
+        echo -e "${GREEN}   ✅ ESLint 通過${NC}"
+        clear_error_remind "ESLint" 2>/dev/null || true
+    fi
+
+    # 7. 完成
     finish_session
 }
 
