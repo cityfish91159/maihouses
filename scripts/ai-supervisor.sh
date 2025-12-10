@@ -319,6 +319,45 @@ cmd_clear_error() {
     fi
 }
 
+# 顯示範例模板
+cmd_template() {
+    local type="${1:-list}"
+    local template_dir="$SCRIPT_DIR/templates"
+
+    case "$type" in
+        list)
+            print_header "🏆 最佳實踐模板"
+            echo ""
+            echo "可用模板："
+            echo "  component  - React 組件模板 (最高 +42 分)"
+            echo "  hook       - Custom Hook 模板 (最高 +29 分)"
+            echo "  api        - API Service 模板 (最高 +26 分)"
+            echo ""
+            echo "使用方式："
+            echo "  ./scripts/ai-supervisor.sh template component"
+            echo "  ./scripts/ai-supervisor.sh template hook"
+            echo ""
+            echo -e "${YELLOW}提示: 照著模板寫可以獲得大量獎勵分數！${NC}"
+            ;;
+        component)
+            print_header "🏆 React 組件模板"
+            cat "$template_dir/component.tsx.template"
+            ;;
+        hook)
+            print_header "🏆 Custom Hook 模板"
+            cat "$template_dir/hook.ts.template"
+            ;;
+        api|service)
+            print_header "🏆 API Service 模板"
+            cat "$template_dir/api-service.ts.template"
+            ;;
+        *)
+            echo -e "${RED}未知模板類型: $type${NC}"
+            echo "可用: component, hook, api"
+            ;;
+    esac
+}
+
 # 顯示幫助
 cmd_help() {
     echo -e "${CYAN}AI Supervisor v12.0 - 全面監控版${NC}"
@@ -348,6 +387,12 @@ cmd_help() {
     echo "  run <指令>       執行指令並檢查錯誤 (第一次免扣，第二次起 -20分)"
     echo "  clear-error      清除錯誤提醒記錄"
     echo ""
+    echo -e "${WHITE}【模板 🏆】${NC}"
+    echo "  template         顯示最佳實踐模板列表"
+    echo "  template component  React 組件模板 (+42 分)"
+    echo "  template hook       Custom Hook 模板 (+29 分)"
+    echo "  template api        API Service 模板 (+26 分)"
+    echo ""
     echo -e "${WHITE}【記錄指令】${NC}"
     echo "  rules            顯示扣分規則"
     echo "  violations       顯示違規記錄"
@@ -367,10 +412,14 @@ cmd_help() {
     echo -e "${YELLOW}【80分清空代碼】${NC}"
     echo "  分數低於 80 = 本次所有代碼被清空重來"
     echo ""
-    echo -e "${GREEN}【獎勵機制】${NC}"
+    echo -e "${GREEN}【獎勵機制 🏆】${NC}"
     echo "  ✅ 精簡檔案 (<100行) = +5~10 分"
-    echo "  ✅ 乾淨代碼 (無偷懶) = +5 分"
-    echo "  ✅ 精簡函數 (<20行) = +3 分"
+    echo "  ✅ 正確類型定義 (無 any) = +8 分"
+    echo "  ✅ React.memo 優化 = +5 分"
+    echo "  ✅ useCallback/useMemo = +5 分"
+    echo "  ✅ i18n 國際化 = +10 分"
+    echo "  ✅ 完整 a11y = +8 分"
+    echo "  ✅ 有測試檔案 = +15 分"
 }
 
 # ============================================================================
@@ -446,6 +495,11 @@ main() {
             ;;
         clear-error)
             cmd_clear_error "$@"
+            ;;
+
+        # 模板
+        template|templates)
+            cmd_template "$@"
             ;;
 
         # 幫助

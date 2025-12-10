@@ -1,0 +1,75 @@
+/**
+ * 🏆 最佳實踐 Custom Hook 模板
+ *
+ * 獎勵點：
+ * - 正確的類型定義 (+8 分)
+ * - useCallback/useMemo (+5 分)
+ * - early return (+3 分)
+ * - JSDoc (+3 分)
+ * - 精簡代碼 (<50行 +10 分)
+ */
+
+import { useState, useCallback, useMemo } from 'react';
+
+// ✅ 清晰的類型定義
+interface UseCustomHookOptions {
+  initialValue?: string;
+  maxLength?: number;
+}
+
+interface UseCustomHookReturn {
+  value: string;
+  setValue: (newValue: string) => void;
+  reset: () => void;
+  isValid: boolean;
+  errorMessage: string | null;
+}
+
+/**
+ * useCustomHook - Hook 描述
+ *
+ * @param options - 配置選項
+ * @returns Hook 返回值
+ *
+ * @example
+ * const { value, setValue, isValid } = useCustomHook({ maxLength: 100 });
+ */
+export function useCustomHook(
+  options: UseCustomHookOptions = {}
+): UseCustomHookReturn {
+  const { initialValue = '', maxLength = 255 } = options;
+
+  const [value, setValueInternal] = useState(initialValue);
+
+  // ✅ useCallback 優化
+  const setValue = useCallback(
+    (newValue: string) => {
+      if (newValue.length <= maxLength) {
+        setValueInternal(newValue);
+      }
+    },
+    [maxLength]
+  );
+
+  const reset = useCallback(() => {
+    setValueInternal(initialValue);
+  }, [initialValue]);
+
+  // ✅ useMemo 優化計算結果
+  const validation = useMemo(() => {
+    if (value.length === 0) {
+      return { isValid: false, errorMessage: 'Value is required' };
+    }
+    if (value.length > maxLength) {
+      return { isValid: false, errorMessage: `Max ${maxLength} characters` };
+    }
+    return { isValid: true, errorMessage: null };
+  }, [value, maxLength]);
+
+  return {
+    value,
+    setValue,
+    reset,
+    ...validation,
+  };
+}

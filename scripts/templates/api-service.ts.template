@@ -1,0 +1,138 @@
+/**
+ * 🏆 最佳實踐 API Service 模板
+ *
+ * 獎勵點：
+ * - 正確的類型定義 (+8 分)
+ * - JSDoc (+3 分)
+ * - 精簡代碼 (+5~10 分)
+ * - 常數定義 (+5 分)
+ */
+
+// ✅ 常數定義（避免魔術數字）
+const API_ENDPOINTS = {
+  LIST: '/api/items',
+  DETAIL: '/api/items/:id',
+  CREATE: '/api/items',
+  UPDATE: '/api/items/:id',
+  DELETE: '/api/items/:id',
+} as const;
+
+const HTTP_STATUS = {
+  OK: 200,
+  CREATED: 201,
+  BAD_REQUEST: 400,
+  UNAUTHORIZED: 401,
+  NOT_FOUND: 404,
+} as const;
+
+// ✅ 清晰的類型定義
+interface ApiResponse<T> {
+  data: T;
+  message: string;
+  success: boolean;
+}
+
+interface Item {
+  id: string;
+  name: string;
+  createdAt: string;
+}
+
+interface CreateItemPayload {
+  name: string;
+}
+
+interface UpdateItemPayload {
+  name?: string;
+}
+
+/**
+ * Item API Service
+ *
+ * @example
+ * const items = await itemService.getAll();
+ * const item = await itemService.getById('123');
+ */
+export const itemService = {
+  /**
+   * 取得所有項目
+   */
+  async getAll(): Promise<Item[]> {
+    const response = await fetch(API_ENDPOINTS.LIST);
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch items: ${response.status}`);
+    }
+
+    const result: ApiResponse<Item[]> = await response.json();
+    return result.data;
+  },
+
+  /**
+   * 根據 ID 取得單一項目
+   */
+  async getById(id: string): Promise<Item> {
+    const url = API_ENDPOINTS.DETAIL.replace(':id', id);
+    const response = await fetch(url);
+
+    if (response.status === HTTP_STATUS.NOT_FOUND) {
+      throw new Error(`Item not found: ${id}`);
+    }
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch item: ${response.status}`);
+    }
+
+    const result: ApiResponse<Item> = await response.json();
+    return result.data;
+  },
+
+  /**
+   * 建立新項目
+   */
+  async create(payload: CreateItemPayload): Promise<Item> {
+    const response = await fetch(API_ENDPOINTS.CREATE, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to create item: ${response.status}`);
+    }
+
+    const result: ApiResponse<Item> = await response.json();
+    return result.data;
+  },
+
+  /**
+   * 更新項目
+   */
+  async update(id: string, payload: UpdateItemPayload): Promise<Item> {
+    const url = API_ENDPOINTS.UPDATE.replace(':id', id);
+    const response = await fetch(url, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to update item: ${response.status}`);
+    }
+
+    const result: ApiResponse<Item> = await response.json();
+    return result.data;
+  },
+
+  /**
+   * 刪除項目
+   */
+  async delete(id: string): Promise<void> {
+    const url = API_ENDPOINTS.DELETE.replace(':id', id);
+    const response = await fetch(url, { method: 'DELETE' });
+
+    if (!response.ok) {
+      throw new Error(`Failed to delete item: ${response.status}`);
+    }
+  },
+};
