@@ -110,12 +110,20 @@ cmd_finish() {
         echo -e "${GREEN}   ✅ 已記錄結果${NC}"
     fi
 
-    # 4. 執行偷懶掃描
+    # 4. 執行偷懶掃描（發現偷懶扣分！）
     echo "4️⃣  執行偷懶掃描..."
-    if ! scan_laziness "$PROJECT_ROOT/src" > /dev/null 2>&1; then
-        warn "發現偷懶模式，但不阻擋完成"
+    local lazy_count=0
+    lazy_count=$(find "$PROJECT_ROOT/src" -type f \( -name "*.ts" -o -name "*.tsx" \) -print0 2>/dev/null | \
+        xargs -0 grep -l -E "throw.*not.?implement|throw.*todo|=>\s*\{\s*\}|function.*\(\s*\)\s*\{\s*\}" 2>/dev/null | wc -l || echo 0)
+    lazy_count=$(echo "$lazy_count" | tr -d '[:space:]')
+
+    if [ "$lazy_count" -gt 0 ]; then
+        echo -e "${RED}   🦥 發現 $lazy_count 個偷懶檔案！${NC}"
+        local lazy_penalty=$((lazy_count * -10))
+        update_score $lazy_penalty "偷懶掃描: $lazy_count 個檔案有偷懶模式"
+    else
+        echo -e "${GREEN}   ✅ 無偷懶模式${NC}"
     fi
-    echo -e "${GREEN}   ✅ 掃描完成${NC}"
 
     # 5. 🔥 自動執行 TypeScript 和 ESLint 檢查 🔥
     echo "5️⃣  執行 TypeScript 檢查..."
