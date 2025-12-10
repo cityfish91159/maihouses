@@ -694,13 +694,30 @@ check_escape() {
 check_todo_result() {
     local violations=0
 
-    # 檢查是否有修改 TODO 相關的 .md 檔案
+    # 直接檢查 git 變更（因為 .md 檔案不強制 track，所以不能依賴 modified_files.log）
     local todo_modified=0
-    if [ -f "$STATE_DIR/modified_files.log" ]; then
+
+    # 方法 1: 檢查 git 變更中是否有 TODO 相關的 .md 檔案
+    local git_md_changes
+    git_md_changes=$(git status --porcelain 2>/dev/null | sed 's/^.. //' | grep -iE "(TODO|CHANGELOG|RESULT|完成|結果).*\.md$" || true)
+    if [ -n "$git_md_changes" ]; then
+        todo_modified=1
+    fi
+
+    # 方法 2: 也檢查 docs/ 目錄下的任何 .md 檔案
+    if [ "$todo_modified" -eq 0 ]; then
+        local docs_changes
+        docs_changes=$(git status --porcelain 2>/dev/null | sed 's/^.. //' | grep -E "^docs/.*\.md$" || true)
+        if [ -n "$docs_changes" ]; then
+            todo_modified=1
+        fi
+    fi
+
+    # 方法 3: 備用 - 也檢查 modified_files.log（以防有人手動 track）
+    if [ "$todo_modified" -eq 0 ] && [ -f "$STATE_DIR/modified_files.log" ]; then
         if grep -qiE "(TODO|CHANGELOG|RESULT|完成|結果).*\.md$" "$STATE_DIR/modified_files.log" 2>/dev/null; then
             todo_modified=1
         fi
-        # 也檢查 docs/ 目錄下的任何 .md 檔案
         if grep -qE "^docs/.*\.md$" "$STATE_DIR/modified_files.log" 2>/dev/null; then
             todo_modified=1
         fi
