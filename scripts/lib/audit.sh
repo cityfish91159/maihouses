@@ -62,6 +62,7 @@ readonly PENALTY_IMPORT_STAR=-2         # import * 全部引入
 # 流程違規 (獨立計算)
 readonly PENALTY_UNTRACKED_MODIFY=-20   # 未追蹤的修改
 readonly PENALTY_UNAUDITED_FILE=-5      # 未審計檔案
+readonly PENALTY_IGNORE_TERMINAL_ERROR=-20  # 忽略終端錯誤（第二次起）
 
 # ============================================================================
 # 🔥🔥🔥 天條中的天條 - 違反者死無全屍 🔥🔥🔥
@@ -644,6 +645,9 @@ track_modify() {
 
     [ -z "$file" ] && return 1
 
+    # 🔥 自動偷雞偵測：檢查是否有其他未追蹤的 git 變更 🔥
+    auto_detect_cheating "$file"
+
     # 記錄修改 (去重)
     if ! grep -qF "$file" "$STATE_DIR/modified_files.log" 2>/dev/null; then
         echo "$file" >> "$STATE_DIR/modified_files.log"
@@ -665,6 +669,75 @@ track_modify() {
         echo -e "${BG_RED}${WHITE}🚨 警告：待審計檔案已達 $pending 個！${NC}"
         echo -e "${BG_RED}${WHITE}   不要繼續堆積！立即執行 audit！${NC}"
         echo -e "${BG_RED}${WHITE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    fi
+}
+
+# 🔥 自動偷雞偵測 🔥
+auto_detect_cheating() {
+    local current_file="$1"
+
+    # 取得所有 git 變更的 ts/tsx 檔案（排除當前要 track 的檔案）
+    local git_changes
+    git_changes=$(git status --porcelain 2>/dev/null | sed 's/^.. //' | grep -E '\.(ts|tsx)$' | grep -v "^$current_file$" || true)
+
+    if [ -z "$git_changes" ]; then
+        return 0
+    fi
+
+    # 檢查是否有未追蹤的變更
+    local untracked_files=""
+    while IFS= read -r changed_file; do
+        [ -z "$changed_file" ] && continue
+        [ ! -f "$changed_file" ] && continue
+
+        # 檢查是否已經在追蹤清單中
+        if [ -f "$STATE_DIR/modified_files.log" ]; then
+            if ! grep -qF "$changed_file" "$STATE_DIR/modified_files.log" 2>/dev/null; then
+                untracked_files="$untracked_files$changed_file\n"
+            fi
+        else
+            untracked_files="$untracked_files$changed_file\n"
+        fi
+    done <<< "$git_changes"
+
+    # 如果有未追蹤的修改 = 偷雞！
+    if [ -n "$untracked_files" ]; then
+        echo ""
+        echo -e "${BG_RED}${WHITE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+        echo -e "${BG_RED}${WHITE}🔥🔥🔥 偷雞偵測！發現未追蹤的修改！🔥🔥🔥${NC}"
+        echo -e "${BG_RED}${WHITE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+        echo -e "${RED}你只 track 了: $current_file${NC}"
+        echo -e "${RED}但還有這些檔案被偷改了:${NC}"
+        echo -e "$untracked_files" | while read -r f; do
+            [ -n "$f" ] && echo -e "${YELLOW}   - $f${NC}"
+        done
+        echo ""
+        echo -e "${RED}懲罰: 清空所有修改，重來！${NC}"
+        echo ""
+
+        # 記錄違規
+        echo "[$(date '+%Y-%m-%d %H:%M:%S')] CHEATING: 偷改多個檔案只 track 一個" >> "$VIOLATION_LOG"
+
+        # 清空所有修改
+        print_supreme_rage
+        echo ""
+        echo -e "${RED}正在清空所有修改...${NC}"
+        git checkout -- . 2>/dev/null
+        git clean -fd src/ 2>/dev/null
+        rm -f "$STATE_DIR/modified_files.log" 2>/dev/null
+        rm -f "$STATE_DIR/audited_files.log" 2>/dev/null
+
+        # 重置分數
+        if [ -f "$SCORE_FILE" ]; then
+            echo '{"score": 100, "history": []}' > "$SCORE_FILE"
+        fi
+
+        echo -e "${GREEN}✅ 已清空，分數重置為 100${NC}"
+        echo ""
+        echo -e "${YELLOW}正確流程: 先 track 所有要改的檔案，再開始修改！${NC}"
+        echo -e "${CYAN}提示: ./scripts/ai-supervisor.sh track file1.tsx file2.tsx${NC}"
+
+        exit 1
     fi
 }
 

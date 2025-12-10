@@ -117,7 +117,32 @@ cmd_finish() {
     fi
     echo -e "${GREEN}   ✅ 掃描完成${NC}"
 
-    # 5. 完成
+    # 5. 🔥 自動執行 TypeScript 和 ESLint 檢查 🔥
+    echo "5️⃣  執行 TypeScript 檢查..."
+    local ts_output
+    ts_output=$(npm run typecheck 2>&1) || true
+    if echo "$ts_output" | grep -qiE "error TS[0-9]+:|Cannot find module"; then
+        echo -e "${RED}   ❌ TypeScript 有錯誤！${NC}"
+        echo "$ts_output" | grep -iE "error TS[0-9]+:" | head -5
+        check_terminal_errors "$ts_output"
+    else
+        echo -e "${GREEN}   ✅ TypeScript 通過${NC}"
+        clear_error_remind "TypeScript" 2>/dev/null || true
+    fi
+
+    echo "6️⃣  執行 ESLint 檢查..."
+    local lint_output
+    lint_output=$(npm run lint 2>&1) || true
+    if echo "$lint_output" | grep -qiE "error|✖.*problems"; then
+        echo -e "${RED}   ❌ ESLint 有錯誤！${NC}"
+        echo "$lint_output" | grep -iE "error" | head -5
+        check_terminal_errors "$lint_output"
+    else
+        echo -e "${GREEN}   ✅ ESLint 通過${NC}"
+        clear_error_remind "ESLint" 2>/dev/null || true
+    fi
+
+    # 7. 完成
     finish_session
 }
 
@@ -264,6 +289,36 @@ cmd_check() {
     run_anti_cheat_check
 }
 
+# 執行指令並檢查錯誤
+cmd_run() {
+    local cmd="$*"
+
+    if [ -z "$cmd" ]; then
+        echo -e "${RED}用法: ./scripts/ai-supervisor.sh run <指令>${NC}"
+        echo "範例: ./scripts/ai-supervisor.sh run npm run typecheck"
+        return 1
+    fi
+
+    check_session
+    echo -e "${CYAN}🔧 執行: $cmd${NC}"
+    echo ""
+
+    # 使用 watcher.sh 的函數執行並檢查錯誤
+    run_with_error_check "$cmd"
+}
+
+# 清除錯誤提醒記錄
+cmd_clear_error() {
+    local error_type="${1:-all}"
+
+    if [ "$error_type" = "all" ]; then
+        rm -f "$STATE_DIR/terminal_errors.log" 2>/dev/null
+        echo -e "${GREEN}✅ 已清除所有錯誤提醒記錄${NC}"
+    else
+        clear_error_remind "$error_type"
+    fi
+}
+
 # 顯示幫助
 cmd_help() {
     echo -e "${CYAN}AI Supervisor v12.0 - 全面監控版${NC}"
@@ -288,6 +343,10 @@ cmd_help() {
     echo "  lock             🔒 鎖定監控檔案 (AI 無法修改)"
     echo "  unlock           🔓 解鎖監控檔案 (需要輸入 YES)"
     echo "  check            執行反作弊檢查"
+    echo ""
+    echo -e "${WHITE}【錯誤檢查】${NC}"
+    echo "  run <指令>       執行指令並檢查錯誤 (第一次免扣，第二次起 -20分)"
+    echo "  clear-error      清除錯誤提醒記錄"
     echo ""
     echo -e "${WHITE}【記錄指令】${NC}"
     echo "  rules            顯示扣分規則"
@@ -379,6 +438,14 @@ main() {
             ;;
         rage-log|rage)
             cmd_rage_log
+            ;;
+
+        # 執行指令並檢查錯誤
+        run)
+            cmd_run "$@"
+            ;;
+        clear-error)
+            cmd_clear_error "$@"
             ;;
 
         # 幫助

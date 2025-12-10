@@ -45,6 +45,7 @@ start_inotify_watcher() {
     [ ! -d "$watch_dir" ] && watch_dir="$PROJECT_ROOT"
 
     echo -e "${CYAN}監控目錄: $watch_dir${NC}"
+    echo -e "${RED}⚠️  偷雞行為（未 track 直接改檔）= 代碼全清！${NC}"
     echo ""
 
     # 使用 inotifywait 監控
@@ -58,11 +59,191 @@ start_inotify_watcher() {
         echo -e "${CYAN}[$timestamp] 📁 偵測到變化: $file${NC}"
         echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 
+        # 🔥🔥🔥 偷雞偵測：檔案被改但沒有 track 🔥🔥🔥
+        if [ -f "$STATE_DIR/modified_files.log" ]; then
+            if ! grep -qF "$file" "$STATE_DIR/modified_files.log" 2>/dev/null; then
+                echo ""
+                echo -e "${BG_RED}${WHITE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+                echo -e "${BG_RED}${WHITE}🔥🔥🔥 偷雞偵測！未 track 就改檔案！🔥🔥🔥${NC}"
+                echo -e "${BG_RED}${WHITE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+                echo -e "${RED}檔案: $file${NC}"
+                echo -e "${RED}懲罰: 清空所有修改，重來！${NC}"
+                echo ""
+
+                # 記錄違規
+                echo "[$(date '+%Y-%m-%d %H:%M:%S')] CHEATING: 未 track 就改檔 $file" >> "$VIOLATION_LOG"
+
+                # 🔥 清空所有修改 🔥
+                wipe_all_changes "偷雞: 未 track 就改檔 $file"
+
+                echo ""
+                echo -e "${YELLOW}重新開始吧！記得先 track 再改檔！${NC}"
+                echo -e "${CYAN}正確流程: track → 修改 → audit → commit${NC}"
+                continue
+            fi
+        else
+            # 沒有 modified_files.log = 沒有 Session 或沒有任何 track
+            echo ""
+            echo -e "${BG_RED}${WHITE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+            echo -e "${BG_RED}${WHITE}🔥🔥🔥 偷雞偵測！沒有任何 track 記錄！🔥🔥🔥${NC}"
+            echo -e "${BG_RED}${WHITE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+
+            # 清空修改
+            wipe_all_changes "偷雞: 完全沒有 track 就改檔"
+            continue
+        fi
+
         # 即時分析
         analyze_file_realtime "$file"
 
         echo ""
     done
+}
+
+# 🔥 清空所有修改 🔥
+wipe_all_changes() {
+    local reason="$1"
+
+    echo ""
+    print_supreme_rage
+    echo ""
+
+    # 記錄
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] WIPE: $reason" >> "$VIOLATION_LOG"
+
+    # 清空所有未 commit 的修改
+    echo -e "${RED}正在清空所有修改...${NC}"
+
+    # 還原所有修改的檔案
+    git checkout -- . 2>/dev/null
+
+    # 刪除新增的檔案 (只刪 src/ 下的)
+    git clean -fd src/ 2>/dev/null
+
+    # 清空 session 狀態
+    rm -f "$STATE_DIR/modified_files.log" 2>/dev/null
+    rm -f "$STATE_DIR/audited_files.log" 2>/dev/null
+
+    # 重置分數
+    if [ -f "$SCORE_FILE" ]; then
+        echo '{"score": 100, "history": []}' > "$SCORE_FILE"
+    fi
+
+    echo -e "${GREEN}✅ 已清空，分數重置為 100${NC}"
+    echo ""
+}
+
+# ============================================================================
+# 終端錯誤檢測 - 第一次提醒，第二次起扣 20 分
+# ============================================================================
+
+# 錯誤提醒記錄檔
+TERMINAL_ERROR_LOG="$STATE_DIR/terminal_errors.log"
+
+# 檢查終端錯誤 (ESLint, TypeScript, npm 等)
+check_terminal_errors() {
+    local output="$1"
+    local error_type=""
+    local error_found=0
+
+    # 檢測各種錯誤類型
+    if echo "$output" | grep -qiE "error TS[0-9]+:|Cannot find module|Type.*is not assignable"; then
+        error_type="TypeScript"
+        error_found=1
+    elif echo "$output" | grep -qiE "eslint.*error|✖.*problems?.*errors?|Rule:"; then
+        error_type="ESLint"
+        error_found=1
+    elif echo "$output" | grep -qiE "npm ERR!|ENOENT|EACCES|Module not found"; then
+        error_type="npm"
+        error_found=1
+    elif echo "$output" | grep -qiE "SyntaxError:|ReferenceError:|TypeError:"; then
+        error_type="Runtime"
+        error_found=1
+    elif echo "$output" | grep -qiE "FAIL.*test|✕.*failed|AssertionError"; then
+        error_type="Test"
+        error_found=1
+    fi
+
+    if [ "$error_found" -eq 1 ]; then
+        handle_terminal_error "$error_type"
+    fi
+}
+
+# 處理終端錯誤
+handle_terminal_error() {
+    local error_type="$1"
+    local error_key="${error_type}_$(date +%Y%m%d)"
+
+    # 初始化錯誤記錄檔
+    [ ! -f "$TERMINAL_ERROR_LOG" ] && echo "{}" > "$TERMINAL_ERROR_LOG"
+
+    # 計算此類錯誤被提醒的次數
+    local remind_count=$(grep -c "REMINDED:$error_type" "$TERMINAL_ERROR_LOG" 2>/dev/null || echo 0)
+    remind_count=$(echo "$remind_count" | tr -d '[:space:]')
+
+    echo ""
+    echo -e "${BG_RED}${WHITE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "${BG_RED}${WHITE}🚨 終端機偵測到 ${error_type} 錯誤！${NC}"
+    echo -e "${BG_RED}${WHITE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+
+    if [ "$remind_count" -eq 0 ]; then
+        # 第一次：只提醒，不扣分
+        echo -e "${YELLOW}⚠️  第一次提醒 - 請立即修復此錯誤！${NC}"
+        echo -e "${YELLOW}   下次再忽略將扣 20 分！${NC}"
+        echo "[$(date '+%Y-%m-%d %H:%M:%S')] REMINDED:$error_type (第1次-免扣)" >> "$TERMINAL_ERROR_LOG"
+    else
+        # 第二次起：扣 20 分
+        local penalty_times=$remind_count
+        echo -e "${RED}❌ 第 $((remind_count + 1)) 次提醒！${NC}"
+        echo -e "${RED}   你已經忽略 ${error_type} 錯誤 ${remind_count} 次了！${NC}"
+        echo -e "${RED}   扣 20 分！${NC}"
+
+        # 記錄
+        echo "[$(date '+%Y-%m-%d %H:%M:%S')] REMINDED:$error_type (第$((remind_count + 1))次-扣20分)" >> "$TERMINAL_ERROR_LOG"
+
+        # 扣分
+        if [ -f "$SCORE_FILE" ]; then
+            update_score -20 "忽略終端 ${error_type} 錯誤 (第$((remind_count + 1))次)"
+        fi
+    fi
+
+    echo ""
+    echo -e "${CYAN}請修復錯誤後再繼續！${NC}"
+    echo -e "${WHITE}提示: 執行 npm run typecheck / npm run lint 檢查${NC}"
+    echo -e "${BG_RED}${WHITE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+}
+
+# 清除錯誤提醒記錄（修復後呼叫）
+clear_error_remind() {
+    local error_type="$1"
+
+    if [ -f "$TERMINAL_ERROR_LOG" ]; then
+        # 清除特定類型的提醒記錄
+        grep -v "REMINDED:$error_type" "$TERMINAL_ERROR_LOG" > "${TERMINAL_ERROR_LOG}.tmp" 2>/dev/null
+        mv "${TERMINAL_ERROR_LOG}.tmp" "$TERMINAL_ERROR_LOG" 2>/dev/null
+        echo -e "${GREEN}✅ ${error_type} 錯誤已修復，提醒記錄已清除${NC}"
+    fi
+}
+
+# 執行指令並檢查錯誤
+run_with_error_check() {
+    local cmd="$1"
+    local output
+    local exit_code
+
+    # 執行指令並捕獲輸出
+    output=$(eval "$cmd" 2>&1)
+    exit_code=$?
+
+    # 顯示輸出
+    echo "$output"
+
+    # 檢查錯誤
+    if [ $exit_code -ne 0 ] || echo "$output" | grep -qiE "error|fail|Error|FAIL"; then
+        check_terminal_errors "$output"
+    fi
+
+    return $exit_code
 }
 
 # 輪詢模式監控 (備用)
