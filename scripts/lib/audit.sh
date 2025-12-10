@@ -68,6 +68,7 @@ readonly PENALTY_UNAUDITED_FILE=-5      # 未審計檔案
 # ============================================================================
 readonly PENALTY_NO_SESSION=-500        # 未啟動 Session 操作
 readonly PENALTY_NO_VERIFY=-500         # 使用 --no-verify 繞過
+readonly PENALTY_NO_RESULT_LOG=-500     # 未記錄施作結果
 
 # ============================================================================
 # 🏆 精簡代碼獎勵系統 - 讓「省力」=「優化」
@@ -684,6 +685,34 @@ check_escape() {
                 violations=$((violations + 1))
             fi
         done <<< "$git_changes"
+    fi
+
+    return $violations
+}
+
+# 檢查 TODO 結果記錄
+check_todo_result() {
+    local violations=0
+
+    # 檢查是否有修改 TODO 相關的 .md 檔案
+    local todo_modified=0
+    if [ -f "$STATE_DIR/modified_files.log" ]; then
+        if grep -qiE "(TODO|CHANGELOG|RESULT|完成|結果).*\.md$" "$STATE_DIR/modified_files.log" 2>/dev/null; then
+            todo_modified=1
+        fi
+        # 也檢查 docs/ 目錄下的任何 .md 檔案
+        if grep -qE "^docs/.*\.md$" "$STATE_DIR/modified_files.log" 2>/dev/null; then
+            todo_modified=1
+        fi
+    fi
+
+    if [ "$todo_modified" -eq 0 ]; then
+        echo -e "${BG_RED}${WHITE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+        echo -e "${BG_RED}${WHITE}🔥 天條違反：未記錄施作結果到 TODO.md！${NC}"
+        echo -e "${BG_RED}${WHITE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+        echo -e "${YELLOW}AI 必須修改 TODO.md 或 docs/*.md 記錄完成內容${NC}"
+        update_score $PENALTY_NO_RESULT_LOG "天條: 未記錄施作結果到 TODO.md"
+        violations=$((violations + 1))
     fi
 
     return $violations

@@ -109,6 +109,50 @@ rage_exit() {
     exit 1
 }
 
+# 🔥💀 超級髒話 + 直接出局 (天條違反專用) 💀🔥
+supreme_rage_exit() {
+    local reason="$1"
+
+    # 超級髒話
+    print_supreme_rage
+
+    echo -e "${BG_RED}${WHITE}致命原因: $reason${NC}"
+    echo ""
+
+    # 記錄
+    if [ -n "$VIOLATION_LOG" ]; then
+        echo "[$(date '+%Y-%m-%d %H:%M:%S')] SUPREME-RAGE: $reason" >> "$VIOLATION_LOG"
+    fi
+    if [ -n "$RAGE_LOG" ]; then
+        echo "[$(date '+%Y-%m-%d %H:%M:%S')] 💀 DEATH: $reason" >> "$RAGE_LOG"
+    fi
+
+    # 清空所有代碼
+    if [ -f "$STATE_DIR/modified_files.log" ]; then
+        echo -e "${RED}🗑️  正在清空所有代碼...${NC}"
+        while IFS= read -r file; do
+            [ -z "$file" ] && continue
+            if [ -f "$file" ]; then
+                if git checkout HEAD -- "$file" 2>/dev/null; then
+                    echo -e "${RED}   ↩️  已還原: $file${NC}"
+                else
+                    rm -f "$file" 2>/dev/null && echo -e "${RED}   🗑️  已刪除: $file${NC}"
+                fi
+            fi
+        done < "$STATE_DIR/modified_files.log"
+    fi
+
+    # 清除 session
+    rm -f "$SESSION_FILE" 2>/dev/null
+
+    echo ""
+    echo -e "${BG_RED}${WHITE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "${BG_RED}${WHITE}💀💀💀 你 已 經 出 局 💀💀💀${NC}"
+    echo -e "${BG_RED}${WHITE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+
+    exit 1
+}
+
 # 警告
 warn() {
     echo -e "${YELLOW}⚠️  $1${NC}"
