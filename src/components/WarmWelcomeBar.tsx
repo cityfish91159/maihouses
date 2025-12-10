@@ -3,18 +3,26 @@ import { getMilestoneHint, getWarmTags, ensureFirstSeen, isWarmbarDismissedToday
 import { Events, track } from "../analytics/track";
 
 export const WarmWelcomeBar = () => {
-  const [shouldShow, setShouldShow] = useState(false);
+  const [dismissed, setDismissed] = useState(false);
   const profile = useMemo(() => loadProfile(), []);
   const tags = useMemo(() => getWarmTags(3), []);
   const milestone = useMemo(() => getMilestoneHint(profile.milestones), [profile.milestones]);
 
-  useEffect(() => {
+  // 使用 useMemo 計算 shouldShow，避免在 effect 中 setState
+  const shouldShow = useMemo(() => {
+    if (dismissed) return false;
+    if (typeof window === 'undefined') return false;
     const { isFirstVisit } = ensureFirstSeen();
     const hasContent = (tags && tags.length > 0) || !!milestone || !!profile.lastMood;
-    const ok = !isFirstVisit && !isWarmbarDismissedToday() && hasContent;
-    setShouldShow(ok);
-    if (ok) track(Events.WarmbarView, { tags, milestone: !!milestone, lastMood: profile.lastMood });
-  }, [tags, milestone, profile.lastMood]);
+    return !isFirstVisit && !isWarmbarDismissedToday() && hasContent;
+  }, [dismissed, tags, milestone, profile.lastMood]);
+
+  // useEffect 只做追蹤，不設定狀態
+  useEffect(() => {
+    if (shouldShow) {
+      track(Events.WarmbarView, { tags, milestone: !!milestone, lastMood: profile.lastMood });
+    }
+  }, [shouldShow, tags, milestone, profile.lastMood]);
 
   if (!shouldShow) return null;
 
@@ -36,20 +44,20 @@ export const WarmWelcomeBar = () => {
   };
   const onDismissToday = () => {
     dismissWarmbarToday();
-    setShouldShow(false);
+    setDismissed(true);
     track(Events.WarmbarDismiss, {});
   };
 
   return (
     <div className="flex h-[34px] w-full items-center justify-center gap-3 border-b border-[#E6ECFF] bg-[#F5F8FF] text-center text-sm leading-[34px] tracking-wide text-[#0a2246]" role="status" aria-live="polite">
       <span>{leftText}</span>
-      <button 
+      <button
         className="h-[26px] cursor-pointer rounded-full border border-[#1749D7] bg-[#1749D7] px-2.5 py-0.5 leading-6 text-white transition-colors hover:bg-[#123cb3]"
         onClick={onContinue}
       >
         接著聊
       </button>
-      <button 
+      <button
         className="h-[26px] cursor-pointer rounded-full border border-[#C9D5FF] bg-white px-2.5 py-0.5 leading-6 text-[#1749D7] transition-colors hover:bg-gray-50"
         onClick={onDismissToday}
       >

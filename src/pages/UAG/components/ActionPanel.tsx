@@ -1,4 +1,4 @@
-import React, { forwardRef, useState, useEffect } from 'react';
+import React, { forwardRef, useState, useRef } from 'react';
 import { Lead } from '../types/uag.types';
 import styles from '../UAG.module.css';
 
@@ -17,11 +17,16 @@ const StatItem = ({ label, value, highlight = false }: { label: string; value: R
 
 const ActionPanel = forwardRef<HTMLDivElement, ActionPanelProps>(({ selectedLead, onBuyLead, isProcessing }, ref) => {
   const [isConfirming, setIsConfirming] = useState(false);
+  const prevLeadIdRef = useRef<string | null>(null);
 
-  // Reset confirmation state when lead changes
-  useEffect(() => {
-    setIsConfirming(false);
-  }, [selectedLead]);
+  // Reset confirmation state when lead changes (at render time, not in effect)
+  const currentLeadId = selectedLead?.id ?? null;
+  if (currentLeadId !== prevLeadIdRef.current) {
+    prevLeadIdRef.current = currentLeadId;
+    if (isConfirming) {
+      setIsConfirming(false);
+    }
+  }
 
   if (!selectedLead) {
     return (

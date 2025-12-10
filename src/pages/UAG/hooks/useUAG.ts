@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { UAGService } from '../services/uagService';
 import { AppData, Grade, LeadStatus } from '../types/uag.types';
@@ -8,29 +8,30 @@ import { useAuth } from '../../../hooks/useAuth';
 import { GRADE_HOURS } from '../uag-config';
 import { validateQuota } from '../utils/validation';
 
+/** 從 URL 或 localStorage 取得初始 mock 模式設定 */
+function getInitialMockMode(): boolean {
+  if (typeof window === 'undefined') return true;
+
+  const params = new URLSearchParams(window.location.search);
+  const urlMode = params.get('mode');
+
+  if (urlMode === 'mock' || urlMode === 'live') {
+    localStorage.setItem('uag_mode', urlMode);
+    return urlMode === 'mock';
+  }
+
+  const saved = localStorage.getItem('uag_mode');
+  if (saved === 'mock' || saved === 'live') {
+    return saved === 'mock';
+  }
+
+  return true;
+}
+
 export function useUAG() {
   const { session } = useAuth();
-  const [useMock, setUseMock] = useState(true);
+  const [useMock, setUseMock] = useState<boolean>(getInitialMockMode);
   const queryClient = useQueryClient();
-
-  // Initialize mock mode from URL or localStorage
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const params = new URLSearchParams(window.location.search);
-    const urlMode = params.get('mode');
-    let initialMock = true;
-    
-    if (urlMode === 'mock' || urlMode === 'live') {
-      initialMock = urlMode === 'mock';
-      localStorage.setItem('uag_mode', urlMode);
-    } else {
-      const saved = localStorage.getItem('uag_mode');
-      if (saved === 'mock' || saved === 'live') {
-        initialMock = saved === 'mock';
-      }
-    }
-    setUseMock(initialMock);
-  }, []);
 
   const toggleMode = () => {
     if (import.meta.env.PROD) {

@@ -32,7 +32,18 @@ function writeStorage(s: QuietState) {
 }
 
 export const QuietModeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [state, setState] = useState<QuietState>(() => readStorage());
+  // 惰性初始化：讀取並清理過期狀態，避免 effect 中 setState
+  const [state, setState] = useState<QuietState>(() => {
+    const saved = readStorage();
+    const now = Date.now();
+    // 初始化時就清理過期狀態
+    if (saved.isQuiet && saved.untilTs && now > saved.untilTs) {
+      const cleared: QuietState = { isQuiet: false, untilTs: null, remainingTurns: null };
+      writeStorage(cleared);
+      return cleared;
+    }
+    return saved;
+  });
   const tickRef = useRef<number | null>(null);
 
   const isActive = useCallback(() => {
@@ -41,15 +52,6 @@ export const QuietModeProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     if (state.untilTs && now > state.untilTs) return false;
     if (state.remainingTurns !== null && (state.remainingTurns ?? 0) <= 0) return false;
     return true;
-  }, [state]);
-
-  // 自動清理過期
-  useEffect(() => {
-    const now = Date.now();
-    if (state.isQuiet && state.untilTs && now > state.untilTs) {
-      setState({ isQuiet: false, untilTs: null, remainingTurns: null });
-      writeStorage({ isQuiet: false, untilTs: null, remainingTurns: null });
-    }
   }, [state]);
 
   // 心跳檢查（每 30 秒確認是否過期）

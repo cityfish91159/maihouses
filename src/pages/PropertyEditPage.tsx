@@ -174,9 +174,9 @@ export const PropertyEditPage: React.FC = () => {
 
           {/* 修改社區 */}
           <div>
-            <label className="mb-2 block text-xs font-medium text-slate-600">
+            <span id="edit-community-label" className="mb-2 block text-xs font-medium text-slate-600">
               重新選擇社區
-            </label>
+            </span>
             <CommunityPicker
               value={newCommunityName}
               address={property.address}

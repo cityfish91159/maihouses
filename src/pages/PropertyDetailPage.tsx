@@ -9,12 +9,13 @@ import { ReportGenerator } from './Report';
 // UAG Tracker Hook v8.1 - 追蹤用戶行為 + S級攔截
 // 優化: 1.修正district傳遞 2.S級即時回調 3.互動事件用fetch獲取等級
 const usePropertyTracker = (
-  propertyId: string, 
-  agentId: string, 
+  propertyId: string,
+  agentId: string,
   district: string,
   onGradeUpgrade?: (newGrade: string, reason?: string) => void
 ) => {
-  const enterTime = useRef(Date.now());
+  // 使用 useState 惰性初始化，避免在 render 中調用 Date.now()
+  const [enterTime] = useState(() => Date.now());
   const actions = useRef({ click_photos: 0, click_line: 0, click_call: 0, scroll_depth: 0 });
   const hasSent = useRef(false);
   const currentGrade = useRef<string>('F');
@@ -42,11 +43,11 @@ const usePropertyTracker = (
       type: eventType,
       property_id: propertyId,
       district: district || 'unknown', // 修正: 使用傳入的 district
-      duration: Math.round((Date.now() - enterTime.current) / 1000),
+      duration: Math.round((Date.now() - enterTime) / 1000),
       actions: { ...actions.current },
       focus: []
     }
-  }), [propertyId, agentId, district, getSessionId]);
+  }), [propertyId, agentId, district, getSessionId, enterTime]);
 
   // 發送追蹤事件 (支援 S 級回調)
   const sendEvent = useCallback(async (eventType: string, useBeacon = false) => {

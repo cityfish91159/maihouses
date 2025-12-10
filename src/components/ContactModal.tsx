@@ -206,10 +206,11 @@ export const ContactModal: React.FC<ContactModalProps> = ({
               {/* 基本資料 */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="mb-1.5 block text-sm font-medium text-slate-700">
+                  <label htmlFor="contact-name" className="mb-1.5 block text-sm font-medium text-slate-700">
                     姓名 <span className="text-red-500">*</span>
                   </label>
                   <input
+                    id="contact-name"
                     type="text"
                     value={form.name}
                     onChange={(e) => setForm({ ...form, name: e.target.value })}
@@ -219,10 +220,11 @@ export const ContactModal: React.FC<ContactModalProps> = ({
                   />
                 </div>
                 <div>
-                  <label className="mb-1.5 block text-sm font-medium text-slate-700">
+                  <label htmlFor="contact-phone" className="mb-1.5 block text-sm font-medium text-slate-700">
                     電話 <span className="text-red-500">*</span>
                   </label>
                   <input
+                    id="contact-phone"
                     type="tel"
                     value={form.phone}
                     onChange={(e) => setForm({ ...form, phone: e.target.value })}
@@ -234,10 +236,10 @@ export const ContactModal: React.FC<ContactModalProps> = ({
               </div>
 
               {/* 偏好聯絡方式 */}
-              <div>
-                <label className="mb-2 block text-sm font-medium text-slate-700">
+              <div role="group" aria-labelledby="preferred-channel-label">
+                <span id="preferred-channel-label" className="mb-2 block text-sm font-medium text-slate-700">
                   偏好聯絡方式
-                </label>
+                </span>
                 <div className="flex gap-2">
                   {channelOptions.map((opt) => (
                     <button
@@ -258,11 +260,11 @@ export const ContactModal: React.FC<ContactModalProps> = ({
               </div>
 
               {/* 方便聯絡時段 */}
-              <div>
-                <label className="mb-2 block text-sm font-medium text-slate-700">
+              <div role="group" aria-labelledby="preferred-time-label">
+                <span id="preferred-time-label" className="mb-2 block text-sm font-medium text-slate-700">
                   <Clock size={14} className="mr-1 inline" />
                   方便聯絡時段
-                </label>
+                </span>
                 <div className="grid grid-cols-3 gap-2">
                   {timeOptions.map((time) => (
                     <button
@@ -283,10 +285,11 @@ export const ContactModal: React.FC<ContactModalProps> = ({
 
               {/* 購屋預算 */}
               <div>
-                <label className="mb-2 block text-sm font-medium text-slate-700">
+                <label htmlFor="contact-budget" className="mb-2 block text-sm font-medium text-slate-700">
                   購屋預算區間
                 </label>
                 <select
+                  id="contact-budget"
                   value={form.budget}
                   onChange={(e) => setForm({ ...form, budget: e.target.value })}
                   className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 outline-none transition-all focus:border-[#003366] focus:ring-2 focus:ring-[#003366]/20"
@@ -300,10 +303,11 @@ export const ContactModal: React.FC<ContactModalProps> = ({
 
               {/* 簡單需求 */}
               <div>
-                <label className="mb-1.5 block text-sm font-medium text-slate-700">
+                <label htmlFor="contact-needs" className="mb-1.5 block text-sm font-medium text-slate-700">
                   其他需求或問題
                 </label>
                 <textarea
+                  id="contact-needs"
                   value={form.needs}
                   onChange={(e) => setForm({ ...form, needs: e.target.value })}
                   placeholder="例如：想了解學區、需要停車位、希望近捷運..."

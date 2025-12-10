@@ -75,9 +75,9 @@ export function Sidebar({ info, questions: questionsProp, posts }: SidebarProps)
         <h4 className="mb-2.5 flex items-center gap-1.5 text-sm font-extrabold text-[var(--brand)]">🔗 快速連結</h4>
         <div className="flex flex-col gap-1">
           {['🏠 查看此社區物件', '📊 與其他社區比較', '🔔 追蹤此社區'].map(link => (
-            <a key={link} href="#" className="flex items-center gap-2 rounded-[10px] px-3 py-2.5 text-[13px] font-semibold text-[var(--text-primary)] no-underline transition-all hover:bg-[#f0f7ff]">
+            <button key={link} type="button" className="flex w-full items-center gap-2 rounded-[10px] px-3 py-2.5 text-left text-[13px] font-semibold text-[var(--text-primary)] transition-all hover:bg-[#f0f7ff]">
               {link}
-            </a>
+            </button>
           ))}
         </div>
       </nav>

@@ -1,14 +1,12 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 
 export function CookieConsent() {
-  const [show, setShow] = useState(false)
-
-  useEffect(() => {
+  // 使用惰性初始化，避免在 effect 中 setState
+  const [show, setShow] = useState(() => {
+    if (typeof window === 'undefined') return false
     const consent = localStorage.getItem('cookie-consent')
-    if (!consent) {
-      setShow(true)
-    }
-  }, [])
+    return !consent
+  })
 
   const accept = () => {
     localStorage.setItem('cookie-consent', 'true')

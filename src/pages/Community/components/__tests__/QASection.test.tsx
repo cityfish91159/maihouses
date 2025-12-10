@@ -37,7 +37,7 @@ describe('QASection accessibility modals', () => {
   const renderComponent = (overrides: Partial<ComponentProps<typeof QASection>> = {}) =>
     render(
       <QASection
-        role="resident"
+        viewerRole="resident"
         questions={questions}
         onAskQuestion={noop}
         onAnswerQuestion={noop}

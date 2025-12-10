@@ -217,30 +217,10 @@ export function useCommunityWallData(
   const [mockData, setMockData] = useState<UnifiedWallData>(() =>
     persistMockState ? loadPersistedMockState(initialMockData) : initialMockData
   );
-  const hasRestoredFromStorage = useRef(false);
+  // likedPosts 只在 Mock 模式有效，切換模式時不需要清除
+  // 因為 API 模式使用 apiData 中的 liked_by 資訊
   const [likedPosts, setLikedPosts] = useState<Set<string | number>>(() => new Set());
   const hasAuthenticatedUser = Boolean(currentUserId);
-  const lastApiDataRef = useRef<UnifiedWallData | null>(null);
-
-  useEffect(() => {
-    lastApiDataRef.current = null;
-  }, [communityId]);
-
-  // 切換至 API 模式時重置 Mock 按讚狀態，避免污染真實資料
-  useEffect(() => {
-    if (!useMock) {
-      setLikedPosts(new Set());
-    }
-  }, [useMock]);
-
-  useEffect(() => {
-    if (!persistMockState || !useMock) return;
-    if (!hasRestoredFromStorage.current) {
-      hasRestoredFromStorage.current = true;
-      return;
-    }
-    setMockData(loadPersistedMockState(initialMockData));
-  }, [useMock, persistMockState, initialMockData]);
 
   useEffect(() => {
     if (!persistMockState || !useMock) return;
@@ -263,7 +243,8 @@ export function useCommunityWallData(
     currentUserId,
   });
 
-  // 統一資料來源（無論 Mock 或 API，都套用 pinned 排序）
+  // 統一資料來源（純計算，無副作用）
+  // React Query 已提供 stale-while-revalidate，不需要額外快取
   const data = useMemo<UnifiedWallData>(() => {
     if (useMock) {
       // Mock 模式：套用置頂排序
@@ -277,19 +258,17 @@ export function useCommunityWallData(
       };
     }
 
+    // API 模式：有資料時轉換，否則顯示載入佔位
     if (apiData) {
       const converted = convertApiData(apiData);
       const safeCommunityInfo = converted.communityInfo?.name
         ? converted.communityInfo
         : { ...EMPTY_WALL_DATA.communityInfo, name: '尚無社區資料' };
-      const merged = { ...converted, communityInfo: safeCommunityInfo };
-      lastApiDataRef.current = merged;
-      return merged;
+      return { ...converted, communityInfo: safeCommunityInfo };
     }
 
-    // API 尚未返回或失敗時：優先使用上一份成功資料，其次顯示載入中佔位
-    return lastApiDataRef.current ?? EMPTY_WALL_DATA;
-  }, [useMock, apiData, mockData]);
+    return EMPTY_WALL_DATA;
+  }, [useMock, mockData, apiData]);
 
   // 封裝操作函數
   const refresh = useCallback(async () => {
@@ -433,6 +412,8 @@ export function useCommunityWallData(
   const setUseMock = useCallback((value: boolean) => {
     const next = mhEnv.setMock(value);
     setUseMockState(next);
+    // 切換模式時重設 likedPosts 追蹤，避免按讚狀態在模式間錯亂
+    setLikedPosts(new Set());
   }, []);
 
   return {

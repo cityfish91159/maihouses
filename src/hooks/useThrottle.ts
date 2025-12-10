@@ -2,9 +2,9 @@ import { useCallback, useRef, useEffect } from 'react';
 
 /**
  * useThrottle Hook
- * 
+ *
  * 限制函數在指定時間內只能執行一次
- * 
+ *
  * @param callback 要執行的函數
  * @param delay 冷卻時間 (ms)
  * @returns 節流後的函數
@@ -14,11 +14,11 @@ export interface UseThrottleOptions {
   trailing?: boolean;
 }
 
-export function useThrottle<T extends (...args: any[]) => any>(
+export function useThrottle<T extends (...args: unknown[]) => unknown>(
   callback: T,
   delay: number,
   options: UseThrottleOptions = {}
-): ((...args: Parameters<T>) => void) & { cancel: () => void } {
+): (...args: Parameters<T>) => void {
   const { leading = true, trailing = false } = options;
   const lastRun = useRef(0);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -39,14 +39,7 @@ export function useThrottle<T extends (...args: any[]) => any>(
     };
   }, []);
 
-  const cancel = useCallback(() => {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-      timeoutRef.current = null;
-    }
-    lastArgsRef.current = null;
-  }, []);
-
+  // 節流函數（使用 useCallback，允許內部使用 Date.now()）
   const throttled = useCallback(
     (...args: Parameters<T>) => {
       const now = Date.now();
@@ -86,8 +79,7 @@ export function useThrottle<T extends (...args: any[]) => any>(
       }
     },
     [delay, leading, trailing]
-  ) as ((...args: Parameters<T>) => void) & { cancel: () => void };
+  );
 
-  throttled.cancel = cancel;
   return throttled;
 }

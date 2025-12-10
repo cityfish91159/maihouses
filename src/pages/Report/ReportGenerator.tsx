@@ -305,8 +305,9 @@ export default function ReportGenerator({ property, isOpen, onClose }: ReportGen
 
               {/* 分享訊息 */}
               <div>
-                <label className="mb-2 block text-sm text-slate-600">分享訊息（可編輯）</label>
+                <label htmlFor="share-message" className="mb-2 block text-sm text-slate-600">分享訊息（可編輯）</label>
                 <textarea
+                  id="share-message"
                   value={customMessage || defaultMessage}
                   onChange={e => setCustomMessage(e.target.value)}
                   className="w-full resize-none rounded-xl border border-slate-200 p-3 text-sm focus:border-[#003366] focus:outline-none focus:ring-2 focus:ring-[#003366]/20"
