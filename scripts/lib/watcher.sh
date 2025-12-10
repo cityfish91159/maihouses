@@ -374,7 +374,7 @@ analyze_file_realtime() {
         [ "$score" -lt 80 ] && score_color="${RED}"
         [ "$score" -lt 100 ] && [ "$score" -ge 80 ] && score_color="${YELLOW}"
         echo ""
-        echo -e "   🏆 目前分數: ${score_color}$score${NC}/150"
+        echo -e "   🏆 目前分數: ${score_color}$score${NC} 分"
         if [ "$score" -lt 90 ]; then
             echo -e "   ${RED}⚠️  距離清空代碼: $((score - 80)) 分！${NC}"
         fi
