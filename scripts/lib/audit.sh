@@ -946,9 +946,9 @@ auto_detect_cheating() {
         echo -e "${BG_RED}${WHITE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
         echo -e "${RED}你只 track 了: $current_file${NC}"
         echo -e "${RED}但還有這些檔案被偷改了:${NC}"
-        echo -e "$untracked_files" | while read -r f; do
+        while IFS= read -r f; do
             [ -n "$f" ] && echo -e "${YELLOW}   - $f${NC}"
-        done
+        done < <(printf '%s\n' "$untracked_files")
         echo ""
         echo -e "${RED}懲罰: 清空所有修改，重來！${NC}"
         echo ""

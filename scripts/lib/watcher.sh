@@ -278,9 +278,9 @@ analyze_file_realtime() {
     local any_lines=$(grep -n ": any" "$file" 2>/dev/null | head -5)
     if [ -n "$any_lines" ]; then
         echo -e "${BG_RED}${WHITE}   💀 致命: 發現 ': any' 類型！${NC}"
-        echo "$any_lines" | while read -r line; do
-            echo -e "${RED}      $line${NC}"
-        done
+        while IFS= read -r line; do
+            [ -n "$line" ] && echo -e "${RED}      $line${NC}"
+        done < <(printf '%s\n' "$any_lines")
         has_fatal=1
     fi
 
@@ -288,9 +288,9 @@ analyze_file_realtime() {
     local ts_ignore=$(grep -n "@ts-ignore\|@ts-nocheck" "$file" 2>/dev/null | head -3)
     if [ -n "$ts_ignore" ]; then
         echo -e "${BG_RED}${WHITE}   💀 致命: 發現 @ts-ignore！${NC}"
-        echo "$ts_ignore" | while read -r line; do
-            echo -e "${RED}      $line${NC}"
-        done
+        while IFS= read -r line; do
+            [ -n "$line" ] && echo -e "${RED}      $line${NC}"
+        done < <(printf '%s\n' "$ts_ignore")
         has_fatal=1
     fi
 
@@ -298,9 +298,9 @@ analyze_file_realtime() {
     local eslint=$(grep -n "eslint-disable" "$file" 2>/dev/null | head -3)
     if [ -n "$eslint" ]; then
         echo -e "${BG_RED}${WHITE}   💀 致命: 發現 eslint-disable！${NC}"
-        echo "$eslint" | while read -r line; do
-            echo -e "${RED}      $line${NC}"
-        done
+        while IFS= read -r line; do
+            [ -n "$line" ] && echo -e "${RED}      $line${NC}"
+        done < <(printf '%s\n' "$eslint")
         has_fatal=1
     fi
 
@@ -319,9 +319,9 @@ analyze_file_realtime() {
     local console=$(grep -n "console\.log" "$file" 2>/dev/null | head -5)
     if [ -n "$console" ]; then
         echo -e "${RED}   🚨 嚴重: 發現 console.log！${NC}"
-        echo "$console" | while read -r line; do
-            echo -e "${YELLOW}      $line${NC}"
-        done
+        while IFS= read -r line; do
+            [ -n "$line" ] && echo -e "${YELLOW}      $line${NC}"
+        done < <(printf '%s\n' "$console")
         has_severe=1
     fi
 
