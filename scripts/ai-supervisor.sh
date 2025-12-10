@@ -264,6 +264,36 @@ cmd_check() {
     run_anti_cheat_check
 }
 
+# 執行指令並檢查錯誤
+cmd_run() {
+    local cmd="$*"
+
+    if [ -z "$cmd" ]; then
+        echo -e "${RED}用法: ./scripts/ai-supervisor.sh run <指令>${NC}"
+        echo "範例: ./scripts/ai-supervisor.sh run npm run typecheck"
+        return 1
+    fi
+
+    check_session
+    echo -e "${CYAN}🔧 執行: $cmd${NC}"
+    echo ""
+
+    # 使用 watcher.sh 的函數執行並檢查錯誤
+    run_with_error_check "$cmd"
+}
+
+# 清除錯誤提醒記錄
+cmd_clear_error() {
+    local error_type="${1:-all}"
+
+    if [ "$error_type" = "all" ]; then
+        rm -f "$STATE_DIR/terminal_errors.log" 2>/dev/null
+        echo -e "${GREEN}✅ 已清除所有錯誤提醒記錄${NC}"
+    else
+        clear_error_remind "$error_type"
+    fi
+}
+
 # 顯示幫助
 cmd_help() {
     echo -e "${CYAN}AI Supervisor v12.0 - 全面監控版${NC}"
@@ -288,6 +318,10 @@ cmd_help() {
     echo "  lock             🔒 鎖定監控檔案 (AI 無法修改)"
     echo "  unlock           🔓 解鎖監控檔案 (需要輸入 YES)"
     echo "  check            執行反作弊檢查"
+    echo ""
+    echo -e "${WHITE}【錯誤檢查】${NC}"
+    echo "  run <指令>       執行指令並檢查錯誤 (第一次免扣，第二次起 -20分)"
+    echo "  clear-error      清除錯誤提醒記錄"
     echo ""
     echo -e "${WHITE}【記錄指令】${NC}"
     echo "  rules            顯示扣分規則"
@@ -379,6 +413,14 @@ main() {
             ;;
         rage-log|rage)
             cmd_rage_log
+            ;;
+
+        # 執行指令並檢查錯誤
+        run)
+            cmd_run "$@"
+            ;;
+        clear-error)
+            cmd_clear_error "$@"
             ;;
 
         # 幫助

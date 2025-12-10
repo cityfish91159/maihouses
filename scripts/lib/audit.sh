@@ -62,6 +62,7 @@ readonly PENALTY_IMPORT_STAR=-2         # import * 全部引入
 # 流程違規 (獨立計算)
 readonly PENALTY_UNTRACKED_MODIFY=-20   # 未追蹤的修改
 readonly PENALTY_UNAUDITED_FILE=-5      # 未審計檔案
+readonly PENALTY_IGNORE_TERMINAL_ERROR=-20  # 忽略終端錯誤（第二次起）
 
 # ============================================================================
 # 🔥🔥🔥 天條中的天條 - 違反者死無全屍 🔥🔥🔥
