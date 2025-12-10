@@ -376,29 +376,58 @@ install_git_hooks() {
     # Pre-commit hook
     cat > "$hook_dir/pre-commit" << 'HOOK'
 #!/bin/bash
-# AI Supervisor Pre-commit Hook
+# AI Supervisor Pre-commit Hook - 強制執行版
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)/scripts"
-source "$SCRIPT_DIR/lib/messages.sh" 2>/dev/null
-source "$SCRIPT_DIR/lib/audit.sh" 2>/dev/null
+STATE_DIR="$SCRIPT_DIR/../.ai_supervisor"
 
 echo ""
 echo -e "\033[0;34m══════════════════════════════════════════════════════════════\033[0m"
-echo -e "\033[0;34m 🔒 AI Supervisor Pre-commit 檢查\033[0m"
+echo -e "\033[0;34m 🔒 AI Supervisor Pre-commit 強制檢查\033[0m"
 echo -e "\033[0;34m══════════════════════════════════════════════════════════════\033[0m"
 
-# 檢查是否有 Session
-if [ ! -f "$SCRIPT_DIR/../.ai_supervisor/session.json" ]; then
+# 1. 檢查是否有 Session
+if [ ! -f "$STATE_DIR/session.json" ]; then
     echo -e "\033[41m\033[1;37m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
-    echo -e "\033[41m\033[1;37m🔥🔥🔥 天條中的天條 - 死刑判決 🔥🔥🔥\033[0m"
-    echo -e "\033[41m\033[1;37m💀 未啟動 Session 就敢 commit？！去死吧！\033[0m"
+    echo -e "\033[41m\033[1;37m🔥🔥🔥 天條違反：未啟動 Session 就敢 commit！🔥🔥🔥\033[0m"
     echo -e "\033[41m\033[1;37m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
     echo ""
-    echo "執行: ./scripts/ai-supervisor.sh start \"任務描述\""
+    echo "必須先執行: ./scripts/ai-supervisor.sh start \"任務描述\""
     exit 1
 fi
 
-# 檢查 staged 檔案
+# 2. 檢查 Session 時間（太快 = 偷懶）
+session_start=$(grep -o '"start_time":[0-9]*' "$STATE_DIR/session.json" | cut -d: -f2)
+current_time=$(date +%s)
+elapsed=$((current_time - session_start))
+if [ "$elapsed" -lt 180 ]; then  # 少於 3 分鐘
+    echo -e "\033[41m\033[1;37m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
+    echo -e "\033[41m\033[1;37m⚠️  警告：Session 時間僅 ${elapsed} 秒，太快了！\033[0m"
+    echo -e "\033[41m\033[1;37m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] SUSPICIOUS: 完成時間過快 ${elapsed}s" >> "$STATE_DIR/violations.log"
+fi
+
+# 3. 檢查是否有 track 記錄
+if [ ! -f "$STATE_DIR/modified_files.log" ] || [ ! -s "$STATE_DIR/modified_files.log" ]; then
+    echo -e "\033[41m\033[1;37m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
+    echo -e "\033[41m\033[1;37m🔥 天條違反：沒有任何 track 記錄！\033[0m"
+    echo -e "\033[41m\033[1;37m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
+    echo ""
+    echo "修改檔案後必須執行: ./scripts/ai-supervisor.sh track <file>"
+    exit 1
+fi
+
+# 4. 檢查是否有 audit 記錄
+if [ ! -f "$STATE_DIR/audited_files.log" ] || [ ! -s "$STATE_DIR/audited_files.log" ]; then
+    echo -e "\033[41m\033[1;37m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
+    echo -e "\033[41m\033[1;37m🔥 天條違反：沒有任何 audit 記錄！\033[0m"
+    echo -e "\033[41m\033[1;37m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
+    echo ""
+    echo "必須執行: ./scripts/ai-supervisor.sh audit-all"
+    exit 1
+fi
+
+# 5. 檢查 staged 檔案的代碼品質
 staged_files=$(git diff --cached --name-only --diff-filter=ACMR | grep -E '\.(ts|tsx)$')
 if [ -n "$staged_files" ]; then
     for file in $staged_files; do
@@ -423,6 +452,9 @@ if [ -n "$staged_files" ]; then
 fi
 
 echo -e "\033[0;32m✅ Pre-commit 檢查通過\033[0m"
+echo "   Session 時間: ${elapsed} 秒"
+echo "   追蹤檔案數: $(wc -l < "$STATE_DIR/modified_files.log" | tr -d ' ')"
+echo "   審計檔案數: $(wc -l < "$STATE_DIR/audited_files.log" | tr -d ' ')"
 exit 0
 HOOK
 
