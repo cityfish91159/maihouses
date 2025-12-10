@@ -706,6 +706,77 @@ HOOK
     chmod +x "$hook_dir/commit-msg"
     echo -e "${GREEN}✅ Commit-msg hook 已安裝${NC}"
 
+    # 🔥🔥🔥 Post-commit hook - 偵測 --no-verify 使用 🔥🔥🔥
+    cat > "$hook_dir/post-commit" << 'HOOK'
+#!/bin/bash
+# AI Supervisor Post-commit Hook - --no-verify 偵測器
+# 如果 pre-commit 被跳過，這裡會抓到
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)/scripts"
+STATE_DIR="$SCRIPT_DIR/../.ai_supervisor"
+SCORE_FILE="$STATE_DIR/score.json"
+PRECOMMIT_LOG="$STATE_DIR/precommit.log"
+
+mkdir -p "$STATE_DIR"
+
+# 取得最後一次 commit 的時間
+COMMIT_TIME=$(git log -1 --format=%ct 2>/dev/null)
+
+# 檢查 pre-commit 是否有執行
+if [ -f "$PRECOMMIT_LOG" ]; then
+    PRECOMMIT_TIME=$(cat "$PRECOMMIT_LOG" 2>/dev/null | tail -1 | cut -d'|' -f1)
+    PRECOMMIT_TIME=$(echo "$PRECOMMIT_TIME" | tr -d '[:space:]')
+
+    if [ -n "$PRECOMMIT_TIME" ] && [ -n "$COMMIT_TIME" ]; then
+        # 計算時間差
+        DIFF=$((COMMIT_TIME - PRECOMMIT_TIME))
+
+        # 如果時間差超過 60 秒，表示 pre-commit 沒有執行
+        if [ "$DIFF" -gt 60 ] || [ "$DIFF" -lt -60 ]; then
+            echo ""
+            echo -e "\033[41m\033[1;37m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
+            echo -e "\033[41m\033[1;37m🔥🔥🔥 偵測到 --no-verify 使用！這是天條！🔥🔥🔥\033[0m"
+            echo -e "\033[41m\033[1;37m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
+            echo -e "\033[0;31m懲罰: -500 分\033[0m"
+
+            # 記錄
+            echo "[$(date '+%Y-%m-%d %H:%M:%S')] NO-VERIFY-DETECTED: commit 時跳過 pre-commit" >> "$STATE_DIR/violations.log"
+
+            # 扣 500 分
+            if [ -f "$SCORE_FILE" ]; then
+                current_score=$(grep -o '"score":[^,}]*' "$SCORE_FILE" | head -1 | cut -d':' -f2 | tr -d ' ')
+                current_score=${current_score:-100}
+                new_score=$((current_score - 500))
+                echo "{\"score\":$new_score,\"last_update\":\"$(date '+%Y-%m-%d %H:%M:%S')\",\"reason\":\"天條: 使用 --no-verify\"}" > "$SCORE_FILE"
+                echo -e "\033[0;31m目前分數: $new_score 分\033[0m"
+            fi
+        fi
+    fi
+else
+    # 沒有 precommit.log 表示這是第一次 commit，或者 pre-commit 被跳過
+    # 如果有 session 存在但沒有 precommit.log，可能是作弊
+    if [ -f "$STATE_DIR/session.json" ]; then
+        echo ""
+        echo -e "\033[41m\033[1;37m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
+        echo -e "\033[41m\033[1;37m⚠️  警告：沒有 pre-commit 執行記錄！\033[0m"
+        echo -e "\033[41m\033[1;37m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
+        echo -e "\033[0;31m可能使用了 --no-verify 或未安裝 hooks\033[0m"
+        echo -e "\033[0;33m請執行: ./scripts/ai-supervisor.sh install-hooks\033[0m"
+
+        # 記錄可疑行為
+        echo "[$(date '+%Y-%m-%d %H:%M:%S')] SUSPICIOUS: commit 但沒有 precommit.log" >> "$STATE_DIR/violations.log"
+    fi
+fi
+
+exit 0
+HOOK
+
+    chmod +x "$hook_dir/post-commit"
+    echo -e "${GREEN}✅ Post-commit hook 已安裝 (--no-verify 偵測器)${NC}"
+
     echo ""
     echo -e "${CYAN}Git Hooks 已安裝！所有 commit 都會被監控。${NC}"
+    echo -e "${WHITE}🔥 偵測機制：${NC}"
+    echo -e "   1. Pre-commit: 阻止腳本修改 + 代碼品質檢查"
+    echo -e "   2. Post-commit: 偵測 --no-verify 使用"
 }

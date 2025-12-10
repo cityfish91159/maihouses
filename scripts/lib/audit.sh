@@ -725,10 +725,15 @@ audit_file() {
         issues="$issues\n+ lazy 載入"
     fi
 
-    # 加入獎勵到總分
+    # 加入獎勵到總分（但有致命錯誤時不給獎勵！）
     if [ "$total_bonus" -gt 0 ]; then
-        total_penalty=$((total_penalty + total_bonus))
-        echo -e "${GREEN}   總獎勵: +$total_bonus 分${NC}"
+        if [ "$critical_count" -gt 0 ]; then
+            echo -e "${RED}   ⚠️ 有致命錯誤，獎勵不計算！(本應 +$total_bonus)${NC}"
+            # 不加獎勵，只保留扣分
+        else
+            total_penalty=$((total_penalty + total_bonus))
+            echo -e "${GREEN}   總獎勵: +$total_bonus 分${NC}"
+        fi
     fi
 
     echo ""
@@ -766,9 +771,13 @@ audit_file() {
             echo -e "${GREEN}✅ 審計通過（有小問題）${NC}"
             echo -e "${YELLOW}   扣分: $total_penalty${NC}"
             update_score $total_penalty "審計通過: $file (有小問題)"
+        elif [ "$total_penalty" -gt 0 ]; then
+            echo -e "${GREEN}✅ 審計完美通過！🏆${NC}"
+            echo -e "${GREEN}   獎勵: +$total_penalty${NC}"
+            update_score $total_penalty "審計完美: $file (+$total_penalty 獎勵)"
         else
-            echo -e "${GREEN}✅ 審計完美通過！${NC}"
-            update_score 3 "審計完美: $file"
+            echo -e "${GREEN}✅ 審計通過${NC}"
+            update_score 0 "審計通過: $file"
         fi
         # 記錄已審計
         echo "$file" >> "$STATE_DIR/audited_files.log"
