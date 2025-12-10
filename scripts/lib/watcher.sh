@@ -124,12 +124,11 @@ wipe_all_changes() {
     rm -f "$STATE_DIR/modified_files.log" 2>/dev/null
     rm -f "$STATE_DIR/audited_files.log" 2>/dev/null
 
-    # 重置分數
-    if [ -f "$SCORE_FILE" ]; then
-        echo '{"score": 100, "history": []}' > "$SCORE_FILE"
-    fi
+    # 🔥 偷雞扣分：-100 分！🔥
+    echo -e "${RED}🔥 偷雞懲罰: -100 分！${NC}"
+    update_score -100 "$reason"
 
-    echo -e "${GREEN}✅ 已清空，分數重置為 100${NC}"
+    echo -e "${YELLOW}⚠️ 代碼已清空，分數已扣！${NC}"
     echo ""
 }
 

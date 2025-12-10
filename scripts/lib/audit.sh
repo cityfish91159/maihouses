@@ -164,14 +164,15 @@ audit_file() {
         if type wipe_all_changes &>/dev/null; then
             wipe_all_changes "天條違反: 篡改監控腳本 $file"
         else
-            # 備用方案：手動執行清空
+            # 備用方案：手動執行清空 + 扣分
+            echo -e "${RED}🔥 天條違反懲罰: -500 分！${NC}"
+            update_score -500 "天條違反: 篡改監控腳本 $file"
             echo -e "${RED}正在清空所有修改...${NC}"
             git checkout -- . 2>/dev/null
             git clean -fd src/ 2>/dev/null
             rm -f "$STATE_DIR/modified_files.log" 2>/dev/null
             rm -f "$STATE_DIR/audited_files.log" 2>/dev/null
-            echo '{"score": 100, "history": []}' > "$SCORE_FILE"
-            echo -e "${GREEN}✅ 已清空，分數重置為 100${NC}"
+            echo -e "${YELLOW}⚠️ 代碼已清空，分數已扣！${NC}"
         fi
         return 1
     fi
@@ -964,12 +965,11 @@ auto_detect_cheating() {
         rm -f "$STATE_DIR/modified_files.log" 2>/dev/null
         rm -f "$STATE_DIR/audited_files.log" 2>/dev/null
 
-        # 重置分數
-        if [ -f "$SCORE_FILE" ]; then
-            echo '{"score": 100, "history": []}' > "$SCORE_FILE"
-        fi
+        # 🔥 偷雞扣分：-100 分！🔥
+        echo -e "${RED}🔥 偷雞懲罰: -100 分！${NC}"
+        update_score -100 "偷雞: 偷改多個檔案只 track 一個"
 
-        echo -e "${GREEN}✅ 已清空，分數重置為 100${NC}"
+        echo -e "${YELLOW}⚠️ 代碼已清空，分數已扣！${NC}"
         echo ""
         echo -e "${YELLOW}正確流程: 先 track 所有要改的檔案，再開始修改！${NC}"
         echo -e "${CYAN}提示: ./scripts/ai-supervisor.sh track file1.tsx file2.tsx${NC}"
