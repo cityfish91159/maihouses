@@ -348,26 +348,26 @@ export const PropertyUploadPage: React.FC = () => {
           
           <div className="space-y-3">
             <div>
-              <label className="mb-1 block text-xs font-medium text-slate-600">物件標題 *</label>
-              <input name="title" value={form.title} onChange={handleInput} className={inputClass + " font-bold"} placeholder="例如：信義區101景觀全新裝潢大三房" />
+              <label htmlFor="upload-title" className="mb-1 block text-xs font-medium text-slate-600">物件標題 *</label>
+              <input id="upload-title" name="title" value={form.title} onChange={handleInput} className={inputClass + " font-bold"} placeholder="例如：信義區101景觀全新裝潢大三房" />
             </div>
-            
+
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="mb-1 block text-xs font-medium text-slate-600">價格 (萬) *</label>
-                <input name="price" type="number" value={form.price} onChange={handleInput} className={inputClass} placeholder="0" />
+                <label htmlFor="upload-price" className="mb-1 block text-xs font-medium text-slate-600">價格 (萬) *</label>
+                <input id="upload-price" name="price" type="number" value={form.price} onChange={handleInput} className={inputClass} placeholder="0" />
               </div>
               <div>
-                <label className="mb-1 block text-xs font-medium text-slate-600">地址 *</label>
-                <input name="address" value={form.address} onChange={handleInput} className={inputClass} placeholder="台北市信義區..." />
+                <label htmlFor="upload-address" className="mb-1 block text-xs font-medium text-slate-600">地址 *</label>
+                <input id="upload-address" name="address" value={form.address} onChange={handleInput} className={inputClass} placeholder="台北市信義區..." />
               </div>
             </div>
 
             {/* 社區名稱 - 必填 */}
             <div>
-              <label className="mb-1 block text-xs font-medium text-slate-600">
+              <span id="upload-community-label" className="mb-1 block text-xs font-medium text-slate-600">
                 社區名稱 * <span className="text-slate-400">(透天/店面請選「無社區」)</span>
-              </label>
+              </span>
               <CommunityPicker
                 value={form.communityName}
                 address={form.address}
@@ -383,16 +383,16 @@ export const PropertyUploadPage: React.FC = () => {
 
             <div className="grid grid-cols-4 gap-3">
               <div>
-                <label className="mb-1 block text-xs font-medium text-slate-600">坪數</label>
-                <input name="size" type="number" value={form.size} onChange={handleInput} className={inputClass} placeholder="0" />
+                <label htmlFor="upload-size" className="mb-1 block text-xs font-medium text-slate-600">坪數</label>
+                <input id="upload-size" name="size" type="number" value={form.size} onChange={handleInput} className={inputClass} placeholder="0" />
               </div>
               <div>
-                <label className="mb-1 block text-xs font-medium text-slate-600">屋齡</label>
-                <input name="age" type="number" value={form.age} onChange={handleInput} className={inputClass} placeholder="0" />
+                <label htmlFor="upload-age" className="mb-1 block text-xs font-medium text-slate-600">屋齡</label>
+                <input id="upload-age" name="age" type="number" value={form.age} onChange={handleInput} className={inputClass} placeholder="0" />
               </div>
               <div className="col-span-2">
-                <label className="mb-1 block text-xs font-medium text-slate-600">類型</label>
-                <select name="type" value={form.type} onChange={handleInput} className={inputClass}>
+                <label htmlFor="upload-type" className="mb-1 block text-xs font-medium text-slate-600">類型</label>
+                <select id="upload-type" name="type" value={form.type} onChange={handleInput} className={inputClass}>
                   <option>電梯大樓</option>
                   <option>公寓</option>
                   <option>透天</option>
@@ -403,16 +403,16 @@ export const PropertyUploadPage: React.FC = () => {
 
             <div className="grid grid-cols-3 gap-3">
               <div>
-                <label className="mb-1 block text-xs font-medium text-slate-600">房</label>
-                <input name="rooms" type="number" value={form.rooms} onChange={handleInput} className={inputClass} />
+                <label htmlFor="upload-rooms" className="mb-1 block text-xs font-medium text-slate-600">房</label>
+                <input id="upload-rooms" name="rooms" type="number" value={form.rooms} onChange={handleInput} className={inputClass} />
               </div>
               <div>
-                <label className="mb-1 block text-xs font-medium text-slate-600">廳</label>
-                <input name="halls" type="number" value={form.halls} onChange={handleInput} className={inputClass} />
+                <label htmlFor="upload-halls" className="mb-1 block text-xs font-medium text-slate-600">廳</label>
+                <input id="upload-halls" name="halls" type="number" value={form.halls} onChange={handleInput} className={inputClass} />
               </div>
               <div>
-                <label className="mb-1 block text-xs font-medium text-slate-600">衛</label>
-                <input name="bathrooms" type="number" value={form.bathrooms} onChange={handleInput} className={inputClass} />
+                <label htmlFor="upload-bathrooms" className="mb-1 block text-xs font-medium text-slate-600">衛</label>
+                <input id="upload-bathrooms" name="bathrooms" type="number" value={form.bathrooms} onChange={handleInput} className={inputClass} />
               </div>
             </div>
           </div>
@@ -430,15 +430,16 @@ export const PropertyUploadPage: React.FC = () => {
 
           <div className="space-y-3">
             <div>
-              <label className="mb-1 flex items-center gap-1.5 text-xs font-medium text-green-700">
+              <label htmlFor="upload-advantage1" className="mb-1 flex items-center gap-1.5 text-xs font-medium text-green-700">
                 <ThumbsUp size={14}/> 優點 1 (至少 5 字)
               </label>
-              <input 
-                name="advantage1" 
-                value={form.advantage1} 
-                onChange={handleInput} 
-                className={inputClass + (validation.adv1Valid ? ' border-green-300 bg-green-50/50' : '') + (validation.advantage1.contentWarning ? ' border-red-300' : '')} 
-                placeholder="例如：格局方正，採光極佳" 
+              <input
+                id="upload-advantage1"
+                name="advantage1"
+                value={form.advantage1}
+                onChange={handleInput}
+                className={inputClass + (validation.adv1Valid ? ' border-green-300 bg-green-50/50' : '') + (validation.advantage1.contentWarning ? ' border-red-300' : '')}
+                placeholder="例如：格局方正，採光極佳"
               />
               <div className="mt-0.5 flex items-center justify-between">
                 <span className={"text-xs " + (validation.adv1Valid ? 'text-green-600' : 'text-slate-400')}>
@@ -453,15 +454,16 @@ export const PropertyUploadPage: React.FC = () => {
             </div>
 
             <div>
-              <label className="mb-1 flex items-center gap-1.5 text-xs font-medium text-green-700">
+              <label htmlFor="upload-advantage2" className="mb-1 flex items-center gap-1.5 text-xs font-medium text-green-700">
                 <ThumbsUp size={14}/> 優點 2 (至少 5 字)
               </label>
-              <input 
-                name="advantage2" 
-                value={form.advantage2} 
-                onChange={handleInput} 
-                className={inputClass + (validation.adv2Valid ? ' border-green-300 bg-green-50/50' : '') + (validation.advantage2.contentWarning ? ' border-red-300' : '')} 
-                placeholder="例如：近捷運站，生活機能好" 
+              <input
+                id="upload-advantage2"
+                name="advantage2"
+                value={form.advantage2}
+                onChange={handleInput}
+                className={inputClass + (validation.adv2Valid ? ' border-green-300 bg-green-50/50' : '') + (validation.advantage2.contentWarning ? ' border-red-300' : '')}
+                placeholder="例如：近捷運站，生活機能好"
               />
               <div className="mt-0.5 flex items-center justify-between">
                 <span className={"text-xs " + (validation.adv2Valid ? 'text-green-600' : 'text-slate-400')}>
@@ -476,15 +478,16 @@ export const PropertyUploadPage: React.FC = () => {
             </div>
 
             <div>
-              <label className="mb-1 flex items-center gap-1.5 text-xs font-medium text-orange-700">
+              <label htmlFor="upload-disadvantage" className="mb-1 flex items-center gap-1.5 text-xs font-medium text-orange-700">
                 <ThumbsDown size={14}/> 誠實公道話 (至少 10 字)
               </label>
-              <input 
-                name="disadvantage" 
-                value={form.disadvantage} 
-                onChange={handleInput} 
-                className={inputClass + (validation.disValid ? ' border-orange-300 bg-orange-50/50' : '') + (validation.disadvantage.contentWarning ? ' border-red-300' : '')} 
-                placeholder="例如：臨路有車流聲，建議加裝氣密窗" 
+              <input
+                id="upload-disadvantage"
+                name="disadvantage"
+                value={form.disadvantage}
+                onChange={handleInput}
+                className={inputClass + (validation.disValid ? ' border-orange-300 bg-orange-50/50' : '') + (validation.disadvantage.contentWarning ? ' border-red-300' : '')}
+                placeholder="例如：臨路有車流聲，建議加裝氣密窗"
               />
               <div className="mt-0.5 flex items-center justify-between">
                 <span className={"text-xs " + (validation.disValid ? 'text-orange-600' : 'text-red-400')}>
@@ -525,21 +528,22 @@ export const PropertyUploadPage: React.FC = () => {
 
           <div className="space-y-4">
             <div>
-              <label className="mb-1 block text-xs font-medium text-slate-600">物件描述</label>
-              <textarea 
-                name="description" 
-                value={form.description} 
-                onChange={handleInput} 
-                rows={4} 
+              <label htmlFor="upload-description" className="mb-1 block text-xs font-medium text-slate-600">物件描述</label>
+              <textarea
+                id="upload-description"
+                name="description"
+                value={form.description}
+                onChange={handleInput}
+                rows={4}
                 className={inputClass + " resize-none"}
-                placeholder="詳細介紹這個物件的特色、生活機能、交通便利性..." 
+                placeholder="詳細介紹這個物件的特色、生活機能、交通便利性..."
               />
             </div>
 
             <div>
-              <label className="mb-2 block text-xs font-medium text-slate-600">
+              <span id="upload-photos-label" className="mb-2 block text-xs font-medium text-slate-600">
                 物件照片 * <span className="text-slate-400">(至少 1 張)</span>
-              </label>
+              </span>
               <div className="grid grid-cols-4 gap-3">
                 {images.map((url, i) => (
                   <div key={i} className="group relative aspect-square overflow-hidden rounded-xl border border-slate-200">

@@ -120,8 +120,9 @@ const BookingModal: React.FC<{ isOpen: boolean; onClose: () => void; agentName: 
 
             {/* Phone Input */}
             <div className="mt-4">
-              <label className="mb-1 block text-xs font-medium text-slate-600">您的手機號碼</label>
+              <label htmlFor="booking-phone" className="mb-1 block text-xs font-medium text-slate-600">您的手機號碼</label>
               <input
+                id="booking-phone"
                 type="tel"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
@@ -155,7 +156,10 @@ export const AgentTrustCard: React.FC<AgentTrustCardProps> = ({ agent, onLineCli
   const [showBookingModal, setShowBookingModal] = useState(false);
   
   // 模擬在線狀態 (實際應從後端獲取)
-  const isOnline = useMemo(() => Math.random() > 0.3, []); // 70% 機率在線
+  // 使用 agent.internalCode 產生確定性結果，避免渲染時使用不純函數
+  const isOnline = useMemo(() => {
+    return agent.internalCode % 10 > 3; // 約 70% 機率在線，但對同一 agent 結果穩定
+  }, [agent.internalCode]);
   const trustBreakdown = getTrustBreakdown(agent.trustScore);
   
   // 經紀人績效指標（模擬數據，後續從後端獲取）
@@ -204,10 +208,15 @@ export const AgentTrustCard: React.FC<AgentTrustCardProps> = ({ agent, onLineCli
 
             <div className="mt-3 flex items-center gap-4">
               {/* 信任分 - 加入 Tooltip */}
-              <div 
+              <div
                 className="relative flex cursor-pointer items-center gap-1.5"
+                role="button"
+                tabIndex={0}
                 onMouseEnter={() => setShowTrustTooltip(true)}
                 onMouseLeave={() => setShowTrustTooltip(false)}
+                onFocus={() => setShowTrustTooltip(true)}
+                onBlur={() => setShowTrustTooltip(false)}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setShowTrustTooltip(!showTrustTooltip); }}
               >
                 <div className="flex size-8 items-center justify-center rounded-lg bg-blue-50 text-[#003366]">
                   <Star size={16} fill="currentColor" />

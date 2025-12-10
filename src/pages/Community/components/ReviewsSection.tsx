@@ -59,14 +59,14 @@ function ReviewCard({ entry }: ReviewCardProps) {
 }
 
 interface ReviewsSectionProps {
-  role: Role;
+  viewerRole: Role;
   reviews: Review[] | { items: Review[] };
   onUnlock?: () => void;
 }
 
-export function ReviewsSection({ role, reviews: reviewsProp, onUnlock }: ReviewsSectionProps) {
+export function ReviewsSection({ viewerRole, reviews: reviewsProp, onUnlock }: ReviewsSectionProps) {
   const reviews = Array.isArray(reviewsProp) ? reviewsProp : (reviewsProp?.items ?? []);
-  const perm = getPermissions(role);
+  const perm = getPermissions(viewerRole);
 
   const reviewEntries = useMemo<ReviewEntry[]>(() => {
     const entries: ReviewEntry[] = [];

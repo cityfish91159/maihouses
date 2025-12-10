@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useQuietMode } from "../context/QuietModeContext";
 
 const barStyle: React.CSSProperties = {
@@ -11,12 +11,23 @@ const barStyle: React.CSSProperties = {
   textAlign: "center",
   letterSpacing: "0.5px",
 };
+
 export const QuietBanner: React.FC = () => {
   const { state, clearQuiet, isActive } = useQuietMode();
+
+  // 使用 state 儲存當前時間，避免在 render 中調用 Date.now()
+  const [now, setNow] = useState(() => Date.now());
+
+  // 定期更新時間（每 10 秒）
+  useEffect(() => {
+    const interval = setInterval(() => setNow(Date.now()), 10000);
+    return () => clearInterval(interval);
+  }, []);
+
   if (!isActive()) return null;
 
   const minutesLeft =
-    state.untilTs ? Math.max(0, Math.ceil((state.untilTs - Date.now()) / 60000)) : null;
+    state.untilTs ? Math.max(0, Math.ceil((state.untilTs - now) / 60000)) : null;
   const turnsLeft = state.remainingTurns ?? null;
 
   return (

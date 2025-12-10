@@ -93,7 +93,7 @@ function QACard({ q, perm, isUnanswered = false, onAnswer, isAnswering, onUnlock
 }
 
 interface QASectionProps {
-  role: Role;
+  viewerRole: Role;
   questions: Question[] | { items: Question[] };
   onAskQuestion?: (question: string) => Promise<void> | void;
   onAnswerQuestion?: (questionId: string, content: string) => Promise<void> | void;
@@ -101,9 +101,9 @@ interface QASectionProps {
   onUnlock?: () => void;
 }
 
-export function QASection({ role, questions: questionsProp, onAskQuestion, onAnswerQuestion, feedbackDurationMs = 5000, onUnlock }: QASectionProps) {
+export function QASection({ viewerRole, questions: questionsProp, onAskQuestion, onAnswerQuestion, feedbackDurationMs = 5000, onUnlock }: QASectionProps) {
   const questions = Array.isArray(questionsProp) ? questionsProp : (questionsProp?.items || []);
-  const perm = getPermissions(role);
+  const perm = getPermissions(viewerRole);
   const [askModalOpen, setAskModalOpen] = useState(false);
   const [askInput, setAskInput] = useState('');
   const [answerModalOpen, setAnswerModalOpen] = useState(false);

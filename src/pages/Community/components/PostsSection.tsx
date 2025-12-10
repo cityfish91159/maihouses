@@ -145,7 +145,7 @@ function PostCard({ post, onLike }: PostCardProps) {
 }
 
 interface PostsSectionProps {
-  role: Role;
+  viewerRole: Role;
   currentTab: WallTab;
   onTabChange: (tab: WallTab) => void;
   publicPosts: Post[];
@@ -155,17 +155,17 @@ interface PostsSectionProps {
   onUnlock?: () => void;
 }
 
-export function PostsSection({ 
-  role, 
-  currentTab, 
-  onTabChange, 
-  publicPosts, 
+export function PostsSection({
+  viewerRole,
+  currentTab,
+  onTabChange,
+  publicPosts,
   privatePosts,
   onLike,
   onCreatePost,
   onUnlock,
 }: PostsSectionProps) {
-  const perm = getPermissions(role);
+  const perm = getPermissions(viewerRole);
   // 角色已由父層統一計算，直接使用 perm 判斷訪客狀態
   const isGuest = perm.isGuest;
   const tabListId = useId();

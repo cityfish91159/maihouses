@@ -8,11 +8,11 @@ import type { Role } from '../types';
 import { getPermissions } from '../types';
 
 interface BottomCTAProps {
-  role: Role;
+  viewerRole: Role;
 }
 
-export function BottomCTA({ role }: BottomCTAProps) {
-  const perm = getPermissions(role);
+export function BottomCTA({ viewerRole }: BottomCTAProps) {
+  const perm = getPermissions(viewerRole);
 
   // 住戶和房仲不顯示 CTA
   if (perm.canAccessPrivate) return null;

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 
 type MascotMood = 'idle' | 'wave' | 'peek' | 'happy' | 'thinking' | 'celebrate' | 'sleep' | 'shy';
 
@@ -24,41 +24,39 @@ export default function MascotInteractive({
   isLoading = false,
   isSuccess = false,
 }: MascotInteractiveProps) {
-  const [internalMood, setInternalMood] = useState<MascotMood>('idle');
   const [isHovered, setIsHovered] = useState(false);
   const [clickCount, setClickCount] = useState(0);
+  const [celebrateFromClick, setCelebrateFromClick] = useState(false);
 
-  // 根據登入狀態自動切換表情
-  useEffect(() => {
-    if (isSuccess) {
-      setInternalMood('celebrate');
-    } else if (hasError) {
-      setInternalMood('shy');
-    } else if (isLoading) {
-      setInternalMood('thinking');
-    } else if (isTypingPassword) {
-      setInternalMood('peek'); // 輸入密碼時遮眼睛偷看
-    } else if (isTypingEmail) {
-      setInternalMood('happy'); // 輸入 email 時開心
-    } else if (isHovered) {
-      setInternalMood('wave');
-    } else {
-      setInternalMood('idle');
-    }
-  }, [isTypingEmail, isTypingPassword, hasError, isLoading, isSuccess, isHovered]);
+  // 使用 useMemo 計算 mood，避免 useEffect 中的 setState
+  const computedMood = useMemo<MascotMood>(() => {
+    if (celebrateFromClick) return 'celebrate';
+    if (isSuccess) return 'celebrate';
+    if (hasError) return 'shy';
+    if (isLoading) return 'thinking';
+    if (isTypingPassword) return 'peek';
+    if (isTypingEmail) return 'happy';
+    if (isHovered) return 'wave';
+    return 'idle';
+  }, [celebrateFromClick, isSuccess, hasError, isLoading, isTypingPassword, isTypingEmail, isHovered]);
 
-  const mood = externalMood || internalMood;
+  const mood = externalMood || computedMood;
 
   // 點擊互動
   const handleClick = useCallback(() => {
-    setClickCount(prev => prev + 1);
-    
-    // 連續點擊會有不同反應
-    if (clickCount >= 5) {
-      setInternalMood('celebrate');
-      setTimeout(() => setClickCount(0), 2000);
-    }
-  }, [clickCount]);
+    setClickCount(prev => {
+      const newCount = prev + 1;
+      // 連續點擊 5 次會慶祝
+      if (newCount >= 5) {
+        setCelebrateFromClick(true);
+        setTimeout(() => {
+          setCelebrateFromClick(false);
+          setClickCount(0);
+        }, 2000);
+      }
+      return newCount;
+    });
+  }, []);
 
   // 尺寸配置
   const sizeConfig = {
@@ -92,9 +90,12 @@ export default function MascotInteractive({
   return (
     <div
       className={`relative ${sizeConfig[size]} ${className} cursor-pointer select-none`}
+      role="button"
+      tabIndex={0}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={handleClick}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleClick(); }}
     >
       {/* 背景光暈 */}
       <div className="bg-[var(--brand)]/10 absolute left-1/2 top-1/2 -z-10 size-3/4 -translate-x-1/2 -translate-y-1/2 animate-pulse rounded-full blur-2xl"></div>
