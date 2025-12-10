@@ -76,7 +76,7 @@ readonly PENALTY_NO_RESULT_LOG=-500     # 未記錄施作結果
 # ============================================================================
 # 原則：短而有效的代碼獲得獎勵，冗長肥大的代碼被懲罰
 
-# 獎勵 (正分)
+# 獎勵 (正分) - 讓 AI 有動力寫好代碼！
 readonly BONUS_CONCISE_FILE=5           # 檔案 < 100 行
 readonly BONUS_VERY_CONCISE=10          # 檔案 < 50 行
 readonly BONUS_SHORT_FUNCTION=3         # 函數 < 20 行
@@ -84,6 +84,20 @@ readonly BONUS_NO_REDUNDANCY=5          # 無重複代碼
 readonly BONUS_PURE_FUNCTION=3          # 純函數 (無副作用)
 readonly BONUS_SINGLE_RESPONSIBILITY=5  # 單一職責 (函數只做一件事)
 readonly BONUS_NET_REDUCTION=8          # 代碼淨減少
+
+# 🏆 新增獎勵 - 最佳實踐
+readonly BONUS_PROPER_TYPES=8           # 使用正確的 interface/type（無 any）
+readonly BONUS_REACT_MEMO=5             # 使用 React.memo 優化
+readonly BONUS_USE_CALLBACK=5           # 正確使用 useCallback/useMemo
+readonly BONUS_ERROR_BOUNDARY=8         # 使用 ErrorBoundary
+readonly BONUS_I18N=10                  # 使用 i18n（無硬編碼字串）
+readonly BONUS_A11Y=8                   # 完整 a11y（aria-label, role 等）
+readonly BONUS_CLEAN_IMPORTS=3          # import 整潔（無 unused, 有排序）
+readonly BONUS_GOOD_NAMING=5            # 命名規範（語義化變數名）
+readonly BONUS_EARLY_RETURN=3           # 使用 early return 模式
+readonly BONUS_CONST_ENUM=5             # 使用 const/enum 取代魔術數字
+readonly BONUS_JSDOC=3                  # API 函數有 JSDoc
+readonly BONUS_TEST_COVERAGE=15         # 有對應的測試檔案
 
 # 懲罰 (額外)
 readonly PENALTY_OVER_ENGINEERING=-10   # 過度工程化
@@ -549,6 +563,80 @@ audit_file() {
         fi
     fi
 
+    # ==================== 🏆 最佳實踐獎勵 ====================
+    echo -e "${GREEN}【獎勵】最佳實踐檢查${NC}"
+
+    # 32. 正確的類型定義（有 interface/type 且無 any）
+    if grep -qE "^(export )?(interface|type) " "$file" 2>/dev/null; then
+        if [ "$any_count" -eq 0 ] 2>/dev/null; then
+            echo -e "${GREEN}   🏆 正確的類型定義 +$BONUS_PROPER_TYPES 分${NC}"
+            total_bonus=$((total_bonus + BONUS_PROPER_TYPES))
+            issues="$issues\n+ 正確類型定義"
+        fi
+    fi
+
+    # 33. 使用 React.memo
+    if grep -q "React\.memo\|memo(" "$file" 2>/dev/null; then
+        echo -e "${GREEN}   🏆 使用 React.memo 優化 +$BONUS_REACT_MEMO 分${NC}"
+        total_bonus=$((total_bonus + BONUS_REACT_MEMO))
+        issues="$issues\n+ React.memo"
+    fi
+
+    # 34. 使用 useCallback/useMemo
+    if grep -qE "useCallback|useMemo" "$file" 2>/dev/null; then
+        echo -e "${GREEN}   🏆 使用 useCallback/useMemo +$BONUS_USE_CALLBACK 分${NC}"
+        total_bonus=$((total_bonus + BONUS_USE_CALLBACK))
+        issues="$issues\n+ useCallback/useMemo"
+    fi
+
+    # 35. 使用 i18n（使用 t() 或 useTranslation）
+    if grep -qE "useTranslation|t\(|i18n\." "$file" 2>/dev/null; then
+        echo -e "${GREEN}   🏆 使用 i18n 國際化 +$BONUS_I18N 分${NC}"
+        total_bonus=$((total_bonus + BONUS_I18N))
+        issues="$issues\n+ i18n"
+    fi
+
+    # 36. 完整 a11y
+    if grep -qE "aria-label|aria-labelledby|role=" "$file" 2>/dev/null; then
+        local aria_count=$(grep -cE "aria-|role=" "$file" 2>/dev/null || echo 0)
+        if [ "$aria_count" -ge 3 ]; then
+            echo -e "${GREEN}   🏆 完整 a11y 支援 ($aria_count 個標籤) +$BONUS_A11Y 分${NC}"
+            total_bonus=$((total_bonus + BONUS_A11Y))
+            issues="$issues\n+ 完整 a11y"
+        fi
+    fi
+
+    # 37. 使用 const/enum 取代魔術數字
+    if grep -qE "^(export )?const [A-Z_]+ =" "$file" 2>/dev/null; then
+        echo -e "${GREEN}   🏆 使用 const 常數 +$BONUS_CONST_ENUM 分${NC}"
+        total_bonus=$((total_bonus + BONUS_CONST_ENUM))
+        issues="$issues\n+ const 常數"
+    fi
+
+    # 38. Early return 模式
+    local early_return=$(grep -cE "if\s*\(.*\)\s*return" "$file" 2>/dev/null || echo 0)
+    if [ "$early_return" -ge 2 ]; then
+        echo -e "${GREEN}   🏆 使用 early return 模式 +$BONUS_EARLY_RETURN 分${NC}"
+        total_bonus=$((total_bonus + BONUS_EARLY_RETURN))
+        issues="$issues\n+ early return"
+    fi
+
+    # 39. 有 JSDoc 註解
+    if grep -q "/\*\*" "$file" 2>/dev/null; then
+        echo -e "${GREEN}   🏆 有 JSDoc 文檔 +$BONUS_JSDOC 分${NC}"
+        total_bonus=$((total_bonus + BONUS_JSDOC))
+        issues="$issues\n+ JSDoc"
+    fi
+
+    # 40. 有對應測試檔案
+    local test_file="${file%.tsx}.test.tsx"
+    local test_file2="${file%.ts}.test.ts"
+    if [ -f "$test_file" ] || [ -f "$test_file2" ] || [ -f "${file%.tsx}.spec.tsx" ]; then
+        echo -e "${GREEN}   🏆 有對應測試檔案 +$BONUS_TEST_COVERAGE 分${NC}"
+        total_bonus=$((total_bonus + BONUS_TEST_COVERAGE))
+        issues="$issues\n+ 測試覆蓋"
+    fi
+
     # 加入獎勵到總分
     if [ "$total_bonus" -gt 0 ]; then
         total_penalty=$((total_penalty + total_bonus))
@@ -655,6 +743,11 @@ track_modify() {
 
     echo -e "${CYAN}📝 已記錄修改: $file${NC}"
 
+    # 🔥 自動 TypeScript 檢查 🔥
+    if [[ "$file" =~ \.(ts|tsx)$ ]] && [ -f "$file" ]; then
+        auto_typecheck_file "$file"
+    fi
+
     # 檢查待審計數量
     local pending=0
     if [ -f "$STATE_DIR/modified_files.log" ] && [ -f "$STATE_DIR/audited_files.log" ]; then
@@ -669,6 +762,38 @@ track_modify() {
         echo -e "${BG_RED}${WHITE}🚨 警告：待審計檔案已達 $pending 個！${NC}"
         echo -e "${BG_RED}${WHITE}   不要繼續堆積！立即執行 audit！${NC}"
         echo -e "${BG_RED}${WHITE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    fi
+}
+
+# 🔥 自動 TypeScript 檢查（單檔）🔥
+auto_typecheck_file() {
+    local file="$1"
+
+    echo ""
+    echo -e "${CYAN}🔍 自動 TypeScript 檢查: $file${NC}"
+
+    # 執行 tsc 檢查（只檢查不輸出）
+    local ts_output
+    ts_output=$(npx tsc --noEmit "$file" 2>&1) || true
+
+    # 檢查是否有錯誤
+    if echo "$ts_output" | grep -qiE "error TS[0-9]+:"; then
+        local error_count=$(echo "$ts_output" | grep -c "error TS" || echo 0)
+
+        echo -e "${BG_RED}${WHITE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+        echo -e "${BG_RED}${WHITE}🚨 TypeScript 錯誤！發現 $error_count 個錯誤${NC}"
+        echo -e "${BG_RED}${WHITE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+
+        # 顯示前 5 個錯誤
+        echo "$ts_output" | grep -iE "error TS[0-9]+:" | head -5
+        echo ""
+
+        # 使用終端錯誤處理機制
+        check_terminal_errors "$ts_output"
+    else
+        echo -e "${GREEN}   ✅ TypeScript 檢查通過${NC}"
+        # 清除之前的錯誤提醒
+        clear_error_remind "TypeScript" 2>/dev/null || true
     fi
 }
 
