@@ -131,6 +131,14 @@ audit_file() {
     local severe_count=0
     local issues=""
 
+    # 🔒 檢查是否已經審計過（防止重複加分）
+    if [ -f "$STATE_DIR/audited_files.log" ]; then
+        if grep -qxF "$file" "$STATE_DIR/audited_files.log" 2>/dev/null; then
+            echo -e "${YELLOW}⏭️  跳過 (已審計過): $file${NC}"
+            return 0
+        fi
+    fi
+
     # 檔案不存在 → 標記為已審計（跳過）並返回成功
     if [ ! -f "$file" ]; then
         echo "$file" >> "$STATE_DIR/audited_files.log"
@@ -726,11 +734,17 @@ audit_file() {
     fi
 
     # 加入獎勵到總分（但有致命錯誤時不給獎勵！）
+    # 🔒 每檔案獎勵上限 20 分，防止分數膨脹
+    local MAX_BONUS_PER_FILE=20
     if [ "$total_bonus" -gt 0 ]; then
         if [ "$critical_count" -gt 0 ]; then
             echo -e "${RED}   ⚠️ 有致命錯誤，獎勵不計算！(本應 +$total_bonus)${NC}"
             # 不加獎勵，只保留扣分
         else
+            if [ "$total_bonus" -gt "$MAX_BONUS_PER_FILE" ]; then
+                echo -e "${YELLOW}   原始獎勵: +$total_bonus → 上限 +$MAX_BONUS_PER_FILE${NC}"
+                total_bonus=$MAX_BONUS_PER_FILE
+            fi
             total_penalty=$((total_penalty + total_bonus))
             echo -e "${GREEN}   總獎勵: +$total_bonus 分${NC}"
         fi
