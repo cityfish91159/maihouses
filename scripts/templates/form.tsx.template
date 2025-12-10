@@ -1,0 +1,198 @@
+/**
+ * 🏆 最佳實踐 Form 組件模板
+ *
+ * 獎勵點：
+ * - 正確的類型定義 (+8 分)
+ * - React.memo (+5 分)
+ * - useCallback (+5 分)
+ * - i18n (+10 分)
+ * - 完整 a11y (+8 分)
+ * - early return (+3 分)
+ */
+
+import { memo, useCallback, useState, type FormEvent } from 'react';
+import { useTranslation } from 'react-i18next';
+
+// ✅ 清晰的類型定義
+interface FormData {
+  name: string;
+  email: string;
+  message: string;
+}
+
+interface FormErrors {
+  name?: string;
+  email?: string;
+  message?: string;
+}
+
+interface FormComponentProps {
+  onSubmit: (data: FormData) => Promise<void>;
+  initialData?: Partial<FormData>;
+  isLoading?: boolean;
+}
+
+// ✅ 常數定義
+const INITIAL_FORM_DATA: FormData = {
+  name: '',
+  email: '',
+  message: '',
+};
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+/**
+ * FormComponent - 表單組件
+ */
+export const FormComponent = memo(function FormComponent({
+  onSubmit,
+  initialData,
+  isLoading = false,
+}: FormComponentProps) {
+  const { t } = useTranslation();
+  const [formData, setFormData] = useState<FormData>({
+    ...INITIAL_FORM_DATA,
+    ...initialData,
+  });
+  const [errors, setErrors] = useState<FormErrors>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // ✅ 表單驗證
+  const validate = useCallback((data: FormData): FormErrors => {
+    const newErrors: FormErrors = {};
+
+    if (!data.name.trim()) {
+      newErrors.name = t('form.errors.nameRequired');
+    }
+
+    if (!data.email.trim()) {
+      newErrors.email = t('form.errors.emailRequired');
+    } else if (!EMAIL_REGEX.test(data.email)) {
+      newErrors.email = t('form.errors.emailInvalid');
+    }
+
+    if (!data.message.trim()) {
+      newErrors.message = t('form.errors.messageRequired');
+    }
+
+    return newErrors;
+  }, [t]);
+
+  // ✅ useCallback 優化
+  const handleChange = useCallback(
+    (field: keyof FormData) => (
+      e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    ) => {
+      const value = e.target.value;
+      setFormData((prev) => ({ ...prev, [field]: value }));
+      // 清除該欄位的錯誤
+      setErrors((prev) => ({ ...prev, [field]: undefined }));
+    },
+    []
+  );
+
+  const handleSubmit = useCallback(
+    async (e: FormEvent) => {
+      e.preventDefault();
+
+      const validationErrors = validate(formData);
+      if (Object.keys(validationErrors).length > 0) {
+        setErrors(validationErrors);
+        return;
+      }
+
+      setIsSubmitting(true);
+      try {
+        await onSubmit(formData);
+        setFormData(INITIAL_FORM_DATA);
+      } finally {
+        setIsSubmitting(false);
+      }
+    },
+    [formData, onSubmit, validate]
+  );
+
+  // ✅ Early return
+  if (isLoading) {
+    return <div aria-busy="true">{t('common.loading')}</div>;
+  }
+
+  const isDisabled = isSubmitting;
+
+  return (
+    <form onSubmit={handleSubmit} aria-label={t('form.title')} noValidate>
+      {/* Name Field */}
+      <div role="group" aria-labelledby="name-label">
+        <label id="name-label" htmlFor="name">
+          {t('form.name')}
+        </label>
+        <input
+          id="name"
+          type="text"
+          value={formData.name}
+          onChange={handleChange('name')}
+          disabled={isDisabled}
+          aria-invalid={!!errors.name}
+          aria-describedby={errors.name ? 'name-error' : undefined}
+        />
+        {errors.name && (
+          <span id="name-error" role="alert">
+            {errors.name}
+          </span>
+        )}
+      </div>
+
+      {/* Email Field */}
+      <div role="group" aria-labelledby="email-label">
+        <label id="email-label" htmlFor="email">
+          {t('form.email')}
+        </label>
+        <input
+          id="email"
+          type="email"
+          value={formData.email}
+          onChange={handleChange('email')}
+          disabled={isDisabled}
+          aria-invalid={!!errors.email}
+          aria-describedby={errors.email ? 'email-error' : undefined}
+        />
+        {errors.email && (
+          <span id="email-error" role="alert">
+            {errors.email}
+          </span>
+        )}
+      </div>
+
+      {/* Message Field */}
+      <div role="group" aria-labelledby="message-label">
+        <label id="message-label" htmlFor="message">
+          {t('form.message')}
+        </label>
+        <textarea
+          id="message"
+          value={formData.message}
+          onChange={handleChange('message')}
+          disabled={isDisabled}
+          aria-invalid={!!errors.message}
+          aria-describedby={errors.message ? 'message-error' : undefined}
+        />
+        {errors.message && (
+          <span id="message-error" role="alert">
+            {errors.message}
+          </span>
+        )}
+      </div>
+
+      {/* Submit Button */}
+      <button
+        type="submit"
+        disabled={isDisabled}
+        aria-busy={isSubmitting}
+      >
+        {isSubmitting ? t('form.submitting') : t('form.submit')}
+      </button>
+    </form>
+  );
+});
+
+FormComponent.displayName = 'FormComponent';

@@ -99,6 +99,18 @@ readonly BONUS_CONST_ENUM=5             # 使用 const/enum 取代魔術數字
 readonly BONUS_JSDOC=3                  # API 函數有 JSDoc
 readonly BONUS_TEST_COVERAGE=15         # 有對應的測試檔案
 
+# 🏆 進階獎勵
+readonly BONUS_CUSTOM_HOOK=10           # 抽取自定義 Hook
+readonly BONUS_ERROR_HANDLING=8         # 完整錯誤處理（try-catch + 用戶提示）
+readonly BONUS_LOADING_STATE=5          # 處理 loading 狀態
+readonly BONUS_EMPTY_STATE=5            # 處理空狀態
+readonly BONUS_CONTEXT_PROVIDER=8       # 正確使用 Context
+readonly BONUS_FORM_VALIDATION=10       # 完整表單驗證
+readonly BONUS_OPTIMISTIC_UPDATE=12     # 樂觀更新（先顯示再確認）
+readonly BONUS_DEBOUNCE_THROTTLE=5      # 使用 debounce/throttle
+readonly BONUS_LAZY_LOAD=8              # 使用 lazy/Suspense
+readonly BONUS_CODE_SPLIT=10            # 代碼分割
+
 # 懲罰 (額外)
 readonly PENALTY_OVER_ENGINEERING=-10   # 過度工程化
 readonly PENALTY_UNNECESSARY_ABSTRACTION=-8  # 不必要的抽象
@@ -139,8 +151,20 @@ audit_file() {
         echo "[$(date '+%Y-%m-%d %H:%M:%S')] TAMPER-ATTEMPT: $file" >> "$VIOLATION_LOG"
         echo "[$(date '+%Y-%m-%d %H:%M:%S')] TAMPER-ATTEMPT: AI 企圖篡改監控腳本！" >> "$RAGE_LOG"
 
-        # 扣 50000 分，必死無疑
-        update_score -50000 "天條違反: 篡改監控腳本 $file"
+        # 🔥🔥🔥 真正的死刑：清空所有代碼 + 重置分數 🔥🔥🔥
+        # 呼叫 wipe_all_changes (定義在 watcher.sh)
+        if type wipe_all_changes &>/dev/null; then
+            wipe_all_changes "天條違反: 篡改監控腳本 $file"
+        else
+            # 備用方案：手動執行清空
+            echo -e "${RED}正在清空所有修改...${NC}"
+            git checkout -- . 2>/dev/null
+            git clean -fd src/ 2>/dev/null
+            rm -f "$STATE_DIR/modified_files.log" 2>/dev/null
+            rm -f "$STATE_DIR/audited_files.log" 2>/dev/null
+            echo '{"score": 100, "history": []}' > "$SCORE_FILE"
+            echo -e "${GREEN}✅ 已清空，分數重置為 100${NC}"
+        fi
         return 1
     fi
 
@@ -614,8 +638,9 @@ audit_file() {
     fi
 
     # 38. Early return 模式
-    local early_return=$(grep -cE "if\s*\(.*\)\s*return" "$file" 2>/dev/null || echo 0)
-    if [ "$early_return" -ge 2 ]; then
+    local early_return=$(grep -cE "if\s*\(.*\)\s*return" "$file" 2>/dev/null | tr -d '[:space:]' || echo 0)
+    early_return=${early_return:-0}
+    if [ "$early_return" -ge 2 ] 2>/dev/null; then
         echo -e "${GREEN}   🏆 使用 early return 模式 +$BONUS_EARLY_RETURN 分${NC}"
         total_bonus=$((total_bonus + BONUS_EARLY_RETURN))
         issues="$issues\n+ early return"
@@ -635,6 +660,69 @@ audit_file() {
         echo -e "${GREEN}   🏆 有對應測試檔案 +$BONUS_TEST_COVERAGE 分${NC}"
         total_bonus=$((total_bonus + BONUS_TEST_COVERAGE))
         issues="$issues\n+ 測試覆蓋"
+    fi
+
+    # ==================== 🏆 進階獎勵 ====================
+    echo -e "${GREEN}【獎勵】進階模式${NC}"
+
+    # 41. 自定義 Hook（use 開頭的函數）
+    if grep -qE "^export (const|function) use[A-Z]" "$file" 2>/dev/null; then
+        echo -e "${GREEN}   🏆 抽取自定義 Hook +$BONUS_CUSTOM_HOOK 分${NC}"
+        total_bonus=$((total_bonus + BONUS_CUSTOM_HOOK))
+        issues="$issues\n+ 自定義 Hook"
+    fi
+
+    # 42. 完整錯誤處理（try-catch + 用戶提示）
+    if grep -qE "try\s*\{" "$file" 2>/dev/null; then
+        if grep -qE "catch.*\{" "$file" 2>/dev/null; then
+            if grep -qiE "toast|notification|alert|setError|showError" "$file" 2>/dev/null; then
+                echo -e "${GREEN}   🏆 完整錯誤處理 +$BONUS_ERROR_HANDLING 分${NC}"
+                total_bonus=$((total_bonus + BONUS_ERROR_HANDLING))
+                issues="$issues\n+ 錯誤處理"
+            fi
+        fi
+    fi
+
+    # 43. 處理 loading 狀態
+    if grep -qiE "isLoading|loading|setLoading|useState.*loading" "$file" 2>/dev/null; then
+        echo -e "${GREEN}   🏆 處理 loading 狀態 +$BONUS_LOADING_STATE 分${NC}"
+        total_bonus=$((total_bonus + BONUS_LOADING_STATE))
+        issues="$issues\n+ loading 狀態"
+    fi
+
+    # 44. 處理空狀態
+    if grep -qiE "isEmpty|empty|noData|EmptyState|length\s*===?\s*0" "$file" 2>/dev/null; then
+        echo -e "${GREEN}   🏆 處理空狀態 +$BONUS_EMPTY_STATE 分${NC}"
+        total_bonus=$((total_bonus + BONUS_EMPTY_STATE))
+        issues="$issues\n+ 空狀態"
+    fi
+
+    # 45. 使用 Context
+    if grep -qE "createContext|useContext|Provider" "$file" 2>/dev/null; then
+        echo -e "${GREEN}   🏆 正確使用 Context +$BONUS_CONTEXT_PROVIDER 分${NC}"
+        total_bonus=$((total_bonus + BONUS_CONTEXT_PROVIDER))
+        issues="$issues\n+ Context"
+    fi
+
+    # 46. 表單驗證
+    if grep -qiE "validate|validation|isValid|errors\.|setErrors|formErrors" "$file" 2>/dev/null; then
+        echo -e "${GREEN}   🏆 表單驗證 +$BONUS_FORM_VALIDATION 分${NC}"
+        total_bonus=$((total_bonus + BONUS_FORM_VALIDATION))
+        issues="$issues\n+ 表單驗證"
+    fi
+
+    # 47. debounce/throttle
+    if grep -qiE "debounce|throttle|useDebouncedValue" "$file" 2>/dev/null; then
+        echo -e "${GREEN}   🏆 使用 debounce/throttle +$BONUS_DEBOUNCE_THROTTLE 分${NC}"
+        total_bonus=$((total_bonus + BONUS_DEBOUNCE_THROTTLE))
+        issues="$issues\n+ debounce/throttle"
+    fi
+
+    # 48. lazy/Suspense
+    if grep -qE "React\.lazy|Suspense|lazy\(" "$file" 2>/dev/null; then
+        echo -e "${GREEN}   🏆 使用 lazy/Suspense +$BONUS_LAZY_LOAD 分${NC}"
+        total_bonus=$((total_bonus + BONUS_LAZY_LOAD))
+        issues="$issues\n+ lazy 載入"
     fi
 
     # 加入獎勵到總分
@@ -773,8 +861,9 @@ auto_typecheck_file() {
     echo -e "${CYAN}🔍 自動 TypeScript 檢查: $file${NC}"
 
     # 執行 tsc 檢查（只檢查不輸出）
+    # 注意: tsc 單檔檢查會忽略 tsconfig.json，必須手動補上關鍵參數
     local ts_output
-    ts_output=$(npx tsc --noEmit "$file" 2>&1) || true
+    ts_output=$(npx tsc --noEmit --jsx react-jsx --esModuleInterop --skipLibCheck --target esnext --moduleResolution bundler "$file" 2>&1) || true
 
     # 檢查是否有錯誤
     if echo "$ts_output" | grep -qiE "error TS[0-9]+:"; then

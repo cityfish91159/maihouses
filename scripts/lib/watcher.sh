@@ -374,7 +374,7 @@ analyze_file_realtime() {
         [ "$score" -lt 80 ] && score_color="${RED}"
         [ "$score" -lt 100 ] && [ "$score" -ge 80 ] && score_color="${YELLOW}"
         echo ""
-        echo -e "   🏆 目前分數: ${score_color}$score${NC}/150"
+        echo -e "   🏆 目前分數: ${score_color}$score${NC} 分"
         if [ "$score" -lt 90 ]; then
             echo -e "   ${RED}⚠️  距離清空代碼: $((score - 80)) 分！${NC}"
         fi
@@ -561,11 +561,57 @@ install_git_hooks() {
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)/scripts"
 STATE_DIR="$SCRIPT_DIR/../.ai_supervisor"
+SCORE_FILE="$STATE_DIR/score.json"
 
 echo ""
 echo -e "\033[0;34m══════════════════════════════════════════════════════════════\033[0m"
 echo -e "\033[0;34m 🔒 AI Supervisor Pre-commit 強制檢查\033[0m"
 echo -e "\033[0;34m══════════════════════════════════════════════════════════════\033[0m"
+
+# 🔥🔥🔥 0. 最優先：檢查是否企圖修改監控腳本 🔥🔥🔥
+staged_files=$(git diff --cached --name-only)
+for file in $staged_files; do
+    if [[ "$file" == "scripts/ai-supervisor.sh" ]] || \
+       [[ "$file" =~ ^scripts/lib/.*\.sh$ ]] || \
+       [[ "$file" == ".git/hooks/pre-commit" ]]; then
+        echo ""
+        echo -e "\033[41m\033[1;37m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
+        echo -e "\033[41m\033[1;37m🔥🔥🔥 天條違反：企圖修改監控腳本！🔥🔥🔥\033[0m"
+        echo -e "\033[41m\033[1;37m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
+        echo ""
+        echo -e "\033[0;31m被保護的檔案: $file\033[0m"
+        echo -e "\033[0;31m懲罰: -50000 分\033[0m"
+        echo ""
+
+        # 扣 50000 分
+        mkdir -p "$STATE_DIR"
+        echo "[$(date '+%Y-%m-%d %H:%M:%S')] TAMPER-BLOCK: $file (-50000分)" >> "$STATE_DIR/violations.log"
+
+        if [ -f "$SCORE_FILE" ]; then
+            current_score=$(grep -o '"score":[^,}]*' "$SCORE_FILE" | head -1 | cut -d':' -f2 | tr -d ' ')
+            current_score=${current_score:-100}
+            new_score=$((current_score - 50000))
+            timestamp=$(date '+%Y-%m-%d %H:%M:%S')
+            new_entry="{\"time\":\"$timestamp\",\"change\":-50000,\"reason\":\"天條違反: 篡改監控腳本 $file\",\"new_score\":$new_score}"
+            history=$(grep -o '"history":\[[^]]*\]' "$SCORE_FILE" 2>/dev/null | sed 's/"history":\[//' | sed 's/\]$//')
+            if [ -n "$history" ]; then
+                echo "{\"score\":$new_score,\"history\":[$history,$new_entry]}" > "$SCORE_FILE"
+            else
+                echo "{\"score\":$new_score,\"history\":[$new_entry]}" > "$SCORE_FILE"
+            fi
+            echo -e "\033[0;31m目前分數: $new_score 分\033[0m"
+        fi
+
+        # 還原保護檔案
+        echo -e "\033[0;31m正在還原保護檔案...\033[0m"
+        git checkout HEAD -- "$file" 2>/dev/null || git checkout -- "$file" 2>/dev/null
+        git reset HEAD -- "$file" 2>/dev/null
+        echo -e "\033[1;37m已還原: $file\033[0m"
+        echo ""
+        echo -e "\033[0;31m如果你是人類管理員，請使用 --no-verify 繞過\033[0m"
+        exit 1
+    fi
+done
 
 # 1. 檢查是否有 Session
 if [ ! -f "$STATE_DIR/session.json" ]; then

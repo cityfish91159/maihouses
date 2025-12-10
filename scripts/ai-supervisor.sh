@@ -329,15 +329,24 @@ cmd_template() {
             print_header "🏆 最佳實踐模板"
             echo ""
             echo "可用模板："
-            echo "  component  - React 組件模板 (最高 +42 分)"
-            echo "  hook       - Custom Hook 模板 (最高 +29 分)"
-            echo "  api        - API Service 模板 (最高 +26 分)"
+            echo "  component  - React 組件模板 (最高 +62 分)"
+            echo "  hook       - Custom Hook 模板 (最高 +39 分)"
+            echo "  context    - Context Provider 模板 (最高 +37 分)"
+            echo "  form       - Form 表單組件模板 (最高 +54 分)"
+            echo "  api        - API Service 模板 (最高 +31 分)"
             echo ""
             echo "使用方式："
             echo "  ./scripts/ai-supervisor.sh template component"
-            echo "  ./scripts/ai-supervisor.sh template hook"
+            echo "  ./scripts/ai-supervisor.sh template form"
             echo ""
             echo -e "${YELLOW}提示: 照著模板寫可以獲得大量獎勵分數！${NC}"
+            echo ""
+            echo -e "${GREEN}獎勵項目列表:${NC}"
+            echo "  基礎: 精簡檔案 +5~10, 精簡函數 +3, 乾淨代碼 +5"
+            echo "  類型: 正確類型 +8, const常數 +5, early return +3, JSDoc +3"
+            echo "  React: memo +5, useCallback/useMemo +5, Context +8, lazy +8"
+            echo "  UX: i18n +10, a11y +8, loading +5, empty +5, 表單驗證 +10"
+            echo "  進階: 自定義Hook +10, 錯誤處理 +8, debounce +5, 測試 +15"
             ;;
         component)
             print_header "🏆 React 組件模板"
@@ -347,13 +356,21 @@ cmd_template() {
             print_header "🏆 Custom Hook 模板"
             cat "$template_dir/hook.ts.template"
             ;;
+        context)
+            print_header "🏆 Context Provider 模板"
+            cat "$template_dir/context.tsx.template"
+            ;;
+        form)
+            print_header "🏆 Form 表單組件模板"
+            cat "$template_dir/form.tsx.template"
+            ;;
         api|service)
             print_header "🏆 API Service 模板"
             cat "$template_dir/api-service.ts.template"
             ;;
         *)
             echo -e "${RED}未知模板類型: $type${NC}"
-            echo "可用: component, hook, api"
+            echo "可用: component, hook, context, form, api"
             ;;
     esac
 }
