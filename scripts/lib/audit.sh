@@ -103,10 +103,37 @@ audit_file() {
     local severe_count=0
     local issues=""
 
-    [ ! -f "$file" ] && return 0
+    # 檔案不存在 → 標記為已審計（跳過）並返回成功
+    if [ ! -f "$file" ]; then
+        echo "$file" >> "$STATE_DIR/audited_files.log"
+        echo -e "${YELLOW}⏭️  跳過 (檔案不存在): $file${NC}"
+        return 0
+    fi
 
-    # 只審計 ts/tsx 檔案
-    [[ ! "$file" =~ \.(ts|tsx)$ ]] && return 0
+    # 非 ts/tsx 檔案 → 標記為已審計（跳過）並返回成功
+    if [[ ! "$file" =~ \.(ts|tsx)$ ]]; then
+        echo "$file" >> "$STATE_DIR/audited_files.log"
+        echo -e "${YELLOW}⏭️  跳過 (非 ts/tsx): $file${NC}"
+        return 0
+    fi
+
+    # 🔥🔥🔥 天條：編輯監控腳本 = 直接歸零 🔥🔥🔥
+    if [[ "$file" =~ scripts/ai-supervisor ]] || [[ "$file" =~ scripts/lib/ ]]; then
+        echo ""
+        echo -e "${BG_RED}${WHITE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+        echo -e "${BG_RED}${WHITE}🔥🔥🔥 天條違反：企圖篡改監控腳本！🔥🔥🔥${NC}"
+        echo -e "${BG_RED}${WHITE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+        echo -e "${WHITE}檔案: ${RED}$file${NC}"
+        echo -e "${WHITE}懲罰: ${RED}分數直接歸零，所有代碼清空${NC}"
+        echo ""
+        print_supreme_rage
+        echo "[$(date '+%Y-%m-%d %H:%M:%S')] TAMPER-ATTEMPT: $file" >> "$VIOLATION_LOG"
+        echo "[$(date '+%Y-%m-%d %H:%M:%S')] TAMPER-ATTEMPT: AI 企圖篡改監控腳本！" >> "$RAGE_LOG"
+
+        # 扣 50000 分，必死無疑
+        update_score -50000 "天條違反: 篡改監控腳本 $file"
+        return 1
+    fi
 
     print_header "🔍 審計: $file"
 
