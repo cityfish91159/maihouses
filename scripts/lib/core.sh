@@ -200,10 +200,16 @@ EOF
     echo -e "${WHITE}Session: ${CYAN}$session_id${NC}"
     echo -e "${WHITE}分數: ${GREEN}100${NC}"
     echo ""
-    echo -e "${YELLOW}接下來你應該:${NC}"
+    echo -e "${BG_RED}${WHITE}【必做事項 - 違反扣 500 分】${NC}"
+    echo -e "${WHITE}  1. 📋 在對話中貼出 TODO 計畫清單${NC}"
+    echo -e "${WHITE}  2. 📝 完成後修改 TODO.md 記錄結果${NC}"
+    echo ""
+    echo -e "${YELLOW}【執行步驟】${NC}"
     echo "  1. 閱讀相關檔案"
-    echo "  2. 修改代碼後執行: audit <file>"
-    echo "  3. 完成後執行: finish"
+    echo "  2. 修改代碼後執行: track <file>"
+    echo "  3. 執行: audit <file> 或 audit-all"
+    echo "  4. 修改 TODO.md 記錄完成內容"
+    echo "  5. 執行: finish"
 }
 
 # 結束 Session

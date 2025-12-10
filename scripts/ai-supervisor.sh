@@ -102,14 +102,22 @@ cmd_finish() {
     fi
     echo -e "${GREEN}   ✅ 所有檔案已審計${NC}"
 
-    # 3. 執行偷懶掃描
-    echo "3️⃣  執行偷懶掃描..."
+    # 3. 檢查 TODO 結果記錄
+    echo "3️⃣  檢查 TODO 結果記錄..."
+    if ! check_todo_result; then
+        echo -e "${RED}   ❌ 未記錄結果到 TODO.md${NC}"
+    else
+        echo -e "${GREEN}   ✅ 已記錄結果${NC}"
+    fi
+
+    # 4. 執行偷懶掃描
+    echo "4️⃣  執行偷懶掃描..."
     if ! scan_laziness "$PROJECT_ROOT/src" > /dev/null 2>&1; then
         warn "發現偷懶模式，但不阻擋完成"
     fi
     echo -e "${GREEN}   ✅ 掃描完成${NC}"
 
-    # 4. 完成
+    # 5. 完成
     finish_session
 }
 
