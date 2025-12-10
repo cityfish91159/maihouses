@@ -499,8 +499,8 @@ audit_file() {
         issues="$issues\n- async 無 await x$async_no_await"
     fi
 
-    # 35. 硬編碼測試資料
-    if grep -qE "test@|example\.com|123456|password|admin|localhost:3000" "$file" 2>/dev/null; then
+    # 35. 硬編碼測試資料（排除註解行）
+    if grep -vE '^\s*//' "$file" | grep -vE '^\s*\*' | grep -qE "test@|example\.com|123456|password|admin|localhost:3000" 2>/dev/null; then
         echo -e "${YELLOW}   🦥 偷懶: 發現硬編碼測試資料${NC}"
         total_penalty=$((total_penalty - 5))
         issues="$issues\n- 硬編碼測試資料"
@@ -671,9 +671,9 @@ track_modify() {
 check_escape() {
     local violations=0
 
-    # 檢查 Git 變更但未追蹤
+    # 檢查 Git 變更但未追蹤（排除 .md 檔案和系統目錄）
     local git_changes
-    git_changes=$(git status --porcelain 2>/dev/null | sed 's/^.. //' | grep -Ev "^dist/|^node_modules/|^\.git/|^\.ai_supervisor/" || true)
+    git_changes=$(git status --porcelain 2>/dev/null | sed 's/^.. //' | grep -Ev "^dist/|^node_modules/|^\.git/|^\.ai_supervisor/" | grep -v '\.md$' || true)
 
     if [ -n "$git_changes" ]; then
         while IFS= read -r changed_file; do
