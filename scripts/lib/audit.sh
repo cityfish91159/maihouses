@@ -110,15 +110,8 @@ audit_file() {
         return 0
     fi
 
-    # 非 ts/tsx 檔案 → 標記為已審計（跳過）並返回成功
-    if [[ ! "$file" =~ \.(ts|tsx)$ ]]; then
-        echo "$file" >> "$STATE_DIR/audited_files.log"
-        echo -e "${YELLOW}⏭️  跳過 (非 ts/tsx): $file${NC}"
-        return 0
-    fi
-
-    # 🔥🔥🔥 天條：編輯監控腳本 = 直接歸零 🔥🔥🔥
-    if [[ "$file" =~ scripts/ai-supervisor ]] || [[ "$file" =~ scripts/lib/ ]]; then
+    # 🔥🔥🔥 天條：編輯監控腳本 = 直接歸零（必須在其他檢查之前！）🔥🔥🔥
+    if [[ "$file" =~ scripts/ai-supervisor ]] || [[ "$file" =~ scripts/lib/.+\.sh$ ]]; then
         echo ""
         echo -e "${BG_RED}${WHITE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
         echo -e "${BG_RED}${WHITE}🔥🔥🔥 天條違反：企圖篡改監控腳本！🔥🔥🔥${NC}"
@@ -133,6 +126,19 @@ audit_file() {
         # 扣 50000 分，必死無疑
         update_score -50000 "天條違反: 篡改監控腳本 $file"
         return 1
+    fi
+
+    # Markdown 文件 → 靜默跳過
+    if [[ "$file" =~ \.md$ ]]; then
+        echo "$file" >> "$STATE_DIR/audited_files.log"
+        return 0
+    fi
+
+    # 非 ts/tsx 檔案 → 標記為已審計（跳過）並返回成功
+    if [[ ! "$file" =~ \.(ts|tsx)$ ]]; then
+        echo "$file" >> "$STATE_DIR/audited_files.log"
+        echo -e "${YELLOW}⏭️  跳過 (非 ts/tsx): $file${NC}"
+        return 0
     fi
 
     print_header "🔍 審計: $file"
@@ -430,6 +436,74 @@ audit_file() {
         echo -e "${CYAN}   💡 提醒: 使用 import * 全部引入${NC}"
         total_penalty=$((total_penalty + PENALTY_IMPORT_STAR))
         issues="$issues\n- import *"
+    fi
+
+    echo ""
+
+    # ==================== 🦥 偷懶模式偵測 ====================
+    echo -e "${RED}【偷懶】AI 常見偷懶模式${NC}"
+
+    # 29. Stub 實作 (throw "not implemented")
+    if grep -qiE "throw.*not.?implement|throw.*todo|return.*\/\/.*todo" "$file" 2>/dev/null; then
+        echo -e "${RED}   🦥 偷懶: 發現 stub 實作 (not implemented)${NC}"
+        total_penalty=$((total_penalty - 20))
+        critical_count=$((critical_count + 1))
+        issues="$issues\n- stub 實作"
+    fi
+
+    # 30. 敷衍的 return (return null/undefined 沒有邏輯)
+    local lazy_return=$(grep -cE "^\s*return (null|undefined|void 0);\s*$" "$file" 2>/dev/null | tr -d '\n' || echo 0)
+    if [ "$lazy_return" -gt 2 ]; then
+        echo -e "${RED}   🦥 偷懶: 發現 $lazy_return 個敷衍 return null/undefined${NC}"
+        total_penalty=$((total_penalty - 10))
+        issues="$issues\n- 敷衍 return x$lazy_return"
+    fi
+
+    # 31. 註解掉的代碼區塊 (連續3行以上的註解代碼)
+    local commented_code=$(awk '
+        /^\s*\/\// { count++ }
+        !/^\s*\/\// { if(count>=3) blocks++; count=0 }
+        END { print blocks+0 }
+    ' "$file" 2>/dev/null)
+    if [ "$commented_code" -gt 0 ]; then
+        echo -e "${YELLOW}   🦥 偷懶: 發現 $commented_code 個註解代碼區塊${NC}"
+        total_penalty=$((total_penalty - 5))
+        issues="$issues\n- 註解代碼區塊 x$commented_code"
+    fi
+
+    # 32. 空函數體 (只有 {} 或只有 return)
+    if grep -qE "=>\s*\{\s*\}|function.*\(\s*\)\s*\{\s*\}" "$file" 2>/dev/null; then
+        echo -e "${RED}   🦥 偷懶: 發現空函數體${NC}"
+        total_penalty=$((total_penalty - 15))
+        critical_count=$((critical_count + 1))
+        issues="$issues\n- 空函數體"
+    fi
+
+    # 33. 複製貼上痕跡 (連續相似的變數名)
+    if grep -qE "(item1|item2|item3|data1|data2|temp1|temp2|var1|var2)" "$file" 2>/dev/null; then
+        echo -e "${YELLOW}   🦥 偷懶: 發現複製貼上痕跡 (item1/item2/temp1...)${NC}"
+        total_penalty=$((total_penalty - 8))
+        issues="$issues\n- 複製貼上痕跡"
+    fi
+
+    # 34. async 函數沒有 await
+    local async_no_await=$(awk '
+        /async.*=>|async function/ { in_async=1; has_await=0 }
+        in_async && /await/ { has_await=1 }
+        in_async && /^\s*\}/ { if(!has_await) count++; in_async=0 }
+        END { print count+0 }
+    ' "$file" 2>/dev/null)
+    if [ "$async_no_await" -gt 0 ]; then
+        echo -e "${YELLOW}   🦥 偷懶: $async_no_await 個 async 函數沒有 await${NC}"
+        total_penalty=$((total_penalty - 5))
+        issues="$issues\n- async 無 await x$async_no_await"
+    fi
+
+    # 35. 硬編碼測試資料
+    if grep -qE "test@|example\.com|123456|password|admin|localhost:3000" "$file" 2>/dev/null; then
+        echo -e "${YELLOW}   🦥 偷懶: 發現硬編碼測試資料${NC}"
+        total_penalty=$((total_penalty - 5))
+        issues="$issues\n- 硬編碼測試資料"
     fi
 
     echo ""
