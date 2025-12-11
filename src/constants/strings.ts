@@ -34,7 +34,7 @@ export const STRINGS = {
       SALE_SUFFIX: '戶待售',
     },
     // P5 Optimization Round 2
-    DEFAULT_USER: '用戶',
+    DEFAULT_USER: 'Mike',
     DEFAULT_COMMUNITY_NAME: '惠宇上晴',
     DEFAULT_COMMUNITY_LABEL: '社區',
     NOTIFY: {
