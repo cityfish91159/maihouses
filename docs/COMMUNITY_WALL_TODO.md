@@ -248,6 +248,24 @@ P4-C1, P4-C2, P4-C3 已修復，但仍有「便宜行事」的痕跡。
 **修改檔案**：
 - `src/App.tsx` - 新增 `/feed/:userId` 路由
 - `src/pages/Feed/Consumer.tsx` - 新增 `userId`, `forceMock` props
+
+### ✅ P5-OPTI：Feed Consumer 優化與重構 (2025-12-11)
+
+**執行內容**：
+1.  **Refactor**:
+    - 抽離 `src/components/Feed/InlineComposer.tsx`，減輕 `Consumer.tsx` 負擔。
+    - 建立 `src/utils/date.ts`，統一時間格式化邏輯。
+2.  **i18n**:
+    - 完成 `ProfileCard`, `FeedSidebar`, `FeedPostCard` 的字串提取 (`src/constants/strings.ts`)。
+    - 消除 UI 中的 Hardcoded Chinese。
+3.  **UI/UX**:
+    - 修復 `BottomNav` 的 Z-Index 問題 (改用 `z-overlay`)。
+4.  **Testing**:
+    - 新增 `src/utils/__tests__/date.test.ts` (Coverage: 100%)
+    - 新增 `src/components/Feed/__tests__/FeedPostCard.test.tsx`
+    - 新增 `src/components/Feed/__tests__/InlineComposer.test.tsx`
+    - 新增 `src/pages/Feed/__tests__/Consumer.test.tsx`
+    - **驗證結果**：所有測試通過，Build 成功。
 ### 🔴 P4-AUDIT-ROUND5：防禦系統強化 (2025-12-08)
 
 > **目標**：修補防禦系統被鑽漏洞的缺口，消除誤報並防堵繞過。

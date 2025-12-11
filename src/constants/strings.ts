@@ -6,6 +6,13 @@ export const STRINGS = {
       STATS_DAYS: '互動天數',
       STATS_LIKED: '被感謝',
       STATS_CONTRIB: '貢獻篇數',
+      // New keys
+      LEVEL_RESIDENT: '黃金住戶',
+      LEVEL_AGENT: '認證房仲',
+      LEVEL_MEMBER: '社區成員',
+      FROM: (name: string) => `來自【${name}】`,
+      FROM_MY_COMMUNITY: '來自【我的社區】',
+      VIEW_WALL: '🧱 查看我的社區牆',
     },
     TX_BANNER: {
       TITLE: '您有一筆交易進行中',
@@ -18,6 +25,13 @@ export const STRINGS = {
       VIEW_ALL: '查看全部',
       HOT_EMPTY: '暫無熱門貼文',
       SALE_EMPTY: '暫無待售物件',
+      // New keys
+      HOT_NEW_POSTS: '本週新增',
+      HOT_POSTS_UNIT: '篇貼文',
+      HOT_ACTIVE_COMMUNITIES: '活躍社區',
+      HOT_COMMUNITIES_UNIT: '個',
+      SALE_PREFIX: '目前有',
+      SALE_SUFFIX: '戶待售',
     },
     POST: {
       LIKE_BTN: '讚',
@@ -30,6 +44,11 @@ export const STRINGS = {
       TIME_MINUTES_AGO: (n: number) => `${n} 分鐘前`,
       TIME_HOURS_AGO: (n: number) => `${n} 小時前`,
       TIME_DAYS_AGO: (n: number) => `${n} 天前`,
+      // New keys
+      BADGE_AGENT: '房仲',
+      BADGE_OFFICIAL: '公告',
+      VIEWS: (n: number) => `${n} 次瀏覽`,
+      PINNED: '可預約看屋',
     },
     AI_INSIGHT: {
       TITLE: 'AI 社區洞察',

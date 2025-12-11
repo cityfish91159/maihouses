@@ -18,15 +18,14 @@ interface ProfileCardProps {
   className?: string;
 }
 
-/** 取得等級顯示名稱 */
 function getLevelLabel(role: UserProfile['role']): string {
   switch (role) {
     case 'resident':
-      return '黃金住戶';
+      return STRINGS.FEED.PROFILE.LEVEL_RESIDENT;
     case 'agent':
-      return '認證房仲';
+      return STRINGS.FEED.PROFILE.LEVEL_AGENT;
     default:
-      return '社區成員';
+      return STRINGS.FEED.PROFILE.LEVEL_MEMBER;
   }
 }
 
@@ -68,7 +67,7 @@ export const ProfileCard = memo(function ProfileCard({
           </h3>
           <p className="flex items-center gap-2 text-sm text-gray-500">
             <span className="truncate">
-              來自【{profile.communityName || '我的社區'}】
+              {STRINGS.FEED.PROFILE.FROM(profile.communityName || '我的社區')}
             </span>
             <span
               className={`inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-bold ${levelStyle}`}
@@ -93,18 +92,20 @@ export const ProfileCard = memo(function ProfileCard({
       </div>
 
       {/* Action Link */}
-      {profile.communityId && (
-        <div className="mt-4 flex justify-end">
-          <a
-            href={`${ROUTES.COMMUNITY_WALL(profile.communityId)}?from=consumer`}
-            className="inline-flex items-center gap-1 rounded-full border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-bold text-brand-700 transition-all hover:bg-blue-100 hover:shadow-sm active:scale-95"
-          >
-            🧱 查看我的社區牆
-            <ArrowRight size={14} />
-          </a>
-        </div>
-      )}
-    </section>
+      {
+        profile.communityId && (
+          <div className="mt-4 flex justify-end">
+            <a
+              href={`${ROUTES.COMMUNITY_WALL(profile.communityId)}?from=consumer`}
+              className="inline-flex items-center gap-1 rounded-full border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-bold text-brand-700 transition-all hover:bg-blue-100 hover:shadow-sm active:scale-95"
+            >
+              {STRINGS.FEED.PROFILE.VIEW_WALL}
+              <ArrowRight size={14} />
+            </a>
+          </div>
+        )
+      }
+    </section >
   );
 });
 

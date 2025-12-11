@@ -58,11 +58,10 @@ function NavList({ activeNav }: { activeNav?: string }) {
           <a
             key={item.id}
             href={item.href}
-            className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition-all ${
-              isActive
-                ? 'bg-gradient-to-r from-brand-700 to-brand-600 text-white shadow-sm'
-                : 'text-gray-700 hover:bg-brand-50'
-            }`}
+            className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition-all ${isActive
+              ? 'bg-gradient-to-r from-brand-700 to-brand-600 text-white shadow-sm'
+              : 'text-gray-700 hover:bg-brand-50'
+              }`}
           >
             {item.icon}
             <span>{item.label}</span>
@@ -89,11 +88,11 @@ function HotPostsCard({ posts }: { posts: HotPost[] | undefined }) {
   return (
     <SidebarCard title={`📊 ${S.HOT_TITLE}`}>
       <p className="text-sm leading-relaxed text-gray-600">
-        本週新增{' '}
-        <span className="font-bold text-brand-700">{totalPosts}</span> 篇貼文
+        {S.HOT_NEW_POSTS}{' '}
+        <span className="font-bold text-brand-700">{totalPosts}</span> {S.HOT_POSTS_UNIT}
         <br />
-        活躍社區{' '}
-        <span className="font-bold text-brand-700">{uniqueCommunities}</span> 個
+        {S.HOT_ACTIVE_COMMUNITIES}{' '}
+        <span className="font-bold text-brand-700">{uniqueCommunities}</span> {S.HOT_COMMUNITIES_UNIT}
       </p>
     </SidebarCard>
   );
@@ -112,9 +111,9 @@ function SaleItemsCard({ items }: { items: SaleItem[] | undefined }) {
   return (
     <SidebarCard title={`🏠 ${S.SALE_TITLE}`}>
       <p className="text-sm leading-relaxed text-gray-600">
-        目前有{' '}
+        {S.SALE_PREFIX}{' '}
         <span className="font-bold text-brand-700">{items.length}</span>{' '}
-        戶待售
+        {S.SALE_SUFFIX}
         <br />
         <a
           href="#sale-all"
