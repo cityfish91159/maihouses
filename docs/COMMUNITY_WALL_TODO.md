@@ -29,7 +29,7 @@
 | P3.5 三頁互跳導航 | ✅ | 1h | 靜態 Feed HTML 補上互跳連結 + Auth Check JS |
 | P4 Composer | ✅ | 2h | headless + UI 統一 |
 | P4.5 Loading/錯誤狀態 | ✅ | 1h | Skeleton + Empty + Error + Retry |
-| P5 feed-consumer | 🔴 | 2h | 靜態 → React |
+| P5 feed-consumer | ✅ | 2h | 靜態 → React (2025-12-11 完成) |
 | P6 feed-agent | 🔴 | 2h | 靜態 → React |
 | P6.5 草稿自動儲存 | 🔴 | 30m | localStorage debounce |
 | P7 私密牆權限 | 🔴 | 1h | membership 驗證 |
@@ -147,9 +147,32 @@
 
 ---
 
-## ✅ P5：Feed Consumer React 化 (待執行)
+## ✅ P5：Feed Consumer React 化 (已完成)
 
-- ⚠️ 發現 i18n 與 Mobile Viewport 問題，已列入下一輪優化重點。
+**執行時間**：2025-12-11 | **狀態**：✅ 審計通過
+
+**核心產出**：
+1. **路由定義**: `src/constants/routes.ts` - 新增 FEED_CONSUMER, FEED_AGENT React 路由 + Legacy 路由
+2. **i18n 字串**: `src/constants/strings.ts` - 新增 FEED 命名空間 (Profile/TxBanner/Sidebar/Post/Nav/Empty/Error)
+3. **類型定義**: `src/types/feed.ts` - FeedImage, AiInsight, FeedPostExtended, UserProfile, ActiveTransaction, SidebarData 等
+4. **組件開發**:
+   - `src/components/Feed/FeedPostCard.tsx` - 貼文卡片 (支援按讚、回覆、分享)
+   - `src/components/Feed/ProfileCard.tsx` - 用戶資料卡片 (頭像、統計、等級)
+   - `src/components/Feed/TxBanner.tsx` - 交易進行中橫幅
+   - `src/components/Feed/FeedSidebar.tsx` - 桌面版側邊欄 (導航、熱帖、待售物件)
+5. **頁面整合**: `src/pages/Feed/Consumer.tsx` - 消費者信息流主頁面
+
+**技術亮點**：
+- 使用 `useFeedData` Hook 統一資料來源
+- 使用 `useAuth` Hook 進行身份驗證
+- 響應式設計：桌面版雙欄 + 手機版底部導航
+- TailwindCSS + Lucide React Icons
+- 完整 TypeScript 類型覆蓋
+
+**驗證結果**：
+- [x] TypeScript 檢查通過 (`npm run typecheck`)
+- [x] ESLint 檢查通過 (`npm run lint`)
+- [x] Build 成功 (`npm run build`)
 
 ### 🔴 P4-AUDIT-ROUND4：Google Principal Engineer 終極審查 (2025-12-08)
 
@@ -173,10 +196,6 @@ P4-C1, P4-C2, P4-C3 已修復，但仍有「便宜行事」的痕跡。
 
 ---
 
-## ✅ P5：Feed Consumer React 化 (待執行)
-
----
-
 ---
 
 ## 🔴 P4.5：Loading 與錯誤狀態
@@ -192,19 +211,16 @@ P4-C1, P4-C2, P4-C3 已修復，但仍有「便宜行事」的痕跡。
 
 ---
 
-## 🔴 P5：feed-consumer React 化
+## ✅ P5：feed-consumer React 化 (已完成 2025-12-11)
 
 **來源**：`public/feed-consumer.html` (559行) → `src/pages/Feed/Consumer.tsx`
 
-> **注意**：P3.5 審計指出靜態頁面維護困難，P5 應盡快執行。
-> **技術債**：目前靜態頁面依賴 `public/js/auth-check.js` 進行簡易 Auth 檢查，React 化後應直接使用 `useAuth`。
-
-| 任務 | 說明 |
-|------|------|
-| P5-1 | 建立 Consumer.tsx 基本架子 |
-| P5-2 | 使用 GlobalHeader |
-| P5-3 | 使用 useFeedData Hook |
-| P5-4 | PostCard + Like API |
+| 任務 | 狀態 | 說明 |
+|------|------|------|
+| P5-1 | ✅ | 建立 Consumer.tsx 基本架子 |
+| P5-2 | ✅ | 使用 GlobalHeader |
+| P5-3 | ✅ | 使用 useFeedData Hook |
+| P5-4 | ✅ | PostCard + Like API |
 ### 🔴 P4-AUDIT-ROUND5：防禦系統強化 (2025-12-08)
 
 > **目標**：修補防禦系統被鑽漏洞的缺口，消除誤報並防堵繞過。

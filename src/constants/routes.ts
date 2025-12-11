@@ -9,11 +9,20 @@ export const ROUTES = {
   /** 房地產列表 */
   PROPERTY_LIST: '/maihouses/property.html',
 
-  /** 房仲信息流 */
-  FEED_AGENT: '/maihouses/feed-agent.html',
+  /** 房仲信息流 (React) */
+  FEED_AGENT: '/maihouses/feed/agent',
 
-  /** 消費者信息流 */
-  FEED_CONSUMER: '/maihouses/feed-consumer.html',
+  /** 消費者信息流 (React) */
+  FEED_CONSUMER: '/maihouses/feed/consumer',
+
+  /** 房仲信息流 (Legacy HTML) */
+  FEED_AGENT_LEGACY: '/maihouses/feed-agent.html',
+
+  /** 消費者信息流 (Legacy HTML) */
+  FEED_CONSUMER_LEGACY: '/maihouses/feed-consumer.html',
+
+  /** ASSURE 交易戰情室 */
+  ASSURE: '/maihouses/assure',
 
   /** 社區牆 MVP */
   COMMUNITY_WALL_MVP: '/maihouses/community-wall_mvp.html',
