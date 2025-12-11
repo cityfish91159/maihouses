@@ -51,6 +51,12 @@ readonly PENALTY_NESTED_TERNARY=-5      # 巢狀三元運算子
 readonly PENALTY_DEEP_NESTING=-6        # 深層巢狀 (>4層)
 readonly PENALTY_TODO_FIXME=-3          # TODO/FIXME 未處理
 readonly PENALTY_DUPLICATE_CODE=-5      # 重複代碼區塊
+readonly PENALTY_NON_NULL_ASSERT=-8     # 非空斷言 (!) - 危險操作
+readonly PENALTY_LONG_LINE=-3           # 超長行 (>120 字符)
+readonly PENALTY_NESTED_AWAIT=-6        # 巢狀 await（難以追蹤錯誤）
+readonly PENALTY_MIXED_EXPORT=-4        # 混用 export default 與 named export
+readonly PENALTY_VAR_KEYWORD=-10        # 使用 var 而非 let/const
+readonly PENALTY_CALLBACK_HELL=-10      # 回調地獄 (>3 層嵌套回調)
 
 # D級 - 警告
 readonly PENALTY_SKIP_PREWRITE=-2       # 跳過 pre-write
@@ -487,6 +493,41 @@ audit_file() {
         issues="$issues\n- import *"
     fi
 
+    # 28.1 非空斷言 (!) - 危險操作
+    local non_null_count=$(grep -cE "[a-zA-Z_]\!" "$file" 2>/dev/null | tr -d '\n' || echo 0)
+    # 排除常見誤判：!= !== !important
+    non_null_count=$(grep -oE "[a-zA-Z_][a-zA-Z0-9_]*\!" "$file" 2>/dev/null | grep -cvE "^\!" || echo 0)
+    if [ "$non_null_count" -gt 0 ]; then
+        echo -e "${RED}   🚨 嚴重: 發現 $non_null_count 個非空斷言 (!)${NC}"
+        total_penalty=$((total_penalty + PENALTY_NON_NULL_ASSERT * non_null_count))
+        issues="$issues\n- 非空斷言 x$non_null_count"
+    fi
+
+    # 28.2 使用 var 而非 let/const
+    local var_count=$(grep -cE "^\s*var\s+" "$file" 2>/dev/null | tr -d '\n' || echo 0)
+    if [ "$var_count" -gt 0 ]; then
+        echo -e "${BG_RED}${WHITE}   💀 致命: 發現 $var_count 個 var 關鍵字（應使用 let/const）${NC}"
+        total_penalty=$((total_penalty + PENALTY_VAR_KEYWORD * var_count))
+        critical_count=$((critical_count + var_count))
+        issues="$issues\n- var 關鍵字 x$var_count"
+    fi
+
+    # 28.3 超長行 (>120 字符)
+    local long_line_count=$(awk 'length > 120' "$file" 2>/dev/null | wc -l | tr -d ' ')
+    if [ "$long_line_count" -gt 5 ]; then
+        echo -e "${YELLOW}   ⚠️ 一般: 發現 $long_line_count 行超過 120 字符${NC}"
+        total_penalty=$((total_penalty + PENALTY_LONG_LINE * (long_line_count / 5)))
+        issues="$issues\n- 超長行 x$long_line_count"
+    fi
+
+    # 28.4 回調地獄 (嵌套回調 >3 層)
+    local callback_hell=$(grep -cE "\)\s*=>\s*\{.*\)\s*=>\s*\{.*\)\s*=>\s*\{" "$file" 2>/dev/null | tr -d '\n' || echo 0)
+    if [ "$callback_hell" -gt 0 ]; then
+        echo -e "${RED}   🚨 嚴重: 發現回調地獄（>3層嵌套）${NC}"
+        total_penalty=$((total_penalty + PENALTY_CALLBACK_HELL))
+        issues="$issues\n- 回調地獄"
+    fi
+
     echo ""
 
     # ==================== 🦥 偷懶模式偵測 ====================
@@ -890,7 +931,7 @@ auto_typecheck_file() {
     # 執行 tsc 檢查（只檢查不輸出）
     # 注意: tsc 單檔檢查會忽略 tsconfig.json，必須手動補上關鍵參數
     local ts_output
-    ts_output=$(npx tsc --noEmit --jsx react-jsx --esModuleInterop --skipLibCheck --target esnext --moduleResolution bundler "$file" 2>&1) || true
+    ts_output=$(npx tsc --noEmit --jsx react-jsx --esModuleInterop --skipLibCheck --target esnext --module esnext --moduleResolution bundler "$file" 2>&1) || true
 
     # 檢查是否有錯誤
     if echo "$ts_output" | grep -qiE "error TS[0-9]+:"; then

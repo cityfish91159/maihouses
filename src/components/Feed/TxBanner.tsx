@@ -46,7 +46,10 @@ export const TxBanner = memo(function TxBanner({
 
   return (
     <div
-      className={`mx-4 flex items-center gap-3 rounded-xl border border-cyan-300 bg-gradient-to-r from-cyan-50 to-cyan-100 p-3 shadow-sm ${className}`}
+      className={`mx-auto max-w-[1120px] px-4 ${className}`}
+    >
+    <div
+      className="flex items-center gap-3 rounded-xl border border-cyan-300 bg-gradient-to-r from-cyan-50 to-cyan-100 p-3 shadow-sm"
       role="region"
       aria-label={S.TITLE}
     >
@@ -73,6 +76,7 @@ export const TxBanner = memo(function TxBanner({
         {S.ENTER_BTN}
         <ChevronRight size={14} />
       </a>
+    </div>
     </div>
   );
 });

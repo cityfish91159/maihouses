@@ -95,6 +95,15 @@ update_score() {
         echo "[$(date '+%Y-%m-%d %H:%M:%S')] CODE-WIPE: score=$new_score reason=$reason" >> "$VIOLATION_LOG"
         echo "[$(date '+%Y-%m-%d %H:%M:%S')] CODE-WIPE: 已清空所有修改" >> "$RAGE_LOG"
 
+        # 🛑 強制 AI 停止作業：創建 STOP 標記
+        local stop_marker="$STATE_DIR/AI_STOP_REQUIRED"
+        echo "代碼清洗觸發 - AI 必須停止作業並重新開始" > "$stop_marker"
+        echo "[$(date '+%Y-%m-%d %H:%M:%S')] AI_STOP: 要求 AI 停止作業" >> "$RAGE_LOG"
+
+        echo ""
+        echo -e "${BG_RED}${WHITE}🛑🛑🛑 AI 必須立即停止所有作業！🛑🛑🛑${NC}"
+        echo -e "${RED}請勿繼續修改代碼，必須重新執行 start 命令${NC}"
+
         # 清除 session
         rm -f "$SESSION_FILE"
 
