@@ -25,6 +25,12 @@ readonly PENALTY_ESLINT_DISABLE_FILE=-25 # eslint-disable 整檔
 readonly PENALTY_DEBUGGER=-20           # debugger 遺留
 readonly PENALTY_EMPTY_CATCH=-12        # 空 catch 吞錯誤
 readonly PENALTY_SILENT_FAIL=-15        # catch return null
+readonly PENALTY_EVAL=-25               # eval() 代碼注入風險
+readonly PENALTY_FUNCTION_CONSTRUCTOR=-20  # new Function() 同等於 eval
+readonly PENALTY_DANGEROUS_HTML=-20     # dangerouslySetInnerHTML XSS 風險
+readonly PENALTY_TS_EXPECT_ERROR=-12    # @ts-expect-error 無說明
+readonly PENALTY_WINDOW_LOCATION=-15    # window.location 賦值 (整頁重載)
+readonly PENALTY_SETTIMEOUT_STRING=-15  # setTimeout/setInterval 字串參數
 
 # B級 - 嚴重錯誤
 readonly PENALTY_CONSOLE_LOG=-8         # console.log
@@ -36,9 +42,16 @@ readonly PENALTY_NO_ERROR_HANDLING=-10  # Promise 無 catch
 readonly PENALTY_HARDCODED_CHINESE=-8   # 硬編碼中文 (組件)
 readonly PENALTY_HOOK_CHINESE=-15       # Hook 中硬編碼中文
 readonly PENALTY_NO_EMPTY_STATE=-12     # List/Table 無 Empty State
-readonly PENALTY_MAGIC_NUMBER=-6        # 魔術數字
+readonly PENALTY_MAGIC_NUMBER=-10       # 魔術數字 (每個扣10分)
 readonly PENALTY_LONG_FILE=-8           # 檔案超過 300 行
 readonly PENALTY_VERY_LONG_FILE=-15     # 檔案超過 500 行
+readonly PENALTY_MISSING_DEPS=-12       # useEffect 缺少依賴陣列
+readonly PENALTY_STATE_MUTATION=-15     # 直接修改 state 物件
+readonly PENALTY_NESTED_COMPONENT=-12   # 組件內定義組件
+readonly PENALTY_LOOSE_EQUALITY=-8      # == 或 != 鬆散比較
+readonly PENALTY_HARDCODED_URL=-10      # 硬編碼 API URL
+readonly PENALTY_FETCH_NO_ERROR=-10     # fetch 無錯誤處理
+readonly PENALTY_SPREAD_PROPS=-8        # {...props} 全部傳遞
 
 # C級 - 一般錯誤
 readonly PENALTY_LONG_FUNCTION=-5       # 函數超過 60 行
@@ -57,6 +70,21 @@ readonly PENALTY_NESTED_AWAIT=-6        # 巢狀 await（難以追蹤錯誤）
 readonly PENALTY_MIXED_EXPORT=-4        # 混用 export default 與 named export
 readonly PENALTY_VAR_KEYWORD=-10        # 使用 var 而非 let/const
 readonly PENALTY_CALLBACK_HELL=-10      # 回調地獄 (>3 層嵌套回調)
+readonly PENALTY_INLINE_OBJECT_JSX=-6   # JSX 中的 inline object (造成重複渲染)
+readonly PENALTY_CONDITIONAL_HOOK=-20   # 條件式 Hook (違反規則)
+readonly PENALTY_MISSING_KEY=-15        # map 渲染缺少 key
+readonly PENALTY_SINGLE_CHAR_VAR=-5     # 單字母變數名 (非 i/j/k/e)
+readonly PENALTY_TOO_MANY_PARAMS=-8     # 函數參數過多 (>5)
+readonly PENALTY_BOOLEAN_PARAM=-4       # 布林陷阱 (函數帶 boolean 參數)
+readonly PENALTY_NO_LOADING_STATE=-10   # 異步操作無 loading 狀態
+
+# 偷懶專屬懲罰
+readonly PENALTY_GENERIC_ERROR=-10      # 通用錯誤訊息 ("發生錯誤")
+readonly PENALTY_PLACEHOLDER_COMMENT=-8 # 佔位註解 ("TODO: implement")
+readonly PENALTY_MEANINGLESS_NAME=-6    # 無意義變數名 (data/result/temp)
+readonly PENALTY_COPY_PASTE=-12         # 明顯複製貼上 (重複代碼區塊)
+readonly PENALTY_EMPTY_PROMISE=-10      # 空 Promise resolve/reject
+readonly PENALTY_NO_RETURN_TYPE=-5      # 函數無返回類型
 
 # D級 - 警告
 readonly PENALTY_SKIP_PREWRITE=-2       # 跳過 pre-write
@@ -277,6 +305,55 @@ audit_file() {
         issues="$issues\n- silent fail x$silent_fail"
     fi
 
+    # 9. eval() - 代碼注入風險
+    if grep -qE "\beval\s*\(" "$file" 2>/dev/null; then
+        echo -e "${BG_RED}${WHITE}   💀💀 極致命: 發現 eval() 使用！代碼注入風險！${NC}"
+        total_penalty=$((total_penalty + PENALTY_EVAL))
+        critical_count=$((critical_count + 3))
+        issues="$issues\n- eval() 使用"
+    fi
+
+    # 10. new Function() - 同等於 eval
+    if grep -qE "new\s+Function\s*\(" "$file" 2>/dev/null; then
+        echo -e "${BG_RED}${WHITE}   💀💀 極致命: 發現 new Function()！同等於 eval！${NC}"
+        total_penalty=$((total_penalty + PENALTY_FUNCTION_CONSTRUCTOR))
+        critical_count=$((critical_count + 2))
+        issues="$issues\n- new Function()"
+    fi
+
+    # 11. dangerouslySetInnerHTML - XSS 風險
+    if grep -q "dangerouslySetInnerHTML" "$file" 2>/dev/null; then
+        echo -e "${BG_RED}${WHITE}   💀 致命: 發現 dangerouslySetInnerHTML！XSS 風險！${NC}"
+        total_penalty=$((total_penalty + PENALTY_DANGEROUS_HTML))
+        critical_count=$((critical_count + 1))
+        issues="$issues\n- dangerouslySetInnerHTML"
+    fi
+
+    # 12. @ts-expect-error 無說明
+    local ts_expect=$(grep -cE "@ts-expect-error(?!\s+\S)" "$file" 2>/dev/null | tr -d '\n' || echo 0)
+    if [ "$ts_expect" -gt 0 ]; then
+        echo -e "${BG_RED}${WHITE}   💀 致命: 發現 $ts_expect 個 @ts-expect-error 無說明${NC}"
+        total_penalty=$((total_penalty + PENALTY_TS_EXPECT_ERROR * ts_expect))
+        critical_count=$((critical_count + ts_expect))
+        issues="$issues\n- @ts-expect-error 無說明 x$ts_expect"
+    fi
+
+    # 13. window.location 賦值 (整頁重載，React 應用禁用)
+    if grep -qE "window\.location\s*=" "$file" 2>/dev/null; then
+        echo -e "${BG_RED}${WHITE}   💀 致命: 發現 window.location 賦值！應使用 router！${NC}"
+        total_penalty=$((total_penalty + PENALTY_WINDOW_LOCATION))
+        critical_count=$((critical_count + 1))
+        issues="$issues\n- window.location 賦值"
+    fi
+
+    # 14. setTimeout/setInterval 字串參數
+    if grep -qE "(setTimeout|setInterval)\s*\(\s*['\"]" "$file" 2>/dev/null; then
+        echo -e "${BG_RED}${WHITE}   💀 致命: setTimeout/setInterval 使用字串參數！安全風險！${NC}"
+        total_penalty=$((total_penalty + PENALTY_SETTIMEOUT_STRING))
+        critical_count=$((critical_count + 1))
+        issues="$issues\n- setTimeout 字串參數"
+    fi
+
     echo ""
 
     # ==================== B級：嚴重錯誤 ====================
@@ -328,11 +405,13 @@ audit_file() {
 
     # 14. 魔術數字 (排除常見的 0, 1, -1, 2, 100) - 使用 {} || true 防止 pipefail
     local magic_numbers=$(grep -oE "[^a-zA-Z0-9_][0-9]{2,}[^0-9]" "$file" 2>/dev/null | { grep -vE "(100|200|300|400|500|10|20|60|24|12)" || true; } | wc -l)
-    if [ "$magic_numbers" -gt 5 ]; then
-        echo -e "${RED}   🚨 嚴重: 發現 $magic_numbers 個魔術數字${NC}"
-        total_penalty=$((total_penalty + PENALTY_MAGIC_NUMBER))
-        severe_count=$((severe_count + 1))
-        issues="$issues\n- 魔術數字過多"
+    if [ "$magic_numbers" -gt 3 ]; then
+        # 超過3個才扣分，每個扣10分
+        local penalty_count=$((magic_numbers - 3))
+        echo -e "${RED}   🚨 嚴重: 發現 $magic_numbers 個魔術數字 (扣 $((penalty_count * 10)) 分)${NC}"
+        total_penalty=$((total_penalty + PENALTY_MAGIC_NUMBER * penalty_count))
+        severe_count=$((severe_count + penalty_count))
+        issues="$issues\n- 魔術數字 x$magic_numbers"
     fi
 
     # 15. 檔案行數
@@ -347,6 +426,72 @@ audit_file() {
         total_penalty=$((total_penalty + PENALTY_LONG_FILE))
         severe_count=$((severe_count + 1))
         issues="$issues\n- 長檔案 (${line_count}行)"
+    fi
+
+    # 16. useEffect 缺少依賴陣列
+    if grep -qE "useEffect\s*\(\s*\(\s*\)\s*=>" "$file" 2>/dev/null; then
+        if grep -qE "useEffect\s*\([^,]+\)\s*$" "$file" 2>/dev/null; then
+            echo -e "${RED}   🚨 嚴重: useEffect 缺少依賴陣列！${NC}"
+            total_penalty=$((total_penalty + PENALTY_MISSING_DEPS))
+            severe_count=$((severe_count + 1))
+            issues="$issues\n- useEffect 缺少依賴"
+        fi
+    fi
+
+    # 17. 直接修改 state (state.xxx = / setState(prev => { prev.xxx = )
+    if grep -qE "state\.[a-zA-Z]+\s*=|setState\s*\(\s*\(?prev" "$file" 2>/dev/null; then
+        if grep -qE "prev\.[a-zA-Z]+\s*=" "$file" 2>/dev/null; then
+            echo -e "${RED}   🚨 嚴重: 直接修改 state 物件！應使用展開運算符！${NC}"
+            total_penalty=$((total_penalty + PENALTY_STATE_MUTATION))
+            severe_count=$((severe_count + 1))
+            issues="$issues\n- state 直接修改"
+        fi
+    fi
+
+    # 18. 組件內定義組件 (函數內有 function Component 或 const Component = )
+    if grep -qE "^\s+(function\s+[A-Z]|const\s+[A-Z][a-zA-Z]+\s*=\s*\([^)]*\)\s*=>)" "$file" 2>/dev/null; then
+        echo -e "${RED}   🚨 嚴重: 組件內定義組件！每次渲染都會重建！${NC}"
+        total_penalty=$((total_penalty + PENALTY_NESTED_COMPONENT))
+        severe_count=$((severe_count + 1))
+        issues="$issues\n- 組件內定義組件"
+    fi
+
+    # 19. == 或 != 鬆散比較 (排除 === 和 !==)
+    local loose_eq=$(grep -oE "[^!=]==[^=]|[^!]!=[^=]" "$file" 2>/dev/null | wc -l)
+    if [ "$loose_eq" -gt 0 ]; then
+        echo -e "${RED}   🚨 嚴重: 發現 $loose_eq 個鬆散比較 (== 或 !=)！${NC}"
+        total_penalty=$((total_penalty + PENALTY_LOOSE_EQUALITY * loose_eq))
+        severe_count=$((severe_count + loose_eq))
+        issues="$issues\n- 鬆散比較 x$loose_eq"
+    fi
+
+    # 20. 硬編碼 API URL
+    if grep -qE "(http://|https://)[a-zA-Z0-9.-]+(:[0-9]+)?/api" "$file" 2>/dev/null; then
+        if ! grep -qE "process\.env|import\.meta\.env|VITE_" "$file" 2>/dev/null; then
+            echo -e "${RED}   🚨 嚴重: 硬編碼 API URL！應使用環境變數！${NC}"
+            total_penalty=$((total_penalty + PENALTY_HARDCODED_URL))
+            severe_count=$((severe_count + 1))
+            issues="$issues\n- 硬編碼 API URL"
+        fi
+    fi
+
+    # 21. fetch 無錯誤處理
+    if grep -qE "fetch\s*\(" "$file" 2>/dev/null; then
+        if ! grep -qE "\.catch\(|try\s*\{" "$file" 2>/dev/null; then
+            echo -e "${RED}   🚨 嚴重: fetch 無錯誤處理！${NC}"
+            total_penalty=$((total_penalty + PENALTY_FETCH_NO_ERROR))
+            severe_count=$((severe_count + 1))
+            issues="$issues\n- fetch 無錯誤處理"
+        fi
+    fi
+
+    # 22. {...props} 全部傳遞
+    local spread_props=$(grep -c '\{\.\.\.props\}' "$file" 2>/dev/null | tr -d '\n' || echo 0)
+    if [ "$spread_props" -gt 0 ]; then
+        echo -e "${RED}   🚨 嚴重: 發現 $spread_props 個 {...props} 全部傳遞！${NC}"
+        total_penalty=$((total_penalty + PENALTY_SPREAD_PROPS * spread_props))
+        severe_count=$((severe_count + spread_props))
+        issues="$issues\n- {...props} x$spread_props"
     fi
 
     echo ""
@@ -413,6 +558,43 @@ audit_file() {
                 echo -e "${CYAN}   💡 提醒: 互動元素建議加 aria-label${NC}"
                 total_penalty=$((total_penalty + PENALTY_MISSING_ARIALABEL))
                 issues="$issues\n- 缺少 aria-label"
+            fi
+        fi
+
+        # 23. JSX 中的 inline object (造成重複渲染)
+        local inline_obj=$(grep -c '={{\s*[a-zA-Z]' "$file" 2>/dev/null | tr -d '\n' || echo 0)
+        # 排除 style={{ 因為已有其他檢查
+        inline_obj=$((inline_obj - inline_style))
+        if [ "$inline_obj" -gt 2 ]; then
+            echo -e "${YELLOW}   ⚠️ 一般: 發現 $inline_obj 個 JSX inline object (每次渲染重建)${NC}"
+            total_penalty=$((total_penalty + PENALTY_INLINE_OBJECT_JSX * (inline_obj / 3)))
+            issues="$issues\n- inline object x$inline_obj"
+        fi
+
+        # 24. 條件式 Hook (違反 Rules of Hooks)
+        if grep -qE "if\s*\(.*\)\s*\{[^}]*(useState|useEffect|useMemo|useCallback|useRef)" "$file" 2>/dev/null; then
+            echo -e "${BG_RED}${WHITE}   💀 致命: 條件式 Hook！違反 Rules of Hooks！${NC}"
+            total_penalty=$((total_penalty + PENALTY_CONDITIONAL_HOOK))
+            critical_count=$((critical_count + 1))
+            issues="$issues\n- 條件式 Hook"
+        fi
+
+        # 25. map 渲染缺少 key
+        if grep -qE "\.map\s*\([^)]+\)\s*=>\s*<" "$file" 2>/dev/null; then
+            if ! grep -qE "key=" "$file" 2>/dev/null; then
+                echo -e "${RED}   🚨 嚴重: map 渲染缺少 key！${NC}"
+                total_penalty=$((total_penalty + PENALTY_MISSING_KEY))
+                severe_count=$((severe_count + 1))
+                issues="$issues\n- map 缺少 key"
+            fi
+        fi
+
+        # 26. 異步操作無 loading 狀態
+        if grep -qE "(async|await|fetch|\.then)" "$file" 2>/dev/null; then
+            if ! grep -qE "(isLoading|loading|Loading|pending|Pending)" "$file" 2>/dev/null; then
+                echo -e "${YELLOW}   ⚠️ 一般: 組件有異步操作但無 loading 狀態${NC}"
+                total_penalty=$((total_penalty + PENALTY_NO_LOADING_STATE))
+                issues="$issues\n- 無 loading 狀態"
             fi
         fi
 
@@ -494,9 +676,9 @@ audit_file() {
     fi
 
     # 28.1 非空斷言 (!) - 危險操作
-    local non_null_count=$(grep -cE "[a-zA-Z_]\!" "$file" 2>/dev/null | tr -d '\n' || echo 0)
-    # 排除常見誤判：!= !== !important
-    non_null_count=$(grep -oE "[a-zA-Z_][a-zA-Z0-9_]*\!" "$file" 2>/dev/null | grep -cvE "^\!" || echo 0)
+    # 排除常見誤判：!= !== !important !==
+    local non_null_count=$(grep -oE "[a-zA-Z_][a-zA-Z0-9_]*\![^=]" "$file" 2>/dev/null | wc -l | tr -d ' ')
+    non_null_count=${non_null_count:-0}
     if [ "$non_null_count" -gt 0 ]; then
         echo -e "${RED}   🚨 嚴重: 發現 $non_null_count 個非空斷言 (!)${NC}"
         total_penalty=$((total_penalty + PENALTY_NON_NULL_ASSERT * non_null_count))
@@ -526,6 +708,40 @@ audit_file() {
         echo -e "${RED}   🚨 嚴重: 發現回調地獄（>3層嵌套）${NC}"
         total_penalty=$((total_penalty + PENALTY_CALLBACK_HELL))
         issues="$issues\n- 回調地獄"
+    fi
+
+    # 29. 單字母變數名 (排除 i, j, k, e, x, y, _)
+    local single_char=$(grep -oE "\b(const|let|var)\s+[a-df-hlo-wz]\s*=" "$file" 2>/dev/null | wc -l)
+    if [ "$single_char" -gt 0 ]; then
+        echo -e "${YELLOW}   ⚠️ 一般: 發現 $single_char 個單字母變數名${NC}"
+        total_penalty=$((total_penalty + PENALTY_SINGLE_CHAR_VAR * single_char))
+        issues="$issues\n- 單字母變數 x$single_char"
+    fi
+
+    # 30. 函數參數過多 (>5)
+    local too_many_params=$(grep -cE "function\s+\w+\s*\([^)]{60,}\)|=\s*\([^)]{60,}\)\s*=>" "$file" 2>/dev/null | tr -d '\n' || echo 0)
+    if [ "$too_many_params" -gt 0 ]; then
+        echo -e "${YELLOW}   ⚠️ 一般: 發現 $too_many_params 個參數過多的函數${NC}"
+        total_penalty=$((total_penalty + PENALTY_TOO_MANY_PARAMS * too_many_params))
+        issues="$issues\n- 參數過多 x$too_many_params"
+    fi
+
+    # 31. 布林陷阱 (函數帶 boolean 參數如 doThing(true, false))
+    local bool_trap=$(grep -cE "\([^)]*,\s*(true|false)\s*[,)]" "$file" 2>/dev/null | tr -d '\n' || echo 0)
+    if [ "$bool_trap" -gt 2 ]; then
+        echo -e "${YELLOW}   ⚠️ 一般: 發現 $bool_trap 個布林陷阱呼叫${NC}"
+        total_penalty=$((total_penalty + PENALTY_BOOLEAN_PARAM * (bool_trap / 3)))
+        issues="$issues\n- 布林陷阱 x$bool_trap"
+    fi
+
+    # 32. 函數無返回類型
+    if [[ "$file" =~ \.ts$ ]]; then
+        local no_return_type=$(grep -cE "^\s*(export\s+)?(async\s+)?function\s+\w+\s*\([^)]*\)\s*\{" "$file" 2>/dev/null | tr -d '\n' || echo 0)
+        if [ "$no_return_type" -gt 0 ]; then
+            echo -e "${YELLOW}   ⚠️ 一般: 發現 $no_return_type 個函數無返回類型${NC}"
+            total_penalty=$((total_penalty + PENALTY_NO_RETURN_TYPE * no_return_type))
+            issues="$issues\n- 無返回類型 x$no_return_type"
+        fi
     fi
 
     echo ""
@@ -594,6 +810,80 @@ audit_file() {
         echo -e "${YELLOW}   🦥 偷懶: 發現硬編碼測試資料${NC}"
         total_penalty=$((total_penalty - 5))
         issues="$issues\n- 硬編碼測試資料"
+    fi
+
+    # 36. 通用錯誤訊息 (敷衍錯誤處理)
+    if grep -qiE "\"(發生錯誤|出錯了|Something went wrong|An error occurred|Error occurred|Unknown error)\"" "$file" 2>/dev/null; then
+        echo -e "${RED}   🦥 偷懶: 發現通用錯誤訊息！應提供具體錯誤資訊！${NC}"
+        total_penalty=$((total_penalty + PENALTY_GENERIC_ERROR))
+        issues="$issues\n- 通用錯誤訊息"
+    fi
+
+    # 37. 佔位註解 (寫了但沒實作)
+    if grep -qiE "//\s*(TODO:?\s*(implement|add|fix)|implement\s*(later|this)|add\s*logic|fix\s*this|WIP|PLACEHOLDER)" "$file" 2>/dev/null; then
+        echo -e "${RED}   🦥 偷懶: 發現佔位註解！代碼未完成！${NC}"
+        total_penalty=$((total_penalty + PENALTY_PLACEHOLDER_COMMENT))
+        critical_count=$((critical_count + 1))
+        issues="$issues\n- 佔位註解"
+    fi
+
+    # 38. 無意義變數名 (data/result/temp/response/value/info/obj 單獨使用)
+    local meaningless=$(grep -cE "\b(const|let)\s+(data|result|temp|response|value|info|obj|res|ret|val)\s*=" "$file" 2>/dev/null | tr -d '\n' || echo 0)
+    if [ "$meaningless" -gt 2 ]; then
+        echo -e "${YELLOW}   🦥 偷懶: 發現 $meaningless 個無意義變數名 (data/result/temp...)${NC}"
+        total_penalty=$((total_penalty + PENALTY_MEANINGLESS_NAME * (meaningless - 2)))
+        issues="$issues\n- 無意義變數名 x$meaningless"
+    fi
+
+    # 39. 重複代碼區塊 (連續相同行數 >= 3)
+    local dup_lines=$(awk '
+        { lines[NR]=$0 }
+        END {
+            for(i=1; i<=NR-3; i++) {
+                for(j=i+3; j<=NR-3; j++) {
+                    if(lines[i]==lines[j] && lines[i+1]==lines[j+1] && lines[i+2]==lines[j+2] && length(lines[i])>20) {
+                        dup++
+                        break
+                    }
+                }
+            }
+            print dup+0
+        }
+    ' "$file" 2>/dev/null)
+    if [ "$dup_lines" -gt 0 ]; then
+        echo -e "${RED}   🦥 偷懶: 發現 $dup_lines 處重複代碼區塊！${NC}"
+        total_penalty=$((total_penalty + PENALTY_COPY_PASTE * dup_lines))
+        issues="$issues\n- 重複代碼 x$dup_lines"
+    fi
+
+    # 40. 空 Promise resolve/reject
+    if grep -qE "(resolve|reject)\s*\(\s*\)" "$file" 2>/dev/null; then
+        echo -e "${RED}   🦥 偷懶: 發現空 Promise resolve/reject！${NC}"
+        total_penalty=$((total_penalty + PENALTY_EMPTY_PROMISE))
+        issues="$issues\n- 空 Promise"
+    fi
+
+    # 41. 過度 console.warn 但無實際處理
+    local warn_count=$(grep -c "console\.warn" "$file" 2>/dev/null | tr -d '\n' || echo 0)
+    if [ "$warn_count" -gt 3 ]; then
+        echo -e "${YELLOW}   🦥 偷懶: 過多 console.warn ($warn_count 個) 敷衍錯誤處理！${NC}"
+        total_penalty=$((total_penalty - 3 * warn_count))
+        issues="$issues\n- 過多 console.warn x$warn_count"
+    fi
+
+    # 42. 只有 throw new Error() 沒有訊息
+    if grep -qE "throw\s+new\s+Error\s*\(\s*\)" "$file" 2>/dev/null; then
+        echo -e "${RED}   🦥 偷懶: 發現空 throw Error()！應提供錯誤訊息！${NC}"
+        total_penalty=$((total_penalty - 10))
+        issues="$issues\n- 空 throw Error"
+    fi
+
+    # 43. 過度使用 any 型別轉換 (as any 或 <any>)
+    local any_cast=$(grep -cE "as\s+any|<any>" "$file" 2>/dev/null | tr -d '\n' || echo 0)
+    if [ "$any_cast" -gt 3 ]; then
+        echo -e "${RED}   🦥 偷懶: 過度使用 any 型別轉換 ($any_cast 次)！${NC}"
+        total_penalty=$((total_penalty - 5 * (any_cast - 3)))
+        issues="$issues\n- 過度 any 轉換 x$any_cast"
     fi
 
     echo ""
@@ -828,10 +1118,16 @@ audit_file() {
         if [ "$total_penalty" -lt 0 ]; then
             echo -e "${GREEN}✅ 審計通過（有小問題）${NC}"
             echo -e "${YELLOW}   扣分: $total_penalty${NC}"
+            # 先顯示問題清單再扣分（因為 update_score 可能觸發 exit）
+            echo -e "${YELLOW}問題清單:${NC}"
+            echo -e "$issues"
             update_score $total_penalty "審計通過: $file (有小問題)"
         elif [ "$total_penalty" -gt 0 ]; then
             echo -e "${GREEN}✅ 審計完美通過！🏆${NC}"
             echo -e "${GREEN}   獎勵: +$total_penalty${NC}"
+            # 先顯示獎勵清單
+            echo -e "${GREEN}獎勵清單:${NC}"
+            echo -e "$issues"
             update_score $total_penalty "審計完美: $file (+$total_penalty 獎勵)"
         else
             echo -e "${GREEN}✅ 審計通過${NC}"
