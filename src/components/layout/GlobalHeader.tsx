@@ -114,7 +114,7 @@ export function GlobalHeader({ mode, title, className = '', notificationCount = 
         {renderCenter()}
 
         {/* Right: Actions */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
         {/* Notifications */}
         <button 
           className="relative inline-flex items-center justify-center rounded-xl border border-brand-100 bg-white p-2 text-brand-700 transition-all hover:bg-brand-50"
