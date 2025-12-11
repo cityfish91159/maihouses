@@ -143,6 +143,48 @@ type ProfileRow = {
   role: Role | null;
 };
 
+// ============ Profile Cache (P5-5 優化) ============
+interface ProfileCacheEntry {
+  profile: ProfileRow;
+  timestamp: number;
+}
+
+const PROFILE_CACHE_TTL_MS = 5 * 60 * 1000;
+const profileCache = new Map<string, ProfileCacheEntry>();
+
+const isProfileCacheValid = (entry: ProfileCacheEntry): boolean => {
+  return Date.now() - entry.timestamp < PROFILE_CACHE_TTL_MS;
+};
+
+const getProfilesFromCache = (authorIds: string[]): {
+  cached: Map<string, ProfileRow>;
+  uncached: string[];
+} => {
+  const cached = new Map<string, ProfileRow>();
+  const uncached: string[] = [];
+
+  for (const id of authorIds) {
+    const entry = profileCache.get(id);
+    if (entry && isProfileCacheValid(entry)) {
+      cached.set(id, entry.profile);
+    } else {
+      uncached.push(id);
+      if (entry) {
+        profileCache.delete(id);
+      }
+    }
+  }
+
+  return { cached, uncached };
+};
+
+const setProfilesToCache = (profiles: ProfileRow[]): void => {
+  const now = Date.now();
+  for (const profile of profiles) {
+    profileCache.set(profile.id, { profile, timestamp: now });
+  }
+};
+
 const filterMockData = (source: UnifiedFeedData, targetCommunityId?: string): UnifiedFeedData => {
   const filteredPosts = targetCommunityId
     ? source.posts.filter(p => p.communityId === targetCommunityId)
@@ -197,17 +239,31 @@ const saveFeedMockState = (data: UnifiedFeedData): void => {
 
 const buildProfileMap = async (authorIds: string[]): Promise<Map<string, ProfileRow>> => {
   if (!authorIds.length) return new Map();
+
+  const { cached, uncached } = getProfilesFromCache(authorIds);
+  if (uncached.length === 0) {
+    return cached;
+  }
+
   const { data, error } = await supabase
     .from('profiles')
     .select('id, name, floor, role')
-    .in('id', authorIds);
+    .in('id', uncached);
 
   if (error) {
     console.error('[useFeedData] Fetch profiles failed', error);
-    return new Map();
+    return cached;
   }
 
-  return new Map((data ?? []).map(profile => [profile.id, profile as ProfileRow]));
+  const fetchedProfiles = (data ?? []).map(profile => profile as ProfileRow);
+  setProfilesToCache(fetchedProfiles);
+
+  const result = new Map(cached);
+  for (const profile of fetchedProfiles) {
+    result.set(profile.id, profile);
+  }
+
+  return result;
 };
 
 const mapSupabasePostsToFeed = async (rows: SupabasePostRow[]): Promise<UnifiedFeedData> => {
