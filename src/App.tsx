@@ -7,6 +7,7 @@ import { getConfig, type AppConfig, type RuntimeOverrides } from './app/config'
 import DevTools from './app/devtools'
 import { trackEvent } from './services/analytics'
 import Home from './pages/Home'
+import Feed from './pages/Feed'
 import Wall from './pages/Community/Wall'
 import Suggested from './pages/Community/Suggested'
 import Detail from './pages/Property/Detail'
@@ -75,6 +76,14 @@ export default function App() {
             此處不需要額外的 /maihouses 路由，
             否則會變成匹配 /maihouses/maihouses 
           */}
+        <Route
+          path="/feed/:userId"
+          element={
+            <ErrorBoundary>
+              <Feed />
+            </ErrorBoundary>
+          }
+        />
         <Route
           path="/uag"
           element={

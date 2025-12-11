@@ -9,10 +9,13 @@ export const ROUTES = {
   /** 房地產列表 */
   PROPERTY_LIST: '/maihouses/property.html',
 
-  /** 房仲信息流 (React) */
+  /** 個人信息流 (React) - 需要 userId 參數 */
+  FEED: (userId: string): string => `/maihouses/feed/${userId}`,
+
+  /** 房仲信息流 (React) - 已棄用，改用 FEED */
   FEED_AGENT: '/maihouses/feed/agent',
 
-  /** 消費者信息流 (React) */
+  /** 消費者信息流 (React) - 已棄用，改用 FEED */
   FEED_CONSUMER: '/maihouses/feed/consumer',
 
   /** 房仲信息流 (Legacy HTML) */

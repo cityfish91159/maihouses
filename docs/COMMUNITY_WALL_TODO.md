@@ -221,6 +221,33 @@ P4-C1, P4-C2, P4-C3 已修復，但仍有「便宜行事」的痕跡。
 | P5-2 | ✅ | 使用 GlobalHeader |
 | P5-3 | ✅ | 使用 useFeedData Hook |
 | P5-4 | ✅ | PostCard + Like API |
+| P5-5 | ✅ | 統一入口路由 `/feed/:userId` |
+
+### P5-5：統一入口路由 (2025-12-11)
+
+**網址格式**：
+```
+/maihouses/feed/:userId
+```
+
+**系統行為**：
+1. 訪問 `/maihouses/feed/abc123`
+2. 系統查詢 `abc123` 的 role
+3. `role = agent` → 顯示房仲版 UI (P6 實作)
+4. `role = member` → 顯示消費者版 UI
+
+**Demo 模式**：
+- `/maihouses/feed/demo-001` → Mock 資料 + 消費者版
+- `/maihouses/feed/demo-agent` → Mock 資料 + 房仲版 (P6)
+- URL 加 `?mock=true` 強制 Mock 模式
+
+**新增檔案**：
+- `src/pages/Feed/index.tsx` - 入口組件，根據 userId 查 role 決定版本
+- `src/constants/routes.ts` - 新增 `FEED(userId)` 路由函數
+
+**修改檔案**：
+- `src/App.tsx` - 新增 `/feed/:userId` 路由
+- `src/pages/Feed/Consumer.tsx` - 新增 `userId`, `forceMock` props
 ### 🔴 P4-AUDIT-ROUND5：防禦系統強化 (2025-12-08)
 
 > **目標**：修補防禦系統被鑽漏洞的缺口，消除誤報並防堵繞過。

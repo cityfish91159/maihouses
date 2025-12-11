@@ -177,8 +177,14 @@ function ErrorState({ message, onRetry }: { message: string; onRetry: () => void
   );
 }
 
+/** Props */
+interface ConsumerProps {
+  userId?: string;
+  forceMock?: boolean;
+}
+
 /** Main Consumer Page */
-export default function Consumer() {
+export default function Consumer({ userId, forceMock }: ConsumerProps) {
   const { user, isAuthenticated, role, loading: authLoading } = useAuth();
   const {
     data,
@@ -191,6 +197,13 @@ export default function Consumer() {
     createPost,
     isLiked,
   } = useFeedData();
+
+  // 根據 forceMock 設置初始 mock 狀態
+  useEffect(() => {
+    if (forceMock !== undefined) {
+      setUseMock(forceMock);
+    }
+  }, [forceMock, setUseMock]);
 
   // 設置頁面標題
   useEffect(() => {
