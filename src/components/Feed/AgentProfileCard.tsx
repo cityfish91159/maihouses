@@ -54,7 +54,7 @@ export const AgentProfileCard = memo(function AgentProfileCard({
                     🏷️ 業務後台
                 </Link>
                 <Link
-                    to={ROUTES.COMMUNITY_WALL(profile.communityId || 'test-uuid')}
+                    to={`/community/${profile.communityId || 'test-uuid'}/wall`}
                     className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-full border border-[#bfdbfe] border-solid text-[#00385a] bg-[#eff6ff] font-bold text-[13px] no-underline opacity-100 transition-all ml-auto max-[400px]:ml-0 max-[400px]:w-full"
                 >
                     🧱 前往我的社區牆 ➡️
