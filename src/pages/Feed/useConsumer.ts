@@ -10,7 +10,7 @@ import { MOCK_FEED_STATS, MOCK_SALE_ITEMS, MOCK_ACTIVE_TRANSACTION } from '../..
 const S = STRINGS.FEED;
 
 export function useConsumer(userId?: string, forceMock?: boolean) {
-    const { user, isAuthenticated, role, loading: authLoading } = useAuth();
+    const { user, isAuthenticated: realAuth, role, loading: authLoading } = useAuth();
     const {
         data,
         useMock,
@@ -22,6 +22,11 @@ export function useConsumer(userId?: string, forceMock?: boolean) {
         createPost,
         isLiked,
     } = useFeedData();
+
+    // 判定是否為 Demo 模式 (forceMock or userId starts with demo-)
+    const isDemo = forceMock || userId?.startsWith('demo-');
+    // 在 Demo 模式下，如果沒有真實登入，則視為「模擬登入」
+    const isAuthenticated = realAuth || isDemo;
 
     // 根據 forceMock 設置初始 mock 狀態
     useEffect(() => {
@@ -37,16 +42,34 @@ export function useConsumer(userId?: string, forceMock?: boolean) {
 
     // Mock 用戶資料
     const userProfile = useMemo<UserProfile | null>(() => {
-        if (!isAuthenticated || !user) return null;
-        return {
-            id: user.id,
-            name: user.user_metadata?.name || user.email?.split('@')[0] || S.DEFAULT_USER,
-            role: role || 'member',
-            stats: MOCK_FEED_STATS,
-            communityId: 'test-uuid',
-            communityName: S.DEFAULT_COMMUNITY_NAME,
-        };
-    }, [isAuthenticated, user, role]);
+        if (!isAuthenticated) return null;
+
+        // 優先使用真實用戶資料
+        if (realAuth && user) {
+            return {
+                id: user.id,
+                name: user.user_metadata?.name || user.email?.split('@')[0] || S.DEFAULT_USER,
+                role: role || 'member',
+                stats: MOCK_FEED_STATS,
+                communityId: 'test-uuid',
+                communityName: S.DEFAULT_COMMUNITY_NAME,
+            };
+        }
+
+        // Demo 模式且未登入時，回傳模擬用戶資料
+        if (isDemo) {
+            return {
+                id: 'demo-user',
+                name: S.DEFAULT_USER, // '用戶'
+                role: (userId === 'demo-agent' ? 'agent' : 'member') as any,
+                stats: MOCK_FEED_STATS,
+                communityId: 'test-uuid',
+                communityName: S.DEFAULT_COMMUNITY_NAME,
+            };
+        }
+
+        return null;
+    }, [realAuth, user, role, isDemo, userId, isAuthenticated]);
 
     // Mock 交易狀態
     const [activeTransaction] = useState<ActiveTransaction>(() => {
@@ -66,7 +89,7 @@ export function useConsumer(userId?: string, forceMock?: boolean) {
         hotPosts: data.posts.slice(0, 3).map((p) => ({
             id: p.id,
             title: p.title,
-            communityName: p.communityName || '社區',
+            communityName: p.communityName || S.DEFAULT_COMMUNITY_LABEL,
             likes: p.likes || 0,
         })),
         saleItems: MOCK_SALE_ITEMS,
@@ -100,12 +123,10 @@ export function useConsumer(userId?: string, forceMock?: boolean) {
 
     const handleReply = useCallback((postId: string | number) => {
         notify.info(S.NOTIFY.FEATURE_WIP, S.NOTIFY.REPLY_WIP);
-        console.log('Reply to post:', postId);
     }, []);
 
     const handleShare = useCallback((postId: string | number) => {
         notify.info(S.NOTIFY.FEATURE_WIP, S.NOTIFY.SHARE_WIP);
-        console.log('Share post:', postId);
     }, []);
 
     const userInitial = userProfile?.name.charAt(0).toUpperCase() || 'U';

@@ -28,16 +28,16 @@ vi.mock('../../../components/layout/GlobalHeader', () => ({
 }));
 
 vi.mock('../../../components/Feed', () => ({
-    FeedPostCard: ({ post, onLike }: any) => (
+    FeedPostCard: ({ post, onLike }: { post: { id: string; title: string }; onLike: (id: string) => void }) => (
         <div data-testid={`post-${post.id}`}>
             {post.title}
             <button onClick={() => onLike(post.id)}>Like</button>
         </div>
     ),
-    ProfileCard: ({ profile }: any) => <div>Profile: {profile.name}</div>,
+    ProfileCard: ({ profile }: { profile: { name: string } }) => <div>Profile: {profile.name}</div>,
     TxBanner: () => <div>TxBanner</div>,
     FeedSidebar: () => <div>FeedSidebar</div>,
-    InlineComposer: ({ onSubmit }: any) => (
+    InlineComposer: ({ onSubmit }: { onSubmit: (content: string) => void }) => (
         <div>
             <input data-testid="composer-input" />
             <button onClick={() => onSubmit('New Post')}>Submit Post</button>
