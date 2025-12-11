@@ -320,8 +320,8 @@ audit_file() {
         fi
     fi
 
-    # 14. 魔術數字 (排除常見的 0, 1, -1, 2, 100)
-    local magic_numbers=$(grep -oE "[^a-zA-Z0-9_][0-9]{2,}[^0-9]" "$file" 2>/dev/null | grep -vE "(100|200|300|400|500|10|20|60|24|12)" | wc -l)
+    # 14. 魔術數字 (排除常見的 0, 1, -1, 2, 100) - 使用 {} || true 防止 pipefail
+    local magic_numbers=$(grep -oE "[^a-zA-Z0-9_][0-9]{2,}[^0-9]" "$file" 2>/dev/null | { grep -vE "(100|200|300|400|500|10|20|60|24|12)" || true; } | wc -l)
     if [ "$magic_numbers" -gt 5 ]; then
         echo -e "${RED}   🚨 嚴重: 發現 $magic_numbers 個魔術數字${NC}"
         total_penalty=$((total_penalty + PENALTY_MAGIC_NUMBER))
@@ -734,12 +734,14 @@ audit_file() {
         issues="$issues\n+ lazy 載入"
     fi
 
-    # 加入獎勵到總分（但有致命錯誤時不給獎勵！）
+    # 加入獎勵到總分（但有任何錯誤時都不給獎勵！）
+    # 🔒 修復: 同時檢查 critical_count 和 severe_count
     # 🔒 每檔案獎勵上限 20 分，防止分數膨脹
     local MAX_BONUS_PER_FILE=20
     if [ "$total_bonus" -gt 0 ]; then
-        if [ "$critical_count" -gt 0 ]; then
-            echo -e "${RED}   ⚠️ 有致命錯誤，獎勵不計算！(本應 +$total_bonus)${NC}"
+        # ⚠️ 關鍵修復: 有 critical 或 severe 錯誤都不給獎勵
+        if [ "$critical_count" -gt 0 ] || [ "$severe_count" -gt 0 ]; then
+            echo -e "${RED}   ⚠️ 有錯誤 (critical:$critical_count, severe:$severe_count)，獎勵不計算！(本應 +$total_bonus)${NC}"
             # 不加獎勵，只保留扣分
         else
             if [ "$total_bonus" -gt "$MAX_BONUS_PER_FILE" ]; then

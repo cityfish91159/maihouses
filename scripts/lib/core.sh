@@ -12,19 +12,31 @@ AUTO_RESTART_THRESHOLD=80
 # 分數管理
 # ============================================================================
 
-# 取得當前分數
+# 取得當前分數 - 確保永遠返回有效數字
 get_score() {
+    local score=""
     if [ -f "$SCORE_FILE" ]; then
-        grep -o '"score":[0-9-]*' "$SCORE_FILE" | cut -d: -f2 || echo 100
+        # 使用更精確的正則：負號可選 + 至少一個數字
+        score=$(grep -o '"score":-\?[0-9]\+' "$SCORE_FILE" 2>/dev/null | cut -d: -f2)
+    fi
+    # 確保返回有效數字，預設 100
+    if [[ "$score" =~ ^-?[0-9]+$ ]]; then
+        echo "$score"
     else
         echo 100
     fi
 }
 
-# 更新分數
+# 更新分數 - 加入參數驗證防止崩潰
 update_score() {
-    local delta="$1"
-    local reason="$2"
+    local delta="${1:-0}"
+    local reason="${2:-未知原因}"
+
+    # 驗證 delta 是有效數字
+    if [[ ! "$delta" =~ ^-?[0-9]+$ ]]; then
+        echo -e "${RED}⚠️ update_score: delta 無效 ($delta)，設為 0${NC}" >&2
+        delta=0
+    fi
 
     local current_score=$(get_score)
     local new_score=$((current_score + delta))
@@ -38,7 +50,7 @@ update_score() {
 
     # 即時回報
     local delta_str="$delta"
-    [ "$delta" -gt 0 ] && delta_str="+$delta"
+    [ "$delta" -gt 0 ] 2>/dev/null && delta_str="+$delta"
     echo -e "${CYAN}📊 分數: $current_score → $new_score ($delta_str) | $reason${NC}"
 
     # 階段性警告

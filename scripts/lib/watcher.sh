@@ -13,8 +13,8 @@
 # 監控間隔 (秒)
 WATCH_INTERVAL=2
 
-# 上次掃描的 hash
-LAST_HASH=""
+# 上次掃描的 hash - 初始化為特殊值，確保首輪能正確偵測變化
+LAST_HASH="__INIT__"
 
 # 即時監控啟動 (使用 inotifywait)
 start_watcher() {
@@ -390,8 +390,8 @@ watch_cycle() {
     if [ "$current_hash" != "$LAST_HASH" ] && [ -n "$LAST_HASH" ]; then
         echo -e "${CYAN}[$timestamp]${NC} 偵測到檔案變化..."
 
-        # 找出變化的檔案
-        local changed_files=$(git status --porcelain 2>/dev/null | sed 's/^.. //' | grep -E '\.(ts|tsx)$')
+        # 找出變化的檔案 (使用 process substitution 避免 pipefail)
+        local changed_files=$(git status --porcelain 2>/dev/null | sed 's/^.. //' | grep -E '\.(ts|tsx)$' || true)
         if [ -n "$changed_files" ]; then
             while IFS= read -r file; do
                 [ -z "$file" ] && continue
@@ -432,7 +432,7 @@ watch_cycle() {
 
     # 3. 檢查 Session 狀態
     if [ ! -f "$SESSION_FILE" ]; then
-        local git_changes=$(git status --porcelain 2>/dev/null | grep -E '\.(ts|tsx)$' | wc -l)
+        local git_changes=$(git status --porcelain 2>/dev/null | { grep -E '\.(ts|tsx)$' || true; } | wc -l)
         if [ "$git_changes" -gt 0 ]; then
             echo ""
             echo -e "${BG_RED}${WHITE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
@@ -622,8 +622,9 @@ if [ ! -f "$STATE_DIR/session.json" ]; then
     exit 1
 fi
 
-# 2. 檢查 Session 時間（太快 = 偷懶）
-session_start=$(grep -o '"start_time":[0-9]*' "$STATE_DIR/session.json" | cut -d: -f2)
+# 2. 檢查 Session 時間（太快 = 偷懶）- 防止空值崩潰
+session_start=$(grep -o '"start_time":[0-9]*' "$STATE_DIR/session.json" 2>/dev/null | cut -d: -f2 || echo "0")
+session_start=${session_start:-0}
 current_time=$(date +%s)
 elapsed=$((current_time - session_start))
 if [ "$elapsed" -lt 180 ]; then  # 少於 3 分鐘
@@ -654,7 +655,7 @@ if [ ! -f "$STATE_DIR/audited_files.log" ] || [ ! -s "$STATE_DIR/audited_files.l
 fi
 
 # 5. 檢查 staged 檔案的代碼品質
-staged_files=$(git diff --cached --name-only --diff-filter=ACMR | grep -E '\.(ts|tsx)$')
+staged_files=$(git diff --cached --name-only --diff-filter=ACMR | grep -E '\.(ts|tsx)$' || true)
 if [ -n "$staged_files" ]; then
     for file in $staged_files; do
         # 檢查致命問題

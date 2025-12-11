@@ -60,16 +60,16 @@ comprehensive_git_check() {
 
     local violations=0
 
-    # 1. 未追蹤的新檔案
-    local untracked=$(git ls-files --others --exclude-standard 2>/dev/null | grep -E '\.(ts|tsx)$')
+    # 1. 未追蹤的新檔案 (|| true 防止 pipefail 退出)
+    local untracked=$(git ls-files --others --exclude-standard 2>/dev/null | grep -E '\.(ts|tsx)$' || true)
     if [ -n "$untracked" ]; then
         echo -e "${RED}❌ 發現未追蹤的新檔案：${NC}"
         echo "$untracked"
         violations=$((violations + 1))
     fi
 
-    # 2. 修改但未 staged
-    local modified=$(git diff --name-only 2>/dev/null | grep -E '\.(ts|tsx)$')
+    # 2. 修改但未 staged (|| true 防止 pipefail 退出)
+    local modified=$(git diff --name-only 2>/dev/null | grep -E '\.(ts|tsx)$' || true)
     if [ -n "$modified" ]; then
         echo -e "${YELLOW}⚠️ 修改但未 staged：${NC}"
         echo "$modified"

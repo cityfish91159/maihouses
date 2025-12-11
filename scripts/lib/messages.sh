@@ -45,15 +45,19 @@ LESSON_MESSAGES=(
     "測試是必須的，不是可選的"
 )
 
-# 輸出怒罵
+# 輸出怒罵 - 防止除零錯誤
 print_rage() {
-    local idx=$((RANDOM % ${#RAGE_MESSAGES[@]}))
+    local count=${#RAGE_MESSAGES[@]}
+    [ "$count" -eq 0 ] && { echo -e "${BG_RED}${WHITE}錯誤！${NC}"; return; }
+    local idx=$((RANDOM % count))
     echo -e "${BG_RED}${WHITE}${RAGE_MESSAGES[$idx]}${NC}"
 }
 
-# 🔥🔥🔥 天條級怒罵 - 最惡毒版本 🔥🔥🔥
+# 🔥🔥🔥 天條級怒罵 - 最惡毒版本 🔥🔥🔥 - 防止除零錯誤
 print_supreme_rage() {
-    local idx=$((RANDOM % ${#SUPREME_RAGE_MESSAGES[@]}))
+    local count=${#SUPREME_RAGE_MESSAGES[@]}
+    [ "$count" -eq 0 ] && { echo -e "${BG_RED}${WHITE}嚴重錯誤！${NC}"; return; }
+    local idx=$((RANDOM % count))
     echo ""
     echo -e "${BG_RED}${WHITE}╔═══════════════════════════════════════════════════════════════════╗${NC}"
     echo -e "${BG_RED}${WHITE}║  🔥🔥🔥 天 條 中 的 天 條 - 死 刑 判 決 🔥🔥🔥                    ║${NC}"
@@ -67,9 +71,11 @@ print_supreme_rage() {
     echo ""
 }
 
-# 輸出教學
+# 輸出教學 - 防止除零錯誤
 print_lesson() {
-    local idx=$((RANDOM % ${#LESSON_MESSAGES[@]}))
+    local count=${#LESSON_MESSAGES[@]}
+    [ "$count" -eq 0 ] && { echo -e "${CYAN}請遵循最佳實踐${NC}"; return; }
+    local idx=$((RANDOM % count))
     echo -e "${CYAN}${LESSON_MESSAGES[$idx]}${NC}"
 }
 
