@@ -10,6 +10,8 @@ import { Heart, MessageCircle, Share2, Calendar, Eye } from 'lucide-react';
 import type { FeedPost } from '../../hooks/useFeedData';
 import { STRINGS } from '../../constants/strings';
 import { formatRelativeTime } from '../../utils/date';
+import { CommentList } from './CommentList';
+import { CommentInput } from './CommentInput';
 
 const S = STRINGS.FEED.POST;
 
@@ -19,6 +21,7 @@ interface FeedPostCardProps {
   onLike?: (postId: string | number) => Promise<void>;
   onReply?: (postId: string | number) => void;
   onShare?: (postId: string | number) => void;
+  onComment?: (postId: string | number, content: string) => Promise<void>; // P6 Phase 1: New prop
   className?: string;
 }
 
@@ -53,9 +56,11 @@ export const FeedPostCard = memo(function FeedPostCard({
   onLike,
   onReply,
   onShare,
+  onComment,
   className = '',
 }: FeedPostCardProps) {
   const [isLiking, setIsLiking] = useState(false);
+  const [isCommentsOpen, setIsCommentsOpen] = useState(false); // P6 Phase 1: Toggle state
 
   const handleLike = useCallback(async () => {
     if (!onLike || isLiking) return;
@@ -66,6 +71,17 @@ export const FeedPostCard = memo(function FeedPostCard({
       setIsLiking(false);
     }
   }, [onLike, post.id, isLiking]);
+
+  const handleReplyClick = () => {
+    setIsCommentsOpen(!isCommentsOpen);
+    onReply?.(post.id);
+  };
+
+  const handleSubmitComment = async (content: string) => {
+    if (onComment) {
+      await onComment(post.id, content);
+    }
+  };
 
   const avatarStyle = getAvatarStyle(post.type);
   const authorBadge = getAuthorBadge(post.type);
@@ -125,8 +141,8 @@ export const FeedPostCard = memo(function FeedPostCard({
           disabled={isLiking}
           aria-pressed={isLiked}
           className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-bold transition-all active:scale-95 disabled:cursor-not-allowed disabled:opacity-60 ${isLiked
-              ? 'border-red-200 bg-red-50 text-red-600'
-              : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
+            ? 'border-red-200 bg-red-50 text-red-600'
+            : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
             }`}
         >
           <Heart size={14} fill={isLiked ? 'currentColor' : 'none'} />
@@ -138,10 +154,13 @@ export const FeedPostCard = memo(function FeedPostCard({
 
         <button
           type="button"
-          onClick={() => onReply?.(post.id)}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-bold text-gray-600 transition-all hover:bg-gray-50 active:scale-95"
+          onClick={handleReplyClick}
+          className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-bold transition-all active:scale-95 ${isCommentsOpen
+              ? 'border-indigo-200 bg-indigo-50 text-indigo-600'
+              : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
+            }`}
         >
-          <MessageCircle size={14} />
+          <MessageCircle size={14} fill={isCommentsOpen ? 'currentColor' : 'none'} />
           <span>{S.REPLY_BTN}</span>
           {typeof post.comments === 'number' && post.comments > 0 && (
             <span className="ml-0.5 text-gray-500">{post.comments}</span>
@@ -171,6 +190,14 @@ export const FeedPostCard = memo(function FeedPostCard({
               {S.PINNED}
             </span>
           )}
+        </div>
+      )}
+
+      {/* Comment Section (P6 Phase 1) */}
+      {isCommentsOpen && (
+        <div className="animate-fade-in">
+          <CommentList comments={post.commentList || []} />
+          <CommentInput onSubmit={handleSubmitComment} />
         </div>
       )}
     </article>

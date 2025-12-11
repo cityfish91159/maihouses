@@ -133,6 +133,7 @@ export default function Consumer({ userId, forceMock }: ConsumerProps) {
     handleLike,
     handleCreatePost,
     handleReply,
+    handleComment,
     handleShare,
   } = useConsumer(userId, forceMock);
 
@@ -189,6 +190,7 @@ export default function Consumer({ userId, forceMock }: ConsumerProps) {
                   isLiked={isLiked(post.id)}
                   onLike={handleLike}
                   onReply={handleReply}
+                  onComment={handleComment}
                   onShare={handleShare}
                 />
               ))}

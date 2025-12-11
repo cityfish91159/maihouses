@@ -10,7 +10,8 @@ import { useParams, useSearchParams } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import Consumer from './Consumer';
-// import Agent from './Agent'; // TODO: P6 實作
+import Agent from './Agent';
+import { RoleToggle } from '../../components/Feed/RoleToggle';
 
 type Role = 'agent' | 'member' | 'guest';
 
@@ -21,6 +22,7 @@ export default function Feed() {
   const [searchParams] = useSearchParams();
 
   const [role, setRole] = useState<Role>('member');
+  const [overrideRole, setOverrideRole] = useState<Role | null>(null); // Toggle state
   const [loading, setLoading] = useState(true);
 
   // 判斷是否強制 Mock
@@ -34,7 +36,7 @@ export default function Feed() {
       return;
     }
 
-    // Demo ID 直接用預設 role
+    // Demo 預設給 Agent 讓他們可以切換
     if (isDemo) {
       setRole(userId === 'demo-agent' ? 'agent' : 'member');
       setLoading(false);
@@ -63,6 +65,14 @@ export default function Feed() {
     fetchRole();
   }, [userId, isDemo]);
 
+  // Decide active role
+  const activeRole = overrideRole || role;
+
+  const handleRoleToggle = () => {
+    const next = activeRole === 'agent' ? 'member' : 'agent';
+    setOverrideRole(next);
+  };
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-brand-50">
@@ -79,15 +89,20 @@ export default function Feed() {
     );
   }
 
-  // 根據 role 渲染對應版本
-  if (role === 'agent') {
-    // TODO: P6 實作 Agent 組件
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-brand-50">
-        <div className="text-sm text-gray-500">房仲版開發中 (P6)</div>
-      </div>
-    );
-  }
+  return (
+    <>
+      {activeRole === 'agent' ? (
+        <Agent userId={userId} forceMock={forceMock} />
+      ) : (
+        <Consumer userId={userId} forceMock={forceMock} />
+      )}
 
-  return <Consumer userId={userId} forceMock={forceMock} />;
+      {forceMock && (
+        <RoleToggle
+          currentRole={activeRole as 'agent' | 'member'}
+          onToggle={handleRoleToggle}
+        />
+      )}
+    </>
+  );
 }

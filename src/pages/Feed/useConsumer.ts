@@ -85,15 +85,8 @@ export function useConsumer(userId?: string, forceMock?: boolean) {
     });
 
     // Mock 側邊欄資料
-    const sidebarData = useMemo<SidebarData>(() => ({
-        hotPosts: data.posts.slice(0, 3).map((p) => ({
-            id: p.id,
-            title: p.title,
-            communityName: p.communityName || S.DEFAULT_COMMUNITY_LABEL,
-            likes: p.likes || 0,
-        })),
-        saleItems: MOCK_SALE_ITEMS,
-    }), [data.posts]);
+    // P5-A2 修復：使用 useFeedData 提供的 sidebarData (來源：API 或 Mock)
+    const sidebarData = useMemo<SidebarData>(() => data.sidebarData, [data.sidebarData]);
 
     const handleLike = useCallback(async (postId: string | number) => {
         if (!isAuthenticated) {
@@ -122,8 +115,20 @@ export function useConsumer(userId?: string, forceMock?: boolean) {
     }, [createPost, isAuthenticated, userProfile]);
 
     const handleReply = useCallback((postId: string | number) => {
-        notify.info(S.NOTIFY.FEATURE_WIP, S.NOTIFY.REPLY_WIP);
+        // notify.info(S.NOTIFY.FEATURE_WIP, S.NOTIFY.REPLY_WIP);
+        // P6 Phase 1: Toggle UI only, logic handled in FeedPostCard via onComment
     }, []);
+
+    const handleComment = useCallback(async (postId: string | number, content: string) => {
+        if (!isAuthenticated) {
+            notify.error(S.NOTIFY.LOGIN_REQUIRED, S.NOTIFY.LOGIN_REQUIRED_POST);
+            return;
+        }
+        // P6 Phase 1: Submitting comment (Mock)
+        // In Phase 2/3, this will call createComment in useFeedData
+        await new Promise(resolve => setTimeout(resolve, 500)); // Simulate latency
+        notify.success('留言成功', '您的留言已發佈');
+    }, [isAuthenticated]);
 
     const handleShare = useCallback((postId: string | number) => {
         notify.info(S.NOTIFY.FEATURE_WIP, S.NOTIFY.SHARE_WIP);
@@ -148,6 +153,7 @@ export function useConsumer(userId?: string, forceMock?: boolean) {
         handleLike,
         handleCreatePost,
         handleReply,
+        handleComment,
         handleShare,
     };
 }

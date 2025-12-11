@@ -18,6 +18,11 @@
  * - P2-C4: API createPost 加入樂觀更新，立即顯示新貼文
  * - P2-C5: 暴露 isLiked helper 函數，方便 UI 判斷按讚狀態
  * - P2-C6: COMMUNITY_NAME_MAP 抽到 src/constants/communities.ts
+ * 
+ * P6-AUDIT Phase 1 (2025-12-11):
+ * - Extract Magic Numbers (HOT_POSTS_LIMIT)
+ * - Dynamic Sidebar Data (deriveSidebarData)
+ * - Comment Types & Mock Data (FeedComment)
  */
 
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
@@ -27,28 +32,82 @@ import type { Post, Role } from '../types/community';
 import { useAuth } from './useAuth';
 import { getCommunityName, isValidCommunityId } from '../constants';
 
+import { MOCK_SALE_ITEMS } from '../services/mock/feed';
+import { STRINGS } from '../constants/strings';
+import type { FeedComment } from '../types/comment';
+const S = STRINGS.FEED;
+
 // ============ Feed 專用型別 ============
 export interface FeedPost extends Post {
   /** 貼文所屬社區（信息流可能跨社區） */
   communityId?: string | undefined;
   communityName?: string | undefined;
+  /** 貼文留言列表 */
+  commentList?: FeedComment[];
+}
+
+export interface SidebarData {
+  hotPosts: { id: string | number; title: string; communityName: string; likes: number }[];
+  saleItems: typeof MOCK_SALE_ITEMS;
 }
 
 export interface UnifiedFeedData {
   posts: FeedPost[];
   totalPosts: number;
+  sidebarData: SidebarData;
 }
 
 // ============ 常數 ============
 const FEED_MOCK_STORAGE_KEY = 'feed-mock-data-v1';
 const MOCK_LATENCY_MS = 250;
+const HOT_POSTS_LIMIT = 3;
+
+// Helper to derive Sidebar Data
+const deriveSidebarData = (posts: FeedPost[]): SidebarData => {
+  const hotPosts = [...posts]
+    .sort((a, b) => (b.likes || 0) - (a.likes || 0))
+    .slice(0, HOT_POSTS_LIMIT)
+    .map(p => ({
+      id: p.id,
+      title: p.title,
+      communityName: p.communityName || S.DEFAULT_COMMUNITY_LABEL,
+      likes: p.likes || 0,
+    }));
+
+  return {
+    hotPosts,
+    saleItems: MOCK_SALE_ITEMS,
+  };
+};
 
 const EMPTY_FEED_DATA: UnifiedFeedData = {
   posts: [],
   totalPosts: 0,
+  sidebarData: { hotPosts: [], saleItems: [] },
 };
 
-// ============ Mock 資料 ============
+// ============ Mock 資料 Helper ============
+const createMockComments = (postId: number): FeedComment[] => [
+  {
+    id: `c-${postId}-1`,
+    postId,
+    author: '王太太',
+    role: 'resident',
+    content: '真的嗎？我也想參加團購！',
+    time: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
+    likes: 2,
+  },
+  {
+    id: `c-${postId}-2`,
+    postId,
+    author: '李先生',
+    role: 'resident',
+    content: '+1',
+    time: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
+    likes: 0,
+  }
+];
+
 const FEED_MOCK_POSTS: FeedPost[] = [
   {
     id: 1001,
@@ -59,9 +118,10 @@ const FEED_MOCK_POSTS: FeedPost[] = [
     title: '有人要團購掃地機嗎？🤖',
     content: '這款 iRobot 打折，滿 5 台有團購價～',
     likes: 31,
-    comments: 14,
+    comments: 2,
     communityId: 'test-uuid',
     communityName: '惠宇上晴',
+    commentList: createMockComments(1001),
   },
   {
     id: 1002,
@@ -72,9 +132,10 @@ const FEED_MOCK_POSTS: FeedPost[] = [
     content: '客廳光線很好，上週屋主剛降價 50 萬，有興趣可私訊。',
     views: 89,
     likes: 0,
-    comments: 5,
+    comments: 0,
     communityId: 'test-uuid',
     communityName: '惠宇上晴',
+    commentList: [],
   },
   {
     id: 1003,
@@ -85,9 +146,20 @@ const FEED_MOCK_POSTS: FeedPost[] = [
     title: '停車位交流 🚗',
     content: '我有 B2-128 想與 B1 交換，方便接送小孩',
     likes: 12,
-    comments: 8,
+    comments: 1,
     communityId: 'community-2',
     communityName: '遠雄中央公園',
+    commentList: [
+      {
+        id: 'c-1003-1',
+        postId: 1003,
+        author: '張先生',
+        role: 'member',
+        content: '我有興趣，私訊您',
+        time: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+        likes: 1
+      }
+    ],
   },
   {
     id: 1004,
@@ -98,9 +170,10 @@ const FEED_MOCK_POSTS: FeedPost[] = [
     title: '推薦水電師傅',
     content: '上次找的師傅很專業，價格公道，需要的鄰居私訊我',
     likes: 25,
-    comments: 6,
+    comments: 0,
     communityId: 'community-3',
     communityName: '國泰建設',
+    commentList: [],
   },
   {
     id: 1005,
@@ -111,15 +184,20 @@ const FEED_MOCK_POSTS: FeedPost[] = [
     content: '屋況極新，前屋主自住保養好',
     views: 156,
     likes: 0,
-    comments: 12,
+    comments: 0,
     communityId: 'test-uuid',
     communityName: '惠宇上晴',
+    commentList: [],
   },
 ];
 
 const FEED_MOCK_DATA: UnifiedFeedData = {
   posts: FEED_MOCK_POSTS,
   totalPosts: FEED_MOCK_POSTS.length,
+  sidebarData: {
+    hotPosts: [],
+    saleItems: MOCK_SALE_ITEMS,
+  },
 };
 
 type SupabasePostRow = {
@@ -193,6 +271,7 @@ const filterMockData = (source: UnifiedFeedData, targetCommunityId?: string): Un
   return {
     posts: filteredPosts,
     totalPosts: filteredPosts.length,
+    sidebarData: deriveSidebarData(filteredPosts),
   };
 };
 
@@ -218,9 +297,11 @@ const loadPersistedFeedMockState = (fallback: UnifiedFeedData): UnifiedFeedData 
     const raw = window.localStorage.getItem(FEED_MOCK_STORAGE_KEY);
     if (!raw) return fallback;
     const parsed = JSON.parse(raw) as Partial<UnifiedFeedData>;
+    const posts = parsed.posts ?? fallback.posts;
     return {
-      posts: parsed.posts ?? fallback.posts,
+      posts,
       totalPosts: parsed.totalPosts ?? fallback.totalPosts,
+      sidebarData: deriveSidebarData(posts),
     };
   } catch (err) {
     console.error('[useFeedData] Failed to load mock state', err);
@@ -299,6 +380,7 @@ const mapSupabasePostsToFeed = async (rows: SupabasePostRow[]): Promise<UnifiedF
   return {
     posts,
     totalPosts: posts.length,
+    sidebarData: deriveSidebarData(posts),
   };
 };
 
@@ -319,6 +401,7 @@ export const createFeedMockPost = (
   pinned: false,
   communityId,
   communityName,
+  commentList: [],
 });
 
 // ============ Hook 選項 ============
@@ -425,7 +508,7 @@ export function useFeedData(
   const [apiLoading, setApiLoading] = useState(false);
   const [apiError, setApiError] = useState<Error | null>(null);
   const lastApiDataRef = useRef<UnifiedFeedData | null>(null);
-  
+
   // P2-C2/C4 修復：API 按讚狀態（用於樂觀更新）
   const [apiLikedPosts, setApiLikedPosts] = useState<Set<string | number>>(() => new Set());
 
@@ -506,11 +589,11 @@ export function useFeedData(
   // P2-C1 修復：Mock likedPosts 初始化（加 ref 保護，只執行一次）
   useEffect(() => {
     if (!useMock || !currentUserId) return;
-    
+
     // 已初始化就跳過，避免 mockData 變化時重複執行
     if (hasInitializedLikedPosts.current) return;
     hasInitializedLikedPosts.current = true;
-    
+
     const initialLiked = new Set<string | number>();
     mockData.posts.forEach(p => {
       if (p.liked_by?.includes(currentUserId)) {
@@ -559,7 +642,7 @@ export function useFeedData(
     if (useMock) {
       const mockUserId = getMockUserId();
       const currentlyLiked = likedPosts.has(postId);
-      
+
       setMockData(prev => ({
         ...prev,
         posts: prev.posts.map(post => {
@@ -575,7 +658,7 @@ export function useFeedData(
           };
         }),
       }));
-      
+
       setLikedPosts(prev => {
         const next = new Set(prev);
         if (next.has(postId)) {
@@ -587,7 +670,7 @@ export function useFeedData(
       });
       return;
     }
-    
+
     // P2-C2 修復：API 模式樂觀更新
     const actingUserId = currentUserId;
     if (!actingUserId) {
@@ -598,7 +681,7 @@ export function useFeedData(
     const currentlyLiked = apiLikedPosts.has(postId);
     const previousApiData = apiData;
     const previousApiLikedPosts = new Set(apiLikedPosts);
-    
+
     // 1. 樂觀更新本地狀態（立即顯示變化）
     setApiData(prev => {
       if (!prev) return prev;
@@ -619,7 +702,7 @@ export function useFeedData(
         }),
       };
     });
-    
+
     setApiLikedPosts(prev => {
       const next = new Set(prev);
       if (next.has(postId)) {
@@ -629,7 +712,7 @@ export function useFeedData(
       }
       return next;
     });
-    
+
     try {
       // 2. 呼叫 Supabase RPC（真實 API）
       const { data, error } = await supabase.rpc('toggle_like', { post_id: postIdStr });
@@ -694,98 +777,79 @@ export function useFeedData(
         ...prev,
         posts: [newPost, ...prev.posts],
         totalPosts: prev.totalPosts + 1,
+        sidebarData: deriveSidebarData([newPost, ...prev.posts]), // Re-calculate sidebar data
       }));
       return;
     }
-    
+
     // P2-C4 修復：API 模式樂觀更新
     const tempId = -Date.now();
     const tempPost: FeedPost = {
       id: tempId,
-      author: authUser?.email?.split('@')[0] ?? '用戶',
-      type: authRole === 'agent' ? 'agent' : 'resident',
+      author: authUser?.user_metadata?.name || authUser?.email || '我',
+      type: ((authRole as string) === 'agent' || (authRole as string) === 'resident' || (authRole as string) === 'official') ? (authRole as any) : 'member',
       time: new Date().toISOString(),
-      title: deriveTitleFromContent(content),
-      content,
+      title: content.substring(0, 20),
+      content: content,
       likes: 0,
       comments: 0,
+      pinned: false,
       communityId: safeCommunityId,
       communityName: resolvedCommunityName,
+      commentList: [],
     };
-    
-    const previousApiData = apiData;
-    
-    // 1. 樂觀更新（立即顯示新貼文）
+
+    // 1. 樂觀插入本地 API Data
     setApiData(prev => {
-      if (!prev) {
-        return {
-          posts: [tempPost],
-          totalPosts: 1,
-        };
-      }
+      if (!prev) return prev;
       return {
         ...prev,
         posts: [tempPost, ...prev.posts],
         totalPosts: prev.totalPosts + 1,
+        sidebarData: deriveSidebarData([tempPost, ...prev.posts]), // Re-calculate sidebar data
       };
     });
-    
+
     try {
-      // 2. 呼叫 Supabase 寫入真實資料
-      const { data, error } = await supabase
-        .from('community_posts')
-        .insert({
-          community_id: safeCommunityId,
-          author_id: currentUserId,
-          content,
-          visibility: 'public',
-          post_type: 'general',
-          is_pinned: false,
-        })
-        .select('id, community_id, author_id, content, visibility, likes_count, comments_count, liked_by, is_pinned, created_at, post_type')
-        .single();
+      // 2. 呼叫真實 API
+      const { error } = await supabase.from('community_posts').insert({
+        content,
+        community_id: safeCommunityId,
+        author_id: currentUserId,
+        post_type: 'general',
+      });
 
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
 
-      const mapped = await mapSupabasePostsToFeed([(data as SupabasePostRow)]);
-      const realPost = mapped.posts[0];
-
+      // 3. 成功後刷新主要數據（取得真實 ID 與時間）
+      await fetchApiData();
+    } catch (err) {
+      console.error('[useFeedData] Create post failed', err);
+      // 4. 失敗時回滾（移除樂觀貼文）
       setApiData(prev => {
-        if (!prev || !realPost) return prev;
+        if (!prev) return prev;
         return {
           ...prev,
-          posts: prev.posts.map(p => (p.id === tempId ? realPost : p)),
-          totalPosts: prev.totalPosts,
+          posts: prev.posts.filter(p => p.id !== tempId),
+          totalPosts: prev.totalPosts - 1,
+          sidebarData: deriveSidebarData(prev.posts.filter(p => p.id !== tempId)),
         };
       });
-    } catch (err) {
-      // 3. 失敗時回滾
-      setApiData(previousApiData);
-      throw err instanceof Error ? err : new Error('發文失敗，請稍後再試');
+      throw err;
     }
-  }, [useMock, communityId, apiData, authUser, authRole, isAuthenticated, currentUserId]);
+  }, [useMock, isAuthenticated, communityId, authUser, authRole, currentUserId, fetchApiData]);
 
-  const setUseMock = useCallback((value: boolean) => {
-    const next = mhEnv.setMock(value);
-    setUseMockState(next);
-  }, []);
-
-  // ============ 回傳 ============
   return {
     data,
     useMock,
-    setUseMock,
-    isLoading: authLoading || (!useMock && apiLoading),
-    error: useMock ? null : apiError,
+    setUseMock: setUseMockState,
+    isLoading: useMock ? false : apiLoading,
+    error: apiError,
     refresh,
     toggleLike,
     createPost,
     viewerRole,
     isAuthenticated,
-    isLiked, // P2-C5 修復：暴露給消費者
+    isLiked,
   };
 }
-
-export default useFeedData;

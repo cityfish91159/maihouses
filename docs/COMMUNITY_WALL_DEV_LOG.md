@@ -1683,3 +1683,52 @@ npm run build
 
 ### 部署
 - 待推送 main。
+
+---
+
+## 2025-12-11 - P5 Optimization Round 3 (Fixes & Improvements)
+
+### 本次變更
+
+| 項目 | 檔案 | 說明 |
+|------|------|------|
+| **Demo 模式修復** | `src/pages/Feed/useConsumer.ts` | 新增 `isDemo` 判斷，允許在無真實登入狀態下模擬發文/按讚（for demo url）。 |
+| **Console Logs 清理** | `src/pages/Feed/useConsumer.ts` | 移除所有殘留的 `console.log`。 |
+| **測試類型修復** | `src/pages/Feed/__tests__/Consumer.test.tsx` | 移除 `any`，定義明確的 Props 介面。 |
+| **新增單元測試** | `src/pages/Feed/__tests__/useConsumer.test.ts` | 針對 Hook 核心邏輯（Demo 模式、權限檢查）新增測試覆蓋。 |
+| **Mock 資料常數化** | `src/services/mock/feed.ts` | 消除魔術字串，改用 `MOCK_STRINGS`。 |
+| **預設用戶更名** | `src/constants/strings.ts` | Default Mock User 改為 "Mike"。 |
+
+### 驗證
+
+```bash
+npm run test src/pages/Feed/__tests__ -- --run  # v. Pass (Integration & Unit)
+```
+
+### 部署
+- commit `chore(feed): update default mock user name to Mike` push 到 main。
+
+---
+
+## 2025-12-11 - P5 Optimization Round 2 (Refactoring)
+
+### 本次變更
+
+| 項目 | 檔案 | 說明 |
+|------|------|------|
+| **邏輯抽離 Hook** | `src/pages/Feed/useConsumer.ts` | 將 `Consumer.tsx` 的邏輯全數抽離至 `useConsumer`，View 層極簡化。 |
+| **i18n 字串收斂** | `src/constants/strings.ts` | 新增 Consumer 相關字串（Profile, Stats, Default Names），消除硬編碼。 |
+| **Mock 資料中心化** | `src/services/mock/feed.ts` | 建立 Mock 資料專用檔，移除 Component 內散落的常數。 |
+| **縮排修正** | `src/components/Feed/InlineComposer.tsx` | 修正縮排為 2 spaces。 |
+| **集成測試重構** | `src/pages/Feed/__tests__/Consumer.test.tsx` | 針對新架構重寫測試，Mock `useConsumer` 進行集成測試。 |
+
+### 驗證
+
+```bash
+npm run typecheck
+npm run test
+```
+
+### 部署
+- commit `feat(feed): optimization round 2 (P5-OPTI-R2)` push 到 main。
+
