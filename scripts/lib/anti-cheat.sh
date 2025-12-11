@@ -192,7 +192,11 @@ enforce_audit_progress() {
         echo -e "${BG_RED}${WHITE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
         echo ""
         echo -e "${RED}你必須先審計這些檔案才能繼續：${NC}"
-        comm -23 <(sort -u "$STATE_DIR/modified_files.log") <(sort -u "$STATE_DIR/audited_files.log" 2>/dev/null || echo "") 2>/dev/null
+        if [ -f "$STATE_DIR/audited_files.log" ]; then
+            comm -23 <(sort -u "$STATE_DIR/modified_files.log") <(sort -u "$STATE_DIR/audited_files.log") 2>/dev/null
+        else
+            cat "$STATE_DIR/modified_files.log"
+        fi
         echo ""
         echo -e "${YELLOW}執行: ./scripts/ai-supervisor.sh audit-all${NC}"
 

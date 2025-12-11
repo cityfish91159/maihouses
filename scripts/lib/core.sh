@@ -125,8 +125,9 @@ realtime_monitor() {
         return
     fi
 
-    # 分數
+    # 分數 - 防護: 確保 score 是有效數字
     local score=$(get_score)
+    [[ "$score" =~ ^-?[0-9]+$ ]] || score=100
     local score_color="${GREEN}"
     [ "$score" -lt 80 ] && score_color="${RED}"
     [ "$score" -lt 100 ] && [ "$score" -ge 80 ] && score_color="${YELLOW}"
@@ -152,7 +153,11 @@ realtime_monitor() {
     if [ "$pending" -gt 0 ]; then
         echo ""
         echo -e "${YELLOW}待審計檔案:${NC}"
-        comm -23 <(sort -u "$STATE_DIR/modified_files.log") <(sort -u "$STATE_DIR/audited_files.log" 2>/dev/null || echo "") 2>/dev/null | head -5
+        if [ -f "$STATE_DIR/audited_files.log" ]; then
+            comm -23 <(sort -u "$STATE_DIR/modified_files.log") <(sort -u "$STATE_DIR/audited_files.log") 2>/dev/null | head -5
+        else
+            head -5 "$STATE_DIR/modified_files.log"
+        fi
     fi
 
     # 違規統計
@@ -230,10 +235,18 @@ finish_session() {
 
     local task=$(grep -o '"task":"[^"]*"' "$SESSION_FILE" | cut -d'"' -f4)
     local score=$(get_score)
+    # 防護: 確保 score 是有效數字
+    [[ "$score" =~ ^-?[0-9]+$ ]] || score=100
 
     # 檢查未審計檔案
-    if [ -f "$STATE_DIR/modified_files.log" ] && [ -f "$STATE_DIR/audited_files.log" ]; then
-        local pending=$(comm -23 <(sort -u "$STATE_DIR/modified_files.log") <(sort -u "$STATE_DIR/audited_files.log" 2>/dev/null || echo "") 2>/dev/null | wc -l | tr -d ' ')
+    if [ -f "$STATE_DIR/modified_files.log" ]; then
+        local pending=0
+        if [ -f "$STATE_DIR/audited_files.log" ]; then
+            pending=$(comm -23 <(sort -u "$STATE_DIR/modified_files.log") <(sort -u "$STATE_DIR/audited_files.log") 2>/dev/null | wc -l | tr -d ' ')
+        else
+            pending=$(wc -l < "$STATE_DIR/modified_files.log" | tr -d ' ')
+        fi
+        pending=${pending:-0}
         if [ "$pending" -gt 0 ]; then
             error "還有 $pending 個檔案未審計！"
             echo "請先執行: audit-all"

@@ -527,7 +527,7 @@ check_no_verify_usage() {
 # 迷你狀態顯示
 show_mini_status() {
     local timestamp=$(date '+%H:%M:%S')
-    local score=$(get_score 2>/dev/null || echo "N/A")
+    local score=$(get_score 2>/dev/null || echo "100")
 
     local modified=0
     local audited=0
@@ -536,9 +536,9 @@ show_mini_status() {
     local pending=$((modified - audited))
     [ "$pending" -lt 0 ] && pending=0
 
-    # 分數顏色
+    # 分數顏色 - 防護: 確保 score 是有效數字
     local score_color="${GREEN}"
-    if [ "$score" != "N/A" ]; then
+    if [[ "$score" =~ ^-?[0-9]+$ ]]; then
         [ "$score" -lt 80 ] && score_color="${RED}"
         [ "$score" -lt 100 ] && [ "$score" -ge 80 ] && score_color="${YELLOW}"
     fi

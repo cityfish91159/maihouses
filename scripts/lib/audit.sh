@@ -865,10 +865,11 @@ track_modify() {
     # 檢查待審計數量
     local pending=0
     if [ -f "$STATE_DIR/modified_files.log" ] && [ -f "$STATE_DIR/audited_files.log" ]; then
-        pending=$(comm -23 <(sort -u "$STATE_DIR/modified_files.log") <(sort -u "$STATE_DIR/audited_files.log" 2>/dev/null || echo "") 2>/dev/null | wc -l | tr -d ' ')
+        pending=$(comm -23 <(sort -u "$STATE_DIR/modified_files.log") <(sort -u "$STATE_DIR/audited_files.log") 2>/dev/null | wc -l | tr -d ' ')
     elif [ -f "$STATE_DIR/modified_files.log" ]; then
         pending=$(wc -l < "$STATE_DIR/modified_files.log" | tr -d ' ')
     fi
+    pending=${pending:-0}
 
     if [ "$pending" -gt 3 ]; then
         echo ""
