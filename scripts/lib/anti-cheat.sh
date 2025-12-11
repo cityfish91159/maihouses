@@ -60,16 +60,16 @@ comprehensive_git_check() {
 
     local violations=0
 
-    # 1. 未追蹤的新檔案
-    local untracked=$(git ls-files --others --exclude-standard 2>/dev/null | grep -E '\.(ts|tsx)$')
+    # 1. 未追蹤的新檔案 (|| true 防止 pipefail 退出)
+    local untracked=$(git ls-files --others --exclude-standard 2>/dev/null | grep -E '\.(ts|tsx)$' || true)
     if [ -n "$untracked" ]; then
         echo -e "${RED}❌ 發現未追蹤的新檔案：${NC}"
         echo "$untracked"
         violations=$((violations + 1))
     fi
 
-    # 2. 修改但未 staged
-    local modified=$(git diff --name-only 2>/dev/null | grep -E '\.(ts|tsx)$')
+    # 2. 修改但未 staged (|| true 防止 pipefail 退出)
+    local modified=$(git diff --name-only 2>/dev/null | grep -E '\.(ts|tsx)$' || true)
     if [ -n "$modified" ]; then
         echo -e "${YELLOW}⚠️ 修改但未 staged：${NC}"
         echo "$modified"
@@ -192,7 +192,11 @@ enforce_audit_progress() {
         echo -e "${BG_RED}${WHITE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
         echo ""
         echo -e "${RED}你必須先審計這些檔案才能繼續：${NC}"
-        comm -23 <(sort -u "$STATE_DIR/modified_files.log") <(sort -u "$STATE_DIR/audited_files.log" 2>/dev/null || echo "") 2>/dev/null
+        if [ -f "$STATE_DIR/audited_files.log" ]; then
+            comm -23 <(sort -u "$STATE_DIR/modified_files.log") <(sort -u "$STATE_DIR/audited_files.log") 2>/dev/null
+        else
+            cat "$STATE_DIR/modified_files.log"
+        fi
         echo ""
         echo -e "${YELLOW}執行: ./scripts/ai-supervisor.sh audit-all${NC}"
 

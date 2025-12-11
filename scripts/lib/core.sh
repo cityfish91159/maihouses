@@ -12,19 +12,31 @@ AUTO_RESTART_THRESHOLD=80
 # 分數管理
 # ============================================================================
 
-# 取得當前分數
+# 取得當前分數 - 確保永遠返回有效數字
 get_score() {
+    local score=""
     if [ -f "$SCORE_FILE" ]; then
-        grep -o '"score":[0-9-]*' "$SCORE_FILE" | cut -d: -f2 || echo 100
+        # 使用更精確的正則：負號可選 + 至少一個數字
+        score=$(grep -o '"score":-\?[0-9]\+' "$SCORE_FILE" 2>/dev/null | cut -d: -f2)
+    fi
+    # 確保返回有效數字，預設 100
+    if [[ "$score" =~ ^-?[0-9]+$ ]]; then
+        echo "$score"
     else
         echo 100
     fi
 }
 
-# 更新分數
+# 更新分數 - 加入參數驗證防止崩潰
 update_score() {
-    local delta="$1"
-    local reason="$2"
+    local delta="${1:-0}"
+    local reason="${2:-未知原因}"
+
+    # 驗證 delta 是有效數字
+    if [[ ! "$delta" =~ ^-?[0-9]+$ ]]; then
+        echo -e "${RED}⚠️ update_score: delta 無效 ($delta)，設為 0${NC}" >&2
+        delta=0
+    fi
 
     local current_score=$(get_score)
     local new_score=$((current_score + delta))
@@ -38,7 +50,7 @@ update_score() {
 
     # 即時回報
     local delta_str="$delta"
-    [ "$delta" -gt 0 ] && delta_str="+$delta"
+    [ "$delta" -gt 0 ] 2>/dev/null && delta_str="+$delta"
     echo -e "${CYAN}📊 分數: $current_score → $new_score ($delta_str) | $reason${NC}"
 
     # 階段性警告
@@ -113,8 +125,9 @@ realtime_monitor() {
         return
     fi
 
-    # 分數
+    # 分數 - 防護: 確保 score 是有效數字
     local score=$(get_score)
+    [[ "$score" =~ ^-?[0-9]+$ ]] || score=100
     local score_color="${GREEN}"
     [ "$score" -lt 80 ] && score_color="${RED}"
     [ "$score" -lt 100 ] && [ "$score" -ge 80 ] && score_color="${YELLOW}"
@@ -140,7 +153,11 @@ realtime_monitor() {
     if [ "$pending" -gt 0 ]; then
         echo ""
         echo -e "${YELLOW}待審計檔案:${NC}"
-        comm -23 <(sort -u "$STATE_DIR/modified_files.log") <(sort -u "$STATE_DIR/audited_files.log" 2>/dev/null || echo "") 2>/dev/null | head -5
+        if [ -f "$STATE_DIR/audited_files.log" ]; then
+            comm -23 <(sort -u "$STATE_DIR/modified_files.log") <(sort -u "$STATE_DIR/audited_files.log") 2>/dev/null | head -5
+        else
+            head -5 "$STATE_DIR/modified_files.log"
+        fi
     fi
 
     # 違規統計
@@ -218,10 +235,18 @@ finish_session() {
 
     local task=$(grep -o '"task":"[^"]*"' "$SESSION_FILE" | cut -d'"' -f4)
     local score=$(get_score)
+    # 防護: 確保 score 是有效數字
+    [[ "$score" =~ ^-?[0-9]+$ ]] || score=100
 
     # 檢查未審計檔案
-    if [ -f "$STATE_DIR/modified_files.log" ] && [ -f "$STATE_DIR/audited_files.log" ]; then
-        local pending=$(comm -23 <(sort -u "$STATE_DIR/modified_files.log") <(sort -u "$STATE_DIR/audited_files.log" 2>/dev/null || echo "") 2>/dev/null | wc -l | tr -d ' ')
+    if [ -f "$STATE_DIR/modified_files.log" ]; then
+        local pending=0
+        if [ -f "$STATE_DIR/audited_files.log" ]; then
+            pending=$(comm -23 <(sort -u "$STATE_DIR/modified_files.log") <(sort -u "$STATE_DIR/audited_files.log") 2>/dev/null | wc -l | tr -d ' ')
+        else
+            pending=$(wc -l < "$STATE_DIR/modified_files.log" | tr -d ' ')
+        fi
+        pending=${pending:-0}
         if [ "$pending" -gt 0 ]; then
             error "還有 $pending 個檔案未審計！"
             echo "請先執行: audit-all"

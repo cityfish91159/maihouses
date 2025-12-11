@@ -89,11 +89,21 @@ cmd_finish() {
 
     # 2. 檢查未審計
     echo "2️⃣  檢查審計覆蓋..."
-    if [ -f "$STATE_DIR/modified_files.log" ] && [ -f "$STATE_DIR/audited_files.log" ]; then
-        local pending=$(comm -23 <(sort -u "$STATE_DIR/modified_files.log") <(sort -u "$STATE_DIR/audited_files.log" 2>/dev/null || echo "") 2>/dev/null | wc -l | tr -d ' ')
+    if [ -f "$STATE_DIR/modified_files.log" ]; then
+        local pending=0
+        if [ -f "$STATE_DIR/audited_files.log" ]; then
+            pending=$(comm -23 <(sort -u "$STATE_DIR/modified_files.log") <(sort -u "$STATE_DIR/audited_files.log") 2>/dev/null | wc -l | tr -d ' ')
+        else
+            pending=$(wc -l < "$STATE_DIR/modified_files.log" | tr -d ' ')
+        fi
+        pending=${pending:-0}
         if [ "$pending" -gt 0 ]; then
             echo -e "${RED}❌ 還有 $pending 個檔案未審計！${NC}"
-            comm -23 <(sort -u "$STATE_DIR/modified_files.log") <(sort -u "$STATE_DIR/audited_files.log" 2>/dev/null || echo "") 2>/dev/null
+            if [ -f "$STATE_DIR/audited_files.log" ]; then
+                comm -23 <(sort -u "$STATE_DIR/modified_files.log") <(sort -u "$STATE_DIR/audited_files.log") 2>/dev/null
+            else
+                cat "$STATE_DIR/modified_files.log"
+            fi
             update_score $((pending * -5)) "未審計檔案: $pending 個"
             echo ""
             echo -e "${YELLOW}執行: ./scripts/ai-supervisor.sh audit-all${NC}"
@@ -213,6 +223,8 @@ cmd_monitor() {
 cmd_score() {
     print_header "🏆 分數"
     local score=$(get_score)
+    # 防護: 確保 score 是有效數字
+    [[ "$score" =~ ^-?[0-9]+$ ]] || score=100
     local score_color="${GREEN}"
     [ "$score" -lt 80 ] && score_color="${RED}"
     [ "$score" -lt 100 ] && [ "$score" -ge 80 ] && score_color="${YELLOW}"
