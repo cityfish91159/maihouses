@@ -5,18 +5,13 @@
  * 顯示用戶的社區動態、跨社區貼文、交易狀態等
  */
 
-import { useState, useCallback, useEffect, useMemo } from 'react';
 import { Home, Search, Bell, User } from 'lucide-react';
 
 import { GlobalHeader } from '../../components/layout/GlobalHeader';
 import { FeedPostCard, ProfileCard, TxBanner, FeedSidebar, InlineComposer } from '../../components/Feed';
 import { MockToggle } from '../../components/common/MockToggle';
-import { notify } from '../../lib/notify';
 
-import { useFeedData } from '../../hooks/useFeedData';
-import { useAuth } from '../../hooks/useAuth';
-
-import type { UserProfile, ActiveTransaction, SidebarData } from '../../types/feed';
+import { useConsumer } from './useConsumer';
 import { STRINGS } from '../../constants/strings';
 import { ROUTES } from '../../constants/routes';
 
@@ -121,116 +116,25 @@ interface ConsumerProps {
 
 /** Main Consumer Page */
 export default function Consumer({ userId, forceMock }: ConsumerProps) {
-  const { user, isAuthenticated, role, loading: authLoading } = useAuth();
   const {
-    data,
-    useMock,
-    setUseMock,
+    authLoading,
+    activeTransaction,
+    userProfile,
+    userInitial,
+    isAuthenticated,
     isLoading,
     error,
+    data,
+    sidebarData,
+    useMock,
+    setUseMock,
     refresh,
-    toggleLike,
-    createPost,
     isLiked,
-  } = useFeedData();
-
-  // 根據 forceMock 設置初始 mock 狀態
-  useEffect(() => {
-    if (forceMock !== undefined) {
-      setUseMock(forceMock);
-    }
-  }, [forceMock, setUseMock]);
-
-  // 設置頁面標題
-  useEffect(() => {
-    document.title = S.PAGE_TITLE;
-  }, []);
-
-  // Mock 用戶資料
-  const userProfile = useMemo<UserProfile | null>(() => {
-    if (!isAuthenticated || !user) return null;
-    return {
-      id: user.id,
-      name: user.user_metadata?.name || user.email?.split('@')[0] || '用戶',
-      role: role || 'member',
-      stats: {
-        days: 128,
-        liked: 73,
-        contributions: 15,
-      },
-      communityId: 'test-uuid',
-      communityName: '惠宇上晴',
-    };
-  }, [isAuthenticated, user, role]);
-
-  // Mock 交易狀態
-  const [activeTransaction] = useState<ActiveTransaction>(() => {
-    try {
-      const hasActive = localStorage.getItem('mai_active_tx') === 'true';
-      if (hasActive) {
-        return {
-          hasActive: true,
-          propertyName: '惠宇上晴 12F',
-          stage: 'negotiation' as const,
-        };
-      }
-      return { hasActive: false };
-    } catch {
-      return { hasActive: false };
-    }
-  });
-
-  // Mock 側邊欄資料
-  const sidebarData = useMemo<SidebarData>(() => ({
-    hotPosts: data.posts.slice(0, 3).map((p) => ({
-      id: p.id,
-      title: p.title,
-      communityName: p.communityName || '社區',
-      likes: p.likes || 0,
-    })),
-    saleItems: [
-      { id: '1', title: '惠宇上晴 12F', price: 1280, priceUnit: '萬', communityName: '惠宇上晴' },
-      { id: '2', title: '惠宇上晴 8F', price: 1150, priceUnit: '萬', communityName: '惠宇上晴' },
-    ],
-  }), [data.posts]);
-
-  const handleLike = useCallback(async (postId: string | number) => {
-    if (!isAuthenticated) {
-      notify.error('請先登入', '登入後才能按讚');
-      return;
-    }
-    try {
-      await toggleLike(postId);
-    } catch (err) {
-      console.error('Failed to toggle like', err);
-      notify.error('按讚失敗', '請稍後再試');
-    }
-  }, [toggleLike, isAuthenticated]);
-
-  const handleCreatePost = useCallback(async (content: string) => {
-    if (!isAuthenticated) {
-      notify.error('請先登入', '登入後才能發文');
-      return;
-    }
-    try {
-      await createPost(content, userProfile?.communityId);
-    } catch (err) {
-      console.error('Failed to create post', err);
-      throw err;
-    }
-  }, [createPost, isAuthenticated, userProfile]);
-
-  const handleReply = useCallback((postId: string | number) => {
-    notify.info('功能開發中', '回覆功能即將上線');
-    console.log('Reply to post:', postId);
-  }, []);
-
-  const handleShare = useCallback((postId: string | number) => {
-    notify.info('功能開發中', '分享功能即將上線');
-    console.log('Share post:', postId);
-  }, []);
-
-  const userInitial = userProfile?.name.charAt(0).toUpperCase() || 'U';
+    handleLike,
+    handleCreatePost,
+    handleReply,
+    handleShare,
+  } = useConsumer(userId, forceMock);
 
   // Auth 載入中
   if (authLoading) {

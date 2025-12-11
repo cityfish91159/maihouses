@@ -33,6 +33,19 @@ export const STRINGS = {
       SALE_PREFIX: '目前有',
       SALE_SUFFIX: '戶待售',
     },
+    // P5 Optimization Round 2
+    DEFAULT_USER: '用戶',
+    DEFAULT_COMMUNITY_NAME: '惠宇上晴',
+    NOTIFY: {
+      LOGIN_REQUIRED: '請先登入',
+      LOGIN_REQUIRED_LIKE: '登入後才能按讚',
+      LOGIN_REQUIRED_POST: '登入後才能發文',
+      LIKE_FAILED: '按讚失敗',
+      LIKE_FAILED_DESC: '請稍後再試',
+      FEATURE_WIP: '功能開發中',
+      REPLY_WIP: '回覆功能即將上線',
+      SHARE_WIP: '分享功能即將上線',
+    },
     POST: {
       LIKE_BTN: '讚',
       LIKED_BTN: '已讚',
