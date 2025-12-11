@@ -121,7 +121,7 @@ export function ComposerModal({
         {/* Backdrop */}
         <button
           type="button"
-          className="absolute inset-0 w-full h-full bg-black/50 backdrop-blur-sm border-0 cursor-default"
+          className="absolute inset-0 size-full cursor-default border-0 bg-black/50 backdrop-blur-sm"
           onClick={() => !isSubmitting && onClose()}
           aria-label={STRINGS.COMPOSER.CLOSE}
           tabIndex={-1}
@@ -133,35 +133,35 @@ export function ComposerModal({
           role="dialog"
           aria-modal="true"
           aria-labelledby="composer-title"
-          className="relative z-10 w-full max-w-lg rounded-2xl bg-white shadow-2xl flex flex-col max-h-[90dvh]"
+          className="relative z-10 flex max-h-[90dvh] w-full max-w-lg flex-col rounded-2xl bg-white shadow-2xl"
         >
           {/* Header */}
           <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
-            <h2 id="composer-title" className="text-lg font-bold text-gray-800 flex items-center gap-2">
+            <h2 id="composer-title" className="flex items-center gap-2 text-lg font-bold text-gray-800">
               {mode === 'community' && isPrivate ? STRINGS.COMPOSER.TITLE_PRIVATE : STRINGS.COMPOSER.TITLE_PUBLIC}
             </h2>
             <button
               onClick={onClose}
               disabled={isSubmitting}
               aria-label={STRINGS.COMPOSER.CLOSE}
-              className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors disabled:opacity-50"
+              className="rounded-full p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 disabled:opacity-50"
             >
               {STRINGS.COMPOSER.CLOSE_ICON}
             </button>
           </div>
 
           {/* Body */}
-          <div className="p-4 flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto p-4">
             {/* Visibility Toggle (Community Mode Only) */}
             {mode === 'community' && (
-              <div className="flex gap-2 mb-4">
+              <div className="mb-4 flex gap-2">
                 <button
                   type="button"
                   onClick={() => setVisibility('public')}
-                  className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-colors border ${
+                  className={`flex-1 rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
                     visibility === 'public'
-                      ? 'bg-brand-50 border-brand-200 text-brand-700'
-                      : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
+                      ? 'border-brand-200 bg-brand-50 text-brand-700'
+                      : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
                   }`}
                 >
                   {STRINGS.COMPOSER.VISIBILITY_PUBLIC}
@@ -169,10 +169,10 @@ export function ComposerModal({
                 <button
                   type="button"
                   onClick={() => setVisibility('private')}
-                  className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-colors border ${
+                  className={`flex-1 rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
                     visibility === 'private'
-                      ? 'bg-amber-50 border-amber-200 text-amber-700'
-                      : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
+                      ? 'border-amber-200 bg-amber-50 text-amber-700'
+                      : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
                   }`}
                 >
                   {STRINGS.COMPOSER.VISIBILITY_PRIVATE}
@@ -185,7 +185,7 @@ export function ComposerModal({
               value={content}
               onChange={(e) => setContent(e.target.value)}
               placeholder={displayPlaceholder}
-              className="w-full min-h-[150px] resize-none text-base text-gray-800 placeholder:text-gray-400 focus:outline-none"
+              className="min-h-[150px] w-full resize-none text-base text-gray-800 placeholder:text-gray-400 focus:outline-none"
               disabled={isSubmitting}
               minLength={minLength}
               maxLength={maxLength}
@@ -197,21 +197,21 @@ export function ComposerModal({
               <button
                 type="button"
                 onClick={() => notify.dev(STRINGS.COMPOSER.UPLOAD_IMAGE_DEV)}
-                className="inline-flex items-center gap-2 text-gray-500 hover:text-brand-600 transition-colors text-sm font-medium px-3 py-2 rounded-lg hover:bg-gray-50"
+                className="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-gray-500 transition-colors hover:bg-gray-50 hover:text-brand-600"
               >
                 {STRINGS.COMPOSER.UPLOAD_IMAGE}
               </button>
             </div>
 
             {error && (
-              <div className="mt-3 p-3 bg-red-50 text-red-600 text-sm rounded-lg" role="alert">
+              <div className="mt-3 rounded-lg bg-red-50 p-3 text-sm text-red-600" role="alert">
                 {error}
               </div>
             )}
           </div>
 
           {/* Footer */}
-          <div className="border-t border-gray-100 px-4 py-3 flex items-center justify-between bg-gray-50 rounded-b-2xl">
+          <div className="flex items-center justify-between rounded-b-2xl border-t border-gray-100 bg-gray-50 px-4 py-3">
             <span
               id="composer-counter"
               className={`text-xs ${charCount > maxLength ? 'text-red-500' : 'text-gray-400'}`}
@@ -223,7 +223,7 @@ export function ComposerModal({
                 type="button"
                 onClick={onClose}
                 disabled={isSubmitting}
-                className="px-4 py-2 text-gray-600 font-medium hover:bg-gray-200 rounded-lg transition-colors disabled:opacity-50"
+                className="rounded-lg px-4 py-2 font-medium text-gray-600 transition-colors hover:bg-gray-200 disabled:opacity-50"
               >
                 {STRINGS.COMPOSER.CANCEL}
               </button>
@@ -231,7 +231,7 @@ export function ComposerModal({
                 type="button"
                 onClick={submit}
                 disabled={!isValid || isSubmitting}
-                className="px-6 py-2 bg-brand-600 text-white font-bold rounded-lg hover:bg-brand-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow"
+                className="rounded-lg bg-brand-600 px-6 py-2 font-bold text-white shadow-sm transition-colors hover:bg-brand-700 hover:shadow disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {isSubmitting ? STRINGS.COMPOSER.SUBMITTING : STRINGS.COMPOSER.SUBMIT}
               </button>

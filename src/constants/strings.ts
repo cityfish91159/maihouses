@@ -1,4 +1,57 @@
 export const STRINGS = {
+  FEED: {
+    TITLE: '我的社區',
+    PAGE_TITLE: '邁房子｜我的社區',
+    PROFILE: {
+      STATS_DAYS: '互動天數',
+      STATS_LIKED: '被感謝',
+      STATS_CONTRIB: '貢獻篇數',
+    },
+    TX_BANNER: {
+      TITLE: '您有一筆交易進行中',
+      ENTER_BTN: '進入戰情室',
+    },
+    SIDEBAR: {
+      NAV_TITLE: '快速導航',
+      HOT_TITLE: '社區動態',
+      SALE_TITLE: '待售物件',
+      VIEW_ALL: '查看全部',
+      HOT_EMPTY: '暫無熱門貼文',
+      SALE_EMPTY: '暫無待售物件',
+    },
+    POST: {
+      LIKE_BTN: '讚',
+      LIKED_BTN: '已讚',
+      REPLY_BTN: '回覆',
+      SHARE_BTN: '分享',
+      SHOW_MORE: '查看更多',
+      SHOW_LESS: '收起',
+      TIME_JUST_NOW: '剛剛',
+      TIME_MINUTES_AGO: (n: number) => `${n} 分鐘前`,
+      TIME_HOURS_AGO: (n: number) => `${n} 小時前`,
+      TIME_DAYS_AGO: (n: number) => `${n} 天前`,
+    },
+    AI_INSIGHT: {
+      TITLE: 'AI 社區洞察',
+      PUBLIC_RATIO: '公開討論比例',
+      COMMUNITY_RATING: '社區評分',
+      ACTIVITY_SCORE: '活躍度',
+    },
+    NAV: {
+      HOME: '首頁',
+      COMMUNITY: '我的社區',
+      NOTIFICATIONS: '通知',
+      PROFILE: '個人',
+    },
+    EMPTY: {
+      TITLE: '還沒有貼文',
+      DESC: '成為第一個發布貼文的人吧！',
+    },
+    ERROR: {
+      LOAD_FAILED: '載入失敗',
+      RETRY: '重試',
+    },
+  },
   COMPOSER: {
     LOGIN_TITLE: '請先登入',
     LOGIN_DESC: '登入後即可參與討論與發布貼文',
