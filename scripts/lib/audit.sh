@@ -931,7 +931,7 @@ auto_typecheck_file() {
     # 執行 tsc 檢查（只檢查不輸出）
     # 注意: tsc 單檔檢查會忽略 tsconfig.json，必須手動補上關鍵參數
     local ts_output
-    ts_output=$(npx tsc --noEmit --jsx react-jsx --esModuleInterop --skipLibCheck --target esnext --module esnext --moduleResolution bundler "$file" 2>&1) || true
+    ts_output=$(npx tsc --noEmit --jsx react-jsx --esModuleInterop --skipLibCheck --target esnext --module esnext --moduleResolution bundler --types vite/client "$file" 2>&1) || true
 
     # 檢查是否有錯誤
     if echo "$ts_output" | grep -qiE "error TS[0-9]+:"; then
