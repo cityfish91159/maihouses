@@ -1,4 +1,5 @@
 import React, { memo } from 'react';
+import { Link } from 'react-router-dom';
 import type { UserProfile } from '../../types/feed';
 import type { PerformanceStats } from '../../types/agent';
 import { ROUTES } from '../../constants/routes';
@@ -49,15 +50,15 @@ export const AgentProfileCard = memo(function AgentProfileCard({
 
             {/* Links Row */}
             <div className="flex gap-2.5 flex-wrap justify-start">
-                <a href="#workbench" className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-full border-none text-white bg-gradient-to-br from-[#00385a] to-[#005282] font-bold text-[13px] no-underline opacity-100 transition-all hover:opacity-100">
+                <Link to="/uag" className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-full border-none text-white bg-gradient-to-br from-[#00385a] to-[#005282] font-bold text-[13px] no-underline opacity-100 transition-all hover:opacity-100">
                     🏷️ 業務後台
-                </a>
-                <a
-                    href={ROUTES.COMMUNITY_WALL(profile.communityId || 'test-uuid')}
+                </Link>
+                <Link
+                    to={ROUTES.COMMUNITY_WALL(profile.communityId || 'test-uuid')}
                     className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-full border border-[#bfdbfe] border-solid text-[#00385a] bg-[#eff6ff] font-bold text-[13px] no-underline opacity-100 transition-all ml-auto max-[400px]:ml-0 max-[400px]:w-full"
                 >
                     🧱 前往我的社區牆 ➡️
-                </a>
+                </Link>
             </div>
         </section>
     );
