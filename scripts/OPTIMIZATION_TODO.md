@@ -1,8 +1,55 @@
 # AI Supervisor 優化清單
 
 > 生成時間: 2025-12-11
-> 狀態: 審查完成
-> 總問題數: 25+
+> 狀態: 審查完成 ✅
+> 總問題數: 25+ (全部已修復)
+> 最終評分: **79 分 → 85 分** (經 Amazon 工程師審查優化)
+
+---
+
+## 🔧 Amazon 工程師審查 (2025-12-11)
+
+> 審查重點: 分數比較防護 + comm 命令 fallback 邏輯
+> 審查結果: 發現並修復 6 個 P1 級別問題
+
+### 已修復的問題
+
+| # | 檔案 | 行號 | 問題描述 | 修復方式 | 狀態 |
+|---|------|------|----------|----------|------|
+| 1 | ai-supervisor.sh | 217 | `cmd_score()` 分數比較無防護 | 加入 `[[ "$score" =~ ^-?[0-9]+$ ]]` 驗證 | ✅ |
+| 2 | watcher.sh | 541-543 | `show_mini_status()` 分數比較不安全 | 改用正則驗證而非 `!= "N/A"` | ✅ |
+| 3 | core.sh | 131 | `realtime_monitor()` 分數比較無防護 | 加入數字驗證 | ✅ |
+| 4 | core.sh | 237-239 | `finish_session()` 分數比較無防護 | 加入數字驗證 | ✅ |
+| 5 | ai-supervisor.sh | 93-96 | `comm || echo ""` 產生空行而非空輸入 | 改用明確的 if-else 邏輯 | ✅ |
+| 6 | core.sh | 155-160 | `comm || echo ""` 同上 | 改用 if-else | ✅ |
+| 7 | core.sh | 241-249 | `comm || echo ""` 同上 | 改用 if-else | ✅ |
+| 8 | anti-cheat.sh | 195 | `comm || echo ""` 同上 | 改用 if-else | ✅ |
+| 9 | audit.sh | 868 | `comm || echo ""` 同上 | 移除不必要的 fallback | ✅ |
+
+### 技術說明
+
+#### 1. 分數比較防護
+```bash
+# 問題: 如果 score 非數字，bash 比較會報錯
+[ "$score" -lt 80 ] && score_color="${RED}"
+
+# 修復: 先驗證是否為數字
+[[ "$score" =~ ^-?[0-9]+$ ]] || score=100
+[ "$score" -lt 80 ] && score_color="${RED}"
+```
+
+#### 2. comm 命令 fallback 邏輯
+```bash
+# 問題: || echo "" 產生一行空行，不是空輸入
+comm -23 <(sort file1) <(sort file2 || echo "")  # ❌ 錯誤
+
+# 修復: 明確檢查檔案存在
+if [ -f "$STATE_DIR/audited_files.log" ]; then
+    comm -23 <(sort -u file1) <(sort -u file2)   # ✅ 正確
+else
+    cat file1  # 沒有 audited，全部都是待審計
+fi
+```
 
 ---
 
