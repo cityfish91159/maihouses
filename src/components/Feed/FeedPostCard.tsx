@@ -9,6 +9,7 @@ import { useState, useCallback, memo } from 'react';
 import { Heart, MessageCircle, Share2, Calendar, Eye } from 'lucide-react';
 import type { FeedPost } from '../../hooks/useFeedData';
 import { STRINGS } from '../../constants/strings';
+import { formatRelativeTime } from '../../utils/date';
 
 const S = STRINGS.FEED.POST;
 
@@ -21,20 +22,7 @@ interface FeedPostCardProps {
   className?: string;
 }
 
-/** 格式化時間為相對時間 */
-function formatRelativeTime(isoTime: string): string {
-  const now = Date.now();
-  const time = new Date(isoTime).getTime();
-  const diffMs = now - time;
-  const diffMinutes = Math.floor(diffMs / (1000 * 60));
-  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
-  if (diffMinutes < 1) return S.TIME_JUST_NOW;
-  if (diffMinutes < 60) return S.TIME_MINUTES_AGO(diffMinutes);
-  if (diffHours < 24) return S.TIME_HOURS_AGO(diffHours);
-  return S.TIME_DAYS_AGO(diffDays);
-}
 
 /** 根據作者類型取得 Avatar 樣式 */
 function getAvatarStyle(type: FeedPost['type']): string {
@@ -48,13 +36,12 @@ function getAvatarStyle(type: FeedPost['type']): string {
   }
 }
 
-/** 取得作者類型標籤 */
 function getAuthorBadge(type: FeedPost['type']): string | null {
   switch (type) {
     case 'agent':
-      return '房仲';
+      return S.BADGE_AGENT;
     case 'official':
-      return '公告';
+      return S.BADGE_OFFICIAL;
     default:
       return null;
   }
@@ -137,11 +124,10 @@ export const FeedPostCard = memo(function FeedPostCard({
           onClick={handleLike}
           disabled={isLiking}
           aria-pressed={isLiked}
-          className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-bold transition-all active:scale-95 disabled:cursor-not-allowed disabled:opacity-60 ${
-            isLiked
+          className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-bold transition-all active:scale-95 disabled:cursor-not-allowed disabled:opacity-60 ${isLiked
               ? 'border-red-200 bg-red-50 text-red-600'
               : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
-          }`}
+            }`}
         >
           <Heart size={14} fill={isLiked ? 'currentColor' : 'none'} />
           <span>{isLiked ? S.LIKED_BTN : S.LIKE_BTN}</span>
@@ -177,12 +163,12 @@ export const FeedPostCard = memo(function FeedPostCard({
         <div className="mt-2 flex items-center gap-4 text-xs text-gray-500">
           <span className="flex items-center gap-1">
             <Eye size={12} />
-            {post.views} 次瀏覽
+            {S.VIEWS(post.views)}
           </span>
           {post.pinned && (
             <span className="flex items-center gap-1">
               <Calendar size={12} />
-              可預約看屋
+              {S.PINNED}
             </span>
           )}
         </div>

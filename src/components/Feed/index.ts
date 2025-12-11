@@ -8,3 +8,4 @@ export { FeedPostCard } from './FeedPostCard';
 export { ProfileCard } from './ProfileCard';
 export { TxBanner } from './TxBanner';
 export { FeedSidebar } from './FeedSidebar';
+export { InlineComposer } from './InlineComposer';
