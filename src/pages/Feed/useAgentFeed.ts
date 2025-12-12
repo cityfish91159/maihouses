@@ -9,6 +9,7 @@ import { MOCK_UAG_SUMMARY, MOCK_PERFORMANCE_STATS, MOCK_TODO_LIST } from '../../
 export function useAgentFeed(userId?: string, forceMock?: boolean) {
     const feed = useFeedData({
         persistMockState: true,
+        role: 'agent',
     });
 
     const { useMock } = feed;

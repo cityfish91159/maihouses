@@ -300,6 +300,19 @@ P4-C1, P4-C2, P4-C3 已修復，但仍有「便宜行事」的痕跡。
 - **M1/M2: 功能補全**：實作 Hot Posts 與 Notification Badge。
 
 ---
+### ✅ P6-FIX：Strict Mock Separation & Role Parity (2025-12-12)
+
+**執行指令**：Strict Anti-Hallucination Workflow
+**核心修復**：
+1.  **資料分流**: `useFeedData.ts` 內部分離 `MOCK_CONSUMER_POSTS` (6則) 與 `MOCK_AGENT_POSTS` (7則)，嚴格對齊 HTML 文字內容，**全數移除圖片 (Zero Image Policy)**。
+2.  **角色感知**: Hook 介面支援 `role` 參數，`Agent.tsx` 與 `Consumer.tsx` 分別傳入對應角色，不再共用混合資料。
+3.  **狀態隔離**: 實作 `feed-mock-v5-agent` 與 `feed-mock-v5-consumer` 雙獨立 Storage Key，避免切換身分時緩存污染。
+4.  **UI 修復**:
+    - `Agent.tsx` 補回 `MockToggle` 開關。
+    - `RoleToggle.tsx` 提升 Z-Index 至 `z-[9999]` 解決無法點擊問題。
+
+---
+
 ### 🔴 P4-AUDIT-ROUND5：防禦系統強化 (2025-12-08)
 
 > **目標**：修補防禦系統被鑽漏洞的缺口，消除誤報並防堵繞過。

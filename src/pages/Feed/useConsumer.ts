@@ -21,7 +21,9 @@ export function useConsumer(userId?: string, forceMock?: boolean) {
         toggleLike,
         createPost,
         isLiked,
-    } = useFeedData();
+    } = useFeedData({
+        role: 'consumer',
+    });
 
     // 判定是否為 Demo 模式 (forceMock or userId starts with demo-)
     const isDemo = forceMock || userId?.startsWith('demo-');

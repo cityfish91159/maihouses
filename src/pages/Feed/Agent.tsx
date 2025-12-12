@@ -8,6 +8,7 @@ import { UagSummaryCard } from '../../components/Feed/UagSummaryCard';
 import { useAgentFeed } from './useAgentFeed';
 import { useAuth } from '../../hooks/useAuth';
 import { STRINGS } from '../../constants/strings';
+import { MockToggle } from '../../components/common/MockToggle';
 
 interface AgentPageProps {
     userId?: string;
@@ -24,7 +25,9 @@ export default function AgentPage({ userId, forceMock }: AgentPageProps) {
         createPost,
         toggleLike,
         isLiked,
-        handleComment
+        handleComment,
+        useMock,
+        setUseMock
     } = useAgentFeed(userId, forceMock);
 
     const { user } = useAuth();
@@ -112,6 +115,9 @@ export default function AgentPage({ userId, forceMock }: AgentPageProps) {
                 />
 
             </div>
+
+            {/* Mock Toggle */}
+            <MockToggle useMock={useMock} onToggle={() => setUseMock(!useMock)} />
         </div>
     );
 }
