@@ -46,6 +46,9 @@ export const STRINGS = {
       FEATURE_WIP: '功能開發中',
       REPLY_WIP: '回覆功能即將上線',
       SHARE_WIP: '分享功能即將上線',
+      // P6-REFACTOR: 留言相關
+      COMMENT_SUCCESS: '留言成功',
+      COMMENT_SUCCESS_DESC: '您的留言已發佈',
     },
     POST: {
       LIKE_BTN: '讚',

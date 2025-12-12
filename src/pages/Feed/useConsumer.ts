@@ -1,16 +1,28 @@
 
+/**
+ * useConsumer
+ *
+ * Consumer 專用 Feed Hook
+ * P6-REFACTOR: Mock 資料已抽離至 mockData/posts/consumer.ts
+ */
+
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useFeedData } from '../../hooks/useFeedData';
 import { useAuth } from '../../hooks/useAuth';
 import { notify } from '../../lib/notify';
 import { STRINGS } from '../../constants/strings';
 import type { UserProfile, ActiveTransaction, SidebarData } from '../../types/feed';
-import { MOCK_FEED_STATS, MOCK_SALE_ITEMS, MOCK_ACTIVE_TRANSACTION } from '../../services/mock/feed';
+import { MOCK_FEED_STATS, MOCK_ACTIVE_TRANSACTION } from '../../services/mock/feed';
+import { getConsumerFeedData } from './mockData';
 
 const S = STRINGS.FEED;
 
 export function useConsumer(userId?: string, forceMock?: boolean) {
     const { user, isAuthenticated: realAuth, role, loading: authLoading } = useAuth();
+
+    // P6-REFACTOR: Use Consumer-specific mock data with deep copy
+    const consumerMockData = useMemo(() => getConsumerFeedData(), []);
+
     const {
         data,
         useMock,
@@ -21,7 +33,9 @@ export function useConsumer(userId?: string, forceMock?: boolean) {
         toggleLike,
         createPost,
         isLiked,
-    } = useFeedData();
+    } = useFeedData({
+        initialMockData: consumerMockData,
+    });
 
     // 判定是否為 Demo 模式 (forceMock or userId starts with demo-)
     const isDemo = forceMock || userId?.startsWith('demo-');
@@ -127,7 +141,7 @@ export function useConsumer(userId?: string, forceMock?: boolean) {
         // P6 Phase 1: Submitting comment (Mock)
         // In Phase 2/3, this will call createComment in useFeedData
         await new Promise(resolve => setTimeout(resolve, 500)); // Simulate latency
-        notify.success('留言成功', '您的留言已發佈');
+        notify.success(S.NOTIFY.COMMENT_SUCCESS, S.NOTIFY.COMMENT_SUCCESS_DESC);
     }, [isAuthenticated]);
 
     const handleShare = useCallback((postId: string | number) => {
