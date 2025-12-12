@@ -44,6 +44,8 @@ export interface FeedPost extends Post {
   communityName?: string | undefined;
   /** 貼文留言列表 */
   commentList?: FeedComment[];
+  /** 貼文圖片 */
+  images?: { src: string; alt: string; width: number; height: number }[];
 }
 
 export interface SidebarData {
@@ -154,6 +156,7 @@ const MOCK_CONSUMER_POSTS: FeedPost[] = [
     communityId: 'test-uuid',
     communityName: '惠宇上晴',
     commentList: [],
+    images: [{ src: 'https://images.unsplash.com/photo-1558317374-067fb5f30001?w=800', alt: '掃地機器人', width: 800, height: 600 }],
   },
   // Parking
   {
@@ -196,6 +199,7 @@ const MOCK_CONSUMER_POSTS: FeedPost[] = [
     communityId: 'test-uuid',
     communityName: '惠宇上晴',
     commentList: [],
+    images: [{ src: 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800', alt: '社區大廳', width: 800, height: 600 }],
   }
 ];
 
@@ -270,6 +274,7 @@ const MOCK_AGENT_POSTS: FeedPost[] = [
     communityId: 'test-uuid',
     communityName: '寶輝秋紅谷',
     commentList: [],
+    images: [{ src: 'https://images.unsplash.com/photo-1552321554-5fefe8c9ef14?w=800', alt: '現代浴室', width: 800, height: 600 }],
   },
   // Agent Yu
   {
@@ -284,6 +289,7 @@ const MOCK_AGENT_POSTS: FeedPost[] = [
     communityId: 'test-uuid',
     communityName: '惠宇上晴',
     commentList: [],
+    images: [{ src: 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800', alt: '窗景採光', width: 800, height: 600 }],
   },
   // Agent Lin
   {
@@ -298,6 +304,7 @@ const MOCK_AGENT_POSTS: FeedPost[] = [
     communityId: 'test-uuid',
     communityName: '惠宇青鳥',
     commentList: [],
+    images: [{ src: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800', alt: '建築外觀', width: 800, height: 600 }],
   },
 ];
 

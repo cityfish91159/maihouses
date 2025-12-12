@@ -30,17 +30,23 @@ const reviews = [
 ];
 
 const questions = [
-  { id: 1, question: '請問社區停車位好停嗎？會不會常客滿？', time: mockTimestampMinutesAgo(2 * 24 * 60), answersCount: 2, answers: [
-    { author: '12F 住戶', type: 'resident' as const, content: 'B2 比較容易有位，B1 要碰運氣。' },
-    { author: '游杰倫', type: 'agent' as const, content: '這社區車位配比是 1:1.2，算充裕的。', expert: true },
-  ]},
-  { id: 2, question: '晚上會不會很吵？我看物件時是白天', time: mockTimestampMinutesAgo(5 * 24 * 60), answersCount: 2, answers: [
-    { author: '3F 住戶', type: 'resident' as const, content: '面大馬路那側確實有車聲，但習慣就好。內側安靜很多。' },
-    { author: '10F 住戶', type: 'resident' as const, content: '我住內側，晚上很安靜，睡眠品質不錯。' },
-  ]},
-  { id: 3, question: '管理費多少？有包含哪些服務？', time: mockTimestampMinutesAgo(7 * 24 * 60), answersCount: 1, answers: [
-    { author: '管委會', type: 'official' as const, content: '目前每坪 85 元，含 24 小時保全、公設維護、垃圾代收。' },
-  ]},
+  {
+    id: 1, question: '請問社區停車位好停嗎？會不會常客滿？', time: mockTimestampMinutesAgo(2 * 24 * 60), answersCount: 2, answers: [
+      { author: '12F 住戶', type: 'resident' as const, content: 'B2 比較容易有位，B1 要碰運氣。' },
+      { author: '游杰倫', type: 'agent' as const, content: '這社區車位配比是 1:1.2，算充裕的。', expert: true },
+    ]
+  },
+  {
+    id: 2, question: '晚上會不會很吵？我看物件時是白天', time: mockTimestampMinutesAgo(5 * 24 * 60), answersCount: 2, answers: [
+      { author: '3F 住戶', type: 'resident' as const, content: '面大馬路那側確實有車聲，但習慣就好。內側安靜很多。' },
+      { author: '10F 住戶', type: 'resident' as const, content: '我住內側，晚上很安靜，睡眠品質不錯。' },
+    ]
+  },
+  {
+    id: 3, question: '管理費多少？有包含哪些服務？', time: mockTimestampMinutesAgo(7 * 24 * 60), answersCount: 1, answers: [
+      { author: '管委會', type: 'official' as const, content: '目前每坪 85 元，含 24 小時保全、公設維護、垃圾代收。' },
+    ]
+  },
   { id: 4, question: '社區有健身房嗎？設備新不新？', time: mockTimestampMinutesAgo(3 * 24 * 60), answersCount: 0, answers: [] },
 ];
 
