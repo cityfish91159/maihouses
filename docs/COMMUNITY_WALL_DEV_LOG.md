@@ -1732,3 +1732,51 @@ npm run test
 ### 部署
 - commit `feat(feed): optimization round 2 (P5-OPTI-R2)` push 到 main。
 
+
+---
+
+## 2025-12-12 - P6-REFACTOR：Feed Mock Data 分離
+
+### 背景
+
+將 Feed 的 mock 資料從 hooks 內嵌抽離至獨立模組，遵循 UAG/Community 的 mockData 管理模式，實現 Consumer/Agent 資料分離。
+
+### 本次變更
+
+| 項目 | 檔案 | 說明 |
+|------|------|------|
+| **共用常數** | `src/pages/Feed/mockData/shared.ts` | 時間工具、社區常數、作者定義 |
+| **Consumer Mock** | `src/pages/Feed/mockData/posts/consumer.ts` | Consumer 專用 mock posts |
+| **Agent Mock** | `src/pages/Feed/mockData/posts/agent.ts` | Agent 專用 mock posts + UAG data |
+| **Factory 函數** | `src/pages/Feed/mockData/factories.ts` | createMockPost, createMockComment |
+| **主入口** | `src/pages/Feed/mockData/index.ts` | Deep copy getters (structuredClone) |
+| **Hook 重構** | `src/hooks/useFeedData.ts` | 移除內嵌 FEED_MOCK_POSTS (100+ lines)，改用 getConsumerFeedData() |
+| **Agent Hook** | `src/pages/Feed/useAgentFeed.ts` | 改用 getAgentFeedData() 等 getters |
+| **類型擴展** | `src/hooks/useFeedData.ts` | FeedPost 新增 images 支援 |
+| **測試修復** | `src/pages/Feed/__tests__/useConsumer.test.ts` | 修復 handleReply 測試 (P6 改為 no-op) |
+
+### 技術亮點
+
+1. **Deep Copy 防止狀態污染**：使用 `structuredClone()` 確保每次取得 mock data 都是新副本
+2. **exactOptionalPropertyTypes 相容**：條件性添加可選屬性避免 undefined
+3. **Factory Pattern**：提供 factory 函數便於測試
+
+### 驗證結果
+
+| 測試項目 | 狀態 |
+|---------|------|
+| TypeScript Check | ✅ 通過 |
+| ESLint Check | ✅ 0 errors |
+| Production Build | ✅ 12s |
+| Unit Tests | ✅ 75/75 |
+
+### 待辦 (已識別但未完成)
+
+1. FeedPostCard.tsx 缺 images 渲染邏輯
+2. consumer.ts 沒有 images 欄位
+3. useConsumer.ts 沒傳 initialMockData
+
+### 部署
+
+- Branch: `claude/review-p6-project-01DXdcHjukTskRWgcv8WzQgG`
+- Commits: 5 個 (feat, refactor, fix, docs)

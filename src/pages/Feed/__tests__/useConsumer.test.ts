@@ -97,14 +97,18 @@ describe('useConsumer', () => {
         expect(defaultFeedData.createPost).toHaveBeenCalledWith('New Post', expect.any(String));
     });
 
-    it('should notify WIP for share', () => {
+    it('should handle reply as no-op (P6 Phase 1: UI handles toggle)', () => {
         const { result } = renderHook(() => useConsumer());
 
-        // handleReply currently does nothing (no mock call)
         act(() => {
             result.current.handleReply('1');
         });
+        // P6 Phase 1: handleReply is now a no-op, UI handles comment toggle
         expect(mockNotify.info).not.toHaveBeenCalled();
+    });
+
+    it('should notify WIP for share', () => {
+        const { result } = renderHook(() => useConsumer());
 
         act(() => {
             result.current.handleShare('1');

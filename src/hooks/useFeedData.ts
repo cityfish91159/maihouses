@@ -35,6 +35,7 @@ import { getCommunityName, isValidCommunityId } from '../constants';
 import { MOCK_SALE_ITEMS } from '../services/mock/feed';
 import { STRINGS } from '../constants/strings';
 import type { FeedComment } from '../types/comment';
+import { getConsumerFeedData, createMockPost as createMockPostFromFactory } from '../pages/Feed/mockData';
 const S = STRINGS.FEED;
 
 // ============ Feed 專用型別 ============
@@ -44,8 +45,8 @@ export interface FeedPost extends Post {
   communityName?: string | undefined;
   /** 貼文留言列表 */
   commentList?: FeedComment[];
-  /** 貼文圖片 */
-  images?: { src: string; alt: string; width: number; height: number }[];
+  /** 貼文圖片 (P6-REFACTOR: 支援圖片) */
+  images?: { src: string; alt: string }[];
 }
 
 export interface SidebarData {
@@ -88,237 +89,10 @@ const EMPTY_FEED_DATA: UnifiedFeedData = {
   sidebarData: { hotPosts: [], saleItems: [] },
 };
 
-// ============ Mock 資料 Helper ============
-const createMockComments = (postId: number): FeedComment[] => [
-  {
-    id: `c-${postId}-1`,
-    postId,
-    author: '王太太',
-    role: 'resident',
-    content: '真的嗎？我也想參加團購！',
-    time: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
-    likes: 2,
-  },
-  {
-    id: `c-${postId}-2`,
-    postId,
-    author: '李先生',
-    role: 'resident',
-    content: '+1',
-    time: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
-    likes: 0,
-  }
-];
-
-// ============ Strict Parity Mock Data (No Images) ============
-
-// 1. Consumer Mock Data (Matches public/feed-consumer.html text)
-const MOCK_CONSUMER_POSTS: FeedPost[] = [
-  // Official
-  {
-    id: 'c-1001',
-    author: '社區管理委員會',
-    type: 'official',
-    time: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-    title: '年度消防演練通知',
-    content: '12/15（日）上午 10:00 將進行全社區消防演練，届時會有警報聲響，請勿驚慌。',
-    likes: 0,
-    comments: 0,
-    pinned: true,
-    communityId: 'test-uuid',
-    communityName: '惠宇上晴',
-    commentList: [],
-  },
-  // Agent Wang
-  {
-    id: 'c-1002',
-    author: '王仲 · 在地房仲',
-    type: 'agent',
-    time: new Date(Date.now() - 3 * 60 * 1000).toISOString(),
-    title: '惠宇上晴 12F 雙陽台戶',
-    content: '🏡 分享一下最近帶看的心得：惠宇上晴 12F 雙陽台戶，客廳採光真的很棒！上週屋主剛降價 50 萬，有興趣的鄰居可以私訊我。',
-    likes: 0,
-    comments: 0,
-    communityId: 'test-uuid',
-    communityName: '惠宇上晴',
-    commentList: [],
-  },
-  // Group Buy
-  {
-    id: 'c-1003',
-    author: '社區熱帖 · 團購',
-    type: 'resident',
-    time: new Date(Date.now() - 20 * 60 * 1000).toISOString(),
-    title: '有人要團購掃地機嗎？',
-    content: '這款 iRobot 打折，滿 5 台有團購價～',
-    likes: 31,
-    comments: 14,
-    communityId: 'test-uuid',
-    communityName: '惠宇上晴',
-    commentList: [],
-    images: [{ src: 'https://images.unsplash.com/photo-1558317374-067fb5f30001?w=800', alt: '掃地機器人', width: 800, height: 600 }],
-  },
-  // Parking
-  {
-    id: 'c-1004',
-    author: '李先生 · B棟住戶',
-    type: 'resident',
-    time: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
-    title: '停車位交流',
-    content: '我有 B2-128 想與 B1 的位置交換，有意願的鄰居請留言～',
-    likes: 16,
-    comments: 11,
-    communityId: 'test-uuid',
-    communityName: '惠宇上晴',
-    commentList: [],
-  },
-  // AI Insight
-  {
-    id: 'c-1005',
-    author: '邁房子 AI',
-    type: 'official',
-    time: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
-    title: '每週市況快訊',
-    content: '📊 本週「惠宇上晴」社區成交一筆 12F，單價約 38.5 萬/坪，較上月微漲 2%。目前待售 3 戶。',
-    likes: 0,
-    comments: 0,
-    communityId: 'test-uuid',
-    communityName: '惠宇上晴',
-    commentList: [],
-  },
-  // New Resident
-  {
-    id: 'c-1006',
-    author: '游先生 · 剛入住',
-    type: 'resident',
-    time: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-    title: '新住戶心得',
-    content: '住了一個月的心得：管理員很親切、公設維護得很好、停車場動線順暢。唯一缺點是面馬路的那側比較吵，建議加裝氣密窗。',
-    likes: 42,
-    comments: 15,
-    communityId: 'test-uuid',
-    communityName: '惠宇上晴',
-    commentList: [],
-    images: [{ src: 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800', alt: '社區大廳', width: 800, height: 600 }],
-  }
-];
-
-// 2. Agent Mock Data (Matches public/feed-agent.html text)
-const MOCK_AGENT_POSTS: FeedPost[] = [
-  // Group Buy (Shared)
-  {
-    id: 'a-1001',
-    author: '社區熱帖 · 團購',
-    type: 'resident',
-    time: new Date(Date.now() - 20 * 60 * 1000).toISOString(),
-    title: '有人要團購掃地機嗎？',
-    content: '這款 iRobot 打折，滿 5 台有團購價～',
-    likes: 31,
-    comments: 14,
-    communityId: 'test-uuid',
-    communityName: '惠宇上晴',
-    commentList: [],
-  },
-  // Agent Wang
-  {
-    id: 'a-1002',
-    author: '王仲 · 在地房仲',
-    type: 'agent',
-    time: new Date(Date.now() - 3 * 60 * 1000).toISOString(),
-    title: '惠宇上晴 12F｜雙陽台視野戶',
-    content: '客廳光線很好。上週屋主剛降價 50 萬。',
-    likes: 0,
-    comments: 0,
-    communityId: 'test-uuid',
-    communityName: '惠宇上晴',
-    commentList: [],
-  },
-  // Parking (Shared)
-  {
-    id: 'a-1003',
-    author: '社區熱帖 · 停車交流',
-    type: 'resident',
-    time: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
-    title: '停車位交流',
-    content: '我有 B2-128 想與 B1 交換，意者留言～',
-    likes: 16,
-    comments: 11,
-    communityId: 'test-uuid',
-    communityName: '惠宇上晴',
-    commentList: [],
-  },
-  // AI Insight (Agent Version)
-  {
-    id: 'a-1004',
-    author: 'AI 體檢快訊',
-    type: 'official',
-    time: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
-    title: 'AI 體檢快訊',
-    content: '台中「單元二」新案公設比平均 33%，最低 27%（近學區）。建議留意朝向與車位動線。',
-    likes: 0,
-    comments: 0,
-    communityId: 'test-uuid',
-    communityName: '惠宇上晴',
-    commentList: [],
-  },
-  // Agent Chen
-  {
-    id: 'a-1005',
-    author: '陳小姐 · 永慶房屋',
-    type: 'agent',
-    time: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
-    title: '寶輝秋紅谷 15F',
-    content: '雙平車，浴室剛整修完畢，通風比想像中好。',
-    likes: 0,
-    comments: 0,
-    communityId: 'test-uuid',
-    communityName: '寶輝秋紅谷',
-    commentList: [],
-    images: [{ src: 'https://images.unsplash.com/photo-1552321554-5fefe8c9ef14?w=800', alt: '現代浴室', width: 800, height: 600 }],
-  },
-  // Agent Yu
-  {
-    id: 'a-1006',
-    author: '游杰倫 · 社區評價',
-    type: 'agent',
-    time: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-    title: '為什麼 12F 視野戶總是熱門？',
-    content: '分享帶看心得：動線、採光與周遭噪音的實勘筆記。',
-    likes: 23,
-    comments: 0,
-    communityId: 'test-uuid',
-    communityName: '惠宇上晴',
-    commentList: [],
-    images: [{ src: 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800', alt: '窗景採光', width: 800, height: 600 }],
-  },
-  // Agent Lin
-  {
-    id: 'a-1007',
-    author: '林先生 · 社區達人',
-    type: 'agent',
-    time: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-    title: '惠宇青鳥 C棟邊間三房',
-    content: '稀有釋出，學區步行可達。',
-    likes: 0,
-    comments: 0,
-    communityId: 'test-uuid',
-    communityName: '惠宇青鳥',
-    commentList: [],
-    images: [{ src: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800', alt: '建築外觀', width: 800, height: 600 }],
-  },
-];
-
-const FEED_MOCK_DATA_CONSUMER: UnifiedFeedData = {
-  posts: MOCK_CONSUMER_POSTS,
-  totalPosts: MOCK_CONSUMER_POSTS.length,
-  sidebarData: { hotPosts: [], saleItems: MOCK_SALE_ITEMS },
-};
-
-const FEED_MOCK_DATA_AGENT: UnifiedFeedData = {
-  posts: MOCK_AGENT_POSTS,
-  totalPosts: MOCK_AGENT_POSTS.length,
-  sidebarData: { hotPosts: [], saleItems: MOCK_SALE_ITEMS },
-};
+// ============ Default Mock Data (from external mockData module) ============
+// P6-REFACTOR: Mock data moved to src/pages/Feed/mockData/
+// Using getter function to ensure deep copy and prevent state mutation
+const getDefaultMockData = (): UnifiedFeedData => getConsumerFeedData();
 
 type SupabasePostRow = {
   id: string;
@@ -411,10 +185,10 @@ const canUseMockStorage = (): boolean => {
   }
 };
 
-const loadPersistedFeedMockState = (fallback: UnifiedFeedData, key: string = FEED_MOCK_STORAGE_KEY): UnifiedFeedData => {
+const loadPersistedFeedMockState = (fallback: UnifiedFeedData): UnifiedFeedData => {
   if (!canUseMockStorage()) return fallback;
   try {
-    const raw = window.localStorage.getItem(key);
+    const raw = window.localStorage.getItem(FEED_MOCK_STORAGE_KEY);
     if (!raw) return fallback;
     const parsed = JSON.parse(raw) as Partial<UnifiedFeedData>;
     const posts = parsed.posts ?? fallback.posts;
@@ -429,10 +203,10 @@ const loadPersistedFeedMockState = (fallback: UnifiedFeedData, key: string = FEE
   }
 };
 
-const saveFeedMockState = (data: UnifiedFeedData, key: string = FEED_MOCK_STORAGE_KEY): void => {
+const saveFeedMockState = (data: UnifiedFeedData): void => {
   if (!canUseMockStorage()) return;
   try {
-    window.localStorage.setItem(key, JSON.stringify(data));
+    window.localStorage.setItem(FEED_MOCK_STORAGE_KEY, JSON.stringify(data));
   } catch (err) {
     console.error('[useFeedData] Failed to persist mock state', err);
   }
@@ -532,8 +306,6 @@ export interface UseFeedDataOptions {
   initialMockData?: UnifiedFeedData;
   /** 是否持久化 Mock 狀態 */
   persistMockState?: boolean;
-  /** 角色 (決定預設 MOCK 資料集 與 Storage Key) */
-  role?: 'agent' | 'member' | 'consumer';
 }
 
 export interface UseFeedDataReturn {
@@ -577,16 +349,12 @@ export function useFeedData(
   const { user: authUser, role: authRole, isAuthenticated, loading: authLoading } = useAuth();
   const {
     communityId,
-    initialMockData: customInitialData,
+    initialMockData,
     persistMockState = true,
-    role = 'member',
   } = options;
 
-  // Determine Default Mock Data & Storage Key based on Role
-  const effectiveRole = role === 'agent' ? 'agent' : 'consumer';
-  const defaultMockData = effectiveRole === 'agent' ? FEED_MOCK_DATA_AGENT : FEED_MOCK_DATA_CONSUMER;
-  const initialDataToUse = customInitialData ?? defaultMockData;
-  const storageKey = `feed-mock-v5-${effectiveRole}`;
+  // P6-REFACTOR: Use getter to ensure fresh deep copy of mock data
+  const resolvedInitialMockData = initialMockData ?? getDefaultMockData();
 
   // ============ Mock 控制 ============
   const [useMock, setUseMockState] = useState<boolean>(() => mhEnv.isMockEnabled());
@@ -600,7 +368,7 @@ export function useFeedData(
 
   // ============ Mock 狀態 ============
   const [mockData, setMockData] = useState<UnifiedFeedData>(() =>
-    persistMockState ? loadPersistedFeedMockState(initialDataToUse) : initialDataToUse
+    persistMockState ? loadPersistedFeedMockState(resolvedInitialMockData) : resolvedInitialMockData
   );
   const hasRestoredFromStorage = useRef(false);
   const [likedPosts, setLikedPosts] = useState<Set<string | number>>(() => new Set());
@@ -623,14 +391,14 @@ export function useFeedData(
       hasRestoredFromStorage.current = true;
       return;
     }
-    setMockData(loadPersistedFeedMockState(initialDataToUse, storageKey));
-  }, [useMock, persistMockState, initialDataToUse, storageKey]);
+    setMockData(loadPersistedFeedMockState(resolvedInitialMockData));
+  }, [useMock, persistMockState, resolvedInitialMockData]);
 
   // 持久化 Mock 資料
   useEffect(() => {
     if (!persistMockState || !useMock) return;
-    saveFeedMockState(mockData, storageKey);
-  }, [mockData, persistMockState, useMock, storageKey]);
+    saveFeedMockState(mockData);
+  }, [mockData, persistMockState, useMock]);
 
   // ============ API 狀態 ============
   const [apiData, setApiData] = useState<UnifiedFeedData | null>(null);

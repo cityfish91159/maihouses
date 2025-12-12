@@ -1,35 +1,37 @@
+/**
+ * useAgentFeed
+ *
+ * Agent 專用 Feed Hook
+ * P6-REFACTOR: Mock 資料已抽離至 mockData/posts/agent.ts
+ */
+
 import { useCallback, useMemo } from 'react';
 import { useFeedData } from '../../hooks/useFeedData';
-import { STRINGS } from '../../constants/strings';
 import { notify } from '../../lib/notify';
-import type { UagSummary, PerformanceStats, TodoItem } from '../../types/agent';
-
-import { MOCK_UAG_SUMMARY, MOCK_PERFORMANCE_STATS, MOCK_TODO_LIST } from '../../services/mock/agent';
+import {
+    getAgentFeedData,
+    getAgentUagSummary,
+    getAgentPerformanceStats,
+    getAgentTodoList,
+} from './mockData';
 
 export function useAgentFeed(userId?: string, forceMock?: boolean) {
+    // P6-REFACTOR: Use Agent-specific mock data with deep copy
+    const agentMockData = useMemo(() => getAgentFeedData(), []);
+
     const feed = useFeedData({
         persistMockState: true,
-        role: 'agent',
+        initialMockData: agentMockData,
     });
 
-    const { useMock } = feed;
+    // P6-REFACTOR: UAG Data from external mockData (deep copy)
+    const uagSummary = useMemo(() => getAgentUagSummary(), []);
 
-    // Mock/API Data Logic (M1 Audit Fix)
-    // Currently API is not deployed for Agent Stats, so we fall back to Mock if useMock is true OR API fails.
-    // In strict production, this would be: if (useMock) return MOCK else return API_DATA
+    // P6-REFACTOR: Performance Stats from external mockData (deep copy)
+    const performanceStats = useMemo(() => getAgentPerformanceStats(), []);
 
-    const uagSummary = useMemo<UagSummary>(() => {
-        // if (!useMock) { /* TODO: fetchApi(userId) */ }
-        return MOCK_UAG_SUMMARY;
-    }, [useMock]);
-
-    const performanceStats = useMemo<PerformanceStats>(() => {
-        return MOCK_PERFORMANCE_STATS;
-    }, [useMock]);
-
-    const todoList = useMemo<TodoItem[]>(() => {
-        return MOCK_TODO_LIST;
-    }, [useMock]);
+    // P6-REFACTOR: Todo List from external mockData (deep copy)
+    const todoList = useMemo(() => getAgentTodoList(), []);
 
     const handleComment = useCallback(async (postId: string | number, content: string) => {
         await new Promise(resolve => setTimeout(resolve, 500));
