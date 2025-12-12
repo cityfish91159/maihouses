@@ -39,7 +39,11 @@ describe('FeedPostCard', () => {
         render(<FeedPostCard post={mockPost} onLike={handleLike} />);
 
         const likeBtn = screen.getByText(STRINGS.FEED.POST.LIKE_BTN);
-        fireEvent.click(likeBtn);
+
+        // Wrap in act to handle internal state updates
+        await import('@testing-library/react').then(({ act }) => act(() => {
+            fireEvent.click(likeBtn);
+        }));
 
         expect(handleLike).toHaveBeenCalledWith('1');
     });

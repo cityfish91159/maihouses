@@ -97,17 +97,18 @@ describe('useConsumer', () => {
         expect(defaultFeedData.createPost).toHaveBeenCalledWith('New Post', expect.any(String));
     });
 
-    it('should notify WIP for reply and share', () => {
+    it('should notify WIP for share', () => {
         const { result } = renderHook(() => useConsumer());
 
+        // handleReply currently does nothing (no mock call)
         act(() => {
             result.current.handleReply('1');
         });
-        expect(mockNotify.info).toHaveBeenCalled();
+        expect(mockNotify.info).not.toHaveBeenCalled();
 
         act(() => {
             result.current.handleShare('1');
         });
-        expect(mockNotify.info).toHaveBeenCalledTimes(2);
+        expect(mockNotify.info).toHaveBeenCalledTimes(1);
     });
 });

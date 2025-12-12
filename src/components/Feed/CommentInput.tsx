@@ -16,7 +16,7 @@ export const CommentInput: React.FC<CommentInputProps> = ({
     const [content, setContent] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.SyntheticEvent) => {
         e.preventDefault();
         if (!content.trim() || isSubmitting) return;
 
@@ -32,7 +32,7 @@ export const CommentInput: React.FC<CommentInputProps> = ({
     const handleKeyDown = (e: React.KeyboardEvent) => {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
-            handleSubmit(e as any);
+            handleSubmit(e);
         }
     };
 
