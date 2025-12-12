@@ -1,7 +1,32 @@
 # 🏠 社區牆 + 信息流 待辦清單
 
 > 供 AI Agent 與開發者協作使用
-> 最後更新：2025-12-11
+> 最後更新：2025-12-12
+
+---
+
+## 📋 執行摘要 (2025-12-12)
+
+### ✅ 已完成
+| 項目 | 檔案 | 說明 |
+|------|------|------|
+| P6-A1 | `useConsumer.ts` | 傳入 `initialMockData`，與 useAgentFeed 一致 |
+| P6-A2 | `FeedPostCard.tsx` | 新增圖片渲染區塊，支援單圖/多圖佈局 |
+| P6-A3 | `consumer.ts` | 房仲物件貼文 (1002, 1005) 新增房屋照片 |
+| P6-A4 | `strings.ts` | 新增 `COMMENT_SUCCESS` 常數，消除硬編碼 |
+
+### 🔴 待執行
+| 項目 | 說明 |
+|------|------|
+| P6.5 | 草稿自動儲存 (localStorage debounce) |
+| P7 | 私密牆權限 (membership 驗證) |
+| P8 | 部署驗證 (情境矩陣測試) |
+| P9 | 優化防呆 (狀態文案 + ErrorBoundary) |
+
+### 驗證結果
+- TypeScript: ✅ 通過
+- ESLint: ✅ 0 errors
+- Build: ✅ 成功 (12.21s)
 
 ---
 
@@ -323,40 +348,44 @@ P4-C1, P4-C2, P4-C3 已修復，但仍有「便宜行事」的痕跡。
 
 ---
 
-### 🔴 P6-REFACTOR-AUDIT：Google Principal Engineer 嚴格審查 (2025-12-12)
+### ✅ P6-REFACTOR-AUDIT：Google Principal Engineer 嚴格審查 (2025-12-12)
 
 > **審查標準**：Google L7+ (Senior Staff Engineer) - 追查「寫文件不改代碼當作完」的便宜行事行為
+> **狀態更新 (2025-12-12)**：全部 4 項問題已修復完成 ✅
 
-**嚴重發現**：P6 重構建立了完整的 mockData 架構，但存在「只做一半」的嚴重問題：
+**原始問題** (已修復)：
 - FeedPost 類型新增了 `images` 屬性 ✅
-- 但 FeedPostCard.tsx 沒有渲染 images ❌
-- 但 consumer.ts 沒有 images 資料 ❌
+- FeedPostCard.tsx 已新增圖片渲染 ✅
+- consumer.ts 已新增 images 資料 ✅
 - useAgentFeed.ts 正確傳入 initialMockData ✅
-- 但 useConsumer.ts 沒有傳入 initialMockData ❌
+- useConsumer.ts 已傳入 initialMockData ✅
 
-| ID | 嚴重度 | 狀態 | 問題摘要 | 首席架構師指導 (Actionable Guidance) |
-|----|--------|------|----------|--------------------------------------|
-| P6-A1 | 🔴 | ⚠️ 未完成 | **useConsumer.ts 未傳入 initialMockData** | **檔案**：`src/pages/Feed/useConsumer.ts:22-24`<br>**問題**：直接呼叫 `useFeedData()` 未傳參數<br>**正確做法**：參考 `useAgentFeed.ts:18-25`，引入 `getConsumerFeedData`，使用 `useMemo` 包裝，傳入 `useFeedData({ initialMockData })`<br>**影響**：Consumer Feed 沒有使用新的 mockData 結構，無法享受 deep copy 保護 |
-| P6-A2 | 🔴 | ⚠️ 未完成 | **FeedPostCard.tsx 沒有渲染圖片** | **檔案**：`src/components/Feed/FeedPostCard.tsx:126-134`<br>**問題**：Body 區塊只渲染 title/content，完全忽略 `post.images`<br>**正確做法**：在 content 之後加入圖片渲染區塊，使用 grid 佈局，支援 lazy loading<br>**影響**：即使資料有圖片也無法顯示 |
-| P6-A3 | 🟡 | ⚠️ 未完成 | **consumer.ts Posts 沒有 images 屬性** | **檔案**：`src/pages/Feed/mockData/posts/consumer.ts`<br>**問題**：所有 5 個 Consumer posts 都沒有 `images` 屬性<br>**正確做法**：為房仲物件貼文 (id: 1002, 1005) 加入房屋照片<br>**格式**：`images: [{ src: 'url', alt: '描述' }]` |
-| P6-A4 | 🟡 | ⚠️ 未完成 | **硬編碼中文字串** | **檔案**：`useConsumer.ts:130`, `useAgentFeed.ts:38`<br>**問題**：`notify.success('留言成功', '您的留言已發佈')` 未使用 STRINGS 常數<br>**正確做法**：在 `strings.ts` 新增 `COMMENT_SUCCESS` 常數並引用 |
+| ID | 嚴重度 | 狀態 | 問題摘要 | 修復說明 |
+|----|--------|------|----------|----------|
+| P6-A1 | 🔴 | ✅ 已完成 | **useConsumer.ts 未傳入 initialMockData** | 引入 `getConsumerFeedData`，使用 `useMemo` 包裝，傳入 `useFeedData({ initialMockData })` |
+| P6-A2 | 🔴 | ✅ 已完成 | **FeedPostCard.tsx 沒有渲染圖片** | 在 Body 區塊新增圖片渲染，支援單圖全寬、多圖 grid-cols-2 佈局，lazy loading |
+| P6-A3 | 🟡 | ✅ 已完成 | **consumer.ts Posts 沒有 images 屬性** | 為 id: 1002 新增 3 張房屋照片，id: 1005 新增 2 張照片 (Unsplash) |
+| P6-A4 | 🟡 | ✅ 已完成 | **硬編碼中文字串** | 在 `strings.ts` 新增 `COMMENT_SUCCESS`、`COMMENT_SUCCESS_DESC`，useConsumer.ts 和 useAgentFeed.ts 已改用常數 |
 
-### P6-REFACTOR Pending Tasks (3 項待完成)
+### P6-REFACTOR 執行紀錄 (2025-12-12)
 
-| # | 任務 | 檔案 | 修復指引 |
-|---|------|------|----------|
-| 1 | **修復 useConsumer.ts** | `src/pages/Feed/useConsumer.ts` | 1. 引入 `getConsumerFeedData` from `./mockData`<br>2. 使用 `useMemo(() => getConsumerFeedData(), [])` 包裝<br>3. 傳入 `useFeedData({ initialMockData: consumerMockData })`<br>4. 參考 `useAgentFeed.ts:18-25` 的正確實作 |
-| 2 | **修復 FeedPostCard 圖片渲染** | `src/components/Feed/FeedPostCard.tsx` | 1. 在 L134 content 之後加入圖片區塊<br>2. 檢查 `post.images?.length > 0`<br>3. 使用 Tailwind grid 佈局 (單圖全寬、多圖 grid-cols-2)<br>4. 加入 `loading="lazy"` 和 rounded 樣式 |
-| 3 | **新增 Consumer Posts 圖片資料** | `src/pages/Feed/mockData/posts/consumer.ts` | 1. 為 id: 1002 加入 2-3 張房屋照片<br>2. 為 id: 1005 加入 1-2 張房屋照片<br>3. 使用 picsum.photos 或 unsplash 的 placeholder URL<br>4. 確保 alt 文字有意義 (如「客廳照片」、「臥室照片」) |
+**修改檔案**：
+| 檔案 | 變更 |
+|------|------|
+| `src/pages/Feed/useConsumer.ts` | 引入 mockData、傳入 initialMockData、改用 STRINGS 常數 |
+| `src/pages/Feed/useAgentFeed.ts` | 引入 STRINGS、改用常數 |
+| `src/components/Feed/FeedPostCard.tsx` | 新增圖片渲染區塊 (L135-158) |
+| `src/pages/Feed/mockData/posts/consumer.ts` | posts 1002, 1005 新增 images |
+| `src/constants/strings.ts` | 新增 COMMENT_SUCCESS 相關常數 |
 
-**「寫文件不改代碼當作完」問題清單**：
+**「寫文件不改代碼當作完」問題 - 已全數修復**：
 
-| 已完成的文件/定義 | 未完成的實作 |
-|-----------------|-------------|
-| FeedPost 新增 `images` 類型定義 | FeedPostCard 沒有渲染 images |
-| mockData/index.ts 有 Consumer getter | useConsumer.ts 沒有使用 |
-| factories.ts 支援 images 參數 | consumer.ts posts 沒有 images |
-| P6-REFACTOR 註解加在 useAgentFeed | useConsumer 沒有同樣處理 |
+| 原始問題 | 修復狀態 |
+|---------|---------|
+| FeedPostCard 沒有渲染 images | ✅ 已新增渲染邏輯 |
+| useConsumer.ts 沒有使用 mockData | ✅ 已引入並傳入 |
+| consumer.ts posts 沒有 images | ✅ 已新增 5 張圖片 |
+| useConsumer 沒有同樣處理 | ✅ 已與 useAgentFeed 一致 |
 
 ---
 

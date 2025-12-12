@@ -131,6 +131,31 @@ export const FeedPostCard = memo(function FeedPostCard({
         <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-700">
           {post.content}
         </p>
+
+        {/* Images (P6-REFACTOR) */}
+        {post.images && post.images.length > 0 && (
+          <div
+            className={`mt-3 gap-2 ${
+              post.images.length === 1
+                ? 'block'
+                : 'grid grid-cols-2'
+            }`}
+          >
+            {post.images.map((img, idx) => (
+              <img
+                key={`${post.id}-img-${idx}`}
+                src={img.src}
+                alt={img.alt}
+                loading="lazy"
+                className={`rounded-lg object-cover ${
+                  post.images!.length === 1
+                    ? 'max-h-80 w-full'
+                    : 'aspect-square w-full'
+                }`}
+              />
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Actions */}

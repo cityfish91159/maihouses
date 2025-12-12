@@ -75,6 +75,12 @@ export const CONSUMER_MOCK_POSTS: FeedPost[] = [
     communityId: MOCK_COMMUNITIES.HUIYU.id,
     communityName: MOCK_COMMUNITIES.HUIYU.name,
     commentList: [],
+    // P6-REFACTOR: 房仲物件圖片
+    images: [
+      { src: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&h=600&fit=crop', alt: '客廳採光' },
+      { src: 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&h=600&fit=crop', alt: '主臥室' },
+      { src: 'https://images.unsplash.com/photo-1484154218962-a197022b5858?w=800&h=600&fit=crop', alt: '廚房' },
+    ],
   },
   {
     id: 1003,
@@ -127,5 +133,10 @@ export const CONSUMER_MOCK_POSTS: FeedPost[] = [
     communityId: MOCK_COMMUNITIES.HUIYU.id,
     communityName: MOCK_COMMUNITIES.HUIYU.name,
     commentList: [],
+    // P6-REFACTOR: 房仲物件圖片
+    images: [
+      { src: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&h=600&fit=crop', alt: '外觀' },
+      { src: 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800&h=600&fit=crop', alt: '陽台景觀' },
+    ],
   },
 ];

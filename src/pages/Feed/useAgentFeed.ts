@@ -8,12 +8,15 @@
 import { useCallback, useMemo } from 'react';
 import { useFeedData } from '../../hooks/useFeedData';
 import { notify } from '../../lib/notify';
+import { STRINGS } from '../../constants/strings';
 import {
     getAgentFeedData,
     getAgentUagSummary,
     getAgentPerformanceStats,
     getAgentTodoList,
 } from './mockData';
+
+const S = STRINGS.FEED;
 
 export function useAgentFeed(userId?: string, forceMock?: boolean) {
     // P6-REFACTOR: Use Agent-specific mock data with deep copy
@@ -35,7 +38,7 @@ export function useAgentFeed(userId?: string, forceMock?: boolean) {
 
     const handleComment = useCallback(async (postId: string | number, content: string) => {
         await new Promise(resolve => setTimeout(resolve, 500));
-        notify.success('留言成功', '您的留言已發佈');
+        notify.success(S.NOTIFY.COMMENT_SUCCESS, S.NOTIFY.COMMENT_SUCCESS_DESC);
     }, []);
 
     return {
