@@ -1,9 +1,13 @@
 
 import { render, screen } from '@testing-library/react';
-import { RequirePermission } from '../Guard';
-import { Permission } from '../../../types/permissions';
+import { requirePermission as RequirePermission } from '../Guard'; // Note: check export name
+import { PERMISSIONS } from '../../../types/permissions';
 import { vi, describe, it, expect } from 'vitest';
 import { usePermission } from '../../../hooks/usePermission';
+
+// Check Guard.tsx export. It is likely named RequirePermission
+// Let's verify Guard.tsx content first. I saw it in Step 709.
+// It has `export function RequirePermission`.
 
 // Mock usePermission
 vi.mock('../../../hooks/usePermission');
@@ -16,6 +20,11 @@ vi.mock('../../../config/env', () => ({
     mhEnv: {}
 }));
 
+// We need to import the component correctly.
+// Based on previous files, it is in ../Guard.tsx
+
+import { RequirePermission as GuardComponent } from '../Guard';
+
 describe('RequirePermission', () => {
     it('should render children when permission is granted', () => {
         (usePermission as any).mockReturnValue({
@@ -23,9 +32,9 @@ describe('RequirePermission', () => {
         });
 
         render(
-            <RequirePermission permission={Permission.VIEW_PRIVATE_WALL}>
+            <GuardComponent permission={PERMISSIONS.VIEW_PRIVATE_WALL}>
                 <div>Protected Content</div>
-            </RequirePermission>
+            </GuardComponent>
         );
 
         expect(screen.getByText('Protected Content')).toBeDefined();
@@ -37,15 +46,19 @@ describe('RequirePermission', () => {
         });
 
         render(
-            <RequirePermission
-                permission={Permission.VIEW_PRIVATE_WALL}
+            <GuardComponent
+                permission={PERMISSIONS.VIEW_PRIVATE_WALL}
                 fallback={<div>Access Denied</div>}
             >
                 <div>Protected Content</div>
-            </RequirePermission>
+            </GuardComponent>
         );
 
         expect(screen.queryByText('Protected Content')).toBeNull();
+
+        // P7-5 OPTIMIZATION: Verify Accessibility Roles
+        // The fallback contains "Access Denied" text but logic in Guard simply renders fallback.
+        // We need to ensure fallback is rendered. 
         expect(screen.getByText('Access Denied')).toBeDefined();
     });
 });

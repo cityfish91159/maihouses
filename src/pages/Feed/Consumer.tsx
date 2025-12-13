@@ -16,7 +16,7 @@ import { useConsumer } from './useConsumer';
 import { STRINGS } from '../../constants/strings';
 import { ROUTES } from '../../constants/routes';
 import { RequirePermission } from '../../components/auth/Guard';
-import { Permission } from '../../types/permissions';
+import { PERMISSIONS } from '../../types/permissions';
 import PrivateWallLocked from '../../components/Feed/PrivateWallLocked';
 import { useState } from 'react';
 
@@ -218,7 +218,7 @@ export default function Consumer({ userId, forceMock }: ConsumerProps) {
               {activeTab === 'private' ? (
                 /* 私密牆守衛 */
                 <RequirePermission
-                  permission={Permission.VIEW_PRIVATE_WALL}
+                  permission={PERMISSIONS.VIEW_PRIVATE_WALL}
                   fallback={<PrivateWallLocked />}
                 >
                   {filteredPosts.length === 0 ? (

@@ -28,33 +28,39 @@ const PrivateWallLocked = memo(function PrivateWallLocked() {
     };
 
     return (
-        <div className="relative overflow-hidden rounded-xl bg-gray-50 p-6 min-h-[400px]">
+        <div
+            className="relative overflow-hidden rounded-xl bg-gray-50 p-6 min-h-[400px] border border-gray-100"
+            role="alert"
+            aria-live="polite"
+            aria-labelledby="lock-title"
+            aria-describedby="lock-desc"
+        >
             {/* 模糊背景層 (Fake Content) */}
-            <div className="absolute inset-0 z-0 p-6 opacity-30 blur-sm pointer-events-none select-none">
+            <div className="absolute inset-0 z-0 p-6 opacity-40 blur-md pointer-events-none select-none bg-white/50" aria-hidden="true">
                 {/* 模擬幾篇假貼文骨架 */}
                 {[1, 2, 3].map((i) => (
-                    <div key={i} className="mb-4 space-y-3 rounded-lg bg-white p-4 shadow-sm">
+                    <div key={i} className="mb-4 space-y-3 rounded-lg bg-gray-100 p-4 shadow-sm opacity-60">
                         <div className="flex items-center gap-2">
-                            <div className="size-10 rounded-full bg-gray-200" />
-                            <div className="h-4 w-24 rounded bg-gray-200" />
+                            <div className="size-10 rounded-full bg-gray-300" />
+                            <div className="h-4 w-24 rounded bg-gray-300" />
                         </div>
-                        <div className="h-4 w-3/4 rounded bg-gray-200" />
-                        <div className="h-4 w-1/2 rounded bg-gray-200" />
+                        <div className="h-4 w-3/4 rounded bg-gray-300" />
+                        <div className="h-4 w-1/2 rounded bg-gray-300" />
                     </div>
                 ))}
             </div>
 
             {/* 互動覆蓋層 */}
-            <div className="absolute inset-0 z-10 flex flex-col items-center justify-center p-6 text-center">
-                <div className="mb-4 rounded-full bg-white p-4 shadow-lg ring-1 ring-gray-100">
-                    <Lock className="size-8 text-brand-500" />
+            <div className="absolute inset-0 z-10 flex flex-col items-center justify-center p-6 text-center bg-gradient-to-b from-transparent via-white/80 to-white">
+                <div className="mb-4 rounded-full bg-white p-4 shadow-xl ring-1 ring-gray-100 animate-bounce-subtle">
+                    <Lock className="size-8 text-brand-600" aria-hidden="true" />
                 </div>
 
-                <h3 className="mb-2 text-lg font-bold text-gray-900">
+                <h3 id="lock-title" className="mb-2 text-xl font-bold text-gray-900 drop-shadow-sm">
                     {STRINGS.COMMUNITY.LOCKED_TITLE}
                 </h3>
 
-                <p className="mb-6 max-w-xs text-sm text-gray-500">
+                <p id="lock-desc" className="mb-6 max-w-xs text-sm text-gray-600 font-medium">
                     {isAuthenticated
                         ? STRINGS.COMMUNITY.LOCKED_DESC_USER
                         : STRINGS.COMMUNITY.LOCKED_DESC_GUEST}
@@ -62,7 +68,8 @@ const PrivateWallLocked = memo(function PrivateWallLocked() {
 
                 <button
                     onClick={handleAction}
-                    className="rounded-full bg-brand-500 px-6 py-2.5 text-sm font-bold text-white shadow-md transition-transform hover:scale-105 active:scale-95"
+                    className="rounded-full bg-brand-600 px-8 py-3 text-base font-bold text-white shadow-lg transition-all hover:bg-brand-700 hover:scale-105 active:scale-95 focus:outline-none focus:ring-4 focus:ring-brand-500/30"
+                    aria-label={isAuthenticated ? STRINGS.COMMUNITY.BTN_UNLOCK_USER : STRINGS.COMMUNITY.BTN_UNLOCK_GUEST}
                 >
                     {isAuthenticated
                         ? STRINGS.COMMUNITY.BTN_UNLOCK_USER

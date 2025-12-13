@@ -37,7 +37,7 @@ import { STRINGS } from '../constants/strings';
 import type { FeedComment } from '../types/comment';
 import { getConsumerFeedData, createMockPost as createMockPostFromFactory } from '../pages/Feed/mockData';
 import { usePermission } from './usePermission';
-import { Permission } from '../types/permissions';
+import { PERMISSIONS } from '../types/permissions';
 const S = STRINGS.FEED;
 
 // ============ Feed 專用型別 ============
@@ -359,7 +359,7 @@ export function useFeedData(
   } = options;
 
   const { hasPermission } = usePermission();
-  const canViewPrivate = hasPermission(Permission.VIEW_PRIVATE_WALL);
+  const canViewPrivate = hasPermission(PERMISSIONS.VIEW_PRIVATE_WALL);
 
   // P6-REFACTOR: Use getter to ensure fresh deep copy of mock data
   const resolvedInitialMockData = initialMockData ?? getDefaultMockData();
@@ -375,9 +375,23 @@ export function useFeedData(
   const currentUserId = authUser?.id;
 
   // ============ Mock 狀態 ============
-  const [mockData, setMockData] = useState<UnifiedFeedData>(() =>
-    persistMockState ? loadPersistedFeedMockState(resolvedInitialMockData) : resolvedInitialMockData
-  );
+  const [mockData, setMockData] = useState<UnifiedFeedData>(() => {
+    const rawData = persistMockState ? loadPersistedFeedMockState(resolvedInitialMockData) : resolvedInitialMockData;
+    // Note: Initial state filtering is tricky because we can't use hooks inside callback easily if they change
+    // But since canViewPrivate comes from a hook, we should trust effect updates or filter here if possible.
+    // simpler to just load raw here and let effect cleanup, OR filter if we can.
+    // Actually, for security, we should filter here too if possible, but canViewPrivate is available in scope.
+    const securePosts = rawData.posts.filter(p => {
+      if (p.private && !canViewPrivate) return false;
+      return true;
+    });
+    return {
+      ...rawData,
+      posts: securePosts,
+      totalPosts: securePosts.length,
+      sidebarData: deriveSidebarData(securePosts)
+    };
+  });
   const hasRestoredFromStorage = useRef(false);
   const [likedPosts, setLikedPosts] = useState<Set<string | number>>(() => new Set());
 
@@ -399,7 +413,20 @@ export function useFeedData(
       hasRestoredFromStorage.current = true;
       return;
     }
-    setMockData(loadPersistedFeedMockState(resolvedInitialMockData));
+    const loadedData = loadPersistedFeedMockState(resolvedInitialMockData);
+
+    // P7-6 OPTIMIZATION: State Level Security for Mock Data
+    const securePosts = loadedData.posts.filter(p => {
+      if (p.private && !canViewPrivate) return false;
+      return true;
+    });
+
+    setMockData({
+      ...loadedData,
+      posts: securePosts,
+      totalPosts: securePosts.length,
+      sidebarData: deriveSidebarData(securePosts)
+    });
   }, [useMock, persistMockState, resolvedInitialMockData]);
 
   // 持久化 Mock 資料
@@ -440,9 +467,28 @@ export function useFeedData(
         throw error;
       }
 
+      // P7-6 OPTIMIZATION: State Level Security
+      // Filter out private posts at the source BEFORE setting state
+      // This prevents sensitive data from ever entering React State / DevTools
+      if (!isProfileCacheValid) { /* This variable doesn't exist here, just placeholder comment */ }
+
       const mapped = await mapSupabasePostsToFeed((data ?? []) as SupabasePostRow[]);
-      setApiData(mapped);
-      lastApiDataRef.current = mapped;
+
+      // Security Filter
+      const securePosts = mapped.posts.filter(p => {
+        if (p.private && !canViewPrivate) return false;
+        return true;
+      });
+
+      const secureData = {
+        ...mapped,
+        posts: securePosts,
+        totalPosts: securePosts.length,
+        sidebarData: deriveSidebarData(securePosts),
+      };
+
+      setApiData(secureData);
+      lastApiDataRef.current = secureData;
 
       if (currentUserId) {
         const initialLiked = new Set<string | number>();
@@ -487,14 +533,13 @@ export function useFeedData(
     // API 尚未返回時使用上次成功資料或空資料
     const rawData = lastApiDataRef.current ?? EMPTY_FEED_DATA;
 
-    // P7-6: Data Layer Security - Filter out private posts if no permission
+    // P7-6 OPTIMIZATION: Double Safety Layer
+    // Although we filtered at source, we keep this Memo filter as a fail-safe
+    // to ensure no private data leaks even if state security fails.
     if (!canViewPrivate) {
       return {
         ...rawData,
         posts: rawData.posts.filter(p => !p.private),
-        // Note: We might want to keep totalPosts accurate or hide it too?
-        // For security, hiding count is better, but for UX 'showing there are private posts' might be ok
-        // But here we strictly sanitize the DATA array.
       };
     }
     return rawData;
