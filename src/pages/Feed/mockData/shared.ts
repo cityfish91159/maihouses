@@ -5,6 +5,9 @@
  * Following UAG/Community mockData patterns.
  */
 
+import { STRINGS } from '../../../constants/strings';
+import { UserProfile } from '../../../types/feed';
+
 // ============ Time Utilities ============
 
 /**
@@ -26,7 +29,7 @@ export const mockTimestampDaysAgo = (days: number): string =>
 
 export const MOCK_COMMUNITIES = {
   HUIYU: {
-    id: 'test-uuid',
+    id: STRINGS.FEED.DEFAULT_COMMUNITY_ID,
     name: '惠宇上晴',
   },
   FARGLORY: {
@@ -38,6 +41,8 @@ export const MOCK_COMMUNITIES = {
     name: '國泰建設',
   },
 } as const;
+
+
 
 export const MOCK_AUTHORS = {
   // Residents

@@ -133,26 +133,35 @@ export const FeedPostCard = memo(function FeedPostCard({
         </p>
 
         {/* Images (P6-REFACTOR) */}
+        {/* Images (P6-REFACTOR) */}
         {post.images && post.images.length > 0 && (
           <div
-            className={`mt-3 gap-2 ${
-              post.images.length === 1
+            className={`mt-3 ${post.images.length === 1
                 ? 'block'
-                : 'grid grid-cols-2'
-            }`}
+                : 'grid grid-cols-2 gap-2'
+              }`}
           >
             {post.images.map((img, idx) => (
-              <img
-                key={`${post.id}-img-${idx}`}
-                src={img.src}
-                alt={img.alt}
-                loading="lazy"
-                className={`rounded-lg object-cover ${
-                  post.images!.length === 1
-                    ? 'max-h-80 w-full'
-                    : 'aspect-square w-full'
-                }`}
-              />
+              <div key={`${post.id}-img-${idx}`} className="relative overflow-hidden rounded-lg bg-gray-100">
+                <img
+                  src={img.src}
+                  alt={img.alt}
+                  loading="lazy"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                    e.currentTarget.parentElement?.classList.add('flex', 'items-center', 'justify-center', 'min-h-[200px]');
+                    // Insert fallback text/icon
+                    const span = document.createElement('span');
+                    span.textContent = '無法載入圖片';
+                    span.className = 'text-xs text-gray-400 font-medium';
+                    e.currentTarget.parentElement?.appendChild(span);
+                  }}
+                  className={`object-cover transition-opacity duration-300 ${post.images?.length === 1
+                      ? 'max-h-80 w-full'
+                      : 'aspect-square w-full'
+                    }`}
+                />
+              </div>
             ))}
           </div>
         )}
@@ -181,8 +190,8 @@ export const FeedPostCard = memo(function FeedPostCard({
           type="button"
           onClick={handleReplyClick}
           className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-bold transition-all active:scale-95 ${isCommentsOpen
-              ? 'border-indigo-200 bg-indigo-50 text-indigo-600'
-              : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
+            ? 'border-indigo-200 bg-indigo-50 text-indigo-600'
+            : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
             }`}
         >
           <MessageCircle size={14} fill={isCommentsOpen ? 'currentColor' : 'none'} />

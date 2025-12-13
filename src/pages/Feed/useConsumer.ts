@@ -12,6 +12,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { notify } from '../../lib/notify';
 import { STRINGS } from '../../constants/strings';
 import type { UserProfile, ActiveTransaction, SidebarData } from '../../types/feed';
+import type { Role } from '../../types/community';
 import { MOCK_FEED_STATS, MOCK_ACTIVE_TRANSACTION } from '../../services/mock/feed';
 import { getConsumerFeedData } from './mockData';
 
@@ -69,7 +70,7 @@ export function useConsumer(userId?: string, forceMock?: boolean) {
                 name: user.user_metadata?.name || user.email?.split('@')[0] || S.DEFAULT_USER,
                 role: role || 'member',
                 stats: MOCK_FEED_STATS,
-                communityId: 'test-uuid',
+                communityId: S.DEFAULT_COMMUNITY_ID,
                 communityName: S.DEFAULT_COMMUNITY_NAME,
             };
         }
@@ -79,9 +80,9 @@ export function useConsumer(userId?: string, forceMock?: boolean) {
             return {
                 id: 'demo-user',
                 name: S.DEFAULT_USER, // '用戶'
-                role: (userId === 'demo-agent' ? 'agent' : 'member') as any,
+                role: (userId === 'demo-agent' ? 'agent' : 'member') as Role,
                 stats: MOCK_FEED_STATS,
-                communityId: 'test-uuid',
+                communityId: S.DEFAULT_COMMUNITY_ID,
                 communityName: S.DEFAULT_COMMUNITY_NAME,
             };
         }
@@ -114,7 +115,7 @@ export function useConsumer(userId?: string, forceMock?: boolean) {
         try {
             await toggleLike(postId);
         } catch (err) {
-            console.error('Failed to toggle like', err);
+            // console.error('Failed to toggle like', err); // B2: Removed console.error
             notify.error(S.NOTIFY.LIKE_FAILED, S.NOTIFY.LIKE_FAILED_DESC);
         }
     }, [toggleLike, isAuthenticated]);
@@ -127,13 +128,13 @@ export function useConsumer(userId?: string, forceMock?: boolean) {
         try {
             await createPost(content, userProfile?.communityId);
         } catch (err) {
-            console.error('Failed to create post', err);
+            // console.error('Failed to create post', err); // B2: Removed console.error
             throw err;
         }
     }, [createPost, isAuthenticated, userProfile]);
 
     const handleReply = useCallback((postId: string | number) => {
-        // notify.info(S.NOTIFY.FEATURE_WIP, S.NOTIFY.REPLY_WIP);
+        notify.info(S.NOTIFY.FEATURE_WIP, S.NOTIFY.REPLY_WIP);
         // P6 Phase 1: Toggle UI only, logic handled in FeedPostCard via onComment
     }, []);
 

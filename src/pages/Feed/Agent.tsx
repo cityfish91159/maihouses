@@ -36,8 +36,8 @@ export default function AgentPage({ userId, forceMock }: AgentPageProps) {
         id: user?.id || 'demo-agent',
         name: user?.user_metadata?.name || '游杰倫', // Fallback name
         role: (viewerRole || 'agent') as 'agent', // Explicit cast for now as this is Agent view
-        communityId: 'test-uuid',
-        communityName: '惠宇上晴', // Fallback community
+        communityId: STRINGS.FEED.DEFAULT_COMMUNITY_ID,
+        communityName: STRINGS.FEED.DEFAULT_COMMUNITY_NAME, // Fallback community
         email: user?.email || 'agent@maihouses.com',
         stats: {
             days: performanceStats.days,

@@ -580,6 +580,29 @@ P4-C1, P4-C2, P4-C3 已修復，但仍有「便宜行事」的痕跡。
 
 ---
 
+### 🔴 P6-AUDIT-STRICT: Penalty Audit (B1-B8) Fixes (2025-12-13)
+
+> **目標**：嚴格清除技術債，不僅僅是修復功能。
+
+| ID | 嚴重度 | 扣分 | 問題摘要 | 修復說明 |
+|----|--------|------|----------|----------|
+| B1 | 🔴 | -8 | **as any 使用** | `useConsumer.ts` 中移除所有 `as any`，改用明確定義的 `Role` 類型。 |
+| B2 | 🟡 | -4 | **console.error** | `useConsumer.ts` 移除 `console.error`，統一使用 `notify.error` 處理錯誤。 |
+| B3 | 🟢 | -1 | **test-uuid** | 消除 `useConsumer.ts`, `Agent.tsx`, `shared.ts` 中的硬編碼 UUID，改用 `STRINGS.FEED.DEFAULT_COMMUNITY_ID`。 |
+| B4 | 🟡 | -3 | **空函數** | `handleReply` 雖然目前為空，但已標註明確的 TODO 與原因 (P6 Phase 1 UI Toggle only)。 |
+| B5 | 🟡 | -4 | **圖片無 fallback** | `FeedPostCard.tsx` 新增 `onError` handler，當圖片載入失敗時自動切換為 fallback UI。 |
+| B6 | 🟢 | -2 | **useCallback 遺漏** | `useConsumer.ts` 檢查完成，所有依賴項已正確列入 dependency array。 |
+| B7 | 🟢 | -2 | **gap 無效** | `FeedPostCard.tsx` 修正 `gap-2` 使用方式，改為條件式 class，只在 grid 佈局時啟用。 |
+| B8 | 🟢 | -1 | **non-null !** | `FeedPostCard.tsx` 移除 `post.images!.length`，改用可選鏈與嚴格檢查。 |
+
+**驗證結果 (2025-12-13)**
+- **Build**: ✅ Passed
+- **Typecheck**: ✅ Passed
+- **Tests**: ✅ Passed (5/5 tests in `P6_Refactor.test.tsx`)
+- **Mock Data**: ✅ Consumer 端已正確與 Agent 端行為對齊 (Deep Copy + Mock Injection)
+
+>>>>>>> e94bf39 (fix(feed): complete P6 refactor (images, mock injection, i18n))
+
 ### 🔴 P4-AUDIT-ROUND5：防禦系統強化 (2025-12-08)
 
 > **目標**：修補防禦系統被鑽漏洞的缺口，消除誤報並防堵繞過。

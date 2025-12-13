@@ -36,6 +36,7 @@ export const STRINGS = {
     // P5 Optimization Round 2
     DEFAULT_USER: 'Mike',
     DEFAULT_COMMUNITY_NAME: '惠宇上晴',
+    DEFAULT_COMMUNITY_ID: 'test-uuid',
     DEFAULT_COMMUNITY_LABEL: '社區',
     NOTIFY: {
       LOGIN_REQUIRED: '請先登入',
