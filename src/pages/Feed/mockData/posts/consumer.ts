@@ -56,6 +56,12 @@ export const CONSUMER_MOCK_POSTS: FeedPost[] = [
     time: mockTimestampHoursAgo(2),
     title: '有人要團購掃地機嗎？🤖',
     content: '這款 iRobot 打折，滿 5 台有團購價～',
+    images: [
+      {
+        src: 'https://picsum.photos/id/1/800/600',
+        alt: '團購說明圖片',
+      },
+    ],
     likes: 31,
     comments: 2,
     communityId: MOCK_COMMUNITIES.HUIYU.id,
@@ -69,18 +75,27 @@ export const CONSUMER_MOCK_POSTS: FeedPost[] = [
     time: mockTimestampDaysAgo(1),
     title: '🏡 惠宇上晴 12F｜雙陽台視野戶',
     content: '客廳光線很好，上週屋主剛降價 50 萬，有興趣可私訊。',
+    images: [
+      {
+        src: 'https://picsum.photos/id/13/800/600',
+        alt: '寬敞明亮的客廳',
+      },
+      {
+        src: 'https://picsum.photos/id/15/800/600',
+        alt: '陽台視野',
+      },
+      {
+        src: 'https://picsum.photos/id/29/800/600',
+        alt: '乾淨衛浴',
+      },
+    ],
     views: 89,
     likes: 0,
     comments: 0,
     communityId: MOCK_COMMUNITIES.HUIYU.id,
     communityName: MOCK_COMMUNITIES.HUIYU.name,
     commentList: [],
-    // P6-REFACTOR: 房仲物件圖片
-    images: [
-      { src: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&h=600&fit=crop', alt: '客廳採光' },
-      { src: 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&h=600&fit=crop', alt: '主臥室' },
-      { src: 'https://images.unsplash.com/photo-1484154218962-a197022b5858?w=800&h=600&fit=crop', alt: '廚房' },
-    ],
+
   },
   {
     id: 1003,
@@ -127,16 +142,22 @@ export const CONSUMER_MOCK_POSTS: FeedPost[] = [
     time: mockTimestampDaysAgo(8),
     title: '🏡 惠宇上晴 8F｜三房車位',
     content: '屋況極新，前屋主自住保養好',
+    images: [
+      {
+        src: 'https://picsum.photos/id/59/800/600',
+        alt: '溫馨臥室',
+      },
+      {
+        src: 'https://picsum.photos/id/60/800/600',
+        alt: '功能齊全的廚房',
+      },
+    ],
     views: 156,
     likes: 0,
     comments: 0,
     communityId: MOCK_COMMUNITIES.HUIYU.id,
     communityName: MOCK_COMMUNITIES.HUIYU.name,
     commentList: [],
-    // P6-REFACTOR: 房仲物件圖片
-    images: [
-      { src: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&h=600&fit=crop', alt: '外觀' },
-      { src: 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800&h=600&fit=crop', alt: '陽台景觀' },
-    ],
+
   },
 ];

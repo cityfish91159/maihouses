@@ -360,6 +360,7 @@ P4-C1, P4-C2, P4-C3 已修復，但仍有「便宜行事」的痕跡。
 - useAgentFeed.ts 正確傳入 initialMockData ✅
 - useConsumer.ts 已傳入 initialMockData ✅
 
+<<<<<<< HEAD
 | ID | 嚴重度 | 狀態 | 問題摘要 | 修復說明 |
 |----|--------|------|----------|----------|
 | P6-A1 | 🔴 | ✅ 已完成 | **useConsumer.ts 未傳入 initialMockData** | 引入 `getConsumerFeedData`，使用 `useMemo` 包裝，傳入 `useFeedData({ initialMockData })` |
@@ -386,6 +387,29 @@ P4-C1, P4-C2, P4-C3 已修復，但仍有「便宜行事」的痕跡。
 | useConsumer.ts 沒有使用 mockData | ✅ 已引入並傳入 |
 | consumer.ts posts 沒有 images | ✅ 已新增 5 張圖片 |
 | useConsumer 沒有同樣處理 | ✅ 已與 useAgentFeed 一致 |
+=======
+| ID | 嚴重度 | 狀態 | 問題摘要 | 首席架構師指導 (Actionable Guidance) |
+|----|--------|------|----------|--------------------------------------|
+| P6-A1 | 🔴 | ✅ 已修復 | **useConsumer.ts 未傳入 initialMockData** | 已引入 `getConsumerFeedData` 並透過 `useMemo` 注入 `initialMockData`，確保資料獨立副本。 |
+| P6-A2 | 🔴 | ✅ 已修復 | **FeedPostCard.tsx 沒有渲染圖片** | 已實作圖片網格 (Grid Layout)，支援單圖/雙圖/三圖顯示，並加入 hover 效果與 lazy loading。 |
+| P6-A3 | 🟡 | ✅ 已修復 | **consumer.ts Posts 沒有 images 屬性** | 已為貼文 1002 (3張) 與 1005 (2張) 補上 picsum 示意圖。 |
+| P6-A4 | 🟡 | ✅ 已修復 | **硬編碼中文字串** | 已新增 `STRINGS.FEED.POST.COMMENT_SUCCESS` 並全面替換硬編碼。 |
+
+### P6-REFACTOR Pending Tasks (已全部完成)
+
+| # | 任務 | 檔案 | 狀態 |
+|---|------|------|----------|
+| 1 | **修復 useConsumer.ts** | `src/pages/Feed/useConsumer.ts` | ✅ Done |
+| 2 | **修復 FeedPostCard 圖片渲染** | `src/components/Feed/FeedPostCard.tsx` | ✅ Done |
+| 3 | **新增 Consumer Posts 圖片資料** | `src/pages/Feed/mockData/posts/consumer.ts` | ✅ Done |
+
+**驗證結果 (2025-12-13)**
+- **Build**: ✅ Passed (8.16s)
+- **Typecheck**: ✅ Passed (Fixed strict type errors)
+- **Tests**: ✅ Passed (5/5 tests in `P6_Refactor.test.tsx`) - Verified deep copy, file structure, and image injection.
+- **Mock Data**: ✅ Consumer 端已正確與 Agent 端行為對齊 (Deep Copy + Mock Injection)
+
+>>>>>>> e94bf39 (fix(feed): complete P6 refactor (images, mock injection, i18n))
 
 ---
 

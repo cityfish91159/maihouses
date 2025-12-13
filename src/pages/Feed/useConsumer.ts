@@ -15,6 +15,9 @@ import type { UserProfile, ActiveTransaction, SidebarData } from '../../types/fe
 import { MOCK_FEED_STATS, MOCK_ACTIVE_TRANSACTION } from '../../services/mock/feed';
 import { getConsumerFeedData } from './mockData';
 
+
+
+
 const S = STRINGS.FEED;
 
 export function useConsumer(userId?: string, forceMock?: boolean) {
@@ -34,7 +37,8 @@ export function useConsumer(userId?: string, forceMock?: boolean) {
         createPost,
         isLiked,
     } = useFeedData({
-        initialMockData: consumerMockData,
+        // P6-REFACTOR: Inject Consumer-specific mock data with deep copy
+        initialMockData: useMemo(() => getConsumerFeedData(), []),
     });
 
     // 判定是否為 Demo 模式 (forceMock or userId starts with demo-)
@@ -141,7 +145,7 @@ export function useConsumer(userId?: string, forceMock?: boolean) {
         // P6 Phase 1: Submitting comment (Mock)
         // In Phase 2/3, this will call createComment in useFeedData
         await new Promise(resolve => setTimeout(resolve, 500)); // Simulate latency
-        notify.success(S.NOTIFY.COMMENT_SUCCESS, S.NOTIFY.COMMENT_SUCCESS_DESC);
+        notify.success(S.POST.COMMENT_SUCCESS.TITLE, S.POST.COMMENT_SUCCESS.DESC);
     }, [isAuthenticated]);
 
     const handleShare = useCallback((postId: string | number) => {

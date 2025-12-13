@@ -66,6 +66,10 @@ export const STRINGS = {
       BADGE_OFFICIAL: '公告',
       VIEWS: (n: number) => `${n} 次瀏覽`,
       PINNED: '可預約看屋',
+      COMMENT_SUCCESS: {
+        TITLE: '留言成功',
+        DESC: '您的留言已發佈',
+      },
     },
     AI_INSIGHT: {
       TITLE: 'AI 社區洞察',

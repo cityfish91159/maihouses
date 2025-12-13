@@ -16,6 +16,7 @@ import {
     getAgentTodoList,
 } from './mockData';
 
+
 const S = STRINGS.FEED;
 
 export function useAgentFeed(userId?: string, forceMock?: boolean) {
@@ -38,7 +39,7 @@ export function useAgentFeed(userId?: string, forceMock?: boolean) {
 
     const handleComment = useCallback(async (postId: string | number, content: string) => {
         await new Promise(resolve => setTimeout(resolve, 500));
-        notify.success(S.NOTIFY.COMMENT_SUCCESS, S.NOTIFY.COMMENT_SUCCESS_DESC);
+        notify.success(STRINGS.FEED.POST.COMMENT_SUCCESS.TITLE, STRINGS.FEED.POST.COMMENT_SUCCESS.DESC);
     }, []);
 
     return {
