@@ -1780,3 +1780,34 @@ npm run test
 
 - Branch: `claude/review-p6-project-01DXdcHjukTskRWgcv8WzQgG`
 - Commits: 5 個 (feat, refactor, fix, docs)
+
+---
+
+## 2025-12-12 - P6-REFACTOR-AUDIT：完成全部 4 項修復
+
+### 背景
+
+前次 P6-REFACTOR 被審計發現「寫文件不改代碼當作完」的問題，今日完成全部修復。
+
+### 本次變更
+
+| 項目 | 檔案 | 說明 |
+|------|------|------|
+| **P6-A1** | `src/pages/Feed/useConsumer.ts` | 引入 `getConsumerFeedData`，傳入 `initialMockData` |
+| **P6-A2** | `src/components/Feed/FeedPostCard.tsx` | 新增圖片渲染區塊 (L135-158)，grid 佈局 + lazy loading |
+| **P6-A3** | `src/pages/Feed/mockData/posts/consumer.ts` | posts 1002, 1005 新增房屋照片 (Unsplash) |
+| **P6-A4** | `src/constants/strings.ts` | 新增 `COMMENT_SUCCESS`、`COMMENT_SUCCESS_DESC` 常數 |
+| **P6-A4** | `src/pages/Feed/useAgentFeed.ts` | 引入 STRINGS，改用常數 |
+
+### 驗證結果
+
+| 測試項目 | 狀態 |
+|---------|------|
+| TypeScript Check | ✅ 通過 |
+| ESLint Check | ✅ 0 errors |
+| Production Build | ✅ 12.21s |
+
+### 部署
+
+- Branch: `claude/review-p6-project-01DXdcHjukTskRWgcv8WzQgG`
+- Commit: `fix(p6): 完成 P6-REFACTOR-AUDIT 全部 4 項修復`
