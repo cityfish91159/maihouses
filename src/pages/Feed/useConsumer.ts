@@ -37,8 +37,8 @@ export function useConsumer(userId?: string, forceMock?: boolean) {
         createPost,
         isLiked,
     } = useFeedData({
-        // P6-REFACTOR: Inject Consumer-specific mock data with deep copy
-        initialMockData: useMemo(() => getConsumerFeedData(), []),
+        // P6-REFACTOR: Use shared mock data instance to prevent duplication (C6)
+        initialMockData: DEFAULT_MOCK_DATA,
     });
 
     // 判定是否為 Demo 模式 (forceMock or userId starts with demo-)

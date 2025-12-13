@@ -8,6 +8,7 @@
 import React from 'react';
 import { usePermission } from '../../hooks/usePermission';
 import { Permission } from '../../types/permissions';
+import { LoadingState } from '../common/LoadingState';
 
 interface RequirePermissionProps {
     permission: Permission;
@@ -24,7 +25,7 @@ export function RequirePermission({
 
     // P7-Audit-C8: Handle Loading State
     if (isLoading) {
-        return <div className="p-4 text-center text-gray-400">Loading permissions...</div>;
+        return <LoadingState />;
     }
 
     if (!hasPermission(permission)) {

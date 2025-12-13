@@ -64,12 +64,13 @@ export const ROLE_PERMISSIONS: Record<Role, readonly Permission[]> = {
         PERMISSIONS.MANAGE_CLIENTS
     ],
 
-    // 管理員 (暫無此角色，保留未來擴充空間)
-    // P7-Audit-C9: Admin role enabled
+    // 管理員 (已啟用)
     admin: [
         PERMISSIONS.VIEW_PRIVATE_WALL,
         PERMISSIONS.POST_PRIVATE_WALL,
-        PERMISSIONS.VIEW_AGENT_STATS
+        PERMISSIONS.VIEW_AGENT_STATS,
+        PERMISSIONS.MANAGE_COMMUNITY,
+        PERMISSIONS.MANAGE_CLIENTS
     ]
 };
 

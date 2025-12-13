@@ -428,9 +428,7 @@ export function useFeedData(
       totalPosts: securePosts.length,
       sidebarData: deriveSidebarData(securePosts)
     });
-    // P7-Audit-C5: Partial fix for dependency warning
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [useMock, persistMockState, resolvedInitialMockData]);
+  }, [useMock, persistMockState, resolvedInitialMockData, canViewPrivate]);
 
   // 持久化 Mock 資料
   useEffect(() => {
@@ -512,9 +510,7 @@ export function useFeedData(
     } finally {
       setApiLoading(false);
     }
-    // P7-Audit-C5: Partial fix for dependency warning
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [useMock, communityId, currentUserId]);
+  }, [useMock, communityId, currentUserId, canViewPrivate]);
 
   // 初始載入
   useEffect(() => {

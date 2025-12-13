@@ -1,31 +1,23 @@
 
 import { render, screen } from '@testing-library/react';
 
-import { PERMISSIONS } from '../../../types/permissions';
+import { PERMISSIONS, type Permission } from '../../../types/permissions';
 import { vi, describe, it, expect } from 'vitest';
 import { usePermission } from '../../../hooks/usePermission';
 
-// Check Guard.tsx export. It is likely named RequirePermission
-// Let's verify Guard.tsx content first. I saw it in Step 709.
-// It has `export function RequirePermission`.
-
 // Mock usePermission
 vi.mock('../../../hooks/usePermission');
-// Mock Supabase to avoid env check
+// Mock Supabase
 vi.mock('../../../lib/supabase', () => ({
     supabase: {}
 }));
-// Mock Env if needed
+// Mock Env
 vi.mock('../../../config/env', () => ({
     mhEnv: {}
 }));
 
-// We need to import the component correctly.
-// Based on previous files, it is in ../Guard.tsx
-
 import { RequirePermission as GuardComponent } from '../Guard';
 
-// P7-Audit-C2: Strict Mock Type (No 'as any')
 import type { UsePermissionReturn } from '../../../hooks/usePermission';
 
 const createPermissionMock = (hasPerm: boolean): UsePermissionReturn => ({
@@ -35,7 +27,7 @@ const createPermissionMock = (hasPerm: boolean): UsePermissionReturn => ({
     role: hasPerm ? 'resident' : 'guest',
     isAuthenticated: hasPerm,
     isLoading: false,
-    permissions: new Set()
+    permissions: new Set<Permission>()
 });
 
 describe('RequirePermission', () => {

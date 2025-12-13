@@ -36,8 +36,7 @@ const PrivateWallLocked = memo(function PrivateWallLocked() {
             // I'll swap, but it won't help if href. 
             // Let's just keep code clean.
             notify.info(STRINGS.COMMUNITY.NOTIFY_LOGIN_TITLE, STRINGS.COMMUNITY.NOTIFY_LOGIN_DESC);
-            // setTimeout(() => window.location.href = ROUTES.AUTH, 500); // Bad UX
-            window.location.href = ROUTES.AUTH;
+            setTimeout(() => window.location.href = ROUTES.AUTH, 1500);
         } else {
             // 已登入但無權限 (需驗證)
             notify.info(STRINGS.COMMUNITY.NOTIFY_VERIFY_REQUIRED, STRINGS.COMMUNITY.NOTIFY_VERIFY_REQUIRED_DESC);

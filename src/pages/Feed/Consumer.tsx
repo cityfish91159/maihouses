@@ -14,6 +14,8 @@ import { FeedPostCard, ProfileCard, TxBanner, FeedSidebar, InlineComposer } from
 import { FeedErrorBoundary } from '../../components/Feed/FeedErrorBoundary';
 import { MockToggle } from '../../components/common/MockToggle';
 
+import { DEFAULTS } from '../../constants/defaults';
+
 import { useConsumer } from './useConsumer';
 import { STRINGS } from '../../constants/strings';
 import { ROUTES } from '../../constants/routes';
@@ -170,20 +172,20 @@ export default function Consumer({ userId, forceMock }: ConsumerProps) {
     );
   }
 
-  const MOCK_NOTIFICATION_COUNT = 2; // P7-Audit-C7: Magic number extracted
-
   return (
     <div className="min-h-screen bg-gray-50 pb-20 md:pb-0">
       <GlobalHeader
         mode="consumer"
-        notificationCount={MOCK_NOTIFICATION_COUNT}
+        notificationCount={DEFAULTS.NOTIFICATION_COUNT}
         onSearch={handleSearch}
         className="sticky top-0 z-30"
       />
       {/* 交易橫幅 */}
-      {activeTransaction.hasActive && (
-        <TxBanner transaction={activeTransaction} className="mt-2" />
-      )}
+      {
+        activeTransaction.hasActive && (
+          <TxBanner transaction={activeTransaction} className="mt-2" />
+        )
+      }
 
       {/* 主要布局 */}
       <div className="mx-auto flex max-w-[960px] gap-5 p-4 pb-[calc(80px+env(safe-area-inset-bottom,20px))] lg:pb-4">
@@ -286,7 +288,7 @@ export default function Consumer({ userId, forceMock }: ConsumerProps) {
           </aside>
         </FeedErrorBoundary>
       </div>
-    </div>
+    </div >
   );
 }
 
