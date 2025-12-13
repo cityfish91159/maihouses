@@ -7,6 +7,11 @@
 
 ## 📋 執行摘要 (2025-12-12)
 
+### 🎯 代碼審計評分：75/100
+
+> **審計者**：美國國防部首席全端工程師
+> **評分標準**：安全性、類型安全、最佳實踐、可維護性
+
 ### ✅ 已完成
 | 項目 | 檔案 | 說明 |
 |------|------|------|
@@ -15,9 +20,23 @@
 | P6-A3 | `consumer.ts` | 房仲物件貼文 (1002, 1005) 新增房屋照片 |
 | P6-A4 | `strings.ts` | 新增 `COMMENT_SUCCESS` 常數，消除硬編碼 |
 
+### 🔴 審計發現的問題 (必須修復)
+
+| ID | 嚴重度 | 扣分 | 檔案 | 問題 |
+|---|--------|-----|------|------|
+| B1 | 🔴 | -8 | `useConsumer.ts:78` | `as any` 類型斷言 |
+| B2 | 🟡 | -4 | `useConsumer.ts:113,126` | `console.error` 未移除 |
+| B3 | 🟢 | -1 | `useConsumer.ts:68,81` | `'test-uuid'` 建議提取常數 |
+| B4 | 🟡 | -3 | `useConsumer.ts:131-134` | `handleReply` 空函數 |
+| B5 | 🟡 | -4 | `FeedPostCard.tsx` | 圖片無 error handling |
+| B6 | 🟢 | -2 | `FeedPostCard.tsx:75,80` | useCallback 遺漏 |
+| B7 | 🟢 | -2 | `FeedPostCard.tsx:138` | grid gap 在 block 無效 |
+| B8 | 🟢 | -1 | `FeedPostCard.tsx:151` | non-null assertion `!` |
+
 ### 🔴 待執行
 | 項目 | 說明 |
 |------|------|
+| B1-B8 | 修復上述審計問題 |
 | P6.5 | 草稿自動儲存 (localStorage debounce) |
 | P7 | 私密牆權限 (membership 驗證) |
 | P8 | 部署驗證 (情境矩陣測試) |
@@ -27,6 +46,154 @@
 - TypeScript: ✅ 通過
 - ESLint: ✅ 0 errors
 - Build: ✅ 成功 (12.21s)
+
+---
+
+## 🔴 P6-AUDIT-B：美國國防部首席工程師審計 (2025-12-12)
+
+> **審計標準**：DoD 級別代碼安全與品質要求
+> **評分**：75/100 (C 級，需要改進)
+
+### B1: `as any` 類型斷言 (嚴重 -8 分)
+
+**檔案**：`src/pages/Feed/useConsumer.ts:78`
+```typescript
+role: (userId === 'demo-agent' ? 'agent' : 'member') as any,
+```
+
+**問題**：使用 `as any` 是類型系統的逃生艙，完全繞過 TypeScript 保護。
+
+**修復指引**：
+1. 檢查 `UserProfile` 的 `role` 類型定義
+2. 如果 `role` 只接受特定值，創建 union type：`type UserRole = 'agent' | 'member' | 'admin'`
+3. 將 `as any` 改為正確的類型：`role: userId === 'demo-agent' ? 'agent' : 'member'`
+4. 若類型不匹配，修改 `UserProfile` interface 或使用 type guard
+
+---
+
+### B2: `console.error` 未移除 (-4 分)
+
+**檔案**：`src/pages/Feed/useConsumer.ts:113,126`
+```typescript
+console.error('Failed to toggle like', err);
+console.error('Failed to create post', err);
+```
+
+**問題**：生產環境不應有 console 輸出，應使用正式 logger 或 error tracking。
+
+**修復指引**：
+1. 移除 `console.error` 或替換為條件式：`if (mhEnv.isDev) console.error(...)`
+2. 考慮使用 Sentry 或類似服務追蹤錯誤
+3. 若要保留，使用 ESLint `no-console` 規則的 allow 配置
+
+---
+
+### B3: `'test-uuid'` 建議提取常數 (-1 分)
+
+**檔案**：`src/pages/Feed/useConsumer.ts:68,81`
+```typescript
+communityId: 'test-uuid',
+```
+
+**說明**：`test-uuid` 對應實際路由 `/maihouses/community/test-uuid/wall`，是有效值。
+
+**建議** (非必要)：
+1. 可提取為常數 `DEMO_COMMUNITY_ID` 便於維護
+2. 目前不影響功能
+
+---
+
+### B4: `handleReply` 空函數 (-3 分)
+
+**檔案**：`src/pages/Feed/useConsumer.ts:131-134`
+```typescript
+const handleReply = useCallback((postId: string | number) => {
+    // P6 Phase 1: Toggle UI only...
+}, []);
+```
+
+**問題**：空函數沒有任何作用，只是佔位。
+
+**修復指引**：
+1. 如果不需要這個函數，從 return 中移除
+2. 如果是 Phase 1 暫時不實作，加入 `notify.dev('Reply feature coming in Phase 2')`
+3. 或者移除整個 handleReply，讓 FeedPostCard 的 onReply 為 undefined
+
+---
+
+### B5: 圖片無 error handling (-4 分)
+
+**檔案**：`src/components/Feed/FeedPostCard.tsx:144-156`
+
+**問題**：外部圖片載入失敗時沒有 fallback，會顯示破圖。
+
+**修復指引**：
+1. 加入 `onError` handler：
+```tsx
+onError={(e) => {
+  e.currentTarget.src = '/images/placeholder-property.jpg';
+  e.currentTarget.alt = '圖片載入失敗';
+}}
+```
+2. 或使用 state 追蹤載入狀態，失敗時顯示 placeholder 組件
+3. 在 `public/images/` 新增 fallback 圖片
+
+---
+
+### B6: useCallback 遺漏 (-2 分)
+
+**檔案**：`src/components/Feed/FeedPostCard.tsx:75-78,80-84`
+
+**問題**：`handleReplyClick` 和 `handleSubmitComment` 沒有用 `useCallback` 包裝。
+
+**修復指引**：
+```tsx
+const handleReplyClick = useCallback(() => {
+  setIsCommentsOpen(prev => !prev);
+  onReply?.(post.id);
+}, [onReply, post.id]);
+
+const handleSubmitComment = useCallback(async (content: string) => {
+  if (onComment) {
+    await onComment(post.id, content);
+  }
+}, [onComment, post.id]);
+```
+
+---
+
+### B7: grid gap 在 block 無效 (-2 分)
+
+**檔案**：`src/components/Feed/FeedPostCard.tsx:138`
+```tsx
+className={`mt-3 gap-2 ${post.images.length === 1 ? 'block' : 'grid grid-cols-2'}`}
+```
+
+**問題**：`gap-2` 只在 `grid` 或 `flex` 容器有效，`block` 時無效。
+
+**修復指引**：
+```tsx
+className={`mt-3 ${post.images.length === 1 ? '' : 'grid grid-cols-2 gap-2'}`}
+```
+
+---
+
+### B8: non-null assertion (-1 分)
+
+**檔案**：`src/components/Feed/FeedPostCard.tsx:151`
+```tsx
+post.images!.length === 1
+```
+
+**問題**：雖然外層已檢查，但 `!` 是不好的實踐。
+
+**修復指引**：
+1. 提取變數避免重複檢查：
+```tsx
+const images = post.images ?? [];
+const isSingleImage = images.length === 1;
+```
+2. 或在 map 外層使用 optional chaining
 
 ---
 
