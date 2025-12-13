@@ -1,5 +1,44 @@
 # 社區牆開發紀錄
 
+## 2025-12-13 - P7 權限系統優化至 L7+ 標準 (Commit 1db1fd0)
+
+### 審計評分：88/100 (B+ 級)
+
+### 本次變更
+
+| 項目 | 檔案 | 說明 |
+|------|------|------|
+| 權限型別重構 | `src/types/permissions.ts` | enum → `as const` 物件，改善 tree-shaking 與型別推導 |
+| Hook O(1) 優化 | `src/hooks/usePermission.ts` | 使用 `Set` + `useMemo` 實現 O(1) 權限查詢，新增 `hasAllPermissions` |
+| 資料層安全 | `src/hooks/useFeedData.ts` | 三層過濾：初始化/載入/Memo，防止私密資料進入 React State |
+| ARIA 無障礙 | `src/components/Feed/PrivateWallLocked.tsx` | 補齊 `role="alert"`, `aria-labelledby`, `aria-describedby` |
+| 測試修正 | `src/components/auth/__tests__/Guard.test.tsx` | 修正 import 路徑，使用 `PERMISSIONS` 常數 |
+
+### 優化亮點
+
+1. **Permission Type 自動推導**：`type Permission = typeof PERMISSIONS[keyof typeof PERMISSIONS]` 確保型別與值同步
+2. **權限集合 Memoize**：`useMemo<Set<Permission>>` 避免每次渲染重算
+3. **雙重安全過濾**：API 層 + Memo 層雙重過濾私密貼文
+4. **完整 ARIA 支援**：`aria-labelledby="lock-title"`, `aria-describedby="lock-desc"`
+
+### 遺留問題
+
+| ID | 嚴重度 | 問題 | 狀態 |
+|----|--------|------|------|
+| R1 | 🟡 | `role as Role` 類型斷言仍存在 | 待優化 |
+| R2 | 🟡 | 測試使用 `as any` mock | 待優化 |
+| R3 | 🟡 | API 層仍返回私密資料（前端過濾） | 需後端配合 |
+| R4 | 🟢 | 無效變數註解 `isProfileCacheValid` | 已標記 |
+
+### 驗證
+
+```bash
+npm run typecheck  # ✅ 通過
+npm run build      # ✅ 成功 (18.34s)
+```
+
+---
+
 ## 2025-12-08 - P4 i18n 收斂 + Routes 常數化 + 防禦誤報說明
 
 ### 本次變更

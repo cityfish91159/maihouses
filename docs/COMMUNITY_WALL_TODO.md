@@ -87,12 +87,147 @@
 
 | 項目 | 分數 | 說明 |
 |------|------|------|
-| **P7-1: permissions.ts** | 85/100 | 結構良好，但有類型斷言問題 |
-| **P7-2: usePermission.ts** | 70/100 | 功能不完整，缺少規劃中的功能 |
-| **P7-3: Guard.tsx** | 80/100 | 測試中使用 `as any` |
-| **P7-4: Consumer.tsx** | 90/100 | 整合良好 |
-| **P7-5: PrivateWallLocked.tsx** | 75/100 | 缺少 ARIA 無障礙標籤 |
-| **P7-6: useFeedData.ts** | 65/100 | 僅前端過濾，安全性不足 |
+| **P7-1: permissions.ts** | 92/100 | ✅ 改用 `as const`，型別自動推導 |
+| **P7-2: usePermission.ts** | 90/100 | ✅ O(1) Set 查詢，完整功能 |
+| **P7-3: Guard.tsx** | 85/100 | ⚠️ 測試仍使用 `as any` |
+| **P7-4: Consumer.tsx** | 90/100 | ✅ 整合良好 |
+| **P7-5: PrivateWallLocked.tsx** | 95/100 | ✅ ARIA 完整 |
+| **P7-6: useFeedData.ts** | 80/100 | ⚠️ 三層過濾但有殘留註解 |
+
+---
+
+### 🚨 Google 首席前後端處長代碼審計 - 第三輪 (2025-12-13)
+
+> **審計者**: Google L8 首席前後端處長
+> **審計對象**: Commit `1db1fd0` (feat(p7): optimize permission system to L7+ standards)
+> **綜合評分**: **88/100 (B+ 級，良好但有改進空間)**
+
+---
+
+#### 📊 改善對照表
+
+| 項目 | 第二輪 | 第三輪 | 改善 |
+|------|--------|--------|------|
+| permissions.ts | 85 | 92 | +7 (enum → as const) |
+| usePermission.ts | 70 | 90 | +20 (完整功能) |
+| PrivateWallLocked.tsx | 75 | 95 | +20 (ARIA 完整) |
+| useFeedData.ts | 65 | 80 | +15 (三層過濾) |
+| **總分** | **77** | **88** | **+11** |
+
+---
+
+#### ✅ 已修復的問題
+
+| 原 ID | 問題 | 修復狀態 |
+|-------|------|----------|
+| A3 | 缺少 useMemo 快取 | ✅ `useMemo<Set<Permission>>` 已實作 |
+| A4 | 缺少 hasAllPermissions | ✅ 已新增 |
+| A5 | 缺少 isLoading | ✅ 已新增 `isLoading: authLoading` |
+| A6 | 缺少 permissions 返回值 | ✅ 已暴露 `permissions` Set |
+| A7 | ARIA 標籤缺失 | ✅ 完整 `role="alert"`, `aria-labelledby`, `aria-describedby` |
+| A9 | enum 影響 tree-shaking | ✅ 改用 `as const` |
+
+---
+
+#### 🔴 尚未完全解決的問題
+
+| ID | 嚴重度 | 檔案 | 問題 | 狀態 |
+|----|--------|------|------|------|
+| **B1** | 🟡 | `usePermission.ts:29` | `role as Role` 類型斷言仍存在 | ⚠️ 未修 |
+| **B2** | 🟡 | `Guard.test.tsx:28,43` | `(usePermission as any)` 仍存在 | ⚠️ 未修 |
+| **B3** | 🟢 | `useFeedData.ts:481` | 無效註解 `if (!isProfileCacheValid)` | ⚠️ 垃圾代碼 |
+| **B4** | 🟡 | `useFeedData.ts` | API 層仍返回全部資料，僅前端過濾 | 需後端配合 |
+
+---
+
+#### 🎯 首席處長引導意見 (第三輪)
+
+##### B1: `role as Role` 類型斷言
+
+```
+問題位置: usePermission.ts:29
+  const rolePermissions = ROLE_PERMISSIONS[role as Role] || [];
+
+根本原因: useAuth 返回的 role 類型可能為 string | undefined
+
+引導方案:
+1. 在 useAuth 內部確保返回類型為 Role | null
+2. 或在 usePermission 使用 type guard:
+
+   function isValidRole(r: unknown): r is Role {
+     return typeof r === 'string' && r in ROLE_PERMISSIONS;
+   }
+   
+   const rolePermissions = isValidRole(role) 
+     ? ROLE_PERMISSIONS[role] 
+     : [];
+
+效益: 消除類型斷言，讓 TypeScript 真正保護你
+```
+
+##### B2: 測試中的 `as any`
+
+```
+問題位置: Guard.test.tsx:28, 43
+  (usePermission as any).mockReturnValue({...})
+
+這是「便宜行事」的標誌，繞過型別檢查。
+
+引導方案:
+1. 使用 vi.mocked 並提供正確類型:
+   
+   vi.mocked(usePermission).mockReturnValue({
+     hasPermission: vi.fn().mockReturnValue(true),
+     hasAnyPermission: vi.fn(),
+     hasAllPermissions: vi.fn(),
+     role: 'resident',
+     isAuthenticated: true,
+     isLoading: false,
+     permissions: new Set(['view:private_wall'])
+   });
+
+2. 或定義 mock 工廠:
+   
+   const createMockPermission = (overrides = {}) => ({
+     hasPermission: vi.fn().mockReturnValue(false),
+     ...overrides
+   });
+```
+
+##### B3: 無效註解/垃圾代碼
+
+```
+問題位置: useFeedData.ts:481
+  if (!isProfileCacheValid) { /* This variable doesn't exist here, just placeholder comment */ }
+
+這行代碼毫無作用，只是開發過程的殘留物。
+
+引導:
+直接刪除這行，不要留下「想做但沒做」的痕跡。
+垃圾代碼會誤導後續維護者，是技術債的來源。
+```
+
+##### B4: API 層資料安全 (需後端配合)
+
+```
+問題: 目前 useFeedData 的 API 查詢沒有根據權限過濾
+  const query = supabase.from('community_posts').select(...)
+  
+API 會返回所有貼文（包括私密），只在前端過濾。
+惡意用戶可透過 DevTools Network 看到私密資料。
+
+前端可做的改進:
+1. 無權限時，查詢加上 visibility 條件:
+   
+   if (!canViewPrivate) {
+     query.eq('visibility', 'public');
+   }
+
+2. 或使用 Supabase RLS (Row Level Security)，讓後端根據 JWT 自動過濾
+
+這是 **Security by Design** 的核心原則:
+「敏感資料不應該離開伺服器」
+```
 
 ---
 
@@ -102,77 +237,102 @@
 |----|--------|------|------|
 | **A1** | 🔴 | `usePermission.ts:23,28` | 使用 `role as Role` 類型斷言，繞過類型檢查 |
 | **A2** | 🔴 | `Guard.test.tsx:21,35` | 使用 `(usePermission as any)` 嚴重違規 |
-| **A3** | 🟡 | `usePermission.ts` | 缺少 `useMemo` 快取權限列表 |
-| **A4** | 🟡 | `usePermission.ts` | 缺少 `hasAllPermissions` 函數 (規劃中有提到) |
-| **A5** | 🟡 | `usePermission.ts` | 缺少 `isLoading` 狀態 (規劃中有提到) |
-| **A6** | 🟡 | `usePermission.ts` | 缺少 `permissions` 陣列返回值 |
-| **A7** | 🟡 | `PrivateWallLocked.tsx` | 缺少 ARIA 標籤 (`role="region"`, `aria-labelledby`) |
+| ~~A3~~ | ~~🟡~~ | ~~usePermission.ts~~ | ~~缺少 useMemo 快取~~ ✅ 已修 |
+| ~~A4~~ | ~~🟡~~ | ~~usePermission.ts~~ | ~~缺少 hasAllPermissions~~ ✅ 已修 |
+| ~~A5~~ | ~~🟡~~ | ~~usePermission.ts~~ | ~~缺少 isLoading~~ ✅ 已修 |
+| ~~A6~~ | ~~🟡~~ | ~~usePermission.ts~~ | ~~缺少 permissions 返回值~~ ✅ 已修 |
+| ~~A7~~ | ~~🟡~~ | ~~PrivateWallLocked.tsx~~ | ~~缺少 ARIA 標籤~~ ✅ 已修 |
 | **A8** | 🟡 | `useFeedData.ts` | 資料層安全僅為前端過濾，API 仍可能返回私密資料 |
-| **A9** | 🟢 | `permissions.ts` | 使用 `enum` 而非 `as const`，影響 tree-shaking |
+| ~~A9~~ | ~~🟢~~ | ~~permissions.ts~~ | ~~使用 enum~~ ✅ 改用 as const |
 
 ---
 
 #### 🎯 首席處長引導意見 (必須修復)
 
-##### A1/A2: 消除 `as any` 和類型斷言
+##### B1/B2: 消除所有 `as any` 和 `as Role` 類型斷言
 
 ```
-問題：使用類型斷言是「便宜行事」的標誌。
+這是「寫文件說要做但代碼沒改完」的典型案例。
 
-修復方向 (A1 - usePermission.ts)：
-1. 在 useAuth 返回時就確保 role 類型正確
-2. 或使用 type guard: function isValidRole(r: unknown): r is Role
-3. 若 role 可能為 undefined，應用 ?? 'guest' 處理
+B1 引導 (usePermission.ts:29):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+問題: const rolePermissions = ROLE_PERMISSIONS[role as Role] || [];
+原因: role 類型為 string | undefined，強制斷言繞過檢查
 
-修復方向 (A2 - Guard.test.tsx)：
-1. 使用正確的 mock 類型：vi.mocked(usePermission).mockReturnValue(...)
-2. 或定義 mock 的返回類型：const mockReturn: ReturnType<typeof usePermission> = {...}
+修復: 使用 Type Guard 函數
+  
+  // 在檔案開頭定義
+  const isValidRole = (r: unknown): r is Role => 
+    typeof r === 'string' && Object.keys(ROLE_PERMISSIONS).includes(r);
+  
+  // 使用時
+  const rolePermissions = isValidRole(role) 
+    ? ROLE_PERMISSIONS[role] 
+    : [];
+
+效益: TypeScript 編譯器會正確推導類型，不再需要斷言
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+B2 引導 (Guard.test.tsx):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+問題: (usePermission as any).mockReturnValue({...})
+這會讓 mock 返回值沒有型別檢查，測試可能遺漏必要欄位
+
+修復: 定義完整的 mock 工廠
+
+  // 在測試檔案開頭定義
+  const createPermissionMock = (hasPermission = false) => ({
+    hasPermission: vi.fn().mockReturnValue(hasPermission),
+    hasAnyPermission: vi.fn().mockReturnValue(hasPermission),
+    hasAllPermissions: vi.fn().mockReturnValue(hasPermission),
+    role: hasPermission ? 'resident' : 'guest',
+    isAuthenticated: hasPermission,
+    isLoading: false,
+    permissions: new Set<Permission>()
+  });
+
+  // 使用時
+  vi.mocked(usePermission).mockReturnValue(createPermissionMock(true));
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
-##### A3-A6: usePermission Hook 功能不完整
+##### B3: 刪除垃圾代碼
 
 ```
-規劃中承諾但未實作：
-1. hasAllPermissions - 批量 AND 檢查
-2. isLoading - 權限載入狀態
-3. permissions - 當前用戶的權限列表
-4. useMemo 優化 - 避免每次渲染重新計算
+問題位置: useFeedData.ts:481
+  if (!isProfileCacheValid) { /* This variable doesn't exist here... */ }
 
-引導：
-- 這是「偷懶沒做完」的典型案例
-- Hook 簽名應該是：
-  { hasPermission, hasAnyPermission, hasAllPermissions, permissions, isLoading }
-- 使用 useMemo 包裝 permissions Set，依賴項為 role
+這行代碼是開發過程的殘留物，毫無作用。
+
+引導: 直接刪除整行
+不要留下「想做但沒做」的註解，這會誤導後續維護者。
+垃圾代碼 = 技術債
 ```
 
-##### A7: PrivateWallLocked 無障礙性缺失
+##### B4: API 層資料安全強化
 
 ```
-缺少的 ARIA 標籤：
-1. 外層容器需要 role="region" 或 role="alert"
-2. 標題需要 id，供 aria-labelledby 使用
-3. 按鈕需要 aria-label 說明用途
+問題: 查詢沒有根據權限過濾，私密資料會進入 Network Response
 
-引導：
-<div role="region" aria-labelledby="locked-title">
-  <h3 id="locked-title">...</h3>
-  <button aria-label="解鎖私密牆內容">...</button>
-</div>
-```
+前端即時可做的改進 (useFeedData.ts fetchApiData):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+在 Supabase 查詢加上條件過濾:
 
-##### A8: 資料層安全不足
+  const query = supabase
+    .from('community_posts')
+    .select('...')
+    .order('is_pinned', { ascending: false });
 
-```
-問題：useFeedData 只是在前端過濾私密貼文，但 API 可能已經返回了這些資料。
-惡意用戶可以透過 DevTools 看到被過濾的資料。
+  // 🔐 Security: 無權限時只查詢公開貼文
+  if (!canViewPrivate) {
+    query.eq('visibility', 'public');
+  }
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-理想解法 (需後端配合)：
-1. API 端根據用戶權限過濾資料
-2. 前端的過濾只是第二道防線
-
-前端可改進：
-1. 無權限時不要發送私密貼文的 API 請求
-2. 或在請求參數中加入 visibility=public
+長期方案 (需後端):
+1. 啟用 Supabase RLS (Row Level Security)
+2. 根據 JWT 的 role claim 自動過濾
+3. 前端過濾變成第二道防線而非唯一防線
 ```
 
 ---
