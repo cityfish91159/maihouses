@@ -75,6 +75,66 @@
 
 ---
 
+### 🚨 Google 首席前後端處長代碼審計 - 第四輪 (2025-12-13)
+
+> **審計者**: Google L8 首席前後端處長
+> **審計對象**: P7 完整模組 (9 個檔案, 1671 行代碼)
+> **綜合評分**: **72/100 (C 級，需重大改進)**
+
+---
+
+#### 📊 各項目評分 (第四輪)
+
+| 項目 | 分數 | 關鍵問題 |
+|------|------|---------|
+| **P7-1: permissions.ts** | 90/100 | 缺少 admin 角色定義 |
+| **P7-2: usePermission.ts** | 65/100 | 🔴 `role as Role` 斷言仍存在 (第 29 行) |
+| **P7-3: Guard.tsx** | 80/100 | 缺少 Loading 狀態處理 |
+| **P7-3: Guard.test.tsx** | 50/100 | 🔴 `as any` 嚴重違規 + 死碼 import |
+| **P7-4: Consumer.tsx** | 75/100 | 硬編碼 notificationCount、缺少 Error Boundary |
+| **P7-4: useConsumer.ts** | 70/100 | 🔴 重複 Mock 資料創建 |
+| **P7-5: PrivateWallLocked.tsx** | 92/100 | ✅ 近乎完美 |
+| **P7-5: usePermission.test.ts** | 85/100 | 缺少 Loading 狀態測試 |
+| **P7-6: useFeedData.ts** | 60/100 | 🔴 垃圾代碼 + ESLint 警告 + 依賴混亂 |
+
+---
+
+#### 🔴 第四輪發現：12 項嚴重問題
+
+| ID | 嚴重度 | 檔案 | 行號 | 問題詳述 |
+|----|--------|------|------|---------|
+| **C1** | 🔴 | `usePermission.ts` | 29 | `role as Role` 類型斷言 **仍未修復** (第三輪已指出) |
+| **C2** | 🔴 | `Guard.test.tsx` | 28,43 | `(usePermission as any)` **仍未修復** (第三輪已指出) |
+| **C3** | 🔴 | `Guard.test.tsx` | 4 | 死碼 import: `requirePermission` 不存在 |
+| **C4** | 🔴 | `useFeedData.ts` | 477 | 垃圾代碼 `if (!isProfileCacheValid)` **仍未修復** |
+| **C5** | 🔴 | `useFeedData.ts` | 430,516 | ESLint 警告: `canViewPrivate` 未列入依賴 |
+| **C6** | 🟡 | `useConsumer.ts` | 39,43 | 重複呼叫 `getConsumerFeedData()` 兩次 (記憶體浪費) |
+| **C7** | 🟡 | `Consumer.tsx` | 169 | 硬編碼 `notificationCount={2}` (寫死假資料) |
+| **C8** | 🟡 | `Guard.tsx` | - | 缺少 `isLoading` 處理，權限載入中會閃爍 |
+| **C9** | 🟡 | `permissions.ts` | 62-66 | admin 角色被註解掉，但 Role type 應包含它 |
+| **C10** | 🟡 | `usePermission.test.ts` | - | 缺少 `isLoading=true` 狀態的測試案例 |
+| **C11** | 🟢 | `Consumer.tsx` | - | 缺少 Error Boundary 包裹，錯誤會導致白屏 |
+| **C12** | 🟢 | `PrivateWallLocked.tsx` | 23-24 | notify 順序問題：跳轉後才顯示 toast (用戶看不到) |
+
+---
+
+#### 🔥 首席處長怒罵：「寫文件說要改但代碼沒動」的行為
+
+**以下問題在第三輪審計已明確指出，但代碼完全沒有修改：**
+
+| 問題 | 第三輪狀態 | 第四輪狀態 | 評價 |
+|------|-----------|-----------|------|
+| C1: `role as Role` | ⚠️ B1 已指出 | ❌ **完全沒改** | 🤬 便宜行事 |
+| C2: `as any` mock | ⚠️ B2 已指出 | ❌ **完全沒改** | 🤬 便宜行事 |
+| C4: 垃圾代碼 | ⚠️ B3 已指出 | ❌ **完全沒改** | 🤬 偷懶 |
+
+**這是 Google 不能接受的行為：**
+1. 在 TODO.md 中標記「已修」但實際代碼沒動
+2. 把引導意見寫得很漂亮，但不執行
+3. 用文件工作替代實際編碼工作
+
+---
+
 ### 🚨 Google 首席前後端處長代碼審計 - 第二輪 (2025-12-13)
 
 > **審計者**: Google L8 首席前後端處長
@@ -133,10 +193,10 @@
 
 | ID | 嚴重度 | 檔案 | 問題 | 狀態 |
 |----|--------|------|------|------|
-| **B1** | 🟡 | `usePermission.ts:29` | `role as Role` 類型斷言仍存在 | ✅ 已修 (Type Guard) |
-| **B2** | 🟡 | `Guard.test.tsx:28,43` | `(usePermission as any)` 仍存在 | ✅ 已修 (Mock Factory) |
-| **B3** | 🟢 | `useFeedData.ts:481` | 無效註解 `if (!isProfileCacheValid)` | ✅ 已修 (Removed) |
-| **B4** | 🟡 | `useFeedData.ts` | API 層仍返回全部資料，僅前端過濾 | ✅ 已修 (API Filter Added) |
+| **B1** | 🟡 | `usePermission.ts:29` | `role as Role` 類型斷言仍存在 | ❌ **未修** (見 C1) |
+| **B2** | 🟡 | `Guard.test.tsx:28,43` | `(usePermission as any)` 仍存在 | ❌ **未修** (見 C2) |
+| **B3** | 🟢 | `useFeedData.ts:481` | 無效註解 `if (!isProfileCacheValid)` | ❌ **未修** (見 C4) |
+| **B4** | 🟡 | `useFeedData.ts` | API 層仍返回全部資料，僅前端過濾 | ⚠️ 部分改善 |
 
 ---
 
@@ -393,7 +453,275 @@ B2 引導 (Guard.test.tsx):
 - [x] **零資料外洩**: 使用者無法透過開發工具 (DevTools) 修改 CSS 來看到私密內容（確保內容根本沒有被渲染）。
 - [x] **擴充性**: 未來新增角色（如管委會）時，不需修改介面程式碼，僅需調整設定。
 - [x] **無障礙性**: 鎖定畫面需具備正確的 ARIA 標籤，讓螢幕閱讀器能正確朗讀。
-- [x] **測試覆蓋**: 針對權限 Hook 與守衛組件建立完整的單元測試。
+- [ ] **測試覆蓋**: ⚠️ 部分測試有問題 (Guard.test.tsx 使用 `as any`)
+
+---
+
+## 🔥 第四輪審計：12 項問題的完整修復引導
+
+> **警告**: 以下問題必須在下次提交前全部修復，否則視為 P7 未完成
+
+---
+
+### 🔴 C1: usePermission.ts 類型斷言 (嚴重)
+
+**問題位置**: `src/hooks/usePermission.ts:29`
+```typescript
+// ❌ 目前的便宜行事寫法
+const rolePermissions = ROLE_PERMISSIONS[role as Role] || [];
+```
+
+**修復方案**:
+```typescript
+// ✅ 正確的 Type Guard 寫法
+import { Role } from '../types/community';
+
+// 1. 在檔案頂部定義 Type Guard
+const isValidRole = (r: unknown): r is Role => {
+    return typeof r === 'string' && 
+           ['guest', 'member', 'resident', 'agent'].includes(r);
+};
+
+// 2. 在 useMemo 內使用
+const permissions = useMemo<Set<Permission>>(() => {
+    if (!isAuthenticated || !role) {
+        return new Set();
+    }
+    // TypeScript 會自動推導 role 為 Role 類型
+    const rolePermissions = isValidRole(role) 
+        ? ROLE_PERMISSIONS[role] 
+        : [];
+    return new Set(rolePermissions);
+}, [isAuthenticated, role]);
+```
+
+**為什麼這很重要**:
+- `as Role` 是告訴 TypeScript「閉嘴，我知道我在做什麼」
+- 如果 useAuth 回傳了不在 ROLE_PERMISSIONS 中的角色（例如 "admin"），運行時會出錯
+- Type Guard 讓編譯器真正理解類型，而非被欺騙
+
+---
+
+### 🔴 C2: Guard.test.tsx 的 `as any` (嚴重)
+
+**問題位置**: `src/components/auth/__tests__/Guard.test.tsx:28,43`
+```typescript
+// ❌ 便宜行事：繞過所有型別檢查
+(usePermission as any).mockReturnValue({
+    hasPermission: () => true
+});
+```
+
+**修復方案**:
+```typescript
+import { vi, describe, it, expect, beforeEach, Mock } from 'vitest';
+import { usePermission } from '../../../hooks/usePermission';
+import type { Permission } from '../../../types/permissions';
+
+// ✅ 定義完整的 Mock 工廠
+type PermissionHookReturn = ReturnType<typeof usePermission>;
+
+const createPermissionMock = (hasPermission = false): PermissionHookReturn => ({
+    hasPermission: vi.fn().mockReturnValue(hasPermission),
+    hasAnyPermission: vi.fn().mockReturnValue(hasPermission),
+    hasAllPermissions: vi.fn().mockReturnValue(hasPermission),
+    role: hasPermission ? 'resident' : 'guest',
+    isAuthenticated: hasPermission,
+    isLoading: false,
+    permissions: new Set<Permission>()
+});
+
+// ✅ 正確的 Mock 使用方式
+vi.mock('../../../hooks/usePermission');
+
+describe('RequirePermission', () => {
+    it('should render children when permission is granted', () => {
+        vi.mocked(usePermission).mockReturnValue(createPermissionMock(true));
+        // ...
+    });
+});
+```
+
+---
+
+### 🔴 C3: Guard.test.tsx 死碼 import (嚴重)
+
+**問題位置**: `src/components/auth/__tests__/Guard.test.tsx:4`
+```typescript
+// ❌ 這個 import 根本不存在，會在執行時報錯
+import { requirePermission as RequirePermission } from '../Guard';
+```
+
+**修復**: 刪除第 4 行，保留第 24 行的正確 import
+
+---
+
+### 🔴 C4: useFeedData.ts 垃圾代碼 (嚴重)
+
+**問題位置**: `src/hooks/useFeedData.ts:477`
+```typescript
+// ❌ 這行完全沒有作用，isProfileCacheValid 不存在
+if (!isProfileCacheValid) { /* This variable doesn't exist here, just placeholder comment */ }
+```
+
+**修復**: 直接刪除整行
+
+---
+
+### 🔴 C5: useFeedData.ts ESLint 警告 (嚴重)
+
+**問題位置**: `src/hooks/useFeedData.ts:430,516`
+```
+React Hook useEffect has a missing dependency: 'canViewPrivate'
+React Hook useCallback has a missing dependency: 'canViewPrivate'
+```
+
+**修復方案**:
+```typescript
+// useEffect (約第 430 行)
+useEffect(() => {
+    // ... 使用 canViewPrivate 的邏輯
+}, [useMock, persistMockState, resolvedInitialMockData, canViewPrivate]); // ← 加入依賴
+
+// useCallback (約第 516 行)
+const data = useMemo<UnifiedFeedData>(() => {
+    // ...
+}, [useMock, apiData, mockData, communityId, canViewPrivate]); // ← 已正確
+```
+
+---
+
+### 🟡 C6: useConsumer.ts 重複創建 Mock 資料
+
+**問題位置**: `src/pages/Feed/useConsumer.ts:39,43`
+```typescript
+// ❌ 同樣的函數呼叫了兩次，浪費記憶體
+const consumerMockData = useMemo(() => getConsumerFeedData(), []);
+
+const { /* ... */ } = useFeedData({
+    initialMockData: useMemo(() => getConsumerFeedData(), []),  // 又呼叫一次！
+});
+```
+
+**修復**:
+```typescript
+// ✅ 只呼叫一次
+const consumerMockData = useMemo(() => getConsumerFeedData(), []);
+
+const { /* ... */ } = useFeedData({
+    initialMockData: consumerMockData,  // 重用同一個
+});
+```
+
+---
+
+### 🟡 C7: Consumer.tsx 硬編碼假資料
+
+**問題位置**: `src/pages/Feed/Consumer.tsx:169`
+```typescript
+// ❌ 硬編碼數字，這不是真實資料
+<GlobalHeader mode="consumer" notificationCount={2} />
+```
+
+**修復方案**:
+```typescript
+// ✅ 從 useConsumer 或其他來源取得真實數據
+const { notificationCount } = useNotifications();
+<GlobalHeader mode="consumer" notificationCount={notificationCount} />
+
+// 或暫時移除假資料
+<GlobalHeader mode="consumer" />
+```
+
+---
+
+### 🟡 C8: Guard.tsx 缺少 Loading 狀態處理
+
+**問題**: 當 `usePermission().isLoading === true` 時，Guard 會直接渲染 fallback，導致閃爍
+
+**修復**:
+```typescript
+export function RequirePermission({
+    permission,
+    children,
+    fallback = null,
+    loadingFallback = null  // 新增 loading 專用 fallback
+}: RequirePermissionProps) {
+    const { hasPermission, isLoading } = usePermission();
+
+    // 載入中顯示專用 fallback 或 null
+    if (isLoading) {
+        return <>{loadingFallback}</>;
+    }
+
+    if (!hasPermission(permission)) {
+        return <>{fallback}</>;
+    }
+
+    return <>{children}</>;
+}
+```
+
+---
+
+### 🟡 C9: permissions.ts admin 角色被註解
+
+**問題**: Role type 包含 admin，但 ROLE_PERMISSIONS 沒有定義
+
+**修復**: 啟用註解的 admin 或從 Role type 移除 admin
+
+---
+
+### 🟡 C10: usePermission.test.ts 缺少 isLoading 測試
+
+**缺少的測試案例**:
+```typescript
+it('should return isLoading when auth is loading', () => {
+    mockUseAuth.mockReturnValue({ 
+        role: null, 
+        isAuthenticated: false, 
+        loading: true  // ← 這個狀態沒測試
+    });
+    const { result } = renderHook(() => usePermission());
+    expect(result.current.isLoading).toBe(true);
+});
+```
+
+---
+
+### 🟢 C11: Consumer.tsx 缺少 Error Boundary
+
+**建議**:
+```tsx
+import { ErrorBoundary } from '../components/ErrorBoundary';
+
+export default function Consumer(props) {
+    return (
+        <ErrorBoundary fallback={<ErrorState message="頁面發生錯誤" />}>
+            <ConsumerInner {...props} />
+        </ErrorBoundary>
+    );
+}
+```
+
+---
+
+### 🟢 C12: PrivateWallLocked.tsx notify 順序問題
+
+**問題**: 先跳轉後顯示 toast，用戶看不到提示
+
+**修復**:
+```typescript
+const handleAction = () => {
+    if (!isAuthenticated) {
+        // ✅ 先顯示 toast，再跳轉
+        notify.info(STRINGS.COMMUNITY.NOTIFY_LOGIN_TITLE, STRINGS.COMMUNITY.NOTIFY_LOGIN_DESC);
+        setTimeout(() => {
+            window.location.href = ROUTES.AUTH;
+        }, 1500);
+    }
+};
+```
 
 ---
 
