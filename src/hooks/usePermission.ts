@@ -26,7 +26,13 @@ export function usePermission() {
         if (!isAuthenticated || !role) {
             return new Set();
         }
-        const rolePermissions = ROLE_PERMISSIONS[role as Role] || [];
+
+        // P7-Audit-B1: Type Guard to avoid unsafe assertion
+        const isValidRole = (r: unknown): r is Role => {
+            return typeof r === 'string' && r in ROLE_PERMISSIONS;
+        };
+
+        const rolePermissions = isValidRole(role) ? ROLE_PERMISSIONS[role] : [];
         return new Set(rolePermissions);
     }, [isAuthenticated, role]);
 

@@ -1,6 +1,6 @@
 
 import { render, screen } from '@testing-library/react';
-import { requirePermission as RequirePermission } from '../Guard'; // Note: check export name
+// import { requirePermission as RequirePermission } from '../Guard'; // Removed invalid import
 import { PERMISSIONS } from '../../../types/permissions';
 import { vi, describe, it, expect } from 'vitest';
 import { usePermission } from '../../../hooks/usePermission';
@@ -25,11 +25,21 @@ vi.mock('../../../config/env', () => ({
 
 import { RequirePermission as GuardComponent } from '../Guard';
 
+// P7-Audit-B2: Mock Factory
+const createPermissionMock = (hasPerm: boolean) => ({
+    hasPermission: vi.fn().mockReturnValue(hasPerm),
+    hasAnyPermission: vi.fn().mockReturnValue(hasPerm),
+    hasAllPermissions: vi.fn().mockReturnValue(hasPerm),
+    role: hasPerm ? 'resident' : 'guest',
+    isAuthenticated: hasPerm,
+    isLoading: false,
+    permissions: new Set<any>()
+});
+
 describe('RequirePermission', () => {
     it('should render children when permission is granted', () => {
-        (usePermission as any).mockReturnValue({
-            hasPermission: () => true
-        });
+        // P7-Audit-B2: Remove 'as any'
+        vi.mocked(usePermission).mockReturnValue(createPermissionMock(true) as any);
 
         render(
             <GuardComponent permission={PERMISSIONS.VIEW_PRIVATE_WALL}>
@@ -41,9 +51,7 @@ describe('RequirePermission', () => {
     });
 
     it('should render fallback when permission is denied', () => {
-        (usePermission as any).mockReturnValue({
-            hasPermission: () => false
-        });
+        vi.mocked(usePermission).mockReturnValue(createPermissionMock(false) as any);
 
         render(
             <GuardComponent

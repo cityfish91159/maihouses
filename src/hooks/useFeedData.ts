@@ -462,6 +462,11 @@ export function useFeedData(
         query.eq('community_id', communityId);
       }
 
+      // P7-Audit-B4: API Level Security (Prevent data leakage over wire)
+      if (!canViewPrivate) {
+        query.eq('visibility', 'public');
+      }
+
       const { data, error } = await query;
       if (error) {
         throw error;
@@ -470,7 +475,6 @@ export function useFeedData(
       // P7-6 OPTIMIZATION: State Level Security
       // Filter out private posts at the source BEFORE setting state
       // This prevents sensitive data from ever entering React State / DevTools
-      if (!isProfileCacheValid) { /* This variable doesn't exist here, just placeholder comment */ }
 
       const mapped = await mapSupabasePostsToFeed((data ?? []) as SupabasePostRow[]);
 
