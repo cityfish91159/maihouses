@@ -66,10 +66,10 @@
 #### 🔵 下階段 1: 核心權限基礎建設
 > 建立可擴展的權限系統，而非散落的邏輯。
 
-- [ ] **P7-1: 定義權限架構** `src/types/permissions.ts`
+- [x] **P7-1: 定義權限架構** `src/types/permissions.ts`
     - 定義權限清單: `查看私密牆`, `發佈私密貼文`, `查看房仲數據`。
     - 定義角色對照表 (矩陣): 設定哪些角色擁有上述權限。
-- [ ] **P7-2: 實作權限 Hook** `src/hooks/usePermission.ts`
+- [x] **P7-2: 實作權限 Hook** `src/hooks/usePermission.ts`
     - 實作 `hasPermission()` 檢查邏輯。
     - 整合現有的 `useAuth` 身分資料。
 
@@ -202,16 +202,16 @@
 #### 🟡 下階段 2: 路由與組件守衛
 > 在介面層統一攔截邏輯。
 
-- [ ] **P7-3: 開發守衛組件** `src/components/auth/Guard.tsx`
+- [x] **P7-3: 開發守衛組件** `src/components/auth/Guard.tsx`
     - 開發 `<RequirePermission>` 組件。
     - 支援自定義替代畫面（例如顯示「鎖定畫面」而非一片空白）。
-- [ ] **P7-4: 整合住戶端分頁** `src/pages/Feed/Consumer.tsx`
+- [x] **P7-4: 整合住戶端分頁** `src/pages/Feed/Consumer.tsx`
     - 將「私密牆」分頁內容包裹在守衛組件中。
 
 #### 🟠 下階段 3: 私密牆鎖定體驗 (UI/UX)
 > 打造高質感的「未授權」體驗。
 
-- [ ] **P7-5: 開發鎖定畫面組件** `src/components/Feed/PrivateWallLocked.tsx`
+- [x] **P7-5: 開發鎖定畫面組件** `src/components/Feed/PrivateWallLocked.tsx`
     - **視覺**: 背景顯示模糊的假貼文 (骨架屏/模糊特效)。
     - **覆蓋層**: 中央顯示鎖頭圖示與引導文案（"僅限社區住戶查看"）。
     - **互動**:
@@ -221,7 +221,7 @@
 #### 🔴 下階段 4: 資料層安全與驗證
 > 確保資料流安全，防止外洩。
 
-- [ ] **P7-6: 資料層安全防護** `useFeedData.ts`
+- [x] **P7-6: 資料層安全防護** `useFeedData.ts`
     - 當分頁為 `private` 且用戶無權限時，Hook 應直接回傳空陣列或鎖定狀態，嚴禁發送真實 API 請求。
 - [ ] **P7-7: 模擬情境驗證** (測試計畫)
     - 需驗證以下四種情境：

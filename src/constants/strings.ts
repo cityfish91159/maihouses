@@ -88,6 +88,10 @@ export const STRINGS = {
       TITLE: '還沒有貼文',
       DESC: '成為第一個發布貼文的人吧！',
     },
+    TABS: {
+      PUBLIC: '公開牆',
+      PRIVATE: '私密牆',
+    },
     ERROR: {
       LOAD_FAILED: '載入失敗',
       RETRY: '重試',

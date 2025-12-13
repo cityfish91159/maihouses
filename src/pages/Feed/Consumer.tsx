@@ -7,6 +7,7 @@
 
 import { Home, Search, Bell, User } from 'lucide-react';
 
+
 import { GlobalHeader } from '../../components/layout/GlobalHeader';
 import { FeedPostCard, ProfileCard, TxBanner, FeedSidebar, InlineComposer } from '../../components/Feed';
 import { MockToggle } from '../../components/common/MockToggle';
@@ -14,6 +15,10 @@ import { MockToggle } from '../../components/common/MockToggle';
 import { useConsumer } from './useConsumer';
 import { STRINGS } from '../../constants/strings';
 import { ROUTES } from '../../constants/routes';
+import { RequirePermission } from '../../components/auth/Guard';
+import { Permission } from '../../types/permissions';
+import PrivateWallLocked from '../../components/Feed/PrivateWallLocked';
+import { useState } from 'react';
 
 const S = STRINGS.FEED;
 
@@ -137,6 +142,13 @@ export default function Consumer({ userId, forceMock }: ConsumerProps) {
     handleShare,
   } = useConsumer(userId, forceMock);
 
+  const [activeTab, setActiveTab] = useState<'public' | 'private'>('public');
+
+  const filteredPosts = data.posts.filter(post => {
+    if (activeTab === 'private') return post.private;
+    return !post.private;
+  });
+
   // Auth 載入中
   if (authLoading) {
     return (
@@ -174,27 +186,80 @@ export default function Consumer({ userId, forceMock }: ConsumerProps) {
             />
           )}
 
+          {/* P7: Wall Tabs */}
+          <div className="flex rounded-lg bg-white p-1 shadow-sm">
+            <button
+              onClick={() => setActiveTab('public')}
+              className={`flex-1 rounded-md py-2 text-sm font-bold transition-all ${activeTab === 'public'
+                ? 'bg-brand-50 text-brand-700 shadow-sm'
+                : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
+                }`}
+            >
+              {S.TABS.PUBLIC}
+            </button>
+            <button
+              onClick={() => setActiveTab('private')}
+              className={`flex-1 rounded-md py-2 text-sm font-bold transition-all ${activeTab === 'private'
+                ? 'bg-brand-50 text-brand-700 shadow-sm'
+                : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
+                }`}
+            >
+              {S.TABS.PRIVATE}
+            </button>
+          </div>
+
           {/* 貼文列表 */}
           {isLoading ? (
             <FeedSkeleton />
           ) : error ? (
             <ErrorState message={error.message} onRetry={refresh} />
-          ) : data.posts.length === 0 ? (
-            <EmptyState />
           ) : (
-            <div className="space-y-3">
-              {data.posts.map((post) => (
-                <FeedPostCard
-                  key={post.id}
-                  post={post}
-                  isLiked={isLiked(post.id)}
-                  onLike={handleLike}
-                  onReply={handleReply}
-                  onComment={handleComment}
-                  onShare={handleShare}
-                />
-              ))}
-            </div>
+            <>
+              {activeTab === 'private' ? (
+                /* 私密牆守衛 */
+                <RequirePermission
+                  permission={Permission.VIEW_PRIVATE_WALL}
+                  fallback={<PrivateWallLocked />}
+                >
+                  {filteredPosts.length === 0 ? (
+                    <EmptyState />
+                  ) : (
+                    <div className="space-y-3">
+                      {filteredPosts.map((post) => (
+                        <FeedPostCard
+                          key={post.id}
+                          post={post}
+                          isLiked={isLiked(post.id)}
+                          onLike={handleLike}
+                          onReply={handleReply}
+                          onComment={handleComment}
+                          onShare={handleShare}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </RequirePermission>
+              ) : (
+                /* 公開牆直接顯示 */
+                filteredPosts.length === 0 ? (
+                  <EmptyState />
+                ) : (
+                  <div className="space-y-3">
+                    {filteredPosts.map((post) => (
+                      <FeedPostCard
+                        key={post.id}
+                        post={post}
+                        isLiked={isLiked(post.id)}
+                        onLike={handleLike}
+                        onReply={handleReply}
+                        onComment={handleComment}
+                        onShare={handleShare}
+                      />
+                    ))}
+                  </div>
+                )
+              )}
+            </>
           )}
         </main>
 

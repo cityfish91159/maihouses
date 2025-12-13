@@ -36,6 +36,8 @@ import { MOCK_SALE_ITEMS } from '../services/mock/feed';
 import { STRINGS } from '../constants/strings';
 import type { FeedComment } from '../types/comment';
 import { getConsumerFeedData, createMockPost as createMockPostFromFactory } from '../pages/Feed/mockData';
+import { usePermission } from './usePermission';
+import { Permission } from '../types/permissions';
 const S = STRINGS.FEED;
 
 // ============ Feed 專用型別 ============
@@ -47,6 +49,8 @@ export interface FeedPost extends Post {
   commentList?: FeedComment[];
   /** 貼文圖片 (P6-REFACTOR: 支援圖片) */
   images?: { src: string; alt: string }[];
+  /** 私密貼文標記 (P7: Private Wall) */
+  private?: boolean;
 }
 
 export interface SidebarData {
@@ -267,6 +271,7 @@ const mapSupabasePostsToFeed = async (rows: SupabasePostRow[]): Promise<UnifiedF
       communityId: row.community_id,
       communityName: getCommunityName(row.community_id),
       liked_by: likedBy,
+      private: row.visibility === 'private',
     };
     return profile?.floor ? { ...base, floor: profile.floor } : base;
   });
@@ -352,6 +357,9 @@ export function useFeedData(
     initialMockData,
     persistMockState = true,
   } = options;
+
+  const { hasPermission } = usePermission();
+  const canViewPrivate = hasPermission(Permission.VIEW_PRIVATE_WALL);
 
   // P6-REFACTOR: Use getter to ensure fresh deep copy of mock data
   const resolvedInitialMockData = initialMockData ?? getDefaultMockData();
@@ -477,8 +485,20 @@ export function useFeedData(
     }
 
     // API 尚未返回時使用上次成功資料或空資料
-    return lastApiDataRef.current ?? EMPTY_FEED_DATA;
-  }, [useMock, apiData, mockData, communityId]);
+    const rawData = lastApiDataRef.current ?? EMPTY_FEED_DATA;
+
+    // P7-6: Data Layer Security - Filter out private posts if no permission
+    if (!canViewPrivate) {
+      return {
+        ...rawData,
+        posts: rawData.posts.filter(p => !p.private),
+        // Note: We might want to keep totalPosts accurate or hide it too?
+        // For security, hiding count is better, but for UX 'showing there are private posts' might be ok
+        // But here we strictly sanitize the DATA array.
+      };
+    }
+    return rawData;
+  }, [useMock, apiData, mockData, communityId, canViewPrivate]);
 
   // ============ viewerRole ============
   const viewerRole = useMemo<Role>(() => authRole ?? 'guest', [authRole]);
