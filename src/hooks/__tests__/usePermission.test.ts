@@ -45,4 +45,13 @@ describe('usePermission', () => {
 
         expect(result.current.hasPermission(PERMISSIONS.VIEW_PRIVATE_WALL)).toBe(false);
     });
+
+    // P7-Audit-C10: Test isLoading state
+    it('should return isLoading true when auth is loading', () => {
+        mockUseAuth.mockReturnValue({ role: undefined, isAuthenticated: false, loading: true });
+        const { result } = renderHook(() => usePermission());
+
+        expect(result.current.isLoading).toBe(true);
+        expect(result.current.hasPermission(PERMISSIONS.VIEW_PRIVATE_WALL)).toBe(false);
+    });
 });

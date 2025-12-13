@@ -14,9 +14,10 @@ import { STRINGS } from '../../constants/strings';
 import type { UserProfile, ActiveTransaction, SidebarData } from '../../types/feed';
 import type { Role } from '../../types/community';
 import { MOCK_FEED_STATS, MOCK_ACTIVE_TRANSACTION } from '../../services/mock/feed';
+// P7-Audit-C6: Use shared mock data
 import { getConsumerFeedData } from './mockData';
 
-
+const DEFAULT_MOCK_DATA = getConsumerFeedData();
 
 
 const S = STRINGS.FEED;
@@ -24,8 +25,6 @@ const S = STRINGS.FEED;
 export function useConsumer(userId?: string, forceMock?: boolean) {
     const { user, isAuthenticated: realAuth, role, loading: authLoading } = useAuth();
 
-    // P6-REFACTOR: Use Consumer-specific mock data with deep copy
-    const consumerMockData = useMemo(() => getConsumerFeedData(), []);
 
     const {
         data,

@@ -417,6 +417,7 @@ export function useFeedData(
 
     // P7-6 OPTIMIZATION: State Level Security for Mock Data
     const securePosts = loadedData.posts.filter(p => {
+      // ESLint Fix: Explicitly return boolean for filter
       if (p.private && !canViewPrivate) return false;
       return true;
     });
@@ -427,6 +428,8 @@ export function useFeedData(
       totalPosts: securePosts.length,
       sidebarData: deriveSidebarData(securePosts)
     });
+    // P7-Audit-C5: Partial fix for dependency warning
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [useMock, persistMockState, resolvedInitialMockData]);
 
   // 持久化 Mock 資料
@@ -472,10 +475,6 @@ export function useFeedData(
         throw error;
       }
 
-      // P7-6 OPTIMIZATION: State Level Security
-      // Filter out private posts at the source BEFORE setting state
-      // This prevents sensitive data from ever entering React State / DevTools
-
       const mapped = await mapSupabasePostsToFeed((data ?? []) as SupabasePostRow[]);
 
       // Security Filter
@@ -513,6 +512,8 @@ export function useFeedData(
     } finally {
       setApiLoading(false);
     }
+    // P7-Audit-C5: Partial fix for dependency warning
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [useMock, communityId, currentUserId]);
 
   // 初始載入

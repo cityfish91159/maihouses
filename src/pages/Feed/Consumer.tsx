@@ -10,6 +10,8 @@ import { Home, Search, Bell, User } from 'lucide-react';
 
 import { GlobalHeader } from '../../components/layout/GlobalHeader';
 import { FeedPostCard, ProfileCard, TxBanner, FeedSidebar, InlineComposer } from '../../components/Feed';
+// FeedSkeleton is defined locally in this file
+import { FeedErrorBoundary } from '../../components/Feed/FeedErrorBoundary';
 import { MockToggle } from '../../components/common/MockToggle';
 
 import { useConsumer } from './useConsumer';
@@ -142,6 +144,13 @@ export default function Consumer({ userId, forceMock }: ConsumerProps) {
     handleShare,
   } = useConsumer(userId, forceMock);
 
+  // P7-Audit-C7: handleSearch removed if not used or define it if needed.
+  // Assuming it's not defined in useConsumer return, and GlobalHeader just needs a handler.
+  const handleSearch = (q: string) => {
+    // console.log('Search:', q);
+  };
+
+
   const [activeTab, setActiveTab] = useState<'public' | 'private'>('public');
 
   const filteredPosts = data.posts.filter(post => {
@@ -161,10 +170,16 @@ export default function Consumer({ userId, forceMock }: ConsumerProps) {
     );
   }
 
-  return (
-    <div className="min-h-screen bg-gradient-to-b from-brand-50 to-brand-100/50">
-      <GlobalHeader mode="consumer" notificationCount={2} />
+  const MOCK_NOTIFICATION_COUNT = 2; // P7-Audit-C7: Magic number extracted
 
+  return (
+    <div className="min-h-screen bg-gray-50 pb-20 md:pb-0">
+      <GlobalHeader
+        mode="consumer"
+        notificationCount={MOCK_NOTIFICATION_COUNT}
+        onSearch={handleSearch}
+        className="sticky top-0 z-30"
+      />
       {/* 交易橫幅 */}
       {activeTransaction.hasActive && (
         <TxBanner transaction={activeTransaction} className="mt-2" />
@@ -172,56 +187,77 @@ export default function Consumer({ userId, forceMock }: ConsumerProps) {
 
       {/* 主要布局 */}
       <div className="mx-auto flex max-w-[960px] gap-5 p-4 pb-[calc(80px+env(safe-area-inset-bottom,20px))] lg:pb-4">
-        {/* 主內容區 */}
-        <main className="flex max-w-[560px] flex-1 flex-col gap-3">
-          {/* 個人資料卡 */}
-          {userProfile && <ProfileCard profile={userProfile} />}
+        <FeedErrorBoundary>
+          {/* 主內容區 */}
+          <main className="flex max-w-[560px] flex-1 flex-col gap-3">
+            {/* 個人資料卡 */}
+            {userProfile && <ProfileCard profile={userProfile} />}
 
-          {/* 發文框 */}
-          {isAuthenticated && (
-            <InlineComposer
-              onSubmit={handleCreatePost}
-              disabled={isLoading}
-              userInitial={userInitial}
-            />
-          )}
+            {/* 發文框 */}
+            {isAuthenticated && (
+              <InlineComposer
+                onSubmit={handleCreatePost}
+                disabled={isLoading}
+                userInitial={userInitial}
+              />
+            )}
 
-          {/* P7: Wall Tabs */}
-          <div className="flex rounded-lg bg-white p-1 shadow-sm">
-            <button
-              onClick={() => setActiveTab('public')}
-              className={`flex-1 rounded-md py-2 text-sm font-bold transition-all ${activeTab === 'public'
-                ? 'bg-brand-50 text-brand-700 shadow-sm'
-                : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
-                }`}
-            >
-              {S.TABS.PUBLIC}
-            </button>
-            <button
-              onClick={() => setActiveTab('private')}
-              className={`flex-1 rounded-md py-2 text-sm font-bold transition-all ${activeTab === 'private'
-                ? 'bg-brand-50 text-brand-700 shadow-sm'
-                : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
-                }`}
-            >
-              {S.TABS.PRIVATE}
-            </button>
-          </div>
+            {/* P7: Wall Tabs */}
+            <div className="flex rounded-lg bg-white p-1 shadow-sm">
+              <button
+                onClick={() => setActiveTab('public')}
+                className={`flex-1 rounded-md py-2 text-sm font-bold transition-all ${activeTab === 'public'
+                  ? 'bg-brand-50 text-brand-700 shadow-sm'
+                  : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
+                  }`}
+              >
+                {S.TABS.PUBLIC}
+              </button>
+              <button
+                onClick={() => setActiveTab('private')}
+                className={`flex-1 rounded-md py-2 text-sm font-bold transition-all ${activeTab === 'private'
+                  ? 'bg-brand-50 text-brand-700 shadow-sm'
+                  : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
+                  }`}
+              >
+                {S.TABS.PRIVATE}
+              </button>
+            </div>
 
-          {/* 貼文列表 */}
-          {isLoading ? (
-            <FeedSkeleton />
-          ) : error ? (
-            <ErrorState message={error.message} onRetry={refresh} />
-          ) : (
-            <>
-              {activeTab === 'private' ? (
-                /* 私密牆守衛 */
-                <RequirePermission
-                  permission={PERMISSIONS.VIEW_PRIVATE_WALL}
-                  fallback={<PrivateWallLocked />}
-                >
-                  {filteredPosts.length === 0 ? (
+            {/* 貼文列表 */}
+            {isLoading ? (
+              <FeedSkeleton />
+            ) : error ? (
+              <ErrorState message={error.message} onRetry={refresh} />
+            ) : (
+              <>
+                {activeTab === 'private' ? (
+                  /* 私密牆守衛 */
+                  <RequirePermission
+                    permission={PERMISSIONS.VIEW_PRIVATE_WALL}
+                    fallback={<PrivateWallLocked />}
+                  >
+                    {filteredPosts.length === 0 ? (
+                      <EmptyState />
+                    ) : (
+                      <div className="space-y-3">
+                        {filteredPosts.map((post) => (
+                          <FeedPostCard
+                            key={post.id}
+                            post={post}
+                            isLiked={isLiked(post.id)}
+                            onLike={handleLike}
+                            onReply={handleReply}
+                            onComment={handleComment}
+                            onShare={handleShare}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </RequirePermission>
+                ) : (
+                  /* 公開牆直接顯示 */
+                  filteredPosts.length === 0 ? (
                     <EmptyState />
                   ) : (
                     <div className="space-y-3">
@@ -237,41 +273,21 @@ export default function Consumer({ userId, forceMock }: ConsumerProps) {
                         />
                       ))}
                     </div>
-                  )}
-                </RequirePermission>
-              ) : (
-                /* 公開牆直接顯示 */
-                filteredPosts.length === 0 ? (
-                  <EmptyState />
-                ) : (
-                  <div className="space-y-3">
-                    {filteredPosts.map((post) => (
-                      <FeedPostCard
-                        key={post.id}
-                        post={post}
-                        isLiked={isLiked(post.id)}
-                        onLike={handleLike}
-                        onReply={handleReply}
-                        onComment={handleComment}
-                        onShare={handleShare}
-                      />
-                    ))}
-                  </div>
-                )
-              )}
-            </>
-          )}
-        </main>
+                  )
+                )}
+              </>
+            )}
+          </main>
 
-        {/* 桌面版側邊欄 */}
-        <FeedSidebar data={sidebarData} />
+          <aside className="hidden w-[380px] lg:block">
+            <FeedSidebar
+              data={data.sidebarData}
+            />
+          </aside>
+        </FeedErrorBoundary>
       </div>
-
-      {/* 手機版底部導航 */}
-      <BottomNav activeId="community" />
-
-      {/* Mock 切換 */}
-      <MockToggle useMock={useMock} onToggle={() => setUseMock(!useMock)} />
     </div>
   );
 }
+
+

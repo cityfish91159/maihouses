@@ -5,7 +5,8 @@
  * 整合 UI 與 API 共用的型別
  */
 
-export type Role = 'guest' | 'member' | 'resident' | 'agent';
+// P7-Audit-C9: Admin role enabled
+export type Role = 'guest' | 'member' | 'resident' | 'agent' | 'official' | 'admin';
 export type WallTab = 'public' | 'private';
 
 export interface Post {

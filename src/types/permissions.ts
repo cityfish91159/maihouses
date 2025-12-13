@@ -53,7 +53,10 @@ export const ROLE_PERMISSIONS: Record<Role, readonly Permission[]> = {
         PERMISSIONS.VIEW_PRIVATE_WALL,
         PERMISSIONS.POST_PRIVATE_WALL
     ],
-
+    official: [ // Added missing official key
+        PERMISSIONS.VIEW_PRIVATE_WALL,
+        PERMISSIONS.POST_PRIVATE_WALL
+    ],
     /** 房仲: 可透視社區狀態以服務客戶，但不可在私密牆發言 */
     agent: [
         PERMISSIONS.VIEW_PRIVATE_WALL,
@@ -62,11 +65,12 @@ export const ROLE_PERMISSIONS: Record<Role, readonly Permission[]> = {
     ],
 
     // 管理員 (暫無此角色，保留未來擴充空間)
-    // admin: [
-    //   PERMISSIONS.VIEW_PRIVATE_WALL,
-    //   PERMISSIONS.POST_PRIVATE_WALL,
-    //   PERMISSIONS.MANAGE_COMMUNITY
-    // ]
+    // P7-Audit-C9: Admin role enabled
+    admin: [
+        PERMISSIONS.VIEW_PRIVATE_WALL,
+        PERMISSIONS.POST_PRIVATE_WALL,
+        PERMISSIONS.VIEW_AGENT_STATS
+    ]
 };
 
 /** 輔助型別：定義擁有權限的函數介面 */

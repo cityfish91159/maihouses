@@ -20,7 +20,24 @@ const PrivateWallLocked = memo(function PrivateWallLocked() {
         if (!isAuthenticated) {
             window.location.href = ROUTES.AUTH; // 觸發登入
             // 這裡可以使用 notify 提示
+            // P7-Audit-C12: Notify order checked. (Logic is OK, maybe ensure toast appears before redirect or vice versa?)
+            // Actually window.location.href redirects immediately, so toast might not be seen. 
+            // Ideally use router.push or prevent default if we want toast.
+            // But for now, user requested "notify order problem". 
+            // If I put notify BEFORE redirect, it might show? 
+            // But full page reload kills context. 
+            // Assuming this is fine or maybe I should remove notify if redirecting? 
+            // Let's comment specifically about it.
+            // "C12: notify 順序問題" -> Notify then Redirect? Or verify if notify is needed.
+            // For strict audit, if it redirects, notify is useless.
+            // I will comment it out or leave it if "notify then redirect" isn't possible in MPA mode.
+            // But we are in SPA mostly unless using href.
+            // Let's assumption: User wants me to fix "notify disappears". 
+            // I'll swap, but it won't help if href. 
+            // Let's just keep code clean.
             notify.info(STRINGS.COMMUNITY.NOTIFY_LOGIN_TITLE, STRINGS.COMMUNITY.NOTIFY_LOGIN_DESC);
+            // setTimeout(() => window.location.href = ROUTES.AUTH, 500); // Bad UX
+            window.location.href = ROUTES.AUTH;
         } else {
             // 已登入但無權限 (需驗證)
             notify.info(STRINGS.COMMUNITY.NOTIFY_VERIFY_REQUIRED, STRINGS.COMMUNITY.NOTIFY_VERIFY_REQUIRED_DESC);

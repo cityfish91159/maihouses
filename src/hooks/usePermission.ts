@@ -15,7 +15,17 @@ import { useAuth } from '../hooks/useAuth';
 import { Permission, ROLE_PERMISSIONS } from '../types/permissions';
 import { Role } from '../types/community';
 
-export function usePermission() {
+// P7-Audit-C2: Export return type for strict mocking
+export interface UsePermissionReturn {
+    hasPermission: (permission: Permission) => boolean;
+    hasAnyPermission: (requiredPermissions: Permission[]) => boolean;
+    hasAllPermissions: (requiredPermissions: Permission[]) => boolean;
+    role: Role | undefined;
+    isAuthenticated: boolean;
+    isLoading: boolean;
+    permissions: Set<Permission>;
+}
+export function usePermission(): UsePermissionReturn {
     const { user, role, isAuthenticated, loading: authLoading } = useAuth();
 
     /**
@@ -27,13 +37,16 @@ export function usePermission() {
             return new Set();
         }
 
-        // P7-Audit-B1: Type Guard to avoid unsafe assertion
-        const isValidRole = (r: unknown): r is Role => {
-            return typeof r === 'string' && r in ROLE_PERMISSIONS;
+        // P7-Audit-C1: Strict Type Guard
+        const isValidRole = (r: string | undefined): r is Role => {
+            return typeof r === 'string' && Object.keys(ROLE_PERMISSIONS).includes(r);
         };
 
-        const rolePermissions = isValidRole(role) ? ROLE_PERMISSIONS[role] : [];
-        return new Set(rolePermissions);
+        if (isValidRole(role)) {
+            return new Set(ROLE_PERMISSIONS[role]);
+        }
+
+        return new Set();
     }, [isAuthenticated, role]);
 
     /**

@@ -20,7 +20,12 @@ export function RequirePermission({
     children,
     fallback = null
 }: RequirePermissionProps) {
-    const { hasPermission } = usePermission();
+    const { hasPermission, isLoading } = usePermission();
+
+    // P7-Audit-C8: Handle Loading State
+    if (isLoading) {
+        return <div className="p-4 text-center text-gray-400">Loading permissions...</div>;
+    }
 
     if (!hasPermission(permission)) {
         return <>{fallback}</>;
