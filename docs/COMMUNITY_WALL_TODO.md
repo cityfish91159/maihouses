@@ -75,129 +75,107 @@
 
 ---
 
-### 🚨 Google 首席前後端處長代碼審計 (2025-12-13)
+### 🚨 Google 首席前後端處長代碼審計 - 第二輪 (2025-12-13)
 
 > **審計者**: Google L8 首席前後端處長
-> **審計標準**: 零容忍「寫文件不改代碼當作完」
-> **審計結果**: 🔴 **嚴重違規 - P7-1/P7-2 完全未施作**
+> **審計對象**: Commit `66535cd` (feat(p7): implement private wall access control system)
+> **綜合評分**: **77/100 (C+ 級，需要改進)**
 
-#### 🔴 致命問題：空頭支票式規劃
+---
 
-| ID | 嚴重度 | 問題 | 證據 |
+#### 📊 各項目評分
+
+| 項目 | 分數 | 說明 |
+|------|------|------|
+| **P7-1: permissions.ts** | 85/100 | 結構良好，但有類型斷言問題 |
+| **P7-2: usePermission.ts** | 70/100 | 功能不完整，缺少規劃中的功能 |
+| **P7-3: Guard.tsx** | 80/100 | 測試中使用 `as any` |
+| **P7-4: Consumer.tsx** | 90/100 | 整合良好 |
+| **P7-5: PrivateWallLocked.tsx** | 75/100 | 缺少 ARIA 無障礙標籤 |
+| **P7-6: useFeedData.ts** | 65/100 | 僅前端過濾，安全性不足 |
+
+---
+
+#### 🔴 發現的問題與便宜行事
+
+| ID | 嚴重度 | 檔案 | 問題 |
 |----|--------|------|------|
-| **AUDIT-P7-1** | 🔴 致命 | `src/types/permissions.ts` **檔案不存在** | `glob` 搜索結果為空 |
-| **AUDIT-P7-2** | 🔴 致命 | `src/hooks/usePermission.ts` **檔案不存在** | `glob` 搜索結果為空 |
-
-**問題本質**：TODO 文件寫得漂漂亮亮，列出了「相關檔案索引」甚至標註 `[新增]`，但這些檔案根本不存在。這是典型的「寫文件不改代碼當作完」行為。
-
----
-
-### 🎯 首席處長引導意見 (P7-1: permissions.ts)
-
-> **目標**：建立一個可擴展、類型安全、易於測試的權限系統。
-
-#### 第一步：定義權限常數 (使用 `as const`)
-
-```
-設計思路：
-1. 使用 TypeScript 的 `as const` 確保權限值為字面量類型
-2. 權限命名採用 SCREAMING_SNAKE_CASE，語意清晰
-3. 每個權限都應該有對應的 JSDoc 說明用途
-```
-
-**權限清單建議**：
-- `VIEW_PRIVATE_WALL` - 查看私密牆內容
-- `POST_PRIVATE_WALL` - 在私密牆發文
-- `VIEW_AGENT_DATA` - 查看房仲專屬數據
-- `MANAGE_COMMUNITY` - 管理社區設定 (未來擴充)
-
-#### 第二步：建立角色-權限矩陣
-
-```
-設計思路：
-1. 使用 Record<Role, Permission[]> 類型確保類型安全
-2. 矩陣應該是唯一的「角色擁有什麼權限」真相來源
-3. 新增角色時只需修改這個矩陣，不用改其他代碼
-```
-
-**矩陣設計建議**：
-
-| 角色 | VIEW_PRIVATE_WALL | POST_PRIVATE_WALL | VIEW_AGENT_DATA |
-|------|-------------------|-------------------|-----------------|
-| guest | ❌ | ❌ | ❌ |
-| member | ❌ | ❌ | ❌ |
-| resident | ✅ | ✅ | ❌ |
-| agent | ✅ | ❌ | ✅ |
-| admin | ✅ | ✅ | ✅ |
-
-#### 第三步：導出輔助類型
-
-```
-設計思路：
-1. 導出 Permission 聯合類型，供 Hook 使用
-2. 導出 hasPermission 的純函數版本，便於單元測試
-3. 確保所有導出都有完整的 JSDoc
-```
+| **A1** | 🔴 | `usePermission.ts:23,28` | 使用 `role as Role` 類型斷言，繞過類型檢查 |
+| **A2** | 🔴 | `Guard.test.tsx:21,35` | 使用 `(usePermission as any)` 嚴重違規 |
+| **A3** | 🟡 | `usePermission.ts` | 缺少 `useMemo` 快取權限列表 |
+| **A4** | 🟡 | `usePermission.ts` | 缺少 `hasAllPermissions` 函數 (規劃中有提到) |
+| **A5** | 🟡 | `usePermission.ts` | 缺少 `isLoading` 狀態 (規劃中有提到) |
+| **A6** | 🟡 | `usePermission.ts` | 缺少 `permissions` 陣列返回值 |
+| **A7** | 🟡 | `PrivateWallLocked.tsx` | 缺少 ARIA 標籤 (`role="region"`, `aria-labelledby`) |
+| **A8** | 🟡 | `useFeedData.ts` | 資料層安全僅為前端過濾，API 仍可能返回私密資料 |
+| **A9** | 🟢 | `permissions.ts` | 使用 `enum` 而非 `as const`，影響 tree-shaking |
 
 ---
 
-### 🎯 首席處長引導意見 (P7-2: usePermission.ts)
+#### 🎯 首席處長引導意見 (必須修復)
 
-> **目標**：建立一個與 useAuth 整合、支援 SSR、效能優化的權限 Hook。
-
-#### 第一步：Hook 簽名設計
+##### A1/A2: 消除 `as any` 和類型斷言
 
 ```
-設計思路：
-1. 返回 { hasPermission, permissions, isLoading } 三元組
-2. hasPermission 應該是 useCallback 包裝，避免不必要的重渲染
-3. 支援批量檢查：hasAnyPermission([...]) 和 hasAllPermissions([...])
+問題：使用類型斷言是「便宜行事」的標誌。
+
+修復方向 (A1 - usePermission.ts)：
+1. 在 useAuth 返回時就確保 role 類型正確
+2. 或使用 type guard: function isValidRole(r: unknown): r is Role
+3. 若 role 可能為 undefined，應用 ?? 'guest' 處理
+
+修復方向 (A2 - Guard.test.tsx)：
+1. 使用正確的 mock 類型：vi.mocked(usePermission).mockReturnValue(...)
+2. 或定義 mock 的返回類型：const mockReturn: ReturnType<typeof usePermission> = {...}
 ```
 
-#### 第二步：整合 useAuth
+##### A3-A6: usePermission Hook 功能不完整
 
 ```
-設計思路：
-1. 從 useAuth 取得 role，若無則視為 guest
-2. 使用 useMemo 快取權限列表，依賴項為 role
-3. 處理 authLoading 狀態，避免閃爍
+規劃中承諾但未實作：
+1. hasAllPermissions - 批量 AND 檢查
+2. isLoading - 權限載入狀態
+3. permissions - 當前用戶的權限列表
+4. useMemo 優化 - 避免每次渲染重新計算
+
+引導：
+- 這是「偷懶沒做完」的典型案例
+- Hook 簽名應該是：
+  { hasPermission, hasAnyPermission, hasAllPermissions, permissions, isLoading }
+- 使用 useMemo 包裝 permissions Set，依賴項為 role
 ```
 
-#### 第三步：效能優化
+##### A7: PrivateWallLocked 無障礙性缺失
 
 ```
-設計思路：
-1. 權限查詢應該是 O(1)，考慮使用 Set 存儲
-2. 避免每次渲染都創建新的 hasPermission 函數
-3. 考慮 memo 化整個 Hook 的返回值
+缺少的 ARIA 標籤：
+1. 外層容器需要 role="region" 或 role="alert"
+2. 標題需要 id，供 aria-labelledby 使用
+3. 按鈕需要 aria-label 說明用途
+
+引導：
+<div role="region" aria-labelledby="locked-title">
+  <h3 id="locked-title">...</h3>
+  <button aria-label="解鎖私密牆內容">...</button>
+</div>
 ```
 
-#### 第四步：測試覆蓋
+##### A8: 資料層安全不足
 
 ```
-必須測試的場景：
-1. 未登入用戶 (guest) 沒有任何權限
-2. 已認證住戶 (resident) 有私密牆權限
-3. 房仲 (agent) 有唯讀權限但不能發文
-4. 權限變更時 Hook 正確更新
-5. authLoading 期間返回正確的 loading 狀態
+問題：useFeedData 只是在前端過濾私密貼文，但 API 可能已經返回了這些資料。
+惡意用戶可以透過 DevTools 看到被過濾的資料。
+
+理想解法 (需後端配合)：
+1. API 端根據用戶權限過濾資料
+2. 前端的過濾只是第二道防線
+
+前端可改進：
+1. 無權限時不要發送私密貼文的 API 請求
+2. 或在請求參數中加入 visibility=public
 ```
 
 ---
-
-### ⚠️ 執行前必讀
-
-**禁止事項**：
-1. ❌ 不要只建立空檔案就標記完成
-2. ❌ 不要跳過單元測試
-3. ❌ 不要使用 `as any` 繞過類型檢查
-4. ❌ 不要硬編碼中文字串
-
-**必須事項**：
-1. ✅ 檔案建立後立即執行 `npm run typecheck`
-2. ✅ 建立對應的測試檔案 `__tests__/usePermission.test.ts`
-3. ✅ 在 PR 中附上測試覆蓋率報告
-4. ✅ 更新此 TODO 文件，將 `[ ]` 改為 `[x]` 並附上提交 hash
 
 #### 🟡 下階段 2: 路由與組件守衛
 > 在介面層統一攔截邏輯。
