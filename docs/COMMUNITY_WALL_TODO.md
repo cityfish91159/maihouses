@@ -163,3 +163,19 @@ function validateFile(file: File): { valid: boolean; error?: string } {
 
 ---
 **Ready for Production Deployment.**
+
+### ✅ P0 優化清單 (Optimization D1-D4)
+> **執行時間**: 2025-12-14 14:05
+> **狀態**: ✅ 已完成
+
+- [x] **D1: 記憶體洩漏防護** (High)
+    - 在 `InlineComposer` 中加入 `useEffect` 監聽 `previewUrls`，利用 `URL.revokeObjectURL` 清理記憶體。
+- [x] **D3: 前端嚴格驗證** (Medium)
+    - 發文前即驗證 `file.type` (僅限 JPG/PNG/WebP) 與 `file.size` (<5MB)。
+    - 不符規格直接阻擋並顯示 Notify Error，減少無效 API 請求。
+- [x] **D2: 批量上傳機制** (Medium)
+    - `uploadService` 新增 `uploadFiles(files[])` 方法，使用 `Promise.all` 並行處理。
+    - `useFeedData` 改用此方法，提升多圖上傳效能。
+- [x] **D4: 類型安全強化** (Low)
+    - 移除 `useFeedData` 中的 `as any` 斷言，改用嚴格的 `includes` 檢查。
+    - 修正 build 時發現的 `undefined` 潛在錯誤。

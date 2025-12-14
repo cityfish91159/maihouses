@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { notify } from '../../lib/notify';
 import { STRINGS } from '../../constants/strings';
 import { Image, X } from 'lucide-react';
@@ -9,6 +9,9 @@ interface InlineComposerProps {
     userInitial: string;
 }
 
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+
 export function InlineComposer({
     onSubmit,
     disabled,
@@ -18,21 +21,51 @@ export function InlineComposer({
     const [isExpanded, setIsExpanded] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+    const [previewUrls, setPreviewUrls] = useState<string[]>([]);
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    // D1: Cleanup object URLs to prevent memory leaks
+    useEffect(() => {
+        return () => {
+            previewUrls.forEach(url => URL.revokeObjectURL(url));
+        };
+    }, [previewUrls]);
 
     const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0) {
             const newFiles = Array.from(e.target.files);
+
+            // D3: Frontend Validation
+            const validFiles = newFiles.filter(file => {
+                if (!ALLOWED_TYPES.includes(file.type)) {
+                    notify.error(`檔案格式不支援: ${file.name}`);
+                    return false;
+                }
+                if (file.size > MAX_FILE_SIZE) {
+                    notify.error(`檔案過大 (超過 5MB): ${file.name}`);
+                    return false;
+                }
+                return true;
+            });
+
+            if (validFiles.length === 0) return;
+
             // Limit to 4 images
-            if (selectedFiles.length + newFiles.length > 4) {
+            if (selectedFiles.length + validFiles.length > 4) {
                 notify.error('最多只能上傳 4 張圖片');
                 return;
             }
-            setSelectedFiles([...selectedFiles, ...newFiles]);
+
+            const newUrls = validFiles.map(file => URL.createObjectURL(file));
+            setPreviewUrls(prev => [...prev, ...newUrls]);
+            setSelectedFiles(prev => [...prev, ...validFiles]);
         }
     };
 
     const removeFile = (index: number) => {
+        const url = previewUrls[index];
+        if (url) URL.revokeObjectURL(url);
+        setPreviewUrls(prev => prev.filter((_, i) => i !== index));
         setSelectedFiles(prev => prev.filter((_, i) => i !== index));
     };
 
@@ -42,6 +75,9 @@ export function InlineComposer({
         try {
             await onSubmit(content.trim(), selectedFiles);
             setContent('');
+            // Cleanup old URLs
+            previewUrls.forEach(url => URL.revokeObjectURL(url));
+            setPreviewUrls([]);
             setSelectedFiles([]);
             setIsExpanded(false);
             if (fileInputRef.current) fileInputRef.current.value = '';
@@ -75,12 +111,12 @@ export function InlineComposer({
                     />
 
                     {/* Image Previews */}
-                    {selectedFiles.length > 0 && (
+                    {previewUrls.length > 0 && (
                         <div className="flex flex-wrap gap-2">
-                            {selectedFiles.map((file, i) => (
-                                <div key={i} className="relative size-16 overflow-hidden rounded-lg border border-gray-200">
+                            {previewUrls.map((url, i) => (
+                                <div key={url} className="relative size-16 overflow-hidden rounded-lg border border-gray-200">
                                     <img
-                                        src={URL.createObjectURL(file)}
+                                        src={url}
                                         alt="Preview"
                                         className="size-full object-cover"
                                     />

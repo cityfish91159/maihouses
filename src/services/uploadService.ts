@@ -55,5 +55,12 @@ export const uploadService = {
             url: publicUrl,
             path: filePath
         };
+    },
+
+    /**
+     * D2: 批量上傳圖片 (Batch Upload)
+     */
+    async uploadFiles(files: File[], bucket = 'community-images', folder = 'posts'): Promise<UploadResult[]> {
+        return Promise.all(files.map(file => this.uploadImage(file, bucket, folder)));
     }
 };

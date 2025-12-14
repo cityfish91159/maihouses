@@ -744,7 +744,7 @@ export function useFeedData(
     const tempPost: FeedPost = {
       id: tempId,
       author: authUser?.user_metadata?.name || authUser?.email || '我',
-      type: ((authRole as string) === 'agent' || (authRole as string) === 'resident' || (authRole as string) === 'official') ? (authRole as any) : 'member',
+      type: (['agent', 'resident', 'official'].includes(authRole || '') ? authRole : 'member') as FeedPost['type'],
       time: new Date().toISOString(),
       title: content.substring(0, 20),
       content: content,
@@ -769,11 +769,10 @@ export function useFeedData(
     });
 
     try {
-      // 2. Upload Images First
+      // 2. Upload Images First (D2: Use Batch Upload)
       let uploadedImages: { src: string; alt: string }[] = [];
       if (images && images.length > 0) {
-        const uploadPromises = images.map(file => uploadService.uploadImage(file));
-        const results = await Promise.all(uploadPromises);
+        const results = await uploadService.uploadFiles(images);
         uploadedImages = results.map(res => ({ src: res.url, alt: 'Post Image' }));
       }
 
