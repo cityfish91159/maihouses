@@ -5,7 +5,7 @@
  * 目前回傳固定值 0 (空實作)，預留未來接上 real-time notification 邏輯
  */
 
-import { useState, useEffect } from 'react';
+import { useMemo } from 'react';
 import { useAuth } from './useAuth';
 
 interface UseNotificationsReturn {
@@ -15,17 +15,13 @@ interface UseNotificationsReturn {
 
 export function useNotifications(): UseNotificationsReturn {
     const { isAuthenticated } = useAuth();
-    const [count, setCount] = useState(0);
 
-    useEffect(() => {
-        if (!isAuthenticated) {
-            setCount(0);
-            return;
-        }
-
+    // Use useMemo instead of useEffect + setState to avoid cascading renders
+    // Future: Replace with real notification fetching logic
+    const count = useMemo(() => {
+        if (!isAuthenticated) return 0;
         // Future: Fetch from API or subscribe to websocket
-        // For now, clean zero state (No fake numbers)
-        setCount(0);
+        return 0;
     }, [isAuthenticated]);
 
     return {
