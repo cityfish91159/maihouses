@@ -1,5 +1,50 @@
 # 社區牆開發紀錄
 
+## 2025-12-14 - P8 工單初始化：圖片上傳與互動功能升級
+
+### 📋 變更摘要
+
+| 項目 | 內容 |
+|------|------|
+| **變更類型** | 工單重建 |
+| **舊工單** | P7 私密牆權限體系 (已完成) |
+| **新工單** | P8 圖片上傳與互動功能升級 |
+| **執行者** | Google L8 首席處長 |
+
+### 🔍 現狀分析
+
+基於代碼閱讀，確認以下組件狀態：
+
+| 組件 | 檔案 | 現狀 |
+|------|------|------|
+| InlineComposer | `src/components/Feed/InlineComposer.tsx` | ❌ 僅支援純文字，無圖片 |
+| FeedPostCard | `src/components/Feed/FeedPostCard.tsx` | ✅ 已支援 `post.images` 顯示 |
+| useFeedData | `src/hooks/useFeedData.ts` | ⚠️ 結構支援 images，createPost 不接收 |
+| useConsumer | `src/pages/Feed/useConsumer.ts` | ❌ 無圖片上傳邏輯 |
+| uploadService | `src/services/uploadService.ts` | ❌ **不存在** |
+
+### 📝 P8 執行清單概覽
+
+| 階段 | 任務 | 優先級 |
+|------|------|--------|
+| 階段 1 | P8-1 升級 InlineComposer (圖片選擇/預覽) | 🔴 P0 |
+| 階段 1 | P8-2 確認 FeedPostCard | ✅ 已完成 |
+| 階段 2 | P8-3 擴充 useFeedData.createPost | 🔴 P0 |
+| 階段 2 | P8-4 修改 useConsumer (上傳邏輯) | 🟠 P1 |
+| 階段 2 | P8-5 修改 useAgentFeed | 🟠 P1 |
+| 階段 3 | P8-6 新建 uploadService | 🔴 P0 |
+| 階段 3 | P8-7 Mock 留言即時更新 | 🟡 P2 |
+| 階段 4 | P8-8 新增圖片常數 | 🟢 P3 |
+
+### 🎯 架構師核心建議
+
+1. **雙軌制策略**：Mock 用 `URL.createObjectURL`，API 用 `uploadService`
+2. **記憶體管理**：組件卸載時必須清理 Blob URL
+3. **類型安全**：`onSubmit: (content: string, images: File[]) => Promise<void>`
+4. **前置驗證**：MAX_FILE_SIZE = 5MB, MAX_FILES = 4
+
+---
+
 ## 2025-12-13 - P7 第五輪審計：C1-C12 修復驗證 (Google L8 首席處長)
 
 ### 審計結果：**58/100 (D 級，不及格)**
