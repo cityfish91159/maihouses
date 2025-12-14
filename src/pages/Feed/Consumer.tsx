@@ -22,7 +22,7 @@ import { ROUTES } from '../../constants/routes';
 import { RequirePermission } from '../../components/auth/Guard';
 import { PERMISSIONS } from '../../types/permissions';
 import PrivateWallLocked from '../../components/Feed/PrivateWallLocked';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 const S = STRINGS.FEED;
 
@@ -150,6 +150,24 @@ function ConsumerContent({ userId, forceMock }: ConsumerProps) {
 
   // P7-Audit-C7: Use Hook (Real Architecture)
   const { count: notificationCount } = useNotifications();
+
+  // E5 Fix: Hash-Driven Navigation (Best Practice)
+  useEffect(() => {
+    const handleHashChange = () => {
+      if (window.location.hash === '#profile') {
+        // Profile is always at the top of the feed layout
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        // Ideally could focus the profile card:
+        // document.getElementById('profile-card')?.focus();
+      }
+    };
+
+    // Initial check
+    handleHashChange();
+
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
 
   const handleSearch = (q: string) => {
     // console.log('Search:', q);

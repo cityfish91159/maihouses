@@ -805,31 +805,33 @@ export function useFeedData(
       });
       throw err;
     }
-  }, [useMock, isAuthenticated, options.communityId, authUser, authRole, currentUserId]);
+  }, [useMock, isAuthenticated, options.communityId, authUser, authRole, currentUserId, fetchApiData]); // E2: Added fetchApiData dependency
 
   const addComment = useCallback(async (postId: string | number, content: string) => {
     if (!useMock && !isAuthenticated) {
       throw new Error('請先登入後再留言');
     }
 
-    if (useMock) {
-      // Generate a mock comment
-      const newComment: FeedComment = {
-        id: Date.now(),
-        postId: postId,
-        author: authUser?.user_metadata?.name || '測試用戶',
-        role: (['agent', 'resident', 'official'].includes(authRole || '') ? authRole : 'member') as FeedComment['role'],
-        content,
-        time: new Date().toISOString(),
-        likes: 0,
-        isLiked: false,
-      };
+    // Prepare Comment Object (Shared for Mock and Optimistic UI)
+    const tempId = useMock ? Date.now() : -Date.now();
+    const commentObj: FeedComment = {
+      id: tempId,
+      postId: postId,
+      author: authUser?.user_metadata?.name || '測試用戶',
+      role: (['agent', 'resident', 'official'].includes(authRole || '') ? authRole : 'member') as FeedComment['role'],
+      content,
+      time: new Date().toISOString(),
+      likes: 0,
+      isLiked: false,
+    };
 
+    // Mock Mode
+    if (useMock) {
       setMockData(prev => ({
         ...prev,
         posts: prev.posts.map(post => {
           if (post.id !== postId) return post;
-          const updatedComments = [...(post.commentList || []), newComment];
+          const updatedComments = [...(post.commentList || []), commentObj];
           return {
             ...post,
             comments: updatedComments.length,
@@ -840,10 +842,54 @@ export function useFeedData(
       return;
     }
 
-    // API Mode: Optimistic update not fully implemented, just return for now
-    // to allow UI to proceed without crashing.
-    console.log('[useFeedData] addComment API mode not implemented');
-  }, [useMock, isAuthenticated, authUser, authRole]);
+    // API Mode (E1 Best Practice: Optimistic + Real DB)
+    const previousApiData = apiData;
+
+    // 1. Optimistic Update
+    setApiData(prev => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        posts: prev.posts.map(post => {
+          if (post.id !== postId) return post;
+          const updatedComments = [...(post.commentList || []), commentObj];
+          return {
+            ...post,
+            comments: updatedComments.length,
+            commentList: updatedComments
+          };
+        })
+      };
+    });
+
+    try {
+      setApiLoading(true);
+
+      // 2. Real API Call
+      const { error } = await supabase
+        .from('community_comments')
+        .insert({
+          post_id: postId,
+          community_id: options.communityId,
+          user_id: currentUserId,
+          content: content
+        });
+
+      if (error) throw error;
+
+      // 3. Refresh data to get Real ID
+      await fetchApiData();
+
+    } catch (err) {
+      // 4. Rollback on Error
+      console.error('[useFeedData] Add comment failed', err);
+      setApiData(previousApiData);
+      setApiError(err as Error);
+      throw err;
+    } finally {
+      setApiLoading(false);
+    }
+  }, [useMock, isAuthenticated, authUser, authRole, currentUserId, options.communityId, refresh, apiData, fetchApiData]);
 
   return {
     data,

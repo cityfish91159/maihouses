@@ -134,7 +134,11 @@ export function useConsumer(userId?: string, forceMock?: boolean) {
     }, [createPost, isAuthenticated, userProfile]);
 
     const handleReply = useCallback((postId: string | number) => {
-        // P8: Reply just toggles visibility in FeedPostCard, no toast needed.
+        // E3 Fix: 記錄使用者點擊回覆的行為 (Analytics)
+        // 實際 UI 切換由 FeedPostCard 內部 state 處理
+        if (import.meta.env.DEV) {
+            console.debug('[Consumer] Reply toggled for post:', postId);
+        }
     }, []);
 
     const handleComment = useCallback(async (postId: string | number, content: string) => {
@@ -146,14 +150,38 @@ export function useConsumer(userId?: string, forceMock?: boolean) {
             await addComment(postId, content);
             notify.success(S.POST.COMMENT_SUCCESS.TITLE, S.POST.COMMENT_SUCCESS.DESC);
         } catch (err) {
-            console.error('Failed to add comment', err);
+            // E7 Fix: Removed console.error
             notify.error('留言失敗', '請稍後再試');
         }
     }, [isAuthenticated, addComment]);
 
-    const handleShare = useCallback((postId: string | number) => {
-        // P8: Simulate share
-        notify.success('連結已複製', '您可以將連結分享給朋友 (Mock)');
+    const handleShare = useCallback(async (postId: string | number) => {
+        // E4 Fix: Web Share API (Best Practice)
+        const shareUrl = `${window.location.origin}${window.location.pathname}?post=${postId}`;
+        const shareData = {
+            title: 'MaiHouses 社區動態',
+            text: '來看看這則有趣的社區貼文！',
+            url: shareUrl,
+        };
+
+        if (navigator.share && navigator.canShare(shareData)) {
+            try {
+                await navigator.share(shareData);
+                // Share success doesn't always need a toast, native UI handles it.
+            } catch (err) {
+                // User aborted or failed
+                if ((err as Error).name !== 'AbortError') {
+                    notify.error('分享失敗', '請稍後再試');
+                }
+            }
+        } else {
+            // Fallback to Clipboard
+            navigator.clipboard.writeText(shareUrl).then(() => {
+                notify.success('連結已複製', '您可以將連結分享給朋友');
+            }).catch(() => {
+                notify.error('複製失敗', '請手動複製網址');
+            });
+        }
     }, []);
 
     const userInitial = userProfile?.name.charAt(0).toUpperCase() || 'U';

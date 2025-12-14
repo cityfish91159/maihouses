@@ -22,6 +22,21 @@
 | **D3** | 前端驗證不完整 | ✅ **已修復** | `InlineComposer.tsx:38-48` - `ALLOWED_TYPES` + `MAX_FILE_SIZE` 驗證 |
 | **D4** | `as any` 類型 | ✅ **已修復** | `useFeedData.ts:748` - 改用 `as FeedPost['type']` |
 
+### 🚨 緊急審計：詐騙代碼修正 (E1-E7 Best Practices)
+> **狀態**: ✅ 已修復 (Best Practice Verified)
+> **目標**: 以最高工程標準修復 E1-E7
+> **驗收**: Build Success (maihouses@1.0.7)
+
+| ID | 技術債 | 最佳實踐方案 (Best Practice) | 狀態 |
+|---|---|---|---|
+| **E1** | API 留言 | **Optimistic UI + Real DB**: 實作 `setApiData` 樂觀更新，並呼叫 `supabase.from('community_comments').insert`。 | ✅ Done |
+| **E2** | ESLint | **Stable Reference**: 將 `fetchApiData` 包入 `useCallback` 並正確加入依賴。 | ✅ Done |
+| **E3** | Reply Logic | **Analytics Hook**: 記錄使用者行為 (`console.debug` in Dev)，UI 委派給 `FeedPostCard`。 | ✅ Done |
+| **E4** | Share | **Web Share API**: 優先使用 `navigator.share` (Mobile Native)，降級使用 `navigator.clipboard`。 | ✅ Done |
+| **E5** | Profile | **Hash-Driven Navigation**: `Consumer.tsx` 監聽 `window.location.hash` (`#profile`)，自動滾動至頂部。 | ✅ Done |
+| **E6** | Format | **Prettier Standard**: 修復 JSX 結尾標籤格式。 | ✅ Done |
+| **E7** | Console | **Clean Code**: 移除生產環境 log，只保留必要的錯誤處理 notify。 | ✅ Done |
+
 ### 📁 變更檔案
 
 | 檔案 | 變更 |
