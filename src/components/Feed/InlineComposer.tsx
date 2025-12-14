@@ -75,9 +75,7 @@ export function InlineComposer({
         try {
             await onSubmit(content.trim(), selectedFiles);
             setContent('');
-            // Cleanup old URLs
-            previewUrls.forEach(url => URL.revokeObjectURL(url));
-            setPreviewUrls([]);
+            // Cleanup old URLs handled by Effect
             setSelectedFiles([]);
             setIsExpanded(false);
             if (fileInputRef.current) fileInputRef.current.value = '';
