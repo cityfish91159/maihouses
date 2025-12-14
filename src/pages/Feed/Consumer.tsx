@@ -151,35 +151,39 @@ function ConsumerContent({ userId, forceMock }: ConsumerProps) {
   // P7-Audit-C7: Use Hook (Real Architecture)
   const { count: notificationCount } = useNotifications();
 
-  // E5/F4 Fix: Hash-Driven Navigation with Feedback
+  // F6/E5 Fix: Deep Linking and Profile Navigation
   useEffect(() => {
+    // 1. Handle Profile Navigation (#profile)
     const handleNavigation = () => {
-      // 1. Handle Profile Navigation
       if (window.location.hash === '#profile') {
         window.scrollTo({ top: 0, behavior: 'smooth' });
-        // UX: Give feedback that user is viewing profile area
-        // notify.info(S.NAV.PROFILE, '您正在檢視個人資料');
       }
+    };
 
-      // 2. Handle Post Deep Linking (F6 Fix)
-      const params = new URLSearchParams(window.location.search);
-      const postId = params.get('post');
-      if (postId) {
+    handleNavigation();
+    window.addEventListener('hashchange', handleNavigation);
+
+    // 2. Handle Post Deep Linking (F6 Fix)
+    // Runs once on mount to handle initial load
+    const params = new URLSearchParams(window.location.search);
+    const postId = params.get('post');
+    if (postId) {
+      // Use retry mechanism for async post loading
+      const tryScroll = (retries = 0) => {
         const element = document.getElementById(`post-${postId}`);
         if (element) {
           element.scrollIntoView({ behavior: 'smooth', block: 'center' });
           element.classList.add('ring-2', 'ring-brand-500', 'ring-offset-2');
           setTimeout(() => element.classList.remove('ring-2', 'ring-brand-500', 'ring-offset-2'), 2000);
+        } else if (retries < 10) {
+          setTimeout(() => tryScroll(retries + 1), 500);
         }
-      }
-    };
+      };
+      setTimeout(() => tryScroll(), 500);
+    }
 
-    // Initial check
-    handleNavigation();
-
-    window.addEventListener('hashchange', handleNavigation);
     return () => window.removeEventListener('hashchange', handleNavigation);
-  }, [data.posts]); // Re-run when posts load to ensure we can scroll to them
+  }, [data.posts]); // Re-run when posts load
 
   const handleSearch = (q: string) => {
     // console.log('Search:', q);
@@ -296,15 +300,16 @@ function ConsumerContent({ userId, forceMock }: ConsumerProps) {
                 ) : (
                   <div className="space-y-3">
                     {filteredPosts.map((post) => (
-                      <FeedPostCard
-                        key={post.id}
-                        post={post}
-                        isLiked={isLiked(post.id)}
-                        onLike={handleLike}
-                        onReply={handleReply}
-                        onComment={handleComment}
-                        onShare={handleShare}
-                      />
+                      <div key={post.id} id={`post-${post.id}`} className="space-y-3">
+                        <FeedPostCard
+                          post={post}
+                          isLiked={isLiked(post.id)}
+                          onLike={handleLike}
+                          onReply={handleReply}
+                          onComment={handleComment}
+                          onShare={handleShare}
+                        />
+                      </div>
                     ))}
                   </div>
                 )

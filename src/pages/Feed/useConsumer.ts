@@ -140,7 +140,7 @@ export function useConsumer(userId?: string, forceMock?: boolean) {
             console.debug('[Consumer] Reply toggled for post:', postId);
         }
         // UX Enhancement: Tell user what happened
-        // notify.info('回覆模式已開啟', '請在下方留言區輸入您的回覆'); // Too noisy? User called it "lazy" so feedback is better.
+        notify.info('回覆模式已開啟', '請在下方留言區輸入您的回覆'); // Real Feedback for F3
     }, []);
 
     const handleComment = useCallback(async (postId: string | number, content: string) => {

@@ -165,12 +165,20 @@ export function GlobalHeader({ mode, title, className = '', notificationCount = 
                     className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-bold text-gray-700 transition-colors hover:bg-brand-50 hover:text-brand-700"
                     role="menuitem"
                     onClick={() => {
-                      // E5/F4 Fix: Ensure we are on the consumer feed before hashing
-                      if (window.location.pathname.includes('/feed/consumer') || window.location.pathname.includes('/feed/')) {
-                        window.location.hash = '#profile';
+                      // E5/F4 Fix: Robust Navigation
+                      const targetPath = ROUTES.FEED_CONSUMER;
+                      const targetHash = 'profile';
+
+                      if (location.pathname === targetPath || location.pathname.includes('/feed/consumer')) {
+                        // Already on page: force hash update and scroll
+                        window.location.hash = targetHash;
+                        // Dispatch event for listeners just in case
+                        window.dispatchEvent(new HashChangeEvent('hashchange'));
+                        // Fallback manual scroll if listener misses it
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
                       } else {
-                        // Fallback or Navigate
-                        window.location.href = `${ROUTES.FEED_CONSUMER}#profile`;
+                        // Navigate to page with hash
+                        window.location.href = `${targetPath}#${targetHash}`;
                       }
                       setUserMenuOpen(false);
                     }}

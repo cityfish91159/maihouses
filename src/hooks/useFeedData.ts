@@ -881,15 +881,18 @@ export function useFeedData(
       await fetchApiData();
 
     } catch (err) {
-      // 4. Rollback on Error
-      console.error('[useFeedData] Add comment failed', err);
+      // F2 Fix: Removed console.error for production safety
+      // Only log in DEV mode for debugging
+      if (import.meta.env.DEV) {
+        console.warn('[useFeedData] Add comment failed (Check Schema: community_comments?)', err);
+      }
       setApiData(previousApiData);
       setApiError(err as Error);
       throw err;
     } finally {
       setApiLoading(false);
     }
-  }, [useMock, isAuthenticated, authUser, authRole, currentUserId, options.communityId, refresh, apiData, fetchApiData]);
+  }, [useMock, isAuthenticated, authUser, authRole, currentUserId, options.communityId, apiData, fetchApiData]);
 
   return {
     data,
