@@ -38,6 +38,7 @@ import type { FeedComment } from '../types/comment';
 import { getConsumerFeedData, createMockPost as createMockPostFromFactory } from '../pages/Feed/mockData';
 import { usePermission } from './usePermission';
 import { PERMISSIONS } from '../types/permissions';
+import { uploadService } from '../services/uploadService';
 const S = STRINGS.FEED;
 
 // ============ Feed 專用型別 ============
@@ -329,7 +330,7 @@ export interface UseFeedDataReturn {
   /** 按讚 */
   toggleLike: (postId: string | number) => Promise<void>;
   /** 發文 */
-  createPost: (content: string, communityId?: string) => Promise<void>;
+  createPost: (content: string, communityId?: string, images?: File[]) => Promise<void>;
   /** 後端判定的使用者身份 */
   viewerRole: Role;
   /** 是否登入 */
@@ -377,10 +378,6 @@ export function useFeedData(
   // ============ Mock 狀態 ============
   const [mockData, setMockData] = useState<UnifiedFeedData>(() => {
     const rawData = persistMockState ? loadPersistedFeedMockState(resolvedInitialMockData) : resolvedInitialMockData;
-    // Note: Initial state filtering is tricky because we can't use hooks inside callback easily if they change
-    // But since canViewPrivate comes from a hook, we should trust effect updates or filter here if possible.
-    // simpler to just load raw here and let effect cleanup, OR filter if we can.
-    // Actually, for security, we should filter here too if possible, but canViewPrivate is available in scope.
     const securePosts = rawData.posts.filter(p => {
       if (p.private && !canViewPrivate) return false;
       return true;
@@ -417,7 +414,6 @@ export function useFeedData(
 
     // P7-6 OPTIMIZATION: State Level Security for Mock Data
     const securePosts = loadedData.posts.filter(p => {
-      // ESLint Fix: Explicitly return boolean for filter
       if (p.private && !canViewPrivate) return false;
       return true;
     });
@@ -522,7 +518,6 @@ export function useFeedData(
   // ============ 統一資料來源 ============
   const data = useMemo<UnifiedFeedData>(() => {
     if (useMock) {
-      // Mock 模式：根據 communityId 篩選
       return filterMockData(mockData, communityId);
     }
 
@@ -531,12 +526,8 @@ export function useFeedData(
       return apiData;
     }
 
-    // API 尚未返回時使用上次成功資料或空資料
     const rawData = lastApiDataRef.current ?? EMPTY_FEED_DATA;
 
-    // P7-6 OPTIMIZATION: Double Safety Layer
-    // Although we filtered at source, we keep this Memo filter as a fail-safe
-    // to ensure no private data leaks even if state security fails.
     if (!canViewPrivate) {
       return {
         ...rawData,
@@ -553,7 +544,6 @@ export function useFeedData(
   useEffect(() => {
     if (!useMock || !currentUserId) return;
 
-    // 已初始化就跳過，避免 mockData 變化時重複執行
     if (hasInitializedLikedPosts.current) return;
     hasInitializedLikedPosts.current = true;
 
@@ -589,7 +579,6 @@ export function useFeedData(
   // ============ 操作方法 ============
   const refresh = useCallback(async () => {
     if (useMock) {
-      // Mock 模式：觸發重新渲染
       setMockData(prev => ({ ...prev }));
       return;
     }
@@ -634,7 +623,6 @@ export function useFeedData(
       return;
     }
 
-    // P2-C2 修復：API 模式樂觀更新
     const actingUserId = currentUserId;
     if (!actingUserId) {
       throw new Error('缺少使用者身份');
@@ -645,7 +633,6 @@ export function useFeedData(
     const previousApiData = apiData;
     const previousApiLikedPosts = new Set(apiLikedPosts);
 
-    // 1. 樂觀更新本地狀態（立即顯示變化）
     setApiData(prev => {
       if (!prev) return prev;
       return {
@@ -677,13 +664,11 @@ export function useFeedData(
     });
 
     try {
-      // 2. 呼叫 Supabase RPC（真實 API）
       const { data, error } = await supabase.rpc('toggle_like', { post_id: postIdStr });
       if (error) {
         throw error;
       }
 
-      // 3. 以伺服器結果校正 likes/liked_by（避免快取與伺服器不一致）
       setApiData(prev => {
         if (!prev) return prev;
         return {
@@ -704,31 +689,32 @@ export function useFeedData(
         };
       });
     } catch (err) {
-      // 4. 失敗時回滾
       setApiData(previousApiData);
       setApiLikedPosts(previousApiLikedPosts);
       throw err instanceof Error ? err : new Error('按讚失敗，請稍後再試');
     }
   }, [useMock, likedPosts, apiLikedPosts, apiData, getMockUserId, isAuthenticated, currentUserId]);
 
-  // P2-C4 修復：API 模式加入樂觀更新
-  const createPost = useCallback(async (content: string, targetCommunityId?: string) => {
+  // P2-C4 修復：API 模式加入樂觀更新 (Updated for P0 Image Upload)
+  const createPost = useCallback(async (content: string, communityId?: string, images?: File[]) => {
     if (!useMock && !isAuthenticated) {
       throw new Error('請先登入後再發文');
     }
 
-    const resolvedCommunityId = targetCommunityId ?? communityId;
+    const resolvedCommunityId = communityId ?? options.communityId;
     if (resolvedCommunityId && !isValidCommunityId(resolvedCommunityId)) {
       console.warn('[useFeedData] Invalid communityId provided, fallback to undefined');
     }
     const safeCommunityId = resolvedCommunityId && isValidCommunityId(resolvedCommunityId)
       ? resolvedCommunityId
       : undefined;
+
     if (!useMock && !safeCommunityId) {
       throw new Error('請先選擇社區後再發文');
     }
-    const resolvedCommunityName = getCommunityName(safeCommunityId); // P2-C6：使用共用函數
+    const resolvedCommunityName = getCommunityName(safeCommunityId);
 
+    // Mock Mode
     if (useMock) {
       const newPost = createFeedMockPost(
         content,
@@ -736,16 +722,24 @@ export function useFeedData(
         resolvedCommunityName
       );
 
+      // Mock Images
+      if (images && images.length > 0) {
+        newPost.images = images.map((_, i) => ({
+          src: `https://picsum.photos/seed/${Date.now() + i}/400/300`,
+          alt: 'Mock Image'
+        }));
+      }
+
       setMockData(prev => ({
         ...prev,
         posts: [newPost, ...prev.posts],
         totalPosts: prev.totalPosts + 1,
-        sidebarData: deriveSidebarData([newPost, ...prev.posts]), // Re-calculate sidebar data
+        sidebarData: deriveSidebarData([newPost, ...prev.posts]),
       }));
       return;
     }
 
-    // P2-C4 修復：API 模式樂觀更新
+    // API Mode
     const tempId = -Date.now();
     const tempPost: FeedPost = {
       id: tempId,
@@ -760,35 +754,45 @@ export function useFeedData(
       communityId: safeCommunityId,
       communityName: resolvedCommunityName,
       commentList: [],
+      ...(images && images.length > 0 ? { images: images.map(f => ({ src: URL.createObjectURL(f), alt: f.name })) } : {})
     };
 
-    // 1. 樂觀插入本地 API Data
+    // 1. 樂觀插入
     setApiData(prev => {
       if (!prev) return prev;
       return {
         ...prev,
         posts: [tempPost, ...prev.posts],
         totalPosts: prev.totalPosts + 1,
-        sidebarData: deriveSidebarData([tempPost, ...prev.posts]), // Re-calculate sidebar data
+        sidebarData: deriveSidebarData([tempPost, ...prev.posts]),
       };
     });
 
     try {
-      // 2. 呼叫真實 API
+      // 2. Upload Images First
+      let uploadedImages: { src: string; alt: string }[] = [];
+      if (images && images.length > 0) {
+        const uploadPromises = images.map(file => uploadService.uploadImage(file));
+        const results = await Promise.all(uploadPromises);
+        uploadedImages = results.map(res => ({ src: res.url, alt: 'Post Image' }));
+      }
+
+      // 3. Insert Post
       const { error } = await supabase.from('community_posts').insert({
         content,
         community_id: safeCommunityId,
         author_id: currentUserId,
         post_type: 'general',
+        images: uploadedImages
       });
 
       if (error) throw error;
 
-      // 3. 成功後刷新主要數據（取得真實 ID 與時間）
+      // 4. Refresh
       await fetchApiData();
     } catch (err) {
       console.error('[useFeedData] Create post failed', err);
-      // 4. 失敗時回滾（移除樂觀貼文）
+      // Rollback
       setApiData(prev => {
         if (!prev) return prev;
         return {
@@ -800,7 +804,7 @@ export function useFeedData(
       });
       throw err;
     }
-  }, [useMock, isAuthenticated, communityId, authUser, authRole, currentUserId, fetchApiData]);
+  }, [useMock, isAuthenticated, authUser, authRole, options.communityId, currentUserId, fetchApiData]);
 
   return {
     data,

@@ -46,6 +46,11 @@ export default function AgentPage({ userId, forceMock }: AgentPageProps) {
         }
     }), [user, viewerRole, performanceStats]);
 
+    const handleCreatePost = async (content: string, images?: File[]) => {
+        // P0: Pass correct communityId (from profile) and images to useFeedData
+        await createPost(content, userProfile.communityId, images);
+    };
+
     return (
         <div className="min-h-screen bg-[#f6f9ff]">
             <GlobalHeader mode="agent" title={STRINGS.FEED.PAGE_TITLE} />
@@ -62,7 +67,7 @@ export default function AgentPage({ userId, forceMock }: AgentPageProps) {
 
                     <InlineComposer
                         userInitial={userProfile.name.charAt(0).toUpperCase()}
-                        onSubmit={createPost}
+                        onSubmit={handleCreatePost}
                     />
 
                     {/* UAG Summary Card */}

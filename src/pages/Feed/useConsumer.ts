@@ -119,13 +119,13 @@ export function useConsumer(userId?: string, forceMock?: boolean) {
         }
     }, [toggleLike, isAuthenticated]);
 
-    const handleCreatePost = useCallback(async (content: string) => {
+    const handleCreatePost = useCallback(async (content: string, images?: File[]) => {
         if (!isAuthenticated) {
             notify.error(S.NOTIFY.LOGIN_REQUIRED, S.NOTIFY.LOGIN_REQUIRED_POST);
             return;
         }
         try {
-            await createPost(content, userProfile?.communityId);
+            await createPost(content, userProfile?.communityId, images);
         } catch (err) {
             // console.error('Failed to create post', err); // B2: Removed console.error
             throw err;

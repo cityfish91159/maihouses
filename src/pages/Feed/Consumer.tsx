@@ -197,9 +197,10 @@ function ConsumerContent({ userId, forceMock }: ConsumerProps) {
           {userProfile && <ProfileCard profile={userProfile} />}
 
           {/* 發文框 */}
+          {/* 發文框 */}
           {isAuthenticated && (
             <InlineComposer
-              onSubmit={handleCreatePost}
+              onSubmit={(content, images) => handleCreatePost(content, images)}
               disabled={isLoading}
               userInitial={userInitial}
             />

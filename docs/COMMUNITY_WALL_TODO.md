@@ -126,4 +126,35 @@
 3.  **安全無虞**: 權限矩陣涵蓋所有角色，Admin/Official 已就位。
 4.  **代碼潔癖**: 無垃圾代碼、無無效引用、無 Lint Error (Build Pass)。
 
+
+---
+
+## 📸 P0 補完計畫: 圖片上傳功能 (Image Upload)
+
+> **狀態**: ✅ 已完成 (2025-12-14)
+> **說明**: 補完 P7 審計中發現的 P0 缺失功能，實現符合 L7 標準的圖片上傳機制。
+
+### ✅ 實作細節
+- [x] **Core Service**: 建立 `src/services/uploadService.ts`
+    - 實作 `uploadImage` (Supabase Storage).
+    - 加入檔案大小 (5MB) 與類型 (image/*) 驗證。
+    - UUID 檔名生成與 error handling。
+- [x] **Data Layer**: 更新 `src/hooks/useFeedData.ts`
+    - `createPost` 支援 `images: File[]` 參數。
+    - **API Mode**: 先上傳圖片取得 URL -> 寫入 `community_posts` (JSONB) -> 失敗自動 Rollback。
+    - **Optimistic UI**: 使用 `URL.createObjectURL` 實現立即預覽，不需等待上傳完成。
+- [x] **UI Components**: 更新 `InlineComposer.tsx`
+    - 新增隱藏式 File Input 與圖片按鈕。
+    - 實作圖片預覽 (Thumbnail) 與移除功能 (X)。
+    - 限制最多 4 張圖片。
+- [x] **Integration**: 整合至 `Agent.tsx` 與 `Consumer.tsx`
+    - 修正對應的 `handleCreatePost` 介面。
+    - 確保 `communityId` 正確傳遞。
+
+### ✅ 驗證項目
+- [x] **Build Check**: `npm run build` 通過。
+- [x] **Type Safety**: 無 `any` 斷言，介面定義完整 (`FeedPost`, `UseFeedDataReturn`)。
+- [x] **UX Flow**: 樂觀更新確保發文體驗流暢，上傳失敗有錯誤提示。
+
+---
 **Ready for Production Deployment.**

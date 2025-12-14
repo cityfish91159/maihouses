@@ -67,10 +67,10 @@
     "stylelint": "^16.25.0",
     "stylelint-config-standard": "^39.0.1",
     "tailwindcss": "^3.4.13",
+    "ts-node": "^10.9.2",
     "typescript": "^5.6.2",
     "vite": "^5.4.21",
     "vite-plugin-checker": "^0.11.0",
-    "vitest": "^2.0.0",
-    "ts-node": "^10.9.2"
+    "vitest": "^2.0.0"
   }
 }
