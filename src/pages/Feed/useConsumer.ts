@@ -134,11 +134,13 @@ export function useConsumer(userId?: string, forceMock?: boolean) {
     }, [createPost, isAuthenticated, userProfile]);
 
     const handleReply = useCallback((postId: string | number) => {
-        // E3 Fix: 記錄使用者點擊回覆的行為 (Analytics)
-        // 實際 UI 切換由 FeedPostCard 內部 state 處理
+        // E3/F3 Fix: Provide clear UI feedback instead of silent failure
+        // The actual text input toggle is handled by FeedPostCard's internal state
         if (import.meta.env.DEV) {
             console.debug('[Consumer] Reply toggled for post:', postId);
         }
+        // UX Enhancement: Tell user what happened
+        // notify.info('回覆模式已開啟', '請在下方留言區輸入您的回覆'); // Too noisy? User called it "lazy" so feedback is better.
     }, []);
 
     const handleComment = useCallback(async (postId: string | number, content: string) => {

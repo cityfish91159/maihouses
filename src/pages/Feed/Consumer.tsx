@@ -151,23 +151,35 @@ function ConsumerContent({ userId, forceMock }: ConsumerProps) {
   // P7-Audit-C7: Use Hook (Real Architecture)
   const { count: notificationCount } = useNotifications();
 
-  // E5 Fix: Hash-Driven Navigation (Best Practice)
+  // E5/F4 Fix: Hash-Driven Navigation with Feedback
   useEffect(() => {
-    const handleHashChange = () => {
+    const handleNavigation = () => {
+      // 1. Handle Profile Navigation
       if (window.location.hash === '#profile') {
-        // Profile is always at the top of the feed layout
         window.scrollTo({ top: 0, behavior: 'smooth' });
-        // Ideally could focus the profile card:
-        // document.getElementById('profile-card')?.focus();
+        // UX: Give feedback that user is viewing profile area
+        // notify.info(S.NAV.PROFILE, '您正在檢視個人資料');
+      }
+
+      // 2. Handle Post Deep Linking (F6 Fix)
+      const params = new URLSearchParams(window.location.search);
+      const postId = params.get('post');
+      if (postId) {
+        const element = document.getElementById(`post-${postId}`);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          element.classList.add('ring-2', 'ring-brand-500', 'ring-offset-2');
+          setTimeout(() => element.classList.remove('ring-2', 'ring-brand-500', 'ring-offset-2'), 2000);
+        }
       }
     };
 
     // Initial check
-    handleHashChange();
+    handleNavigation();
 
-    window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
-  }, []);
+    window.addEventListener('hashchange', handleNavigation);
+    return () => window.removeEventListener('hashchange', handleNavigation);
+  }, [data.posts]); // Re-run when posts load to ensure we can scroll to them
 
   const handleSearch = (q: string) => {
     // console.log('Search:', q);

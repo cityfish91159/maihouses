@@ -165,8 +165,13 @@ export function GlobalHeader({ mode, title, className = '', notificationCount = 
                     className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-bold text-gray-700 transition-colors hover:bg-brand-50 hover:text-brand-700"
                     role="menuitem"
                     onClick={() => {
-                      // E5 Fix: Navigate to profile using hash strategy
-                      window.location.hash = '#profile';
+                      // E5/F4 Fix: Ensure we are on the consumer feed before hashing
+                      if (window.location.pathname.includes('/feed/consumer') || window.location.pathname.includes('/feed/')) {
+                        window.location.hash = '#profile';
+                      } else {
+                        // Fallback or Navigate
+                        window.location.href = `${ROUTES.FEED_CONSUMER}#profile`;
+                      }
                       setUserMenuOpen(false);
                     }}
                   >
