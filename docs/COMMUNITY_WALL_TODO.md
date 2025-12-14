@@ -1,8 +1,95 @@
 # 🖼️ P8: 圖片上傳與互動功能升級
 
-> **專案狀態**: 🔵 規劃中
+> **專案狀態**: ✅ **P0 已完成 (85/100)**
 > **最後更新**: 2025-12-14
 > **審計等級**: Google L7+ (嚴格安全與架構標準)
+> **最新審計**: 85/100 (B+ 級) - Commit f0d43c6 通過
+
+---
+
+## 🚨 第一輪審計 (2025-12-14)
+
+> **審計者**: Google L8 首席前後端處長
+> **審計對象**: Commit `f0d43c6` (P0 圖片上傳完成)
+> **評分**: **85/100 (B+ 級，良好)**
+
+### ✅ P0 任務完成確認
+
+| 任務 | 狀態 | 證據 |
+|------|------|------|
+| P8-1 InlineComposer | ✅ | `onSubmit: (content: string, images?: File[])` + 預覽 + 移除 |
+| P8-3 createPost | ✅ | `createPost(content, communityId?, images?: File[])` |
+| P8-6 uploadService | ✅ | `uploadImage()` + UUID + 5MB 驗證 |
+
+### 🔴 發現的問題 (待修復)
+
+| ID | 嚴重度 | 問題 | 檔案 | 扣分 |
+|----|--------|------|------|------|
+| **D1** | 🔴 | 記憶體洩漏：`URL.createObjectURL` 未清理 | `InlineComposer.tsx:83` | -8 |
+| **D2** | 🟡 | 缺少 `uploadFiles` 批量方法 | `uploadService.ts` | -3 |
+| **D3** | 🟡 | 前端驗證不完整 (缺 type/size 檢查) | `InlineComposer.tsx:22-30` | -3 |
+| **D4** | 🟢 | `as any` 類型斷言 | `useFeedData.ts:744` | -1 |
+
+### 🎯 待修復引導意見
+
+#### D1: 記憶體洩漏 (🔴 嚴重)
+
+**問題**：每次 render 都會呼叫 `URL.createObjectURL(file)` 產生新 URL，但沒有清理舊的
+
+**位置**：`InlineComposer.tsx` 第 83-85 行
+
+```tsx
+// ❌ 目前問題代碼
+{selectedFiles.map((file, i) => (
+  <img src={URL.createObjectURL(file)} ... />  // 每次 render 產生新 URL!
+))}
+```
+
+**引導意見**：
+```
+1. 使用 useState 儲存預覽 URL，而非每次 render 計算
+2. 在 useEffect cleanup 中呼叫 URL.revokeObjectURL
+3. 當 selectedFiles 變化時更新 previewUrls
+
+結構：
+const [previewUrls, setPreviewUrls] = useState<string[]>([]);
+
+useEffect(() => {
+  const urls = selectedFiles.map(f => URL.createObjectURL(f));
+  setPreviewUrls(urls);
+  return () => urls.forEach(url => URL.revokeObjectURL(url));
+}, [selectedFiles]);
+
+然後在 JSX 中使用 previewUrls[i] 而非 URL.createObjectURL(file)
+```
+
+#### D3: 前端驗證不完整
+
+**位置**：`InlineComposer.tsx` 第 22-30 行
+
+**目前只檢查數量，缺少：**
+- file.type 不是 image/* 時應拒絕
+- file.size > 5MB 時應拒絕
+
+**引導意見**：
+```
+在 handleFileSelect 中加入驗證：
+
+const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+const MAX_SIZE = 5 * 1024 * 1024;
+
+const validFiles = newFiles.filter(file => {
+  if (!file.type.startsWith('image/')) {
+    notify.error(`${file.name} 不是圖片檔案`);
+    return false;
+  }
+  if (file.size > MAX_SIZE) {
+    notify.error(`${file.name} 超過 5MB 限制`);
+    return false;
+  }
+  return true;
+});
+```
 
 ---
 
