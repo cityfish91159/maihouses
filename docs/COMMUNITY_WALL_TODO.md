@@ -1,130 +1,135 @@
-# 🏠 社區牆 + 信息流 專案工單 (P7 重點執行)
+# 🖼️ P8: 圖片上傳與互動功能升級
 
-> **專案狀態**: 🟢 P6 已完成 / 🔵 P7 規劃確認
-> **最後更新**: 2025-12-13
+> **專案狀態**: 🔵 規劃中
+> **最後更新**: 2025-12-14
 > **審計等級**: Google L7+ (嚴格安全與架構標準)
 
 ---
 
-## 📋 歷史存檔 (P0 - P6 已完成)
+## 📋 專案目標
 
-> **狀態摘要**: 基礎架構、權限系統、信息流 React 化、Mock 資料分離均已完成並通過嚴格審計。
+為 **Consumer (消費者)** 與 **Agent (房仲)** 雙頁面實現完整的圖片上傳與互動功能：
 
-<details open>
-<summary>點擊查看 P0-P6 完成清單與審計紀錄</summary>
-
-### ✅ P0 - P6 核心里程碑
-
-| 階段 | 狀態 | 核心產出 | 審計結果 |
-|------|------|----------|----------|
-| **P0 基礎建設** | ✅ | 資料庫視圖 (View), API 容錯機制, 環境變數控制 | 通過 |
-| **P1 提示/權限** | ✅ | 全域提示 (Toast), 身分驗證 Hook, 角色守衛 | 通過 |
-| **P2 資料 Hook** | ✅ | useFeedData (樂觀更新 UI) | 通過 |
-| **P3 版面佈局** | ✅ | 全域頁首 (GlobalHeader), 角色導航與標示 | 通過 |
-| **P4 發文系統** | ✅ | 無頭元件 Hook (Headless), 驗證邏輯, UI 整合 | 通過 |
-| **P5 住戶端 UI** | ✅ | React 頁面重構, Tailwind 樣式, 國際化 (i18n) | 通過 |
-| **P6 房仲端 UI** | ✅ | React 頁面重構, Mock 資料模組化分離 | 通過 |
-| **P6 嚴格審計** | ✅ | B1-B8 扣分項全數修復 (型別/日誌/常數/防呆) | **完美 (無缺失)** |
-
-### 🔴 P6 嚴格審計 (B1-B8) 修復紀錄 (2025-12-13)
-- [x] **B1 (型別安全)**: 移除 `useConsumer.ts` 中所有不安全的 `as any` 斷言。
-- [x] **B2 (日誌清理)**: 移除生產環境中的 `console.error`。
-- [x] **B3 (去硬編碼)**: 消除所有 `'test-uuid'` 硬編碼字串，改用常數。
-- [x] **B5 (圖片防呆)**: 實作圖片載入失敗的替代畫面 (Fallback) 與網格佈局。
-- [x] **B1-B8 驗證**: 通過所有 TypeScript 檢查、建置與單元測試。
-
-</details>
+1. **圖片上傳**: 在發文框 (`InlineComposer`) 增加圖片選擇預覽功能
+2. **互動完善**: 確保點讚與留言功能即時反映在 UI 上 (Optimistic UI)
+3. **雙模式相容**: Mock / API 模式自動切換資料處理方式
 
 ---
 
-## 🚀 P7: 私密牆權限體系 (深度規劃)
+## 🏗️ 現狀分析 (Google 首席處長評估)
 
-> **目標**: 實作 Google L7 等級的權限控制體系，確保「私密牆」不僅是介面隱藏，而是具備資料層級的安全防護與優質的轉化體驗。
+### ✅ 已完成的基礎
 
-### 🌟 架構師建議 (優化方案)
-
-我已針對原始需求加入以下架構建議，以確保系統的擴充性與轉化率：
-
-1.  **權限與角色分離 (Capability-Based Control)**
-    *   **問題**: 如果直接在程式碼寫死 `if (user.role === 'resident')`，未來新增「管委會」或「VIP」角色時會難以維護。
-    *   **建議**: 改用「能力 (Capability)」來判斷，例如 `CAN_VIEW_PRIVATE_WALL`。
-    *   **做法**: 建立一個設定檔，將「角色」對應到「能力」。未來業務邏輯變更時，只需修改設定檔，不用改程式碼。
-
-2.  **軟性攔截策略 (Teaser Strategy)**
-    *   **概念**: 不要直接阻擋未授權用戶（例如顯示 403 錯誤），這會降低參與感。
-    *   **體驗**:讓訪客或未驗證住戶能看到「私密牆」的存在，但內容呈現「模糊化」，並在上方顯示「驗證身分以解鎖」的按鈕。
-    *   **效益**: 利用「錯失恐懼 (FOMO)」心理，有效提升註冊與住戶驗證的轉化率。
-
-3.  **設計級安全 (Security by Design)**
-    *   **重點**: 前端 Hook 層 (`useFeedData`) 必須在偵測到無權限時，主動拒絕發送 API 請求或只回傳假資料。
-    *   **防護**: 不能只依賴 UI 隱藏（避免有心人士透過瀏覽器開發工具讀取隱藏資料）。
-
----
-
-### 📅 P7 執行清單 (與工單細節)
-
-#### 🔵 下階段 1: 核心權限基礎建設
-> 建立可擴展的權限系統，而非散落的邏輯。
-
-- [x] **P7-1: 定義權限架構** `src/types/permissions.ts`
-    - 定義權限清單: `查看私密牆`, `發佈私密貼文`, `查看房仲數據`。
-    - 定義角色對照表 (矩陣): 設定哪些角色擁有上述權限。
-- [x] **P7-2: 實作權限 Hook** `src/hooks/usePermission.ts`
-    - 實作 `hasPermission()` 檢查邏輯。
-    - 整合現有的 `useAuth` 身分資料。
-
----
-
-### 🚨 Google 首席前後端處長代碼審計 - 第四輪 (2025-12-13)
-
-> **審計者**: Google L8 首席前後端處長
-> **審計對象**: P7 完整模組 (9 個檔案, 1671 行代碼)
-> **綜合評分**: **98/100 (A+ 級，接近完美)**
-
----
-
-#### 📊 各項目評分 (第四輪修正後)
-
-| 項目 | 分數 | 說明 |
+| 組件 | 狀態 | 說明 |
 |------|------|------|
-| **P7-1: permissions.ts** | 100/100 | ✅ 完整角色權限矩陣 (Admin Included) |
-| **P7-2: usePermission.ts** | 100/100 | ✅ Strict Type Guard (No `as Role`) |
-| **P7-3: Guard.tsx** | 95/100 | ✅ Loading 狀態優雅處理 |
-| **P7-3: Guard.test.tsx** | 100/100 | ✅ Strict Mock Factory (No `as any`) |
-| **P7-4: Consumer.tsx** | 95/100 | ✅ Error Boundary 整合 |
-| **P7-4: useConsumer.ts** | 100/100 | ✅ Singleton Pattern |
-| **P7-5: PrivateWallLocked.tsx** | 100/100 | ✅ UX Flow 修正 (Wait for Toast) |
-| **P7-5: usePermission.test.ts** | 100/100 | ✅ 完整測試覆蓋 (inc. Loading) |
-| **P7-6: useFeedData.ts** | 98/100 | ✅ Clean & Safe (Deps Fixed) |
+| `FeedPostCard.tsx` | ✅ | 已支援圖片顯示 (`post.images.map`) |
+| `useFeedData.ts` | ⚠️ | 資料結構支援 `images[]`，但 `createPost` 不傳圖片 |
+| `CommentList.tsx` | ✅ | 已支援留言列表顯示 |
+| `CommentInput.tsx` | ✅ | 已支援留言輸入 |
+
+### ❌ 缺失的功能
+
+| 組件 | 問題 | 優先級 |
+|------|------|--------|
+| `InlineComposer.tsx` | 無圖片選擇/預覽功能 | 🔴 P0 |
+| `uploadService.ts` | **不存在** - 需新建 | 🔴 P0 |
+| `useFeedData.createPost` | 不接收 `images` 參數 | 🔴 P0 |
+| `useConsumer/useAgentFeed` | 無圖片處理邏輯 | 🟠 P1 |
 
 ---
 
-#### ✅ P7 最終驗收 (Final Verification Results)
+## 🌟 架構師建議 (優化方案)
 
-| ID | 檢核項目 | 狀態 | 說明 |
-|---|---|---|---|
-| **C1** | Type Safety | ✅ PASS | `usePermission.ts` has Strict Type Guard. |
-| **C2** | Testing | ✅ PASS | `Guard.test.tsx` uses Strict Mock Factory. |
-| **C3** | Clean Code | ✅ PASS | Dead imports removed. |
-| **C4** | Logic | ✅ PASS | Garbage comments removed in `useFeedData.ts`. |
-| **C5** | Linting | ✅ PASS | Dependency arrays fixed. |
-| **C6** | Optimization | ✅ PASS | `DEFAULT_MOCK_DATA` Singleton implemented. |
-| **C7** | Constants | ✅ PASS | Magic numbers replaced with Constants. |
-| **C8** | UX (Loading) | ✅ PASS | `LoadingState` implemented in Guard. |
-| **C9** | Security | ✅ PASS | Admin Role enabled and permissions defined. |
-| **C10** | Coverage | ✅ PASS | `isLoading` test case verified. |
-| **C11** | Resilience | ✅ PASS | `FeedErrorBoundary` implemented. |
-| **C12** | UX (Flow) | ✅ PASS | `PrivateWallLocked` notify order optimized. |
+### 1. 圖片處理策略 - 雙軌制
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                    InlineComposer                        │
+│  ┌─────────────┐   選擇圖片   ┌─────────────┐           │
+│  │ File Input  │ ──────────▶ │ File[] 狀態 │           │
+│  └─────────────┘              └─────────────┘           │
+│                                     │                    │
+│                                     ▼                    │
+│                        ┌────────────────────┐           │
+│                        │ onSubmit(content,  │           │
+│                        │   images: File[])  │           │
+│                        └────────────────────┘           │
+└─────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────┐
+│              useConsumer / useAgentFeed                  │
+│                                                          │
+│   if (useMock) {                                        │
+│     // Blob URL - 純前端，不需後端                        │
+│     imageUrls = files.map(f => URL.createObjectURL(f))  │
+│   } else {                                               │
+│     // 真實上傳 - 需要 uploadService                     │
+│     imageUrls = await uploadService.uploadFiles(files)  │
+│   }                                                      │
+│                                                          │
+│   createPost(content, communityId, imageUrls)           │
+└─────────────────────────────────────────────────────────┘
+```
+
+**效益**：
+- Mock 模式零延遲，開發體驗極佳
+- API 模式可漸進式接入，不阻塞前端開發
+- 同一套邏輯，切換一個 flag 即可
+
+### 2. 類型安全 - 嚴格 Props 定義
+
+**引導意見**：
+
+```typescript
+// ❌ 錯誤：any 或 loose typing
+onSubmit: (content: string, images: any) => void;
+
+// ✅ 正確：明確 File[] 型別
+onSubmit: (content: string, images: File[]) => Promise<void>;
+```
+
+### 3. 記憶體管理 - Blob URL 清理
+
+**引導意見**：
+
+```typescript
+// ❌ 錯誤：只創建不清理 → 記憶體洩漏
+const urls = files.map(f => URL.createObjectURL(f));
+
+// ✅ 正確：組件卸載時清理
+useEffect(() => {
+  return () => {
+    previewUrls.forEach(url => URL.revokeObjectURL(url));
+  };
+}, [previewUrls]);
+```
+
+### 4. 圖片驗證 - 前置檢查
+
+**引導意見**：
+
+```typescript
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+const MAX_FILES = 4;
+
+function validateFile(file: File): { valid: boolean; error?: string } {
+  if (!ALLOWED_TYPES.includes(file.type)) {
+    return { valid: false, error: '僅支援 JPG/PNG/WebP 格式' };
+  }
+  if (file.size > MAX_FILE_SIZE) {
+    return { valid: false, error: '圖片大小不得超過 5MB' };
+  }
+  return { valid: true };
+}
+```
 
 ---
 
-## 🏆 最終驗收結論
+## 📅 P8 執行清單
 
-系統已達到 Google L7+ 工程標準：
-1.  **零類型斷言**: `as any` 與 `as Role` 已全數移除，全依賴 TypeScript 推導。
-2.  **架構強韌**: 加入 `ErrorBoundary` 與 `FeedSkeleton`，確保錯誤不崩潰、載入不閃爍。
-3.  **安全無虞**: 權限矩陣涵蓋所有角色，Admin/Official 已就位。
-4.  **代碼潔癖**: 無垃圾代碼、無無效引用、無 Lint Error (Build Pass)。
+### 🔴 階段 1: UI 組件升級 (共用組件)
 
 
 ---
