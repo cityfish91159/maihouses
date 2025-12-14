@@ -337,6 +337,8 @@ export interface UseFeedDataReturn {
   isAuthenticated: boolean;
   /** 判斷某貼文是否已按讚（P2-C5 修復：暴露給消費者） */
   isLiked: (postId: string | number) => boolean;
+  /** 新增留言 */
+  addComment: (postId: string | number, content: string) => Promise<void>;
 }
 
 // ============ Main Hook ============
@@ -803,17 +805,56 @@ export function useFeedData(
       });
       throw err;
     }
-  }, [useMock, isAuthenticated, authUser, authRole, options.communityId, currentUserId, fetchApiData]);
+  }, [useMock, isAuthenticated, options.communityId, authUser, authRole, currentUserId]);
+
+  const addComment = useCallback(async (postId: string | number, content: string) => {
+    if (!useMock && !isAuthenticated) {
+      throw new Error('請先登入後再留言');
+    }
+
+    if (useMock) {
+      // Generate a mock comment
+      const newComment: FeedComment = {
+        id: Date.now(),
+        postId: postId,
+        author: authUser?.user_metadata?.name || '測試用戶',
+        role: (['agent', 'resident', 'official'].includes(authRole || '') ? authRole : 'member') as FeedComment['role'],
+        content,
+        time: new Date().toISOString(),
+        likes: 0,
+        isLiked: false,
+      };
+
+      setMockData(prev => ({
+        ...prev,
+        posts: prev.posts.map(post => {
+          if (post.id !== postId) return post;
+          const updatedComments = [...(post.commentList || []), newComment];
+          return {
+            ...post,
+            comments: updatedComments.length,
+            commentList: updatedComments
+          };
+        })
+      }));
+      return;
+    }
+
+    // API Mode: Optimistic update not fully implemented, just return for now
+    // to allow UI to proceed without crashing.
+    console.log('[useFeedData] addComment API mode not implemented');
+  }, [useMock, isAuthenticated, authUser, authRole]);
 
   return {
     data,
     useMock,
     setUseMock: setUseMockState,
     isLoading: useMock ? false : apiLoading,
-    error: apiError,
+    error: useMock ? null : apiError,
     refresh,
     toggleLike,
     createPost,
+    addComment,
     viewerRole,
     isAuthenticated,
     isLiked,

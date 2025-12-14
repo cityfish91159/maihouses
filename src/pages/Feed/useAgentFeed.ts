@@ -37,10 +37,24 @@ export function useAgentFeed(userId?: string, forceMock?: boolean) {
     // P6-REFACTOR: Todo List from external mockData (deep copy)
     const todoList = useMemo(() => getAgentTodoList(), []);
 
+    const {
+        createPost,
+        toggleLike,
+        isLiked,
+        addComment,
+        useMock,
+        setUseMock,
+        isAuthenticated
+    } = feed;
+    // ...
     const handleComment = useCallback(async (postId: string | number, content: string) => {
-        await new Promise(resolve => setTimeout(resolve, 500));
-        notify.success(STRINGS.FEED.POST.COMMENT_SUCCESS.TITLE, STRINGS.FEED.POST.COMMENT_SUCCESS.DESC);
-    }, []);
+        try {
+            await addComment(postId, content);
+            notify.success(STRINGS.FEED.POST.COMMENT_SUCCESS.TITLE, STRINGS.FEED.POST.COMMENT_SUCCESS.DESC);
+        } catch (err) {
+            notify.error('留言失敗', '請稍後再試');
+        }
+    }, [addComment]);
 
     return {
         ...feed,

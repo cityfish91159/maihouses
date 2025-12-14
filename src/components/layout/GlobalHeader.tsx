@@ -165,7 +165,8 @@ export function GlobalHeader({ mode, title, className = '', notificationCount = 
                     className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-bold text-gray-700 transition-colors hover:bg-brand-50 hover:text-brand-700"
                     role="menuitem"
                     onClick={() => {
-                      notify.info(HEADER_STRINGS.MSG_FEATURE_DEV, HEADER_STRINGS.MSG_PROFILE_SOON);
+                      // P8: Removed WIP notification
+                      window.location.hash = 'profile';
                       setUserMenuOpen(false);
                     }}
                   >
@@ -195,6 +196,6 @@ export function GlobalHeader({ mode, title, className = '', notificationCount = 
           )}
         </div>
       </div>
-    </header>
+    </header >
   );
 }

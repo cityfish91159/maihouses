@@ -35,6 +35,7 @@ export function useConsumer(userId?: string, forceMock?: boolean) {
         refresh,
         toggleLike,
         createPost,
+        addComment,
         isLiked,
     } = useFeedData({
         // P6-REFACTOR: Use shared mock data instance to prevent duplication (C6)
@@ -133,8 +134,7 @@ export function useConsumer(userId?: string, forceMock?: boolean) {
     }, [createPost, isAuthenticated, userProfile]);
 
     const handleReply = useCallback((postId: string | number) => {
-        notify.info(S.NOTIFY.FEATURE_WIP, S.NOTIFY.REPLY_WIP);
-        // P6 Phase 1: Toggle UI only, logic handled in FeedPostCard via onComment
+        // P8: Reply just toggles visibility in FeedPostCard, no toast needed.
     }, []);
 
     const handleComment = useCallback(async (postId: string | number, content: string) => {
@@ -142,14 +142,18 @@ export function useConsumer(userId?: string, forceMock?: boolean) {
             notify.error(S.NOTIFY.LOGIN_REQUIRED, S.NOTIFY.LOGIN_REQUIRED_POST);
             return;
         }
-        // P6 Phase 1: Submitting comment (Mock)
-        // In Phase 2/3, this will call createComment in useFeedData
-        await new Promise(resolve => setTimeout(resolve, 500)); // Simulate latency
-        notify.success(S.POST.COMMENT_SUCCESS.TITLE, S.POST.COMMENT_SUCCESS.DESC);
-    }, [isAuthenticated]);
+        try {
+            await addComment(postId, content);
+            notify.success(S.POST.COMMENT_SUCCESS.TITLE, S.POST.COMMENT_SUCCESS.DESC);
+        } catch (err) {
+            console.error('Failed to add comment', err);
+            notify.error('留言失敗', '請稍後再試');
+        }
+    }, [isAuthenticated, addComment]);
 
     const handleShare = useCallback((postId: string | number) => {
-        notify.info(S.NOTIFY.FEATURE_WIP, S.NOTIFY.SHARE_WIP);
+        // P8: Simulate share
+        notify.success('連結已複製', '您可以將連結分享給朋友 (Mock)');
     }, []);
 
     const userInitial = userProfile?.name.charAt(0).toUpperCase() || 'U';

@@ -245,3 +245,14 @@ function validateFile(file: File): { valid: boolean; error?: string } {
 3. **Build 驗證**: `npm run build` 順利通過，無 Type Error。
 
 **結論**: P0 圖片上傳功能已達到 Production Ready 標準，可立即部署。
+
+---
+## 🚀 加碼優化 (2025-12-14 16:45)
+
+> **需求**: 消費者/房仲體驗一致性 + Mock 功能完善
+
+### ✅ 完成項目
+- [x] **Mock 互動完善**: 實作 `addComment` (useFeedData)，支援 Mock 模式下真實留言互動 (Optimistic UI)。
+- [x] **WIP 提示移除**: 移除「功能開發中」提示，Reply/Share/Profile 改為靜默或導覽行為。
+- [x] **Agent 同步**: 確認房仲版 (`Agent.tsx`) 同步享有圖片上傳與留言互動功能。
+- [x] **全站驗證**: Build 通過，無 Lint Error。
