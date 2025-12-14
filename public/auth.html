@@ -1229,18 +1229,17 @@
           }
           
           if(role) setLS('mh.auth.role', role);
+
+          // P7-FIX: Redirect to React Feed App (Unified Entry)
+          go(`/maihouses/feed/${user.id}`);
+          return;
       }
     } catch(err) { 
       console.error('Error fetching user role:', err.message || err); 
     }
     
-    role = role || 'member'; // Default to consumer
-
-    if (role === 'agent') {
-        go('/maihouses/feed-agent.html');
-    } else {
-        go('/maihouses/feed-consumer.html');
-    }
+    // Fallback if user ID not found (Should not happen if logged in)
+    go('/maihouses/');
   }
 
   syncMode(true);

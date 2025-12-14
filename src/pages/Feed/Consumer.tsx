@@ -286,6 +286,10 @@ function ConsumerContent({ userId, forceMock }: ConsumerProps) {
           <FeedSidebar
             data={data.sidebarData}
           />
+          {/* Debug/Demo Toggle */}
+          <div className="mt-4 flex justify-center">
+            <MockToggle useMock={useMock} onToggle={() => setUseMock(!useMock)} />
+          </div>
         </aside>
       </div>
     </div >
