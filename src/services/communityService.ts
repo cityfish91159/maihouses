@@ -8,6 +8,7 @@
 import { supabase } from '../lib/supabase';
 import { communityApiBase } from '../config/env';
 import type { Role } from '../types/community';
+import type { FeaturedReviewsResponse, ReviewForUI } from '../types/review';
 
 // API 基礎路徑
 const API_BASE = communityApiBase;
@@ -145,7 +146,7 @@ async function fetchAPI<T>(
       errorMessage = errorData.message;
     } else if (Array.isArray(errorData.error)) {
       // Zod 錯誤是 array
-      errorMessage = errorData.error.map((e: any) => e.message || e).join(', ');
+      errorMessage = errorData.error.map((e: { message?: string } | string) => (typeof e === 'object' ? e.message : e) || String(e)).join(', ');
     }
     
     const error = new Error(errorMessage || `HTTP ${response.status}`);
@@ -297,4 +298,34 @@ export default {
   askQuestion,
   answerQuestion,
   clearCommunityCache,
+  getFeaturedHomeReviews,
 };
+
+/**
+ * 取得首頁精選評價 (P9-2)
+ * 呼叫 /api/home/featured-reviews
+ * 
+ * @returns 評價列表 (ReviewForUI[])
+ */
+export async function getFeaturedHomeReviews(): Promise<ReviewForUI[]> {
+  try {
+    // 直接呼叫 Vercel API，不經過 communityApiBase
+    const response = await fetch('/api/home/featured-reviews');
+    
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status}`);
+    }
+    
+    const data: FeaturedReviewsResponse = await response.json();
+    
+    if (!data.success) {
+      throw new Error('API returned success: false');
+    }
+    
+    return data.data;
+  } catch (error) {
+    console.error('[CommunityService] Failed to fetch featured reviews:', error);
+    // 錯誤時回傳空陣列，讓 UI 顯示 fallback 或空狀態
+    return [];
+  }
+}

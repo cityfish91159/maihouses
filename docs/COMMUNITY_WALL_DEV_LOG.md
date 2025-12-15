@@ -1,5 +1,41 @@
 # 社區牆開發紀錄
 
+## 2025-12-15 - P9-2 前端服務層實作
+
+### 📋 任務摘要
+
+> **實作者**: AI Agent
+> **任務**: P9-2 實作 - 前端 Service 層串接 API
+> **審查者**: Google L8 首席前後端處長
+> **結果**: ✅ **已實作並部署**
+
+### 🛠️ 實作內容
+
+#### 1. 更新 `src/services/communityService.ts`
+
+- **引入共用型別**: `import type { FeaturedReviewsResponse, ReviewForUI } from '../types/review';`
+- **新增 `getFeaturedHomeReviews()`**:
+  - 直接呼叫 `/api/home/featured-reviews` (Vercel API)
+  - 實作錯誤處理 (try-catch)
+  - 失敗時回傳空陣列 `[]` (Graceful Degradation)
+
+### 📁 修改檔案
+
+| 檔案 | 變更 |
+|------|------|
+| `src/services/communityService.ts` | 新增 `getFeaturedHomeReviews` |
+| `docs/COMMUNITY_WALL_TODO.md` | 更新 P9-2 狀態 |
+
+### 🔗 驗證結果
+
+| 項目 | 結果 |
+|------|------|
+| TypeScript 編譯 | ✅ 通過 |
+| API 路徑 | ✅ `/api/home/featured-reviews` |
+| 型別檢查 | ✅ `ReviewForUI[]` |
+
+---
+
 ## 2025-12-15 - P9-1 第三輪審查修復: I1-I6 一次到位
 
 ### 📋 任務摘要
