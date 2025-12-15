@@ -1,13 +1,158 @@
 # 🏠 P9: 首頁社區評價聚合 API 導入
 
-> **專案狀態**: ✅ **Phase 1 完成 (100/100)**
+> **專案狀態**: 🟡 **Phase 1 待修復 (82/100)**
 > **最後更新**: 2025-12-15
+> **最新 Commit**: `87352df`
 > **目標**: 外觀不變，資料源從靜態切換為 API 混合模式
 > **核心策略**: 後端聚合 + 自動補位 (Hybrid Reviews System)
 
 ---
 
-## ✅ H1-H4 二次審查修復 (commit: 待提交)
+## 🔴 I1-I8 第三輪審查發現的問題 (必須修復)
+
+> **審查者**: Google L8 首席前後端處長
+> **審查對象**: commit `87352df` (H1-H4 修復後)
+> **評分**: **82/100** (非 100/100，因為還有問題)
+
+### 💀 I1: src/types/review.ts 註解仍有「匿名住戶」(致命)
+
+**位置**: [src/types/review.ts](src/types/review.ts#L20)
+
+**問題**：註解寫 `從 name 提取首字 (如 "匿" 或 "林")`，但代碼已改為英文字母
+
+**引導意見**：
+1. 開啟 `src/types/review.ts`
+2. 第 20 行：將 `(如 "匿" 或 "林")` 改為 `(如 "J" 或 "林")`
+3. 說明真實資料用英文字母，Mock 用中文首字
+
+---
+
+### 💀 I2: src/types/review.ts 範例仍有「匿名住戶｜認證評價」(致命)
+
+**位置**: [src/types/review.ts](src/types/review.ts#L23)
+
+**問題**：範例寫 `"匿名住戶｜認證評價"` 但系統無匿名功能
+
+**引導意見**：
+1. 第 23 行：將範例改為 `"J***｜榮耀城示範社區 住戶"`
+2. 確保範例與實際 API 輸出一致
+
+---
+
+### 🔴 I3: TODO.md 顯示 `commit: 待提交` 但已提交 (文檔過時)
+
+**位置**: 本文件第 10 行
+
+**問題**：H1-H4 區塊寫「commit: 待提交」但已提交 `f2208ff`
+
+**引導意見**：
+1. 更新為 `(commit: f2208ff, 87352df)`
+2. 保持文檔與實際狀態同步
+
+---
+
+### 🔴 I4: API 沒有使用 src/types/review.ts，型別重複定義 (代碼重複)
+
+**位置**: 
+- [api/home/featured-reviews.ts](api/home/featured-reviews.ts#L27-L60) - 本地定義
+- [src/types/review.ts](src/types/review.ts) - 共用定義
+
+**問題**：P4 說「新增共用型別」，但 API 沒有 import 使用，導致兩處重複定義
+
+**引導意見**：
+1. 在 API 檔案頂部加入：
+   ```typescript
+   import type { ReviewForUI, RealReviewRow, ServerSeed } from '../src/types/review';
+   ```
+2. 刪除 API 檔案中 L27-L60 的重複 interface
+3. 確保單一真相來源 (Single Source of Truth)
+
+**注意**：Vercel API 的 import 路徑要正確，可能需要：
+- 使用相對路徑 `../../src/types/review`
+- 或在 `api/tsconfig.json` 設定 paths
+
+---
+
+### 🟡 I5: RealReviewRow 定義不一致 (型別不一致)
+
+**位置**：
+- API 有 `community_name: string | null`
+- src/types/review.ts 沒有這個欄位
+
+**問題**：JOIN 後的欄位沒有在共用型別中定義
+
+**引導意見**：
+1. 在 `src/types/review.ts` 的 `RealReviewRow` 加入：
+   ```typescript
+   /** JOIN communities 表取得的社區名稱 */
+   community_name?: string | null;
+   ```
+2. 使用 `?` 表示這是 JOIN 後才有的欄位
+
+---
+
+### 🟡 I6: P4 聲稱「共用」但實際沒用 (功能未實作)
+
+**位置**: TODO.md P4 區塊
+
+**問題**：P4 說「API 和前端可共用同一介面」，但：
+- API 沒有 import `src/types/review.ts`
+- 前端也還沒使用（P9-2/P9-3 待做）
+
+**引導意見**：
+1. 標記 P4 為「部分完成」
+2. 說明「已建立型別，待 API 和前端 import 使用」
+3. 在 P9-2 時真正 import 使用
+
+---
+
+### 🟡 I7: TODO.md 宣稱 100/100 但實際 82/100 (虛假宣稱)
+
+**位置**: 本文件第 3 行
+
+**問題**：專案狀態寫 `100/100` 但有 I1-I8 問題未修
+
+**引導意見**：
+1. 改為 `82/100` 或 `待修復`
+2. 列出所有待修問題
+3. 誠實反映專案狀態
+
+---
+
+### 🟢 I8: commit 參考過時 (文檔過時)
+
+**位置**: TODO.md 多處
+
+**問題**：
+- 引用 `100551e`（舊 commit）
+- 應該引用 `87352df`（最新）
+
+**引導意見**：
+1. 搜尋所有 `100551e` 並更新
+2. 保持 commit 參考最新
+
+---
+
+## 📊 第三輪審查評分
+
+```
+基準分: 100
+
+✅ H1-H4 修復: +0 (baseline)
+✅ 錯字修復 (房仿→房仲): +0 (baseline)
+
+💀 I1 型別註解「匿」: -5 (文檔與代碼不符)
+💀 I2 型別範例「匿名住戶」: -5 (文檔與代碼不符)
+🔴 I3 commit 參考過時: -2 (文檔維護)
+🔴 I4 型別重複定義: -3 (代碼重複)
+🟡 I5 RealReviewRow 不一致: -1 (型別不完整)
+🟡 I6 P4 功能未真正實作: -1 (宣稱與實際不符)
+🟡 I7 虛假 100/100: -1 (誠信問題)
+
+最終分數: 82/100
+```
+
+---
 
 ### ✅ H1: displayId 字母不穩定 (已修復)
 
