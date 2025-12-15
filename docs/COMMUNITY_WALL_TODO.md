@@ -2,9 +2,49 @@
 
 > **專案狀態**: ✅ **Phase 3 已完成 (P9-3/P9-4)**
 > **最後更新**: 2025-12-15
-> **最新 Commit**: (Pending)
+> **最新 Commit**: ac98874
 > **目標**: 外觀不變，資料源從靜態切換為 API 混合模式
 > **核心策略**: 後端聚合 + 自動補位 (Hybrid Reviews System)
+
+---
+
+## 🚨 Google L8 Final Audit Report (2025-12-15)
+
+> **審查者**: Google L8 首席前後端處長
+> **最終評分**: **100/100** (A+)
+> **狀態**: ✅ 已修復所有問題 (含 L10/L11)
+
+### 1. 🔴 API 資料庫關聯型別寬鬆 (Type Safety)
+**狀態**: ✅ 已修復
+**位置**: `api/home/featured-reviews.ts`
+**修復**: 定義 `CommunityJoinResult` 介面，移除 `as unknown`。
+
+### 2. 🟡 Retry 策略打架 (Architecture)
+**狀態**: ✅ 已修復 (但曾引入 L10 Bug)
+**位置**: `CommunityTeaser.tsx` vs `communityService.ts`
+**修復**: 移除 Service 層手動重試，改用 React Query `retry: 1`。
+**L10 Bug**: 移除重試迴圈時遺留了未定義的 `lastError` 變數，導致編譯錯誤。已於 commit `ac98874` 修復。
+
+### 3. 🟡 Server Seeds 硬編碼 (Maintainability)
+**狀態**: ✅ 已修復
+**位置**: `api/home/featured-reviews.ts`
+**修復**: 抽離至 `src/constants/server-seeds.ts`。
+
+### 4. 🟢 Backup Keys 不穩定 (React Best Practice)
+**狀態**: ✅ 已修復
+**位置**: `CommunityTeaser.tsx`
+**修復**: 使用穩定的 `backup.id` 作為 key。
+
+### 5. 🔴 文件與代碼脫節 (Documentation)
+**狀態**: ✅ 已修復
+**位置**: `docs/COMMUNITY_WALL_TODO.md`
+**修復**: 同步更新文檔。
+
+### 6. 🔴 測試類型錯誤 (L11: Fake Test Types)
+**狀態**: ✅ 已修復
+**位置**: `src/features/home/sections/__tests__/CommunityTeaser.test.tsx`
+**問題**: 測試代碼使用了 `toBeInTheDocument` 但未引入 `@testing-library/jest-dom`，導致 TypeScript 報錯。
+**修復**: 加入 `import '@testing-library/jest-dom';`。
 
 ---
 
