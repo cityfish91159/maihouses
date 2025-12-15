@@ -516,14 +516,14 @@ if (items.length > 0) {
 
 ### Phase 3: UI 整合
 
-- [ ] **P9-3**: 更新 `CommunityTeaser.tsx`
+- [x] **P9-3**: 更新 `CommunityTeaser.tsx` ✅ 完成
   - 改用 `useEffect` + `useState` 取代靜態 import
   - 保持 UI 外觀完全不變
   - 處理點擊導向邏輯 (Mock vs Real)
 
 ### Phase 4: 保底機制
 
-- [ ] **P9-4**: 更新 `src/constants/data.ts`
+- [x] **P9-4**: 更新 `src/constants/data.ts` ✅ 完成
   - 將 `COMMUNITY_REVIEWS` 改名為 `BACKUP_REVIEWS`
 
 ---
@@ -535,8 +535,34 @@ if (items.length > 0) {
 | `api/home/featured-reviews.ts` | 新增+修復 | ✅ 完成 |
 | `src/types/review.ts` | 新增 | ✅ 完成 |
 | `src/services/communityService.ts` | 修改 | ✅ 完成 |
-| `src/features/home/sections/CommunityTeaser.tsx` | 修改 | ⬜ 待做 |
-| `src/constants/data.ts` | 修改 | ⬜ 待做 |
+| `src/features/home/sections/CommunityTeaser.tsx` | 修改 | ✅ 完成 |
+| `src/constants/data.ts` | 修改 | ✅ 完成 |
+
+---
+
+## 📋 P9-3/P9-4 實作過程紀錄
+
+### 實作內容
+
+1. **更新 `src/features/home/sections/CommunityTeaser.tsx`**
+   - 引入 `useNavigate` from `react-router-dom`
+   - 新增 `ReviewWithNavigation` interface (保留 originalId + displayId)
+   - `useEffect` + `useState` 呼叫 `getFeaturedHomeReviews()`
+   - Loading skeleton (6 個骨架屏)
+   - Error fallback 使用 `BACKUP_REVIEWS`
+   - 點擊導向: real → `/community/{id}/wall`, seed → `/maihouses/community-wall_mvp.html`
+
+2. **更新 `src/constants/data.ts`**
+   - `COMMUNITY_REVIEWS` → `BACKUP_REVIEWS`
+   - 加入 JSDoc 說明用途
+
+### 驗證結果
+
+- **TypeScript 編譯**: ✅ 通過
+- **ESLint**: ✅ 0 errors
+- **Build**: ✅ 18.36s
+- **部署**: ✅ commit `9eec0f6`
+- **API**: ✅ 回傳 6 筆資料
 
 ---
 
