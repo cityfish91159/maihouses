@@ -362,29 +362,20 @@ export async function getFeaturedHomeReviews(): Promise<ReviewForUI[]> {
       clearTimeout(timeoutId);
       
       // T1: 不使用 console.error，直接拋出讓上層處理
+      let finalError: Error;
       if (error instanceof Error && error.name === 'AbortError') {
-        lastError = new Error('Request timeout');
+        finalError = new Error('Request timeout');
       } else if (error instanceof Error) {
-        lastError = error;
+        finalError = error;
       } else {
-        lastError = new Error('Unknown error');
+        finalError = new Error('Unknown error');
       }
       
-      // U2: 如果還有重試次數，等待 1 秒後重試
-      // if (attempt < FEATURED_REVIEWS_MAX_RETRIES) {
-      //   await new Promise(resolve => setTimeout(resolve, 1000));
-      //   continue;
-      // }
-      
       // 重試用盡，拋出最後一次錯誤
-      throw lastError;
+      throw finalError;
     } finally {
       clearTimeout(timeoutId);
     }
-  // }
-  
-  // 理論上不會到這裡，但為了 TypeScript 類型安全
-  // throw lastError || new Error('Max retries exceeded');
 }
 
 /**

@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
+import '@testing-library/jest-dom'; // Fix: Import jest-dom for matchers
 import CommunityTeaser from '../CommunityTeaser';
 import { BACKUP_REVIEWS } from '../../../../constants/data';
 
