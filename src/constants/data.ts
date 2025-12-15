@@ -54,42 +54,54 @@ export const BACKUP_REVIEWS = [
     name: 'J***｜景安和院 住戶',
     rating: 5,
     tags: ['#物業/管理'],
-    content: '公設維護得乾淨，假日草皮有人整理。之前反映停車動線，管委會一週內就公告改善。'
+    content: '公設維護得乾淨，假日草皮有人整理。之前反映停車動線，管委會一週內就公告改善。',
+    source: 'seed' as const,
+    communityId: null
   },
   {
     id: 'W',
     name: 'W***｜松濤苑 住戶',
     rating: 4,
     tags: ['#噪音'],
-    content: '住起來整體舒服，但臨路面向在上下班尖峰車聲明顯，喜靜者建議考慮中高樓層。'
+    content: '住起來整體舒服，但臨路面向在上下班尖峰車聲明顯，喜靜者建議考慮中高樓層。',
+    source: 'seed' as const,
+    communityId: null
   },
   {
     id: 'L',
     name: 'L***｜遠揚柏悅 住戶',
     rating: 4,
     tags: ['#漏水/壁癌'],
-    content: '頂樓排水設計不錯，颱風天沒有積水。不過垃圾車時間稍晚，偶爾有下水道味。'
+    content: '頂樓排水設計不錯，颱風天沒有積水。不過垃圾車時間稍晚，偶爾有下水道味。',
+    source: 'seed' as const,
+    communityId: null
   },
   {
     id: 'A',
     name: 'A***｜華固名邸 住戶',
     rating: 5,
     tags: ['#物業/管理'],
-    content: '管理員很負責，包裹收發與公告都有效率；電梯偶爾故障但維修速度快。'
+    content: '管理員很負責，包裹收發與公告都有效率；電梯偶爾故障但維修速度快。',
+    source: 'seed' as const,
+    communityId: null
   },
   {
     id: 'H',
     name: 'H***｜寶輝花園廣場 住戶',
     rating: 3,
     tags: ['#停車/車位'],
-    content: '地下室車位轉彎半徑偏小，新手要多注意；平日夜間社區整體很安靜。'
+    content: '地下室車位轉彎半徑偏小，新手要多注意；平日夜間社區整體很安靜。',
+    source: 'seed' as const,
+    communityId: null
   },
   {
     id: 'K',
     name: 'K***｜潤泰峰匯 住戶',
     rating: 4,
     tags: ['#採光/日照'],
-    content: '採光好、通風佳，夏天不會太悶熱；但西曬戶下午還是會稍微熱一些。'
+    content: '採光好、通風佳，夏天不會太悶熱；但西曬戶下午還是會稍微熱一些。',
+    source: 'seed' as const,
+    communityId: null
   }
 ];
 
