@@ -12,8 +12,10 @@ import type { FeaturedReviewsResponse, ReviewForUI } from '../types/review';
 
 // API 基礎路徑
 const API_BASE = communityApiBase;
+
+// Featured Reviews API 專用常數 (T3: 明確標註範圍)
 const FEATURED_REVIEWS_ENDPOINT = '/api/home/featured-reviews';
-const DEFAULT_TIMEOUT = 5000; // 5秒超時
+const FEATURED_REVIEWS_TIMEOUT = 5000; // 5秒超時，僅用於 getFeaturedHomeReviews
 
 // 註：快取已移除，改由 React Query 統一管理
 
@@ -307,21 +309,23 @@ export default {
  * 取得首頁精選評價 (P9-2)
  * 呼叫 /api/home/featured-reviews
  * 
- * S1-S4 修復：
- * - S1: 錯誤處理不再 silent fail，改為 throw error 讓上層處理
- * - S2: 使用常數 FEATURED_REVIEWS_ENDPOINT
- * - S3: 加入 AbortController timeout 機制
- * - S4: 加入 Runtime Validation
+ * T1-T5 修復 (第五輪審查)：
+ * - T1: 移除 console.error，錯誤由上層處理
+ * - T2: Type Guard 驗證陣列元素結構
+ * - T3: 常數使用 _FEATURED_ prefix 明確範圍
+ * - T5: JSDoc 列出具體錯誤訊息
  * 
  * @returns 評價列表 (ReviewForUI[])
- * @throws Error 當 API 失敗或資料格式錯誤時
+ * @throws {Error} "Request timeout" - 當請求超過 5 秒
+ * @throws {Error} "API error: {status}" - 當 HTTP 狀態碼非 200
+ * @throws {Error} "Invalid API response format" - 當回應結構不符合 FeaturedReviewsResponse
+ * @throws {Error} "API returned success: false" - 當 API 明確回傳失敗
  */
 export async function getFeaturedHomeReviews(): Promise<ReviewForUI[]> {
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT);
+  const timeoutId = setTimeout(() => controller.abort(), FEATURED_REVIEWS_TIMEOUT);
 
   try {
-    // S2: 使用常數路徑
     const response = await fetch(FEATURED_REVIEWS_ENDPOINT, {
       signal: controller.signal
     });
@@ -330,8 +334,7 @@ export async function getFeaturedHomeReviews(): Promise<ReviewForUI[]> {
       throw new Error(`API error: ${response.status}`);
     }
     
-    // S4: Runtime Validation
-    const data = await response.json() as unknown; // 先轉 unknown 避免直接斷言
+    const data = await response.json() as unknown;
     
     if (!isValidFeaturedReviewsResponse(data)) {
       throw new Error('Invalid API response format');
@@ -343,27 +346,45 @@ export async function getFeaturedHomeReviews(): Promise<ReviewForUI[]> {
     
     return data.data;
   } catch (error) {
-    // S1: 記錄錯誤並拋出，不吞噬錯誤
+    // T1: 不使用 console.error，直接拋出讓上層 (Error Boundary / React Query) 處理
     if (error instanceof Error && error.name === 'AbortError') {
-      console.error('[CommunityService] Fetch timeout:', error);
       throw new Error('Request timeout');
     }
-    console.error('[CommunityService] Failed to fetch featured reviews:', error);
-    throw error; // 讓上層 (React Query 或 Component) 決定如何處理 (顯示 Error Boundary 或 Fallback)
+    throw error;
   } finally {
     clearTimeout(timeoutId);
   }
 }
 
-// S4: Type Guard
+/**
+ * Type Guard: 驗證 FeaturedReviewsResponse 結構
+ * T2 修復：不只驗證外層，也驗證陣列元素的必要欄位
+ */
 function isValidFeaturedReviewsResponse(data: unknown): data is FeaturedReviewsResponse {
   if (typeof data !== 'object' || data === null) {
     return false;
   }
   
   const response = data as Record<string, unknown>;
-  return (
-    typeof response.success === 'boolean' &&
-    Array.isArray(response.data)
-  );
+  
+  // 驗證外層結構
+  if (typeof response.success !== 'boolean' || !Array.isArray(response.data)) {
+    return false;
+  }
+  
+  // T2: 驗證陣列元素結構 (抽樣檢查第一個元素)
+  const items = response.data as unknown[];
+  if (items.length > 0) {
+    const firstItem = items[0] as Record<string, unknown>;
+    // 檢查 ReviewForUI 必要欄位: id, displayId, name
+    if (
+      typeof firstItem.id !== 'string' ||
+      typeof firstItem.displayId !== 'string' ||
+      typeof firstItem.name !== 'string'
+    ) {
+      return false;
+    }
+  }
+  
+  return true;
 }
