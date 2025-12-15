@@ -20,7 +20,7 @@ export const HeroStep = React.memo(({ index, title, desc, icon: Icon, isLast }: 
         {/* 修改 2: size-12 -> size-10 (手機版縮小為 40px), md:size-12 (桌機維持 48px) */}
         <div className="flex size-10 items-center justify-center rounded-full border-2 border-border-light bg-white text-text-muted shadow-sm transition-all duration-300 group-hover:scale-110 group-hover:border-brand group-hover:text-brand md:size-12">
           {/* 修改 3: Icon size 預設縮小一點 (18px)，桌機版再放大 */}
-          <Icon size={18} className="md:h-5 md:w-5" />
+          <Icon size={18} className="md:size-5" />
         </div>
 
         {/* Step Number Badge */}

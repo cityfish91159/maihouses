@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { BACKUP_REVIEWS } from '../../../constants/data'
 import { HomeCard } from '../components/HomeCard'
 import { ReviewCard } from '../components/ReviewCard'
@@ -65,6 +66,7 @@ function mapBackupToReviewWithNavigation(backup: typeof BACKUP_REVIEWS[number], 
  * - 點擊 real 評價導向社區頁面，seed 評價導向社區牆
  */
 export default function CommunityTeaser() {
+  const navigate = useNavigate();
   const [reviews, setReviews] = useState<ReviewWithNavigation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -99,19 +101,6 @@ export default function CommunityTeaser() {
       isMounted = false;
     };
   }, []);
-
-  /**
-   * P9-3: 處理評價卡片點擊
-   * - source: 'real' → 導向社區牆頁面 /community/{communityId}/wall
-   * - source: 'seed' → 導向社區牆 /maihouses/community-wall_mvp.html
-   */
-  const handleReviewClick = (review: ReviewWithNavigation) => {
-    if (review.source === 'real' && review.communityId) {
-      window.location.href = `/community/${review.communityId}/wall`;
-    } else {
-      window.location.href = '/maihouses/community-wall_mvp.html';
-    }
-  };
 
   // Loading skeleton
   if (isLoading) {
@@ -176,8 +165,23 @@ export default function CommunityTeaser() {
         {reviews.map((review) => (
           <div
             key={review.originalId}
-            onClick={() => handleReviewClick(review)}
-            onKeyDown={(e) => e.key === 'Enter' && handleReviewClick(review)}
+            onClick={() => {
+              // P9-3: real → 社區牆頁面, seed → 靜態社區牆
+              if (review.source === 'real' && review.communityId) {
+                navigate(`/community/${review.communityId}/wall`);
+              } else {
+                window.location.href = '/maihouses/community-wall_mvp.html';
+              }
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                if (review.source === 'real' && review.communityId) {
+                  navigate(`/community/${review.communityId}/wall`);
+                } else {
+                  window.location.href = '/maihouses/community-wall_mvp.html';
+                }
+              }
+            }}
             role="button"
             tabIndex={0}
             className="cursor-pointer"
