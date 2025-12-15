@@ -46,6 +46,8 @@ interface RealReviewRow {
   disadvantage: string | null;
   source: string | null;
   created_at: string;
+  // JOIN 欄位
+  community_name: string | null;
 }
 
 interface ServerSeed {
@@ -123,29 +125,6 @@ async function logError(context: string, error: unknown, meta?: Record<string, u
 // ============================================
 
 /**
- * 從名稱提取首字作為 displayId
- * P1 修復：確保與 ReviewCard 相容
- * 
- * @example
- * extractDisplayId("匿名住戶｜認證評價") => "匿"
- * extractDisplayId("林小姐｜平台精選") => "林"
- * extractDisplayId("J***｜景安和院 住戶") => "J"
- */
-function extractDisplayId(name: string): string {
-  if (!name || name.length === 0) return '?';
-  
-  // 取第一個字元
-  const firstChar = name.charAt(0);
-  
-  // 如果是英文字母，轉大寫
-  if (/[a-zA-Z]/.test(firstChar)) {
-    return firstChar.toUpperCase();
-  }
-  
-  return firstChar;
-}
-
-/**
  * 計算評分
  * P3 修復：根據 disadvantage 決定評分，不再硬編碼 5 星
  * 
@@ -221,6 +200,15 @@ const SERVER_SEEDS: ServerSeed[] = [
 // 6. 資料適配器 (Adapter Pattern)
 // ============================================
 
+/**
+ * 生成隨機英文字母作為顯示 ID
+ * 格式：X*** (如 J***, W***, L***)
+ */
+function generateRandomLetter(): string {
+  const letters = 'ABCDEFGHJKLMNPQRSTUVWXYZ'; // 排除 I, O 避免混淆
+  return letters.charAt(Math.floor(Math.random() * letters.length));
+}
+
 function adaptRealReviewForUI(review: RealReviewRow): ReviewForUI {
   // 從兩好一公道欄位提取內容
   const tags: string[] = [];
@@ -242,18 +230,19 @@ function adaptRealReviewForUI(review: RealReviewRow): ReviewForUI {
     }
   }
   
-  // 匿名化名稱
-  const sourceLabel = review.source === 'agent' ? '房仲' : 
-                      review.source === 'resident' ? '住戶' : '用戶';
-  const name = `匿名${sourceLabel}｜認證評價`;
+  // 正確的名稱格式：X***｜社區名稱 住戶/房仲
+  // 例如：J***｜景安和院 住戶
+  const letter = generateRandomLetter();
+  const roleLabel = review.source === 'agent' ? '房仲' : '住戶';
+  const communityLabel = review.community_name || '認證社區';
+  const name = `${letter}***｜${communityLabel} ${roleLabel}`;
   
-  // P1 修復：displayId 從 name 提取首字
-  // P3 修復：rating 根據 disadvantage 決定
+  // displayId 就是那個字母
   return {
     id: review.id,
-    displayId: extractDisplayId(name),  // "匿"
+    displayId: letter,
     name,
-    rating: calculateRating(!!review.disadvantage),  // 有缺點=4星
+    rating: calculateRating(!!review.disadvantage),
     tags: tags.length > 0 ? tags : ['#精選評價'],
     content,
     communityId: review.community_id,
@@ -263,10 +252,11 @@ function adaptRealReviewForUI(review: RealReviewRow): ReviewForUI {
 }
 
 function adaptSeedForUI(seed: ServerSeed): ReviewForUI {
-  // P1 修復：displayId 從 name 提取首字
+  // displayId 從 name 提取首字
+  const firstChar = seed.name.charAt(0);
   return {
     id: seed.id,
-    displayId: extractDisplayId(seed.name),  // "林", "陳", "王" 等
+    displayId: firstChar,
     name: seed.name,
     rating: seed.rating,
     tags: seed.tags,
@@ -304,10 +294,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const mixedReviews: ReviewForUI[] = [];
 
   try {
-    // 1. 撈取真實資料
+    // 1. 撈取真實資料 (JOIN communities 取得社區名稱)
     const { data: realData, error } = await getSupabase()
       .from('community_reviews')
-      .select('id, community_id, advantage_1, advantage_2, disadvantage, source, created_at')
+      .select(`
+        id, 
+        community_id, 
+        advantage_1, 
+        advantage_2, 
+        disadvantage, 
+        source, 
+        created_at,
+        communities:community_id (name)
+      `)
       .order('created_at', { ascending: false })
       .limit(REQUIRED_COUNT);
 
@@ -330,8 +329,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           continue;
         }
         
-        // P1/P2/P3 修復已在 adaptRealReviewForUI 中處理
-        mixedReviews.push(adaptRealReviewForUI(row));
+        // 從 JOIN 結果提取社區名稱
+        // Supabase 返回可能是物件或陣列，需要處理兩種情況
+        const communities = row.communities as unknown;
+        let communityName: string | null = null;
+        
+        if (communities && typeof communities === 'object') {
+          if (Array.isArray(communities) && communities.length > 0) {
+            communityName = (communities[0] as { name?: string })?.name || null;
+          } else {
+            communityName = (communities as { name?: string })?.name || null;
+          }
+        }
+        
+        const reviewWithCommunity: RealReviewRow = {
+          ...row,
+          community_name: communityName
+        };
+        
+        mixedReviews.push(adaptRealReviewForUI(reviewWithCommunity));
         usedCommunityIds.add(row.community_id);
         
         // 達到目標數量就停止
