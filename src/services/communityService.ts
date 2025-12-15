@@ -17,7 +17,7 @@ const API_BASE = communityApiBase;
 const FEATURED_REVIEWS_ENDPOINT = '/api/home/featured-reviews';
 // U4: 可配置 timeout，從環境變數讀取或使用預設值
 const FEATURED_REVIEWS_TIMEOUT = Number(import.meta.env.VITE_API_TIMEOUT) || 5000;
-const FEATURED_REVIEWS_MAX_RETRIES = 1; // U2: 最多重試1次
+// const FEATURED_REVIEWS_MAX_RETRIES = 1; // U2: 最多重試1次 (Moved to React Query)
 
 // 註：快取已移除，改由 React Query 統一管理
 
@@ -331,10 +331,10 @@ export default {
  * @throws {Error} "Max retries exceeded" - 當重試次數用盡仍失敗
  */
 export async function getFeaturedHomeReviews(): Promise<ReviewForUI[]> {
-  let lastError: Error | null = null;
+  // let lastError: Error | null = null;
   
   // U2: Retry 機制 - 最多嘗試 1 + FEATURED_REVIEWS_MAX_RETRIES 次
-  for (let attempt = 0; attempt <= FEATURED_REVIEWS_MAX_RETRIES; attempt++) {
+  // for (let attempt = 0; attempt <= FEATURED_REVIEWS_MAX_RETRIES; attempt++) {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), FEATURED_REVIEWS_TIMEOUT);
 
@@ -371,20 +371,20 @@ export async function getFeaturedHomeReviews(): Promise<ReviewForUI[]> {
       }
       
       // U2: 如果還有重試次數，等待 1 秒後重試
-      if (attempt < FEATURED_REVIEWS_MAX_RETRIES) {
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        continue;
-      }
+      // if (attempt < FEATURED_REVIEWS_MAX_RETRIES) {
+      //   await new Promise(resolve => setTimeout(resolve, 1000));
+      //   continue;
+      // }
       
       // 重試用盡，拋出最後一次錯誤
       throw lastError;
     } finally {
       clearTimeout(timeoutId);
     }
-  }
+  // }
   
   // 理論上不會到這裡，但為了 TypeScript 類型安全
-  throw lastError || new Error('Max retries exceeded');
+  // throw lastError || new Error('Max retries exceeded');
 }
 
 /**

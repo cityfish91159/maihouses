@@ -49,9 +49,9 @@ function mapToReviewWithNavigation(review: ReviewForUI): ReviewWithNavigation {
  * backup.id 本身就是唯一字母，同時用於 originalId 和 displayId
  * V3: BACKUP_REVIEWS 現在已包含 source 和 communityId
  */
-function mapBackupToReviewWithNavigation(backup: typeof BACKUP_REVIEWS[number], index: number): ReviewWithNavigation {
+function mapBackupToReviewWithNavigation(backup: typeof BACKUP_REVIEWS[number]): ReviewWithNavigation {
   return {
-    originalId: `backup-${index}-${backup.id}`, // 生成唯一 ID
+    originalId: backup.id, // H5: Use stable ID directly
     displayId: backup.id,  // 顯示用字母
     name: backup.name,
     rating: backup.rating,
@@ -78,7 +78,7 @@ export default function CommunityTeaser() {
     queryKey: ['featured-reviews'],
     queryFn: getFeaturedHomeReviews,
     staleTime: 5 * 60 * 1000, // 5 minutes
-    retry: false, // Service already handles retries
+    retry: 1, // U2: Retry once (handled by React Query now)
   });
 
   // Determine which reviews to show
