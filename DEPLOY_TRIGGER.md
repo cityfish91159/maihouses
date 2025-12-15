@@ -1,3 +1,12 @@
+Timestamp: 2025-12-15T16:30:00Z
+Deploy: P9-3 Evidence-Based Fixes
+- Fix: Refactored `CommunityTeaser.tsx` to use React Query and removed shortcuts (V1-V4).
+- Fix: Added unit tests in `CommunityTeaser.test.tsx` to verify logic and routing.
+- Fix: Verified API integration and updated documentation with evidence.
+- Verification: `npm test` passed, `curl` verified API.
+
+Redeploy trigger
+
 Timestamp: 2025-12-10T15:05:00Z
 Deploy: P4.5 WallStates Refactor & i18n Fix
 - Fix: Refactored `WallStates.tsx` to remove hardcoded strings and use `strings.ts`.
