@@ -201,12 +201,26 @@ const SERVER_SEEDS: ServerSeed[] = [
 // ============================================
 
 /**
- * 生成隨機英文字母作為顯示 ID
+ * 生成穩定的英文字母作為顯示 ID (H1 修復)
+ * 使用 review.id 的 hash 作為種子，確保同一筆評價永遠對應同一個字母
  * 格式：X*** (如 J***, W***, L***)
+ * 
+ * @param reviewId 評價的唯一識別碼，用於產生穩定的 hash
+ * @returns 穩定的大寫英文字母
  */
-function generateRandomLetter(): string {
+function generateStableLetter(reviewId: string): string {
   const letters = 'ABCDEFGHJKLMNPQRSTUVWXYZ'; // 排除 I, O 避免混淆
-  return letters.charAt(Math.floor(Math.random() * letters.length));
+  
+  // 使用 djb2 hash 演算法產生穩定的數字
+  let hash = 5381;
+  for (let i = 0; i < reviewId.length; i++) {
+    hash = ((hash << 5) + hash) + reviewId.charCodeAt(i);
+    hash = hash & hash; // Convert to 32-bit integer
+  }
+  
+  // 取絕對值並對字母數量取餘數
+  const index = Math.abs(hash) % letters.length;
+  return letters.charAt(index);
 }
 
 function adaptRealReviewForUI(review: RealReviewRow): ReviewForUI {
@@ -232,9 +246,11 @@ function adaptRealReviewForUI(review: RealReviewRow): ReviewForUI {
   
   // 正確的名稱格式：X***｜社區名稱 住戶/房仲
   // 例如：J***｜景安和院 住戶
-  const letter = generateRandomLetter();
-  const roleLabel = review.source === 'agent' ? '房仲' : '住戶';
-  const communityLabel = review.community_name || '認證社區';
+  // H1 修復：使用穩定的字母生成，同一 review.id 永遠對應同一字母
+  const letter = generateStableLetter(review.id);
+  const roleLabel = review.source === 'agent' ? '房仿' : '住戶';
+  // H4 修復：fallback 從「認證社區」改為「已認證」
+  const communityLabel = review.community_name || '已認證';
   const name = `${letter}***｜${communityLabel} ${roleLabel}`;
   
   // displayId 就是那個字母
@@ -272,11 +288,16 @@ function adaptSeedForUI(seed: ServerSeed): ReviewForUI {
 // ============================================
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // 設定 CORS 與快取
+  // 設定 CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=300');
+  
+  // H3 修復：強化快取策略
+  // s-maxage=300: CDN 快取 5 分鐘 (確保穩定字母在快取期間不變)
+  // stale-while-revalidate=600: 過期後 10 分鐘內仍可使用舊資料，同時背景更新
+  // 這確保用戶在短時間內重複訪問會看到相同的字母
+  res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=600');
 
   // OPTIONS 預檢請求
   if (req.method === 'OPTIONS') {
