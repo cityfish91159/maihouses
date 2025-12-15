@@ -12,6 +12,8 @@ import type { FeaturedReviewsResponse, ReviewForUI } from '../types/review';
 
 // API 基礎路徑
 const API_BASE = communityApiBase;
+const FEATURED_REVIEWS_ENDPOINT = '/api/home/featured-reviews';
+const DEFAULT_TIMEOUT = 5000; // 5秒超時
 
 // 註：快取已移除，改由 React Query 統一管理
 
@@ -305,18 +307,35 @@ export default {
  * 取得首頁精選評價 (P9-2)
  * 呼叫 /api/home/featured-reviews
  * 
+ * S1-S4 修復：
+ * - S1: 錯誤處理不再 silent fail，改為 throw error 讓上層處理
+ * - S2: 使用常數 FEATURED_REVIEWS_ENDPOINT
+ * - S3: 加入 AbortController timeout 機制
+ * - S4: 加入 Runtime Validation
+ * 
  * @returns 評價列表 (ReviewForUI[])
+ * @throws Error 當 API 失敗或資料格式錯誤時
  */
 export async function getFeaturedHomeReviews(): Promise<ReviewForUI[]> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT);
+
   try {
-    // 直接呼叫 Vercel API，不經過 communityApiBase
-    const response = await fetch('/api/home/featured-reviews');
+    // S2: 使用常數路徑
+    const response = await fetch(FEATURED_REVIEWS_ENDPOINT, {
+      signal: controller.signal
+    });
     
     if (!response.ok) {
       throw new Error(`API error: ${response.status}`);
     }
     
-    const data: FeaturedReviewsResponse = await response.json();
+    // S4: Runtime Validation
+    const data = await response.json() as unknown; // 先轉 unknown 避免直接斷言
+    
+    if (!isValidFeaturedReviewsResponse(data)) {
+      throw new Error('Invalid API response format');
+    }
     
     if (!data.success) {
       throw new Error('API returned success: false');
@@ -324,8 +343,27 @@ export async function getFeaturedHomeReviews(): Promise<ReviewForUI[]> {
     
     return data.data;
   } catch (error) {
+    // S1: 記錄錯誤並拋出，不吞噬錯誤
+    if (error instanceof Error && error.name === 'AbortError') {
+      console.error('[CommunityService] Fetch timeout:', error);
+      throw new Error('Request timeout');
+    }
     console.error('[CommunityService] Failed to fetch featured reviews:', error);
-    // 錯誤時回傳空陣列，讓 UI 顯示 fallback 或空狀態
-    return [];
+    throw error; // 讓上層 (React Query 或 Component) 決定如何處理 (顯示 Error Boundary 或 Fallback)
+  } finally {
+    clearTimeout(timeoutId);
   }
+}
+
+// S4: Type Guard
+function isValidFeaturedReviewsResponse(data: unknown): data is FeaturedReviewsResponse {
+  if (typeof data !== 'object' || data === null) {
+    return false;
+  }
+  
+  const response = data as Record<string, unknown>;
+  return (
+    typeof response.success === 'boolean' &&
+    Array.isArray(response.data)
+  );
 }
