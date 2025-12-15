@@ -21,44 +21,7 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
-
-// ============================================
-// 1. 型別定義 (對應 src/types/review.ts)
-// ============================================
-
-interface ReviewForUI {
-  id: string;
-  displayId: string;
-  name: string;
-  rating: number;
-  tags: string[];
-  content: string;
-  communityId: string | null;
-  source: 'real' | 'seed';
-  region: string;
-}
-
-interface RealReviewRow {
-  id: string;
-  community_id: string;
-  advantage_1: string | null;
-  advantage_2: string | null;
-  disadvantage: string | null;
-  source: string | null;
-  created_at: string;
-  // JOIN 欄位
-  community_name: string | null;
-}
-
-interface ServerSeed {
-  id: string;
-  community_id: string;
-  name: string;
-  rating: number;
-  tags: string[];
-  content: string;
-  source: 'seed';
-}
+import type { ReviewForUI, RealReviewRow, ServerSeed } from '../../src/types/review';
 
 // ============================================
 // 2. 常數定義

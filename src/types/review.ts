@@ -15,10 +15,10 @@ export interface ReviewForUI {
   /** 唯一識別碼 (UUID 或 seed-xxx) */
   id: string;
   
-  /** 顯示用編號，從 name 提取首字 (如 "匿" 或 "林") */
+  /** 顯示用編號，從 review.id 哈希生成的穩定字母 (如 "J" 或 "V") */
   displayId: string;
   
-  /** 評價者名稱 (如 "匿名住戶｜認證評價" 或 "林小姐｜平台精選") */
+  /** 評價者名稱 (如 "J***｜榮耀城示範社區 住戶" 或 "V***｜測試社區 房仲") */
   name: string;
   
   /** 評分 1-5 星 */
@@ -66,6 +66,8 @@ export interface RealReviewRow {
   disadvantage: string | null;
   source: string | null;
   created_at: string;
+  /** JOIN communities 表取得的社區名稱 */
+  community_name?: string | null;
 }
 
 /**
