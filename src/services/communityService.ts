@@ -156,8 +156,7 @@ async function fetchAPI<T>(
     }
     
     const error = new Error(errorMessage || `HTTP ${response.status}`);
-    (error as any).status = response.status;
-    (error as any).code = errorData.code;
+    Object.assign(error, { status: response.status, code: errorData.code });
     throw error;
   }
 
@@ -347,7 +346,7 @@ export async function getFeaturedHomeReviews(): Promise<ReviewForUI[]> {
         throw new Error(`API error: ${response.status}`);
       }
       
-      const data = await response.json() as unknown;
+      const data = await response.json();
       
       if (!isValidFeaturedReviewsResponse(data)) {
         throw new Error('Invalid API response format');
@@ -411,7 +410,9 @@ function isValidFeaturedReviewsResponse(data: unknown): data is FeaturedReviewsR
   }
   
   // U1: 驗證全部陣列元素（不只第一個）
-  const items = response.data as unknown[];
+  const items = response.data;
+  if (!Array.isArray(items)) return false;
+
   for (const item of items) {
     const review = item as Record<string, unknown>;
     // 檢查 ReviewForUI 必要欄位
