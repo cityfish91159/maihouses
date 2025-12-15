@@ -40,7 +40,15 @@ export const HERO_STEPS = [
   },
 ];
 
-export const COMMUNITY_REVIEWS = [
+/**
+ * P9-4: 備用評價資料 (Backup Reviews)
+ * 
+ * 當 API (/api/home/featured-reviews) 失敗時作為保底機制
+ * 原名 COMMUNITY_REVIEWS，重命名以明確用途
+ * 
+ * @see src/features/home/sections/CommunityTeaser.tsx
+ */
+export const BACKUP_REVIEWS = [
   {
     id: 'J',
     name: 'J***｜景安和院 住戶',
