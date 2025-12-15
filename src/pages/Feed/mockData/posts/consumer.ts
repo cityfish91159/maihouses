@@ -70,32 +70,28 @@ export const CONSUMER_MOCK_POSTS: FeedPost[] = [
   },
   {
     id: 1002,
-    author: MOCK_AUTHORS.YOU_AGENT.name,
-    type: MOCK_AUTHORS.YOU_AGENT.type,
+    author: MOCK_AUTHORS.CHEN_MS.name,
+    floor: MOCK_AUTHORS.CHEN_MS.floor,
+    type: 'resident',
     time: mockTimestampDaysAgo(1),
-    title: '🏡 惠宇上晴 12F｜雙陽台視野戶',
-    content: '客廳光線很好，上週屋主剛降價 50 萬，有興趣可私訊。',
+    title: ' #裝潢新穎，可直接入住',
+    content: '推薦優點：裝潢新穎，可直接入住、公設完善，有健身房游泳池。\n\n需注意：坪數較小，約 15 坪',
     images: [
       {
         src: 'https://picsum.photos/id/13/800/600',
-        alt: '寬敞明亮的客廳',
+        alt: '裝潢實拍',
       },
       {
         src: 'https://picsum.photos/id/15/800/600',
-        alt: '陽台視野',
-      },
-      {
-        src: 'https://picsum.photos/id/29/800/600',
-        alt: '乾淨衛浴',
+        alt: '公設健身房',
       },
     ],
     views: 89,
-    likes: 0,
+    likes: 12,
     comments: 0,
     communityId: MOCK_COMMUNITIES.HUIYU.id,
     communityName: MOCK_COMMUNITIES.HUIYU.name,
     commentList: [],
-
   },
   {
     id: 1003,
