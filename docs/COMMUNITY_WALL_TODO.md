@@ -1,8 +1,8 @@
 # 🏠 P9: 首頁社區評價聚合 API 導入
 
-> **專案狀態**: � **Phase 1 完成 (100/100)**
+> **專案狀態**: 🟡 **Phase 2 待優化 (75/100)**
 > **最後更新**: 2025-12-15
-> **最新 Commit**: `0cf08c0` (I1-I6 修復)
+> **最新 Commit**: `162ec6d` (P9-2 初步實作)
 > **目標**: 外觀不變，資料源從靜態切換為 API 混合模式
 > **核心策略**: 後端聚合 + 自動補位 (Hybrid Reviews System)
 
@@ -307,11 +307,62 @@ res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=600');
 
 ---
 
-## 📝 待實作清單
+## � S1-S4 第四輪審查發現的問題 (P9-2 缺失)
+
+> **審查者**: Google L8 首席前後端處長
+> **審查對象**: commit `162ec6d` (P9-2 實作)
+> **評分**: **75/100** (功能可用，但缺乏工程嚴謹度)
+
+### 💀 S1: Silent Failure (吞噬錯誤)
+
+**位置**: [src/services/communityService.ts](src/services/communityService.ts) `getFeaturedHomeReviews`
+
+**問題**：`catch` 區塊直接回傳 `[]`，導致呼叫端無法區分「真的沒有資料」還是「API 掛了」。這在 Google 是絕對禁止的 Pattern。
+
+**引導意見**：
+1. 定義明確的錯誤回傳格式，或讓 React Query 處理錯誤
+2. 至少要上報錯誤 (使用 `logError` 或類似機制)
+3. 考慮回傳 `{ data: [], error: Error }` 或直接 throw 讓上層 Boundary 處理
+
+---
+
+### 🔴 S2: Hardcoded URL (硬編碼路徑)
+
+**位置**: `fetch('/api/home/featured-reviews')`
+
+**問題**：直接將 API 路徑寫死在 fetch 中。雖然目前是 Vercel Function，但若未來 API 架構改變 (例如移到 `/api/v2`)，需要全域搜尋取代。
+
+**引導意見**：
+1. 在 `src/config/env.ts` 或檔案頂部定義常數
+2. `const FEATURED_REVIEWS_ENDPOINT = '/api/home/featured-reviews';`
+
+---
+
+### 🟡 S3: No Timeout Handling (缺乏超時控制)
+
+**問題**：`fetch` 原生沒有 timeout。如果 API 響應卡住，前端會一直等待直到瀏覽器超時，造成 UX 卡頓。
+
+**引導意見**：
+1. 使用 `AbortController` 實作 timeout 機制
+2. 設定合理的超時時間 (例如 5000ms)
+
+---
+
+### 🟡 S4: Runtime Validation Missing (缺乏執行時驗證)
+
+**問題**：`const data: FeaturedReviewsResponse = await response.json();` 是危險的 Type Assertion。如果 API 回傳格式改變，前端會直接炸在存取屬性時。
+
+**引導意見**：
+1. 雖然 TypeScript 編譯通過，但 Runtime 不安全
+2. 建議使用 Zod 進行簡單的 Schema 驗證，或至少檢查 `data.success` 存在性
+
+---
+
+## �📝 待實作清單
 
 ### Phase 2: 前端服務層
 
-- [ ] **P9-2**: 更新 `src/services/communityService.ts`
+- [x] **P9-2**: 更新 `src/services/communityService.ts`
   - 新增 `getFeaturedHomeReviews()` 函數
   - 使用 `src/types/review.ts` 的共用型別
   - 錯誤處理 + fallback
@@ -336,9 +387,27 @@ res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=600');
 |------|------|------|
 | `api/home/featured-reviews.ts` | 新增+修復 | ✅ 完成 |
 | `src/types/review.ts` | 新增 | ✅ 完成 |
-| `src/services/communityService.ts` | 修改 | ⬜ 待做 |
+| `src/services/communityService.ts` | 修改 | ✅ 完成 |
 | `src/features/home/sections/CommunityTeaser.tsx` | 修改 | ⬜ 待做 |
 | `src/constants/data.ts` | 修改 | ⬜ 待做 |
+
+---
+
+## 📋 P9-2 實作過程紀錄
+
+### 實作內容
+
+1. **更新 `src/services/communityService.ts`**
+   - 引入共用型別: `import type { FeaturedReviewsResponse, ReviewForUI } from '../types/review';`
+   - 新增 `getFeaturedHomeReviews()` 函數
+   - 使用 `fetch('/api/home/featured-reviews')` 直接呼叫 Vercel API
+   - 實作錯誤處理：API 失敗時回傳空陣列 `[]` (Fallback)
+
+### 驗證結果
+
+- **TypeScript 編譯**: ✅ 通過 (`npx tsc --noEmit`)
+- **型別檢查**: ✅ 確認 `ReviewForUI[]` 回傳型別正確
+- **API 路徑**: ✅ 使用 `/api/home/featured-reviews` (不經過 `communityApiBase`)
 
 ---
 
