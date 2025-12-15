@@ -1,225 +1,281 @@
-# 🖼️ P8: 圖片上傳與互動功能升級
+# 🏠 P9: 首頁社區評價聚合 API 導入
 
-> **專案狀態**: ✅ **92/100 (A- 級)**
-> **最後更新**: 2025-12-14
-> **審計等級**: Google L7+ (嚴格安全與架構標準)
-> **最新審計**: 92/100 (A-) - Commit 3c0191c **代碼真正修復**
+> **專案狀態**: 🟡 **規劃中**
+> **最後更新**: 2025-12-15
+> **目標**: 外觀不變，資料源從靜態切換為 API 混合模式
+> **核心策略**: 後端聚合 + 自動補位 (Hybrid Reviews System)
 
 ---
 
-## 🚨 第六輪審計 (2025-12-14) - 真正修復 F1-F6
+## 🎯 核心目標
 
-> **審計者**: Google L8 首席前後端處長
-> **審計對象**: Commit `3c0191c` (83018f2) - F1-F6 真實代碼修復
-> **評分**: **92/100 (A- 級)**
-> **結論**: ✅ **代碼真正修復**，ESLint 通過、Build 成功
+1. **零天窗保證**：無論資料庫有沒有資料，首頁永遠顯示 6 則評價卡片
+2. **自動演化**：
+   - 初期 (0 資料)：顯示 6 則 Mock
+   - 中期 (少資料)：顯示 真實資料 + Mock 補位
+   - 後期 (多資料)：全顯示真實資料，Mock 自動退場
+3. **外觀凍結**：完全不改動現有 UI/CSS，僅替換資料源
 
-### ✅ F1-F6 修復驗證 (全部通過)
+---
 
-| ID | 問題 | 狀態 | 驗證 |
-|----|------|------|------|
-| **F1** | ESLint refresh 依賴 | ✅ **已修復** | `npx eslint useFeedData.ts` 無警告 |
-| **F2** | console.error | ✅ **已修復** | 改用 `import.meta.env.DEV` + `console.warn` |
-| **F3** | handleReply 空函數 | ✅ **已修復** | 恢復 `notify.info('回覆模式已開啟')` |
-| **F4** | GlobalHeader ##profile | ✅ **已修復** | 改用 `targetHash = 'profile'` |
-| **F5** | Supabase 表名 | ⚠️ **待執行** | 需手動執行 Migration SQL |
-| **F6** | Deep Linking | ✅ **已修復** | retry 機制 + `id="post-{id}"` wrapper |
-
-### 🟡 新發現的小問題 (H1-H3)
-
-| ID | 嚴重度 | 檔案 | 行號 | 問題 | 扣分 |
-|----|--------|------|------|------|------|
-| **H1** | 🟢 | `Consumer.tsx` | L303 | wrapper div 多餘 `space-y-3` class | -3 |
-| **H2** | 🟢 | `useConsumer.ts` | L143 | notify.info 文字可精簡 | -2 |
-| **H3** | 🟢 | `GlobalHeader.tsx` | L177 | fallback scroll 可能重複執行 | -3 |
-
-### 📊 評分明細
+## 🏗️ 系統架構
 
 ```
-基準分: 100
-
-✅ F1-F6 全部修復: +0 (恢復到基準)
-
-🟡 H1 多餘 class: -3
-🟡 H2 文字優化: -2
-🟡 H3 重複執行: -3
-
-最終分數: 92/100 (A- 級)
+┌─────────────────────────────────────────────────────────────┐
+│                    CommunityTeaser.tsx                       │
+│                  (外觀完全不變)                               │
+│                         ↓                                    │
+│              getFeaturedHomeReviews()                        │
+│                         ↓                                    │
+├─────────────────────────────────────────────────────────────┤
+│            /api/home/featured-reviews                        │
+│                                                              │
+│   ┌──────────────┐    ┌──────────────┐                      │
+│   │  Supabase    │ +  │ SERVER_SEEDS │ = 永遠 6 筆          │
+│   │  真實資料    │    │  Mock 補位   │                      │
+│   └──────────────┘    └──────────────┘                      │
+│                                                              │
+│   自動補位公式：missingCount = 6 - realData.length          │
+└─────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 🎯 第六輪修復指南 (可選優化)
+## 📝 實作清單
 
-### H1: Consumer.tsx wrapper div 多餘 class (🟢 輕微)
+### Phase 1: 後端 API (🔴 最優先)
 
-**問題位置**：`Consumer.tsx` 第 303 行
+- [ ] **P9-1**: 建立 `api/home/featured-reviews.ts`
+  - 從 Supabase `community_reviews` 撈取真實資料
+  - 不足 6 筆時用 `SERVER_SEEDS` 補位
+  - 統一輸出格式 (Adapter Pattern)
+  - 設定 Cache Header (`s-maxage=60`)
 
-**當前代碼**：
-```tsx
-<div key={post.id} id={`post-${post.id}`} className="space-y-3">
-  <FeedPostCard ... />
-</div>
-```
+### Phase 2: 前端服務層
 
-**問題**：`space-y-3` 是控制**子元素間距**的，但這個 div 只有一個子元素 (FeedPostCard)，所以這個 class 毫無作用。
+- [ ] **P9-2**: 更新 `src/services/communityService.ts`
+  - 新增 `getFeaturedHomeReviews()` 函數
+  - 管理使用者地區偏好 (`localStorage`)
+  - 錯誤處理 + fallback
 
-**引導意見**：
-```
-選項 A (推薦)：移除多餘 class
-<div key={post.id} id={`post-${post.id}`}>
-  <FeedPostCard ... />
-</div>
+### Phase 3: UI 整合
 
-選項 B：如果未來會加更多子元素，可以保留
-// 但要寫註解說明原因
-```
+- [ ] **P9-3**: 更新 `CommunityTeaser.tsx`
+  - 改用 `useEffect` + `useState` 取代靜態 import
+  - 保持 UI 外觀完全不變
+  - 加入 Loading Skeleton
+  - 處理點擊導向邏輯 (Mock vs Real)
 
----
+### Phase 4: 保底機制
 
-### H2: useConsumer.ts notify 文字優化 (🟢 輕微)
-
-**問題位置**：`useConsumer.ts` 第 143 行
-
-**當前代碼**：
-```typescript
-notify.info('回覆模式已開啟', '請在下方留言區輸入您的回覆');
-```
-
-**問題**：訊息太長、太 formal，用戶已經點了回覆按鈕，不需要這麼詳細的說明。
-
-**引導意見**：
-```
-選項 A (推薦)：精簡文字
-notify.info('已展開留言', '');  // 單行足夠
-
-選項 B：更簡潔
-notify.info('回覆', `貼文 #${postId}`);
-
-選項 C：完全移除 (如果 UI 已經很明顯)
-// FeedPostCard 展開時 UI 變化已經足夠提示用戶
-// 不需要額外的 toast notification
-```
+- [ ] **P9-4**: 更新 `src/constants/data.ts`
+  - 將 `COMMUNITY_REVIEWS` 改名為 `BACKUP_REVIEWS`
+  - 作為 API 斷線時的 Level 3 保底
 
 ---
 
-### H3: GlobalHeader.tsx fallback scroll 重複 (🟢 輕微)
+## 🔧 技術細節
 
-**問題位置**：`GlobalHeader.tsx` 第 173-177 行
+### 1. API 端點設計
 
-**當前代碼**：
-```typescript
-if (location.pathname === targetPath || location.pathname.includes('/feed/consumer')) {
-  window.location.hash = targetHash;
-  window.dispatchEvent(new HashChangeEvent('hashchange'));
-  window.scrollTo({ top: 0, behavior: 'smooth' });  // ← 這裡
+**路徑**: `GET /api/home/featured-reviews`
+
+**Query Parameters**:
+| 參數 | 類型 | 說明 |
+|------|------|------|
+| `region` | string | 地區偏好 (north/central/south)，可選 |
+
+**Response**:
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "review-123",
+      "displayId": "01",
+      "name": "J***｜景安和院 住戶",
+      "rating": 5,
+      "tags": ["#物業/管理"],
+      "content": "公設維護得乾淨...",
+      "communityId": "uuid-xxx",
+      "source": "real",
+      "region": "north"
+    }
+  ]
 }
 ```
 
-**問題**：
-1. `dispatchEvent` 會觸發 Consumer.tsx 的 `handleNavigation`
-2. `handleNavigation` 裡面已經有 `scrollTo({ top: 0 })`
-3. 所以 scroll 會執行兩次（雖然視覺上看不出來）
+### 2. 自動補位邏輯 (核心)
 
-**引導意見**：
-```
-選項 A (推薦)：移除 fallback，信任 event listener
-if (location.pathname.includes('/feed/consumer')) {
-  window.location.hash = targetHash;
-  // Consumer 的 hashchange listener 會處理 scroll
+```typescript
+const REQUIRED_COUNT = 6;
+
+// 1. 撈真實資料
+const realReviews = await fetchFromSupabase();
+
+// 2. 計算缺口
+const missingCount = REQUIRED_COUNT - realReviews.length;
+
+// 3. 自動補位
+if (missingCount > 0) {
+  const seeds = SERVER_SEEDS.slice(0, missingCount);
+  return [...realReviews, ...seeds];
 }
 
-選項 B：保留 fallback 但加註解
-window.scrollTo({ top: 0, behavior: 'smooth' }); // Fallback: 確保即使 listener 未觸發也能 scroll
+return realReviews;
+```
 
-選項 C：用 setTimeout 避免競爭
-setTimeout(() => {
-  if (window.scrollY > 100) {  // 只在沒 scroll 到頂時才執行
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+### 3. 三層保底機制
+
+| 層級 | 情境 | 資料源 |
+|------|------|--------|
+| Level 1 | API 正常 + 有真實資料 | Supabase 真實資料 |
+| Level 2 | API 正常 + 無真實資料 | SERVER_SEEDS (後端 Mock) |
+| Level 3 | API 斷線 | BACKUP_REVIEWS (前端靜態) |
+
+---
+
+## 🌟 架構師建議 (優化方案)
+
+### 建議 1: 使用 SWR/React Query 取代原生 fetch
+
+**為什麼**：
+- 自動快取 + 重新驗證
+- 避免重複請求
+- 更好的 Loading/Error 狀態管理
+
+**引導意見**：
+```typescript
+// 用 useSWR 取代手動 useState + useEffect
+import useSWR from 'swr';
+
+function CommunityTeaser() {
+  const { data, isLoading } = useSWR('/api/home/featured-reviews', fetcher, {
+    revalidateOnFocus: false,
+    dedupingInterval: 60000, // 60秒內不重複請求
+  });
+}
+```
+
+### 建議 2: 加入 Optimistic Placeholder
+
+**為什麼**：
+- 避免首次載入時的空白/跳動
+- 提升 CLS (Cumulative Layout Shift) 分數
+
+**引導意見**：
+```typescript
+// 在 API 回應前先顯示 placeholder
+const [reviews, setReviews] = useState(BACKUP_REVIEWS); // 預設值
+
+useEffect(() => {
+  getFeaturedHomeReviews().then(data => {
+    if (data?.length > 0) setReviews(data);
+    // 失敗時保持預設值，不會閃爍
+  });
+}, []);
+```
+
+### 建議 3: 區分 Mock 的視覺提示 (可選)
+
+**為什麼**：
+- 避免用戶誤以為 Mock 是真實評價
+- 增加信任度
+
+**引導意見**：
+```typescript
+// 可以在 Mock 卡片加上小標籤
+{review.source === 'seed' && (
+  <span className="text-xs text-gray-400">示範</span>
+)}
+```
+
+### 建議 4: 點擊行為差異化
+
+**為什麼**：
+- Mock 評價沒有對應社區頁，點擊應該不導航
+- 真實評價點擊應該導向社區牆
+
+**引導意見**：
+```typescript
+const handleClick = (review) => {
+  if (review.source === 'real' && review.communityId) {
+    navigate(`/maihouses/community/${review.communityId}/wall`);
   }
-}, 100);
+  // Mock 不做任何事，或跳通用頁
+};
+```
+
+### 建議 5: Server-Side Rendering 考量
+
+**為什麼**：
+- 首頁 SEO 重要
+- 避免首次載入時內容跳動
+
+**引導意見**：
+```typescript
+// 如果未來需要 SSR，可考慮：
+// 1. 在 Vercel Edge Function 預渲染
+// 2. 使用 Next.js 的 getServerSideProps
+// 3. 或在 HTML 中嵌入初始資料
 ```
 
 ---
 
-## 📜 歷史審計紀錄
+## ✅ 驗收標準
 
-### 第五輪 (45/100, F) - 文件詐騙
-- Merge Conflict 未解決
-- 宣稱 100/100 但代碼沒修
-- 偽造驗收報告
-
-### 第四輪 (78/100, B-) - E1-E7 部分修復
-- E1/E4/E6/E7 修復
-- E2/E3/E5 有問題
-- 新增 F1-F6 問題
-
-### 第三輪 (65/100, C) - E1-E7 發現
-- 發現 E1-E7 七個問題
-- API 留言沒實作
-- handleReply 空函數
-
-### 第二輪 (100/100, A+) - D1-D4 修復
-- 記憶體洩漏修復
-- 批量上傳方法
-- 前端驗證完整
-
-### 第一輪 (85/100, B+) - P0 完成
-- 圖片上傳功能
-- 樂觀更新
-- Rollback 機制
+| 項目 | 標準 |
+|------|------|
+| **外觀** | UI/CSS 完全不變 |
+| **資料** | 永遠顯示 6 筆評價 |
+| **效能** | 首次載入 < 2s |
+| **穩定** | API 斷線時有 fallback |
+| **SEO** | 保持現有 meta tags |
 
 ---
 
-## 📋 專案目標
+## 📊 測試計畫
 
-為 **Consumer (消費者)** 與 **Agent (房仲)** 雙頁面實現完整的圖片上傳與互動功能：
+### 1. 現在 (0 真實資料)
+- [ ] 部署後首頁顯示 6 張卡片
+- [ ] 全部來自 SERVER_SEEDS
+- [ ] 顯示「林小姐 (平台精選)」等示範資料
 
-1. **圖片上傳**: InlineComposer 圖片選擇預覽功能 ✅
-2. **互動完善**: 點讚與留言 Optimistic UI ✅
-3. **雙模式相容**: Mock / API 自動切換 ✅
+### 2. 未來 (有 1 筆真實資料)
+- [ ] 手動在 `community_reviews` 新增測試資料
+- [ ] 重新整理首頁
+- [ ] 顯示：第 1 張真實 + 第 2-6 張 Mock
 
----
+### 3. 成熟期 (6+ 真實資料)
+- [ ] 首頁顯示 6 張全真實評價
+- [ ] Mock 自動消失
 
-## 🎯 功能完整性清單
-
-### P0: 圖片上傳 ✅
-- [x] InlineComposer 支援多圖選擇與預覽
-- [x] uploadService 批量上傳 (Promise.all)
-- [x] createPost 整合上傳流程
-
-### P2: 互動功能 ✅
-- [x] Optimistic UI (按讚/留言/發文)
-- [x] Deep Linking (分享 URL 自動滾動 + retry)
-- [x] Profile Navigation (導航至個人區塊)
-
-### P6/P7: 架構優化 ✅
-- [x] Mock/API 模式自動切換
-- [x] Type Safety (No any)
-- [x] Memory Leak Prevention (useEffect cleanup)
-
-### 待辦 ⚠️
-- [ ] F5: 執行 Supabase Migration SQL
+### 4. API 斷線測試
+- [ ] 關閉 Supabase 連線
+- [ ] 首頁顯示 `BACKUP_REVIEWS` 靜態資料
+- [ ] 不影響用戶體驗
 
 ---
 
-## 🌟 架構師評語
+## 📁 檔案變更清單
 
-### ✅ 這次做對的事情
-
-1. **代碼真的改了** - 不再只是改文件騙人
-2. **ESLint 驗證** - F1 移除 `refresh` 後無警告
-3. **Production Safe** - F2 用 `import.meta.env.DEV` 保護
-4. **用戶回饋** - F3 恢復 `notify.info`
-5. **Hash 正確設定** - F4 用 `'profile'` 不是 `'#profile'`
-6. **Deep Linking 強化** - F6 加入 retry 機制防止 race condition
-
-### 🟡 可以更好的地方
-
-1. **H1-H3 是小問題**，不影響功能，但代碼可以更精簡
-2. **F5 Migration** 還沒手動執行，API 模式可能會失敗
-3. **測試覆蓋** - 建議加入 E2E 測試驗證 Deep Linking
+| 檔案 | 操作 | 說明 |
+|------|------|------|
+| `api/home/featured-reviews.ts` | **新增** | 後端聚合 API |
+| `src/services/communityService.ts` | 修改 | 新增 API 呼叫函數 |
+| `src/features/home/sections/CommunityTeaser.tsx` | 修改 | 改用動態資料 |
+| `src/constants/data.ts` | 修改 | COMMUNITY_REVIEWS → BACKUP_REVIEWS |
 
 ---
 
-**Ready for Production. 建議執行 F5 Migration 後部署。**
+## 🚀 部署檢查
+
+- [ ] ESLint 通過
+- [ ] TypeScript 編譯通過
+- [ ] Build 成功
+- [ ] 首頁功能正常
+- [ ] 評價區塊顯示 6 筆
+
+---
+
+**Ready for Implementation.**
