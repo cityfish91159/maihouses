@@ -66,7 +66,7 @@ export interface UnifiedFeedData {
 }
 
 // ============ 常數 ============
-const FEED_MOCK_STORAGE_KEY = 'feed-mock-data-v2';
+const FEED_MOCK_STORAGE_KEY = 'feed-mock-data-v1';
 const MOCK_LATENCY_MS = 250;
 const HOT_POSTS_LIMIT = 3;
 
