@@ -1,5 +1,34 @@
 # 社區牆開發紀錄
 
+## 2025-12-15 Ui Optimization: HeroAssure Mobile Compact
+
+### 📋 工單目標
+解決手機版「安心留痕保障」列表垂直過長的問題，減少用戶滑動距離。
+
+### 🛠️ 變更紀錄
+
+#### 1. Layout (HeroAssure.tsx)
+- **Top Margin**: `mt-4` -> `mt-2`
+- **Vertical Line**: `left-8` -> `left-7` (Aligned to new icon center)
+- **Grid Gap**: `gap-6` -> `gap-3` (Reduced from 24px to 12px)
+
+#### 2. Component (HeroStep.tsx)
+- **Padding**: `p-2` -> `py-2 pl-2 pr-1`
+- **Icon Size**: `size-12` (48px) -> `size-10` (40px)
+- **Gap**: `gap-4` -> `gap-3`
+- **Title**: `text-base` -> `text-sm`
+- **Desc**: `text-xs` -> `text-[11px]`
+- **Spacing**: Reduced margins between title and desc.
+
+### 📊 預期成效
+- 每格節省約 12px 間距 + 8px 圖標高度
+- 整體視覺更緊湊，資訊密度提升
+- 手機版瀏覽體驗順暢度增加
+
+> Status: Applied & Deployed
+
+---
+
 ## 2025-12-14 - P8 第五輪審計：45/100 (F 級) - 偽裝完成大騙局
 
 ### 📋 審計摘要
