@@ -327,7 +327,6 @@ export default {
  * @throws {Error} "API error: {status}" - 當 HTTP 狀態碼非 200
  * @throws {Error} "Invalid API response format" - 當回應結構不符合 FeaturedReviewsResponse
  * @throws {Error} "API returned success: false" - 當 API 明確回傳失敗
- * @throws {Error} "Max retries exceeded" - 當重試次數用盡仍失敗
  */
 export async function getFeaturedHomeReviews(): Promise<ReviewForUI[]> {
   // let lastError: Error | null = null;
@@ -422,6 +421,7 @@ function isValidFeaturedReviewsResponse(data: unknown): data is FeaturedReviewsR
       typeof review.name !== 'string' ||
       typeof review.rating !== 'number' ||
       !Array.isArray(review.tags) ||
+      !review.tags.every(t => typeof t === 'string') || // Fix Lie 1: Verify tags are strings
       typeof review.content !== 'string' ||
       (review.communityId !== null && typeof review.communityId !== 'string') ||
       (review.source !== 'real' && review.source !== 'seed') ||

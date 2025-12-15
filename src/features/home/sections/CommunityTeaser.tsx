@@ -161,7 +161,8 @@ export default function CommunityTeaser() {
             key={review.originalId}
             onClick={() => handleReviewClick(review)}
             onKeyDown={(e) => {
-              if (e.key === 'Enter') {
+              if (e.key === 'Enter' || e.key === ' ') { // Fix Lie 7: Support Space key
+                e.preventDefault(); // Prevent scrolling for Space
                 handleReviewClick(review);
               }
             }}

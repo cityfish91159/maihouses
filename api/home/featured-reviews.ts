@@ -29,6 +29,7 @@ import { SERVER_SEEDS } from '../../src/constants/server-seeds';
 // ============================================
 
 const REQUIRED_COUNT = 6;
+const DISPLAY_ID_LETTERS = 'ABCDEFGHJKLMNPQRSTUVWXYZ'; // Fix Lie 12: Extract constant (Exclude I, O)
 
 // 延遲初始化 Supabase client
 let supabase: SupabaseClient | null = null;
@@ -118,7 +119,7 @@ function calculateRating(hasDisadvantage: boolean): number {
  * @returns 穩定的大寫英文字母
  */
 function generateStableLetter(reviewId: string): string {
-  const letters = 'ABCDEFGHJKLMNPQRSTUVWXYZ'; // 排除 I, O 避免混淆
+  // const letters = 'ABCDEFGHJKLMNPQRSTUVWXYZ'; // Moved to constants
   
   // 使用 djb2 hash 演算法產生穩定的數字
   let hash = 5381;
@@ -128,8 +129,8 @@ function generateStableLetter(reviewId: string): string {
   }
   
   // 取絕對值並對字母數量取餘數
-  const index = Math.abs(hash) % letters.length;
-  return letters.charAt(index);
+  const index = Math.abs(hash) % DISPLAY_ID_LETTERS.length;
+  return DISPLAY_ID_LETTERS.charAt(index);
 }
 
 function adaptRealReviewForUI(review: RealReviewRow): ReviewForUI {
@@ -161,6 +162,9 @@ function adaptRealReviewForUI(review: RealReviewRow): ReviewForUI {
   // H4 修復：fallback 從「認證社區」改為「已認證」
   // 將測試用社區名稱映射為正常名稱（資料庫測試資料保持不變，顯示時替換）
   let communityLabel = review.community_name || '已認證';
+  
+  // Fix Lie 11: Explicitly acknowledge this is a dirty data patch
+  // TODO: Clean up test data in database and remove this patch
   if (communityLabel.includes('測試社區') || communityLabel.includes('API 穩定性')) {
     communityLabel = '明湖水岸'; // 正常社區名稱，實際上是測試資料
   }
