@@ -1,6 +1,66 @@
 # 社區牆開發紀錄
 
-<<<<<<< HEAD
+## 2025-12-15 - P9-1: 首頁評價聚合 API 建立
+
+### 📋 任務摘要
+
+> **實作者**: AI Agent
+> **任務**: P9-1 Backend API - 首頁評價聚合 API
+> **結果**: ✅ **代碼已部署，Live API 正常運作**
+
+### 🛠️ 新增檔案
+
+| 檔案 | 操作 | 說明 |
+|------|------|------|
+| `api/home/featured-reviews.ts` | 新增 | 首頁評價聚合 API (292 行) |
+
+### 📦 核心功能
+
+1. **Hybrid Reviews System (混合動力架構)**
+   - 優先從 Supabase `community_reviews` 撈取真實資料
+   - 不足 6 筆時用 `SERVER_SEEDS` Mock 資料補位
+   - 保證永遠回傳 6 筆資料（零天窗）
+
+2. **Adapter Pattern (資料適配器)**
+   - `adaptRealReviewForUI()`: 轉換 DB 資料為 UI 格式
+   - `adaptSeedForUI()`: 轉換 Mock 資料為 UI 格式
+
+3. **錯誤降級機制**
+   - Level 1: Supabase 查詢失敗 → Mock 補位
+   - Level 2: API 異常 → 全 Mock 回傳 (200 OK)
+
+4. **快取策略**
+   - `s-maxage=60, stale-while-revalidate=300`
+
+### 🔗 驗證結果
+
+| 項目 | 結果 |
+|------|------|
+| TypeScript 編譯 | ✅ 通過 |
+| Vite Build | ✅ 通過 (19.21s) |
+| Git Push | ✅ `bc830ea` |
+| Live API | ✅ 正常回傳 6 筆資料 |
+
+**Live 端點**: `https://maihouses.vercel.app/api/home/featured-reviews`
+
+### 📊 Live API 回應 (實測)
+
+```json
+{
+  "success": true,
+  "data": [
+    { "source": "real", "name": "匿名用戶｜認證評價" },
+    { "source": "real", "name": "匿名用戶｜認證評價" },
+    { "source": "seed", "name": "林小姐｜平台精選" },
+    { "source": "seed", "name": "陳先生｜已購客" },
+    { "source": "seed", "name": "王太太｜住戶" },
+    { "source": "seed", "name": "張經理｜投資客" }
+  ]
+}
+```
+
+---
+
 ## 2025-12-15 Ui Optimization: HeroAssure Mobile Compact
 
 ### 📋 工單目標
@@ -27,7 +87,9 @@
 - 手機版瀏覽體驗順暢度增加
 
 > Status: Applied & Deployed
-=======
+
+---
+
 ## 2025-12-14 - P8 第六輪審計：92/100 (A-) - 真正修復 F1-F6
 
 ### 📋 審計摘要
@@ -94,7 +156,6 @@
 **剩餘工作**：
 1. 手動執行 Supabase Migration SQL
 2. 考慮優化 H1-H3 小問題
->>>>>>> 7fd08a71d7213dcdc2ee5071c020cae19d94f617
 
 ---
 
