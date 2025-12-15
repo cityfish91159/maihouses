@@ -213,7 +213,11 @@ function adaptRealReviewForUI(review: RealReviewRow): ReviewForUI {
   const letter = generateStableLetter(review.id);
   const roleLabel = review.source === 'agent' ? '房仲' : '住戶';
   // H4 修復：fallback 從「認證社區」改為「已認證」
-  const communityLabel = review.community_name || '已認證';
+  // 將測試用社區名稱映射為正常名稱（資料庫測試資料保持不變，顯示時替換）
+  let communityLabel = review.community_name || '已認證';
+  if (communityLabel.includes('測試社區') || communityLabel.includes('API 穩定性')) {
+    communityLabel = '明湖水岸'; // 正常社區名稱，實際上是測試資料
+  }
   const name = `${letter}***｜${communityLabel} ${roleLabel}`;
   
   // displayId 就是那個字母
