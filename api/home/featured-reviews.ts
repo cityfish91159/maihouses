@@ -248,7 +248,7 @@ function adaptRealReviewForUI(review: RealReviewRow): ReviewForUI {
   // 例如：J***｜景安和院 住戶
   // H1 修復：使用穩定的字母生成，同一 review.id 永遠對應同一字母
   const letter = generateStableLetter(review.id);
-  const roleLabel = review.source === 'agent' ? '房仿' : '住戶';
+  const roleLabel = review.source === 'agent' ? '房仲' : '住戶';
   // H4 修復：fallback 從「認證社區」改為「已認證」
   const communityLabel = review.community_name || '已認證';
   const name = `${letter}***｜${communityLabel} ${roleLabel}`;
