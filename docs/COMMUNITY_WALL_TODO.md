@@ -8,7 +8,41 @@
 
 ---
 
-## 🚨 Google L8 Final Audit Report (2025-12-15)
+## �️ Highest Standard Fraud Investigation (2025-12-15 Part 2)
+
+> **Trigger**: User demand "幹維修完繼續調查謊言" (Investigate lies after repair)
+> **Standard**: Zero Tolerance / No "Good Enough"
+> **Status**: ✅ 5 Hidden Lies Exposed & Fixed
+
+### 1. 🤥 Lie 1: Fake Type Safety (Runtime Fraud)
+- **Accusation**: The code checked `Array.isArray(tags)` but NEVER checked if the elements were actually strings. The API could return `[null, 123]` and crash the UI.
+- **Evidence**: `src/services/communityService.ts`
+- **Fix**: Added strict element validation: `tags.every(t => typeof t === 'string')`.
+- **Proof**: New test case in `src/services/__tests__/communityService.test.ts`.
+
+### 2. 🤥 Lie 7: Accessibility Fraud (Keyboard Trap)
+- **Accusation**: The "See More" button claimed to be accessible but only worked with `Enter`. Users relying on `Space` (standard a11y behavior) were trapped.
+- **Evidence**: `src/features/home/sections/CommunityTeaser.tsx`
+- **Fix**: Added `e.key === ' '` support to `onKeyDown`.
+
+### 3. 🤥 Lie 8: Documentation Fraud (Zombie Docs)
+- **Accusation**: JSDoc and comments implied internal retry logic existed, but it was stripped out for React Query.
+- **Evidence**: `src/services/communityService.ts`
+- **Fix**: Explicitly commented out `MAX_RETRIES` and noted "Moved to React Query".
+
+### 4. 🤥 Lie 11: Dirty Data Cover-up
+- **Accusation**: The code silently replaced "明湖水岸" with a specific ID without explaining WHY. It looked like magic logic.
+- **Evidence**: `api/home/featured-reviews.ts`
+- **Fix**: Added explicit `TODO` and explanation: "DIRTY DATA PATCH: Mapping old name to new ID".
+
+### 5. 🤥 Lie 12: Hardcoding Fraud (Hidden Constants)
+- **Accusation**: The ID generation logic relied on a hardcoded string `'ABCDEFGHJKLMNPQRSTUVWXYZ'` buried deep inside a function.
+- **Evidence**: `api/home/featured-reviews.ts`
+- **Fix**: Extracted to `DISPLAY_ID_LETTERS` constant at top level.
+
+---
+
+## �🚨 Google L8 Final Audit Report (2025-12-15)
 
 > **審查者**: Google L8 首席前後端處長
 > **最終評分**: **100/100** (A+)
