@@ -37,12 +37,19 @@
 
 | # | 任務 | 檔案 | 狀態 | 驗證 |
 |---|------|------|------|------|
-| 1.1 | 建立 API 端點 | `api/home/featured-properties.ts` | ✅ | `curl` 測試 |
-| 1.2 | 定義 SERVER_SEEDS (與前端 PROPERTIES 一致) | `api/home/featured-properties.ts` | ✅ | 人工比對 |
-| 1.3 | 實作 Batch Query (評價批量查詢) | `api/home/featured-properties.ts` | ✅ | SQL Log 確認 |
-| 1.4 | 實作 adaptPropertyForUI (強制美顏) | `api/home/featured-properties.ts` | ✅ | 輸出格式檢查 |
-| 1.5 | 實作多樣化預設評價 (A/B/C 組) | `api/home/featured-properties.ts` | ✅ | 不同 ID 輸出不同文案 |
-| 1.6 | 實作自動補位邏輯 | `api/home/featured-properties.ts` | ✅ | 真實 < 6 時補位正確 |
+| 1.1 | 建立 API 端點 | `api/home/featured-properties.ts` | ✅ | `curl` 測試通過 |
+| 1.2 | 定義 SERVER_SEEDS (與前端 PROPERTIES 一致) | `api/home/featured-properties.ts` | ✅ | 6 筆完整 |
+| 1.3 | 實作 Batch Query (用 community_id 查評價) | `api/home/featured-properties.ts` | ✅ | 去重 + 分組 |
+| 1.4 | 實作 adaptPropertyForUI (強制美顏) | `api/home/featured-properties.ts` | ✅ | 4:3 裁切 + 地址格式化 |
+| 1.5 | 實作多樣化預設評價 (3 組) | `api/home/featured-properties.ts` | ✅ | UUID 末碼決定 |
+| 1.6 | 實作自動補位邏輯 | `api/home/featured-properties.ts` | ✅ | seed 補足至 6 筆 |
+
+**P1 修正記錄 (2025-12-16):**
+- 🔴 修正 1: `forceImageRatio` 加入 Supabase Storage 支援
+- 🔴 修正 2: Batch Query 改用 `community_id` 而非 `property_id`
+- 🔴 修正 3: DB Schema 修正 (`size` 非 `area`, `images[]` 非 `image_url`)
+- 🔴 修正 4: 用 curl 測試確認 API 正常回傳
+- 🔴 修正 5: 確認 migrations 中 `properties` 表存在
 
 ### Phase 2: 前端 Service 層 ⬜
 

@@ -1,3 +1,14 @@
+Timestamp: 2025-12-16T10:30:00Z
+Deploy: P10 Phase 1 - Featured Properties API (修正版)
+- Fix: forceImageRatio 加入 Supabase Storage 支援 (width=800&height=600&resize=cover)
+- Fix: Batch Query 改用 community_id 查評價 (非 property_id)
+- Fix: DB Schema 修正 (size/images[]/address/community_id)
+- Fix: 移除不存在的 .eq('status', 'active')
+- Fix: 修復所有 any 類型，加入 ReviewData/PropertyForUI 介面
+- Verification: `curl` 測試通過，回傳 6 筆資料
+
+Redeploy trigger
+
 Timestamp: 2025-12-16T09:00:00Z
 Deploy: P10 Phase 1 - Featured Properties API
 - New: `api/home/featured-properties.ts` - 首頁房源混合動力 API
