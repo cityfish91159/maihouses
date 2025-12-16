@@ -1,8 +1,8 @@
 # 🏠 P11: 房源列表頁混合動力升級 V2.0
 
-> **專案狀態**: ⚠️ **Phase 1 審查不合格，需修正 6 項缺失**
+> **專案狀態**: ✅ **Phase 1 D1-D6 已修正，二次審查發現新缺失**
 > **最後更新**: 2025-12-16
-> **審查評分**: **52/100** (便宜行事嚴重)
+> **審查評分**: **72/100** (從 52 分進步，但仍有改進空間)
 > **目標**: 將 `public/property.html` 升級為混合動力架構，零閃爍載入真實資料
 > **核心策略**: Mock First, API Background, Silent Replace, Race Guard
 
@@ -32,177 +32,271 @@
 
 ## 📋 TODO List (HARD GATE)
 
-### Phase 1: 資料標準化 (SSOT) ⚠️ 待修正
+### Phase 1: 資料標準化 (SSOT) ✅ D1-D6 已修正
 
 | # | 任務 | 檔案 | 狀態 | 驗證 |
 |---|------|------|------|------|
 | 1.1 | 建立種子資料 JSON | `public/data/seed-property-page.json` | ✅ | 結構與 Mock 一致 |
 | 1.2 | 更新前端 Mock 註解 | `public/js/property-data.js` | ✅ | 標記同步提醒 |
 | 1.3 | TypeScript 型別定義 | `src/types/property-page.ts` | ✅ | Zod Schema-First |
-| 1.4 | 🔴 **修正 D1** | JSON 加入 `default`/`test` 結構 | ✅ | 與 Mock 完全一致 |
-| 1.5 | 🔴 **修正 D2** | JSON 結構對齊 Mock | ✅ | `default.featured` |
-| 1.6 | 🟠 **修正 D3** | 建立型別驗證腳本 | ✅ | `npm run validate:property` |
-| 1.7 | 🟠 **修正 D4** | 建立 JSON Schema | ⬜ | IDE 提示 |
-| 1.8 | 🟡 **修正 D5** | 建立同步檢查腳本 | ⬜ | pre-commit |
-| 1.9 | 🟡 **修正 D6** | 統一 Review 結構 | ⬜ | BaseReview |
+| 1.4 | 🔴 **D1** | JSON 加入 `default`/`test` 結構 | ✅ | 與 Mock 完全一致 |
+| 1.5 | 🔴 **D2** | JSON 結構對齊 Mock | ✅ | `default.featured` |
+| 1.6 | 🟠 **D3** | Zod Schema + 驗證腳本 | ✅ | `npm run validate:property` |
+| 1.7 | 🟠 **D4** | JSON Schema 生成 | ✅ | `npm run generate:schema` |
+| 1.8 | 🟡 **D5** | Mock ↔ JSON 同步檢查 | ✅ | `npm run check:ssot` |
+| 1.9 | 🟡 **D6** | Review Adapter 統一 | ✅ | `NormalizedReview` |
 
-**驗收**: ⚠️ ~~JSON 與 JS Mock 結構完全一致~~ **審查發現 6 項缺失，需修正後重新驗收**
+**驗收**: ✅ Pre-commit hook Step 6-8 自動驗證
 
 ---
 
-### 🔴 P1 審查報告 (Google 首席前後端處長)
+### 🔴 二次審查報告 (Google 首席前後端處長)
 
 > **審查日期**: 2025-12-16
-> **審查結果**: ⚠️ **勉強通過，有 6 項重大缺失待修**
-> **評分**: **52/100** (便宜行事嚴重)
+> **審查結果**: ⚠️ **D1-D6 基本完成，但發現 7 項新缺失**
+> **評分**: **72/100** (進步但有改進空間)
 
-#### 📋 缺失清單
+#### 📋 新發現缺失清單
 
 | # | 嚴重度 | 缺失描述 | 影響 | 狀態 |
 |---|--------|----------|------|------|
-| D1 | 🔴 P0 | **Mock 有 `test` 資料集，JSON 沒有** | SSOT 打假，根本不一致 | ⬜ 待修 |
-| D2 | 🔴 P0 | **property-data.js 保留舊結構 `window.propertyMockData.default`**，JSON 直接是根結構 | API 整合時會 crash | ⬜ 待修 |
-| D3 | 🟠 P1 | **型別檔沒有驗證腳本** | 只寫 .ts 不跑驗證 = 裝飾品 | ⬜ 待修 |
-| D4 | 🟠 P1 | **JSON 沒有 JSON Schema** | 沒有 schema 驗證，隨便亂改也不會報錯 | ⬜ 待修 |
-| D5 | 🟡 P2 | **沒有同步檢查腳本** | 下次改 Mock 忘記改 JSON，就不一致了 | ⬜ 待修 |
-| D6 | 🟡 P2 | **review 結構不一致** - Featured 用 `stars`，Listing 用 `badge` | 後端 adapter 會很痛苦 | ⬜ 待修 |
+| D7 | 🔴 P0 | **D4 JSON Schema 是硬編碼，不是從 Zod 自動生成** | Zod 改了 Schema 不會自動更新 | ⬜ 待修 |
+| D8 | 🔴 P0 | **D3 validate 只驗 JSON，沒驗 Mock** | Mock 可能偷偷壞掉 | ⬜ 待修 |
+| D9 | 🟠 P1 | **D6 adapter 沒有單元測試** | Regex 解析可能出錯不知道 | ⬜ 待修 |
+| D10 | 🟠 P1 | **D6 adapter 沒有被任何代碼引用** | 寫了等於沒寫 | ⬜ 待修 |
+| D11 | 🟡 P2 | **pre-commit Step 7 會自動 git add，但沒通知用戶** | 用戶不知道 commit 被改了什麼 | ⬜ 待修 |
+| D12 | 🟡 P2 | **D5 check:ssot 沒有測試案例** | 不知道 deepEqual 有沒有 bug | ⬜ 待修 |
+| D13 | 🟡 P2 | **三個腳本都沒有 error boundary** | 腳本 crash 會讓 pre-commit 掛掉 | ⬜ 待修 |
 
 ---
 
-#### 🔴 D1: Mock 有 test 資料，JSON 沒有
+#### 🔴 D7: JSON Schema 是假的「自動生成」
 
-**問題**: `property-data.js` 有 `default` 和 `test` 兩組資料，但 `seed-property-page.json` 只有一組。
+**問題**: `generate-json-schema.ts` 裡面是 **硬編碼** 的 JSON Schema，不是真的從 Zod 自動轉換。
 
-**偷懶程度**: 💀💀💀 嚴重 - 你說 "SSOT 單一真理來源"，結果 Mock 比 JSON 多一倍資料？
+**偷懶程度**: 💀💀💀 嚴重詐騙 - 說「自動生成」但其實是手寫
 
-**引導修正**:
-```
-選項 A (推薦): JSON 也加入 test 資料集
-{
-  "default": { featured: {...}, listings: [...] },
-  "test": { featured: {...}, listings: [...] }
-}
-
-選項 B: Mock 刪除 test 資料，只留 default
-把 window.propertyMockData.test 整段刪掉
-
-選 A 或 B 都可以，但必須一致！
-```
-
----
-
-#### 🔴 D2: 結構層級不一致
-
-**問題**: 
-- Mock: `window.propertyMockData.default.featured`
-- JSON: `featured` (根層級)
-
-**偷懶程度**: 💀💀💀 嚴重 - 這樣 API 整合時要寫兩套解析邏輯？
-
-**引導修正**:
-```
-JSON 改成與 Mock 相同結構：
-{
-  "default": {
-    "featured": {...},
-    "listings": [...]
+**證據**:
+```typescript
+// scripts/generate-json-schema.ts
+const jsonSchema = {
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "FeaturedReview": { ... }  // 全部硬編碼！
   }
-}
-
-或 Mock 改成平鋪結構，但要改所有引用點。
-推薦改 JSON，因為 Mock 已經被 property.html 引用。
+};
 ```
 
----
-
-#### 🟠 D3: 型別檔是裝飾品
-
-**問題**: 寫了 `property-page.ts` 但沒有任何代碼 import 它，也沒有驗證腳本確認 JSON 符合型別。
-
-**偷懶程度**: 💀💀 中等 - 寫文件不寫代碼，典型敷衍
+**風險**: 當 Zod Schema 改了，JSON Schema 不會自動更新，會脫節。
 
 **引導修正**:
 ```
-建立驗證腳本 scripts/validate-property-types.ts：
+方案 A (理想): 用 zod-to-json-schema 庫真的自動轉換
+- 但目前 Zod v4 不支援
 
-1. import JSON 檔案
-2. import 型別定義
-3. 用 TypeScript satisfies 或 zod 驗證
-4. 加入 npm script: "validate:property": "tsx scripts/validate-property-types.ts"
-5. 加入 pre-commit hook 自動執行
-```
-
----
-
-#### 🟠 D4: 沒有 JSON Schema
-
-**問題**: JSON 檔沒有對應的 `.schema.json`，IDE 不會提示錯誤。
-
-**偷懶程度**: 💀💀 中等 - 專業後端都會寫 schema
-
-**引導修正**:
-```
-建立 public/data/seed-property-page.schema.json
-
-然後在 JSON 檔頭部加入：
-{
-  "$schema": "./seed-property-page.schema.json",
-  ...
-}
-
-Schema 可以從 TypeScript 型別自動生成：
-npx ts-json-schema-generator -p src/types/property-page.ts -t PropertyPageData
-```
-
----
-
-#### 🟡 D5: 沒有同步檢查機制
-
-**問題**: 註解寫 "必須與 JSON 保持同步"，但沒有任何自動檢查。下次改 Mock 忘記改 JSON，誰會發現？
-
-**偷懶程度**: 💀 輕微 - 靠人腦記憶 = 遲早出事
-
-**引導修正**:
-```
-建立 scripts/check-ssot-sync.ts：
-
-1. 讀取 property-data.js 的 Mock 資料
-2. 讀取 seed-property-page.json
-3. deep equal 比對（忽略 test 資料集）
+方案 B (務實): 
+1. 腳本加入 Zod → JSON Schema 欄位比對檢查
+2. 讀取 Zod Schema 的欄位名稱
+3. 比對 JSON Schema 的 properties
 4. 不一致就報錯
-5. 加入 pre-commit hook
+
+範例邏輯:
+const zodKeys = Object.keys(FeaturedReviewSchema.shape);
+const jsonKeys = Object.keys(jsonSchema.definitions.FeaturedReview.properties);
+if (!arraysEqual(zodKeys, jsonKeys)) throw Error("Zod ↔ JSON Schema 不同步");
 ```
 
 ---
 
-#### 🟡 D6: Review 結構不一致
+#### 🔴 D8: validate:property 沒驗證 Mock
 
-**問題**:
-- `FeaturedReview`: `{ stars, author, tags?, content }`
-- `ListingReview`: `{ badge, content }`
+**問題**: `validate-property-types.ts` 只驗證 JSON，沒驗證 `property-data.js`。
 
-差異太大，後端 API 要寫兩套 adapter。
+**偷懶程度**: 💀💀 中等 - Mock 可以偷偷壞掉不被發現
 
-**偷懶程度**: 💀 輕微 - 照抄舊資料結構，沒有統一設計
+**證據**:
+```typescript
+// 只讀 JSON
+const jsonPath = resolve(__dirname, '../public/data/seed-property-page.json');
+// 沒有讀 property-data.js！
+```
+
+**風險**: 有人改 Mock 結構，Zod 驗證不會發現。
 
 **引導修正**:
 ```
-統一 Review 結構：
-interface BaseReview {
-  author: string;
-  content: string;
-  rating?: number;     // 1-5 星
-  tags?: string[];
-  badges?: string[];   // 如 "內湖區第1名"
-}
+validate-property-types.ts 應該也驗證 Mock:
 
-然後 FeaturedReview 和 ListingReview 都繼承 BaseReview。
-這樣後端只需要一套 adapter。
+1. 用 VM 執行 property-data.js 取得 window.propertyMockData
+2. 對 Mock 資料也跑 SeedFileSchema.safeParse()
+3. 兩者都通過才算 pass
+
+這樣 Zod 同時守護 JSON 和 Mock，真正的 SSOT。
 ```
 
 ---
 
-### Phase 2: 後端聚合 API ⬜
+#### 🟠 D9: D6 adapter 沒有單元測試
+
+**問題**: `normalizeListingReview()` 用 Regex 解析 content，但沒有測試。
+
+**偷懶程度**: 💀💀 中等 - Regex 最容易出錯
+
+**證據**:
+```typescript
+const match = r.content.match(/「(.+)」—\s*(.+)/);
+return {
+  author: match?.[2] ?? '匿名',  // 如果格式不對就變「匿名」
+```
+
+**風險**: 
+- content 沒有「」會直接變匿名
+- content 有多個「」會解析錯誤
+- 全形/半形空格不一致會 fail
+
+**引導修正**:
+```
+建立 src/types/__tests__/property-page.test.ts:
+
+describe('normalizeListingReview', () => {
+  it('正常格式', () => {
+    const r = { badge: 'X', content: '「評價內容」— 作者名' };
+    expect(normalizeListingReview(r).author).toBe('作者名');
+  });
+  
+  it('無「」時回傳匿名', () => {
+    const r = { badge: 'X', content: '普通評價' };
+    expect(normalizeListingReview(r).author).toBe('匿名');
+    expect(normalizeListingReview(r).content).toBe('普通評價');
+  });
+  
+  it('多個「」時只取最外層', () => {
+    const r = { badge: 'X', content: '「他說「很棒」」— 作者' };
+    // 這個會 fail，要修 Regex
+  });
+});
+```
+
+---
+
+#### 🟠 D10: D6 adapter 沒有被引用
+
+**問題**: 寫了 `normalizeFeaturedReview` 和 `normalizeListingReview`，但沒有任何代碼 import 使用。
+
+**偷懶程度**: 💀💀 中等 - 寫了等於沒寫
+
+**證據**:
+```bash
+grep -r "normalizeFeaturedReview\|normalizeListingReview" src/ api/
+# 只有定義，沒有引用
+```
+
+**風險**: 代碼腐爛，可能哪天被刪掉。
+
+**引導修正**:
+```
+至少要有一處實際使用:
+
+方案 A: 在 Phase 2 的 api/property/page-data.ts 使用
+方案 B: 在前端組件使用（如果有需要統一格式的地方）
+方案 C: 加入 TODO 註解標記「Phase 2 會用到」
+
+最低標準: 加入 @see 或 @used-by 註解說明預期用途
+```
+
+---
+
+#### 🟡 D11: pre-commit 偷偷改檔案沒通知
+
+**問題**: Step 7 會自動執行 `git add`，但用戶不知道 commit 多了什麼。
+
+**證據**:
+```bash
+# .git/hooks/pre-commit
+npm run generate:schema
+git add public/data/seed-property-page.schema.json
+echo "✅ Schema 已更新並加入暫存區。"  # 只有這行提示
+```
+
+**風險**: 用戶以為 commit 了 A，結果還包含 B。
+
+**引導修正**:
+```
+改進提示訊息:
+
+echo "⚠️  注意：以下檔案已自動加入此次 commit:"
+echo "    • public/data/seed-property-page.schema.json"
+echo ""
+echo "如果這不是你預期的，請執行 git reset HEAD -- <file>"
+```
+
+---
+
+#### 🟡 D12: check:ssot 的 deepEqual 沒測試
+
+**問題**: `check-ssot-sync.ts` 自己寫了 `deepEqual()`，但沒有單元測試。
+
+**偷懶程度**: 💀 輕微 - 標準庫有現成的
+
+**引導修正**:
+```
+方案 A: 用 Node.js 內建的 assert.deepStrictEqual()
+方案 B: 用 lodash 的 _.isEqual()
+方案 C: 至少寫幾個測試案例確認 edge case
+
+Edge cases 要測:
+- undefined vs 缺失 key
+- null vs undefined
+- [] vs {}
+- 順序不同的陣列
+```
+
+---
+
+#### 🟡 D13: 腳本沒有 error boundary
+
+**問題**: 三個腳本都是直接 `process.exit(1)`，沒有統一的錯誤處理。
+
+**證據**:
+```typescript
+} catch (error) {
+  console.error('❌ 執行失敗:', error instanceof Error ? error.message : error);
+  process.exit(1);
+}
+```
+
+**風險**: 錯誤訊息不一致，debug 困難。
+
+**引導修正**:
+```
+建立 scripts/lib/error-handler.ts:
+
+export function handleScriptError(scriptName: string, error: unknown): never {
+  console.error('');
+  console.error(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+  console.error(`❌ [${scriptName}] 執行失敗`);
+  console.error(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+  if (error instanceof Error) {
+    console.error(`錯誤: ${error.message}`);
+    if (process.env.DEBUG) console.error(error.stack);
+  }
+  process.exit(1);
+}
+```
+
+---
+
+### 📊 修正優先順序建議
+
+| 優先 | 缺失 | 理由 |
+|------|------|------|
+| 1 | D7 | SSOT 核心，Schema 脫節 = 假驗證 |
+| 2 | D8 | Mock 沒驗證 = SSOT 有洞 |
+| 3 | D9 | Regex 解析容易出錯 |
+| 4 | D10 | 死代碼要清理或標記 |
+| 5 | D11-D13 | 體驗/維護性問題，非關鍵 |
+
+---
 
 | # | 任務 | 檔案 | 狀態 | 驗證 |
 |---|------|------|------|------|
