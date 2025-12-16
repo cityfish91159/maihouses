@@ -16,6 +16,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "generate:schema": "tsx scripts/generate-json-schema.ts",
+    "verify:seed": "tsx scripts/verify-seed-strict.ts",
     "validate:property": "tsx scripts/validate-property-types.ts",
     "check:ssot": "tsx scripts/check-ssot-sync.ts",
     "speedup:start": "bash scripts/speedup-control.sh start",

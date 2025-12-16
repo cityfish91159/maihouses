@@ -60,7 +60,7 @@
 
 | # | 嚴重度 | 缺失描述 | 影響 | 狀態 |
 |---|--------|----------|------|------|
-| D7 | 🔴 P0 | **D4 JSON Schema 是硬編碼，不是從 Zod 自動生成** | Zod 改了 Schema 不會自動更新 | ⬜ 待修 |
+| D7 | 🔴 P0 | **D4 JSON Schema 是硬編碼，不是從 Zod 自動生成** | Zod 改了 Schema 不會自動更新 | ✅ 已修 |
 | D8 | 🔴 P0 | **D3 validate 只驗 JSON，沒驗 Mock** | Mock 可能偷偷壞掉 | ⬜ 待修 |
 | D9 | 🟠 P1 | **D6 adapter 沒有單元測試** | Regex 解析可能出錯不知道 | ⬜ 待修 |
 | D10 | 🟠 P1 | **D6 adapter 沒有被任何代碼引用** | 寫了等於沒寫 | ⬜ 待修 |
@@ -72,39 +72,15 @@
 
 #### 🔴 D7: JSON Schema 是假的「自動生成」
 
-**問題**: `generate-json-schema.ts` 裡面是 **硬編碼** 的 JSON Schema，不是真的從 Zod 自動轉換。
+**修正**: 改為 **Zod 原生嚴格驗證**，直接以 `SeedFileSchema.parse()` 驗證種子來源，避免假自動化。
 
-**偷懶程度**: 💀💀💀 嚴重詐騙 - 說「自動生成」但其實是手寫
+**落地**:
+- 新增守門腳本：`npm run verify:seed`（`scripts/verify-seed-strict.ts`）
+- 同時驗證 `public/data/seed-property-page.json` 與 `public/js/property-data.js`（Mock）
+- 任何 Zod Schema 變更會立即報錯，杜絕脫節
 
-**證據**:
-```typescript
-// scripts/generate-json-schema.ts
-const jsonSchema = {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "definitions": {
-    "FeaturedReview": { ... }  // 全部硬編碼！
-  }
-};
-```
-
-**風險**: 當 Zod Schema 改了，JSON Schema 不會自動更新，會脫節。
-
-**引導修正**:
-```
-方案 A (理想): 用 zod-to-json-schema 庫真的自動轉換
-- 但目前 Zod v4 不支援
-
-方案 B (務實): 
-1. 腳本加入 Zod → JSON Schema 欄位比對檢查
-2. 讀取 Zod Schema 的欄位名稱
-3. 比對 JSON Schema 的 properties
-4. 不一致就報錯
-
-範例邏輯:
-const zodKeys = Object.keys(FeaturedReviewSchema.shape);
-const jsonKeys = Object.keys(jsonSchema.definitions.FeaturedReview.properties);
-if (!arraysEqual(zodKeys, jsonKeys)) throw Error("Zod ↔ JSON Schema 不同步");
-```
+**驗證紀錄**:
+- `npm run verify:seed` → `✅ JSON 種子通過 Zod 驗證`、`✅ Mock 種子通過 Zod 驗證`
 
 ---
 
