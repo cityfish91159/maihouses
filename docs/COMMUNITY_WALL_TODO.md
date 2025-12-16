@@ -1,7 +1,7 @@
 # 🏠 P10: 首頁智能房源混合動力 V4.0
 
-> **專案狀態**: 🔴 **待開發 (Pending)**
-> **最後更新**: 2025-12-15
+> **專案狀態**: � **開發中 (In Progress)**
+> **最後更新**: 2025-12-16
 > **目標**: 首頁房源從 Mock 無縫切換至真實資料，**外觀完全不變**
 > **核心策略**: Real First, Mock Fill, Zero Flicker (真實優先，Mock 補位，零閃爍)
 
@@ -33,16 +33,16 @@
 
 ## 📋 TODO List (HARD GATE)
 
-### Phase 1: 後端 API 開發 ⬜
+### Phase 1: 後端 API 開發 ✅ (2025-12-16)
 
 | # | 任務 | 檔案 | 狀態 | 驗證 |
 |---|------|------|------|------|
-| 1.1 | 建立 API 端點 | `api/home/featured-properties.ts` | ⬜ | `curl` 測試 |
-| 1.2 | 定義 SERVER_SEEDS (與前端 PROPERTIES 一致) | `api/home/featured-properties.ts` | ⬜ | 人工比對 |
-| 1.3 | 實作 Batch Query (評價批量查詢) | `api/home/featured-properties.ts` | ⬜ | SQL Log 確認 |
-| 1.4 | 實作 adaptPropertyForUI (強制美顏) | `api/home/featured-properties.ts` | ⬜ | 輸出格式檢查 |
-| 1.5 | 實作多樣化預設評價 (A/B/C 組) | `api/home/featured-properties.ts` | ⬜ | 不同 ID 輸出不同文案 |
-| 1.6 | 實作自動補位邏輯 | `api/home/featured-properties.ts` | ⬜ | 真實 < 6 時補位正確 |
+| 1.1 | 建立 API 端點 | `api/home/featured-properties.ts` | ✅ | `curl` 測試 |
+| 1.2 | 定義 SERVER_SEEDS (與前端 PROPERTIES 一致) | `api/home/featured-properties.ts` | ✅ | 人工比對 |
+| 1.3 | 實作 Batch Query (評價批量查詢) | `api/home/featured-properties.ts` | ✅ | SQL Log 確認 |
+| 1.4 | 實作 adaptPropertyForUI (強制美顏) | `api/home/featured-properties.ts` | ✅ | 輸出格式檢查 |
+| 1.5 | 實作多樣化預設評價 (A/B/C 組) | `api/home/featured-properties.ts` | ✅ | 不同 ID 輸出不同文案 |
+| 1.6 | 實作自動補位邏輯 | `api/home/featured-properties.ts` | ✅ | 真實 < 6 時補位正確 |
 
 ### Phase 2: 前端 Service 層 ⬜
 

@@ -1,3 +1,14 @@
+Timestamp: 2025-12-16T09:00:00Z
+Deploy: P10 Phase 1 - Featured Properties API
+- New: `api/home/featured-properties.ts` - 首頁房源混合動力 API
+- Feature: SERVER_SEEDS 與前端 PROPERTIES 完全一致
+- Feature: adaptPropertyForUI 強制美顏 (4:3 裁切)
+- Feature: 多樣化預設評價 (A/B/C 組)
+- Feature: 自動補位邏輯 (真實 + Mock 混合)
+- Verification: `npm run typecheck` passed, `npm run build` passed.
+
+Redeploy trigger
+
 Timestamp: 2025-12-15T17:00:00Z
 Deploy: P9 Highest Standard Fraud Investigation Fixes
 - Fix: Lie 1 - Added strict type guard for `tags` array in `communityService.ts`.
