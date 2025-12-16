@@ -72,14 +72,15 @@
 
 #### 🔴 D7: JSON Schema 是假的「自動生成」
 
-**修正**: 改為 **Zod 原生嚴格驗證**，直接以 `SeedFileSchema.parse()` 驗證種子來源，避免假自動化。
+**修正**: 改為 **Zod 主導自動生成 + 原生嚴格驗證**，Schema 直接由 `SeedFileSchema.toJSONSchema()` 產出，不再手寫。
 
 **落地**:
-- 新增守門腳本：`npm run verify:seed`（`scripts/verify-seed-strict.ts`）
-- 同時驗證 `public/data/seed-property-page.json` 與 `public/js/property-data.js`（Mock）
-- 任何 Zod Schema 變更會立即報錯，杜絕脫節
+- `npm run generate:schema`：由 `scripts/generate-json-schema.ts` 調用 `SeedFileSchema.toJSONSchema()` 自動生成 Draft-07 Schema
+- `npm run verify:seed`：(`scripts/verify-seed-strict.ts`) 同時驗證 `public/data/seed-property-page.json` 與 `public/js/property-data.js`（Mock）
+- Zod 變更 → Schema/種子立刻報錯，杜絕脫節與假自動化
 
 **驗證紀錄**:
+- `npm run generate:schema` → 成功生成 `public/data/seed-property-page.schema.json`（Draft-07，自動化來源：Zod）
 - `npm run verify:seed` → `✅ JSON 種子通過 Zod 驗證`、`✅ Mock 種子通過 Zod 驗證`
 
 ---
