@@ -116,7 +116,15 @@ interface RealPropertyRow {
   disadvantage: string | null;
 }
 
-// 評價資料型別
+// Supabase 回傳的評價資料型別
+interface SupabaseReviewRow {
+  community_id: string;
+  content: { pros?: string[]; cons?: string; property_title?: string } | null;
+  agent: { name: string }[] | null; // Supabase join 回傳陣列
+  source: string | null;
+}
+
+// 評價資料型別 (轉換後)
 interface ReviewData {
   avatar?: string;
   name?: string;
@@ -275,11 +283,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             
             // 分組
             if (reviewsData) {
-                reviewsData.forEach((r: ReviewData) => {
-                    if (!reviewsMap[r.community_id]) {
-                        reviewsMap[r.community_id] = [];
+                reviewsData.forEach((r: SupabaseReviewRow) => {
+                    const cid = r.community_id;
+                    if (!cid) return;
+                    if (!reviewsMap[cid]) {
+                        reviewsMap[cid] = [];
                     }
-                    reviewsMap[r.community_id].push(r);
+                    // 轉換為 ReviewData
+                    const review: ReviewData = {
+                        community_id: cid,
+                        content: r.content || undefined,
+                        agent: r.agent?.[0] ? { name: r.agent[0].name } : undefined,
+                        source: r.source || undefined,
+                    };
+                    reviewsMap[cid].push(review);
                 });
             }
         }

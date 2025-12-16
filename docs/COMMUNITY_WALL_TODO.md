@@ -64,13 +64,102 @@
 - ✅ 三層容錯：`response.ok` / `json.success` / `catch`
 - ✅ TypeScript 編譯檢查通過
 
-### Phase 3: 前端 UI 整合 ⬜
+### Phase 3: 前端 UI 整合 🔴 (需修正)
 
 | # | 任務 | 檔案 | 狀態 | 驗證 |
 |---|------|------|------|------|
-| 3.1 | useState 初始值改為 PROPERTIES (Mock) | `src/features/home/sections/PropertyGrid.tsx` | ⬜ | 視覺無閃爍 |
-| 3.2 | useEffect 呼叫 API 並靜默替換 | `src/features/home/sections/PropertyGrid.tsx` | ⬜ | Network Tab 確認 |
-| 3.3 | 確保 key 使用 property.id | `src/features/home/sections/PropertyGrid.tsx` | ⬜ | React DevTools |
+| 3.1 | useState 初始值改為 PROPERTIES (Mock) | `src/features/home/sections/PropertyGrid.tsx` | ✅ | 視覺無閃爍 |
+| 3.2 | useEffect 呼叫 API 並靜默替換 | `src/features/home/sections/PropertyGrid.tsx` | ✅ | Network Tab 確認 |
+| 3.3 | 確保 key 使用 property.id | `src/features/home/sections/PropertyGrid.tsx` | ✅ | React DevTools |
+
+---
+
+## 🔴 P3 首席處長審查報告 (2025-12-16)
+
+**審查者**: Google 首席前後端處長
+**總評分**: **62/100 (不合格)**
+**結論**: 代碼能跑，但品質低劣，缺乏工程嚴謹性
+
+---
+
+### 🚨 嚴重缺失 (Critical Issues)
+
+#### 缺失 #1: 型別不一致 - PROPERTIES 缺少 source 欄位
+- **問題**: `PROPERTIES` (Mock) 沒有 `source` 欄位，但 API 回傳的資料有
+- **影響**: 型別斷言 `useState<Property[]>(PROPERTIES)` 實際上是型別欺騙，只因為 `source?` 是 optional 才沒報錯
+- **證據**: `src/constants/data.ts` 的 PROPERTIES 完全沒有 `source` 屬性
+- **建議修正**: 
+  1. 在 `PROPERTIES` 每筆資料加上 `source: 'seed' as const`
+  2. 或建立 `MOCK_PROPERTIES` 常數，明確標記 source
+
+#### 缺失 #2: 型別定義分散，無單一真理來源
+- **問題**: 
+  - `PropertyCard.tsx` 定義 `Property` type
+  - `propertyService.ts` 定義 `FeaturedPropertyForUI` interface
+  - `featured-properties.ts` 定義 `PropertyForUI` interface
+  - 三個定義應該相同，卻分散在三處
+- **影響**: 維護噩夢，改一處忘記改另一處
+- **建議修正**:
+  1. 建立 `src/types/property.ts` 單一檔案
+  2. 前端、後端、Service 全部從該檔案 import
+
+#### 缺失 #3: useEffect 沒有 error handling UI
+- **問題**: API 失敗時只 `console.error`，用戶完全不知道
+- **影響**: 用戶體驗差，Debug 困難
+- **建議修正**:
+  1. 加入 `isLoaded` state 追蹤 API 是否已回應
+  2. (可選) 加入 retry 機制或 toast 提示
+
+---
+
+### 🟠 中度缺失 (Medium Issues)
+
+#### 缺失 #4: PropertyCard 的 href 硬編碼
+- **問題**: `href={/property/${property.id}}` 對 UUID 可能有問題
+- **影響**: 真實房源用 UUID，Mock 用 number，路由可能不一致
+- **建議修正**: 確認路由設計是否支援兩種 ID 格式
+
+#### 缺失 #5: 沒有執行 TODO 要求的驗證項目
+- **問題**: TODO 明確要求：
+  - `視覺無閃爍` → 沒有實際測試證據
+  - `Network Tab 確認` → 沒有截圖或記錄
+  - `React DevTools` → 沒有檢查 key 警告
+- **影響**: 說完成但沒驗證 = 自欺欺人
+- **建議修正**: 每個驗證項目必須附上證據或執行記錄
+
+#### 缺失 #6: 沒有使用 P2 定義的 FeaturedPropertyForUI
+- **問題**: P2 花時間定義了 `FeaturedPropertyForUI`，但 P3 用的是 `Property`
+- **影響**: P2 的工作白做了
+- **建議修正**: 
+  1. 方案 A: PropertyGrid 改用 `FeaturedPropertyForUI`
+  2. 方案 B: 刪除重複的 `FeaturedPropertyForUI`，統一用 `Property`
+
+---
+
+### 🟡 輕度缺失 (Minor Issues)
+
+#### 缺失 #7: 沒有 Loading 指示器的明確說明
+- **問題**: 設計說「零秒載入」，但沒說明為什麼不需要 Loading
+- **建議**: 在代碼註解中說明混合動力架構的原理
+
+#### 缺失 #8: isMounted 模式過時
+- **問題**: React 18 的 Strict Mode 下，這種模式可能有 race condition
+- **建議**: 考慮使用 AbortController 或 React Query
+
+---
+
+### 📋 必須修正清單 (按優先級)
+
+| 優先級 | 缺失 | 修正指引 |
+|--------|------|----------|
+| P0 | #1 型別不一致 | `data.ts` 的 PROPERTIES 每筆加 `source: 'seed'` |
+| P0 | #2 型別分散 | 建立 `src/types/property.ts`，export 共用 interface |
+| P1 | #5 沒驗證 | 執行測試並記錄證據到此 TODO |
+| P1 | #6 型別重複 | 決定用 `Property` 還是 `FeaturedPropertyForUI`，刪掉另一個 |
+| P2 | #3 error handling | 加入 isLoaded state (可選，不影響功能) |
+| P2 | #4 href UUID | 確認路由設計 |
+
+---
 
 ### Phase 4: 測試與驗證 ⬜
 

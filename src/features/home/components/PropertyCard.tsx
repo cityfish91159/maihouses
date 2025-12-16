@@ -9,7 +9,7 @@ export type Review = {
 };
 
 export type Property = {
-    id: number;
+    id: string | number;
     image: string;
     badge: string;
     title: string;
@@ -17,6 +17,7 @@ export type Property = {
     price: string;
     location: string;
     reviews: Review[];
+    source?: string; // 'real' | 'seed'
 };
 
 export default function PropertyCard({ property }: { property: Property }) {
