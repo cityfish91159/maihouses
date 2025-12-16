@@ -1,6 +1,6 @@
 # 🏠 P11: 房源列表頁混合動力升級 V2.0
 
-> **專案狀態**: ⬜ **待開發 (Pending)**
+> **專案狀態**: 🔧 **開發中 (In Progress)** - Phase 1 完成
 > **最後更新**: 2025-12-16
 > **目標**: 將 `public/property.html` 升級為混合動力架構，零閃爍載入真實資料
 > **核心策略**: Mock First, API Background, Silent Replace, Race Guard
@@ -31,15 +31,15 @@
 
 ## 📋 TODO List (HARD GATE)
 
-### Phase 1: 資料標準化 (SSOT) ⬜
+### Phase 1: 資料標準化 (SSOT) ✅
 
 | # | 任務 | 檔案 | 狀態 | 驗證 |
 |---|------|------|------|------|
-| 1.1 | 建立種子資料 JSON | `public/data/seed-property-page.json` | ⬜ | 結構與 Mock 一致 |
-| 1.2 | 更新前端 Mock 註解 | `public/js/property-data.js` | ⬜ | 標記同步提醒 |
-| 1.3 | TypeScript 型別定義 | `src/types/property-page.ts` | ⬜ | 共用介面 |
+| 1.1 | 建立種子資料 JSON | `public/data/seed-property-page.json` | ✅ | 結構與 Mock 一致 |
+| 1.2 | 更新前端 Mock 註解 | `public/js/property-data.js` | ✅ | 標記同步提醒 |
+| 1.3 | TypeScript 型別定義 | `src/types/property-page.ts` | ✅ | 共用介面 |
 
-**驗收**: JSON 與 JS Mock 結構完全一致
+**驗收**: ✅ JSON 與 JS Mock 結構完全一致 (2025-12-16)
 
 ---
 
