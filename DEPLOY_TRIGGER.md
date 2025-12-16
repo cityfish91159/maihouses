@@ -1,3 +1,15 @@
+Timestamp: 2025-12-16T12:00:00Z
+Deploy: P10 Phase 2-4 - Service/UI/Testing 完整實作
+- New: `src/services/propertyService.ts` - getFeaturedProperties() 三層容錯
+- New: `src/features/home/sections/PropertyGrid.tsx` - useState/useEffect 混合動力
+- New: `api/home/__tests__/featured-properties.test.ts` - 19 tests passed
+- New: `src/services/__tests__/propertyService.test.ts` - 12 tests passed
+- Fix: `PropertyCard.tsx` 支援 `id: string | number` (UUID/Mock 相容)
+- Fix: API lazy Supabase init (支援測試環境)
+- Verification: 31 tests passed, tsc passed, build passed
+
+Redeploy trigger
+
 Timestamp: 2025-12-16T10:30:00Z
 Deploy: P10 Phase 1 - Featured Properties API (修正版)
 - Fix: forceImageRatio 加入 Supabase Storage 支援 (width=800&height=600&resize=cover)
