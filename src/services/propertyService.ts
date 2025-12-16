@@ -175,9 +175,10 @@ export const propertyService = {
             .getPublicUrl(fileName);
           
           return data.publicUrl;
-        } catch (e: any) {
+        } catch (e: unknown) {
+          const errorMessage = e instanceof Error ? e.message : '上傳失敗';
           console.error('Image upload exception:', e);
-          failed.push({ file, error: e.message || '上傳失敗' });
+          failed.push({ file, error: errorMessage });
           return null;
         } finally {
           completed++;
@@ -396,3 +397,58 @@ export const propertyService = {
     return data ? { exists: true, community: data } : { exists: false };
   }
 };
+
+// =============================================
+// P10: 首頁精選房源 API
+// =============================================
+
+/** * 首頁精選房源的 UI 資料型別 
+ * 注意：id 支援 string (真實 UUID) 與 number (Mock ID)，以相容 PropertyCard
+ */
+export interface FeaturedPropertyForUI {
+  id: string | number;
+  image: string;
+  badge: string;
+  title: string;
+  tags: string[];
+  price: string;
+  location: string;
+  // 建議將 Review 的型別定義得更明確，對齊 PropertyCard 的 Review type
+  reviews: { 
+    avatar: string; 
+    name: string; 
+    role: string; 
+    tag: string; 
+    text: string 
+  }[];
+  source: string; // 用於辨識 'real' 或 'seed'
+}
+
+/**
+ * 取得首頁精選房源
+ * - 成功: 回傳 6 筆房源 (真實 + Seed 補位)
+ * - 失敗: 回傳空陣列 (觸發 Level 3 前端 Mock 保底)
+ */
+export async function getFeaturedProperties(): Promise<FeaturedPropertyForUI[]> {
+  try {
+    // 這裡建議加上完整的錯誤處理與 Timeout 機制 (可選)
+    const response = await fetch('/api/home/featured-properties');
+    
+    if (!response.ok) {
+      console.warn('[propertyService] API 回應非 200:', response.status);
+      return [];
+    }
+    
+    const json = await response.json();
+    
+    if (json.success && Array.isArray(json.data)) {
+      return json.data;
+    }
+    
+    console.warn('[propertyService] API 回傳格式錯誤:', json);
+    return [];
+  } catch (error) {
+    console.error('[propertyService] getFeaturedProperties 失敗:', error);
+    return []; // Level 3: 回傳空陣列，讓前端維持顯示初始 Mock
+  }
+}

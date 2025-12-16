@@ -51,12 +51,18 @@
 - 🔴 修正 4: 用 curl 測試確認 API 正常回傳
 - 🔴 修正 5: 確認 migrations 中 `properties` 表存在
 
-### Phase 2: 前端 Service 層 ⬜
+### Phase 2: 前端 Service 層 ✅ (2025-12-16)
 
 | # | 任務 | 檔案 | 狀態 | 驗證 |
 |---|------|------|------|------|
-| 2.1 | 新增 getFeaturedProperties() | `src/services/propertyService.ts` | ⬜ | 單元測試 |
-| 2.2 | 失敗時回傳空陣列 (觸發 Level 3) | `src/services/propertyService.ts` | ⬜ | 模擬錯誤測試 |
+| 2.1 | 新增 getFeaturedProperties() | `src/services/propertyService.ts` | ✅ | tsc 通過 |
+| 2.2 | 失敗時回傳空陣列 (觸發 Level 3) | `src/services/propertyService.ts` | ✅ | 三層容錯 |
+
+**P2 實作記錄 (2025-12-16):**
+- ✅ 新增 `FeaturedPropertyForUI` 強型別介面
+- ✅ 新增 `getFeaturedProperties()` 函數
+- ✅ 三層容錯：`response.ok` / `json.success` / `catch`
+- ✅ TypeScript 編譯檢查通過
 
 ### Phase 3: 前端 UI 整合 ⬜
 
