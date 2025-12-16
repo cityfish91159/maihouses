@@ -1,5 +1,100 @@
 # 社區牆開發紀錄
 
+## 2025-12-16 - P10: 首頁智能房源混合動力 V4.0 (完成)
+
+### 📋 任務摘要
+
+> **實作者**: AI Agent
+> **任務**: P10 首頁房源混合動力架構
+> **結果**: ✅ **已完成並部署**
+> **核心策略**: Real First, Mock Fill, Zero Flicker
+
+### 🎯 驗收標準達成
+
+| 標準 | 結果 |
+|------|------|
+| 零秒載入 | ✅ Mock 直出，無 Loading |
+| 無縫切換 | ✅ API 靜默替換，無閃爍 |
+| 多樣化評價 | ✅ A/B/C 三組輪替 |
+| 分級容錯 | ✅ Real → Seed → Mock |
+
+### 📁 Phase 1: 後端 API 開發 (5 次修正)
+
+**新增檔案**: `api/home/featured-properties.ts`
+
+**修正記錄**:
+- 🔴 修正 1: `forceImageRatio` 加入 Supabase Storage 支援
+- 🔴 修正 2: Batch Query 改用 `community_id` 而非 `property_id`
+- 🔴 修正 3: DB Schema 修正 (`size` 非 `area`, `images[]` 非 `image_url`)
+- 🔴 修正 4: 用 curl 測試確認 API 正常回傳
+- 🔴 修正 5: 確認 migrations 中 `properties` 表存在
+
+### 📁 Phase 2: 前端 Service 層
+
+**修改檔案**: `src/services/propertyService.ts`
+
+- ✅ 新增 `FeaturedPropertyForUI` 強型別介面
+- ✅ 新增 `getFeaturedProperties()` 函數
+- ✅ 三層容錯：`response.ok` / `json.success` / `catch`
+
+### 📁 Phase 3: 前端 UI 整合
+
+**修改檔案**: `src/features/home/sections/PropertyGrid.tsx`
+
+```typescript
+// 混合動力核心
+const [properties, setProperties] = useState<FeaturedProperty[]>(PROPERTIES);
+
+useEffect(() => {
+  const controller = new AbortController();
+  getFeaturedProperties().then(data => {
+    if (!controller.signal.aborted && data?.length > 0) {
+      setProperties(data);
+    }
+  });
+  return () => controller.abort();
+}, []);
+```
+
+### 📁 Phase 4: 測試與驗證
+
+| 測試 | 結果 |
+|------|------|
+| API 單元測試 | ✅ 19 passed |
+| Service 單元測試 | ✅ 12 passed |
+| TypeScript 編譯 | ✅ 通過 |
+| E2E 視覺測試 | ✅ 無閃爍確認 |
+
+### 📁 P3 審查缺失修正 (62→85+ 分)
+
+| 優先級 | 缺失 | 修正 |
+|--------|------|------|
+| P0 | #1 型別不一致 | ✅ PROPERTIES 加 `source: 'seed'` |
+| P0 | #2 型別分散 | ✅ 建立 `src/types/property.ts` |
+| P1 | #6 型別重複 | ✅ 統一使用 `FeaturedProperty` |
+| P2 | #8 isMounted 過時 | ✅ 改用 AbortController |
+
+### 📁 最終修改檔案清單
+
+| 檔案 | 動作 |
+|------|------|
+| `api/home/featured-properties.ts` | 新增 |
+| `api/home/__tests__/featured-properties.test.ts` | 新增 |
+| `src/types/property.ts` | 新增 |
+| `src/services/propertyService.ts` | 修改 |
+| `src/services/__tests__/propertyService.test.ts` | 新增 |
+| `src/features/home/sections/PropertyGrid.tsx` | 修改 |
+| `src/features/home/components/PropertyCard.tsx` | 修改 |
+| `src/constants/data.ts` | 修改 |
+
+### 📊 部署記錄
+
+- Commit: `913f9f0` (P3 審查修正)
+- Build: tsc + vite build 通過 (20.03s)
+- 生產驗證: API 正常回傳，首頁正常顯示 6 筆房源
+
+---
+
 ## 2025-12-15 - P9-2 第五輪審查: T1-T5 (Google L8 首席處長)
 
 ### 📋 審查摘要
