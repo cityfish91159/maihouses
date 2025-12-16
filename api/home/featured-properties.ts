@@ -1,11 +1,17 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-// 使用 Anon Key
-const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_ANON_KEY!
-);
+// 延遲初始化 Supabase Client (避免測試時因環境變數不存在而失敗)
+let _supabase: SupabaseClient | null = null;
+function getSupabase(): SupabaseClient {
+  if (!_supabase) {
+    _supabase = createClient(
+      process.env.SUPABASE_URL!,
+      process.env.SUPABASE_ANON_KEY!
+    );
+  }
+  return _supabase;
+}
 
 const REQUIRED_COUNT = 6;
 
@@ -250,7 +256,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     // 1. 撈取真實房源 (使用正確的欄位名稱)
-    const { data: realData, error } = await supabase
+    const { data: realData, error } = await getSupabase()
       .from('properties')
       .select(`
         id, public_id, title, price, address, images, 
@@ -275,7 +281,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         if (communityIds.length > 0) {
             // 查詢 community_reviews (View)
-            const { data: reviewsData } = await supabase
+            const { data: reviewsData } = await getSupabase()
                 .from('community_reviews')
                 .select('community_id, content, agent(name), source')
                 .in('community_id', communityIds)
@@ -326,3 +332,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     data: mixedProperties
   });
 }
+
+// 🧪 測試用導出 (僅導出純函數，不導出 handler)
+export const __testHelpers = {
+  formatPrice,
+  adaptRealPropertyForUI,
+  SERVER_SEEDS,
+  REQUIRED_COUNT,
+};
+
+// 導出型別供測試使用
+export type { RealPropertyRow, ReviewData, PropertyForUI };

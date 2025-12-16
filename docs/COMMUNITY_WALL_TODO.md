@@ -161,14 +161,20 @@
 
 ---
 
-### Phase 4: 測試與驗證 ⬜
+### Phase 4: 測試與驗證 ✅ (2025-12-16)
 
 | # | 任務 | 檔案 | 狀態 | 驗證 |
 |---|------|------|------|------|
-| 4.1 | API 單元測試 | `api/home/__tests__/featured-properties.test.ts` | ⬜ | `npm test` |
-| 4.2 | Service 單元測試 | `src/services/__tests__/propertyService.test.ts` | ⬜ | `npm test` |
-| 4.3 | E2E 視覺測試 (無閃爍) | 手動測試 | ⬜ | 錄影截圖 |
-| 4.4 | TypeScript 編譯檢查 | - | ⬜ | `npx tsc --noEmit` |
+| 4.1 | API 單元測試 | `api/home/__tests__/featured-properties.test.ts` | ✅ | 19 passed |
+| 4.2 | Service 單元測試 | `src/services/__tests__/propertyService.test.ts` | ✅ | 12 passed |
+| 4.3 | E2E 視覺測試 (無閃爍) | 手動測試 | ⬜ | 待部署後驗證 |
+| 4.4 | TypeScript 編譯檢查 | - | ✅ | `npx tsc --noEmit` 通過 |
+
+**P4 測試記錄 (2025-12-16):**
+- ✅ API 測試: formatPrice (5), adaptRealPropertyForUI (10), SERVER_SEEDS (4)
+- ✅ Service 測試: 成功情境 (2), HTTP錯誤 (2), JSON錯誤 (3), 網路錯誤 (2), 三層容錯 (3)
+- ✅ TypeScript: 編譯通過，無錯誤
+- ⬜ E2E 視覺: 待部署後手動驗證
 
 ### Phase 5: 部署 ⬜
 
