@@ -141,3 +141,45 @@ export const PropertyPageAPIResponseSchema = z.object({
 
 /** API 回應格式 */
 export type PropertyPageAPIResponse = z.infer<typeof PropertyPageAPIResponseSchema>;
+
+// ============================================
+// 統一 Review Adapter (D6 修正)
+// ============================================
+
+/**
+ * 後端統一 Review 格式
+ * 用於 API 回傳，前端/資料結構不變
+ */
+export interface NormalizedReview {
+  author: string;
+  content: string;
+  rating?: string | undefined;
+  tags?: string[] | undefined;
+  badges?: string[] | undefined;
+}
+
+/**
+ * Featured → Normalized 轉換
+ */
+export function normalizeFeaturedReview(r: FeaturedReview): NormalizedReview {
+  const result: NormalizedReview = {
+    author: r.author,
+    content: r.content
+  };
+  if (r.stars) result.rating = r.stars;
+  if (r.tags) result.tags = r.tags;
+  return result;
+}
+
+/**
+ * Listing → Normalized 轉換
+ * 從 content 解析 author（格式：「內容」— 作者）
+ */
+export function normalizeListingReview(r: ListingReview): NormalizedReview {
+  const match = r.content.match(/「(.+)」—\s*(.+)/);
+  return {
+    author: match?.[2] ?? '匿名',
+    content: match?.[1] ?? r.content,
+    badges: [r.badge]
+  };
+}

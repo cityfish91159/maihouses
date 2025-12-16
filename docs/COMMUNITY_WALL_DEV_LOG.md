@@ -1,5 +1,64 @@
 # 社區牆開發紀錄
 
+## 2025-12-16 - D1-D6 缺陷修正 (完成)
+
+### 📋 任務摘要
+
+> **實作者**: AI Agent
+> **任務**: P11 Phase 1 代碼審查後的 6 項缺陷修正
+> **結果**: ✅ **全部完成**
+> **審查者**: Google 首席前後端處長角色
+
+### 📁 缺陷修正明細
+
+| # | 缺陷 | 問題 | 修正方式 | 狀態 |
+|---|------|------|----------|------|
+| D1 | Mock 有 test，JSON 沒有 | 資料集不一致 | JSON 加入 test 資料集 | ✅ |
+| D2 | 結構差異 | `featured` vs `default.featured` | JSON 改為 `default` + `test` 結構 | ✅ |
+| D3 | 類型是裝飾品 | 沒有 runtime 驗證 | Zod Schema-First + validate 腳本 | ✅ |
+| D4 | 沒有 JSON Schema | IDE 無法驗證 | 從 Zod 生成 JSON Schema | ✅ |
+| D5 | 沒有同步檢查 | Mock ↔ JSON 可能脫節 | check-ssot-sync.ts 腳本 | ✅ |
+| D6 | Review 結構不一致 | 後端要寫兩套 adapter | 統一 NormalizedReview adapter | ✅ |
+
+### 📁 檔案變更明細
+
+**D1+D2: 修改 `public/data/seed-property-page.json`**
+- 改為 `{ default: {...}, test: {...} }` 結構
+- 加入 `$schema` 參照
+
+**D3: Zod Schema-First**
+- 重寫 `src/types/property-page.ts` 使用 Zod
+- 新增 `scripts/validate-property-types.ts`
+- package.json 加 `validate:property` 指令
+- pre-commit hook 加 Step #6
+
+**D4: JSON Schema 自動生成**
+- 新增 `scripts/generate-json-schema.ts`
+- 新增 `public/data/seed-property-page.schema.json`
+- package.json 加 `generate:schema` 指令
+- pre-commit hook 加 Step #7
+
+**D5: SSOT 同步檢查**
+- 新增 `scripts/check-ssot-sync.ts`
+- package.json 加 `check:ssot` 指令
+- pre-commit hook 加 Step #8
+
+**D6: Review Adapter**
+- `src/types/property-page.ts` 新增：
+  - `NormalizedReview` interface
+  - `normalizeFeaturedReview()` 函數
+  - `normalizeListingReview()` 函數
+
+### 🔒 Pre-commit Hook 驗證鏈
+
+```
+Step 6: validate:property  → Zod ↔ JSON 驗證
+Step 7: generate:schema    → JSON Schema 同步
+Step 8: check:ssot         → Mock ↔ JSON 同步
+```
+
+---
+
 ## 2025-12-16 - P11: Phase 1 資料標準化 (SSOT) (完成)
 
 ### 📋 任務摘要

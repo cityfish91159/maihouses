@@ -1,4 +1,5 @@
 {
+  "$schema": "./seed-property-page.schema.json",
   "default": {
     "featured": {
       "main": {

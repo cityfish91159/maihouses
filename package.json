@@ -15,7 +15,9 @@
     "lint": "eslint src",
     "test": "vitest run",
     "test:watch": "vitest",
+    "generate:schema": "tsx scripts/generate-json-schema.ts",
     "validate:property": "tsx scripts/validate-property-types.ts",
+    "check:ssot": "tsx scripts/check-ssot-sync.ts",
     "speedup:start": "bash scripts/speedup-control.sh start",
     "speedup:stop": "bash scripts/speedup-control.sh stop",
     "speedup:status": "bash scripts/speedup-control.sh status",
@@ -73,6 +75,7 @@
     "typescript": "^5.6.2",
     "vite": "^5.4.21",
     "vite-plugin-checker": "^0.11.0",
-    "vitest": "^2.0.0"
+    "vitest": "^2.0.0",
+    "zod-to-json-schema": "^3.25.0"
   }
 }
