@@ -1,5 +1,44 @@
 # 社區牆開發紀錄
 
+## 2025-12-16 - P11: Phase 1 資料標準化 (SSOT) (完成)
+
+### 📋 任務摘要
+
+> **實作者**: AI Agent
+> **任務**: P11 房源列表頁混合動力 - Phase 1 資料標準化
+> **結果**: ✅ **已完成** (待審查)
+> **Commit**: `060a9ff`
+
+### 📁 完成項目
+
+| # | 任務 | 檔案 | 狀態 |
+|---|------|------|------|
+| 1.1 | 建立種子資料 JSON | `public/data/seed-property-page.json` | ✅ 新建 |
+| 1.2 | 更新前端 Mock 註解 | `public/js/property-data.js` | ✅ 加註解 |
+| 1.3 | TypeScript 型別定義 | `src/types/property-page.ts` | ✅ 新建 |
+
+### 📁 檔案變更明細
+
+**新增 `public/data/seed-property-page.json`** (197 行)
+- Featured 區塊：main, sideTop, sideBottom 三卡
+- Listings 區塊：8 筆房源資料
+- 結構與 Mock 完全一致
+
+**修改 `public/js/property-data.js`** (+11 行)
+- 加入 SSOT 警告註解
+- 說明同步維護原則
+
+**新增 `src/types/property-page.ts`** (127 行)
+- `FeaturedReview` - 精選評價
+- `FeaturedPropertyCard` - 精選卡片
+- `FeaturedSection` - 精選區塊
+- `ListingReview` - 列表評價
+- `ListingPropertyCard` - 列表卡片
+- `PropertyPageData` - 完整頁面資料
+- `PropertyPageAPIResponse` - API 回應
+
+---
+
 ## 2025-12-16 - P10: 首頁智能房源混合動力 V4.0 (完成)
 
 ### 📋 任務摘要
