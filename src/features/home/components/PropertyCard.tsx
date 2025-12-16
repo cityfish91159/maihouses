@@ -1,26 +1,10 @@
 import React from 'react';
+import type { FeaturedProperty, PropertyReview } from '../../../types/property';
 
-export type Review = {
-    avatar: string;
-    name: string;
-    role: string;
-    tag: string;
-    text: string;
-};
+// Re-export for backward compatibility
+export type { PropertyReview as Review, FeaturedProperty as Property };
 
-export type Property = {
-    id: string | number;
-    image: string;
-    badge: string;
-    title: string;
-    tags: string[];
-    price: string;
-    location: string;
-    reviews: Review[];
-    source?: string; // 'real' | 'seed'
-};
-
-export default function PropertyCard({ property }: { property: Property }) {
+export default function PropertyCard({ property }: { property: FeaturedProperty }) {
     return (
         <article
             className="group relative isolate overflow-hidden rounded-2xl border border-[#E6EDF7] bg-white shadow-none transition-all duration-[180ms] ease-out hover:-translate-y-0.5 hover:border-[#1749d738] hover:shadow-[0_10px_26px_rgba(13,39,94,0.12)]"

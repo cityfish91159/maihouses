@@ -105,9 +105,17 @@ export const BACKUP_REVIEWS = [
   }
 ];
 
+import type { SeedProperty } from '../types/property';
+
 export const QUICK_QUESTIONS = ['3房以內', '30坪以下', '近捷運', '新成屋'];
 
-export const PROPERTIES = [
+/**
+ * 首頁房源 Seed 資料
+ * 
+ * P10 混合動力架構: Mock 先渲染，API 靜默替換
+ * 必須與 api/home/featured-properties.ts 的 SERVER_SEEDS 完全一致
+ */
+export const PROPERTIES: SeedProperty[] = [
   {
     id: 1,
     image: 'https://images.unsplash.com/photo-1600585154526-990dced4db0d?q=80&w=1600&auto=format&fit=crop',
@@ -116,6 +124,7 @@ export const PROPERTIES = [
     tags: ['34.2 坪', '3 房 2 廳', '高樓層'],
     price: '1,288',
     location: '新北市板橋區 · 中山路一段',
+    source: 'seed',
     reviews: [
       {
         avatar: 'A',
@@ -141,6 +150,7 @@ export const PROPERTIES = [
     tags: ['28.6 坪', '2 房 2 廳', '可寵物'],
     price: '1,052',
     location: '台北市松山區 · 民生東路五段',
+    source: 'seed',
     reviews: [
       {
         avatar: 'C',
@@ -166,6 +176,7 @@ export const PROPERTIES = [
     tags: ['22.1 坪', '2 房 1 廳', '低公設比'],
     price: '838',
     location: '新北市新店區 · 北新路二段',
+    source: 'seed',
     reviews: [
       {
         avatar: 'E',
@@ -191,6 +202,7 @@ export const PROPERTIES = [
     tags: ['36.8 坪', '3 房 2 廳', '邊間'],
     price: '1,560',
     location: '台北市中山區 · 敦化北路',
+    source: 'seed',
     reviews: [
       {
         avatar: 'G',
@@ -216,6 +228,7 @@ export const PROPERTIES = [
     tags: ['27.4 坪', '2 房 2 廳', '含機車位'],
     price: '968',
     location: '台北市內湖區 · 康寧路三段',
+    source: 'seed',
     reviews: [
       {
         avatar: 'I',
@@ -241,6 +254,7 @@ export const PROPERTIES = [
     tags: ['24.9 坪', '2 房 1 廳', '社區新'],
     price: '898',
     location: '新北市中和區 · 中和路',
+    source: 'seed',
     reviews: [
       {
         avatar: 'K',

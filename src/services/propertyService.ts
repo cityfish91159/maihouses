@@ -402,34 +402,17 @@ export const propertyService = {
 // P10: 首頁精選房源 API
 // =============================================
 
-/** * 首頁精選房源的 UI 資料型別 
- * 注意：id 支援 string (真實 UUID) 與 number (Mock ID)，以相容 PropertyCard
- */
-export interface FeaturedPropertyForUI {
-  id: string | number;
-  image: string;
-  badge: string;
-  title: string;
-  tags: string[];
-  price: string;
-  location: string;
-  // 建議將 Review 的型別定義得更明確，對齊 PropertyCard 的 Review type
-  reviews: { 
-    avatar: string; 
-    name: string; 
-    role: string; 
-    tag: string; 
-    text: string 
-  }[];
-  source: string; // 用於辨識 'real' 或 'seed'
-}
+import type { FeaturedProperty } from '../types/property';
+
+// Re-export for backward compatibility
+export type { FeaturedProperty as FeaturedPropertyForUI };
 
 /**
  * 取得首頁精選房源
  * - 成功: 回傳 6 筆房源 (真實 + Seed 補位)
  * - 失敗: 回傳空陣列 (觸發 Level 3 前端 Mock 保底)
  */
-export async function getFeaturedProperties(): Promise<FeaturedPropertyForUI[]> {
+export async function getFeaturedProperties(): Promise<FeaturedProperty[]> {
   try {
     // 這裡建議加上完整的錯誤處理與 Timeout 機制 (可選)
     const response = await fetch('/api/home/featured-properties');
