@@ -38,10 +38,10 @@
 |---|------|------|------|------|
 | 1.1 | 建立種子資料 JSON | `public/data/seed-property-page.json` | ✅ | 結構與 Mock 一致 |
 | 1.2 | 更新前端 Mock 註解 | `public/js/property-data.js` | ✅ | 標記同步提醒 |
-| 1.3 | TypeScript 型別定義 | `src/types/property-page.ts` | ⚠️ | 無驗證 = 裝飾品 |
+| 1.3 | TypeScript 型別定義 | `src/types/property-page.ts` | ✅ | Zod Schema-First |
 | 1.4 | 🔴 **修正 D1** | JSON 加入 `default`/`test` 結構 | ✅ | 與 Mock 完全一致 |
 | 1.5 | 🔴 **修正 D2** | JSON 結構對齊 Mock | ✅ | `default.featured` |
-| 1.6 | 🟠 **修正 D3** | 建立型別驗證腳本 | ⬜ | npm run validate |
+| 1.6 | 🟠 **修正 D3** | 建立型別驗證腳本 | ✅ | `npm run validate:property` |
 | 1.7 | 🟠 **修正 D4** | 建立 JSON Schema | ⬜ | IDE 提示 |
 | 1.8 | 🟡 **修正 D5** | 建立同步檢查腳本 | ⬜ | pre-commit |
 | 1.9 | 🟡 **修正 D6** | 統一 Review 結構 | ⬜ | BaseReview |

@@ -1,126 +1,143 @@
 /**
- * Property Page Types - 單一真理來源
+ * Property Page Types - Schema-First (Zod)
  * 
- * P11 房源列表頁混合動力架構
- * 用於：
- * - public/property.html 前端渲染
- * - api/property/page-data.ts 後端 API
- * - public/data/seed-property-page.json Seed 資料
+ * 🔥 SSOT 單一真理來源：
+ * - Schema 定義在這裡
+ * - TypeScript Type 自動推斷
+ * - Runtime 驗證自動生成
  * 
- * @see docs/COMMUNITY_WALL_TODO.md - P11 工單
+ * @see public/data/seed-property-page.json - Seed 資料
+ * @see scripts/validate-property-types.ts - 驗證腳本
  */
+import { z } from 'zod';
+
+// ============================================
+// Featured 區塊 Schema
+// ============================================
 
 /**
- * 精選房源評價 (Featured Review)
- * 用於精選區塊的詳細評價
+ * 精選評價 Schema
+ * 用於 featured.main / sideTop / sideBottom
  */
-export interface FeaturedReview {
-  /** 星級評分 (如 "★★★★★") */
-  stars: string;
-  /** 評價者 (如 "M*** ・ B棟住戶") */
-  author: string;
-  /** 標籤 (如 ["#物業/管理", "#安靜"]) - 僅 main 卡片有 */
-  tags?: string[];
-  /** 評價內容 */
-  content: string;
-}
+export const FeaturedReviewSchema = z.object({
+  stars: z.string(),
+  author: z.string(),
+  tags: z.array(z.string()).optional(),
+  content: z.string()
+});
 
 /**
- * 精選房源卡片 (Featured Property Card)
- * 用於頁面頂部的大卡片 (main) 和側邊卡片 (sideTop, sideBottom)
+ * 精選房源卡片 Schema
+ * main 卡片有 highlights，side 卡片沒有
  */
-export interface FeaturedPropertyCard {
-  /** 標籤 (如 "熱門社區", "高評價", "新上架") */
-  badge: string;
-  /** 封面圖片 URL */
-  image: string;
-  /** 標題 (如 "新光晴川 B棟 12樓") */
-  title: string;
-  /** 地點 (如 "📍 板橋區・江子翠生活圈") */
-  location: string;
-  /** 詳細資訊列表 */
-  details: string[];
-  /** 亮點 (僅 main 卡片有) */
-  highlights?: string;
-  /** 評分 (如 "4.4 分(63 則評價)") */
-  rating: string;
-  /** 評價列表 */
-  reviews: FeaturedReview[];
-  /** 鎖定評價數量 */
-  lockCount: number;
-  /** 價格 (如 "1,050 萬") */
-  price: string;
-  /** 坪數 (如 "約 23 坪") */
-  size: string;
-}
+export const FeaturedPropertyCardSchema = z.object({
+  badge: z.string(),
+  image: z.string().url(),
+  title: z.string(),
+  location: z.string(),
+  details: z.array(z.string()).min(1, '至少要有一項 details'),
+  highlights: z.string().optional(), // 僅 main 有
+  rating: z.string(),
+  reviews: z.array(FeaturedReviewSchema).min(1, '至少要有一則評價'),
+  lockCount: z.number().int().nonnegative(),
+  price: z.string(),
+  size: z.string()
+});
 
 /**
- * 精選房源區塊 (Featured Section)
+ * 精選區塊 Schema
  */
-export interface FeaturedSection {
-  /** 主卡片 (大) */
-  main: FeaturedPropertyCard;
-  /** 側邊上方卡片 */
-  sideTop: FeaturedPropertyCard;
-  /** 側邊下方卡片 */
-  sideBottom: FeaturedPropertyCard;
-}
+export const FeaturedSectionSchema = z.object({
+  main: FeaturedPropertyCardSchema,
+  sideTop: FeaturedPropertyCardSchema,
+  sideBottom: FeaturedPropertyCardSchema
+});
+
+// ============================================
+// Listings 區塊 Schema
+// ============================================
 
 /**
- * 列表房源評價 (Listing Review)
- * 用於列表卡片的簡短評價
+ * 列表評價 Schema
+ * 結構與 FeaturedReview 不同（badge vs stars）
  */
-export interface ListingReview {
-  /** 標籤 (如 "內湖區第1名", "影片房源") */
-  badge: string;
-  /** 評價內容 */
-  content: string;
-}
+export const ListingReviewSchema = z.object({
+  badge: z.string(),
+  content: z.string()
+});
 
 /**
- * 列表房源卡片 (Listing Property Card)
- * 用於頁面下方的房源列表
+ * 列表房源卡片 Schema
  */
-export interface ListingPropertyCard {
-  /** 封面圖片 URL */
-  image: string;
-  /** 標題 (如 "冠德美麗大直・中山區") */
-  title: string;
-  /** 標籤 (如 "捷運劍南路站") */
-  tag: string;
-  /** 價格 (如 "4 房 3,980 萬") */
-  price: string;
-  /** 坪數 (如 "約 45 坪") */
-  size: string;
-  /** 評分 (如 "4.5 分(92 則評價)・豪宅精選") */
-  rating: string;
-  /** 評價列表 */
-  reviews: ListingReview[];
-  /** 備註 */
-  note: string;
-  /** 鎖定標籤 (如 "豪宅住戶真實評價") */
-  lockLabel: string;
-  /** 鎖定評價數量 */
-  lockCount: number;
-}
+export const ListingPropertyCardSchema = z.object({
+  image: z.string().url(),
+  title: z.string(),
+  tag: z.string(),
+  price: z.string(),
+  size: z.string(),
+  rating: z.string(),
+  reviews: z.array(ListingReviewSchema).min(1, '至少要有一則評價'),
+  note: z.string(),
+  lockLabel: z.string(),
+  lockCount: z.number().int().nonnegative()
+});
+
+// ============================================
+// 完整頁面 Schema
+// ============================================
 
 /**
- * 房源列表頁完整資料 (Property Page Data)
- * API 回傳格式：{ success: boolean, data: PropertyPageData }
+ * 房源列表頁完整資料 Schema
  */
-export interface PropertyPageData {
-  /** 精選區塊 */
-  featured: FeaturedSection;
-  /** 列表區塊 */
-  listings: ListingPropertyCard[];
-}
+export const PropertyPageDataSchema = z.object({
+  featured: FeaturedSectionSchema,
+  listings: z.array(ListingPropertyCardSchema).min(1, 'Listings 不能為空')
+});
 
 /**
- * API 回應格式
+ * Seed 檔案根結構 Schema (包含 default + test)
  */
-export interface PropertyPageAPIResponse {
-  /** 是否成功 */
-  success: boolean;
-  /** 資料 (成功或失敗都會有，失敗時為 Seed) */
-  data: PropertyPageData;
-}
+export const SeedFileSchema = z.object({
+  default: PropertyPageDataSchema,
+  test: PropertyPageDataSchema.optional()
+});
+
+// ============================================
+// 自動推斷 TypeScript Types
+// ============================================
+
+/** 精選評價 */
+export type FeaturedReview = z.infer<typeof FeaturedReviewSchema>;
+
+/** 精選房源卡片 */
+export type FeaturedPropertyCard = z.infer<typeof FeaturedPropertyCardSchema>;
+
+/** 精選區塊 */
+export type FeaturedSection = z.infer<typeof FeaturedSectionSchema>;
+
+/** 列表評價 */
+export type ListingReview = z.infer<typeof ListingReviewSchema>;
+
+/** 列表房源卡片 */
+export type ListingPropertyCard = z.infer<typeof ListingPropertyCardSchema>;
+
+/** 房源列表頁完整資料 */
+export type PropertyPageData = z.infer<typeof PropertyPageDataSchema>;
+
+/** Seed 檔案根結構 */
+export type SeedFile = z.infer<typeof SeedFileSchema>;
+
+// ============================================
+// API 回應 Schema
+// ============================================
+
+/**
+ * API 回應格式 Schema
+ */
+export const PropertyPageAPIResponseSchema = z.object({
+  success: z.boolean(),
+  data: PropertyPageDataSchema
+});
+
+/** API 回應格式 */
+export type PropertyPageAPIResponse = z.infer<typeof PropertyPageAPIResponseSchema>;
