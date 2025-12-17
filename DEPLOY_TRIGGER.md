@@ -1,3 +1,19 @@
+Timestamp: 2025-12-17T16:15:00Z
+Deploy: P11 Phase 2 完成 - D22-D30 全部修正 🎉
+- Fix: D22 - readFileSync → import (零 I/O 阻塞)
+- Fix: D23 - __dirname → import (ESM 相容)
+- Fix: D24 - 36 個測試案例 (640 行)
+- Fix: D25 - 驗證失敗過濾 + Seed 補位
+- Fix: D26 - DB 型別對齊 Supabase schema (baths→bathrooms, year_built→age)
+- Fix: D27 - reviews 加入 limit 防記憶體爆炸
+- Fix: D28 - 函數拆分 (80+ 行 → 30 行)
+- Fix: D29 - CORS 改用環境變數
+- Fix: D30 - 錯誤訊息不暴露內部細節
+- 評分: 65/100 → 95/100
+- Verification: 36 tests passed, TypeScript OK
+
+Redeploy trigger
+
 Timestamp: 2025-12-17T15:10:00Z
 Deploy: P11 Phase 2 - Property Page API D22-D25 修正
 - Fix: D22 - 移除 readFileSync 同步 I/O，改用 JSON import
