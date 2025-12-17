@@ -352,24 +352,333 @@ const jsonSchema = (SeedFileSchema as unknown as { toJSONSchema: () => Record<st
 
 | 優先 | 缺失 | 理由 |
 |------|------|------|
-| 1 | D14 | **最重要** - adapter 假使用，Phase 2 前必須解決 |
-| 2 | D15 | 重複腳本浪費維護成本 |
-| 3 | D16 | 測試發現問題卻不修，等於沒測 |
-| 4 | D17-D19 | 輕微問題，可延後 |
-| ~~5~~ | ~~D7-D13~~ | ✅ 已完成 |
+| ~~1~~ | ~~D14~~ | ✅ **Phase 2 已完成** - adapter 在 api/property/page-data.ts 真實使用 |
+| ~~2~~ | ~~D15~~ | ✅ **已刪除 check-ssot-sync.ts** - 統一用 verify-seed-strict.ts |
+| ~~3~~ | ~~D16~~ | ✅ **已修 Regex** - 支援全形—和半形- |
+| ~~4~~ | ~~D17~~ | ✅ **已加測試** - error-handler.test.ts |
+| ~~5~~ | ~~D18~~ | ✅ **已刪除** - 移除 git hooks，hard-gate.sh 獨立運作 |
+| ~~6~~ | ~~D19~~ | ✅ **已修正** - 使用 zod-to-json-schema 套件 |
 
 ---
 
-## Phase 2: API 端點建立 ✅
-| 2.1 | 建立 API 端點 | `api/property/page-data.ts` | ✅ | `curl` 測試 |
-| 2.2 | 撈取真實房源 (11筆) | `api/property/page-data.ts` | ✅ | DB Query |
-| 2.3 | 批量撈取評價 | `api/property/page-data.ts` | ✅ | Batch Query |
-| 2.4 | 資料適配器 (DB → UI) | `api/property/page-data.ts` | ✅ | adaptProperty |
-| 2.5 | 混合組裝 (真實 + Seed 補位) | `api/property/page-data.ts` | ✅ | 11筆完整 |
-| 2.6 | 快取設定 | `api/property/page-data.ts` | ✅ | s-maxage=60 |
-| 2.7 | 錯誤時回傳 Seed | `api/property/page-data.ts` | ✅ | 不回 500 |
+## 🔴 Phase 2 API 三次審計（Google 首席前後端處長）
 
-**驗收**: API 回傳 `{ success: true, data: {...} }` 或 `{ success: false, data: SEED }` ✅ DONE 2025-01
+> **審計日期**: 2025-12-17
+> **審計對象**: `api/property/page-data.ts` (437 行)
+> **審計結果**: ⚠️ **發現 9 個問題，3個嚴重**
+> **評分**: **65/100** (寫了但沒寫好)
+
+---
+
+### 📋 Phase 2 新發現缺失清單
+
+| # | 嚴重度 | 缺失描述 | 影響 | 狀態 |
+|---|--------|----------|------|------|
+| D22 | 🔴 P0 | **Seed 檔案讀取使用 readFileSync 同步 I/O** | Serverless Cold Start 變慢，阻塞事件迴圈 | ⬜ 待修 |
+| D23 | 🔴 P0 | **`__dirname` 在 Vercel ESM 環境可能不存在** | 部署後 Seed 讀取失敗，永遠回傳 minimalSeed | ⬜ 待修 |
+| D24 | 🔴 P0 | **API 沒有單元測試，Phase 5 遙遙無期** | 437 行代碼零覆蓋，隨時可能壞掉不知道 | ⬜ 待修 |
+| D25 | 🟠 P1 | **normalizeFeaturedReview 只是 console.warn，不影響輸出** | 驗證是裝飾品，發現問題也不處理 | ⬜ 待修 |
+| D26 | 🟠 P1 | **DBProperty/DBReview 型別與 Supabase 實際 schema 可能不符** | 欄位名稱猜測的，沒有驗證 | ⬜ 待修 |
+| D27 | 🟠 P1 | **reviews 查詢沒有 limit，可能拉回數千筆** | 大社區 1000+ 評價全撈回來，記憶體爆炸 | ⬜ 待修 |
+| D28 | 🟡 P2 | **adaptToFeaturedCard 有 80+ 行，違反單一職責** | 函數太長難維護 | ⬜ 待修 |
+| D29 | 🟡 P2 | **CORS allowedOrigins 硬編碼，沒有環境變數** | 新環境要改代碼 | ⬜ 待修 |
+| D30 | 🟡 P2 | **錯誤降級時 error 欄位暴露內部錯誤訊息給前端** | 安全風險，可能洩漏 DB 結構 | ⬜ 待修 |
+
+---
+
+### 🔴 D22: Seed 讀取使用同步 I/O
+
+**問題**: `getSeedData()` 使用 `readFileSync`，這在 Serverless 環境是致命的。
+
+**偷懶程度**: 💀💀💀 **嚴重** - 直接複製 Node.js 寫法，沒考慮 Serverless
+
+**證據**:
+```typescript
+// api/property/page-data.ts L49-53
+const seedPath = resolve(__dirname, '../../public/data/seed-property-page.json');
+const raw = readFileSync(seedPath, 'utf8');  // 🔴 同步阻塞！
+```
+
+**風險**: 
+- Cold Start 時阻塞事件迴圈
+- 多 Worker 同時讀檔案造成 I/O 競爭
+
+**引導修正**:
+```
+方案 A (最佳): 打包時 inline JSON
+  // vite.config.ts 或 vercel.json 設定
+  // 讓 Seed 在 build time 變成 JS 物件
+
+方案 B: 改用 dynamic import
+  const seedModule = await import('../../public/data/seed-property-page.json', {
+    assert: { type: 'json' }
+  });
+  return seedModule.default.default;
+
+方案 C: 保留同步但加 try-catch + 快取
+  // 至少確保只讀一次
+  if (_seedData) return _seedData;  // ✅ 已有
+  // 但第一次還是會阻塞
+```
+
+---
+
+### 🔴 D23: `__dirname` 在 ESM 環境不存在
+
+**問題**: Vercel Serverless 預設用 ESM，`__dirname` 是 CommonJS 專屬。
+
+**偷懶程度**: 💀💀💀 **嚴重** - 本機測試可能過，部署後 crash
+
+**證據**:
+```typescript
+// api/property/page-data.ts L49
+const seedPath = resolve(__dirname, '../../public/data/seed-property-page.json');
+//                       ^^^^^^^^^ ESM 環境不存在！
+```
+
+**風險**: 
+- 部署後 `__dirname is not defined` 錯誤
+- 永遠回傳 minimalSeed（因為 catch 了）
+
+**引導修正**:
+```
+方案 A: 使用 import.meta.url
+  import { fileURLToPath } from 'url';
+  import { dirname, resolve } from 'path';
+  
+  const __filename = fileURLToPath(import.meta.url);
+  const __dirname = dirname(__filename);
+
+方案 B: 直接用 import (推薦)
+  // 在 Vercel 環境用 JSON import
+  import seedJson from '../../public/data/seed-property-page.json';
+  // 注意：需要 tsconfig 設定 resolveJsonModule: true
+
+方案 C: 環境變數指向 URL
+  const SEED_URL = process.env.SEED_DATA_URL || '/data/seed-property-page.json';
+  const res = await fetch(SEED_URL);
+  // 注意：增加一次 HTTP 請求
+```
+
+---
+
+### 🔴 D24: API 零測試覆蓋
+
+**問題**: Phase 5 說要寫測試，但 Phase 2 已經標記完成，測試遙遙無期。
+
+**偷懶程度**: 💀💀💀 **嚴重** - 經典「先上線再說」
+
+**證據**:
+```bash
+ls api/property/__tests__/
+# No such file or directory
+```
+
+**風險**: 
+- 437 行代碼任何修改都可能壞掉
+- Adapter 邏輯複雜，沒測試根本不知道對不對
+- `__testHelpers` 匯出了但沒人用
+
+**引導修正**:
+```
+立即建立 api/property/__tests__/page-data.test.ts：
+
+1. 測試 getSeedData()
+   - 正常讀取 seed-property-page.json
+   - 檔案不存在時回傳 minimalSeed
+
+2. 測試 adaptToFeaturedCard()
+   - 完整 DBProperty + 評價
+   - 部分欄位為 null
+   - 零評價時用 Seed 補位
+   - price 換算正確（元 → 萬）
+
+3. 測試 adaptToListingCard()
+   - title 組合正確（標題・區域）
+   - 半形/全形 dash 都能解析
+
+4. 測試 handler() (需要 mock Supabase)
+   - 成功回傳 success: true
+   - DB 錯誤回傳 success: false + seed
+   - CORS header 正確
+   - Cache header 正確
+
+使用 vitest + msw 或 jest + nock mock Supabase。
+```
+
+---
+
+### 🟠 D25: 驗證是裝飾品
+
+**問題**: `normalizeFeaturedReview` 驗證失敗只是 console.warn，輸出還是原樣。
+
+**偷懶程度**: 💀💀 **中等** - 看起來有驗證，實際上沒有防護
+
+**證據**:
+```typescript
+// api/property/page-data.ts L189-194
+adaptedReviews.forEach(r => {
+  const normalized = normalizeFeaturedReview(r);
+  if (!normalized.author || !normalized.content) {
+    console.warn('[API] normalizeFeaturedReview 缺少必要欄位:', ...);
+    // 🔴 然後呢？什麼都沒做！
+  }
+});
+```
+
+**風險**: 
+- 壞資料還是會回傳給前端
+- Log 爆炸但問題沒解決
+
+**引導修正**:
+```
+方案 A: 驗證失敗時用 Seed 替換
+  const validReviews = adaptedReviews.filter(r => {
+    const normalized = normalizeFeaturedReview(r);
+    if (!normalized.author || !normalized.content) {
+      console.warn('[API] 無效評價，使用 Seed 替換');
+      return false;
+    }
+    return true;
+  });
+  // 不足的用 Seed 補
+
+方案 B: 刪除這個驗證（如果只是 log 不如不要）
+  // 減少執行時開銷
+
+方案 C: 驗證失敗時 throw（嚴格模式）
+  // 但會導致整個 API 失敗，不建議
+```
+
+---
+
+### 🟠 D26: DB 型別與實際 Schema 可能不符
+
+**問題**: `DBProperty` 和 `DBReview` 是手寫的，沒有從 Supabase 生成。
+
+**偷懶程度**: 💀💀 **中等** - 猜測欄位名稱
+
+**證據**:
+```typescript
+// 這些欄位名稱是猜的嗎？
+interface DBProperty {
+  advantage_1: string | null;  // 實際是 advantage_1 還是 advantage1？
+  disadvantage: string | null; // 實際有這個欄位嗎？
+}
+```
+
+**風險**: 
+- 欄位不存在，DB 回傳空
+- 欄位名稱錯誤，永遠是 null
+
+**引導修正**:
+```
+方案 A (最佳): 使用 Supabase CLI 生成型別
+  npx supabase gen types typescript --project-id xxx > src/types/supabase.ts
+  import { Database } from '../src/types/supabase';
+  type DBProperty = Database['public']['Tables']['properties']['Row'];
+
+方案 B: 至少加個驗證
+  if (!properties?.[0]?.id) {
+    console.error('[API] properties 欄位不符預期:', Object.keys(properties[0]));
+  }
+
+方案 C: 寫個測試驗證欄位存在
+  // 測試環境連真實 DB，確認欄位名稱
+```
+
+---
+
+### 🟠 D27: reviews 查詢沒有 limit
+
+**問題**: 評價查詢沒有 limit，大社區可能有數千筆。
+
+**偷懶程度**: 💀💀 **中等** - 忘了加 limit
+
+**證據**:
+```typescript
+// api/property/page-data.ts L327-331
+const { data: reviews } = await getSupabase()
+  .from('community_reviews')
+  .select('...')
+  .in('community_id', communityIds)
+  // 🔴 沒有 .limit()！
+```
+
+**風險**: 
+- 熱門社區 1000+ 評價全撈回來
+- 記憶體暴增，回應變慢
+- Vercel 函數 timeout
+
+**引導修正**:
+```
+每個社區只需要 2 筆評價（因為 reviews.slice(0, 2)）：
+
+方案 A: 加 limit（簡單但不精確）
+  .limit(communityIds.length * 3)  // 每社區 3 筆，有 buffer
+
+方案 B: 用 SQL Window Function（精確但複雜）
+  // 需要 Supabase Edge Function 寫 Raw SQL
+  SELECT * FROM (
+    SELECT *, ROW_NUMBER() OVER (PARTITION BY community_id ORDER BY created_at DESC) as rn
+    FROM community_reviews
+    WHERE community_id IN (...)
+  ) t WHERE rn <= 2
+
+方案 C: 分批查詢（中等複雜度）
+  for (const cid of communityIds) {
+    const { data } = await supabase.from(...).eq('community_id', cid).limit(2);
+    // 但這是 N+1...
+  }
+
+建議用方案 A，簡單有效。
+```
+
+---
+
+### 🟡 D28-D30: 輕微問題
+
+**D28**: `adaptToFeaturedCard` 80+ 行 → 拆成 `buildDetails()`, `buildReviews()`, `buildCard()`
+
+**D29**: CORS 硬編碼 → `process.env.ALLOWED_ORIGINS?.split(',')` 或 `*`
+
+**D30**: error 暴露內部訊息 → `error: '伺服器錯誤，請稍後再試'`（不要 `error.message`）
+
+
+
+---
+
+## Phase 2: API 端點建立 ⚠️ (完成但有缺陷)
+
+> **審計結果**: Phase 2 代碼已完成，但發現 9 個問題 (D22-D30)
+> **評分**: 65/100 - 寫了但沒寫好
+
+| # | 任務 | 檔案 | 狀態 | 缺陷 |
+|---|------|------|------|------|
+| 2.1 | 建立 API 端點 | `api/property/page-data.ts` | ✅ | - |
+| 2.2 | 撈取真實房源 (11筆) | `api/property/page-data.ts` | ✅ | D26 型別可能不符 |
+| 2.3 | 批量撈取評價 | `api/property/page-data.ts` | ⚠️ | **D27 沒有 limit** |
+| 2.4 | 資料適配器 (DB → UI) | `api/property/page-data.ts` | ⚠️ | **D25 驗證是裝飾品** |
+| 2.5 | 混合組裝 (真實 + Seed 補位) | `api/property/page-data.ts` | ✅ | - |
+| 2.6 | 快取設定 | `api/property/page-data.ts` | ✅ | - |
+| 2.7 | 錯誤時回傳 Seed | `api/property/page-data.ts` | ⚠️ | **D30 暴露內部錯誤** |
+| 2.8 | Seed 讀取方式 | `api/property/page-data.ts` | 🔴 | **D22/D23 同步I/O+__dirname** |
+| 2.9 | API 單元測試 | - | 🔴 | **D24 零測試覆蓋** |
+
+**驗收**: ⚠️ API 能運作，但有嚴重的 Serverless 相容性問題
+
+---
+
+### 📊 Phase 2 修正優先順序
+
+| 優先 | 缺失 | 緊急程度 | 預估工時 |
+|------|------|----------|----------|
+| 1 | D22+D23 | 🔴 **部署可能失敗** | 30 分鐘 |
+| 2 | D24 | 🔴 無測試 = 隨時壞 | 2 小時 |
+| 3 | D27 | 🟠 記憶體爆炸風險 | 5 分鐘 |
+| 4 | D25 | 🟠 驗證沒意義 | 15 分鐘 |
+| 5 | D26 | 🟠 型別不安全 | 30 分鐘 |
+| 6 | D28-D30 | 🟡 可延後 | 30 分鐘 |
 
 ---
 
@@ -575,6 +884,9 @@ export class PropertyRenderer {
 3. **禁止 N+1 查詢**: 必須批量查詢評價
 4. **禁止吞噬錯誤**: API 失敗必須有明確 fallback
 5. **禁止競態問題**: 必須有 AbortController + 版本控制
+6. **禁止同步 I/O**: Serverless 環境禁用 readFileSync
+7. **禁止硬編碼環境路徑**: 不要用 __dirname，用 import 或環境變數
+8. **禁止零測試上線**: API 至少要有基本單元測試
 
 ---
 
@@ -592,9 +904,10 @@ export class PropertyRenderer {
 | 日期 | 內容 | 負責人 |
 |------|------|--------|
 | 2025-12-16 | 建立 P11 TODO List | AI |
+| 2025-12-17 | Phase 2 API 完成，發現 9 個問題 (D22-D30) | AI |
 | - | - | - |
 
 ---
 
-*版本：V2.0*
-*最後更新：2025-12-16*
+*版本：V3.0*
+*最後更新：2025-12-17*
