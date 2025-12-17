@@ -715,6 +715,16 @@ error: '伺服器暫時無法取得資料，已使用預設內容',
 - `property.html` 僅保留單一 ESM 入口，符合 https://maihouses.vercel.app/maihouses/ 站點路徑需求 ✅
 - 快速刷新無舊資料閃爍（renderVersion + AbortController 生效） ✅
 
+#### Phase 4 待補強（高優先）
+
+| # | 缺失 | 狀態 | 指引 |
+|---|------|------|------|
+| 4.A | 視覺防閃爍缺乏自動化驗證 | ⬜ | 用 Playwright/puppeteer 在 `/maihouses/property.html` 連續快刷 5 次，錄製 GIF，並記錄 DOM renderVersion 序列，驗證舊畫面未覆蓋。輸出報告與失敗截圖。 |
+| 4.B | 性能指標缺失 (LCP/FCP/圖片預載耗時) | ⬜ | 在首次真實資料 render 後上報 LCP、FCP、API RTT、圖片預載耗時；設定閾值（例 2s）超標警告，寫入 telemetry。 |
+| 4.C | API 失敗時僅保留初始 Mock，未顯式 fallback | ⬜ | 若 `getPageData()` 為 null，顯式以 Seed/Mock 再 render 並上報事件，避免背景失敗時使用者無感知。 |
+| 4.D | 競態壓測缺失 | ⬜ | 撰寫自動化壓測腳本：快速刷新/多次點擊觸發 10+ 次請求，確認 AbortController 與 renderVersion 均阻擋舊回應；紀錄成功率。 |
+| 4.E | 圖片預載覆蓋率未知 | ⬜ | 計算預載 URL 數 vs 實際渲染 URL 數，若漏載>0 觸發警告並輸出缺失清單。 |
+
 ---
 
 ### Phase 5: 測試與驗證 ⬜
