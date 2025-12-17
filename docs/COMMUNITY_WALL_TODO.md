@@ -360,16 +360,16 @@ const jsonSchema = (SeedFileSchema as unknown as { toJSONSchema: () => Record<st
 
 ---
 
-## Phase 2: API 端點建立 ⬜
-| 2.1 | 建立 API 端點 | `api/property/page-data.ts` | ⬜ | `curl` 測試 |
-| 2.2 | 撈取真實房源 (11筆) | `api/property/page-data.ts` | ⬜ | DB Query |
-| 2.3 | 批量撈取評價 | `api/property/page-data.ts` | ⬜ | Batch Query |
-| 2.4 | 資料適配器 (DB → UI) | `api/property/page-data.ts` | ⬜ | adaptProperty |
-| 2.5 | 混合組裝 (真實 + Seed 補位) | `api/property/page-data.ts` | ⬜ | 11筆完整 |
-| 2.6 | 快取設定 | `api/property/page-data.ts` | ⬜ | s-maxage=60 |
-| 2.7 | 錯誤時回傳 Seed | `api/property/page-data.ts` | ⬜ | 不回 500 |
+## Phase 2: API 端點建立 ✅
+| 2.1 | 建立 API 端點 | `api/property/page-data.ts` | ✅ | `curl` 測試 |
+| 2.2 | 撈取真實房源 (11筆) | `api/property/page-data.ts` | ✅ | DB Query |
+| 2.3 | 批量撈取評價 | `api/property/page-data.ts` | ✅ | Batch Query |
+| 2.4 | 資料適配器 (DB → UI) | `api/property/page-data.ts` | ✅ | adaptProperty |
+| 2.5 | 混合組裝 (真實 + Seed 補位) | `api/property/page-data.ts` | ✅ | 11筆完整 |
+| 2.6 | 快取設定 | `api/property/page-data.ts` | ✅ | s-maxage=60 |
+| 2.7 | 錯誤時回傳 Seed | `api/property/page-data.ts` | ✅ | 不回 500 |
 
-**驗收**: API 回傳 `{ success: true, data: {...} }` 或 `{ success: false, data: SEED }`
+**驗收**: API 回傳 `{ success: true, data: {...} }` 或 `{ success: false, data: SEED }` ✅ DONE 2025-01
 
 ---
 
