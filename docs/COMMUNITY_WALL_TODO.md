@@ -61,168 +61,282 @@
 | # | 嚴重度 | 缺失描述 | 影響 | 狀態 |
 |---|--------|----------|------|------|
 | D7 | 🔴 P0 | **D4 JSON Schema 是硬編碼，不是從 Zod 自動生成** | Zod 改了 Schema 不會自動更新 | ✅ 已修 |
-| D8 | 🔴 P0 | **D3 validate 只驗 JSON，沒驗 Mock** | Mock 可能偷偷壞掉 | ⬜ 待修 |
-| D9 | 🟠 P1 | **D6 adapter 沒有單元測試** | Regex 解析可能出錯不知道 | ⬜ 待修 |
-| D10 | 🟠 P1 | **D6 adapter 沒有被任何代碼引用** | 寫了等於沒寫 | ⬜ 待修 |
-| D11 | 🟡 P2 | **pre-commit Step 7 會自動 git add，但沒通知用戶** | 用戶不知道 commit 被改了什麼 | ⬜ 待修 |
-| D12 | 🟡 P2 | **D5 check:ssot 沒有測試案例** | 不知道 deepEqual 有沒有 bug | ⬜ 待修 |
-| D13 | 🟡 P2 | **三個腳本都沒有 error boundary** | 腳本 crash 會讓 pre-commit 掛掉 | ⬜ 待修 |
+| D8 | 🔴 P0 | **D3 validate 只驗 JSON，沒驗 Mock** | Mock 可能偷偷壞掉 | ✅ 已修 |
+| D9 | 🟠 P1 | **D6 adapter 沒有單元測試** | Regex 解析可能出錯不知道 | ✅ 已修 |
+| D10 | 🟠 P1 | **D6 adapter 沒有被任何代碼引用** | 寫了等於沒寫 | ✅ 已修 |
+| D11 | 🟡 P2 | **pre-commit Step 7 會自動 git add，但沒通知用戶** | 用戶不知道 commit 被改了什麼 | ✅ 已修 |
+| D12 | 🟡 P2 | **D5 check:ssot 沒有測試案例** | 不知道 deepEqual 有沒有 bug | ✅ 已修 |
+| D13 | 🟡 P2 | **三個腳本都沒有 error boundary** | 腳本 crash 會讓 pre-commit 掛掉 | ✅ 已修 |
 
 ---
 
-#### 🔴 D7: JSON Schema 是假的「自動生成」
+### 🔴 D7-D13 二次審計（Google 首席工程師視角）
 
-**修正**: 改為 **Zod 主導自動生成 + 原生嚴格驗證**，Schema 直接由 `SeedFileSchema.toJSONSchema()` 產出，不再手寫。
+> **審計日期**: 2025-12-17
+> **審計結果**: 發現 6 個新問題需追蹤
 
-**落地**:
-- `npm run generate:schema`：由 `scripts/generate-json-schema.ts` 調用 `SeedFileSchema.toJSONSchema()` 自動生成 Draft-07 Schema
-- `npm run verify:seed`：(`scripts/verify-seed-strict.ts`) 同時驗證 `public/data/seed-property-page.json` 與 `public/js/property-data.js`（Mock）
-- Zod 變更 → Schema/種子立刻報錯，杜絕脫節與假自動化
-
-**驗證紀錄**:
-- `npm run generate:schema` → 成功生成 `public/data/seed-property-page.schema.json`（Draft-07，自動化來源：Zod）
-- `npm run verify:seed` → `✅ JSON 種子通過 Zod 驗證`、`✅ Mock 種子通過 Zod 驗證`
+| # | 嚴重度 | 缺失描述 | 影響 | 狀態 |
+|---|--------|----------|------|------|
+| D14 | 🔴 P0 | **D10 只在驗證腳本使用 adapter，沒有在實際業務代碼使用** | 假裝解決、實際還是死代碼 | ⬜ 待修 |
+| D15 | 🔴 P0 | **verify-seed-strict 和 check-ssot-sync 功能重疊** | 維護兩份相同邏輯 | ⬜ 待修 |
+| D16 | 🟠 P1 | **D9 測試案例不足：半形 dash 失敗但沒修 Regex** | 測試發現問題卻不修，等於沒測 | ⬜ 待修 |
+| D17 | 🟠 P1 | **error-handler.ts 沒有單元測試** | 錯誤處理器本身可能有 bug | ⬜ 待修 |
+| D18 | 🟡 P2 | **hard-gate.sh 的 G8 和 pre-commit hook Step 7 重複** | 兩處都做 Schema 同步檢查 | ⬜ 待修 |
+| D19 | 🟡 P2 | **SeedFileSchema.toJSONSchema() 強制轉型 as unknown** | 沒有型別安全，toJSONSchema 可能不存在 | ⬜ 待修 |
 
 ---
 
-#### 🔴 D8: validate:property 沒驗證 Mock
+#### 🔴 D14: D10 的修復是假的「使用」
 
-**問題**: `validate-property-types.ts` 只驗證 JSON，沒驗證 `property-data.js`。
+**問題**: D10 說 adapter 沒被引用，修復方式是在 `verify-seed-strict.ts` 裡呼叫。但這不是「業務使用」，只是「測試執行」。
 
-**偷懶程度**: 💀💀 中等 - Mock 可以偷偷壞掉不被發現
+**偷懶程度**: 💀💀💀 嚴重 - 用驗證腳本假裝「有引用」，實際業務代碼還是沒用
 
 **證據**:
-```typescript
-// 只讀 JSON
-const jsonPath = resolve(__dirname, '../public/data/seed-property-page.json');
-// 沒有讀 property-data.js！
-```
-
-**風險**: 有人改 Mock 結構，Zod 驗證不會發現。
-
-**引導修正**:
-```
-validate-property-types.ts 應該也驗證 Mock:
-
-1. 用 VM 執行 property-data.js 取得 window.propertyMockData
-2. 對 Mock 資料也跑 SeedFileSchema.safeParse()
-3. 兩者都通過才算 pass
-
-這樣 Zod 同時守護 JSON 和 Mock，真正的 SSOT。
-```
-
----
-
-#### 🟠 D9: D6 adapter 沒有單元測試
-
-**問題**: `normalizeListingReview()` 用 Regex 解析 content，但沒有測試。
-
-**偷懶程度**: 💀💀 中等 - Regex 最容易出錯
-
-**證據**:
-```typescript
-const match = r.content.match(/「(.+)」—\s*(.+)/);
-return {
-  author: match?.[2] ?? '匿名',  // 如果格式不對就變「匿名」
+```bash
+# 搜尋實際業務代碼（api/, src/pages/, src/components/）
+grep -r "normalizeFeaturedReview\|normalizeListingReview" src/pages/ src/components/ api/
+# 結果：0 matches
 ```
 
 **風險**: 
-- content 沒有「」會直接變匿名
-- content 有多個「」會解析錯誤
-- 全形/半形空格不一致會 fail
+- API 端點沒用 adapter，前後端格式還是不統一
+- adapter 還是可能被刪除（因為「看起來沒人用」）
 
 **引導修正**:
 ```
-建立 src/types/__tests__/property-page.test.ts:
+這是 Phase 2 的核心：
 
-describe('normalizeListingReview', () => {
-  it('正常格式', () => {
-    const r = { badge: 'X', content: '「評價內容」— 作者名' };
-    expect(normalizeListingReview(r).author).toBe('作者名');
-  });
-  
-  it('無「」時回傳匿名', () => {
-    const r = { badge: 'X', content: '普通評價' };
-    expect(normalizeListingReview(r).author).toBe('匿名');
-    expect(normalizeListingReview(r).content).toBe('普通評價');
-  });
-  
-  it('多個「」時只取最外層', () => {
-    const r = { badge: 'X', content: '「他說「很棒」」— 作者' };
-    // 這個會 fail，要修 Regex
+1. 建立 api/property/page-data.ts API 端點
+2. 從 Supabase 撈取真實房源資料
+3. 使用 normalizeFeaturedReview / normalizeListingReview 統一格式
+4. 回傳統一的 NormalizedReview[] 給前端
+
+在那之前，至少加上 JSDoc 說明：
+@used-by api/property/page-data.ts (Phase 2)
+```
+
+---
+
+#### 🔴 D15: verify-seed-strict 和 check-ssot-sync 功能重疊
+
+**問題**: 兩個腳本都做「Mock ↔ JSON 同步檢查」，而且邏輯幾乎一樣。
+
+**偷懶程度**: 💀💀 中等 - 修 D8 時沒整合，反而造成冗餘
+
+**證據**:
+```typescript
+// verify-seed-strict.ts
+deepStrictEqual(normalizedJson, normalizedMock);
+
+// check-ssot-sync.ts
+deepStrictEqual(normalizedMock, normalizedJson);
+// 完全一樣！
+```
+
+**風險**: 
+- 改一邊忘改另一邊
+- pre-commit 跑兩次相同檢查浪費時間
+
+**引導修正**:
+```
+方案 A: 刪除 check-ssot-sync.ts，統一用 verify-seed-strict.ts
+  - 修改 package.json: "check:ssot": "npm run verify:seed"
+
+方案 B: 拆分職責
+  - verify-seed-strict: 只做 Zod 驗證（結構正確性）
+  - check-ssot-sync: 只做內容比對（資料一致性）
+  - 但這樣 adapter 檢查要搬去哪？
+
+建議用方案 A，一個腳本做完所有事。
+```
+
+---
+
+#### 🟠 D16: D9 測試發現問題卻不修
+
+**問題**: `property-page.test.ts` 有測試「半形 dash」案例，但測試預期是「失敗回傳匿名」，而不是「修 Regex 支援半形」。
+
+**偷懶程度**: 💀💀 中等 - 用「預期失敗」掩蓋 Regex 缺陷
+
+**證據**:
+```typescript
+it('tolerates halfwidth dash', () => {
+  const result = normalizeListingReview({ badge: '在地', content: '「好住」- 小李' });
+  expect(result).toEqual({
+    author: '匿名',  // 明明應該是「小李」！
+    content: '「好住」- 小李',
+    badges: ['在地']
   });
 });
 ```
 
+**風險**: 
+- 實際資料可能用半形 dash，會全變匿名
+- 測試通過但功能有缺陷
+
+**引導修正**:
+```
+修改 normalizeListingReview 的 Regex：
+
+// 改前：只支援全形 —
+const match = r.content.match(/「(.+)」—\s*(.+)/);
+
+// 改後：同時支援全形 — 和半形 -
+const match = r.content.match(/「(.+)」[—-]\s*(.+)/);
+
+然後修改測試預期：
+expect(result.author).toBe('小李');  // 不是匿名！
+```
+
 ---
 
-#### 🟠 D10: D6 adapter 沒有被引用
+#### 🟠 D17: error-handler.ts 沒有單元測試
 
-**問題**: 寫了 `normalizeFeaturedReview` 和 `normalizeListingReview`，但沒有任何代碼 import 使用。
+**問題**: 建立統一錯誤處理器是好事，但處理器本身沒測試。
 
-**偷懶程度**: 💀💀 中等 - 寫了等於沒寫
+**偷懶程度**: 💀 輕微 - 錯誤處理邏輯簡單，但 Zod issues 展開可能有 bug
+
+**風險**: 
+- `issues.slice(0, 10)` 可能在非陣列時 crash
+- `issue.path.join('.')` 可能在 path undefined 時 crash
+
+**引導修正**:
+```
+建立 scripts/lib/__tests__/error-handler.test.ts:
+
+describe('handleScriptError', () => {
+  it('handles plain Error', () => {
+    // 驗證輸出格式
+  });
+  
+  it('handles Zod error with issues', () => {
+    const zodError = new ZodError([...]);
+    // 驗證 issues 展開正確
+  });
+  
+  it('handles non-Error values', () => {
+    // 驗證 string, null, undefined 不會 crash
+  });
+});
+
+// 注意：handleScriptError 會 process.exit(1)
+// 測試時要 mock process.exit
+```
+
+---
+
+#### 🟡 D18: G8 和 Step 7 重複
+
+**問題**: Schema 同步檢查同時存在於：
+1. `.git/hooks/pre-commit` Step 7
+2. `scripts/hard-gate.sh` G8
+
+**偷懶程度**: 💀 輕微 - 不影響功能，但浪費執行時間
+
+**風險**: 
+- 兩處邏輯不同步時會混亂
+- pre-commit 跑兩次 `npm run generate:schema`
+
+**引導修正**:
+```
+方案 A: 刪除 hard-gate.sh 的 G8，只保留 pre-commit hook
+  - 因為 pre-commit hook 是實際執行的
+
+方案 B: pre-commit hook 改為呼叫 hard-gate.sh
+  - 統一入口，避免重複
+
+建議用方案 A，hard-gate.sh 是給 arena 用的，不需要管 Schema。
+```
+
+---
+
+#### 🟡 D19: toJSONSchema 強制轉型
+
+**問題**: `generate-json-schema.ts` 用 `as unknown as { toJSONSchema: ... }` 強制轉型。
+
+**偷懶程度**: 💀 輕微 - 沒有型別安全
 
 **證據**:
-```bash
-grep -r "normalizeFeaturedReview\|normalizeListingReview" src/ api/
-# 只有定義，沒有引用
+```typescript
+const jsonSchema = (SeedFileSchema as unknown as { toJSONSchema: () => Record<string, unknown> }).toJSONSchema();
 ```
 
-**風險**: 代碼腐爛，可能哪天被刪掉。
+**風險**: 
+- 如果 zod-to-json-schema 沒安裝，執行時才會 crash
+- TypeScript 無法提供自動補全
 
 **引導修正**:
 ```
-至少要有一處實際使用:
+方案 A: 安裝 @anatine/zod-openapi 或 zod-to-json-schema
+  npm install zod-to-json-schema
+  import { zodToJsonSchema } from 'zod-to-json-schema';
+  const jsonSchema = zodToJsonSchema(SeedFileSchema);
 
-方案 A: 在 Phase 2 的 api/property/page-data.ts 使用
-方案 B: 在前端組件使用（如果有需要統一格式的地方）
-方案 C: 加入 TODO 註解標記「Phase 2 會用到」
+方案 B: 加上執行時檢查
+  if (typeof SeedFileSchema.toJSONSchema !== 'function') {
+    throw new Error('SeedFileSchema.toJSONSchema 不存在，請確認 zod 版本');
+  }
 
-最低標準: 加入 @see 或 @used-by 註解說明預期用途
+建議用方案 A，有完整型別支援。
 ```
 
 ---
 
-#### 🟡 D11: pre-commit 偷偷改檔案沒通知
+### 📊 D7-D13 原問題（已歸檔）
 
-**問題**: Step 7 會自動執行 `git add`，但用戶不知道 commit 多了什麼。
+> 以下為原始問題描述，已於 2025-12-17 修正完成
 
-**證據**:
-```bash
-# .git/hooks/pre-commit
-npm run generate:schema
-git add public/data/seed-property-page.schema.json
-echo "✅ Schema 已更新並加入暫存區。"  # 只有這行提示
-```
+<details>
+<summary>點擊展開已修正的 D7-D13 原始問題</summary>
 
-**風險**: 用戶以為 commit 了 A，結果還包含 B。
+#### ✅ D7: JSON Schema 是假的「自動生成」(已修)
 
-**引導修正**:
-```
-改進提示訊息:
-
-echo "⚠️  注意：以下檔案已自動加入此次 commit:"
-echo "    • public/data/seed-property-page.schema.json"
-echo ""
-echo "如果這不是你預期的，請執行 git reset HEAD -- <file>"
-```
+**修正**: 改為 `SeedFileSchema.toJSONSchema()` 真自動生成
 
 ---
 
-#### 🟡 D12: check:ssot 的 deepEqual 沒測試
+#### ✅ D8: validate:property 沒驗證 Mock (已修)
 
-**問題**: `check-ssot-sync.ts` 自己寫了 `deepEqual()`，但沒有單元測試。
+**修正**: `verify-seed-strict.ts` 同時驗 JSON + Mock
 
-**偷懶程度**: 💀 輕微 - 標準庫有現成的
+---
 
-**引導修正**:
-```
-方案 A: 用 Node.js 內建的 assert.deepStrictEqual()
-方案 B: 用 lodash 的 _.isEqual()
-方案 C: 至少寫幾個測試案例確認 edge case
+#### ✅ D9: D6 adapter 沒有單元測試 (已修但有缺陷)
 
-Edge cases 要測:
-- undefined vs 缺失 key
+**修正**: 新增 `property-page.test.ts`
+**⚠️ 缺陷**: 半形 dash 測試預期「匿名」而非修 Regex，見 D16
+
+---
+
+#### ✅ D10: D6 adapter 沒有被引用 (已修但有缺陷)
+
+**修正**: 在 `verify-seed-strict.ts` 呼叫 adapters
+**⚠️ 缺陷**: 這只是驗證使用，非業務代碼使用，見 D14
+
+---
+
+#### ✅ D11: pre-commit 偷偷改檔案沒通知 (已修)
+
+**修正**: `.git/hooks/pre-commit` + `hard-gate.sh` 加警示
+
+---
+
+#### ✅ D12: check:ssot 的 deepEqual 沒測試 (已修)
+
+**修正**: 改用 Node.js `assert.deepStrictEqual`
+
+---
+
+#### ✅ D13: 腳本沒有 error boundary (已修)
+
+**修正**: 新增 `scripts/lib/error-handler.ts` 統一格式
+
+</details>
+
+---
+
+### 📊 修正優先順序建議（更新版）
 - null vs undefined
 - [] vs {}
 - 順序不同的陣列
@@ -230,53 +344,23 @@ Edge cases 要測:
 
 ---
 
-#### 🟡 D13: 腳本沒有 error boundary
-
-**問題**: 三個腳本都是直接 `process.exit(1)`，沒有統一的錯誤處理。
-
-**證據**:
-```typescript
-} catch (error) {
-  console.error('❌ 執行失敗:', error instanceof Error ? error.message : error);
-  process.exit(1);
-}
-```
-
-**風險**: 錯誤訊息不一致，debug 困難。
-
-**引導修正**:
-```
-建立 scripts/lib/error-handler.ts:
-
-export function handleScriptError(scriptName: string, error: unknown): never {
-  console.error('');
-  console.error(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
-  console.error(`❌ [${scriptName}] 執行失敗`);
-  console.error(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
-  if (error instanceof Error) {
-    console.error(`錯誤: ${error.message}`);
-    if (process.env.DEBUG) console.error(error.stack);
-  }
-  process.exit(1);
-}
-```
+</details>
 
 ---
 
-### 📊 修正優先順序建議
+### 📊 修正優先順序建議（更新版 2025-12-17）
 
 | 優先 | 缺失 | 理由 |
 |------|------|------|
-| 1 | D7 | SSOT 核心，Schema 脫節 = 假驗證 |
-| 2 | D8 | Mock 沒驗證 = SSOT 有洞 |
-| 3 | D9 | Regex 解析容易出錯 |
-| 4 | D10 | 死代碼要清理或標記 |
-| 5 | D11-D13 | 體驗/維護性問題，非關鍵 |
+| 1 | D14 | **最重要** - adapter 假使用，Phase 2 前必須解決 |
+| 2 | D15 | 重複腳本浪費維護成本 |
+| 3 | D16 | 測試發現問題卻不修，等於沒測 |
+| 4 | D17-D19 | 輕微問題，可延後 |
+| ~~5~~ | ~~D7-D13~~ | ✅ 已完成 |
 
 ---
 
-| # | 任務 | 檔案 | 狀態 | 驗證 |
-|---|------|------|------|------|
+## Phase 2: API 端點建立 ⬜
 | 2.1 | 建立 API 端點 | `api/property/page-data.ts` | ⬜ | `curl` 測試 |
 | 2.2 | 撈取真實房源 (11筆) | `api/property/page-data.ts` | ⬜ | DB Query |
 | 2.3 | 批量撈取評價 | `api/property/page-data.ts` | ⬜ | Batch Query |

@@ -1,5 +1,92 @@
 # 社區牆開發紀錄
 
+## 2025-12-17 - D7-D13 缺陷修正 (完成)
+
+### 📋 任務摘要
+
+> **實作者**: AI Agent
+> **任務**: P11 Phase 1 二次審查後的 7 項缺陷修正 (D7-D13)
+> **結果**: ✅ **全部完成**
+> **審查者**: Google 首席前後端處長角色
+
+### 📁 缺陷修正明細
+
+| # | 缺陷 | 問題 | 修正方式 | 狀態 |
+|---|------|------|----------|------|
+| D7 | JSON Schema 假自動生成 | 硬編碼非 Zod 產出 | `SeedFileSchema.toJSONSchema()` 真自動生成 | ✅ |
+| D8 | validate 只驗 JSON | Mock 可偷偷壞掉 | `verify-seed-strict.ts` 同時驗 JSON+Mock | ✅ |
+| D9 | Adapter 無單元測試 | Regex 解析未覆蓋 | 新增 `property-page.test.ts` 4 個測試案例 | ✅ |
+| D10 | Adapter 無引用 | 死代碼風險 | `verify-seed-strict.ts` 內呼叫 adapters 驗證 | ✅ |
+| D11 | git add 無提示 | commit 被偷改 | `.git/hooks/pre-commit` + `hard-gate.sh` 加警示 | ✅ |
+| D12 | 自寫 deepEqual 無測試 | edge case 漏接 | 改用 Node.js `assert.deepStrictEqual` | ✅ |
+| D13 | 腳本錯誤處理不一致 | debug 困難 | 新增 `scripts/lib/error-handler.ts` 統一格式 | ✅ |
+
+### 📁 檔案變更明細
+
+**D7: 修改 `scripts/generate-json-schema.ts`**
+```typescript
+// 改前：硬編碼 Schema 結構
+const jsonSchema = { type: 'object', properties: {...} };
+
+// 改後：真正從 Zod 自動生成
+const jsonSchema = SeedFileSchema.toJSONSchema();
+```
+
+**D8: 新增 `scripts/verify-seed-strict.ts`**
+- 同時驗證 `seed-property-page.json` 與 `property-data.js`
+- 使用 Zod `SeedFileSchema.parse()` 驗證兩者
+- `deepStrictEqual` 比對資料內容防止漂移
+- 取代舊的 `validate-property-types.ts`
+
+**D9: 新增 `src/types/__tests__/property-page.test.ts`**
+- `normalizeFeaturedReview`: 2 個測試（正常格式、無 tags）
+- `normalizeListingReview`: 4 個測試（正常、無格式、半形 dash、巢狀引號）
+
+**D10: 修改 `scripts/verify-seed-strict.ts`**
+- 新增 `assertAdaptersWork()` 函數
+- 執行時實際呼叫 `normalizeFeaturedReview` / `normalizeListingReview`
+- adapters 不再是死代碼
+
+**D11: 修改 `.git/hooks/pre-commit` + `scripts/hard-gate.sh`**
+- 自動 git add 時輸出警告訊息
+- 告知用戶哪些檔案被自動加入
+- 提供 `git reset HEAD -- <file>` 還原指令
+
+**D12: 修改 `scripts/check-ssot-sync.ts`**
+```typescript
+// 改前：自寫 50+ 行 deepEqual，無測試
+function deepEqual(a, b, path) { ... }
+
+// 改後：直接用 Node.js 標準庫
+import { deepStrictEqual } from 'assert';
+deepStrictEqual(normalizedMock, normalizedJson);
+```
+
+**D13: 新增 `scripts/lib/error-handler.ts`**
+- `handleScriptError(scriptName, error)`: 統一錯誤輸出格式
+- `handleScriptSuccess(scriptName, message)`: 統一成功輸出格式
+- 支援 Zod issues 展開、DEBUG 模式顯示 stack
+- 三個腳本全部改用統一處理器
+
+### 🔒 驗證鏈更新
+
+```
+npm run verify:seed     → Zod 驗 JSON + Mock + 內容比對 + Adapter 執行
+npm run generate:schema → 從 Zod 真自動生成 JSON Schema
+npm run check:ssot      → deepStrictEqual 比對（標準庫保證）
+```
+
+### 📊 Commits
+
+| Commit | 訊息 | 檔案數 |
+|--------|------|--------|
+| 37b51b9 | fix(D10): wire review adapters into verify-seed-strict | 2 |
+| aa63be7 | fix(D11): add schema sync gate with explicit auto-add notice | 1 |
+| 4de4bc8 | fix(D12): replace custom deepEqual with Node.js deepStrictEqual | 1 |
+| 83f1e8d | fix(D13): unified error handler for all scripts | 4 |
+
+---
+
 ## 2025-12-16 - D1-D6 缺陷修正 (完成)
 
 ### 📋 任務摘要
