@@ -62,39 +62,99 @@ function getSeedData(): PropertyPageData {
 }
 
 // ============================================
-// DB Types
+// DB Types (D26 修正：與 Supabase schema 對齊)
 // ============================================
 
+/**
+ * DBProperty - 與 properties 表 schema 對齊
+ * 
+ * @see src/types/supabase-schema.ts - 完整型別定義
+ * @see supabase/migrations/20251127_properties_schema.sql - 基本欄位
+ * @see supabase/migrations/20251127_property_upload_schema.sql - 詳細規格欄位
+ * @see supabase/migrations/20241201_property_community_link.sql - 社區關聯
+ * 
+ * ⚠️ 注意：
+ * - title, price, address 在 DB 是 NOT NULL，但查詢可能回傳 null
+ * - rooms, halls, bathrooms 有 DEFAULT 0，但仍標記為 nullable 以防萬一
+ * - year_built 在 DB 是 age（房齡），不是蓋好的年份
+ * - baths 在 DB 是 bathrooms
+ */
 interface DBProperty {
+  // 主鍵與識別
   id: string;
   public_id: string;
+  
+  // 基本資訊
   title: string | null;
   price: number | null;
   address: string | null;
   images: string[] | null;
+  
+  // 社區關聯 (20241201_property_community_link.sql)
   community_id: string | null;
   community_name: string | null;
+  
+  // 詳細規格 (20251127_property_upload_schema.sql)
   size: number | null;
-  rooms: number | null;
-  halls: number | null;
-  baths: number | null;
-  features: string[] | null;
+  rooms: number | null;             // DB: rooms NUMERIC DEFAULT 0
+  halls: number | null;             // DB: halls NUMERIC DEFAULT 0
+  bathrooms: number | null;         // DB: bathrooms NUMERIC DEFAULT 0 (原本寫 baths)
+  features: string[] | null;        // DB: features TEXT[] DEFAULT '{}'
+  
+  // 兩好一公道 (properties 表直接有這些欄位)
   advantage_1: string | null;
   advantage_2: string | null;
   disadvantage: string | null;
-  year_built: number | null;
-  total_units: number | null;
+  
+  // 房齡相關 (DB 是 age，不是 year_built)
+  age: number | null;               // DB: age NUMERIC (房齡年數)
+  
+  // ❌ 已移除不存在的欄位:
+  // - year_built (DB 用 age 表示房齡)
+  // - total_units (在 communities 表，不在 properties)
+  // - baths (正確名稱是 bathrooms)
 }
 
+/**
+ * DBReview - 與 community_reviews VIEW schema 對齊
+ * 
+ * @see src/types/supabase-schema.ts - 完整型別定義
+ * @see supabase/migrations/20251206_fix_community_reviews_view.sql - VIEW 定義
+ * 
+ * ⚠️ 重要：community_reviews 是 VIEW 不是 TABLE
+ * 它從 properties 表生成，所以欄位名稱與一般 reviews 表不同
+ * 
+ * ❌ 原本的錯誤欄位：content, rating, author_name, tags
+ * ✅ 正確欄位：advantage_1, advantage_2, disadvantage, source, content (jsonb)
+ */
 interface DBReview {
   id: string;
   community_id: string;
-  content: string | null;
-  rating: number | null;
-  author_name: string | null;
-  source: string | null;
-  tags: string[] | null;
+  property_id: string;              // VIEW: p.id AS property_id
+  author_id: string | null;         // VIEW: p.agent_id AS author_id
+  
+  // 兩好一公道 (來自 properties 表)
+  advantage_1: string | null;
+  advantage_2: string | null;
+  disadvantage: string | null;
+  
+  // 來源
+  source_platform: string | null;
+  source: string | null;            // VIEW: p.source_external_id AS source
+  
+  // JSONB 內容 (VIEW 組裝的)
+  content: {
+    pros: (string | null)[];        // [advantage_1, advantage_2]
+    cons: string | null;            // disadvantage
+    property_title: string;
+  } | null;
+  
   created_at: string;
+  
+  // ❌ 已移除不存在的欄位:
+  // - rating (VIEW 沒有)
+  // - author_name (VIEW 用 author_id)
+  // - tags (VIEW 沒有)
 }
 
 // ============================================
@@ -114,17 +174,19 @@ function adaptToFeaturedCard(
   
   // 詳細資訊
   const details: string[] = [];
-  if (property.rooms || property.halls || property.baths) {
+  // D26 修正：baths → bathrooms
+  if (property.rooms || property.halls || property.bathrooms) {
     const layout = [
       property.rooms ? `${property.rooms}房` : '',
       property.halls ? `${property.halls}廳` : '',
-      property.baths ? `${property.baths}衛` : ''
+      property.bathrooms ? `${property.bathrooms}衛` : ''  // D26: baths → bathrooms
     ].filter(Boolean).join('');
     const sizeInfo = property.size ? `室內 ${property.size}坪` : '';
     details.push([layout, sizeInfo].filter(Boolean).join(' + '));
   }
-  if (property.year_built) {
-    details.push(`🏢 ${property.year_built}年完工${property.total_units ? `・${property.total_units}戶` : ''}`);
+  // D26 修正：year_built → age (房齡)，移除 total_units (不在 properties 表)
+  if (property.age) {
+    details.push(`🏢 屋齡 ${property.age} 年`);  // D26: year_built 改用 age，移除 total_units
   }
   if (property.advantage_1) {
     details.push(property.advantage_1);
@@ -133,12 +195,19 @@ function adaptToFeaturedCard(
     details.push(property.advantage_2);
   }
 
-  // 評價轉換 - 使用 adapter
+  // D26 修正：評價轉換 - 使用新的 DBReview 結構
+  // community_reviews VIEW 沒有 rating/author_name/tags，要用正確欄位
   let adaptedReviews: FeaturedReview[] = reviews.slice(0, 2).map(r => ({
-    stars: r.rating ? '★'.repeat(Math.min(5, Math.round(r.rating))) + '☆'.repeat(5 - Math.min(5, Math.round(r.rating))) : '★★★★☆',
-    author: r.author_name || '匿名用戶',
-    tags: r.tags || undefined,
-    content: r.content || '好評推薦'
+    // D26: rating 不存在，給預設值 4 顆星
+    stars: '★★★★☆',
+    // D26: author_name → author_id (但我們沒有名字，給匿名)
+    author: '匿名用戶',
+    // D26: tags 不存在，用 advantage_1/2 作為替代
+    tags: [r.advantage_1, r.advantage_2].filter(Boolean) as string[] | undefined,
+    // D26: content 是 JSONB，組合優缺點作為內容
+    content: r.content 
+      ? `${r.content.property_title || '好物件'} - 優點：${r.content.pros?.filter(Boolean).join('、') || '無'}` 
+      : (r.advantage_1 || '好評推薦')
   }));
 
   // D25 修正：驗證失敗時過濾掉無效評價
@@ -163,8 +232,9 @@ function adaptToFeaturedCard(
     location: property.address ? `📍 ${property.address}` : seed.location,
     details: details.length > 0 ? details : seed.details,
     highlights: seed.highlights, // 保留 Seed 的 highlights
+    // D26 修正：rating 不存在，用評價數量作為替代
     rating: reviews.length > 0 
-      ? `${(reviews.reduce((sum, r) => sum + (r.rating || 4), 0) / reviews.length).toFixed(1)} 分(${reviews.length} 則評價)`
+      ? `${reviews.length} 則評價`
       : seed.rating,
     reviews: adaptedReviews,
     lockCount: reviews.length || seed.lockCount,
@@ -184,12 +254,14 @@ function adaptToListingCard(
   // 圖片處理
   const image = property.images?.[0] || seed.image;
 
-  // 評價轉換 - 使用 adapter
+  // D26 修正：評價轉換 - 使用正確的 DBReview 結構
   let adaptedReviews: ListingReview[] = reviews.slice(0, 2).map((r, i) => ({
-    badge: r.tags?.[0] || (i === 0 ? '真實評價' : '住戶推薦'),
+    // D26: tags 不存在，用 advantage_1 作為 badge
+    badge: r.advantage_1 || (i === 0 ? '真實評價' : '住戶推薦'),
+    // D26: content 是 JSONB 物件，author_name 不存在
     content: r.content 
-      ? `「${r.content}」— ${r.author_name || '匿名'}`
-      : seed.reviews[i]?.content || '好評推薦'
+      ? `「${r.content.property_title || '好物件'}」— ${r.content.pros?.filter(Boolean).join('、') || '好評'}`
+      : (r.advantage_1 || seed.reviews[i]?.content || '好評推薦')
   }));
 
   // D25 修正：驗證失敗時過濾掉格式錯誤的評價
@@ -220,8 +292,9 @@ function adaptToListingCard(
     tag: property.community_name || property.features?.[0] || seed.tag,
     price: roomLabel ? `${roomLabel} ${priceLabel}` : priceLabel,
     size: property.size ? `約 ${property.size} 坪` : seed.size,
+    // D26 修正：rating 不存在，用評價數量作為替代
     rating: reviews.length > 0
-      ? `${(reviews.reduce((sum, r) => sum + (r.rating || 4), 0) / reviews.length).toFixed(1)} 分(${reviews.length} 則評價)`
+      ? `${reviews.length} 則評價`
       : seed.rating,
     reviews: adaptedReviews,
     note: property.advantage_1 || seed.note,
@@ -253,14 +326,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const seed = getSeedData();
 
   try {
-    // 1. 撈取房源 (11筆: 3 featured + 8 listings)
+    // D26 修正：1. 撈取房源 (11筆: 3 featured + 8 listings)
+    // 欄位對齊 Supabase schema：baths → bathrooms, year_built → age, 移除 total_units
     const { data: properties, error: propError } = await getSupabase()
       .from('properties')
       .select(`
         id, public_id, title, price, address, images,
-        community_id, community_name, size, rooms, halls, baths,
+        community_id, community_name, size, rooms, halls, bathrooms,
         features, advantage_1, advantage_2, disadvantage,
-        year_built, total_units
+        age
       `)
       .order('created_at', { ascending: false })
       .limit(11);
@@ -280,9 +354,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     let reviewsMap: Record<string, DBReview[]> = {};
     
     if (communityIds.length > 0) {
+      // D26 修正：使用正確的 community_reviews VIEW 欄位
+      // VIEW 沒有 rating, author_name, tags，改用正確欄位
       const { data: reviews, error: revError } = await getSupabase()
         .from('community_reviews')
-        .select('id, community_id, content, rating, author_name, source, tags, created_at')
+        .select(`
+          id, community_id, property_id, author_id,
+          advantage_1, advantage_2, disadvantage,
+          source_platform, source, content, created_at
+        `)
         .in('community_id', communityIds)
         .order('created_at', { ascending: false });
 

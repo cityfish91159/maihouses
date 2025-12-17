@@ -8,6 +8,7 @@
  * 4. handler() - API 主函數 (mock Supabase)
  * 
  * @see docs/COMMUNITY_WALL_TODO.md D24
+ * @updated D26: 修正 DBProperty/DBReview 結構對齊 Supabase schema
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { __testHelpers, type DBProperty, type DBReview } from '../page-data';
@@ -17,6 +18,7 @@ const { getSeedData, adaptToFeaturedCard, adaptToListingCard } = __testHelpers;
 
 // ============================
 // Mock Data Builders
+// D26: 更新以匹配 Supabase 實際 schema
 // ============================
 
 const buildDBProperty = (overrides?: Partial<DBProperty>): DBProperty => ({
@@ -31,25 +33,35 @@ const buildDBProperty = (overrides?: Partial<DBProperty>): DBProperty => ({
   size: 23,
   rooms: 3,
   halls: 2,
-  baths: 2,
+  bathrooms: 2,           // D26: baths → bathrooms
   features: ['熱門社區', '高樓層'],
   advantage_1: '🏪 5分鐘全聯・10分鐘捷運',
   advantage_2: '📍 近學區',
   disadvantage: null,
-  year_built: 2020,
-  total_units: 150,
+  age: 4,                 // D26: year_built → age (房齡年數)
+  // D26: 移除 total_units (不在 properties 表)
   ...overrides,
 });
 
+// D26: 完全重寫 DBReview - community_reviews 是 VIEW 不是 TABLE
 const buildDBReview = (overrides?: Partial<DBReview>): DBReview => ({
   id: 'rev-001',
   community_id: 'comm-001',
-  content: '很棒的社區，管理很好',
-  rating: 4.5,
-  author_name: '陳小明',
+  property_id: 'prop-001',        // D26: VIEW 有這個欄位
+  author_id: 'agent-001',         // D26: VIEW 用 author_id，不是 author_name
+  advantage_1: '管理佳',           // D26: VIEW 從 properties 來
+  advantage_2: '安靜',             // D26: VIEW 從 properties 來
+  disadvantage: null,
+  source_platform: null,
   source: 'google',
-  tags: ['管理佳', '安靜'],
+  // D26: content 是 JSONB 物件，不是字串
+  content: {
+    pros: ['管理佳', '安靜'],
+    cons: null,
+    property_title: '很棒的社區'
+  },
   created_at: '2024-12-15T10:00:00Z',
+  // D26: 移除 rating, author_name, tags (VIEW 沒有這些)
   ...overrides,
 });
 
@@ -252,10 +264,11 @@ describe('api/property/page-data.ts', () => {
       expect(result.reviews[0].author).toBe('Seed 作者');
     });
 
+    // D26 更新：author_name 欄位不存在，改用 author_id 但沒有名字
     it('一筆評價時補足至兩筆', () => {
       const property = buildDBProperty();
       const reviews = [
-        buildDBReview({ author_name: '真實用戶', content: '真實評價' }),
+        buildDBReview({ author_id: 'agent-001' }),  // D26: author_name → author_id
       ];
       const seed = buildSeedFeaturedCard({
         reviews: [
@@ -267,32 +280,35 @@ describe('api/property/page-data.ts', () => {
       const result = adaptToFeaturedCard(property, reviews, seed);
       
       expect(result.reviews.length).toBe(2);
-      expect(result.reviews[0].author).toBe('真實用戶');
+      // D26: community_reviews VIEW 沒有 author_name，固定給「匿名用戶」
+      expect(result.reviews[0].author).toBe('匿名用戶');
       expect(result.reviews[1].author).toBe('Seed 作者2'); // 補位
     });
 
-    it('rating 根據評價計算', () => {
+    // D26 更新：rating 欄位不存在，改用評價數量
+    it('rating 顯示評價數量（D26: VIEW 沒有 rating 欄位）', () => {
       const property = buildDBProperty();
       const reviews = [
-        buildDBReview({ rating: 5 }),
-        buildDBReview({ rating: 4 }),
+        buildDBReview(),
+        buildDBReview(),
       ];
       const seed = buildSeedFeaturedCard();
       
       const result = adaptToFeaturedCard(property, reviews, seed);
       
-      // (5 + 4) / 2 = 4.5
-      expect(result.rating).toBe('4.5 分(2 則評價)');
+      // D26: community_reviews VIEW 沒有 rating 欄位，只顯示評價數量
+      expect(result.rating).toBe('2 則評價');
     });
 
-    it('details 組合 layout + year_built + advantages', () => {
+    // D26 更新：year_built → age，baths → bathrooms
+    it('details 組合 layout + age + advantages', () => {
       const property = buildDBProperty({
         rooms: 3,
         halls: 2,
-        baths: 2,
+        bathrooms: 2,  // D26: baths → bathrooms
         size: 23,
-        year_built: 2020,
-        total_units: 150,
+        age: 4,        // D26: year_built → age (房齡年數)
+        // D26: 移除 total_units
         advantage_1: '近捷運',
         advantage_2: '近學校',
       });
@@ -302,34 +318,24 @@ describe('api/property/page-data.ts', () => {
       
       // 驗證 details 內容
       expect(result.details.some(d => d.includes('3房'))).toBe(true);
-      expect(result.details.some(d => d.includes('2020年完工'))).toBe(true);
+      expect(result.details.some(d => d.includes('屋齡 4 年'))).toBe(true);  // D26: 改成屋齡
       expect(result.details.some(d => d.includes('近捷運'))).toBe(true);
     });
 
-    it('stars 正確生成（5星 → ★★★★★）', () => {
+    // D26 更新：rating 不存在，stars 固定為預設值
+    it('stars 固定為預設值（D26：rating 欄位不存在）', () => {
       const property = buildDBProperty();
-      const reviews = [
-        buildDBReview({ rating: 5 }),
-      ];
+      const reviews = [buildDBReview()];
       const seed = buildSeedFeaturedCard();
       
       const result = adaptToFeaturedCard(property, reviews, seed);
       
-      expect(result.reviews[0].stars).toBe('★★★★★');
+      // D26: community_reviews VIEW 沒有 rating 欄位，固定給 4 顆星
+      expect(result.reviews[0].stars).toBe('★★★★☆');
     });
 
-    it('stars 處理小數（4.5 → ★★★★★☆）', () => {
-      const property = buildDBProperty();
-      const reviews = [
-        buildDBReview({ rating: 4.5 }),
-      ];
-      const seed = buildSeedFeaturedCard();
-      
-      const result = adaptToFeaturedCard(property, reviews, seed);
-      
-      // Math.round(4.5) = 5, 所以 5 stars
-      expect(result.reviews[0].stars).toBe('★★★★★');
-    });
+    // D26 移除：這個測試不再適用（沒有 rating 欄位）
+    // it('stars 處理小數（4.5 → ★★★★★☆）' ...
   });
 
   // ========================================
@@ -388,23 +394,36 @@ describe('api/property/page-data.ts', () => {
       expect(result.price).toBe('888 萬');
     });
 
-    it('reviews 正確格式化（「內容」— 作者）', () => {
+    // D26 更新：新的 DBReview 結構
+    it('reviews 正確格式化（D26：使用 content.property_title 和 content.pros）', () => {
       const property = buildDBProperty();
       const reviews = [
-        buildDBReview({ content: '很棒', author_name: '小明', tags: ['管理佳'] }),
+        buildDBReview({ 
+          advantage_1: '管理佳',
+          content: { 
+            pros: ['管理佳', '安靜'], 
+            cons: null, 
+            property_title: '很棒的房子' 
+          } 
+        }),
       ];
       const seed = buildSeedListingCard();
       
       const result = adaptToListingCard(property, reviews, seed);
       
-      expect(result.reviews[0].content).toBe('「很棒」— 小明');
-      expect(result.reviews[0].badge).toBe('管理佳');
+      // D26: content 格式改成「property_title」— pros
+      expect(result.reviews[0].content).toBe('「很棒的房子」— 管理佳、安靜');
+      expect(result.reviews[0].badge).toBe('管理佳');  // D26: 用 advantage_1 作為 badge
     });
 
-    it('reviews 無 author 時過濾並用 Seed 替換（D25 修正）', () => {
+    // D26 更新：新的 DBReview 結構
+    it('reviews 沒有 content 時用 advantage_1（D26 修正）', () => {
       const property = buildDBProperty();
       const reviews = [
-        buildDBReview({ content: '不錯', author_name: null }),
+        buildDBReview({ 
+          content: null,
+          advantage_1: '近捷運' 
+        }),
       ];
       const seed = buildSeedListingCard({
         reviews: [
@@ -414,22 +433,22 @@ describe('api/property/page-data.ts', () => {
       
       const result = adaptToListingCard(property, reviews, seed);
       
-      // D25 修正：格式不正確的評價（「內容」— 匿名）會被過濾
-      // 因為 normalized.author === '匿名' && content.includes('「') && content.includes('—')
-      // 所以用 Seed 補位
-      expect(result.reviews[0].content).toBe('「Seed 內容」— Seed 作者');
+      // D26: 沒有 content 時用 advantage_1
+      expect(result.reviews[0].content).toBe('近捷運');
     });
 
-    it('reviews 無 tags 時用預設', () => {
+    // D26 更新：advantage_1 作為 badge
+    it('reviews 沒有 advantage_1 時用預設 badge', () => {
       const property = buildDBProperty();
       const reviews = [
-        buildDBReview({ tags: null }),
-        buildDBReview({ tags: null }),
+        buildDBReview({ advantage_1: null }),
+        buildDBReview({ advantage_1: null }),
       ];
       const seed = buildSeedListingCard();
       
       const result = adaptToListingCard(property, reviews, seed);
       
+      // D26: advantage_1 為 null 時用預設
       expect(result.reviews[0].badge).toBe('真實評價');
       expect(result.reviews[1].badge).toBe('住戶推薦');
     });
@@ -577,28 +596,20 @@ describe('api/property/page-data.ts', () => {
       expect(result.image).toBe('fallback.jpg');
     });
 
-    it('處理超過 5 顆星的 rating', () => {
+    // D26 更新：rating 欄位不存在，stars 固定為預設值
+    it('D26: stars 固定為預設值（community_reviews VIEW 沒有 rating 欄位）', () => {
       const property = buildDBProperty();
-      const reviews = [buildDBReview({ rating: 10 })]; // 超過 5
+      const reviews = [buildDBReview()];
       const seed = buildSeedFeaturedCard();
       
       const result = adaptToFeaturedCard(property, reviews, seed);
       
-      // 應該 cap 在 5 stars
-      expect(result.reviews[0].stars).toBe('★★★★★');
-    });
-
-    it('處理 0 rating（falsy 值使用預設）', () => {
-      const property = buildDBProperty();
-      const reviews = [buildDBReview({ rating: 0 })];
-      const seed = buildSeedFeaturedCard();
-      
-      const result = adaptToFeaturedCard(property, reviews, seed);
-      
-      // 業務邏輯：rating 為 falsy (0, null, undefined) 時使用預設值 ★★★★☆
-      // 這是刻意設計：0 分評價視為無效資料，不顯示全空星
+      // D26: community_reviews VIEW 沒有 rating 欄位，固定給 4 顆星
       expect(result.reviews[0].stars).toBe('★★★★☆');
     });
+
+    // D26 移除: 這個測試不再適用 (沒有 rating 欄位)
+    // it('處理 0 rating（falsy 值使用預設）' ...
 
     it('address 沒有「區」字時不 crash', () => {
       const property = buildDBProperty({

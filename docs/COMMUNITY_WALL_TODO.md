@@ -378,7 +378,7 @@ const jsonSchema = (SeedFileSchema as unknown as { toJSONSchema: () => Record<st
 | D23 | 🔴 P0 | **`__dirname` 在 Vercel ESM 環境可能不存在** | 部署後 Seed 讀取失敗，永遠回傳 minimalSeed | ✅ 已修 |
 | D24 | 🔴 P0 | **API 沒有單元測試，Phase 5 遙遙無期** | 437 行代碼零覆蓋，隨時可能壞掉不知道 | ✅ 已修 |
 | D25 | 🟠 P1 | **normalizeFeaturedReview 只是 console.warn，不影響輸出** | 驗證是裝飾品，發現問題也不處理 | ✅ 已修 |
-| D26 | 🟠 P1 | **DBProperty/DBReview 型別與 Supabase 實際 schema 可能不符** | 欄位名稱猜測的，沒有驗證 | ⬜ 待修 |
+| D26 | 🟠 P1 | **DBProperty/DBReview 型別與 Supabase 實際 schema 可能不符** | 欄位名稱猜測的，沒有驗證 | ✅ 已修 |
 | D27 | 🟠 P1 | **reviews 查詢沒有 limit，可能拉回數千筆** | 大社區 1000+ 評價全撈回來，記憶體爆炸 | ⬜ 待修 |
 | D28 | 🟡 P2 | **adaptToFeaturedCard 有 80+ 行，違反單一職責** | 函數太長難維護 | ⬜ 待修 |
 | D29 | 🟡 P2 | **CORS allowedOrigins 硬編碼，沒有環境變數** | 新環境要改代碼 | ⬜ 待修 |
@@ -517,40 +517,63 @@ adaptedReviews = adaptedReviews.filter(r => {
 
 ---
 
-### 🟠 D26: DB 型別與實際 Schema 可能不符
+### 🟠 D26: DB 型別與實際 Schema 可能不符 ✅ 已修
 
 **問題**: `DBProperty` 和 `DBReview` 是手寫的，沒有從 Supabase 生成。
 
-**偷懶程度**: 💀💀 **中等** - 猜測欄位名稱
+**修正方式**: 
+1. 分析所有 migration 檔案確認實際 schema
+2. 建立 `src/types/supabase-schema.ts` 完整型別定義
+3. 修正 `api/property/page-data.ts` 的型別與查詢：
+   - `baths` → `bathrooms` (DB 欄位名稱是 bathrooms)
+   - `year_built` → `age` (DB 用 age 表示房齡)
+   - 移除 `total_units` (不在 properties 表)
+   - 修正 `DBReview` 使用 community_reviews VIEW 的正確欄位
+   - 更新 Supabase SELECT 查詢
 
-**證據**:
+**修正證據**:
 ```typescript
-// 這些欄位名稱是猜的嗎？
+// 檔案: api/property/page-data.ts (D26 修正)
+
+// DBProperty 修正：
 interface DBProperty {
-  advantage_1: string | null;  // 實際是 advantage_1 還是 advantage1？
-  disadvantage: string | null; // 實際有這個欄位嗎？
+  bathrooms: number | null;  // 原本寫 baths
+  age: number | null;        // 原本寫 year_built
+  // 移除 total_units (不在 properties 表)
 }
+
+// DBReview 修正 (community_reviews 是 VIEW)：
+interface DBReview {
+  property_id: string;
+  author_id: string | null;
+  advantage_1: string | null;
+  advantage_2: string | null;
+  disadvantage: string | null;
+  content: { pros: (string | null)[]; cons: string | null; property_title: string } | null;
+  // 移除 rating, author_name, tags (VIEW 沒有這些欄位)
+}
+
+// Supabase 查詢修正：
+.select(`
+  id, public_id, title, price, address, images,
+  community_id, community_name, size, rooms, halls, bathrooms,  // baths → bathrooms
+  features, advantage_1, advantage_2, disadvantage,
+  age  // year_built → age, 移除 total_units
+`)
+
+// Reviews 查詢修正：
+.select(`
+  id, community_id, property_id, author_id,
+  advantage_1, advantage_2, disadvantage,
+  source_platform, source, content, created_at
+`)  // 移除 rating, author_name, tags
 ```
 
-**風險**: 
-- 欄位不存在，DB 回傳空
-- 欄位名稱錯誤，永遠是 null
-
-**引導修正**:
-```
-方案 A (最佳): 使用 Supabase CLI 生成型別
-  npx supabase gen types typescript --project-id xxx > src/types/supabase.ts
-  import { Database } from '../src/types/supabase';
-  type DBProperty = Database['public']['Tables']['properties']['Row'];
-
-方案 B: 至少加個驗證
-  if (!properties?.[0]?.id) {
-    console.error('[API] properties 欄位不符預期:', Object.keys(properties[0]));
-  }
-
-方案 C: 寫個測試驗證欄位存在
-  // 測試環境連真實 DB，確認欄位名稱
-```
+**Migration 檔案分析**:
+- `20251127_properties_schema.sql`: 基本欄位
+- `20251127_property_upload_schema.sql`: rooms, halls, bathrooms (不是 baths!)
+- `20241201_property_community_link.sql`: community_id, community_name
+- `20251206_fix_community_reviews_view.sql`: community_reviews 是 VIEW，不是 TABLE
 
 ---
 
@@ -621,7 +644,7 @@ const { data: reviews } = await getSupabase()
 | # | 任務 | 檔案 | 狀態 | 缺陷 |
 |---|------|------|------|------|
 | 2.1 | 建立 API 端點 | `api/property/page-data.ts` | ✅ | - |
-| 2.2 | 撈取真實房源 (11筆) | `api/property/page-data.ts` | ✅ | D26 型別可能不符 |
+| 2.2 | 撈取真實房源 (11筆) | `api/property/page-data.ts` | ✅ | D26 型別已修正 |
 | 2.3 | 批量撈取評價 | `api/property/page-data.ts` | ⚠️ | **D27 沒有 limit** |
 | 2.4 | 資料適配器 (DB → UI) | `api/property/page-data.ts` | ✅ | ~~D25 驗證是裝飾品~~ |
 | 2.5 | 混合組裝 (真實 + Seed 補位) | `api/property/page-data.ts` | ✅ | - |
@@ -642,7 +665,7 @@ const { data: reviews } = await getSupabase()
 | ~~2~~ | ~~D24~~ | ✅ **已修** | - |
 | ~~3~~ | ~~D25~~ | ✅ **已修** | - |
 | 4 | D27 | 🟠 記憶體爆炸風險 | 5 分鐘 |
-| 5 | D26 | 🟠 型別不安全 | 30 分鐘 |
+| 5 | D26 | ✅ 型別已對齊 | 完成 |
 | 6 | D28-D30 | 🟡 可延後 | 30 分鐘 |
 
 ---
