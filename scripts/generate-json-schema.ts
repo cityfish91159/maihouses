@@ -19,7 +19,9 @@ const OUTPUT_PATH = resolve(__dirname, '../public/data/seed-property-page.schema
 console.log('🔄 正在從 Zod 生成 JSON Schema...');
 
 try {
-  const jsonSchema = zodToJsonSchema(SeedFileSchema, { $refStrategy: 'none' });
+  // Note: zod v4 與 zod-to-json-schema v3 有型別不相容，但執行正常
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const jsonSchema = zodToJsonSchema(SeedFileSchema as any, { $refStrategy: 'none' });
   writeFileSync(OUTPUT_PATH, JSON.stringify(jsonSchema, null, 2));
   handleScriptSuccess('generate-json-schema', `Schema 已生成至: ${OUTPUT_PATH}`);
 } catch (error) {
