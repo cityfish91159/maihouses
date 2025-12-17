@@ -701,7 +701,7 @@ error: '伺服器暫時無法取得資料，已使用預設內容',
 
 ---
 
-### Phase 4: 防閃爍機制 ⬜
+### Phase 4: 防閃爍機制 ✅
 
 | # | 任務 | 檔案 | 狀態 | 驗證 |
 |---|------|------|------|------|
@@ -710,7 +710,10 @@ error: '伺服器暫時無法取得資料，已使用預設內容',
 | 4.3 | requestAnimationFrame | `public/js/property-renderer.js` | ✅ | 流暢渲染維持 |
 | 4.4 | 競態保護 | `public/js/services/property-api.js` | ✅ | abort 舊請求 + timeout |
 
-**驗收**: 快速刷新無舊資料閃爍
+**驗收**:
+- `node --check public/js/property-renderer.js public/js/property-main.js public/js/services/property-api.js` ✅
+- `property.html` 僅保留單一 ESM 入口，符合 https://maihouses.vercel.app/maihouses/ 站點路徑需求 ✅
+- 快速刷新無舊資料閃爍（renderVersion + AbortController 生效） ✅
 
 ---
 
