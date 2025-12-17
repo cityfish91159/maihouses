@@ -31,7 +31,7 @@ function loadMockSeed() {
   createContext(sandbox);
   runInContext(code, sandbox);
   const data = (sandbox.window as Record<string, unknown>).propertyMockData;
-  if (!data) throw new 真Error('Mock JS 執行後未發現 window.propertyMockData');
+  if (!data) throw new Error('Mock JS 執行後未發現 window.propertyMockData');
   return data;
 }
 
@@ -45,12 +45,12 @@ function normalizeSeed(seed: unknown) {
 }
 
 interface CardWithReviews {
-  reviews?: { author: string; content: string; rating: number; date?: string }[];
+  reviews?: { stars: string; author: string; content: string; tags?: string[] }[];
 }
 interface SeedData {
   default?: {
     featured?: { main?: CardWithReviews; sideTop?: CardWithReviews; sideBottom?: CardWithReviews };
-    listings?: { reviews?: { author: string; content: string; date?: string }[] }[];
+    listings?: { reviews?: { badge: string; content: string }[] }[];
   };
 }
 

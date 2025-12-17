@@ -3,14 +3,14 @@ import { handleScriptError, handleScriptSuccess } from '../error-handler';
 
 describe('error-handler', () => {
   let consoleSpy: { error: ReturnType<typeof vi.spyOn>; log: ReturnType<typeof vi.spyOn> };
-  let exitSpy: ReturnType<typeof vi.spyOn>;
+  let exitSpy: ReturnType<typeof vi.spyOn<typeof process, 'exit'>>;
 
   beforeEach(() => {
     consoleSpy = {
       error: vi.spyOn(console, 'error').mockImplementation(() => {}),
       log: vi.spyOn(console, 'log').mockImplementation(() => {})
     };
-    exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => undefined as never);
+    exitSpy = vi.spyOn(process, 'exit').mockImplementation((() => {}) as () => never);
   });
 
   afterEach(() => {
