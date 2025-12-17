@@ -31,7 +31,7 @@ function loadMockSeed() {
   createContext(sandbox);
   runInContext(code, sandbox);
   const data = (sandbox.window as Record<string, unknown>).propertyMockData;
-  if (!data) throw new Error('Mock JS 執行後未發現 window.propertyMockData');
+  if (!data) throw new 真Error('Mock JS 執行後未發現 window.propertyMockData');
   return data;
 }
 
