@@ -179,9 +179,10 @@ describe('api/property/page-data.ts', () => {
     
     it('完整 DBProperty + 評價 -> 正確轉換', () => {
       const property = buildDBProperty();
+      // D26: content 是 JSONB 物件，不是字串；VIEW 沒有 rating/author_name
       const reviews = [
-        buildDBReview({ rating: 5, author_name: '王大明', content: '超棒的' }),
-        buildDBReview({ rating: 4, author_name: '李小華', content: '很不錯' }),
+        buildDBReview({ advantage_1: '超棒', content: { pros: ['超棒', null], cons: null, property_title: '好房' } }),
+        buildDBReview({ advantage_1: '很讚', content: { pros: ['很讚', null], cons: null, property_title: '好房2' } }),
       ];
       const seed = buildSeedFeaturedCard();
       
@@ -531,6 +532,7 @@ describe('api/property/page-data.ts', () => {
 
     it('DB 資料全為 null 時回傳 Seed 格式', () => {
       const seed = getSeedData();
+      // D26: 修正欄位名稱對齊 Supabase schema
       const emptyProperty: DBProperty = {
         id: 'empty',
         public_id: 'empty',
@@ -543,13 +545,13 @@ describe('api/property/page-data.ts', () => {
         size: null,
         rooms: null,
         halls: null,
-        baths: null,
+        bathrooms: null,  // D26: baths → bathrooms
         features: null,
         advantage_1: null,
         advantage_2: null,
         disadvantage: null,
-        year_built: null,
-        total_units: null,
+        age: null,        // D26: year_built → age
+        // D26: 移除 total_units (不在 properties 表)
       };
       
       const result = adaptToFeaturedCard(emptyProperty, [], seed.featured.main);
