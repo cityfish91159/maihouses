@@ -377,7 +377,7 @@ const jsonSchema = (SeedFileSchema as unknown as { toJSONSchema: () => Record<st
 | D22 | 🔴 P0 | **Seed 檔案讀取使用 readFileSync 同步 I/O** | Serverless Cold Start 變慢，阻塞事件迴圈 | ✅ 已修 |
 | D23 | 🔴 P0 | **`__dirname` 在 Vercel ESM 環境可能不存在** | 部署後 Seed 讀取失敗，永遠回傳 minimalSeed | ✅ 已修 |
 | D24 | 🔴 P0 | **API 沒有單元測試，Phase 5 遙遙無期** | 437 行代碼零覆蓋，隨時可能壞掉不知道 | ✅ 已修 |
-| D25 | 🟠 P1 | **normalizeFeaturedReview 只是 console.warn，不影響輸出** | 驗證是裝飾品，發現問題也不處理 | ⬜ 待修 |
+| D25 | 🟠 P1 | **normalizeFeaturedReview 只是 console.warn，不影響輸出** | 驗證是裝飾品，發現問題也不處理 | ✅ 已修 |
 | D26 | 🟠 P1 | **DBProperty/DBReview 型別與 Supabase 實際 schema 可能不符** | 欄位名稱猜測的，沒有驗證 | ⬜ 待修 |
 | D27 | 🟠 P1 | **reviews 查詢沒有 limit，可能拉回數千筆** | 大社區 1000+ 評價全撈回來，記憶體爆炸 | ⬜ 待修 |
 | D28 | 🟡 P2 | **adaptToFeaturedCard 有 80+ 行，違反單一職責** | 函數太長難維護 | ⬜ 待修 |
@@ -486,47 +486,34 @@ npm test -- api/property/__tests__/page-data.test.ts
 
 ---
 
-### 🟠 D25: 驗證是裝飾品
+### 🟠 D25: 驗證是裝飾品 ✅ 已修
 
 **問題**: `normalizeFeaturedReview` 驗證失敗只是 console.warn，輸出還是原樣。
 
-**偷懶程度**: 💀💀 **中等** - 看起來有驗證，實際上沒有防護
+**修正方式**: 方案 A - 驗證失敗時過濾掉無效評價，用 Seed 補位
 
-**證據**:
+**修正證據**:
 ```typescript
-// api/property/page-data.ts L189-194
-adaptedReviews.forEach(r => {
+// adaptToFeaturedCard 修正
+let adaptedReviews = reviews.slice(0, 2).map(...);
+adaptedReviews = adaptedReviews.filter(r => {
   const normalized = normalizeFeaturedReview(r);
   if (!normalized.author || !normalized.content) {
-    console.warn('[API] normalizeFeaturedReview 缺少必要欄位:', ...);
-    // 🔴 然後呢？什麼都沒做！
+    console.warn('[API] 無效評價已過濾，將使用 Seed 替換');
+    return false;  // 🔴 現在會過濾掉！
   }
+  return true;
 });
+// 補位邏輯不變，但無效的已被過濾
 ```
 
-**風險**: 
-- 壞資料還是會回傳給前端
-- Log 爆炸但問題沒解決
+**行為變更**:
+- 舊：無效評價 → console.warn → 還是回傳給前端
+- 新：無效評價 → console.warn → **過濾掉** → **Seed 補位**
 
-**引導修正**:
-```
-方案 A: 驗證失敗時用 Seed 替換
-  const validReviews = adaptedReviews.filter(r => {
-    const normalized = normalizeFeaturedReview(r);
-    if (!normalized.author || !normalized.content) {
-      console.warn('[API] 無效評價，使用 Seed 替換');
-      return false;
-    }
-    return true;
-  });
-  // 不足的用 Seed 補
-
-方案 B: 刪除這個驗證（如果只是 log 不如不要）
-  // 減少執行時開銷
-
-方案 C: 驗證失敗時 throw（嚴格模式）
-  // 但會導致整個 API 失敗，不建議
-```
+**測試更新**:
+- 更新測試案例 `reviews 無 author 時過濾並用 Seed 替換（D25 修正）`
+- 驗證無效評價被過濾後用 Seed 補位
 
 ---
 
@@ -636,7 +623,7 @@ const { data: reviews } = await getSupabase()
 | 2.1 | 建立 API 端點 | `api/property/page-data.ts` | ✅ | - |
 | 2.2 | 撈取真實房源 (11筆) | `api/property/page-data.ts` | ✅ | D26 型別可能不符 |
 | 2.3 | 批量撈取評價 | `api/property/page-data.ts` | ⚠️ | **D27 沒有 limit** |
-| 2.4 | 資料適配器 (DB → UI) | `api/property/page-data.ts` | ⚠️ | **D25 驗證是裝飾品** |
+| 2.4 | 資料適配器 (DB → UI) | `api/property/page-data.ts` | ✅ | ~~D25 驗證是裝飾品~~ |
 | 2.5 | 混合組裝 (真實 + Seed 補位) | `api/property/page-data.ts` | ✅ | - |
 | 2.6 | 快取設定 | `api/property/page-data.ts` | ✅ | - |
 | 2.7 | 錯誤時回傳 Seed | `api/property/page-data.ts` | ⚠️ | **D30 暴露內部錯誤** |
@@ -653,8 +640,8 @@ const { data: reviews } = await getSupabase()
 |------|------|----------|----------|
 | ~~1~~ | ~~D22+D23~~ | ✅ **已修** | - |
 | ~~2~~ | ~~D24~~ | ✅ **已修** | - |
-| 3 | D27 | 🟠 記憶體爆炸風險 | 5 分鐘 |
-| 4 | D25 | 🟠 驗證沒意義 | 15 分鐘 |
+| ~~3~~ | ~~D25~~ | ✅ **已修** | - |
+| 4 | D27 | 🟠 記憶體爆炸風險 | 5 分鐘 |
 | 5 | D26 | 🟠 型別不安全 | 30 分鐘 |
 | 6 | D28-D30 | 🟡 可延後 | 30 分鐘 |
 

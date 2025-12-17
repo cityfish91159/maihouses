@@ -401,16 +401,23 @@ describe('api/property/page-data.ts', () => {
       expect(result.reviews[0].badge).toBe('管理佳');
     });
 
-    it('reviews 無 author 時用匿名', () => {
+    it('reviews 無 author 時過濾並用 Seed 替換（D25 修正）', () => {
       const property = buildDBProperty();
       const reviews = [
         buildDBReview({ content: '不錯', author_name: null }),
       ];
-      const seed = buildSeedListingCard();
+      const seed = buildSeedListingCard({
+        reviews: [
+          { badge: 'Seed Badge', content: '「Seed 內容」— Seed 作者' },
+        ],
+      });
       
       const result = adaptToListingCard(property, reviews, seed);
       
-      expect(result.reviews[0].content).toBe('「不錯」— 匿名');
+      // D25 修正：格式不正確的評價（「內容」— 匿名）會被過濾
+      // 因為 normalized.author === '匿名' && content.includes('「') && content.includes('—')
+      // 所以用 Seed 補位
+      expect(result.reviews[0].content).toBe('「Seed 內容」— Seed 作者');
     });
 
     it('reviews 無 tags 時用預設', () => {

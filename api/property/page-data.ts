@@ -134,26 +134,27 @@ function adaptToFeaturedCard(
   }
 
   // 評價轉換 - 使用 adapter
-  const adaptedReviews: FeaturedReview[] = reviews.slice(0, 2).map(r => ({
+  let adaptedReviews: FeaturedReview[] = reviews.slice(0, 2).map(r => ({
     stars: r.rating ? '★'.repeat(Math.min(5, Math.round(r.rating))) + '☆'.repeat(5 - Math.min(5, Math.round(r.rating))) : '★★★★☆',
     author: r.author_name || '匿名用戶',
     tags: r.tags || undefined,
     content: r.content || '好評推薦'
   }));
 
+  // D25 修正：驗證失敗時過濾掉無效評價
+  adaptedReviews = adaptedReviews.filter(r => {
+    const normalized = normalizeFeaturedReview(r);
+    if (!normalized.author || !normalized.content) {
+      console.warn('[API] 無效評價已過濾，將使用 Seed 替換');
+      return false;
+    }
+    return true;
+  });
+
   // 補位：如果評價不足，用 Seed 補
   while (adaptedReviews.length < 2 && seed.reviews.length > adaptedReviews.length) {
     adaptedReviews.push(seed.reviews[adaptedReviews.length]);
   }
-
-  // 驗證 adapter 輸出
-  adaptedReviews.forEach(r => {
-    const normalized = normalizeFeaturedReview(r);
-    // FeaturedReview 必須有 author 和 content
-    if (!normalized.author || !normalized.content) {
-      console.warn('[API] normalizeFeaturedReview 缺少必要欄位:', { author: normalized.author, content: normalized.content });
-    }
-  });
 
   return {
     badge: property.features?.[0] || seed.badge,
@@ -184,27 +185,28 @@ function adaptToListingCard(
   const image = property.images?.[0] || seed.image;
 
   // 評價轉換 - 使用 adapter
-  const adaptedReviews: ListingReview[] = reviews.slice(0, 2).map((r, i) => ({
+  let adaptedReviews: ListingReview[] = reviews.slice(0, 2).map((r, i) => ({
     badge: r.tags?.[0] || (i === 0 ? '真實評價' : '住戶推薦'),
     content: r.content 
       ? `「${r.content}」— ${r.author_name || '匿名'}`
       : seed.reviews[i]?.content || '好評推薦'
   }));
 
+  // D25 修正：驗證失敗時過濾掉格式錯誤的評價
+  adaptedReviews = adaptedReviews.filter(r => {
+    const normalized = normalizeListingReview(r);
+    // 如果 content 包含「」但解析出匿名，表示格式有問題
+    if (normalized.author === '匿名' && r.content.includes('「') && r.content.includes('—')) {
+      console.warn('[API] 無效 Listing 評價已過濾，將使用 Seed 替換:', r.content);
+      return false;
+    }
+    return true;
+  });
+
   // 補位
   while (adaptedReviews.length < 2 && seed.reviews.length > adaptedReviews.length) {
     adaptedReviews.push(seed.reviews[adaptedReviews.length]);
   }
-
-  // 驗證 adapter 輸出
-  adaptedReviews.forEach(r => {
-    const normalized = normalizeListingReview(r);
-    // ListingReview 的 author 從 content 解析，若格式不對會是 '匿名'
-    // content 若格式不對會是原始 content
-    if (normalized.author === '匿名' && r.content.includes('「')) {
-      console.warn('[API] normalizeListingReview 解析失敗，content 格式可能不符:', r.content);
-    }
-  });
 
   // 房型標籤
   const roomLabel = property.rooms ? `${property.rooms} 房` : '';
