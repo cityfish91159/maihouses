@@ -9,7 +9,11 @@ import { dirname, resolve } from 'path';
 import { fileURLToPath } from 'url';
 import { createContext, runInContext } from 'vm';
 import { deepStrictEqual } from 'assert';
-import { SeedFileSchema } from '../src/types/property-page';
+import {
+  SeedFileSchema,
+  normalizeFeaturedReview,
+  normalizeListingReview
+} from '../src/types/property-page';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -37,6 +41,32 @@ function normalizeSeed(seed: unknown) {
     delete (copy as Record<string, unknown>).$schema;
   }
   return copy;
+}
+
+interface CardWithReviews {
+  reviews?: { author: string; content: string; rating: number; date?: string }[];
+}
+interface SeedData {
+  default?: {
+    featured?: { main?: CardWithReviews; sideTop?: CardWithReviews; sideBottom?: CardWithReviews };
+    listings?: { reviews?: { author: string; content: string; date?: string }[] }[];
+  };
+}
+
+function assertAdaptersWork(seed: unknown) {
+  const data = normalizeSeed(seed) as SeedData;
+  const featured = data?.default?.featured;
+  const listings = data?.default?.listings ?? [];
+
+  if (featured) {
+    [featured.main, featured.sideTop, featured.sideBottom].forEach((card) => {
+      (card?.reviews ?? []).forEach((r) => normalizeFeaturedReview(r));
+    });
+  }
+
+  listings.forEach((item) => {
+    (item?.reviews ?? []).forEach((r) => normalizeListingReview(r));
+  });
 }
 
 function printIssues(title: string, error: unknown) {
@@ -69,6 +99,11 @@ try {
   } catch (driftErr) {
     throw new Error('資料內容脫節 (Data Drift)：JSON 與 Mock 不一致');
   }
+
+  // 3. 適配器可用性檢查：確保定義的 Adapter 不是死代碼
+  console.log('🔗 驗證 Review Adapter 可正常運作...');
+  assertAdaptersWork(jsonSeed);
+  console.log('✅ Review Adapter 解析完成（featured/listings）');
 
   console.log('🎉 驗證成功：Zod 定義與種子資料完全一致');
   process.exit(0);
