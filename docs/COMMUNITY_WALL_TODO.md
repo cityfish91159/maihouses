@@ -719,11 +719,17 @@ error: '伺服器暫時無法取得資料，已使用預設內容',
 
 | # | 缺失 | 狀態 | 指引 |
 |---|------|------|------|
-| 4.A | 視覺防閃爍缺乏自動化驗證 | ⬜ | 用 Playwright/puppeteer 在 `/maihouses/property.html` 連續快刷 5 次，錄製 GIF，並記錄 DOM renderVersion 序列，驗證舊畫面未覆蓋。輸出報告與失敗截圖。 |
-| 4.B | 性能指標缺失 (LCP/FCP/圖片預載耗時) | ⬜ | 在首次真實資料 render 後上報 LCP、FCP、API RTT、圖片預載耗時；設定閾值（例 2s）超標警告，寫入 telemetry。 |
-| 4.C | API 失敗時僅保留初始 Mock，未顯式 fallback | ⬜ | 若 `getPageData()` 為 null，顯式以 Seed/Mock 再 render 並上報事件，避免背景失敗時使用者無感知。 |
-| 4.D | 競態壓測缺失 | ⬜ | 撰寫自動化壓測腳本：快速刷新/多次點擊觸發 10+ 次請求，確認 AbortController 與 renderVersion 均阻擋舊回應；紀錄成功率。 |
-| 4.E | 圖片預載覆蓋率未知 | ⬜ | 計算預載 URL 數 vs 實際渲染 URL 數，若漏載>0 觸發警告並輸出缺失清單。 |
+| 4.A | 視覺防閃爍缺乏自動化驗證 | ✅ | 新增 Playwright 腳本 `npm run phase4:flicker`，於 `/maihouses/property.html` 連刷 5 次並輸出 renderVersion + telemetry + 截圖報告（arena/results/phase4）。 |
+| 4.B | 性能指標缺失 (LCP/FCP/圖片預載耗時) | ✅ | 前端 Telemetry 取得 LCP/FCP、API RTT、預載耗時/覆蓋率並掛載 `window.__phase4Telemetry`。 |
+| 4.C | API 失敗時僅保留初始 Mock，未顯式 fallback | ✅ | `getPageData()` 為 null/error 時強制 fallback render 並紀錄 telemetry 事件。 |
+| 4.D | 競態壓測缺失 | ✅ | 新增 Vitest 壓測 `npm run test:phase4`：驗證 AbortController 會中止舊請求、renderVersion Guard 丟棄舊畫面。 |
+| 4.E | 圖片預載覆蓋率未知 | ✅ | `preloadImages` 回傳 coverage/失敗清單，寫入 telemetry 與測試覆蓋。 |
+
+補強說明與證據：
+- Telemetry：`public/js/property-main.js` 掛載 `window.__phase4Telemetry`，包含 LCP/FCP、API RTT、預載耗時/覆蓋率與 render 來源事件。
+- Render Guard + 覆蓋率：`public/js/property-renderer.js` 增加 renderVersion Log (`window.__renderVersionLog`) 與預載覆蓋率計算，回傳失敗清單。
+- 壓測/單測：`npm run test:phase4` 執行 [public/js/__tests__/property-phase4.test.js](../public/js/__tests__/property-phase4.test.js) 驗證 AbortController 會中止舊請求、renderVersion 丟棄舊畫面、預載覆蓋率計算。
+- 視覺驗證腳本：`npm run phase4:flicker` 透過 [scripts/phase4/flicker-visual.ts](../scripts/phase4/flicker-visual.ts) 使用 Playwright 連刷 5 次 `/maihouses/property.html`，輸出截圖 + renderVersion/telemetry 報告到 `arena/results/phase4/`。
 
 ---
 

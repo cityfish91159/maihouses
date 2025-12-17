@@ -8,6 +8,21 @@ export class PropertyRenderer {
   constructor() {
     this.renderVersion = 0;
     this.containers = null;
+    this.versionLog = [];
+  }
+
+  logVersion(entry) {
+    this.versionLog.push(entry);
+    if (this.versionLog.length > 50) {
+      this.versionLog.shift();
+    }
+    if (typeof window !== 'undefined') {
+      window.__renderVersionLog = [...this.versionLog];
+    }
+  }
+
+  getVersionLog() {
+    return [...this.versionLog];
   }
 
   ensureContainers() {
@@ -28,15 +43,35 @@ export class PropertyRenderer {
       ...(data?.listings || []).map((item) => item.image)
     ].filter(Boolean);
 
+    const summary = {
+      attempted: urls.length,
+      loaded: 0,
+      failed: [],
+      durationMs: 0,
+      coverage: 0
+    };
+
+    const start = typeof performance !== 'undefined' && performance.now ? performance.now() : Date.now();
+
     await Promise.all(urls.map((url) => new Promise((resolve) => {
       const img = new Image();
-      img.onload = resolve;
-      img.onerror = resolve;
+      img.onload = () => {
+        summary.loaded += 1;
+        resolve();
+      };
+      img.onerror = () => {
+        summary.failed.push(url);
+        resolve();
+      };
       img.src = url;
     })));
+
+    summary.durationMs = (typeof performance !== 'undefined' && performance.now ? performance.now() : Date.now()) - start;
+    summary.coverage = summary.attempted === 0 ? 1 : summary.loaded / summary.attempted;
+    return summary;
   }
 
-  render(data) {
+  render(data, context = {}) {
     if (!data) return;
     this.ensureContainers();
 
@@ -44,12 +79,23 @@ export class PropertyRenderer {
     requestAnimationFrame(() => {
       if (currentVersion !== this.renderVersion) return;
 
+      const eventMeta = {
+        version: currentVersion,
+        source: context.source || 'unknown',
+        reason: context.reason || null,
+        ts: (typeof performance !== 'undefined' && performance.now ? performance.now() : Date.now())
+      };
+
       this.renderFeaturedMain(data?.featured?.main);
       this.renderFeaturedSide(data?.featured?.sideTop, 'sideTop');
       this.renderFeaturedSide(data?.featured?.sideBottom, 'sideBottom');
       this.renderListings(data?.listings || []);
       this.updateListingCount(Array.isArray(data?.listings) ? data.listings.length : 0);
+
+      this.logVersion(eventMeta);
     });
+
+    return currentVersion;
   }
 
   updateListingCount(total) {
