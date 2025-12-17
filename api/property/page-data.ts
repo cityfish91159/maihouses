@@ -159,58 +159,56 @@ interface DBReview {
 
 // ============================================
 // Adapter Functions
+// D28: 拆分成小函數，符合單一職責原則
 // ============================================
 
 /**
- * 將 DB 房源轉為 Featured Card 格式
+ * D28: 建構房屋詳細資訊列表
  */
-function adaptToFeaturedCard(
-  property: DBProperty,
-  reviews: DBReview[],
-  seed: FeaturedPropertyCard
-): FeaturedPropertyCard {
-  // 圖片處理
-  const image = property.images?.[0] || seed.image;
-  
-  // 詳細資訊
+function buildPropertyDetails(property: DBProperty): string[] {
   const details: string[] = [];
-  // D26 修正：baths → bathrooms
+  
+  // 房型格局
   if (property.rooms || property.halls || property.bathrooms) {
     const layout = [
       property.rooms ? `${property.rooms}房` : '',
       property.halls ? `${property.halls}廳` : '',
-      property.bathrooms ? `${property.bathrooms}衛` : ''  // D26: baths → bathrooms
+      property.bathrooms ? `${property.bathrooms}衛` : ''
     ].filter(Boolean).join('');
     const sizeInfo = property.size ? `室內 ${property.size}坪` : '';
     details.push([layout, sizeInfo].filter(Boolean).join(' + '));
   }
-  // D26 修正：year_built → age (房齡)，移除 total_units (不在 properties 表)
+  
+  // 屋齡
   if (property.age) {
-    details.push(`🏢 屋齡 ${property.age} 年`);  // D26: year_built 改用 age，移除 total_units
+    details.push(`🏢 屋齡 ${property.age} 年`);
   }
-  if (property.advantage_1) {
-    details.push(property.advantage_1);
-  }
-  if (property.advantage_2) {
-    details.push(property.advantage_2);
-  }
+  
+  // 優勢
+  if (property.advantage_1) details.push(property.advantage_1);
+  if (property.advantage_2) details.push(property.advantage_2);
+  
+  return details;
+}
 
-  // D26 修正：評價轉換 - 使用新的 DBReview 結構
-  // community_reviews VIEW 沒有 rating/author_name/tags，要用正確欄位
+/**
+ * D28: 建構評價列表 (Featured Card 用)
+ */
+function buildFeaturedReviews(
+  reviews: DBReview[],
+  seedReviews: FeaturedReview[]
+): FeaturedReview[] {
+  // 轉換 DB 評價
   let adaptedReviews: FeaturedReview[] = reviews.slice(0, 2).map(r => ({
-    // D26: rating 不存在，給預設值 4 顆星
-    stars: '★★★★☆',
-    // D26: author_name → author_id (但我們沒有名字，給匿名)
-    author: '匿名用戶',
-    // D26: tags 不存在，用 advantage_1/2 作為替代
+    stars: '★★★★☆',  // D26: VIEW 沒有 rating，給預設
+    author: '匿名用戶',  // D26: VIEW 沒有 author_name
     tags: [r.advantage_1, r.advantage_2].filter(Boolean) as string[] | undefined,
-    // D26: content 是 JSONB，組合優缺點作為內容
     content: r.content 
       ? `${r.content.property_title || '好物件'} - 優點：${r.content.pros?.filter(Boolean).join('、') || '無'}` 
       : (r.advantage_1 || '好評推薦')
   }));
 
-  // D25 修正：驗證失敗時過濾掉無效評價
+  // D25: 過濾無效評價
   adaptedReviews = adaptedReviews.filter(r => {
     const normalized = normalizeFeaturedReview(r);
     if (!normalized.author || !normalized.content) {
@@ -220,22 +218,34 @@ function adaptToFeaturedCard(
     return true;
   });
 
-  // 補位：如果評價不足，用 Seed 補
-  while (adaptedReviews.length < 2 && seed.reviews.length > adaptedReviews.length) {
-    adaptedReviews.push(seed.reviews[adaptedReviews.length]);
+  // 補位
+  while (adaptedReviews.length < 2 && seedReviews.length > adaptedReviews.length) {
+    adaptedReviews.push(seedReviews[adaptedReviews.length]);
   }
+  
+  return adaptedReviews;
+}
+
+/**
+ * 將 DB 房源轉為 Featured Card 格式
+ * D28: 重構後約 30 行（原本 80+ 行）
+ */
+function adaptToFeaturedCard(
+  property: DBProperty,
+  reviews: DBReview[],
+  seed: FeaturedPropertyCard
+): FeaturedPropertyCard {
+  const details = buildPropertyDetails(property);
+  const adaptedReviews = buildFeaturedReviews(reviews, seed.reviews);
 
   return {
     badge: property.features?.[0] || seed.badge,
-    image,
+    image: property.images?.[0] || seed.image,
     title: property.title || seed.title,
     location: property.address ? `📍 ${property.address}` : seed.location,
     details: details.length > 0 ? details : seed.details,
-    highlights: seed.highlights, // 保留 Seed 的 highlights
-    // D26 修正：rating 不存在，用評價數量作為替代
-    rating: reviews.length > 0 
-      ? `${reviews.length} 則評價`
-      : seed.rating,
+    highlights: seed.highlights,
+    rating: reviews.length > 0 ? `${reviews.length} 則評價` : seed.rating,
     reviews: adaptedReviews,
     lockCount: reviews.length || seed.lockCount,
     price: property.price ? `${Math.round(property.price / 10000).toLocaleString()} 萬` : seed.price,
@@ -308,13 +318,17 @@ function adaptToListingCard(
 // ============================================
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // CORS
-  const allowedOrigins = [
+  // D29: CORS 改用環境變數，支援動態設定
+  const defaultOrigins = [
     'https://maihouses.vercel.app',
     'https://cityfish91159.github.io',
     'http://localhost:5173',
     'http://localhost:4173'
   ];
+  const allowedOrigins = process.env.ALLOWED_ORIGINS 
+    ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
+    : defaultOrigins;
+  
   const origin = req.headers.origin;
   if (origin && allowedOrigins.includes(origin)) {
     res.setHeader('Access-Control-Allow-Origin', origin);
@@ -451,13 +465,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     });
 
   } catch (error) {
-    // 錯誤時回傳 Seed (不回 500)
+    // D30: 錯誤時回傳 Seed，不暴露內部錯誤訊息給前端
     console.error('[API] Error, falling back to seed:', error);
     
     return res.status(200).json({
       success: false,
       data: seed,
-      error: error instanceof Error ? error.message : 'Unknown error',
+      // D30: 只給通用錯誤訊息，不暴露 error.message
+      error: '伺服器暫時無法取得資料，已使用預設內容',
       meta: {
         realCount: 0,
         seedCount: 11,
