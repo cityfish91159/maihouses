@@ -10,11 +10,16 @@
  * 
  * @see src/types/property-page.ts - Schema & Types
  * @see public/data/seed-property-page.json - Seed Data
+ * 
+ * D22/D23 修正：使用 import JSON 取代 readFileSync + __dirname
+ * - 不再使用同步 I/O (readFileSync)
+ * - 不再依賴 __dirname (ESM 不存在)
+ * - JSON 在 build time 打包成 JS 物件
  */
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import { readFileSync } from 'fs';
-import { resolve } from 'path';
+// D22/D23 修正：移除 fs 和 path import，改用 JSON import
+import seedJson from '../../public/data/seed-property-page.json';
 import {
   type FeaturedPropertyCard,
   type ListingPropertyCard,
@@ -41,67 +46,19 @@ function getSupabase(): SupabaseClient {
 }
 
 // ============================================
-// Seed Data Loader
+// Seed Data Loader (D22/D23 修正版)
 // ============================================
 
-let _seedData: PropertyPageData | null = null;
+/**
+ * 取得 Seed 資料
+ * D22/D23 修正：直接使用 import 的 JSON，不再用 readFileSync
+ * - 零 I/O 阻塞
+ * - 無 __dirname 依賴
+ * - Build time 就打包好
+ */
 function getSeedData(): PropertyPageData {
-  if (!_seedData) {
-    try {
-      const seedPath = resolve(__dirname, '../../public/data/seed-property-page.json');
-      const raw = readFileSync(seedPath, 'utf8');
-      const parsed = JSON.parse(raw);
-      _seedData = parsed.default as PropertyPageData;
-    } catch {
-      // Fallback: 如果檔案讀取失敗，使用最小 Mock
-      _seedData = createMinimalSeed();
-    }
-  }
-  return _seedData;
-}
-
-// 最小 Seed (檔案讀取失敗時的保底)
-function createMinimalSeed(): PropertyPageData {
-  const minimalFeaturedReview: FeaturedReview = {
-    stars: '★★★★☆',
-    author: '系統',
-    content: '資料載入中...'
-  };
-  
-  const minimalCard: FeaturedPropertyCard = {
-    badge: '載入中',
-    image: 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800',
-    title: '資料載入中...',
-    location: '請稍候',
-    details: ['載入中...'],
-    rating: '- 分',
-    reviews: [minimalFeaturedReview],
-    lockCount: 0,
-    price: '- 萬',
-    size: '- 坪'
-  };
-
-  const minimalListing: ListingPropertyCard = {
-    image: 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=600',
-    title: '載入中...',
-    tag: '-',
-    price: '- 萬',
-    size: '- 坪',
-    rating: '- 分',
-    reviews: [{ badge: '載入中', content: '資料載入中...' }],
-    note: '請稍候',
-    lockLabel: '-',
-    lockCount: 0
-  };
-
-  return {
-    featured: {
-      main: minimalCard,
-      sideTop: minimalCard,
-      sideBottom: minimalCard
-    },
-    listings: [minimalListing]
-  };
+  // seedJson 結構是 { default: PropertyPageData, test?: PropertyPageData }
+  return (seedJson as { default: PropertyPageData }).default;
 }
 
 // ============================================
@@ -432,8 +389,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 export const __testHelpers = {
   getSeedData,
   adaptToFeaturedCard,
-  adaptToListingCard,
-  createMinimalSeed
+  adaptToListingCard
+  // D22/D23: 移除 createMinimalSeed（不再需要，JSON import 不會失敗）
 };
 
 export type { DBProperty, DBReview };

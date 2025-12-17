@@ -374,8 +374,8 @@ const jsonSchema = (SeedFileSchema as unknown as { toJSONSchema: () => Record<st
 
 | # | 嚴重度 | 缺失描述 | 影響 | 狀態 |
 |---|--------|----------|------|------|
-| D22 | 🔴 P0 | **Seed 檔案讀取使用 readFileSync 同步 I/O** | Serverless Cold Start 變慢，阻塞事件迴圈 | ⬜ 待修 |
-| D23 | 🔴 P0 | **`__dirname` 在 Vercel ESM 環境可能不存在** | 部署後 Seed 讀取失敗，永遠回傳 minimalSeed | ⬜ 待修 |
+| D22 | 🔴 P0 | **Seed 檔案讀取使用 readFileSync 同步 I/O** | Serverless Cold Start 變慢，阻塞事件迴圈 | ✅ 已修 |
+| D23 | 🔴 P0 | **`__dirname` 在 Vercel ESM 環境可能不存在** | 部署後 Seed 讀取失敗，永遠回傳 minimalSeed | ✅ 已修 |
 | D24 | 🔴 P0 | **API 沒有單元測試，Phase 5 遙遙無期** | 437 行代碼零覆蓋，隨時可能壞掉不知道 | ⬜ 待修 |
 | D25 | 🟠 P1 | **normalizeFeaturedReview 只是 console.warn，不影響輸出** | 驗證是裝飾品，發現問題也不處理 | ⬜ 待修 |
 | D26 | 🟠 P1 | **DBProperty/DBReview 型別與 Supabase 實際 schema 可能不符** | 欄位名稱猜測的，沒有驗證 | ⬜ 待修 |
@@ -386,79 +386,51 @@ const jsonSchema = (SeedFileSchema as unknown as { toJSONSchema: () => Record<st
 
 ---
 
-### 🔴 D22: Seed 讀取使用同步 I/O
+### 🔴 D22: Seed 讀取使用同步 I/O ✅ 已修
 
 **問題**: `getSeedData()` 使用 `readFileSync`，這在 Serverless 環境是致命的。
 
-**偷懶程度**: 💀💀💀 **嚴重** - 直接複製 Node.js 寫法，沒考慮 Serverless
+**修正方式**: 改用 `import seedJson from '../../public/data/seed-property-page.json'`
 
-**證據**:
-```typescript
-// api/property/page-data.ts L49-53
-const seedPath = resolve(__dirname, '../../public/data/seed-property-page.json');
-const raw = readFileSync(seedPath, 'utf8');  // 🔴 同步阻塞！
+**修正證據**:
+```bash
+# 確認已移除 readFileSync
+grep -n "readFileSync" api/property/page-data.ts | grep -v "//"
+# 結果：無輸出
+
+# 確認 TypeScript 編譯通過
+npx tsc -p api/tsconfig.json --noEmit
+# Exit code: 0
 ```
 
-**風險**: 
-- Cold Start 時阻塞事件迴圈
-- 多 Worker 同時讀檔案造成 I/O 競爭
-
-**引導修正**:
-```
-方案 A (最佳): 打包時 inline JSON
-  // vite.config.ts 或 vercel.json 設定
-  // 讓 Seed 在 build time 變成 JS 物件
-
-方案 B: 改用 dynamic import
-  const seedModule = await import('../../public/data/seed-property-page.json', {
-    assert: { type: 'json' }
-  });
-  return seedModule.default.default;
-
-方案 C: 保留同步但加 try-catch + 快取
-  // 至少確保只讀一次
-  if (_seedData) return _seedData;  // ✅ 已有
-  // 但第一次還是會阻塞
-```
+**效益**:
+- 零 I/O 阻塞（JSON 在 build time 打包）
+- Cold Start 時間減少
+- 代碼從 19 行簡化為 3 行
 
 ---
 
-### 🔴 D23: `__dirname` 在 ESM 環境不存在
+### 🔴 D23: `__dirname` 在 ESM 環境不存在 ✅ 已修
 
 **問題**: Vercel Serverless 預設用 ESM，`__dirname` 是 CommonJS 專屬。
 
-**偷懶程度**: 💀💀💀 **嚴重** - 本機測試可能過，部署後 crash
+**修正方式**: 改用 `import seedJson`，完全移除對 `path` 和 `__dirname` 的依賴
 
-**證據**:
-```typescript
-// api/property/page-data.ts L49
-const seedPath = resolve(__dirname, '../../public/data/seed-property-page.json');
-//                       ^^^^^^^^^ ESM 環境不存在！
+**修正證據**:
+```bash
+# 確認已移除 __dirname
+grep -n "__dirname" api/property/page-data.ts | grep -v "//"
+# 結果：無輸出
+
+# 確認已移除 path import
+grep -n "from 'path'" api/property/page-data.ts
+# 結果：無輸出
 ```
 
-**風險**: 
-- 部署後 `__dirname is not defined` 錯誤
-- 永遠回傳 minimalSeed（因為 catch 了）
-
-**引導修正**:
-```
-方案 A: 使用 import.meta.url
-  import { fileURLToPath } from 'url';
-  import { dirname, resolve } from 'path';
-  
-  const __filename = fileURLToPath(import.meta.url);
-  const __dirname = dirname(__filename);
-
-方案 B: 直接用 import (推薦)
-  // 在 Vercel 環境用 JSON import
-  import seedJson from '../../public/data/seed-property-page.json';
-  // 注意：需要 tsconfig 設定 resolveJsonModule: true
-
-方案 C: 環境變數指向 URL
-  const SEED_URL = process.env.SEED_DATA_URL || '/data/seed-property-page.json';
-  const res = await fetch(SEED_URL);
-  // 注意：增加一次 HTTP 請求
-```
+**效益**:
+- 不再依賴 CommonJS 專屬變數
+- Vercel ESM 環境不會 crash
+- 不需要 `import.meta.url` 複雜轉換
 
 ---
 
@@ -673,7 +645,7 @@ const { data: reviews } = await getSupabase()
 
 | 優先 | 缺失 | 緊急程度 | 預估工時 |
 |------|------|----------|----------|
-| 1 | D22+D23 | 🔴 **部署可能失敗** | 30 分鐘 |
+| ~~1~~ | ~~D22+D23~~ | ✅ **已修** | - |
 | 2 | D24 | 🔴 無測試 = 隨時壞 | 2 小時 |
 | 3 | D27 | 🟠 記憶體爆炸風險 | 5 分鐘 |
 | 4 | D25 | 🟠 驗證沒意義 | 15 分鐘 |
