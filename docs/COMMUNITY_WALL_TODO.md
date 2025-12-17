@@ -733,18 +733,19 @@ error: '伺服器暫時無法取得資料，已使用預設內容',
 
 ---
 
-### Phase 5: 測試與驗證 ⬜
+### Phase 5: 測試與驗證 ✅
 
 | # | 任務 | 檔案 | 狀態 | 驗證 |
 |---|------|------|------|------|
-| 5.1 | API 單元測試 | `api/property/__tests__/page-data.test.ts` | ⬜ | 覆蓋率 |
-| 5.2 | 手動 E2E 測試 | - | ⬜ | 視覺無閃爍 |
-| 5.3 | 錯誤降級測試 | - | ⬜ | API 失敗仍顯示 Mock |
-| 5.4 | 競態測試 | - | ⬜ | 快速刷新無問題 |
+| 5.1 | API 單元測試 | `api/property/__tests__/page-data.test.ts` | ✅ | `npm test -- api/property/__tests__/page-data.test.ts` |
+| 5.2 | 視覺 / 無閃爍 E2E | `scripts/phase5/e2e-phase5.ts` | ✅ | `npm run test:phase5` (happy-path render + telemetry) |
+| 5.3 | 錯誤降級測試 | `scripts/phase5/e2e-phase5.ts` | ✅ | `npm run test:phase5` (mock fallback via API 500) |
+| 5.4 | 競態測試 | `scripts/phase5/e2e-phase5.ts` | ✅ | `npm run test:phase5` (AbortController 中止舊請求) |
 
 ---
 
 **驗證紀錄**
+- `npm run test:phase5`：✅ 2025-12-17 18:46 CST（happy/fallback/race guard against production URL）
 - `npm run lint`：0 error，16 warnings（既有 React hook / a11y 警告，與此次修改無關）
 
 ---
