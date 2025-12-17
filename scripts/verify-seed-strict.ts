@@ -58,16 +58,35 @@ function assertAdaptersWork(seed: unknown) {
   const data = normalizeSeed(seed) as SeedData;
   const featured = data?.default?.featured;
   const listings = data?.default?.listings ?? [];
+  let featuredCount = 0;
+  let listingCount = 0;
 
   if (featured) {
     [featured.main, featured.sideTop, featured.sideBottom].forEach((card) => {
-      (card?.reviews ?? []).forEach((r) => normalizeFeaturedReview(r));
+      (card?.reviews ?? []).forEach((r) => {
+        const normalized = normalizeFeaturedReview(r);
+        // D14 修正：檢查輸出格式，不只是「呼叫」
+        if (!normalized.author || !normalized.content) {
+          throw new Error(`normalizeFeaturedReview 輸出異常: ${JSON.stringify(normalized)}`);
+        }
+        featuredCount++;
+      });
     });
   }
 
   listings.forEach((item) => {
-    (item?.reviews ?? []).forEach((r) => normalizeListingReview(r));
+    (item?.reviews ?? []).forEach((r) => {
+      const normalized = normalizeListingReview(r);
+      // D14 修正：檢查輸出格式，不只是「呼叫」
+      if (!normalized.author || !normalized.content) {
+        throw new Error(`normalizeListingReview 輸出異常: ${JSON.stringify(normalized)}`);
+      }
+      listingCount++;
+    });
   });
+
+  console.log(`   • Featured reviews 解析: ${featuredCount} 則`);
+  console.log(`   • Listing reviews 解析: ${listingCount} 則`);
 }
 
 // D13: 使用統一錯誤處理，移除舊的 printIssues
