@@ -1,5 +1,6 @@
 /**
  * D5 修正：Mock ↔ JSON 同步檢查
+ * D12 修正：改用 Node.js 標準庫 deepStrictEqual，移除自寫 deepEqual
  * 
  * 用途：
  * 1. 確保 property-data.js (Mock) 和 seed-property-page.json 結構一致
@@ -8,13 +9,14 @@
  * 邏輯：
  * 1. 讀取 property-data.js，用 VM 執行取得 window.propertyMockData
  * 2. 讀取 seed-property-page.json
- * 3. Deep equal 比對 default 資料集
- * 4. 不一致就報錯並列出差異
+ * 3. 用 assert.deepStrictEqual 比對（標準庫自動處理所有 edge case）
+ * 4. 不一致就報錯
  */
 import { readFileSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { createContext, runInContext } from 'vm';
+import { deepStrictEqual } from 'assert';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -38,79 +40,22 @@ const jsonData = JSON.parse(jsonRaw);
 // 移除 $schema 欄位進行比對
 const { $schema, ...jsonDataClean } = jsonData;
 
-// 3. Deep equal 比對
-function deepEqual(a: unknown, b: unknown, path = ''): string[] {
-  const errors: string[] = [];
-  
-  if (typeof a !== typeof b) {
-    errors.push(`${path}: 類型不同 (Mock: ${typeof a}, JSON: ${typeof b})`);
-    return errors;
-  }
-  
-  if (a === null || b === null) {
-    if (a !== b) {
-      errors.push(`${path}: 值不同 (Mock: ${a}, JSON: ${b})`);
-    }
-    return errors;
-  }
-  
-  if (typeof a !== 'object') {
-    if (a !== b) {
-      errors.push(`${path}: 值不同 (Mock: "${a}", JSON: "${b}")`);
-    }
-    return errors;
-  }
-  
-  if (Array.isArray(a) !== Array.isArray(b)) {
-    errors.push(`${path}: 一個是陣列，一個不是`);
-    return errors;
-  }
-  
-  if (Array.isArray(a) && Array.isArray(b)) {
-    if (a.length !== b.length) {
-      errors.push(`${path}: 陣列長度不同 (Mock: ${a.length}, JSON: ${b.length})`);
-    }
-    const minLen = Math.min(a.length, b.length);
-    for (let i = 0; i < minLen; i++) {
-      errors.push(...deepEqual(a[i], b[i], `${path}[${i}]`));
-    }
-    return errors;
-  }
-  
-  const aObj = a as Record<string, unknown>;
-  const bObj = b as Record<string, unknown>;
-  const aKeys = Object.keys(aObj).sort();
-  const bKeys = Object.keys(bObj).sort();
-  
-  const missingInJson = aKeys.filter(k => !bKeys.includes(k));
-  const missingInMock = bKeys.filter(k => !aKeys.includes(k));
-  
-  for (const key of missingInJson) {
-    errors.push(`${path}.${key}: Mock 有但 JSON 沒有`);
-  }
-  for (const key of missingInMock) {
-    errors.push(`${path}.${key}: JSON 有但 Mock 沒有`);
-  }
-  
-  for (const key of aKeys.filter(k => bKeys.includes(k))) {
-    errors.push(...deepEqual(aObj[key], bObj[key], path ? `${path}.${key}` : key));
-  }
-  
-  return errors;
-}
-
-const errors = deepEqual(mockData, jsonDataClean);
-
-if (errors.length > 0) {
-  console.error('❌ Mock ↔ JSON 不同步！發現以下差異：\n');
-  errors.slice(0, 20).forEach(err => console.error(`  • ${err}`));
-  if (errors.length > 20) {
-    console.error(`\n  ... 還有 ${errors.length - 20} 個差異`);
-  }
-  console.error('\n請確保 property-data.js 和 seed-property-page.json 內容一致！');
-  process.exit(1);
-} else {
+// 3. 用標準庫 deepStrictEqual 比對
+// 先 JSON.stringify → JSON.parse 確保兩邊結構相同（消除原型差異）
+try {
+  const normalizedMock = JSON.parse(JSON.stringify(mockData));
+  const normalizedJson = JSON.parse(JSON.stringify(jsonDataClean));
+  deepStrictEqual(normalizedMock, normalizedJson);
   console.log('✅ Mock ↔ JSON 完全同步！');
   console.log('   • property-data.js');
   console.log('   • seed-property-page.json');
+  process.exit(0);
+} catch (err) {
+  console.error('❌ Mock ↔ JSON 不同步！\n');
+  if (err instanceof Error) {
+    // AssertionError 會包含詳細差異
+    console.error(err.message);
+  }
+  console.error('\n請確保 property-data.js 和 seed-property-page.json 內容一致！');
+  process.exit(1);
 }
