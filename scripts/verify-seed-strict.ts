@@ -14,6 +14,7 @@ import {
   normalizeFeaturedReview,
   normalizeListingReview
 } from '../src/types/property-page';
+import { handleScriptError, handleScriptSuccess } from './lib/error-handler';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -69,14 +70,7 @@ function assertAdaptersWork(seed: unknown) {
   });
 }
 
-function printIssues(title: string, error: unknown) {
-  console.error(`❌ ${title} 驗證失敗`);
-  if (error && typeof error === 'object' && 'issues' in error) {
-    console.error(JSON.stringify((error as { issues: unknown }).issues, null, 2));
-  } else {
-    console.error(error);
-  }
-}
+// D13: 使用統一錯誤處理，移除舊的 printIssues
 
 try {
   console.log('🛡️  啟動 Zod 原生嚴格驗證 (JSON + Mock)...');
@@ -105,9 +99,8 @@ try {
   assertAdaptersWork(jsonSeed);
   console.log('✅ Review Adapter 解析完成（featured/listings）');
 
-  console.log('🎉 驗證成功：Zod 定義與種子資料完全一致');
+  handleScriptSuccess('verify-seed-strict', 'Zod 定義與種子資料完全一致');
   process.exit(0);
 } catch (error) {
-  printIssues('Zod 原生嚴格驗證', error);
-  process.exit(1);
+  handleScriptError('verify-seed-strict', error);
 }

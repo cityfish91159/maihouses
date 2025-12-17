@@ -17,6 +17,7 @@ import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { createContext, runInContext } from 'vm';
 import { deepStrictEqual } from 'assert';
+import { handleScriptError, handleScriptSuccess } from './lib/error-handler';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -46,16 +47,8 @@ try {
   const normalizedMock = JSON.parse(JSON.stringify(mockData));
   const normalizedJson = JSON.parse(JSON.stringify(jsonDataClean));
   deepStrictEqual(normalizedMock, normalizedJson);
-  console.log('✅ Mock ↔ JSON 完全同步！');
-  console.log('   • property-data.js');
-  console.log('   • seed-property-page.json');
+  handleScriptSuccess('check-ssot-sync', 'Mock ↔ JSON 完全同步');
   process.exit(0);
 } catch (err) {
-  console.error('❌ Mock ↔ JSON 不同步！\n');
-  if (err instanceof Error) {
-    // AssertionError 會包含詳細差異
-    console.error(err.message);
-  }
-  console.error('\n請確保 property-data.js 和 seed-property-page.json 內容一致！');
-  process.exit(1);
+  handleScriptError('check-ssot-sync', err);
 }
