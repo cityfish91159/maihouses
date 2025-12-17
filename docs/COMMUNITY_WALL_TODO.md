@@ -379,7 +379,7 @@ const jsonSchema = (SeedFileSchema as unknown as { toJSONSchema: () => Record<st
 | D24 | 🔴 P0 | **API 沒有單元測試，Phase 5 遙遙無期** | 437 行代碼零覆蓋，隨時可能壞掉不知道 | ✅ 已修 |
 | D25 | 🟠 P1 | **normalizeFeaturedReview 只是 console.warn，不影響輸出** | 驗證是裝飾品，發現問題也不處理 | ✅ 已修 |
 | D26 | 🟠 P1 | **DBProperty/DBReview 型別與 Supabase 實際 schema 可能不符** | 欄位名稱猜測的，沒有驗證 | ✅ 已修 |
-| D27 | 🟠 P1 | **reviews 查詢沒有 limit，可能拉回數千筆** | 大社區 1000+ 評價全撈回來，記憶體爆炸 | ⬜ 待修 |
+| D27 | 🟠 P1 | **reviews 查詢沒有 limit，可能拉回數千筆** | 大社區 1000+ 評價全撈回來，記憶體爆炸 | ✅ 已修 |
 | D28 | 🟡 P2 | **adaptToFeaturedCard 有 80+ 行，違反單一職責** | 函數太長難維護 | ⬜ 待修 |
 | D29 | 🟡 P2 | **CORS allowedOrigins 硬編碼，沒有環境變數** | 新環境要改代碼 | ⬜ 待修 |
 | D30 | 🟡 P2 | **錯誤降級時 error 欄位暴露內部錯誤訊息給前端** | 安全風險，可能洩漏 DB 結構 | ⬜ 待修 |
@@ -577,47 +577,30 @@ interface DBReview {
 
 ---
 
-### 🟠 D27: reviews 查詢沒有 limit
+### 🟠 D27: reviews 查詢沒有 limit ✅ 已修
 
 **問題**: 評價查詢沒有 limit，大社區可能有數千筆。
 
-**偷懶程度**: 💀💀 **中等** - 忘了加 limit
+**修正方式**: 方案 A - 加入 limit，每社區 3 筆 buffer
 
-**證據**:
+**修正證據**:
 ```typescript
-// api/property/page-data.ts L327-331
+// api/property/page-data.ts (D27 修正)
+// D27: 加入 limit 防止大社區撈回數千筆評價
+// 每個社區只需要 2 筆（reviews.slice(0, 2)），給 3 筆 buffer
+const maxReviews = communityIds.length * 3;
 const { data: reviews } = await getSupabase()
   .from('community_reviews')
-  .select('...')
+  .select(`...`)
   .in('community_id', communityIds)
-  // 🔴 沒有 .limit()！
+  .order('created_at', { ascending: false })
+  .limit(maxReviews);  // ✅ D27: 防止記憶體爆炸
 ```
 
-**風險**: 
-- 熱門社區 1000+ 評價全撈回來
-- 記憶體暴增，回應變慢
-- Vercel 函數 timeout
-
-**引導修正**:
-```
-每個社區只需要 2 筆評價（因為 reviews.slice(0, 2)）：
-
-方案 A: 加 limit（簡單但不精確）
-  .limit(communityIds.length * 3)  // 每社區 3 筆，有 buffer
-
-方案 B: 用 SQL Window Function（精確但複雜）
-  // 需要 Supabase Edge Function 寫 Raw SQL
-  SELECT * FROM (
-    SELECT *, ROW_NUMBER() OVER (PARTITION BY community_id ORDER BY created_at DESC) as rn
-    FROM community_reviews
-    WHERE community_id IN (...)
-  ) t WHERE rn <= 2
-
-方案 C: 分批查詢（中等複雜度）
-  for (const cid of communityIds) {
-    const { data } = await supabase.from(...).eq('community_id', cid).limit(2);
-    // 但這是 N+1...
-  }
+**效益**:
+- 11 筆房源 → 最多 11 個社區 → 最多 33 筆評價（不是數千筆）
+- 記憶體使用可控
+- 回應時間穩定
 
 建議用方案 A，簡單有效。
 ```
@@ -645,7 +628,7 @@ const { data: reviews } = await getSupabase()
 |---|------|------|------|------|
 | 2.1 | 建立 API 端點 | `api/property/page-data.ts` | ✅ | - |
 | 2.2 | 撈取真實房源 (11筆) | `api/property/page-data.ts` | ✅ | D26 型別已修正 |
-| 2.3 | 批量撈取評價 | `api/property/page-data.ts` | ⚠️ | **D27 沒有 limit** |
+| 2.3 | 批量撈取評價 | `api/property/page-data.ts` | ✅ | D27 已加 limit |
 | 2.4 | 資料適配器 (DB → UI) | `api/property/page-data.ts` | ✅ | ~~D25 驗證是裝飾品~~ |
 | 2.5 | 混合組裝 (真實 + Seed 補位) | `api/property/page-data.ts` | ✅ | - |
 | 2.6 | 快取設定 | `api/property/page-data.ts` | ✅ | - |
@@ -664,7 +647,7 @@ const { data: reviews } = await getSupabase()
 | ~~1~~ | ~~D22+D23~~ | ✅ **已修** | - |
 | ~~2~~ | ~~D24~~ | ✅ **已修** | - |
 | ~~3~~ | ~~D25~~ | ✅ **已修** | - |
-| 4 | D27 | 🟠 記憶體爆炸風險 | 5 分鐘 |
+| 4 | D27 | ✅ 已加 limit | 完成 |
 | 5 | D26 | ✅ 型別已對齊 | 完成 |
 | 6 | D28-D30 | 🟡 可延後 | 30 分鐘 |
 

@@ -356,6 +356,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (communityIds.length > 0) {
       // D26 修正：使用正確的 community_reviews VIEW 欄位
       // VIEW 沒有 rating, author_name, tags，改用正確欄位
+      // D27 修正：加入 limit 防止大社區撈回數千筆評價
+      // 每個社區只需要 2 筆（reviews.slice(0, 2)），給 3 筆 buffer
+      const maxReviews = communityIds.length * 3;
       const { data: reviews, error: revError } = await getSupabase()
         .from('community_reviews')
         .select(`
@@ -364,7 +367,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           source_platform, source, content, created_at
         `)
         .in('community_id', communityIds)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(maxReviews);  // D27: 防止記憶體爆炸
 
       if (revError) {
         console.warn('[API] Reviews query error (non-fatal):', revError);
