@@ -1,3 +1,15 @@
+Timestamp: 2025-12-17T15:10:00Z
+Deploy: P11 Phase 2 - Property Page API D22-D25 修正
+- Fix: D22 - 移除 readFileSync 同步 I/O，改用 JSON import
+- Fix: D23 - 移除 __dirname（ESM 環境不存在）
+- Fix: D24 - 建立 page-data.test.ts (618行/38案例/79斷言)
+- Fix: D25 - 驗證失敗時過濾無效評價並用 Seed 替換
+- New: `api/property/page-data.ts` - 混合動力 API
+- New: `api/property/__tests__/page-data.test.ts` - 完整單元測試
+- Verification: 38 tests passed, TypeScript OK
+
+Redeploy trigger
+
 Timestamp: 2025-12-16T12:00:00Z
 Deploy: P10 Phase 2-4 - Service/UI/Testing 完整實作
 - New: `src/services/propertyService.ts` - getFeaturedProperties() 三層容錯
