@@ -686,7 +686,7 @@ error: '伺服器暫時無法取得資料，已使用預設內容',
 
 ---
 
-### Phase 3: 前端架構重構 (ES Modules) ⬜
+### Phase 3: 前端架構重構 (ES Modules) ✅
 
 | # | 任務 | 檔案 | 狀態 | 驗證 |
 |---|------|------|------|------|
@@ -695,6 +695,7 @@ error: '伺服器暫時無法取得資料，已使用預設內容',
 | 3.3 | 升級 Renderer | `public/js/property-renderer.js` | ✅ | Class + renderVersion |
 | 3.4 | 修改 HTML 引用 | `public/property.html` | ✅ | type="module" + tracker defer |
 | 3.5 | 實作圖片預載 | `public/js/property-renderer.js` | ✅ | preloadImages + silent replace |
+| 3.6 | 清理重複 script 注入 | `public/property.html` | ✅ | 單一 ESM 入口，無樣式破壞 |
 
 **驗收**: `property.html` 秒開 + 背景靜默更新
 
