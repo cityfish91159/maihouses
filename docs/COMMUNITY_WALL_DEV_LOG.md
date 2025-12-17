@@ -1,5 +1,69 @@
 # 社區牆開發紀錄
 
+## 2025-12-17 - P11 Phase 2: Property Page Data API (完成)
+
+### 📋 任務摘要
+
+> **實作者**: AI Agent
+> **任務**: P11 Phase 2 建立 `api/property/page-data.ts` API 端點
+> **結果**: ✅ **全部完成**
+> **Commit**: `e6f0cdf`
+> **審查者**: Google 首席前後端處長角色
+
+### 📁 完成項目
+
+| # | 任務 | 檔案 | 狀態 |
+|---|------|------|------|
+| 2.1 | 建立 API 端點 | `api/property/page-data.ts` | ✅ 新建 (437 行) |
+| 2.2 | 撈取真實房源 (11筆) | `api/property/page-data.ts` | ✅ Supabase Query |
+| 2.3 | 批量撈取評價 | `api/property/page-data.ts` | ✅ Batch IN Query |
+| 2.4 | 資料適配器 (DB → UI) | `api/property/page-data.ts` | ✅ adaptTo* 函數 |
+| 2.5 | 混合組裝 (真實 + Seed 補位) | `api/property/page-data.ts` | ✅ 實作 |
+| 2.6 | 快取設定 | `api/property/page-data.ts` | ✅ s-maxage=60 |
+| 2.7 | 錯誤時回傳 Seed | `api/property/page-data.ts` | ✅ 不回 500 |
+
+### 📁 檔案變更明細
+
+**新增 `api/property/page-data.ts`** (437 行)
+
+```typescript
+// 核心架構
+getSupabase()           // 延遲初始化 Supabase Client
+getSeedData()           // 讀取 Seed JSON (含 fallback)
+createMinimalSeed()     // 最小 Seed 保底
+adaptToFeaturedCard()   // DB → Featured Card 格式
+adaptToListingCard()    // DB → Listing Card 格式
+handler()               // Vercel Serverless 入口
+
+// 使用 SSOT adapters
+import { normalizeFeaturedReview, normalizeListingReview } from '../../src/types/property-page';
+```
+
+**修改 `docs/COMMUNITY_WALL_TODO.md`**
+- Phase 2 所有項目標記為 ✅
+
+### 🔧 API 技術細節
+
+| 項目 | 實作方式 |
+|------|----------|
+| **N+1 避免** | `community_reviews.in('community_id', [...])` |
+| **CORS** | 支援 localhost + production |
+| **快取** | `s-maxage=60, stale-while-revalidate=300` |
+| **錯誤降級** | catch → 回 200 + Seed |
+| **可測試** | `__testHelpers` 匯出內部函數 |
+
+### 📊 API 回應格式
+
+```typescript
+// 成功
+{ success: true, data: PropertyPageData, meta: { realCount, seedCount, timestamp } }
+
+// 失敗 (仍回 200，不回 500)
+{ success: false, data: SeedData, error: "...", meta: { fallback: true, ... } }
+```
+
+---
+
 ## 2025-12-17 - D7-D13 缺陷修正 (完成)
 
 ### 📋 任務摘要
