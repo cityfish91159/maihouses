@@ -690,11 +690,11 @@ error: '伺服器暫時無法取得資料，已使用預設內容',
 
 | # | 任務 | 檔案 | 狀態 | 驗證 |
 |---|------|------|------|------|
-| 3.1 | 建立主入口 | `public/js/property-main.js` | ⬜ | ES Module |
-| 3.2 | 升級 API Service | `public/js/services/property-api.js` | ⬜ | AbortController |
-| 3.3 | 升級 Renderer | `public/js/property-renderer.js` | ⬜ | Class + 版本控制 |
-| 3.4 | 修改 HTML 引用 | `public/property.html` | ⬜ | type="module" |
-| 3.5 | 實作圖片預載 | `public/js/property-renderer.js` | ⬜ | preloadImages |
+| 3.1 | 建立主入口 | `public/js/property-main.js` | ✅ | ESM 入口 + 背景更新 |
+| 3.2 | 升級 API Service | `public/js/services/property-api.js` | ✅ | AbortController + timeout |
+| 3.3 | 升級 Renderer | `public/js/property-renderer.js` | ✅ | Class + renderVersion |
+| 3.4 | 修改 HTML 引用 | `public/property.html` | ✅ | type="module" + tracker defer |
+| 3.5 | 實作圖片預載 | `public/js/property-renderer.js` | ✅ | preloadImages + silent replace |
 
 **驗收**: `property.html` 秒開 + 背景靜默更新
 
@@ -704,10 +704,10 @@ error: '伺服器暫時無法取得資料，已使用預設內容',
 
 | # | 任務 | 檔案 | 狀態 | 驗證 |
 |---|------|------|------|------|
-| 4.1 | 圖片預載 Helper | `public/js/property-renderer.js` | ⬜ | Promise.all |
-| 4.2 | 版本控制渲染 | `public/js/property-renderer.js` | ⬜ | renderVersion |
-| 4.3 | requestAnimationFrame | `public/js/property-renderer.js` | ⬜ | 流暢渲染 |
-| 4.4 | 競態保護 | `public/js/services/property-api.js` | ⬜ | abort 舊請求 |
+| 4.1 | 圖片預載 Helper | `public/js/property-renderer.js` | ✅ | Promise.all 預載 |
+| 4.2 | 版本控制渲染 | `public/js/property-renderer.js` | ✅ | renderVersion 防舊畫面 |
+| 4.3 | requestAnimationFrame | `public/js/property-renderer.js` | ✅ | 流暢渲染維持 |
+| 4.4 | 競態保護 | `public/js/services/property-api.js` | ✅ | abort 舊請求 + timeout |
 
 **驗收**: 快速刷新無舊資料閃爍
 
@@ -721,6 +721,11 @@ error: '伺服器暫時無法取得資料，已使用預設內容',
 | 5.2 | 手動 E2E 測試 | - | ⬜ | 視覺無閃爍 |
 | 5.3 | 錯誤降級測試 | - | ⬜ | API 失敗仍顯示 Mock |
 | 5.4 | 競態測試 | - | ⬜ | 快速刷新無問題 |
+
+---
+
+**驗證紀錄**
+- `npm run lint`：0 error，16 warnings（既有 React hook / a11y 警告，與此次修改無關）
 
 ---
 

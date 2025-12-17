@@ -1,113 +1,91 @@
-
 /**
- * Property Page Renderer
- * Handles rendering of property cards based on the provided data set.
- * Optimized for performance with DocumentFragment and template literals.
- * 
- * v2.0 - 支援新的資料架構 (PropertyAPI + DataAdapter)
+ * Property Page Renderer (ESM)
+ * - Version guarded rendering to prevent stale updates
+ * - Optional image preload to reduce flicker
  */
 
-const PropertyRenderer = {
-  // 快取 DOM 元素
-  containers: null,
-  
-  init() {
+export class PropertyRenderer {
+  constructor() {
+    this.renderVersion = 0;
+    this.containers = null;
+  }
+
+  ensureContainers() {
+    if (this.containers) return;
     this.containers = {
       main: document.getElementById('featured-main-container'),
       sideTop: document.getElementById('featured-side-top-container'),
       sideBottom: document.getElementById('featured-side-bottom-container'),
       listings: document.getElementById('listing-grid-container')
     };
-  },
+  }
 
-  /**
-   * v2 渲染方法 - 使用 PropertyAPI
-   */
-  async renderAsync() {
-    if (!this.containers) this.init();
-    
-    try {
-      // 並行取得精選和列表資料
-      const [featured, listings] = await Promise.all([
-        window.PropertyAPI.getFeatured(),
-        window.PropertyAPI.getListings()
-      ]);
-      
-      // 使用 requestAnimationFrame 確保渲染效能
-      requestAnimationFrame(() => {
-        if (featured.main) this.renderFeaturedMain(featured.main);
-        if (featured.sideTop) this.renderFeaturedSide(featured.sideTop, 'sideTop');
-        if (featured.sideBottom) this.renderFeaturedSide(featured.sideBottom, 'sideBottom');
-        if (listings.items) this.renderListings(listings.items);
-        
-        // 更新列表計數
-        this.updateListingCount(listings.total);
-      });
-    } catch (error) {
-      console.error('[PropertyRenderer] renderAsync error:', error);
-      // Fallback 到舊版渲染
-      this.render('default');
-    }
-  },
+  async preloadImages(data) {
+    const urls = [
+      data?.featured?.main?.image,
+      data?.featured?.sideTop?.image,
+      data?.featured?.sideBottom?.image,
+      ...(data?.listings || []).map((item) => item.image)
+    ].filter(Boolean);
 
-  /**
-   * 更新列表計數顯示
-   */
+    await Promise.all(urls.map((url) => new Promise((resolve) => {
+      const img = new Image();
+      img.onload = resolve;
+      img.onerror = resolve;
+      img.src = url;
+    })));
+  }
+
+  render(data) {
+    if (!data) return;
+    this.ensureContainers();
+
+    const currentVersion = ++this.renderVersion;
+    requestAnimationFrame(() => {
+      if (currentVersion !== this.renderVersion) return;
+
+      this.renderFeaturedMain(data?.featured?.main);
+      this.renderFeaturedSide(data?.featured?.sideTop, 'sideTop');
+      this.renderFeaturedSide(data?.featured?.sideBottom, 'sideBottom');
+      this.renderListings(data?.listings || []);
+      this.updateListingCount(Array.isArray(data?.listings) ? data.listings.length : 0);
+    });
+  }
+
   updateListingCount(total) {
     const countEl = document.querySelector('.listing-header .small-text');
-    if (countEl && total) {
+    if (countEl && typeof total === 'number' && total > 0) {
       countEl.textContent = `共 ${total} 個社區`;
     }
-  },
+  }
 
-  /**
-   * v1 渲染方法 - 保留向下相容 (使用舊版 propertyMockData)
-   * @deprecated 請使用 renderAsync()
-   */
-  render(dataSetKey = 'default') {
-    const data = window.propertyMockData?.[dataSetKey];
-    if (!data) {
-      console.error(`Data set '${dataSetKey}' not found.`);
-      return;
-    }
-    
-    if (!this.containers) this.init();
-
-    // 使用 requestAnimationFrame 確保渲染效能
-    requestAnimationFrame(() => {
-      this.renderFeaturedMain(data.featured.main);
-      this.renderFeaturedSide(data.featured.sideTop, 'sideTop');
-      this.renderFeaturedSide(data.featured.sideBottom, 'sideBottom');
-      this.renderListings(data.listings);
-    });
-  },
-
-  // 建立評論 HTML（共用函式）
   createReviewHtml(review, compact = false) {
+    if (!review) return '';
+
     if (compact) {
       return `<div class="review-item-compact">
-        <span class="review-badge">${review.badge}</span>
-        <p class="review-text">${review.content}</p>
+        <span class="review-badge">${review.badge || ''}</span>
+        <p class="review-text">${review.content || ''}</p>
       </div>`;
     }
-    
-    const tagsHtml = review.tags?.map(tag => `<span class="review-tag">${tag}</span>`).join('') || '';
+
+    const tagsHtml = review.tags?.map((tag) => `<span class="review-tag">${tag}</span>`).join('') || '';
     return `<div class="property-review-item">
       <div class="review-header">
-        <span class="review-stars">${review.stars}</span>
-        <span class="review-author">${review.author}</span>
+        <span class="review-stars">${review.stars || ''}</span>
+        <span class="review-author">${review.author || ''}</span>
       </div>
       ${tagsHtml ? `<div class="review-tags">${tagsHtml}</div>` : ''}
-      <p class="review-content">${review.content}</p>
+      <p class="review-content">${review.content || ''}</p>
     </div>`;
-  },
+  }
 
   renderFeaturedMain(item) {
     const container = this.containers?.main;
-    if (!container) return;
+    if (!container || !item) return;
 
-    const detailsHtml = item.details.map(d => `<div style="margin-bottom:0.25rem">${d}</div>`).join('');
-    const reviewsHtml = item.reviews.map(r => this.createReviewHtml(r)).join('');
+    const detailsHtml = (item.details || []).map((d) => `<div style="margin-bottom:0.25rem">${d}</div>`).join('');
+    const reviewsHtml = (item.reviews || []).map((r) => this.createReviewHtml(r)).join('');
 
     container.innerHTML = `
       <article class="property-card">
@@ -119,7 +97,7 @@ const PropertyRenderer = {
           <h3 class="property-title">${item.title}</h3>
           <div class="property-location">${item.location}</div>
           <div class="small-text" style="margin-bottom:0.5rem;color:var(--text-secondary)">${detailsHtml}</div>
-          <div class="tiny-text" style="margin-bottom:0.5rem;color:var(--primary)">${item.highlights}</div>
+          <div class="tiny-text" style="margin-bottom:0.5rem;color:var(--primary)">${item.highlights || ''}</div>
           <div class="property-rating"><span class="star">★</span>${item.rating}</div>
           <div class="property-reviews"><strong>住戶真實評價：</strong>${reviewsHtml}</div>
           <div class="property-more-reviews">
@@ -135,14 +113,14 @@ const PropertyRenderer = {
           </div>
         </div>
       </article>`;
-  },
+  }
 
   renderFeaturedSide(item, key) {
     const container = this.containers?.[key];
-    if (!container) return;
+    if (!container || !item) return;
 
-    const detailsHtml = item.details.join('・');
-    const reviewsHtml = item.reviews.map(r => this.createReviewHtml(r)).join('');
+    const detailsHtml = (item.details || []).join('・');
+    const reviewsHtml = (item.reviews || []).map((r) => this.createReviewHtml(r)).join('');
 
     container.innerHTML = `
       <article class="property-card" style="height:100%">
@@ -165,18 +143,17 @@ const PropertyRenderer = {
           <div class="property-price" style="font-size:1rem;margin-bottom:0.5rem">${item.price}<span style="font-size:0.75rem">${item.size}</span></div>
         </div>
       </article>`;
-  },
+  }
 
   renderListings(items) {
     const container = this.containers?.listings;
     if (!container) return;
 
-    // 使用 DocumentFragment 減少 reflow
     const fragment = document.createDocumentFragment();
     const template = document.createElement('template');
-    
-    template.innerHTML = items.map(item => {
-      const reviewsHtml = item.reviews.map(r => this.createReviewHtml(r, true)).join('');
+
+    template.innerHTML = (items || []).map((item) => {
+      const reviewsHtml = (item.reviews || []).map((r) => this.createReviewHtml(r, true)).join('');
       return `
         <article class="horizontal-card">
           <div class="horizontal-left">
@@ -186,12 +163,12 @@ const PropertyRenderer = {
             <div class="horizontal-main">
               <div class="horizontal-title-row">
                 <span>📍</span><strong>${item.title}</strong>
-                <span class="horizontal-tag">${item.tag}</span>
+                <span class="horizontal-tag">${item.tag || ''}</span>
               </div>
               <div class="horizontal-price">${item.price}<span>${item.size}</span></div>
               <div class="horizontal-rating"><span class="star">★</span>${item.rating}</div>
               <div class="horizontal-reviews">${reviewsHtml}</div>
-              <div class="horizontal-bottom-note">${item.note}</div>
+              <div class="horizontal-bottom-note">${item.note || ''}</div>
             </div>
           </div>
           <div class="horizontal-right">
@@ -200,7 +177,7 @@ const PropertyRenderer = {
               <div class="lock-header">
                 <span class="lock-icon">🔒</span>
                 <div class="lock-text">
-                  <span class="lock-label">${item.lockLabel}</span>
+                  <span class="lock-label">${item.lockLabel || ''}</span>
                   <span class="lock-count">還有 ${item.lockCount} 則評價</span>
                 </div>
               </div>
@@ -213,28 +190,11 @@ const PropertyRenderer = {
           </div>
         </article>`;
     }).join('');
-    
+
     fragment.appendChild(template.content);
     container.innerHTML = '';
     container.appendChild(fragment);
   }
-};
+}
 
-// Initialize with new async method (v2)
-document.addEventListener('DOMContentLoaded', () => {
-  PropertyRenderer.init();
-  
-  // 優先使用新架構
-  if (window.PropertyAPI && window.MockProperties) {
-    PropertyRenderer.renderAsync();
-  } else {
-    // Fallback 到舊版
-    PropertyRenderer.render('default');
-  }
-});
-
-// Expose for switching datasets (保留向下相容)
-window.renderPropertyPage = (key) => PropertyRenderer.render(key);
-
-// Expose async render method
-window.renderPropertyPageAsync = () => PropertyRenderer.renderAsync();
+export default PropertyRenderer;

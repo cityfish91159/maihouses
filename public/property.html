@@ -243,13 +243,8 @@
         padding: 0.5rem 0.875rem;
         box-shadow: var(--shadow-sm);
       }
-
-      .search-icon {
-        font-size: 1.125rem; /* 18px */
-      }
-
-      .search-input {
-        flex: 1;
+      <script type="module" src="js/property-main.js"></script>
+      <script src="js/tracker.js" defer></script>
         border: none;
         outline: none;
         font-size: 0.875rem; /* 14px */
@@ -1358,12 +1353,8 @@
         <div class="listing-grid" id="listing-grid-container"></div>
       </section>
     </main>
-    <!-- 新架構：Config → Mock Data → Adapter → API → Renderer -->
-    <script src="js/config/property-config.js"></script>
-    <script src="js/data/mock-properties.js"></script>
-    <script src="js/data/data-adapter.js"></script>
-    <script src="js/services/property-api.js"></script>
-    <script src="js/property-renderer.js"></script>
-    <script src="js/tracker.js"></script>
+    <!-- ESM 入口：秒開 Mock + 背景真實資料 + 防閃爍預載 -->
+    <script type="module" src="js/property-main.js"></script>
+    <script src="js/tracker.js" defer></script>
   </body>
 </html>

@@ -3,9 +3,9 @@
  * 環境設定與 API 配置
  */
 
-const PropertyConfig = {
+export const PropertyConfig = {
   // 資料來源模式: 'mock' | 'api'
-  dataSource: 'mock',
+  dataSource: 'api',
   
   // API 設定
   api: {
@@ -50,9 +50,13 @@ const PropertyConfig = {
 };
 
 // 開發環境自動使用 mock
-if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
   PropertyConfig.setDataSource('mock');
 }
 
-// 暴露給全域
-window.PropertyConfig = PropertyConfig;
+// 保留全域曝光以兼容舊代碼
+if (typeof window !== 'undefined') {
+  window.PropertyConfig = PropertyConfig;
+}
+
+export default PropertyConfig;

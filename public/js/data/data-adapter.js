@@ -4,7 +4,7 @@
  * 這樣無論資料來自 Mock 還是真實 API，Renderer 都能正常運作
  */
 
-const DataAdapter = {
+export const DataAdapter = {
   /**
    * 轉換精選房源（大卡）
    * @param {Object} property - Supabase properties 格式的資料
@@ -231,5 +231,9 @@ const DataAdapter = {
   }
 };
 
-// 暴露給全域
-window.DataAdapter = DataAdapter;
+// 暴露給全域以兼容舊版
+if (typeof window !== 'undefined') {
+  window.DataAdapter = DataAdapter;
+}
+
+export default DataAdapter;

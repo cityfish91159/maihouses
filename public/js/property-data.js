@@ -9,7 +9,7 @@
  * @see public/data/seed-property-page.json - 單一真理來源
  * @see api/property/page-data.ts - 後端聚合 API
  */
-window.propertyMockData = {
+export const propertyMockData = {
   default: {
     featured: {
       main: {
@@ -296,3 +296,10 @@ window.propertyMockData = {
     ]
   }
 };
+
+// 保留全域以支援舊版引用
+if (typeof window !== 'undefined') {
+  window.propertyMockData = propertyMockData;
+}
+
+export default propertyMockData;
