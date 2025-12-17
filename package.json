@@ -18,7 +18,7 @@
     "generate:schema": "tsx scripts/generate-json-schema.ts",
     "verify:seed": "tsx scripts/verify-seed-strict.ts",
     "validate:property": "tsx scripts/validate-property-types.ts",
-    "check:ssot": "tsx scripts/check-ssot-sync.ts",
+    "check:ssot": "tsx scripts/verify-seed-strict.ts",
     "speedup:start": "bash scripts/speedup-control.sh start",
     "speedup:stop": "bash scripts/speedup-control.sh stop",
     "speedup:status": "bash scripts/speedup-control.sh status",

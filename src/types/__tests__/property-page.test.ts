@@ -52,10 +52,11 @@ describe('normalizeListingReview', () => {
   });
 
   it('tolerates halfwidth dash', () => {
+    // D21 修正後，半形 dash 也應該正確解析
     const result = normalizeListingReview({ badge: '在地', content: '「好住」- 小李' });
     expect(result).toEqual({
-      author: '匿名',
-      content: '「好住」- 小李',
+      author: '小李',
+      content: '好住',
       badges: ['在地']
     });
   });

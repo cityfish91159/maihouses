@@ -161,7 +161,6 @@ export interface NormalizedReview {
 /**
  * Featured → Normalized 轉換
  * 
- * @used-by api/property/page-data.ts (Phase 2 會實際呼叫)
  * @see scripts/verify-seed-strict.ts (驗證 adapter 可執行並檢查輸出)
  * @see src/types/__tests__/property-page.test.ts (單元測試覆蓋)
  */
@@ -177,14 +176,14 @@ export function normalizeFeaturedReview(r: FeaturedReview): NormalizedReview {
 
 /**
  * Listing → Normalized 轉換
- * 從 content 解析 author（格式：「內容」— 作者）
+ * 從 content 解析 author（格式：「內容」— 作者 或 「內容」- 作者）
  * 
- * @used-by api/property/page-data.ts (Phase 2 會實際呼叫)
  * @see scripts/verify-seed-strict.ts (驗證 adapter 可執行並檢查輸出)
  * @see src/types/__tests__/property-page.test.ts (單元測試覆蓋)
  */
 export function normalizeListingReview(r: ListingReview): NormalizedReview {
-  const match = r.content.match(/「(.+)」—\s*(.+)/);
+  // D21 修正：支援全形破折號 — 和半形 dash -
+  const match = r.content.match(/「(.+)」[—-]\s*(.+)/);
   return {
     author: match?.[2] ?? '匿名',
     content: match?.[1] ?? r.content,
