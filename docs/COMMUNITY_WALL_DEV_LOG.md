@@ -105,10 +105,10 @@ npm test -- keyCapsules.test.ts featured-properties.test.ts page-data.test.ts
 
 ### 📋 任務摘要
 
-> **實作者**: GitHub Copilot (Gemini 3 Flash (Preview))
+> **實作者**: GitHub Copilot (GPT-5.2)
 > **任務**: 修正 KC1.4 審計發現的 SSOT 格式分裂與語言不一致問題
 > **結果**: ✅ **完成** - 格式化工具抽離、繁中單位統一、測試通過
-> **Commit**: `[PENDING]`
+> **Commit**: `4f18273`
 
 ---
 
@@ -146,6 +146,27 @@ npm test -- src/utils/__tests__/keyCapsules.test.ts
 #### 2. 詳情頁 UI 優化 (`PropertyDetailPage.tsx`)
 - 移除手寫的 `${property.rooms} 房 ${property.halls || 0} 廳`。
 - 改用 `formatLayout(property.rooms, property.halls)`，達成邏輯與標籤生成的一致性。
+
+---
+
+## 2025-12-18 - KC1.6: 補齊樓層繁中正規化 (12F) ✅
+
+### 📋 任務摘要
+
+> **實作者**: GitHub Copilot (GPT-5.2)
+> **任務**: 補齊樓層顯示的 F→繁中正規化邊界（例如 `12F`）
+> **結果**: ✅ **完成** - `formatFloor` 正規化 + 單元測試補齊
+> **Commit**: `cf46c30`
+
+---
+
+### 📊 測試證據
+
+```bash
+npm test -- src/utils/__tests__/keyCapsules.test.ts
+# Test Files  1 passed (1)
+# Tests       9 passed (9)
+```
 
 ---
 
