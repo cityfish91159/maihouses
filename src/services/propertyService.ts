@@ -13,6 +13,13 @@ export interface PropertyData {
   images: string[];
   agent: Agent;
   sourcePlatform?: 'MH' | '591';
+  size?: number;
+  rooms?: number;
+  halls?: number;
+  bathrooms?: number;
+  floorCurrent?: string;
+  floorTotal?: number;
+  features?: string[];
   // 結構化評價欄位
   advantage1?: string;
   advantage2?: string;
@@ -49,6 +56,16 @@ export const DEFAULT_PROPERTY: PropertyData = {
   address: '台北市信義區',
   description: '這是一間位於信義區的優質好房，擁有絕佳的101景觀，全新裝潢，即可入住。周邊生活機能完善，交通便利，是您成家的最佳選擇。',
   images: ['https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'],
+  size: 34.2,
+  rooms: 3,
+  halls: 2,
+  bathrooms: 2,
+  floorCurrent: '12',
+  floorTotal: 15,
+  features: ['近捷運', '有車位', '全新裝潢'],
+  advantage1: '近捷運',
+  advantage2: '有車位',
+  disadvantage: '臨路低樓層較吵',
   agent: {
     id: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
     internalCode: 1,
@@ -93,6 +110,16 @@ export const propertyService = {
         description: data.description,
         images: data.images || [],
         sourcePlatform: data.source_platform,
+        size: data.size != null ? Number(data.size) : undefined,
+        rooms: data.rooms != null ? Number(data.rooms) : undefined,
+        halls: data.halls != null ? Number(data.halls) : undefined,
+        bathrooms: data.bathrooms != null ? Number(data.bathrooms) : undefined,
+        floorCurrent: data.floor_current ?? undefined,
+        floorTotal: data.floor_total != null ? Number(data.floor_total) : undefined,
+        features: Array.isArray(data.features) ? data.features : undefined,
+        advantage1: data.advantage_1 ?? undefined,
+        advantage2: data.advantage_2 ?? undefined,
+        disadvantage: data.disadvantage ?? undefined,
         agent: {
           id: data.agent.id,
           internalCode: data.agent.internal_code,

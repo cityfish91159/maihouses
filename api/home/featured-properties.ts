@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { buildKeyCapsuleTags } from '../../src/utils/keyCapsules';
 
 // 延遲初始化 Supabase Client (避免測試時因環境變數不存在而失敗)
 let _supabase: SupabaseClient | null = null;
@@ -174,13 +175,16 @@ function adaptRealPropertyForUI(row: RealPropertyRow, reviews: ReviewData[]): Pr
     imageUrl += '?width=800&height=600&resize=cover';
   }
 
-  // 2. 標籤組合 (Size + Rooms + Feature)
-  const area = row.size ? `${Number(row.size).toFixed(1)} 坪` : '';
-  // 嘗試組合房廳: "3房2廳" 或 "3房"
-  const layout = row.rooms ? `${row.rooms}房${row.halls ? row.halls + '廳' : ''}` : '';
-  const featureTag = (row.features && row.features.length > 0) ? row.features[0] : '優質好房';
-  
-  const tags = [area, layout, featureTag].filter(t => t && t !== '').slice(0, 3);
+  // 2. 標籤組合 (SSOT Key Capsules)
+  // index 語意：tags[0..1] highlights、tags[2..3] specs
+  const tags = buildKeyCapsuleTags({
+    advantage1: row.advantage_1,
+    advantage2: row.advantage_2,
+    features: row.features,
+    size: row.size,
+    rooms: row.rooms,
+    halls: row.halls,
+  });
 
   // 3. 地址處理 (DB 只有 address，沒有 city/district 欄位，簡單截取或直接顯示)
   // Mock 格式: "新北市板橋區 · 中山路一段"
@@ -235,7 +239,7 @@ function adaptRealPropertyForUI(row: RealPropertyRow, reviews: ReviewData[]): Pr
     image: imageUrl,
     badge: (row.features && row.features.length > 0) ? row.features[0] : '精選物件',
     title: row.title || '未命名物件',
-    tags: tags,
+    tags,
     price: formatPrice(row.price),
     location: location,
     reviews: formattedReviews,

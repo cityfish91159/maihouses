@@ -5,6 +5,7 @@ import { AgentTrustCard } from '../components/AgentTrustCard';
 import { propertyService, DEFAULT_PROPERTY, PropertyData } from '../services/propertyService';
 import { ContactModal } from '../components/ContactModal';
 import { ReportGenerator } from './Report';
+import { buildKeyCapsuleTags } from '../utils/keyCapsules';
 
 // UAG Tracker Hook v8.1 - 追蹤用戶行為 + S級攔截
 // 優化: 1.修正district傳遞 2.S級即時回調 3.互動事件用fetch獲取等級
@@ -217,6 +218,28 @@ export const PropertyDetailPage: React.FC = () => {
     };
   }, [property.publicId]);
 
+  const capsuleTags = useMemo(() => {
+    return buildKeyCapsuleTags({
+      advantage1: property.advantage1,
+      advantage2: property.advantage2,
+      features: property.features,
+      floorCurrent: property.floorCurrent,
+      floorTotal: property.floorTotal,
+      size: property.size,
+      rooms: property.rooms,
+      halls: property.halls
+    }).slice(0, 4);
+  }, [
+    property.advantage1,
+    property.advantage2,
+    property.features,
+    property.floorCurrent,
+    property.floorTotal,
+    property.size,
+    property.rooms,
+    property.halls
+  ]);
+
   useEffect(() => {
     const fetchProperty = async () => {
       if (!id) return;
@@ -390,7 +413,7 @@ export const PropertyDetailPage: React.FC = () => {
 
             {/* Tags */}
             <div className="flex flex-wrap gap-2">
-              {['近捷運', '全新裝潢', '有車位', '高樓層'].map(tag => (
+              {capsuleTags.map(tag => (
                 <span key={tag} className="rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-[#003366]">
                   {tag}
                 </span>

@@ -34,6 +34,8 @@ const buildDBProperty = (overrides?: Partial<DBProperty>): DBProperty => ({
   rooms: 3,
   halls: 2,
   bathrooms: 2,           // D26: baths → bathrooms
+  floor_current: '12',
+  floor_total: 15,
   features: ['熱門社區', '高樓層'],
   advantage_1: '🏪 5分鐘全聯・10分鐘捷運',
   advantage_2: '📍 近學區',
@@ -478,6 +480,30 @@ describe('api/property/page-data.ts', () => {
       expect(result.tag).toBe('高樓層');
     });
 
+    it('tags 使用 SSOT buildKeyCapsuleTags 產出（含 highlights + specs）', () => {
+      const property = buildDBProperty({
+        size: 23,
+        rooms: 3,
+        halls: 2,
+        floor_current: '12',
+        floor_total: 15,
+        advantage_1: '近捷運',
+        advantage_2: '有車位',
+        features: ['全新裝潢']
+      });
+      const seed = buildSeedListingCard();
+
+      const result = adaptToListingCard(property, [], seed);
+
+      expect(Array.isArray(result.tags)).toBe(true);
+      expect(result.tags.length).toBeGreaterThan(0);
+      expect(result.tags.length).toBeLessThanOrEqual(4);
+      expect(result.tags[0]).toBe('近捷運');
+      expect(result.tags[1]).toBe('有車位');
+      expect(result.tags).toContain('23.0 坪');
+      expect(result.tags).toContain('3房2廳');
+    });
+
     it('零評價時用 Seed 補位', () => {
       const property = buildDBProperty();
       const seed = buildSeedListingCard({
@@ -546,6 +572,8 @@ describe('api/property/page-data.ts', () => {
         rooms: null,
         halls: null,
         bathrooms: null,  // D26: baths → bathrooms
+        floor_current: null,
+        floor_total: null,
         features: null,
         advantage_1: null,
         advantage_2: null,

@@ -29,6 +29,7 @@ import {
   normalizeFeaturedReview,
   normalizeListingReview
 } from '../../src/types/property-page';
+import { buildKeyCapsuleTags } from '../../src/utils/keyCapsules';
 
 // ============================================
 // Supabase Client
@@ -99,6 +100,8 @@ interface DBProperty {
   rooms: number | null;             // DB: rooms NUMERIC DEFAULT 0
   halls: number | null;             // DB: halls NUMERIC DEFAULT 0
   bathrooms: number | null;         // DB: bathrooms NUMERIC DEFAULT 0 (原本寫 baths)
+  floor_current: string | null;      // DB: floor_current TEXT
+  floor_total: number | null;        // DB: floor_total NUMERIC
   features: string[] | null;        // DB: features TEXT[] DEFAULT '{}'
   
   // 兩好一公道 (properties 表直接有這些欄位)
@@ -294,12 +297,24 @@ function adaptToListingCard(
   const roomLabel = property.rooms ? `${property.rooms} 房` : '';
   const priceLabel = property.price ? `${Math.round(property.price / 10000).toLocaleString()} 萬` : seed.price;
 
+  const tags = buildKeyCapsuleTags({
+    advantage1: property.advantage_1 ?? undefined,
+    advantage2: property.advantage_2 ?? undefined,
+    features: property.features ?? undefined,
+    floorCurrent: property.floor_current ?? undefined,
+    floorTotal: property.floor_total ?? undefined,
+    size: property.size ?? undefined,
+    rooms: property.rooms ?? undefined,
+    halls: property.halls ?? undefined
+  });
+
   return {
     image,
     title: property.title 
       ? `${property.title}・${property.address?.split('區')[0]}區` 
       : seed.title,
     tag: property.community_name || property.features?.[0] || seed.tag,
+    tags,
     price: roomLabel ? `${roomLabel} ${priceLabel}` : priceLabel,
     size: property.size ? `約 ${property.size} 坪` : seed.size,
     // D26 修正：rating 不存在，用評價數量作為替代
@@ -347,6 +362,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .select(`
         id, public_id, title, price, address, images,
         community_id, community_name, size, rooms, halls, bathrooms,
+        floor_current, floor_total,
         features, advantage_1, advantage_2, disadvantage,
         age
       `)

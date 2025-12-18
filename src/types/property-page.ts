@@ -73,6 +73,7 @@ export const ListingPropertyCardSchema = z.object({
   image: z.string().url(),
   title: z.string(),
   tag: z.string(),
+  tags: z.array(z.string()).optional(),
   price: z.string(),
   size: z.string(),
   rating: z.string(),

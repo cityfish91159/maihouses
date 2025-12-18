@@ -31,7 +31,7 @@ export default function PropertyCard({ property }: { property: FeaturedProperty 
                 </div>
 
                 <div className="mb-1.5 flex flex-wrap items-center gap-2 text-[13px] text-[#6C7B91]">
-                    {property.tags.map((tag, i) => (
+                    {property.tags.slice(0, 3).map((tag, i) => (
                         <span
                             key={i}
                             className="duration-120 rounded-full border border-[#E6EDF7] bg-[#F6F9FF] px-2.5 py-0.5 font-extrabold text-[#2A2F3A] transition-all ease-out group-hover:-translate-y-px group-hover:shadow-[0_4px_10px_rgba(0,56,90,0.10)]"

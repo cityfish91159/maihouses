@@ -94,12 +94,14 @@ describe('featured-properties helpers', () => {
         size: 34.2,
         rooms: 3,
         halls: 2,
-        features: ['高樓層'],
+        features: ['高樓層', '近捷運'],
       });
       const result = adaptRealPropertyForUI(row, []);
+      // SSOT：優先 highlights，再 specs
+      expect(result.tags[0]).toBe('高樓層');
       expect(result.tags).toContain('34.2 坪');
       expect(result.tags).toContain('3房2廳');
-      expect(result.tags.length).toBeLessThanOrEqual(3);
+      expect(result.tags.length).toBeLessThanOrEqual(4);
     });
 
     it('格式化地址: 插入 " · " 分隔', () => {

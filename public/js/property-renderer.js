@@ -210,6 +210,12 @@ export class PropertyRenderer {
 
     template.innerHTML = (items || []).map((item) => {
       const reviewsHtml = (item.reviews || []).map((r) => this.createReviewHtml(r, true)).join('');
+
+      const chipTags = Array.isArray(item.tags) && item.tags.length > 0
+        ? item.tags.slice(0, 3)
+        : (item.tag ? [item.tag] : []);
+      const tagsHtml = chipTags.map((t) => `<span class="horizontal-tag">${t}</span>`).join('');
+
       return `
         <article class="horizontal-card">
           <div class="horizontal-left">
@@ -219,7 +225,7 @@ export class PropertyRenderer {
             <div class="horizontal-main">
               <div class="horizontal-title-row">
                 <span>📍</span><strong>${item.title}</strong>
-                <span class="horizontal-tag">${item.tag || ''}</span>
+                ${tagsHtml}
               </div>
               <div class="horizontal-price">${item.price}<span>${item.size}</span></div>
               <div class="horizontal-rating"><span class="star">★</span>${item.rating}</div>
