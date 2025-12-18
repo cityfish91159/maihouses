@@ -420,6 +420,26 @@ export const PropertyDetailPage: React.FC = () => {
               ))}
             </div>
 
+            {/* 物件基本資訊 (Phase 2: 消除 hardcode) */}
+            <div className="grid grid-cols-2 gap-4 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm sm:grid-cols-4">
+              <div className="flex flex-col">
+                <span className="text-xs text-slate-400">建案坪數</span>
+                <span className="text-sm font-bold text-slate-800">{property.size ? `${property.size.toFixed(1)} 坪` : '--'}</span>
+              </div>
+              <div className="flex flex-col">
+                <span className="text-xs text-slate-400">格局</span>
+                <span className="text-sm font-bold text-slate-800">{property.rooms ? `${property.rooms} 房 ${property.halls || 0} 廳` : '--'}</span>
+              </div>
+              <div className="flex flex-col">
+                <span className="text-xs text-slate-400">樓層</span>
+                <span className="text-sm font-bold text-slate-800">{property.floorCurrent ? `${property.floorCurrent} / ${property.floorTotal || '--'} F` : '--'}</span>
+              </div>
+              <div className="flex flex-col">
+                <span className="text-xs text-slate-400">編號</span>
+                <span className="text-sm font-bold text-slate-800">{property.publicId}</span>
+              </div>
+            </div>
+
             <div className="h-px bg-slate-100" />
 
             {/* Description */}

@@ -49,6 +49,63 @@ npm run build
 
 ### 🔧 核心邏輯變更
 
+---
+
+## 2025-12-18 - KC1.2 & Phase 2: 最終優化與詳情頁 SSOT ✅
+
+### 📋 任務摘要
+
+> **實作者**: AI Agent (Gemini 3 Flash)
+> **任務**: 修正 KC1.2 審計缺失 + 實作 Phase 2 前端消除 hardcode
+> **結果**: ✅ **全數完成** - 62 項測試通過、詳情頁 SSOT 落地
+> **Commit**: `dc99011`
+
+---
+
+### 📊 變更總覽
+
+| # | 項目 | 變更內容 | 檔案 | 狀態 |
+|---|------|----------|------|------|
+| 1 | KC1.2-1 | 更新測試斷言為 `X 房 Y 廳` | `featured-properties.test.ts` | ✅ |
+| 2 | KC1.2-2 | 更新 Legacy tag 測試邏輯 | `page-data.test.ts` | ✅ |
+| 3 | Phase 2.1 | 詳情頁移除 hardcode tags | `PropertyDetailPage.tsx` | ✅ |
+| 4 | Phase 2.2 | 詳情頁新增「物件基本資訊」區塊 | `PropertyDetailPage.tsx` | ✅ |
+| 5 | Phase 2.3 | 確保 Service 映射完整欄位 | `propertyService.ts` | ✅ |
+
+---
+
+### 📊 測試證據
+
+```bash
+npm test -- keyCapsules.test.ts featured-properties.test.ts page-data.test.ts
+# Test Files  3 passed (3)
+# Tests       62 passed (62)
+```
+
+---
+
+### 🔧 核心邏輯變更
+
+#### 1. 詳情頁 SSOT 整合 (`PropertyDetailPage.tsx`)
+- 移除原本 hardcode 的 `['近捷運','全新裝潢','有車位','高樓層']`。
+- 使用 `useMemo` 呼叫 `buildKeyCapsuleTags`，傳入 `property` 的 8 個結構化欄位。
+- 顯示 `tags.slice(0, 4)`，確保與首頁/列表頁語意一致。
+
+#### 2. 新增物件資訊區塊
+- 在詳情頁標題下方新增一個 Grid 佈局，顯示：
+  - **建案坪數**: `property.size` (含 `toFixed(1)`)
+  - **格局**: `property.rooms` 房 `property.halls` 廳
+  - **樓層**: `property.floorCurrent` / `property.floorTotal` F
+  - **編號**: `property.publicId`
+
+#### 3. 測試斷言同步
+- 修正了因格式變更（增加空格）導致的 3 處測試失敗。
+- 更新了 `page-data.test.ts` 中關於 `tag` 的測試描述，使其符合「tag 來自 SSOT tags[0]」的新規則。
+
+---
+
+### 🔧 核心邏輯變更 (舊)
+
 **樓層比例推斷 (keyCapsules.ts L17-30)**:
 ```typescript
 const curNum = parseInt(text, 10);
