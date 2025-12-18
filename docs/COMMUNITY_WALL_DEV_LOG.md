@@ -101,6 +101,54 @@ npm test -- keyCapsules.test.ts featured-properties.test.ts page-data.test.ts
 
 ---
 
+## 2025-12-18 - KC1.5: 修正 KC1.4 審計缺失 (SSOT 格式化與繁中化) ✅
+
+### 📋 任務摘要
+
+> **實作者**: GitHub Copilot (Gemini 3 Flash (Preview))
+> **任務**: 修正 KC1.4 審計發現的 SSOT 格式分裂與語言不一致問題
+> **結果**: ✅ **完成** - 格式化工具抽離、繁中單位統一、測試通過
+> **Commit**: `[PENDING]`
+
+---
+
+### 📊 變更總覽
+
+| # | 項目 | 變更內容 | 檔案 | 狀態 |
+|---|------|----------|------|------|
+| 1 | SSOT 格式化 | 抽離 `formatArea`, `formatLayout`, `formatFloor` 並導出 | `keyCapsules.ts` | ✅ |
+| 2 | UI 整合 | 詳情頁資訊區塊改用 SSOT 格式化工具，消除 `3 房 0 廳` 風險 | `PropertyDetailPage.tsx` | ✅ |
+| 3 | 繁中化 | 樓層單位由 `F` 改為 `樓 / 層` | `keyCapsules.ts` | ✅ |
+| 4 | 測試補齊 | 新增格式化工具單元測試，確保邊界情況正確 | `keyCapsules.test.ts` | ✅ |
+
+---
+
+### 📊 測試證據
+
+```bash
+npm test -- src/utils/__tests__/keyCapsules.test.ts
+# ✓ formatArea (1)
+# ✓ formatLayout (1)
+# ✓ formatFloor (1)
+# ✓ buildKeyCapsuleTags (6)
+# Test Files  1 passed (1)
+# Tests       9 passed (9)
+```
+
+---
+
+### 🔧 核心邏輯變更
+
+#### 1. 格式化工具抽離 (`keyCapsules.ts`)
+- `formatLayout`: 確保 `halls=0` 時不顯示「0 廳」，統一輸出格式。
+- `formatFloor`: 處理數字與文字混合情況，自動補上「樓」與「層」單位。
+
+#### 2. 詳情頁 UI 優化 (`PropertyDetailPage.tsx`)
+- 移除手寫的 `${property.rooms} 房 ${property.halls || 0} 廳`。
+- 改用 `formatLayout(property.rooms, property.halls)`，達成邏輯與標籤生成的一致性。
+
+---
+
 ### 🔧 核心邏輯變更 (舊)
 
 **樓層比例推斷 (keyCapsules.ts L17-30)**:

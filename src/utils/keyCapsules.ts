@@ -39,17 +39,28 @@ function pushUnique(target: string[], value: string | null) {
   target.push(normalized);
 }
 
-function formatArea(size: number | null | undefined): string | null {
+export function formatArea(size: number | null | undefined): string | null {
   if (typeof size !== 'number' || !Number.isFinite(size) || size <= 0) return null;
   return `${Number(size).toFixed(1)} 坪`;
 }
 
-function formatLayout(rooms: number | null | undefined, halls: number | null | undefined): string | null {
+export function formatLayout(rooms: number | null | undefined, halls: number | null | undefined): string | null {
   const r = typeof rooms === 'number' && Number.isFinite(rooms) && rooms > 0 ? rooms : null;
   const h = typeof halls === 'number' && Number.isFinite(halls) && halls > 0 ? halls : null;
   if (!r) return null;
   // 修正格式 (P2 缺失修正)：統一為 "X 房 Y 廳"
   return `${r} 房${h ? ` ${h} 廳` : ''}`;
+}
+
+export function formatFloor(current: string | null | undefined, total: number | null | undefined): string | null {
+  const cur = current?.trim() || '';
+  if (!cur) return null;
+  
+  // 統一繁中單位：若只有數字則補「樓」，否則保留原樣（如「頂樓」）
+  const displayCur = /^\d+$/.test(cur) ? `${cur} 樓` : cur;
+  const displayTotal = total && total > 0 ? `${total} 層` : null;
+  
+  return displayTotal ? `${displayCur} / ${displayTotal}` : displayCur;
 }
 
 /**

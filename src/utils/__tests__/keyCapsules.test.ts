@@ -1,5 +1,35 @@
 import { describe, expect, it } from 'vitest';
-import { buildKeyCapsuleTags } from '../keyCapsules';
+import { buildKeyCapsuleTags, formatArea, formatLayout, formatFloor } from '../keyCapsules';
+
+describe('formatArea', () => {
+  it('應正確格式化坪數', () => {
+    expect(formatArea(34.2)).toBe('34.2 坪');
+    expect(formatArea(20)).toBe('20.0 坪');
+    expect(formatArea(0)).toBe(null);
+    expect(formatArea(-1)).toBe(null);
+    expect(formatArea(null)).toBe(null);
+  });
+});
+
+describe('formatLayout', () => {
+  it('應正確格式化格局', () => {
+    expect(formatLayout(3, 2)).toBe('3 房 2 廳');
+    expect(formatLayout(2, 0)).toBe('2 房');
+    expect(formatLayout(2, null)).toBe('2 房');
+    expect(formatLayout(0, 2)).toBe(null);
+    expect(formatLayout(null, null)).toBe(null);
+  });
+});
+
+describe('formatFloor', () => {
+  it('應正確格式化樓層並使用繁中單位', () => {
+    expect(formatFloor('12', 15)).toBe('12 樓 / 15 層');
+    expect(formatFloor('頂樓', 20)).toBe('頂樓 / 20 層');
+    expect(formatFloor('5', null)).toBe('5 樓');
+    expect(formatFloor(null, 10)).toBe(null);
+    expect(formatFloor('  ', 10)).toBe(null);
+  });
+});
 
 describe('buildKeyCapsuleTags', () => {
   it('優先使用 advantage1/2 作為 highlights', () => {

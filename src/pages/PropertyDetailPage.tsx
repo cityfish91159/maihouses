@@ -5,7 +5,7 @@ import { AgentTrustCard } from '../components/AgentTrustCard';
 import { propertyService, DEFAULT_PROPERTY, PropertyData } from '../services/propertyService';
 import { ContactModal } from '../components/ContactModal';
 import { ReportGenerator } from './Report';
-import { buildKeyCapsuleTags } from '../utils/keyCapsules';
+import { buildKeyCapsuleTags, formatArea, formatLayout, formatFloor } from '../utils/keyCapsules';
 
 // UAG Tracker Hook v8.1 - 追蹤用戶行為 + S級攔截
 // 優化: 1.修正district傳遞 2.S級即時回調 3.互動事件用fetch獲取等級
@@ -424,15 +424,15 @@ export const PropertyDetailPage: React.FC = () => {
             <div className="grid grid-cols-2 gap-4 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm sm:grid-cols-4">
               <div className="flex flex-col">
                 <span className="text-xs text-slate-400">建案坪數</span>
-                <span className="text-sm font-bold text-slate-800">{property.size ? `${property.size.toFixed(1)} 坪` : '--'}</span>
+                <span className="text-sm font-bold text-slate-800">{formatArea(property.size) || '--'}</span>
               </div>
               <div className="flex flex-col">
                 <span className="text-xs text-slate-400">格局</span>
-                <span className="text-sm font-bold text-slate-800">{property.rooms ? `${property.rooms} 房 ${property.halls || 0} 廳` : '--'}</span>
+                <span className="text-sm font-bold text-slate-800">{formatLayout(property.rooms, property.halls) || '--'}</span>
               </div>
               <div className="flex flex-col">
                 <span className="text-xs text-slate-400">樓層</span>
-                <span className="text-sm font-bold text-slate-800">{property.floorCurrent ? `${property.floorCurrent} / ${property.floorTotal || '--'} F` : '--'}</span>
+                <span className="text-sm font-bold text-slate-800">{formatFloor(property.floorCurrent, property.floorTotal) || '--'}</span>
               </div>
               <div className="flex flex-col">
                 <span className="text-xs text-slate-400">編號</span>
