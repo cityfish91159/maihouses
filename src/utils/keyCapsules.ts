@@ -14,12 +14,20 @@ const normalize = (value: string) => value.trim().replace(/\s+/g, ' ');
 const isNonEmpty = (value: unknown): value is string =>
   typeof value === 'string' && value.trim().length > 0;
 
-function inferFloorTag(raw: string | null | undefined): string | null {
-  if (!raw) return null;
-  const text = raw.trim();
-  if (!text) return null;
-  if (/高樓層|高樓/.test(text)) return '高樓層';
-  if (/低樓層|低樓/.test(text)) return '低樓層';
+function inferFloorTag(current: string | null | undefined, total: number | null | undefined): string | null {
+  const text = current?.trim() || '';
+  if (text) {
+    if (/高樓層|高樓/.test(text)) return '高樓層';
+    if (/低樓層|低樓/.test(text)) return '低樓層';
+  }
+
+  // 數字推斷邏輯 (P2 缺失修正)
+  const curNum = parseInt(text, 10);
+  if (!isNaN(curNum) && typeof total === 'number' && total > 0) {
+    const ratio = curNum / total;
+    if (ratio >= 0.7) return '高樓層';
+    if (ratio <= 0.3 && total >= 4) return '低樓層';
+  }
   return null;
 }
 
@@ -40,7 +48,8 @@ function formatLayout(rooms: number | null | undefined, halls: number | null | u
   const r = typeof rooms === 'number' && Number.isFinite(rooms) && rooms > 0 ? rooms : null;
   const h = typeof halls === 'number' && Number.isFinite(halls) && halls > 0 ? halls : null;
   if (!r) return null;
-  return `${r}房${h ? `${h}廳` : ''}`;
+  // 修正格式 (P2 缺失修正)：統一為 "X 房 Y 廳"
+  return `${r} 房${h ? ` ${h} 廳` : ''}`;
 }
 
 /**
@@ -59,7 +68,8 @@ export function buildKeyCapsuleTags(input: KeyCapsuleInput): string[] {
       if (isNonEmpty(feature)) highlightCandidates.push(feature);
     }
   }
-  highlightCandidates.push(inferFloorTag(input.floorCurrent) ?? '');
+  // 傳入 floorTotal 進行推斷 (P0 缺失修正)
+  highlightCandidates.push(inferFloorTag(input.floorCurrent, input.floorTotal) ?? '');
 
   for (const candidate of highlightCandidates) {
     if (tags.length >= 2) break;

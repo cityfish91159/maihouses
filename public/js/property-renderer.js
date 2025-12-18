@@ -140,7 +140,12 @@ export class PropertyRenderer {
     const container = this.containers?.main;
     if (!container || !item) return;
 
-    const detailsHtml = (item.details || []).map((d) => `<div style="margin-bottom:0.25rem">${d}</div>`).join('');
+    // 修正 Featured 大卡 (P3.1 缺失修正)：優先使用 tags 膠囊
+    const chipTags = Array.isArray(item.tags) && item.tags.length > 0
+      ? item.tags.slice(0, 3)
+      : (item.details || []);
+    const tagsHtml = chipTags.map((t) => `<span class="horizontal-tag" style="margin-right:0.25rem;margin-bottom:0.25rem">${t}</span>`).join('');
+    
     const reviewsHtml = (item.reviews || []).map((r) => this.createReviewHtml(r)).join('');
 
     container.innerHTML = `
@@ -152,7 +157,7 @@ export class PropertyRenderer {
         <div class="property-content">
           <h3 class="property-title">${item.title}</h3>
           <div class="property-location">${item.location}</div>
-          <div class="small-text" style="margin-bottom:0.5rem;color:var(--text-secondary)">${detailsHtml}</div>
+          <div class="property-tags-row" style="margin-bottom:0.5rem;display:flex;flex-wrap:wrap">${tagsHtml}</div>
           <div class="tiny-text" style="margin-bottom:0.5rem;color:var(--primary)">${item.highlights || ''}</div>
           <div class="property-rating"><span class="star">★</span>${item.rating}</div>
           <div class="property-reviews"><strong>住戶真實評價：</strong>${reviewsHtml}</div>
@@ -175,7 +180,12 @@ export class PropertyRenderer {
     const container = this.containers?.[key];
     if (!container || !item) return;
 
-    const detailsHtml = (item.details || []).join('・');
+    // 修正 Featured 側邊卡 (P3.1 缺失修正)：優先使用 tags 膠囊
+    const chipTags = Array.isArray(item.tags) && item.tags.length > 0
+      ? item.tags.slice(0, 3)
+      : (item.details || []);
+    const tagsHtml = chipTags.map((t) => `<span class="horizontal-tag" style="margin-right:0.25rem;margin-bottom:0.25rem;font-size:0.7rem">${t}</span>`).join('');
+
     const reviewsHtml = (item.reviews || []).map((r) => this.createReviewHtml(r)).join('');
 
     container.innerHTML = `
@@ -187,7 +197,7 @@ export class PropertyRenderer {
         <div class="property-content">
           <h3 class="property-title" style="font-size:1rem">${item.title}</h3>
           <div class="property-location" style="font-size:0.75rem">${item.location}</div>
-          <div class="tiny-text" style="margin-bottom:0.5rem">${detailsHtml}</div>
+          <div class="property-tags-row" style="margin-bottom:0.5rem;display:flex;flex-wrap:wrap">${tagsHtml}</div>
           <div class="property-rating" style="font-size:0.8125rem"><span class="star">★</span>${item.rating}</div>
           <div class="property-reviews">${reviewsHtml}</div>
           <div class="property-more-reviews" style="padding:0.375rem;margin:0.5rem 0">

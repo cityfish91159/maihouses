@@ -313,7 +313,8 @@ function adaptToListingCard(
     title: property.title 
       ? `${property.title}・${property.address?.split('區')[0]}區` 
       : seed.title,
-    tag: property.community_name || property.features?.[0] || seed.tag,
+    // 修正 Legacy Tag (P1 缺失修正)：改為由 SSOT tags[0] 產出，不再獨立 fallback
+    tag: tags[0] || seed.tag,
     tags,
     price: roomLabel ? `${roomLabel} ${priceLabel}` : priceLabel,
     size: property.size ? `約 ${property.size} 坪` : seed.size,

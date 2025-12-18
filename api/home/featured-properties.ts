@@ -117,6 +117,8 @@ interface RealPropertyRow {
   size: number | null;             // ✅ 坪數
   rooms: number | null;            // 房數
   halls: number | null;            // 廳數 (選填)
+  floor_current: string | null;    // ✅ 樓層 (P0 缺失修正)
+  floor_total: number | null;      // ✅ 總樓層 (P0 缺失修正)
   features: string[] | null;       // 特色標籤
   advantage_1: string | null;      // 兩好一公道
   advantage_2: string | null;
@@ -184,6 +186,8 @@ function adaptRealPropertyForUI(row: RealPropertyRow, reviews: ReviewData[]): Pr
     size: row.size,
     rooms: row.rooms,
     halls: row.halls,
+    floorCurrent: row.floor_current,
+    floorTotal: row.floor_total,
   });
 
   // 3. 地址處理 (DB 只有 address，沒有 city/district 欄位，簡單截取或直接顯示)
@@ -237,7 +241,8 @@ function adaptRealPropertyForUI(row: RealPropertyRow, reviews: ReviewData[]): Pr
   return {
     id: row.id, // 真實 UUID
     image: imageUrl,
-    badge: (row.features && row.features.length > 0) ? row.features[0] : '精選物件',
+    // 修正 Badge (P2 缺失修正)：不再從 features 隨機抓，統一為「精選物件」或社區名
+    badge: row.community_name || '精選物件',
     title: row.title || '未命名物件',
     tags,
     price: formatPrice(row.price),
@@ -266,6 +271,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         id, public_id, title, price, address, images, 
         community_id, community_name, 
         size, rooms, halls, features, 
+        floor_current, floor_total,
         advantage_1, advantage_2, disadvantage
       `)
       // .eq('status', 'published') // 建議開啟
