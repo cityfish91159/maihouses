@@ -77,57 +77,65 @@
 
 | # | 嚴重度 | 缺失描述 | 影響 | 狀態 |
 |---|--------|----------|------|------|
-| D14 | 🔴 P0 | **D10 只在驗證腳本使用 adapter，沒有在實際業務代碼使用** | 假裝解決、實際還是死代碼 | ⬜ 待修 |
-| D15 | 🔴 P0 | **verify-seed-strict 和 check-ssot-sync 功能重疊** | 維護兩份相同邏輯 | ⬜ 待修 |
-| D16 | 🟠 P1 | **D9 測試案例不足：半形 dash 失敗但沒修 Regex** | 測試發現問題卻不修，等於沒測 | ⬜ 待修 |
-| D17 | 🟠 P1 | **error-handler.ts 沒有單元測試** | 錯誤處理器本身可能有 bug | ⬜ 待修 |
-| D18 | 🟡 P2 | **hard-gate.sh 的 G8 和 pre-commit hook Step 7 重複** | 兩處都做 Schema 同步檢查 | ⬜ 待修 |
-| D19 | 🟡 P2 | **SeedFileSchema.toJSONSchema() 強制轉型 as unknown** | 沒有型別安全，toJSONSchema 可能不存在 | ⬜ 待修 |
+| D14 | 🔴 P0 | **D10 只在驗證腳本使用 adapter，沒有在實際業務代碼使用** | 假裝解決、實際還是死代碼 | ✅ 已修 |
+| D15 | 🔴 P0 | **verify-seed-strict 和 check-ssot-sync 功能重疊** | 維護兩份相同邏輯 | ✅ 已修 |
+| D16 | 🟠 P1 | **D9 測試案例不足：半形 dash 失敗但沒修 Regex** | 測試發現問題卻不修，等於沒測 | ✅ 已修 |
+| D17 | 🟠 P1 | **error-handler.ts 沒有單元測試** | 錯誤處理器本身可能有 bug | ✅ 已修 |
+| D18 | 🟡 P2 | **hard-gate.sh 的 G8 和 pre-commit hook Step 7 重複** | 兩處都做 Schema 同步檢查 | ✅ 已修 |
+| D19 | 🟡 P2 | **SeedFileSchema.toJSONSchema() 強制轉型 as unknown** | 沒有型別安全，toJSONSchema 可能不存在 | ✅ 已修 |
+
+> **D14-D19 驗證紀錄 (2025-12-18)**:
+> - D14: `grep -r "normalizeFeaturedReview" api/` → 4 matches in `api/property/page-data.ts` ✅
+> - D15: `ls scripts/check-ssot-sync.ts` → FILE_NOT_FOUND（已刪除）✅
+> - D16: `grep "\[—-\]" src/types/property-page.ts` → 已修正 Regex ✅
+> - D17: `npm test -- scripts/lib/__tests__/error-handler.test.ts` → 6 tests passed ✅
+> - D18: 已移除 git hooks，hard-gate.sh 獨立運作 ✅
+> - D19: 使用 zod-to-json-schema 套件 ✅
 
 ---
 
-#### 🔴 D14: D10 的修復是假的「使用」
+#### ✅ D14: adapter 已在業務代碼使用 (已修)
 
-**問題**: D10 說 adapter 沒被引用，修復方式是在 `verify-seed-strict.ts` 裡呼叫。但這不是「業務使用」，只是「測試執行」。
+**修正方式**: `api/property/page-data.ts` 直接 import 並使用 `normalizeFeaturedReview` / `normalizeListingReview`
 
-**偷懶程度**: 💀💀💀 嚴重 - 用驗證腳本假裝「有引用」，實際業務代碼還是沒用
-
-**證據**:
+**驗證**:
 ```bash
-# 搜尋實際業務代碼（api/, src/pages/, src/components/）
-grep -r "normalizeFeaturedReview\|normalizeListingReview" src/pages/ src/components/ api/
-# 結果：0 matches
-```
-
-**風險**: 
-- API 端點沒用 adapter，前後端格式還是不統一
-- adapter 還是可能被刪除（因為「看起來沒人用」）
-
-**引導修正**:
-```
-這是 Phase 2 的核心：
-
-1. 建立 api/property/page-data.ts API 端點
-2. 從 Supabase 撈取真實房源資料
-3. 使用 normalizeFeaturedReview / normalizeListingReview 統一格式
-4. 回傳統一的 NormalizedReview[] 給前端
-
-在那之前，至少加上 JSDoc 說明：
-@used-by api/property/page-data.ts (Phase 2)
+grep -r "normalizeFeaturedReview\|normalizeListingReview" api/
+# api/property/page-data.ts:  normalizeFeaturedReview,
+# api/property/page-data.ts:  normalizeListingReview
+# api/property/page-data.ts:    const normalized = normalizeFeaturedReview(r);
+# api/property/page-data.ts:    const normalized = normalizeListingReview(r);
 ```
 
 ---
 
-#### 🔴 D15: verify-seed-strict 和 check-ssot-sync 功能重疊
+#### ✅ D15: check-ssot-sync.ts 已刪除 (已修)
 
-**問題**: 兩個腳本都做「Mock ↔ JSON 同步檢查」，而且邏輯幾乎一樣。
+**修正方式**: 刪除 `scripts/check-ssot-sync.ts`，統一用 `verify-seed-strict.ts`
 
-**偷懶程度**: 💀💀 中等 - 修 D8 時沒整合，反而造成冗餘
+---
 
-**證據**:
-```typescript
-// verify-seed-strict.ts
-deepStrictEqual(normalizedJson, normalizedMock);
+#### ✅ D16: Regex 已修正支援半形 dash (已修)
+
+**修正方式**: `src/types/property-page.ts` L186 改為 `/「(.+)」[—-]\s*(.+)/`
+
+---
+
+#### ✅ D17: error-handler.ts 已有測試 (已修)
+
+**修正方式**: `scripts/lib/__tests__/error-handler.test.ts` (6 tests)
+
+---
+
+#### ✅ D18: 已移除重複檢查 (已修)
+
+**修正方式**: 移除 git hooks，hard-gate.sh 獨立運作
+
+---
+
+#### ✅ D19: 改用 zod-to-json-schema (已修)
+
+**修正方式**: 安裝 zod-to-json-schema 套件並使用
 
 // check-ssot-sync.ts
 deepStrictEqual(normalizedMock, normalizedJson);
@@ -750,17 +758,316 @@ error: '伺服器暫時無法取得資料，已使用預設內容',
 
 ---
 
-### Phase 6: 部署 ⬜
+### Phase 6: 部署 ✅
 
 | # | 任務 | 檔案 | 狀態 | 驗證 |
 |---|------|------|------|------|
-| 6.1 | 更新 DEPLOY_TRIGGER.md | `DEPLOY_TRIGGER.md` | ⬜ | P11 記錄 |
-| 6.2 | Git Commit & Push | - | ⬜ | Vercel Build |
-| 6.3 | 生產環境驗證 | - | ⬜ | 線上測試 |
+| 6.1 | 更新 DEPLOY_TRIGGER.md | `DEPLOY_TRIGGER.md` | ✅ | P11 Phase5+6 部署記錄 (2025-12-17T18:50Z) |
+| 6.2 | Git Commit & Push | - | ✅ | 643d1bb 推送觸發 Vercel |
+| 6.3 | 生產環境驗證 | - | ✅ | `npm run test:phase5` 對 production 通過 |
 
 ---
 
-## 🛠️ 實作細節
+## � 四次審計：Phase 3-6 代碼品質問題（Google 首席前後端處長）
+
+> **審計日期**: 2025-12-18
+> **審計範圍**: Phase 3-6 所有變更
+> **評分**: **88/100** (良好但有隱患)
+> **結論**: 功能完成但測試品質需加強
+
+---
+
+### 📋 新發現缺失清單 (P31-P38)
+
+| # | 嚴重度 | 缺失描述 | 影響 | 狀態 |
+|---|--------|----------|------|------|
+| P31 | 🔴 P0 | **E2E 測試使用 `as any` 繞過型別檢查** | 靜態分析失效，運行時可能 crash | ⬜ 待修 |
+| P32 | 🔴 P0 | **Phase 4 測試只有 3 個案例，覆蓋率極低** | 聲稱「壓測」但只測基本流程 | ⬜ 待修 |
+| P33 | 🟠 P1 | **telemetry LCP observer 在 jsdom 環境不會觸發** | 測試環境無法驗證 LCP 邏輯 | ⬜ 待修 |
+| P34 | 🟠 P1 | **flicker-visual.ts 沒有斷言，只輸出 JSON** | 視覺測試不會 fail，等於沒測 | ⬜ 待修 |
+| P35 | 🟠 P1 | **renderVersion 日誌沒有 cleanup，可能記憶體洩漏** | 長時間使用頁面會累積 50+ entries | ⬜ 待修 |
+| P36 | 🟡 P2 | **E2E seed 使用 readFileSync（自己不許別人用卻自己用）** | 雙標：D22 禁止同步 I/O，測試卻用 | ⬜ 待修 |
+| P37 | 🟡 P2 | **TODO 文件更新滯後：D14-D19 狀態不一致** | 已修但標記仍是 ⬜ | ✅ 已修 |
+| P38 | 🟡 P2 | **Phase 5 標題寫「測試與驗證」但 Phase 6 才部署** | Phase 5 完成時尚未部署，邏輯順序錯誤 | ⬜ 資訊 |
+
+---
+
+### 🔴 P31: E2E 測試使用 `as any` 繞過型別檢查
+
+**問題**: `scripts/phase5/e2e-phase5.ts` 第 53 行和第 79 行使用 `as any`
+
+**偷懶程度**: 💀💀💀 嚴重 - 明明剛修完 TS7006 卻留下 as any
+
+**證據**:
+```typescript
+// L53
+const lastEvent = Array.isArray((telemetry as any).events) ? (telemetry as any).events.at(-1) : null;
+
+// L79
+const api = (window as unknown as { PropertyAPI: any }).PropertyAPI;
+```
+
+**風險**: 
+- telemetry 結構改變時靜態分析不會報錯
+- PropertyAPI 型別不安全，方法簽名不確定
+
+**引導修正**:
+```
+1. 定義 Phase4Telemetry interface：
+   interface Phase4Telemetry {
+     events: Array<{ name: string; ts: number; [key: string]: unknown }>;
+     lcp: number | null;
+     fcp: number | null;
+   }
+
+2. 定義 WindowWithApi interface：
+   interface WindowWithApi extends Window {
+     PropertyAPI: { getPageData: () => Promise<unknown> };
+     __phase4Telemetry?: Phase4Telemetry;
+     __renderVersionLog?: unknown[];
+   }
+
+3. 使用型別 guard 而非 as any：
+   const win = window as WindowWithApi;
+   if (win.__phase4Telemetry?.events) { ... }
+```
+
+---
+
+### 🔴 P32: Phase 4 測試只有 3 個案例，覆蓋率極低
+
+**問題**: `public/js/__tests__/property-phase4.test.js` 聲稱「壓測」但只有 3 個基本測試
+
+**偷懶程度**: 💀💀💀 嚴重 - TODO 說「壓測」但實際只是基本 happy path
+
+**證據**:
+```bash
+npm run test:phase4
+# 只有 3 tests passed
+```
+
+**風險**: 
+- AbortController 邊界條件沒測（超時、網路錯誤、retry）
+- renderVersion 競態只測一種情境
+- 無 stress test（連續 100 次請求）
+
+**引導修正**:
+```
+補充以下測試案例（至少 15 個）：
+
+1. AbortController 系列 (5 個)：
+   - 連續 5 次請求，只有最後一次成功
+   - 超時 5s 後自動 abort
+   - 手動 abort 後 fetch 返回 null
+   - abort 後重新請求不受影響
+   - 多個 controller 互不干擾
+
+2. renderVersion 系列 (5 個)：
+   - 連續 10 次 render，只執行最後一次
+   - requestAnimationFrame 時序驗證
+   - 版本號溢出處理 (Number.MAX_SAFE_INTEGER)
+   - render(null) 不遞增版本
+   - 並發 render 的 race condition
+
+3. preloadImages 系列 (5 個)：
+   - 空陣列返回 coverage = 1
+   - 部分圖片失敗的 coverage 計算
+   - 超過 10 張圖片的效能
+   - 重複 URL 去重
+   - 404 圖片的 failed 記錄
+```
+
+---
+
+### 🟠 P33: LCP observer 在 jsdom 環境不會觸發
+
+**問題**: `property-main.js` 的 LCP 觀察器依賴瀏覽器 PerformanceObserver，jsdom 無此 API
+
+**偷懶程度**: 💀💀 中等 - 有寫代碼但測不到
+
+**證據**:
+```javascript
+// property-main.js L9-18
+const lcpObserver = (typeof PerformanceObserver !== 'undefined')
+  ? new PerformanceObserver((entryList) => { ... })
+  : null;
+// jsdom 沒有 PerformanceObserver，所以永遠是 null
+```
+
+**風險**: 
+- LCP 邏輯有 bug 不會被發現
+- 測試通過但生產環境可能出錯
+
+**引導修正**:
+```
+方案 A: Mock PerformanceObserver
+  // vitest setup.ts
+  vi.stubGlobal('PerformanceObserver', class {
+    constructor(callback) { this.callback = callback; }
+    observe() {}
+    disconnect() {}
+    simulateEntry(entry) {
+      this.callback({ getEntries: () => [entry] });
+    }
+  });
+
+方案 B: 抽離 telemetry 模組獨立測試
+  // telemetry.js
+  export function createTelemetry(deps = { PerformanceObserver }) { ... }
+  // telemetry.test.js
+  const mockPO = ...;
+  const telemetry = createTelemetry({ PerformanceObserver: mockPO });
+
+建議方案 B，更易於測試和維護。
+```
+
+---
+
+### 🟠 P34: flicker-visual.ts 沒有斷言
+
+**問題**: `scripts/phase4/flicker-visual.ts` 只輸出 JSON 報告，不會因為異常而 fail
+
+**偷懶程度**: 💀💀 中等 - 寫了腳本但不判斷結果
+
+**證據**:
+```typescript
+// flicker-visual.ts L36
+await fs.promises.writeFile(reportPath, JSON.stringify({ targetUrl, runs }, null, 2));
+// 沒有 assert，不會 throw
+```
+
+**風險**: 
+- renderVersion 全是 0 也不會 fail
+- 截圖全白也不會 fail
+- CI/CD 無法自動發現問題
+
+**引導修正**:
+```
+在 run() 結束前加入斷言：
+
+// 1. 驗證每次 render 都有版本號遞增
+runs.forEach((run, i) => {
+  assert(Array.isArray(run.versions) && run.versions.length > 0,
+    `Run ${i + 1}: renderVersion log is empty`);
+});
+
+// 2. 驗證 telemetry 有 events
+runs.forEach((run, i) => {
+  const events = (run.telemetry as any)?.events || [];
+  assert(events.length > 0, `Run ${i + 1}: telemetry events is empty`);
+});
+
+// 3. 驗證沒有連續相同版本（表示 guard 生效）
+const allVersions = runs.flatMap(r => r.versions);
+// 允許重複但不允許連續重複過多
+
+// 4. 失敗時輸出截圖路徑供人工檢查
+```
+
+---
+
+### 🟠 P35: renderVersion 日誌無 cleanup
+
+**問題**: `property-renderer.js` 的 versionLog 只有 shift 到 50 條，但長時間使用會持續累積
+
+**偷懶程度**: 💀 輕微 - 有限制但仍占記憶體
+
+**證據**:
+```javascript
+// property-renderer.js L13-17
+logVersion(entry) {
+  this.versionLog.push(entry);
+  if (this.versionLog.length > 50) {
+    this.versionLog.shift();
+  }
+  // 每次 render 都會累積 window.__renderVersionLog
+}
+```
+
+**風險**: 
+- 單頁應用長時間使用會累積
+- window.__renderVersionLog 沒有限制
+
+**引導修正**:
+```
+方案 A: 使用環形緩衝區 (Ring Buffer)
+  class RingBuffer {
+    constructor(size) {
+      this.buffer = new Array(size);
+      this.head = 0;
+      this.size = size;
+    }
+    push(item) {
+      this.buffer[this.head % this.size] = item;
+      this.head++;
+    }
+  }
+
+方案 B: 只在開發模式啟用日誌
+  if (import.meta.env?.DEV) {
+    window.__renderVersionLog = [...this.versionLog];
+  }
+
+方案 C: 提供清理 API
+  clearLog() {
+    this.versionLog = [];
+    if (typeof window !== 'undefined') {
+      window.__renderVersionLog = [];
+    }
+  }
+
+建議方案 B，生產環境不需要這個日誌。
+```
+
+---
+
+### 🟡 P36: E2E 測試使用 readFileSync（雙標）
+
+**問題**: D22 禁止 API 使用 `readFileSync`，但 E2E 測試自己用
+
+**偷懶程度**: 💀 輕微 - 測試環境可以接受，但不一致
+
+**證據**:
+```typescript
+// scripts/phase5/e2e-phase5.ts L10
+const seed = JSON.parse(fs.readFileSync(seedPath, 'utf-8'));
+```
+
+**風險**: 
+- 規則不一致造成混淆
+- 若測試在 CI 環境可能有路徑問題
+
+**引導修正**:
+```
+方案 A: 改用 import（與 API 一致）
+  import seed from '../../public/data/seed-property-page.json' assert { type: 'json' };
+  // 或使用動態 import
+  const seed = await import('../../public/data/seed-property-page.json', { assert: { type: 'json' } });
+
+方案 B: 在註解說明為何測試可以用同步 I/O
+  // NOTE: 測試環境允許同步 I/O，因為：
+  // 1. 非 Serverless 環境，無 Cold Start 問題
+  // 2. 只執行一次，不影響事件迴圈
+
+建議方案 A，保持一致性。
+```
+
+---
+
+### 📊 修正優先順序建議
+
+| 優先 | 缺失 | 理由 |
+|------|------|------|
+| 1 | P31 | 🔴 型別安全基礎設施，防止運行時 crash |
+| 2 | P32 | 🔴 測試覆蓋率太低，無法保證競態防護有效 |
+| 3 | P34 | 🟠 視覺測試不斷言等於沒測 |
+| 4 | P33 | 🟠 LCP 邏輯無法被測試驗證 |
+| 5 | P35 | 🟠 記憶體問題在長時間使用時會顯現 |
+| 6 | P36 | 🟡 一致性問題，非功能性 |
+
+---
+
+## �🛠️ 實作細節
 
 ### 1. 種子資料 JSON (`public/data/seed-property-page.json`)
 
