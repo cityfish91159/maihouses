@@ -1,11 +1,12 @@
 export interface KeyCapsuleInput {
-  advantage1?: string | null;
-  advantage2?: string | null;
-  features?: Array<string | null | undefined> | null;
-  size?: number | null;
-  rooms?: number | null;
-  halls?: number | null;
-  floorCurrent?: string | null;
+  advantage1?: string | null | undefined;
+  advantage2?: string | null | undefined;
+  features?: Array<string | null | undefined> | null | undefined;
+  size?: number | null | undefined;
+  rooms?: number | null | undefined;
+  halls?: number | null | undefined;
+  floorCurrent?: string | null | undefined;
+  floorTotal?: number | null | undefined;
 }
 
 const normalize = (value: string) => value.trim().replace(/\s+/g, ' ');

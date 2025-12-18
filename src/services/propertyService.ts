@@ -100,8 +100,7 @@ export const propertyService = {
         return null;
       }
 
-      // 轉換資料格式
-      const result = {
+      const result: PropertyData = {
         id: data.id,
         publicId: data.public_id,
         title: data.title,
@@ -110,16 +109,6 @@ export const propertyService = {
         description: data.description,
         images: data.images || [],
         sourcePlatform: data.source_platform,
-        size: data.size != null ? Number(data.size) : undefined,
-        rooms: data.rooms != null ? Number(data.rooms) : undefined,
-        halls: data.halls != null ? Number(data.halls) : undefined,
-        bathrooms: data.bathrooms != null ? Number(data.bathrooms) : undefined,
-        floorCurrent: data.floor_current ?? undefined,
-        floorTotal: data.floor_total != null ? Number(data.floor_total) : undefined,
-        features: Array.isArray(data.features) ? data.features : undefined,
-        advantage1: data.advantage_1 ?? undefined,
-        advantage2: data.advantage_2 ?? undefined,
-        disadvantage: data.disadvantage ?? undefined,
         agent: {
           id: data.agent.id,
           internalCode: data.agent.internal_code,
@@ -130,6 +119,17 @@ export const propertyService = {
           encouragementCount: data.agent.encouragement_count
         }
       };
+
+      if (data.size != null) result.size = Number(data.size);
+      if (data.rooms != null) result.rooms = Number(data.rooms);
+      if (data.halls != null) result.halls = Number(data.halls);
+      if (data.bathrooms != null) result.bathrooms = Number(data.bathrooms);
+      if (data.floor_current) result.floorCurrent = data.floor_current;
+      if (data.floor_total != null) result.floorTotal = Number(data.floor_total);
+      if (Array.isArray(data.features)) result.features = data.features;
+      if (data.advantage_1) result.advantage1 = data.advantage_1;
+      if (data.advantage_2) result.advantage2 = data.advantage_2;
+      if (data.disadvantage) result.disadvantage = data.disadvantage;
 
       return result;
     } catch (e) {

@@ -1,5 +1,70 @@
 # 社區牆開發紀錄
 
+## 2025-12-18 - KC1: Key Capsules SSOT Phase 1 實作 ✅
+
+### 📋 任務摘要
+
+> **實作者**: AI Agent (Claude Opus 4.5)
+> **任務**: KC1 Phase 1 - 統一 Key Capsules 資料層 (SSOT)
+> **結果**: ✅ **完成** - Build 通過，待部署
+> **審查者**: Google 首席前後端處長角色（待審查）
+
+---
+
+### 📊 變更總覽
+
+| # | 檔案 | 變更內容 | 狀態 |
+|---|------|----------|------|
+| 1 | `src/utils/keyCapsules.ts` | 新增 SSOT 生成器 `buildKeyCapsuleTags()` | ✅ |
+| 2 | `src/utils/__tests__/keyCapsules.test.ts` | 新增單元測試 (3 tests) | ✅ |
+| 3 | `api/home/featured-properties.ts` | 首頁 API 改用 SSOT tags | ✅ |
+| 4 | `api/home/__tests__/featured-properties.test.ts` | 更新測試斷言 | ✅ |
+| 5 | `api/property/page-data.ts` | 列表 API 新增 `tags[]` 並用 SSOT | ✅ |
+| 6 | `api/property/__tests__/page-data.test.ts` | 新增 tags SSOT 測試 | ✅ |
+| 7 | `src/types/property-page.ts` | listings schema 新增 optional `tags[]` | ✅ |
+| 8 | `public/js/property-renderer.js` | 橫式卡片改顯示 `tags.slice(0,3)` | ✅ |
+| 9 | `src/pages/PropertyDetailPage.tsx` | 移除 hardcode tags，改用 SSOT 計算 | ✅ |
+| 10 | `src/services/propertyService.ts` | 補齊結構化欄位供詳情頁 SSOT | ✅ |
+| 11 | `src/features/home/components/PropertyCard.tsx` | 固定顯示 3 顆膠囊 | ✅ |
+| 12 | `src/lib/version.ts` | VersionBadge 加入 `KC1` 標記 | ✅ |
+
+---
+
+### 📊 測試證據
+
+```bash
+npm test -- api/home/__tests__/featured-properties.test.ts \
+            src/utils/__tests__/keyCapsules.test.ts \
+            api/property/__tests__/page-data.test.ts
+# Test Files  3 passed (3)
+# Tests       59 passed (59)
+
+npm run build
+# ✓ built in 19.30s
+```
+
+---
+
+### 🔧 Build 修正紀錄
+
+| # | 錯誤 | 修正 |
+|---|------|------|
+| 1 | TS2353: `floorTotal` not in `KeyCapsuleInput` | 補上 `floorTotal?: number | null | undefined` |
+| 2 | TS2375: exactOptionalPropertyTypes 不允許 `undefined` 指派 | `KeyCapsuleInput` 所有欄位改成接受 `undefined` |
+| 3 | TS2379: exactOptionalPropertyTypes 呼叫端不相容 | 同上 |
+| 4 | propertyService 回傳型別不符 | 改成條件式賦值（有值才加欄位） |
+
+---
+
+### 📋 待審查項目（Google 首席處長視角）
+
+- Phase 1 TODO 對照驗收
+- 是否有便宜行事/偷懶項目
+- 測試覆蓋率是否足夠
+- SSOT 邏輯是否 deterministic
+
+---
+
 ## 2025-12-18 - Phase 6: 部署完成 + 四次審計（Google 首席前後端處長）✅
 
 ### 📋 任務摘要
