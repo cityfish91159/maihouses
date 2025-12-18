@@ -91,8 +91,5 @@ export function buildKeyCapsuleTags(input: KeyCapsuleInput): string[] {
     pushUnique(tags, candidate);
   }
 
-  pushUnique(tags, formatArea(input.size));
-  pushUnique(tags, formatLayout(input.rooms, input.halls));
-
   return tags.slice(0, 4);
 }
