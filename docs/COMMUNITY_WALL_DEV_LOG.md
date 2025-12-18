@@ -169,6 +169,7 @@
 |------|------|------|
 | P31-追打 | `scripts/phase5/e2e-phase5.ts` 仍殘留 `(results[1] as any).featured` | 改用 `Record<string, unknown>` 型別守衛 + `'featured' in obj` |
 | P41-追打 | `public/js/__tests__/property-phase4.test.js` 使用 `.at(-1)`（環境相容性風險） | 改成 `arr[arr.length - 1]` |
+| P38-文件 | Phase 5/6 命名與生產驗證順序不一致 | 更新 TODO：Phase 5 聚焦測試、Phase 6 改為部署與驗證 |
 | 文件一致性 | TODO 仍引用舊證據（3 tests / 無斷言 / readFileSync） | 更新 `docs/COMMUNITY_WALL_TODO.md` P31–P36 證據段落 |
 
 ### 驗證證明
