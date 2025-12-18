@@ -447,6 +447,12 @@ npm test -- keyCapsules.test.ts featured-properties.test.ts page-data.test.ts
 > **修正 Commit**: `cf46c30`
 > **驗收結果**: ✅ 通過
 
+#### 🛠️ KC1.6 後續 Hotfix（mock 詳情頁規格欄位）
+
+- 問題：`MH-100001`（示範用 mock）在 production 抓到空欄位時，坪數/格局/樓層顯示 `--`。
+- 措施：`propertyService.getPropertyByPublicId` 針對 `MH-100001` 將空字串/缺值回退為 `DEFAULT_PROPERTY` 的結構化欄位，避免再出現 `--`（commit 待補）。
+- 驗收：詳情頁「物件基本資訊」應顯示 `34.2 坪 / 3 房 2 廳 / 12 樓 / 15 層`。
+
 #### 📌 修正證據
 
 - `formatFloor` 補齊 `12F/12 f` 正規化：`src/utils/keyCapsules.ts`

@@ -80,6 +80,25 @@ export const DEFAULT_PROPERTY: PropertyData = {
 export const propertyService = {
   // 1. 獲取物件詳情
   getPropertyByPublicId: async (publicId: string): Promise<PropertyData | null> => {
+    const coerceNumber = (value: unknown): number | null => {
+      if (value == null) return null;
+      if (typeof value === 'number') return Number.isFinite(value) ? value : null;
+      if (typeof value === 'string') {
+        const trimmed = value.trim();
+        if (!trimmed) return null;
+        const parsed = Number(trimmed);
+        return Number.isFinite(parsed) ? parsed : null;
+      }
+      const parsed = Number(value);
+      return Number.isFinite(parsed) ? parsed : null;
+    };
+
+    const coerceNonEmptyString = (value: unknown): string | null => {
+      if (typeof value !== 'string') return null;
+      const trimmed = value.trim();
+      return trimmed ? trimmed : null;
+    };
+
     try {
       // 嘗試從 Supabase 讀取正式資料
       const { data, error } = await supabase
@@ -120,16 +139,42 @@ export const propertyService = {
         }
       };
 
-      if (data.size != null) result.size = Number(data.size);
-      if (data.rooms != null) result.rooms = Number(data.rooms);
-      if (data.halls != null) result.halls = Number(data.halls);
-      if (data.bathrooms != null) result.bathrooms = Number(data.bathrooms);
-      if (data.floor_current) result.floorCurrent = data.floor_current;
-      if (data.floor_total != null) result.floorTotal = Number(data.floor_total);
+      const size = coerceNumber(data.size);
+      if (size != null) result.size = size;
+
+      const rooms = coerceNumber(data.rooms);
+      if (rooms != null) result.rooms = rooms;
+
+      const halls = coerceNumber(data.halls);
+      if (halls != null) result.halls = halls;
+
+      const bathrooms = coerceNumber(data.bathrooms);
+      if (bathrooms != null) result.bathrooms = bathrooms;
+
+      const floorCurrent = coerceNonEmptyString(data.floor_current);
+      if (floorCurrent) result.floorCurrent = floorCurrent;
+
+      const floorTotal = coerceNumber(data.floor_total);
+      if (floorTotal != null) result.floorTotal = floorTotal;
+
       if (Array.isArray(data.features)) result.features = data.features;
       if (data.advantage_1) result.advantage1 = data.advantage_1;
       if (data.advantage_2) result.advantage2 = data.advantage_2;
       if (data.disadvantage) result.disadvantage = data.disadvantage;
+
+      // 針對 Demo 物件：若 DB 有資料但缺少結構化欄位，回退到 DEFAULT_PROPERTY（只補缺的欄位）
+      if (publicId === 'MH-100001') {
+        if (result.size == null) result.size = DEFAULT_PROPERTY.size;
+        if (result.rooms == null) result.rooms = DEFAULT_PROPERTY.rooms;
+        if (result.halls == null) result.halls = DEFAULT_PROPERTY.halls;
+        if (result.bathrooms == null) result.bathrooms = DEFAULT_PROPERTY.bathrooms;
+        if (result.floorCurrent == null) result.floorCurrent = DEFAULT_PROPERTY.floorCurrent;
+        if (result.floorTotal == null) result.floorTotal = DEFAULT_PROPERTY.floorTotal;
+        if (result.features == null) result.features = DEFAULT_PROPERTY.features;
+        if (result.advantage1 == null) result.advantage1 = DEFAULT_PROPERTY.advantage1;
+        if (result.advantage2 == null) result.advantage2 = DEFAULT_PROPERTY.advantage2;
+        if (result.disadvantage == null) result.disadvantage = DEFAULT_PROPERTY.disadvantage;
+      }
 
       return result;
     } catch (e) {
