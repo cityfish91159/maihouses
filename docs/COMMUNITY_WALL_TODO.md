@@ -1,6 +1,6 @@
 # 🧩 重點膠囊（Key Capsules）統一化計畫書 v1
 
-> **狀態**：規格/計畫書（尚未開始改 code）
+> **狀態**：Phase 1 ✅ / Phase 2 ✅（以代碼與測試為準）
 > **最後更新**：2025-12-18
 > **範圍**：物件詳情頁（React）/ 首頁卡片（React）/ 列表頁 property.html（vanilla）
 
@@ -24,9 +24,9 @@
 
 ### A) 詳情頁（React /property/:id）
 
-- 現在的膠囊是 hardcode：`['近捷運','全新裝潢','有車位','高樓層']`
-- 資料來源走 `propertyService.getPropertyByPublicId()`，但回傳型別 `PropertyData` 沒帶 `features/size/rooms/halls/advantage_1/2`。
-- 結果：詳情頁看到的 4 個膠囊與其他頁面完全不具 SSOT。
+- ✅ 已移除 hardcode，改用 `buildKeyCapsuleTags()` 由結構化欄位生成 `tags.slice(0,4)`。
+- ✅ `propertyService.getPropertyByPublicId()` 已支援 `features/size/rooms/halls/floor/advantage1/2` 等欄位（以代碼為準）。
+- 結果：詳情頁膠囊已與首頁/列表共用 SSOT 規則。
 
 ### B) 首頁底部卡片（React PropertyCard）
 
@@ -216,7 +216,7 @@
 | 1 | 首頁 API 缺 floor 欄位 | 補齊 `floor_current/total` 抓取與傳遞 | `api/home/featured-properties.ts` L175 |
 | 2 | `RealPropertyRow` 不完整 | 補齊 `floor_current`, `floor_total` 型別 | `api/home/featured-properties.ts` L118 |
 | 3 | Legacy `tag` 未清理 | 改為 `tag: tags[0]` 統一由 SSOT 產出 | `api/property/page-data.ts` L313 |
-| 4 | 測試覆蓋率不足 | 補齊 6 項測試（含邊界、比例、index 語意） | `src/utils/__tests__/keyCapsules.test.ts` |
+| 4 | Phase 2 Service | 確認所有結構化欄位可由 service 回傳（此項可能在較早 commit 已完成） | `src/services/propertyService.ts` |
 | 5 | 樓層推斷不完整 | 實作 `ratio >= 0.7` 高樓層推斷邏輯 | `src/utils/keyCapsules.ts` L25 |
 | 6 | 格式不一致 | 統一為 `X 房 Y 廳` (含空格) | `src/utils/keyCapsules.ts` L49 |
 | 7 | Badge 違反分離原則 | 改為優先顯示社區名，不再隨機抓 feature | `api/home/featured-properties.ts` L247 |
@@ -318,6 +318,54 @@ npm test -- keyCapsules.test.ts featured-properties.test.ts page-data.test.ts
 3. **測試驅動開發**: 確保所有格式變動（如空格）都同步反映在測試中，達成 100% 綠燈。
 
 ---
+
+### 🔴 KC1.4：commit 12f1fca 審核報告（Google 首席前後端處長）
+
+> **審核對象**: `12f1fca`（改動：DEV_LOG / TODO / 詳情頁新增資訊區塊）
+> **審核結論**: ⚠️ **文件與 commit 內容曾不一致，且新增 UI 區塊存在 SSOT 再分裂風險**
+
+#### 📊 評分（100）
+
+| 面向 | 分數 | 說明 |
+|------|------|------|
+| 需求對齊 | 12/20 | Phase 2 主目標是消除 hardcode；此 commit 主要新增資訊區塊，屬 scope creep 風險 |
+| SSOT 一致性 | 14/25 | 新增的格局/樓層字串未明確重用 SSOT formatter，可能造成格式分裂 |
+| 文件誠實度 | 8/20 | DEV_LOG 曾出現錯模型/錯 commit/混寫成果（已修正，但屬重大流程缺失） |
+| 可維護性 | 14/20 | UI 直接手寫格式字串，未集中管理，長期易漂移 |
+| 驗證完整性 | 12/15 | 有測試通過證據，但需確保「證據對應到實際修測試的 commit」 |
+| **總分** | **60/100** | **不接受以文件宣稱代替代碼事實** |
+
+#### 🟥 發現問題（錯誤 / 便宜行事 / 偷懶）
+
+1) **文件與事實不一致（最高優先）**
+- 現象：DEV_LOG 一度寫錯「實作者/模型」並指向錯誤 commit；同時宣稱修測試，但該 commit 未改測試檔。
+- 風險：團隊無法追溯「哪個 commit 真正修了什麼」，會導致回溯與 hotfix 極度困難。
+- 最佳引導方案（不貼代碼）：
+  - 文件每一條「修正行動」都必須附上**真正改到那個檔案的 commit**（不要混寫）。
+  - 若同一功能分多次 commit：用「KC1.x-commitA / KC1.x-commitB」分段列證據。
+
+2) **SSOT 格式可能再分裂（中高）**
+- 現象：新增資訊區塊的「格局」顯示若使用 `halls || 0` 可能出現 `3 房 0 廳`，與既有 SSOT 規則（halls=0 應省略）衝突。
+- 最佳引導方案：
+  - UI 顯示層應重用 SSOT 的 layout formatter（同一來源、同一規則、同一輸出）。
+  - 將「格局顯示規則」寫成可測的純函數（只測規則，不做 UI snapshot）。
+
+3) **語言/單位不一致（中）**
+- 現象：樓層顯示使用 `F`（英文），與全站繁中 UI 文字規範不一致。
+- 最佳引導方案：
+  - 統一為繁中單位（樓/層），並定義空值時的占位規則（例如一律 `--`）。
+
+4) **Scope creep（中）**
+- 現象：Phase 2 本質是 hardcode 清理；本 commit 額外新增資訊區塊，若未列入驗收標準，等同擅自擴需求。
+- 最佳引導方案：
+  - 若產品需要：把資訊區塊明確寫入 Phase 2 驗收標準與回歸檢查點。
+  - 若不需要：回退新增區塊，保持改動最小化。
+
+#### ✅ 建議的下一步（只寫引導，不寫完整代碼）
+
+1. 把「格局/樓層」顯示規則抽成可測 formatter（重用 SSOT 規則）。
+2. 修正文案單位（`F` → 繁中）。
+3. 把 KC1.3 文件中的「證據 commit」逐條校正為可追溯（每條對應實際改檔 commit）。
 
 ### Phase 2：前端消除 hardcode ✅
 
