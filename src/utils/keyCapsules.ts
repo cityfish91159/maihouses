@@ -53,8 +53,11 @@ export function formatLayout(rooms: number | null | undefined, halls: number | n
 }
 
 export function formatFloor(current: string | null | undefined, total: number | null | undefined): string | null {
-  const cur = current?.trim() || '';
-  if (!cur) return null;
+  const curRaw = current?.trim() || '';
+  if (!curRaw) return null;
+
+  // 常見輸入正規化：將「12F / 12 f」視為「12」以便繁中化輸出
+  const cur = curRaw.replace(/^(\d+)\s*[Ff]$/, '$1');
   
   // 統一繁中單位：若只有數字則補「樓」，否則保留原樣（如「頂樓」）
   const displayCur = /^\d+$/.test(cur) ? `${cur} 樓` : cur;

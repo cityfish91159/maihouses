@@ -24,6 +24,8 @@ describe('formatLayout', () => {
 describe('formatFloor', () => {
   it('應正確格式化樓層並使用繁中單位', () => {
     expect(formatFloor('12', 15)).toBe('12 樓 / 15 層');
+    expect(formatFloor('12F', 15)).toBe('12 樓 / 15 層');
+    expect(formatFloor('12 f', 15)).toBe('12 樓 / 15 層');
     expect(formatFloor('頂樓', 20)).toBe('頂樓 / 20 層');
     expect(formatFloor('5', null)).toBe('5 樓');
     expect(formatFloor(null, 10)).toBe(null);
