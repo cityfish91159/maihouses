@@ -1,5 +1,71 @@
 # 社區牆開發紀錄
 
+## 2025-12-18 - KC1.1: Phase 1 審計缺失修正 ✅
+
+### 📋 任務摘要
+
+> **實作者**: AI Agent (Claude Opus 4.5)
+> **任務**: KC1 Phase 1 - 修正 Google 首席處長審計發現的 9 項缺失
+> **結果**: ✅ **全數修正通過** - 6 項測試、Build 成功
+> **Commit**: `884b15b`
+
+---
+
+### 📊 修正變更總覽
+
+| # | 缺失 | 修正內容 | 檔案 | 狀態 |
+|---|------|----------|------|------|
+| 1 | P0: 首頁 API 缺 floor 欄位 | 補齊 SQL 查詢 + SSOT 傳遞 | `api/home/featured-properties.ts` | ✅ |
+| 2 | P0: RealPropertyRow 不完整 | 新增 `floor_current/total` 型別 | `api/home/featured-properties.ts` | ✅ |
+| 3 | P1: Legacy tag 未清理 | 改為 `tag: tags[0]` | `api/property/page-data.ts` | ✅ |
+| 4 | P1: 測試覆蓋不足 | 新增 3 項測試 (共 6 項) | `keyCapsules.test.ts` | ✅ |
+| 5 | P2: 樓層推斷不完整 | 實作比例推斷 `ratio >= 0.7` | `keyCapsules.ts` | ✅ |
+| 6 | P2: 格式不一致 | 統一為 `X 房 Y 廳` | `keyCapsules.ts` | ✅ |
+| 7 | P2: Badge 違反分離 | 改為社區名優先 | `api/home/featured-properties.ts` | ✅ |
+| 8 | P2: SSOT 欄位不一致 | 統一 8 欄位傳遞 | `api/home/featured-properties.ts` | ✅ |
+| 9 | P3: Featured 大卡未改 | 實作 tags 膠囊渲染 | `property-renderer.js` | ✅ |
+
+---
+
+### 📊 測試證據
+
+```bash
+npm test src/utils/__tests__/keyCapsules.test.ts
+# ✓ buildKeyCapsuleTags (6)
+#   ✓ 優先使用 advantage1/2 作為 highlights
+#   ✓ advantage 不足時從 features 補 highlights，並去重
+#   ✓ 可從 floorCurrent 推導高/低樓層
+#   ✓ 應能根據樓層比例推斷高/低樓層 (P2 缺失修正)
+#   ✓ 應嚴格遵守 index 語意與長度限制 (P1 缺失修正)
+#   ✓ 處理空值與異常輸入 (P1 缺失修正)
+# Test Files  1 passed (1)
+# Tests       6 passed (6)
+
+npm run build
+# ✓ built in 18.16s
+```
+
+---
+
+### 🔧 核心邏輯變更
+
+**樓層比例推斷 (keyCapsules.ts L17-30)**:
+```typescript
+const curNum = parseInt(text, 10);
+if (!isNaN(curNum) && typeof total === 'number' && total > 0) {
+  const ratio = curNum / total;
+  if (ratio >= 0.7) return '高樓層';
+  if (ratio <= 0.3 && total >= 4) return '低樓層';
+}
+```
+
+**格式統一 (keyCapsules.ts L49)**:
+```typescript
+return `${r} 房${h ? ` ${h} 廳` : ''}`;
+```
+
+---
+
 ## 2025-12-18 - KC1: Key Capsules SSOT Phase 1 實作 ✅
 
 ### 📋 任務摘要
