@@ -789,6 +789,9 @@ error: '伺服器暫時無法取得資料，已使用預設內容',
 | P36 | 🟡 P2 | **E2E seed 使用 readFileSync（自己不許別人用卻自己用）** | 雙標：D22 禁止同步 I/O，測試卻用 | ✅ 已修 |
 | P37 | 🟡 P2 | **TODO 文件更新滯後：D14-D19 狀態不一致** | 已修但標記仍是 ⬜ | ✅ 已修 |
 | P38 | 🟡 P2 | **Phase 5 標題寫「測試與驗證」但 Phase 6 才部署** | Phase 5 完成時尚未部署，邏輯順序錯誤 | ⬜ 資訊 |
+| P41 | 🟠 P1 | **TS2550：測試使用 `.at()` 但 tsconfig lib 未到 ES2022** | IDE/CI 型別檢查失敗，阻塞開發 | ✅ 已修 |
+| P42 | 🔴 P0 | **import 副作用：`property-main.js` 被測試 import 時自動 bootstrap** | 測試污染（stderr）、隱性網路呼叫、不可預期狀態 | ✅ 已修 |
+| P43 | 🟠 P1 | **測試產物誤提交：`arena/results/` 進 git** | repo 膨脹、PR diff 噪音、CI 變慢 | ✅ 已修 |
 
 ---
 
@@ -1050,6 +1053,63 @@ const seed = JSON.parse(fs.readFileSync(seedPath, 'utf-8'));
   // 2. 只執行一次，不影響事件迴圈
 
 建議方案 A，保持一致性。
+
+---
+
+### 🟠 P41: TS2550（`.at()` 與 tsconfig lib 不一致）
+
+**問題**: TS 目標未啟用 ES2022 lib，但測試使用 `Array.prototype.at()`。
+
+**偷懶程度**: 💀💀 中等 - 依賴新語法卻沒同步設定，CI/IDE 會爆。
+
+**引導修正（最佳做法）**:
+```
+優先原則：不要為了 1 個 `.at()` 升級全案 lib（會牽動 polyfill/相容性）。
+
+1) 測試/腳本：改用最相容寫法
+  - last = arr.length ? arr[arr.length - 1] : undefined
+
+2) 若團隊堅持 `.at()`：才調整 tsconfig lib 到 ES2022 並驗證瀏覽器目標
+  - 同步檢查 Vite build 目標 + 需要時加 polyfill
+```
+
+---
+
+### 🔴 P42: import 副作用（測試污染）
+
+**問題**: `public/js/property-main.js` 在 module load 時就自動 bootstrap（包含 fetch/render）。
+
+**偷懶程度**: 💀💀💀 嚴重 - 這會讓任何 import 都帶副作用，測試可預測性直接崩。
+
+**引導修正（最佳做法）**:
+```
+目標：import 應該是「宣告」，啟動應該是「明確呼叫」。
+
+1) 把 IIFE 改成 `async function bootstrap()`
+2) 只在真正瀏覽器入口（window+document 存在）才呼叫
+3) 測試環境要有硬判斷：
+  - Vitest 可用 globalThis.__vitest_worker__ 判斷
+4) 驗證標準：
+  - `npm run test:telemetry` 不得產生 fetch stderr
+  - `createTelemetry` 可被純 import + 單測
+```
+
+---
+
+### 🟠 P43: 測試產物誤提交（repo 汙染）
+
+**問題**: Playwright 產生的 png/json 報告被 commit 進 repo。
+
+**偷懶程度**: 💀💀 中等 - 這通常是「跑一次測試就順手 add .」造成。
+
+**引導修正（最佳做法）**:
+```
+1) 一律忽略產物路徑：把 `arena/results/` 加到 .gitignore
+2) 把已追蹤的產物移出 git：git rm --cached
+3) PR 檢查規則：
+  - 禁止提交 *.png / 大型 json report（除非明確需求）
+  - 若需要留證：改用 CI artifact / release 附件，而非 git 追蹤
+```
 ```
 
 ---

@@ -27,3 +27,6 @@ node_modules
 
 # Build output
 dist/
+
+# Arena results (generated artifacts)
+arena/results/

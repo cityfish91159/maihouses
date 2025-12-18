@@ -68,7 +68,9 @@ async function runFallbackTest(page: Page) {
     };
   });
 
-  const lastEvent = Array.isArray(telemetry.events) ? telemetry.events.at(-1) : null;
+  const lastEvent = Array.isArray(telemetry.events) && telemetry.events.length > 0
+    ? telemetry.events[telemetry.events.length - 1]
+    : null;
   assert(lastEvent?.name === 'render:fallback', 'fallback event not recorded');
   assert(listingCount > 0, 'fallback did not render listings');
   assert(Array.isArray(renderLog) && renderLog.length > 0, 'render log missing under fallback');

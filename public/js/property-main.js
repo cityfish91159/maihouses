@@ -61,7 +61,7 @@ export function createTelemetry() {
 }
 
 // 主流程：Mock 秒開 + 背景 API 靜默更新 + 圖片預載 + 版本檢查 + Telemetry
-(async function bootstrap() {
+async function bootstrap() {
   const telemetry = createTelemetry();
   const renderer = new PropertyRenderer();
   telemetry.log('bootstrap:start');
@@ -103,4 +103,11 @@ export function createTelemetry() {
     telemetry.expose();
     console.warn('[property-main] background update skipped:', error?.message || error);
   }
-})();
+}
+
+// 避免在 Vitest/jsdom 進行 unit tests 時觸發副作用（fetch / render 等）
+const isVitest = typeof globalThis !== 'undefined' && Boolean(globalThis.__vitest_worker__);
+if (!isVitest && typeof window !== 'undefined' && typeof document !== 'undefined') {
+  // eslint-disable-next-line no-void
+  void bootstrap();
+}

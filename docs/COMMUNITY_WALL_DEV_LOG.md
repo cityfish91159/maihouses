@@ -3784,3 +3784,22 @@ P7 Phase 1-2 已基本完成，但存在「偷懶沒做完」的問題：
 
 ### 結論
 成功消除 6 項 P0-P2 級別的品質缺失，達成「言行一致」的開發標準，並大幅提升系統穩定性與可測試性。
+
+---
+
+## 2025-12-18 - P31-P38 修復後追打審計（TS2550 / 產物誤提交 / 測試副作用）
+
+### 新增發現（修復後才暴露的問題）
+
+| ID | 問題 | 影響 | 修正 |
+|----|------|------|------|
+| **P41** | `e2e-phase5.ts` 使用 `Array.prototype.at()` 導致 TS2550 | 目標 lib 未到 ES2022，編譯/IDE 報錯 | 改成 `arr[arr.length - 1]` |
+| **P42** | `property-main.js` import 會自動 bootstrap（Vitest 會觸發 fetch/render） | 測試 stderr + 非預期副作用 | 改為 `bootstrap()` 函數並加 `__vitest_worker__` guard |
+| **P43** | `arena/results/phase4` 產物（png/json）被誤提交到 git | repo 膨脹、CI 變慢、污染 diff | `git rm --cached` 移除追蹤並加入 `.gitignore` |
+
+### 驗證證明
+
+- `npm run test:phase4`：✅ 9/9 passed
+- `npm run test:telemetry`：✅ 3/3 passed（且不再有 bootstrap stderr）
+- `npm run test:phase5`：✅ passed
+- `npm run phase4:flicker`：✅ 5 runs assertions passed（產物改為 git ignore，不再污染 repo）
