@@ -456,27 +456,33 @@ describe('api/property/page-data.ts', () => {
       expect(result.reviews[1].badge).toBe('住戶推薦');
     });
 
-    it('tag 優先使用 community_name', () => {
+    // KC1.1 修正：tag 現在由 SSOT tags[0] 產出，不再獨立取 community_name
+    it('tag 由 SSOT tags[0] 產出 (不再獨立取 community_name)', () => {
       const property = buildDBProperty({
         community_name: '新光社區',
         features: ['熱門'],
+        advantage_1: '近捷運',
       });
       const seed = buildSeedListingCard();
       
       const result = adaptToListingCard(property, [], seed);
       
-      expect(result.tag).toBe('新光社區');
+      // tag 現在來自 tags[0]，而 tags[0] 是 advantage_1 (SSOT highlights 優先)
+      expect(result.tag).toBe('近捷運');
     });
 
-    it('tag 無 community_name 時用 features[0]', () => {
+    it('tag 無 advantage 時用 features[0] (SSOT 規則)', () => {
       const property = buildDBProperty({
         community_name: null,
         features: ['高樓層'],
+        advantage_1: null,
+        advantage_2: null,
       });
       const seed = buildSeedListingCard();
       
       const result = adaptToListingCard(property, [], seed);
       
+      // tags[0] 會是 features[0] = '高樓層'
       expect(result.tag).toBe('高樓層');
     });
 
@@ -501,7 +507,8 @@ describe('api/property/page-data.ts', () => {
       expect(result.tags[0]).toBe('近捷運');
       expect(result.tags[1]).toBe('有車位');
       expect(result.tags).toContain('23.0 坪');
-      expect(result.tags).toContain('3房2廳');
+      // KC1.1 修正：格式統一為 "X 房 Y 廳"
+      expect(result.tags).toContain('3 房 2 廳');
     });
 
     it('零評價時用 Seed 補位', () => {

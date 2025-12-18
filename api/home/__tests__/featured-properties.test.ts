@@ -100,7 +100,8 @@ describe('featured-properties helpers', () => {
       // SSOT：優先 highlights，再 specs
       expect(result.tags[0]).toBe('高樓層');
       expect(result.tags).toContain('34.2 坪');
-      expect(result.tags).toContain('3房2廳');
+      // KC1.1 修正：格式統一為 "X 房 Y 廳"
+      expect(result.tags).toContain('3 房 2 廳');
       expect(result.tags.length).toBeLessThanOrEqual(4);
     });
 
