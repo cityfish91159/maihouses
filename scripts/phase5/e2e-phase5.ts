@@ -100,9 +100,11 @@ async function runRaceGuardTest(page: Page, seed: any) {
     return settled.map((r) => (r.status === 'fulfilled' ? r.value : null));
   });
 
+  const isObject = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null;
+
   assert(results.length === 2, 'race test missing results');
   assert(results[0] === null, 'first (aborted) call should be null');
-  assert(results[1] && (results[1] as any).featured, 'second call should succeed with data');
+  assert(isObject(results[1]) && 'featured' in results[1], 'second call should succeed with data');
   console.log('[OK] race guard aborts stale request and returns fresh data');
 }
 

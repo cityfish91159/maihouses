@@ -768,7 +768,7 @@ error: '伺服器暫時無法取得資料，已使用預設內容',
 
 ---
 
-## � 四次審計：Phase 3-6 代碼品質問題（Google 首席前後端處長）
+## 🔴 四次審計：Phase 3-6 代碼品質問題（Google 首席前後端處長）
 
 > **審計日期**: 2025-12-18
 > **審計範圍**: Phase 3-6 所有變更
@@ -797,17 +797,30 @@ error: '伺服器暫時無法取得資料，已使用預設內容',
 
 ### 🔴 P31: E2E 測試使用 `as any` 繞過型別檢查
 
-**問題**: `scripts/phase5/e2e-phase5.ts` 第 53 行和第 79 行使用 `as any`
+**問題（已修）**: 舊版 `scripts/phase5/e2e-phase5.ts` 以 `as any` 讀取 telemetry / PropertyAPI，且用 `.at()` 取最後一筆事件。
 
 **偷懶程度**: 💀💀💀 嚴重 - 明明剛修完 TS7006 卻留下 as any
 
-**證據**:
+**修正證據（現況）**:
 ```typescript
-// L53
-const lastEvent = Array.isArray((telemetry as any).events) ? (telemetry as any).events.at(-1) : null;
+interface Phase4Telemetry {
+  events: Array<{ name: string; ts: number; [key: string]: unknown }>;
+  lcp: number | null;
+  fcp: number | null;
+}
 
-// L79
-const api = (window as unknown as { PropertyAPI: any }).PropertyAPI;
+interface WindowWithApi extends Window {
+  PropertyAPI: { getPageData: () => Promise<unknown> };
+  __phase4Telemetry?: Phase4Telemetry;
+  __renderVersionLog?: unknown[];
+}
+
+const lastEvent = Array.isArray(telemetry.events) && telemetry.events.length > 0
+  ? telemetry.events[telemetry.events.length - 1]
+  : null;
+
+const isObject = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null;
+assert(isObject(results[1]) && 'featured' in results[1], 'second call should succeed with data');
 ```
 
 **風險**: 
@@ -839,14 +852,15 @@ const api = (window as unknown as { PropertyAPI: any }).PropertyAPI;
 
 ### 🔴 P32: Phase 4 測試只有 3 個案例，覆蓋率極低
 
-**問題**: `public/js/__tests__/property-phase4.test.js` 聲稱「壓測」但只有 3 個基本測試
+**問題（已修）**: 早期 `public/js/__tests__/property-phase4.test.js` 案例數過少，無法支撐「壓測」宣稱。
 
 **偷懶程度**: 💀💀💀 嚴重 - TODO 說「壓測」但實際只是基本 happy path
 
-**證據**:
+**修正證據（現況）**:
 ```bash
 npm run test:phase4
-# 只有 3 tests passed
+# Tests  9 passed (9)
+# 已涵蓋：競態/timeout/並發/多次 render/preload 覆蓋率與去重
 ```
 
 **風險**: 
@@ -928,15 +942,17 @@ const lcpObserver = (typeof PerformanceObserver !== 'undefined')
 
 ### 🟠 P34: flicker-visual.ts 沒有斷言
 
-**問題**: `scripts/phase4/flicker-visual.ts` 只輸出 JSON 報告，不會因為異常而 fail
+**問題（已修）**: 舊版 `scripts/phase4/flicker-visual.ts` 只輸出 JSON，不會因異常 fail。
 
 **偷懶程度**: 💀💀 中等 - 寫了腳本但不判斷結果
 
-**證據**:
+**修正證據（現況）**:
 ```typescript
-// flicker-visual.ts L36
-await fs.promises.writeFile(reportPath, JSON.stringify({ targetUrl, runs }, null, 2));
-// 沒有 assert，不會 throw
+// 目前已加入 assertions，若沒有 render log 或 telemetry events 會直接 fail
+runs.forEach((run, i) => {
+  assert(Array.isArray(run.versions) && run.versions.length > 0, `Run ${i + 1}: renderVersion log is empty`);
+  assert(run.telemetry?.events?.length > 0, `Run ${i + 1}: telemetry events is empty`);
+});
 ```
 
 **風險**: 
@@ -956,7 +972,7 @@ runs.forEach((run, i) => {
 
 // 2. 驗證 telemetry 有 events
 runs.forEach((run, i) => {
-  const events = (run.telemetry as any)?.events || [];
+  const events = Array.isArray(run.telemetry?.events) ? run.telemetry.events : [];
   assert(events.length > 0, `Run ${i + 1}: telemetry events is empty`);
 });
 
@@ -971,19 +987,25 @@ const allVersions = runs.flatMap(r => r.versions);
 
 ### 🟠 P35: renderVersion 日誌無 cleanup
 
-**問題**: `property-renderer.js` 的 versionLog 只有 shift 到 50 條，但長時間使用會持續累積
+**問題（已修）**: 早期 render 日誌缺乏清理與上限控管，可能造成記憶體與全域狀態污染。
 
 **偷懶程度**: 💀 輕微 - 有限制但仍占記憶體
 
-**證據**:
+**修正證據（現況）**:
 ```javascript
-// property-renderer.js L13-17
+// property-renderer.js
 logVersion(entry) {
   this.versionLog.push(entry);
   if (this.versionLog.length > 50) {
     this.versionLog.shift();
   }
-  // 每次 render 都會累積 window.__renderVersionLog
+}
+
+clearLog() {
+  this.versionLog = [];
+  if (typeof window !== 'undefined') {
+    window.__renderVersionLog = [];
+  }
 }
 ```
 
@@ -1026,14 +1048,15 @@ logVersion(entry) {
 
 ### 🟡 P36: E2E 測試使用 readFileSync（雙標）
 
-**問題**: D22 禁止 API 使用 `readFileSync`，但 E2E 測試自己用
+**問題（已修）**: 舊版 E2E seed 讀取使用同步 I/O，與 D22 的原則不一致。
 
 **偷懶程度**: 💀 輕微 - 測試環境可以接受，但不一致
 
-**證據**:
+**修正證據（現況）**:
 ```typescript
-// scripts/phase5/e2e-phase5.ts L10
-const seed = JSON.parse(fs.readFileSync(seedPath, 'utf-8'));
+// scripts/phase5/e2e-phase5.ts
+const content = await fs.promises.readFile(seedPath, 'utf-8');
+return JSON.parse(content);
 ```
 
 **風險**: 

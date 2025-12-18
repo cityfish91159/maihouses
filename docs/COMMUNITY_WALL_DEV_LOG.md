@@ -160,6 +160,23 @@
 ### 🏗️ 架構設計
 
 ```
+
+## 2025-12-18 - P31 追打修正：移除殘留 as any + 測試移除 .at()
+
+### 修正內容
+
+| 項目 | 問題 | 修正 |
+|------|------|------|
+| P31-追打 | `scripts/phase5/e2e-phase5.ts` 仍殘留 `(results[1] as any).featured` | 改用 `Record<string, unknown>` 型別守衛 + `'featured' in obj` |
+| P41-追打 | `public/js/__tests__/property-phase4.test.js` 使用 `.at(-1)`（環境相容性風險） | 改成 `arr[arr.length - 1]` |
+| 文件一致性 | TODO 仍引用舊證據（3 tests / 無斷言 / readFileSync） | 更新 `docs/COMMUNITY_WALL_TODO.md` P31–P36 證據段落 |
+
+### 驗證證明
+
+- `npm run test:phase4`：✅ 9/9 passed
+- `npm run test:telemetry`：✅ 3/3 passed
+- `npm run test:phase5`：✅ passed
+
 property.html
     └── <script type="module" src="js/property-main.js">
             ├── import { propertyMockData } from './property-data.js'
@@ -3769,7 +3786,7 @@ P7 Phase 1-2 已基本完成，但存在「偷懶沒做完」的問題：
 | **P32** | Phase 4 測試覆蓋率低 | 增加 AbortController 超時、並發請求、renderVersion 競態、preload 去重等 6 個測試案例 | `npm run test:phase4` ✅ (9 tests) |
 | **P33** | LCP Observer 測試問題 | 導出 `createTelemetry` 與新增 `telemetry.test.js` 使用 Mock PerformanceObserver | `npm run test:telemetry` ✅ |
 | **P34** | Flicker 測試無斷言 | 在 `flicker-visual.ts` 加入 `assert` 驗證 renderVersion 與 telemetry | `npm run phase4:flicker` ✅ |
-| **P35** | renderVersion 記憶體洩漏 | 實作 `clearLog` 並在 `logVersion` 中加入環境判斷與長度限制 | 代碼審查 ✅ |
+| **P35** | renderVersion 記憶體洩漏 | 實作 `clearLog` 並在 `logVersion` 中加入長度限制 | 代碼審查 ✅ |
 | **P36** | E2E 測試同步 I/O | 將 `readFileSync` 改為 `fs.promises.readFile` 非同步讀取 | `npm run test:phase5` ✅ |
 
 ### 變更檔案

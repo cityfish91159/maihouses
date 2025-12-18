@@ -223,8 +223,9 @@ describe('PropertyRenderer render guards', () => {
     expect(mainAfter).toContain('New Title');
 
     const log = renderer.getVersionLog();
-    expect(log.at(-1)?.source).toBe('api');
-    expect(log.at(-1)?.version).toBe(2);
+    const last = log.length > 0 ? log[log.length - 1] : undefined;
+    expect(last?.source).toBe('api');
+    expect(last?.version).toBe(2);
   });
 
   it('does not increment version when rendering null', () => {
