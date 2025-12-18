@@ -152,6 +152,57 @@
 2. 讓所有輸出都遵守 index 語意：`0..1 highlights`、`2..3 specs`
 3. 將 legacy 欄位（listing 的 `tag`）逐步改為由 `tags[0]` 或獨立 `proofBadge` 產出（不再另寫 fallback）
 
+---
+
+### 🔴 KC1 Phase 1 審計報告 (Google 首席前後端處長)
+
+> **審查日期**: 2025-12-18
+> **審查結果**: ⚠️ **基本完成，但發現 9 項缺失**
+> **評分**: **72/100**
+> **狀態**: 🟡 需要修正後才能進入 Phase 2
+
+#### 📋 缺失清單
+
+| # | 嚴重度 | 缺失描述 | 影響檔案 | 修正指引 |
+|---|--------|----------|----------|----------|
+| 1 | 🟥 P0 | 首頁 API 缺少 `floorCurrent`/`floorTotal` 輸入 | `api/home/featured-properties.ts` | 在 `RealPropertyRow` 加入 `floor_current`, `floor_total` 並傳給 SSOT |
+| 2 | 🟥 P0 | 首頁 `RealPropertyRow` 型別不完整 | `api/home/featured-properties.ts` L114-128 | 補齊 `floor_current: string \| null` 和 `floor_total: number \| null` |
+| 3 | 🟧 P1 | Legacy `tag` 欄位未清理，還在用獨立 fallback | `api/property/page-data.ts` L311 | 改為 `tag: tags[0] \|\| seed.tag` |
+| 4 | 🟧 P1 | 測試覆蓋率不足（只有 3 個測試） | `src/utils/__tests__/keyCapsules.test.ts` | 補齊：空值邊界、index 語意驗證、長度驗證 |
+| 5 | 🟨 P2 | `inferFloorTag` 只能解析文字，無法從數字推斷 | `src/utils/keyCapsules.ts` L17-24 | 加入 `current/total >= 0.7 → 高樓層` 比例判斷 |
+| 6 | 🟨 P2 | `formatLayout` 輸出 "2房2廳" 與 Seed "2 房 2 廳" 格式不一致 | `src/utils/keyCapsules.ts` L47 | 統一為 `${r} 房 ${h} 廳` |
+| 7 | 🟨 P2 | 首頁 `badge` 從 features 取，違反社會證明分離原則 | `api/home/featured-properties.ts` L245 | badge 應獨立欄位或 hardcode「精選物件」 |
+| 8 | 🟨 P2 | 首頁與詳情頁傳給 SSOT 的欄位數量不一致 | 首頁缺 floor 欄位 | 統一所有呼叫 SSOT 的地方傳入 8 個欄位 |
+| 9 | 🟨 P2 | 文件標示完成但代碼沒改（Phase 3.1 featured 大卡） | `public/js/property-renderer.js` | 這是 Phase 3 範圍，但需移除錯誤的完成標記 |
+
+#### 📊 評分細項
+
+| 項目 | 滿分 | 得分 | 說明 |
+|------|------|------|------|
+| SSOT 函數完整性 | 25 | 20 | 樓層推斷不完整（只看文字） |
+| 首頁 API 整合 | 20 | 12 | 缺 floor 欄位，違反 SSOT |
+| 列表頁整合 | 20 | 18 | 做了但 legacy tag 未清 |
+| 詳情頁整合 | 15 | 15 | ✅ 完整 |
+| 測試覆蓋 | 10 | 4 | 只有 3 個測試 |
+| 代碼品質 | 10 | 3 | 格式不一致 |
+| **總分** | **100** | **72** | |
+
+#### ✅ 做得好的地方
+
+- ✅ SSOT 函數 `buildKeyCapsuleTags` 正確抽離到 `src/utils/keyCapsules.ts`
+- ✅ 去重邏輯 `pushUnique` 正確處理重複值
+- ✅ 修復 TypeScript `exactOptionalPropertyTypes` 嚴格模式
+- ✅ 列表頁水平卡正確使用 `tags.slice(0,3)` 顯示多膠囊
+- ✅ 詳情頁移除 hardcode，改用 SSOT
+
+#### 🛠️ 修正優先級
+
+1. **立即修正 (P0)**: 首頁 API 缺 floor 欄位 → 讓所有頁面 SSOT 輸入一致
+2. **本週修正 (P1)**: legacy tag 清理、測試補齊
+3. **下週優化 (P2)**: 格式統一、樓層數字推斷
+
+---
+
 ### Phase 2：前端消除 hardcode
 
 1. 詳情頁移除 hardcode tags，改讀取 `property` 的結構化欄位
