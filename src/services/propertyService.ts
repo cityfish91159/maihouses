@@ -164,16 +164,16 @@ export const propertyService = {
 
       // 針對 Demo 物件：若 DB 有資料但缺少結構化欄位，回退到 DEFAULT_PROPERTY（只補缺的欄位）
       if (publicId === 'MH-100001') {
-        if (result.size == null) result.size = DEFAULT_PROPERTY.size;
-        if (result.rooms == null) result.rooms = DEFAULT_PROPERTY.rooms;
-        if (result.halls == null) result.halls = DEFAULT_PROPERTY.halls;
-        if (result.bathrooms == null) result.bathrooms = DEFAULT_PROPERTY.bathrooms;
-        if (result.floorCurrent == null) result.floorCurrent = DEFAULT_PROPERTY.floorCurrent;
-        if (result.floorTotal == null) result.floorTotal = DEFAULT_PROPERTY.floorTotal;
-        if (result.features == null) result.features = DEFAULT_PROPERTY.features;
-        if (result.advantage1 == null) result.advantage1 = DEFAULT_PROPERTY.advantage1;
-        if (result.advantage2 == null) result.advantage2 = DEFAULT_PROPERTY.advantage2;
-        if (result.disadvantage == null) result.disadvantage = DEFAULT_PROPERTY.disadvantage;
+        if (result.size == null && DEFAULT_PROPERTY.size != null) result.size = DEFAULT_PROPERTY.size;
+        if (result.rooms == null && DEFAULT_PROPERTY.rooms != null) result.rooms = DEFAULT_PROPERTY.rooms;
+        if (result.halls == null && DEFAULT_PROPERTY.halls != null) result.halls = DEFAULT_PROPERTY.halls;
+        if (result.bathrooms == null && DEFAULT_PROPERTY.bathrooms != null) result.bathrooms = DEFAULT_PROPERTY.bathrooms;
+        if (result.floorCurrent == null && DEFAULT_PROPERTY.floorCurrent != null) result.floorCurrent = DEFAULT_PROPERTY.floorCurrent;
+        if (result.floorTotal == null && DEFAULT_PROPERTY.floorTotal != null) result.floorTotal = DEFAULT_PROPERTY.floorTotal;
+        if (result.features == null && DEFAULT_PROPERTY.features != null) result.features = DEFAULT_PROPERTY.features;
+        if (result.advantage1 == null && DEFAULT_PROPERTY.advantage1 != null) result.advantage1 = DEFAULT_PROPERTY.advantage1;
+        if (result.advantage2 == null && DEFAULT_PROPERTY.advantage2 != null) result.advantage2 = DEFAULT_PROPERTY.advantage2;
+        if (result.disadvantage == null && DEFAULT_PROPERTY.disadvantage != null) result.disadvantage = DEFAULT_PROPERTY.disadvantage;
       }
 
       return result;
