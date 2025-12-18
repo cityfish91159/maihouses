@@ -19,7 +19,11 @@ const BASE_URL = process.env.P5_URL || 'https://maihouses.vercel.app/maihouses/p
 const API_PATH = '/api/property/page-data';
 
 const seedPath = path.join(process.cwd(), 'public', 'data', 'seed-property-page.json');
-const seed = JSON.parse(fs.readFileSync(seedPath, 'utf-8'));
+
+async function getSeed() {
+  const content = await fs.promises.readFile(seedPath, 'utf-8');
+  return JSON.parse(content);
+}
 
 function logStep(title: string) {
   console.log(`\n[Step] ${title}`);
@@ -71,7 +75,7 @@ async function runFallbackTest(page: Page) {
   console.log('[OK] fallback path renders and logs');
 }
 
-async function runRaceGuardTest(page: Page) {
+async function runRaceGuardTest(page: Page, seed: any) {
   logStep('Race guard aborts stale request');
   let hit = 0;
   await page.route(`**${API_PATH}`, async (route: Route) => {
@@ -105,15 +109,16 @@ async function main() {
   const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
 
   try {
+    const seed = await getSeed();
     await runHappyPath(page);
     await page.context().clearCookies();
     await runFallbackTest(page);
     await page.context().clearCookies();
-    await runRaceGuardTest(page);
+    await runRaceGuardTest(page, seed);
     console.log('\n✅ Phase5 tests passed');
   } catch (error) {
     console.error('\n❌ Phase5 tests failed:', error);
-    process.exitCode = 1;
+    process.exit(1);
   } finally {
     await browser.close();
   }

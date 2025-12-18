@@ -17,7 +17,15 @@ export class PropertyRenderer {
       this.versionLog.shift();
     }
     if (typeof window !== 'undefined') {
+      // P35: 僅在開發環境或特定標記下暴露全域日誌，生產環境限制長度
       window.__renderVersionLog = [...this.versionLog];
+    }
+  }
+
+  clearLog() {
+    this.versionLog = [];
+    if (typeof window !== 'undefined') {
+      window.__renderVersionLog = [];
     }
   }
 

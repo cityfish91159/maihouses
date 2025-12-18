@@ -785,8 +785,8 @@ error: '伺服器暫時無法取得資料，已使用預設內容',
 | P32 | 🔴 P0 | **Phase 4 測試只有 3 個案例，覆蓋率極低** | 聲稱「壓測」但只測基本流程 | ✅ 已修 |
 | P33 | 🟠 P1 | **telemetry LCP observer 在 jsdom 環境不會觸發** | 測試環境無法驗證 LCP 邏輯 | ✅ 已修 |
 | P34 | 🟠 P1 | **flicker-visual.ts 沒有斷言，只輸出 JSON** | 視覺測試不會 fail，等於沒測 | ✅ 已修 |
-| P35 | 🟠 P1 | **renderVersion 日誌沒有 cleanup，可能記憶體洩漏** | 長時間使用頁面會累積 50+ entries | ⬜ 待修 |
-| P36 | 🟡 P2 | **E2E seed 使用 readFileSync（自己不許別人用卻自己用）** | 雙標：D22 禁止同步 I/O，測試卻用 | ⬜ 待修 |
+| P35 | 🟠 P1 | **renderVersion 日誌沒有 cleanup，可能記憶體洩漏** | 長時間使用頁面會累積 50+ entries | ✅ 已修 |
+| P36 | 🟡 P2 | **E2E seed 使用 readFileSync（自己不許別人用卻自己用）** | 雙標：D22 禁止同步 I/O，測試卻用 | ✅ 已修 |
 | P37 | 🟡 P2 | **TODO 文件更新滯後：D14-D19 狀態不一致** | 已修但標記仍是 ⬜ | ✅ 已修 |
 | P38 | 🟡 P2 | **Phase 5 標題寫「測試與驗證」但 Phase 6 才部署** | Phase 5 完成時尚未部署，邏輯順序錯誤 | ⬜ 資訊 |
 
