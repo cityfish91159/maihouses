@@ -20,6 +20,7 @@
     "validate:property": "tsx scripts/validate-property-types.ts",
     "check:ssot": "tsx scripts/verify-seed-strict.ts",
     "test:phase4": "vitest run public/js/__tests__/property-phase4.test.js",
+    "test:telemetry": "vitest run public/js/__tests__/telemetry.test.js",
     "phase4:flicker": "tsx scripts/phase4/flicker-visual.ts",
     "test:phase5": "tsx scripts/phase5/e2e-phase5.ts",
     "speedup:start": "bash scripts/speedup-control.sh start",

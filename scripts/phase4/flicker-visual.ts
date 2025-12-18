@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import assert from 'node:assert';
 import { chromium } from 'playwright-chromium';
 
 const targetUrl = process.env.PHASE4_URL || 'https://maihouses.vercel.app/maihouses/property.html';
@@ -14,14 +15,14 @@ async function run() {
   const browser = await chromium.launch({ headless: true });
   const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
 
-  const runs: Array<{ index: number; versions: unknown; telemetry: unknown; screenshot: string }> = [];
+  const runs: Array<{ index: number; versions: unknown[]; telemetry: any; screenshot: string }> = [];
 
   for (let i = 0; i < 5; i += 1) {
     await page.goto(targetUrl, { waitUntil: 'networkidle' });
     await page.waitForTimeout(500);
 
-    const versions = await page.evaluate(() => (window as unknown as { __renderVersionLog?: unknown }).__renderVersionLog || []);
-    const telemetry = await page.evaluate(() => (window as unknown as { __phase4Telemetry?: unknown }).__phase4Telemetry || {});
+    const versions = await page.evaluate(() => (window as unknown as { __renderVersionLog?: unknown[] }).__renderVersionLog || []);
+    const telemetry = await page.evaluate(() => (window as unknown as { __phase4Telemetry?: any }).__phase4Telemetry || {});
 
     const screenshot = path.join(outDir, `flicker-run-${i + 1}.png`);
     await page.screenshot({ path: screenshot, fullPage: true });
@@ -31,9 +32,18 @@ async function run() {
   }
 
   await browser.close();
+
+  // Assertions
+  console.log('\n[Audit] Verifying flicker-visual results...');
+  runs.forEach((run, i) => {
+    assert(Array.isArray(run.versions) && run.versions.length > 0, `Run ${i + 1}: renderVersion log is empty`);
+    assert(run.telemetry?.events?.length > 0, `Run ${i + 1}: telemetry events is empty`);
+    console.log(`[OK] Run ${i + 1} passed assertions`);
+  });
+
   const reportPath = path.join(outDir, 'flicker-report.json');
   await fs.promises.writeFile(reportPath, JSON.stringify({ targetUrl, runs }, null, 2));
-  console.log(`Phase4 visual report written to ${reportPath}`);
+  console.log(`\nPhase4 visual report written to ${reportPath}`);
 }
 
 run().catch((error) => {

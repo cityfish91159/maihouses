@@ -1,0 +1,200 @@
+{
+  "targetUrl": "https://maihouses.vercel.app/maihouses/property.html",
+  "runs": [
+    {
+      "index": 1,
+      "versions": [
+        {
+          "version": 1,
+          "source": "mock",
+          "reason": "bootstrap",
+          "ts": 109.79999999993015
+        },
+        {
+          "version": 2,
+          "source": "fallback",
+          "reason": "api-null",
+          "ts": 578.5999999999767
+        }
+      ],
+      "telemetry": {
+        "events": [
+          {
+            "name": "bootstrap:start",
+            "ts": 94.29999999993015
+          },
+          {
+            "name": "render:mock",
+            "ts": 94.79999999993015,
+            "version": 1
+          },
+          {
+            "name": "render:fallback",
+            "ts": 577.1999999999534,
+            "version": 2,
+            "apiMs": 482.4000000000233
+          }
+        ],
+        "lcp": 248,
+        "fcp": 92
+      },
+      "screenshot": "/home/codespace/maihouses/arena/results/phase4/flicker-run-1.png"
+    },
+    {
+      "index": 2,
+      "versions": [
+        {
+          "version": 1,
+          "source": "mock",
+          "reason": "bootstrap",
+          "ts": 58.09999999997672
+        },
+        {
+          "version": 2,
+          "source": "fallback",
+          "reason": "api-null",
+          "ts": 517.0999999999767
+        }
+      ],
+      "telemetry": {
+        "events": [
+          {
+            "name": "bootstrap:start",
+            "ts": 45.59999999997672
+          },
+          {
+            "name": "render:mock",
+            "ts": 45.70000000006985,
+            "version": 1
+          },
+          {
+            "name": "render:fallback",
+            "ts": 516.7000000000698,
+            "version": 2,
+            "apiMs": 470.89999999990687
+          }
+        ],
+        "lcp": 92,
+        "fcp": 40
+      },
+      "screenshot": "/home/codespace/maihouses/arena/results/phase4/flicker-run-2.png"
+    },
+    {
+      "index": 3,
+      "versions": [
+        {
+          "version": 1,
+          "source": "mock",
+          "reason": "bootstrap",
+          "ts": 57.90000000002328
+        },
+        {
+          "version": 2,
+          "source": "fallback",
+          "reason": "api-null",
+          "ts": 515.5999999999767
+        }
+      ],
+      "telemetry": {
+        "events": [
+          {
+            "name": "bootstrap:start",
+            "ts": 50.20000000006985
+          },
+          {
+            "name": "render:mock",
+            "ts": 50.5,
+            "version": 1
+          },
+          {
+            "name": "render:fallback",
+            "ts": 515.2000000000698,
+            "version": 2,
+            "apiMs": 464.70000000006985
+          }
+        ],
+        "lcp": 108,
+        "fcp": 48
+      },
+      "screenshot": "/home/codespace/maihouses/arena/results/phase4/flicker-run-3.png"
+    },
+    {
+      "index": 4,
+      "versions": [
+        {
+          "version": 1,
+          "source": "mock",
+          "reason": "bootstrap",
+          "ts": 46.70000000006985
+        },
+        {
+          "version": 2,
+          "source": "fallback",
+          "reason": "api-null",
+          "ts": 519.3000000000466
+        }
+      ],
+      "telemetry": {
+        "events": [
+          {
+            "name": "bootstrap:start",
+            "ts": 36.20000000006985
+          },
+          {
+            "name": "render:mock",
+            "ts": 36.300000000046566,
+            "version": 1
+          },
+          {
+            "name": "render:fallback",
+            "ts": 518.9000000000233,
+            "version": 2,
+            "apiMs": 482.5
+          }
+        ],
+        "lcp": 120,
+        "fcp": 36
+      },
+      "screenshot": "/home/codespace/maihouses/arena/results/phase4/flicker-run-4.png"
+    },
+    {
+      "index": 5,
+      "versions": [
+        {
+          "version": 1,
+          "source": "mock",
+          "reason": "bootstrap",
+          "ts": 56.70000000006985
+        },
+        {
+          "version": 2,
+          "source": "fallback",
+          "reason": "api-null",
+          "ts": 513.9000000000233
+        }
+      ],
+      "telemetry": {
+        "events": [
+          {
+            "name": "bootstrap:start",
+            "ts": 46.800000000046566
+          },
+          {
+            "name": "render:mock",
+            "ts": 47,
+            "version": 1
+          },
+          {
+            "name": "render:fallback",
+            "ts": 513.4000000000233,
+            "version": 2,
+            "apiMs": 466.30000000004657
+          }
+        ],
+        "lcp": 88,
+        "fcp": 40
+      },
+      "screenshot": "/home/codespace/maihouses/arena/results/phase4/flicker-run-5.png"
+    }
+  ]
+}

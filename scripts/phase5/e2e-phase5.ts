@@ -3,6 +3,18 @@ import path from 'node:path';
 import assert from 'node:assert';
 import { chromium, type Page, type Route } from 'playwright-chromium';
 
+interface Phase4Telemetry {
+  events: Array<{ name: string; ts: number; [key: string]: unknown }>;
+  lcp: number | null;
+  fcp: number | null;
+}
+
+interface WindowWithApi extends Window {
+  PropertyAPI: { getPageData: () => Promise<unknown> };
+  __phase4Telemetry?: Phase4Telemetry;
+  __renderVersionLog?: unknown[];
+}
+
 const BASE_URL = process.env.P5_URL || 'https://maihouses.vercel.app/maihouses/property.html';
 const API_PATH = '/api/property/page-data';
 
@@ -19,8 +31,9 @@ async function runHappyPath(page: Page) {
   await page.waitForTimeout(800);
 
   const { renderLog, telemetry, listingCount, mainHtml } = await page.evaluate(() => {
-    const log = (window as unknown as { __renderVersionLog?: unknown[] }).__renderVersionLog || [];
-    const tm = (window as unknown as { __phase4Telemetry?: unknown }).__phase4Telemetry || {};
+    const win = window as unknown as WindowWithApi;
+    const log = win.__renderVersionLog || [];
+    const tm = win.__phase4Telemetry || { events: [], lcp: null, fcp: null };
     const listings = document.querySelectorAll('#listing-grid-container article').length;
     const mainInner = (document.getElementById('featured-main-container') || {}).innerHTML || '';
     return { renderLog: log, telemetry: tm, listingCount: listings, mainHtml: mainInner };
@@ -29,7 +42,7 @@ async function runHappyPath(page: Page) {
   assert(mainHtml.includes('<img'), 'featured main missing image');
   assert(listingCount > 0, 'listing cards not rendered');
   assert(Array.isArray(renderLog) && renderLog.length > 0, 'render log missing');
-  assert(telemetry && (telemetry as Record<string, unknown>).events, 'telemetry missing');
+  assert(telemetry && telemetry.events && telemetry.events.length > 0, 'telemetry missing');
   console.log('[OK] happy path render + telemetry captured');
 }
 
@@ -43,14 +56,15 @@ async function runFallbackTest(page: Page) {
   await page.waitForTimeout(500);
 
   const { telemetry, renderLog, listingCount } = await page.evaluate(() => {
+    const win = window as unknown as WindowWithApi;
     return {
-      telemetry: (window as unknown as { __phase4Telemetry?: unknown }).__phase4Telemetry || {},
-      renderLog: (window as unknown as { __renderVersionLog?: unknown[] }).__renderVersionLog || [],
+      telemetry: win.__phase4Telemetry || { events: [], lcp: null, fcp: null },
+      renderLog: win.__renderVersionLog || [],
       listingCount: document.querySelectorAll('#listing-grid-container article').length
     };
   });
 
-  const lastEvent = Array.isArray((telemetry as any).events) ? (telemetry as any).events.at(-1) : null;
+  const lastEvent = Array.isArray(telemetry.events) ? telemetry.events.at(-1) : null;
   assert(lastEvent?.name === 'render:fallback', 'fallback event not recorded');
   assert(listingCount > 0, 'fallback did not render listings');
   assert(Array.isArray(renderLog) && renderLog.length > 0, 'render log missing under fallback');
@@ -74,14 +88,15 @@ async function runRaceGuardTest(page: Page) {
   await page.waitForTimeout(300);
 
   const results = await page.evaluate(async () => {
-    const api = (window as unknown as { PropertyAPI: any }).PropertyAPI;
+    const win = window as unknown as WindowWithApi;
+    const api = win.PropertyAPI;
     const settled = await Promise.allSettled([api.getPageData(), api.getPageData()]);
     return settled.map((r) => (r.status === 'fulfilled' ? r.value : null));
   });
 
   assert(results.length === 2, 'race test missing results');
   assert(results[0] === null, 'first (aborted) call should be null');
-  assert(results[1] && results[1].featured, 'second call should succeed with data');
+  assert(results[1] && (results[1] as any).featured, 'second call should succeed with data');
   console.log('[OK] race guard aborts stale request and returns fresh data');
 }
 

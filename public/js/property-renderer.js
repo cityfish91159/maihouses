@@ -36,12 +36,14 @@ export class PropertyRenderer {
   }
 
   async preloadImages(data) {
-    const urls = [
+    const rawUrls = [
       data?.featured?.main?.image,
       data?.featured?.sideTop?.image,
       data?.featured?.sideBottom?.image,
       ...(data?.listings || []).map((item) => item.image)
     ].filter(Boolean);
+
+    const urls = [...new Set(rawUrls)];
 
     const summary = {
       attempted: urls.length,

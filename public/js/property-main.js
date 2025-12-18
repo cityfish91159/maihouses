@@ -4,7 +4,7 @@ import propertyAPI from './services/property-api.js';
 
 const now = () => (typeof performance !== 'undefined' && performance.now ? performance.now() : Date.now());
 
-function createTelemetry() {
+export function createTelemetry() {
   const events = [];
   let lcp = null;
   let fcp = null;

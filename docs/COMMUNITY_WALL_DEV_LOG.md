@@ -3753,3 +3753,32 @@ P7 Phase 1-2 已基本完成，但存在「偷懶沒做完」的問題：
 - 資料安全僅依賴前端過濾
 
 待下次迭代修復上述問題。
+
+---
+
+## 2025-12-18 - Phase 6 審計與 P31-P34 修復 (Commit e5870c9+)
+
+### 審計背景
+針對 Phase 3-6 的代碼品質進行全面審計，發現 8 項缺失 (P31-P38)。
+
+### 修復清單 (P31-P34)
+
+| ID | 缺失描述 | 修復內容 | 驗證結果 |
+|----|----------|----------|----------|
+| **P31** | E2E 測試使用 `as any` | 定義 `Phase4Telemetry` 與 `WindowWithApi` 介面，移除所有 `as any` | `npm run test:phase5` ✅ |
+| **P32** | Phase 4 測試覆蓋率低 | 增加 AbortController 超時、並發請求、renderVersion 競態、preload 去重等 6 個測試案例 | `npm run test:phase4` ✅ (9 tests) |
+| **P33** | LCP Observer 測試問題 | 導出 `createTelemetry` 並新增 `telemetry.test.js` 使用 Mock PerformanceObserver | `npm run test:telemetry` ✅ |
+| **P34** | Flicker 測試無斷言 | 在 `flicker-visual.ts` 加入 `assert` 驗證 renderVersion 與 telemetry | `npm run phase4:flicker` ✅ |
+
+### 變更檔案
+
+- `scripts/phase5/e2e-phase5.ts`: 移除 `as any`，增加型別定義。
+- `public/js/__tests__/property-phase4.test.js`: 增加 6 個測試案例。
+- `public/js/property-main.js`: 導出 `createTelemetry`。
+- `public/js/__tests__/telemetry.test.js`: **新增** 測試檔案。
+- `scripts/phase4/flicker-visual.ts`: 加入斷言邏輯。
+- `public/js/property-renderer.js`: `preloadImages` 加入 URL 去重。
+- `package.json`: 新增 `test:telemetry` 腳本。
+
+### 結論
+成功消除 4 項 P0/P1 級別的「詐騙代碼」與「偷懶實作」，大幅提升測試覆蓋率與型別安全性。
