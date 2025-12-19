@@ -53,9 +53,9 @@ export interface ValidationState {
   price: { valid: boolean; message: string };
   address: { valid: boolean; message: string };
   communityName: { valid: boolean; message: string };
-  advantage1: { valid: boolean; message: string; charCount: number; contentWarning?: string };
-  advantage2: { valid: boolean; message: string; charCount: number; contentWarning?: string };
-  disadvantage: { valid: boolean; message: string; charCount: number; contentWarning?: string };
+  advantage1: { valid: boolean; message: string; charCount: number; contentWarning?: string | undefined };
+  advantage2: { valid: boolean; message: string; charCount: number; contentWarning?: string | undefined };
+  disadvantage: { valid: boolean; message: string; charCount: number; contentWarning?: string | undefined };
   highlights: { valid: boolean; message: string; warnings: string[] };
   images: { valid: boolean; message: string; count: number };
   
@@ -136,6 +136,7 @@ export function validateImages(files: File[]): {
 
 /**
  * 主要 Hook
+ * 實作「標籤/文字」權重互補邏輯 (HP-2.1)
  */
 export function usePropertyFormValidation(
   form: FormFields,
@@ -144,6 +145,15 @@ export function usePropertyFormValidation(
   
   const validation = useMemo(() => {
     const errors: ValidationError[] = [];
+    const highlights = form.highlights || [];
+    const highlightCount = highlights.length;
+
+    // 動態計算字數門檻 (互補邏輯)
+    const dynamicRules = {
+      advMin: highlightCount >= 3 ? 2 : 5,
+      adv2Optional: highlightCount >= 5,
+      disMin: highlightCount >= 3 ? 5 : 10,
+    };
     
     // 標題驗證
     const titleValid = form.title.length >= VALIDATION_RULES.title.minLength;
@@ -176,124 +186,79 @@ export function usePropertyFormValidation(
       errors.push({ field: 'communityName', message: communityMessage });
     }
     
-    // 優點1 驗證
+    // 優點1 驗證 (受動態門檻影響)
     const adv1Length = form.advantage1.length;
-    const adv1Valid = adv1Length >= VALIDATION_RULES.advantage.minLength;
+    const adv1Valid = adv1Length >= dynamicRules.advMin;
     const adv1Message = adv1Valid 
       ? '' 
-      : `還需 ${VALIDATION_RULES.advantage.minLength - adv1Length} 字`;
+      : `還需 ${dynamicRules.advMin - adv1Length} 字`;
     if (!adv1Valid && adv1Length > 0) {
       errors.push({ field: 'advantage1', message: `優點1${adv1Message}` });
     }
     
-    // 優點2 驗證
+    // 優點2 驗證 (受動態門檻影響)
     const adv2Length = form.advantage2.length;
-    const adv2Valid = adv2Length >= VALIDATION_RULES.advantage.minLength;
+    const adv2Valid = dynamicRules.adv2Optional || adv2Length >= dynamicRules.advMin;
     const adv2Message = adv2Valid 
       ? '' 
-      : `還需 ${VALIDATION_RULES.advantage.minLength - adv2Length} 字`;
+      : `還需 ${dynamicRules.advMin - adv2Length} 字`;
     if (!adv2Valid && adv2Length > 0) {
       errors.push({ field: 'advantage2', message: `優點2${adv2Message}` });
     }
     
-    // 公道話 驗證
+    // 公道話 驗證 (受動態門檻影響)
     const disLength = form.disadvantage.length;
-    const disValid = disLength >= VALIDATION_RULES.disadvantage.minLength;
+    const disValid = disLength >= dynamicRules.disMin;
     const disMessage = disValid 
       ? '' 
-      : `還需 ${VALIDATION_RULES.disadvantage.minLength - disLength} 字`;
+      : `還需 ${dynamicRules.disMin - disLength} 字`;
     if (!disValid && disLength > 0) {
       errors.push({ field: 'disadvantage', message: `公道話${disMessage}` });
     }
-    
-    // 敏感詞檢測 - 檢查三個文字欄位
-    const contentWarnings: string[] = [];
-    let blockByContent = false;
-    
-    const adv1ContentCheck = form.advantage1.length > 0 ? checkContent(form.advantage1) : null;
-    const adv2ContentCheck = form.advantage2.length > 0 ? checkContent(form.advantage2) : null;
-    const disContentCheck = form.disadvantage.length > 0 ? checkContent(form.disadvantage) : null;
-    
-    // 重點膠囊內容檢查
-    const highlightsContentChecks = (form.highlights || []).map(tag => checkContent(tag));
-    const highlightsHasSensitive = highlightsContentChecks.some(res => !res.passed && res.issues.some(i => i.type === 'sensitive'));
-    const highlightsWarnings = highlightsContentChecks
-      .filter(res => !res.passed)
-      .flatMap(res => res.issues.map(i => i.message));
 
-    // 計算各欄位的內容警告訊息
-    const adv1ContentWarning = (!adv1ContentCheck || adv1ContentCheck.passed) 
-      ? undefined 
-      : adv1ContentCheck.issues.map(i => i.message).join('、');
-    
-    const adv2ContentWarning = (!adv2ContentCheck || adv2ContentCheck.passed) 
-      ? undefined 
-      : adv2ContentCheck.issues.map(i => i.message).join('、');
-    
-    const disContentWarning = (!disContentCheck || disContentCheck.passed) 
-      ? undefined 
-      : disContentCheck.issues.map(i => i.message).join('、');
-    
-    // 輔助函數：判斷是否為嚴重問題（敏感詞阻擋送出）
-    const hasSensitiveIssue = (result: ContentCheckResult | null): boolean => {
-      if (!result) return false;
-      return result.issues.some(i => i.type === 'sensitive');
-    };
-    
-    // 收集警告
-    if (adv1ContentCheck && !adv1ContentCheck.passed) {
-      const warning = `優點1：${adv1ContentWarning}`;
-      contentWarnings.push(warning);
-      if (hasSensitiveIssue(adv1ContentCheck)) {
-        blockByContent = true;
-        errors.push({ field: 'advantage1', message: adv1ContentWarning! });
-      }
-    }
-    
-    if (adv2ContentCheck && !adv2ContentCheck.passed) {
-      const warning = `優點2：${adv2ContentWarning}`;
-      contentWarnings.push(warning);
-      if (hasSensitiveIssue(adv2ContentCheck)) {
-        blockByContent = true;
-        errors.push({ field: 'advantage2', message: adv2ContentWarning! });
-      }
-    }
-    
-    if (disContentCheck && !disContentCheck.passed) {
-      const warning = `公道話：${disContentWarning}`;
-      contentWarnings.push(warning);
-      if (hasSensitiveIssue(disContentCheck)) {
-        blockByContent = true;
-        errors.push({ field: 'disadvantage', message: disContentWarning! });
-      }
-    }
-
-    if (highlightsWarnings.length > 0) {
-      contentWarnings.push(...highlightsWarnings.map(w => `重點膠囊：${w}`));
-      if (highlightsHasSensitive) {
-        blockByContent = true;
-        errors.push({ field: 'highlights', message: '重點膠囊包含敏感詞' });
-      }
+    // 重點膠囊驗證
+    const highlightsValid = highlightCount >= 3;
+    const highlightsMessage = highlightsValid ? '' : '請至少選擇 3 個重點膠囊';
+    if (!highlightsValid && highlightCount > 0) {
+      errors.push({ field: 'highlights', message: highlightsMessage });
     }
     
     // 圖片驗證
     const imagesValid = imageCount >= VALIDATION_RULES.images.minCount;
-    const imagesMessage = imagesValid ? '' : '請至少上傳一張照片';
+    const imagesMessage = imagesValid ? '' : '請至少上傳 1 張照片';
     if (!imagesValid) {
       errors.push({ field: 'images', message: imagesMessage });
     }
     
-    // 重點膠囊驗證 (如果有的話)
-    const highlightsValid = form.highlights ? form.highlights.length >= 3 : true;
+    // 內容審核 (遞迴檢查所有文字欄位)
+    const checkFields = [
+      { name: '標題', value: form.title },
+      { name: '地址', value: form.address },
+      { name: '社區', value: form.communityName },
+      { name: '優點1', value: form.advantage1 },
+      { name: '優點2', value: form.advantage2 },
+      { name: '公道話', value: form.disadvantage },
+      ...highlights.map((h, i) => ({ name: `標籤${i+1}`, value: h }))
+    ];
 
-    // 整體狀態
+    const contentWarnings: string[] = [];
+    let blockSubmit = false;
+
+    const fieldResults = checkFields.map(f => {
+      const result = checkContent(f.value);
+      if (!result.passed) {
+        result.issues.forEach(issue => {
+          contentWarnings.push(`${f.name}: ${issue.message}`);
+          if (issue.type === 'sensitive') blockSubmit = true;
+        });
+      }
+      return { name: f.name, result };
+    });
+
     const basicValid = titleValid && priceValid && addressValid && communityValid;
-    const twoGoodOneFairValid = (form.highlights ? highlightsValid : (adv1Valid && adv2Valid)) && disValid;
-    const allValid = basicValid && twoGoodOneFairValid && imagesValid;
-    
-    // 考慮敏感詞：block 等級會阻止送出
-    const canSubmit = allValid && !blockByContent;
-    
+    const twoGoodOneFairValid = adv1Valid && adv2Valid && disValid && highlightsValid;
+    const allValid = basicValid && twoGoodOneFairValid && imagesValid && !blockSubmit;
+
     return {
       title: { valid: titleValid, message: titleMessage },
       price: { valid: priceValid, message: priceMessage },
@@ -303,46 +268,48 @@ export function usePropertyFormValidation(
         valid: adv1Valid, 
         message: adv1Message, 
         charCount: adv1Length,
-        ...(adv1ContentWarning && { contentWarning: adv1ContentWarning }),
+        contentWarning: fieldResults.find(r => r.name === '優點1')?.result.issues[0]?.message
       },
       advantage2: { 
         valid: adv2Valid, 
         message: adv2Message, 
         charCount: adv2Length,
-        ...(adv2ContentWarning && { contentWarning: adv2ContentWarning }),
+        contentWarning: fieldResults.find(r => r.name === '優點2')?.result.issues[0]?.message
       },
       disadvantage: { 
         valid: disValid, 
         message: disMessage, 
         charCount: disLength,
-        ...(disContentWarning && { contentWarning: disContentWarning }),
+        contentWarning: fieldResults.find(r => r.name === '公道話')?.result.issues[0]?.message
       },
-      highlights: {
-        valid: highlightsValid,
-        message: highlightsValid ? '' : '請至少選擇 3 個重點膠囊',
-        warnings: highlightsWarnings
+      highlights: { 
+        valid: highlightsValid, 
+        message: highlightsMessage,
+        warnings: fieldResults.filter(r => r.name.startsWith('標籤')).map(r => r.result.issues[0]?.message).filter(Boolean) as string[]
       },
       images: { valid: imagesValid, message: imagesMessage, count: imageCount },
-      // 向後兼容別名
+      
       adv1Valid,
       adv2Valid,
       disValid,
       communityValid,
       highlightsValid,
-      // 整體狀態
+      
       basicValid,
       twoGoodOneFairValid,
       allValid,
-      canSubmit,
+      canSubmit: allValid,
+      
       contentCheck: {
         hasIssues: contentWarnings.length > 0,
-        blockSubmit: blockByContent,
+        blockSubmit,
         warnings: contentWarnings,
       },
+      
       errors,
-    } as ValidationState;
+    };
   }, [form, imageCount]);
-  
+
   return validation;
 }
 

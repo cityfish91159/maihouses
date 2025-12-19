@@ -1,10 +1,18 @@
-Timestamp: 2025-12-19T10:00:00Z
-Deploy: TODO Reorganization & HighlightPicker Planning
-- Docs: 重整 COMMUNITY_WALL_TODO.md，歸檔歷史審計報告，建立 SSOT 任務清單。
-- Plan: 優先採用 HighlightPicker 方式製作重點膠囊。
-- Fix: 移除 TODO 中已完成項目的冗餘描述，保持文件精簡。
+Timestamp: 2025-12-19T06:32:40Z
+Deploy: HP-3 - Google Level Architecture Refactor
+- Performance: Regex pre-compilation ($O(N)$).
+- Security: Zod schema validation in service layer.
+- Architecture: Context API to eliminate Prop Drilling.
+- UI: Sonner Toast integration.
 
-Timestamp: 2025-12-17T18:50:00Z
+Timestamp: 2025-12-19T10:45:00Z
+Deploy: HP1.1 - HighlightPicker Integration & UI Refactoring
+- UI: Moved HighlightPicker to a standalone "Property Features" section.
+- Validation: Integrated 3-tag minimum and sensitive word filtering for tags.
+- Service: Synced highlights array to Supabase features column.
+- Fix: Restored missing Advantage 1 label and removed redundant UI dividers.
+
+Timestamp: 2025-12-19T10:00:00Z
 Deploy: P11 Phase 5-6 - E2E 驗證 + 部署觸發
 - New: `scripts/phase5/e2e-phase5.ts` Playwright 測試（happy/fallback/race）
 - Fix: 加入 Page/Route 型別，移除 TS7006

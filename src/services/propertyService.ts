@@ -1,6 +1,30 @@
 import { supabase } from '../lib/supabase';
 import { Agent, Imported591Data } from '../lib/types';
 import { computeAddressFingerprint, normalizeCommunityName } from '../utils/address';
+import { z } from 'zod';
+
+/**
+ * Google 級別防禦性驗證 Schema (SSOT)
+ * 確保 Service 層不接受任何非法資料
+ */
+const PropertyFormSchema = z.object({
+  title: z.string().min(1, '標題必填').max(100, '標題太長'),
+  price: z.string().min(1, '價格必填'),
+  address: z.string().min(5, '地址太短').max(200, '地址太長'),
+  communityName: z.string().min(1, '社區名稱必填'),
+  advantage1: z.string().max(100),
+  advantage2: z.string().max(100),
+  disadvantage: z.string().min(10, '缺點至少需要 10 個字').max(200),
+  highlights: z.array(z.string()).optional(),
+}).refine((data) => {
+  // 動態驗證邏輯：若標籤 >= 3，優點字數門檻降低
+  const hasEnoughHighlights = (data.highlights?.length || 0) >= 3;
+  const minAdvLength = hasEnoughHighlights ? 2 : 5;
+  return data.advantage1.length >= minAdvLength && data.advantage2.length >= minAdvLength;
+}, {
+  message: "優點描述字數不足 (若標籤少於 3 個，優點需至少 5 字)",
+  path: ["advantage1"]
+});
 
 // 定義物件資料介面
 export interface PropertyData {
@@ -45,6 +69,7 @@ export interface PropertyFormInput {
   advantage2: string;
   disadvantage: string;
   highlights?: string[]; // 新增：重點膠囊陣列
+  images: string[];      // 新增：圖片 URL 陣列
   sourceExternalId: string;
 }
 
@@ -279,6 +304,13 @@ export const propertyService = {
   // 4. 建立物件 (新版 - 含結構化欄位 + 社區自動建立)
   // 核心邏輯：地址優先比對 → 社區名模糊比對輔助 → 建新社區(待審核)
   createPropertyWithForm: async (form: PropertyFormInput, images: string[], existingCommunityId?: string) => {
+    // 🛡️ 防禦性驗證：Service 層不信任 Client 資料
+    const validation = PropertyFormSchema.safeParse(form);
+    if (!validation.success) {
+      const errorMsg = validation.error.issues.map((e: any) => e.message).join(', ');
+      throw new Error(`資料驗證失敗: ${errorMsg}`);
+    }
+
     // 確認登入狀態
     const { data: { user } } = await supabase.auth.getUser();
     
@@ -412,19 +444,20 @@ export const propertyService = {
         floor_total: Number(form.floorTotal || 0),
         property_type: form.type,
         
-        // 結構化儲存 (關鍵)
+        // 結構化儲存 (HP-2.3: 確保 SSOT)
         advantage_1: form.advantage1,
         advantage_2: form.advantage2,
         disadvantage: form.disadvantage,
         
         description: form.description,
         images: images,
-        features: [
+        // SSOT: features 欄位存儲所有標籤，包含類型與重點膠囊
+        features: Array.from(new Set([
           form.type, 
           ...(form.highlights || []),
-          !form.highlights && form.advantage1,
-          !form.highlights && form.advantage2
-        ].filter(Boolean) as string[],
+          // 只有在沒有 highlights 時才 fallback 到 advantage
+          ...((!form.highlights || form.highlights.length === 0) ? [form.advantage1, form.advantage2] : [])
+        ])).filter(Boolean) as string[],
         
         source_platform: form.sourceExternalId ? '591' : 'MH',
         source_external_id: form.sourceExternalId || null

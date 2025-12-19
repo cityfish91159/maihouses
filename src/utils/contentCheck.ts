@@ -30,6 +30,26 @@ const COMMUNITY_NAME_BLACKLIST = [
   'A棟', 'B棟', 'C棟', 'A區', 'B區', 'C區',
 ];
 
+/**
+ * 預編譯 Regex 模式，提升效能 (Google 級別優化)
+ */
+const escapeRegex = (str: string) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+// 1. 敏感詞 Regex (單次掃描)
+const SENSITIVE_REGEX = new RegExp(
+  SENSITIVE_WORDS.map(w => escapeRegex(w.replace(/[^\u4e00-\u9fa5a-zA-Z0-9]/g, '').toLowerCase())).join('|'),
+  'i'
+);
+
+// 2. 廣告詞 Regex (支援干擾字元變體)
+const AD_REGEX_PATTERN = AD_WORDS.map(word => 
+  word.split('').map(char => escapeRegex(char)).join('[^\\u4e00-\\u9fa5a-zA-Z0-9]{0,2}')
+).join('|');
+const AD_REGEX = new RegExp(AD_REGEX_PATTERN, 'i');
+
+// 3. 社區黑名單 Regex
+const COMMUNITY_BLACKLIST_REGEX = new RegExp(`^(${COMMUNITY_NAME_BLACKLIST.map(escapeRegex).join('|')})$`, 'i');
+
 export interface ContentCheckResult {
   passed: boolean;
   issues: {
@@ -41,31 +61,34 @@ export interface ContentCheckResult {
 
 /**
  * 檢查文字內容是否包含敏感詞
+ * 採用 Regex 強化版，可過濾干擾字元（如：幹.你.娘、加-L-I-N-E）
+ * 效能優化：使用預編譯 Regex 達成 O(N) 匹配
  */
 export function checkContent(text: string): ContentCheckResult {
   const issues: ContentCheckResult['issues'] = [];
-  const lowerText = text.toLowerCase();
+  if (!text) return { passed: true, issues: [] };
+  
+  // 建立干擾字元過濾後的純文字 (移除所有標點符號、空白、特殊字元)
+  const cleanText = text.replace(/[^\u4e00-\u9fa5a-zA-Z0-9]/g, '').toLowerCase();
 
-  // 檢查敏感詞
-  for (const word of SENSITIVE_WORDS) {
-    if (text.includes(word)) {
-      issues.push({
-        type: 'sensitive',
-        word,
-        message: `包含不當用語「${word}」`,
-      });
-    }
+  // 1. 檢查敏感詞 (使用預編譯 Regex)
+  const sensitiveMatch = cleanText.match(SENSITIVE_REGEX);
+  if (sensitiveMatch) {
+    issues.push({
+      type: 'sensitive',
+      word: sensitiveMatch[0],
+      message: `包含不當用語`,
+    });
   }
 
-  // 檢查廣告詞
-  for (const word of AD_WORDS) {
-    if (lowerText.includes(word.toLowerCase())) {
-      issues.push({
-        type: 'ad',
-        word,
-        message: `疑似廣告內容「${word}」`,
-      });
-    }
+  // 2. 檢查廣告詞 (使用預編譯 Regex 偵測變體)
+  const adMatch = text.match(AD_REGEX);
+  if (adMatch) {
+    issues.push({
+      type: 'ad',
+      word: adMatch[0],
+      message: `疑似廣告內容`,
+    });
   }
 
   return {
@@ -96,15 +119,12 @@ export function checkCommunityName(name: string): ContentCheckResult {
     });
   }
 
-  // 黑名單檢查
-  for (const word of COMMUNITY_NAME_BLACKLIST) {
-    if (trimmed === word || new RegExp(`^${word}$`, 'i').test(trimmed)) {
-      issues.push({
-        type: 'blacklist',
-        word,
-        message: `「${word}」不是正式社區名稱，請輸入完整社區名`,
-      });
-    }
+  // 黑名單檢查 (使用預編譯 Regex)
+  if (COMMUNITY_BLACKLIST_REGEX.test(trimmed)) {
+    issues.push({
+      type: 'blacklist',
+      message: `「${trimmed}」不是正式社區名稱，請輸入完整社區名`,
+    });
   }
 
   // 格式檢查：純地址（路街巷弄+號）

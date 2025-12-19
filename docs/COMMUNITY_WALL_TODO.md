@@ -41,50 +41,20 @@
 
 ## ✅ 已完成階段 (Milestones)
 
-### ✨ HighlightPicker 整合 (2025-12-19)
-- ✅ **HP-1.1**: 在 `PropertyUploadPage` 整合 `HighlightPicker` 組件。
-- ✅ **HP-1.2**: 串接 `HighlightPicker` 輸出至 `advantage1/2` 欄位 (透過 `propertyService` 自動映射)。
-- ✅ **HP-1.3**: 確保自定義標籤符合 5 字以內規範，並修正 `TS2532` 潛在 undefined 錯誤。
-- ✅ **HP-1.4**: 實作 `usePropertyFormValidation` 整合，支援至少 3 個膠囊驗證與敏感詞過濾。
-- ✅ **HP-1.5**: 更新 `propertyService` 支援 `highlights` 陣列存儲，並與 `features` 欄位同步。
+### ✨ Phase 3: HP 重構與架構硬化 (2025-12-19) ✅
+- ✅ **HP-3**: 實作 `UploadContext` 消除 Prop Drilling，整合 Zod 驗證與 Regex 效能優化。
+- ✅ **HP-2**: 模組化上傳頁面，優化標籤權重邏輯與敏感詞過濾。
+- ✅ **HP-1**: 整合 `HighlightPicker` 並串接 `advantage` 欄位。
 
-### 🧩 KC1 Phase 1 & 2 (2025-12-18)
-- ✅ **KC-1.1**: 在 API adapter 層新增 `tags` 統一生成函數。
-- ✅ **KC-1.2**: 讓所有輸出遵守 index 語意：`0..1 highlights`、`2..3 specs`。
-- ✅ **KC-2.1**: 詳情頁移除 hardcode tags，改讀取結構化欄位。
-- ✅ **KC-2.2**: 擴充 `propertyService` 回傳必要結構化欄位。
-- ✅ **KC-2.3**: 詳情頁新增「物件基本資訊」區塊 (坪數/格局/樓層)。
+### 🧩 KC1 Phase 1 & 2 (2025-12-18) ✅
+- ✅ 在 API adapter 層新增 `tags` 統一生成函數。
+- ✅ 詳情頁移除 hardcode tags，改讀取結構化欄位。
+- ✅ 詳情頁新增「物件基本資訊」區塊。
 
-### 🏠 P11 Phase 1 (2025-12-17)
-- ✅ **D1-D6**: 資料標準化 (SSOT) 建立，Zod Schema 驗證通過。
-- ✅ **D7-D19**: Adapter 業務代碼引用與 Regex 修正。
+### 🏠 P11 Phase 1 (2025-12-17) ✅
+- ✅ 資料標準化 (SSOT) 建立，Zod Schema 驗證通過。
+- ✅ Adapter 業務代碼引用與 Regex 修正。
 
 ---
 
 ## 📜 歷史存檔 (Archive)
-
-<details>
-<summary>點擊展開 KC1 歷史審計報告 (KC1.1 - KC1.6)</summary>
-
-- **KC1.1**: 9 項缺失修正 (100/100)
-- **KC1.2**: 測試斷言同步問題 (92/100)
-- **KC1.5**: 繁中化與 SSOT 格式分裂修正 (78/100)
-- **KC1.6**: Hotfix 樓層正規化完成。
-</details>
-
-<details>
-<summary>點擊展開 P11 歷史審計報告 (D1 - D19)</summary>
-
-- **D1-D6**: 資料標準化完成。
-- **D7-D13**: JSON Schema 自動化與驗證腳本修正。
-- **D14-D19**: Adapter 業務代碼引用與 Regex 修正。
-</details>
-
----
-
-## 🛠️ 技術規範與禁止行為 (Red Lines)
-
-1. **禁止改動 UI**: HTML/CSS 結構不得隨意修改。
-2. **禁止 Loading 動畫**: 必須 Mock 秒開，背景靜默更新。
-3. **禁止同步 I/O**: Serverless 環境禁用 `readFileSync`。
-4. **禁止競態問題**: 必須有 `AbortController` + 版本控制。
