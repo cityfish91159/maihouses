@@ -52,7 +52,18 @@
   - 作法：新增 `.tiny-text-highlight`, `.lock-info` class；`createReviewElement` 改回傳 DOM，`renderFeaturedCard`/`renderListings` 以 DOM append reviews，移除 `innerHTML` 拼接 user content
   - 影響：完全移除 inline style；評價區改 DOM-safe append，降低 XSS 風險
 
-### 📁 修改的檔案清單
+### � 2025-12-19 審計發現重大 BUG（已修復）
+- **問題**: `renderListings` 函數中 `const article` 宣告了**兩次**
+  - 第一次：L312-348 建立 article 並設定 innerHTML
+  - 第二次：L355-391 完全一樣的代碼再來一次
+- **影響**: `SyntaxError: Identifier 'article' has already been declared` - **代碼根本無法執行**
+- **根因**: 複製貼上時忘記刪除原始代碼，純粹的便宜行事
+- **修復**:
+  - 刪除 L350-391 的重複區塊（包含 `ensureCard` 函數和第二個 `article`）
+  - 重構 diffing 邏輯為 inline：`const existingCard = existingMap.get(key)`
+  - innerHTML 使用次數從 4 個降到 3 個
+
+### �📁 修改的檔案清單
 | 檔案 | 變更類型 | 說明 |
 |------|----------|------|
 | `src/features/home/hooks/useSmartAsk.ts` | 重構 | 合併 Action 類型 |

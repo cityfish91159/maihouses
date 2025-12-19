@@ -346,61 +346,23 @@ export class PropertyRenderer {
             </div>
           </div>`;
 
-      const ensureCard = () => {
-        if (existingMap.has(key)) return existingMap.get(key);
-        return article;
-      };
-
-      const article = document.createElement('article');
-      article.className = 'horizontal-card';
-      article.setAttribute('data-key', key);
-      article.dataset.sig = signature;
-      article.innerHTML = `
-          <div class="horizontal-left">
-            <div class="horizontal-thumb">
-              <img src="${item.image}" alt="${this.escapeHtml(item.title)}" loading="lazy" decoding="async" />
-            </div>
-            <div class="horizontal-main">
-              <div class="horizontal-title-row">
-                <span>📍</span><strong>${this.escapeHtml(item.title)}</strong>
-                ${tagsHtml}
-              </div>
-              <div class="horizontal-price">${this.escapeHtml(item.price)}<span>${this.escapeHtml(item.size)}</span></div>
-              <div class="horizontal-rating"><span class="star">★</span>${this.escapeHtml(item.rating)}</div>
-              <div class="horizontal-reviews"></div>
-              <div class="horizontal-bottom-note">${this.escapeHtml(item.note || '')}</div>
-            </div>
-          </div>
-          <div class="horizontal-right">
-            <div class="horizontal-price">${this.escapeHtml(item.price)}<span>${this.escapeHtml(item.size)}</span></div>
-            <div class="lock-row">
-              <div class="lock-header">
-                <span class="lock-icon">🔒</span>
-                <div class="lock-text">
-                  <span class="lock-label">${this.escapeHtml(item.lockLabel || '')}</span>
-                  <span class="lock-count">還有 ${item.lockCount} 則評價</span>
-                </div>
-              </div>
-              <button class="lock-btn" type="button">註冊查看更多評價</button>
-            </div>
-            <div class="horizontal-cta-row">
-              <button class="btn-outline" type="button">查看</button>
-              <button class="heart-btn" type="button" aria-label="加入收藏">♡</button>
-            </div>
-          </div>`;
-
       const reviewsHost = article.querySelector('.horizontal-reviews');
       if (reviewsHost) {
         const nodes = (item.reviews || []).map((r) => this.createReviewElement(r, true));
         reviewsHost.replaceChildren(...nodes);
       }
 
-      const card = ensureCard();
-      if (card.dataset.sig !== signature) {
-        card.replaceChildren(...article.childNodes);
-        card.dataset.sig = signature;
+      // S1: DOM Diffing - 如果已存在相同 key 的 card 且簽名不同才更新
+      const existingCard = existingMap.get(key);
+      if (existingCard) {
+        if (existingCard.dataset.sig !== signature) {
+          existingCard.replaceChildren(...article.childNodes);
+          existingCard.dataset.sig = signature;
+        }
+        fragment.appendChild(existingCard);
+      } else {
+        fragment.appendChild(article);
       }
-      fragment.appendChild(card);
     });
 
     existingMap.forEach((card, key) => {

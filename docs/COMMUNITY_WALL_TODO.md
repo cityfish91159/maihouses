@@ -39,17 +39,17 @@
 
 ### 🚨 Google 首席前後端處長 技術審計報告 (2025-12-19)
 
-> **審計對象**: P11 S1-S4 優化實作 (Commit: `a00e23a`)
-> **評分**: **83/100**
+> **審計對象**: P11 S1-S4 優化實作 (最新 Commit)
+> **評分**: **75/100** ⚠️ 有扣分
 
 #### 🔴 嚴重問題 (必須修正)
 
 | # | 問題 | 檔案 | 引導修正方案 | 狀態 |
 |:--|:-----|:-----|:-------------|:---|
 | S1 | `renderListings` 全量 `innerHTML` | `property-renderer.js` | **實作 DOM Diffing** | ✅ |
-| S2 | `useSmartAsk.ts` dispatch 過多 | `useSmartAsk.ts` | **用 `useRef` 累積 chunks + `requestAnimationFrame` 批次更新** | ✅ |
+| S2 | `useSmartAsk.ts` dispatch 過多 | `useSmartAsk.ts` | **用 `useRef` + `rAF` + `startTransition`** | ✅ |
 | S3 | seed 資料使用舊格式 `tag` | `seed-property-page.json` | **全面更新為 `tags[]`** | ✅ |
-| S4 | `renderFeaturedCard` inline style 殘留 | `property-renderer.js` | **新增 `.tiny-text-highlight` `.lock-info` CSS class** | ✅ |
+| S4 | `renderFeaturedCard` inline style 殘留 | `property-renderer.js` | **新增 CSS class** | ✅ |
 
 #### 🟡 中等問題 (應該修正)
 
@@ -63,18 +63,28 @@
 
 | # | 問題 | 檔案 | 引導修正方案 | 狀態 |
 |:--|:-----|:-----|:-------------|:---|
-| L1 | `createReviewHtml` innerHTML XSS 風險 | `property-renderer.js` | **改用 `textContent`** | ⚠️ |
+| L1 | `createReviewHtml` innerHTML XSS 風險 | `property-renderer.js` | **改用 `textContent`** | ✅ |
 | L2 | proof 與 tags 分離無驗證 | N/A | **新增 Zod schema** | ⬜ |
 
-#### 📊 評分
+#### 📊 評分詳情
 
 | 項目 | 得分 | 扣分原因 |
 |:-----|:-----|:---------|
-| S1 DOM Diffing | 25/25 | - |
-| S2 狀態更新優化 | 25/25 | 使用 `useRef` + rAF + startTransition 批次更新 |
-| S3 Seed 資料統一 | 25/25 | - |
-| S4 代碼抽象化 | 25/25 | Config 驅動 + 全移除 inline style，reviews 改 DOM append 防 XSS |
-| **總分** | **100/100** | |
+| S1 DOM Diffing | 25/25 | 正確實作 key-based diffing + signature 比對 |
+| S2 狀態更新優化 | 25/25 | useRef + rAF + startTransition 完整實作 |
+| S3 Seed 資料統一 | 25/25 | 無 `tag` 殘留 |
+| S4 代碼抽象化 | 20/25 | Config 驅動 ✅，但 innerHTML 仍用於卡片模板 |
+| **小計** | **95/100** | |
+| **扣分** | **-20** | 曾有重大 BUG：重複宣告 `const article` 導致 SyntaxError |
+| **總分** | **75/100** | |
+
+#### ⚠️ 審計發現的嚴重問題（已修復）
+
+**BUG: `renderListings` 重複宣告 `article` 變數**
+- 位置：原 L312-348 與 L355-391 完全重複
+- 影響：`SyntaxError: Identifier 'article' has already been declared`
+- 根因：複製貼上未清理，代碼根本無法執行
+- 修復：刪除重複區塊，重構 ensureCard 為 inline 邏輯
 
 ---
 
