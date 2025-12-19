@@ -20,9 +20,7 @@ const PrivateWallLocked = memo(function PrivateWallLocked() {
         if (!isAuthenticated) {
             // P7-Audit-C12: Notify first, then redirect
             notify.info(STRINGS.COMMUNITY.NOTIFY_LOGIN_TITLE, STRINGS.COMMUNITY.NOTIFY_LOGIN_DESC);
-            setTimeout(() => {
-                window.location.href = ROUTES.AUTH;
-            }, 1500);
+            window.location.href = ROUTES.AUTH;
         } else {
             // 已登入但無權限 (需驗證)
             notify.info(STRINGS.COMMUNITY.NOTIFY_VERIFY_REQUIRED, STRINGS.COMMUNITY.NOTIFY_VERIFY_REQUIRED_DESC);

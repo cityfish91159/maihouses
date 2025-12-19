@@ -29,7 +29,7 @@ import {
   normalizeFeaturedReview,
   normalizeListingReview
 } from '../../src/types/property-page';
-import { buildKeyCapsuleTags } from '../../src/utils/keyCapsules';
+import { buildKeyCapsuleTags, formatArea, formatLayout } from '../../src/utils/keyCapsules';
 
 // ============================================
 // Supabase Client
@@ -308,14 +308,24 @@ function adaptToListingCard(
     halls: property.halls ?? undefined
   });
 
+  // P11-S1: 補齊規格標籤（坪數、房廳）
+  const specTags: string[] = [];
+  const sizeTag = formatArea(property.size ?? null);
+  const layoutTag = formatLayout(property.rooms ?? null, property.halls ?? null);
+
+  if (sizeTag && !tags.includes(sizeTag)) specTags.push(sizeTag);
+  if (layoutTag && !tags.includes(layoutTag)) specTags.push(layoutTag);
+
+  const finalTags = [...tags, ...specTags];
+
   return {
     image,
     title: property.title 
       ? `${property.title}・${property.address?.split('區')[0]}區` 
       : seed.title,
     // 修正 Legacy Tag (P1 缺失修正)：改為由 SSOT tags[0] 產出，不再獨立 fallback
-    tag: tags[0] || seed.tag,
-    tags,
+    tag: finalTags[0] || seed.tag,
+    tags: finalTags,
     price: roomLabel ? `${roomLabel} ${priceLabel}` : priceLabel,
     size: property.size ? `約 ${property.size} 坪` : seed.size,
     // D26 修正：rating 不存在，用評價數量作為替代

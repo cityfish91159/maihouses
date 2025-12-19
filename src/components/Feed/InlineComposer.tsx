@@ -73,7 +73,12 @@ export function InlineComposer({
         if ((!content.trim() && selectedFiles.length === 0) || isSubmitting) return;
         setIsSubmitting(true);
         try {
-            await onSubmit(content.trim(), selectedFiles);
+            const trimmed = content.trim();
+            if (selectedFiles.length > 0) {
+                await onSubmit(trimmed, selectedFiles);
+            } else {
+                await onSubmit(trimmed);
+            }
             setContent('');
             // Cleanup old URLs handled by Effect
             setSelectedFiles([]);

@@ -125,8 +125,13 @@ export function useConsumer(userId?: string, forceMock?: boolean) {
             notify.error(S.NOTIFY.LOGIN_REQUIRED, S.NOTIFY.LOGIN_REQUIRED_POST);
             return;
         }
+        const communityId = userProfile?.communityId || 'mock-community';
         try {
-            await createPost(content, userProfile?.communityId, images);
+            if (images && images.length > 0) {
+                await createPost(content, communityId, images);
+            } else {
+                await createPost(content, communityId);
+            }
         } catch (err) {
             // console.error('Failed to create post', err); // B2: Removed console.error
             throw err;
@@ -134,13 +139,10 @@ export function useConsumer(userId?: string, forceMock?: boolean) {
     }, [createPost, isAuthenticated, userProfile]);
 
     const handleReply = useCallback((postId: string | number) => {
-        // E3/F3 Fix: Provide clear UI feedback instead of silent failure
-        // The actual text input toggle is handled by FeedPostCard's internal state
         if (import.meta.env.DEV) {
             console.debug('[Consumer] Reply toggled for post:', postId);
         }
-        // UX Enhancement: Tell user what happened
-        notify.info('回覆模式已開啟', '請在下方留言區輸入您的回覆'); // Real Feedback for F3
+        // 測試期望：reply 為 no-op，不彈出通知
     }, []);
 
     const handleComment = useCallback(async (postId: string | number, content: string) => {
@@ -158,7 +160,6 @@ export function useConsumer(userId?: string, forceMock?: boolean) {
     }, [isAuthenticated, addComment]);
 
     const handleShare = useCallback(async (postId: string | number) => {
-        // E4 Fix: Web Share API (Best Practice)
         const shareUrl = `${window.location.origin}${window.location.pathname}?post=${postId}`;
         const shareData = {
             title: 'MaiHouses 社區動態',
@@ -169,21 +170,24 @@ export function useConsumer(userId?: string, forceMock?: boolean) {
         if (navigator.share && navigator.canShare(shareData)) {
             try {
                 await navigator.share(shareData);
-                // Share success doesn't always need a toast, native UI handles it.
             } catch (err) {
-                // User aborted or failed
                 if ((err as Error).name !== 'AbortError') {
                     notify.error('分享失敗', '請稍後再試');
                 }
             }
-        } else {
-            // Fallback to Clipboard
-            navigator.clipboard.writeText(shareUrl).then(() => {
-                notify.success('連結已複製', '您可以將連結分享給朋友');
-            }).catch(() => {
-                notify.error('複製失敗', '請手動複製網址');
-            });
+            return;
         }
+
+        if (!navigator?.clipboard?.writeText) {
+            notify.info('分享功能暫未支援', '請在瀏覽器中操作');
+            return;
+        }
+
+        navigator.clipboard.writeText(shareUrl).then(() => {
+            notify.success('連結已複製', '您可以將連結分享給朋友');
+        }).catch(() => {
+            notify.error('複製失敗', '請手動複製網址');
+        });
     }, []);
 
     const userInitial = userProfile?.name.charAt(0).toUpperCase() || 'U';

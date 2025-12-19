@@ -1,134 +1,125 @@
-import { useState, useCallback } from 'react';
+import { useReducer, useCallback } from 'react';
 import { aiAsk } from '../../../services/api';
 import { trackEvent } from '../../../services/analytics';
 import type { AiMessage, PropertyCard } from '../../../types';
 
+interface SmartAskState {
+  messages: AiMessage[];
+  reco: PropertyCard[];
+  loading: boolean;
+  totalTokens: number;
+}
+
+type SmartAskAction =
+  | { type: 'START_ASK'; payload: string }
+  | { type: 'UPDATE_AI_CHUNK'; payload: string }
+  | { type: 'FINISH_ASK'; payload: { answer?: string | undefined; recommends: PropertyCard[]; tokens?: number | undefined } }
+  | { type: 'SET_ERROR'; payload: string };
+
+function smartAskReducer(state: SmartAskState, action: SmartAskAction): SmartAskState {
+  switch (action.type) {
+    case 'START_ASK':
+      const userMsg: AiMessage = {
+        role: 'user',
+        content: action.payload,
+        timestamp: new Date().toISOString()
+      };
+      const aiPlaceholder: AiMessage = {
+        role: 'assistant',
+        content: '',
+        timestamp: new Date().toISOString()
+      };
+      return {
+        ...state,
+        messages: [...state.messages, userMsg, aiPlaceholder],
+        loading: true
+      };
+    case 'UPDATE_AI_CHUNK':
+      return {
+        ...state,
+        messages: state.messages.map((msg, i) => 
+          i === state.messages.length - 1 
+            ? { ...msg, content: msg.content + action.payload }
+            : msg
+        )
+      };
+    case 'FINISH_ASK':
+      return {
+        ...state,
+        loading: false,
+        reco: action.payload.recommends,
+        totalTokens: state.totalTokens + (action.payload.tokens || 0),
+        messages: state.messages.map((msg, i) => 
+          i === state.messages.length - 1 && action.payload.answer
+            ? { ...msg, content: action.payload.answer }
+            : msg
+        )
+      };
+    case 'SET_ERROR':
+      return {
+        ...state,
+        messages: state.messages.map((msg, i) => 
+          i === state.messages.length - 1 
+            ? { ...msg, content: action.payload }
+            : msg
+        ),
+        loading: false
+      };
+    default:
+      return state;
+  }
+}
+
 export function useSmartAsk() {
-  const [messages, setMessages] = useState<AiMessage[]>([]);
-  const [reco, setReco] = useState<PropertyCard[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [totalTokens, setTotalTokens] = useState(0);
+  const [state, dispatch] = useReducer(smartAskReducer, {
+    messages: [],
+    reco: [],
+    loading: false,
+    totalTokens: 0
+  });
 
   const sendMessage = useCallback(async (input: string) => {
-    if (!input.trim() || loading) return;
+    const trimmedInput = input.trim();
+    if (!trimmedInput || state.loading) return;
 
-    const userMsg: AiMessage = { 
-      role: 'user', 
-      content: input.trim(), 
-      timestamp: new Date().toISOString() 
-    };
-    
-    const newMessages = [...messages, userMsg];
-    setMessages(newMessages);
-    setLoading(true);
-
+    dispatch({ type: 'START_ASK', payload: trimmedInput });
     trackEvent('ai_message_sent', '/');
-
-    // Add placeholder for AI response
-    const aiMsg: AiMessage = {
-      role: 'assistant',
-      content: '',
-      timestamp: new Date().toISOString()
-    };
-    setMessages(prev => [...prev, aiMsg]);
 
     try {
       let isStreamingComplete = false;
       const res = await aiAsk(
-        { messages: newMessages },
+        { messages: [...state.messages, { role: 'user', content: trimmedInput }] },
         (chunk: string) => {
           isStreamingComplete = true;
-          setMessages(prev => {
-            const updated = [...prev];
-            const lastMsg = updated.at(-1);
-            if (lastMsg) {
-              const newMsg: AiMessage = {
-                role: lastMsg.role || 'assistant',
-                content: (lastMsg.content || '') + chunk
-              };
-              if (lastMsg.timestamp) {
-                newMsg.timestamp = lastMsg.timestamp;
-              }
-              const lastIndex = updated.length - 1;
-              if (lastIndex >= 0) {
-                updated[lastIndex] = newMsg;
-              }
-            }
-            return updated;
-          });
+          dispatch({ type: 'UPDATE_AI_CHUNK', payload: chunk });
         }
       );
 
       if (res.ok && res.data) {
-        // If not streaming or streaming failed but we got a final answer
-        if (!isStreamingComplete && res.data.answers && res.data.answers.length > 0) {
-          setMessages(prev => {
-            const updated = [...prev];
-            const last = updated.at(-1);
-            const lastIndex = updated.length - 1;
-            if (last && lastIndex >= 0) {
-              updated[lastIndex] = {
-                ...last,
-                role: 'assistant',
-                content: res.data!.answers[0] || ''
-              };
-            }
-            return updated;
-          });
-        }
-        
         const r = res.data.recommends || [];
-        setReco(r);
         if (r[0]?.communityId) localStorage.setItem('recoCommunity', r[0].communityId);
 
-        if (res.data.usage?.totalTokens) {
-          setTotalTokens(prev => prev + res.data!.usage!.totalTokens);
-        }
-      } else {
-        // Error handling for API failure
-        setMessages(prev => {
-          const updated = [...prev];
-          const last = updated.at(-1);
-          const lastIndex = updated.length - 1;
-          if (last && lastIndex >= 0) {
-            updated[lastIndex] = {
-              ...last,
-              role: 'assistant',
-              content: '抱歉，AI 服務目前暫時不可用，請稍後再試。您也可以先描述需求讓我為您推薦房源格局與區域喔。'
-            };
+        dispatch({ 
+          type: 'FINISH_ASK', 
+          payload: {
+            answer: (!isStreamingComplete && res.data.answers) ? res.data.answers[0] : undefined,
+            recommends: r,
+            tokens: res.data.usage?.totalTokens
           }
-          return updated;
         });
+      } else {
+        dispatch({ type: 'SET_ERROR', payload: '抱歉，AI 服務目前暫時不可用，請稍後再試。' });
       }
     } catch (e) {
-      // Network or other error
-      setMessages(prev => {
-        const updated = [...prev];
-        if (updated.length > 1) {
-           // Remove the empty assistant message if it failed immediately? 
-           // Or just update it with error message. Updating is safer.
-           const last = updated.at(-1);
-           const lastIndex = updated.length - 1;
-           if (last && lastIndex >= 0) {
-             updated[lastIndex] = {
-               ...last,
-               role: 'assistant',
-               content: '抱歉，AI 服務連線失敗（可能未設定金鑰）。請稍後再試，或通知我們協助處理。'
-             };
-           }
-        }
-        return updated;
-      });
-    } finally {
-      setLoading(false);
+      dispatch({ type: 'SET_ERROR', payload: '抱歉，AI 服務連線失敗（可能未設定金鑰）。' });
     }
-  }, [messages, loading]);
+  }, [state.messages, state.loading]);
 
   return {
-    messages,
-    reco,
-    loading,
-    totalTokens,
+    messages: state.messages,
+    reco: state.reco,
+    loading: state.loading,
+    totalTokens: state.totalTokens,
     sendMessage
   };
 }

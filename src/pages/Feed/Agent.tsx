@@ -116,7 +116,7 @@ export default function AgentPage({ userId, forceMock }: AgentPageProps) {
                 <AgentSidebar
                     stats={performanceStats}
                     todos={todoList}
-                    hotPosts={data.sidebarData.hotPosts}
+                    hotPosts={data.sidebarData?.hotPosts || []}
                 />
 
             </div>

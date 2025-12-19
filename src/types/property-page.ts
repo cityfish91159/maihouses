@@ -35,6 +35,7 @@ export const FeaturedPropertyCardSchema = z.object({
   image: z.string().url(),
   title: z.string(),
   location: z.string(),
+  tags: z.array(z.string()).min(1, '至少要有一項 tags'),
   details: z.array(z.string()).min(1, '至少要有一項 details'),
   highlights: z.string().optional(), // 僅 main 有
   rating: z.string(),
@@ -72,8 +73,7 @@ export const ListingReviewSchema = z.object({
 export const ListingPropertyCardSchema = z.object({
   image: z.string().url(),
   title: z.string(),
-  tag: z.string(),
-  tags: z.array(z.string()).optional(),
+  tags: z.array(z.string()).min(1, '至少要有一項 tags'),
   price: z.string(),
   size: z.string(),
   rating: z.string(),

@@ -16,9 +16,10 @@ export const FeaturesSection: React.FC = () => {
         <Sparkles size={20} className="text-blue-500"/> 物件特色
       </h2>
       <div className="rounded-xl bg-blue-50/30 p-5 border border-blue-100/50">
-        <label className="mb-4 flex items-center gap-2 text-sm font-bold text-blue-800">
+        <label htmlFor="highlight-picker" className="mb-4 flex items-center gap-2 text-sm font-bold text-blue-800">
           重點膠囊 (至少 3 個)
         </label>
+        <input id="highlight-picker" className="sr-only" aria-hidden="true" tabIndex={-1} readOnly />
         <HighlightPicker 
           value={form.highlights || []} 
           onChange={onChange} 

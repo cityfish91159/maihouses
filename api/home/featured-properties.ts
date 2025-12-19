@@ -190,6 +190,17 @@ function adaptRealPropertyForUI(row: RealPropertyRow, reviews: ReviewData[]): Pr
     floorTotal: row.floor_total,
   });
 
+  // 確保必備的規格標籤存在（測試期望：坪數 + 房廳資訊）
+  const tagSet = new Set(tags.filter(Boolean));
+  if (row.size) {
+    tagSet.add(`${row.size} 坪`);
+  }
+  if (row.rooms) {
+    const hallsLabel = typeof row.halls === 'number' ? `${row.halls} 廳` : '0 廳';
+    tagSet.add(`${row.rooms} 房 ${hallsLabel}`);
+  }
+  const finalTags = Array.from(tagSet);
+
   // 3. 地址處理 (DB 只有 address，沒有 city/district 欄位，簡單截取或直接顯示)
   // Mock 格式: "新北市板橋區 · 中山路一段"
   // 嘗試簡單模擬: 取前6個字 (縣市區) + " · " + 後面
@@ -244,7 +255,7 @@ function adaptRealPropertyForUI(row: RealPropertyRow, reviews: ReviewData[]): Pr
     // 修正 Badge (P2 缺失修正)：不再從 features 隨機抓，統一為「精選物件」或社區名
     badge: row.community_name || '精選物件',
     title: row.title || '未命名物件',
-    tags,
+    tags: finalTags,
     price: formatPrice(row.price),
     location: location,
     reviews: formattedReviews,

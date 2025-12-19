@@ -12,27 +12,42 @@ export class PropertyRenderer {
   }
 
   logVersion(entry) {
-    // P35: 嚴格限制日誌長度，防止無限增長導致的記憶體洩漏
-    this.versionLog.push(entry);
-    while (this.versionLog.length > 50) {
-      this.versionLog.shift();
+    // M1: 實作 Ring Buffer 避免 O(n) 陣列搬移
+    if (!this.versionLogCapacity) {
+      this.versionLogCapacity = 50;
+      this.versionLogIndex = 0;
+    }
+    
+    if (this.versionLog.length < this.versionLogCapacity) {
+      this.versionLog.push(entry);
+    } else {
+      this.versionLog[this.versionLogIndex] = entry;
+      this.versionLogIndex = (this.versionLogIndex + 1) % this.versionLogCapacity;
     }
     
     if (typeof window !== 'undefined') {
-      // 效能優化：直接引用陣列而非展開，減少 GC 壓力
-      window.__renderVersionLog = this.versionLog;
+      // 為了相容性，對外暴露時仍提供排序後的陣列
+      window.__renderVersionLog = this.getVersionLog();
     }
   }
 
   clearLog() {
     this.versionLog = [];
+    this.versionLogIndex = 0;
     if (typeof window !== 'undefined') {
       window.__renderVersionLog = [];
     }
   }
 
   getVersionLog() {
-    return [...this.versionLog];
+    if (!this.versionLogCapacity || this.versionLog.length < this.versionLogCapacity) {
+      return [...this.versionLog];
+    }
+    // 重新排序 Ring Buffer
+    return [
+      ...this.versionLog.slice(this.versionLogIndex),
+      ...this.versionLog.slice(0, this.versionLogIndex)
+    ];
   }
 
   ensureContainers() {
@@ -43,6 +58,17 @@ export class PropertyRenderer {
       sideBottom: document.getElementById('featured-side-bottom-container'),
       listings: document.getElementById('listing-grid-container')
     };
+  }
+
+  escapeHtml(str) {
+    if (typeof str !== 'string') return str;
+    return str.replace(/[&<>"']/g, (m) => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;'
+    }[m]));
   }
 
   async preloadImages(data) {
@@ -98,9 +124,11 @@ export class PropertyRenderer {
         ts: (typeof performance !== 'undefined' && performance.now ? performance.now() : Date.now())
       };
 
-      this.renderFeaturedMain(data?.featured?.main);
-      this.renderFeaturedSide(data?.featured?.sideTop, 'sideTop');
-      this.renderFeaturedSide(data?.featured?.sideBottom, 'sideBottom');
+      // S4: 抽取共用渲染邏輯
+      this.renderFeaturedCard(data?.featured?.main, this.containers?.main, 'main');
+      this.renderFeaturedCard(data?.featured?.sideTop, this.containers?.sideTop, 'sideTop');
+      this.renderFeaturedCard(data?.featured?.sideBottom, this.containers?.sideBottom, 'sideBottom');
+      
       this.renderListings(data?.listings || []);
       this.updateListingCount(Array.isArray(data?.listings) ? data.listings.length : 0);
 
@@ -120,95 +148,117 @@ export class PropertyRenderer {
   createReviewHtml(review, compact = false) {
     if (!review) return '';
 
+    const container = document.createElement('div');
     if (compact) {
-      return `<div class="review-item-compact">
-        <span class="review-badge">${review.badge || ''}</span>
-        <p class="review-text">${review.content || ''}</p>
-      </div>`;
+      container.className = 'review-item-compact';
+      const badgeSpan = document.createElement('span');
+      badgeSpan.className = 'review-badge';
+      badgeSpan.textContent = review.badge || '';
+      
+      const contentP = document.createElement('p');
+      contentP.className = 'review-text';
+      contentP.textContent = review.content || '';
+      
+      container.appendChild(badgeSpan);
+      container.appendChild(contentP);
+      return container.outerHTML;
     }
 
-    const tagsHtml = review.tags?.map((tag) => `<span class="review-tag">${tag}</span>`).join('') || '';
-    return `<div class="property-review-item">
-      <div class="review-header">
-        <span class="review-stars">${review.stars || ''}</span>
-        <span class="review-author">${review.author || ''}</span>
-      </div>
-      ${tagsHtml ? `<div class="review-tags">${tagsHtml}</div>` : ''}
-      <p class="review-content">${review.content || ''}</p>
-    </div>`;
+    container.className = 'property-review-item';
+    const header = document.createElement('div');
+    header.className = 'review-header';
+    
+    const stars = document.createElement('span');
+    stars.className = 'review-stars';
+    stars.textContent = review.stars || '';
+    
+    const author = document.createElement('span');
+    author.className = 'review-author';
+    author.textContent = review.author || '';
+    
+    header.appendChild(stars);
+    header.appendChild(author);
+    container.appendChild(header);
+
+    if (review.tags && review.tags.length > 0) {
+      const tagsDiv = document.createElement('div');
+      tagsDiv.className = 'review-tags';
+      review.tags.forEach((tag) => {
+        const tagSpan = document.createElement('span');
+        tagSpan.className = 'review-tag';
+        tagSpan.textContent = tag;
+        tagsDiv.appendChild(tagSpan);
+      });
+      container.appendChild(tagsDiv);
+    }
+
+    const contentP = document.createElement('p');
+    contentP.className = 'review-content';
+    contentP.textContent = review.content || '';
+    container.appendChild(contentP);
+
+    return container.outerHTML;
   }
 
-  renderFeaturedMain(item) {
-    const container = this.containers?.main;
+  renderFeaturedCard(item, container, variant = 'main') {
     if (!container || !item) return;
 
-    // 修正 Featured 大卡 (P3.1 缺失修正)：優先使用 tags 膠囊
-    const chipTags = Array.isArray(item.tags) && item.tags.length > 0
-      ? item.tags.slice(0, 3)
-      : (item.details || []);
-    const tagsHtml = chipTags.map((t) => `<span class="horizontal-tag" style="margin-right:0.25rem;margin-bottom:0.25rem">${t}</span>`).join('');
-    
+    const config = {
+      main: {
+        cardClass: '',
+        chipClass: '',
+        showHighlights: true,
+        lockPrefix: '還有 ',
+        btnText: '註冊查看',
+        showCta: true
+      },
+      sideTop: {
+        cardClass: 'variant-side',
+        chipClass: 'capsule-chip-sm',
+        showHighlights: false,
+        lockPrefix: '',
+        btnText: '查看',
+        showCta: false
+      },
+      sideBottom: {
+        cardClass: 'variant-side',
+        chipClass: 'capsule-chip-sm',
+        showHighlights: false,
+        lockPrefix: '',
+        btnText: '查看',
+        showCta: false
+      }
+    }[variant] || config.main;
+
+    const chipTags = Array.isArray(item.tags) ? item.tags.slice(0, 3) : [];
+    const tagsHtml = chipTags.map((t) => `<span class="capsule-chip ${config.chipClass}">${this.escapeHtml(t)}</span>`).join('');
     const reviewsHtml = (item.reviews || []).map((r) => this.createReviewHtml(r)).join('');
 
     container.innerHTML = `
-      <article class="property-card">
+      <article class="property-card ${config.cardClass}">
         <div class="property-media">
-          <img src="${item.image}" alt="${item.title}" loading="lazy" decoding="async" />
-          <span class="property-badge">${item.badge}</span>
+          <img src="${item.image}" alt="${this.escapeHtml(item.title)}" loading="lazy" decoding="async" />
+          <span class="property-badge">${this.escapeHtml(item.badge)}</span>
         </div>
         <div class="property-content">
-          <h3 class="property-title">${item.title}</h3>
-          <div class="property-location">${item.location}</div>
-          <div class="property-tags-row" style="margin-bottom:0.5rem;display:flex;flex-wrap:wrap">${tagsHtml}</div>
-          <div class="tiny-text" style="margin-bottom:0.5rem;color:var(--primary)">${item.highlights || ''}</div>
-          <div class="property-rating"><span class="star">★</span>${item.rating}</div>
-          <div class="property-reviews"><strong>住戶真實評價：</strong>${reviewsHtml}</div>
+          <h3 class="property-title">${this.escapeHtml(item.title)}</h3>
+          <div class="property-location">${this.escapeHtml(item.location)}</div>
+          <div class="property-tags-row">${tagsHtml}</div>
+          ${config.showHighlights ? `<div class="tiny-text" style="margin-bottom:0.5rem;color:var(--primary)">${this.escapeHtml(item.highlights || '')}</div>` : ''}
+          <div class="property-rating"><span class="star">★</span>${this.escapeHtml(item.rating)}</div>
+          <div class="property-reviews">${reviewsHtml}</div>
           <div class="property-more-reviews">
-            <div style="display:flex;align-items:center;gap:0.5rem">
-              <span class="lock-icon">🔒</span><span>還有 ${item.lockCount} 則評價</span>
+            <div class="lock-info" style="display:flex;align-items:center;gap:0.5rem">
+              <span class="lock-icon">🔒</span><span>${config.lockPrefix}${item.lockCount} 則評價</span>
             </div>
-            <button class="register-btn" type="button">註冊查看</button>
+            <button class="register-btn" type="button">${config.btnText}</button>
           </div>
-          <div class="property-price">${item.price}<span>${item.size}</span></div>
+          <div class="property-price">${this.escapeHtml(item.price)}<span>${this.escapeHtml(item.size)}</span></div>
+          ${config.showCta ? `
           <div class="property-cta">
             <button class="btn-primary" type="button">查看詳情</button>
             <button class="heart-btn" type="button" aria-label="加入收藏">♡</button>
-          </div>
-        </div>
-      </article>`;
-  }
-
-  renderFeaturedSide(item, key) {
-    const container = this.containers?.[key];
-    if (!container || !item) return;
-
-    // 修正 Featured 側邊卡 (P3.1 缺失修正)：優先使用 tags 膠囊
-    const chipTags = Array.isArray(item.tags) && item.tags.length > 0
-      ? item.tags.slice(0, 3)
-      : (item.details || []);
-    const tagsHtml = chipTags.map((t) => `<span class="horizontal-tag" style="margin-right:0.25rem;margin-bottom:0.25rem;font-size:0.7rem">${t}</span>`).join('');
-
-    const reviewsHtml = (item.reviews || []).map((r) => this.createReviewHtml(r)).join('');
-
-    container.innerHTML = `
-      <article class="property-card" style="height:100%">
-        <div class="property-media" style="aspect-ratio:2/1">
-          <img src="${item.image}" alt="${item.title}" loading="lazy" decoding="async" />
-          <span class="property-badge">${item.badge}</span>
-        </div>
-        <div class="property-content">
-          <h3 class="property-title" style="font-size:1rem">${item.title}</h3>
-          <div class="property-location" style="font-size:0.75rem">${item.location}</div>
-          <div class="property-tags-row" style="margin-bottom:0.5rem;display:flex;flex-wrap:wrap">${tagsHtml}</div>
-          <div class="property-rating" style="font-size:0.8125rem"><span class="star">★</span>${item.rating}</div>
-          <div class="property-reviews">${reviewsHtml}</div>
-          <div class="property-more-reviews" style="padding:0.375rem;margin:0.5rem 0">
-            <div style="display:flex;align-items:center;gap:0.25rem;font-size:0.75rem">
-              <span class="lock-icon">🔒</span><span>${item.lockCount} 則評價</span>
-            </div>
-            <button class="register-btn" type="button" style="padding:0.125rem 0.5rem;min-height:1.5rem">查看</button>
-          </div>
-          <div class="property-price" style="font-size:1rem;margin-bottom:0.5rem">${item.price}<span style="font-size:0.75rem">${item.size}</span></div>
+          </div>` : ''}
         </div>
       </article>`;
   }
@@ -217,41 +267,66 @@ export class PropertyRenderer {
     const container = this.containers?.listings;
     if (!container) return;
 
+    // S1: 實作 DOM Diffing (Key-based Update with stable keys and signature)
+    const existingCards = Array.from(container.querySelectorAll('.horizontal-card'));
+    const existingMap = new Map();
+    existingCards.forEach((card) => {
+      const key = card.getAttribute('data-key');
+      if (key) existingMap.set(key, card);
+    });
+
+    const newKeys = new Set();
     const fragment = document.createDocumentFragment();
-    const template = document.createElement('template');
 
-    template.innerHTML = (items || []).map((item) => {
+    (items || []).forEach((item, idx) => {
+      const baseKey = item.id || item.title || `listing-${idx}`;
+      let key = baseKey;
+      // 保證同一批資料中 key 唯一
+      while (newKeys.has(key)) {
+        key = `${baseKey}-${idx}`;
+      }
+      newKeys.add(key);
+
       const reviewsHtml = (item.reviews || []).map((r) => this.createReviewHtml(r, true)).join('');
+      const chipTags = Array.isArray(item.tags) ? item.tags.slice(0, 3) : [];
+      const tagsHtml = chipTags.map((t) => `<span class="capsule-chip capsule-chip-sm">${this.escapeHtml(t)}</span>`).join('');
 
-      const chipTags = Array.isArray(item.tags) && item.tags.length > 0
-        ? item.tags.slice(0, 3)
-        : (item.tag ? [item.tag] : []);
-      const tagsHtml = chipTags.map((t) => `<span class="horizontal-tag">${t}</span>`).join('');
+      const signature = [
+        item.image,
+        item.title,
+        item.price,
+        item.size,
+        item.rating,
+        item.note,
+        tagsHtml,
+        reviewsHtml,
+        item.lockLabel,
+        item.lockCount
+      ].join('|');
 
-      return `
-        <article class="horizontal-card">
+      const cardHtml = `
           <div class="horizontal-left">
             <div class="horizontal-thumb">
-              <img src="${item.image}" alt="${item.title}" loading="lazy" decoding="async" />
+              <img src="${item.image}" alt="${this.escapeHtml(item.title)}" loading="lazy" decoding="async" />
             </div>
             <div class="horizontal-main">
               <div class="horizontal-title-row">
-                <span>📍</span><strong>${item.title}</strong>
+                <span>📍</span><strong>${this.escapeHtml(item.title)}</strong>
                 ${tagsHtml}
               </div>
-              <div class="horizontal-price">${item.price}<span>${item.size}</span></div>
-              <div class="horizontal-rating"><span class="star">★</span>${item.rating}</div>
+              <div class="horizontal-price">${this.escapeHtml(item.price)}<span>${this.escapeHtml(item.size)}</span></div>
+              <div class="horizontal-rating"><span class="star">★</span>${this.escapeHtml(item.rating)}</div>
               <div class="horizontal-reviews">${reviewsHtml}</div>
-              <div class="horizontal-bottom-note">${item.note || ''}</div>
+              <div class="horizontal-bottom-note">${this.escapeHtml(item.note || '')}</div>
             </div>
           </div>
           <div class="horizontal-right">
-            <div class="horizontal-price">${item.price}<span>${item.size}</span></div>
+            <div class="horizontal-price">${this.escapeHtml(item.price)}<span>${this.escapeHtml(item.size)}</span></div>
             <div class="lock-row">
               <div class="lock-header">
                 <span class="lock-icon">🔒</span>
                 <div class="lock-text">
-                  <span class="lock-label">${item.lockLabel || ''}</span>
+                  <span class="lock-label">${this.escapeHtml(item.lockLabel || '')}</span>
                   <span class="lock-count">還有 ${item.lockCount} 則評價</span>
                 </div>
               </div>
@@ -261,13 +336,32 @@ export class PropertyRenderer {
               <button class="btn-outline" type="button">查看</button>
               <button class="heart-btn" type="button" aria-label="加入收藏">♡</button>
             </div>
-          </div>
-        </article>`;
-    }).join('');
+          </div>`;
 
-    fragment.appendChild(template.content);
-    container.innerHTML = '';
-    container.appendChild(fragment);
+      if (existingMap.has(key)) {
+        const existingCard = existingMap.get(key);
+        if (existingCard.dataset.sig !== signature) {
+          existingCard.innerHTML = cardHtml;
+          existingCard.dataset.sig = signature;
+        }
+        fragment.appendChild(existingCard);
+      } else {
+        const article = document.createElement('article');
+        article.className = 'horizontal-card';
+        article.setAttribute('data-key', key);
+        article.dataset.sig = signature;
+        article.innerHTML = cardHtml;
+        fragment.appendChild(article);
+      }
+    });
+
+    existingMap.forEach((card, key) => {
+      if (!newKeys.has(key)) {
+        card.remove();
+      }
+    });
+
+    container.replaceChildren(fragment);
   }
 }
 

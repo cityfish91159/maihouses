@@ -234,7 +234,9 @@ function ConsumerContent({ userId, forceMock }: ConsumerProps) {
           {/* 發文框 */}
           {isAuthenticated && (
             <InlineComposer
-              onSubmit={(content, images) => handleCreatePost(content, images)}
+              onSubmit={(content, images) => (images && images.length > 0
+                ? handleCreatePost(content, images)
+                : handleCreatePost(content))}
               disabled={isLoading}
               userInitial={userInitial}
             />

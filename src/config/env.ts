@@ -71,6 +71,18 @@ const showFriendlyErrorPage = (title: string, message: string): void => {
 };
 
 function readEnv(): EnvShape {
+  const isTest = import.meta.env.MODE === 'test' || Boolean(import.meta.env.VITEST);
+
+  if (isTest) {
+    // 測試環境提供安全的預設值，避免因缺少 .env 而中斷
+    return {
+      VITE_SUPABASE_URL: import.meta.env.VITE_SUPABASE_URL || 'https://test.supabase.co',
+      VITE_SUPABASE_ANON_KEY: import.meta.env.VITE_SUPABASE_ANON_KEY || 'test-anon-key',
+      VITE_API_BASE_URL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:4173/api',
+      VITE_APP_URL: import.meta.env.VITE_APP_URL || 'http://localhost:4173'
+    };
+  }
+
   const missing = REQUIRED_KEYS.filter((key) => !import.meta.env[key]);
   if (missing.length > 0) {
     const message = `缺少必要的環境變數：${missing.join(', ')}`;

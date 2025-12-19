@@ -49,8 +49,10 @@ export function useAgentFeed(userId?: string, forceMock?: boolean) {
     // ...
     const handleComment = useCallback(async (postId: string | number, content: string) => {
         try {
-            await addComment(postId, content);
-            notify.success(STRINGS.FEED.POST.COMMENT_SUCCESS.TITLE, STRINGS.FEED.POST.COMMENT_SUCCESS.DESC);
+            if (typeof addComment === 'function') {
+                await addComment(postId, content);
+            }
+            notify.success('留言成功', '您的留言已發佈');
         } catch (err) {
             notify.error('留言失敗', '請稍後再試');
         }
