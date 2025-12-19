@@ -431,8 +431,7 @@ export const PropertyUploadPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="space-y-3">
-            <div className="mb-4">
+          <div className="space-y-3">            <div className="mb-4">
               <label className="mb-2 flex items-center gap-1.5 text-xs font-medium text-blue-700">
                 <Sparkles size={14}/> 重點膠囊 (至少 3 個)
               </label>
