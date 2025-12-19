@@ -145,42 +145,40 @@ export class PropertyRenderer {
     }
   }
 
-  createReviewHtml(review, compact = false) {
-    if (!review) return '';
-
+  createReviewElement(review, compact = false) {
     const container = document.createElement('div');
     if (compact) {
       container.className = 'review-item-compact';
       const badgeSpan = document.createElement('span');
       badgeSpan.className = 'review-badge';
-      badgeSpan.textContent = review.badge || '';
-      
+      badgeSpan.textContent = review?.badge || '';
+
       const contentP = document.createElement('p');
       contentP.className = 'review-text';
-      contentP.textContent = review.content || '';
-      
+      contentP.textContent = review?.content || '';
+
       container.appendChild(badgeSpan);
       container.appendChild(contentP);
-      return container.outerHTML;
+      return container;
     }
 
     container.className = 'property-review-item';
     const header = document.createElement('div');
     header.className = 'review-header';
-    
+
     const stars = document.createElement('span');
     stars.className = 'review-stars';
-    stars.textContent = review.stars || '';
-    
+    stars.textContent = review?.stars || '';
+
     const author = document.createElement('span');
     author.className = 'review-author';
-    author.textContent = review.author || '';
-    
+    author.textContent = review?.author || '';
+
     header.appendChild(stars);
     header.appendChild(author);
     container.appendChild(header);
 
-    if (review.tags && review.tags.length > 0) {
+    if (Array.isArray(review?.tags) && review.tags.length > 0) {
       const tagsDiv = document.createElement('div');
       tagsDiv.className = 'review-tags';
       review.tags.forEach((tag) => {
@@ -194,10 +192,10 @@ export class PropertyRenderer {
 
     const contentP = document.createElement('p');
     contentP.className = 'review-content';
-    contentP.textContent = review.content || '';
+    contentP.textContent = review?.content || '';
     container.appendChild(contentP);
 
-    return container.outerHTML;
+    return container;
   }
 
   renderFeaturedCard(item, container, variant = 'main') {
@@ -232,10 +230,10 @@ export class PropertyRenderer {
 
     const chipTags = Array.isArray(item.tags) ? item.tags.slice(0, 3) : [];
     const tagsHtml = chipTags.map((t) => `<span class="capsule-chip ${config.chipClass}">${this.escapeHtml(t)}</span>`).join('');
-    const reviewsHtml = (item.reviews || []).map((r) => this.createReviewHtml(r)).join('');
 
-    container.innerHTML = `
-      <article class="property-card ${config.cardClass}">
+    const article = document.createElement('article');
+    article.className = `property-card ${config.cardClass}`.trim();
+    article.innerHTML = `
         <div class="property-media">
           <img src="${item.image}" alt="${this.escapeHtml(item.title)}" loading="lazy" decoding="async" />
           <span class="property-badge">${this.escapeHtml(item.badge)}</span>
@@ -244,11 +242,11 @@ export class PropertyRenderer {
           <h3 class="property-title">${this.escapeHtml(item.title)}</h3>
           <div class="property-location">${this.escapeHtml(item.location)}</div>
           <div class="property-tags-row">${tagsHtml}</div>
-          ${config.showHighlights ? `<div class="tiny-text" style="margin-bottom:0.5rem;color:var(--primary)">${this.escapeHtml(item.highlights || '')}</div>` : ''}
+          ${config.showHighlights ? `<div class="tiny-text tiny-text-highlight">${this.escapeHtml(item.highlights || '')}</div>` : ''}
           <div class="property-rating"><span class="star">★</span>${this.escapeHtml(item.rating)}</div>
-          <div class="property-reviews">${reviewsHtml}</div>
+          <div class="property-reviews"></div>
           <div class="property-more-reviews">
-            <div class="lock-info" style="display:flex;align-items:center;gap:0.5rem">
+            <div class="lock-info">
               <span class="lock-icon">🔒</span><span>${config.lockPrefix}${item.lockCount} 則評價</span>
             </div>
             <button class="register-btn" type="button">${config.btnText}</button>
@@ -259,8 +257,16 @@ export class PropertyRenderer {
             <button class="btn-primary" type="button">查看詳情</button>
             <button class="heart-btn" type="button" aria-label="加入收藏">♡</button>
           </div>` : ''}
-        </div>
-      </article>`;
+        </div>`;
+
+    const reviewsHost = article.querySelector('.property-reviews');
+    if (reviewsHost) {
+      const nodes = (item.reviews || []).map((r) => this.createReviewElement(r));
+      reviewsHost.replaceChildren(...nodes);
+    }
+
+    container.innerHTML = '';
+    container.appendChild(article);
   }
 
   renderListings(items) {
@@ -287,7 +293,6 @@ export class PropertyRenderer {
       }
       newKeys.add(key);
 
-      const reviewsHtml = (item.reviews || []).map((r) => this.createReviewHtml(r, true)).join('');
       const chipTags = Array.isArray(item.tags) ? item.tags.slice(0, 3) : [];
       const tagsHtml = chipTags.map((t) => `<span class="capsule-chip capsule-chip-sm">${this.escapeHtml(t)}</span>`).join('');
 
@@ -299,12 +304,15 @@ export class PropertyRenderer {
         item.rating,
         item.note,
         tagsHtml,
-        reviewsHtml,
         item.lockLabel,
         item.lockCount
       ].join('|');
 
-      const cardHtml = `
+      const article = document.createElement('article');
+      article.className = 'horizontal-card';
+      article.setAttribute('data-key', key);
+      article.dataset.sig = signature;
+      article.innerHTML = `
           <div class="horizontal-left">
             <div class="horizontal-thumb">
               <img src="${item.image}" alt="${this.escapeHtml(item.title)}" loading="lazy" decoding="async" />
@@ -316,7 +324,7 @@ export class PropertyRenderer {
               </div>
               <div class="horizontal-price">${this.escapeHtml(item.price)}<span>${this.escapeHtml(item.size)}</span></div>
               <div class="horizontal-rating"><span class="star">★</span>${this.escapeHtml(item.rating)}</div>
-              <div class="horizontal-reviews">${reviewsHtml}</div>
+              <div class="horizontal-reviews"></div>
               <div class="horizontal-bottom-note">${this.escapeHtml(item.note || '')}</div>
             </div>
           </div>
@@ -338,21 +346,61 @@ export class PropertyRenderer {
             </div>
           </div>`;
 
-      if (existingMap.has(key)) {
-        const existingCard = existingMap.get(key);
-        if (existingCard.dataset.sig !== signature) {
-          existingCard.innerHTML = cardHtml;
-          existingCard.dataset.sig = signature;
-        }
-        fragment.appendChild(existingCard);
-      } else {
-        const article = document.createElement('article');
-        article.className = 'horizontal-card';
-        article.setAttribute('data-key', key);
-        article.dataset.sig = signature;
-        article.innerHTML = cardHtml;
-        fragment.appendChild(article);
+      const ensureCard = () => {
+        if (existingMap.has(key)) return existingMap.get(key);
+        return article;
+      };
+
+      const article = document.createElement('article');
+      article.className = 'horizontal-card';
+      article.setAttribute('data-key', key);
+      article.dataset.sig = signature;
+      article.innerHTML = `
+          <div class="horizontal-left">
+            <div class="horizontal-thumb">
+              <img src="${item.image}" alt="${this.escapeHtml(item.title)}" loading="lazy" decoding="async" />
+            </div>
+            <div class="horizontal-main">
+              <div class="horizontal-title-row">
+                <span>📍</span><strong>${this.escapeHtml(item.title)}</strong>
+                ${tagsHtml}
+              </div>
+              <div class="horizontal-price">${this.escapeHtml(item.price)}<span>${this.escapeHtml(item.size)}</span></div>
+              <div class="horizontal-rating"><span class="star">★</span>${this.escapeHtml(item.rating)}</div>
+              <div class="horizontal-reviews"></div>
+              <div class="horizontal-bottom-note">${this.escapeHtml(item.note || '')}</div>
+            </div>
+          </div>
+          <div class="horizontal-right">
+            <div class="horizontal-price">${this.escapeHtml(item.price)}<span>${this.escapeHtml(item.size)}</span></div>
+            <div class="lock-row">
+              <div class="lock-header">
+                <span class="lock-icon">🔒</span>
+                <div class="lock-text">
+                  <span class="lock-label">${this.escapeHtml(item.lockLabel || '')}</span>
+                  <span class="lock-count">還有 ${item.lockCount} 則評價</span>
+                </div>
+              </div>
+              <button class="lock-btn" type="button">註冊查看更多評價</button>
+            </div>
+            <div class="horizontal-cta-row">
+              <button class="btn-outline" type="button">查看</button>
+              <button class="heart-btn" type="button" aria-label="加入收藏">♡</button>
+            </div>
+          </div>`;
+
+      const reviewsHost = article.querySelector('.horizontal-reviews');
+      if (reviewsHost) {
+        const nodes = (item.reviews || []).map((r) => this.createReviewElement(r, true));
+        reviewsHost.replaceChildren(...nodes);
       }
+
+      const card = ensureCard();
+      if (card.dataset.sig !== signature) {
+        card.replaceChildren(...article.childNodes);
+        card.dataset.sig = signature;
+      }
+      fragment.appendChild(card);
     });
 
     existingMap.forEach((card, key) => {

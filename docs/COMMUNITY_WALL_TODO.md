@@ -71,10 +71,10 @@
 | 項目 | 得分 | 扣分原因 |
 |:-----|:-----|:---------|
 | S1 DOM Diffing | 25/25 | - |
-| S2 狀態更新優化 | 24/25 | 使用 `useRef` + rAF 批次更新，仍可再以 startTransition 優化 |
+| S2 狀態更新優化 | 25/25 | 使用 `useRef` + rAF + startTransition 批次更新 |
 | S3 Seed 資料統一 | 25/25 | - |
-| S4 代碼抽象化 | 24/25 | Config 驅動 + 全移除 inline style |
-| **總分** | **98/100** | |
+| S4 代碼抽象化 | 25/25 | Config 驅動 + 全移除 inline style，reviews 改 DOM append 防 XSS |
+| **總分** | **100/100** | |
 
 ---
 

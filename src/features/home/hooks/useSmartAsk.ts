@@ -1,4 +1,4 @@
-import { useReducer, useCallback, useRef } from 'react';
+import { useReducer, useCallback, useRef, startTransition } from 'react';
 import { aiAsk } from '../../../services/api';
 import { trackEvent } from '../../../services/analytics';
 import type { AiMessage, PropertyCard } from '../../../types';
@@ -101,7 +101,9 @@ export function useSmartAsk() {
               if (!chunkRef.current) return;
               const buffered = chunkRef.current;
               chunkRef.current = '';
-              dispatch({ type: 'UPDATE_AI_CHUNK', payload: buffered });
+              startTransition(() => {
+                dispatch({ type: 'UPDATE_AI_CHUNK', payload: buffered });
+              });
             });
           }
         }
