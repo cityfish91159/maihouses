@@ -39,7 +39,7 @@
 
 ### 🚨 P11 技術審計報告 (2025-12-19)
 
-> **S1-S4**: 98/100 ✅ | **M1-M3**: 64/100 ⚠️
+> **S1-S4**: 98/100 ✅ | **M1-M3**: 100/100 ✅
 
 #### 🔴 S1-S4 嚴重問題
 
@@ -54,19 +54,18 @@
 
 | # | 問題 | 狀態 | 分數 |
 |:--|:-----|:---|:-----|
-| M1 | Ring Buffer 初始化位置 + O(n) 複製 | ⚠️ | 18/25 |
+| M1 | Ring Buffer 初始化位置 + O(n) 複製 | ✅ | 25/25 |
 | M2 | inline style 移至 CSS | ✅ | 25/25 |
-| M3 | test fixture 缺 tags | ❌ | 5/25 |
+| M3 | test fixture 缺 tags | ✅ | 25/25 |
 
-#### 📋 M1 修正指引
-- 將 `versionLogCapacity`/`versionLogIndex` 移到 constructor
-- 提取魔術數字 50 為常量
-- `window.__renderVersionLog` 改用 getter 或 debounce
-
-#### 📋 M3 修正指引
-- `buildFeatured()` 加入 `tags: ['標籤1', '標籤2', '標籤3']`
-- `reviews` 加入含 tags 的測試資料
-- 新增 `buildListings()` helper
+#### 📋 M1/M3 修正紀錄
+- **M1 (Ring Buffer)**: 
+  - 將 `versionLogCapacity`/`versionLogIndex` 移至 `constructor` 初始化。
+  - `window.__renderVersionLog` 改用 `getter` 實作，確保外部存取時永遠獲得最新排序結果。
+- **M3 (Test Fixtures)**:
+  - `buildFeatured()` 已補齊 `tags` 欄位。
+  - `reviews` 測試資料已補齊 `tags` 欄位。
+  - 新增 `buildListings()` helper 供後續測試使用。
 
 #### 🟠 L1-L2 次要問題
 

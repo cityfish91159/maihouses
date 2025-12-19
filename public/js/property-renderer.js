@@ -9,34 +9,31 @@ export class PropertyRenderer {
     this.renderVersion = 0;
     this.containers = null;
     this.versionLog = [];
+    this.versionLogCapacity = 50;
+    this.versionLogIndex = 0;
+    
+    // M1: 使用 getter 暴露 versionLog，避免每次手動更新 window
+    if (typeof window !== 'undefined') {
+      Object.defineProperty(window, '__renderVersionLog', {
+        get: () => this.getVersionLog(),
+        configurable: true
+      });
+    }
   }
 
   logVersion(entry) {
     // M1: 實作 Ring Buffer 避免 O(n) 陣列搬移
-    if (!this.versionLogCapacity) {
-      this.versionLogCapacity = 50;
-      this.versionLogIndex = 0;
-    }
-    
     if (this.versionLog.length < this.versionLogCapacity) {
       this.versionLog.push(entry);
     } else {
       this.versionLog[this.versionLogIndex] = entry;
       this.versionLogIndex = (this.versionLogIndex + 1) % this.versionLogCapacity;
     }
-    
-    if (typeof window !== 'undefined') {
-      // 為了相容性，對外暴露時仍提供排序後的陣列
-      window.__renderVersionLog = this.getVersionLog();
-    }
   }
 
   clearLog() {
     this.versionLog = [];
     this.versionLogIndex = 0;
-    if (typeof window !== 'undefined') {
-      window.__renderVersionLog = [];
-    }
   }
 
   getVersionLog() {
