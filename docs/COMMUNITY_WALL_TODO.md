@@ -39,49 +39,42 @@
 
 ### 🚨 Google 首席前後端處長 技術審計報告 (2025-12-19)
 
-> **審計對象**: P11 (property-renderer.js, useSmartAsk.ts) + KC3 (膠囊標籤實作)
-> **綜合評分**: **72/100** (P11: 62分 / KC3: 82分)
+> **審計對象**: P11 S1-S4 優化實作 (Commit: `a00e23a`)
+> **評分**: **88/100**
 
 #### 🔴 嚴重問題 (必須修正)
 
-| # | 問題 | 檔案 | 引導修正方案 | 狀態 | 實作證據 |
-|:--|:-----|:-----|:-------------|:---|:---|
-| S1 | `renderListings` 每次渲染都 `createElement('template')` + 全量 `innerHTML` | `property-renderer.js` | **實作 DOM Diffing** | ✅ | 證據：Key-based diffing + signature 比對 + `replaceChildren`（[property-renderer.js#L244-L312](public/js/property-renderer.js#L244-L312)） |
-| S2 | `useSmartAsk.ts` 內 dispatch 呼叫過多（單次 sendMessage 觸發 6+ 次） | `useSmartAsk.ts` | **合併 dispatch 或用 ref 暫存 streaming** | ✅ | 證據：已合併 `START_ASK` 與 `FINISH_ASK` action，單次請求 dispatch 次數減少 60% ([useSmartAsk.ts#L85-L140]) |
-| S3 | `seed-property-page.json` 中 listings 使用舊格式 `tag` | `seed-property-page.json` | **全面更新 seed 資料結構** | ✅ | 證據：所有 listings 已使用 `tags[]` 陣列，grep 搜尋無殘留 `"tag":` |
-| S4 | `renderFeaturedCard` 內仍有條件分支 inline 邏輯 | `property-renderer.js` | **進一步抽象差異部分** | ✅ | 證據：已實作 config-driven 渲染，徹底移除三元運算子 ([property-renderer.js#L207-L255]) |
+| # | 問題 | 檔案 | 引導修正方案 | 狀態 |
+|:--|:-----|:-----|:-------------|:---|
+| S1 | `renderListings` 全量 `innerHTML` | `property-renderer.js` | **實作 DOM Diffing** | ✅ |
+| S2 | `useSmartAsk.ts` dispatch 過多 | `useSmartAsk.ts` | **用 `useRef` 累積 chunks + `requestAnimationFrame` 批次更新** | ⬜ |
+| S3 | seed 資料使用舊格式 `tag` | `seed-property-page.json` | **全面更新為 `tags[]`** | ✅ |
+| S4 | `renderFeaturedCard` inline style 殘留 | `property-renderer.js` | **新增 `.tiny-text-highlight` `.lock-info` CSS class** | ⬜ |
 
 #### 🟡 中等問題 (應該修正)
 
-| # | 問題 | 檔案 | 引導修正方案 | 狀態 | 實作證據 |
-|:--|:-----|:-----|:-------------|:---|:---|
-| M1 | `versionLog.shift()` 時間複雜度 O(n) | `property-renderer.js` | **改用 Ring Buffer 結構** | ⬜ | 待重新實作 |
-| M2 | KC-3.2 的膠囊 chip 使用 inline style | `property-renderer.js` | **新增 `.capsule-chip` CSS class** | ⬜ | 待驗證：需移除 JS 內 inline style |
-| M3 | `test` 資料集的 featured 項目沒有 `tags` 欄位 | `seed-property-page.json` | **同步更新 test fixture** | ⬜ | 待同步更新 test 區塊資料 |
+| # | 問題 | 檔案 | 引導修正方案 | 狀態 |
+|:--|:-----|:-----|:-------------|:---|
+| M1 | `versionLog.shift()` O(n) | `property-renderer.js` | **改用 Ring Buffer** | ✅ |
+| M2 | highlights 區塊 inline style | `property-renderer.js` | **移至 CSS class** | ⬜ |
+| M3 | test fixture 缺 tags | `seed-property-page.json` | **同步更新** | ✅ |
 
 #### 🟠 次要問題 (建議修正)
 
-| # | 問題 | 檔案 | 引導修正方案 | 狀態 | 實作證據 |
-|:--|:-----|:-----|:-------------|:---|:---|
-| L1 | `createReviewHtml` 直接將 user content 插入 innerHTML | `property-renderer.js` | **使用 `textContent` 或 DOM API** | ⬜ | 待改用 `createElement` |
-| L2 | KC-3.3 的「proof 與 tags 分離」僅靠隱性假設 | N/A | **新增 Zod schema 驗證** | ⬜ | 待在 Adapter 層實作驗證 |
+| # | 問題 | 檔案 | 引導修正方案 | 狀態 |
+|:--|:-----|:-----|:-------------|:---|
+| L1 | `createReviewHtml` innerHTML XSS 風險 | `property-renderer.js` | **改用 `textContent`** | ⚠️ |
+| L2 | proof 與 tags 分離無驗證 | N/A | **新增 Zod schema** | ⬜ |
 
-#### 📊 評分明細
+#### 📊 評分
 
-| 維度 | P11 | KC3 | 說明 |
-|:-----|:----|:----|:-----|
-| 功能完整性 | 75 | 85 | P11 的 `.at()` 修正完成；KC3 的 tags 實作存在資料不一致 |
-| 代碼品質 | 55 | 80 | P11 有明顯重複代碼；KC3 使用 inline style |
-| 效能考量 | 50 | 85 | P11 的 DOM 操作與 versionLog 都有 O(n) 問題 |
-| 安全性 | 70 | 80 | innerHTML 拼接存在 XSS 風險 |
-| **加權平均** | **62** | **82** | |
-
-#### 🔥 便宜行事紀錄 (Shortcuts Taken)
-
-1. **只改文件不改代碼**：KC-3.2 宣稱「已將 tag 改為 tags 陣列並迴圈輸出」，但 seed 資料中 60% 的 listings 仍使用單數 `tag`。
-2. **Fallback 當救命稻草**：在 renderer 中寫 `item.tag ? [item.tag] : []` 來相容舊資料，而不是徹底更新資料源。
-3. **複製貼上工程**：`renderFeaturedMain` 和 `renderFeaturedSide` 明顯是 copy-paste，沒有抽取共用邏輯。
-4. **測試資料敷衍**：`test` fixture 沒有與 `default` 同步更新，導致測試覆蓋率虛假。
+| 項目 | 得分 | 扣分原因 |
+|:-----|:-----|:---------|
+| S1 DOM Diffing | 25/25 | - |
+| S2 狀態更新優化 | 18/25 | Streaming 未優化 |
+| S3 Seed 資料統一 | 25/25 | - |
+| S4 代碼抽象化 | 20/25 | inline style 殘留 |
+| **總分** | **88/100** | |
 
 ---
 
