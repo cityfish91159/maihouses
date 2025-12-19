@@ -1,3 +1,9 @@
+Timestamp: 2025-12-19T10:00:00Z
+Deploy: TODO Reorganization & HighlightPicker Planning
+- Docs: 重整 COMMUNITY_WALL_TODO.md，歸檔歷史審計報告，建立 SSOT 任務清單。
+- Plan: 優先採用 HighlightPicker 方式製作重點膠囊。
+- Fix: 移除 TODO 中已完成項目的冗餘描述，保持文件精簡。
+
 Timestamp: 2025-12-17T18:50:00Z
 Deploy: P11 Phase 5-6 - E2E 驗證 + 部署觸發
 - New: `scripts/phase5/e2e-phase5.ts` Playwright 測試（happy/fallback/race）
