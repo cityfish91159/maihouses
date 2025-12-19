@@ -431,31 +431,33 @@ export const PropertyUploadPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="space-y-3">            <div className="mb-4">
-              <label className="mb-2 flex items-center gap-1.5 text-xs font-medium text-blue-700">
-                <Sparkles size={14}/> 重點膠囊 (至少 3 個)
-              </label>
-              <HighlightPicker 
-                value={form.highlights || []} 
-                onChange={(tags) => setForm({ ...form, highlights: tags })} 
-              />
-              {!validation.highlightsValid && (
-                <p className="mt-1 text-[10px] text-red-500">請至少選擇 3 個重點膠囊</p>
-              )}
-            </div>
+          <div className="mb-6 rounded-xl bg-blue-50/30 p-4 border border-blue-100/50">
+            <label className="mb-3 flex items-center gap-1.5 text-sm font-bold text-blue-800">
+              <Sparkles size={16} className="text-blue-500"/> 重點膠囊 (至少 3 個)
+            </label>
+            <HighlightPicker 
+              value={form.highlights || []} 
+              onChange={(tags) => setForm({ ...form, highlights: tags })} 
+            />
+            {!validation.highlightsValid && (
+              <p className="mt-2 text-xs text-red-500 flex items-center gap-1">
+                <AlertTriangle size={12} /> 請至少選擇 3 個重點膠囊
+              </p>
+            )}
+          </div>
 
-            <div className="relative">
+          <div className="space-y-4">
+            <div className="relative py-2">
               <div className="absolute inset-0 flex items-center" aria-hidden="true">
                 <div className="w-full border-t border-slate-100"></div>
               </div>
               <div className="relative flex justify-center">
-                <span className="bg-white px-2 text-[10px] text-slate-400">或填寫詳細優點</span>
+                <span className="bg-white px-3 text-xs font-medium text-slate-400">或填寫詳細優缺點</span>
               </div>
             </div>
 
             <div>
               <label htmlFor="upload-advantage1" className="mb-1 flex items-center gap-1.5 text-xs font-medium text-green-700">
-                <ThumbsUp size={14}/> 優點 1 (至少 5 字)
               </label>
               <input
                 id="upload-advantage1"
