@@ -10,7 +10,7 @@ import { checkContent, ContentCheckResult } from '../utils/contentCheck';
 
 // 驗證規則配置
 export const VALIDATION_RULES = {
-  advantage: { minLength: 5, maxLength: 100 },
+  advantage: { minLength: 2, maxLength: 100 },
   disadvantage: { minLength: 10, maxLength: 200 },
   communityName: { minLength: 2 },
   title: { minLength: 1, maxLength: 100 },
@@ -39,6 +39,7 @@ export interface FormFields {
   advantage1: string;
   advantage2: string;
   disadvantage: string;
+  highlights?: string[];
 }
 
 export interface ValidationError {
@@ -55,6 +56,7 @@ export interface ValidationState {
   advantage1: { valid: boolean; message: string; charCount: number; contentWarning?: string };
   advantage2: { valid: boolean; message: string; charCount: number; contentWarning?: string };
   disadvantage: { valid: boolean; message: string; charCount: number; contentWarning?: string };
+  highlights: { valid: boolean; message: string; warnings: string[] };
   images: { valid: boolean; message: string; count: number };
   
   // 向後兼容別名（舊版命名）
@@ -62,6 +64,7 @@ export interface ValidationState {
   adv2Valid: boolean;
   disValid: boolean;
   communityValid: boolean;
+  highlightsValid: boolean;
   
   // 整體狀態
   basicValid: boolean;
@@ -211,6 +214,13 @@ export function usePropertyFormValidation(
     const adv2ContentCheck = form.advantage2.length > 0 ? checkContent(form.advantage2) : null;
     const disContentCheck = form.disadvantage.length > 0 ? checkContent(form.disadvantage) : null;
     
+    // 重點膠囊內容檢查
+    const highlightsContentChecks = (form.highlights || []).map(tag => checkContent(tag));
+    const highlightsHasSensitive = highlightsContentChecks.some(res => !res.passed && res.issues.some(i => i.type === 'sensitive'));
+    const highlightsWarnings = highlightsContentChecks
+      .filter(res => !res.passed)
+      .flatMap(res => res.issues.map(i => i.message));
+
     // 計算各欄位的內容警告訊息
     const adv1ContentWarning = (!adv1ContentCheck || adv1ContentCheck.passed) 
       ? undefined 
@@ -257,6 +267,14 @@ export function usePropertyFormValidation(
         errors.push({ field: 'disadvantage', message: disContentWarning! });
       }
     }
+
+    if (highlightsWarnings.length > 0) {
+      contentWarnings.push(...highlightsWarnings.map(w => `重點膠囊：${w}`));
+      if (highlightsHasSensitive) {
+        blockByContent = true;
+        errors.push({ field: 'highlights', message: '重點膠囊包含敏感詞' });
+      }
+    }
     
     // 圖片驗證
     const imagesValid = imageCount >= VALIDATION_RULES.images.minCount;
@@ -265,9 +283,12 @@ export function usePropertyFormValidation(
       errors.push({ field: 'images', message: imagesMessage });
     }
     
+    // 重點膠囊驗證 (如果有的話)
+    const highlightsValid = form.highlights ? form.highlights.length >= 3 : true;
+
     // 整體狀態
     const basicValid = titleValid && priceValid && addressValid && communityValid;
-    const twoGoodOneFairValid = adv1Valid && adv2Valid && disValid;
+    const twoGoodOneFairValid = (form.highlights ? highlightsValid : (adv1Valid && adv2Valid)) && disValid;
     const allValid = basicValid && twoGoodOneFairValid && imagesValid;
     
     // 考慮敏感詞：block 等級會阻止送出
@@ -296,12 +317,18 @@ export function usePropertyFormValidation(
         charCount: disLength,
         ...(disContentWarning && { contentWarning: disContentWarning }),
       },
+      highlights: {
+        valid: highlightsValid,
+        message: highlightsValid ? '' : '請至少選擇 3 個重點膠囊',
+        warnings: highlightsWarnings
+      },
       images: { valid: imagesValid, message: imagesMessage, count: imageCount },
       // 向後兼容別名
       adv1Valid,
       adv2Valid,
       disValid,
       communityValid,
+      highlightsValid,
       // 整體狀態
       basicValid,
       twoGoodOneFairValid,

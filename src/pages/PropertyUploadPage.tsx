@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { propertyService, PropertyFormInput } from '../services/propertyService';
 import { CommunityPicker } from '../components/ui/CommunityPicker';
+import { HighlightPicker } from '../components/ui/HighlightPicker';
 import { usePropertyFormValidation, validateImages, VALIDATION_RULES } from '../hooks/usePropertyFormValidation';
 import { notify } from '../lib/notify';
 import { 
@@ -38,6 +39,7 @@ export const PropertyUploadPage: React.FC = () => {
     floorCurrent: '', floorTotal: '', rooms: '3', halls: '2', bathrooms: '2', 
     type: '電梯大樓', description: '',
     advantage1: '', advantage2: '', disadvantage: '',
+    highlights: [],
     sourceExternalId: ''
   });
 
@@ -67,6 +69,7 @@ export const PropertyUploadPage: React.FC = () => {
       advantage1: form.advantage1,
       advantage2: form.advantage2,
       disadvantage: form.disadvantage,
+      highlights: form.highlights || [],
     },
     imageFiles.length
   );
@@ -429,6 +432,28 @@ export const PropertyUploadPage: React.FC = () => {
           </div>
 
           <div className="space-y-3">
+            <div className="mb-4">
+              <label className="mb-2 flex items-center gap-1.5 text-xs font-medium text-blue-700">
+                <Sparkles size={14}/> 重點膠囊 (至少 3 個)
+              </label>
+              <HighlightPicker 
+                value={form.highlights || []} 
+                onChange={(tags) => setForm({ ...form, highlights: tags })} 
+              />
+              {!validation.highlightsValid && (
+                <p className="mt-1 text-[10px] text-red-500">請至少選擇 3 個重點膠囊</p>
+              )}
+            </div>
+
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                <div className="w-full border-t border-slate-100"></div>
+              </div>
+              <div className="relative flex justify-center">
+                <span className="bg-white px-2 text-[10px] text-slate-400">或填寫詳細優點</span>
+              </div>
+            </div>
+
             <div>
               <label htmlFor="upload-advantage1" className="mb-1 flex items-center gap-1.5 text-xs font-medium text-green-700">
                 <ThumbsUp size={14}/> 優點 1 (至少 5 字)
@@ -594,7 +619,12 @@ export const PropertyUploadPage: React.FC = () => {
                   <span className="text-sm text-slate-500">萬</span>
                 </div>
                 <div className="mt-2 flex flex-wrap gap-1">
-                  {[form.type, form.size && (form.size + '坪'), form.rooms + '房' + form.halls + '廳' + form.bathrooms + '衛'].filter(Boolean).map((tag, i) => (
+                  {[
+                    form.type, 
+                    form.size && (form.size + '坪'), 
+                    form.rooms + '房' + form.halls + '廳' + form.bathrooms + '衛',
+                    ...(form.highlights || [])
+                  ].filter(Boolean).map((tag, i) => (
                     <span key={i} className="rounded-full bg-blue-50 px-2 py-0.5 text-xs text-[#003366]">{tag}</span>
                   ))}
                 </div>

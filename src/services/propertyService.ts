@@ -44,6 +44,7 @@ export interface PropertyFormInput {
   advantage1: string;
   advantage2: string;
   disadvantage: string;
+  highlights?: string[]; // 新增：重點膠囊陣列
   sourceExternalId: string;
 }
 
@@ -418,7 +419,12 @@ export const propertyService = {
         
         description: form.description,
         images: images,
-        features: [form.type, form.advantage1, form.advantage2].filter(Boolean),
+        features: [
+          form.type, 
+          ...(form.highlights || []),
+          !form.highlights && form.advantage1,
+          !form.highlights && form.advantage2
+        ].filter(Boolean) as string[],
         
         source_platform: form.sourceExternalId ? '591' : 'MH',
         source_external_id: form.sourceExternalId || null

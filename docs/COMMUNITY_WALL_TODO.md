@@ -10,15 +10,6 @@
 
 ## 🚀 當前執行區 (Active Tasks)
 
-### ✨ 新功能: HighlightPicker 重點膠囊選擇器 (優先)
-- **目標**: 在上傳頁面整合 `HighlightPicker` 組件，讓用戶手動挑選/自定義膠囊。
-
-| ID | 任務描述 (Action) | 檔案路徑 (File) | 狀態 | 驗證證據 (Evidence) |
-|:---|:---|:---|:---|:---|
-| HP-1.1 | 在 `PropertyUploadPage` 整合 `HighlightPicker` | `src/pages/PropertyUploadPage.tsx` | ⬜ | |
-| HP-1.2 | 串接 `HighlightPicker` 輸出至 `advantage1/2` 欄位 | `src/pages/PropertyUploadPage.tsx` | ⬜ | |
-| HP-1.3 | 確保自定義標籤符合 5 字以內規範 | `src/components/ui/HighlightPicker.tsx` | ⬜ | |
-
 ### 🧩 KC1: 重點膠囊統一化 (Phase 3-5)
 - **目標**: 讓 `property.html` 與 React 頁面共享同一套膠囊邏輯。
 
@@ -49,6 +40,13 @@
 ---
 
 ## ✅ 已完成階段 (Milestones)
+
+### ✨ HighlightPicker 整合 (2025-12-19)
+- ✅ **HP-1.1**: 在 `PropertyUploadPage` 整合 `HighlightPicker` 組件。
+- ✅ **HP-1.2**: 串接 `HighlightPicker` 輸出至 `advantage1/2` 欄位 (透過 `propertyService` 自動映射)。
+- ✅ **HP-1.3**: 確保自定義標籤符合 5 字以內規範，並修正 `TS2532` 潛在 undefined 錯誤。
+- ✅ **HP-1.4**: 實作 `usePropertyFormValidation` 整合，支援至少 3 個膠囊驗證與敏感詞過濾。
+- ✅ **HP-1.5**: 更新 `propertyService` 支援 `highlights` 陣列存儲，並與 `features` 欄位同步。
 
 ### 🧩 KC1 Phase 1 & 2 (2025-12-18)
 - ✅ **KC-1.1**: 在 API adapter 層新增 `tags` 統一生成函數。
