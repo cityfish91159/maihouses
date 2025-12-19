@@ -228,45 +228,118 @@ export class PropertyRenderer {
       }
     }[variant] || config.main;
 
-    const chipTags = Array.isArray(item.tags) ? item.tags.slice(0, 3) : [];
-    const tagsHtml = chipTags.map((t) => `<span class="capsule-chip ${config.chipClass}">${this.escapeHtml(t)}</span>`).join('');
-
     const article = document.createElement('article');
     article.className = `property-card ${config.cardClass}`.trim();
-    article.innerHTML = `
-        <div class="property-media">
-          <img src="${item.image}" alt="${this.escapeHtml(item.title)}" loading="lazy" decoding="async" />
-          <span class="property-badge">${this.escapeHtml(item.badge)}</span>
-        </div>
-        <div class="property-content">
-          <h3 class="property-title">${this.escapeHtml(item.title)}</h3>
-          <div class="property-location">${this.escapeHtml(item.location)}</div>
-          <div class="property-tags-row">${tagsHtml}</div>
-          ${config.showHighlights ? `<div class="tiny-text tiny-text-highlight">${this.escapeHtml(item.highlights || '')}</div>` : ''}
-          <div class="property-rating"><span class="star">★</span>${this.escapeHtml(item.rating)}</div>
-          <div class="property-reviews"></div>
-          <div class="property-more-reviews">
-            <div class="lock-info">
-              <span class="lock-icon">🔒</span><span>${config.lockPrefix}${item.lockCount} 則評價</span>
-            </div>
-            <button class="register-btn" type="button">${config.btnText}</button>
-          </div>
-          <div class="property-price">${this.escapeHtml(item.price)}<span>${this.escapeHtml(item.size)}</span></div>
-          ${config.showCta ? `
-          <div class="property-cta">
-            <button class="btn-primary" type="button">查看詳情</button>
-            <button class="heart-btn" type="button" aria-label="加入收藏">♡</button>
-          </div>` : ''}
-        </div>`;
 
-    const reviewsHost = article.querySelector('.property-reviews');
-    if (reviewsHost) {
-      const nodes = (item.reviews || []).map((r) => this.createReviewElement(r));
-      reviewsHost.replaceChildren(...nodes);
+    // Media Section
+    const mediaDiv = document.createElement('div');
+    mediaDiv.className = 'property-media';
+    const img = document.createElement('img');
+    img.src = item.image;
+    img.alt = item.title;
+    img.loading = 'lazy';
+    img.decoding = 'async';
+    const badge = document.createElement('span');
+    badge.className = 'property-badge';
+    badge.textContent = item.badge;
+    mediaDiv.appendChild(img);
+    mediaDiv.appendChild(badge);
+
+    // Content Section
+    const contentDiv = document.createElement('div');
+    contentDiv.className = 'property-content';
+
+    const title = document.createElement('h3');
+    title.className = 'property-title';
+    title.textContent = item.title;
+
+    const location = document.createElement('div');
+    location.className = 'property-location';
+    location.textContent = item.location;
+
+    const tagsRow = document.createElement('div');
+    tagsRow.className = 'property-tags-row';
+    (item.tags || []).slice(0, 3).forEach((t) => {
+      const span = document.createElement('span');
+      span.className = `capsule-chip ${config.chipClass}`.trim();
+      span.textContent = t;
+      tagsRow.appendChild(span);
+    });
+
+    contentDiv.appendChild(title);
+    contentDiv.appendChild(location);
+    contentDiv.appendChild(tagsRow);
+
+    if (config.showHighlights) {
+      const highlights = document.createElement('div');
+      highlights.className = 'tiny-text tiny-text-highlight';
+      highlights.textContent = item.highlights || '';
+      contentDiv.appendChild(highlights);
     }
 
-    container.innerHTML = '';
-    container.appendChild(article);
+    const rating = document.createElement('div');
+    rating.className = 'property-rating';
+    const star = document.createElement('span');
+    star.className = 'star';
+    star.textContent = '★';
+    rating.appendChild(star);
+    rating.appendChild(document.createTextNode(item.rating));
+    contentDiv.appendChild(rating);
+
+    const reviewsHost = document.createElement('div');
+    reviewsHost.className = 'property-reviews';
+    const nodes = (item.reviews || []).map((r) => this.createReviewElement(r));
+    reviewsHost.replaceChildren(...nodes);
+    contentDiv.appendChild(reviewsHost);
+
+    const moreReviews = document.createElement('div');
+    moreReviews.className = 'property-more-reviews';
+    const lockInfo = document.createElement('div');
+    lockInfo.className = 'lock-info';
+    const lockIcon = document.createElement('span');
+    lockIcon.className = 'lock-icon';
+    lockIcon.textContent = '🔒';
+    const lockText = document.createElement('span');
+    lockText.textContent = `${config.lockPrefix}${item.lockCount} 則評價`;
+    lockInfo.appendChild(lockIcon);
+    lockInfo.appendChild(lockText);
+    const regBtn = document.createElement('button');
+    regBtn.className = 'register-btn';
+    regBtn.type = 'button';
+    regBtn.textContent = config.btnText;
+    moreReviews.appendChild(lockInfo);
+    moreReviews.appendChild(regBtn);
+    contentDiv.appendChild(moreReviews);
+
+    const price = document.createElement('div');
+    price.className = 'property-price';
+    price.textContent = item.price;
+    const size = document.createElement('span');
+    size.textContent = item.size;
+    price.appendChild(size);
+    contentDiv.appendChild(price);
+
+    if (config.showCta) {
+      const cta = document.createElement('div');
+      cta.className = 'property-cta';
+      const detailBtn = document.createElement('button');
+      detailBtn.className = 'btn-primary';
+      detailBtn.type = 'button';
+      detailBtn.textContent = '查看詳情';
+      const heartBtn = document.createElement('button');
+      heartBtn.className = 'heart-btn';
+      heartBtn.type = 'button';
+      heartBtn.setAttribute('aria-label', '加入收藏');
+      heartBtn.textContent = '♡';
+      cta.appendChild(detailBtn);
+      cta.appendChild(heartBtn);
+      contentDiv.appendChild(cta);
+    }
+
+    article.appendChild(mediaDiv);
+    article.appendChild(contentDiv);
+
+    container.replaceChildren(article);
   }
 
   renderListings(items) {
@@ -294,8 +367,6 @@ export class PropertyRenderer {
       newKeys.add(key);
 
       const chipTags = Array.isArray(item.tags) ? item.tags.slice(0, 3) : [];
-      const tagsHtml = chipTags.map((t) => `<span class="capsule-chip capsule-chip-sm">${this.escapeHtml(t)}</span>`).join('');
-
       const signature = [
         item.image,
         item.title,
@@ -303,7 +374,7 @@ export class PropertyRenderer {
         item.size,
         item.rating,
         item.note,
-        tagsHtml,
+        chipTags.join(','),
         item.lockLabel,
         item.lockCount
       ].join('|');
@@ -312,45 +383,123 @@ export class PropertyRenderer {
       article.className = 'horizontal-card';
       article.setAttribute('data-key', key);
       article.dataset.sig = signature;
-      article.innerHTML = `
-          <div class="horizontal-left">
-            <div class="horizontal-thumb">
-              <img src="${item.image}" alt="${this.escapeHtml(item.title)}" loading="lazy" decoding="async" />
-            </div>
-            <div class="horizontal-main">
-              <div class="horizontal-title-row">
-                <span>📍</span><strong>${this.escapeHtml(item.title)}</strong>
-                ${tagsHtml}
-              </div>
-              <div class="horizontal-price">${this.escapeHtml(item.price)}<span>${this.escapeHtml(item.size)}</span></div>
-              <div class="horizontal-rating"><span class="star">★</span>${this.escapeHtml(item.rating)}</div>
-              <div class="horizontal-reviews"></div>
-              <div class="horizontal-bottom-note">${this.escapeHtml(item.note || '')}</div>
-            </div>
-          </div>
-          <div class="horizontal-right">
-            <div class="horizontal-price">${this.escapeHtml(item.price)}<span>${this.escapeHtml(item.size)}</span></div>
-            <div class="lock-row">
-              <div class="lock-header">
-                <span class="lock-icon">🔒</span>
-                <div class="lock-text">
-                  <span class="lock-label">${this.escapeHtml(item.lockLabel || '')}</span>
-                  <span class="lock-count">還有 ${item.lockCount} 則評價</span>
-                </div>
-              </div>
-              <button class="lock-btn" type="button">註冊查看更多評價</button>
-            </div>
-            <div class="horizontal-cta-row">
-              <button class="btn-outline" type="button">查看</button>
-              <button class="heart-btn" type="button" aria-label="加入收藏">♡</button>
-            </div>
-          </div>`;
 
-      const reviewsHost = article.querySelector('.horizontal-reviews');
-      if (reviewsHost) {
-        const nodes = (item.reviews || []).map((r) => this.createReviewElement(r, true));
-        reviewsHost.replaceChildren(...nodes);
-      }
+      // Left Section
+      const leftDiv = document.createElement('div');
+      leftDiv.className = 'horizontal-left';
+      
+      const thumbDiv = document.createElement('div');
+      thumbDiv.className = 'horizontal-thumb';
+      const img = document.createElement('img');
+      img.src = item.image;
+      img.alt = item.title;
+      img.loading = 'lazy';
+      img.decoding = 'async';
+      thumbDiv.appendChild(img);
+
+      const mainDiv = document.createElement('div');
+      mainDiv.className = 'horizontal-main';
+      
+      const titleRow = document.createElement('div');
+      titleRow.className = 'horizontal-title-row';
+      const pin = document.createElement('span');
+      pin.textContent = '📍';
+      const strong = document.createElement('strong');
+      strong.textContent = item.title;
+      titleRow.appendChild(pin);
+      titleRow.appendChild(strong);
+      chipTags.forEach((t) => {
+        const span = document.createElement('span');
+        span.className = 'capsule-chip capsule-chip-sm';
+        span.textContent = t;
+        titleRow.appendChild(span);
+      });
+
+      const priceDiv = document.createElement('div');
+      priceDiv.className = 'horizontal-price';
+      priceDiv.textContent = item.price;
+      const sizeSpan = document.createElement('span');
+      sizeSpan.textContent = item.size;
+      priceDiv.appendChild(sizeSpan);
+
+      const ratingDiv = document.createElement('div');
+      ratingDiv.className = 'horizontal-rating';
+      const star = document.createElement('span');
+      star.className = 'star';
+      star.textContent = '★';
+      ratingDiv.appendChild(star);
+      ratingDiv.appendChild(document.createTextNode(item.rating));
+
+      const reviewsHost = document.createElement('div');
+      reviewsHost.className = 'horizontal-reviews';
+      const nodes = (item.reviews || []).map((r) => this.createReviewElement(r, true));
+      reviewsHost.replaceChildren(...nodes);
+
+      const noteDiv = document.createElement('div');
+      noteDiv.className = 'horizontal-bottom-note';
+      noteDiv.textContent = item.note || '';
+
+      mainDiv.appendChild(titleRow);
+      mainDiv.appendChild(priceDiv);
+      mainDiv.appendChild(ratingDiv);
+      mainDiv.appendChild(reviewsHost);
+      mainDiv.appendChild(noteDiv);
+
+      leftDiv.appendChild(thumbDiv);
+      leftDiv.appendChild(mainDiv);
+
+      // Right Section
+      const rightDiv = document.createElement('div');
+      rightDiv.className = 'horizontal-right';
+      
+      const rightPrice = priceDiv.cloneNode(true);
+      
+      const lockRow = document.createElement('div');
+      lockRow.className = 'lock-row';
+      const lockHeader = document.createElement('div');
+      lockHeader.className = 'lock-header';
+      const lockIcon = document.createElement('span');
+      lockIcon.className = 'lock-icon';
+      lockIcon.textContent = '🔒';
+      const lockText = document.createElement('div');
+      lockText.className = 'lock-text';
+      const lockLabel = document.createElement('span');
+      lockLabel.className = 'lock-label';
+      lockLabel.textContent = item.lockLabel || '';
+      const lockCount = document.createElement('span');
+      lockCount.className = 'lock-count';
+      lockCount.textContent = `還有 ${item.lockCount} 則評價`;
+      lockText.appendChild(lockLabel);
+      lockText.appendChild(lockCount);
+      lockHeader.appendChild(lockIcon);
+      lockHeader.appendChild(lockText);
+      const lockBtn = document.createElement('button');
+      lockBtn.className = 'lock-btn';
+      lockBtn.type = 'button';
+      lockBtn.textContent = '註冊查看更多評價';
+      lockRow.appendChild(lockHeader);
+      lockRow.appendChild(lockBtn);
+
+      const ctaRow = document.createElement('div');
+      ctaRow.className = 'horizontal-cta-row';
+      const viewBtn = document.createElement('button');
+      viewBtn.className = 'btn-outline';
+      viewBtn.type = 'button';
+      viewBtn.textContent = '查看';
+      const heartBtn = document.createElement('button');
+      heartBtn.className = 'heart-btn';
+      heartBtn.type = 'button';
+      heartBtn.setAttribute('aria-label', '加入收藏');
+      heartBtn.textContent = '♡';
+      ctaRow.appendChild(viewBtn);
+      ctaRow.appendChild(heartBtn);
+
+      rightDiv.appendChild(rightPrice);
+      rightDiv.appendChild(lockRow);
+      rightDiv.appendChild(ctaRow);
+
+      article.appendChild(leftDiv);
+      article.appendChild(rightDiv);
 
       // S1: DOM Diffing - 如果已存在相同 key 的 card 且簽名不同才更新
       const existingCard = existingMap.get(key);
