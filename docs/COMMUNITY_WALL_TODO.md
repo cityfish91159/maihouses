@@ -31,11 +31,19 @@
 
 | ID | 任務描述 (Action) | 檔案路徑 (File) | 狀態 | 驗證證據 (Evidence) |
 |:---|:---|:---|:---|:---|
-| P35 | 修正版本日誌無限增長導致的記憶體洩漏 | `public/js/property-renderer.js` | ⬜ | |
-| P36 | E2E 測試改用 async readFile (移除 readFileSync) | `scripts/phase5/e2e-phase5.ts` | ⬜ | |
-| P41 | 修正 `.at()` 語法與 tsconfig lib 不一致問題 | `tsconfig.json` / `src/...` | ⬜ | |
-| P42 | **[P0]** 移除 `property-main.js` 的 import 副作用 | `public/js/property-main.js` | ⬜ | |
-| P43 | 建立 `.gitignore` 規則防止測試產物 (png/json) 提交 | `.gitignore` | ⬜ | |
+| P35 | 修正版本日誌無限增長導致的記憶體洩漏 | `public/js/property-renderer.js` | ✅ | 限制長度 50 並優化全域引用 |
+| P36 | E2E 測試改用 async readFile (移除 readFileSync) | `scripts/phase5/e2e-phase5.ts` | ✅ | 已確認使用 fs.promises.readFile |
+| P41 | 修正 `.at()` 語法與 tsconfig lib 不一致問題 | `tsconfig.json` / `src/...` | ✅ | 更新 lib: ["ES2022"] 並全面優化代碼 |
+| P42 | **[P0]** 移除 `property-main.js` 的 import 副作用 | `public/js/property-main.js` | ✅ | 封裝 bootstrap 並在 HTML 顯式呼叫 |
+| P43 | 建立 `.gitignore` 規則防止測試產物 (png/json) 提交 | `.gitignore` | ✅ | 已加入 *.png 與測試產物過濾規則 |
+
+### 📝 P11 執行日誌 (2025-12-19)
+- **P35**: 優化 `PropertyRenderer.logVersion`，將 `[...this.versionLog]` 改為直接引用，並使用 `while` 迴圈嚴格限制長度為 50，減少 GC 壓力。
+- **P36**: 驗證 `e2e-phase5.ts` 已全面使用 `fs.promises.readFile`，移除所有同步 I/O。
+- **P41**: 更新 `scripts/tsconfig.json` 加入 `ES2022` lib 支援；同步優化 `src/` 下 8 處 `[length - 1]` 為 `.at(-1)`，提升代碼現代化程度。
+- **P42**: **[P0]** 重構 `property-main.js`，將 `bootstrap` 導出並移除頂層立即執行邏輯；同步更新 `property.html` 顯式呼叫，徹底消除 import 副作用。
+- **P43**: 更新 `.gitignore`，加入 `*.png`、`test-results/`、`playwright-report/` 等規則，並確保不誤傷 `public/data/*.json`。
+- **驗證**: `npm run build` 通過，`scripts/phase5/e2e-phase5.ts` 測試通過，`property-phase4.test.js` 單元測試通過。
 
 ---
 

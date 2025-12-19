@@ -5,264 +5,505 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>邁房子帳號</title>
   <meta name="color-scheme" content="light">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700;900&display=swap" rel="stylesheet">
   <style>
-    /* ===== 設計 Token（沿用邁房子色系）===== */
-    :root{
-      /* 品牌色 - 邁房子主色 */
-      --brand:#00385a; 
-      --brand-dark:#00385a; 
-      --brand-light:#33607b;
-      --brand-lighter:#eef3ff;
+    /* ===== 設計 Token ===== */
+    :root {
+      /* 品牌色 - 邁房子深藍主色 */
+      --brand: #00385a;
+      --brand-dark: #002a42;
+      --brand-600: #004E7C;
+      --brand-500: #00629B;
+      --brand-light: #009FE8;
+      --brand-lighter: #E6EDF7;
+      --brand-50: #F6F9FF;
       
-      /* 背景色 */
-      --bg-page:#f6f9ff;
-      --bg-card:#ffffff;
-      --bg-glass:rgba(255,255,255,0.88);
+      /* 漸層 */
+      --gradient-brand: linear-gradient(135deg, #00385a 0%, #004E7C 50%, #00629B 100%);
+      --gradient-card: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+      --gradient-glow: radial-gradient(ellipse at 50% -20%, rgba(0, 56, 90, 0.12) 0%, transparent 60%);
       
-      /* 漸層 - 統一使用深藍色，避免過黑 */
-      --gradient-brand:linear-gradient(135deg, #00385a 0%, #004E7C 100%);
-      --gradient-bg:linear-gradient(135deg, #eef3ff 0%, #e3f0ff 100%);
-      --gradient-hero:radial-gradient(1200px 800px at 50% -10%, #e9f0ff, transparent 50%);
+      /* 背景 */
+      --bg-page: #F6F9FF;
+      --bg-card: #ffffff;
       
-      /* 文字色 */
-      --text-primary:#0a2246;
-      --text-secondary:#6c7b91;
-      --text-tertiary:#8a95a5;
-      
-      /* 中性色 */
-      --neutral-100:#F3F4F6;
-      --neutral-200:#E5E7EB;
-      --neutral-800:#1F2937;
+      /* 文字 */
+      --text-primary: #0A2246;
+      --text-secondary: #6C7B91;
+      --text-tertiary: #94A3B8;
       
       /* 邊框 */
-      --border:#e6edf7;
-      --border-light:#eef3ff;
+      --border: #E6EDF7;
+      --border-light: #f1f5f9;
       
       /* 圓角 */
-      --r-sm:10px;
-      --r-md:14px;
-      --r-lg:18px;
-      --r-xl:24px;
-      --r-pill:999px;
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --radius-xl: 24px;
+      --radius-2xl: 32px;
       
       /* 陰影 */
-      --shadow-sm:0 2px 8px rgba(10, 34, 70, 0.04);
-      --shadow-md:0 4px 16px rgba(10, 34, 70, 0.08);
-      --shadow-lg:0 8px 24px rgba(0, 56, 90, 0.12);
+      --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 56, 90, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
+      --shadow-xl: 0 20px 25px -5px rgba(0, 56, 90, 0.12), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+      --shadow-glow: 0 0 40px rgba(0, 56, 90, 0.12);
       
       /* 過渡 */
-      --transition:200ms cubic-bezier(0.2, 0.7, 0.2, 1);
+      --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     /* ===== 動畫 ===== */
-    @keyframes fadeInUp {
-      from { opacity: 0; transform: translateY(20px); }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(30px); }
       to { opacity: 1; transform: translateY(0); }
     }
     
     @keyframes float {
+      0%, 100% { transform: translateY(0) rotate(0deg); }
+      50% { transform: translateY(-10px) rotate(2deg); }
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.6; }
+    }
+    
+    @keyframes shimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+
+    /* ===== 吉祥物動畫 ===== */
+    @keyframes mascot-float {
       0%, 100% { transform: translateY(0); }
       50% { transform: translateY(-8px); }
     }
     
-    @keyframes pulse-glow {
-      0%, 100% { box-shadow: 0 0 20px rgba(0, 56, 90, 0.3); }
-      50% { box-shadow: 0 0 30px rgba(0, 56, 90, 0.5); }
+    @keyframes mascot-wave {
+      0%, 100% { transform: rotate(0deg); }
+      25% { transform: rotate(20deg); }
+      75% { transform: rotate(-10deg); }
     }
     
-    @keyframes slide {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
+    @keyframes mascot-wiggle {
+      0%, 100% { transform: rotate(0deg); }
+      25% { transform: rotate(-3deg); }
+      75% { transform: rotate(3deg); }
+    }
+    
+    @keyframes mascot-blink {
+      0%, 45%, 55%, 100% { transform: scaleY(1); }
+      50% { transform: scaleY(0.1); }
+    }
+    
+    @keyframes mascot-peek {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(4px); }
+    }
+    
+    @keyframes mascot-happy-bounce {
+      0%, 100% { transform: translateY(0) scale(1); }
+      50% { transform: translateY(-12px) scale(1.05); }
+    }
+    
+    @keyframes mascot-shy-sway {
+      0%, 100% { transform: translateX(0) rotate(0deg); }
+      25% { transform: translateX(-3px) rotate(-2deg); }
+      75% { transform: translateX(3px) rotate(2deg); }
+    }
+    
+    @keyframes heart-float {
+      0% { opacity: 0; transform: translate(-50%, 0) scale(0); }
+      20% { opacity: 1; transform: translate(-50%, -10px) scale(1); }
+      100% { opacity: 0; transform: translate(-50%, -30px) scale(0.5); }
     }
 
     /* ===== 基礎樣式 ===== */
     * { box-sizing: border-box; margin: 0; padding: 0; }
     
     html, body {
-      height: 100%;
-      font-family: 'Noto Sans TC', 'PingFang TC', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      min-height: 100vh;
+      font-family: 'Noto Sans TC', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       color: var(--text-primary);
       background: var(--bg-page);
       -webkit-font-smoothing: antialiased;
-      position: relative;
-      overflow-x: hidden;
+    }
+
+    /* ===== 背景裝飾 ===== */
+    .bg-decoration {
+      position: fixed;
+      inset: 0;
+      overflow: hidden;
+      pointer-events: none;
+      z-index: 0;
     }
     
-    /* 背景裝飾 */
-    body::before {
-      content: '';
-      position: fixed;
-      top: -50%;
-      left: -10%;
+    .bg-blob {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.6;
+    }
+    
+    .bg-blob-1 {
       width: 600px;
       height: 600px;
-      background: radial-gradient(circle, rgba(0, 56, 90, 0.08) 0%, transparent 70%);
-      border-radius: 50%;
-      animation: float 8s ease-in-out infinite;
-      pointer-events: none;
-      z-index: 0;
+      background: linear-gradient(135deg, #E6EDF7, #d1e3f5);
+      top: -200px;
+      right: -100px;
+      animation: float 15s ease-in-out infinite;
     }
     
-    body::after {
-      content: '';
-      position: fixed;
-      bottom: -30%;
-      right: -10%;
+    .bg-blob-2 {
       width: 500px;
       height: 500px;
-      background: radial-gradient(circle, rgba(106, 164, 255, 0.06) 0%, transparent 70%);
-      border-radius: 50%;
-      animation: float 10s ease-in-out infinite reverse;
-      pointer-events: none;
-      z-index: 0;
+      background: linear-gradient(135deg, #dbeafe, #c7d8ed);
+      bottom: -150px;
+      left: -100px;
+      animation: float 20s ease-in-out infinite reverse;
+    }
+    
+    .bg-blob-3 {
+      width: 300px;
+      height: 300px;
+      background: linear-gradient(135deg, #E6EDF7, #cce0f0);
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      animation: float 12s ease-in-out infinite;
+      opacity: 0.4;
+    }
+
+    /* ===== 佈局 ===== */
+    .page-wrapper {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      z-index: 1;
     }
 
     /* ===== Header ===== */
     header {
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      background: rgba(255, 255, 255, 0.8);
-      backdrop-filter: blur(12px) saturate(120%);
-      border-bottom: 1px solid var(--border);
-      animation: fadeInUp 0.6s ease-out;
-    }
-    
-    .header-wrap {
-      max-width: 1280px;
-      margin: 0 auto;
-      padding: 14px 20px;
+      padding: 16px 24px;
       display: flex;
-      align-items: center;
       justify-content: space-between;
+      align-items: center;
+      animation: fadeIn 0.6s ease-out;
     }
     
     .logo {
       display: flex;
       align-items: center;
-      gap: 10px;
-      font-weight: 900;
-      font-size: 16px;
-      letter-spacing: 0.3px;
-      color: var(--brand);
+      gap: 12px;
       text-decoration: none;
-      transition: all var(--transition);
-    }
-    
-    .logo:hover {
-      transform: scale(1.02);
     }
     
     .logo-icon {
-      width: 32px;
-      height: 32px;
-      border-radius: 10px;
-      background: var(--gradient-brand);
-      display: grid;
-      place-items: center;
+      width: 42px;
+      height: 42px;
+      background: linear-gradient(135deg, #00385a, #005282);
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 10px 15px -3px rgba(0, 56, 90, 0.2);
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+    
+    .logo:hover .logo-icon {
+      transform: scale(1.05);
+      box-shadow: 0 10px 15px -3px rgba(0, 56, 90, 0.3);
+    }
+    
+    .logo-icon svg {
+      width: 22px;
+      height: 22px;
       color: white;
-      font-weight: 900;
-      box-shadow: var(--shadow-sm);
-      animation: pulse-glow 3s ease-in-out infinite;
+      position: relative;
+      z-index: 10;
+      filter: drop-shadow(0 1px 2px rgba(0,0,0,0.1));
+      transition: transform 0.3s ease;
+    }
+    
+    .logo:hover .logo-icon svg {
+      transform: translateY(-1px);
+    }
+    
+    .logo-badge {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      width: 6px;
+      height: 6px;
+      background: #FF6B6B;
+      border-radius: 50%;
+      box-shadow: 0 0 0 1.5px #004E7C;
+    }
+    
+    .logo-text {
+      display: flex;
+      align-items: center;
+    }
+    
+    .logo-name {
+      font-size: 24px;
+      font-weight: 700;
+      font-family: serif;
+      color: #00385a;
+      letter-spacing: 0.025em;
+      line-height: 1;
+    }
+    
+    .logo-slogan-wrap {
+      display: flex;
+      align-items: center;
+      margin-left: 12px;
+      padding-left: 12px;
+      border-left: 2px solid rgba(230, 237, 247, 0.8);
+      height: 20px;
+    }
+    
+    .logo-slogan {
+      font-size: 15px;
+      font-weight: 700;
+      color: #00629B;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      line-height: 1;
+      padding-top: 1px;
+      transition: color 0.2s;
+    }
+    
+    .logo:hover .logo-slogan {
+      color: #00385a;
+    }
+    
+    @media (max-width: 640px) {
+      .logo-slogan-wrap {
+        display: none;
+      }
     }
     
     .back-btn {
-      display: inline-flex;
+      display: flex;
       align-items: center;
-      gap: 8px;
-      padding: 10px 18px;
-      border-radius: var(--r-pill);
-      background: var(--bg-glass);
+      gap: 6px;
+      padding: 10px 16px;
+      background: white;
       border: 1px solid var(--border);
+      border-radius: 999px;
       color: var(--text-secondary);
       text-decoration: none;
-      font-weight: 600;
       font-size: 14px;
-      transition: all var(--transition);
+      font-weight: 600;
+      transition: var(--transition);
+      box-shadow: var(--shadow-sm);
     }
     
     .back-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: var(--shadow-md);
       border-color: var(--brand-light);
       color: var(--brand);
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-md);
     }
 
     /* ===== Main Container ===== */
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 40px 20px 60px;
-      position: relative;
-      z-index: 1;
-    }
-    
-    @media (max-width: 768px) {
-      .container { padding: 24px 16px 40px; }
+    main {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
     }
 
     /* ===== Auth Card ===== */
     .auth-card {
+      width: 100%;
+      max-width: 480px;
       background: var(--bg-card);
-      border-radius: var(--r-xl);
-      box-shadow: var(--shadow-lg);
+      border-radius: var(--radius-2xl);
+      box-shadow: var(--shadow-xl), var(--shadow-glow);
       overflow: hidden;
-      display: grid;
-      grid-template-columns: 1.1fr 0.9fr;
-      grid-template-rows: auto 1fr;
-      grid-template-areas: 
-        "accent accent"
-        "form feature";
-      max-width: 1080px;
-      margin: 0 auto;
-      border: 1px solid var(--border-light);
-      animation: fadeInUp 0.8s ease-out;
+      animation: slideUp 0.8s ease-out;
+      border: 1px solid rgba(255, 255, 255, 0.8);
     }
     
-    @media (max-width: 980px) {
-      .auth-card { 
-        grid-template-columns: 1fr;
-        grid-template-areas: 
-          "accent"
-          "form"
-          "feature";
-      }
-    }
-
-    /* ===== 頂部裝飾條 ===== */
-    .accent-bar {
-      grid-area: accent;
-      height: 5px;
+    /* 頂部漸層條 */
+    .card-accent {
+      height: 4px;
       background: var(--gradient-brand);
       background-size: 200% 100%;
-      animation: slide 4s linear infinite;
+      animation: shimmer 3s linear infinite;
+    }
+    
+    .card-content {
+      padding: 40px 36px 36px;
+    }
+    
+    @media (max-width: 520px) {
+      .card-content { padding: 32px 24px 28px; }
     }
 
-    /* ===== Left Panel (表單) ===== */
-    .form-panel {
-      grid-area: form;
-      padding: 44px 48px;
-      position: relative;
-    }
-    
-    @media (max-width: 768px) {
-      .form-panel { padding: 32px 24px; }
-    }
-    
-    .form-header {
+    /* ===== Card Header ===== */
+    .card-header {
+      text-align: center;
       margin-bottom: 32px;
     }
     
-    .form-title {
-      font-size: 30px;
-      font-weight: 900;
-      color: var(--text-primary);
-      margin-bottom: 8px;
-      letter-spacing: 0.3px;
+    .card-emoji {
+      font-size: 48px;
+      margin-bottom: 16px;
+      display: inline-block;
+      animation: float 3s ease-in-out infinite;
     }
     
-    .form-subtitle {
+    /* ===== 吉祥物樣式（使用首頁原版公仔）===== */
+    .mascot-container {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 16px;
+      position: relative;
+    }
+    
+    .mascot-wrapper {
+      position: relative;
+      width: 100px;
+      height: 120px;
+      cursor: pointer;
+    }
+    
+    .mascot-wrapper:hover {
+      transform: scale(1.05);
+    }
+    
+    .mascot-svg {
+      width: 100%;
+      height: 100%;
+      color: var(--brand);
+      filter: drop-shadow(0 2px 4px rgba(0, 56, 90, 0.15));
+      transition: transform 0.3s ease;
+    }
+    
+    /* 狀態動畫 */
+    .mascot-wrapper.idle .mascot-svg {
+      animation: mascot-float 3s ease-in-out infinite;
+    }
+    
+    .mascot-wrapper.wave .mascot-svg {
+      animation: mascot-wiggle 0.5s ease-in-out infinite;
+    }
+    
+    .mascot-wrapper.wave .mascot-arm-right {
+      animation: mascot-wave 0.6s ease-in-out infinite;
+      transform-origin: 145px 130px;
+    }
+    
+    .mascot-wrapper.happy .mascot-svg {
+      animation: mascot-happy-bounce 0.6s ease-in-out;
+    }
+    
+    .mascot-wrapper.thinking .mascot-svg {
+      animation: mascot-wiggle 2s ease-in-out infinite;
+    }
+    
+    .mascot-wrapper.shy .mascot-svg {
+      animation: mascot-shy-sway 1s ease-in-out infinite;
+    }
+    
+    /* 遮眼狀態 - 手臂移到眼睛位置 */
+    .mascot-wrapper.peek .mascot-arm-left {
+      transform: translate(35px, -15px) rotate(45deg);
+      transition: transform 0.3s ease;
+    }
+    
+    .mascot-wrapper.peek .mascot-arm-right {
+      transform: translate(-35px, -15px) rotate(-45deg);
+      transition: transform 0.3s ease;
+    }
+    
+    .mascot-arm-left,
+    .mascot-arm-right {
+      transition: transform 0.3s ease;
+    }
+    
+    /* 愛心動畫 */
+    .mascot-hearts {
+      position: absolute;
+      top: -10px;
+      left: 50%;
+      transform: translateX(-50%);
+      pointer-events: none;
+    }
+    
+    .mascot-heart {
+      position: absolute;
+      font-size: 14px;
+      opacity: 0;
+    }
+    
+    .mascot-wrapper.happy .mascot-heart {
+      animation: heart-float 1s ease-out forwards;
+    }
+    
+    .mascot-wrapper.happy .mascot-heart:nth-child(1) { left: -15px; animation-delay: 0s; }
+    .mascot-wrapper.happy .mascot-heart:nth-child(2) { left: 5px; animation-delay: 0.15s; }
+    .mascot-wrapper.happy .mascot-heart:nth-child(3) { left: -5px; animation-delay: 0.3s; }
+    
+    /* 對話泡泡 */
+    .mascot-speech {
+      position: absolute;
+      top: -35px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: white;
+      padding: 6px 12px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--brand);
+      box-shadow: var(--shadow-md);
+      white-space: nowrap;
+      opacity: 0;
+      transition: opacity 0.3s, transform 0.3s;
+      pointer-events: none;
+      z-index: 10;
+    }
+    
+    .mascot-speech::after {
+      content: '';
+      position: absolute;
+      bottom: -6px;
+      left: 50%;
+      transform: translateX(-50%);
+      border-left: 6px solid transparent;
+      border-right: 6px solid transparent;
+      border-top: 6px solid white;
+    }
+    
+    .mascot-speech.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(-4px);
+    }
+    
+    .card-title {
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+      letter-spacing: -0.02em;
+    }
+    
+    .card-subtitle {
       font-size: 15px;
       color: var(--text-secondary);
     }
@@ -270,85 +511,56 @@
     /* ===== Tabs ===== */
     .tabs {
       display: flex;
-      gap: 10px;
-      margin-bottom: 28px;
+      background: var(--border-light);
+      border-radius: var(--radius-lg);
       padding: 4px;
-      background: var(--bg-glass);
-      border-radius: var(--r-lg);
-      border: 1px solid var(--border);
+      margin-bottom: 28px;
     }
     
     .tab {
       flex: 1;
-      padding: 12px 20px;
+      padding: 14px 20px;
       border: none;
       background: transparent;
-      border-radius: var(--r-md);
+      border-radius: var(--radius-md);
       font-size: 15px;
       font-weight: 600;
-      color: var(--text-secondary);
+      color: var(--text-tertiary);
       cursor: pointer;
-      transition: all var(--transition);
-      position: relative;
+      transition: var(--transition);
     }
     
-    .tab:hover {
-      color: var(--brand);
-      background: rgba(0, 56, 90, 0.04);
+    .tab:hover:not(.active) {
+      color: var(--text-secondary);
     }
     
     .tab.active {
-      background: var(--gradient-brand);
-      color: white;
+      background: white;
+      color: var(--brand);
       box-shadow: var(--shadow-sm);
-      font-weight: 700;
     }
 
     /* ===== Buttons ===== */
     .btn {
-      display: inline-flex;
+      display: flex;
       align-items: center;
       justify-content: center;
       gap: 10px;
       width: 100%;
       min-height: 52px;
-      padding: 14px 20px;
-      border-radius: var(--r-md);
+      padding: 14px 24px;
+      border-radius: var(--radius-md);
       font-size: 15px;
       font-weight: 700;
       border: none;
       cursor: pointer;
-      transition: all var(--transition);
+      transition: var(--transition);
       position: relative;
       overflow: hidden;
     }
     
-    .btn::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(135deg, rgba(255,255,255,0.2), transparent);
-      opacity: 0;
-      transition: opacity var(--transition);
-    }
-    
-    .btn:hover::before {
-      opacity: 1;
-    }
-    
     .btn:active {
       transform: scale(0.98);
-    }
-    
-    .btn-primary {
-      background: var(--gradient-brand);
-      color: white;
-      box-shadow: var(--shadow-sm);
-    }
-    
-    .btn-primary:hover {
-      box-shadow: var(--shadow-md);
-      transform: translateY(-2px);
     }
     
     .btn-google {
@@ -363,54 +575,77 @@
       transform: translateY(-2px);
     }
     
-    .google-icon {
-      width: 22px;
-      height: 22px;
-      background: white;
-      border-radius: 6px;
-      display: grid;
-      place-items: center;
+    .btn-google svg {
+      width: 20px;
+      height: 20px;
+    }
+    
+    .btn-primary {
+      background: var(--gradient-brand);
+      color: white;
+      box-shadow: var(--shadow-md), 0 4px 14px rgba(0, 56, 90, 0.25);
+    }
+    
+    .btn-primary:hover {
+      box-shadow: var(--shadow-lg), 0 6px 20px rgba(0, 56, 90, 0.35);
+      transform: translateY(-2px);
+    }
+    
+    .btn-primary::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.2), transparent);
+      opacity: 0;
+      transition: var(--transition);
+    }
+    
+    .btn-primary:hover::before {
+      opacity: 1;
+    }
+
+    /* ===== Divider ===== */
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin: 24px 0;
+      color: var(--text-tertiary);
+      font-size: 13px;
+      font-weight: 500;
+    }
+    
+    .divider::before,
+    .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
     }
 
     /* ===== Form Fields ===== */
-    .field-group {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-      margin-bottom: 18px;
-    }
-    
-    @media (max-width: 640px) {
-      .field-group { grid-template-columns: 1fr; }
-    }
-    
     .field {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-    
-    .field.full {
-      grid-column: 1 / -1;
+      margin-bottom: 20px;
     }
     
     .field label {
+      display: block;
       font-size: 14px;
       font-weight: 600;
       color: var(--text-primary);
+      margin-bottom: 8px;
     }
     
-    .field input[type="text"],
-    .field input[type="email"],
-    .field input[type="password"] {
-      height: 50px;
-      padding: 12px 16px;
-      border-radius: var(--r-md);
+    .field input {
+      width: 100%;
+      height: 52px;
+      padding: 0 16px;
       border: 2px solid var(--border);
-      background: white;
+      border-radius: var(--radius-md);
       font-size: 16px;
       color: var(--text-primary);
-      transition: all var(--transition);
+      background: white;
+      transition: var(--transition);
     }
     
     .field input:focus {
@@ -425,8 +660,9 @@
     
     .field .error {
       display: none;
+      margin-top: 6px;
       font-size: 13px;
-      color: #e11d48;
+      color: #dc2626;
       font-weight: 500;
     }
     
@@ -434,12 +670,67 @@
       display: block;
     }
 
+    /* ===== Role Select ===== */
+    .role-select {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    
+    .role-option {
+      position: relative;
+    }
+    
+    .role-option input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+    
+    .role-option label {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      padding: 20px 16px;
+      border: 2px solid var(--border);
+      border-radius: var(--radius-lg);
+      cursor: pointer;
+      transition: var(--transition);
+      background: white;
+    }
+    
+    .role-option:hover label {
+      border-color: var(--brand-light);
+    }
+    
+    .role-option input:checked + label {
+      border-color: var(--brand);
+      background: var(--brand-lighter);
+    }
+    
+    .role-icon {
+      font-size: 28px;
+    }
+    
+    .role-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    
+    .role-desc {
+      font-size: 12px;
+      color: var(--text-tertiary);
+    }
+
     /* ===== Checkbox ===== */
     .checkbox-field {
       display: flex;
       align-items: flex-start;
-      gap: 10px;
-      margin: 16px 0;
+      gap: 12px;
+      margin: 20px 0;
     }
     
     .checkbox-field input[type="checkbox"] {
@@ -448,13 +739,14 @@
       margin-top: 2px;
       accent-color: var(--brand);
       cursor: pointer;
+      flex-shrink: 0;
     }
     
     .checkbox-field label {
       font-size: 14px;
       color: var(--text-secondary);
-      cursor: pointer;
       line-height: 1.5;
+      cursor: pointer;
     }
     
     .checkbox-field a {
@@ -467,321 +759,309 @@
       text-decoration: underline;
     }
 
-    /* ===== Divider ===== */
-    .divider {
-      display: grid;
-      grid-template-columns: 1fr auto 1fr;
-      align-items: center;
-      gap: 16px;
-      margin: 24px 0;
-    }
-    
-    .divider::before,
-    .divider::after {
-      content: '';
-      height: 1px;
-      background: var(--border);
-    }
-    
-    .divider span {
-      font-size: 13px;
-      color: var(--text-tertiary);
-      font-weight: 500;
-    }
-
-    /* ===== Right Panel (功能介紹) ===== */
-    .feature-panel {
-      grid-area: feature;
-      background: var(--gradient-bg);
-      padding: 44px 40px;
-      display: flex;
-      flex-direction: column;
-      gap: 24px;
-      border-left: 1px solid var(--border-light);
-    }
-    
-    @media (max-width: 980px) {
-      .feature-panel {
-        border-left: none;
-        border-top: 1px solid var(--border-light);
-        padding: 32px 24px;
-      }
-    }
-    
-    .tagline {
-      display: inline-block;
-      padding: 8px 16px;
-      background: rgba(0, 56, 90, 0.08);
-      border: 1px solid rgba(0, 56, 90, 0.2);
-      border-radius: var(--r-pill);
-      font-size: 13px;
-      font-weight: 700;
-      color: var(--brand);
-      margin-bottom: 8px;
-    }
-    
-    .feature-card {
-      background: white;
-      padding: 24px;
-      border-radius: var(--r-lg);
-      box-shadow: var(--shadow-sm);
-      border: 1px solid var(--border-light);
-      transition: all var(--transition);
-    }
-    
-    .feature-card:hover {
-      transform: translateY(-4px);
-      box-shadow: var(--shadow-md);
-    }
-    
-    .feature-card h3 {
-      font-size: 17px;
-      font-weight: 800;
-      color: var(--text-primary);
-      margin-bottom: 8px;
-    }
-    
-    .feature-card p {
-      font-size: 14px;
-      color: var(--text-secondary);
-      line-height: 1.6;
-    }
-    
-    .chips {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-top: 16px;
-    }
-    
-    .chip {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 10px 16px;
-      background: white;
-      border: 1px solid var(--border);
-      border-radius: var(--r-pill);
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--brand);
-      transition: all var(--transition);
-    }
-    
-    .chip:hover {
-      border-color: var(--brand-light);
-      transform: translateY(-2px);
-      box-shadow: var(--shadow-sm);
-    }
-    
-    .chip-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: var(--brand);
-      box-shadow: 0 0 8px rgba(0, 56, 90, 0.4);
-    }
-
-    /* ===== Footer ===== */
-    footer {
-      text-align: center;
-      padding: 32px 20px;
-      color: var(--text-tertiary);
-      font-size: 14px;
-    }
-    
+    /* ===== Forgot Link ===== */
     .forgot-link {
-      display: inline-block;
-      margin-top: 12px;
+      display: block;
+      text-align: center;
+      margin-top: 16px;
       font-size: 14px;
       color: var(--brand);
       text-decoration: none;
       font-weight: 600;
-      transition: all var(--transition);
+      transition: var(--transition);
     }
     
     .forgot-link:hover {
       text-decoration: underline;
     }
+
+    /* ===== Features ===== */
+    .features {
+      display: flex;
+      justify-content: center;
+      gap: 32px;
+      margin-top: 32px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border-light);
+    }
+    
+    .feature {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--text-tertiary);
+    }
+    
+    .feature-icon {
+      width: 20px;
+      height: 20px;
+      color: var(--brand-light);
+    }
+    
+    @media (max-width: 480px) {
+      .features {
+        flex-direction: column;
+        gap: 12px;
+        align-items: center;
+      }
+    }
+
+    /* ===== Footer ===== */
+    footer {
+      text-align: center;
+      padding: 24px;
+      font-size: 13px;
+      color: var(--text-tertiary);
+    }
+
+    /* ===== 隱藏元素 ===== */
+    .hidden {
+      display: none !important;
+    }
   </style>
 </head>
 <body>
-  <!-- Header -->
-  <header>
-    <div class="header-wrap">
+  <!-- 背景裝飾 -->
+  <div class="bg-decoration">
+    <div class="bg-blob bg-blob-1"></div>
+    <div class="bg-blob bg-blob-2"></div>
+    <div class="bg-blob bg-blob-3"></div>
+  </div>
+
+  <div class="page-wrapper">
+    <!-- Header -->
+    <header>
       <a href="/maihouses/" class="logo">
-        <div class="logo-icon">邁</div>
-        <span>邁房子</span>
+        <!-- Logo Icon - 完全比照首頁 -->
+        <div class="logo-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 9.5L12 3L21 9.5V20.5C21 21.0523 20.5523 21.5 20 21.5H4C3.44772 21.5 3 21.0523 3 20.5V9.5Z" />
+            <path d="M9 21.5V13H15V21.5" />
+          </svg>
+          <!-- Notification Badge -->
+          <div class="logo-badge"></div>
+        </div>
+        <div class="logo-text">
+          <span class="logo-name">邁房子</span>
+          <div class="logo-slogan-wrap">
+            <span class="logo-slogan">讓家，不只是地址</span>
+          </div>
+        </div>
       </a>
       <a href="/maihouses/" class="back-btn">
-        <span>←</span>
-        <span>返回首頁</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+        返回首頁
       </a>
-    </div>
-  </header>
+    </header>
 
-  <!-- Main Content -->
-  <main class="container">
-    <div class="auth-card">
-      <div class="accent-bar"></div>
-      
-      <!-- Left: Form Panel -->
-      <div class="form-panel">
-        <div class="form-header">
-          <h1 class="form-title">邁房子帳號</h1>
-          <p class="form-subtitle" id="subtitle">回到你的邁房子</p>
-        </div>
+    <!-- Main Content -->
+    <main>
+      <div class="auth-card">
+        <div class="card-accent"></div>
+        <div class="card-content">
+          <!-- Header -->
+          <div class="card-header">
+            <!-- 互動吉祥物（使用首頁原版公仔）-->
+            <div class="mascot-container">
+              <div class="mascot-wrapper idle" id="mascot">
+                <!-- 對話泡泡 -->
+                <div class="mascot-speech" id="mascotSpeech">嗨！歡迎回來 👋</div>
+                
+                <!-- 愛心動畫 -->
+                <div class="mascot-hearts">
+                  <span class="mascot-heart">💙</span>
+                  <span class="mascot-heart">💙</span>
+                  <span class="mascot-heart">💙</span>
+                </div>
+                
+                <!-- 首頁原版公仔 SVG -->
+                <svg class="mascot-svg" viewBox="0 0 200 240">
+                  <!-- M-Antenna（M字天線）-->
+                  <path d="M 85 40 L 85 15 L 100 30 L 115 15 L 115 40" 
+                        stroke="currentColor" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
 
-        <!-- Tabs -->
-        <div class="tabs">
-          <button class="tab active" id="tabLogin">登入</button>
-          <button class="tab" id="tabSignup">註冊</button>
-        </div>
+                  <!-- House Body & Roof（房屋與屋頂）-->
+                  <path d="M 40 80 L 100 40 L 160 80" 
+                        stroke="currentColor" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                  <rect x="55" y="80" width="90" height="100" 
+                        stroke="currentColor" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
 
-        <!-- Google Button -->
-        <button class="btn btn-google" id="btnGoogle">
-          <span class="google-icon">
-            <svg width="18" height="18" viewBox="0 0 48 48">
-              <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.6 31.8 29.3 35 24 35c-6.6 0-12-5.4-12-12s5.4-12 12-12c3 0 5.7 1.1 7.7 2.9l5.7-5.7C34.9 5.7 29.7 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20c10 0 19-7.3 19-20 0-1.2-.1-2.3-.4-3.5z"/>
-              <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 16.2 19 13 24 13c3 0 5.7 1.1 7.7 2.9l5.7-5.7C34.9 5.7 29.7 4 24 4c-7.7 0-14.4 4.3-17.7 10.7z"/>
-              <path fill="#4CAF50" d="M24 44c5.2 0 10-1.7 13.8-4.7l-6.4-5.2C29.3 35 26.8 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.7 16.2 44 24 44z"/>
-              <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-1 2.9-3.2 5.2-5.9 6.6l.1.1 6.4 5.2C37 41.7 43 36 43 24c0-1.2-.1-2.3-.4-3.5z"/>
+                  <!-- Eyebrows（眉毛）-->
+                  <path d="M 78 110 Q 85 105 92 110" stroke="currentColor" stroke-width="4" fill="none" stroke-linecap="round" />
+                  <path d="M 108 110 Q 115 105 122 110" stroke="currentColor" stroke-width="4" fill="none" stroke-linecap="round" />
+                  
+                  <!-- Eyes（眼睛 - 空心圓）-->
+                  <circle cx="85" cy="125" r="4" stroke="currentColor" stroke-width="3" fill="none" />
+                  <circle cx="115" cy="125" r="4" stroke="currentColor" stroke-width="3" fill="none" />
+
+                  <!-- Hands（手 - 從側邊伸出）-->
+                  <path class="mascot-arm-left" d="M 55 130 L 25 110" stroke="currentColor" stroke-width="5" fill="none" stroke-linecap="round" />
+                  <path class="mascot-arm-right" d="M 145 130 L 175 110" stroke="currentColor" stroke-width="5" fill="none" stroke-linecap="round" />
+
+                  <!-- Legs（腳 - 走路姿勢）-->
+                  <path d="M 85 180 L 85 215 L 75 215" stroke="currentColor" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+                  <path d="M 115 180 L 115 215 L 125 215" stroke="currentColor" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </div>
+            </div>
+            
+            <h1 class="card-title" id="cardTitle">歡迎回來</h1>
+            <p class="card-subtitle" id="cardSubtitle">登入你的邁房子帳號</p>
+          </div>
+
+          <!-- Tabs -->
+          <div class="tabs">
+            <button class="tab active" id="tabLogin">登入</button>
+            <button class="tab" id="tabSignup">註冊</button>
+          </div>
+
+          <!-- Google Button -->
+          <button class="btn btn-google" id="btnGoogle">
+            <svg viewBox="0 0 24 24">
+              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
             </svg>
-          </span>
-          <span id="googleText">使用 Google 登入</span>
-        </button>
+            <span id="googleText">使用 Google 繼續</span>
+          </button>
 
-        <!-- Divider -->
-        <div class="divider"><span>或使用 Email</span></div>
+          <!-- Divider -->
+          <div class="divider">或使用 Email</div>
 
-        <!-- Form Fields -->
-        <form id="authForm">
-          <div class="field-group">
-            <div class="field full">
+          <!-- Form -->
+          <form id="authForm">
+            <!-- Email -->
+            <div class="field">
               <label for="email">Email</label>
               <input type="email" id="email" placeholder="name@example.com" autocomplete="email" />
               <span class="error" id="errEmail">請輸入有效的 Email</span>
             </div>
-            <div class="field full">
+
+            <!-- Password -->
+            <div class="field">
               <label for="password">密碼</label>
-              <input type="password" id="password" placeholder="至少 8 碼" autocomplete="current-password" />
-              <span class="error" id="errPassword">密碼需至少 8 碼</span>
+              <input type="password" id="password" placeholder="請輸入密碼" autocomplete="current-password" />
+              <span class="error" id="errPassword">密碼需至少 6 碼</span>
             </div>
-            <div class="field full" id="confirmField" style="display:none">
+
+            <!-- Confirm Password (Signup Only) -->
+            <div class="field hidden" id="confirmField">
               <label for="confirmPassword">確認密碼</label>
-              <input type="password" id="confirmPassword" placeholder="請再輸入一次" autocomplete="new-password" />
+              <input type="password" id="confirmPassword" placeholder="請再輸入一次密碼" autocomplete="new-password" />
               <span class="error" id="errConfirm">兩次密碼不一致</span>
             </div>
-          </div>
 
-          
-          <!-- Role Select (Only for Signup) -->
-          <div class="field full" id="roleField" style="display:none">
-            <label>選擇身分</label>
-            <div style="display:flex; gap:12px; flex-wrap:wrap;">
-              <label style="display:flex;align-items:center;gap:8px;padding:10px 14px;border:1px solid var(--border);border-radius:12px;cursor:pointer;user-select:none;">
-                <input type="radio" name="role" value="member" checked style="accent-color: var(--brand);" />
-                <span>我是消費者</span>
-              </label>
-              <label style="display:flex;align-items:center;gap:8px;padding:10px 14px;border:1px solid var(--border);border-radius:12px;cursor:pointer;user-select:none;">
-                <input type="radio" name="role" value="agent" style="accent-color: var(--brand);" />
-                <span>我是房仲（業務）</span>
+            <!-- Role Select (Signup Only) -->
+            <div class="role-select hidden" id="roleField">
+              <div class="role-option">
+                <input type="radio" name="role" value="member" id="roleMember" checked />
+                <label for="roleMember">
+                  <span class="role-icon">🏠</span>
+                  <span class="role-title">我是買家</span>
+                  <span class="role-desc">找理想的家</span>
+                </label>
+              </div>
+              <div class="role-option">
+                <input type="radio" name="role" value="agent" id="roleAgent" />
+                <label for="roleAgent">
+                  <span class="role-icon">💼</span>
+                  <span class="role-title">我是業務</span>
+                  <span class="role-desc">房仲經紀人</span>
+                </label>
+              </div>
+            </div>
+            <span class="error hidden" id="errRole">請選擇身分</span>
+
+            <!-- Terms (Signup Only) -->
+            <div class="checkbox-field hidden" id="termsField">
+              <input type="checkbox" id="terms" />
+              <label for="terms">
+                我同意<a href="#/terms">《服務條款》</a>與<a href="#/privacy">《隱私權政策》</a>
               </label>
             </div>
-            <span class="error" id="errRole" style="display:none">請選擇身分</span>
+            <span class="error hidden" id="errTerms" style="margin-top:-12px;margin-bottom:16px">請先同意條款</span>
+
+            <!-- Submit -->
+            <button type="submit" class="btn btn-primary" id="btnSubmit">
+              <span id="submitText">登入</span>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M5 12h14M12 5l7 7-7 7"/>
+              </svg>
+            </button>
+
+            <!-- Forgot Password -->
+            <a href="#/forgot" class="forgot-link" id="forgotLink">忘記密碼？</a>
+          </form>
+
+          <!-- Features -->
+          <div class="features">
+            <div class="feature">
+              <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+              </svg>
+              <span>安全加密</span>
+            </div>
+            <div class="feature">
+              <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/>
+                <polyline points="22 4 12 14.01 9 11.01"/>
+              </svg>
+              <span>資料保護</span>
+            </div>
+            <div class="feature">
+              <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                <path d="M7 11V7a5 5 0 0110 0v4"/>
+              </svg>
+              <span>隱私優先</span>
+            </div>
           </div>
-
-          <!-- Terms Checkbox (Only for Signup) -->
-          <div class="checkbox-field" id="termsField" style="display:none">
-            <input type="checkbox" id="terms" />
-            <label for="terms">
-              我同意<a href="#/terms">《服務條款》</a>與<a href="#/privacy">《隱私權政策》</a>
-            </label>
-          </div>
-          <span class="error" id="errTerms" style="display:none;margin-top:-8px;margin-bottom:12px">請先同意條款</span>
-
-          <!-- Submit Button -->
-          <button type="submit" class="btn btn-primary" id="btnSubmit">
-            使用 Email 繼續
-          </button>
-
-          <!-- Forgot Password (Only for Login) -->
-          <a href="#/forgot" class="forgot-link" id="forgotLink">忘記密碼？</a>
-        </form>
+        </div>
       </div>
+    </main>
 
-      <!-- Right: Feature Panel -->
-      <aside class="feature-panel">
-        <span class="tagline">讓家，不只是地址</span>
-        
-        <div class="feature-card">
-          <h3>🏘️ 社區情報，一目了然</h3>
-          <p>社區牆精選兩則公開評論，帶看前就掌握氛圍與優缺點。</p>
-        </div>
+    <!-- Footer -->
+    <footer>© 2024 邁房子 MaiHouses</footer>
+  </div>
 
-        <div class="feature-card">
-          <h3>🛡️ 安心留痕，交易更放心</h3>
-          <p>通話、帶看、要約、斡旋，每一步都留痕備查。</p>
-        </div>
+<!-- Supabase Auth integration -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+  // Ensure Supabase is loaded
+  if (typeof window.supabase === 'undefined') {
+    alert('系統載入失敗 (Supabase Client Missing)，請重新整理頁面或檢查網路連線。');
+  }
 
-        <div class="chips">
-          <span class="chip">
-            <span class="chip-dot"></span>
-            真實評價
-          </span>
-          <span class="chip">
-            <span class="chip-dot"></span>
-            精準線索
-          </span>
-          <span class="chip">
-            <span class="chip-dot"></span>
-            一鍵收藏
-          </span>
-        </div>
-      </aside>
-    </div>
-  </main>
-
-  <!-- Footer -->
-  <footer>© 邁房子 2024</footer>
-
-  
-<!-- Firebase Auth integration (CDN modular v10) -->
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
-  import { 
-    getAuth, setPersistence, browserLocalPersistence,
-    GoogleAuthProvider, signInWithPopup,
-    createUserWithEmailAndPassword, signInWithEmailAndPassword,
-    sendEmailVerification, onAuthStateChanged
-  } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
-
-  // === Replace with your Firebase web app config ===
-  const firebaseConfig = {
-    apiKey: "AIzaSyCGbukAPBLjDyA2Wa8vAjdZRXo_d2arpHM",
-    authDomain: "maihouses-6ab90.firebaseapp.com",
-    projectId: "maihouses-6ab90",
-    appId: "1:419601150365:web:80071e422e4f957af7bf74"
-  };
-
-  // Init
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  await setPersistence(auth, browserLocalPersistence);
+  const supabaseUrl = 'https://mtqnjmoisrvjofdxhwhi.supabase.co';
+  const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im10cW5qbW9pc3J2am9mZHhod2hpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1MjE1MDEsImV4cCI6MjA3OTA5NzUwMX0.P2o5n09PQChfryl-WLT7v6wRVWhDK6Oik7ajjcwyNrc';
+  const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
   // Helpers
   const qs = (k)=> new URLSearchParams(location.search).get(k);
   const setLS = (k,v)=> localStorage.setItem(k, typeof v==='string'? v : JSON.stringify(v));
-  const getLS = (k,d=null)=> { try{const v=localStorage.getItem(k); return v ?? d;}catch(_){return d;} };
+  const getLS = (k,d=null)=> { try{const v=localStorage.getItem(k); return v ?? d;}catch(e){console.debug('localStorage read error:', e); return d;} };
   const go = (u)=> location.href = u;
 
-  // Elements (match your DOM)
+  // Elements
   const tabLogin = document.getElementById('tabLogin');
   const tabSignup = document.getElementById('tabSignup');
-  const subtitle = document.getElementById('subtitle');
+  const cardTitle = document.getElementById('cardTitle');
+  const cardSubtitle = document.getElementById('cardSubtitle');
   const googleText = document.getElementById('googleText');
+  const submitText = document.getElementById('submitText');
   const btnGoogle = document.getElementById('btnGoogle');
   const authForm = document.getElementById('authForm');
+  
+  // 吉祥物元素
+  const mascot = document.getElementById('mascot');
+  const mascotSpeech = document.getElementById('mascotSpeech');
+  const emailInput = document.getElementById('email');
+  const passwordInput = document.getElementById('password');
+  const confirmPasswordInput = document.getElementById('confirmPassword');
 
   const confirmField = document.getElementById('confirmField');
   const termsField = document.getElementById('termsField');
@@ -795,30 +1075,171 @@
   const errConfirm = document.getElementById('errConfirm');
   const errTerms = document.getElementById('errTerms');
 
-  const AFTER = '/maihouses/auth/after-login.html?role=consumer';
   let mode = qs('mode') || 'login';
+  
+  // 吉祥物狀態管理
+  let mascotMood = 'idle';
+  let speechTimeout = null;
+  
+  function setMascotMood(mood, duration = 0) {
+    if (!mascot) return;
+    mascot.className = 'mascot-wrapper ' + mood;
+    mascotMood = mood;
+    
+    if (duration > 0) {
+      setTimeout(() => {
+        if (mascotMood === mood) {
+          setMascotMood('idle');
+        }
+      }, duration);
+    }
+  }
+  
+  function showSpeech(text, duration = 2500) {
+    if (!mascotSpeech) return;
+    if (speechTimeout) clearTimeout(speechTimeout);
+    
+    mascotSpeech.textContent = text;
+    mascotSpeech.classList.add('show');
+    
+    speechTimeout = setTimeout(() => {
+      mascotSpeech.classList.remove('show');
+    }, duration);
+  }
+  
+  // 點擊吉祥物互動
+  mascot?.addEventListener('click', () => {
+    const moods = ['wave', 'happy', 'shy'];
+    const speeches = ['嗨！👋', '很高興見到你！💙', '(*´∀`*)'];
+    const idx = Math.floor(Math.random() * moods.length);
+    setMascotMood(moods[idx], 1500);
+    showSpeech(speeches[idx]);
+  });
+  
+  // Email 輸入時 - 思考
+  emailInput?.addEventListener('focus', () => {
+    setMascotMood('thinking');
+    showSpeech('輸入你的 Email...', 2000);
+  });
+  
+  emailInput?.addEventListener('blur', () => {
+    if (document.activeElement !== passwordInput && 
+        document.activeElement !== confirmPasswordInput) {
+      setMascotMood('idle');
+    }
+  });
+  
+  // 密碼輸入時 - 遮眼
+  passwordInput?.addEventListener('focus', () => {
+    setMascotMood('peek');
+    showSpeech('我不偷看 🙈', 2000);
+  });
+  
+  passwordInput?.addEventListener('blur', () => {
+    if (document.activeElement !== confirmPasswordInput) {
+      setMascotMood('idle');
+    }
+  });
+  
+  // 確認密碼時 - 繼續遮眼
+  confirmPasswordInput?.addEventListener('focus', () => {
+    setMascotMood('peek');
+    showSpeech('再輸入一次～', 2000);
+  });
+  
+  confirmPasswordInput?.addEventListener('blur', () => {
+    setMascotMood('idle');
+  });
+  
+  // 頁面載入時揮手
+  setTimeout(() => {
+    setMascotMood('wave', 2000);
+    showSpeech(mode === 'login' ? '嗨！歡迎回來 👋' : '歡迎加入！✨', 2500);
+  }, 500);
 
   function syncMode(replace=true){
     const isLogin = mode === 'login';
+    
+    // Update UI classes
     tabLogin?.classList.toggle('active', isLogin);
     tabSignup?.classList.toggle('active', !isLogin);
-    if(subtitle) subtitle.textContent = isLogin ? '回到你的邁房子' : '30 秒建立新帳號';
-    if(googleText) googleText.textContent = isLogin ? '使用 Google 登入' : '用 Google 快速註冊';
-    if(confirmField) confirmField.style.display = isLogin ? 'none' : 'block';
-    if(termsField) termsField.style.display = isLogin ? 'none' : 'flex';
-    if(roleField) roleField.style.display = isLogin ? 'none' : 'block';
-    if(forgotLink) forgotLink.style.display = isLogin ? 'inline-block' : 'none';
-    const url = new URL(location.href); url.searchParams.set('mode', mode);
-    replace ? history.replaceState(null,'',url) : history.pushState(null,'',url);
+    
+    // Update header
+    if(cardTitle) cardTitle.textContent = isLogin ? '歡迎回來' : '加入邁房子';
+    if(cardSubtitle) cardSubtitle.textContent = isLogin ? '登入你的邁房子帳號' : '30 秒建立新帳號';
+    if(googleText) googleText.textContent = isLogin ? '使用 Google 繼續' : '用 Google 快速註冊';
+    if(submitText) submitText.textContent = isLogin ? '登入' : '建立帳號';
+    
+    // 吉祥物反應
+    setMascotMood('wave', 1500);
+    showSpeech(isLogin ? '歡迎回來！👋' : '來加入我們吧！✨', 2000);
+    
+    // Toggle visibility
+    confirmField?.classList.toggle('hidden', isLogin);
+    roleField?.classList.toggle('hidden', isLogin);
+    termsField?.classList.toggle('hidden', isLogin);
+    forgotLink?.classList.toggle('hidden', !isLogin);
+    
+    // Update URL
+    const url = new URL(location.href); 
+    url.searchParams.set('mode', mode);
+    if (replace) {
+      history.replaceState(null,'',url);
+    } else {
+      history.pushState(null,'',url);
+    }
   }
-  function clearErrors(){ [errEmail,errPassword,errConfirm,errTerms,errRole].forEach(el=>{ if(el){ el.style.display='none'; }}); }
-  function successRedirect(isLogin){
+  
+  function clearErrors(){ 
+    for (const el of [errEmail,errPassword,errConfirm,errTerms,errRole]) {
+      if(el){ el.classList.remove('show'); el.style.display='none'; }
+    }
+  }
+  
+  async function successRedirect(isLogin){
+    // 吉祥物慶祝
+    setMascotMood('happy', 3000);
+    showSpeech(isLogin ? '登入成功！🎉' : '歡迎加入！💙', 2500);
+    
+    // 稍等讓動畫播放
+    await new Promise(r => setTimeout(r, 800));
+    
     const ret = qs('return');
-    if(isLogin && ret){ go(ret); return; }
-    // 根據 localStorage 中的角色決定跳轉
-    const role = getLS('mh.auth.role') || 'member';
-    const roleParam = (role === 'agent' || role === '房仲') ? 'agent' : 'consumer';
-    go('/maihouses/auth/after-login.html?role=' + roleParam);
+    if(ret){ go(ret); return; }
+
+    // Determine role
+    let role = getLS('mh.auth.role');
+    
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+          // 1. Check metadata
+          if (user.user_metadata && user.user_metadata.role) {
+              role = user.user_metadata.role;
+          } 
+          // 2. If no metadata role, check pending role from localStorage (for Google Signup)
+          else {
+              const pending = getLS('mh.auth.pending_role');
+              if(pending){
+                  role = pending;
+                  // Try to update metadata for future
+                  supabase.auth.updateUser({ data: { role: pending } });
+                  localStorage.removeItem('mh.auth.pending_role');
+              }
+          }
+          
+          if(role) setLS('mh.auth.role', role);
+
+          // P7-FIX: Redirect to React Feed App (Unified Entry)
+          go(`/maihouses/feed/${user.id}`);
+          return;
+      }
+    } catch(err) { 
+      console.error('Error fetching user role:', err.message || err); 
+    }
+    
+    // Fallback if user ID not found (Should not happen if logged in)
+    go('/maihouses/');
   }
 
   syncMode(true);
@@ -826,19 +1247,53 @@
   tabLogin?.addEventListener('click', ()=>{ mode='login'; syncMode(false); clearErrors(); });
   tabSignup?.addEventListener('click', ()=>{ mode='signup'; syncMode(false); clearErrors(); });
 
-  // Google sign-in (auto links existing account)
-  const provider = new GoogleAuthProvider();
+  // Handle Logout Action
+  const isLogout = qs('action') === 'logout';
+  if(isLogout) {
+      if(cardSubtitle) cardSubtitle.textContent = '已成功登出';
+      // Clear session immediately
+      supabase.auth.signOut().then(()=>{
+          localStorage.removeItem('mh.auth.role');
+      });
+  }
+
+  // Listen for auth state changes (Handle OAuth Redirect)
+  supabase.auth.onAuthStateChange((event, session) => {
+    // If we are in logout mode, ignore any session presence to prevent auto-redirect
+    if (isLogout) return;
+
+    if (event === 'SIGNED_IN' && session) {
+       successRedirect(true);
+    }
+  });
+
+  // Google sign-in
   btnGoogle?.addEventListener('click', async ()=>{
     try{
-      await signInWithPopup(auth, provider);
-      // On Google sign-in, respect selected role if current mode is signup
-      if(mode==='signup'){
-        const roleSel = (document.querySelector('input[name="role"]:checked')||{}).value || 'member';
-        setLS('mh.auth.role', roleSel);
-      } else if(!getLS('mh.auth.role')) {
-        setLS('mh.auth.role','member');
+      // Capture selected role if in signup mode
+      if(mode === 'signup'){
+          const roleSel = (document.querySelector('input[name="role"]:checked')||{}).value;
+          if(roleSel) setLS('mh.auth.pending_role', roleSel);
       }
-      successRedirect(mode==='login');
+
+      // Determine redirect URL based on environment
+      let redirectUrl = window.location.origin + '/maihouses/auth.html';
+      // Force production URL if not on localhost to ensure it matches Supabase whitelist
+      if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+          redirectUrl = 'https://maihouses.vercel.app/maihouses/auth.html';
+      }
+
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: redirectUrl,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
+        },
+      });
+      if(error) throw error;
     }catch(e){
       console.error(e);
       alert('Google 連線失敗，請再試一次');
@@ -855,49 +1310,71 @@
 
     const isLogin = (mode==='login');
     let ok = true;
-    if(!email || !email.includes('@')){ if(errEmail){ errEmail.style.display='block'; } ok=false; }
-    if(!password || password.length<8){ if(errPassword){ errPassword.style.display='block'; } ok=false; }
-    if(!isLogin){
-      if(password!==confirmPassword){ if(errConfirm){ errConfirm.style.display='block'; } ok=false; }
-      if(terms && !terms.checked){ if(errTerms){ errTerms.style.display='block'; } ok=false; }
-      const role = (document.querySelector('input[name="role"]:checked')||{}).value;
-      if(!role){ if(errRole){ errRole.style.display='block'; } ok=false; }
+    
+    // Validation
+    if(!email || !email.includes('@')){ 
+      if(errEmail){ errEmail.classList.add('show'); errEmail.style.display='block'; } 
+      ok=false; 
     }
+    if(!password || password.length<6){ 
+      if(errPassword){ errPassword.classList.add('show'); errPassword.style.display='block'; } 
+      ok=false; 
+    }
+    
+    if(!isLogin){
+      if(password!==confirmPassword){ 
+        if(errConfirm){ errConfirm.classList.add('show'); errConfirm.style.display='block'; } 
+        ok=false; 
+      }
+      if(terms && !terms.checked){ 
+        if(errTerms){ errTerms.classList.add('show'); errTerms.style.display='block'; } 
+        ok=false; 
+      }
+      const role = (document.querySelector('input[name="role"]:checked')||{}).value;
+      if(!role){ 
+        if(errRole){ errRole.classList.add('show'); errRole.style.display='block'; } 
+        ok=false; 
+      }
+    }
+    
     if(!ok) return;
 
     try{
       if(isLogin){
-        await signInWithEmailAndPassword(auth, email, password);
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if(error) throw error;
       }else{
-        const { user } = await createUserWithEmailAndPassword(auth, email, password);
-        try{ await sendEmailVerification(user); }catch(_){}
+        const role = (document.querySelector('input[name="role"]:checked')||{}).value || 'member';
+        const { error } = await supabase.auth.signUp({ 
+          email, 
+          password,
+          options: { data: { role } } 
+        });
+        if(error) throw error;
+        alert('註冊成功！請檢查您的信箱以驗證帳號。');
+        setLS('mh.auth.role', role);
       }
-      // Save selected role on signup; default member on login
+      
+      // Save selected role on signup (already handled above for signup, but good for redundancy)
       if(!isLogin){
         const roleSel = (document.querySelector('input[name="role"]:checked')||{}).value || 'member';
         setLS('mh.auth.role', roleSel);
-      } else {
-        if(!getLS('mh.auth.role')) setLS('mh.auth.role','member');
       }
-      successRedirect(isLogin);
+      
+      await successRedirect(isLogin);
     }catch(e){
       console.error(e);
-      const code = e?.code || '';
-      if(code.includes('email-already-in-use')){
-        if(errEmail){ errEmail.textContent='帳號已存在'; errEmail.style.display='block'; }
-      }else if(code.includes('user-not-found')){
-        if(errEmail){ errEmail.textContent='帳號不存在'; errEmail.style.display='block'; }
-      }else if(code.includes('wrong-password')){
-        if(errPassword){ errPassword.textContent='密碼錯誤'; errPassword.style.display='block'; }
-      }else{
-        if(errEmail){ errEmail.textContent='登入失敗，請稍後再試'; errEmail.style.display='block'; }
+      const msg = e.message || '';
+      if(msg.includes('Invalid login credentials')){
+         if(errPassword){ errPassword.textContent='帳號或密碼錯誤'; errPassword.classList.add('show'); errPassword.style.display='block'; }
+      } else if(msg.includes('User already registered')){
+         if(errEmail){ errEmail.textContent='帳號已存在'; errEmail.classList.add('show'); errEmail.style.display='block'; }
+      } else if(msg.includes('Email not confirmed')){
+         if(errEmail){ errEmail.textContent='請先至信箱收取驗證信啟用帳號'; errEmail.classList.add('show'); errEmail.style.display='block'; }
+      } else {
+         if(errEmail){ errEmail.textContent='操作失敗：' + msg; errEmail.classList.add('show'); errEmail.style.display='block'; }
       }
     }
-  });
-
-  // Optional: auto-redirect if already signed-in (keep user on /auth if needed)
-  onAuthStateChanged(auth, (user)=>{
-    // 可在這裡讀 user.email 顯示，但 MVP 可先不動
   });
 </script>
 
