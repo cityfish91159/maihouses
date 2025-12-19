@@ -65,7 +65,7 @@ export const HighlightPicker: React.FC<HighlightPickerProps> = ({
 
   // 新增自訂標籤
   const addCustomTag = useCallback((index: number) => {
-    const tag = customInputs[index].trim();
+    const tag = (customInputs[index] || '').trim();
     if (!tag) return;
     if (value.includes(tag)) return; // 已存在
     if (value.length >= MAX_HIGHLIGHTS) return; // 已滿
