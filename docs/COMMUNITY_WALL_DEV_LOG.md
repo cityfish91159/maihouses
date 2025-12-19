@@ -41,6 +41,17 @@
   - 移除散落的 `${isMain ? ... : ...}` 三元運算子
   - Config 屬性：`cardClass`, `chipClass`, `showHighlights`, `lockPrefix`, `btnText`, `showCta`
 
+### ♻️ 2025-12-19 後續優化：S2/S4 收尾
+- **Commit**: `30237a9`（文件修正），_worktree 變更同步於主分支_
+- **S2 Streaming 批次更新**:
+  - 檔案：`src/features/home/hooks/useSmartAsk.ts`
+  - 作法：`useRef` 累積 chunks，`requestAnimationFrame` 批次 dispatch `UPDATE_AI_CHUNK`
+  - 影響：Streaming 時 dispatch 由每 chunk 一次 → rAF 節流批次
+- **S4 Inline Style 移除**:
+  - 檔案：`public/js/property-renderer.js`, `public/property.html`
+  - 作法：新增 `.tiny-text-highlight`, `.lock-info` class，移除 `style=` 內聯
+  - 影響：完全移除 inline style，便於樣式一致與快取
+
 ### 📁 修改的檔案清單
 | 檔案 | 變更類型 | 說明 |
 |------|----------|------|

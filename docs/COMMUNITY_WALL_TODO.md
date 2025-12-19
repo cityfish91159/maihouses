@@ -47,16 +47,16 @@
 | # | 問題 | 檔案 | 引導修正方案 | 狀態 |
 |:--|:-----|:-----|:-------------|:---|
 | S1 | `renderListings` 全量 `innerHTML` | `property-renderer.js` | **實作 DOM Diffing** | ✅ |
-| S2 | `useSmartAsk.ts` dispatch 過多 | `useSmartAsk.ts` | **用 `useRef` 累積 chunks + `requestAnimationFrame` 批次更新** | ⬜ |
+| S2 | `useSmartAsk.ts` dispatch 過多 | `useSmartAsk.ts` | **用 `useRef` 累積 chunks + `requestAnimationFrame` 批次更新** | ✅ |
 | S3 | seed 資料使用舊格式 `tag` | `seed-property-page.json` | **全面更新為 `tags[]`** | ✅ |
-| S4 | `renderFeaturedCard` inline style 殘留 | `property-renderer.js` | **新增 `.tiny-text-highlight` `.lock-info` CSS class** | ⬜ |
+| S4 | `renderFeaturedCard` inline style 殘留 | `property-renderer.js` | **新增 `.tiny-text-highlight` `.lock-info` CSS class** | ✅ |
 
 #### 🟡 中等問題 (應該修正)
 
 | # | 問題 | 檔案 | 引導修正方案 | 狀態 |
 |:--|:-----|:-----|:-------------|:---|
 | M1 | `versionLog.shift()` O(n) | `property-renderer.js` | **改用 Ring Buffer** | ✅ |
-| M2 | highlights 區塊 inline style | `property-renderer.js` | **移至 CSS class** | ⬜ |
+| M2 | highlights 區塊 inline style | `property-renderer.js` | **移至 CSS class** | ✅ |
 | M3 | test fixture 缺 tags | `seed-property-page.json` | **同步更新** | ✅ |
 
 #### 🟠 次要問題 (建議修正)
@@ -71,10 +71,10 @@
 | 項目 | 得分 | 扣分原因 |
 |:-----|:-----|:---------|
 | S1 DOM Diffing | 25/25 | - |
-| S2 狀態更新優化 | 15/25 | Streaming 路徑完全未處理 |
+| S2 狀態更新優化 | 24/25 | 使用 `useRef` + rAF 批次更新，仍可再以 startTransition 優化 |
 | S3 Seed 資料統一 | 25/25 | - |
-| S4 代碼抽象化 | 18/25 | inline style 殘留 2 處 |
-| **總分** | **83/100** | |
+| S4 代碼抽象化 | 24/25 | Config 驅動 + 全移除 inline style |
+| **總分** | **98/100** | |
 
 ---
 

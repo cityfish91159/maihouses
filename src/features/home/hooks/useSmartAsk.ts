@@ -1,4 +1,4 @@
-import { useReducer, useCallback } from 'react';
+import { useReducer, useCallback, useRef } from 'react';
 import { aiAsk } from '../../../services/api';
 import { trackEvent } from '../../../services/analytics';
 import type { AiMessage, PropertyCard } from '../../../types';
@@ -77,6 +77,8 @@ export function useSmartAsk() {
     loading: false,
     totalTokens: 0
   });
+  const chunkRef = useRef('');
+  const flushScheduled = useRef(false);
 
   const sendMessage = useCallback(async (input: string) => {
     const trimmedInput = input.trim();
@@ -91,7 +93,17 @@ export function useSmartAsk() {
         { messages: [...state.messages, { role: 'user', content: trimmedInput }] },
         (chunk: string) => {
           isStreamingComplete = true;
-          dispatch({ type: 'UPDATE_AI_CHUNK', payload: chunk });
+          chunkRef.current += chunk;
+          if (!flushScheduled.current) {
+            flushScheduled.current = true;
+            requestAnimationFrame(() => {
+              flushScheduled.current = false;
+              if (!chunkRef.current) return;
+              const buffered = chunkRef.current;
+              chunkRef.current = '';
+              dispatch({ type: 'UPDATE_AI_CHUNK', payload: buffered });
+            });
+          }
         }
       );
 

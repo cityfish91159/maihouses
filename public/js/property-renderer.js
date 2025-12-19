@@ -244,11 +244,11 @@ export class PropertyRenderer {
           <h3 class="property-title">${this.escapeHtml(item.title)}</h3>
           <div class="property-location">${this.escapeHtml(item.location)}</div>
           <div class="property-tags-row">${tagsHtml}</div>
-          ${config.showHighlights ? `<div class="tiny-text" style="margin-bottom:0.5rem;color:var(--primary)">${this.escapeHtml(item.highlights || '')}</div>` : ''}
+          ${config.showHighlights ? `<div class="tiny-text tiny-text-highlight">${this.escapeHtml(item.highlights || '')}</div>` : ''}
           <div class="property-rating"><span class="star">★</span>${this.escapeHtml(item.rating)}</div>
           <div class="property-reviews">${reviewsHtml}</div>
           <div class="property-more-reviews">
-            <div class="lock-info" style="display:flex;align-items:center;gap:0.5rem">
+            <div class="lock-info">
               <span class="lock-icon">🔒</span><span>${config.lockPrefix}${item.lockCount} 則評價</span>
             </div>
             <button class="register-btn" type="button">${config.btnText}</button>
