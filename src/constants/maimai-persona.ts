@@ -340,7 +340,7 @@ export function getRecentPainPoint(): PainPoint | null {
   // 返回最近 7 天內的痛點
   const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
   const recent = painPoints.filter(p => p.timestamp > weekAgo);
-  return recent[recent.length - 1] || null;
+  return recent.at(-1) || null;
 }
 
 export function savePainPointsToStorage(): void {

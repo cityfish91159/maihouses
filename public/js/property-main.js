@@ -13,7 +13,7 @@ export function createTelemetry() {
     ? new PerformanceObserver((entryList) => {
         const entries = entryList.getEntries();
         if (entries.length > 0) {
-          lcp = entries[entries.length - 1].startTime;
+          lcp = entries.at(-1).startTime;
         }
       })
     : null;
@@ -61,7 +61,7 @@ export function createTelemetry() {
 }
 
 // 主流程：Mock 秒開 + 背景 API 靜默更新 + 圖片預載 + 版本檢查 + Telemetry
-async function bootstrap() {
+export async function bootstrap() {
   const telemetry = createTelemetry();
   const renderer = new PropertyRenderer();
   telemetry.log('bootstrap:start');
@@ -105,9 +105,6 @@ async function bootstrap() {
   }
 }
 
-// 避免在 Vitest/jsdom 進行 unit tests 時觸發副作用（fetch / render 等）
-const isVitest = typeof globalThis !== 'undefined' && Boolean(globalThis.__vitest_worker__);
-if (!isVitest && typeof window !== 'undefined' && typeof document !== 'undefined') {
-  // eslint-disable-next-line no-void
-  void bootstrap();
-}
+// 移除自動執行的副作用，改由外部顯式呼叫 bootstrap()
+// 僅保留環境判斷邏輯供測試參考
+export const isTestEnv = typeof globalThis !== 'undefined' && Boolean(globalThis.__vitest_worker__);

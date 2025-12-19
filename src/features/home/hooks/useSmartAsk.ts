@@ -40,7 +40,7 @@ export function useSmartAsk() {
           isStreamingComplete = true;
           setMessages(prev => {
             const updated = [...prev];
-            const lastMsg = updated[updated.length - 1];
+            const lastMsg = updated.at(-1);
             if (lastMsg) {
               const newMsg: AiMessage = {
                 role: lastMsg.role || 'assistant',
@@ -49,7 +49,10 @@ export function useSmartAsk() {
               if (lastMsg.timestamp) {
                 newMsg.timestamp = lastMsg.timestamp;
               }
-              updated[updated.length - 1] = newMsg;
+              const lastIndex = updated.length - 1;
+              if (lastIndex >= 0) {
+                updated[lastIndex] = newMsg;
+              }
             }
             return updated;
           });
@@ -61,9 +64,10 @@ export function useSmartAsk() {
         if (!isStreamingComplete && res.data.answers && res.data.answers.length > 0) {
           setMessages(prev => {
             const updated = [...prev];
-            if (updated.length > 0) {
-              const last = updated[updated.length - 1];
-              updated[updated.length - 1] = {
+            const last = updated.at(-1);
+            const lastIndex = updated.length - 1;
+            if (last && lastIndex >= 0) {
+              updated[lastIndex] = {
                 ...last,
                 role: 'assistant',
                 content: res.data!.answers[0] || ''
@@ -84,9 +88,10 @@ export function useSmartAsk() {
         // Error handling for API failure
         setMessages(prev => {
           const updated = [...prev];
-          if (updated.length > 0) {
-            const last = updated[updated.length - 1];
-            updated[updated.length - 1] = {
+          const last = updated.at(-1);
+          const lastIndex = updated.length - 1;
+          if (last && lastIndex >= 0) {
+            updated[lastIndex] = {
               ...last,
               role: 'assistant',
               content: '抱歉，AI 服務目前暫時不可用，請稍後再試。您也可以先描述需求讓我為您推薦房源格局與區域喔。'
@@ -102,12 +107,15 @@ export function useSmartAsk() {
         if (updated.length > 1) {
            // Remove the empty assistant message if it failed immediately? 
            // Or just update it with error message. Updating is safer.
-           const last = updated[updated.length - 1];
-           updated[updated.length - 1] = {
-             ...last,
-             role: 'assistant',
-             content: '抱歉，AI 服務連線失敗（可能未設定金鑰）。請稍後再試，或通知我們協助處理。'
-           };
+           const last = updated.at(-1);
+           const lastIndex = updated.length - 1;
+           if (last && lastIndex >= 0) {
+             updated[lastIndex] = {
+               ...last,
+               role: 'assistant',
+               content: '抱歉，AI 服務連線失敗（可能未設定金鑰）。請稍後再試，或通知我們協助處理。'
+             };
+           }
         }
         return updated;
       });

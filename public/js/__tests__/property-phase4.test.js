@@ -223,7 +223,7 @@ describe('PropertyRenderer render guards', () => {
     expect(mainAfter).toContain('New Title');
 
     const log = renderer.getVersionLog();
-    const last = log.length > 0 ? log[log.length - 1] : undefined;
+    const last = log.at(-1);
     expect(last?.source).toBe('api');
     expect(last?.version).toBe(2);
   });

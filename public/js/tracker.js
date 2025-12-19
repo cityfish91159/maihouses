@@ -252,7 +252,7 @@ class EventBatcher {
     if (this.queue.length === 0) return;
     
     // 送最新狀態 (累計的 duration 和 actions)
-    const latestEvent = this.queue[this.queue.length - 1];
+    const latestEvent = this.queue.at(-1);
     this.queue = [];
     this.sendEvent(latestEvent);
   }

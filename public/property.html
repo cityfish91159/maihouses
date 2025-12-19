@@ -1352,8 +1352,11 @@
         <div class="listing-grid" id="listing-grid-container"></div>
       </section>
     </main>
-    <!-- ESM 入口：秒開 Mock + 背景真實資料 + 防閃爍預載 -->
-    <script type="module" src="js/property-main.js"></script>
+    <!-- ESM 入口：顯式初始化以避免 import 副作用 (P42 修正) -->
+    <script type="module">
+      import { bootstrap } from './js/property-main.js';
+      void bootstrap();
+    </script>
     <script src="js/tracker.js" defer></script>
   </body>
 </html>

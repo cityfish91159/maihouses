@@ -249,7 +249,7 @@ export function QASection({ viewerRole, questions: questionsProp, onAskQuestion,
     }
     
     const [first] = focusable;
-    const last = focusable[focusable.length - 1];
+    const last = focusable.at(-1);
     const active = document.activeElement as HTMLElement | null;
     if (!active || !container.contains(active)) {
       first?.focus();

@@ -431,7 +431,7 @@ class EventBatcher {
     if (this.queue.length === 0) return;
     
     // 取最新狀態發送 (duration 和 actions 是累積的)
-    const latestEvent = this.queue[this.queue.length - 1];
+    const latestEvent = this.queue.at(-1);
     this.queue = [];
 
     const payload = {

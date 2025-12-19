@@ -12,13 +12,15 @@ export class PropertyRenderer {
   }
 
   logVersion(entry) {
+    // P35: 嚴格限制日誌長度，防止無限增長導致的記憶體洩漏
     this.versionLog.push(entry);
-    if (this.versionLog.length > 50) {
+    while (this.versionLog.length > 50) {
       this.versionLog.shift();
     }
+    
     if (typeof window !== 'undefined') {
-      // P35: 限制日誌長度，並暴露全域供測試/視覺驗證使用
-      window.__renderVersionLog = [...this.versionLog];
+      // 效能優化：直接引用陣列而非展開，減少 GC 壓力
+      window.__renderVersionLog = this.versionLog;
     }
   }
 

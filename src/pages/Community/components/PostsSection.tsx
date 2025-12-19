@@ -227,7 +227,7 @@ export function PostsSection({
     }
     event.preventDefault();
 
-    const lastAvailableTab = activeTabs[activeTabs.length - 1];
+    const lastAvailableTab = activeTabs.at(-1);
 
     if (event.key === 'Home') {
       focusTab('public');

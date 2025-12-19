@@ -30,3 +30,11 @@ dist/
 
 # Arena results (generated artifacts)
 arena/results/
+
+# Test artifacts (P43 修正)
+*.png
+test-results/
+playwright-report/
+blob-report/
+**/__tests__/*.json
+!public/data/*.json

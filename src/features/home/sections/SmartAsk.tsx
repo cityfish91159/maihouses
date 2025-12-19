@@ -129,7 +129,7 @@ export default function SmartAsk() {
                 (chunk) => {
                     setMessages(prev => {
                         const newMsgs = [...prev];
-                        const last = newMsgs[newMsgs.length - 1];
+                        const last = newMsgs.at(-1);
                         if (last && last.role === 'assistant') {
                             last.content += chunk;
                         }
@@ -144,7 +144,7 @@ export default function SmartAsk() {
             console.error(e);
             setMessages(prev => {
                 const newMsgs = [...prev];
-                const last = newMsgs[newMsgs.length - 1];
+                const last = newMsgs.at(-1);
                 if (last) {
                     last.content = "抱歉，我這邊好像有點問題，等一下再試試？";
                 }
