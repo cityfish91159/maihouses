@@ -12,7 +12,7 @@ export default function PropertyGrid() {
   useEffect(() => {
     // React 18 最佳實踐: 使用 AbortController 取代 isMounted flag
     const controller = new AbortController();
-    
+
     // 🚀 關鍵 2: 背景靜默更新
     getFeaturedProperties().then(data => {
       if (!controller.signal.aborted && data && data.length > 0) {
@@ -20,7 +20,7 @@ export default function PropertyGrid() {
       }
       // 如果 API 失敗或回傳空陣列，維持顯示初始 Seed (Level 3)
     });
-    
+
     return () => { controller.abort(); };
   }, []);
 

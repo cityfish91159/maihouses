@@ -170,9 +170,9 @@ function formatPrice(price: number | null): string {
 function adaptRealPropertyForUI(row: RealPropertyRow, reviews: ReviewData[]): PropertyForUI {
   // 1. 圖片處理 (取第一張 + 強制裁切)
   let imageUrl = (row.images && row.images.length > 0)
-     ? row.images[0]
-     : 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?q=80&w=1600';
-  
+    ? row.images[0]
+    : 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?q=80&w=1600';
+
   if (imageUrl.includes('supabase.co')) {
     imageUrl += '?width=800&height=600&resize=cover';
   }
@@ -191,7 +191,11 @@ function adaptRealPropertyForUI(row: RealPropertyRow, reviews: ReviewData[]): Pr
   });
 
   // 確保必備的規格標籤存在（測試期望：坪數 + 房廳資訊）
+  // 確保必備的規格標籤存在（測試期望：坪數 + 房廳資訊）
   const tagSet = new Set(tags.filter(Boolean));
+  // [UP-4.1 Fix] Source Cleaning: 絕不將規格 (30坪/3房) 混入 tags (亮點)
+  // 這些資訊應由 Frontend 直接從 property.size / property.rooms 讀取並顯示在規格欄
+  /* Removed for Strict Separation
   if (row.size) {
     tagSet.add(`${row.size} 坪`);
   }
@@ -199,6 +203,7 @@ function adaptRealPropertyForUI(row: RealPropertyRow, reviews: ReviewData[]): Pr
     const hallsLabel = typeof row.halls === 'number' ? `${row.halls} 廳` : '0 廳';
     tagSet.add(`${row.rooms} 房 ${hallsLabel}`);
   }
+  */
   const finalTags = Array.from(tagSet);
 
   // 3. 地址處理 (DB 只有 address，沒有 city/district 欄位，簡單截取或直接顯示)
@@ -206,38 +211,38 @@ function adaptRealPropertyForUI(row: RealPropertyRow, reviews: ReviewData[]): Pr
   // 嘗試簡單模擬: 取前6個字 (縣市區) + " · " + 後面
   let location = row.address || '地址詳洽';
   if (location.length > 6) {
-      // 簡單的視覺優化，讓長地址看起來跟 Mock 比較像
-      // 例如 "台北市信義區信義路五段" -> "台北市信義區 · 信義路五段"
-      // 注意：這只是簡單切分，不保證精確行政區劃分，但視覺上足夠
-      const districtEnd = location.indexOf('區');
-      if (districtEnd > -1 && districtEnd < location.length - 1) {
-          location = `${location.substring(0, districtEnd + 1)} · ${location.substring(districtEnd + 1)}`;
-      }
+    // 簡單的視覺優化，讓長地址看起來跟 Mock 比較像
+    // 例如 "台北市信義區信義路五段" -> "台北市信義區 · 信義路五段"
+    // 注意：這只是簡單切分，不保證精確行政區劃分，但視覺上足夠
+    const districtEnd = location.indexOf('區');
+    if (districtEnd > -1 && districtEnd < location.length - 1) {
+      location = `${location.substring(0, districtEnd + 1)} · ${location.substring(districtEnd + 1)}`;
+    }
   }
 
   // 4. 評價處理 (多樣化補位)
   const displayReviews = [...reviews];
   if (displayReviews.length < 2) {
-      // 根據 UUID 最後一碼決定預設文案
-      const lastChar = row.id.slice(-1);
-      const seedIndex = parseInt(lastChar, 16) % 3;
-      
-      const defaultSets = [
-        [
-            { avatar: 'M', name: '邁房子', role: '系統', tag: '新上架', text: '此物件剛剛上架，歡迎預約看屋！' },
-            { avatar: 'S', name: 'AI估價', role: '推薦', tag: '符合行情', text: '系統分析開價合理，建議把握機會。' }
-        ],
-        [
-            { avatar: 'H', name: '熱度榜', role: '系統', tag: '瀏覽高', text: '本週熱門物件，瀏覽人數眾多。' },
-            { avatar: 'A', name: 'AI分析', role: '推薦', tag: '格局方正', text: '空間利用率高，無明顯虛坪浪費。' }
-        ],
-        [
-            { avatar: 'L', name: '區域通', role: '系統', tag: '地段佳', text: '位於精華生活圈，周邊機能完善。' },
-            { avatar: 'S', name: 'AI分析', role: '推薦', tag: '交通便利', text: '步行可達大眾運輸，通勤首選。' }
-        ]
-      ];
-      
-      displayReviews.push(...defaultSets[seedIndex].slice(0, 2 - displayReviews.length));
+    // 根據 UUID 最後一碼決定預設文案
+    const lastChar = row.id.slice(-1);
+    const seedIndex = parseInt(lastChar, 16) % 3;
+
+    const defaultSets = [
+      [
+        { avatar: 'M', name: '邁房子', role: '系統', tag: '新上架', text: '此物件剛剛上架，歡迎預約看屋！' },
+        { avatar: 'S', name: 'AI估價', role: '推薦', tag: '符合行情', text: '系統分析開價合理，建議把握機會。' }
+      ],
+      [
+        { avatar: 'H', name: '熱度榜', role: '系統', tag: '瀏覽高', text: '本週熱門物件，瀏覽人數眾多。' },
+        { avatar: 'A', name: 'AI分析', role: '推薦', tag: '格局方正', text: '空間利用率高，無明顯虛坪浪費。' }
+      ],
+      [
+        { avatar: 'L', name: '區域通', role: '系統', tag: '地段佳', text: '位於精華生活圈，周邊機能完善。' },
+        { avatar: 'S', name: 'AI分析', role: '推薦', tag: '交通便利', text: '步行可達大眾運輸，通勤首選。' }
+      ]
+    ];
+
+    displayReviews.push(...defaultSets[seedIndex].slice(0, 2 - displayReviews.length));
   }
 
   // 5. 評價格式轉換
@@ -295,46 +300,46 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     let reviewsMap: Record<string, any[]> = {};
 
     if (realData && realData.length > 0) {
-        // 收集不重複的 community_id
-        const communityIds = [...new Set(
-            realData.map(p => p.community_id).filter(id => id)
-        )];
+      // 收集不重複的 community_id
+      const communityIds = [...new Set(
+        realData.map(p => p.community_id).filter(id => id)
+      )];
 
-        if (communityIds.length > 0) {
-            // 查詢 community_reviews (View)
-            const { data: reviewsData } = await getSupabase()
-                .from('community_reviews')
-                .select('community_id, content, agent(name), source')
-                .in('community_id', communityIds)
-                .order('created_at', { ascending: false });
-            
-            // 分組
-            if (reviewsData) {
-                reviewsData.forEach((r: SupabaseReviewRow) => {
-                    const cid = r.community_id;
-                    if (!cid) return;
-                    if (!reviewsMap[cid]) {
-                        reviewsMap[cid] = [];
-                    }
-                    // 轉換為 ReviewData
-                    const review: ReviewData = {
-                        community_id: cid,
-                        content: r.content || undefined,
-                        agent: r.agent?.[0] ? { name: r.agent[0].name } : undefined,
-                        source: r.source || undefined,
-                    };
-                    reviewsMap[cid].push(review);
-                });
+      if (communityIds.length > 0) {
+        // 查詢 community_reviews (View)
+        const { data: reviewsData } = await getSupabase()
+          .from('community_reviews')
+          .select('community_id, content, agent(name), source')
+          .in('community_id', communityIds)
+          .order('created_at', { ascending: false });
+
+        // 分組
+        if (reviewsData) {
+          reviewsData.forEach((r: SupabaseReviewRow) => {
+            const cid = r.community_id;
+            if (!cid) return;
+            if (!reviewsMap[cid]) {
+              reviewsMap[cid] = [];
             }
+            // 轉換為 ReviewData
+            const review: ReviewData = {
+              community_id: cid,
+              content: r.content || undefined,
+              agent: r.agent?.[0] ? { name: r.agent[0].name } : undefined,
+              source: r.source || undefined,
+            };
+            reviewsMap[cid].push(review);
+          });
         }
+      }
 
-        // 3. 填充與適配
-        for (const row of realData) {
-            // 根據 property 的 community_id 找評價
-            const reviews = row.community_id ? (reviewsMap[row.community_id] || []) : [];
-            // 呼叫適配器
-            mixedProperties.push(adaptRealPropertyForUI(row as RealPropertyRow, reviews));
-        }
+      // 3. 填充與適配
+      for (const row of realData) {
+        // 根據 property 的 community_id 找評價
+        const reviews = row.community_id ? (reviewsMap[row.community_id] || []) : [];
+        // 呼叫適配器
+        mixedProperties.push(adaptRealPropertyForUI(row as RealPropertyRow, reviews));
+      }
     }
 
   } catch (error) {
