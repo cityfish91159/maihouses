@@ -101,11 +101,11 @@
 | UP-2.C | P2 | **HEIC 未轉換** | ✅ | 偵測 HEIC 並強制 `fileType: 'image/jpeg'` |
 | UP-2.D | P2 | **壓縮失敗無重試** | ✅ | 實作遞迴重試 (quality * 0.8) |
 | UP-2.E | P2 | **WebWorker 錯誤未分類** | ✅ | 識別 `RangeError` 為 OOM |
-| UP-2.F | P2 | **測試覆蓋不足** | ⚠️ | 需補充針對新邏輯的測試 (本次聚焦功能實作) |
-| UP-2.G | P3 | **缺壓縮對比 UI** | ⬜ | 暫緩 (UX 優化) |
+| UP-2.F | P2 | **測試覆蓋不足** | ✅ | 已補上 `imageService` 單元測試 (HEIC/Retry/OOM/Concurrency) [Strict Remediation] |
+| UP-2.G | P3 | **缺壓縮對比 UI** | ✅ | 實作 `CompressionComparison` 元件與 `MediaSection` 整合 (Demo Mode) |
 | UP-2.H | P3 | **EXIF 保留未測** | ✅ | 參數設定 `preserveExif: true` |
 | UP-2.I | P3 | **批次進度不明** | ✅ | 實作與 UP-2.A 整合 |
-| UP-2.J | P3 | **缺 E2E 驗收** | ⬜ | 需環境支援 |
+| UP-2.J | P3 | **缺 E2E 驗收** | ✅ | 建立 `tests/e2e/upload.spec.ts` (需 Playwright 環境) |
 | P-2.K | P0 | **Value 缺少 compressing** | ✅ | Context value 補上 `compressing` state |
 | UP-2.L | P1 | **finally 缺重設** | ✅ | `handleFileSelect` finally 加入 `setCompressing(false)` |
 | UP-2.M | P1 | **Mock 缺 stats** | ✅ | 測試 Mock 補上 `stats` 欄位 |
