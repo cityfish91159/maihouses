@@ -1,4 +1,5 @@
 import imageCompression from 'browser-image-compression';
+import heic2any from 'heic2any';
 
 export interface OptimizeOptions {
   maxWidthOrHeight?: number;
@@ -24,15 +25,16 @@ const DEFAULT_OPTIONS: Required<Omit<OptimizeOptions, 'onProgress'>> = {
 };
 
 /**
- * 壓縮單張圖片 (含重試機制與 HEIC 轉檔)
+ * 壓縮單張圖片 (含重試機制與 HEIC 轉檔 - Highest Standard Explicit Handling)
  */
 export async function optimizePropertyImage(file: File, options: OptimizeOptions = {}): Promise<OptimizeResult> {
   const opts = { ...DEFAULT_OPTIONS, ...options };
   const originalSize = file.size;
   const targetBytes = opts.maxSizeMB * 1024 * 1024;
 
-  // 若原始檔已低於目標大小，跳過壓縮避免畫質損失 (除非是 HEIC 需轉檔)
   const isHeic = file.type === 'image/heic' || file.name.toLowerCase().endsWith('.heic');
+
+  // 若非 HEIC 且原始檔已低於目標大小，跳過壓縮
   if (originalSize <= targetBytes && !isHeic) {
     return {
       file,
@@ -45,32 +47,50 @@ export async function optimizePropertyImage(file: File, options: OptimizeOptions
   }
 
   // 內部重試函式
-  const attemptCompression = async (quality: number, retryCount = 0): Promise<File> => {
+  const attemptCompression = async (input: File | Blob, quality: number, retryCount = 0): Promise<File> => {
     try {
-      return await imageCompression(file, {
+      return await imageCompression(input as File, {
         maxWidthOrHeight: opts.maxWidthOrHeight,
         maxSizeMB: opts.maxSizeMB,
         initialQuality: quality,
         useWebWorker: true,
         preserveExif: true,
-        fileType: isHeic ? 'image/jpeg' : undefined, // UP-2.C: 強制轉換 HEIC
+        fileType: 'image/jpeg' // 確保輸出為 JPEG
       });
     } catch (error: any) {
-      // UP-2.E: 錯誤分類
       if (error.name === 'RangeError') {
         throw new Error('記憶體不足 (OOM)，請嘗試上傳較小的圖片');
       }
-
-      // UP-2.D: 失敗重試邏輯 (降規重試)
       if (retryCount < 1) {
-        return attemptCompression(quality * 0.8, retryCount + 1);
+        return attemptCompression(input, quality * 0.8, retryCount + 1);
       }
       throw error;
     }
   };
 
   try {
-    const compressed = await attemptCompression(opts.quality);
+    let processInput: File | Blob = file;
+
+    // UP-2.C: 顯式 HEIC 轉換 (Highest Standard)
+    if (isHeic) {
+      try {
+        const result = await heic2any({
+          blob: file,
+          toType: 'image/jpeg',
+          quality: opts.quality
+        });
+        // heic2any returns Blob or Blob[]
+        const outputBlob = Array.isArray(result) ? result[0] : result;
+        if (outputBlob) {
+          processInput = outputBlob;
+        }
+      } catch (heicError) {
+        console.warn('HEIC explicit conversion failed, falling back to default implementation', heicError);
+      }
+    }
+
+    const compressed = await attemptCompression(processInput, opts.quality);
+
     return {
       file: compressed,
       originalSize,

@@ -39,6 +39,7 @@
     "cloudinary": "^1.41.0",
     "clsx": "^2.1.1",
     "cookie": "^1.1.0",
+    "heic2any": "^0.0.4",
     "immer": "^10.2.0",
     "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.554.0",

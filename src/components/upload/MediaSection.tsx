@@ -60,31 +60,30 @@ export const MediaSection: React.FC = () => {
               <Upload size={28} />
               <span className="mt-2 text-xs font-bold">上傳照片</span>
             </button>
-            <span className="mt-2 text-xs font-bold">上傳照片</span>
-          </button>
-          <input type="file" multiple ref={fileInputRef} onChange={handleFileSelect} className="hidden" accept="image/*" />
-        </div>
-
-        {/* UP-2.A: 壓縮進度 UI */}
-        {compressionProgress !== null && (
-          <div className="mt-3 flex items-center gap-3 rounded-lg bg-blue-50 px-4 py-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 text-blue-600">
-              <Sparkles size={20} className="animate-pulse" />
-            </div>
-            <div className="flex-1">
-              <div className="mb-1 flex justify-between text-xs font-bold text-blue-700">
-                <span>正在優化圖片...</span>
-                <span>{compressionProgress}%</span>
-              </div>
-              <div className="h-1.5 w-full overflow-hidden rounded-full bg-blue-200">
-                <div
-                  className="h-full bg-blue-500 transition-all duration-300 ease-out"
-                  style={{ width: `${compressionProgress}%` }}
-                />
-              </div>
-            </div>
+            <input type="file" multiple ref={fileInputRef} onChange={handleFileSelect} className="hidden" accept="image/*" />
           </div>
-        )}
+
+          {/* UP-2.A: 壓縮進度 UI */}
+          {compressionProgress !== null && (
+            <div className="mt-3 flex items-center gap-3 rounded-lg bg-blue-50 px-4 py-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 text-blue-600">
+                <Sparkles size={20} className="animate-pulse" />
+              </div>
+              <div className="flex-1">
+                <div className="mb-1 flex justify-between text-xs font-bold text-blue-700">
+                  <span>正在優化圖片...</span>
+                  <span>{compressionProgress}%</span>
+                </div>
+                <div className="h-1.5 w-full overflow-hidden rounded-full bg-blue-200">
+                  <div
+                    className="h-full bg-blue-500 transition-all duration-300 ease-out"
+                    style={{ width: `${compressionProgress}%` }}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </section>
   );
