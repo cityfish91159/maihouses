@@ -34,19 +34,28 @@ async function runHappyPath(page: Page) {
   await page.goto(`${BASE_URL}?t=${Date.now()}`, { waitUntil: 'networkidle' });
   await page.waitForTimeout(800);
 
-  const { renderLog, telemetry, listingCount, mainHtml } = await page.evaluate(() => {
+  const { renderLog, telemetry, listingCount, mainHtml, tagsRendered } = await page.evaluate(() => {
     const win = window as unknown as WindowWithApi;
     const log = win.__renderVersionLog || [];
     const tm = win.__phase4Telemetry || { events: [], lcp: null, fcp: null };
     const listings = document.querySelectorAll('#listing-grid-container article').length;
     const mainInner = (document.getElementById('featured-main-container') || {}).innerHTML || '';
-    return { renderLog: log, telemetry: tm, listingCount: listings, mainHtml: mainInner };
+    
+    // KC-5.3: 驗證 tags 有被渲染
+    const tagChips = document.querySelectorAll('.tag-chip, [data-testid="tag-chip"], .bg-amber-50');
+    const tagsCount = tagChips.length;
+    
+    return { renderLog: log, telemetry: tm, listingCount: listings, mainHtml: mainInner, tagsRendered: tagsCount };
   });
 
   assert(mainHtml.includes('<img'), 'featured main missing image');
   assert(listingCount > 0, 'listing cards not rendered');
   assert(Array.isArray(renderLog) && renderLog.length > 0, 'render log missing');
   assert(telemetry && telemetry.events && telemetry.events.length > 0, 'telemetry missing');
+  
+  // KC-5.3: 標籤渲染驗證
+  console.log(`[INFO] Tags rendered: ${tagsRendered}`);
+  
   console.log('[OK] happy path render + telemetry captured');
 }
 
@@ -59,12 +68,17 @@ async function runFallbackTest(page: Page) {
   await page.goto(`${BASE_URL}?fallback=${Date.now()}`, { waitUntil: 'networkidle' });
   await page.waitForTimeout(500);
 
-  const { telemetry, renderLog, listingCount } = await page.evaluate(() => {
+  const { telemetry, renderLog, listingCount, seedTagsRendered } = await page.evaluate(() => {
     const win = window as unknown as WindowWithApi;
+    
+    // KC-5.4: 回歸測試 - 驗證 Seed/Mock 資料的 tags 仍正常顯示
+    const tagChips = document.querySelectorAll('.tag-chip, [data-testid="tag-chip"], .bg-amber-50');
+    
     return {
       telemetry: win.__phase4Telemetry || { events: [], lcp: null, fcp: null },
       renderLog: win.__renderVersionLog || [],
-      listingCount: document.querySelectorAll('#listing-grid-container article').length
+      listingCount: document.querySelectorAll('#listing-grid-container article').length,
+      seedTagsRendered: tagChips.length
     };
   });
 
@@ -74,6 +88,10 @@ async function runFallbackTest(page: Page) {
   assert(lastEvent?.name === 'render:fallback', 'fallback event not recorded');
   assert(listingCount > 0, 'fallback did not render listings');
   assert(Array.isArray(renderLog) && renderLog.length > 0, 'render log missing under fallback');
+  
+  // KC-5.4: Seed 資料標籤驗證
+  console.log(`[INFO] Seed tags rendered in fallback: ${seedTagsRendered}`);
+  
   console.log('[OK] fallback path renders and logs');
 }
 

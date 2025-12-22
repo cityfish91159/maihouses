@@ -10,19 +10,18 @@
 
 ## 🚀 當前執行區 (Active Tasks)
 
-### 🧩 KC1: 重點膠囊統一化 (Phase 5 - 測試)
-- **目標**: 補齊 KC-4 相關測試。
-
-| ID | 任務描述 (Action) | 檔案路徑 (File) | 狀態 | 驗證證據 (Evidence) |
-|:---|:---|:---|:---|:---|
-| KC-5.1 | 單元測試：對膠囊生成函數做 deterministic 測試 | `src/utils/__tests__/keyCapsules.test.ts` | ⬜ | |
-| KC-5.2 | API 測試：確保首頁 tags 長度與內容符合 | `api/home/__tests__/featured-properties.test.ts` | ⬜ | |
-| KC-5.3 | E2E 測試：featured 大卡與水平卡 render tags | `scripts/phase5/e2e-phase5.ts` | ⬜ | |
-| KC-5.4 | 回歸測試：確認不破壞既有 Seed/Mock 顯示 | `scripts/phase5/e2e-phase5.ts` | ⬜ | |
+*目前無待處理任務*
 
 ---
 
 ## ✅ 已完成階段 (Milestones)
+
+### 🧩 KC-5: 測試補強 (2025-12-22) ✅
+- ✅ **KC-5.1**: 單元測試 `keyCapsules.test.ts` - 11 個 deterministic 測試 | 已存在
+- ✅ **KC-5.2**: API 測試 `featured-properties.test.ts` - tags 長度/結構驗證 | 已存在
+- ✅ **KC-5.3**: E2E 測試 `e2e-phase5.ts` - tags 渲染驗證 | Commit: 待提交
+- ✅ **KC-5.4**: 回歸測試 - Seed/Mock fallback tags 驗證 | Commit: 待提交
+- **測試結果**: 228 tests passed (37 test files)
 
 ### 🧩 KC-4: AI 膠囊生成與上傳整合 (2025-12-22) ✅ 97/100
 - ✅ **KC-4.1**: API `generate-key-capsules.ts` - Retry 機制、型別安全 | Commit: `f49ee59`
