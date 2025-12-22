@@ -1,4 +1,5 @@
-import { useEffect, useCallback, useMemo, useRef } from 'react';
+import { useEffect, useCallback, useMemo, useRef, MutableRefObject } from 'react';
+import { notify } from '../lib/notify';
 
 const DRAFT_KEY_PREFIX = 'mh_draft_upload';
 const AUTO_SAVE_DELAY_MS = 1000;
@@ -47,6 +48,16 @@ export function usePropertyDraft(
   userId?: string
 ) {
   const tabIdRef = useRef<string>('');
+  const autoSaveWarnedRef = useRef(false);
+  const restoreWarnedRef = useRef(false);
+  const clearWarnedRef = useRef(false);
+  const migrateWarnedRef = useRef(false);
+
+  const showWarningOnce = useCallback((flag: MutableRefObject<boolean>, title: string, description: string) => {
+    if (flag.current) return;
+    flag.current = true;
+    notify.warning(title, description);
+  }, []);
   if (!tabIdRef.current) {
     const hasCrypto = typeof globalThis !== 'undefined' && typeof globalThis.crypto !== 'undefined';
     tabIdRef.current = hasCrypto && globalThis.crypto.randomUUID
@@ -109,7 +120,11 @@ export function usePropertyDraft(
           lastSavedRef.current = serialized;
         }
       } catch (e) {
-        console.warn('草稿自動存檔失敗:', e);
+        showWarningOnce(
+          autoSaveWarnedRef,
+          '草稿自動存檔失敗',
+          '瀏覽器儲存空間或隱私設定可能阻擋自動存檔，請稍後重試'
+        );
       }
     }, AUTO_SAVE_DELAY_MS);
 
@@ -161,7 +176,11 @@ export function usePropertyDraft(
       const { _version, _savedAt, _tabId, ...rest } = parsed;
       return rest;
     } catch (e) {
-      console.error('草稿還原失敗:', e);
+      showWarningOnce(
+        restoreWarnedRef,
+        '草稿還原失敗',
+        '草稿檔案可能已損壞或版本不符，已取消還原'
+      );
       return null;
     }
   }, [draftKey]);
@@ -172,7 +191,11 @@ export function usePropertyDraft(
       localStorage.removeItem(draftKey);
       lastSavedRef.current = '';
     } catch (e) {
-      console.warn('草稿清除失敗:', e);
+      showWarningOnce(
+        clearWarnedRef,
+        '草稿清除失敗',
+        '請檢查瀏覽器儲存空間或權限設定，草稿可能尚未移除'
+      );
     }
   }, [draftKey]);
 
@@ -187,7 +210,11 @@ export function usePropertyDraft(
       localStorage.setItem(toKey, saved);
       localStorage.removeItem(fromKey);
     } catch (e) {
-      console.warn('草稿遷移失敗:', e);
+      showWarningOnce(
+        migrateWarnedRef,
+        '草稿遷移失敗',
+        '匿名草稿未能移轉到登入帳號，請重新登入後再試'
+      );
     }
   }, []);
 

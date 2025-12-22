@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { User } from '@supabase/supabase-js';
 import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { 
@@ -32,7 +33,7 @@ const PropertyUploadContent: React.FC = () => {
     clearDraft
   } = useUploadForm();
 
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [draftAvailable, setDraftAvailable] = useState(false);
   const [draftPreview, setDraftPreview] = useState<{ title: string; savedAt: string } | null>(null);
 

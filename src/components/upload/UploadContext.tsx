@@ -263,7 +263,7 @@ export const UploadFormProvider: React.FC<{ children: ReactNode }> = ({ children
         try {
           await propertyService.deleteImages(uploadRes.urls);
         } catch (cleanupError) {
-          console.error('Cleanup failed:', cleanupError);
+          notify.warning('圖片清理失敗', '部分圖片可能仍留在伺服器，請稍後重試或聯繫客服協助');
         }
       }
       
