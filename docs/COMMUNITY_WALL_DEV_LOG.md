@@ -4,18 +4,61 @@
 
 ---
 
+## 📅 2025-12-22 UP-2 圖片前端預處理 (Client-side Compression)
+
+### 📊 審計評分：75/100 ⚠️
+
+| 項目 | 得分 | 扣分原因 |
+|------|------|----------|
+| 功能完整度 | 20/25 | 核心壓縮完成，但缺進度 UI、HEIC 轉換、WebWorker 錯誤處理 |
+| 代碼品質 | 18/25 | 缺並發控制、重試機制、記憶體洩漏防護 |
+| 測試覆蓋 | 17/25 | 僅 3 個單測 + 1 個整合測，缺邊界/E2E/壓力測試 |
+| UX 完整度 | 20/25 | 有 toast 通知但缺壓縮進度條、壓縮前後對比、批次進度 |
+
+### 🔧 已完成實作
+- **新增檔案**: `src/services/imageService.ts` - optimizePropertyImage/optimizeImages
+- **整合**: `src/components/upload/UploadContext.tsx` - handleFileSelect 串驗證→壓縮→1.5MB 防線
+- **測試**: `src/services/__tests__/imageService.test.ts` (3 tests), `src/components/upload/__tests__/UploadContext.test.tsx` (1 test)
+- **依賴**: browser-image-compression
+
+### ❌ 審計發現缺失 (10 項)
+
+| 編號 | 嚴重度 | 描述 | 分類 |
+|:---:|:---:|:---|:---:|
+| UP-2.A | P1 | 缺壓縮進度 UI（用戶不知道在等什麼） | UX |
+| UP-2.B | P1 | optimizeImages 逐一處理無並發限制，大量圖片時過慢 | 效能 |
+| UP-2.C | P2 | HEIC/HEIF 格式未轉換為 JPEG（iOS 用戶常見） | 相容性 |
+| UP-2.D | P2 | 壓縮失敗無重試機制 | 穩定性 |
+| UP-2.E | P2 | WebWorker 錯誤未分類處理（OOM vs 格式錯誤） | 錯誤處理 |
+| UP-2.F | P2 | 測試僅 4 個，缺：壓縮後仍超限、EXIF 旋轉、0 byte 檔案、WebWorker 失敗 | 測試 |
+| UP-2.G | P3 | 缺壓縮前後檔案大小對比 UI | UX |
+| UP-2.H | P3 | preserveExif: true 但未測試實際 EXIF 保留 | 測試 |
+| UP-2.I | P3 | 批次上傳時無總進度指示（3/10 張） | UX |
+| UP-2.J | P3 | 缺 E2E 測試驗證實際上傳流量 < 2MB | 驗收 |
+
+### 📁 修改的檔案清單
+| 檔案 | 變更類型 | 說明 |
+|------|----------|------|
+| `package.json` | 修改 | 新增 browser-image-compression 依賴 |
+| `src/services/imageService.ts` | 新增 | 壓縮服務 |
+| `src/components/upload/UploadContext.tsx` | 修改 | 整合壓縮流程 |
+| `src/services/__tests__/imageService.test.ts` | 新增 | 壓縮服務測試 |
+| `src/components/upload/__tests__/UploadContext.test.tsx` | 新增 | 上傳流程測試 |
+
+---
+
 ## 📅 2025-12-22 UP-1 表單自動快照 (Draft Persistence)
 
 ### 📊 首次審計後修正評分：95/100 ✅
 ### 📊 二次審計評分：88/100 ⚠️
-### 📊 三次審計（本次）評分：94/100 ⚠️
+### 📊 三次審計（本次）評分：98/100 ✅
 
 | 審計回合 | 分數 | 說明 |
 |:---:|:---:|:---|
 | 首次審計 | 45/100 ❌ | 發現 12 項重大缺失 |
 | 缺失修正後 | 95/100 ✅ | 全部 12 項缺失修正完成 |
 | 二次嚴格審計 | 88/100 ⚠️ | 發現 6 項次要問題 (A-F) |
-| **三次審計（本次）** | **94/100 ⚠️** | A/B/D/E/F 修正，C(測試覆蓋)未補 |
+| **三次審計（本次）** | **98/100 ✅** | A/B/C/D/E/F 全數修畢，補齊邊界測試 |
 
 ### 📊 二次審計詳細評分
 
@@ -23,8 +66,8 @@
 |------|------|----------|
 | 功能完整度 | 24/25 | 全部 12 項缺失已修正 |
 | 代碼品質 | 24/25 | useEffect 依賴、重複 auth 調用、useMemo 依賴、遷移 guard 已修正 |
-| 測試覆蓋 | 21/25 | 仍僅 5 個測試案例，邊界情況未補 |
-| UX 完整度 | 23/25 | 捨棄前確認對話框已補，餘優化待觀察 |
+| 測試覆蓋 | 24/25 | 補齊腐敗 JSON、空草稿、debounce 單寫入、相對時間預覽等邊界 |
+| UX 完整度 | 24/25 | 捨棄前確認對話框已補，UX 觀察中 |
 
 ### ⚠️ 二次審計發現問題 (6項)
 
@@ -32,7 +75,7 @@
 |:---:|:---:|:---|:---:|
 | A | P1 | useEffect 依賴 hasDraft/getDraftPreview 造成重跑風險 | **✅ 已修** |
 | B | P2 | 捨棄草稿前無確認對話框 | **✅ 已修** |
-| C | P2 | 測試案例不足（只有 5 個） | ⬜ 未補 |
+| C | P2 | 測試案例不足（只有 5 個） | **✅ 已補** |
 | D | P2 | PropertyUploadPage 重複調用 supabase.auth.getUser() | **✅ 已修** |
 | E | P2 | draftFormData useMemo 依賴整個 form 物件而非具體欄位 | **✅ 已修** |
 | F | P2 | migrateDraft 無條件執行 | **✅ 已修** |
@@ -50,7 +93,7 @@
 - 單元測試：`src/hooks/__tests__/usePropertyDraft.test.ts`（保存/還原/過期/遷移）
 - 全套測試：`npm test` 233/233
 - 建置：`npm run build`
-- 本次修正：`npm test`、`npm run build` 通過；A/B/D/E/F 已修，C 待補邊界測試
+- 本次修正：`npm test`、`npm run build` 通過；A/B/C/D/E/F 全數完成，邊界測試已補
 
 ---
 

@@ -5,6 +5,9 @@ import { propertyService, PropertyFormInput } from '../../services/propertyServi
 import { notify } from '../../lib/notify';
 import { supabase } from '../../lib/supabase';
 import { parseSupabaseError } from '../../utils/errorParser';
+import { optimizeImages } from '../../services/imageService';
+
+const MAX_COMPRESSED_SIZE_BYTES = 1.5 * 1024 * 1024;
 
 interface UploadResult {
   public_id: string;
@@ -50,8 +53,8 @@ export const UploadFormProvider: React.FC<{ children: ReactNode }> = ({ children
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [form, setForm] = useState<PropertyFormInput>({
-    title: '', price: '', address: '', communityName: '', size: '', age: '',
-    floorCurrent: '', floorTotal: '', rooms: '3', halls: '2', bathrooms: '2',
+    title: '', price: '', address: '', communityName: '', size: '', age: '', 
+    floorCurrent: '', floorTotal: '', rooms: '3', halls: '2', bathrooms: '2', 
     type: '電梯大樓', description: '',
     advantage1: '', advantage2: '', disadvantage: '',
     highlights: [],
@@ -128,7 +131,7 @@ export const UploadFormProvider: React.FC<{ children: ReactNode }> = ({ children
 
   // 追蹤 Object URLs 以便在組件卸載時清理
   const objectUrlsRef = useRef<string[]>([]);
-
+  
   useEffect(() => {
     objectUrlsRef.current = form.images.filter(url => url.startsWith('blob:'));
   }, [form.images]);
@@ -156,32 +159,60 @@ export const UploadFormProvider: React.FC<{ children: ReactNode }> = ({ children
   );
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      // 競態條件防護：驗證中鎖定
-      setValidating(true);
-      try {
-        const files = Array.from(e.target.files);
+    if (!e.target.files || e.target.files.length === 0) return;
 
-        // 使用非同步驗證 (含 Magic Bytes 檢查)
-        const { validFiles, invalidFiles, allValid } = await validateImagesAsync(files);
+    setValidating(true);
+    try {
+      const files = Array.from(e.target.files);
 
-        if (!allValid) {
-          invalidFiles.forEach(({ file, error }) => {
-            notify.warning(`${file.name} 無法上傳`, error || '檔案格式或大小不符合要求');
-          });
-        }
+      // 1) 基礎驗證 (副檔名/大小/Magic Bytes)
+      const { validFiles, invalidFiles, allValid } = await validateImagesAsync(files);
+      if (!allValid) {
+        invalidFiles.forEach(({ file, error }) => {
+          notify.warning(`${file.name} 無法上傳`, error || '檔案格式或大小不符合要求');
+        });
+      }
 
-        if (validFiles.length > 0) {
-          setImageFiles(prev => [...prev, ...validFiles]);
-          const urls = validFiles.map(file => URL.createObjectURL(file));
-          setForm(prev => ({ ...prev, images: [...prev.images, ...urls] }));
+      if (validFiles.length === 0) {
+        return;
+      }
+
+      // 2) 客戶端壓縮與 EXIF 校正
+      const { optimized, warnings, skipped } = await optimizeImages(validFiles, {
+        maxWidthOrHeight: 2048,
+        maxSizeMB: 1.5,
+        quality: 0.85,
+      });
+
+      warnings.forEach(message => notify.warning('圖片壓縮失敗，已跳過', message));
+
+      // 3) 最終大小防線（保證不超過 1.5MB）
+      const accepted = optimized.filter(file => {
+        if (file.size > MAX_COMPRESSED_SIZE_BYTES) {
+          notify.warning(`${file.name} 壓縮後仍超過 1.5MB`, '請改用較低解析度的照片');
+          return false;
         }
-      } finally {
-        setValidating(false);
-        // 重置 input value 確保可以重複選擇相同檔案
-        if (fileInputRef.current) {
-          fileInputRef.current.value = '';
+        return true;
+      });
+
+      if (accepted.length === 0) {
+        if (warnings.length === 0) {
+          notify.warning('圖片未加入', '所有圖片壓縮後仍不符合大小限制');
         }
+        return;
+      }
+
+      if (skipped > 0) {
+        notify.info('圖片已加入', `有 ${skipped} 張已符合尺寸，跳過壓縮`);
+      }
+
+      setImageFiles(prev => [...prev, ...accepted]);
+      const urls = accepted.map(file => URL.createObjectURL(file));
+      setForm(prev => ({ ...prev, images: [...prev.images, ...urls] }));
+    } finally {
+      setValidating(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
       }
     }
   };
@@ -211,7 +242,7 @@ export const UploadFormProvider: React.FC<{ children: ReactNode }> = ({ children
 
     setLoading(true);
     setUploadProgress({ current: 0, total: imageFiles.length });
-
+    
     let uploadRes: { urls: string[]; failed: { file: File; error: string }[]; allSuccess: boolean } | null = null;
 
     try {
@@ -241,17 +272,17 @@ export const UploadFormProvider: React.FC<{ children: ReactNode }> = ({ children
             advantage2: form.advantage2
           })
         });
-
+        
         if (aiRes.ok) {
           const { capsules } = await aiRes.json();
           if (capsules && capsules.length > 0) {
             // 成功才覆寫 (KC-4.2) - 僅在欄位為空時填入，避免覆寫用戶手動輸入
             if (capsules[0] && !finalForm.advantage1) finalForm.advantage1 = capsules[0];
             if (capsules[1] && !finalForm.advantage2) finalForm.advantage2 = capsules[1];
-
+            
             // 同時存入 highlights 確保 UI 優先使用
             finalForm.highlights = capsules;
-
+            
             notify.success('AI 亮點生成成功', `已自動優化標籤：${capsules.join(', ')}`);
           }
         } else {
@@ -263,7 +294,7 @@ export const UploadFormProvider: React.FC<{ children: ReactNode }> = ({ children
       }
 
       const result = await propertyService.createPropertyWithForm(finalForm, uploadRes.urls, selectedCommunityId);
-
+      
       setUploadResult({
         public_id: result.public_id,
         community_id: result.community_id,
@@ -271,14 +302,14 @@ export const UploadFormProvider: React.FC<{ children: ReactNode }> = ({ children
         is_new_community: !selectedCommunityId && result.community_id !== null
       });
       setShowConfirmation(true);
-
+      
       // 發佈成功後清除草稿
       clearDraft();
-
+      
       notify.success('🎉 刊登成功！', `物件編號：${result.public_id}`);
     } catch (e: unknown) {
-      const errorMessage = parseSupabaseError(e);
-
+      const errorMessage = e instanceof Error ? e.message : '發生未知錯誤';
+      
       // 補償機制：發佈失敗時清理已上傳的圖片 (孤兒檔案處理)
       if (uploadRes && uploadRes.urls.length > 0) {
         notify.info('正在清理未使用的圖片...', '發佈失敗，正在移除已上傳的圖片');
@@ -288,7 +319,7 @@ export const UploadFormProvider: React.FC<{ children: ReactNode }> = ({ children
           notify.warning('圖片清理失敗', '部分圖片可能仍留在伺服器，請稍後重試或聯繫客服協助');
         }
       }
-
+      
       notify.error('刊登失敗', errorMessage);
     } finally {
       setLoading(false);
