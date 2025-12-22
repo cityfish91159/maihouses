@@ -85,7 +85,16 @@ export async function optimizePropertyImage(file: File, options: OptimizeOptions
           processInput = outputBlob;
         }
       } catch (heicError) {
-        console.warn('HEIC explicit conversion failed, falling back to default implementation', heicError);
+        // HEIC 轉換失敗：回傳明確錯誤，不 fallthrough
+        return {
+          file,
+          originalSize,
+          compressedSize: originalSize,
+          ratio: 1,
+          skipped: true,
+          reason: 'heic-conversion-failed',
+          error: 'iOS HEIC 格式轉換失敗，請改用 JPEG 格式的照片'
+        };
       }
     }
 

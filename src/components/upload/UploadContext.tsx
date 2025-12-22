@@ -1,30 +1,24 @@
-import React, { createContext, useContext, useState, useRef, ReactNode, useEffect, useCallback, useMemo } from 'react';
+import React, { createContext, useContext, useReducer, useRef, ReactNode, useEffect, useCallback, useMemo } from 'react';
 import { usePropertyFormValidation, validateImagesAsync, VALIDATION_RULES, ValidationState } from '../../hooks/usePropertyFormValidation';
 import { usePropertyDraft, DraftFormData } from '../../hooks/usePropertyDraft';
 import { propertyService, PropertyFormInput } from '../../services/propertyService';
 import { notify } from '../../lib/notify';
 import { supabase } from '../../lib/supabase';
-import { parseSupabaseError } from '../../utils/errorParser';
 import { optimizeImages } from '../../services/imageService';
+import { uploadReducer, createInitialState, UploadState, UploadError, UploadResult } from './uploadReducer';
 
 const MAX_COMPRESSED_SIZE_BYTES = 1.5 * 1024 * 1024;
 
-interface UploadResult {
-  public_id: string;
-  community_id: string | null;
-  community_name: string | null;
-  is_new_community: boolean;
-}
-
 interface UploadContextType {
+  // State (exposed for UI - unchanged interface)
   form: PropertyFormInput;
   setForm: React.Dispatch<React.SetStateAction<PropertyFormInput>>;
   validation: ValidationState;
   loading: boolean;
   setLoading: (loading: boolean) => void;
   validating: boolean;
-  compressing: boolean; // UP-2.K: 新增狀態
-  compressionProgress: number | null; // UP-2.A: 壓縮進度
+  compressing: boolean;
+  compressionProgress: number | null;
   uploadProgress: { current: number; total: number } | null;
   selectedCommunityId: string | undefined;
   setSelectedCommunityId: (id: string | undefined) => void;
@@ -40,41 +34,35 @@ interface UploadContextType {
   restoreDraft: () => DraftFormData | null;
   clearDraft: () => void;
   getDraftPreview: () => { title: string; savedAt: string } | null;
+  // Error Handling (新增)
+  lastError: UploadError | null;
+  clearError: () => void;
+  retryWithOriginal: () => void; // Fallback: 上傳原檔
 }
 
 const UploadContext = createContext<UploadContextType | undefined>(undefined);
 
 export const UploadFormProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [loading, setLoading] = useState(false);
-  const [compressing, setCompressing] = useState(false); // UP-2.K
-  const [uploadProgress, setUploadProgress] = useState<{ current: number; total: number } | null>(null);
-  const [compressionProgress, setCompressionProgress] = useState<number | null>(null); // UP-2.A: 壓縮進度
-  const [imageFiles, setImageFiles] = useState<File[]>([]);
-  const [selectedCommunityId, setSelectedCommunityId] = useState<string | undefined>();
-  const [uploadResult, setUploadResult] = useState<UploadResult | null>(null);
-  const [showConfirmation, setShowConfirmation] = useState(false);
-  const [userId, setUserId] = useState<string | undefined>(undefined);
+  const [state, dispatch] = useReducer(uploadReducer, undefined, createInitialState);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [form, setForm] = useState<PropertyFormInput>({
-    title: '', price: '', address: '', communityName: '', size: '', age: '',
-    floorCurrent: '', floorTotal: '', rooms: '3', halls: '2', bathrooms: '2',
-    type: '電梯大樓', description: '',
-    advantage1: '', advantage2: '', disadvantage: '',
-    highlights: [],
-    images: [],
-    sourceExternalId: ''
-  });
+  // 追蹤 Object URLs 以便在組件卸載時清理
+  const objectUrlsRef = useRef<string[]>([]);
 
-  // 取得 userId 並監聽登入事件（支援匿名 → 登入遷移）
+  // Pending files for fallback retry
+  const pendingFilesRef = useRef<File[]>([]);
+
+  // ============================================================
+  // Auth: 取得 userId 並監聽登入事件
+  // ============================================================
   useEffect(() => {
     let mounted = true;
     supabase.auth.getUser().then(({ data }) => {
       if (!mounted) return;
-      setUserId(data.user?.id);
+      dispatch({ type: 'SET_USER_ID', payload: data.user?.id });
     });
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUserId(session?.user?.id);
+      dispatch({ type: 'SET_USER_ID', payload: session?.user?.id });
     });
     return () => {
       mounted = false;
@@ -82,63 +70,52 @@ export const UploadFormProvider: React.FC<{ children: ReactNode }> = ({ children
     };
   }, []);
 
-  // 草稿功能整合
+  // ============================================================
+  // Draft 功能整合
+  // ============================================================
   const draftFormData = useMemo<DraftFormData>(() => ({
-    title: form.title,
-    price: form.price,
-    address: form.address,
-    communityName: form.communityName,
-    size: form.size,
-    age: form.age,
-    floorCurrent: form.floorCurrent,
-    floorTotal: form.floorTotal,
-    rooms: form.rooms,
-    halls: form.halls,
-    bathrooms: form.bathrooms,
-    type: form.type,
-    description: form.description,
-    advantage1: form.advantage1,
-    advantage2: form.advantage2,
-    disadvantage: form.disadvantage,
-    highlights: form.highlights ?? [],
-    sourceExternalId: form.sourceExternalId
+    title: state.form.title,
+    price: state.form.price,
+    address: state.form.address,
+    communityName: state.form.communityName,
+    size: state.form.size,
+    age: state.form.age,
+    floorCurrent: state.form.floorCurrent,
+    floorTotal: state.form.floorTotal,
+    rooms: state.form.rooms,
+    halls: state.form.halls,
+    bathrooms: state.form.bathrooms,
+    type: state.form.type,
+    description: state.form.description,
+    advantage1: state.form.advantage1,
+    advantage2: state.form.advantage2,
+    disadvantage: state.form.disadvantage,
+    highlights: state.form.highlights ?? [],
+    sourceExternalId: state.form.sourceExternalId
   }), [
-    form.title,
-    form.price,
-    form.address,
-    form.communityName,
-    form.size,
-    form.age,
-    form.floorCurrent,
-    form.floorTotal,
-    form.rooms,
-    form.halls,
-    form.bathrooms,
-    form.type,
-    form.description,
-    form.advantage1,
-    form.advantage2,
-    form.disadvantage,
-    form.highlights,
-    form.sourceExternalId
+    state.form.title, state.form.price, state.form.address, state.form.communityName,
+    state.form.size, state.form.age, state.form.floorCurrent, state.form.floorTotal,
+    state.form.rooms, state.form.halls, state.form.bathrooms, state.form.type,
+    state.form.description, state.form.advantage1, state.form.advantage2,
+    state.form.disadvantage, state.form.highlights, state.form.sourceExternalId
   ]);
 
-  const { hasDraft, restoreDraft, clearDraft, getDraftPreview, migrateDraft } = usePropertyDraft(draftFormData, userId);
+  const { hasDraft, restoreDraft, clearDraft, getDraftPreview, migrateDraft } = usePropertyDraft(draftFormData, state.userId);
 
   // 匿名草稿遷移到登入用戶
   useEffect(() => {
     const hasAnonymousDraft = typeof window !== 'undefined' && localStorage.getItem('mh_draft_upload_anonymous');
-    if (userId && hasAnonymousDraft) {
-      migrateDraft(undefined, userId);
+    if (state.userId && hasAnonymousDraft) {
+      migrateDraft(undefined, state.userId);
     }
-  }, [userId, migrateDraft]);
+  }, [state.userId, migrateDraft]);
 
-  // 追蹤 Object URLs 以便在組件卸載時清理
-  const objectUrlsRef = useRef<string[]>([]);
-
+  // ============================================================
+  // Object URL Cleanup
+  // ============================================================
   useEffect(() => {
-    objectUrlsRef.current = form.images.filter(url => url.startsWith('blob:'));
-  }, [form.images]);
+    objectUrlsRef.current = state.form.images.filter(url => url.startsWith('blob:'));
+  }, [state.form.images]);
 
   useEffect(() => {
     return () => {
@@ -146,30 +123,36 @@ export const UploadFormProvider: React.FC<{ children: ReactNode }> = ({ children
     };
   }, []);
 
-  const [validating, setValidating] = useState(false);
-
+  // ============================================================
+  // Validation Hook
+  // ============================================================
   const validation = usePropertyFormValidation(
     {
-      title: form.title,
-      price: form.price,
-      address: form.address,
-      communityName: form.communityName,
-      advantage1: form.advantage1,
-      advantage2: form.advantage2,
-      disadvantage: form.disadvantage,
-      highlights: form.highlights || [],
+      title: state.form.title,
+      price: state.form.price,
+      address: state.form.address,
+      communityName: state.form.communityName,
+      advantage1: state.form.advantage1,
+      advantage2: state.form.advantage2,
+      disadvantage: state.form.disadvantage,
+      highlights: state.form.highlights || [],
     },
-    imageFiles.length
+    state.imageFiles.length
   );
 
-  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // ============================================================
+  // File Selection Handler (含壓縮與錯誤處理)
+  // ============================================================
+  const handleFileSelect = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) return;
 
-    setValidating(true);
-    setCompressing(true); // UP-2.K: Start compressing state
-    try {
-      const files = Array.from(e.target.files);
+    dispatch({ type: 'SET_VALIDATING', payload: true });
+    dispatch({ type: 'START_COMPRESSION' });
 
+    const files = Array.from(e.target.files);
+    pendingFilesRef.current = files; // 儲存原檔供 fallback
+
+    try {
       // 1) 基礎驗證 (副檔名/大小/Magic Bytes)
       const { validFiles, invalidFiles, allValid } = await validateImagesAsync(files);
       if (!allValid) {
@@ -179,21 +162,32 @@ export const UploadFormProvider: React.FC<{ children: ReactNode }> = ({ children
       }
 
       if (validFiles.length === 0) {
+        dispatch({ type: 'SET_VALIDATING', payload: false });
+        dispatch({
+          type: 'COMPRESSION_FAILED', payload: {
+            message: '所有檔案驗證失敗',
+            canFallback: false,
+            originalFiles: []
+          }
+        });
         return;
       }
 
       // 2) 客戶端壓縮與 EXIF 校正
-      // UP-2.A: 傳入 onProgress 回調
-      setCompressionProgress(0);
       const { optimized, warnings, skipped } = await optimizeImages(validFiles, {
         maxWidthOrHeight: 2048,
         maxSizeMB: 1.5,
         quality: 0.85,
-        onProgress: (p) => setCompressionProgress(p)
+        onProgress: (p) => dispatch({ type: 'UPDATE_COMPRESSION_PROGRESS', payload: p })
       });
-      // setCompressionProgress(null); // UP-2.L: Moved to finally
 
-      warnings.forEach(message => notify.warning('圖片壓縮失敗，已跳過', message));
+      // 處理 HEIC 或壓縮錯誤
+      const heicErrors = warnings.filter(w => w.includes('HEIC') || w.includes('heic'));
+      if (heicErrors.length > 0) {
+        heicErrors.forEach(msg => notify.error('HEIC 格式錯誤', msg));
+      }
+      warnings.filter(w => !w.includes('HEIC') && !w.includes('heic'))
+        .forEach(msg => notify.warning('圖片壓縮失敗', msg));
 
       // 3) 最終大小防線（保證不超過 1.5MB）
       const accepted = optimized.filter(file => {
@@ -205,9 +199,14 @@ export const UploadFormProvider: React.FC<{ children: ReactNode }> = ({ children
       });
 
       if (accepted.length === 0) {
-        if (warnings.length === 0) {
-          notify.warning('圖片未加入', '所有圖片壓縮後仍不符合大小限制');
-        }
+        // 壓縮全失敗，提供 Fallback
+        dispatch({
+          type: 'COMPRESSION_FAILED', payload: {
+            message: '所有圖片壓縮失敗或仍超過大小限制',
+            canFallback: validFiles.some(f => f.size <= MAX_COMPRESSED_SIZE_BYTES),
+            originalFiles: validFiles.filter(f => f.size <= MAX_COMPRESSED_SIZE_BYTES)
+          }
+        });
         return;
       }
 
@@ -215,29 +214,60 @@ export const UploadFormProvider: React.FC<{ children: ReactNode }> = ({ children
         notify.info('圖片已加入', `有 ${skipped} 張已符合尺寸，跳過壓縮`);
       }
 
-      setImageFiles(prev => [...prev, ...accepted]);
+      // 成功：加入圖片
       const urls = accepted.map(file => URL.createObjectURL(file));
-      setForm(prev => ({ ...prev, images: [...prev.images, ...urls] }));
+      dispatch({ type: 'FINISH_COMPRESSION', payload: { files: accepted, urls } });
+
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : '壓縮過程發生未知錯誤';
+      dispatch({
+        type: 'COMPRESSION_FAILED', payload: {
+          message,
+          canFallback: true,
+          originalFiles: files.filter(f => f.size <= MAX_COMPRESSED_SIZE_BYTES)
+        }
+      });
+      notify.error('圖片處理失敗', message);
     } finally {
-      setValidating(false);
-      setCompressing(false); // UP-2.L: Reset compressing state
-      setCompressionProgress(null); // UP-2.L: Reset progress
+      dispatch({ type: 'SET_VALIDATING', payload: false });
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
     }
-  };
+  }, []);
 
-  const removeImage = (index: number) => {
-    const urlToRemove = form.images[index];
+  // ============================================================
+  // Fallback: 上傳原檔 (跳過壓縮)
+  // ============================================================
+  const retryWithOriginal = useCallback(() => {
+    if (!state.lastError?.originalFiles || state.lastError.originalFiles.length === 0) {
+      notify.warning('無法重試', '沒有可用的原始檔案');
+      return;
+    }
+
+    const files = state.lastError.originalFiles;
+    const urls = files.map(file => URL.createObjectURL(file));
+
+    dispatch({ type: 'CLEAR_ERROR' });
+    dispatch({ type: 'ADD_IMAGES', payload: { files, urls } });
+    notify.success('已加入原檔', `${files.length} 張圖片將以原始大小上傳`);
+  }, [state.lastError]);
+
+  // ============================================================
+  // Remove Image
+  // ============================================================
+  const removeImage = useCallback((index: number) => {
+    const urlToRemove = state.form.images[index];
     if (urlToRemove && urlToRemove.startsWith('blob:')) {
       URL.revokeObjectURL(urlToRemove);
     }
-    setForm(prev => ({ ...prev, images: prev.images.filter((_: string, i: number) => i !== index) }));
-    setImageFiles(prev => prev.filter((_: File, i: number) => i !== index));
-  };
+    dispatch({ type: 'REMOVE_IMAGE', payload: index });
+  }, [state.form.images]);
 
-  const handleSubmit = async () => {
+  // ============================================================
+  // Submit Handler
+  // ============================================================
+  const handleSubmit = useCallback(async () => {
     if (!validation.basicValid) {
       notify.error('請完成必填欄位', '標題、價格、地址與社區名稱為必填');
       return;
@@ -251,15 +281,14 @@ export const UploadFormProvider: React.FC<{ children: ReactNode }> = ({ children
       return;
     }
 
-    setLoading(true);
-    setUploadProgress({ current: 0, total: imageFiles.length });
+    dispatch({ type: 'START_UPLOAD', payload: { total: state.imageFiles.length } });
 
     let uploadRes: { urls: string[]; failed: { file: File; error: string }[]; allSuccess: boolean } | null = null;
 
     try {
-      uploadRes = await propertyService.uploadImages(imageFiles, {
+      uploadRes = await propertyService.uploadImages(state.imageFiles, {
         concurrency: 3,
-        onProgress: (current, total) => setUploadProgress({ current, total }),
+        onProgress: (current, total) => dispatch({ type: 'UPDATE_UPLOAD_PROGRESS', payload: { current, total } }),
       });
 
       if (!uploadRes.allSuccess) {
@@ -270,84 +299,101 @@ export const UploadFormProvider: React.FC<{ children: ReactNode }> = ({ children
         throw new Error('所有圖片上傳失敗，請檢查網路連線後重試');
       }
 
-      // KC-4.2 & 4.3: AI 生成亮點膠囊 (優雅降級)
-      let finalForm = { ...form };
-      /* 暫時關閉 AI 自動生成，以尊重用戶手動勾選為主 (User Request)
-      try {
-        const aiRes = await fetch('/api/property/generate-key-capsules', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            title: form.title,
-            description: form.description,
-            advantage1: form.advantage1,
-            advantage2: form.advantage2
-          })
-        });
-        
-        if (aiRes.ok) {
-          const { capsules } = await aiRes.json();
-          if (capsules && capsules.length > 0) {
-            // 成功才覆寫 (KC-4.2) - 僅在欄位為空時填入，避免覆寫用戶手動輸入
-            if (capsules[0] && !finalForm.advantage1) finalForm.advantage1 = capsules[0];
-            if (capsules[1] && !finalForm.advantage2) finalForm.advantage2 = capsules[1];
-            
-            // 同時存入 highlights 確保 UI 優先使用
-            finalForm.highlights = capsules;
-            
-            notify.success('AI 亮點生成成功', `已自動優化標籤：${capsules.join(', ')}`);
-          }
-        } else {
-          throw new Error('AI 服務回應異常');
+      const result = await propertyService.createPropertyWithForm(state.form, uploadRes.urls, state.selectedCommunityId);
+
+      dispatch({
+        type: 'UPLOAD_SUCCESS', payload: {
+          public_id: result.public_id,
+          community_id: result.community_id,
+          community_name: result.community_name || state.form.communityName,
+          is_new_community: !state.selectedCommunityId && result.community_id !== null
         }
-      } catch (aiError) {
-        // 降級處理：AI 失敗不阻塞主流程 (KC-4.3)
-        notify.warning('AI 亮點生成跳過', '目前無法使用 AI 優化，將以原始內容發佈');
-      }
-      */
-
-      const result = await propertyService.createPropertyWithForm(finalForm, uploadRes.urls, selectedCommunityId);
-
-      setUploadResult({
-        public_id: result.public_id,
-        community_id: result.community_id,
-        community_name: result.community_name || form.communityName,
-        is_new_community: !selectedCommunityId && result.community_id !== null
       });
-      setShowConfirmation(true);
 
-      // 發佈成功後清除草稿
       clearDraft();
-
       notify.success('🎉 刊登成功！', `物件編號：${result.public_id}`);
+
     } catch (e: unknown) {
       const errorMessage = e instanceof Error ? e.message : '發生未知錯誤';
 
-      // 補償機制：發佈失敗時清理已上傳的圖片 (孤兒檔案處理)
+      // 判斷錯誤類型
+      let errorType: UploadError['type'] = 'upload';
+      if (errorMessage.includes('網路') || errorMessage.includes('network') || errorMessage.includes('fetch')) {
+        errorType = 'network';
+      }
+
+      // 補償機制：發佈失敗時清理已上傳的圖片
       if (uploadRes && uploadRes.urls.length > 0) {
         notify.info('正在清理未使用的圖片...', '發佈失敗，正在移除已上傳的圖片');
         try {
           await propertyService.deleteImages(uploadRes.urls);
-        } catch (cleanupError) {
-          notify.warning('圖片清理失敗', '部分圖片可能仍留在伺服器，請稍後重試或聯繫客服協助');
+        } catch {
+          notify.warning('圖片清理失敗', '部分圖片可能仍留在伺服器');
         }
       }
 
-      notify.error('刊登失敗', errorMessage);
-    } finally {
-      setLoading(false);
-      setUploadProgress(null);
-    }
-  };
+      dispatch({ type: 'UPLOAD_FAILED', payload: { type: errorType, message: errorMessage } });
 
-  const value = {
-    form, setForm, validation, loading, setLoading, validating, uploadProgress,
-    compressing, // UP-2.K: Expose compressing state
-    compressionProgress,
-    selectedCommunityId, setSelectedCommunityId, fileInputRef, userId,
-    handleFileSelect, removeImage, handleSubmit, uploadResult, showConfirmation,
-    // Draft 功能
-    hasDraft, restoreDraft, clearDraft, getDraftPreview
+      if (errorType === 'network') {
+        notify.error('網路連線錯誤', '請檢查您的網路連線後重試');
+      } else {
+        notify.error('刊登失敗', errorMessage);
+      }
+    }
+  }, [validation, state.imageFiles, state.form, state.selectedCommunityId, clearDraft]);
+
+  // ============================================================
+  // Compatibility: setForm / setLoading / setSelectedCommunityId
+  // ============================================================
+  const setForm: React.Dispatch<React.SetStateAction<PropertyFormInput>> = useCallback((action) => {
+    if (typeof action === 'function') {
+      dispatch({ type: 'SET_FORM', payload: action(state.form) });
+    } else {
+      dispatch({ type: 'SET_FORM', payload: action });
+    }
+  }, [state.form]);
+
+  const setLoading = useCallback((loading: boolean) => {
+    dispatch({ type: 'SET_LOADING', payload: loading });
+  }, []);
+
+  const setSelectedCommunityId = useCallback((id: string | undefined) => {
+    dispatch({ type: 'SET_COMMUNITY_ID', payload: id });
+  }, []);
+
+  const clearError = useCallback(() => {
+    dispatch({ type: 'CLEAR_ERROR' });
+  }, []);
+
+  // ============================================================
+  // Context Value (保持與原本相同的 interface)
+  // ============================================================
+  const value: UploadContextType = {
+    form: state.form,
+    setForm,
+    validation,
+    loading: state.loading,
+    setLoading,
+    validating: state.validating,
+    compressing: state.compressing,
+    compressionProgress: state.compressionProgress,
+    uploadProgress: state.uploadProgress,
+    selectedCommunityId: state.selectedCommunityId,
+    setSelectedCommunityId,
+    fileInputRef,
+    handleFileSelect,
+    removeImage,
+    handleSubmit,
+    uploadResult: state.uploadResult,
+    showConfirmation: state.showConfirmation,
+    userId: state.userId,
+    hasDraft,
+    restoreDraft,
+    clearDraft,
+    getDraftPreview,
+    lastError: state.lastError,
+    clearError,
+    retryWithOriginal
   };
 
   return (
