@@ -101,7 +101,12 @@ describe('UploadContext - handleFileSelect', () => {
   it('validates, optimizes, and stores image URLs', async () => {
     const file = createFile('ok.jpg', 2_000_000);
     mockValidate.mockResolvedValue({ validFiles: [file], invalidFiles: [], allValid: true });
-    mockOptimize.mockResolvedValue({ optimized: [createFile('ok.jpg', 1_000_000)], warnings: [], skipped: 0 });
+    mockOptimize.mockResolvedValue({
+      optimized: [createFile('ok.jpg', 1_000_000)],
+      warnings: [],
+      skipped: 0,
+      stats: { totalOriginalSize: 2000000, totalCompressedSize: 1000000 } // UP-2.M
+    });
 
     render(
       <UploadFormProvider>

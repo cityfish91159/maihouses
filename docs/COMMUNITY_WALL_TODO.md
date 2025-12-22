@@ -106,6 +106,9 @@
 | UP-2.H | P3 | **EXIF 保留未測** | ✅ | 參數設定 `preserveExif: true` |
 | UP-2.I | P3 | **批次進度不明** | ✅ | 實作與 UP-2.A 整合 |
 | UP-2.J | P3 | **缺 E2E 驗收** | ⬜ | 需環境支援 |
+| P-2.K | P0 | **Value 缺少 compressing** | ✅ | Context value 補上 `compressing` state |
+| UP-2.L | P1 | **finally 缺重設** | ✅ | `handleFileSelect` finally 加入 `setCompressing(false)` |
+| UP-2.M | P1 | **Mock 缺 stats** | ✅ | 測試 Mock 補上 `stats` 欄位 |
 
 ---
 
