@@ -4,6 +4,39 @@
 
 ---
 
+## 📅 2025-12-22 UP-2.J 修復 (Playwright 版本衝突)
+
+### 📊 修復前: 92/100 → 修復後: 100/100 ✅
+
+### 🔧 問題描述
+| 問題 | 說明 |
+|------|------|
+| 錯誤訊息 | `You have two different versions of @playwright/test` |
+| 原因 | `@playwright/test: ^1.57.0` 與 `playwright-chromium: ^1.48.2` 版本不一致 |
+| 影響 | E2E 測試無法執行，vitest 會嘗試載入 playwright 測試導致失敗 |
+
+### ✅ 修復內容
+
+| 檔案 | 變更類型 | 說明 |
+|------|----------|------|
+| `package.json` | 修改 | `playwright-chromium` 版本對齊 `^1.57.0` |
+| `vite.config.ts` | 修改 | vitest exclude 加入 `tests/e2e/**` |
+| `playwright.config.ts` | 新增 | Playwright 獨立配置（testDir, webServer, use） |
+
+### 📊 測試結果
+```
+npm test: 40 passed (245/245 tests)
+E2E 測試已從 vitest 排除，需用 npx playwright test 執行
+```
+
+### 📁 Commit 資訊
+| 項目 | 值 |
+|------|------|
+| Commit | 2707bbc |
+| 訊息 | `fix(UP-2.J): Playwright 版本對齊、vitest 排除 e2e、新增 playwright.config.ts` |
+
+---
+
 ## 📅 2025-12-22 Commit df16f1c 審計 (測試補強)
 
 ### 📊 審計評分：45/100 ❌ 測試與實作完全不匹配
