@@ -296,8 +296,10 @@ export const UploadFormProvider: React.FC<{ children: ReactNode }> = ({ children
       console.warn('[UP-3.D] Invariant violation: Cover image is not at position 0');
     }
     if (process.env.NODE_ENV !== 'production') {
+      // 正確邏輯：如果有圖片，第一張必須是封面
+      const hasCoverAtFirst = sortedImages.length === 0 || sortedImages[0]?.isCover === true;
       console.assert(
-        sortedImages.length === 0 || sortedImages[0]?.isCover || !sortedImages.some(img => img.isCover),
+        hasCoverAtFirst,
         '[UP-3.D] 封面圖片必須在 images[0] 位置'
       );
     }

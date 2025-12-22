@@ -195,14 +195,16 @@ describe('uploadReducer', () => {
             expect(newState.managedImages.filter(img => img.isCover).length).toBe(1);
         });
 
-        it('should handle setting non-existent id as cover', () => {
+        it('should handle setting non-existent id as cover (should preserve existing cover)', () => {
             const images: ManagedImage[] = [
                 { id: 'img1', file: createMockFile('1.jpg'), previewUrl: 'blob:1', isCover: true },
             ];
             const stateWithImages = { ...initialState, managedImages: images };
 
             const newState = uploadReducer(stateWithImages, { type: 'SET_COVER', payload: 'non-existent' });
-            expect(newState.managedImages.filter(img => img.isCover).length).toBe(0);
+            // 修正：目標 id 不存在時應保持原狀，不應清除既有封面
+            expect(newState.managedImages.filter(img => img.isCover).length).toBe(1);
+            expect(newState.managedImages[0].isCover).toBe(true);
         });
 
         it('should handle setting same cover twice', () => {

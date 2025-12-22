@@ -244,6 +244,12 @@ export function uploadReducer(state: UploadState, action: UploadAction): UploadS
         // UP-3.3: 設為封面
         case 'SET_COVER': {
             const coverId = action.payload;
+            // 檢查目標 id 是否存在
+            const targetExists = state.managedImages.some(img => img.id === coverId);
+            if (!targetExists) {
+                // 目標不存在，保持原狀
+                return state;
+            }
             const updatedImages = state.managedImages.map(img => ({
                 ...img,
                 isCover: img.id === coverId
