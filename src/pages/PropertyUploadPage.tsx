@@ -28,11 +28,13 @@ const PropertyUploadContent: React.FC = () => {
     // Draft 功能
     hasDraft,
     restoreDraft,
-    getDraftPreview
+    getDraftPreview,
+    clearDraft
   } = useUploadForm();
 
   const [user, setUser] = useState<any>(null);
   const [draftAvailable, setDraftAvailable] = useState(false);
+  const [draftPreview, setDraftPreview] = useState<{ title: string; savedAt: string } | null>(null);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -40,21 +42,44 @@ const PropertyUploadContent: React.FC = () => {
     });
     // 檢查是否有草稿可用
     setDraftAvailable(hasDraft());
-  }, [hasDraft]);
+    setDraftPreview(getDraftPreview());
+
+    const onStorage = (event: StorageEvent) => {
+      if (event.key && event.key.startsWith('mh_draft_upload')) {
+        setDraftAvailable(hasDraft());
+        setDraftPreview(getDraftPreview());
+      }
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, [hasDraft, getDraftPreview]);
 
   // 還原草稿
   const handleRestoreDraft = () => {
     const draftData = restoreDraft();
-    if (draftData) {
-      setForm(prev => ({
-        ...prev,
-        ...draftData,
-        images: prev.images // 保留當前圖片（不覆蓋）
-      }));
+    if (!draftData) {
+      notify.error('草稿還原失敗', '草稿可能已過期或損壞，已為你清除');
+      clearDraft();
       setDraftAvailable(false);
-      const preview = getDraftPreview();
-      notify.success('草稿已還原', preview ? `標題：${preview.title.slice(0, 20)}...` : '已載入上次編輯內容');
+      setDraftPreview(null);
+      return;
     }
+    setForm(prev => ({
+      ...prev,
+      ...draftData,
+      images: prev.images // 保留當前圖片（不覆蓋）
+    }));
+    setDraftAvailable(false);
+    const preview = getDraftPreview();
+    setDraftPreview(preview);
+    notify.success('草稿已還原', preview ? `標題：${preview.title.slice(0, 20)}... / 儲存於 ${preview.savedAt}` : '已載入上次編輯內容');
+  };
+
+  const handleDiscardDraft = () => {
+    clearDraft();
+    setDraftAvailable(false);
+    setDraftPreview(null);
+    notify.info('草稿已捨棄', '已清除本機草稿');
   };
 
   // 591 搬家
@@ -158,12 +183,23 @@ const PropertyUploadContent: React.FC = () => {
           </div>
           <div className="flex items-center gap-3">
             {draftAvailable && (
-              <button 
-                onClick={handleRestoreDraft}
-                className="flex items-center gap-2 rounded-full bg-blue-50 px-4 py-2 text-sm font-bold text-blue-600 transition-all hover:bg-blue-100"
-              >
-                <RotateCcw size={16}/> 還原草稿
-              </button>
+              <div className="flex items-center gap-2">
+                <button 
+                  onClick={handleRestoreDraft}
+                  className="flex items-center gap-2 rounded-full bg-blue-50 px-4 py-2 text-sm font-bold text-blue-600 transition-all hover:bg-blue-100"
+                >
+                  <RotateCcw size={16}/> 還原草稿
+                  {draftPreview && (
+                    <span className="text-[11px] font-semibold text-blue-500">{draftPreview.title.slice(0, 10)} / {draftPreview.savedAt}</span>
+                  )}
+                </button>
+                <button
+                  onClick={handleDiscardDraft}
+                  className="rounded-full px-3 py-2 text-xs font-bold text-slate-500 hover:bg-slate-100"
+                >
+                  捨棄
+                </button>
+              </div>
             )}
             <button 
               onClick={handleImport591}

@@ -1,8 +1,9 @@
-import React, { createContext, useContext, useState, useRef, ReactNode, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useRef, ReactNode, useEffect, useCallback, useMemo } from 'react';
 import { usePropertyFormValidation, validateImagesAsync, VALIDATION_RULES, ValidationState } from '../../hooks/usePropertyFormValidation';
 import { usePropertyDraft, DraftFormData } from '../../hooks/usePropertyDraft';
 import { propertyService, PropertyFormInput } from '../../services/propertyService';
 import { notify } from '../../lib/notify';
+import { supabase } from '../../lib/supabase';
 
 interface UploadResult {
   public_id: string;
@@ -43,6 +44,7 @@ export const UploadFormProvider: React.FC<{ children: ReactNode }> = ({ children
   const [selectedCommunityId, setSelectedCommunityId] = useState<string | undefined>();
   const [uploadResult, setUploadResult] = useState<UploadResult | null>(null);
   const [showConfirmation, setShowConfirmation] = useState(false);
+  const [userId, setUserId] = useState<string | undefined>(undefined);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [form, setForm] = useState<PropertyFormInput>({
@@ -55,8 +57,24 @@ export const UploadFormProvider: React.FC<{ children: ReactNode }> = ({ children
     sourceExternalId: ''
   });
 
+  // 取得 userId 並監聽登入事件（支援匿名 → 登入遷移）
+  useEffect(() => {
+    let mounted = true;
+    supabase.auth.getUser().then(({ data }) => {
+      if (!mounted) return;
+      setUserId(data.user?.id);
+    });
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUserId(session?.user?.id);
+    });
+    return () => {
+      mounted = false;
+      listener?.subscription.unsubscribe();
+    };
+  }, []);
+
   // 草稿功能整合
-  const draftFormData = useCallback((): DraftFormData => ({
+  const draftFormData = useMemo<DraftFormData>(() => ({
     title: form.title,
     price: form.price,
     address: form.address,
@@ -77,7 +95,14 @@ export const UploadFormProvider: React.FC<{ children: ReactNode }> = ({ children
     sourceExternalId: form.sourceExternalId
   }), [form]);
 
-  const { hasDraft, restoreDraft, clearDraft, getDraftPreview } = usePropertyDraft(draftFormData());
+  const { hasDraft, restoreDraft, clearDraft, getDraftPreview, migrateDraft } = usePropertyDraft(draftFormData, userId);
+
+  // 匿名草稿遷移到登入用戶
+  useEffect(() => {
+    if (userId) {
+      migrateDraft(undefined, userId);
+    }
+  }, [userId, migrateDraft]);
 
   // 追蹤 Object URLs 以便在組件卸載時清理
   const objectUrlsRef = useRef<string[]>([]);

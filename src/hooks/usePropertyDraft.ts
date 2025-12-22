@@ -1,7 +1,9 @@
-import { useEffect, useCallback, useRef } from 'react';
+import { useEffect, useCallback, useMemo, useRef } from 'react';
 
 const DRAFT_KEY_PREFIX = 'mh_draft_upload';
 const AUTO_SAVE_DELAY_MS = 1000;
+const DRAFT_VERSION = 1;
+const DRAFT_EXPIRY_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
 /**
  * 草稿自動存取 Interface
@@ -28,6 +30,12 @@ export interface DraftFormData {
   sourceExternalId: string;
 }
 
+type DraftStorage = DraftFormData & {
+  _version: number;
+  _savedAt: number;
+  _tabId: string;
+};
+
 /**
  * 表單自動快照 Hook (UP-1)
  * - 每 1000ms 自動存入 localStorage
@@ -38,7 +46,19 @@ export function usePropertyDraft(
   form: DraftFormData,
   userId?: string
 ) {
-  const DRAFT_KEY = userId ? `${DRAFT_KEY_PREFIX}_${userId}` : DRAFT_KEY_PREFIX;
+  const tabIdRef = useRef<string>('');
+  if (!tabIdRef.current) {
+    const hasCrypto = typeof globalThis !== 'undefined' && typeof globalThis.crypto !== 'undefined';
+    tabIdRef.current = hasCrypto && globalThis.crypto.randomUUID
+      ? globalThis.crypto.randomUUID()
+      : Math.random().toString(36).slice(2);
+  }
+
+  const draftKey = useMemo(() => {
+    const keyUser = userId ? userId : 'anonymous';
+    return `${DRAFT_KEY_PREFIX}_${keyUser}`;
+  }, [userId]);
+
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastSavedRef = useRef<string>('');
 
@@ -57,8 +77,7 @@ export function usePropertyDraft(
 
     saveTimeoutRef.current = setTimeout(() => {
       try {
-        // 只存文字欄位，排除 images (blob URL)
-        const draftData: DraftFormData = {
+        const draftData: DraftStorage = {
           title: form.title,
           price: form.price,
           address: form.address,
@@ -77,13 +96,16 @@ export function usePropertyDraft(
           disadvantage: form.disadvantage,
           highlights: form.highlights ?? [],
           sourceExternalId: form.sourceExternalId,
+          _version: DRAFT_VERSION,
+          _savedAt: Date.now(),
+          _tabId: tabIdRef.current,
         };
 
         const serialized = JSON.stringify(draftData);
         
         // 避免重複存檔相同內容
         if (serialized !== lastSavedRef.current) {
-          localStorage.setItem(DRAFT_KEY, serialized);
+          localStorage.setItem(draftKey, serialized);
           lastSavedRef.current = serialized;
         }
       } catch (e) {
@@ -96,67 +118,111 @@ export function usePropertyDraft(
         clearTimeout(saveTimeoutRef.current);
       }
     };
-  }, [form, DRAFT_KEY]);
+  }, [form, draftKey]);
 
   // 檢查是否有草稿
   const hasDraft = useCallback((): boolean => {
     if (typeof window === 'undefined') return false;
     try {
-      const saved = localStorage.getItem(DRAFT_KEY);
+      const saved = localStorage.getItem(draftKey);
       if (!saved) return false;
-      const parsed = JSON.parse(saved) as DraftFormData;
-      // 確認草稿有實質內容
+      const parsed = JSON.parse(saved) as DraftStorage;
+      if (parsed._version !== DRAFT_VERSION) {
+        localStorage.removeItem(draftKey);
+        return false;
+      }
+      if (Date.now() - parsed._savedAt > DRAFT_EXPIRY_MS) {
+        localStorage.removeItem(draftKey);
+        return false;
+      }
       return !!(parsed.title || parsed.price || parsed.address || 
                 parsed.advantage1 || parsed.advantage2);
     } catch {
       return false;
     }
-  }, [DRAFT_KEY]);
+  }, [draftKey]);
 
   // 還原草稿 - 返回草稿數據而不是設置表單
   const restoreDraft = useCallback((): DraftFormData | null => {
     try {
-      const saved = localStorage.getItem(DRAFT_KEY);
+      const saved = localStorage.getItem(draftKey);
       if (!saved) return null;
       
-      const parsed = JSON.parse(saved) as DraftFormData;
+      const parsed = JSON.parse(saved) as DraftStorage;
+      if (parsed._version !== DRAFT_VERSION) {
+        localStorage.removeItem(draftKey);
+        return null;
+      }
+      if (Date.now() - parsed._savedAt > DRAFT_EXPIRY_MS) {
+        localStorage.removeItem(draftKey);
+        return null;
+      }
       lastSavedRef.current = saved; // 避免立即重新存檔
-      return parsed;
+      const { _version, _savedAt, _tabId, ...rest } = parsed;
+      return rest;
     } catch (e) {
       console.error('草稿還原失敗:', e);
       return null;
     }
-  }, [DRAFT_KEY]);
+  }, [draftKey]);
 
   // 清除草稿
   const clearDraft = useCallback(() => {
     try {
-      localStorage.removeItem(DRAFT_KEY);
+      localStorage.removeItem(draftKey);
       lastSavedRef.current = '';
     } catch (e) {
       console.warn('草稿清除失敗:', e);
     }
-  }, [DRAFT_KEY]);
+  }, [draftKey]);
+
+  // 遷移草稿 (anonymous -> userId)
+  const migrateDraft = useCallback((fromUserId: string | undefined, toUserId: string | undefined) => {
+    const fromKey = `${DRAFT_KEY_PREFIX}_${fromUserId ?? 'anonymous'}`;
+    const toKey = `${DRAFT_KEY_PREFIX}_${toUserId ?? 'anonymous'}`;
+    if (fromKey === toKey) return;
+    try {
+      const saved = localStorage.getItem(fromKey);
+      if (!saved) return;
+      localStorage.setItem(toKey, saved);
+      localStorage.removeItem(fromKey);
+    } catch (e) {
+      console.warn('草稿遷移失敗:', e);
+    }
+  }, []);
 
   // 取得草稿預覽 (用於顯示提示)
   const getDraftPreview = useCallback((): { title: string; savedAt: string } | null => {
     try {
-      const saved = localStorage.getItem(DRAFT_KEY);
+      const saved = localStorage.getItem(draftKey);
       if (!saved) return null;
-      const parsed = JSON.parse(saved) as DraftFormData;
+      const parsed = JSON.parse(saved) as DraftStorage;
+      if (parsed._version !== DRAFT_VERSION) return null;
       return {
         title: parsed.title || '未命名物件',
-        savedAt: '剛才', // 簡化版，未存時間戳
+        savedAt: formatRelative(parsed._savedAt),
       };
     } catch {
       return null;
     }
-  }, [DRAFT_KEY]);
+  }, [draftKey]);
 
   return {
     hasDraft,
     restoreDraft,
     clearDraft,
     getDraftPreview,
+    migrateDraft,
   };
+}
+
+function formatRelative(time: number): string {
+  const diff = Date.now() - time;
+  const minute = 60 * 1000;
+  const hour = 60 * minute;
+  const day = 24 * hour;
+  if (diff < minute) return '剛剛';
+  if (diff < hour) return `${Math.floor(diff / minute)} 分鐘前`;
+  if (diff < day) return `${Math.floor(diff / hour)} 小時前`;
+  return `${Math.floor(diff / day)} 天前`;
 }
