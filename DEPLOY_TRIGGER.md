@@ -400,3 +400,9 @@ Deploy: KC-4.1 Hotfix - Build Error Resolution
 - Fix: Resolved TS2448/TS2454 (variable used before declaration) by reordering hooks.
 - Fix: Resolved TS18048/TS18047 (possibly null/undefined) with strict type guards.
 - Verify: Passed `npm run typecheck`.
+
+Timestamp: 2025-12-22T02:39:07Z
+Deploy: KC-4.1 Hotfix 2 - PropertyService Interface Hardening
+- Fix: Explicitly defined `PropertyService` interface to resolve TS2339.
+- Fix: Added missing `deleteImages` and `checkCommunityExists` to interface definition.
+- Verify: Passed `npm run typecheck` with strict interface compliance.

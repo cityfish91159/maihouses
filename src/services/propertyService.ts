@@ -17,14 +17,20 @@ const PropertyFormSchema = z.object({
   disadvantage: z.string().min(10, '缺點至少需要 10 個字').max(200),
   highlights: z.array(z.string()).optional(),
 }).refine((data) => {
-  // 動態驗證邏輯：若標籤 >= 3，優點字數門檻降低
-  const hasEnoughHighlights = (data.highlights?.length || 0) >= 3;
-  const minAdvLength = hasEnoughHighlights ? 2 : 5;
+  // 動態驗證邏輯：若有 AI 亮點標籤，優點字數門檻降低至 2 字 (標籤長度)
+  const hasHighlights = (data.highlights?.length || 0) > 0;
+  const minAdvLength = hasHighlights ? 2 : 5;
   return data.advantage1.length >= minAdvLength && data.advantage2.length >= minAdvLength;
 }, {
-  message: "優點描述字數不足 (若標籤少於 3 個，優點需至少 5 字)",
+  message: "優點描述字數不足 (若無 AI 標籤，優點需至少 5 字；有標籤則需至少 2 字)",
   path: ["advantage1"]
 });
+
+const UPLOAD_CONFIG = {
+  CONCURRENCY: 3,
+  CACHE_CONTROL: '31536000', // 1 年快取
+  BUCKET: 'property-images'
+} as const;
 
 // 定義物件資料介面
 export interface PropertyData {
@@ -73,37 +79,48 @@ export interface PropertyFormInput {
   sourceExternalId: string;
 }
 
+// 定義 Service 介面 (Explicit Interface)
+export interface PropertyService {
+  getPropertyByPublicId(publicId: string): Promise<PropertyData | null>;
+  createProperty(data: Imported591Data, agentId: string): Promise<any>;
+  uploadImages(files: File[], options?: { concurrency?: number; onProgress?: (completed: number, total: number) => void }): Promise<{ urls: string[]; failed: { file: File; error: string }[]; allSuccess: boolean }>;
+  deleteImages(urls: string[]): Promise<void>;
+  uploadImagesLegacy(files: File[]): Promise<string[]>;
+  createPropertyWithForm(form: PropertyFormInput, images: string[], existingCommunityId?: string): Promise<any>;
+  checkCommunityExists(name: string): Promise<{ exists: boolean; community?: { id: string; name: string } }>;
+}
+
 // 預設資料 (Fallback Data) - 用於初始化或錯誤時，確保畫面不崩壞
 export const DEFAULT_PROPERTY: PropertyData = {
   id: 'b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22',
   publicId: 'MH-100001',
-  title: '信義區101景觀全新裝潢大三房',
-  price: 3680,
-  address: '台北市信義區',
-  description: '這是一間位於信義區的優質好房，擁有絕佳的101景觀，全新裝潢，即可入住。周邊生活機能完善，交通便利，是您成家的最佳選擇。',
-  images: ['https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'],
-  size: 34.2,
-  rooms: 3,
-  halls: 2,
-  bathrooms: 2,
-  floorCurrent: '12',
-  floorTotal: 15,
-  features: ['近捷運', '有車位', '全新裝潢'],
-  advantage1: '近捷運',
-  advantage2: '有車位',
-  disadvantage: '臨路低樓層較吵',
+  title: '',
+  price: 0,
+  address: '',
+  description: '',
+  images: [],
+  size: 0,
+  rooms: 0,
+  halls: 0,
+  bathrooms: 0,
+  floorCurrent: '',
+  floorTotal: 0,
+  features: [],
+  advantage1: '',
+  advantage2: '',
+  disadvantage: '',
   agent: {
-    id: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
-    internalCode: 1,
-    name: '王小明',
-    avatarUrl: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80',
-    company: '邁房子信義店',
-    trustScore: 92,
-    encouragementCount: 156,
+    id: '',
+    internalCode: 0,
+    name: '',
+    avatarUrl: '',
+    company: '',
+    trustScore: 0,
+    encouragementCount: 0,
   }
 };
 
-export const propertyService = {
+export const propertyService: PropertyService = {
   // 1. 獲取物件詳情
   getPropertyByPublicId: async (publicId: string): Promise<PropertyData | null> => {
     const coerceNumber = (value: unknown): number | null => {
@@ -241,7 +258,7 @@ export const propertyService = {
     failed: { file: File; error: string }[];
     allSuccess: boolean;
   }> => {
-    const concurrency = options?.concurrency || 3; // 預設並發 3
+    const concurrency = options?.concurrency || UPLOAD_CONFIG.CONCURRENCY;
     const results: string[] = [];
     const failed: { file: File; error: string }[] = [];
     let completed = 0;
@@ -256,10 +273,10 @@ export const propertyService = {
           const fileName = `${crypto.randomUUID()}.${fileExt}`;
           
           const { error } = await supabase.storage
-            .from('property-images')
+            .from(UPLOAD_CONFIG.BUCKET)
             .upload(fileName, file, {
               contentType: file.type,
-              cacheControl: '31536000', // 1 年快取
+              cacheControl: UPLOAD_CONFIG.CACHE_CONTROL,
             });
 
           if (error) {
@@ -295,6 +312,26 @@ export const propertyService = {
     };
   },
 
+  // 3.1 清理圖片 (補償機制)
+  deleteImages: async (urls: string[]) => {
+    if (!urls || urls.length === 0) return;
+    
+    // 從 URL 提取檔案名稱
+    // 假設 URL 格式為: .../property-images/filename.jpg
+    const fileNames = urls.map(url => url.split('/').pop()).filter(Boolean) as string[];
+    
+    if (fileNames.length === 0) return;
+
+    const { error } = await supabase.storage
+      .from(UPLOAD_CONFIG.BUCKET)
+      .remove(fileNames);
+    
+    if (error) {
+      console.error('Failed to cleanup images:', error);
+      // 這裡不拋出錯誤，因為這是清理流程，不應阻斷主流程的錯誤回報
+    }
+  },
+
   // 舊版相容：回傳純 URL 陣列
   uploadImagesLegacy: async (files: File[]): Promise<string[]> => {
     const result = await propertyService.uploadImages(files);
@@ -307,7 +344,7 @@ export const propertyService = {
     // 🛡️ 防禦性驗證：Service 層不信任 Client 資料
     const validation = PropertyFormSchema.safeParse(form);
     if (!validation.success) {
-      const errorMsg = validation.error.issues.map((e: any) => e.message).join(', ');
+      const errorMsg = validation.error.issues.map((e) => e.message).join(', ');
       throw new Error(`資料驗證失敗: ${errorMsg}`);
     }
 
@@ -326,11 +363,10 @@ export const propertyService = {
     if (finalCommunityName === '無') {
       communityId = null;
       finalCommunityName = '無';
-      console.log('✅ 透天/店面，不歸入社區牆');
     }
     // 已選擇現有社區，直接使用
     else if (existingCommunityId) {
-      console.log('✅ 使用已選擇的社區 ID:', existingCommunityId);
+      // 使用已選擇的社區 ID
     }
     // 需要查找或建立社區
     else if (form.address && finalCommunityName) {
@@ -347,7 +383,6 @@ export const propertyService = {
 
         if (existingByAddress) {
           communityId = existingByAddress.id;
-          console.log('✅ 地址比對成功，使用現有社區:', existingByAddress.name);
         }
       }
       
@@ -371,7 +406,6 @@ export const propertyService = {
           if (matched) {
             communityId = matched.id;
             finalCommunityName = matched.name; // 用資料庫的名稱
-            console.log('✅ 社區名正規化比對成功:', matched.name);
           }
         }
 
@@ -385,7 +419,6 @@ export const propertyService = {
 
           if (exactMatch) {
             communityId = exactMatch.id;
-            console.log('✅ 社區名精準比對成功:', exactMatch.name);
           }
         }
       }
@@ -414,7 +447,6 @@ export const propertyService = {
         if (!communityError && newCommunity) {
           communityId = newCommunity.id;
           isNewCommunity = true;
-          console.log('✅ 建立新社區（待審核）:', finalCommunityName);
         } else {
           console.error('❌ 建立社區失敗:', communityError);
         }
