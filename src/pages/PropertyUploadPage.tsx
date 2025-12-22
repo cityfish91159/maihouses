@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { 
-  Loader2, Download, Check, Home, ArrowLeft, Building2, Edit3
+  Loader2, Download, Check, Home, ArrowLeft, Building2, Edit3, RotateCcw
 } from 'lucide-react';
+import { notify } from '../lib/notify';
 
 // 抽離的子組件 (HP-2.2)
 import { BasicInfoSection } from '../components/upload/BasicInfoSection';
@@ -23,16 +24,38 @@ const PropertyUploadContent: React.FC = () => {
     validation, 
     handleSubmit,
     uploadResult,
-    showConfirmation
+    showConfirmation,
+    // Draft 功能
+    hasDraft,
+    restoreDraft,
+    getDraftPreview
   } = useUploadForm();
 
   const [user, setUser] = useState<any>(null);
+  const [draftAvailable, setDraftAvailable] = useState(false);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
       setUser(data.user);
     });
-  }, []);
+    // 檢查是否有草稿可用
+    setDraftAvailable(hasDraft());
+  }, [hasDraft]);
+
+  // 還原草稿
+  const handleRestoreDraft = () => {
+    const draftData = restoreDraft();
+    if (draftData) {
+      setForm(prev => ({
+        ...prev,
+        ...draftData,
+        images: prev.images // 保留當前圖片（不覆蓋）
+      }));
+      setDraftAvailable(false);
+      const preview = getDraftPreview();
+      notify.success('草稿已還原', preview ? `標題：${preview.title.slice(0, 20)}...` : '已載入上次編輯內容');
+    }
+  };
 
   // 591 搬家
   const handleImport591 = () => {
@@ -134,6 +157,14 @@ const PropertyUploadContent: React.FC = () => {
             <h1 className="text-xl font-black text-[#003366]">刊登物件</h1>
           </div>
           <div className="flex items-center gap-3">
+            {draftAvailable && (
+              <button 
+                onClick={handleRestoreDraft}
+                className="flex items-center gap-2 rounded-full bg-blue-50 px-4 py-2 text-sm font-bold text-blue-600 transition-all hover:bg-blue-100"
+              >
+                <RotateCcw size={16}/> 還原草稿
+              </button>
+            )}
             <button 
               onClick={handleImport591}
               className="hidden items-center gap-2 rounded-full bg-orange-50 px-4 py-2 text-sm font-bold text-orange-600 transition-all hover:bg-orange-100 sm:flex"

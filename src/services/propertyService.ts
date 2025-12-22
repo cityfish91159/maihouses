@@ -79,14 +79,23 @@ export interface PropertyFormInput {
   sourceExternalId: string;
 }
 
+// 定義 Property 建立結果
+export interface CreatePropertyResult {
+  id: string;
+  public_id: string;
+  community_id: string | null;
+  community_name: string | null;
+  is_new_community: boolean;
+}
+
 // 定義 Service 介面 (Explicit Interface)
 export interface PropertyService {
   getPropertyByPublicId(publicId: string): Promise<PropertyData | null>;
-  createProperty(data: Imported591Data, agentId: string): Promise<any>;
+  createProperty(data: Imported591Data, agentId: string): Promise<CreatePropertyResult>;
   uploadImages(files: File[], options?: { concurrency?: number; onProgress?: (completed: number, total: number) => void }): Promise<{ urls: string[]; failed: { file: File; error: string }[]; allSuccess: boolean }>;
   deleteImages(urls: string[]): Promise<void>;
   uploadImagesLegacy(files: File[]): Promise<string[]>;
-  createPropertyWithForm(form: PropertyFormInput, images: string[], existingCommunityId?: string): Promise<any>;
+  createPropertyWithForm(form: PropertyFormInput, images: string[], existingCommunityId?: string): Promise<CreatePropertyResult>;
   checkCommunityExists(name: string): Promise<{ exists: boolean; community?: { id: string; name: string } }>;
 }
 

@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useState, useRef, ReactNode, useEffect } from 'react';
+import React, { createContext, useContext, useState, useRef, ReactNode, useEffect, useCallback } from 'react';
 import { usePropertyFormValidation, validateImagesAsync, VALIDATION_RULES, ValidationState } from '../../hooks/usePropertyFormValidation';
+import { usePropertyDraft, DraftFormData } from '../../hooks/usePropertyDraft';
 import { propertyService, PropertyFormInput } from '../../services/propertyService';
 import { notify } from '../../lib/notify';
 
@@ -26,6 +27,11 @@ interface UploadContextType {
   handleSubmit: () => Promise<void>;
   uploadResult: UploadResult | null;
   showConfirmation: boolean;
+  // Draft 功能
+  hasDraft: () => boolean;
+  restoreDraft: () => DraftFormData | null;
+  clearDraft: () => void;
+  getDraftPreview: () => { title: string; savedAt: string } | null;
 }
 
 const UploadContext = createContext<UploadContextType | undefined>(undefined);
@@ -48,6 +54,30 @@ export const UploadFormProvider: React.FC<{ children: ReactNode }> = ({ children
     images: [],
     sourceExternalId: ''
   });
+
+  // 草稿功能整合
+  const draftFormData = useCallback((): DraftFormData => ({
+    title: form.title,
+    price: form.price,
+    address: form.address,
+    communityName: form.communityName,
+    size: form.size,
+    age: form.age,
+    floorCurrent: form.floorCurrent,
+    floorTotal: form.floorTotal,
+    rooms: form.rooms,
+    halls: form.halls,
+    bathrooms: form.bathrooms,
+    type: form.type,
+    description: form.description,
+    advantage1: form.advantage1,
+    advantage2: form.advantage2,
+    disadvantage: form.disadvantage,
+    highlights: form.highlights ?? [],
+    sourceExternalId: form.sourceExternalId
+  }), [form]);
+
+  const { hasDraft, restoreDraft, clearDraft, getDraftPreview } = usePropertyDraft(draftFormData());
 
   // 追蹤 Object URLs 以便在組件卸載時清理
   const objectUrlsRef = useRef<string[]>([]);
@@ -194,6 +224,10 @@ export const UploadFormProvider: React.FC<{ children: ReactNode }> = ({ children
         is_new_community: !selectedCommunityId && result.community_id !== null
       });
       setShowConfirmation(true);
+      
+      // 發佈成功後清除草稿
+      clearDraft();
+      
       notify.success('🎉 刊登成功！', `物件編號：${result.public_id}`);
     } catch (e: unknown) {
       const errorMessage = e instanceof Error ? e.message : '發生未知錯誤';
@@ -218,7 +252,9 @@ export const UploadFormProvider: React.FC<{ children: ReactNode }> = ({ children
   const value = {
     form, setForm, validation, loading, setLoading, validating, uploadProgress,
     selectedCommunityId, setSelectedCommunityId, fileInputRef,
-    handleFileSelect, removeImage, handleSubmit, uploadResult, showConfirmation
+    handleFileSelect, removeImage, handleSubmit, uploadResult, showConfirmation,
+    // Draft 功能
+    hasDraft, restoreDraft, clearDraft, getDraftPreview
   };
 
   return (
