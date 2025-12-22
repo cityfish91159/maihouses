@@ -8,12 +8,14 @@ import { optimizeImages } from '../../services/imageService';
 import {
   uploadReducer,
   createInitialState,
-  UploadError,
-  UploadResult,
-  ManagedImage,
   createManagedImage,
   getSortedImages
 } from './uploadReducer';
+import {
+  UploadError,
+  UploadResult,
+  ManagedImage
+} from '../../types/upload';
 
 const MAX_COMPRESSED_SIZE_BYTES = 1.5 * 1024 * 1024;
 
@@ -256,12 +258,16 @@ export const UploadFormProvider: React.FC<{ children: ReactNode }> = ({ children
     notify.success('已加入原檔', `${files.length} 張圖片將以原始大小上傳`);
   }, [state.lastError]);
 
-  // ============================================================
   // UP-3: Remove Image (使用 id)
   // ============================================================
   const removeImage = useCallback((id: string) => {
+    // Side Effect Cleanup: 在 Dispatch 前處理 URL Revocation (Reducer 必須保持純淨)
+    const imgToRemove = state.managedImages.find(img => img.id === id);
+    if (imgToRemove?.previewUrl) {
+      URL.revokeObjectURL(imgToRemove.previewUrl);
+    }
     dispatch({ type: 'REMOVE_IMAGE', payload: id });
-  }, []);
+  }, [state.managedImages]);
 
   // ============================================================
   // UP-3.3: Set Cover
@@ -291,17 +297,22 @@ export const UploadFormProvider: React.FC<{ children: ReactNode }> = ({ children
     // UP-3.4: 確保封面在第一位
     const sortedImages = getSortedImages(state.managedImages);
 
-    // UP-3.D: Invariant check - 封面必須在第一位
-    if (sortedImages.length > 0 && sortedImages[0]?.isCover === false) {
-      console.warn('[UP-3.D] Invariant violation: Cover image is not at position 0');
+    // UP-3.D: MVP Standard - Form Validation
+    // 檢查：排序後的第一張圖是否標記為封面
+    // 如果沒有封面，這是 Validation Error，應告知用戶而非偷偷修改
+    if (sortedImages.length > 0 && sortedImages[0]?.isCover !== true) {
+      console.error('[UP-3.D] Validation Failed: No cover image selected.');
+      // MVP: 阻擋上傳並通知用戶 (避免靜默失敗)
+      if (typeof window !== 'undefined') {
+        window.alert('系統偵測到封面設定異常，請重新整理頁面或重新選擇封面。');
+      }
+      return;
     }
+
+    // Dev Assertion
     if (process.env.NODE_ENV !== 'production') {
-      // 正確邏輯：如果有圖片，第一張必須是封面
-      const hasCoverAtFirst = sortedImages.length === 0 || sortedImages[0]?.isCover === true;
-      console.assert(
-        hasCoverAtFirst,
-        '[UP-3.D] 封面圖片必須在 images[0] 位置'
-      );
+      const isHealthy = sortedImages.length === 0 || sortedImages[0]?.isCover === true;
+      console.assert(isHealthy, '[UP-3.D] Invariant Violation: Cover image missing at index 0');
     }
 
     const filesToUpload = sortedImages.map(img => img.file);

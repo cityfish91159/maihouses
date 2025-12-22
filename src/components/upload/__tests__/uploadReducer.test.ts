@@ -117,7 +117,7 @@ describe('uploadReducer', () => {
     // UP-3.C: 驗證 revokeObjectURL 被呼叫
     // UP-3.E: 刪除封面後的 fallback
     describe('REMOVE_IMAGE', () => {
-        it('should call URL.revokeObjectURL when removing image', () => {
+        it('should NOT call URL.revokeObjectURL (Side Effect moved to Context)', () => {
             const images: ManagedImage[] = [
                 { id: 'img1', file: createMockFile('1.jpg'), previewUrl: 'blob:to-revoke', isCover: true },
                 { id: 'img2', file: createMockFile('2.jpg'), previewUrl: 'blob:keep', isCover: false },
@@ -125,8 +125,8 @@ describe('uploadReducer', () => {
             const stateWithImages = { ...initialState, managedImages: images };
 
             uploadReducer(stateWithImages, { type: 'REMOVE_IMAGE', payload: 'img1' });
-            expect(mockRevokeObjectURL).toHaveBeenCalledWith('blob:to-revoke');
-            expect(mockRevokeObjectURL).toHaveBeenCalledTimes(1);
+            // Reducer must be PURE. Side effect happens in Context.
+            expect(mockRevokeObjectURL).not.toHaveBeenCalled();
         });
 
         it('should set next image as cover when removing cover image', () => {
@@ -141,7 +141,22 @@ describe('uploadReducer', () => {
             expect(newState.managedImages.length).toBe(2);
             expect(newState.managedImages[0].id).toBe('second');
             expect(newState.managedImages[0].isCover).toBe(true);
+            expect(newState.managedImages[0].isCover).toBe(true);
             expect(newState.managedImages.filter(img => img.isCover).length).toBe(1);
+        });
+
+        // Regression Test: 刪除普通圖片，不應影響封面
+        it('should NOT change cover when removing non-cover image', () => {
+            const images: ManagedImage[] = [
+                { id: 'cover', file: createMockFile('c.jpg'), previewUrl: 'b:c', isCover: true },
+                { id: 'normal', file: createMockFile('n.jpg'), previewUrl: 'b:n', isCover: false },
+            ];
+            const stateWithImages = { ...initialState, managedImages: images };
+
+            const newState = uploadReducer(stateWithImages, { type: 'REMOVE_IMAGE', payload: 'normal' });
+            expect(newState.managedImages.length).toBe(1);
+            expect(newState.managedImages[0].id).toBe('cover');
+            expect(newState.managedImages[0].isCover).toBe(true);
         });
 
         it('should handle removing non-existent image gracefully', () => {
