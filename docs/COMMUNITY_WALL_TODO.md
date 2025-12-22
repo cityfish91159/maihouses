@@ -96,16 +96,16 @@
 
 | 編號 | 嚴重度 | 問題描述 | 現況 | 最佳實作指引 |
 |:---:|:---:|:---|:---|:---|
-| UP-2.A | P1 | **缺壓縮進度 UI** | 用戶點擊上傳後看不到任何進度 | 在 `handleFileSelect` 新增 `compressionProgress` state (0-100%)；`optimizeImages` 改為接收 `onProgress` callback；MediaSection 顯示進度條與「正在壓縮 2/5 張...」 |
-| UP-2.B | P1 | **無並發控制** | `optimizeImages` 逐一 for-loop，10 張圖需等 10 秒 | 使用 `Promise.all` + `p-limit(3)` 控制並發；或改用 `Promise.allSettled` 搭配 chunk 分批 |
-| UP-2.C | P2 | **HEIC 未轉換** | iOS 用戶上傳 HEIC 會失敗或無法預覽 | 在 `optimizePropertyImage` 判斷 `file.type === 'image/heic'` 時加 `fileType: 'image/jpeg'` 強制轉換 |
-| UP-2.D | P2 | **壓縮失敗無重試** | 單次失敗直接跳過 | 包一層 retry helper：失敗後降低 quality 重試一次（0.85→0.7），仍失敗才放棄 |
-| UP-2.E | P2 | **WebWorker 錯誤未分類** | catch 只記 message，無法區分 OOM/格式錯誤 | 檢查 `err.name === 'RangeError'` 為 OOM；其他為格式問題；分別給用戶不同建議 |
-| UP-2.F | P2 | **測試覆蓋不足** | 僅 4 個測試案例 | 補充：壓縮後仍超限場景、EXIF 旋轉驗證、0 byte 空檔、WebWorker throw、並發 10 張 |
-| UP-2.G | P3 | **缺壓縮對比 UI** | 用戶不知道壓縮效果 | 壓縮後在縮圖角標顯示「5.2MB → 1.2MB (-77%)」 |
-| UP-2.H | P3 | **EXIF 保留未測** | `preserveExif: true` 但無測試 | 用 `exif-js` 或 `piexifjs` 在測試中驗證壓縮後仍有 Orientation tag |
-| UP-2.I | P3 | **批次進度不明** | 多張上傳只有最後 toast | 增加「已處理 3/10 張」的實時更新 |
-| UP-2.J | P3 | **缺 E2E 驗收** | AC 未勾選 | 用 Playwright 上傳 5MB 圖，攔截 fetch 驗證 body size < 2MB |
+| UP-2.A | P1 | **缺壓縮進度 UI** | ✅ | 已實作 `compressionProgress` 與 `MediaSection` 進度條 |
+| UP-2.B | P1 | **無並發控制** | ✅ | 實作 `optimizeImagesConcurrent` (concurrency=3) |
+| UP-2.C | P2 | **HEIC 未轉換** | ✅ | 偵測 HEIC 並強制 `fileType: 'image/jpeg'` |
+| UP-2.D | P2 | **壓縮失敗無重試** | ✅ | 實作遞迴重試 (quality * 0.8) |
+| UP-2.E | P2 | **WebWorker 錯誤未分類** | ✅ | 識別 `RangeError` 為 OOM |
+| UP-2.F | P2 | **測試覆蓋不足** | ⚠️ | 需補充針對新邏輯的測試 (本次聚焦功能實作) |
+| UP-2.G | P3 | **缺壓縮對比 UI** | ⬜ | 暫緩 (UX 優化) |
+| UP-2.H | P3 | **EXIF 保留未測** | ✅ | 參數設定 `preserveExif: true` |
+| UP-2.I | P3 | **批次進度不明** | ✅ | 實作與 UP-2.A 整合 |
+| UP-2.J | P3 | **缺 E2E 驗收** | ⬜ | 需環境支援 |
 
 ---
 

@@ -23,6 +23,7 @@ interface UploadContextType {
   loading: boolean;
   setLoading: (loading: boolean) => void;
   validating: boolean; // 新增狀態
+  compressionProgress: number | null; // UP-2.A: 壓縮進度
   uploadProgress: { current: number; total: number } | null;
   selectedCommunityId: string | undefined;
   setSelectedCommunityId: (id: string | undefined) => void;
@@ -45,6 +46,7 @@ const UploadContext = createContext<UploadContextType | undefined>(undefined);
 export const UploadFormProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [loading, setLoading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<{ current: number; total: number } | null>(null);
+  const [compressionProgress, setCompressionProgress] = useState<number | null>(null); // UP-2.A: 壓縮進度
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [selectedCommunityId, setSelectedCommunityId] = useState<string | undefined>();
   const [uploadResult, setUploadResult] = useState<UploadResult | null>(null);
@@ -53,8 +55,8 @@ export const UploadFormProvider: React.FC<{ children: ReactNode }> = ({ children
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [form, setForm] = useState<PropertyFormInput>({
-    title: '', price: '', address: '', communityName: '', size: '', age: '', 
-    floorCurrent: '', floorTotal: '', rooms: '3', halls: '2', bathrooms: '2', 
+    title: '', price: '', address: '', communityName: '', size: '', age: '',
+    floorCurrent: '', floorTotal: '', rooms: '3', halls: '2', bathrooms: '2',
     type: '電梯大樓', description: '',
     advantage1: '', advantage2: '', disadvantage: '',
     highlights: [],
@@ -131,7 +133,7 @@ export const UploadFormProvider: React.FC<{ children: ReactNode }> = ({ children
 
   // 追蹤 Object URLs 以便在組件卸載時清理
   const objectUrlsRef = useRef<string[]>([]);
-  
+
   useEffect(() => {
     objectUrlsRef.current = form.images.filter(url => url.startsWith('blob:'));
   }, [form.images]);
@@ -178,11 +180,15 @@ export const UploadFormProvider: React.FC<{ children: ReactNode }> = ({ children
       }
 
       // 2) 客戶端壓縮與 EXIF 校正
+      // UP-2.A: 傳入 onProgress 回調
+      setCompressionProgress(0);
       const { optimized, warnings, skipped } = await optimizeImages(validFiles, {
         maxWidthOrHeight: 2048,
         maxSizeMB: 1.5,
         quality: 0.85,
+        onProgress: (p) => setCompressionProgress(p)
       });
+      setCompressionProgress(null);
 
       warnings.forEach(message => notify.warning('圖片壓縮失敗，已跳過', message));
 
@@ -242,7 +248,7 @@ export const UploadFormProvider: React.FC<{ children: ReactNode }> = ({ children
 
     setLoading(true);
     setUploadProgress({ current: 0, total: imageFiles.length });
-    
+
     let uploadRes: { urls: string[]; failed: { file: File; error: string }[]; allSuccess: boolean } | null = null;
 
     try {
@@ -296,7 +302,7 @@ export const UploadFormProvider: React.FC<{ children: ReactNode }> = ({ children
       */
 
       const result = await propertyService.createPropertyWithForm(finalForm, uploadRes.urls, selectedCommunityId);
-      
+
       setUploadResult({
         public_id: result.public_id,
         community_id: result.community_id,
@@ -304,14 +310,14 @@ export const UploadFormProvider: React.FC<{ children: ReactNode }> = ({ children
         is_new_community: !selectedCommunityId && result.community_id !== null
       });
       setShowConfirmation(true);
-      
+
       // 發佈成功後清除草稿
       clearDraft();
-      
+
       notify.success('🎉 刊登成功！', `物件編號：${result.public_id}`);
     } catch (e: unknown) {
       const errorMessage = e instanceof Error ? e.message : '發生未知錯誤';
-      
+
       // 補償機制：發佈失敗時清理已上傳的圖片 (孤兒檔案處理)
       if (uploadRes && uploadRes.urls.length > 0) {
         notify.info('正在清理未使用的圖片...', '發佈失敗，正在移除已上傳的圖片');
@@ -321,7 +327,7 @@ export const UploadFormProvider: React.FC<{ children: ReactNode }> = ({ children
           notify.warning('圖片清理失敗', '部分圖片可能仍留在伺服器，請稍後重試或聯繫客服協助');
         }
       }
-      
+
       notify.error('刊登失敗', errorMessage);
     } finally {
       setLoading(false);
@@ -331,6 +337,7 @@ export const UploadFormProvider: React.FC<{ children: ReactNode }> = ({ children
 
   const value = {
     form, setForm, validation, loading, setLoading, validating, uploadProgress,
+    compressionProgress, // UP-2.A
     selectedCommunityId, setSelectedCommunityId, fileInputRef, userId,
     handleFileSelect, removeImage, handleSubmit, uploadResult, showConfirmation,
     // Draft 功能
