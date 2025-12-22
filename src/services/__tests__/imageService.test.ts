@@ -1,11 +1,22 @@
 import { describe, it, expect, vi, beforeEach, Mock } from 'vitest';
+
+// Polyfill Worker GLOBALLY before imports to prevent heic2any crash
+global.Worker = vi.fn().mockImplementation(() => ({
+  postMessage: vi.fn(),
+  onmessage: null,
+  onerror: null,
+  terminate: vi.fn(),
+})) as unknown as typeof Worker;
+
 import { optimizePropertyImage, optimizeImages } from '../imageService';
 import imageCompression from 'browser-image-compression';
 import heic2any from 'heic2any';
 
 // Mocks
 vi.mock('browser-image-compression');
-vi.mock('heic2any');
+vi.mock('heic2any', () => ({
+  default: vi.fn()
+}));
 
 function createMockFile(name: string, type: string, size: number) {
   return new File([new ArrayBuffer(size)], name, { type });
