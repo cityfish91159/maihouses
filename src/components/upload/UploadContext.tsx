@@ -39,6 +39,16 @@ export const UploadFormProvider: React.FC<{ children: ReactNode }> = ({ children
   const [showConfirmation, setShowConfirmation] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const [form, setForm] = useState<PropertyFormInput>({
+    title: '', price: '', address: '', communityName: '', size: '', age: '', 
+    floorCurrent: '', floorTotal: '', rooms: '3', halls: '2', bathrooms: '2', 
+    type: '電梯大樓', description: '',
+    advantage1: '', advantage2: '', disadvantage: '',
+    highlights: [],
+    images: [],
+    sourceExternalId: ''
+  });
+
   // 追蹤 Object URLs 以便在組件卸載時清理
   const objectUrlsRef = useRef<string[]>([]);
   
@@ -51,16 +61,6 @@ export const UploadFormProvider: React.FC<{ children: ReactNode }> = ({ children
       objectUrlsRef.current.forEach(url => URL.revokeObjectURL(url));
     };
   }, []);
-
-  const [form, setForm] = useState<PropertyFormInput>({
-    title: '', price: '', address: '', communityName: '', size: '', age: '', 
-    floorCurrent: '', floorTotal: '', rooms: '3', halls: '2', bathrooms: '2', 
-    type: '電梯大樓', description: '',
-    advantage1: '', advantage2: '', disadvantage: '',
-    highlights: [],
-    images: [],
-    sourceExternalId: ''
-  });
 
   const [validating, setValidating] = useState(false);
 
@@ -199,7 +199,7 @@ export const UploadFormProvider: React.FC<{ children: ReactNode }> = ({ children
       const errorMessage = e instanceof Error ? e.message : '發生未知錯誤';
       
       // 補償機制：發佈失敗時清理已上傳的圖片 (孤兒檔案處理)
-      if (uploadRes?.urls?.length > 0) {
+      if (uploadRes && uploadRes.urls.length > 0) {
         notify.info('正在清理未使用的圖片...', '發佈失敗，正在移除已上傳的圖片');
         try {
           await propertyService.deleteImages(uploadRes.urls);
@@ -213,7 +213,6 @@ export const UploadFormProvider: React.FC<{ children: ReactNode }> = ({ children
       setLoading(false);
       setUploadProgress(null);
     }
-  };
   };
 
   const value = {
