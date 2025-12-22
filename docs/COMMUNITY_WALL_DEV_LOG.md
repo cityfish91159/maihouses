@@ -4,6 +4,67 @@
 
 ---
 
+## 📅 2025-12-22 Commit df16f1c 審計 (測試補強)
+
+### 📊 審計評分：45/100 ❌ 測試與實作完全不匹配
+
+| 項目 | 得分 | 扣分原因 |
+|------|------|----------|
+| 功能正確性 | 5/25 | 測試假設 HEIC 用 `heic2any`，但實作用 `fileType` 參數 |
+| 代碼品質 | 10/25 | Worker polyfill 是 hack；測試期望 `result.error` 但實作是 throw |
+| 測試覆蓋 | 15/25 | 增加了測試數量，但測試邏輯錯誤會全部 fail |
+| 完成度 | 15/25 | 只改測試沒改實作，測試必定失敗 |
+
+### ❌ 嚴重問題清單
+
+| # | 嚴重度 | 問題 |
+|:---:|:---:|:---|
+| 1 | **P0** | 測試 import `heic2any` 並 mock，但 `imageService.ts` 根本沒有使用 `heic2any`！實作用 `browser-image-compression` 的 `fileType` 參數 |
+| 2 | **P0** | 測試寫 `expect(result.error).toContain(...)`，但 `optimizePropertyImage` 失敗時是 `throw new Error()`，不是回傳 `{ error }` |
+| 3 | **P1** | 測試期望重試時 `initialQuality: 0.68 (0.85*0.8)`，但實作寫死 `0.7` |
+| 4 | **P1** | 測試沒驗證 `stats` 欄位 |
+| 5 | **P2** | `heic2any` 被 mock 但從未被使用 |
+
+### 📁 Commit 變更檔案
+| 檔案 | 變更 |
+|------|------|
+| package.json | +`@playwright/test` |
+| package-lock.json | +playwright 依賴 |
+| src/services/__tests__/imageService.test.ts | +Worker polyfill +heic2any mock +新測試 |
+
+---
+
+## 📅 2025-12-22 UP-2 圖片前端預處理 補強實作
+
+### 📊 補強前: 75/100 → 補強後評估中
+
+### 🔧 本次變更內容
+
+| 檔案 | 變更類型 | 說明 |
+|------|----------|------|
+| `src/services/imageService.ts` | 重構 | +並發控制(concurrency:3) +HEIC轉JPEG +重試機制(0.85→0.7) +錯誤分類(OOM/format/unknown) +壓縮統計(OptimizeStats) |
+| `src/components/upload/UploadContext.tsx` | 修改 | +compressing/compressionProgress state +onProgress callback +節省空間 toast |
+
+### ✅ 已修正的 UP-2 缺失
+
+| 編號 | 原問題 | 修正內容 |
+|:---:|:---|:---|
+| UP-2.A | 缺壓縮進度 UI | ✅ 新增 `compressing`, `compressionProgress` state；傳入 `onProgress` callback |
+| UP-2.B | 無並發控制 | ✅ `Promise.allSettled` + chunk 分批，`concurrency: 3` |
+| UP-2.C | HEIC 未轉換 | ✅ `HEIC_TYPES` 檢測 + `fileType: 'image/jpeg'` 強制轉換 |
+| UP-2.D | 壓縮失敗無重試 | ✅ 第一次失敗後 `initialQuality: 0.7` 重試一次 |
+| UP-2.E | WebWorker 錯誤未分類 | ✅ `classifyError()` 區分 OOM/format/unknown |
+
+### ❌ 發現新問題（嚴重 BUG）
+
+| 編號 | 嚴重度 | 問題描述 |
+|:---:|:---:|:---|
+| UP-2.K | **P0** | `UploadContext.tsx` 宣告了 `compressing`/`compressionProgress` 但 **value 物件沒有暴露**！用戶 UI 永遠拿不到這兩個狀態 |
+| UP-2.L | P2 | `compressing` 設為 true 後若 `optimizeImages` 發生異常，finally 區塊沒有 `setCompressing(false)` |
+| UP-2.M | P2 | 測試未更新：測試仍 mock 舊版 `optimizeImages` 回傳格式（無 stats） |
+
+---
+
 ## 📅 2025-12-22 UP-2 圖片前端預處理 (Client-side Compression)
 
 ### 📊 審計評分：75/100 ⚠️
