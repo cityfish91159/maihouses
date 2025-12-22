@@ -5,12 +5,20 @@ import { propertyService, PropertyFormInput } from '../../services/propertyServi
 import { notify } from '../../lib/notify';
 import { supabase } from '../../lib/supabase';
 import { optimizeImages } from '../../services/imageService';
-import { uploadReducer, createInitialState, UploadState, UploadError, UploadResult } from './uploadReducer';
+import {
+  uploadReducer,
+  createInitialState,
+  UploadError,
+  UploadResult,
+  ManagedImage,
+  createManagedImage,
+  getSortedImages
+} from './uploadReducer';
 
 const MAX_COMPRESSED_SIZE_BYTES = 1.5 * 1024 * 1024;
 
 interface UploadContextType {
-  // State (exposed for UI - unchanged interface)
+  // State
   form: PropertyFormInput;
   setForm: React.Dispatch<React.SetStateAction<PropertyFormInput>>;
   validation: ValidationState;
@@ -24,20 +32,23 @@ interface UploadContextType {
   setSelectedCommunityId: (id: string | undefined) => void;
   fileInputRef: React.RefObject<HTMLInputElement>;
   handleFileSelect: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  removeImage: (index: number) => void;
+  removeImage: (id: string) => void;        // UP-3: 改用 id
+  setCover: (id: string) => void;           // UP-3.3: 設為封面
   handleSubmit: () => Promise<void>;
   uploadResult: UploadResult | null;
   showConfirmation: boolean;
   userId: string | undefined;
+  // UP-3: 圖片管理
+  managedImages: ManagedImage[];
   // Draft 功能
   hasDraft: () => boolean;
   restoreDraft: () => DraftFormData | null;
   clearDraft: () => void;
   getDraftPreview: () => { title: string; savedAt: string } | null;
-  // Error Handling (新增)
+  // Error Handling
   lastError: UploadError | null;
   clearError: () => void;
-  retryWithOriginal: () => void; // Fallback: 上傳原檔
+  retryWithOriginal: () => void;
 }
 
 const UploadContext = createContext<UploadContextType | undefined>(undefined);
@@ -45,9 +56,6 @@ const UploadContext = createContext<UploadContextType | undefined>(undefined);
 export const UploadFormProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [state, dispatch] = useReducer(uploadReducer, undefined, createInitialState);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // 追蹤 Object URLs 以便在組件卸載時清理
-  const objectUrlsRef = useRef<string[]>([]);
 
   // Pending files for fallback retry
   const pendingFilesRef = useRef<File[]>([]);
@@ -111,15 +119,11 @@ export const UploadFormProvider: React.FC<{ children: ReactNode }> = ({ children
   }, [state.userId, migrateDraft]);
 
   // ============================================================
-  // Object URL Cleanup
+  // Object URL Cleanup on Unmount
   // ============================================================
   useEffect(() => {
-    objectUrlsRef.current = state.form.images.filter(url => url.startsWith('blob:'));
-  }, [state.form.images]);
-
-  useEffect(() => {
     return () => {
-      objectUrlsRef.current.forEach(url => URL.revokeObjectURL(url));
+      state.managedImages.forEach(img => URL.revokeObjectURL(img.previewUrl));
     };
   }, []);
 
@@ -137,7 +141,7 @@ export const UploadFormProvider: React.FC<{ children: ReactNode }> = ({ children
       disadvantage: state.form.disadvantage,
       highlights: state.form.highlights || [],
     },
-    state.imageFiles.length
+    state.managedImages.length // UP-3: 使用 managedImages.length
   );
 
   // ============================================================
@@ -150,7 +154,7 @@ export const UploadFormProvider: React.FC<{ children: ReactNode }> = ({ children
     dispatch({ type: 'START_COMPRESSION' });
 
     const files = Array.from(e.target.files);
-    pendingFilesRef.current = files; // 儲存原檔供 fallback
+    pendingFilesRef.current = files;
 
     try {
       // 1) 基礎驗證 (副檔名/大小/Magic Bytes)
@@ -199,7 +203,6 @@ export const UploadFormProvider: React.FC<{ children: ReactNode }> = ({ children
       });
 
       if (accepted.length === 0) {
-        // 壓縮全失敗，提供 Fallback
         dispatch({
           type: 'COMPRESSION_FAILED', payload: {
             message: '所有圖片壓縮失敗或仍超過大小限制',
@@ -214,9 +217,9 @@ export const UploadFormProvider: React.FC<{ children: ReactNode }> = ({ children
         notify.info('圖片已加入', `有 ${skipped} 張已符合尺寸，跳過壓縮`);
       }
 
-      // 成功：加入圖片
-      const urls = accepted.map(file => URL.createObjectURL(file));
-      dispatch({ type: 'FINISH_COMPRESSION', payload: { files: accepted, urls } });
+      // UP-3: 建立 ManagedImage 陣列
+      const newManagedImages = accepted.map(file => createManagedImage(file));
+      dispatch({ type: 'FINISH_COMPRESSION', payload: newManagedImages });
 
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : '壓縮過程發生未知錯誤';
@@ -246,23 +249,27 @@ export const UploadFormProvider: React.FC<{ children: ReactNode }> = ({ children
     }
 
     const files = state.lastError.originalFiles;
-    const urls = files.map(file => URL.createObjectURL(file));
+    const newManagedImages = files.map(file => createManagedImage(file));
 
     dispatch({ type: 'CLEAR_ERROR' });
-    dispatch({ type: 'ADD_IMAGES', payload: { files, urls } });
+    dispatch({ type: 'ADD_IMAGES', payload: newManagedImages });
     notify.success('已加入原檔', `${files.length} 張圖片將以原始大小上傳`);
   }, [state.lastError]);
 
   // ============================================================
-  // Remove Image
+  // UP-3: Remove Image (使用 id)
   // ============================================================
-  const removeImage = useCallback((index: number) => {
-    const urlToRemove = state.form.images[index];
-    if (urlToRemove && urlToRemove.startsWith('blob:')) {
-      URL.revokeObjectURL(urlToRemove);
-    }
-    dispatch({ type: 'REMOVE_IMAGE', payload: index });
-  }, [state.form.images]);
+  const removeImage = useCallback((id: string) => {
+    dispatch({ type: 'REMOVE_IMAGE', payload: id });
+  }, []);
+
+  // ============================================================
+  // UP-3.3: Set Cover
+  // ============================================================
+  const setCover = useCallback((id: string) => {
+    dispatch({ type: 'SET_COVER', payload: id });
+    notify.success('已設定封面', '此照片將作為物件封面');
+  }, []);
 
   // ============================================================
   // Submit Handler
@@ -281,12 +288,16 @@ export const UploadFormProvider: React.FC<{ children: ReactNode }> = ({ children
       return;
     }
 
-    dispatch({ type: 'START_UPLOAD', payload: { total: state.imageFiles.length } });
+    // UP-3.4: 確保封面在第一位
+    const sortedImages = getSortedImages(state.managedImages);
+    const filesToUpload = sortedImages.map(img => img.file);
+
+    dispatch({ type: 'START_UPLOAD', payload: { total: filesToUpload.length } });
 
     let uploadRes: { urls: string[]; failed: { file: File; error: string }[]; allSuccess: boolean } | null = null;
 
     try {
-      uploadRes = await propertyService.uploadImages(state.imageFiles, {
+      uploadRes = await propertyService.uploadImages(filesToUpload, {
         concurrency: 3,
         onProgress: (current, total) => dispatch({ type: 'UPDATE_UPLOAD_PROGRESS', payload: { current, total } }),
       });
@@ -316,13 +327,11 @@ export const UploadFormProvider: React.FC<{ children: ReactNode }> = ({ children
     } catch (e: unknown) {
       const errorMessage = e instanceof Error ? e.message : '發生未知錯誤';
 
-      // 判斷錯誤類型
       let errorType: UploadError['type'] = 'upload';
       if (errorMessage.includes('網路') || errorMessage.includes('network') || errorMessage.includes('fetch')) {
         errorType = 'network';
       }
 
-      // 補償機制：發佈失敗時清理已上傳的圖片
       if (uploadRes && uploadRes.urls.length > 0) {
         notify.info('正在清理未使用的圖片...', '發佈失敗，正在移除已上傳的圖片');
         try {
@@ -340,7 +349,7 @@ export const UploadFormProvider: React.FC<{ children: ReactNode }> = ({ children
         notify.error('刊登失敗', errorMessage);
       }
     }
-  }, [validation, state.imageFiles, state.form, state.selectedCommunityId, clearDraft]);
+  }, [validation, state.managedImages, state.form, state.selectedCommunityId, clearDraft]);
 
   // ============================================================
   // Compatibility: setForm / setLoading / setSelectedCommunityId
@@ -366,7 +375,7 @@ export const UploadFormProvider: React.FC<{ children: ReactNode }> = ({ children
   }, []);
 
   // ============================================================
-  // Context Value (保持與原本相同的 interface)
+  // Context Value
   // ============================================================
   const value: UploadContextType = {
     form: state.form,
@@ -383,10 +392,12 @@ export const UploadFormProvider: React.FC<{ children: ReactNode }> = ({ children
     fileInputRef,
     handleFileSelect,
     removeImage,
+    setCover,                 // UP-3.3
     handleSubmit,
     uploadResult: state.uploadResult,
     showConfirmation: state.showConfirmation,
     userId: state.userId,
+    managedImages: state.managedImages, // UP-3
     hasDraft,
     restoreDraft,
     clearDraft,

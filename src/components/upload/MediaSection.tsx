@@ -1,19 +1,28 @@
 import React from 'react';
-import { Sparkles, Upload, X } from 'lucide-react';
+import { Sparkles, Upload, X, Star } from 'lucide-react';
 import { useUploadForm } from './UploadContext';
+import { CompressionComparison } from './CompressionComparison';
 
 const inputClass = "w-full p-3 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-maihouses-dark focus:border-transparent outline-none text-sm transition-all";
 
-import { CompressionComparison } from './CompressionComparison';
-
 export const MediaSection: React.FC = () => {
-  const { form, setForm, fileInputRef, handleFileSelect, removeImage, compressionProgress } = useUploadForm();
+  // UP-3: 使用 managedImages 與 setCover
+  const {
+    form,
+    setForm,
+    fileInputRef,
+    handleFileSelect,
+    removeImage,
+    setCover,
+    compressionProgress,
+    managedImages
+  } = useUploadForm();
   const [showComparison, setShowComparison] = React.useState(false);
 
-  // Mock data for demonstration until context stores real results
+  // Mock data for demonstration
   const mockComparison = {
     originalUrl: form.images[0] || '',
-    compressedUrl: form.images[0] || '', // In real app, this would be different blobs
+    compressedUrl: form.images[0] || '',
     originalSize: 5000000,
     compressedSize: 1000000
   };
@@ -29,7 +38,6 @@ export const MediaSection: React.FC = () => {
       </h2>
 
       <div className="space-y-5">
-        {/* ... existing fields ... */}
         <div>
           <label htmlFor="upload-description" className="mb-1.5 block text-xs font-semibold text-slate-500 uppercase tracking-wider">物件描述</label>
           <textarea
@@ -44,10 +52,9 @@ export const MediaSection: React.FC = () => {
         </div>
 
         <div>
-          {/* ... existing image grid ... */}
           <span className="mb-3 flex items-center justify-between text-xs font-semibold text-slate-500 uppercase tracking-wider">
-            <span>物件照片 * <span className="text-slate-400 font-normal">(至少 1 張)</span></span>
-            {form.images.length > 0 && (
+            <span>物件照片 * <span className="text-slate-400 font-normal">(至少 1 張，點擊 ⭐ 設為封面)</span></span>
+            {managedImages.length > 0 && (
               <button
                 onClick={() => setShowComparison(true)}
                 className="text-maihouses-dark hover:underline"
@@ -56,24 +63,53 @@ export const MediaSection: React.FC = () => {
               </button>
             )}
           </span>
+
+          {/* UP-3: 使用 managedImages 渲染圖片 */}
           <div className="grid grid-cols-4 gap-4">
-            {form.images.map((url: string, i: number) => (
-              <div key={i} className="group relative aspect-square overflow-hidden rounded-xl border border-slate-200 shadow-sm">
-                <img src={url} alt="" className="size-full object-cover transition-transform duration-300 group-hover:scale-110" />
+            {managedImages.map((img) => (
+              <div
+                key={img.id}
+                className={`group relative aspect-square overflow-hidden rounded-xl border-2 shadow-sm transition-all ${img.isCover ? 'border-yellow-400 ring-2 ring-yellow-200' : 'border-slate-200'
+                  }`}
+              >
+                <img
+                  src={img.previewUrl}
+                  alt=""
+                  className="size-full object-cover transition-transform duration-300 group-hover:scale-110"
+                />
                 <div className="absolute inset-0 bg-black/20 opacity-0 transition-opacity group-hover:opacity-100" />
+
+                {/* 刪除按鈕 */}
                 <button
-                  onClick={() => removeImage(i)}
+                  onClick={() => removeImage(img.id)}
                   className="absolute right-1.5 top-1.5 rounded-full bg-red-500 p-1.5 text-white shadow-lg transition-transform hover:scale-110"
+                  title="移除圖片"
                 >
                   <X size={14} />
                 </button>
-                {i === 0 && (
-                  <span className="absolute bottom-1.5 left-1.5 rounded-md bg-maihouses-dark/90 px-2 py-1 text-[10px] font-bold text-white backdrop-blur-sm">
+
+                {/* UP-3.3: 設為封面按鈕 */}
+                <button
+                  onClick={() => setCover(img.id)}
+                  className={`absolute left-1.5 top-1.5 rounded-full p-1.5 shadow-lg transition-transform hover:scale-110 ${img.isCover
+                      ? 'bg-yellow-400 text-yellow-900'
+                      : 'bg-white/80 text-slate-400 hover:bg-yellow-100 hover:text-yellow-600'
+                    }`}
+                  title={img.isCover ? '目前封面' : '設為封面'}
+                >
+                  <Star size={14} fill={img.isCover ? 'currentColor' : 'none'} />
+                </button>
+
+                {/* 封面標籤 */}
+                {img.isCover && (
+                  <span className="absolute bottom-1.5 left-1.5 rounded-md bg-yellow-400 px-2 py-1 text-[10px] font-bold text-yellow-900 backdrop-blur-sm">
                     封面
                   </span>
                 )}
               </div>
             ))}
+
+            {/* 上傳按鈕 */}
             <button
               onClick={() => fileInputRef.current?.click()}
               className="flex aspect-square flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 text-slate-400 transition-all hover:border-maihouses-light hover:bg-blue-50 hover:text-maihouses-light"
@@ -107,7 +143,7 @@ export const MediaSection: React.FC = () => {
         </div>
       </div>
 
-      {showComparison && form.images.length > 0 && (
+      {showComparison && managedImages.length > 0 && (
         <CompressionComparison
           originalUrl={mockComparison.originalUrl}
           compressedUrl={mockComparison.compressedUrl}

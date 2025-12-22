@@ -14,8 +14,16 @@ export interface UploadResult {
 export interface UploadError {
     type: 'compression' | 'heic' | 'upload' | 'network' | 'validation';
     message: string;
-    canFallback?: boolean; // 是否允許上傳原檔
-    originalFiles?: File[]; // Fallback 用的原檔
+    canFallback?: boolean;
+    originalFiles?: File[];
+}
+
+// UP-3.1: ManagedImage 介面
+export interface ManagedImage {
+    id: string;           // 唯一識別碼 (crypto.randomUUID)
+    file: File;           // 原始 File 物件
+    previewUrl: string;   // Blob URL 供預覽
+    isCover: boolean;     // 是否為封面
 }
 
 export interface UploadState {
@@ -30,7 +38,7 @@ export interface UploadState {
 
     // Data
     form: PropertyFormInput;
-    imageFiles: File[];
+    managedImages: ManagedImage[]; // UP-3.2: 使用 ManagedImage 取代 imageFiles
     selectedCommunityId: string | undefined;
     userId: string | undefined;
 
@@ -54,12 +62,13 @@ export type UploadAction =
     // Compression Flow
     | { type: 'START_COMPRESSION' }
     | { type: 'UPDATE_COMPRESSION_PROGRESS'; payload: number }
-    | { type: 'FINISH_COMPRESSION'; payload: { files: File[]; urls: string[] } }
+    | { type: 'FINISH_COMPRESSION'; payload: ManagedImage[] } // UP-3: 使用 ManagedImage[]
     | { type: 'COMPRESSION_FAILED'; payload: { message: string; canFallback: boolean; originalFiles: File[] } }
 
-    // Image Management
-    | { type: 'ADD_IMAGES'; payload: { files: File[]; urls: string[] } }
-    | { type: 'REMOVE_IMAGE'; payload: number }
+    // Image Management (UP-3)
+    | { type: 'ADD_IMAGES'; payload: ManagedImage[] }
+    | { type: 'REMOVE_IMAGE'; payload: string } // 使用 id 而非 index
+    | { type: 'SET_COVER'; payload: string }    // UP-3.3: 設為封面
 
     // Form
     | { type: 'SET_FORM'; payload: PropertyFormInput }
@@ -83,6 +92,30 @@ export type UploadAction =
     | { type: 'RESET_UPLOAD_STATE' };
 
 // ============================================================
+// Helper: 建立 ManagedImage
+// ============================================================
+
+export function createManagedImage(file: File, isCover: boolean = false): ManagedImage {
+    return {
+        id: crypto.randomUUID(),
+        file,
+        previewUrl: URL.createObjectURL(file),
+        isCover
+    };
+}
+
+// ============================================================
+// Helper: 取得排序後的圖片 (封面優先)
+// ============================================================
+
+export function getSortedImages(images: ManagedImage[]): ManagedImage[] {
+    // UP-3.4: 確保封面在第一位
+    const cover = images.find(img => img.isCover);
+    const others = images.filter(img => !img.isCover);
+    return cover ? [cover, ...others] : images;
+}
+
+// ============================================================
 // Initial State Factory
 // ============================================================
 
@@ -101,7 +134,7 @@ export const createInitialState = (): UploadState => ({
         images: [],
         sourceExternalId: ''
     },
-    imageFiles: [],
+    managedImages: [],
     selectedCommunityId: undefined,
     userId: undefined,
     uploadResult: null,
@@ -134,17 +167,26 @@ export function uploadReducer(state: UploadState, action: UploadAction): UploadS
         case 'UPDATE_COMPRESSION_PROGRESS':
             return { ...state, compressionProgress: action.payload };
 
-        case 'FINISH_COMPRESSION':
+        case 'FINISH_COMPRESSION': {
+            const newImages = action.payload;
+            // 若目前無封面且有新圖片，將第一張設為封面
+            const hasCover = state.managedImages.some(img => img.isCover) || newImages.some(img => img.isCover);
+            let imagesToAdd = newImages;
+            if (!hasCover && newImages.length > 0 && state.managedImages.length === 0) {
+                imagesToAdd = newImages.map((img, idx) => idx === 0 ? { ...img, isCover: true } : img);
+            }
+            const allImages = [...state.managedImages, ...imagesToAdd];
             return {
                 ...state,
                 compressing: false,
                 compressionProgress: null,
-                imageFiles: [...state.imageFiles, ...action.payload.files],
+                managedImages: allImages,
                 form: {
                     ...state.form,
-                    images: [...state.form.images, ...action.payload.urls]
+                    images: getSortedImages(allImages).map(img => img.previewUrl)
                 }
             };
+        }
 
         case 'COMPRESSION_FAILED':
             return {
@@ -159,25 +201,59 @@ export function uploadReducer(state: UploadState, action: UploadAction): UploadS
                 }
             };
 
-        // --- Image Management ---
-        case 'ADD_IMAGES':
+        // --- Image Management (UP-3) ---
+        case 'ADD_IMAGES': {
+            const newImages = action.payload;
+            const hasCover = state.managedImages.some(img => img.isCover) || newImages.some(img => img.isCover);
+            let imagesToAdd = newImages;
+            if (!hasCover && newImages.length > 0 && state.managedImages.length === 0) {
+                imagesToAdd = newImages.map((img, idx) => idx === 0 ? { ...img, isCover: true } : img);
+            }
+            const allImages = [...state.managedImages, ...imagesToAdd];
             return {
                 ...state,
-                imageFiles: [...state.imageFiles, ...action.payload.files],
+                managedImages: allImages,
                 form: {
                     ...state.form,
-                    images: [...state.form.images, ...action.payload.urls]
+                    images: getSortedImages(allImages).map(img => img.previewUrl)
                 }
             };
+        }
 
         case 'REMOVE_IMAGE': {
-            const index = action.payload;
+            const idToRemove = action.payload;
+            const imageToRemove = state.managedImages.find(img => img.id === idToRemove);
+            if (imageToRemove) {
+                URL.revokeObjectURL(imageToRemove.previewUrl);
+            }
+            let remaining = state.managedImages.filter(img => img.id !== idToRemove);
+            // 若移除的是封面，將第一張設為新封面
+            if (imageToRemove?.isCover && remaining.length > 0) {
+                remaining = remaining.map((img, idx) => idx === 0 ? { ...img, isCover: true } : img);
+            }
             return {
                 ...state,
-                imageFiles: state.imageFiles.filter((_, i) => i !== index),
+                managedImages: remaining,
                 form: {
                     ...state.form,
-                    images: state.form.images.filter((_, i) => i !== index)
+                    images: getSortedImages(remaining).map(img => img.previewUrl)
+                }
+            };
+        }
+
+        // UP-3.3: 設為封面
+        case 'SET_COVER': {
+            const coverId = action.payload;
+            const updatedImages = state.managedImages.map(img => ({
+                ...img,
+                isCover: img.id === coverId
+            }));
+            return {
+                ...state,
+                managedImages: updatedImages,
+                form: {
+                    ...state.form,
+                    images: getSortedImages(updatedImages).map(img => img.previewUrl)
                 }
             };
         }
