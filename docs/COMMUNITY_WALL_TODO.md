@@ -33,12 +33,12 @@
 
 | 編號 | 優先級 | 描述 | 狀態 | 驗證方式 |
 |:---:|:---:|:---|:---:|:---|
-| A | P1 | useEffect 依賴 hasDraft/getDraftPreview 可能造成重跑 | ⬜ | 檢視依賴、手動重整觀察 render 次數 |
-| B | P2 | 捨棄草稿缺少確認對話框 | ⬜ | 手動點擊捨棄需出現確認並可取消 |
-| C | P2 | 測試案例不足（僅 5 個，缺邊界） | ⬜ | 新增邊界測試，npm test 全綠 |
-| D | P2 | PropertyUploadPage 重複呼叫 supabase.auth.getUser() | ⬜ | 以 context 提供 userId，確保只呼叫一次 |
-| E | P2 | draftFormData useMemo 依賴整個 form 導致頻繁重算 | ⬜ | 拆依賴或內部處理，確認渲染次數下降 |
-| F | P2 | migrateDraft 每次 userId 變動都執行 | ⬜ | 先檢查匿名草稿存在再遷移 |
+| A | P1 | useEffect 依賴 hasDraft/getDraftPreview 可能造成重跑 | ✅ | 依賴改為 userId；重新載入與 storage 事件皆正常 |
+| B | P2 | 捨棄草稿缺少確認對話框 | ✅ | 手動點擊「捨棄」彈出確認，可取消 |
+| C | P2 | 測試案例不足（僅 5 個，缺邊界） | ⬜ | 新增邊界測試：空草稿、損壞 JSON、debounce、storage 事件、相對時間；npm test 全綠 |
+| D | P2 | PropertyUploadPage 重複呼叫 supabase.auth.getUser() | ✅ | 改用 context.userId，移除重複 supabase 呼叫 |
+| E | P2 | draftFormData useMemo 依賴整個 form 導致頻繁重算 | ✅ | useMemo 依賴拆欄位，避免每次 setForm 重算 |
+| F | P2 | migrateDraft 每次 userId 變動都執行 | ✅ | 遷移前檢查 anonymous key 存在再遷移 |
 
 **目標**: 收斂 UP-1 技術債，保留唯一待修列表，清除已完成雜訊。
 
@@ -64,6 +64,8 @@
 - 移除已完成的 UP-1 任務描述，改為單一「待修列表」+「成果摘要」
 - 保留二次審計待修 A-F 作為唯一執行入口，避免資訊雜亂
 - 清除 UP-1 相關 console.* 並改為單次警示 toast；`useState<any>` 改為 `User | null`
+- TS1128 自查：執行 `npm run build`（含 tsc）未復現錯誤，仍需若 IDE 有殘留可重啟 TS Server
+- 本次：修復 A/B/D/E/F，新增捨棄確認、移除重複 auth 取得、useMemo 拆欄位、遷移 guard；C 仍待新增邊界測試
 
 
 ### 任務 2: [P0] 圖片前端預處理 (Client-side Compression)

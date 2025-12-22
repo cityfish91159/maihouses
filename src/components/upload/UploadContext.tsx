@@ -28,6 +28,7 @@ interface UploadContextType {
   handleSubmit: () => Promise<void>;
   uploadResult: UploadResult | null;
   showConfirmation: boolean;
+  userId: string | undefined;
   // Draft 功能
   hasDraft: () => boolean;
   restoreDraft: () => DraftFormData | null;
@@ -93,13 +94,33 @@ export const UploadFormProvider: React.FC<{ children: ReactNode }> = ({ children
     disadvantage: form.disadvantage,
     highlights: form.highlights ?? [],
     sourceExternalId: form.sourceExternalId
-  }), [form]);
+  }), [
+    form.title,
+    form.price,
+    form.address,
+    form.communityName,
+    form.size,
+    form.age,
+    form.floorCurrent,
+    form.floorTotal,
+    form.rooms,
+    form.halls,
+    form.bathrooms,
+    form.type,
+    form.description,
+    form.advantage1,
+    form.advantage2,
+    form.disadvantage,
+    form.highlights,
+    form.sourceExternalId
+  ]);
 
   const { hasDraft, restoreDraft, clearDraft, getDraftPreview, migrateDraft } = usePropertyDraft(draftFormData, userId);
 
   // 匿名草稿遷移到登入用戶
   useEffect(() => {
-    if (userId) {
+    const hasAnonymousDraft = typeof window !== 'undefined' && localStorage.getItem('mh_draft_upload_anonymous');
+    if (userId && hasAnonymousDraft) {
       migrateDraft(undefined, userId);
     }
   }, [userId, migrateDraft]);
@@ -276,7 +297,7 @@ export const UploadFormProvider: React.FC<{ children: ReactNode }> = ({ children
 
   const value = {
     form, setForm, validation, loading, setLoading, validating, uploadProgress,
-    selectedCommunityId, setSelectedCommunityId, fileInputRef,
+    selectedCommunityId, setSelectedCommunityId, fileInputRef, userId,
     handleFileSelect, removeImage, handleSubmit, uploadResult, showConfirmation,
     // Draft 功能
     hasDraft, restoreDraft, clearDraft, getDraftPreview

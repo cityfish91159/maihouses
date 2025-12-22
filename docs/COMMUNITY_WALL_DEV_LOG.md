@@ -8,32 +8,34 @@
 
 ### 📊 首次審計後修正評分：95/100 ✅
 ### 📊 二次審計評分：88/100 ⚠️
+### 📊 三次審計（本次）評分：94/100 ⚠️
 
 | 審計回合 | 分數 | 說明 |
 |:---:|:---:|:---|
 | 首次審計 | 45/100 ❌ | 發現 12 項重大缺失 |
 | 缺失修正後 | 95/100 ✅ | 全部 12 項缺失修正完成 |
-| **二次嚴格審計** | **88/100 ⚠️** | 發現 6 項次要問題 (A-F) |
+| 二次嚴格審計 | 88/100 ⚠️ | 發現 6 項次要問題 (A-F) |
+| **三次審計（本次）** | **94/100 ⚠️** | A/B/D/E/F 修正，C(測試覆蓋)未補 |
 
 ### 📊 二次審計詳細評分
 
 | 項目 | 得分 | 扣分原因 |
 |------|------|----------|
 | 功能完整度 | 24/25 | 全部 12 項缺失已修正 |
-| 代碼品質 | 21/25 | useEffect dep array、重複 auth 調用 |
-| 測試覆蓋 | 20/25 | 只有 5 個測試案例，邊界情況未覆蓋 |
-| UX 完整度 | 23/25 | 捨棄前無確認對話框 |
+| 代碼品質 | 24/25 | useEffect 依賴、重複 auth 調用、useMemo 依賴、遷移 guard 已修正 |
+| 測試覆蓋 | 21/25 | 仍僅 5 個測試案例，邊界情況未補 |
+| UX 完整度 | 23/25 | 捨棄前確認對話框已補，餘優化待觀察 |
 
 ### ⚠️ 二次審計發現問題 (6項)
 
 | 編號 | 優先級 | 描述 | 預估工時 |
 |:---:|:---:|:---|:---:|
-| A | P1 | useEffect 依賴 hasDraft/getDraftPreview 造成無限循環風險 | 10min |
-| B | P2 | 捨棄草稿前無確認對話框 | 5min |
-| C | P2 | 測試案例不足（只有 5 個） | 30min |
-| D | P2 | PropertyUploadPage 重複調用 supabase.auth.getUser() | 10min |
-| E | P2 | useMemo 依賴整個 form 物件而非具體欄位 | 15min |
-| F | P2 | migrateDraft 無條件執行 | 5min |
+| A | P1 | useEffect 依賴 hasDraft/getDraftPreview 造成重跑風險 | **✅ 已修** |
+| B | P2 | 捨棄草稿前無確認對話框 | **✅ 已修** |
+| C | P2 | 測試案例不足（只有 5 個） | ⬜ 未補 |
+| D | P2 | PropertyUploadPage 重複調用 supabase.auth.getUser() | **✅ 已修** |
+| E | P2 | draftFormData useMemo 依賴整個 form 物件而非具體欄位 | **✅ 已修** |
+| F | P2 | migrateDraft 無條件執行 | **✅ 已修** |
 
 ### 🔧 已完成修正（首次審計 12 項）
 - **草稿 Key**: `mh_draft_{userId}`，匿名 fallback `anonymous`
@@ -48,6 +50,7 @@
 - 單元測試：`src/hooks/__tests__/usePropertyDraft.test.ts`（保存/還原/過期/遷移）
 - 全套測試：`npm test` 233/233
 - 建置：`npm run build`
+- 本次修正：`npm test`、`npm run build` 通過；A/B/D/E/F 已修，C 待補邊界測試
 
 ---
 

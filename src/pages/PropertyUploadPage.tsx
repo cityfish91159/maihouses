@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User } from '@supabase/supabase-js';
 import { useNavigate, Link } from 'react-router-dom';
-import { supabase } from '../lib/supabase';
 import { 
   Loader2, Download, Check, Home, ArrowLeft, Building2, Edit3, RotateCcw
 } from 'lucide-react';
@@ -30,17 +28,14 @@ const PropertyUploadContent: React.FC = () => {
     hasDraft,
     restoreDraft,
     getDraftPreview,
-    clearDraft
+    clearDraft,
+    userId
   } = useUploadForm();
 
-  const [user, setUser] = useState<User | null>(null);
   const [draftAvailable, setDraftAvailable] = useState(false);
   const [draftPreview, setDraftPreview] = useState<{ title: string; savedAt: string } | null>(null);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      setUser(data.user);
-    });
     // 檢查是否有草稿可用
     setDraftAvailable(hasDraft());
     setDraftPreview(getDraftPreview());
@@ -53,7 +48,7 @@ const PropertyUploadContent: React.FC = () => {
     };
     window.addEventListener('storage', onStorage);
     return () => window.removeEventListener('storage', onStorage);
-  }, [hasDraft, getDraftPreview]);
+  }, [userId]);
 
   // 還原草稿
   const handleRestoreDraft = () => {
@@ -77,6 +72,8 @@ const PropertyUploadContent: React.FC = () => {
   };
 
   const handleDiscardDraft = () => {
+    const confirmDiscard = window.confirm('確定要捨棄草稿嗎？此操作無法復原');
+    if (!confirmDiscard) return;
     clearDraft();
     setDraftAvailable(false);
     setDraftPreview(null);
@@ -208,7 +205,7 @@ const PropertyUploadContent: React.FC = () => {
             >
               <Download size={16}/> 591 搬家
             </button>
-            {!user && (
+            {!userId && (
               <Link to="/auth" className="text-sm font-bold text-blue-600 hover:underline">登入以同步</Link>
             )}
           </div>
