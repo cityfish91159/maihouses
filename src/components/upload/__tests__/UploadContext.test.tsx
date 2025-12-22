@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, fireEvent, waitFor, screen } from '@testing-library/react';
-import { vi, describe, it, expect, beforeEach } from 'vitest';
+import { vi, describe, it, expect, beforeEach, Mock } from 'vitest';
 import { UploadFormProvider, useUploadForm } from '../UploadContext';
 
 const mockValidate = vi.fn();
@@ -92,7 +92,7 @@ describe('UploadContext - handleFileSelect', () => {
   beforeEach(() => {
     mockValidate.mockReset();
     mockOptimize.mockReset();
-    (global as unknown as { URL: { createObjectURL: vi.Mock; revokeObjectURL: vi.Mock } }).URL = {
+    (global as unknown as { URL: { createObjectURL: Mock; revokeObjectURL: Mock } }).URL = {
       createObjectURL: vi.fn(() => 'blob:test'),
       revokeObjectURL: vi.fn(),
     };
@@ -101,7 +101,12 @@ describe('UploadContext - handleFileSelect', () => {
   it('validates, optimizes, and stores image URLs', async () => {
     const file = createFile('ok.jpg', 2_000_000);
     mockValidate.mockResolvedValue({ validFiles: [file], invalidFiles: [], allValid: true });
-    mockOptimize.mockResolvedValue({ optimized: [createFile('ok.jpg', 1_000_000)], warnings: [], skipped: 0 });
+    mockOptimize.mockResolvedValue({
+      optimized: [createFile('ok.jpg', 1_000_000)],
+      warnings: [],
+      skipped: 0,
+      stats: { totalOriginalSize: 2000000, totalCompressedSize: 1000000 } // UP-2.M
+    });
 
     render(
       <UploadFormProvider>

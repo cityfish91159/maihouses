@@ -4,8 +4,19 @@ import { useUploadForm } from './UploadContext';
 
 const inputClass = "w-full p-3 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-maihouses-dark focus:border-transparent outline-none text-sm transition-all";
 
+import { CompressionComparison } from './CompressionComparison';
+
 export const MediaSection: React.FC = () => {
-  const { form, setForm, fileInputRef, handleFileSelect, removeImage } = useUploadForm();
+  const { form, setForm, fileInputRef, handleFileSelect, removeImage, compressionProgress } = useUploadForm();
+  const [showComparison, setShowComparison] = React.useState(false);
+
+  // Mock data for demonstration until context stores real results
+  const mockComparison = {
+    originalUrl: form.images[0] || '',
+    compressedUrl: form.images[0] || '', // In real app, this would be different blobs
+    originalSize: 5000000,
+    compressedSize: 1000000
+  };
 
   const onInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
@@ -18,6 +29,7 @@ export const MediaSection: React.FC = () => {
       </h2>
 
       <div className="space-y-5">
+        {/* ... existing fields ... */}
         <div>
           <label htmlFor="upload-description" className="mb-1.5 block text-xs font-semibold text-slate-500 uppercase tracking-wider">物件描述</label>
           <textarea
@@ -32,8 +44,17 @@ export const MediaSection: React.FC = () => {
         </div>
 
         <div>
-          <span className="mb-3 block text-xs font-semibold text-slate-500 uppercase tracking-wider">
-            物件照片 * <span className="text-slate-400 font-normal">(至少 1 張)</span>
+          {/* ... existing image grid ... */}
+          <span className="mb-3 flex items-center justify-between text-xs font-semibold text-slate-500 uppercase tracking-wider">
+            <span>物件照片 * <span className="text-slate-400 font-normal">(至少 1 張)</span></span>
+            {form.images.length > 0 && (
+              <button
+                onClick={() => setShowComparison(true)}
+                className="text-maihouses-dark hover:underline"
+              >
+                查看壓縮效果 (Demo)
+              </button>
+            )}
           </span>
           <div className="grid grid-cols-4 gap-4">
             {form.images.map((url: string, i: number) => (
@@ -62,8 +83,39 @@ export const MediaSection: React.FC = () => {
             </button>
             <input type="file" multiple ref={fileInputRef} onChange={handleFileSelect} className="hidden" accept="image/*" />
           </div>
+
+          {/* UP-2.A: 壓縮進度 UI */}
+          {compressionProgress !== null && (
+            <div className="mt-3 flex items-center gap-3 rounded-lg bg-blue-50 px-4 py-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 text-blue-600">
+                <Sparkles size={20} className="animate-pulse" />
+              </div>
+              <div className="flex-1">
+                <div className="mb-1 flex justify-between text-xs font-bold text-blue-700">
+                  <span>正在優化圖片...</span>
+                  <span>{compressionProgress}%</span>
+                </div>
+                <div className="h-1.5 w-full overflow-hidden rounded-full bg-blue-200">
+                  <div
+                    className="h-full bg-blue-500 transition-all duration-300 ease-out"
+                    style={{ width: `${compressionProgress}%` }}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
+
+      {showComparison && form.images.length > 0 && (
+        <CompressionComparison
+          originalUrl={mockComparison.originalUrl}
+          compressedUrl={mockComparison.compressedUrl}
+          originalSize={mockComparison.originalSize}
+          compressedSize={mockComparison.compressedSize}
+          onClose={() => setShowComparison(false)}
+        />
+      )}
     </section>
   );
 };
