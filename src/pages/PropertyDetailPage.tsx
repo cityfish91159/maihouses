@@ -6,6 +6,7 @@ import { propertyService, DEFAULT_PROPERTY, PropertyData } from '../services/pro
 import { ContactModal } from '../components/ContactModal';
 import { ReportGenerator } from './Report';
 import { buildKeyCapsuleTags, formatArea, formatLayout, formatFloor } from '../utils/keyCapsules';
+import { isSpecTag } from '../lib/tagUtils';
 
 // UAG Tracker Hook v8.1 - 追蹤用戶行為 + S級攔截
 // 優化: 1.修正district傳遞 2.S級即時回調 3.互動事件用fetch獲取等級
@@ -70,13 +71,13 @@ const usePropertyTracker = (
         keepalive: true // 防止頁面切換時中斷
       });
       const data = await res.json();
-      
+
       // 檢查是否升級到 S 級
       if (data.success && data.grade) {
         const gradeRank: Record<string, number> = { S: 5, A: 4, B: 3, C: 2, F: 1 };
         const newRank = gradeRank[data.grade] || 1;
         const oldRank = gradeRank[currentGrade.current] || 1;
-        
+
         if (newRank > oldRank) {
           currentGrade.current = data.grade;
           // S 級即時通知 (含 reason)
@@ -143,24 +144,24 @@ export const PropertyDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [searchParams] = useSearchParams();
   const [isFavorite, setIsFavorite] = useState(false);
-  
+
   // Mock: 固定未登入狀態（正式版改用 useAuth）
   const isLoggedIn = false;
-  
+
   // 圖片瀏覽狀態
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  
+
   // ContactModal 狀態
   const [showContactModal, setShowContactModal] = useState(false);
   const [contactSource, setContactSource] = useState<'sidebar' | 'mobile_bar' | 'booking'>('sidebar');
-  
+
   // S 級 VIP 攔截 Modal
   const [showVipModal, setShowVipModal] = useState(false);
   const [vipReason, setVipReason] = useState<string>('');
-  
+
   // 報告生成器 Modal
   const [showReportGenerator, setShowReportGenerator] = useState(false);
-  
+
   // 初始化直接使用 DEFAULT_PROPERTY，確保第一幀就有畫面，絕不留白
   const [property, setProperty] = useState<PropertyData>(DEFAULT_PROPERTY);
 
@@ -189,8 +190,8 @@ export const PropertyDetailPage: React.FC = () => {
 
   // 初始化追蹤器 (傳入 district + S級回調)
   const tracker = usePropertyTracker(
-    id || '', 
-    getAgentId(), 
+    id || '',
+    getAgentId(),
     extractDistrict(property.address),
     handleGradeUpgrade
   );
@@ -228,7 +229,7 @@ export const PropertyDetailPage: React.FC = () => {
       size: property.size,
       rooms: property.rooms,
       halls: property.halls
-    }).slice(0, 4);
+    }).filter(tag => !isSpecTag(tag)).slice(0, 4);
   }, [
     property.advantage1,
     property.advantage2,
@@ -243,7 +244,7 @@ export const PropertyDetailPage: React.FC = () => {
   useEffect(() => {
     const fetchProperty = async () => {
       if (!id) return;
-      
+
       try {
         const data = await propertyService.getPropertyByPublicId(id);
         if (data) {
@@ -260,8 +261,8 @@ export const PropertyDetailPage: React.FC = () => {
   // [Safety] 確保有圖片可顯示，防止空陣列導致破圖
   const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80';
 
-  let displayImage = (property.images && property.images.length > 0 && property.images[0]) 
-    ? property.images[0] 
+  let displayImage = (property.images && property.images.length > 0 && property.images[0])
+    ? property.images[0]
     : FALLBACK_IMAGE;
 
   // [Double Safety] 前端攔截 picsum
@@ -284,10 +285,10 @@ export const PropertyDetailPage: React.FC = () => {
             邁房子
           </div>
         </div>
-        
+
         {/* 僅顯示公開編號 */}
         <div className="flex items-center rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 font-mono text-xs text-slate-500">
-          <Hash size={12} className="mr-1 text-gray-400"/>
+          <Hash size={12} className="mr-1 text-gray-400" />
           編號：<span className="ml-1 font-bold text-[#003366]">{property.publicId}</span>
         </div>
       </nav>
@@ -297,8 +298,8 @@ export const PropertyDetailPage: React.FC = () => {
         <div className="mb-4">
           {/* 主圖 */}
           <div className="group relative aspect-video overflow-hidden rounded-2xl bg-slate-200">
-            <img 
-              src={property.images?.[currentImageIndex] || displayImage} 
+            <img
+              src={property.images?.[currentImageIndex] || displayImage}
               alt={property.title}
               onError={(e) => {
                 if (e.currentTarget.src !== FALLBACK_IMAGE) {
@@ -312,7 +313,7 @@ export const PropertyDetailPage: React.FC = () => {
               <span>{currentImageIndex + 1} / {property.images?.length || 1}</span>
             </div>
           </div>
-          
+
           {/* 縮圖橫向滾動 */}
           {property.images && property.images.length > 1 && (
             <div className="scrollbar-hide -mx-4 mt-3 flex gap-2 overflow-x-auto px-4 pb-2">
@@ -323,14 +324,13 @@ export const PropertyDetailPage: React.FC = () => {
                     setCurrentImageIndex(i);
                     tracker.trackPhotoClick();
                   }}
-                  className={`h-14 w-20 shrink-0 overflow-hidden rounded-lg border-2 transition-all ${
-                    i === currentImageIndex 
-                      ? 'border-[#003366] ring-2 ring-[#003366]/20' 
-                      : 'border-transparent opacity-70 hover:opacity-100'
-                  }`}
+                  className={`h-14 w-20 shrink-0 overflow-hidden rounded-lg border-2 transition-all ${i === currentImageIndex
+                    ? 'border-[#003366] ring-2 ring-[#003366]/20'
+                    : 'border-transparent opacity-70 hover:opacity-100'
+                    }`}
                 >
-                  <img 
-                    src={img} 
+                  <img
+                    src={img}
                     alt={`照片 ${i + 1}`}
                     onError={(e) => { e.currentTarget.src = FALLBACK_IMAGE; }}
                     className="size-full object-cover"
@@ -345,14 +345,14 @@ export const PropertyDetailPage: React.FC = () => {
         <div className="mb-6 lg:hidden">
           <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-lg">
             <div className="flex gap-3">
-              <button 
+              <button
                 onClick={() => openContactModal('mobile_bar')}
                 className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#003366] py-4 text-base font-bold text-white shadow-lg"
               >
                 <Phone size={20} />
                 立即聯絡經紀人
               </button>
-              <button 
+              <button
                 onClick={() => openContactModal('mobile_bar')}
                 className="flex w-14 items-center justify-center rounded-xl bg-[#06C755] text-white shadow-lg"
               >
@@ -373,14 +373,14 @@ export const PropertyDetailPage: React.FC = () => {
                 <h1 className="text-2xl font-bold leading-tight text-slate-900">
                   {property.title}
                 </h1>
-                <button 
+                <button
                   onClick={() => setIsFavorite(!isFavorite)}
                   className={`rounded-full p-2 transition-all ${isFavorite ? 'bg-red-50 text-red-500' : 'bg-slate-50 text-slate-400 hover:bg-slate-100'}`}
                 >
                   <Heart size={24} fill={isFavorite ? "currentColor" : "none"} />
                 </button>
               </div>
-              
+
               <div className="mt-2 flex items-center gap-2 text-sm text-slate-500">
                 <MapPin size={16} />
                 {property.address}
@@ -449,7 +449,7 @@ export const PropertyDetailPage: React.FC = () => {
                 {property.description}
               </p>
             </div>
-            
+
             {/* 🏠 社區評價 - 兩好一公道 */}
             <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
               <div className="mb-4 flex items-center justify-between">
@@ -461,7 +461,7 @@ export const PropertyDetailPage: React.FC = () => {
                   88 位住戶加入
                 </span>
               </div>
-              
+
               {/* 前兩則評價（公開顯示） */}
               <div className="space-y-3">
                 <div className="flex gap-3 rounded-xl bg-slate-50 p-3">
@@ -479,7 +479,7 @@ export const PropertyDetailPage: React.FC = () => {
                     </p>
                   </div>
                 </div>
-                
+
                 <div className="flex gap-3 rounded-xl bg-slate-50 p-3">
                   <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#00A8E8] text-lg font-bold text-white">
                     W
@@ -496,7 +496,7 @@ export const PropertyDetailPage: React.FC = () => {
                   </div>
                 </div>
               </div>
-              
+
               {/* 第三則（未登入時模糊隱藏，登入後正常顯示） */}
               <div className="relative mt-3 overflow-hidden rounded-xl">
                 <div className={`flex gap-3 bg-slate-50 p-3 ${!isLoggedIn ? 'select-none blur-sm' : ''}`}>
@@ -510,17 +510,17 @@ export const PropertyDetailPage: React.FC = () => {
                       {isLoggedIn && <span className="text-xs text-yellow-500">★★★★★</span>}
                     </div>
                     <p className="text-sm text-slate-600">
-                      {isLoggedIn 
+                      {isLoggedIn
                         ? '頂樓排水設計不錯，颱風天也沒有積水問題。管委會有固定請人清理排水孔，很放心。'
                         : '頂樓排水設計不錯，颱風天也沒有積水問題...'}
                     </p>
                   </div>
                 </div>
-                
+
                 {/* 遮罩層 - 已登入則直接看到，未登入顯示註冊按鈕 */}
                 {!isLoggedIn && (
                   <div className="absolute inset-0 flex items-end justify-center bg-gradient-to-b from-transparent via-white/80 to-white pb-3">
-                    <button 
+                    <button
                       onClick={() => {
                         window.location.href = '/auth.html?redirect=community';
                       }}
@@ -533,13 +533,13 @@ export const PropertyDetailPage: React.FC = () => {
                   </div>
                 )}
               </div>
-              
+
               {/* 社區牆入口提示 */}
               <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3">
                 <p className="text-xs text-slate-500">
                   💬 加入社區牆，與現任住戶交流
                 </p>
-                <button 
+                <button
                   onClick={() => window.location.href = '/maihouses/community-wall_mvp.html'}
                   className="flex items-center gap-1 text-xs font-bold text-[#003366] hover:underline"
                 >
@@ -553,13 +553,13 @@ export const PropertyDetailPage: React.FC = () => {
           {/* Sidebar / Agent Card */}
           <div className="lg:col-span-1">
             <div className="sticky top-24 space-y-4">
-              <AgentTrustCard 
-                agent={property.agent} 
+              <AgentTrustCard
+                agent={property.agent}
                 onLineClick={() => openContactModal('sidebar')}
                 onCallClick={() => openContactModal('sidebar')}
                 onBookingClick={() => openContactModal('booking')}
               />
-              
+
               <div className="rounded-xl border border-blue-100 bg-blue-50 p-4">
                 <h4 className="mb-2 flex items-center gap-2 text-sm font-bold text-[#003366]">
                   <Shield size={16} />
@@ -586,7 +586,7 @@ export const PropertyDetailPage: React.FC = () => {
       </main>
 
       {/* 📱 30秒回電浮動按鈕 - 高轉換 */}
-      <button 
+      <button
         onClick={() => openContactModal('booking')}
         className="fixed bottom-28 right-4 z-40 flex size-16 animate-bounce flex-col items-center justify-center rounded-full bg-orange-500 text-xs font-bold text-white shadow-2xl transition-transform hover:scale-110 hover:bg-orange-600 lg:bottom-8"
         style={{ animationDuration: '2s' }}
@@ -614,20 +614,20 @@ export const PropertyDetailPage: React.FC = () => {
             </span>
           )}
         </div>
-        
+
         {/* 雙主按鈕 */}
         <div className="flex gap-2">
           {/* 左按鈕：加 LINE（低門檻）*/}
-          <button 
+          <button
             onClick={() => openContactModal('mobile_bar')}
             className="flex flex-[4] items-center justify-center gap-2 rounded-xl bg-[#06C755] py-3 font-bold text-white shadow-lg shadow-green-500/20"
           >
             <MessageCircle size={20} />
             加 LINE 諮詢
           </button>
-          
+
           {/* 右按鈕：預約看屋（高意圖）*/}
-          <button 
+          <button
             onClick={() => openContactModal('booking')}
             className="flex flex-[6] items-center justify-center gap-2 rounded-xl bg-[#003366] py-3 font-bold text-white shadow-lg shadow-blue-900/20"
           >
@@ -650,11 +650,11 @@ export const PropertyDetailPage: React.FC = () => {
 
       {/* VIP 高意願客戶攔截彈窗 (S-Grade) */}
       {showVipModal && (
-        <div 
+        <div
           className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4"
           onClick={() => setShowVipModal(false)}
         >
-          <div 
+          <div
             className="animate-in zoom-in-95 w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl duration-300"
             onClick={(e) => e.stopPropagation()}
           >

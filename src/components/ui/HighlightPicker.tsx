@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { Check, Plus, X } from 'lucide-react';
+import { isSpecTag } from '../../lib/tagUtils';
 
 // 標籤庫定義
 const HIGHLIGHT_CATEGORIES = [
@@ -70,8 +71,14 @@ export const HighlightPicker: React.FC<HighlightPickerProps> = ({
     if (value.includes(tag)) return; // 已存在
     if (value.length >= MAX_HIGHLIGHTS) return; // 已滿
 
+    // UP-4.1: 源頭清洗 - 阻擋規格型標籤
+    if (isSpecTag(tag)) {
+      alert('請勿將「格局、坪數、樓層」等規格填寫於亮點，請使用專屬欄位。');
+      return;
+    }
+
     onChange([...value, tag]);
-    
+
     // 清空該輸入框
     const newInputs = [...customInputs];
     newInputs[index] = '';
@@ -109,20 +116,19 @@ export const HighlightPicker: React.FC<HighlightPickerProps> = ({
               {category.tags.map((tag) => {
                 const isSelected = value.includes(tag);
                 const isDisabled = !isSelected && isFull;
-                
+
                 return (
                   <button
                     key={tag}
                     type="button"
                     onClick={() => toggleTag(tag)}
                     disabled={isDisabled}
-                    className={`flex items-center gap-1 rounded-full px-3 py-1.5 text-sm font-medium transition-all ${
-                      isSelected
-                        ? 'bg-[#003366] text-white shadow-sm'
-                        : isDisabled
+                    className={`flex items-center gap-1 rounded-full px-3 py-1.5 text-sm font-medium transition-all ${isSelected
+                      ? 'bg-[#003366] text-white shadow-sm'
+                      : isDisabled
                         ? 'cursor-not-allowed bg-slate-200 text-slate-400'
                         : 'bg-white text-slate-600 shadow-sm hover:bg-blue-50 hover:text-[#003366]'
-                    }`}
+                      }`}
                   >
                     {isSelected && <Check size={14} />}
                     {tag}
