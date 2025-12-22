@@ -259,11 +259,11 @@ export const propertyService: PropertyService = {
   },
 
   // 3. 上傳圖片 (UUID 防撞 + 並發限制 + 詳細錯誤回報)
-  uploadImages: async (files: File[], options?: { 
+  uploadImages: async (files: File[], options?: {
     concurrency?: number;
     onProgress?: (completed: number, total: number) => void;
-  }): Promise<{ 
-    urls: string[]; 
+  }): Promise<{
+    urls: string[];
     failed: { file: File; error: string }[];
     allSuccess: boolean;
   }> => {
@@ -271,16 +271,16 @@ export const propertyService: PropertyService = {
     const results: string[] = [];
     const failed: { file: File; error: string }[] = [];
     let completed = 0;
-    
+
     // 分批上傳（控制並發數）
     for (let i = 0; i < files.length; i += concurrency) {
       const batch = files.slice(i, i + concurrency);
-      
+
       const batchPromises = batch.map(async (file) => {
         try {
           const fileExt = file.name.split('.').pop()?.toLowerCase() || 'jpg';
           const fileName = `${crypto.randomUUID()}.${fileExt}`;
-          
+
           const { error } = await supabase.storage
             .from(UPLOAD_CONFIG.BUCKET)
             .upload(fileName, file, {
@@ -297,7 +297,7 @@ export const propertyService: PropertyService = {
           const { data } = supabase.storage
             .from('property-images')
             .getPublicUrl(fileName);
-          
+
           return data.publicUrl;
         } catch (e: unknown) {
           const errorMessage = e instanceof Error ? e.message : '上傳失敗';
@@ -324,17 +324,17 @@ export const propertyService: PropertyService = {
   // 3.1 清理圖片 (補償機制)
   deleteImages: async (urls: string[]) => {
     if (!urls || urls.length === 0) return;
-    
+
     // 從 URL 提取檔案名稱
     // 假設 URL 格式為: .../property-images/filename.jpg
     const fileNames = urls.map(url => url.split('/').pop()).filter(Boolean) as string[];
-    
+
     if (fileNames.length === 0) return;
 
     const { error } = await supabase.storage
       .from(UPLOAD_CONFIG.BUCKET)
       .remove(fileNames);
-    
+
     if (error) {
       console.error('Failed to cleanup images:', error);
       // 這裡不拋出錯誤，因為這是清理流程，不應阻斷主流程的錯誤回報
@@ -359,15 +359,24 @@ export const propertyService: PropertyService = {
 
     // 確認登入狀態
     const { data: { user } } = await supabase.auth.getUser();
-    
-    // 若未登入，使用預設 agent_id (開發模式)
+
+    // 嚴格權限控管：生產環境必須登入
+    if (!user && !import.meta.env.DEV) {
+      throw new Error('請先登入 (權限不足)');
+    }
+
+    // 若未登入且在開發模式，使用預設 agent_id
     const agentId = user?.id || 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
+
+    if (!user && import.meta.env.DEV) {
+      console.warn('⚠️ [DEV] 使用 Mock Agent ID 發佈物件');
+    }
 
     // 🏢 社區處理邏輯
     let communityId: string | null = existingCommunityId || null;
     let finalCommunityName = form.communityName?.trim() || null;
     let isNewCommunity = false;
-    
+
     // 「無社區」直接跳過社區處理
     if (finalCommunityName === '無') {
       communityId = null;
@@ -381,7 +390,7 @@ export const propertyService: PropertyService = {
     else if (form.address && finalCommunityName) {
       // 用共用函數計算地址指紋
       const addressFingerprint = computeAddressFingerprint(form.address);
-      
+
       // Step 1: 用地址指紋精準比對
       if (addressFingerprint.length >= 5) {
         const { data: existingByAddress } = await supabase
@@ -394,11 +403,11 @@ export const propertyService: PropertyService = {
           communityId = existingByAddress.id;
         }
       }
-      
+
       // Step 2: 地址沒找到，用社區名稱比對（正規化後比對）
       if (!communityId && finalCommunityName.length >= 2) {
         const normalizedInput = normalizeCommunityName(finalCommunityName);
-        
+
         // 撈同區域的社區，用正規化後的名稱比對
         const district = form.address.match(/([^市縣]+[區鄉鎮市])/)?.[1] || '';
         const { data: candidates } = await supabase
@@ -409,7 +418,7 @@ export const propertyService: PropertyService = {
 
         if (candidates && candidates.length > 0) {
           // 找正規化後完全相同的
-          const matched = candidates.find(c => 
+          const matched = candidates.find(c =>
             normalizeCommunityName(c.name) === normalizedInput
           );
           if (matched) {
@@ -431,12 +440,12 @@ export const propertyService: PropertyService = {
           }
         }
       }
-      
+
       // Step 3: 都沒找到，建立新社區（待審核）
       if (!communityId) {
         const district = form.address.match(/([^市縣]+[區鄉鎮市])/)?.[1] || '';
         const city = form.address.match(/^(.*?[市縣])/)?.[1] || '台北市';
-        
+
         // 🔧 新社區不直接存評價，交給 AI 處理
         const { data: newCommunity, error: communityError } = await supabase
           .from('communities')
@@ -477,29 +486,29 @@ export const propertyService: PropertyService = {
         community_id: communityId,
         size: Number(form.size || 0),
         age: Number(form.age || 0),
-        
+
         rooms: Number(form.rooms),
         halls: Number(form.halls),
         bathrooms: Number(form.bathrooms),
         floor_current: form.floorCurrent,
         floor_total: Number(form.floorTotal || 0),
         property_type: form.type,
-        
+
         // 結構化儲存 (HP-2.3: 確保 SSOT)
         advantage_1: form.advantage1,
         advantage_2: form.advantage2,
         disadvantage: form.disadvantage,
-        
+
         description: form.description,
         images: images,
         // SSOT: features 欄位存儲所有標籤，包含類型與重點膠囊
         features: Array.from(new Set([
-          form.type, 
+          form.type,
           ...(form.highlights || []),
           // 只有在沒有 highlights 時才 fallback 到 advantage
           ...((!form.highlights || form.highlights.length === 0) ? [form.advantage1, form.advantage2] : [])
         ])).filter(Boolean) as string[],
-        
+
         source_platform: form.sourceExternalId ? '591' : 'MH',
         source_external_id: form.sourceExternalId || null
       })
@@ -507,7 +516,7 @@ export const propertyService: PropertyService = {
       .single();
 
     if (error) throw error;
-    
+
     // 📝 把兩好一公道存進 community_reviews（不管新舊社區）
     if (communityId && (form.advantage1 || form.advantage2 || form.disadvantage)) {
       await supabase.from('community_reviews').insert({
@@ -518,7 +527,7 @@ export const propertyService: PropertyService = {
         advantage_2: form.advantage2 || null,
         disadvantage: form.disadvantage || null,
       });
-      
+
       // 🤖 Fire-and-forget：自動觸發 AI 重新總結社區牆（不擋主流程）
       // 每次有新評價進來都會重新聚合，確保 two_good / one_fair 永遠是最新的
       fetch('/api/generate-community-profile', {
@@ -527,7 +536,7 @@ export const propertyService: PropertyService = {
         body: JSON.stringify({ communityId })
       }).catch(err => console.warn('AI 總結背景執行中:', err));
     }
-    
+
     // 回傳包含社區資訊
     return {
       ...data,
@@ -538,7 +547,7 @@ export const propertyService: PropertyService = {
   // 5. 檢查社區是否存在 (供前端即時驗證)
   checkCommunityExists: async (name: string): Promise<{ exists: boolean; community?: { id: string; name: string } }> => {
     if (!name || name.trim().length < 2) return { exists: false };
-    
+
     const { data } = await supabase
       .from('communities')
       .select('id, name')
@@ -568,18 +577,18 @@ export async function getFeaturedProperties(): Promise<FeaturedProperty[]> {
   try {
     // 這裡建議加上完整的錯誤處理與 Timeout 機制 (可選)
     const response = await fetch('/api/home/featured-properties');
-    
+
     if (!response.ok) {
       console.warn('[propertyService] API 回應非 200:', response.status);
       return [];
     }
-    
+
     const json = await response.json();
-    
+
     if (json.success && Array.isArray(json.data)) {
       return json.data;
     }
-    
+
     console.warn('[propertyService] API 回傳格式錯誤:', json);
     return [];
   } catch (error) {

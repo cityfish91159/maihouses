@@ -74,6 +74,13 @@ export default defineConfig({
       clientPort: inCodespaces ? 443 : 5173,
       overlay: false,
     },
+    proxy: {
+      '/api': {
+        target: 'https://maihouses.vercel.app',
+        changeOrigin: true,
+        secure: false,
+      }
+    }
   },
   preview: { port: 5173, strictPort: true },
   optimizeDeps: {
