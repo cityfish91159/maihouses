@@ -4,6 +4,7 @@ import { usePropertyDraft, DraftFormData } from '../../hooks/usePropertyDraft';
 import { propertyService, PropertyFormInput } from '../../services/propertyService';
 import { notify } from '../../lib/notify';
 import { supabase } from '../../lib/supabase';
+import { parseSupabaseError } from '../../utils/errorParser';
 
 interface UploadResult {
   public_id: string;
@@ -49,8 +50,8 @@ export const UploadFormProvider: React.FC<{ children: ReactNode }> = ({ children
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [form, setForm] = useState<PropertyFormInput>({
-    title: '', price: '', address: '', communityName: '', size: '', age: '', 
-    floorCurrent: '', floorTotal: '', rooms: '3', halls: '2', bathrooms: '2', 
+    title: '', price: '', address: '', communityName: '', size: '', age: '',
+    floorCurrent: '', floorTotal: '', rooms: '3', halls: '2', bathrooms: '2',
     type: '電梯大樓', description: '',
     advantage1: '', advantage2: '', disadvantage: '',
     highlights: [],
@@ -127,7 +128,7 @@ export const UploadFormProvider: React.FC<{ children: ReactNode }> = ({ children
 
   // 追蹤 Object URLs 以便在組件卸載時清理
   const objectUrlsRef = useRef<string[]>([]);
-  
+
   useEffect(() => {
     objectUrlsRef.current = form.images.filter(url => url.startsWith('blob:'));
   }, [form.images]);
@@ -160,16 +161,16 @@ export const UploadFormProvider: React.FC<{ children: ReactNode }> = ({ children
       setValidating(true);
       try {
         const files = Array.from(e.target.files);
-        
+
         // 使用非同步驗證 (含 Magic Bytes 檢查)
         const { validFiles, invalidFiles, allValid } = await validateImagesAsync(files);
-        
+
         if (!allValid) {
           invalidFiles.forEach(({ file, error }) => {
             notify.warning(`${file.name} 無法上傳`, error || '檔案格式或大小不符合要求');
           });
         }
-        
+
         if (validFiles.length > 0) {
           setImageFiles(prev => [...prev, ...validFiles]);
           const urls = validFiles.map(file => URL.createObjectURL(file));
@@ -210,7 +211,7 @@ export const UploadFormProvider: React.FC<{ children: ReactNode }> = ({ children
 
     setLoading(true);
     setUploadProgress({ current: 0, total: imageFiles.length });
-    
+
     let uploadRes: { urls: string[]; failed: { file: File; error: string }[]; allSuccess: boolean } | null = null;
 
     try {
@@ -240,17 +241,17 @@ export const UploadFormProvider: React.FC<{ children: ReactNode }> = ({ children
             advantage2: form.advantage2
           })
         });
-        
+
         if (aiRes.ok) {
           const { capsules } = await aiRes.json();
           if (capsules && capsules.length > 0) {
             // 成功才覆寫 (KC-4.2) - 僅在欄位為空時填入，避免覆寫用戶手動輸入
             if (capsules[0] && !finalForm.advantage1) finalForm.advantage1 = capsules[0];
             if (capsules[1] && !finalForm.advantage2) finalForm.advantage2 = capsules[1];
-            
+
             // 同時存入 highlights 確保 UI 優先使用
             finalForm.highlights = capsules;
-            
+
             notify.success('AI 亮點生成成功', `已自動優化標籤：${capsules.join(', ')}`);
           }
         } else {
@@ -262,7 +263,7 @@ export const UploadFormProvider: React.FC<{ children: ReactNode }> = ({ children
       }
 
       const result = await propertyService.createPropertyWithForm(finalForm, uploadRes.urls, selectedCommunityId);
-      
+
       setUploadResult({
         public_id: result.public_id,
         community_id: result.community_id,
@@ -270,14 +271,14 @@ export const UploadFormProvider: React.FC<{ children: ReactNode }> = ({ children
         is_new_community: !selectedCommunityId && result.community_id !== null
       });
       setShowConfirmation(true);
-      
+
       // 發佈成功後清除草稿
       clearDraft();
-      
+
       notify.success('🎉 刊登成功！', `物件編號：${result.public_id}`);
     } catch (e: unknown) {
-      const errorMessage = e instanceof Error ? e.message : '發生未知錯誤';
-      
+      const errorMessage = parseSupabaseError(e);
+
       // 補償機制：發佈失敗時清理已上傳的圖片 (孤兒檔案處理)
       if (uploadRes && uploadRes.urls.length > 0) {
         notify.info('正在清理未使用的圖片...', '發佈失敗，正在移除已上傳的圖片');
@@ -287,7 +288,7 @@ export const UploadFormProvider: React.FC<{ children: ReactNode }> = ({ children
           notify.warning('圖片清理失敗', '部分圖片可能仍留在伺服器，請稍後重試或聯繫客服協助');
         }
       }
-      
+
       notify.error('刊登失敗', errorMessage);
     } finally {
       setLoading(false);

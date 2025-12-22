@@ -8,7 +8,7 @@ module.exports = {
           light: '#009FE8',
           dark: '#00385a',
           700: '#00385a',
-          600: '#004E7C', 
+          600: '#004E7C',
           500: '#00629B',
           300: '#7EA5FF',
           100: '#E6EDF7',
@@ -36,6 +36,10 @@ module.exports = {
           tertiary: 'var(--text-tertiary)',
           muted: '#6C7B91',
           ink: '#0A2246',
+        },
+        maihouses: {
+          dark: '#003366', // Was hardcoded
+          light: '#00A8E8', // Was hardcoded
         }
       },
       maxWidth: {

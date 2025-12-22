@@ -2,7 +2,7 @@ import React from 'react';
 import { Shield, ThumbsUp, ThumbsDown, AlertTriangle } from 'lucide-react';
 import { useUploadForm } from './UploadContext';
 
-const inputClass = "w-full p-3 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-[#003366] focus:border-transparent outline-none text-sm transition-all";
+const inputClass = "w-full p-3 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-maihouses-dark focus:border-transparent outline-none text-sm transition-all";
 
 export const TwoGoodsSection: React.FC = () => {
   const { form, setForm, validation } = useUploadForm();
@@ -16,7 +16,7 @@ export const TwoGoodsSection: React.FC = () => {
       <div className="mb-5 flex items-center gap-2">
         <Shield className="text-orange-500" size={22} />
         <div>
-          <h2 className="text-lg font-bold text-[#003366]">兩好一公道</h2>
+          <h2 className="text-lg font-bold text-maihouses-dark">兩好一公道</h2>
           <p className="text-xs text-slate-500">誠實揭露，建立買賣信任</p>
         </div>
       </div>
@@ -25,7 +25,7 @@ export const TwoGoodsSection: React.FC = () => {
         {/* 優點 1 */}
         <div>
           <label htmlFor="upload-advantage1" className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold text-green-700 uppercase tracking-wider">
-            <ThumbsUp size={14}/> 優點 1
+            <ThumbsUp size={14} /> 優點 1
           </label>
           <input
             id="upload-advantage1"
@@ -50,7 +50,7 @@ export const TwoGoodsSection: React.FC = () => {
         {/* 優點 2 */}
         <div>
           <label htmlFor="upload-advantage2" className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold text-green-700 uppercase tracking-wider">
-            <ThumbsUp size={14}/> 優點 2
+            <ThumbsUp size={14} /> 優點 2
           </label>
           <input
             id="upload-advantage2"
@@ -75,7 +75,7 @@ export const TwoGoodsSection: React.FC = () => {
         {/* 公道話 */}
         <div>
           <label htmlFor="upload-disadvantage" className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold text-orange-700 uppercase tracking-wider">
-            <ThumbsDown size={14}/> 誠實公道話
+            <ThumbsDown size={14} /> 誠實公道話
           </label>
           <input
             id="upload-disadvantage"
@@ -97,7 +97,7 @@ export const TwoGoodsSection: React.FC = () => {
           </div>
         </div>
       </div>
-      
+
       {/* 敏感詞警告區塊 */}
       {validation.contentCheck.hasIssues && (
         <div className={`mt-5 flex items-start gap-3 rounded-xl p-4 ${validation.contentCheck.blockSubmit ? 'border border-red-200 bg-red-50' : 'border border-yellow-200 bg-yellow-50'}`}>

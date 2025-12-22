@@ -25,12 +25,12 @@ export const PreviewSection: React.FC = () => {
   return (
     <section className="rounded-2xl border border-slate-200 bg-slate-50/50 p-5">
       <h3 className="mb-4 flex items-center gap-2 text-sm font-bold text-slate-500 uppercase tracking-wider">
-        <MapPin size={16} className="text-slate-400"/> 即時預覽
+        <MapPin size={16} className="text-slate-400" /> 即時預覽
       </h3>
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-md transition-all hover:shadow-lg">
         {form.images.length > 0 && (
           <div className="aspect-video overflow-hidden">
-            <img src={form.images[0]} alt="" className="size-full object-cover"/>
+            <img src={form.images[0]} alt="" className="size-full object-cover" />
           </div>
         )}
         <div className="p-5">
@@ -39,12 +39,12 @@ export const PreviewSection: React.FC = () => {
             <MapPin size={14} /> {form.address || '地址'}
           </p>
           <div className="mt-3 flex items-baseline gap-1.5">
-            <span className="text-2xl font-black text-[#003366]">{form.price || '0'}</span>
+            <span className="text-2xl font-black text-maihouses-dark">{form.price || '0'}</span>
             <span className="text-sm font-bold text-slate-500">萬</span>
           </div>
           <div className="mt-4 flex flex-wrap gap-2">
             {tags.map((tag, i) => (
-              <span key={i} className="rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-[#003366] border border-blue-100">
+              <span key={i} className="rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-maihouses-dark border border-blue-100">
                 {tag}
               </span>
             ))}
@@ -52,7 +52,7 @@ export const PreviewSection: React.FC = () => {
               <span className="text-xs text-slate-400 italic">尚未生成標籤</span>
             )}
           </div>
-          
+
           {/* 社區牆預覽提示 */}
           {form.communityName && (
             <div className="mt-4 border-t border-slate-100 pt-3 text-xs text-slate-500">

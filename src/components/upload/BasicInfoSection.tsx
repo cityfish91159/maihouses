@@ -3,7 +3,7 @@ import { Home } from 'lucide-react';
 import { CommunityPicker } from '../ui/CommunityPicker';
 import { useUploadForm } from './UploadContext';
 
-const inputClass = "w-full p-3 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-[#003366] focus:border-transparent outline-none text-sm transition-all";
+const inputClass = "w-full p-3 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-maihouses-dark focus:border-transparent outline-none text-sm transition-all";
 
 export const BasicInfoSection: React.FC = () => {
   const { form, setForm, validation, setSelectedCommunityId } = useUploadForm();
@@ -19,45 +19,45 @@ export const BasicInfoSection: React.FC = () => {
 
   return (
     <section className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
-      <h2 className="mb-5 flex items-center gap-2 text-lg font-bold text-[#003366]">
-        <Home size={20} className="text-[#00A8E8]"/> 基本資料
+      <h2 className="mb-5 flex items-center gap-2 text-lg font-bold text-maihouses-dark">
+        <Home size={20} className="text-maihouses-light" /> 基本資料
       </h2>
-      
+
       <div className="space-y-4">
         <div>
           <label htmlFor="upload-title" className="mb-1.5 block text-xs font-semibold text-slate-500 uppercase tracking-wider">物件標題 *</label>
-          <input 
-            id="upload-title" 
-            name="title" 
-            value={form.title} 
-            onChange={onInput} 
-            className={`${inputClass} font-bold ${!validation.title.valid && form.title.length > 0 ? 'border-red-300 bg-red-50' : ''}`} 
-            placeholder="例如：信義區101景觀全新裝潢大三房" 
+          <input
+            id="upload-title"
+            name="title"
+            value={form.title}
+            onChange={onInput}
+            className={`${inputClass} font-bold ${!validation.title.valid && form.title.length > 0 ? 'border-red-300 bg-red-50' : ''}`}
+            placeholder="例如：信義區101景觀全新裝潢大三房"
           />
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label htmlFor="upload-price" className="mb-1.5 block text-xs font-semibold text-slate-500 uppercase tracking-wider">價格 (萬) *</label>
-            <input 
-              id="upload-price" 
-              name="price" 
-              type="number" 
-              value={form.price} 
-              onChange={onInput} 
-              className={`${inputClass} ${!validation.price.valid && form.price.length > 0 ? 'border-red-300 bg-red-50' : ''}`} 
-              placeholder="0" 
+            <input
+              id="upload-price"
+              name="price"
+              type="number"
+              value={form.price}
+              onChange={onInput}
+              className={`${inputClass} ${!validation.price.valid && form.price.length > 0 ? 'border-red-300 bg-red-50' : ''}`}
+              placeholder="0"
             />
           </div>
           <div>
             <label htmlFor="upload-address" className="mb-1.5 block text-xs font-semibold text-slate-500 uppercase tracking-wider">地址 *</label>
-            <input 
-              id="upload-address" 
-              name="address" 
-              value={form.address} 
-              onChange={onInput} 
-              className={`${inputClass} ${!validation.address.valid && form.address.length > 0 ? 'border-red-300 bg-red-50' : ''}`} 
-              placeholder="台北市信義區..." 
+            <input
+              id="upload-address"
+              name="address"
+              value={form.address}
+              onChange={onInput}
+              className={`${inputClass} ${!validation.address.valid && form.address.length > 0 ? 'border-red-300 bg-red-50' : ''}`}
+              placeholder="台北市信義區..."
             />
           </div>
         </div>

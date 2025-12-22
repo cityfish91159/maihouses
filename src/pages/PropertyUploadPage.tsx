@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { 
+import {
   Loader2, Download, Check, Home, ArrowLeft, Building2, Edit3, RotateCcw
 } from 'lucide-react';
 import { notify } from '../lib/notify';
@@ -15,12 +15,12 @@ import { UploadFormProvider, useUploadForm } from '../components/upload/UploadCo
 
 const PropertyUploadContent: React.FC = () => {
   const navigate = useNavigate();
-  const { 
-    loading, 
-    setLoading, 
-    uploadProgress, 
-    setForm, 
-    validation, 
+  const {
+    loading,
+    setLoading,
+    uploadProgress,
+    setForm,
+    validation,
     handleSubmit,
     uploadResult,
     showConfirmation,
@@ -83,16 +83,16 @@ const PropertyUploadContent: React.FC = () => {
   // 591 搬家
   const handleImport591 = () => {
     const url = prompt('請貼上 591 網址');
-    if(!url) return;
+    if (!url) return;
     setLoading(true);
     setTimeout(() => {
-      setForm(prev => ({ 
-        ...prev, 
-        title: '【急售】信義區捷運景觀豪邸', 
-        price: '2880', 
-        address: '台北市信義區忠孝東路', 
+      setForm(prev => ({
+        ...prev,
+        title: '【急售】信義區捷運景觀豪邸',
+        price: '2880',
+        address: '台北市信義區忠孝東路',
         size: '45.2',
-        sourceExternalId: '591-MOCK-ID' 
+        sourceExternalId: '591-MOCK-ID'
       }));
       setLoading(false);
     }, 1000);
@@ -109,7 +109,7 @@ const PropertyUploadContent: React.FC = () => {
             <h1 className="text-2xl font-black">上傳成功！</h1>
             <p className="mt-1 opacity-90">您的物件已正式發佈</p>
           </div>
-          
+
           <div className="p-8">
             <div className="mb-8 space-y-4">
               <div className="flex items-center gap-4 rounded-2xl bg-slate-50 p-4">
@@ -141,21 +141,21 @@ const PropertyUploadContent: React.FC = () => {
             </div>
 
             <div className="grid grid-cols-1 gap-3">
-              <Link 
+              <Link
                 to={`/p/${uploadResult.public_id}`}
-                className="flex items-center justify-center gap-2 rounded-xl bg-[#003366] py-4 font-bold text-white transition-all hover:bg-[#002244] active:scale-[0.98]"
+                className="flex items-center justify-center gap-2 rounded-xl bg-maihouses-dark py-4 font-bold text-white transition-all hover:bg-[#002244] active:scale-[0.98]"
               >
                 查看物件詳情
               </Link>
               {uploadResult.community_id && (
-                <Link 
+                <Link
                   to={`/community/${uploadResult.community_id}`}
-                  className="flex items-center justify-center gap-2 rounded-xl border-2 border-[#003366] py-4 font-bold text-[#003366] transition-all hover:bg-blue-50 active:scale-[0.98]"
+                  className="flex items-center justify-center gap-2 rounded-xl border-2 border-maihouses-dark py-4 font-bold text-maihouses-dark transition-all hover:bg-blue-50 active:scale-[0.98]"
                 >
                   前往社區牆
                 </Link>
               )}
-              <button 
+              <button
                 onClick={() => window.location.reload()}
                 className="mt-2 text-sm font-bold text-slate-400 hover:text-slate-600"
               >
@@ -177,16 +177,16 @@ const PropertyUploadContent: React.FC = () => {
             <button onClick={() => navigate(-1)} className="rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600">
               <ArrowLeft size={20} />
             </button>
-            <h1 className="text-xl font-black text-[#003366]">刊登物件</h1>
+            <h1 className="text-xl font-black text-maihouses-dark">刊登物件</h1>
           </div>
           <div className="flex items-center gap-3">
             {draftAvailable && (
               <div className="flex items-center gap-2">
-                <button 
+                <button
                   onClick={handleRestoreDraft}
                   className="flex items-center gap-2 rounded-full bg-blue-50 px-4 py-2 text-sm font-bold text-blue-600 transition-all hover:bg-blue-100"
                 >
-                  <RotateCcw size={16}/> 還原草稿
+                  <RotateCcw size={16} /> 還原草稿
                   {draftPreview && (
                     <span className="text-[11px] font-semibold text-blue-500">{draftPreview.title.slice(0, 10)} / {draftPreview.savedAt}</span>
                   )}
@@ -199,11 +199,11 @@ const PropertyUploadContent: React.FC = () => {
                 </button>
               </div>
             )}
-            <button 
+            <button
               onClick={handleImport591}
               className="hidden items-center gap-2 rounded-full bg-orange-50 px-4 py-2 text-sm font-bold text-orange-600 transition-all hover:bg-orange-100 sm:flex"
             >
-              <Download size={16}/> 591 搬家
+              <Download size={16} /> 591 搬家
             </button>
             {!userId && (
               <Link to="/auth" className="text-sm font-bold text-blue-600 hover:underline">登入以同步</Link>
@@ -238,11 +238,10 @@ const PropertyUploadContent: React.FC = () => {
                 <button
                   onClick={handleSubmit}
                   disabled={!validation.canSubmit || loading}
-                  className={`group relative w-full overflow-hidden rounded-xl py-4 font-black text-white transition-all active:scale-[0.98] ${
-                    validation.canSubmit && !loading
-                      ? 'bg-gradient-to-r from-[#003366] to-[#00A8E8] shadow-lg shadow-blue-200 hover:translate-y-[-2px] hover:shadow-xl'
+                  className={`group relative w-full overflow-hidden rounded-xl py-4 font-black text-white transition-all active:scale-[0.98] ${validation.canSubmit && !loading
+                      ? 'bg-gradient-to-r from-maihouses-dark to-maihouses-light shadow-lg shadow-blue-200 hover:translate-y-[-2px] hover:shadow-xl'
                       : 'cursor-not-allowed bg-slate-300'
-                  }`}
+                    }`}
                 >
                   {loading ? (
                     <div className="flex items-center justify-center gap-3">
