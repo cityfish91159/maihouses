@@ -261,6 +261,7 @@ export const UploadFormProvider: React.FC<{ children: ReactNode }> = ({ children
 
       // KC-4.2 & 4.3: AI 生成亮點膠囊 (優雅降級)
       let finalForm = { ...form };
+      /* 暫時關閉 AI 自動生成，以尊重用戶手動勾選為主 (User Request)
       try {
         const aiRes = await fetch('/api/property/generate-key-capsules', {
           method: 'POST',
@@ -292,6 +293,7 @@ export const UploadFormProvider: React.FC<{ children: ReactNode }> = ({ children
         // 降級處理：AI 失敗不阻塞主流程 (KC-4.3)
         notify.warning('AI 亮點生成跳過', '目前無法使用 AI 優化，將以原始內容發佈');
       }
+      */
 
       const result = await propertyService.createPropertyWithForm(finalForm, uploadRes.urls, selectedCommunityId);
       
