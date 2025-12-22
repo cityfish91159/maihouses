@@ -14,23 +14,6 @@ const normalize = (value: string) => value.trim().replace(/\s+/g, ' ');
 const isNonEmpty = (value: unknown): value is string =>
   typeof value === 'string' && value.trim().length > 0;
 
-function inferFloorTag(current: string | null | undefined, total: number | null | undefined): string | null {
-  const text = current?.trim() || '';
-  if (text) {
-    if (/高樓層|高樓/.test(text)) return '高樓層';
-    if (/低樓層|低樓/.test(text)) return '低樓層';
-  }
-
-  // 數字推斷邏輯 (P2 缺失修正)
-  const curNum = parseInt(text, 10);
-  if (!isNaN(curNum) && typeof total === 'number' && total > 0) {
-    const ratio = curNum / total;
-    if (ratio >= 0.7) return '高樓層';
-    if (ratio <= 0.3 && total >= 4) return '低樓層';
-  }
-  return null;
-}
-
 function pushUnique(target: string[], value: string | null) {
   if (!value) return;
   const normalized = normalize(value);
@@ -58,19 +41,14 @@ export function formatFloor(current: string | null | undefined, total: number | 
 
   // 常見輸入正規化：將「12F / 12 f」視為「12」以便繁中化輸出
   const cur = curRaw.replace(/^(\d+)\s*[Ff]$/, '$1');
-  
+
   // 統一繁中單位：若只有數字則補「樓」，否則保留原樣（如「頂樓」）
   const displayCur = /^\d+$/.test(cur) ? `${cur} 樓` : cur;
   const displayTotal = total && total > 0 ? `${total} 層` : null;
-  
+
   return displayTotal ? `${displayCur} / ${displayTotal}` : displayCur;
 }
 
-/**
- * 產出 tags[]，遵守 index 語意：
- * - tags[0..1]：Highlights（賣點）
- * - tags[2..3]：Specs（規格）
- */
 export function buildKeyCapsuleTags(input: KeyCapsuleInput): string[] {
   const tags: string[] = [];
 
@@ -82,8 +60,6 @@ export function buildKeyCapsuleTags(input: KeyCapsuleInput): string[] {
       if (isNonEmpty(feature)) highlightCandidates.push(feature);
     }
   }
-  // 傳入 floorTotal 進行推斷 (P0 缺失修正)
-  highlightCandidates.push(inferFloorTag(input.floorCurrent, input.floorTotal) ?? '');
 
   for (const candidate of highlightCandidates) {
     if (tags.length >= 2) break;
