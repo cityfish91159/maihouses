@@ -290,6 +290,18 @@ export const UploadFormProvider: React.FC<{ children: ReactNode }> = ({ children
 
     // UP-3.4: 確保封面在第一位
     const sortedImages = getSortedImages(state.managedImages);
+
+    // UP-3.D: Invariant check - 封面必須在第一位
+    if (sortedImages.length > 0 && sortedImages[0]?.isCover === false) {
+      console.warn('[UP-3.D] Invariant violation: Cover image is not at position 0');
+    }
+    if (process.env.NODE_ENV !== 'production') {
+      console.assert(
+        sortedImages.length === 0 || sortedImages[0]?.isCover || !sortedImages.some(img => img.isCover),
+        '[UP-3.D] 封面圖片必須在 images[0] 位置'
+      );
+    }
+
     const filesToUpload = sortedImages.map(img => img.file);
 
     dispatch({ type: 'START_UPLOAD', payload: { total: filesToUpload.length } });
