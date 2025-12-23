@@ -16,15 +16,36 @@ const noopStorage = {
 };
 
 function getStorage(type: 'localStorage' | 'sessionStorage') {
+    // 1. 先檢查 window 是否存在（SSR 安全）
+    if (typeof window === 'undefined') {
+        return noopStorage;
+    }
+    
     try {
-        const storage = window[type];
-        // Test storage to verify it actually works
+        // 2. 使用 Object.prototype.hasOwnProperty 檢查，避免直接存取時拋錯
+        if (!(type in window)) {
+            return noopStorage;
+        }
+        
+        // 3. 用 try-catch 包裝存取，因為某些 iOS Safari 在這一步就會拋 SecurityError
+        let storage: Storage;
+        try {
+            storage = window[type];
+        } catch {
+            return noopStorage;
+        }
+        
+        if (!storage) {
+            return noopStorage;
+        }
+        
+        // 4. Test storage to verify it actually works
         const x = '__storage_test__';
         storage.setItem(x, x);
         storage.removeItem(x);
         return storage;
     } catch (e) {
-        console.warn(`[SafeStorage] ${type} is not available (SecurityError or unsupported). Using in-memory fallback.`);
+        // 靜默失敗，不要 console.warn 因為這可能在模組初始化時執行
         return noopStorage;
     }
 }
