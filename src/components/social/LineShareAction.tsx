@@ -24,7 +24,7 @@ export const LineShareAction: React.FC<ShareProps> = ({
 }) => {
     const handleShare = () => {
         // 1. Trigger mascot celebration (Global Event)
-        window.dispatchEvent(new CustomEvent('mascot:celebrate', { detail: { emoji: '🎉' } }));
+        window.dispatchEvent(new CustomEvent('mascot:celebrate'));
 
         // 2. Notify user
         notify.success('✨ 準備分享至 LINE', 'MaiMai 已經幫您整理好物件摘要了！');

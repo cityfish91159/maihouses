@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { Home, Heart, Phone, MessageCircle, Hash, MapPin, ArrowLeft, Shield, Eye, Users, Calendar, Flame, Star, Lock, ChevronRight, CheckCircle, FileText } from 'lucide-react';
 import { AgentTrustCard } from '../components/AgentTrustCard';
@@ -272,6 +273,14 @@ export const PropertyDetailPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#f8fafc] font-sans text-slate-800">
+      <Helmet>
+        <title>{property?.title ? `${property.title} | 邁房子` : '邁房子 | 讓家,不只是地址'}</title>
+        <meta name="description" content={property?.title ? `【邁房子推薦】${property.title} - ${property.price} | ${property.address}` : '邁房子為您提供優質好房'} />
+        <meta property="og:title" content={property?.title ? `${property.title} | 總價 ${property.price}` : '邁房子'} />
+        <meta property="og:description" content={property ? `${property.address} | ${formatArea(property.size)} | ${formatLayout(property.rooms, property.halls)}` : '邁房子為您提供優質好房'} />
+        <meta property="og:image" content={property?.images?.[0] || 'https://maihouses.vercel.app/og-default.jpg'} />
+        <meta property="og:type" content="article" />
+      </Helmet>
       {/* Header */}
       <nav className="sticky top-0 z-overlay flex h-16 items-center justify-between border-b border-slate-100 bg-white/90 px-4 shadow-sm backdrop-blur-md">
         <div className="flex items-center gap-3">
