@@ -1,6 +1,7 @@
 /// <reference types="vitest" />
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import legacy from '@vitejs/plugin-legacy'
 import checker from 'vite-plugin-checker'
 import { execSync } from 'node:child_process'
 
@@ -33,11 +34,22 @@ const gitSha = resolveGitSha()
 
 export default defineConfig({
   plugins: [
-    react(),
-    checker({
-      typescript: true,
-      overlay: { initialIsOpen: false },
+    legacy({
+      // 目標：避免舊版 iOS/Safari 因不支援 module 直接白屏
+      // 交由 plugin-legacy 產出 nomodule + polyfills
+      targets: ['defaults', 'ios >= 11', 'safari >= 11'],
     }),
+    react(),
+    // build 時已跑過 `tsc`，這個 checker 會額外啟動服務吃記憶體
+    // 只在 dev/serve 啟用即可
+    ...(process.env.NODE_ENV === 'development'
+      ? [
+          checker({
+            typescript: true,
+            overlay: { initialIsOpen: false },
+          }),
+        ]
+      : []),
   ],
   define: {
     __APP_VERSION__: JSON.stringify(gitSha),
@@ -47,7 +59,7 @@ export default defineConfig({
   base: '/maihouses/',
   build: {
     outDir: 'dist', // Standardize to dist for Vercel
-    sourcemap: true, // Enable sourcemaps for debugging
+    sourcemap: false, // legacy build + sourcemap 容易 OOM，先關閉避免白屏無法部署
     chunkSizeWarningLimit: 1000, // Increase warning limit to 1000kB
     rollupOptions: {
       input: {

@@ -19,7 +19,8 @@ declare global {
   var __UAG__: { queue: Uag[]; timer?: number; backoff: number; attempts: number } | undefined
 }
 
-const G = globalThis.__UAG__ || (globalThis.__UAG__ = { queue: [], backoff: 10000, attempts: 0 })
+const _global = (typeof globalThis !== 'undefined' ? globalThis : typeof window !== 'undefined' ? window : typeof self !== 'undefined' ? self : {}) as any;
+const G = _global.__UAG__ || (_global.__UAG__ = { queue: [], backoff: 10000, attempts: 0 });
 
 try {
   G.queue = JSON.parse(localStorage.getItem(KEY) || '[]')
@@ -44,7 +45,7 @@ async function flush(batch: Uag[]) {
 
   if (r.ok) {
     const ids = new Set(batch.map((b) => b.requestId))
-    G.queue = G.queue.filter((x) => !ids.has(x.requestId))
+    G.queue = G.queue.filter((x: Uag) => !ids.has(x.requestId))
     save()
     G.attempts = 0
     G.backoff = 10000
