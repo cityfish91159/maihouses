@@ -4,6 +4,7 @@ import {
   Loader2, Download, Check, Home, ArrowLeft, Building2, Edit3, RotateCcw
 } from 'lucide-react';
 import { notify } from '../lib/notify';
+import { Logo } from '../components/Logo/Logo'; // Atomic Logo w/ M Icon
 
 // 抽離的子組件 (HP-2.2)
 import { BasicInfoSection } from '../components/upload/BasicInfoSection';
@@ -171,29 +172,36 @@ const PropertyUploadContent: React.FC = () => {
   return (
     <div className="min-h-screen bg-slate-50 pb-20">
       {/* Header */}
-      <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/80 backdrop-blur-md">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-4">
-          <div className="flex items-center gap-4">
-            <button onClick={() => navigate(-1)} className="rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600">
+      <header className="sticky top-0 z-30 border-b border-brand-100 bg-white/95 backdrop-blur-md">
+        <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => navigate(-1)}
+              className="rounded-xl p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
+            >
               <ArrowLeft size={20} />
             </button>
-            <h1 className="text-xl font-black text-maihouses-dark">刊登物件</h1>
+            {/* Atomic Logo Component */}
+            <div className="scale-90 origin-left">
+              <Logo showSlogan={false} showBadge={false} />
+            </div>
           </div>
+
           <div className="flex items-center gap-3">
             {draftAvailable && (
               <div className="flex items-center gap-2">
                 <button
                   onClick={handleRestoreDraft}
-                  className="flex items-center gap-2 rounded-full bg-blue-50 px-4 py-2 text-sm font-bold text-blue-600 transition-all hover:bg-blue-100"
+                  className="flex items-center gap-2 rounded-full bg-[#003366] px-4 py-2 text-sm font-bold text-white shadow-md shadow-blue-900/10 transition-all hover:bg-[#002244] hover:shadow-lg active:scale-95"
                 >
                   <RotateCcw size={16} /> 還原草稿
                   {draftPreview && (
-                    <span className="text-[11px] font-semibold text-blue-500">{draftPreview.title.slice(0, 10)} / {draftPreview.savedAt}</span>
+                    <span className="opacity-80 text-[11px] font-medium border-l border-white/20 pl-2 ml-1">{draftPreview.savedAt}</span>
                   )}
                 </button>
                 <button
                   onClick={handleDiscardDraft}
-                  className="rounded-full px-3 py-2 text-xs font-bold text-slate-500 hover:bg-slate-100"
+                  className="rounded-full px-3 py-2 text-xs font-bold text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
                 >
                   捨棄
                 </button>
@@ -201,12 +209,13 @@ const PropertyUploadContent: React.FC = () => {
             )}
             <button
               onClick={handleImport591}
-              className="hidden items-center gap-2 rounded-full bg-orange-50 px-4 py-2 text-sm font-bold text-orange-600 transition-all hover:bg-orange-100 sm:flex"
+              className="hidden items-center gap-2 rounded-full border-2 border-[#003366] bg-white px-4 py-1.5 text-sm font-bold text-[#003366] transition-all hover:bg-blue-50 sm:flex"
             >
               <Download size={16} /> 591 搬家
             </button>
+
             {!userId && (
-              <Link to="/auth" className="text-sm font-bold text-blue-600 hover:underline">登入以同步</Link>
+              <Link to="/auth" className="ml-2 text-sm font-bold text-[#003366] hover:underline">登入同步</Link>
             )}
           </div>
         </div>
@@ -239,8 +248,8 @@ const PropertyUploadContent: React.FC = () => {
                   onClick={handleSubmit}
                   disabled={!validation.canSubmit || loading}
                   className={`group relative w-full overflow-hidden rounded-xl py-4 font-black text-white transition-all active:scale-[0.98] ${validation.canSubmit && !loading
-                      ? 'bg-gradient-to-r from-maihouses-dark to-maihouses-light shadow-lg shadow-blue-200 hover:translate-y-[-2px] hover:shadow-xl'
-                      : 'cursor-not-allowed bg-slate-300'
+                    ? 'bg-gradient-to-r from-maihouses-dark to-maihouses-light shadow-lg shadow-blue-200 hover:translate-y-[-2px] hover:shadow-xl'
+                    : 'cursor-not-allowed bg-slate-300'
                     }`}
                 >
                   {loading ? (
