@@ -84,17 +84,17 @@ interface DBProperty {
   // 主鍵與識別
   id: string;
   public_id: string;
-  
+
   // 基本資訊
   title: string | null;
   price: number | null;
   address: string | null;
   images: string[] | null;
-  
+
   // 社區關聯 (20241201_property_community_link.sql)
   community_id: string | null;
   community_name: string | null;
-  
+
   // 詳細規格 (20251127_property_upload_schema.sql)
   size: number | null;
   rooms: number | null;             // DB: rooms NUMERIC DEFAULT 0
@@ -103,15 +103,15 @@ interface DBProperty {
   floor_current: string | null;      // DB: floor_current TEXT
   floor_total: number | null;        // DB: floor_total NUMERIC
   features: string[] | null;        // DB: features TEXT[] DEFAULT '{}'
-  
+
   // 兩好一公道 (properties 表直接有這些欄位)
   advantage_1: string | null;
   advantage_2: string | null;
   disadvantage: string | null;
-  
+
   // 房齡相關 (DB 是 age，不是 year_built)
   age: number | null;               // DB: age NUMERIC (房齡年數)
-  
+
   // ❌ 已移除不存在的欄位:
   // - year_built (DB 用 age 表示房齡)
   // - total_units (在 communities 表，不在 properties)
@@ -135,25 +135,25 @@ interface DBReview {
   community_id: string;
   property_id: string;              // VIEW: p.id AS property_id
   author_id: string | null;         // VIEW: p.agent_id AS author_id
-  
+
   // 兩好一公道 (來自 properties 表)
   advantage_1: string | null;
   advantage_2: string | null;
   disadvantage: string | null;
-  
+
   // 來源
   source_platform: string | null;
   source: string | null;            // VIEW: p.source_external_id AS source
-  
+
   // JSONB 內容 (VIEW 組裝的)
   content: {
     pros: (string | null)[];        // [advantage_1, advantage_2]
     cons: string | null;            // disadvantage
     property_title: string;
   } | null;
-  
+
   created_at: string;
-  
+
   // ❌ 已移除不存在的欄位:
   // - rating (VIEW 沒有)
   // - author_name (VIEW 用 author_id)
@@ -170,7 +170,7 @@ interface DBReview {
  */
 function buildPropertyDetails(property: DBProperty): string[] {
   const details: string[] = [];
-  
+
   // 房型格局
   if (property.rooms || property.halls || property.bathrooms) {
     const layout = [
@@ -181,16 +181,16 @@ function buildPropertyDetails(property: DBProperty): string[] {
     const sizeInfo = property.size ? `室內 ${property.size}坪` : '';
     details.push([layout, sizeInfo].filter(Boolean).join(' + '));
   }
-  
+
   // 屋齡
   if (property.age) {
     details.push(`🏢 屋齡 ${property.age} 年`);
   }
-  
+
   // 優勢
   if (property.advantage_1) details.push(property.advantage_1);
   if (property.advantage_2) details.push(property.advantage_2);
-  
+
   return details;
 }
 
@@ -206,8 +206,8 @@ function buildFeaturedReviews(
     stars: '★★★★☆',  // D26: VIEW 沒有 rating，給預設
     author: '匿名用戶',  // D26: VIEW 沒有 author_name
     tags: [r.advantage_1, r.advantage_2].filter(Boolean) as string[] | undefined,
-    content: r.content 
-      ? `${r.content.property_title || '好物件'} - 優點：${r.content.pros?.filter(Boolean).join('、') || '無'}` 
+    content: r.content
+      ? `${r.content.property_title || '好物件'} - 優點：${r.content.pros?.filter(Boolean).join('、') || '無'}`
       : (r.advantage_1 || '好評推薦')
   }));
 
@@ -225,7 +225,7 @@ function buildFeaturedReviews(
   while (adaptedReviews.length < 2 && seedReviews.length > adaptedReviews.length) {
     adaptedReviews.push(seedReviews[adaptedReviews.length]);
   }
-  
+
   return adaptedReviews;
 }
 
@@ -241,13 +241,31 @@ function adaptToFeaturedCard(
   const details = buildPropertyDetails(property);
   const adaptedReviews = buildFeaturedReviews(reviews, seed.reviews);
 
+  // D31 Optimization: Generate dynamic tags (Capsules) from property attributes
+  const tags = buildKeyCapsuleTags({
+    advantage1: property.advantage_1 ?? undefined,
+    advantage2: property.advantage_2 ?? undefined,
+    features: property.features ?? undefined,
+    floorCurrent: property.floor_current ?? undefined,
+    floorTotal: property.floor_total ?? undefined,
+    size: property.size ?? undefined,
+    rooms: property.rooms ?? undefined,
+    halls: property.halls ?? undefined
+  });
+
+  // D31 Optimization: Use advantages as highlights if available, fallback to seed
+  const dynamicHighlights = (property.advantage_1 && property.advantage_2)
+    ? `🏪 ${property.advantage_1}・${property.advantage_2}`
+    : seed.highlights;
+
   return {
     badge: property.features?.[0] || seed.badge,
     image: property.images?.[0] || seed.image,
     title: property.title || seed.title,
     location: property.address ? `📍 ${property.address}` : seed.location,
+    tags: tags.length > 0 ? tags : (seed.tags || []), // Use generated tags or seed
     details: details.length > 0 ? details : seed.details,
-    highlights: seed.highlights,
+    highlights: dynamicHighlights,
     rating: reviews.length > 0 ? `${reviews.length} 則評價` : seed.rating,
     reviews: adaptedReviews,
     lockCount: reviews.length || seed.lockCount,
@@ -272,7 +290,7 @@ function adaptToListingCard(
     // D26: tags 不存在，用 advantage_1 作為 badge
     badge: r.advantage_1 || (i === 0 ? '真實評價' : '住戶推薦'),
     // D26: content 是 JSONB 物件，author_name 不存在
-    content: r.content 
+    content: r.content
       ? `「${r.content.property_title || '好物件'}」— ${r.content.pros?.filter(Boolean).join('、') || '好評'}`
       : (r.advantage_1 || seed.reviews[i]?.content || '好評推薦')
   }));
@@ -320,8 +338,8 @@ function adaptToListingCard(
 
   return {
     image,
-    title: property.title 
-      ? `${property.title}・${property.address?.split('區')[0]}區` 
+    title: property.title
+      ? `${property.title}・${property.address?.split('區')[0]}區`
       : seed.title,
     // 修正 Legacy Tag (P1 缺失修正)：改為由 SSOT tags[0] 產出，不再獨立 fallback
     tag: finalTags[0] || seed.tag,
@@ -351,15 +369,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     'http://localhost:5173',
     'http://localhost:4173'
   ];
-  const allowedOrigins = process.env.ALLOWED_ORIGINS 
+  const allowedOrigins = process.env.ALLOWED_ORIGINS
     ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
     : defaultOrigins;
-  
+
   const origin = req.headers.origin;
   if (origin && allowedOrigins.includes(origin)) {
     res.setHeader('Access-Control-Allow-Origin', origin);
   }
-  
+
   // Cache: 60秒 CDN 快取 + 5分鐘 stale-while-revalidate
   res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=300');
 
@@ -393,7 +411,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     ));
 
     let reviewsMap: Record<string, DBReview[]> = {};
-    
+
     if (communityIds.length > 0) {
       // D26 修正：使用正確的 community_reviews VIEW 欄位
       // VIEW 沒有 rating, author_name, tags，改用正確欄位
@@ -426,37 +444,37 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // 3. 組裝資料
     const realProperties = properties || [];
-    
+
     // Featured: 取前 3 筆
     const featuredProps = realProperties.slice(0, 3);
     const featured = {
       main: featuredProps[0]
         ? adaptToFeaturedCard(
-            featuredProps[0] as DBProperty,
-            reviewsMap[featuredProps[0].community_id || ''] || [],
-            seed.featured.main
-          )
+          featuredProps[0] as DBProperty,
+          reviewsMap[featuredProps[0].community_id || ''] || [],
+          seed.featured.main
+        )
         : seed.featured.main,
       sideTop: featuredProps[1]
         ? adaptToFeaturedCard(
-            featuredProps[1] as DBProperty,
-            reviewsMap[featuredProps[1].community_id || ''] || [],
-            seed.featured.sideTop
-          )
+          featuredProps[1] as DBProperty,
+          reviewsMap[featuredProps[1].community_id || ''] || [],
+          seed.featured.sideTop
+        )
         : seed.featured.sideTop,
       sideBottom: featuredProps[2]
         ? adaptToFeaturedCard(
-            featuredProps[2] as DBProperty,
-            reviewsMap[featuredProps[2].community_id || ''] || [],
-            seed.featured.sideBottom
-          )
+          featuredProps[2] as DBProperty,
+          reviewsMap[featuredProps[2].community_id || ''] || [],
+          seed.featured.sideBottom
+        )
         : seed.featured.sideBottom
     };
 
     // Listings: 取第 4-11 筆
     const listingProps = realProperties.slice(3, 11);
     const listings: ListingPropertyCard[] = [];
-    
+
     for (let i = 0; i < 8; i++) {
       if (listingProps[i]) {
         listings.push(adaptToListingCard(
@@ -494,7 +512,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   } catch (error) {
     // D30: 錯誤時回傳 Seed，不暴露內部錯誤訊息給前端
     console.error('[API] Error, falling back to seed:', error);
-    
+
     return res.status(200).json({
       success: false,
       data: seed,
