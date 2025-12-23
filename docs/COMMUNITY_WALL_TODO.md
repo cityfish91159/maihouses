@@ -52,75 +52,15 @@
 
 ---
 
-### MM-1 缺失清單
+### MM-1.H 待修 (85/100)
 
-| # | 問題 | 狀態 | 修正/說明 |
-|:---:|:---|:---:|:---|
-| A | 單元測試 | ✅ | 25 tests passed |
-| B | AC1~4 未驗 | ✅ | 點擊 5 次/SmartAsk 慶祝皆有 confetti + mood 對齊 |
-| C | SIZE_CLASSES 重複 | ✅ | MaiMaiBase + MascotInteractive 改用 types.SIZE_CLASSES |
-| D | MaiMaiSpeech 沒人用 | ✅ | MascotInteractive 串 SmartAsk 訊息 + 氣泡實顯 |
-| E | CelebrateEvent 未整合 | ✅ | celebrate/excited 邊界觸發 confetti + mascot:celebrate（含冷卻） |
-| F | 無 Storybook | ✅ | maimai-story.html + 多入口 build + smoke test（npm run dev:maimai-story） |
-| G | CSS 動畫未定義 | ✅ | tailwind.config.cjs 加 9 個 keyframes |
-| H | Arms 設計不純 | ⚠️ | 表面完成，存在 5 項架構問題（見下方） |
-
----
-
-### MM-1.H 深度審計 (Google 首席前後端處長評價)
-
-**評分**: 85/100 ⚠️ 功能完成但便宜行事
-
-**📊 詳細評分**:
-| 項目 | 得分 | 扣分原因 |
-|------|------|----------|
-| 功能完整度 | 23/25 | 姿態映射完成，wave 雙側對稱完成 |
-| 代碼品質 | 20/25 | **模組層 JSX 違反 React 原則**；types.ts 與 MaiMaiBase.tsx 姿態表重複 |
-| 效能優化 | 22/25 | 移除 transition-all 正確，但 extra 仍在模組層生成 ReactNode |
-| 架構一致性 | 20/25 | **DEFAULT_ARM_POSES 與 ARM_POSES 並存未統一**；座標硬編碼 |
-
-**⚠️ 發現的偷懶/便宜行事 (5 項)**:
-
-| # | 嚴重度 | 問題 | 後果 | 優化方向 |
-|:---:|:---:|:---|:---|:---|
-| H.1 | **P1** | `ARM_POSES` 在模組層包含 JSX (`extra` 屬性) | 每次 import 都執行 React.createElement；違反「模組層只放 data」原則 | 姿態表只存座標/參數，extra 在 Arms 組件內根據 pose.extraType 動態生成 |
-| H.2 | **P1** | `types.ts` 有 `DEFAULT_ARM_POSES`，`MaiMaiBase.tsx` 有 `ARM_POSES` | 兩套姿態表並存，違反 SSOT；未來修改需改兩處 | 刪除 types.ts 的 DEFAULT_ARM_POSES，或將 ARM_POSES 移入 types.ts 統一匯出 |
-| H.3 | P2 | `createWaveExtra(26, 90, ...)` 與 `(180, 90, ...)` 硬編碼 | 座標與手臂端點 (38,112) / (175,98) 不對齊，magic number 難維護 | 用 `waveHandX - offset` 公式計算，或定義 `WAVE_ANCHOR = { left: {...}, right: {...} }` |
-| H.4 | P2 | `peekBarXs = [76, 100, 124]` 硬編碼 | 與 rect x=64 width=72 的關係不明顯 (64+12=76, 64+36=100, 64+60=124)，下次改 rect 必忘記改這裡 | 用 `const cx = 64 + 72/2; const bars = [-24, 0, 24].map(d => cx + d)` 或類似公式 |
-| H.5 | P3 | 移除 `transition-all` 後無替代動畫 | 姿態切換變成瞬間跳變，UX 略生硬 | 可補 CSS animation 或 SMIL `<animate>` 讓切換有過渡感（非必要，視設計需求） |
-
-**💡 首席架構師指引 (如何做到 100 分)**:
-
-> **H.1 修正方案**: 模組層姿態表只存純 data，JSX 在 render 內生成
-> ```typescript
-> // types.ts - 純 data
-> interface ArmPoseData {
->   left: string;
->   right: string;
->   extraType?: 'wave' | 'peek' | null;
->   extraParams?: { waveAnchors?: [number, number][]; peekRect?: { x: number; width: number; bars: number } };
-> }
-> 
-> // MaiMaiBase.tsx - Arms 組件內
-> function renderExtra(pose: ArmPoseData) {
->   if (pose.extraType === 'wave') return <WaveCircles anchors={pose.extraParams.waveAnchors} />;
->   if (pose.extraType === 'peek') return <PeekBars config={pose.extraParams.peekRect} />;
->   return null;
-> }
-> ```
->
-> **H.2 修正方案**: 刪除 `types.ts` 的 `DEFAULT_ARM_POSES`，讓 `ARM_POSES` 成為唯一真理來源。或反過來，在 `types.ts` 定義 `ARM_POSE_DATA`，`MaiMaiBase.tsx` 引用它。
->
-> **H.3/H.4 修正方案**: 所有座標用常數或公式，並加註釋說明關係
-> ```typescript
-> const WAVE_CIRCLE_OFFSET = 12; // 圓心距手臂端點的偏移
-> const waveRight = { armEnd: [175, 98], circleCenter: [175 + WAVE_CIRCLE_OFFSET, 98 - 8] };
-> 
-> const PEEK_RECT = { x: 64, width: 72 };
-> const peekCenter = PEEK_RECT.x + PEEK_RECT.width / 2; // 100
-> const PEEK_BAR_SPACING = 24;
-> const peekBarXs = [-1, 0, 1].map(i => peekCenter + i * PEEK_BAR_SPACING); // [76, 100, 124]
-> ```
+| # | 問題 | 優化方向 |
+|:---:|:---|:---|
+| H.1 | 模組層含 JSX | 姿態表只存 data，JSX 在組件內生成 |
+| H.2 | 兩處姿態表 | 刪 types.ts 的 DEFAULT_ARM_POSES |
+| H.3 | wave 座標硬編 | 用公式算圓心位置 |
+| H.4 | peek 座標硬編 | 用公式算柵欄位置 |
+| H.5 | 無過渡動畫 | 視需求補 CSS animation |
 
 ---
 
