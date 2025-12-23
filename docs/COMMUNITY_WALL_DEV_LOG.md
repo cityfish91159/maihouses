@@ -4,6 +4,54 @@
 
 ---
 
+## 📅 2025-12-23 MM-1.H 手臂姿態純化（Arms Optimization）
+
+### 📊 審計評分：85/100 ⚠️ (實作完成但存在架構隱患)
+
+| 項目 | 得分 | 扣分原因 |
+|------|------|----------|
+| 功能完整度 | 23/25 | 姿態映射完成，但 wave 對稱特效渲染重複 |
+| 代碼品質 | 20/25 | 模組層 JSX 違反 React 純函數原則；DEFAULT_ARM_POSES 與 ARM_POSES 重複定義 |
+| 效能優化 | 22/25 | 移除 transition-all 正確，但 extra 仍在模組層生成 ReactNode |
+| 架構一致性 | 20/25 | types.ts 與 MaiMaiBase.tsx 兩處姿態定義未統一 |
+
+### ⚠️ 審計發現問題 (5 項)
+
+| 編號 | 嚴重度 | 描述 | 分類 |
+|:---:|:---:|:---|:---:|
+| H.1 | **P1** | `ARM_POSES` 在模組層包含 JSX (`extra` 屬性)，違反 React 純函數原則，每次 import 都會執行 | 架構 |
+| H.2 | **P1** | `types.ts` 有 `DEFAULT_ARM_POSES`，`MaiMaiBase.tsx` 有 `ARM_POSES`，兩套姿態映射未統一 | 重複 |
+| H.3 | P2 | `createWaveExtra` 被呼叫兩次生成對稱圓形，但座標 (26,90) 與 (180,90) 硬編碼，與手臂端點不對齊 | 精度 |
+| H.4 | P2 | `peekBarXs = [76, 100, 124]` 硬編碼，未與遮眼 rect (x=64, width=72) 的中心對齊公式化 | 維護 |
+| H.5 | P3 | 移除 `transition-all` 正確，但未補上 `will-change: d` 或 CSS animation 作為替代方案 | 效能 |
+
+### 📁 修改的檔案清單
+
+| 檔案 | 變更類型 | 說明 |
+|------|----------|------|
+| `src/components/MaiMai/MaiMaiBase.tsx` | 重構 | 模組層姿態映射 + 對稱 wave + peek 迭代 + 移除 transition-all |
+| `docs/COMMUNITY_WALL_TODO.md` | 更新 | H 狀態標記完成 |
+
+### 🔧 已完成的優化
+
+| 項目 | 優化前 | 優化後 | 說明 |
+|------|--------|--------|------|
+| 姿態表位置 | render 內 switch | 模組層 Record | 減少每次 render 重建 |
+| wave 特效 | 單側圓形 | 雙側對稱 | 視覺對稱 |
+| peek 線條 | 硬編碼 3 個 path | map 生成 | 減少重複 |
+| transition | transition-all | 無 | 避免 path d 補間重排 |
+
+### ❌ 偷懶/便宜行事清單
+
+| 項目 | 問題 | 應做 |
+|------|------|------|
+| JSX 外提 | 把 JSX 放模組層看起來「乾淨」但違反原則 | 姿態表只存 data，extra 在組件內根據 data 生成 |
+| 座標硬編碼 | 26/180/76/100/124 魔術數字 | 統一用常數或公式計算 |
+| 未統一 types.ts | DEFAULT_ARM_POSES 與 ARM_POSES 並存 | 刪除其一，SSOT |
+| 未補替代動畫 | 移除 transition-all 後無替代 | 視需求補 CSS animation 或 SMIL |
+
+---
+
 ## 📅 2025-12-23 MM-1 MaiMai 原子組件整合
 
 ### 📊 首次審計評分：78/100 ⚠️ (架構完成但缺失多項驗收標準)
