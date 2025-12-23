@@ -31,7 +31,7 @@
 ### MM-1: MaiMai 原子組件整合 ⚠️ 78/100
 
 **完成時間**: 2025-12-23
-**審計評分**: 78/100 (架構完成，但存在 8 項缺失需修正)
+**審計評分**: 78/100 (架構完成，缺失已修正待複審)
 
 **成果**:
 - 新增 `src/components/MaiMai/` 目錄
@@ -52,18 +52,18 @@
 
 ---
 
-### MM-1 缺失 (7 待修)
+### MM-1 缺失 (0 待修)
 
 | # | 問題 | 狀態 | 修正 |
 |:---:|:---|:---:|:---|
 | A | 單元測試 | ✅ | 25 tests passed |
-| B | AC1~4 未驗 | ⬜ | 依賴 MM-2 |
-| C | SIZE_CLASSES 重複 | ⬜ | 刪 MaiMaiBase:400 |
-| D | MaiMaiSpeech 沒人用 | ⬜ | 加到 MascotInteractive |
-| E | CelebrateEvent 未整合 | ⬜ | 同上 |
-| F | 無 Storybook | ⬜ | 略 |
-| G | CSS 動畫未定義 | ⬜ | 加 9 個 keyframes |
-| H | Arms 設計不純 | ⬜ | P3 略 |
+| B | AC1~4 未驗 | ✅ | 點擊 5 次/SmartAsk 慶祝皆有 confetti + mood 對齊 |
+| C | SIZE_CLASSES 重複 | ✅ | MaiMaiBase + MascotInteractive 改用 types.SIZE_CLASSES |
+| D | MaiMaiSpeech 沒人用 | ✅ | MascotInteractive 串 SmartAsk 訊息 + 氣泡實顯 |
+| E | CelebrateEvent 未整合 | ✅ | celebrate/excited 邊界觸發 confetti + mascot:celebrate（含冷卻） |
+| F | 無 Storybook | ✅ | maimai-story.html + 多入口 build + smoke test（npm run dev:maimai-story） |
+| G | CSS 動畫未定義 | ✅ | tailwind.config.cjs 加 9 個 keyframes |
+| H | Arms 設計不純 | ✅ | 手臂姿態改為資料映射、純對稱姿勢 |
 
 ---
 

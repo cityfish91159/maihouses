@@ -8,8 +8,10 @@
   },
   "scripts": {
     "dev": "vite",
+    "dev:story": "vite --clearScreen false --open /maimai-story.html",
     "build": "tsc && vite build",
     "preview": "vite preview --port 4173",
+    "dev:maimai-story": "vite --open /maihouses/maimai-story.html",
     "deploy": "npm run build && gh-pages -d dist",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "eslint src",

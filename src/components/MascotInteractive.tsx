@@ -1,11 +1,13 @@
-import React, { useState, useCallback, useMemo } from 'react';
-import { MaiMaiBase, useMaiMaiMood } from './MaiMai';
+import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
+import { MaiMaiBase, MaiMaiSpeech, useMaiMaiMood, SIZE_CLASSES } from './MaiMai';
+import useConfetti from './MaiMai/useConfetti';
 import type { MaiMaiMood } from './MaiMai';
 
 interface MascotInteractiveProps {
   mood?: MaiMaiMood;
   size?: 'sm' | 'md' | 'lg';
   className?: string;
+  messages?: string[];
   // 登入頁互動
   isTypingEmail?: boolean;
   isTypingPassword?: boolean;
@@ -22,6 +24,7 @@ export default function MascotInteractive({
   mood: externalMood,
   size = 'md',
   className = '',
+  messages = [],
   isTypingEmail = false,
   isTypingPassword = false,
   hasError = false,
@@ -41,22 +44,33 @@ export default function MascotInteractive({
     isHovered,
   });
 
-  // 尺寸對應
-  const sizeMap: Record<'sm' | 'md' | 'lg', 'sm' | 'md' | 'lg' | 'xl'> = {
-    sm: 'sm',
-    md: 'md',
-    lg: 'lg',
-  };
+  const { fireConfetti, ConfettiOverlay } = useConfetti();
+  const prevMoodRef = useRef<MaiMaiMood | null>(null);
+  const lastCelebrateAtRef = useRef<number>(0);
 
-  const sizeClasses = {
-    sm: 'w-20 h-20',
-    md: 'w-32 h-32',
-    lg: 'w-40 h-40',
-  };
+  const effectiveMessages = useMemo(() => {
+    const trimmed = messages.map(m => m.trim()).filter(Boolean);
+    return trimmed.slice(-3);
+  }, [messages]);
+
+  useEffect(() => {
+    const shouldCelebrate = computedMood === 'celebrate' || computedMood === 'excited';
+    const now = Date.now();
+    if (
+      shouldCelebrate &&
+      prevMoodRef.current !== computedMood &&
+      now - lastCelebrateAtRef.current > 800
+    ) {
+      fireConfetti();
+      window.dispatchEvent(new CustomEvent('mascot:celebrate'));
+      lastCelebrateAtRef.current = now;
+    }
+    prevMoodRef.current = computedMood;
+  }, [computedMood, fireConfetti]);
 
   return (
     <div
-      className={`relative ${sizeClasses[size]} ${className} cursor-pointer select-none`}
+      className={`relative ${SIZE_CLASSES[size]} ${className} cursor-pointer select-none`}
       role="button"
       tabIndex={0}
       onMouseEnter={() => setIsHovered(true)}
@@ -64,11 +78,15 @@ export default function MascotInteractive({
       onClick={handleClick}
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleClick(); }}
     >
+      {effectiveMessages.length > 0 && (
+        <MaiMaiSpeech messages={effectiveMessages} className="-right-10 -top-12" />
+      )}
+      {ConfettiOverlay}
       {/* 公仔 */}
       <div className={`size-full transition-transform duration-300 ${isHovered ? 'scale-110' : ''}`}>
         <MaiMaiBase
           mood={computedMood}
-          size={sizeMap[size]}
+          size={size}
           className="size-full"
           animated={true}
           showEffects={true}

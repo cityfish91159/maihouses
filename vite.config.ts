@@ -50,6 +50,10 @@ export default defineConfig({
     sourcemap: true, // Enable sourcemaps for debugging
     chunkSizeWarningLimit: 1000, // Increase warning limit to 1000kB
     rollupOptions: {
+      input: {
+        main: 'index.html',
+        maimaiStory: 'maimai-story.html',
+      },
       output: {
         manualChunks: {
           'react-vendor': ['react', 'react-dom', 'react-router-dom'],
@@ -85,6 +89,6 @@ export default defineConfig({
   },
   preview: { port: 5173, strictPort: true },
   optimizeDeps: {
-    entries: ['src/main.tsx'],
+    entries: ['src/main.tsx', 'src/dev/maimai-story.tsx'],
   },
 })

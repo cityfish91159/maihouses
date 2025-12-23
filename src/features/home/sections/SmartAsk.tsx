@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Send, Sparkles, MessageCircle, Heart } from 'lucide-react';
 import { postLLM, setJustChatMode } from '../../../services/ai';
-import MascotMaiMai from '../../../components/MascotMaiMai';
+import MascotInteractive from '../../../components/MascotInteractive';
 import ChatMessage from '../components/ChatMessage';
 import { 
     QUICK_TAGS_LIFESTYLE, 
@@ -20,6 +20,7 @@ export default function SmartAsk() {
     const [loading, setLoading] = useState(false);
     const [returnGreeting, setReturnGreeting] = useState<string | null>(null);
     const [intimacy, setIntimacy] = useState(getIntimacyLevel());
+    const [status, setStatus] = useState<'idle' | 'thinking' | 'success' | 'error'>('idle');
     const chatRef = useRef<HTMLDivElement>(null);
 
     // 根據對話輪數決定顯示哪組 Quick Tags
@@ -119,6 +120,7 @@ export default function SmartAsk() {
         setMessages(prev => [...prev, userMsg]);
         setInput('');
         setLoading(true);
+        setStatus('thinking');
 
         const assistantMsg: ChatMsg = { role: 'assistant', content: '', timestamp: new Date().toISOString() };
         setMessages(prev => [...prev, assistantMsg]);
@@ -140,6 +142,7 @@ export default function SmartAsk() {
             
             // 熱度系統在 ai.ts 中自動追蹤，不需要額外處理
             void fullResponse; // 使用變數避免 lint 警告
+            setStatus('success');
         } catch (e) {
             console.error(e);
             setMessages(prev => {
@@ -150,10 +153,23 @@ export default function SmartAsk() {
                 }
                 return newMsgs;
             });
+            setStatus('error');
         } finally {
             setLoading(false);
         }
     };
+
+    // 成功/錯誤狀態維持短暫提示後回到 idle
+    useEffect(() => {
+        if (status === 'success') {
+            const timer = setTimeout(() => setStatus('idle'), 2000);
+            return () => clearTimeout(timer);
+        }
+        if (status === 'error') {
+            const timer = setTimeout(() => setStatus('idle'), 2500);
+            return () => clearTimeout(timer);
+        }
+    }, [status]);
 
     return (
         <section className="group relative isolate overflow-hidden rounded-[24px] border border-brand-100 bg-gradient-to-br from-white via-[#F8FAFC] to-[#00385a08] shadow-[0_8px_24px_rgba(0,56,90,0.06)] transition-all duration-300 hover:shadow-[0_12px_32px_rgba(0,56,90,0.1)]">
@@ -215,12 +231,18 @@ export default function SmartAsk() {
                     role="log"
                     aria-live="polite"
                 >
+                    <div className="flex flex-shrink-0 justify-start">
+                        <MascotInteractive
+                            size="lg"
+                            messages={messages.map(m => m.content)}
+                            isLoading={loading || !!input.trim()}
+                            isSuccess={status === 'success'}
+                            hasError={status === 'error'}
+                        />
+                    </div>
+
                     {messages.length === 0 ? (
                         <div className="flex flex-1 flex-col items-center justify-center p-4 text-center opacity-80">
-
-                            {/* MaiMai Mascot */}
-                            <MascotMaiMai />
-
                             <p className="mb-2 text-base font-black text-brand-700">
                                 {returnGreeting ? returnGreeting.split('！')[0] + '！' : '嗨～我是邁邁 👋'}
                             </p>

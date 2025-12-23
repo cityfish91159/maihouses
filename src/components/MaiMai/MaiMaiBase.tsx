@@ -1,5 +1,75 @@
 import React from 'react';
-import type { MaiMaiMood, MaiMaiBaseProps, SIZE_CLASSES } from './types';
+import { SIZE_CLASSES } from './types';
+import type { MaiMaiMood, MaiMaiBaseProps } from './types';
+
+type ArmPose = { left: string; right: string; extra?: React.ReactNode };
+
+const relaxedPose: ArmPose = {
+  left: 'M 55 130 L 32 138',
+  right: 'M 145 130 L 168 138',
+};
+
+const celebratoryPose: ArmPose = {
+  left: 'M 55 130 L 15 82',
+  right: 'M 145 130 L 185 82',
+};
+
+const createWaveExtra = (x: number, y: number, origin: string) => (
+  <g className={`animate-wave ${origin}`}>
+    <circle cx={x} cy={y} r="8" stroke="currentColor" strokeWidth="4" fill="none" />
+  </g>
+);
+
+const peekBarXs = [76, 100, 124];
+
+const ARM_POSES: Record<MaiMaiMood | 'default', ArmPose> = {
+  default: relaxedPose,
+  idle: relaxedPose,
+  happy: {
+    left: 'M 55 130 L 28 102',
+    right: 'M 145 130 L 172 102',
+  },
+  celebrate: celebratoryPose,
+  excited: celebratoryPose,
+  wave: {
+    left: 'M 55 130 L 38 112',
+    right: 'M 145 130 L 175 98',
+    extra: (
+      <>
+        {createWaveExtra(26, 90, 'origin-bottom-right')}
+        {createWaveExtra(180, 90, 'origin-bottom-left')}
+      </>
+    ),
+  },
+  thinking: {
+    left: 'M 55 130 L 35 140',
+    right: 'M 145 130 L 132 150 L 108 150', // 托下巴
+  },
+  peek: {
+    left: 'M 55 130 L 72 118',
+    right: 'M 145 130 L 128 118',
+    extra: (
+      <>
+        <rect x="64" y="116" width="72" height="12" rx="6" fill="white" stroke="currentColor" strokeWidth="3" />
+        {peekBarXs.map((x) => (
+          <path key={x} d={`M ${x} 116 L ${x} 128`} stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+        ))}
+      </>
+    ),
+  },
+  shy: {
+    left: 'M 55 130 L 42 118 L 36 132',
+    right: 'M 145 130 L 158 118 L 164 132',
+  },
+  confused: {
+    left: 'M 55 130 L 40 136',
+    right: 'M 145 130 L 160 136',
+  },
+  sleep: {
+    left: 'M 55 130 L 38 152',
+    right: 'M 145 130 L 162 152',
+  },
+};
 
 /**
  * MaiMai 公仔 SVG 骨架組件
@@ -218,71 +288,7 @@ export function Mouth({ mood }: { mood: MaiMaiMood }) {
 
 /** 手臂 */
 export function Arms({ mood }: { mood: MaiMaiMood }) {
-  const getArmPaths = (): { left: string; right: string; extra?: React.ReactNode } => {
-    switch (mood) {
-      case 'wave':
-        return {
-          left: 'M 55 130 L 30 140',
-          right: 'M 145 130 L 175 95',
-          extra: (
-            <g className="animate-wave origin-bottom-left">
-              <circle cx="180" cy="88" r="8" stroke="currentColor" strokeWidth="4" fill="none" />
-            </g>
-          ),
-        };
-      case 'celebrate':
-      case 'excited':
-        return {
-          left: 'M 55 130 L 15 80',
-          right: 'M 145 130 L 185 80',
-        };
-      case 'thinking':
-        return {
-          left: 'M 55 130 L 30 140',
-          right: 'M 145 130 L 135 155 L 110 155', // 托下巴
-        };
-      case 'peek':
-        // 遮眼手
-        return {
-          left: 'M 55 130 L 70 120',
-          right: 'M 145 130 L 130 120',
-          extra: (
-            <>
-              <ellipse cx="78" cy="125" rx="12" ry="10" stroke="currentColor" strokeWidth="4" fill="white" />
-              <path d="M 72 120 L 72 130" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" />
-              <path d="M 78 120 L 78 130" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" />
-              <path d="M 84 120 L 84 130" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" />
-              <ellipse cx="122" cy="125" rx="12" ry="10" stroke="currentColor" strokeWidth="4" fill="white" />
-              <path d="M 116 120 L 116 130" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" />
-              <path d="M 122 120 L 122 130" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" />
-              <path d="M 128 120 L 128 130" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" />
-            </>
-          ),
-        };
-      case 'shy':
-        return {
-          left: 'M 55 130 L 40 120 L 35 130',
-          right: 'M 145 130 L 160 120 L 165 130',
-        };
-      case 'sleep':
-        return {
-          left: 'M 55 130 L 35 155',
-          right: 'M 145 130 L 165 155',
-        };
-      case 'happy':
-        return {
-          left: 'M 55 130 L 25 100',
-          right: 'M 145 130 L 175 100',
-        };
-      default:
-        return {
-          left: 'M 55 130 L 30 140',
-          right: 'M 145 130 L 170 140',
-        };
-    }
-  };
-
-  const arms = getArmPaths();
+  const arms = ARM_POSES[mood] ?? ARM_POSES.default;
 
   return (
     <>
@@ -293,7 +299,6 @@ export function Arms({ mood }: { mood: MaiMaiMood }) {
         fill="none"
         strokeLinecap="round"
         strokeLinejoin="round"
-        className="transition-all duration-500"
       />
       <path
         d={arms.right}
@@ -302,7 +307,6 @@ export function Arms({ mood }: { mood: MaiMaiMood }) {
         fill="none"
         strokeLinecap="round"
         strokeLinejoin="round"
-        className="transition-all duration-500"
       />
       {arms.extra}
     </>
@@ -395,14 +399,6 @@ export function Effects({ mood }: { mood: MaiMaiMood }) {
 
 // ============ 主組件 ============
 
-const sizeClasses: Record<string, string> = {
-  xs: 'w-12 h-12',
-  sm: 'w-20 h-20',
-  md: 'w-32 h-32',
-  lg: 'w-40 h-40',
-  xl: 'w-56 h-56',
-};
-
 export function MaiMaiBase({
   mood = 'idle',
   size = 'md',
@@ -432,7 +428,7 @@ export function MaiMaiBase({
 
   return (
     <div
-      className={`relative ${sizeClasses[size]} ${className} ${onClick ? 'cursor-pointer' : ''}`}
+      className={`relative ${SIZE_CLASSES[size]} ${className} ${onClick ? 'cursor-pointer' : ''}`}
       onClick={onClick}
       role={onClick ? 'button' : undefined}
       tabIndex={onClick ? 0 : undefined}
