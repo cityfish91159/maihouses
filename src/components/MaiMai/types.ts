@@ -182,11 +182,32 @@ export const BLUSH_RADIUS = 8;
 export const EFFECT_CONFETTI_OFFSET_X = 70;
 export const EFFECT_CONFETTI_OFFSET_Y = 40;
 
+// ============ 特效顏色常量 (v2.4) ============
+/** 星星/閃光金色 */
+export const EFFECT_COLOR_GOLD = '#FFD700';
+/** 彩帶紅色 */
+export const EFFECT_COLOR_CONFETTI_RED = '#FF6B6B';
+/** 彩帶青色 */
+export const EFFECT_COLOR_CONFETTI_TEAL = '#4ECDC4';
+/** 彩帶黃色 */
+export const EFFECT_COLOR_CONFETTI_YELLOW = '#FFE66D';
+/** 眼淚/害羞藍色 */
+export const EFFECT_COLOR_SHY_BLUE = '#87CEEB';
+
+/** 五角星內半徑比例 (相對於外半徑) */
+export const STAR_INNER_RATIO = 0.4;
+/** 閃光對角線比例 */
+export const SPARKLE_DIAGONAL_RATIO = 0.6;
+
 /**
  * 特效元素定義 (具名 discriminated union)
+ * @description v2.4: 移除 emoji text，改用 SVG path (star/sparkle/confetti)
  */
 export type EffectItem =
   | { kind: 'text'; x: number; y: number; icon: string; size?: number; opacity?: number; className?: string }
+  | { kind: 'star'; x: number; y: number; size: number; opacity?: number; className?: string }
+  | { kind: 'sparkle'; x: number; y: number; size: number; opacity?: number; className?: string }
+  | { kind: 'confetti'; x: number; y: number; size: number; opacity?: number; className?: string }
   | { kind: 'circle'; x: number; y: number; r: number; opacity?: number; className?: string }
   | { kind: 'ellipse'; x: number; y: number; rx: number; ry: number; className?: string };
 
@@ -194,21 +215,21 @@ export const EFFECT_POSITIONS: Record<MaiMaiMood | 'default', EffectItem[]> = {
   default: [],
   idle: [],
   celebrate: [
-    { kind: 'text', x: -70, y: 40, size: 14, icon: '🎉' },
-    { kind: 'text', x: 60, y: 35, size: 12, icon: '🎊' },
-    { kind: 'text', x: -80, y: 80, size: 10, icon: '✨' },
-    { kind: 'text', x: 75, y: 75, size: 10, icon: '⭐' },
+    { kind: 'confetti', x: -70, y: 40, size: 14 },
+    { kind: 'confetti', x: 60, y: 35, size: 12 },
+    { kind: 'sparkle', x: -80, y: 80, size: 10 },
+    { kind: 'star', x: 75, y: 75, size: 10 },
   ],
   excited: [
-    { kind: 'text', x: -70, y: 40, size: 14, icon: '🎉' },
-    { kind: 'text', x: 60, y: 35, size: 12, icon: '🎊' },
-    { kind: 'text', x: -80, y: 80, size: 10, icon: '✨' },
-    { kind: 'text', x: 75, y: 75, size: 10, icon: '⭐' },
+    { kind: 'confetti', x: -70, y: 40, size: 14 },
+    { kind: 'confetti', x: 60, y: 35, size: 12 },
+    { kind: 'sparkle', x: -80, y: 80, size: 10 },
+    { kind: 'star', x: 75, y: 75, size: 10 },
   ],
   peek: [],
   happy: [
-    { kind: 'text', x: -60, y: 60, size: 14, icon: '✨', className: 'animate-twinkle' },
-    { kind: 'text', x: 55, y: 55, size: 12, icon: '✨', className: 'animate-twinkle-delay' },
+    { kind: 'sparkle', x: -60, y: 60, size: 14, className: 'animate-twinkle' },
+    { kind: 'sparkle', x: 55, y: 55, size: 12, className: 'animate-twinkle-delay' },
   ],
   thinking: [
     { kind: 'circle', x: 60, y: 50, r: 5, opacity: 0.3 },
