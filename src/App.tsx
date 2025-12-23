@@ -21,7 +21,7 @@ import { CookieConsent } from './components/CookieConsent'
 import UAGPage from './pages/UAG'
 import { PropertyDetailPage } from './pages/PropertyDetailPage'
 import { PropertyUploadPage } from './pages/PropertyUploadPage'
-import PropertyListPage from './pages/PropertyListPage'
+// import PropertyListPage from './pages/PropertyListPage' // ROLLBACK: Temporarily disabled to fix iOS crash
 import { PropertyEditPage } from './pages/PropertyEditPage'
 import { ReportPage } from './pages/Report'
 
@@ -166,6 +166,7 @@ export default function App() {
                 </ErrorBoundary>
               }
             />
+            {/* ROLLBACK: PropertyListPage route disabled to fix iOS crash
             <Route
               path="/property.html"
               element={
@@ -174,6 +175,7 @@ export default function App() {
                 </ErrorBoundary>
               }
             />
+            */}
             <Route
               path="/property/:id"
               element={
