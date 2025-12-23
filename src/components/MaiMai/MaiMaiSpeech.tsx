@@ -15,8 +15,8 @@ export function MaiMaiSpeech({ messages, className = '' }: MaiMaiSpeechProps) {
   return (
     <div 
       className={`
-        absolute left-1/2 -translate-x-1/2 -top-20 z-10
-        min-w-[140px] max-w-[280px]
+        absolute left-1/2 -translate-x-1/2 -top-14 z-10
+        min-w-[120px] max-w-[85vw] sm:max-w-[280px]
         rounded-xl bg-white px-3 py-2
         shadow-lg ring-1 ring-slate-200
         animate-in fade-in slide-in-from-bottom-2 duration-300
