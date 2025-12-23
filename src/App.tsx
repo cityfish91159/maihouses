@@ -124,7 +124,7 @@ export default function App() {
               }
             />
             <Route
-              path="/maihouses/property.html"
+              path="/property.html"
               element={
                 <ErrorBoundary>
                   <PropertyListPage />
