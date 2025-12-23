@@ -1,5 +1,4 @@
 import React from 'react';
-import { LineShareButton } from 'react-share';
 import { MessageCircle } from 'lucide-react';
 import { notify } from '../../lib/notify';
 
@@ -33,6 +32,10 @@ export const LineShareAction: React.FC<ShareProps> = ({
         if (onShareClick) {
             onShareClick();
         }
+
+        // 4. Open LINE share window
+        const shareUrl = `https://social-plugins.line.me/lineit/share?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title)}`;
+        window.open(shareUrl, '_blank', 'noopener,noreferrer');
     };
 
     // NOTE: react-share's LineShareButton opens the window immediately on click.
@@ -58,16 +61,13 @@ export const LineShareAction: React.FC<ShareProps> = ({
          because react-share buttons might consume onClick for their window.open logic 
          but we want to track it "as it happens".
        */}
-            <LineShareButton
-                url={url}
-                title={title}
-                className={className}
+            <button
+                type="button"
+                className={`flex items-center justify-center gap-2 ${className}`}
             >
-                <div className="flex items-center justify-center gap-2">
-                    {showIcon && <MessageCircle size={18} />}
-                    <span>{btnText}</span>
-                </div>
-            </LineShareButton>
+                {showIcon && <MessageCircle size={18} />}
+                <span>{btnText}</span>
+            </button>
         </div>
     );
 };

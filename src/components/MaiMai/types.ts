@@ -75,6 +75,8 @@ export interface UseMaiMaiMoodOptions {
   isTypingPassword?: boolean;
   /** 是否正在輸入 email */
   isTypingEmail?: boolean;
+  /** 是否 hover 中 */
+  isHovered?: boolean;
   /** 是否處於慶祝狀態（點擊 5 次觸發）*/
   isCelebrating?: boolean;
 }
@@ -143,6 +145,7 @@ export const ANTENNA_Y = 40;
 export const ANTENNA_TOP_Y = 15;
 export const ANTENNA_PEAK_Y = 30;
 export const ANTENNA_DROOP_OFFSET = 5;
+export const ANTENNA_DROOP_PEAK_OFFSET = 2;
 
 // ============ 相對位移與尺寸常量 ============
 export const ANTENNA_DROOP_Y = 5;
@@ -179,29 +182,50 @@ export const BLUSH_RADIUS = 8;
 export const EFFECT_CONFETTI_OFFSET_X = 70;
 export const EFFECT_CONFETTI_OFFSET_Y = 40;
 
-export const EFFECT_POSITIONS = {
+/**
+ * 特效元素定義 (具名 discriminated union)
+ */
+export type EffectItem =
+  | { kind: 'text'; x: number; y: number; icon: string; size?: number; opacity?: number; className?: string }
+  | { kind: 'circle'; x: number; y: number; r: number; opacity?: number; className?: string }
+  | { kind: 'ellipse'; x: number; y: number; rx: number; ry: number; className?: string };
+
+export const EFFECT_POSITIONS: Record<MaiMaiMood | 'default', EffectItem[]> = {
+  default: [],
+  idle: [],
   celebrate: [
-    { x: -70, y: 40, size: 14, icon: '🎉' },
-    { x: 60, y: 35, size: 12, icon: '🎊' },
-    { x: -80, y: 80, size: 10, icon: '✨' },
-    { x: 75, y: 75, size: 10, icon: '⭐' },
+    { kind: 'text', x: -70, y: 40, size: 14, icon: '🎉' },
+    { kind: 'text', x: 60, y: 35, size: 12, icon: '🎊' },
+    { kind: 'text', x: -80, y: 80, size: 10, icon: '✨' },
+    { kind: 'text', x: 75, y: 75, size: 10, icon: '⭐' },
   ],
+  excited: [
+    { kind: 'text', x: -70, y: 40, size: 14, icon: '🎉' },
+    { kind: 'text', x: 60, y: 35, size: 12, icon: '🎊' },
+    { kind: 'text', x: -80, y: 80, size: 10, icon: '✨' },
+    { kind: 'text', x: 75, y: 75, size: 10, icon: '⭐' },
+  ],
+  peek: [],
   happy: [
-    { x: -60, y: 60, size: 14, icon: '✨', className: 'animate-twinkle' },
-    { x: 55, y: 55, size: 12, icon: '✨', className: 'animate-twinkle-delay' },
+    { kind: 'text', x: -60, y: 60, size: 14, icon: '✨', className: 'animate-twinkle' },
+    { kind: 'text', x: 55, y: 55, size: 12, icon: '✨', className: 'animate-twinkle-delay' },
   ],
   thinking: [
-    { x: 60, y: 50, r: 5, opacity: 0.3 },
-    { x: 70, y: 35, r: 8, opacity: 0.5 },
-    { x: 85, y: 15, r: 12, opacity: 0.7 },
+    { kind: 'circle', x: 60, y: 50, r: 5, opacity: 0.3 },
+    { kind: 'circle', x: 70, y: 35, r: 8, opacity: 0.5 },
+    { kind: 'circle', x: 85, y: 15, r: 12, opacity: 0.7 },
   ],
   sleep: [
-    { x: 50, y: 50, size: 12, icon: 'z', opacity: 0.7 },
-    { x: 65, y: 35, size: 16, icon: 'z', opacity: 0.8 },
-    { x: 80, y: 18, size: 20, icon: 'Z', opacity: 1.0 },
+    { kind: 'text', x: 50, y: 50, size: 12, icon: 'z', opacity: 0.7 },
+    { kind: 'text', x: 65, y: 35, size: 16, icon: 'z', opacity: 0.8 },
+    { kind: 'text', x: 80, y: 18, size: 20, icon: 'Z', opacity: 1.0 },
   ],
-  shy: { x: 55, y: 70, rx: 5, ry: 8 },
-  wave: { x: 75, y: 60, rx: 20, ry: 15, textY: 65, fontSize: 12 },
+  shy: [{ kind: 'ellipse', x: 55, y: 70, rx: 5, ry: 8 }],
+  wave: [
+    { kind: 'ellipse', x: 75, y: 60, rx: 20, ry: 15 },
+    { kind: 'text', x: 75, y: 65, icon: 'Hi!', size: 12 },
+  ],
+  confused: [],
 };
 
 /** 

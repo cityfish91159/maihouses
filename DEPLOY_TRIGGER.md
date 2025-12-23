@@ -20,6 +20,11 @@ Deploy: P11 Phase 5-6 - E2E 驗證 + 部署觸發
 - Build: git push main (commit 643d1bb) 觸發 Vercel 部署
 - Verification: `npm run test:phase5` 對 production URL 通過 (2025-12-17 18:46 CST)
 
+Timestamp: 2025-12-23T00:05:00Z
+Deploy: Hotfix - MaiMai hover typing & LINE share
+- Fix: Add isHovered to UseMaiMaiMoodOptions; remove react-share dependency and open LINE share via window.open
+- Build: npm run build (tsc + vite) ✅
+
 Redeploy trigger
 
 Timestamp: 2025-12-17T16:15:00Z

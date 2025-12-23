@@ -27,7 +27,9 @@ import {
   LEG_BEND_Y,  ANTENNA_Y,
   ANTENNA_TOP_Y,
   ANTENNA_PEAK_Y,
-  ANTENNA_DROOP_OFFSET,  ROOF_OVERHANG,
+  ANTENNA_DROOP_OFFSET,
+  ANTENNA_DROOP_PEAK_OFFSET,
+  ROOF_OVERHANG,
   ROOF_PEAK_Y,
   WAVE_OFFSET_X,
   WAVE_OFFSET_Y,
@@ -63,7 +65,7 @@ export function Antenna({ animated = false, mood = 'idle' }: { animated?: boolea
   // 基於眼睛座標與常量計算
   const aY = droopy ? ANTENNA_Y + ANTENNA_DROOP_OFFSET : ANTENNA_Y;
   const aTopY = droopy ? ANTENNA_TOP_Y + ANTENNA_DROOP_OFFSET : ANTENNA_TOP_Y;
-  const aPeakY = droopy ? ANTENNA_PEAK_Y + 2 : ANTENNA_PEAK_Y;
+  const aPeakY = droopy ? ANTENNA_PEAK_Y + ANTENNA_DROOP_PEAK_OFFSET : ANTENNA_PEAK_Y;
 
   const d = `M ${EYE_L_X} ${aY} L ${EYE_L_X} ${aTopY} L ${CENTER_X} ${aPeakY} L ${EYE_R_X} ${aTopY} L ${EYE_R_X} ${aY}`;
 
@@ -292,55 +294,61 @@ export function Blush({ show }: { show: boolean }) {
 /** 特效 - 愛心/星星 */
 export function Effects({ mood }: { mood: MaiMaiMood }) {
   const centerX = CENTER_X;
-  
-  switch (mood) {
-    case 'celebrate':
-    case 'excited':
-      return (
-        <g className="animate-confetti">
-          {EFFECT_POSITIONS.celebrate.map((p, i) => (
-            <text key={i} x={centerX + p.x} y={p.y} fontSize={p.size}>{p.icon}</text>
-          ))}
-        </g>
-      );
-    case 'happy':
-      return (
-        <>
-          {EFFECT_POSITIONS.happy.map((p, i) => (
-            <text key={i} x={centerX + p.x} y={p.y} fontSize={p.size} className={p.className}>{p.icon}</text>
-          ))}
-        </>
-      );
-    case 'thinking':
-      return (
-        <g className="animate-float-up">
-          {EFFECT_POSITIONS.thinking.map((p, i) => (
-            <circle key={i} cx={centerX + p.x} cy={p.y} r={p.r} fill="currentColor" opacity={p.opacity} />
-          ))}
-        </g>
-      );
-    case 'sleep':
-      return (
-        <g className="animate-float-up">
-          {EFFECT_POSITIONS.sleep.map((p, i) => (
-            <text key={i} x={centerX + p.x} y={p.y} fontSize={p.size} fill="currentColor" opacity={p.opacity}>{p.icon}</text>
-          ))}
-        </g>
-      );
-    case 'shy':
-      return (
-        <ellipse cx={centerX + EFFECT_POSITIONS.shy.x} cy={EFFECT_POSITIONS.shy.y} rx={EFFECT_POSITIONS.shy.rx} ry={EFFECT_POSITIONS.shy.ry} fill="#87CEEB" className="animate-drip" />
-      );
-    case 'wave':
-      return (
-        <g className="animate-bounce">
-          <ellipse cx={centerX + EFFECT_POSITIONS.wave.x} cy={EFFECT_POSITIONS.wave.y} rx={EFFECT_POSITIONS.wave.rx} ry={EFFECT_POSITIONS.wave.ry} fill="white" stroke="currentColor" strokeWidth="2" />
-          <text x={centerX + EFFECT_POSITIONS.wave.x} y={EFFECT_POSITIONS.wave.textY} textAnchor="middle" fontSize={EFFECT_POSITIONS.wave.fontSize} fontWeight="bold" fill="currentColor">Hi!</text>
-        </g>
-      );
-    default:
-      return null;
-  }
+  const items = EFFECT_POSITIONS[mood] || EFFECT_POSITIONS.default;
+
+  if (!items.length) return null;
+
+  return (
+    <>
+      {items.map((p, i) => {
+        if (p.kind === 'text') {
+          return (
+            <text
+              key={i}
+              x={centerX + p.x}
+              y={p.y}
+              fontSize={p.size}
+              className={p.className}
+              fontWeight={p.icon === 'Hi!' ? 'bold' : undefined}
+              fill="currentColor"
+              opacity={p.opacity}
+              textAnchor={p.icon === 'Hi!' ? 'middle' : undefined}
+            >
+              {p.icon}
+            </text>
+          );
+        }
+
+        if (p.kind === 'circle') {
+          return (
+            <circle
+              key={i}
+              cx={centerX + p.x}
+              cy={p.y}
+              r={p.r}
+              fill="currentColor"
+              opacity={p.opacity}
+              className={p.className}
+            />
+          );
+        }
+
+        return (
+          <ellipse
+            key={i}
+            cx={centerX + p.x}
+            cy={p.y}
+            rx={p.rx}
+            ry={p.ry}
+            fill={mood === 'shy' ? '#87CEEB' : 'white'}
+            stroke={mood === 'wave' ? 'currentColor' : 'none'}
+            strokeWidth={mood === 'wave' ? 2 : undefined}
+            className={mood === 'shy' ? 'animate-drip' : mood === 'wave' ? 'animate-bounce' : p.className}
+          />
+        );
+      })}
+    </>
+  );
 }
 
 // ============ 主組件 ============
