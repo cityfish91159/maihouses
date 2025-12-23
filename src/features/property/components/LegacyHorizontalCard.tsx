@@ -39,85 +39,65 @@ export default function LegacyHorizontalCard({ data }: LegacyHorizontalCardProps
                             <div className="flex flex-wrap gap-1">
                                 {data.tags.slice(0, 3).map((tag, i) => (
                                     <span
-                                        key={i}
-                                        className="inline-block rounded-full bg-[#e0f4ff] px-2 py-0.5 text-[11px] text-[#00385a]"
-                                    >
-                                        {tag}
-                                    </span>
-                                ))}
-                            </div>
-                        )}
-                    </div>
+                                        <div className="horizontal-card">
+                                        <div className="horizontal-left">
+                                            <div className="horizontal-thumb">
+                                                <img src={data.image} alt={data.title} loading="lazy" />
+                                            </div>
+                                            <div className="horizontal-main">
+                                                <div>
+                                                    <div className="horizontal-title-row">
+                                                        <strong>{data.title}</strong>
+                                                        {data.tag && (
+                                                            <span className="horizontal-tag">{data.tag}</span>
+                                                        )}
+                                                    </div>
+                                                    <div className="horizontal-rating">
+                                                        <span className="star">★</span>
+                                                        {data.rating}
+                                                    </div>
+                                                </div>
 
-                    {/* Price (Mobile Only - Order changed via flex) */}
-                    <div className="mb-2 text-xl font-bold text-[#00385a] md:hidden">
-                        {data.price}
-                        <span className="ml-1.5 text-[13px] font-normal text-[#9aa5b1]">{data.size}</span>
-                    </div>
+                                                <div className="horizontal-reviews">
+                                                    {data.reviews.map((review: any, i: number) => (
+                                                        <div key={i} className="review-item-compact">
+                                                            <span className="review-badge">{review.badge}</span>
+                                                            <p className="review-text">{review.content}</p>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </div>
 
-                    {/* Rating */}
-                    <div className="mb-2 text-xs text-[#5b6b7b] md:mb-0">
-                        <span className="mr-0.5 text-[#fbbf24]">★</span>
-                        <span>{data.rating}</span>
-                    </div>
+                                        <div className="horizontal-right">
+                                            <div className="property-price">
+                                                {data.price}
+                                                <span>{data.size}</span>
+                                            </div>
 
-                    {/* Reviews */}
-                    <div className="flex flex-1 flex-col justify-center gap-1.5">
-                        {(data.reviews || []).slice(0, 2).map((review, i) => (
-                            <div key={i} className={`flex items-start gap-2 ${i > 0 ? 'hidden md:flex' : ''}`}>
-                                <span className="shrink-0 rounded bg-[#e0f4ff] px-1.5 py-0.5 text-[10px] font-semibold text-[#00385a]">
-                                    {review.badge}
-                                </span>
-                                <p className="line-clamp-1 text-[11px] leading-relaxed text-[#5b6b7b]">
-                                    {review.content}
-                                </p>
-                            </div>
-                        ))}
-                    </div>
+                                            <div className="lock-row">
+                                                <div className="lock-header">
+                                                    <span className="lock-icon">🔒</span>
+                                                    <div className="lock-text">
+                                                        <div className="lock-label">{data.lockLabel}</div>
+                                                        {data.lockCount && (
+                                                            <div className="lock-count">({data.lockCount})</div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
 
-                    {/* Note (Hidden on mobile per legacy css) */}
-                    {data.note && (
-                        <div className="hidden text-[11px] text-[#00385a] md:block">
-                            {data.note}
-                        </div>
-                    )}
-                </div>
-            </div>
+                                            <div className="property-cta">
+                                                <button className="btn-primary" style={{ padding: '0.375rem', minHeight: '2.5rem', fontSize: '0.8125rem' }}>
+                                                    查看詳情
+                                                </button>
+                                                <button className="heart-btn" style={{ width: '2.5rem', height: '2.5rem', minWidth: '2.5rem' }}>
+                                                    ♥
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+};
 
-            {/* Right Section (Desktop Only mostly, but adapted for responsive) */}
-            <div className="flex w-full min-w-0 flex-col justify-center border-t border-[#dde5f0] p-3.5 md:h-[140px] md:w-60 md:min-w-[240px] md:border-l md:border-t-0 md:p-4">
-
-                {/* Price (Desktop) */}
-                <div className="mb-2 hidden text-lg font-bold text-[#00385a] md:block">
-                    {data.price}
-                    <span className="ml-1.5 text-[13px] font-normal text-[#9aa5b1]">{data.size}</span>
-                </div>
-
-                {/* Lock Info */}
-                <div className="mb-2.5 flex flex-col gap-2 rounded-lg bg-[#e0f4ff] border border-[#00385a]/20 p-2 md:p-2.5">
-                    <div className="flex items-center gap-1.5">
-                        <span className="text-sm text-[#00385a]">🔒</span>
-                        <div className="text-[11px] font-semibold text-[#00385a]">
-                            {data.lockLabel}
-                            <span className="ml-1 text-[10px] font-normal text-[#9aa5b1]">還有 {data.lockCount} 則評價</span>
-                        </div>
-                    </div>
-                    <button className="min-h-8 cursor-pointer rounded-lg bg-[#00385a] px-4 py-1.5 text-[11px] font-semibold text-white shadow-sm transition-all hover:translate-y-px hover:shadow-md active:opacity-90">
-                        註冊查看更多評價
-                    </button>
-                </div>
-
-                {/* CTA Row */}
-                <div className="flex gap-1.5">
-                    <button className="min-h-9 flex-1 cursor-pointer rounded-lg border border-[#00385a] bg-transparent px-2.5 py-1.5 text-xs font-semibold text-[#00385a] transition-colors hover:bg-[#e0f4ff] active:opacity-80">
-                        查看
-                    </button>
-                    <button className="flex size-9 min-w-9 items-center justify-center rounded-lg border border-[#dde5f0] bg-transparent text-base text-[#9aa5b1] transition-colors hover:border-[#ef4444] hover:bg-red-50 hover:text-[#ef4444] active:scale-95" aria-label="加入收藏">
-                        ♡
-                    </button>
-                </div>
-
-            </div>
-        </article>
-    );
-}
+                                export default LegacyHorizontalCard;

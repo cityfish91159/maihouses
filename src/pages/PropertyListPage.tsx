@@ -1,14 +1,45 @@
 import React, { useEffect, useState } from 'react';
 import LegacyFeaturedCard from '../features/property/components/LegacyFeaturedCard';
 import LegacyHorizontalCard from '../features/property/components/LegacyHorizontalCard';
-import type { PropertyPageData } from '../types/property-page';
-import { Logo } from '../components/Logo/Logo';
+import { SEED_DATA } from '../features/property/data/seed';
+import '../styles/LegacyPropertyPage.css'; // Import strict legacy styles
 
 // Mimic legacy behavior: Fetch directly from the endpoint
 const API_ENDPOINT = '/api/property/page-data';
 
+// Legacy Header Component (Inline for strict structure matching)
+const LegacyHeader = () => (
+    <header className="legacy-header">
+        <div className="logo-container">
+            <div className="logo-icon-box">
+                <svg
+                    className="logo-icon-svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                >
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                    <polyline points="9 22 9 12 15 12 15 22" />
+                </svg>
+                <div className="logo-badge" />
+            </div>
+            <div className="logo-text-group">
+                <div className="logo-text-main">邁房子</div>
+                <div className="logo-separator">
+                    <div className="logo-slogan">家，不只是地址</div>
+                </div>
+            </div>
+        </div>
+        <button className="auth-btn">登入/註冊</button>
+    </header>
+);
+
 export default function PropertyListPage() {
-    const [data, setData] = useState<PropertyPageData | null>(null);
+    // Assuming PropertyPageData is the type of SEED_DATA, or a compatible type
+    const [data, setData] = useState<typeof SEED_DATA | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -38,101 +69,95 @@ export default function PropertyListPage() {
       */}
             <header className="sticky top-0 z-50 flex h-14 items-center justify-between bg-white px-5 shadow-sm md:px-10">
                 <div className="flex items-center gap-3 cursor-pointer" onClick={() => window.location.href = '/maihouses/'}>
-                    {/* Logo Component Logic Inlined or Reused? 
-                 Legacy used specific HTML structure. We use the Standard Atomic Logo to be safe but cleaner 
-                 Wait, user said "Don't change appearance", but Header uses "MaiHouse" text.
-                 Let's use our Atomic Logo but configured to look like the legacy one if possible, 
-                 or just use Atomic Logo because it's better. 
-                 The plan said: "Implements the 'Simple Header' (Logo + Auth Button)"
-                 Let's use the Atomic <Logo /> as it's the standard.
-            */}
-                    <Logo showSlogan={true} />
-                </div>
-                <button className="cursor-pointer rounded-[20px] border border-[#dde5f0] bg-white px-3.5 py-1.5 text-[13px] text-[#5b6b7b] transition-colors hover:border-[#00385a] hover:bg-[#e0f4ff] hover:text-[#002a44]">
-                    登入/註冊
-                </button>
-            </header>
+                    <div className="legacy-property-page">
+                        <LegacyHeader />
 
-            <main className="mx-auto max-w-[1200px] px-5 pb-10 pt-5">
-
-                {/* Page Header */}
-                <div className="mb-4">
-                    <div className="flex items-baseline gap-2">
-                        <h1 className="text-[22px] font-semibold">社區口碑房源</h1>
-                        <span className="text-xs text-[#9aa5b1]">真實評價・透明資訊</span>
-                    </div>
-                    <p className="mt-1 text-[13px] text-[#5b6b7b]">來自真實住戶的生活體驗</p>
-                </div>
-
-                {/* Search Box */}
-                <div className="my-3 mb-5">
-                    <div className="flex items-center rounded-full border border-[#dde5f0] bg-white px-3.5 py-2 shadow-sm">
-                        <span className="mr-2">🔍</span>
-                        <input
-                            type="text"
-                            className="flex-1 bg-transparent text-sm text-[#1f2933] outline-none placeholder:text-[#5b6b7b]"
-                            placeholder="搜尋社區名稱、區域或建案關鍵字..."
-                        />
-                        <button className="min-w-[60px] cursor-pointer rounded-full bg-[#00385a] px-3.5 py-1.5 text-[13px] font-semibold text-white hover:opacity-90">
-                            搜尋
-                        </button>
-                    </div>
-                    <p className="mt-1.5 text-xs text-[#9aa5b1]">例如:「林口」、「捷運」、「學區」</p>
-                </div>
-
-                {/* Featured Section */}
-                <section className="my-6 mb-8">
-                    <div className="mb-4 flex items-baseline justify-between">
-                        <h2 className="text-lg font-semibold">本週精選社區</h2>
-                        <span className="text-xs text-[#9aa5b1]">每週五更新</span>
-                    </div>
-
-                    {loading ? (
-                        <div className="py-20 text-center text-gray-400">載入中...</div>
-                    ) : data?.featured ? (
-                        <div className="grid min-h-[500px] grid-cols-1 gap-4">
-                            {/* Top Row Layout */}
-                            <div className="grid min-h-[360px] grid-cols-1 gap-2.5 md:grid-cols-[1.5fr_1fr]">
-                                {/* Main Card */}
-                                {data.featured.main && (
-                                    <LegacyFeaturedCard data={data.featured.main} variant="main" />
-                                )}
-
-                                {/* Side Stack */}
-                                <div className="flex flex-col gap-2.5">
-                                    {data.featured.sideTop && (
-                                        <div className="flex-1">
-                                            <LegacyFeaturedCard data={data.featured.sideTop} variant="side" />
-                                        </div>
-                                    )}
-                                    {data.featured.sideBottom && (
-                                        <div className="flex-1">
-                                            <LegacyFeaturedCard data={data.featured.sideBottom} variant="side" />
-                                        </div>
-                                    )}
+                        <div className="page">
+                            {/* Page Header */}
+                            <div className="page-header">
+                                <div className="page-title-row">
+                                    <h1 className="page-title">社區口碑房源</h1>
+                                    <span className="page-sub">真實評價・透明資訊</span>
                                 </div>
+                                <p className="page-desc">來自真實住戶的生活體驗</p>
                             </div>
+
+                            {/* Search Box */}
+                            <div className="search-container">
+                                <div className="search-box">
+                                    <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        width="18"
+                                        height="18"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        className="mr-2 text-[#5b6b7b]"
+                                    >
+                                        <circle cx="11" cy="11" r="8" />
+                                        <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                                    </svg>
+                                    <input
+                                        type="text"
+                                        className="search-input"
+                                        placeholder="搜尋社區名稱、區域或建案關鍵字..."
+                                        defaultValue=""
+                                    />
+                                    <button className="search-btn">搜尋</button>
+                                </div>
+                                <div className="search-hint">例如：「林口」、「捷運」、「學區」</div>
+                            </div>
+
+                            {/* Featured Section */}
+                            <section className="featured-section">
+                                <div className="featured-header">
+                                    <h2>本週精選社區</h2>
+                                    <span className="tiny-text">每週五更新</span>
+                                </div>
+
+                                <div className="featured-grid">
+                                    <div className="featured-top-row">
+                                        {/* Main Card */}
+                                        {data?.featured?.main && (
+                                            <div className="featured-main">
+                                                <LegacyFeaturedCard data={data.featured.main} variant="main" />
+                                            </div>
+                                        )}
+
+                                        {/* Side Stack */}
+                                        <div className="featured-side-container">
+                                            {data?.featured?.sideTop && (
+                                                <div className="featured-side-top">
+                                                    <LegacyFeaturedCard data={data.featured.sideTop} variant="side" />
+                                                </div>
+                                            )}
+                                            {data?.featured?.sideBottom && (
+                                                <div className="featured-side-bottom">
+                                                    <LegacyFeaturedCard data={data.featured.sideBottom} variant="side" />
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            </section>
+
+                            {/* Listing Section */}
+                            <section className="listing-section">
+                                <div className="listing-header">
+                                    <h2>更多精選房源</h2>
+                                    <span className="small-text">共 {data?.listings?.length || 0} 個社區</span>
+                                </div>
+
+                                <div className="listing-grid">
+                                    {data?.listings?.map((item, index) => (
+                                        <LegacyHorizontalCard key={index} data={item} />
+                                    ))}
+                                </div>
+                            </section>
                         </div>
-                    ) : (
-                        <div className="py-10 text-center text-gray-500">暫無精選資料</div>
-                    )}
-                </section>
-
-                {/* Listing Section */}
-                <section className="my-8">
-                    <div className="mb-4 flex items-baseline justify-between">
-                        <h2 className="text-lg font-semibold">更多精選房源</h2>
-                        <span className="text-[13px] text-[#5b6b7b]">共 {data?.listings?.length || 0} 個社區</span>
                     </div>
-
-                    <div className="flex flex-col gap-3">
-                        {data?.listings?.map((item, idx) => (
-                            <LegacyHorizontalCard key={idx} data={item} />
-                        ))}
-                    </div>
-                </section>
-
-            </main>
-        </div>
-    );
+                    );
 }
