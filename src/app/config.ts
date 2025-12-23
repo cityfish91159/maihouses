@@ -18,8 +18,21 @@ export type RuntimeOverrides = {
 
 const LS = 'maihouse_config'
 
+const DEFAULT_CONFIG: AppConfig & Partial<RuntimeOverrides> = {
+  apiBaseUrl: '/api',
+  appVersion: 'local',
+  minBackend: '0',
+  features: {},
+  mock: true,
+  latency: 0,
+  error: 0,
+}
+
 async function fetchJson(url: string) {
   const r = await fetch(url)
+  if (!r.ok) {
+    throw new Error(`Failed to fetch ${url}: ${r.status}`)
+  }
   return r.json()
 }
 
@@ -35,17 +48,27 @@ function isValidConfig(obj: any): obj is AppConfig {
 }
 
 async function readBase(): Promise<AppConfig & Partial<RuntimeOverrides>> {
+  // 1) localStorage cache
   try {
     const cache = localStorage.getItem(LS)
     if (cache) {
       const parsed = JSON.parse(cache)
-      if (isValidConfig(parsed)) return { ...parsed, ...pickParams() }
+      if (isValidConfig(parsed)) return parsed
     }
   } catch {}
-  
+
+  // 2) remote app.config.json
   const baseUrl = import.meta.env.BASE_URL || '/'
   const url = `${window.location.origin}${baseUrl}app.config.json`
-  return fetchJson(url)
+  try {
+    const remote = await fetchJson(url)
+    if (isValidConfig(remote)) return remote
+  } catch (err) {
+    console.warn('[config] fetch app.config.json failed, fallback to DEFAULT_CONFIG', err)
+  }
+
+  // 3) hardcoded default to prevent white screen
+  return DEFAULT_CONFIG
 }
 
 function getParamFromBoth(key: string): string | undefined {
@@ -74,19 +97,31 @@ function pickParams() {
 }
 
 export async function getConfig(): Promise<AppConfig & RuntimeOverrides> {
-  const base = await readBase()
-  const o = pickParams()
-  const merged: AppConfig & RuntimeOverrides = {
-    ...base,
-    ...o,
-    mock: o.mock ?? (base as any).mock ?? true,
-    latency: o.latency ?? (base as any).latency ?? 0,
-    error: o.error ?? (base as any).error ?? 0
-  }
-  
   try {
-    localStorage.setItem(LS, JSON.stringify(merged))
-  } catch {}
-  
-  return merged
+    const base = await readBase()
+    const o = pickParams()
+    const merged: AppConfig & RuntimeOverrides = {
+      ...base,
+      ...o,
+      mock: o.mock ?? (base as any).mock ?? true,
+      latency: o.latency ?? (base as any).latency ?? 0,
+      error: o.error ?? (base as any).error ?? 0,
+    }
+
+    try {
+      localStorage.setItem(LS, JSON.stringify(merged))
+    } catch {}
+
+    return merged
+  } catch (err) {
+    console.error('[config] getConfig failed, using DEFAULT_CONFIG', err)
+    const merged: AppConfig & RuntimeOverrides = {
+      ...DEFAULT_CONFIG,
+      ...pickParams(),
+      mock: true,
+      latency: 0,
+      error: 0,
+    }
+    return merged
+  }
 }

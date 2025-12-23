@@ -36,19 +36,62 @@ const queryClient = new QueryClient({
 
 export default function App() {
   const [config, setConfig] = useState<(AppConfig & RuntimeOverrides) | null>(null)
+  const [configError, setConfigError] = useState<string | null>(null)
+  const [loadingConfig, setLoadingConfig] = useState(true)
+  const [retryKey, setRetryKey] = useState(0)
   const loc = useLocation()
 
   useEffect(() => {
-    getConfig().then(setConfig)
-  }, [])
+    let active = true
+    const load = async () => {
+      setLoadingConfig(true)
+      setConfigError(null)
+      try {
+        const cfg = await getConfig()
+        if (!active) return
+        setConfig(cfg)
+      } catch (err) {
+        if (!active) return
+        console.error('[config] load failed', err)
+        setConfig(null)
+        setConfigError('無法載入配置，請檢查網路後重新整理')
+      } finally {
+        if (active) setLoadingConfig(false)
+      }
+    }
+    load()
+    return () => {
+      active = false
+    }
+  }, [retryKey])
 
   useEffect(() => {
     if (config) trackEvent('page_view', loc.pathname)
   }, [loc, config])
 
-  if (!config) {
+  if (loadingConfig) {
     return (
-      <div className="p-6 text-sm text-[var(--text-secondary)]">載入中…</div>
+      <div className="flex min-h-screen items-center justify-center p-6 text-sm text-[var(--text-secondary)]">
+        載入中…
+      </div>
+    )
+  }
+
+  if (configError || !config) {
+    return (
+      <div className="flex min-h-screen items-center justify-center p-6">
+        <div className="w-full max-w-sm space-y-3 rounded-2xl bg-white p-6 text-center shadow-md">
+          <div className="text-lg font-semibold text-slate-800">無法載入配置</div>
+          <div className="text-sm text-slate-600">{configError ?? '請檢查網路連線，稍後再試。'}</div>
+          <button
+            type="button"
+            className="w-full rounded-xl bg-[#00385a] px-4 py-2 text-sm font-semibold text-white hover:bg-[#004e7c]"
+            onClick={() => setRetryKey((k) => k + 1)}
+          >
+            重新嘗試
+          </button>
+        </div>
+      </div>
     )
   }
 
