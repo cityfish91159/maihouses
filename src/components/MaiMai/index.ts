@@ -37,4 +37,4 @@ export type {
 } from './types';
 
 // 常數
-export { SIZE_CLASSES, DEFAULT_ARM_POSES } from './types';
+export { SIZE_CLASSES } from './types';

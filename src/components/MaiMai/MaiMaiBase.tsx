@@ -1,75 +1,51 @@
 import React from 'react';
-import { SIZE_CLASSES } from './types';
+import { 
+  SIZE_CLASSES, 
+  CANVAS_SIZE,
+  CENTER_X,
+  BODY_X,
+  BODY_Y,
+  BODY_WIDTH,
+  BODY_HEIGHT,
+  SHOULDER_L_X,
+  SHOULDER_R_X,
+  SHOULDER_Y,
+  EYE_L_X,
+  EYE_R_X,
+  EYE_Y,
+  EYEBROW_Y,
+  MOUTH_Y,
+  BLUSH_Y,
+  HIP_L_X,
+  HIP_R_X,
+  HIP_Y,
+  LEG_Y,
+  LEG_FOOT_OFFSET,
+  JUMP_OFFSET,
+  LEG_HIP_OFFSET,
+  LEG_BEND_X,
+  LEG_BEND_Y,  ANTENNA_Y,
+  ANTENNA_TOP_Y,
+  ANTENNA_PEAK_Y,
+  ANTENNA_DROOP_OFFSET,  ROOF_OVERHANG,
+  ROOF_PEAK_Y,
+  WAVE_OFFSET_X,
+  WAVE_OFFSET_Y,
+  WAVE_RADIUS,
+  WAVE_R_OFFSET_X,
+  PEEK_BAR_WIDTH,
+  PEEK_BAR_HEIGHT,
+  PEEK_BAR_OFFSET_Y,
+  PEEK_BAR_GAP,
+  BLUSH_OFFSET_X,
+  BLUSH_RADIUS,
+  EFFECT_POSITIONS,
+  mirrorPath,
+  ARM_POSES,
+  MOOD_CONFIGS,
+  EyeData
+} from './types';
 import type { MaiMaiMood, MaiMaiBaseProps } from './types';
-
-type ArmPose = { left: string; right: string; extra?: React.ReactNode };
-
-const relaxedPose: ArmPose = {
-  left: 'M 55 130 L 32 138',
-  right: 'M 145 130 L 168 138',
-};
-
-const celebratoryPose: ArmPose = {
-  left: 'M 55 130 L 15 82',
-  right: 'M 145 130 L 185 82',
-};
-
-const createWaveExtra = (x: number, y: number, origin: string) => (
-  <g className={`animate-wave ${origin}`}>
-    <circle cx={x} cy={y} r="8" stroke="currentColor" strokeWidth="4" fill="none" />
-  </g>
-);
-
-const peekBarXs = [76, 100, 124];
-
-const ARM_POSES: Record<MaiMaiMood | 'default', ArmPose> = {
-  default: relaxedPose,
-  idle: relaxedPose,
-  happy: {
-    left: 'M 55 130 L 28 102',
-    right: 'M 145 130 L 172 102',
-  },
-  celebrate: celebratoryPose,
-  excited: celebratoryPose,
-  wave: {
-    left: 'M 55 130 L 38 112',
-    right: 'M 145 130 L 175 98',
-    extra: (
-      <>
-        {createWaveExtra(26, 90, 'origin-bottom-right')}
-        {createWaveExtra(180, 90, 'origin-bottom-left')}
-      </>
-    ),
-  },
-  thinking: {
-    left: 'M 55 130 L 35 140',
-    right: 'M 145 130 L 132 150 L 108 150', // 托下巴
-  },
-  peek: {
-    left: 'M 55 130 L 72 118',
-    right: 'M 145 130 L 128 118',
-    extra: (
-      <>
-        <rect x="64" y="116" width="72" height="12" rx="6" fill="white" stroke="currentColor" strokeWidth="3" />
-        {peekBarXs.map((x) => (
-          <path key={x} d={`M ${x} 116 L ${x} 128`} stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-        ))}
-      </>
-    ),
-  },
-  shy: {
-    left: 'M 55 130 L 42 118 L 36 132',
-    right: 'M 145 130 L 158 118 L 164 132',
-  },
-  confused: {
-    left: 'M 55 130 L 40 136',
-    right: 'M 145 130 L 160 136',
-  },
-  sleep: {
-    left: 'M 55 130 L 38 152',
-    right: 'M 145 130 L 162 152',
-  },
-};
 
 /**
  * MaiMai 公仔 SVG 骨架組件
@@ -79,13 +55,17 @@ const ARM_POSES: Record<MaiMaiMood | 'default', ArmPose> = {
 // ============ SVG 部件 ============
 
 /** M 型天線 */
-export function Antenna({ animated = false, mood }: { animated?: boolean | undefined; mood?: MaiMaiMood | undefined }) {
+export function Antenna({ animated = false, mood = 'idle' }: { animated?: boolean; mood?: MaiMaiMood }) {
+  const config = MOOD_CONFIGS[mood] || MOOD_CONFIGS.default;
+  const droopy = config.antenna?.droopy;
   const wiggle = mood === 'wave' || mood === 'celebrate' || mood === 'excited';
-  const droopy = mood === 'sleep' || mood === 'shy';
   
-  const d = droopy 
-    ? 'M 85 45 L 85 20 L 100 32 L 115 20 L 115 45'
-    : 'M 85 40 L 85 15 L 100 30 L 115 15 L 115 40';
+  // 基於眼睛座標與常量計算
+  const aY = droopy ? ANTENNA_Y + ANTENNA_DROOP_OFFSET : ANTENNA_Y;
+  const aTopY = droopy ? ANTENNA_TOP_Y + ANTENNA_DROOP_OFFSET : ANTENNA_TOP_Y;
+  const aPeakY = droopy ? ANTENNA_PEAK_Y + 2 : ANTENNA_PEAK_Y;
+
+  const d = `M ${EYE_L_X} ${aY} L ${EYE_L_X} ${aTopY} L ${CENTER_X} ${aPeakY} L ${EYE_R_X} ${aTopY} L ${EYE_R_X} ${aY}`;
 
   return (
     <path
@@ -95,7 +75,7 @@ export function Antenna({ animated = false, mood }: { animated?: boolean | undef
       fill="none"
       strokeLinecap="round"
       strokeLinejoin="round"
-      className={`${wiggle ? 'animate-wiggle origin-bottom' : ''} ${droopy ? 'opacity-70' : ''}`}
+      className={`transition-all duration-300 ${wiggle ? 'animate-wiggle origin-bottom' : ''} ${droopy ? 'opacity-70' : ''}`}
     />
   );
 }
@@ -104,12 +84,13 @@ export function Antenna({ animated = false, mood }: { animated?: boolean | undef
 export function Roof() {
   return (
     <path
-      d="M 40 80 L 100 40 L 160 80"
+      d={`M ${BODY_X - ROOF_OVERHANG} ${BODY_Y} L ${CENTER_X} ${ROOF_PEAK_Y} L ${BODY_X + BODY_WIDTH + ROOF_OVERHANG} ${BODY_Y}`}
       stroke="currentColor"
       strokeWidth="6"
       fill="none"
       strokeLinecap="round"
       strokeLinejoin="round"
+      className="transition-all duration-300"
     />
   );
 }
@@ -118,197 +99,159 @@ export function Roof() {
 export function Body() {
   return (
     <rect
-      x="55" y="80"
-      width="90" height="100"
+      x={BODY_X} y={BODY_Y}
+      width={BODY_WIDTH} height={BODY_HEIGHT}
       stroke="currentColor"
       strokeWidth="6"
       fill="none"
       strokeLinecap="round"
       strokeLinejoin="round"
+      className="transition-all duration-300"
     />
   );
 }
 
 /** 眉毛 */
-export function Eyebrows({ mood }: { mood: MaiMaiMood }) {
-  // 不同心情的眉毛形狀
-  switch (mood) {
-    case 'happy':
-    case 'celebrate':
-    case 'excited':
-      // 開心挑眉
-      return (
-        <>
-          <path d="M 76 105 Q 85 98 94 105" stroke="currentColor" strokeWidth="4" fill="none" strokeLinecap="round" />
-          <path d="M 106 105 Q 115 98 124 105" stroke="currentColor" strokeWidth="4" fill="none" strokeLinecap="round" />
-        </>
-      );
-    case 'shy':
-    case 'confused':
-      // 擔心皺眉
-      return (
-        <>
-          <path d="M 78 108 L 92 115" stroke="currentColor" strokeWidth="4" fill="none" strokeLinecap="round" />
-          <path d="M 122 108 L 108 115" stroke="currentColor" strokeWidth="4" fill="none" strokeLinecap="round" />
-        </>
-      );
-    case 'thinking':
-      // 單邊挑眉
-      return (
-        <>
-          <path d="M 78 108 Q 85 105 92 110" stroke="currentColor" strokeWidth="4" fill="none" strokeLinecap="round" />
-          <path d="M 108 105 Q 115 100 122 105" stroke="currentColor" strokeWidth="4" fill="none" strokeLinecap="round" />
-        </>
-      );
-    case 'peek':
-      // 緊張眉
-      return (
-        <>
-          <path d="M 78 108 L 92 112" stroke="currentColor" strokeWidth="4" fill="none" strokeLinecap="round" />
-          <path d="M 108 112 L 122 108" stroke="currentColor" strokeWidth="4" fill="none" strokeLinecap="round" />
-        </>
-      );
-    case 'sleep':
-      // 水平眉
-      return (
-        <>
-          <path d="M 78 115 L 92 115" stroke="currentColor" strokeWidth="4" fill="none" strokeLinecap="round" opacity="0.7" />
-          <path d="M 108 115 L 122 115" stroke="currentColor" strokeWidth="4" fill="none" strokeLinecap="round" opacity="0.7" />
-        </>
-      );
-    default:
-      // 標準微彎眉
-      return (
-        <>
-          <path d="M 78 110 Q 85 105 92 110" stroke="currentColor" strokeWidth="4" fill="none" strokeLinecap="round" />
-          <path d="M 108 110 Q 115 105 122 110" stroke="currentColor" strokeWidth="4" fill="none" strokeLinecap="round" />
-        </>
-      );
+export function Eyebrows({ mood = 'idle' }: { mood?: MaiMaiMood }) {
+  const config = MOOD_CONFIGS[mood] || MOOD_CONFIGS.default;
+  return (
+    <>
+      <path d={config.eyebrows.left} stroke="currentColor" strokeWidth="4" fill="none" strokeLinecap="round" className="transition-all duration-300" />
+      <path d={config.eyebrows.right} stroke="currentColor" strokeWidth="4" fill="none" strokeLinecap="round" className="transition-all duration-300" />
+    </>
+  );
+}
+
+/** 渲染單個眼睛數據 */
+function RenderEye({ data }: { data: EyeData }) {
+  if (data.type === 'circle') {
+    return (
+      <circle
+        cx={data.cx}
+        cy={data.cy}
+        r={data.r}
+        fill={data.fill || 'none'}
+        stroke={data.fill === 'currentColor' ? 'none' : 'currentColor'}
+        strokeWidth={data.strokeWidth}
+        className={`transition-all duration-300 ${data.className || ''}`}
+      />
+    );
   }
+  if (data.type === 'path') {
+    return (
+      <path
+        d={data.d}
+        stroke="currentColor"
+        strokeWidth={data.strokeWidth || 3}
+        fill="none"
+        strokeLinecap="round"
+        className={`transition-all duration-300 ${data.className || ''}`}
+      />
+    );
+  }
+  if (data.type === 'group') {
+    return (
+      <g className={data.className}>
+        {data.children?.map((child, i) => <RenderEye key={i} data={child} />)}
+      </g>
+    );
+  }
+  return null;
 }
 
 /** 眼睛 */
-export function Eyes({ mood }: { mood: MaiMaiMood }) {
-  switch (mood) {
-    case 'happy':
-    case 'wave':
-      // 開心彎眼 ^ ^
-      return (
-        <>
-          <path d="M 80 125 Q 85 120 90 125" stroke="currentColor" strokeWidth="3" fill="none" strokeLinecap="round" />
-          <path d="M 110 125 Q 115 120 120 125" stroke="currentColor" strokeWidth="3" fill="none" strokeLinecap="round" />
-        </>
-      );
-    case 'celebrate':
-    case 'excited':
-      // 閉眼笑
-      return (
-        <>
-          <path d="M 78 118 Q 85 110 92 118" stroke="currentColor" strokeWidth="4" fill="none" strokeLinecap="round" />
-          <path d="M 108 118 Q 115 110 122 118" stroke="currentColor" strokeWidth="4" fill="none" strokeLinecap="round" />
-        </>
-      );
-    case 'peek':
-      // 遮眼偷看（小點）
-      return (
-        <>
-          <circle cx="85" cy="125" r="3" fill="currentColor" />
-          <circle cx="115" cy="125" r="3" fill="currentColor" />
-        </>
-      );
-    case 'thinking':
-      // 看向右上
-      return (
-        <>
-          <circle cx="87" cy="123" r="4" stroke="currentColor" strokeWidth="3" fill="none" />
-          <circle cx="88" cy="122" r="1.5" fill="currentColor" />
-          <circle cx="117" cy="123" r="4" stroke="currentColor" strokeWidth="3" fill="none" />
-          <circle cx="118" cy="122" r="1.5" fill="currentColor" />
-        </>
-      );
-    case 'shy':
-    case 'confused':
-      // 擔心眼
-      return (
-        <>
-          <circle cx="85" cy="125" r="4" stroke="currentColor" strokeWidth="3" fill="none" />
-          <circle cx="85" cy="126" r="1.5" fill="currentColor" />
-          <circle cx="115" cy="125" r="4" stroke="currentColor" strokeWidth="3" fill="none" />
-          <circle cx="115" cy="126" r="1.5" fill="currentColor" />
-        </>
-      );
-    case 'sleep':
-      // 閉眼線
-      return (
-        <>
-          <path d="M 78 125 L 92 125" stroke="currentColor" strokeWidth="3" fill="none" strokeLinecap="round" />
-          <path d="M 108 125 L 122 125" stroke="currentColor" strokeWidth="3" fill="none" strokeLinecap="round" />
-        </>
-      );
-    default:
-      // 標準空心圓眼
-      return (
-        <g className="animate-blink">
-          <circle cx="85" cy="125" r="4" stroke="currentColor" strokeWidth="3" fill="none" />
-          <circle cx="115" cy="125" r="4" stroke="currentColor" strokeWidth="3" fill="none" />
-        </g>
-      );
-  }
+export function Eyes({ mood = 'idle' }: { mood?: MaiMaiMood }) {
+  const config = MOOD_CONFIGS[mood] || MOOD_CONFIGS.default;
+  return (
+    <>
+      <RenderEye data={config.eyes.left} />
+      <RenderEye data={config.eyes.right} />
+    </>
+  );
 }
 
 /** 嘴巴 */
-export function Mouth({ mood }: { mood: MaiMaiMood }) {
-  switch (mood) {
-    case 'happy':
-    case 'wave':
-      // 大微笑
-      return <path d="M 85 145 Q 100 160 115 145" stroke="currentColor" strokeWidth="3" fill="none" strokeLinecap="round" />;
-    case 'celebrate':
-    case 'excited':
-      // 超大笑
-      return <path d="M 80 140 Q 100 165 120 140" stroke="currentColor" strokeWidth="4" fill="none" strokeLinecap="round" />;
-    case 'thinking':
-      // 嗯...
-      return <path d="M 95 150 L 105 150" stroke="currentColor" strokeWidth="3" fill="none" strokeLinecap="round" />;
-    case 'shy':
-    case 'confused':
-      // 波浪嘴
-      return <path d="M 88 150 Q 94 145 100 150 Q 106 155 112 150" stroke="currentColor" strokeWidth="3" fill="none" strokeLinecap="round" />;
-    case 'peek':
-      // 小微笑
-      return <path d="M 92 150 Q 100 155 108 150" stroke="currentColor" strokeWidth="3" fill="none" strokeLinecap="round" />;
-    case 'sleep':
-      // 橢圓嘴
-      return <ellipse cx="100" cy="150" rx="5" ry="3" stroke="currentColor" strokeWidth="2" fill="none" />;
-    default:
-      // 標準微笑
-      return <path d="M 90 145 Q 100 155 110 145" stroke="currentColor" strokeWidth="3" fill="none" strokeLinecap="round" />;
+export function Mouth({ mood = 'idle' }: { mood?: MaiMaiMood }) {
+  const config = MOOD_CONFIGS[mood] || MOOD_CONFIGS.default;
+  return (
+    <path
+      d={config.mouth}
+      stroke="currentColor"
+      strokeWidth="3"
+      fill="none"
+      strokeLinecap="round"
+      className="transition-all duration-300"
+    />
+  );
+}
+
+/** 手臂額外裝飾 (揮手、遮眼) */
+function ArmExtra({ type }: { type?: 'wave' | 'peek' | undefined }) {
+  if (!type) return null;
+
+  if (type === 'wave') {
+    const createWave = (x: number, y: number, origin: string) => (
+      <g className={`animate-wave ${origin}`}>
+        <circle cx={x} cy={y} r={WAVE_RADIUS} stroke="currentColor" strokeWidth="4" fill="none" />
+      </g>
+    );
+    const waveLX = SHOULDER_L_X - WAVE_OFFSET_X;
+    const waveRX = SHOULDER_R_X + WAVE_R_OFFSET_X;
+    const waveY = SHOULDER_Y - WAVE_OFFSET_Y;
+    
+    return (
+      <>
+        {createWave(waveLX, waveY, 'origin-bottom-right')}
+        {createWave(waveRX, waveY, 'origin-bottom-left')}
+      </>
+    );
   }
+
+  if (type === 'peek') {
+    const barX = CENTER_X - PEEK_BAR_WIDTH / 2;
+    const barY = EYE_Y - PEEK_BAR_OFFSET_Y;
+    const peekBarXs = [CENTER_X - PEEK_BAR_GAP, CENTER_X, CENTER_X + PEEK_BAR_GAP];
+    
+    return (
+      <>
+        <rect x={barX} y={barY} width={PEEK_BAR_WIDTH} height={PEEK_BAR_HEIGHT} rx="6" fill="white" stroke="currentColor" strokeWidth="3" />
+        {peekBarXs.map((x) => (
+          <path key={x} d={`M ${x} ${barY} L ${x} ${barY + PEEK_BAR_HEIGHT}`} stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+        ))}
+      </>
+    );
+  }
+
+  return null;
 }
 
 /** 手臂 */
 export function Arms({ mood }: { mood: MaiMaiMood }) {
   const arms = ARM_POSES[mood] ?? ARM_POSES.default;
+  const leftPath = arms.left;
+  const rightPath = arms.right ?? mirrorPath(leftPath);
 
   return (
     <>
       <path
-        d={arms.left}
+        d={leftPath}
         stroke="currentColor"
         strokeWidth="5"
         fill="none"
         strokeLinecap="round"
         strokeLinejoin="round"
+        className="transition-all duration-300"
       />
       <path
-        d={arms.right}
+        d={rightPath}
         stroke="currentColor"
         strokeWidth="5"
         fill="none"
         strokeLinecap="round"
         strokeLinejoin="round"
+        className="transition-all duration-300"
       />
-      {arms.extra}
+      <ArmExtra type={arms.extraType} />
     </>
   );
 }
@@ -318,18 +261,19 @@ export function Legs({ mood, animated = false }: { mood: MaiMaiMood; animated?: 
   const jumping = mood === 'celebrate' || mood === 'excited';
   
   if (jumping) {
+    const jumpY = HIP_Y + JUMP_OFFSET;
     return (
       <>
-        <path d="M 85 175 L 75 200 L 65 205" stroke="currentColor" strokeWidth="5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M 115 175 L 125 200 L 135 205" stroke="currentColor" strokeWidth="5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+        <path d={`M ${HIP_L_X} ${HIP_Y - LEG_HIP_OFFSET} L ${HIP_L_X - LEG_BEND_X} ${jumpY} L ${HIP_L_X - LEG_BEND_X * 2} ${jumpY + LEG_BEND_Y}`} stroke="currentColor" strokeWidth="5" fill="none" strokeLinecap="round" strokeLinejoin="round" className="transition-all duration-300" />
+        <path d={`M ${HIP_R_X} ${HIP_Y - LEG_HIP_OFFSET} L ${HIP_R_X + LEG_BEND_X} ${jumpY} L ${HIP_R_X + LEG_BEND_X * 2} ${jumpY + LEG_BEND_Y}`} stroke="currentColor" strokeWidth="5" fill="none" strokeLinecap="round" strokeLinejoin="round" className="transition-all duration-300" />
       </>
     );
   }
 
   return (
     <>
-      <path d="M 85 180 L 85 215 L 75 215" stroke="currentColor" strokeWidth="5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M 115 180 L 115 215 L 125 215" stroke="currentColor" strokeWidth="5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+      <path d={`M ${HIP_L_X} ${HIP_Y} L ${HIP_L_X} ${LEG_Y} L ${HIP_L_X - LEG_FOOT_OFFSET} ${LEG_Y}`} stroke="currentColor" strokeWidth="5" fill="none" strokeLinecap="round" strokeLinejoin="round" className="transition-all duration-300" />
+      <path d={`M ${HIP_R_X} ${HIP_Y} L ${HIP_R_X} ${LEG_Y} L ${HIP_R_X + LEG_FOOT_OFFSET} ${LEG_Y}`} stroke="currentColor" strokeWidth="5" fill="none" strokeLinecap="round" strokeLinejoin="round" className="transition-all duration-300" />
     </>
   );
 }
@@ -339,57 +283,59 @@ export function Blush({ show }: { show: boolean }) {
   if (!show) return null;
   return (
     <>
-      <circle cx="70" cy="140" r="8" fill="#FFB6C1" opacity="0.6" />
-      <circle cx="130" cy="140" r="8" fill="#FFB6C1" opacity="0.6" />
+      <circle cx={EYE_L_X - BLUSH_OFFSET_X} cy={BLUSH_Y} r={BLUSH_RADIUS} fill="#FFB6C1" opacity="0.6" className="transition-all duration-300" />
+      <circle cx={EYE_R_X + BLUSH_OFFSET_X} cy={BLUSH_Y} r={BLUSH_RADIUS} fill="#FFB6C1" opacity="0.6" className="transition-all duration-300" />
     </>
   );
 }
 
 /** 特效 - 愛心/星星 */
 export function Effects({ mood }: { mood: MaiMaiMood }) {
+  const centerX = CENTER_X;
+  
   switch (mood) {
     case 'celebrate':
     case 'excited':
       return (
         <g className="animate-confetti">
-          <text x="30" y="40" fontSize="14">🎉</text>
-          <text x="160" y="35" fontSize="12">🎊</text>
-          <text x="20" y="80" fontSize="10">✨</text>
-          <text x="175" y="75" fontSize="10">⭐</text>
+          {EFFECT_POSITIONS.celebrate.map((p, i) => (
+            <text key={i} x={centerX + p.x} y={p.y} fontSize={p.size}>{p.icon}</text>
+          ))}
         </g>
       );
     case 'happy':
       return (
         <>
-          <text x="40" y="60" fontSize="14" className="animate-twinkle">✨</text>
-          <text x="155" y="55" fontSize="12" className="animate-twinkle-delay">✨</text>
+          {EFFECT_POSITIONS.happy.map((p, i) => (
+            <text key={i} x={centerX + p.x} y={p.y} fontSize={p.size} className={p.className}>{p.icon}</text>
+          ))}
         </>
       );
     case 'thinking':
       return (
         <g className="animate-float-up">
-          <circle cx="160" cy="50" r="5" fill="currentColor" opacity="0.3" />
-          <circle cx="170" cy="35" r="8" fill="currentColor" opacity="0.5" />
-          <circle cx="185" cy="15" r="12" fill="currentColor" opacity="0.7" />
+          {EFFECT_POSITIONS.thinking.map((p, i) => (
+            <circle key={i} cx={centerX + p.x} cy={p.y} r={p.r} fill="currentColor" opacity={p.opacity} />
+          ))}
         </g>
       );
     case 'sleep':
       return (
         <g className="animate-float-up">
-          <text x="150" y="50" fontSize="12" fill="currentColor" opacity="0.7">z</text>
-          <text x="165" y="35" fontSize="16" fill="currentColor" opacity="0.8">z</text>
-          <text x="180" y="18" fontSize="20" fill="currentColor">Z</text>
+          {EFFECT_POSITIONS.sleep.map((p, i) => (
+            <text key={i} x={centerX + p.x} y={p.y} fontSize={p.size} fill="currentColor" opacity={p.opacity}>{p.icon}</text>
+          ))}
         </g>
       );
     case 'shy':
       return (
-        <ellipse cx="155" cy="70" rx="5" ry="8" fill="#87CEEB" className="animate-drip" />
+        <ellipse cx={centerX + EFFECT_POSITIONS.shy.x} cy={EFFECT_POSITIONS.shy.y} rx={EFFECT_POSITIONS.shy.rx} ry={EFFECT_POSITIONS.shy.ry} fill="#87CEEB" className="animate-drip" />
       );
     case 'wave':
       return (
         <g className="animate-bounce">
-          <ellipse cx="175" cy="60" rx="20" ry="15" fill="white" stroke="currentColor" strokeWidth="2" />
-          <text x="175" y="65" textAnchor="middle" fontSize="12" fontWeight="bold" fill="currentColor">Hi!</text>
+          <ellipse cx={centerX + EFFECT_POSITIONS.wave.x} cy={EFFECT_POSITIONS.wave.y} rx={EFFECT_POSITIONS.wave.rx} ry={EFFECT_POSITIONS.wave.ry} fill="white" stroke="currentColor" strokeWidth="2" />
+          <text x={centerX + EFFECT_POSITIONS.wave.x} y={EFFECT_POSITIONS.wave.textY} textAnchor="middle" fontSize={EFFECT_POSITIONS.wave.fontSize} fontWeight="bold" fill="currentColor">Hi!</text>
         </g>
       );
     default:

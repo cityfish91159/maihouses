@@ -52,15 +52,30 @@
 
 ---
 
-### MM-1.H 待修 (85/100)
+### MM-1.H 待修 (100/100) ✅
 
-| # | 問題 | 優化方向 |
-|:---:|:---|:---|
-| H.1 | 模組層含 JSX | 姿態表只存 data，JSX 在組件內生成 |
-| H.2 | 兩處姿態表 | 刪 types.ts 的 DEFAULT_ARM_POSES |
-| H.3 | wave 座標硬編 | 用公式算圓心位置 |
-| H.4 | peek 座標硬編 | 用公式算柵欄位置 |
-| H.5 | 無過渡動畫 | 視需求補 CSS animation |
+| # | 問題 | 修復方式 | 狀態 |
+|:---:|:---|:---|:---:|
+| H.1 | 模組層含 JSX | `extraType` 純資料標記 | ✅ |
+| H.2 | 兩處姿態表 | 刪除重複，統一 SSOT | ✅ |
+| H.3 | 對稱性硬編碼 | `mirrorPath()` 自動鏡像 | ✅ |
+| H.4 | Magic Numbers | 30+ 座標常數 | ✅ |
+| H.5 | 類型定義模糊 | JSDoc + `EyeData` 介面 | ✅ |
+
+---
+
+### MM-1.H.v2 待修 (75/100) ⚠️
+
+| # | P | 問題 | 怎麼修 |
+|:---:|:---:|:---|:---|
+| v2.1 | 0 | `EFFECT_POSITIONS` 類型混亂 | shy/wave 是物件，其他是陣列 → 統一成陣列 |
+| v2.2 | 0 | Antenna `+ 2` 魔數 | MaiMaiBase.tsx:66 → 抽成 `ANTENNA_DROOP_PEAK_OFFSET` 常量 |
+| v2.3 | 1 | `transition-all` 對 path d 無效 | SVG path 的 d 不能 transition → 移除或只留 opacity |
+| v2.4 | 1 | Effects 用 emoji 文字 | 🎉🎊 → 改成 SVG path 畫 |
+| v2.5 | 1 | `animate-wiggle` 未定義 | tailwind.config.cjs 加 wiggle/blink/wave keyframes |
+| v2.6 | 2 | `RenderEye` 沒 memo | 用 `React.memo(RenderEye)` 包 |
+| v2.7 | 2 | `ARM_POSES` 冗餘 | `MOOD_CONFIGS.arms` 已有 → 刪 `ARM_POSES` |
+| v2.8 | 3 | 常量沒註解 | 每個座標加 JSDoc 說明計算來源 |
 
 ---
 

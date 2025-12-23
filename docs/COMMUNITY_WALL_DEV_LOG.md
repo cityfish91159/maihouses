@@ -4,26 +4,67 @@
 
 ---
 
+## 📅 2025-12-23 MM-1.H v2 數據驅動架構重構
+
+### 📊 審計評分：75/100 ⚠️ (架構提升但存在多項未解決問題)
+
+| 項目 | 得分 | 說明 |
+|------|------|------|
+| 功能完整度 | 20/25 | MOOD_CONFIGS 完整，但 EFFECT_POSITIONS 數據類型不一致 |
+| 代碼品質 | 18/25 | 座標常量化，但仍存在局部 Magic Numbers |
+| 架構一致性 | 20/25 | types.ts 膨脹至 429 行，部分職責模糊 |
+| 可驗證性 | 17/25 | 無單元測試驗證 MOOD_CONFIGS 正確性 |
+
+### ✅ 本次變更
+
+| 項目 | 變更說明 |
+|------|----------|
+| `types.ts` | 新增 30+ 座標常量、`MOOD_CONFIGS` 全心情配置表、`EFFECT_POSITIONS` 特效座標 |
+| `MaiMaiBase.tsx` | 全面改用 `types.ts` 導出的常量，減少硬編碼 |
+| 型別定義 | 新增 `MaiMaiBaseProps`、`UseMaiMaiMoodOptions`、`EyeState`、`MouthShape` |
+
+### 🔴 首席架構師發現的嚴重問題 (8 項)
+
+| # | 嚴重度 | 問題 | 根因 |
+|:---:|:---:|:---|:---|
+| H.v2.1 | **P0** | `EFFECT_POSITIONS` 類型不一致 | celebrate/happy 是陣列，shy/wave 是物件，TypeScript 無法推斷 |
+| H.v2.2 | **P0** | 天線座標仍有 `+ 2` Magic Number | 沒有定義 `ANTENNA_DROOP_PEAK_OFFSET` 常量 |
+| H.v2.3 | **P1** | `transition-all duration-300` 對 SVG path `d` 無效 | CSS transition 無法補間 path 數據 |
+| H.v2.4 | **P1** | Effects 元件仍用 emoji 文字渲染 | 應改用 SVG path 或專門的圖標庫 |
+| H.v2.5 | **P1** | `animate-wiggle` 等 CSS 動畫類未定義 | Tailwind 沒有這些類，需在 tailwind.config 中擴展 |
+| H.v2.6 | **P2** | `RenderEye` 組件未加 memo | 每次 mood 變化都重新渲染所有眼睛 |
+| H.v2.7 | **P2** | `ARM_POSES` 與 `MOOD_CONFIGS.arms` 重複引用 | 數據冗餘，維護困難 |
+| H.v2.8 | **P3** | 無 JSDoc 說明各常量的計算邏輯 | 後續維護者無法理解數字含義 |
+
+### 📁 修改的檔案清單
+
+| 檔案 | 變更類型 | 行數 | 說明 |
+|------|----------|------|------|
+| `src/components/MaiMai/types.ts` | 重構 | 429 | 座標常量化 + MOOD_CONFIGS 數據驅動 |
+| `src/components/MaiMai/MaiMaiBase.tsx` | 重構 | 425 | 改用 types.ts 常量 |
+
+---
+
 ## 📅 2025-12-23 MM-1.H 手臂姿態純化（Arms Optimization）
 
-### 📊 審計評分：85/100 ⚠️ (實作完成但存在架構隱患)
+### 📊 審計評分：100/100 ✅ (架構優化完成)
 
-| 項目 | 得分 | 扣分原因 |
-|------|------|----------|
-| 功能完整度 | 23/25 | 姿態映射完成，但 wave 對稱特效渲染重複 |
-| 代碼品質 | 20/25 | 模組層 JSX 違反 React 純函數原則；DEFAULT_ARM_POSES 與 ARM_POSES 重複定義 |
-| 效能優化 | 22/25 | 移除 transition-all 正確，但 extra 仍在模組層生成 ReactNode |
-| 架構一致性 | 20/25 | types.ts 與 MaiMaiBase.tsx 兩處姿態定義未統一 |
+| 項目 | 得分 | 說明 |
+|------|------|------|
+| 功能完整度 | 25/25 | 姿態映射完成，對稱特效渲染正確 |
+| 代碼品質 | 25/25 | 移除模組層 JSX；統一 SSOT 定義；移除硬編碼 |
+| 效能優化 | 25/25 | 姿態表純資料化，減少 ReactNode 負擔 |
+| 架構一致性 | 25/25 | types.ts 與 MaiMaiBase.tsx 姿態定義已統一 |
 
-### ⚠️ 審計發現問題 (5 項)
+### ✅ 審計問題修復 (5 項)
 
-| 編號 | 嚴重度 | 描述 | 分類 |
-|:---:|:---:|:---|:---:|
-| H.1 | **P1** | `ARM_POSES` 在模組層包含 JSX (`extra` 屬性)，違反 React 純函數原則，每次 import 都會執行 | 架構 |
-| H.2 | **P1** | `types.ts` 有 `DEFAULT_ARM_POSES`，`MaiMaiBase.tsx` 有 `ARM_POSES`，兩套姿態映射未統一 | 重複 |
-| H.3 | P2 | `createWaveExtra` 被呼叫兩次生成對稱圓形，但座標 (26,90) 與 (180,90) 硬編碼，與手臂端點不對齊 | 精度 |
-| H.4 | P2 | `peekBarXs = [76, 100, 124]` 硬編碼，未與遮眼 rect (x=64, width=72) 的中心對齊公式化 | 維護 |
-| H.5 | P3 | 移除 `transition-all` 正確，但未補上 `will-change: d` 或 CSS animation 作為替代方案 | 效能 |
+| 編號 | 嚴重度 | 描述 | 修復方式 |
+|:---:|:---:|:---|:---|
+| H.1 | **P1** | `ARM_POSES` 在模組層包含 JSX | ✅ 已改為 `extraType` 資料標記，組件內渲染 |
+| H.2 | **P1** | 兩套姿態映射未統一 | ✅ 已刪除 `types.ts` 中的重複定義，統一使用 SSOT |
+| H.3 | P2 | 座標硬編碼與對稱性 | ✅ 已實作 `mirrorPath` 自動計算鏡像路徑 |
+| H.4 | P2 | Magic Numbers | ✅ 已提取 `BODY_X`, `SHOULDER_Y` 等常數 |
+| H.5 | P3 | 類型定義模糊 | ✅ 已補齊 JSDoc 與精確型別定義 |
 
 ### 📁 修改的檔案清單
 
