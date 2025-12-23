@@ -22,7 +22,14 @@ export type MaiMaiMood =
 export type MaiMaiSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
 /** 嘴巴形狀 */
-export type MouthShape = 'smile' | 'big-smile' | 'wow' | 'focused' | 'worried' | 'sleep' | 'line';
+export type MouthShape =
+  | 'smile'
+  | 'big-smile'
+  | 'wow'
+  | 'focused'
+  | 'worried'
+  | 'sleep'
+  | 'line';
 
 /** 尺寸 CSS 類別對照表 */
 export const SIZE_CLASSES: Record<MaiMaiSize, string> = {
@@ -81,8 +88,9 @@ export interface UseMaiMaiMoodOptions {
   isLoading?: boolean;
   isTypingPassword?: boolean;
   isTypingEmail?: boolean;
-  isHovered?: boolean;
   isCelebrating?: boolean;
+  /** 是否處於 Hover 狀態 */
+  isHovered?: boolean;
 }
 
 /** MaiMai 對話氣泡 Props */
@@ -180,14 +188,14 @@ export const PEEK_BAR_GAP = 24;
 // ============ 手臂位移常量 (SSOT) ============
 
 export const ARM = {
-  rest:      [23, 8],
-  happy:     [27, 28],
-  wave:      [17, 18],
+  rest: [23, 8],
+  happy: [27, 28],
+  wave: [17, 18],
   celebrate: [40, 48],
-  think:     [20, 10],
-  shy:       [[13, 12], [19, -2]] as [[number, number], [number, number]],
-  confused:  [15, -6],
-  sleep:     [17, -22],
+  think: [20, 10],
+  shy: [[13, 12], [19, -2]] as [[number, number], [number, number]],
+  confused: [15, -6],
+  sleep: [17, -22],
 } as const;
 
 // ============ 特效顏色 ============
@@ -284,12 +292,16 @@ const brow = {
 // 眼睛工廠
 const eyes = {
   circle: (blink = true): { left: EyeData; right: EyeData } => ({
-    left: { type: 'group', className: blink ? 'animate-blink' : undefined, children: [
-      { type: 'circle', cx: EYE_L_X, cy: EYE_Y, r: EYE_RADIUS, strokeWidth: 3, fill: 'none' },
-    ]},
-    right: { type: 'group', className: blink ? 'animate-blink' : undefined, children: [
-      { type: 'circle', cx: EYE_R_X, cy: EYE_Y, r: EYE_RADIUS, strokeWidth: 3, fill: 'none' },
-    ]},
+    left: {
+      type: 'group', className: blink ? 'animate-blink' : undefined, children: [
+        { type: 'circle', cx: EYE_L_X, cy: EYE_Y, r: EYE_RADIUS, strokeWidth: 3, fill: 'none' },
+      ]
+    },
+    right: {
+      type: 'group', className: blink ? 'animate-blink' : undefined, children: [
+        { type: 'circle', cx: EYE_R_X, cy: EYE_Y, r: EYE_RADIUS, strokeWidth: 3, fill: 'none' },
+      ]
+    },
   }),
   happy: (): { left: EyeData; right: EyeData } => ({
     left: { type: 'path', d: `M ${EYE_L_X - 5} ${EYE_Y} Q ${EYE_L_X} ${EYE_Y - 5} ${EYE_L_X + 5} ${EYE_Y}`, strokeWidth: 3 },
@@ -304,14 +316,18 @@ const eyes = {
     right: { type: 'circle', cx: EYE_R_X, cy: EYE_Y, r: 3, fill: 'currentColor' },
   }),
   withPupil: (offsetX = 0, offsetY = 0): { left: EyeData; right: EyeData } => ({
-    left: { type: 'group', children: [
-      { type: 'circle', cx: EYE_L_X + offsetX, cy: EYE_Y + offsetY, r: 4, strokeWidth: 3, fill: 'none' },
-      { type: 'circle', cx: EYE_L_X + offsetX + 1, cy: EYE_Y + offsetY, r: 1.5, fill: 'currentColor' },
-    ]},
-    right: { type: 'group', children: [
-      { type: 'circle', cx: EYE_R_X + offsetX, cy: EYE_Y + offsetY, r: 4, strokeWidth: 3, fill: 'none' },
-      { type: 'circle', cx: EYE_R_X + offsetX + 1, cy: EYE_Y + offsetY, r: 1.5, fill: 'currentColor' },
-    ]},
+    left: {
+      type: 'group', children: [
+        { type: 'circle', cx: EYE_L_X + offsetX, cy: EYE_Y + offsetY, r: 4, strokeWidth: 3, fill: 'none' },
+        { type: 'circle', cx: EYE_L_X + offsetX + 1, cy: EYE_Y + offsetY, r: 1.5, fill: 'currentColor' },
+      ]
+    },
+    right: {
+      type: 'group', children: [
+        { type: 'circle', cx: EYE_R_X + offsetX, cy: EYE_Y + offsetY, r: 4, strokeWidth: 3, fill: 'none' },
+        { type: 'circle', cx: EYE_R_X + offsetX + 1, cy: EYE_Y + offsetY, r: 1.5, fill: 'currentColor' },
+      ]
+    },
   }),
   closed: (): { left: EyeData; right: EyeData } => ({
     left: { type: 'path', d: `M ${EYE_L_X - 7} ${EYE_Y} L ${EYE_L_X + 7} ${EYE_Y}`, strokeWidth: 3 },

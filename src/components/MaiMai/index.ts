@@ -4,7 +4,7 @@
  */
 
 // 核心組件
-export { MaiMaiBase, default } from './MaiMaiBase';
+export { MaiMaiBase } from './MaiMaiBase';
 export { MaiMaiSpeech } from './MaiMaiSpeech';
 
 // SVG 部件（可用於組合）
