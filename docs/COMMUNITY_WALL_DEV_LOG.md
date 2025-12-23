@@ -4,6 +4,41 @@
 
 ---
 
+## 📅 2025-12-23 MM-1.H.v2 完整修復 (v2.1-v2.8)
+
+### 📊 審計評分：92/100 ⚠️ (核心修復完成，但存在遺漏)
+
+| 項目 | 得分 | 說明 |
+|------|------|------|
+| 功能完整度 | 24/25 | 8 項修復全部聲稱完成 |
+| 代碼品質 | 22/25 | JSDoc 完善，但部分 Magic Numbers 仍存在 |
+| 架構一致性 | 23/25 | SSOT 統一，但 types.ts 膨脹至 720 行 |
+| 可驗證性 | 23/25 | 無單元測試驗證修復正確性 |
+
+### ✅ v2.1-v2.8 變更清單
+
+| 版本 | Commit | 變更說明 |
+|------|--------|----------|
+| v2.1 | - | `EFFECT_POSITIONS` 改為 `EffectItem[]` discriminated union |
+| v2.2 | - | 新增 `ANTENNA_DROOP_PEAK_OFFSET = 2` 常量 |
+| v2.3 | 7522218 | `T_OPACITY` 常量取代 `transition-all`；12 處 path 優化 |
+| v2.4 | 7522218 | `EffectStar/Sparkle/Confetti` React.memo 組件 + 顏色常量 |
+| v2.5 | 54f8d41 | 刪除 index.css 13 個重複 @keyframes，SSOT 至 tailwind.config.cjs |
+| v2.6 | dd85878 | `RenderEye` 加 `React.memo` + `areEyePropsEqual` 自定義比較 |
+| v2.7 | 5603f88 | 刪除 `ARM_POSES` 獨立常量，內聯至 `MOOD_CONFIGS.arms` |
+| v2.8 | fa5d84d | 38+ 座標常量加 JSDoc 註解 |
+
+### 📁 修改的檔案清單
+
+| 檔案 | 變更類型 | 行數變化 | 說明 |
+|------|----------|----------|------|
+| `types.ts` | 大幅擴充 | 459→720 | JSDoc 註解 + EffectItem union |
+| `MaiMaiBase.tsx` | 重構 | 517→592 | memo 組件 + areEqual |
+| `tailwind.config.cjs` | 擴充 | +JSDoc | 動畫 SSOT |
+| `index.css` | 刪減 | -66 行 | 移除重複 @keyframes |
+
+---
+
 ## 📅 2025-12-23 MM-1.H v2 數據驅動架構重構
 
 ### 📊 審計評分：75/100 ⚠️ (架構提升但存在多項未解決問題)
