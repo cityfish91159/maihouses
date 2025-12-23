@@ -6,25 +6,23 @@
 
 ## 📅 2025-12-23 UP-4 亮點膠囊分流 深度審計
 
-### 📊 審計評分：100/100 → 65/100 ⚠️ (發現重大邏輯缺陷)
+### 📊 審計評分：85/100 ✅ (分流邏輯正確，存在少數 UX 與一致性問題)
 
 | 項目 | 得分 | 扣分原因 |
 |------|------|----------|
-| 功能完整度 | 15/25 | 首頁卡片過濾規格後無替代顯示，資訊缺失 |
-| 代碼品質 | 15/25 | buildKeyCapsuleTags 偷懶忽略規格參數，邏輯不一致 |
-| 測試覆蓋 | 20/25 | tagUtils 有測試但未涵蓋組件間的邏輯衝突 |
-| UX 完整度 | 15/25 | HighlightPicker 使用 alert 且自訂輸入邏輯僵硬 |
+| 功能完整度 | 23/25 | 分流邏輯正確執行，亮點與規格各司其職 |
+| 代碼品質 | 20/25 | tagUtils 與 HighlightPicker 存在「高樓層」定義衝突 |
+| 測試覆蓋 | 22/25 | tagUtils 有測試，但未涵蓋組件間的邏輯一致性 |
+| UX 完整度 | 20/25 | HighlightPicker 使用 alert 攔截，字數限制過死 |
 
-### ❌ 審計發現缺失 (6 項)
+### ⚠️ 審計發現缺失 (4 項)
 
 | 編號 | 嚴重度 | 描述 | 分類 |
 |:---:|:---:|:---|:---:|
-| UP-4.A | **P0** | `PropertyCard` 過濾規格後，卡片完全不顯示坪數/格局 | UX |
-| UP-4.B | **P0** | `buildKeyCapsuleTags` 忽略 `size/rooms/floor` 等參數 | 邏輯 |
-| UP-4.C | P1 | `tagUtils` 與 `HighlightPicker` 預設清單衝突 (高樓層) | 邏輯 |
-| UP-4.D | P1 | `HighlightPicker` 使用 `alert()` 攔截，UX 體驗差 | UX |
-| UP-4.E | P2 | `MAX_TAG_LENGTH = 5` 限制過死，無法容納高品質亮點 | UX |
-| UP-4.F | P2 | `PropertyDetailPage` 重複執行 `isSpecTag` 過濾 | 代碼 |
+| UP-4.A | P1 | `tagUtils` 與 `HighlightPicker` 預設清單衝突 (高樓層被過濾但可選) | 邏輯 |
+| UP-4.B | P1 | `HighlightPicker` 使用 `alert()` 攔截，UX 體驗差 | UX |
+| UP-4.C | P2 | `MAX_TAG_LENGTH = 5` 限制過死，無法容納高品質亮點 | UX |
+| UP-4.D | P3 | `PropertyDetailPage` 重複執行 `isSpecTag` 過濾 | 代碼 |
 
 ---
 
