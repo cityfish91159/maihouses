@@ -77,7 +77,7 @@ export function Antenna({ animated = false, mood = 'idle' }: { animated?: boolea
       fill="none"
       strokeLinecap="round"
       strokeLinejoin="round"
-      className={`transition-all duration-300 ${wiggle ? 'animate-wiggle origin-bottom' : ''} ${droopy ? 'opacity-70' : ''}`}
+      className={`transition-opacity duration-300 ${wiggle ? 'animate-wiggle origin-bottom' : ''} ${droopy ? 'opacity-70' : ''}`}
     />
   );
 }
@@ -92,7 +92,7 @@ export function Roof() {
       fill="none"
       strokeLinecap="round"
       strokeLinejoin="round"
-      className="transition-all duration-300"
+      className="transition-opacity duration-300"
     />
   );
 }
@@ -108,7 +108,7 @@ export function Body() {
       fill="none"
       strokeLinecap="round"
       strokeLinejoin="round"
-      className="transition-all duration-300"
+      className="transition-opacity duration-300"
     />
   );
 }
@@ -118,8 +118,8 @@ export function Eyebrows({ mood = 'idle' }: { mood?: MaiMaiMood }) {
   const config = MOOD_CONFIGS[mood] || MOOD_CONFIGS.default;
   return (
     <>
-      <path d={config.eyebrows.left} stroke="currentColor" strokeWidth="4" fill="none" strokeLinecap="round" className="transition-all duration-300" />
-      <path d={config.eyebrows.right} stroke="currentColor" strokeWidth="4" fill="none" strokeLinecap="round" className="transition-all duration-300" />
+      <path d={config.eyebrows.left} stroke="currentColor" strokeWidth="4" fill="none" strokeLinecap="round" className="transition-opacity duration-300" />
+      <path d={config.eyebrows.right} stroke="currentColor" strokeWidth="4" fill="none" strokeLinecap="round" className="transition-opacity duration-300" />
     </>
   );
 }
@@ -135,7 +135,7 @@ function RenderEye({ data }: { data: EyeData }) {
         fill={data.fill || 'none'}
         stroke={data.fill === 'currentColor' ? 'none' : 'currentColor'}
         strokeWidth={data.strokeWidth}
-        className={`transition-all duration-300 ${data.className || ''}`}
+        className={`transition-[opacity,cx,cy,r] duration-300 ${data.className || ''}`}
       />
     );
   }
@@ -147,7 +147,7 @@ function RenderEye({ data }: { data: EyeData }) {
         strokeWidth={data.strokeWidth || 3}
         fill="none"
         strokeLinecap="round"
-        className={`transition-all duration-300 ${data.className || ''}`}
+        className={`transition-opacity duration-300 ${data.className || ''}`}
       />
     );
   }
@@ -182,7 +182,7 @@ export function Mouth({ mood = 'idle' }: { mood?: MaiMaiMood }) {
       strokeWidth="3"
       fill="none"
       strokeLinecap="round"
-      className="transition-all duration-300"
+      className="transition-opacity duration-300"
     />
   );
 }
@@ -242,7 +242,7 @@ export function Arms({ mood }: { mood: MaiMaiMood }) {
         fill="none"
         strokeLinecap="round"
         strokeLinejoin="round"
-        className="transition-all duration-300"
+        className="transition-opacity duration-300"
       />
       <path
         d={rightPath}
@@ -251,7 +251,7 @@ export function Arms({ mood }: { mood: MaiMaiMood }) {
         fill="none"
         strokeLinecap="round"
         strokeLinejoin="round"
-        className="transition-all duration-300"
+        className="transition-opacity duration-300"
       />
       <ArmExtra type={arms.extraType} />
     </>
@@ -266,16 +266,16 @@ export function Legs({ mood, animated = false }: { mood: MaiMaiMood; animated?: 
     const jumpY = HIP_Y + JUMP_OFFSET;
     return (
       <>
-        <path d={`M ${HIP_L_X} ${HIP_Y - LEG_HIP_OFFSET} L ${HIP_L_X - LEG_BEND_X} ${jumpY} L ${HIP_L_X - LEG_BEND_X * 2} ${jumpY + LEG_BEND_Y}`} stroke="currentColor" strokeWidth="5" fill="none" strokeLinecap="round" strokeLinejoin="round" className="transition-all duration-300" />
-        <path d={`M ${HIP_R_X} ${HIP_Y - LEG_HIP_OFFSET} L ${HIP_R_X + LEG_BEND_X} ${jumpY} L ${HIP_R_X + LEG_BEND_X * 2} ${jumpY + LEG_BEND_Y}`} stroke="currentColor" strokeWidth="5" fill="none" strokeLinecap="round" strokeLinejoin="round" className="transition-all duration-300" />
+        <path d={`M ${HIP_L_X} ${HIP_Y - LEG_HIP_OFFSET} L ${HIP_L_X - LEG_BEND_X} ${jumpY} L ${HIP_L_X - LEG_BEND_X * 2} ${jumpY + LEG_BEND_Y}`} stroke="currentColor" strokeWidth="5" fill="none" strokeLinecap="round" strokeLinejoin="round" className="transition-opacity duration-300" />
+        <path d={`M ${HIP_R_X} ${HIP_Y - LEG_HIP_OFFSET} L ${HIP_R_X + LEG_BEND_X} ${jumpY} L ${HIP_R_X + LEG_BEND_X * 2} ${jumpY + LEG_BEND_Y}`} stroke="currentColor" strokeWidth="5" fill="none" strokeLinecap="round" strokeLinejoin="round" className="transition-opacity duration-300" />
       </>
     );
   }
 
   return (
     <>
-      <path d={`M ${HIP_L_X} ${HIP_Y} L ${HIP_L_X} ${LEG_Y} L ${HIP_L_X - LEG_FOOT_OFFSET} ${LEG_Y}`} stroke="currentColor" strokeWidth="5" fill="none" strokeLinecap="round" strokeLinejoin="round" className="transition-all duration-300" />
-      <path d={`M ${HIP_R_X} ${HIP_Y} L ${HIP_R_X} ${LEG_Y} L ${HIP_R_X + LEG_FOOT_OFFSET} ${LEG_Y}`} stroke="currentColor" strokeWidth="5" fill="none" strokeLinecap="round" strokeLinejoin="round" className="transition-all duration-300" />
+      <path d={`M ${HIP_L_X} ${HIP_Y} L ${HIP_L_X} ${LEG_Y} L ${HIP_L_X - LEG_FOOT_OFFSET} ${LEG_Y}`} stroke="currentColor" strokeWidth="5" fill="none" strokeLinecap="round" strokeLinejoin="round" className="transition-opacity duration-300" />
+      <path d={`M ${HIP_R_X} ${HIP_Y} L ${HIP_R_X} ${LEG_Y} L ${HIP_R_X + LEG_FOOT_OFFSET} ${LEG_Y}`} stroke="currentColor" strokeWidth="5" fill="none" strokeLinecap="round" strokeLinejoin="round" className="transition-opacity duration-300" />
     </>
   );
 }
@@ -285,8 +285,8 @@ export function Blush({ show }: { show: boolean }) {
   if (!show) return null;
   return (
     <>
-      <circle cx={EYE_L_X - BLUSH_OFFSET_X} cy={BLUSH_Y} r={BLUSH_RADIUS} fill="#FFB6C1" opacity="0.6" className="transition-all duration-300" />
-      <circle cx={EYE_R_X + BLUSH_OFFSET_X} cy={BLUSH_Y} r={BLUSH_RADIUS} fill="#FFB6C1" opacity="0.6" className="transition-all duration-300" />
+      <circle cx={EYE_L_X - BLUSH_OFFSET_X} cy={BLUSH_Y} r={BLUSH_RADIUS} fill="#FFB6C1" opacity="0.6" className="transition-opacity duration-300" />
+      <circle cx={EYE_R_X + BLUSH_OFFSET_X} cy={BLUSH_Y} r={BLUSH_RADIUS} fill="#FFB6C1" opacity="0.6" className="transition-opacity duration-300" />
     </>
   );
 }

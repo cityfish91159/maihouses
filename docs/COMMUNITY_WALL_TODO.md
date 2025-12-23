@@ -66,16 +66,16 @@
 
 ### MM-1.H.v2 待修 (75/100) ⚠️
 
-| # | P | 問題 | 怎麼修 |
-|:---:|:---:|:---|:---|
-| v2.1 | 0 | `EFFECT_POSITIONS` 類型混亂 | shy/wave 是物件，其他是陣列 → 統一成陣列 |
-| v2.2 | 0 | Antenna `+ 2` 魔數 | MaiMaiBase.tsx:66 → 抽成 `ANTENNA_DROOP_PEAK_OFFSET` 常量 |
-| v2.3 | 1 | `transition-all` 對 path d 無效 | SVG path 的 d 不能 transition → 移除或只留 opacity |
-| v2.4 | 1 | Effects 用 emoji 文字 | 🎉🎊 → 改成 SVG path 畫 |
-| v2.5 | 1 | `animate-wiggle` 未定義 | tailwind.config.cjs 加 wiggle/blink/wave keyframes |
-| v2.6 | 2 | `RenderEye` 沒 memo | 用 `React.memo(RenderEye)` 包 |
-| v2.7 | 2 | `ARM_POSES` 冗餘 | `MOOD_CONFIGS.arms` 已有 → 刪 `ARM_POSES` |
-| v2.8 | 3 | 常量沒註解 | 每個座標加 JSDoc 說明計算來源 |
+| # | P | 問題 | 怎麼修 | 狀態 |
+|:---:|:---:|:---|:---|:---:|
+| v2.1 | 0 | `EFFECT_POSITIONS` 類型混亂 | 全改陣列 + discriminated union | ✅ |
+| v2.2 | 0 | Antenna `+ 2` 魔數 | 抽 `ANTENNA_DROOP_PEAK_OFFSET` 常量並套用 | ✅ |
+| v2.3 | 1 | `transition-all` 對 path d 無效 | 所有 `<path>` 改用 `transition-opacity`；15 處已修正 | ✅ |
+| v2.4 | 1 | Effects 用 emoji 文字 | 🎉🎊 → 改成 SVG path 畫 | ⬜ |
+| v2.5 | 1 | `animate-wiggle` 未定義 | tailwind.config.cjs 加 wiggle/blink/wave keyframes | ⬜ |
+| v2.6 | 2 | `RenderEye` 沒 memo | 用 `React.memo(RenderEye)` 包 | ⬜ |
+| v2.7 | 2 | `ARM_POSES` 冗餘 | `MOOD_CONFIGS.arms` 已有 → 刪 `ARM_POSES` | ⬜ |
+| v2.8 | 3 | 常量沒註解 | 每個座標加 JSDoc 說明計算來源 | ⬜ |
 
 ---
 
