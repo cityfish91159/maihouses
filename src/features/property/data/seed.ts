@@ -1,6 +1,7 @@
 export const SEED_DATA = {
     featured: {
         main: {
+            id: "MH-100001",
             badge: "熱門社區",
             image: "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=1260&auto=format&fit=crop",
             title: "新光晴川 B棟 12樓",

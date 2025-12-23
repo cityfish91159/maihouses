@@ -9,7 +9,9 @@ const LegacyHorizontalCard: React.FC<LegacyHorizontalCardProps> = ({ data }) => 
     const navigate = useNavigate();
 
     const handleNavigate = () => {
-        navigate('/maihouses/property/detail');
+        // Priority: id (Mock) -> public_id (DB) -> fallback
+        const targetId = data.id || data.public_id || 'detail';
+        navigate(`/maihouses/property/${targetId}`);
     };
 
     const firstTag = data.tags && data.tags.length > 0 ? data.tags[0] : null;
