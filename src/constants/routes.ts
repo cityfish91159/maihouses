@@ -5,9 +5,9 @@
 export const ROUTES = {
   /** 首頁 */
   HOME: '/maihouses/',
-  
+
   /** 房地產列表 */
-  PROPERTY_LIST: '/maihouses/property.html',
+  PROPERTY_LIST: '/property/list',
 
   /** 個人信息流 (React) - 需要 userId 參數 */
   FEED: (userId: string): string => `/maihouses/feed/${userId}`,
@@ -38,13 +38,13 @@ export const ROUTES = {
 
   /** 認證頁面 */
   AUTH: '/maihouses/auth.html',
-  
+
   /** 社區頁面 - 需要 communityId 參數 */
   COMMUNITY: (communityId: string): string => `/maihouses/community/${communityId}`,
-  
+
   /** 社區牆頁面 - 需要 communityId 參數 */
   COMMUNITY_WALL: (communityId: string): string => `/maihouses/community/${communityId}/wall`,
-  
+
   /** 房源詳情頁 - 需要 propertyId 參數 */
   PROPERTY: (propertyId: string): string => `/maihouses/p/${propertyId}`,
 } as const;
@@ -55,7 +55,7 @@ export const RouteUtils = {
   isActive: (currentPath: string, route: string): boolean => {
     return currentPath === route || currentPath.startsWith(route);
   },
-  
+
   /** 取得帶有查詢參數的路由 */
   withQuery: (route: string, params: Record<string, string>): string => {
     const query = new URLSearchParams(params).toString();
