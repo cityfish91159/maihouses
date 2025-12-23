@@ -72,7 +72,7 @@
 | v2.2 | 0 | Antenna `+ 2` 魔數 | 抽 `ANTENNA_DROOP_PEAK_OFFSET` 常量並套用 | ✅ |
 | v2.3 | 1 | `transition-all` 對 path d 無效 | 抽 `T_OPACITY` 常量；靜態元素移除 transition；12 處優化 | ✅ |
 | v2.4 | 1 | Effects 用 emoji 文字 | `React.memo` + `useMemo` + 顏色常量化；獨立 `EffectStar/Sparkle/Confetti` 組件 | ✅ |
-| v2.5 | 1 | `animate-wiggle` 未定義 | tailwind.config.cjs 加 wiggle/blink/wave keyframes | ⬜ |
+| v2.5 | 1 | `animate-wiggle` 未定義 | 刪除 index.css 重複定義，統一使用 tailwind.config.cjs SSOT | ✅ |
 | v2.6 | 2 | `RenderEye` 沒 memo | 用 `React.memo(RenderEye)` 包 | ⬜ |
 | v2.7 | 2 | `ARM_POSES` 冗餘 | `MOOD_CONFIGS.arms` 已有 → 刪 `ARM_POSES` | ⬜ |
 | v2.8 | 3 | 常量沒註解 | 每個座標加 JSDoc 說明計算來源 | ⬜ |
