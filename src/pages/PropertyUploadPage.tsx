@@ -182,8 +182,12 @@ const PropertyUploadContent: React.FC = () => {
               <ArrowLeft size={20} />
             </button>
             {/* Atomic Logo Component */}
-            <div className="scale-90 origin-left">
-              <Logo showSlogan={false} showBadge={false} />
+            <div className="flex items-center gap-4">
+              <div className="scale-90 origin-left">
+                <Logo showSlogan={false} showBadge={true} />
+              </div>
+              <div className="h-6 w-px bg-slate-200" />
+              <h1 className="text-lg font-bold text-slate-700">刊登物件</h1>
             </div>
           </div>
 
