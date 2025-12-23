@@ -5,6 +5,20 @@ import { HelmetProvider } from 'react-helmet-async';
 import App from './App'
 import './index.css'
 
+import ErrorBoundary from './app/ErrorBoundary';
+
+// Mobile Debugger (Eruda)
+// Usage: Add ?eruda=true to the URL
+if (new URLSearchParams(window.location.search).get('eruda') === 'true') {
+  const script = document.createElement('script');
+  script.src = "//cdn.jsdelivr.net/npm/eruda";
+  script.onload = () => {
+    // @ts-ignore
+    if (window.eruda) window.eruda.init();
+  };
+  document.body.appendChild(script);
+}
+
 const rootElement = document.getElementById('root');
 if (!rootElement) {
   // 容錯處理：root element 不存在時顯示錯誤
@@ -20,15 +34,17 @@ if (!rootElement) {
   ReactDOM.createRoot(rootElement).render(
     <React.StrictMode>
       <HelmetProvider>
-        <BrowserRouter
-          basename={basename}
-          future={{
-            v7_startTransition: true,
-            v7_relativeSplatPath: true,
-          }}
-        >
-          <App />
-        </BrowserRouter>
+        <ErrorBoundary>
+          <BrowserRouter
+            basename={basename}
+            future={{
+              v7_startTransition: true,
+              v7_relativeSplatPath: true,
+            }}
+          >
+            <App />
+          </BrowserRouter>
+        </ErrorBoundary>
       </HelmetProvider>
     </React.StrictMode>
   );
