@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
-import { MaiMaiBase, MaiMaiSpeech, useMaiMaiMood, SIZE_CLASSES } from './MaiMai';
+import { MaiMaiBase, MaiMaiSpeech, useMaiMaiMood, useMascotCelebrateEvent, SIZE_CLASSES } from './MaiMai';
 import useConfetti from './MaiMai/useConfetti';
 import type { MaiMaiMood } from './MaiMai';
 
@@ -32,6 +32,7 @@ export default function MascotInteractive({
   isSuccess = false,
 }: MascotInteractiveProps) {
   const [isHovered, setIsHovered] = useState(false);
+  const [eventCelebrating, setEventCelebrating] = useState(false);
 
   // 使用統一的心情狀態機 Hook
   const { mood: computedMood, clickCount, handleClick } = useMaiMaiMood({
@@ -42,9 +43,17 @@ export default function MascotInteractive({
     isTypingPassword,
     isTypingEmail,
     isHovered,
+    isCelebrating: eventCelebrating // Pass event-triggered celebration
   });
 
   const { fireConfetti, ConfettiOverlay } = useConfetti();
+
+  // 監聽全域慶祝事件 (e.g. LINE Share)
+  useMascotCelebrateEvent(useCallback(() => {
+    setEventCelebrating(true);
+    fireConfetti();
+    setTimeout(() => setEventCelebrating(false), 2000);
+  }, [fireConfetti]));
   const prevMoodRef = useRef<MaiMaiMood | null>(null);
   const lastCelebrateAtRef = useRef<number>(0);
 
