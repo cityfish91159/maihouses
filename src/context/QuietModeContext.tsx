@@ -74,7 +74,7 @@ export const QuietModeProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     const minutes = opts?.minutes ?? null;
     const turns = opts?.turns ?? 10; // 預設 10 回合
     const reason = opts?.reason;
-    const untilTs = minutes ? Date.now() + minutes * 60_000 : null;
+    const untilTs = minutes ? Date.now() + minutes * 60000 : null;
     const next: QuietState = {
       isQuiet: true,
       ...(reason && { reason }),

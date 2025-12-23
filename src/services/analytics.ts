@@ -19,7 +19,7 @@ declare global {
   var __UAG__: { queue: Uag[]; timer?: number; backoff: number; attempts: number } | undefined
 }
 
-const G = globalThis.__UAG__ || (globalThis.__UAG__ = { queue: [], backoff: 10_000, attempts: 0 })
+const G = globalThis.__UAG__ || (globalThis.__UAG__ = { queue: [], backoff: 10000, attempts: 0 })
 
 try {
   G.queue = JSON.parse(localStorage.getItem(KEY) || '[]')
@@ -33,7 +33,7 @@ const save = () => {
   } catch {}
 }
 
-const MAX = 300_000
+const MAX = 300000
 
 async function flush(batch: Uag[]) {
   const r = await apiFetch<{ retryAfterMs?: number } | null>('/api/v1/uag/events', {
@@ -47,7 +47,7 @@ async function flush(batch: Uag[]) {
     G.queue = G.queue.filter((x) => !ids.has(x.requestId))
     save()
     G.attempts = 0
-    G.backoff = 10_000
+    G.backoff = 10000
   } else {
     G.attempts++
     const ra = (r as any)?.data?.retryAfterMs
