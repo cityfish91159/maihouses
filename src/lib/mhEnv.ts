@@ -71,7 +71,15 @@ export const mhEnv: MhEnv = {
   subscribe(onChange: (value: boolean) => void): () => void {
     if (typeof window === 'undefined') return () => { }
     const handler = (event: StorageEvent) => {
-      if (event.storageArea !== window.localStorage) return
+      // Accessing window.localStorage might throw SecurityError in restricted environments.
+      // We wrap it in a try-catch block or skip strict equality check if unsafe.
+      try {
+        if (event.storageArea !== window.localStorage) return
+      } catch {
+        // If we can't access localStorage, we assume it's not relevant or we can't track it.
+        return
+      }
+
       if (event.key !== MOCK_STORAGE_KEY) return
       const parsed = parseBool(event.newValue)
       if (parsed !== null) {

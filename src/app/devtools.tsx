@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { AppConfig, RuntimeOverrides } from './config'
 import { getSessionId, getMeta } from '../services/api'
+import { safeLocalStorage } from '../lib/safeStorage'
 
 export default function DevTools({ config }: { config: AppConfig & RuntimeOverrides }) {
   const [visible, setVisible] = useState(true)
@@ -20,8 +21,8 @@ export default function DevTools({ config }: { config: AppConfig & RuntimeOverri
   const apply = () => {
     const next = { ...config, mock, latency, error, q, mockSeed, devtools: '1' as const }
     try {
-      localStorage.setItem('maihouse_config', JSON.stringify(next))
-    } catch {}
+      safeLocalStorage.setItem('maihouse_config', JSON.stringify(next))
+    } catch { }
     location.reload()
   }
 
@@ -29,11 +30,11 @@ export default function DevTools({ config }: { config: AppConfig & RuntimeOverri
     const s = String(Date.now())
     setMockSeed(s)
     try {
-      localStorage.setItem(
+      safeLocalStorage.setItem(
         'maihouse_config',
         JSON.stringify({ ...config, mockSeed: s, mock, latency, error, q, devtools: '1' as const })
       )
-    } catch {}
+    } catch { }
     location.reload()
   }
 

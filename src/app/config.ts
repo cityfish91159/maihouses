@@ -111,7 +111,7 @@ export async function getConfig(): Promise<AppConfig & RuntimeOverrides> {
     }
 
     try {
-      localStorage.setItem(LS, JSON.stringify(merged))
+      safeLocalStorage.setItem(LS, JSON.stringify(merged))
     } catch { }
 
     return merged

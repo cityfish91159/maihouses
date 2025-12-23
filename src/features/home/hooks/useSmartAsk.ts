@@ -112,7 +112,7 @@ export function useSmartAsk() {
 
       if (res.ok && res.data) {
         const r = res.data.recommends || [];
-        if (r[0]?.communityId) localStorage.setItem('recoCommunity', r[0].communityId);
+        if (r[0]?.communityId) safeLocalStorage.setItem('recoCommunity', r[0].communityId);
 
         dispatch({
           type: 'FINISH_ASK',
