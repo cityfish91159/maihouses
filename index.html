@@ -1,19 +1,34 @@
 <!doctype html>
 <html lang="zh-Hant-TW">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="color-scheme" content="light only" />
-    <meta name="theme-color" content="#ffffff" />
-    
-    <!-- DNS 預解析與預連線優化 -->
-    <link rel="preconnect" href="https://api.openai.com" crossorigin />
-    <link rel="dns-prefetch" href="https://api.openai.com" />
-    
-    <title>邁房子｜讓家,不只是地址</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="light only" />
+  <meta name="theme-color" content="#ffffff" />
+
+  <!-- DNS 預解析與預連線優化 -->
+  <link rel="preconnect" href="https://api.openai.com" crossorigin />
+  <link rel="dns-prefetch" href="https://api.openai.com" />
+
+  <title>邁房子｜讓家,不只是地址</title>
+</head>
+
+<body>
+  <div id="root"></div>
+  <script>
+    // Force Eruda if ?eruda=true is present
+    if (window.location.href.includes('eruda=true')) {
+      var script = document.createElement('script');
+      script.src = "//cdn.jsdelivr.net/npm/eruda";
+      script.onload = function () {
+        eruda.init();
+        console.log('Eruda initialized directly from index.html');
+      };
+      document.body.appendChild(script);
+    }
+  </script>
+  <script type="module" src="/src/main.tsx"></script>
+</body>
+
 </html>
