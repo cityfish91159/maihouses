@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { 
   SIZE_CLASSES, 
   CANVAS_SIZE,
@@ -133,8 +133,79 @@ export function Eyebrows({ mood = 'idle' }: { mood?: MaiMaiMood }) {
   );
 }
 
-/** 渲染單個眼睛數據 */
-function RenderEye({ data }: { data: EyeData }) {
+/**
+ * 深度比較兩個 EyeData 物件是否相等
+ * 
+ * @description NASA-grade 比較函數，精確控制 RenderEye 重繪時機
+ * @param prev - 前一個 props
+ * @param next - 新的 props
+ * @returns true = 相等不重繪, false = 不等需重繪
+ * 
+ * @complexity O(n) where n = children depth
+ * @sideEffects none
+ */
+function areEyePropsEqual(
+  prev: { data: EyeData },
+  next: { data: EyeData }
+): boolean {
+  const a = prev.data;
+  const b = next.data;
+  
+  // 快速路徑：引用相等
+  if (a === b) return true;
+  
+  // 類型不同 = 不等
+  if (a.type !== b.type) return false;
+  
+  // 基礎屬性比較
+  if (
+    a.d !== b.d ||
+    a.cx !== b.cx ||
+    a.cy !== b.cy ||
+    a.r !== b.r ||
+    a.strokeWidth !== b.strokeWidth ||
+    a.fill !== b.fill ||
+    a.className !== b.className
+  ) {
+    return false;
+  }
+  
+  // 遞迴比較 children (group 類型)
+  if (a.children || b.children) {
+    if (!a.children || !b.children) return false;
+    if (a.children.length !== b.children.length) return false;
+    for (let i = 0; i < a.children.length; i++) {
+      const childA = a.children[i];
+      const childB = b.children[i];
+      if (!childA || !childB) return false;
+      if (!areEyePropsEqual({ data: childA }, { data: childB })) {
+        return false;
+      }
+    }
+  }
+  
+  return true;
+}
+
+/**
+ * 渲染單個眼睛 SVG 元素
+ * 
+ * @description NASA-grade 組件：
+ * - React.memo + 自定義 areEqual 避免不必要重繪
+ * - 支援三種類型：circle (瞳孔)、path (線條)、group (複合)
+ * - 遞迴渲染 children 支援複雜眼睛結構
+ * 
+ * @param props.data - EyeData 眼睛定義物件
+ * @returns SVG 元素或 null
+ * 
+ * @example
+ * // 圓形眼睛
+ * <RenderEye data={{ type: 'circle', cx: 70, cy: 65, r: 8, fill: 'currentColor' }} />
+ * 
+ * // 線條眼睛 (閉眼)
+ * <RenderEye data={{ type: 'path', d: 'M62 65 h16', strokeWidth: 3 }} />
+ */
+const RenderEye = memo(function RenderEye({ data }: { data: EyeData }) {
   if (data.type === 'circle') {
     return (
       <circle
@@ -168,7 +239,10 @@ function RenderEye({ data }: { data: EyeData }) {
     );
   }
   return null;
-}
+}, areEyePropsEqual);
+
+// DevTools 顯示名稱
+RenderEye.displayName = 'RenderEye';
 
 /** 眼睛 */
 export function Eyes({ mood = 'idle' }: { mood?: MaiMaiMood }) {
