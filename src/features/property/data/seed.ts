@@ -1,10 +1,4 @@
-import type { PropertyPageData } from '../../../types/property-page';
-
-/**
- * Property Page Client-Side Seed Data
- * Ported from public/js/property-data.js to provide instant render capability.
- */
-export const SEED_DATA: PropertyPageData = {
+export const SEED_DATA = {
     featured: {
         main: {
             badge: "熱門社區",
