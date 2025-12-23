@@ -38,12 +38,13 @@ const LegacyHeader = () => (
 );
 
 export default function PropertyListPage() {
-    // Assuming PropertyPageData is the type of SEED_DATA, or a compatible type
-    const [data, setData] = useState<typeof SEED_DATA | null>(null);
-    const [loading, setLoading] = useState(true);
+    // S2: Instant Render with Mock Data (Legacy Behavior)
+    const [data, setData] = useState<typeof SEED_DATA>(SEED_DATA);
+    // Silent loading for background update
+    const [loading, setLoading] = useState(false);
 
     useEffect(() => {
-        const fetchData = async () => {
+        const fetchLive = async () => {
             try {
                 const res = await fetch(API_ENDPOINT);
                 const json = await res.json();
@@ -51,14 +52,10 @@ export default function PropertyListPage() {
                     setData(json.data);
                 }
             } catch (err) {
-                console.error('Failed to fetch property page data', err);
-                // In legacy script, full failure fallback to seed is handled by renderer or api
-                // Here we rely on the API 200 fallback behavior we saw in `page-data.ts`
-            } finally {
-                setLoading(false);
+                console.warn('Background update failed, using seed data');
             }
         };
-        fetchData();
+        fetchLive();
     }, []);
 
     return (
