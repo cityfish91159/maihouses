@@ -1,3 +1,5 @@
+import { safeLocalStorage } from '../lib/safeStorage';
+
 export type NoteItem = {
   id: string;
   createdAt: number;
@@ -7,7 +9,7 @@ export type NoteItem = {
 const KEY = "mai-notes-v1";
 function loadAll(): NoteItem[] {
   try {
-    const raw = localStorage.getItem(KEY);
+    const raw = safeLocalStorage.getItem(KEY);
     if (!raw) return [];
     return JSON.parse(raw) as NoteItem[];
   } catch {
@@ -15,7 +17,9 @@ function loadAll(): NoteItem[] {
   }
 }
 function saveAll(items: NoteItem[]) {
-  localStorage.setItem(KEY, JSON.stringify(items));
+  try {
+    safeLocalStorage.setItem(KEY, JSON.stringify(items));
+  } catch { }
 }
 export function addNote(note: string, echo?: string): NoteItem {
   const items = loadAll();

@@ -1,6 +1,7 @@
 import React, { createContext, useCallback, useContext, useMemo, useState } from "react";
 import { Events, track } from "../analytics/track";
 import { setLastMood } from "../stores/profileStore";
+import { safeLocalStorage } from "../lib/safeStorage";
 
 export type Mood = "neutral" | "stress" | "rest";
 type MoodAPI = {
@@ -13,14 +14,14 @@ const MoodContext = createContext<MoodAPI | null>(null);
 
 export const MoodProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [mood, setMoodState] = useState<Mood>(() => {
-    const raw = localStorage.getItem("mai-mood-v1");
+    const raw = safeLocalStorage.getItem("mai-mood-v1");
     return (raw as Mood) || "neutral";
   });
 
   // 使用 useCallback 確保 setMood 引用穩定
   const setMood = useCallback((m: Mood) => {
     setMoodState(m);
-    localStorage.setItem("mai-mood-v1", m);
+    safeLocalStorage.setItem("mai-mood-v1", m);
     setLastMood(m);
     track(Events.MoodPick, { mood: m });
   }, []);

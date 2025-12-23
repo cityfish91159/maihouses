@@ -1,3 +1,5 @@
+import { safeLocalStorage } from "../lib/safeStorage";
+
 export type UserMilestones = {
   birthday?: string;      // YYYY-MM-DD
   move_in_date?: string;  // YYYY-MM-DD
@@ -15,7 +17,7 @@ const WARM_DISMISS_KEY = "mai-warmbar-dismissed-date"; // YYYY-MM-DD
 
 export function loadProfile(): UserProfile {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = safeLocalStorage.getItem(STORAGE_KEY);
     if (!raw) return { tags: [] };
     return JSON.parse(raw) as UserProfile;
   } catch {
@@ -23,7 +25,9 @@ export function loadProfile(): UserProfile {
   }
 }
 export function saveProfile(p: UserProfile) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(p));
+  try {
+    safeLocalStorage.setItem(STORAGE_KEY, JSON.stringify(p));
+  } catch { }
 }
 export function upsertTags(newTags: string[]) {
   const p = loadProfile();
@@ -47,16 +51,16 @@ export function touchVisit() {
   saveProfile(p);
 }
 export function ensureFirstSeen(): { isFirstVisit: boolean } {
-  const exist = localStorage.getItem(FIRST_SEEN_KEY);
+  const exist = safeLocalStorage.getItem(FIRST_SEEN_KEY);
   if (exist) return { isFirstVisit: false };
-  localStorage.setItem(FIRST_SEEN_KEY, String(Date.now()));
+  safeLocalStorage.setItem(FIRST_SEEN_KEY, String(Date.now()));
   return { isFirstVisit: true };
 }
 export function dismissWarmbarToday() {
-  localStorage.setItem(WARM_DISMISS_KEY, todayStr());
+  safeLocalStorage.setItem(WARM_DISMISS_KEY, todayStr());
 }
 export function isWarmbarDismissedToday() {
-  return localStorage.getItem(WARM_DISMISS_KEY) === todayStr();
+  return safeLocalStorage.getItem(WARM_DISMISS_KEY) === todayStr();
 }
 export function getWarmTags(max = 3): string[] {
   const p = loadProfile();

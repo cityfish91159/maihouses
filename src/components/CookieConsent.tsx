@@ -1,15 +1,16 @@
 import { useState } from 'react'
+import { safeLocalStorage } from '../lib/safeStorage'
 
 export function CookieConsent() {
   // 使用惰性初始化，避免在 effect 中 setState
   const [show, setShow] = useState(() => {
     if (typeof window === 'undefined') return false
-    const consent = localStorage.getItem('cookie-consent')
+    const consent = safeLocalStorage.getItem('cookie-consent')
     return !consent
   })
 
   const accept = () => {
-    localStorage.setItem('cookie-consent', 'true')
+    safeLocalStorage.setItem('cookie-consent', 'true')
     setShow(false)
   }
 

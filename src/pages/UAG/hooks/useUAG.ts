@@ -7,6 +7,7 @@ import { notify } from '../../../lib/notify';
 import { useAuth } from '../../../hooks/useAuth';
 import { GRADE_HOURS } from '../uag-config';
 import { validateQuota } from '../utils/validation';
+import { safeLocalStorage } from '../../../lib/safeStorage';
 
 /** 從 URL 或 localStorage 取得初始 mock 模式設定 */
 function getInitialMockMode(): boolean {
@@ -16,11 +17,11 @@ function getInitialMockMode(): boolean {
   const urlMode = params.get('mode');
 
   if (urlMode === 'mock' || urlMode === 'live') {
-    localStorage.setItem('uag_mode', urlMode);
+    safeLocalStorage.setItem('uag_mode', urlMode);
     return urlMode === 'mock';
   }
 
-  const saved = localStorage.getItem('uag_mode');
+  const saved = safeLocalStorage.getItem('uag_mode');
   if (saved === 'mock' || saved === 'live') {
     return saved === 'mock';
   }
@@ -40,7 +41,7 @@ export function useUAG() {
     }
     const newMode = !useMock;
     setUseMock(newMode);
-    localStorage.setItem('uag_mode', newMode ? 'mock' : 'live');
+    safeLocalStorage.setItem('uag_mode', newMode ? 'mock' : 'live');
     queryClient.invalidateQueries({ queryKey: ['uagData'] });
   };
 
@@ -50,7 +51,7 @@ export function useUAG() {
       if (useMock) {
         // Simulate delay
         // await new Promise(resolve => setTimeout(resolve, 500));
-        return MOCK_DB as unknown as AppData; 
+        return MOCK_DB as unknown as AppData;
       }
       if (!session?.user?.id) throw new Error('Not authenticated');
       return UAGService.fetchAppData(session.user.id);
@@ -77,11 +78,11 @@ export function useUAG() {
         // Optimistic validation
         const lead = previousData.leads.find(l => l.id === leadId);
         if (lead) {
-           const { valid, error } = validateQuota(lead, previousData.user);
-           if (!valid) {
-             notify.error(error || '配額不足');
-             throw new Error(error || "配額不足 (Optimistic Check)");
-           }
+          const { valid, error } = validateQuota(lead, previousData.user);
+          if (!valid) {
+            notify.error(error || '配額不足');
+            throw new Error(error || "配額不足 (Optimistic Check)");
+          }
         }
 
         const newData = {

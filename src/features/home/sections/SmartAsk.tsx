@@ -3,10 +3,11 @@ import { Send, Sparkles, MessageCircle, Heart } from 'lucide-react';
 import { postLLM, setJustChatMode } from '../../../services/ai';
 import MascotInteractive from '../../../components/MascotInteractive';
 import ChatMessage from '../components/ChatMessage';
-import { 
-    QUICK_TAGS_LIFESTYLE, 
-    QUICK_TAGS_EXPLORE, 
-    generateReturnGreeting, 
+import { safeLocalStorage } from '../../../lib/safeStorage';
+import {
+    QUICK_TAGS_LIFESTYLE,
+    QUICK_TAGS_EXPLORE,
+    generateReturnGreeting,
     loadPainPointsFromStorage,
     getIntimacyLevel,
     saveIntimacyToStorage
@@ -32,17 +33,17 @@ export default function SmartAsk() {
     // ============================================
     useEffect(() => {
         loadPainPointsFromStorage();
-        
-        const lastChat = localStorage.getItem('mai-last-chat');
+
+        const lastChat = safeLocalStorage.getItem('mai-last-chat');
         const today = new Date().toDateString();
-        
+
         // 今天還沒聊過 → 主動打招呼
         if (!lastChat || lastChat !== today) {
             const greeting = generateReturnGreeting();
             if (greeting) {
                 setReturnGreeting(greeting);
             }
-            
+
             // 延遲顯示主動關心訊息
             const timer = setTimeout(() => {
                 const welcomeMsg = greeting || '嗨～今天過得怎麼樣呀？有沒有什麼想跟我分享的？☀️';
@@ -51,13 +52,13 @@ export default function SmartAsk() {
                     content: welcomeMsg,
                     timestamp: new Date().toISOString()
                 }]);
-                localStorage.setItem('mai-last-chat', today);
+                safeLocalStorage.setItem('mai-last-chat', today);
             }, 1500);
-            
+
             return () => clearTimeout(timer);
         }
     }, []);
-    
+
     // ============================================
     // v6.0 刀6：晚安物語（22:00-22:30）
     // ============================================
@@ -65,10 +66,10 @@ export default function SmartAsk() {
         const now = new Date();
         const hour = now.getHours();
         const minute = now.getMinutes();
-        
+
         // 晚上 10:00 - 10:30 之間
         if (hour === 22 && minute < 30) {
-            const todayGoodnight = localStorage.getItem('mai-goodnight-' + now.toDateString());
+            const todayGoodnight = safeLocalStorage.getItem('mai-goodnight-' + now.toDateString());
             if (!todayGoodnight && messages.length > 0) {
                 const timer = setTimeout(() => {
                     setMessages(prev => [...prev, {
@@ -76,21 +77,21 @@ export default function SmartAsk() {
                         content: '晚安啦～今天也辛苦了，要好好休息喔 💤\n對了...夢裡如果看到喜歡的房子，記得明天告訴我，我幫你找找看有沒有類似的～',
                         timestamp: new Date().toISOString()
                     }]);
-                    localStorage.setItem('mai-goodnight-' + now.toDateString(), '1');
+                    safeLocalStorage.setItem('mai-goodnight-' + now.toDateString(), '1');
                 }, 5000);
-                
+
                 return () => clearTimeout(timer);
             }
         }
     }, [messages.length]);
-    
+
     // ============================================
     // v6.0 刀2：更新親密度顯示
     // ============================================
     useEffect(() => {
         setIntimacy(getIntimacyLevel());
     }, [messages.length]);
-    
+
     // 離開頁面時保存親密度
     useEffect(() => {
         const handleBeforeUnload = () => {
@@ -139,7 +140,7 @@ export default function SmartAsk() {
                     });
                 }
             );
-            
+
             // 熱度系統在 ai.ts 中自動追蹤，不需要額外處理
             void fullResponse; // 使用變數避免 lint 警告
             setStatus('success');
@@ -247,7 +248,7 @@ export default function SmartAsk() {
                                 {returnGreeting ? returnGreeting.split('！')[0] + '！' : '嗨～我是邁邁 👋'}
                             </p>
                             <p className="mx-auto max-w-xs text-sm font-medium leading-relaxed text-ink-600">
-                                {returnGreeting 
+                                {returnGreeting
                                     ? returnGreeting.includes('！') ? returnGreeting.split('！').slice(1).join('！') : '最近過得怎樣？'
                                     : <>今天過得怎樣？<br />想聊什麼都可以，我在這陪你～</>
                                 }

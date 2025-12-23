@@ -1,4 +1,5 @@
 import { Transaction, Step } from '../hooks/useTrustRoom';
+import { safeSessionStorage } from '../lib/safeStorage';
 
 // --- TYPES ---
 // Re-exporting or defining types if needed, but for now we use the ones from hook or define here
@@ -36,13 +37,15 @@ const createMockState = (id: string): Transaction => ({
 const getMockTx = (id: string): Transaction => {
   if (typeof window === 'undefined') return createMockState(id);
   // Use sessionStorage to avoid polluting global localStorage and keep it session-based
-  const saved = sessionStorage.getItem(`mock_tx_${id}`);
+  const saved = safeSessionStorage.getItem(`mock_tx_${id}`);
   return saved ? JSON.parse(saved) : createMockState(id);
 };
 
 const saveMockTx = (tx: Transaction) => {
   if (typeof window !== 'undefined') {
-    sessionStorage.setItem(`mock_tx_${tx.id}`, JSON.stringify(tx));
+    try {
+      safeSessionStorage.setItem(`mock_tx_${tx.id}`, JSON.stringify(tx));
+    } catch { }
   }
 };
 
@@ -169,9 +172,9 @@ export const realService = {
         },
         body: JSON.stringify(body)
       });
-      
+
       if (res.status === 401 || res.status === 403) {
-         return { success: false, error: "UNAUTHORIZED" };
+        return { success: false, error: "UNAUTHORIZED" };
       }
 
       const d = await res.json();

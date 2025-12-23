@@ -1,4 +1,5 @@
 import { apiFetch, getSessionId } from './api'
+import { safeLocalStorage } from '../lib/safeStorage'
 
 type Uag = {
   event: string
@@ -23,15 +24,16 @@ const _global = (typeof globalThis !== 'undefined' ? globalThis : typeof window 
 const G = _global.__UAG__ || (_global.__UAG__ = { queue: [], backoff: 10000, attempts: 0 });
 
 try {
-  G.queue = JSON.parse(localStorage.getItem(KEY) || '[]')
+  const stored = safeLocalStorage.getItem(KEY)
+  G.queue = JSON.parse(stored || '[]')
 } catch {
   G.queue = []
 }
 
 const save = () => {
   try {
-    localStorage.setItem(KEY, JSON.stringify(G.queue.slice(-CAP)))
-  } catch {}
+    safeLocalStorage.setItem(KEY, JSON.stringify(G.queue.slice(-CAP)))
+  } catch { }
 }
 
 const MAX = 300000
@@ -103,13 +105,13 @@ export function trackEvent(event: string, page: string, targetId?: string) {
     meta: { origin: 'gh-pages' },
     requestId: uuidv4()
   }
-  
+
   if (targetId) ev.targetId = targetId
-  
+
   G.queue.push(ev)
   if (G.queue.length > CAP) G.queue = G.queue.slice(-CAP)
   save()
-  
+
   flush([ev]).catch(() => {
     G.attempts++
     G.backoff = Math.min(G.backoff * 2, MAX)

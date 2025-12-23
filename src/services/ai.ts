@@ -1,7 +1,8 @@
 import { isQuietActiveFromStorage } from "../context/QuietModeContext";
 import { loadProfile } from "../stores/profileStore";
-import { 
-  buildEnhancedPrompt, 
+import { safeLocalStorage } from "../lib/safeStorage";
+import {
+  buildEnhancedPrompt,
   detectMessageStyle,
   analyzeEmotionalState,
   detectUserState,
@@ -99,23 +100,23 @@ export function resetDemandHeat(): void {
 
 function composeSystemPrompt(recentMessages?: ChatMessage[]): string {
   const isZen = isQuietActiveFromStorage();
-  
+
   // 安靜模式優先
   if (isZen) return SYS_ZEN;
-  
-  const mood = (localStorage.getItem("mai-mood-v1") as "neutral" | "stress" | "rest") || "neutral";
+
+  const mood = (safeLocalStorage.getItem("mai-mood-v1") as "neutral" | "stress" | "rest") || "neutral";
   const profile = loadProfile();
   const profileTags = (profile.tags || []).slice(0, 5);
 
   // 分析對話
   const lastUserMsg = recentMessages?.filter(m => m.role === 'user').pop()?.content || '';
-  
+
   // ============================================
   // v5.5：載入用戶生活檔案 + v5.6：載入購買準備度
   // ============================================
   loadUserProfileFromStorage();
   loadBuyingReadinessFromStorage();
-  
+
   // ============================================
   // v5.6：負面情緒偵測（優先處理）
   // ============================================
@@ -125,7 +126,7 @@ function composeSystemPrompt(recentMessages?: ChatMessage[]): string {
 偵測到用戶可能心情不好，請優先關心，不要推薦任何東西！
 建議回應風格：「${careResponse}」`;
   }
-  
+
   // ============================================
   // v5.2：純陪聊模式檢查
   // ============================================
@@ -139,7 +140,7 @@ function composeSystemPrompt(recentMessages?: ChatMessage[]): string {
       return SYS_JUST_CHAT;
     }
   }
-  
+
   // ============================================
   // v5.5：退出信號偵測（避免硬推）
   // ============================================
@@ -151,59 +152,59 @@ function composeSystemPrompt(recentMessages?: ChatMessage[]): string {
       return SYS_JUST_CHAT + `\n\n【重要】用戶剛剛表示「${exitSignal === 'no-need' ? '不需要' : '情緒不好'}」，請 100% 同理陪伴，完全不要提任何房產話題！`;
     }
   }
-  
+
   // ============================================
   // v5.5：提取用戶生活資訊 + v5.6：更新購買準備度
   // ============================================
   extractUserProfile(lastUserMsg);
   updateBuyingReadiness(lastUserMsg);
-  
+
   // ============================================
   // v5.0：標籤累積系統
   // ============================================
   accumulateTags(lastUserMsg);
   const accTags = getAccumulatedTags();
   const topCategory = getTopCategory();
-  
+
   // v5.2：更新訪問記憶
   updateVisitMemory(topCategory);
-  
+
   // ============================================
   // v5.0：用戶狀態分類（情境感知）
   // ============================================
   const userState = detectUserState(lastUserMsg, accTags);
-  
+
   // ============================================
   // v5.0：純閒聊計數器
   // ============================================
   const chitchatRounds = updateChitchatCounter(userState);
-  
+
   // ============================================
   // v5.0：情緒分析
   // ============================================
   const emotionalState = analyzeEmotionalState(lastUserMsg);
-  
+
   // ============================================
   // v5.0：時機判斷
   // ============================================
   const timing = assessTiming(lastUserMsg);
-  
+
   // ============================================
   // v5.0：檢查用戶是否對鋪墊有興趣
   // ============================================
   const paveStatus = checkPaved();
   let userShowedInterest = false;
-  
+
   if (paveStatus.hasPaved) {
     // 檢查用戶這輪是否對上輪的鋪墊有反應
     userShowedInterest = detectPaveInterest(lastUserMsg);
-    
+
     // 如果用戶拒絕，重設鋪墊狀態
     if (detectRejection(lastUserMsg)) {
       resetPaved();
     }
   }
-  
+
   // ============================================
   // v5.0：決定推薦階段
   // ============================================
@@ -215,17 +216,17 @@ function composeSystemPrompt(recentMessages?: ChatMessage[]): string {
     topCategory,
     userShowedInterest
   );
-  
+
   // 如果這輪是鋪墊，記錄下來
   if (recommendationPhase === 'pave' && topCategory) {
     markPaved(topCategory);
   }
-  
+
   // ============================================
   // 偵測用戶訊息風格
   // ============================================
   const style = detectMessageStyle(lastUserMsg);
-  
+
   // ============================================
   // v5.0：構建增強版 prompt
   // ============================================
@@ -237,13 +238,13 @@ function composeSystemPrompt(recentMessages?: ChatMessage[]): string {
     chitchatRounds,
     style
   );
-  
+
   // ============================================
   // v5.2：生活小側寫服務
   // ============================================
   let totalScore = 0;
   accTags.forEach(score => { totalScore += score; });
-  
+
   if (shouldTriggerLifeProfile(userState, totalScore, timing as TimingQuality)) {
     const profileSummary = generateLifeProfileSummary(accTags);
     if (profileSummary) {
@@ -255,7 +256,7 @@ function composeSystemPrompt(recentMessages?: ChatMessage[]): string {
 ${profileSummary}`;
     }
   }
-  
+
   // ============================================
   // v5.2：Few-Shot 對話腳本
   // ============================================
@@ -278,12 +279,12 @@ ${FEW_SHOT_SCRIPTS.explicitToListing}`;
   if (!warmthStrategy.canRecommend) {
     warmthPrompt += `\n⚠️ 目前不適合推薦，專心陪聊！`;
   }
-  
+
   // ============================================
   // v5.5：時刻感知
   // ============================================
   const timePrompt = `\n\n${getTimePrompt()}`;
-  
+
   // ============================================
   // v5.5：用戶生活檔案記憶
   // ============================================
@@ -354,12 +355,12 @@ C) ${quiz.options[2]?.text ?? ''}  D) ${quiz.options[3]?.text ?? ''}
     mood === "stress"
       ? "\n【額外情緒提醒】localStorage 偵測到壓力模式，更加溫柔。"
       : mood === "rest"
-      ? "\n【額外情緒提醒】localStorage 偵測到休息模式，輕鬆聊天。"
-      : "";
+        ? "\n【額外情緒提醒】localStorage 偵測到休息模式，輕鬆聊天。"
+        : "";
 
   // 用戶記憶
-  const memory = profileTags.length 
-    ? `\n【用戶記憶】使用者曾提到在意：${profileTags.join("、")}。可在相關話題出現時輕柔承接。` 
+  const memory = profileTags.length
+    ? `\n【用戶記憶】使用者曾提到在意：${profileTags.join("、")}。可在相關話題出現時輕柔承接。`
     : "";
 
   // Debug 資訊（生產環境可移除）
@@ -369,7 +370,7 @@ C) ${quiz.options[2]?.text ?? ''}  D) ${quiz.options[3]?.text ?? ''}
 }
 
 export async function postLLM(
-  messages: ChatMessage[], 
+  messages: ChatMessage[],
   optionsOrCallback?: { temperature?: number; max_tokens?: number } | ((chunk: string) => void),
   maybeOptions?: { temperature?: number; max_tokens?: number }
 ) {
@@ -391,7 +392,7 @@ export async function postLLM(
       stream: !!onChunk
     }),
   });
-  
+
   if (!res.ok) {
     throw new Error(`LLM proxy error: ${res.status}`);
   }
@@ -400,19 +401,19 @@ export async function postLLM(
     const reader = res.body.getReader();
     const decoder = new TextDecoder();
     let fullText = '';
-    
+
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
-      
+
       const chunk = decoder.decode(value, { stream: true });
       const lines = chunk.split('\n');
-      
+
       for (const line of lines) {
         if (line.startsWith('data: ')) {
           const data = line.slice(6);
           if (data === '[DONE]') continue;
-          
+
           try {
             const parsed = JSON.parse(data);
             const content = parsed?.choices?.[0]?.delta?.content;
@@ -426,7 +427,7 @@ export async function postLLM(
         }
       }
     }
-    
+
     return fullText;
   }
 

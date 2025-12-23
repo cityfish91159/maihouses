@@ -1,5 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { Events, track } from "../analytics/track";
+import { safeLocalStorage } from "../lib/safeStorage";
 
 type QuietState = {
   isQuiet: boolean;
@@ -19,7 +20,7 @@ const QuietModeContext = createContext<QuietAPI | null>(null);
 
 function readStorage(): QuietState {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = safeLocalStorage.getItem(STORAGE_KEY);
     if (!raw) return { isQuiet: false, untilTs: null, remainingTurns: null };
     const parsed = JSON.parse(raw) as QuietState;
     return parsed;
@@ -28,7 +29,9 @@ function readStorage(): QuietState {
   }
 }
 function writeStorage(s: QuietState) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
+  try {
+    safeLocalStorage.setItem(STORAGE_KEY, JSON.stringify(s));
+  } catch { }
 }
 
 export const QuietModeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -131,7 +134,7 @@ export function useQuietMode() {
 }
 export function isQuietActiveFromStorage(): boolean {
   try {
-    const raw = localStorage.getItem("mai-quiet-mode-v1");
+    const raw = safeLocalStorage.getItem("mai-quiet-mode-v1");
     if (!raw) return false;
     const s = JSON.parse(raw) as QuietState;
     const now = Date.now();
