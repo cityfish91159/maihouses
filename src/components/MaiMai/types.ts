@@ -266,47 +266,6 @@ export interface MoodConfig {
   antenna?: { droopy: boolean };
 }
 
-/** 手臂姿勢對照表 */
-export const ARM_POSES: Record<MaiMaiMood | 'default', ArmPose> = {
-  default: {
-    left: `M ${SHOULDER_L_X} ${SHOULDER_Y} L ${SHOULDER_L_X - 23} ${SHOULDER_Y + 8}`,
-  },
-  idle: {
-    left: `M ${SHOULDER_L_X} ${SHOULDER_Y} L ${SHOULDER_L_X - 23} ${SHOULDER_Y + 8}`,
-  },
-  happy: {
-    left: `M ${SHOULDER_L_X} ${SHOULDER_Y} L ${SHOULDER_L_X - 27} ${SHOULDER_Y - 28}`,
-  },
-  celebrate: {
-    left: `M ${SHOULDER_L_X} ${SHOULDER_Y} L ${SHOULDER_L_X - 40} ${SHOULDER_Y - 48}`,
-  },
-  excited: {
-    left: `M ${SHOULDER_L_X} ${SHOULDER_Y} L ${SHOULDER_L_X - 40} ${SHOULDER_Y - 48}`,
-  },
-  wave: {
-    left: `M ${SHOULDER_L_X} ${SHOULDER_Y} L ${SHOULDER_L_X - 17} ${SHOULDER_Y - 18}`,
-    right: `M ${SHOULDER_R_X} ${SHOULDER_Y} L ${SHOULDER_R_X + 30} ${SHOULDER_Y - 32}`,
-    extraType: 'wave',
-  },
-  thinking: {
-    left: `M ${SHOULDER_L_X} ${SHOULDER_Y} L ${SHOULDER_L_X - 20} ${SHOULDER_Y + 10}`,
-    right: `M ${SHOULDER_R_X} ${SHOULDER_Y} L ${SHOULDER_R_X - 13} ${SHOULDER_Y + 20} L ${CENTER_X + 8} ${SHOULDER_Y + 20}`,
-  },
-  peek: {
-    left: `M ${SHOULDER_L_X} ${SHOULDER_Y} L ${SHOULDER_L_X + 17} ${SHOULDER_Y - 12}`,
-    extraType: 'peek',
-  },
-  shy: {
-    left: `M ${SHOULDER_L_X} ${SHOULDER_Y} L ${SHOULDER_L_X - 13} ${SHOULDER_Y - 12} L ${SHOULDER_L_X - 19} ${SHOULDER_Y + 2}`,
-  },
-  confused: {
-    left: `M ${SHOULDER_L_X} ${SHOULDER_Y} L ${SHOULDER_L_X - 15} ${SHOULDER_Y + 6}`,
-  },
-  sleep: {
-    left: `M ${SHOULDER_L_X} ${SHOULDER_Y} L ${SHOULDER_L_X - 17} ${SHOULDER_Y + 22}`,
-  },
-};
-
 /** 全域心情配置表 (SSOT) */
 export const MOOD_CONFIGS: Record<MaiMaiMood | 'default', MoodConfig> = {
   default: {
@@ -323,7 +282,9 @@ export const MOOD_CONFIGS: Record<MaiMaiMood | 'default', MoodConfig> = {
       ]},
     },
     mouth: `M ${CENTER_X - MOUTH_WIDTH_SM} ${MOUTH_Y - MOUTH_CURVE_Y} Q ${CENTER_X} ${MOUTH_Y + MOUTH_CURVE_Y} ${CENTER_X + MOUTH_WIDTH_SM} ${MOUTH_Y - MOUTH_CURVE_Y}`,
-    arms: ARM_POSES.default,
+    arms: {
+      left: `M ${SHOULDER_L_X} ${SHOULDER_Y} L ${SHOULDER_L_X - 23} ${SHOULDER_Y + 8}`,
+    },
   },
   idle: {
     eyebrows: {
@@ -339,7 +300,9 @@ export const MOOD_CONFIGS: Record<MaiMaiMood | 'default', MoodConfig> = {
       ]},
     },
     mouth: `M ${CENTER_X - MOUTH_WIDTH_SM} ${MOUTH_Y - MOUTH_CURVE_Y} Q ${CENTER_X} ${MOUTH_Y + MOUTH_CURVE_Y} ${CENTER_X + MOUTH_WIDTH_SM} ${MOUTH_Y - MOUTH_CURVE_Y}`,
-    arms: ARM_POSES.idle,
+    arms: {
+      left: `M ${SHOULDER_L_X} ${SHOULDER_Y} L ${SHOULDER_L_X - 23} ${SHOULDER_Y + 8}`,
+    },
   },
   happy: {
     eyebrows: {
@@ -351,7 +314,9 @@ export const MOOD_CONFIGS: Record<MaiMaiMood | 'default', MoodConfig> = {
       right: { type: 'path', d: `M ${EYE_R_X - 5} ${EYE_Y} Q ${EYE_R_X} ${EYE_Y - 5} ${EYE_R_X + 5} ${EYE_Y}`, strokeWidth: 3 },
     },
     mouth: `M ${CENTER_X - MOUTH_WIDTH_MD} ${MOUTH_Y - 5} Q ${CENTER_X} ${MOUTH_Y + 10} ${CENTER_X + MOUTH_WIDTH_MD} ${MOUTH_Y - 5}`,
-    arms: ARM_POSES.happy,
+    arms: {
+      left: `M ${SHOULDER_L_X} ${SHOULDER_Y} L ${SHOULDER_L_X - 27} ${SHOULDER_Y - 28}`,
+    },
   },
   wave: {
     eyebrows: {
@@ -363,7 +328,11 @@ export const MOOD_CONFIGS: Record<MaiMaiMood | 'default', MoodConfig> = {
       right: { type: 'path', d: `M ${EYE_R_X - 5} ${EYE_Y} Q ${EYE_R_X} ${EYE_Y - 5} ${EYE_R_X + 5} ${EYE_Y}`, strokeWidth: 3 },
     },
     mouth: `M ${CENTER_X - MOUTH_WIDTH_MD} ${MOUTH_Y - 5} Q ${CENTER_X} ${MOUTH_Y + 10} ${CENTER_X + MOUTH_WIDTH_MD} ${MOUTH_Y - 5}`,
-    arms: ARM_POSES.wave,
+    arms: {
+      left: `M ${SHOULDER_L_X} ${SHOULDER_Y} L ${SHOULDER_L_X - 17} ${SHOULDER_Y - 18}`,
+      right: `M ${SHOULDER_R_X} ${SHOULDER_Y} L ${SHOULDER_R_X + 30} ${SHOULDER_Y - 32}`,
+      extraType: 'wave',
+    },
   },
   celebrate: {
     eyebrows: {
@@ -375,7 +344,9 @@ export const MOOD_CONFIGS: Record<MaiMaiMood | 'default', MoodConfig> = {
       right: { type: 'path', d: `M ${EYE_R_X - 7} ${EYE_Y - 7} Q ${EYE_R_X} ${EYE_Y - 15} ${EYE_R_X + 7} ${EYE_Y - 7}`, strokeWidth: 4 },
     },
     mouth: `M ${CENTER_X - MOUTH_WIDTH_LG} ${MOUTH_Y - 10} Q ${CENTER_X} ${MOUTH_Y + 15} ${CENTER_X + MOUTH_WIDTH_LG} ${MOUTH_Y - 10}`,
-    arms: ARM_POSES.celebrate,
+    arms: {
+      left: `M ${SHOULDER_L_X} ${SHOULDER_Y} L ${SHOULDER_L_X - 40} ${SHOULDER_Y - 48}`,
+    },
   },
   excited: {
     eyebrows: {
@@ -387,7 +358,9 @@ export const MOOD_CONFIGS: Record<MaiMaiMood | 'default', MoodConfig> = {
       right: { type: 'path', d: `M ${EYE_R_X - 7} ${EYE_Y - 7} Q ${EYE_R_X} ${EYE_Y - 15} ${EYE_R_X + 7} ${EYE_Y - 7}`, strokeWidth: 4 },
     },
     mouth: `M ${CENTER_X - MOUTH_WIDTH_LG} ${MOUTH_Y - 10} Q ${CENTER_X} ${MOUTH_Y + 15} ${CENTER_X + MOUTH_WIDTH_LG} ${MOUTH_Y - 10}`,
-    arms: ARM_POSES.excited,
+    arms: {
+      left: `M ${SHOULDER_L_X} ${SHOULDER_Y} L ${SHOULDER_L_X - 40} ${SHOULDER_Y - 48}`,
+    },
   },
   peek: {
     eyebrows: {
@@ -399,7 +372,10 @@ export const MOOD_CONFIGS: Record<MaiMaiMood | 'default', MoodConfig> = {
       right: { type: 'circle', cx: EYE_R_X, cy: EYE_Y, r: 3, fill: 'currentColor' },
     },
     mouth: `M ${CENTER_X - 8} ${MOUTH_Y} Q ${CENTER_X} ${MOUTH_Y + 5} ${CENTER_X + 8} ${MOUTH_Y}`,
-    arms: ARM_POSES.peek,
+    arms: {
+      left: `M ${SHOULDER_L_X} ${SHOULDER_Y} L ${SHOULDER_L_X + 17} ${SHOULDER_Y - 12}`,
+      extraType: 'peek',
+    },
     antenna: { droopy: true },
   },
   thinking: {
@@ -418,7 +394,10 @@ export const MOOD_CONFIGS: Record<MaiMaiMood | 'default', MoodConfig> = {
       ]},
     },
     mouth: `M ${CENTER_X - 5} ${MOUTH_Y} L ${CENTER_X + 5} ${MOUTH_Y}`,
-    arms: ARM_POSES.thinking,
+    arms: {
+      left: `M ${SHOULDER_L_X} ${SHOULDER_Y} L ${SHOULDER_L_X - 20} ${SHOULDER_Y + 10}`,
+      right: `M ${SHOULDER_R_X} ${SHOULDER_Y} L ${SHOULDER_R_X - 13} ${SHOULDER_Y + 20} L ${CENTER_X + 8} ${SHOULDER_Y + 20}`,
+    },
   },
   shy: {
     eyebrows: {
@@ -436,7 +415,9 @@ export const MOOD_CONFIGS: Record<MaiMaiMood | 'default', MoodConfig> = {
       ]},
     },
     mouth: `M ${CENTER_X - 12} ${MOUTH_Y} Q ${CENTER_X - 6} ${MOUTH_Y - 5} ${CENTER_X} ${MOUTH_Y} Q ${CENTER_X + 6} ${MOUTH_Y + 5} ${CENTER_X + 12} ${MOUTH_Y}`,
-    arms: ARM_POSES.shy,
+    arms: {
+      left: `M ${SHOULDER_L_X} ${SHOULDER_Y} L ${SHOULDER_L_X - 13} ${SHOULDER_Y - 12} L ${SHOULDER_L_X - 19} ${SHOULDER_Y + 2}`,
+    },
     antenna: { droopy: true },
   },
   confused: {
@@ -455,7 +436,9 @@ export const MOOD_CONFIGS: Record<MaiMaiMood | 'default', MoodConfig> = {
       ]},
     },
     mouth: `M ${CENTER_X - 12} ${MOUTH_Y} Q ${CENTER_X - 6} ${MOUTH_Y - 5} ${CENTER_X} ${MOUTH_Y} Q ${CENTER_X + 6} ${MOUTH_Y + 5} ${CENTER_X + 12} ${MOUTH_Y}`,
-    arms: ARM_POSES.confused,
+    arms: {
+      left: `M ${SHOULDER_L_X} ${SHOULDER_Y} L ${SHOULDER_L_X - 15} ${SHOULDER_Y + 6}`,
+    },
   },
   sleep: {
     eyebrows: {
@@ -467,7 +450,9 @@ export const MOOD_CONFIGS: Record<MaiMaiMood | 'default', MoodConfig> = {
       right: { type: 'path', d: `M ${EYE_R_X - 7} ${EYE_Y} L ${EYE_R_X + 7} ${EYE_Y}`, strokeWidth: 3 },
     },
     mouth: `M ${CENTER_X} ${MOUTH_Y} m -5, 0 a 5,3 0 1,0 10,0 a 5,3 0 1,0 -10,0`, // 橢圓路徑化
-    arms: ARM_POSES.sleep,
+    arms: {
+      left: `M ${SHOULDER_L_X} ${SHOULDER_Y} L ${SHOULDER_L_X - 17} ${SHOULDER_Y + 22}`,
+    },
     antenna: { droopy: true },
   },
 };

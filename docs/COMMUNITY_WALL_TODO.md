@@ -74,7 +74,7 @@
 | v2.4 | 1 | Effects 用 emoji 文字 | `React.memo` + `useMemo` + 顏色常量化；獨立 `EffectStar/Sparkle/Confetti` 組件 | ✅ |
 | v2.5 | 1 | `animate-wiggle` 未定義 | 刪除 index.css 重複定義，統一使用 tailwind.config.cjs SSOT | ✅ |
 | v2.6 | 2 | `RenderEye` 沒 memo | 用 `React.memo(RenderEye)` 包 | ✅ |
-| v2.7 | 2 | `ARM_POSES` 冗餘 | `MOOD_CONFIGS.arms` 已有 → 刪 `ARM_POSES` | ⬜ |
+| v2.7 | 2 | `ARM_POSES` 冗餘 | 內聯至 `MOOD_CONFIGS.arms`，刪除獨立常量 | ✅ |
 | v2.8 | 3 | 常量沒註解 | 每個座標加 JSDoc 說明計算來源 | ⬜ |
 
 ---

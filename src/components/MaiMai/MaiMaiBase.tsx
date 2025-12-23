@@ -50,7 +50,7 @@ import {
   STAR_INNER_RATIO,
   SPARKLE_DIAGONAL_RATIO,
   mirrorPath,
-  ARM_POSES,
+
   MOOD_CONFIGS,
   EyeData
 } from './types';
@@ -312,7 +312,8 @@ function ArmExtra({ type }: { type?: 'wave' | 'peek' | undefined }) {
 
 /** 手臂 */
 export function Arms({ mood }: { mood: MaiMaiMood }) {
-  const arms = ARM_POSES[mood] ?? ARM_POSES.default;
+  const config = MOOD_CONFIGS[mood] ?? MOOD_CONFIGS.default;
+  const arms = config.arms;
   const leftPath = arms.left;
   const rightPath = arms.right ?? mirrorPath(leftPath);
 
