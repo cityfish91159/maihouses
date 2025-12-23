@@ -6,7 +6,6 @@ import { propertyService, DEFAULT_PROPERTY, PropertyData } from '../services/pro
 import { ContactModal } from '../components/ContactModal';
 import { ReportGenerator } from './Report';
 import { buildKeyCapsuleTags, formatArea, formatLayout, formatFloor } from '../utils/keyCapsules';
-import { isSpecTag } from '../lib/tagUtils';
 
 // UAG Tracker Hook v8.1 - 追蹤用戶行為 + S級攔截
 // 優化: 1.修正district傳遞 2.S級即時回調 3.互動事件用fetch獲取等級
@@ -229,7 +228,7 @@ export const PropertyDetailPage: React.FC = () => {
       size: property.size,
       rooms: property.rooms,
       halls: property.halls
-    }).filter(tag => !isSpecTag(tag)).slice(0, 4);
+    }).slice(0, 4);
   }, [
     property.advantage1,
     property.advantage2,

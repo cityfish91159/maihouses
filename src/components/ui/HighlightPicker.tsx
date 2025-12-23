@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { Check, Plus, X } from 'lucide-react';
 import { isSpecTag } from '../../lib/tagUtils';
+import { toast } from 'sonner';
 
 // 標籤庫定義
 const HIGHLIGHT_CATEGORIES = [
@@ -29,7 +30,7 @@ const HIGHLIGHT_CATEGORIES = [
 const MAX_HIGHLIGHTS = 5;
 const MIN_HIGHLIGHTS = 3;
 const MAX_CUSTOM_TAGS = 3;
-const MAX_TAG_LENGTH = 5;
+const MAX_TAG_LENGTH = 10;
 
 interface HighlightPickerProps {
   value: string[];
@@ -73,7 +74,7 @@ export const HighlightPicker: React.FC<HighlightPickerProps> = ({
 
     // UP-4.1: 源頭清洗 - 阻擋規格型標籤
     if (isSpecTag(tag)) {
-      alert('請勿將「格局、坪數、樓層」等規格填寫於亮點，請使用專屬欄位。');
+      toast.error('請勿將「格局、坪數、樓層」等規格填寫於亮點，請使用專屬欄位。');
       return;
     }
 
@@ -100,7 +101,7 @@ export const HighlightPicker: React.FC<HighlightPickerProps> = ({
       {/* 標題 */}
       <div className="flex items-center justify-between">
         <span className="text-xs font-medium text-slate-600">
-          物件亮點 {required && '*'} <span className="text-slate-400">（選 3-5 個，每個 5 字內）</span>
+          物件亮點 {required && '*'} <span className="text-slate-400">（選 3-5 個，每個 10 字內）</span>
         </span>
         <span className={`text-xs font-medium ${isValid ? 'text-green-600' : 'text-slate-400'}`}>
           已選 {selectedCount}/{MAX_HIGHLIGHTS} {isValid && '✓'}
@@ -160,7 +161,7 @@ export const HighlightPicker: React.FC<HighlightPickerProps> = ({
                   placeholder="自訂..."
                   maxLength={MAX_TAG_LENGTH}
                   disabled={isFull}
-                  className="w-20 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm text-slate-700 placeholder:text-slate-300 focus:border-[#003366] focus:outline-none focus:ring-1 focus:ring-[#003366] disabled:cursor-not-allowed disabled:bg-slate-100"
+                  className="w-28 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm text-slate-700 placeholder:text-slate-300 focus:border-[#003366] focus:outline-none focus:ring-1 focus:ring-[#003366] disabled:cursor-not-allowed disabled:bg-slate-100"
                 />
                 {input.trim() && !isFull && (
                   <button

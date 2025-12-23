@@ -1,11 +1,10 @@
 # 🏠 MaiHouses 物件上傳優化 TODO (SSOT)
 
-> **最後更新**: 2025-12-22
+> **最後更新**: 2025-12-23
 > **目標**: 將上傳頁從「資料輸入表單」提升為「專業生產力工具」
 > **首頁**: https://maihouses.vercel.app/maihouses/
 > **上傳頁**: https://maihouses.vercel.app/maihouses/property/upload
 
----
 
 ## 📋 摘要 (Executive Summary)
 
@@ -16,11 +15,10 @@
 | P1 | UP-3 圖片管理重構 | ✅ 95/100 |
 | P1 | UP-4 亮點膠囊分流 | ✅ 85/100 |
 
----
 
 ## ✅ 已完成
 
-### UP-4: 亮點膠囊分流 (Spec vs Feature Separation) ⚠️ 65/100
+### UP-4: 亮點膠囊分流 (Spec vs Feature Separation) ✅ 85/100
 
 | ID | 任務 | 狀態 | 核心驗證 |
 |:---|:---|:---:|:---|
@@ -47,14 +45,9 @@
 > 2. **提升輸入體驗**：`alert()` 攔截規格輸入太粗暴，請改用 `sonner` toast 或紅字提示，讓用戶明白原因但不被打斷。
 > 3. **放寬字數限制**：5 字上限會扼殺高品質亮點（如『雙捷運交匯3分鐘』），8-10 字更合理。」
 
----
 
 ### UP-3: 圖片管理重構 (Image Consistency) ✅ 95/100
 
-- 架構: ManagedImage SSOT / Pure Reducer (Side Effect Removed)
-- 驗證: 封面自動遞補 (Runtime Safety Net Verified)
-- 測試: E2E 流程通過 (Trade-off: 使用 Mock Magic Bytes 繞過檢查)
-- `npm test` 34 passed (Unit + E2E)
 
 **📊 審計評分：95/100** ✅ (Core Logic Fixed)
 
@@ -77,27 +70,12 @@
 | UP-3.G | P3 | 無 E2E 測試驗證 UI 行為 | ✅ |
 | UP-3.H | P3 | ManagedImage 型別未 export | ✅ |
 
----
 
 ### UP-2: 圖片前端壓縮 ✅ 100/100
-- 壓縮: 2048px / 1.5MB / quality 0.85
-- 並發控制 (concurrency=3)
-- HEIC 轉 JPEG
-- 重試機制 (0.85→0.68)
-- 壓縮進度 UI
-- `npm test` 250 passed
 
 ### UP-1: 表單自動快照 ✅ 98/100
-- 草稿 Key: `mh_draft_{userId}`
-- 7 天過期、版本檢查、匿名遷移
-- `npm test` 通過
 
 ### 其他已完成
-- KC-5: 測試補強 ✅
-- KC-4: AI 膠囊生成 ✅ 97/100
-- KC-3: 列表頁膠囊渲染 ✅
-- P11: 房源列表頁升級 ✅
 
----
 
 > 完整歷史：見 `docs/COMMUNITY_WALL_DEV_LOG.md`
