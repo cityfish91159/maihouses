@@ -1,109 +1,37 @@
 import React, { useState, useEffect } from 'react';
+import { MaiMaiBase, useMaiMaiMood } from './MaiMai';
+import type { MaiMaiMood } from './MaiMai';
 
+/**
+ * MascotMaiMai - 簡化版公仔（SmartAsk 使用）
+ * @description 使用 MaiMai 原子組件重構，保持原有循環動畫行為
+ */
 export default function MascotMaiMai() {
-  const [mood, setMood] = useState(0);
+  const [moodIndex, setMoodIndex] = useState(0);
   
-  // 簡單的待命動畫
+  // 簡單的待命動畫：idle → wave → happy 循環
   useEffect(() => {
     const interval = setInterval(() => {
-      setMood(m => (m + 1) % 3);
+      setMoodIndex(m => (m + 1) % 3);
     }, 3000);
     return () => clearInterval(interval);
   }, []);
 
-  // 手勢變化
-  const getArms = () => {
-    switch (mood) {
-      case 0: // 待命
-        return { left: 'M 55 130 L 35 145', right: 'M 145 130 L 165 145' };
-      case 1: // 揮手
-        return { left: 'M 55 130 L 35 145', right: 'M 145 130 L 175 100' };
-      case 2: // 雙手張開歡迎
-        return { left: 'M 55 130 L 25 115', right: 'M 145 130 L 175 115' };
-      default:
-        return { left: 'M 55 130 L 35 145', right: 'M 145 130 L 165 145' };
-    }
-  };
-
-  const arms = getArms();
+  // 對應原本的 3 種手勢循環
+  const moods: MaiMaiMood[] = ['idle', 'wave', 'happy'];
+  const currentMood: MaiMaiMood = moods[moodIndex] ?? 'idle';
 
   return (
     <div className="relative mb-4 h-40 w-32 text-brand">
-        <div className="absolute left-1/2 top-1/2 -z-10 size-24 -translate-x-1/2 -translate-y-1/2 rounded-full bg-brand-100/50 blur-2xl"></div>
-        
-        <svg viewBox="0 0 200 240" className="size-full animate-float drop-shadow-sm">
-          
-          {/* M-Antenna */}
-          <path 
-            d="M 85 40 L 85 15 L 100 30 L 115 15 L 115 40" 
-            stroke="currentColor" 
-            strokeWidth="5" 
-            fill="none" 
-            strokeLinecap="round" 
-            strokeLinejoin="round"
-          />
-          
-          {/* House Body & Roof */}
-          <path 
-            d="M 40 80 L 100 40 L 160 80" 
-            stroke="currentColor" 
-            strokeWidth="6" 
-            fill="none" 
-            strokeLinecap="round" 
-            strokeLinejoin="round"
-          />
-          <rect 
-            x="55" y="80" 
-            width="90" height="100" 
-            stroke="currentColor" 
-            strokeWidth="6" 
-            fill="none" 
-            strokeLinecap="round" 
-            strokeLinejoin="round"
-          />
-          
-          {/* 領結 - 簡化版 */}
-          <circle cx="100" cy="85" r="4" fill="currentColor" />
-          
-          {/* Eyebrows */}
-          <path d="M 78 110 Q 85 105 92 110" stroke="currentColor" strokeWidth="4" fill="none" strokeLinecap="round" />
-          <path d="M 108 110 Q 115 105 122 110" stroke="currentColor" strokeWidth="4" fill="none" strokeLinecap="round" />
-          
-          {/* Eyes */}
-          <circle cx="85" cy="125" r="4" stroke="currentColor" strokeWidth="3" fill="none" />
-          <circle cx="115" cy="125" r="4" stroke="currentColor" strokeWidth="3" fill="none" />
-          
-          {/* 嘴巴 - 微笑 */}
-          <path 
-            d="M 90 145 Q 100 155 110 145" 
-            stroke="currentColor" 
-            strokeWidth="3" 
-            fill="none" 
-            strokeLinecap="round"
-          />
-          
-          {/* Hands - 動態 */}
-          <path 
-            d={arms.left}
-            stroke="currentColor" 
-            strokeWidth="5" 
-            fill="none" 
-            strokeLinecap="round"
-            className="transition-all duration-500"
-          />
-          <path 
-            d={arms.right}
-            stroke="currentColor" 
-            strokeWidth="5" 
-            fill="none" 
-            strokeLinecap="round"
-            className="transition-all duration-500"
-          />
-
-          {/* Legs */}
-          <path d="M 85 180 L 85 215 L 75 215" stroke="currentColor" strokeWidth="5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-          <path d="M 115 180 L 115 215 L 125 215" stroke="currentColor" strokeWidth="5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
+      <div className="absolute left-1/2 top-1/2 -z-10 size-24 -translate-x-1/2 -translate-y-1/2 rounded-full bg-brand-100/50 blur-2xl" />
+      <MaiMaiBase
+        mood={currentMood}
+        size="lg"
+        className="size-full"
+        animated={true}
+        showEffects={false}
+      />
     </div>
   );
 }
+
