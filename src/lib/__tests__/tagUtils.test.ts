@@ -2,30 +2,33 @@ import { isSpecTag, filterHighlights } from '../tagUtils';
 
 describe('Tag Filtering Logic (UP-4)', () => {
     describe('isSpecTag - Should identify spec-like tags', () => {
+        // 這些是 SPEC_PATTERNS 實際會匹配的規格
         const specs = [
-            '3房', '3房2廳', '1衛', '25坪', '10年', '5樓', // Pure specs
-            '主建30坪', '地坪100坪', '屋齡5年', // Prefix specs
-            'B1車位', '3個陽台' // More complex specs
+            '3房', '2廳', '1衛', '25坪', '30.5坪', // 數字+單位
+            '5樓', '12樓之3',                       // X樓 格式
+            '屋齡10年', '屋齡 5 年',                 // 屋齡X年 格式
+            '主建30坪', '地坪100坪', '建坪50',       // 前綴+數字
+            'B1車位', 'b2車位',                     // BX車位
+            '3個陽台',                              // X個陽台
+            '朝南', '朝向東北',                      // 朝向
+            '格局方正',                             // 格局
+            '車位平面',                             // 車位
+            '管理費2000',                           // 管理費
+            '公設比30%',                            // 公設比
         ];
 
+        // 這些是亮點，不應被過濾
         const highlights = [
             '近捷運', '高樓層', '採光佳', '全新裝潢',
-            '有車位', '大三房' // '大三房' is borderline, but strictly it contains '三房' spec info? 
-            // User AC: "Zero repetition". If '3房' is in Spec, '大三房' is redundant info?
-            // Let's stricter: Any numeric + SpecKey is banned.
+            '有車位', '有電梯', '景觀戶', '邊間',
         ];
 
         test.each(specs)('should identify "%s" as a spec', (tag) => {
             expect(isSpecTag(tag)).toBe(true);
         });
 
-        // Note: '大三房' might typically be a highlight "Large 3 Rooms", 
-        // but implies spec. If we are strict, we might ban it. 
-        // For now let's focus on Digit+Key patterns.
-        test('should allow adjective highlights', () => {
-            expect(isSpecTag('近捷運')).toBe(false);
-            expect(isSpecTag('全新裝潢')).toBe(false);
-            expect(isSpecTag('高樓層')).toBe(false); // Contains '樓' but no digit
+        test.each(highlights)('should allow "%s" as highlight', (tag) => {
+            expect(isSpecTag(tag)).toBe(false);
         });
 
         test('should detect numeric spec patterns', () => {

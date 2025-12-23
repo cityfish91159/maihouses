@@ -89,7 +89,7 @@ describe('featured-properties helpers', () => {
       expect(result.image).toContain('unsplash.com');
     });
 
-    it('組合標籤: size + rooms + halls + feature', () => {
+    it('組合標籤: features 優先，規格不進入 tags (UP-4 分流)', () => {
       const row = buildPropertyRow({
         size: 34.2,
         rooms: 3,
@@ -97,11 +97,10 @@ describe('featured-properties helpers', () => {
         features: ['高樓層', '近捷運'],
       });
       const result = adaptRealPropertyForUI(row, []);
-      // SSOT：優先 highlights，再 specs
-      expect(result.tags[0]).toBe('高樓層');
-      expect(result.tags).toContain('34.2 坪');
-      // KC1.1 修正：格式統一為 "X 房 Y 廳"
-      expect(result.tags).toContain('3 房 2 廳');
+      // UP-4: tags 只包含亮點 (features)，不包含規格 (坪數/格局)
+      expect(result.tags).toContain('高樓層');
+      expect(result.tags).toContain('近捷運');
+      // 規格應該在卡片的規格區顯示，不在 tags 中
       expect(result.tags.length).toBeLessThanOrEqual(4);
     });
 

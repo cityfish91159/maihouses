@@ -64,46 +64,28 @@ describe('buildKeyCapsuleTags', () => {
     expect(tags.length).toBe(2);
   });
 
-  it('可從 floorCurrent 推導高/低樓層', () => {
-    const tags = buildKeyCapsuleTags({
-      floorCurrent: '高樓層',
-      features: [],
-      size: 10.5,
-      rooms: 1,
-      halls: 1,
-    });
-
-    expect(tags[0]).toBe('高樓層');
-    expect(tags.length).toBe(1);
-  });
-
-  it('應能根據樓層比例推斷高/低樓層 (P2 缺失修正)', () => {
-    // 高樓層: 12/15 = 0.8 >= 0.7
-    const tagsHigh = buildKeyCapsuleTags({
+  // UP-4: 樓層自動推斷已移除，亮點必須手動輸入
+  // 「高樓層」若要顯示，必須由用戶在 advantage1/advantage2/features 中明確填寫
+  it('UP-4: 不再自動推斷高/低樓層，僅接受明確輸入', () => {
+    // 沒有 advantage，即使樓層數據存在也不會自動生成膠囊
+    const tagsNoAdvantage = buildKeyCapsuleTags({
       floorCurrent: '12',
       floorTotal: 15,
       size: 30,
       rooms: 3,
     });
-    expect(tagsHigh[0]).toBe('高樓層');
+    expect(tagsNoAdvantage.length).toBe(0);
 
-    // 低樓層: 2/10 = 0.2 <= 0.3
-    const tagsLow = buildKeyCapsuleTags({
-      floorCurrent: '2',
-      floorTotal: 10,
+    // 有明確 advantage 才會顯示
+    const tagsWithAdvantage = buildKeyCapsuleTags({
+      advantage1: '高樓層',
+      floorCurrent: '12',
+      floorTotal: 15,
       size: 30,
       rooms: 3,
     });
-    expect(tagsLow[0]).toBe('低樓層');
-
-    // 中間樓層: 5/10 = 0.5 (不應推斷)
-    const tagsMid = buildKeyCapsuleTags({
-      floorCurrent: '5',
-      floorTotal: 10,
-      size: 30,
-      rooms: 3,
-    });
-    expect(tagsMid.length).toBe(0);
+    expect(tagsWithAdvantage[0]).toBe('高樓層');
+    expect(tagsWithAdvantage.length).toBe(1);
   });
 
   it('應嚴格遵守 index 語意與長度限制 (P1 缺失修正)', () => {
