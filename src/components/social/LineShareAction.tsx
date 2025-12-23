@@ -6,7 +6,7 @@ import { notify } from '../../lib/notify';
 interface ShareProps {
     url: string;
     title: string;
-    onShareSuccess?: () => void;
+    onShareClick?: () => void;
     className?: string; // Support custom styling (button)
     btnText?: string;    // Custom button text
     showIcon?: boolean;  // Toggle icon
@@ -16,7 +16,7 @@ interface ShareProps {
 export const LineShareAction: React.FC<ShareProps> = ({
     url,
     title,
-    onShareSuccess,
+    onShareClick,
     className = '', // Default to empty string to fix undefined type error
     btnText = 'LINE 分享',
     showIcon = true,
@@ -29,9 +29,9 @@ export const LineShareAction: React.FC<ShareProps> = ({
         // 2. Notify user
         notify.success('✨ 準備分享至 LINE', 'MaiMai 已經幫您整理好物件摘要了！');
 
-        // 3. Tracking callback
-        if (onShareSuccess) {
-            onShareSuccess();
+        // 3. Tracking callback (Intent only)
+        if (onShareClick) {
+            onShareClick();
         }
     };
 
@@ -41,7 +41,18 @@ export const LineShareAction: React.FC<ShareProps> = ({
     // The 'beforeOnClick' or just 'onClick' usually works.
 
     return (
-        <div onClick={handleShare} className={wrapperClass}>
+        <div
+            onClick={handleShare}
+            className={wrapperClass}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    handleShare();
+                }
+            }}
+            aria-label={btnText}
+        >
             {/* 
          Wrapping in a div to capture the click event bubbling up 
          because react-share buttons might consume onClick for their window.open logic 

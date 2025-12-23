@@ -377,7 +377,7 @@ export const PropertyDetailPage: React.FC = () => {
                   <LineShareAction
                     url={window.location.origin + window.location.pathname}
                     title={`【邁房子推薦】${property.title} | 總價 ${property.price} 萬`}
-                    onShareSuccess={tracker.trackLineClick}
+                    onShareClick={tracker.trackLineClick}
                     className="flex items-center gap-1 rounded-full bg-[#06C755] px-3 py-2 text-sm font-bold text-white shadow-sm hover:bg-[#05a847]"
                     btnText="分享"
                     showIcon={true}
