@@ -205,7 +205,9 @@ function buildFeaturedReviews(
   let adaptedReviews: FeaturedReview[] = reviews.slice(0, 2).map(r => ({
     stars: '★★★★☆',  // D26: VIEW 沒有 rating，給預設
     author: '匿名用戶',  // D26: VIEW 沒有 author_name
-    tags: [r.advantage_1, r.advantage_2].filter(Boolean) as string[] | undefined,
+    tags: [r.advantage_1, r.advantage_2]
+      .filter(Boolean)
+      .map(tag => tag!.startsWith('#') ? tag! : `#${tag!}`),
     content: r.content
       ? `${r.content.property_title || '好物件'} - 優點：${r.content.pros?.filter(Boolean).join('、') || '無'}`
       : (r.advantage_1 || '好評推薦')
@@ -341,8 +343,7 @@ function adaptToListingCard(
     title: property.title
       ? `${property.title}・${property.address?.split('區')[0]}區`
       : seed.title,
-    // 修正 Legacy Tag (P1 缺失修正)：改為由 SSOT tags[0] 產出，不再獨立 fallback
-    tag: finalTags[0] || seed.tag,
+    // D41 Fix: Remove 'tag' property as it doesn't exist in ListingPropertyCardSchema
     tags: finalTags,
     price: roomLabel ? `${roomLabel} ${priceLabel}` : priceLabel,
     size: property.size ? `約 ${property.size} 坪` : seed.size,
