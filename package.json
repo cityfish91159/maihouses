@@ -71,6 +71,7 @@
     "@vercel/node": "^5.5.13",
     "@vitejs/plugin-react": "^4.3.2",
     "autoprefixer": "^10.4.20",
+    "eruda": "^3.4.3",
     "eslint": "^9.12.0",
     "eslint-plugin-jsx-a11y": "^6.10.2",
     "eslint-plugin-react-hooks": "^7.0.1",

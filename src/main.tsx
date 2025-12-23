@@ -7,6 +7,12 @@ import './index.css'
 
 import ErrorBoundary from './app/ErrorBoundary';
 
+// Mobile Debugger (Eruda)
+// Usage: Add ?eruda=true to the URL
+if (new URLSearchParams(window.location.search).get('eruda') === 'true') {
+  import('eruda').then((eruda) => eruda.default.init());
+}
+
 const rootElement = document.getElementById('root');
 if (!rootElement) {
   // 容錯處理：root element 不存在時顯示錯誤
