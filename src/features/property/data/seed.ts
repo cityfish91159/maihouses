@@ -5,6 +5,7 @@ export const SEED_DATA = {
             image: "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=1260&auto=format&fit=crop",
             title: "新光晴川 B棟 12樓",
             location: "📍 板橋區・江子翠生活圈",
+            tags: ["#捷運宅", "#生活機能佳"],
             details: [
                 "3房2廳2衛 + 平面車位・室內 23坪 / 主建物 26坪",
                 "🏢 2020年完工・7棟・420戶",
@@ -37,6 +38,7 @@ export const SEED_DATA = {
             image: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&auto=format&fit=crop",
             title: "遠雄新未來",
             location: "📍 中和區・中和環球購物中心",
+            tags: ["#商城宅", "#捷運宅"],
             details: [
                 "2房2廳1衛・室內 18坪",
                 "🏢 2019年完工・384戶",
@@ -56,6 +58,7 @@ export const SEED_DATA = {
             image: "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800&auto=format&fit=crop",
             title: "國家大苑",
             location: "📍 永和區・永安市場商圈",
+            tags: ["#公園宅", "#近捷運"],
             details: [
                 "3房2廳2衛・室內 28坪",
                 "🏢 2018年完工・256戶",
@@ -75,7 +78,7 @@ export const SEED_DATA = {
         {
             image: "https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=600&auto=format&fit=crop",
             title: "冠德美麗大直・中山區",
-            tag: "捷運劍南路站",
+            tags: ["捷運劍南路站"],
             price: "4 房 3,980 萬",
             size: "約 45 坪",
             rating: "4.5 分(92 則評價)・豪宅精選",
@@ -90,7 +93,7 @@ export const SEED_DATA = {
         {
             image: "https://images.unsplash.com/photo-1600585154526-990dced4db0d?w=600&auto=format&fit=crop",
             title: "日勝幸福・三重區",
-            tag: "機捷 A2",
+            tags: ["機捷 A2"],
             price: "2 房 750 萬",
             size: "約 18 坪",
             rating: "4.0 分(58 則評價)・首購族最愛",
@@ -105,7 +108,7 @@ export const SEED_DATA = {
         {
             image: "https://images.unsplash.com/photo-1600573472592-401b489a3cdc?w=600&auto=format&fit=crop",
             title: "文心大和・中正區",
-            tag: "信義計畫區",
+            tags: ["信義計畫區"],
             price: "2 房 980 萬",
             size: "約 21 坪",
             rating: "4.3 分(47 則評價)・收租比例略高",
@@ -120,7 +123,7 @@ export const SEED_DATA = {
         {
             image: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=600&auto=format&fit=crop",
             title: "合環青田・新莊區",
-            tag: "副都心生活圈",
+            tags: ["副都心生活圈"],
             price: "3 房 1,180 萬",
             size: "約 28 坪",
             rating: "4.2 分(35 則評價)・首購 / 換屋混合",
@@ -135,7 +138,7 @@ export const SEED_DATA = {
         {
             image: "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=600&auto=format&fit=crop",
             title: "世界花園・蘆洲區",
-            tag: "捷運蘆洲站",
+            tags: ["捷運蘆洲站"],
             price: "2 房 880 萬",
             size: "約 20 坪",
             rating: "3.9 分(29 則評價)・交通便利",
@@ -150,7 +153,7 @@ export const SEED_DATA = {
         {
             image: "https://images.unsplash.com/photo-1600585154526-990dced4db0d?w=600&auto=format&fit=crop",
             title: "遠雄大未來・汐止區",
-            tag: "東湖生活圈",
+            tags: ["東湖生活圈"],
             price: "3 房 1,350 萬",
             size: "約 28 坪",
             rating: "4.1 分(44 則評價)・通勤族首選",
@@ -165,7 +168,7 @@ export const SEED_DATA = {
         {
             image: "https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=600&auto=format&fit=crop",
             title: "興富發巨蛋・鼓山區",
-            tag: "巨蛋商圈",
+            tags: ["巨蛋商圈"],
             price: "2 房 1,680 萬",
             size: "約 25 坪",
             rating: "4.4 分(51 則評價)・投資自住兩相宜",
@@ -180,7 +183,7 @@ export const SEED_DATA = {
         {
             image: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=600&auto=format&fit=crop",
             title: "華固新天地・內湖區",
-            tag: "內湖科學園區",
+            tags: ["內湖科學園區"],
             price: "3 房 2,180 萬",
             size: "約 32 坪",
             rating: "4.3 分(48 則評價)・科技人最愛",

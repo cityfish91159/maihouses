@@ -1,22 +1,31 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
 interface LegacyHorizontalCardProps {
     data: any;
 }
 
 const LegacyHorizontalCard: React.FC<LegacyHorizontalCardProps> = ({ data }) => {
+    const navigate = useNavigate();
+
+    const handleNavigate = () => {
+        navigate('/maihouses/property/detail');
+    };
+
+    const firstTag = data.tags && data.tags.length > 0 ? data.tags[0] : null;
+
     return (
         <div className="horizontal-card">
             <div className="horizontal-left">
-                <div className="horizontal-thumb">
+                <div className="horizontal-thumb" onClick={handleNavigate} style={{ cursor: 'pointer' }}>
                     <img src={data.image} alt={data.title} loading="lazy" />
                 </div>
                 <div className="horizontal-main">
                     <div>
                         <div className="horizontal-title-row">
-                            <strong>{data.title}</strong>
-                            {data.tag && (
-                                <span className="horizontal-tag">{data.tag}</span>
+                            <strong onClick={handleNavigate} style={{ cursor: 'pointer' }}>{data.title}</strong>
+                            {firstTag && (
+                                <span className="horizontal-tag">{firstTag}</span>
                             )}
                         </div>
                         <div className="horizontal-rating">
@@ -55,7 +64,11 @@ const LegacyHorizontalCard: React.FC<LegacyHorizontalCardProps> = ({ data }) => 
                 </div>
 
                 <div className="property-cta">
-                    <button className="btn-primary" style={{ padding: '0.375rem', minHeight: '2.5rem', fontSize: '0.8125rem' }}>
+                    <button
+                        className="btn-primary"
+                        onClick={handleNavigate}
+                        style={{ padding: '0.375rem', minHeight: '2.5rem', fontSize: '0.8125rem' }}
+                    >
                         查看詳情
                     </button>
                     <button className="heart-btn" style={{ width: '2.5rem', height: '2.5rem', minWidth: '2.5rem' }}>

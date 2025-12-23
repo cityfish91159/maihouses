@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
 interface LegacyFeaturedCardProps {
     data: any;
@@ -6,15 +7,21 @@ interface LegacyFeaturedCardProps {
 }
 
 const LegacyFeaturedCard: React.FC<LegacyFeaturedCardProps> = ({ data, variant }) => {
+    const navigate = useNavigate();
+
+    const handleNavigate = () => {
+        navigate('/maihouses/property/detail');
+    };
+
     return (
         <div className="property-card">
-            <div className="property-media">
+            <div className="property-media" onClick={handleNavigate} style={{ cursor: 'pointer' }}>
                 <img src={data.image} alt={data.title} />
                 <div className="property-badge">{data.badge}</div>
             </div>
 
             <div className="property-content">
-                <h3 className="property-title">{data.title}</h3>
+                <h3 className="property-title" onClick={handleNavigate} style={{ cursor: 'pointer' }}>{data.title}</h3>
                 <div className="property-location">{data.location}</div>
 
                 <div className="property-rating">
@@ -33,7 +40,7 @@ const LegacyFeaturedCard: React.FC<LegacyFeaturedCardProps> = ({ data, variant }
                                         <span className="review-author">{review.author}</span>
                                     </div>
                                     <div className="review-tags">
-                                        {review.tags.map((tag: string, ti: number) => (
+                                        {review.tags && review.tags.map((tag: string, ti: number) => (
                                             <span key={ti} className="review-tag">{tag}</span>
                                         ))}
                                     </div>
@@ -44,7 +51,7 @@ const LegacyFeaturedCard: React.FC<LegacyFeaturedCardProps> = ({ data, variant }
                             ))}
                         </div>
 
-                        <div className="property-more-reviews">
+                        <div className="property-more-reviews" onClick={handleNavigate} style={{ cursor: 'pointer' }}>
                             <span className="lock-icon">🔒</span>
                             <span>查看其他 {data.lockCount} 則住戶真實評價</span>
                             <button className="register-btn">免費註冊</button>
@@ -56,7 +63,7 @@ const LegacyFeaturedCard: React.FC<LegacyFeaturedCardProps> = ({ data, variant }
                         </div>
 
                         <div className="property-cta">
-                            <button className="btn-primary">預約看屋</button>
+                            <button className="btn-primary" onClick={handleNavigate}>預約看屋</button>
                             <button className="heart-btn">♥</button>
                         </div>
                     </>
@@ -77,7 +84,7 @@ const LegacyFeaturedCard: React.FC<LegacyFeaturedCardProps> = ({ data, variant }
                             ))}
                         </div>
 
-                        <div className="property-more-reviews">
+                        <div className="property-more-reviews" onClick={handleNavigate} style={{ cursor: 'pointer' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                                 <span className="lock-icon">🔒</span>
                                 <span>{data.lockCount} 則評價</span>
