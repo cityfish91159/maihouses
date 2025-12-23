@@ -28,8 +28,18 @@
     /* === 常用參數 === */
     --r-sm: 12px;
     --r-md: 16px;
+    --r-lg: 16px;
     --r-2xl: 32px;
     --r-pill: 999px;
+    
+    /* === 缺失的 CSS 變數補充（防止手機白屏） === */
+    --danger: #dc2626;
+    --shadow-card: 0 2px 8px rgba(15, 23, 42, 0.08);
+    --z-overlay: 40;
+    --neutral-100: #f5f5f5;
+    --neutral-150: #e5e5e5;
+    --neutral-300: #d4d4d4;
+    --brand-fg: #ffffff;
   }
 
   body {
