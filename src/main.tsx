@@ -5,6 +5,8 @@ import { HelmetProvider } from 'react-helmet-async';
 import App from './App'
 import './index.css'
 
+import ErrorBoundary from './app/ErrorBoundary';
+
 const rootElement = document.getElementById('root');
 if (!rootElement) {
   // 容錯處理：root element 不存在時顯示錯誤
@@ -20,15 +22,17 @@ if (!rootElement) {
   ReactDOM.createRoot(rootElement).render(
     <React.StrictMode>
       <HelmetProvider>
-        <BrowserRouter
-          basename={basename}
-          future={{
-            v7_startTransition: true,
-            v7_relativeSplatPath: true,
-          }}
-        >
-          <App />
-        </BrowserRouter>
+        <ErrorBoundary>
+          <BrowserRouter
+            basename={basename}
+            future={{
+              v7_startTransition: true,
+              v7_relativeSplatPath: true,
+            }}
+          >
+            <App />
+          </BrowserRouter>
+        </ErrorBoundary>
       </HelmetProvider>
     </React.StrictMode>
   );

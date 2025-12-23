@@ -68,7 +68,8 @@ export default function MascotInteractive({
     if (
       shouldCelebrate &&
       prevMoodRef.current !== computedMood &&
-      now - lastCelebrateAtRef.current > 800
+      now - lastCelebrateAtRef.current > 800 &&
+      !eventCelebrating // Prevent loop: don't re-dispatch if triggered by event
     ) {
       fireConfetti();
       window.dispatchEvent(new CustomEvent('mascot:celebrate'));
