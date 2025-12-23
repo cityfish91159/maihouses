@@ -9,26 +9,29 @@
 
 ## 📋 摘要 (Executive Summary)
 
-| 優先級 | 任務 | 狀態 | 預估工時 |
-|:---:|:---|:---:|:---:|
-| P0 | MM-1 MaiMai 原子組件整合 | ✅ | 2hr |
-| P0 | MM-2 慶祝動畫 (react-canvas-confetti) | ⬜ | 1hr |
-| P0 | IM-1 智慧貼上監聽器 | ⬜ | 2hr |
-| P0 | IM-2 591 生產級解析器 | ⬜ | 3hr |
-| P1 | MM-3 情緒狀態機 (Mood FSM) | ⬜ | 2hr |
-| P1 | IM-3 重複匯入偵測 | ⬜ | 1hr |
-| P1 | IM-4 iOS 捷徑支援 | ⬜ | 1hr |
-| P2 | MM-4 對話歷史氣泡 | ⬜ | 1hr |
-| P2 | IM-5 解析品質追蹤 API | ⬜ | 1hr |
-| P3 | MM-5 MaiMai 全站統一實例 | ⬜ | 2hr |
+| 優先級 | 任務 | 狀態 | 預估工時 | 審計分數 |
+|:---:|:---|:---:|:---:|:---:|
+| P0 | MM-1 MaiMai 原子組件整合 | ⚠️ | 2hr | 78/100 |
+| P0 | MM-2 慶祝動畫 (react-canvas-confetti) | ⬜ | 1hr | - |
+| P0 | IM-1 智慧貼上監聽器 | ⬜ | 2hr | - |
+| P0 | IM-2 591 生產級解析器 | ⬜ | 3hr | - |
+| P1 | MM-3 情緒狀態機 (Mood FSM) | ⬜ | 2hr | - |
+| P1 | IM-3 重複匯入偵測 | ⬜ | 1hr | - |
+| P1 | IM-4 iOS 捷徑支援 | ⬜ | 1hr | - |
+| P2 | MM-4 對話歷史氣泡 | ⬜ | 1hr | - |
+| P2 | IM-5 解析品質追蹤 API | ⬜ | 1hr | - |
+| P3 | MM-5 MaiMai 全站統一實例 | ⬜ | 2hr | - |
+
+> **⚠️ 狀態說明**: ⬜ 未開始 | 🔧 進行中 | ⚠️ 需修正 | ✅ 完成 (100分)
 
 ---
 
 ## 🎭 MaiMai 公仔互動模組
 
-### MM-1: MaiMai 原子組件整合 ✅
+### MM-1: MaiMai 原子組件整合 ⚠️ 78/100
 
 **完成時間**: 2025-12-23
+**審計評分**: 78/100 (架構完成，但存在 8 項缺失需修正)
 
 **成果**:
 - 新增 `src/components/MaiMai/` 目錄
@@ -46,6 +49,227 @@
 | MascotHouse.tsx | 215 | 132 | -39% |
 
 **驗證**: 298/298 測試通過，TypeScript 編譯通過
+
+---
+
+### ❌ MM-1 審計缺失清單 (8 項待修)
+
+| 編號 | 嚴重度 | 問題描述 | 狀態 |
+|:---:|:---:|:---|:---:|
+| MM-1.A | **P0** | 無 `useMaiMaiMood.test.ts` 單元測試 | ⬜ |
+| MM-1.B | **P0** | 驗收標準 MM-AC1~4 未驗證 | ⬜ |
+| MM-1.C | P1 | `SIZE_CLASSES` 在 types.ts 和 MaiMaiBase.tsx 重複定義 | ⬜ |
+| MM-1.D | P1 | `MaiMaiSpeech` 組件建立但**完全沒被使用** | ⬜ |
+| MM-1.E | P1 | `useMascotCelebrateEvent` 未與 MascotInteractive 整合 | ⬜ |
+| MM-1.F | P2 | 無 Storybook 視覺測試 | ⬜ |
+| MM-1.G | P2 | CSS 動畫類 (animate-wiggle 等) 未在 tailwind.config 定義 | ⬜ |
+| MM-1.H | P3 | Arms 組件返回 `extra?: React.ReactNode` 設計不純 | ⬜ |
+
+---
+
+### 🔧 MM-1.A 修正指引：單元測試
+
+**問題**: `useMaiMaiMood` 是心情系統核心，但 0 個測試覆蓋。
+
+**必須測試的案例**:
+```typescript
+// src/components/MaiMai/__tests__/useMaiMaiMood.test.ts
+describe('useMaiMaiMood', () => {
+  // 優先級測試
+  it('externalMood 優先於所有其他狀態');
+  it('isCelebrating 優先於 isSuccess');
+  it('isSuccess 觸發 celebrate 心情');
+  it('hasError 觸發 shy 心情');
+  it('isLoading 觸發 thinking 心情');
+  it('isTypingPassword 觸發 peek 心情');
+  it('isTypingEmail 觸發 happy 心情');
+  it('isHovered 觸發 wave 心情');
+  it('預設返回 idle');
+  
+  // 點擊 5 次測試
+  it('點擊 5 次後 mood 變為 celebrate');
+  it('celebrate 狀態 2 秒後自動重置');
+});
+```
+
+**💡 技術指引**:
+> 使用 `@testing-library/react` 的 `renderHook` + `act` 測試 Hook。
+> 使用 `vi.useFakeTimers()` 測試 2 秒自動重置。
+
+---
+
+### 🔧 MM-1.B 修正指引：驗收標準未驗證
+
+**問題**: TODO 定義的 4 個驗收標準，代碼都沒驗證。
+
+| 驗收標準 | 當前狀態 | 修正方案 |
+|:---|:---|:---|
+| MM-AC1: 點擊 5 次觸發撒花 | ⚠️ celebrate 有，撒花無 | 需先完成 MM-2 |
+| MM-AC2: SmartAsk 輸入顯示 thinking | ❌ 完全未整合 | 見下方指引 |
+| MM-AC3: 問答成功後撒花 | ❌ 完全未整合 | 見下方指引 |
+| MM-AC4: 對話氣泡顯示 3 句 | ❌ 組件存在但沒人用 | 見下方指引 |
+
+**SmartAsk 整合指引**:
+```tsx
+// src/features/home/sections/SmartAsk.tsx
+// 1. 將 MascotMaiMai 改用 MascotInteractive 並傳入狀態
+import MascotInteractive from '../../../components/MascotInteractive';
+
+// 2. 傳遞狀態給公仔
+<MascotInteractive
+  isLoading={loading}          // 問問題時顯示 thinking
+  isSuccess={justAnswered}     // 回答完畢後 celebrate
+  isTypingEmail={input.length > 0}  // 打字時 happy
+/>
+
+// 3. 成功後觸發全域事件
+useEffect(() => {
+  if (justAnswered) {
+    window.dispatchEvent(new CustomEvent('mascot:celebrate'));
+  }
+}, [justAnswered]);
+```
+
+---
+
+### 🔧 MM-1.C 修正指引：SIZE_CLASSES 重複
+
+**問題**: `SIZE_CLASSES` 在兩個地方定義，未來改動可能不一致。
+
+**當前狀態**:
+- `types.ts:85-90`: 定義 `SIZE_CLASSES`
+- `MaiMaiBase.tsx:400-406`: 重複定義 `sizeClasses`
+
+**修正**: 刪除 `MaiMaiBase.tsx` 中的 `sizeClasses`，改用 import：
+```tsx
+import { SIZE_CLASSES } from './types';
+// 刪除 const sizeClasses = {...}
+// 把 sizeClasses[size] 改為 SIZE_CLASSES[size]
+```
+
+---
+
+### 🔧 MM-1.D 修正指引：MaiMaiSpeech 沒人用
+
+**問題**: 花時間寫的對話氣泡組件，但三個重構的組件都沒使用。
+
+**修正**: 至少在 `MascotInteractive` 使用：
+```tsx
+// MascotInteractive.tsx 加入
+import { MaiMaiBase, MaiMaiSpeech, useMaiMaiMood } from './MaiMai';
+
+const [messages, setMessages] = useState<string[]>([]);
+
+// 點擊時加入訊息
+const handleClickWithMessage = () => {
+  handleClick();
+  const msgs = ['嗨嗨！', '好開心看到你！', '哇嗚！', '讚讚！', '🎉'];
+  setMessages(prev => [...prev, msgs[clickCount % msgs.length]]);
+};
+
+// 渲染氣泡
+{messages.length > 0 && <MaiMaiSpeech messages={messages} />}
+```
+
+---
+
+### 🔧 MM-1.E 修正指引：useMascotCelebrateEvent 未整合
+
+**問題**: Hook 存在但沒有組件使用，全域事件發了也沒人聽。
+
+**修正**: 在 `MascotInteractive` 加入監聽：
+```tsx
+import { useMaiMaiMood, useMascotCelebrateEvent } from './MaiMai';
+
+const [externalCelebrate, setExternalCelebrate] = useState(false);
+
+useMascotCelebrateEvent(() => {
+  setExternalCelebrate(true);
+  setTimeout(() => setExternalCelebrate(false), 2000);
+});
+
+const { mood } = useMaiMaiMood({
+  isCelebrating: externalCelebrate,
+  // ...其他
+});
+```
+
+---
+
+### 🔧 MM-1.G 修正指引：CSS 動畫未定義
+
+**問題**: 代碼使用了 `animate-wiggle`、`animate-wave`、`animate-blink`、`animate-confetti`、`animate-jump`、`animate-shake`、`animate-twinkle`、`animate-drip`、`animate-float-up`，但 tailwind.config.cjs 只定義了 `animate-float` 和 `animate-bounce-slow`。
+
+**修正**: 在 `tailwind.config.cjs` 加入：
+```javascript
+animation: {
+  // 現有的
+  'float': 'float 3s ease-in-out infinite',
+  'bounce-slow': 'bounce 2s infinite',
+  // 新增
+  'wiggle': 'wiggle 0.3s ease-in-out',
+  'wave': 'wave 0.5s ease-in-out',
+  'blink': 'blink 3s infinite',
+  'jump': 'jump 0.5s ease-in-out',
+  'shake': 'shake 0.5s ease-in-out',
+  'twinkle': 'twinkle 1.5s infinite',
+  'drip': 'drip 2s infinite',
+  'float-up': 'floatUp 3s infinite',
+  'confetti': 'confetti 1s forwards',
+},
+keyframes: {
+  wiggle: {
+    '0%, 100%': { transform: 'rotate(0deg)' },
+    '25%': { transform: 'rotate(-5deg)' },
+    '75%': { transform: 'rotate(5deg)' },
+  },
+  wave: {
+    '0%, 100%': { transform: 'rotate(0deg)' },
+    '50%': { transform: 'rotate(20deg)' },
+  },
+  blink: {
+    '0%, 45%, 55%, 100%': { opacity: '1' },
+    '50%': { opacity: '0' },
+  },
+  jump: {
+    '0%, 100%': { transform: 'translateY(0)' },
+    '50%': { transform: 'translateY(-15px)' },
+  },
+  shake: {
+    '0%, 100%': { transform: 'translateX(0)' },
+    '25%': { transform: 'translateX(-3px)' },
+    '75%': { transform: 'translateX(3px)' },
+  },
+  twinkle: {
+    '0%, 100%': { opacity: '1', transform: 'scale(1)' },
+    '50%': { opacity: '0.5', transform: 'scale(0.8)' },
+  },
+  drip: {
+    '0%': { transform: 'translateY(0)', opacity: '0.7' },
+    '100%': { transform: 'translateY(20px)', opacity: '0' },
+  },
+  floatUp: {
+    '0%, 100%': { transform: 'translateY(0)', opacity: '0.7' },
+    '50%': { transform: 'translateY(-10px)', opacity: '1' },
+  },
+  confetti: {
+    '0%': { transform: 'scale(0) rotate(0deg)', opacity: '1' },
+    '100%': { transform: 'scale(1.5) rotate(360deg)', opacity: '0' },
+  },
+},
+```
+
+---
+
+### 🔧 MM-1.H 修正指引：Arms 組件設計問題
+
+**問題**: `Arms` 函數內的 `getArmPaths` 返回 `extra?: React.ReactNode`，這讓純 SVG 部件變得不純。
+
+**當前狀態**: 可接受 (P3)，但未來重構時應考慮拆分：
+- `ArmsBase`: 純 SVG path
+- `ArmsEffects`: 附加的手部特效 (遮眼手指)
+
+**暫不需修正**，記錄為技術債。
 
 ---
 
