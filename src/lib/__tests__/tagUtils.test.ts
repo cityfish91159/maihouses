@@ -1,3 +1,4 @@
+import { describe, test, expect } from 'vitest';
 import { isSpecTag, filterHighlights } from '../tagUtils';
 
 describe('Tag Filtering Logic (UP-4)', () => {
