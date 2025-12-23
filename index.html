@@ -1,33 +1,19 @@
 <!doctype html>
 <html lang="zh-Hant-TW">
-
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="color-scheme" content="light only" />
-  <meta name="theme-color" content="#ffffff" />
-
-  <!-- DNS 預解析與預連線優化 -->
-  <link rel="preconnect" href="https://api.openai.com" crossorigin />
-  <link rel="dns-prefetch" href="https://api.openai.com" />
-
-  <title>邁房子｜讓家,不只是地址</title>
-</head>
-
-<body>
-  <div id="root">
-    <div
-      style="padding:16px;font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#526070;background:#EEF2F7;min-height:100vh;box-sizing:border-box;">
-      載入中…若畫面長時間空白，請更新 Safari 或清除快取後重試。
-    </div>
-  </div>
-  <noscript>
-    <div
-      style="padding:16px;font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#526070;background:#EEF2F7;min-height:100vh;box-sizing:border-box;">
-      需要啟用 JavaScript 才能使用此網站。
-    </div>
-  </noscript>
-  <script type="module" src="/src/main.tsx"></script>
-</body>
-
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light only" />
+    <meta name="theme-color" content="#ffffff" />
+    
+    <!-- DNS 預解析與預連線優化 -->
+    <link rel="preconnect" href="https://api.openai.com" crossorigin />
+    <link rel="dns-prefetch" href="https://api.openai.com" />
+    
+    <title>邁房子｜讓家,不只是地址</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
 </html>

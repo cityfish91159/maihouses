@@ -21,7 +21,6 @@ import { CookieConsent } from './components/CookieConsent'
 import UAGPage from './pages/UAG'
 import { PropertyDetailPage } from './pages/PropertyDetailPage'
 import { PropertyUploadPage } from './pages/PropertyUploadPage'
-// import PropertyListPage from './pages/PropertyListPage' // ROLLBACK: Temporarily disabled to fix iOS crash
 import { PropertyEditPage } from './pages/PropertyEditPage'
 import { ReportPage } from './pages/Report'
 
@@ -36,62 +35,19 @@ const queryClient = new QueryClient({
 
 export default function App() {
   const [config, setConfig] = useState<(AppConfig & RuntimeOverrides) | null>(null)
-  const [configError, setConfigError] = useState<string | null>(null)
-  const [loadingConfig, setLoadingConfig] = useState(true)
-  const [retryKey, setRetryKey] = useState(0)
   const loc = useLocation()
 
   useEffect(() => {
-    let active = true
-    const load = async () => {
-      setLoadingConfig(true)
-      setConfigError(null)
-      try {
-        const cfg = await getConfig()
-        if (!active) return
-        setConfig(cfg)
-      } catch (err) {
-        if (!active) return
-        console.error('[config] load failed', err)
-        setConfig(null)
-        setConfigError('無法載入配置，請檢查網路後重新整理')
-      } finally {
-        if (active) setLoadingConfig(false)
-      }
-    }
-    load()
-    return () => {
-      active = false
-    }
-  }, [retryKey])
+    getConfig().then(setConfig)
+  }, [])
 
   useEffect(() => {
     if (config) trackEvent('page_view', loc.pathname)
   }, [loc, config])
 
-  if (loadingConfig) {
+  if (!config) {
     return (
-      <div className="flex min-h-screen items-center justify-center p-6 text-sm text-[var(--text-secondary)]">
-        載入中…
-      </div>
-    )
-  }
-
-  if (configError || !config) {
-    return (
-      <div className="flex min-h-screen items-center justify-center p-6">
-        <div className="w-full max-w-sm space-y-3 rounded-2xl bg-white p-6 text-center shadow-md">
-          <div className="text-lg font-semibold text-slate-800">無法載入配置</div>
-          <div className="text-sm text-slate-600">{configError ?? '請檢查網路連線，稍後再試。'}</div>
-          <button
-            type="button"
-            className="w-full rounded-xl bg-[#00385a] px-4 py-2 text-sm font-semibold text-white hover:bg-[#004e7c]"
-            onClick={() => setRetryKey((k) => k + 1)}
-          >
-            重新嘗試
-          </button>
-        </div>
-      </div>
+      <div className="p-6 text-sm text-[var(--text-secondary)]">載入中…</div>
     )
   }
 
@@ -107,129 +63,119 @@ export default function App() {
             toastOptions={{ duration: 3200 }}
           />
           <Routes key={loc.pathname}>
-            <Route
-              path="/"
-              element={
-                <ErrorBoundary>
-                  <Home config={config} />
-                </ErrorBoundary>
-              }
-            />
-            {/* 
+          <Route
+            path="/"
+            element={
+              <ErrorBoundary>
+                <Home config={config} />
+              </ErrorBoundary>
+            }
+          />
+          {/* 
             由於 basename 已統一設定為 /maihouses/，
             此處不需要額外的 /maihouses 路由，
             否則會變成匹配 /maihouses/maihouses 
           */}
-            <Route
-              path="/feed/:userId"
-              element={
-                <ErrorBoundary>
-                  <Feed />
-                </ErrorBoundary>
-              }
-            />
-            <Route
-              path="/uag"
-              element={
-                <UAGPage />
-              }
-            />
-            <Route
-              path="/community/:id/wall"
-              element={
-                <ErrorBoundary>
-                  <Wall />
-                </ErrorBoundary>
-              }
-            />
-            <Route
-              path="/community/suggested"
-              element={
-                <ErrorBoundary>
-                  <Suggested />
-                </ErrorBoundary>
-              }
-            />
-            <Route
-              path="/property/upload"
-              element={
-                <ErrorBoundary>
-                  <PropertyUploadPage />
-                </ErrorBoundary>
-              }
-            />
-            <Route
-              path="/property/:publicId/edit"
-              element={
-                <ErrorBoundary>
-                  <PropertyEditPage />
-                </ErrorBoundary>
-              }
-            />
-            {/* ROLLBACK: PropertyListPage route disabled to fix iOS crash
-            <Route
-              path="/property.html"
-              element={
-                <ErrorBoundary>
-                  <PropertyListPage />
-                </ErrorBoundary>
-              }
-            />
-            */}
-            <Route
-              path="/property/:id"
-              element={
-                <ErrorBoundary>
-                  <PropertyDetailPage />
-                </ErrorBoundary>
-              }
-            />
-            <Route
-              path="/p/:id"
-              element={
-                <ErrorBoundary>
-                  <Detail />
-                </ErrorBoundary>
-              }
-            />
-            <Route
-              path="/maihouses/trust/room"
-              element={
-                <ErrorBoundary>
-                  <AssureDetail />
-                </ErrorBoundary>
-              }
-            />
-            <Route
-              path="/assure"
-              element={
-                <ErrorBoundary>
-                  <AssureDetail />
-                </ErrorBoundary>
-              }
-            />
-            <Route
-              path="/chat"
-              element={
-                <ErrorBoundary>
-                  <ChatStandalone />
-                </ErrorBoundary>
-              }
-            />
-            <Route
-              path="/r/:id"
-              element={
-                <ErrorBoundary>
-                  <ReportPage />
-                </ErrorBoundary>
-              }
-            />
-          </Routes>
-          {import.meta.env.DEV && (
-            <ReactQueryDevtools initialIsOpen={false} />
-          )}
-          {config.devtools === '1' && <DevTools config={config} />}
-          <CookieConsent />
+        <Route
+          path="/feed/:userId"
+          element={
+            <ErrorBoundary>
+              <Feed />
+            </ErrorBoundary>
+          }
+        />
+        <Route
+          path="/uag"
+          element={
+            <UAGPage />
+          }
+        />
+        <Route
+          path="/community/:id/wall"
+          element={
+            <ErrorBoundary>
+              <Wall />
+            </ErrorBoundary>
+          }
+        />
+        <Route
+          path="/community/suggested"
+          element={
+            <ErrorBoundary>
+              <Suggested />
+            </ErrorBoundary>
+          }
+        />
+        <Route
+          path="/property/upload"
+          element={
+            <ErrorBoundary>
+              <PropertyUploadPage />
+            </ErrorBoundary>
+          }
+        />
+        <Route
+          path="/property/:publicId/edit"
+          element={
+            <ErrorBoundary>
+              <PropertyEditPage />
+            </ErrorBoundary>
+          }
+        />
+        <Route
+          path="/property/:id"
+          element={
+            <ErrorBoundary>
+              <PropertyDetailPage />
+            </ErrorBoundary>
+          }
+        />
+        <Route
+          path="/p/:id"
+          element={
+            <ErrorBoundary>
+              <Detail />
+            </ErrorBoundary>
+          }
+        />
+        <Route
+          path="/maihouses/trust/room"
+          element={
+            <ErrorBoundary>
+              <AssureDetail />
+            </ErrorBoundary>
+          }
+        />
+        <Route
+          path="/assure"
+          element={
+            <ErrorBoundary>
+              <AssureDetail />
+            </ErrorBoundary>
+          }
+        />
+        <Route
+          path="/chat"
+          element={
+            <ErrorBoundary>
+              <ChatStandalone />
+            </ErrorBoundary>
+          }
+        />
+        <Route
+          path="/r/:id"
+          element={
+            <ErrorBoundary>
+              <ReportPage />
+            </ErrorBoundary>
+          }
+        />
+      </Routes>
+      {import.meta.env.DEV && (
+        <ReactQueryDevtools initialIsOpen={false} />
+      )}
+      {config.devtools === '1' && <DevTools config={config} />}
+      <CookieConsent />
         </MoodProvider>
       </QuietModeProvider>
     </QueryClientProvider>
