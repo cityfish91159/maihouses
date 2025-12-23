@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { X, ChevronRight, Check, Copy, Share2, FileText, Link2 } from 'lucide-react';
 import { PropertyReportData, ReportStyle, REPORT_STYLES, HIGHLIGHT_OPTIONS } from './types';
 import { notify } from '../../lib/notify';
+import { LineShareAction } from '../../components/social/LineShareAction';
 
 interface ReportGeneratorProps {
   property: PropertyReportData;
@@ -21,7 +22,7 @@ export default function ReportGenerator({ property, isOpen, onClose }: ReportGen
   const [generatedUrl, setGeneratedUrl] = useState<string | null>(null);
 
   // 預設訊息
-  const defaultMessage = useMemo(() => 
+  const defaultMessage = useMemo(() =>
     `這是「${property.title}」的物件報告，我幫您整理了幾個重點，有空可以看看 🙂`,
     [property.title]
   );
@@ -68,14 +69,14 @@ export default function ReportGenerator({ property, isOpen, onClose }: ReportGen
   // 生成報告
   const handleGenerate = async () => {
     setIsGenerating(true);
-    
+
     try {
       // TODO: 呼叫 API 建立報告記錄
       // await fetch('/api/report/create', {
       //   method: 'POST',
       //   body: JSON.stringify({ ... })
       // });
-      
+
       await new Promise(r => setTimeout(r, 800));
       const url = generateReportUrl();
       setGeneratedUrl(url);
@@ -112,7 +113,7 @@ export default function ReportGenerator({ property, isOpen, onClose }: ReportGen
       handleCopyLink();
       return;
     }
-    
+
     try {
       await navigator.share({
         title: property.title,
@@ -136,17 +137,17 @@ export default function ReportGenerator({ property, isOpen, onClose }: ReportGen
   return (
     <div className="fixed inset-0 z-modal flex items-end justify-center sm:items-center">
       {/* 背景遮罩 */}
-      <div 
+      <div
         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
         onClick={handleClose}
       />
-      
+
       {/* Modal */}
       <div className="relative flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded-t-3xl bg-white sm:rounded-2xl">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
           <h2 className="text-lg font-bold text-slate-800">生成物件報告</h2>
-          <button 
+          <button
             onClick={handleClose}
             className="rounded-full p-2 transition hover:bg-slate-100"
           >
@@ -160,10 +161,9 @@ export default function ReportGenerator({ property, isOpen, onClose }: ReportGen
             {(['style', 'highlights', 'photos', 'preview'] as Step[]).map((s, i) => (
               <React.Fragment key={s}>
                 <div className={`flex items-center gap-1.5 ${step === s ? 'font-bold text-[#003366]' : 'text-slate-400'}`}>
-                  <div className={`flex size-6 items-center justify-center rounded-full text-xs font-bold ${
-                    step === s ? 'bg-[#003366] text-white' : 
+                  <div className={`flex size-6 items-center justify-center rounded-full text-xs font-bold ${step === s ? 'bg-[#003366] text-white' :
                     (['style', 'highlights', 'photos', 'preview'].indexOf(step) > i) ? 'bg-green-500 text-white' : 'bg-slate-200'
-                  }`}>
+                    }`}>
                     {(['style', 'highlights', 'photos', 'preview'].indexOf(step) > i) ? <Check size={14} /> : i + 1}
                   </div>
                   <span className="hidden sm:inline">
@@ -181,23 +181,22 @@ export default function ReportGenerator({ property, isOpen, onClose }: ReportGen
 
         {/* 內容區域 */}
         <div className="flex-1 overflow-y-auto p-5">
-          
+
           {/* Step 1: 選擇樣式 */}
           {step === 'style' && (
             <div className="space-y-4">
               <div className="mb-4 text-sm text-slate-500">
                 選擇最適合這位客戶的報告樣式
               </div>
-              
+
               {Object.values(REPORT_STYLES).map(style => (
                 <button
                   key={style.id}
                   onClick={() => setSelectedStyle(style.id as ReportStyle)}
-                  className={`w-full rounded-xl border-2 p-4 text-left transition ${
-                    selectedStyle === style.id 
-                      ? 'border-[#003366] bg-blue-50' 
-                      : 'border-slate-200 hover:border-slate-300'
-                  }`}
+                  className={`w-full rounded-xl border-2 p-4 text-left transition ${selectedStyle === style.id
+                    ? 'border-[#003366] bg-blue-50'
+                    : 'border-slate-200 hover:border-slate-300'
+                    }`}
                 >
                   <div className="flex items-start gap-3">
                     <span className="text-2xl">{style.icon}</span>
@@ -222,16 +221,15 @@ export default function ReportGenerator({ property, isOpen, onClose }: ReportGen
               <div className="mb-4 text-sm text-slate-500">
                 選擇 3 個最能打動客戶的亮點（已選 {selectedHighlights.length}/3）
               </div>
-              
+
               {HIGHLIGHT_OPTIONS.map(h => (
                 <button
                   key={h.id}
                   onClick={() => toggleHighlight(h.id)}
-                  className={`w-full rounded-xl border-2 p-3 text-left transition ${
-                    selectedHighlights.includes(h.id)
-                      ? 'border-[#003366] bg-blue-50' 
-                      : 'border-slate-200 hover:border-slate-300'
-                  }`}
+                  className={`w-full rounded-xl border-2 p-3 text-left transition ${selectedHighlights.includes(h.id)
+                    ? 'border-[#003366] bg-blue-50'
+                    : 'border-slate-200 hover:border-slate-300'
+                    }`}
                 >
                   <div className="flex items-center gap-3">
                     <span className="text-xl">{h.icon}</span>
@@ -256,17 +254,16 @@ export default function ReportGenerator({ property, isOpen, onClose }: ReportGen
               <div className="mb-4 text-sm text-slate-500">
                 選擇要放入報告的照片（已選 {selectedPhotos.length}/5）
               </div>
-              
+
               <div className="grid grid-cols-3 gap-2">
                 {property.images.map((img, i) => (
                   <button
                     key={i}
                     onClick={() => togglePhoto(i)}
-                    className={`relative aspect-square overflow-hidden rounded-lg border-2 transition ${
-                      selectedPhotos.includes(i)
-                        ? 'border-[#003366] ring-2 ring-[#003366]/20' 
-                        : 'border-transparent'
-                    }`}
+                    className={`relative aspect-square overflow-hidden rounded-lg border-2 transition ${selectedPhotos.includes(i)
+                      ? 'border-[#003366] ring-2 ring-[#003366]/20'
+                      : 'border-transparent'
+                      }`}
                   >
                     <img src={img} alt="" className="size-full object-cover" />
                     {selectedPhotos.includes(i) && (
@@ -324,17 +321,17 @@ export default function ReportGenerator({ property, isOpen, onClose }: ReportGen
                   <Copy size={18} />
                   複製連結
                 </button>
-                
-                <button
-                  onClick={handleLineShare}
+
+                <LineShareAction
+                  url={generatedUrl}
+                  title={customMessage || defaultMessage}
                   className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#06C755] py-3 font-bold text-white transition hover:bg-[#05a847]"
-                >
-                  <svg viewBox="0 0 24 24" className="size-5 fill-current">
-                    <path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.346 0 .627.285.627.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63.346 0 .628.285.628.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.282.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314"/>
-                  </svg>
-                  LINE 分享
-                </button>
-                
+                  wrapperClass="w-full"
+                  btnText="LINE 分享"
+                  showIcon={false} // Icon is inside SVG in original? No, original had SVG. LineShareAction has icon. Let's use LineShareAction's icon or custom?
+                // LineShareAction has default icon. Let's use it.
+                />
+
                 <button
                   onClick={handleShare}
                   className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-slate-200 py-3 font-bold text-slate-700 transition hover:border-slate-300"
@@ -376,7 +373,7 @@ export default function ReportGenerator({ property, isOpen, onClose }: ReportGen
                 上一步
               </button>
             )}
-            
+
             <button
               onClick={() => {
                 if (step === 'style') setStep('highlights');

@@ -5,6 +5,7 @@ import { AgentTrustCard } from '../components/AgentTrustCard';
 import { propertyService, DEFAULT_PROPERTY, PropertyData } from '../services/propertyService';
 import { ContactModal } from '../components/ContactModal';
 import { ReportGenerator } from './Report';
+import { LineShareAction } from '../components/social/LineShareAction';
 import { buildKeyCapsuleTags, formatArea, formatLayout, formatFloor } from '../utils/keyCapsules';
 
 // UAG Tracker Hook v8.1 - 追蹤用戶行為 + S級攔截
@@ -372,12 +373,22 @@ export const PropertyDetailPage: React.FC = () => {
                 <h1 className="text-2xl font-bold leading-tight text-slate-900">
                   {property.title}
                 </h1>
-                <button
-                  onClick={() => setIsFavorite(!isFavorite)}
-                  className={`rounded-full p-2 transition-all ${isFavorite ? 'bg-red-50 text-red-500' : 'bg-slate-50 text-slate-400 hover:bg-slate-100'}`}
-                >
-                  <Heart size={24} fill={isFavorite ? "currentColor" : "none"} />
-                </button>
+                <div className="flex gap-2">
+                  <LineShareAction
+                    url={window.location.href}
+                    title={`【邁房子推薦】${property.title} | 總價 ${property.price} 萬`}
+                    onShareSuccess={tracker.trackLineClick}
+                    className="flex items-center gap-1 rounded-full bg-[#06C755] px-3 py-2 text-sm font-bold text-white shadow-sm hover:bg-[#05a847]"
+                    btnText="分享"
+                    showIcon={true}
+                  />
+                  <button
+                    onClick={() => setIsFavorite(!isFavorite)}
+                    className={`rounded-full p-2 transition-all ${isFavorite ? 'bg-red-50 text-red-500' : 'bg-slate-50 text-slate-400 hover:bg-slate-100'}`}
+                  >
+                    <Heart size={24} fill={isFavorite ? "currentColor" : "none"} />
+                  </button>
+                </div>
               </div>
 
               <div className="mt-2 flex items-center gap-2 text-sm text-slate-500">
