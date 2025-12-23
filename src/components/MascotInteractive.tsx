@@ -88,7 +88,7 @@ export default function MascotInteractive({
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleClick(); }}
     >
       {effectiveMessages.length > 0 && (
-        <MaiMaiSpeech messages={effectiveMessages} className="-right-10 -top-12" />
+        <MaiMaiSpeech messages={effectiveMessages} />
       )}
       {ConfettiOverlay}
       {/* 公仔 */}

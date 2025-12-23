@@ -231,7 +231,7 @@ export default function SmartAsk() {
                     role="log"
                     aria-live="polite"
                 >
-                    <div className="flex flex-shrink-0 justify-start">
+                    <div className="flex flex-shrink-0 justify-center">
                         <MascotInteractive
                             size="lg"
                             messages={messages.map(m => m.content)}
