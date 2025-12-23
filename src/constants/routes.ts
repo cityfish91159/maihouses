@@ -7,7 +7,7 @@ export const ROUTES = {
   HOME: '/maihouses/',
 
   /** 房地產列表 */
-  PROPERTY_LIST: '/property/list',
+  PROPERTY_LIST: '/maihouses/property.html',
 
   /** 個人信息流 (React) - 需要 userId 參數 */
   FEED: (userId: string): string => `/maihouses/feed/${userId}`,
