@@ -2,6 +2,7 @@ import { useReducer, useCallback, useRef, startTransition } from 'react';
 import { aiAsk } from '../../../services/api';
 import { trackEvent } from '../../../services/analytics';
 import type { AiMessage, PropertyCard } from '../../../types';
+import { safeLocalStorage } from '../../../lib/safeStorage';
 
 interface SmartAskState {
   messages: AiMessage[];
@@ -37,8 +38,8 @@ function smartAskReducer(state: SmartAskState, action: SmartAskAction): SmartAsk
     case 'UPDATE_AI_CHUNK':
       return {
         ...state,
-        messages: state.messages.map((msg, i) => 
-          i === state.messages.length - 1 
+        messages: state.messages.map((msg, i) =>
+          i === state.messages.length - 1
             ? { ...msg, content: msg.content + action.payload }
             : msg
         )
@@ -49,7 +50,7 @@ function smartAskReducer(state: SmartAskState, action: SmartAskAction): SmartAsk
         loading: false,
         reco: action.payload.recommends,
         totalTokens: state.totalTokens + (action.payload.tokens || 0),
-        messages: state.messages.map((msg, i) => 
+        messages: state.messages.map((msg, i) =>
           i === state.messages.length - 1 && action.payload.answer
             ? { ...msg, content: action.payload.answer }
             : msg
@@ -58,8 +59,8 @@ function smartAskReducer(state: SmartAskState, action: SmartAskAction): SmartAsk
     case 'SET_ERROR':
       return {
         ...state,
-        messages: state.messages.map((msg, i) => 
-          i === state.messages.length - 1 
+        messages: state.messages.map((msg, i) =>
+          i === state.messages.length - 1
             ? { ...msg, content: action.payload }
             : msg
         ),
@@ -113,8 +114,8 @@ export function useSmartAsk() {
         const r = res.data.recommends || [];
         if (r[0]?.communityId) localStorage.setItem('recoCommunity', r[0].communityId);
 
-        dispatch({ 
-          type: 'FINISH_ASK', 
+        dispatch({
+          type: 'FINISH_ASK',
           payload: {
             answer: (!isStreamingComplete && res.data.answers) ? res.data.answers[0] : undefined,
             recommends: r,

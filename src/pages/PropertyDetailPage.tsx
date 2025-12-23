@@ -8,6 +8,7 @@ import { ContactModal } from '../components/ContactModal';
 import { ReportGenerator } from './Report';
 import { LineShareAction } from '../components/social/LineShareAction';
 import { buildKeyCapsuleTags, formatArea, formatLayout, formatFloor } from '../utils/keyCapsules';
+import { safeLocalStorage } from '../lib/safeStorage';
 
 // UAG Tracker Hook v8.1 - 追蹤用戶行為 + S級攔截
 // 優化: 1.修正district傳遞 2.S級即時回調 3.互動事件用fetch獲取等級
@@ -25,10 +26,10 @@ const usePropertyTracker = (
 
   // 取得或建立 session_id
   const getSessionId = useCallback(() => {
-    let sid = localStorage.getItem('uag_session');
+    let sid = safeLocalStorage.getItem('uag_session');
     if (!sid) {
       sid = `u_${Math.random().toString(36).substring(2, 11)}`;
-      localStorage.setItem('uag_session', sid);
+      safeLocalStorage.setItem('uag_session', sid);
     }
     return sid;
   }, []);
@@ -169,8 +170,8 @@ export const PropertyDetailPage: React.FC = () => {
   // 取得 agent_id (從 URL 參數或 localStorage)
   const getAgentId = () => {
     let aid = searchParams.get('aid');
-    if (!aid) aid = localStorage.getItem('uag_last_aid');
-    if (aid && aid !== 'unknown') localStorage.setItem('uag_last_aid', aid);
+    if (!aid) aid = safeLocalStorage.getItem('uag_last_aid');
+    if (aid && aid !== 'unknown') safeLocalStorage.setItem('uag_last_aid', aid);
     return aid || 'unknown';
   };
 

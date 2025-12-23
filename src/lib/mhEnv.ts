@@ -1,3 +1,5 @@
+import { safeLocalStorage } from './safeStorage'
+
 const MOCK_PARAM = 'mock'
 const MOCK_STORAGE_KEY = 'mh_mock_mode'
 
@@ -16,21 +18,11 @@ const readFromUrl = (): boolean | null => {
 }
 
 const readFromStorage = (): boolean | null => {
-  if (typeof window === 'undefined' || !window.localStorage) return null
-  try {
-    return parseBool(window.localStorage.getItem(MOCK_STORAGE_KEY))
-  } catch {
-    return null
-  }
+  return parseBool(safeLocalStorage.getItem(MOCK_STORAGE_KEY))
 }
 
 const persistToStorage = (value: boolean) => {
-  if (typeof window === 'undefined' || !window.localStorage) return
-  try {
-    window.localStorage.setItem(MOCK_STORAGE_KEY, String(value))
-  } catch {
-    // ignore storage failures; mock is non-critical
-  }
+  safeLocalStorage.setItem(MOCK_STORAGE_KEY, String(value))
 }
 
 const persistToUrl = (value: boolean) => {
@@ -77,7 +69,7 @@ export const mhEnv: MhEnv = {
 
   /** 監聽其他頁面的 mock 變更（storage event） */
   subscribe(onChange: (value: boolean) => void): () => void {
-    if (typeof window === 'undefined') return () => {}
+    if (typeof window === 'undefined') return () => { }
     const handler = (event: StorageEvent) => {
       if (event.storageArea !== window.localStorage) return
       if (event.key !== MOCK_STORAGE_KEY) return

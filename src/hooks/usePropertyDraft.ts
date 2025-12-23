@@ -1,5 +1,6 @@
 import { useEffect, useCallback, useMemo, useRef, MutableRefObject } from 'react';
 import { notify } from '../lib/notify';
+import { safeLocalStorage } from '../lib/safeStorage';
 
 const DRAFT_KEY_PREFIX = 'mh_draft_upload';
 const AUTO_SAVE_DELAY_MS = 1000;
@@ -11,6 +12,8 @@ const DRAFT_EXPIRY_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
  * 僅包含文字欄位，不含圖片 (blob URL 無法序列化)
  */
 export interface DraftFormData {
+  // ... existing imports ...
+
   title: string;
   price: string;
   address: string;
@@ -76,15 +79,17 @@ export function usePropertyDraft(
   // 自動存檔 (debounced)
   useEffect(() => {
     // 只有當表單有內容時才存檔
-    const hasContent = form.title || form.price || form.address || 
-                       form.advantage1 || form.advantage2 || form.disadvantage;
-    
+    const hasContent = form.title || form.price || form.address ||
+      form.advantage1 || form.advantage2 || form.disadvantage;
+
     if (!hasContent) return;
 
     // 清除前一個 timeout
     if (saveTimeoutRef.current) {
       clearTimeout(saveTimeoutRef.current);
     }
+
+    // ...
 
     saveTimeoutRef.current = setTimeout(() => {
       try {
@@ -113,10 +118,10 @@ export function usePropertyDraft(
         };
 
         const serialized = JSON.stringify(draftData);
-        
+
         // 避免重複存檔相同內容
         if (serialized !== lastSavedRef.current) {
-          localStorage.setItem(draftKey, serialized);
+          safeLocalStorage.setItem(draftKey, serialized);
           lastSavedRef.current = serialized;
         }
       } catch (e) {
@@ -137,21 +142,21 @@ export function usePropertyDraft(
 
   // 檢查是否有草稿
   const hasDraft = useCallback((): boolean => {
-    if (typeof window === 'undefined') return false;
+    // safeLocalStorage handles window check
     try {
-      const saved = localStorage.getItem(draftKey);
+      const saved = safeLocalStorage.getItem(draftKey);
       if (!saved) return false;
       const parsed = JSON.parse(saved) as DraftStorage;
       if (parsed._version !== DRAFT_VERSION) {
-        localStorage.removeItem(draftKey);
+        safeLocalStorage.removeItem(draftKey);
         return false;
       }
       if (Date.now() - parsed._savedAt > DRAFT_EXPIRY_MS) {
-        localStorage.removeItem(draftKey);
+        safeLocalStorage.removeItem(draftKey);
         return false;
       }
-      return !!(parsed.title || parsed.price || parsed.address || 
-                parsed.advantage1 || parsed.advantage2);
+      return !!(parsed.title || parsed.price || parsed.address ||
+        parsed.advantage1 || parsed.advantage2);
     } catch {
       return false;
     }
@@ -160,16 +165,16 @@ export function usePropertyDraft(
   // 還原草稿 - 返回草稿數據而不是設置表單
   const restoreDraft = useCallback((): DraftFormData | null => {
     try {
-      const saved = localStorage.getItem(draftKey);
+      const saved = safeLocalStorage.getItem(draftKey);
       if (!saved) return null;
-      
+
       const parsed = JSON.parse(saved) as DraftStorage;
       if (parsed._version !== DRAFT_VERSION) {
-        localStorage.removeItem(draftKey);
+        safeLocalStorage.removeItem(draftKey);
         return null;
       }
       if (Date.now() - parsed._savedAt > DRAFT_EXPIRY_MS) {
-        localStorage.removeItem(draftKey);
+        safeLocalStorage.removeItem(draftKey);
         return null;
       }
       lastSavedRef.current = saved; // 避免立即重新存檔
@@ -188,7 +193,7 @@ export function usePropertyDraft(
   // 清除草稿
   const clearDraft = useCallback(() => {
     try {
-      localStorage.removeItem(draftKey);
+      safeLocalStorage.removeItem(draftKey);
       lastSavedRef.current = '';
     } catch (e) {
       showWarningOnce(
@@ -205,10 +210,10 @@ export function usePropertyDraft(
     const toKey = `${DRAFT_KEY_PREFIX}_${toUserId ?? 'anonymous'}`;
     if (fromKey === toKey) return;
     try {
-      const saved = localStorage.getItem(fromKey);
+      const saved = safeLocalStorage.getItem(fromKey);
       if (!saved) return;
-      localStorage.setItem(toKey, saved);
-      localStorage.removeItem(fromKey);
+      safeLocalStorage.setItem(toKey, saved);
+      safeLocalStorage.removeItem(fromKey);
     } catch (e) {
       showWarningOnce(
         migrateWarnedRef,
@@ -221,7 +226,7 @@ export function usePropertyDraft(
   // 取得草稿預覽 (用於顯示提示)
   const getDraftPreview = useCallback((): { title: string; savedAt: string } | null => {
     try {
-      const saved = localStorage.getItem(draftKey);
+      const saved = safeLocalStorage.getItem(draftKey);
       if (!saved) return null;
       const parsed = JSON.parse(saved) as DraftStorage;
       if (parsed._version !== DRAFT_VERSION) return null;

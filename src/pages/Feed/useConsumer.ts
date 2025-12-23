@@ -16,6 +16,7 @@ import type { Role } from '../../types/community';
 import { MOCK_FEED_STATS, MOCK_ACTIVE_TRANSACTION } from '../../services/mock/feed';
 // P7-Audit-C6: Use shared mock data
 import { getConsumerFeedData } from './mockData';
+import { safeLocalStorage } from '../../lib/safeStorage';
 
 const DEFAULT_MOCK_DATA = getConsumerFeedData();
 
@@ -92,15 +93,11 @@ export function useConsumer(userId?: string, forceMock?: boolean) {
 
     // Mock 交易狀態
     const [activeTransaction] = useState<ActiveTransaction>(() => {
-        try {
-            const hasActive = localStorage.getItem('mai_active_tx') === 'true';
-            if (hasActive) {
-                return MOCK_ACTIVE_TRANSACTION;
-            }
-            return { hasActive: false };
-        } catch {
-            return { hasActive: false };
+        const hasActive = safeLocalStorage.getItem('mai_active_tx') === 'true';
+        if (hasActive) {
+            return MOCK_ACTIVE_TRANSACTION;
         }
+        return { hasActive: false };
     });
 
     // Mock 側邊欄資料

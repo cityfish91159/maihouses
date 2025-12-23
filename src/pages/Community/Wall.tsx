@@ -25,6 +25,7 @@ import {
 import { notify } from '../../lib/notify';
 import { MockToggle } from '../../components/common/MockToggle';
 import { mhEnv } from '../../lib/mhEnv';
+import { safeLocalStorage } from '../../lib/safeStorage';
 
 // Types
 import type { Role, WallTab } from './types';
@@ -76,19 +77,17 @@ function WallInner() {
     if (urlRole) {
       return urlRole;
     }
-    try {
-      const stored = localStorage.getItem(ROLE_STORAGE_KEY) as Role | null;
-      if (stored && VALID_ROLES.includes(stored)) {
-        return stored;
-      }
-    } catch {}
+    const stored = safeLocalStorage.getItem(ROLE_STORAGE_KEY) as Role | null;
+    if (stored && VALID_ROLES.includes(stored)) {
+      return stored;
+    }
     return 'guest';
   }, []);
 
   const [role, setRoleInternal] = useState<Role>(initialRole);
   const [currentTab, setCurrentTab] = useState<WallTab>('public');
   const [isReloading, setIsReloading] = useState(false);
-  
+
   // B1/B4/B5: 統一 auth 狀態，單一來源
   const { isAuthenticated, role: authRole, loading: authLoading, error: authError } = useAuth();
 
@@ -99,12 +98,12 @@ function WallInner() {
     if (allowMockRole) return role;
     return isAuthenticated ? authRole : 'guest';
   }, [authRole, isAuthenticated, role, authLoading]);
-  
+
   const perm = useMemo(() => getPermissions(effectiveRole), [effectiveRole]);
   const allowManualMockToggle = GLOBAL_MOCK_TOGGLE_ENABLED;
 
   // 統一資料來源 Hook - 必須在所有條件渲染之前呼叫
-  const { 
+  const {
     data,
     useMock,
     setUseMock,
@@ -119,7 +118,7 @@ function WallInner() {
   } = useCommunityWallData(communityId ?? '', {
     includePrivate: perm.canAccessPrivate,
   });
-  
+
   const canToggleMock = allowManualMockToggle || useMock;
   const allowManualRoleSwitch = import.meta.env.DEV || useMock;
   const mockToggleDisabled = !canToggleMock && !useMock;
@@ -155,12 +154,7 @@ function WallInner() {
 
     const nextParams = updateURLParam(searchParamsRef.current, ROLE_PARAM, newRole);
     setSearchParams(nextParams, { replace: true });
-    try {
-      localStorage.setItem(ROLE_STORAGE_KEY, newRole);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      console.warn('[CommunityWall] Failed to persist role preference', message);
-    }
+    safeLocalStorage.setItem(ROLE_STORAGE_KEY, newRole);
   }, [allowManualRoleSwitch, setSearchParams]);
 
   useEffect(() => {
@@ -174,8 +168,11 @@ function WallInner() {
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const handleStorage = (event: StorageEvent) => {
-      if (event.storageArea !== window.localStorage || event.newValue === null) return;
-      if (import.meta.env.DEV && event.key === ROLE_STORAGE_KEY) {
+      // safeLocalStorage uses standard localStorage so this event still fires.
+      // However, reading from event.newValue is safe (it's a string or null).
+      // We just need to check if we can trust it.
+      // In private mode, this event might not fire or might be weird, but reading event properties is safe.
+      if (event.key === ROLE_STORAGE_KEY && import.meta.env.DEV) {
         const parsedRole = parseRoleParam(event.newValue);
         if (parsedRole && parsedRole !== role) {
           setRoleInternal(parsedRole);
@@ -191,7 +188,7 @@ function WallInner() {
     window.location.href = ROUTES.AUTH;
   }, []);
 
-  
+
   // Tab 切換
   const handleTabChange = useCallback((tab: WallTab) => {
     if (tab === 'private' && !perm.canAccessPrivate) {
@@ -348,7 +345,7 @@ function WallInner() {
             {isAuthError ? '請先登入' : '載入失敗，請稍後再試'}
           </div>
           {isAuthError ? (
-            <button 
+            <button
               onClick={() => window.location.href = '/auth'}
               className="rounded-lg bg-brand px-4 py-2 text-sm text-white"
             >
@@ -356,7 +353,7 @@ function WallInner() {
             </button>
           ) : (
             <div className="flex flex-col gap-2 sm:flex-row sm:justify-center">
-              <button 
+              <button
                 onClick={handleReload}
                 disabled={isReloading}
                 aria-busy={isReloading}
@@ -364,7 +361,7 @@ function WallInner() {
               >
                 {isReloading ? '⏳ 重新整理中…' : '🔄 重新整理'}
               </button>
-              <button 
+              <button
                 onClick={forceEnableMock}
                 className="rounded-lg bg-[#1a1a2e] px-4 py-2 text-sm font-semibold text-white shadow hover:brightness-110"
               >
@@ -384,14 +381,14 @@ function WallInner() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-[var(--bg-base)] to-[var(--bg-alt)]">
       <GlobalHeader mode="community" title={communityInfo.name} />
-      
+
       <div className="mx-auto flex max-w-[960px] gap-5 p-2.5 pb-[calc(80px+env(safe-area-inset-bottom,20px))] lg:p-2.5">
         {/* 主內容區 */}
         <main className="flex max-w-[600px] flex-1 animate-[fadeInUp_0.5s_ease-out] flex-col gap-3">
           <ReviewsSection viewerRole={effectiveRole} reviews={reviews} onUnlock={handleUnlock} />
           <PostsSection
             viewerRole={effectiveRole}
-            currentTab={currentTab} 
+            currentTab={currentTab}
             onTabChange={handleTabChange}
             publicPosts={posts.public}
             privatePosts={posts.private}
@@ -409,8 +406,8 @@ function WallInner() {
         </main>
 
         {/* 側邊欄 - 使用同一個資料來源 */}
-        <Sidebar 
-          info={communityInfo} 
+        <Sidebar
+          info={communityInfo}
           questions={questions}
           posts={posts.public}
         />

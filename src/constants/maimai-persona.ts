@@ -1,18 +1,44 @@
-/**
- * 邁邁 (MaiMai) - 社區鄰居管家 AI 人設與對話策略
- * 
- * 優化版本 v5.0 - 情境感知版
- * 
- * 核心改進：
- * 1. 情境感知取代輪數控制（探索型/半熱型/明確型）
- * 2. 標籤累積 + 時機判斷（不是看到關鍵字就推）
- * 3. 純閒聊軟著陸機制（生活錨點問句）
- * 4. 鋪墊 → 推薦兩步驟（先口頭提，用戶有興趣再附卡片）
- */
+import { safeLocalStorage } from '../lib/safeStorage';
 
-// ============================================
-// 🎭 System Prompt V5.1 - 話題橋接 + 情緒記憶版
-// ============================================
+// ... (existing imports, but this file doesn't seem to have any imports at the top, it exports constants)
+// So I will just add the import at the top.
+
+export function savePainPointsToStorage(): void {
+  safeLocalStorage.setItem('maimai_pain_points', JSON.stringify(painPoints));
+}
+
+export function loadPainPointsFromStorage(): void {
+  const stored = safeLocalStorage.getItem('maimai_pain_points');
+  if (stored) {
+    try {
+      painPoints = JSON.parse(stored);
+    } catch {
+      painPoints = [];
+    }
+  }
+}
+
+export function resetPainPoints(): void {
+  painPoints = [];
+  safeLocalStorage.removeItem('maimai_pain_points');
+}
+
+// ...
+
+export function saveUserProfileToStorage(): void {
+  safeLocalStorage.setItem('maimai_user_profile', JSON.stringify(userProfile));
+}
+
+export function loadUserProfileFromStorage(): void {
+  const stored = safeLocalStorage.getItem('maimai_user_profile');
+  if (stored) {
+    try {
+      userProfile = JSON.parse(stored);
+    } catch {
+      userProfile = {};
+    }
+  }
+}
 
 export const MAIMAI_SYSTEM_PROMPT = `你是邁邁，住在這城市 20 年的超熱心里長伯。
 
@@ -197,7 +223,7 @@ export function detectUserState(
   accumulatedTags: Map<string, number>
 ): UserState {
   const msg = message.toLowerCase();
-  
+
   // 明確型：直接問房子
   const explicitKeywords = [
     '買房', '賣房', '看房', '想搬', '找房', '換房',
@@ -207,14 +233,14 @@ export function detectUserState(
   if (explicitKeywords.some(k => msg.includes(k))) {
     return 'explicit';
   }
-  
+
   // 半熱型：有隱含需求（標籤累積 >= 3）
   let totalScore = 0;
   accumulatedTags.forEach(score => { totalScore += score; });
   if (totalScore >= 3) {
     return 'semi-warm';
   }
-  
+
   // 預設：探索型
   return 'exploring';
 }
@@ -227,9 +253,9 @@ export function detectUserState(
 // 🌉 話題橋接劇本（讓轉折更自然）
 // ============================================
 
-export const BRIDGE_SCRIPTS: Record<string, { 
-  topic: string; 
-  bridge: string; 
+export const BRIDGE_SCRIPTS: Record<string, {
+  topic: string;
+  bridge: string;
   feature: string;
   keywords: string[];
 }> = {
@@ -343,44 +369,20 @@ export function getRecentPainPoint(): PainPoint | null {
   return recent.at(-1) || null;
 }
 
-export function savePainPointsToStorage(): void {
-  if (typeof window !== 'undefined') {
-    localStorage.setItem('maimai_pain_points', JSON.stringify(painPoints));
-  }
-}
 
-export function loadPainPointsFromStorage(): void {
-  if (typeof window !== 'undefined') {
-    const stored = localStorage.getItem('maimai_pain_points');
-    if (stored) {
-      try {
-        painPoints = JSON.parse(stored);
-      } catch {
-        painPoints = [];
-      }
-    }
-  }
-}
-
-export function resetPainPoints(): void {
-  painPoints = [];
-  if (typeof window !== 'undefined') {
-    localStorage.removeItem('maimai_pain_points');
-  }
-}
 
 // 根據痛點生成關心開場白
 export function generateCareGreeting(): string | null {
   const recent = getRecentPainPoint();
   if (!recent) return null;
-  
+
   const greetings: Record<string, string> = {
     'rental': '嗨！上次你說房東的事情，後來有處理好嗎？',
     'quality': '嗨！上次聽你說房子的問題，最近有改善嗎？',
     'noise': '嗨！上次你說的噪音問題，後來有好一點嗎？',
     'commute': '嗨！最近通勤還是那麼累嗎？辛苦了～'
   };
-  
+
   return greetings[recent.category] || null;
 }
 
@@ -388,7 +390,7 @@ export function generateCareGreeting(): string | null {
 // 🏷️ 類型定義
 // ============================================
 
-export type TagCategory = 
+export type TagCategory =
   | 'education'   // 小孩、學區
   | 'commute'     // 通勤
   | 'noise'       // 噪音
@@ -411,7 +413,7 @@ export const TAG_WEIGHTS: Record<string, { weight: number; category: TagCategory
   '國小': { weight: 2, category: 'education' },
   '國中': { weight: 2, category: 'education' },
   '上學': { weight: 1, category: 'education' },
-  
+
   // 通勤
   '上班': { weight: 1, category: 'commute' },
   '通勤': { weight: 3, category: 'commute' },
@@ -420,7 +422,7 @@ export const TAG_WEIGHTS: Record<string, { weight: number; category: TagCategory
   '開車': { weight: 1, category: 'commute' },
   '車位': { weight: 2, category: 'commute' },
   '停車': { weight: 2, category: 'commute' },
-  
+
   // 噪音
   '好吵': { weight: 3, category: 'noise' },
   '噪音': { weight: 3, category: 'noise' },
@@ -428,14 +430,14 @@ export const TAG_WEIGHTS: Record<string, { weight: number; category: TagCategory
   '樓上': { weight: 1, category: 'noise' },
   '樓下': { weight: 1, category: 'noise' },
   '施工': { weight: 2, category: 'noise' },
-  
+
   // 寵物
   '狗': { weight: 2, category: 'pet' },
   '貓': { weight: 2, category: 'pet' },
   '寵物': { weight: 3, category: 'pet' },
   '毛小孩': { weight: 3, category: 'pet' },
   '遛狗': { weight: 2, category: 'pet' },
-  
+
   // 人生階段
   '結婚': { weight: 2, category: 'life-change' },
   '懷孕': { weight: 3, category: 'life-change' },
@@ -443,7 +445,7 @@ export const TAG_WEIGHTS: Record<string, { weight: number; category: TagCategory
   '搬出去': { weight: 2, category: 'life-change' },
   '獨立': { weight: 1, category: 'life-change' },
   '新婚': { weight: 2, category: 'life-change' },
-  
+
   // 租房
   '房東': { weight: 2, category: 'rental' },
   '租約': { weight: 2, category: 'rental' },
@@ -452,27 +454,27 @@ export const TAG_WEIGHTS: Record<string, { weight: number; category: TagCategory
   '押金': { weight: 1, category: 'rental' },
   '退租': { weight: 2, category: 'rental' },
   '搬家': { weight: 2, category: 'rental' },
-  
+
   // 壓力
   '好累': { weight: 1, category: 'stress' },
   '壓力': { weight: 1, category: 'stress' },
   '加班': { weight: 1, category: 'stress' },
   '老闆': { weight: 1, category: 'stress' },
   '機車': { weight: 1, category: 'stress' },
-  
+
   // 居住品質
   '漏水': { weight: 3, category: 'quality' },
   '壁癌': { weight: 3, category: 'quality' },
   '老舊': { weight: 2, category: 'quality' },
   '管理': { weight: 1, category: 'quality' },
   '管委會': { weight: 2, category: 'quality' },
-  
+
   // 生活機能
   '買菜': { weight: 1, category: 'amenity' },
   '超市': { weight: 1, category: 'amenity' },
   '便利商店': { weight: 1, category: 'amenity' },
   '公園': { weight: 1, category: 'amenity' },
-  
+
   // 療癒
   '夜景': { weight: 2, category: 'healing' },
   '陽台': { weight: 2, category: 'healing' },
@@ -486,14 +488,14 @@ let accumulatedTags: Map<string, number> = new Map();
 
 export function accumulateTags(message: string): Map<string, number> {
   const msg = message.toLowerCase();
-  
+
   Object.entries(TAG_WEIGHTS).forEach(([keyword, { weight, category }]) => {
     if (msg.includes(keyword)) {
       const current = accumulatedTags.get(category) || 0;
       accumulatedTags.set(category, current + weight);
     }
   });
-  
+
   return accumulatedTags;
 }
 
@@ -510,14 +512,14 @@ export function getTotalScore(): number {
 export function getTopCategory(): TagCategory | null {
   let topCategory: TagCategory | null = null;
   let topScore = 0;
-  
+
   accumulatedTags.forEach((score, category) => {
     if (score > topScore) {
       topScore = score;
       topCategory = category as TagCategory;
     }
   });
-  
+
   return topScore >= 3 ? topCategory : null;
 }
 
@@ -552,13 +554,13 @@ const EXIT_PATTERNS: Record<string, RegExp[]> = {
 
 export function detectExitSignal(message: string): ExitSignal {
   const msg = message.toLowerCase();
-  
+
   for (const [signal, patterns] of Object.entries(EXIT_PATTERNS)) {
     if (patterns.some(p => p.test(msg))) {
       return signal as ExitSignal;
     }
   }
-  
+
   return null;
 }
 
@@ -605,7 +607,7 @@ let userProfile: UserLifeProfile = {};
 export function extractUserProfile(message: string): Partial<UserLifeProfile> {
   const msg = message.toLowerCase();
   const extracted: Partial<UserLifeProfile> = {};
-  
+
   // 工作地點
   const workPatterns = [
     /(?:上班|公司|工作).*?(?:在|於)(.+?)(?:那|這|，|。|$)/,
@@ -619,7 +621,7 @@ export function extractUserProfile(message: string): Partial<UserLifeProfile> {
       break;
     }
   }
-  
+
   // 目前居住地
   const homePatterns = [
     /(?:住|租).*?(?:在|於)(.+?)(?:那|這|，|。|$)/,
@@ -633,13 +635,13 @@ export function extractUserProfile(message: string): Partial<UserLifeProfile> {
       break;
     }
   }
-  
+
   // 通勤痛點
   if (/通勤.*(?:一小時|一個小時|30分|很久|好遠|累|煩)/.test(msg)) {
     userProfile.commutePain = message;
     extracted.commutePain = message;
   }
-  
+
   // 家庭狀態
   if (/結婚|訂婚|新婚|嫁|娶/.test(msg)) {
     userProfile.familyStatus = 'newlywed';
@@ -657,7 +659,7 @@ export function extractUserProfile(message: string): Partial<UserLifeProfile> {
     userProfile.familyStatus = 'with-parents';
     extracted.familyStatus = 'with-parents';
   }
-  
+
   // 生活方式
   const lifestyleMap: Record<string, string> = {
     '健身|運動|跑步|瑜珈': 'fitness',
@@ -667,19 +669,19 @@ export function extractUserProfile(message: string): Partial<UserLifeProfile> {
     '早睡|早起|規律': 'early-bird',
     '夜貓|熬夜|晚睡': 'night-owl',
   };
-  
+
   for (const [pattern, style] of Object.entries(lifestyleMap)) {
     if (new RegExp(pattern).test(msg)) {
       userProfile.lifestyle = [...(userProfile.lifestyle || []), style];
       extracted.lifestyle = userProfile.lifestyle;
     }
   }
-  
+
   if (Object.keys(extracted).length > 0) {
     userProfile.lastUpdated = Date.now();
     saveUserProfileToStorage();
   }
-  
+
   return extracted;
 }
 
@@ -687,24 +689,7 @@ export function getUserProfile(): UserLifeProfile {
   return userProfile;
 }
 
-export function saveUserProfileToStorage(): void {
-  if (typeof window !== 'undefined') {
-    localStorage.setItem('maimai_user_profile', JSON.stringify(userProfile));
-  }
-}
 
-export function loadUserProfileFromStorage(): void {
-  if (typeof window !== 'undefined') {
-    const stored = localStorage.getItem('maimai_user_profile');
-    if (stored) {
-      try {
-        userProfile = JSON.parse(stored);
-      } catch {
-        userProfile = {};
-      }
-    }
-  }
-}
 
 // 生成個人化問候
 export function generatePersonalizedGreeting(): string | null {
@@ -737,7 +722,7 @@ export function getWarmthLevel(): WarmthStrategy {
   const totalScore = getTotalScore();
   const chitchatRounds = pureChitchatRounds;
   const rounds = totalConversationRounds;
-  
+
   // intimate: 對話 10+ 輪，分數高
   if (rounds >= 10 && totalScore >= 5) {
     return {
@@ -751,7 +736,7 @@ export function getWarmthLevel(): WarmthStrategy {
       canRecommend: true
     };
   }
-  
+
   // hot: 分數 >= 4，用戶有明確興趣
   if (totalScore >= 4) {
     return {
@@ -765,7 +750,7 @@ export function getWarmthLevel(): WarmthStrategy {
       canRecommend: true
     };
   }
-  
+
   // warm: 分數 2-4，有隱含需求
   if (totalScore >= 2) {
     return {
@@ -779,7 +764,7 @@ export function getWarmthLevel(): WarmthStrategy {
       canRecommend: false
     };
   }
-  
+
   // cold: 純閒聊
   return {
     level: 'cold',
@@ -828,20 +813,20 @@ export type TimingQuality = 'good' | 'neutral' | 'bad';
 
 export function assessTiming(message: string): TimingQuality {
   const msg = message.toLowerCase();
-  
+
   // 好時機：用戶問問題、表達困擾、話題自然停頓
   const goodSignals = ['怎麼辦', '好煩', '不知道', '?', '？', '好累', '該怎麼', '有推薦'];
   if (goodSignals.some(s => msg.includes(s))) {
     return 'good';
   }
-  
+
   // 壞時機：用戶在講故事中、情緒激動中
   const badSignals = ['然後', '結果', '後來', '超級', '！！', '哈哈哈', '...'];
   const badCount = badSignals.filter(s => msg.includes(s)).length;
   if (badCount >= 2) {
     return 'bad';
   }
-  
+
   return 'neutral';
 }
 
@@ -883,11 +868,9 @@ export type IntimacyLevel = 'new' | 'familiar' | 'close' | 'bestie' | 'soulmate'
 
 export function getIntimacyLevel(): { level: IntimacyLevel; label: string; emoji: string } {
   // 從 localStorage 讀取累積對話輪數
-  const storedRounds = typeof window !== 'undefined' 
-    ? parseInt(localStorage.getItem('mai-intimacy-rounds') || '0', 10)
-    : 0;
+  const storedRounds = parseInt(safeLocalStorage.getItem('mai-intimacy-rounds') || '0', 10);
   const rounds = storedRounds + totalConversationRounds;
-  
+
   if (rounds >= 50) return { level: 'soulmate', label: '超級閨蜜', emoji: '🤍' };
   if (rounds >= 30) return { level: 'bestie', label: '無話不談', emoji: '💕' };
   if (rounds >= 15) return { level: 'close', label: '好閨蜜', emoji: '💖' };
@@ -896,11 +879,9 @@ export function getIntimacyLevel(): { level: IntimacyLevel; label: string; emoji
 }
 
 export function saveIntimacyToStorage(): void {
-  if (typeof window !== 'undefined') {
-    const storedRounds = parseInt(localStorage.getItem('mai-intimacy-rounds') || '0', 10);
-    localStorage.setItem('mai-intimacy-rounds', String(storedRounds + totalConversationRounds));
-    totalConversationRounds = 0; // 存完後重置當次
-  }
+  const storedRounds = parseInt(safeLocalStorage.getItem('mai-intimacy-rounds') || '0', 10);
+  safeLocalStorage.setItem('mai-intimacy-rounds', String(storedRounds + totalConversationRounds));
+  totalConversationRounds = 0; // 存完後重置當次
 }
 
 // 生活錨點問句
@@ -925,30 +906,26 @@ export function pickLifeAnchorQuestion(): string {
 const MEMORY_KEY = 'mai-memory-v6';
 
 export function saveMemory(fact: string): void {
-  if (typeof window === 'undefined') return;
-  const memories: string[] = JSON.parse(localStorage.getItem(MEMORY_KEY) || '[]');
+  const memories: string[] = JSON.parse(safeLocalStorage.getItem(MEMORY_KEY) || '[]');
   // 避免重複
   if (!memories.includes(fact) && memories.length < 20) {
     memories.push(fact);
-    localStorage.setItem(MEMORY_KEY, JSON.stringify(memories));
+    safeLocalStorage.setItem(MEMORY_KEY, JSON.stringify(memories));
   }
 }
 
 export function getMemories(): string[] {
-  if (typeof window === 'undefined') return [];
-  return JSON.parse(localStorage.getItem(MEMORY_KEY) || '[]');
+  return JSON.parse(safeLocalStorage.getItem(MEMORY_KEY) || '[]');
 }
 
 export function clearMemories(): void {
-  if (typeof window !== 'undefined') {
-    localStorage.removeItem(MEMORY_KEY);
-  }
+  safeLocalStorage.removeItem(MEMORY_KEY);
 }
 
 // 自動從對話中抽取記憶點
 export function extractMemoryFromMessage(message: string): string | null {
   const msg = message.toLowerCase();
-  
+
   const patterns: [RegExp, string][] = [
     [/喜歡(貓|狗|寵物)/, '喜歡毛小孩'],
     [/(討厭|不喜歡)通勤/, '討厭通勤'],
@@ -961,7 +938,7 @@ export function extractMemoryFromMessage(message: string): string | null {
     [/(喜歡|愛)運動/, '喜歡運動'],
     [/失眠|睡不好/, '有睡眠困擾'],
   ];
-  
+
   for (const [pattern, memory] of patterns) {
     if (pattern.test(msg)) {
       return memory;
@@ -974,7 +951,7 @@ export function extractMemoryFromMessage(message: string): string | null {
 // 🎭 情緒狀態
 // ============================================
 
-export type DetailedEmotionalState = 
+export type DetailedEmotionalState =
   | 'happy'      // 開心
   | 'stressed'   // 壓力大
   | 'frustrated' // 煩躁
@@ -985,25 +962,25 @@ export type DetailedEmotionalState =
 
 export function analyzeEmotionalState(message: string): DetailedEmotionalState {
   const msg = message.toLowerCase();
-  
+
   // 正在講故事
   const storytellingWords = ['然後', '結果', '後來', '接著', '最後'];
   if (storytellingWords.filter(w => msg.includes(w)).length >= 2) {
     return 'storytelling';
   }
-  
+
   const frustratedWords = ['氣', '機車', '爛', '討厭', '無言', '傻眼', '扯', '煩死'];
   const stressWords = ['累', '煩', '崩潰', '受不了', '壓力', '疲憊', '加班', '好忙'];
   const confusedWords = ['不知道', '不確定', '怎麼辦', '該怎', '幫忙', '選哪', '猶豫'];
   const curiousWords = ['想了解', '好奇', '有興趣', '可以說', '告訴我', '是什麼'];
   const happyWords = ['開心', '不錯', '很好', '滿意', '棒', '讚', '喜歡', '期待', '耶'];
-  
+
   if (frustratedWords.some(w => msg.includes(w))) return 'frustrated';
   if (stressWords.some(w => msg.includes(w))) return 'stressed';
   if (confusedWords.some(w => msg.includes(w))) return 'confused';
   if (curiousWords.some(w => msg.includes(w))) return 'curious';
   if (happyWords.some(w => msg.includes(w))) return 'happy';
-  
+
   return 'neutral';
 }
 
@@ -1011,7 +988,7 @@ export function analyzeEmotionalState(message: string): DetailedEmotionalState {
 // 🎯 推薦階段（鋪墊 vs 推卡片）
 // ============================================
 
-export type RecommendationPhase = 
+export type RecommendationPhase =
   | 'none'        // 不推薦
   | 'seed'        // 埋種子（純閒聊偶爾埋線）
   | 'pave'        // 鋪墊（口頭提，不附卡片）
@@ -1069,32 +1046,32 @@ export function determineRecommendationPhase(
   if (emotionalState === 'storytelling') {
     return 'none';
   }
-  
+
   // 用戶煩躁或壓力大 → 不推薦
   if (emotionalState === 'frustrated' || emotionalState === 'stressed') {
     return 'none';
   }
-  
+
   // 時機不好 → 不推薦
   if (timing === 'bad') {
     return 'none';
   }
-  
+
   // 明確型用戶 + 好奇 → 可以直接推卡片
   if (userState === 'explicit' && emotionalState === 'curious') {
     return 'card';
   }
-  
+
   // 明確型用戶 → 至少鋪墊
   if (userState === 'explicit') {
     return hasPaved ? 'card' : 'pave';
   }
-  
+
   // 半熱型 + 用戶對鋪墊有興趣 → 推卡片
   if (userState === 'semi-warm' && hasPaved && userShowedInterest) {
     return 'card';
   }
-  
+
   // ⭐ 優化：半熱型 + 命中橋接話題 + 情緒正向 → 使用橋接鋪墊
   if (userState === 'semi-warm' && message) {
     const bridge = detectBridgeTopic(message);
@@ -1105,17 +1082,17 @@ export function determineRecommendationPhase(
       }
     }
   }
-  
+
   // 半熱型 + 時機好 + 有累積標籤 → 鋪墊
   if (userState === 'semi-warm' && timing === 'good' && topCategory && !hasPaved) {
     return 'pave';
   }
-  
+
   // 探索型 + 純閒聊超過 5 輪 → 埋種子
   if (userState === 'exploring' && chitchatRounds >= 5) {
     return 'seed';
   }
-  
+
   return 'none';
 }
 
@@ -1123,60 +1100,60 @@ export function determineRecommendationPhase(
 // 🏠 社區牆候選
 // ============================================
 
-export type CommunityCandidate = { 
-  name: string; 
+export type CommunityCandidate = {
+  name: string;
   topic: string;
   pavePhrase: string;  // 鋪墊用的口頭語
 };
 
 export const COMMUNITY_BY_CATEGORY: Record<TagCategory, CommunityCandidate> = {
-  'education': { 
-    name: '快樂花園', 
+  'education': {
+    name: '快樂花園',
     topic: '這裡的媽媽群組超強大',
     pavePhrase: '我之前有聽那邊的家長說，他們有個超強的家長群組互相幫忙接送...'
   },
-  'commute': { 
-    name: '美河市', 
+  'commute': {
+    name: '美河市',
     topic: '其實走捷徑只要5分鐘？',
     pavePhrase: '說到通勤，我之前有聽住在美河市的人說那邊真的很近捷運...'
   },
-  'noise': { 
-    name: '景安和院', 
+  'noise': {
+    name: '景安和院',
     topic: '這幾棟千萬別買（噪音討論）',
     pavePhrase: '有些社區真的會有噪音問題... 我記得有個社區住戶在討論這個'
   },
-  'pet': { 
-    name: '松濤苑', 
+  'pet': {
+    name: '松濤苑',
     topic: '中庭遛狗到底行不行？',
     pavePhrase: '養毛小孩找社區要特別小心，有些管委會超級嚴格...'
   },
-  'life-change': { 
-    name: '華固名邸', 
+  'life-change': {
+    name: '華固名邸',
     topic: '新婚小家庭的真實心得',
     pavePhrase: '新婚買房真的要好好選，很多人第一間就買錯了...'
   },
-  'rental': { 
-    name: '遠雄二代宅', 
+  'rental': {
+    name: '遠雄二代宅',
     topic: '租不如買？算給你看',
     pavePhrase: '租金繳一繳，其實都可以付房貸了... 有人算過這筆帳'
   },
-  'stress': { 
-    name: '遠雄二代宅', 
+  'stress': {
+    name: '遠雄二代宅',
     topic: '飯店式管理真的有差嗎？',
     pavePhrase: '有些社區是飯店式管理，回家什麼都不用煩...'
   },
-  'quality': { 
-    name: '景安和院', 
+  'quality': {
+    name: '景安和院',
     topic: '管委會處理速度實測',
     pavePhrase: '房子有問題最怕管委會不處理... 有些社區真的很積極'
   },
-  'amenity': { 
-    name: '美河市', 
+  'amenity': {
+    name: '美河市',
     topic: '生活機能實際體驗分享',
     pavePhrase: '住的地方附近方不方便真的差很多，有些社區出門就有超市...'
   },
-  'healing': { 
-    name: '天空之城', 
+  'healing': {
+    name: '天空之城',
     topic: '高樓層景觀真的能療癒嗎？',
     pavePhrase: '心情不好的時候如果有個大陽台看夜景，真的會好很多...'
   }
@@ -1197,7 +1174,7 @@ export function countConversationRounds(messages: { role: string }[]): number {
 export function detectMessageStyle(message: string): 'brief' | 'expressive' | 'neutral' {
   const hasEmoji = /[\u{1F300}-\u{1F9FF}]/u.test(message);
   const length = message.length;
-  
+
   if (length < 10 && !hasEmoji) return 'brief';
   if (hasEmoji || length > 30) return 'expressive';
   return 'neutral';
@@ -1233,7 +1210,7 @@ export function buildEnhancedPrompt(
   messageStyle: 'brief' | 'expressive' | 'neutral'
 ): string {
   let prompt = MAIMAI_SYSTEM_PROMPT;
-  
+
   // ============================================
   // 用戶狀態指引
   // ============================================
@@ -1243,22 +1220,22 @@ export function buildEnhancedPrompt(
 - 專心陪聊，不推薦任何東西
 - 偶爾可以問一句「你平常都在哪一帶活動？」
 - 如果用戶不接，就繼續聊別的`,
-    
+
     'semi-warm': `\n\n【👤 用戶狀態：半熱型】
 用戶有隱含需求（累積標籤：${topCategory || '未知'}）
 - 先同理，不要馬上推薦
 - 時機對的話可以「口頭鋪墊」
 - 等用戶表示興趣再附卡片`,
-    
+
     'explicit': `\n\n【👤 用戶狀態：明確型】
 用戶直接問房子，不用裝熟！
 - 可以直接進入推薦模式
 - 問他在意什麼（通勤？學區？安靜？）
 - 但不要問預算、幾房幾廳`
   }[userState];
-  
+
   prompt += stateGuide;
-  
+
   // ============================================
   // 情緒指引
   // ============================================
@@ -1276,7 +1253,7 @@ export function buildEnhancedPrompt(
 「辛苦了～今天還好嗎？」
 這輪不推薦任何東西。`;
   }
-  
+
   // ============================================
   // 推薦階段指引
   // ============================================
@@ -1288,7 +1265,7 @@ export function buildEnhancedPrompt(
 「${anchorQ}」
 如果用戶不接，就繼續聊別的，不要硬轉。`;
       break;
-      
+
     case 'pave':
       // ⭐ 優先使用橋接話題（更自然的轉折）
       const bridgeTopic = getCurrentBridgeTopic();
@@ -1308,7 +1285,7 @@ export function buildEnhancedPrompt(
 ⚠️ 這輪不要附卡片！等用戶說「真的嗎」「想了解」再附。`;
       }
       break;
-      
+
     case 'card':
       if (topCategory) {
         const community = getCommunityByCategory(topCategory);
@@ -1318,19 +1295,19 @@ export function buildEnhancedPrompt(
 [[社區牆:${community.name}:${community.topic}]]`;
       }
       break;
-      
+
     case 'listing':
       prompt += `\n\n【🏠 建議：推物件】
 用戶興趣很高！可以順勢推物件：
 「剛好那社區最近有一間在賣，要不要看看？」
 [[物件:社區名稱:MH-2024-001]]`;
       break;
-      
+
     default:
       prompt += `\n\n【💬 建議：純陪聊】
 這輪不推薦，專心同理和陪聊。`;
   }
-  
+
   // ============================================
   // 風格調整
   // ============================================
@@ -1339,11 +1316,11 @@ export function buildEnhancedPrompt(
     expressive: '\n\n【風格】用戶表達豐富，可以多聊幾句、用更溫暖的口吻。',
     neutral: ''
   }[messageStyle];
-  
+
   if (styleHint) {
     prompt += styleHint;
   }
-  
+
   return prompt;
 }
 
@@ -1357,7 +1334,7 @@ export function buildEnhancedPrompt(
  */
 export function generateLifeProfileSummary(accTags: Map<string, number>): string | null {
   if (accTags.size < 2) return null;
-  
+
   const tagDescriptions: Record<string, string> = {
     'education': '小孩的學區和接送',
     'commute': '通勤時間和交通便利',
@@ -1370,16 +1347,16 @@ export function generateLifeProfileSummary(accTags: Map<string, number>): string
     'amenity': '生活機能和便利性',
     'healing': '能讓自己放鬆的空間'
   };
-  
+
   const concerns: string[] = [];
   accTags.forEach((score, category) => {
     if (score >= 2 && tagDescriptions[category]) {
       concerns.push(tagDescriptions[category]);
     }
   });
-  
+
   if (concerns.length === 0) return null;
-  
+
   return `我先幫你整理一下你剛剛聊的重點：
 ‧ 你比較在意：${concerns.join('、')}
 
@@ -1391,7 +1368,7 @@ export function generateLifeProfileSummary(accTags: Map<string, number>): string
  */
 export function generateSingleStartPoint(topCategory: TagCategory): string {
   const community = getCommunityByCategory(topCategory);
-  
+
   return `照你這樣講，我會先從一個社區牆開始看就好，不然資訊太多會看到頭很暈 😆
 
 我先幫你準備一個起點：
@@ -1435,9 +1412,9 @@ export function generateContextualPropertyRecommendation(
     'amenity': '這間樓下就是商圈，買菜吃飯都超方便',
     'healing': '這間有大陽台可以看夜景，很適合放空'
   };
-  
+
   const reason = reasons[topCategory] || '這間感覺跟你聊的需求蠻符合的';
-  
+
   return `剛好想到一間可以給你參考：
 [[物件:${communityName}:${propertyId}]]
 
@@ -1458,20 +1435,16 @@ export interface VisitMemory {
 }
 
 export function saveVisitMemory(memory: VisitMemory): void {
-  if (typeof window !== 'undefined') {
-    localStorage.setItem('maimai_visit_memory', JSON.stringify(memory));
-  }
+  safeLocalStorage.setItem('maimai_visit_memory', JSON.stringify(memory));
 }
 
 export function loadVisitMemory(): VisitMemory | null {
-  if (typeof window !== 'undefined') {
-    const stored = localStorage.getItem('maimai_visit_memory');
-    if (stored) {
-      try {
-        return JSON.parse(stored);
-      } catch {
-        return null;
-      }
+  const stored = safeLocalStorage.getItem('maimai_visit_memory');
+  if (stored) {
+    try {
+      return JSON.parse(stored);
+    } catch {
+      return null;
     }
   }
   return null;
@@ -1480,12 +1453,12 @@ export function loadVisitMemory(): VisitMemory | null {
 export function generateReturnGreeting(): string | null {
   const memory = loadVisitMemory();
   if (!memory) return null;
-  
+
   const daysSinceLastVisit = Math.floor((Date.now() - memory.lastVisit) / (1000 * 60 * 60 * 24));
-  
+
   // 1-7 天內回訪才問候
   if (daysSinceLastVisit < 1 || daysSinceLastVisit > 7) return null;
-  
+
   const greetings: Record<TagCategory, string> = {
     'commute': '欸～上次聊到你通勤要花很久的事情，最近有比較習慣嗎？還是一樣累 😅',
     'education': '嗨！上次你有提到小孩的學區問題，最近有頭緒了嗎？',
@@ -1498,11 +1471,11 @@ export function generateReturnGreeting(): string | null {
     'amenity': '嗨！好久不見～最近過得怎樣？',
     'healing': '嗨～上次感覺你需要放鬆，這幾天有比較輕鬆嗎？'
   };
-  
+
   if (memory.dominantCategory && greetings[memory.dominantCategory]) {
     return greetings[memory.dominantCategory];
   }
-  
+
   return '嗨～好久不見！最近過得怎樣？';
 }
 
@@ -1705,27 +1678,27 @@ let buyingReadiness: BuyingReadiness = {
 
 export function updateBuyingReadiness(message: string): void {
   const msg = message.toLowerCase();
-  
+
   // 區域偏好
   if (/住.*?區|想住|偏好|喜歡.*區|在.*找/.test(msg)) {
     buyingReadiness.hasArea = true;
   }
-  
+
   // 預算
   if (/預算|萬|千萬|頭期|貸款/.test(msg)) {
     buyingReadiness.hasBudget = true;
   }
-  
+
   // 時間線
   if (/明年|今年|最近|急|不急|慢慢|什麼時候/.test(msg)) {
     buyingReadiness.hasTimeline = true;
   }
-  
+
   // 家庭需求
   if (/小孩|孩子|寵物|狗|貓|父母|長輩/.test(msg)) {
     buyingReadiness.hasFamilyNeeds = true;
   }
-  
+
   saveBuyingReadinessToStorage();
 }
 
@@ -1760,20 +1733,16 @@ export function isReadyToBook(): boolean {
 }
 
 export function saveBuyingReadinessToStorage(): void {
-  if (typeof window !== 'undefined') {
-    localStorage.setItem('maimai_buying_readiness', JSON.stringify(buyingReadiness));
-  }
+  safeLocalStorage.setItem('maimai_buying_readiness', JSON.stringify(buyingReadiness));
 }
 
 export function loadBuyingReadinessFromStorage(): void {
-  if (typeof window !== 'undefined') {
-    const stored = localStorage.getItem('maimai_buying_readiness');
-    if (stored) {
-      try {
-        buyingReadiness = { ...buyingReadiness, ...JSON.parse(stored) };
-      } catch {
-        // 保持預設
-      }
+  const stored = safeLocalStorage.getItem('maimai_buying_readiness');
+  if (stored) {
+    try {
+      buyingReadiness = { ...buyingReadiness, ...JSON.parse(stored) };
+    } catch {
+      // 保持預設
     }
   }
 }
@@ -1863,13 +1832,13 @@ export function getRandomQuiz(): QuizQuestion {
 export function processQuizAnswer(quizId: string, answer: string): { category: TagCategory; response: string } | null {
   const quiz = MINI_QUIZZES.find(q => q.id === quizId);
   if (!quiz) return null;
-  
+
   const selected = quiz.options.find(o => o.key.toLowerCase() === answer.toLowerCase());
   if (!selected) return null;
-  
+
   // 累積對應標籤
   accumulateTags(selected.text);
-  
+
   return {
     category: selected.category,
     response: quiz.followUp
@@ -1893,13 +1862,13 @@ export function shouldTriggerLifeAnchor(chitchatRounds: number, timing: TimingQu
   if (seedThreshold === null) {
     seedThreshold = 3 + Math.floor(Math.random() * 5);
   }
-  
+
   // 達到閾值 + 時機不差 → 觸發
   if (chitchatRounds >= seedThreshold && timing !== 'bad') {
     seedThreshold = null; // 重置，下次重新隨機
     return true;
   }
-  
+
   return false;
 }
 

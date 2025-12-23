@@ -5,6 +5,7 @@ import { propertyService, PropertyFormInput } from '../../services/propertyServi
 import { notify } from '../../lib/notify';
 import { supabase } from '../../lib/supabase';
 import { optimizeImages } from '../../services/imageService';
+import { safeLocalStorage } from '../../lib/safeStorage';
 import {
   uploadReducer,
   createInitialState,
@@ -114,7 +115,7 @@ export const UploadFormProvider: React.FC<{ children: ReactNode }> = ({ children
 
   // 匿名草稿遷移到登入用戶
   useEffect(() => {
-    const hasAnonymousDraft = typeof window !== 'undefined' && localStorage.getItem('mh_draft_upload_anonymous');
+    const hasAnonymousDraft = safeLocalStorage.getItem('mh_draft_upload_anonymous');
     if (state.userId && hasAnonymousDraft) {
       migrateDraft(undefined, state.userId);
     }

@@ -1,3 +1,5 @@
+import { safeLocalStorage } from '../lib/safeStorage';
+
 export interface AppConfig {
   apiBaseUrl: string
   appVersion: string
@@ -50,12 +52,12 @@ function isValidConfig(obj: any): obj is AppConfig {
 async function readBase(): Promise<AppConfig & Partial<RuntimeOverrides>> {
   // 1) localStorage cache
   try {
-    const cache = localStorage.getItem(LS)
+    const cache = safeLocalStorage.getItem(LS)
     if (cache) {
       const parsed = JSON.parse(cache)
       if (isValidConfig(parsed)) return parsed
     }
-  } catch {}
+  } catch { }
 
   // 2) remote app.config.json
   const baseUrl = import.meta.env.BASE_URL || '/'
@@ -83,7 +85,7 @@ function pickParams() {
   const features = slots
     ? slots.split(',').reduce<Record<string, boolean>>((a, s) => ((a[s.trim()] = true), a), {})
     : undefined
-  
+
   return {
     apiBaseUrl: getParamFromBoth('api'),
     features,
@@ -110,7 +112,7 @@ export async function getConfig(): Promise<AppConfig & RuntimeOverrides> {
 
     try {
       localStorage.setItem(LS, JSON.stringify(merged))
-    } catch {}
+    } catch { }
 
     return merged
   } catch (err) {

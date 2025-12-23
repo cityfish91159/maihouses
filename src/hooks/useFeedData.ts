@@ -27,6 +27,7 @@
 
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { mhEnv } from '../lib/mhEnv';
+import { safeLocalStorage } from '../lib/safeStorage';
 import { supabase } from '../lib/supabase';
 import type { Post, Role } from '../types/community';
 import { useAuth } from './useAuth';
@@ -182,19 +183,10 @@ const deriveTitleFromContent = (content: string): string => {
   return content.length > 40 ? `${content.slice(0, 40)}...` : content;
 };
 
-const canUseMockStorage = (): boolean => {
-  try {
-    return typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
-  } catch {
-    return false;
-  }
-};
-
 const loadPersistedFeedMockState = (fallback: UnifiedFeedData): UnifiedFeedData => {
-  if (!canUseMockStorage()) return fallback;
+  const raw = safeLocalStorage.getItem(FEED_MOCK_STORAGE_KEY);
+  if (!raw) return fallback;
   try {
-    const raw = window.localStorage.getItem(FEED_MOCK_STORAGE_KEY);
-    if (!raw) return fallback;
     const parsed = JSON.parse(raw) as Partial<UnifiedFeedData>;
     const posts = parsed.posts ?? fallback.posts;
     return {
@@ -209,9 +201,8 @@ const loadPersistedFeedMockState = (fallback: UnifiedFeedData): UnifiedFeedData 
 };
 
 const saveFeedMockState = (data: UnifiedFeedData): void => {
-  if (!canUseMockStorage()) return;
   try {
-    window.localStorage.setItem(FEED_MOCK_STORAGE_KEY, JSON.stringify(data));
+    safeLocalStorage.setItem(FEED_MOCK_STORAGE_KEY, JSON.stringify(data));
   } catch (err) {
     console.error('[useFeedData] Failed to persist mock state', err);
   }
@@ -562,10 +553,10 @@ export function useFeedData(
   const getMockUserId = useCallback((): string => {
     if (currentUserId) return currentUserId;
     const storageKey = 'mock_user_id';
-    let mockId = localStorage.getItem(storageKey);
+    let mockId = safeLocalStorage.getItem(storageKey);
     if (!mockId) {
       mockId = `mock-user-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-      localStorage.setItem(storageKey, mockId);
+      safeLocalStorage.setItem(storageKey, mockId);
     }
     return mockId;
   }, [currentUserId]);
