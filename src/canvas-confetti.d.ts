@@ -24,14 +24,14 @@ declare module 'canvas-confetti' {
     useWorker?: boolean;
   }
 
-  export interface CreateTypes {
-    (options?: Options): Promise<null> | null;
-    reset(): void;
-  }
-
   function confetti(options?: Options): Promise<null> | null;
 
   namespace confetti {
+    export interface CreateTypes {
+      (options?: Options): Promise<null> | null;
+      reset(): void;
+    }
+
     function create(canvas: HTMLCanvasElement | null, options?: CreateOptions): CreateTypes;
     function reset(): void;
   }
