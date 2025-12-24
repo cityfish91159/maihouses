@@ -13,7 +13,7 @@
 |:---:|:---|:---:|:---:|:---:|
 | P0 | MM-1 MaiMai 原子組件整合 | ✅ | 2hr | 100/100 |
 | P0 | MM-2 慶祝動畫 (canvas-confetti) | ⚠️ | 1hr | 70/100 |
-| P0 | IM-1 智慧貼上監聽器 | ⬜ | 2hr | - |
+| P0 | IM-1 智慧貼上監聽器 | ✅ | 2hr | 100/100 |
 | P0 | IM-2 591 生產級解析器 | ⬜ | 3hr | - |
 | P1 | MM-3 情緒狀態機 (Mood FSM) | ⚠️ | 2hr | 80/100 |
 | P1 | IM-3 重複匯入偵測 | ⬜ | 1hr | - |
@@ -177,16 +177,35 @@
 
 ## 🚚 591 一鍵搬家模組
 
-### IM-1: 智慧貼上監聽器 ⬜
+### IM-1: 智慧貼上監聽器 ✅
 
+**完成時間**: 2025-12-24
 **核心理念**: 非侵入式監聽 `paste` 事件。若焦點在 `INPUT/TEXTAREA`，則不攔截。
 
 | ID | 子任務 | 狀態 | 驗收標準 |
 |:---|:---|:---:|:---|
-| IM-1.1 | 在 `PropertyUploadPage` 加入 `paste` 監聽 | ⬜ | 事件處理器已綁定 |
-| IM-1.2 | 排除 `INPUT/TEXTAREA` 焦點衝突 | ⬜ | 在標題框內貼上不觸發自動填表 |
-| IM-1.3 | 智慧偵測 591 內容 | ⬜ | 包含「591」或「萬+坪」才觸發 |
-| IM-1.4 | 顯示處理中 Loading 狀態 | ⬜ | 用戶知道系統正在處理 |
+| IM-1.1 | 在 `PropertyUploadPage` 加入 `paste` 監聽 | ✅ | 事件處理器已綁定 |
+| IM-1.2 | 排除 `INPUT/TEXTAREA` 焦點衝突 | ✅ | 在標題框內貼上不觸發自動填表 |
+| IM-1.3 | 智慧偵測 591 內容 | ✅ | 包含「591」或「萬+坪」才觸發 |
+| IM-1.4 | 顯示處理中 Loading 狀態 | ✅ | 用戶知道系統正在處理 |
+
+**實作成果**:
+- 新增 `src/lib/parse591.ts` - 591 內容解析器
+  - `parse591Content()`: 解析價格、坪數、格局、地址、標題、物件ID
+  - `detect591Content()`: 智慧偵測是否為 591 內容
+  - 信心分數計算 (0-100)，根據解析成功的欄位數量
+- 修改 `src/pages/PropertyUploadPage.tsx`
+  - 加入全域 paste 事件監聽器（`document.addEventListener('paste')`）
+  - 焦點檢查：`activeElement?.tagName === 'INPUT/TEXTAREA'` 時不攔截
+  - 整合 MaiMaiContext：根據信心分數顯示不同心情（excited/happy/confused）
+  - 自動填入表單欄位（title, price, address, size, rooms, halls, bathrooms, sourceExternalId）
+  - 處理中顯示 Loading 狀態和 MaiMai thinking 心情
+
+**驗證**:
+- ✅ IM-AC1: 在空白處貼上 591 內容，自動填入價格、坪數、地址
+- ✅ IM-AC2: 在標題輸入框內貼上 591，不會觸發自動填表
+- ✅ MaiMai 根據解析結果顯示不同情緒反應
+- ✅ 信心分數 ≥80% 時觸發慶祝動畫
 
 **💡 首席架構師指引**:
 > 「貼上監聯的關鍵是 **不要干擾正常輸入**。用 `document.activeElement?.tagName` 判斷焦點位置，而非禁用整個 paste 事件。」
