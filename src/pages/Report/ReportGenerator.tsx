@@ -99,15 +99,7 @@ export default function ReportGenerator({ property, isOpen, onClose }: ReportGen
     }
   };
 
-  // LINE 分享
-  const handleLineShare = () => {
-    const message = customMessage || defaultMessage;
-    const url = encodeURIComponent(generatedUrl || '');
-    const text = encodeURIComponent(message);
-    window.open(`https://line.me/R/msg/text/?${text}%0A${url}`, '_blank');
-  };
-
-  // Web Share
+  // Web Share (LINE 分享已由 LineShareAction 組件處理)
   const handleShare = async () => {
     if (!navigator.share || !generatedUrl) {
       handleCopyLink();
@@ -325,11 +317,23 @@ export default function ReportGenerator({ property, isOpen, onClose }: ReportGen
                 <LineShareAction
                   url={generatedUrl}
                   title={customMessage || defaultMessage}
+                  onShareClick={() => {
+                    // 追蹤報告分享事件
+                    fetch('/api/report/track', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        property_id: property.publicId,
+                        agent_id: property.agent.id,
+                        action: 'line_share',
+                        report_url: generatedUrl
+                      })
+                    }).catch(() => { /* 追蹤失敗不影響用戶體驗 */ });
+                  }}
                   className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#06C755] py-3 font-bold text-white transition hover:bg-[#05a847]"
                   wrapperClass="w-full"
                   btnText="LINE 分享"
-                  showIcon={false} // Icon is inside SVG in original? No, original had SVG. LineShareAction has icon. Let's use LineShareAction's icon or custom?
-                // LineShareAction has default icon. Let's use it.
+                  showIcon={true}
                 />
 
                 <button
