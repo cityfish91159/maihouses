@@ -1,98 +1,59 @@
 /**
- * Safe Storage Wrapper (v2 - True Safety)
+ * Safe Storage Wrapper
  * 
- * iOS Safari in Private Mode (and other restrictive environments)
- * throws "SecurityError" when accessing localStorage/sessionStorage.
- * 
- * This wrapper catches errors on EVERY operation, not just at init time.
- * This prevents crashes even if the browser behavior is inconsistent.
+ * iOS Safari in Private Mode (and some other restrictive environments) 
+ * throws a "SecurityError" when accessing localStorage/sessionStorage.
+ * This wrapper catches these errors to prevent the app from crashing.
  */
 
-type StorageType = 'localStorage' | 'sessionStorage';
+const noopStorage = {
+    getItem: (_key: string) => null,
+    setItem: (_key: string, _value: string) => { },
+    removeItem: (_key: string) => { },
+    clear: () => { },
+    length: 0,
+    key: (_index: number) => null,
+};
 
-interface SafeStorage {
-    getItem(key: string): string | null;
-    setItem(key: string, value: string): void;
-    removeItem(key: string): void;
-    clear(): void;
-    readonly length: number;
-    key(index: number): string | null;
+function getStorage(type: 'localStorage' | 'sessionStorage') {
+    // 1. 先檢查 window 是否存在（SSR 安全）
+    if (typeof window === 'undefined') {
+        return noopStorage;
+    }
+    
+    // 2. 整個存取過程都用 try-catch 包裝，因為 iOS Safari 私密模式
+    //    可能在任何存取 localStorage 的步驟都拋 SecurityError
+    try {
+        // 直接嘗試取得 storage，不做任何前置檢查
+        const storage = type === 'localStorage' ? window.localStorage : window.sessionStorage;
+        
+        if (!storage) {
+            return noopStorage;
+        }
+        
+        // Test storage to verify it actually works
+        const x = '__storage_test__';
+        storage.setItem(x, x);
+        storage.removeItem(x);
+        return storage;
+    } catch {
+        // 靜默失敗，直接返回 noopStorage
+        return noopStorage;
+    }
 }
 
-function createSafeStorage(type: StorageType): SafeStorage {
-    // Check if we can even access the storage at all
-    const canAccess = (): Storage | null => {
-        if (typeof window === 'undefined') return null;
-        try {
-            return window[type];
-        } catch {
-            return null;
-        }
-    };
-
-    return {
-        getItem(key: string): string | null {
-            try {
-                const storage = canAccess();
-                return storage ? storage.getItem(key) : null;
-            } catch {
-                return null;
-            }
-        },
-
-        setItem(key: string, value: string): void {
-            try {
-                const storage = canAccess();
-                if (storage) storage.setItem(key, value);
-            } catch {
-                // Silently fail - this is expected in private mode
-            }
-        },
-
-        removeItem(key: string): void {
-            try {
-                const storage = canAccess();
-                if (storage) storage.removeItem(key);
-            } catch {
-                // Silently fail
-            }
-        },
-
-        clear(): void {
-            try {
-                const storage = canAccess();
-                if (storage) storage.clear();
-            } catch {
-                // Silently fail
-            }
-        },
-
-        get length(): number {
-            try {
-                const storage = canAccess();
-                return storage ? storage.length : 0;
-            } catch {
-                return 0;
-            }
-        },
-
-        key(index: number): string | null {
-            try {
-                const storage = canAccess();
-                return storage ? storage.key(index) : null;
-            } catch {
-                return null;
-            }
-        }
-    };
-}
-
-export const safeLocalStorage = createSafeStorage('localStorage');
-export const safeSessionStorage = createSafeStorage('sessionStorage');
+export const safeLocalStorage = getStorage('localStorage');
+export const safeSessionStorage = getStorage('sessionStorage');
 
 // Helper for type-safe usage (optional)
 export const storage = {
     get: (key: string) => safeLocalStorage.getItem(key),
-    set: (key: string, value: string) => safeLocalStorage.setItem(key, value),
+    set: (key: string, value: string) => {
+        try {
+            safeLocalStorage.setItem(key, value);
+        } catch (e) {
+            console.warn('Storage setItem failed:', e);
+        }
+    },
     remove: (key: string) => safeLocalStorage.removeItem(key),
 };
