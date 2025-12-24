@@ -1,10 +1,16 @@
-import { ShieldCheck, ArrowRight } from 'lucide-react';
+import { useState } from 'react';
+import { ShieldCheck, ArrowRight, ChevronDown, ChevronUp } from 'lucide-react';
 import MascotHouse from '../../../components/MascotHouse';
 import { HERO_STEPS } from '../../../constants/data';
 import { HomeCard } from '../components/HomeCard';
 import { HeroStep } from '../components/HeroStep';
 
+/** 手機版預設顯示的步驟數量 */
+const MOBILE_VISIBLE_STEPS = 2;
+
 export default function HeroAssure() {
+  const [isExpanded, setIsExpanded] = useState(false);
+
   return (
     <HomeCard variant="hero" className="group/container relative overflow-hidden">
 
@@ -38,18 +44,23 @@ export default function HeroAssure() {
       </div>
 
       {/* Process Timeline */}
-      {/* 修改 1: mt-4 -> mt-2 (縮減頂部間距) */}
       <div className="relative mt-2 pl-2 md:mt-4 md:pl-0">
 
         {/* Connecting Line (Desktop) */}
         <div className="absolute left-0 top-8 -z-0 hidden h-0.5 w-full bg-border-light md:block"></div>
 
-        {/* Connecting Line (Mobile) */}
-        {/* 修改 2: left-8 -> left-7 (配合 size-10 的圖標中心點: 8px padding + 20px center = 28px/1.75rem) */}
-        <div className="absolute inset-y-0 left-7 -z-0 w-0.5 bg-border-light md:hidden"></div>
+        {/* Connecting Line (Mobile) - 高度根據展開狀態調整 */}
+        <div
+          className="absolute left-7 top-0 -z-0 w-0.5 bg-border-light transition-all duration-300 md:hidden"
+          style={{
+            height: isExpanded
+              ? `calc(100% - 3rem)`
+              : `calc(${MOBILE_VISIBLE_STEPS} * 3.5rem)`
+          }}
+        />
 
-        {/* 修改 3: gap-6 -> gap-3 (大幅縮減卡片間距) */}
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-6 md:gap-2">
+        {/* Desktop: 顯示全部 6 步驟 */}
+        <div className="hidden md:grid md:grid-cols-6 md:gap-2">
           {HERO_STEPS.map((step, index) => (
             <HeroStep
               key={step.id}
@@ -58,6 +69,35 @@ export default function HeroAssure() {
               isLast={index === HERO_STEPS.length - 1}
             />
           ))}
+        </div>
+
+        {/* Mobile: 可收合的時間軸 */}
+        <div className="grid grid-cols-1 gap-3 md:hidden">
+          {HERO_STEPS.slice(0, isExpanded ? HERO_STEPS.length : MOBILE_VISIBLE_STEPS).map((step, index, arr) => (
+            <HeroStep
+              key={step.id}
+              {...step}
+              index={index}
+              isLast={index === arr.length - 1}
+            />
+          ))}
+
+          {/* 展開/收合按鈕 */}
+          <button
+            type="button"
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="mt-1 flex items-center justify-center gap-2 rounded-xl border border-border-light bg-bg-soft px-4 py-2.5 text-sm font-bold text-text-muted transition-all hover:border-brand hover:text-brand active:scale-[0.98]"
+          >
+            {isExpanded ? (
+              <>
+                收合流程 <ChevronUp size={16} />
+              </>
+            ) : (
+              <>
+                查看完整流程 ({HERO_STEPS.length - MOBILE_VISIBLE_STEPS} 步驟) <ChevronDown size={16} />
+              </>
+            )}
+          </button>
         </div>
       </div>
     </HomeCard>
