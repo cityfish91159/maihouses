@@ -1,4 +1,4 @@
-import React, { memo, useRef, useEffect, useState } from 'react';
+import React, { memo } from 'react';
 import {
   SIZE_CLASSES,
   CANVAS_SIZE,
@@ -530,29 +530,11 @@ export function MaiMaiBase({
   onClick,
   showEffects = true,
 }: MaiMaiBaseProps) {
-  // ============ H1 修正：心情過渡動畫 ============
-  // CSS 無法對 SVG path d 做 transition，所以用雙層 crossfade
-  const [displayMood, setDisplayMood] = useState<MaiMaiMood>(mood);
-  const [isTransitioning, setIsTransitioning] = useState(false);
-  const prevMoodRef = useRef<MaiMaiMood>(mood);
-
-  useEffect(() => {
-    if (mood !== prevMoodRef.current) {
-      // 開始過渡
-      setIsTransitioning(true);
-      // 150ms 後切換到新心情
-      const timer = setTimeout(() => {
-        setDisplayMood(mood);
-        setIsTransitioning(false);
-        prevMoodRef.current = mood;
-      }, 150);
-      return () => clearTimeout(timer);
-    }
-  }, [mood]);
+  const activeMood = mood;
 
   // 根據心情決定動畫
   const getAnimationClass = () => {
-    switch (displayMood) {
+    switch (activeMood) {
       case 'celebrate':
       case 'excited':
         return 'animate-jump';
@@ -567,7 +549,7 @@ export function MaiMaiBase({
     }
   };
 
-  const showBlush = displayMood === 'shy' || displayMood === 'peek';
+  const showBlush = activeMood === 'shy' || activeMood === 'peek';
 
   return (
     <div
@@ -582,14 +564,16 @@ export function MaiMaiBase({
 
       <svg
         viewBox={`0 0 ${CANVAS_SIZE} ${CANVAS_HEIGHT}`}
-        className={`size-full text-[var(--brand)] drop-shadow-sm ${T_TRANSFORM} ${getAnimationClass()} ${isTransitioning ? 'opacity-80' : 'opacity-100'}`}
-        style={{ transition: 'opacity 150ms ease-in-out' }}
+        key={activeMood}
+        data-mood={activeMood}
+        className={`size-full text-[var(--brand)] drop-shadow-sm ${T_TRANSFORM} ${getAnimationClass()} animate-fadeIn`}
+        style={{ animationDuration: '180ms' }}
       >
         {/* 特效 */}
-        {showEffects && <Effects mood={displayMood} />}
+        {showEffects && <Effects mood={activeMood} />}
 
         {/* 天線 */}
-        <Antenna mood={displayMood} animated={animated} />
+        <Antenna mood={activeMood} animated={animated} />
 
         {/* 屋頂 */}
         <Roof />
@@ -598,22 +582,22 @@ export function MaiMaiBase({
         <Body />
 
         {/* 眉毛 */}
-        <Eyebrows mood={displayMood} />
+        <Eyebrows mood={activeMood} />
 
         {/* 眼睛 */}
-        <Eyes mood={displayMood} />
+        <Eyes mood={activeMood} />
 
         {/* 腮紅 */}
         <Blush show={showBlush} />
 
         {/* 嘴巴 */}
-        <Mouth mood={displayMood} />
+        <Mouth mood={activeMood} />
 
         {/* 手臂 */}
-        <Arms mood={displayMood} />
+        <Arms mood={activeMood} />
 
         {/* 腿 */}
-        <Legs mood={displayMood} animated={animated} />
+        <Legs mood={activeMood} animated={animated} />
       </svg>
     </div>
   );

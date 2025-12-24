@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import {
   Loader2, Download, Check, Home, ArrowLeft, Building2, Edit3, RotateCcw
 } from 'lucide-react';
 import { notify } from '../lib/notify';
 import { Logo } from '../components/Logo/Logo'; // Atomic Logo w/ M Icon
+import { useMaiMai } from '../context/MaiMaiContext';
+import { parse591Content, detect591Content } from '../lib/parse591';
 
 // 抽離的子組件 (HP-2.2)
 import { BasicInfoSection } from '../components/upload/BasicInfoSection';
@@ -32,6 +34,9 @@ const PropertyUploadContent: React.FC = () => {
     clearDraft,
     userId
   } = useUploadForm();
+
+  // IM-1: MaiMai 狀態管理
+  const { setMood, addMessage } = useMaiMai();
 
   const [draftAvailable, setDraftAvailable] = useState(false);
   const [draftPreview, setDraftPreview] = useState<{ title: string; savedAt: string } | null>(null);
@@ -81,22 +86,91 @@ const PropertyUploadContent: React.FC = () => {
     notify.info('草稿已捨棄', '已清除本機草稿');
   };
 
-  // 591 搬家
-  const handleImport591 = () => {
-    const url = prompt('請貼上 591 網址');
-    if (!url) return;
+  // IM-1: 智慧貼上處理函數
+  const handle591Import = useCallback((text: string) => {
     setLoading(true);
+    setMood('thinking');
+    addMessage('正在解析 591 物件資料...');
+
+    // 模擬解析延遲（讓用戶看到 MaiMai 在思考）
     setTimeout(() => {
+      const parsed = parse591Content(text);
+
+      if (parsed.confidence === 0) {
+        setMood('confused');
+        addMessage('沒有找到可用的資料，請確認內容是否完整');
+        setLoading(false);
+        notify.warning('解析失敗', '未能從內容中提取有效資訊');
+        return;
+      }
+
+      // 填入表單
       setForm(prev => ({
         ...prev,
-        title: '【急售】信義區捷運景觀豪邸',
-        price: '2880',
-        address: '台北市信義區忠孝東路',
-        size: '45.2',
-        sourceExternalId: '591-MOCK-ID'
+        ...(parsed.title && { title: parsed.title }),
+        ...(parsed.price && { price: parsed.price }),
+        ...(parsed.address && { address: parsed.address }),
+        ...(parsed.size && { size: parsed.size }),
+        ...(parsed.rooms && { rooms: parsed.rooms }),
+        ...(parsed.halls && { halls: parsed.halls }),
+        ...(parsed.bathrooms && { bathrooms: parsed.bathrooms }),
+        ...(parsed.listingId && { sourceExternalId: `591-${parsed.listingId}` })
       }));
+
+      // 根據信心分數顯示不同的 MaiMai 反應
+      if (parsed.confidence >= 80) {
+        setMood('excited');
+        addMessage(`完美！成功解析了 ${parsed.fieldsFound} 個欄位 ✨`);
+        // 觸發慶祝動畫
+        window.dispatchEvent(new CustomEvent('mascot:celebrate'));
+      } else if (parsed.confidence >= 40) {
+        setMood('happy');
+        addMessage(`已填入 ${parsed.fieldsFound} 個欄位，剩下的再補齊吧～`);
+      } else {
+        setMood('confused');
+        addMessage(`只找到了 ${parsed.fieldsFound} 個欄位，內容可能不完整 🤔`);
+      }
+
       setLoading(false);
-    }, 1000);
+      notify.success('匯入成功', `已自動填入 ${parsed.fieldsFound} 個欄位（信心度 ${parsed.confidence}%）`);
+    }, 500);
+  }, [setForm, setLoading, setMood, addMessage]);
+
+  // IM-1: 全域 paste 事件監聽器
+  useEffect(() => {
+    const handlePaste = (e: ClipboardEvent) => {
+      // IM-1.2: 排除 INPUT/TEXTAREA 焦點衝突
+      const activeEl = document.activeElement;
+      if (activeEl?.tagName === 'INPUT' || activeEl?.tagName === 'TEXTAREA') {
+        return;
+      }
+
+      const text = e.clipboardData?.getData('text') || '';
+
+      // IM-1.3: 智慧偵測 591 內容
+      if (detect591Content(text)) {
+        e.preventDefault();
+        handle591Import(text);
+      }
+    };
+
+    document.addEventListener('paste', handlePaste);
+    return () => document.removeEventListener('paste', handlePaste);
+  }, [handle591Import]);
+
+  // 591 搬家（保留舊的按鈕功能）
+  const handleImport591 = () => {
+    const url = prompt('請貼上 591 網址或內容');
+    if (!url) return;
+
+    // 如果貼上的是 URL，顯示提示
+    if (url.startsWith('http')) {
+      notify.info('提示', '請直接從 591 頁面複製物件資訊，然後在空白處按 Ctrl+V 貼上即可自動填表');
+      return;
+    }
+
+    // 否則當作內容處理
+    handle591Import(url);
   };
 
   if (showConfirmation && uploadResult) {
