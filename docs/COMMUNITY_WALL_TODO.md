@@ -15,7 +15,7 @@
 | P0 | MM-2 慶祝動畫 (canvas-confetti) | ⚠️ | 1hr | 70/100 |
 | P0 | IM-1 智慧貼上監聽器 | ⬜ | 2hr | - |
 | P0 | IM-2 591 生產級解析器 | ⬜ | 3hr | - |
-| P1 | MM-3 情緒狀態機 (Mood FSM) | ✅ | 2hr | 100/100 |
+| P1 | MM-3 情緒狀態機 (Mood FSM) | ⚠️ | 2hr | 88/100 |
 | P1 | IM-3 重複匯入偵測 | ⬜ | 1hr | - |
 | P1 | IM-4 iOS 捷徑支援 | ⬜ | 1hr | - |
 | P2 | MM-4 對話歷史氣泡 | ✅ | 1hr | 100/100 |
@@ -115,10 +115,10 @@
 
 ---
 
-### MM-3: 情緒狀態機 (Mood FSM) ✅ 100/100
+### MM-3: 情緒狀態機 (Mood FSM) ⚠️ 88/100
 
 **完成時間**: 2025-12-24
-**審計評分**: 100/100 (完全符合規格，41/41 測試通過)
+**審計評分**: 88/100 (功能正確，但存在 4 項優化空間)
 
 **心情定義** (`src/components/MaiMai/types.ts`):
 ```typescript
@@ -139,7 +139,7 @@ type MaiMaiMood =
 |:---|:---|:---:|:---|
 | MM-3.1 | 定義 `MaiMaiMood` 型別 | ✅ | `types.ts:9-19` — 10 種心情 + `peek` |
 | MM-3.2 | 實作 `useMaiMaiMood` Hook | ✅ | `useMaiMaiMood.ts` — 8 級優先順序 + `useMemo` |
-| MM-3.3 | 加入心情轉換動畫 | ✅ | `MaiMaiBase.tsx` — 150ms opacity crossfade |
+| MM-3.3 | 加入心情轉換動畫 | ⚠️ | `MaiMaiBase.tsx` — 150ms crossfade (有問題) |
 | MM-3.4 | 整合 MascotInteractive 現有邏輯 | ✅ | 完整整合：hover/click/confetti/global events |
 
 **實作亮點**:
@@ -147,9 +147,48 @@ type MaiMaiMood =
 - **點擊慶祝**：5 次點擊觸發 `celebrate` + 撒花，2 秒後自動重置
 - **全域事件**：`useMascotCelebrateEvent` 監聽 `mascot:celebrate` CustomEvent
 - **防閃爍**：使用 `useMemo` 計算 mood，避免 `useEffect` + `setState`
-- **心情過渡**：150ms opacity crossfade (CSS 無法 animate SVG path d)
-- **登入頁支援**：`isTypingPassword` → `peek`，`isTypingEmail` → `happy`
 - **測試覆蓋**：41 個單元測試 (MaiMai.test.ts: 17, useMaiMaiMood.test.ts: 23, MascotInteractive.test.tsx: 1)
+
+---
+
+### MM-3.H 待修 (88/100) ⚠️
+
+> **首席處長審計發現 (db83797 → 5397c50)**
+
+| # | P | 問題 | 怎麼修 | 狀態 |
+|:---:|:---:|:---|:---|:---:|
+| H1 | 1 | `opacity-80` 太微弱 | 改為 `opacity-0` 完全淡出再淡入，才有真正「過渡感」 | ⬜ |
+| H2 | 1 | 150ms 後才切 displayMood 有延遲感 | 應該立即更新 displayMood，用 CSS transition 做 opacity 動畫而非 setTimeout 延遲 | ⬜ |
+| H3 | 2 | `act()` 警告未解 | `MascotInteractive.test.tsx` 需包裝 `await act(async () => { ... })` | ⬜ |
+| H4 | 2 | 無 crossfade 測試 | 補測 `displayMood` 在 `mood` 變化後的行為 | ⬜ |
+
+**💡 首席架構師指引 (H1-H2 解法)**:
+> 「目前的實作是『延遲切換』，不是『過渡動畫』。正確做法是：
+> 1. `mood` 變化時**立即**更新 `displayMood`
+> 2. 同時設定 `isTransitioning = true` 觸發 `opacity-0`
+> 3. 100ms 後 `isTransitioning = false` 讓 `opacity-100` CSS transition 淡入
+> 
+> **核心洞察**：動畫應該發生在 **視覺渲染後**，而非延遲 state 更新。」
+>
+> **虛擬碼（勿直接貼）**:
+> ```
+> useEffect:
+>   if (mood !== prevMoodRef.current):
+>     setDisplayMood(mood)        // 立即切
+>     setIsTransitioning(true)    // 觸發 fade out
+>     setTimeout(100ms):
+>       setIsTransitioning(false) // fade in
+> ```
+
+**💡 H3 解法指引**:
+> 在 `MascotInteractive.test.tsx` 中，使用 `await act(async () => { vi.advanceTimersByTime(xxx) })` 包裝所有 timer 操作。
+
+**💡 H4 測試補充指引**:
+> 新增 `MaiMaiBase.test.tsx`：
+> 1. render 初始 mood
+> 2. rerender 新 mood
+> 3. 驗證 `isTransitioning` class 變化
+> 4. advanceTimersByTime 後驗證 class 還原
 
 ---
 
