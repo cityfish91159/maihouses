@@ -16,6 +16,7 @@ import ChatStandalone from './pages/Chat/Standalone'
 import ErrorBoundary from './app/ErrorBoundary'
 import { QuietModeProvider } from './context/QuietModeContext'
 import { MoodProvider } from './context/MoodContext'
+import { MaiMaiProvider } from './context/MaiMaiContext'
 import { CookieConsent } from './components/CookieConsent'
 
 import UAGPage from './pages/UAG'
@@ -56,14 +57,15 @@ export default function App() {
     <QueryClientProvider client={queryClient}>
       <QuietModeProvider>
         <MoodProvider>
-          <Toaster
-            position="top-right"
-            theme="light"
-            richColors
-            closeButton
-            toastOptions={{ duration: 3200 }}
-          />
-          <Routes key={loc.pathname}>
+          <MaiMaiProvider>
+            <Toaster
+              position="top-right"
+              theme="light"
+              richColors
+              closeButton
+              toastOptions={{ duration: 3200 }}
+            />
+            <Routes key={loc.pathname}>
             <Route
               path="/"
               element={
@@ -179,12 +181,13 @@ export default function App() {
                 </ErrorBoundary>
               }
             />
-          </Routes>
-          {import.meta.env.DEV && (
-            <ReactQueryDevtools initialIsOpen={false} />
-          )}
-          {config.devtools === '1' && <DevTools config={config} />}
-          <CookieConsent />
+            </Routes>
+            {import.meta.env.DEV && (
+              <ReactQueryDevtools initialIsOpen={false} />
+            )}
+            {config.devtools === '1' && <DevTools config={config} />}
+            <CookieConsent />
+          </MaiMaiProvider>
         </MoodProvider>
       </QuietModeProvider>
     </QueryClientProvider>
