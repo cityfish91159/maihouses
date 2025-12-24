@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { MOOD_CONFIGS } from './configs';
+import { MOOD_CONFIGS, EFFECT_POSITIONS, mirrorPath, CANVAS_SIZE } from './types';
 import type { MaiMaiMood } from './types';
 
 describe('MaiMai MOOD_CONFIGS', () => {
@@ -82,27 +82,91 @@ describe('MaiMai MOOD_CONFIGS', () => {
     expect(MOOD_CONFIGS.sleep.antenna?.droopy).toBe(true);
   });
 
-  it('SVG path 不應包含硬編碼數字 (應使用常量)', () => {
-    // 檢查是否有獨立的純數字 (不在變數名或運算式中)
-    const hasHardcodedNumbers = (str: string) => {
-      // 排除常見的小數字 (0, 1, 2, 3, 4, 5)
-      const suspiciousNumbers = /\b(?:[6-9]|\d{2,})\b/g;
-      return suspiciousNumbers.test(str);
-    };
-
-    allMoods.forEach(mood => {
-      const config = MOOD_CONFIGS[mood];
-
-      // 這裡不檢查 path 字串,因為它們是由工廠函數生成的
-      // 只要工廠函數使用常量,就符合規範
-      expect(config).toBeDefined();
-    });
-  });
-
   it('所有心情的配置應該可以序列化', () => {
     allMoods.forEach(mood => {
       const config = MOOD_CONFIGS[mood];
       expect(() => JSON.stringify(config)).not.toThrow();
     });
+  });
+});
+
+describe('EFFECT_POSITIONS', () => {
+  it('應該為所有心情定義特效位置', () => {
+    const allMoods: (MaiMaiMood | 'default')[] = [
+      'default', 'idle', 'wave', 'peek', 'happy', 'thinking',
+      'excited', 'confused', 'celebrate', 'shy', 'sleep',
+    ];
+
+    allMoods.forEach(mood => {
+      expect(EFFECT_POSITIONS[mood]).toBeDefined();
+      expect(Array.isArray(EFFECT_POSITIONS[mood])).toBe(true);
+    });
+  });
+
+  it('celebrate 和 excited 應該有特效', () => {
+    expect(EFFECT_POSITIONS.celebrate.length).toBeGreaterThan(0);
+    expect(EFFECT_POSITIONS.excited.length).toBeGreaterThan(0);
+  });
+
+  it('特效項目應該有正確的結構', () => {
+    const effectsWithItems: MaiMaiMood[] = ['celebrate', 'excited', 'happy', 'thinking', 'sleep', 'shy', 'wave'];
+
+    effectsWithItems.forEach(mood => {
+      EFFECT_POSITIONS[mood].forEach(effect => {
+        expect(effect).toHaveProperty('kind');
+        expect(effect).toHaveProperty('x');
+        expect(effect).toHaveProperty('y');
+        expect(['text', 'star', 'sparkle', 'confetti', 'circle', 'ellipse']).toContain(effect.kind);
+      });
+    });
+  });
+
+  it('特效座標應該在合理範圍內', () => {
+    const effectsWithItems: MaiMaiMood[] = ['celebrate', 'excited', 'happy'];
+
+    effectsWithItems.forEach(mood => {
+      EFFECT_POSITIONS[mood].forEach(effect => {
+        // x 座標應該在 -100 到 100 之間（相對於中心點）
+        expect(effect.x).toBeGreaterThanOrEqual(-100);
+        expect(effect.x).toBeLessThanOrEqual(100);
+        // y 座標應該在 0 到 200 之間
+        expect(effect.y).toBeGreaterThanOrEqual(0);
+        expect(effect.y).toBeLessThanOrEqual(240);
+      });
+    });
+  });
+});
+
+describe('mirrorPath', () => {
+  it('應該正確鏡像 SVG 路徑座標', () => {
+    const input = 'M 50 100 L 60 120';
+    const expected = 'M 150 100 L 140 120';
+    expect(mirrorPath(input)).toBe(expected);
+  });
+
+  it('應該處理多個座標對', () => {
+    const input = 'M 10 20 L 30 40 L 50 60';
+    const expected = 'M 190 20 L 170 40 L 150 60';
+    expect(mirrorPath(input)).toBe(expected);
+  });
+
+  it('應該處理 Q 曲線命令', () => {
+    const input = 'M 50 100 Q 100 50 150 100';
+    const expected = 'M 150 100 Q 100 50 50 100';
+    expect(mirrorPath(input)).toBe(expected);
+  });
+
+  it('中心點應該保持在中心', () => {
+    const centerX = CANVAS_SIZE / 2; // 100
+    const input = `M ${centerX} 100`;
+    const expected = `M ${centerX} 100`;
+    expect(mirrorPath(input)).toBe(expected);
+  });
+
+  it('左右對稱點應該正確交換', () => {
+    const leftX = 50;
+    const rightX = 150;
+    expect(mirrorPath(`M ${leftX} 100`)).toBe(`M ${rightX} 100`);
+    expect(mirrorPath(`M ${rightX} 100`)).toBe(`M ${leftX} 100`);
   });
 });

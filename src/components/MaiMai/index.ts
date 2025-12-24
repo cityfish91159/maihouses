@@ -23,6 +23,7 @@ export {
 
 // Hooks
 export { useMaiMaiMood, useMascotCelebrateEvent } from './useMaiMaiMood';
+export { useConfetti } from './useConfetti';
 
 // 型別
 export type {

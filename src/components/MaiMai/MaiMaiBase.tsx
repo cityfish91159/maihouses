@@ -215,8 +215,8 @@ function areEyePropsEqual(
  * // 圓形眼睛
  * <RenderEye data={{ type: 'circle', cx: EYE_L_X, cy: EYE_Y, r: EYE_RADIUS, fill: 'currentColor' }} />
  *
- * // 線條眼睛 (閉眼)
- * <RenderEye data={{ type: 'path', d: `M ${EYE_L_X - 7} ${EYE_Y} h 14`, strokeWidth: 3 }} />
+ * // 線條眼睛 (閉眼) - 使用工廠函數生成,避免硬編碼
+ * <RenderEye data={eyes.closed().left} />
  */
 const RenderEye = memo(function RenderEye({ data }: { data: EyeData }) {
   if (data.type === 'circle') {

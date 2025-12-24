@@ -38,7 +38,7 @@ export default function MascotMaiMai({ isThinking = false, isSuccess = false, ha
     isLoading: isThinking,
   });
 
-  const { fireConfetti, ConfettiOverlay } = useConfetti(14);
+  const { fireConfetti, ConfettiCanvas } = useConfetti({ particleCount: 14 });
   const prevMoodRef = useRef<MaiMaiMood>(mood);
 
   useEffect(() => {
@@ -58,7 +58,7 @@ export default function MascotMaiMai({ isThinking = false, isSuccess = false, ha
       {speechMessages.length > 0 && (
         <MaiMaiSpeech messages={speechMessages} />
       )}
-      {ConfettiOverlay}
+      <ConfettiCanvas />
       <MaiMaiBase
         mood={mood}
         size="lg"

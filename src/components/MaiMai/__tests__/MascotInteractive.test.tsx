@@ -4,10 +4,11 @@ import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
 import MascotInteractive from '../../MascotInteractive';
 
 const mockFireConfetti = vi.fn();
+const MockConfettiCanvas = () => <div data-testid="confetti-canvas" />;
 
 vi.mock('../useConfetti', () => ({
 	__esModule: true,
-	default: () => ({ fireConfetti: mockFireConfetti, ConfettiOverlay: <div data-testid="overlay" /> }),
+	useConfetti: () => ({ fireConfetti: mockFireConfetti, ConfettiCanvas: MockConfettiCanvas }),
 }));
 
 describe('MascotInteractive confetti edge trigger', () => {
@@ -45,8 +46,8 @@ describe('MascotInteractive confetti edge trigger', () => {
 		expect(mockFireConfetti).toHaveBeenCalledTimes(1);
 		expect(eventCount).toBe(1);
 
-		// 等待冷卻，再進入 celebrate 會再觸發
-		vi.advanceTimersByTime(1000);
+		// 等待冷卻（eventCelebrating 重置需要 2 秒），再進入 celebrate 會再觸發
+		vi.advanceTimersByTime(2100);
 		rerender(<MascotInteractive mood="celebrate" messages={["hi"]} />);
 		expect(mockFireConfetti).toHaveBeenCalledTimes(2);
 		expect(eventCount).toBe(2);

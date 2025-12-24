@@ -1,6 +1,5 @@
 import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
-import { MaiMaiBase, MaiMaiSpeech, useMaiMaiMood, useMascotCelebrateEvent, SIZE_CLASSES } from './MaiMai';
-import useConfetti from './MaiMai/useConfetti';
+import { MaiMaiBase, MaiMaiSpeech, useMaiMaiMood, useMascotCelebrateEvent, useConfetti, SIZE_CLASSES } from './MaiMai';
 import type { MaiMaiMood } from './MaiMai';
 
 interface MascotInteractiveProps {
@@ -46,7 +45,7 @@ export default function MascotInteractive({
     isCelebrating: eventCelebrating // Pass event-triggered celebration
   });
 
-  const { fireConfetti, ConfettiOverlay } = useConfetti();
+  const { fireConfetti, ConfettiCanvas } = useConfetti();
 
   // 監聽全域慶祝事件 (e.g. LINE Share)
   useMascotCelebrateEvent(useCallback(() => {
@@ -71,12 +70,12 @@ export default function MascotInteractive({
       now - lastCelebrateAtRef.current > 800 &&
       !eventCelebrating // Prevent loop: don't re-dispatch if triggered by event
     ) {
-      fireConfetti();
+      // 只 dispatch 事件，由事件監聽器統一處理 fireConfetti
       window.dispatchEvent(new CustomEvent('mascot:celebrate'));
       lastCelebrateAtRef.current = now;
     }
     prevMoodRef.current = computedMood;
-  }, [computedMood, fireConfetti]);
+  }, [computedMood, eventCelebrating]);
 
   return (
     <div
@@ -91,7 +90,7 @@ export default function MascotInteractive({
       {effectiveMessages.length > 0 && (
         <MaiMaiSpeech messages={effectiveMessages} />
       )}
-      {ConfettiOverlay}
+      <ConfettiCanvas />
       {/* 公仔 */}
       <div className={`size-full transition-transform duration-300 ${isHovered ? 'scale-110' : ''}`}>
         <MaiMaiBase
