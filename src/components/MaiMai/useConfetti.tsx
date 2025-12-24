@@ -48,7 +48,7 @@ export function useConfetti(options: UseConfettiOptions = {}) {
   } = options;
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const confettiInstance = useRef<confetti.CreateTypes | null>(null);
+  const confettiInstance = useRef<ReturnType<typeof confetti.create> | null>(null);
 
   // 初始化 confetti 實例
   useEffect(() => {
