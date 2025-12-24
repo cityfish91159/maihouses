@@ -6,7 +6,7 @@ allowed-tools: Read, Grep, Bash, Edit
 
 # Code Validator Skill
 
-依照 `/home/user/maihouses/CLAUDE.md` 規範驗證代碼品質。
+依照專案根目錄的 `CLAUDE.md` 規範驗證代碼品質。
 
 ## 🎯 執行時機
 
@@ -109,6 +109,6 @@ npm run lint
 
 ## 🎓 參考規範
 
-所有驗證標準基於：`/home/user/maihouses/CLAUDE.md`
+所有驗證標準基於：專案根目錄的 `CLAUDE.md`
 
 違反任何規範即為驗證失敗。

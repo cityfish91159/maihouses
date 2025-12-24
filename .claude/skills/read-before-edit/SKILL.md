@@ -260,7 +260,7 @@ Edit: file_path="src/hooks/useAuth.ts" ...
 
 ## 📝 完整案例研究
 
-見 `/home/user/maihouses/CLAUDE.md` 第 "📖 強制閱讀規範" 章節。
+見專案根目錄的 `CLAUDE.md` 第 "📖 強制閱讀規範" 章節。
 
 ## 💡 快速提示
 
@@ -276,7 +276,7 @@ Edit: file_path="src/hooks/useAuth.ts" ...
 
 ## 🎓 參考規範
 
-- 完整規範: `/home/user/maihouses/CLAUDE.md`
+- 完整規範: `CLAUDE.md` (專案根目錄)
 - 監督系統: `.claude/settings.json` hooks 配置
 - 稽核腳本: `scripts/ai-supervisor.sh`
 

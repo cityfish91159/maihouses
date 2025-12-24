@@ -207,10 +207,10 @@ grep -A 3 "permissions" .claude/settings.json
 
 ## 📖 相關文檔
 
-- 專案規範：`/home/user/maihouses/CLAUDE.md`
+- 專案規範：`CLAUDE.md` (專案根目錄)
 - Settings 配置：`.claude/settings.json`
 - Hooks 系統：`scripts/ai-supervisor.sh`
-- 官方文檔：https://docs.claude.com/en/docs/agents-and-tools/agent-skills/overview
+- 官方文檔：https://docs.anthropic.com/en/docs/claude-code
 
 ---
 
