@@ -26,11 +26,23 @@ const STORAGE_KEY_MOOD = 'maimai-mood-v1';
 const STORAGE_KEY_MESSAGES = 'maimai-messages-v1';
 const MAX_MESSAGES = 3;
 
+const VALID_MOODS = new Set<MaiMaiMood>([
+  'idle', 'wave', 'peek', 'happy', 'thinking', 
+  'excited', 'confused', 'celebrate', 'shy', 'sleep'
+]);
+
+function isValidMood(mood: unknown): mood is MaiMaiMood {
+  return typeof mood === 'string' && VALID_MOODS.has(mood as MaiMaiMood);
+}
+
 export const MaiMaiProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // 從 localStorage 初始化 mood
   const [mood, setMoodState] = useState<MaiMaiMood>(() => {
     const stored = safeLocalStorage.getItem(STORAGE_KEY_MOOD);
-    return (stored as MaiMaiMood) || 'idle';
+    if (isValidMood(stored)) {
+      return stored;
+    }
+    return 'idle';
   });
 
   // 從 localStorage 初始化 messages
