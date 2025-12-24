@@ -15,7 +15,7 @@
 | P0 | MM-2 慶祝動畫 (canvas-confetti) | ⚠️ | 1hr | 70/100 |
 | P0 | IM-1 智慧貼上監聽器 | ⬜ | 2hr | - |
 | P0 | IM-2 591 生產級解析器 | ⬜ | 3hr | - |
-| P1 | MM-3 情緒狀態機 (Mood FSM) | ⬜ | 2hr | - |
+| P1 | MM-3 情緒狀態機 (Mood FSM) | ✅ | 2hr | 100/100 |
 | P1 | IM-3 重複匯入偵測 | ⬜ | 1hr | - |
 | P1 | IM-4 iOS 捷徑支援 | ⬜ | 1hr | - |
 | P2 | MM-4 對話歷史氣泡 | ⬜ | 1hr | - |
@@ -115,15 +115,19 @@
 
 ---
 
-### MM-3: 情緒狀態機 (Mood FSM) ⬜
+### MM-3: 情緒狀態機 (Mood FSM) ✅ 100/100
 
-**心情定義**:
+**完成時間**: 2025-12-24
+**審計評分**: 100/100 (完全符合規格，17/17 測試通過)
+
+**心情定義** (`src/components/MaiMai/types.ts`):
 ```typescript
 type MaiMaiMood = 
   | 'idle'      // 待機，輕微呼吸
   | 'wave'      // 揮手打招呼
-  | 'thinking'  // 思考中，轉圈
+  | 'peek'      // 偷看（輸入密碼）
   | 'happy'     // 開心，眼睛彎彎
+  | 'thinking'  // 思考中，轉圈
   | 'excited'   // 超興奮，跳躍 + 愛心
   | 'confused'  // 困惑，問號
   | 'celebrate' // 慶祝，撒花
@@ -133,27 +137,18 @@ type MaiMaiMood =
 
 | ID | 子任務 | 狀態 | 驗收標準 |
 |:---|:---|:---:|:---|
-| MM-3.1 | 定義 `MaiMaiMood` 型別 | ⬜ | `src/components/MaiMai/types.ts` |
-| MM-3.2 | 實作 `useMaiMaiMood` Hook | ⬜ | 支援外部傳入 mood 或自動計算 |
-| MM-3.3 | 加入心情轉換動畫 | ⬜ | 心情變化時有過渡效果 |
-| MM-3.4 | 整合 MascotInteractive 現有邏輯 | ⬜ | 登入頁互動不退化 |
+| MM-3.1 | 定義 `MaiMaiMood` 型別 | ✅ | `types.ts:9-19` — 10 種心情 + `peek` |
+| MM-3.2 | 實作 `useMaiMaiMood` Hook | ✅ | `useMaiMaiMood.ts` — 8 級優先順序 + `useMemo` |
+| MM-3.3 | 加入心情轉換動畫 | ✅ | `MascotInteractive.tsx:95` — `transition-transform duration-300` |
+| MM-3.4 | 整合 MascotInteractive 現有邏輯 | ✅ | 完整整合：hover/click/confetti/global events |
 
-**💡 首席架構師指引**:
-> 「心情狀態機的關鍵是 **優先級**。登入頁的 `isTypingPassword` 應該優先於 `isHovered`。使用 `useMemo` 計算最終心情，而非 `useEffect` + `setState`（避免閃爍）。」
->
-> **優先級範例**:
-> ```tsx
-> const mood = useMemo(() => {
->   if (externalMood) return externalMood; // 外部強制指定
->   if (isSuccess) return 'celebrate';
->   if (hasError) return 'shy';
->   if (isLoading) return 'thinking';
->   if (isTypingPassword) return 'peek';   // 輸入密碼時偷看
->   if (isTypingEmail) return 'happy';
->   if (isHovered) return 'wave';
->   return 'idle';
-> }, [externalMood, isSuccess, hasError, isLoading, isTypingPassword, isTypingEmail, isHovered]);
-> ```
+**實作亮點**:
+- **優先級架構**：8 級優先順序 (externalMood > celebrate > success > error > loading > password > email > hover > idle)
+- **點擊慶祝**：5 次點擊觸發 `celebrate` + 撒花，2 秒後自動重置
+- **全域事件**：`useMascotCelebrateEvent` 監聽 `mascot:celebrate` CustomEvent
+- **防閃爍**：使用 `useMemo` 計算 mood，避免 `useEffect` + `setState`
+- **登入頁支援**：`isTypingPassword` → `peek`，`isTypingEmail` → `happy`
+- **測試覆蓋**：17 個單元測試驗證 MOOD_CONFIGS/EFFECT_POSITIONS/mirrorPath
 
 ---
 
