@@ -29,8 +29,10 @@ export const FeaturedReviewSchema = z.object({
 /**
  * 精選房源卡片 Schema
  * main 卡片有 highlights，side 卡片沒有
+ * id 用於導航 (Mock: MH-100001, DB: public_id)
  */
 export const FeaturedPropertyCardSchema = z.object({
+  id: z.string().optional(), // 導航用 ID (Mock 或 DB public_id)
   badge: z.string(),
   image: z.string().url(),
   title: z.string(),
@@ -69,8 +71,10 @@ export const ListingReviewSchema = z.object({
 
 /**
  * 列表房源卡片 Schema
+ * id 用於導航 (Mock 或 DB public_id)
  */
 export const ListingPropertyCardSchema = z.object({
+  id: z.string().optional(), // 導航用 ID (Mock 或 DB public_id)
   image: z.string().url(),
   title: z.string(),
   tags: z.array(z.string()).min(1, '至少要有一項 tags'),

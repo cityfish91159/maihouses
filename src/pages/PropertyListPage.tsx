@@ -2,10 +2,45 @@ import React, { useEffect, useState } from 'react';
 import LegacyFeaturedCard from '../features/property/components/LegacyFeaturedCard';
 import LegacyHorizontalCard from '../features/property/components/LegacyHorizontalCard';
 import { SEED_DATA } from '../features/property/data/seed';
+import type { PropertyPageData } from '../types/property-page';
 import '../styles/LegacyPropertyPage.css'; // Import strict legacy styles
 
 // Mimic legacy behavior: Fetch directly from the endpoint
 const API_ENDPOINT = '/api/property/page-data';
+
+/**
+ * 圖片預載函數 - 避免 API 資料切換時的閃爍
+ * @param data API 回傳的資料
+ * @returns Promise 在主要圖片載入完成後 resolve
+ */
+async function preloadImages(data: PropertyPageData): Promise<void> {
+    const imageUrls: string[] = [];
+
+    // Featured 區塊的三張主要圖片
+    if (data.featured?.main?.image) imageUrls.push(data.featured.main.image);
+    if (data.featured?.sideTop?.image) imageUrls.push(data.featured.sideTop.image);
+    if (data.featured?.sideBottom?.image) imageUrls.push(data.featured.sideBottom.image);
+
+    // 只預載前 3 張 listing 圖片 (viewport 內可見)
+    data.listings?.slice(0, 3).forEach(item => {
+        if (item.image) imageUrls.push(item.image);
+    });
+
+    // 並行預載，最多等 2 秒
+    const preloadPromises = imageUrls.map(url =>
+        new Promise<void>((resolve) => {
+            const img = new Image();
+            img.onload = () => resolve();
+            img.onerror = () => resolve(); // 失敗也不阻塞
+            img.src = url;
+        })
+    );
+
+    await Promise.race([
+        Promise.all(preloadPromises),
+        new Promise<void>(resolve => setTimeout(resolve, 2000)) // 2 秒 timeout
+    ]);
+}
 
 // Legacy Header Component (Inline for strict structure matching)
 const LegacyHeader = () => (
@@ -39,7 +74,7 @@ const LegacyHeader = () => (
 
 export default function PropertyListPage() {
     // S2: Instant Render with Mock Data (Legacy Behavior)
-    const [data, setData] = useState<typeof SEED_DATA>(SEED_DATA);
+    const [data, setData] = useState<PropertyPageData>(SEED_DATA);
 
     useEffect(() => {
         const fetchLive = async () => {
@@ -47,6 +82,8 @@ export default function PropertyListPage() {
                 const res = await fetch(API_ENDPOINT);
                 const json = await res.json();
                 if (json.success && json.data) {
+                    // 預載圖片後再更新資料，避免閃爍
+                    await preloadImages(json.data);
                     setData(json.data);
                 }
             } catch (err) {

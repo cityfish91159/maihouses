@@ -1,8 +1,9 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import type { FeaturedPropertyCard, FeaturedReview } from '../../../types/property-page';
 
 interface LegacyFeaturedCardProps {
-    data: any;
+    data: FeaturedPropertyCard;
     variant: 'main' | 'side';
 }
 
@@ -10,9 +11,9 @@ const LegacyFeaturedCard: React.FC<LegacyFeaturedCardProps> = ({ data, variant }
     const navigate = useNavigate();
 
     const handleNavigate = () => {
-        // Priority: id (Mock) -> public_id (DB) -> fallback
-        const targetId = data.id || data.public_id || 'detail';
-        window.location.href = `/maihouses/property/${targetId}`;
+        // 使用 id 進行導航，若無則使用 demo 預設
+        const targetId = data.id || 'MH-100001';
+        navigate(`/property/${targetId}`);
     };
 
     return (
@@ -61,7 +62,7 @@ const LegacyFeaturedCard: React.FC<LegacyFeaturedCardProps> = ({ data, variant }
                     // Main Card Layout
                     <>
                         <div className="property-reviews">
-                            {data.reviews.map((review: any, i: number) => (
+                            {data.reviews.map((review: FeaturedReview, i: number) => (
                                 <div key={i} className="property-review-item">
                                     <div className="review-header">
                                         <span className="review-stars">{review.stars}</span>
@@ -99,7 +100,7 @@ const LegacyFeaturedCard: React.FC<LegacyFeaturedCardProps> = ({ data, variant }
                     // Side Card Layout
                     <>
                         <div className="property-reviews">
-                            {data.reviews.map((review: any, i: number) => (
+                            {data.reviews.map((review: FeaturedReview, i: number) => (
                                 <div key={i} className="property-review-item">
                                     <div className="review-header">
                                         <span className="review-stars">{review.stars}</span>

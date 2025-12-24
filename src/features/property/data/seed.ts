@@ -1,4 +1,6 @@
-export const SEED_DATA = {
+import type { PropertyPageData } from '../../../types/property-page';
+
+export const SEED_DATA: PropertyPageData = {
     featured: {
         main: {
             id: "MH-100001",
@@ -35,6 +37,7 @@ export const SEED_DATA = {
             size: "約 23 坪"
         },
         sideTop: {
+            id: "MH-100002",
             badge: "高評價",
             image: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&auto=format&fit=crop",
             title: "遠雄新未來",
@@ -55,6 +58,7 @@ export const SEED_DATA = {
             size: "約 18 坪"
         },
         sideBottom: {
+            id: "MH-100003",
             badge: "新上架",
             image: "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800&auto=format&fit=crop",
             title: "國家大苑",
@@ -77,6 +81,7 @@ export const SEED_DATA = {
     },
     listings: [
         {
+            id: "MH-100004",
             image: "https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=600&auto=format&fit=crop",
             title: "冠德美麗大直・中山區",
             tags: ["捷運劍南路站"],
@@ -92,6 +97,7 @@ export const SEED_DATA = {
             lockCount: 90
         },
         {
+            id: "MH-100005",
             image: "https://images.unsplash.com/photo-1600585154526-990dced4db0d?w=600&auto=format&fit=crop",
             title: "日勝幸福・三重區",
             tags: ["機捷 A2"],
@@ -107,6 +113,7 @@ export const SEED_DATA = {
             lockCount: 56
         },
         {
+            id: "MH-100006",
             image: "https://images.unsplash.com/photo-1600573472592-401b489a3cdc?w=600&auto=format&fit=crop",
             title: "文心大和・中正區",
             tags: ["信義計畫區"],
@@ -122,6 +129,7 @@ export const SEED_DATA = {
             lockCount: 45
         },
         {
+            id: "MH-100007",
             image: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=600&auto=format&fit=crop",
             title: "合環青田・新莊區",
             tags: ["副都心生活圈"],
@@ -137,6 +145,7 @@ export const SEED_DATA = {
             lockCount: 33
         },
         {
+            id: "MH-100008",
             image: "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=600&auto=format&fit=crop",
             title: "世界花園・蘆洲區",
             tags: ["捷運蘆洲站"],
@@ -152,6 +161,7 @@ export const SEED_DATA = {
             lockCount: 27
         },
         {
+            id: "MH-100009",
             image: "https://images.unsplash.com/photo-1600585154526-990dced4db0d?w=600&auto=format&fit=crop",
             title: "遠雄大未來・汐止區",
             tags: ["東湖生活圈"],
@@ -167,6 +177,7 @@ export const SEED_DATA = {
             lockCount: 42
         },
         {
+            id: "MH-100010",
             image: "https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=600&auto=format&fit=crop",
             title: "興富發巨蛋・鼓山區",
             tags: ["巨蛋商圈"],
@@ -182,6 +193,7 @@ export const SEED_DATA = {
             lockCount: 49
         },
         {
+            id: "MH-100011",
             image: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=600&auto=format&fit=crop",
             title: "華固新天地・內湖區",
             tags: ["內湖科學園區"],

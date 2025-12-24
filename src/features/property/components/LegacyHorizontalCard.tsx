@@ -1,17 +1,18 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import type { ListingPropertyCard, ListingReview } from '../../../types/property-page';
 
 interface LegacyHorizontalCardProps {
-    data: any;
+    data: ListingPropertyCard;
 }
 
 const LegacyHorizontalCard: React.FC<LegacyHorizontalCardProps> = ({ data }) => {
     const navigate = useNavigate();
 
     const handleNavigate = () => {
-        // Priority: id (Mock) -> public_id (DB) -> fallback
-        const targetId = data.id || data.public_id || 'detail';
-        window.location.href = `/maihouses/property/${targetId}`;
+        // 使用 id 進行導航，若無則使用 demo 預設
+        const targetId = data.id || 'MH-100001';
+        navigate(`/property/${targetId}`);
     };
 
     const firstTag = data.tags && data.tags.length > 0 ? data.tags[0] : null;
@@ -37,7 +38,7 @@ const LegacyHorizontalCard: React.FC<LegacyHorizontalCardProps> = ({ data }) => 
                     </div>
 
                     <div className="horizontal-reviews">
-                        {data.reviews.map((review: any, i: number) => (
+                        {data.reviews.map((review: ListingReview, i: number) => (
                             <div key={i} className="review-item-compact">
                                 <span className="review-badge">{review.badge}</span>
                                 <p className="review-text">{review.content}</p>

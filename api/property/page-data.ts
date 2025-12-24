@@ -261,6 +261,7 @@ function adaptToFeaturedCard(
     : seed.highlights;
 
   return {
+    id: property.public_id || seed.id, // 導航用 ID
     badge: property.features?.[0] || seed.badge,
     image: property.images?.[0] || seed.image,
     title: property.title || seed.title,
@@ -339,6 +340,7 @@ function adaptToListingCard(
   const finalTags = [...tags, ...specTags];
 
   return {
+    id: property.public_id || seed.id, // 導航用 ID
     image,
     title: property.title
       ? `${property.title}・${property.address?.split('區')[0]}區`
