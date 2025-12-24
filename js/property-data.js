@@ -1,15 +1,28 @@
-window.propertyMockData = {
+/**
+ * Property Page Mock Data
+ * 
+ * ⚠️ SSOT 警告：此檔案內容必須與 public/data/seed-property-page.json 保持同步！
+ * 
+ * 為了首屏 0ms 載入，保留 JS 物件形式（瀏覽器直接解析）
+ * 後端 API 失敗時也會使用 seed-property-page.json 作為 fallback
+ * 
+ * @see public/data/seed-property-page.json - 單一真理來源
+ * @see api/property/page-data.ts - 後端聚合 API
+ */
+export const propertyMockData = {
   default: {
     featured: {
       main: {
         badge: "熱門社區",
-        image: "https://images.pexels.com/photos/323780/pexels-photo-323780.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
-        title: "新光晴川",
-        location: "📍 板橋區・江翠北側重劃區",
+        image: "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=1260&auto=format&fit=crop",
+        title: "新光晴川 B棟 12樓",
+        location: "📍 板橋區・江子翠生活圈",
         details: [
-          "2房2廳1衛・室內 23坪",
-          "🏢 2021年完工・128戶",
-          "👥 自住85%・年輕家庭"
+          "3房2廳2衛 + 平面車位・室內 23坪 / 主建物 26坪",
+          "🏢 2020年完工・7棟・420戶",
+          "👥 自住85%・首購換屋族群",
+          "🚗 平面車位為主(好停)",
+          "💰 管理費約 80元/坪"
         ],
         highlights: "🏪 5分鐘全聯・10分鐘捷運",
         rating: "4.4 分(63 則評價)",
@@ -33,7 +46,7 @@ window.propertyMockData = {
       },
       sideTop: {
         badge: "高評價",
-        image: "https://images.pexels.com/photos/1642125/pexels-photo-1642125.jpeg?auto=compress&cs=tinysrgb&w=800",
+        image: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&auto=format&fit=crop",
         title: "遠雄新未來",
         location: "📍 中和區・中和環球購物中心",
         details: [
@@ -52,7 +65,7 @@ window.propertyMockData = {
       },
       sideBottom: {
         badge: "新上架",
-        image: "https://images.pexels.com/photos/1546168/pexels-photo-1546168.jpeg?auto=compress&cs=tinysrgb&w=800",
+        image: "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800&auto=format&fit=crop",
         title: "國家大苑",
         location: "📍 永和區・永安市場商圈",
         details: [
@@ -72,7 +85,7 @@ window.propertyMockData = {
     },
     listings: [
       {
-        image: "https://images.pexels.com/photos/1732414/pexels-photo-1732414.jpeg?auto=compress&cs=tinysrgb&w=600",
+        image: "https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=600&auto=format&fit=crop",
         title: "冠德美麗大直・中山區",
         tag: "捷運劍南路站",
         price: "4 房 3,980 萬",
@@ -87,7 +100,7 @@ window.propertyMockData = {
         lockCount: 90
       },
       {
-        image: "https://images.pexels.com/photos/2635038/pexels-photo-2635038.jpeg?auto=compress&cs=tinysrgb&w=600",
+        image: "https://images.unsplash.com/photo-1600585154526-990dced4db0d?w=600&auto=format&fit=crop",
         title: "日勝幸福・三重區",
         tag: "機捷 A2",
         price: "2 房 750 萬",
@@ -102,7 +115,7 @@ window.propertyMockData = {
         lockCount: 56
       },
       {
-        image: "https://images.pexels.com/photos/1571468/pexels-photo-1571468.jpeg?auto=compress&cs=tinysrgb&w=600",
+        image: "https://images.unsplash.com/photo-1600573472592-401b489a3cdc?w=600&auto=format&fit=crop",
         title: "文心大和・中正區",
         tag: "信義計畫區",
         price: "2 房 980 萬",
@@ -117,7 +130,7 @@ window.propertyMockData = {
         lockCount: 45
       },
       {
-        image: "https://images.pexels.com/photos/259580/pexels-photo-259580.jpeg?auto=compress&cs=tinysrgb&w=600",
+        image: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=600&auto=format&fit=crop",
         title: "合環青田・新莊區",
         tag: "副都心生活圈",
         price: "3 房 1,180 萬",
@@ -132,7 +145,7 @@ window.propertyMockData = {
         lockCount: 33
       },
       {
-        image: "https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg?auto=compress&cs=tinysrgb&w=600",
+        image: "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=600&auto=format&fit=crop",
         title: "世界花園・蘆洲區",
         tag: "捷運蘆洲站",
         price: "2 房 880 萬",
@@ -147,7 +160,7 @@ window.propertyMockData = {
         lockCount: 27
       },
       {
-        image: "https://images.pexels.com/photos/323780/pexels-photo-323780.jpeg?auto=compress&cs=tinysrgb&w=600",
+        image: "https://images.unsplash.com/photo-1600585154526-990dced4db0d?w=600&auto=format&fit=crop",
         title: "遠雄大未來・汐止區",
         tag: "東湖生活圈",
         price: "3 房 1,350 萬",
@@ -162,7 +175,7 @@ window.propertyMockData = {
         lockCount: 42
       },
       {
-        image: "https://images.pexels.com/photos/280222/pexels-photo-280222.jpeg?auto=compress&cs=tinysrgb&w=600",
+        image: "https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=600&auto=format&fit=crop",
         title: "興富發巨蛋・鼓山區",
         tag: "巨蛋商圈",
         price: "2 房 1,680 萬",
@@ -177,7 +190,7 @@ window.propertyMockData = {
         lockCount: 49
       },
       {
-        image: "https://images.pexels.com/photos/1643383/pexels-photo-1643383.jpeg?auto=compress&cs=tinysrgb&w=600",
+        image: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=600&auto=format&fit=crop",
         title: "華固新天地・內湖區",
         tag: "內湖科學園區",
         price: "3 房 2,180 萬",
@@ -283,3 +296,10 @@ window.propertyMockData = {
     ]
   }
 };
+
+// 保留全域以支援舊版引用
+if (typeof window !== 'undefined') {
+  window.propertyMockData = propertyMockData;
+}
+
+export default propertyMockData;
