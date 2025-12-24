@@ -31,7 +31,7 @@ export default async function handler(req: any, res: any) {
   // 解析 request body
   const { 
     messages, 
-    model = 'claude-3-5-sonnet-20241022', 
+    model = 'claude-sonnet-4-20250514', 
     max_tokens = 4096,
     temperature = 1.0,
     stream = false 
