@@ -118,7 +118,7 @@
 ### MM-3: 情緒狀態機 (Mood FSM) ✅ 100/100
 
 **完成時間**: 2025-12-24
-**審計評分**: 100/100 (完全符合規格，17/17 測試通過)
+**審計評分**: 100/100 (完全符合規格，41/41 測試通過)
 
 **心情定義** (`src/components/MaiMai/types.ts`):
 ```typescript
@@ -139,7 +139,7 @@ type MaiMaiMood =
 |:---|:---|:---:|:---|
 | MM-3.1 | 定義 `MaiMaiMood` 型別 | ✅ | `types.ts:9-19` — 10 種心情 + `peek` |
 | MM-3.2 | 實作 `useMaiMaiMood` Hook | ✅ | `useMaiMaiMood.ts` — 8 級優先順序 + `useMemo` |
-| MM-3.3 | 加入心情轉換動畫 | ✅ | `MascotInteractive.tsx:95` — `transition-transform duration-300` |
+| MM-3.3 | 加入心情轉換動畫 | ✅ | `MaiMaiBase.tsx` — 150ms opacity crossfade |
 | MM-3.4 | 整合 MascotInteractive 現有邏輯 | ✅ | 完整整合：hover/click/confetti/global events |
 
 **實作亮點**:
@@ -147,8 +147,9 @@ type MaiMaiMood =
 - **點擊慶祝**：5 次點擊觸發 `celebrate` + 撒花，2 秒後自動重置
 - **全域事件**：`useMascotCelebrateEvent` 監聽 `mascot:celebrate` CustomEvent
 - **防閃爍**：使用 `useMemo` 計算 mood，避免 `useEffect` + `setState`
+- **心情過渡**：150ms opacity crossfade (CSS 無法 animate SVG path d)
 - **登入頁支援**：`isTypingPassword` → `peek`，`isTypingEmail` → `happy`
-- **測試覆蓋**：17 個單元測試驗證 MOOD_CONFIGS/EFFECT_POSITIONS/mirrorPath
+- **測試覆蓋**：41 個單元測試 (MaiMai.test.ts: 17, useMaiMaiMood.test.ts: 23, MascotInteractive.test.tsx: 1)
 
 ---
 

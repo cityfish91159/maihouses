@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:maihouses.vercel.app)",
+      "Bash(npm run typecheck:*)",
+      "Bash(npm run lint:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nrefactor: complete React migration for PropertyListPage\n\n- Add type safety: Replace `any` types with proper Zod types\n- Add id field to Schema for navigation \\(FeaturedPropertyCard, ListingPropertyCard\\)\n- Update seed.ts with id values for all cards \\(MH-100001 to MH-100011\\)\n- Use navigate\\(\\) instead of window.location.href for SPA navigation\n- Add image preloading to prevent flicker on API data swap\n- API page-data.ts now returns id field from public_id or seed\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git push:*)",
+      "Bash(git commit:*)",
+      "Bash(git pull:*)",
+      "Bash(git rebase:*)"
+    ]
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "filesystem",
+    "puppeteer",
+    "fetch",
+    "git"
+  ]
+}
