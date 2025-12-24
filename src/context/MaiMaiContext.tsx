@@ -62,7 +62,11 @@ export const MaiMaiProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   // setMood: 更新心情並持久化
   const setMood = useCallback((newMood: MaiMaiMood) => {
     setMoodState(newMood);
-    safeLocalStorage.setItem(STORAGE_KEY_MOOD, newMood);
+    try {
+      safeLocalStorage.setItem(STORAGE_KEY_MOOD, newMood);
+    } catch (e) {
+      console.warn('Failed to save mood:', e);
+    }
   }, []);
 
   // addMessage: 新增訊息，自動保持最後 3 句
@@ -72,7 +76,11 @@ export const MaiMaiProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
     setMessagesState((prev) => {
       const updated = [...prev, trimmed].slice(-MAX_MESSAGES);
-      safeLocalStorage.setItem(STORAGE_KEY_MESSAGES, JSON.stringify(updated));
+      try {
+        safeLocalStorage.setItem(STORAGE_KEY_MESSAGES, JSON.stringify(updated));
+      } catch (e) {
+        console.warn('Failed to save messages:', e);
+      }
       return updated;
     });
   }, []);
@@ -80,7 +88,11 @@ export const MaiMaiProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   // resetMessages: 清空訊息
   const resetMessages = useCallback(() => {
     setMessagesState([]);
-    safeLocalStorage.setItem(STORAGE_KEY_MESSAGES, JSON.stringify([]));
+    try {
+      safeLocalStorage.setItem(STORAGE_KEY_MESSAGES, JSON.stringify([]));
+    } catch (e) {
+      console.warn('Failed to reset messages:', e);
+    }
   }, []);
 
   // 使用 useMemo 確保 context value 穩定

@@ -76,6 +76,27 @@ describe('MaiMaiContext', () => {
         expect(result.current.mood).toBe('celebrate');
         expect(safeLocalStorage.setItem).toHaveBeenCalledWith('maimai-mood-v1', 'celebrate');
       });
+
+      it('handles storage errors gracefully when setting mood', () => {
+        const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+        vi.mocked(safeLocalStorage.getItem).mockReturnValue(null);
+        vi.mocked(safeLocalStorage.setItem).mockImplementation(() => {
+          throw new Error('QuotaExceeded');
+        });
+
+        const { result } = renderHook(() => useMaiMai(), { wrapper });
+
+        // Should not throw
+        act(() => {
+          result.current.setMood('shy');
+        });
+
+        // State should still update even if storage fails
+        expect(result.current.mood).toBe('shy');
+        expect(consoleSpy).toHaveBeenCalledWith('Failed to save mood:', expect.any(Error));
+        
+        consoleSpy.mockRestore();
+      });
     });
 
     describe('Message Management', () => {
@@ -149,6 +170,26 @@ describe('MaiMaiContext', () => {
         const { result } = renderHook(() => useMaiMai(), { wrapper });
         
         expect(result.current.messages).toEqual([]);
+      });
+
+      it('handles storage errors gracefully when adding messages', () => {
+        const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+        vi.mocked(safeLocalStorage.getItem).mockReturnValue(null);
+        vi.mocked(safeLocalStorage.setItem).mockImplementation(() => {
+          throw new Error('QuotaExceeded');
+        });
+
+        const { result } = renderHook(() => useMaiMai(), { wrapper });
+
+        act(() => {
+          result.current.addMessage('Important Message');
+        });
+
+        // State update works
+        expect(result.current.messages).toContain('Important Message');
+        expect(consoleSpy).toHaveBeenCalledWith('Failed to save messages:', expect.any(Error));
+
+        consoleSpy.mockRestore();
       });
     });
   });
