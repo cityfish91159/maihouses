@@ -1,14 +1,11 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { Helmet } from 'react-helmet-async';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { Home, Heart, Phone, MessageCircle, Hash, MapPin, ArrowLeft, Shield, Eye, Users, Calendar, Flame, Star, Lock, ChevronRight, CheckCircle, FileText } from 'lucide-react';
 import { AgentTrustCard } from '../components/AgentTrustCard';
 import { propertyService, DEFAULT_PROPERTY, PropertyData } from '../services/propertyService';
 import { ContactModal } from '../components/ContactModal';
 import { ReportGenerator } from './Report';
-import { LineShareAction } from '../components/social/LineShareAction';
 import { buildKeyCapsuleTags, formatArea, formatLayout, formatFloor } from '../utils/keyCapsules';
-import { safeLocalStorage } from '../lib/safeStorage';
 
 // UAG Tracker Hook v8.1 - 追蹤用戶行為 + S級攔截
 // 優化: 1.修正district傳遞 2.S級即時回調 3.互動事件用fetch獲取等級
@@ -26,10 +23,10 @@ const usePropertyTracker = (
 
   // 取得或建立 session_id
   const getSessionId = useCallback(() => {
-    let sid = safeLocalStorage.getItem('uag_session');
+    let sid = localStorage.getItem('uag_session');
     if (!sid) {
       sid = `u_${Math.random().toString(36).substring(2, 11)}`;
-      safeLocalStorage.setItem('uag_session', sid);
+      localStorage.setItem('uag_session', sid);
     }
     return sid;
   }, []);
@@ -170,8 +167,8 @@ export const PropertyDetailPage: React.FC = () => {
   // 取得 agent_id (從 URL 參數或 localStorage)
   const getAgentId = () => {
     let aid = searchParams.get('aid');
-    if (!aid) aid = safeLocalStorage.getItem('uag_last_aid');
-    if (aid && aid !== 'unknown') safeLocalStorage.setItem('uag_last_aid', aid);
+    if (!aid) aid = localStorage.getItem('uag_last_aid');
+    if (aid && aid !== 'unknown') localStorage.setItem('uag_last_aid', aid);
     return aid || 'unknown';
   };
 
@@ -274,14 +271,6 @@ export const PropertyDetailPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#f8fafc] font-sans text-slate-800">
-      <Helmet>
-        <title>{property?.title ? `${property.title} | 邁房子` : '邁房子 | 讓家,不只是地址'}</title>
-        <meta name="description" content={property?.title ? `【邁房子推薦】${property.title} - ${property.price} | ${property.address}` : '邁房子為您提供優質好房'} />
-        <meta property="og:title" content={property?.title ? `${property.title} | 總價 ${property.price}` : '邁房子'} />
-        <meta property="og:description" content={property ? `${property.address} | ${formatArea(property.size)} | ${formatLayout(property.rooms, property.halls)}` : '邁房子為您提供優質好房'} />
-        <meta property="og:image" content={property?.images?.[0] || 'https://maihouses.vercel.app/og-default.jpg'} />
-        <meta property="og:type" content="article" />
-      </Helmet>
       {/* Header */}
       <nav className="sticky top-0 z-overlay flex h-16 items-center justify-between border-b border-slate-100 bg-white/90 px-4 shadow-sm backdrop-blur-md">
         <div className="flex items-center gap-3">
@@ -383,22 +372,12 @@ export const PropertyDetailPage: React.FC = () => {
                 <h1 className="text-2xl font-bold leading-tight text-slate-900">
                   {property.title}
                 </h1>
-                <div className="flex gap-2">
-                  <LineShareAction
-                    url={window.location.origin + window.location.pathname}
-                    title={`【邁房子推薦】${property.title} | 總價 ${property.price} 萬`}
-                    onShareClick={tracker.trackLineClick}
-                    className="flex items-center gap-1 rounded-full bg-[#06C755] px-3 py-2 text-sm font-bold text-white shadow-sm hover:bg-[#05a847]"
-                    btnText="分享"
-                    showIcon={true}
-                  />
-                  <button
-                    onClick={() => setIsFavorite(!isFavorite)}
-                    className={`rounded-full p-2 transition-all ${isFavorite ? 'bg-red-50 text-red-500' : 'bg-slate-50 text-slate-400 hover:bg-slate-100'}`}
-                  >
-                    <Heart size={24} fill={isFavorite ? "currentColor" : "none"} />
-                  </button>
-                </div>
+                <button
+                  onClick={() => setIsFavorite(!isFavorite)}
+                  className={`rounded-full p-2 transition-all ${isFavorite ? 'bg-red-50 text-red-500' : 'bg-slate-50 text-slate-400 hover:bg-slate-100'}`}
+                >
+                  <Heart size={24} fill={isFavorite ? "currentColor" : "none"} />
+                </button>
               </div>
 
               <div className="mt-2 flex items-center gap-2 text-sm text-slate-500">
