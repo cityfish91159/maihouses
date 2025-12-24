@@ -1,7 +1,8 @@
 import React, { memo } from 'react';
-import { 
-  SIZE_CLASSES, 
+import {
+  SIZE_CLASSES,
   CANVAS_SIZE,
+  CANVAS_HEIGHT,
   CENTER_X,
   BODY_X,
   BODY_Y,
@@ -48,7 +49,17 @@ import {
   EFFECT_COLOR_CONFETTI_YELLOW,
   EFFECT_COLOR_SHY_BLUE,
   STAR_INNER_RATIO,
+  STAR_UNIT_VERTICES,
   SPARKLE_DIAGONAL_RATIO,
+  CONFETTI_RECT_1_WIDTH_RATIO,
+  CONFETTI_RECT_1_HEIGHT_RATIO,
+  CONFETTI_RECT_2_X_OFFSET_RATIO,
+  CONFETTI_RECT_2_WIDTH_RATIO,
+  CONFETTI_RECT_2_HEIGHT_RATIO,
+  CONFETTI_RECT_3_X_OFFSET_RATIO,
+  CONFETTI_RECT_3_Y_OFFSET_RATIO,
+  CONFETTI_RECT_3_WIDTH_RATIO,
+  CONFETTI_RECT_3_HEIGHT_RATIO,
   mirrorPath,
 
   MOOD_CONFIGS,
@@ -64,6 +75,8 @@ import type { MaiMaiMood, MaiMaiBaseProps } from './types';
 // ============ 樣式常量 ============
 /** opacity 過渡動畫 (path d 無法 transition，只用 opacity) */
 const T_OPACITY = 'transition-opacity duration-300';
+/** transform 過渡動畫 */
+const T_TRANSFORM = 'transition-transform duration-300';
 
 // ============ SVG 部件 ============
 
@@ -189,21 +202,21 @@ function areEyePropsEqual(
 
 /**
  * 渲染單個眼睛 SVG 元素
- * 
+ *
  * @description NASA-grade 組件：
  * - React.memo + 自定義 areEqual 避免不必要重繪
  * - 支援三種類型：circle (瞳孔)、path (線條)、group (複合)
  * - 遞迴渲染 children 支援複雜眼睛結構
- * 
+ *
  * @param props.data - EyeData 眼睛定義物件
  * @returns SVG 元素或 null
- * 
+ *
  * @example
  * // 圓形眼睛
- * <RenderEye data={{ type: 'circle', cx: 70, cy: 65, r: 8, fill: 'currentColor' }} />
- * 
+ * <RenderEye data={{ type: 'circle', cx: EYE_L_X, cy: EYE_Y, r: EYE_RADIUS, fill: 'currentColor' }} />
+ *
  * // 線條眼睛 (閉眼)
- * <RenderEye data={{ type: 'path', d: 'M62 65 h16', strokeWidth: 3 }} />
+ * <RenderEye data={{ type: 'path', d: `M ${EYE_L_X - 7} ${EYE_Y} h 14`, strokeWidth: 3 }} />
  */
 const RenderEye = memo(function RenderEye({ data }: { data: EyeData }) {
   if (data.type === 'circle') {
@@ -391,14 +404,11 @@ interface EffectShapeProps {
  */
 const EffectStar = React.memo(function EffectStar({ cx, cy, size, opacity, className }: EffectShapeProps) {
   const r = size / 2;
-  // 預計算五角星 10 個頂點 (外5 + 內5 交錯)
+  // 使用預計算的單位圓頂點
   const points = React.useMemo(() => {
-    return Array.from({ length: 10 }, (_, i) => {
-      const isOuter = i % 2 === 0;
-      const angle = (i * 36 - 90) * Math.PI / 180;
-      const radius = isOuter ? r : r * STAR_INNER_RATIO;
-      return `${cx + radius * Math.cos(angle)},${cy + radius * Math.sin(angle)}`;
-    }).join(' ');
+    return STAR_UNIT_VERTICES
+      .map(v => `${cx + v.x * r},${cy + v.y * r}`)
+      .join(' ');
   }, [cx, cy, r]);
 
   return <polygon points={points} fill={EFFECT_COLOR_GOLD} opacity={opacity} className={className} />;
@@ -433,9 +443,9 @@ const EffectConfetti = React.memo(function EffectConfetti({ cx, cy, size, opacit
 
   return (
     <g opacity={opacity} className={className}>
-      <rect x={cx - r * 0.3} y={cy - r} width={r * 0.6} height={r * 1.2} fill={EFFECT_COLOR_CONFETTI_RED} rx="1" transform={`rotate(15 ${cx} ${cy})`} />
-      <rect x={cx - r * 0.8} y={cy - r * 0.5} width={r * 0.5} height={r * 0.8} fill={EFFECT_COLOR_CONFETTI_TEAL} rx="1" transform={`rotate(-20 ${cx} ${cy})`} />
-      <rect x={cx + r * 0.3} y={cy - r * 0.3} width={r * 0.4} height={r} fill={EFFECT_COLOR_CONFETTI_YELLOW} rx="1" transform={`rotate(30 ${cx} ${cy})`} />
+      <rect x={cx - r * CONFETTI_RECT_1_WIDTH_RATIO} y={cy - r} width={r * CONFETTI_RECT_1_WIDTH_RATIO * 2} height={r * CONFETTI_RECT_1_HEIGHT_RATIO} fill={EFFECT_COLOR_CONFETTI_RED} rx="1" transform={`rotate(15 ${cx} ${cy})`} />
+      <rect x={cx - r * CONFETTI_RECT_2_X_OFFSET_RATIO} y={cy - r * 0.5} width={r * CONFETTI_RECT_2_WIDTH_RATIO} height={r * CONFETTI_RECT_2_HEIGHT_RATIO} fill={EFFECT_COLOR_CONFETTI_TEAL} rx="1" transform={`rotate(-20 ${cx} ${cy})`} />
+      <rect x={cx + r * CONFETTI_RECT_3_X_OFFSET_RATIO} y={cy - r * CONFETTI_RECT_3_Y_OFFSET_RATIO} width={r * CONFETTI_RECT_3_WIDTH_RATIO} height={r * CONFETTI_RECT_3_HEIGHT_RATIO} fill={EFFECT_COLOR_CONFETTI_YELLOW} rx="1" transform={`rotate(30 ${cx} ${cy})`} />
     </g>
   );
 });
@@ -551,8 +561,8 @@ export function MaiMaiBase({
       <div className="absolute left-1/2 top-1/2 -z-10 size-3/4 -translate-x-1/2 -translate-y-1/2 animate-pulse rounded-full bg-[var(--brand)]/10 blur-2xl" />
 
       <svg
-        viewBox="0 0 200 240"
-        className={`size-full text-[var(--brand)] drop-shadow-sm transition-transform duration-300 ${getAnimationClass()}`}
+        viewBox={`0 0 ${CANVAS_SIZE} ${CANVAS_HEIGHT}`}
+        className={`size-full text-[var(--brand)] drop-shadow-sm ${T_TRANSFORM} ${getAnimationClass()}`}
       >
         {/* 特效 */}
         {showEffects && <Effects mood={mood} />}

@@ -1,0 +1,19 @@
+{
+  "name": "skillsmp-mcp-server",
+  "version": "1.0.0",
+  "description": "MCP Server for SkillsMP Agent Skills Marketplace",
+  "main": "index.js",
+  "type": "commonjs",
+  "bin": {
+    "skillsmp-mcp": "./index.js"
+  },
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

@@ -2,7 +2,7 @@
   "mcpServers": {
     "filesystem": {
       "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/home/user/maihouses"],
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/home/codespace/maihouses"],
       "env": {}
     },
     "puppeteer": {
@@ -17,8 +17,15 @@
     },
     "git": {
       "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-git", "/home/user/maihouses"],
+      "args": ["-y", "@modelcontextprotocol/server-git", "/home/codespace/maihouses"],
       "env": {}
+    },
+    "skillsmp": {
+      "command": "node",
+      "args": ["/home/codespace/maihouses/mcp-servers/skillsmp/index.js"],
+      "env": {
+        "SKILLSMP_API_KEY": "sk_live_skillsmp_IYFFeI3S5CutdM8QDH2hbo5xpt4xxxv6AIyzSsvCtM4"
+      }
     }
   }
 }
