@@ -11,7 +11,7 @@
 
 | 優先級 | 任務 | 狀態 | 預估工時 | 審計分數 |
 |:---:|:---|:---:|:---:|:---:|
-| P0 | MM-1 MaiMai 原子組件整合 | ✅ | 2hr | 100/100 |
+| P0 | MM-1 MaiMai 原子組件整合 | ⚠️ | 2hr | 83/100 |
 | P0 | MM-2 慶祝動畫 (react-canvas-confetti) | ⬜ | 1hr | - |
 | P0 | IM-1 智慧貼上監聽器 | ⬜ | 2hr | - |
 | P0 | IM-2 591 生產級解析器 | ⬜ | 3hr | - |
@@ -28,10 +28,10 @@
 
 ## 🎭 MaiMai 公仔互動模組
 
-### MM-1: MaiMai 原子組件整合 ✅ 100/100
+### MM-1: MaiMai 原子組件整合 ⚠️ 83/100
 
 **完成時間**: 2025-12-24
-**審計評分**: 100/100 (v2.1-v2.8 + v3.1-v3.10 全部完成)
+**審計評分**: 83/100 (v3.3 偷懶 -4分, v3.7 空殼測試 -3分, 額外發現 -10分備註)
 
 **成果**:
 - 新增 `src/components/MaiMai/` 目錄
@@ -79,20 +79,170 @@
 
 ---
 
-### MM-1.H.v3 待修 (10/10) ✅
+### MM-1.H.v3 待修 (83/100) ⚠️
 
-| # | P | 問題 | 怎麼修 | 狀態 |
-|:---:|:---:|:---|:---|:---:|
-| v3.1 | 0 | arms 路徑 11 處 Magic Numbers | 定義 `ARM_OFFSET_*` 常量組 | ✅ |
-| v3.2 | 0 | EffectConfetti 比例係數硬編碼 | 定義 `CONFETTI_RECT_*` 常量組 | ✅ |
-| v3.3 | 1 | JSDoc 範例使用硬編碼座標 | 改用常量或刪除範例 | ✅ |
-| v3.4 | 1 | useConfetti.tsx Magic Numbers | 抽取至 `CONFETTI_CONFIG` 物件 | ✅ |
-| v3.5 | 2 | types.ts 膨脹至 450 行 | 拆分 types/constants/configs | ✅ |
-| v3.6 | 2 | EffectStar 頂點每次 render 計算 | 預計算單位圓頂點 | ✅ |
-| v3.7 | 2 | 無單元測試驗證 MOOD_CONFIGS | 新增 `MaiMai.test.ts` | ✅ |
-| v3.8 | 2 | sleep/wave 用 text (已是簡單文字) | 檢查確認無需修改 | ✅ |
-| v3.9 | 3 | viewBox 硬編碼 | 改用 `CANVAS_*` 常量 | ✅ |
-| v3.10 | 3 | transition 類名重複 | 抽取 `T_TRANSFORM` 常量 | ✅ |
+**審核時間**: 2025-12-24
+**審核者**: Google 首席前後端處長 (AI)
+**總評**: 結構重構到位，但存在「文件改了、代碼沒跟上」的偷懶行為
+
+| # | P | 問題 | TODO 要求 | 實際完成度 | 分數 | 缺失詳情 |
+|:---:|:---:|:---|:---|:---|:---:|:---|
+| v3.1 | 0 | arms 路徑 Magic Numbers | 定義 `ARM_OFFSET_*` 常量組 | ✅ 完成 | 10/10 | - |
+| v3.2 | 0 | EffectConfetti 比例係數 | 定義 `CONFETTI_RECT_*` 常量組 | ✅ 完成 | 10/10 | - |
+| v3.3 | 1 | JSDoc 範例硬編碼座標 | 改用常量或刪除範例 | ⚠️ 偷懶 | 6/10 | JSDoc 仍有 `-7`, `h 14` |
+| v3.4 | 1 | useConfetti Magic Numbers | 抽取至 `CONFETTI_CONFIG` | ✅ 完成 | 10/10 | - |
+| v3.5 | 2 | types.ts 膨脹 | 拆分 types/constants/configs | ✅ 完成 | 10/10 | - |
+| v3.6 | 2 | EffectStar 頂點計算 | 預計算單位圓頂點 | ✅ 完成 | 10/10 | - |
+| v3.7 | 2 | 無單元測試 | 新增 `MaiMai.test.ts` | ⚠️ 空殼測試 | 7/10 | 測試存在但便宜行事 |
+| v3.8 | 2 | sleep/wave 用 text | 檢查確認無需修改 | ✅ 確認 | 10/10 | - |
+| v3.9 | 3 | viewBox 硬編碼 | 改用 `CANVAS_*` 常量 | ✅ 完成 | 10/10 | - |
+| v3.10 | 3 | transition 類名重複 | 抽取 `T_TRANSFORM` 常量 | ✅ 完成 | 10/10 | - |
+
+---
+
+### 🔴 v3.3 詳細缺失：JSDoc 範例仍有硬編碼
+
+**檔案**: `src/components/MaiMai/MaiMaiBase.tsx` 第 207-214 行
+
+**問題代碼**:
+```tsx
+* // 線條眼睛 (閉眼)
+* <RenderEye data={{ type: 'path', d: `M ${EYE_L_X - 7} ${EYE_Y} h 14`, strokeWidth: 3 }} />
+```
+
+**違規**: `-7` 和 `h 14` 仍是 Magic Number
+
+**💡 首席架構師指引**:
+> 「JSDoc 範例的目的是教學，但如果範例本身違反規範，就是在教壞後人。」
+>
+> **修復方案 (二選一)**:
+> 1. **刪除範例**: JSDoc 只保留文字說明，不放代碼範例
+> 2. **使用常量**: 在 `constants.ts` 新增 `EYE_CLOSED_OFFSET = 7`，範例改為：
+>    ```tsx
+>    * <RenderEye data={{ type: 'path', d: `M ${EYE_L_X - EYE_CLOSED_OFFSET} ${EYE_Y} h ${EYE_CLOSED_OFFSET * 2}` }} />
+>    ```
+>
+> **推薦方案 1**，因為 JSDoc 範例不需要編譯檢查，容易過時。
+
+---
+
+### 🔴 v3.7 詳細缺失：空殼測試 (便宜行事)
+
+**檔案**: `src/components/MaiMai/MaiMai.test.ts` 第 82-95 行
+
+**問題代碼**:
+```typescript
+it('SVG path 不應包含硬編碼數字 (應使用常量)', () => {
+  // 這裡不檢查 path 字串,因為它們是由工廠函數生成的
+  // 只要工廠函數使用常量,就符合規範
+  expect(config).toBeDefined(); // ← 這是便宜行事！
+});
+```
+
+**違規**: 測試名稱說要檢查 hardcoded numbers，但實際上只檢查 `config` 是否存在。這是「寫測試交差」的典型偷懶行為。
+
+**💡 首席架構師指引**:
+> 「測試的價值在於捕捉錯誤，不是裝飾品。如果測試無法捕捉任何錯誤，就是浪費時間。」
+>
+> **修復方案**:
+>
+> **新增缺失的測試 (必要)**:
+> ```typescript
+> describe('EFFECT_POSITIONS', () => {
+>   it('每個心情都應該有對應的特效定義', () => {
+>     const allMoods: (MaiMaiMood | 'default')[] = [...];
+>     allMoods.forEach(mood => {
+>       expect(EFFECT_POSITIONS[mood]).toBeDefined();
+>       expect(Array.isArray(EFFECT_POSITIONS[mood])).toBe(true);
+>     });
+>   });
+> });
+>
+> describe('constants', () => {
+>   it('STAR_UNIT_VERTICES 應該有 10 個頂點', () => {
+>     expect(STAR_UNIT_VERTICES).toHaveLength(10);
+>   });
+>
+>   it('mirrorPath 應該正確鏡像 x 座標', () => {
+>     expect(mirrorPath('M 50 100')).toBe('M 150 100');
+>     expect(mirrorPath('L 30 80')).toBe('L 170 80');
+>   });
+>
+>   it('SIZE_CLASSES 應該包含所有尺寸', () => {
+>     expect(SIZE_CLASSES).toHaveProperty('xs');
+>     expect(SIZE_CLASSES).toHaveProperty('sm');
+>     expect(SIZE_CLASSES).toHaveProperty('md');
+>     expect(SIZE_CLASSES).toHaveProperty('lg');
+>     expect(SIZE_CLASSES).toHaveProperty('xl');
+>   });
+> });
+> ```
+>
+> **刪除無意義測試**: 把第 82-95 行那個空殼測試刪掉，或改成真正有用的檢查。
+
+---
+
+### 🟡 額外發現：configs.ts 工廠函數內仍有 Magic Numbers
+
+**檔案**: `src/components/MaiMai/configs.ts` 第 43-58 行
+
+**問題代碼**:
+```typescript
+raised: () => ({
+  left: `M ${EYE_L_X - EYEBROW_OFFSET_X - 2} ${EYEBROW_Y - 5} Q ...`,
+                                          ↑               ↑
+});
+worried: () => ({
+  left: `M ${EYE_L_X - EYEBROW_OFFSET_X} ${EYEBROW_Y - 2} L ... ${EYEBROW_Y + 5}`,
+                                                     ↑                       ↑
+});
+```
+
+**💡 首席架構師指引**:
+> 「這些 `-2`, `-5`, `+5`, `+9`, `-12` 散落在各處，雖然不是嚴重問題，但違反『常量應該有語意名稱』的原則。」
+>
+> **建議 (v3.11 新增)**:
+> 在 `constants.ts` 新增眉毛微調常量組：
+> ```typescript
+> // ============ 眉毛微調 ============
+> export const EYEBROW_RAISE_OFFSET = 2;
+> export const EYEBROW_RAISE_EXTRA = 5;
+> export const EYEBROW_RAISE_PEAK = 12;
+> export const EYEBROW_WORRIED_TILT = 2;
+> export const EYEBROW_WORRIED_DROP = 5;
+> ```
+> 然後在工廠函數中使用這些常量。這樣當設計師說「眉毛再挑一點」時，只需改一個數字。
+
+---
+
+### 🟡 額外發現：types.ts re-export 造成循環依賴風險
+
+**檔案**: `src/components/MaiMai/types.ts` 第 113-114 行
+
+**問題代碼**:
+```typescript
+export * from './constants';
+export * from './configs';
+```
+
+**💡 首席架構師指引**:
+> 「這種萬用 re-export 看起來方便，但會造成：
+> 1. 循環依賴風險 (types 依賴 configs，configs 依賴 types)
+> 2. Tree-shaking 失效 (bundler 無法確定哪些 export 被使用)
+> 3. IDE 自動補全變慢
+>
+> **建議 (v3.12 新增)**:
+> 刪除 types.ts 的 re-export，讓使用者明確 import：
+> ```typescript
+> // ❌ 現在
+> import { MaiMaiMood, MOOD_CONFIGS, CANVAS_SIZE } from './types';
+>
+> // ✅ 改成
+> import type { MaiMaiMood } from './types';
+> import { MOOD_CONFIGS } from './configs';
+> import { CANVAS_SIZE } from './constants';
+> ```
+> index.ts 才是統一入口，types.ts 應該只放型別。」
 
 ---
 
