@@ -1,12 +1,37 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import LegacyFeaturedCard from '../features/property/components/LegacyFeaturedCard';
 import LegacyHorizontalCard from '../features/property/components/LegacyHorizontalCard';
 import { SEED_DATA } from '../features/property/data/seed';
-import type { PropertyPageData } from '../types/property-page';
+import type { PropertyPageData, ListingPropertyCard } from '../types/property-page';
 import '../styles/LegacyPropertyPage.css'; // Import strict legacy styles
 
 // Mimic legacy behavior: Fetch directly from the endpoint
 const API_ENDPOINT = '/api/property/page-data';
+
+/**
+ * 搜尋過濾函數 - 根據關鍵字過濾房源
+ * @param items 房源列表
+ * @param query 搜尋關鍵字
+ * @returns 過濾後的房源列表
+ */
+function filterByQuery(items: ListingPropertyCard[], query: string): ListingPropertyCard[] {
+    if (!query.trim()) return items;
+
+    const lowerQuery = query.toLowerCase().trim();
+    return items.filter(item => {
+        // 搜尋範圍：標題、標籤、備註、評價內容
+        const searchableText = [
+            item.title,
+            item.note,
+            item.lockLabel,
+            ...item.tags,
+            ...item.reviews.map(r => r.content)
+        ].filter(Boolean).join(' ').toLowerCase();
+
+        return searchableText.includes(lowerQuery);
+    });
+}
 
 /**
  * 圖片預載函數 - 避免 API 資料切換時的閃爍
@@ -73,8 +98,18 @@ const LegacyHeader = () => (
 );
 
 export default function PropertyListPage() {
+    // URL 搜尋參數
+    const [searchParams, setSearchParams] = useSearchParams();
+    const urlQuery = searchParams.get('q') || '';
+
     // S2: Instant Render with Mock Data (Legacy Behavior)
     const [data, setData] = useState<PropertyPageData>(SEED_DATA);
+    const [searchInput, setSearchInput] = useState(urlQuery);
+
+    // 同步 URL 參數到輸入框
+    useEffect(() => {
+        setSearchInput(urlQuery);
+    }, [urlQuery]);
 
     useEffect(() => {
         const fetchLive = async () => {
@@ -87,11 +122,33 @@ export default function PropertyListPage() {
                     setData(json.data);
                 }
             } catch (err) {
-                console.warn('Background update failed, using seed data');
+                // Background update failed, using seed data (silent)
             }
         };
         fetchLive();
     }, []);
+
+    /** 執行搜尋：更新 URL 參數 */
+    const handleSearch = useCallback(() => {
+        const trimmed = searchInput.trim();
+        if (trimmed) {
+            setSearchParams({ q: trimmed });
+        } else {
+            setSearchParams({});
+        }
+    }, [searchInput, setSearchParams]);
+
+    /** 鍵盤事件：Enter 觸發搜尋 */
+    const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Enter') {
+            handleSearch();
+        }
+    }, [handleSearch]);
+
+    /** 過濾後的房源列表 */
+    const filteredListings = useMemo(() => {
+        return filterByQuery(data.listings || [], urlQuery);
+    }, [data.listings, urlQuery]);
 
     return (
         <div className="legacy-property-page">
@@ -129,11 +186,19 @@ export default function PropertyListPage() {
                             type="text"
                             className="search-input"
                             placeholder="搜尋社區名稱、區域或建案關鍵字..."
-                            defaultValue=""
+                            value={searchInput}
+                            onChange={(e) => setSearchInput(e.target.value)}
+                            onKeyDown={handleKeyDown}
                         />
-                        <button className="search-btn">搜尋</button>
+                        <button type="button" className="search-btn" onClick={handleSearch}>搜尋</button>
                     </div>
-                    <div className="search-hint">例如：「林口」、「捷運」、「學區」</div>
+                    <div className="search-hint">
+                        {urlQuery ? (
+                            <>搜尋「{urlQuery}」的結果 · <button type="button" className="text-brand-600 hover:underline" onClick={() => { setSearchInput(''); setSearchParams({}); }}>清除搜尋</button></>
+                        ) : (
+                            <>例如：「林口」、「捷運」、「學區」</>
+                        )}
+                    </div>
                 </div>
 
                 {/* Featured Section */}
@@ -172,14 +237,30 @@ export default function PropertyListPage() {
                 {/* Listing Section */}
                 <section className="listing-section">
                     <div className="listing-header">
-                        <h2>更多精選房源</h2>
-                        <span className="small-text">共 {data?.listings?.length || 0} 個社區</span>
+                        <h2>{urlQuery ? '搜尋結果' : '更多精選房源'}</h2>
+                        <span className="small-text">
+                            {urlQuery
+                                ? `找到 ${filteredListings.length} 個符合的社區`
+                                : `共 ${data?.listings?.length || 0} 個社區`
+                            }
+                        </span>
                     </div>
 
                     <div className="listing-grid">
-                        {data?.listings?.map((item, index) => (
-                            <LegacyHorizontalCard key={index} data={item} />
-                        ))}
+                        {filteredListings.length > 0 ? (
+                            filteredListings.map((item, index) => (
+                                <LegacyHorizontalCard key={item.id || index} data={item} />
+                            ))
+                        ) : (
+                            <div className="empty-state" style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '3rem 1rem' }}>
+                                <p style={{ fontSize: '1.125rem', fontWeight: 600, color: '#5b6b7b', marginBottom: '0.5rem' }}>
+                                    找不到符合「{urlQuery}」的房源
+                                </p>
+                                <p style={{ fontSize: '0.875rem', color: '#8b9cad' }}>
+                                    試試其他關鍵字，例如：林口、捷運、學區
+                                </p>
+                            </div>
+                        )}
                     </div>
                 </section>
             </div>
