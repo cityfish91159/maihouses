@@ -12,7 +12,7 @@ const LegacyFeaturedCard: React.FC<LegacyFeaturedCardProps> = ({ data, variant }
     const handleNavigate = () => {
         // Priority: id (Mock) -> public_id (DB) -> fallback
         const targetId = data.id || data.public_id || 'detail';
-        navigate(`/maihouses/property/${targetId}`);
+        navigate(`/property/${targetId}`);
     };
 
     return (
