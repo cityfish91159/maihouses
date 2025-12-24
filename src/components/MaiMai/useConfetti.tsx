@@ -1,6 +1,6 @@
 /**
  * MaiMai 慶祝動畫 Hook
- * @description 使用 react-canvas-confetti 實現高效能撒花動畫
+ * @description 使用 canvas-confetti 實現高效能撒花動畫
  */
 
 import { useCallback, useEffect, useRef } from 'react';
@@ -48,7 +48,7 @@ export function useConfetti(options: UseConfettiOptions = {}) {
   } = options;
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const confettiInstance = useRef<confetti.CreateTypes | null>(null);
+  const confettiInstance = useRef<ReturnType<typeof confetti.create> | null>(null);
 
   // 初始化 confetti 實例
   useEffect(() => {

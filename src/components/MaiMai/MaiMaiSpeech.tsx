@@ -13,7 +13,7 @@ export function MaiMaiSpeech({ messages, className = '' }: MaiMaiSpeechProps) {
   const lastIndex = recentMessages.length - 1;
 
   return (
-    <div 
+    <div
       className={`
         absolute left-1/2 -translate-x-1/2 bottom-full mb-3 z-10
         min-w-[120px] max-w-[85vw] sm:max-w-[280px]
@@ -22,6 +22,10 @@ export function MaiMaiSpeech({ messages, className = '' }: MaiMaiSpeechProps) {
         animate-in fade-in slide-in-from-bottom-2 duration-300
         ${className}
       `}
+      role="status"
+      aria-live="polite"
+      aria-atomic="true"
+      aria-label="MaiMai 最新對話"
     >
       {/* 氣泡尾巴 - 置中 */}
       <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 size-4 rotate-45 bg-white ring-1 ring-slate-200" />

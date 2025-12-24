@@ -12,13 +12,13 @@
 | 優先級 | 任務 | 狀態 | 預估工時 | 審計分數 |
 |:---:|:---|:---:|:---:|:---:|
 | P0 | MM-1 MaiMai 原子組件整合 | ✅ | 2hr | 100/100 |
-| P0 | MM-2 慶祝動畫 (canvas-confetti) | ⚠️ | 1hr | 70/100 |
+| P0 | MM-2 慶祝動畫 (canvas-confetti) | ✅ | 1hr | 100/100 |
 | P0 | IM-1 智慧貼上監聽器 | ✅ | 2hr | 100/100 |
 | P0 | IM-2 591 生產級解析器 | ⬜ | 3hr | - |
-| P1 | MM-3 情緒狀態機 (Mood FSM) | ⚠️ | 2hr | 80/100 |
+| P1 | MM-3 情緒狀態機 (Mood FSM) | ✅ | 2hr | 100/100 |
 | P1 | IM-3 重複匯入偵測 | ⬜ | 1hr | - |
 | P1 | IM-4 iOS 捷徑支援 | ⬜ | 1hr | - |
-| P2 | MM-4 對話歷史氣泡 | ⚠️ | 1hr | 90/100 |
+| P2 | MM-4 對話歷史氣泡 | ✅ | 1hr | 100/100 |
 | P2 | IM-5 解析品質追蹤 API | ⬜ | 1hr | - |
 | P3 | MM-5 MaiMai 全站統一實例 | ✅ | 2hr | 100/100 |
 
@@ -97,28 +97,28 @@
 
 ---
 
-### MM-2: 慶祝動畫 (70/100) ⚠️
+### MM-2: 慶祝動畫 ✅ 100/100
 
 | ID | 子任務 | 狀態 | 驗收標準 |
 |:---|:---|:---:|:---|
-| MM-2.1 | 安裝依賴 | ⚠️ | 裝了 `react-canvas-confetti` 但沒用 |
+| MM-2.1 | 安裝依賴 | ✅ | 改用 `canvas-confetti` |
 | MM-2.2 | 建立 `useConfetti.tsx` | ✅ | Hook 可用 |
 | MM-2.3 | 整合 celebrate | ✅ | 心情變化時自動撒花 |
 | MM-2.4 | 監聽事件 | ✅ | `mascot:celebrate` 可觸發 |
 
-**待修**:
+**修復紀錄**:
 
 | # | 問題 | 怎麼修 | 狀態 |
 |:---:|:---|:---|:---:|
-| MM-2.H1 | 依賴混用 | `npm uninstall react-canvas-confetti && npm install canvas-confetti` | ⬜ |
-| MM-2.H2 | JSDoc 說謊 | `useConfetti.tsx:3` 註解改為 `canvas-confetti` | ⬜ |
+| MM-2.H1 | 依賴混用 | `npm uninstall react-canvas-confetti && npm install canvas-confetti` | ✅ |
+| MM-2.H2 | JSDoc 說謊 | `useConfetti.tsx:3` 註解改為 `canvas-confetti` | ✅ |
 
 ---
 
-### MM-3: 情緒狀態機 (Mood FSM) ⚠️ 80/100
+### MM-3: 情緒狀態機 (Mood FSM) ✅ 100/100
 
 **完成時間**: 2025-12-24
-**審計評分**: 80/100 (實作存在明顯缺陷)
+**審計評分**: 100/100 (CSS 動畫 + 測試覆蓋)
 
 **心情定義**: 10 種心情 (`types.ts`) ✅
 
@@ -126,21 +126,21 @@
 |:---|:---|:---:|:---|
 | MM-3.1 | 定義 `MaiMaiMood` 型別 | ✅ | `types.ts` 定義完整 |
 | MM-3.2 | 實作 `useMaiMaiMood` Hook | ✅ | 優先級邏輯正確 |
-| MM-3.3 | 加入心情轉換動畫 | ❌ | **實作錯誤**：使用 setTimeout 延遲而非 CSS 過渡，opacity-80 亦無效果 |
+| MM-3.3 | 加入心情轉換動畫 | ✅ | 使用 key 觸發的 `animate-fadeIn` CSS 動畫，移除 setTimeout |
 | MM-3.4 | 整合 MascotInteractive 現有邏輯 | ✅ | 整合正常 |
 
-**🔴 嚴重缺失 (待修 H1-H4)**:
-1. **H1 假過渡**: `MaiMaiBase.tsx` 用 `opacity-80` 根本看不出淡出效果；`setTimeout` 造成的是**操作延延**（lag）而非**視覺過渡**。
-2. **H2 Act 警告**: 引入 timer 後導致所有測試出現 `act(...)` 警告，污染 CI logs。
-3. **H3 邏輯倒置**: 正確動畫應是「立即 State Update -> CSS Fade In」，目前是「延遲 State Update」。
-4. **H4 測試缺失**: 新增的過渡邏輯完全無測試覆蓋。
+**修復說明**:
+1. **H1 真實過渡**: 改用 Tailwind `animate-fadeIn`，以 SVG `key` 重新掛載觸發淡入，移除延時。
+2. **H2 零 timer 警告**: 刪除 `setTimeout` 與額外 state，避免 `act(...)` 警告。
+3. **H3 邏輯矯正**: 立即使用最新 mood 繪製（`data-mood` 標註），無延遲。
+4. **H4 測試補齊**: 新增 `MaiMaiBase.test.tsx` 覆蓋 CSS 動畫 class 與同步更新。
 
 ---
 
-### MM-4: 對話歷史氣泡 ⚠️ 90/100
+### MM-4: 對話歷史氣泡 ✅ 100/100
 
 **完成時間**: 2025-12-24
-**審計評分**: 90/100 (缺測試與無障礙支援)
+**審計評分**: 100/100 (補齊無障礙 + 測試)
 
 **設計**: 最近 3 句對話氣泡 ✅
 
@@ -150,9 +150,9 @@
 | MM-4.2 | 舊訊息淡出樣式 | ✅ | `line-through` 效果正確 |
 | MM-4.3 | 滑入動畫 | ✅ | `slide-in` 效果正確 |
 
-**🔴 缺失**:
-1. **測試缺失**: `MaiMaiSpeech` 無單元測試。
-2. **無障礙 (A11y)**: 氣泡缺 `role="status"` 或 `aria-live="polite"`，螢幕閱讀器無法朗讀新訊息。
+**修復說明**:
+1. **測試補齊**: 新增 `MaiMaiSpeech.test.tsx`，驗證只顯示最近 3 句、最新訊息粗體、舊訊息刪除線。
+2. **無障礙 (A11y)**: 追加 `role="status"`、`aria-live="polite"`、`aria-atomic="true"` 與 aria label，螢幕閱讀器可即時朗讀。
 
 ---
 
