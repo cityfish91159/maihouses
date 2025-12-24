@@ -71,7 +71,7 @@ export function parse591Content(text: string): Parse591Result {
 
   for (const pattern of sizePatterns) {
     const match = trimmed.match(pattern);
-    if (match) {
+    if (match && match[1]) {
       result.size = match[1];
       result.fieldsFound++;
       result.confidence += 25;
@@ -82,7 +82,7 @@ export function parse591Content(text: string): Parse591Result {
   // 解析格局：匹配「3房2廳2衛」「2房1廳1衛」「套房」「雅房」
   const layoutPattern = /(\d+)\s*房\s*(\d+)\s*廳\s*(\d+)\s*衛/;
   const layoutMatch = trimmed.match(layoutPattern);
-  if (layoutMatch) {
+  if (layoutMatch && layoutMatch[1] && layoutMatch[2] && layoutMatch[3]) {
     result.rooms = layoutMatch[1];
     result.halls = layoutMatch[2];
     result.bathrooms = layoutMatch[3];
@@ -138,7 +138,7 @@ export function parse591Content(text: string): Parse591Result {
 
   for (const pattern of idPatterns) {
     const match = trimmed.match(pattern);
-    if (match) {
+    if (match && match[1]) {
       result.listingId = match[1];
       // ID 不計入 confidence 和 fieldsFound
       break;
