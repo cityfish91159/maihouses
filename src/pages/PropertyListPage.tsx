@@ -1,9 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
 import LegacyFeaturedCard from '../features/property/components/LegacyFeaturedCard';
 import LegacyHorizontalCard from '../features/property/components/LegacyHorizontalCard';
 import { SEED_DATA } from '../features/property/data/seed';
-import { ROUTES } from '../constants/routes';
 import '../styles/LegacyPropertyPage.css'; // Import strict legacy styles
 
 // Mimic legacy behavior: Fetch directly from the endpoint
@@ -12,7 +10,7 @@ const API_ENDPOINT = '/api/property/page-data';
 // Legacy Header Component (Inline for strict structure matching)
 const LegacyHeader = () => (
     <header className="legacy-header">
-        <Link to="/" className="logo-container" style={{ textDecoration: 'none' }}>
+        <a href="/maihouses/" className="logo-container" style={{ textDecoration: 'none' }}>
             <div className="logo-icon-box">
                 <svg
                     className="logo-icon-svg"
@@ -34,8 +32,8 @@ const LegacyHeader = () => (
                     <div className="logo-slogan">家，不只是地址</div>
                 </div>
             </div>
-        </Link>
-        <Link to="/auth.html" className="auth-btn" style={{ textDecoration: 'none' }}>登入/註冊</Link>
+        </a>
+        <a href="/maihouses/auth.html" className="auth-btn" style={{ textDecoration: 'none' }}>登入/註冊</a>
     </header>
 );
 
