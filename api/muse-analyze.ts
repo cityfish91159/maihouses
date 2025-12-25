@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { OpenAI } from 'openai';
 import { z } from 'zod';
+import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 // Define the schema for the detailed report
 const reportSchema = z.object({
@@ -10,7 +11,7 @@ const reportSchema = z.object({
   muse_whisper: z.string().describe("A possessive, dark whisper from Muse.")
 });
 
-export default async function handler(req, res) {
+export default async function handler(req: VercelRequest, res: VercelResponse) {
   // 1. CORS Configuration
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
