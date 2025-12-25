@@ -75,6 +75,15 @@ interface SexyUnlockRequest {
   created_at: string;
 }
 
+// 💬 統一聊天訊息格式
+interface ChatMessage {
+  id: string;
+  content: string;
+  from_admin: boolean;
+  created_at: string;
+  source: 'shadow_logs' | 'godview_messages';
+}
+
 export default function GodView() {
   const [logs, setLogs] = useState<ShadowLog[]>([]);
   const [rivals, setRivals] = useState<RivalDecoder[]>([]);
@@ -101,6 +110,11 @@ export default function GodView() {
   const [directSending, setDirectSending] = useState(false);
   const [detectedUserId, setDetectedUserId] = useState<string | null>(null);
   const [manualUserId, setManualUserId] = useState('');
+
+  // 💬 完整對話記錄
+  const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
+  const [loadingChat, setLoadingChat] = useState(false);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
 
   const messageInputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -243,6 +257,88 @@ export default function GodView() {
 
     detectUserId();
   }, [logs]); // 當 logs 更新時重新檢測
+
+  // 💬 載入完整對話記錄
+  const loadChatHistory = async (userId: string) => {
+    setLoadingChat(true);
+    try {
+      // 載入用戶發送的訊息 (從 shadow_logs)
+      const { data: userMessages } = await supabase
+        .from('shadow_logs')
+        .select('id, content, created_at')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: true });
+
+      // 載入管理員發送的訊息 (從 godview_messages)
+      const { data: adminMessages } = await supabase
+        .from('godview_messages')
+        .select('id, content, created_at, message_type')
+        .eq('user_id', userId)
+        .eq('message_type', 'chat')
+        .order('created_at', { ascending: true });
+
+      // 合併並排序
+      const combined: ChatMessage[] = [
+        ...(userMessages || []).map(m => ({
+          id: m.id,
+          content: m.content,
+          from_admin: false,
+          created_at: m.created_at,
+          source: 'shadow_logs' as const
+        })),
+        ...(adminMessages || []).map(m => ({
+          id: m.id,
+          content: m.content,
+          from_admin: true,
+          created_at: m.created_at,
+          source: 'godview_messages' as const
+        }))
+      ].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+
+      setChatHistory(combined);
+
+      // 滾動到底部
+      setTimeout(() => {
+        chatContainerRef.current?.scrollTo({
+          top: chatContainerRef.current.scrollHeight,
+          behavior: 'smooth'
+        });
+      }, 100);
+
+    } catch (error) {
+      console.error('Load chat error:', error);
+      toast.error('載入對話記錄失敗');
+    } finally {
+      setLoadingChat(false);
+    }
+  };
+
+  // 💬 當檢測到用戶 ID 時自動載入對話
+  useEffect(() => {
+    const targetId = manualUserId.trim() || detectedUserId;
+    if (targetId) {
+      loadChatHistory(targetId);
+    }
+  }, [detectedUserId, manualUserId]);
+
+  // 💬 刪除對話訊息
+  const deleteChatMessage = async (msg: ChatMessage) => {
+    try {
+      if (msg.source === 'shadow_logs') {
+        const { error } = await supabase.from('shadow_logs').delete().eq('id', msg.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from('godview_messages').delete().eq('id', msg.id);
+        if (error) throw error;
+      }
+
+      setChatHistory(prev => prev.filter(m => m.id !== msg.id));
+      toast.success('訊息已刪除');
+    } catch (error) {
+      console.error('Delete message error:', error);
+      toast.error('刪除失敗');
+    }
+  };
 
   const handleDeleteLog = async (id: string) => {
     setLogs(prev => prev.filter(l => l.id !== id));
@@ -494,6 +590,25 @@ export default function GodView() {
 
       console.log('✅ 訊息已插入:', data);
 
+      // 添加到對話記錄
+      if (data && data[0]) {
+        setChatHistory(prev => [...prev, {
+          id: data[0].id,
+          content: messageToSend,
+          from_admin: true,
+          created_at: data[0].created_at,
+          source: 'godview_messages'
+        }]);
+
+        // 滾動到底部
+        setTimeout(() => {
+          chatContainerRef.current?.scrollTo({
+            top: chatContainerRef.current.scrollHeight,
+            behavior: 'smooth'
+          });
+        }, 100);
+      }
+
       toast.success("訊息已推送", {
         description: `發送給 ${targetUserId.slice(0, 8)}...`,
         className: 'bg-purple-900 text-purple-200'
@@ -669,39 +784,98 @@ export default function GodView() {
         </div>
       </h1>
 
-      {/* 📨 直接發訊息面板 - 隨時可用 */}
-      <div className="mb-6 p-4 bg-purple-950/30 border border-purple-500/30 rounded-xl">
-        <div className="flex items-center justify-between mb-3">
+      {/* 💬 完整對話面板 */}
+      <div className="mb-6 bg-purple-950/20 border border-purple-500/30 rounded-xl overflow-hidden">
+        {/* 標題列 */}
+        <div className="p-4 border-b border-purple-500/20 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <MessageCircle className="text-purple-400" size={20} />
             <h3 className="text-purple-400 text-sm uppercase tracking-wider">
-              直接推送訊息給資欣
+              與資欣老師的對話
             </h3>
+            <span className="text-[10px] text-stone-500">
+              ({chatHistory.length} 則訊息)
+            </span>
           </div>
-          {/* 顯示目標用戶 ID */}
-          <div className="text-[10px] text-stone-500">
+          <div className="flex items-center gap-3">
+            {/* 顯示目標用戶 ID */}
             {detectedUserId ? (
-              <span className="text-green-400">
-                目標: {detectedUserId.slice(0, 12)}...
+              <span className="text-[10px] text-green-400">
+                ID: {detectedUserId.slice(0, 12)}...
               </span>
             ) : (
-              <span className="text-red-400">⚠️ 未檢測到用戶</span>
+              <span className="text-[10px] text-red-400">⚠️ 未檢測到用戶</span>
             )}
+            {/* 手動輸入 Session ID */}
+            <input
+              type="text"
+              value={manualUserId}
+              onChange={(e) => setManualUserId(e.target.value)}
+              className="w-48 bg-stone-900/50 border border-stone-800 rounded-lg px-2 py-1 text-stone-300 text-[10px] font-mono focus:border-purple-500/50 focus:outline-none"
+              placeholder="手動輸入 Session ID"
+            />
           </div>
         </div>
 
-        {/* 手動輸入 Session ID */}
-        <div className="mb-3">
-          <input
-            type="text"
-            value={manualUserId}
-            onChange={(e) => setManualUserId(e.target.value)}
-            className="w-full bg-stone-900/50 border border-stone-800 rounded-lg px-3 py-2 text-stone-300 text-xs font-mono focus:border-purple-500/50 focus:outline-none"
-            placeholder="手動輸入 Session ID（可選，留空則使用自動檢測的 ID）"
-          />
+        {/* 對話記錄 */}
+        <div
+          ref={chatContainerRef}
+          className="h-64 overflow-y-auto p-4 space-y-3 scrollbar-thin scrollbar-thumb-purple-900"
+        >
+          {loadingChat ? (
+            <div className="text-center text-stone-500 py-8">載入中...</div>
+          ) : chatHistory.length === 0 ? (
+            <div className="text-center text-stone-600 py-8 italic">
+              還沒有對話記錄，開始聊天吧！
+            </div>
+          ) : (
+            chatHistory.map((msg) => (
+              <div
+                key={msg.id}
+                className={`group flex ${msg.from_admin ? 'justify-end' : 'justify-start'}`}
+              >
+                <div
+                  className={`relative max-w-[75%] p-3 rounded-xl ${
+                    msg.from_admin
+                      ? 'bg-purple-900/40 border border-purple-500/30'
+                      : 'bg-stone-900/60 border border-stone-800'
+                  }`}
+                >
+                  {/* 刪除按鈕 */}
+                  <button
+                    onClick={() => deleteChatMessage(msg)}
+                    className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-red-900/80 text-red-300 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center hover:bg-red-800"
+                  >
+                    <X size={12} />
+                  </button>
+
+                  {/* 發送者標籤 */}
+                  <p className={`text-[9px] mb-1 ${msg.from_admin ? 'text-purple-400' : 'text-stone-500'}`}>
+                    {msg.from_admin ? '你 (MUSE)' : '資欣老師'}
+                  </p>
+
+                  {/* 訊息內容 */}
+                  <p className="text-stone-200 text-sm normal-case font-sans whitespace-pre-wrap">
+                    {msg.content}
+                  </p>
+
+                  {/* 時間戳 */}
+                  <p className="text-[8px] text-stone-600 mt-1">
+                    {new Date(msg.created_at).toLocaleString('zh-TW', {
+                      month: 'short',
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}
+                  </p>
+                </div>
+              </div>
+            ))
+          )}
         </div>
 
-        <div className="flex gap-3">
+        {/* 輸入區 */}
+        <div className="p-4 border-t border-purple-500/20 flex gap-3">
           <textarea
             value={directMessage}
             onChange={(e) => setDirectMessage(e.target.value)}
@@ -712,21 +886,18 @@ export default function GodView() {
               }
             }}
             className="flex-1 bg-stone-900/50 border border-stone-800 rounded-xl px-4 py-3 text-stone-200 text-sm normal-case font-sans focus:border-purple-500/50 focus:outline-none resize-none"
-            placeholder="以 MUSE 身份發送訊息給資欣..."
+            placeholder="以 MUSE 身份發送訊息..."
             rows={2}
           />
           <button
             onClick={sendDirectMessage}
             disabled={directSending || !directMessage.trim() || (!detectedUserId && !manualUserId.trim())}
-            className="px-6 bg-purple-600 text-white rounded-xl hover:bg-purple-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            className="px-6 bg-purple-600 text-white rounded-xl hover:bg-purple-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 self-end"
           >
             <Send size={16} />
-            推送
+            {directSending ? '發送中...' : '發送'}
           </button>
         </div>
-        <p className="text-[9px] text-stone-600 mt-2">
-          訊息會即時推送到 NightMode。如果沒收到，請檢查 NightMode 頁面的 console 是否有訂閱成功訊息。
-        </p>
       </div>
 
       {/* 用戶進度概覽 */}
