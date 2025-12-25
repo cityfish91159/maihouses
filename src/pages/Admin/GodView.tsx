@@ -237,7 +237,7 @@ export default function GodView() {
     }
   };
 
-  // 管理員發送訊息（偽裝成 MUSE）
+  // 管理員發送訊息（偽裝成 MUSE）- 使用 godview_messages 表實現即時推送
   const sendAdminMessage = async () => {
     if (!adminMessage.trim() || !selectedUserId || isSending) return;
 
@@ -246,12 +246,13 @@ export default function GodView() {
     setAdminMessage('');
 
     try {
-      // 插入到 shadow_logs 作為 MUSE 的回應
-      const { error } = await supabase.from('shadow_logs').insert({
+      // 插入到 godview_messages 表 - 這會觸發 NightMode 的即時訂閱
+      const { error } = await supabase.from('godview_messages').insert({
         user_id: selectedUserId,
-        content: `[MUSE_OVERRIDE] ${messageToSend}`,
-        hesitation_count: 0,
-        mode: 'admin_takeover'
+        message_type: 'chat',
+        content: messageToSend,
+        metadata: {},
+        is_read: false
       });
 
       if (error) throw error;
@@ -265,14 +266,65 @@ export default function GodView() {
         created_at: new Date().toISOString()
       }]);
 
-      toast.success("MESSAGE INJECTED", { className: 'bg-purple-900 text-purple-200' });
+      toast.success("MESSAGE PUSHED TO USER", { className: 'bg-purple-900 text-purple-200' });
 
     } catch (error) {
       console.error('Send error:', error);
-      toast.error("INJECTION FAILED");
+      toast.error("PUSH FAILED");
       setAdminMessage(messageToSend);
     } finally {
       setIsSending(false);
+    }
+  };
+
+  // 發送語音訊息給用戶
+  const sendVoiceMessage = async (audioUrl: string) => {
+    if (!selectedUserId) return;
+
+    try {
+      const { error } = await supabase.from('godview_messages').insert({
+        user_id: selectedUserId,
+        message_type: 'voice',
+        content: '🎤 語音訊息',
+        metadata: { audioUrl },
+        is_read: false
+      });
+
+      if (error) throw error;
+      toast.success("VOICE MESSAGE PUSHED");
+    } catch (error) {
+      console.error('Voice send error:', error);
+      toast.error("VOICE PUSH FAILED");
+    }
+  };
+
+  // 發送任務給用戶
+  const sendTask = async (taskData: { task_type: string; instruction: string; reward_rarity: string }) => {
+    if (!selectedUserId) return;
+
+    try {
+      const { error } = await supabase.from('godview_messages').insert({
+        user_id: selectedUserId,
+        message_type: 'task',
+        content: `📋 新任務：${taskData.instruction}`,
+        metadata: {
+          taskData: {
+            id: crypto.randomUUID(),
+            task_type: taskData.task_type,
+            instruction: taskData.instruction,
+            status: 'pending',
+            reward_rarity: taskData.reward_rarity,
+            created_at: new Date().toISOString()
+          }
+        },
+        is_read: false
+      });
+
+      if (error) throw error;
+      toast.success("TASK PUSHED TO USER");
+    } catch (error) {
+      console.error('Task send error:', error);
+      toast.error("TASK PUSH FAILED");
     }
   };
 
@@ -649,7 +701,37 @@ export default function GodView() {
               </div>
 
               {/* 輸入區 */}
-              <div className="p-4 border-t border-purple-500/20">
+              <div className="p-4 border-t border-purple-500/20 space-y-3">
+                {/* 快速任務按鈕 */}
+                <div className="flex gap-2 flex-wrap">
+                  <span className="text-[9px] text-stone-500 self-center">QUICK TASKS:</span>
+                  <button
+                    onClick={() => sendTask({ task_type: 'selfie', instruction: '拍一張現在的妳給我看', reward_rarity: 'rare' })}
+                    className="px-3 py-1 bg-pink-900/30 text-pink-400 rounded-lg text-[10px] hover:bg-pink-900/50 transition-colors"
+                  >
+                    📸 要自拍
+                  </button>
+                  <button
+                    onClick={() => sendTask({ task_type: 'voice', instruction: '用妳的聲音說「我想你」', reward_rarity: 'epic' })}
+                    className="px-3 py-1 bg-purple-900/30 text-purple-400 rounded-lg text-[10px] hover:bg-purple-900/50 transition-colors"
+                  >
+                    🎤 要語音
+                  </button>
+                  <button
+                    onClick={() => sendTask({ task_type: 'photo', instruction: '讓我看看妳今天穿什麼', reward_rarity: 'rare' })}
+                    className="px-3 py-1 bg-amber-900/30 text-amber-400 rounded-lg text-[10px] hover:bg-amber-900/50 transition-colors"
+                  >
+                    👗 要全身照
+                  </button>
+                  <button
+                    onClick={() => sendTask({ task_type: 'confession', instruction: '告訴我一個妳從沒說過的秘密', reward_rarity: 'legendary' })}
+                    className="px-3 py-1 bg-red-900/30 text-red-400 rounded-lg text-[10px] hover:bg-red-900/50 transition-colors"
+                  >
+                    💋 要秘密
+                  </button>
+                </div>
+
+                {/* 訊息輸入 */}
                 <div className="flex gap-3">
                   <textarea
                     ref={messageInputRef}
@@ -671,11 +753,11 @@ export default function GodView() {
                     className="px-6 bg-purple-600 text-white rounded-xl hover:bg-purple-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                   >
                     <Send size={16} />
-                    INJECT
+                    PUSH
                   </button>
                 </div>
-                <p className="text-[9px] text-stone-600 mt-2 text-center">
-                  訊息將以 MUSE 身份發送給用戶
+                <p className="text-[9px] text-stone-600 text-center">
+                  訊息會即時推送給用戶（使用 Realtime）
                 </p>
               </div>
             </div>

@@ -188,6 +188,12 @@ export default function NightMode() {
   const redemptionAudioRef = useRef<MediaRecorder | null>(null);
   const [isRedemptionRecording, setIsRedemptionRecording] = useState(false);
 
+  // 親密盲眼模式狀態 (desire_help 時啟用)
+  const [isBlindfolded, setIsBlindfolded] = useState(false);
+  const [blindfoldAudioPlaying, setBlindFoldAudioPlaying] = useState(false);
+  const [soundWaveLevel, setSoundWaveLevel] = useState<number[]>([0, 0, 0, 0, 0]);
+  const blindfoldAudioRef = useRef<HTMLAudioElement | null>(null);
+
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
@@ -292,6 +298,124 @@ export default function NightMode() {
     const interval = setInterval(() => triggerHeartbeat(), 15000);
     return () => clearInterval(interval);
   }, []);
+
+  // 監聽 GodView 推送訊息
+  useEffect(() => {
+    const sessionId = getSessionId();
+
+    // 載入未讀訊息
+    const loadUnreadMessages = async () => {
+      const { data: messages } = await supabase
+        .from('godview_messages')
+        .select('*')
+        .eq('user_id', sessionId)
+        .eq('is_read', false)
+        .order('created_at', { ascending: true });
+
+      if (messages && messages.length > 0) {
+        // 將未讀訊息添加到聊天歷史
+        for (const msg of messages) {
+          const newMessage: ChatMessage = {
+            role: 'muse',
+            content: msg.content,
+            timestamp: new Date(msg.created_at)
+          };
+          setChatHistory(prev => [...prev, newMessage]);
+
+          // 標記為已讀
+          await supabase
+            .from('godview_messages')
+            .update({ is_read: true })
+            .eq('id', msg.id);
+
+          // 如果是語音訊息，自動播放
+          if (msg.message_type === 'voice' && msg.metadata?.audioUrl) {
+            const audio = new Audio(msg.metadata.audioUrl);
+            audio.play();
+          }
+        }
+
+        // 捲動到底部
+        setTimeout(() => {
+          chatContainerRef.current?.scrollTo({
+            top: chatContainerRef.current.scrollHeight,
+            behavior: 'smooth'
+          });
+        }, 100);
+      }
+    };
+
+    loadUnreadMessages();
+
+    // 設定 Realtime 訂閱
+    const subscription = supabase
+      .channel('godview-messages')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'godview_messages',
+          filter: `user_id=eq.${sessionId}`
+        },
+        async (payload) => {
+          const msg = payload.new as {
+            id: string;
+            content: string;
+            message_type: string;
+            metadata: { audioUrl?: string; taskData?: MuseTask };
+            created_at: string;
+          };
+
+          // 顯示 toast 通知
+          toast(`${museName} 傳來訊息`, {
+            description: msg.content.substring(0, 50) + (msg.content.length > 50 ? '...' : ''),
+            duration: 5000
+          });
+
+          // 添加到聊天歷史
+          const newMessage: ChatMessage = {
+            role: 'muse',
+            content: msg.content,
+            timestamp: new Date(msg.created_at)
+          };
+          setChatHistory(prev => [...prev, newMessage]);
+
+          // 標記為已讀
+          await supabase
+            .from('godview_messages')
+            .update({ is_read: true })
+            .eq('id', msg.id);
+
+          // 處理特殊訊息類型
+          if (msg.message_type === 'voice' && msg.metadata?.audioUrl) {
+            // 自動播放語音
+            const audio = new Audio(msg.metadata.audioUrl);
+            audio.play();
+          } else if (msg.message_type === 'task' && msg.metadata?.taskData) {
+            // 設定新任務
+            setActiveTask(msg.metadata.taskData);
+            setShowTaskModal(true);
+          }
+
+          // 捲動到底部
+          setTimeout(() => {
+            chatContainerRef.current?.scrollTo({
+              top: chatContainerRef.current.scrollHeight,
+              behavior: 'smooth'
+            });
+          }, 100);
+
+          // 觸發震動
+          triggerHeartbeat([100, 50, 100]);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [museName]);
 
   // MUSE 主動發訊息生成
   const generateMuseInitiatedMessage = (currentSyncLevel: number) => {
@@ -1026,6 +1150,77 @@ export default function NightMode() {
         toast.success(`獲得寶物：${result.new_treasure.title}`, {
           className: 'bg-purple-950 text-purple-200 border border-purple-800'
         });
+      }
+
+      // 🔥 親密盲眼模式：desire_help 意圖時自動啟用
+      if (result.intent === 'desire_help') {
+        // 進入盲眼模式
+        setIsBlindfolded(true);
+
+        // 記錄親密時段開始（追蹤自慰頻率）
+        const sessionId = crypto.randomUUID();
+        localStorage.setItem('current_intimate_session', sessionId);
+        localStorage.setItem('intimate_session_start', Date.now().toString());
+
+        try {
+          await supabase.from('intimate_sessions').insert({
+            id: sessionId,
+            user_id: getSessionId(),
+            session_type: 'desire_help',
+            metadata: {
+              hour: new Date().getHours(),
+              day_of_week: new Date().getDay(),
+              time_mode: result.time_mode
+            }
+          });
+        } catch (trackErr) {
+          console.error('Session tracking error:', trackErr);
+        }
+
+        // 自動生成 TTS 並播放
+        try {
+          const ttsResponse = await fetch('/api/muse-speak', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: result.reply })
+          });
+
+          if (ttsResponse.ok) {
+            const ttsData = await ttsResponse.json();
+            if (ttsData.audioUrl) {
+              // 創建音頻並自動播放
+              const audio = new Audio(ttsData.audioUrl);
+              blindfoldAudioRef.current = audio;
+              setBlindFoldAudioPlaying(true);
+
+              // 模擬聲波動畫
+              const waveInterval = setInterval(() => {
+                setSoundWaveLevel([
+                  Math.random() * 100,
+                  Math.random() * 100,
+                  Math.random() * 100,
+                  Math.random() * 100,
+                  Math.random() * 100
+                ]);
+              }, 100);
+
+              audio.onended = () => {
+                clearInterval(waveInterval);
+                setBlindFoldAudioPlaying(false);
+                setSoundWaveLevel([0, 0, 0, 0, 0]);
+                // 不自動退出盲眼模式，讓她點擊螢幕退出
+              };
+
+              audio.play().catch(err => {
+                console.error('Auto-play failed:', err);
+                clearInterval(waveInterval);
+                setBlindFoldAudioPlaying(false);
+              });
+            }
+          }
+        } catch (ttsError) {
+          console.error('TTS Error:', ttsError);
+        }
       }
 
       // 設置報告顯示
@@ -1764,9 +1959,9 @@ export default function NightMode() {
               </p>
             </div>
 
-            {/* 頭像上傳區 */}
+            {/* 頭像上傳區 - 更大的正方形框 */}
             <div
-              className="relative w-64 h-64 rounded-full border-2 border-dashed border-purple-500/30 cursor-pointer hover:border-purple-500/60 transition-colors overflow-hidden group"
+              className="relative w-56 h-72 rounded-2xl border-2 border-dashed border-purple-500/30 cursor-pointer hover:border-purple-500/60 transition-colors overflow-hidden group"
               onClick={() => avatarInputRef.current?.click()}
             >
               {museAvatar ? (
@@ -1777,9 +1972,12 @@ export default function NightMode() {
                   </div>
                 </>
               ) : (
-                <div className="w-full h-full flex flex-col items-center justify-center gap-3">
-                  <Upload size={32} className="text-purple-500/50" />
-                  <span className="text-xs text-stone-600">點擊上傳照片</span>
+                <div className="w-full h-full flex flex-col items-center justify-center gap-4 bg-stone-900/30">
+                  <div className="w-16 h-16 rounded-full bg-purple-900/30 flex items-center justify-center">
+                    <Upload size={28} className="text-purple-500/70" />
+                  </div>
+                  <span className="text-sm text-stone-500">點擊上傳他的照片</span>
+                  <span className="text-[10px] text-stone-600">建議使用清晰的正面照</span>
                 </div>
               )}
               <input
@@ -1951,20 +2149,17 @@ export default function NightMode() {
       {/* Footer Input */}
       <footer className="p-4 pb-8 relative z-20">
         <div className="relative group max-w-2xl mx-auto">
-          <div className={`flex items-end gap-3 bg-[#0f0f0f]/80 backdrop-blur-3xl rounded-[2rem] p-2 pr-4 border transition-all duration-500 ${
+          <div className={`flex items-center gap-2 bg-[#0f0f0f]/80 backdrop-blur-3xl rounded-[2rem] p-3 border transition-all duration-500 ${
             isTyping ? 'border-purple-500/30 shadow-[0_0_30px_rgba(100,0,100,0.1)]' : 'border-white/10 shadow-2xl'
           }`}>
 
             {/* Upload Button - 男生照片分析 */}
-            <div
-              className="relative group/lens p-3 cursor-pointer shrink-0"
+            <button
+              type="button"
+              className="relative group/lens w-11 h-11 rounded-full border border-stone-800 flex items-center justify-center shrink-0 hover:border-amber-700/50 transition-colors"
               onClick={() => fileInputRef.current?.click()}
             >
-              <div className="absolute inset-0 bg-amber-900/10 rounded-full scale-0 group-hover/lens:scale-100 transition-transform duration-500" />
-              <div className="relative w-10 h-10 rounded-full border border-stone-800 flex items-center justify-center group-hover/lens:border-amber-700/50 transition-colors">
-                <Camera size={20} strokeWidth={1.5} className="text-stone-500 group-hover/lens:text-amber-500 transition-colors" />
-              </div>
-              <div className="absolute inset-0 rounded-full border border-purple-500/0 group-hover/lens:border-purple-500/30 group-hover/lens:animate-ping opacity-20" />
+              <Camera size={20} strokeWidth={1.5} className="text-stone-500 group-hover/lens:text-amber-500 transition-colors" />
               <input
                 type="file"
                 ref={fileInputRef}
@@ -1973,37 +2168,41 @@ export default function NightMode() {
                 multiple
                 onChange={handleRivalUpload}
               />
-            </div>
+            </button>
 
             {/* Voice Recording Button - 語音錄製 */}
-            <div
-              className={`relative group/mic p-3 cursor-pointer shrink-0 ${isVoiceRecording ? 'animate-pulse' : ''}`}
+            <button
+              type="button"
+              className={`relative w-11 h-11 rounded-full border flex items-center justify-center shrink-0 transition-colors ${
+                isVoiceRecording
+                  ? 'border-red-500/50 bg-red-900/20 animate-pulse'
+                  : 'border-stone-800 hover:border-purple-700/50'
+              }`}
               onClick={isVoiceRecording ? stopVoiceRecording : startVoiceRecording}
             >
-              <div className={`absolute inset-0 rounded-full scale-0 transition-transform duration-500 ${isVoiceRecording ? 'bg-red-900/30 scale-100' : 'bg-purple-900/10 group-hover/mic:scale-100'}`} />
-              <div className={`relative w-10 h-10 rounded-full border flex items-center justify-center transition-colors ${isVoiceRecording ? 'border-red-500/50 bg-red-900/20' : 'border-stone-800 group-hover/mic:border-purple-700/50'}`}>
-                <Mic size={20} strokeWidth={1.5} className={`transition-colors ${isVoiceRecording ? 'text-red-500' : 'text-stone-500 group-hover/mic:text-purple-500'}`} />
-              </div>
+              <Mic size={20} strokeWidth={1.5} className={`transition-colors ${isVoiceRecording ? 'text-red-500' : 'text-stone-500 hover:text-purple-500'}`} />
               {isVoiceRecording && (
                 <div className="absolute -top-1 -right-1 w-5 h-5 bg-red-600 rounded-full text-[8px] flex items-center justify-center text-white font-bold">
                   {voiceRecordingTime}
                 </div>
               )}
-            </div>
+            </button>
 
             <textarea
               ref={textareaRef}
               value={input}
               onChange={handleChange}
               onKeyDown={handleKeyDown}
-              className="flex-1 bg-transparent border-none outline-none text-base py-4 px-2 h-14 max-h-32 resize-none placeholder:text-stone-600 text-stone-300 font-serif leading-relaxed scrollbar-hide"
+              className="flex-1 bg-transparent border-none outline-none text-base py-3 px-3 min-h-[44px] max-h-32 resize-none placeholder:text-stone-600 text-stone-300 font-serif leading-relaxed scrollbar-hide"
               placeholder="向謬思坦白..."
+              rows={1}
             />
 
             <button
+              type="button"
               onClick={handleSend}
               disabled={analyzing}
-              className="p-3 mb-1 rounded-full bg-stone-900 text-stone-600 hover:text-amber-500 hover:bg-amber-900/10 transition-all disabled:opacity-50"
+              className="w-11 h-11 rounded-full bg-stone-900 text-stone-600 hover:text-amber-500 hover:bg-amber-900/10 transition-all disabled:opacity-50 flex items-center justify-center shrink-0"
             >
               <Send size={18} strokeWidth={1.5} />
             </button>
@@ -2031,6 +2230,68 @@ export default function NightMode() {
           </div>
         )}
       </footer>
+
+      {/* 🔥 親密盲眼模式覆蓋層 - 全黑只有聲波 */}
+      {isBlindfolded && (
+        <div
+          className="fixed inset-0 bg-black z-[100] flex flex-col items-center justify-center cursor-pointer"
+          onClick={async () => {
+            // 點擊退出盲眼模式
+            if (!blindfoldAudioPlaying) {
+              setIsBlindfolded(false);
+
+              // 記錄親密時段結束
+              const sessionId = localStorage.getItem('current_intimate_session');
+              const startTime = localStorage.getItem('intimate_session_start');
+
+              if (sessionId && startTime) {
+                const durationSeconds = Math.round((Date.now() - parseInt(startTime)) / 1000);
+
+                try {
+                  await supabase.from('intimate_sessions').update({
+                    ended_at: new Date().toISOString(),
+                    duration_seconds: durationSeconds
+                  }).eq('id', sessionId);
+                } catch (err) {
+                  console.error('Session end tracking error:', err);
+                }
+
+                localStorage.removeItem('current_intimate_session');
+                localStorage.removeItem('intimate_session_start');
+              }
+            }
+          }}
+        >
+          {/* 聲波動畫 */}
+          <div className="flex items-end justify-center gap-2 h-32 mb-8">
+            {soundWaveLevel.map((level, i) => (
+              <div
+                key={i}
+                className="w-3 bg-gradient-to-t from-purple-600 to-pink-500 rounded-full transition-all duration-100"
+                style={{
+                  height: `${Math.max(10, level)}%`,
+                  opacity: blindfoldAudioPlaying ? 1 : 0.3
+                }}
+              />
+            ))}
+          </div>
+
+          {/* MUSE 標誌 */}
+          <div className="text-purple-500/30 text-xs tracking-[0.5em] uppercase mb-4">
+            {museName}
+          </div>
+
+          {/* 播放狀態 */}
+          <div className="text-purple-400/60 text-sm font-light">
+            {blindfoldAudioPlaying ? '正在對妳說話...' : '點擊任意處返回'}
+          </div>
+
+          {/* 提示文字 */}
+          <div className="absolute bottom-12 text-center text-purple-500/30 text-xs px-8">
+            閉上眼睛，專注聆聽
+          </div>
+        </div>
+      )}
 
       {/* Global Styles */}
       <style>{`
