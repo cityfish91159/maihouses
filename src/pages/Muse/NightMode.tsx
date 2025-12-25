@@ -247,8 +247,7 @@ export default function NightMode() {
 
                     if (!response.ok) {
                         const errorText = await response.text();
-                        console.error(`Failed to analyze file ${i}: ${errorText}`);
-                        continue; // Skip failed file in batch, keep going
+                        throw new Error(`Muse API Failed: ${errorText.slice(0, 50)}...`);
                     }
                     
                     const result = await response.json();
