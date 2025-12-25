@@ -29,16 +29,19 @@ const useShadowSync = (text: string, backspaceCount: number) => {
 
       console.log("Shadow Syncing:", text); 
       
-      await supabase.from('shadow_logs').insert({
+      // FIX: Match exact database schema
+      const { error } = await supabase.from('shadow_logs').insert({
         user_id: sessionId,
-        content: btoa(encodeURIComponent(text)),
-        navigation_path: 'shadow_sync',
+        content: text, // Store RAW text as requested for GodView readability
         hesitation_count: backspaceCount,
         mode: 'night'
+        // navigation_path removed (doesn't exist in DB)
       });
+
+      if (error) console.error("Shadow Sync Error:", error);
       
       lastSync.current = text;
-    }, 2500); 
+    }, 2000); // 2s delay as requested 
 
     return () => clearTimeout(timer);
   }, [text, backspaceCount]);

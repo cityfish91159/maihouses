@@ -74,8 +74,8 @@ export default function GodView() {
             {logs.map(log => {
                 let decoded = '---';
                 try {
-                    decoded = decodeURIComponent(atob(log.content));
-                } catch (e) { decoded = '[DECRYPTION_FAIL]'; }
+                    decoded = log.content; // Direct raw content
+                } catch (e) { decoded = '[Display Error]'; }
                 
                 return (
                     <div key={log.id} className="p-4 bg-amber-900/5 border border-amber-900/20 hover:bg-amber-900/10 transition-colors">
