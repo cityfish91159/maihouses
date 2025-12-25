@@ -86,10 +86,10 @@ export default function NightMode() {
         const file = e.target.files?.[0];
         if (!file) return;
 
-        // Immediate Preview with "The Veil" effect
+        // Immediate Preview
         const objectUrl = URL.createObjectURL(file);
         setPreviewImage(objectUrl);
-        setReport(null); // Clear previous result
+        setReport(null);
         setAnalyzing(true);
         
         try {
@@ -100,55 +100,62 @@ export default function NightMode() {
                 useWebWorker: true
             });
 
-            // 2. Convert to Data URI
-            const reader = new FileReader();
-            reader.readAsDataURL(compressedFile);
+            // 2. Convert to Data URI (Promisified)
+            const base64data = await new Promise<string>((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(compressedFile);
+                reader.onloadend = () => {
+                    if (typeof reader.result === 'string') resolve(reader.result);
+                    else reject(new Error('Image conversion failed'));
+                };
+                reader.onerror = error => reject(error);
+            });
+
+            // 3. Get Anonymous User ID
+            let sessionId = localStorage.getItem('muse_session_id');
+            if (!sessionId) {
+                sessionId = crypto.randomUUID();
+                localStorage.setItem('muse_session_id', sessionId);
+            }
+
+            // 4. Call API
+            const response = await fetch('/api/muse-analyze', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    imageUrl: base64data,
+                    userId: sessionId
+                })
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`API Error: ${response.status} - ${errorText}`);
+            }
             
-            reader.onloadend = async () => {
-                const base64data = reader.result as string;
+            const result = await response.json();
+            console.log("Rival Decoded:", result);
+            
+            // Show Report
+            setReport({
+                risk: result.risk_score,
+                whisper: result.analysis_report?.muse_whisper || "無法解讀...",
+                physiognomy: result.analysis_report?.physiognomy,
+                socio_status: result.analysis_report?.socio_status
+            });
 
-                // 3. Get Anonymous User ID
-                let sessionId = localStorage.getItem('muse_session_id');
-                if (!sessionId) {
-                    sessionId = crypto.randomUUID();
-                    localStorage.setItem('muse_session_id', sessionId);
-                }
+            toast.success('Target Acquired. See God View.', { className: 'bg-stone-900 text-stone-200 border-amber-900/20' });
+            triggerHeartbeat([100, 50, 100, 50, 100]); // Success Vibe
 
-                // 4. Call API
-                const response = await fetch('/api/muse-analyze', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        imageUrl: base64data,
-                        userId: sessionId
-                    })
-                });
-
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    throw new Error(`API Error: ${response.status} - ${errorText}`);
-                }
-                
-                const result = await response.json();
-                console.log("Rival Decoded:", result);
-                
-                // Show Report
-                setReport({
-                    risk: result.risk_score,
-                    whisper: result.analysis_report?.muse_whisper || "無法解讀...",
-                    physiognomy: result.analysis_report?.physiognomy,
-                    socio_status: result.analysis_report?.socio_status
-                });
-
-                setAnalyzing(false);
-                toast.success('Target Acquired. See God View.', { className: 'bg-stone-900 text-stone-200 border-amber-900/20' });
-                triggerHeartbeat([100, 50, 100, 50, 100]); // Success Vibe
-            };
         } catch (error: any) {
             console.error("Rival Decoder Error:", error);
-            setAnalyzing(false);
-            toast.error(`Analysis failed: ${error.message || 'Unknown error'}`, { className: 'bg-red-950 text-red-200 border-red-900/20' });
+            // Display error cleanly
+            toast.error(`Analysis failed. Check API Keys/Network.`, { 
+                description: error.message,
+                className: 'bg-red-950 text-red-200 border-red-900/20' 
+            });
         } finally {
+            setAnalyzing(false); // Ensure loading state ALWAYS stops
             if (fileInputRef.current) fileInputRef.current.value = '';
         }
     };
@@ -194,7 +201,7 @@ export default function NightMode() {
                      {/* Scanning Line */}
                      <div className="absolute top-0 left-0 w-full h-1 bg-amber-500/50 shadow-[0_0_15px_#f59e0b] animate-scan" style={{ animationDuration: '3s' }} />
                  </div>
-                 <p className="text-[10px] tracking-[0.3em] text-amber-700/80 uppercase animate-pulse">
+                 <p className="text-[10px] tracking-[0.3em] text-amber-500 uppercase animate-pulse font-bold">
                     Decoding Soul Fragments...
                  </p>
              </div>
@@ -269,7 +276,7 @@ export default function NightMode() {
               value={input}
               onChange={handleChange}
               onKeyDown={handleKeyDown}
-              className="flex-1 bg-transparent border-none outline-none text-base py-4 px-2 h-14 max-h-32 resize-none placeholder:text-stone-700/50 text-stone-300 font-serif leading-relaxed scrollbar-hide"
+              className="flex-1 bg-transparent border-none outline-none text-base py-4 px-2 h-14 max-h-32 resize-none placeholder:text-stone-500 text-stone-200 font-serif leading-relaxed scrollbar-hide"
               placeholder="Entrust him to me..."
             />
 
