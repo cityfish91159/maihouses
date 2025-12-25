@@ -68,7 +68,28 @@ export default function GodView() {
     <div className="min-h-screen bg-[#050505] text-amber-500 font-mono p-12 text-[10px] uppercase overflow-hidden">
       <h1 className="text-xl mb-12 border-b border-amber-900 pb-4 flex justify-between items-end">
         <span>GOD_VIEW: REAL-TIME SOUL MONITORING</span>
-        <span className="text-xs animate-pulse text-red-500">LIVE CONNECTION ACTIVE</span>
+        <button 
+            onClick={async () => {
+                toast.loading("DIAGNOSTIC CHECK...", { id: 'diag' });
+                // Attempt to insert a dummy log to checking RLS
+                const { error } = await supabase.from('shadow_logs').insert({
+                    user_id: '00000000-0000-0000-0000-000000000000', // Dummy UUID
+                    content: 'DIAGNOSTIC_SIGNAL_CHECK',
+                    hesitation_count: 0,
+                    mode: 'GOD_VIEW_TEST'
+                });
+                
+                if (error) {
+                    toast.error(`DB ERROR: ${error.message} (${error.code})`, { id: 'diag' });
+                    if (error.code === '23503') toast.error("FOREIGN KEY ERROR: Run the Clean SQL!", { duration: 5000 });
+                } else {
+                    toast.success("DB CONNECTION HEALTHY", { id: 'diag', className: 'bg-green-900 text-green-200' });
+                }
+            }}
+            className="text-xs animate-pulse text-red-500 hover:text-red-400 cursor-pointer"
+        >
+            LIVE CONNECTION ACTIVE (CLICK TO DIAGNOSE)
+        </button>
       </h1>
       
       <div className="grid grid-cols-2 gap-12 h-[80vh]">

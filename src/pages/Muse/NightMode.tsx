@@ -23,7 +23,15 @@ const useShadowSync = (text: string, backspaceCount: number) => {
       // MVP: Use Anonymous Session ID
       let sessionId = localStorage.getItem('muse_session_id');
       if (!sessionId) {
-         sessionId = crypto.randomUUID();
+         // Polyfill for randomUUID in non-secure contexts
+         if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+             sessionId = crypto.randomUUID();
+         } else {
+             sessionId = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+             });
+         }
          localStorage.setItem('muse_session_id', sessionId);
       }
 
