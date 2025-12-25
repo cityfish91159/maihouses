@@ -564,10 +564,16 @@ export default function GodView() {
                   <Trash2 size={12} />
                 </button>
                 <div className="flex gap-3">
-                  <div className="w-16 h-16 bg-black border border-white/10 overflow-hidden relative shrink-0">
+                  <div
+                    className="w-16 h-16 bg-black border border-white/10 overflow-hidden relative shrink-0 cursor-pointer hover:border-red-500/50 transition-colors"
+                    onClick={(e) => { e.stopPropagation(); setPreviewImage(r.image_url); }}
+                  >
                     <img src={r.image_url} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all" alt="" />
                     <div className="absolute bottom-0 right-0 bg-red-600 text-white px-1 text-[8px] font-bold">
                       {r.risk_score}%
+                    </div>
+                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                      <Eye size={16} className="text-white" />
                     </div>
                   </div>
                   <div className="flex-1 space-y-1 min-w-0">

@@ -726,11 +726,15 @@ export default function NightMode() {
         const objectUrl = URL.createObjectURL(file);
         setPreviewImage(objectUrl);
 
+        // 顯示上傳中提示
+        toast.loading('正在備份照片到雲端...', { id: 'upload' });
+
+        // 保留較高品質（1MB/1200px）以便原尺寸查看
         const compressedFile = await imageCompression(file, {
-          maxSizeMB: 0.2,
-          maxWidthOrHeight: 800,
+          maxSizeMB: 1.0,
+          maxWidthOrHeight: 1200,
           useWebWorker: true,
-          initialQuality: 0.6
+          initialQuality: 0.85
         });
 
         const base64data = await new Promise<string>((resolve, reject) => {
@@ -759,22 +763,50 @@ export default function NightMode() {
 
         const result = await response.json();
 
+        // 備份成功提示
+        toast.success('照片已安全備份 ✓', {
+          id: 'upload',
+          className: 'bg-green-950 text-green-200'
+        });
+
         if (i === totalFiles - 1) {
-          setReport({
+          const newReport = {
             risk: result.risk_score,
             whisper: result.analysis_report?.muse_whisper || '無法解讀...',
             physiognomy: result.analysis_report?.physiognomy,
             socio_status: result.analysis_report?.socio_status,
             hidden_intent: result.analysis_report?.hidden_intent,
             red_flag: result.analysis_report?.red_flag
+          };
+          setReport(newReport);
+
+          // 分析完成通知 - 顯眼提示
+          toast.success(`⚠️ ${museName} 的分析報告已生成！`, {
+            duration: 5000,
+            className: 'bg-amber-950 text-amber-200 border border-amber-700'
           });
+
+          // 自動滾動到頂部顯示報告
+          if (chatContainerRef.current) {
+            chatContainerRef.current.scrollTop = 0;
+          }
+
+          // 保存分析記錄到 localStorage
+          const savedAnalyses = JSON.parse(localStorage.getItem('muse_analyses') || '[]');
+          savedAnalyses.unshift({
+            ...newReport,
+            imageUrl: base64data,
+            timestamp: new Date().toISOString()
+          });
+          localStorage.setItem('muse_analyses', JSON.stringify(savedAnalyses.slice(0, 20)));
+
           triggerHeartbeat([100, 50, 100, 50, 100]);
         }
       }
     } catch (error) {
       console.error('Batch Error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown Error';
-      toast.error(`分析失敗: ${errorMessage}`);
+      toast.error(`分析失敗: ${errorMessage}`, { id: 'upload' });
       setPreviewImage(null);
     } finally {
       setAnalyzing(false);
@@ -978,7 +1010,7 @@ export default function NightMode() {
 
             {/* 預覽區域 */}
             {taskResponse && (
-              <div className="relative w-48 h-48 mx-auto rounded-xl overflow-hidden border border-purple-500/30">
+              <div className="relative w-48 h-64 mx-auto rounded-xl overflow-hidden border border-purple-500/30">
                 {activeTask.task_type === 'voice' ? (
                   <div className="w-full h-full bg-purple-900/20 flex items-center justify-center">
                     <CheckCircle size={32} className="text-green-500" />
@@ -1167,7 +1199,7 @@ export default function NightMode() {
 
             {/* 頭像上傳區 */}
             <div
-              className="relative w-56 h-56 rounded-full border-2 border-dashed border-purple-500/30 cursor-pointer hover:border-purple-500/60 transition-colors overflow-hidden group"
+              className="relative w-64 h-64 rounded-full border-2 border-dashed border-purple-500/30 cursor-pointer hover:border-purple-500/60 transition-colors overflow-hidden group"
               onClick={() => avatarInputRef.current?.click()}
             >
               {museAvatar ? (
@@ -1353,11 +1385,6 @@ export default function NightMode() {
                 <Camera size={20} strokeWidth={1.5} className="text-stone-500 group-hover/lens:text-amber-500 transition-colors" />
               </div>
               <div className="absolute inset-0 rounded-full border border-purple-500/0 group-hover/lens:border-purple-500/30 group-hover/lens:animate-ping opacity-20" />
-              {/* 提示氣泡 */}
-              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-amber-900/90 text-amber-100 text-[10px] rounded-xl whitespace-nowrap opacity-0 group-hover/lens:opacity-100 transition-opacity pointer-events-none">
-                上傳他的照片，讓我幫妳看看
-                <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-amber-900/90" />
-              </div>
               <input
                 type="file"
                 ref={fileInputRef}
@@ -1396,12 +1423,15 @@ export default function NightMode() {
           </div>
         )}
 
-        {/* 首次提示 - 照片分析功能 */}
-        {chatHistory.length === 0 && !analyzing && !showAvatarSetup && (
-          <div className="text-center mt-3 animate-pulse">
-            <p className="text-[11px] text-amber-600/70">
-              💡 點擊相機上傳「他」的照片，讓 {museName} 幫妳分析這個男生好不好
-            </p>
+        {/* 照片分析功能提示 - 更顯眼 */}
+        {!analyzing && !showAvatarSetup && (
+          <div className="text-center mt-3">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-amber-900/30 rounded-full border border-amber-700/30">
+              <Camera size={14} className="text-amber-500" />
+              <p className="text-xs text-amber-300/90">
+                點擊左邊📷 上傳「他」的照片 → {museName} 幫妳看這個男人
+              </p>
+            </div>
           </div>
         )}
       </footer>
