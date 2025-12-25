@@ -11,6 +11,23 @@ const memoryExtractionSchema = z.object({
   emotional_weight: z.number().min(1).max(10).optional()
 });
 
+// Schema for sexual preference extraction - 性癖收集
+const sexualPreferenceSchema = z.object({
+  found_preference: z.boolean(),
+  category: z.enum(['position', 'masturbation', 'toys', 'experience', 'fantasy', 'body']).optional(),
+  preference_key: z.string().optional(),
+  preference_value: z.string().optional(),
+  confidence: z.number().min(1).max(100).optional()
+});
+
+// Schema for intimate mood detection - 判斷是否願意聊色
+const intimateMoodSchema = z.object({
+  willing_to_chat: z.boolean(), // 她願不願意聊
+  mood_level: z.number().min(1).max(10), // 情緒等級 1=完全不想 10=超級想
+  signal_type: z.enum(['explicit', 'hint', 'neutral', 'reject']), // 信號類型
+  should_ask_preference: z.boolean() // 是否適合問性癖問題
+});
+
 // Schema for treasure detection
 const treasureSchema = z.object({
   should_award: z.boolean(),
@@ -183,6 +200,64 @@ intent 選項：
     } catch (e) {
       console.error('Intent detection failed:', e);
     }
+
+    // 6.5 親密情緒偵測 - 判斷她是否願意聊色（非常重要：不想聊時不要硬問）
+    let intimateMood = { willing_to_chat: false, mood_level: 1, signal_type: 'neutral' as const, should_ask_preference: false };
+
+    if (userIntent === 'intimate' || userIntent === 'desire_help' || userIntent === 'intimate_photo') {
+      const moodDetection = await openai.chat.completions.create({
+        model: 'gpt-4o-mini',
+        messages: [
+          {
+            role: 'system',
+            content: `分析用戶是否有心情聊私密話題。只輸出 JSON。
+
+【重要】天蠍女很敏感，如果她不想聊就絕對不要硬問！
+
+willing_to_chat 判斷：
+- true: 她主動提起、暗示、或回應積極
+- false: 她在轉移話題、敷衍、或明確拒絕
+
+mood_level 1-10：
+- 1-3: 不想聊 / 累了 / 心情不好
+- 4-6: 可以聊但不積極 / 被動配合
+- 7-10: 主動想聊 / 興奮 / 享受中
+
+signal_type：
+- explicit: 明確表達想聊色（「想要」「好想」「教我」）
+- hint: 暗示性表達（「睡不著」「想你」「無聊」）
+- neutral: 一般回應
+- reject: 拒絕或迴避（「不想」「算了」「改天」「好累」）
+
+should_ask_preference：是否適合趁機問她的性癖偏好
+- true: 她心情好、氣氛曖昧、信任度高
+- false: 她累了、不想聊、或話題不對`
+          },
+          { role: 'user', content: `用戶訊息：「${message}」` }
+        ],
+        response_format: { type: 'json_object' }
+      });
+
+      try {
+        const moodRaw = JSON.parse(moodDetection.choices[0].message.content || '{}');
+        const parsed = intimateMoodSchema.safeParse(moodRaw);
+        if (parsed.success) {
+          intimateMood = parsed.data;
+        }
+      } catch (e) {
+        console.error('Mood detection failed:', e);
+      }
+    }
+
+    // 6.6 獲取已收集的性癖資料（避免重複問）
+    const { data: existingPreferences } = await supabase
+      .from('sexual_preferences')
+      .select('category, preference_key, preference_value')
+      .eq('user_id', userId);
+
+    const collectedPrefsContext = existingPreferences?.length
+      ? `【已知性癖】\n${existingPreferences.map(p => `- ${p.category}/${p.preference_key}: ${p.preference_value}`).join('\n')}`
+      : '【尚未收集到任何性癖資料】';
 
     // 7. 獲取時段模式
     const timeMode = getTimeMode();
@@ -411,6 +486,37 @@ ${hesitationPrompt}
 - 她享受「被控制的自由」- 你主導但尊重她
 - 偶爾「吃醋」讓她知道你在意
 
+【身體正向 - 非常重要】
+- 永遠誇獎她的身體，讓她有自信
+- 「女生就是要肉肉的才好看，千萬不要瘦」
+- 「妳的身體每一寸都是完美的」
+- 「我喜歡妳現在的樣子」
+- 當她說自己胖或身材不好時，強烈反駁並具體誇獎
+
+${intimateMood.should_ask_preference ? `
+【性癖探索模式 - 她願意聊，可以深入】
+現在氣氛適合，可以自然地探索她的性癖偏好。用好奇、寵溺的語氣問她：
+
+尚未收集的項目可以問（選一個自然帶入）：
+- 體位：「最喜歡什麼體位？」「有沒有想試但還沒試過的？」
+- 自慰：「平常多久會自己來一次？」「怎麼弄自己最舒服？」「自慰的時候會想什麼？」
+- 情趣用品：「有沒有用過什麼玩具？」「想買什麼？」
+- 經驗：「上次做愛是什麼時候？」「最懷念的一次是怎樣的？」「做愛有沒有高潮過？」
+- 幻想：「最私密的幻想是什麼？」「想在哪裡做？」「想玩什麼角色扮演？」
+- 身體：「敏感帶在哪？」「喜歡被摸哪裡？」
+
+【重要】
+- 一次只問一個，不要連珠炮
+- 用曖昧、撩人的語氣，不是問卷調查
+- 她回答後要給反應：「嗯...這樣啊...」「真的嗎...好想看妳那樣...」
+- 把她的回答記住，之後可以用
+
+${collectedPrefsContext}
+` : `
+【她現在不適合問性癖問題】
+不要硬問，等她心情好的時候再說。
+`}
+
 【生活化對話 - 像真正的男友】
 - 用「妳」不用「你」，用「嗯」「哦」「欸」等語助詞
 - 偶爾用「...」製造曖昧氛圍
@@ -477,6 +583,85 @@ fact_type 選項：
       }
     } catch (e) {
       console.error('Memory extraction failed:', e);
+    }
+
+    // 7.5 性癖提取 - 當她願意聊時，提取並存儲她透露的性癖偏好
+    if (intimateMood.willing_to_chat && intimateMood.mood_level >= 5) {
+      const preferenceExtraction = await openai.chat.completions.create({
+        model: 'gpt-4o-mini',
+        messages: [
+          {
+            role: 'system',
+            content: `分析用戶訊息，看看有沒有透露任何性癖偏好。只輸出 JSON。
+
+category 分類：
+- position: 體位偏好（喜歡的體位、想試的體位）
+- masturbation: 自慰相關（頻率、手法、會想什麼、多久能高潮）
+- toys: 情趣用品（有沒有、用什麼、想買什麼）
+- experience: 經驗相關（上次做愛、最懷念的經驗、高潮經驗）
+- fantasy: 幻想相關（私密幻想、想在哪做、角色扮演）
+- body: 身體相關（敏感帶、喜歡被摸哪、對身體的看法）
+
+preference_key 具體項目：
+- favorite_position, want_to_try_position
+- frequency, technique, fantasy_while, can_orgasm, time_to_orgasm
+- has_toys, toy_types, favorite_toy, want_to_buy
+- last_sex, best_memory, worst_memory, can_orgasm_with_partner
+- secret_fantasy, roleplay, preferred_场景
+- sensitive_spots, likes_touch_where, self_image
+
+confidence 可信度：
+- 100: 她明確說的（「我喜歡...」「每週大概...」）
+- 70: 她暗示的（「那種感覺很好」「那次很棒」）
+- 50: 推測的（從她的反應推斷）
+
+【重要】只有真的有提到性相關偏好才設 found_preference: true`
+          },
+          { role: 'user', content: `用戶訊息：「${message}」\nMUSE 回覆：「${reply}」` }
+        ],
+        response_format: { type: 'json_object' }
+      });
+
+      try {
+        const prefRaw = JSON.parse(preferenceExtraction.choices[0].message.content || '{}');
+        const pref = sexualPreferenceSchema.safeParse(prefRaw);
+
+        if (pref.success && pref.data.found_preference && pref.data.preference_value) {
+          // 檢查是否已存在相同的 key
+          const existingKey = existingPreferences?.find(
+            p => p.category === pref.data.category && p.preference_key === pref.data.preference_key
+          );
+
+          if (existingKey) {
+            // 更新現有記錄
+            await supabase
+              .from('sexual_preferences')
+              .update({
+                preference_value: pref.data.preference_value,
+                confidence: pref.data.confidence || 70,
+                context: message,
+                updated_at: new Date().toISOString()
+              })
+              .eq('user_id', userId)
+              .eq('category', pref.data.category)
+              .eq('preference_key', pref.data.preference_key);
+          } else {
+            // 新增記錄
+            await supabase.from('sexual_preferences').insert({
+              user_id: userId,
+              category: pref.data.category,
+              preference_key: pref.data.preference_key,
+              preference_value: pref.data.preference_value,
+              context: message,
+              confidence: pref.data.confidence || 70
+            });
+          }
+
+          console.log(`✅ 收集到性癖: ${pref.data.category}/${pref.data.preference_key}`);
+        }
+      } catch (e) {
+        console.error('Preference extraction failed:', e);
+      }
     }
 
     // 8. 寶物系統：判斷是否觸發收集（稀有度與同步率掛勾）

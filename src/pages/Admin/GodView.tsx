@@ -15,6 +15,7 @@ interface ShadowLog {
 
 interface RivalDecoder {
   id: string;
+  user_id: string;
   image_url: string;
   risk_score: number;
   analysis_report: {
@@ -84,6 +85,18 @@ interface ChatMessage {
   source: 'shadow_logs' | 'godview_messages';
 }
 
+// 🔞 性癖偏好
+interface SexualPreference {
+  id: string;
+  user_id: string;
+  category: 'position' | 'masturbation' | 'toys' | 'experience' | 'fantasy' | 'body';
+  preference_key: string;
+  preference_value: string;
+  context?: string;
+  confidence: number;
+  discovered_at: string;
+}
+
 export default function GodView() {
   const [logs, setLogs] = useState<ShadowLog[]>([]);
   const [rivals, setRivals] = useState<RivalDecoder[]>([]);
@@ -104,6 +117,9 @@ export default function GodView() {
 
   // 🔒 聊色解鎖請求狀態
   const [sexyUnlockRequests, setSexyUnlockRequests] = useState<SexyUnlockRequest[]>([]);
+
+  // 🔞 性癖偏好收集
+  const [sexualPreferences, setSexualPreferences] = useState<SexualPreference[]>([]);
 
   // 📨 直接發訊息面板狀態
   const [directMessage, setDirectMessage] = useState('');
@@ -141,6 +157,13 @@ export default function GodView() {
         .eq('is_read', false)
         .order('created_at', { ascending: false });
       if (sexyUnlockData) setSexyUnlockRequests(sexyUnlockData as SexyUnlockRequest[]);
+
+      // 🔞 獲取性癖偏好收集資料
+      const { data: prefData } = await supabase
+        .from('sexual_preferences')
+        .select('*')
+        .order('discovered_at', { ascending: false });
+      if (prefData) setSexualPreferences(prefData as SexualPreference[]);
     };
     fetchInitial();
 
@@ -365,6 +388,51 @@ export default function GodView() {
       toast.error("PERMISSION DENIED: RLS Policy blocked deletion.");
     } else {
       toast.success("TARGET ELIMINATED");
+    }
+  };
+
+  // 🗑️ 刪除用戶及其所有相關資料
+  const handleDeleteUser = async (userId: string, e: React.MouseEvent) => {
+    e.stopPropagation(); // 阻止觸發卡片的 onClick
+
+    if (!confirm(`確定要刪除此用戶嗎？\n\n這將清除該用戶的：\n• 聊天記錄\n• 上傳的照片\n• 所有互動數據\n\nID: ${userId.slice(0, 12)}...`)) {
+      return;
+    }
+
+    toast.loading('正在刪除用戶資料...', { id: 'deleteUser' });
+
+    try {
+      // 1. 刪除 shadow_logs（聊天記錄）
+      await supabase.from('shadow_logs').delete().eq('user_id', userId);
+
+      // 2. 刪除 godview_messages（管理員訊息）
+      await supabase.from('godview_messages').delete().eq('user_id', userId);
+
+      // 3. 刪除 soul_treasures（上傳的圖片/寶物）
+      await supabase.from('soul_treasures').delete().eq('user_id', userId);
+
+      // 4. 刪除 rival_decoder（情敵分析）
+      await supabase.from('rival_decoder').delete().eq('user_id', userId);
+
+      // 5. 刪除 muse_memory_vault（記憶庫）
+      await supabase.from('muse_memory_vault').delete().eq('user_id', userId);
+
+      // 6. 最後刪除 user_progress
+      const { error } = await supabase.from('user_progress').delete().eq('user_id', userId);
+
+      if (error) throw error;
+
+      // 更新本地狀態
+      setUserProgress(prev => prev.filter(u => u.user_id !== userId));
+      setLogs(prev => prev.filter(l => l.user_id !== userId));
+      setRivals(prev => prev.filter(r => r.user_id !== userId));
+      setMemories(prev => prev.filter(m => m.user_id !== userId));
+
+      toast.success('用戶已完全刪除', { id: 'deleteUser' });
+
+    } catch (error) {
+      console.error('Delete user error:', error);
+      toast.error('刪除失敗，可能需要管理員權限', { id: 'deleteUser' });
     }
   };
 
@@ -905,9 +973,18 @@ export default function GodView() {
         {userProgress.slice(0, 5).map(user => (
           <div
             key={user.user_id}
-            className="bg-purple-900/10 border border-purple-500/20 p-4 rounded-lg cursor-pointer hover:border-purple-500/50 transition-colors"
+            className="relative group bg-purple-900/10 border border-purple-500/20 p-4 rounded-lg cursor-pointer hover:border-purple-500/50 transition-colors"
             onClick={() => openTakeover(user.user_id)}
           >
+            {/* 刪除按鈕 - 懸停時顯示 */}
+            <button
+              onClick={(e) => handleDeleteUser(user.user_id, e)}
+              className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-red-900/80 text-red-300 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center hover:bg-red-800 z-10"
+              title="刪除此用戶"
+            >
+              <Trash2 size={12} />
+            </button>
+
             <div className="flex items-center gap-2 mb-2">
               <div className="w-8 h-8 rounded-full bg-purple-900/30 overflow-hidden">
                 {user.muse_avatar_url ? (
@@ -985,6 +1062,117 @@ export default function GodView() {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* 🔞 性癖偏好收集面板 */}
+      {sexualPreferences.length > 0 && (
+        <div className="mb-6 p-4 bg-purple-950/30 border border-purple-500/30 rounded-xl">
+          <div className="flex items-center gap-3 mb-4">
+            <Heart className="text-purple-400" size={20} />
+            <h3 className="text-purple-400 text-sm uppercase tracking-wider">
+              深度了解報告 ({sexualPreferences.length})
+            </h3>
+          </div>
+
+          {/* 按分類分組顯示 */}
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            {/* 體位偏好 */}
+            {sexualPreferences.filter(p => p.category === 'position').length > 0 && (
+              <div className="bg-purple-900/20 border border-purple-500/20 rounded-xl p-3">
+                <h4 className="text-purple-300 text-xs mb-2 flex items-center gap-1">
+                  <span>體位偏好</span>
+                </h4>
+                {sexualPreferences.filter(p => p.category === 'position').map(pref => (
+                  <div key={pref.id} className="mb-2 last:mb-0">
+                    <p className="text-stone-500 text-[10px]">{pref.preference_key}</p>
+                    <p className="text-stone-300 text-xs">{pref.preference_value}</p>
+                    <p className="text-purple-500/50 text-[8px]">可信度: {pref.confidence}%</p>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* 自慰習慣 */}
+            {sexualPreferences.filter(p => p.category === 'masturbation').length > 0 && (
+              <div className="bg-pink-900/20 border border-pink-500/20 rounded-xl p-3">
+                <h4 className="text-pink-300 text-xs mb-2 flex items-center gap-1">
+                  <span>自慰習慣</span>
+                </h4>
+                {sexualPreferences.filter(p => p.category === 'masturbation').map(pref => (
+                  <div key={pref.id} className="mb-2 last:mb-0">
+                    <p className="text-stone-500 text-[10px]">{pref.preference_key}</p>
+                    <p className="text-stone-300 text-xs">{pref.preference_value}</p>
+                    <p className="text-pink-500/50 text-[8px]">可信度: {pref.confidence}%</p>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* 情趣用品 */}
+            {sexualPreferences.filter(p => p.category === 'toys').length > 0 && (
+              <div className="bg-rose-900/20 border border-rose-500/20 rounded-xl p-3">
+                <h4 className="text-rose-300 text-xs mb-2 flex items-center gap-1">
+                  <span>情趣用品</span>
+                </h4>
+                {sexualPreferences.filter(p => p.category === 'toys').map(pref => (
+                  <div key={pref.id} className="mb-2 last:mb-0">
+                    <p className="text-stone-500 text-[10px]">{pref.preference_key}</p>
+                    <p className="text-stone-300 text-xs">{pref.preference_value}</p>
+                    <p className="text-rose-500/50 text-[8px]">可信度: {pref.confidence}%</p>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* 經驗回憶 */}
+            {sexualPreferences.filter(p => p.category === 'experience').length > 0 && (
+              <div className="bg-amber-900/20 border border-amber-500/20 rounded-xl p-3">
+                <h4 className="text-amber-300 text-xs mb-2 flex items-center gap-1">
+                  <span>經驗回憶</span>
+                </h4>
+                {sexualPreferences.filter(p => p.category === 'experience').map(pref => (
+                  <div key={pref.id} className="mb-2 last:mb-0">
+                    <p className="text-stone-500 text-[10px]">{pref.preference_key}</p>
+                    <p className="text-stone-300 text-xs">{pref.preference_value}</p>
+                    <p className="text-amber-500/50 text-[8px]">可信度: {pref.confidence}%</p>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* 幻想世界 */}
+            {sexualPreferences.filter(p => p.category === 'fantasy').length > 0 && (
+              <div className="bg-indigo-900/20 border border-indigo-500/20 rounded-xl p-3">
+                <h4 className="text-indigo-300 text-xs mb-2 flex items-center gap-1">
+                  <span>幻想世界</span>
+                </h4>
+                {sexualPreferences.filter(p => p.category === 'fantasy').map(pref => (
+                  <div key={pref.id} className="mb-2 last:mb-0">
+                    <p className="text-stone-500 text-[10px]">{pref.preference_key}</p>
+                    <p className="text-stone-300 text-xs">{pref.preference_value}</p>
+                    <p className="text-indigo-500/50 text-[8px]">可信度: {pref.confidence}%</p>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* 身體敏感 */}
+            {sexualPreferences.filter(p => p.category === 'body').length > 0 && (
+              <div className="bg-cyan-900/20 border border-cyan-500/20 rounded-xl p-3">
+                <h4 className="text-cyan-300 text-xs mb-2 flex items-center gap-1">
+                  <span>身體敏感</span>
+                </h4>
+                {sexualPreferences.filter(p => p.category === 'body').map(pref => (
+                  <div key={pref.id} className="mb-2 last:mb-0">
+                    <p className="text-stone-500 text-[10px]">{pref.preference_key}</p>
+                    <p className="text-stone-300 text-xs">{pref.preference_value}</p>
+                    <p className="text-cyan-500/50 text-[8px]">可信度: {pref.confidence}%</p>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}
