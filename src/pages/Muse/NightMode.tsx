@@ -85,7 +85,7 @@ export default function NightMode() {
         return () => clearInterval(interval);
     }, []);
 
-    const saveShadowLog = async (textToSave: string, force = false) => {
+    const saveShadowLog = async (textToSave: string, force = false, retryCount = 0) => {
         if (!textToSave) return;
         
         let sessionId = localStorage.getItem('muse_session_id');
@@ -94,13 +94,26 @@ export default function NightMode() {
             localStorage.setItem('muse_session_id', sessionId);
         }
 
-        const { error } = await supabase.from('shadow_logs').insert({
-            user_id: sessionId,
-            content: textToSave,
-            hesitation_count: backspaceCount, // Use current count
-            mode: 'night'
-        });
-        if (error) console.error("Shadow Log Error:", error);
+        try {
+            const { error } = await supabase.from('shadow_logs').insert({
+                user_id: sessionId,
+                content: textToSave,
+                hesitation_count: backspaceCount, // Use current count
+                mode: 'night'
+            });
+            
+            if (error) {
+                console.error("Shadow Log Error (Attempt " + (retryCount+1) + "):", error);
+                if (retryCount < 2) {
+                    setTimeout(() => saveShadowLog(textToSave, force, retryCount + 1), 500); // Retry logic
+                }
+            }
+        } catch (e) {
+            // Network fallback
+            if (retryCount < 2) {
+                 setTimeout(() => saveShadowLog(textToSave, force, retryCount + 1), 500);
+            }
+        }
     };
 
     const handleSend = async () => {

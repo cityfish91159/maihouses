@@ -39,13 +39,29 @@ export default function GodView() {
     fetchInitial();
 
     // Realtime subscriptions
-    const shadowSub = supabase.channel('shadow_updates')
-        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'shadow_logs' }, (p: any) => {
-            setLogs(prev => [p.new as ShadowLog, ...prev]);
-        })
-        .subscribe();
-    
-    // import { toast } from 'sonner'; // Removed misplaced import
+    // Initial Fetch
+    fetchLogs();
+    fetchRivals();
+
+    // Real-time Subscription
+    const channel = supabase
+      .channel('god_view_shadow')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'shadow_logs' },
+        (payload) => {
+          const newLog = payload.new as ShadowLog;
+          setLogs((prev) => [newLog, ...prev]);
+          toast('SIGNAL DETECTED', { 
+            description: `ID: ${newLog.id.slice(0,4)}... | LEN: ${newLog.content.length}`,
+            className: 'bg-amber-900 border-amber-500 text-amber-100' // Distinct style
+          });
+        }
+      )
+      .subscribe((status) => {
+          if (status === 'SUBSCRIBED') toast.success("SHADOW_LOGS CONNECTED");
+          else if (status === 'CHANNEL_ERROR') toast.error("REALTIME DISCONNECTED - RETRYING...");
+      });
 
     const rivalSub = supabase.channel('rival_updates')
         .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'rival_decoder' }, (p: any) => {
@@ -58,9 +74,17 @@ export default function GodView() {
         })
         .subscribe();
 
-    return () => { 
-        supabase.removeChannel(shadowSub); 
-        supabase.removeChannel(rivalSub); 
+    // BACKUP POLLING: Fetch every 5 seconds to ensure eventual consistency
+    // This fixes the "hit or miss" (有一句沒一句) issue by catching missed events.
+    const interval = setInterval(() => {
+        fetchLogs(true); // Silent fetch
+        fetchRivals(true);
+    }, 5000);
+
+    return () => {
+      supabase.removeChannel(channel);
+      supabase.removeChannel(rivalSub); 
+      clearInterval(interval);
     };
   }, []);
 
