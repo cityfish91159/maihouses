@@ -2,7 +2,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { supabase } from '../../lib/supabase';
 import { toast } from 'sonner';
-import { Trash2, Send, MessageCircle, Eye, Heart, Gem, Brain, X, Download, Archive } from 'lucide-react';
+import { Trash2, Send, MessageCircle, Eye, Heart, Gem, Brain, X, Download, Archive, Lock, Unlock, Check, XCircle } from 'lucide-react';
 
 interface ShadowLog {
   id: string;
@@ -62,6 +62,19 @@ interface SoulTreasure {
   unlocked_at: string;
 }
 
+// 🔒 解鎖請求
+interface UnlockRequest {
+  id: string;
+  user_id: string;
+  message_type: string;
+  content: string;
+  metadata: {
+    timestamp: string;
+    session_duration: number;
+  };
+  created_at: string;
+}
+
 export default function GodView() {
   const [logs, setLogs] = useState<ShadowLog[]>([]);
   const [rivals, setRivals] = useState<RivalDecoder[]>([]);
@@ -80,6 +93,9 @@ export default function GodView() {
   const [userTreasures, setUserTreasures] = useState<SoulTreasure[]>([]);
   const [showTreasuresPanel, setShowTreasuresPanel] = useState(false);
 
+  // 🔒 解鎖請求狀態
+  const [unlockRequests, setUnlockRequests] = useState<UnlockRequest[]>([]);
+
   const messageInputRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
@@ -96,6 +112,15 @@ export default function GodView() {
 
       const { data: memoryData } = await supabase.from('muse_memory_vault').select('*').order('created_at', { ascending: false }).limit(50);
       if (memoryData) setMemories(memoryData);
+
+      // 🔒 獲取待處理的解鎖請求
+      const { data: unlockData } = await supabase
+        .from('godview_messages')
+        .select('*')
+        .eq('message_type', 'unlock_request')
+        .eq('is_read', false)
+        .order('created_at', { ascending: false });
+      if (unlockData) setUnlockRequests(unlockData as UnlockRequest[]);
     };
     fetchInitial();
 
@@ -154,6 +179,21 @@ export default function GodView() {
       })
       .subscribe();
 
+    // 🔒 解鎖請求訂閱
+    const unlockSub = supabase.channel('unlock_requests')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'godview_messages' }, (p) => {
+        const msg = p.new as UnlockRequest;
+        if (msg.message_type === 'unlock_request') {
+          setUnlockRequests(prev => [msg, ...prev]);
+          toast('🔓 解鎖請求！', {
+            description: `用戶 ${msg.user_id.slice(0, 8)} 請求結束親密模式`,
+            className: 'bg-purple-950 text-purple-200 border border-purple-800',
+            duration: 10000
+          });
+        }
+      })
+      .subscribe();
+
     // BACKUP POLLING
     const interval = setInterval(() => {
       fetchLogs();
@@ -163,6 +203,7 @@ export default function GodView() {
     return () => {
       supabase.removeChannel(channel);
       supabase.removeChannel(rivalSub);
+      supabase.removeChannel(unlockSub);
       clearInterval(interval);
     };
   }, []);
@@ -325,6 +366,80 @@ export default function GodView() {
     } catch (error) {
       console.error('Task send error:', error);
       toast.error("TASK PUSH FAILED");
+    }
+  };
+
+  // 🔒 同意解鎖
+  const approveUnlock = async (request: UnlockRequest) => {
+    try {
+      // 標記原始請求為已讀
+      await supabase.from('godview_messages').update({ is_read: true }).eq('id', request.id);
+
+      // 發送解鎖回應給用戶
+      const { error } = await supabase.from('godview_messages').insert({
+        user_id: request.user_id,
+        message_type: 'unlock_response',
+        content: '✅ 解鎖已批准',
+        metadata: { approved: true },
+        is_read: false
+      });
+
+      if (error) throw error;
+
+      // 從列表中移除
+      setUnlockRequests(prev => prev.filter(r => r.id !== request.id));
+      toast.success("已批准解鎖", { className: 'bg-green-900 text-green-200' });
+    } catch (error) {
+      console.error('Approve unlock error:', error);
+      toast.error("操作失敗");
+    }
+  };
+
+  // 🔒 拒絕解鎖
+  const denyUnlock = async (request: UnlockRequest, message: string = '還不行...再堅持一下') => {
+    try {
+      // 標記原始請求為已讀
+      await supabase.from('godview_messages').update({ is_read: true }).eq('id', request.id);
+
+      // 發送拒絕回應給用戶
+      const { error } = await supabase.from('godview_messages').insert({
+        user_id: request.user_id,
+        message_type: 'unlock_response',
+        content: '❌ 解鎖被拒絕',
+        metadata: { approved: false, message },
+        is_read: false
+      });
+
+      if (error) throw error;
+
+      // 從列表中移除
+      setUnlockRequests(prev => prev.filter(r => r.id !== request.id));
+      toast('已拒絕解鎖', {
+        description: message,
+        className: 'bg-pink-900 text-pink-200'
+      });
+    } catch (error) {
+      console.error('Deny unlock error:', error);
+      toast.error("操作失敗");
+    }
+  };
+
+  // 🔒 主動遠端鎖定用戶
+  const remoteLockUser = async (userId: string) => {
+    try {
+      const { error } = await supabase.from('godview_messages').insert({
+        user_id: userId,
+        message_type: 'remote_lock',
+        content: '🔒 螢幕已被鎖定',
+        metadata: { locked_at: new Date().toISOString() },
+        is_read: false
+      });
+
+      if (error) throw error;
+      toast.success("已遠端鎖定用戶", { className: 'bg-purple-900 text-purple-200' });
+    } catch (error) {
+      console.error('Remote lock error:', error);
+      toast.error("鎖定失敗");
     }
   };
 
@@ -525,13 +640,70 @@ export default function GodView() {
                 <span>INT: {user.intimacy_score}</span>
               </div>
             </div>
-            <button className="mt-2 w-full py-1 bg-purple-900/30 text-purple-400 rounded text-[9px] hover:bg-purple-900/50 flex items-center justify-center gap-1">
-              <MessageCircle size={10} />
-              TAKEOVER
-            </button>
+            <div className="mt-2 flex gap-2">
+              <button className="flex-1 py-1 bg-purple-900/30 text-purple-400 rounded text-[9px] hover:bg-purple-900/50 flex items-center justify-center gap-1">
+                <MessageCircle size={10} />
+                TAKEOVER
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  remoteLockUser(user.user_id);
+                }}
+                className="px-2 py-1 bg-pink-900/30 text-pink-400 rounded text-[9px] hover:bg-pink-900/50 flex items-center justify-center"
+                title="遠端鎖定"
+              >
+                <Lock size={10} />
+              </button>
+            </div>
           </div>
         ))}
       </div>
+
+      {/* 🔒 解鎖請求面板 - 只在有請求時顯示 */}
+      {unlockRequests.length > 0 && (
+        <div className="mb-6 p-4 bg-purple-950/30 border border-purple-500/30 rounded-xl animate-pulse">
+          <div className="flex items-center gap-3 mb-4">
+            <Lock className="text-purple-400" size={20} />
+            <h3 className="text-purple-400 text-sm uppercase tracking-wider">
+              解鎖請求 ({unlockRequests.length})
+            </h3>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {unlockRequests.map(req => (
+              <div key={req.id} className="bg-purple-900/20 border border-purple-500/20 rounded-xl p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-purple-300 text-xs">
+                    ID: {req.user_id.slice(0, 8)}...
+                  </span>
+                  <span className="text-purple-500/60 text-[10px]">
+                    {Math.floor((req.metadata?.session_duration || 0) / 60)}分鐘
+                  </span>
+                </div>
+                <p className="text-stone-400 text-[10px] mb-3">
+                  {new Date(req.created_at).toLocaleTimeString()}
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => approveUnlock(req)}
+                    className="flex-1 py-2 bg-green-900/30 text-green-400 rounded-lg text-xs hover:bg-green-900/50 transition-colors flex items-center justify-center gap-1"
+                  >
+                    <Check size={14} />
+                    允許
+                  </button>
+                  <button
+                    onClick={() => denyUnlock(req)}
+                    className="flex-1 py-2 bg-pink-900/30 text-pink-400 rounded-lg text-xs hover:bg-pink-900/50 transition-colors flex items-center justify-center gap-1"
+                  >
+                    <XCircle size={14} />
+                    拒絕
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-3 gap-8 h-[60vh]">
 

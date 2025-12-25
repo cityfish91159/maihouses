@@ -200,6 +200,11 @@ export default function NightMode() {
   const [hapticMetronomeActive, setHapticMetronomeActive] = useState(false); // 觸覺節拍器
   const [hapticBPM, setHapticBPM] = useState(60); // 節拍速度 (BPM)
   const [showClimaxButton, setShowClimaxButton] = useState(false); // 顯示「我快到了」按鈕
+
+  // 🔒 遠端鎖狀態
+  const [isRemoteLocked, setIsRemoteLocked] = useState(false); // 是否被遠端鎖住
+  const [unlockRequestPending, setUnlockRequestPending] = useState(false); // 解鎖請求等待中
+  const [unlockDeniedMessage, setUnlockDeniedMessage] = useState<string | null>(null); // 解鎖被拒訊息
   const [climaxButtonHeld, setClimaxButtonHeld] = useState(false); // 長按中
   const [climaxHoldProgress, setClimaxHoldProgress] = useState(0); // 長按進度 0-100
   const [isListeningMoan, setIsListeningMoan] = useState(false); // 呻吟檢測中
@@ -412,6 +417,37 @@ export default function NightMode() {
             // 設定新任務
             setActiveTask(msg.metadata.taskData);
             setShowTaskModal(true);
+          } else if (msg.message_type === 'unlock_response') {
+            // 🔒 處理解鎖回應
+            const unlockMetadata = msg.metadata as { approved?: boolean; message?: string };
+            if (unlockMetadata.approved) {
+              // 解鎖成功
+              setIsRemoteLocked(false);
+              setUnlockRequestPending(false);
+              toast.success('已解鎖', {
+                description: unlockMetadata.message || '好女孩，妳可以休息了',
+                className: 'bg-green-950 text-green-200 border border-green-800'
+              });
+              // 退出親密模式
+              exitIntimateMode();
+            } else {
+              // 解鎖被拒
+              setUnlockRequestPending(false);
+              setUnlockDeniedMessage(unlockMetadata.message || '還不行...再等一下...');
+              toast('解鎖請求被拒絕', {
+                description: unlockMetadata.message || '他說還不行',
+                className: 'bg-red-950 text-red-200 border border-red-800'
+              });
+              // 3 秒後清除拒絕訊息
+              setTimeout(() => setUnlockDeniedMessage(null), 3000);
+            }
+          } else if (msg.message_type === 'remote_lock') {
+            // 🔒 遠端鎖定命令
+            setIsRemoteLocked(true);
+            toast('螢幕已被鎖定', {
+              description: '需要請求解鎖',
+              className: 'bg-purple-950 text-purple-200 border border-purple-800'
+            });
           }
 
           // 捲動到底部
@@ -1200,6 +1236,39 @@ export default function NightMode() {
       className: 'bg-purple-950 text-purple-200 border border-purple-800'
     });
   }, [stopHapticMetronome, stopMoanDetection]);
+
+  // 🔒 請求解鎖
+  const requestUnlock = useCallback(async () => {
+    if (unlockRequestPending) return;
+
+    setUnlockRequestPending(true);
+
+    try {
+      const { error } = await supabase.from('godview_messages').insert({
+        user_id: getSessionId(),
+        message_type: 'unlock_request',
+        content: '🔓 請求解鎖',
+        metadata: {
+          timestamp: new Date().toISOString(),
+          session_duration: localStorage.getItem('intimate_session_start')
+            ? Math.round((Date.now() - parseInt(localStorage.getItem('intimate_session_start') || '0')) / 1000)
+            : 0
+        },
+        is_read: false
+      });
+
+      if (error) throw error;
+
+      toast('解鎖請求已發送', {
+        description: '等待他的回應...',
+        className: 'bg-purple-950 text-purple-200 border border-purple-800'
+      });
+    } catch (err) {
+      console.error('Unlock request error:', err);
+      setUnlockRequestPending(false);
+      toast.error('請求失敗');
+    }
+  }, [unlockRequestPending]);
 
   // ═══════════════════════════════════════════════════════════════
 
@@ -2801,24 +2870,55 @@ export default function NightMode() {
               <span className="text-2xl">{blindfoldAudioPlaying ? '🟡' : '▶️'}</span>
             </button>
 
-            {/* 🔴 紅燈 - 完成/結束 */}
+            {/* 🔴 紅燈 - 完成/結束 或 🔒 解鎖請求 */}
             <button
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
-                exitIntimateMode();
+                if (isRemoteLocked) {
+                  // 被鎖住時，發送解鎖請求
+                  requestUnlock();
+                } else {
+                  exitIntimateMode();
+                }
               }}
-              className="w-16 h-16 rounded-full bg-red-600/20 border-2 border-red-500/50 flex items-center justify-center transition-all hover:bg-red-600/40 hover:scale-110 active:scale-95"
+              disabled={unlockRequestPending}
+              className={`w-16 h-16 rounded-full flex items-center justify-center transition-all hover:scale-110 active:scale-95 ${
+                isRemoteLocked
+                  ? 'bg-purple-600/30 border-2 border-purple-500/50 hover:bg-purple-600/50'
+                  : 'bg-red-600/20 border-2 border-red-500/50 hover:bg-red-600/40'
+              } ${unlockRequestPending ? 'animate-pulse opacity-60' : ''}`}
             >
-              <span className="text-2xl">🔴</span>
+              <span className="text-2xl">
+                {isRemoteLocked ? (unlockRequestPending ? '⏳' : '🔒') : '🔴'}
+              </span>
             </button>
           </div>
+
+          {/* 🔒 鎖定狀態顯示 */}
+          {isRemoteLocked && (
+            <div className="absolute bottom-28 left-0 right-0 flex flex-col items-center">
+              {unlockRequestPending ? (
+                <div className="text-purple-400/80 text-sm animate-pulse">
+                  等待他允許妳結束...
+                </div>
+              ) : unlockDeniedMessage ? (
+                <div className="text-pink-400/80 text-sm animate-bounce">
+                  {unlockDeniedMessage}
+                </div>
+              ) : (
+                <div className="text-purple-500/60 text-xs">
+                  點擊 🔒 請求結束
+                </div>
+              )}
+            </div>
+          )}
 
           {/* 按鈕說明 */}
           <div className="absolute bottom-8 left-0 right-0 flex justify-center gap-10 text-[10px] text-purple-500/40">
             <span>加速</span>
             <span>減速</span>
-            <span>完成</span>
+            <span>{isRemoteLocked ? '請求解鎖' : '完成'}</span>
           </div>
         </div>
       )}
