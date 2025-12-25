@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Camera, ShieldAlert, Send, Fingerprint, Eye, Lock } from 'lucide-react';
+import { Camera, ShieldAlert, Send, Fingerprint, Eye, Lock, Brain, AlertTriangle } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import imageCompression from 'browser-image-compression';
 import { toast } from 'sonner';
@@ -258,7 +258,9 @@ export default function NightMode() {
                             risk: result.risk_score,
                             whisper: result.analysis_report?.muse_whisper || "無法解讀...",
                             physiognomy: result.analysis_report?.physiognomy,
-                            socio_status: result.analysis_report?.socio_status
+                            socio_status: result.analysis_report?.socio_status,
+                            hidden_intent: result.analysis_report?.hidden_intent,
+                            red_flag: result.analysis_report?.red_flag
                         });
                         triggerHeartbeat([100, 50, 100, 50, 100]); 
                     }
@@ -371,6 +373,24 @@ export default function NightMode() {
                             </h4>
                             <p className="text-xs leading-relaxed font-light text-stone-400 font-sans">{report.socio_status}</p>
                         </div>
+
+                        {report.hidden_intent && (
+                            <div className="space-y-2">
+                                <h4 className="text-[10px] uppercase tracking-[0.2em] text-red-900/60 flex items-center gap-2">
+                                    <Brain size={12} /> Hidden Intent (潛在動機)
+                                </h4>
+                                <p className="text-xs leading-relaxed font-light text-stone-400 font-sans">{report.hidden_intent}</p>
+                            </div>
+                        )}
+
+                        {report.red_flag && (
+                            <div className="space-y-2">
+                                <h4 className="text-[10px] uppercase tracking-[0.2em] text-red-600 flex items-center gap-2">
+                                    <AlertTriangle size={12} /> Red Flag (危險信號)
+                                </h4>
+                                <p className="text-xs leading-relaxed font-light text-red-400/80 font-sans border-l border-red-900/30 pl-2">{report.red_flag}</p>
+                            </div>
+                        )}
                     </div>
                   )}
                 </div>

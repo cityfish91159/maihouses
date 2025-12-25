@@ -6,9 +6,11 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 // Define the schema for the detailed report
 const reportSchema = z.object({
   risk_score: z.number().min(1).max(100),
-  physiognomy: z.string().describe("A biting, toxic observation of facial features."),
-  socio_status: z.string().describe("A ruthless assessment of social standing."),
-  muse_whisper: z.string().describe("A possessive, dark whisper from Muse.")
+  physiognomy: z.string(),
+  socio_status: z.string(),
+  hidden_intent: z.string(),
+  red_flag: z.string(),
+  muse_whisper: z.string()
 });
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -85,11 +87,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 type: "object",
                 properties: {
                 risk_score: { type: "number", description: "Risk score 1-100" },
-                physiognomy: { type: "string", description: "Physiognomy analysis: Use metaphors (e.g. 'crude pottery'). 1 sharp sentence." },
-                socio_status: { type: "string", description: "Socio-economic analysis: Critique their vibe. 1 sharp sentence." },
-                muse_whisper: { type: "string", description: "A dark, possessive whisper to the user. 2 sentences max." }
+                physiognomy: { type: "string", description: "Physiognomy analysis: Use metaphors. ~30 words." },
+                socio_status: { type: "string", description: "Socio-economic analysis. ~30 words." },
+                hidden_intent: { type: "string", description: "The man's hidden, selfish intent. ~30 words." },
+                red_flag: { type: "string", description: "A specific, dangerous trait. ~30 words." },
+                muse_whisper: { type: "string", description: "A dark, possessive whisper. ~50 words." }
                 },
-                required: ["risk_score", "physiognomy", "socio_status", "muse_whisper"]
+                required: ["risk_score", "physiognomy", "socio_status", "hidden_intent", "red_flag", "muse_whisper"]
             }
             }
         ],
