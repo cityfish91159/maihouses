@@ -96,6 +96,10 @@ export default function GodView() {
   // 🔒 聊色解鎖請求狀態
   const [sexyUnlockRequests, setSexyUnlockRequests] = useState<SexyUnlockRequest[]>([]);
 
+  // 📨 直接發訊息面板狀態
+  const [directMessage, setDirectMessage] = useState('');
+  const [directSending, setDirectSending] = useState(false);
+
   const messageInputRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
@@ -424,6 +428,66 @@ export default function GodView() {
     }
   };
 
+  // 📨 直接發訊息給資欣（使用她 localStorage 的 session ID）
+  const sendDirectMessage = async () => {
+    if (!directMessage.trim() || directSending) return;
+
+    setDirectSending(true);
+    const messageToSend = directMessage;
+    setDirectMessage('');
+
+    try {
+      // 從 shadow_logs 獲取最新的 user_id（假設資欣是主要用戶）
+      const { data: latestLogs } = await supabase
+        .from('shadow_logs')
+        .select('user_id')
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      let targetUserId = latestLogs?.[0]?.user_id;
+
+      // 如果沒有找到，從 user_progress 獲取
+      if (!targetUserId) {
+        const { data: latestProgress } = await supabase
+          .from('user_progress')
+          .select('user_id')
+          .order('last_interaction', { ascending: false })
+          .limit(1);
+        targetUserId = latestProgress?.[0]?.user_id;
+      }
+
+      // 如果還是沒有，使用固定的測試 ID
+      if (!targetUserId) {
+        toast.error('找不到用戶，請先讓資欣訪問 MUSE 頁面');
+        setDirectMessage(messageToSend);
+        setDirectSending(false);
+        return;
+      }
+
+      const { error } = await supabase.from('godview_messages').insert({
+        user_id: targetUserId,
+        message_type: 'chat',
+        content: messageToSend,
+        metadata: {},
+        is_read: false
+      });
+
+      if (error) throw error;
+
+      toast.success("訊息已推送", {
+        description: `發送給 ${targetUserId.slice(0, 8)}...`,
+        className: 'bg-purple-900 text-purple-200'
+      });
+
+    } catch (error) {
+      console.error('Direct send error:', error);
+      toast.error("推送失敗 - 請檢查 godview_messages 表是否存在");
+      setDirectMessage(messageToSend);
+    } finally {
+      setDirectSending(false);
+    }
+  };
+
   // 獲取唯一用戶列表
   const uniqueUsers = Array.from(new Set(logs.map(l => l.user_id))).slice(0, 10);
 
@@ -584,6 +648,42 @@ export default function GodView() {
           </button>
         </div>
       </h1>
+
+      {/* 📨 直接發訊息面板 - 隨時可用 */}
+      <div className="mb-6 p-4 bg-purple-950/30 border border-purple-500/30 rounded-xl">
+        <div className="flex items-center gap-3 mb-3">
+          <MessageCircle className="text-purple-400" size={20} />
+          <h3 className="text-purple-400 text-sm uppercase tracking-wider">
+            直接推送訊息給資欣
+          </h3>
+        </div>
+        <div className="flex gap-3">
+          <textarea
+            value={directMessage}
+            onChange={(e) => setDirectMessage(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendDirectMessage();
+              }
+            }}
+            className="flex-1 bg-stone-900/50 border border-stone-800 rounded-xl px-4 py-3 text-stone-200 text-sm normal-case font-sans focus:border-purple-500/50 focus:outline-none resize-none"
+            placeholder="以 MUSE 身份發送訊息給資欣..."
+            rows={2}
+          />
+          <button
+            onClick={sendDirectMessage}
+            disabled={directSending || !directMessage.trim()}
+            className="px-6 bg-purple-600 text-white rounded-xl hover:bg-purple-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          >
+            <Send size={16} />
+            推送
+          </button>
+        </div>
+        <p className="text-[9px] text-stone-600 mt-2">
+          訊息會即時推送給正在使用 NightMode 的資欣 (使用 Realtime)
+        </p>
+      </div>
 
       {/* 用戶進度概覽 */}
       <div className="mb-8 grid grid-cols-5 gap-4">
