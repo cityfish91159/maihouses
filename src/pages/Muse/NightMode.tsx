@@ -498,7 +498,15 @@ export default function NightMode() {
           triggerHeartbeat([100, 50, 100]);
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('🔔 GodView 訊息訂閱狀態:', status);
+        console.log('🔑 當前 Session ID:', sessionId);
+        if (status === 'SUBSCRIBED') {
+          console.log('✅ Realtime 訂閱成功！等待 GodView 訊息...');
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('❌ Realtime 訂閱失敗');
+        }
+      });
 
     return () => {
       subscription.unsubscribe();
@@ -2323,6 +2331,28 @@ export default function NightMode() {
                     <span className="text-stone-500">連續天數</span>
                     <span className="text-green-400">{streakDays} 天</span>
                   </div>
+                </div>
+              </div>
+
+              {/* Session ID - 用於 GodView 推送 */}
+              <div className="bg-stone-900/30 rounded-xl p-4 border border-stone-800/50">
+                <h3 className="text-[10px] text-stone-500 uppercase tracking-widest mb-2">Session ID (給管理員用)</h3>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={getSessionId()}
+                    readOnly
+                    className="flex-1 bg-stone-800/50 border border-stone-700 rounded-lg px-3 py-2 text-stone-400 text-[10px] font-mono"
+                  />
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(getSessionId());
+                      toast.success('已複製 Session ID');
+                    }}
+                    className="px-3 py-2 bg-stone-800 text-stone-400 rounded-lg hover:bg-stone-700 transition-colors"
+                  >
+                    <Copy size={14} />
+                  </button>
                 </div>
               </div>
             </div>

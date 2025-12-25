@@ -99,6 +99,8 @@ export default function GodView() {
   // 📨 直接發訊息面板狀態
   const [directMessage, setDirectMessage] = useState('');
   const [directSending, setDirectSending] = useState(false);
+  const [detectedUserId, setDetectedUserId] = useState<string | null>(null);
+  const [manualUserId, setManualUserId] = useState('');
 
   const messageInputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -211,6 +213,36 @@ export default function GodView() {
       clearInterval(interval);
     };
   }, []);
+
+  // 📨 自動檢測最新用戶 ID
+  useEffect(() => {
+    const detectUserId = async () => {
+      // 優先從 shadow_logs 獲取
+      const { data: latestLogs } = await supabase
+        .from('shadow_logs')
+        .select('user_id')
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      if (latestLogs?.[0]?.user_id) {
+        setDetectedUserId(latestLogs[0].user_id);
+        return;
+      }
+
+      // 備選：從 user_progress 獲取
+      const { data: latestProgress } = await supabase
+        .from('user_progress')
+        .select('user_id')
+        .order('last_interaction', { ascending: false })
+        .limit(1);
+
+      if (latestProgress?.[0]?.user_id) {
+        setDetectedUserId(latestProgress[0].user_id);
+      }
+    };
+
+    detectUserId();
+  }, [logs]); // 當 logs 更新時重新檢測
 
   const handleDeleteLog = async (id: string) => {
     setLogs(prev => prev.filter(l => l.id !== id));
@@ -428,51 +460,39 @@ export default function GodView() {
     }
   };
 
-  // 📨 直接發訊息給資欣（使用她 localStorage 的 session ID）
+  // 📨 直接發訊息給資欣
   const sendDirectMessage = async () => {
     if (!directMessage.trim() || directSending) return;
+
+    // 使用手動輸入的 ID 或自動檢測的 ID
+    const targetUserId = manualUserId.trim() || detectedUserId;
+
+    if (!targetUserId) {
+      toast.error('找不到用戶 ID，請先讓資欣訪問 MUSE 頁面，或手動輸入 Session ID');
+      return;
+    }
 
     setDirectSending(true);
     const messageToSend = directMessage;
     setDirectMessage('');
 
     try {
-      // 從 shadow_logs 獲取最新的 user_id（假設資欣是主要用戶）
-      const { data: latestLogs } = await supabase
-        .from('shadow_logs')
-        .select('user_id')
-        .order('created_at', { ascending: false })
-        .limit(1);
+      console.log('📨 發送訊息給:', targetUserId);
 
-      let targetUserId = latestLogs?.[0]?.user_id;
-
-      // 如果沒有找到，從 user_progress 獲取
-      if (!targetUserId) {
-        const { data: latestProgress } = await supabase
-          .from('user_progress')
-          .select('user_id')
-          .order('last_interaction', { ascending: false })
-          .limit(1);
-        targetUserId = latestProgress?.[0]?.user_id;
-      }
-
-      // 如果還是沒有，使用固定的測試 ID
-      if (!targetUserId) {
-        toast.error('找不到用戶，請先讓資欣訪問 MUSE 頁面');
-        setDirectMessage(messageToSend);
-        setDirectSending(false);
-        return;
-      }
-
-      const { error } = await supabase.from('godview_messages').insert({
+      const { error, data } = await supabase.from('godview_messages').insert({
         user_id: targetUserId,
         message_type: 'chat',
         content: messageToSend,
         metadata: {},
         is_read: false
-      });
+      }).select();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase insert error:', error);
+        throw error;
+      }
+
+      console.log('✅ 訊息已插入:', data);
 
       toast.success("訊息已推送", {
         description: `發送給 ${targetUserId.slice(0, 8)}...`,
@@ -651,12 +671,36 @@ export default function GodView() {
 
       {/* 📨 直接發訊息面板 - 隨時可用 */}
       <div className="mb-6 p-4 bg-purple-950/30 border border-purple-500/30 rounded-xl">
-        <div className="flex items-center gap-3 mb-3">
-          <MessageCircle className="text-purple-400" size={20} />
-          <h3 className="text-purple-400 text-sm uppercase tracking-wider">
-            直接推送訊息給資欣
-          </h3>
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-3">
+            <MessageCircle className="text-purple-400" size={20} />
+            <h3 className="text-purple-400 text-sm uppercase tracking-wider">
+              直接推送訊息給資欣
+            </h3>
+          </div>
+          {/* 顯示目標用戶 ID */}
+          <div className="text-[10px] text-stone-500">
+            {detectedUserId ? (
+              <span className="text-green-400">
+                目標: {detectedUserId.slice(0, 12)}...
+              </span>
+            ) : (
+              <span className="text-red-400">⚠️ 未檢測到用戶</span>
+            )}
+          </div>
         </div>
+
+        {/* 手動輸入 Session ID */}
+        <div className="mb-3">
+          <input
+            type="text"
+            value={manualUserId}
+            onChange={(e) => setManualUserId(e.target.value)}
+            className="w-full bg-stone-900/50 border border-stone-800 rounded-lg px-3 py-2 text-stone-300 text-xs font-mono focus:border-purple-500/50 focus:outline-none"
+            placeholder="手動輸入 Session ID（可選，留空則使用自動檢測的 ID）"
+          />
+        </div>
+
         <div className="flex gap-3">
           <textarea
             value={directMessage}
@@ -673,7 +717,7 @@ export default function GodView() {
           />
           <button
             onClick={sendDirectMessage}
-            disabled={directSending || !directMessage.trim()}
+            disabled={directSending || !directMessage.trim() || (!detectedUserId && !manualUserId.trim())}
             className="px-6 bg-purple-600 text-white rounded-xl hover:bg-purple-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >
             <Send size={16} />
@@ -681,7 +725,7 @@ export default function GodView() {
           </button>
         </div>
         <p className="text-[9px] text-stone-600 mt-2">
-          訊息會即時推送給正在使用 NightMode 的資欣 (使用 Realtime)
+          訊息會即時推送到 NightMode。如果沒收到，請檢查 NightMode 頁面的 console 是否有訂閱成功訊息。
         </p>
       </div>
 
