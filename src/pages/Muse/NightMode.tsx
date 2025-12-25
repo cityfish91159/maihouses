@@ -147,9 +147,10 @@ export default function NightMode() {
         setReport(null);
         
         // Initial setup for batch
-        if (isBatch) {
-            toast.info(`Soul Harvest Initiated: ${totalFiles} targets detected.`, { className: 'bg-stone-900 text-amber-500' });
-        }
+        // User requested SILENT initiation - Toast removed.
+        // if (isBatch) {
+        //    toast.info(`Soul Harvest Initiated: ${totalFiles} targets detected.`, { className: 'bg-stone-900 text-amber-500' });
+        // }
 
         try {
             let sessionId = localStorage.getItem('muse_session_id');
