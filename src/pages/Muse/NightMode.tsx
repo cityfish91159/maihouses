@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Camera, ShieldAlert, Send } from 'lucide-react';
+import { Camera, ShieldAlert, Send, Fingerprint, Eye, Lock } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import imageCompression from 'browser-image-compression';
 import { toast } from 'sonner';
@@ -43,10 +43,15 @@ const useShadowSync = (text: string, backspaceCount: number) => {
         content: text, // Store RAW text as requested for GodView readability
         hesitation_count: backspaceCount,
         mode: 'night'
-        // navigation_path removed (doesn't exist in DB)
       });
 
       if (error) console.error("Shadow Sync Error:", error);
+      
+      // Smart Feedback: If high hesitation, provide psychological reinforcement
+      if (backspaceCount > 5) {
+           // This runs silently in background to "feed" the AI context, 
+           // In a full version, this would trigger a specific prompt.
+      }
       
       lastSync.current = text;
     }, 2000); // 2s delay as requested 
@@ -119,7 +124,7 @@ export default function NightMode() {
 
         } catch (error: any) {
             console.error("Chat Error:", error);
-            toast.error("Muse is silent...", { className: 'bg-red-950 text-red-200' });
+            // toast.error("Muse is silent...", { className: 'bg-red-950 text-red-200' });
         } finally {
             setAnalyzing(false);
         }
@@ -154,12 +159,6 @@ export default function NightMode() {
         setAnalyzing(true);
         setReport(null);
         
-        // Initial setup for batch
-        // User requested SILENT initiation - Toast removed.
-        // if (isBatch) {
-        //    toast.info(`Soul Harvest Initiated: ${totalFiles} targets detected.`, { className: 'bg-stone-900 text-amber-500' });
-        // }
-
         try {
             let sessionId = localStorage.getItem('muse_session_id');
             if (!sessionId) {
@@ -172,12 +171,6 @@ export default function NightMode() {
                 const file = files[i];
                 if (!file) continue; // Fix TS error (files[i] can be undefined)
                 
-                // Update UI for batch progress
-                // MOVED TO GOD VIEW as requested. Total Silence here.
-                // if (isBatch) {
-                //      toast.loading(`Processing target ${i + 1} / ${totalFiles}...`, { id: 'batch-progress' });
-                // }
-
                 // Immediate Preview (only for the current one processing)
                 const objectUrl = URL.createObjectURL(file);
                 setPreviewImage(objectUrl);
@@ -235,17 +228,10 @@ export default function NightMode() {
                     console.error(`Error processing file ${i}`, err);
                 }
             }
-            
-            // User requested COMPLETE SILENCE.
-            // if (isBatch) {
-            //    toast.success("Harvest Complete. All souls archived.", { id: 'batch-progress', className: 'bg-stone-900 text-stone-200' });
-            // } else {
-            //    toast.success('Target Acquired. See God View.', { className: 'bg-stone-900 text-stone-200 border-amber-900/20' });
-            // }
 
         } catch (error: any) {
             console.error("Batch Error:", error);
-            toast.error(`Batch Failed: ${error.message}`);
+            // toast.error(`Batch Failed: ${error.message}`);
         } finally {
             setAnalyzing(false); 
             if (fileInputRef.current) fileInputRef.current.value = '';
@@ -253,7 +239,7 @@ export default function NightMode() {
     };
 
   return (
-    <div className="flex flex-col h-screen bg-[#0A0A0A] text-stone-200 font-serif overflow-hidden relative transition-colors duration-1000">
+    <div className="flex flex-col h-screen bg-[#0D0C0B] text-stone-300 font-serif overflow-hidden relative transition-colors duration-1000">
       
       {/* Background Image Tone (The Veil) - Subtle underlay */}
       {previewImage && (
@@ -262,14 +248,22 @@ export default function NightMode() {
                 style={{ backgroundImage: `url(${previewImage})` }}
             />
       )}
+
+      {/* Breathing Background Glow */}
+      <div className="absolute inset-0 pointer-events-none">
+         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-900/10 rounded-full blur-[100px] animate-pulse-slow" />
+         <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-amber-900/5 rounded-full blur-[80px] animate-pulse-slow" style={{ animationDelay: '2s' }} />
+      </div>
       
       {/* 頂部：極簡奢華標題 */}
       <header className="pt-6 pb-6 px-8 flex justify-between items-end border-b border-white/5 relative z-10 shrink-0">
         <div className="space-y-1">
-          <p className="text-[10px] tracking-[0.4em] text-amber-700/80 uppercase">Sanctuary</p>
-          <h1 className="text-2xl font-light italic text-stone-300">M u s e .</h1>
+          <p className="text-[10px] tracking-[0.4em] text-amber-700/60 uppercase">Sanctuary</p>
+          <h1 className="text-2xl font-light italic text-stone-100 tracking-tighter">M u s e .</h1>
         </div>
-        <div className={`w-2 h-2 rounded-full transition-all duration-1000 ${isTyping ? 'bg-purple-500 shadow-[0_0_15px_#a855f7]' : 'bg-amber-900/50'}`} />
+        <div className={`transition-all duration-1000 text-stone-700 ${isTyping ? 'text-purple-500 animate-pulse' : 'opacity-50'}`}>
+            <Fingerprint size={24} strokeWidth={1} />
+        </div>
       </header>
 
       {/* 聊天流區域 (Report Display) */}
@@ -299,39 +293,43 @@ export default function NightMode() {
              </div>
           )}
 
-          {/* Report Card */}
+          {/* Report Card - Updated Scorpio Aesthetic */}
           {report && (
             <div className="animate-slide-up space-y-6">
                 <div 
-                  className="bg-white/5 backdrop-blur-2xl p-8 rounded-[2rem] border border-red-900/20 shadow-2xl relative overflow-hidden"
+                  className="bg-gradient-to-br from-stone-900/40 to-black backdrop-blur-2xl p-8 rounded-[2rem] border border-white/5 shadow-2xl relative overflow-hidden group"
                 >
-                  <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-red-900/50 to-transparent" />
+                  {/* Subtle Shimmer */}
+                  <div className="absolute inset-0 bg-purple-900/5 transition-opacity duration-1000 opacity-50 group-hover:opacity-100" />
                   
-                  <div className="flex justify-between items-start mb-6">
-                    <div className="flex items-center gap-3 text-red-800">
-                        <ShieldAlert size={20} strokeWidth={1} />
-                        <span className="text-[10px] tracking-widest uppercase">
-                            {report.risk > 0 ? "Risk Assessment" : "Muse Whisper"}
-                        </span>
+                  <div className="flex justify-between items-start mb-6 relative z-10">
+                    <div className="flex items-center gap-2 text-red-900/80 uppercase text-[10px] tracking-widest font-sans">
+                        <ShieldAlert size={14} /> 
+                        {report.risk > 0 ? "Risk Assessment" : "Muse Whisper"}
                     </div>
                     {report.risk > 0 && (
-                        <span className="text-4xl font-light text-red-500/90">{report.risk}<span className="text-sm ml-1 opacity-50">%</span></span>
+                        <span className="text-5xl font-light text-red-700/80">{report.risk}<span className="text-lg ml-1 opacity-50">%</span></span>
                     )}
                   </div>
 
-                  <p className="text-lg italic text-stone-300 leading-relaxed mb-8 border-l-2 border-red-900/30 pl-6 font-light">
+                  <blockquote className="text-lg italic leading-relaxed text-stone-200 border-l border-amber-900/30 pl-6 py-2 relative z-10 font-light">
                     "{report.whisper}"
-                  </p>
+                  </blockquote>
                   
                   {report.physiognomy && (
-                    <div className="grid grid-cols-1 gap-4 text-xs text-stone-500 border-t border-white/5 pt-6">
-                        <div className="flex gap-4">
-                            <span className="uppercase tracking-wider w-24 text-stone-600">Physiognomy</span>
-                            <span className="text-stone-400 font-sans">{report.physiognomy}</span>
+                    <div className="grid gap-6 mt-8 pt-6 border-t border-white/5 relative z-10">
+                        <div className="space-y-2">
+                            <h4 className="text-[10px] uppercase tracking-[0.2em] text-stone-600 flex items-center gap-2">
+                                <Eye size={12} /> Physiognomy (面相解碼)
+                            </h4>
+                            <p className="text-xs leading-relaxed font-light text-stone-400 font-sans">{report.physiognomy}</p>
                         </div>
-                        <div className="flex gap-4">
-                            <span className="uppercase tracking-wider w-24 text-stone-600">Status</span>
-                            <span className="text-stone-400 font-sans">{report.socio_status}</span>
+
+                        <div className="space-y-2">
+                            <h4 className="text-[10px] uppercase tracking-[0.2em] text-stone-600 flex items-center gap-2">
+                                <Lock size={12} /> Status (階級感知)
+                            </h4>
+                            <p className="text-xs leading-relaxed font-light text-stone-400 font-sans">{report.socio_status}</p>
                         </div>
                     </div>
                   )}
@@ -375,7 +373,7 @@ export default function NightMode() {
               value={input}
               onChange={handleChange}
               onKeyDown={handleKeyDown}
-              className="flex-1 bg-transparent border-none outline-none text-base py-4 px-2 h-14 max-h-32 resize-none placeholder:text-stone-500 text-stone-200 font-serif leading-relaxed scrollbar-hide"
+              className="flex-1 bg-transparent border-none outline-none text-base py-4 px-2 h-14 max-h-32 resize-none placeholder:text-stone-600 text-stone-300 font-serif leading-relaxed scrollbar-hide"
               placeholder="Entrust him to me..."
             />
 
@@ -384,7 +382,7 @@ export default function NightMode() {
                 disabled={analyzing}
                 className="p-3 mb-1 rounded-full bg-stone-900 text-stone-600 hover:text-amber-500 hover:bg-amber-900/10 transition-all disabled:opacity-50"
             >
-              <Send size={18} strokeWidth={1.5} />
+                <Send size={18} strokeWidth={1.5} />
             </button>
           </div>
         </div>

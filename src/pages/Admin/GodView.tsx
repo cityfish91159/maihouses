@@ -76,7 +76,7 @@ export default function GodView() {
                     user_id: '00000000-0000-0000-0000-000000000000', // Dummy UUID
                     content: 'DIAGNOSTIC_SIGNAL_CHECK',
                     hesitation_count: 0,
-                    mode: 'GOD_VIEW_TEST'
+                    mode: 'night' // Use valid mode to pass constraint if not dropped yet
                 });
                 
                 if (error) {
