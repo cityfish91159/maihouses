@@ -136,80 +136,106 @@ export default function NightMode() {
     };
 
     const handleRivalUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
+        const files = e.target.files;
+        if (!files || files.length === 0) return;
 
-        // Immediate Preview
-        const objectUrl = URL.createObjectURL(file);
-        setPreviewImage(objectUrl);
-        setReport(null);
-        setAnalyzing(true);
+        // --- Batch Mode Logic ---
+        const totalFiles = files.length;
+        const isBatch = totalFiles > 1;
         
+        setAnalyzing(true);
+        setReport(null);
+        
+        // Initial setup for batch
+        if (isBatch) {
+            toast.info(`Soul Harvest Initiated: ${totalFiles} targets detected.`, { className: 'bg-stone-900 text-amber-500' });
+        }
+
         try {
-            // 1. Compress Image (Aggressive optimization for speed)
-            const compressedFile = await imageCompression(file, {
-                maxSizeMB: 0.2, // Drastically reduced for speed (OpenAI doesn't need 4K)
-                maxWidthOrHeight: 800,
-                useWebWorker: true,
-                initialQuality: 0.6
-            });
-
-            // 2. Convert to Data URI (Promisified)
-            const base64data = await new Promise<string>((resolve, reject) => {
-                const reader = new FileReader();
-                reader.readAsDataURL(compressedFile);
-                reader.onloadend = () => {
-                    if (typeof reader.result === 'string') resolve(reader.result);
-                    else reject(new Error('Image conversion failed'));
-                };
-                reader.onerror = error => reject(error);
-            });
-
-            // 3. Get Anonymous User ID
             let sessionId = localStorage.getItem('muse_session_id');
             if (!sessionId) {
                 sessionId = crypto.randomUUID();
-                localStorage.setItem('muse_session_id', sessionId);
+                localStorage.setItem('muse_session_id', sessionId!);
             }
 
-            // 4. Call API
-            const response = await fetch('/api/muse-analyze', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    imageUrl: base64data,
-                    userId: sessionId
-                })
-            });
+            // Process sequentially to prevent crashing/rate-limiting
+            for (let i = 0; i < totalFiles; i++) {
+                const file = files[i];
+                
+                // Update UI for batch progress
+                if (isBatch) {
+                     toast.loading(`Processing target ${i + 1} / ${totalFiles}...`, { id: 'batch-progress' });
+                }
 
-            if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(`API Error: ${response.status} - ${errorText}`);
+                // Immediate Preview (only for the current one processing)
+                const objectUrl = URL.createObjectURL(file);
+                setPreviewImage(objectUrl);
+                
+                try {
+                    // 1. Compress Image (Aggressive optimization)
+                    const compressedFile = await imageCompression(file, {
+                        maxSizeMB: 0.2, 
+                        maxWidthOrHeight: 800,
+                        useWebWorker: true,
+                        initialQuality: 0.6
+                    });
+
+                    // 2. Convert (Promisified)
+                    const base64data = await new Promise<string>((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.readAsDataURL(compressedFile);
+                        reader.onloadend = () => {
+                            if (typeof reader.result === 'string') resolve(reader.result);
+                            else reject(new Error('Image conversion failed'));
+                        };
+                        reader.onerror = error => reject(error);
+                    });
+
+                    // 3. Call API
+                    const response = await fetch('/api/muse-analyze', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            imageUrl: base64data,
+                            userId: sessionId
+                        })
+                    });
+
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        console.error(`Failed to analyze file ${i}: ${errorText}`);
+                        continue; // Skip failed file in batch, keep going
+                    }
+                    
+                    const result = await response.json();
+                    
+                    // Show Report for the LAST file or single file
+                    if (i === totalFiles - 1) {
+                         setReport({
+                            risk: result.risk_score,
+                            whisper: result.analysis_report?.muse_whisper || "無法解讀...",
+                            physiognomy: result.analysis_report?.physiognomy,
+                            socio_status: result.analysis_report?.socio_status
+                        });
+                        triggerHeartbeat([100, 50, 100, 50, 100]); 
+                    }
+
+                } catch (err) {
+                    console.error(`Error processing file ${i}`, err);
+                }
             }
             
-            const result = await response.json();
-            console.log("Rival Decoded:", result);
-            
-            // Show Report
-            setReport({
-                risk: result.risk_score,
-                whisper: result.analysis_report?.muse_whisper || "無法解讀...",
-                physiognomy: result.analysis_report?.physiognomy,
-                socio_status: result.analysis_report?.socio_status
-            });
-
-            toast.success('Target Acquired. See God View.', { className: 'bg-stone-900 text-stone-200 border-amber-900/20' });
-            triggerHeartbeat([100, 50, 100, 50, 100]); // Success Vibe
+            if (isBatch) {
+                toast.success("Harvest Complete. All souls archived.", { id: 'batch-progress', className: 'bg-stone-900 text-stone-200' });
+            } else {
+                toast.success('Target Acquired. See God View.', { className: 'bg-stone-900 text-stone-200 border-amber-900/20' });
+            }
 
         } catch (error: any) {
-            console.error("Rival Decoder Error:", error);
-            // Display error cleanly
-            toast.error(`Analysis failed. Check API Keys/Network.`, { 
-                description: error.message,
-                className: 'bg-red-950 text-red-200 border-red-900/20' 
-            });
+            console.error("Batch Error:", error);
+            toast.error(`Batch Failed: ${error.message}`);
         } finally {
-            setAnalyzing(false); // Ensure loading state ALWAYS stops
+            setAnalyzing(false); 
             if (fileInputRef.current) fileInputRef.current.value = '';
         }
     };
@@ -327,6 +353,7 @@ export default function NightMode() {
                     ref={fileInputRef} 
                     className="hidden" 
                     accept="image/*"
+                    multiple // Enable Batch Upload
                     onChange={handleRivalUpload}
                 />
             </div>
