@@ -245,31 +245,18 @@ export default function NightMode() {
   const [iceZonePassed, setIceZonePassed] = useState(false); // 是否成功通過
   const iceZoneIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // 🕯️ 告解室 (Confession Booth) 狀態
-  const [showConfessionBooth, setShowConfessionBooth] = useState(false);
-  const [confessionText, setConfessionText] = useState('');
-  const [confessionDissolving, setConfessionDissolving] = useState(false);
-  const [confessionResponse, setConfessionResponse] = useState<string | null>(null);
-  const [confessionPromptType, setConfessionPromptType] = useState<'dark' | 'fantasy'>('dark');
-  const [confessionVoiceRecording, setConfessionVoiceRecording] = useState(false);
-  const [confessionVoiceTime, setConfessionVoiceTime] = useState(0);
-  const confessionVoiceRecorderRef = useRef<MediaRecorder | null>(null);
-  const confessionVoiceTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const confessionPhotoInputRef = useRef<HTMLInputElement>(null);
-
-  // 🕯️ 告解室對話功能 - 類似主對話框
-  const [confessionChatHistory, setConfessionChatHistory] = useState<Array<{
-    id: string;
-    role: 'user' | 'muse';
-    content: string;
-    timestamp: Date;
-    mediaType?: 'text' | 'voice' | 'photo';
-    mediaUrl?: string;
-  }>>([]);
+  // 🔥 壞壞模式 + 焚燒功能
+  const [naughtyMode, setNaughtyMode] = useState(() => {
+    return localStorage.getItem('muse_naughty_mode') === 'true';
+  });
   const [showBurningToast, setShowBurningToast] = useState(false);
   const [burningContent, setBurningContent] = useState('');
   const [burningPhotoUrl, setBurningPhotoUrl] = useState<string | null>(null);
-  const confessionChatContainerRef = useRef<HTMLDivElement>(null);
+  const [burningVoiceRecording, setBurningVoiceRecording] = useState(false);
+  const [burningVoiceTime, setBurningVoiceTime] = useState(0);
+  const burningVoiceRecorderRef = useRef<MediaRecorder | null>(null);
+  const burningVoiceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const burningPhotoInputRef = useRef<HTMLInputElement>(null);
 
   // 📊 表現評估表 (Performance Report) 狀態
   const [showPerformanceReport, setShowPerformanceReport] = useState(false);
@@ -526,24 +513,6 @@ export default function NightMode() {
             timestamp: new Date(msg.created_at)
           };
           setChatHistory(prev => [...prev, newMessage]);
-
-          // 如果是 chat 類型訊息，也加入告解室對話歷史（讓告解室也能收到後台訊息）
-          if (msg.message_type === 'chat') {
-            setConfessionChatHistory(prev => [...prev, {
-              id: msg.id,
-              role: 'muse' as const,
-              content: msg.content,
-              timestamp: new Date(msg.created_at),
-              mediaType: 'text' as const
-            }]);
-            // 滾動告解室到底部
-            setTimeout(() => {
-              confessionChatContainerRef.current?.scrollTo({
-                top: confessionChatContainerRef.current.scrollHeight,
-                behavior: 'smooth'
-              });
-            }, 100);
-          }
 
           // 標記為已讀
           await supabase
@@ -1872,46 +1841,39 @@ export default function NightMode() {
     }
   }, [backspaceCount]);
 
-  // 🕯️ 告解室提交處理 - 焚燒模式（不加入對話歷史）
-  const handleConfessionSubmit = async () => {
-    if (!confessionText.trim()) return;
+  // 🔥 焚燒文字提交 - 燒掉後存 shadow_logs，GodView 看得到
+  const handleBurningTextSubmit = async (text: string) => {
+    if (!text.trim()) return;
 
-    const confession = confessionText.trim();
     const sessionId = getSessionId();
+    const content = text.trim();
 
-    // 顯示焚燒彈窗（文字會在彈窗中「焚燒」消失）
-    setBurningContent(confession);
+    // 顯示焚燒動畫 3 秒
+    setBurningContent(content);
     setShowBurningToast(true);
-    setConfessionText('');
-
-    // 3 秒後隱藏焚燒彈窗
     setTimeout(() => {
       setShowBurningToast(false);
       setBurningContent('');
     }, 3000);
 
     try {
-      // 存儲告解到 shadow_logs（特殊類型）- 只存儲，不顯示在對話框
       await supabase.from('shadow_logs').insert({
         user_id: sessionId,
-        content: confession,
+        content: content,
         hesitation_count: 0,
         metadata: {
-          type: 'confession',
-          confession_type: confessionPromptType,
-          is_dark_thought: confessionPromptType === 'dark',
-          is_fantasy: confessionPromptType === 'fantasy',
-          media_type: 'text'
+          type: 'burning',
+          media_type: 'text',
+          naughty_mode: naughtyMode
         }
       });
-      // 焚燒模式：不自動回應，等待 GodView 發送訊息
     } catch (error) {
-      console.error('Confession save error:', error);
+      console.error('Burning text save error:', error);
     }
   };
 
-  // 🕯️ 告解室語音錄音 - 開始（焚燒模式）
-  const startConfessionVoiceRecording = async () => {
+  // 🔥 焚燒語音錄音 - 開始
+  const startBurningVoiceRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mediaRecorder = new MediaRecorder(stream);
@@ -1928,30 +1890,28 @@ export default function NightMode() {
               const sessionId = getSessionId();
               const voiceUrl = reader.result;
 
-              // 顯示焚燒彈窗
-              setBurningContent(`🎤 語音告解 (${confessionVoiceTime}秒)`);
+              // 顯示焚燒動畫 3 秒
+              setBurningContent(`🎤 語音正在焚燒 (${burningVoiceTime}秒)`);
               setShowBurningToast(true);
               setTimeout(() => {
                 setShowBurningToast(false);
                 setBurningContent('');
               }, 3000);
 
-              // 儲存語音告解到 shadow_logs（不加入對話歷史）
               await supabase.from('shadow_logs').insert({
                 user_id: sessionId,
-                content: `[語音告解 ${confessionVoiceTime}秒]`,
+                content: `[私密語音 ${burningVoiceTime}秒]`,
                 hesitation_count: 0,
                 metadata: {
-                  type: 'confession',
-                  confession_type: confessionPromptType,
+                  type: 'burning',
                   media_type: 'voice',
                   media_url: voiceUrl,
-                  duration: confessionVoiceTime
+                  duration: burningVoiceTime,
+                  naughty_mode: naughtyMode
                 }
               });
-              // 焚燒模式：不自動回應，等待 GodView 發送訊息
             } catch (err) {
-              console.error('Confession voice save error:', err);
+              console.error('Burning voice save error:', err);
               toast.error('語音保存失敗');
             }
           }
@@ -1959,35 +1919,35 @@ export default function NightMode() {
         stream.getTracks().forEach(track => track.stop());
       };
 
-      confessionVoiceRecorderRef.current = mediaRecorder;
+      burningVoiceRecorderRef.current = mediaRecorder;
       mediaRecorder.start();
-      setConfessionVoiceRecording(true);
-      setConfessionVoiceTime(0);
+      setBurningVoiceRecording(true);
+      setBurningVoiceTime(0);
 
-      confessionVoiceTimerRef.current = setInterval(() => {
-        setConfessionVoiceTime(prev => prev + 1);
+      burningVoiceTimerRef.current = setInterval(() => {
+        setBurningVoiceTime(prev => prev + 1);
       }, 1000);
 
     } catch (error) {
-      console.error('Confession voice recording error:', error);
+      console.error('Burning voice recording error:', error);
       toast.error('無法存取麥克風');
     }
   };
 
-  // 🕯️ 告解室語音錄音 - 停止
-  const stopConfessionVoiceRecording = () => {
-    if (confessionVoiceRecorderRef.current && confessionVoiceRecording) {
-      confessionVoiceRecorderRef.current.stop();
-      setConfessionVoiceRecording(false);
-      if (confessionVoiceTimerRef.current) {
-        clearInterval(confessionVoiceTimerRef.current);
-        confessionVoiceTimerRef.current = null;
+  // 🔥 焚燒語音錄音 - 停止
+  const stopBurningVoiceRecording = () => {
+    if (burningVoiceRecorderRef.current && burningVoiceRecording) {
+      burningVoiceRecorderRef.current.stop();
+      setBurningVoiceRecording(false);
+      if (burningVoiceTimerRef.current) {
+        clearInterval(burningVoiceTimerRef.current);
+        burningVoiceTimerRef.current = null;
       }
     }
   };
 
-  // 🕯️ 告解室照片上傳（焚燒模式）
-  const handleConfessionPhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // 🔥 焚燒照片上傳
+  const handleBurningPhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
@@ -2002,7 +1962,7 @@ export default function NightMode() {
           const sessionId = getSessionId();
           const photoUrl = reader.result;
 
-          // 顯示焚燒彈窗（顯示照片 5 秒）
+          // 顯示焚燒動畫（顯示照片 5 秒）
           setBurningContent('📷 照片正在焚燒...');
           setBurningPhotoUrl(photoUrl);
           setShowBurningToast(true);
@@ -2012,86 +1972,36 @@ export default function NightMode() {
             setBurningPhotoUrl(null);
           }, 5000);
 
-          // 儲存照片告解到 shadow_logs（不加入對話歷史）
           await supabase.from('shadow_logs').insert({
             user_id: sessionId,
-            content: `[私密照片 - ${confessionPromptType === 'dark' ? '黑暗' : '幻想'}]`,
+            content: '[私密照片]',
             hesitation_count: 0,
             metadata: {
-              type: 'confession',
-              confession_type: confessionPromptType,
+              type: 'burning',
               media_type: 'photo',
-              media_url: photoUrl
+              media_url: photoUrl,
+              naughty_mode: naughtyMode
             }
           });
-          // 焚燒模式：不自動回應，等待 GodView 發送訊息
         } catch (err) {
-          console.error('Confession photo save error:', err);
+          console.error('Burning photo save error:', err);
           toast.error('照片保存失敗');
         }
       }
     };
 
-    // Reset input
     if (e.target) e.target.value = '';
   };
 
-  // 🕯️ 告解室正常對話 - 顯示在對話歷史中
-  const handleConfessionNormalChat = async () => {
-    if (!confessionText.trim()) return;
-
-    const message = confessionText.trim();
-    const sessionId = getSessionId();
-
-    // 添加到告解室對話歷史（會顯示）
-    const newMsg = {
-      id: `confession-${Date.now()}`,
-      role: 'user' as const,
-      content: message,
-      timestamp: new Date()
-    };
-    setConfessionChatHistory(prev => [...prev, newMsg]);
-    setConfessionText('');
-
-    try {
-      // 存儲到 shadow_logs（告解室正常對話）
-      await supabase.from('shadow_logs').insert({
-        user_id: sessionId,
-        content: message,
-        hesitation_count: 0,
-        metadata: {
-          type: 'confession_chat',
-          confession_type: confessionPromptType
-        }
-      });
-
-      // 調用 muse-chat API 獲取回應
-      const response = await fetch('/api/muse-chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: message,
-          userId: sessionId,
-          hesitationCount: 0,
-          context: 'confession_booth'
-        })
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        if (result.response) {
-          // 添加 AI 回應到告解室對話歷史
-          setConfessionChatHistory(prev => [...prev, {
-            id: `muse-${Date.now()}`,
-            role: 'muse',
-            content: result.response,
-            timestamp: new Date()
-          }]);
-        }
-      }
-    } catch (error) {
-      console.error('Confession normal chat error:', error);
-      toast.error('發送失敗');
+  // 🔥 壞壞模式切換
+  const toggleNaughtyMode = () => {
+    const newValue = !naughtyMode;
+    setNaughtyMode(newValue);
+    localStorage.setItem('muse_naughty_mode', String(newValue));
+    if (newValue) {
+      toast.success('🔥 壞壞模式開啟', { duration: 2000 });
+    } else {
+      toast('壞壞模式關閉', { duration: 2000 });
     }
   };
 
@@ -2124,7 +2034,8 @@ export default function NightMode() {
         body: JSON.stringify({
           message: userMessage,
           userId: sessionId,
-          hesitationCount: backspaceCount
+          hesitationCount: backspaceCount,
+          naughtyMode: naughtyMode
         })
       });
 
@@ -2493,214 +2404,6 @@ export default function NightMode() {
         </div>
       )}
 
-      {/* 🕯️ 告解室 (Confession Booth) - 正常對話 + 焚燒按鈕 */}
-      {showConfessionBooth && (
-        <div className="fixed inset-0 bg-black/95 backdrop-blur-xl z-50 flex flex-col animate-fade-in">
-          {/* 燭光效果 */}
-          <div className="absolute top-4 left-1/2 -translate-x-1/2 w-32 h-32 bg-amber-500/20 rounded-full blur-[60px] animate-pulse pointer-events-none" />
-
-          {/* 頂部標題欄 */}
-          <div className="relative flex items-center justify-between p-4 border-b border-amber-900/30">
-            <div className="flex items-center gap-3">
-              <Fingerprint size={20} className="text-amber-500" />
-              <div>
-                <h3 className="text-base font-light text-amber-200/80 tracking-wider">告 解 室</h3>
-                <p className="text-[9px] text-stone-600 tracking-widest uppercase">Confession Booth</p>
-              </div>
-            </div>
-            {/* 模式切換 */}
-            <div className="flex gap-2">
-              <button
-                onClick={() => setConfessionPromptType('dark')}
-                className={`px-2 py-1 rounded-full text-[10px] transition-all ${
-                  confessionPromptType === 'dark'
-                    ? 'bg-amber-900/50 text-amber-300 border border-amber-700/50'
-                    : 'text-stone-600 hover:text-amber-400'
-                }`}
-              >
-                黑暗念頭
-              </button>
-              <button
-                onClick={() => setConfessionPromptType('fantasy')}
-                className={`px-2 py-1 rounded-full text-[10px] transition-all ${
-                  confessionPromptType === 'fantasy'
-                    ? 'bg-pink-900/50 text-pink-300 border border-pink-700/50'
-                    : 'text-stone-600 hover:text-pink-400'
-                }`}
-              >
-                壞壞想像
-              </button>
-            </div>
-            {/* 關閉按鈕 */}
-            <button
-              onClick={() => {
-                setShowConfessionBooth(false);
-                setConfessionText('');
-              }}
-              className="w-8 h-8 rounded-full bg-stone-900 border border-stone-700 text-stone-500 hover:text-white flex items-center justify-center"
-            >
-              <X size={16} />
-            </button>
-          </div>
-
-          {/* 對話歷史區域 - 正常顯示所有對話 */}
-          <div
-            ref={confessionChatContainerRef}
-            className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-hide"
-          >
-            {confessionChatHistory.length === 0 ? (
-              /* 空狀態 - 顯示引導文字 */
-              <div className="flex flex-col items-center justify-center h-full space-y-4 text-center">
-                <div className="w-16 h-16 rounded-full bg-amber-900/20 flex items-center justify-center">
-                  <Fingerprint size={32} className="text-amber-500/50" />
-                </div>
-                {confessionPromptType === 'dark' ? (
-                  <div className="space-y-2">
-                    <p className="text-stone-500 text-sm italic">
-                      「今天妳腦子裡閃過的<br/>
-                      <span className="text-amber-500/80">最髒的念頭</span>是什麼？」
-                    </p>
-                    <p className="text-[10px] text-stone-700">
-                      在這裡寫下妳的黑暗面...我會接住妳的一切
-                    </p>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    <p className="text-stone-500 text-sm italic">
-                      「寫下妳<span className="text-pink-400">最私密的幻想</span>...」
-                    </p>
-                    <p className="text-[10px] text-stone-700">
-                      想像我在妳身邊...我會對妳做什麼？
-                    </p>
-                  </div>
-                )}
-              </div>
-            ) : (
-              /* 正常對話歷史 */
-              confessionChatHistory.map((msg) => (
-                <div
-                  key={msg.id}
-                  className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                >
-                  <div
-                    className={`max-w-[80%] rounded-2xl p-3 ${
-                      msg.role === 'user'
-                        ? 'bg-amber-900/40 border border-amber-700/30'
-                        : 'bg-stone-900/60 border border-stone-700/30'
-                    }`}
-                  >
-                    {/* 顯示照片 */}
-                    {msg.mediaType === 'photo' && msg.mediaUrl && (
-                      <img
-                        src={msg.mediaUrl}
-                        alt="照片"
-                        className="w-full max-w-[200px] rounded-lg mb-2"
-                      />
-                    )}
-                    {/* 顯示語音 */}
-                    {msg.mediaType === 'voice' && msg.mediaUrl && (
-                      <audio
-                        src={msg.mediaUrl}
-                        controls
-                        className="w-full max-w-[200px] mb-2"
-                      />
-                    )}
-                    {/* 訊息內容 */}
-                    <p className={`text-sm ${
-                      msg.role === 'user' ? 'text-amber-100' : 'text-stone-300'
-                    }`}>
-                      {msg.content}
-                    </p>
-                    {/* 時間戳 */}
-                    <p className="text-[9px] text-stone-600 mt-1">
-                      {msg.timestamp.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' })}
-                    </p>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-
-          {/* 輸入區域 */}
-          <div className="p-4 border-t border-amber-900/30 space-y-3">
-            {/* 🔥 三個焚燒按鈕 - 上傳後燒掉，不出現在對話 */}
-            <div className="flex gap-2">
-              {/* 📷 照片焚燒 */}
-              <label className="flex-1 py-2 bg-cyan-900/40 text-cyan-200 hover:bg-cyan-800/40 border border-cyan-800/30 rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer text-xs">
-                <Camera size={14} />
-                <span>🔥 照片</span>
-                <input
-                  ref={confessionPhotoInputRef}
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleConfessionPhotoUpload}
-                />
-              </label>
-
-              {/* 🎤 語音焚燒 */}
-              <button
-                onClick={confessionVoiceRecording ? stopConfessionVoiceRecording : startConfessionVoiceRecording}
-                className={`flex-1 py-2 rounded-xl flex items-center justify-center gap-1.5 transition-all text-xs ${
-                  confessionVoiceRecording
-                    ? 'bg-red-600 text-white animate-pulse'
-                    : 'bg-purple-900/40 text-purple-200 hover:bg-purple-800/40 border border-purple-800/30'
-                }`}
-              >
-                <Mic size={14} />
-                <span>{confessionVoiceRecording ? `${confessionVoiceTime}s` : '🔥 語音'}</span>
-              </button>
-
-              {/* ✏️ 文字焚燒 */}
-              <button
-                onClick={() => {
-                  const text = prompt(confessionPromptType === 'dark' ? '寫下妳的黑暗念頭（會焚燒）...' : '寫下妳的私密幻想（會焚燒）...');
-                  if (text && text.trim()) {
-                    setConfessionText(text.trim());
-                    setTimeout(() => handleConfessionSubmit(), 100);
-                  }
-                }}
-                className="flex-1 py-2 bg-amber-900/40 text-amber-200 hover:bg-amber-800/40 border border-amber-700/30 rounded-xl flex items-center justify-center gap-1.5 transition-all text-xs"
-              >
-                <Send size={14} />
-                <span>🔥 文字</span>
-              </button>
-            </div>
-
-            {/* 正常文字輸入 - 這個會顯示在對話中 */}
-            <div className="flex gap-2">
-              <textarea
-                value={confessionText}
-                onChange={(e) => setConfessionText(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    handleConfessionNormalChat();
-                  }
-                }}
-                placeholder="正常對話..."
-                className="flex-1 bg-black/50 border border-amber-900/30 rounded-xl p-3 text-stone-300 placeholder:text-stone-700 resize-none focus:outline-none focus:border-amber-700/50 text-sm"
-                rows={2}
-              />
-              <button
-                onClick={handleConfessionNormalChat}
-                disabled={!confessionText.trim()}
-                className="px-4 bg-gradient-to-r from-amber-800/70 to-amber-900/70 border border-amber-700/30 rounded-xl text-amber-200 hover:from-amber-700/70 hover:to-amber-800/70 transition-all disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center"
-              >
-                <Send size={18} />
-              </button>
-            </div>
-
-            {/* 提示 */}
-            <div className="flex items-center justify-center gap-2">
-              <Shield size={10} className="text-emerald-500" />
-              <p className="text-[9px] text-stone-600">
-                正常對話會顯示 · 🔥按鈕上傳的會焚燒
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* 🔥 焚燒彈窗 - 浮動顯示 */}
       {showBurningToast && burningContent && (
@@ -2858,6 +2561,23 @@ export default function NightMode() {
             className="p-2 rounded-full bg-stone-900/50 hover:bg-stone-800/50 transition-colors"
           >
             <Settings size={18} className="text-stone-500 hover:text-stone-300" />
+          </button>
+
+          {/* 🔥 壞壞模式 Toggle - iOS 風格 */}
+          <button
+            onClick={toggleNaughtyMode}
+            className={`relative w-11 h-6 rounded-full transition-all duration-300 ${
+              naughtyMode
+                ? 'bg-gradient-to-r from-pink-600 to-red-600'
+                : 'bg-stone-800'
+            }`}
+            title={naughtyMode ? '壞壞模式開啟' : '壞壞模式關閉'}
+          >
+            <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow-md transition-transform duration-300 flex items-center justify-center ${
+              naughtyMode ? 'translate-x-5' : 'translate-x-0.5'
+            }`}>
+              <span className="text-[10px]">{naughtyMode ? '🔥' : '💤'}</span>
+            </div>
           </button>
 
           <div className={`transition-all duration-1000 text-stone-700 ${isTyping ? 'text-purple-500 animate-pulse' : 'opacity-50'}`}>
@@ -3669,20 +3389,49 @@ export default function NightMode() {
               </label>
             </div>
 
-            {/* 🕯️ 告解室按鈕 */}
-            <button
-              type="button"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setShowConfessionBooth(true);
-              }}
-              className="relative z-30 w-9 h-9 md:w-10 md:h-10 rounded-full border border-stone-800 flex items-center justify-center shrink-0 hover:border-amber-700/50 transition-colors group/confess touch-manipulation active:scale-95"
-              title="告解室"
-              style={{ pointerEvents: 'auto', WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}
-            >
-              <Fingerprint size={16} strokeWidth={1.5} className="text-stone-500 group-hover/confess:text-amber-500 transition-colors md:w-5 md:h-5 pointer-events-none" />
-            </button>
+            {/* 🔥 焚燒按鈕組 - iOS 風格 */}
+            <div className="flex items-center gap-1">
+              {/* 🔥📷 照片焚燒 */}
+              <label className="relative z-30 w-8 h-8 rounded-full border border-amber-800/50 bg-amber-950/30 flex items-center justify-center shrink-0 hover:border-amber-600/70 hover:bg-amber-900/40 transition-all cursor-pointer touch-manipulation active:scale-95" title="焚燒照片">
+                <Camera size={14} strokeWidth={1.5} className="text-amber-500/80 pointer-events-none" />
+                <input
+                  ref={burningPhotoInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="sr-only"
+                  onChange={handleBurningPhotoUpload}
+                />
+              </label>
+              {/* 🔥🎤 語音焚燒 */}
+              <button
+                type="button"
+                onClick={burningVoiceRecording ? stopBurningVoiceRecording : startBurningVoiceRecording}
+                className={`relative z-30 w-8 h-8 rounded-full border flex items-center justify-center shrink-0 transition-all touch-manipulation active:scale-95 ${
+                  burningVoiceRecording
+                    ? 'border-red-500 bg-red-900/50 animate-pulse'
+                    : 'border-amber-800/50 bg-amber-950/30 hover:border-amber-600/70 hover:bg-amber-900/40'
+                }`}
+                title={burningVoiceRecording ? `${burningVoiceTime}s` : '焚燒語音'}
+                style={{ pointerEvents: 'auto', WebkitTapHighlightColor: 'transparent' }}
+              >
+                <Mic size={14} strokeWidth={1.5} className={`pointer-events-none ${burningVoiceRecording ? 'text-red-400' : 'text-amber-500/80'}`} />
+              </button>
+              {/* 🔥✏️ 文字焚燒 */}
+              <button
+                type="button"
+                onClick={() => {
+                  const text = prompt('寫下要焚燒的私密內容...');
+                  if (text && text.trim()) {
+                    handleBurningTextSubmit(text.trim());
+                  }
+                }}
+                className="relative z-30 w-8 h-8 rounded-full border border-amber-800/50 bg-amber-950/30 flex items-center justify-center shrink-0 hover:border-amber-600/70 hover:bg-amber-900/40 transition-all touch-manipulation active:scale-95"
+                title="焚燒文字"
+                style={{ pointerEvents: 'auto', WebkitTapHighlightColor: 'transparent' }}
+              >
+                <Fingerprint size={14} strokeWidth={1.5} className="text-amber-500/80 pointer-events-none" />
+              </button>
+            </div>
 
             {/* Voice Recording Button - 語音錄製 */}
             <button
