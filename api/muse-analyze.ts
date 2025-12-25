@@ -77,7 +77,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             ] 
             }
         ],
-        response_format: { type: "json_object" },
         functions: [
             {
             name: "generate_report",
