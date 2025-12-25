@@ -268,6 +268,7 @@ export default function NightMode() {
   }>>([]);
   const [showBurningToast, setShowBurningToast] = useState(false);
   const [burningContent, setBurningContent] = useState('');
+  const [burningPhotoUrl, setBurningPhotoUrl] = useState<string | null>(null);
   const confessionChatContainerRef = useRef<HTMLDivElement>(null);
 
   // 📊 表現評估表 (Performance Report) 狀態
@@ -2001,13 +2002,15 @@ export default function NightMode() {
           const sessionId = getSessionId();
           const photoUrl = reader.result;
 
-          // 顯示焚燒彈窗
-          setBurningContent('📷 照片告解已焚燒');
+          // 顯示焚燒彈窗（顯示照片 5 秒）
+          setBurningContent('📷 照片正在焚燒...');
+          setBurningPhotoUrl(photoUrl);
           setShowBurningToast(true);
           setTimeout(() => {
             setShowBurningToast(false);
             setBurningContent('');
-          }, 3000);
+            setBurningPhotoUrl(null);
+          }, 5000);
 
           // 儲存照片告解到 shadow_logs（不加入對話歷史）
           await supabase.from('shadow_logs').insert({
@@ -2702,11 +2705,24 @@ export default function NightMode() {
       {/* 🔥 焚燒彈窗 - 浮動顯示 */}
       {showBurningToast && burningContent && (
         <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[60] pointer-events-none">
-          <div className="relative bg-black/90 border border-amber-600/50 rounded-2xl p-6 max-w-xs animate-fade-in">
+          <div className="relative bg-black/90 border border-amber-600/50 rounded-2xl p-6 max-w-sm animate-fade-in">
             {/* 火焰效果 */}
             <div className="absolute -top-4 left-1/2 -translate-x-1/2 text-2xl animate-bounce">🔥</div>
             <div className="absolute -bottom-2 left-1/4 text-lg animate-ping">🔥</div>
             <div className="absolute -bottom-2 right-1/4 text-lg animate-ping" style={{ animationDelay: '0.2s' }}>🔥</div>
+
+            {/* 照片預覽（如果有） */}
+            {burningPhotoUrl && (
+              <div className="mb-4 relative">
+                <img
+                  src={burningPhotoUrl}
+                  alt="焚燒中的照片"
+                  className="w-full max-h-48 object-contain rounded-lg opacity-80 animate-pulse"
+                  style={{ filter: 'sepia(0.3) brightness(1.1)' }}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-amber-900/50 to-transparent rounded-lg" />
+              </div>
+            )}
 
             {/* 正在燃燒的文字 */}
             <p className="text-amber-200 text-center italic animate-pulse opacity-80 blur-[0.5px]">
