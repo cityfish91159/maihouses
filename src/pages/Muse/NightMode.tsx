@@ -2,7 +2,8 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   Camera, ShieldAlert, Send, Fingerprint, Eye, Lock, Brain,
   AlertTriangle, Heart, Sparkles, Gem, Star, Moon, Upload, User, X,
-  Mic, ImagePlus, CheckCircle, Clock, Gift, Settings, Copy, Download, Key
+  Mic, ImagePlus, CheckCircle, Clock, Gift, Settings, Copy, Download, Key,
+  Volume2, VolumeX, Snowflake
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import imageCompression from 'browser-image-compression';
@@ -167,6 +168,16 @@ export default function NightMode() {
   // 靈魂備份功能狀態
   const [showSettings, setShowSettings] = useState(false);
   const [importKey, setImportKey] = useState('');
+
+  // 獨立語音錄製狀態
+  const [isVoiceRecording, setIsVoiceRecording] = useState(false);
+  const [voiceRecordingTime, setVoiceRecordingTime] = useState(0);
+  const voiceRecorderRef = useRef<MediaRecorder | null>(null);
+  const voiceTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // MUSE 說話狀態
+  const [speakingIndex, setSpeakingIndex] = useState<number | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -550,6 +561,142 @@ export default function NightMode() {
     if (mediaRecorderRef.current && isRecording) {
       mediaRecorderRef.current.stop();
       setIsRecording(false);
+    }
+  };
+
+  // 獨立語音錄製 - 開始
+  const startVoiceRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      const chunks: Blob[] = [];
+
+      mediaRecorder.ondataavailable = e => chunks.push(e.data);
+      mediaRecorder.onstop = async () => {
+        const blob = new Blob(chunks, { type: 'audio/webm' });
+        const reader = new FileReader();
+        reader.readAsDataURL(blob);
+        reader.onloadend = async () => {
+          if (typeof reader.result === 'string') {
+            // 上傳語音到 API
+            toast.loading('正在保存語音...', { id: 'voice' });
+            try {
+              const sessionId = getSessionId();
+              const response = await fetch('/api/muse-voice', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  audioData: reader.result,
+                  userId: sessionId,
+                  duration: voiceRecordingTime,
+                  context: `來自 ${museName} 的私密語音`
+                })
+              });
+
+              if (response.ok) {
+                const data = await response.json();
+                toast.success('語音已保存到寶物庫 ✓', {
+                  id: 'voice',
+                  className: 'bg-purple-950 text-purple-200'
+                });
+                // 更新寶物列表
+                if (data.treasure) {
+                  setTreasures(prev => [data.treasure, ...prev]);
+                  setNewTreasure(data.treasure);
+                }
+                // 更新同步率
+                if (data.sync_level) {
+                  setSyncLevel(data.sync_level);
+                }
+              } else {
+                toast.error('語音保存失敗', { id: 'voice' });
+              }
+            } catch (err) {
+              console.error('Voice upload error:', err);
+              toast.error('語音上傳失敗', { id: 'voice' });
+            }
+          }
+        };
+        stream.getTracks().forEach(track => track.stop());
+      };
+
+      voiceRecorderRef.current = mediaRecorder;
+      mediaRecorder.start();
+      setIsVoiceRecording(true);
+      setVoiceRecordingTime(0);
+
+      // 開始計時
+      voiceTimerRef.current = setInterval(() => {
+        setVoiceRecordingTime(prev => prev + 1);
+      }, 1000);
+
+      toast.success('開始錄音...', { className: 'bg-red-950 text-red-200' });
+    } catch (error) {
+      console.error('Voice recording error:', error);
+      toast.error('無法存取麥克風');
+    }
+  };
+
+  // 獨立語音錄製 - 停止
+  const stopVoiceRecording = () => {
+    if (voiceRecorderRef.current && isVoiceRecording) {
+      voiceRecorderRef.current.stop();
+      setIsVoiceRecording(false);
+      if (voiceTimerRef.current) {
+        clearInterval(voiceTimerRef.current);
+        voiceTimerRef.current = null;
+      }
+    }
+  };
+
+  // MUSE 說話功能 (TTS)
+  const speakMessage = async (text: string, index: number) => {
+    // 如果正在播放，停止
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+    }
+
+    if (speakingIndex === index) {
+      setSpeakingIndex(null);
+      return;
+    }
+
+    setSpeakingIndex(index);
+    toast.loading(`${museName} 正在說話...`, { id: 'speak' });
+
+    try {
+      const response = await fetch('/api/muse-speak', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text })
+      });
+
+      if (!response.ok) {
+        throw new Error('TTS failed');
+      }
+
+      const data = await response.json();
+      const audio = new Audio(data.audioUrl);
+      audioRef.current = audio;
+
+      audio.onended = () => {
+        setSpeakingIndex(null);
+        audioRef.current = null;
+      };
+
+      audio.onerror = () => {
+        setSpeakingIndex(null);
+        toast.error('語音播放失敗', { id: 'speak' });
+      };
+
+      toast.dismiss('speak');
+      await audio.play();
+      triggerHeartbeat([50, 30, 50]); // 播放時震動
+    } catch (err) {
+      console.error('TTS error:', err);
+      toast.error('語音生成失敗', { id: 'speak' });
+      setSpeakingIndex(null);
     }
   };
 
@@ -1459,7 +1606,20 @@ export default function NightMode() {
                   }`}
                 >
                   {msg.role === 'muse' && (
-                    <p className="text-[10px] text-amber-700/60 mb-2 uppercase tracking-widest">MUSE</p>
+                    <div className="flex justify-between items-center mb-2">
+                      <p className="text-[10px] text-amber-700/60 uppercase tracking-widest">MUSE</p>
+                      <button
+                        onClick={() => speakMessage(msg.content, index)}
+                        className={`p-1.5 rounded-full transition-colors ${
+                          speakingIndex === index
+                            ? 'bg-purple-500/30 text-purple-400 animate-pulse'
+                            : 'hover:bg-stone-800 text-stone-600 hover:text-purple-400'
+                        }`}
+                        title={speakingIndex === index ? '停止' : '聽 MUSE 說'}
+                      >
+                        {speakingIndex === index ? <VolumeX size={14} /> : <Volume2 size={14} />}
+                      </button>
+                    </div>
                   )}
                   <p className={`text-sm leading-relaxed ${msg.role === 'user' ? 'text-purple-200' : 'text-stone-300 italic'}`}>
                     {msg.content}
@@ -1573,6 +1733,22 @@ export default function NightMode() {
                 multiple
                 onChange={handleRivalUpload}
               />
+            </div>
+
+            {/* Voice Recording Button - 語音錄製 */}
+            <div
+              className={`relative group/mic p-3 cursor-pointer shrink-0 ${isVoiceRecording ? 'animate-pulse' : ''}`}
+              onClick={isVoiceRecording ? stopVoiceRecording : startVoiceRecording}
+            >
+              <div className={`absolute inset-0 rounded-full scale-0 transition-transform duration-500 ${isVoiceRecording ? 'bg-red-900/30 scale-100' : 'bg-purple-900/10 group-hover/mic:scale-100'}`} />
+              <div className={`relative w-10 h-10 rounded-full border flex items-center justify-center transition-colors ${isVoiceRecording ? 'border-red-500/50 bg-red-900/20' : 'border-stone-800 group-hover/mic:border-purple-700/50'}`}>
+                <Mic size={20} strokeWidth={1.5} className={`transition-colors ${isVoiceRecording ? 'text-red-500' : 'text-stone-500 group-hover/mic:text-purple-500'}`} />
+              </div>
+              {isVoiceRecording && (
+                <div className="absolute -top-1 -right-1 w-5 h-5 bg-red-600 rounded-full text-[8px] flex items-center justify-center text-white font-bold">
+                  {voiceRecordingTime}
+                </div>
+              )}
             </div>
 
             <textarea

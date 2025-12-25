@@ -116,19 +116,52 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const reportRaw = JSON.parse(functionArgs);
         report = reportSchema.parse(reportRaw);
 
-        // 5. Store in Supabase (Rival Decoder)
+        // 5. Upload image to Supabase Storage (for better performance & GodView access)
+        let storedImageUrl = imageUrl;
+        try {
+            // Convert base64 to buffer
+            const base64Data = imageUrl.replace(/^data:image\/\w+;base64,/, '');
+            const buffer = Buffer.from(base64Data, 'base64');
+            const fileName = `rival/${userId}/${Date.now()}.jpg`;
+
+            const { data: uploadData, error: uploadError } = await supabase.storage
+                .from('muse-media')
+                .upload(fileName, buffer, {
+                    contentType: 'image/jpeg',
+                    upsert: false
+                });
+
+            if (uploadError) {
+                console.error("Storage Upload Error:", uploadError);
+                // Fall back to base64 if storage fails
+            } else if (uploadData) {
+                // Get public URL
+                const { data: { publicUrl } } = supabase.storage
+                    .from('muse-media')
+                    .getPublicUrl(fileName);
+                storedImageUrl = publicUrl;
+            }
+        } catch (storageErr) {
+            console.error("Storage processing error:", storageErr);
+            // Continue with base64 if storage fails
+        }
+
+        // 6. Store in Supabase (Rival Decoder) with storage URL
         const { error } = await supabase
         .from('rival_decoder')
-        .insert({ 
-            user_id: userId, 
-            image_url: imageUrl, 
-            analysis_report: report, 
-            risk_score: report.risk_score 
+        .insert({
+            user_id: userId,
+            image_url: storedImageUrl,
+            analysis_report: report,
+            risk_score: report.risk_score
         });
 
         if (error) {
             console.error("Supabase Insert Error:", error);
-            // We don't throw here to avoid failing the response if just saving fails
+            // Log more details for debugging
+            console.error("Insert details:", { userId, imageUrlLength: storedImageUrl.length });
+        } else {
+            console.log("Successfully saved to rival_decoder for user:", userId);
         }
 
     } else {
