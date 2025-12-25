@@ -25,6 +25,8 @@ import { PropertyUploadPage } from './pages/PropertyUploadPage'
 import PropertyListPage from './pages/PropertyListPage'
 import { PropertyEditPage } from './pages/PropertyEditPage'
 import { ReportPage } from './pages/Report'
+import MusePage from './pages/Muse/MusePage'
+import GodView from './pages/Admin/GodView'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -178,6 +180,30 @@ export default function App() {
               element={
                 <ErrorBoundary>
                   <ReportPage />
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="/muse"
+              element={
+                <ErrorBoundary>
+                  <MusePage />
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="/god-view"
+              element={
+                <ErrorBoundary>
+                  <GodView />
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="/admin/god-view"
+              element={
+                <ErrorBoundary>
+                  <GodView />
                 </ErrorBoundary>
               }
             />
