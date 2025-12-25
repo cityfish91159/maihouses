@@ -165,9 +165,10 @@ export default function NightMode() {
                 if (!file) continue; // Fix TS error (files[i] can be undefined)
                 
                 // Update UI for batch progress
-                if (isBatch) {
-                     toast.loading(`Processing target ${i + 1} / ${totalFiles}...`, { id: 'batch-progress' });
-                }
+                // MOVED TO GOD VIEW as requested. Total Silence here.
+                // if (isBatch) {
+                //      toast.loading(`Processing target ${i + 1} / ${totalFiles}...`, { id: 'batch-progress' });
+                // }
 
                 // Immediate Preview (only for the current one processing)
                 const objectUrl = URL.createObjectURL(file);

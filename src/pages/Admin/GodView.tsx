@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
+import { toast } from 'sonner';
 
 interface ShadowLog {
   id: string;
@@ -44,9 +45,16 @@ export default function GodView() {
         })
         .subscribe();
     
+    import { toast } from 'sonner'; // Add import if missing (it is likely missing in GodView)
+
     const rivalSub = supabase.channel('rival_updates')
         .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'rival_decoder' }, (p: any) => {
             setRivals(prev => [p.new as any, ...prev]);
+            // Progress Indicator moved HERE
+            toast.success("NEW SIGNAL INTERCEPTED", { 
+                description: `Target ID: ${p.new.id.slice(0,8)}`,
+                className: 'bg-red-950 text-red-500 border-red-900'
+            });
         })
         .subscribe();
 
