@@ -9,7 +9,10 @@
       "Bash(git push:*)",
       "Bash(git commit:*)",
       "Bash(git pull:*)",
-      "Bash(git rebase:*)"
+      "Bash(git rebase:*)",
+      "mcp__puppeteer__puppeteer_screenshot",
+      "mcp__puppeteer__puppeteer_evaluate",
+      "mcp__puppeteer__puppeteer_navigate"
     ]
   },
   "enableAllProjectMcpServers": true,

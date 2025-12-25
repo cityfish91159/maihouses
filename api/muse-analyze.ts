@@ -60,6 +60,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     let completion;
     let report;
 
+    if (imageUrl) {
         // --- Image Analysis Mode ---
         completion = await openai.chat.completions.create({
         model: "gpt-4o",
@@ -150,7 +151,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     console.error("API Error:", error);
     // Handle Zod errors specially
     if (error instanceof z.ZodError) {
-        return res.status(422).json({ error: 'Validation Error', details: error.errors });
+        return res.status(422).json({ error: 'Validation Error', details: error.issues });
     }
     return res.status(500).json({ 
         error: 'Internal Server Error', 
