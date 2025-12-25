@@ -211,6 +211,14 @@ export default function NightMode() {
   const [isListeningMoan, setIsListeningMoan] = useState(false); // 呻吟檢測中
   const [moanLevel, setMoanLevel] = useState(0); // 呻吟音量 0-100
   const [lastMoanFeedback, setLastMoanFeedback] = useState<'quiet' | 'loud' | null>(null);
+
+  // 🧊 Ice Zone (絕對禁止令) 狀態
+  const [isIceZoneActive, setIsIceZoneActive] = useState(false);
+  const [iceZoneTimer, setIceZoneTimer] = useState(0); // 倒數秒數
+  const [iceZoneResetCount, setIceZoneResetCount] = useState(0); // 重置次數
+  const [iceZonePassed, setIceZonePassed] = useState(false); // 是否成功通過
+  const iceZoneIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
   const hapticIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const climaxHoldRef = useRef<NodeJS.Timeout | null>(null);
   const moanAnalyserRef = useRef<AnalyserNode | null>(null);
@@ -896,6 +904,36 @@ export default function NightMode() {
     startHapticMetronome(Math.max(30, Math.min(180, newBPM)));
   }, [stopHapticMetronome, startHapticMetronome]);
 
+  // 🧊 Ice Zone - 重置（聲音太大）- 需要在 moan detection 之前定義
+  const resetIceZone = useCallback((originalDuration: number) => {
+    setIceZoneResetCount(prev => prev + 1);
+    setIceZoneTimer(originalDuration);
+
+    // 懲罰語音
+    const punishmentPhrases = [
+      '不乖...重來。',
+      '我說了不准動。',
+      '太大聲了...重新開始。',
+      '忍不住嗎？再試一次。'
+    ];
+    const phrase = punishmentPhrases[Math.floor(Math.random() * punishmentPhrases.length)];
+
+    const utterance = new SpeechSynthesisUtterance(phrase);
+    utterance.lang = 'zh-TW';
+    utterance.rate = 0.9;
+    speechSynthesis.speak(utterance);
+
+    // 懲罰震動
+    if (navigator.vibrate) {
+      navigator.vibrate([300, 100, 300]);
+    }
+
+    toast('🧊 重置！', {
+      description: phrase,
+      className: 'bg-red-950 text-red-200 border border-red-800'
+    });
+  }, []);
+
   // 🎙️ 呻吟檢測 - 開始
   const startMoanDetection = useCallback(async () => {
     try {
@@ -942,6 +980,12 @@ export default function NightMode() {
           setLastMoanFeedback('loud');
         }
 
+        // 🧊 Ice Zone 檢測 - 如果在禁止期間發出聲音太大，重置計時器
+        if (isIceZoneActive && normalizedLevel > 50) {
+          // 聲音超過閾值，觸發重置
+          resetIceZone(60);
+        }
+
         if (isListeningMoan) {
           requestAnimationFrame(checkVolume);
         }
@@ -951,7 +995,7 @@ export default function NightMode() {
     } catch (error) {
       console.error('Moan detection error:', error);
     }
-  }, [isBlindfolded, isListeningMoan, lastMoanFeedback]);
+  }, [isBlindfolded, isListeningMoan, lastMoanFeedback, isIceZoneActive, resetIceZone]);
 
   // 🎙️ 呻吟檢測 - 停止
   const stopMoanDetection = useCallback(() => {
@@ -1215,11 +1259,86 @@ export default function NightMode() {
     setClimaxHoldProgress(0);
   }, []);
 
+  // 🧊 Ice Zone (絕對禁止令) - 啟動
+  const startIceZone = useCallback((duration: number = 60) => {
+    setIsIceZoneActive(true);
+    setIceZoneTimer(duration);
+    setIceZoneResetCount(0);
+    setIceZonePassed(false);
+
+    // 停止節拍器（不准動）
+    stopHapticMetronome();
+
+    // 播放 TTS 語音
+    const utterance = new SpeechSynthesisUtterance(
+      `手拿開。在這${duration}秒內，只能聽我的聲音，不准碰自己。敢動一下，今天就結束了。`
+    );
+    utterance.lang = 'zh-TW';
+    utterance.rate = 0.85;
+    utterance.pitch = 0.9;
+    speechSynthesis.speak(utterance);
+
+    // 開始倒數
+    iceZoneIntervalRef.current = setInterval(() => {
+      setIceZoneTimer(prev => {
+        if (prev <= 1) {
+          // 時間到，成功通過
+          endIceZone(true);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  }, [stopHapticMetronome]);
+
+  // 🧊 Ice Zone - 結束
+  const endIceZone = useCallback((success: boolean) => {
+    if (iceZoneIntervalRef.current) {
+      clearInterval(iceZoneIntervalRef.current);
+      iceZoneIntervalRef.current = null;
+    }
+
+    setIsIceZoneActive(false);
+    setIceZoneTimer(0);
+
+    if (success) {
+      setIceZonePassed(true);
+      // 成功語音
+      const utterance = new SpeechSynthesisUtterance('好女孩...妳做到了...');
+      utterance.lang = 'zh-TW';
+      utterance.rate = 0.8;
+      speechSynthesis.speak(utterance);
+
+      // 震動獎勵
+      if (navigator.vibrate) {
+        navigator.vibrate([100, 50, 100, 50, 200]);
+      }
+
+      toast.success('🧊 妳通過了絕對禁止令', {
+        description: '好女孩...現在可以繼續了',
+        className: 'bg-cyan-950 text-cyan-200 border border-cyan-800'
+      });
+
+      // 恢復節拍器
+      setTimeout(() => {
+        startHapticMetronome(hapticBPM);
+      }, 2000);
+    }
+  }, [startHapticMetronome, hapticBPM]);
+
   // 退出親密模式的清理
   const exitIntimateMode = useCallback(async () => {
     // 停止所有功能
     stopHapticMetronome();
     stopMoanDetection();
+
+    // 🧊 清理 Ice Zone
+    if (iceZoneIntervalRef.current) {
+      clearInterval(iceZoneIntervalRef.current);
+      iceZoneIntervalRef.current = null;
+    }
+    setIsIceZoneActive(false);
+    setIceZoneTimer(0);
 
     // 🎤 停止錄音（會自動觸發 onstop 保存）
     if (intimateRecorderRef.current && intimateRecorderRef.current.state !== 'inactive') {
@@ -2751,9 +2870,63 @@ export default function NightMode() {
 
       {/* 🔥 親密盲眼模式覆蓋層 - 進階版 */}
       {isBlindfolded && (
-        <div className="fixed inset-0 bg-black z-[100] flex flex-col items-center justify-center">
+        <div className={`fixed inset-0 z-[100] flex flex-col items-center justify-center transition-colors duration-1000 ${
+          isIceZoneActive ? 'bg-gradient-to-b from-cyan-950 via-blue-950 to-black' : 'bg-black'
+        }`}>
+
+          {/* 🧊 Ice Zone 覆蓋層 */}
+          {isIceZoneActive && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center z-10">
+              {/* 冰晶效果 */}
+              <div className="absolute inset-0 opacity-20">
+                <div className="absolute top-1/4 left-1/4 w-32 h-32 bg-cyan-400/30 rounded-full blur-3xl animate-pulse" />
+                <div className="absolute bottom-1/3 right-1/4 w-24 h-24 bg-blue-400/30 rounded-full blur-2xl animate-pulse" style={{ animationDelay: '0.5s' }} />
+                <div className="absolute top-1/2 right-1/3 w-20 h-20 bg-cyan-300/20 rounded-full blur-xl animate-pulse" style={{ animationDelay: '1s' }} />
+              </div>
+
+              {/* 禁止標誌 */}
+              <div className="text-6xl mb-6 animate-pulse">🧊</div>
+
+              {/* 倒數計時器 */}
+              <div className="text-8xl font-extralight text-cyan-400 mb-4 tabular-nums">
+                {iceZoneTimer}
+              </div>
+
+              {/* 狀態文字 */}
+              <div className="text-cyan-300/80 text-lg tracking-widest uppercase mb-2">
+                絕對禁止令
+              </div>
+
+              <div className="text-cyan-500/60 text-sm mb-8">
+                不准動...不准出聲...
+              </div>
+
+              {/* 重置次數 */}
+              {iceZoneResetCount > 0 && (
+                <div className="text-red-400/70 text-sm">
+                  重置次數: {iceZoneResetCount}
+                </div>
+              )}
+
+              {/* 音量指示器 - 警告用 */}
+              <div className="absolute bottom-32 left-0 right-0 flex flex-col items-center">
+                <div className="w-48 h-3 bg-cyan-900/30 rounded-full overflow-hidden">
+                  <div
+                    className={`h-full transition-all duration-100 ${
+                      moanLevel > 50 ? 'bg-red-500' : moanLevel > 30 ? 'bg-yellow-500' : 'bg-cyan-500'
+                    }`}
+                    style={{ width: `${moanLevel}%` }}
+                  />
+                </div>
+                <div className="text-cyan-500/40 text-[10px] mt-2">
+                  {moanLevel > 50 ? '⚠️ 太大聲了！' : '保持安靜...'}
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* 🫀 節拍器顯示 */}
-          {hapticMetronomeActive && (
+          {hapticMetronomeActive && !isIceZoneActive && (
             <div className="absolute top-8 left-0 right-0 flex flex-col items-center">
               <div className="text-purple-500/60 text-xs tracking-widest mb-2">RHYTHM</div>
               <div className="flex items-center gap-4">
@@ -2779,8 +2952,8 @@ export default function NightMode() {
             </div>
           )}
 
-          {/* 🎙️ 呻吟音量顯示 */}
-          {isListeningMoan && (
+          {/* 🎙️ 呻吟音量顯示 - Ice Zone 時不顯示（有自己的音量條） */}
+          {isListeningMoan && !isIceZoneActive && (
             <div className="absolute top-28 left-0 right-0 flex flex-col items-center">
               <div className="w-32 h-2 bg-purple-900/30 rounded-full overflow-hidden">
                 <div
@@ -2961,13 +3134,33 @@ export default function NightMode() {
             >
               <span className="text-2xl">🔴</span>
             </button>
+
+            {/* 🧊 Ice Zone 按鈕 */}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (!isIceZoneActive) {
+                  startIceZone(60);
+                }
+              }}
+              disabled={isIceZoneActive}
+              className={`w-16 h-16 rounded-full flex items-center justify-center transition-all hover:scale-110 active:scale-95 ${
+                isIceZoneActive
+                  ? 'bg-cyan-600/40 border-2 border-cyan-400/50 animate-pulse'
+                  : 'bg-cyan-600/20 border-2 border-cyan-500/50 hover:bg-cyan-600/40'
+              }`}
+            >
+              <span className="text-2xl">🧊</span>
+            </button>
           </div>
 
           {/* 按鈕說明 */}
-          <div className="absolute bottom-8 left-0 right-0 flex justify-center gap-10 text-[10px] text-purple-500/40">
+          <div className="absolute bottom-8 left-0 right-0 flex justify-center gap-8 text-[10px] text-purple-500/40">
             <span>加速</span>
             <span>減速</span>
             <span>完成</span>
+            <span className="text-cyan-500/40">禁止令</span>
           </div>
         </div>
       )}
