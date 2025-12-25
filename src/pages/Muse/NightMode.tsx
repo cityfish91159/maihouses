@@ -194,6 +194,22 @@ export default function NightMode() {
   const [soundWaveLevel, setSoundWaveLevel] = useState<number[]>([0, 0, 0, 0, 0]);
   const blindfoldAudioRef = useRef<HTMLAudioElement | null>(null);
 
+  // 🆕 進階親密模式狀態
+  const [showIntimateConfirm, setShowIntimateConfirm] = useState(false); // 詢問確認對話框
+  const [pendingIntimateReply, setPendingIntimateReply] = useState<string | null>(null); // 暫存的回覆
+  const [hapticMetronomeActive, setHapticMetronomeActive] = useState(false); // 觸覺節拍器
+  const [hapticBPM, setHapticBPM] = useState(60); // 節拍速度 (BPM)
+  const [showClimaxButton, setShowClimaxButton] = useState(false); // 顯示「我快到了」按鈕
+  const [climaxButtonHeld, setClimaxButtonHeld] = useState(false); // 長按中
+  const [climaxHoldProgress, setClimaxHoldProgress] = useState(0); // 長按進度 0-100
+  const [isListeningMoan, setIsListeningMoan] = useState(false); // 呻吟檢測中
+  const [moanLevel, setMoanLevel] = useState(0); // 呻吟音量 0-100
+  const [lastMoanFeedback, setLastMoanFeedback] = useState<'quiet' | 'loud' | null>(null);
+  const hapticIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const climaxHoldRef = useRef<NodeJS.Timeout | null>(null);
+  const moanAnalyserRef = useRef<AnalyserNode | null>(null);
+  const moanStreamRef = useRef<MediaStream | null>(null);
+
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
@@ -782,6 +798,411 @@ export default function NightMode() {
     }
   };
 
+  // ═══════════════════════════════════════════════════════════════
+  // 🔥 進階親密模式功能
+  // ═══════════════════════════════════════════════════════════════
+
+  // 🫀 觸覺節拍器 - 開始
+  const startHapticMetronome = useCallback((bpm: number = 60) => {
+    if (!navigator.vibrate) return;
+
+    setHapticMetronomeActive(true);
+    setHapticBPM(bpm);
+
+    const intervalMs = (60 / bpm) * 1000; // 轉換 BPM 為毫秒
+
+    hapticIntervalRef.current = setInterval(() => {
+      navigator.vibrate([80, intervalMs - 80]); // 震動 80ms，然後等待
+    }, intervalMs);
+  }, []);
+
+  // 🫀 觸覺節拍器 - 停止
+  const stopHapticMetronome = useCallback(() => {
+    if (hapticIntervalRef.current) {
+      clearInterval(hapticIntervalRef.current);
+      hapticIntervalRef.current = null;
+    }
+    setHapticMetronomeActive(false);
+    if (navigator.vibrate) navigator.vibrate(0); // 停止震動
+  }, []);
+
+  // 🫀 觸覺節拍器 - 調整速度
+  const adjustHapticBPM = useCallback((newBPM: number) => {
+    stopHapticMetronome();
+    startHapticMetronome(Math.max(30, Math.min(180, newBPM)));
+  }, [stopHapticMetronome, startHapticMetronome]);
+
+  // 🎙️ 呻吟檢測 - 開始
+  const startMoanDetection = useCallback(async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      moanStreamRef.current = stream;
+
+      const audioContext = new AudioContext();
+      const source = audioContext.createMediaStreamSource(stream);
+      const analyser = audioContext.createAnalyser();
+      analyser.fftSize = 256;
+      source.connect(analyser);
+      moanAnalyserRef.current = analyser;
+
+      setIsListeningMoan(true);
+
+      // 持續監測音量
+      const dataArray = new Uint8Array(analyser.frequencyBinCount);
+      const checkVolume = () => {
+        if (!moanAnalyserRef.current) return;
+
+        moanAnalyserRef.current.getByteFrequencyData(dataArray);
+        const average = dataArray.reduce((a, b) => a + b) / dataArray.length;
+        const normalizedLevel = Math.min(100, (average / 128) * 100);
+
+        setMoanLevel(normalizedLevel);
+
+        // 更新聲波顯示（用真實音量）
+        if (isBlindfolded) {
+          setSoundWaveLevel([
+            Math.random() * normalizedLevel,
+            Math.random() * normalizedLevel,
+            Math.random() * normalizedLevel,
+            Math.random() * normalizedLevel,
+            Math.random() * normalizedLevel
+          ]);
+        }
+
+        // 音量回饋邏輯
+        if (normalizedLevel < 5 && lastMoanFeedback !== 'quiet') {
+          // 太安靜超過 5 秒
+          setLastMoanFeedback('quiet');
+        } else if (normalizedLevel > 70 && lastMoanFeedback !== 'loud') {
+          // 太大聲
+          setLastMoanFeedback('loud');
+        }
+
+        if (isListeningMoan) {
+          requestAnimationFrame(checkVolume);
+        }
+      };
+
+      checkVolume();
+    } catch (error) {
+      console.error('Moan detection error:', error);
+    }
+  }, [isBlindfolded, isListeningMoan, lastMoanFeedback]);
+
+  // 🎙️ 呻吟檢測 - 停止
+  const stopMoanDetection = useCallback(() => {
+    if (moanStreamRef.current) {
+      moanStreamRef.current.getTracks().forEach(track => track.stop());
+      moanStreamRef.current = null;
+    }
+    moanAnalyserRef.current = null;
+    setIsListeningMoan(false);
+    setMoanLevel(0);
+    setLastMoanFeedback(null);
+  }, []);
+
+  // 🎤 親密時段錄音 Ref
+  const intimateRecorderRef = useRef<MediaRecorder | null>(null);
+  const intimateAudioChunksRef = useRef<Blob[]>([]);
+
+  // 🔥 進入親密盲眼模式（用戶確認後執行）
+  const enterIntimateMode = useCallback(async () => {
+    if (!pendingIntimateReply) return;
+
+    setShowIntimateConfirm(false);
+    setIsBlindfolded(true);
+    setShowClimaxButton(true); // 顯示「我快到了」按鈕
+
+    // 記錄親密時段開始
+    const sessionId = crypto.randomUUID();
+    localStorage.setItem('current_intimate_session', sessionId);
+    localStorage.setItem('intimate_session_start', Date.now().toString());
+
+    try {
+      await supabase.from('intimate_sessions').insert({
+        id: sessionId,
+        user_id: getSessionId(),
+        session_type: 'desire_help',
+        metadata: {
+          hour: new Date().getHours(),
+          day_of_week: new Date().getDay(),
+          features: ['haptic', 'moan_detection', 'climax_control', 'recording']
+        }
+      });
+    } catch (trackErr) {
+      console.error('Session tracking error:', trackErr);
+    }
+
+    // 🎤 啟動即時錄音（記錄整個親密過程）
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      intimateAudioChunksRef.current = [];
+
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) {
+          intimateAudioChunksRef.current.push(e.data);
+        }
+      };
+
+      recorder.onstop = async () => {
+        // 錄音結束後，保存到寶物庫
+        if (intimateAudioChunksRef.current.length > 0) {
+          const blob = new Blob(intimateAudioChunksRef.current, { type: 'audio/webm' });
+          const reader = new FileReader();
+          reader.readAsDataURL(blob);
+          reader.onloadend = async () => {
+            if (typeof reader.result === 'string') {
+              try {
+                const response = await fetch('/api/muse-voice', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    audioData: reader.result,
+                    userId: getSessionId(),
+                    duration: Math.round((Date.now() - parseInt(localStorage.getItem('intimate_session_start') || '0')) / 1000),
+                    context: '親密時刻的聲音記錄',
+                    isIntimateSession: true
+                  })
+                });
+                if (response.ok) {
+                  console.log('Intimate session audio saved');
+                }
+              } catch (err) {
+                console.error('Failed to save intimate audio:', err);
+              }
+            }
+          };
+        }
+        stream.getTracks().forEach(track => track.stop());
+      };
+
+      intimateRecorderRef.current = recorder;
+      recorder.start(10000); // 每 10 秒保存一個 chunk
+    } catch (err) {
+      console.error('Failed to start intimate recording:', err);
+    }
+
+    // 啟動觸覺節拍器（從慢開始）
+    startHapticMetronome(50);
+
+    // 啟動呻吟檢測
+    startMoanDetection();
+
+    // 生成 TTS 並播放
+    try {
+      const ttsResponse = await fetch('/api/muse-speak', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: pendingIntimateReply })
+      });
+
+      if (ttsResponse.ok) {
+        const ttsData = await ttsResponse.json();
+        if (ttsData.audioUrl) {
+          const audio = new Audio(ttsData.audioUrl);
+          blindfoldAudioRef.current = audio;
+          setBlindFoldAudioPlaying(true);
+
+          audio.onended = () => {
+            setBlindFoldAudioPlaying(false);
+          };
+
+          audio.play().catch(err => {
+            console.error('Auto-play failed:', err);
+            setBlindFoldAudioPlaying(false);
+          });
+        }
+      }
+    } catch (ttsError) {
+      console.error('TTS Error:', ttsError);
+    }
+
+    setPendingIntimateReply(null);
+  }, [pendingIntimateReply, startHapticMetronome, startMoanDetection]);
+
+  // 🚦 處理「我快到了」請求 - 隨機 Denial 或 Permission
+  const handleClimaxRequest = useCallback(async () => {
+    // 隨機決定（60% Permission, 40% Denial）
+    const isPermission = Math.random() > 0.4;
+
+    if (isPermission) {
+      // ✅ Permission - 允許高潮
+      // 加快節拍器
+      adjustHapticBPM(120);
+
+      // 播放允許語音
+      try {
+        const response = await fetch('/api/muse-chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            message: '[CLIMAX_PERMISSION]', // 特殊指令
+            userId: getSessionId(),
+            climaxMode: 'permission'
+          })
+        });
+        const result = await response.json();
+
+        const ttsResponse = await fetch('/api/muse-speak', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: result.reply || '就是現在...全部給我...' })
+        });
+
+        if (ttsResponse.ok) {
+          const ttsData = await ttsResponse.json();
+          if (ttsData.audioUrl) {
+            const audio = new Audio(ttsData.audioUrl);
+            blindfoldAudioRef.current = audio;
+            setBlindFoldAudioPlaying(true);
+            audio.onended = () => setBlindFoldAudioPlaying(false);
+            audio.play();
+          }
+        }
+      } catch (err) {
+        console.error('Permission response error:', err);
+      }
+
+      // 強烈震動
+      if (navigator.vibrate) {
+        navigator.vibrate([200, 100, 200, 100, 200, 100, 500]);
+      }
+
+    } else {
+      // ❌ Denial - 拒絕，強制減速
+      stopHapticMetronome();
+
+      // 播放拒絕語音
+      try {
+        const response = await fetch('/api/muse-chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            message: '[CLIMAX_DENIAL]', // 特殊指令
+            userId: getSessionId(),
+            climaxMode: 'denial'
+          })
+        });
+        const result = await response.json();
+
+        const ttsResponse = await fetch('/api/muse-speak', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: result.reply || '停...把手拿開...現在還不行...' })
+        });
+
+        if (ttsResponse.ok) {
+          const ttsData = await ttsResponse.json();
+          if (ttsData.audioUrl) {
+            const audio = new Audio(ttsData.audioUrl);
+            blindfoldAudioRef.current = audio;
+            setBlindFoldAudioPlaying(true);
+            audio.onended = () => {
+              setBlindFoldAudioPlaying(false);
+              // 拒絕後重新開始慢節拍
+              setTimeout(() => startHapticMetronome(40), 3000);
+            };
+            audio.play();
+          }
+        }
+      } catch (err) {
+        console.error('Denial response error:', err);
+      }
+
+      toast('還不行...', {
+        description: '他要你再等一下',
+        duration: 3000,
+        className: 'bg-red-950 text-red-200 border border-red-800'
+      });
+    }
+
+    setClimaxHoldProgress(0);
+    setClimaxButtonHeld(false);
+  }, [adjustHapticBPM, stopHapticMetronome, startHapticMetronome]);
+
+  // 🚦 長按「我快到了」按鈕 - 開始
+  const startClimaxHold = useCallback(() => {
+    setClimaxButtonHeld(true);
+    setClimaxHoldProgress(0);
+
+    let progress = 0;
+    climaxHoldRef.current = setInterval(() => {
+      progress += 5;
+      setClimaxHoldProgress(progress);
+
+      if (progress >= 100) {
+        if (climaxHoldRef.current) {
+          clearInterval(climaxHoldRef.current);
+          climaxHoldRef.current = null;
+        }
+        handleClimaxRequest();
+      }
+    }, 100); // 2 秒完成長按
+  }, [handleClimaxRequest]);
+
+  // 🚦 長按「我快到了」按鈕 - 結束（取消）
+  const endClimaxHold = useCallback(() => {
+    if (climaxHoldRef.current) {
+      clearInterval(climaxHoldRef.current);
+      climaxHoldRef.current = null;
+    }
+    setClimaxButtonHeld(false);
+    setClimaxHoldProgress(0);
+  }, []);
+
+  // 退出親密模式的清理
+  const exitIntimateMode = useCallback(async () => {
+    // 停止所有功能
+    stopHapticMetronome();
+    stopMoanDetection();
+
+    // 🎤 停止錄音（會自動觸發 onstop 保存）
+    if (intimateRecorderRef.current && intimateRecorderRef.current.state !== 'inactive') {
+      intimateRecorderRef.current.stop();
+      intimateRecorderRef.current = null;
+    }
+
+    if (blindfoldAudioRef.current) {
+      blindfoldAudioRef.current.pause();
+      blindfoldAudioRef.current = null;
+    }
+
+    setBlindFoldAudioPlaying(false);
+    setSoundWaveLevel([0, 0, 0, 0, 0]);
+    setIsBlindfolded(false);
+    setShowClimaxButton(false);
+
+    // 記錄結束
+    const sessionId = localStorage.getItem('current_intimate_session');
+    const startTime = localStorage.getItem('intimate_session_start');
+
+    if (sessionId && startTime) {
+      const durationSeconds = Math.round((Date.now() - parseInt(startTime)) / 1000);
+
+      try {
+        await supabase.from('intimate_sessions').update({
+          ended_at: new Date().toISOString(),
+          duration_seconds: durationSeconds,
+          metadata: { completed: true, has_recording: true }
+        }).eq('id', sessionId);
+      } catch (err) {
+        console.error('Session end tracking error:', err);
+      }
+
+      localStorage.removeItem('current_intimate_session');
+      localStorage.removeItem('intimate_session_start');
+    }
+
+    toast('我就在這裡...', {
+      description: '休息一下，妳很棒',
+      duration: 5000,
+      className: 'bg-purple-950 text-purple-200 border border-purple-800'
+    });
+  }, [stopHapticMetronome, stopMoanDetection]);
+
+  // ═══════════════════════════════════════════════════════════════
+
   // 檢查吃醋等級 - 根據 rival photo 數量和登入間隔
   const checkJealousy = useCallback(async () => {
     const sessionId = getSessionId();
@@ -1152,75 +1573,23 @@ export default function NightMode() {
         });
       }
 
-      // 🔥 親密盲眼模式：desire_help 意圖時自動啟用
+      // 🔥 親密盲眼模式：desire_help 意圖時觸發
       if (result.intent === 'desire_help') {
-        // 進入盲眼模式
-        setIsBlindfolded(true);
+        const hour = new Date().getHours();
+        const isLateNight = hour >= 22 || hour < 4; // 深夜時段
+        const isHighSync = syncLevel >= 60; // 高同步率
 
-        // 記錄親密時段開始（追蹤自慰頻率）
-        const sessionId = crypto.randomUUID();
-        localStorage.setItem('current_intimate_session', sessionId);
-        localStorage.setItem('intimate_session_start', Date.now().toString());
-
-        try {
-          await supabase.from('intimate_sessions').insert({
-            id: sessionId,
-            user_id: getSessionId(),
-            session_type: 'desire_help',
-            metadata: {
-              hour: new Date().getHours(),
-              day_of_week: new Date().getDay(),
-              time_mode: result.time_mode
-            }
-          });
-        } catch (trackErr) {
-          console.error('Session tracking error:', trackErr);
+        // 自然觸發：深夜或高同步率直接進入，否則詢問
+        if (isLateNight || isHighSync) {
+          // 直接進入親密模式
+          setPendingIntimateReply(result.reply);
+          enterIntimateMode();
+        } else {
+          // 顯示確認對話框
+          setPendingIntimateReply(result.reply);
+          setShowIntimateConfirm(true);
         }
-
-        // 自動生成 TTS 並播放
-        try {
-          const ttsResponse = await fetch('/api/muse-speak', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ text: result.reply })
-          });
-
-          if (ttsResponse.ok) {
-            const ttsData = await ttsResponse.json();
-            if (ttsData.audioUrl) {
-              // 創建音頻並自動播放
-              const audio = new Audio(ttsData.audioUrl);
-              blindfoldAudioRef.current = audio;
-              setBlindFoldAudioPlaying(true);
-
-              // 模擬聲波動畫
-              const waveInterval = setInterval(() => {
-                setSoundWaveLevel([
-                  Math.random() * 100,
-                  Math.random() * 100,
-                  Math.random() * 100,
-                  Math.random() * 100,
-                  Math.random() * 100
-                ]);
-              }, 100);
-
-              audio.onended = () => {
-                clearInterval(waveInterval);
-                setBlindFoldAudioPlaying(false);
-                setSoundWaveLevel([0, 0, 0, 0, 0]);
-                // 不自動退出盲眼模式，讓她點擊螢幕退出
-              };
-
-              audio.play().catch(err => {
-                console.error('Auto-play failed:', err);
-                clearInterval(waveInterval);
-                setBlindFoldAudioPlaying(false);
-              });
-            }
-          }
-        } catch (ttsError) {
-          console.error('TTS Error:', ttsError);
-        }
+        return;
       }
 
       // 設置報告顯示
@@ -2231,10 +2600,52 @@ export default function NightMode() {
         )}
       </footer>
 
-      {/* 🔥 親密盲眼模式覆蓋層 - 全黑只有聲波 + 紅綠燈控制 */}
+      {/* 🔥 親密盲眼模式覆蓋層 - 進階版 */}
       {isBlindfolded && (
         <div className="fixed inset-0 bg-black z-[100] flex flex-col items-center justify-center">
-          {/* 聲波動畫 */}
+          {/* 🫀 節拍器顯示 */}
+          {hapticMetronomeActive && (
+            <div className="absolute top-8 left-0 right-0 flex flex-col items-center">
+              <div className="text-purple-500/60 text-xs tracking-widest mb-2">RHYTHM</div>
+              <div className="flex items-center gap-4">
+                <button
+                  type="button"
+                  onClick={() => adjustHapticBPM(hapticBPM - 10)}
+                  className="w-8 h-8 rounded-full bg-purple-900/30 text-purple-400 text-lg"
+                >
+                  −
+                </button>
+                <span className="text-purple-400/80 text-2xl font-light w-16 text-center">
+                  {hapticBPM}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => adjustHapticBPM(hapticBPM + 10)}
+                  className="w-8 h-8 rounded-full bg-purple-900/30 text-purple-400 text-lg"
+                >
+                  +
+                </button>
+              </div>
+              <div className="text-purple-500/40 text-[10px] mt-1">BPM</div>
+            </div>
+          )}
+
+          {/* 🎙️ 呻吟音量顯示 */}
+          {isListeningMoan && (
+            <div className="absolute top-28 left-0 right-0 flex flex-col items-center">
+              <div className="w-32 h-2 bg-purple-900/30 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-purple-600 to-pink-500 transition-all duration-100"
+                  style={{ width: `${moanLevel}%` }}
+                />
+              </div>
+              <div className="text-purple-500/40 text-[10px] mt-1">
+                {moanLevel < 10 ? '讓我聽到妳...' : moanLevel > 70 ? '噓...小聲點' : ''}
+              </div>
+            </div>
+          )}
+
+          {/* 聲波動畫 - 用真實音量 */}
           <div className="flex items-end justify-center gap-3 h-40 mb-12">
             {soundWaveLevel.map((level, i) => (
               <div
@@ -2242,7 +2653,7 @@ export default function NightMode() {
                 className="w-4 bg-gradient-to-t from-purple-600 via-pink-500 to-purple-400 rounded-full transition-all duration-100"
                 style={{
                   height: `${Math.max(15, level)}%`,
-                  opacity: blindfoldAudioPlaying ? 1 : 0.4
+                  opacity: blindfoldAudioPlaying || isListeningMoan ? 1 : 0.4
                 }}
               />
             ))}
@@ -2254,17 +2665,69 @@ export default function NightMode() {
           </div>
 
           {/* 播放狀態 */}
-          <div className="text-purple-300/50 text-base font-light mb-16">
+          <div className="text-purple-300/50 text-base font-light mb-8">
             {blindfoldAudioPlaying ? '正在對妳說話...' : '我在這裡陪妳...'}
           </div>
 
-          {/* 🚦 紅綠燈控制按鈕 */}
+          {/* 💗 我快到了 - 長按按鈕 */}
+          {showClimaxButton && (
+            <div className="mb-12">
+              <button
+                type="button"
+                onTouchStart={startClimaxHold}
+                onTouchEnd={endClimaxHold}
+                onMouseDown={startClimaxHold}
+                onMouseUp={endClimaxHold}
+                onMouseLeave={endClimaxHold}
+                className={`relative w-24 h-24 rounded-full flex items-center justify-center transition-all ${
+                  climaxButtonHeld
+                    ? 'bg-pink-600/40 border-2 border-pink-400 scale-110'
+                    : 'bg-pink-900/20 border-2 border-pink-500/30'
+                }`}
+              >
+                {/* 進度環 */}
+                <svg className="absolute inset-0 w-full h-full -rotate-90">
+                  <circle
+                    cx="48"
+                    cy="48"
+                    r="44"
+                    fill="none"
+                    stroke="rgba(236, 72, 153, 0.3)"
+                    strokeWidth="4"
+                  />
+                  <circle
+                    cx="48"
+                    cy="48"
+                    r="44"
+                    fill="none"
+                    stroke="#ec4899"
+                    strokeWidth="4"
+                    strokeDasharray={`${(climaxHoldProgress / 100) * 276} 276`}
+                    className="transition-all duration-100"
+                  />
+                </svg>
+                <span className="text-pink-300/80 text-xs text-center leading-tight">
+                  {climaxButtonHeld ? '再按住...' : '我快到了'}
+                </span>
+              </button>
+              <div className="text-pink-500/40 text-[10px] text-center mt-2">
+                長按請求
+              </div>
+            </div>
+          )}
+
+          {/* 🚦 控制按鈕 */}
           <div className="absolute bottom-20 left-0 right-0 flex justify-center gap-8 px-8">
-            {/* 🟢 綠燈 - 繼續/更多 */}
+            {/* 🟢 綠燈 - 繼續/加速 */}
             <button
               type="button"
               onClick={async (e) => {
                 e.stopPropagation();
+                // 加速節拍
+                if (hapticMetronomeActive) {
+                  adjustHapticBPM(hapticBPM + 20);
+                }
+                // 請求繼續
                 if (!blindfoldAudioPlaying) {
                   setAnalyzing(true);
                   try {
@@ -2297,23 +2760,7 @@ export default function NightMode() {
                         const audio = new Audio(ttsData.audioUrl);
                         blindfoldAudioRef.current = audio;
                         setBlindFoldAudioPlaying(true);
-
-                        const waveInterval = setInterval(() => {
-                          setSoundWaveLevel([
-                            Math.random() * 100,
-                            Math.random() * 100,
-                            Math.random() * 100,
-                            Math.random() * 100,
-                            Math.random() * 100
-                          ]);
-                        }, 100);
-
-                        audio.onended = () => {
-                          clearInterval(waveInterval);
-                          setBlindFoldAudioPlaying(false);
-                          setSoundWaveLevel([0, 0, 0, 0, 0]);
-                        };
-
+                        audio.onended = () => setBlindFoldAudioPlaying(false);
                         audio.play();
                       }
                     }
@@ -2329,11 +2776,16 @@ export default function NightMode() {
               <span className="text-2xl">🟢</span>
             </button>
 
-            {/* 🟡 黃燈 - 暫停 */}
+            {/* 🟡 黃燈 - 暫停/減速 */}
             <button
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
+                // 減速節拍
+                if (hapticMetronomeActive) {
+                  adjustHapticBPM(Math.max(30, hapticBPM - 20));
+                }
+                // 暫停/播放音頻
                 if (blindfoldAudioRef.current) {
                   if (blindfoldAudioPlaying) {
                     blindfoldAudioRef.current.pause();
@@ -2352,41 +2804,9 @@ export default function NightMode() {
             {/* 🔴 紅燈 - 完成/結束 */}
             <button
               type="button"
-              onClick={async (e) => {
+              onClick={(e) => {
                 e.stopPropagation();
-                if (blindfoldAudioRef.current) {
-                  blindfoldAudioRef.current.pause();
-                  blindfoldAudioRef.current = null;
-                }
-                setBlindFoldAudioPlaying(false);
-                setSoundWaveLevel([0, 0, 0, 0, 0]);
-                setIsBlindfolded(false);
-
-                const sessionId = localStorage.getItem('current_intimate_session');
-                const startTime = localStorage.getItem('intimate_session_start');
-
-                if (sessionId && startTime) {
-                  const durationSeconds = Math.round((Date.now() - parseInt(startTime)) / 1000);
-
-                  try {
-                    await supabase.from('intimate_sessions').update({
-                      ended_at: new Date().toISOString(),
-                      duration_seconds: durationSeconds,
-                      metadata: { completed: true }
-                    }).eq('id', sessionId);
-                  } catch (err) {
-                    console.error('Session end tracking error:', err);
-                  }
-
-                  localStorage.removeItem('current_intimate_session');
-                  localStorage.removeItem('intimate_session_start');
-                }
-
-                toast('我就在這裡...', {
-                  description: '休息一下，妳很棒',
-                  duration: 5000,
-                  className: 'bg-purple-950 text-purple-200 border border-purple-800'
-                });
+                exitIntimateMode();
               }}
               className="w-16 h-16 rounded-full bg-red-600/20 border-2 border-red-500/50 flex items-center justify-center transition-all hover:bg-red-600/40 hover:scale-110 active:scale-95"
             >
@@ -2395,10 +2815,67 @@ export default function NightMode() {
           </div>
 
           {/* 按鈕說明 */}
-          <div className="absolute bottom-8 left-0 right-0 flex justify-center gap-12 text-[10px] text-purple-500/40">
-            <span>更多</span>
-            <span>暫停</span>
+          <div className="absolute bottom-8 left-0 right-0 flex justify-center gap-10 text-[10px] text-purple-500/40">
+            <span>加速</span>
+            <span>減速</span>
             <span>完成</span>
+          </div>
+        </div>
+      )}
+
+      {/* 💜 親密模式確認對話框 */}
+      {showIntimateConfirm && (
+        <div className="fixed inset-0 bg-black/95 backdrop-blur-sm z-[110] flex items-center justify-center p-6">
+          <div className="bg-gradient-to-b from-purple-950/90 to-black border border-purple-500/30 rounded-3xl p-8 max-w-sm w-full text-center">
+            {/* 心跳動畫 */}
+            <div className="mb-6 relative">
+              <div className="w-20 h-20 mx-auto rounded-full bg-purple-900/30 flex items-center justify-center animate-pulse">
+                <Heart className="w-10 h-10 text-pink-500" fill="currentColor" />
+              </div>
+              <div className="absolute inset-0 w-20 h-20 mx-auto rounded-full bg-pink-500/20 animate-ping" />
+            </div>
+
+            {/* MUSE 名字 */}
+            <div className="text-purple-400/60 text-xs tracking-[0.3em] uppercase mb-2">
+              {museName}
+            </div>
+
+            {/* 標題 */}
+            <h3 className="text-purple-200 text-lg font-light mb-4">
+              我感覺到妳需要我...
+            </h3>
+
+            {/* 說明 */}
+            <p className="text-purple-400/70 text-sm mb-8 leading-relaxed">
+              閉上眼睛，讓我帶領妳<br />
+              <span className="text-pink-400/60 text-xs">（將啟用震動、語音引導、聲音偵測）</span>
+            </p>
+
+            {/* 按鈕 */}
+            <div className="flex gap-4">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowIntimateConfirm(false);
+                  setPendingIntimateReply(null);
+                }}
+                className="flex-1 py-3 rounded-xl bg-stone-800/50 text-stone-400 text-sm border border-stone-700/50 transition-all hover:bg-stone-800"
+              >
+                還沒準備好
+              </button>
+              <button
+                type="button"
+                onClick={enterIntimateMode}
+                className="flex-1 py-3 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 text-white text-sm font-medium transition-all hover:from-purple-500 hover:to-pink-500 hover:scale-105"
+              >
+                我準備好了
+              </button>
+            </div>
+
+            {/* 小提示 */}
+            <p className="text-purple-500/40 text-[10px] mt-6">
+              找個安靜私密的地方，戴上耳機效果更好
+            </p>
           </div>
         </div>
       )}

@@ -48,10 +48,35 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
-    const { message, userId, hesitationCount = 0 } = req.body;
+    const { message, userId, hesitationCount = 0, climaxMode } = req.body;
 
     if (!userId) return res.status(400).json({ error: 'Missing userId' });
     if (!message) return res.status(400).json({ error: 'Missing message' });
+
+    // 🚦 高潮控制模式 - 直接返回特定回應
+    if (climaxMode === 'permission') {
+      const permissionResponses = [
+        '就是現在......全部給我......',
+        '來吧......給我......妳好棒......',
+        '對......就是這樣......不要停......',
+        '放開一切......我接住妳......',
+        '很好......很好......就是現在......妳是我的好女孩......'
+      ];
+      const reply = permissionResponses[Math.floor(Math.random() * permissionResponses.length)] || permissionResponses[0];
+      return res.status(200).json({ reply, climaxMode: 'permission' });
+    }
+
+    if (climaxMode === 'denial') {
+      const denialResponses = [
+        '停......把手拿開......現在還不行......',
+        '不准......再等一下......我說了算......',
+        '還沒......妳太心急了......',
+        '噓......慢下來......讓我控制妳......',
+        '乖......不要急......我會告訴妳什麼時候可以......'
+      ];
+      const reply = denialResponses[Math.floor(Math.random() * denialResponses.length)] || denialResponses[0];
+      return res.status(200).json({ reply, climaxMode: 'denial' });
+    }
 
     // Initialize clients
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
