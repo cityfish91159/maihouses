@@ -257,6 +257,7 @@ export default function NightMode() {
   const burningVoiceRecorderRef = useRef<MediaRecorder | null>(null);
   const burningVoiceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const burningPhotoInputRef = useRef<HTMLInputElement>(null);
+  const [showBurningMenu, setShowBurningMenu] = useState(false);
 
   // 📊 表現評估表 (Performance Report) 狀態
   const [showPerformanceReport, setShowPerformanceReport] = useState(false);
@@ -3369,115 +3370,141 @@ export default function NightMode() {
           </div>
         )}
 
-        <div className="relative group max-w-2xl mx-auto z-30">
-          <div className={`relative z-30 flex items-center gap-1.5 md:gap-2 bg-[#0f0f0f]/80 backdrop-blur-3xl rounded-[2rem] p-2 md:p-3 border transition-all duration-500 ${
-            isTyping ? 'border-purple-500/30 shadow-[0_0_30px_rgba(100,0,100,0.1)]' : 'border-white/10 shadow-2xl'
-          }`}>
+        <div className="relative group max-w-2xl mx-auto z-30 space-y-2">
+          {/* 上排工具列 */}
+          <div className="flex items-center justify-center gap-3 px-2">
+            {/* 👤 分析他的照片 */}
+            <label className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-stone-900/60 border border-stone-700/50 hover:border-amber-600/50 hover:bg-amber-950/30 transition-all cursor-pointer touch-manipulation active:scale-95">
+              <Eye size={14} className="text-amber-500/70" />
+              <span className="text-[11px] text-stone-400">分析他</span>
+              <input
+                type="file"
+                ref={fileInputRef}
+                className="sr-only"
+                accept="image/*"
+                multiple
+                onChange={handleRivalUpload}
+              />
+            </label>
 
-            {/* Upload Button - 男生照片分析 */}
-            <div className="relative w-9 h-9 md:w-10 md:h-10 shrink-0">
-              <label className="absolute inset-0 z-20 group/lens rounded-full border border-stone-800 flex items-center justify-center hover:border-amber-700/50 transition-colors cursor-pointer touch-manipulation overflow-hidden">
-                <Camera size={16} strokeWidth={1.5} className="text-stone-500 group-hover/lens:text-amber-500 transition-colors pointer-events-none md:w-5 md:h-5" />
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  className="sr-only"
-                  accept="image/*"
-                  multiple
-                  onChange={handleRivalUpload}
-                />
-              </label>
-            </div>
+            {/* 💬 分析對話截圖 */}
+            <label className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-stone-900/60 border border-stone-700/50 hover:border-cyan-600/50 hover:bg-cyan-950/30 transition-all cursor-pointer touch-manipulation active:scale-95">
+              <MessageSquare size={14} className="text-cyan-500/70" />
+              <span className="text-[11px] text-stone-400">分析對話</span>
+              <input
+                type="file"
+                ref={conversationInputRef}
+                className="sr-only"
+                accept="image/*"
+                onChange={handleConversationUpload}
+              />
+            </label>
 
-            {/* 🔥 焚燒按鈕組 - iOS 風格 */}
-            <div className="flex items-center gap-1">
-              {/* 🔥📷 照片焚燒 */}
-              <label className="relative z-30 w-8 h-8 rounded-full border border-amber-800/50 bg-amber-950/30 flex items-center justify-center shrink-0 hover:border-amber-600/70 hover:bg-amber-900/40 transition-all cursor-pointer touch-manipulation active:scale-95" title="焚燒照片">
-                <Camera size={14} strokeWidth={1.5} className="text-amber-500/80 pointer-events-none" />
-                <input
-                  ref={burningPhotoInputRef}
-                  type="file"
-                  accept="image/*"
-                  className="sr-only"
-                  onChange={handleBurningPhotoUpload}
-                />
-              </label>
-              {/* 🔥🎤 語音焚燒 */}
+            {/* 🔥 焚燒按鈕 - 點擊展開選單 */}
+            <div className="relative">
               <button
                 type="button"
-                onClick={burningVoiceRecording ? stopBurningVoiceRecording : startBurningVoiceRecording}
-                className={`relative z-30 w-8 h-8 rounded-full border flex items-center justify-center shrink-0 transition-all touch-manipulation active:scale-95 ${
-                  burningVoiceRecording
-                    ? 'border-red-500 bg-red-900/50 animate-pulse'
-                    : 'border-amber-800/50 bg-amber-950/30 hover:border-amber-600/70 hover:bg-amber-900/40'
+                onClick={() => setShowBurningMenu(!showBurningMenu)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border transition-all touch-manipulation active:scale-95 ${
+                  showBurningMenu || burningVoiceRecording
+                    ? 'bg-amber-900/50 border-amber-600/70 text-amber-300'
+                    : 'bg-stone-900/60 border-stone-700/50 hover:border-amber-600/50 hover:bg-amber-950/30'
                 }`}
-                title={burningVoiceRecording ? `${burningVoiceTime}s` : '焚燒語音'}
-                style={{ pointerEvents: 'auto', WebkitTapHighlightColor: 'transparent' }}
               >
-                <Mic size={14} strokeWidth={1.5} className={`pointer-events-none ${burningVoiceRecording ? 'text-red-400' : 'text-amber-500/80'}`} />
+                <span className="text-sm">🔥</span>
+                <span className="text-[11px] text-stone-400">焚燒</span>
+                {burningVoiceRecording && <span className="text-[10px] text-red-400 animate-pulse">{burningVoiceTime}s</span>}
               </button>
-              {/* 🔥✏️ 文字焚燒 */}
-              <button
-                type="button"
-                onClick={() => {
-                  const text = prompt('寫下要焚燒的私密內容...');
-                  if (text && text.trim()) {
-                    handleBurningTextSubmit(text.trim());
-                  }
-                }}
-                className="relative z-30 w-8 h-8 rounded-full border border-amber-800/50 bg-amber-950/30 flex items-center justify-center shrink-0 hover:border-amber-600/70 hover:bg-amber-900/40 transition-all touch-manipulation active:scale-95"
-                title="焚燒文字"
-                style={{ pointerEvents: 'auto', WebkitTapHighlightColor: 'transparent' }}
-              >
-                <Fingerprint size={14} strokeWidth={1.5} className="text-amber-500/80 pointer-events-none" />
-              </button>
+
+              {/* 焚燒選單 */}
+              {showBurningMenu && (
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-black/95 border border-amber-700/50 rounded-xl p-2 min-w-[140px] shadow-xl animate-fade-in">
+                  <div className="text-[9px] text-amber-500/60 text-center mb-2 pb-1 border-b border-amber-900/50">私密內容會焚燒</div>
+                  {/* 照片 */}
+                  <label className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-amber-900/30 cursor-pointer transition-colors">
+                    <Camera size={14} className="text-amber-400" />
+                    <span className="text-xs text-stone-300">照片</span>
+                    <input
+                      ref={burningPhotoInputRef}
+                      type="file"
+                      accept="image/*"
+                      className="sr-only"
+                      onChange={(e) => {
+                        handleBurningPhotoUpload(e);
+                        setShowBurningMenu(false);
+                      }}
+                    />
+                  </label>
+                  {/* 語音 */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (burningVoiceRecording) {
+                        stopBurningVoiceRecording();
+                      } else {
+                        startBurningVoiceRecording();
+                      }
+                      setShowBurningMenu(false);
+                    }}
+                    className="w-full flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-amber-900/30 transition-colors text-left"
+                  >
+                    <Mic size={14} className={burningVoiceRecording ? 'text-red-400 animate-pulse' : 'text-amber-400'} />
+                    <span className="text-xs text-stone-300">{burningVoiceRecording ? '停止錄音' : '語音'}</span>
+                  </button>
+                  {/* 文字 */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowBurningMenu(false);
+                      const text = prompt('寫下要焚燒的私密內容...');
+                      if (text && text.trim()) {
+                        handleBurningTextSubmit(text.trim());
+                      }
+                    }}
+                    className="w-full flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-amber-900/30 transition-colors text-left"
+                  >
+                    <Fingerprint size={14} className="text-amber-400" />
+                    <span className="text-xs text-stone-300">文字</span>
+                  </button>
+                </div>
+              )}
             </div>
 
-            {/* Voice Recording Button - 語音錄製 */}
+            {/* 🎤 語音訊息 */}
             <button
               type="button"
-              className={`relative z-20 w-9 h-9 md:w-10 md:h-10 rounded-full border flex items-center justify-center shrink-0 transition-colors touch-manipulation active:scale-95 ${
-                isVoiceRecording
-                  ? 'border-red-500/50 bg-red-900/20 animate-pulse'
-                  : 'border-stone-800 hover:border-purple-700/50'
-              }`}
               onClick={isVoiceRecording ? stopVoiceRecording : startVoiceRecording}
-              style={{ pointerEvents: 'auto', WebkitTapHighlightColor: 'transparent' }}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border transition-all touch-manipulation active:scale-95 ${
+                isVoiceRecording
+                  ? 'bg-red-900/50 border-red-500/70 text-red-300 animate-pulse'
+                  : 'bg-stone-900/60 border-stone-700/50 hover:border-purple-600/50 hover:bg-purple-950/30'
+              }`}
             >
-              <Mic size={16} strokeWidth={1.5} className={`transition-colors md:w-5 md:h-5 pointer-events-none ${isVoiceRecording ? 'text-red-500' : 'text-stone-500 hover:text-purple-500'}`} />
+              <Mic size={14} className={isVoiceRecording ? 'text-red-400' : 'text-purple-500/70'} />
+              <span className="text-[11px] text-stone-400">{isVoiceRecording ? `${voiceRecordingTime}s` : '語音'}</span>
             </button>
+          </div>
 
-            {/* 🗨️ 對話截圖分析按鈕 */}
-            <div className="relative w-9 h-9 md:w-10 md:h-10 shrink-0">
-              <label className="absolute inset-0 z-20 group/chat rounded-full border border-stone-800 flex items-center justify-center hover:border-cyan-700/50 transition-colors cursor-pointer touch-manipulation overflow-hidden" title="分析對話截圖">
-                <MessageSquare size={16} strokeWidth={1.5} className="text-stone-500 group-hover/chat:text-cyan-400 transition-colors pointer-events-none md:w-5 md:h-5" />
-                <input
-                  type="file"
-                  ref={conversationInputRef}
-                  className="sr-only"
-                  accept="image/*"
-                  onChange={handleConversationUpload}
-                />
-              </label>
-            </div>
-
+          {/* 下排輸入框 - 乾淨簡潔 */}
+          <div className={`relative z-30 flex items-center gap-2 bg-[#0f0f0f]/80 backdrop-blur-3xl rounded-full p-2 md:p-3 border transition-all duration-500 ${
+            isTyping ? 'border-purple-500/30 shadow-[0_0_30px_rgba(100,0,100,0.1)]' : 'border-white/10 shadow-2xl'
+          }`}>
             <textarea
               ref={textareaRef}
               value={input}
               onChange={handleChange}
               onKeyDown={handleKeyDown}
-              className="flex-1 bg-transparent border-none outline-none text-sm md:text-base py-2 md:py-3 px-2 md:px-3 min-h-[36px] md:min-h-[44px] max-h-32 resize-none placeholder:text-stone-600 text-stone-300 font-serif leading-relaxed scrollbar-hide"
+              className="flex-1 bg-transparent border-none outline-none text-sm md:text-base py-2 md:py-3 px-3 md:px-4 min-h-[36px] md:min-h-[44px] max-h-32 resize-none placeholder:text-stone-600 text-stone-300 font-serif leading-relaxed scrollbar-hide"
               placeholder="向謬思坦白..."
               rows={1}
             />
-
             <button
               type="button"
               onClick={handleSend}
               disabled={analyzing}
-              className="w-9 h-9 md:w-10 md:h-10 rounded-full bg-stone-900 text-stone-600 hover:text-amber-500 hover:bg-amber-900/10 transition-all disabled:opacity-50 flex items-center justify-center shrink-0 touch-manipulation active:scale-95"
+              className="w-10 h-10 md:w-11 md:h-11 rounded-full bg-gradient-to-br from-purple-600/80 to-pink-600/80 text-white hover:from-purple-500 hover:to-pink-500 transition-all disabled:opacity-50 flex items-center justify-center shrink-0 touch-manipulation active:scale-95 shadow-lg"
             >
-              <Send size={16} strokeWidth={1.5} className="md:w-[18px] md:h-[18px]" />
+              <Send size={18} strokeWidth={2} />
             </button>
           </div>
         </div>

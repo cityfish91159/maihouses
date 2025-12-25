@@ -92,6 +92,7 @@ interface ChatMessageMetadata {
   is_muse_response?: boolean | undefined;
   media_type?: 'text' | 'voice' | 'photo' | undefined;
   media_url?: string | undefined;
+  naughty_mode?: boolean | undefined;
 }
 
 interface ChatMessage {
@@ -952,20 +953,14 @@ export default function GodView() {
                   {/* 發送者標籤 */}
                   <p className={`text-[9px] mb-1 ${msg.from_admin ? 'text-purple-400' : 'text-stone-500'}`}>
                     {msg.from_admin ? '你 (MUSE)' : '資欣老師'}
-                    {/* 告解室焚燒內容 */}
-                    {msg.metadata?.type === 'confession' && (
+                    {/* 🔥 焚燒內容標籤 */}
+                    {msg.metadata?.type === 'burning' && (
                       <span className="ml-2 text-amber-400">
-                        🔥 告解焚燒
-                        {msg.metadata?.confession_type === 'dark' && ' [黑暗]'}
-                        {msg.metadata?.confession_type === 'fantasy' && ' [幻想]'}
-                      </span>
-                    )}
-                    {/* 告解室正常對話 */}
-                    {msg.metadata?.type === 'confession_chat' && (
-                      <span className="ml-2 text-amber-400">
-                        🕯️ 告解室對話
-                        {msg.metadata?.confession_type === 'dark' && ' [黑暗]'}
-                        {msg.metadata?.confession_type === 'fantasy' && ' [幻想]'}
+                        🔥 焚燒
+                        {msg.metadata?.media_type === 'photo' && ' [照片]'}
+                        {msg.metadata?.media_type === 'voice' && ' [語音]'}
+                        {msg.metadata?.media_type === 'text' && ' [文字]'}
+                        {msg.metadata?.naughty_mode && ' 🔞'}
                       </span>
                     )}
                   </p>

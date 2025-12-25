@@ -17,9 +17,11 @@
       "mcp__puppeteer__puppeteer_fill",
       "mcp__filesystem__directory_tree",
       "mcp__filesystem__list_directory",
-      "Bash(npx eslint:*)"
+      "Bash(npx eslint:*)",
+      "WebSearch"
     ]
   },
+  "model": "sonnet",
   "enableAllProjectMcpServers": true,
   "enabledMcpjsonServers": [
     "filesystem",
