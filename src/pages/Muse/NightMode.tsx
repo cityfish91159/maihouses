@@ -263,8 +263,9 @@ export default function NightMode() {
                         triggerHeartbeat([100, 50, 100, 50, 100]); 
                     }
 
-                } catch (err) {
+                } catch (err: any) {
                     console.error(`Error processing file ${i}`, err);
+                    throw new Error(err.message || "Analysis Failed");
                 }
             }
         } catch (error: any) {
