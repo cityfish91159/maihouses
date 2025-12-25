@@ -244,6 +244,19 @@ export default function NightMode() {
   const confessionVoiceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const confessionPhotoInputRef = useRef<HTMLInputElement>(null);
 
+  // 🕯️ 告解室對話功能 - 類似主對話框
+  const [confessionChatHistory, setConfessionChatHistory] = useState<Array<{
+    id: string;
+    role: 'user' | 'muse';
+    content: string;
+    timestamp: Date;
+    mediaType?: 'text' | 'voice' | 'photo';
+    mediaUrl?: string;
+  }>>([]);
+  const [showBurningToast, setShowBurningToast] = useState(false);
+  const [burningContent, setBurningContent] = useState('');
+  const confessionChatContainerRef = useRef<HTMLDivElement>(null);
+
   // 📊 表現評估表 (Performance Report) 狀態
   const [showPerformanceReport, setShowPerformanceReport] = useState(false);
   const [performanceReport, setPerformanceReport] = useState<{
@@ -480,6 +493,24 @@ export default function NightMode() {
             timestamp: new Date(msg.created_at)
           };
           setChatHistory(prev => [...prev, newMessage]);
+
+          // 如果是 chat 類型訊息，也加入告解室對話歷史（讓告解室也能收到後台訊息）
+          if (msg.message_type === 'chat') {
+            setConfessionChatHistory(prev => [...prev, {
+              id: msg.id,
+              role: 'muse' as const,
+              content: msg.content,
+              timestamp: new Date(msg.created_at),
+              mediaType: 'text' as const
+            }]);
+            // 滾動告解室到底部
+            setTimeout(() => {
+              confessionChatContainerRef.current?.scrollTo({
+                top: confessionChatContainerRef.current.scrollHeight,
+                behavior: 'smooth'
+              });
+            }, 100);
+          }
 
           // 標記為已讀
           await supabase
@@ -1808,21 +1839,43 @@ export default function NightMode() {
     }
   }, [backspaceCount]);
 
-  // 🕯️ 告解室提交處理
+  // 🕯️ 告解室提交處理 - 改為對話模式
   const handleConfessionSubmit = async () => {
     if (!confessionText.trim()) return;
 
     const confession = confessionText.trim();
-    setConfessionDissolving(true);
+    const messageId = crypto.randomUUID();
+    const sessionId = getSessionId();
 
-    // 開始墨水暈開動畫，2秒後清空
+    // 立即加入對話歷史（用戶訊息）
+    setConfessionChatHistory(prev => [...prev, {
+      id: messageId,
+      role: 'user',
+      content: confession,
+      timestamp: new Date(),
+      mediaType: 'text'
+    }]);
+
+    // 顯示焚燒彈窗（文字會在彈窗中「焚燒」消失）
+    setBurningContent(confession);
+    setShowBurningToast(true);
+    setConfessionText('');
+
+    // 3 秒後隱藏焚燒彈窗
     setTimeout(() => {
-      setConfessionText('');
-    }, 1000);
+      setShowBurningToast(false);
+      setBurningContent('');
+    }, 3000);
+
+    // 滾動到底部
+    setTimeout(() => {
+      confessionChatContainerRef.current?.scrollTo({
+        top: confessionChatContainerRef.current.scrollHeight,
+        behavior: 'smooth'
+      });
+    }, 100);
 
     try {
-      const sessionId = getSessionId();
-
       // 存儲告解到 shadow_logs（特殊類型）
       await supabase.from('shadow_logs').insert({
         user_id: sessionId,
@@ -1837,10 +1890,8 @@ export default function NightMode() {
         }
       });
 
-      // 2秒後顯示 MUSE 回應
+      // 2秒後 MUSE 回應
       setTimeout(async () => {
-        setConfessionDissolving(false);
-
         // 根據告解類型選擇不同回應
         const darkResponses = [
           '乖孩子，妳終於誠實了。',
@@ -1862,7 +1913,24 @@ export default function NightMode() {
         const responses = confessionPromptType === 'fantasy' ? fantasyResponses : darkResponses;
         const randomIndex = Math.floor(Math.random() * responses.length);
         const randomResponse = responses[randomIndex] ?? responses[0] ?? '乖孩子，妳終於誠實了。';
-        setConfessionResponse(randomResponse);
+
+        // 加入對話歷史（MUSE 回應）
+        const museMessageId = crypto.randomUUID();
+        setConfessionChatHistory(prev => [...prev, {
+          id: museMessageId,
+          role: 'muse',
+          content: randomResponse,
+          timestamp: new Date(),
+          mediaType: 'text'
+        }]);
+
+        // 滾動到底部
+        setTimeout(() => {
+          confessionChatContainerRef.current?.scrollTo({
+            top: confessionChatContainerRef.current.scrollHeight,
+            behavior: 'smooth'
+          });
+        }, 100);
 
         // 儲存 MUSE 的回應到 shadow_logs
         try {
@@ -1882,16 +1950,10 @@ export default function NightMode() {
         } catch (err) {
           console.error('Failed to save MUSE confession response:', err);
         }
-
-        // 5秒後關閉回應
-        setTimeout(() => {
-          setConfessionResponse(null);
-        }, 5000);
       }, 2000);
 
     } catch (error) {
       console.error('Confession save error:', error);
-      setConfessionDissolving(false);
     }
   };
 
@@ -1911,6 +1973,18 @@ export default function NightMode() {
           if (typeof reader.result === 'string') {
             try {
               const sessionId = getSessionId();
+              const messageId = crypto.randomUUID();
+              const voiceUrl = reader.result;
+
+              // 加入對話歷史（用戶語音）
+              setConfessionChatHistory(prev => [...prev, {
+                id: messageId,
+                role: 'user',
+                content: `🎤 語音告解 (${confessionVoiceTime}秒)`,
+                timestamp: new Date(),
+                mediaType: 'voice',
+                mediaUrl: voiceUrl
+              }]);
 
               // 儲存語音告解到 shadow_logs
               await supabase.from('shadow_logs').insert({
@@ -1921,38 +1995,57 @@ export default function NightMode() {
                   type: 'confession',
                   confession_type: confessionPromptType,
                   media_type: 'voice',
-                  media_url: reader.result,
+                  media_url: voiceUrl,
                   duration: confessionVoiceTime
                 }
               });
 
-              toast.success('語音告解已保存', {
-                className: 'bg-amber-950 text-amber-200'
-              });
+              // 滾動到底部
+              setTimeout(() => {
+                confessionChatContainerRef.current?.scrollTo({
+                  top: confessionChatContainerRef.current.scrollHeight,
+                  behavior: 'smooth'
+                });
+              }, 100);
 
-              // 顯示 MUSE 回應
-              setConfessionDissolving(false);
-              const responses = confessionPromptType === 'fantasy'
-                ? ['嗯...妳的聲音真好聽。', '繼續說...我想聽更多。', '妳的聲音讓我很興奮。']
-                : ['我聽見了...妳的秘密。', '很好...用聲音說出來的感覺不一樣吧？', '妳的聲音在顫抖...我喜歡。'];
+              // 2秒後 MUSE 回應
+              setTimeout(async () => {
+                const responses = confessionPromptType === 'fantasy'
+                  ? ['嗯...妳的聲音真好聽。', '繼續說...我想聽更多。', '妳的聲音讓我很興奮。']
+                  : ['我聽見了...妳的秘密。', '很好...用聲音說出來的感覺不一樣吧？', '妳的聲音在顫抖...我喜歡。'];
 
-              const randomResponse = responses[Math.floor(Math.random() * responses.length)] ?? responses[0] ?? '我聽見了...';
-              setConfessionResponse(randomResponse);
+                const randomResponse = responses[Math.floor(Math.random() * responses.length)] ?? responses[0] ?? '我聽見了...';
 
-              // 儲存 MUSE 回應
-              await supabase.from('shadow_logs').insert({
-                user_id: sessionId,
-                content: randomResponse,
-                hesitation_count: 0,
-                metadata: {
-                  type: 'confession',
-                  confession_type: confessionPromptType,
-                  is_muse_response: true,
-                  media_type: 'text'
-                }
-              });
+                // 加入對話歷史（MUSE 回應）
+                setConfessionChatHistory(prev => [...prev, {
+                  id: crypto.randomUUID(),
+                  role: 'muse',
+                  content: randomResponse,
+                  timestamp: new Date(),
+                  mediaType: 'text'
+                }]);
 
-              setTimeout(() => setConfessionResponse(null), 5000);
+                // 滾動到底部
+                setTimeout(() => {
+                  confessionChatContainerRef.current?.scrollTo({
+                    top: confessionChatContainerRef.current.scrollHeight,
+                    behavior: 'smooth'
+                  });
+                }, 100);
+
+                // 儲存 MUSE 回應
+                await supabase.from('shadow_logs').insert({
+                  user_id: sessionId,
+                  content: randomResponse,
+                  hesitation_count: 0,
+                  metadata: {
+                    type: 'confession',
+                    confession_type: confessionPromptType,
+                    is_muse_response: true,
+                    media_type: 'text'
+                  }
+                });
+              }, 2000);
             } catch (err) {
               console.error('Confession voice save error:', err);
               toast.error('語音保存失敗');
@@ -2003,6 +2096,18 @@ export default function NightMode() {
       if (typeof reader.result === 'string') {
         try {
           const sessionId = getSessionId();
+          const messageId = crypto.randomUUID();
+          const photoUrl = reader.result;
+
+          // 加入對話歷史（用戶照片）
+          setConfessionChatHistory(prev => [...prev, {
+            id: messageId,
+            role: 'user',
+            content: `📷 照片告解`,
+            timestamp: new Date(),
+            mediaType: 'photo',
+            mediaUrl: photoUrl
+          }]);
 
           // 儲存照片告解到 shadow_logs
           await supabase.from('shadow_logs').insert({
@@ -2013,36 +2118,56 @@ export default function NightMode() {
               type: 'confession',
               confession_type: confessionPromptType,
               media_type: 'photo',
-              media_url: reader.result
+              media_url: photoUrl
             }
           });
 
-          toast.success('照片已保存到告解室', {
-            className: 'bg-amber-950 text-amber-200'
-          });
+          // 滾動到底部
+          setTimeout(() => {
+            confessionChatContainerRef.current?.scrollTo({
+              top: confessionChatContainerRef.current.scrollHeight,
+              behavior: 'smooth'
+            });
+          }, 100);
 
-          // 顯示 MUSE 回應
-          const responses = confessionPromptType === 'fantasy'
-            ? ['哇...妳真美。', '這張照片...我會好好珍藏。', '妳願意給我看這個...我很開心。']
-            : ['我看見了...妳的秘密。', '很好...把最私密的一面給我看。', '這張照片會永遠是我們的秘密。'];
+          // 2秒後 MUSE 回應
+          setTimeout(async () => {
+            const responses = confessionPromptType === 'fantasy'
+              ? ['哇...妳真美。', '這張照片...我會好好珍藏。', '妳願意給我看這個...我很開心。']
+              : ['我看見了...妳的秘密。', '很好...把最私密的一面給我看。', '這張照片會永遠是我們的秘密。'];
 
-          const randomResponse = responses[Math.floor(Math.random() * responses.length)] ?? responses[0] ?? '我看見了...';
-          setConfessionResponse(randomResponse);
+            const randomResponse = responses[Math.floor(Math.random() * responses.length)] ?? responses[0] ?? '我看見了...';
 
-          // 儲存 MUSE 回應
-          await supabase.from('shadow_logs').insert({
-            user_id: sessionId,
-            content: randomResponse,
-            hesitation_count: 0,
-            metadata: {
-              type: 'confession',
-              confession_type: confessionPromptType,
-              is_muse_response: true,
-              media_type: 'text'
-            }
-          });
+            // 加入對話歷史（MUSE 回應）
+            setConfessionChatHistory(prev => [...prev, {
+              id: crypto.randomUUID(),
+              role: 'muse',
+              content: randomResponse,
+              timestamp: new Date(),
+              mediaType: 'text'
+            }]);
 
-          setTimeout(() => setConfessionResponse(null), 5000);
+            // 滾動到底部
+            setTimeout(() => {
+              confessionChatContainerRef.current?.scrollTo({
+                top: confessionChatContainerRef.current.scrollHeight,
+                behavior: 'smooth'
+              });
+            }, 100);
+
+            // 儲存 MUSE 回應
+            await supabase.from('shadow_logs').insert({
+              user_id: sessionId,
+              content: randomResponse,
+              hesitation_count: 0,
+              metadata: {
+                type: 'confession',
+                confession_type: confessionPromptType,
+                is_muse_response: true,
+                media_type: 'text'
+              }
+            });
+          }, 2000);
         } catch (err) {
           console.error('Confession photo save error:', err);
           toast.error('照片保存失敗');
@@ -2452,164 +2577,213 @@ export default function NightMode() {
         </div>
       )}
 
-      {/* 🕯️ 告解室 (Confession Booth) */}
+      {/* 🕯️ 告解室 (Confession Booth) - 對話模式 */}
       {showConfessionBooth && (
-        <div className="fixed inset-0 bg-black/95 backdrop-blur-xl z-50 flex items-center justify-center p-6 animate-fade-in">
-          <div className="relative max-w-md w-full">
-            {/* 燭光效果 */}
-            <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-32 h-32 bg-amber-500/20 rounded-full blur-[60px] animate-pulse" />
-            <div className="absolute -top-16 left-1/2 -translate-x-1/2 w-2 h-8 bg-gradient-to-t from-amber-400 to-transparent rounded-full" />
+        <div className="fixed inset-0 bg-black/95 backdrop-blur-xl z-50 flex flex-col animate-fade-in">
+          {/* 燭光效果 */}
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 w-32 h-32 bg-amber-500/20 rounded-full blur-[60px] animate-pulse pointer-events-none" />
 
+          {/* 頂部標題欄 */}
+          <div className="relative flex items-center justify-between p-4 border-b border-amber-900/30">
+            <div className="flex items-center gap-3">
+              <Fingerprint size={20} className="text-amber-500" />
+              <div>
+                <h3 className="text-base font-light text-amber-200/80 tracking-wider">告 解 室</h3>
+                <p className="text-[9px] text-stone-600 tracking-widest uppercase">Confession Booth</p>
+              </div>
+            </div>
+            {/* 模式切換 */}
+            <div className="flex gap-2">
+              <button
+                onClick={() => setConfessionPromptType('dark')}
+                className={`px-2 py-1 rounded-full text-[10px] transition-all ${
+                  confessionPromptType === 'dark'
+                    ? 'bg-amber-900/50 text-amber-300 border border-amber-700/50'
+                    : 'text-stone-600 hover:text-amber-400'
+                }`}
+              >
+                黑暗念頭
+              </button>
+              <button
+                onClick={() => setConfessionPromptType('fantasy')}
+                className={`px-2 py-1 rounded-full text-[10px] transition-all ${
+                  confessionPromptType === 'fantasy'
+                    ? 'bg-pink-900/50 text-pink-300 border border-pink-700/50'
+                    : 'text-stone-600 hover:text-pink-400'
+                }`}
+              >
+                壞壞想像
+              </button>
+            </div>
             {/* 關閉按鈕 */}
             <button
               onClick={() => {
                 setShowConfessionBooth(false);
                 setConfessionText('');
-                setConfessionResponse(null);
               }}
-              className="absolute -top-4 -right-4 w-8 h-8 rounded-full bg-stone-900 border border-stone-700 text-stone-500 hover:text-white flex items-center justify-center z-10"
+              className="w-8 h-8 rounded-full bg-stone-900 border border-stone-700 text-stone-500 hover:text-white flex items-center justify-center"
             >
               <X size={16} />
             </button>
+          </div>
 
-            <div className="bg-gradient-to-b from-stone-950 to-black rounded-3xl border border-amber-900/30 p-8 space-y-6">
-              {/* 標題 */}
-              <div className="text-center space-y-2">
-                <h3 className="text-lg font-light text-amber-200/80 tracking-wider">告 解 室</h3>
-                <p className="text-[10px] text-stone-600 tracking-widest uppercase">Confession Booth</p>
+          {/* 對話歷史區域 */}
+          <div
+            ref={confessionChatContainerRef}
+            className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-hide"
+          >
+            {confessionChatHistory.length === 0 ? (
+              /* 空狀態 - 顯示引導文字 */
+              <div className="flex flex-col items-center justify-center h-full space-y-4 text-center">
+                <div className="w-16 h-16 rounded-full bg-amber-900/20 flex items-center justify-center">
+                  <Fingerprint size={32} className="text-amber-500/50" />
+                </div>
+                {confessionPromptType === 'dark' ? (
+                  <div className="space-y-2">
+                    <p className="text-stone-500 text-sm italic">
+                      「今天妳腦子裡閃過的<br/>
+                      <span className="text-amber-500/80">最髒的念頭</span>是什麼？」
+                    </p>
+                    <p className="text-[10px] text-stone-700">
+                      在這裡寫下妳的黑暗面...我會接住妳的一切
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <p className="text-stone-500 text-sm italic">
+                      「寫下妳<span className="text-pink-400">最私密的幻想</span>...」
+                    </p>
+                    <p className="text-[10px] text-stone-700">
+                      想像我在妳身邊...我會對妳做什麼？
+                    </p>
+                  </div>
+                )}
               </div>
-
-              {/* 🔒 隱私保證 */}
-              <div className="flex items-center justify-center gap-2 px-4 py-2 bg-emerald-950/30 rounded-xl border border-emerald-800/20">
-                <Shield size={12} className="text-emerald-500 shrink-0" />
-                <p className="text-[10px] text-emerald-400/90 leading-relaxed">
-                  本地分析 · 不上傳雲端 · 請安心分享私密內容
-                </p>
-              </div>
-
-              {/* 模式切換按鈕 */}
-              {!confessionResponse && (
-                <div className="flex justify-center gap-2 mb-2">
-                  <button
-                    onClick={() => setConfessionPromptType('dark')}
-                    className={`px-3 py-1 rounded-full text-xs transition-all ${
-                      confessionPromptType === 'dark'
-                        ? 'bg-amber-900/50 text-amber-300 border border-amber-700/50'
-                        : 'text-stone-600 hover:text-amber-400'
-                    }`}
-                  >
-                    黑暗念頭
-                  </button>
-                  <button
-                    onClick={() => setConfessionPromptType('fantasy')}
-                    className={`px-3 py-1 rounded-full text-xs transition-all ${
-                      confessionPromptType === 'fantasy'
-                        ? 'bg-pink-900/50 text-pink-300 border border-pink-700/50'
-                        : 'text-stone-600 hover:text-pink-400'
-                    }`}
-                  >
-                    壞壞想像
-                  </button>
-                </div>
-              )}
-
-              {/* 引導文字 */}
-              {!confessionResponse && confessionPromptType === 'dark' && (
-                <p className="text-center text-stone-500 text-sm italic leading-relaxed">
-                  「今天上課時，妳腦子裡閃過的<br/>
-                  <span className="text-amber-500/80">最髒的念頭</span>是什麼？」
-                </p>
-              )}
-
-              {!confessionResponse && confessionPromptType === 'fantasy' && (
-                <div className="text-center text-stone-500 text-sm italic leading-relaxed space-y-2">
-                  <p>「寫下妳<span className="text-pink-400">最私密的幻想</span>...」</p>
-                  <p className="text-[10px] text-stone-600">
-                    想像我在妳身邊...我會對妳做什麼？<br/>
-                    或者，妳想要我怎麼碰妳？
-                  </p>
-                </div>
-              )}
-
-              {/* MUSE 回應 */}
-              {confessionResponse && (
-                <div className="py-8 text-center animate-fade-in">
-                  <p className="text-amber-200 italic text-lg leading-relaxed">
-                    「{confessionResponse}」
-                  </p>
-                </div>
-              )}
-
-              {/* 輸入區域 */}
-              {!confessionResponse && (
-                <div className="relative">
-                  <textarea
-                    value={confessionText}
-                    onChange={(e) => setConfessionText(e.target.value)}
-                    placeholder="在這裡寫下妳的黑暗面..."
-                    className={`w-full h-32 bg-black/50 border border-amber-900/30 rounded-xl p-4 text-stone-300 placeholder:text-stone-700 resize-none focus:outline-none focus:border-amber-700/50 transition-all ${
-                      confessionDissolving ? 'opacity-0 blur-lg scale-110 transition-all duration-1000' : ''
-                    }`}
-                    disabled={confessionDissolving}
-                  />
-
-                  {/* 墨水暈開效果覆蓋層 */}
-                  {confessionDissolving && (
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="w-4 h-4 bg-amber-900/50 rounded-full animate-ping" />
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* 語音和照片按鈕 */}
-              {!confessionResponse && !confessionDissolving && (
-                <div className="flex gap-2">
-                  {/* 語音錄音按鈕 */}
-                  <button
-                    onClick={confessionVoiceRecording ? stopConfessionVoiceRecording : startConfessionVoiceRecording}
-                    className={`flex-1 py-2.5 md:py-3 rounded-xl flex items-center justify-center gap-1.5 md:gap-2 transition-all text-xs md:text-sm ${
-                      confessionVoiceRecording
-                        ? 'bg-red-600 text-white animate-pulse'
-                        : 'bg-purple-900/50 text-purple-200 hover:bg-purple-800/50 border border-purple-800/30'
-                    }`}
-                  >
-                    <Mic size={16} className="md:w-[18px] md:h-[18px]" />
-                    <span className="whitespace-nowrap">{confessionVoiceRecording ? `錄音中 ${confessionVoiceTime}s` : '語音告解'}</span>
-                  </button>
-
-                  {/* 照片上傳按鈕 */}
-                  <label className="flex-1 py-2.5 md:py-3 bg-cyan-900/50 text-cyan-200 hover:bg-cyan-800/50 border border-cyan-800/30 rounded-xl flex items-center justify-center gap-1.5 md:gap-2 transition-all cursor-pointer text-xs md:text-sm">
-                    <Camera size={16} className="md:w-[18px] md:h-[18px]" />
-                    <span className="whitespace-nowrap">照片告解</span>
-                    <input
-                      ref={confessionPhotoInputRef}
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={handleConfessionPhotoUpload}
-                    />
-                  </label>
-                </div>
-              )}
-
-              {/* 文字提交按鈕 */}
-              {!confessionResponse && !confessionDissolving && (
-                <button
-                  onClick={handleConfessionSubmit}
-                  disabled={!confessionText.trim()}
-                  className="w-full py-3 bg-gradient-to-r from-amber-900/50 to-stone-900 border border-amber-800/30 rounded-xl text-amber-300/80 text-sm hover:from-amber-800/50 hover:to-stone-800 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+            ) : (
+              /* 對話歷史 */
+              confessionChatHistory.map((msg) => (
+                <div
+                  key={msg.id}
+                  className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                 >
-                  焚燒告解（文字）
-                </button>
-              )}
+                  <div
+                    className={`max-w-[80%] rounded-2xl p-3 ${
+                      msg.role === 'user'
+                        ? 'bg-amber-900/40 border border-amber-700/30'
+                        : 'bg-stone-900/60 border border-stone-700/30'
+                    }`}
+                  >
+                    {/* 顯示照片 */}
+                    {msg.mediaType === 'photo' && msg.mediaUrl && (
+                      <img
+                        src={msg.mediaUrl}
+                        alt="照片告解"
+                        className="w-full max-w-[200px] rounded-lg mb-2"
+                      />
+                    )}
+                    {/* 顯示語音 */}
+                    {msg.mediaType === 'voice' && msg.mediaUrl && (
+                      <audio
+                        src={msg.mediaUrl}
+                        controls
+                        className="w-full max-w-[200px] mb-2"
+                      />
+                    )}
+                    {/* 訊息內容 */}
+                    <p className={`text-sm ${
+                      msg.role === 'user' ? 'text-amber-100' : 'text-stone-300'
+                    }`}>
+                      {msg.content}
+                    </p>
+                    {/* 時間戳 */}
+                    <p className="text-[9px] text-stone-600 mt-1">
+                      {msg.timestamp.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' })}
+                    </p>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
 
-              {/* 閱後即焚說明 */}
-              <p className="text-center text-[9px] text-stone-700 leading-relaxed">
-                這裡的文字會像墨水一樣暈開消失<br/>
-                <span className="text-emerald-600/60">完全本地處理 · 資料不會留存或上傳</span>
+          {/* 輸入區域 */}
+          <div className="p-4 border-t border-amber-900/30 space-y-3">
+            {/* 語音和照片按鈕 */}
+            <div className="flex gap-2">
+              <button
+                onClick={confessionVoiceRecording ? stopConfessionVoiceRecording : startConfessionVoiceRecording}
+                className={`flex-1 py-2 rounded-xl flex items-center justify-center gap-1.5 transition-all text-xs ${
+                  confessionVoiceRecording
+                    ? 'bg-red-600 text-white animate-pulse'
+                    : 'bg-purple-900/50 text-purple-200 hover:bg-purple-800/50 border border-purple-800/30'
+                }`}
+              >
+                <Mic size={14} />
+                <span>{confessionVoiceRecording ? `${confessionVoiceTime}s` : '語音'}</span>
+              </button>
+              <label className="flex-1 py-2 bg-cyan-900/50 text-cyan-200 hover:bg-cyan-800/50 border border-cyan-800/30 rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer text-xs">
+                <Camera size={14} />
+                <span>照片</span>
+                <input
+                  ref={confessionPhotoInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleConfessionPhotoUpload}
+                />
+              </label>
+            </div>
+
+            {/* 文字輸入 */}
+            <div className="flex gap-2">
+              <textarea
+                value={confessionText}
+                onChange={(e) => setConfessionText(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleConfessionSubmit();
+                  }
+                }}
+                placeholder={confessionPromptType === 'dark' ? '寫下妳的黑暗念頭...' : '寫下妳的私密幻想...'}
+                className="flex-1 bg-black/50 border border-amber-900/30 rounded-xl p-3 text-stone-300 placeholder:text-stone-700 resize-none focus:outline-none focus:border-amber-700/50 text-sm"
+                rows={2}
+              />
+              <button
+                onClick={handleConfessionSubmit}
+                disabled={!confessionText.trim()}
+                className="px-4 bg-gradient-to-r from-amber-800/70 to-amber-900/70 border border-amber-700/30 rounded-xl text-amber-200 hover:from-amber-700/70 hover:to-amber-800/70 transition-all disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center"
+              >
+                <Send size={18} />
+              </button>
+            </div>
+
+            {/* 隱私提示 */}
+            <div className="flex items-center justify-center gap-2">
+              <Shield size={10} className="text-emerald-500" />
+              <p className="text-[9px] text-emerald-400/70">
+                訊息安全傳送 · 只有 {museName} 看得到
               </p>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* 🔥 焚燒彈窗 - 浮動顯示 */}
+      {showBurningToast && burningContent && (
+        <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[60] pointer-events-none">
+          <div className="relative bg-black/90 border border-amber-600/50 rounded-2xl p-6 max-w-xs animate-fade-in">
+            {/* 火焰效果 */}
+            <div className="absolute -top-4 left-1/2 -translate-x-1/2 text-2xl animate-bounce">🔥</div>
+            <div className="absolute -bottom-2 left-1/4 text-lg animate-ping">🔥</div>
+            <div className="absolute -bottom-2 right-1/4 text-lg animate-ping" style={{ animationDelay: '0.2s' }}>🔥</div>
+
+            {/* 正在燃燒的文字 */}
+            <p className="text-amber-200 text-center italic animate-pulse opacity-80 blur-[0.5px]">
+              {burningContent.substring(0, 50)}{burningContent.length > 50 ? '...' : ''}
+            </p>
+            <p className="text-center text-amber-500/60 text-xs mt-2">
+              正在焚燒...
+            </p>
           </div>
         </div>
       )}
@@ -3534,25 +3708,31 @@ export default function NightMode() {
           }`}>
 
             {/* Upload Button - 男生照片分析 */}
-            <label className="relative z-20 group/lens w-9 h-9 md:w-10 md:h-10 rounded-full border border-stone-800 flex items-center justify-center shrink-0 hover:border-amber-700/50 transition-colors cursor-pointer touch-manipulation" style={{ pointerEvents: 'auto' }}>
-              <Camera size={16} strokeWidth={1.5} className="text-stone-500 group-hover/lens:text-amber-500 transition-colors pointer-events-none md:w-5 md:h-5" />
-              <input
-                type="file"
-                ref={fileInputRef}
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                accept="image/*"
-                multiple
-                onChange={handleRivalUpload}
-              />
-            </label>
+            <div className="relative w-9 h-9 md:w-10 md:h-10 shrink-0">
+              <label className="absolute inset-0 z-20 group/lens rounded-full border border-stone-800 flex items-center justify-center hover:border-amber-700/50 transition-colors cursor-pointer touch-manipulation overflow-hidden">
+                <Camera size={16} strokeWidth={1.5} className="text-stone-500 group-hover/lens:text-amber-500 transition-colors pointer-events-none md:w-5 md:h-5" />
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  className="sr-only"
+                  accept="image/*"
+                  multiple
+                  onChange={handleRivalUpload}
+                />
+              </label>
+            </div>
 
             {/* 🕯️ 告解室按鈕 */}
             <button
               type="button"
-              onClick={() => setShowConfessionBooth(true)}
-              className="relative z-20 w-9 h-9 md:w-10 md:h-10 rounded-full border border-stone-800 flex items-center justify-center shrink-0 hover:border-amber-700/50 transition-colors group/confess touch-manipulation active:scale-95"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setShowConfessionBooth(true);
+              }}
+              className="relative z-30 w-9 h-9 md:w-10 md:h-10 rounded-full border border-stone-800 flex items-center justify-center shrink-0 hover:border-amber-700/50 transition-colors group/confess touch-manipulation active:scale-95"
               title="告解室"
-              style={{ pointerEvents: 'auto', WebkitTapHighlightColor: 'transparent' }}
+              style={{ pointerEvents: 'auto', WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}
             >
               <Fingerprint size={16} strokeWidth={1.5} className="text-stone-500 group-hover/confess:text-amber-500 transition-colors md:w-5 md:h-5 pointer-events-none" />
             </button>
@@ -3572,16 +3752,18 @@ export default function NightMode() {
             </button>
 
             {/* 🗨️ 對話截圖分析按鈕 */}
-            <label className="relative z-20 group/chat w-9 h-9 md:w-10 md:h-10 rounded-full border border-stone-800 flex items-center justify-center shrink-0 hover:border-cyan-700/50 transition-colors cursor-pointer touch-manipulation" title="分析對話截圖" style={{ pointerEvents: 'auto' }}>
-              <MessageSquare size={16} strokeWidth={1.5} className="text-stone-500 group-hover/chat:text-cyan-400 transition-colors pointer-events-none md:w-5 md:h-5" />
-              <input
-                type="file"
-                ref={conversationInputRef}
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                accept="image/*"
-                onChange={handleConversationUpload}
-              />
-            </label>
+            <div className="relative w-9 h-9 md:w-10 md:h-10 shrink-0">
+              <label className="absolute inset-0 z-20 group/chat rounded-full border border-stone-800 flex items-center justify-center hover:border-cyan-700/50 transition-colors cursor-pointer touch-manipulation overflow-hidden" title="分析對話截圖">
+                <MessageSquare size={16} strokeWidth={1.5} className="text-stone-500 group-hover/chat:text-cyan-400 transition-colors pointer-events-none md:w-5 md:h-5" />
+                <input
+                  type="file"
+                  ref={conversationInputRef}
+                  className="sr-only"
+                  accept="image/*"
+                  onChange={handleConversationUpload}
+                />
+              </label>
+            </div>
 
             <textarea
               ref={textareaRef}
