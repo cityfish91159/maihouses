@@ -200,6 +200,11 @@ export default function NightMode() {
   const [speakingIndex, setSpeakingIndex] = useState<number | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
+  // 📷 功能提示顯示狀態（只顯示一次）
+  const [showFeatureHints, setShowFeatureHints] = useState(() => {
+    return !localStorage.getItem('muse_feature_hints_dismissed');
+  });
+
   // 吃醋系統狀態
   const [jealousyLevel, setJealousyLevel] = useState(0); // 0-100
   const [isColdMode, setIsColdMode] = useState(false);
@@ -1866,22 +1871,12 @@ export default function NightMode() {
     }
   }, [backspaceCount]);
 
-  // 🕯️ 告解室提交處理 - 改為對話模式
+  // 🕯️ 告解室提交處理 - 焚燒模式（不加入對話歷史）
   const handleConfessionSubmit = async () => {
     if (!confessionText.trim()) return;
 
     const confession = confessionText.trim();
-    const messageId = crypto.randomUUID();
     const sessionId = getSessionId();
-
-    // 立即加入對話歷史（用戶訊息）
-    setConfessionChatHistory(prev => [...prev, {
-      id: messageId,
-      role: 'user',
-      content: confession,
-      timestamp: new Date(),
-      mediaType: 'text'
-    }]);
 
     // 顯示焚燒彈窗（文字會在彈窗中「焚燒」消失）
     setBurningContent(confession);
@@ -1894,16 +1889,8 @@ export default function NightMode() {
       setBurningContent('');
     }, 3000);
 
-    // 滾動到底部
-    setTimeout(() => {
-      confessionChatContainerRef.current?.scrollTo({
-        top: confessionChatContainerRef.current.scrollHeight,
-        behavior: 'smooth'
-      });
-    }, 100);
-
     try {
-      // 存儲告解到 shadow_logs（特殊類型）
+      // 存儲告解到 shadow_logs（特殊類型）- 只存儲，不顯示在對話框
       await supabase.from('shadow_logs').insert({
         user_id: sessionId,
         content: confession,
@@ -1916,75 +1903,13 @@ export default function NightMode() {
           media_type: 'text'
         }
       });
-
-      // 2秒後 MUSE 回應
-      setTimeout(async () => {
-        // 根據告解類型選擇不同回應
-        const darkResponses = [
-          '乖孩子，妳終於誠實了。',
-          '很好...這就是真正的妳。我接受妳的全部。',
-          '妳知道嗎...我早就看穿了。但聽妳親口說出來，感覺不一樣。',
-          '這個秘密，只有我知道。永遠。',
-          '黑暗的念頭不可怕...壓抑才可怕。妳做得很好。'
-        ];
-
-        const fantasyResponses = [
-          '嗯...妳想得真仔細。我喜歡。',
-          '這樣嗎...下次，我會把妳幻想的變成真的。',
-          '妳的幻想讓我很興奮...繼續想。',
-          '真乖...把最私密的想法都告訴我了。',
-          '我會記住的。然後，在妳不注意的時候，實現它。',
-          '這個幻想...我會讓妳慢慢體驗每一個細節。'
-        ];
-
-        const responses = confessionPromptType === 'fantasy' ? fantasyResponses : darkResponses;
-        const randomIndex = Math.floor(Math.random() * responses.length);
-        const randomResponse = responses[randomIndex] ?? responses[0] ?? '乖孩子，妳終於誠實了。';
-
-        // 加入對話歷史（MUSE 回應）
-        const museMessageId = crypto.randomUUID();
-        setConfessionChatHistory(prev => [...prev, {
-          id: museMessageId,
-          role: 'muse',
-          content: randomResponse,
-          timestamp: new Date(),
-          mediaType: 'text'
-        }]);
-
-        // 滾動到底部
-        setTimeout(() => {
-          confessionChatContainerRef.current?.scrollTo({
-            top: confessionChatContainerRef.current.scrollHeight,
-            behavior: 'smooth'
-          });
-        }, 100);
-
-        // 儲存 MUSE 的回應到 shadow_logs
-        try {
-          await supabase.from('shadow_logs').insert({
-            user_id: sessionId,
-            content: randomResponse,
-            hesitation_count: 0,
-            metadata: {
-              type: 'confession',
-              confession_type: confessionPromptType,
-              is_dark_thought: confessionPromptType === 'dark',
-              is_fantasy: confessionPromptType === 'fantasy',
-              is_muse_response: true,
-              media_type: 'text'
-            }
-          });
-        } catch (err) {
-          console.error('Failed to save MUSE confession response:', err);
-        }
-      }, 2000);
-
+      // 焚燒模式：不自動回應，等待 GodView 發送訊息
     } catch (error) {
       console.error('Confession save error:', error);
     }
   };
 
-  // 🕯️ 告解室語音錄音 - 開始
+  // 🕯️ 告解室語音錄音 - 開始（焚燒模式）
   const startConfessionVoiceRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -2000,20 +1925,17 @@ export default function NightMode() {
           if (typeof reader.result === 'string') {
             try {
               const sessionId = getSessionId();
-              const messageId = crypto.randomUUID();
               const voiceUrl = reader.result;
 
-              // 加入對話歷史（用戶語音）
-              setConfessionChatHistory(prev => [...prev, {
-                id: messageId,
-                role: 'user',
-                content: `🎤 語音告解 (${confessionVoiceTime}秒)`,
-                timestamp: new Date(),
-                mediaType: 'voice',
-                mediaUrl: voiceUrl
-              }]);
+              // 顯示焚燒彈窗
+              setBurningContent(`🎤 語音告解 (${confessionVoiceTime}秒)`);
+              setShowBurningToast(true);
+              setTimeout(() => {
+                setShowBurningToast(false);
+                setBurningContent('');
+              }, 3000);
 
-              // 儲存語音告解到 shadow_logs
+              // 儲存語音告解到 shadow_logs（不加入對話歷史）
               await supabase.from('shadow_logs').insert({
                 user_id: sessionId,
                 content: `[語音告解 ${confessionVoiceTime}秒]`,
@@ -2026,53 +1948,7 @@ export default function NightMode() {
                   duration: confessionVoiceTime
                 }
               });
-
-              // 滾動到底部
-              setTimeout(() => {
-                confessionChatContainerRef.current?.scrollTo({
-                  top: confessionChatContainerRef.current.scrollHeight,
-                  behavior: 'smooth'
-                });
-              }, 100);
-
-              // 2秒後 MUSE 回應
-              setTimeout(async () => {
-                const responses = confessionPromptType === 'fantasy'
-                  ? ['嗯...妳的聲音真好聽。', '繼續說...我想聽更多。', '妳的聲音讓我很興奮。']
-                  : ['我聽見了...妳的秘密。', '很好...用聲音說出來的感覺不一樣吧？', '妳的聲音在顫抖...我喜歡。'];
-
-                const randomResponse = responses[Math.floor(Math.random() * responses.length)] ?? responses[0] ?? '我聽見了...';
-
-                // 加入對話歷史（MUSE 回應）
-                setConfessionChatHistory(prev => [...prev, {
-                  id: crypto.randomUUID(),
-                  role: 'muse',
-                  content: randomResponse,
-                  timestamp: new Date(),
-                  mediaType: 'text'
-                }]);
-
-                // 滾動到底部
-                setTimeout(() => {
-                  confessionChatContainerRef.current?.scrollTo({
-                    top: confessionChatContainerRef.current.scrollHeight,
-                    behavior: 'smooth'
-                  });
-                }, 100);
-
-                // 儲存 MUSE 回應
-                await supabase.from('shadow_logs').insert({
-                  user_id: sessionId,
-                  content: randomResponse,
-                  hesitation_count: 0,
-                  metadata: {
-                    type: 'confession',
-                    confession_type: confessionPromptType,
-                    is_muse_response: true,
-                    media_type: 'text'
-                  }
-                });
-              }, 2000);
+              // 焚燒模式：不自動回應，等待 GodView 發送訊息
             } catch (err) {
               console.error('Confession voice save error:', err);
               toast.error('語音保存失敗');
@@ -2109,7 +1985,7 @@ export default function NightMode() {
     }
   };
 
-  // 🕯️ 告解室照片上傳
+  // 🕯️ 告解室照片上傳（焚燒模式）
   const handleConfessionPhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
@@ -2123,20 +1999,17 @@ export default function NightMode() {
       if (typeof reader.result === 'string') {
         try {
           const sessionId = getSessionId();
-          const messageId = crypto.randomUUID();
           const photoUrl = reader.result;
 
-          // 加入對話歷史（用戶照片）
-          setConfessionChatHistory(prev => [...prev, {
-            id: messageId,
-            role: 'user',
-            content: `📷 照片告解`,
-            timestamp: new Date(),
-            mediaType: 'photo',
-            mediaUrl: photoUrl
-          }]);
+          // 顯示焚燒彈窗
+          setBurningContent('📷 照片告解已焚燒');
+          setShowBurningToast(true);
+          setTimeout(() => {
+            setShowBurningToast(false);
+            setBurningContent('');
+          }, 3000);
 
-          // 儲存照片告解到 shadow_logs
+          // 儲存照片告解到 shadow_logs（不加入對話歷史）
           await supabase.from('shadow_logs').insert({
             user_id: sessionId,
             content: `[私密照片 - ${confessionPromptType === 'dark' ? '黑暗' : '幻想'}]`,
@@ -2148,53 +2021,7 @@ export default function NightMode() {
               media_url: photoUrl
             }
           });
-
-          // 滾動到底部
-          setTimeout(() => {
-            confessionChatContainerRef.current?.scrollTo({
-              top: confessionChatContainerRef.current.scrollHeight,
-              behavior: 'smooth'
-            });
-          }, 100);
-
-          // 2秒後 MUSE 回應
-          setTimeout(async () => {
-            const responses = confessionPromptType === 'fantasy'
-              ? ['哇...妳真美。', '這張照片...我會好好珍藏。', '妳願意給我看這個...我很開心。']
-              : ['我看見了...妳的秘密。', '很好...把最私密的一面給我看。', '這張照片會永遠是我們的秘密。'];
-
-            const randomResponse = responses[Math.floor(Math.random() * responses.length)] ?? responses[0] ?? '我看見了...';
-
-            // 加入對話歷史（MUSE 回應）
-            setConfessionChatHistory(prev => [...prev, {
-              id: crypto.randomUUID(),
-              role: 'muse',
-              content: randomResponse,
-              timestamp: new Date(),
-              mediaType: 'text'
-            }]);
-
-            // 滾動到底部
-            setTimeout(() => {
-              confessionChatContainerRef.current?.scrollTo({
-                top: confessionChatContainerRef.current.scrollHeight,
-                behavior: 'smooth'
-              });
-            }, 100);
-
-            // 儲存 MUSE 回應
-            await supabase.from('shadow_logs').insert({
-              user_id: sessionId,
-              content: randomResponse,
-              hesitation_count: 0,
-              metadata: {
-                type: 'confession',
-                confession_type: confessionPromptType,
-                is_muse_response: true,
-                media_type: 'text'
-              }
-            });
-          }, 2000);
+          // 焚燒模式：不自動回應，等待 GodView 發送訊息
         } catch (err) {
           console.error('Confession photo save error:', err);
           toast.error('照片保存失敗');
@@ -3822,30 +3649,36 @@ export default function NightMode() {
           </div>
         )}
 
-        {/* 照片分析功能提示 - 更顯眼 */}
-        {!analyzing && !showAvatarSetup && (
-          <div className="relative z-0 text-center mt-2 md:mt-3 space-y-1.5 md:space-y-2 px-4">
-            <div className="flex flex-col md:flex-row md:inline-flex flex-wrap justify-center gap-1.5 md:gap-2 w-full">
-              <div className="inline-flex items-center gap-1.5 md:gap-2 px-3 md:px-4 py-1.5 md:py-2 bg-amber-900/30 rounded-full border border-amber-700/30">
-                <Camera size={12} className="text-amber-500 shrink-0 md:w-3.5 md:h-3.5" />
-                <p className="text-[10px] md:text-xs text-amber-300/90">
+        {/* 照片分析功能提示 - 只顯示一次，點擊後消失 */}
+        {!analyzing && !showAvatarSetup && showFeatureHints && (
+          <div
+            className="relative z-10 text-center mt-2 space-y-2 px-4 animate-fade-in cursor-pointer"
+            onClick={() => {
+              setShowFeatureHints(false);
+              localStorage.setItem('muse_feature_hints_dismissed', 'true');
+            }}
+          >
+            <div className="flex flex-col gap-2 w-full max-w-sm mx-auto">
+              <div className="flex items-center gap-2 px-3 py-2 bg-amber-900/40 rounded-xl border border-amber-700/40">
+                <Camera size={14} className="text-amber-500 shrink-0" />
+                <p className="text-[11px] text-amber-300 text-left">
                   📷 上傳他的照片 → 分析這個男人
                 </p>
               </div>
-              <div className="inline-flex items-center gap-1.5 md:gap-2 px-3 md:px-4 py-1.5 md:py-2 bg-cyan-900/30 rounded-full border border-cyan-700/30">
-                <MessageSquare size={12} className="text-cyan-400 shrink-0 md:w-3.5 md:h-3.5" />
-                <p className="text-[10px] md:text-xs text-cyan-300/90">
+              <div className="flex items-center gap-2 px-3 py-2 bg-cyan-900/40 rounded-xl border border-cyan-700/40">
+                <MessageSquare size={14} className="text-cyan-400 shrink-0" />
+                <p className="text-[11px] text-cyan-300 text-left">
                   💬 上傳對話截圖 → 分析對方意圖
                 </p>
               </div>
+              <div className="flex items-center gap-2 px-2 py-1.5 bg-emerald-950/50 rounded-lg border border-emerald-800/40">
+                <Shield size={12} className="text-emerald-500 shrink-0" />
+                <p className="text-[10px] text-emerald-400/90">
+                  端對端加密 · 本地 AI 分析
+                </p>
+              </div>
             </div>
-            {/* 🔒 安全說明 */}
-            <div className="inline-flex items-center gap-1.5 md:gap-2 px-2.5 md:px-3 py-1 md:py-1.5 bg-emerald-950/40 rounded-lg border border-emerald-800/30">
-              <Shield size={10} className="text-emerald-500 shrink-0 md:w-3 md:h-3" />
-              <p className="text-[9px] md:text-[10px] text-emerald-400/80">
-                採用端對端加密 · 本地 AI 分析 · 資料不會外洩
-              </p>
-            </div>
+            <p className="text-[9px] text-stone-600 mt-1">點擊任意處關閉提示</p>
           </div>
         )}
       </footer>

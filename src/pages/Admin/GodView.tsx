@@ -85,13 +85,22 @@ interface SexyUnlockRequest {
   created_at: string;
 }
 
-// 💬 統一聊天訊息格式
+// 💬 統一聊天訊息格式 - metadata 屬性明確允許 undefined
+interface ChatMessageMetadata {
+  type?: string | undefined;
+  confession_type?: 'dark' | 'fantasy' | undefined;
+  is_muse_response?: boolean | undefined;
+  media_type?: 'text' | 'voice' | 'photo' | undefined;
+  media_url?: string | undefined;
+}
+
 interface ChatMessage {
   id: string;
   content: string;
   from_admin: boolean;
   created_at: string;
   source: 'shadow_logs' | 'godview_messages';
+  metadata?: ChatMessageMetadata | undefined;
 }
 
 // 🔞 性癖偏好
@@ -297,7 +306,7 @@ export default function GodView() {
       // 載入用戶發送的訊息 (從 shadow_logs)
       const { data: userMessages } = await supabase
         .from('shadow_logs')
-        .select('id, content, created_at')
+        .select('id, content, created_at, metadata')
         .eq('user_id', userId)
         .order('created_at', { ascending: true });
 
@@ -311,13 +320,27 @@ export default function GodView() {
 
       // 合併並排序
       const combined: ChatMessage[] = [
-        ...(userMessages || []).map(m => ({
-          id: m.id,
-          content: m.content,
-          from_admin: false,
-          created_at: m.created_at,
-          source: 'shadow_logs' as const
-        })),
+        ...(userMessages || []).map(m => {
+          // 處理 metadata，確保類型正確
+          const metadata = m.metadata && typeof m.metadata === 'object'
+            ? {
+                type: (m.metadata as Record<string, unknown>).type as string | undefined,
+                confession_type: (m.metadata as Record<string, unknown>).confession_type as 'dark' | 'fantasy' | undefined,
+                is_muse_response: (m.metadata as Record<string, unknown>).is_muse_response as boolean | undefined,
+                media_type: (m.metadata as Record<string, unknown>).media_type as 'text' | 'voice' | 'photo' | undefined,
+                media_url: (m.metadata as Record<string, unknown>).media_url as string | undefined
+              }
+            : undefined;
+
+          return {
+            id: m.id,
+            content: m.content,
+            from_admin: false,
+            created_at: m.created_at,
+            source: 'shadow_logs' as const,
+            ...(metadata && { metadata })
+          };
+        }),
         ...(adminMessages || []).map(m => ({
           id: m.id,
           content: m.content,
@@ -929,7 +952,32 @@ export default function GodView() {
                   {/* 發送者標籤 */}
                   <p className={`text-[9px] mb-1 ${msg.from_admin ? 'text-purple-400' : 'text-stone-500'}`}>
                     {msg.from_admin ? '你 (MUSE)' : '資欣老師'}
+                    {msg.metadata?.type === 'confession' && (
+                      <span className="ml-2 text-amber-400">
+                        🕯️ 告解室
+                        {msg.metadata?.confession_type === 'dark' && ' [黑暗]'}
+                        {msg.metadata?.confession_type === 'fantasy' && ' [幻想]'}
+                      </span>
+                    )}
                   </p>
+
+                  {/* 照片顯示 */}
+                  {msg.metadata?.media_type === 'photo' && msg.metadata?.media_url && (
+                    <img
+                      src={msg.metadata.media_url}
+                      alt="照片"
+                      className="max-w-[200px] rounded-lg border border-amber-500/30 mb-2"
+                    />
+                  )}
+
+                  {/* 語音顯示 */}
+                  {msg.metadata?.media_type === 'voice' && msg.metadata?.media_url && (
+                    <audio
+                      src={msg.metadata.media_url}
+                      controls
+                      className="w-full max-w-[250px] mb-2"
+                    />
+                  )}
 
                   {/* 訊息內容 */}
                   <p className="text-stone-200 text-sm normal-case font-sans whitespace-pre-wrap">
