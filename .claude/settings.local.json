@@ -14,7 +14,9 @@
       "mcp__puppeteer__puppeteer_evaluate",
       "mcp__puppeteer__puppeteer_navigate",
       "mcp__puppeteer__puppeteer_click",
-      "mcp__puppeteer__puppeteer_fill"
+      "mcp__puppeteer__puppeteer_fill",
+      "mcp__filesystem__directory_tree",
+      "mcp__filesystem__list_directory"
     ]
   },
   "enableAllProjectMcpServers": true,
