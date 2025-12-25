@@ -331,7 +331,7 @@ fact_type 選項：
       console.error('Memory extraction failed:', e);
     }
 
-    // 8. 寶物系統：判斷是否觸發收集
+    // 8. 寶物系統：判斷是否觸發收集（稀有度與同步率掛勾）
     const treasureCheck = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [
@@ -346,12 +346,14 @@ treasure_type 選項：
 - moment: 特別的對話瞬間
 - desire: 深層渴望的表達
 
-rarity 判斷：
-- common: 普通對話
-- rare: 有情感價值
-- epic: 深度連結時刻
-- legendary: 靈魂共鳴
-- mythic: 命運交織的瞬間（極少給）`
+rarity 判斷（嚴格根據對話深度）：
+- common: 普通對話、打招呼、日常閒聊
+- rare: 有情感價值、分享心情、小秘密
+- epic: 深度連結時刻、重要告白、脆弱時刻
+- legendary: 靈魂共鳴、深層情感揭露
+- mythic: 命運交織的瞬間（極少給，只有極特殊時刻）
+
+【重要】請嚴格評估，不要輕易給高稀有度。大部分對話應該是 common 或不給寶物。`
         },
         {
           role: 'user',
@@ -361,18 +363,36 @@ rarity 判斷：
       response_format: { type: 'json_object' }
     });
 
+    // 稀有度上限對照表（根據同步率）
+    const getRarityCap = (sync: number): string => {
+      if (sync < 20) return 'common';      // 同步率 0-19%：只能獲得 common
+      if (sync < 40) return 'rare';        // 同步率 20-39%：最高 rare
+      if (sync < 60) return 'epic';        // 同步率 40-59%：最高 epic
+      if (sync < 80) return 'legendary';   // 同步率 60-79%：最高 legendary
+      return 'mythic';                     // 同步率 80%+：可以獲得 mythic
+    };
+
+    const rarityOrder = ['common', 'rare', 'epic', 'legendary', 'mythic'];
+
     let newTreasure = null;
     try {
       const treasureRaw = JSON.parse(treasureCheck.choices[0].message.content || '{}');
       const treasure = treasureSchema.safeParse(treasureRaw);
 
       if (treasure.success && treasure.data.should_award && treasure.data.title) {
+        // 應用稀有度上限
+        const aiRarity = treasure.data.rarity || 'common';
+        const maxRarity = getRarityCap(syncLevel);
+        const aiRarityIndex = rarityOrder.indexOf(aiRarity);
+        const maxRarityIndex = rarityOrder.indexOf(maxRarity);
+        const finalRarity = aiRarityIndex <= maxRarityIndex ? aiRarity : maxRarity;
+
         const treasureData = {
           user_id: userId,
           treasure_type: treasure.data.treasure_type || 'moment',
           title: treasure.data.title,
           content: treasure.data.content || reply,
-          rarity: treasure.data.rarity || 'common'
+          rarity: finalRarity
         };
 
         const { data } = await supabase

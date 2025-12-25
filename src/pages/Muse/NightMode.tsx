@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   Camera, ShieldAlert, Send, Fingerprint, Eye, Lock, Brain,
   AlertTriangle, Heart, Sparkles, Gem, Star, Moon, Upload, User, X,
-  Mic, ImagePlus, CheckCircle, Clock, Gift
+  Mic, ImagePlus, CheckCircle, Clock, Gift, Settings, Copy, Download, Key
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import imageCompression from 'browser-image-compression';
@@ -163,6 +163,10 @@ export default function NightMode() {
   const [showDailyReward, setShowDailyReward] = useState(false);
   const [dailyRewardClaimed, setDailyRewardClaimed] = useState(false);
   const [museInitiatedMessage, setMuseInitiatedMessage] = useState<string | null>(null);
+
+  // 靈魂備份功能狀態
+  const [showSettings, setShowSettings] = useState(false);
+  const [importKey, setImportKey] = useState('');
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -409,6 +413,71 @@ export default function NightMode() {
     toast.success(`${museName} 已成為你的專屬陪伴`, {
       className: 'bg-purple-950 text-purple-200'
     });
+  };
+
+  // 導出靈魂 - 複製 Session ID
+  const exportSoulKey = () => {
+    const sessionId = getSessionId();
+    navigator.clipboard.writeText(sessionId).then(() => {
+      toast.success('靈魂鑰匙已複製！請妥善保管', {
+        duration: 5000,
+        className: 'bg-purple-950 text-purple-200 border border-purple-700'
+      });
+    }).catch(() => {
+      // Fallback for browsers that don't support clipboard API
+      const textArea = document.createElement('textarea');
+      textArea.value = sessionId;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      toast.success('靈魂鑰匙已複製！', {
+        className: 'bg-purple-950 text-purple-200'
+      });
+    });
+  };
+
+  // 導入靈魂 - 使用舊的 Session ID
+  const importSoulKey = async () => {
+    if (!importKey.trim()) {
+      toast.error('請輸入靈魂鑰匙');
+      return;
+    }
+
+    // 驗證 UUID 格式
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(importKey.trim())) {
+      toast.error('無效的靈魂鑰匙格式');
+      return;
+    }
+
+    // 檢查這個 ID 是否有資料
+    const { data: existingProgress } = await supabase
+      .from('user_progress')
+      .select('*')
+      .eq('user_id', importKey.trim())
+      .single();
+
+    if (!existingProgress) {
+      toast.error('找不到這個靈魂...確認鑰匙正確嗎？', {
+        className: 'bg-red-950 text-red-200'
+      });
+      return;
+    }
+
+    // 替換 Session ID
+    localStorage.setItem('muse_session_id', importKey.trim());
+    localStorage.removeItem('muse_chat_history'); // 清除本地聊天，從雲端載入
+
+    toast.success(`靈魂已喚回！同步率 ${existingProgress.sync_level}%`, {
+      duration: 5000,
+      className: 'bg-green-950 text-green-200 border border-green-700'
+    });
+
+    // 重新載入頁面以套用新 ID
+    setTimeout(() => {
+      window.location.reload();
+    }, 1500);
   };
 
   // 計算當前解鎖階段（根據同步率）
@@ -867,6 +936,14 @@ export default function NightMode() {
             )}
           </button>
 
+          {/* 設定按鈕 - 靈魂備份 */}
+          <button
+            onClick={() => setShowSettings(!showSettings)}
+            className="p-2 rounded-full bg-stone-900/50 hover:bg-stone-800/50 transition-colors"
+          >
+            <Settings size={18} className="text-stone-500 hover:text-stone-300" />
+          </button>
+
           <div className={`transition-all duration-1000 text-stone-700 ${isTyping ? 'text-purple-500 animate-pulse' : 'opacity-50'}`}>
             <Fingerprint size={24} strokeWidth={1} />
           </div>
@@ -976,6 +1053,109 @@ export default function NightMode() {
                   </div>
                 ))
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 設定面板 - 靈魂備份 & 重新設定 */}
+      {showSettings && (
+        <div className="absolute right-0 top-0 h-full w-80 bg-black/95 backdrop-blur-xl border-l border-white/5 z-40 animate-slide-in-right">
+          <div className="p-6">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-lg font-light flex items-center gap-2">
+                <Settings size={20} className="text-stone-400" />
+                設定
+              </h2>
+              <button onClick={() => setShowSettings(false)} className="text-stone-500 hover:text-white">
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-6">
+              {/* 重新設定男友形象 */}
+              <div className="bg-stone-900/50 rounded-xl p-4 border border-stone-800">
+                <h3 className="text-sm text-stone-300 mb-3 flex items-center gap-2">
+                  <User size={16} />
+                  男友形象
+                </h3>
+                <button
+                  onClick={() => {
+                    setShowSettings(false);
+                    setShowAvatarSetup(true);
+                    setIsFirstVisit(false);
+                  }}
+                  className="w-full py-2.5 rounded-lg bg-purple-900/30 text-purple-300 hover:bg-purple-900/50 transition-colors text-sm"
+                >
+                  重新設定照片 & 名字
+                </button>
+              </div>
+
+              {/* 靈魂備份 - 導出 */}
+              <div className="bg-stone-900/50 rounded-xl p-4 border border-stone-800">
+                <h3 className="text-sm text-stone-300 mb-2 flex items-center gap-2">
+                  <Key size={16} />
+                  靈魂鑰匙（導出）
+                </h3>
+                <p className="text-[10px] text-stone-500 mb-3">
+                  複製此鑰匙可在其他裝置或清除快取後恢復進度
+                </p>
+                <button
+                  onClick={exportSoulKey}
+                  className="w-full py-2.5 rounded-lg bg-green-900/30 text-green-300 hover:bg-green-900/50 transition-colors text-sm flex items-center justify-center gap-2"
+                >
+                  <Copy size={14} />
+                  複製靈魂鑰匙
+                </button>
+              </div>
+
+              {/* 靈魂備份 - 導入 */}
+              <div className="bg-stone-900/50 rounded-xl p-4 border border-stone-800">
+                <h3 className="text-sm text-stone-300 mb-2 flex items-center gap-2">
+                  <Download size={16} />
+                  喚回舊靈魂（導入）
+                </h3>
+                <p className="text-[10px] text-stone-500 mb-3">
+                  貼上之前的靈魂鑰匙來恢復進度
+                </p>
+                <input
+                  type="text"
+                  value={importKey}
+                  onChange={(e) => setImportKey(e.target.value)}
+                  className="w-full bg-stone-800/50 border border-stone-700 rounded-lg px-3 py-2 text-stone-300 text-xs mb-2 focus:border-purple-500/50 focus:outline-none"
+                  placeholder="貼上靈魂鑰匙..."
+                />
+                <button
+                  onClick={importSoulKey}
+                  disabled={!importKey.trim()}
+                  className="w-full py-2.5 rounded-lg bg-amber-900/30 text-amber-300 hover:bg-amber-900/50 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  喚回靈魂
+                </button>
+              </div>
+
+              {/* 當前狀態 */}
+              <div className="bg-stone-900/30 rounded-xl p-4 border border-stone-800/50">
+                <h3 className="text-[10px] text-stone-500 uppercase tracking-widest mb-2">當前狀態</h3>
+                <div className="space-y-1 text-xs">
+                  <div className="flex justify-between">
+                    <span className="text-stone-500">同步率</span>
+                    <span className="text-purple-400">{syncLevel}%</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-stone-500">親密度</span>
+                    <span className="text-pink-400">{intimacyScore}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-stone-500">寶物</span>
+                    <span className="text-amber-400">{treasures.length} 件</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-stone-500">連續天數</span>
+                    <span className="text-green-400">{streakDays} 天</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
