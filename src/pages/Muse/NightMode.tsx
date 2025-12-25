@@ -2030,12 +2030,12 @@ export default function NightMode() {
     setAnalyzing(true);
     const userMessage = input.trim();
 
-    // 添加用戶訊息到歷史
-    setChatHistory(prev => [...prev, {
-      role: 'user',
-      content: userMessage,
-      timestamp: new Date()
-    }]);
+    // 添加用戶訊息 + 空的 MUSE 訊息（一起加，確保索引正確）
+    setChatHistory(prev => [
+      ...prev,
+      { role: 'user', content: userMessage, timestamp: new Date() },
+      { role: 'muse', content: '...', timestamp: new Date() } // MUSE 思考中
+    ]);
 
     // 強制保存到 Shadow Logs
     await saveShadowLog(userMessage);
@@ -2063,14 +2063,6 @@ export default function NightMode() {
         throw new Error(`API Error: ${response.status}`);
       }
 
-      // 先加入空的 MUSE 訊息，之後逐步更新
-      const museMessageIndex = chatHistory.length + 1; // +1 因為剛加了用戶訊息
-      setChatHistory(prev => [...prev, {
-        role: 'muse',
-        content: '',
-        timestamp: new Date()
-      }]);
-
       // 讀取串流
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
@@ -2094,13 +2086,14 @@ export default function NightMode() {
                   if (data.sync_level) setSyncLevel(data.sync_level);
                   if (data.intimacy_score) setIntimacyScore(data.intimacy_score);
                 } else if (data.content) {
-                  // 累積回覆並即時更新 UI
+                  // 累積回覆並即時更新最後一條訊息（MUSE）
                   fullReply += data.content;
                   setChatHistory(prev => {
                     const updated = [...prev];
-                    if (updated[museMessageIndex]) {
-                      updated[museMessageIndex] = {
-                        ...updated[museMessageIndex],
+                    const lastIndex = updated.length - 1;
+                    if (lastIndex >= 0 && updated[lastIndex]?.role === 'muse') {
+                      updated[lastIndex] = {
+                        ...updated[lastIndex],
                         content: fullReply
                       };
                     }

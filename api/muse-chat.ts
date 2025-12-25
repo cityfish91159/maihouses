@@ -55,7 +55,7 @@ async function extractMemoryBackground(
 ) {
   try {
     const memoryExtraction = await openai.chat.completions.create({
-      model: grokKey ? 'grok-2' : 'gpt-4o-mini',
+      model: grokKey ? 'grok-4-1-fast-reasoning' : 'gpt-4o-mini',
       messages: [
         {
           role: 'system',
@@ -619,7 +619,7 @@ ${naughtyMode ? `
       res.setHeader('Connection', 'keep-alive');
 
       const streamCompletion = await openai.chat.completions.create({
-        model: grokKey ? 'grok-2' : 'gpt-4o', // 用較快的模型
+        model: grokKey ? 'grok-4-1-fast-reasoning' : 'gpt-4o', // 最高品質模型
         messages: chatMessages,
         stream: true
       });
@@ -645,7 +645,7 @@ ${naughtyMode ? `
 
     // 非串流模式 - 原有邏輯
     const completion = await openai.chat.completions.create({
-      model: grokKey ? 'grok-2' : 'gpt-4o', // 用較快的模型
+      model: grokKey ? 'grok-4-1-fast-reasoning' : 'gpt-4o', // 最高品質模型
       messages: chatMessages
     });
 
