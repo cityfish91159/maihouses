@@ -2033,6 +2033,65 @@ export default function NightMode() {
     if (e.target) e.target.value = '';
   };
 
+  // 🕯️ 告解室正常對話 - 顯示在對話歷史中
+  const handleConfessionNormalChat = async () => {
+    if (!confessionText.trim()) return;
+
+    const message = confessionText.trim();
+    const sessionId = getSessionId();
+
+    // 添加到告解室對話歷史（會顯示）
+    const newMsg = {
+      id: `confession-${Date.now()}`,
+      role: 'user' as const,
+      content: message,
+      timestamp: new Date()
+    };
+    setConfessionChatHistory(prev => [...prev, newMsg]);
+    setConfessionText('');
+
+    try {
+      // 存儲到 shadow_logs（告解室正常對話）
+      await supabase.from('shadow_logs').insert({
+        user_id: sessionId,
+        content: message,
+        hesitation_count: 0,
+        metadata: {
+          type: 'confession_chat',
+          confession_type: confessionPromptType
+        }
+      });
+
+      // 調用 muse-chat API 獲取回應
+      const response = await fetch('/api/muse-chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: message,
+          userId: sessionId,
+          hesitationCount: 0,
+          context: 'confession_booth'
+        })
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.response) {
+          // 添加 AI 回應到告解室對話歷史
+          setConfessionChatHistory(prev => [...prev, {
+            id: `muse-${Date.now()}`,
+            role: 'muse',
+            content: result.response,
+            timestamp: new Date()
+          }]);
+        }
+      }
+    } catch (error) {
+      console.error('Confession normal chat error:', error);
+      toast.error('發送失敗');
+    }
+  };
+
   const handleSend = async () => {
     if (!input.trim() || analyzing) return;
 
@@ -2431,7 +2490,7 @@ export default function NightMode() {
         </div>
       )}
 
-      {/* 🕯️ 告解室 (Confession Booth) - 對話模式 */}
+      {/* 🕯️ 告解室 (Confession Booth) - 正常對話 + 焚燒按鈕 */}
       {showConfessionBooth && (
         <div className="fixed inset-0 bg-black/95 backdrop-blur-xl z-50 flex flex-col animate-fade-in">
           {/* 燭光效果 */}
@@ -2481,7 +2540,7 @@ export default function NightMode() {
             </button>
           </div>
 
-          {/* 對話歷史區域 */}
+          {/* 對話歷史區域 - 正常顯示所有對話 */}
           <div
             ref={confessionChatContainerRef}
             className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-hide"
@@ -2514,7 +2573,7 @@ export default function NightMode() {
                 )}
               </div>
             ) : (
-              /* 對話歷史 */
+              /* 正常對話歷史 */
               confessionChatHistory.map((msg) => (
                 <div
                   key={msg.id}
@@ -2531,7 +2590,7 @@ export default function NightMode() {
                     {msg.mediaType === 'photo' && msg.mediaUrl && (
                       <img
                         src={msg.mediaUrl}
-                        alt="照片告解"
+                        alt="照片"
                         className="w-full max-w-[200px] rounded-lg mb-2"
                       />
                     )}
@@ -2561,22 +2620,12 @@ export default function NightMode() {
 
           {/* 輸入區域 */}
           <div className="p-4 border-t border-amber-900/30 space-y-3">
-            {/* 語音和照片按鈕 */}
+            {/* 🔥 三個焚燒按鈕 - 上傳後燒掉，不出現在對話 */}
             <div className="flex gap-2">
-              <button
-                onClick={confessionVoiceRecording ? stopConfessionVoiceRecording : startConfessionVoiceRecording}
-                className={`flex-1 py-2 rounded-xl flex items-center justify-center gap-1.5 transition-all text-xs ${
-                  confessionVoiceRecording
-                    ? 'bg-red-600 text-white animate-pulse'
-                    : 'bg-purple-900/50 text-purple-200 hover:bg-purple-800/50 border border-purple-800/30'
-                }`}
-              >
-                <Mic size={14} />
-                <span>{confessionVoiceRecording ? `${confessionVoiceTime}s` : '語音'}</span>
-              </button>
-              <label className="flex-1 py-2 bg-cyan-900/50 text-cyan-200 hover:bg-cyan-800/50 border border-cyan-800/30 rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer text-xs">
+              {/* 📷 照片焚燒 */}
+              <label className="flex-1 py-2 bg-cyan-900/40 text-cyan-200 hover:bg-cyan-800/40 border border-cyan-800/30 rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer text-xs">
                 <Camera size={14} />
-                <span>照片</span>
+                <span>🔥 照片</span>
                 <input
                   ref={confessionPhotoInputRef}
                   type="file"
@@ -2585,9 +2634,37 @@ export default function NightMode() {
                   onChange={handleConfessionPhotoUpload}
                 />
               </label>
+
+              {/* 🎤 語音焚燒 */}
+              <button
+                onClick={confessionVoiceRecording ? stopConfessionVoiceRecording : startConfessionVoiceRecording}
+                className={`flex-1 py-2 rounded-xl flex items-center justify-center gap-1.5 transition-all text-xs ${
+                  confessionVoiceRecording
+                    ? 'bg-red-600 text-white animate-pulse'
+                    : 'bg-purple-900/40 text-purple-200 hover:bg-purple-800/40 border border-purple-800/30'
+                }`}
+              >
+                <Mic size={14} />
+                <span>{confessionVoiceRecording ? `${confessionVoiceTime}s` : '🔥 語音'}</span>
+              </button>
+
+              {/* ✏️ 文字焚燒 */}
+              <button
+                onClick={() => {
+                  const text = prompt(confessionPromptType === 'dark' ? '寫下妳的黑暗念頭（會焚燒）...' : '寫下妳的私密幻想（會焚燒）...');
+                  if (text && text.trim()) {
+                    setConfessionText(text.trim());
+                    setTimeout(() => handleConfessionSubmit(), 100);
+                  }
+                }}
+                className="flex-1 py-2 bg-amber-900/40 text-amber-200 hover:bg-amber-800/40 border border-amber-700/30 rounded-xl flex items-center justify-center gap-1.5 transition-all text-xs"
+              >
+                <Send size={14} />
+                <span>🔥 文字</span>
+              </button>
             </div>
 
-            {/* 文字輸入 */}
+            {/* 正常文字輸入 - 這個會顯示在對話中 */}
             <div className="flex gap-2">
               <textarea
                 value={confessionText}
@@ -2595,15 +2672,15 @@ export default function NightMode() {
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
-                    handleConfessionSubmit();
+                    handleConfessionNormalChat();
                   }
                 }}
-                placeholder={confessionPromptType === 'dark' ? '寫下妳的黑暗念頭...' : '寫下妳的私密幻想...'}
+                placeholder="正常對話..."
                 className="flex-1 bg-black/50 border border-amber-900/30 rounded-xl p-3 text-stone-300 placeholder:text-stone-700 resize-none focus:outline-none focus:border-amber-700/50 text-sm"
                 rows={2}
               />
               <button
-                onClick={handleConfessionSubmit}
+                onClick={handleConfessionNormalChat}
                 disabled={!confessionText.trim()}
                 className="px-4 bg-gradient-to-r from-amber-800/70 to-amber-900/70 border border-amber-700/30 rounded-xl text-amber-200 hover:from-amber-700/70 hover:to-amber-800/70 transition-all disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center"
               >
@@ -2611,11 +2688,11 @@ export default function NightMode() {
               </button>
             </div>
 
-            {/* 隱私提示 */}
+            {/* 提示 */}
             <div className="flex items-center justify-center gap-2">
               <Shield size={10} className="text-emerald-500" />
-              <p className="text-[9px] text-emerald-400/70">
-                訊息安全傳送 · 只有 {museName} 看得到
+              <p className="text-[9px] text-stone-600">
+                正常對話會顯示 · 🔥按鈕上傳的會焚燒
               </p>
             </div>
           </div>
