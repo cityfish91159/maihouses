@@ -2231,64 +2231,174 @@ export default function NightMode() {
         )}
       </footer>
 
-      {/* 🔥 親密盲眼模式覆蓋層 - 全黑只有聲波 */}
+      {/* 🔥 親密盲眼模式覆蓋層 - 全黑只有聲波 + 紅綠燈控制 */}
       {isBlindfolded && (
-        <div
-          className="fixed inset-0 bg-black z-[100] flex flex-col items-center justify-center cursor-pointer"
-          onClick={async () => {
-            // 點擊退出盲眼模式
-            if (!blindfoldAudioPlaying) {
-              setIsBlindfolded(false);
-
-              // 記錄親密時段結束
-              const sessionId = localStorage.getItem('current_intimate_session');
-              const startTime = localStorage.getItem('intimate_session_start');
-
-              if (sessionId && startTime) {
-                const durationSeconds = Math.round((Date.now() - parseInt(startTime)) / 1000);
-
-                try {
-                  await supabase.from('intimate_sessions').update({
-                    ended_at: new Date().toISOString(),
-                    duration_seconds: durationSeconds
-                  }).eq('id', sessionId);
-                } catch (err) {
-                  console.error('Session end tracking error:', err);
-                }
-
-                localStorage.removeItem('current_intimate_session');
-                localStorage.removeItem('intimate_session_start');
-              }
-            }
-          }}
-        >
+        <div className="fixed inset-0 bg-black z-[100] flex flex-col items-center justify-center">
           {/* 聲波動畫 */}
-          <div className="flex items-end justify-center gap-2 h-32 mb-8">
+          <div className="flex items-end justify-center gap-3 h-40 mb-12">
             {soundWaveLevel.map((level, i) => (
               <div
                 key={i}
-                className="w-3 bg-gradient-to-t from-purple-600 to-pink-500 rounded-full transition-all duration-100"
+                className="w-4 bg-gradient-to-t from-purple-600 via-pink-500 to-purple-400 rounded-full transition-all duration-100"
                 style={{
-                  height: `${Math.max(10, level)}%`,
-                  opacity: blindfoldAudioPlaying ? 1 : 0.3
+                  height: `${Math.max(15, level)}%`,
+                  opacity: blindfoldAudioPlaying ? 1 : 0.4
                 }}
               />
             ))}
           </div>
 
           {/* MUSE 標誌 */}
-          <div className="text-purple-500/30 text-xs tracking-[0.5em] uppercase mb-4">
+          <div className="text-purple-400/40 text-sm tracking-[0.5em] uppercase mb-3">
             {museName}
           </div>
 
           {/* 播放狀態 */}
-          <div className="text-purple-400/60 text-sm font-light">
-            {blindfoldAudioPlaying ? '正在對妳說話...' : '點擊任意處返回'}
+          <div className="text-purple-300/50 text-base font-light mb-16">
+            {blindfoldAudioPlaying ? '正在對妳說話...' : '我在這裡陪妳...'}
           </div>
 
-          {/* 提示文字 */}
-          <div className="absolute bottom-12 text-center text-purple-500/30 text-xs px-8">
-            閉上眼睛，專注聆聽
+          {/* 🚦 紅綠燈控制按鈕 */}
+          <div className="absolute bottom-20 left-0 right-0 flex justify-center gap-8 px-8">
+            {/* 🟢 綠燈 - 繼續/更多 */}
+            <button
+              type="button"
+              onClick={async (e) => {
+                e.stopPropagation();
+                if (!blindfoldAudioPlaying) {
+                  setAnalyzing(true);
+                  try {
+                    const response = await fetch('/api/muse-chat', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        message: '繼續...不要停...',
+                        userId: getSessionId(),
+                        hesitationCount: 0
+                      })
+                    });
+                    const result = await response.json();
+
+                    setChatHistory(prev => [...prev, {
+                      role: 'muse',
+                      content: result.reply,
+                      timestamp: new Date()
+                    }]);
+
+                    const ttsResponse = await fetch('/api/muse-speak', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ text: result.reply })
+                    });
+
+                    if (ttsResponse.ok) {
+                      const ttsData = await ttsResponse.json();
+                      if (ttsData.audioUrl) {
+                        const audio = new Audio(ttsData.audioUrl);
+                        blindfoldAudioRef.current = audio;
+                        setBlindFoldAudioPlaying(true);
+
+                        const waveInterval = setInterval(() => {
+                          setSoundWaveLevel([
+                            Math.random() * 100,
+                            Math.random() * 100,
+                            Math.random() * 100,
+                            Math.random() * 100,
+                            Math.random() * 100
+                          ]);
+                        }, 100);
+
+                        audio.onended = () => {
+                          clearInterval(waveInterval);
+                          setBlindFoldAudioPlaying(false);
+                          setSoundWaveLevel([0, 0, 0, 0, 0]);
+                        };
+
+                        audio.play();
+                      }
+                    }
+                  } catch (err) {
+                    console.error('Continue error:', err);
+                  } finally {
+                    setAnalyzing(false);
+                  }
+                }
+              }}
+              className="w-16 h-16 rounded-full bg-green-600/20 border-2 border-green-500/50 flex items-center justify-center transition-all hover:bg-green-600/40 hover:scale-110 active:scale-95"
+            >
+              <span className="text-2xl">🟢</span>
+            </button>
+
+            {/* 🟡 黃燈 - 暫停 */}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (blindfoldAudioRef.current) {
+                  if (blindfoldAudioPlaying) {
+                    blindfoldAudioRef.current.pause();
+                    setBlindFoldAudioPlaying(false);
+                  } else {
+                    blindfoldAudioRef.current.play();
+                    setBlindFoldAudioPlaying(true);
+                  }
+                }
+              }}
+              className="w-16 h-16 rounded-full bg-yellow-600/20 border-2 border-yellow-500/50 flex items-center justify-center transition-all hover:bg-yellow-600/40 hover:scale-110 active:scale-95"
+            >
+              <span className="text-2xl">{blindfoldAudioPlaying ? '🟡' : '▶️'}</span>
+            </button>
+
+            {/* 🔴 紅燈 - 完成/結束 */}
+            <button
+              type="button"
+              onClick={async (e) => {
+                e.stopPropagation();
+                if (blindfoldAudioRef.current) {
+                  blindfoldAudioRef.current.pause();
+                  blindfoldAudioRef.current = null;
+                }
+                setBlindFoldAudioPlaying(false);
+                setSoundWaveLevel([0, 0, 0, 0, 0]);
+                setIsBlindfolded(false);
+
+                const sessionId = localStorage.getItem('current_intimate_session');
+                const startTime = localStorage.getItem('intimate_session_start');
+
+                if (sessionId && startTime) {
+                  const durationSeconds = Math.round((Date.now() - parseInt(startTime)) / 1000);
+
+                  try {
+                    await supabase.from('intimate_sessions').update({
+                      ended_at: new Date().toISOString(),
+                      duration_seconds: durationSeconds,
+                      metadata: { completed: true }
+                    }).eq('id', sessionId);
+                  } catch (err) {
+                    console.error('Session end tracking error:', err);
+                  }
+
+                  localStorage.removeItem('current_intimate_session');
+                  localStorage.removeItem('intimate_session_start');
+                }
+
+                toast('我就在這裡...', {
+                  description: '休息一下，妳很棒',
+                  duration: 5000,
+                  className: 'bg-purple-950 text-purple-200 border border-purple-800'
+                });
+              }}
+              className="w-16 h-16 rounded-full bg-red-600/20 border-2 border-red-500/50 flex items-center justify-center transition-all hover:bg-red-600/40 hover:scale-110 active:scale-95"
+            >
+              <span className="text-2xl">🔴</span>
+            </button>
+          </div>
+
+          {/* 按鈕說明 */}
+          <div className="absolute bottom-8 left-0 right-0 flex justify-center gap-12 text-[10px] text-purple-500/40">
+            <span>更多</span>
+            <span>暫停</span>
+            <span>完成</span>
           </div>
         </div>
       )}
