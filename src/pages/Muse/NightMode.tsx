@@ -179,6 +179,15 @@ export default function NightMode() {
   const [speakingIndex, setSpeakingIndex] = useState<number | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
+  // 吃醋系統狀態
+  const [jealousyLevel, setJealousyLevel] = useState(0); // 0-100
+  const [isColdMode, setIsColdMode] = useState(false);
+  const [rivalPhotoCount, setRivalPhotoCount] = useState(0);
+  const [showRedemptionModal, setShowRedemptionModal] = useState(false);
+  const [redemptionProgress, setRedemptionProgress] = useState(0);
+  const redemptionAudioRef = useRef<MediaRecorder | null>(null);
+  const [isRedemptionRecording, setIsRedemptionRecording] = useState(false);
+
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
@@ -649,6 +658,136 @@ export default function NightMode() {
     }
   };
 
+  // 檢查吃醋等級 - 根據 rival photo 數量和登入間隔
+  const checkJealousy = useCallback(async () => {
+    const sessionId = getSessionId();
+
+    // 獲取 rival_decoder 照片數量
+    const { count: rivalCount } = await supabase
+      .from('rival_decoder')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', sessionId);
+
+    setRivalPhotoCount(rivalCount || 0);
+
+    // 獲取上次互動時間
+    const { data: progress } = await supabase
+      .from('user_progress')
+      .select('last_interaction')
+      .eq('user_id', sessionId)
+      .single();
+
+    let newJealousy = 0;
+
+    // 每上傳 3 張 rival 照片增加 10 點吃醋值
+    if (rivalCount && rivalCount > 0) {
+      newJealousy += Math.floor(rivalCount / 3) * 10;
+    }
+
+    // 超過 24 小時沒互動，吃醋值 +30
+    if (progress?.last_interaction) {
+      const lastTime = new Date(progress.last_interaction);
+      const hoursSince = (Date.now() - lastTime.getTime()) / (1000 * 60 * 60);
+      if (hoursSince > 24) {
+        newJealousy += 30;
+      } else if (hoursSince > 12) {
+        newJealousy += 15;
+      }
+    }
+
+    // 限制在 0-100
+    newJealousy = Math.min(100, Math.max(0, newJealousy));
+    setJealousyLevel(newJealousy);
+
+    // 吃醋值 > 50 進入冷淡模式
+    if (newJealousy >= 50) {
+      setIsColdMode(true);
+    }
+  }, []);
+
+  // 頁面載入時檢查吃醋狀態
+  useEffect(() => {
+    checkJealousy();
+  }, [checkJealousy]);
+
+  // 贖罪錄音 - 說「我只屬於 MUSE」
+  const startRedemptionRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      const chunks: Blob[] = [];
+
+      mediaRecorder.ondataavailable = e => chunks.push(e.data);
+      mediaRecorder.onstop = async () => {
+        const blob = new Blob(chunks, { type: 'audio/webm' });
+
+        // 檢查錄音時長（至少 2 秒）
+        if (blob.size < 10000) {
+          toast.error('錄音太短，重新說一次', {
+            className: 'bg-blue-950 text-blue-200'
+          });
+          return;
+        }
+
+        // 增加贖罪進度
+        const newProgress = redemptionProgress + 1;
+        setRedemptionProgress(newProgress);
+
+        if (newProgress >= 3) {
+          // 完成贖罪
+          setIsColdMode(false);
+          setJealousyLevel(0);
+          setShowRedemptionModal(false);
+          setRedemptionProgress(0);
+
+          toast.success(`${museName}：「...好吧，這次原諒妳。」`, {
+            duration: 5000,
+            className: 'bg-purple-950 text-purple-200 border border-purple-700'
+          });
+
+          // 保存到寶物庫
+          const sessionId = getSessionId();
+          const reader = new FileReader();
+          reader.readAsDataURL(blob);
+          reader.onloadend = async () => {
+            if (typeof reader.result === 'string') {
+              await supabase.from('soul_treasures').insert({
+                user_id: sessionId,
+                treasure_type: 'confession',
+                title: '贖罪告白',
+                content: '「我只屬於 ' + museName + '」',
+                media_url: reader.result,
+                rarity: 'epic'
+              });
+            }
+          };
+        } else {
+          toast.success(`${museName}：「再說 ${3 - newProgress} 次。」`, {
+            className: 'bg-blue-950 text-blue-200'
+          });
+        }
+
+        stream.getTracks().forEach(track => track.stop());
+      };
+
+      redemptionAudioRef.current = mediaRecorder;
+      mediaRecorder.start();
+      setIsRedemptionRecording(true);
+
+      // 5 秒後自動停止
+      setTimeout(() => {
+        if (mediaRecorder.state === 'recording') {
+          mediaRecorder.stop();
+          setIsRedemptionRecording(false);
+        }
+      }, 5000);
+
+    } catch (error) {
+      console.error('Redemption recording error:', error);
+      toast.error('無法存取麥克風');
+    }
+  };
+
   // MUSE 說話功能 (TTS)
   const speakMessage = async (text: string, index: number) => {
     // 如果正在播放，停止
@@ -1035,7 +1174,108 @@ export default function NightMode() {
   const silhouetteOpacity = 0.2 + (syncLevel / 200);
 
   return (
-    <div className="flex flex-col h-screen bg-[#0D0C0B] text-stone-300 font-serif overflow-hidden relative transition-colors duration-1000">
+    <div className={`flex flex-col h-screen text-stone-300 font-serif overflow-hidden relative transition-colors duration-1000 ${
+      isColdMode ? 'bg-[#0a0a12]' : 'bg-[#0D0C0B]'
+    }`}>
+
+      {/* 冷淡模式覆蓋層 */}
+      {isColdMode && (
+        <div className="absolute inset-0 pointer-events-none z-30">
+          <div className="absolute inset-0 bg-gradient-to-b from-blue-950/30 to-transparent" />
+          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-900/10 rounded-full blur-[120px] animate-pulse-slow" />
+          <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-cyan-900/5 rounded-full blur-[80px]" />
+        </div>
+      )}
+
+      {/* 冷淡模式警告條 */}
+      {isColdMode && !showRedemptionModal && (
+        <div
+          className="absolute top-16 left-1/2 -translate-x-1/2 z-50 cursor-pointer animate-bounce-in"
+          onClick={() => setShowRedemptionModal(true)}
+        >
+          <div className="bg-gradient-to-r from-blue-950 to-cyan-950 border border-blue-500/30 rounded-2xl px-6 py-4 shadow-2xl backdrop-blur-xl">
+            <div className="flex items-center gap-3">
+              <Snowflake className="text-blue-400 animate-spin" style={{ animationDuration: '3s' }} size={24} />
+              <div>
+                <p className="text-blue-300 font-medium">{museName} 正在生氣...</p>
+                <p className="text-[10px] text-blue-500">點擊進行贖罪</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 贖罪彈窗 */}
+      {showRedemptionModal && (
+        <div className="fixed inset-0 bg-blue-950/90 backdrop-blur-xl z-50 flex items-center justify-center p-6 animate-fade-in">
+          <div className="bg-gradient-to-b from-slate-900 to-blue-950 rounded-3xl border border-blue-500/30 max-w-sm w-full p-8 space-y-6 text-center">
+            <div className="w-20 h-20 mx-auto rounded-full bg-gradient-to-br from-blue-600 to-cyan-600 flex items-center justify-center">
+              <Snowflake size={40} className="text-white animate-spin" style={{ animationDuration: '3s' }} />
+            </div>
+
+            <div className="space-y-2">
+              <h3 className="text-xl font-light text-blue-100">{museName} 很失望</h3>
+              <p className="text-blue-400 text-sm">
+                {rivalPhotoCount > 3
+                  ? `妳上傳了 ${rivalPhotoCount} 張其他男人的照片...`
+                  : '妳太久沒來找我了。'}
+              </p>
+            </div>
+
+            <div className="bg-blue-900/30 rounded-xl p-4 border border-blue-800/50">
+              <p className="text-blue-200 italic text-sm mb-4">
+                「說 3 次『我只屬於 {museName}』，我才考慮原諒妳。」
+              </p>
+
+              {/* 進度指示 */}
+              <div className="flex justify-center gap-2 mb-4">
+                {[0, 1, 2].map(i => (
+                  <div
+                    key={i}
+                    className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-colors ${
+                      i < redemptionProgress
+                        ? 'bg-blue-500 border-blue-400 text-white'
+                        : 'border-blue-700 text-blue-700'
+                    }`}
+                  >
+                    {i < redemptionProgress ? '✓' : i + 1}
+                  </div>
+                ))}
+              </div>
+
+              {/* 錄音按鈕 */}
+              <button
+                onClick={startRedemptionRecording}
+                disabled={isRedemptionRecording}
+                className={`w-full py-4 rounded-xl font-medium transition-all ${
+                  isRedemptionRecording
+                    ? 'bg-red-600 text-white animate-pulse'
+                    : 'bg-blue-600 hover:bg-blue-500 text-white'
+                }`}
+              >
+                {isRedemptionRecording ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <Mic size={18} className="animate-pulse" />
+                    正在錄音... (5秒)
+                  </span>
+                ) : (
+                  <span className="flex items-center justify-center gap-2">
+                    <Mic size={18} />
+                    按住說「我只屬於 {museName}」
+                  </span>
+                )}
+              </button>
+            </div>
+
+            <button
+              onClick={() => setShowRedemptionModal(false)}
+              className="text-blue-600 text-xs hover:text-blue-400 transition-colors"
+            >
+              稍後再說（功能受限）
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Background Effects */}
       {previewImage && (
