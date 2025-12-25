@@ -1,5 +1,23 @@
 "use client";
-import { useEffect, useState } from 'react';
+import { Trash2 } from 'lucide-react'; // Ensure import
+
+// ... inside Shadow Logs map
+                        <button 
+                            onClick={(e) => { e.stopPropagation(); handleDeleteLog(log.id); }}
+                            className="absolute top-2 right-2 text-stone-600 hover:text-red-500 transition-colors opacity-50 hover:opacity-100"
+                            title="Delete Log"
+                        >
+                            <Trash2 size={14} />
+                        </button>
+
+// ... inside Rival Decoder map
+                    <button 
+                        onClick={(e) => { e.stopPropagation(); handleDeleteRival(r.id); }}
+                        className="absolute top-2 right-2 text-stone-600 hover:text-red-500 transition-colors z-20 opacity-50 hover:opacity-100"
+                        title="Delete Target"
+                    >
+                        <Trash2 size={14} />
+                    </button>
 import { supabase } from '../../lib/supabase';
 import { toast } from 'sonner';
 
@@ -156,9 +174,10 @@ export default function GodView() {
                     <div key={log.id} className="p-4 bg-amber-900/5 border border-amber-900/20 hover:bg-amber-900/10 transition-colors group relative">
                         <button 
                             onClick={(e) => { e.stopPropagation(); handleDeleteLog(log.id); }}
-                            className="absolute top-2 right-2 text-stone-700 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                            className="absolute top-2 right-2 text-stone-600 hover:text-red-500 transition-colors opacity-50 hover:opacity-100 p-1"
+                            title="Delete Log"
                         >
-                            [DEL]
+                            <Trash2 size={14} />
                         </button>
                         <div className="flex justify-between opacity-40 mb-2">
                             <span>ID: {log.id.slice(0,8)}</span>
@@ -191,9 +210,10 @@ export default function GodView() {
                 <div key={r.id} className="group p-4 border border-red-900/20 bg-red-900/5 hover:border-red-500/30 transition-all relative">
                     <button 
                         onClick={(e) => { e.stopPropagation(); handleDeleteRival(r.id); }}
-                        className="absolute top-2 right-2 text-stone-700 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity z-20"
+                        className="absolute top-2 right-2 text-stone-600 hover:text-red-500 transition-colors z-20 opacity-50 hover:opacity-100 p-1 bg-black/50 rounded-full"
+                        title="Delete Target"
                     >
-                        [DEL]
+                        <Trash2 size={14} />
                     </button>
                     <div className="flex gap-4">
                         <div className="w-24 h-24 bg-black border border-white/10 overflow-hidden relative shrink-0">
