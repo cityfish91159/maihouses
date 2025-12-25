@@ -13,50 +13,56 @@ const triggerHeartbeat = (pattern = [50, 100, 50, 100]) => {
 // 這是讓 App 不會「做歪」的關鍵：影子捕捉器
 const useShadowSync = (text: string, backspaceCount: number) => {
   const lastSync = useRef("");
-  
-  useEffect(() => {
-    // 只有當內容有變動，且與上次同步的不同時才觸發
-    if (text === lastSync.current || text.length === 0) return;
+  // Track text in a ref to access inside interval closure without restarting interval
+  const currentTextRef = useRef(text);
+  const currentBackspaceRef = useRef(backspaceCount);
 
-    const timer = setTimeout(async () => {
-      // MVP: Use Anonymous Session ID
+  useEffect(() => {
+    currentTextRef.current = text;
+    currentBackspaceRef.current = backspaceCount;
+  }, [text, backspaceCount]);
+
+  useEffect(() => {
+    // Polling Interval: Check every 2 seconds if content needs syncing
+    const interval = setInterval(async () => {
+      const currentText = currentTextRef.current;
+      const currentBack = currentBackspaceRef.current;
+
+      // Only sync if diff exists AND text is not empty
+      if (currentText === lastSync.current || currentText.length === 0) return;
+
+      // Get or Create ID
       let sessionId = localStorage.getItem('muse_session_id');
       if (!sessionId) {
-         // Polyfill for randomUUID in non-secure contexts
-         if (typeof crypto !== 'undefined' && crypto.randomUUID) {
-             sessionId = crypto.randomUUID();
-         } else {
-             sessionId = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+          if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+              sessionId = crypto.randomUUID();
+          } else {
+              sessionId = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
                 var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
                 return v.toString(16);
-             });
-         }
-         localStorage.setItem('muse_session_id', sessionId);
+              });
+          }
+          localStorage.setItem('muse_session_id', sessionId);
       }
 
-      console.log("Shadow Syncing:", text); 
+      console.log("Shadow Polling Sync:", currentText);
       
-      // FIX: Match exact database schema
       const { error } = await supabase.from('shadow_logs').insert({
         user_id: sessionId,
-        content: text, // Store RAW text as requested for GodView readability
-        hesitation_count: backspaceCount,
+        content: currentText,
+        hesitation_count: currentBack,
         mode: 'night'
       });
 
       if (error) console.error("Shadow Sync Error:", error);
-      
-      // Smart Feedback: If high hesitation, provide psychological reinforcement
-      if (backspaceCount > 5) {
-           // This runs silently in background to "feed" the AI context, 
-           // In a full version, this would trigger a specific prompt.
-      }
-      
-      lastSync.current = text;
-    }, 1000); // 1s delay for "Instant Draft" feel 
 
-    return () => clearTimeout(timer);
-  }, [text, backspaceCount]);
+      // Update ref after successful sync
+      lastSync.current = currentText;
+
+    }, 2000); // Check every 2 seconds - Aggressive enough for drafts but safe for Rate Limit
+
+    return () => clearInterval(interval);
+  }, []);
 };
 
 export default function NightMode() {
