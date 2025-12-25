@@ -108,18 +108,35 @@ export default function GodView() {
   }, []);
 
   const handleDeleteLog = async (id: string) => {
+    // 1. Optimistic Update
     setLogs(prev => prev.filter(l => l.id !== id));
-    const { error } = await supabase.from('shadow_logs').delete().eq('id', id);
+    
+    // 2. Perform Delete with select() to verify
+    const { error, data } = await supabase.from('shadow_logs').delete().eq('id', id).select();
+    
+    // 3. Check results
     if (error) {
-        toast.error("Delete Failed: " + error.message);
+        toast.error(`DELETE ERROR: ${error.message}`);
+        // Revert could be added here
+    } else if (!data || data.length === 0) {
+        // RLS Blocked the delete (Success but 0 rows)
+        toast.error("PERMISSION DENIED: RLS Policy blocked deletion. Please run the SQL migration.");
+    } else {
+        toast.success("LOG DELETED");
     }
   };
 
   const handleDeleteRival = async (id: string) => {
     setRivals(prev => prev.filter(r => r.id !== id));
-    const { error } = await supabase.from('rival_decoder').delete().eq('id', id);
+    
+    const { error, data } = await supabase.from('rival_decoder').delete().eq('id', id).select();
+
     if (error) {
-        toast.error("Delete Failed: " + error.message);
+        toast.error(`DELETE ERROR: ${error.message}`);
+    } else if (!data || data.length === 0) {
+        toast.error("PERMISSION DENIED: RLS Policy blocked deletion. Please run the SQL migration.");
+    } else {
+        toast.success("TARGET ELIMINATED");
     }
   };
 
