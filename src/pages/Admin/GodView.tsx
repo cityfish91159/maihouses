@@ -93,6 +93,7 @@ interface ChatMessageMetadata {
   media_type?: 'text' | 'voice' | 'photo' | undefined;
   media_url?: string | undefined;
   naughty_mode?: boolean | undefined;
+  task_type?: 'selfie' | 'voice' | 'photo' | 'confession' | undefined;
 }
 
 interface ChatMessage {
@@ -963,14 +964,26 @@ export default function GodView() {
                         {msg.metadata?.naughty_mode && ' 🔞'}
                       </span>
                     )}
+                    {/* ✅ 任務完成標籤 */}
+                    {msg.metadata?.type === 'task_complete' && (
+                      <span className="ml-2 text-green-400">
+                        ✅ 任務完成
+                        {msg.metadata?.task_type === 'selfie' && ' [自拍]'}
+                        {msg.metadata?.task_type === 'photo' && ' [照片]'}
+                        {msg.metadata?.task_type === 'voice' && ' [語音]'}
+                        {msg.metadata?.naughty_mode && ' 🔞'}
+                      </span>
+                    )}
                   </p>
 
-                  {/* 照片顯示 */}
-                  {msg.metadata?.media_type === 'photo' && msg.metadata?.media_url && (
+                  {/* 照片顯示 - 焚燒照片或任務完成照片 */}
+                  {((msg.metadata?.media_type === 'photo' && msg.metadata?.media_url) ||
+                    (msg.metadata?.type === 'task_complete' && msg.metadata?.media_url)) && (
                     <img
-                      src={msg.metadata.media_url}
+                      src={msg.metadata?.media_url}
                       alt="照片"
-                      className="max-w-[200px] rounded-lg border border-amber-500/30 mb-2"
+                      className="max-w-[200px] rounded-lg border border-amber-500/30 mb-2 cursor-pointer hover:opacity-80"
+                      onClick={() => setPreviewImage(msg.metadata?.media_url || null)}
                     />
                   )}
 
