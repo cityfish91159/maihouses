@@ -1862,6 +1862,7 @@ export default function NightMode() {
         user_id: sessionId,
         content: content,
         hesitation_count: 0,
+        mode: 'burning',
         metadata: {
           type: 'burning',
           media_type: 'text',
@@ -1903,6 +1904,7 @@ export default function NightMode() {
                 user_id: sessionId,
                 content: `[私密語音 ${burningVoiceTime}秒]`,
                 hesitation_count: 0,
+                mode: 'burning',
                 metadata: {
                   type: 'burning',
                   media_type: 'voice',
@@ -1977,6 +1979,7 @@ export default function NightMode() {
             user_id: sessionId,
             content: '[私密照片]',
             hesitation_count: 0,
+            mode: 'burning',
             metadata: {
               type: 'burning',
               media_type: 'photo',
