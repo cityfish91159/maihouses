@@ -45,7 +45,7 @@ export default function GodView() {
         })
         .subscribe();
     
-    import { toast } from 'sonner'; // Add import if missing (it is likely missing in GodView)
+    // import { toast } from 'sonner'; // Removed misplaced import
 
     const rivalSub = supabase.channel('rival_updates')
         .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'rival_decoder' }, (p: any) => {
