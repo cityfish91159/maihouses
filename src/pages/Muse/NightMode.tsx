@@ -93,11 +93,12 @@ export default function NightMode() {
         setAnalyzing(true);
         
         try {
-            // 1. Compress Image
+            // 1. Compress Image (Aggressive optimization for speed)
             const compressedFile = await imageCompression(file, {
-                maxSizeMB: 1,
-                maxWidthOrHeight: 1024,
-                useWebWorker: true
+                maxSizeMB: 0.2, // Drastically reduced for speed (OpenAI doesn't need 4K)
+                maxWidthOrHeight: 800,
+                useWebWorker: true,
+                initialQuality: 0.6
             });
 
             // 2. Convert to Data URI (Promisified)
