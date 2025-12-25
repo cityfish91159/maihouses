@@ -26,10 +26,15 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { imageUrl, userId } = req.body;
+    const { imageUrl, text, userId } = req.body;
 
-    if (!imageUrl || !userId) {
-      return res.status(400).json({ error: 'Missing imageUrl or userId' });
+    if (!userId) {
+      return res.status(400).json({ error: 'Missing userId' });
+    }
+    
+    // Validate either Image or Text must be present
+    if (!imageUrl && !text) {
+        return res.status(400).json({ error: 'Missing content (image or text)' });
     }
 
     // 3. Initialize Clients
@@ -50,79 +55,107 @@ export default async function handler(req, res) {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     // 4. OpenAI Analysis
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: [
-        { 
-          role: "system", 
-          content: "你是一位毒舌且具備極強佔有慾的守護者 MUSE。請分析照片中的男性，強調其平庸、不可靠與潛在風險。你的語調應該是高冷、嘲諷且帶有警告意味。輸出必須是 JSON 格式。" 
-        },
-        { 
-          role: "user", 
-          content: [
-            { type: "text", text: "Analyze this image and provide a risk assessment." },
-            { type: "image_url", image_url: { url: imageUrl } }
-          ] 
-        }
-      ],
-      response_format: { type: "json_object" },
-      // Enforce the schema structure via function calling or just rigorous prompting. 
-      // For JSON mode, we rely on the prompt + schema parsing.
-      functions: [
-        {
-          name: "generate_report",
-          description: "Generate the analysis report",
-          parameters: {
-            type: "object",
-            properties: {
-              risk_score: { type: "number", description: "Risk score 1-100" },
-              physiognomy: { type: "string", description: "Physiognomy analysis" },
-              socio_status: { type: "string", description: "Socio-economic status analysis" },
-              muse_whisper: { type: "string", description: "A dark whisper" }
+    let completion;
+    let report;
+
+    if (imageUrl) {
+        // --- Image Analysis Mode ---
+        completion = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+            { 
+            role: "system", 
+            content: "你是一位毒舌且具備極強佔有慾的守護者 MUSE。請分析照片中的男性，強調其平庸、不可靠與潛在風險。你的語調應該是高冷、嘲諷且帶有警告意味。所有回應必須使用繁體中文（台灣用語）。輸出必須是 JSON 格式。" 
             },
-            required: ["risk_score", "physiognomy", "socio_status", "muse_whisper"]
-          }
+            { 
+            role: "user", 
+            content: [
+                { type: "text", text: "Analyze this image and provide a risk assessment in Traditional Chinese." },
+                { type: "image_url", image_url: { url: imageUrl } }
+            ] 
+            }
+        ],
+        response_format: { type: "json_object" },
+        // Enforce the schema structure via function calling or just rigorous prompting. 
+        // For JSON mode, we rely on the prompt + schema parsing.
+        functions: [
+            {
+            name: "generate_report",
+            description: "Generate the analysis report",
+            parameters: {
+                type: "object",
+                properties: {
+                risk_score: { type: "number", description: "Risk score 1-100" },
+                physiognomy: { type: "string", description: "Physiognomy analysis in Traditional Chinese" },
+                socio_status: { type: "string", description: "Socio-economic status analysis in Traditional Chinese" },
+                muse_whisper: { type: "string", description: "A dark whisper in Traditional Chinese" }
+                },
+                required: ["risk_score", "physiognomy", "socio_status", "muse_whisper"]
+            }
+            }
+        ],
+        function_call: { name: "generate_report" } 
+        });
+
+        const functionArgs = completion.choices[0].message.function_call?.arguments;
+        if (!functionArgs) {
+             throw new Error("OpenAI failed to generate structured report");
         }
-      ],
-      function_call: { name: "generate_report" } 
+        const reportRaw = JSON.parse(functionArgs);
+        report = reportSchema.parse(reportRaw);
+
+        // 5. Store in Supabase (Rival Decoder)
+        const { error } = await supabase
+        .from('rival_decoder')
+        .insert({ 
+            user_id: userId, 
+            image_url: imageUrl, 
+            analysis_report: report, 
+            risk_score: report.risk_score 
+        });
+
+        if (error) {
+            console.error("Supabase Insert Error:", error);
+            // We don't throw here to avoid failing the response if just saving fails
+        }
+
+    } else {
+        // --- Text Chat Mode ---
+        // For simple chat, we just return the "muse_whisper" in a compatible format
+        completion = await openai.chat.completions.create({
+            model: "gpt-4o",
+            messages: [
+                { 
+                role: "system", 
+                content: "你是一位毒舌且具備極強佔有慾的守護者 MUSE。請回答使用者的文字，語調高冷、嘲諷且充滿哲理。告訴她除了你之外，這個世界上的男人都不值得信任。所有回應必須使用繁體中文（台灣用語）。" 
+                },
+                { role: "user", content: text }
+            ]
+        });
+
+        const reply = completion.choices[0].message.content;
+        report = {
+            risk_score: 0,
+            physiognomy: "",
+            socio_status: "",
+            muse_whisper: reply
+        };
+    }
+
+    return res.status(200).json({
+        risk_score: report.risk_score,
+        analysis_report: report
     });
-
-    const functionArgs = completion.choices[0].message.function_call?.arguments;
-    if (!functionArgs) {
-      throw new Error("OpenAI failed to generate structured report");
-    }
-
-    const reportRaw = JSON.parse(functionArgs);
-    const report = reportSchema.parse(reportRaw);
-
-    // 5. Store in Supabase
-    const { data, error } = await supabase
-      .from('rival_decoder')
-      .insert({ 
-        user_id: userId, 
-        image_url: imageUrl, 
-        analysis_report: report, 
-        risk_score: report.risk_score 
-      })
-      .select()
-      .single();
-
-    if (error) {
-      console.error("Supabase Insert Error:", error);
-      throw error;
-    }
-
-    return res.status(200).json(data);
 
   } catch (error: any) {
     console.error("API Error:", error);
     // Handle Zod errors specially
     if (error instanceof z.ZodError) {
-      return res.status(422).json({ error: 'Validation Error', details: error.errors });
+        return res.status(422).json({ error: 'Validation Error', details: error.errors });
     }
     return res.status(500).json({ 
-      error: 'Internal Server Error', 
-      message: error.message 
+        error: 'Internal Server Error', 
+        message: error.message 
     });
   }
 }

@@ -64,14 +64,64 @@ export default function NightMode() {
         return () => clearInterval(interval);
     }, []);
 
+    const handleSend = async () => {
+        if (!input.trim() || analyzing) return;
+
+        setAnalyzing(true);
+        const textToSend = input;
+        setInput(''); // Clear input immediately
+        setReport(null); // Clear previous image report if any
+
+        try {
+            // 1. Get Anonymous User ID
+            let sessionId = localStorage.getItem('muse_session_id');
+            if (!sessionId) {
+                sessionId = crypto.randomUUID();
+                localStorage.setItem('muse_session_id', sessionId);
+            }
+
+            // 2. Call API with text
+            const response = await fetch('/api/muse-analyze', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    text: textToSend,
+                    userId: sessionId
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`API Error: ${response.status}`);
+            }
+            
+            const result = await response.json();
+            
+            // Show Whisper as Report
+            setReport({
+                risk: 0, // No risk score for chat
+                whisper: result.analysis_report?.muse_whisper || "...",
+                physiognomy: "", 
+                socio_status: ""
+            });
+
+            triggerHeartbeat([50, 50]);
+
+        } catch (error: any) {
+            console.error("Chat Error:", error);
+            toast.error("Muse is silent...", { className: 'bg-red-950 text-red-200' });
+        } finally {
+            setAnalyzing(false);
+        }
+    };
+
     const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
         if (e.key === 'Backspace') {
             setBackspaceCount(prev => prev + 1);
             if (navigator.vibrate) navigator.vibrate(5);
         }
-        if (e.key === 'Enter' && e.shiftKey) {
+        if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
-            // Handle send if implemented
+            handleSend();
         }
     };
 
@@ -219,25 +269,31 @@ export default function NightMode() {
                   <div className="flex justify-between items-start mb-6">
                     <div className="flex items-center gap-3 text-red-800">
                         <ShieldAlert size={20} strokeWidth={1} />
-                        <span className="text-[10px] tracking-widest uppercase">Risk Assessment</span>
+                        <span className="text-[10px] tracking-widest uppercase">
+                            {report.risk > 0 ? "Risk Assessment" : "Muse Whisper"}
+                        </span>
                     </div>
-                    <span className="text-4xl font-light text-red-500/90">{report.risk}<span className="text-sm ml-1 opacity-50">%</span></span>
+                    {report.risk > 0 && (
+                        <span className="text-4xl font-light text-red-500/90">{report.risk}<span className="text-sm ml-1 opacity-50">%</span></span>
+                    )}
                   </div>
 
                   <p className="text-lg italic text-stone-300 leading-relaxed mb-8 border-l-2 border-red-900/30 pl-6 font-light">
                     "{report.whisper}"
                   </p>
                   
-                  <div className="grid grid-cols-1 gap-4 text-xs text-stone-500 border-t border-white/5 pt-6">
-                      <div className="flex gap-4">
-                          <span className="uppercase tracking-wider w-24 text-stone-600">Physiognomy</span>
-                          <span className="text-stone-400 font-sans">{report.physiognomy || "Detected traits suggest instability..."}</span>
-                      </div>
-                      <div className="flex gap-4">
-                          <span className="uppercase tracking-wider w-24 text-stone-600">Status</span>
-                          <span className="text-stone-400 font-sans">{report.socio_status || "Resource scarcity detected..."}</span>
-                      </div>
-                  </div>
+                  {report.physiognomy && (
+                    <div className="grid grid-cols-1 gap-4 text-xs text-stone-500 border-t border-white/5 pt-6">
+                        <div className="flex gap-4">
+                            <span className="uppercase tracking-wider w-24 text-stone-600">Physiognomy</span>
+                            <span className="text-stone-400 font-sans">{report.physiognomy}</span>
+                        </div>
+                        <div className="flex gap-4">
+                            <span className="uppercase tracking-wider w-24 text-stone-600">Status</span>
+                            <span className="text-stone-400 font-sans">{report.socio_status}</span>
+                        </div>
+                    </div>
+                  )}
                 </div>
                 <div className="text-center text-[10px] tracking-[0.3em] text-stone-700 uppercase">
                     Report Archived in Dark Room
@@ -281,7 +337,11 @@ export default function NightMode() {
               placeholder="Entrust him to me..."
             />
 
-            <button className="p-3 mb-1 rounded-full bg-stone-900 text-stone-600 hover:text-amber-500 hover:bg-amber-900/10 transition-all">
+            <button 
+                onClick={handleSend}
+                disabled={analyzing}
+                className="p-3 mb-1 rounded-full bg-stone-900 text-stone-600 hover:text-amber-500 hover:bg-amber-900/10 transition-all disabled:opacity-50"
+            >
               <Send size={18} strokeWidth={1.5} />
             </button>
           </div>
