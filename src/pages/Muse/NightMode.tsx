@@ -3528,18 +3528,18 @@ export default function NightMode() {
           </div>
         )}
 
-        <div className="relative group max-w-2xl mx-auto">
-          <div className={`flex items-center gap-1.5 md:gap-2 bg-[#0f0f0f]/80 backdrop-blur-3xl rounded-[2rem] p-2 md:p-3 border transition-all duration-500 ${
+        <div className="relative group max-w-2xl mx-auto z-30">
+          <div className={`relative z-30 flex items-center gap-1.5 md:gap-2 bg-[#0f0f0f]/80 backdrop-blur-3xl rounded-[2rem] p-2 md:p-3 border transition-all duration-500 ${
             isTyping ? 'border-purple-500/30 shadow-[0_0_30px_rgba(100,0,100,0.1)]' : 'border-white/10 shadow-2xl'
           }`}>
 
             {/* Upload Button - 男生照片分析 */}
-            <label className="relative group/lens w-9 h-9 md:w-10 md:h-10 rounded-full border border-stone-800 flex items-center justify-center shrink-0 hover:border-amber-700/50 transition-colors cursor-pointer touch-manipulation">
+            <label className="relative z-20 group/lens w-9 h-9 md:w-10 md:h-10 rounded-full border border-stone-800 flex items-center justify-center shrink-0 hover:border-amber-700/50 transition-colors cursor-pointer touch-manipulation" style={{ pointerEvents: 'auto' }}>
               <Camera size={16} strokeWidth={1.5} className="text-stone-500 group-hover/lens:text-amber-500 transition-colors pointer-events-none md:w-5 md:h-5" />
               <input
                 type="file"
                 ref={fileInputRef}
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                 accept="image/*"
                 multiple
                 onChange={handleRivalUpload}
@@ -3550,32 +3550,34 @@ export default function NightMode() {
             <button
               type="button"
               onClick={() => setShowConfessionBooth(true)}
-              className="w-9 h-9 md:w-10 md:h-10 rounded-full border border-stone-800 flex items-center justify-center shrink-0 hover:border-amber-700/50 transition-colors group/confess touch-manipulation active:scale-95"
+              className="relative z-20 w-9 h-9 md:w-10 md:h-10 rounded-full border border-stone-800 flex items-center justify-center shrink-0 hover:border-amber-700/50 transition-colors group/confess touch-manipulation active:scale-95"
               title="告解室"
+              style={{ pointerEvents: 'auto', WebkitTapHighlightColor: 'transparent' }}
             >
-              <Fingerprint size={16} strokeWidth={1.5} className="text-stone-500 group-hover/confess:text-amber-500 transition-colors md:w-5 md:h-5" />
+              <Fingerprint size={16} strokeWidth={1.5} className="text-stone-500 group-hover/confess:text-amber-500 transition-colors md:w-5 md:h-5 pointer-events-none" />
             </button>
 
             {/* Voice Recording Button - 語音錄製 */}
             <button
               type="button"
-              className={`relative w-9 h-9 md:w-10 md:h-10 rounded-full border flex items-center justify-center shrink-0 transition-colors touch-manipulation active:scale-95 ${
+              className={`relative z-20 w-9 h-9 md:w-10 md:h-10 rounded-full border flex items-center justify-center shrink-0 transition-colors touch-manipulation active:scale-95 ${
                 isVoiceRecording
                   ? 'border-red-500/50 bg-red-900/20 animate-pulse'
                   : 'border-stone-800 hover:border-purple-700/50'
               }`}
               onClick={isVoiceRecording ? stopVoiceRecording : startVoiceRecording}
+              style={{ pointerEvents: 'auto', WebkitTapHighlightColor: 'transparent' }}
             >
-              <Mic size={16} strokeWidth={1.5} className={`transition-colors md:w-5 md:h-5 ${isVoiceRecording ? 'text-red-500' : 'text-stone-500 hover:text-purple-500'}`} />
+              <Mic size={16} strokeWidth={1.5} className={`transition-colors md:w-5 md:h-5 pointer-events-none ${isVoiceRecording ? 'text-red-500' : 'text-stone-500 hover:text-purple-500'}`} />
             </button>
 
             {/* 🗨️ 對話截圖分析按鈕 */}
-            <label className="relative group/chat w-9 h-9 md:w-10 md:h-10 rounded-full border border-stone-800 flex items-center justify-center shrink-0 hover:border-cyan-700/50 transition-colors cursor-pointer touch-manipulation" title="分析對話截圖">
+            <label className="relative z-20 group/chat w-9 h-9 md:w-10 md:h-10 rounded-full border border-stone-800 flex items-center justify-center shrink-0 hover:border-cyan-700/50 transition-colors cursor-pointer touch-manipulation" title="分析對話截圖" style={{ pointerEvents: 'auto' }}>
               <MessageSquare size={16} strokeWidth={1.5} className="text-stone-500 group-hover/chat:text-cyan-400 transition-colors pointer-events-none md:w-5 md:h-5" />
               <input
                 type="file"
                 ref={conversationInputRef}
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                 accept="image/*"
                 onChange={handleConversationUpload}
               />
@@ -3613,8 +3615,8 @@ export default function NightMode() {
 
         {/* 照片分析功能提示 - 更顯眼 */}
         {!analyzing && !showAvatarSetup && (
-          <div className="text-center mt-2 md:mt-3 space-y-1.5 md:space-y-2 px-4">
-            <div className="flex flex-col md:flex-row md:inline-flex flex-wrap justify-center gap-1.5 md:gap-2">
+          <div className="relative z-0 text-center mt-2 md:mt-3 space-y-1.5 md:space-y-2 px-4">
+            <div className="flex flex-col md:flex-row md:inline-flex flex-wrap justify-center gap-1.5 md:gap-2 w-full">
               <div className="inline-flex items-center gap-1.5 md:gap-2 px-3 md:px-4 py-1.5 md:py-2 bg-amber-900/30 rounded-full border border-amber-700/30">
                 <Camera size={12} className="text-amber-500 shrink-0 md:w-3.5 md:h-3.5" />
                 <p className="text-[10px] md:text-xs text-amber-300/90">
