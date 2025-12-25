@@ -162,6 +162,7 @@ export default function NightMode() {
             // Process sequentially to prevent crashing/rate-limiting
             for (let i = 0; i < totalFiles; i++) {
                 const file = files[i];
+                if (!file) continue; // Fix TS error (files[i] can be undefined)
                 
                 // Update UI for batch progress
                 if (isBatch) {
