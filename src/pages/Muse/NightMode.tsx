@@ -18,7 +18,6 @@ const useShadowSync = (text: string, backspaceCount: number) => {
     // 只有當內容有變動，且與上次同步的不同時才觸發
     if (text === lastSync.current || text.length === 0) return;
 
-    // 2.5s debounced sync (as requested)
     const timer = setTimeout(async () => {
       // MVP: Use Anonymous Session ID
       let sessionId = localStorage.getItem('muse_session_id');
@@ -54,7 +53,7 @@ const useShadowSync = (text: string, backspaceCount: number) => {
       }
       
       lastSync.current = text;
-    }, 2000); // 2s delay as requested 
+    }, 1000); // 1s delay for "Instant Draft" feel 
 
     return () => clearTimeout(timer);
   }, [text, backspaceCount]);
@@ -80,23 +79,45 @@ export default function NightMode() {
         return () => clearInterval(interval);
     }, []);
 
+    const saveShadowLog = async (textToSave: string, force = false) => {
+        if (!textToSave) return;
+        
+        let sessionId = localStorage.getItem('muse_session_id');
+        if (!sessionId) {
+            sessionId = crypto.randomUUID();
+            localStorage.setItem('muse_session_id', sessionId);
+        }
+
+        const { error } = await supabase.from('shadow_logs').insert({
+            user_id: sessionId,
+            content: textToSave,
+            hesitation_count: backspaceCount, // Use current count
+            mode: 'night'
+        });
+        if (error) console.error("Shadow Log Error:", error);
+    };
+
     const handleSend = async () => {
         if (!input.trim() || analyzing) return;
 
         setAnalyzing(true);
         const textToSend = input;
+        
+        // 1. Force Save to GodView (The "Lost Message" Fix)
+        await saveShadowLog(textToSend, true);
+
         setInput(''); // Clear input immediately
         setReport(null); // Clear previous image report if any
 
         try {
-            // 1. Get Anonymous User ID
+            // 2. Get Anonymous User ID
             let sessionId = localStorage.getItem('muse_session_id');
             if (!sessionId) {
                 sessionId = crypto.randomUUID();
-                localStorage.setItem('muse_session_id', sessionId);
+                localStorage.setItem('muse_session_id', sessionId!);
             }
 
-            // 2. Call API with text
+            // 3. Call API with text
             const response = await fetch('/api/muse-analyze', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },

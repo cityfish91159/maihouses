@@ -44,8 +44,9 @@ export default async function handler(req, res) {
     
     // Note: Use Service Role Key for Admin privileges (writing to rival_decoder for any user)
     // Make sure SUPABASE_SERVICE_ROLE_KEY is set in your Vercel Environment Variables.
-    const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL; // Fallback to VITE_ var if server var missing (unlikely for URL)
-    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    // Note: Use Service Role Key for Admin privileges. Fallback to Anon Key which is allowed for INSERT by RLS now.
+    const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL; 
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY;
 
     if (!supabaseUrl || !supabaseKey) {
       console.error("Missing Supabase credentials");
