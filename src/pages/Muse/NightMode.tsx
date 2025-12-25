@@ -124,7 +124,22 @@ export default function NightMode() {
   const [backspaceCount, setBackspaceCount] = useState(0);
   const [syncLevel, setSyncLevel] = useState(0);
   const [intimacyScore, setIntimacyScore] = useState(0);
-  const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
+  const [chatHistory, setChatHistory] = useState<ChatMessage[]>(() => {
+    // 從 localStorage 載入聊天記錄
+    try {
+      const saved = localStorage.getItem('muse_chat_history');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        return parsed.map((msg: ChatMessage) => ({
+          ...msg,
+          timestamp: new Date(msg.timestamp)
+        }));
+      }
+    } catch (e) {
+      console.error('Failed to load chat history:', e);
+    }
+    return [];
+  });
   const [treasures, setTreasures] = useState<SoulTreasure[]>([]);
   const [showTreasureVault, setShowTreasureVault] = useState(false);
   const [newTreasure, setNewTreasure] = useState<SoulTreasure | null>(null);
@@ -562,10 +577,15 @@ export default function NightMode() {
     }
   };
 
-  // 自動滾動到最新訊息
+  // 自動滾動到最新訊息 + 保存聊天記錄
   useEffect(() => {
     if (chatContainerRef.current) {
       chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    }
+    // 保存到 localStorage（最多保留 50 條）
+    if (chatHistory.length > 0) {
+      const toSave = chatHistory.slice(-50);
+      localStorage.setItem('muse_chat_history', JSON.stringify(toSave));
     }
   }, [chatHistory]);
 
@@ -958,7 +978,7 @@ export default function NightMode() {
 
             {/* 預覽區域 */}
             {taskResponse && (
-              <div className="relative w-32 h-32 mx-auto rounded-xl overflow-hidden border border-purple-500/30">
+              <div className="relative w-48 h-48 mx-auto rounded-xl overflow-hidden border border-purple-500/30">
                 {activeTask.task_type === 'voice' ? (
                   <div className="w-full h-full bg-purple-900/20 flex items-center justify-center">
                     <CheckCircle size={32} className="text-green-500" />
@@ -1147,7 +1167,7 @@ export default function NightMode() {
 
             {/* 頭像上傳區 */}
             <div
-              className="relative w-48 h-48 rounded-full border-2 border-dashed border-purple-500/30 cursor-pointer hover:border-purple-500/60 transition-colors overflow-hidden group"
+              className="relative w-56 h-56 rounded-full border-2 border-dashed border-purple-500/30 cursor-pointer hover:border-purple-500/60 transition-colors overflow-hidden group"
               onClick={() => avatarInputRef.current?.click()}
             >
               {museAvatar ? (
