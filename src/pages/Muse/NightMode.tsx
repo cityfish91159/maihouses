@@ -1866,8 +1866,8 @@ export default function NightMode() {
         const objectUrl = URL.createObjectURL(file);
         setPreviewImage(objectUrl);
 
-        // 顯示上傳中提示
-        toast.loading('正在備份照片到雲端...', { id: 'upload' });
+        // 顯示分析中提示
+        toast.loading('分析中...', { id: 'upload' });
 
         // 保留較高品質（1MB/1200px）以便原尺寸查看
         const compressedFile = await imageCompression(file, {
@@ -1903,11 +1903,8 @@ export default function NightMode() {
 
         const result = await response.json();
 
-        // 備份成功提示
-        toast.success('照片已安全備份 ✓', {
-          id: 'upload',
-          className: 'bg-green-950 text-green-200'
-        });
+        // 關閉 loading toast
+        toast.dismiss('upload');
 
         if (i === totalFiles - 1) {
           const newReport = {
@@ -2395,23 +2392,18 @@ export default function NightMode() {
                   placeholder="寫下你的秘密..."
                 />
               ) : (
-                <button
-                  onClick={() => taskMediaInputRef.current?.click()}
-                  className="w-full py-4 rounded-xl bg-purple-900/50 text-purple-200 hover:bg-purple-800/50 transition-colors flex items-center justify-center gap-2"
-                >
-                  <Camera size={20} />
-                  {taskResponse ? '重新拍攝' : '拍攝照片'}
-                </button>
+                <label className="relative w-full py-4 rounded-xl bg-purple-900/50 text-purple-200 hover:bg-purple-800/50 transition-colors flex items-center justify-center gap-2 cursor-pointer overflow-hidden">
+                  <Camera size={20} className="pointer-events-none" />
+                  <span className="pointer-events-none">{taskResponse ? '重新選擇' : '拍攝或選擇照片'}</span>
+                  <input
+                    ref={taskMediaInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    onChange={handleTaskMediaUpload}
+                  />
+                </label>
               )}
-
-              <input
-                ref={taskMediaInputRef}
-                type="file"
-                accept="image/*"
-                capture="user"
-                className="hidden"
-                onChange={handleTaskMediaUpload}
-              />
 
               {/* 提交按鈕 */}
               <div className="flex gap-3">
@@ -2550,19 +2542,16 @@ export default function NightMode() {
             </div>
 
             {/* 頭像上傳區 - 更大的正方形框 */}
-            <div
-              className="relative w-56 h-72 rounded-2xl border-2 border-dashed border-purple-500/30 cursor-pointer hover:border-purple-500/60 transition-colors overflow-hidden group"
-              onClick={() => avatarInputRef.current?.click()}
-            >
+            <label className="relative w-56 h-72 rounded-2xl border-2 border-dashed border-purple-500/30 cursor-pointer hover:border-purple-500/60 transition-colors overflow-hidden group block">
               {museAvatar ? (
                 <>
-                  <img src={museAvatar} alt="Preview" className="w-full h-full object-cover" />
-                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                  <img src={museAvatar} alt="Preview" className="w-full h-full object-cover pointer-events-none" />
+                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
                     <Upload size={32} className="text-purple-400" />
                   </div>
                 </>
               ) : (
-                <div className="w-full h-full flex flex-col items-center justify-center gap-4 bg-stone-900/30">
+                <div className="w-full h-full flex flex-col items-center justify-center gap-4 bg-stone-900/30 pointer-events-none">
                   <div className="w-16 h-16 rounded-full bg-purple-900/30 flex items-center justify-center">
                     <Upload size={28} className="text-purple-500/70" />
                   </div>
@@ -2574,10 +2563,10 @@ export default function NightMode() {
                 ref={avatarInputRef}
                 type="file"
                 accept="image/*"
-                className="hidden"
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                 onChange={handleAvatarUpload}
               />
-            </div>
+            </label>
 
             {/* 名字輸入 */}
             <div className="space-y-2 w-full max-w-xs">
@@ -2791,21 +2780,17 @@ export default function NightMode() {
           }`}>
 
             {/* Upload Button - 男生照片分析 */}
-            <button
-              type="button"
-              className="relative group/lens w-11 h-11 rounded-full border border-stone-800 flex items-center justify-center shrink-0 hover:border-amber-700/50 transition-colors"
-              onClick={() => fileInputRef.current?.click()}
-            >
-              <Camera size={20} strokeWidth={1.5} className="text-stone-500 group-hover/lens:text-amber-500 transition-colors" />
+            <label className="relative group/lens w-11 h-11 rounded-full border border-stone-800 flex items-center justify-center shrink-0 hover:border-amber-700/50 transition-colors cursor-pointer">
+              <Camera size={20} strokeWidth={1.5} className="text-stone-500 group-hover/lens:text-amber-500 transition-colors pointer-events-none" />
               <input
                 type="file"
                 ref={fileInputRef}
-                className="hidden"
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                 accept="image/*"
                 multiple
                 onChange={handleRivalUpload}
               />
-            </button>
+            </label>
 
             {/* Voice Recording Button - 語音錄製 */}
             <button
