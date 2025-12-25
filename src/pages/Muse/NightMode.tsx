@@ -164,7 +164,7 @@ export default function NightMode() {
 
         } catch (error: any) {
             console.error("Chat Error:", error);
-            // toast.error("Muse is silent...", { className: 'bg-red-950 text-red-200' });
+             toast.error("Muse is silent...", { className: 'bg-red-950 text-red-200' });
         } finally {
             setAnalyzing(false);
         }
@@ -269,9 +269,11 @@ export default function NightMode() {
                 }
             }
 
+            }
         } catch (error: any) {
             console.error("Batch Error:", error);
-            // toast.error(`Batch Failed: ${error.message}`);
+            toast.error(`Analysis Failed: ${error.message || "Unknown Error"}`);
+            setPreviewImage(null); // Reset image on error so Welcome screen reappears
         } finally {
             setAnalyzing(false); 
             if (fileInputRef.current) fileInputRef.current.value = '';
