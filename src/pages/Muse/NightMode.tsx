@@ -268,8 +268,6 @@ export default function NightMode() {
                     console.error(`Error processing file ${i}`, err);
                 }
             }
-
-            }
         } catch (error: any) {
             console.error("Batch Error:", error);
             toast.error(`Analysis Failed: ${error.message || "Unknown Error"}`);
