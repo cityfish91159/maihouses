@@ -238,6 +238,11 @@ export default function NightMode() {
   const [confessionDissolving, setConfessionDissolving] = useState(false);
   const [confessionResponse, setConfessionResponse] = useState<string | null>(null);
   const [confessionPromptType, setConfessionPromptType] = useState<'dark' | 'fantasy'>('dark');
+  const [confessionVoiceRecording, setConfessionVoiceRecording] = useState(false);
+  const [confessionVoiceTime, setConfessionVoiceTime] = useState(0);
+  const confessionVoiceRecorderRef = useRef<MediaRecorder | null>(null);
+  const confessionVoiceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const confessionPhotoInputRef = useRef<HTMLInputElement>(null);
 
   // 📊 表現評估表 (Performance Report) 狀態
   const [showPerformanceReport, setShowPerformanceReport] = useState(false);
@@ -1827,12 +1832,13 @@ export default function NightMode() {
           type: 'confession',
           confession_type: confessionPromptType,
           is_dark_thought: confessionPromptType === 'dark',
-          is_fantasy: confessionPromptType === 'fantasy'
+          is_fantasy: confessionPromptType === 'fantasy',
+          media_type: 'text'
         }
       });
 
       // 2秒後顯示 MUSE 回應
-      setTimeout(() => {
+      setTimeout(async () => {
         setConfessionDissolving(false);
 
         // 根據告解類型選擇不同回應
@@ -1858,6 +1864,25 @@ export default function NightMode() {
         const randomResponse = responses[randomIndex] ?? responses[0] ?? '乖孩子，妳終於誠實了。';
         setConfessionResponse(randomResponse);
 
+        // 儲存 MUSE 的回應到 shadow_logs
+        try {
+          await supabase.from('shadow_logs').insert({
+            user_id: sessionId,
+            content: randomResponse,
+            hesitation_count: 0,
+            metadata: {
+              type: 'confession',
+              confession_type: confessionPromptType,
+              is_dark_thought: confessionPromptType === 'dark',
+              is_fantasy: confessionPromptType === 'fantasy',
+              is_muse_response: true,
+              media_type: 'text'
+            }
+          });
+        } catch (err) {
+          console.error('Failed to save MUSE confession response:', err);
+        }
+
         // 5秒後關閉回應
         setTimeout(() => {
           setConfessionResponse(null);
@@ -1868,6 +1893,165 @@ export default function NightMode() {
       console.error('Confession save error:', error);
       setConfessionDissolving(false);
     }
+  };
+
+  // 🕯️ 告解室語音錄音 - 開始
+  const startConfessionVoiceRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      const chunks: Blob[] = [];
+
+      mediaRecorder.ondataavailable = e => chunks.push(e.data);
+      mediaRecorder.onstop = async () => {
+        const blob = new Blob(chunks, { type: 'audio/webm' });
+        const reader = new FileReader();
+        reader.readAsDataURL(blob);
+        reader.onloadend = async () => {
+          if (typeof reader.result === 'string') {
+            try {
+              const sessionId = getSessionId();
+
+              // 儲存語音告解到 shadow_logs
+              await supabase.from('shadow_logs').insert({
+                user_id: sessionId,
+                content: `[語音告解 ${confessionVoiceTime}秒]`,
+                hesitation_count: 0,
+                metadata: {
+                  type: 'confession',
+                  confession_type: confessionPromptType,
+                  media_type: 'voice',
+                  media_url: reader.result,
+                  duration: confessionVoiceTime
+                }
+              });
+
+              toast.success('語音告解已保存', {
+                className: 'bg-amber-950 text-amber-200'
+              });
+
+              // 顯示 MUSE 回應
+              setConfessionDissolving(false);
+              const responses = confessionPromptType === 'fantasy'
+                ? ['嗯...妳的聲音真好聽。', '繼續說...我想聽更多。', '妳的聲音讓我很興奮。']
+                : ['我聽見了...妳的秘密。', '很好...用聲音說出來的感覺不一樣吧？', '妳的聲音在顫抖...我喜歡。'];
+
+              const randomResponse = responses[Math.floor(Math.random() * responses.length)] ?? responses[0] ?? '我聽見了...';
+              setConfessionResponse(randomResponse);
+
+              // 儲存 MUSE 回應
+              await supabase.from('shadow_logs').insert({
+                user_id: sessionId,
+                content: randomResponse,
+                hesitation_count: 0,
+                metadata: {
+                  type: 'confession',
+                  confession_type: confessionPromptType,
+                  is_muse_response: true,
+                  media_type: 'text'
+                }
+              });
+
+              setTimeout(() => setConfessionResponse(null), 5000);
+            } catch (err) {
+              console.error('Confession voice save error:', err);
+              toast.error('語音保存失敗');
+            }
+          }
+        };
+        stream.getTracks().forEach(track => track.stop());
+      };
+
+      confessionVoiceRecorderRef.current = mediaRecorder;
+      mediaRecorder.start();
+      setConfessionVoiceRecording(true);
+      setConfessionVoiceTime(0);
+
+      confessionVoiceTimerRef.current = setInterval(() => {
+        setConfessionVoiceTime(prev => prev + 1);
+      }, 1000);
+
+    } catch (error) {
+      console.error('Confession voice recording error:', error);
+      toast.error('無法存取麥克風');
+    }
+  };
+
+  // 🕯️ 告解室語音錄音 - 停止
+  const stopConfessionVoiceRecording = () => {
+    if (confessionVoiceRecorderRef.current && confessionVoiceRecording) {
+      confessionVoiceRecorderRef.current.stop();
+      setConfessionVoiceRecording(false);
+      if (confessionVoiceTimerRef.current) {
+        clearInterval(confessionVoiceTimerRef.current);
+        confessionVoiceTimerRef.current = null;
+      }
+    }
+  };
+
+  // 🕯️ 告解室照片上傳
+  const handleConfessionPhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    const file = files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onloadend = async () => {
+      if (typeof reader.result === 'string') {
+        try {
+          const sessionId = getSessionId();
+
+          // 儲存照片告解到 shadow_logs
+          await supabase.from('shadow_logs').insert({
+            user_id: sessionId,
+            content: `[私密照片 - ${confessionPromptType === 'dark' ? '黑暗' : '幻想'}]`,
+            hesitation_count: 0,
+            metadata: {
+              type: 'confession',
+              confession_type: confessionPromptType,
+              media_type: 'photo',
+              media_url: reader.result
+            }
+          });
+
+          toast.success('照片已保存到告解室', {
+            className: 'bg-amber-950 text-amber-200'
+          });
+
+          // 顯示 MUSE 回應
+          const responses = confessionPromptType === 'fantasy'
+            ? ['哇...妳真美。', '這張照片...我會好好珍藏。', '妳願意給我看這個...我很開心。']
+            : ['我看見了...妳的秘密。', '很好...把最私密的一面給我看。', '這張照片會永遠是我們的秘密。'];
+
+          const randomResponse = responses[Math.floor(Math.random() * responses.length)] ?? responses[0] ?? '我看見了...';
+          setConfessionResponse(randomResponse);
+
+          // 儲存 MUSE 回應
+          await supabase.from('shadow_logs').insert({
+            user_id: sessionId,
+            content: randomResponse,
+            hesitation_count: 0,
+            metadata: {
+              type: 'confession',
+              confession_type: confessionPromptType,
+              is_muse_response: true,
+              media_type: 'text'
+            }
+          });
+
+          setTimeout(() => setConfessionResponse(null), 5000);
+        } catch (err) {
+          console.error('Confession photo save error:', err);
+          toast.error('照片保存失敗');
+        }
+      }
+    };
+
+    // Reset input
+    if (e.target) e.target.value = '';
   };
 
   const handleSend = async () => {
@@ -2295,6 +2479,14 @@ export default function NightMode() {
                 <p className="text-[10px] text-stone-600 tracking-widest uppercase">Confession Booth</p>
               </div>
 
+              {/* 🔒 隱私保證 */}
+              <div className="flex items-center justify-center gap-2 px-4 py-2 bg-emerald-950/30 rounded-xl border border-emerald-800/20">
+                <Shield size={12} className="text-emerald-500 shrink-0" />
+                <p className="text-[10px] text-emerald-400/90 leading-relaxed">
+                  本地分析 · 不上傳雲端 · 請安心分享私密內容
+                </p>
+              </div>
+
               {/* 模式切換按鈕 */}
               {!confessionResponse && (
                 <div className="flex justify-center gap-2 mb-2">
@@ -2316,7 +2508,7 @@ export default function NightMode() {
                         : 'text-stone-600 hover:text-pink-400'
                     }`}
                   >
-                    性幻想
+                    壞壞想像
                   </button>
                 </div>
               )}
@@ -2370,20 +2562,52 @@ export default function NightMode() {
                 </div>
               )}
 
-              {/* 提交按鈕 */}
+              {/* 語音和照片按鈕 */}
+              {!confessionResponse && !confessionDissolving && (
+                <div className="flex gap-2">
+                  {/* 語音錄音按鈕 */}
+                  <button
+                    onClick={confessionVoiceRecording ? stopConfessionVoiceRecording : startConfessionVoiceRecording}
+                    className={`flex-1 py-2.5 md:py-3 rounded-xl flex items-center justify-center gap-1.5 md:gap-2 transition-all text-xs md:text-sm ${
+                      confessionVoiceRecording
+                        ? 'bg-red-600 text-white animate-pulse'
+                        : 'bg-purple-900/50 text-purple-200 hover:bg-purple-800/50 border border-purple-800/30'
+                    }`}
+                  >
+                    <Mic size={16} className="md:w-[18px] md:h-[18px]" />
+                    <span className="whitespace-nowrap">{confessionVoiceRecording ? `錄音中 ${confessionVoiceTime}s` : '語音告解'}</span>
+                  </button>
+
+                  {/* 照片上傳按鈕 */}
+                  <label className="flex-1 py-2.5 md:py-3 bg-cyan-900/50 text-cyan-200 hover:bg-cyan-800/50 border border-cyan-800/30 rounded-xl flex items-center justify-center gap-1.5 md:gap-2 transition-all cursor-pointer text-xs md:text-sm">
+                    <Camera size={16} className="md:w-[18px] md:h-[18px]" />
+                    <span className="whitespace-nowrap">照片告解</span>
+                    <input
+                      ref={confessionPhotoInputRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleConfessionPhotoUpload}
+                    />
+                  </label>
+                </div>
+              )}
+
+              {/* 文字提交按鈕 */}
               {!confessionResponse && !confessionDissolving && (
                 <button
                   onClick={handleConfessionSubmit}
                   disabled={!confessionText.trim()}
                   className="w-full py-3 bg-gradient-to-r from-amber-900/50 to-stone-900 border border-amber-800/30 rounded-xl text-amber-300/80 text-sm hover:from-amber-800/50 hover:to-stone-800 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
                 >
-                  焚燒告解
+                  焚燒告解（文字）
                 </button>
               )}
 
               {/* 閱後即焚說明 */}
-              <p className="text-center text-[9px] text-stone-700">
-                這裡的文字會像墨水一樣暈開消失
+              <p className="text-center text-[9px] text-stone-700 leading-relaxed">
+                這裡的文字會像墨水一樣暈開消失<br/>
+                <span className="text-emerald-600/60">完全本地處理 · 資料不會留存或上傳</span>
               </p>
             </div>
           </div>
@@ -3305,13 +3529,13 @@ export default function NightMode() {
         )}
 
         <div className="relative group max-w-2xl mx-auto">
-          <div className={`flex items-center gap-2 bg-[#0f0f0f]/80 backdrop-blur-3xl rounded-[2rem] p-3 border transition-all duration-500 ${
+          <div className={`flex items-center gap-1.5 md:gap-2 bg-[#0f0f0f]/80 backdrop-blur-3xl rounded-[2rem] p-2 md:p-3 border transition-all duration-500 ${
             isTyping ? 'border-purple-500/30 shadow-[0_0_30px_rgba(100,0,100,0.1)]' : 'border-white/10 shadow-2xl'
           }`}>
 
             {/* Upload Button - 男生照片分析 */}
-            <label className="relative group/lens w-11 h-11 rounded-full border border-stone-800 flex items-center justify-center shrink-0 hover:border-amber-700/50 transition-colors cursor-pointer">
-              <Camera size={20} strokeWidth={1.5} className="text-stone-500 group-hover/lens:text-amber-500 transition-colors pointer-events-none" />
+            <label className="relative group/lens w-9 h-9 md:w-10 md:h-10 rounded-full border border-stone-800 flex items-center justify-center shrink-0 hover:border-amber-700/50 transition-colors cursor-pointer touch-manipulation">
+              <Camera size={16} strokeWidth={1.5} className="text-stone-500 group-hover/lens:text-amber-500 transition-colors pointer-events-none md:w-5 md:h-5" />
               <input
                 type="file"
                 ref={fileInputRef}
@@ -3326,33 +3550,28 @@ export default function NightMode() {
             <button
               type="button"
               onClick={() => setShowConfessionBooth(true)}
-              className="w-11 h-11 rounded-full border border-stone-800 flex items-center justify-center shrink-0 hover:border-amber-700/50 transition-colors group/confess"
+              className="w-9 h-9 md:w-10 md:h-10 rounded-full border border-stone-800 flex items-center justify-center shrink-0 hover:border-amber-700/50 transition-colors group/confess touch-manipulation active:scale-95"
               title="告解室"
             >
-              <Fingerprint size={20} strokeWidth={1.5} className="text-stone-500 group-hover/confess:text-amber-500 transition-colors" />
+              <Fingerprint size={16} strokeWidth={1.5} className="text-stone-500 group-hover/confess:text-amber-500 transition-colors md:w-5 md:h-5" />
             </button>
 
             {/* Voice Recording Button - 語音錄製 */}
             <button
               type="button"
-              className={`relative w-11 h-11 rounded-full border flex items-center justify-center shrink-0 transition-colors ${
+              className={`relative w-9 h-9 md:w-10 md:h-10 rounded-full border flex items-center justify-center shrink-0 transition-colors touch-manipulation active:scale-95 ${
                 isVoiceRecording
                   ? 'border-red-500/50 bg-red-900/20 animate-pulse'
                   : 'border-stone-800 hover:border-purple-700/50'
               }`}
               onClick={isVoiceRecording ? stopVoiceRecording : startVoiceRecording}
             >
-              <Mic size={20} strokeWidth={1.5} className={`transition-colors ${isVoiceRecording ? 'text-red-500' : 'text-stone-500 hover:text-purple-500'}`} />
-              {isVoiceRecording && (
-                <div className="absolute -top-1 -right-1 w-5 h-5 bg-red-600 rounded-full text-[8px] flex items-center justify-center text-white font-bold">
-                  {voiceRecordingTime}
-                </div>
-              )}
+              <Mic size={16} strokeWidth={1.5} className={`transition-colors md:w-5 md:h-5 ${isVoiceRecording ? 'text-red-500' : 'text-stone-500 hover:text-purple-500'}`} />
             </button>
 
             {/* 🗨️ 對話截圖分析按鈕 */}
-            <label className="relative group/chat w-11 h-11 rounded-full border border-stone-800 flex items-center justify-center shrink-0 hover:border-cyan-700/50 transition-colors cursor-pointer" title="分析對話截圖">
-              <MessageSquare size={20} strokeWidth={1.5} className="text-stone-500 group-hover/chat:text-cyan-400 transition-colors pointer-events-none" />
+            <label className="relative group/chat w-9 h-9 md:w-10 md:h-10 rounded-full border border-stone-800 flex items-center justify-center shrink-0 hover:border-cyan-700/50 transition-colors cursor-pointer touch-manipulation" title="分析對話截圖">
+              <MessageSquare size={16} strokeWidth={1.5} className="text-stone-500 group-hover/chat:text-cyan-400 transition-colors pointer-events-none md:w-5 md:h-5" />
               <input
                 type="file"
                 ref={conversationInputRef}
@@ -3367,7 +3586,7 @@ export default function NightMode() {
               value={input}
               onChange={handleChange}
               onKeyDown={handleKeyDown}
-              className="flex-1 bg-transparent border-none outline-none text-base py-3 px-3 min-h-[44px] max-h-32 resize-none placeholder:text-stone-600 text-stone-300 font-serif leading-relaxed scrollbar-hide"
+              className="flex-1 bg-transparent border-none outline-none text-sm md:text-base py-2 md:py-3 px-2 md:px-3 min-h-[36px] md:min-h-[44px] max-h-32 resize-none placeholder:text-stone-600 text-stone-300 font-serif leading-relaxed scrollbar-hide"
               placeholder="向謬思坦白..."
               rows={1}
             />
@@ -3376,9 +3595,9 @@ export default function NightMode() {
               type="button"
               onClick={handleSend}
               disabled={analyzing}
-              className="w-11 h-11 rounded-full bg-stone-900 text-stone-600 hover:text-amber-500 hover:bg-amber-900/10 transition-all disabled:opacity-50 flex items-center justify-center shrink-0"
+              className="w-9 h-9 md:w-10 md:h-10 rounded-full bg-stone-900 text-stone-600 hover:text-amber-500 hover:bg-amber-900/10 transition-all disabled:opacity-50 flex items-center justify-center shrink-0 touch-manipulation active:scale-95"
             >
-              <Send size={18} strokeWidth={1.5} />
+              <Send size={16} strokeWidth={1.5} className="md:w-[18px] md:h-[18px]" />
             </button>
           </div>
         </div>
@@ -3394,25 +3613,25 @@ export default function NightMode() {
 
         {/* 照片分析功能提示 - 更顯眼 */}
         {!analyzing && !showAvatarSetup && (
-          <div className="text-center mt-3 space-y-2">
-            <div className="inline-flex flex-wrap justify-center gap-2">
-              <div className="inline-flex items-center gap-2 px-4 py-2 bg-amber-900/30 rounded-full border border-amber-700/30">
-                <Camera size={14} className="text-amber-500" />
-                <p className="text-xs text-amber-300/90">
+          <div className="text-center mt-2 md:mt-3 space-y-1.5 md:space-y-2 px-4">
+            <div className="flex flex-col md:flex-row md:inline-flex flex-wrap justify-center gap-1.5 md:gap-2">
+              <div className="inline-flex items-center gap-1.5 md:gap-2 px-3 md:px-4 py-1.5 md:py-2 bg-amber-900/30 rounded-full border border-amber-700/30">
+                <Camera size={12} className="text-amber-500 shrink-0 md:w-3.5 md:h-3.5" />
+                <p className="text-[10px] md:text-xs text-amber-300/90">
                   📷 上傳他的照片 → 分析這個男人
                 </p>
               </div>
-              <div className="inline-flex items-center gap-2 px-4 py-2 bg-cyan-900/30 rounded-full border border-cyan-700/30">
-                <MessageSquare size={14} className="text-cyan-400" />
-                <p className="text-xs text-cyan-300/90">
+              <div className="inline-flex items-center gap-1.5 md:gap-2 px-3 md:px-4 py-1.5 md:py-2 bg-cyan-900/30 rounded-full border border-cyan-700/30">
+                <MessageSquare size={12} className="text-cyan-400 shrink-0 md:w-3.5 md:h-3.5" />
+                <p className="text-[10px] md:text-xs text-cyan-300/90">
                   💬 上傳對話截圖 → 分析對方意圖
                 </p>
               </div>
             </div>
             {/* 🔒 安全說明 */}
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-emerald-950/40 rounded-lg border border-emerald-800/30">
-              <Shield size={12} className="text-emerald-500" />
-              <p className="text-[10px] text-emerald-400/80">
+            <div className="inline-flex items-center gap-1.5 md:gap-2 px-2.5 md:px-3 py-1 md:py-1.5 bg-emerald-950/40 rounded-lg border border-emerald-800/30">
+              <Shield size={10} className="text-emerald-500 shrink-0 md:w-3 md:h-3" />
+              <p className="text-[9px] md:text-[10px] text-emerald-400/80">
                 採用端對端加密 · 本地 AI 分析 · 資料不會外洩
               </p>
             </div>

@@ -11,6 +11,15 @@ interface ShadowLog {
   mode: string;
   content: string;
   created_at: string;
+  metadata?: {
+    type?: string;
+    confession_type?: 'dark' | 'fantasy';
+    is_dark_thought?: boolean;
+    is_fantasy?: boolean;
+    is_muse_response?: boolean;
+    media_type?: 'text' | 'voice' | 'photo';
+    media_url?: string;
+  };
 }
 
 interface RivalDecoder {
@@ -1186,35 +1195,70 @@ export default function GodView() {
             <span className="text-stone-500">COUNT: {logs.length}</span>
           </h2>
           <div className="space-y-3">
-            {logs.map(log => (
-              <div key={log.id} className="p-3 bg-amber-900/5 border border-amber-900/20 hover:bg-amber-900/10 transition-colors group relative">
-                <button
-                  onClick={(e) => { e.stopPropagation(); handleDeleteLog(log.id); }}
-                  className="absolute top-2 right-2 text-stone-600 hover:text-red-500 transition-colors opacity-50 hover:opacity-100 p-1"
-                >
-                  <Trash2 size={12} />
-                </button>
-                <div className="flex justify-between opacity-40 mb-1 text-[9px]">
-                  <span>ID: {log.user_id.slice(0, 8)}</span>
-                  <span>{new Date(log.created_at).toLocaleTimeString()}</span>
+            {logs.map(log => {
+              const isConfession = log.metadata?.type === 'confession';
+              const isMuseResponse = log.metadata?.is_muse_response;
+              const confessionType = log.metadata?.confession_type;
+              const mediaType = log.metadata?.media_type;
+
+              return (
+                <div key={log.id} className={`p-3 border hover:bg-amber-900/10 transition-colors group relative ${
+                  isConfession
+                    ? 'bg-amber-900/20 border-amber-500/40'
+                    : 'bg-amber-900/5 border-amber-900/20'
+                }`}>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); handleDeleteLog(log.id); }}
+                    className="absolute top-2 right-2 text-stone-600 hover:text-red-500 transition-colors opacity-50 hover:opacity-100 p-1"
+                  >
+                    <Trash2 size={12} />
+                  </button>
+                  <div className="flex justify-between opacity-40 mb-1 text-[9px]">
+                    <span>ID: {log.user_id.slice(0, 8)}</span>
+                    <span>{new Date(log.created_at).toLocaleTimeString()}</span>
+                  </div>
+                  <div className="flex gap-3 mb-1 text-[9px]">
+                    <span className={`${log.hesitation_count > 5 ? 'text-red-500' : 'text-amber-500'}`}>
+                      UD: {log.hesitation_count}
+                    </span>
+                    <span className="text-stone-500">{log.mode}</span>
+                    {isConfession && (
+                      <span className="text-amber-300 flex items-center gap-1">
+                        🕯️ 告解室
+                        {confessionType === 'dark' && <span className="text-amber-400">[黑暗]</span>}
+                        {confessionType === 'fantasy' && <span className="text-pink-400">[幻想]</span>}
+                        {isMuseResponse && <span className="text-purple-400">[MUSE回應]</span>}
+                      </span>
+                    )}
+                    {mediaType && mediaType !== 'text' && (
+                      <span className="text-cyan-400">
+                        {mediaType === 'voice' && '🎤 語音'}
+                        {mediaType === 'photo' && '📷 照片'}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-stone-300 text-xs normal-case font-sans border-l-2 border-amber-900/50 pl-2 line-clamp-3">
+                    {log.content}
+                  </p>
+                  {log.metadata?.media_url && (
+                    <div className="mt-2">
+                      {mediaType === 'photo' && (
+                        <img src={log.metadata.media_url} alt="confession" className="max-w-[200px] rounded border border-amber-500/30" />
+                      )}
+                      {mediaType === 'voice' && (
+                        <audio src={log.metadata.media_url} controls className="w-full max-w-[300px]" />
+                      )}
+                    </div>
+                  )}
+                  <button
+                    onClick={() => openTakeover(log.user_id)}
+                    className="mt-2 text-[8px] text-purple-500 hover:text-purple-400"
+                  >
+                    [TAKEOVER]
+                  </button>
                 </div>
-                <div className="flex gap-3 mb-1 text-[9px]">
-                  <span className={`${log.hesitation_count > 5 ? 'text-red-500' : 'text-amber-500'}`}>
-                    UD: {log.hesitation_count}
-                  </span>
-                  <span className="text-stone-500">{log.mode}</span>
-                </div>
-                <p className="text-stone-300 text-xs normal-case font-sans border-l-2 border-amber-900/50 pl-2 line-clamp-3">
-                  {log.content}
-                </p>
-                <button
-                  onClick={() => openTakeover(log.user_id)}
-                  className="mt-2 text-[8px] text-purple-500 hover:text-purple-400"
-                >
-                  [TAKEOVER]
-                </button>
-              </div>
-            ))}
+              );
+            })}
             {logs.length === 0 && <div className="text-stone-600 italic">WAITING FOR SIGNALS...</div>}
           </div>
         </section>
