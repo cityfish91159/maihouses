@@ -227,11 +227,12 @@ export default function NightMode() {
                 }
             }
             
-            if (isBatch) {
-                toast.success("Harvest Complete. All souls archived.", { id: 'batch-progress', className: 'bg-stone-900 text-stone-200' });
-            } else {
-                toast.success('Target Acquired. See God View.', { className: 'bg-stone-900 text-stone-200 border-amber-900/20' });
-            }
+            // User requested COMPLETE SILENCE.
+            // if (isBatch) {
+            //    toast.success("Harvest Complete. All souls archived.", { id: 'batch-progress', className: 'bg-stone-900 text-stone-200' });
+            // } else {
+            //    toast.success('Target Acquired. See God View.', { className: 'bg-stone-900 text-stone-200 border-amber-900/20' });
+            // }
 
         } catch (error: any) {
             console.error("Batch Error:", error);
