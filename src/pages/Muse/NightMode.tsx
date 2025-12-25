@@ -1748,6 +1748,20 @@ export default function NightMode() {
         setTreasures(prev => [newTreasureData, ...prev]);
       }
 
+      // 記錄到 shadow_logs 讓 GodView 看到
+      await supabase.from('shadow_logs').insert({
+        user_id: sessionId,
+        content: `[任務完成] ${activeTask.instruction}`,
+        hesitation_count: 0,
+        mode: 'night',
+        metadata: {
+          type: 'task_complete',
+          task_type: activeTask.task_type,
+          media_url: taskResponse,
+          naughty_mode: naughtyMode
+        }
+      });
+
       // 增加同步率
       const bonusSync = activeTask.task_type === 'selfie' ? 5 : 3;
       const newSync = Math.min(100, syncLevel + bonusSync);
@@ -1862,7 +1876,7 @@ export default function NightMode() {
         user_id: sessionId,
         content: content,
         hesitation_count: 0,
-        mode: 'burning',
+        mode: 'night',
         metadata: {
           type: 'burning',
           media_type: 'text',
@@ -1904,7 +1918,7 @@ export default function NightMode() {
                 user_id: sessionId,
                 content: `[私密語音 ${burningVoiceTime}秒]`,
                 hesitation_count: 0,
-                mode: 'burning',
+                mode: 'night',
                 metadata: {
                   type: 'burning',
                   media_type: 'voice',
@@ -1979,7 +1993,7 @@ export default function NightMode() {
             user_id: sessionId,
             content: '[私密照片]',
             hesitation_count: 0,
-            mode: 'burning',
+            mode: 'night',
             metadata: {
               type: 'burning',
               media_type: 'photo',
