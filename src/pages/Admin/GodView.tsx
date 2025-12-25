@@ -1,25 +1,8 @@
 "use client";
-import { Trash2 } from 'lucide-react'; // Ensure import
-
-// ... inside Shadow Logs map
-                        <button 
-                            onClick={(e) => { e.stopPropagation(); handleDeleteLog(log.id); }}
-                            className="absolute top-2 right-2 text-stone-600 hover:text-red-500 transition-colors opacity-50 hover:opacity-100"
-                            title="Delete Log"
-                        >
-                            <Trash2 size={14} />
-                        </button>
-
-// ... inside Rival Decoder map
-                    <button 
-                        onClick={(e) => { e.stopPropagation(); handleDeleteRival(r.id); }}
-                        className="absolute top-2 right-2 text-stone-600 hover:text-red-500 transition-colors z-20 opacity-50 hover:opacity-100"
-                        title="Delete Target"
-                    >
-                        <Trash2 size={14} />
-                    </button>
+import React, { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { toast } from 'sonner';
+import { Trash2 } from 'lucide-react';
 
 interface ShadowLog {
   id: string;
@@ -56,12 +39,32 @@ export default function GodView() {
     };
     fetchInitial();
 
-    // Realtime subscriptions
-    // Initial Fetch
-    fetchLogs();
-    fetchRivals();
+    // Helper functions for polling
+    const fetchLogs = async (silent = false) => {
+        const { data } = await supabase.from('shadow_logs').select('*').order('created_at', { ascending: false }).limit(50);
+        if (data) {
+             setLogs(prev => {
+                const currentIds = new Set(prev.map(l => l.id));
+                const newItems = data.filter(d => !currentIds.has(d.id));
+                if (newItems.length === 0) return prev; 
+                return [...newItems, ...prev].sort((a,b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 50);
+            });
+        }
+    };
 
-    // Real-time Subscription
+    const fetchRivals = async (silent = false) => {
+        const { data } = await supabase.from('rival_decoder').select('*').order('created_at', { ascending: false }).limit(20);
+        if (data) {
+              setRivals(prev => {
+                const currentIds = new Set(prev.map(r => r.id));
+                const newItems = data.filter(d => !currentIds.has(d.id));
+                if (newItems.length === 0) return prev;
+                return [...newItems, ...prev].sort((a,b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 20);
+            });
+        }
+    };
+
+    // Real-time subscriptions
     const channel = supabase
       .channel('god_view_shadow')
       .on(
@@ -72,7 +75,7 @@ export default function GodView() {
           setLogs((prev) => [newLog, ...prev]);
           toast('SIGNAL DETECTED', { 
             description: `ID: ${newLog.id.slice(0,4)}... | LEN: ${newLog.content.length}`,
-            className: 'bg-amber-900 border-amber-500 text-amber-100' // Distinct style
+            className: 'bg-amber-900 border-amber-500 text-amber-100' 
           });
         }
       )
@@ -84,7 +87,6 @@ export default function GodView() {
     const rivalSub = supabase.channel('rival_updates')
         .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'rival_decoder' }, (p: any) => {
             setRivals(prev => [p.new as any, ...prev]);
-            // Progress Indicator moved HERE
             toast.success("NEW SIGNAL INTERCEPTED", { 
                 description: `Target ID: ${p.new.id.slice(0,8)}`,
                 className: 'bg-red-950 text-red-500 border-red-900'
@@ -92,10 +94,9 @@ export default function GodView() {
         })
         .subscribe();
 
-    // BACKUP POLLING: Fetch every 5 seconds to ensure eventual consistency
-    // This fixes the "hit or miss" (有一句沒一句) issue by catching missed events.
+    // BACKUP POLLING
     const interval = setInterval(() => {
-        fetchLogs(true); // Silent fetch
+        fetchLogs(true);
         fetchRivals(true);
     }, 5000);
 
@@ -107,17 +108,14 @@ export default function GodView() {
   }, []);
 
   const handleDeleteLog = async (id: string) => {
-    // Optimistic UI update
     setLogs(prev => prev.filter(l => l.id !== id));
     const { error } = await supabase.from('shadow_logs').delete().eq('id', id);
     if (error) {
         toast.error("Delete Failed: " + error.message);
-        // Revert (fetch again or handle state)
     }
   };
 
   const handleDeleteRival = async (id: string) => {
-    // Optimistic UI update
     setRivals(prev => prev.filter(r => r.id !== id));
     const { error } = await supabase.from('rival_decoder').delete().eq('id', id);
     if (error) {
@@ -133,12 +131,11 @@ export default function GodView() {
              <button 
                 onClick={async () => {
                     toast.loading("DIAGNOSTIC CHECK...", { id: 'diag' });
-                    // Attempt to insert a dummy log to checking RLS
                     const { error } = await supabase.from('shadow_logs').insert({
-                        user_id: '00000000-0000-0000-0000-000000000000', // Dummy UUID
+                        user_id: '00000000-0000-0000-0000-000000000000',
                         content: 'DIAGNOSTIC_SIGNAL_CHECK',
                         hesitation_count: 0,
-                        mode: 'night' // Use valid mode to pass constraint if not dropped yet
+                        mode: 'night'
                     });
                     
                     if (error) {
@@ -167,7 +164,7 @@ export default function GodView() {
             {logs.map(log => {
                 let decoded = '---';
                 try {
-                    decoded = log.content; // Direct raw content
+                    decoded = log.content; 
                 } catch (e) { decoded = '[Display Error]'; }
                 
                 return (
@@ -217,7 +214,6 @@ export default function GodView() {
                     </button>
                     <div className="flex gap-4">
                         <div className="w-24 h-24 bg-black border border-white/10 overflow-hidden relative shrink-0">
-                             {/* Improved Image handling */}
                              <img src={r.image_url} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500" />
                              <div className="absolute bottom-0 right-0 bg-red-600 text-white px-1 text-[9px] font-bold">
                                 {r.risk_score}%
