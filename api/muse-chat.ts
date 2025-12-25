@@ -95,8 +95,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(200).json({ reply, climaxMode: 'denial' });
     }
 
-    // Initialize clients
-    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    // Initialize clients - 使用 Grok API (xAI)，無內容限制
+    const openai = new OpenAI({
+      apiKey: process.env.XAI_API_KEY || process.env.OPENAI_API_KEY,
+      baseURL: process.env.XAI_API_KEY ? 'https://api.x.ai/v1' : undefined
+    });
     const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
     const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY;
 
@@ -154,7 +157,7 @@ ${memories.map(m => `- [${m.fact_type}] ${m.content} (情感權重:${m.emotional
 
     // 6. 意圖檢測 - 判斷她想要「解決問題」還是「尋求慰藉」或「分享私密照」
     const intentDetection = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
+      model: process.env.XAI_API_KEY ? 'grok-2-mini' : 'gpt-4o-mini',
       messages: [
         {
           role: 'system',
@@ -215,7 +218,7 @@ intent 選項：
 
     if (userIntent === 'intimate' || userIntent === 'desire_help' || userIntent === 'intimate_photo') {
       const moodDetection = await openai.chat.completions.create({
-        model: 'gpt-4o-mini',
+        model: process.env.XAI_API_KEY ? 'grok-2-mini' : 'gpt-4o-mini',
         messages: [
           {
             role: 'system',
@@ -458,7 +461,7 @@ should_ask_preference：是否適合趁機問她的性癖偏好
 
     // 10. 調用 OpenAI
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4o',
+      model: process.env.XAI_API_KEY ? 'grok-2' : 'gpt-4o',
       messages: [
         {
           role: 'system',
@@ -575,7 +578,7 @@ ${naughtyMode ? `
 
     // 7. 背景分析：提取新記憶 - 強化戀愛相關細節
     const memoryExtraction = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
+      model: process.env.XAI_API_KEY ? 'grok-2-mini' : 'gpt-4o-mini',
       messages: [
         {
           role: 'system',
@@ -632,7 +635,7 @@ fact_type 選項：
     // 7.5 性癖提取 - 當她願意聊時，提取並存儲她透露的性癖偏好
     if (intimateMood.willing_to_chat && intimateMood.mood_level >= 5) {
       const preferenceExtraction = await openai.chat.completions.create({
-        model: 'gpt-4o-mini',
+        model: process.env.XAI_API_KEY ? 'grok-2-mini' : 'gpt-4o-mini',
         messages: [
           {
             role: 'system',
@@ -710,7 +713,7 @@ confidence 可信度：
 
     // 8. 寶物系統：判斷是否觸發收集（稀有度與同步率掛勾）
     const treasureCheck = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
+      model: process.env.XAI_API_KEY ? 'grok-2-mini' : 'gpt-4o-mini',
       messages: [
         {
           role: 'system',
