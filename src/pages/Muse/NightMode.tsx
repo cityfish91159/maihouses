@@ -140,6 +140,7 @@ export default function NightMode() {
   const [analyzing, setAnalyzing] = useState(false);
   const [report, setReport] = useState<Report | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [fullscreenImage, setFullscreenImage] = useState<string | null>(null); // 全螢幕照片查看
   const [conversationReport, setConversationReport] = useState<ConversationReport | null>(null);
   const [conversationPreviewImage, setConversationPreviewImage] = useState<string | null>(null);
   const [isTyping, setIsTyping] = useState(false);
@@ -2703,6 +2704,15 @@ export default function NightMode() {
                       <Star size={12} className={rarityColors[treasure.rarity]?.text} />
                     </div>
                     <h3 className="font-medium text-stone-200 mb-1">{treasure.title}</h3>
+                    {/* 寶物照片 - 可點擊查看原圖 */}
+                    {treasure.media_url && (
+                      <img
+                        src={treasure.media_url}
+                        alt={treasure.title}
+                        className="w-full h-32 object-cover rounded-lg mb-2 cursor-pointer hover:opacity-80 transition-opacity"
+                        onClick={() => setFullscreenImage(treasure.media_url || null)}
+                      />
+                    )}
                     <p className="text-xs text-stone-500 line-clamp-2">{treasure.content}</p>
                   </div>
                 ))
@@ -3967,6 +3977,38 @@ export default function NightMode() {
         }
         .animate-fade-in { animation: fade-in 1s ease-out forwards; }
       `}</style>
+
+      {/* 📷 全螢幕照片查看器 */}
+      {fullscreenImage && (
+        <div
+          className="fixed inset-0 bg-black/95 z-[200] flex items-center justify-center p-4 animate-fade-in"
+          onClick={() => setFullscreenImage(null)}
+        >
+          <button
+            className="absolute top-4 right-4 p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+            onClick={() => setFullscreenImage(null)}
+          >
+            <X size={24} className="text-white" />
+          </button>
+          <img
+            src={fullscreenImage}
+            alt="Full size"
+            className="max-w-full max-h-full object-contain rounded-lg"
+            onClick={(e) => e.stopPropagation()}
+          />
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-3">
+            <a
+              href={fullscreenImage}
+              download="muse-photo.jpg"
+              className="px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 text-white text-sm flex items-center gap-2"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Download size={16} />
+              下載
+            </a>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

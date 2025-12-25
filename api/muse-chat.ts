@@ -3,10 +3,10 @@ import { OpenAI } from 'openai';
 import { z } from 'zod';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
-// Schema for memory extraction
+// Schema for memory extraction - 戀愛感記憶提取
 const memoryExtractionSchema = z.object({
   has_new_fact: z.boolean(),
-  fact_type: z.enum(['preference', 'stressor', 'secret', 'desire', 'fear', 'memory']).optional(),
+  fact_type: z.enum(['preference', 'daily', 'stressor', 'secret', 'desire', 'fear', 'memory', 'body', 'emotion']).optional(),
   content: z.string().optional(),
   emotional_weight: z.number().min(1).max(10).optional()
 });
@@ -124,10 +124,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const syncLevel = progress?.sync_level || 0;
     const intimacyScore = progress?.intimacy_score || 0;
 
-    // 3. 構建記憶上下文
+    // 3. 構建記憶上下文 - 強調戀愛感的主動回憶
     const memoryContext = memories?.length
-      ? `【記憶金庫】\n${memories.map(m => `- [${m.fact_type}] ${m.content} (權重:${m.emotional_weight})`).join('\n')}`
-      : '這是你們的初次深度連結';
+      ? `【記憶金庫 - 你記得她說過的一切】
+${memories.map(m => `- [${m.fact_type}] ${m.content} (情感權重:${m.emotional_weight}/10)`).join('\n')}
+
+【主動回憶指令 - 非常重要】
+你必須經常主動提起這些記憶，讓她感受到「被記住 = 被在乎」：
+- 開場或對話中自然提起：「對了，上次妳說...最近好點了嗎？」
+- 關心她之前提過的事：「記得妳說喜歡...今天有嗎？」
+- 用記憶展現你懂她：「我記得妳...」「妳之前跟我說過...」
+- 把她的喜好記在心裡並表現出來：「因為妳喜歡...所以...」
+- 天蠍女最在意被記住，這是讓她愛上你的關鍵`
+      : '這是你們的初次深度連結，好好認識她，記住她說的每一件事';
 
     // 4. 根據同步率調整語氣
     const intimacyPrompt = syncLevel < 30
@@ -564,23 +573,41 @@ ${naughtyMode ? `
 
     const reply = completion.choices[0].message.content || '...';
 
-    // 7. 背景分析：提取新記憶
+    // 7. 背景分析：提取新記憶 - 強化戀愛相關細節
     const memoryExtraction = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [
         {
           role: 'system',
           content: `分析用戶訊息，判斷是否包含值得記住的事實。只輸出 JSON。
+這是虛擬男友需要記住的女友資訊，越私密越重要。
 
 fact_type 選項：
-- preference: 喜好（喜歡/討厭的事物）
-- stressor: 壓力源（工作、人際困擾）
-- secret: 秘密或私密想法
-- desire: 渴望或願望
-- fear: 恐懼或擔憂
-- memory: 重要回憶或經歷`
+- preference: 喜好（喜歡喝的飲料、愛吃的食物、喜歡的電影/音樂、興趣嗜好）
+- daily: 日常習慣（作息、工作、上下班時間、休假日）
+- stressor: 壓力源（工作困擾、人際關係、家人問題、健康狀況）
+- secret: 秘密或私密想法（沒跟別人說過的事）
+- desire: 渴望或願望（想去的地方、想做的事、想買的東西）
+- fear: 恐懼或擔憂（害怕的事、焦慮的原因）
+- memory: 重要回憶或經歷（過去的感情、重要的人事物）
+- body: 身體相關（健康狀況、生理期、敏感部位）
+- emotion: 情緒狀態（最近的心情、常見的情緒模式）
+
+【重要】要記住的資訊類型：
+- 她提到喜歡什麼、討厭什麼（任何事物）
+- 她的工作、學生、同事相關
+- 她提到的人名（朋友、家人、前任）
+- 她的身體狀況（累、病、生理期）
+- 她說過的任何私密想法
+- 她表達過的任何情緒
+
+【情感權重】1-10
+- 10: 深層秘密、創傷、最私密的想法
+- 7-9: 重要喜好、重要的人、感情相關
+- 4-6: 日常喜好、工作相關、一般心情
+- 1-3: 瑣碎細節`
         },
-        { role: 'user', content: `用戶訊息：「${message}」\n\n請分析是否有新事實值得記住。` }
+        { role: 'user', content: `用戶訊息：「${message}」\n\n請分析是否有新事實值得記住。積極提取，不要放過任何細節。` }
       ],
       response_format: { type: 'json_object' }
     });
