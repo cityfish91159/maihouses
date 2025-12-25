@@ -1343,7 +1343,7 @@ export default function NightMode() {
             isTyping ? 'border-purple-500/30 shadow-[0_0_30px_rgba(100,0,100,0.1)]' : 'border-white/10 shadow-2xl'
           }`}>
 
-            {/* Upload Button */}
+            {/* Upload Button - 男生照片分析 */}
             <div
               className="relative group/lens p-3 cursor-pointer shrink-0"
               onClick={() => fileInputRef.current?.click()}
@@ -1353,6 +1353,11 @@ export default function NightMode() {
                 <Camera size={20} strokeWidth={1.5} className="text-stone-500 group-hover/lens:text-amber-500 transition-colors" />
               </div>
               <div className="absolute inset-0 rounded-full border border-purple-500/0 group-hover/lens:border-purple-500/30 group-hover/lens:animate-ping opacity-20" />
+              {/* 提示氣泡 */}
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-amber-900/90 text-amber-100 text-[10px] rounded-xl whitespace-nowrap opacity-0 group-hover/lens:opacity-100 transition-opacity pointer-events-none">
+                上傳他的照片，讓我幫妳看看
+                <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-amber-900/90" />
+              </div>
               <input
                 type="file"
                 ref={fileInputRef}
@@ -1388,6 +1393,15 @@ export default function NightMode() {
             <span className="text-[10px] text-purple-500/50 animate-pulse">
               MUSE 感知到妳的猶豫...
             </span>
+          </div>
+        )}
+
+        {/* 首次提示 - 照片分析功能 */}
+        {chatHistory.length === 0 && !analyzing && !showAvatarSetup && (
+          <div className="text-center mt-3 animate-pulse">
+            <p className="text-[11px] text-amber-600/70">
+              💡 點擊相機上傳「他」的照片，讓 {museName} 幫妳分析這個男生好不好
+            </p>
           </div>
         )}
       </footer>
