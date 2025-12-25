@@ -2046,7 +2046,7 @@ export default function NightMode() {
     try {
       const sessionId = getSessionId();
 
-      // 調用新的 muse-chat API
+      // 🚀 串流模式 - 邊生成邊顯示
       const response = await fetch('/api/muse-chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -2054,7 +2054,8 @@ export default function NightMode() {
           message: userMessage,
           userId: sessionId,
           hesitationCount: backspaceCount,
-          naughtyMode: naughtyMode
+          naughtyMode: naughtyMode,
+          stream: true // 啟用串流
         })
       });
 
@@ -2062,52 +2063,62 @@ export default function NightMode() {
         throw new Error(`API Error: ${response.status}`);
       }
 
-      const result = await response.json();
-
-      // 添加 MUSE 回覆到歷史
+      // 先加入空的 MUSE 訊息，之後逐步更新
+      const museMessageIndex = chatHistory.length + 1; // +1 因為剛加了用戶訊息
       setChatHistory(prev => [...prev, {
         role: 'muse',
-        content: result.reply,
+        content: '',
         timestamp: new Date()
       }]);
 
-      // 更新同步率
-      if (result.sync_level) setSyncLevel(result.sync_level);
-      if (result.intimacy_score) setIntimacyScore(result.intimacy_score);
+      // 讀取串流
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+      let fullReply = '';
 
-      // 處理新寶物
-      if (result.new_treasure) {
-        setNewTreasure(result.new_treasure);
-        setTreasures(prev => [result.new_treasure, ...prev]);
-        triggerHeartbeat([100, 50, 100, 50, 200]);
-        toast.success(`獲得寶物：${result.new_treasure.title}`, {
-          className: 'bg-purple-950 text-purple-200 border border-purple-800'
-        });
-      }
+      if (reader) {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
 
-      // 🔥 親密盲眼模式：desire_help 意圖時觸發
-      if (result.intent === 'desire_help') {
-        const hour = new Date().getHours();
-        const isLateNight = hour >= 22 || hour < 4; // 深夜時段
-        const isHighSync = syncLevel >= 60; // 高同步率
+          const chunk = decoder.decode(value);
+          const lines = chunk.split('\n');
 
-        // 自然觸發：深夜或高同步率直接進入，否則詢問
-        if (isLateNight || isHighSync) {
-          // 直接進入親密模式
-          setPendingIntimateReply(result.reply);
-          enterIntimateMode();
-        } else {
-          // 顯示確認對話框
-          setPendingIntimateReply(result.reply);
-          setShowIntimateConfirm(true);
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              try {
+                const data = JSON.parse(line.slice(6));
+
+                if (data.done) {
+                  // 串流結束，更新狀態
+                  if (data.sync_level) setSyncLevel(data.sync_level);
+                  if (data.intimacy_score) setIntimacyScore(data.intimacy_score);
+                } else if (data.content) {
+                  // 累積回覆並即時更新 UI
+                  fullReply += data.content;
+                  setChatHistory(prev => {
+                    const updated = [...prev];
+                    if (updated[museMessageIndex]) {
+                      updated[museMessageIndex] = {
+                        ...updated[museMessageIndex],
+                        content: fullReply
+                      };
+                    }
+                    return updated;
+                  });
+                }
+              } catch {
+                // JSON parse error, skip
+              }
+            }
+          }
         }
-        return;
       }
 
       // 設置報告顯示
       setReport({
         risk: 0,
-        whisper: result.reply
+        whisper: fullReply
       });
 
       setBackspaceCount(0);

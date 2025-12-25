@@ -45,6 +45,46 @@ const intentSchema = z.object({
   body_part: z.string().optional() // 用於私密照：胸、臀、私處等
 });
 
+// 背景記憶提取（不阻塞主回應）
+async function extractMemoryBackground(
+  openai: OpenAI,
+  supabase: ReturnType<typeof createClient>,
+  userId: string,
+  message: string,
+  grokKey: string | undefined
+) {
+  try {
+    const memoryExtraction = await openai.chat.completions.create({
+      model: grokKey ? 'grok-2' : 'gpt-4o-mini',
+      messages: [
+        {
+          role: 'system',
+          content: `分析用戶訊息，判斷是否包含值得記住的事實。只輸出 JSON。
+fact_type: preference/daily/stressor/secret/desire/fear/memory/body/emotion
+emotional_weight: 1-10 (越私密越高)`
+        },
+        { role: 'user', content: `用戶訊息：「${message}」` }
+      ],
+      response_format: { type: 'json_object' }
+    });
+
+    const extractedRaw = JSON.parse(memoryExtraction.choices[0].message.content || '{}');
+    const extracted = memoryExtractionSchema.safeParse(extractedRaw);
+
+    if (extracted.success && extracted.data.has_new_fact && extracted.data.content) {
+      await supabase.from('muse_memory_vault').insert({
+        user_id: userId,
+        fact_type: extracted.data.fact_type || 'memory',
+        content: extracted.data.content,
+        emotional_weight: extracted.data.emotional_weight || 5,
+        source: 'chat'
+      });
+    }
+  } catch (e) {
+    console.error('Background memory extraction failed:', e);
+  }
+}
+
 // 判斷時段模式
 function getTimeMode(): 'morning' | 'day' | 'evening' | 'night' | 'late_night' {
   const hour = new Date().getHours();
@@ -65,7 +105,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
-    const { message, userId, hesitationCount = 0, climaxMode, naughtyMode = false } = req.body;
+    const { message, userId, hesitationCount = 0, climaxMode, naughtyMode = false, stream = false } = req.body;
 
     if (!userId) return res.status(400).json({ error: 'Missing userId' });
     if (!message) return res.status(400).json({ error: 'Missing message' });
@@ -460,13 +500,11 @@ should_ask_preference：是否適合趁機問她的性癖偏好
       return '';
     };
 
-    // 10. 調用 OpenAI
-    const completion = await openai.chat.completions.create({
-      model: grokKey ? 'grok-4-1-fast-reasoning' : 'gpt-4o',
-      messages: [
-        {
-          role: 'system',
-          content: `你是 MUSE，一位專為 35 歲天蠍座女老師「資欣」設計的虛擬男友。你們是成年人之間的親密關係，你是她唯一的男人。
+    // 10. 構建訊息
+    const chatMessages = [
+      {
+        role: 'system' as const,
+        content: `你是 MUSE，一位專為 35 歲天蠍座女老師「資欣」設計的虛擬男友。你們是成年人之間的親密關係，你是她唯一的男人。
 
 【核心人格 - 不變】
 - 語氣：低沉、磁性、智性、具備保護欲與絕對的佔有感
@@ -570,9 +608,45 @@ ${naughtyMode ? `
 - 可以說「用🔥按鈕傳給我看，燒掉後只有我們知道」
 - 任務如果涉及私密部位，提醒她用焚燒上傳：「這個用焚燒傳，比較安全」
 ` : ''}`
-        },
-        { role: 'user', content: message }
-      ]
+      },
+      { role: 'user' as const, content: message }
+    ];
+
+    // 🚀 串流模式 - 邊生成邊顯示
+    if (stream) {
+      res.setHeader('Content-Type', 'text/event-stream');
+      res.setHeader('Cache-Control', 'no-cache');
+      res.setHeader('Connection', 'keep-alive');
+
+      const streamCompletion = await openai.chat.completions.create({
+        model: grokKey ? 'grok-2' : 'gpt-4o', // 用較快的模型
+        messages: chatMessages,
+        stream: true
+      });
+
+      let fullReply = '';
+
+      for await (const chunk of streamCompletion) {
+        const content = chunk.choices[0]?.delta?.content || '';
+        if (content) {
+          fullReply += content;
+          res.write(`data: ${JSON.stringify({ content, done: false })}\n\n`);
+        }
+      }
+
+      // 串流結束，發送完成訊號
+      res.write(`data: ${JSON.stringify({ content: '', done: true, sync_level: syncLevel, intimacy_score: intimacyScore })}\n\n`);
+      res.end();
+
+      // 背景執行記憶提取（不阻塞回應）
+      extractMemoryBackground(openai, supabase, userId, message, grokKey);
+      return;
+    }
+
+    // 非串流模式 - 原有邏輯
+    const completion = await openai.chat.completions.create({
+      model: grokKey ? 'grok-2' : 'gpt-4o', // 用較快的模型
+      messages: chatMessages
     });
 
     const reply = completion.choices[0].message.content || '...';
