@@ -58,9 +58,17 @@ interface ConversationReport {
   muse_comment: string;
 }
 
-// Helper to trigger haptic feedback
+// Helper to trigger haptic feedback (only works after user interaction)
+let hasUserInteracted = false;
+const markUserInteraction = () => { hasUserInteracted = true; };
 const triggerHeartbeat = (pattern = [50, 100, 50, 100]) => {
-  if (navigator.vibrate) navigator.vibrate(pattern);
+  if (hasUserInteracted && navigator.vibrate) {
+    try {
+      navigator.vibrate(pattern);
+    } catch {
+      // Vibration not supported or blocked
+    }
+  }
 };
 
 // 獲取或創建 Session ID
@@ -282,6 +290,25 @@ export default function NightMode() {
 
   // Activate Shadow Sync
   useShadowSync(input, backspaceCount);
+
+  // 🎯 標記用戶已互動（解鎖震動功能）
+  useEffect(() => {
+    const handleInteraction = () => {
+      markUserInteraction();
+      // 移除監聽器，只需要標記一次
+      document.removeEventListener('click', handleInteraction);
+      document.removeEventListener('touchstart', handleInteraction);
+      document.removeEventListener('keydown', handleInteraction);
+    };
+    document.addEventListener('click', handleInteraction);
+    document.addEventListener('touchstart', handleInteraction);
+    document.addEventListener('keydown', handleInteraction);
+    return () => {
+      document.removeEventListener('click', handleInteraction);
+      document.removeEventListener('touchstart', handleInteraction);
+      document.removeEventListener('keydown', handleInteraction);
+    };
+  }, []);
 
   // 🔒 初始化色色限制狀態 - 每分鐘檢查一次
   useEffect(() => {
