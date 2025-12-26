@@ -177,7 +177,42 @@ export default function GodView() {
       if (rivalData) setRivals(rivalData as RivalDecoder[]);
 
       const { data: progressData } = await supabase.from('user_progress').select('*').order('sync_level', { ascending: false });
-      if (progressData) setUserProgress(progressData);
+
+      // 🎮 從 shadow_logs 取得每個用戶的最新模式狀態
+      if (progressData) {
+        // 獲取所有用戶的最新 shadow_log
+        const userIds = progressData.map(u => u.user_id);
+        const { data: latestLogs } = await supabase
+          .from('shadow_logs')
+          .select('user_id, metadata, created_at')
+          .in('user_id', userIds)
+          .order('created_at', { ascending: false });
+
+        // 建立用戶 -> 最新 log 的映射
+        const userModeMap: Record<string, 'normal' | 'naughty' | 'work'> = {};
+        if (latestLogs) {
+          const seenUsers = new Set<string>();
+          for (const log of latestLogs) {
+            if (seenUsers.has(log.user_id)) continue;
+            seenUsers.add(log.user_id);
+            const meta = log.metadata as { naughty_mode?: boolean; work_mode?: boolean } | null;
+            if (meta?.naughty_mode) {
+              userModeMap[log.user_id] = 'naughty';
+            } else if (meta?.work_mode) {
+              userModeMap[log.user_id] = 'work';
+            } else {
+              userModeMap[log.user_id] = 'normal';
+            }
+          }
+        }
+
+        // 合併模式狀態到 progressData
+        const enrichedProgress = progressData.map(user => ({
+          ...user,
+          current_mode: userModeMap[user.user_id] || user.current_mode || 'normal'
+        }));
+        setUserProgress(enrichedProgress);
+      }
 
       const { data: memoryData } = await supabase.from('muse_memory_vault').select('*').order('created_at', { ascending: false }).limit(50);
       if (memoryData) setMemories(memoryData);

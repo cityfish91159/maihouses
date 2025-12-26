@@ -30,7 +30,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const { imageUrl, text, userId, analysisType = 'rival' } = req.body;
+    const { imageUrl, text, userId, analysisType = 'rival', gender } = req.body;
 
     if (!userId) {
       return res.status(400).json({ error: 'Missing userId' });
@@ -139,23 +139,31 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         });
 
     } else if (imageUrl) {
-        // --- Step 1: 先判斷性別 ---
-        const genderDetection = await openai.chat.completions.create({
-          model: "gpt-4o",
-          messages: [
-            {
-              role: "user",
-              content: [
-                { type: "text", text: "這張照片中的主要人物是男性還是女性？只回答 'male' 或 'female'。如果無法判斷或沒有人，回答 'unknown'。" },
-                { type: "image_url", image_url: { url: imageUrl } }
-              ]
-            }
-          ],
-          max_tokens: 10
-        });
+        // --- 使用前端傳入的性別，若無則自動偵測 ---
+        let isFemale = false;
 
-        const detectedGender = (genderDetection.choices[0].message.content || '').toLowerCase().trim();
-        const isFemale = detectedGender.includes('female');
+        if (gender === 'female') {
+          isFemale = true;
+        } else if (gender === 'male') {
+          isFemale = false;
+        } else {
+          // 如果前端沒傳 gender，則使用 AI 自動偵測（向後相容）
+          const genderDetection = await openai.chat.completions.create({
+            model: "gpt-4o",
+            messages: [
+              {
+                role: "user",
+                content: [
+                  { type: "text", text: "這張照片中的主要人物是男性還是女性？只回答 'male' 或 'female'。如果無法判斷或沒有人，回答 'unknown'。" },
+                  { type: "image_url", image_url: { url: imageUrl } }
+                ]
+              }
+            ],
+            max_tokens: 10
+          });
+          const detectedGender = (genderDetection.choices[0].message.content || '').toLowerCase().trim();
+          isFemale = detectedGender.includes('female');
+        }
 
         if (isFemale) {
           // --- 女生照片分析模式 ---

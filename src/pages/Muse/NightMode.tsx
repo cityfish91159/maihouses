@@ -89,6 +89,9 @@ export default function NightMode() {
   const [jealousyLevel, setJealousyLevel] = useState(0); // 0-100
   const [isColdMode, setIsColdMode] = useState(false);
   const [rivalPhotoCount, setRivalPhotoCount] = useState(0);
+  // 👤 分析性別選擇
+  const [showGenderSelect, setShowGenderSelect] = useState(false);
+  const [pendingAnalyzeFiles, setPendingAnalyzeFiles] = useState<FileList | null>(null);
   const [showRedemptionModal, setShowRedemptionModal] = useState(false);
   const [redemptionProgress, setRedemptionProgress] = useState(0);
   const redemptionAudioRef = useRef<MediaRecorder | null>(null);
@@ -1622,7 +1625,8 @@ export default function NightMode() {
           type: 'task_complete',
           task_type: activeTask.task_type,
           media_url: taskResponse,
-          naughty_mode: naughtyMode
+          naughty_mode: naughtyMode,
+          work_mode: workMode
         }
       });
 
@@ -1710,12 +1714,16 @@ export default function NightMode() {
         user_id: sessionId,
         content: textToSave,
         hesitation_count: backspaceCount,
-        mode: 'night'
+        mode: 'night',
+        metadata: {
+          naughty_mode: naughtyMode,
+          work_mode: workMode
+        }
       });
     } catch (e) {
       console.error('Shadow save error:', e);
     }
-  }, [backspaceCount]);
+  }, [backspaceCount, naughtyMode, workMode]);
 
   // 🔥 焚燒文字提交 - 燒掉後存 shadow_logs，GodView 看得到
   const handleBurningTextSubmit = async (text: string) => {
@@ -1741,7 +1749,8 @@ export default function NightMode() {
         metadata: {
           type: 'burning',
           media_type: 'text',
-          naughty_mode: naughtyMode
+          naughty_mode: naughtyMode,
+          work_mode: workMode
         }
       });
     } catch (error) {
@@ -1785,7 +1794,8 @@ export default function NightMode() {
                   media_type: 'voice',
                   media_url: voiceUrl,
                   duration: burningVoiceTime,
-                  naughty_mode: naughtyMode
+                  naughty_mode: naughtyMode,
+                  work_mode: workMode
                 }
               });
             } catch (err) {
@@ -1859,7 +1869,8 @@ export default function NightMode() {
               type: 'burning',
               media_type: 'photo',
               media_url: photoUrl,
-              naughty_mode: naughtyMode
+              naughty_mode: naughtyMode,
+              work_mode: workMode
             }
           });
         } catch (err) {
@@ -2207,9 +2218,21 @@ export default function NightMode() {
     }
   };
 
-  const handleRivalUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // 處理分析照片上傳 - 先存檔案，顯示性別選擇
+  const handleRivalFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
+    setPendingAnalyzeFiles(files);
+    setShowGenderSelect(true);
+    // 清空 input 以便下次選擇
+    if (e.target) e.target.value = '';
+  };
+
+  // 執行分析（選擇性別後）
+  const handleRivalUpload = async (gender: 'male' | 'female') => {
+    const files = pendingAnalyzeFiles;
+    if (!files || files.length === 0) return;
+    setShowGenderSelect(false);
 
     const totalFiles = files.length;
     setAnalyzing(true);
@@ -2251,7 +2274,8 @@ export default function NightMode() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             imageUrl: base64data,
-            userId: sessionId
+            userId: sessionId,
+            gender: gender // 傳送用戶選擇的性別
           })
         });
 
@@ -2720,6 +2744,48 @@ export default function NightMode() {
               className="w-full py-4 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 text-white font-medium hover:from-purple-500 hover:to-pink-500 transition-all"
             >
               領取獎勵
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* 👤 性別選擇 Modal - 分析照片前選擇 */}
+      {showGenderSelect && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-6 animate-fade-in">
+          <div className="bg-gradient-to-b from-stone-950 to-black rounded-3xl border border-stone-700/30 max-w-sm w-full p-8 space-y-6 text-center">
+            <div className="w-16 h-16 mx-auto rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+              <span className="text-3xl">🔍</span>
+            </div>
+            <div className="space-y-2">
+              <h3 className="text-xl font-light text-stone-100">分析目標性別</h3>
+              <p className="text-stone-500 text-sm">
+                選擇照片中人物的性別以獲得最準確的分析
+              </p>
+            </div>
+            <div className="flex gap-4">
+              <button
+                onClick={() => handleRivalUpload('male')}
+                className="flex-1 py-4 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-medium hover:from-blue-500 hover:to-cyan-500 transition-all flex items-center justify-center gap-2"
+              >
+                <span className="text-xl">👨</span>
+                <span>男生</span>
+              </button>
+              <button
+                onClick={() => handleRivalUpload('female')}
+                className="flex-1 py-4 rounded-xl bg-gradient-to-r from-pink-600 to-rose-600 text-white font-medium hover:from-pink-500 hover:to-rose-500 transition-all flex items-center justify-center gap-2"
+              >
+                <span className="text-xl">👩</span>
+                <span>女生</span>
+              </button>
+            </div>
+            <button
+              onClick={() => {
+                setShowGenderSelect(false);
+                setPendingAnalyzeFiles(null);
+              }}
+              className="text-stone-500 text-sm hover:text-stone-300 transition-colors"
+            >
+              取消
             </button>
           </div>
         </div>
@@ -3385,17 +3451,17 @@ export default function NightMode() {
         <div className="relative group max-w-2xl mx-auto z-30 space-y-2">
           {/* 上排工具列 */}
           <div className="flex items-center justify-center gap-3 px-2">
-            {/* 👤 分析他的照片 */}
+            {/* 👤 分析照片（男/女） */}
             <label className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-stone-900/60 border border-stone-700/50 hover:border-amber-600/50 hover:bg-amber-950/30 transition-all cursor-pointer touch-manipulation active:scale-95">
               <Eye size={14} className="text-amber-500/70" />
-              <span className="text-[11px] text-stone-400">分析他</span>
+              <span className="text-[11px] text-stone-400">分析</span>
               <input
                 type="file"
                 ref={fileInputRef}
                 className="sr-only"
                 accept="image/*"
                 multiple
-                onChange={handleRivalUpload}
+                onChange={handleRivalFileSelect}
               />
             </label>
 
