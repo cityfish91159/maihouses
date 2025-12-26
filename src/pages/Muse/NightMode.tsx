@@ -9,131 +9,11 @@ import { supabase } from '../../lib/supabase';
 import imageCompression from 'browser-image-compression';
 import { toast } from 'sonner';
 
-// Types
-interface SoulTreasure {
-  id: string;
-  treasure_type: string;
-  title: string;
-  content: string;
-  media_url?: string;
-  rarity: 'common' | 'rare' | 'epic' | 'legendary' | 'mythic';
-  unlocked_at: string;
-}
-
-interface MuseTask {
-  id: string;
-  task_type: 'selfie' | 'voice' | 'confession' | 'photo';
-  instruction: string;
-  location_hint?: string;
-  status: 'pending' | 'completed' | 'expired';
-  reward_rarity: string;
-  created_at: string;
-}
-
-interface ChatMessage {
-  role: 'user' | 'muse';
-  content: string;
-  timestamp: Date;
-  hasTask?: boolean;
-  task?: MuseTask;
-}
-
-interface Report {
-  risk: number;
-  whisper: string;
-  physiognomy?: string;
-  socio_status?: string;
-  hidden_intent?: string;
-  red_flag?: string;
-  user_zodiac_insight?: string; // AI 對用戶星座的洞察
-}
-
-// 對話截圖分析報告
-interface ConversationReport {
-  trust_score: number;
-  intent_analysis: string;
-  red_flags: string;
-  green_flags: string;
-  advice: string;
-  muse_comment: string;
-}
-
-// Helper to trigger haptic feedback (only works after user interaction)
-let hasUserInteracted = false;
-const markUserInteraction = () => { hasUserInteracted = true; };
-const triggerHeartbeat = (pattern = [50, 100, 50, 100]) => {
-  if (hasUserInteracted && navigator.vibrate) {
-    try {
-      navigator.vibrate(pattern);
-    } catch {
-      // Vibration not supported or blocked
-    }
-  }
-};
-
-// 獲取或創建 Session ID
-const getSessionId = (): string => {
-  let sessionId = localStorage.getItem('muse_session_id');
-  if (!sessionId) {
-    sessionId = crypto.randomUUID();
-    localStorage.setItem('muse_session_id', sessionId);
-  }
-  return sessionId;
-};
-
-// 影子同步 Hook
-const useShadowSync = (text: string, backspaceCount: number) => {
-  const lastSync = useRef('');
-  const currentTextRef = useRef(text);
-  const currentBackspaceRef = useRef(backspaceCount);
-
-  useEffect(() => {
-    currentTextRef.current = text;
-    currentBackspaceRef.current = backspaceCount;
-  }, [text, backspaceCount]);
-
-  useEffect(() => {
-    const interval = setInterval(async () => {
-      const currentText = currentTextRef.current;
-      const currentBack = currentBackspaceRef.current;
-
-      if (currentText === lastSync.current || currentText.length === 0) return;
-
-      const sessionId = getSessionId();
-
-      const { error } = await supabase.from('shadow_logs').insert({
-        user_id: sessionId,
-        content: currentText,
-        hesitation_count: currentBack,
-        mode: 'night'
-      });
-
-      if (error) console.error('Shadow Sync Error:', error);
-      lastSync.current = currentText;
-    }, 2000);
-
-    return () => clearInterval(interval);
-  }, []);
-};
-
-// 稀有度顏色映射
-const rarityColors: Record<string, { bg: string; text: string; glow: string }> = {
-  common: { bg: 'bg-stone-800/50', text: 'text-stone-400', glow: '' },
-  rare: { bg: 'bg-blue-900/50', text: 'text-blue-400', glow: 'shadow-blue-500/20' },
-  epic: { bg: 'bg-purple-900/50', text: 'text-purple-400', glow: 'shadow-purple-500/30' },
-  legendary: { bg: 'bg-amber-900/50', text: 'text-amber-400', glow: 'shadow-amber-500/40' },
-  mythic: { bg: 'bg-gradient-to-r from-pink-900/50 to-purple-900/50', text: 'text-pink-300', glow: 'shadow-pink-500/50' }
-};
-
-// 解鎖階段描述
-const UNLOCK_STAGES = [
-  { level: 0, name: '未知', description: '他的輪廓隱藏在迷霧之中...', blur: 30, opacity: 0.1 },
-  { level: 1, name: '輪廓', description: '你開始感知到他的存在...', blur: 20, opacity: 0.25 },
-  { level: 2, name: '剪影', description: '他的身形逐漸清晰...', blur: 12, opacity: 0.4 },
-  { level: 3, name: '朦朧', description: '你能看見他的面容...', blur: 6, opacity: 0.6 },
-  { level: 4, name: '清晰', description: '他正注視著你...', blur: 2, opacity: 0.85 },
-  { level: 5, name: '完全解鎖', description: '他屬於你。', blur: 0, opacity: 1 }
-];
+// Local imports
+import type { SoulTreasure, MuseTask, ChatMessage, Report, ConversationReport, PerformanceReport } from './types';
+import { rarityColors, UNLOCK_STAGES } from './constants';
+import { getSessionId, markUserInteraction, triggerHeartbeat } from './utils';
+import { useShadowSync } from './hooks';
 
 export default function NightMode() {
   const [input, setInput] = useState('');
@@ -1504,12 +1384,6 @@ export default function NightMode() {
       toast.error('請求失敗');
     }
   }, [sexyUnlockPending, blockedMessage]);
-
-  // 🕐 檢查是否在色色限制時段 (8:00-17:00)
-  const isInSexyLockedHours = useCallback(() => {
-    const hour = new Date().getHours();
-    return hour >= 8 && hour < 17;
-  }, []);
 
   // ═══════════════════════════════════════════════════════════════
 

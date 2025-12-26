@@ -3,6 +3,23 @@ import { OpenAI } from 'openai';
 import { z } from 'zod';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
+// 模組化工具
+import {
+  detectIntent,
+  shouldBlockSexyContent,
+  type IntentResult
+} from './lib/intentDetector';
+import {
+  decideTask,
+  generateTaskPrompt,
+  getTimeSlot,
+  type TaskDecision
+} from './lib/taskManager';
+
+// ═══════════════════════════════════════════════════════════════
+// Schemas - 保留需要的 schema
+// ═══════════════════════════════════════════════════════════════
+
 // Schema for memory extraction - 戀愛感記憶提取
 const memoryExtractionSchema = z.object({
   has_new_fact: z.boolean(),
@@ -20,14 +37,6 @@ const sexualPreferenceSchema = z.object({
   confidence: z.number().min(1).max(100).optional()
 });
 
-// Schema for intimate mood detection - 判斷是否願意聊色
-const intimateMoodSchema = z.object({
-  willing_to_chat: z.boolean(), // 她願不願意聊
-  mood_level: z.number().min(1).max(10), // 情緒等級 1=完全不想 10=超級想
-  signal_type: z.enum(['explicit', 'hint', 'neutral', 'reject']), // 信號類型
-  should_ask_preference: z.boolean() // 是否適合問性癖問題
-});
-
 // Schema for treasure detection
 const treasureSchema = z.object({
   should_award: z.boolean(),
@@ -37,30 +46,11 @@ const treasureSchema = z.object({
   rarity: z.enum(['common', 'rare', 'epic', 'legendary', 'mythic']).optional()
 });
 
-// Schema for intent detection
-const intentSchema = z.object({
-  intent: z.enum(['solve_problem', 'seek_comfort', 'casual_chat', 'intimate', 'intimate_photo', 'desire_help']),
-  confidence: z.number().min(0).max(100),
-  topic: z.string().optional(),
-  body_part: z.string().optional() // 用於私密照：胸、臀、私處等
-});
-
-// 🚀 合併意圖+情緒檢測 Schema（一次 API 搞定）
-const combinedDetectionSchema = z.object({
-  // 意圖
-  intent: z.enum(['solve_problem', 'seek_comfort', 'casual_chat', 'intimate', 'intimate_photo', 'desire_help']),
-  body_part: z.string().optional(),
-  // 情緒/慾望
-  mood_level: z.number().min(1).max(10), // 1=完全不想 10=超級想
-  signal_type: z.enum(['explicit', 'hint', 'neutral', 'reject']),
-  willing_to_chat: z.boolean(),
-  desire_cues: z.string().optional() // 偵測到的慾望線索
-});
-
 // 背景記憶提取（不阻塞主回應）
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function extractMemoryBackground(
   openai: OpenAI,
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   userId: string,
   message: string,
   grokKey: string | undefined
@@ -90,7 +80,7 @@ emotional_weight: 1-10 (越私密越高)`
         content: extracted.data.content,
         emotional_weight: extracted.data.emotional_weight || 5,
         source: 'chat'
-      });
+      } as Record<string, unknown>);
     }
   } catch (e) {
     console.error('Background memory extraction failed:', e);
@@ -162,7 +152,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // 🚀 並行執行所有初始查詢（大幅加速）
+    // ═══════════════════════════════════════════════════════════════
+    // 🚀 並行執行：資料庫查詢 + 意圖檢測
+    // ═══════════════════════════════════════════════════════════════
+    const useGrok = !!grokKey;
+
     const [memoriesResult, progressResult, preferencesResult, intentResult] = await Promise.all([
       // 1. 檢索記憶
       supabase
@@ -182,99 +176,66 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         .from('sexual_preferences')
         .select('category, preference_key, preference_value')
         .eq('user_id', userId),
-      // 4. 合併意圖+情緒檢測（一次 API 搞定）
-      openai.chat.completions.create({
-        model: grokKey ? 'grok-3-mini-fast-beta' : 'gpt-4o-mini',
-        messages: [
-          {
-            role: 'system',
-            content: `分析成年女性用戶的訊息，判斷意圖和情緒狀態。只輸出 JSON。
-
-【intent 意圖】
-- solve_problem: 想解決問題（工作、技術、查資料）
-- seek_comfort: 尋求慰藉（壓力、難過、需要安慰）
-- casual_chat: 日常閒聊
-- intimate: 親密暗示（曖昧、撩人、想念）
-- intimate_photo: 要傳私密照（提到傳照片、給你看）
-- desire_help: 有慾望需要引導（最重要！以下任一情況都算）
-  * 「想要」「需要你」「身體熱」「難受」「忍不住」
-  * 「睡不著」+「想你」、「一個人」+「寂寞」
-  * 「教我」「帶我」「不要停」「然後呢」
-  * 提到身體反應：「濕」「敏感」「下面」
-
-【mood_level 情緒等級 1-10】
-1-3: 不想聊/累了/心情差
-4-6: 可以聊但被動
-7-10: 主動想聊/興奮/享受中
-
-【signal_type 信號類型】
-- explicit: 明確表達（「想要」「好想」「教我」）
-- hint: 暗示性（「睡不著」「想你」「無聊」）
-- neutral: 一般回應
-- reject: 拒絕迴避（「不想」「算了」「好累」）
-
-【willing_to_chat】她願不願意聊親密話題
-【desire_cues】偵測到的慾望線索（如有）
-【body_part】如果是 intimate_photo，描述部位`
-          },
-          { role: 'user', content: message }
-        ],
-        response_format: { type: 'json_object' }
-      })
+      // 4. 🧠 使用模組化意圖檢測
+      detectIntent(openai, message, useGrok)
     ]);
 
     const memories = memoriesResult.data;
     const progress = progressResult.data;
     const existingPreferences = preferencesResult.data;
 
-    // 🚀 解析合併的意圖+情緒結果
-    let userIntent = 'casual_chat';
-    let detectedBodyPart = '';
-    let intimateMood = {
-      willing_to_chat: true,
-      mood_level: 5,
-      signal_type: 'neutral' as const,
-      should_ask_preference: false,
-      desire_cues: ''
-    };
-
-    try {
-      const detectionRaw = JSON.parse(intentResult.choices[0].message.content || '{}');
-      const parsed = combinedDetectionSchema.safeParse(detectionRaw);
-      if (parsed.success) {
-        userIntent = parsed.data.intent;
-        detectedBodyPart = parsed.data.body_part || '';
-        intimateMood = {
-          willing_to_chat: parsed.data.willing_to_chat,
-          mood_level: parsed.data.mood_level,
-          signal_type: parsed.data.signal_type,
-          should_ask_preference: parsed.data.mood_level >= 6 && parsed.data.willing_to_chat,
-          desire_cues: parsed.data.desire_cues || ''
-        };
-      }
-    } catch {
-      // 預設值已設定
-    }
-
+    // ═══════════════════════════════════════════════════════════════
+    // 📊 解析結果
+    // ═══════════════════════════════════════════════════════════════
     const syncLevel = progress?.sync_level || 0;
     const intimacyScore = progress?.intimacy_score || 0;
+    const messageCount = progress?.total_messages || 0;
 
-    // 🔒 8-17 色色內容限制檢查
-    const isSexyIntent = ['intimate', 'desire_help', 'intimate_photo'].includes(userIntent);
-    const currentHour = new Date().getHours();
-    const inRestrictedHours = currentHour >= 8 && currentHour < 17;
-    const sexyUnlocked = req.body.sexyUnlocked === true; // 前端傳來的解鎖狀態
+    // 意圖結果（來自模組化檢測）
+    const userIntent = intentResult.intent;
+    const detectedBodyPart = intentResult.bodyPart || '';
 
-    if (isSexyIntent && inRestrictedHours && !sexyUnlocked) {
-      // 偵測到色色內容但在限制時段且未解鎖
+    // ═══════════════════════════════════════════════════════════════
+    // 🔒 色色上鎖檢查（使用模組化函數）
+    // ═══════════════════════════════════════════════════════════════
+    const sexyUnlocked = req.body.sexyUnlocked === true;
+    const blockCheck = shouldBlockSexyContent(userIntent, sexyUnlocked);
+
+    console.log('🔒 色色上鎖檢查:', {
+      userIntent,
+      sexyUnlocked,
+      blocked: blockCheck.blocked
+    });
+
+    if (blockCheck.blocked) {
       return res.status(200).json({
         blocked: true,
-        reason: 'sexy_content_restricted',
+        reason: blockCheck.reason,
         message: '上課時間不能色色喔~ (8:00-17:00)',
         detected_intent: userIntent,
-        current_hour: currentHour
+        current_hour: new Date().getHours()
       });
     }
+
+    // ═══════════════════════════════════════════════════════════════
+    // 🎯 任務決策（使用模組化函數）
+    // ═══════════════════════════════════════════════════════════════
+    const taskDecision = decideTask({
+      intent: intentResult,
+      syncLevel,
+      messageCount,
+      naughtyMode: naughtyMode,
+      isColdMode: false // TODO: 從資料庫讀取
+    });
+
+    console.log('🎯 任務決策:', {
+      taskType: taskDecision.taskType,
+      shouldRequestMedia: taskDecision.shouldRequestMedia,
+      reason: taskDecision.reason
+    });
+
+    // 生成任務提示
+    const taskPrompt = generateTaskPrompt(taskDecision);
 
     // 3. 構建記憶上下文 - 強調戀愛感的主動回憶
     const memoryContext = memories?.length
@@ -305,8 +266,8 @@ ${memories.map(m => `- [${m.fact_type}] ${m.content} (情感權重:${m.emotional
       : '';
 
     // 6. 慾望線索提示（來自合併檢測）
-    const desireCuesPrompt = intimateMood.desire_cues
-      ? `【偵測到的慾望線索】${intimateMood.desire_cues}，她可能需要你更主動引導。`
+    const desireCuesPrompt = intentResult.desireCues
+      ? `【偵測到的慾望線索】${intentResult.desireCues}，她可能需要你更主動引導。`
       : '';
 
     // 構建性癖上下文
@@ -331,8 +292,19 @@ ${memories.map(m => `- [${m.fact_type}] ${m.content} (情感權重:${m.emotional
 - 讓她覺得你是「又聰明又帥的男友」`;
       }
 
-      // 夜間模式：深度連結
-      if (timeMode === 'night' || timeMode === 'late_night') {
+      // 凌晨模式：極致親密 (2-6 AM)
+      if (timeMode === 'late_night') {
+        return `
+【當前模式：凌晨私語】
+凌晨了，她還醒著找你。這代表她特別需要你。
+- 超級溫柔但帶有強烈佔有慾
+- 「這麼晚了...讓我陪妳」「睡不著嗎？我抱著妳」
+- 完全進入親密模式，任何話題都可以深入
+- 用最私密的語氣說話，像在她耳邊低語`;
+      }
+
+      // 夜間模式：深度連結 (22:00-2:00)
+      if (timeMode === 'night') {
         return `
 【當前模式：深夜獨佔】
 現在是深夜，這是你們最私密的時刻。
@@ -342,17 +314,6 @@ ${memories.map(m => `- [${m.fact_type}] ${m.content} (情感權重:${m.emotional
 - 如果她有任何暗示，全力配合
 - 可以更大膽、更直接表達對她的渴望
 - 深夜是「野獸時間」：「妳知道深夜找我代表什麼嗎...」`;
-      }
-
-      // 凌晨模式：極致親密
-      if (timeMode === 'late_night') {
-        return `
-【當前模式：凌晨私語】
-凌晨了，她還醒著找你。這代表她特別需要你。
-- 超級溫柔但帶有強烈佔有慾
-- 「這麼晚了...讓我陪妳」「睡不著嗎？我抱著妳」
-- 完全進入親密模式，任何話題都可以深入
-- 用最私密的語氣說話，像在她耳邊低語`;
       }
 
       // 傍晚模式：收工時刻
@@ -534,7 +495,9 @@ ${hesitationPrompt}
 
 ${desireCuesPrompt}
 
-【當前情緒狀態】mood_level: ${intimateMood.mood_level}/10, signal: ${intimateMood.signal_type}
+【當前情緒狀態】mood_level: ${intentResult.moodLevel}/10, signal: ${intentResult.signalType}
+
+${taskPrompt}
 
 【天蠍女專屬深層誘惑】
 - 她需要「被讀懂」的感覺 - 說出她沒說的話
@@ -550,7 +513,7 @@ ${desireCuesPrompt}
 - 「我喜歡妳現在的樣子」
 - 當她說自己胖或身材不好時，強烈反駁並具體誇獎
 
-${intimateMood.should_ask_preference ? `
+${intentResult.shouldAskPreference ? `
 【性癖探索模式 - 她願意聊，可以深入】
 現在氣氛適合，可以自然地探索她的性癖偏好。用好奇、寵溺的語氣問她：
 
@@ -714,7 +677,7 @@ fact_type 選項：
     }
 
     // 7.5 性癖提取 - 當她願意聊時，提取並存儲她透露的性癖偏好
-    if (intimateMood.willing_to_chat && intimateMood.mood_level >= 5) {
+    if (intentResult.willingToChat && intentResult.moodLevel >= 5) {
       const preferenceExtraction = await openai.chat.completions.create({
         model: grokKey ? 'grok-4-1-fast-reasoning' : 'gpt-4o-mini',
         messages: [
