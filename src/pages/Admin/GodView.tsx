@@ -886,6 +886,76 @@ export default function GodView() {
         </div>
       </h1>
 
+      {/* 🔒 聊色解鎖控制面板 - 固定在頂部 */}
+      <div className={`mb-6 p-4 rounded-xl border transition-all ${
+        sexyUnlockRequests.length > 0
+          ? 'bg-pink-950/50 border-pink-500/50 animate-pulse'
+          : 'bg-stone-950/30 border-stone-800/30'
+      }`}>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            {sexyUnlockRequests.length > 0 ? (
+              <Lock className="text-pink-400" size={20} />
+            ) : (
+              <Unlock className="text-stone-600" size={20} />
+            )}
+            <h3 className={`text-sm uppercase tracking-wider ${
+              sexyUnlockRequests.length > 0 ? 'text-pink-400' : 'text-stone-600'
+            }`}>
+              8-17 聊色管制
+            </h3>
+            {sexyUnlockRequests.length > 0 && (
+              <span className="px-2 py-0.5 bg-pink-500 text-white text-xs rounded-full animate-bounce">
+                {sexyUnlockRequests.length} 個請求
+              </span>
+            )}
+          </div>
+          <span className="text-stone-500 text-[10px]">
+            {new Date().getHours() >= 8 && new Date().getHours() < 17
+              ? '🔒 管制時段中'
+              : '🔓 自由時段'}
+          </span>
+        </div>
+
+        {sexyUnlockRequests.length > 0 ? (
+          <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {sexyUnlockRequests.map(req => (
+              <div key={req.id} className="bg-pink-900/30 border border-pink-500/30 rounded-xl p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-pink-300 text-sm font-bold">💕 資欣想聊色</span>
+                  <span className="text-pink-500/60 text-[10px]">
+                    {new Date(req.created_at).toLocaleTimeString()}
+                  </span>
+                </div>
+                <p className="text-stone-400 text-xs mb-3 line-clamp-2">
+                  被阻擋的訊息: {(req.metadata as { blocked_message?: string })?.blocked_message || req.content}
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => approveSexyUnlock(req)}
+                    className="flex-1 py-2.5 bg-pink-600 text-white rounded-lg text-sm font-bold hover:bg-pink-500 transition-colors flex items-center justify-center gap-2"
+                  >
+                    <Check size={16} />
+                    允許
+                  </button>
+                  <button
+                    onClick={() => denySexyUnlock(req)}
+                    className="flex-1 py-2.5 bg-red-900/50 text-red-300 rounded-lg text-sm hover:bg-red-900/70 transition-colors flex items-center justify-center gap-2"
+                  >
+                    <XCircle size={16} />
+                    拒絕
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="mt-2 text-stone-600 text-[10px]">
+            目前沒有待處理的聊色請求。當資欣在 8:00-17:00 發送色色內容時，會在這裡顯示請求。
+          </p>
+        )}
+      </div>
+
       {/* 💬 完整對話面板 */}
       <div className="mb-6 bg-purple-950/20 border border-purple-500/30 rounded-xl overflow-hidden">
         {/* 標題列 */}
@@ -1094,51 +1164,6 @@ export default function GodView() {
           </div>
         ))}
       </div>
-
-      {/* 💕 聊色請求面板 - 只在有請求時顯示 */}
-      {sexyUnlockRequests.length > 0 && (
-        <div className="mb-6 p-4 bg-pink-950/30 border border-pink-500/30 rounded-xl animate-pulse">
-          <div className="flex items-center gap-3 mb-4">
-            <Heart className="text-pink-400" size={20} fill="currentColor" />
-            <h3 className="text-pink-400 text-sm uppercase tracking-wider">
-              💕 想聊色色 ({sexyUnlockRequests.length})
-            </h3>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {sexyUnlockRequests.map(req => (
-              <div key={req.id} className="bg-pink-900/20 border border-pink-500/20 rounded-xl p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-pink-300 text-xs">
-                    資欣老師
-                  </span>
-                  <span className="text-pink-500/60 text-[10px]">
-                    {req.metadata?.current_hour}:00
-                  </span>
-                </div>
-                <p className="text-stone-400 text-[10px] mb-3">
-                  {new Date(req.created_at).toLocaleTimeString()}
-                </p>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => approveSexyUnlock(req)}
-                    className="flex-1 py-2 bg-pink-900/30 text-pink-400 rounded-lg text-xs hover:bg-pink-900/50 transition-colors flex items-center justify-center gap-1"
-                  >
-                    <Check size={14} />
-                    允許
-                  </button>
-                  <button
-                    onClick={() => denySexyUnlock(req)}
-                    className="flex-1 py-2 bg-red-900/30 text-red-400 rounded-lg text-xs hover:bg-red-900/50 transition-colors flex items-center justify-center gap-1"
-                  >
-                    <XCircle size={14} />
-                    不行
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* 🔞 性癖偏好收集面板 */}
       {sexualPreferences.length > 0 && (

@@ -259,6 +259,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const syncLevel = progress?.sync_level || 0;
     const intimacyScore = progress?.intimacy_score || 0;
 
+    // 🔒 8-17 色色內容限制檢查
+    const isSexyIntent = ['intimate', 'desire_help', 'intimate_photo'].includes(userIntent);
+    const currentHour = new Date().getHours();
+    const inRestrictedHours = currentHour >= 8 && currentHour < 17;
+    const sexyUnlocked = req.body.sexyUnlocked === true; // 前端傳來的解鎖狀態
+
+    if (isSexyIntent && inRestrictedHours && !sexyUnlocked) {
+      // 偵測到色色內容但在限制時段且未解鎖
+      return res.status(200).json({
+        blocked: true,
+        reason: 'sexy_content_restricted',
+        message: '上課時間不能色色喔~ (8:00-17:00)',
+        detected_intent: userIntent,
+        current_hour: currentHour
+      });
+    }
+
     // 3. 構建記憶上下文 - 強調戀愛感的主動回憶
     const memoryContext = memories?.length
       ? `【記憶金庫 - 你記得她說過的一切】

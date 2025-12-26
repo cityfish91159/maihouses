@@ -228,11 +228,11 @@ export default function NightMode() {
   const [hapticBPM, setHapticBPM] = useState(60); // 節拍速度 (BPM)
   const [showClimaxButton, setShowClimaxButton] = useState(false); // 顯示「我快到了」按鈕
 
-  // 🔒 聊色限制狀態 (8:00-17:00 不能聊色)
-  const [isSexyLocked, setIsSexyLocked] = useState(false); // 是否在色色限制時段且未解鎖
+  // 🔒 聊色限制狀態 (8:00-17:00 偵測到色色內容才鎖)
+  const [isSexyBlocked, setIsSexyBlocked] = useState(false); // API 偵測到色色內容被阻擋
   const [sexyUnlockPending, setSexyUnlockPending] = useState(false); // 解鎖請求等待中
   const [sexyUnlockDenied, setSexyUnlockDenied] = useState<string | null>(null); // 解鎖被拒訊息
-  const [showSexyUnlockPrompt, setShowSexyUnlockPrompt] = useState(false); // 顯示「真的想聊？」提示
+  const [blockedMessage, setBlockedMessage] = useState<string>(''); // 被阻擋的訊息（重送用）
   const [climaxButtonHeld, setClimaxButtonHeld] = useState(false); // 長按中
   const [climaxHoldProgress, setClimaxHoldProgress] = useState(0); // 長按進度 0-100
   const [isListeningMoan, setIsListeningMoan] = useState(false); // 呻吟檢測中
@@ -305,38 +305,16 @@ export default function NightMode() {
     };
   }, []);
 
-  // 🔒 初始化色色限制狀態 - 每分鐘檢查一次
+  // 🔒 每天午夜重置解鎖狀態
   useEffect(() => {
-    const checkSexyLock = () => {
-      const hour = new Date().getHours();
-      const inLockedHours = hour >= 8 && hour < 17;
-      // 只有在限制時段且尚未手動解鎖時才鎖定
-      if (inLockedHours && !localStorage.getItem('sexy_unlocked_today')) {
-        setIsSexyLocked(true);
-      } else {
-        setIsSexyLocked(false);
-      }
-    };
-
-    // 初始檢查
-    checkSexyLock();
-
-    // 每分鐘檢查一次
-    const interval = setInterval(checkSexyLock, 60000);
-
-    // 每天午夜重置解鎖狀態
     const now = new Date();
     const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
     const msUntilMidnight = tomorrow.getTime() - now.getTime();
     const midnightTimeout = setTimeout(() => {
       localStorage.removeItem('sexy_unlocked_today');
-      checkSexyLock();
     }, msUntilMidnight);
 
-    return () => {
-      clearInterval(interval);
-      clearTimeout(midnightTimeout);
-    };
+    return () => clearTimeout(midnightTimeout);
   }, []);
 
   // 載入用戶進度和寶物
@@ -536,14 +514,16 @@ export default function NightMode() {
             const unlockMetadata = msg.metadata as { approved?: boolean; message?: string };
             if (unlockMetadata.approved) {
               // 解鎖成功 - 可以聊色了
-              setIsSexyLocked(false);
+              setIsSexyBlocked(false);
               setSexyUnlockPending(false);
               // 記錄今天已解鎖
               localStorage.setItem('sexy_unlocked_today', new Date().toDateString());
               toast.success('💕 解鎖成功', {
-                description: unlockMetadata.message || '好吧...今天特別允許妳',
+                description: unlockMetadata.message || '好吧...今天特別允許妳，繼續聊吧',
                 className: 'bg-pink-950 text-pink-200 border border-pink-800'
               });
+              // 清除被阻擋的訊息
+              setBlockedMessage('');
             } else {
               // 解鎖被拒 - 要認真上課
               setSexyUnlockPending(false);
@@ -552,7 +532,7 @@ export default function NightMode() {
                 description: unlockMetadata.message || '他說要認真上課',
                 className: 'bg-red-950 text-red-200 border border-red-800'
               });
-              // 5 秒後清除拒絕訊息
+              // 5 秒後清除拒絕訊息，但保持阻擋狀態
               setTimeout(() => setSexyUnlockDenied(null), 5000);
             }
           }
@@ -1498,16 +1478,16 @@ export default function NightMode() {
     if (sexyUnlockPending) return;
 
     setSexyUnlockPending(true);
-    setShowSexyUnlockPrompt(false);
 
     try {
       const { error } = await supabase.from('godview_messages').insert({
         user_id: getSessionId(),
         message_type: 'sexy_unlock_request',
-        content: '💕 想聊色色...',
+        content: blockedMessage || '💕 想聊色色...',
         metadata: {
           timestamp: new Date().toISOString(),
-          current_hour: new Date().getHours()
+          current_hour: new Date().getHours(),
+          blocked_message: blockedMessage // 保存被阻擋的訊息
         },
         is_read: false
       });
@@ -1523,7 +1503,7 @@ export default function NightMode() {
       setSexyUnlockPending(false);
       toast.error('請求失敗');
     }
-  }, [sexyUnlockPending]);
+  }, [sexyUnlockPending, blockedMessage]);
 
   // 🕐 檢查是否在色色限制時段 (8:00-17:00)
   const isInSexyLockedHours = useCallback(() => {
@@ -2047,6 +2027,7 @@ export default function NightMode() {
       const sessionId = getSessionId();
 
       // 🚀 串流模式 - 邊生成邊顯示
+      const sexyUnlocked = localStorage.getItem('sexy_unlocked_today') === new Date().toDateString();
       const response = await fetch('/api/muse-chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -2055,12 +2036,32 @@ export default function NightMode() {
           userId: sessionId,
           hesitationCount: backspaceCount,
           naughtyMode: naughtyMode,
+          sexyUnlocked: sexyUnlocked, // 傳送解鎖狀態
           stream: true // 啟用串流
         })
       });
 
       if (!response.ok) {
         throw new Error(`API Error: ${response.status}`);
+      }
+
+      // 🔒 檢查是否被色色限制阻擋
+      const contentType = response.headers.get('content-type');
+      if (contentType?.includes('application/json')) {
+        const jsonData = await response.json();
+        if (jsonData.blocked && jsonData.reason === 'sexy_content_restricted') {
+          // 被阻擋！顯示解鎖提示
+          setIsSexyBlocked(true);
+          setBlockedMessage(userMessage);
+          // 移除剛加的訊息
+          setChatHistory(prev => prev.slice(0, -2));
+          setAnalyzing(false);
+          toast('🔒 偵測到色色內容，上課時間需要解鎖', {
+            description: '點擊下方按鈕請求解鎖',
+            duration: 4000
+          });
+          return;
+        }
       }
 
       // 讀取串流
@@ -3354,8 +3355,8 @@ export default function NightMode() {
 
       {/* Footer Input */}
       <footer className="p-4 pb-8 relative z-20">
-        {/* 🔒 色色限制提示 (8:00-17:00) */}
-        {isSexyLocked && (
+        {/* 🔒 色色限制提示 (只有偵測到色色內容才顯示) */}
+        {isSexyBlocked && (
           <div className="max-w-2xl mx-auto mb-3">
             <div className="bg-gradient-to-r from-pink-950/50 to-purple-950/50 border border-pink-500/30 rounded-2xl p-4 text-center">
               {sexyUnlockPending ? (
@@ -3383,7 +3384,7 @@ export default function NightMode() {
                 <div className="flex flex-col items-center gap-3">
                   <div className="flex items-center gap-2 text-pink-400/80 text-sm">
                     <Lock size={16} />
-                    <span>上課時間不能色色喔~ (8:00-17:00)</span>
+                    <span>偵測到色色內容 (8:00-17:00 需要解鎖)</span>
                   </div>
                   <button
                     type="button"
