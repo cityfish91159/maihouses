@@ -2764,14 +2764,22 @@ export default function NightMode() {
             </div>
             <div className="flex gap-4">
               <button
-                onClick={() => handleRivalUpload('male')}
+                type="button"
+                onClick={() => {
+                  console.log('Male button clicked, files:', pendingAnalyzeFiles);
+                  handleRivalUpload('male');
+                }}
                 className="flex-1 py-4 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-medium hover:from-blue-500 hover:to-cyan-500 transition-all flex items-center justify-center gap-2"
               >
                 <span className="text-xl">👨</span>
                 <span>男生</span>
               </button>
               <button
-                onClick={() => handleRivalUpload('female')}
+                type="button"
+                onClick={() => {
+                  console.log('Female button clicked, files:', pendingAnalyzeFiles);
+                  handleRivalUpload('female');
+                }}
                 className="flex-1 py-4 rounded-xl bg-gradient-to-r from-pink-600 to-rose-600 text-white font-medium hover:from-pink-500 hover:to-rose-500 transition-all flex items-center justify-center gap-2"
               >
                 <span className="text-xl">👩</span>
@@ -2779,6 +2787,7 @@ export default function NightMode() {
               </button>
             </div>
             <button
+              type="button"
               onClick={() => {
                 setShowGenderSelect(false);
                 setPendingAnalyzeFiles(null);
