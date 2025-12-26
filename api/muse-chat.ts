@@ -7,6 +7,8 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import {
   detectIntent,
   shouldBlockSexyContent,
+  isSexyIntent,
+  isRestrictedHours,
   type IntentResult
 } from './lib/intentDetector';
 import {
