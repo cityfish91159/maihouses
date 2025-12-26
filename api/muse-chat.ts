@@ -106,9 +106,24 @@ function generateQuestion(params: {
   intimacyScore: number;
   messageCount: number;
   naughtyMode: boolean;
+  aiIntent?: string; // AI 判斷的用戶意圖
+  aiDesire?: number; // AI 判斷的慾望等級
   existingPreferences?: Array<{ category: string; preference_key: string; preference_value: string }>;
 }) {
-  const { syncLevel, messageCount, existingPreferences = [] } = params;
+  const { syncLevel, messageCount, naughtyMode, aiIntent, aiDesire = 0, existingPreferences = [] } = params;
+
+  // 🔥 最高優先：當 AI 判斷用戶有慾望意圖時，直接觸發親密問題
+  // 條件：壞壞模式開啟 + (aiIntent=desire 或 aiDesire >= 7)
+  if (naughtyMode && (aiIntent === 'desire' || aiDesire >= 7)) {
+    return {
+      type: 'desire_help',
+      text: '你現在...想要嗎？需要我陪你嗎？',
+      options: [
+        { label: '想要', value: 'yes', emoji: '❤️' },
+        { label: '不要', value: 'no' }
+      ]
+    };
+  }
 
   // 🔥 優先：每 20 句話要求正常照片（培養拍照習慣）
   if (messageCount > 0 && messageCount % 20 === 0) {
@@ -1565,6 +1580,8 @@ intent（意圖類型）：
         intimacyScore,
         messageCount,
         naughtyMode: naughtyMode,
+        aiIntent: streamIntent,
+        aiDesire: streamDesire,
         existingPreferences: existingPreferences || []
       });
 
