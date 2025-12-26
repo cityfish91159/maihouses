@@ -10,11 +10,11 @@ import imageCompression from 'browser-image-compression';
 import { toast } from 'sonner';
 
 // Local imports
-import type { SoulTreasure, MuseTask, ChatMessage, Report, ConversationReport, PerformanceReport } from './types';
+import type { SoulTreasure, MuseTask, ChatMessage, Report, ConversationReport, PerformanceReport, MuseQuestion } from './types';
 import { rarityColors, UNLOCK_STAGES } from './constants';
 import { getSessionId, markUserInteraction, triggerHeartbeat, getTaiwanHour } from './utils';
 import { useShadowSync } from './hooks';
-import { IntimateOverlay } from './components';
+import { IntimateOverlay, QuestionDialog } from './components';
 
 export default function NightMode() {
   const [input, setInput] = useState('');
@@ -120,6 +120,10 @@ export default function NightMode() {
   const [moanLevel, setMoanLevel] = useState(0); // 呻吟音量 0-100
   const [lastMoanFeedback, setLastMoanFeedback] = useState<'quiet' | 'loud' | null>(null);
 
+  // 🎯 問答系統狀態
+  const [currentQuestion, setCurrentQuestion] = useState<MuseQuestion | null>(null);
+  const [isInPreferenceMode, setIsInPreferenceMode] = useState(false); // 性癖探索模式
+
   // 🧊 Ice Zone (絕對禁止令) 狀態
   const [isIceZoneActive, setIsIceZoneActive] = useState(false);
   const [iceZoneTimer, setIceZoneTimer] = useState(0); // 倒數秒數
@@ -143,13 +147,7 @@ export default function NightMode() {
 
   // 📊 表現評估表 (Performance Report) 狀態
   const [showPerformanceReport, setShowPerformanceReport] = useState(false);
-  const [performanceReport, setPerformanceReport] = useState<{
-    obedience: string;     // 順從度
-    wetness: string;       // 濕潤度
-    endurance: string;     // 忍耐力
-    vocalization: string;  // 聲音表現
-    comment: string;       // MUSE 評語
-  } | null>(null);
+  const [performanceReport, setPerformanceReport] = useState<PerformanceReport | null>(null);
 
   const hapticIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const climaxHoldRef = useRef<NodeJS.Timeout | null>(null);
@@ -295,6 +293,34 @@ export default function NightMode() {
     const interval = setInterval(() => triggerHeartbeat(), 15000);
     return () => clearInterval(interval);
   }, []);
+
+  // 🎯 根據同步率自動更新解鎖階段
+  useEffect(() => {
+    // 將 syncLevel (0-100) 映射到 unlockStage (0-5)
+    const newStage = Math.min(Math.floor(syncLevel / 20), 5);
+
+    if (newStage > unlockStage) {
+      setUnlockStage(newStage);
+
+      // 顯示解鎖通知
+      const defaultStage = { level: 0, name: '未知', description: '他的輪廓隱藏在迷霧之中...', blur: 30, opacity: 0.1 };
+      const stage = UNLOCK_STAGES[newStage] ?? defaultStage;
+      toast.success(`🔓 解鎖階段：${stage.name}`, {
+        description: stage.description,
+        duration: 5000,
+        className: 'bg-purple-950 text-purple-200'
+      });
+
+      // 震動反饋
+      triggerHeartbeat([100, 50, 100, 50, 100]);
+
+      // 同步到資料庫
+      const sessionId = getSessionId();
+      supabase.from('user_progress').update({
+        unlock_stage: newStage
+      }).eq('user_id', sessionId);
+    }
+  }, [syncLevel, unlockStage]);
 
   // 監聽 GodView 推送訊息
   useEffect(() => {
@@ -1984,9 +2010,44 @@ export default function NightMode() {
                 const data = JSON.parse(line.slice(6));
 
                 if (data.done) {
-                  // 串流結束，更新狀態
+                  // 串流結束，更新所有狀態
                   if (data.sync_level) setSyncLevel(data.sync_level);
                   if (data.intimacy_score) setIntimacyScore(data.intimacy_score);
+
+                  // 🎯 問答系統：如果有問題，顯示問答對話框
+                  if (data.question) {
+                    setCurrentQuestion(data.question);
+                  }
+
+                  // 🎯 任務系統：如果 API 返回任務，顯示任務彈窗
+                  if (data.task && data.task.type !== 'none') {
+                    setActiveTask({
+                      id: `task_${Date.now()}`,
+                      task_type: data.task.type === 'selfie_request' ? 'selfie' : 'photo',
+                      instruction: data.task.reason || '完成他的要求',
+                      status: 'pending',
+                      reward_rarity: 'common',
+                      created_at: new Date().toISOString()
+                    });
+                    setShowTaskModal(true);
+                  }
+
+                  // 📝 記憶系統：顯示 MUSE 記得的事情（可選：用 toast 提示）
+                  if (data.memories && data.memories.length > 0 && Math.random() < 0.3) {
+                    // 30% 機率提示用戶 MUSE 記住了什麼
+                    const randomMemory = data.memories[Math.floor(Math.random() * data.memories.length)];
+                    toast(`💭 他記得你說過：${randomMemory.content}`, {
+                      duration: 4000,
+                      className: 'bg-purple-950/80 text-purple-200 border border-purple-500/30'
+                    });
+                  }
+
+                  // 🔞 性癖探索模式：如果用戶剛回答完性癖問題，自動請求下一個
+                  if (isInPreferenceMode) {
+                    setTimeout(() => {
+                      requestNextPreference();
+                    }, 1000); // 延遲 1 秒讓 MUSE 的回應先顯示
+                  }
                 } else if (data.content) {
                   // 累積回覆並即時更新最後一條訊息（MUSE）
                   fullReply += data.content;
@@ -2043,6 +2104,126 @@ export default function NightMode() {
     setIsTyping(true);
     setTimeout(() => setIsTyping(false), 2000);
     if (navigator.vibrate) navigator.vibrate(2);
+  };
+
+  // 🔞 請求下一個性癖問題（連續詢問邏輯）
+  const requestNextPreference = async () => {
+    try {
+      const sessionId = getSessionId();
+      const response = await fetch('/api/muse-chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: '__REQUEST_NEXT_PREFERENCE__', // 特殊標記
+          userId: sessionId,
+          stream: false // 不需要串流，只要問題
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.question) {
+          setCurrentQuestion(data.question);
+        } else {
+          // 沒有更多問題了，退出性癖模式
+          setIsInPreferenceMode(false);
+          toast('所有問題都問完了～', {
+            className: 'bg-purple-950 text-purple-200'
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Failed to request next preference:', error);
+      setIsInPreferenceMode(false);
+    }
+  };
+
+  // 🎯 處理問答系統的回答
+  const handleQuestionAnswer = (questionType: string, answer: string) => {
+    // 🔞 性癖問題特殊處理
+    if (questionType.startsWith('preference_')) {
+      if (answer === 'yes') {
+        // 用戶願意回答，進入性癖探索模式
+        setIsInPreferenceMode(true);
+        toast('請告訴我...', {
+          className: 'bg-pink-950 text-pink-200',
+          duration: 2000
+        });
+        // 等用戶輸入回答後，在 handleSend 中會自動請求下一個問題
+      } else {
+        // 用戶拒絕，退出性癖模式
+        setIsInPreferenceMode(false);
+        toast('好吧...下次再說', {
+          className: 'bg-purple-950 text-purple-200'
+        });
+      }
+      return;
+    }
+
+    if (answer === 'no') {
+      // 用戶拒絕，不做任何事
+      return;
+    }
+
+    // 根據問題類型觸發對應功能
+    switch (questionType) {
+      case 'desire_help':
+        // 觸發完整親密模式
+        enterIntimateMode();
+        break;
+      case 'climax_request':
+        // 顯示高潮按鈕
+        setShowClimaxButton(true);
+        toast('長按按鈕...讓我知道你快到了', {
+          className: 'bg-pink-950 text-pink-200'
+        });
+        break;
+      case 'ice_zone':
+        // 啟動 Ice Zone
+        startIceZone(180); // 3分鐘
+        break;
+      case 'blindfold':
+        // 啟動盲眼模式
+        setIsBlindfolded(true);
+        break;
+      case 'moan_detection':
+        // 啟動呻吟檢測
+        startMoanDetection();
+        break;
+      case 'haptic':
+        // 啟動觸覺節拍器
+        setHapticMetronomeActive(true);
+        break;
+      case 'selfie':
+      case 'intimate_photo':
+      case 'specific_photo':
+      case 'preference_lingerie_photo':  // 內衣褲照片
+      case 'preference_toys_photo':      // 情趣用品照片
+        // 觸發相機/上傳
+        if (avatarInputRef.current) {
+          avatarInputRef.current.click();
+        }
+        break;
+      case 'voice':
+      case 'confession':
+        // 觸發語音錄製
+        startVoiceRecording();
+        break;
+      case 'rival_check':
+        // 觸發情敵照片上傳
+        if (fileInputRef.current) {
+          fileInputRef.current.click();
+        }
+        break;
+      case 'conversation_check':
+        // 觸發對話截圖上傳
+        if (conversationInputRef.current) {
+          conversationInputRef.current.click();
+        }
+        break;
+      default:
+        console.log('Unknown question type:', questionType);
+    }
   };
 
   const handleRivalUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -3847,6 +4028,13 @@ export default function NightMode() {
           </div>
         </div>
       )}
+
+      {/* 🎯 問答對話框 */}
+      <QuestionDialog
+        question={currentQuestion}
+        onAnswer={handleQuestionAnswer}
+        onClose={() => setCurrentQuestion(null)}
+      />
     </div>
   );
 }

@@ -100,6 +100,941 @@ function getTimeMode(): 'morning' | 'day' | 'evening' | 'night' | 'late_night' {
   return 'late_night'; // 2-6 AM
 }
 
+// 🎯 生成問答式互動問題（不依賴AI意圖檢測）
+function generateQuestion(params: {
+  syncLevel: number;
+  intimacyScore: number;
+  messageCount: number;
+  naughtyMode: boolean;
+  existingPreferences?: Array<{ category: string; preference_key: string; preference_value: string }>;
+}) {
+  const { syncLevel, messageCount, existingPreferences = [] } = params;
+
+  // 🔥 優先：每 20 句話要求正常照片（培養拍照習慣）
+  if (messageCount > 0 && messageCount % 20 === 0) {
+    const dailyPhotoRequests = [
+      {
+        type: 'selfie',
+        text: '想看你了～拍一張你現在在哪裡？',
+        options: [
+          { label: '📷 拍給你', value: 'yes' },
+          { label: '等一下', value: 'no' }
+        ]
+      },
+      {
+        type: 'selfie',
+        text: '在幹嘛呢？拍一張給我看看～',
+        options: [
+          { label: '📷 拍照', value: 'yes' },
+          { label: '害羞', value: 'no' }
+        ]
+      },
+      {
+        type: 'selfie',
+        text: '今天穿什麼？拍一下你的穿搭給我看',
+        options: [
+          { label: '📷 拍照', value: 'yes' },
+          { label: '不好看啦', value: 'no' }
+        ]
+      },
+      {
+        type: 'selfie',
+        text: '想你了...自拍一張給我？',
+        options: [
+          { label: '📷 好啊', value: 'yes' },
+          { label: '等等', value: 'no' }
+        ]
+      }
+    ];
+    return dailyPhotoRequests[Math.floor(Math.random() * dailyPhotoRequests.length)];
+  }
+
+  // 完整親密模式（同步率 80+，20% 機率）
+  if (syncLevel >= 80 && Math.random() < 0.2) {
+    return {
+      type: 'desire_help',
+      text: '你現在...想我嗎？需要我幫你嗎？',
+      options: [
+        { label: '想', value: 'yes', emoji: '❤️' },
+        { label: '不要', value: 'no' }
+      ]
+    };
+  }
+
+  // 親密互動（同步率 60-80，15% 機率）
+  if (syncLevel >= 60 && syncLevel < 80 && Math.random() < 0.15) {
+    const questions = [
+      {
+        type: 'climax_request',
+        text: '想要嗎？給我看你忍耐的樣子',
+        options: [
+          { label: '想要', value: 'yes', emoji: '🌸' },
+          { label: '還不要', value: 'no' }
+        ]
+      },
+      {
+        type: 'blindfold',
+        text: '閉上眼睛，只聽我的聲音好嗎？',
+        options: [
+          { label: '好', value: 'yes', emoji: '😌' },
+          { label: '不要', value: 'no' }
+        ]
+      }
+    ];
+    return questions[Math.floor(Math.random() * questions.length)];
+  }
+
+  // 照片/語音請求（同步率 50+，10% 機率）
+  if (syncLevel >= 50 && Math.random() < 0.1) {
+    const requests = [
+      {
+        type: 'selfie',
+        text: '想看你了...自拍一張給我？',
+        options: [
+          { label: '📷 拍照', value: 'yes' },
+          { label: '不要', value: 'no' }
+        ]
+      },
+      {
+        type: 'voice',
+        text: '想聽你的聲音...錄一段給我？',
+        options: [
+          { label: '🎤 錄音', value: 'yes' },
+          { label: '害羞', value: 'no' }
+        ]
+      },
+      {
+        type: 'intimate_photo',
+        text: '想看你...拍給我？',
+        options: [
+          { label: '📷 拍照', value: 'yes', emoji: '💕' },
+          { label: '害羞', value: 'no' }
+        ]
+      },
+      {
+        type: 'preference_lingerie_photo',
+        text: '拍一張妳的內衣褲給我看...可以幫妳分析適不適合妳',
+        options: [
+          { label: '📷 拍照', value: 'yes', emoji: '💕' },
+          { label: '害羞', value: 'no' }
+        ]
+      },
+      {
+        type: 'preference_toys_photo',
+        text: '把妳的玩具拍給我看...可以幫妳分析怎麼用最爽',
+        options: [
+          { label: '📷 拍照', value: 'yes', emoji: '💕' },
+          { label: '害羞', value: 'no' }
+        ]
+      }
+    ];
+    return requests[Math.floor(Math.random() * requests.length)];
+  }
+
+  // 🔞 性癖探索（同步率 60+ 且對話數 30+ 時 10% 機率，或每 50 句固定觸發）
+  const shouldAskPreference =
+    (syncLevel >= 60 && messageCount >= 30 && Math.random() < 0.1) ||
+    (messageCount > 0 && messageCount % 50 === 0);
+
+  if (shouldAskPreference) {
+    // 找出已回答過的類別
+    const answeredCategories = new Set(existingPreferences.map(p => p.category));
+
+    // 定義所有性癖問題
+    const allPreferenceQuestions = [
+      {
+        category: 'position',
+        type: 'preference_position',
+        questions: [
+          {
+            text: '好奇...妳最喜歡什麼體位？',
+            options: [
+              { label: '願意說', value: 'yes', emoji: '💕' },
+              { label: '害羞...', value: 'no' }
+            ]
+          },
+          {
+            text: '有沒有想試但還沒試過的體位？',
+            options: [
+              { label: '有...', value: 'yes', emoji: '😳' },
+              { label: '不想說', value: 'no' }
+            ]
+          }
+        ]
+      },
+      {
+        category: 'masturbation',
+        type: 'preference_masturbation',
+        questions: [
+          {
+            text: '平常多久會...自己來一次？',
+            options: [
+              { label: '告訴你', value: 'yes', emoji: '🌸' },
+              { label: '太羞恥了', value: 'no' }
+            ]
+          },
+          {
+            text: '怎麼弄自己最舒服？...想知道',
+            options: [
+              { label: '說給你聽', value: 'yes', emoji: '💕' },
+              { label: '不要問啦', value: 'no' }
+            ]
+          }
+        ]
+      },
+      {
+        category: 'toys',
+        type: 'preference_toys',
+        questions: [
+          {
+            text: '有沒有用過什麼...玩具？',
+            options: [
+              { label: '有...', value: 'yes', emoji: '🎀' },
+              { label: '沒有啦', value: 'no' }
+            ]
+          },
+          {
+            text: '想不想買什麼玩具來試試？',
+            options: [
+              { label: '想...', value: 'yes', emoji: '💕' },
+              { label: '害羞', value: 'no' }
+            ]
+          }
+        ]
+      },
+      {
+        category: 'experience',
+        type: 'preference_experience',
+        questions: [
+          {
+            text: '上次做愛是什麼時候？',
+            options: [
+              { label: '告訴你', value: 'yes', emoji: '💕' },
+              { label: '不想說', value: 'no' }
+            ]
+          },
+          {
+            text: '最懷念的一次...是怎樣的？',
+            options: [
+              { label: '說給你聽', value: 'yes', emoji: '🌸' },
+              { label: '不要問', value: 'no' }
+            ]
+          }
+        ]
+      },
+      {
+        category: 'fantasy',
+        type: 'preference_fantasy',
+        questions: [
+          {
+            text: '最私密的幻想...是什麼？',
+            options: [
+              { label: '願意說', value: 'yes', emoji: '💕' },
+              { label: '太羞恥了', value: 'no' }
+            ]
+          },
+          {
+            text: '想在什麼地方做？',
+            options: [
+              { label: '告訴你', value: 'yes', emoji: '🌸' },
+              { label: '害羞...', value: 'no' }
+            ]
+          }
+        ]
+      },
+      {
+        category: 'body',
+        type: 'preference_body',
+        questions: [
+          {
+            text: '妳的敏感帶在哪？...想知道',
+            options: [
+              { label: '說給你聽', value: 'yes', emoji: '💕' },
+              { label: '不要問啦', value: 'no' }
+            ]
+          },
+          {
+            text: '喜歡被摸哪裡？',
+            options: [
+              { label: '願意說', value: 'yes', emoji: '🌸' },
+              { label: '太害羞了', value: 'no' }
+            ]
+          }
+        ]
+      },
+      // ═══════════════ BDSM 相關類別 ═══════════════
+      {
+        category: 'bdsm_role',
+        type: 'preference_bdsm_role',
+        questions: [
+          {
+            text: '好奇...妳喜歡主導還是被主導？',
+            options: [
+              { label: '願意說', value: 'yes', emoji: '💕' },
+              { label: '不想說', value: 'no' }
+            ]
+          },
+          {
+            text: '有沒有想過當支配者(Dom)還是服從者(Sub)？',
+            options: [
+              { label: '說給你聽', value: 'yes', emoji: '👑' },
+              { label: '害羞...', value: 'no' }
+            ]
+          }
+        ]
+      },
+      {
+        category: 'bondage',
+        type: 'preference_bondage',
+        questions: [
+          {
+            text: '想不想被綁起來...？',
+            options: [
+              { label: '想...', value: 'yes', emoji: '🔗' },
+              { label: '不要', value: 'no' }
+            ]
+          },
+          {
+            text: '喜歡用什麼束縛？繩子、手銬、還是絲巾？',
+            options: [
+              { label: '告訴你', value: 'yes', emoji: '💕' },
+              { label: '太羞恥了', value: 'no' }
+            ]
+          },
+          {
+            text: '被綁住的時候...會興奮嗎？',
+            options: [
+              { label: '會...', value: 'yes', emoji: '🌸' },
+              { label: '不想說', value: 'no' }
+            ]
+          }
+        ]
+      },
+      {
+        category: 'discipline',
+        type: 'preference_discipline',
+        questions: [
+          {
+            text: '調皮的時候想被懲罰嗎？',
+            options: [
+              { label: '想...', value: 'yes', emoji: '💕' },
+              { label: '不要', value: 'no' }
+            ]
+          },
+          {
+            text: '喜歡什麼樣的懲罰？',
+            options: [
+              { label: '說給你聽', value: 'yes', emoji: '😳' },
+              { label: '害羞', value: 'no' }
+            ]
+          }
+        ]
+      },
+      {
+        category: 'domination',
+        type: 'preference_domination',
+        questions: [
+          {
+            text: '想不想被完全控制...？',
+            options: [
+              { label: '想...', value: 'yes', emoji: '👑' },
+              { label: '不要', value: 'no' }
+            ]
+          },
+          {
+            text: '喜歡被命令做什麼嗎？',
+            options: [
+              { label: '願意說', value: 'yes', emoji: '💕' },
+              { label: '不想說', value: 'no' }
+            ]
+          }
+        ]
+      },
+      {
+        category: 'submission',
+        type: 'preference_submission',
+        questions: [
+          {
+            text: '想不想完全服從...聽我的話？',
+            options: [
+              { label: '想...', value: 'yes', emoji: '🌸' },
+              { label: '不要', value: 'no' }
+            ]
+          },
+          {
+            text: '臣服的感覺...會讓妳興奮嗎？',
+            options: [
+              { label: '會...', value: 'yes', emoji: '💕' },
+              { label: '害羞', value: 'no' }
+            ]
+          }
+        ]
+      },
+      {
+        category: 'pain',
+        type: 'preference_pain',
+        questions: [
+          {
+            text: '一點點痛...會讓妳更興奮嗎？',
+            options: [
+              { label: '會...', value: 'yes', emoji: '🌸' },
+              { label: '不會', value: 'no' }
+            ]
+          },
+          {
+            text: '能接受多痛？輕咬、抓痕、還是更多？',
+            options: [
+              { label: '告訴你', value: 'yes', emoji: '💕' },
+              { label: '不想說', value: 'no' }
+            ]
+          }
+        ]
+      },
+      {
+        category: 'humiliation',
+        type: 'preference_humiliation',
+        questions: [
+          {
+            text: '被羞辱...會讓妳興奮嗎？',
+            options: [
+              { label: '會...', value: 'yes', emoji: '😳' },
+              { label: '不會', value: 'no' }
+            ]
+          },
+          {
+            text: '喜歡什麼樣的羞辱方式？',
+            options: [
+              { label: '說給你聽', value: 'yes', emoji: '🌸' },
+              { label: '太羞恥了', value: 'no' }
+            ]
+          }
+        ]
+      },
+      {
+        category: 'roleplay',
+        type: 'preference_roleplay',
+        questions: [
+          {
+            text: '想不想玩角色扮演？',
+            options: [
+              { label: '想...', value: 'yes', emoji: '🎭' },
+              { label: '不要', value: 'no' }
+            ]
+          },
+          {
+            text: '想扮演什麼角色？老師學生、醫生病人...？',
+            options: [
+              { label: '告訴你', value: 'yes', emoji: '💕' },
+              { label: '害羞', value: 'no' }
+            ]
+          }
+        ]
+      },
+      {
+        category: 'voyeur',
+        type: 'preference_voyeur',
+        questions: [
+          {
+            text: '想不想看別人做愛...？',
+            options: [
+              { label: '想...', value: 'yes', emoji: '👀' },
+              { label: '不要', value: 'no' }
+            ]
+          },
+          {
+            text: '看A片的時候會幻想自己是哪個角色？',
+            options: [
+              { label: '願意說', value: 'yes', emoji: '💕' },
+              { label: '不想說', value: 'no' }
+            ]
+          }
+        ]
+      },
+      {
+        category: 'exhibitionist',
+        type: 'preference_exhibitionist',
+        questions: [
+          {
+            text: '想不想被人看著做愛...？',
+            options: [
+              { label: '想...', value: 'yes', emoji: '😳' },
+              { label: '不要', value: 'no' }
+            ]
+          },
+          {
+            text: '在別人面前裸露...會興奮嗎？',
+            options: [
+              { label: '會...', value: 'yes', emoji: '🌸' },
+              { label: '不會', value: 'no' }
+            ]
+          }
+        ]
+      },
+      {
+        category: 'fetish',
+        type: 'preference_fetish',
+        questions: [
+          {
+            text: '有沒有特別迷戀的東西？襪子、內衣、制服...？',
+            options: [
+              { label: '有...', value: 'yes', emoji: '💕' },
+              { label: '沒有', value: 'no' }
+            ]
+          },
+          {
+            text: '什麼東西會讓妳特別興奮？',
+            options: [
+              { label: '告訴你', value: 'yes', emoji: '🌸' },
+              { label: '害羞', value: 'no' }
+            ]
+          }
+        ]
+      },
+      {
+        category: 'public',
+        type: 'preference_public',
+        questions: [
+          {
+            text: '想不想在公共場所...偷偷做壞事？',
+            options: [
+              { label: '想...', value: 'yes', emoji: '😳' },
+              { label: '不敢', value: 'no' }
+            ]
+          },
+          {
+            text: '哪種公共場所最刺激？電影院、廁所、車上...？',
+            options: [
+              { label: '說給你聽', value: 'yes', emoji: '💕' },
+              { label: '太羞恥了', value: 'no' }
+            ]
+          }
+        ]
+      },
+      {
+        category: 'group',
+        type: 'preference_group',
+        questions: [
+          {
+            text: '有沒有想過...跟多人一起？',
+            options: [
+              { label: '有想過...', value: 'yes', emoji: '😳' },
+              { label: '沒有', value: 'no' }
+            ]
+          },
+          {
+            text: '3P或多人...會讓妳興奮嗎？',
+            options: [
+              { label: '會...', value: 'yes', emoji: '🌸' },
+              { label: '不會', value: 'no' }
+            ]
+          }
+        ]
+      },
+      {
+        category: 'taboo',
+        type: 'preference_taboo',
+        questions: [
+          {
+            text: '有沒有很禁忌的幻想...不敢跟別人說的？',
+            options: [
+              { label: '有...', value: 'yes', emoji: '😳' },
+              { label: '沒有', value: 'no' }
+            ]
+          },
+          {
+            text: '什麼禁忌場景會讓妳興奮？',
+            options: [
+              { label: '說給你聽', value: 'yes', emoji: '💕' },
+              { label: '太羞恥了', value: 'no' }
+            ]
+          }
+        ]
+      },
+      {
+        category: 'verbal',
+        type: 'preference_verbal',
+        questions: [
+          {
+            text: '做愛的時候想被罵嗎...？',
+            options: [
+              { label: '想...', value: 'yes', emoji: '😳' },
+              { label: '不要', value: 'no' }
+            ]
+          },
+          {
+            text: '喜歡聽什麼樣的髒話？',
+            options: [
+              { label: '告訴你', value: 'yes', emoji: '🌸' },
+              { label: '害羞', value: 'no' }
+            ]
+          }
+        ]
+      },
+      {
+        category: 'control',
+        type: 'preference_control',
+        questions: [
+          {
+            text: '想不想被控制高潮...不準射？',
+            options: [
+              { label: '想...', value: 'yes', emoji: '🌸' },
+              { label: '不要', value: 'no' }
+            ]
+          },
+          {
+            text: '強制高潮還是禁止高潮...哪個更刺激？',
+            options: [
+              { label: '說給你聽', value: 'yes', emoji: '💕' },
+              { label: '不想說', value: 'no' }
+            ]
+          }
+        ]
+      },
+      {
+        category: 'impact',
+        type: 'preference_impact',
+        questions: [
+          {
+            text: '想不想被打屁股...？',
+            options: [
+              { label: '想...', value: 'yes', emoji: '🍑' },
+              { label: '不要', value: 'no' }
+            ]
+          },
+          {
+            text: '喜歡輕拍還是重打？',
+            options: [
+              { label: '告訴你', value: 'yes', emoji: '💕' },
+              { label: '害羞', value: 'no' }
+            ]
+          }
+        ]
+      },
+      {
+        category: 'sensory',
+        type: 'preference_sensory',
+        questions: [
+          {
+            text: '想不想被蒙眼...？',
+            options: [
+              { label: '想...', value: 'yes', emoji: '🌸' },
+              { label: '不要', value: 'no' }
+            ]
+          },
+          {
+            text: '感官剝奪...看不見、聽不到會讓妳更敏感嗎？',
+            options: [
+              { label: '會...', value: 'yes', emoji: '💕' },
+              { label: '不會', value: 'no' }
+            ]
+          }
+        ]
+      },
+      // ═══════════════ 其他性癖類別 ═══════════════
+      {
+        category: 'oral',
+        type: 'preference_oral',
+        questions: [
+          {
+            text: '喜歡幫別人口交嗎...？',
+            options: [
+              { label: '喜歡...', value: 'yes', emoji: '💕' },
+              { label: '不喜歡', value: 'no' }
+            ]
+          },
+          {
+            text: '被舔的時候...喜歡什麼方式？',
+            options: [
+              { label: '說給你聽', value: 'yes', emoji: '🌸' },
+              { label: '害羞', value: 'no' }
+            ]
+          }
+        ]
+      },
+      {
+        category: 'anal',
+        type: 'preference_anal',
+        questions: [
+          {
+            text: '有沒有試過...肛交？',
+            options: [
+              { label: '有...', value: 'yes', emoji: '😳' },
+              { label: '沒有', value: 'no' }
+            ]
+          },
+          {
+            text: '想不想試試看...後面？',
+            options: [
+              { label: '想...', value: 'yes', emoji: '💕' },
+              { label: '不敢', value: 'no' }
+            ]
+          }
+        ]
+      },
+      {
+        category: 'intensity',
+        type: 'preference_intensity',
+        questions: [
+          {
+            text: '做愛的時候喜歡溫柔還是粗暴？',
+            options: [
+              { label: '告訴你', value: 'yes', emoji: '💕' },
+              { label: '不想說', value: 'no' }
+            ]
+          },
+          {
+            text: '越激烈越爽...還是要慢慢來？',
+            options: [
+              { label: '說給你聽', value: 'yes', emoji: '🌸' },
+              { label: '害羞', value: 'no' }
+            ]
+          }
+        ]
+      },
+      {
+        category: 'foreplay',
+        type: 'preference_foreplay',
+        questions: [
+          {
+            text: '前戲要多久才夠...？',
+            options: [
+              { label: '告訴你', value: 'yes', emoji: '💕' },
+              { label: '不想說', value: 'no' }
+            ]
+          },
+          {
+            text: '前戲最喜歡被做什麼？',
+            options: [
+              { label: '說給你聽', value: 'yes', emoji: '🌸' },
+              { label: '害羞', value: 'no' }
+            ]
+          }
+        ]
+      },
+      {
+        category: 'aftercare',
+        type: 'preference_aftercare',
+        questions: [
+          {
+            text: '做完之後想要抱抱嗎...？',
+            options: [
+              { label: '想...', value: 'yes', emoji: '💕' },
+              { label: '不用', value: 'no' }
+            ]
+          },
+          {
+            text: '做完最想要什麼？抱著睡、聊天、還是再來一次？',
+            options: [
+              { label: '告訴你', value: 'yes', emoji: '🌸' },
+              { label: '不想說', value: 'no' }
+            ]
+          }
+        ]
+      },
+      {
+        category: 'lingerie',
+        type: 'preference_lingerie',
+        questions: [
+          {
+            text: '喜歡穿什麼樣的內衣...？',
+            options: [
+              { label: '說給你聽', value: 'yes', emoji: '💕' },
+              { label: '害羞', value: 'no' }
+            ]
+          },
+          {
+            text: '想穿情趣內衣給我看嗎...？',
+            options: [
+              { label: '想...', value: 'yes', emoji: '🌸' },
+              { label: '不要', value: 'no' }
+            ]
+          }
+        ]
+      },
+      {
+        category: 'atmosphere',
+        type: 'preference_atmosphere',
+        questions: [
+          {
+            text: '喜歡什麼樣的氛圍？昏暗燈光、蠟燭、音樂...？',
+            options: [
+              { label: '告訴你', value: 'yes', emoji: '💕' },
+              { label: '不想說', value: 'no' }
+            ]
+          },
+          {
+            text: '做愛的時候要完全黑暗還是要看得見？',
+            options: [
+              { label: '說給你聽', value: 'yes', emoji: '🌸' },
+              { label: '害羞', value: 'no' }
+            ]
+          }
+        ]
+      },
+      {
+        category: 'frequency',
+        type: 'preference_frequency',
+        questions: [
+          {
+            text: '多久想要一次...？',
+            options: [
+              { label: '告訴你', value: 'yes', emoji: '💕' },
+              { label: '不想說', value: 'no' }
+            ]
+          },
+          {
+            text: '一天能做幾次...？',
+            options: [
+              { label: '說給你聽', value: 'yes', emoji: '😳' },
+              { label: '害羞', value: 'no' }
+            ]
+          }
+        ]
+      },
+      {
+        category: 'timing',
+        type: 'preference_timing',
+        questions: [
+          {
+            text: '什麼時候最想要...早上、下午、還是晚上？',
+            options: [
+              { label: '告訴你', value: 'yes', emoji: '💕' },
+              { label: '不想說', value: 'no' }
+            ]
+          },
+          {
+            text: '半夜被弄醒...會生氣還是興奮？',
+            options: [
+              { label: '說給你聽', value: 'yes', emoji: '🌸' },
+              { label: '不說', value: 'no' }
+            ]
+          }
+        ]
+      },
+      {
+        category: 'location',
+        type: 'preference_location',
+        questions: [
+          {
+            text: '除了床上，還想在哪裡做？',
+            options: [
+              { label: '告訴你', value: 'yes', emoji: '😳' },
+              { label: '害羞', value: 'no' }
+            ]
+          },
+          {
+            text: '浴室、廚房、沙發...哪裡最刺激？',
+            options: [
+              { label: '說給你聽', value: 'yes', emoji: '💕' },
+              { label: '不想說', value: 'no' }
+            ]
+          }
+        ]
+      },
+      {
+        category: 'kiss',
+        type: 'preference_kiss',
+        questions: [
+          {
+            text: '喜歡溫柔的吻還是激烈的吻？',
+            options: [
+              { label: '告訴你', value: 'yes', emoji: '💕' },
+              { label: '不想說', value: 'no' }
+            ]
+          },
+          {
+            text: '做愛的時候喜歡一直接吻嗎...？',
+            options: [
+              { label: '喜歡...', value: 'yes', emoji: '🌸' },
+              { label: '不用', value: 'no' }
+            ]
+          }
+        ]
+      },
+      {
+        category: 'touch',
+        type: 'preference_touch',
+        questions: [
+          {
+            text: '喜歡被怎麼摸...？',
+            options: [
+              { label: '說給你聽', value: 'yes', emoji: '💕' },
+              { label: '害羞', value: 'no' }
+            ]
+          },
+          {
+            text: '想被溫柔撫摸還是用力抓...？',
+            options: [
+              { label: '告訴你', value: 'yes', emoji: '🌸' },
+              { label: '不想說', value: 'no' }
+            ]
+          }
+        ]
+      },
+      {
+        category: 'dirty_talk',
+        type: 'preference_dirty_talk',
+        questions: [
+          {
+            text: '做愛的時候喜歡說髒話嗎...？',
+            options: [
+              { label: '喜歡...', value: 'yes', emoji: '😳' },
+              { label: '不喜歡', value: 'no' }
+            ]
+          },
+          {
+            text: '喜歡聽什麼樣的髒話？',
+            options: [
+              { label: '說給你聽', value: 'yes', emoji: '💕' },
+              { label: '太羞恥了', value: 'no' }
+            ]
+          }
+        ]
+      },
+      {
+        category: 'preparation',
+        type: 'preference_preparation',
+        questions: [
+          {
+            text: '做愛前會特別準備什麼...？',
+            options: [
+              { label: '告訴你', value: 'yes', emoji: '💕' },
+              { label: '不想說', value: 'no' }
+            ]
+          },
+          {
+            text: '喜歡剃毛嗎...全剃還是留一點？',
+            options: [
+              { label: '說給你聽', value: 'yes', emoji: '🌸' },
+              { label: '害羞', value: 'no' }
+            ]
+          }
+        ]
+      }
+    ];
+
+    // 過濾出未回答的類別
+    const unansweredQuestions = allPreferenceQuestions.filter(
+      q => !answeredCategories.has(q.category)
+    );
+
+    // 如果還有未回答的，隨機選一個
+    if (unansweredQuestions.length > 0) {
+      const selectedCategory = unansweredQuestions[Math.floor(Math.random() * unansweredQuestions.length)];
+      const selectedQuestion = selectedCategory.questions[Math.floor(Math.random() * selectedCategory.questions.length)];
+
+      return {
+        type: selectedCategory.type,
+        text: selectedQuestion.text,
+        options: selectedQuestion.options
+      };
+    }
+  }
+
+  // 沒有問題
+  return null;
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -160,7 +1095,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // ═══════════════════════════════════════════════════════════════
     const useGrok = !!grokKey;
 
-    const [memoriesResult, progressResult, preferencesResult, intentResult] = await Promise.all([
+    const [memoriesResult, progressResult, preferencesResult] = await Promise.all([
       // 1. 檢索記憶
       supabase
         .from('muse_memory_vault')
@@ -178,9 +1113,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       supabase
         .from('sexual_preferences')
         .select('category, preference_key, preference_value')
-        .eq('user_id', userId),
-      // 4. 🧠 使用模組化意圖檢測
-      detectIntent(openai, message, useGrok)
+        .eq('user_id', userId)
     ]);
 
     const memories = memoriesResult.data;
@@ -194,34 +1127,35 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const intimacyScore = progress?.intimacy_score || 0;
     const messageCount = progress?.total_messages || 0;
 
-    // 意圖結果（來自模組化檢測）
-    const userIntent = intentResult.intent;
-    const detectedBodyPart = intentResult.bodyPart || '';
+    // 🔞 特殊處理：性癖探索模式請求下一個問題
+    if (message === '__REQUEST_NEXT_PREFERENCE__') {
+      const question = generateQuestion({
+        syncLevel,
+        intimacyScore,
+        messageCount,
+        naughtyMode: false,
+        existingPreferences: existingPreferences || []
+      });
+
+      return res.status(200).json({
+        question: question
+      });
+    }
+
+    // 簡單關鍵字檢測（僅用於色色限制）- 針對女性用戶
+    const sexyKeywords = [
+      '做愛', '自慰', '幹我', '插', '舔', '口交', '性', '色色',
+      '濕了', '下面濕', '想要你', '想被你', '摸我', '親我', '上我', '要我',
+      '手指', '摸自己', '敏感', '高潮', '爽', '舒服', '奶', '胸', '下面',
+      '慾望', '騷', '癢', '硬了', '想你', '想做', '脫衣服', '裸', '床上'
+    ];
+    const hasSexyKeyword = sexyKeywords.some(keyword => message.includes(keyword));
 
     // ═══════════════════════════════════════════════════════════════
     // 🔒 色色上鎖檢查（完整版邏輯）
     // ═══════════════════════════════════════════════════════════════
     const sexyUnlocked = req.body.sexyUnlocked === true;
     const inRestrictedHours = isRestrictedHours();
-
-    console.log('🔒 色色上鎖檢查:', {
-      userIntent,
-      sexyUnlocked,
-      naughtyMode,
-      inRestrictedHours
-    });
-
-    // 完整邏輯表：
-    // ┌─────────────┬──────────┬──────────────┬──────────┬────────┐
-    // │ 時段        │ 壞壞模式 │ sexyUnlocked │ 訊息類型 │ 結果   │
-    // ├─────────────┼──────────┼──────────────┼──────────┼────────┤
-    // │ 非限制(17-8)│ 任何     │ 任何         │ 任何     │ 不鎖   │
-    // │ 限制(8-17)  │ ON       │ YES          │ 任何     │ 不鎖   │
-    // │ 限制(8-17)  │ ON       │ NO           │ 任何     │ 鎖🔒   │
-    // │ 限制(8-17)  │ OFF      │ YES          │ 任何     │ 不鎖   │
-    // │ 限制(8-17)  │ OFF      │ NO           │ 色色話   │ 鎖🔒   │
-    // │ 限制(8-17)  │ OFF      │ NO           │ 普通話   │ 不鎖   │
-    // └─────────────┴──────────┴──────────────┴──────────┴────────┘
 
     // 只在限制時段 + 未解鎖的情況下才檢查
     if (inRestrictedHours && !sexyUnlocked) {
@@ -231,20 +1165,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           blocked: true,
           reason: 'naughty_mode_needs_confirmation',
           message: '⚠️ 上課時間開啟壞壞模式需要確認\n你確定要在這個時間色色嗎？',
-          detected_intent: userIntent,
-          current_hour: getTaiwanHour(),
           naughtyMode: true
         });
       }
 
-      // 第二優先：色色內容檢查（非壞壞模式下，偵測到色色意圖才鎖）
-      if (isSexyIntent(userIntent)) {
+      // 第二優先：色色關鍵字檢查（非壞壞模式下）
+      if (hasSexyKeyword) {
         return res.status(200).json({
           blocked: true,
           reason: 'sexy_content_restricted',
           message: '🔒 偵測到色色內容，上課時間需要解鎖 (8:00-17:00)',
-          detected_intent: userIntent,
-          current_hour: getTaiwanHour(),
           naughtyMode: false
         });
       }
@@ -253,24 +1183,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // 其他情況：不阻擋，繼續處理
 
     // ═══════════════════════════════════════════════════════════════
-    // 🎯 任務決策（使用模組化函數）
+    // 🎯 任務決策：改用問答式，不再自動決策
     // ═══════════════════════════════════════════════════════════════
-    const taskDecision = decideTask({
-      intent: intentResult,
-      syncLevel,
-      messageCount,
-      naughtyMode: naughtyMode,
-      isColdMode: false // TODO: 從資料庫讀取
-    });
-
-    console.log('🎯 任務決策:', {
-      taskType: taskDecision.taskType,
-      shouldRequestMedia: taskDecision.shouldRequestMedia,
-      reason: taskDecision.reason
-    });
-
-    // 生成任務提示
-    const taskPrompt = generateTaskPrompt(taskDecision);
+    const taskDecision = {
+      taskType: 'none',
+      shouldRequestMedia: false,
+      reason: ''
+    };
+    const taskPrompt = '';
 
     // 3. 構建記憶上下文 - 強調戀愛感的主動回憶
     const memoryContext = memories?.length
@@ -659,8 +1579,33 @@ ${naughtyMode ? `
         }
       }
 
-      // 串流結束，發送完成訊號
-      res.write(`data: ${JSON.stringify({ content: '', done: true, sync_level: syncLevel, intimacy_score: intimacyScore })}\n\n`);
+      // 🎯 生成問答式互動問題
+      const question = generateQuestion({
+        syncLevel,
+        intimacyScore,
+        messageCount,
+        naughtyMode: naughtyMode,
+        existingPreferences: existingPreferences || []
+      });
+
+      // 串流結束，發送完成訊號（包含完整狀態數據）
+      res.write(`data: ${JSON.stringify({
+        content: '',
+        done: true,
+        sync_level: syncLevel,
+        intimacy_score: intimacyScore,
+        question: question, // 🎯 問答式互動
+        task: taskDecision.taskType !== 'none' ? {
+          type: taskDecision.taskType,
+          shouldRequestMedia: taskDecision.shouldRequestMedia,
+          reason: taskDecision.reason
+        } : null,
+        memories: memories?.slice(0, 5).map(m => ({ // 最近 5 條記憶
+          type: m.fact_type,
+          content: m.content,
+          weight: m.emotional_weight
+        }))
+      })}\n\n`);
       res.end();
 
       // 背景執行記憶提取（不阻塞回應）
