@@ -267,8 +267,8 @@ export default function NightMode() {
         setTreasures(userTreasures);
       }
 
-      // 載入待完成任務
-      const { data: pendingTask } = await supabase
+      // 載入待完成任務（如果表存在）
+      const { data: pendingTask, error: taskError } = await supabase
         .from('muse_tasks')
         .select('*')
         .eq('user_id', sessionId)
@@ -277,7 +277,10 @@ export default function NightMode() {
         .limit(1)
         .single();
 
-      if (pendingTask) {
+      if (taskError) {
+        // 靜默處理錯誤 - muse_tasks 表可能不存在或無法訪問
+        console.warn('⚠️ muse_tasks 查詢失敗:', taskError.message);
+      } else if (pendingTask) {
         setActiveTask(pendingTask);
       }
 
@@ -1661,13 +1664,18 @@ export default function NightMode() {
 
     if (!template) return;
 
-    const { data } = await supabase.from('muse_tasks').insert({
+    const { data, error } = await supabase.from('muse_tasks').insert({
       user_id: sessionId,
       task_type: template.type,
       instruction: template.instruction,
       location_hint: template.location_hint,
       reward_rarity: template.rarity
     }).select().single();
+
+    if (error) {
+      console.warn('⚠️ 無法創建任務 (muse_tasks 表可能不存在):', error.message);
+      return;
+    }
 
     if (data) {
       setActiveTask(data);
