@@ -973,8 +973,6 @@ export default function NightMode() {
 
   // 🔥 進入親密盲眼模式（用戶確認後執行）
   const enterIntimateMode = useCallback(async () => {
-    if (!pendingIntimateReply) return;
-
     setShowIntimateConfirm(false);
     setIsBlindfolded(true);
     setShowClimaxButton(true); // 顯示「我快到了」按鈕
@@ -1056,11 +1054,12 @@ export default function NightMode() {
     startMoanDetection();
 
     // 生成 TTS 並播放
+    const ttsText = pendingIntimateReply || '閉上眼睛...只聽我的聲音...讓我帶你進入另一個世界';
     try {
       const ttsResponse = await fetch('/api/muse-speak', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: pendingIntimateReply })
+        body: JSON.stringify({ text: ttsText })
       });
 
       if (ttsResponse.ok) {
