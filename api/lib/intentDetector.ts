@@ -5,6 +5,7 @@
 
 import { OpenAI } from 'openai';
 import { z } from 'zod';
+import { getTaiwanHour } from './timeUtils';
 
 // ═══════════════════════════════════════════════════════════════
 // 類型定義
@@ -162,10 +163,10 @@ export function isSexyIntent(intent: UserIntent): boolean {
 }
 
 /**
- * 判斷是否在限制時段 (8:00-17:00)
+ * 判斷是否在限制時段 (8:00-17:00) - 使用台灣時間
  */
 export function isRestrictedHours(): boolean {
-  const hour = new Date().getHours();
+  const hour = getTaiwanHour();
   return hour >= 8 && hour < 17;
 }
 

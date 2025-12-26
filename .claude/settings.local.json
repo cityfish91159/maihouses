@@ -19,7 +19,9 @@
       "mcp__filesystem__list_directory",
       "Bash(npx eslint:*)",
       "WebSearch",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "mcp__filesystem__create_directory",
+      "Bash(npx tsc:*)"
     ]
   },
   "model": "sonnet",

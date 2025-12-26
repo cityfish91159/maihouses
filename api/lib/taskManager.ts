@@ -4,6 +4,7 @@
  */
 
 import type { UserIntent, IntentResult } from './intentDetector';
+import { getTaiwanHour } from './timeUtils';
 
 // ═══════════════════════════════════════════════════════════════
 // 任務類型定義
@@ -35,7 +36,7 @@ export interface TaskDecision {
 export type TimeSlot = 'morning' | 'day' | 'evening' | 'night' | 'late_night';
 
 export function getTimeSlot(): TimeSlot {
-  const hour = new Date().getHours();
+  const hour = getTaiwanHour();
   if (hour >= 6 && hour < 9) return 'morning';
   if (hour >= 9 && hour < 18) return 'day';
   if (hour >= 18 && hour < 22) return 'evening';

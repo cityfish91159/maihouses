@@ -12,7 +12,7 @@ import { toast } from 'sonner';
 // Local imports
 import type { SoulTreasure, MuseTask, ChatMessage, Report, ConversationReport, PerformanceReport } from './types';
 import { rarityColors, UNLOCK_STAGES } from './constants';
-import { getSessionId, markUserInteraction, triggerHeartbeat } from './utils';
+import { getSessionId, markUserInteraction, triggerHeartbeat, getTaiwanHour } from './utils';
 import { useShadowSync } from './hooks';
 
 export default function NightMode() {
@@ -449,7 +449,7 @@ export default function NightMode() {
 
   // MUSE 主動發訊息生成
   const generateMuseInitiatedMessage = (currentSyncLevel: number) => {
-    const hour = new Date().getHours();
+    const hour = getTaiwanHour();
     const messages: Record<string, string[]> = {
       morning: [ // 6-11
         '早安，我的女孩。有夢到我嗎？',
@@ -974,7 +974,7 @@ export default function NightMode() {
         user_id: getSessionId(),
         session_type: 'desire_help',
         metadata: {
-          hour: new Date().getHours(),
+          hour: getTaiwanHour(),
           day_of_week: new Date().getDay(),
           features: ['haptic', 'moan_detection', 'climax_control', 'recording']
         }
@@ -1369,7 +1369,7 @@ export default function NightMode() {
         content: blockedMessage || '💕 想聊色色...',
         metadata: {
           timestamp: new Date().toISOString(),
-          current_hour: new Date().getHours(),
+          current_hour: getTaiwanHour(),
           blocked_message: blockedMessage // 保存被阻擋的訊息
         },
         is_read: false

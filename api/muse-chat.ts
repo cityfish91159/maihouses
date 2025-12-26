@@ -15,6 +15,7 @@ import {
   getTimeSlot,
   type TaskDecision
 } from './lib/taskManager';
+import { getTaiwanHour } from './lib/timeUtils';
 
 // ═══════════════════════════════════════════════════════════════
 // Schemas - 保留需要的 schema
@@ -87,9 +88,9 @@ emotional_weight: 1-10 (越私密越高)`
   }
 }
 
-// 判斷時段模式
+// 判斷時段模式 - 使用台灣時間
 function getTimeMode(): 'morning' | 'day' | 'evening' | 'night' | 'late_night' {
-  const hour = new Date().getHours();
+  const hour = getTaiwanHour();
   if (hour >= 6 && hour < 9) return 'morning';
   if (hour >= 9 && hour < 18) return 'day';
   if (hour >= 18 && hour < 22) return 'evening';
@@ -213,7 +214,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         reason: blockCheck.reason,
         message: '上課時間不能色色喔~ (8:00-17:00)',
         detected_intent: userIntent,
-        current_hour: new Date().getHours()
+        current_hour: getTaiwanHour()
       });
     }
 

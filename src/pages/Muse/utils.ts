@@ -1,5 +1,13 @@
 // MUSE Night Mode - Utility Functions
 
+// 獲取台灣時間（UTC+8）的小時數
+export function getTaiwanHour(): number {
+  const now = new Date();
+  const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+  const taiwanTime = new Date(utc + (8 * 3600000));
+  return taiwanTime.getHours();
+}
+
 // Helper to trigger haptic feedback (only works after user interaction)
 let hasUserInteracted = false;
 
@@ -27,9 +35,9 @@ export const getSessionId = (): string => {
   return sessionId;
 };
 
-// 判斷是否在色色限制時段 (8:00-17:00)
+// 判斷是否在色色限制時段 (8:00-17:00) - 使用台灣時間
 export const isInSexyLockedHours = (): boolean => {
-  const hour = new Date().getHours();
+  const hour = getTaiwanHour();
   return hour >= 8 && hour < 17;
 };
 
@@ -44,11 +52,11 @@ export const setSexyUnlockedToday = (): void => {
   localStorage.setItem('sexy_unlocked_today', new Date().toDateString());
 };
 
-// 判斷時段模式
+// 判斷時段模式 - 使用台灣時間
 export type TimeMode = 'morning' | 'afternoon' | 'evening' | 'night';
 
 export const getTimeMode = (): TimeMode => {
-  const hour = new Date().getHours();
+  const hour = getTaiwanHour();
   if (hour >= 6 && hour < 12) return 'morning';
   if (hour >= 12 && hour < 18) return 'afternoon';
   if (hour >= 18 && hour < 23) return 'evening';

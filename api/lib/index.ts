@@ -5,3 +5,4 @@
 
 export * from './intentDetector';
 export * from './taskManager';
+export * from './timeUtils';

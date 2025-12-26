@@ -378,6 +378,92 @@ export default function GodView() {
     }
   }, [detectedUserId, manualUserId]);
 
+  // 💬 即時監聽新訊息並更新對話框
+  useEffect(() => {
+    const targetId = manualUserId.trim() || detectedUserId;
+    if (!targetId) return;
+
+    console.log('🔔 開始監聽用戶訊息:', targetId);
+
+    // 監聽 shadow_logs（用戶發送的訊息）
+    const shadowSub = supabase
+      .channel(`chat_shadow_${targetId}`)
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'shadow_logs' },
+        (payload) => {
+          const newLog = payload.new as ShadowLog;
+          if (newLog.user_id === targetId) {
+            const metadata = newLog.metadata && typeof newLog.metadata === 'object'
+              ? {
+                  type: (newLog.metadata as Record<string, unknown>).type as string | undefined,
+                  confession_type: (newLog.metadata as Record<string, unknown>).confession_type as 'dark' | 'fantasy' | undefined,
+                  is_muse_response: (newLog.metadata as Record<string, unknown>).is_muse_response as boolean | undefined,
+                  media_type: (newLog.metadata as Record<string, unknown>).media_type as 'text' | 'voice' | 'photo' | undefined,
+                  media_url: (newLog.metadata as Record<string, unknown>).media_url as string | undefined
+                }
+              : undefined;
+
+            const newMessage: ChatMessage = {
+              id: newLog.id,
+              content: newLog.content,
+              from_admin: false,
+              created_at: newLog.created_at,
+              source: 'shadow_logs',
+              ...(metadata && { metadata })
+            };
+
+            setChatHistory(prev => [...prev, newMessage]);
+
+            // 滾動到底部
+            setTimeout(() => {
+              chatContainerRef.current?.scrollTo({
+                top: chatContainerRef.current.scrollHeight,
+                behavior: 'smooth'
+              });
+            }, 100);
+          }
+        }
+      )
+      .subscribe();
+
+    // 監聽 godview_messages（管理員發送的訊息）
+    const godviewSub = supabase
+      .channel(`chat_godview_${targetId}`)
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'godview_messages' },
+        (payload) => {
+          const newMsg = payload.new as AdminMessage;
+          if (newMsg.user_id === targetId && (newMsg as { message_type?: string }).message_type === 'chat') {
+            const newMessage: ChatMessage = {
+              id: newMsg.id,
+              content: newMsg.content,
+              from_admin: true,
+              created_at: newMsg.created_at,
+              source: 'godview_messages'
+            };
+
+            setChatHistory(prev => [...prev, newMessage]);
+
+            // 滾動到底部
+            setTimeout(() => {
+              chatContainerRef.current?.scrollTo({
+                top: chatContainerRef.current.scrollHeight,
+                behavior: 'smooth'
+              });
+            }, 100);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(shadowSub);
+      supabase.removeChannel(godviewSub);
+    };
+  }, [detectedUserId, manualUserId]);
+
   // 💬 刪除對話訊息
   const deleteChatMessage = async (msg: ChatMessage) => {
     try {
