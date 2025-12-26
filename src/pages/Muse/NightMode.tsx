@@ -1893,12 +1893,18 @@ export default function NightMode() {
     } else {
       toast('壞壞模式關閉', { duration: 2000 });
     }
-    // 同步模式狀態到 GodView
+    // 同步模式狀態到 GodView - 寫入 shadow_log 讓 GodView 可以讀取
     const sessionId = getSessionId();
-    await supabase.from('user_progress').upsert({
+    await supabase.from('shadow_logs').insert({
       user_id: sessionId,
-      current_mode: newValue ? 'naughty' : (workMode ? 'work' : 'normal'),
-      updated_at: new Date().toISOString()
+      content: newValue ? '[模式切換] 壞壞模式開啟' : '[模式切換] 壞壞模式關閉',
+      hesitation_count: 0,
+      mode: 'night',
+      metadata: {
+        type: 'mode_change',
+        naughty_mode: newValue,
+        work_mode: workMode
+      }
     });
   };
 
@@ -2672,12 +2678,18 @@ export default function NightMode() {
               } else {
                 toast('工作助手模式關閉', { duration: 2000 });
               }
-              // 同步模式狀態到 GodView
+              // 同步模式狀態到 GodView - 寫入 shadow_log
               const sessionId = getSessionId();
-              await supabase.from('user_progress').upsert({
+              await supabase.from('shadow_logs').insert({
                 user_id: sessionId,
-                current_mode: naughtyMode ? 'naughty' : (newValue ? 'work' : 'normal'),
-                updated_at: new Date().toISOString()
+                content: newValue ? '[模式切換] 工作模式開啟' : '[模式切換] 工作模式關閉',
+                hesitation_count: 0,
+                mode: 'night',
+                metadata: {
+                  type: 'mode_change',
+                  naughty_mode: naughtyMode,
+                  work_mode: newValue
+                }
               });
             }}
             className={`relative w-11 h-6 rounded-full transition-all duration-300 ${
@@ -2751,7 +2763,7 @@ export default function NightMode() {
 
       {/* 👤 性別選擇 Modal - 分析照片前選擇 */}
       {showGenderSelect && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-6 animate-fade-in">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[80] flex items-center justify-center p-6 animate-fade-in">
           <div className="bg-gradient-to-b from-stone-950 to-black rounded-3xl border border-stone-700/30 max-w-sm w-full p-8 space-y-6 text-center">
             <div className="w-16 h-16 mx-auto rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
               <span className="text-3xl">🔍</span>
@@ -2765,10 +2777,7 @@ export default function NightMode() {
             <div className="flex gap-4">
               <button
                 type="button"
-                onClick={() => {
-                  console.log('Male button clicked, files:', pendingAnalyzeFiles);
-                  handleRivalUpload('male');
-                }}
+                onClick={() => handleRivalUpload('male')}
                 className="flex-1 py-4 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-medium hover:from-blue-500 hover:to-cyan-500 transition-all flex items-center justify-center gap-2"
               >
                 <span className="text-xl">👨</span>
@@ -2776,10 +2785,7 @@ export default function NightMode() {
               </button>
               <button
                 type="button"
-                onClick={() => {
-                  console.log('Female button clicked, files:', pendingAnalyzeFiles);
-                  handleRivalUpload('female');
-                }}
+                onClick={() => handleRivalUpload('female')}
                 className="flex-1 py-4 rounded-xl bg-gradient-to-r from-pink-600 to-rose-600 text-white font-medium hover:from-pink-500 hover:to-rose-500 transition-all flex items-center justify-center gap-2"
               >
                 <span className="text-xl">👩</span>
