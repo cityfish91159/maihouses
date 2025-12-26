@@ -91,7 +91,7 @@ export default function NightMode() {
   const [rivalPhotoCount, setRivalPhotoCount] = useState(0);
   // 👤 分析性別選擇
   const [showGenderSelect, setShowGenderSelect] = useState(false);
-  const [pendingAnalyzeFiles, setPendingAnalyzeFiles] = useState<FileList | null>(null);
+  const [pendingAnalyzeFiles, setPendingAnalyzeFiles] = useState<File[] | null>(null);
   const [showRedemptionModal, setShowRedemptionModal] = useState(false);
   const [redemptionProgress, setRedemptionProgress] = useState(0);
   const redemptionAudioRef = useRef<MediaRecorder | null>(null);
@@ -2228,7 +2228,9 @@ export default function NightMode() {
   const handleRivalFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
-    setPendingAnalyzeFiles(files);
+    // 轉換成 Array 以避免 FileList 在 input 清空後變空
+    const fileArray = Array.from(files);
+    setPendingAnalyzeFiles(fileArray);
     setShowGenderSelect(true);
     // 清空 input 以便下次選擇
     if (e.target) e.target.value = '';
