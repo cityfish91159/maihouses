@@ -118,6 +118,15 @@ interface SexualPreference {
   discovered_at: string;
 }
 
+// 💦 親密統計
+interface IntimateStats {
+  total_sessions: number;
+  avg_duration: number;
+  last_session: string | null;
+  by_hour: Record<number, number>;
+  by_day: Record<number, number>;
+}
+
 export default function GodView() {
   const [logs, setLogs] = useState<ShadowLog[]>([]);
   const [rivals, setRivals] = useState<RivalDecoder[]>([]);
@@ -141,6 +150,9 @@ export default function GodView() {
 
   // 🔞 性癖偏好收集
   const [sexualPreferences, setSexualPreferences] = useState<SexualPreference[]>([]);
+
+  // 💦 親密統計
+  const [intimateStats, setIntimateStats] = useState<IntimateStats | null>(null);
 
   // 📨 直接發訊息面板狀態
   const [directMessage, setDirectMessage] = useState('');
@@ -185,6 +197,37 @@ export default function GodView() {
         .select('*')
         .order('discovered_at', { ascending: false });
       if (prefData) setSexualPreferences(prefData as SexualPreference[]);
+
+      // 💦 獲取親密統計
+      const { data: intimateData } = await supabase
+        .from('intimate_sessions')
+        .select('*')
+        .order('started_at', { ascending: false });
+      if (intimateData && intimateData.length > 0) {
+        const byHour: Record<number, number> = {};
+        const byDay: Record<number, number> = {};
+        let totalDuration = 0;
+        let durationCount = 0;
+
+        intimateData.forEach((session: { metadata?: { hour?: number; day_of_week?: number }; duration_seconds?: number }) => {
+          const hour = session.metadata?.hour;
+          const day = session.metadata?.day_of_week;
+          if (hour !== undefined) byHour[hour] = (byHour[hour] || 0) + 1;
+          if (day !== undefined) byDay[day] = (byDay[day] || 0) + 1;
+          if (session.duration_seconds) {
+            totalDuration += session.duration_seconds;
+            durationCount++;
+          }
+        });
+
+        setIntimateStats({
+          total_sessions: intimateData.length,
+          avg_duration: durationCount > 0 ? Math.round(totalDuration / durationCount) : 0,
+          last_session: intimateData[0]?.started_at || null,
+          by_hour: byHour,
+          by_day: byDay
+        });
+      }
     };
     fetchInitial();
 
@@ -1265,6 +1308,76 @@ export default function GodView() {
       </div>
 
       {/* 🔞 性癖偏好收集面板 */}
+      {/* 💦 親密統計面板 */}
+      {intimateStats && intimateStats.total_sessions > 0 && (
+        <div className="mb-6 p-4 bg-pink-950/30 border border-pink-500/30 rounded-xl">
+          <div className="flex items-center gap-3 mb-4">
+            <Heart className="text-pink-400" size={20} />
+            <h3 className="text-pink-400 text-sm uppercase tracking-wider">
+              親密統計 💦
+            </h3>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+            <div className="bg-pink-900/20 rounded-lg p-3 text-center">
+              <div className="text-2xl font-bold text-pink-400">{intimateStats.total_sessions}</div>
+              <div className="text-[10px] text-pink-500/60">總次數</div>
+            </div>
+            <div className="bg-pink-900/20 rounded-lg p-3 text-center">
+              <div className="text-2xl font-bold text-pink-400">
+                {intimateStats.avg_duration > 0 ? `${Math.floor(intimateStats.avg_duration / 60)}分${intimateStats.avg_duration % 60}秒` : '-'}
+              </div>
+              <div className="text-[10px] text-pink-500/60">平均時長</div>
+            </div>
+            <div className="bg-pink-900/20 rounded-lg p-3 text-center">
+              <div className="text-lg font-bold text-pink-400">
+                {intimateStats.last_session ? new Date(intimateStats.last_session).toLocaleDateString('zh-TW', { month: 'short', day: 'numeric' }) : '-'}
+              </div>
+              <div className="text-[10px] text-pink-500/60">最近一次</div>
+            </div>
+            <div className="bg-pink-900/20 rounded-lg p-3 text-center">
+              <div className="text-lg font-bold text-pink-400">
+                {Object.entries(intimateStats.by_hour).length > 0
+                  ? `${Object.entries(intimateStats.by_hour).sort((a, b) => b[1] - a[1])[0]?.[0] || '-'}點`
+                  : '-'}
+              </div>
+              <div className="text-[10px] text-pink-500/60">最常時段</div>
+            </div>
+          </div>
+          {/* 時段分佈 */}
+          {Object.keys(intimateStats.by_hour).length > 0 && (
+            <div className="bg-pink-900/10 rounded-lg p-3">
+              <div className="text-[10px] text-pink-500/60 mb-2">時段分佈</div>
+              <div className="flex gap-1 h-12">
+                {Array.from({ length: 24 }, (_, i) => {
+                  const count = intimateStats.by_hour[i] || 0;
+                  const maxCount = Math.max(...Object.values(intimateStats.by_hour), 1);
+                  const height = count > 0 ? Math.max((count / maxCount) * 100, 10) : 5;
+                  return (
+                    <div
+                      key={i}
+                      className="flex-1 flex flex-col justify-end"
+                      title={`${i}:00 - ${count}次`}
+                    >
+                      <div
+                        className={`rounded-t ${count > 0 ? 'bg-pink-500' : 'bg-pink-900/30'}`}
+                        style={{ height: `${height}%` }}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="flex justify-between text-[8px] text-pink-500/40 mt-1">
+                <span>0</span>
+                <span>6</span>
+                <span>12</span>
+                <span>18</span>
+                <span>24</span>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {sexualPreferences.length > 0 && (
         <div className="mb-6 p-4 bg-purple-950/30 border border-purple-500/30 rounded-xl">
           <div className="flex items-center gap-3 mb-4">
