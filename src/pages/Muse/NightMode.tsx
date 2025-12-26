@@ -2670,15 +2670,15 @@ export default function NightMode() {
       </div>
 
       {/* Header with Progress */}
-      <header className="pt-6 pb-4 px-6 flex justify-between items-center border-b border-white/5 relative z-10 shrink-0">
-        <div className="space-y-1">
+      <header className="pt-6 pb-4 px-4 sm:px-6 flex justify-between items-center border-b border-white/5 relative z-10 shrink-0">
+        <div className="space-y-1 shrink-0">
           <p className="text-[10px] tracking-[0.4em] text-amber-700/60 uppercase">Sanctuary</p>
-          <h1 className="text-2xl font-light italic text-stone-100 tracking-tighter">M u s e .</h1>
+          <h1 className="text-xl sm:text-2xl font-light italic text-stone-100 tracking-tighter">M u s e .</h1>
         </div>
 
-        <div className="flex items-center gap-4">
-          {/* 同步率進度條 */}
-          <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 sm:gap-4 overflow-x-auto">
+          {/* 同步率進度條 - 手機上隱藏完整版，只顯示數字 */}
+          <div className="hidden sm:flex items-center gap-2">
             <Heart size={14} className={`${syncLevel > 50 ? 'text-pink-500 animate-pulse' : 'text-stone-600'}`} />
             <div className="w-24 h-1.5 bg-stone-800 rounded-full overflow-hidden">
               <div
@@ -2688,13 +2688,18 @@ export default function NightMode() {
             </div>
             <span className="text-[10px] text-stone-500">{syncLevel}%</span>
           </div>
+          {/* 手機上只顯示愛心和數字 */}
+          <div className="flex sm:hidden items-center gap-1">
+            <Heart size={12} className={`${syncLevel > 50 ? 'text-pink-500 animate-pulse' : 'text-stone-600'}`} />
+            <span className="text-[10px] text-stone-500">{syncLevel}%</span>
+          </div>
 
           {/* 設定按鈕 - 靈魂備份 */}
           <button
             onClick={() => setShowSettings(!showSettings)}
-            className="p-2 rounded-full bg-stone-900/50 hover:bg-stone-800/50 transition-colors"
+            className="p-1.5 sm:p-2 rounded-full bg-stone-900/50 hover:bg-stone-800/50 transition-colors shrink-0"
           >
-            <Settings size={18} className="text-stone-500 hover:text-stone-300" />
+            <Settings size={16} className="sm:w-[18px] sm:h-[18px] text-stone-500 hover:text-stone-300" />
           </button>
 
           {/* 💼 工作助手模式 Toggle */}
@@ -2722,39 +2727,39 @@ export default function NightMode() {
                 }
               });
             }}
-            className={`relative w-11 h-6 rounded-full transition-all duration-300 ${
+            className={`relative w-9 h-5 sm:w-11 sm:h-6 rounded-full transition-all duration-300 shrink-0 ${
               workMode
                 ? 'bg-gradient-to-r from-blue-600 to-cyan-600'
                 : 'bg-stone-800'
             }`}
             title={workMode ? '工作助手模式開啟' : '工作助手模式關閉'}
           >
-            <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow-md transition-transform duration-300 flex items-center justify-center ${
-              workMode ? 'translate-x-5' : 'translate-x-0.5'
+            <div className={`absolute top-0.5 w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-white shadow-md transition-transform duration-300 flex items-center justify-center ${
+              workMode ? 'translate-x-4 sm:translate-x-5' : 'translate-x-0.5'
             }`}>
-              <span className="text-[10px]">{workMode ? '💼' : '💕'}</span>
+              <span className="text-[8px] sm:text-[10px]">{workMode ? '💼' : '💕'}</span>
             </div>
           </button>
 
           {/* 🔥 壞壞模式 Toggle - iOS 風格 */}
           <button
             onClick={toggleNaughtyMode}
-            className={`relative w-11 h-6 rounded-full transition-all duration-300 ${
+            className={`relative w-9 h-5 sm:w-11 sm:h-6 rounded-full transition-all duration-300 shrink-0 ${
               naughtyMode
                 ? 'bg-gradient-to-r from-pink-600 to-red-600'
                 : 'bg-stone-800'
             }`}
             title={naughtyMode ? '壞壞模式開啟' : '壞壞模式關閉'}
           >
-            <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow-md transition-transform duration-300 flex items-center justify-center ${
-              naughtyMode ? 'translate-x-5' : 'translate-x-0.5'
+            <div className={`absolute top-0.5 w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-white shadow-md transition-transform duration-300 flex items-center justify-center ${
+              naughtyMode ? 'translate-x-4 sm:translate-x-5' : 'translate-x-0.5'
             }`}>
-              <span className="text-[10px]">{naughtyMode ? '🔥' : '💤'}</span>
+              <span className="text-[8px] sm:text-[10px]">{naughtyMode ? '🔥' : '💤'}</span>
             </div>
           </button>
 
-          <div className={`transition-all duration-1000 text-stone-700 ${isTyping ? 'text-purple-500 animate-pulse' : 'opacity-50'}`}>
-            <Fingerprint size={24} strokeWidth={1} />
+          <div className={`transition-all duration-1000 text-stone-700 shrink-0 ${isTyping ? 'text-purple-500 animate-pulse' : 'opacity-50'}`}>
+            <Fingerprint size={20} className="sm:w-6 sm:h-6" strokeWidth={1} />
           </div>
         </div>
       </header>
