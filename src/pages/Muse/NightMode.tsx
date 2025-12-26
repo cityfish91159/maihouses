@@ -1947,7 +1947,7 @@ export default function NightMode() {
           const jsonData = await response.json();
           console.log('📡 Response JSON:', jsonData);
 
-          if (jsonData.blocked && jsonData.reason === 'sexy_content_restricted') {
+          if (jsonData.blocked) {
             console.log('🔒 內容被阻擋，顯示解鎖 UI');
 
             // 被阻擋！顯示解鎖提示
