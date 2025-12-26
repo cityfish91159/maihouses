@@ -1045,7 +1045,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
-    const { message, userId, hesitationCount = 0, climaxMode, naughtyMode = false, stream = false } = req.body;
+    const { message, userId: rawUserId, sessionId, hesitationCount = 0, climaxMode, naughtyMode = false, stream = false } = req.body;
+    // 相容前端發送 sessionId 或 userId
+    const userId = rawUserId || sessionId;
 
     if (!userId) return res.status(400).json({ error: 'Missing userId' });
     if (!message) return res.status(400).json({ error: 'Missing message' });
@@ -1095,7 +1097,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // ═══════════════════════════════════════════════════════════════
     const useGrok = !!grokKey;
 
-    const [memoriesResult, progressResult, preferencesResult] = await Promise.all([
+    const [memoriesResult, progressResult, preferencesResult, intentResult] = await Promise.all([
       // 1. 檢索記憶
       supabase
         .from('muse_memory_vault')
@@ -1113,12 +1115,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       supabase
         .from('sexual_preferences')
         .select('category, preference_key, preference_value')
-        .eq('user_id', userId)
+        .eq('user_id', userId),
+      // 4. 意圖檢測
+      detectIntent(openai, message, useGrok)
     ]);
 
     const memories = memoriesResult.data;
     const progress = progressResult.data;
     const existingPreferences = preferencesResult.data;
+    const userIntent = intentResult.intent;
+    const detectedBodyPart = intentResult.bodyPart;
 
     // ═══════════════════════════════════════════════════════════════
     // 📊 解析結果
