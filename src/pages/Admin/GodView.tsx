@@ -43,6 +43,8 @@ interface UserProgress {
   muse_avatar_url?: string;
   muse_name?: string;
   current_mode?: 'normal' | 'naughty' | 'work';
+  admin_takeover?: boolean;
+  admin_takeover_at?: string | null;
 }
 
 interface MemoryVault {
@@ -1084,6 +1086,102 @@ export default function GodView() {
     }
   };
 
+  // 🎮 切換管理員接管狀態
+  const toggleAdminTakeover = async (userId: string) => {
+    const user = userProgress.find(u => u.user_id === userId);
+    const currentState = user?.admin_takeover || false;
+    const newState = !currentState;
+
+    try {
+      if (newState) {
+        // 開啟接管
+        const { error } = await supabase
+          .from('user_progress')
+          .update({
+            admin_takeover: true,
+            admin_takeover_at: new Date().toISOString()
+          })
+          .eq('user_id', userId);
+
+        if (error) throw error;
+
+        setUserProgress(prev => prev.map(u =>
+          u.user_id === userId
+            ? { ...u, admin_takeover: true, admin_takeover_at: new Date().toISOString() }
+            : u
+        ));
+
+        toast.success('👤 已接管對話', {
+          description: 'AI 暫停回應，由你來對話',
+          className: 'bg-red-900 text-red-200'
+        });
+      } else {
+        // 結束接管 - 檢查是否需要 AI 補回應
+        const { data: lastLog } = await supabase
+          .from('shadow_logs')
+          .select('*')
+          .eq('user_id', userId)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single();
+
+        // 檢查最後一句是否有 MUSE 回應
+        const lastMetadata = lastLog?.metadata as { is_muse_response?: boolean } | null;
+        const needsAIResponse = lastLog && !lastMetadata?.is_muse_response;
+
+        const { error } = await supabase
+          .from('user_progress')
+          .update({
+            admin_takeover: false,
+            admin_takeover_at: null
+          })
+          .eq('user_id', userId);
+
+        if (error) throw error;
+
+        setUserProgress(prev => prev.map(u =>
+          u.user_id === userId
+            ? { ...u, admin_takeover: false, admin_takeover_at: null }
+            : u
+        ));
+
+        if (needsAIResponse) {
+          // 觸發 AI 回應最後一句話
+          toast.loading('🤖 AI 正在回應...', { id: 'ai-resume' });
+
+          try {
+            const response = await fetch('/api/muse-chat', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                message: lastLog.content,
+                userId: userId,
+                resumeAfterTakeover: true
+              })
+            });
+
+            if (response.ok) {
+              toast.success('🤖 AI 已恢復對話', { id: 'ai-resume' });
+            } else {
+              toast.error('AI 回應失敗', { id: 'ai-resume' });
+            }
+          } catch (e) {
+            console.error('AI resume error:', e);
+            toast.error('AI 回應失敗', { id: 'ai-resume' });
+          }
+        } else {
+          toast.success('🤖 AI 已恢復', {
+            description: '下次用戶發訊息時 AI 會回應',
+            className: 'bg-green-900 text-green-200'
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Toggle takeover error:', error);
+      toast.error('操作失敗');
+    }
+  };
+
   // 獲取唯一用戶列表
   const uniqueUsers = Array.from(new Set(logs.map(l => l.user_id))).slice(0, 10);
 
@@ -1932,6 +2030,24 @@ export default function GodView() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
+                  {/* 🎮 AI 接管開關 */}
+                  {(() => {
+                    const currentUser = userProgress.find(u => u.user_id === selectedUserId);
+                    const isTakeover = currentUser?.admin_takeover || false;
+                    return (
+                      <button
+                        onClick={() => toggleAdminTakeover(selectedUserId)}
+                        className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                          isTakeover
+                            ? 'bg-red-900/50 text-red-300 border border-red-500/50 hover:bg-red-900/70'
+                            : 'bg-green-900/30 text-green-400 border border-green-500/30 hover:bg-green-900/50'
+                        }`}
+                      >
+                        {isTakeover ? <Lock size={14} /> : <Unlock size={14} />}
+                        {isTakeover ? 'AI 已暫停' : 'AI 運作中'}
+                      </button>
+                    );
+                  })()}
                   <button
                     onClick={() => setShowTreasuresPanel(!showTreasuresPanel)}
                     className={`p-2 rounded-lg transition-colors ${showTreasuresPanel ? 'bg-pink-900/50 text-pink-400' : 'text-stone-500 hover:text-pink-400'}`}

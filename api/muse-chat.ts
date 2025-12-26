@@ -1172,7 +1172,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       // 2. 獲取用戶進度
       supabase
         .from('user_progress')
-        .select('sync_level, total_messages, intimacy_score')
+        .select('sync_level, total_messages, intimacy_score, admin_takeover')
         .eq('user_id', userId)
         .single(),
       // 3. 獲取性癖資料
@@ -1185,6 +1185,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const memories = memoriesResult.data;
     const progress = progressResult.data;
     const existingPreferences = preferencesResult.data;
+
+    // 🎮 管理員接管檢查 - 如果管理員正在接管，AI 不回應
+    if (progress?.admin_takeover) {
+      console.log(`[MUSE] Admin takeover active for user ${userId}, skipping AI response`);
+      return res.status(200).json({
+        reply: null,
+        adminTakeover: true,
+        message: 'Admin is currently handling this conversation'
+      });
+    }
 
     // ═══════════════════════════════════════════════════════════════
     // 📊 解析結果
