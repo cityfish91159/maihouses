@@ -1166,16 +1166,23 @@ export default function GodView() {
               還沒有對話記錄，開始聊天吧！
             </div>
           ) : (
-            chatHistory.map((msg) => (
+            chatHistory.map((msg) => {
+              const isMuseResponse = msg.metadata?.is_muse_response === true;
+              const isFromAdmin = msg.from_admin;
+              const isRightAligned = isFromAdmin || isMuseResponse;
+
+              return (
               <div
                 key={msg.id}
-                className={`group flex ${msg.from_admin ? 'justify-end' : 'justify-start'}`}
+                className={`group flex ${isRightAligned ? 'justify-end' : 'justify-start'}`}
               >
                 <div
                   className={`relative max-w-[75%] p-3 rounded-xl ${
-                    msg.from_admin
+                    isFromAdmin
                       ? 'bg-purple-900/40 border border-purple-500/30'
-                      : 'bg-stone-900/60 border border-stone-800'
+                      : isMuseResponse
+                        ? 'bg-pink-900/30 border border-pink-500/30'
+                        : 'bg-stone-900/60 border border-stone-800'
                   }`}
                 >
                   {/* 刪除按鈕 */}
@@ -1187,8 +1194,8 @@ export default function GodView() {
                   </button>
 
                   {/* 發送者標籤 */}
-                  <p className={`text-[9px] mb-1 ${msg.from_admin ? 'text-purple-400' : 'text-stone-500'}`}>
-                    {msg.from_admin ? '你 (MUSE)' : '資欣老師'}
+                  <p className={`text-[9px] mb-1 ${isFromAdmin ? 'text-purple-400' : isMuseResponse ? 'text-pink-400' : 'text-stone-500'}`}>
+                    {isFromAdmin ? '你 (GodView)' : isMuseResponse ? '🤖 MUSE' : '資欣老師'}
                     {/* 🔥 焚燒內容標籤 */}
                     {msg.metadata?.type === 'burning' && (
                       <span className="ml-2 text-amber-400">
@@ -1247,7 +1254,8 @@ export default function GodView() {
                   </p>
                 </div>
               </div>
-            ))
+              );
+            })
           )}
         </div>
 

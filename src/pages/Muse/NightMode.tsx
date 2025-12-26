@@ -2070,10 +2070,27 @@ export default function NightMode() {
       }
 
       // 設置報告顯示（過濾掉 AI 回報標記）
+      const cleanedReply = fullReply.replace(/\[MUSE_STATE:[^\]]+\]/g, '').trim();
       setReport({
         risk: 0,
-        whisper: fullReply.replace(/\[MUSE_STATE:[^\]]+\]/g, '').trim()
+        whisper: cleanedReply
       });
+
+      // 💾 保存 MUSE 回覆到 shadow_logs（讓 GodView 可以看到完整對話）
+      if (cleanedReply) {
+        const sessionId = getSessionId();
+        await supabase.from('shadow_logs').insert({
+          user_id: sessionId,
+          content: cleanedReply,
+          hesitation_count: 0,
+          mode: 'night',
+          metadata: {
+            is_muse_response: true,
+            naughty_mode: naughtyMode,
+            work_mode: workMode
+          }
+        });
+      }
 
       setBackspaceCount(0);
       triggerHeartbeat([50, 50]);
