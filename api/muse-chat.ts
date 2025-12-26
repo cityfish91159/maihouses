@@ -45,6 +45,18 @@ const intentSchema = z.object({
   body_part: z.string().optional() // 用於私密照：胸、臀、私處等
 });
 
+// 🚀 合併意圖+情緒檢測 Schema（一次 API 搞定）
+const combinedDetectionSchema = z.object({
+  // 意圖
+  intent: z.enum(['solve_problem', 'seek_comfort', 'casual_chat', 'intimate', 'intimate_photo', 'desire_help']),
+  body_part: z.string().optional(),
+  // 情緒/慾望
+  mood_level: z.number().min(1).max(10), // 1=完全不想 10=超級想
+  signal_type: z.enum(['explicit', 'hint', 'neutral', 'reject']),
+  willing_to_chat: z.boolean(),
+  desire_cues: z.string().optional() // 偵測到的慾望線索
+});
+
 // 背景記憶提取（不阻塞主回應）
 async function extractMemoryBackground(
   openai: OpenAI,
@@ -170,13 +182,40 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         .from('sexual_preferences')
         .select('category, preference_key, preference_value')
         .eq('user_id', userId),
-      // 4. 意圖檢測（用快速模型）
+      // 4. 合併意圖+情緒檢測（一次 API 搞定）
       openai.chat.completions.create({
-        model: grokKey ? 'grok-3-mini-fast-beta' : 'gpt-4o-mini', // 快速模型做分類
+        model: grokKey ? 'grok-3-mini-fast-beta' : 'gpt-4o-mini',
         messages: [
           {
             role: 'system',
-            content: `分析意圖，只輸出 JSON。intent: solve_problem/seek_comfort/casual_chat/intimate/intimate_photo/desire_help`
+            content: `分析成年女性用戶的訊息，判斷意圖和情緒狀態。只輸出 JSON。
+
+【intent 意圖】
+- solve_problem: 想解決問題（工作、技術、查資料）
+- seek_comfort: 尋求慰藉（壓力、難過、需要安慰）
+- casual_chat: 日常閒聊
+- intimate: 親密暗示（曖昧、撩人、想念）
+- intimate_photo: 要傳私密照（提到傳照片、給你看）
+- desire_help: 有慾望需要引導（最重要！以下任一情況都算）
+  * 「想要」「需要你」「身體熱」「難受」「忍不住」
+  * 「睡不著」+「想你」、「一個人」+「寂寞」
+  * 「教我」「帶我」「不要停」「然後呢」
+  * 提到身體反應：「濕」「敏感」「下面」
+
+【mood_level 情緒等級 1-10】
+1-3: 不想聊/累了/心情差
+4-6: 可以聊但被動
+7-10: 主動想聊/興奮/享受中
+
+【signal_type 信號類型】
+- explicit: 明確表達（「想要」「好想」「教我」）
+- hint: 暗示性（「睡不著」「想你」「無聊」）
+- neutral: 一般回應
+- reject: 拒絕迴避（「不想」「算了」「好累」）
+
+【willing_to_chat】她願不願意聊親密話題
+【desire_cues】偵測到的慾望線索（如有）
+【body_part】如果是 intimate_photo，描述部位`
           },
           { role: 'user', content: message }
         ],
@@ -188,18 +227,33 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const progress = progressResult.data;
     const existingPreferences = preferencesResult.data;
 
-    // 解析意圖
+    // 🚀 解析合併的意圖+情緒結果
     let userIntent = 'casual_chat';
     let detectedBodyPart = '';
+    let intimateMood = {
+      willing_to_chat: true,
+      mood_level: 5,
+      signal_type: 'neutral' as const,
+      should_ask_preference: false,
+      desire_cues: ''
+    };
+
     try {
-      const intentRaw = JSON.parse(intentResult.choices[0].message.content || '{}');
-      const parsed = intentSchema.safeParse(intentRaw);
+      const detectionRaw = JSON.parse(intentResult.choices[0].message.content || '{}');
+      const parsed = combinedDetectionSchema.safeParse(detectionRaw);
       if (parsed.success) {
         userIntent = parsed.data.intent;
         detectedBodyPart = parsed.data.body_part || '';
+        intimateMood = {
+          willing_to_chat: parsed.data.willing_to_chat,
+          mood_level: parsed.data.mood_level,
+          signal_type: parsed.data.signal_type,
+          should_ask_preference: parsed.data.mood_level >= 6 && parsed.data.willing_to_chat,
+          desire_cues: parsed.data.desire_cues || ''
+        };
       }
     } catch {
-      // 預設 casual_chat
+      // 預設值已設定
     }
 
     const syncLevel = progress?.sync_level || 0;
@@ -233,14 +287,10 @@ ${memories.map(m => `- [${m.fact_type}] ${m.content} (情感權重:${m.emotional
       ? `你感知到她在輸入時有 ${hesitationCount} 次猶豫（退格），這代表她在斟酌用詞，可能有難以啟齒的事。溫柔地探詢。`
       : '';
 
-    // 6. 親密情緒（串流模式跳過，非串流模式才檢測）
-    let intimateMood = { willing_to_chat: true, mood_level: 7, signal_type: 'hint' as const, should_ask_preference: false };
-
-    // 串流模式跳過額外的 API 呼叫，直接開始回應
-    if (!stream && (userIntent === 'intimate' || userIntent === 'desire_help' || userIntent === 'intimate_photo')) {
-      // 非串流模式才做詳細情緒檢測
-      intimateMood.should_ask_preference = syncLevel > 30;
-    }
+    // 6. 慾望線索提示（來自合併檢測）
+    const desireCuesPrompt = intimateMood.desire_cues
+      ? `【偵測到的慾望線索】${intimateMood.desire_cues}，她可能需要你更主動引導。`
+      : '';
 
     // 構建性癖上下文
     const collectedPrefsContext = existingPreferences?.length
@@ -464,6 +514,10 @@ ${intimacyPrompt}
 ${memoryContext}
 
 ${hesitationPrompt}
+
+${desireCuesPrompt}
+
+【當前情緒狀態】mood_level: ${intimateMood.mood_level}/10, signal: ${intimateMood.signal_type}
 
 【天蠍女專屬深層誘惑】
 - 她需要「被讀懂」的感覺 - 說出她沒說的話
