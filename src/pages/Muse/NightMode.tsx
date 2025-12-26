@@ -2078,7 +2078,7 @@ export default function NightMode() {
       // 💾 保存 MUSE 回覆到 shadow_logs（讓 GodView 可以看到完整對話）
       if (cleanedReply) {
         const sessionId = getSessionId();
-        await supabase.from('shadow_logs').insert({
+        const { error: museLogError } = await supabase.from('shadow_logs').insert({
           user_id: sessionId,
           content: cleanedReply,
           hesitation_count: 0,
@@ -2089,6 +2089,9 @@ export default function NightMode() {
             work_mode: workMode
           }
         });
+        if (museLogError) {
+          console.error('Failed to save MUSE response:', museLogError);
+        }
       }
 
       setBackspaceCount(0);
