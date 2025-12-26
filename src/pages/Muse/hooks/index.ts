@@ -20,6 +20,7 @@ export type { UseMuseMediaOptions, UseMuseMediaReturn } from './useMuseMedia';
 export { useMuseHaptics } from './useMuseHaptics';
 export type { UseMuseHapticsReturn, VibrationPattern } from './useMuseHaptics';
 
+
 // 親密功能（組合器 + 子模組）
 export { useMuseIntimacy } from './intimacy';
 export type { UseMuseIntimacyOptions, UseMuseIntimacyReturn } from './intimacy';
