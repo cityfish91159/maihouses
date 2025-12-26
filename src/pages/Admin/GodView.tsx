@@ -42,6 +42,7 @@ interface UserProgress {
   intimacy_score: number;
   muse_avatar_url?: string;
   muse_name?: string;
+  current_mode?: 'normal' | 'naughty' | 'work';
 }
 
 interface MemoryVault {
@@ -1241,6 +1242,18 @@ export default function GodView() {
               <div className="flex justify-between text-[8px] text-stone-600">
                 <span>MSG: {user.total_messages}</span>
                 <span>INT: {user.intimacy_score}</span>
+              </div>
+              {/* 模式狀態 */}
+              <div className="mt-1 text-center">
+                <span className={`text-[9px] px-2 py-0.5 rounded-full ${
+                  user.current_mode === 'naughty'
+                    ? 'bg-pink-900/50 text-pink-400'
+                    : user.current_mode === 'work'
+                      ? 'bg-blue-900/50 text-blue-400'
+                      : 'bg-stone-800 text-stone-500'
+                }`}>
+                  {user.current_mode === 'naughty' ? '🔥 壞壞模式' : user.current_mode === 'work' ? '💼 工作模式' : '💕 正常模式'}
+                </span>
               </div>
             </div>
             <button className="mt-2 w-full py-1 bg-purple-900/30 text-purple-400 rounded text-[9px] hover:bg-purple-900/50 flex items-center justify-center gap-1">

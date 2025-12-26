@@ -1873,7 +1873,7 @@ export default function NightMode() {
   };
 
   // 🔥 壞壞模式切換
-  const toggleNaughtyMode = () => {
+  const toggleNaughtyMode = async () => {
     const newValue = !naughtyMode;
     setNaughtyMode(newValue);
     localStorage.setItem('muse_naughty_mode', String(newValue));
@@ -1882,6 +1882,13 @@ export default function NightMode() {
     } else {
       toast('壞壞模式關閉', { duration: 2000 });
     }
+    // 同步模式狀態到 GodView
+    const sessionId = getSessionId();
+    await supabase.from('user_progress').upsert({
+      user_id: sessionId,
+      current_mode: newValue ? 'naughty' : (workMode ? 'work' : 'normal'),
+      updated_at: new Date().toISOString()
+    });
   };
 
   const handleSend = async () => {
@@ -2632,7 +2639,7 @@ export default function NightMode() {
 
           {/* 💼 工作助手模式 Toggle */}
           <button
-            onClick={() => {
+            onClick={async () => {
               const newValue = !workMode;
               setWorkMode(newValue);
               localStorage.setItem('muse_work_mode', String(newValue));
@@ -2641,6 +2648,13 @@ export default function NightMode() {
               } else {
                 toast('工作助手模式關閉', { duration: 2000 });
               }
+              // 同步模式狀態到 GodView
+              const sessionId = getSessionId();
+              await supabase.from('user_progress').upsert({
+                user_id: sessionId,
+                current_mode: naughtyMode ? 'naughty' : (newValue ? 'work' : 'normal'),
+                updated_at: new Date().toISOString()
+              });
             }}
             className={`relative w-11 h-6 rounded-full transition-all duration-300 ${
               workMode
