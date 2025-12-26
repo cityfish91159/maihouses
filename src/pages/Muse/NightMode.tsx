@@ -2051,13 +2051,15 @@ export default function NightMode() {
                 } else if (data.content) {
                   // 累積回覆並即時更新最後一條訊息（MUSE）
                   fullReply += data.content;
+                  // 過濾掉 AI 回報標記，不顯示給用戶
+                  const displayContent = fullReply.replace(/\[MUSE_STATE:[^\]]+\]/g, '').trim();
                   setChatHistory(prev => {
                     const updated = [...prev];
                     const lastIndex = updated.length - 1;
                     if (lastIndex >= 0 && updated[lastIndex]?.role === 'muse') {
                       updated[lastIndex] = {
                         ...updated[lastIndex],
-                        content: fullReply
+                        content: displayContent
                       };
                     }
                     return updated;
@@ -2071,10 +2073,10 @@ export default function NightMode() {
         }
       }
 
-      // 設置報告顯示
+      // 設置報告顯示（過濾掉 AI 回報標記）
       setReport({
         risk: 0,
-        whisper: fullReply
+        whisper: fullReply.replace(/\[MUSE_STATE:[^\]]+\]/g, '').trim()
       });
 
       setBackspaceCount(0);
