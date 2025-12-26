@@ -133,6 +133,10 @@ export default function NightMode() {
   const [naughtyMode, setNaughtyMode] = useState(() => {
     return localStorage.getItem('muse_naughty_mode') === 'true';
   });
+  // 💼 工作助手模式
+  const [workMode, setWorkMode] = useState(() => {
+    return localStorage.getItem('muse_work_mode') === 'true';
+  });
   const [showBurningToast, setShowBurningToast] = useState(false);
   const [burningContent, setBurningContent] = useState('');
   const [burningPhotoUrl, setBurningPhotoUrl] = useState<string | null>(null);
@@ -1913,6 +1917,7 @@ export default function NightMode() {
           userId: sessionId,
           hesitationCount: backspaceCount,
           naughtyMode: naughtyMode,
+          workMode: workMode, // 💼 工作助手模式
           sexyUnlocked: sexyUnlocked, // 傳送解鎖狀態
           stream: true // 啟用串流
         })
@@ -2623,6 +2628,32 @@ export default function NightMode() {
             className="p-2 rounded-full bg-stone-900/50 hover:bg-stone-800/50 transition-colors"
           >
             <Settings size={18} className="text-stone-500 hover:text-stone-300" />
+          </button>
+
+          {/* 💼 工作助手模式 Toggle */}
+          <button
+            onClick={() => {
+              const newValue = !workMode;
+              setWorkMode(newValue);
+              localStorage.setItem('muse_work_mode', String(newValue));
+              if (newValue) {
+                toast.success('💼 工作助手模式開啟', { duration: 2000 });
+              } else {
+                toast('工作助手模式關閉', { duration: 2000 });
+              }
+            }}
+            className={`relative w-11 h-6 rounded-full transition-all duration-300 ${
+              workMode
+                ? 'bg-gradient-to-r from-blue-600 to-cyan-600'
+                : 'bg-stone-800'
+            }`}
+            title={workMode ? '工作助手模式開啟' : '工作助手模式關閉'}
+          >
+            <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow-md transition-transform duration-300 flex items-center justify-center ${
+              workMode ? 'translate-x-5' : 'translate-x-0.5'
+            }`}>
+              <span className="text-[10px]">{workMode ? '💼' : '💕'}</span>
+            </div>
           </button>
 
           {/* 🔥 壞壞模式 Toggle - iOS 風格 */}
