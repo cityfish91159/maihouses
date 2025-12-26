@@ -1,11 +1,12 @@
 // MUSE Night Mode - Utility Functions
 
 // 獲取台灣時間（UTC+8）的小時數
+// 直接使用 UTC 時間加 8 小時
 export function getTaiwanHour(): number {
   const now = new Date();
-  const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
-  const taiwanTime = new Date(utc + (8 * 3600000));
-  return taiwanTime.getHours();
+  const utcHour = now.getUTCHours();
+  const taiwanHour = (utcHour + 8) % 24;
+  return taiwanHour;
 }
 
 // Helper to trigger haptic feedback (only works after user interaction)
