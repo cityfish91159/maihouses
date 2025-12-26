@@ -1912,16 +1912,6 @@ export default function NightMode() {
       // 🚀 串流模式 - 邊生成邊顯示
       const sexyUnlocked = localStorage.getItem('sexy_unlocked_today') === new Date().toDateString();
 
-      // 🐛 DEBUG: 顯示當前狀態
-      console.log('🔍 發送訊息前檢查:', {
-        message: userMessage,
-        naughtyMode,
-        sexyUnlocked,
-        currentHour: new Date().getHours(),
-        storedDate: localStorage.getItem('sexy_unlocked_today'),
-        todayDate: new Date().toDateString()
-      });
-
       const response = await fetch('/api/muse-chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1941,16 +1931,12 @@ export default function NightMode() {
 
       // 🔒 檢查是否被色色限制阻擋
       const contentType = response.headers.get('content-type');
-      console.log('📡 Response Content-Type:', contentType);
 
       if (contentType?.includes('application/json')) {
         try {
           const jsonData = await response.json();
-          console.log('📡 Response JSON:', jsonData);
 
           if (jsonData.blocked) {
-            console.log('🔒 內容被阻擋，顯示解鎖 UI');
-
             // 被阻擋！顯示解鎖提示
             setIsSexyBlocked(true);
             setBlockedMessage(userMessage);
