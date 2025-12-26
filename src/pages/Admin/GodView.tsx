@@ -460,6 +460,27 @@ export default function GodView() {
             dismissedSet.delete(newLog.user_id);
             localStorage.setItem('godview_dismissed_users', JSON.stringify([...dismissedSet]));
             setDismissedUsers(new Set(dismissedSet) as Set<string>);
+
+            // 🔄 刷新該用戶的 userProgress 資料
+            supabase
+              .from('user_progress')
+              .select('user_id, sync_level, total_messages, intimacy_score, muse_avatar_url, muse_name, current_mode, admin_takeover, admin_takeover_at')
+              .eq('user_id', newLog.user_id)
+              .single()
+              .then(({ data: userData }) => {
+                if (userData) {
+                  setUserProgress(prev => {
+                    // 檢查是否已存在
+                    const exists = prev.some(u => u.user_id === userData.user_id);
+                    if (exists) {
+                      return prev.map(u => u.user_id === userData.user_id ? userData : u);
+                    } else {
+                      return [userData, ...prev];
+                    }
+                  });
+                }
+              });
+
             toast.success('👋 用戶回來了！', {
               description: `ID: ${newLog.user_id.slice(0, 8)}... 已自動恢復顯示`,
               className: 'bg-green-900 border-green-500 text-green-100'
@@ -517,6 +538,24 @@ export default function GodView() {
       })
       .subscribe();
 
+    // 🎮 用戶進度訂閱（包含接管狀態）
+    const userProgressSub = supabase.channel('user_progress_updates')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'user_progress' }, (p) => {
+        if (p.eventType === 'UPDATE') {
+          const updated = p.new as UserProgress;
+          setUserProgress(prev => prev.map(u =>
+            u.user_id === updated.user_id ? { ...u, ...updated } : u
+          ));
+        } else if (p.eventType === 'INSERT') {
+          const newUser = p.new as UserProgress;
+          setUserProgress(prev => {
+            const exists = prev.some(u => u.user_id === newUser.user_id);
+            return exists ? prev : [newUser, ...prev];
+          });
+        }
+      })
+      .subscribe();
+
     // BACKUP POLLING
     const interval = setInterval(() => {
       fetchLogs();
@@ -527,6 +566,7 @@ export default function GodView() {
       supabase.removeChannel(channel);
       supabase.removeChannel(rivalSub);
       supabase.removeChannel(sexyUnlockSub);
+      supabase.removeChannel(userProgressSub);
       clearInterval(interval);
     };
   }, []);
