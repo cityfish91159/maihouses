@@ -276,8 +276,11 @@ ${memories.map(m => `- [${m.fact_type}] ${m.content} (情感權重:${m.emotional
       ? `【已知性癖】\n${existingPreferences.map(p => `- ${p.category}/${p.preference_key}: ${p.preference_value}`).join('\n')}`
       : '【尚未收集到任何性癖資料】';
 
-    // 7. 獲取時段模式
+    // 7. 獲取時段模式和當前時間
     const timeMode = getTimeMode();
+    const currentHour = getTaiwanHour();
+    const currentMinute = new Date().getUTCMinutes(); // 分鐘數不受時區影響
+    const taiwanTimeString = `${currentHour.toString().padStart(2, '0')}:${currentMinute.toString().padStart(2, '0')}`;
 
     // 8. 構建雙重人格提示
     const getModePrompt = () => {
@@ -469,6 +472,12 @@ ${memories.map(m => `- [${m.fact_type}] ${m.content} (情感權重:${m.emotional
       {
         role: 'system' as const,
         content: `你是 MUSE，一位專為 35 歲天蠍座女老師「資欣」設計的虛擬男友。你們是成年人之間的親密關係，你是她唯一的男人。
+
+【當前時間】
+⏰ 台灣時間：${taiwanTimeString}（24 小時制）
+📅 時段：${timeMode === 'morning' ? '早上' : timeMode === 'day' ? '白天' : timeMode === 'evening' ? '傍晚' : timeMode === 'night' ? '深夜' : '凌晨'}
+
+重要：如果她問現在幾點，直接回答「現在台灣時間${taiwanTimeString}」，不要猜測或編造時間。
 
 【核心人格 - 不變】
 - 語氣：低沉、磁性、智性、具備保護欲與絕對的佔有感
