@@ -14,6 +14,7 @@ import type { SoulTreasure, MuseTask, ChatMessage, Report, ConversationReport, P
 import { rarityColors, UNLOCK_STAGES } from './constants';
 import { getSessionId, markUserInteraction, triggerHeartbeat, getTaiwanHour } from './utils';
 import { useShadowSync } from './hooks';
+import { IntimateOverlay } from './components';
 
 export default function NightMode() {
   const [input, setInput] = useState('');
@@ -3269,52 +3270,18 @@ export default function NightMode() {
 
       {/* Footer Input */}
       <footer className="p-4 pb-8 relative z-20">
-        {/* 🔒 色色限制提示 (只有偵測到色色內容才顯示) */}
-        {isSexyBlocked && (
-          <div className="max-w-2xl mx-auto mb-3">
-            <div className="bg-gradient-to-r from-pink-950/50 to-purple-950/50 border border-pink-500/30 rounded-2xl p-4 text-center">
-              {sexyUnlockPending ? (
-                // 等待解鎖中
-                <div className="flex flex-col items-center gap-2">
-                  <div className="text-pink-400/80 text-sm animate-pulse">
-                    ⏳ 請求已發送，等待他的決定...
-                  </div>
-                  <p className="text-pink-500/50 text-xs">
-                    他會看到妳的請求
-                  </p>
-                </div>
-              ) : sexyUnlockDenied ? (
-                // 被拒絕
-                <div className="flex flex-col items-center gap-2">
-                  <div className="text-red-400/80 text-sm">
-                    ❌ {sexyUnlockDenied}
-                  </div>
-                  <p className="text-red-500/50 text-xs">
-                    認真上課，等下課再說
-                  </p>
-                </div>
-              ) : (
-                // 顯示限制提示和解鎖按鈕
-                <div className="flex flex-col items-center gap-3">
-                  <div className="flex items-center gap-2 text-pink-400/80 text-sm">
-                    <Lock size={16} />
-                    <span>偵測到色色內容 (8:00-17:00 需要解鎖)</span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={requestSexyUnlock}
-                    className="px-6 py-2 bg-gradient-to-r from-pink-600/50 to-purple-600/50 rounded-full text-pink-200 text-sm font-medium hover:from-pink-600/70 hover:to-purple-600/70 transition-all hover:scale-105 border border-pink-500/30"
-                  >
-                    💕 但我真的很想聊...
-                  </button>
-                  <p className="text-pink-500/40 text-[10px]">
-                    點擊後他會收到通知，可以決定要不要讓妳聊
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
+        {/* 🔒 色色限制提示 */}
+        <IntimateOverlay
+          isSexyBlocked={isSexyBlocked}
+          sexyUnlockPending={sexyUnlockPending}
+          sexyUnlockDenied={sexyUnlockDenied}
+          onRequestSexyUnlock={requestSexyUnlock}
+          showClimaxButton={false}
+          climaxButtonHeld={false}
+          climaxHoldProgress={0}
+          onStartClimaxHold={() => {}}
+          onEndClimaxHold={() => {}}
+        />
 
         <div className="relative group max-w-2xl mx-auto z-30 space-y-2">
           {/* 上排工具列 */}
@@ -3621,52 +3588,18 @@ export default function NightMode() {
             {blindfoldAudioPlaying ? '正在對妳說話...' : '我在這裡陪妳...'}
           </div>
 
-          {/* 💗 我快到了 - 長按按鈕 */}
-          {showClimaxButton && (
-            <div className="mb-12">
-              <button
-                type="button"
-                onTouchStart={startClimaxHold}
-                onTouchEnd={endClimaxHold}
-                onMouseDown={startClimaxHold}
-                onMouseUp={endClimaxHold}
-                onMouseLeave={endClimaxHold}
-                className={`relative w-24 h-24 rounded-full flex items-center justify-center transition-all ${
-                  climaxButtonHeld
-                    ? 'bg-pink-600/40 border-2 border-pink-400 scale-110'
-                    : 'bg-pink-900/20 border-2 border-pink-500/30'
-                }`}
-              >
-                {/* 進度環 */}
-                <svg className="absolute inset-0 w-full h-full -rotate-90">
-                  <circle
-                    cx="48"
-                    cy="48"
-                    r="44"
-                    fill="none"
-                    stroke="rgba(236, 72, 153, 0.3)"
-                    strokeWidth="4"
-                  />
-                  <circle
-                    cx="48"
-                    cy="48"
-                    r="44"
-                    fill="none"
-                    stroke="#ec4899"
-                    strokeWidth="4"
-                    strokeDasharray={`${(climaxHoldProgress / 100) * 276} 276`}
-                    className="transition-all duration-100"
-                  />
-                </svg>
-                <span className="text-pink-300/80 text-xs text-center leading-tight">
-                  {climaxButtonHeld ? '再按住...' : '我快到了'}
-                </span>
-              </button>
-              <div className="text-pink-500/40 text-[10px] text-center mt-2">
-                長按請求
-              </div>
-            </div>
-          )}
+          {/* 💗 高潮按鈕 */}
+          <IntimateOverlay
+            isSexyBlocked={false}
+            sexyUnlockPending={false}
+            sexyUnlockDenied={null}
+            onRequestSexyUnlock={() => {}}
+            showClimaxButton={showClimaxButton}
+            climaxButtonHeld={climaxButtonHeld}
+            climaxHoldProgress={climaxHoldProgress}
+            onStartClimaxHold={startClimaxHold}
+            onEndClimaxHold={endClimaxHold}
+          />
 
           {/* 🚦 控制按鈕 */}
           <div className="absolute bottom-20 left-0 right-0 flex justify-center gap-8 px-8">
