@@ -10,7 +10,7 @@ import imageCompression from 'browser-image-compression';
 import { toast } from 'sonner';
 
 // Local imports
-import type { SoulTreasure, MuseTask, ChatMessage, Report, ConversationReport, PerformanceReport, MuseQuestion } from './types';
+import type { MuseTask, ChatMessage, Report, ConversationReport, PerformanceReport, MuseQuestion } from './types';
 import { rarityColors, UNLOCK_STAGES } from './constants';
 import { getSessionId, markUserInteraction, triggerHeartbeat, getTaiwanHour } from './utils';
 import { useShadowSync } from './hooks';
@@ -44,9 +44,7 @@ export default function NightMode() {
     }
     return [];
   });
-  const [treasures, setTreasures] = useState<SoulTreasure[]>([]);
-  const [showTreasureVault, setShowTreasureVault] = useState(false);
-  const [newTreasure, setNewTreasure] = useState<SoulTreasure | null>(null);
+  // 寶物庫已移至 GodView，此處僅保留寫入功能
 
   // 男友形象相關狀態
   const [museAvatar, setMuseAvatar] = useState<string | null>(null);
@@ -253,17 +251,6 @@ export default function NightMode() {
         localStorage.setItem('muse_streak', '1');
         localStorage.setItem('muse_last_login', today);
         setStreakDays(1);
-      }
-
-      // 載入寶物
-      const { data: userTreasures } = await supabase
-        .from('soul_treasures')
-        .select('*')
-        .eq('user_id', sessionId)
-        .order('unlocked_at', { ascending: false });
-
-      if (userTreasures) {
-        setTreasures(userTreasures);
       }
 
       // 載入待完成任務（如果表存在）
@@ -785,15 +772,10 @@ export default function NightMode() {
 
               if (response.ok) {
                 const data = await response.json();
-                toast.success('語音已保存到寶物庫 ✓', {
+                toast.success('語音已保存 ✓', {
                   id: 'voice',
                   className: 'bg-purple-950 text-purple-200'
                 });
-                // 更新寶物列表
-                if (data.treasure) {
-                  setTreasures(prev => [data.treasure, ...prev]);
-                  setNewTreasure(data.treasure);
-                }
                 // 更新同步率
                 if (data.sync_level) {
                   setSyncLevel(data.sync_level);
@@ -1622,16 +1604,9 @@ export default function NightMode() {
         rarity: activeTask.reward_rarity || 'rare'
       };
 
-      const { data: newTreasureData } = await supabase
+      await supabase
         .from('soul_treasures')
-        .insert(treasureData)
-        .select()
-        .single();
-
-      if (newTreasureData) {
-        setNewTreasure(newTreasureData);
-        setTreasures(prev => [newTreasureData, ...prev]);
-      }
+        .insert(treasureData);
 
       // 記錄到 shadow_logs 讓 GodView 看到
       await supabase.from('shadow_logs').insert({
@@ -1721,14 +1696,6 @@ export default function NightMode() {
       localStorage.setItem('muse_chat_history', JSON.stringify(toSave));
     }
   }, [chatHistory]);
-
-  // 新寶物動畫
-  useEffect(() => {
-    if (newTreasure) {
-      const timer = setTimeout(() => setNewTreasure(null), 5000);
-      return () => clearTimeout(timer);
-    }
-  }, [newTreasure]);
 
   const saveShadowLog = useCallback(async (textToSave: string) => {
     if (!textToSave) return;
@@ -2650,19 +2617,6 @@ export default function NightMode() {
             <span className="text-[10px] text-stone-500">{syncLevel}%</span>
           </div>
 
-          {/* 寶物庫按鈕 */}
-          <button
-            onClick={() => setShowTreasureVault(!showTreasureVault)}
-            className="relative p-2 rounded-full bg-stone-900/50 hover:bg-purple-900/30 transition-colors"
-          >
-            <Gem size={18} className="text-purple-400" />
-            {treasures.length > 0 && (
-              <span className="absolute -top-1 -right-1 w-4 h-4 bg-purple-600 rounded-full text-[8px] flex items-center justify-center">
-                {treasures.length}
-              </span>
-            )}
-          </button>
-
           {/* 設定按鈕 - 靈魂備份 */}
           <button
             onClick={() => setShowSettings(!showSettings)}
@@ -2693,21 +2647,6 @@ export default function NightMode() {
           </div>
         </div>
       </header>
-
-      {/* 新寶物通知 */}
-      {newTreasure && (
-        <div className="absolute top-20 left-1/2 -translate-x-1/2 z-50 animate-bounce-in">
-          <div className={`${rarityColors[newTreasure.rarity]?.bg} ${rarityColors[newTreasure.rarity]?.glow} shadow-2xl backdrop-blur-xl rounded-2xl p-4 border border-white/10`}>
-            <div className="flex items-center gap-3">
-              <Sparkles className={`${rarityColors[newTreasure.rarity]?.text}`} size={24} />
-              <div>
-                <p className="text-[10px] text-stone-500 uppercase tracking-widest">新寶物解鎖</p>
-                <p className={`font-medium ${rarityColors[newTreasure.rarity]?.text}`}>{newTreasure.title}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* 每日獎勵彈窗 */}
       {showDailyReward && !dailyRewardClaimed && (
@@ -2757,56 +2696,6 @@ export default function NightMode() {
           <div className="bg-purple-900/60 backdrop-blur-xl rounded-2xl px-5 py-3 border border-purple-500/30 shadow-lg max-w-xs">
             <p className="text-[10px] text-purple-400 mb-1 uppercase tracking-widest">{museName} 說</p>
             <p className="text-stone-300 text-sm italic">"{museInitiatedMessage}"</p>
-          </div>
-        </div>
-      )}
-
-      {/* 寶物庫側邊欄 */}
-      {showTreasureVault && (
-        <div className="absolute right-0 top-0 h-full w-80 bg-black/95 backdrop-blur-xl border-l border-white/5 z-40 animate-slide-in-right">
-          <div className="p-6">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-lg font-light flex items-center gap-2">
-                <Gem size={20} className="text-purple-400" />
-                靈魂寶物庫
-              </h2>
-              <button onClick={() => setShowTreasureVault(false)} className="text-stone-500 hover:text-white">
-                ✕
-              </button>
-            </div>
-
-            <div className="space-y-3 max-h-[calc(100vh-120px)] overflow-y-auto no-scrollbar">
-              {treasures.length === 0 ? (
-                <p className="text-stone-600 text-sm italic text-center py-8">
-                  與 MUSE 深度對話<br />解鎖專屬寶物
-                </p>
-              ) : (
-                treasures.map(treasure => (
-                  <div
-                    key={treasure.id}
-                    className={`${rarityColors[treasure.rarity]?.bg} ${rarityColors[treasure.rarity]?.glow} shadow-lg rounded-xl p-4 border border-white/5`}
-                  >
-                    <div className="flex items-start justify-between mb-2">
-                      <span className={`text-[10px] uppercase tracking-widest ${rarityColors[treasure.rarity]?.text}`}>
-                        {treasure.treasure_type}
-                      </span>
-                      <Star size={12} className={rarityColors[treasure.rarity]?.text} />
-                    </div>
-                    <h3 className="font-medium text-stone-200 mb-1">{treasure.title}</h3>
-                    {/* 寶物照片 - 可點擊查看原圖 */}
-                    {treasure.media_url && (
-                      <img
-                        src={treasure.media_url}
-                        alt={treasure.title}
-                        className="w-full h-32 object-cover rounded-lg mb-2 cursor-pointer hover:opacity-80 transition-opacity"
-                        onClick={() => setFullscreenImage(treasure.media_url || null)}
-                      />
-                    )}
-                    <p className="text-xs text-stone-500 line-clamp-2">{treasure.content}</p>
-                  </div>
-                ))
-              )}
-            </div>
           </div>
         </div>
       )}
@@ -2898,10 +2787,6 @@ export default function NightMode() {
                   <div className="flex justify-between">
                     <span className="text-stone-500">親密度</span>
                     <span className="text-pink-400">{intimacyScore}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-stone-500">寶物</span>
-                    <span className="text-amber-400">{treasures.length} 件</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-stone-500">連續天數</span>

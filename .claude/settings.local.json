@@ -23,7 +23,10 @@
       "mcp__filesystem__create_directory",
       "Bash(npx tsc:*)",
       "Bash(node -e:*)",
-      "Bash(git restore:*)"
+      "Bash(git restore:*)",
+      "Bash(git log:*)",
+      "Bash(npm run typecheck:api:*)",
+      "Bash(npm run:*)"
     ]
   },
   "model": "sonnet",
