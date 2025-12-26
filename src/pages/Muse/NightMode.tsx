@@ -1910,6 +1910,17 @@ export default function NightMode() {
 
       // 🚀 串流模式 - 邊生成邊顯示
       const sexyUnlocked = localStorage.getItem('sexy_unlocked_today') === new Date().toDateString();
+
+      // 🐛 DEBUG: 顯示當前狀態
+      console.log('🔍 發送訊息前檢查:', {
+        message: userMessage,
+        naughtyMode,
+        sexyUnlocked,
+        currentHour: new Date().getHours(),
+        storedDate: localStorage.getItem('sexy_unlocked_today'),
+        todayDate: new Date().toDateString()
+      });
+
       const response = await fetch('/api/muse-chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1929,30 +1940,41 @@ export default function NightMode() {
 
       // 🔒 檢查是否被色色限制阻擋
       const contentType = response.headers.get('content-type');
+      console.log('📡 Response Content-Type:', contentType);
+
       if (contentType?.includes('application/json')) {
-        const jsonData = await response.json();
-        if (jsonData.blocked && jsonData.reason === 'sexy_content_restricted') {
-          // 被阻擋！顯示解鎖提示
-          setIsSexyBlocked(true);
-          setBlockedMessage(userMessage);
-          // 移除剛加的訊息
-          setChatHistory(prev => prev.slice(0, -2));
-          setAnalyzing(false);
+        try {
+          const jsonData = await response.json();
+          console.log('📡 Response JSON:', jsonData);
 
-          // 根據壞壞模式狀態顯示不同訊息
-          const title = jsonData.naughtyMode
-            ? '⚠️ 上課時間需要確認'
-            : '🔒 色色內容需要解鎖';
+          if (jsonData.blocked && jsonData.reason === 'sexy_content_restricted') {
+            console.log('🔒 內容被阻擋，顯示解鎖 UI');
 
-          const description = jsonData.naughtyMode
-            ? '壞壞模式在上課時間需要你的明確同意'
-            : '點擊下方按鈕請求解鎖';
+            // 被阻擋！顯示解鎖提示
+            setIsSexyBlocked(true);
+            setBlockedMessage(userMessage);
+            // 移除剛加的訊息
+            setChatHistory(prev => prev.slice(0, -2));
+            setAnalyzing(false);
 
-          toast(title, {
-            description,
-            duration: 4000
-          });
-          return;
+            // 根據壞壞模式狀態顯示不同訊息
+            const title = jsonData.naughtyMode
+              ? '⚠️ 上課時間需要確認'
+              : '🔒 色色內容需要解鎖';
+
+            const description = jsonData.naughtyMode
+              ? '壞壞模式在上課時間需要你的明確同意'
+              : '點擊下方按鈕請求解鎖';
+
+            toast(title, {
+              description,
+              duration: 4000
+            });
+            return;
+          }
+        } catch (jsonError) {
+          console.error('❌ JSON 解析失敗:', jsonError);
+          throw jsonError; // 重新拋出，讓外層 catch 處理
         }
       }
 
