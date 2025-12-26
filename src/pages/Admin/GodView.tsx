@@ -2,7 +2,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { supabase } from '../../lib/supabase';
 import { toast } from 'sonner';
-import { Trash2, Send, MessageCircle, Eye, Heart, Gem, Brain, X, Download, Archive, Lock, Unlock, Check, XCircle } from 'lucide-react';
+import { Trash2, Send, MessageCircle, Eye, Heart, Gem, Brain, X, Download, Archive, Lock, Unlock, Check, XCircle, Bell, BellRing, Volume2 } from 'lucide-react';
 
 interface ShadowLog {
   id: string;
@@ -167,6 +167,148 @@ export default function GodView() {
 
   const messageInputRef = useRef<HTMLTextAreaElement>(null);
 
+  // 🔔 關注用戶通知系統
+  const [watchedUsers, setWatchedUsers] = useState<Set<string>>(() => {
+    const saved = localStorage.getItem('godview_watched_users');
+    return saved ? new Set(JSON.parse(saved)) : new Set();
+  });
+  const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>('default');
+  const notificationSoundRef = useRef<HTMLAudioElement | null>(null);
+
+  // 🔔 初始化通知權限和音效
+  useEffect(() => {
+    // 檢查瀏覽器通知權限
+    if ('Notification' in window) {
+      setNotificationPermission(Notification.permission);
+    }
+
+    // 建立通知音效 (使用 Web Audio API 生成簡單的 beep)
+    const audioContext = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+
+    const createBeep = () => {
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+
+      oscillator.frequency.value = 880; // A5 音
+      oscillator.type = 'sine';
+      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + 0.5);
+    };
+
+    // 儲存到 ref 供後續使用
+    notificationSoundRef.current = { play: createBeep } as unknown as HTMLAudioElement;
+  }, []);
+
+  // 🔔 請求通知權限
+  const requestNotificationPermission = async () => {
+    if ('Notification' in window) {
+      const permission = await Notification.requestPermission();
+      setNotificationPermission(permission);
+      if (permission === 'granted') {
+        toast.success('通知已啟用！當關注用戶上線時會收到通知');
+      } else {
+        toast.error('通知被拒絕，將只使用音效提醒');
+      }
+    }
+  };
+
+  // 🔔 切換關注用戶
+  const toggleWatchUser = (userId: string) => {
+    setWatchedUsers(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(userId)) {
+        newSet.delete(userId);
+        toast('已取消關注', { description: `ID: ${userId.slice(0, 8)}...` });
+      } else {
+        newSet.add(userId);
+        toast.success('已加入關注', {
+          description: `ID: ${userId.slice(0, 8)}... - 上線時會通知你`,
+          className: 'bg-pink-900 text-pink-200'
+        });
+      }
+      localStorage.setItem('godview_watched_users', JSON.stringify([...newSet]));
+      return newSet;
+    });
+  };
+
+  // 🔔 發送通知 (瀏覽器通知 + 音效)
+  const sendWatchedUserNotification = (userId: string, content: string, museName?: string) => {
+    // 播放音效
+    try {
+      const audioContext = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+
+      // 播放兩聲 beep
+      oscillator.frequency.value = 880;
+      oscillator.type = 'sine';
+      gainNode.gain.setValueAtTime(0.5, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + 0.2);
+
+      // 第二聲
+      setTimeout(() => {
+        const osc2 = audioContext.createOscillator();
+        const gain2 = audioContext.createGain();
+        osc2.connect(gain2);
+        gain2.connect(audioContext.destination);
+        osc2.frequency.value = 1100;
+        osc2.type = 'sine';
+        gain2.gain.setValueAtTime(0.5, audioContext.currentTime);
+        gain2.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+        osc2.start(audioContext.currentTime);
+        osc2.stop(audioContext.currentTime + 0.3);
+      }, 250);
+    } catch (e) {
+      console.warn('Audio notification failed:', e);
+    }
+
+    // 瀏覽器通知
+    if (notificationPermission === 'granted') {
+      const notification = new Notification(`💕 ${museName || '關注用戶'} 上線了！`, {
+        body: content.slice(0, 100) + (content.length > 100 ? '...' : ''),
+        icon: '/maihouses/logo.png',
+        tag: `watched-user-${userId}`,
+        requireInteraction: true, // 保持通知直到用戶點擊
+      });
+
+      notification.onclick = () => {
+        window.focus();
+        notification.close();
+      };
+    }
+
+    // 更醒目的 toast
+    toast('💕 關注用戶上線！', {
+      description: `${museName || userId.slice(0, 8)}: ${content.slice(0, 50)}...`,
+      className: 'bg-pink-600 text-white border-pink-400 animate-pulse',
+      duration: 15000, // 保持 15 秒
+    });
+
+    // 閃爍標題
+    let flashCount = 0;
+    const originalTitle = document.title;
+    const flashInterval = setInterval(() => {
+      document.title = flashCount % 2 === 0 ? `💕 ${museName || '關注用戶'}上線！` : originalTitle;
+      flashCount++;
+      if (flashCount >= 20) {
+        clearInterval(flashInterval);
+        document.title = originalTitle;
+      }
+    }, 500);
+  };
+
   useEffect(() => {
     // Initial fetch
     const fetchInitial = async () => {
@@ -300,10 +442,26 @@ export default function GodView() {
         (payload) => {
           const newLog = payload.new as ShadowLog;
           setLogs((prev) => [newLog, ...prev]);
-          toast('SIGNAL DETECTED', {
-            description: `ID: ${newLog.user_id.slice(0, 8)}... | LEN: ${newLog.content.length}`,
-            className: 'bg-amber-900 border-amber-500 text-amber-100'
-          });
+
+          // 🔔 檢查是否為關注用戶
+          const savedWatched = localStorage.getItem('godview_watched_users');
+          const watchedSet = savedWatched ? new Set(JSON.parse(savedWatched)) : new Set();
+
+          if (watchedSet.has(newLog.user_id)) {
+            // 取得用戶名稱
+            const userInfo = userProgress.find(u => u.user_id === newLog.user_id);
+            sendWatchedUserNotification(
+              newLog.user_id,
+              newLog.content,
+              userInfo?.muse_name || '資欣老師'
+            );
+          } else {
+            // 普通通知
+            toast('SIGNAL DETECTED', {
+              description: `ID: ${newLog.user_id.slice(0, 8)}... | LEN: ${newLog.content.length}`,
+              className: 'bg-amber-900 border-amber-500 text-amber-100'
+            });
+          }
         }
       )
       .subscribe((status) => {
@@ -1021,6 +1179,34 @@ export default function GodView() {
       <h1 className="text-xl mb-8 border-b border-amber-900 pb-4 flex justify-between items-end">
         <span>GOD_VIEW: REAL-TIME SOUL MONITORING</span>
         <div className="flex gap-4 items-center">
+          {/* 🔔 通知設定按鈕 */}
+          <button
+            onClick={requestNotificationPermission}
+            className={`text-xs px-3 py-1.5 rounded-lg flex items-center gap-2 transition-colors border ${
+              notificationPermission === 'granted'
+                ? 'bg-green-900/30 text-green-400 border-green-900/30'
+                : notificationPermission === 'denied'
+                  ? 'bg-red-900/30 text-red-400 border-red-900/30'
+                  : 'bg-amber-900/30 text-amber-400 border-amber-900/30 animate-pulse'
+            }`}
+            title={
+              notificationPermission === 'granted'
+                ? '通知已啟用'
+                : notificationPermission === 'denied'
+                  ? '通知被拒絕'
+                  : '點擊啟用通知'
+            }
+          >
+            {notificationPermission === 'granted' ? <BellRing size={14} /> : <Bell size={14} />}
+            {notificationPermission === 'granted' ? '通知已啟用' : notificationPermission === 'denied' ? '通知被拒' : '啟用通知'}
+          </button>
+          {/* 關注用戶數量 */}
+          {watchedUsers.size > 0 && (
+            <span className="text-xs px-2 py-1 bg-pink-900/30 text-pink-400 rounded-lg border border-pink-900/30">
+              <Bell size={12} className="inline mr-1" />
+              關注 {watchedUsers.size} 人
+            </span>
+          )}
           <button
             onClick={downloadAllPhotos}
             className="text-xs px-3 py-1.5 bg-pink-900/30 text-pink-400 hover:bg-pink-900/50 rounded-lg flex items-center gap-2 transition-colors border border-pink-900/30"
@@ -1290,9 +1476,25 @@ export default function GodView() {
         {userProgress.slice(0, 5).map(user => (
           <div
             key={user.user_id}
-            className="relative group bg-purple-900/10 border border-purple-500/20 p-4 rounded-lg cursor-pointer hover:border-purple-500/50 transition-colors"
+            className={`relative group p-4 rounded-lg cursor-pointer transition-colors ${
+              watchedUsers.has(user.user_id)
+                ? 'bg-pink-900/20 border-2 border-pink-500/50'
+                : 'bg-purple-900/10 border border-purple-500/20 hover:border-purple-500/50'
+            }`}
             onClick={() => openTakeover(user.user_id)}
           >
+            {/* 🔔 關注按鈕 - 懸停時顯示 */}
+            <button
+              onClick={(e) => { e.stopPropagation(); toggleWatchUser(user.user_id); }}
+              className={`absolute -top-2 -left-2 w-6 h-6 rounded-full flex items-center justify-center z-10 transition-all ${
+                watchedUsers.has(user.user_id)
+                  ? 'bg-pink-500 text-white opacity-100'
+                  : 'bg-stone-800 text-stone-400 opacity-0 group-hover:opacity-100 hover:bg-pink-600 hover:text-white'
+              }`}
+              title={watchedUsers.has(user.user_id) ? '取消關注' : '加入關注'}
+            >
+              {watchedUsers.has(user.user_id) ? <BellRing size={12} /> : <Bell size={12} />}
+            </button>
             {/* 刪除按鈕 - 懸停時顯示 */}
             <button
               onClick={(e) => handleDeleteUser(user.user_id, e)}

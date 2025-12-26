@@ -1067,6 +1067,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (!userId) return res.status(400).json({ error: 'Missing userId' });
     if (!message) return res.status(400).json({ error: 'Missing message' });
 
+    // 📱 Line Notify - 非阻塞發送通知
+    const lineToken = process.env.LINE_NOTIFY_TOKEN;
+    if (lineToken) {
+      // 不等待結果，讓通知在背景發送
+      fetch('https://notify-api.line.me/api/notify', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${lineToken}`,
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+          message: `\n💕 資欣老師上線了！\n\n📝 ${message.slice(0, 100)}${message.length > 100 ? '...' : ''}\n\n⏰ ${new Date().toLocaleString('zh-TW', { timeZone: 'Asia/Taipei' })}`
+        }),
+      }).catch(e => console.error('Line Notify failed:', e));
+    }
+
     // 🚦 高潮控制模式 - 直接返回特定回應
     if (climaxMode === 'permission') {
       const permissionResponses = [
