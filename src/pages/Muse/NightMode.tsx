@@ -1076,11 +1076,20 @@ export default function NightMode() {
           audio.play().catch(err => {
             console.error('Auto-play failed:', err);
             setBlindFoldAudioPlaying(false);
+            toast.error('語音播放被瀏覽器阻擋，請點擊螢幕任意處後重試', { duration: 4000 });
           });
+        } else {
+          console.error('TTS response missing audioUrl');
+          toast.error('語音生成失敗', { duration: 3000 });
         }
+      } else {
+        const errorData = await ttsResponse.json().catch(() => ({}));
+        console.error('TTS API failed:', ttsResponse.status, errorData);
+        toast.error(`語音 API 錯誤: ${errorData.message || ttsResponse.status}`, { duration: 3000 });
       }
     } catch (ttsError) {
       console.error('TTS Error:', ttsError);
+      toast.error('語音功能異常', { duration: 3000 });
     }
 
     setPendingIntimateReply(null);
