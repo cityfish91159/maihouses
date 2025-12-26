@@ -1938,8 +1938,18 @@ export default function NightMode() {
           // 移除剛加的訊息
           setChatHistory(prev => prev.slice(0, -2));
           setAnalyzing(false);
-          toast('🔒 偵測到色色內容，上課時間需要解鎖', {
-            description: '點擊下方按鈕請求解鎖',
+
+          // 根據壞壞模式狀態顯示不同訊息
+          const title = jsonData.naughtyMode
+            ? '⚠️ 上課時間需要確認'
+            : '🔒 色色內容需要解鎖';
+
+          const description = jsonData.naughtyMode
+            ? '壞壞模式在上課時間需要你的明確同意'
+            : '點擊下方按鈕請求解鎖';
+
+          toast(title, {
+            description,
             duration: 4000
           });
           return;

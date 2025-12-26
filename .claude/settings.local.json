@@ -21,7 +21,9 @@
       "WebSearch",
       "Bash(curl:*)",
       "mcp__filesystem__create_directory",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(node -e:*)",
+      "Bash(git restore:*)"
     ]
   },
   "model": "sonnet",

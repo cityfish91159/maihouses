@@ -200,26 +200,33 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // 🔒 色色上鎖檢查（使用模組化函數）
     // ═══════════════════════════════════════════════════════════════
     const sexyUnlocked = req.body.sexyUnlocked === true;
-
-    // ⚠️ 重要：如果用戶主動開啟壞壞模式，視為明確解鎖，跳過時間限制
-    const effectivelyUnlocked = sexyUnlocked || naughtyMode;
-    const blockCheck = shouldBlockSexyContent(userIntent, effectivelyUnlocked);
+    const blockCheck = shouldBlockSexyContent(userIntent, sexyUnlocked);
 
     console.log('🔒 色色上鎖檢查:', {
       userIntent,
       sexyUnlocked,
       naughtyMode,
-      effectivelyUnlocked,
+      inRestrictedHours: isRestrictedHours(),
       blocked: blockCheck.blocked
     });
 
+    // 正確邏輯：
+    // 1. 非限制時段 (17:00-8:00) → 不阻擋
+    // 2. 限制時段 (8:00-17:00) + 已解鎖 → 不阻擋
+    // 3. 限制時段 (8:00-17:00) + 未解鎖 + 色色內容 → 阻擋並要求確認
+    //    （即使開啟壞壞模式，仍需要確認一次）
     if (blockCheck.blocked) {
+      const message = naughtyMode
+        ? '⚠️ 上課時間開啟壞壞模式需要確認\n你確定要在這個時間色色嗎？'
+        : '🔒 偵測到色色內容，上課時間需要解鎖 (8:00-17:00)';
+
       return res.status(200).json({
         blocked: true,
         reason: blockCheck.reason,
-        message: '上課時間不能色色喔~ (8:00-17:00)\n💡 提示：開啟壞壞模式可隨時解鎖',
+        message,
         detected_intent: userIntent,
-        current_hour: getTaiwanHour()
+        current_hour: getTaiwanHour(),
+        naughtyMode // 回傳壞壞模式狀態，前端可以調整 UI
       });
     }
 
