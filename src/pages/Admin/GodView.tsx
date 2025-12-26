@@ -175,6 +175,12 @@ export default function GodView() {
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>('default');
   const notificationSoundRef = useRef<HTMLAudioElement | null>(null);
 
+  // 🗑️ 已隱藏的用戶（localStorage 持久化，用戶再上線會自動移除）
+  const [dismissedUsers, setDismissedUsers] = useState<Set<string>>(() => {
+    const saved = localStorage.getItem('godview_dismissed_users');
+    return saved ? new Set(JSON.parse(saved)) : new Set();
+  });
+
   // 🔔 初始化通知權限和音效
   useEffect(() => {
     // 檢查瀏覽器通知權限
@@ -442,6 +448,21 @@ export default function GodView() {
         (payload) => {
           const newLog = payload.new as ShadowLog;
           setLogs((prev) => [newLog, ...prev]);
+
+          // 🔄 檢查是否為已隱藏的用戶 - 如果是，自動恢復顯示
+          const savedDismissed = localStorage.getItem('godview_dismissed_users');
+          const dismissedSet = savedDismissed ? new Set(JSON.parse(savedDismissed)) : new Set();
+
+          if (dismissedSet.has(newLog.user_id)) {
+            // 用戶回來了！從隱藏列表移除
+            dismissedSet.delete(newLog.user_id);
+            localStorage.setItem('godview_dismissed_users', JSON.stringify([...dismissedSet]));
+            setDismissedUsers(new Set(dismissedSet) as Set<string>);
+            toast.success('👋 用戶回來了！', {
+              description: `ID: ${newLog.user_id.slice(0, 8)}... 已自動恢復顯示`,
+              className: 'bg-green-900 border-green-500 text-green-100'
+            });
+          }
 
           // 🔔 檢查是否為關注用戶
           const savedWatched = localStorage.getItem('godview_watched_users');
@@ -748,33 +769,40 @@ export default function GodView() {
     }
   };
 
-  // 🗑️ 刪除用戶及其所有相關資料
-  const handleDeleteUser = async (userId: string, e: React.MouseEvent) => {
-    e.stopPropagation(); // 阻止觸發卡片的 onClick
+  // 🗑️ 隱藏用戶（不刪除資料，用戶再上線會自動恢復）
+  const handleDismissUser = (userId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
 
-    if (!confirm(`確定要刪除此用戶嗎？\n\n這將清除該用戶的：\n• 聊天記錄\n• 上傳的照片\n• 所有互動數據\n\nID: ${userId.slice(0, 12)}...`)) {
+    setDismissedUsers(prev => {
+      const newSet = new Set(prev);
+      newSet.add(userId);
+      localStorage.setItem('godview_dismissed_users', JSON.stringify([...newSet]));
+      return newSet;
+    });
+
+    toast('已隱藏此用戶', {
+      description: '用戶再次上線時會自動恢復顯示',
+      duration: 3000
+    });
+  };
+
+  // 🗑️ 完全刪除用戶（長按或右鍵選擇）
+  const handleDeleteUser = async (userId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+
+    if (!confirm(`⚠️ 確定要【完全刪除】此用戶嗎？\n\n這將永久清除：\n• 聊天記錄\n• 上傳的照片\n• 所有互動數據\n\n如果只是想暫時隱藏，請用普通點擊。\n\nID: ${userId.slice(0, 12)}...`)) {
       return;
     }
 
     toast.loading('正在刪除用戶資料...', { id: 'deleteUser' });
 
     try {
-      // 1. 刪除 shadow_logs（聊天記錄）
       await supabase.from('shadow_logs').delete().eq('user_id', userId);
-
-      // 2. 刪除 godview_messages（管理員訊息）
       await supabase.from('godview_messages').delete().eq('user_id', userId);
-
-      // 3. 刪除 soul_treasures（上傳的圖片/寶物）
       await supabase.from('soul_treasures').delete().eq('user_id', userId);
-
-      // 4. 刪除 rival_decoder（情敵分析）
       await supabase.from('rival_decoder').delete().eq('user_id', userId);
-
-      // 5. 刪除 muse_memory_vault（記憶庫）
       await supabase.from('muse_memory_vault').delete().eq('user_id', userId);
-
-      // 6. 最後刪除 user_progress
+      await supabase.from('sexual_preferences').delete().eq('user_id', userId);
       const { error } = await supabase.from('user_progress').delete().eq('user_id', userId);
 
       if (error) throw error;
@@ -785,11 +813,19 @@ export default function GodView() {
       setRivals(prev => prev.filter(r => r.user_id !== userId));
       setMemories(prev => prev.filter(m => m.user_id !== userId));
 
+      // 也從隱藏列表移除
+      setDismissedUsers(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(userId);
+        localStorage.setItem('godview_dismissed_users', JSON.stringify([...newSet]));
+        return newSet;
+      });
+
       toast.success('用戶已完全刪除', { id: 'deleteUser' });
 
     } catch (error) {
       console.error('Delete user error:', error);
-      toast.error('刪除失敗，可能需要管理員權限', { id: 'deleteUser' });
+      toast.error('刪除失敗', { id: 'deleteUser' });
     }
   };
 
@@ -1473,7 +1509,7 @@ export default function GodView() {
 
       {/* 用戶進度概覽 */}
       <div className="mb-8 grid grid-cols-5 gap-4">
-        {userProgress.slice(0, 5).map(user => (
+        {userProgress.filter(u => !dismissedUsers.has(u.user_id)).slice(0, 5).map(user => (
           <div
             key={user.user_id}
             className={`relative group p-4 rounded-lg cursor-pointer transition-colors ${
@@ -1495,13 +1531,14 @@ export default function GodView() {
             >
               {watchedUsers.has(user.user_id) ? <BellRing size={12} /> : <Bell size={12} />}
             </button>
-            {/* 刪除按鈕 - 懸停時顯示 */}
+            {/* 隱藏按鈕 - 懸停時顯示（點擊隱藏，雙擊永久刪除） */}
             <button
-              onClick={(e) => handleDeleteUser(user.user_id, e)}
-              className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-red-900/80 text-red-300 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center hover:bg-red-800 z-10"
-              title="刪除此用戶"
+              onClick={(e) => handleDismissUser(user.user_id, e)}
+              onDoubleClick={(e) => handleDeleteUser(user.user_id, e)}
+              className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-stone-700/80 text-stone-300 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center hover:bg-red-800 hover:text-red-200 z-10"
+              title="點擊隱藏 / 雙擊永久刪除"
             >
-              <Trash2 size={12} />
+              <X size={12} />
             </button>
 
             <div className="flex items-center gap-2 mb-2">
