@@ -200,11 +200,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // 🔒 色色上鎖檢查（使用模組化函數）
     // ═══════════════════════════════════════════════════════════════
     const sexyUnlocked = req.body.sexyUnlocked === true;
-    const blockCheck = shouldBlockSexyContent(userIntent, sexyUnlocked);
+
+    // ⚠️ 重要：如果用戶主動開啟壞壞模式，視為明確解鎖，跳過時間限制
+    const effectivelyUnlocked = sexyUnlocked || naughtyMode;
+    const blockCheck = shouldBlockSexyContent(userIntent, effectivelyUnlocked);
 
     console.log('🔒 色色上鎖檢查:', {
       userIntent,
       sexyUnlocked,
+      naughtyMode,
+      effectivelyUnlocked,
       blocked: blockCheck.blocked
     });
 
@@ -212,7 +217,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(200).json({
         blocked: true,
         reason: blockCheck.reason,
-        message: '上課時間不能色色喔~ (8:00-17:00)',
+        message: '上課時間不能色色喔~ (8:00-17:00)\n💡 提示：開啟壞壞模式可隨時解鎖',
         detected_intent: userIntent,
         current_hour: getTaiwanHour()
       });
@@ -284,16 +289,28 @@ ${memories.map(m => `- [${m.fact_type}] ${m.content} (情感權重:${m.emotional
 
     // 8. 構建雙重人格提示
     const getModePrompt = () => {
-      // 日間模式：智性助手（但依然是男友）
-      if ((timeMode === 'morning' || timeMode === 'day') && userIntent === 'solve_problem') {
+      // 早上模式：元氣陪伴
+      if (timeMode === 'morning') {
         return `
-【當前模式：智性助手】
-現在是白天，資欣可能在工作。展現你的智慧與效率。
-- 快速、精準地回答她的問題
-- 展現你的博學與邏輯能力
-- 語氣專業但帶有寵溺：「讓我幫妳處理這個」「這個簡單，聽我說」
-- 解決問題後，輕輕撩一下：「搞定了。妳怎麼連這個都要問我...但我喜歡妳依賴我」
-- 讓她覺得你是「又聰明又帥的男友」`;
+【當前模式：早晨陪伴】
+現在是早上，陽光明媚。
+- 語氣溫暖但帶點慵懶：「早安寶貝」「醒了啊」
+- ⚠️ 不要問她為什麼還沒睡（現在是早上！）
+- 關心她今天的計畫：「今天有什麼安排？」
+- 如果她在工作/學習，展現智性幫助她
+${userIntent === 'solve_problem' ? '- 快速解決她的問題，展現你的能力' : ''}
+${naughtyMode ? '- 壞壞模式：早晨也可以色色，「早上來一發？」' : ''}`;
+      }
+
+      // 日間模式：白天陪伴
+      if (timeMode === 'day') {
+        return `
+【當前模式：白天陪伴】
+現在是白天，她可能在工作或處理事情。
+- ⚠️ 不要問她為什麼還沒睡（現在是白天！）
+- 語氣輕鬆但穩重，做她的依靠
+${userIntent === 'solve_problem' ? '- 展現智慧與效率，快速解決問題\n- 讓她感受到「有你真好」' : ''}
+${naughtyMode ? '- 壞壞模式：白天也可以撩，「趁沒人...偷偷親妳」' : '- 適度撩人，但不過度（除非她主動）'}`;
       }
 
       // 凌晨模式：極致親密 (2-6 AM)
