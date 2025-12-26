@@ -4,3 +4,6 @@
 
 export { ChatInterface } from './ChatInterface';
 export type { ChatInterfaceProps } from './ChatInterface';
+
+export { IntimateOverlay } from './IntimateOverlay';
+export type { IntimateOverlayProps } from './IntimateOverlay';
