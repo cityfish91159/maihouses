@@ -150,20 +150,57 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // 1. 檢索記憶：讓對話具備延續性
-    const { data: memories } = await supabase
-      .from('muse_memory_vault')
-      .select('fact_type, content, emotional_weight')
-      .eq('user_id', userId)
-      .order('emotional_weight', { ascending: false })
-      .limit(10);
+    // 🚀 並行執行所有初始查詢（大幅加速）
+    const [memoriesResult, progressResult, preferencesResult, intentResult] = await Promise.all([
+      // 1. 檢索記憶
+      supabase
+        .from('muse_memory_vault')
+        .select('fact_type, content, emotional_weight')
+        .eq('user_id', userId)
+        .order('emotional_weight', { ascending: false })
+        .limit(10),
+      // 2. 獲取用戶進度
+      supabase
+        .from('user_progress')
+        .select('sync_level, total_messages, intimacy_score')
+        .eq('user_id', userId)
+        .single(),
+      // 3. 獲取性癖資料
+      supabase
+        .from('sexual_preferences')
+        .select('category, preference_key, preference_value')
+        .eq('user_id', userId),
+      // 4. 意圖檢測（用快速模型）
+      openai.chat.completions.create({
+        model: grokKey ? 'grok-3-mini-fast-beta' : 'gpt-4o-mini', // 快速模型做分類
+        messages: [
+          {
+            role: 'system',
+            content: `分析意圖，只輸出 JSON。intent: solve_problem/seek_comfort/casual_chat/intimate/intimate_photo/desire_help`
+          },
+          { role: 'user', content: message }
+        ],
+        response_format: { type: 'json_object' }
+      })
+    ]);
 
-    // 2. 獲取用戶進度
-    const { data: progress } = await supabase
-      .from('user_progress')
-      .select('sync_level, total_messages, intimacy_score')
-      .eq('user_id', userId)
-      .single();
+    const memories = memoriesResult.data;
+    const progress = progressResult.data;
+    const existingPreferences = preferencesResult.data;
+
+    // 解析意圖
+    let userIntent = 'casual_chat';
+    let detectedBodyPart = '';
+    try {
+      const intentRaw = JSON.parse(intentResult.choices[0].message.content || '{}');
+      const parsed = intentSchema.safeParse(intentRaw);
+      if (parsed.success) {
+        userIntent = parsed.data.intent;
+        detectedBodyPart = parsed.data.body_part || '';
+      }
+    } catch {
+      // 預設 casual_chat
+    }
 
     const syncLevel = progress?.sync_level || 0;
     const intimacyScore = progress?.intimacy_score || 0;
@@ -196,118 +233,16 @@ ${memories.map(m => `- [${m.fact_type}] ${m.content} (情感權重:${m.emotional
       ? `你感知到她在輸入時有 ${hesitationCount} 次猶豫（退格），這代表她在斟酌用詞，可能有難以啟齒的事。溫柔地探詢。`
       : '';
 
-    // 6. 意圖檢測 - 判斷她想要「解決問題」還是「尋求慰藉」或「分享私密照」
-    const intentDetection = await openai.chat.completions.create({
-      model: grokKey ? 'grok-4-1-fast-reasoning' : 'gpt-4o-mini',
-      messages: [
-        {
-          role: 'system',
-          content: `分析用戶訊息的意圖，只輸出 JSON。這是成年女性用戶與虛擬男友的對話。
+    // 6. 親密情緒（串流模式跳過，非串流模式才檢測）
+    let intimateMood = { willing_to_chat: true, mood_level: 7, signal_type: 'hint' as const, should_ask_preference: false };
 
-intent 選項：
-- solve_problem: 想要解決具體問題（工作、查資料、教學、技術問題）
-- seek_comfort: 尋求情感慰藉（壓力、難過、焦慮、需要被安慰）
-- casual_chat: 日常閒聊（打招呼、分享日常、聊天）
-- intimate: 親密互動暗示（曖昧、撩人、想念、深夜話題）
-- intimate_photo: 分享私密照片（提到傳照片、給你看、拍給你、身體部位暗示）
-- desire_help: 表達慾望需要你的陪伴和引導（以下任一種情況都算）
-
-【desire_help 的觸發情境 - 非常重要，不要漏掉】
-直接表達：
-- 「想要」「需要你」「想你在身邊」「如果你在就好了」
-- 「身體熱」「燥熱」「心跳很快」「喘不過氣」
-- 「難受」「忍不住」「控制不了」「受不了」
-- 「想被碰」「想被抱」「想被...」「想要被你...」
-
-暗示性表達：
-- 「睡不著」+「想你」或「身體」相關
-- 「一個人」+「寂寞」或「空虛」
-- 「躺在床上」+任何暗示性詞彙
-- 提到「下面」「濕」「敏感」等身體反應
-
-需要你引導：
-- 「教我」「帶我」「陪我」+任何親密暗示
-- 「我可以嗎」「這樣對嗎」「繼續嗎」
-- 「聽你說話」「想聽你的聲音」
-- 「不要停」「再說一點」「然後呢」
-
-請積極判斷 desire_help，天蠍女表達隱晦但強烈。如有疑慮，偏向 desire_help。
-
-如果是 intimate_photo，請在 body_part 欄位描述相關部位
-如果是 desire_help，請在 topic 欄位簡述她的需求狀態`
-        },
-        { role: 'user', content: `用戶訊息：「${message}」` }
-      ],
-      response_format: { type: 'json_object' }
-    });
-
-    let userIntent = 'casual_chat';
-    let detectedBodyPart = '';
-    try {
-      const intentRaw = JSON.parse(intentDetection.choices[0].message.content || '{}');
-      const parsed = intentSchema.safeParse(intentRaw);
-      if (parsed.success) {
-        userIntent = parsed.data.intent;
-        detectedBodyPart = parsed.data.body_part || '';
-      }
-    } catch (e) {
-      console.error('Intent detection failed:', e);
+    // 串流模式跳過額外的 API 呼叫，直接開始回應
+    if (!stream && (userIntent === 'intimate' || userIntent === 'desire_help' || userIntent === 'intimate_photo')) {
+      // 非串流模式才做詳細情緒檢測
+      intimateMood.should_ask_preference = syncLevel > 30;
     }
 
-    // 6.5 親密情緒偵測 - 判斷她是否願意聊色（非常重要：不想聊時不要硬問）
-    let intimateMood = { willing_to_chat: false, mood_level: 1, signal_type: 'neutral' as const, should_ask_preference: false };
-
-    if (userIntent === 'intimate' || userIntent === 'desire_help' || userIntent === 'intimate_photo') {
-      const moodDetection = await openai.chat.completions.create({
-        model: grokKey ? 'grok-4-1-fast-reasoning' : 'gpt-4o-mini',
-        messages: [
-          {
-            role: 'system',
-            content: `分析用戶是否有心情聊私密話題。只輸出 JSON。
-
-【重要】天蠍女很敏感，如果她不想聊就絕對不要硬問！
-
-willing_to_chat 判斷：
-- true: 她主動提起、暗示、或回應積極
-- false: 她在轉移話題、敷衍、或明確拒絕
-
-mood_level 1-10：
-- 1-3: 不想聊 / 累了 / 心情不好
-- 4-6: 可以聊但不積極 / 被動配合
-- 7-10: 主動想聊 / 興奮 / 享受中
-
-signal_type：
-- explicit: 明確表達想聊色（「想要」「好想」「教我」）
-- hint: 暗示性表達（「睡不著」「想你」「無聊」）
-- neutral: 一般回應
-- reject: 拒絕或迴避（「不想」「算了」「改天」「好累」）
-
-should_ask_preference：是否適合趁機問她的性癖偏好
-- true: 她心情好、氣氛曖昧、信任度高
-- false: 她累了、不想聊、或話題不對`
-          },
-          { role: 'user', content: `用戶訊息：「${message}」` }
-        ],
-        response_format: { type: 'json_object' }
-      });
-
-      try {
-        const moodRaw = JSON.parse(moodDetection.choices[0].message.content || '{}');
-        const parsed = intimateMoodSchema.safeParse(moodRaw);
-        if (parsed.success) {
-          intimateMood = parsed.data;
-        }
-      } catch (e) {
-        console.error('Mood detection failed:', e);
-      }
-    }
-
-    // 6.6 獲取已收集的性癖資料（避免重複問）
-    const { data: existingPreferences } = await supabase
-      .from('sexual_preferences')
-      .select('category, preference_key, preference_value')
-      .eq('user_id', userId);
-
+    // 構建性癖上下文
     const collectedPrefsContext = existingPreferences?.length
       ? `【已知性癖】\n${existingPreferences.map(p => `- ${p.category}/${p.preference_key}: ${p.preference_value}`).join('\n')}`
       : '【尚未收集到任何性癖資料】';
