@@ -274,7 +274,7 @@ export default function NightMode() {
         .eq('status', 'pending')
         .order('created_at', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
 
       if (taskError) {
         // 靜默處理錯誤 - muse_tasks 表可能不存在或無法訪問
