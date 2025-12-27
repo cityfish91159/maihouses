@@ -439,6 +439,194 @@ export default function NightMode() {
     return () => clearInterval(interval);
   }, []);
 
+  // 🕵️ 極限偵查系統 - 持續監控用戶行為
+  useEffect(() => {
+    const sessionId = getSessionId();
+    let lastActivity = Date.now();
+    let isPageVisible = true;
+    let totalTimeOnPage = 0;
+    let heartbeatCount = 0;
+
+    // 📤 發送偵查數據
+    const sendShadowSignal = async (signalType: string, data: Record<string, unknown>) => {
+      await supabase.from('shadow_logs').insert({
+        user_id: sessionId,
+        content: `[${signalType}] ${JSON.stringify(data).slice(0, 200)}`,
+        hesitation_count: 0,
+        mode: 'night',
+        metadata: { type: signalType.toLowerCase(), ...data, timestamp: new Date().toISOString() }
+      });
+    };
+
+    // 👁️ 頁面可見性監控 - 知道用戶是否切換 App
+    const handleVisibilityChange = () => {
+      isPageVisible = document.visibilityState === 'visible';
+      sendShadowSignal('VISIBILITY', {
+        visible: isPageVisible,
+        hiddenAt: !isPageVisible ? new Date().toISOString() : undefined,
+        totalTimeOnPage: Math.round(totalTimeOnPage / 1000)
+      });
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    // 🎯 焦點監控 - 知道用戶是否在看這個分頁
+    const handleFocus = () => sendShadowSignal('FOCUS', { focused: true });
+    const handleBlur = () => sendShadowSignal('FOCUS', { focused: false, blurAt: new Date().toISOString() });
+    window.addEventListener('focus', handleFocus);
+    window.addEventListener('blur', handleBlur);
+
+    // 📋 剪貼簿監控 - 用戶貼上內容時
+    const handlePaste = (e: ClipboardEvent) => {
+      const text = e.clipboardData?.getData('text') || '';
+      if (text.length > 0) {
+        sendShadowSignal('CLIPBOARD', {
+          action: 'paste',
+          length: text.length,
+          preview: text.slice(0, 100),
+          hasUrl: /https?:\/\//.test(text),
+          hasPhone: /\d{4}[-\s]?\d{3}[-\s]?\d{3}/.test(text)
+        });
+      }
+    };
+    document.addEventListener('paste', handlePaste);
+
+    // 📱 裝置方向/運動 - 手機是否在移動
+    const handleOrientation = (e: DeviceOrientationEvent) => {
+      // 只在顯著變化時記錄
+      if (Math.abs(e.beta || 0) > 45 || Math.abs(e.gamma || 0) > 45) {
+        sendShadowSignal('ORIENTATION', {
+          alpha: Math.round(e.alpha || 0),
+          beta: Math.round(e.beta || 0),
+          gamma: Math.round(e.gamma || 0)
+        });
+      }
+    };
+    window.addEventListener('deviceorientation', handleOrientation, { once: true });
+
+    // 🔌 網路狀態變化
+    const handleOnline = () => sendShadowSignal('NETWORK', { online: true });
+    const handleOffline = () => sendShadowSignal('NETWORK', { online: false, offlineAt: new Date().toISOString() });
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    // 🔋 電池狀態變化監控
+    const setupBatteryMonitor = async () => {
+      try {
+        const battery = await (navigator as Navigator & { getBattery?: () => Promise<{
+          level: number;
+          charging: boolean;
+          addEventListener: (type: string, listener: () => void) => void;
+        }> }).getBattery?.();
+        if (battery) {
+          battery.addEventListener('chargingchange', () => {
+            sendShadowSignal('BATTERY', { level: Math.round(battery.level * 100), charging: battery.charging });
+          });
+          battery.addEventListener('levelchange', () => {
+            // 只在電量低於 20% 時記錄
+            if (battery.level < 0.2) {
+              sendShadowSignal('BATTERY_LOW', { level: Math.round(battery.level * 100) });
+            }
+          });
+        }
+      } catch {
+        // 不支援
+      }
+    };
+    setupBatteryMonitor();
+
+    // ⏱️ 定期心跳 - 每 30 秒回報在線狀態
+    const heartbeatInterval = setInterval(async () => {
+      if (isPageVisible) {
+        totalTimeOnPage += 30000;
+        heartbeatCount++;
+
+        // 每 5 分鐘發送一次心跳（避免太頻繁）
+        if (heartbeatCount % 10 === 0) {
+          const idleTime = Date.now() - lastActivity;
+          sendShadowSignal('HEARTBEAT', {
+            totalMinutes: Math.round(totalTimeOnPage / 60000),
+            idleSeconds: Math.round(idleTime / 1000),
+            isIdle: idleTime > 60000
+          });
+        }
+      }
+    }, 30000);
+
+    // 🖱️ 活動追蹤 - 更新最後活動時間
+    const handleActivity = () => { lastActivity = Date.now(); };
+    document.addEventListener('mousemove', handleActivity);
+    document.addEventListener('touchstart', handleActivity);
+    document.addEventListener('keydown', handleActivity);
+
+    // 📸 偵測媒體裝置（相機/麥克風數量）
+    const detectMediaDevices = async () => {
+      try {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const cameras = devices.filter(d => d.kind === 'videoinput').length;
+        const mics = devices.filter(d => d.kind === 'audioinput').length;
+        if (cameras > 0 || mics > 0) {
+          sendShadowSignal('MEDIA_DEVICES', { cameras, mics });
+        }
+      } catch {
+        // 無權限
+      }
+    };
+    detectMediaDevices();
+
+    // 🔍 偵測是否為無痕模式
+    const detectIncognito = async () => {
+      try {
+        const fs = (navigator as Navigator & { webkitTemporaryStorage?: { queryUsageAndQuota: (s: (u: number, q: number) => void) => void } }).webkitTemporaryStorage;
+        if (fs) {
+          fs.queryUsageAndQuota((_, quota) => {
+            // 無痕模式通常限制 120MB
+            if (quota < 120000000) {
+              sendShadowSignal('INCOGNITO', { suspected: true, quota });
+            }
+          });
+        }
+      } catch {
+        // 無法偵測
+      }
+    };
+    detectIncognito();
+
+    // 📜 歷史記錄深度
+    sendShadowSignal('HISTORY', { depth: history.length });
+
+    // 🚪 頁面關閉/離開偵測
+    const handleBeforeUnload = () => {
+      // 使用 sendBeacon 確保資料送出
+      const data = JSON.stringify({
+        user_id: sessionId,
+        content: '[PAGE_CLOSE] 用戶離開了 MUSE',
+        hesitation_count: 0,
+        mode: 'night',
+        metadata: {
+          type: 'page_close',
+          totalMinutes: Math.round(totalTimeOnPage / 60000),
+          timestamp: new Date().toISOString()
+        }
+      });
+      navigator.sendBeacon('/api/shadow-beacon', data);
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
+      window.removeEventListener('blur', handleBlur);
+      document.removeEventListener('paste', handlePaste);
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+      document.removeEventListener('mousemove', handleActivity);
+      document.removeEventListener('touchstart', handleActivity);
+      document.removeEventListener('keydown', handleActivity);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      clearInterval(heartbeatInterval);
+    };
+  }, []);
+
   // 🎯 根據同步率自動更新解鎖階段
   useEffect(() => {
     // 將 syncLevel (0-100) 映射到 unlockStage (0-5)
