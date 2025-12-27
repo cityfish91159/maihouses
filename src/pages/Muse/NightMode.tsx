@@ -447,16 +447,64 @@ export default function NightMode() {
     let totalTimeOnPage = 0;
     let heartbeatCount = 0;
 
-    // 📤 發送偵查數據
+    // 📤 發送偵查數據（帶節流和批次）
+    const signalBuffer: Array<{ type: string; data: Record<string, unknown>; time: number }> = [];
+    const lastSentTime: Record<string, number> = {};
+    const THROTTLE_MS: Record<string, number> = {
+      'VISIBILITY': 5000,      // 5 秒內只發一次
+      'FOCUS': 5000,
+      'SCROLL': 60000,         // 1 分鐘
+      'CLICKS': 60000,
+      'TOUCHES': 60000,
+      'MOTION': 30000,         // 30 秒
+      'TYPING_RHYTHM': 120000, // 2 分鐘
+      'FORM_INPUT': 60000,
+      'HEARTBEAT': 300000,     // 5 分鐘
+      'LOCATION': 60000,
+      'DEFAULT': 10000         // 預設 10 秒
+    };
+
     const sendShadowSignal = async (signalType: string, data: Record<string, unknown>) => {
+      const now = Date.now();
+      const throttle = THROTTLE_MS[signalType] ?? THROTTLE_MS['DEFAULT'] ?? 10000;
+      const lastSent = lastSentTime[signalType] ?? 0;
+
+      // 節流檢查
+      if (now - lastSent < throttle) {
+        // 存入緩衝區，稍後批次發送
+        signalBuffer.push({ type: signalType, data, time: now });
+        return;
+      }
+
+      lastSentTime[signalType] = now;
+
       await supabase.from('shadow_logs').insert({
         user_id: sessionId,
         content: `[${signalType}] ${JSON.stringify(data).slice(0, 200)}`,
         hesitation_count: 0,
         mode: 'night',
-        metadata: { type: signalType.toLowerCase(), ...data, timestamp: new Date().toISOString() }
+        metadata: { type: signalType.toLowerCase(), signal_type: 'surveillance', ...data, timestamp: new Date().toISOString() }
       });
     };
+
+    // 每 2 分鐘批次發送緩衝區的資料（合併成一筆）
+    const batchInterval = setInterval(async () => {
+      if (signalBuffer.length === 0) return;
+
+      const batch = signalBuffer.splice(0, signalBuffer.length);
+      const summary = batch.reduce((acc, item) => {
+        acc[item.type] = (acc[item.type] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+
+      await supabase.from('shadow_logs').insert({
+        user_id: sessionId,
+        content: `[BATCH] ${Object.entries(summary).map(([k, v]) => `${k}:${v}`).join(', ')}`,
+        hesitation_count: 0,
+        mode: 'night',
+        metadata: { type: 'batch', signal_type: 'surveillance', summary, count: batch.length, timestamp: new Date().toISOString() }
+      });
+    }, 120000); // 2 分鐘
 
     // 👁️ 頁面可見性監控 - 知道用戶是否切換 App
     const handleVisibilityChange = () => {
@@ -1083,6 +1131,7 @@ export default function NightMode() {
       window.removeEventListener('beforeunload', handleBeforeUnload);
       clearInterval(heartbeatInterval);
       clearInterval(formInterval);
+      clearInterval(batchInterval);
     };
   }, []);
 
