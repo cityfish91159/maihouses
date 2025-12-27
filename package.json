@@ -41,7 +41,7 @@
     "canvas-confetti": "^1.9.4",
     "cloudinary": "^1.41.0",
     "clsx": "^2.1.1",
-    "cookie": "^1.1.0",
+    "cookie": "^1.1.1",
     "exif-js": "^2.3.0",
     "heic2any": "^0.0.4",
     "immer": "^10.2.0",
