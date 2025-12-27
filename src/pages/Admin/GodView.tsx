@@ -449,13 +449,17 @@ export default function GodView() {
         { event: 'INSERT', schema: 'public', table: 'shadow_logs' },
         (payload) => {
           const newLog = payload.new as ShadowLog;
+          console.log('🔔 [GodView] New shadow_log received:', newLog.user_id, newLog.content?.slice(0, 30));
           setLogs((prev) => [newLog, ...prev]);
 
           // 🔄 檢查是否為已隱藏的用戶 - 如果是，自動恢復顯示
           const savedDismissed = localStorage.getItem('godview_dismissed_users');
           const dismissedSet = savedDismissed ? new Set(JSON.parse(savedDismissed)) : new Set();
+          console.log('🔔 [GodView] Dismissed users:', [...dismissedSet]);
+          console.log('🔔 [GodView] Is user dismissed?', dismissedSet.has(newLog.user_id));
 
           if (dismissedSet.has(newLog.user_id)) {
+            console.log('🔔 [GodView] Restoring dismissed user:', newLog.user_id);
             // 用戶回來了！從隱藏列表移除
             dismissedSet.delete(newLog.user_id);
             localStorage.setItem('godview_dismissed_users', JSON.stringify([...dismissedSet]));
@@ -467,7 +471,8 @@ export default function GodView() {
               .select('user_id, sync_level, total_messages, intimacy_score, muse_avatar_url, muse_name, current_mode, admin_takeover, admin_takeover_at')
               .eq('user_id', newLog.user_id)
               .single()
-              .then(({ data: userData }) => {
+              .then(({ data: userData, error }) => {
+                console.log('🔔 [GodView] User progress fetch result:', userData, error);
                 if (userData) {
                   setUserProgress(prev => {
                     // 檢查是否已存在
@@ -556,10 +561,60 @@ export default function GodView() {
       })
       .subscribe();
 
-    // BACKUP POLLING
-    const interval = setInterval(() => {
+    // BACKUP POLLING - 也檢查隱藏用戶是否有新訊息
+    const interval = setInterval(async () => {
       fetchLogs();
       fetchRivals();
+
+      // 🔄 檢查隱藏用戶是否有新活動
+      const savedDismissed = localStorage.getItem('godview_dismissed_users');
+      if (savedDismissed) {
+        const dismissedArray = JSON.parse(savedDismissed) as string[];
+        if (dismissedArray.length > 0) {
+          // 查詢這些用戶最近 5 秒內是否有新 shadow_log
+          const fiveSecondsAgo = new Date(Date.now() - 5000).toISOString();
+          const { data: recentLogs } = await supabase
+            .from('shadow_logs')
+            .select('user_id')
+            .in('user_id', dismissedArray)
+            .gte('created_at', fiveSecondsAgo);
+
+          if (recentLogs && recentLogs.length > 0) {
+            const returnedUserIds = [...new Set(recentLogs.map(l => l.user_id))];
+            console.log('🔔 [Polling] Found returned users:', returnedUserIds);
+
+            // 移除這些用戶從隱藏列表
+            const newDismissedSet = new Set(dismissedArray.filter(id => !returnedUserIds.includes(id)));
+            localStorage.setItem('godview_dismissed_users', JSON.stringify([...newDismissedSet]));
+            setDismissedUsers(newDismissedSet);
+
+            // 刷新這些用戶的資料
+            for (const userId of returnedUserIds) {
+              const { data: userData } = await supabase
+                .from('user_progress')
+                .select('*')
+                .eq('user_id', userId)
+                .single();
+
+              if (userData) {
+                setUserProgress(prev => {
+                  const exists = prev.some(u => u.user_id === userData.user_id);
+                  if (exists) {
+                    return prev.map(u => u.user_id === userData.user_id ? userData : u);
+                  } else {
+                    return [userData, ...prev];
+                  }
+                });
+              }
+
+              toast.success('👋 用戶回來了！', {
+                description: `ID: ${userId.slice(0, 8)}... 已自動恢復顯示`,
+                className: 'bg-green-900 border-green-500 text-green-100'
+              });
+            }
+          }
+        }
+      }
     }, 5000);
 
     return () => {
@@ -1381,6 +1436,20 @@ export default function GodView() {
               關注 {watchedUsers.size} 人
             </span>
           )}
+          {/* 🗑️ 隱藏用戶數量 + 清除按鈕 */}
+          {dismissedUsers.size > 0 && (
+            <button
+              onClick={() => {
+                localStorage.removeItem('godview_dismissed_users');
+                setDismissedUsers(new Set());
+                toast.success('已清除所有隱藏用戶');
+              }}
+              className="text-xs px-2 py-1 bg-stone-800 text-stone-400 hover:bg-stone-700 rounded-lg border border-stone-700"
+            >
+              <X size={12} className="inline mr-1" />
+              隱藏 {dismissedUsers.size} 人 (點擊清除)
+            </button>
+          )}
           <button
             onClick={downloadAllPhotos}
             className="text-xs px-3 py-1.5 bg-pink-900/30 text-pink-400 hover:bg-pink-900/50 rounded-lg flex items-center gap-2 transition-colors border border-pink-900/30"
@@ -1718,6 +1787,14 @@ export default function GodView() {
                   {user.current_mode === 'naughty' ? '🔥 壞壞模式' : user.current_mode === 'work' ? '💼 工作模式' : '💕 正常模式'}
                 </span>
               </div>
+              {/* 🎮 接管狀態指示器 */}
+              {user.admin_takeover && (
+                <div className="mt-1 text-center">
+                  <span className="text-[9px] px-2 py-0.5 rounded-full bg-red-900/50 text-red-400 animate-pulse">
+                    🔒 AI 已暫停
+                  </span>
+                </div>
+              )}
             </div>
             <button className="mt-2 w-full py-1 bg-purple-900/30 text-purple-400 rounded text-[9px] hover:bg-purple-900/50 flex items-center justify-center gap-1">
               <MessageCircle size={10} />
