@@ -214,6 +214,19 @@ export default function NightMode() {
       const sessionId = getSessionId();
       const today = new Date().toDateString();
 
+      // 👁️ 發送上線信號到 shadow_logs
+      await supabase.from('shadow_logs').insert({
+        user_id: sessionId,
+        content: '[PAGE_OPEN] 用戶打開了 MUSE',
+        hesitation_count: 0,
+        mode: 'night',
+        metadata: {
+          type: 'page_open',
+          timestamp: new Date().toISOString(),
+          user_agent: navigator.userAgent
+        }
+      });
+
       // 載入進度（包含連續登入資訊）
       const { data: progress } = await supabase
         .from('user_progress')

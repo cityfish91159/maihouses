@@ -492,6 +492,33 @@ export default function GodView() {
             });
           }
 
+          // 👁️ 檢查是否為上線信號
+          const logMetadata = newLog.metadata as { type?: string } | null;
+          if (logMetadata?.type === 'page_open') {
+            const userInfo = userProgress.find(u => u.user_id === newLog.user_id);
+            // 🚨 顯示醒目的上線通知
+            toast('👁️ 用戶上線了！', {
+              description: `${userInfo?.muse_name || 'MUSE 用戶'} 打開了頁面`,
+              duration: 10000,
+              className: 'bg-green-950 border-2 border-green-500 text-green-100 animate-pulse'
+            });
+
+            // 播放提示音（如果有通知權限）
+            if (Notification.permission === 'granted') {
+              new Notification('👁️ 用戶上線！', {
+                body: `${userInfo?.muse_name || 'MUSE 用戶'} 打開了頁面`,
+                icon: '/favicon.ico',
+                tag: 'page-open'
+              });
+            }
+
+            // 震動提示（手機）
+            if (navigator.vibrate) {
+              navigator.vibrate([200, 100, 200, 100, 200]);
+            }
+            return; // 上線信號不需要其他處理
+          }
+
           // 🔔 檢查是否為關注用戶
           const savedWatched = localStorage.getItem('godview_watched_users');
           const watchedSet = savedWatched ? new Set(JSON.parse(savedWatched)) : new Set();
@@ -1996,15 +2023,18 @@ export default function GodView() {
           <div className="space-y-3">
             {logs.map(log => {
               const isConfession = log.metadata?.type === 'confession';
+              const isPageOpen = log.metadata?.type === 'page_open';
               const isMuseResponse = log.metadata?.is_muse_response;
               const confessionType = log.metadata?.confession_type;
               const mediaType = log.metadata?.media_type;
 
               return (
                 <div key={log.id} className={`p-3 border hover:bg-amber-900/10 transition-colors group relative ${
-                  isConfession
-                    ? 'bg-amber-900/20 border-amber-500/40'
-                    : 'bg-amber-900/5 border-amber-900/20'
+                  isPageOpen
+                    ? 'bg-green-900/30 border-green-500/50'
+                    : isConfession
+                      ? 'bg-amber-900/20 border-amber-500/40'
+                      : 'bg-amber-900/5 border-amber-900/20'
                 }`}>
                   <button
                     onClick={(e) => { e.stopPropagation(); handleDeleteLog(log.id); }}
