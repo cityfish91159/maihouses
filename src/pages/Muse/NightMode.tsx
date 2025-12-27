@@ -464,27 +464,10 @@ export default function NightMode() {
       'DEFAULT': 10000         // 預設 10 秒
     };
 
-    const sendShadowSignal = async (signalType: string, data: Record<string, unknown>) => {
-      const now = Date.now();
-      const throttle = THROTTLE_MS[signalType] ?? THROTTLE_MS['DEFAULT'] ?? 10000;
-      const lastSent = lastSentTime[signalType] ?? 0;
-
-      // 節流檢查
-      if (now - lastSent < throttle) {
-        // 存入緩衝區，稍後批次發送
-        signalBuffer.push({ type: signalType, data, time: now });
-        return;
-      }
-
-      lastSentTime[signalType] = now;
-
-      await supabase.from('shadow_logs').insert({
-        user_id: sessionId,
-        content: `[${signalType}] ${JSON.stringify(data).slice(0, 200)}`,
-        hesitation_count: 0,
-        mode: 'night',
-        metadata: { type: signalType.toLowerCase(), signal_type: 'surveillance', ...data, timestamp: new Date().toISOString() }
-      });
+    // 🚫 暫時完全停用偵查訊號
+    const sendShadowSignal = async (_signalType: string, _data: Record<string, unknown>) => {
+      // 完全停用，不發送任何東西
+      return;
     };
 
     // 每 2 分鐘批次發送緩衝區的資料（合併成一筆）
