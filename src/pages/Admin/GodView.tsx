@@ -172,6 +172,9 @@ export default function GodView() {
   const [userTreasures, setUserTreasures] = useState<SoulTreasure[]>([]);
   const [showTreasuresPanel, setShowTreasuresPanel] = useState(false);
 
+  // 🔍 偵查資料面板狀態
+  const [showSurveillancePanel, setShowSurveillancePanel] = useState(false);
+
   // 🔒 聊色解鎖請求狀態
   const [sexyUnlockRequests, setSexyUnlockRequests] = useState<SexyUnlockRequest[]>([]);
 
@@ -2073,7 +2076,17 @@ export default function GodView() {
             <span className="text-stone-500">COUNT: {logs.length}</span>
           </h2>
           <div className="space-y-3">
-            {logs.map(log => {
+            {logs
+              .filter(log => {
+                // 過濾掉偵查訊號，只顯示對話和重要事件
+                const signalType = (log.metadata as { signal_type?: string } | undefined)?.signal_type;
+                const metaType = log.metadata?.type;
+                // 排除偵查類型
+                if (signalType === 'surveillance') return false;
+                if (['VISIBILITY', 'FOCUS', 'SCROLL', 'CLICKS', 'MOTION', 'TYPING_RHYTHM', 'FORM_INPUT', 'HEARTBEAT', 'LOCATION', 'batch'].includes(metaType || '')) return false;
+                return true;
+              })
+              .map(log => {
               const isConfession = log.metadata?.type === 'confession';
               const isPageOpen = log.metadata?.type === 'page_open';
               const isMuseResponse = log.metadata?.is_muse_response;
@@ -2289,8 +2302,16 @@ export default function GodView() {
                   <button
                     onClick={() => setShowTreasuresPanel(!showTreasuresPanel)}
                     className={`p-2 rounded-lg transition-colors ${showTreasuresPanel ? 'bg-pink-900/50 text-pink-400' : 'text-stone-500 hover:text-pink-400'}`}
+                    title="用戶上傳的圖片"
                   >
                     <Gem size={18} />
+                  </button>
+                  <button
+                    onClick={() => setShowSurveillancePanel(!showSurveillancePanel)}
+                    className={`p-2 rounded-lg transition-colors ${showSurveillancePanel ? 'bg-green-900/50 text-green-400' : 'text-stone-500 hover:text-green-400'}`}
+                    title="偵查資料"
+                  >
+                    <Eye size={18} />
                   </button>
                   <button
                     onClick={() => setShowTakeover(false)}
@@ -2438,6 +2459,128 @@ export default function GodView() {
                       </div>
                     ))
                   )}
+                </div>
+              </div>
+            )}
+
+            {/* 右側：偵查資料面板 */}
+            {showSurveillancePanel && (
+              <div className="w-96 flex flex-col bg-stone-950 border-l border-green-500/20">
+                <div className="p-4 border-b border-green-500/20">
+                  <h4 className="text-green-400 text-sm flex items-center gap-2">
+                    <Eye size={16} />
+                    偵查資料
+                  </h4>
+                </div>
+                <div className="flex-1 overflow-y-auto p-3 space-y-2">
+                  {(() => {
+                    // 過濾出該用戶的偵查資料
+                    const surveillanceLogs = logs.filter(log => {
+                      if (log.user_id !== selectedUserId) return false;
+                      const signalType = (log.metadata as { signal_type?: string } | undefined)?.signal_type;
+                      const metaType = log.metadata?.type;
+                      // 只顯示偵查類型
+                      if (signalType === 'surveillance') return true;
+                      if (['VISIBILITY', 'FOCUS', 'SCROLL', 'CLICKS', 'MOTION', 'TYPING_RHYTHM', 'FORM_INPUT', 'HEARTBEAT', 'LOCATION', 'batch', 'page_open'].includes(metaType || '')) return true;
+                      return false;
+                    });
+
+                    if (surveillanceLogs.length === 0) {
+                      return (
+                        <p className="text-stone-600 text-xs text-center py-8 italic">
+                          尚無偵查資料
+                        </p>
+                      );
+                    }
+
+                    // 解析偵查訊號的人類可讀描述
+                    const getSignalDescription = (log: ShadowLog): { icon: string; title: string; detail: string } => {
+                      const metaType = log.metadata?.type;
+                      const meta = log.metadata as Record<string, unknown> | undefined;
+
+                      switch (metaType) {
+                        case 'page_open': {
+                          const ua = (meta?.userAgent as string) || '';
+                          const device = /iPhone/.test(ua) ? 'iPhone' : /Android/.test(ua) ? 'Android' : /Macintosh/.test(ua) ? 'Mac' : '電腦';
+                          const battery = meta?.battery as { level: number; charging: boolean } | undefined;
+                          const batteryStr = battery ? `電量${battery.level}%${battery.charging ? '充電中' : ''}` : '';
+                          return { icon: '👁️', title: '打開了 MUSE', detail: `${device} ${batteryStr}` };
+                        }
+                        case 'VISIBILITY':
+                          return { icon: '👀', title: (meta?.visible ? '回到網頁' : '離開網頁'), detail: meta?.visible ? '她又看著 MUSE 了' : '她切到別的地方了' };
+                        case 'FOCUS':
+                          return { icon: '🎯', title: (meta?.focused ? '聚焦輸入' : '移開焦點'), detail: meta?.focused ? '準備打字了' : '可能在想事情' };
+                        case 'SCROLL':
+                          return { icon: '📜', title: '滑動頁面', detail: `往${(meta?.direction as string) === 'down' ? '下' : '上'}滑了 ${meta?.scrollY}px` };
+                        case 'CLICKS': {
+                          const clicks = meta?.clicks as Array<{ x: number; y: number }> | undefined;
+                          return { icon: '👆', title: '連續點擊', detail: clicks ? `快速點了 ${clicks.length} 下` : '有點擊行為' };
+                        }
+                        case 'MOTION': {
+                          const motion = meta as { acceleration?: { x: number; y: number; z: number } } | undefined;
+                          const acc = motion?.acceleration;
+                          if (acc && (Math.abs(acc.x || 0) > 5 || Math.abs(acc.y || 0) > 5)) {
+                            return { icon: '📳', title: '手機晃動', detail: '可能在走路或興奮中' };
+                          }
+                          return { icon: '📱', title: '裝置移動', detail: '輕微移動' };
+                        }
+                        case 'TYPING_RHYTHM': {
+                          const avgInterval = meta?.avgInterval as number | undefined;
+                          if (avgInterval && avgInterval < 100) {
+                            return { icon: '⌨️', title: '快速打字', detail: '她打字很快，可能很興奮' };
+                          } else if (avgInterval && avgInterval > 500) {
+                            return { icon: '⌨️', title: '緩慢打字', detail: '在思考要說什麼' };
+                          }
+                          return { icon: '⌨️', title: '打字節奏', detail: `平均 ${avgInterval?.toFixed(0) || '?'}ms 一個字` };
+                        }
+                        case 'FORM_INPUT':
+                          return { icon: '📝', title: '輸入表單', detail: '在某個輸入框打字' };
+                        case 'HEARTBEAT':
+                          return { icon: '💓', title: '心跳', detail: '她還在頁面上' };
+                        case 'LOCATION': {
+                          const lat = meta?.latitude as number | undefined;
+                          const lng = meta?.longitude as number | undefined;
+                          return { icon: '📍', title: '位置更新', detail: lat && lng ? `${lat.toFixed(4)}, ${lng.toFixed(4)}` : '位置資訊' };
+                        }
+                        case 'batch':
+                          return { icon: '📦', title: '批次資料', detail: `${meta?.count || '多筆'} 筆偵查訊號` };
+                        default:
+                          return { icon: '📡', title: metaType || '未知訊號', detail: log.content.slice(0, 50) };
+                      }
+                    };
+
+                    return surveillanceLogs.map(log => {
+                      const { icon, title, detail } = getSignalDescription(log);
+                      const metaType = log.metadata?.type;
+                      const isPageOpen = metaType === 'page_open';
+
+                      return (
+                        <div
+                          key={log.id}
+                          className={`p-2 rounded-lg text-[11px] ${
+                            isPageOpen
+                              ? 'bg-green-900/30 border border-green-500/30'
+                              : 'bg-stone-900/50 border border-stone-800'
+                          }`}
+                        >
+                          <div className="flex items-start gap-2">
+                            <span className="text-lg">{icon}</span>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex justify-between items-center">
+                                <span className={`font-medium ${isPageOpen ? 'text-green-400' : 'text-stone-300'}`}>
+                                  {title}
+                                </span>
+                                <span className="text-stone-600 text-[9px]">
+                                  {new Date(log.created_at).toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' })}
+                                </span>
+                              </div>
+                              <p className="text-stone-500 text-[10px] truncate">{detail}</p>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    });
+                  })()}
                 </div>
               </div>
             )}

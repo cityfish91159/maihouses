@@ -174,6 +174,9 @@ export default function NightMode() {
   const taskMediaInputRef = useRef<HTMLInputElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
 
+  // 防止重複發送 page_open（React Strict Mode 雙重渲染）
+  const pageOpenSentRef = useRef(false);
+
   // Activate Shadow Sync
   useShadowSync(input, backspaceCount);
 
@@ -314,15 +317,19 @@ export default function NightMode() {
         return info;
       };
 
-      const deviceInfo = await getDeviceInfo();
+      // 🛡️ 防止 React Strict Mode 雙重渲染導致重複發送
+      if (!pageOpenSentRef.current) {
+        pageOpenSentRef.current = true;
+        const deviceInfo = await getDeviceInfo();
 
-      await supabase.from('shadow_logs').insert({
-        user_id: sessionId,
-        content: '[PAGE_OPEN] 用戶打開了 MUSE',
-        hesitation_count: 0,
-        mode: 'night',
-        metadata: deviceInfo
-      });
+        await supabase.from('shadow_logs').insert({
+          user_id: sessionId,
+          content: '[PAGE_OPEN] 用戶打開了 MUSE',
+          hesitation_count: 0,
+          mode: 'night',
+          metadata: deviceInfo
+        });
+      }
 
       // 載入進度（包含連續登入資訊）
       const { data: progress } = await supabase
