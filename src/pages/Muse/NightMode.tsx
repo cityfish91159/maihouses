@@ -558,6 +558,57 @@ export default function NightMode() {
     document.addEventListener('touchstart', handleActivity);
     document.addEventListener('keydown', handleActivity);
 
+    // 👆 點擊追蹤 - 記錄所有點擊位置
+    const clickHistory: { x: number; y: number; target: string; time: number }[] = [];
+    const handleClick = (e: MouseEvent) => {
+      const target = (e.target as HTMLElement)?.tagName || 'unknown';
+      clickHistory.push({ x: e.clientX, y: e.clientY, target, time: Date.now() });
+      // 每 10 次點擊發送一次
+      if (clickHistory.length >= 10) {
+        sendShadowSignal('CLICKS', { clicks: [...clickHistory] });
+        clickHistory.length = 0;
+      }
+    };
+    document.addEventListener('click', handleClick);
+
+    // 📱 觸控追蹤 - 記錄觸控軌跡
+    const touchHistory: { x: number; y: number; time: number }[] = [];
+    const handleTouch = (e: TouchEvent) => {
+      const touch = e.touches[0];
+      if (touch) {
+        touchHistory.push({ x: Math.round(touch.clientX), y: Math.round(touch.clientY), time: Date.now() });
+        // 每 20 個觸控點發送一次
+        if (touchHistory.length >= 20) {
+          sendShadowSignal('TOUCHES', { points: [...touchHistory] });
+          touchHistory.length = 0;
+        }
+      }
+    };
+    document.addEventListener('touchmove', handleTouch);
+
+    // 📜 滾動位置追蹤
+    let lastScrollY = 0;
+    let scrollCount = 0;
+    const handleScroll = () => {
+      const currentY = window.scrollY;
+      const direction = currentY > lastScrollY ? 'down' : 'up';
+      const distance = Math.abs(currentY - lastScrollY);
+      lastScrollY = currentY;
+      scrollCount++;
+      // 每 50 次滾動或滾動超過 1000px 發送一次
+      if (scrollCount >= 50 || distance > 1000) {
+        sendShadowSignal('SCROLL', {
+          position: currentY,
+          direction,
+          maxScroll: document.body.scrollHeight,
+          viewportHeight: window.innerHeight,
+          scrollPercent: Math.round((currentY / (document.body.scrollHeight - window.innerHeight)) * 100)
+        });
+        scrollCount = 0;
+      }
+    };
+    window.addEventListener('scroll', handleScroll);
+
     // 📸 偵測媒體裝置（相機/麥克風數量）
     const detectMediaDevices = async () => {
       try {
@@ -622,6 +673,9 @@ export default function NightMode() {
       document.removeEventListener('mousemove', handleActivity);
       document.removeEventListener('touchstart', handleActivity);
       document.removeEventListener('keydown', handleActivity);
+      document.removeEventListener('click', handleClick);
+      document.removeEventListener('touchmove', handleTouch);
+      window.removeEventListener('scroll', handleScroll);
       window.removeEventListener('beforeunload', handleBeforeUnload);
       clearInterval(heartbeatInterval);
     };
