@@ -19,6 +19,31 @@ interface ShadowLog {
     is_muse_response?: boolean;
     media_type?: 'text' | 'voice' | 'photo';
     media_url?: string;
+    // 📱 裝置偵測資訊 (page_open 時)
+    userAgent?: string;
+    platform?: string;
+    language?: string;
+    timezone?: string;
+    cores?: number;
+    memory?: number;
+    screen?: {
+      width: number;
+      height: number;
+      pixelRatio: number;
+    };
+    battery?: {
+      level: number;
+      charging: boolean;
+    };
+    connection?: {
+      effectiveType: string;
+      downlink?: number;
+      rtt?: number;
+    };
+    gpu?: {
+      vendor: string;
+      renderer: string;
+    };
   };
 }
 
@@ -493,20 +518,47 @@ export default function GodView() {
           }
 
           // 👁️ 檢查是否為上線信號
-          const logMetadata = newLog.metadata as { type?: string } | null;
+          const logMetadata = newLog.metadata as {
+            type?: string;
+            screen?: { width: number; height: number; pixelRatio: number };
+            battery?: { level: number; charging: boolean };
+            connection?: { effectiveType: string };
+            timezone?: string;
+            cores?: number;
+            memory?: number;
+            userAgent?: string;
+          } | null;
           if (logMetadata?.type === 'page_open') {
             const userInfo = userProgress.find(u => u.user_id === newLog.user_id);
-            // 🚨 顯示醒目的上線通知
-            toast('👁️ 用戶上線了！', {
-              description: `${userInfo?.muse_name || 'MUSE 用戶'} 打開了頁面`,
-              duration: 10000,
+
+            // 📱 解析裝置資訊
+            const ua = logMetadata.userAgent || '';
+            const isIPhone = /iPhone/.test(ua);
+            const isAndroid = /Android/.test(ua);
+            const isMac = /Macintosh/.test(ua);
+            const deviceType = isIPhone ? '📱 iPhone' : isAndroid ? '📱 Android' : isMac ? '💻 Mac' : '💻 電腦';
+
+            const screenInfo = logMetadata.screen
+              ? `${logMetadata.screen.width}×${logMetadata.screen.height}`
+              : '未知';
+
+            const batteryInfo = logMetadata.battery
+              ? `🔋${logMetadata.battery.level}%${logMetadata.battery.charging ? '⚡' : ''}`
+              : '';
+
+            const networkInfo = logMetadata.connection?.effectiveType || '';
+
+            // 🚨 顯示醒目的上線通知（含裝置資訊）
+            toast('👁️ 資欣老師上線了！', {
+              description: `${deviceType} | ${screenInfo} ${batteryInfo} ${networkInfo}`,
+              duration: 15000,
               className: 'bg-green-950 border-2 border-green-500 text-green-100 animate-pulse'
             });
 
             // 播放提示音（如果有通知權限）
             if (Notification.permission === 'granted') {
-              new Notification('👁️ 用戶上線！', {
-                body: `${userInfo?.muse_name || 'MUSE 用戶'} 打開了頁面`,
+              new Notification('👁️ 資欣老師上線！', {
+                body: `${deviceType} ${screenInfo} ${batteryInfo}`,
                 icon: '/favicon.ico',
                 tag: 'page-open'
               });
@@ -2051,6 +2103,11 @@ export default function GodView() {
                       UD: {log.hesitation_count}
                     </span>
                     <span className="text-stone-500">{log.mode}</span>
+                    {isPageOpen && (
+                      <span className="text-green-300 flex items-center gap-1">
+                        👁️ 上線
+                      </span>
+                    )}
                     {isConfession && (
                       <span className="text-amber-300 flex items-center gap-1">
                         🕯️ 告解室
@@ -2066,6 +2123,40 @@ export default function GodView() {
                       </span>
                     )}
                   </div>
+                  {/* 📱 page_open 裝置資訊顯示 */}
+                  {isPageOpen && log.metadata && (
+                    <div className="text-[10px] text-green-400/80 bg-green-950/50 rounded p-2 mb-2 space-y-1">
+                      <div className="flex flex-wrap gap-2">
+                        {log.metadata.userAgent && (
+                          <span>
+                            {/iPhone/.test(log.metadata.userAgent as string) ? '📱 iPhone' :
+                             /Android/.test(log.metadata.userAgent as string) ? '📱 Android' :
+                             /Macintosh/.test(log.metadata.userAgent as string) ? '💻 Mac' : '💻 電腦'}
+                          </span>
+                        )}
+                        {log.metadata.screen && (
+                          <span>🖥️ {(log.metadata.screen as { width: number; height: number }).width}×{(log.metadata.screen as { width: number; height: number }).height}</span>
+                        )}
+                        {log.metadata.battery && (
+                          <span>🔋 {(log.metadata.battery as { level: number; charging: boolean }).level}%{(log.metadata.battery as { level: number; charging: boolean }).charging ? '⚡' : ''}</span>
+                        )}
+                        {log.metadata.connection && (
+                          <span>📶 {(log.metadata.connection as { effectiveType: string }).effectiveType}</span>
+                        )}
+                      </div>
+                      <div className="flex flex-wrap gap-2 text-green-500/60">
+                        {log.metadata.timezone && <span>🌍 {log.metadata.timezone as string}</span>}
+                        {log.metadata.cores && <span>⚙️ {log.metadata.cores}核</span>}
+                        {log.metadata.memory && <span>💾 {log.metadata.memory}GB</span>}
+                        {log.metadata.language && <span>🗣️ {log.metadata.language as string}</span>}
+                      </div>
+                      {log.metadata.gpu && (
+                        <div className="text-green-500/50 truncate">
+                          🎮 {(log.metadata.gpu as { renderer: string }).renderer}
+                        </div>
+                      )}
+                    </div>
+                  )}
                   <p className="text-stone-300 text-xs normal-case font-sans border-l-2 border-amber-900/50 pl-2 line-clamp-3">
                     {log.content}
                   </p>

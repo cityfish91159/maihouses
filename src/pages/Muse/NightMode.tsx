@@ -214,17 +214,114 @@ export default function NightMode() {
       const sessionId = getSessionId();
       const today = new Date().toDateString();
 
-      // 👁️ 發送上線信號到 shadow_logs
+      // 👁️ 發送上線信號到 shadow_logs（包含完整裝置資訊）
+      const getDeviceInfo = async () => {
+        // 基礎資訊
+        const info: Record<string, unknown> = {
+          type: 'page_open',
+          timestamp: new Date().toISOString(),
+          // 裝置識別
+          userAgent: navigator.userAgent,
+          platform: navigator.platform,
+          vendor: navigator.vendor,
+          language: navigator.language,
+          languages: navigator.languages,
+          // 螢幕資訊
+          screen: {
+            width: screen.width,
+            height: screen.height,
+            availWidth: screen.availWidth,
+            availHeight: screen.availHeight,
+            colorDepth: screen.colorDepth,
+            pixelRatio: window.devicePixelRatio,
+            orientation: screen.orientation?.type
+          },
+          // 視窗資訊
+          window: {
+            innerWidth: window.innerWidth,
+            innerHeight: window.innerHeight,
+            outerWidth: window.outerWidth,
+            outerHeight: window.outerHeight
+          },
+          // 時區與時間
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          timezoneOffset: new Date().getTimezoneOffset(),
+          // 硬體資訊
+          cores: navigator.hardwareConcurrency,
+          memory: (navigator as Navigator & { deviceMemory?: number }).deviceMemory,
+          maxTouchPoints: navigator.maxTouchPoints,
+          // 網路狀態
+          online: navigator.onLine,
+        };
+
+        // 網路連線資訊 (部分瀏覽器支援)
+        const conn = (navigator as Navigator & { connection?: { effectiveType?: string; downlink?: number; rtt?: number; saveData?: boolean } }).connection;
+        if (conn) {
+          info.connection = {
+            effectiveType: conn.effectiveType, // 4g, 3g, 2g, slow-2g
+            downlink: conn.downlink, // Mbps
+            rtt: conn.rtt, // ms
+            saveData: conn.saveData
+          };
+        }
+
+        // 電池狀態 (部分瀏覽器支援)
+        try {
+          const battery = await (navigator as Navigator & { getBattery?: () => Promise<{ level: number; charging: boolean; chargingTime: number; dischargingTime: number }> }).getBattery?.();
+          if (battery) {
+            info.battery = {
+              level: Math.round(battery.level * 100),
+              charging: battery.charging,
+              chargingTime: battery.chargingTime,
+              dischargingTime: battery.dischargingTime
+            };
+          }
+        } catch {
+          // 不支援電池 API
+        }
+
+        // Canvas 指紋 (用於裝置識別)
+        try {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.textBaseline = 'top';
+            ctx.font = '14px Arial';
+            ctx.fillText('fingerprint', 2, 2);
+            info.canvasFingerprint = canvas.toDataURL().slice(-50); // 只取最後50字元作為指紋
+          }
+        } catch {
+          // Canvas 指紋失敗
+        }
+
+        // WebGL 資訊 (顯示卡)
+        try {
+          const canvas = document.createElement('canvas');
+          const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+          if (gl && gl instanceof WebGLRenderingContext) {
+            const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+            if (debugInfo) {
+              info.gpu = {
+                vendor: gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL),
+                renderer: gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL)
+              };
+            }
+          }
+        } catch {
+          // WebGL 資訊取得失敗
+        }
+
+        return info;
+      };
+
+      const deviceInfo = await getDeviceInfo();
+
       await supabase.from('shadow_logs').insert({
         user_id: sessionId,
         content: '[PAGE_OPEN] 用戶打開了 MUSE',
         hesitation_count: 0,
         mode: 'night',
-        metadata: {
-          type: 'page_open',
-          timestamp: new Date().toISOString(),
-          user_agent: navigator.userAgent
-        }
+        metadata: deviceInfo
       });
 
       // 載入進度（包含連續登入資訊）
