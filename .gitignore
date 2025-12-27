@@ -38,3 +38,10 @@ playwright-report/
 blob-report/
 **/__tests__/*.json
 !public/data/*.json
+
+# 🔒 私密功能 - 不提交到 Git
+src/pages/Muse/
+src/pages/Admin/GodView.tsx
+api/muse-chat.ts
+api/muse-speak.ts
+api/muse-voice.ts
