@@ -2267,8 +2267,8 @@ export default function GodView() {
 
       {/* 管理員接管對話模態框 */}
       {showTakeover && selectedUserId && (
-        <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center p-6">
-          <div className="bg-[#0a0a0a] border border-purple-500/30 rounded-2xl w-full max-w-5xl h-[90vh] flex">
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center p-2 md:p-6">
+          <div className="bg-[#0a0a0a] border border-purple-500/30 rounded-2xl w-full max-w-5xl h-[95vh] md:h-[90vh] flex flex-col md:flex-row overflow-hidden">
             {/* 左側：對話區 */}
             <div className="flex-1 flex flex-col border-r border-purple-500/20">
               {/* 標題 */}
@@ -2463,23 +2463,28 @@ export default function GodView() {
               </div>
             )}
 
-            {/* 右側：偵查資料面板 */}
+            {/* 右側：偵查資料面板 - 響應式設計 */}
             {showSurveillancePanel && (
-              <div className="w-96 flex flex-col bg-stone-950 border-l border-green-500/20">
-                <div className="p-4 border-b border-green-500/20">
+              <div className="w-full md:w-96 flex flex-col bg-stone-950 border-t md:border-t-0 md:border-l border-green-500/20 max-h-[50vh] md:max-h-full">
+                <div className="p-3 md:p-4 border-b border-green-500/20 flex items-center justify-between">
                   <h4 className="text-green-400 text-sm flex items-center gap-2">
                     <Eye size={16} />
                     偵查資料
                   </h4>
+                  <button
+                    onClick={() => setShowSurveillancePanel(false)}
+                    className="md:hidden text-stone-500 hover:text-white"
+                  >
+                    <X size={16} />
+                  </button>
                 </div>
-                <div className="flex-1 overflow-y-auto p-3 space-y-2">
+                <div className="flex-1 overflow-y-auto p-2 md:p-3 space-y-2">
                   {(() => {
                     // 過濾出該用戶的偵查資料
                     const surveillanceLogs = logs.filter(log => {
                       if (log.user_id !== selectedUserId) return false;
                       const signalType = (log.metadata as { signal_type?: string } | undefined)?.signal_type;
                       const metaType = log.metadata?.type;
-                      // 只顯示偵查類型
                       if (signalType === 'surveillance') return true;
                       if (['VISIBILITY', 'FOCUS', 'SCROLL', 'CLICKS', 'MOTION', 'TYPING_RHYTHM', 'FORM_INPUT', 'HEARTBEAT', 'LOCATION', 'batch', 'page_open'].includes(metaType || '')) return true;
                       return false;
@@ -2493,93 +2498,146 @@ export default function GodView() {
                       );
                     }
 
-                    // 解析偵查訊號的人類可讀描述
-                    const getSignalDescription = (log: ShadowLog): { icon: string; title: string; detail: string } => {
-                      const metaType = log.metadata?.type;
-                      const meta = log.metadata as Record<string, unknown> | undefined;
+                    // 計算上線/下線摘要
+                    const pageOpenLogs = surveillanceLogs.filter(l => l.metadata?.type === 'page_open');
+                    const visibilityLogs = surveillanceLogs.filter(l => l.metadata?.type === 'VISIBILITY');
+                    const lastOnline = pageOpenLogs[0];
+                    const lastDevice = lastOnline?.metadata?.userAgent as string || '';
+                    const deviceName = /iPhone/.test(lastDevice) ? 'iPhone' :
+                                       /Android/.test(lastDevice) ? 'Android 手機' :
+                                       /iPad/.test(lastDevice) ? 'iPad' :
+                                       /Macintosh/.test(lastDevice) ? 'Mac 電腦' :
+                                       /Windows/.test(lastDevice) ? 'Windows 電腦' : '未知裝置';
 
-                      switch (metaType) {
-                        case 'page_open': {
-                          const ua = (meta?.userAgent as string) || '';
-                          const device = /iPhone/.test(ua) ? 'iPhone' : /Android/.test(ua) ? 'Android' : /Macintosh/.test(ua) ? 'Mac' : '電腦';
-                          const battery = meta?.battery as { level: number; charging: boolean } | undefined;
-                          const batteryStr = battery ? `電量${battery.level}%${battery.charging ? '充電中' : ''}` : '';
-                          return { icon: '👁️', title: '打開了 MUSE', detail: `${device} ${batteryStr}` };
-                        }
-                        case 'VISIBILITY':
-                          return { icon: '👀', title: (meta?.visible ? '回到網頁' : '離開網頁'), detail: meta?.visible ? '她又看著 MUSE 了' : '她切到別的地方了' };
-                        case 'FOCUS':
-                          return { icon: '🎯', title: (meta?.focused ? '聚焦輸入' : '移開焦點'), detail: meta?.focused ? '準備打字了' : '可能在想事情' };
-                        case 'SCROLL':
-                          return { icon: '📜', title: '滑動頁面', detail: `往${(meta?.direction as string) === 'down' ? '下' : '上'}滑了 ${meta?.scrollY}px` };
-                        case 'CLICKS': {
-                          const clicks = meta?.clicks as Array<{ x: number; y: number }> | undefined;
-                          return { icon: '👆', title: '連續點擊', detail: clicks ? `快速點了 ${clicks.length} 下` : '有點擊行為' };
-                        }
-                        case 'MOTION': {
-                          const motion = meta as { acceleration?: { x: number; y: number; z: number } } | undefined;
-                          const acc = motion?.acceleration;
-                          if (acc && (Math.abs(acc.x || 0) > 5 || Math.abs(acc.y || 0) > 5)) {
-                            return { icon: '📳', title: '手機晃動', detail: '可能在走路或興奮中' };
-                          }
-                          return { icon: '📱', title: '裝置移動', detail: '輕微移動' };
-                        }
-                        case 'TYPING_RHYTHM': {
-                          const avgInterval = meta?.avgInterval as number | undefined;
-                          if (avgInterval && avgInterval < 100) {
-                            return { icon: '⌨️', title: '快速打字', detail: '她打字很快，可能很興奮' };
-                          } else if (avgInterval && avgInterval > 500) {
-                            return { icon: '⌨️', title: '緩慢打字', detail: '在思考要說什麼' };
-                          }
-                          return { icon: '⌨️', title: '打字節奏', detail: `平均 ${avgInterval?.toFixed(0) || '?'}ms 一個字` };
-                        }
-                        case 'FORM_INPUT':
-                          return { icon: '📝', title: '輸入表單', detail: '在某個輸入框打字' };
-                        case 'HEARTBEAT':
-                          return { icon: '💓', title: '心跳', detail: '她還在頁面上' };
-                        case 'LOCATION': {
-                          const lat = meta?.latitude as number | undefined;
-                          const lng = meta?.longitude as number | undefined;
-                          return { icon: '📍', title: '位置更新', detail: lat && lng ? `${lat.toFixed(4)}, ${lng.toFixed(4)}` : '位置資訊' };
-                        }
-                        case 'batch':
-                          return { icon: '📦', title: '批次資料', detail: `${meta?.count || '多筆'} 筆偵查訊號` };
-                        default:
-                          return { icon: '📡', title: metaType || '未知訊號', detail: log.content.slice(0, 50) };
-                      }
-                    };
+                    // 計算今日在線時間
+                    const today = new Date().toDateString();
+                    const todayLogs = surveillanceLogs.filter(l => new Date(l.created_at).toDateString() === today);
+                    const onlineMinutes = Math.round(todayLogs.length * 2); // 估算
 
-                    return surveillanceLogs.map(log => {
-                      const { icon, title, detail } = getSignalDescription(log);
-                      const metaType = log.metadata?.type;
-                      const isPageOpen = metaType === 'page_open';
+                    // 統計切換次數
+                    const switchCount = visibilityLogs.filter(l => !(l.metadata as Record<string, unknown>)?.visible).length;
 
-                      return (
-                        <div
-                          key={log.id}
-                          className={`p-2 rounded-lg text-[11px] ${
-                            isPageOpen
-                              ? 'bg-green-900/30 border border-green-500/30'
-                              : 'bg-stone-900/50 border border-stone-800'
-                          }`}
-                        >
-                          <div className="flex items-start gap-2">
-                            <span className="text-lg">{icon}</span>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex justify-between items-center">
-                                <span className={`font-medium ${isPageOpen ? 'text-green-400' : 'text-stone-300'}`}>
-                                  {title}
-                                </span>
-                                <span className="text-stone-600 text-[9px]">
-                                  {new Date(log.created_at).toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' })}
-                                </span>
-                              </div>
-                              <p className="text-stone-500 text-[10px] truncate">{detail}</p>
+                    return (
+                      <>
+                        {/* 📊 摘要區塊 */}
+                        <div className="bg-green-950/50 rounded-lg p-3 mb-3 space-y-2">
+                          <div className="text-green-400 text-[10px] uppercase tracking-wider mb-2">今日活動摘要</div>
+                          {lastOnline && (
+                            <div className="flex items-center gap-2 text-[11px]">
+                              <span className="text-green-500">最後上線:</span>
+                              <span className="text-stone-300">
+                                {new Date(lastOnline.created_at).toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' })}
+                              </span>
+                              <span className="text-stone-500">({deviceName})</span>
                             </div>
+                          )}
+                          {lastOnline?.metadata?.battery && (
+                            <div className="flex items-center gap-2 text-[11px]">
+                              <span className="text-green-500">電量:</span>
+                              <span className="text-stone-300">
+                                {(lastOnline.metadata.battery as { level: number; charging: boolean }).level}%
+                                {(lastOnline.metadata.battery as { level: number; charging: boolean }).charging ? ' ⚡充電中' : ''}
+                              </span>
+                            </div>
+                          )}
+                          <div className="flex items-center gap-2 text-[11px]">
+                            <span className="text-green-500">開啟次數:</span>
+                            <span className="text-stone-300">{pageOpenLogs.length} 次</span>
+                          </div>
+                          {switchCount > 0 && (
+                            <div className="flex items-center gap-2 text-[11px]">
+                              <span className="text-amber-500">切換離開:</span>
+                              <span className="text-stone-300">{switchCount} 次 (可能在看其他 App)</span>
+                            </div>
+                          )}
+                          <div className="flex items-center gap-2 text-[11px]">
+                            <span className="text-green-500">估計在線:</span>
+                            <span className="text-stone-300">約 {onlineMinutes} 分鐘</span>
                           </div>
                         </div>
-                      );
-                    });
+
+                        {/* 📜 時間軸 */}
+                        <div className="text-stone-500 text-[9px] uppercase tracking-wider mb-1">活動時間軸</div>
+                        {surveillanceLogs.slice(0, 30).map(log => {
+                          const metaType = log.metadata?.type;
+                          const meta = log.metadata as Record<string, unknown> | undefined;
+                          const time = new Date(log.created_at).toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' });
+
+                          // 人類可讀描述
+                          let icon = '📡';
+                          let text = '';
+
+                          switch (metaType) {
+                            case 'page_open':
+                              icon = '🟢';
+                              text = '上線了';
+                              break;
+                            case 'VISIBILITY':
+                              if (meta?.visible) {
+                                icon = '👁️';
+                                text = '回到 MUSE';
+                              } else {
+                                icon = '👋';
+                                text = '切換到其他 App';
+                              }
+                              break;
+                            case 'FOCUS':
+                              if (meta?.focused) {
+                                icon = '✏️';
+                                text = '準備打字';
+                              } else {
+                                icon = '💭';
+                                text = '停止輸入';
+                              }
+                              break;
+                            case 'TYPING_RHYTHM': {
+                              const avgMs = meta?.avgInterval as number;
+                              icon = '⌨️';
+                              text = avgMs < 150 ? '快速打字中（興奮？）' : avgMs > 400 ? '緩慢打字（在思考）' : '正常打字';
+                              break;
+                            }
+                            case 'SCROLL':
+                              icon = '📜';
+                              text = '滑動瀏覽';
+                              break;
+                            case 'CLICKS': {
+                              const clicks = meta?.clicks as Array<unknown> | undefined;
+                              icon = '👆';
+                              text = clicks ? `連點 ${clicks.length} 下` : '點擊';
+                              break;
+                            }
+                            case 'MOTION':
+                              icon = '📳';
+                              text = '手機在晃動';
+                              break;
+                            case 'LOCATION': {
+                              icon = '📍';
+                              text = '位置更新';
+                              break;
+                            }
+                            case 'HEARTBEAT':
+                              icon = '💓';
+                              text = '仍在頁面上';
+                              break;
+                            default:
+                              text = metaType || '活動';
+                          }
+
+                          return (
+                            <div key={log.id} className="flex items-center gap-2 py-1 text-[11px] border-l-2 border-green-900/30 pl-2">
+                              <span className="text-stone-600 w-10 shrink-0">{time}</span>
+                              <span>{icon}</span>
+                              <span className="text-stone-400">{text}</span>
+                            </div>
+                          );
+                        })}
+                        {surveillanceLogs.length > 30 && (
+                          <p className="text-stone-600 text-[10px] text-center py-2">
+                            還有 {surveillanceLogs.length - 30} 筆更早的記錄...
+                          </p>
+                        )}
+                      </>
+                    );
                   })()}
                 </div>
               </div>
