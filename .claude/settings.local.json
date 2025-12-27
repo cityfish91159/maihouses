@@ -28,7 +28,8 @@
       "Bash(npm run typecheck:api:*)",
       "Bash(npm run:*)",
       "Bash(vercel:*)",
-      "Bash(npx vercel --prod)"
+      "Bash(npx vercel --prod)",
+      "Bash(npm install:*)"
     ]
   },
   "model": "sonnet",

