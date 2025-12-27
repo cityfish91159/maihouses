@@ -1,0 +1,19 @@
+{
+  "task": "uag_score",
+  "timestamp": "2025-12-09T02:57:59.240Z",
+  "candidates": [
+    {
+      "name": "claude-v1",
+      "status": "ELIMINATED",
+      "testsPassed": false,
+      "fuzzFailRate": 0,
+      "stressPassed": false,
+      "avgRuntimeMs": null,
+      "codeLines": 69,
+      "score": 0,
+      "eliminationReason": "Nesting too deep: 4 > 3"
+    }
+  ],
+  "champion": null,
+  "leaderboard": []
+}

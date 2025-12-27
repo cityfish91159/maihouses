@@ -1,0 +1,49 @@
+{
+  "task": "uag_score",
+  "timestamp": "2025-12-09T03:19:43.207Z",
+  "candidates": [
+    {
+      "name": "claude-v1",
+      "status": "PASS",
+      "testsPassed": true,
+      "fuzzFailRate": 0,
+      "stressPassed": true,
+      "avgRuntimeMs": 0.004873366666666356,
+      "codeLines": 49,
+      "score": 0
+    },
+    {
+      "name": "claude-v2",
+      "status": "PASS",
+      "testsPassed": true,
+      "fuzzFailRate": 0,
+      "stressPassed": true,
+      "avgRuntimeMs": 0.0027425666666658797,
+      "codeLines": 14,
+      "score": 100
+    }
+  ],
+  "champion": "claude-v2",
+  "leaderboard": [
+    {
+      "name": "claude-v2",
+      "status": "PASS",
+      "testsPassed": true,
+      "fuzzFailRate": 0,
+      "stressPassed": true,
+      "avgRuntimeMs": 0.0027425666666658797,
+      "codeLines": 14,
+      "score": 100
+    },
+    {
+      "name": "claude-v1",
+      "status": "PASS",
+      "testsPassed": true,
+      "fuzzFailRate": 0,
+      "stressPassed": true,
+      "avgRuntimeMs": 0.004873366666666356,
+      "codeLines": 49,
+      "score": 0
+    }
+  ]
+}

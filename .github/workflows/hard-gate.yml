@@ -1,0 +1,57 @@
+# ============================================================================
+# Hard Gate (不可繞過) - Server-Side Enforcement
+# ============================================================================
+# 這是真正的物理阻斷，即使本地繞過 git hooks，GitHub 也會擋住
+# ============================================================================
+
+name: Hard Gate (不可繞過)
+
+on: [push, pull_request]
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: TypeScript 檢查
+        run: npm run typecheck
+
+      - name: ESLint 檢查
+        run: npm run lint
+
+      - name: G6 偷懶代碼檢查
+        run: |
+          echo "🔍 檢查偷懶代碼..."
+
+          # 檢查 any 類型
+          if grep -r ": any" --include="*.ts" --include="*.tsx" src/; then
+            echo "❌ 發現 'any' 類型！"
+            exit 1
+          fi
+
+          # 檢查 @ts-ignore
+          if grep -r "@ts-ignore\|@ts-nocheck" --include="*.ts" --include="*.tsx" src/; then
+            echo "❌ 發現 @ts-ignore！"
+            exit 1
+          fi
+
+          # 檢查 eslint-disable
+          if grep -r "eslint-disable" --include="*.ts" --include="*.tsx" src/; then
+            echo "❌ 發現 eslint-disable！"
+            exit 1
+          fi
+
+          echo "✅ 無偷懶代碼"
+
+      - name: Build 檢查
+        run: npm run build

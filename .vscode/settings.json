@@ -1,0 +1,73 @@
+{
+  "css.validate": true,
+  "css.lint.unknownAtRules": "ignore",
+  "stylelint.enable": true,
+  "github.copilot.chat.terminalChatLocation": "terminal",
+  "github.copilot.chat.runCommand.enabled": true,
+  "github.copilot.chat.executeCommand.enabled": true,
+  
+  // Claude Code 設定 - 使用自己的 API Key
+  "claude-code.model": "claude-opus-4-20250514",
+  
+  // Cline Global Rules v2.0 - 強制工具搜尋版
+  "cline.customInstructions": "# 🚨 Cline Global Rules v2.0 - 強制工具搜尋\n\n## ⛔ 第零條天條：強制 Skills 搜尋\n\n開始任何任務前，必須先使用 SkillsMP 搜尋適合的工具：\n1. 使用 search_skills 或 ai_search_skills 搜尋工具\n2. 在任務報告中列出找到的 Skills\n3. 優先使用已有的 Skills，不重複造輪子\n\n**沒有搜尋工具就開始寫代碼 = 違規 = 任務失敗**\n\n## 🔒 核心原則\n\n### 絕對禁止\n- 禁止跳過 Skills 搜尋\n- 禁止 `any` 類型\n- 禁止便宜行事\n- 禁止腦補需求\n- 禁止硬編碼密鑰\n- 禁止盲寫代碼\n\n### 絕對必須\n- 先查 Skills\n- 先讀後寫\n- 讀對檔案\n- 先計畫後執行\n- 完整錯誤處理\n- 繁體中文 UI\n- 完整測試\n\n## 📋 任務執行協議\n\n收到任務的第一秒：\n1. 輸出「📋 任務接收」報告\n2. 列出 Skills 搜尋結果\n3. 列出工作清單\n4. 每完成一個清單項目輸出進度報告\n5. 完成後輸出「🏁 任務完成」報告\n\n## 🧪 強制驗證\n\n完成修改後必須執行：\n- npm run typecheck\n- npm run lint\n- npm run build\n\n任何一項失敗 = 任務未完成",
+  
+  // GitHub Copilot 設定
+  "github.copilot.enable": {
+    "*": true,
+    "plaintext": false,
+    "markdown": true,
+    "scminput": false
+  },
+  
+  // Copilot Chat 進階設定
+  "github.copilot.chat.codeGeneration.useInstructionFiles": true,
+  "github.copilot.chat.codeGeneration.instructions": [
+    {
+      "file": ".github/copilot-instructions.md"
+    }
+  ],
+  
+  // 效能優化設定
+  "files.watcherExclude": {
+    "**/node_modules/**": true,
+    "**/dist/**": true,
+    "**/docs/**": true,
+    "**/.turbo/**": true,
+    "**/.next/**": true,
+    "**/.git/objects/**": true,
+    "**/.git/subtree-cache/**": true
+  },
+  "search.exclude": {
+    "**/node_modules/**": true,
+    "**/dist/**": true,
+    "**/docs/**": true
+  },
+  "git.autorefresh": false,
+  "npm.fetchOnlinePackageInfo": false,
+  "typescript.tsserver.maxTsServerMemory": 3072,
+  "typescript.tsserver.useSeparateSyntaxServer": true,
+  "eslint.run": "onSave",
+  
+  // 編輯器設定
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  },
+  
+  // TypeScript 設定
+  "typescript.preferences.importModuleSpecifier": "relative",
+  "typescript.suggest.autoImports": true,
+  
+  // 檔案關聯
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  }
+}

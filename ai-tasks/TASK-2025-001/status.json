@@ -1,0 +1,17 @@
+{
+  "taskId": "TASK-2025-001",
+  "lastUpdate": "2025-12-09T11:50:58.416Z",
+  "completed": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8
+  ],
+  "inProgress": null,
+  "blocked": [],
+  "score": 80
+}

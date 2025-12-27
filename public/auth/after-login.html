@@ -1,0 +1,17 @@
+<!doctype html><html lang="zh-Hant"><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>登入完成，正在導向…</title>
+<script>
+(function(){
+  var params = new URLSearchParams(location.search);
+  var role = (params.get('role') || localStorage.getItem('userRole') || 'consumer').toLowerCase();
+  if (role === '房仲') role = 'agent';
+  var BASE = '/maihouses/';
+  var target = (role === 'agent')
+    ? BASE + 'feed-agent.html'
+    : BASE + 'feed-consumer.html';
+  window.location.replace(target);
+})();
+</script>
+<noscript><meta http-equiv="refresh" content="0; url=/maihouses/feed-consumer.html"></noscript>
+</html>

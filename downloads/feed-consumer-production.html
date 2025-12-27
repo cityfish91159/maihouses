@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1" name="viewport"/>
+<title>邁房子｜我的社區</title>
+<meta name="description" content="邁房子 - 您專屬的房產社群助手"/>
+
+<link rel="dns-prefetch" href="https://images.unsplash.com">
+<link rel="preconnect" href="https://images.unsplash.com" crossorigin>
+<link rel="preload" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap" as="style">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap">
+
+<style>
+/* ── 核心變數 & Reset ───────────────────────────── */
+:root{
+  --ink:#0b214a; --muted:#6c7b91; --brand:#003366; --brand-2:#00A8E8; --line:#e6edf7; --card:#fff;
+  --bg1:#f6f9ff; --bg2:#eef3ff;
+  --pill-border:#cbead4; --pill-bg1:#f3fff8; --pill-bg2:#e8faef; --pill-ink:#0e8d52;
+  --safe-bottom: env(safe-area-inset-bottom, 20px);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth}
+body{margin:0;background:linear-gradient(180deg,var(--bg1),var(--bg2));color:var(--ink);
+  font-family:"Noto Sans TC",system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased}
+
+/* ── 桌機版雙欄 Layout ─────────────────────────────────────────── */
+.layout{max-width:960px;margin:0 auto;display:flex;gap:20px;padding:10px}
+.feed-main{flex:1;max-width:560px;display:flex;flex-direction:column;gap:12px;padding-bottom:calc(80px + var(--safe-bottom))}
+.feed-sidebar{width:280px;flex-shrink:0;display:none;position:sticky;top:70px;align-self:flex-start}
+@media(min-width:800px){
+  .feed-sidebar{display:flex;flex-direction:column;gap:12px}
+  .sticky{display:none!important}
+}
+@media(max-width:799px){
+  .layout{padding:10px 10px calc(80px + var(--safe-bottom))}
+  .feed-main{max-width:100%}
+}
+
+/* ── 頂部導航 (Sticky Header) ───────────────────── */
+.topbar{position:sticky;top:0;z-index:100;background:rgba(246,249,255,.95);backdrop-filter:blur(12px);
+  border-bottom:1px solid rgba(230,237,247,0.8);display:flex;align-items:center;gap:10px;padding:8px 16px;
+  transform:translateZ(0)}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none}
+.brand .logo-icon{width:42px;height:42px;background:linear-gradient(135deg,var(--brand),#005282);border-radius:12px;
+  display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(0,51,102,.2);position:relative;overflow:hidden}
+.brand .logo-icon svg{width:22px;height:22px;color:#fff}
+.brand .logo-icon::after{content:'';position:absolute;top:2px;right:2px;width:6px;height:6px;background:#FF6B6B;border-radius:50%;border:1.5px solid var(--brand)}
+.brand .logo-text{font-size:24px;font-weight:700;font-family:serif;color:var(--brand);letter-spacing:0.5px}
+.brand .logo-slogan{display:none;margin-left:12px;padding-left:12px;border-left:2px solid rgba(0,51,102,.15);font-size:14px;font-weight:700;color:#005282;letter-spacing:2px}
+@media(min-width:640px){.brand .logo-slogan{display:block}}
+.tools{margin-left:auto;display:flex;gap:8px;align-items:center}
+.icon{border:1px solid var(--line);border-radius:12px;background:#fff;padding:8px;font-size:13px;color:#173a7c;
+  display:inline-flex;align-items:center;gap:6px;line-height:1;cursor:pointer;transition:transform 0.1s}
+.icon:active{transform:scale(0.95)}
+.icon.badge{position:relative}
+.icon.badge::after{content:attr(data-badge);position:absolute;top:-6px;right:-6px;
+  min-width:18px;height:18px;border-radius:999px;background:#e02626;color:#fff;font-size:11px;
+  display:flex;align-items:center;justify-content:center;border:2px solid #fff;font-weight:700}
+
+/* ── 下拉選單 (Dropdown) ────────────────────────── */
+.menu{position:relative}
+.menu summary{list-style:none;cursor:pointer}
+.menu summary::-webkit-details-marker{display:none}
+.chip{border:1px solid var(--line);border-radius:14px;padding:6px 10px;font-size:13px;color:#173a7c;background:#fff;display:flex;align-items:center;gap:4px;font-weight:700}
+.menu[open]::before{content:"";position:fixed;inset:0;background:rgba(0,0,0,0.1);z-index:10;cursor:default}
+.menu-list{display:none;position:absolute;right:0;top:calc(100% + 8px);width:180px;background:#fff;
+  border:1px solid var(--line);border-radius:12px;box-shadow:0 10px 30px rgba(11,33,74,.15);
+  padding:6px;z-index:20;animation:slideDown 0.2s cubic-bezier(0.16, 1, 0.3, 1)}
+.menu[open] .menu-list{display:block}
+@keyframes slideDown{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
+.menu-list a{display:flex;align-items:center;gap:10px;padding:10px;border-radius:8px;color:#173a7c;text-decoration:none;font-weight:700;font-size:13px}
+.menu-list a:hover{background:#f6f9ff}
+.menu-list a:active{background:#eef3ff}
+.menu-list hr{border:0;border-top:1px solid #f1f5f9;margin:4px 0}
+
+/* ── 交易橫幅（只在有交易時顯示） ───────────────────────────── */
+.tx-banner{display:none;background:linear-gradient(135deg,#e0f7fa,#b2ebf2);border:1px solid #80deea;border-radius:12px;
+  padding:12px 16px;align-items:center;gap:12px;margin:0 16px 10px}
+.tx-banner.show{display:flex}
+.tx-banner .icon-wrap{width:40px;height:40px;background:#fff;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 2px 8px rgba(0,150,136,.15)}
+.tx-banner .info{flex:1}
+.tx-banner .info b{display:block;font-size:14px;color:#00695c}
+.tx-banner .info span{font-size:12px;color:#4db6ac}
+.tx-banner .enter{background:#00897b;color:#fff;border:none;border-radius:999px;padding:8px 14px;font-weight:700;font-size:12px;cursor:pointer}
+.tx-banner .enter:hover{background:#00796b}
+
+/* ── 個人卡片 (Profile Card) ────────────────────── */
+.profile-card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:16px;
+  box-shadow:0 4px 14px rgba(0,51,102,.04);display:flex;flex-direction:column;gap:14px}
+.profile-card .row{display:flex;align-items:center;gap:14px}
+.profile-card .feed-avatar{width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,#eef3ff,#fff);
+  border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-weight:900;color:var(--brand);font-size:22px}
+.profile-card .feed-hgroup h3{margin:0 0 4px 0;font-size:18px;font-weight:900}
+.profile-card .feed-hgroup p{margin:0;font-size:13px;color:var(--muted)}
+.level{display:inline-flex;align-items:center;padding:3px 8px;border-radius:6px;font-weight:800;
+  font-size:11px;color:#854d0e;background:#fef9c3;border:1px solid #fde047;vertical-align:middle}
+.stats{display:flex;gap:8px;flex-wrap:wrap}
+.pill{display:inline-flex;align-items:center;padding:5px 10px;border-radius:999px;border:1px solid var(--pill-border);
+  background:linear-gradient(180deg,var(--pill-bg1),var(--pill-bg2));font-weight:700;font-size:12px;color:var(--pill-ink)}
+
+/* Flexbox 響應式按鈕布局 */
+.links{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-start}
+.link{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 16px;border-radius:999px;
+  border:1px dashed var(--line);text-decoration:none;color:var(--brand);background:#fff;font-weight:700;font-size:13px;transition:all 0.2s;opacity:.84}
+.link:hover{border-style:solid;border-color:var(--brand);opacity:1}
+.link:active{transform:scale(0.97)}
+.link.push-right{margin-left:auto;background:#eff6ff;border-color:#bfdbfe;border-style:solid;opacity:1}
+@media(max-width:400px){.link.push-right{margin-left:0;width:100%}}
+
+/* ── 發佈框 (Composer) ──────────────────────────── */
+.composer{display:flex;gap:10px;align-items:flex-start;background:#fff;border:1px solid var(--line);border-radius:16px;padding:12px;box-shadow:0 2px 8px rgba(0,0,0,0.02);transition:all .2s}
+.composer .feed-avatar{width:36px;height:36px;border-radius:999px;background:#eef3ff;border:1px solid var(--line);
+  display:flex;align-items:center;justify-content:center;color:#173a7c;font-weight:900;flex-shrink:0}
+.composer textarea{flex:1;border:1px solid transparent;background:#f6f9ff;border-radius:12px;padding:10px 14px;font-size:14px;transition:all 0.2s;outline:none;resize:none;min-height:40px;max-height:120px;font-family:inherit;line-height:1.4}
+.composer textarea:focus{background:#fff;border-color:var(--brand-2);box-shadow:0 0 0 3px rgba(0,168,232,0.15)}
+.composer .btn{border:none;background:var(--brand);color:#fff;border-radius:999px;padding:8px 16px;font-weight:700;font-size:13px;cursor:pointer;transition:all .2s}
+.composer .btn:hover{background:#004488}
+.composer.expanded{box-shadow:0 6px 18px rgba(0,51,102,.1);border-color:#c3d4ff}
+.composer.expanded textarea{background:#fff}
+
+/* ── 貼文 (Feed Card) & 骨架屏動效 ──────────────── */
+.feed-post{background:#fff;border:1px solid var(--line);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:12px;
+  box-shadow:0 4px 14px rgba(12,34,80,.04);opacity:0;transform:translateY(20px);transition:opacity 0.6s ease, transform 0.6s cubic-bezier(0.16, 1, 0.3, 1)}
+.feed-post.visible{opacity:1;transform:translateY(0)}
+.head{display:flex;gap:12px;align-items:center;padding-bottom:10px;border-bottom:1px solid #f1f5f9}
+.head .feed-avatar{width:40px;height:40px;border-radius:999px;background:#eef3ff;display:flex;align-items:center;justify-content:center;color:#173a7c;font-weight:900;border:1px solid var(--line)}
+.feed-hgroup{flex:1;line-height:1.3}
+.feed-hgroup b{display:block;font-size:15px;color:#0f172a}
+.feed-hgroup .sub{font-size:12px;color:var(--muted)}
+.body{padding-top:4px}
+.body p{margin:0 0 10px;line-height:1.6}
+
+.photo-container{width:100%;aspect-ratio:16/9;background:#e2e8f0;border-radius:12px;overflow:hidden;border:1px solid var(--line)}
+.photo{width:100%;height:100%;object-fit:cover;transition:transform 0.5s ease}
+.photo:hover{transform:scale(1.02)}
+
+.ai-insight{margin-top:10px;padding:10px 12px;background:#f8fafc;border-radius:10px;font-size:12px;color:#475569;display:flex;align-items:center;gap:8px;cursor:pointer;transition:all .2s}
+.ai-insight:hover{background:#eff6ff}
+
+.actions{display:flex;gap:8px;border-top:1px solid #f1f5f9;padding-top:12px;margin-top:4px}
+.btn{border:1px solid var(--line);border-radius:8px;background:#fff;padding:8px 14px;font-weight:700;font-size:13px;
+  color:#475569;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all 0.15s}
+.btn:hover{background:#f8fafc}
+.btn:active{transform:scale(0.95)}
+.btn[aria-pressed="true"]{background:#eff6ff;color:var(--brand);border-color:var(--brand-2)}
+.btn[disabled]{opacity:.6;cursor:not-allowed}
+.btn.primary{background:#eff6ff;color:var(--brand);border-color:#bfdbfe}
+
+/* ── 標籤 ────────────────────────────── */
+.tags{display:flex;gap:6px;flex-wrap:wrap}
+.tag{border:1px solid #e2e8f0;background:#f8fafc;border-radius:6px;padding:3px 8px;font-size:12px;color:#475569}
+.tag.ok{background:#f0fdf4;border-color:#bbf7d0;color:#15803d}
+
+/* ── 底部黏著 CTA (Safe Area Perfect) ───────────── */
+.sticky{position:fixed;left:0;right:0;bottom:0;z-index:90;
+  background:rgba(255,255,255,.92);backdrop-filter:blur(16px);border-top:1px solid rgba(0,0,0,0.05);
+  padding:10px 12px calc(10px + var(--safe-bottom));
+  display:flex;gap:10px;justify-content:center;box-shadow:0 -4px 20px rgba(0,0,0,0.03)}
+.sticky .cta{flex:1;max-width:180px;border:none;border-radius:12px;padding:12px;font-weight:800;font-size:14px;cursor:pointer;transition:transform 0.2s}
+.sticky .cta:active{transform:scale(0.97)}
+.sticky .cta.secondary{background:#eff6ff;color:var(--brand)}
+.sticky .cta.primary{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(0,51,102,0.25)}
+
+/* ── 桌機版 Sidebar ─────────────────────────────────────────── */
+.sidebar-card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px;box-shadow:0 4px 14px rgba(0,51,102,.04)}
+.sidebar-card h4{margin:0 0 10px 0;font-size:14px;font-weight:700;color:var(--brand)}
+.sidebar-card .link-list{display:flex;flex-direction:column;gap:6px}
+.sidebar-card .link-list a{display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:10px;text-decoration:none;color:var(--ink);font-size:13px;font-weight:600;transition:all .15s}
+.sidebar-card .link-list a:hover{background:#f0f7ff}
+.sidebar-card .link-list a.active{background:linear-gradient(135deg,var(--brand),var(--brand-2));color:#fff}
+
+/* GPU hint */
+.topbar,.sticky{will-change:transform}
+
+/* 響應式 */
+@media(max-width:375px){
+  .stats{gap:6px}
+  .pill{padding:4px 8px;font-size:11px}
+}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <a href="/maihouses/" class="brand" aria-label="邁房子首頁">
+    <div class="logo-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 9.5L12 3L21 9.5V20.5C21 21.0523 20.5523 21.5 20 21.5H4C3.44772 21.5 3 21.0523 3 20.5V9.5Z"/>
+        <path d="M9 21.5V13H15V21.5"/>
+      </svg>
+    </div>
+    <span class="logo-text">邁房子</span>
+    <span class="logo-slogan">讓家，不只是地址</span>
+  </a>
+  <div class="tools">
+    <details class="menu">
+      <summary aria-haspopup="menu" role="button"><span class="chip">👤 我的</span></summary>
+      <div class="menu-list" role="menu" id="myMenu">
+        <a href="#fav" role="menuitem">⭐ 我的收藏</a>
+        <a href="#history" role="menuitem">📋 瀏覽紀錄</a>
+        <hr>
+        <a href="auth.html?action=logout" role="menuitem" style="color:#ef4444">🚪 登出</a>
+      </div>
+    </details>
+    <button type="button" class="icon badge" data-badge="2" aria-label="通知：2 則未讀">🔔</button>
+    <button type="button" class="icon" aria-label="訊息">💬</button>
+  </div>
+</header>
+
+<!-- 交易橫幅 - 只在有進行中交易時顯示 -->
+<div class="tx-banner" id="txBanner">
+  <div class="icon-wrap">🏠</div>
+  <div class="info">
+    <b>您有一筆交易進行中</b>
+    <span>惠宇上晴 12F・斡旋階段</span>
+  </div>
+  <button class="enter" onclick="location.href='/maihouses/assure'">進入戰情室</button>
+</div>
+
+<div class="layout">
+  <main class="feed-main">
+    <!-- 個人卡 -->
+    <section class="profile-card">
+      <div class="row">
+        <div class="feed-avatar" aria-hidden="true">M</div>
+        <div class="feed-hgroup">
+          <h3>Mike</h3>
+          <p>來自【惠宇上晴社區】｜<span class="level">👑 黃金住戶</span></p>
+        </div>
+      </div>
+      <div class="stats">
+        <span class="pill">📅 互動 128 天</span>
+        <span class="pill">❤️ 被感謝 73</span>
+        <span class="pill">✍️ 貢獻 15 篇</span>
+      </div>
+      <div class="links">
+        <a class="link push-right" href="#my-community">🧱 查看我的社區牆 ➡️</a>
+      </div>
+    </section>
+
+    <!-- 發文框 -->
+    <div class="composer">
+      <div class="feed-avatar" aria-hidden="true">M</div>
+      <textarea placeholder="分享看屋心得、社區生活或想問的事…" rows="1" aria-label="建立貼文"></textarea>
+      <button class="btn">發佈</button>
+    </div>
+
+    <!-- 貼文：社區公告 -->
+    <article class="feed-post">
+      <div class="head">
+        <div class="feed-avatar" style="background:#003366;color:#fff">管</div>
+        <div class="feed-hgroup">
+          <b>社區管理委員會</b>
+          <div class="sub">📢 公告 · 2 小時前</div>
+        </div>
+      </div>
+      <div class="body">
+        <p><b>年度消防演練通知</b></p>
+        <p>12/15（日）上午 10:00 將進行全社區消防演練，届時會有警報聲響，請勿驚慌。</p>
+        <div class="tags">
+          <span class="tag ok">✅ 重要公告</span>
+          <span class="tag">🔥 消防安全</span>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="btn" aria-pressed="false">👍 已讀</button>
+        <button class="btn">💬 留言</button>
+      </div>
+    </article>
+
+    <!-- 貼文：房仲分享 -->
+    <article class="feed-post">
+      <div class="head">
+        <div class="feed-avatar">王</div>
+        <div class="feed-hgroup">
+          <b>王仲 · 在地房仲</b>
+          <div class="sub">3 分鐘前 · 社區動態</div>
+        </div>
+      </div>
+      <div class="body">
+        <p>🏡 分享一下最近帶看的心得：惠宇上晴 12F 雙陽台戶，客廳採光真的很棒！上週屋主剛降價 <b>50 萬</b>，有興趣的鄰居可以私訊我。</p>
+        <div class="photo-container">
+          <picture>
+            <source srcset="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" type="image/webp">
+            <img loading="lazy" class="photo" src="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80" alt="惠宇上晴客廳採光實景">
+          </picture>
+        </div>
+        <div class="ai-insight" onclick="alert('AI 體檢報告（開發中）')">
+          🤖 <b>AI 體檢：</b> 屋況良好 (92分)｜公設比 31%｜社區評分 4.6★ →
+        </div>
+      </div>
+      <div class="actions">
+        <button class="btn" aria-pressed="false">👍 讚</button>
+        <button class="btn">💬 詢問</button>
+        <button class="btn primary">📅 預約</button>
+      </div>
+    </article>
+
+    <!-- 貼文：團購 -->
+    <article class="feed-post">
+      <div class="head">
+        <div class="feed-avatar">社</div>
+        <div class="feed-hgroup">
+          <b>社區熱帖 · 團購</b>
+          <div class="sub">20 分鐘前</div>
+        </div>
+      </div>
+      <div class="body">
+        <p><b>有人要團購掃地機嗎？</b> 這款 iRobot 打折，滿 5 台有團購價～</p>
+        <p style="font-size:13px;color:var(--muted)">❤️ 31 · 💬 14</p>
+      </div>
+      <div class="actions">
+        <button class="btn" aria-pressed="false">❤️ 讚</button>
+        <button class="btn">💬 回覆</button>
+        <button class="btn">+1 參加</button>
+      </div>
+    </article>
+
+    <!-- 貼文：停車位 -->
+    <article class="feed-post">
+      <div class="head">
+        <div class="feed-avatar">李</div>
+        <div class="feed-hgroup">
+          <b>李先生 · B棟住戶</b>
+          <div class="sub">1 小時前</div>
+        </div>
+      </div>
+      <div class="body">
+        <p><b>停車位交換</b> 我有 B2-128 想與 B1 的位置交換，有意願的鄰居請留言～</p>
+        <p style="font-size:13px;color:var(--muted)">❤️ 16 · 💬 11</p>
+      </div>
+      <div class="actions">
+        <button class="btn">💬 回覆</button>
+        <button class="btn">⭐ 追蹤</button>
+      </div>
+    </article>
+
+    <!-- 貼文：AI 快訊 -->
+    <article class="feed-post">
+      <div class="head">
+        <div class="feed-avatar" style="background:linear-gradient(135deg,#667eea,#764ba2);color:#fff">AI</div>
+        <div class="feed-hgroup">
+          <b>邁房子 AI</b>
+          <div class="sub">每週市況快訊 · 5 分鐘前</div>
+        </div>
+      </div>
+      <div class="body">
+        <p>📊 本週「惠宇上晴」社區成交一筆 12F，單價約 <b>38.5 萬/坪</b>，較上月微漲 2%。目前待售 3 戶。</p>
+        <div class="tags">
+          <span class="tag">📈 市場行情</span>
+          <span class="tag ok">✅ 數據更新</span>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="btn">🔎 看詳細</button>
+        <button class="btn">💬 討論</button>
+      </div>
+    </article>
+
+    <!-- 貼文：新住戶心得 -->
+    <article class="feed-post">
+      <div class="head">
+        <div class="feed-avatar">游</div>
+        <div class="feed-hgroup">
+          <b>游先生 · 剛入住</b>
+          <div class="sub">2 天前 · 新住戶心得</div>
+        </div>
+      </div>
+      <div class="body">
+        <p>住了一個月的心得：管理員很親切、公設維護得很好、停車場動線順暢。唯一缺點是面馬路的那側比較吵，建議加裝氣密窗。</p>
+        <div class="tags">
+          <span class="tag ok">✅ 真實心得</span>
+          <span class="tag">🏠 新住戶</span>
+        </div>
+        <p style="font-size:13px;color:var(--muted);margin-top:8px">❤️ 42 · 💬 15</p>
+      </div>
+      <div class="actions">
+        <button class="btn" aria-pressed="false">👍 讚</button>
+        <button class="btn">💬 留言</button>
+      </div>
+    </article>
+  </main>
+
+  <!-- 桌機版側欄 -->
+  <aside class="feed-sidebar">
+    <div class="sidebar-card">
+      <h4>🧭 快速導航</h4>
+      <div class="link-list">
+        <a href="#my-community" class="active">🧱 我的社區牆</a>
+        <a href="#explore">🔍 探索其他社區</a>
+        <a href="#fav">⭐ 我的收藏</a>
+        <a href="#history">📋 瀏覽紀錄</a>
+      </div>
+    </div>
+    
+    <div class="sidebar-card">
+      <h4>📊 社區動態</h4>
+      <p style="font-size:13px;color:var(--muted);margin:0;line-height:1.8">
+        本週新增 <b style="color:var(--brand)">3</b> 篇貼文<br>
+        活躍住戶 <b style="color:var(--brand)">28</b> 人
+      </p>
+    </div>
+    
+    <div class="sidebar-card">
+      <h4>🏠 待售物件</h4>
+      <p style="font-size:13px;color:var(--muted);margin:0;line-height:1.8">
+        惠宇上晴目前有 <b style="color:var(--brand)">3</b> 戶待售<br>
+        <a href="#" style="color:var(--brand-2);font-size:12px">查看全部 →</a>
+      </p>
+    </div>
+  </aside>
+</div>
+
+<!-- 黏底 CTA - 手機版 -->
+<nav class="sticky">
+  <button class="cta secondary" onclick="location.href='#my-community'">🧱 社區牆</button>
+  <button class="cta primary" onclick="location.href='#explore'">🔍 探索社區</button>
+</nav>
+
+<script>
+(function initApp() {
+  const $ = (sel, root=document) => root.querySelector(sel);
+  const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+
+  // 1. 骨架屏觀測器 - 貼文滑入動效
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.1 });
+  
+  $$('.feed-post').forEach(el => observer.observe(el));
+
+  // 2. 檢查是否有進行中的交易
+  (function checkTransaction(){
+    try {
+      const hasActiveTx = localStorage.getItem('mai_active_tx');
+      if (hasActiveTx === 'true') {
+        $('#txBanner').classList.add('show');
+        // 同時在選單加入連結
+        const menu = $('#myMenu');
+        const link = document.createElement('a');
+        link.href = "/maihouses/assure";
+        link.role = "menuitem";
+        link.style.cssText = "color:#0284c7;background:#f0f9ff";
+        link.innerHTML = '🏠 <b>安心戰情室</b> <span style="font-size:10px;background:#0ea5e9;color:white;padding:1px 6px;border-radius:99px;margin-left:auto">進行中</span>';
+        menu.insertBefore(link, menu.firstChild);
+      }
+      // 開發測試：URL 加 ?tx=1 可強制顯示
+      if (new URLSearchParams(location.search).get('tx') === '1') {
+        $('#txBanner').classList.add('show');
+        localStorage.setItem('mai_active_tx', 'true');
+      }
+    } catch (e) {
+      console.debug('Transaction check:', e);
+    }
+  })();
+
+  // 3. Composer 展開效果
+  (function(){
+    const comp = $('.composer');
+    if(!comp) return;
+    const textarea = $('textarea', comp);
+    if(!textarea) return;
+    function expand(){ comp.classList.add('expanded'); }
+    function collapse(){ if(!textarea.value.trim()) comp.classList.remove('expanded'); }
+    textarea.addEventListener('focus', expand);
+    textarea.addEventListener('blur', collapse);
+    textarea.addEventListener('input', function(){
+      this.style.height = 'auto';
+      this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+    });
+  })();
+
+  // 4. 事件委託
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('button, summary');
+    if (!btn) return;
+
+    // 讚按鈕
+    if (btn.classList.contains('btn') && /讚|已讀/.test(btn.textContent)) {
+      const isPressed = btn.getAttribute('aria-pressed') === 'true';
+      btn.setAttribute('aria-pressed', !isPressed);
+      if (!isPressed) {
+        btn.dataset._orig = btn.textContent;
+        btn.innerHTML = '✅ ' + btn.textContent.replace(/^./, '');
+      } else {
+        btn.innerHTML = btn.dataset._orig || '👍 讚';
+      }
+      btn.disabled = true;
+      setTimeout(() => { btn.disabled = false; }, 300);
+      if (navigator.vibrate) navigator.vibrate(50);
+    }
+
+    // 發佈
+    if (btn.closest('.composer') && btn.classList.contains('btn')) {
+      e.preventDefault();
+      const textarea = $('textarea', btn.closest('.composer'));
+      if (!textarea) return;
+      const content = textarea.value.trim();
+      if (!content) return;
+      console.log('發佈成功（本地）：', { content, time: new Date().toISOString() });
+      textarea.value = '';
+      textarea.style.height = 'auto';
+      btn.closest('.composer').classList.remove('expanded');
+      alert('發佈成功！');
+    }
+
+    // 下拉選單關閉
+    if (btn.tagName === 'SUMMARY') {
+      setTimeout(() => {
+        const closeMenu = (ev) => {
+          if (!btn.parentElement.contains(ev.target)) {
+            btn.parentElement.removeAttribute('open');
+            document.removeEventListener('click', closeMenu);
+          }
+        };
+        document.addEventListener('click', closeMenu);
+      }, 0);
+    }
+
+    // 通知按鈕
+    if (btn.classList.contains('icon')) {
+      e.preventDefault();
+      alert('功能開發中');
+    }
+  });
+
+  // 5. Lazy load images
+  $$('img:not([loading])').forEach(img => img.loading = 'lazy');
+
+})();
+</script>
+
+</body>
+</html>

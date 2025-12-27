@@ -1,0 +1,47 @@
+node_modules
+.DS_Store
+*.log
+.aider*
+
+# 環境變數 (包含 API keys)
+.env
+.env.*
+!.env.example
+.env.local
+.env.*.local
+
+# 編譯輸出 (包含環境變數,不應進 git)
+# dist/
+# 註：此專案以 GitHub Pages 直接使用 docs 作為網站根目錄，需保留版本控管
+.auto-speedup.pid
+.speedup.log
+
+# AI Supervisor tracking files
+.ai-execution.log
+.ai-current-task.json
+.ai-read-files.log
+.ai-task-plan.json
+
+# AI Supervisor runtime files
+.ai_supervisor/
+
+# Build output
+dist/
+
+# Arena results (generated artifacts)
+arena/results/
+
+# Test artifacts (P43 修正)
+*.png
+test-results/
+playwright-report/
+blob-report/
+**/__tests__/*.json
+!public/data/*.json
+
+# 🔒 私密功能 - 不提交到 Git
+src/pages/Muse/
+src/pages/Admin/GodView.tsx
+api/muse-chat.ts
+api/muse-speak.ts
+api/muse-voice.ts

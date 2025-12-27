@@ -1,0 +1,12 @@
+tree 57588e7eb694572d128182285db1a49698eed078
+parent df3b95434211bbe58d3929f8541b9b64579179b2
+author Claude <noreply@anthropic.com> 1762934916 +0000
+committer Claude <noreply@anthropic.com> 1762934916 +0000
+gpgsig -----BEGIN SSH SIGNATURE-----
+ U1NIU0lHAAAAAQAAADMAAAALc3NoLWVkMjU1MTkAAAAgrLzsfFISF4by8Q+FKz27YpkK1USsBB+m
+ amu1QkJnbDsAAAADZ2l0AAAAAAAAAAZzaGE1MTIAAABTAAAAC3NzaC1lZDI1NTE5AAAAQMEYjaB6
+ k5Ca2wdDf2B24zgoEDgaedlhBpEWxFu9JHbSc757c8y0775sEMyQojx5bXhgqLBqG7h8/pEafbbs
+ JQg=
+ -----END SSH SIGNATURE-----
+
+restore: add cake-reveal.html content from backup

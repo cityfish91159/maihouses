@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>邁房子 V10 - 安心戰情室</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .step-line { position: absolute; left: 24px; top: 50px; bottom: -20px; width: 2px; background: #e5e7eb; z-index: 0; }
+        .last-step .step-line { display: none; }
+        [v-cloak] { display: none; }
+        .toast-enter-active, .toast-leave-active { transition: all 0.5s ease; }
+        .toast-enter-from, .toast-leave-to { opacity: 0; transform: translateY(20px); }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans text-gray-800 antialiased">
+
+<div id="app" v-cloak class="max-w-md mx-auto min-h-screen bg-white shadow-2xl relative pb-24">
+    
+    <header class="bg-slate-900 text-white p-4 sticky top-0 z-50 flex justify-between items-center shadow-lg">
+        <div>
+            <h1 class="font-bold text-lg tracking-wide">MaiHouses <span class="text-xs bg-blue-600 px-1 rounded">V10</span></h1>
+            <div class="flex items-center text-[10px] text-gray-400 gap-2">
+                <span>案號: {{ displayId }}</span>
+                <span v-if="loading" class="animate-pulse">●</span>
+            </div>
+        </div>
+        <div class="flex gap-2">
+            <button v-if="isDev" @click="reset" class="bg-red-600 w-7 h-7 rounded flex items-center justify-center"><i class="fas fa-redo text-xs"></i></button>
+            <button v-if="isDev" @click="toggleRole" class="px-2 py-1 rounded text-xs border" :class="role==='agent'?'bg-blue-600':'bg-green-600'">
+                {{ role==='agent'?'房仲':'買方' }}
+            </button>
+            <div v-if="!isDev" class="px-2 py-1 bg-slate-800 rounded text-xs border border-slate-600">
+                {{ role==='agent'?'👨‍💼 房仲':'👤 買方' }}
+            </div>
+        </div>
+    </header>
+
+    <div class="p-4 bg-slate-50 border-b sticky top-[60px] z-40">
+        <div class="flex justify-between items-center mb-2">
+            <span class="text-xs font-bold text-slate-700">進度 {{ tx.currentStep }}/6</span>
+            <span v-if="tx.isPaid" class="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full font-bold">已履約</span>
+        </div>
+        <div class="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+            <div class="bg-blue-600 h-2 rounded-full transition-all duration-700" :style="{ width: (tx.currentStep / 6 * 100) + '%' }"></div>
+        </div>
+    </div>
+
+    <div class="p-4 space-y-0">
+        <div v-for="(step, key) in tx.steps" :key="key" class="relative pl-14 py-3" :class="{'opacity-50 grayscale': parseInt(key) > tx.currentStep}">
+            <div class="absolute left-0 top-3 z-10 w-10 h-10 rounded-full flex items-center justify-center border-4 border-white shadow-sm transition-colors" :class="getStepColor(key)">
+                <i :class="getStepIcon(key)" class="text-white text-sm"></i>
+            </div>
+            <div class="step-line" v-if="key != 6"></div>
+            <div class="bg-white border rounded-xl p-4 shadow-sm transition-all" :class="getCardStyle(key)">
+                <div class="flex justify-between items-start mb-3">
+                    <h3 class="font-bold text-gray-800 flex items-center gap-2">
+                        {{ step.name }}
+                        <span v-if="key==5 && step.paymentStatus=='initiated' && !step.locked" class="text-[10px] text-orange-500 bg-orange-50 px-2 rounded animate-pulse">付款中</span>
+                        <span v-if="key==5 && step.paymentStatus=='expired'" class="text-[10px] text-red-500 bg-red-50 px-2 rounded">逾期</span>
+                    </h3>
+                    <div v-if="step.locked" class="text-green-600"><i class="fas fa-lock"></i></div>
+                </div>
+
+                <div v-if="key == 2" class="mb-3 p-3 bg-gray-50 rounded border border-gray-100">
+                    <p class="text-xs font-bold text-gray-500 mb-2 border-b pb-1">📢 房仲屋況聲明</p>
+                    <div class="grid grid-cols-2 gap-2">
+                        <label class="flex items-center space-x-2 text-xs">
+                            <input type="checkbox" v-model="step.data.risks.water" :disabled="step.locked || role !== 'agent'" class="rounded text-blue-600"> <span>漏水/滲水</span>
+                        </label>
+                        <label class="flex items-center space-x-2 text-xs">
+                            <input type="checkbox" v-model="step.data.risks.wall" :disabled="step.locked || role !== 'agent'" class="rounded text-blue-600"> <span>壁癌/白華</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div v-if="key == 5 && step.paymentStatus === 'initiated' && !step.locked" class="mb-4 text-center p-4 bg-orange-50 rounded-lg border border-orange-200">
+                    <div class="text-2xl font-mono text-orange-600 font-bold mb-1">{{ timeLeft }}</div>
+                    <div class="text-xs text-orange-400 mb-3">付款截止</div>
+                    <div v-if="role === 'buyer'">
+                        <button @click="pay" :disabled="isBusy || timeLeft === '已逾期'" class="w-full text-white font-bold py-2 rounded shadow transition" :class="timeLeft === '已逾期' ? 'bg-gray-400 cursor-not-allowed' : 'bg-gradient-to-r from-orange-500 to-red-500 hover:shadow-lg'">
+                            {{ timeLeft === '已逾期' ? '付款已截止' : (isBusy ? '處理中...' : '立即支付 NT$ 2,000') }}
+                        </button>
+                    </div>
+                    <div v-else class="text-xs text-gray-400">等待買方付款...</div>
+                </div>
+
+                <div v-if="key == 6 && !step.locked && tx.isPaid" class="space-y-2 mt-2">
+                    <div v-for="(item, idx) in step.checklist" :key="idx" @click="toggleCheck(idx, !item.checked)" class="flex items-center p-3 border rounded transition cursor-pointer" :class="item.checked ? 'bg-indigo-50 border-indigo-200' : 'hover:bg-gray-50'">
+                         <div class="w-5 h-5 border rounded flex items-center justify-center bg-white" :class="{'bg-indigo-600 border-indigo-600': item.checked}"><i v-if="item.checked" class="fas fa-check text-white text-xs"></i></div>
+                        <span class="ml-3 text-sm" :class="{'text-indigo-800 font-bold': item.checked}">{{ item.label }}</span>
+                    </div>
+                    <button @click="confirmStep(6)" class="w-full bg-indigo-600 text-white py-2 rounded font-bold mt-2">完成交屋</button>
+                </div>
+
+                <div v-if="!step.locked && parseInt(key) === tx.currentStep && key != 5 && key != 6">
+                    <div v-if="role === 'agent'">
+                        <div v-if="step.agentStatus === 'pending'">
+                            <textarea v-if="key != 2" v-model="inputBuffer" class="w-full border p-2 rounded text-sm mb-2 focus:ring-2 ring-blue-200 outline-none" placeholder="輸入紀錄..."></textarea>
+                            <button @click="submitAgent(key)" :disabled="isBusy" class="w-full bg-slate-800 text-white py-2 rounded text-sm">{{ isBusy ? '...' : '送出' }}</button>
+                        </div>
+                        <div v-else class="text-center text-xs text-gray-400 py-2 bg-gray-50 rounded">等待買方確認...</div>
+                    </div>
+                    <div v-if="role === 'buyer'">
+                        <div v-if="step.agentStatus === 'submitted'">
+                            <p class="text-xs text-gray-500 mb-2">房仲已提交，請核對：</p>
+                            <div class="p-2 bg-gray-50 rounded border text-sm mb-2 whitespace-pre-wrap">{{ step.data.note || '（已提交表單）' }}</div>
+                            <button @click="confirmStep(key)" :disabled="isBusy" class="w-full bg-green-600 text-white py-2 rounded text-sm">{{ isBusy ? '...' : '確認無誤' }}</button>
+                        </div>
+                        <div v-else class="text-center text-xs text-gray-400 py-2">等待房仲提交...</div>
+                    </div>
+                </div>
+
+                <div v-if="key == 5 && !step.locked && step.paymentStatus == 'pending'">
+                    <div v-if="role === 'agent' && step.agentStatus === 'pending'"><button @click="submitAgent(5)" class="w-full bg-slate-800 text-white py-2 rounded">上傳合約並送出</button></div>
+                    <div v-if="role === 'buyer' && step.agentStatus === 'submitted'"><button @click="confirmStep(5)" class="w-full bg-green-600 text-white py-2 rounded">確認合約 (將啟動付款)</button></div>
+                </div>
+
+                <div v-if="tx.supplements.length > 0" class="mt-4 pt-4 border-t border-dashed">
+                    <div v-for="s in tx.supplements" class="text-xs mb-1 p-2 bg-gray-50 rounded border border-gray-100 flex gap-2">
+                        <span class="font-bold">{{ s.role === 'agent' ? '👨‍💼' : '👤' }}</span> <span class="flex-1">{{ s.content }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-8 bg-white p-4 rounded-xl shadow-sm border">
+            <h4 class="text-xs font-bold text-gray-500 mb-2">📝 新增補充紀錄</h4>
+            <div class="flex gap-2"><input v-model="supplementInput" class="flex-1 border rounded px-3 py-2 text-sm" placeholder="輸入備註..."><button @click="addSupplement" :disabled="!supplementInput" class="bg-gray-800 text-white px-4 rounded text-sm">送出</button></div>
+        </div>
+    </div>
+
+    <transition name="toast"><div v-if="toast.show" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-slate-800 text-white px-4 py-2 rounded-lg shadow-xl text-sm z-50 flex items-center gap-2"><i class="fas fa-info-circle text-blue-400"></i> {{ toast.msg }}</div></transition>
+</div>
+
+<script>
+    const { createApp, ref, onMounted, computed } = Vue;
+    createApp({
+        setup() {
+            const caseId = ref('');
+            const role = ref('agent');
+            const token = ref('');
+            const tx = ref({ steps: {}, currentStep: 1, supplements: [] });
+            const inputBuffer = ref('');
+            const supplementInput = ref('');
+            const loading = ref(false);
+            const isBusy = ref(false);
+            const timeLeft = ref('--:--:--');
+            const toast = ref({ show: false, msg: '' });
+            const API = '/api';
+            // 判斷是否為本地開發環境，用來顯示測試按鈕
+            const isDev = globalThis.location.hostname === 'localhost';
+
+            const showToast = (msg) => { toast.value = { show: true, msg }; setTimeout(() => toast.value.show = false, 3000); };
+            
+            const displayId = computed(() => caseId.value || '未指定');
+
+            // 核心邏輯：從 URL Hash 或 LocalStorage 獲取 Token
+            const initAuth = () => {
+                const hash = globalThis.location.hash;
+                if (hash.includes('token=')) {
+                    token.value = hash.split('token=')[1];
+                    localStorage.setItem('mh_token', token.value);
+                    globalThis.location.hash = ''; // 清除 hash
+                } else {
+                    token.value = localStorage.getItem('mh_token') || '';
+                }
+
+                if (token.value) {
+                    // 解析 Token 取得 CaseId 與 Role
+                    try {
+                        const payload = JSON.parse(atob(token.value.split('.')[1]));
+                        role.value = payload.role;
+                        caseId.value = payload.caseId;
+                    } catch (e) {
+                        console.error('Token invalid:', e.message);
+                        showToast('憑證格式錯誤');
+                    }
+                } else if (isDev) {
+                    caseId.value = 'demo-v10'; // Dev default
+                    devLogin();
+                }
+            };
+
+            const devLogin = async () => {
+                const res = await fetch(`${API}/auth/login`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ role: role.value, caseId: caseId.value }) });
+                const d = await res.json();
+                if(d.token) { token.value = d.token; fetchData(); }
+            };
+
+            const headers = computed(() => ({ 'Content-Type': 'application/json', 'Authorization': `Bearer ${token.value}` }));
+
+            const fetchData = async () => {
+                if(!token.value || !caseId.value) return;
+                loading.value = true;
+                try {
+                    const res = await fetch(`${API}/status/${caseId.value}`, { headers: headers.value });
+                    if(res.ok) { tx.value = await res.json(); updateTimer(); }
+                    else if(res.status === 401 || res.status === 403) { showToast('憑證失效'); }
+                } catch(e) { console.error(e); }
+                loading.value = false;
+            };
+
+            const updateTimer = () => {
+                const s5 = tx.value.steps[5];
+                if (s5 && s5.paymentStatus === 'initiated' && s5.paymentDeadline) {
+                    const diff = s5.paymentDeadline - Date.now();
+                    if (diff <= 0) timeLeft.value = "已逾期";
+                    else {
+                        const h = Math.floor(diff/3600000);
+                        const m = Math.floor((diff%3600000)/60000);
+                        const s = Math.floor((diff%60000)/1000);
+                        timeLeft.value = `${h}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+                    }
+                }
+            };
+
+            onMounted(() => { initAuth(); setInterval(() => { fetchData(); updateTimer(); }, 5000); setInterval(updateTimer, 1000); });
+
+            const action = async (url, body = {}) => {
+                if(isBusy.value) return; isBusy.value = true;
+                try {
+                    const res = await fetch(url, { method: 'POST', headers: headers.value, body: JSON.stringify(body) });
+                    const d = await res.json();
+                    if(d.error) showToast(d.error); else { inputBuffer.value = ''; supplementInput.value=''; await fetchData(); showToast('成功'); }
+                } catch(e) { showToast(e.message); }
+                isBusy.value = false;
+            };
+
+            const submitAgent = (step) => action(`${API}/agent/submit/${caseId.value}`, { step, data: step==2 ? {risks: tx.value.steps[2].data.risks} : {note: inputBuffer.value} });
+            const confirmStep = (step) => action(`${API}/buyer/confirm/${caseId.value}`, { step });
+            const pay = () => { if(confirm('確認付款？')) action(`${API}/payment/${caseId.value}`); };
+            const toggleCheck = (index, checked) => { if(role.value === 'buyer') action(`${API}/checklist/${caseId.value}`, { index, checked }); };
+            const addSupplement = () => action(`${API}/supplement/${caseId.value}`, { content: supplementInput.value });
+            const reset = () => { if(confirm('重置？')) action(`${API}/reset/${caseId.value}`); };
+            const toggleRole = () => { role.value = role.value === 'agent' ? 'buyer' : 'agent'; devLogin(); };
+            
+            const getStepColor = (k) => {
+                const step = Number.parseInt(k, 10);
+                if (step < tx.value.currentStep || tx.value.steps[step].locked) {
+                    return 'bg-green-500 border-green-500';
+                }
+                if (step === tx.value.currentStep) {
+                    return 'bg-blue-600 border-blue-600';
+                }
+                return 'bg-gray-300 border-gray-300';
+            };
+            const getCardStyle = (k) => Number.parseInt(k, 10) === tx.value.currentStep ? 'border-blue-500 ring-2 ring-blue-50' : 'border-gray-200';
+            const getStepIcon = (k) => { const m={1:'fa-phone',2:'fa-clipboard-check',3:'fa-hand-holding-usd',4:'fa-comments',5:'fa-file-signature',6:'fa-home'}; return `fas ${m[k]}`; };
+
+            return { caseId, role, tx, inputBuffer, supplementInput, isBusy, loading, timeLeft, toast, isDev, displayId, submitAgent, confirmStep, pay, toggleCheck, addSupplement, reset, toggleRole, getStepColor, getCardStyle, getStepIcon };
+        }
+    }).mount('#app');
+</script>
+</body>
+</html>

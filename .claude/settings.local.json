@@ -1,0 +1,44 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:maihouses.vercel.app)",
+      "Bash(npm run typecheck:*)",
+      "Bash(npm run lint:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nrefactor: complete React migration for PropertyListPage\n\n- Add type safety: Replace `any` types with proper Zod types\n- Add id field to Schema for navigation \\(FeaturedPropertyCard, ListingPropertyCard\\)\n- Update seed.ts with id values for all cards \\(MH-100001 to MH-100011\\)\n- Use navigate\\(\\) instead of window.location.href for SPA navigation\n- Add image preloading to prevent flicker on API data swap\n- API page-data.ts now returns id field from public_id or seed\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git push:*)",
+      "Bash(git commit:*)",
+      "Bash(git pull:*)",
+      "Bash(git rebase:*)",
+      "mcp__puppeteer__puppeteer_screenshot",
+      "mcp__puppeteer__puppeteer_evaluate",
+      "mcp__puppeteer__puppeteer_navigate",
+      "mcp__puppeteer__puppeteer_click",
+      "mcp__puppeteer__puppeteer_fill",
+      "mcp__filesystem__directory_tree",
+      "mcp__filesystem__list_directory",
+      "Bash(npx eslint:*)",
+      "WebSearch",
+      "Bash(curl:*)",
+      "mcp__filesystem__create_directory",
+      "Bash(npx tsc:*)",
+      "Bash(node -e:*)",
+      "Bash(git restore:*)",
+      "Bash(git log:*)",
+      "Bash(npm run typecheck:api:*)",
+      "Bash(npm run:*)",
+      "Bash(vercel:*)",
+      "Bash(npx vercel --prod)",
+      "Bash(npm install:*)",
+      "Bash(git checkout:*)"
+    ]
+  },
+  "model": "sonnet",
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "filesystem",
+    "puppeteer",
+    "fetch",
+    "git"
+  ]
+}

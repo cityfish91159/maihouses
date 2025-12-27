@@ -1,0 +1,95 @@
+{
+  "permissions": {
+    "allow": [
+      "Skill",
+      "WebFetch(domain:maihouses.vercel.app)",
+      "Bash(npm run typecheck:*)",
+      "Bash(npm run lint:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '' && echo '╔══════════════════════════════════════════════════════════════╗' && echo '║  🚨🚨🚨 [CLAUDE.md 強制規範 - 違反即失敗] 🚨🚨🚨           ║' && echo '╠══════════════════════════════════════════════════════════════╣' && echo '║  ❌ 禁止: any 類型、console.log、@ts-ignore、eslint-disable ║' && echo '║  ✅ 必須: 先 Read 該檔案、完整錯誤處理、Zod Schema 類型     ║' && echo '║  📖 規範: 專案根目錄 CLAUDE.md                               ║' && echo '╚══════════════════════════════════════════════════════════════╝' && echo ''"
+          }
+        ]
+      },
+      {
+        "matcher": "Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '' && echo '╔══════════════════════════════════════════════════════════════╗' && echo '║  🚨🚨🚨 [CLAUDE.md 強制規範 - 違反即失敗] 🚨🚨🚨           ║' && echo '╠══════════════════════════════════════════════════════════════╣' && echo '║  ❌ 禁止: any 類型、console.log、@ts-ignore、eslint-disable ║' && echo '║  ✅ 必須: 先 Read 該檔案、完整錯誤處理、Zod Schema 類型     ║' && echo '║  📖 規範: 專案根目錄 CLAUDE.md                               ║' && echo '╚══════════════════════════════════════════════════════════════╝' && echo ''"
+          }
+        ]
+      },
+      {
+        "matcher": "Task",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '' && echo '╔══════════════════════════════════════════════════════════════╗' && echo '║  🤖 [AI Agent 啟動] 強制規範適用於所有子代理                ║' && echo '╠══════════════════════════════════════════════════════════════╣' && echo '║  📖 必讀: CLAUDE.md (專案根目錄)                             ║' && echo '║  ❌ 禁止: any、console.log、@ts-ignore                       ║' && echo '║  ✅ 必須: 先讀後寫、類型安全、錯誤處理                       ║' && echo '╚══════════════════════════════════════════════════════════════╝' && echo ''"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '⚡ [Bash] 確認命令安全'"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '✅ [Edit 完成] 請執行 npm run typecheck 驗證類型安全'"
+          }
+        ]
+      },
+      {
+        "matcher": "Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '✅ [Write 完成] 請執行 npm run typecheck 驗證類型安全'"
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '' && echo '╔══════════════════════════════════════════════════════════════╗' && echo '║  📋 [maihouses AI 強制規範] 任何 AI 必須遵守                 ║' && echo '╠══════════════════════════════════════════════════════════════╣' && echo '║  📖 閱讀: CLAUDE.md (專案根目錄) - 最高優先級                ║' && echo '║  ❌ 禁止: any、console.log、@ts-ignore、eslint-disable       ║' && echo '║  ✅ 必須: 先讀後寫、完整類型定義、Zod Schema、錯誤處理       ║' && echo '║  🔧 驗證: npm run typecheck && npm run lint                  ║' && echo '╚══════════════════════════════════════════════════════════════╝' && echo ''"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '' && echo '╔══════════════════════════════════════════════════════════════╗' && echo '║  🏁 [任務結束檢查] 必須全部通過                              ║' && echo '╠══════════════════════════════════════════════════════════════╣' && echo '║  □ npm run typecheck 通過?                                   ║' && echo '║  □ npm run lint 通過?                                        ║' && echo '║  □ 無 any 類型?                                              ║' && echo '║  □ 無 console.log?                                           ║' && echo '║  □ 先讀後寫規則遵守?                                         ║' && echo '╚══════════════════════════════════════════════════════════════╝' && echo ''"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "task": "uag_score",
+  "timestamp": "2025-12-09T03:14:57.265Z",
+  "candidates": [
+    {
+      "name": "claude-v1",
+      "status": "ELIMINATED",
+      "testsPassed": false,
+      "fuzzFailRate": 0,
+      "stressPassed": true,
+      "avgRuntimeMs": 0,
+      "codeLines": 69,
+      "score": 0,
+      "eliminationReason": "Tests failed: Test '完美房源': expected {\"score\":100,\"level\":\"S\",\"breakdown\":{\"verification\":30,\"quality\":25,\"responsiveness\":23,\"history\":18}}, got {\"score\":96,\"level\":\"S\",\"breakdown\":{\"verification\":30,\"quality\":25,\"responsiveness\":23,\"history\":18}}"
+    },
+    {
+      "name": "claude-v2",
+      "status": "ELIMINATED",
+      "testsPassed": false,
+      "fuzzFailRate": 0,
+      "stressPassed": true,
+      "avgRuntimeMs": 0,
+      "codeLines": 32,
+      "score": 0,
+      "eliminationReason": "Tests failed: Test '完美房源': expected {\"score\":100,\"level\":\"S\",\"breakdown\":{\"verification\":30,\"quality\":25,\"responsiveness\":23,\"history\":18}}, got {\"score\":96,\"level\":\"S\",\"breakdown\":{\"verification\":30,\"quality\":25,\"responsiveness\":23,\"history\":18}}"
+    },
+    {
+      "name": "claude-v3",
+      "status": "ELIMINATED",
+      "testsPassed": false,
+      "fuzzFailRate": 0,
+      "stressPassed": true,
+      "avgRuntimeMs": 0,
+      "codeLines": 38,
+      "score": 0,
+      "eliminationReason": "Tests failed: Test '完美房源': expected {\"score\":100,\"level\":\"S\",\"breakdown\":{\"verification\":30,\"quality\":25,\"responsiveness\":23,\"history\":18}}, got {\"score\":96,\"level\":\"S\",\"breakdown\":{\"verification\":30,\"quality\":25,\"responsiveness\":23,\"history\":18}}"
+    }
+  ],
+  "champion": null,
+  "leaderboard": []
+}

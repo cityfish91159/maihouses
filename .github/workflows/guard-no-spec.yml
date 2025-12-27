@@ -1,0 +1,24 @@
+name: guard-no-spec
+on: [pull_request]
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Require acceptance & file list & gaps
+        run: |
+          BODY="$(jq -r '.pull_request.body' "$GITHUB_EVENT_PATH")"
+          echo "$BODY" | grep -qi '驗收條件' || { echo "缺少『驗收條件』"; exit 1; }
+          echo "$BODY" | grep -qi '變更檔案'   || { echo "缺少『變更檔案』"; exit 1; }
+          echo "$BODY" | grep -qi '需查證'     || { echo "缺少『需查證』"; exit 1; }
+          COUNT=$(echo "$BODY" | grep -E '^[[:space:]]*[0-9]+\.' | wc -l)
+          test "$COUNT" -ge 3 || { echo "『需查證』至少 3 點"; exit 1; }
+
+      - name: Block runtime deps changes
+        run: |
+          BASE=${{ github.base_ref }}
+          git fetch origin "$BASE" --depth=1 >/dev/null 2>&1 || true
+          if git diff origin/$BASE...HEAD -- package.json | grep -q '"dependencies"'; then
+            echo "不允許改動 runtime dependencies（dependencies）。請改用 devDependencies 或取消。"; exit 1;
+          fi
