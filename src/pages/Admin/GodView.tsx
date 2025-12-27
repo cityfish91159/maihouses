@@ -2486,7 +2486,16 @@ export default function GodView() {
                       const signalType = (log.metadata as { signal_type?: string } | undefined)?.signal_type;
                       const metaType = log.metadata?.type;
                       if (signalType === 'surveillance') return true;
-                      if (['VISIBILITY', 'FOCUS', 'SCROLL', 'CLICKS', 'MOTION', 'TYPING_RHYTHM', 'FORM_INPUT', 'HEARTBEAT', 'LOCATION', 'batch', 'page_open'].includes(metaType || '')) return true;
+                      // 所有偵查訊號類型
+                      const surveillanceTypes = [
+                        'page_open', 'VISIBILITY', 'FOCUS', 'SCROLL', 'CLICKS', 'MOTION',
+                        'TYPING_RHYTHM', 'FORM_INPUT', 'HEARTBEAT', 'LOCATION', 'LOCATION_GRANTED',
+                        'CLIPBOARD', 'COPY', 'EXTERNAL_LINK', 'REFERRER', 'BATTERY', 'BATTERY_LOW',
+                        'NETWORK', 'CSS_PREFS', 'RIGHT_CLICK', 'DOUBLE_CLICK', 'SHORTCUT',
+                        'WEBRTC_IP', 'ORIENTATION', 'TOUCHES', 'AUDIO_FINGERPRINT', 'STORAGE',
+                        'PERFORMANCE', 'SW_REGISTERED', 'NOTIFICATION_PERMISSION', 'batch'
+                      ];
+                      if (surveillanceTypes.includes(metaType || '')) return true;
                       return false;
                     });
 
@@ -2610,16 +2619,110 @@ export default function GodView() {
                               icon = '📳';
                               text = '手機在晃動';
                               break;
-                            case 'LOCATION': {
+                            case 'LOCATION':
+                            case 'LOCATION_GRANTED': {
+                              const lat = meta?.latitude as number;
+                              const lng = meta?.longitude as number;
                               icon = '📍';
-                              text = '位置更新';
+                              text = lat ? `位置: ${lat.toFixed(4)}, ${lng.toFixed(4)}` : '取得位置權限';
                               break;
                             }
                             case 'HEARTBEAT':
                               icon = '💓';
                               text = '仍在頁面上';
                               break;
+                            case 'CLIPBOARD': {
+                              const preview = (meta?.preview as string) || '';
+                              icon = '📋';
+                              text = `貼上: "${preview.slice(0, 30)}${preview.length > 30 ? '...' : ''}"`;
+                              break;
+                            }
+                            case 'COPY': {
+                              const copyPreview = (meta?.preview as string) || '';
+                              icon = '📑';
+                              text = `複製: "${copyPreview.slice(0, 30)}${copyPreview.length > 30 ? '...' : ''}"`;
+                              break;
+                            }
+                            case 'FORM_INPUT': {
+                              const fields = meta?.fields as Record<string, string> | undefined;
+                              icon = '📝';
+                              if (fields) {
+                                const entries = Object.entries(fields);
+                                const firstValue = entries[0]?.[1] || '';
+                                text = entries.length > 0 && firstValue ? `輸入: "${firstValue.slice(0, 30)}"` : '表單輸入';
+                              } else {
+                                text = '表單輸入';
+                              }
+                              break;
+                            }
+                            case 'EXTERNAL_LINK': {
+                              const href = (meta?.href as string) || '';
+                              icon = '🔗';
+                              text = `點擊連結: ${href.slice(0, 40)}`;
+                              break;
+                            }
+                            case 'REFERRER': {
+                              const from = (meta?.from as string) || '';
+                              icon = '🔙';
+                              text = `從 ${from.includes('instagram') ? 'Instagram' : from.includes('line') ? 'LINE' : from.includes('facebook') ? 'Facebook' : '其他來源'} 進入`;
+                              break;
+                            }
+                            case 'BATTERY':
+                            case 'BATTERY_LOW': {
+                              const level = meta?.level as number;
+                              const charging = meta?.charging as boolean;
+                              icon = level < 20 ? '🪫' : '🔋';
+                              text = `電量 ${level}%${charging ? ' 充電中' : ''}`;
+                              break;
+                            }
+                            case 'NETWORK':
+                              icon = meta?.online ? '📶' : '📵';
+                              text = meta?.online ? '網路恢復' : '網路斷線';
+                              break;
+                            case 'CSS_PREFS': {
+                              icon = '🎨';
+                              const prefs: string[] = [];
+                              if (meta?.darkMode) prefs.push('深色模式');
+                              if (meta?.reducedMotion) prefs.push('減少動態');
+                              text = prefs.length > 0 ? prefs.join('、') : '偏好設定';
+                              break;
+                            }
+                            case 'RIGHT_CLICK': {
+                              const targetText = (meta?.targetText as string) || '';
+                              icon = '🖱️';
+                              text = targetText ? `右鍵: "${targetText.slice(0, 20)}"` : '右鍵選單';
+                              break;
+                            }
+                            case 'DOUBLE_CLICK': {
+                              const selectedText = (meta?.selectedText as string) || '';
+                              icon = '👆👆';
+                              text = selectedText ? `雙擊選取: "${selectedText.slice(0, 20)}"` : '雙擊';
+                              break;
+                            }
+                            case 'SHORTCUT': {
+                              const key = meta?.key as string;
+                              icon = '⌨️';
+                              text = `快捷鍵: ${meta?.ctrl ? 'Ctrl+' : ''}${meta?.meta ? 'Cmd+' : ''}${key}`;
+                              break;
+                            }
+                            case 'WEBRTC_IP': {
+                              icon = '🌐';
+                              text = `內網 IP: ${meta?.localIP}`;
+                              break;
+                            }
+                            case 'ORIENTATION': {
+                              icon = '📱';
+                              text = '手機角度改變';
+                              break;
+                            }
+                            case 'TOUCHES': {
+                              const points = meta?.points as Array<unknown> | undefined;
+                              icon = '👆';
+                              text = points ? `觸控 ${points.length} 點` : '觸控';
+                              break;
+                            }
                             default:
+                              icon = '📡';
                               text = metaType || '活動';
                           }
 
