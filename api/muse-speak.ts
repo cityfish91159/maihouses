@@ -23,7 +23,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       model: 'tts-1',
       voice: 'onyx', // 低沉磁性男聲
       input: text,
-      speed: 0.95 // 稍微慢一點，更有磁性
+      speed: 0.9 // 更慢的速度，更有磁性與文藝氣息
     });
 
     // 將音頻轉換為 base64
