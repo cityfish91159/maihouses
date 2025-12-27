@@ -2081,9 +2081,9 @@ export default function GodView() {
                 // 過濾掉偵查訊號，只顯示對話和重要事件
                 const signalType = (log.metadata as { signal_type?: string } | undefined)?.signal_type;
                 const metaType = log.metadata?.type;
-                // 排除偵查類型
+                // 排除偵查類型（包含 page_open）
                 if (signalType === 'surveillance') return false;
-                if (['VISIBILITY', 'FOCUS', 'SCROLL', 'CLICKS', 'MOTION', 'TYPING_RHYTHM', 'FORM_INPUT', 'HEARTBEAT', 'LOCATION', 'batch'].includes(metaType || '')) return false;
+                if (['page_open', 'VISIBILITY', 'FOCUS', 'SCROLL', 'CLICKS', 'MOTION', 'TYPING_RHYTHM', 'FORM_INPUT', 'HEARTBEAT', 'LOCATION', 'batch'].includes(metaType || '')) return false;
                 return true;
               })
               .map(log => {
