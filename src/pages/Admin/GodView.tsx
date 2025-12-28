@@ -2489,7 +2489,6 @@ export default function GodView() {
                   {(() => {
                     // 過濾出該用戶的偵查資料
                     const userLogs = logs.filter(log => log.user_id === selectedUserId);
-                    console.log('📊 [Surveillance] Total logs:', logs.length, 'User logs:', userLogs.length, 'SelectedUserId:', selectedUserId);
 
                     const surveillanceLogs = userLogs.filter(log => {
                       const signalType = (log.metadata as { signal_type?: string } | undefined)?.signal_type;
@@ -2517,7 +2516,14 @@ export default function GodView() {
                       return false;
                     });
 
-                    console.log('📊 [Surveillance] Filtered logs:', surveillanceLogs.length);
+                    // 簡潔的調試訊息
+                    if (userLogs.length === 0) {
+                      console.log('👁️ 無用戶記錄');
+                    } else if (surveillanceLogs.length === 0) {
+                      console.log('👁️ 無監控資料 (共', userLogs.length, '筆其他記錄)');
+                    } else {
+                      console.log('👁️ 載入', surveillanceLogs.length, '筆監控資料');
+                    }
 
                     if (surveillanceLogs.length === 0) {
                       return (
