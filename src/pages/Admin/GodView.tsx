@@ -1798,7 +1798,7 @@ export default function GodView() {
 
       {/* 用戶進度概覽 */}
       <div className="mb-8 grid grid-cols-5 gap-4">
-        {userProgress.filter(u => !dismissedUsers.has(u.user_id)).slice(0, 5).map(user => (
+        {userProgress.filter(u => !dismissedUsers.has(u.user_id)).map(user => (
           <div
             key={user.user_id}
             className={`relative group p-4 rounded-lg cursor-pointer transition-colors ${
