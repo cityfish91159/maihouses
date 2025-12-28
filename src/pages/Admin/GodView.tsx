@@ -2472,7 +2472,7 @@ export default function GodView() {
 
             {/* 右側：偵查資料面板 - 響應式設計 */}
             {showSurveillancePanel && (
-              <div className="h-1/2 md:w-96 flex flex-col bg-stone-950 border-t md:border-t-0 md:border-l border-green-500/20">
+              <div className="h-1/2 md:w-96 flex flex-col bg-stone-950 border-t md:border-t-0 md:border-l border-green-500/20 overflow-hidden">
                 <div className="p-3 md:p-4 border-b border-green-500/20 flex items-center justify-between">
                   <h4 className="text-green-400 text-sm flex items-center gap-2">
                     <Eye size={16} />
