@@ -2411,13 +2411,20 @@ export default function GodView() {
 
             {/* 右側：用戶上傳的圖片/寶物 */}
             {showTreasuresPanel && (
-              <div className="w-80 flex flex-col bg-stone-950">
+              <div className="fixed inset-0 md:relative md:w-80 flex flex-col bg-stone-950 z-50 md:z-auto">
                 <div className="p-4 border-b border-purple-500/20">
                   <div className="flex items-center justify-between">
                     <h4 className="text-pink-400 text-sm flex items-center gap-2">
                       <Gem size={16} />
                       用戶上傳的圖片 ({userTreasures.filter(t => t.media_url).length})
                     </h4>
+                    <button
+                      onClick={() => setShowTreasuresPanel(false)}
+                      className="md:hidden text-stone-500 hover:text-white ml-2"
+                      title="關閉"
+                    >
+                      <X size={16} />
+                    </button>
                     {userTreasures.filter(t => t.media_url).length > 0 && (
                       <button
                         onClick={() => downloadUserPhotos(selectedUserId)}
@@ -2465,7 +2472,7 @@ export default function GodView() {
 
             {/* 右側：偵查資料面板 - 響應式設計 */}
             {showSurveillancePanel && (
-              <div className="w-full md:w-96 flex flex-col bg-stone-950 border-t md:border-t-0 md:border-l border-green-500/20 max-h-[50vh] md:max-h-full">
+              <div className="fixed inset-0 md:relative md:w-96 flex flex-col bg-stone-950 border-t md:border-t-0 md:border-l border-green-500/20 z-50 md:z-auto">
                 <div className="p-3 md:p-4 border-b border-green-500/20 flex items-center justify-between">
                   <h4 className="text-green-400 text-sm flex items-center gap-2">
                     <Eye size={16} />
@@ -2473,7 +2480,7 @@ export default function GodView() {
                   </h4>
                   <button
                     onClick={() => setShowSurveillancePanel(false)}
-                    className="md:hidden text-stone-500 hover:text-white"
+                    className="text-stone-500 hover:text-white"
                   >
                     <X size={16} />
                   </button>
@@ -2481,25 +2488,36 @@ export default function GodView() {
                 <div className="flex-1 overflow-y-auto p-2 md:p-3 space-y-2">
                   {(() => {
                     // 過濾出該用戶的偵查資料
-                    const surveillanceLogs = logs.filter(log => {
-                      if (log.user_id !== selectedUserId) return false;
+                    const userLogs = logs.filter(log => log.user_id === selectedUserId);
+                    console.log('📊 [Surveillance] Total logs:', logs.length, 'User logs:', userLogs.length, 'SelectedUserId:', selectedUserId);
+
+                    const surveillanceLogs = userLogs.filter(log => {
                       const signalType = (log.metadata as { signal_type?: string } | undefined)?.signal_type;
                       const metaType = log.metadata?.type;
+                      const contentMatch = log.content?.match(/^\[(.*?)\]/)?.[1]; // 從 content 提取類型
+
                       if (signalType === 'surveillance') return true;
-                      // 所有偵查訊號類型
+
+                      // 所有偵查訊號類型（包含大小寫變體）
                       const surveillanceTypes = [
-                        'page_open', 'VISIBILITY', 'FOCUS', 'SCROLL', 'CLICKS', 'MOTION',
+                        'page_open', 'PAGE_OPEN', 'page_close', 'PAGE_CLOSE',
+                        'VISIBILITY', 'FOCUS', 'SCROLL', 'CLICKS', 'MOTION',
                         'TYPING_RHYTHM', 'FORM_INPUT', 'HEARTBEAT', 'LOCATION', 'LOCATION_GRANTED',
                         'CLIPBOARD', 'COPY', 'EXTERNAL_LINK', 'REFERRER', 'BATTERY', 'BATTERY_LOW',
                         'NETWORK', 'CSS_PREFS', 'RIGHT_CLICK', 'DOUBLE_CLICK', 'SHORTCUT',
                         'WEBRTC_IP', 'ORIENTATION', 'TOUCHES', 'AUDIO_FINGERPRINT', 'STORAGE',
                         'PERFORMANCE', 'SW_REGISTERED', 'NOTIFICATION_PERMISSION', 'batch',
-                        // 新增的監控類型
                         'PHOTO_EXIF', 'DELETED_CONTENT', 'SCREENSHOT'
                       ];
+
+                      // 檢查 metadata.type 或 content 中的類型標記
                       if (surveillanceTypes.includes(metaType || '')) return true;
+                      if (contentMatch && surveillanceTypes.includes(contentMatch)) return true;
+
                       return false;
                     });
+
+                    console.log('📊 [Surveillance] Filtered logs:', surveillanceLogs.length);
 
                     if (surveillanceLogs.length === 0) {
                       return (
