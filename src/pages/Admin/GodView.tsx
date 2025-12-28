@@ -496,7 +496,7 @@ export default function GodView() {
             // 🔄 刷新該用戶的 userProgress 資料
             supabase
               .from('user_progress')
-              .select('user_id, sync_level, total_messages, intimacy_score, muse_avatar_url, muse_name, current_mode, admin_takeover, admin_takeover_at')
+              .select('*')
               .eq('user_id', newLog.user_id)
               .maybeSingle()
               .then(({ data: userData, error }) => {
