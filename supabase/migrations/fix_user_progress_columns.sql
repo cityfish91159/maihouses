@@ -47,6 +47,24 @@ BEGIN
     END IF;
 END $$;
 
+-- 添加 admin_takeover 欄位（如果不存在）
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+                   WHERE table_name = 'user_progress' AND column_name = 'admin_takeover') THEN
+        ALTER TABLE user_progress ADD COLUMN admin_takeover BOOLEAN DEFAULT false;
+    END IF;
+END $$;
+
+-- 添加 admin_takeover_at 欄位（如果不存在）
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+                   WHERE table_name = 'user_progress' AND column_name = 'admin_takeover_at') THEN
+        ALTER TABLE user_progress ADD COLUMN admin_takeover_at TIMESTAMPTZ;
+    END IF;
+END $$;
+
 -- =====================================================
 -- 創建 muse_tasks 表（如果不存在）
 -- =====================================================
