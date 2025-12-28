@@ -29,7 +29,8 @@
       "Bash(npm run:*)",
       "Bash(vercel:*)",
       "Bash(npx vercel --prod)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(cat:*)"
     ]
   },
   "model": "sonnet",
