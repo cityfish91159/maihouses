@@ -2270,7 +2270,7 @@ export default function GodView() {
         <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center p-2 md:p-6">
           <div className="bg-[#0a0a0a] border border-purple-500/30 rounded-2xl w-full max-w-5xl h-[95vh] md:h-[90vh] flex flex-col md:flex-row overflow-hidden">
             {/* 左側：對話區 */}
-            <div className="flex-1 flex flex-col border-r md:border-r-0 border-purple-500/20 min-h-0">
+            <div className="h-1/2 md:flex-1 flex flex-col border-r md:border-r-0 border-purple-500/20 min-h-0">
               {/* 標題 */}
               <div className="p-4 border-b border-purple-500/20 flex justify-between items-center">
                 <div className="flex items-center gap-3">
@@ -2472,7 +2472,7 @@ export default function GodView() {
 
             {/* 右側：偵查資料面板 - 響應式設計 */}
             {showSurveillancePanel && (
-              <div className="w-full md:w-96 flex flex-col bg-stone-950 border-t md:border-t-0 md:border-l border-green-500/20">
+              <div className="h-1/2 md:w-96 flex flex-col bg-stone-950 border-t md:border-t-0 md:border-l border-green-500/20">
                 <div className="p-3 md:p-4 border-b border-green-500/20 flex items-center justify-between">
                   <h4 className="text-green-400 text-sm flex items-center gap-2">
                     <Eye size={16} />
