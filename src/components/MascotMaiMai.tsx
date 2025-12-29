@@ -25,21 +25,9 @@ export default function MascotMaiMai({ isThinking = false, isSuccess = false, ha
   // 問答成功時短暫 excited + 撒花
   useEffect(() => {
     if (!isSuccess) return;
-<<<<<<< HEAD
-
-    // Use setTimeout to avoid synchronous setState in effect
-    const immediate = setTimeout(() => setSuccessFlash(true), 0);
-    const timer = setTimeout(() => setSuccessFlash(false), 1800);
-
-    return () => {
-      clearTimeout(immediate);
-      clearTimeout(timer);
-    };
-=======
     setSuccessFlash(true);
     const timer = setTimeout(() => setSuccessFlash(false), 1800);
     return () => clearTimeout(timer);
->>>>>>> main
   }, [isSuccess]);
 
   // 心情狀態機：輸入/請求 → thinking；成功 → excited/celebrate；錯誤 → shy

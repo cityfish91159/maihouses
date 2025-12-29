@@ -16,8 +16,6 @@ export const cmp = (a: string, b: string) => {
   }
   return 0
 }
-<<<<<<< HEAD
-=======
 
 // 台北時區 (UTC+8) 格式化工具
 const TAIPEI_TZ = 'Asia/Taipei'
@@ -45,4 +43,3 @@ export function formatTaipeiDate(date: Date | string, options?: Intl.DateTimeFor
     ...options
   })
 }
->>>>>>> main
