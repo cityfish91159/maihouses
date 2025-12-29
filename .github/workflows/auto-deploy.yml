@@ -20,5 +20,5 @@ jobs:
       - name: 觸發 Vercel 部署
         run: |
           echo "🚀 觸發 Vercel 部署..."
-          curl -X POST https://api.vercel.com/v1/integrations/deploy/prj_VfkrZclMKuDUOdmkUffDAz8nJp7h/Rc8zlkTE8b
+          curl -X POST https://api.vercel.com/v1/integrations/deploy/prj_VfkrZclMKuDUOdmkUffDAz8nJp7h/BtnS5yOvFQ
           echo "✅ 部署請求已發送"
