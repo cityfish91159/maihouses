@@ -74,7 +74,7 @@
     "@types/uuid": "^9.0.8",
     "@typescript-eslint/parser": "^8.13.0",
     "@vercel/node": "^5.5.13",
-    "@vitejs/plugin-legacy": "^5.4.3",
+    "@vitejs/plugin-legacy": "^7.2.1",
     "@vitejs/plugin-react": "^4.3.2",
     "autoprefixer": "^10.4.20",
     "eruda": "^3.4.3",
