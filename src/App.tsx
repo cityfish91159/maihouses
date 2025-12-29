@@ -37,8 +37,8 @@ const queryClient = new QueryClient({
   },
 })
 
-// 🔒 私密功能開關 - 通過環境變數控制
-const ENABLE_PRIVATE_FEATURES = import.meta.env.VITE_ENABLE_PRIVATE_FEATURES === 'true'
+// 🔒 私密功能開關 - deploy 分支強制啟用
+const ENABLE_PRIVATE_FEATURES = true
 
 export default function App() {
   const [config, setConfig] = useState<(AppConfig & RuntimeOverrides) | null>(null)
