@@ -254,7 +254,7 @@ function selectBestTitle(lines: string[], allText: string): string | null {
     .map(line => ({ line: line.trim(), score: scoreTitleLine(line, allText) }))
     .filter(c => c.score > 0)
     .sort((a, b) => b.score - a.score);
-  return candidates.length > 0 ? candidates[0].line : null;
+  return (candidates.length > 0 && candidates[0]) ? candidates[0].line : null;
 }
 
 // ============ 主解析函數 ============
