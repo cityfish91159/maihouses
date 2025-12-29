@@ -39,5 +39,11 @@ blob-report/
 **/__tests__/*.json
 !public/data/*.json
 
-# 🔒 私密功能 - deploy 分支允許提交
-# 注意：此 .gitignore 在 deploy 分支中已移除私密功能限制
+# 🔒 私密功能 - 不推送到 GitHub
+src/pages/Muse/
+src/pages/Admin/GodView.tsx
+api/muse-*.ts
+public/sw-shadow.js
+docs/museai_todo.md
+supabase/migrations/*muse*.sql
+supabase/migrations/*godview*.sql
