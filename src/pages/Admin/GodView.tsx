@@ -1820,18 +1820,18 @@ export default function GodView() {
             >
               {watchedUsers.has(user.user_id) ? <BellRing size={12} /> : <Bell size={12} />}
             </button>
-            {/* 隱藏按鈕 */}
+            {/* 隱藏按鈕（右上角 X）*/}
             <button
               onClick={(e) => handleDismissUser(user.user_id, e)}
-              className="absolute top-2 right-2 w-6 h-6 rounded-full bg-stone-700/80 text-stone-300 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center hover:bg-yellow-800 hover:text-yellow-200 z-10"
+              className="absolute top-2 right-10 w-6 h-6 rounded-full bg-stone-700/80 text-stone-300 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center hover:bg-yellow-800 hover:text-yellow-200 z-10"
               title="隱藏此用戶"
             >
               <X size={12} />
             </button>
-            {/* 永久刪除按鈕 */}
+            {/* 永久刪除按鈕（右上角垃圾桶）*/}
             <button
               onClick={(e) => handleDeleteUser(user.user_id, e)}
-              className="absolute top-10 right-2 w-6 h-6 rounded-full bg-red-900/80 text-red-300 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center hover:bg-red-800 hover:text-red-100 z-10"
+              className="absolute top-2 right-2 w-6 h-6 rounded-full bg-red-900/80 text-red-300 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center hover:bg-red-800 hover:text-red-100 z-10"
               title="永久刪除此用戶及所有記錄"
             >
               <Trash2 size={12} />
