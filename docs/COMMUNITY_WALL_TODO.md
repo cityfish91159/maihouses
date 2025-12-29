@@ -17,9 +17,9 @@
 | P0 | IM-2 591 生產級解析器 | ✅ | 3hr | 100/100 |
 | P1 | MM-3 情緒狀態機 (Mood FSM) | ✅ | 2hr | 100/100 |
 | P1 | IM-3 重複匯入偵測 | ✅ | 1hr | 100/100 |
-| P1 | IM-4 iOS 捷徑支援 | ✅ | 1hr | 100/100 |
+| P1 | IM-4 iOS 捷徑支援 | ⬜ | 1hr | - |
 | P2 | MM-4 對話歷史氣泡 | ✅ | 1hr | 100/100 |
-| P2 | IM-5 解析品質追蹤 API | ✅ | 1hr | 100/100 |
+| P2 | IM-5 解析品質追蹤 API | ⬜ | 1hr | - |
 | P3 | MM-5 MaiMai 全站統一實例 | ✅ | 2hr | 100/100 |
 
 > **⚠️ 狀態說明**: ⬜ 未開始 | 🔧 進行中 | ⚠️ 需修正 | ✅ 完成 (100分)
@@ -261,39 +261,31 @@
 
 ---
 
-### IM-4: iOS 捷徑支援 ✅ 100/100
+### IM-4: iOS 捷徑支援 ⬜
 
-**完成時間**: 2025-12-29
-**實作方式**:
-- 監聽 `?importText=` URL 參數
-- 使用 `decodeURIComponent` 解碼內容
-- 匯入後自動清除 URL 參數，避免重新整理重複觸發
+**設計**: 支援 iOS Shortcuts 直接傳遞 591 內容至上傳頁。
 
 | ID | 子任務 | 狀態 | 驗收標準 |
 |:---|:---|:---:|:---|
-| IM-4.1 | 監聽 URL `?importText=` 參數 | ✅ | `useSearchParams` |
-| IM-4.2 | 處理 URI decode | ✅ | `decodeURIComponent` |
-| IM-4.3 | 處理後清除 URL 參數 | ✅ | `setSearchParams(..., {replace: true})` |
-| IM-4.4 | 防止重複處理 | ✅ | `hasProcessedUrlImportRef` |
+| IM-4.1 | 監聽 URL `?importText=` 參數 | ⬜ | 頁面載入時自動觸發匯入 |
+| IM-4.2 | 處理 URI decode | ⬜ | 正確解析中文字元 |
+| IM-4.3 | 處理後清除 URL 參數 | ⬜ | 避免重新整理時重複匯入 |
+| IM-4.4 | 防止重複處理 | ⬜ | 使用 `useRef` 記錄是否已處理 |
 
 **💡 首席架構師指引**:
 > 「iOS 捷徑的 URL 可能很長，記得用 `decodeURIComponent` 解碼。處理後用 `setSearchParams` 清除參數，且設定 `replace: true` 避免污染歷史紀錄。」
 
 ---
 
-### IM-5: 解析品質追蹤 API ✅ 100/100
+### IM-5: 解析品質追蹤 API ⬜
 
-**完成時間**: 2025-12-29
-**實作方式**:
-- 建立 Vercel Serverless Function (`api/analytics/import.ts`)
-- 前端採用 Fire-and-forget 機制，確保不影響使用者體驗
-- 採用結構化 Log 機制，無需直接資料庫寫入權限即可追蹤
+**設計**: 後端追蹤解析結果，用於優化 Regex。
 
 | ID | 子任務 | 狀態 | 驗收標準 |
 |:---|:---|:---:|:---|
-| IM-5.1 | 建立 `api/analytics/import.ts` | ✅ | Vercel Serverless 函數 |
-| IM-5.2 | 記錄 `textLength`, `confidence`, `fieldsFound` | ✅ | 可查詢哪個欄位最常失敗 |
-| IM-5.3 | 寫入 Supabase analytics 表 | ✅ | 改用 Vercel Logs 結構化紀錄 (符合權限規範) |
+| IM-5.1 | 建立 `api/analytics/import.ts` | ⬜ | Vercel Serverless 函數 |
+| IM-5.2 | 記錄 `textLength`, `confidence`, `fieldsFound` | ⬜ | 可查詢哪個欄位最常失敗 |
+| IM-5.3 | 寫入 Supabase analytics 表 | ⬜ | 每週可分析解析品質 |
 
 **💡 首席架構師指引**:
 > 「這是 P2 任務，先確保前端功能完善。追蹤 API 的價值在於 **發現 591 改版**：如果某週的價格解析成功率突然下降，就知道該更新 Regex 了。」
