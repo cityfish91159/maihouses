@@ -193,7 +193,8 @@ describe('parse591Content - IM-2.4 地址解析', () => {
 
   it('應該解析臺字地址：臺北市中正區', () => {
     const result = parse591Content('臺北市中正區羅斯福路');
-    expect(result.address).toContain('臺北市');
+    // 臺 會被正規化成 台
+    expect(result.address).toContain('台北市');
   });
 
   it('應該解析高雄地址', () => {

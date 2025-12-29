@@ -243,9 +243,16 @@ function scoreTitleLine(line: string, allText: string): number {
     '房', '廳', '衛', '坪', '區', '市', '路', '街', '號', '樓', '層',
     '套房', '雅房', '公寓', '大樓', '透天', '別墅', '店面', '住宅', '華廈',
   ];
+  let realEstateHits = 0;
   for (const kw of realEstateKeywords) {
-    if (trimmed.includes(kw)) score += 1;
+    if (trimmed.includes(kw)) {
+      score += 1;
+      realEstateHits++;
+    }
   }
+
+  // 若完全沒有房產關鍵字 → 不可能是有效標題
+  if (realEstateHits === 0) return -100;
 
   return score;
 }
