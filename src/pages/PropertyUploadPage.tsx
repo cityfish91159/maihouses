@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import {
   Loader2, Download, Check, Home, ArrowLeft, Building2, Edit3, RotateCcw
@@ -40,6 +40,9 @@ const PropertyUploadContent: React.FC = () => {
 
   const [draftAvailable, setDraftAvailable] = useState(false);
   const [draftPreview, setDraftPreview] = useState<{ title: string; savedAt: string } | null>(null);
+
+  // IM-3: 重複匯入偵測
+  const lastImportedIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     // 檢查是否有草稿可用
@@ -99,6 +102,26 @@ const PropertyUploadContent: React.FC = () => {
     // 先同步解析（不阻塞 UI）
     const parsed = parse591Content(text);
 
+    // IM-3: 重複匯入偵測 (ID 不同時詢問)
+    if (parsed.listingId && lastImportedIdRef.current && parsed.listingId !== lastImportedIdRef.current) {
+      const confirmOverwrite = window.confirm(
+        '檢測到您剛剛已匯入過另一個物件，確定要覆蓋嗎？\n\n' +
+        '點擊「確定」將填入新物件資料。\n' +
+        '點擊「取消」將保留目前內容。'
+      );
+      
+      if (!confirmOverwrite) {
+        setLoading(false);
+        setMood('confused');
+        addMessage('已取消匯入');
+        notify.info('已取消', '保留了原本的物件資料');
+        return;
+      }
+      
+      // 若確認覆蓋，清空上一個物件 ID，確保後續邏輯視為新匯入
+      // (表單清空邏輯由 setForm 處理，這裡主要阻擋流程)
+    }
+
     // IM-2.8: 解析失敗時立即回饋（0ms），不強制等待
     if (parsed.confidence === 0) {
       setMood('confused');
@@ -128,6 +151,11 @@ const PropertyUploadContent: React.FC = () => {
         ...(parsed.bathrooms && { bathrooms: parsed.bathrooms }),
         ...(parsed.listingId && { sourceExternalId: `591-${parsed.listingId}` })
       }));
+
+      // IM-3: 記錄本次匯入的 ID
+      if (parsed.listingId) {
+        lastImportedIdRef.current = parsed.listingId;
+      }
 
       // 根據信心分數顯示不同的 MaiMai 反應
       if (isHighConfidence) {
@@ -194,6 +222,8 @@ const PropertyUploadContent: React.FC = () => {
     document.addEventListener('paste', handlePaste);
     return () => document.removeEventListener('paste', handlePaste);
   }, [handle591Import]);
+
+
 
   // 591 搬家（保留舊的按鈕功能）
   const handleImport591 = () => {
