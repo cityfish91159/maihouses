@@ -39,20 +39,13 @@ blob-report/
 **/__tests__/*.json
 !public/data/*.json
 
-<<<<<<< HEAD
-# 🔒 私密功能 - 不推送到 GitHub
-src/pages/Muse/
-src/pages/Admin/GodView.tsx
-api/muse-*.ts
-public/sw-shadow.js
-docs/museai_todo.md
-supabase/migrations/*muse*.sql
-supabase/migrations/*godview*.sql
-=======
-# 🔒 私密功能 - 不提交到 Git
-src/pages/Muse/
-src/pages/Admin/GodView.tsx
-api/muse-chat.ts
-api/muse-speak.ts
-api/muse-voice.ts
->>>>>>> main
+# 🔒 私密功能 - deploy 分支可見，main 分支隱藏
+# 注意：在 deploy 分支這些規則被註釋，檔案會被提交到 GitHub 並部署到 Vercel
+# 在 main 分支這些規則應該保持啟用，以隱藏私密功能
+# src/pages/Muse/
+# src/pages/Admin/GodView.tsx
+# api/muse-*.ts
+# public/sw-shadow.js
+# docs/museai_todo.md
+# supabase/migrations/*muse*.sql
+# supabase/migrations/*godview*.sql

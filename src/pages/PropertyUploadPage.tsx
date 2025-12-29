@@ -99,19 +99,23 @@ const PropertyUploadContent: React.FC = () => {
     // 先同步解析（不阻塞 UI）
     const parsed = parse591Content(text);
 
-    // IM-1.H4: 解析失敗時立即回饋，不強制等待
+    // IM-2.8: 解析失敗時立即回饋（0ms），不強制等待
     if (parsed.confidence === 0) {
       setMood('confused');
-      addMessage('沒有找到可用的資料，請確認內容是否完整');
+      const missingMsg = parsed.missingFields?.length > 0 
+        ? `缺少：${parsed.missingFields.join('、')}` 
+        : '未能從內容中提取有效資訊';
+      addMessage(`解析失敗 😢 ${missingMsg}`);
       setLoading(false);
-      notify.warning('解析失敗', '未能從內容中提取有效資訊');
+      notify.warning('解析失敗', missingMsg);
       return;
     }
 
-    // 高信心度時給予「思考」延遲感，低信心度減少等待
-    const thinkingDelay = parsed.confidence >= 80 ? 500 : 200;
+    // IM-2.8: 低信心度時立即回饋並列缺失欄位；高信心度保留短延遲展示撒花
+    const isHighConfidence = parsed.confidence >= 80;
+    const thinkingDelay = isHighConfidence ? 400 : 0; // 低信心0ms，高信心400ms
 
-    setTimeout(() => {
+    const completeImport = () => {
       // 填入表單
       setForm(prev => ({
         ...prev,
@@ -126,21 +130,31 @@ const PropertyUploadContent: React.FC = () => {
       }));
 
       // 根據信心分數顯示不同的 MaiMai 反應
-      if (parsed.confidence >= 80) {
+      if (isHighConfidence) {
         setMood('excited');
         addMessage(`完美！成功解析了 ${parsed.fieldsFound} 個欄位 ✨`);
         // 觸發慶祝動畫
         window.dispatchEvent(new CustomEvent('mascot:celebrate'));
       } else if (parsed.confidence >= 40) {
         setMood('happy');
-        addMessage(`已填入 ${parsed.fieldsFound} 個欄位，剩下的再補齊吧～`);
+        const missingHint = parsed.missingFields?.length > 0 
+          ? `（缺少：${parsed.missingFields.join('、')}）` 
+          : '';
+        addMessage(`已填入 ${parsed.fieldsFound} 個欄位${missingHint}，剩下的再補齊吧～`);
       } else {
         setMood('confused');
-        addMessage(`只找到了 ${parsed.fieldsFound} 個欄位，內容可能不完整 🤔`);
+        const missingHint = parsed.missingFields?.length > 0 
+          ? `缺少：${parsed.missingFields.join('、')}` 
+          : '內容可能不完整';
+        addMessage(`只找到了 ${parsed.fieldsFound} 個欄位 🤔 ${missingHint}`);
       }
 
       setLoading(false);
-      notify.success('匯入成功', `已自動填入 ${parsed.fieldsFound} 個欄位（信心度 ${parsed.confidence}%）`);
+      
+      const notifyMsg = parsed.missingFields?.length > 0 
+        ? `已填入 ${parsed.fieldsFound} 個欄位，缺少：${parsed.missingFields.join('、')}`
+        : `已自動填入 ${parsed.fieldsFound} 個欄位`;
+      notify.success('匯入成功', `${notifyMsg}（信心度 ${parsed.confidence}%）`);
 
       // IM-AC3: 匯入成功後 3 秒，自動滾動至「兩好一公道」區塊
       setTimeout(() => {
@@ -149,7 +163,14 @@ const PropertyUploadContent: React.FC = () => {
           twoGoodsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
       }, SCROLL_DELAY_MS);
-    }, thinkingDelay);
+    };
+
+    // 根據信心度決定是否延遲
+    if (thinkingDelay > 0) {
+      setTimeout(completeImport, thinkingDelay);
+    } else {
+      completeImport();
+    }
   }, [setForm, setLoading, setMood, addMessage]);
 
   // IM-1: 全域 paste 事件監聽器
