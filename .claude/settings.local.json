@@ -30,7 +30,8 @@
       "Bash(vercel:*)",
       "Bash(npx vercel --prod)",
       "Bash(npm install:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(git show:*)"
     ]
   },
   "model": "sonnet",
