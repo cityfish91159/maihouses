@@ -101,7 +101,7 @@ describe('parse591Content - IM-2.1 價格解析', () => {
 
   it('應該解析租金格式：租金 25,000 元/月', () => {
     const result = parse591Content('租金：25,000 元/月');
-    expect(result.price).toBe('25000');
+    expect(result.price).toBe('2.5');
   });
 
   it('應該解析無冒號格式：1280萬', () => {
@@ -111,7 +111,7 @@ describe('parse591Content - IM-2.1 價格解析', () => {
 
   it('應該解析月租金格式：月租 8,500 元', () => {
     const result = parse591Content('月租：8,500 元');
-    expect(result.price).toBe('8500');
+    expect(result.price).toBe('0.85');
   });
 
   it('應該處理價格中的逗號', () => {
@@ -193,7 +193,8 @@ describe('parse591Content - IM-2.4 地址解析', () => {
 
   it('應該解析臺字地址：臺北市中正區', () => {
     const result = parse591Content('臺北市中正區羅斯福路');
-    expect(result.address).toContain('臺北市');
+    // 臺 會被正規化成 台
+    expect(result.address).toContain('台北市');
   });
 
   it('應該解析高雄地址', () => {
@@ -253,15 +254,23 @@ describe('parse591Content - IM-2.6 591 物件 ID 擷取', () => {
   });
 });
 
-describe('parse591Content - IM-2.7 信心分數計算', () => {
-  it('完整資訊應該達到 100 分', () => {
+describe('parse591Content - IM-2.7 信心分數計算 & IM-2.2 fieldsFound', () => {
+  it('完整資訊應該達到 100 分且 fieldsFound 為 5', () => {
     const result = parse591Content(SAMPLE_FULL_SALE);
     expect(result.confidence).toBe(100);
+    expect(result.fieldsFound).toBe(5);
   });
 
-  it('只有價格和坪數應該是 50 分', () => {
-    const result = parse591Content('售價：1000萬 坪數：30坪');
-    expect(result.confidence).toBe(50);
+  it('只有格局 fieldsFound 應為 1', () => {
+    const result = parse591Content('3房2廳2衛');
+    expect(result.fieldsFound).toBe(1);
+    expect(result.confidence).toBe(20);
+  });
+
+  it('套房應該得到 15 分但 fieldsFound 仍為 1', () => {
+    const result = parse591Content('套房');
+    expect(result.confidence).toBe(15);
+    expect(result.fieldsFound).toBe(1);
   });
 
   it('純廢話應該是 0 分', () => {
@@ -269,10 +278,43 @@ describe('parse591Content - IM-2.7 信心分數計算', () => {
     expect(result.confidence).toBe(0);
     expect(result.fieldsFound).toBe(0);
   });
+});
 
-  it('套房應該得到 15 分（套房得分較低）', () => {
-    const result = parse591Content('套房');
-    expect(result.confidence).toBe(15);
+describe('parse591Content - IM-2 Audit Fixes', () => {
+  // 2.1 價格正規化
+  it('應該識別元/月並保持數值', () => {
+    const result = parse591Content('租金：25,000 元/月');
+    expect(result.price).toBe('2.5');
+    expect(result.priceUnit).toBe('萬/月');
+  });
+
+  it('應該支援億元換算', () => {
+    const result = parse591Content('總價：1.2億');
+    expect(result.price).toBe('12000');
+    expect(result.priceUnit).toBe('萬');
+  });
+
+  // 2.3 格局容錯
+  it('應該解析 1.5 衛', () => {
+    const result = parse591Content('3房2廳1.5衛');
+    expect(result.bathrooms).toBe('1.5');
+  });
+
+  it('應該解析 0 廳', () => {
+    const result = parse591Content('1房0廳1衛');
+    expect(result.halls).toBe('0');
+  });
+
+  it('應該解析開放式格局', () => {
+    const result = parse591Content('開放式格局');
+    expect(result.rooms).toBe('1'); // 開放式視為 1 房 (Studio)
+    expect(result.confidence).toBeGreaterThan(0);
+  });
+
+  // 2.4 模糊坪數
+  it('應該解析模糊坪數', () => {
+    const result = parse591Content('建坪 約 34.2 坪 (含車位)');
+    expect(result.size).toBe('34.2');
   });
 });
 
@@ -291,7 +333,7 @@ describe('parse591Content - 整合測試', () => {
 
   it('應該正確解析完整租屋資訊', () => {
     const result = parse591Content(SAMPLE_FULL_RENT);
-    expect(result.price).toBe('25000');
+    expect(result.price).toBe('2.5');
     expect(result.size).toBe('12');
     expect(result.rooms).toBe('1');
     expect(result.address).toContain('中正區');
