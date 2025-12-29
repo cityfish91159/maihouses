@@ -87,23 +87,31 @@ const PropertyUploadContent: React.FC = () => {
   };
 
   // IM-1: 智慧貼上處理函數
+  // IM-AC3: SCROLL_DELAY_MS - 3 秒後自動滾動至「兩好一公道」區塊
+  const SCROLL_DELAY_MS = 3000;
+  const TWO_GOODS_SECTION_ID = 'two-goods-section';
+
   const handle591Import = useCallback((text: string) => {
     setLoading(true);
     setMood('thinking');
     addMessage('正在解析 591 物件資料...');
 
-    // 模擬解析延遲（讓用戶看到 MaiMai 在思考）
+    // 先同步解析（不阻塞 UI）
+    const parsed = parse591Content(text);
+
+    // IM-1.H4: 解析失敗時立即回饋，不強制等待
+    if (parsed.confidence === 0) {
+      setMood('confused');
+      addMessage('沒有找到可用的資料，請確認內容是否完整');
+      setLoading(false);
+      notify.warning('解析失敗', '未能從內容中提取有效資訊');
+      return;
+    }
+
+    // 高信心度時給予「思考」延遲感，低信心度減少等待
+    const thinkingDelay = parsed.confidence >= 80 ? 500 : 200;
+
     setTimeout(() => {
-      const parsed = parse591Content(text);
-
-      if (parsed.confidence === 0) {
-        setMood('confused');
-        addMessage('沒有找到可用的資料，請確認內容是否完整');
-        setLoading(false);
-        notify.warning('解析失敗', '未能從內容中提取有效資訊');
-        return;
-      }
-
       // 填入表單
       setForm(prev => ({
         ...prev,
@@ -133,7 +141,15 @@ const PropertyUploadContent: React.FC = () => {
 
       setLoading(false);
       notify.success('匯入成功', `已自動填入 ${parsed.fieldsFound} 個欄位（信心度 ${parsed.confidence}%）`);
-    }, 500);
+
+      // IM-AC3: 匯入成功後 3 秒，自動滾動至「兩好一公道」區塊
+      setTimeout(() => {
+        const twoGoodsSection = document.getElementById(TWO_GOODS_SECTION_ID);
+        if (twoGoodsSection) {
+          twoGoodsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, SCROLL_DELAY_MS);
+    }, thinkingDelay);
   }, [setForm, setLoading, setMood, addMessage]);
 
   // IM-1: 全域 paste 事件監聽器

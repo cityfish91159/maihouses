@@ -12,7 +12,7 @@ export const TwoGoodsSection: React.FC = () => {
   };
 
   return (
-    <section className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
+    <section id="two-goods-section" className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
       <div className="mb-5 flex items-center gap-2">
         <Shield className="text-orange-500" size={22} />
         <div>
