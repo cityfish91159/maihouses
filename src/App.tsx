@@ -25,8 +25,11 @@ import { PropertyUploadPage } from './pages/PropertyUploadPage'
 import PropertyListPage from './pages/PropertyListPage'
 import { PropertyEditPage } from './pages/PropertyEditPage'
 import { ReportPage } from './pages/Report'
+<<<<<<< HEAD
 import MusePage from './pages/Muse/MusePage'
 import GodView from './pages/Admin/GodView'
+=======
+>>>>>>> main
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -37,9 +40,12 @@ const queryClient = new QueryClient({
   },
 })
 
+<<<<<<< HEAD
 // 🔒 私密功能開關 - 通過環境變數控制
 const ENABLE_PRIVATE_FEATURES = import.meta.env.VITE_ENABLE_PRIVATE_FEATURES === 'true'
 
+=======
+>>>>>>> main
 export default function App() {
   const [config, setConfig] = useState<(AppConfig & RuntimeOverrides) | null>(null)
   const loc = useLocation()
@@ -186,6 +192,7 @@ export default function App() {
                 </ErrorBoundary>
               }
             />
+<<<<<<< HEAD
             {/* 🔒 私密功能路由 - 僅在啟用時可見 */}
             {ENABLE_PRIVATE_FEATURES && (
               <>
@@ -215,6 +222,8 @@ export default function App() {
                 />
               </>
             )}
+=======
+>>>>>>> main
             </Routes>
             {import.meta.env.DEV && (
               <ReactQueryDevtools initialIsOpen={false} />

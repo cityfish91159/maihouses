@@ -1,7 +1,7 @@
 # ============================================================================
-# 自動部署到 Vercel - Deploy 分支專用
+# 自動部署到 Vercel - Main/Deploy 分支雙軌部署
 # ============================================================================
-# 每次 push deploy 分支時自動觸發 Vercel 部署
+# 每次 push main 或 deploy 分支時自動觸發 Vercel 部署
 # 不依賴 GitHub webhook，直接使用 Vercel Deploy Hook
 # ============================================================================
 
@@ -10,6 +10,7 @@ name: Auto Deploy to Vercel
 on:
   push:
     branches:
+      - main
       - deploy
 
 jobs:

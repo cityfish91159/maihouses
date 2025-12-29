@@ -39,6 +39,7 @@ blob-report/
 **/__tests__/*.json
 !public/data/*.json
 
+<<<<<<< HEAD
 # 🔒 私密功能 - 不推送到 GitHub
 src/pages/Muse/
 src/pages/Admin/GodView.tsx
@@ -47,3 +48,11 @@ public/sw-shadow.js
 docs/museai_todo.md
 supabase/migrations/*muse*.sql
 supabase/migrations/*godview*.sql
+=======
+# 🔒 私密功能 - 不提交到 Git
+src/pages/Muse/
+src/pages/Admin/GodView.tsx
+api/muse-chat.ts
+api/muse-speak.ts
+api/muse-voice.ts
+>>>>>>> main
