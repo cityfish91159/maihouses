@@ -1,0 +1,24 @@
+# ============================================================================
+# 自動部署到 Vercel - Main/Deploy 分支雙軌部署
+# ============================================================================
+# 每次 push main 或 deploy 分支時自動觸發 Vercel 部署
+# 不依賴 GitHub webhook，直接使用 Vercel Deploy Hook
+# ============================================================================
+
+name: Auto Deploy to Vercel
+
+on:
+  push:
+    branches:
+      - main
+      - deploy
+
+jobs:
+  trigger-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 觸發 Vercel 部署
+        run: |
+          echo "🚀 觸發 Vercel 部署..."
+          curl -X POST https://api.vercel.com/v1/integrations/deploy/prj_VfkrZclMKuDUOdmkUffDAz8nJp7h/Rc8zlkTE8b
+          echo "✅ 部署請求已發送"
