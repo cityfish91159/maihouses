@@ -152,8 +152,7 @@ function parsePrice(text: string): PriceMatch | null {
   if (simpleRentMatch && simpleRentMatch[1]) {
     return { 
       value: normalizePriceValue(simpleRentMatch[1], '元'), 
-      unit: '元/月', // 這裡其實應該也轉萬？若 UI 支援元就給元。依照審計要求 "統一萬為主"
-      // 假設我這裡也轉萬
+      unit: '萬/月', // P0: 統一為萬/月
       raw: simpleRentMatch[0] 
     };
   }
@@ -168,6 +167,8 @@ const SIZE_PATTERNS = [
   /(?:權狀|建坪|室內|主建物|坪數|使用)[：:]\s*([\d.]+)\s*坪/,
   // 模糊格式 (2.4)
   /(?:約)?\s*([\d.]+)\s*坪/,
+  // P1: 坪(含車位)
+  /([\d.]+)\s*坪(?:\(含車位\))?/,
 ] as const;
 
 // ============ 格局解析模式 (支援半衛/0廳/開放式) ============
@@ -175,8 +176,10 @@ const SIZE_PATTERNS = [
 const LAYOUT_PATTERNS = [
   // 標準格局：3房2廳2衛 (2.3: 支援小數點 1.5衛)
   /(\d+)\s*房\s*(\d+)\s*廳\s*([\d.]+)\s*衛/,
+  // P1: 支援 1+1房、2.5房
+  /((?:\d+(?:\.\d+)?)(?:\+\d)?)\s*房\s*(\d+)\s*廳\s*([\d.]+)\s*衛/, 
   // 無廳格式：3房2衛 -> 0廳
-  /(\d+)\s*房\s*([\d.]+)\s*衛/,
+  /((?:\d+(?:\.\d+)?)(?:\+\d)?)\s*房\s*([\d.]+)\s*衛/,
   // 開放式格局
   /開放式/,
 ] as const;
@@ -184,10 +187,12 @@ const LAYOUT_PATTERNS = [
 // ============ 地址解析模式 (台/臺正規化，跨行) ============
 
 const ADDRESS_PATTERNS = [
-  // 完整地址 (2.6: 放寬結尾條件)
-  /[台臺]?(?:北|中|南|東)?(?:市|縣)?[^，,\n]{2,5}[區鄉鎮市][^，,\n]{2,40}[路街道巷弄號樓](?:之\d+)?(?:樓)?/,
-  // 寬鬆地址：至少到路/街
-  /(?:台北|臺北|新北|桃園|台中|臺中|台南|臺南|高雄|新竹|基隆|嘉義)[市縣]?[^，,\n]{2,30}[路街道]/,
+  // Pattern 0: 完整地址 (有號/樓)
+  /[台臺新]?(?:北|中|南|東|竹)?(?:市|縣)?[^，,\n：:]{2,5}[區鄉鎮市][^，,\n：:]{2,40}[號樓](?:之\d+)?(?:樓)?/,
+  // Pattern 1: 寬鬆地址 (無門牌，只到段/巷/弄)
+  /[台臺新]?(?:北|中|南|東|竹)?(?:市|縣)?[^，,\n：:]{2,5}[區鄉鎮市][^，,\n：:]{2,40}[路街道段巷弄]/,
+  // Pattern 2: 寬鬆地址 (至少到路/街)
+  /(?:台北|臺北|新北|桃園|台中|臺中|台南|臺南|高雄|新竹|基隆|嘉義)[市縣]?[^，,\n：:]{2,30}[路街道]/,
 ] as const;
 
 /** 591 物件 ID 解析模式 */
@@ -220,7 +225,13 @@ function scoreTitleLine(line: string, allText: string): number {
 
   // 加分詞
   const positiveKeywords = ['景觀', '視野', '採光', '方正', '捷運', '學區', '裝潢', '全新', '電梯', '車位'];
-  for (const kw of positiveKeywords) if (trimmed.includes(kw)) score += 3;
+  let positiveHits = 0;
+  for (const kw of positiveKeywords) {
+    if (trimmed.includes(kw)) {
+      score += 3;
+      positiveHits++;
+    }
+  }
 
   // 房產詞 (門檻)
   const realEstateKeywords = ['房', '廳', '衛', '坪', '公寓', '大樓', '透天', '別墅', '套房', '雅房', '住家', '店面'];
@@ -231,12 +242,9 @@ function scoreTitleLine(line: string, allText: string): number {
       hits++;
     }
   }
-  if (hits === 0) return -100; // 2.5: 強制含關鍵詞可能誤殺？審查說「可能誤殺有效標題」。
-  // 修正：如果長度適中且沒被排除，就算沒關鍵詞也給過？
-  // 但純廢話「今天天氣真好」怎麼辦？
-  // 審查說「未做行內評分... 容易挑到次佳」。
-  // 妥協：如果有 positiveKeywords，即使沒有 realEstateKeywords 也給過。
-  // 或者降低门槛。目前維持現狀，因為測試都過了。
+  
+  // P1: 放寬門檻，若有正向詞且格式乾淨(無排除詞)，即使沒房產詞也保留
+  if (hits === 0 && positiveHits === 0) return -100; 
 
   return score;
 }
@@ -305,8 +313,8 @@ export function parse591Content(text: string): Parse591Result {
   // 3. 格局 (IM-2.3)
   let layoutFound = false;
   
-  // 3.1 標準 (含 3房2廳1.5衛)
-  const stdMatch = normalized.match(LAYOUT_PATTERNS[0]);
+  // 3.1 P1: 支援 1+1房 / 2.5房
+  const stdMatch = normalized.match(LAYOUT_PATTERNS[1]); // 使用新的 Regex
   if (stdMatch && stdMatch[1] && stdMatch[2] && stdMatch[3]) {
     result.rooms = stdMatch[1];
     result.halls = stdMatch[2];
@@ -315,9 +323,9 @@ export function parse591Content(text: string): Parse591Result {
     result.confidence += CONFIDENCE.LAYOUT_FULL;
   }
 
-  // 3.2 無廳 (3房2衛)
+  // 3.2 無廳 (3房2衛) / 1+1房2衛
   if (!layoutFound) {
-    const noHallMatch = normalized.match(LAYOUT_PATTERNS[1]);
+    const noHallMatch = normalized.match(LAYOUT_PATTERNS[2]);
     if (noHallMatch && noHallMatch[1] && noHallMatch[2]) {
       result.rooms = noHallMatch[1];
       result.halls = '0';
@@ -371,9 +379,9 @@ export function parse591Content(text: string): Parse591Result {
 
   // 6. ID (IM-2.6) - 不計分
   for (const pattern of ID_PATTERNS) {
-    const match = normalized.match(pattern);
-    if (match && match[1]) {
-      result.listingId = match[1];
+    const patternMatch = normalized.match(pattern);
+    if (patternMatch && patternMatch[1]) {
+      result.listingId = patternMatch[1];
       break;
     }
   }
@@ -395,7 +403,15 @@ export function detect591Content(text: string): boolean {
   if (/[\d.]+\s*坪/.test(text)) score++;
   if (/\d+房/.test(text)) score++;
   if (/(?:台北|臺北|新北|桃園|台中|高雄)[市縣]/.test(text)) score++;
-  if (/(?:月租|租金|元\/月)/.test(text)) score++; // 增強租金特徵
+  // if (/(?:月租|租金|元\/月)/.test(text)) score++; // P1: 移除單獨租金給分，避免與金額重複計分導致純租金誤判
+  
+  // P1: 租金+地名 強力特徵 (避免純數字+元誤判)
+  const hasRent = /(?:月租|租金|元\/月)/.test(text);
+  const hasLoc = /(?:台北|臺北|新北|桃園|台中|高雄)[市縣]/.test(text);
+  if (hasRent && hasLoc) score += 2;
+
+  // P1: 純租金無地名，應排除 (score >= 2 才能通過)
+  // 如果只有 租金 (1分) -> Fail. Good.
   
   return score >= 2;
 }

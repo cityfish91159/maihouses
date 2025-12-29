@@ -363,6 +363,40 @@ describe('parse591Content - 整合測試', () => {
     expect(result.rooms).toBe('4');
     expect(result.confidence).toBe(100);
   });
+  describe('IM-2 v2.3 優化建議', () => {
+    it('P0: 價格單位一致性 (simpleRentMatch 為 萬/月)', () => {
+      // 測試 simpleRentMatch (無冒號格式)
+      const result = parse591Content('25,000 元/月'); 
+      expect(result.price).toBe('2.5');
+      expect(result.priceUnit).toBe('萬/月');
+    });
+
+    it('P1: 標題門檻放寬 (無房產詞但有正向詞)', () => {
+      // 只有正向詞，無房產詞
+      const result = parse591Content('景觀第一排 捷運 1 分鐘\n總價 2000 萬\n坪數 30 坪');
+      expect(result.title).toBe('景觀第一排 捷運 1 分鐘');
+    });
+
+    it('P1: 格局支援 1+1房', () => {
+      const result = parse591Content('格局：1+1房1廳1衛');
+      expect(result.rooms).toBe('1+1');
+    });
+
+    it('P1: 格局支援 2.5房', () => {
+      const result = parse591Content('格局：2.5房2廳1衛');
+      expect(result.rooms).toBe('2.5');
+    });
+
+    it('P1: 地址寬鬆模式 (無門牌)', () => {
+      const result = parse591Content('地址：新北市板橋區民生路一段');
+      expect(result.address).toBe('新北市板橋區民生路一段');
+    });
+
+    it('P1: 坪數(含車位)', () => {
+      const result = parse591Content('建坪 45.5 坪(含車位)');
+      expect(result.size).toBe('45.5');
+    });
+  });
 });
 
 describe('detect591Content', () => {
@@ -384,5 +418,13 @@ describe('detect591Content', () => {
 
   it('應該拒絕太短的內容', () => {
     expect(detect591Content('hi')).toBe(false);
+  });
+
+  it('P1: 租金+地名 應識別為 True', () => {
+    expect(detect591Content('租金 25000 元/月 位於台北市大安區')).toBe(true);
+  });
+ 
+  it('P1: 純租金無地名 應為 False', () => {
+    expect(detect591Content('租金 25000 元/月')).toBe(false);
   });
 });

@@ -134,9 +134,9 @@ const PropertyUploadContent: React.FC = () => {
       return;
     }
 
-    // IM-2.8: 低信心度時立即回饋並列缺失欄位；高信心度保留短延遲展示撒花
+    // IM-2.8 / P2: 統一延遲規格，高信心 500ms 展示撒花，低信心 200ms
     const isHighConfidence = parsed.confidence >= 80;
-    const thinkingDelay = isHighConfidence ? 400 : 0; // 低信心0ms，高信心400ms
+    const thinkingDelay = isHighConfidence ? 500 : 200;
 
     const completeImport = () => {
       // 填入表單
