@@ -12,7 +12,7 @@
 
 | 優先級 | 任務 | 狀態 | 預估工時 | 負責人 |
 |:---:|:---|:---:|:---:|:---:|
-| **P0** | UAG-1 資料庫 Schema 部署 | ⬜ | 2hr | DevOps |
+| **P0** | UAG-1 資料庫 Schema 部署 | ✅ | 2hr | DevOps |
 | **P0** | UAG-2 District 傳遞修復 | ⬜ | 1hr | Frontend |
 | **P0** | UAG-3 RPC 函數創建 | ⬜ | 2hr | Backend |
 | **P0** | UAG-4 Session Recovery API | ⬜ | 2hr | Backend |
@@ -37,86 +37,12 @@
 
 ## 🔥 P0 高優先級任務（必須完成）
 
-### UAG-1: 資料庫 Schema 部署 ⬜
+### UAG-1: 資料庫 Schema 部署 ✅
 
-**問題**：UAG 完整 SQL Schema 尚未部署到 Supabase
-
-**當前狀態**：
-- SQL 只存在於 `UAG_COMPLETE_SYSTEM_GUIDE.md:666-921`
-- 資料庫中不存在 `uag_sessions`, `uag_events`, `uag_events_archive` 表
-
-**修復步驟**：
-
-#### 1.1 創建 Migration 檔案
-```bash
-# 建立檔案
-touch supabase/migrations/20251230_uag_tracking_v8.sql
-```
-
-#### 1.2 複製 SQL Schema
-從 `UAG_COMPLETE_SYSTEM_GUIDE.md` 複製完整 SQL：
-- Line 666-686: `uag_sessions` 表
-- Line 688-710: `uag_events` 表
-- Line 712-717: `uag_events_archive` 表
-- Line 720-744: `uag_lead_rankings` 物化視圖
-- Line 746-786: `calculate_lead_grade()` 函數
-- Line 788-809: `archive_old_history()` 函數
-- Line 812-901: `track_uag_event_v8()` RPC 函數
-- Line 903-921: RLS 政策
-
-#### 1.3 部署到 Supabase
-
-**選項 A: Supabase CLI（推薦）**
-```bash
-# 連接專案
-supabase link --project-ref mtqnjmoisrvjofdxhwhi
-
-# 推送 migration
-supabase db push
-
-# 驗證
-supabase db diff
-```
-
-**選項 B: Dashboard 手動執行**
-1. 打開 https://supabase.com/dashboard/project/mtqnjmoisrvjofdxhwhi
-2. 進入 SQL Editor
-3. 貼上完整 SQL
-4. 執行
-
-#### 1.4 驗證部署
-
-```sql
--- 確認表格存在
-SELECT table_name
-FROM information_schema.tables
-WHERE table_schema = 'public' AND table_name LIKE 'uag%';
-
--- 預期結果：
--- uag_sessions
--- uag_events
--- uag_events_archive
-
--- 確認函數存在
-SELECT routine_name
-FROM information_schema.routines
-WHERE routine_schema = 'public' AND routine_name LIKE '%uag%';
-
--- 預期結果：
--- track_uag_event_v8
--- calculate_lead_grade
--- archive_old_history
-```
-
-**驗收標準**：
-- [x] 所有表格創建成功
-- [x] 所有索引創建成功
-- [x] 所有函數創建成功
-- [x] RLS 政策啟用
-- [x] 測試資料可正常插入
-
-**預估工時**: 2hr
-**優先級**: P0（阻塞所有其他 UAG 任務）
+**完成日期**: 2025-12-30
+**Migration 檔案**: `supabase/migrations/20251230_uag_tracking_v8.sql`
+**部署方式**: 手動執行 SQL via Supabase Dashboard
+**包含內容**: 3 表 + 1 視圖 + 3 函數 + RLS 政策
 
 ---
 
