@@ -47,7 +47,12 @@ export function useMaiMaiMood(options: UseMaiMaiMoodOptions = {}): {
     });
   }, []);
 
-  // 自動重置慶祝狀態 (避免 setTimeout 記憶體洩漏)
+  const resetCelebration = useCallback(() => {
+    setInternalCelebrating(false);
+    setClickCount(0);
+  }, []);
+
+  // 自動重置慶祝狀態 (避免 unmout 後更新 state)
   useEffect(() => {
     if (internalCelebrating) {
       const timer = setTimeout(() => {
@@ -57,11 +62,6 @@ export function useMaiMaiMood(options: UseMaiMaiMoodOptions = {}): {
       return () => clearTimeout(timer);
     }
   }, [internalCelebrating]);
-
-  const resetCelebration = useCallback(() => {
-    setInternalCelebrating(false);
-    setClickCount(0);
-  }, []);
 
   // 使用 useMemo 計算 mood，避免閃爍
   const mood = useMemo<MaiMaiMood>(() => {

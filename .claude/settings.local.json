@@ -31,7 +31,13 @@
       "Bash(npx vercel --prod)",
       "Bash(npm install:*)",
       "Bash(cat:*)",
-      "Bash(git show:*)"
+      "Bash(git show:*)",
+      "Bash(git fetch:*)",
+      "Bash(git ls-tree:*)",
+      "Bash(printf:*)",
+      "Bash({ echo -n true)",
+      "Bash(})",
+      "Bash(git rm:*)"
     ]
   },
   "model": "sonnet",
