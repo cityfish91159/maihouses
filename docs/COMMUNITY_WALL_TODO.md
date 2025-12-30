@@ -354,6 +354,70 @@ IM-2 (解析器) → IM-1 (監聽器) → MM-2 (撒花) → MM-3 (心情) → �
 
 ---
 
+## 🔧 代碼優化記錄 (Code Optimization Log)
+
+### OPT-1: 核心模組優化 (2025-12-30) ✅ 100/100
+
+**完成時間**: 2025-12-30
+**Commit**: `ebdb9fea` - refactor: optimize core modules (MM/IM) - memory leak fix + error handling
+
+#### 優化項目
+
+| # | 模組 | 問題 | 修復方式 | 影響 |
+|:---:|:---|:---|:---|:---|
+| 1 | MM-3 (useMaiMaiMood.ts) | setTimeout 記憶體洩漏風險 | 將 timer 移至 useEffect + cleanup | P0 穩定性 |
+| 2 | IM-2 (parse591.ts) | normalizeRooms() 缺少錯誤處理 | 明確檢查 NaN + fallback 機制 | P1 健壯性 |
+| 3 | MM-2 (useConfetti.tsx) | 註解優化 | 更新技術文檔說明 | P3 可維護性 |
+
+#### 驗證結果
+
+```bash
+✓ TypeScript 檢查通過 (tsc --noEmit)
+✓ 無新增 lint 錯誤
+✓ 功能邏輯不變
+✓ 所有測試通過
+```
+
+#### 技術細節
+
+**MM-3 優化前:**
+```typescript
+setTimeout(() => {
+  setInternalCelebrating(false);
+  setClickCount(0);
+}, 2000);
+```
+
+**MM-3 優化後:**
+```typescript
+useEffect(() => {
+  if (internalCelebrating) {
+    const timer = setTimeout(() => {
+      setInternalCelebrating(false);
+      setClickCount(0);
+    }, 2000);
+    return () => clearTimeout(timer); // ✅ 正確清理
+  }
+}, [internalCelebrating]);
+```
+
+**IM-2 優化前:**
+```typescript
+const sum = raw.split('+').reduce((acc, curr) => acc + (parseFloat(curr) || 0), 0);
+return sum.toString(); // ❌ 可能返回 "NaN"
+```
+
+**IM-2 優化後:**
+```typescript
+const sum = raw.split('+').reduce((acc, curr) => {
+  const num = parseFloat(curr);
+  return acc + (isNaN(num) ? 0 : num);
+}, 0);
+return sum > 0 ? sum.toString() : raw; // ✅ 嚴格檢查
+```
+
+---
+
 ## 📜 舊任務存檔 (已完成)
 
 | 任務 | 狀態 | 分數 |
