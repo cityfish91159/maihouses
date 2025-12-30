@@ -19,7 +19,7 @@
 | P1 | IM-3 重複匯入偵測 | ✅ | 1hr | 100/100 |
 | P1 | IM-4 iOS 捷徑支援 | ✅ | 1hr | 100/100 |
 | P2 | MM-4 對話歷史氣泡 | ✅ | 1hr | 100/100 |
-| P2 | IM-5 解析品質追蹤 API | ⬜ | 1hr | - |
+| P2 | IM-5 解析品質追蹤 API | ✅ | 1hr | 100/100 |
 | P3 | MM-5 MaiMai 全站統一實例 | ✅ | 2hr | 100/100 |
 
 > **⚠️ 狀態說明**: ⬜ 未開始 | 🔧 進行中 | ⚠️ 需修正 | ✅ 完成 (100分)
@@ -350,18 +350,158 @@ https://maihouses.vercel.app/maihouses/property/upload?importText=...
 
 ---
 
-### IM-5: 解析品質追蹤 API ⬜
+### IM-5: 解析品質追蹤 API ✅ 100/100
+
+**完成時間**: 2025-12-30
+**Commit**: `8e7c6c8f` - feat(IM-5): implement 591 import quality tracking API
 
 **設計**: 後端追蹤解析結果，用於優化 Regex。
 
 | ID | 子任務 | 狀態 | 驗收標準 |
 |:---|:---|:---:|:---|
-| IM-5.1 | 建立 `api/analytics/import.ts` | ⬜ | Vercel Serverless 函數 |
-| IM-5.2 | 記錄 `textLength`, `confidence`, `fieldsFound` | ⬜ | 可查詢哪個欄位最常失敗 |
-| IM-5.3 | 寫入 Supabase analytics 表 | ⬜ | 每週可分析解析品質 |
+| IM-5.1 | 建立 `api/analytics/import.ts` | ✅ | Vercel Serverless 函數 (157 行) |
+| IM-5.2 | 記錄 `textLength`, `confidence`, `fieldsFound` | ✅ | 完整 field_status JSONB + missing_fields 陣列 |
+| IM-5.3 | 寫入 Supabase analytics 表 | ✅ | migration SQL + RLS 政策 + 索引優化 |
 
-**💡 首席架構師指引**:
-> 「這是 P2 任務，先確保前端功能完善。追蹤 API 的價值在於 **發現 591 改版**：如果某週的價格解析成功率突然下降，就知道該更新 Regex 了。」
+#### 實作細節
+
+**檔案結構**:
+```
+api/analytics/
+└── import.ts         (157 行) - Serverless 追蹤 API
+
+supabase/migrations/
+└── 20251230_create_import_analytics.sql  (60 行) - 資料表 schema
+```
+
+**API Endpoint**: `POST /api/analytics/import`
+
+**Request Payload**:
+```typescript
+{
+  textLength: number,        // 原始文字長度
+  confidence: number,        // 解析信心 0-100
+  fieldsFound: number,       // 成功欄位數 0-10
+  fieldStatus: {             // 各欄位狀態
+    title: boolean,
+    price: boolean,
+    size: boolean,
+    layout: boolean,
+    address: boolean,
+    listingId: boolean
+  },
+  missingFields: string[],   // 缺失欄位
+  source: 'paste'|'url'|'button',
+  userAgent?: string
+}
+```
+
+**Database Schema**:
+```sql
+CREATE TABLE import_analytics (
+  id UUID PRIMARY KEY,
+  text_length INTEGER CHECK (>= 0),
+  confidence INTEGER CHECK (0-100),
+  fields_found INTEGER CHECK (0-10),
+  field_status JSONB,
+  missing_fields TEXT[],
+  source TEXT CHECK (IN 'paste','url','button'),
+  user_agent TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 索引
+CREATE INDEX idx_import_analytics_created_at ON import_analytics(created_at DESC);
+CREATE INDEX idx_import_analytics_confidence ON import_analytics(confidence);
+CREATE INDEX idx_import_analytics_source ON import_analytics(source);
+```
+
+**前端整合** ([PropertyUploadPage.tsx:131-161](src/pages/PropertyUploadPage.tsx#L131-L161)):
+```typescript
+const handle591Import = useCallback((text: string, source: 'paste'|'url'|'button' = 'paste') => {
+  const parsed = parse591Content(text);
+
+  // IM-5: 非阻塞追蹤
+  const trackImportQuality = async () => {
+    try {
+      await fetch('/api/analytics/import', {
+        method: 'POST',
+        body: JSON.stringify({
+          textLength: text.length,
+          confidence: parsed.confidence,
+          fieldsFound: parsed.fieldsFound,
+          fieldStatus: {
+            title: !!parsed.title,
+            price: !!parsed.price,
+            size: !!parsed.size,
+            layout: !!(parsed.rooms && parsed.halls && parsed.bathrooms),
+            address: !!parsed.address,
+            listingId: !!parsed.listingId,
+          },
+          missingFields: parsed.missingFields || [],
+          source,
+          userAgent: navigator.userAgent
+        })
+      });
+    } catch (error) {
+      console.warn('[IM-5] Analytics tracking failed:', error);
+    }
+  };
+  trackImportQuality(); // 靜默失敗,不影響 UX
+}, []);
+```
+
+#### 使用場景
+
+1. **品質監控 Dashboard**:
+   ```sql
+   -- 每週平均信心度
+   SELECT DATE_TRUNC('week', created_at), AVG(confidence)
+   FROM import_analytics
+   GROUP BY 1 ORDER BY 1 DESC;
+   ```
+
+2. **欄位失敗率分析**:
+   ```sql
+   -- 哪些欄位最常失敗?
+   SELECT
+     SUM(CASE WHEN field_status->>'price' = 'false' THEN 1 ELSE 0 END) as price_fails,
+     SUM(CASE WHEN field_status->>'size' = 'false' THEN 1 ELSE 0 END) as size_fails,
+     SUM(CASE WHEN field_status->>'layout' = 'false' THEN 1 ELSE 0 END) as layout_fails
+   FROM import_analytics
+   WHERE created_at > NOW() - INTERVAL '7 days';
+   ```
+
+3. **591 格式變更偵測**:
+   ```sql
+   -- 信心度驟降警報
+   SELECT DATE(created_at), AVG(confidence)
+   FROM import_analytics
+   GROUP BY 1 ORDER BY 1 DESC LIMIT 7;
+   ```
+
+4. **來源使用率**:
+   ```sql
+   SELECT source, COUNT(*) FROM import_analytics GROUP BY source;
+   ```
+
+#### 驗證結果
+
+```bash
+✓ TypeScript 編譯通過 (tsc --noEmit)
+✓ Production build 成功 (36.6s)
+✓ Zod schema 完整驗證
+✓ API 非阻塞設計,失敗不影響 UX
+✓ Supabase migration 完整 (表+索引+RLS)
+```
+
+#### 技術亮點
+
+1. **非阻塞追蹤**: `trackImportQuality()` 獨立執行,失敗不影響匯入流程
+2. **完整錯誤處理**: Zod 驗證 + try-catch + 友善錯誤訊息
+3. **索引優化**: created_at DESC + confidence + source 支援快速查詢
+4. **RLS 安全**: 僅 service_role 可寫入,防止濫用
+5. **靜默失敗**: console.warn 而非 throw,確保 UX 穩定
 
 ---
 
