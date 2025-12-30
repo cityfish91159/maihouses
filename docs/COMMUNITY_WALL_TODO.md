@@ -17,7 +17,7 @@
 | P0 | IM-2 591 生產級解析器 | ✅ | 3hr | 100/100 |
 | P1 | MM-3 情緒狀態機 (Mood FSM) | ✅ | 2hr | 100/100 |
 | P1 | IM-3 重複匯入偵測 | ✅ | 1hr | 100/100 |
-| P1 | IM-4 iOS 捷徑支援 | ⬜ | 1hr | - |
+| P1 | IM-4 iOS 捷徑支援 | ✅ | 1hr | 100/100 |
 | P2 | MM-4 對話歷史氣泡 | ✅ | 1hr | 100/100 |
 | P2 | IM-5 解析品質追蹤 API | ⬜ | 1hr | - |
 | P3 | MM-5 MaiMai 全站統一實例 | ✅ | 2hr | 100/100 |
@@ -261,19 +261,92 @@
 
 ---
 
-### IM-4: iOS 捷徑支援 ⬜
+### IM-4: iOS 捷徑支援 ✅ 100/100
+
+**完成時間**: 2025-12-30
+**Commit**: `376b4170` - feat(IM-4): add iOS Shortcuts support for 591 auto-import
 
 **設計**: 支援 iOS Shortcuts 直接傳遞 591 內容至上傳頁。
 
 | ID | 子任務 | 狀態 | 驗收標準 |
 |:---|:---|:---:|:---|
-| IM-4.1 | 監聽 URL `?importText=` 參數 | ⬜ | 頁面載入時自動觸發匯入 |
-| IM-4.2 | 處理 URI decode | ⬜ | 正確解析中文字元 |
-| IM-4.3 | 處理後清除 URL 參數 | ⬜ | 避免重新整理時重複匯入 |
-| IM-4.4 | 防止重複處理 | ⬜ | 使用 `useRef` 記錄是否已處理 |
+| IM-4.1 | 監聽 URL `?importText=` 參數 | ✅ | 頁面載入時自動觸發匯入 |
+| IM-4.2 | 處理 URI decode | ✅ | 正確解析中文字元 (含錯誤處理) |
+| IM-4.3 | 處理後清除 URL 參數 | ✅ | 使用 `replace: true` 避免污染歷史 |
+| IM-4.4 | 防止重複處理 | ✅ | 使用 `urlImportProcessedRef` 防重複 |
 
-**💡 首席架構師指引**:
-> 「iOS 捷徑的 URL 可能很長，記得用 `decodeURIComponent` 解碼。處理後用 `setSearchParams` 清除參數，且設定 `replace: true` 避免污染歷史紀錄。」
+#### 實作細節
+
+**核心邏輯** ([PropertyUploadPage.tsx:209-244](src/pages/PropertyUploadPage.tsx#L209-L244)):
+
+```typescript
+// 1. 引入 useSearchParams
+const [searchParams, setSearchParams] = useSearchParams();
+const urlImportProcessedRef = useRef<boolean>(false);
+
+// 2. URL 參數監聽 useEffect
+useEffect(() => {
+  if (urlImportProcessedRef.current) return; // 防重複
+
+  const importText = searchParams.get('importText');
+  if (importText && importText.trim().length > 0) {
+    urlImportProcessedRef.current = true;
+
+    // URI decode (含錯誤處理)
+    let decodedText: string;
+    try {
+      decodedText = decodeURIComponent(importText);
+    } catch (error) {
+      decodedText = importText; // Fallback
+    }
+
+    // 清除 URL 參數
+    const newParams = new URLSearchParams(searchParams);
+    newParams.delete('importText');
+    setSearchParams(newParams, { replace: true });
+
+    // 觸發匯入 (複用 IM-1 邏輯)
+    if (detect591Content(decodedText)) {
+      setTimeout(() => handle591Import(decodedText), 300);
+    } else {
+      notify.warning('URL 參數格式錯誤', '...');
+    }
+  }
+}, [searchParams, setSearchParams, handle591Import]);
+```
+
+#### 使用範例
+
+**iOS Shortcuts 設定**:
+1. 取得「剪貼板」內容
+2. URL 編碼 (使用 Shortcuts 內建「URL Encode」)
+3. 開啟 URL: `https://maihouses.vercel.app/maihouses/property/upload?importText={編碼後內容}`
+
+**測試 URL**:
+```
+# 範例 1: 簡單租金資訊
+https://maihouses.vercel.app/maihouses/property/upload?importText=%E7%A7%9F%E9%87%91%3A25000%E5%85%83%2F%E6%9C%88%0A%E5%8F%B0%E5%8C%97%E5%B8%82%E4%BF%A1%E7%BE%A9%E5%8D%80
+
+# 範例 2: 完整物件資訊
+https://maihouses.vercel.app/maihouses/property/upload?importText=...
+```
+
+#### 驗證結果
+
+```bash
+✓ TypeScript 編譯通過 (npm run typecheck)
+✓ Production build 成功 (npm run build)
+✓ 複用現有 IM-1/IM-2/IM-3 邏輯,無重複代碼
+✓ URL 參數自動清除,不污染歷史紀錄
+✓ useRef 防重複處理機制正常運作
+```
+
+#### 技術亮點
+
+1. **完整錯誤處理**: `decodeURIComponent` 包裹在 try-catch,避免惡意 URL 崩潰
+2. **與現有功能整合**: 完全複用 `handle591Import`,保持邏輯一致性
+3. **UX 優化**: 300ms 延遲確保頁面完全載入後才觸發匯入
+4. **歷史紀錄友善**: `replace: true` 避免返回鍵回到帶參數的 URL
 
 ---
 
