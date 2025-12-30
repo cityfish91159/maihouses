@@ -217,11 +217,14 @@ function scoreTitleLine(line: string, allText: string): number {
 
   // 數字過多扣分
   const digitCount = (trimmed.match(/\d/g) || []).length;
-  if (digitCount / trimmed.length > 0.4) return -100;
+  const ratio = digitCount / trimmed.length;
+  if (ratio > 0.4) return -100;
 
-  // 排除清單
+  // 排除清單 (2.5)
   if (/^(售價|總價|租金|單價|坪數|格局|地址|樓層|屋齡|型態|用途|https?|591)/.test(trimmed)) return -100;
   if (trimmed.includes('元/月') || trimmed.includes('萬元')) return -100;
+  // 必須包含至少一個中文字 (避免純英文/數字雜訊)
+  if (!/[\u4e00-\u9fa5]/.test(trimmed)) return -100;
 
   // 加分詞
   const positiveKeywords = ['景觀', '視野', '採光', '方正', '捷運', '學區', '裝潢', '全新', '電梯', '車位'];
@@ -243,8 +246,13 @@ function scoreTitleLine(line: string, allText: string): number {
     }
   }
   
-  // P1: 放寬門檻，若有正向詞且格式乾淨(無排除詞)，即使沒房產詞也保留
-  if (hits === 0 && positiveHits === 0) return -100; 
+  // P1/v2.4: 放寬門檻
+  if (hits === 0) {
+      // 若無房產詞，必須有正向詞 OR (數字率極低 且 長度>=8)
+      // 避免 "今天天氣真好" (短廢話) 或 "Hello World" (已由中文檢核擋掉)
+      const lowRatioPass = ratio <= 0.2 && trimmed.length >= 8;
+      if (positiveHits === 0 && !lowRatioPass) return -100;
+  }
 
   return score;
 }
@@ -255,6 +263,17 @@ function selectBestTitle(lines: string[], allText: string): string | null {
     .filter(c => c.score > 0)
     .sort((a, b) => b.score - a.score);
   return (candidates.length > 0 && candidates[0]) ? candidates[0].line : null;
+}
+
+// ============ 輔助函數 ============
+
+// 2.12: 處理 1+1 房 -> 2 房
+function normalizeRooms(raw: string): string {
+  if (raw.includes('+')) {
+    const sum = raw.split('+').reduce((acc, curr) => acc + (parseFloat(curr) || 0), 0);
+    return sum.toString();
+  }
+  return raw;
 }
 
 // ============ 主解析函數 ============
@@ -316,7 +335,7 @@ export function parse591Content(text: string): Parse591Result {
   // 3.1 P1: 支援 1+1房 / 2.5房
   const stdMatch = normalized.match(LAYOUT_PATTERNS[1]); // 使用新的 Regex
   if (stdMatch && stdMatch[1] && stdMatch[2] && stdMatch[3]) {
-    result.rooms = stdMatch[1];
+    result.rooms = normalizeRooms(stdMatch[1]); // 2.12: Sum 1+1
     result.halls = stdMatch[2];
     result.bathrooms = stdMatch[3];
     layoutFound = true;
@@ -327,7 +346,7 @@ export function parse591Content(text: string): Parse591Result {
   if (!layoutFound) {
     const noHallMatch = normalized.match(LAYOUT_PATTERNS[2]);
     if (noHallMatch && noHallMatch[1] && noHallMatch[2]) {
-      result.rooms = noHallMatch[1];
+      result.rooms = normalizeRooms(noHallMatch[1]); // 2.12: Sum 1+1
       result.halls = '0';
       result.bathrooms = noHallMatch[2];
       layoutFound = true;

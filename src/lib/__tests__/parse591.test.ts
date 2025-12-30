@@ -363,7 +363,7 @@ describe('parse591Content - 整合測試', () => {
     expect(result.rooms).toBe('4');
     expect(result.confidence).toBe(100);
   });
-  describe('IM-2 v2.3 優化建議', () => {
+  describe('IM-2 v2.3 & v2.4 優化建議', () => {
     it('P0: 價格單位一致性 (simpleRentMatch 為 萬/月)', () => {
       // 測試 simpleRentMatch (無冒號格式)
       const result = parse591Content('25,000 元/月'); 
@@ -377,9 +377,16 @@ describe('parse591Content - 整合測試', () => {
       expect(result.title).toBe('景觀第一排 捷運 1 分鐘');
     });
 
-    it('P1: 格局支援 1+1房', () => {
+    it('P1: 標題門檻放寬 (無房產詞且無正向詞，但數字率極低)', () => {
+      // v2.4: 低數字率放行
+      const result = parse591Content('優質社區環境單純\n總價 2000 萬\n坪數 30 坪');
+      expect(result.title).toBe('優質社區環境單純');
+    });
+
+    it('P1: 格局支援 1+1房 (自動加總)', () => {
       const result = parse591Content('格局：1+1房1廳1衛');
-      expect(result.rooms).toBe('1+1');
+      // v2.4: 1+1 -> 2
+      expect(result.rooms).toBe('2');
     });
 
     it('P1: 格局支援 2.5房', () => {
@@ -422,6 +429,10 @@ describe('detect591Content', () => {
 
   it('P1: 租金+地名 應識別為 True', () => {
     expect(detect591Content('租金 25000 元/月 位於台北市大安區')).toBe(true);
+  });
+
+  it('IM-2.13: 租金+地名(無坪數) 應為 True', () => {
+    expect(detect591Content('月租 20000 元/月 台中市西屯區')).toBe(true);
   });
  
   it('P1: 純租金無地名 應為 False', () => {
