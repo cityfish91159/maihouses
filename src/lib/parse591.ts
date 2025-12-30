@@ -1,16 +1,16 @@
 /**
- * 591 物件資訊解析器 (IM-2 Production Grade v2.2)
+ * 591 物件資訊解析器 (IM-2 Production Grade v2.4)
  * @description 用於解析從 591 網站複製的物件內容，帶多重 fallback 策略
- * @version 2.2.0 - 2025-12-29
+ * @version 2.4.0 - 2025-12-30
  * 
  * 修正項目 (Audit Fixes):
  * - 2.1: 價格正規化 (統一轉為「萬」單位，支援億、元/月轉換)
  * - 2.2: fieldsFound 修正 (格局、ID 不重複計分)
  * - 2.3: 格局容錯 (1.5衛、0廳、開放式)
  * - 2.4: 坪數模糊 fallback (移除括號、含車位等廢字)
- * - 2.5: 標題評分優化 (過濾無效行)
+ * - 2.5: 標題評分優化 (過濾無效行，支援低數字率放行)
  * - 2.6: 地址正規化 (台/臺、跨行)
- * - 2.7: Detect591 增強
+ * - 2.7: Detect591 增強 (租金+地名覆蓋)
  */
 
 export interface Parse591Result {
@@ -174,13 +174,12 @@ const SIZE_PATTERNS = [
 // ============ 格局解析模式 (支援半衛/0廳/開放式) ============
 
 const LAYOUT_PATTERNS = [
-  // 標準格局：3房2廳2衛 (2.3: 支援小數點 1.5衛)
-  /(\d+)\s*房\s*(\d+)\s*廳\s*([\d.]+)\s*衛/,
-  // P1: 支援 1+1房、2.5房
+  // 0: 標準+擴充 (支援 1+1房 / 2.5房 / 3房 / 1.5衛)
+  // 策略: 數值保留 String, 但若含 "+", normalizeRooms 會進行加總 (如 1+1->2)
   /((?:\d+(?:\.\d+)?)(?:\+\d)?)\s*房\s*(\d+)\s*廳\s*([\d.]+)\s*衛/, 
-  // 無廳格式：3房2衛 -> 0廳
+  // 1: 無廳格式：3房2衛 -> 0廳
   /((?:\d+(?:\.\d+)?)(?:\+\d)?)\s*房\s*([\d.]+)\s*衛/,
-  // 開放式格局
+  // 2: 開放式格局
   /開放式/,
 ] as const;
 
@@ -333,7 +332,7 @@ export function parse591Content(text: string): Parse591Result {
   let layoutFound = false;
   
   // 3.1 P1: 支援 1+1房 / 2.5房
-  const stdMatch = normalized.match(LAYOUT_PATTERNS[1]); // 使用新的 Regex
+  const stdMatch = normalized.match(LAYOUT_PATTERNS[0]); // Index 0 (Updated)
   if (stdMatch && stdMatch[1] && stdMatch[2] && stdMatch[3]) {
     result.rooms = normalizeRooms(stdMatch[1]); // 2.12: Sum 1+1
     result.halls = stdMatch[2];
@@ -344,7 +343,7 @@ export function parse591Content(text: string): Parse591Result {
 
   // 3.2 無廳 (3房2衛) / 1+1房2衛
   if (!layoutFound) {
-    const noHallMatch = normalized.match(LAYOUT_PATTERNS[2]);
+    const noHallMatch = normalized.match(LAYOUT_PATTERNS[1]); // Index 1 (Updated)
     if (noHallMatch && noHallMatch[1] && noHallMatch[2]) {
       result.rooms = normalizeRooms(noHallMatch[1]); // 2.12: Sum 1+1
       result.halls = '0';
@@ -413,7 +412,8 @@ export function parse591Content(text: string): Parse591Result {
 
 // 2.7 Detect591 增強
 export function detect591Content(text: string): boolean {
-  if (!text || text.trim().length < 10) return false;
+  // R4: 降低門檻至 8 (適應 "租金25000台北" 等短貼文)
+  if (!text || text.trim().length < 8) return false;
   if (text.includes('591')) return true;
   
   // 關鍵字計分
