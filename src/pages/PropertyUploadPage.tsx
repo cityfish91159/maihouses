@@ -46,8 +46,12 @@ const PropertyUploadContent: React.FC = () => {
   // IM-3: 重複匯入偵測
   const lastImportedIdRef = useRef<string | null>(null);
 
-  // IM-4: iOS 捷徑支援 - 防止重複處理 URL 參數
-  const urlImportProcessedRef = useRef<boolean>(false);
+  // IM-4: iOS 捷徑支援 - 記錄已處理的 importText 值 (非 boolean，以支援 SPA 多次導航)
+  const lastProcessedImportTextRef = useRef<string | null>(null);
+
+  // OPT-2: Timer 清理機制 (解決 SPA 導航 Bug)
+  const scrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const importTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     // 檢查是否有草稿可用
@@ -63,6 +67,16 @@ const PropertyUploadContent: React.FC = () => {
     window.addEventListener('storage', onStorage);
     return () => window.removeEventListener('storage', onStorage);
   }, [userId]);
+
+  // OPT-2: 組件卸載時清理 scrollTimer (防止 SPA 靈異滾動)
+  useEffect(() => {
+    return () => {
+      if (scrollTimerRef.current) {
+        clearTimeout(scrollTimerRef.current);
+        scrollTimerRef.current = null;
+      }
+    };
+  }, []);
 
   // 還原草稿
   const handleRestoreDraft = () => {
@@ -190,11 +204,14 @@ const PropertyUploadContent: React.FC = () => {
       notify.success('匯入成功', `${notifyMsg}（信心度 ${parsed.confidence}%）`);
 
       // IM-AC3: 匯入成功後 3 秒，自動滾動至「兩好一公道」區塊
-      setTimeout(() => {
+      // OPT-2: 使用 ref 儲存 timer，支援組件卸載時清理
+      if (scrollTimerRef.current) clearTimeout(scrollTimerRef.current);
+      scrollTimerRef.current = setTimeout(() => {
         const twoGoodsSection = document.getElementById(TWO_GOODS_SECTION_ID);
         if (twoGoodsSection) {
           twoGoodsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
+        scrollTimerRef.current = null;
       }, SCROLL_DELAY_MS);
     };
 
@@ -207,40 +224,45 @@ const PropertyUploadContent: React.FC = () => {
   }, [setForm, setLoading, setMood, addMessage]);
 
   // IM-4: iOS 捷徑支援 - 監聽 URL ?importText= 參數
+  // OPT-2: 重寫以修復 SPA 導航 Bug、冗餘解碼、記憶體洩漏
   useEffect(() => {
-    // 防止重複處理
-    if (urlImportProcessedRef.current) return;
-
     const importText = searchParams.get('importText');
 
-    if (importText && importText.trim().length > 0) {
-      // 標記已處理,防止重新整理時重複匯入
-      urlImportProcessedRef.current = true;
+    // OPT-2.2: 改用值比較而非 boolean 鎖，支援 SPA 中多次不同參數導航
+    if (!importText || importText.trim().length === 0) return;
+    if (lastProcessedImportTextRef.current === importText) return;
 
-      // IM-4.2: URI decode 中文字元
-      let decodedText: string;
-      try {
-        decodedText = decodeURIComponent(importText);
-      } catch (error) {
-        console.error('URL decode failed:', error);
-        decodedText = importText; // Fallback 使用原始值
-      }
+    // 標記當前值已處理
+    lastProcessedImportTextRef.current = importText;
 
-      // IM-4.3: 處理後清除 URL 參數 (replace: true 避免污染歷史紀錄)
-      const newParams = new URLSearchParams(searchParams);
-      newParams.delete('importText');
-      setSearchParams(newParams, { replace: true });
+    // OPT-2.3: 移除冗餘 decodeURIComponent
+    // searchParams.get() 已自動處理 URL 解碼，再次解碼會導致 % 符號異常
+    const textToImport = importText;
 
-      // 觸發匯入 (使用現有的 handle591Import 函數)
-      if (detect591Content(decodedText)) {
-        // 稍微延遲確保頁面已完全載入
-        setTimeout(() => {
-          handle591Import(decodedText);
-        }, 300);
-      } else {
-        notify.warning('URL 參數格式錯誤', '匯入的內容不符合 591 格式');
-      }
+    // IM-4.3: 處理後清除 URL 參數 (replace: true 避免污染歷史紀錄)
+    const newParams = new URLSearchParams(searchParams);
+    newParams.delete('importText');
+    setSearchParams(newParams, { replace: true });
+
+    // 觸發匯入 (使用現有的 handle591Import 函數)
+    if (detect591Content(textToImport)) {
+      // OPT-2.4: 使用 ref 儲存 timer，組件卸載時可清理
+      if (importTimerRef.current) clearTimeout(importTimerRef.current);
+      importTimerRef.current = setTimeout(() => {
+        handle591Import(textToImport);
+        importTimerRef.current = null;
+      }, 300);
+    } else {
+      notify.warning('URL 參數格式錯誤', '匯入的內容不符合 591 格式');
     }
+
+    // OPT-2.1: Cleanup function - 組件卸載時清理所有 timer
+    return () => {
+      if (importTimerRef.current) {
+        clearTimeout(importTimerRef.current);
+        importTimerRef.current = null;
+      }
+    };
   }, [searchParams, setSearchParams, handle591Import]);
 
   // IM-1: 全域 paste 事件監聽器

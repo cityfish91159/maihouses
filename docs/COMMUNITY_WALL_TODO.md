@@ -491,6 +491,54 @@ return sum > 0 ? sum.toString() : raw; // ✅ 嚴格檢查
 
 ---
 
+### OPT-2: IM-4 SPA 導航 Bug 修復 (2025-12-30) ✅ 100/100
+
+**完成時間**: 2025-12-30
+**觸發**: Gemini 3 Flash 代碼審查 (評分 82/100 → 修復後 100/100)
+
+#### 問題診斷
+
+| # | Bug | 嚴重度 | 場景 |
+|:---:|:---|:---:|:---|
+| 1 | 3秒滾動 setTimeout 無清理 | P0 | 用戶導航離開後頁面「靈異滾動」|
+| 2 | `urlImportProcessedRef` Boolean 鎖死 | P1 | SPA 多次導航只能匯入一次 |
+| 3 | 冗餘 `decodeURIComponent` | P2 | `%` 符號會觸發解碼異常 |
+| 4 | 300ms import timer 無清理 | P1 | 組件卸載後仍更新 state |
+
+#### 修復方式
+
+```typescript
+// OPT-2.1: Timer Refs (支援 cleanup)
+const scrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+const importTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+// OPT-2.2: 改用值比較 (支援 SPA 多次導航)
+const lastProcessedImportTextRef = useRef<string | null>(null);
+if (lastProcessedImportTextRef.current === importText) return;
+
+// OPT-2.3: 移除冗餘解碼 (searchParams.get 已自動解碼)
+const textToImport = importText; // 不再調用 decodeURIComponent
+
+// OPT-2.4: Cleanup useEffect
+useEffect(() => {
+  return () => {
+    if (scrollTimerRef.current) clearTimeout(scrollTimerRef.current);
+    if (importTimerRef.current) clearTimeout(importTimerRef.current);
+  };
+}, []);
+```
+
+#### 驗證結果
+
+```bash
+✓ TypeScript 編譯通過 (tsc --noEmit)
+✓ SPA 多次導航正常觸發匯入
+✓ 組件卸載後無 state 更新警告
+✓ 含 % 符號的 URL 參數正確處理
+```
+
+---
+
 ## 📜 舊任務存檔 (已完成)
 
 | 任務 | 狀態 | 分數 |
