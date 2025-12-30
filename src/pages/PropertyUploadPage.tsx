@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import {
   Loader2, Download, Check, Home, ArrowLeft, Building2, Edit3, RotateCcw
 } from 'lucide-react';
@@ -18,6 +18,8 @@ import { UploadFormProvider, useUploadForm } from '../components/upload/UploadCo
 
 const PropertyUploadContent: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+
   const {
     loading,
     setLoading,
@@ -43,6 +45,9 @@ const PropertyUploadContent: React.FC = () => {
 
   // IM-3: 重複匯入偵測
   const lastImportedIdRef = useRef<string | null>(null);
+
+  // IM-4: iOS 捷徑支援 - 防止重複處理 URL 參數
+  const urlImportProcessedRef = useRef<boolean>(false);
 
   useEffect(() => {
     // 檢查是否有草稿可用
@@ -200,6 +205,43 @@ const PropertyUploadContent: React.FC = () => {
       completeImport();
     }
   }, [setForm, setLoading, setMood, addMessage]);
+
+  // IM-4: iOS 捷徑支援 - 監聽 URL ?importText= 參數
+  useEffect(() => {
+    // 防止重複處理
+    if (urlImportProcessedRef.current) return;
+
+    const importText = searchParams.get('importText');
+
+    if (importText && importText.trim().length > 0) {
+      // 標記已處理,防止重新整理時重複匯入
+      urlImportProcessedRef.current = true;
+
+      // IM-4.2: URI decode 中文字元
+      let decodedText: string;
+      try {
+        decodedText = decodeURIComponent(importText);
+      } catch (error) {
+        console.error('URL decode failed:', error);
+        decodedText = importText; // Fallback 使用原始值
+      }
+
+      // IM-4.3: 處理後清除 URL 參數 (replace: true 避免污染歷史紀錄)
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete('importText');
+      setSearchParams(newParams, { replace: true });
+
+      // 觸發匯入 (使用現有的 handle591Import 函數)
+      if (detect591Content(decodedText)) {
+        // 稍微延遲確保頁面已完全載入
+        setTimeout(() => {
+          handle591Import(decodedText);
+        }, 300);
+      } else {
+        notify.warning('URL 參數格式錯誤', '匯入的內容不符合 591 格式');
+      }
+    }
+  }, [searchParams, setSearchParams, handle591Import]);
 
   // IM-1: 全域 paste 事件監聽器
   useEffect(() => {
