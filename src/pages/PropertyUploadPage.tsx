@@ -52,6 +52,8 @@ const PropertyUploadContent: React.FC = () => {
   // OPT-2: Timer 清理機制 (解決 SPA 導航 Bug)
   const scrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const importTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // OPT-2.5: thinkingDelay timer (信心度延遲)
+  const thinkingDelayTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     // 檢查是否有草稿可用
@@ -68,12 +70,17 @@ const PropertyUploadContent: React.FC = () => {
     return () => window.removeEventListener('storage', onStorage);
   }, [userId]);
 
-  // OPT-2: 組件卸載時清理 scrollTimer (防止 SPA 靈異滾動)
+  // OPT-2: 組件卸載時清理所有 Timer (防止 SPA 靈異滾動/匯入)
   useEffect(() => {
     return () => {
       if (scrollTimerRef.current) {
         clearTimeout(scrollTimerRef.current);
         scrollTimerRef.current = null;
+      }
+      // OPT-2.5: 清理 thinkingDelay timer
+      if (thinkingDelayTimerRef.current) {
+        clearTimeout(thinkingDelayTimerRef.current);
+        thinkingDelayTimerRef.current = null;
       }
     };
   }, []);
@@ -216,8 +223,13 @@ const PropertyUploadContent: React.FC = () => {
     };
 
     // 根據信心度決定是否延遲
+    // OPT-2.5: 使用 ref 儲存 timer，支援組件卸載時清理
     if (thinkingDelay > 0) {
-      setTimeout(completeImport, thinkingDelay);
+      if (thinkingDelayTimerRef.current) clearTimeout(thinkingDelayTimerRef.current);
+      thinkingDelayTimerRef.current = setTimeout(() => {
+        completeImport();
+        thinkingDelayTimerRef.current = null;
+      }, thinkingDelay);
     } else {
       completeImport();
     }
