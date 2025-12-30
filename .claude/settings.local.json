@@ -40,7 +40,11 @@
       "Bash(git rm:*)",
       "Bash(mkdir:*)",
       "Bash(ls:*)",
-      "Bash(npx supabase link:*)"
+      "Bash(npx supabase link:*)",
+      "Bash(npx vercel --prod --yes)",
+      "Bash(git checkout:*)",
+      "Bash(git merge:*)",
+      "Bash(git stash:*)"
     ]
   },
   "model": "sonnet",

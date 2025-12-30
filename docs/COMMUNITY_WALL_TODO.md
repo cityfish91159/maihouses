@@ -37,12 +37,29 @@
 
 ## 🔥 P0 高優先級任務（必須完成）
 
-### UAG-1: 資料庫 Schema 部署 ✅
+### UAG-1: 資料庫 Schema 部署 ✅ 92/100
 
-**完成日期**: 2025-12-30
-**Migration 檔案**: `supabase/migrations/20251230_uag_tracking_v8.sql`
-**部署方式**: 手動執行 SQL via Supabase Dashboard
-**包含內容**: 3 表 + 1 視圖 + 3 函數 + RLS 政策
+**Migration**: `supabase/migrations/20251230_uag_tracking_v8.sql` (255 行)
+
+| 項目 | 狀態 |
+|:---|:---:|
+| `uag_sessions` 表 | ✅ |
+| `uag_events` 表 | ✅ |
+| `uag_events_archive` 表 | ✅ |
+| `uag_lead_rankings` 物化視圖 | ✅ |
+| `calculate_lead_grade()` 函數 | ✅ |
+| `archive_old_history()` 函數 | ✅ |
+| `track_uag_event_v8()` RPC | ✅ |
+| RLS 政策 | ✅ |
+| 索引 (7 個) | ✅ |
+
+**審計發現 (扣 8 分)**:
+| # | 問題 | 修復 |
+|:---:|:---|:---|
+| 1 | `get_agent_property_stats` RPC 未創建 | → UAG-3 |
+| 2 | `purchase_lead` RPC 未創建 | → UAG-3 |
+| 3 | 物化視圖缺 UNIQUE INDEX (無法 CONCURRENTLY) | 補 `idx_lead_ranking_unique` |
+| 4 | RLS `auth.uid()` 與 `agent_id` 格式可能不匹配 | 確認 ID 來源 |
 
 ---
 
