@@ -39,7 +39,8 @@
       "Bash(})",
       "Bash(git rm:*)",
       "Bash(mkdir:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(npx supabase link:*)"
     ]
   },
   "model": "sonnet",
