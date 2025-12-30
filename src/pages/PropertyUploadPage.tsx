@@ -120,13 +120,45 @@ const PropertyUploadContent: React.FC = () => {
   const SCROLL_DELAY_MS = 3000;
   const TWO_GOODS_SECTION_ID = 'two-goods-section';
 
-  const handle591Import = useCallback((text: string) => {
+  const handle591Import = useCallback((text: string, source: 'paste' | 'url' | 'button' = 'paste') => {
     setLoading(true);
     setMood('thinking');
     addMessage('正在解析 591 物件資料...');
 
     // 先同步解析（不阻塞 UI）
     const parsed = parse591Content(text);
+
+    // IM-5: 追蹤解析品質 (非同步,不阻塞主流程)
+    const trackImportQuality = async () => {
+      try {
+        await fetch('/api/analytics/import', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            textLength: text.length,
+            confidence: parsed.confidence,
+            fieldsFound: parsed.fieldsFound,
+            fieldStatus: {
+              title: !!parsed.title,
+              price: !!parsed.price,
+              size: !!parsed.size,
+              layout: !!(parsed.rooms && parsed.halls && parsed.bathrooms),
+              address: !!parsed.address,
+              listingId: !!parsed.listingId,
+            },
+            missingFields: parsed.missingFields || [],
+            source,
+            userAgent: navigator.userAgent,
+          }),
+        });
+      } catch (error) {
+        // 靜默失敗,不影響用戶體驗
+        console.warn('[IM-5] Analytics tracking failed:', error);
+      }
+    };
+
+    // 非阻塞追蹤
+    trackImportQuality();
 
     // IM-3: 重複匯入偵測 (ID 不同時詢問)
     if (parsed.listingId && lastImportedIdRef.current && parsed.listingId !== lastImportedIdRef.current) {
@@ -261,7 +293,7 @@ const PropertyUploadContent: React.FC = () => {
       // OPT-2.4: 使用 ref 儲存 timer，組件卸載時可清理
       if (importTimerRef.current) clearTimeout(importTimerRef.current);
       importTimerRef.current = setTimeout(() => {
-        handle591Import(textToImport);
+        handle591Import(textToImport, 'url'); // IM-5: 標記來源為 URL
         importTimerRef.current = null;
       }, 300);
     } else {
@@ -291,7 +323,7 @@ const PropertyUploadContent: React.FC = () => {
       // IM-1.3: 智慧偵測 591 內容
       if (detect591Content(text)) {
         e.preventDefault();
-        handle591Import(text);
+        handle591Import(text, 'paste'); // IM-5: 標記來源為 paste
       }
     };
 
@@ -313,7 +345,7 @@ const PropertyUploadContent: React.FC = () => {
     }
 
     // 否則當作內容處理
-    handle591Import(url);
+    handle591Import(url, 'button'); // IM-5: 標記來源為 button
   };
 
   if (showConfirmation && uploadResult) {
