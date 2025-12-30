@@ -350,7 +350,7 @@ https://maihouses.vercel.app/maihouses/property/upload?importText=...
 
 ---
 
-### IM-5: 解析品質追蹤 API ✅ 100/100
+### IM-5: 解析品質追蹤 API ✅ 98/100
 
 **完成時間**: 2025-12-30
 **Commit**: `8e7c6c8f` - feat(IM-5): implement 591 import quality tracking API
@@ -502,6 +502,20 @@ const handle591Import = useCallback((text: string, source: 'paste'|'url'|'button
 3. **索引優化**: created_at DESC + confidence + source 支援快速查詢
 4. **RLS 安全**: 僅 service_role 可寫入,防止濫用
 5. **靜默失敗**: console.warn 而非 throw,確保 UX 穩定
+
+#### 代碼審查 (2025-12-30)
+
+**審查範圍**:
+| 檔案 | 行數 | 評價 |
+|:---|:---:|:---|
+| `api/analytics/import.ts` | 158 | ⭐5 - Zod validation, Singleton client, CORS |
+| `migrations/20251230_create_import_analytics.sql` | 57 | ⭐5 - RLS, Indexes, Comments |
+| `PropertyUploadPage.tsx` (整合) | ~30 | ⭐5 - Fire-and-forget, Silent fail |
+
+**扣分項**:
+- 缺少 API 單元測試 (`import.test.ts`) (-2 分)
+
+**最終評分**: **98/100**
 
 ---
 

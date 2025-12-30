@@ -37,7 +37,9 @@
       "Bash(printf:*)",
       "Bash({ echo -n true)",
       "Bash(})",
-      "Bash(git rm:*)"
+      "Bash(git rm:*)",
+      "Bash(mkdir:*)",
+      "Bash(ls:*)"
     ]
   },
   "model": "sonnet",
