@@ -266,11 +266,15 @@ function selectBestTitle(lines: string[], allText: string): string | null {
 
 // ============ 輔助函數 ============
 
-// 2.12: 處理 1+1 房 -> 2 房
+// 2.12: 處理 1+1 房 -> 2 房 (含錯誤處理)
 function normalizeRooms(raw: string): string {
   if (raw.includes('+')) {
-    const sum = raw.split('+').reduce((acc, curr) => acc + (parseFloat(curr) || 0), 0);
-    return sum.toString();
+    const sum = raw.split('+').reduce((acc, curr) => {
+      const num = parseFloat(curr);
+      return acc + (isNaN(num) ? 0 : num);
+    }, 0);
+    // 避免返回 NaN 或無效值
+    return sum > 0 ? sum.toString() : raw;
   }
   return raw;
 }

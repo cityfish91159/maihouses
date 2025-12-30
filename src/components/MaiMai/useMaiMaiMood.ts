@@ -42,15 +42,21 @@ export function useMaiMaiMood(options: UseMaiMaiMoodOptions = {}): {
       const newCount = prev + 1;
       if (newCount >= 5) {
         setInternalCelebrating(true);
-        // 2 秒後重置
-        setTimeout(() => {
-          setInternalCelebrating(false);
-          setClickCount(0);
-        }, 2000);
       }
       return newCount;
     });
   }, []);
+
+  // 自動重置慶祝狀態 (避免 setTimeout 記憶體洩漏)
+  useEffect(() => {
+    if (internalCelebrating) {
+      const timer = setTimeout(() => {
+        setInternalCelebrating(false);
+        setClickCount(0);
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [internalCelebrating]);
 
   const resetCelebration = useCallback(() => {
     setInternalCelebrating(false);

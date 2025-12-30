@@ -80,7 +80,7 @@ export function useConfetti(options: UseConfettiOptions = {}) {
     });
   }, [particleCount, spread, origin, colors]);
 
-  // Canvas 組件
+  // Canvas 組件 (useMemo 優於 useCallback,因為返回 JSX 而非函數)
   const ConfettiCanvas = useCallback((): JSX.Element => {
     return (
       <canvas
