@@ -29,7 +29,7 @@
 
 ## 🔥 P0 任務
 
-### UAG-1: 資料庫 Schema 部署 ✅
+### UAG-1: 資料庫 Schema 部署 ✅ 100/100
 
 **Migration**: `supabase/migrations/20251230_uag_tracking_v8.sql`
 
@@ -38,11 +38,9 @@
 - ✅ `uag_lead_rankings` 物化視圖
 - ✅ `calculate_lead_grade()` / `archive_old_history()` 函數
 - ✅ `track_uag_event_v8()` RPC
-- ✅ RLS 政策 + 7 個索引
-
-**待補**:
-- [ ] 物化視圖 UNIQUE INDEX (CONCURRENTLY 需要)
-- [ ] 驗證 RLS `auth.uid()` 與 `agent_id` 格式
+- ✅ RLS 政策 + 8 個索引
+- ✅ 物化視圖 UNIQUE INDEX (`idx_lead_ranking_unique`) - 支援 CONCURRENTLY 刷新
+- ✅ RLS 政策加入 NOTE 說明 `auth.uid()` 與 `agent_id` 格式要求
 
 ---
 

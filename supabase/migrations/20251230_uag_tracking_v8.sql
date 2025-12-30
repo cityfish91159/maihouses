@@ -76,6 +76,8 @@ WHERE grade IN ('S', 'A', 'B')
 WITH DATA;
 
 CREATE INDEX idx_lead_ranking ON public.uag_lead_rankings(agent_id, grade, rank);
+-- UNIQUE INDEX for CONCURRENTLY refresh support
+CREATE UNIQUE INDEX idx_lead_ranking_unique ON public.uag_lead_rankings(session_id);
 
 -- ══════════════════════════════════════════════════════════════════════════════
 -- 5. 分級計算函數
@@ -237,6 +239,10 @@ $$;
 -- ══════════════════════════════════════════════════════════════════════════════
 -- 8. RLS 政策 (Row Level Security)
 -- ══════════════════════════════════════════════════════════════════════════════
+-- NOTE: agent_id 格式必須與 auth.uid()::text 一致
+-- 如果 agent_id 使用自定義格式（如 "agent_123"），需修改 USING 條件
+-- 例如: USING (agent_id = (SELECT custom_agent_id FROM profiles WHERE id = auth.uid()))
+
 ALTER TABLE public.uag_sessions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.uag_events ENABLE ROW LEVEL SECURITY;
 
@@ -244,7 +250,7 @@ ALTER TABLE public.uag_events ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Allow anon insert" ON public.uag_sessions FOR INSERT TO anon WITH CHECK (true);
 CREATE POLICY "Allow anon insert" ON public.uag_events FOR INSERT TO anon WITH CHECK (true);
 
--- 業務只能看自己的客戶
+-- 業務只能看自己的客戶 (假設 agent_id = auth.uid()::text)
 CREATE POLICY "Agent can read own sessions" ON public.uag_sessions
   FOR SELECT TO authenticated
   USING (agent_id = auth.uid()::text);
