@@ -5,7 +5,7 @@ import { AppData, Grade, LeadStatus } from '../types/uag.types';
 import { MOCK_DB } from '../mockData';
 import { notify } from '../../../lib/notify';
 import { useAuth } from '../../../hooks/useAuth';
-import { GRADE_HOURS } from '../uag-config';
+import { GRADE_PROTECTION_HOURS } from '../uag-config';
 import { validateQuota } from '../utils/validation';
 import { safeLocalStorage } from '../../../lib/safeStorage';
 
@@ -98,7 +98,7 @@ export function useUAG() {
           },
           leads: previousData.leads.map(l =>
             l.id === leadId
-              ? { ...l, status: 'purchased' as LeadStatus, remainingHours: GRADE_HOURS[grade] || 48 }
+              ? { ...l, status: 'purchased' as LeadStatus, remainingHours: GRADE_PROTECTION_HOURS[grade] || 48 }
               : l
           )
         };
