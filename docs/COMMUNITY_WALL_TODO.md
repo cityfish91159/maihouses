@@ -1,7 +1,7 @@
 # 🎯 UAG 系統完整優化工單 (SSOT)
 
-> **最後更新**: 2025-12-30
-> **目標**: UAG (User Activity & Grade) 客戶分級追蹤系統完整部署與優化
+> **最後更新**: 2025-12-31
+> **目標**: UAG (User Activity & Grade) 客戶分級追蹤系統完整部署與優化 + 私訊系統
 > **首頁**: https://maihouses.vercel.app/maihouses/
 > **UAG 頁**: https://maihouses.vercel.app/maihouses/uag
 > **Feed 頁**: https://maihouses.vercel.app/maihouses/feed/demo-001
@@ -16,6 +16,15 @@
 | **P0** | UAG-2 District 傳遞修復 | ✅ | 1hr | Frontend |
 | **P0** | UAG-3 RPC 函數創建 | ✅ | 2hr | Backend |
 | **P0** | UAG-4 Session Recovery API | ✅ | 2hr | Backend |
+| **P0** | MSG-1 私訊系統資料模型 | ⬜ | 2hr | Backend |
+| **P0** | MSG-2 消費者 Feed 鈴鐺功能 | ⬜ | 2hr | Frontend |
+| **P0** | MSG-3 消費者 Feed 橫條提醒 | ⬜ | 1hr | Frontend |
+| **P0** | MSG-4 對話頁面 | ⬜ | 3hr | Frontend |
+| **P0** | MSG-5 房仲後台發送介面 | ⬜ | 2hr | Frontend |
+| **P0** | NOTIFY-1 簡訊 API | ⬜ | 2hr | Backend |
+| **P0** | NOTIFY-2 Web Push 推播 | ⬜ | 2hr | Backend |
+| **P0** | AUTH-1 註冊流程 phone 必填 | ⬜ | 1hr | Frontend |
+| **P0** | UAG-13 purchase_lead 觸發通知 | ⬜ | 2hr | Backend |
 | **P1** | UAG-5 配置統一重構 | ✅ | 1hr | Frontend |
 | **P1** | UAG-6 page_exit 去重 | ⬜ | 1hr | Frontend |
 | **P1** | UAG-7 地圖點擊追蹤 | ⬜ | 0.5hr | Frontend |
@@ -85,6 +94,178 @@
 - ✅ **單元測試**: `api/__tests__/session-recovery.test.ts` (Vitest, 11 cases passed)
 
 **驗證**: TypeScript 0 errors, API 測試 3/3 passed, Vitest 11/11 passed
+
+---
+
+### MSG-1: 私訊系統資料模型 ⬜
+
+**目標**: 建立房仲與消費者對話的資料結構
+
+**資料表設計**:
+
+**conversations（對話）**
+| 欄位 | 類型 | 說明 |
+|------|------|------|
+| id | UUID | 對話 ID |
+| agent_id | TEXT | 房仲 |
+| session_id | TEXT | 匿名識別 |
+| profile_id | UUID | 消費者（回覆後填入） |
+| property_id | TEXT | 物件 |
+| status | TEXT | pending / active / closed |
+| created_at | TIMESTAMPTZ | 建立時間 |
+| updated_at | TIMESTAMPTZ | 更新時間 |
+
+**messages（訊息）**
+| 欄位 | 類型 | 說明 |
+|------|------|------|
+| id | UUID | 訊息 ID |
+| conversation_id | UUID | 對話 ID |
+| sender_type | TEXT | agent / consumer |
+| sender_id | TEXT | 發送者 ID |
+| content | TEXT | 訊息內容 |
+| created_at | TIMESTAMPTZ | 發送時間 |
+| read_at | TIMESTAMPTZ | 已讀時間 |
+
+**業務邏輯**:
+- 房仲購買 session 後建立 conversation（status: pending）
+- 消費者回覆後 conversation 變為 active，填入 profile_id
+- 房仲可留自己聯絡資料，內容不限制
+
+---
+
+### MSG-2: 消費者 Feed 鈴鐺功能 ⬜
+
+**目標**: GlobalHeader 鈴鐺點擊展開私訊列表
+
+**位置**: `src/components/layout/GlobalHeader.tsx` Line 121-131
+
+**功能**:
+- 顯示未讀數量紅點（現有 `notificationCount` prop）
+- 點擊展開私訊列表下拉選單
+- 列表項目：房仲名、物件名、訊息預覽、時間
+- 點擊項目進入對話頁面
+
+**資料來源**: `useNotifications` hook 擴展
+
+---
+
+### MSG-3: 消費者 Feed 橫條提醒 ⬜
+
+**目標**: TxBanner 擴展支援私訊提醒
+
+**位置**: `src/components/Feed/TxBanner.tsx`
+
+**顯示條件**: 有未讀私訊時顯示
+
+**內容**:
+```
+💬 有房仲想聯繫您
+   惠宇上晴 12F · 游杰倫 · 5分鐘前    [查看]
+```
+
+**優先級**: 私訊提醒 > 交易提醒
+
+---
+
+### MSG-4: 對話頁面 ⬜
+
+**目標**: 消費者查看訊息並回覆的頁面
+
+**路由**: `/feed/{userId}/chat/{conversationId}`
+
+**功能**:
+- 顯示房仲資訊（名稱、公司、頭像）
+- 顯示相關物件資訊
+- 訊息列表（時間排序）
+- 回覆輸入框
+- 回覆後 conversation 狀態變 active
+
+---
+
+### MSG-5: 房仲後台發送介面 ⬜
+
+**目標**: 房仲購買客戶後編輯並發送訊息
+
+**位置**: UAG 頁面購買成功後 或 房仲 Feed
+
+**功能**:
+- 購買成功後彈出訊息編輯框
+- 可編輯訊息內容（可留自己聯絡資料）
+- 發送按鈕
+- 顯示對話列表（已發送的客戶）
+
+**對話列表顯示**:
+- 消費者身份：訪客-A3F2B1（匿名）
+- 狀態：等待回覆 / 對話中
+- 消費者回覆後顯示真實身份
+
+---
+
+### NOTIFY-1: 簡訊 API ⬜
+
+**目標**: 平台發送簡訊通知消費者，房仲看不到號碼
+
+**API**: `/api/send-sms`
+
+**觸發時機**: 房仲發送訊息後
+
+**簡訊內容**:
+```
+【邁邁房屋】有房仲想聯繫您，請至 maihouses.vercel.app/feed/xxx 查看
+```
+
+**服務商**: 三竹簡訊（Mitake）或其他台灣簡訊服務
+
+**個資保護**:
+- 手機號碼存在 profiles 表
+- API 內部讀取發送，不回傳給前端
+- 房仲只知道「已通知」，不知道號碼
+
+---
+
+### NOTIFY-2: Web Push 推播 ⬜
+
+**目標**: 瀏覽器推播通知消費者
+
+**觸發時機**: 房仲發送訊息後
+
+**前置條件**: 消費者已授權推播
+
+**推播內容**:
+```
+邁邁房屋
+有房仲想聯繫您，點擊查看
+```
+
+**技術**: Firebase Cloud Messaging 或 Web Push API
+
+---
+
+### AUTH-1: 註冊流程 phone 必填 ⬜
+
+**目標**: 消費者註冊時必須填寫手機號碼
+
+**修改位置**:
+- 註冊表單
+- profiles 表 schema
+- 驗證邏輯
+
+**欄位**:
+- phone: TEXT NOT NULL
+- phone_verified: BOOLEAN DEFAULT false
+
+---
+
+### UAG-13: purchase_lead 觸發通知 ⬜
+
+**目標**: 修改 purchase_lead RPC，購買成功後建立 conversation 並觸發通知
+
+**修改位置**: `supabase/migrations/20251231_002_uag_rpc_functions.sql`
+
+**新增邏輯**:
+1. 購買成功後建立 conversation（status: pending）
+2. 觸發通知 API（簡訊 + Web Push）
+3. 返回 conversation_id 供前端跳轉
 
 ---
 
