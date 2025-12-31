@@ -72,21 +72,19 @@
 
 ---
 
-### UAG-4: Session Recovery API ✅ (92/100)
+### UAG-4: Session Recovery API ✅ (100/100)
 
 **完成日期**: 2025-12-31
-**API**: `api/session-recovery.js` → https://maihouses.vercel.app/api/session-recovery
+**API**: `api/session-recovery.ts` → https://maihouses.vercel.app/api/session-recovery
 
 **實作內容**:
 - ✅ 修正欄位名稱：`last_active_at` → `last_active`, `current_grade` → `grade`
 - ✅ 增強錯誤處理：環境變數檢查、詳細 console.log
 - ✅ 優化查詢邏輯：agentId 過濾、7 天時間窗口
+- ✅ **TypeScript 純度**: `.js` → `.ts`，定義 `SessionRecoveryRequest/Response` 介面
+- ✅ **單元測試**: `api/__tests__/session-recovery.test.ts` (Vitest, 11 cases passed)
 
-**驗證**: API 測試 3/3 passed, 已部署生產環境
-
-**待優化** (P2):
-- ⬜ **TypeScript 純度** (-3): `.js` → `.ts`，定義 `SessionRecoveryRequest/Response` 介面
-- ⬜ **單元測試** (-3): 建立 `api/__tests__/session-recovery.test.ts` (Vitest)
+**驗證**: TypeScript 0 errors, API 測試 3/3 passed, Vitest 11/11 passed
 
 ---
 

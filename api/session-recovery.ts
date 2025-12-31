@@ -1,4 +1,32 @@
 import { createClient } from '@supabase/supabase-js';
+import type { VercelRequest, VercelResponse } from '@vercel/node';
+
+// ============================================================================
+// Types
+// ============================================================================
+
+export interface SessionRecoveryRequest {
+  fingerprint: string;
+  agentId?: string;
+}
+
+export interface SessionRecoveryResponse {
+  recovered: boolean;
+  session_id?: string;
+  grade?: string;
+  last_active?: string;
+  error?: string;
+}
+
+interface SessionData {
+  session_id: string;
+  last_active: string;
+  grade: string;
+}
+
+// ============================================================================
+// Supabase Client
+// ============================================================================
 
 const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY;
@@ -9,42 +37,48 @@ if (!supabaseUrl || !supabaseKey) {
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
+// ============================================================================
+// Handler
+// ============================================================================
+
 /**
  * Session Recovery API
  *
  * 功能：根據設備指紋恢復用戶的 session_id
  * 場景：用戶清除 localStorage 後，避免創建新 session
  * 時間窗口：7 天內活躍的 session 可恢復
- *
- * @param {string} fingerprint - 設備指紋（base64 編碼的 JSON）
- * @param {string} agentId - 房仲 ID（可選，用於過濾）
- * @returns {object} { recovered: boolean, session_id?: string, grade?: string, last_active?: string }
  */
-export default async function handler(req, res) {
+export default async function handler(
+  req: VercelRequest,
+  res: VercelResponse
+): Promise<void> {
   // CORS Headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
   if (req.method === 'OPTIONS') {
-    return res.status(200).end();
+    res.status(200).end();
+    return;
   }
 
   if (req.method !== 'POST') {
-    return res.status(405).json({
+    res.status(405).json({
       error: 'Method not allowed',
       recovered: false
     });
+    return;
   }
 
-  const { fingerprint, agentId } = req.body;
+  const { fingerprint, agentId } = req.body as SessionRecoveryRequest;
 
   // 驗證必填參數
   if (!fingerprint) {
-    return res.status(400).json({
+    res.status(400).json({
       error: 'Missing required parameter: fingerprint',
       recovered: false
     });
+    return;
   }
 
   try {
@@ -64,7 +98,7 @@ export default async function handler(req, res) {
       query = query.eq('agent_id', agentId);
     }
 
-    const { data, error } = await query.single();
+    const { data, error } = await query.single<SessionData>();
 
     // PGRST116 = "Row not found" - 這是正常情況，不是錯誤
     if (error && error.code !== 'PGRST116') {
@@ -86,12 +120,13 @@ export default async function handler(req, res) {
         agentId
       });
 
-      return res.status(200).json({
+      res.status(200).json({
         recovered: true,
         session_id: data.session_id,
         grade: data.grade,
         last_active: data.last_active
       });
+      return;
     }
 
     // 沒有找到可恢復的 session
@@ -100,17 +135,18 @@ export default async function handler(req, res) {
       agentId
     });
 
-    return res.status(200).json({ recovered: false });
+    res.status(200).json({ recovered: false });
 
   } catch (err) {
+    const error = err as Error;
     console.error('[session-recovery] Unexpected error:', {
-      message: err.message,
-      stack: err.stack,
+      message: error.message,
+      stack: error.stack,
       fingerprint: fingerprint ? fingerprint.substring(0, 20) + '...' : 'undefined'
     });
 
     // 即使出錯也回傳 recovered: false，不中斷前端追蹤器
-    return res.status(200).json({
+    res.status(200).json({
       recovered: false,
       error: 'Internal server error'
     });
