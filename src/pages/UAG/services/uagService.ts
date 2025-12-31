@@ -10,7 +10,7 @@ import {
   FeedPost,
   UserDataSchema
 } from '../types/uag.types';
-import { GRADE_HOURS } from '../uag-config';
+import { GRADE_PROTECTION_HOURS } from '../uag-config';
 
 // Helper function for remaining hours calculation
 const calculateRemainingHours = (
@@ -19,7 +19,7 @@ const calculateRemainingHours = (
 ): number => {
   if (!purchasedAt) return 0;
   
-  const totalHours = GRADE_HOURS[grade] || 336;
+  const totalHours = GRADE_PROTECTION_HOURS[grade] || 336;
   const purchasedTime = new Date(purchasedAt).getTime();
   const elapsedHours = (Date.now() - purchasedTime) / (1000 * 60 * 60);
   

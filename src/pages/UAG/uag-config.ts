@@ -47,16 +47,3 @@ export const GRADE_PRICE: Record<Grade, number> = {
   C: 80,
   F: 20,
 } as const;
-
-// ============================================================================
-// Legacy 兼容性常數（標記為 deprecated，避免破壞現有代碼）
-// ============================================================================
-
-/** @deprecated 請使用 GRADE_PROTECTION_HOURS */
-export const GRADE_HOURS = GRADE_PROTECTION_HOURS;
-
-/** @deprecated 請使用 GRADE_PRICE */
-export const UAG_GRADE_PRICE = GRADE_PRICE;
-
-/** @deprecated 請使用 GRADE_PROTECTION_HOURS */
-export const UAG_PROTECTION_HOURS = GRADE_PROTECTION_HOURS;
