@@ -74,14 +74,7 @@
 
 ### UAG-4: Session Recovery API ✅
 
-**完成日期**: 2025-12-31
-**施作重點**: 修正 API 欄位名稱錯誤、增強錯誤處理、部署驗證通過
-**API**: https://maihouses.vercel.app/api/session-recovery
-
-**修正項目**:
-- 欄位名稱：`last_active_at` → `last_active`, `current_grade` → `grade`
-- 環境變數檢查、詳細 log、agentId 過濾、7 天窗口
-- TypeScript 0 errors、API 測試全通過、已部署生產環境
+**2025-12-31**: 修正欄位名稱(last_active/grade)、環境變數檢查、agentId過濾、部署驗證通過 https://maihouses.vercel.app/api/session-recovery
 
 ---
 
