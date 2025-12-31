@@ -34,19 +34,23 @@ export const LeadSchema = SupabaseLeadSchema.extend({
 
 export type Lead = z.infer<typeof LeadSchema>;
 
-export const ListingSchema = z.object({
+export const SupabaseListingSchema = z.object({
   title: z.string(),
   tags: z.array(z.string()).optional().nullable(),
   view_count: z.number().optional(),
   click_count: z.number().optional(),
   fav_count: z.number().optional(),
   thumb_color: z.string().optional(),
-  // Transformed fields
+}).passthrough();
+
+export type SupabaseListing = z.infer<typeof SupabaseListingSchema>;
+
+export const ListingSchema = SupabaseListingSchema.extend({
   view: z.number().optional(),
   click: z.number().optional(),
   fav: z.number().optional(),
   thumbColor: z.string().optional(),
-}).passthrough();
+});
 
 export type Listing = z.infer<typeof ListingSchema>;
 
