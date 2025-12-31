@@ -84,7 +84,9 @@
 
 **驗證**: API 測試 3/3 passed, 已部署生產環境
 
-**待優化** (P2): `.js` → `.ts` + 單元測試
+**待優化** (P2):
+- ⬜ **TypeScript 純度** (-3): `.js` → `.ts`，定義 `SessionRecoveryRequest/Response` 介面
+- ⬜ **單元測試** (-3): 建立 `api/__tests__/session-recovery.test.ts` (Vitest)
 
 ---
 
