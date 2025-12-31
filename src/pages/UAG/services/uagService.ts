@@ -1,10 +1,11 @@
 import { supabase } from '../../../lib/supabase';
-import { 
-  AppData, 
-  Grade, 
-  LeadSchema, 
+import {
+  AppData,
+  Grade,
+  LeadSchema,
   ListingSchema,
   FeedPostSchema,
+  FeedPost,
   UserDataSchema
 } from '../types/uag.types';
 import { GRADE_HOURS } from '../uag-config';
@@ -23,11 +24,25 @@ const calculateRemainingHours = (
   return Math.max(0, Math.min(totalHours, totalHours - elapsedHours));
 };
 
+interface SupabaseUserData {
+  points: number;
+  quota_s: number;
+  quota_a: number;
+}
+
+interface SupabaseLeadData {
+  purchased_at?: string | number | null;
+  grade: string;
+  status: string;
+  remaining_hours?: number | null;
+  [key: string]: unknown;
+}
+
 const transformSupabaseData = (
-  userData: any,
-  leadsData: any[],
-  listingsData: any[],
-  feedData: any[]
+  userData: SupabaseUserData,
+  leadsData: SupabaseLeadData[],
+  listingsData: unknown[],
+  feedData: unknown[]
 ): AppData => {
   // 1. Validate User Data (Critical)
   const userRaw = {
@@ -83,7 +98,7 @@ const transformSupabaseData = (
   });
 
   // 4. Validate Feed
-  const validFeed = feedData.filter(post => {
+  const validFeed = feedData.filter((post): post is FeedPost => {
     const result = FeedPostSchema.safeParse(post);
     if (!result.success) {
       console.warn('Skipping invalid feed post:', result.error.flatten());

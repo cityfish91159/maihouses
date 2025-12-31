@@ -69,6 +69,17 @@ export const UserDataSchema = z.object({
 
 export type UserData = z.infer<typeof UserDataSchema>;
 
+export const PropertyViewStatsSchema = z.object({
+  property_id: z.string(),
+  view_count: z.number(),
+  unique_sessions: z.number(),
+  total_duration: z.number(),
+  line_clicks: z.number(),
+  call_clicks: z.number(),
+});
+
+export type PropertyViewStats = z.infer<typeof PropertyViewStatsSchema>;
+
 export const AppDataSchema = z.object({
   user: UserDataSchema,
   leads: z.array(LeadSchema),
