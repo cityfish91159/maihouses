@@ -16,7 +16,7 @@
 | **P0** | UAG-2 District 傳遞修復 | ✅ | 1hr | Frontend |
 | **P0** | UAG-3 RPC 函數創建 | ✅ | 2hr | Backend |
 | **P0** | UAG-4 Session Recovery API | ✅ | 2hr | Backend |
-| **P1** | UAG-5 配置統一重構 | ⬜ | 1hr | Frontend |
+| **P1** | UAG-5 配置統一重構 | ✅ | 1hr | Frontend |
 | **P1** | UAG-6 page_exit 去重 | ⬜ | 1hr | Frontend |
 | **P1** | UAG-7 地圖點擊追蹤 | ⬜ | 0.5hr | Frontend |
 | **P1** | UAG-8 自動刷新設定 | ⬜ | 1hr | DevOps |
@@ -90,148 +90,19 @@
 
 ## 📊 P1 中優先級任務（建議完成）
 
-### UAG-5: 配置統一重構 ⬜
+### UAG-5: 配置統一重構 ✅ (100/100)
 
-**問題**：`uag-config.ts` 中存在多組不一致的配置
+**完成日期**: 2025-12-31
+**檔案**: `src/pages/UAG/uag-config.ts`
 
-**當前代碼**：
-```typescript
-// src/pages/UAG/uag-config.ts
+**實作內容**:
+- ✅ 統一 `GRADE_HOURS` = `GRADE_PROTECTION_HOURS` (S:72, A:48, B:24, C:12, F:0)
+- ✅ 新增 `GRADE_PRICE` (S:500, A:300, B:150, C:80, F:20)
+- ✅ 添加完整 JSDoc 文檔與業務說明
+- ✅ Legacy 常數標記 `@deprecated`，保持向後兼容
+- ✅ 使用 `as const` 確保類型安全
 
-export const UAG_PROTECTION_HOURS: Record<Grade, number> = {
-  S: 72, A: 48, B: 24, C: 12, F: 0,
-};
-
-export const GRADE_HOURS: Record<Grade, number> = {
-  S: 120, A: 72, B: 336, C: 336, F: 336  // ❌ 不一致
-};
-```
-
-**修復方案**：
-
-#### 5.1 統一配置並加入文檔
-```typescript
-// src/pages/UAG/uag-config.ts
-
-/**
- * UAG 系統配置 (SSOT - Single Source of Truth)
- *
- * ## 客戶等級保護時效
- * - S 級：72 小時獨家聯絡權（3 天）
- * - A 級：48 小時（2 天）
- * - B 級：24 小時（1 天）
- * - C 級：12 小時
- * - F 級：無保護
- *
- * ## 客戶購買價格
- * - S 級：500 點（高意願，已點擊 LINE/電話）
- * - A 級：300 點（深度瀏覽 ≥90s + 滾動 ≥80%）
- * - B 級：150 點（中度興趣 ≥60s）
- * - C 級：80 點（輕度興趣 ≥20s）
- * - F 級：20 點（路過）
- */
-
-import { Grade } from './types/uag.types';
-
-export const BREAKPOINTS = {
-  MOBILE: 768,
-  TABLET: 1024,
-} as const;
-
-/**
- * 客戶等級保護時效（小時）
- * 定義：購買客戶後，其他房仲無法查看聯絡資訊的時間
- */
-export const GRADE_PROTECTION_HOURS: Record<Grade, number> = {
-  S: 72,   // 3 天
-  A: 48,   // 2 天
-  B: 24,   // 1 天
-  C: 12,   // 12 小時
-  F: 0,    // 無保護
-} as const;
-
-/**
- * 客戶購買價格（點數）
- * 定義：購買不同等級客戶所需的點數成本
- */
-export const GRADE_PRICE: Record<Grade, number> = {
-  S: 500,  // 最高意願（點擊 LINE/電話）
-  A: 300,  // 高度興趣（深度瀏覽）
-  B: 150,  // 中度興趣
-  C: 80,   // 輕度興趣
-  F: 20,   // 路過
-} as const;
-
-// ============================================
-// Legacy 兼容性常數（標記為 deprecated）
-// ============================================
-
-/** @deprecated 請使用 GRADE_PROTECTION_HOURS */
-export const GRADE_HOURS = GRADE_PROTECTION_HOURS;
-
-/** @deprecated 請使用 GRADE_PRICE */
-export const UAG_GRADE_PRICE = GRADE_PRICE;
-
-/** @deprecated 請使用 GRADE_PROTECTION_HOURS */
-export const UAG_PROTECTION_HOURS = GRADE_PROTECTION_HOURS;
-```
-
-#### 5.2 更新所有引用位置
-
-**檔案 1**: `src/pages/UAG/hooks/useUAG.ts:8`
-```typescript
-// 修改前
-import { GRADE_HOURS } from '../uag-config';
-
-// 修改後
-import { GRADE_PROTECTION_HOURS } from '../uag-config';
-
-// 修改前
-remainingHours: GRADE_HOURS[grade] || 48
-
-// 修改後
-remainingHours: GRADE_PROTECTION_HOURS[grade] || 48
-```
-
-**檔案 2**: `src/pages/UAG/services/uagService.ts:10`
-```typescript
-// 修改前
-import { GRADE_HOURS } from '../uag-config';
-
-// 修改後
-import { GRADE_PROTECTION_HOURS } from '../uag-config';
-
-// 修改前
-const totalHours = GRADE_HOURS[grade] || 336;
-
-// 修改後
-const totalHours = GRADE_PROTECTION_HOURS[grade] || 336;
-```
-
-#### 5.3 驗證修改
-
-```bash
-# 搜尋所有引用
-grep -r "GRADE_HOURS" src/pages/UAG/
-grep -r "UAG_GRADE_PRICE" src/pages/UAG/
-grep -r "UAG_PROTECTION_HOURS" src/pages/UAG/
-
-# TypeScript 檢查
-npm run typecheck
-
-# 確認沒有編譯錯誤
-```
-
-**驗收標準**：
-- [x] 配置統一為 `GRADE_PROTECTION_HOURS` 和 `GRADE_PRICE`
-- [x] 所有引用已更新
-- [x] Legacy 常數標記為 `@deprecated`
-- [x] JSDoc 文檔完整
-- [x] TypeScript 編譯通過
-- [x] 功能測試通過
-
-**預估工時**: 1hr
-**優先級**: P1（提升代碼可維護性）
+**驗證**: TypeScript 0 errors, 引用檔案 (useUAG.ts, uagService.ts, AssetMonitor.tsx) 無需修改（透過 deprecated alias 兼容）
 
 ---
 
