@@ -165,22 +165,21 @@
 
 ---
 
-### MSG-1: 私訊系統資料模型 ✅
+### MSG-1: 私訊系統資料模型 ✅ (60/100) - ⚠️ 嚴重缺失
 
-**完成日期**: 2025-12-31
+**完成日期**: 2025-12-31 (Commit `9951a161`)
 **Migration**: `supabase/migrations/20251231_003_messaging_schema.sql`
 **Types**: `src/types/messaging.types.ts`
 
-**實作內容**:
-- ✅ `conversations` 表 (10 欄位 + 5 索引)
-- ✅ `messages` 表 (7 欄位 + 3 索引)
-- ✅ RLS 政策 (6 條: SELECT/INSERT/UPDATE for both tables)
-- ✅ `fn_create_conversation()` - 建立對話
-- ✅ `fn_send_message()` - 發送訊息 + 更新未讀數 + 自動 active
-- ✅ `fn_mark_messages_read()` - 標記已讀
-- ✅ TypeScript 類型定義 (Conversation, Message, API types)
+**❌ 審核缺失 (Critical Issues)**:
+- 🔴 **致命錯誤 (FK Referencing)**: `lead_id` 引用了不存在的 `uag_leads` 表。正確表名應為 `uag_lead_purchases`。此 Migration **必定失敗**。
+- 🔴 **邏輯漏洞 (RLS Pending)**: TODO 明確要求「pending 狀態時消費者透過 session_id 比對」，但 RLS 僅檢查 `consumer_profile_id`。這導致消費者**無法**在回覆前看到對話。
+- 🟡 **類型混用 (Type Safety)**: `agent_id` 定義為 `TEXT` 但在 RLS 中與 `auth.uid()` (UUID) 混用。應統一規範。
 
-**驗證**: TypeScript 0 errors
+**修正行動 (Action Items)**:
+1.  **修正 FK**: 將 `REFERENCES uag_leads(id)` 改為 `REFERENCES uag_lead_purchases(id)`。
+2.  **修正 RLS**: `conversations_consumer_select` 必須加入 `OR (status = 'pending' AND consumer_session_id = current_setting('app.session_id', true))` 邏輯。
+3.  **重新驗證**: 確認 SQL 能在乾淨環境執行成功。
 
 **資料表設計**:
 
