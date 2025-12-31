@@ -15,7 +15,7 @@
 | **P0** | UAG-1 資料庫 Schema 部署 | ✅ | 2hr | DevOps |
 | **P0** | UAG-2 District 傳遞修復 | ✅ | 1hr | Frontend |
 | **P0** | UAG-3 RPC 函數創建 | ✅ | 2hr | Backend |
-| **P0** | UAG-4 Session Recovery API | ⬜ | 2hr | Backend |
+| **P0** | UAG-4 Session Recovery API | ✅ | 2hr | Backend |
 | **P1** | UAG-5 配置統一重構 | ⬜ | 1hr | Frontend |
 | **P1** | UAG-6 page_exit 去重 | ⬜ | 1hr | Frontend |
 | **P1** | UAG-7 地圖點擊追蹤 | ⬜ | 0.5hr | Frontend |
@@ -72,7 +72,11 @@
 
 ---
 
-### UAG-4: Session Recovery API ⬜
+### UAG-4: Session Recovery API ✅
+
+**完成日期**: 2025-12-31
+**API 檔案**: `api/session-recovery.js`
+**部署狀態**: ✅ 已部署至 https://maihouses.vercel.app/api/session-recovery
 
 **問題**：前端追蹤器呼叫 `/api/session-recovery`，但 API 不存在
 
@@ -218,20 +222,39 @@ async recoverSession() {
 }
 ```
 
-**驗收標準**：
+**實作內容**:
+- ✅ 修正欄位名稱：`last_active_at` → `last_active`，`current_grade` → `grade`
+- ✅ 增強錯誤處理：環境變數檢查、詳細 console.log
+- ✅ 優化查詢邏輯：支援 agentId 過濾、7 天時間窗口
+- ✅ 完整 JSDoc 文檔註解
+- ✅ CORS 設定完整（OPTIONS, POST）
+- ✅ 驗證所有錯誤情境（缺少參數、錯誤 method）
 
-**選項 A**:
-- [x] `/api/session-recovery.js` 創建完成
-- [x] API 測試通過
-- [x] 前端可正常恢復 session
-- [x] 7 天時間窗口正確
+**驗收標準**:
+- ✅ `/api/session-recovery.js` 已修正並部署
+- ✅ API 測試通過（正常、缺參數、錯誤 method）
+  ```bash
+  # 測試 1: 正常請求（無資料）
+  curl -X POST https://maihouses.vercel.app/api/session-recovery \
+    -H "Content-Type: application/json" \
+    -d '{"fingerprint":"eyJ0ZXN0IjoidGVzdCJ9","agentId":"test-agent"}'
+  # 回應: {"recovered":false}
 
-**選項 B**:
-- [x] `recoverSession()` 已註解
-- [x] 前端不再報 404 錯誤
-- [x] localStorage 正常運作
+  # 測試 2: 缺少 fingerprint
+  curl -X POST https://maihouses.vercel.app/api/session-recovery \
+    -H "Content-Type: application/json" -d '{"agentId":"test"}'
+  # 回應: {"error":"Missing required parameter: fingerprint","recovered":false}
 
-**預估工時**: 2hr（選項 A）或 0.5hr（選項 B）
+  # 測試 3: 錯誤 HTTP method
+  curl -X GET https://maihouses.vercel.app/api/session-recovery
+  # 回應: {"error":"Method not allowed","recovered":false}
+  ```
+- ✅ 前端 tracker.js 整合正常（L99-117）
+- ✅ 7 天時間窗口正確實作
+- ✅ TypeScript 編譯通過
+- ✅ Vercel 生產環境部署成功
+
+**預估工時**: 2hr（實際：1.5hr）
 **優先級**: P0（阻塞前端追蹤器）
 
 ---
