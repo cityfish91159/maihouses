@@ -167,22 +167,29 @@
 
 ### MSG-1: 私訊系統資料模型 ✅ (100/100)
 
-**完成日期**: 2025-12-31 (Commit `9951a161` + 修復 Commit)
-**Migration**:
-- `20251231_003_messaging_schema.sql` (初版)
-- `20251231_004_fix_messaging_critical_issues.sql` (修復 3 個致命問題)
-**Types**: `src/types/messaging.types.ts`
+**目標**: 建立房仲與消費者對話的資料結構
+**前置依賴**: 無
 
-**✅ 修復完成 (2025-12-31)**:
+**實作紀錄**:
+- **完成日期**: 2025-12-31 (Commit `66b1449f` Fixed)
+- **Migration**:
+  - `20251231_003_messaging_schema.sql` (Initial)
+  - `20251231_004_fix_messaging_critical_issues.sql` (Fixes)
+- **Types**: `src/types/messaging.types.ts`
+- **實作項目詳細**:
+  - ✅ `conversations` 表 (10 欄位 + 5 索引)
+  - ✅ `messages` 表 (7 欄位 + 3 索引)
+  - ✅ RLS 政策 (6 條: SELECT/INSERT/UPDATE for both tables)
+  - ✅ `fn_create_conversation()` - 建立對話
+  - ✅ `fn_send_message()` - 發送訊息 + 更新未讀數 + 自動 active
+  - ✅ `fn_mark_messages_read()` - 標記已讀
+  - ✅ TypeScript 類型定義 (Conversation, Message, API types)
+
+**✅ 關鍵修復 (Audit Fixes - 2025-12-31)**:
 - ✅ **FK Reference**: `uag_leads` → `uag_lead_purchases` (ON DELETE SET NULL)
 - ✅ **RLS Pending**: 加入 `session_id` 比對邏輯 (`current_setting('app.session_id')`)
 - ✅ **類型統一**: `agent_id TEXT` → `UUID`，移除所有 `::TEXT` 轉換
 - ✅ **Idempotent**: `fn_create_conversation` 加入重複檢查
-
-**Skills 使用**:
-- [Data Validation Engine](https://skillsmp.com/skills/jeremylongshore-claude-code-plugins-plus-plugins-database-data-validation-engine-skills-data-validation-engine-skill-md) - constraint 驗證
-- [testing-database-code](https://skillsmp.com/zh/skills/juanre-pgdbm-skills-testing-database-code-skill-md) - PostgreSQL 測試
-- [supabase-automation](https://skillsmp.com/zh/skills/jgtolentino-insightpulse-odoo-docs-claude-code-skills-community-supabase-automation-skill-md) - migration 修復
 
 **資料表設計**:
 
