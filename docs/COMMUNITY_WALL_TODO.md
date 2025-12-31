@@ -14,7 +14,7 @@
 |:---:|:---|:---:|:---:|:---:|
 | **P0** | UAG-1 資料庫 Schema 部署 | ✅ | 2hr | DevOps |
 | **P0** | UAG-2 District 傳遞修復 | ⬜ | 1hr | Frontend |
-| **P0** | UAG-3 RPC 函數創建 | ⬜ | 2hr | Backend |
+| **P0** | UAG-3 RPC 函數創建 | ✅ | 2hr | Backend |
 | **P0** | UAG-4 Session Recovery API | ⬜ | 2hr | Backend |
 | **P1** | UAG-5 配置統一重構 | ⬜ | 1hr | Frontend |
 | **P1** | UAG-6 page_exit 去重 | ⬜ | 1hr | Frontend |
@@ -54,188 +54,17 @@
 
 -----
 
-### UAG-3: RPC 函數創建 ⬜
+### UAG-3: RPC 函數創建 ✅
 
-**問題**：`uagService.ts:136` 呼叫 `get_agent_property_stats` RPC，但資料庫中不存在
+**完成日期**: 2025-12-31
+**Migration**: [20251230_uag_rpc_functions.sql](file:///C:/Users/%E9%99%B3%E4%B8%96%E7%91%9C/maihouses/supabase/migrations/20251230_uag_rpc_functions.sql)
+**實作內容**:
+- ✅ `agents` 表擴充: `points`, `quota_s`, `quota_a` 欄位
+- ✅ 建立 `uag_lead_purchases` 購買紀錄表
+- ✅ `get_agent_property_stats(p_agent_id)`: 房源流量聚合統計
+- ✅ `purchase_lead(p_user_id, p_lead_id, p_cost, p_grade)`: 原子化交易扣點/配額邏輯
 
-**當前代碼**：
-```typescript
-// src/pages/UAG/services/uagService.ts:136
-
-const { data, error } = await supabase
-  .rpc('get_agent_property_stats', { p_agent_id: agentId });
-```
-
-**修復方案**：
-
-#### 3.1 創建 RPC 函數 SQL
-```sql
--- supabase/migrations/20251230_uag_rpc_property_stats.sql
-
-/**
- * 取得房仲所有房源的 UAG 統計
- *
- * @param p_agent_id - 房仲 ID
- * @returns 各房源的瀏覽統計
- */
-CREATE OR REPLACE FUNCTION get_agent_property_stats(p_agent_id TEXT)
-RETURNS TABLE (
-  property_id TEXT,           -- 房源 public_id
-  view_count BIGINT,          -- 總瀏覽次數
-  unique_sessions BIGINT,     -- 不重複訪客數
-  total_duration BIGINT,      -- 總停留秒數
-  line_clicks BIGINT,         -- LINE 點擊次數
-  call_clicks BIGINT          -- 電話點擊次數
-)
-LANGUAGE plpgsql
-SECURITY DEFINER
-AS $$
-BEGIN
-  RETURN QUERY
-  WITH agent_properties AS (
-    -- 先取得該房仲的所有房源 ID
-    SELECT public_id
-    FROM properties
-    WHERE agent_id = p_agent_id
-  )
-  SELECT
-    e.property_id,
-    COUNT(*) as view_count,
-    COUNT(DISTINCT e.session_id) as unique_sessions,
-    SUM(e.duration)::BIGINT as total_duration,
-    SUM(CASE WHEN (e.actions->>'click_line')::INT = 1 THEN 1 ELSE 0 END)::BIGINT as line_clicks,
-    SUM(CASE WHEN (e.actions->>'click_call')::INT = 1 THEN 1 ELSE 0 END)::BIGINT as call_clicks
-  FROM uag_events e
-  WHERE e.property_id IN (SELECT public_id FROM agent_properties)
-  GROUP BY e.property_id;
-END;
-$$;
-
--- 加入註解
-COMMENT ON FUNCTION get_agent_property_stats IS '取得房仲所有房源的 UAG 瀏覽統計';
-```
-
-#### 3.2 創建 purchase_lead RPC
-```sql
--- supabase/migrations/20251230_uag_rpc_purchase_lead.sql
-
-/**
- * 購買客戶（扣點、扣配額、更新狀態）
- *
- * @param p_user_id - 購買者 ID
- * @param p_lead_id - 客戶 ID
- * @param p_cost - 點數成本
- * @param p_grade - 客戶等級 S/A/B/C/F
- */
-CREATE OR REPLACE FUNCTION purchase_lead(
-  p_user_id TEXT,
-  p_lead_id TEXT,
-  p_cost INTEGER,
-  p_grade CHAR(1)
-)
-RETURNS VOID
-LANGUAGE plpgsql
-SECURITY DEFINER
-AS $$
-DECLARE
-  v_current_points INTEGER;
-  v_quota_s INTEGER;
-  v_quota_a INTEGER;
-BEGIN
-  -- 1. 取得用戶當前點數和配額
-  SELECT points, quota_s, quota_a
-  INTO v_current_points, v_quota_s, v_quota_a
-  FROM users
-  WHERE id = p_user_id
-  FOR UPDATE;  -- 鎖定避免競爭條件
-
-  -- 2. 驗證點數足夠
-  IF v_current_points < p_cost THEN
-    RAISE EXCEPTION '點數不足: 需要 %, 當前 %', p_cost, v_current_points;
-  END IF;
-
-  -- 3. 驗證配額足夠
-  IF p_grade = 'S' AND v_quota_s <= 0 THEN
-    RAISE EXCEPTION 'S 級配額不足';
-  END IF;
-
-  IF p_grade = 'A' AND v_quota_a <= 0 THEN
-    RAISE EXCEPTION 'A 級配額不足';
-  END IF;
-
-  -- 4. 扣除點數
-  UPDATE users
-  SET points = points - p_cost,
-      quota_s = CASE WHEN p_grade = 'S' THEN quota_s - 1 ELSE quota_s END,
-      quota_a = CASE WHEN p_grade = 'A' THEN quota_a - 1 ELSE quota_a END
-  WHERE id = p_user_id;
-
-  -- 5. 更新客戶狀態
-  UPDATE leads
-  SET status = 'purchased',
-      purchased_at = NOW(),
-      purchased_by = p_user_id,
-      transaction_hash = gen_random_uuid()::TEXT
-  WHERE id = p_lead_id;
-
-  -- 6. 記錄交易
-  INSERT INTO lead_transactions (
-    user_id,
-    lead_id,
-    cost,
-    grade,
-    created_at
-  ) VALUES (
-    p_user_id,
-    p_lead_id,
-    p_cost,
-    p_grade,
-    NOW()
-  );
-
-END;
-$$;
-
-COMMENT ON FUNCTION purchase_lead IS '購買客戶（原子操作，含點數驗證）';
-```
-
-#### 3.3 部署 RPC
-
-**Supabase CLI**:
-```bash
-supabase db push
-```
-
-**或 Dashboard**:
-1. SQL Editor
-2. 貼上兩個 SQL 檔案內容
-3. 執行
-
-#### 3.4 驗證 RPC
-
-```sql
--- 測試 get_agent_property_stats
-SELECT * FROM get_agent_property_stats('agent_test_123');
-
--- 測試 purchase_lead（需要先建立測試資料）
-SELECT purchase_lead(
-  'user_test_123',
-  'lead_test_456',
-  300,
-  'A'
-);
-```
-
-**驗收標準**：
-- [x] `get_agent_property_stats` RPC 創建成功
-- [x] `purchase_lead` RPC 創建成功
-- [x] 兩個 RPC 測試通過
-- [x] RPC 權限設定正確（SECURITY DEFINER）
-- [x] 前端呼叫不再報錯
-- [x] UAG 頁面正常載入房源統計
-
-**預估工時**: 2hr
-**優先級**: P0（阻塞 UAG 功能）
+---
 
 ---
 
