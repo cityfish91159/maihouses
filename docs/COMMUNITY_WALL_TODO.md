@@ -16,7 +16,7 @@
 | **P0** | UAG-2 District 傳遞修復 | ✅ | 1hr | Frontend | - |
 | **P0** | UAG-3 RPC 函數創建 | ✅ | 2hr | Backend | UAG-1 |
 | **P0** | UAG-4 Session Recovery API | ✅ | 2hr | Backend | UAG-1 |
-| **P0** | MSG-1 私訊系統資料模型 | ⬜ | 2hr | Backend | - |
+| **P0** | MSG-1 私訊系統資料模型 | ✅ | 2hr | Backend | - |
 | **P0** | MSG-2 鈴鐺通知（消費者+房仲） | ⬜ | 2hr | Frontend | MSG-1 |
 | **P0** | MSG-3 消費者 Feed 橫條提醒 | ⬜ | 1hr | Frontend | MSG-1 |
 | **P0** | MSG-4 對話頁面 | ⬜ | 3hr | Frontend | MSG-1 |
@@ -165,11 +165,22 @@
 
 ---
 
-### MSG-1: 私訊系統資料模型 ⬜
+### MSG-1: 私訊系統資料模型 ✅
 
-**目標**: 建立房仲與消費者對話的資料結構
+**完成日期**: 2025-12-31
+**Migration**: `supabase/migrations/20251231_003_messaging_schema.sql`
+**Types**: `src/types/messaging.types.ts`
 
-**前置依賴**: 無
+**實作內容**:
+- ✅ `conversations` 表 (10 欄位 + 5 索引)
+- ✅ `messages` 表 (7 欄位 + 3 索引)
+- ✅ RLS 政策 (6 條: SELECT/INSERT/UPDATE for both tables)
+- ✅ `fn_create_conversation()` - 建立對話
+- ✅ `fn_send_message()` - 發送訊息 + 更新未讀數 + 自動 active
+- ✅ `fn_mark_messages_read()` - 標記已讀
+- ✅ TypeScript 類型定義 (Conversation, Message, API types)
+
+**驗證**: TypeScript 0 errors
 
 **資料表設計**:
 
@@ -198,19 +209,6 @@
 | content | TEXT | 訊息內容（可含聯絡資料）|
 | created_at | TIMESTAMPTZ | 發送時間 |
 | read_at | TIMESTAMPTZ | 已讀時間 |
-
-**RLS 政策**:
-- 房仲只能看自己的 conversation
-- 消費者只能看 consumer_profile_id = auth.uid() 的 conversation
-- pending 狀態時消費者透過 session_id 比對
-
-**施作提示**:
-```sql
--- Migration: 20251231_003_messaging_schema.sql
--- 1. 建表 + 索引
--- 2. RLS 政策
--- 3. 建立 fn_create_conversation() 給 purchase_lead 呼叫
-```
 
 ---
 
