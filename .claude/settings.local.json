@@ -44,7 +44,10 @@
       "Bash(npx vercel --prod --yes)",
       "Bash(git checkout:*)",
       "Bash(git merge:*)",
-      "Bash(git stash:*)"
+      "Bash(git stash:*)",
+      "Bash(grep:*)",
+      "WebFetch(domain:skillsmp.com)",
+      "Bash(node:*)"
     ]
   },
   "model": "sonnet",

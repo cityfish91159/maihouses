@@ -3,11 +3,14 @@
     "allow": [
       "Skill",
       "WebFetch(domain:maihouses.vercel.app)",
+      "WebFetch(domain:skillsmp.com)",
+      "WebSearch",
       "Bash(npm run typecheck:*)",
       "Bash(npm run lint:*)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(node .claude/skills/skill-marketplace/*.cjs*)"
     ]
   },
   "hooks": {

@@ -1,0 +1,39 @@
+{
+  "enabled": true,
+  "auto_search": true,
+  "auto_install": false,
+  "cache_duration": "24h",
+  "max_results": 3,
+  "min_stars": 100,
+  "cleanup_after_use": true,
+  "trusted_sources": [
+    "github.com/anthropics",
+    "github.com/openai",
+    "skillsmp.com"
+  ],
+  "trigger_keywords": [
+    "testing",
+    "test",
+    "docker",
+    "deploy",
+    "deployment",
+    "documentation",
+    "api doc",
+    "security",
+    "audit",
+    "ci/cd",
+    "github actions",
+    "database",
+    "migration",
+    "data processing",
+    "transform"
+  ],
+  "categories": {
+    "Testing & Security": ["testing", "test", "security", "audit", "vulnerability"],
+    "DevOps": ["docker", "deploy", "ci", "cd", "github-actions", "kubernetes"],
+    "Documentation": ["documentation", "api doc", "readme", "openapi"],
+    "Data & AI": ["data", "csv", "json", "transform", "ml", "ai"],
+    "Development": ["code", "refactor", "lint", "format"],
+    "Databases": ["database", "sql", "migration", "postgres", "mongo"]
+  }
+}
