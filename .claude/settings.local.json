@@ -47,7 +47,9 @@
       "Bash(git stash:*)",
       "Bash(grep:*)",
       "WebFetch(domain:skillsmp.com)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(git cherry-pick:*)",
+      "Bash(npm test:*)"
     ]
   },
   "model": "sonnet",

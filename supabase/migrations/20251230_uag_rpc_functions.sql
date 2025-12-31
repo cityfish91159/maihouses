@@ -114,15 +114,18 @@ BEGIN
 
     -- 4. 建立/更新 Leads 表
     -- 取最近一次事件的 property_id 作為主要關聯
-    SELECT property_id INTO v_property_id FROM public.uag_events 
+    SELECT property_id INTO v_property_id FROM public.uag_events
     WHERE session_id = v_session_id ORDER BY created_at DESC LIMIT 1;
-    
-    -- 模擬聯絡資訊 (實作中應從 session summary 或 fingerprint 關聯)
-    v_customer_phone := '09' || LPAD(FLOOR(RANDOM() * 100000000)::TEXT, 8, '0');
+
+    -- 聯絡資訊從 session fingerprint 取得 (待實作完整解析)
+    v_customer_phone := 'UAG-' || SUBSTR(v_session_id, 1, 8);
 
     INSERT INTO public.leads (property_id, agent_id, customer_name, customer_phone, status, source)
-    VALUES (v_property_id, v_agent_id, '客端訪客 ' || SUBSTR(v_session_id, 1, 4), v_customer_phone, 'purchased', 'uag')
-    ON CONFLICT DO NOTHING;
+    VALUES (v_property_id, v_agent_id, 'UAG客戶-' || SUBSTR(v_session_id, 1, 6), v_customer_phone, 'purchased', 'uag')
+    ON CONFLICT (property_id, customer_phone) DO UPDATE SET
+        agent_id = EXCLUDED.agent_id,
+        status = EXCLUDED.status,
+        updated_at = NOW();
 
     RETURN jsonb_build_object('success', true, 'used_quota', v_use_quota);
 END;
