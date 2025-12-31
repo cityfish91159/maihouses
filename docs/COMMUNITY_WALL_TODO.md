@@ -271,19 +271,25 @@
 
 ## 📊 P1 中優先級任務（建議完成）
 
-### UAG-5: 配置統一重構 ✅ (100/100)
+### UAG-5: 配置統一重構 ✅ (85/100) - ⚠️ 需修復
 
-**完成日期**: 2025-12-31
+**完成日期**: 2025-12-31 (Commit `c2ee7d18`)
 **檔案**: `src/pages/UAG/uag-config.ts`
 
 **實作內容**:
-- ✅ 統一 `GRADE_HOURS` = `GRADE_PROTECTION_HOURS` (S:72, A:48, B:24, C:12, F:0)
-- ✅ 新增 `GRADE_PRICE` (S:500, A:300, B:150, C:80, F:20)
-- ✅ 添加完整 JSDoc 文檔與業務說明
-- ✅ Legacy 常數標記 `@deprecated`，保持向後兼容
-- ✅ 使用 `as const` 確保類型安全
+- ✅ 統一 `GRADE_HOURS` = `GRADE_PROTECTION_HOURS` (SSOT)
+- ✅ 新增 `GRADE_PRICE`
+- ✅ JSDoc 文檔完整
 
-**驗證**: TypeScript 0 errors, 引用檔案 (useUAG.ts, uagService.ts, AssetMonitor.tsx) 無需修改（透過 deprecated alias 兼容）
+**❌ 審核缺失 (Critical Issues)**:
+- 🔴 **引用未更新 (-10)**: `useUAG.ts`, `uagService.ts`, `AssetMonitor.tsx` 仍在使用被 deprecated 的 `GRADE_HOURS`。
+- 🔴 **代碼不潔 (-5)**: 內部專案應直接重構並移除 deprecated 代碼，避免累積技術債。
+
+**修正行動 (Action Items)**:
+1. 全局替換 `GRADE_HOURS` → `GRADE_PROTECTION_HOURS`
+2. 全局替換 `UAG_GRADE_PRICE` → `GRADE_PRICE`
+3. 移除 `uag-config.ts` 中的 deprecated 區塊
+4. 驗證 build 與測試通過
 
 ---
 
