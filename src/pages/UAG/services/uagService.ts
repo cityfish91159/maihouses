@@ -2,7 +2,9 @@ import { supabase } from '../../../lib/supabase';
 import {
   AppData,
   Grade,
+  Lead,
   LeadSchema,
+  Listing,
   ListingSchema,
   FeedPostSchema,
   FeedPost,
@@ -57,55 +59,61 @@ const transformSupabaseData = (
   }
 
   // 2. Transform and Validate Leads (Resilient)
-  const validLeads = leadsData.map((l: any) => {
-    let remainingHours = l.remaining_hours != null ? Number(l.remaining_hours) : null;
+  const validLeads: Lead[] = [];
+  for (const l of leadsData) {
+    let remainingHours = l.remaining_hours != null ? Number(l.remaining_hours) : undefined;
 
     if (remainingHours == null && l.purchased_at && l.status === 'purchased') {
       remainingHours = calculateRemainingHours(l.purchased_at, l.grade as Grade);
     }
 
-    return {
+    const transformed = {
       ...l,
       grade: l.grade,
       status: l.status,
       ...(remainingHours != null ? { remainingHours } : {})
     };
-  }).filter(lead => {
-    const result = LeadSchema.safeParse(lead);
-    if (!result.success) {
-      console.warn(`Skipping invalid lead (${lead.id}):`, result.error.flatten());
-      return false;
+
+    const result = LeadSchema.safeParse(transformed);
+    if (result.success) {
+      validLeads.push(result.data);
+    } else {
+      console.warn('Skipping invalid lead:', result.error.issues);
     }
-    return true;
-  });
+  }
 
   // 3. Transform and Validate Listings
-  const validListings = listingsData.map((l: any) => ({
-    ...l,
-    title: l.title,
-    tags: l.tags ?? [],
-    view: l.view_count ?? 0,
-    click: l.click_count ?? 0,
-    fav: l.fav_count ?? 0,
-    thumbColor: l.thumb_color ?? '#e5e7eb'
-  })).filter(listing => {
-    const result = ListingSchema.safeParse(listing);
-    if (!result.success) {
-      console.warn('Skipping invalid listing:', result.error.flatten());
-      return false;
+  const validListings: Listing[] = [];
+  for (const l of listingsData) {
+    const listing = l as Record<string, unknown>;
+    const transformed = {
+      ...listing,
+      title: listing.title as string,
+      tags: (listing.tags as string[] | null) ?? [],
+      view: (listing.view_count as number | undefined) ?? 0,
+      click: (listing.click_count as number | undefined) ?? 0,
+      fav: (listing.fav_count as number | undefined) ?? 0,
+      thumbColor: (listing.thumb_color as string | undefined) ?? '#e5e7eb'
+    };
+
+    const result = ListingSchema.safeParse(transformed);
+    if (result.success) {
+      validListings.push(result.data);
+    } else {
+      console.warn('Skipping invalid listing:', result.error.issues);
     }
-    return true;
-  });
+  }
 
   // 4. Validate Feed
-  const validFeed = feedData.filter((post): post is FeedPost => {
+  const validFeed: FeedPost[] = [];
+  for (const post of feedData) {
     const result = FeedPostSchema.safeParse(post);
-    if (!result.success) {
-      console.warn('Skipping invalid feed post:', result.error.flatten());
-      return false;
+    if (result.success) {
+      validFeed.push(result.data);
+    } else {
+      console.warn('Skipping invalid feed post:', result.error.issues);
     }
-    return true;
-  });
+  }
 
   return {
     user: userResult.data,
