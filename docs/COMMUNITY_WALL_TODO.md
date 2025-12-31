@@ -165,21 +165,24 @@
 
 ---
 
-### MSG-1: 私訊系統資料模型 ✅ (60/100) - ⚠️ 嚴重缺失
+### MSG-1: 私訊系統資料模型 ✅ (100/100)
 
-**完成日期**: 2025-12-31 (Commit `9951a161`)
-**Migration**: `supabase/migrations/20251231_003_messaging_schema.sql`
+**完成日期**: 2025-12-31 (Commit `9951a161` + 修復 Commit)
+**Migration**:
+- `20251231_003_messaging_schema.sql` (初版)
+- `20251231_004_fix_messaging_critical_issues.sql` (修復 3 個致命問題)
 **Types**: `src/types/messaging.types.ts`
 
-**❌ 審核缺失 (Critical Issues)**:
-- 🔴 **致命錯誤 (FK Referencing)**: `lead_id` 引用了不存在的 `uag_leads` 表。正確表名應為 `uag_lead_purchases`。此 Migration **必定失敗**。
-- 🔴 **邏輯漏洞 (RLS Pending)**: TODO 明確要求「pending 狀態時消費者透過 session_id 比對」，但 RLS 僅檢查 `consumer_profile_id`。這導致消費者**無法**在回覆前看到對話。
-- 🟡 **類型混用 (Type Safety)**: `agent_id` 定義為 `TEXT` 但在 RLS 中與 `auth.uid()` (UUID) 混用。應統一規範。
+**✅ 修復完成 (2025-12-31)**:
+- ✅ **FK Reference**: `uag_leads` → `uag_lead_purchases` (ON DELETE SET NULL)
+- ✅ **RLS Pending**: 加入 `session_id` 比對邏輯 (`current_setting('app.session_id')`)
+- ✅ **類型統一**: `agent_id TEXT` → `UUID`，移除所有 `::TEXT` 轉換
+- ✅ **Idempotent**: `fn_create_conversation` 加入重複檢查
 
-**修正行動 (Action Items)**:
-1.  **修正 FK**: 將 `REFERENCES uag_leads(id)` 改為 `REFERENCES uag_lead_purchases(id)`。
-2.  **修正 RLS**: `conversations_consumer_select` 必須加入 `OR (status = 'pending' AND consumer_session_id = current_setting('app.session_id', true))` 邏輯。
-3.  **重新驗證**: 確認 SQL 能在乾淨環境執行成功。
+**Skills 使用**:
+- [Data Validation Engine](https://skillsmp.com/skills/jeremylongshore-claude-code-plugins-plus-plugins-database-data-validation-engine-skills-data-validation-engine-skill-md) - constraint 驗證
+- [testing-database-code](https://skillsmp.com/zh/skills/juanre-pgdbm-skills-testing-database-code-skill-md) - PostgreSQL 測試
+- [supabase-automation](https://skillsmp.com/zh/skills/jgtolentino-insightpulse-odoo-docs-claude-code-skills-community-supabase-automation-skill-md) - migration 修復
 
 **資料表設計**:
 
