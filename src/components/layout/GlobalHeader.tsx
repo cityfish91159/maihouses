@@ -16,6 +16,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { useNotifications } from '../../hooks/useNotifications';
 import { Logo } from '../Logo/Logo';
 import { notify } from '../../lib/notify';
+import { logger } from '../../lib/logger';
 import { HEADER_STRINGS, GlobalHeaderMode } from '../../constants/header';
 import { ROUTES } from '../../constants/routes';
 import { NotificationDropdown } from './NotificationDropdown';
@@ -57,7 +58,7 @@ export function GlobalHeader({ mode, title, className = '' }: GlobalHeaderProps)
       setUserMenuOpen(false);
       setTimeout(() => navigate(ROUTES.HOME), 100);
     } catch (error) {
-      console.error('Logout failed:', error);
+      logger.error('GlobalHeader.handleSignOut.failed', { error, userId: user?.id });
       notify.error(HEADER_STRINGS.MSG_LOGOUT_ERROR, HEADER_STRINGS.MSG_LOGOUT_RETRY);
     }
   };

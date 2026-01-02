@@ -8,6 +8,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from './useAuth';
 import { supabase } from '../lib/supabase';
+import { logger } from '../lib/logger';
 import type { ConversationListItem, ConversationStatus, SenderType } from '../types/messaging.types';
 
 interface UseNotificationsReturn {
@@ -199,7 +200,12 @@ export function useNotifications(): UseNotificationsReturn {
                 setNotifications(notificationList);
             }
         } catch (err) {
-            console.error('[useNotifications] Error:', err);
+            logger.error('useNotifications.fetchNotifications.failed', {
+                error: err,
+                userId: user?.id,
+                role,
+                isAgent: role === 'agent'
+            });
             setError(err instanceof Error ? err : new Error('Failed to fetch notifications'));
             // 保留舊資料，不清空 count 和 notifications
         } finally {
