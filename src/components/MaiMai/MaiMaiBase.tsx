@@ -101,7 +101,7 @@ export function Antenna({ animated = false, mood = 'idle' }: { animated?: boolea
       fill="none"
       strokeLinecap="round"
       strokeLinejoin="round"
-      className={`${T_OPACITY} ${wiggle ? 'animate-wiggle origin-bottom' : ''} ${droopy ? 'opacity-70' : ''}`}
+      className={`${T_OPACITY} ${wiggle ? 'origin-bottom animate-wiggle' : ''} ${droopy ? 'opacity-70' : ''}`}
     />
   );
 }
@@ -560,7 +560,7 @@ export function MaiMaiBase({
       onKeyDown={onClick ? (e) => { if (e.key === 'Enter' || e.key === ' ') onClick(); } : undefined}
     >
       {/* 背景光暈 */}
-      <div className="absolute left-1/2 top-1/2 -z-10 size-3/4 -translate-x-1/2 -translate-y-1/2 animate-pulse rounded-full bg-[var(--brand)]/10 blur-2xl" />
+      <div className="bg-[var(--brand)]/10 absolute left-1/2 top-1/2 -z-10 size-3/4 -translate-x-1/2 -translate-y-1/2 animate-pulse rounded-full blur-2xl" />
 
       <svg
         viewBox={`0 0 ${CANVAS_SIZE} ${CANVAS_HEIGHT}`}

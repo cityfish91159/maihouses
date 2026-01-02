@@ -15,11 +15,11 @@ export function MaiMaiSpeech({ messages, className = '' }: MaiMaiSpeechProps) {
   return (
     <div
       className={`
-        absolute left-1/2 -translate-x-1/2 bottom-full mb-3 z-10
-        min-w-[120px] max-w-[85vw] sm:max-w-[280px]
-        rounded-xl bg-white px-3 py-2
-        shadow-lg ring-1 ring-slate-200
-        animate-in fade-in slide-in-from-bottom-2 duration-300
+        animate-in fade-in slide-in-from-bottom-2 absolute bottom-full left-1/2
+        z-10 mb-3 min-w-[120px]
+        max-w-[85vw] -translate-x-1/2 rounded-xl bg-white
+        px-3 py-2 shadow-lg
+        ring-1 ring-slate-200 duration-300 sm:max-w-[280px]
         ${className}
       `}
       role="status"
@@ -28,7 +28,7 @@ export function MaiMaiSpeech({ messages, className = '' }: MaiMaiSpeechProps) {
       aria-label="MaiMai 最新對話"
     >
       {/* 氣泡尾巴 - 置中 */}
-      <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 size-4 rotate-45 bg-white ring-1 ring-slate-200" />
+      <div className="absolute -bottom-2 left-1/2 size-4 -translate-x-1/2 rotate-45 bg-white ring-1 ring-slate-200" />
       
       <div className="relative space-y-0.5">
         {recentMessages.map((message, index) => {

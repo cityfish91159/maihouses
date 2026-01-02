@@ -4,15 +4,18 @@
  *
  * Consumer 專用 Feed Hook
  * P6-REFACTOR: Mock 資料已抽離至 mockData/posts/consumer.ts
+ * MSG-3: 整合 useNotifications 支援未讀私訊提醒橫幅
  */
 
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useFeedData } from '../../hooks/useFeedData';
 import { useAuth } from '../../hooks/useAuth';
+import { useNotifications } from '../../hooks/useNotifications';
 import { notify } from '../../lib/notify';
 import { STRINGS } from '../../constants/strings';
 import type { UserProfile, ActiveTransaction, SidebarData } from '../../types/feed';
 import type { Role } from '../../types/community';
+import type { ConversationListItem } from '../../types/messaging.types';
 import { MOCK_FEED_STATS, MOCK_ACTIVE_TRANSACTION } from '../../services/mock/feed';
 // P7-Audit-C6: Use shared mock data
 import { getConsumerFeedData } from './mockData';
@@ -26,6 +29,17 @@ const S = STRINGS.FEED;
 export function useConsumer(userId?: string, forceMock?: boolean) {
     const { user, isAuthenticated: realAuth, role, loading: authLoading } = useAuth();
 
+    // MSG-3: 取得未讀私訊通知（只在真正登入時查詢）
+    const { notifications } = useNotifications();
+    
+    // MSG-3: 只有真正登入的用戶才顯示私訊通知（Demo 模式不顯示）
+    // 使用 useMemo 避免每次 render 都重新計算
+    const latestNotification = useMemo<ConversationListItem | null>(() => {
+        if (!realAuth || !user || !notifications || notifications.length === 0) {
+            return null;
+        }
+        return notifications[0] ?? null;
+    }, [realAuth, user, notifications]);
 
     const {
         data,
@@ -208,5 +222,7 @@ export function useConsumer(userId?: string, forceMock?: boolean) {
         handleReply,
         handleComment,
         handleShare,
+        // MSG-3: 新增通知相關資料
+        latestNotification,
     };
 }

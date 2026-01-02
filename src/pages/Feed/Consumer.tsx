@@ -144,6 +144,8 @@ function ConsumerContent({ userId, forceMock }: ConsumerProps) {
     handleReply,
     handleComment,
     handleShare,
+    // MSG-3: 通知資料
+    latestNotification,
   } = useConsumer(userId, forceMock);
 
   // F6/E5 Fix: Deep Linking and Profile Navigation
@@ -210,12 +212,14 @@ function ConsumerContent({ userId, forceMock }: ConsumerProps) {
         onSearch={handleSearch}
         className="sticky top-0 z-30"
       />
-      {/* 交易橫幅 */}
-      {
-        activeTransaction.hasActive && (
-          <TxBanner transaction={activeTransaction} className="mt-2" />
-        )
-      }
+      {/* MSG-3: 交易橫幅（現在也支援私訊提醒，私訊優先） */}
+      {(latestNotification || activeTransaction.hasActive) && (
+        <TxBanner
+          transaction={activeTransaction}
+          messageNotification={latestNotification}
+          className="mt-2"
+        />
+      )}
 
       {/* 主要布局 */}
       <div className="mx-auto flex max-w-[960px] gap-5 p-4 pb-[calc(80px+env(safe-area-inset-bottom,20px))] lg:pb-4">

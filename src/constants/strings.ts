@@ -18,6 +18,14 @@ export const STRINGS = {
       TITLE: '您有一筆交易進行中',
       ENTER_BTN: '進入戰情室',
     },
+    // MSG-3: 私訊提醒橫幅文案
+    MSG_BANNER: {
+      TITLE: '💬 有房仲想聯繫您',
+      PROPERTY_FALLBACK: '物件諮詢',
+      VIEW_BTN: '查看',
+      COMING_SOON: '對話功能開發中',
+      COMING_SOON_DESC: '敬請期待',
+    },
     SIDEBAR: {
       NAV_TITLE: '快速導航',
       HOT_TITLE: '社區動態',
@@ -221,4 +229,3 @@ export const STRINGS = {
     },
   },
 };
-

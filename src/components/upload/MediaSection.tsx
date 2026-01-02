@@ -39,7 +39,7 @@ export const MediaSection: React.FC = () => {
 
       <div className="space-y-5">
         <div>
-          <label htmlFor="upload-description" className="mb-1.5 block text-xs font-semibold text-slate-500 uppercase tracking-wider">物件描述</label>
+          <label htmlFor="upload-description" className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-500">物件描述</label>
           <textarea
             id="upload-description"
             name="description"
@@ -52,8 +52,8 @@ export const MediaSection: React.FC = () => {
         </div>
 
         <div>
-          <span className="mb-3 flex items-center justify-between text-xs font-semibold text-slate-500 uppercase tracking-wider">
-            <span>物件照片 * <span className="text-slate-400 font-normal">(至少 1 張，點擊 ⭐ 設為封面)</span></span>
+          <span className="mb-3 flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-slate-500">
+            <span>物件照片 * <span className="font-normal text-slate-400">(至少 1 張，點擊 ⭐ 設為封面)</span></span>
             {managedImages.length > 0 && (
               <button
                 onClick={() => setShowComparison(true)}
@@ -123,7 +123,7 @@ export const MediaSection: React.FC = () => {
           {/* UP-2.A: 壓縮進度 UI */}
           {compressionProgress !== null && (
             <div className="mt-3 flex items-center gap-3 rounded-lg bg-blue-50 px-4 py-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 text-blue-600">
+              <div className="flex size-10 items-center justify-center rounded-full bg-blue-100 text-blue-600">
                 <Sparkles size={20} className="animate-pulse" />
               </div>
               <div className="flex-1">
