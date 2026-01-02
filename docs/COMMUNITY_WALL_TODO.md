@@ -225,74 +225,89 @@
 ### MSG-2: 鈴鐺通知功能（消費者 + 房仲共用）✅ (100/100)
 
 **完成日期**: 2026-01-02
-**實作內容**: GlobalHeader 鈴鐺點擊展開私訊列表
 
-**⚠️ 重要**: 消費者和房仲**都需要**鈴鐺功能
-- ✅ 消費者：收到房仲訊息時顯示通知
-- ✅ 房仲：收到消費者回覆時顯示通知
+#### 📁 核心檔案
 
-**實作項目**:
-1. ✅ **useNotifications Hook** ([src/hooks/useNotifications.ts](src/hooks/useNotifications.ts))
-   - 查詢 Supabase `conversations` 表
-   - 根據用戶角色（agent/consumer）查詢未讀訊息
-   - JOIN `messages` 表獲取最新訊息
-   - 返回未讀數量 + 通知列表（ConversationListItem[]）
-   - 支持手動刷新（refresh 方法）
+| 檔案 | 用途 |
+|------|------|
+| `src/hooks/useNotifications.ts` | 通知 Hook（查詢 + Realtime + 重試） |
+| `src/components/layout/NotificationDropdown.tsx` | 下拉選單 UI |
+| `src/components/layout/NotificationErrorBoundary.tsx` | 錯誤邊界 |
+| `src/components/layout/GlobalHeader.tsx` | 整合鈴鐺入口 |
+| `src/constants/messaging.ts` | 配置常數 |
+| `src/hooks/__tests__/useNotifications.test.ts` | Hook 測試 (14 cases) |
+| `src/components/layout/__tests__/*.test.tsx` | 組件測試 (41 cases) |
 
-2. ✅ **NotificationDropdown 組件** ([src/components/layout/NotificationDropdown.tsx](src/components/layout/NotificationDropdown.tsx))
-   - 下拉選單 UI（380px 寬，最高 400px 滾動）
-   - 顯示：對方名稱、物件名、訊息預覽、時間
-   - 未讀數 badge（紅色圓點）
-   - 點擊項目跳轉到對話頁面（`/maihouses/chat/:conversationId`）
-   - 空狀態提示：沒有新訊息
-   - Loading 狀態：骨架屏動畫
+#### 🔧 施作流程
 
-3. ✅ **GlobalHeader 整合** ([src/components/layout/GlobalHeader.tsx](src/components/layout/GlobalHeader.tsx))
-   - 移除 `notificationCount` prop（改用 hook 獲取）
-   - 使用 `useNotifications` hook
-   - 鈴鐺按鈕加入 onClick 展開 dropdown
-   - 點擊外部自動關閉 dropdown
-   - 通知數字 badge（>99 顯示 99+）
-
-4. ✅ **清理代碼**
-   - [src/pages/Feed/Consumer.tsx](src/pages/Feed/Consumer.tsx): 移除不必要的 `notificationCount` prop 傳遞
-   - [src/pages/Feed/Agent.tsx](src/pages/Feed/Agent.tsx): 已正確使用 GlobalHeader，無需修改
-   - [src/types/messaging.types.ts](src/types/messaging.types.ts): 修正 ConversationListItem 類型定義
-
-**驗證結果**:
-- ✅ TypeScript 檢查通過 (`npm run typecheck`)
-- ✅ ESLint 檢查通過（修改檔案無 errors）
-- ✅ 功能測試：
-  - 消費者可看到房仲訊息通知
-  - 房仲可看到消費者回覆通知
-  - 點擊通知正確跳轉到對話頁面
-  - 未讀數字正確顯示
-
-**已修改檔案**:
 ```
-修改:
-✏️ src/hooks/useNotifications.ts （實作真實數據查詢 + Realtime + .limit(50)）
-✏️ src/components/layout/GlobalHeader.tsx （整合 dropdown + ErrorBoundary）
-✏️ src/components/layout/NotificationDropdown.tsx （修復 eslint-disable）
-✏️ src/pages/Feed/Consumer.tsx （移除 prop）
-✏️ src/types/messaging.types.ts （類型修正）
+Week 1: 基礎功能
+├── useNotifications Hook
+│   ├── Supabase JOIN 查詢（conversations + messages + profiles）
+│   ├── 角色判斷（agent/consumer 不同查詢）
+│   ├── .limit(50) 防止資料爆炸
+│   └── Realtime 訂閱即時更新
+├── NotificationDropdown UI
+│   ├── 380px 寬，最高 400px 滾動
+│   ├── 訊息預覽 + 相對時間 + 未讀 badge
+│   └── Empty/Loading/Error 三態
+├── GlobalHeader 整合
+│   ├── 鈴鐺展開 dropdown
+│   ├── 點擊外部關閉
+│   └── ErrorBoundary 包裹
+└── eslint-disable 修復（role="presentation"）
 
-新增:
-➕ src/components/layout/NotificationDropdown.tsx
-➕ src/components/layout/NotificationErrorBoundary.tsx
+Week 2: 品質強化
+├── 單元測試 55 cases（Hook 14 + Dropdown 26 + ErrorBoundary 15）
+├── Stale Data Indicator（isStale + lastUpdated + refresh 按鈕）
+├── Keyboard Navigation（Arrow/Tab/Home/End + Focus Trap）
+├── AbortController 請求取消
+├── Smart Retry（只重試 5xx/網路錯誤，不重試 4xx）
+└── Magic Numbers → MESSAGING_CONFIG 常數
 ```
 
-**Week 1 品質修復 (2026-01-02)**:
-- ✅ console.error → logger（原本已完成）
-- ✅ JOIN 查詢加 `.limit(50)` 防止資料爆炸
-- ✅ 加入 Supabase Realtime 訂閱即時更新
-- ✅ 修復 eslint-disable（改用 role="presentation" + onKeyDown）
-- ✅ 移除 setTimeout hack（GlobalHeader 登出後直接 navigate）
-- ✅ 加入 NotificationErrorBoundary 捕獲錯誤
+#### ⚙️ 配置常數 (`src/constants/messaging.ts`)
 
-**TODO 註記**:
-- ⚠️ 對話頁面（MSG-4）尚未完成，目前點擊通知會跳轉到 `/maihouses/chat/:conversationId`
-- 🔮 未來可加入通知音效和瀏覽器推播（NOTIFY-2）
+```typescript
+export const MESSAGING_CONFIG = {
+  MAX_NOTIFICATIONS_DISPLAY: 20,    // 下拉選單最多顯示項目數
+  MESSAGE_PREVIEW_MAX_LENGTH: 40,   // 訊息預覽截斷長度
+  STALE_THRESHOLD_MS: 5 * 60 * 1000, // 資料過期閾值（5分鐘）
+  QUERY_LIMIT: 50,                  // 單次查詢最大對話數
+  RETRY_COUNT: 3,                   // 最大重試次數
+  RETRY_INITIAL_DELAY_MS: 1000,     // 初始重試延遲
+  UNREAD_BADGE_MAX: 99,             // 未讀數顯示上限
+  LOADING_SKELETON_COUNT: 3,        // Loading 骨架數量
+};
+```
+
+#### 🔑 關鍵設計
+
+**Smart Retry 機制** (`isRetryableError`)：
+- ✅ 重試：網路錯誤、5xx、timeout
+- ❌ 不重試：4xx（400/401/403/404）、AbortError
+
+**Keyboard Navigation**：
+- `↑/↓` 導航項目
+- `Home/End` 跳到首尾
+- `Tab` Focus Trap（不離開 dropdown）
+- `Escape` 關閉
+
+**Stale Indicator**：
+- `isStale = error !== null || (lastUpdated > STALE_THRESHOLD_MS)`
+- UI 顯示黃色警告 + 重新整理按鈕
+
+#### ✅ 驗證結果
+
+- [x] TypeScript 0 errors
+- [x] ESLint 通過
+- [x] 55 單元測試全通過
+- [x] Vercel 部署成功
+
+#### ⚠️ 後續依賴
+
+- MSG-4（對話頁面）：目前點擊通知跳轉 `/maihouses/chat/:id` 待實作
+- NOTIFY-2（Web Push）：可加入瀏覽器推播
 
 ---
 
