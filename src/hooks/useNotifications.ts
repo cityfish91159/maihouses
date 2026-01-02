@@ -46,7 +46,57 @@ interface RawConversationData {
 }
 
 /**
+ * 判斷錯誤是否可重試
+ * - 網路錯誤（TypeError: Failed to fetch）：可重試
+ * - 5xx 伺服器錯誤：可重試
+ * - Timeout/AbortError：不重試（用戶取消）
+ * - 4xx 用戶端錯誤：不重試（重試無意義）
+ */
+function isRetryableError(err: unknown): boolean {
+    // AbortError 不重試
+    if (err instanceof DOMException && err.name === 'AbortError') {
+        return false;
+    }
+
+    // 網路錯誤（fetch 失敗）：可重試
+    if (err instanceof TypeError && err.message.includes('fetch')) {
+        return true;
+    }
+
+    // Supabase/PostgrestError 檢查 HTTP 狀態碼
+    if (err && typeof err === 'object' && 'code' in err) {
+        const code = String((err as { code: unknown }).code);
+        // PGRST 錯誤碼或 HTTP 狀態碼
+        // 5xx 錯誤：可重試
+        if (code.startsWith('5') || code === 'PGRST') {
+            return true;
+        }
+        // 4xx 錯誤：不重試
+        if (code.startsWith('4')) {
+            return false;
+        }
+    }
+
+    // 通用 Error 檢查訊息
+    if (err instanceof Error) {
+        const msg = err.message.toLowerCase();
+        // 網路相關錯誤：可重試
+        if (msg.includes('network') || msg.includes('timeout') || msg.includes('connection')) {
+            return true;
+        }
+        // 明確的用戶端錯誤：不重試
+        if (msg.includes('bad request') || msg.includes('unauthorized') || msg.includes('forbidden') || msg.includes('not found')) {
+            return false;
+        }
+    }
+
+    // 預設：暫時性錯誤，可重試
+    return true;
+}
+
+/**
  * Exponential Backoff Retry 機制
+ * 只對可重試的錯誤進行重試，避免浪費資源
  */
 async function fetchWithRetry<T>(
     fn: () => Promise<T>,
@@ -57,7 +107,17 @@ async function fetchWithRetry<T>(
         try {
             return await fn();
         } catch (err) {
-            if (i === retries - 1) throw err;
+            // 檢查是否為可重試的錯誤
+            if (!isRetryableError(err)) {
+                throw err; // 4xx/AbortError 直接拋出，不重試
+            }
+
+            // 最後一次嘗試失敗，拋出錯誤
+            if (i === retries - 1) {
+                throw err;
+            }
+
+            // 等待後重試（指數退避）
             await new Promise(resolve => setTimeout(resolve, delay * Math.pow(2, i)));
         }
     }
