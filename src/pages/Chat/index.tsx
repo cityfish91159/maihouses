@@ -4,6 +4,7 @@ import { GlobalHeader } from '../../components/layout/GlobalHeader';
 import { HEADER_MODES } from '../../constants/header';
 import { useAuth } from '../../hooks/useAuth';
 import { ChatHeader } from './ChatHeader';
+import { ChatErrorLayout } from './ErrorLayout';
 import { MessageInput } from './MessageInput';
 import { MessageList } from './MessageList';
 import { useChat } from './useChat';
@@ -11,7 +12,7 @@ import { useChat } from './useChat';
 export default function ChatPage() {
   const { conversationId } = useParams();
   const { isAuthenticated, loading: authLoading, role } = useAuth();
-  const { header, messages, isLoading, isSending, error, sendMessage, isAgent } = useChat(conversationId);
+  const { header, messages, isLoading, isSending, isTyping, error, sendMessage, sendTyping, isAgent } = useChat(conversationId);
   const headerMode = role === 'agent' ? HEADER_MODES.AGENT : HEADER_MODES.CONSUMER;
 
   useEffect(() => {
@@ -19,40 +20,23 @@ export default function ChatPage() {
   }, []);
 
   if (!conversationId) {
-    return (
-      <div className="min-h-screen bg-slate-50">
-        <GlobalHeader mode={headerMode} />
-        <div className="mx-auto max-w-[960px] px-4 py-10 text-sm text-slate-600">
-          無效的對話連結。
-        </div>
-      </div>
-    );
+    return <ChatErrorLayout mode={headerMode}>無效的對話連結。</ChatErrorLayout>;
   }
 
   if (authLoading) {
-    return (
-      <div className="min-h-screen bg-slate-50">
-        <GlobalHeader mode={headerMode} />
-        <div className="mx-auto max-w-[960px] px-4 py-10 text-sm text-slate-600">
-          載入中...
-        </div>
-      </div>
-    );
+    return <ChatErrorLayout mode={headerMode}>載入中...</ChatErrorLayout>;
   }
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-slate-50">
-        <GlobalHeader mode={headerMode} />
-        <div className="mx-auto max-w-[960px] px-4 py-10">
-          <div className="rounded-2xl border border-brand-100 bg-white p-6 text-sm text-slate-600 shadow-sm">
-            請先登入才能查看對話內容。
-            <a className="ml-2 font-bold text-brand-700" href="/maihouses/auth.html?mode=login">
-              前往登入
-            </a>
-          </div>
+      <ChatErrorLayout mode={headerMode}>
+        <div className="rounded-2xl border border-brand-100 bg-white p-6 text-sm text-slate-600 shadow-sm">
+          請先登入才能查看對話內容。
+          <a className="ml-2 font-bold text-brand-700" href="/maihouses/auth.html?mode=login">
+            前往登入
+          </a>
         </div>
-      </div>
+      </ChatErrorLayout>
     );
   }
 
@@ -78,9 +62,17 @@ export default function ChatPage() {
               isLoading={isLoading}
               error={error}
             />
+            {isTyping && (
+              <div className="mt-3 text-xs text-slate-500">對方輸入中...</div>
+            )}
           </div>
           <div className="border-t border-brand-100 p-3">
-            <MessageInput onSend={sendMessage} disabled={isLoading || isSending} isSending={isSending} />
+            <MessageInput
+              onSend={sendMessage}
+              onTyping={sendTyping}
+              disabled={isLoading || isSending}
+              isSending={isSending}
+            />
           </div>
         </section>
       </div>

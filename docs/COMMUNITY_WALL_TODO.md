@@ -422,13 +422,14 @@ src/pages/Chat/
 - [x] 權限檢查 (session_id + role-based)
 - [x] hasAccess 狀態管理
 - ✅ 友好錯誤訊息
-- ❌ 4 處 `as` 斷言 (Line 84,121,232,248) → 需 Zod 驗證
+- ✅ 4 處 `as` 斷言 → Zod 驗證
 - [x] 發送改樂觀更新，移除全量重查
-- ❌ 新訊息排序整個陣列 (Line 237) → 直接 append
-- ❌ MessageInput catch 空白 (Line 19) → 需 toast 提示
-- ⚠️ 測試覆蓋 0 個
-- ⚠️ MessageInput 無 maxLength 限制
-- ⚠️ textarea 缺 aria-label
+- ✅ 新訊息直接 append，不排序
+- ✅ MessageInput 送出失敗 toast 提示
+- ✅ 輸入狀態指示器（對方輸入中）
+- ✅ 測試覆蓋 15 個
+- ✅ MessageInput 加入 maxLength
+- ✅ textarea 補上 aria-label
 
 **驗證**: TypeScript 0 errors, ESLint pass, 功能可用
 

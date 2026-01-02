@@ -1,13 +1,15 @@
 import { useState } from 'react';
 import { Send } from 'lucide-react';
+import { notify } from '../../lib/notify';
 
 interface MessageInputProps {
   onSend: (content: string) => Promise<void> | void;
   disabled?: boolean;
   isSending?: boolean;
+  onTyping?: () => void;
 }
 
-export function MessageInput({ onSend, disabled, isSending }: MessageInputProps) {
+export function MessageInput({ onSend, disabled, isSending, onTyping }: MessageInputProps) {
   const [value, setValue] = useState('');
 
   const handleSend = async () => {
@@ -17,7 +19,7 @@ export function MessageInput({ onSend, disabled, isSending }: MessageInputProps)
       await onSend(trimmed);
       setValue('');
     } catch {
-      // Keep input content when send fails.
+      notify.error('訊息發送失敗', '請重試');
     }
   };
 
@@ -26,8 +28,13 @@ export function MessageInput({ onSend, disabled, isSending }: MessageInputProps)
       <textarea
         className="min-h-[44px] flex-1 resize-none rounded-2xl border border-brand-100 px-4 py-2 text-sm text-slate-900 shadow-sm focus:border-brand-300 focus:outline-none"
         placeholder="輸入訊息..."
+        aria-label="輸入訊息"
+        maxLength={500}
         value={value}
-        onChange={(event) => setValue(event.target.value)}
+        onChange={(event) => {
+          setValue(event.target.value);
+          onTyping?.();
+        }}
         onKeyDown={(event) => {
           if (event.key === 'Enter' && !event.shiftKey) {
             event.preventDefault();

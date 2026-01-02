@@ -1,26 +1,56 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { z } from 'zod';
 import { supabase } from '../../lib/supabase';
 import { logger } from '../../lib/logger';
 import { useAuth } from '../../hooks/useAuth';
 import type { Conversation, Message, SenderType } from '../../types/messaging.types';
 
-type ProfileRow = {
-  name: string | null;
-  email: string | null;
-};
+const MessageSchema = z.object({
+  id: z.string().uuid(),
+  conversation_id: z.string().uuid(),
+  sender_type: z.enum(['agent', 'consumer']),
+  sender_id: z.string().uuid().nullable(),
+  content: z.string(),
+  created_at: z.string(),
+  read_at: z.string().nullable(),
+});
 
-type PropertyRow = {
-  public_id: string | null;
-  title: string | null;
-  images: string[] | null;
-  address: string | null;
-};
+const ProfileSchema = z.object({
+  name: z.string().nullable().optional(),
+  email: z.string().nullable().optional(),
+});
 
-interface RawConversationRow extends Conversation {
-  agent_profile?: ProfileRow[] | null;
-  consumer_profile?: ProfileRow[] | null;
-  property?: PropertyRow[] | null;
-}
+const PropertySchema = z.object({
+  public_id: z.string().nullable().optional(),
+  title: z.string().nullable().optional(),
+  images: z.array(z.string()).nullable().optional(),
+  address: z.string().nullable().optional(),
+});
+
+const ConversationSchema = z.object({
+  id: z.string().uuid(),
+  status: z.enum(['pending', 'active', 'closed']),
+  agent_id: z.string(),
+  consumer_session_id: z.string(),
+  consumer_profile_id: z.string().uuid().nullable(),
+  property_id: z.string().nullable(),
+  lead_id: z.string().uuid().nullable(),
+  unread_agent: z.number(),
+  unread_consumer: z.number(),
+  created_at: z.string(),
+  updated_at: z.string(),
+  agent_profile: z.array(ProfileSchema).nullable().optional(),
+  consumer_profile: z.array(ProfileSchema).nullable().optional(),
+  property: z.array(PropertySchema).nullable().optional(),
+});
+
+const ConversationUpdateSchema = z.object({
+  id: z.string().uuid(),
+  status: z.enum(['pending', 'active', 'closed']),
+  updated_at: z.string(),
+});
+
+const MessageListSchema = z.array(MessageSchema);
 
 export interface ChatHeaderData {
   counterpartName: string;
@@ -58,6 +88,10 @@ export function useChat(conversationId?: string) {
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const [hasAccess, setHasAccess] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
+  const typingTimeoutRef = useRef<number | null>(null);
+  const typingSentAtRef = useRef(0);
+  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
   const statusLabel = useMemo(() => {
     if (!conversation) return '';
@@ -91,7 +125,7 @@ export function useChat(conversationId?: string) {
       throw error;
     }
 
-    const row = data as RawConversationRow;
+    const row = ConversationSchema.parse(data);
     const sessionId = getUagSessionId();
     const isParticipant = isAgent
       ? row.agent_id === user.id
@@ -137,7 +171,8 @@ export function useChat(conversationId?: string) {
       throw error;
     }
 
-    setMessages((data as Message[]) || []);
+    const validatedMessages = MessageListSchema.parse(data ?? []);
+    setMessages(validatedMessages);
   }, [conversationId, user]);
 
   const markRead = useCallback(async () => {
@@ -222,6 +257,7 @@ export function useChat(conversationId?: string) {
       setConversation(null);
       setHeader(null);
       setMessages([]);
+      setIsTyping(false);
       try {
         await loadConversation();
         await loadMessages();
@@ -252,15 +288,34 @@ export function useChat(conversationId?: string) {
     const channel = supabase
       .channel(`chat-${conversationId}`)
       .on(
+        'broadcast',
+        { event: 'typing' },
+        ({ payload }) => {
+          if (payload?.senderId === user.id) return;
+          setIsTyping(true);
+          if (typingTimeoutRef.current) {
+            clearTimeout(typingTimeoutRef.current);
+          }
+          typingTimeoutRef.current = window.setTimeout(() => {
+            setIsTyping(false);
+          }, 1500);
+        }
+      )
+      .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'messages', filter: `conversation_id=eq.${conversationId}` },
         (payload) => {
-          const incoming = payload.new as Message;
+          const parsedIncoming = MessageSchema.safeParse(payload.new);
+          if (!parsedIncoming.success) {
+            logger.warn('chat.realtime.invalidMessage', { errors: parsedIncoming.error.issues });
+            return;
+          }
+          const incoming = parsedIncoming.data;
           setMessages((prev) => {
             if (prev.some((msg) => msg.id === incoming.id)) {
               return prev;
             }
-            return [...prev, incoming].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+            return [...prev, incoming];
           });
           if (incoming.sender_type !== senderType) {
             markRead();
@@ -271,7 +326,12 @@ export function useChat(conversationId?: string) {
         'postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'conversations', filter: `id=eq.${conversationId}` },
         (payload) => {
-          const updated = payload.new as Conversation;
+          const parsedUpdate = ConversationUpdateSchema.safeParse(payload.new);
+          if (!parsedUpdate.success) {
+            logger.warn('chat.realtime.invalidConversation', { errors: parsedUpdate.error.issues });
+            return;
+          }
+          const updated = parsedUpdate.data;
           setConversation((prev) => (prev ? { ...prev, status: updated.status, updated_at: updated.updated_at } : prev));
           setHeader((prev) =>
             prev
@@ -285,10 +345,25 @@ export function useChat(conversationId?: string) {
       )
       .subscribe();
 
+    channelRef.current = channel;
+
     return () => {
       supabase.removeChannel(channel);
+      channelRef.current = null;
     };
   }, [conversationId, conversation, user, senderType, markRead, hasAccess]);
+
+  const sendTyping = useCallback(() => {
+    if (!channelRef.current || !user || !hasAccess) return;
+    const now = Date.now();
+    if (now - typingSentAtRef.current < 1000) return;
+    typingSentAtRef.current = now;
+    channelRef.current.send({
+      type: 'broadcast',
+      event: 'typing',
+      payload: { senderId: user.id },
+    });
+  }, [user, hasAccess]);
 
   return {
     conversation,
@@ -297,8 +372,10 @@ export function useChat(conversationId?: string) {
     messages,
     isLoading,
     isSending,
+    isTyping,
     error,
     sendMessage,
+    sendTyping,
     markRead,
     isAgent,
   };
