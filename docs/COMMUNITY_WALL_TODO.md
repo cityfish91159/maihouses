@@ -19,7 +19,7 @@
 | **P0** | MSG-1 私訊系統資料模型 | ✅ | 2hr | Backend | - |
 | **P0** | MSG-2 鈴鐺通知（消費者+房仲） | ✅ | 2hr | Frontend | MSG-1 |
 | **P0** | MSG-3 消費者 Feed 橫條提醒 | ⬜ | 1hr | Frontend | MSG-1 |
-| **P0** | MSG-4 對話頁面 | ✅ | 3hr | Frontend | MSG-1 |
+| **P0** | MSG-4 對話頁面 | [x] | 3hr | Frontend | MSG-1 |
 | **P0** | MSG-5 房仲訊息發送介面 | ⬜ | 2hr | Frontend | MSG-1, UAG-13 |
 | **P0** | NOTIFY-1 簡訊 API | ⬜ | 2hr | Backend | MSG-1, AUTH-1 |
 | **P0** | NOTIFY-2 Web Push 推播 | ⬜ | 2hr | Backend | MSG-1 |
@@ -372,7 +372,7 @@ useConsumer 整合
 
 ---
 
-### MSG-4: 對話頁面 ✅
+### MSG-4: 對話頁面 [x]
 
 **目標**: 消費者/房仲查看訊息並回覆的頁面
 
@@ -413,9 +413,9 @@ src/pages/Chat/
 ```
 
 **完成紀錄**:
-- ✅ 對話頁面 UI 與訊息輸入/列表元件完成
-- ✅ useChat 串接 Supabase 查詢、Realtime、已讀與發送
-- ✅ 新增 /chat/:conversationId 與 /feed/*/chat/:conversationId 路由
+- [x] 對話頁面 UI 與訊息輸入/列表元件完成
+- [x] useChat 串接 Supabase 查詢、Realtime、已讀與發送
+- [x] 新增 /chat/:conversationId 與 /feed/*/chat/:conversationId 路由
 
 ---
 
