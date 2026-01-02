@@ -5,7 +5,7 @@
  * MSG-3: 擴展支援私訊通知，優先級高於交易橫幅
  */
 
-import { memo } from 'react';
+import { memo, useMemo } from 'react';
 import { Home, MessageCircle, ChevronRight } from 'lucide-react';
 import type { ActiveTransaction } from '../../types/feed';
 import type { ConversationListItem } from '../../types/messaging.types';
@@ -23,7 +23,11 @@ interface TxBannerProps {
   className?: string;
 }
 
-/** 取得交易階段顯示名稱 */
+/**
+ * 取得交易階段顯示名稱
+ * @param stage - 交易階段
+ * @returns 階段的中文顯示名稱
+ */
 function getStageLabel(stage: ActiveTransaction['stage']): string {
   switch (stage) {
     case 'negotiation':
@@ -41,10 +45,24 @@ function getStageLabel(stage: ActiveTransaction['stage']): string {
 
 /**
  * 格式化時間為相對時間
+ *
+ * @param timestamp - ISO 8601 時間戳字串
+ * @returns 相對時間字串（剛剛、5分鐘前、1小時前、3天前 等）
+ *
+ * @example
+ * formatRelativeTime('2026-01-02T10:00:00Z') // '5 分鐘前'
+ * formatRelativeTime('invalid') // '時間未知'
  */
 function formatRelativeTime(timestamp: string): string {
   const now = new Date();
   const time = new Date(timestamp);
+
+  // 驗證日期有效性
+  if (isNaN(time.getTime())) {
+    console.warn('[TxBanner] Invalid timestamp:', timestamp);
+    return '時間未知';
+  }
+
   const diffMs = now.getTime() - time.getTime();
   const diffMins = Math.floor(diffMs / 60000);
   const diffHours = Math.floor(diffMins / 60);
@@ -58,6 +76,17 @@ function formatRelativeTime(timestamp: string): string {
 }
 
 /**
+ * 截斷過長的名字
+ * @param name - 原始名字
+ * @param maxLength - 最大長度（預設 12）
+ * @returns 截斷後的名字（如果超過長度會加上 ...）
+ */
+function truncateName(name: string, maxLength = 12): string {
+  if (name.length <= maxLength) return name;
+  return `${name.slice(0, maxLength)}...`;
+}
+
+/**
  * MSG-3: 處理查看私訊點擊
  * 由於 MSG-4 尚未完成，點擊時顯示 toast 提示
  */
@@ -66,17 +95,38 @@ function handleMessageClick(e: React.MouseEvent<HTMLButtonElement>): void {
   notify.info(S_MSG.COMING_SOON, S_MSG.COMING_SOON_DESC);
 }
 
+/**
+ * TxBanner 組件
+ *
+ * 顯示進行中的交易或未讀私訊通知的橫幅
+ * 優先級：私訊通知 > 交易橫幅
+ */
 export const TxBanner = memo(function TxBanner({
   transaction,
   messageNotification,
   className = '',
 }: TxBannerProps) {
   // MSG-3: 私訊優先級高於交易
-  if (messageNotification) {
-    const timeLabel = messageNotification.last_message
+  // 使用 useMemo 優化性能，只在相關資料變化時重新計算
+  const messageContent = useMemo(() => {
+    if (!messageNotification) return null;
+
+    // 使用 optional chaining 確保類型安全
+    const timeLabel = messageNotification.last_message?.created_at
       ? formatRelativeTime(messageNotification.last_message.created_at)
       : '';
 
+    // 截斷過長的名字
+    const displayName = truncateName(messageNotification.counterpart.name);
+
+    return {
+      propertyTitle: messageNotification.property?.title || S_MSG.PROPERTY_FALLBACK,
+      counterpartName: displayName,
+      timeLabel,
+    };
+  }, [messageNotification]);
+
+  if (messageContent) {
     return (
       <div className={`mx-auto max-w-[1120px] px-4 ${className}`}>
         <div
@@ -91,15 +141,15 @@ export const TxBanner = memo(function TxBanner({
 
           {/* Info */}
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-bold text-brand-800">{S_MSG.TITLE}</p>
+            <p className="text-brand-800 text-sm font-bold">{S_MSG.TITLE}</p>
             <p className="truncate text-xs text-brand-700">
-              {messageNotification.property?.title || S_MSG.PROPERTY_FALLBACK}
+              {messageContent.propertyTitle}
               <span className="mx-1">·</span>
-              {messageNotification.counterpart.name}
-              {timeLabel && (
+              {messageContent.counterpartName}
+              {messageContent.timeLabel && (
                 <>
                   <span className="mx-1">·</span>
-                  {timeLabel}
+                  {messageContent.timeLabel}
                 </>
               )}
             </p>
@@ -110,6 +160,7 @@ export const TxBanner = memo(function TxBanner({
             type="button"
             onClick={handleMessageClick}
             className="inline-flex shrink-0 items-center gap-1 rounded-full bg-brand-600 px-3 py-1.5 text-xs font-bold text-white shadow-sm transition-all hover:bg-brand-700 active:scale-95"
+            aria-label="查看房仲私訊"
           >
             {S_MSG.VIEW_BTN}
             <ChevronRight size={14} />
@@ -154,6 +205,7 @@ export const TxBanner = memo(function TxBanner({
       <a
         href={ROUTES.ASSURE}
         className="inline-flex shrink-0 items-center gap-1 rounded-full bg-cyan-600 px-3 py-1.5 text-xs font-bold text-white shadow-sm transition-all hover:bg-cyan-700 active:scale-95"
+        aria-label="進入交易戰情室"
       >
         {S_TX.ENTER_BTN}
         <ChevronRight size={14} />

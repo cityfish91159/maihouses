@@ -30,10 +30,26 @@ export function useConsumer(userId?: string, forceMock?: boolean) {
     const { user, isAuthenticated: realAuth, role, loading: authLoading } = useAuth();
 
     // MSG-3: 取得未讀私訊通知（只在真正登入時查詢）
-    const { notifications } = useNotifications();
-    
-    // MSG-3: 只有真正登入的用戶才顯示私訊通知（Demo 模式不顯示）
-    // 使用 useMemo 避免每次 render 都重新計算
+    const { notifications, error: notificationsError } = useNotifications();
+
+    // MSG-3: 處理通知查詢錯誤（不影響主要功能）
+    useEffect(() => {
+        if (notificationsError) {
+            console.warn('[MSG-3] Failed to load notifications:', notificationsError);
+            // 不顯示 toast，避免干擾用戶體驗
+        }
+    }, [notificationsError]);
+
+    /**
+     * MSG-3: 獲取最新未讀私訊通知
+     *
+     * 規則：
+     * - 只有真正登入的用戶才顯示（Demo 模式不顯示）
+     * - 返回未讀通知列表中的第一條
+     * - 如果沒有通知或未登入，返回 null
+     *
+     * @returns {ConversationListItem | null} 最新通知或 null
+     */
     const latestNotification = useMemo<ConversationListItem | null>(() => {
         if (!realAuth || !user || !notifications || notifications.length === 0) {
             return null;
