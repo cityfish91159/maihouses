@@ -367,7 +367,7 @@ const PropertyUploadContent: React.FC = () => {
                   <Home size={24} />
                 </div>
                 <div>
-                  <p className="text-xs font-bold uppercase text-slate-400">物件編號</p>
+                  <p className="text-xs font-bold text-slate-400 uppercase">物件編號</p>
                   <p className="font-mono font-bold text-slate-700">{uploadResult.public_id}</p>
                 </div>
               </div>
@@ -378,7 +378,7 @@ const PropertyUploadContent: React.FC = () => {
                     <Building2 size={24} />
                   </div>
                   <div>
-                    <p className="text-xs font-bold uppercase text-slate-400">社區牆</p>
+                    <p className="text-xs font-bold text-slate-400 uppercase">社區牆</p>
                     <p className="font-bold text-slate-700">{uploadResult.community_name}</p>
                     {uploadResult.is_new_community && (
                       <span className="mt-0.5 inline-block rounded bg-orange-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
@@ -426,13 +426,13 @@ const PropertyUploadContent: React.FC = () => {
           <div className="flex items-center gap-3">
             <button
               onClick={() => navigate(-1)}
-              className="rounded-xl p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
+              className="rounded-xl p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
             >
               <ArrowLeft size={20} />
             </button>
             {/* Atomic Logo Component */}
             <div className="flex items-center gap-4">
-              <div className="origin-left scale-90">
+              <div className="scale-90 origin-left">
                 <Logo showSlogan={false} showBadge={true} />
               </div>
               <div className="h-6 w-px bg-slate-200" />
@@ -449,12 +449,12 @@ const PropertyUploadContent: React.FC = () => {
                 >
                   <RotateCcw size={16} /> 還原草稿
                   {draftPreview && (
-                    <span className="ml-1 border-l border-white/20 pl-2 text-[11px] font-medium opacity-80">{draftPreview.savedAt}</span>
+                    <span className="opacity-80 text-[11px] font-medium border-l border-white/20 pl-2 ml-1">{draftPreview.savedAt}</span>
                   )}
                 </button>
                 <button
                   onClick={handleDiscardDraft}
-                  className="rounded-full px-3 py-2 text-xs font-bold text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
+                  className="rounded-full px-3 py-2 text-xs font-bold text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
                 >
                   捨棄
                 </button>
@@ -489,9 +489,9 @@ const PropertyUploadContent: React.FC = () => {
             <div className="sticky top-24 space-y-6">
               <PreviewSection />
 
-              <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
+              <div className="rounded-2xl bg-white p-6 shadow-sm border border-slate-100">
                 <div className="mb-4 flex items-center justify-between">
-                  <h3 className="text-sm font-bold uppercase tracking-wider text-slate-500">發佈確認</h3>
+                  <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider">發佈確認</h3>
                   <span className={`text-xs font-bold ${validation.canSubmit ? 'text-green-500' : 'text-red-400'}`}>
                     {validation.canSubmit ? '✓ 資料已齊全' : '⚠ 尚有必填欄位'}
                   </span>

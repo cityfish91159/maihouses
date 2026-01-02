@@ -25,7 +25,7 @@ export const BasicInfoSection: React.FC = () => {
 
       <div className="space-y-4">
         <div>
-          <label htmlFor="upload-title" className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-500">物件標題 *</label>
+          <label htmlFor="upload-title" className="mb-1.5 block text-xs font-semibold text-slate-500 uppercase tracking-wider">物件標題 *</label>
           <input
             id="upload-title"
             name="title"
@@ -38,7 +38,7 @@ export const BasicInfoSection: React.FC = () => {
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label htmlFor="upload-price" className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-500">價格 (萬) *</label>
+            <label htmlFor="upload-price" className="mb-1.5 block text-xs font-semibold text-slate-500 uppercase tracking-wider">價格 (萬) *</label>
             <input
               id="upload-price"
               name="price"
@@ -50,7 +50,7 @@ export const BasicInfoSection: React.FC = () => {
             />
           </div>
           <div>
-            <label htmlFor="upload-address" className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-500">地址 *</label>
+            <label htmlFor="upload-address" className="mb-1.5 block text-xs font-semibold text-slate-500 uppercase tracking-wider">地址 *</label>
             <input
               id="upload-address"
               name="address"
@@ -63,8 +63,8 @@ export const BasicInfoSection: React.FC = () => {
         </div>
 
         <div>
-          <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-500">
-            社區名稱 * <span className="font-normal text-slate-400">(透天/店面請選「無社區」)</span>
+          <span className="mb-1.5 block text-xs font-semibold text-slate-500 uppercase tracking-wider">
+            社區名稱 * <span className="text-slate-400 font-normal">(透天/店面請選「無社區」)</span>
           </span>
           <CommunityPicker
             value={form.communityName}
@@ -73,7 +73,7 @@ export const BasicInfoSection: React.FC = () => {
             required={true}
           />
           {!validation.communityValid && form.communityName.length > 0 && (
-            <p className="mt-1.5 text-[11px] font-medium text-red-500">
+            <p className="mt-1.5 text-[11px] text-red-500 font-medium">
               請輸入完整社區名稱（至少2字）
             </p>
           )}
@@ -81,15 +81,15 @@ export const BasicInfoSection: React.FC = () => {
 
         <div className="grid grid-cols-4 gap-4">
           <div>
-            <label htmlFor="upload-size" className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-500">坪數</label>
+            <label htmlFor="upload-size" className="mb-1.5 block text-xs font-semibold text-slate-500 uppercase tracking-wider">坪數</label>
             <input id="upload-size" name="size" type="number" value={form.size} onChange={onInput} className={inputClass} placeholder="0" />
           </div>
           <div>
-            <label htmlFor="upload-age" className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-500">屋齡</label>
+            <label htmlFor="upload-age" className="mb-1.5 block text-xs font-semibold text-slate-500 uppercase tracking-wider">屋齡</label>
             <input id="upload-age" name="age" type="number" value={form.age} onChange={onInput} className={inputClass} placeholder="0" />
           </div>
           <div className="col-span-2">
-            <label htmlFor="upload-type" className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-500">類型</label>
+            <label htmlFor="upload-type" className="mb-1.5 block text-xs font-semibold text-slate-500 uppercase tracking-wider">類型</label>
             <select id="upload-type" name="type" value={form.type} onChange={onInput} className={inputClass}>
               <option>電梯大樓</option>
               <option>公寓</option>
@@ -101,15 +101,15 @@ export const BasicInfoSection: React.FC = () => {
 
         <div className="grid grid-cols-3 gap-4">
           <div>
-            <label htmlFor="upload-rooms" className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-500">房</label>
+            <label htmlFor="upload-rooms" className="mb-1.5 block text-xs font-semibold text-slate-500 uppercase tracking-wider">房</label>
             <input id="upload-rooms" name="rooms" type="number" value={form.rooms} onChange={onInput} className={inputClass} />
           </div>
           <div>
-            <label htmlFor="upload-halls" className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-500">廳</label>
+            <label htmlFor="upload-halls" className="mb-1.5 block text-xs font-semibold text-slate-500 uppercase tracking-wider">廳</label>
             <input id="upload-halls" name="halls" type="number" value={form.halls} onChange={onInput} className={inputClass} />
           </div>
           <div>
-            <label htmlFor="upload-bathrooms" className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-500">衛</label>
+            <label htmlFor="upload-bathrooms" className="mb-1.5 block text-xs font-semibold text-slate-500 uppercase tracking-wider">衛</label>
             <input id="upload-bathrooms" name="bathrooms" type="number" value={form.bathrooms} onChange={onInput} className={inputClass} />
           </div>
         </div>

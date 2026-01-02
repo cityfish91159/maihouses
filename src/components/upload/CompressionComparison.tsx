@@ -54,7 +54,7 @@ export const CompressionComparison: React.FC<CompressionComparisonProps> = ({
                     <img
                         src={compressedUrl}
                         alt="Compressed"
-                        className="absolute inset-0 size-full object-contain"
+                        className="absolute inset-0 h-full w-full object-contain"
                     />
                     {/* 標籤 Right */}
                     <div className="absolute right-4 top-4 rounded bg-black/50 px-2 py-1 text-xs text-white">After ({ratio}%)</div>
@@ -67,7 +67,7 @@ export const CompressionComparison: React.FC<CompressionComparisonProps> = ({
                         <img
                             src={originalUrl}
                             alt="Original"
-                            className="absolute inset-0 size-full object-contain"
+                            className="absolute inset-0 h-full w-full object-contain"
                         />
                         {/* 標籤 Left */}
                         <div className="absolute left-4 top-4 rounded bg-black/50 px-2 py-1 text-xs text-white">Before (100%)</div>
@@ -78,7 +78,7 @@ export const CompressionComparison: React.FC<CompressionComparisonProps> = ({
                         className="absolute inset-y-0 w-1 cursor-ew-resize bg-white shadow-[0_0_10px_rgba(0,0,0,0.5)]"
                         style={{ left: `${sliderPosition}%` }}
                     >
-                        <div className="absolute top-1/2 -ml-3 flex size-8 -translate-y-1/2 items-center justify-center rounded-full bg-white text-gray-800 shadow-lg">
+                        <div className="absolute top-1/2 -ml-3 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-white text-gray-800 shadow-lg">
                             <GripVertical size={16} />
                         </div>
                     </div>
@@ -90,7 +90,7 @@ export const CompressionComparison: React.FC<CompressionComparisonProps> = ({
                         max="100"
                         value={sliderPosition}
                         onChange={(e) => setSliderPosition(Number(e.target.value))}
-                        className="absolute inset-0 z-10 size-full cursor-ew-resize opacity-0"
+                        className="absolute inset-0 z-10 h-full w-full cursor-ew-resize opacity-0"
                     />
                 </div>
 

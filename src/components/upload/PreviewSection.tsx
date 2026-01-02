@@ -24,7 +24,7 @@ export const PreviewSection: React.FC = () => {
 
   return (
     <section className="rounded-2xl border border-slate-200 bg-slate-50/50 p-5">
-      <h3 className="mb-4 flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-slate-500">
+      <h3 className="mb-4 flex items-center gap-2 text-sm font-bold text-slate-500 uppercase tracking-wider">
         <MapPin size={16} className="text-slate-400" /> 即時預覽
       </h3>
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-md transition-all hover:shadow-lg">
@@ -34,8 +34,8 @@ export const PreviewSection: React.FC = () => {
           </div>
         )}
         <div className="p-5">
-          <h4 className="text-lg font-bold leading-tight text-slate-900">{form.title || '物件標題'}</h4>
-          <p className="mt-1.5 flex items-center gap-1 text-sm text-slate-500">
+          <h4 className="text-lg font-bold text-slate-900 leading-tight">{form.title || '物件標題'}</h4>
+          <p className="mt-1.5 text-sm text-slate-500 flex items-center gap-1">
             <MapPin size={14} /> {form.address || '地址'}
           </p>
           <div className="mt-3 flex items-baseline gap-1.5">
@@ -44,12 +44,12 @@ export const PreviewSection: React.FC = () => {
           </div>
           <div className="mt-4 flex flex-wrap gap-2">
             {tags.map((tag, i) => (
-              <span key={i} className="rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-xs font-bold text-maihouses-dark">
+              <span key={i} className="rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-maihouses-dark border border-blue-100">
                 {tag}
               </span>
             ))}
             {tags.length === 0 && (
-              <span className="text-xs italic text-slate-400">尚未生成標籤</span>
+              <span className="text-xs text-slate-400 italic">尚未生成標籤</span>
             )}
           </div>
 
@@ -62,9 +62,9 @@ export const PreviewSection: React.FC = () => {
                   {form.communityName}
                 </span>
                 {selectedCommunityId ? (
-                  <span className="rounded bg-green-50 px-1.5 py-0.5 text-green-600">已連結現有社區</span>
+                  <span className="text-green-600 bg-green-50 px-1.5 py-0.5 rounded">已連結現有社區</span>
                 ) : (
-                  <span className="rounded bg-blue-50 px-1.5 py-0.5 text-blue-600">將自動建立新社區</span>
+                  <span className="text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded">將自動建立新社區</span>
                 )}
               </span>
             </div>
