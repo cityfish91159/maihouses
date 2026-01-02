@@ -1,6 +1,6 @@
 # 🎯 UAG 系統完整優化工單 (SSOT)
 
-> **最後更新**: 2025-12-31
+> **最後更新**: 2026-01-02
 > **目標**: UAG (User Activity & Grade) 客戶分級追蹤系統完整部署與優化 + 私訊系統
 > **首頁**: https://maihouses.vercel.app/maihouses/
 > **UAG 頁**: https://maihouses.vercel.app/maihouses/uag
@@ -172,6 +172,7 @@
 
 **實作紀錄**:
 - **完成日期**: 2025-12-31 (Commit `66b1449f` Fixed)
+- **文檔同步**: 2026-01-02 (更新資料表設計與 TODO 文件)
 - **Migration**:
   - `20251231_003_messaging_schema.sql` (Initial)
   - `20251231_004_fix_messaging_critical_issues.sql` (Fixes)
@@ -180,7 +181,7 @@
   - ✅ `conversations` 表 (10 欄位 + 5 索引)
   - ✅ `messages` 表 (7 欄位 + 3 索引)
   - ✅ RLS 政策 (6 條: SELECT/INSERT/UPDATE for both tables)
-  - ✅ `fn_create_conversation()` - 建立對話
+  - ✅ `fn_create_conversation()` - 建立對話（含 idempotent 檢查）
   - ✅ `fn_send_message()` - 發送訊息 + 更新未讀數 + 自動 active
   - ✅ `fn_mark_messages_read()` - 標記已讀
   - ✅ TypeScript 類型定義 (Conversation, Message, API types)
@@ -197,11 +198,11 @@
 | 欄位 | 類型 | 說明 |
 |------|------|------|
 | id | UUID | 對話 ID |
-| agent_id | TEXT | 房仲 profile_id |
+| agent_id | UUID | 房仲 profile_id（修正：TEXT → UUID）|
 | consumer_session_id | TEXT | UAG session_id（購買時的匿名識別）|
 | consumer_profile_id | UUID | 消費者 profile_id（回覆後填入）|
 | property_id | TEXT | 相關物件 |
-| lead_id | UUID | 關聯的 uag_leads 記錄 |
+| lead_id | UUID | FK → uag_lead_purchases（修正：uag_leads → uag_lead_purchases）|
 | status | TEXT | pending → active → closed |
 | unread_agent | INT | 房仲未讀數 |
 | unread_consumer | INT | 消費者未讀數 |
