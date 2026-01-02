@@ -20,6 +20,7 @@ import { logger } from '../../lib/logger';
 import { HEADER_STRINGS, GlobalHeaderMode } from '../../constants/header';
 import { ROUTES } from '../../constants/routes';
 import { NotificationDropdown } from './NotificationDropdown';
+import { NotificationErrorBoundary } from './NotificationErrorBoundary';
 
 interface GlobalHeaderProps {
   /** 顯示模式：社區牆 | 消費者端 | 房仲端 */
@@ -56,7 +57,7 @@ export function GlobalHeader({ mode, title, className = '' }: GlobalHeaderProps)
       await signOut();
       notify.success(HEADER_STRINGS.MSG_LOGOUT_SUCCESS, HEADER_STRINGS.MSG_LOGOUT_DESC);
       setUserMenuOpen(false);
-      setTimeout(() => navigate(ROUTES.HOME), 100);
+      navigate(ROUTES.HOME);
     } catch (error) {
       logger.error('GlobalHeader.handleSignOut.failed', { error, userId: user?.id });
       notify.error(HEADER_STRINGS.MSG_LOGOUT_ERROR, HEADER_STRINGS.MSG_LOGOUT_RETRY);
@@ -154,12 +155,14 @@ export function GlobalHeader({ mode, title, className = '' }: GlobalHeaderProps)
             {/* Notification Dropdown */}
             {notificationMenuOpen && (
               <div id="gh-notification-dropdown">
-                <NotificationDropdown
-                  notifications={notifications}
-                  isLoading={notificationsLoading}
-                  onClose={() => setNotificationMenuOpen(false)}
-                  onNotificationClick={handleNotificationClick}
-                />
+                <NotificationErrorBoundary onClose={() => setNotificationMenuOpen(false)}>
+                  <NotificationDropdown
+                    notifications={notifications}
+                    isLoading={notificationsLoading}
+                    onClose={() => setNotificationMenuOpen(false)}
+                    onNotificationClick={handleNotificationClick}
+                  />
+                </NotificationErrorBoundary>
               </div>
             )}
           </div>

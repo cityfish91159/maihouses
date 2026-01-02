@@ -152,7 +152,8 @@ export function useNotifications(): UseNotificationsReturn {
                         `)
                         .eq('agent_id', user.id)
                         .gt('unread_agent', 0)
-                        .order('updated_at', { ascending: false });
+                        .order('updated_at', { ascending: false })
+                        .limit(50);
 
                     if (error) throw error;
                     return data;
@@ -185,7 +186,8 @@ export function useNotifications(): UseNotificationsReturn {
                         `)
                         .eq('consumer_profile_id', user.id)
                         .gt('unread_consumer', 0)
-                        .order('updated_at', { ascending: false });
+                        .order('updated_at', { ascending: false })
+                        .limit(50);
 
                     if (error) throw error;
                     return data;
@@ -217,6 +219,49 @@ export function useNotifications(): UseNotificationsReturn {
     useEffect(() => {
         fetchNotifications();
     }, [fetchNotifications]);
+
+    // Supabase Realtime 訂閱
+    useEffect(() => {
+        if (!isAuthenticated || !user) return;
+
+        const isAgent = role === 'agent';
+        const channelName = `notifications-${user.id}`;
+
+        const channel = supabase
+            .channel(channelName)
+            .on(
+                'postgres_changes',
+                {
+                    event: '*',
+                    schema: 'public',
+                    table: 'conversations',
+                    filter: isAgent ? `agent_id=eq.${user.id}` : `consumer_profile_id=eq.${user.id}`
+                },
+                () => {
+                    fetchNotifications();
+                }
+            )
+            .on(
+                'postgres_changes',
+                {
+                    event: 'INSERT',
+                    schema: 'public',
+                    table: 'messages'
+                },
+                () => {
+                    fetchNotifications();
+                }
+            )
+            .subscribe((status) => {
+                if (status === 'SUBSCRIBED') {
+                    logger.info('useNotifications.realtime.subscribed', { channelName, userId: user.id });
+                }
+            });
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [isAuthenticated, user, role, fetchNotifications]);
 
     return {
         count,

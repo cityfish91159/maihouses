@@ -271,19 +271,28 @@
 **已修改檔案**:
 ```
 修改:
-✏️ src/hooks/useNotifications.ts （實作真實數據查詢）
-✏️ src/components/layout/GlobalHeader.tsx （整合 dropdown）
+✏️ src/hooks/useNotifications.ts （實作真實數據查詢 + Realtime + .limit(50)）
+✏️ src/components/layout/GlobalHeader.tsx （整合 dropdown + ErrorBoundary）
+✏️ src/components/layout/NotificationDropdown.tsx （修復 eslint-disable）
 ✏️ src/pages/Feed/Consumer.tsx （移除 prop）
 ✏️ src/types/messaging.types.ts （類型修正）
 
 新增:
 ➕ src/components/layout/NotificationDropdown.tsx
+➕ src/components/layout/NotificationErrorBoundary.tsx
 ```
+
+**Week 1 品質修復 (2026-01-02)**:
+- ✅ console.error → logger（原本已完成）
+- ✅ JOIN 查詢加 `.limit(50)` 防止資料爆炸
+- ✅ 加入 Supabase Realtime 訂閱即時更新
+- ✅ 修復 eslint-disable（改用 role="presentation" + onKeyDown）
+- ✅ 移除 setTimeout hack（GlobalHeader 登出後直接 navigate）
+- ✅ 加入 NotificationErrorBoundary 捕獲錯誤
 
 **TODO 註記**:
 - ⚠️ 對話頁面（MSG-4）尚未完成，目前點擊通知會跳轉到 `/maihouses/chat/:conversationId`
-- 🔮 未來可加入 Supabase Realtime 訂閱，實現即時通知更新
-- 🔮 未來可加入通知音效和瀏覽器推播（MSG-2 + NOTIFY-2）
+- 🔮 未來可加入通知音效和瀏覽器推播（NOTIFY-2）
 
 ---
 
