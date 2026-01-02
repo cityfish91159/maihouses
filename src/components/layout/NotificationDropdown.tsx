@@ -5,6 +5,7 @@
  * 顯示未讀私訊列表，點擊項目跳轉到對話頁面
  */
 
+import { useRef, useEffect } from 'react';
 import { MessageCircle, X } from 'lucide-react';
 import type { ConversationListItem } from '../../types/messaging.types';
 
@@ -41,23 +42,53 @@ function truncateMessage(content: string, maxLength = 40): string {
   return `${content.slice(0, maxLength)}...`;
 }
 
+const MAX_NOTIFICATIONS_DISPLAY = 20; // 最多顯示 20 筆，防止 DOM 爆炸
+
 export function NotificationDropdown({
   notifications,
   isLoading,
   onClose,
   onNotificationClick
 }: NotificationDropdownProps) {
+  // 限制顯示數量
+  const displayNotifications = notifications.slice(0, MAX_NOTIFICATIONS_DISPLAY);
+  const hasMore = notifications.length > MAX_NOTIFICATIONS_DISPLAY;
+
+  // Focus 管理
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+
+  // 初始 focus 到關閉按鈕 + 鍵盤事件處理
+  useEffect(() => {
+    closeButtonRef.current?.focus();
+
+    // Escape 鍵關閉
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onClose();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
+
   return (
-    <div
-      className="animate-in fade-in zoom-in-95 absolute right-0 top-full mt-2 w-[380px] origin-top-right rounded-xl border border-brand-100 bg-white shadow-xl ring-1 ring-black/5 duration-100"
-      role="dialog"
-      aria-label="通知列表"
-      onClick={(e) => e.stopPropagation()}
-    >
+    // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
+    <div onClick={(e) => e.stopPropagation()}>
+      <div
+        ref={dropdownRef}
+        className="animate-in fade-in zoom-in-95 absolute right-0 top-full mt-2 w-[380px] origin-top-right rounded-xl border border-brand-100 bg-white shadow-xl ring-1 ring-black/5 duration-100"
+        role="dialog"
+        aria-modal="true"
+        aria-label="通知列表"
+      >
       {/* Header */}
       <div className="flex items-center justify-between border-b border-brand-100 px-4 py-3">
         <h3 className="text-brand-900 text-sm font-bold">私訊通知</h3>
         <button
+          ref={closeButtonRef}
           onClick={onClose}
           className="rounded-lg p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
           aria-label="關閉"
@@ -93,7 +124,7 @@ export function NotificationDropdown({
         ) : (
           // Notification List
           <div className="divide-y divide-gray-100">
-            {notifications.map((notification) => (
+            {displayNotifications.map((notification) => (
               <button
                 key={notification.id}
                 onClick={() => onNotificationClick(notification.id)}
@@ -142,21 +173,27 @@ export function NotificationDropdown({
                 </div>
               </button>
             ))}
+            {hasMore && (
+              <div className="px-4 py-3 text-center text-xs text-gray-500">
+                還有 {notifications.length - MAX_NOTIFICATIONS_DISPLAY} 則未讀訊息
+              </div>
+            )}
           </div>
         )}
       </div>
 
-      {/* Footer (Optional) */}
-      {notifications.length > 0 && (
-        <div className="border-t border-brand-100 px-4 py-2 text-center">
-          <a
-            href="/maihouses/chat"
-            className="text-xs font-bold text-brand-700 hover:text-brand-600"
-          >
-            查看所有訊息
-          </a>
-        </div>
-      )}
+        {/* Footer (Optional) */}
+        {notifications.length > 0 && (
+          <div className="border-t border-brand-100 px-4 py-2 text-center">
+            <a
+              href="/maihouses/chat"
+              className="text-xs font-bold text-brand-700 hover:text-brand-600"
+            >
+              查看所有訊息
+            </a>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

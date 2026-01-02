@@ -10,6 +10,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Bell, User, LogOut, ChevronDown } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { useNotifications } from '../../hooks/useNotifications';
@@ -44,6 +45,7 @@ const getRoleLabel = (role: string | undefined) => {
 export function GlobalHeader({ mode, title, className = '' }: GlobalHeaderProps) {
   const { isAuthenticated, user, signOut, role } = useAuth();
   const { count: notificationCount, notifications, isLoading: notificationsLoading } = useNotifications();
+  const navigate = useNavigate();
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [notificationMenuOpen, setNotificationMenuOpen] = useState(false);
 
@@ -53,8 +55,7 @@ export function GlobalHeader({ mode, title, className = '' }: GlobalHeaderProps)
       await signOut();
       notify.success(HEADER_STRINGS.MSG_LOGOUT_SUCCESS, HEADER_STRINGS.MSG_LOGOUT_DESC);
       setUserMenuOpen(false);
-      // P3-AUDIT-FIX: Graceful redirect instead of reload
-      window.location.href = ROUTES.HOME;
+      setTimeout(() => navigate(ROUTES.HOME), 100);
     } catch (error) {
       console.error('Logout failed:', error);
       notify.error(HEADER_STRINGS.MSG_LOGOUT_ERROR, HEADER_STRINGS.MSG_LOGOUT_RETRY);
@@ -76,13 +77,10 @@ export function GlobalHeader({ mode, title, className = '' }: GlobalHeaderProps)
     return () => document.removeEventListener('click', handleClickOutside);
   }, []);
 
-  // 處理通知點擊跳轉
+  // 處理通知點擊跳轉（使用 React Router）
   const handleNotificationClick = (conversationId: string) => {
-    // TODO: 當 MSG-4 對話頁面完成後，這裡會跳轉到對話頁面
-    // 目前先使用 console.log
-    console.log('[GlobalHeader] Navigate to conversation:', conversationId);
-    window.location.href = `/maihouses/chat/${conversationId}`;
     setNotificationMenuOpen(false);
+    navigate(`/maihouses/chat/${conversationId}`);
   };
 
   // 渲染左側區域 (Logo)
@@ -142,7 +140,11 @@ export function GlobalHeader({ mode, title, className = '' }: GlobalHeaderProps)
             >
               <Bell size={18} strokeWidth={2.5} />
               {notificationCount > 0 && (
-                <span className="absolute -right-1 -top-1 flex h-[16px] min-w-[16px] items-center justify-center rounded-full border-2 border-white bg-red-600 text-[10px] font-bold text-white shadow-sm">
+                <span
+                  className="absolute -right-1 -top-1 flex h-[16px] min-w-[16px] items-center justify-center rounded-full border-2 border-white bg-red-600 text-[10px] font-bold text-white shadow-sm"
+                  aria-live="polite"
+                  aria-atomic="true"
+                >
                   {notificationCount > 99 ? '99+' : notificationCount}
                 </span>
               )}
