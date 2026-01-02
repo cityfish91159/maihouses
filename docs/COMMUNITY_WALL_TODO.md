@@ -311,46 +311,26 @@ export const MESSAGING_CONFIG = {
 
 ---
 
-### MSG-3: 消費者 Feed 橫條提醒 ✅
+### MSG-3: 消費者 Feed 橫條提醒 ⚠️ (68/100)
 
 **目標**: TxBanner 擴展支援私訊提醒
 
-**現有架構**:
-```
-src/components/Feed/TxBanner.tsx
-└── 目前只顯示交易狀態
+**實作完成**: 2026-01-02 (Commit f4c96eb1)
+**審查日期**: 2026-01-02 (Commit 693d057d)
+**審查評分**: **68/100** ⚠️ 需要大幅改進
 
-src/pages/Feed/Consumer.tsx
-├── Line 219-224: TxBanner 使用處
-└── 條件: activeTransaction.hasActive
-```
-
-**顯示邏輯**:
-```
-優先級: 未讀私訊 > 進行中交易
-
-if (unreadMessages > 0) {
-  顯示: 💬 有房仲想聯繫您 · 惠宇上晴 12F · 游杰倫 · 5分鐘前 [查看]
-} else if (activeTransaction.hasActive) {
-  顯示: 原本的交易橫條
-}
-```
-
-**施作步驟**:
-1. TxBanner 新增 `messageNotification` prop
-2. useConsumer 查詢最新未讀訊息
-3. 優先顯示私訊提醒
-
-**實作完成**: 2026-01-02
+---
 
 #### 📁 修改檔案
 
-| 檔案 | 變更 |
-|------|------|
-| `src/constants/strings.ts` | 新增 `MSG_BANNER` section (L21-28) |
-| `src/components/Feed/TxBanner.tsx` | 擴展支援 `messageNotification` prop |
-| `src/pages/Feed/useConsumer.ts` | 整合 `useNotifications`，新增 `latestNotification` |
-| `src/pages/Feed/Consumer.tsx` | 傳遞 `latestNotification` 至 TxBanner |
+| 檔案 | 變更 | 狀態 |
+|------|------|------|
+| `src/constants/strings.ts` | 新增 `MSG_BANNER` section (L21-28) | ✅ |
+| `src/components/Feed/TxBanner.tsx` | 擴展支援 `messageNotification` prop | ⚠️ |
+| `src/pages/Feed/useConsumer.ts` | 整合 `useNotifications`，新增 `latestNotification` | ⚠️ |
+| `src/pages/Feed/Consumer.tsx` | 傳遞 `latestNotification` 至 TxBanner | ✅ |
+
+---
 
 #### 🔑 關鍵設計
 
@@ -358,11 +338,128 @@ if (unreadMessages > 0) {
 - MSG-4 未完成，點擊「查看」顯示 toast 提示
 - Demo 模式下不顯示私訊通知
 
-#### ✅ 驗證結果
+---
+
+#### 🚨 審查發現的問題（Google 首席級別標準）
+
+**總評分**: **68/100** ⚠️
+
+##### P0 嚴重問題（必須修復）
+
+1. **Git Commit 管理混亂** (-15分)
+   - 問題：f4c96eb1 混入 11 個無關文件（MaiMai、Upload 組件等）
+   - 影響：代碼回滾困難、審查困難、違反「一個 commit 一件事」原則
+   - 方案：使用 `git rebase -i` 拆分成獨立 commits
+   - 驗證：每個 commit 只包含相關文件
+
+2. **完全缺少單元測試** (-12分)
+   - 問題：0 個測試（MSG-2 有 55 個測試作為對比）
+   - 影響：無法保證功能正確性、重構風險高
+   - 方案：創建 `src/components/Feed/__tests__/TxBanner.test.tsx`
+   - 必須測試：
+     - ✅ 顯示私訊通知
+     - ✅ 私訊優先級 > 交易
+     - ✅ Demo 模式不顯示私訊
+     - ✅ 點擊顯示 toast
+     - ✅ 時間格式化（刚刚、5分钟前、1小时前）
+     - ✅ 邊界情況（null、undefined、空陣列）
+     - ✅ 可訪問性（aria-label）
+   - 驗證：`npm test -- TxBanner` 至少 10 個測試通過
+
+3. **ESLint 錯誤** (-3分)
+   - 問題：`TxBanner.tsx:94` Tailwind 類名順序錯誤
+   - 方案：`npx eslint --fix src/components/Feed/TxBanner.tsx`
+   - 驗證：`npx eslint src/components/Feed/TxBanner.tsx --max-warnings=0`
+
+##### P1 重要問題（強烈建議修復）
+
+4. **類型定義不夠嚴格** (-5分)
+   - 問題：未使用 optional chaining (`?.`)
+   - 位置：TxBanner.tsx:76
+   - 方案：`messageNotification?.last_message` 替代 `messageNotification.last_message`
+
+5. **缺少邊界情況處理** (-5分)
+   - 問題 1：名字過長未截斷
+   - 問題 2：無效時間戳未驗證
+   - 方案：加入長度檢查和日期驗證 (`isNaN(time.getTime())`)
+
+6. **缺少性能優化** (-3分)
+   - 問題：每次 render 重新計算時間格式
+   - 方案：使用 `useMemo` 緩存 `timeLabel`
+
+##### P2 改進建議（建議修復）
+
+7. **缺少可訪問性支持** (-2分)
+   - 問題：按鈕缺少 `aria-label`
+   - 方案：添加 `aria-label="查看房仲私訊"`
+
+8. **缺少錯誤處理** (-3分)
+   - 問題：`useNotifications` 失敗未處理
+   - 方案：添加 error 處理和 console.warn
+
+9. **缺少文檔註釋** (-2分)
+   - 問題：複雜邏輯缺少 JSDoc
+   - 方案：為 `latestNotification` useMemo 添加詳細註釋
+
+---
+
+#### ✅ 驗證結果（初始）
 
 - [x] TypeScript 0 errors
 - [x] Build 成功
-- [x] MSG-3 檔案無 lint 錯誤
+- [x] 基本功能正常運作
+
+#### ❌ 未達標項目
+
+- [ ] 單元測試（0/10 cases）
+- [ ] ESLint 0 warnings（1 warning）
+- [ ] Git commit 整潔度
+- [ ] 邊界情況處理
+- [ ] 性能優化
+- [ ] 可訪問性支持
+- [ ] 錯誤處理
+- [ ] 代碼文檔
+
+---
+
+#### 🎯 改進行動清單
+
+**優先級**: P0 → P1 → P2
+
+1. [ ] 修復 ESLint 錯誤（Tailwind 順序）
+2. [ ] 創建單元測試（至少 10 cases）
+3. [ ] 使用 optional chaining (`?.`)
+4. [ ] 添加邊界處理（名字截斷、日期驗證）
+5. [ ] 性能優化（useMemo）
+6. [ ] 添加 aria-label
+7. [ ] 錯誤處理（useNotifications error）
+8. [ ] 完善 JSDoc 註釋
+9. [ ] 拆分 Git commits（高級）
+
+**驗收標準**：
+- [ ] 評分 > 90/100
+- [ ] 單元測試覆蓋率 > 80%
+- [ ] ESLint 0 warnings
+- [ ] TypeScript strict mode 通過
+
+---
+
+#### 💡 學習重點
+
+這次審查揭示的**核心問題**不是代碼能不能跑，而是：
+
+1. **測試文化缺失** - MSG-2 有測試，MSG-3 沒測試 = 標準不一致
+2. **Git 紀律鬆散** - 15 個文件混在一起 commit
+3. **防禦性編程不足** - 沒考慮 null/undefined/邊界情況
+4. **性能意識薄弱** - 沒使用 useMemo/useCallback
+5. **文檔習慣不佳** - 複雜邏輯沒註釋
+
+**Google 級別代碼** = 功能正確 + 測試完整 + 邊界處理 + 性能優化 + 文檔清晰 + Git 整潔
+
+---
+
+**審查完成日期**: 2026-01-02
+**下次審查觸發**: 完成改進後重新提交
 
 ---
 
