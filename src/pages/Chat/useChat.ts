@@ -55,7 +55,7 @@ export function useChat(conversationId?: string) {
   }, [conversation]);
 
   const loadConversation = useCallback(async () => {
-    if (!conversationId) return;
+    if (!conversationId || !user) return;
     const { data, error } = await supabase
       .from('conversations')
       .select(`
@@ -82,6 +82,10 @@ export function useChat(conversationId?: string) {
     }
 
     const row = data as RawConversationRow;
+    const isParticipant = row.agent_id === user.id || row.consumer_profile_id === user.id;
+    if (!isParticipant) {
+      throw new Error('Unauthorized conversation access');
+    }
     setConversation(row);
 
     const profileData = isAgent ? row.consumer_profile?.[0] : row.agent_profile?.[0];
@@ -104,10 +108,10 @@ export function useChat(conversationId?: string) {
       propertySubtitle,
       propertyImage,
     });
-  }, [conversationId, isAgent]);
+  }, [conversationId, isAgent, user]);
 
   const loadMessages = useCallback(async () => {
-    if (!conversationId) return;
+    if (!conversationId || !user) return;
     const { data, error } = await supabase
       .from('messages')
       .select('id, conversation_id, sender_type, sender_id, content, created_at, read_at')
@@ -119,7 +123,7 @@ export function useChat(conversationId?: string) {
     }
 
     setMessages((data as Message[]) || []);
-  }, [conversationId]);
+  }, [conversationId, user]);
 
   const markRead = useCallback(async () => {
     if (!conversationId || !isAuthenticated || !user) return;
@@ -178,7 +182,8 @@ export function useChat(conversationId?: string) {
       setIsLoading(true);
       setError(null);
       try {
-        await Promise.all([loadConversation(), loadMessages()]);
+        await loadConversation();
+        await loadMessages();
         if (isMounted) {
           await markRead();
         }
@@ -201,7 +206,7 @@ export function useChat(conversationId?: string) {
   }, [conversationId, isAuthenticated, user, loadConversation, loadMessages, markRead]);
 
   useEffect(() => {
-    if (!conversationId) return;
+    if (!conversationId || !conversation || !user) return;
 
     const channel = supabase
       .channel(`chat-${conversationId}`)
@@ -242,7 +247,7 @@ export function useChat(conversationId?: string) {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [conversationId, senderType, markRead]);
+  }, [conversationId, conversation, user, senderType, markRead]);
 
   return {
     conversation,
