@@ -311,7 +311,7 @@ export const MESSAGING_CONFIG = {
 
 ---
 
-### MSG-3: 消費者 Feed 橫條提醒 ⬜
+### MSG-3: 消費者 Feed 橫條提醒 ✅
 
 **目標**: TxBanner 擴展支援私訊提醒
 
@@ -340,6 +340,29 @@ if (unreadMessages > 0) {
 1. TxBanner 新增 `messageNotification` prop
 2. useConsumer 查詢最新未讀訊息
 3. 優先顯示私訊提醒
+
+**實作完成**: 2026-01-02
+
+#### 📁 修改檔案
+
+| 檔案 | 變更 |
+|------|------|
+| `src/constants/strings.ts` | 新增 `MSG_BANNER` section (L21-28) |
+| `src/components/Feed/TxBanner.tsx` | 擴展支援 `messageNotification` prop |
+| `src/pages/Feed/useConsumer.ts` | 整合 `useNotifications`，新增 `latestNotification` |
+| `src/pages/Feed/Consumer.tsx` | 傳遞 `latestNotification` 至 TxBanner |
+
+#### 🔑 關鍵設計
+
+- 私訊使用 brand 色系 vs 交易使用 cyan 色系
+- MSG-4 未完成，點擊「查看」顯示 toast 提示
+- Demo 模式下不顯示私訊通知
+
+#### ✅ 驗證結果
+
+- [x] TypeScript 0 errors
+- [x] Build 成功
+- [x] MSG-3 檔案無 lint 錯誤
 
 ---
 
