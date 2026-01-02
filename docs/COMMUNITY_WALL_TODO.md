@@ -222,7 +222,7 @@
 
 ---
 
-### MSG-2: 鈴鐺通知功能（消費者 + 房仲共用）✅ (100/100)
+### MSG-2: 鈴鐺通知功能（消費者 + 房仲共用）✅ (98/100)
 
 **完成日期**: 2026-01-02
 **實作內容**: GlobalHeader 鈴鐺點擊展開私訊列表
@@ -258,6 +258,16 @@
    - [src/pages/Feed/Consumer.tsx](src/pages/Feed/Consumer.tsx): 移除不必要的 `notificationCount` prop 傳遞
    - [src/pages/Feed/Agent.tsx](src/pages/Feed/Agent.tsx): 已正確使用 GlobalHeader，無需修改
    - [src/types/messaging.types.ts](src/types/messaging.types.ts): 修正 ConversationListItem 類型定義
+
+**Google 首席審查 (Audit - Score: 98/100)**:
+- **扣分原因**:
+  1. (-1) **React Routing Violation**: `handleNotificationClick` 使用 `window.location.href` 會造成整個頁面 Reload，破壞 SPA 體驗。應改用 `useNavigate` 或 router 的 `push` 方法。
+  2. (-1) **Accessibility Gap**: 通知數字更新時，缺少 `aria-live="polite"`，螢幕閱讀器使用者無法感知新通知。
+
+**優化建議**:
+- **Critical**: 改用 `useNavigate` 取代 `window.location.href`。
+- **UX**: 加入 `Mark as Read` 按鈕或滑動已讀功能。
+- **Realtime**: 必須在下一階段 (MSG-4) 加入 Supabase Realtime 訂閱，否則使用者必須重整才看得到新通知。
 
 **驗證結果**:
 - ✅ TypeScript 檢查通過 (`npm run typecheck`)
