@@ -156,8 +156,19 @@ export function useChat(conversationId?: string) {
       if (!conversationId || !isAuthenticated || !user || !hasAccess) return;
       const trimmed = content.trim();
       if (!trimmed) return;
+      const tempId = `temp-${crypto.randomUUID?.() ?? Date.now()}`;
+      const optimisticMessage: Message = {
+        id: tempId,
+        conversation_id: conversationId,
+        sender_type: senderType,
+        sender_id: user.id,
+        content: trimmed,
+        created_at: new Date().toISOString(),
+        read_at: null,
+      };
 
       setIsSending(true);
+      setMessages((prev) => [...prev, optimisticMessage]);
       try {
         const { data: messageId, error } = await supabase.rpc('fn_send_message', {
           p_conversation_id: conversationId,
@@ -170,38 +181,21 @@ export function useChat(conversationId?: string) {
           throw error;
         }
         if (messageId) {
-          const { data: messageRow, error: fetchError } = await supabase
-            .from('messages')
-            .select('id, conversation_id, sender_type, sender_id, content, created_at, read_at')
-            .eq('id', messageId)
-            .single();
-          if (fetchError || !messageRow) {
-            setMessages((prev) => [
-              ...prev,
-              {
-                id: String(messageId),
-                conversation_id: conversationId,
-                sender_type: senderType,
-                sender_id: user.id,
-                content: trimmed,
-                created_at: new Date().toISOString(),
-                read_at: null,
-              }
-            ]);
-          } else {
-            setMessages((prev) => {
-              if (prev.some((msg) => msg.id === messageRow.id)) {
-                return prev;
-              }
-              return [...prev, messageRow as Message].sort(
-                (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-              );
-            });
-          }
+          setMessages((prev) =>
+            prev.map((msg) =>
+              msg.id === tempId
+                ? {
+                    ...msg,
+                    id: String(messageId),
+                  }
+                : msg
+            )
+          );
         }
       } catch (err) {
         logger.error('chat.sendMessage.failed', { err, conversationId, senderType });
         setError(err instanceof Error ? err : new Error('Failed to send message'));
+        setMessages((prev) => prev.filter((msg) => msg.id !== tempId));
       } finally {
         setIsSending(false);
       }
