@@ -414,6 +414,8 @@ src/pages/Chat/
 **完成紀錄**:
 - [x] 加入對話參與者權限檢查（非本人拒絕載入）
 - [x] 角色綁定權限（房仲僅 agent_id、消費者僅 consumer_profile_id）
+- [x] 對話權限加入 consumer_session_id 比對
+- [x] 發送訊息改為單筆插入/讀取，避免重載歷史
 
 ---
 

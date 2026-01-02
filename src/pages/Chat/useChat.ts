@@ -31,6 +31,15 @@ export interface ChatHeaderData {
   propertyImage?: string | undefined;
 }
 
+const getUagSessionId = () => {
+  if (typeof window === 'undefined') return null;
+  try {
+    return localStorage.getItem('uag_session');
+  } catch {
+    return null;
+  }
+};
+
 const STATUS_LABELS: Record<Conversation['status'], string> = {
   pending: '等待回覆',
   active: '對話中',
@@ -83,11 +92,13 @@ export function useChat(conversationId?: string) {
     }
 
     const row = data as RawConversationRow;
+    const sessionId = getUagSessionId();
     const isParticipant = isAgent
       ? row.agent_id === user.id
-      : row.consumer_profile_id === user.id;
+      : row.consumer_profile_id === user.id || (!!sessionId && row.consumer_session_id === sessionId);
     if (!isParticipant) {
-      throw new Error('Unauthorized conversation access');
+      setError(new Error('您無權查看此對話'));
+      throw new Error('Unauthorized');
     }
     setHasAccess(true);
     setConversation(row);
@@ -148,7 +159,7 @@ export function useChat(conversationId?: string) {
 
       setIsSending(true);
       try {
-        const { error } = await supabase.rpc('fn_send_message', {
+        const { data: messageId, error } = await supabase.rpc('fn_send_message', {
           p_conversation_id: conversationId,
           p_sender_type: senderType,
           p_sender_id: user.id,
@@ -158,8 +169,36 @@ export function useChat(conversationId?: string) {
         if (error) {
           throw error;
         }
-
-        await loadMessages();
+        if (messageId) {
+          const { data: messageRow, error: fetchError } = await supabase
+            .from('messages')
+            .select('id, conversation_id, sender_type, sender_id, content, created_at, read_at')
+            .eq('id', messageId)
+            .single();
+          if (fetchError || !messageRow) {
+            setMessages((prev) => [
+              ...prev,
+              {
+                id: String(messageId),
+                conversation_id: conversationId,
+                sender_type: senderType,
+                sender_id: user.id,
+                content: trimmed,
+                created_at: new Date().toISOString(),
+                read_at: null,
+              }
+            ]);
+          } else {
+            setMessages((prev) => {
+              if (prev.some((msg) => msg.id === messageRow.id)) {
+                return prev;
+              }
+              return [...prev, messageRow as Message].sort(
+                (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+              );
+            });
+          }
+        }
       } catch (err) {
         logger.error('chat.sendMessage.failed', { err, conversationId, senderType });
         setError(err instanceof Error ? err : new Error('Failed to send message'));
@@ -167,7 +206,7 @@ export function useChat(conversationId?: string) {
         setIsSending(false);
       }
     },
-    [conversationId, isAuthenticated, user, senderType, loadMessages, hasAccess]
+    [conversationId, isAuthenticated, user, senderType, hasAccess]
   );
 
   useEffect(() => {
@@ -185,6 +224,10 @@ export function useChat(conversationId?: string) {
     const load = async () => {
       setIsLoading(true);
       setError(null);
+      setHasAccess(false);
+      setConversation(null);
+      setHeader(null);
+      setMessages([]);
       try {
         await loadConversation();
         await loadMessages();
