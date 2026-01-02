@@ -413,7 +413,7 @@ src/pages/Chat/
 
 
 **完成日期**: 2026-01-02
-**Commit**: 5b8c73f9 (Implement),  66e323c (Fix access), 29646731 (Optimistic send)
+**Commit**: `5b8c73f9` (Implement), `066e323c` (Fix access), `29646731` (Optimistic send)
 
 **實作內容**:
 - ✅ 對話頁面 UI (ChatHeader, MessageInput, MessageList)
