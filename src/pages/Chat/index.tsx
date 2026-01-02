@@ -55,7 +55,7 @@ export default function ChatPage() {
         />
 
         <section className="flex min-h-[440px] flex-1 flex-col rounded-2xl border border-brand-100 bg-white shadow-sm">
-          <div className="flex-1 overflow-y-auto p-4">
+          <div className="flex-1 overflow-hidden p-4">
             <MessageList
               messages={messages}
               currentSender={isAgent ? 'agent' : 'consumer'}

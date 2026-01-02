@@ -425,6 +425,8 @@ src/pages/Chat/
 - ✅ 4 處 `as` 斷言 → Zod 驗證
 - [x] 發送改樂觀更新，移除全量重查
 - ✅ 新訊息直接 append，不排序
+- ✅ 虛擬滾動（react-window）
+- ✅ 已讀回執顯示
 - ✅ MessageInput 送出失敗 toast 提示
 - ✅ 輸入狀態指示器（對方輸入中）
 - ✅ 測試覆蓋 15 個
