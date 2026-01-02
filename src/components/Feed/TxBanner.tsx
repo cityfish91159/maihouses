@@ -12,6 +12,7 @@ import type { ConversationListItem } from '../../types/messaging.types';
 import { STRINGS } from '../../constants/strings';
 import { ROUTES } from '../../constants/routes';
 import { notify } from '../../lib/notify';
+import { logger } from '../../lib/logger';
 
 const S_TX = STRINGS.FEED.TX_BANNER;
 const S_MSG = STRINGS.FEED.MSG_BANNER;
@@ -59,7 +60,7 @@ function formatRelativeTime(timestamp: string): string {
 
   // 驗證日期有效性
   if (isNaN(time.getTime())) {
-    console.warn('[TxBanner] Invalid timestamp:', timestamp);
+    logger.warn('TxBanner.formatRelativeTime.invalidTimestamp', { timestamp });
     return '時間未知';
   }
 

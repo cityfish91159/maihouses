@@ -12,6 +12,7 @@ import { useFeedData } from '../../hooks/useFeedData';
 import { useAuth } from '../../hooks/useAuth';
 import { useNotifications } from '../../hooks/useNotifications';
 import { notify } from '../../lib/notify';
+import { logger } from '../../lib/logger';
 import { STRINGS } from '../../constants/strings';
 import type { UserProfile, ActiveTransaction, SidebarData } from '../../types/feed';
 import type { Role } from '../../types/community';
@@ -35,7 +36,7 @@ export function useConsumer(userId?: string, forceMock?: boolean) {
     // MSG-3: 處理通知查詢錯誤（不影響主要功能）
     useEffect(() => {
         if (notificationsError) {
-            console.warn('[MSG-3] Failed to load notifications:', notificationsError);
+            logger.warn('useConsumer.notifications.loadFailed', { error: notificationsError });
             // 不顯示 toast，避免干擾用戶體驗
         }
     }, [notificationsError]);
