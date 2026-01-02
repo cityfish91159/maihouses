@@ -9,6 +9,7 @@ import { useRef, useEffect, useState, useCallback } from 'react';
 import { MessageCircle, X, RefreshCw, AlertTriangle } from 'lucide-react';
 import type { ConversationListItem } from '../../types/messaging.types';
 import { MESSAGING_CONFIG } from '../../constants/messaging';
+import { ROUTES } from '../../constants/routes';
 
 interface NotificationDropdownProps {
   notifications: ConversationListItem[];
@@ -285,7 +286,7 @@ export function NotificationDropdown({
         {notifications.length > 0 && (
           <div className="border-t border-brand-100 px-4 py-2 text-center">
             <a
-              href="/maihouses/chat"
+              href={ROUTES.CHAT_HOME}
               className="text-xs font-bold text-brand-700 hover:text-brand-600"
             >
               查看所有訊息

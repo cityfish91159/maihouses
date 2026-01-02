@@ -83,7 +83,7 @@ export function GlobalHeader({ mode, title, className = '' }: GlobalHeaderProps)
   // 處理通知點擊跳轉（使用 React Router）
   const handleNotificationClick = (conversationId: string) => {
     setNotificationMenuOpen(false);
-    navigate(`/maihouses/chat/${conversationId}`);
+    navigate(ROUTES.CHAT(conversationId));
   };
 
   // 渲染左側區域 (Logo)

@@ -39,6 +39,12 @@ export const ROUTES = {
   /** 認證頁面 */
   AUTH: '/maihouses/auth.html',
 
+  /** 對話頁面 */
+  CHAT: (conversationId: string): string => `/maihouses/chat/${conversationId}`,
+
+  /** 對話入口 */
+  CHAT_HOME: '/maihouses/chat',
+
   /** 社區頁面 - 需要 communityId 參數 */
   COMMUNITY: (communityId: string): string => `/maihouses/community/${communityId}`,
 

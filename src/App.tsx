@@ -12,6 +12,7 @@ import Wall from './pages/Community/Wall'
 import Suggested from './pages/Community/Suggested'
 import Detail from './pages/Property/Detail'
 import AssureDetail from './pages/Assure/Detail'
+import ChatPage from './pages/Chat'
 import ChatStandalone from './pages/Chat/Standalone'
 import ErrorBoundary from './app/ErrorBoundary'
 import { QuietModeProvider } from './context/QuietModeContext'
@@ -175,6 +176,30 @@ export default function App() {
               element={
                 <ErrorBoundary>
                   <ChatStandalone />
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="/chat/:conversationId"
+              element={
+                <ErrorBoundary>
+                  <ChatPage />
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="/feed/consumer/chat/:conversationId"
+              element={
+                <ErrorBoundary>
+                  <ChatPage />
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="/feed/agent/chat/:conversationId"
+              element={
+                <ErrorBoundary>
+                  <ChatPage />
                 </ErrorBoundary>
               }
             />
