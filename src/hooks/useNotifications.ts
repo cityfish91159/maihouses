@@ -5,10 +5,11 @@
  * 查詢 conversations 表，計算未讀私訊數量並返回通知列表
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from './useAuth';
 import { supabase } from '../lib/supabase';
 import { logger } from '../lib/logger';
+import { MESSAGING_CONFIG } from '../constants/messaging';
 import type { ConversationListItem, ConversationStatus, SenderType } from '../types/messaging.types';
 
 interface UseNotificationsReturn {
@@ -16,6 +17,8 @@ interface UseNotificationsReturn {
     notifications: ConversationListItem[];
     isLoading: boolean;
     error: Error | null;
+    isStale: boolean;
+    lastUpdated: Date | null;
     refresh: () => Promise<void>;
 }
 
@@ -47,8 +50,8 @@ interface RawConversationData {
  */
 async function fetchWithRetry<T>(
     fn: () => Promise<T>,
-    retries = 3,
-    delay = 1000
+    retries = MESSAGING_CONFIG.RETRY_COUNT,
+    delay = MESSAGING_CONFIG.RETRY_INITIAL_DELAY_MS
 ): Promise<T> {
     for (let i = 0; i < retries; i++) {
         try {
@@ -111,14 +114,33 @@ function transformConversation(conv: RawConversationData, isAgent: boolean): Con
     };
 }
 
+// 從 config 解構常用常數
+const { STALE_THRESHOLD_MS, QUERY_LIMIT, RETRY_COUNT, RETRY_INITIAL_DELAY_MS } = MESSAGING_CONFIG;
+
 export function useNotifications(): UseNotificationsReturn {
     const { isAuthenticated, user, role } = useAuth();
     const [count, setCount] = useState(0);
     const [notifications, setNotifications] = useState<ConversationListItem[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<Error | null>(null);
+    const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+
+    // AbortController 用於取消進行中的請求
+    const abortControllerRef = useRef<AbortController | null>(null);
+
+    // 計算是否為過期資料（有錯誤 或 超過閾值時間）
+    const isStale = error !== null || (
+        lastUpdated !== null &&
+        Date.now() - lastUpdated.getTime() > STALE_THRESHOLD_MS
+    );
 
     const fetchNotifications = useCallback(async () => {
+        // 取消之前的請求
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+        }
+        abortControllerRef.current = new AbortController();
+        const signal = abortControllerRef.current.signal;
         if (!isAuthenticated || !user) {
             setCount(0);
             setNotifications([]);
@@ -135,6 +157,11 @@ export function useNotifications(): UseNotificationsReturn {
             // 查詢有未讀訊息的對話（使用 JOIN 一次查詢所有資料 + Retry 機制）
             if (isAgent) {
                 const result = await fetchWithRetry(async () => {
+                    // 檢查是否已被取消
+                    if (signal.aborted) {
+                        throw new DOMException('Aborted', 'AbortError');
+                    }
+
                     const { data, error } = await supabase
                         .from('conversations')
                         .select(`
@@ -153,7 +180,8 @@ export function useNotifications(): UseNotificationsReturn {
                         .eq('agent_id', user.id)
                         .gt('unread_agent', 0)
                         .order('updated_at', { ascending: false })
-                        .limit(50);
+                        .limit(QUERY_LIMIT)
+                        .abortSignal(signal);
 
                     if (error) throw error;
                     return data;
@@ -166,9 +194,15 @@ export function useNotifications(): UseNotificationsReturn {
                 // 轉換為 ConversationListItem 格式
                 const notificationList = (result || []).map((conv: RawConversationData) => transformConversation(conv, true));
                 setNotifications(notificationList);
+                setLastUpdated(new Date());
             } else {
                 // Consumer（使用 JOIN 一次查詢所有資料 + Retry 機制）
                 const result = await fetchWithRetry(async () => {
+                    // 檢查是否已被取消
+                    if (signal.aborted) {
+                        throw new DOMException('Aborted', 'AbortError');
+                    }
+
                     const { data, error } = await supabase
                         .from('conversations')
                         .select(`
@@ -187,7 +221,8 @@ export function useNotifications(): UseNotificationsReturn {
                         .eq('consumer_profile_id', user.id)
                         .gt('unread_consumer', 0)
                         .order('updated_at', { ascending: false })
-                        .limit(50);
+                        .limit(QUERY_LIMIT)
+                        .abortSignal(signal);
 
                     if (error) throw error;
                     return data;
@@ -200,8 +235,14 @@ export function useNotifications(): UseNotificationsReturn {
                 // 轉換為 ConversationListItem 格式
                 const notificationList = (result || []).map((conv: RawConversationData) => transformConversation(conv, false));
                 setNotifications(notificationList);
+                setLastUpdated(new Date());
             }
         } catch (err) {
+            // 忽略 AbortError（請求被取消）
+            if (err instanceof DOMException && err.name === 'AbortError') {
+                return;
+            }
+
             logger.error('useNotifications.fetchNotifications.failed', {
                 error: err,
                 userId: user?.id,
@@ -214,6 +255,15 @@ export function useNotifications(): UseNotificationsReturn {
             setIsLoading(false);
         }
     }, [isAuthenticated, user, role]);
+
+    // 組件卸載時取消進行中的請求
+    useEffect(() => {
+        return () => {
+            if (abortControllerRef.current) {
+                abortControllerRef.current.abort();
+            }
+        };
+    }, []);
 
     // 初始載入和用戶變更時重新查詢
     useEffect(() => {
@@ -268,6 +318,8 @@ export function useNotifications(): UseNotificationsReturn {
         notifications,
         isLoading,
         error,
+        isStale,
+        lastUpdated,
         refresh: fetchNotifications
     };
 }

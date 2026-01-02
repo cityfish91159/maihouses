@@ -19,6 +19,7 @@ import { notify } from '../../lib/notify';
 import { logger } from '../../lib/logger';
 import { HEADER_STRINGS, GlobalHeaderMode } from '../../constants/header';
 import { ROUTES } from '../../constants/routes';
+import { MESSAGING_CONFIG } from '../../constants/messaging';
 import { NotificationDropdown } from './NotificationDropdown';
 import { NotificationErrorBoundary } from './NotificationErrorBoundary';
 
@@ -46,7 +47,7 @@ const getRoleLabel = (role: string | undefined) => {
 
 export function GlobalHeader({ mode, title, className = '' }: GlobalHeaderProps) {
   const { isAuthenticated, user, signOut, role } = useAuth();
-  const { count: notificationCount, notifications, isLoading: notificationsLoading } = useNotifications();
+  const { count: notificationCount, notifications, isLoading: notificationsLoading, isStale, refresh } = useNotifications();
   const navigate = useNavigate();
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [notificationMenuOpen, setNotificationMenuOpen] = useState(false);
@@ -147,7 +148,7 @@ export function GlobalHeader({ mode, title, className = '' }: GlobalHeaderProps)
                   aria-live="polite"
                   aria-atomic="true"
                 >
-                  {notificationCount > 99 ? '99+' : notificationCount}
+                  {notificationCount > MESSAGING_CONFIG.UNREAD_BADGE_MAX ? `${MESSAGING_CONFIG.UNREAD_BADGE_MAX}+` : notificationCount}
                 </span>
               )}
             </button>
@@ -159,8 +160,10 @@ export function GlobalHeader({ mode, title, className = '' }: GlobalHeaderProps)
                   <NotificationDropdown
                     notifications={notifications}
                     isLoading={notificationsLoading}
+                    isStale={isStale}
                     onClose={() => setNotificationMenuOpen(false)}
                     onNotificationClick={handleNotificationClick}
+                    onRefresh={refresh}
                   />
                 </NotificationErrorBoundary>
               </div>

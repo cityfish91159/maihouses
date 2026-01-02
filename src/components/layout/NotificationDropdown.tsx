@@ -5,15 +5,18 @@
  * 顯示未讀私訊列表，點擊項目跳轉到對話頁面
  */
 
-import { useRef, useEffect } from 'react';
-import { MessageCircle, X } from 'lucide-react';
+import { useRef, useEffect, useState, useCallback } from 'react';
+import { MessageCircle, X, RefreshCw, AlertTriangle } from 'lucide-react';
 import type { ConversationListItem } from '../../types/messaging.types';
+import { MESSAGING_CONFIG } from '../../constants/messaging';
 
 interface NotificationDropdownProps {
   notifications: ConversationListItem[];
   isLoading: boolean;
+  isStale?: boolean;
   onClose: () => void;
   onNotificationClick: (conversationId: string) => void;
+  onRefresh?: () => void;
 }
 
 /**
@@ -34,21 +37,24 @@ function formatRelativeTime(timestamp: string): string {
   return time.toLocaleDateString('zh-TW', { month: 'short', day: 'numeric' });
 }
 
+// 從 config 解構常用常數
+const { MAX_NOTIFICATIONS_DISPLAY, MESSAGE_PREVIEW_MAX_LENGTH, UNREAD_BADGE_MAX, LOADING_SKELETON_COUNT } = MESSAGING_CONFIG;
+
 /**
  * 訊息預覽截斷
  */
-function truncateMessage(content: string, maxLength = 40): string {
+function truncateMessage(content: string, maxLength = MESSAGE_PREVIEW_MAX_LENGTH): string {
   if (content.length <= maxLength) return content;
   return `${content.slice(0, maxLength)}...`;
 }
 
-const MAX_NOTIFICATIONS_DISPLAY = 20; // 最多顯示 20 筆，防止 DOM 爆炸
-
 export function NotificationDropdown({
   notifications,
   isLoading,
+  isStale = false,
   onClose,
-  onNotificationClick
+  onNotificationClick,
+  onRefresh
 }: NotificationDropdownProps) {
   // 限制顯示數量
   const displayNotifications = notifications.slice(0, MAX_NOTIFICATIONS_DISPLAY);
@@ -57,8 +63,15 @@ export function NotificationDropdown({
   // Focus 管理
   const dropdownRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const notificationRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const [focusedIndex, setFocusedIndex] = useState(-1);
 
-  // 初始 focus 到關閉按鈕 + 鍵盤事件處理
+  // 設置 notification refs
+  const setNotificationRef = useCallback((el: HTMLButtonElement | null, index: number) => {
+    notificationRefs.current[index] = el;
+  }, []);
+
+  // 初始 focus 到關閉按鈕 + 全域鍵盤事件處理
   useEffect(() => {
     closeButtonRef.current?.focus();
 
@@ -74,8 +87,59 @@ export function NotificationDropdown({
     return () => document.removeEventListener('keydown', handleEscapeKey);
   }, [onClose]);
 
+  // 處理方向鍵導航
   const handleKeyDown = (e: React.KeyboardEvent) => {
     e.stopPropagation();
+
+    const itemCount = displayNotifications.length;
+    if (itemCount === 0) return;
+
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault();
+        setFocusedIndex(prev => {
+          const next = prev < itemCount - 1 ? prev + 1 : 0;
+          notificationRefs.current[next]?.focus();
+          return next;
+        });
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        setFocusedIndex(prev => {
+          const next = prev > 0 ? prev - 1 : itemCount - 1;
+          notificationRefs.current[next]?.focus();
+          return next;
+        });
+        break;
+      case 'Home':
+        e.preventDefault();
+        setFocusedIndex(0);
+        notificationRefs.current[0]?.focus();
+        break;
+      case 'End':
+        e.preventDefault();
+        setFocusedIndex(itemCount - 1);
+        notificationRefs.current[itemCount - 1]?.focus();
+        break;
+      case 'Tab':
+        // Focus trap - 只允許在 dropdown 內部 Tab
+        if (e.shiftKey) {
+          // Shift+Tab 從關閉按鈕移到最後一個通知
+          if (document.activeElement === closeButtonRef.current && itemCount > 0) {
+            e.preventDefault();
+            setFocusedIndex(itemCount - 1);
+            notificationRefs.current[itemCount - 1]?.focus();
+          }
+        } else {
+          // Tab 從最後一個通知移到關閉按鈕
+          if (focusedIndex === itemCount - 1) {
+            e.preventDefault();
+            setFocusedIndex(-1);
+            closeButtonRef.current?.focus();
+          }
+        }
+        break;
+    }
   };
 
   const handleClick = (e: React.MouseEvent) => {
@@ -97,15 +161,35 @@ export function NotificationDropdown({
       >
       {/* Header */}
       <div className="flex items-center justify-between border-b border-brand-100 px-4 py-3">
-        <h3 className="text-brand-900 text-sm font-bold">私訊通知</h3>
-        <button
-          ref={closeButtonRef}
-          onClick={onClose}
-          className="rounded-lg p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
-          aria-label="關閉"
-        >
-          <X size={16} />
-        </button>
+        <div className="flex items-center gap-2">
+          <h3 className="text-brand-900 text-sm font-bold">私訊通知</h3>
+          {isStale && (
+            <span className="flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-medium text-amber-700">
+              <AlertTriangle size={10} />
+              資料可能過期
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-1">
+          {onRefresh && (
+            <button
+              onClick={onRefresh}
+              className="rounded-lg p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+              aria-label="重新整理"
+              disabled={isLoading}
+            >
+              <RefreshCw size={16} className={isLoading ? 'animate-spin' : ''} />
+            </button>
+          )}
+          <button
+            ref={closeButtonRef}
+            onClick={onClose}
+            className="rounded-lg p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+            aria-label="關閉"
+          >
+            <X size={16} />
+          </button>
+        </div>
       </div>
 
       {/* Content */}
@@ -113,7 +197,7 @@ export function NotificationDropdown({
         {isLoading ? (
           // Loading State
           <div className="p-4">
-            {[1, 2, 3].map((i) => (
+            {Array.from({ length: LOADING_SKELETON_COUNT }, (_, i) => i + 1).map((i) => (
               <div key={i} className="mb-3 flex animate-pulse gap-3">
                 <div className="size-10 rounded-full bg-gray-200" />
                 <div className="flex-1 space-y-2">
@@ -134,13 +218,17 @@ export function NotificationDropdown({
           </div>
         ) : (
           // Notification List
-          <div className="divide-y divide-gray-100">
-            {displayNotifications.map((notification) => (
+          <div className="divide-y divide-gray-100" role="menu">
+            {displayNotifications.map((notification, index) => (
               <button
                 key={notification.id}
+                ref={(el) => setNotificationRef(el, index)}
                 onClick={() => onNotificationClick(notification.id)}
-                className="flex w-full gap-3 px-4 py-3 text-left transition-colors hover:bg-brand-50"
+                onFocus={() => setFocusedIndex(index)}
+                className={`flex w-full gap-3 px-4 py-3 text-left transition-colors hover:bg-brand-50 focus:bg-brand-50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-brand-500 ${focusedIndex === index ? 'bg-brand-50' : ''}`}
                 role="menuitem"
+                tabIndex={focusedIndex === index ? 0 : -1}
+                aria-current={focusedIndex === index ? 'true' : undefined}
               >
                 {/* Avatar */}
                 <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-brand-100 text-sm font-bold text-brand-700">
@@ -177,7 +265,7 @@ export function NotificationDropdown({
                     </span>
                     {notification.unread_count > 0 && (
                       <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-600 px-1.5 text-[10px] font-bold text-white">
-                        {notification.unread_count > 99 ? '99+' : notification.unread_count}
+                        {notification.unread_count > UNREAD_BADGE_MAX ? `${UNREAD_BADGE_MAX}+` : notification.unread_count}
                       </span>
                     )}
                   </div>
