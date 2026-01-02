@@ -48,6 +48,7 @@ export function useChat(conversationId?: string) {
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<Error | null>(null);
+  const [hasAccess, setHasAccess] = useState(false);
 
   const statusLabel = useMemo(() => {
     if (!conversation) return '';
@@ -82,10 +83,13 @@ export function useChat(conversationId?: string) {
     }
 
     const row = data as RawConversationRow;
-    const isParticipant = row.agent_id === user.id || row.consumer_profile_id === user.id;
+    const isParticipant = isAgent
+      ? row.agent_id === user.id
+      : row.consumer_profile_id === user.id;
     if (!isParticipant) {
       throw new Error('Unauthorized conversation access');
     }
+    setHasAccess(true);
     setConversation(row);
 
     const profileData = isAgent ? row.consumer_profile?.[0] : row.agent_profile?.[0];
@@ -126,7 +130,7 @@ export function useChat(conversationId?: string) {
   }, [conversationId, user]);
 
   const markRead = useCallback(async () => {
-    if (!conversationId || !isAuthenticated || !user) return;
+    if (!conversationId || !isAuthenticated || !user || !hasAccess) return;
     const { error } = await supabase.rpc('fn_mark_messages_read', {
       p_conversation_id: conversationId,
       p_reader_type: senderType,
@@ -134,11 +138,11 @@ export function useChat(conversationId?: string) {
     if (error) {
       logger.warn('chat.markRead.failed', { error, conversationId, senderType });
     }
-  }, [conversationId, isAuthenticated, user, senderType]);
+  }, [conversationId, isAuthenticated, user, senderType, hasAccess]);
 
   const sendMessage = useCallback(
     async (content: string) => {
-      if (!conversationId || !isAuthenticated || !user) return;
+      if (!conversationId || !isAuthenticated || !user || !hasAccess) return;
       const trimmed = content.trim();
       if (!trimmed) return;
 
@@ -163,7 +167,7 @@ export function useChat(conversationId?: string) {
         setIsSending(false);
       }
     },
-    [conversationId, isAuthenticated, user, senderType, loadMessages]
+    [conversationId, isAuthenticated, user, senderType, loadMessages, hasAccess]
   );
 
   useEffect(() => {
@@ -206,7 +210,7 @@ export function useChat(conversationId?: string) {
   }, [conversationId, isAuthenticated, user, loadConversation, loadMessages, markRead]);
 
   useEffect(() => {
-    if (!conversationId || !conversation || !user) return;
+    if (!conversationId || !conversation || !user || !hasAccess) return;
 
     const channel = supabase
       .channel(`chat-${conversationId}`)
@@ -247,7 +251,7 @@ export function useChat(conversationId?: string) {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [conversationId, conversation, user, senderType, markRead]);
+  }, [conversationId, conversation, user, senderType, markRead, hasAccess]);
 
   return {
     conversation,
