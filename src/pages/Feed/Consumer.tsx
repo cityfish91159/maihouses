@@ -123,8 +123,6 @@ interface ConsumerProps {
   forceMock?: boolean;
 }
 
-import { useNotifications } from '../../hooks/useNotifications';
-
 /** Main Consumer Page Content */
 function ConsumerContent({ userId, forceMock }: ConsumerProps) {
   const {
@@ -147,9 +145,6 @@ function ConsumerContent({ userId, forceMock }: ConsumerProps) {
     handleComment,
     handleShare,
   } = useConsumer(userId, forceMock);
-
-  // P7-Audit-C7: Use Hook (Real Architecture)
-  const { count: notificationCount } = useNotifications();
 
   // F6/E5 Fix: Deep Linking and Profile Navigation
   useEffect(() => {
@@ -212,7 +207,6 @@ function ConsumerContent({ userId, forceMock }: ConsumerProps) {
     <div className="min-h-screen bg-gray-50 pb-20 md:pb-0">
       <GlobalHeader
         mode="consumer"
-        notificationCount={notificationCount}
         onSearch={handleSearch}
         className="sticky top-0 z-30"
       />

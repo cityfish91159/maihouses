@@ -12,10 +12,12 @@
 import { useState, useEffect } from 'react';
 import { Bell, User, LogOut, ChevronDown } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
+import { useNotifications } from '../../hooks/useNotifications';
 import { Logo } from '../Logo/Logo';
 import { notify } from '../../lib/notify';
 import { HEADER_STRINGS, GlobalHeaderMode } from '../../constants/header';
 import { ROUTES } from '../../constants/routes';
+import { NotificationDropdown } from './NotificationDropdown';
 
 interface GlobalHeaderProps {
   /** 顯示模式：社區牆 | 消費者端 | 房仲端 */
@@ -24,8 +26,6 @@ interface GlobalHeaderProps {
   title?: string;
   /** 額外樣式 */
   className?: string;
-  /** 通知數量 (Optional) */
-  notificationCount?: number;
   /** 搜尋回調 (Optional) */
   onSearch?: (query: string) => void;
 }
@@ -41,9 +41,11 @@ const getRoleLabel = (role: string | undefined) => {
   }
 };
 
-export function GlobalHeader({ mode, title, className = '', notificationCount = 0 }: GlobalHeaderProps) {
+export function GlobalHeader({ mode, title, className = '' }: GlobalHeaderProps) {
   const { isAuthenticated, user, signOut, role } = useAuth();
+  const { count: notificationCount, notifications, isLoading: notificationsLoading } = useNotifications();
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [notificationMenuOpen, setNotificationMenuOpen] = useState(false);
 
   // 處理登出
   const handleSignOut = async () => {
@@ -66,10 +68,22 @@ export function GlobalHeader({ mode, title, className = '', notificationCount = 
       if (!target.closest('#gh-user-menu-btn') && !target.closest('#gh-user-menu-dropdown')) {
         setUserMenuOpen(false);
       }
+      if (!target.closest('#gh-notification-btn') && !target.closest('#gh-notification-dropdown')) {
+        setNotificationMenuOpen(false);
+      }
     };
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
   }, []);
+
+  // 處理通知點擊跳轉
+  const handleNotificationClick = (conversationId: string) => {
+    // TODO: 當 MSG-4 對話頁面完成後，這裡會跳轉到對話頁面
+    // 目前先使用 console.log
+    console.log('[GlobalHeader] Navigate to conversation:', conversationId);
+    window.location.href = `/maihouses/chat/${conversationId}`;
+    setNotificationMenuOpen(false);
+  };
 
   // 渲染左側區域 (Logo)
   const renderLeft = () => {
@@ -118,17 +132,34 @@ export function GlobalHeader({ mode, title, className = '', notificationCount = 
         {/* Right: Actions */}
         <div className="flex items-center gap-3">
           {/* Notifications */}
-          <button
-            className="relative inline-flex items-center justify-center rounded-xl border border-brand-100 bg-white p-2 text-brand-700 transition-all hover:bg-brand-50"
-            aria-label={HEADER_STRINGS.LABEL_NOTIFICATIONS}
-          >
-            <Bell size={18} strokeWidth={2.5} />
-            {notificationCount > 0 && (
-              <span className="absolute -right-1 -top-1 flex h-[16px] min-w-[16px] items-center justify-center rounded-full border-2 border-white bg-red-600 text-[10px] font-bold text-white shadow-sm">
-                {notificationCount > 99 ? '99+' : notificationCount}
-              </span>
+          <div className="relative">
+            <button
+              id="gh-notification-btn"
+              onClick={() => setNotificationMenuOpen(!notificationMenuOpen)}
+              className="relative inline-flex items-center justify-center rounded-xl border border-brand-100 bg-white p-2 text-brand-700 transition-all hover:bg-brand-50 active:scale-95"
+              aria-label={HEADER_STRINGS.LABEL_NOTIFICATIONS}
+              aria-expanded={notificationMenuOpen}
+            >
+              <Bell size={18} strokeWidth={2.5} />
+              {notificationCount > 0 && (
+                <span className="absolute -right-1 -top-1 flex h-[16px] min-w-[16px] items-center justify-center rounded-full border-2 border-white bg-red-600 text-[10px] font-bold text-white shadow-sm">
+                  {notificationCount > 99 ? '99+' : notificationCount}
+                </span>
+              )}
+            </button>
+
+            {/* Notification Dropdown */}
+            {notificationMenuOpen && (
+              <div id="gh-notification-dropdown">
+                <NotificationDropdown
+                  notifications={notifications}
+                  isLoading={notificationsLoading}
+                  onClose={() => setNotificationMenuOpen(false)}
+                  onNotificationClick={handleNotificationClick}
+                />
+              </div>
             )}
-          </button>
+          </div>
 
           {/* User Menu */}
           {isAuthenticated ? (

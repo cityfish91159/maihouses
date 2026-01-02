@@ -82,7 +82,7 @@ export interface ConversationListItem {
     content: string;
     created_at: string;
     sender_type: SenderType;
-  };
+  } | undefined;
   // 對方資訊
   counterpart: {
     name: string;            // 房仲名稱 或 訪客-XXXX
@@ -93,5 +93,5 @@ export interface ConversationListItem {
     id: string;
     title: string;
     image?: string;
-  };
+  } | undefined;
 }

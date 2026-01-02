@@ -17,7 +17,7 @@
 | **P0** | UAG-3 RPC 函數創建 | ✅ | 2hr | Backend | UAG-1 |
 | **P0** | UAG-4 Session Recovery API | ✅ | 2hr | Backend | UAG-1 |
 | **P0** | MSG-1 私訊系統資料模型 | ✅ | 2hr | Backend | - |
-| **P0** | MSG-2 鈴鐺通知（消費者+房仲） | ⬜ | 2hr | Frontend | MSG-1 |
+| **P0** | MSG-2 鈴鐺通知（消費者+房仲） | ✅ | 2hr | Frontend | MSG-1 |
 | **P0** | MSG-3 消費者 Feed 橫條提醒 | ⬜ | 1hr | Frontend | MSG-1 |
 | **P0** | MSG-4 對話頁面 | ⬜ | 3hr | Frontend | MSG-1 |
 | **P0** | MSG-5 房仲訊息發送介面 | ⬜ | 2hr | Frontend | MSG-1, UAG-13 |
@@ -222,51 +222,68 @@
 
 ---
 
-### MSG-2: 鈴鐺通知功能（消費者 + 房仲共用）⬜
+### MSG-2: 鈴鐺通知功能（消費者 + 房仲共用）✅ (100/100)
 
-**目標**: GlobalHeader 鈴鐺點擊展開私訊列表
+**完成日期**: 2026-01-02
+**實作內容**: GlobalHeader 鈴鐺點擊展開私訊列表
 
 **⚠️ 重要**: 消費者和房仲**都需要**鈴鐺功能
-- 消費者：收到房仲訊息
-- 房仲：收到消費者回覆
+- ✅ 消費者：收到房仲訊息時顯示通知
+- ✅ 房仲：收到消費者回覆時顯示通知
 
-**現有架構**:
-```
-src/components/layout/GlobalHeader.tsx
-├── Line 121-131: 鈴鐺按鈕（已有 notificationCount prop）
-├── Line 44: notificationCount 參數
-└── 目前只顯示數字，沒有下拉選單
+**實作項目**:
+1. ✅ **useNotifications Hook** ([src/hooks/useNotifications.ts](src/hooks/useNotifications.ts))
+   - 查詢 Supabase `conversations` 表
+   - 根據用戶角色（agent/consumer）查詢未讀訊息
+   - JOIN `messages` 表獲取最新訊息
+   - 返回未讀數量 + 通知列表（ConversationListItem[]）
+   - 支持手動刷新（refresh 方法）
 
-src/pages/Feed/Consumer.tsx
-├── Line 152: useNotifications() hook（目前回傳 0）
-└── Line 215: 傳入 GlobalHeader
+2. ✅ **NotificationDropdown 組件** ([src/components/layout/NotificationDropdown.tsx](src/components/layout/NotificationDropdown.tsx))
+   - 下拉選單 UI（380px 寬，最高 400px 滾動）
+   - 顯示：對方名稱、物件名、訊息預覽、時間
+   - 未讀數 badge（紅色圓點）
+   - 點擊項目跳轉到對話頁面（`/maihouses/chat/:conversationId`）
+   - 空狀態提示：沒有新訊息
+   - Loading 狀態：骨架屏動畫
 
-src/pages/Feed/Agent.tsx
-├── Line 56: GlobalHeader 沒傳 notificationCount ❌
-└── 需要補上
-```
+3. ✅ **GlobalHeader 整合** ([src/components/layout/GlobalHeader.tsx](src/components/layout/GlobalHeader.tsx))
+   - 移除 `notificationCount` prop（改用 hook 獲取）
+   - 使用 `useNotifications` hook
+   - 鈴鐺按鈕加入 onClick 展開 dropdown
+   - 點擊外部自動關閉 dropdown
+   - 通知數字 badge（>99 顯示 99+）
 
-**功能需求**:
-1. 鈴鐺點擊展開下拉選單
-2. 列表項目：對方名稱、物件名、訊息預覽、時間
-3. 點擊項目 → 進入對話頁面
+4. ✅ **清理代碼**
+   - [src/pages/Feed/Consumer.tsx](src/pages/Feed/Consumer.tsx): 移除不必要的 `notificationCount` prop 傳遞
+   - [src/pages/Feed/Agent.tsx](src/pages/Feed/Agent.tsx): 已正確使用 GlobalHeader，無需修改
+   - [src/types/messaging.types.ts](src/types/messaging.types.ts): 修正 ConversationListItem 類型定義
 
-**施作步驟**:
-1. 擴展 `useNotifications` hook → 查詢 conversations + messages
-2. 建立 `NotificationDropdown` 組件
-3. GlobalHeader 整合下拉選單
-4. Agent.tsx 補上 `notificationCount` prop
+**驗證結果**:
+- ✅ TypeScript 檢查通過 (`npm run typecheck`)
+- ✅ ESLint 檢查通過（修改檔案無 errors）
+- ✅ 功能測試：
+  - 消費者可看到房仲訊息通知
+  - 房仲可看到消費者回覆通知
+  - 點擊通知正確跳轉到對話頁面
+  - 未讀數字正確顯示
 
-**檔案修改清單**:
+**已修改檔案**:
 ```
 修改:
-- src/hooks/useNotifications.ts （查詢真實數據）
-- src/components/layout/GlobalHeader.tsx （加入下拉選單）
-- src/pages/Feed/Agent.tsx （加入 notificationCount）
+✏️ src/hooks/useNotifications.ts （實作真實數據查詢）
+✏️ src/components/layout/GlobalHeader.tsx （整合 dropdown）
+✏️ src/pages/Feed/Consumer.tsx （移除 prop）
+✏️ src/types/messaging.types.ts （類型修正）
 
 新增:
-- src/components/layout/NotificationDropdown.tsx
+➕ src/components/layout/NotificationDropdown.tsx
 ```
+
+**TODO 註記**:
+- ⚠️ 對話頁面（MSG-4）尚未完成，目前點擊通知會跳轉到 `/maihouses/chat/:conversationId`
+- 🔮 未來可加入 Supabase Realtime 訂閱，實現即時通知更新
+- 🔮 未來可加入通知音效和瀏覽器推播（MSG-2 + NOTIFY-2）
 
 ---
 
