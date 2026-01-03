@@ -437,7 +437,7 @@ MessageList 虛擬滾動
 
 ---
 
-### MSG-5: 房仲訊息發送介面 ⬜
+### MSG-5: 房仲訊息發送介面 ✅
 
 **目標**: 房仲購買客戶後編輯並發送第一則訊息
 
@@ -482,6 +482,23 @@ src/pages/Feed/Agent.tsx
 - src/components/UAG/SendMessageModal.tsx
 - src/components/Feed/AgentConversationList.tsx
 ```
+
+**實作完成**: 2026-01-03
+
+#### 📁 新增/修改檔案
+
+| 檔案 | 用途 |
+|------|------|
+| `src/services/messagingService.ts` | 對話建立與訊息發送 API |
+| `src/components/UAG/SendMessageModal.tsx` | 購買成功後訊息發送 Modal |
+| `src/pages/UAG/index.tsx` | 整合 Modal 於購買流程 |
+| `src/components/Feed/AgentConversationList.tsx` | 側欄客戶對話列表 |
+
+#### ✅ 驗證結果
+
+- [x] TypeScript 0 errors
+- [x] Build 成功 (49.62s)
+- [x] MSG-5 檔案無 lint 錯誤
 
 ---
 

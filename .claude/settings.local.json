@@ -49,7 +49,8 @@
       "WebFetch(domain:skillsmp.com)",
       "Bash(node:*)",
       "Bash(git cherry-pick:*)",
-      "Bash(npm test:*)"
+      "Bash(npm test:*)",
+      "Bash(git merge-base:*)"
     ]
   },
   "model": "claude-opus-4-5-20251101",

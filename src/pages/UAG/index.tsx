@@ -1,10 +1,11 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { QueryErrorResetBoundary } from '@tanstack/react-query';
 
 import styles from './UAG.module.css';
 import { useUAG } from './hooks/useUAG';
 import { useLeadSelection } from './hooks/useLeadSelection';
+import { useAuth } from '../../hooks/useAuth';
 
 import { UAGHeader } from './components/UAGHeader';
 import { UAGFooter } from './components/UAGFooter';
@@ -18,22 +19,48 @@ import ListingFeed from './components/ListingFeed';
 import ReportGenerator from './components/ReportGenerator';
 import TrustFlow from './components/TrustFlow';
 
+// MSG-5: 購買成功後發送訊息 Modal
+import { SendMessageModal } from '../../components/UAG/SendMessageModal';
+import type { Lead } from './types/uag.types';
+
 function UAGPageContent() {
   const { data: appData, isLoading, buyLead, isBuying, useMock, toggleMode } = useUAG();
   const { selectedLead, selectLead, close } = useLeadSelection();
+  const { user } = useAuth();
   const actionPanelRef = useRef<HTMLDivElement>(null);
+
+  // MSG-5: Modal 狀態
+  const [showMessageModal, setShowMessageModal] = useState(false);
+  const [purchasedLead, setPurchasedLead] = useState<Lead | null>(null);
 
   const onBuyLead = async (leadId: string) => {
     if (!appData || isBuying) return;
 
-    // Validation logic is now handled inside useUAG's buyLead
-    // Confirmation is handled in ActionPanel UI
+    // 找到被購買的 lead
+    const lead = appData.leads.find(l => l.id === leadId);
+    if (!lead) return;
+
+    // 執行購買
     buyLead(leadId);
     close();
+
+    // MSG-5: 購買成功後顯示發送訊息 Modal
+    setPurchasedLead(lead);
+    setShowMessageModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setShowMessageModal(false);
+    setPurchasedLead(null);
   };
 
   if (isLoading) return <UAGLoadingSkeleton />;
   if (!appData) return null;
+
+  // MSG-5: 取得 agent_id 和 session_id
+  const agentId = user?.id || 'demo-agent';
+  // 對於 mock 模式，使用 lead 的 id 作為 session_id
+  const sessionId = purchasedLead?.id || 'demo-session';
 
   return (
     <div className={styles['uag-page']}>
@@ -67,6 +94,17 @@ function UAGPageContent() {
       </main>
 
       <UAGFooter user={appData.user} useMock={useMock} toggleMode={toggleMode} />
+
+      {/* MSG-5: 購買成功後發送訊息 Modal */}
+      {purchasedLead && (
+        <SendMessageModal
+          isOpen={showMessageModal}
+          onClose={handleCloseModal}
+          lead={purchasedLead}
+          agentId={agentId}
+          sessionId={sessionId}
+        />
+      )}
     </div>
   );
 }
@@ -85,4 +123,3 @@ export default function UAGPage() {
     </QueryErrorResetBoundary>
   );
 }
-
