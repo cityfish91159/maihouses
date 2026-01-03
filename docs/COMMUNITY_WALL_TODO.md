@@ -627,12 +627,23 @@ Response: { success: boolean, message_id?: string }
 
 **環境變數**: `VITE_VAPID_PUBLIC_KEY`
 
-#### ✅ 驗證結果
+  #### ✅ 驗證結果
+  
+  - [x] TypeScript 0 errors（NOTIFY-2 相關檔案）
+  - [x] ESLint 0 warnings（NOTIFY-2 相關檔案）
+  - [x] Migration 語法正確
+  - [x] Service Worker 語法正確
 
-- [x] TypeScript 0 errors（NOTIFY-2 相關檔案）
-- [x] ESLint 0 warnings（NOTIFY-2 相關檔案）
-- [x] Migration 語法正確
-- [x] Service Worker 語法正確
+  #### 🔍 Code Review（NOTIFY-2）
+
+  **評分**: 6.5 / 10（Needs changes）
+
+  **重點問題**:
+  - `fn_upsert_push_subscription` / `fn_delete_push_subscription` / `fn_get_push_subscriptions` 為 `SECURITY DEFINER` 且未檢查 `auth.uid()`，可傳入任意 `profile_id` 造成越權寫入/刪除/讀取。(`supabase/migrations/20260103_001_push_subscriptions.sql:75-145`)
+  - `fn_delete_push_subscription` 使用 `ROW_COUNT` 指派到 boolean 變數，可能造成 migration 失敗或型別錯誤。(`supabase/migrations/20260103_001_push_subscriptions.sql:114-122`)
+  - RLS `UPDATE` 僅有 `USING` 無 `WITH CHECK`，可把 `profile_id` 改成其他用戶。(`supabase/migrations/20260103_001_push_subscriptions.sql:45-48`)
+  - `subscribe()` 未先檢查既有 subscription，已訂閱時會丟 `InvalidStateError` 或重複寫入。(`src/hooks/usePushNotifications.ts:205-260`)
+  - 通知 payload 的 `data.url` 未做同源驗證，若後端誤送可能導向外部。(`public/sw-maihouses.js:79-87`)
 
 #### ⚠️ 後續步驟（部署前）
 
