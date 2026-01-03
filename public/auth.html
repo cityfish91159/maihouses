@@ -1160,6 +1160,21 @@
   confirmPasswordInput?.addEventListener('blur', () => {
     setMascotMood('idle');
   });
+
+  // Phone Input Formatting (Auto-strip non-digits)
+  const phoneInput = document.getElementById('phone');
+  phoneInput?.addEventListener('input', (e) => {
+    // 移除所有非數字字符
+    const val = e.target.value.replace(/\D/g, '');
+    if (val !== e.target.value) {
+      e.target.value = val;
+    }
+  });
+  
+  phoneInput?.addEventListener('focus', () => {
+     setMascotMood('thinking');
+     showSpeech('09...', 1500);
+  });
   
   // 頁面載入時揮手
   setTimeout(() => {

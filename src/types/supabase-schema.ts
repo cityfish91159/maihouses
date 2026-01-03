@@ -170,6 +170,27 @@ export interface AgentRow {
 }
 
 // ============================================
+// Profiles Table
+// ============================================
+
+/**
+ * profiles 表 Row 型別
+ * 
+ * @see 20260104_auth_1_phone_constraint.sql (AUTH-1)
+ */
+export interface ProfileRow {
+  id: string;                           // UUID PRIMARY KEY REFERENCES auth.users(id)
+  email: string | null;                 // TEXT
+  role: string | null;                  // TEXT
+  phone: string | null;                 // TEXT (AUTH-1: 允許 NULL 用以支援 OAuth，但前端註冊強制必填)
+  
+  // 其他可能存在的欄位 (需根據實際 DB schema 補充)
+  // full_name: string | null;
+  // avatar_url: string | null;
+  updated_at: string | null;            // TIMESTAMPTZ
+}
+
+// ============================================
 // Type Aliases for API Usage
 // ============================================
 
