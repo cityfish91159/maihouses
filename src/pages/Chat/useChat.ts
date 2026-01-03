@@ -21,19 +21,25 @@ const ProfileSchema = z.object({
 });
 
 const PropertySchema = z.object({
-  public_id: z.string().nullable().optional(),
+  public_id: z.string(),
   title: z.string().nullable().optional(),
   images: z.array(z.string()).nullable().optional(),
   address: z.string().nullable().optional(),
 });
 
+const PropertyQueryResultSchema = z.array(PropertySchema);
+
+/**
+ * 問題 #5 修復：移除 property JOIN（TEXT FK 無法 JOIN UUID）
+ * 改為分開查詢 properties 表
+ */
 const ConversationSchema = z.object({
   id: z.string().uuid(),
   status: z.enum(['pending', 'active', 'closed']),
   agent_id: z.string(),
   consumer_session_id: z.string(),
   consumer_profile_id: z.string().uuid().nullable(),
-  property_id: z.string().nullable(),
+  property_id: z.string().nullable(), // TEXT 格式如 'MH-100001'
   lead_id: z.string().uuid().nullable(),
   unread_agent: z.number(),
   unread_consumer: z.number(),
@@ -41,7 +47,7 @@ const ConversationSchema = z.object({
   updated_at: z.string(),
   agent_profile: z.array(ProfileSchema).nullable().optional(),
   consumer_profile: z.array(ProfileSchema).nullable().optional(),
-  property: z.array(PropertySchema).nullable().optional(),
+  // 問題 #5 修復：移除 property，改用分開查詢
 });
 
 const ConversationUpdateSchema = z.object({
@@ -98,8 +104,13 @@ export function useChat(conversationId?: string) {
     return STATUS_LABELS[conversation.status];
   }, [conversation]);
 
+  /**
+   * 問題 #5 修復：移除 property JOIN，改為分開查詢
+   */
   const loadConversation = useCallback(async () => {
     if (!conversationId || !user) return;
+
+    // 1. 查詢對話（不含 property JOIN）
     const { data, error } = await supabase
       .from('conversations')
       .select(`
@@ -115,8 +126,7 @@ export function useChat(conversationId?: string) {
         created_at,
         updated_at,
         agent_profile:profiles!agent_id(name, email),
-        consumer_profile:profiles!consumer_profile_id(name, email),
-        property:properties!property_id(public_id, title, images, address)
+        consumer_profile:profiles!consumer_profile_id(name, email)
       `)
       .eq('id', conversationId)
       .single();
@@ -144,10 +154,34 @@ export function useChat(conversationId?: string) {
     const counterpartName = profileData?.name || profileData?.email?.split('@')[0] || fallbackName;
     const counterpartSubtitle = profileData?.email || (isAgent ? '匿名訪客' : '認證房仲');
 
-    const propertyData = row.property?.[0];
-    const propertyTitle = propertyData?.title || (row.property_id ? '物件資訊' : undefined);
-    const propertySubtitle = propertyData?.address || (row.property_id ? `編號 ${row.property_id}` : undefined);
-    const propertyImage = propertyData?.images?.[0] || undefined;
+    // 2. 問題 #5 修復：分開查詢 property（用 public_id 匹配）
+    let propertyTitle: string | undefined;
+    let propertySubtitle: string | undefined;
+    let propertyImage: string | undefined;
+
+    if (row.property_id) {
+      const { data: propertyData, error: propertyError } = await supabase
+        .from('properties')
+        .select('public_id, title, images, address')
+        .eq('public_id', row.property_id)
+        .maybeSingle();
+
+      if (propertyError) {
+        logger.warn('chat.loadProperty.failed', { error: propertyError, property_id: row.property_id });
+      }
+
+      if (propertyData) {
+        const parsed = PropertySchema.safeParse(propertyData);
+        if (parsed.success) {
+          propertyTitle = parsed.data.title ?? '物件資訊';
+          propertySubtitle = parsed.data.address ?? `編號 ${row.property_id}`;
+          propertyImage = parsed.data.images?.[0];
+        }
+      } else {
+        propertyTitle = '物件資訊';
+        propertySubtitle = `編號 ${row.property_id}`;
+      }
+    }
 
     setHeader({
       counterpartName,

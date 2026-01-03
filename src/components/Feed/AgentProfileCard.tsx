@@ -5,6 +5,9 @@ import type { PerformanceStats } from '../../types/agent';
 import { STRINGS } from '../../constants/strings';
 import { ROUTES } from '../../constants/routes';
 
+// 問題 #16 修復：使用常數替代硬編碼
+const DEFAULT_COMMUNITY_ID = STRINGS.FEED.DEFAULT_COMMUNITY_ID;
+
 interface AgentProfileCardProps {
     profile: UserProfile;
     stats: PerformanceStats;
@@ -55,7 +58,7 @@ export const AgentProfileCard = memo(function AgentProfileCard({
                     {STRINGS.AGENT.PROFILE.LINK_WORKBENCH}
                 </Link>
                 <Link
-                    to={`/community/${profile.communityId || 'test-uuid'}/wall`}
+                    to={`/community/${profile.communityId || DEFAULT_COMMUNITY_ID}/wall`}
                     className="ml-auto inline-flex items-center justify-center gap-1.5 rounded-full border border-solid border-[#bfdbfe] bg-[#eff6ff] px-4 py-2.5 text-[13px] font-bold text-[#00385a] no-underline opacity-100 transition-all max-[400px]:ml-0 max-[400px]:w-full"
                 >
                     {STRINGS.AGENT.PROFILE.LINK_WALL}

@@ -17,31 +17,45 @@ import { logger } from '../lib/logger';
 
 /**
  * 建立新對話
+ *
+ * 問題 #13 修復：使用 fn_create_conversation RPC 替代直接 insert
+ * RPC 有幂等性檢查，避免重複建立對話
  */
 export async function createConversation(
   req: CreateConversationRequest
 ): Promise<Conversation> {
-  const { data, error } = await supabase
-    .from('conversations')
-    .insert({
-      agent_id: req.agent_id,
-      consumer_session_id: req.consumer_session_id,
-      property_id: req.property_id ?? null,
-      lead_id: req.lead_id ?? null,
-      status: 'pending',
-      unread_agent: 0,
-      unread_consumer: 0,
-    })
-    .select()
-    .single();
+  // 使用 RPC 建立對話（有幂等性檢查）
+  const { data: conversationId, error } = await supabase.rpc('fn_create_conversation', {
+    p_agent_id: req.agent_id,
+    p_consumer_session_id: req.consumer_session_id,
+    p_property_id: req.property_id ?? null,
+    p_lead_id: req.lead_id ?? null,
+  });
 
   if (error) {
-    logger.error('[messagingService] Failed to create conversation', { error: error.message });
+    logger.error('[messagingService] Failed to create conversation via RPC', { error: error.message });
     throw new Error(`建立對話失敗: ${error.message}`);
   }
 
+  if (!conversationId) {
+    logger.error('[messagingService] RPC returned null conversation_id');
+    throw new Error('建立對話失敗: 無效的回傳值');
+  }
+
+  // 查詢剛建立的對話以返回完整資料
+  const { data: convData, error: fetchError } = await supabase
+    .from('conversations')
+    .select('*')
+    .eq('id', conversationId)
+    .single();
+
+  if (fetchError) {
+    logger.error('[messagingService] Failed to fetch created conversation', { error: fetchError.message });
+    throw new Error(`建立對話失敗: ${fetchError.message}`);
+  }
+
   // Zod 驗證取代 as 斷言
-  const parsed = ConversationSchema.safeParse(data);
+  const parsed = ConversationSchema.safeParse(convData);
   if (!parsed.success) {
     logger.error('[messagingService] Invalid conversation data', { error: parsed.error.message });
     throw new Error('對話資料格式錯誤');
@@ -52,53 +66,49 @@ export async function createConversation(
 
 /**
  * 發送訊息
+ *
+ * 問題 #8-9 修復：使用 fn_send_message RPC 替代直接 insert
+ * 這樣可以確保：
+ * 1. unread 計數原子遞增（無競態條件）
+ * 2. 消費者首次回覆時 status 自動更新為 active
+ * 3. consumer_profile_id 自動填入
  */
 export async function sendMessage(req: SendMessageRequest): Promise<Message> {
-  const { data, error } = await supabase
-    .from('messages')
-    .insert({
-      conversation_id: req.conversation_id,
-      sender_type: req.sender_type,
-      sender_id: req.sender_id,
-      content: req.content,
-    })
-    .select()
-    .single();
+  // 使用 RPC 發送訊息（與 useChat.ts 保持一致）
+  const { data: messageId, error } = await supabase.rpc('fn_send_message', {
+    p_conversation_id: req.conversation_id,
+    p_sender_type: req.sender_type,
+    p_sender_id: req.sender_id,
+    p_content: req.content,
+  });
 
   if (error) {
-    logger.error('[messagingService] Failed to send message', { error: error.message });
+    logger.error('[messagingService] Failed to send message via RPC', { error: error.message });
     throw new Error(`發送訊息失敗: ${error.message}`);
   }
 
+  if (!messageId) {
+    logger.error('[messagingService] RPC returned null message_id');
+    throw new Error('發送訊息失敗: 無效的回傳值');
+  }
+
+  // 查詢剛建立的訊息以返回完整資料
+  const { data: messageData, error: fetchError } = await supabase
+    .from('messages')
+    .select('*')
+    .eq('id', messageId)
+    .single();
+
+  if (fetchError) {
+    logger.error('[messagingService] Failed to fetch sent message', { error: fetchError.message });
+    throw new Error(`發送訊息失敗: ${fetchError.message}`);
+  }
+
   // Zod 驗證取代 as 斷言
-  const parsed = MessageSchema.safeParse(data);
+  const parsed = MessageSchema.safeParse(messageData);
   if (!parsed.success) {
     logger.error('[messagingService] Invalid message data', { error: parsed.error.message });
     throw new Error('訊息資料格式錯誤');
-  }
-
-  // 更新對話的未讀數（對方 +1）- 直接 fetch-then-update
-  const isAgent = req.sender_type === 'agent';
-  const unreadField = isAgent ? 'unread_consumer' : 'unread_agent';
-
-  const { data: conv, error: fetchError } = await supabase
-    .from('conversations')
-    .select('unread_consumer, unread_agent')
-    .eq('id', req.conversation_id)
-    .single();
-
-  if (!fetchError && conv) {
-    const currentCount = conv[unreadField] ?? 0;
-    const { error: updateError } = await supabase
-      .from('conversations')
-      .update({ [unreadField]: currentCount + 1 })
-      .eq('id', req.conversation_id);
-
-    if (updateError) {
-      logger.warn('[messagingService] Failed to update unread count', { error: updateError.message });
-    }
-  } else if (fetchError) {
-    logger.warn('[messagingService] Failed to fetch conversation for unread update', { error: fetchError.message });
   }
 
   return parsed.data;

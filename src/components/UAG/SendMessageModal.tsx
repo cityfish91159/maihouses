@@ -4,7 +4,7 @@
  * 購買客戶成功後彈出的訊息發送 Modal
  */
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { X, Send, MessageCircle, User, Home } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import type { Lead } from '../../pages/UAG/types/uag.types';
@@ -91,36 +91,49 @@ export function SendMessageModal({
     } finally {
       setIsSending(false);
     }
-  }, [message, isSending, agentId, sessionId, lead.id, propertyId, onClose, navigate]);
+  }, [message, isSending, agentId, sessionId, propertyId, onClose, navigate]);
 
   const handleLater = useCallback(() => {
     onClose();
     notify.info(S.SAVED_FOR_LATER, S.SAVED_FOR_LATER_DESC);
   }, [onClose]);
 
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key === 'Enter' && e.ctrlKey) {
-        handleSend();
-      }
+  // Escape key handler via useEffect (a11y compliant)
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         onClose();
       }
+    };
+
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [isOpen, onClose]);
+
+  // Ctrl+Enter handler for textarea
+  const handleTextareaKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+      if (e.key === 'Enter' && e.ctrlKey) {
+        e.preventDefault();
+        handleSend();
+      }
     },
-    [handleSend, onClose]
+    [handleSend]
   );
 
   if (!isOpen) return null;
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="send-message-title"
-      onKeyDown={handleKeyDown}
-    >
-      <div className="w-full max-w-md animate-in fade-in zoom-in-95 rounded-2xl bg-white shadow-2xl duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+      <form
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="send-message-title"
+        onSubmit={(e) => { e.preventDefault(); handleSend(); }}
+        className="animate-in fade-in zoom-in-95 w-full max-w-md rounded-2xl bg-white shadow-2xl duration-200"
+      >
         {/* Header */}
         <div className="flex items-center justify-between border-b border-gray-100 p-4">
           <div className="flex items-center gap-2">
@@ -175,6 +188,7 @@ export function SendMessageModal({
               id="message-input"
               value={message}
               onChange={(e) => setMessage(e.target.value)}
+              onKeyDown={handleTextareaKeyDown}
               placeholder={S.MESSAGE_PLACEHOLDER}
               maxLength={500}
               rows={4}
@@ -199,8 +213,7 @@ export function SendMessageModal({
             {S.LATER_BTN}
           </button>
           <button
-            type="button"
-            onClick={handleSend}
+            type="submit"
             disabled={!message.trim() || isSending}
             className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-700 disabled:bg-gray-300 disabled:text-gray-500"
           >
@@ -214,7 +227,7 @@ export function SendMessageModal({
             )}
           </button>
         </div>
-      </div>
+      </form>
     </div>
   );
 }

@@ -6,6 +6,9 @@ import { STRINGS } from '../../constants/strings';
 import { ROUTES } from '../../constants/routes';
 import { AgentConversationList } from './AgentConversationList';
 
+// 問題 #15 修復：使用常數替代硬編碼
+const DEFAULT_COMMUNITY_ID = STRINGS.FEED.DEFAULT_COMMUNITY_ID;
+
 interface AgentSidebarProps {
     stats: PerformanceStats;
     todos: TodoItem[];
@@ -40,7 +43,7 @@ export const AgentSidebar: React.FC<AgentSidebarProps> = ({
                     <Link to={ROUTES.ASSURE} className="flex items-center gap-2 rounded-[10px] p-2.5 text-[13px] font-semibold text-[#0b214a] no-underline transition-colors hover:bg-[#f0f7ff]">
                         {STRINGS.AGENT.SIDEBAR.LINK_TRUST}
                     </Link>
-                    <Link to={`/community/${'test-uuid'}/wall`} className="relative flex items-center gap-2 rounded-[10px] p-2.5 text-[13px] font-semibold text-[#0b214a] no-underline transition-colors hover:bg-[#f0f7ff]">
+                    <Link to={`/community/${DEFAULT_COMMUNITY_ID}/wall`} className="relative flex items-center gap-2 rounded-[10px] p-2.5 text-[13px] font-semibold text-[#0b214a] no-underline transition-colors hover:bg-[#f0f7ff]">
                         {STRINGS.AGENT.SIDEBAR.LINK_WALL}
                         {/* Notification Badge Example */}
                         <span className="absolute right-2 top-3 size-2 rounded-full bg-red-500"></span>

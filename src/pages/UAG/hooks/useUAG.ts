@@ -124,6 +124,7 @@ export function useUAG() {
 
   /**
    * MSG-5 FIX: 購買客戶，回傳 Promise 以便追蹤成功/失敗
+   * 問題 #19 修復：返回更新後的 lead 數據（status = 'purchased'）
    * @returns Promise<BuyLeadResult> 包含購買結果
    */
   const buyLead = useCallback(async (leadId: string): Promise<BuyLeadResult> => {
@@ -148,7 +149,7 @@ export function useUAG() {
       return { success: false, error: quotaError || '配額不足' };
     }
 
-    const cost = lead.price || 10;
+    const cost = lead.price ?? 10;
     if (data.user.points < cost) {
       notify.error('點數不足');
       return { success: false, error: '點數不足' };
@@ -158,7 +159,14 @@ export function useUAG() {
       buyLeadMutation.mutate({ leadId, cost, grade: lead.grade }, {
         onSuccess: () => {
           notify.success('購買成功');
-          resolve({ success: true, lead });
+          // 問題 #19 修復：返回更新後的 lead 數據
+          const updatedLead: Lead = {
+            ...lead,
+            status: 'purchased' as LeadStatus,
+            remainingHours: GRADE_PROTECTION_HOURS[lead.grade] ?? 48,
+            purchased_at: new Date().toISOString(),
+          };
+          resolve({ success: true, lead: updatedLead });
         },
         onError: (err) => {
           resolve({ success: false, error: err instanceof Error ? err.message : 'Unknown error' });

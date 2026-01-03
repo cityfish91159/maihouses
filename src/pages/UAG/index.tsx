@@ -59,10 +59,16 @@ function UAGPageContent() {
   if (isLoading) return <UAGLoadingSkeleton />;
   if (!appData) return null;
 
-  // MSG-5: Agent ID 和 Session ID
-  const agentId = user?.id ?? 'demo-agent';
+  /**
+   * 問題 #10-11 修復：不使用假數據 fallback
+   * 如果沒有真實的 user.id 或 session_id，不應該嘗試建立對話
+   */
+  const agentId = user?.id;
   // 使用 lead 的 session_id（來自消費者瀏覽記錄）
-  const consumerSessionId = purchasedLead?.session_id ?? 'unknown-session';
+  const consumerSessionId = purchasedLead?.session_id;
+
+  // 問題 #10-11 修復：判斷是否可以發送訊息
+  const canSendMessage = Boolean(agentId && consumerSessionId);
 
   return (
     <div className={styles['uag-page']}>
@@ -98,7 +104,8 @@ function UAGPageContent() {
       <UAGFooter user={appData.user} useMock={useMock} toggleMode={toggleMode} />
 
       {/* MSG-5: 購買成功後發送訊息 Modal */}
-      {purchasedLead && (
+      {/* 問題 #10-11 修復：只有在有真實 agentId 和 sessionId 時才渲染 */}
+      {purchasedLead && canSendMessage && agentId && consumerSessionId && (
         <SendMessageModal
           isOpen={showMessageModal}
           onClose={handleCloseModal}
