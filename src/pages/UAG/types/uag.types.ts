@@ -7,8 +7,9 @@ export const LeadStatusSchema = z.enum(['new', 'purchased']);
 export type LeadStatus = z.infer<typeof LeadStatusSchema>;
 
 // Schema for data coming directly from Supabase
+// 注意：id 可能是 uag_lead_purchases.id (UUID) 或 session_id (非 UUID)
 export const SupabaseLeadSchema = z.object({
-  id: z.string().uuid(),
+  id: z.string(), // 購買前為 session_id，購買後為 purchase UUID
   name: z.string(),
   grade: GradeSchema,
   intent: z.number(),
@@ -24,8 +25,8 @@ export const SupabaseLeadSchema = z.object({
   x: z.number().optional(),
   y: z.number().optional(),
   created_at: z.string().optional(),
-  session_id: z.string().optional(),
-  property_id: z.string().uuid().optional(),
+  session_id: z.string(), // 必填：追蹤匿名消費者
+  property_id: z.string().optional(), // TEXT 格式如 'MH-100001'，不是 UUID
 }).passthrough(); // Allow extra fields
 
 // Schema for the transformed Lead object used in the UI

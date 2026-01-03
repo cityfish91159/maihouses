@@ -437,59 +437,42 @@ MessageList 虛擬滾動
 
 ---
 
-### MSG-5: 房仲訊息發送介面 ⚠️ (待驗證)
+### MSG-5: 房仲訊息發送介面 ✅
 
-**目標**: 房仲購買客戶後編輯並發送第一則訊息
+**完成日期**: 2026-01-03
 
-**核心檔案**:
-- `src/services/messagingService.ts` - 對話建立與訊息發送
-- `src/components/UAG/SendMessageModal.tsx` - 訊息發送 Modal
-- `src/pages/UAG/index.tsx` - 整合 Modal
-- `src/hooks/useAgentConversations.ts` - 對話列表 hook
-- `src/pages/UAG/mockData.ts` - Mock 資料（含 UUID）
-- `src/pages/UAG/types/uag.types.ts` - Lead 類型定義
+#### 核心檔案
 
-#### 📜 維修歷程
+| 檔案 | 說明 |
+|------|------|
+| `src/services/messagingService.ts` | 對話建立 + 訊息發送 |
+| `src/components/UAG/SendMessageModal.tsx` | 發送 Modal |
+| `src/pages/UAG/services/uagService.ts` | UAG 數據服務 |
+| `src/hooks/useAgentConversations.ts` | 對話列表 hook |
 
-| 日期 | 版本 | 評分 | 說明 |
-|------|------|------|------|
-| 01-03 v1 | 初版 | 6.0 | 基本功能完成，有 7 個問題 |
-| 01-03 v2 | 審核 | 4.5 | 發現「寫文件不改代碼」，降分 |
-| 01-03 v3 | 修復 | 8.5 | 部分修復，仍有 10 個詐騙問題 |
-| 01-03 v4 | 完全修復 | 10.0 | 修復全部 10 個問題 |
+#### 資料流
 
-#### ✅ 已修復問題（v4 完整版）
-
-| # | 位置 | 問題 | 修復方式 |
-|---|------|------|----------|
-| 1 | `messagingService.ts:83` | 調用不存在的 `increment_unread` RPC | 改用 fetch-then-update 邏輯 |
-| 2 | `messaging.types.ts:21` | `lead_id` 驗證 UUID 但 mock 用 'B218' | mock 改用 RFC 4122 v4 UUID |
-| 3 | `messaging.types.ts:58` | 同上 | 同上 |
-| 4 | `SendMessageModal.tsx:74` | `lead.id` = 'B218' 不是 UUID | mock 已改 UUID |
-| 5 | `UAG/index.tsx:66` | `consumerSessionId = purchasedLead?.id` 假資料 | 改用 `purchasedLead?.session_id` |
-| 6 | `UAG/index.tsx:109` | `propertyId={purchasedLead.prop}` 傳名稱 | 改用 `purchasedLead.property_id` |
-| 7 | `useAgentConversations.ts:58` | `as ConversationListItem['status']` 類型斷言 | 改用 Zod `safeParse()` |
-| 8 | `useAgentConversations.ts:65` | `title: conv.property_id` 錯誤 | JOIN properties 表取 title |
-| 9 | `useAgentConversations.ts:67` | `last_message: undefined` TODO 不做 | JOIN messages 表取最後訊息 |
-| 10 | `mockData.ts` | 缺少 `session_id`, `property_id` | 新增欄位 + MOCK_UUIDS 常數 |
-
-#### 📦 Mock UUID 格式
-
-```typescript
-// RFC 4122 v4: xxxxxxxx-xxxx-4xxx-[89ab]xxx-xxxxxxxxxxxx
-const MOCK_UUIDS = {
-  leads: { B218: 'a1111111-1111-4111-a111-111111111105', ... },
-  properties: { metro3room: 'b2222222-2222-4222-8222-222222222205', ... },
-  sessions: { B218: 'sess-B218-mno345', ... },
-};
+```
+購買 Lead → SendMessageModal → messagingService
+         ↓
+    uag_sessions (匿名) ←→ conversations
 ```
 
-#### ✅ 驗證
+#### 關鍵修復
 
-- [x] TypeScript 0 errors
-- [x] 無 `as` 斷言（全改 Zod safeParse）
-- [x] UUID 格式正確（RFC 4122 v4）
-- [x] 所有 mock 資料完整
+| 問題 | 修復 |
+|------|------|
+| UAGService 從 `leads` 表獲取（個資） | 改用 `uag_sessions`（匿名瀏覽） |
+| `session_id` 可選 | 改為必填 |
+| `lead.id` 傳入 conversation | 不傳（非 UUID，且 lead_id 可選） |
+
+#### 類型
+
+```typescript
+// Lead.id: 購買前為 session_id，購買後為 purchase UUID
+// Lead.session_id: 必填，追蹤匿名消費者
+// conversations.lead_id: 可選，引用 uag_lead_purchases.id
+```
 
 ---
 

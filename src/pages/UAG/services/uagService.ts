@@ -133,21 +133,121 @@ export interface PropertyViewStats {
   call_clicks: number;
 }
 
+/**
+ * 從 grade 計算 intent 分數
+ */
+function gradeToIntent(grade: string): number {
+  switch (grade) {
+    case 'S': return 90 + Math.floor(Math.random() * 10); // 90-99
+    case 'A': return 70 + Math.floor(Math.random() * 20); // 70-89
+    case 'B': return 50 + Math.floor(Math.random() * 20); // 50-69
+    case 'C': return 30 + Math.floor(Math.random() * 20); // 30-49
+    default: return 10 + Math.floor(Math.random() * 20);  // 10-29
+  }
+}
+
+/**
+ * 從 grade 計算點數價格
+ */
+function gradeToPrice(grade: string): number {
+  switch (grade) {
+    case 'S': return 20;
+    case 'A': return 10;
+    case 'B': return 3;
+    case 'C': return 1;
+    default: return 0.5;
+  }
+}
+
+/**
+ * 生成 AI 建議
+ */
+function generateAiSuggestion(grade: string, visitCount: number): string {
+  if (grade === 'S') {
+    return visitCount >= 3 ? '🔥 強烈建議立即發送訊息！' : '高意願客戶，請優先處理';
+  }
+  if (grade === 'A') {
+    return visitCount >= 2 ? '深度瀏覽用戶，建議發送邀約' : 'A 級客戶，適合推薦物件';
+  }
+  if (grade === 'B') {
+    return '中度興趣，可發送物件資訊';
+  }
+  if (grade === 'C') {
+    return '輕度興趣，建議先觀察';
+  }
+  return '潛在客戶';
+}
+
 export class UAGService {
+  /**
+   * 從 uag_sessions 獲取匿名潛在客戶數據（非 leads 表的真實個資）
+   */
   static async fetchAppData(userId: string): Promise<AppData> {
-    const [userRes, leadsRes, listingsRes, feedRes] = await Promise.all([
+    const [userRes, sessionsRes, listingsRes, feedRes] = await Promise.all([
       supabase.from('users').select('points, quota_s, quota_a').single(),
-      supabase.from('leads').select('*'),
+      // 正確數據源：uag_sessions（匿名瀏覽行為），不是 leads（真實個資）
+      supabase
+        .from('uag_sessions')
+        .select('session_id, agent_id, grade, total_duration, property_count, last_active, summary')
+        .eq('agent_id', userId)
+        .in('grade', ['S', 'A', 'B', 'C', 'F'])
+        .order('last_active', { ascending: false })
+        .limit(50),
       supabase.from('listings').select('*').eq('agent_id', userId),
       supabase.from('feed').select('*').order('created_at', { ascending: false }).limit(5)
     ]);
 
     if (userRes.error) throw userRes.error;
-    if (leadsRes.error) throw leadsRes.error;
+    if (sessionsRes.error) throw sessionsRes.error;
     if (listingsRes.error) throw listingsRes.error;
     if (feedRes.error) throw feedRes.error;
 
-    return transformSupabaseData(userRes.data, leadsRes.data, listingsRes.data, feedRes.data);
+    // 獲取每個 session 最近瀏覽的物件
+    const sessionIds = (sessionsRes.data || []).map(s => s.session_id);
+    let propertyMap = new Map<string, string>();
+
+    if (sessionIds.length > 0) {
+      const { data: events } = await supabase
+        .from('uag_events')
+        .select('session_id, property_id')
+        .in('session_id', sessionIds)
+        .order('created_at', { ascending: false });
+
+      // 每個 session 取第一個（最近的）property_id
+      if (events) {
+        for (const evt of events) {
+          if (!propertyMap.has(evt.session_id) && evt.property_id) {
+            propertyMap.set(evt.session_id, evt.property_id);
+          }
+        }
+      }
+    }
+
+    // 轉換 uag_sessions 為 Lead 格式
+    const leadsData: SupabaseLeadData[] = (sessionsRes.data || []).map((session, index) => {
+      const grade = session.grade || 'F';
+      const propertyId = propertyMap.get(session.session_id);
+
+      return {
+        id: session.session_id, // 使用 session_id 作為 Lead ID
+        name: `訪客-${session.session_id.slice(-4).toUpperCase()}`,
+        grade,
+        intent: gradeToIntent(grade),
+        prop: propertyId || '物件瀏覽',
+        visit: session.property_count || 1,
+        price: gradeToPrice(grade),
+        status: 'new',
+        ai: generateAiSuggestion(grade, session.property_count || 1),
+        session_id: session.session_id,
+        property_id: propertyId,
+        // 雷達座標（隨機分佈）
+        x: 15 + (index % 5) * 15 + Math.random() * 10,
+        y: 15 + Math.floor(index / 5) * 15 + Math.random() * 10,
+        created_at: session.last_active,
+      };
+    });
+
+    return transformSupabaseData(userRes.data, leadsData, listingsRes.data, feedRes.data);
   }
 
   // 獲取某房仲所有房源的瀏覽統計

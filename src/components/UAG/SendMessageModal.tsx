@@ -71,8 +71,8 @@ export function SendMessageModal({
         {
           agent_id: agentId,
           consumer_session_id: sessionId,
-          lead_id: lead.id,
-          // MSG-5 FIX 6: 傳入 property_id
+          // 注意：lead_id 需要是 uag_lead_purchases.id (UUID)，
+          // 但 lead.id 可能是 session_id (非 UUID)，所以不傳
           property_id: propertyId,
         },
         message.trim(),
