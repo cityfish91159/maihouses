@@ -31,7 +31,7 @@ export const ROUTES = {
   COMMUNITY_WALL_MVP: '/maihouses/community-wall_mvp.html',
 
   /** UAG 評分系統 */
-  UAG: 'https://maihouses.vercel.app/maihouses/uag',
+  UAG: '/maihouses/uag',
 
   /** 信任交易 */
   TRUST: '/trust',

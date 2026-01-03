@@ -3,95 +3,115 @@
  * @see supabase/migrations/20251231_003_messaging_schema.sql
  */
 
+import { z } from 'zod';
+
 // =============================================================================
 // Conversation (對話)
 // =============================================================================
 
-export type ConversationStatus = 'pending' | 'active' | 'closed';
+export const ConversationStatusSchema = z.enum(['pending', 'active', 'closed']);
+export type ConversationStatus = z.infer<typeof ConversationStatusSchema>;
 
-export interface Conversation {
-  id: string;                          // UUID
-  agent_id: string;                    // 房仲 profile_id
-  consumer_session_id: string;         // UAG session_id
-  consumer_profile_id: string | null;  // 消費者 profile_id（回覆後填入）
-  property_id: string | null;          // 相關物件
-  lead_id: string | null;              // 關聯的 uag_leads 記錄
-  status: ConversationStatus;          // pending → active → closed
-  unread_agent: number;                // 房仲未讀數
-  unread_consumer: number;             // 消費者未讀數
-  created_at: string;                  // ISO timestamp
-  updated_at: string;                  // ISO timestamp
-}
+export const ConversationSchema = z.object({
+  id: z.string().uuid(),
+  agent_id: z.string().uuid(),
+  consumer_session_id: z.string(),
+  consumer_profile_id: z.string().uuid().nullable(),
+  property_id: z.string().nullable(),
+  lead_id: z.string().uuid().nullable(),
+  status: ConversationStatusSchema,
+  unread_agent: z.number().int().min(0),
+  unread_consumer: z.number().int().min(0),
+  created_at: z.string(),
+  updated_at: z.string(),
+});
+
+export type Conversation = z.infer<typeof ConversationSchema>;
 
 // =============================================================================
 // Message (訊息)
 // =============================================================================
 
-export type SenderType = 'agent' | 'consumer';
+export const SenderTypeSchema = z.enum(['agent', 'consumer']);
+export type SenderType = z.infer<typeof SenderTypeSchema>;
 
-export interface Message {
-  id: string;                          // UUID
-  conversation_id: string;             // FK to conversations
-  sender_type: SenderType;             // 'agent' | 'consumer'
-  sender_id: string | null;            // profile_id
-  content: string;                     // 訊息內容
-  created_at: string;                  // ISO timestamp
-  read_at: string | null;              // 已讀時間
-}
+export const MessageSchema = z.object({
+  id: z.string().uuid(),
+  conversation_id: z.string().uuid(),
+  sender_type: SenderTypeSchema,
+  sender_id: z.string().uuid().nullable(),
+  content: z.string().min(1).max(2000),
+  created_at: z.string(),
+  read_at: z.string().nullable(),
+});
+
+export type Message = z.infer<typeof MessageSchema>;
 
 // =============================================================================
 // API Request/Response Types
 // =============================================================================
 
-export interface CreateConversationRequest {
-  agent_id: string;
-  consumer_session_id: string;
-  property_id?: string | undefined;
-  lead_id?: string | undefined;
-}
+export const CreateConversationRequestSchema = z.object({
+  agent_id: z.string().uuid(),
+  consumer_session_id: z.string().min(1),
+  property_id: z.string().optional(),
+  lead_id: z.string().uuid().optional(),
+});
 
-export interface SendMessageRequest {
-  conversation_id: string;
-  sender_type: SenderType;
-  sender_id: string;
-  content: string;
-}
+export type CreateConversationRequest = z.infer<typeof CreateConversationRequestSchema>;
 
-export interface MarkReadRequest {
-  conversation_id: string;
-  reader_type: SenderType;
-}
+export const SendMessageRequestSchema = z.object({
+  conversation_id: z.string().uuid(),
+  sender_type: SenderTypeSchema,
+  sender_id: z.string().uuid(),
+  content: z.string().min(1).max(2000),
+});
+
+export type SendMessageRequest = z.infer<typeof SendMessageRequestSchema>;
+
+export const MarkReadRequestSchema = z.object({
+  conversation_id: z.string().uuid(),
+  reader_type: SenderTypeSchema,
+});
+
+export type MarkReadRequest = z.infer<typeof MarkReadRequestSchema>;
 
 // =============================================================================
 // Conversation with Messages (擴展型)
 // =============================================================================
 
-export interface ConversationWithMessages extends Conversation {
-  messages: Message[];
-}
+export const ConversationWithMessagesSchema = ConversationSchema.extend({
+  messages: z.array(MessageSchema),
+});
+
+export type ConversationWithMessages = z.infer<typeof ConversationWithMessagesSchema>;
 
 // =============================================================================
 // Conversation List Item (列表顯示用)
 // =============================================================================
 
-export interface ConversationListItem {
-  id: string;
-  status: ConversationStatus;
-  unread_count: number;
-  last_message?: {
-    content: string;
-    created_at: string;
-    sender_type: SenderType;
-  } | undefined;
-  // 對方資訊
-  counterpart: {
-    name: string;            // 房仲名稱 或 訪客-XXXX
-    avatar?: string;
-  };
-  // 物件資訊
-  property?: {
-    id: string;
-    title: string;
-    image?: string;
-  } | undefined;
-}
+export const ConversationListItemSchema = z.object({
+  id: z.string().uuid(),
+  status: ConversationStatusSchema,
+  unread_count: z.number().int().min(0),
+  last_message: z
+    .object({
+      content: z.string(),
+      created_at: z.string(),
+      sender_type: SenderTypeSchema,
+    })
+    .optional(),
+  counterpart: z.object({
+    name: z.string(),
+    avatar: z.string().optional(),
+  }),
+  property: z
+    .object({
+      id: z.string(),
+      title: z.string(),
+      image: z.string().optional(),
+    })
+    .optional(),
+});
+
+export type ConversationListItem = z.infer<typeof ConversationListItemSchema>;

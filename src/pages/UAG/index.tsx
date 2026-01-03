@@ -26,7 +26,7 @@ import type { Lead } from './types/uag.types';
 function UAGPageContent() {
   const { data: appData, isLoading, buyLead, isBuying, useMock, toggleMode } = useUAG();
   const { selectedLead, selectLead, close } = useLeadSelection();
-  const { user, session } = useAuth();
+  const { user } = useAuth();
   const actionPanelRef = useRef<HTMLDivElement>(null);
 
   // MSG-5: Modal 狀態
@@ -59,13 +59,11 @@ function UAGPageContent() {
   if (isLoading) return <UAGLoadingSkeleton />;
   if (!appData) return null;
 
-  // MSG-5 FIX 2: 使用真實的 agent 和 session ID
-  const agentId = user?.id || 'demo-agent';
-  // 使用真實 session_id，而非 lead.id
-  // 對於 mock 模式，生成一個基於時間的 session_id
-  const consumerSessionId = session?.user?.id 
-    ? `session-${Date.now()}-${purchasedLead?.id?.slice(-4) || 'xxxx'}`
-    : `mock-session-${Date.now()}`;
+  // MSG-5: Agent ID 和 Session ID
+  const agentId = user?.id ?? 'demo-agent';
+  // 使用 lead.id 作為 session 識別符（穩定值，可追溯）
+  // TODO: 未來應從 uag_lead_purchases.session_id 取得真實消費者 session
+  const consumerSessionId = purchasedLead?.id ?? 'unknown-session';
 
   return (
     <div className={styles['uag-page']}>
@@ -108,6 +106,7 @@ function UAGPageContent() {
           lead={purchasedLead}
           agentId={agentId}
           sessionId={consumerSessionId}
+          propertyId={purchasedLead.prop}
         />
       )}
     </div>
