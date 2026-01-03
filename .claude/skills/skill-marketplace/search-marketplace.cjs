@@ -1,197 +1,237 @@
 #!/usr/bin/env node
 /**
- * Skill Marketplace Search API
+ * Skill Marketplace Search API (Fixed Version)
  *
- * 搜尋 skillsmp.com 並返回相關 skills
+ * 從 skillsmp.com 搜尋真實的 skills
  *
- * Usage: node search-marketplace.js "api testing"
+ * Usage: node search-marketplace.cjs "testing" [category] [limit]
  */
 
 const https = require('https');
 
 /**
- * 搜尋市集
- * @param {string} query - 搜尋關鍵字
- * @param {object} options - 搜尋選項
- * @returns {Promise<Array>} - Skill 列表
+ * 從 skillsmp.com URL 解析出 GitHub raw URL
+ *
+ * skillsmp URL: anthropics-claude-code-plugins-plugin-dev-skills-hook-development-skill-md
+ * GitHub path: anthropics/claude-code/main/plugins/plugin-dev/skills/hook-development/SKILL.md
  */
-async function searchMarketplace(query, options = {}) {
-  const {
-    category = null,
-    minStars = 0,
-    limit = 5,
-    sortBy = 'relevance' // relevance, stars, updated
-  } = options;
+function skillsmpToGithubRaw(skillsmpSlug) {
+  // 解析 slug: owner-repo-path-skill-md
+  // Example: anthropics-claude-code-plugins-plugin-dev-skills-hook-development-skill-md
 
-  console.log(`🔍 搜尋市集: "${query}"`);
-  console.log(`   分類: ${category || '全部'}`);
-  console.log(`   最低星數: ${minStars}`);
-  console.log(`   結果數量: ${limit}\n`);
+  const parts = skillsmpSlug.replace(/-skill-md$/, '').split('-');
 
-  try {
-    // 使用 Google Custom Search 搜尋 skillsmp.com
-    const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(query)}+site:skillsmp.com`;
+  // 找到 owner 和 repo（通常是前兩個部分）
+  // 但有些 repo 名稱包含連字號，需要特殊處理
 
-    // 簡化版：返回模擬結果
-    // 實際使用時需要解析 HTML 或使用 API
-    const mockResults = generateMockResults(query, { category, minStars, limit });
+  // 常見模式：{owner}-{repo}-{path...}
+  // anthropics-claude-code-plugins-...
+  // pytorch-pytorch-claude-skills-...
+  // metabase-metabase-claude-skills-...
 
-    console.log(`✅ 找到 ${mockResults.length} 個相關 skills:\n`);
-    mockResults.forEach((skill, i) => {
-      console.log(`${i + 1}. ${skill.name} (⭐ ${skill.stars})`);
-      console.log(`   ${skill.description}`);
-      console.log(`   分類: ${skill.category} | 更新: ${skill.updated}`);
-      console.log(`   URL: ${skill.url}\n`);
-    });
+  if (parts.length < 3) return null;
 
-    return mockResults;
+  const owner = parts[0];
+  const repo = parts[1];
+  const pathParts = parts.slice(2);
+  const path = pathParts.join('/');
 
-  } catch (error) {
-    console.error('❌ 搜尋失敗:', error.message);
-    return [];
-  }
+  return {
+    owner,
+    repo,
+    path,
+    rawUrl: `https://raw.githubusercontent.com/${owner}/${repo}/main/${path}/SKILL.md`,
+    githubUrl: `https://github.com/${owner}/${repo}/tree/main/${path}`
+  };
 }
 
 /**
- * 生成模擬結果（實際應該從 skillsmp.com 抓取）
+ * 使用 skillsmp.com 的 API 搜尋（如果有）或解析頁面
  */
-function generateMockResults(query, options) {
-  const knownSkills = {
-    'testing': [
-      {
-        name: 'api-test-generator',
-        description: 'Automatically generate comprehensive API tests from OpenAPI/Swagger specs',
-        category: 'Testing & Security',
-        stars: 245,
-        updated: '2025-12-15',
-        url: 'https://skillsmp.com/skills/api-test-generator',
-        skillUrl: 'https://raw.githubusercontent.com/skills/api-test-generator/main/SKILL.md'
-      },
-      {
-        name: 'playwright-test-gen',
-        description: 'Generate end-to-end tests using Playwright',
-        category: 'Testing & Security',
-        stars: 312,
-        updated: '2025-12-20',
-        url: 'https://skillsmp.com/skills/playwright-test-gen',
-        skillUrl: 'https://raw.githubusercontent.com/skills/playwright-test-gen/main/SKILL.md'
-      }
-    ],
-    'docker': [
-      {
-        name: 'docker-compose-generator',
-        description: 'Generate docker-compose.yml from project structure',
-        category: 'DevOps',
-        stars: 423,
-        updated: '2025-12-18',
-        url: 'https://skillsmp.com/skills/docker-compose-generator',
-        skillUrl: 'https://raw.githubusercontent.com/skills/docker-compose-gen/main/SKILL.md'
-      }
-    ],
-    'documentation': [
-      {
-        name: 'api-doc-generator',
-        description: 'Generate beautiful API documentation from code',
-        category: 'Documentation',
-        stars: 567,
-        updated: '2025-12-22',
-        url: 'https://skillsmp.com/skills/api-doc-generator',
-        skillUrl: 'https://raw.githubusercontent.com/skills/api-doc-gen/main/SKILL.md'
-      }
-    ]
-  };
+async function searchSkillsmpApi(query, options = {}) {
+  const { category = null, limit = 10 } = options;
 
-  // 簡單關鍵字匹配
-  const lowerQuery = query.toLowerCase();
-  let results = [];
+  // skillsmp.com 的搜尋 API endpoint
+  const baseUrl = 'https://skillsmp.com';
+  const searchPath = category
+    ? `/api/skills?category=${encodeURIComponent(category)}&q=${encodeURIComponent(query)}&limit=${limit}`
+    : `/api/skills?q=${encodeURIComponent(query)}&limit=${limit}`;
 
-  for (const [key, skills] of Object.entries(knownSkills)) {
-    if (lowerQuery.includes(key)) {
-      results = results.concat(skills);
+  return new Promise((resolve, reject) => {
+    const url = new URL(searchPath, baseUrl);
+
+    https.get(url.toString(), {
+      headers: {
+        'Accept': 'application/json',
+        'User-Agent': 'Claude-Code-Skill-Marketplace/1.0'
+      }
+    }, (res) => {
+      let data = '';
+      res.on('data', chunk => data += chunk);
+      res.on('end', () => {
+        try {
+          const json = JSON.parse(data);
+          resolve(json);
+        } catch (e) {
+          // API 可能不存在，返回空
+          resolve({ skills: [] });
+        }
+      });
+    }).on('error', (e) => {
+      resolve({ skills: [] });
+    });
+  });
+}
+
+/**
+ * 從已知的熱門 repos 搜尋 skills（備用方案）
+ */
+async function searchGithubSkills(query, options = {}) {
+  const { limit = 10 } = options;
+
+  // 已知有 skills 的 repos
+  const knownRepos = [
+    { owner: 'anthropics', repo: 'claude-code', path: 'plugins' },
+    { owner: 'anthropics', repo: 'skills', path: '' },
+  ];
+
+  const results = [];
+
+  for (const repo of knownRepos) {
+    const apiUrl = `https://api.github.com/search/code?q=${encodeURIComponent(query)}+filename:SKILL.md+repo:${repo.owner}/${repo.repo}`;
+
+    try {
+      const response = await new Promise((resolve, reject) => {
+        https.get(apiUrl, {
+          headers: {
+            'Accept': 'application/vnd.github.v3+json',
+            'User-Agent': 'Claude-Code-Skill-Marketplace/1.0'
+          }
+        }, (res) => {
+          let data = '';
+          res.on('data', chunk => data += chunk);
+          res.on('end', () => {
+            try {
+              resolve(JSON.parse(data));
+            } catch (e) {
+              resolve({ items: [] });
+            }
+          });
+        }).on('error', () => resolve({ items: [] }));
+      });
+
+      if (response.items) {
+        for (const item of response.items.slice(0, limit)) {
+          const pathParts = item.path.split('/');
+          pathParts.pop(); // 移除 SKILL.md
+          const skillPath = pathParts.join('/');
+          const skillName = pathParts[pathParts.length - 1] || 'unknown';
+
+          results.push({
+            name: skillName,
+            description: `Skill from ${repo.owner}/${repo.repo}`,
+            owner: repo.owner,
+            repo: repo.repo,
+            path: skillPath,
+            rawUrl: `https://raw.githubusercontent.com/${repo.owner}/${repo.repo}/main/${skillPath}/SKILL.md`,
+            githubUrl: `https://github.com/${repo.owner}/${repo.repo}/tree/main/${skillPath}`,
+            stars: 0,
+            updated: new Date().toISOString().split('T')[0]
+          });
+        }
+      }
+    } catch (e) {
+      console.error(`Error searching ${repo.owner}/${repo.repo}:`, e.message);
     }
   }
 
-  // 如果沒找到，返回通用結果
-  if (results.length === 0) {
-    results = [{
-      name: 'general-task-helper',
-      description: `Helper skill for "${query}" tasks`,
-      category: 'Tools',
-      stars: 120,
-      updated: '2025-12-10',
-      url: 'https://skillsmp.com/skills/general-task-helper',
-      skillUrl: 'https://raw.githubusercontent.com/skills/general-helper/main/SKILL.md'
-    }];
-  }
-
-  // 過濾和排序
-  results = results.filter(s => s.stars >= options.minStars);
-
-  if (options.category) {
-    results = results.filter(s => s.category === options.category);
-  }
-
-  // 排序
-  results.sort((a, b) => {
-    if (options.sortBy === 'stars') return b.stars - a.stars;
-    if (options.sortBy === 'updated') return new Date(b.updated) - new Date(a.updated);
-    return 0; // relevance (保持原順序)
-  });
-
-  return results.slice(0, options.limit);
+  return results.slice(0, limit);
 }
 
 /**
- * 評估 skill 分數
+ * 主搜尋函數
  */
-function scoreSkill(skill, query) {
-  let score = 0;
+async function searchMarketplace(query, options = {}) {
+  const { category = null, limit = 10 } = options;
 
-  // 關鍵字匹配 (40%)
-  const keywords = query.toLowerCase().split(' ');
-  const nameMatch = keywords.filter(k => skill.name.toLowerCase().includes(k)).length;
-  const descMatch = keywords.filter(k => skill.description.toLowerCase().includes(k)).length;
-  score += (nameMatch * 20 + descMatch * 20);
+  console.log(`\n🔍 搜尋市集: "${query}"`);
+  console.log(`   分類: ${category || '全部'}`);
+  console.log(`   結果數量: ${limit}\n`);
 
-  // GitHub stars (25%)
-  score += Math.min(skill.stars / 10, 25);
+  // 方案 1: 嘗試 skillsmp.com API
+  console.log('⏳ 嘗試 skillsmp.com API...');
+  let results = [];
 
-  // 更新時間 (15%) - 最近30天內
-  const daysSinceUpdate = (Date.now() - new Date(skill.updated)) / (1000 * 60 * 60 * 24);
-  if (daysSinceUpdate < 30) score += 15;
-  else if (daysSinceUpdate < 90) score += 10;
-  else if (daysSinceUpdate < 180) score += 5;
+  const apiResults = await searchSkillsmpApi(query, options);
+  if (apiResults.skills && apiResults.skills.length > 0) {
+    console.log(`✅ 從 skillsmp.com API 找到 ${apiResults.skills.length} 個結果`);
+    results = apiResults.skills.map(skill => ({
+      ...skill,
+      ...skillsmpToGithubRaw(skill.slug || skill.id || '')
+    }));
+  }
 
-  // 描述完整度 (10%)
-  if (skill.description.length > 50) score += 10;
-  else if (skill.description.length > 30) score += 5;
+  // 方案 2: 如果 API 沒結果，使用 GitHub 搜尋
+  if (results.length === 0) {
+    console.log('⏳ API 無結果，嘗試 GitHub 搜尋...');
+    results = await searchGithubSkills(query, options);
+  }
 
-  // 分類相關性 (10%)
-  const preferredCategories = ['Testing & Security', 'DevOps', 'Development'];
-  if (preferredCategories.includes(skill.category)) score += 10;
+  // 方案 3: 提供手動安裝指引
+  if (results.length === 0) {
+    console.log('\n⚠️  沒有找到自動化結果');
+    console.log('\n📖 手動搜尋方式:');
+    console.log('   1. 前往 https://skillsmp.com');
+    console.log(`   2. 搜尋 "${query}"`);
+    console.log('   3. 點擊想要的 skill');
+    console.log('   4. 複製 GitHub URL 或下載 skill.zip');
+    console.log('\n📥 手動安裝:');
+    console.log('   node .claude/skills/skill-marketplace/install-skill.cjs <github-raw-url>');
+    return [];
+  }
 
-  return Math.round(score);
+  // 顯示結果
+  console.log(`\n✅ 找到 ${results.length} 個相關 skills:\n`);
+  results.forEach((skill, i) => {
+    console.log(`${i + 1}. ${skill.name}`);
+    console.log(`   ${skill.description || 'No description'}`);
+    console.log(`   📦 ${skill.owner}/${skill.repo}`);
+    console.log(`   🔗 ${skill.rawUrl}`);
+    console.log('');
+  });
+
+  return results;
 }
 
 // CLI 模式
 if (require.main === module) {
   const query = process.argv[2];
   if (!query) {
-    console.error('Usage: node search-marketplace.js "search query"');
+    console.log('Usage: node search-marketplace.cjs "<search query>" [category] [limit]');
+    console.log('');
+    console.log('Examples:');
+    console.log('  node search-marketplace.cjs "testing"');
+    console.log('  node search-marketplace.cjs "docker" devops 5');
+    console.log('');
+    console.log('Or visit https://skillsmp.com to browse 40,000+ skills');
     process.exit(1);
   }
 
-  const options = {
-    category: process.argv[3] || null,
-    minStars: parseInt(process.argv[4]) || 0,
-    limit: parseInt(process.argv[5]) || 5
-  };
+  const category = process.argv[3] || null;
+  const limit = parseInt(process.argv[4]) || 10;
 
-  searchMarketplace(query, options).then(results => {
-    console.log(`\n📊 搜尋完成！找到 ${results.length} 個結果\n`);
-    console.log('JSON 輸出:');
-    console.log(JSON.stringify(results, null, 2));
+  searchMarketplace(query, { category, limit }).then(results => {
+    if (results.length > 0) {
+      console.log('\n📊 JSON 輸出:');
+      console.log(JSON.stringify(results, null, 2));
+
+      console.log('\n💡 安裝指令:');
+      console.log(`   node .claude/skills/skill-marketplace/install-skill.cjs "${results[0].rawUrl}"`);
+    }
+  }).catch(err => {
+    console.error('❌ 搜尋失敗:', err.message);
+    process.exit(1);
   });
 }
 
-module.exports = { searchMarketplace, scoreSkill };
+module.exports = { searchMarketplace, skillsmpToGithubRaw };

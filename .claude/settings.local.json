@@ -50,7 +50,9 @@
       "Bash(node:*)",
       "Bash(git cherry-pick:*)",
       "Bash(npm test:*)",
-      "Bash(git merge-base:*)"
+      "Bash(git merge-base:*)",
+      "mcp__filesystem__list_allowed_directories",
+      "Bash(npx supabase migration list:*)"
     ]
   },
   "model": "claude-opus-4-5-20251101",

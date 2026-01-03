@@ -955,6 +955,13 @@
               <span class="error" id="errConfirm">兩次密碼不一致</span>
             </div>
 
+            <!-- Phone (Signup Only) -->
+            <div class="field hidden" id="phoneField">
+              <label for="phone">手機號碼</label>
+              <input type="tel" id="phone" placeholder="09xxxxxxxx" autocomplete="tel" maxlength="10" />
+              <span class="error" id="errPhone">請輸入正確的手機號碼 (09xxxxxxxx)</span>
+            </div>
+
             <!-- Role Select (Signup Only) -->
             <div class="role-select hidden" id="roleField">
               <div class="role-option">
@@ -1063,7 +1070,9 @@
   const passwordInput = document.getElementById('password');
   const confirmPasswordInput = document.getElementById('confirmPassword');
 
+
   const confirmField = document.getElementById('confirmField');
+  const phoneField = document.getElementById('phoneField');
   const termsField = document.getElementById('termsField');
   const roleField = document.getElementById('roleField');
   const errRole = document.getElementById('errRole');
@@ -1073,6 +1082,7 @@
   const errEmail = document.getElementById('errEmail');
   const errPassword = document.getElementById('errPassword');
   const errConfirm = document.getElementById('errConfirm');
+  const errPhone = document.getElementById('errPhone');
   const errTerms = document.getElementById('errTerms');
 
   let mode = qs('mode') || 'login';
@@ -1176,6 +1186,7 @@
     
     // Toggle visibility
     confirmField?.classList.toggle('hidden', isLogin);
+    phoneField?.classList.toggle('hidden', isLogin);
     roleField?.classList.toggle('hidden', isLogin);
     termsField?.classList.toggle('hidden', isLogin);
     forgotLink?.classList.toggle('hidden', !isLogin);
@@ -1191,7 +1202,7 @@
   }
   
   function clearErrors(){ 
-    for (const el of [errEmail,errPassword,errConfirm,errTerms,errRole]) {
+    for (const el of [errEmail,errPassword,errConfirm,errPhone,errTerms,errRole]) {
       if(el){ el.classList.remove('show'); el.style.display='none'; }
     }
   }
@@ -1310,6 +1321,9 @@
 
     const isLogin = (mode==='login');
     let ok = true;
+
+    // Phone (Signup only)
+    const phone = document.getElementById('phone')?.value.trim() || '';
     
     // Validation
     if(!email || !email.includes('@')){ 
@@ -1326,6 +1340,13 @@
         if(errConfirm){ errConfirm.classList.add('show'); errConfirm.style.display='block'; } 
         ok=false; 
       }
+      
+      // Validate Phone (Taiwan Format: 09xxxxxxxx)
+      if(!/^09\d{8}$/.test(phone)) {
+        if(errPhone){ errPhone.classList.add('show'); errPhone.style.display='block'; }
+        ok=false;
+      }
+
       if(terms && !terms.checked){ 
         if(errTerms){ errTerms.classList.add('show'); errTerms.style.display='block'; } 
         ok=false; 
@@ -1348,7 +1369,7 @@
         const { error } = await supabase.auth.signUp({ 
           email, 
           password,
-          options: { data: { role } } 
+          options: { data: { role, phone } } 
         });
         if(error) throw error;
         alert('註冊成功！請檢查您的信箱以驗證帳號。');

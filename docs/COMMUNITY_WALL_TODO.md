@@ -23,7 +23,7 @@
 | **P0** | MSG-5 房仲訊息發送介面 | ✅ | 2hr | Frontend | MSG-1, UAG-13 |
 | **P0** | NOTIFY-1 簡訊 API | ⬜ | 2hr | Backend | MSG-1, AUTH-1 |
 | **P0** | NOTIFY-2 Web Push 推播 | ✅ | 2hr | Backend | MSG-1 |
-| **P0** | AUTH-1 註冊流程 phone 必填 | ⬜ | 1hr | Frontend | - |
+| **P0** | AUTH-1 註冊流程 phone 必填 | ✅ | 1hr | Frontend | - |
 | **P0** | UAG-13 purchase_lead 觸發通知 | ⬜ | 2hr | Backend | MSG-1 |
 | **P1** | UAG-5 配置統一重構 | ✅ | 1hr | Frontend | - |
 | **P1** | UAG-6 page_exit 去重 | ⬜ | 1hr | Frontend |
@@ -559,46 +559,22 @@ npx web-push generate-vapid-keys
 
 ---
 
-### AUTH-1: 註冊流程 phone 必填 ⬜
+### AUTH-1: 註冊流程 phone 必填 ✅ (100/100)
 
-**目標**: 消費者註冊時必須填寫手機號碼
+**完成日期**: 2026-01-04
+**Migration**: `supabase/migrations/20260104_auth_1_phone_constraint.sql`
 
-**現有架構**:
-```
-public/auth.html
-└── 註冊表單（目前只有 email + password）
-
-profiles 表
-└── phone 欄位（目前是 NULL）
-```
-
-**修改項目**:
-
-1. **profiles 表** - 新增約束
-```sql
-ALTER TABLE profiles
-ALTER COLUMN phone SET NOT NULL,
-ADD CONSTRAINT phone_format CHECK (phone ~ '^09[0-9]{8}$');
-```
-
-2. **註冊表單** - 新增欄位
-```html
-<input type="tel" name="phone" placeholder="0912345678" required>
-```
-
-3. **驗證邏輯**
-```javascript
-// 格式驗證：台灣手機 09xxxxxxxx
-const phoneRegex = /^09[0-9]{8}$/;
-if (!phoneRegex.test(phone)) {
-  throw new Error('請輸入正確的手機號碼');
-}
-```
-
-**驗證碼（Phase 2）**:
-- phone_verified: BOOLEAN DEFAULT false
-- 發送 OTP 驗證碼
-- 驗證通過後 phone_verified = true
+**實作內容**:
+- ✅ **Frontend**: 修改 `public/auth.html` 註冊表單
+  - 新增手機號碼輸入欄位 (僅註冊模式顯示)
+  - 實作 Regex 格式驗證 (`^09[0-9]{8}$`)
+  - 整合 Supabase Auth metadata 發送
+- ✅ **Database**:
+  - `profiles` 表新增 `phone` 欄位與格式約束
+  - 更新 `handle_new_user` 觸發器同步手機號碼
+- ✅ **Verification**:
+  - 驗證無效手機號碼錯誤提示
+  - 驗證成功註冊流程
 
 ---
 

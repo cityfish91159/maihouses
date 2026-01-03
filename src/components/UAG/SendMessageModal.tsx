@@ -71,9 +71,9 @@ export function SendMessageModal({
         {
           agent_id: agentId,
           consumer_session_id: sessionId,
-          // 注意：lead_id 需要是 uag_lead_purchases.id (UUID)，
-          // 但 lead.id 可能是 session_id (非 UUID)，所以不傳
           property_id: propertyId,
+          // 問題 #A 修復：購買成功後 lead.id 已更新為 purchase_id (UUID)，可以安全傳遞
+          lead_id: lead.id,
         },
         message.trim(),
         agentId

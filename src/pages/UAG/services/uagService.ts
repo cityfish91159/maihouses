@@ -20,6 +20,7 @@ import { logger } from '../../../lib/logger';
 const PurchaseLeadResultSchema = z.object({
   success: z.boolean(),
   used_quota: z.boolean().optional(),
+  purchase_id: z.string().uuid().optional(),
   error: z.string().optional(),
 });
 

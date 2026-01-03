@@ -160,11 +160,12 @@ DECLARE
   v_conversation_id UUID;
 BEGIN
   -- 檢查是否已存在（idempotent）
+  -- 使用 IS NOT DISTINCT FROM 正確處理 NULL 比較
   SELECT id INTO v_conversation_id
   FROM conversations
   WHERE agent_id = p_agent_id
     AND consumer_session_id = p_consumer_session_id
-    AND property_id = p_property_id;
+    AND property_id IS NOT DISTINCT FROM p_property_id;
 
   -- 如果不存在，創建新對話
   IF v_conversation_id IS NULL THEN

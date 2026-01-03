@@ -1,59 +1,9 @@
 -- ==============================================================================
--- UAG RPC Functions: Business Logic Only
--- 執行順序: 2/2 (需先執行 001_uag_schema_setup.sql)
+-- 修復 purchase_lead RPC 返回 purchase_id
+-- 問題：前端購買成功後不知道新建的 purchase UUID，導致無法正確關聯對話
+-- 修復：ALTER FUNCTION 添加 purchase_id 到返回的 JSONB
 -- ==============================================================================
 
--- 1. Helper: 從 fingerprint 解析客戶資訊
-CREATE OR REPLACE FUNCTION fn_extract_client_info(p_fingerprint TEXT)
-RETURNS TABLE (device_type TEXT, language TEXT, display_name TEXT)
-LANGUAGE plpgsql
-AS $$
-DECLARE
-    v_decoded JSONB;
-BEGIN
-    BEGIN
-        v_decoded := convert_from(decode(p_fingerprint, 'base64'), 'UTF8')::JSONB;
-    EXCEPTION WHEN OTHERS THEN
-        RETURN QUERY SELECT 'unknown'::TEXT, 'zh-TW'::TEXT, 'UAG訪客'::TEXT;
-        RETURN;
-    END;
-
-    RETURN QUERY SELECT
-        COALESCE(v_decoded->>'screen', 'unknown')::TEXT,
-        COALESCE(v_decoded->>'language', 'zh-TW')::TEXT,
-        ('訪客-' || SUBSTR(p_fingerprint, 1, 6))::TEXT;
-END;
-$$;
-
--- 2. 房源流量統計 RPC
-CREATE OR REPLACE FUNCTION get_agent_property_stats(p_agent_id TEXT)
-RETURNS TABLE (
-    property_id TEXT,
-    view_count BIGINT,
-    unique_sessions BIGINT,
-    total_duration BIGINT,
-    line_clicks BIGINT,
-    call_clicks BIGINT
-)
-LANGUAGE plpgsql
-SECURITY DEFINER
-AS $$
-BEGIN
-    RETURN QUERY
-    SELECT
-        e.property_id,
-        COUNT(*)::BIGINT,
-        COUNT(DISTINCT e.session_id)::BIGINT,
-        COALESCE(SUM(e.duration), 0)::BIGINT,
-        SUM(CASE WHEN (e.actions->>'click_line')::INT = 1 THEN 1 ELSE 0 END)::BIGINT,
-        SUM(CASE WHEN (e.actions->>'click_call')::INT = 1 THEN 1 ELSE 0 END)::BIGINT
-    FROM public.uag_events e
-    WHERE e.agent_id = p_agent_id
-    GROUP BY e.property_id;
-END;
-$$;
-
--- 3. 購買客戶 RPC (含審計)
 CREATE OR REPLACE FUNCTION purchase_lead(
     p_user_id TEXT,
     p_lead_id TEXT,
@@ -72,7 +22,7 @@ DECLARE
     v_property_id TEXT;
     v_fingerprint TEXT;
     v_client_info RECORD;
-    v_purchase_id UUID;
+    v_purchase_id UUID;  -- 新增：捕獲 purchase ID
     v_result JSONB;
 BEGIN
     -- 1. 檢查重複購買
@@ -107,7 +57,7 @@ BEGIN
         RETURN v_result;
     END IF;
 
-    -- 4. 紀錄購買
+    -- 4. 紀錄購買（新增 RETURNING 捕獲 ID）
     INSERT INTO public.uag_lead_purchases (agent_id, session_id, grade, cost, used_quota)
     VALUES (p_user_id, p_lead_id, p_grade, CASE WHEN v_use_quota THEN 0 ELSE p_cost END, v_use_quota)
     RETURNING id INTO v_purchase_id;
@@ -138,8 +88,12 @@ BEGIN
         notes = EXCLUDED.notes,
         updated_at = NOW();
 
-    -- 7. 審計成功紀錄
-    v_result := jsonb_build_object('success', true, 'used_quota', v_use_quota, 'purchase_id', v_purchase_id);
+    -- 7. 審計成功紀錄（新增 purchase_id 到返回值）
+    v_result := jsonb_build_object(
+        'success', true,
+        'used_quota', v_use_quota,
+        'purchase_id', v_purchase_id  -- ✅ 新增：返回 purchase UUID
+    );
     INSERT INTO public.uag_audit_logs (action, agent_id, session_id, request, response, success)
     VALUES ('purchase_lead', p_user_id, p_lead_id,
             jsonb_build_object('cost', p_cost, 'grade', p_grade),
@@ -148,3 +102,45 @@ BEGIN
     RETURN v_result;
 END;
 $$;
+
+-- ==============================================================================
+-- 修復 fn_create_conversation 的 NULL 比較問題
+-- 問題：property_id = NULL 永遠返回 NULL，導致幂等性檢查失敗，創建重複對話
+-- 修復：使用 IS NOT DISTINCT FROM 正確處理 NULL
+-- ==============================================================================
+
+CREATE OR REPLACE FUNCTION fn_create_conversation(
+  p_agent_id UUID,
+  p_consumer_session_id TEXT,
+  p_property_id TEXT,
+  p_lead_id UUID
+)
+RETURNS UUID
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  v_conversation_id UUID;
+BEGIN
+  -- 檢查是否已存在（idempotent）
+  -- ✅ 使用 IS NOT DISTINCT FROM 正確處理 NULL 比較
+  SELECT id INTO v_conversation_id
+  FROM conversations
+  WHERE agent_id = p_agent_id
+    AND consumer_session_id = p_consumer_session_id
+    AND property_id IS NOT DISTINCT FROM p_property_id;
+
+  -- 如果不存在，創建新對話
+  IF v_conversation_id IS NULL THEN
+    INSERT INTO conversations (agent_id, consumer_session_id, property_id, lead_id, status)
+    VALUES (p_agent_id, p_consumer_session_id, p_property_id, p_lead_id, 'pending')
+    RETURNING id INTO v_conversation_id;
+  END IF;
+
+  RETURN v_conversation_id;
+END;
+$$;
+
+-- ==============================================================================
+-- 完成
+-- ==============================================================================

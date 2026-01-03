@@ -62,7 +62,9 @@ export function useUAG() {
       return UAGService.fetchAppData(session.user.id);
     },
     enabled: useMock || !!session?.user?.id,
-    staleTime: 1000 * 10,
+    // 漏洞 5 修復：staleTime 與 refetchInterval 一致，避免不必要的 refetch
+    // 購買操作的即時更新依賴 onSuccess 手動 cache 更新，不依賴 refetch
+    staleTime: 1000 * 30,
     refetchInterval: useMock ? false : 30000,
   });
 
@@ -70,10 +72,12 @@ export function useUAG() {
     mutationFn: async ({ leadId, cost, grade }: { leadId: string; cost: number; grade: Grade }) => {
       if (useMock) {
         await new Promise(resolve => setTimeout(resolve, 500));
-        return;
+        // ✅ Mock 模式：生成符合 UUID 格式的假 purchase_id
+        const mockPurchaseId = crypto.randomUUID();
+        return { success: true, used_quota: false, purchase_id: mockPurchaseId };
       }
       if (!session?.user?.id) throw new Error('Not authenticated');
-      await UAGService.purchaseLead(session.user.id, leadId, cost, grade);
+      return UAGService.purchaseLead(session.user.id, leadId, cost, grade);
     },
     onMutate: async ({ leadId, cost, grade }) => {
       await queryClient.cancelQueries({ queryKey: ['uagData'] });
@@ -117,9 +121,8 @@ export function useUAG() {
       }
       notify.error(`購買失敗: ${err instanceof Error ? err.message : 'Unknown error'}`);
     },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['uagData'] });
-    },
+    // ❌ 移除 onSettled：避免與局部 onSuccess 競態
+    // onSuccess 會手動更新 query cache（包含新的 purchase_id）
   });
 
   /**
@@ -157,15 +160,44 @@ export function useUAG() {
 
     return new Promise((resolve) => {
       buyLeadMutation.mutate({ leadId, cost, grade: lead.grade }, {
-        onSuccess: () => {
+        onSuccess: (result) => {
           notify.success('購買成功');
-          // 問題 #19 修復：返回更新後的 lead 數據
-          const updatedLead: Lead = {
+
+          // ✅ 漏洞 3 修復：手動更新 Query Cache（解決列表與 Modal 數據不一致）
+          queryClient.setQueryData<AppData>(
+            ['uagData', useMock, session?.user?.id],
+            (oldData) => {
+              if (!oldData) return oldData;
+
+              return {
+                ...oldData,
+                // 遍歷 leads 陣列，找到目標並替換
+                leads: oldData.leads.map((item) => {
+                  // ⚠️ 用舊的 leadId (session_id) 來匹配，因為此時 cache 中還是舊 ID
+                  if (item.id === leadId) {
+                    // ✅ 使用 oldData 中的 lead（保留 onMutate 的更新）
+                    return {
+                      ...item,
+                      id: result?.purchase_id ?? item.id,  // 更新為 purchase UUID
+                      purchased_at: new Date().toISOString(),
+                    };
+                  }
+                  return item;
+                })
+              };
+            }
+          );
+
+          // 從更新後的 cache 中取得最終 lead
+          const finalData = queryClient.getQueryData<AppData>(['uagData', useMock, session?.user?.id]);
+          const updatedLead = finalData?.leads.find(l => l.id === result?.purchase_id) ?? {
             ...lead,
+            id: result?.purchase_id ?? lead.id,
             status: 'purchased' as LeadStatus,
             remainingHours: GRADE_PROTECTION_HOURS[lead.grade] ?? 48,
             purchased_at: new Date().toISOString(),
           };
+
           resolve({ success: true, lead: updatedLead });
         },
         onError: (err) => {
