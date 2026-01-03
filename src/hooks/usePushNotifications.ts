@@ -28,18 +28,35 @@ function isPushSupported(): boolean {
 }
 
 /**
+ * 將 NotificationPermission 轉換為 PushPermissionState
+ * 使用 type guard 避免 `as` 斷言
+ */
+function toPermissionState(permission: NotificationPermission): PushPermissionState {
+  // NotificationPermission: 'default' | 'denied' | 'granted'
+  // PushPermissionState: 'prompt' | 'granted' | 'denied' | 'unsupported'
+  if (permission === 'default') {
+    return 'prompt';
+  }
+  return permission; // 'granted' | 'denied' 直接返回
+}
+
+/**
  * 取得目前的推播權限狀態
  */
 function getPermissionState(): PushPermissionState {
   if (!isPushSupported()) {
     return 'unsupported';
   }
-  return Notification.permission as PushPermissionState;
+  return toPermissionState(Notification.permission);
 }
 
 /**
  * 將 Base64 URL 安全字串轉為 ArrayBuffer（用於 applicationServerKey）
  * 返回 ArrayBuffer 以符合 PushManager.subscribe 的類型要求
+ *
+ * 注意：`as ArrayBuffer` 斷言是必要的，因為 TypeScript 的 Uint8Array.buffer
+ * 類型為 ArrayBufferLike（包含 SharedArrayBuffer），但這裡我們從 new Uint8Array
+ * 創建，保證底層 buffer 一定是 ArrayBuffer。
  */
 function urlBase64ToArrayBuffer(base64String: string): ArrayBuffer {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
@@ -49,6 +66,7 @@ function urlBase64ToArrayBuffer(base64String: string): ArrayBuffer {
   for (let i = 0; i < rawData.length; ++i) {
     outputArray[i] = rawData.charCodeAt(i);
   }
+  // Safe assertion: new Uint8Array always uses ArrayBuffer, never SharedArrayBuffer
   return outputArray.buffer as ArrayBuffer;
 }
 
@@ -225,7 +243,7 @@ export function usePushNotifications(): UsePushNotificationsReturn {
     try {
       // 1. 請求通知權限
       const permissionResult = await Notification.requestPermission();
-      setPermission(permissionResult as PushPermissionState);
+      setPermission(toPermissionState(permissionResult));
 
       if (permissionResult !== 'granted') {
         logger.info('usePushNotifications.subscribe.permissionDenied', {
