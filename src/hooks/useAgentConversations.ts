@@ -8,7 +8,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
 import { useAuth } from './useAuth';
 import { logger } from '../lib/logger';
-import type { ConversationListItem } from '../types/messaging.types';
+import { ConversationStatusSchema, SenderTypeSchema, type ConversationListItem } from '../types/messaging.types';
 
 interface UseAgentConversationsResult {
   conversations: ConversationListItem[];
@@ -28,6 +28,7 @@ export function useAgentConversations(): UseAgentConversationsResult {
     queryFn: async (): Promise<ConversationListItem[]> => {
       if (!user?.id) return [];
 
+      // 查詢對話及關聯的最後訊息和物件資訊
       const { data: conversations, error: queryError } = await supabase
         .from('conversations')
         .select(`
@@ -36,8 +37,16 @@ export function useAgentConversations(): UseAgentConversationsResult {
           unread_agent,
           property_id,
           consumer_session_id,
-          created_at,
-          updated_at
+          updated_at,
+          messages (
+            content,
+            created_at,
+            sender_type
+          ),
+          properties:property_id (
+            title,
+            images
+          )
         `)
         .eq('agent_id', user.id)
         .order('updated_at', { ascending: false })
@@ -52,32 +61,60 @@ export function useAgentConversations(): UseAgentConversationsResult {
         return [];
       }
 
-      // 轉換為 ConversationListItem 格式
-      const items: ConversationListItem[] = conversations.map((conv) => ({
-        id: conv.id,
-        status: conv.status as ConversationListItem['status'],
-        unread_count: conv.unread_agent ?? 0,
-        counterpart: {
-          // 匿名顯示：訪客-XXXX
-          name: `訪客-${conv.consumer_session_id?.slice(-4).toUpperCase() ?? 'XXXX'}`,
-        },
-        property: conv.property_id
-          ? { id: conv.property_id, title: conv.property_id }
-          : undefined,
-        last_message: undefined, // TODO: JOIN messages 取得最後訊息
-      }));
+      // 轉換為 ConversationListItem 格式，使用 Zod 驗證
+      const items: ConversationListItem[] = conversations.map((conv) => {
+        // Zod 驗證 status
+        const statusResult = ConversationStatusSchema.safeParse(conv.status);
+        const status = statusResult.success ? statusResult.data : 'pending';
+
+        // 取得最後一則訊息（按 created_at 排序）
+        const messages = Array.isArray(conv.messages) ? conv.messages : [];
+        const lastMsg = messages.sort((a, b) =>
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        )[0];
+
+        // Zod 驗證 sender_type
+        const senderTypeResult = lastMsg ? SenderTypeSchema.safeParse(lastMsg.sender_type) : null;
+        const senderType = senderTypeResult?.success ? senderTypeResult.data : 'consumer';
+
+        // 取得物件資訊
+        const propertyData = conv.properties as { title?: string; images?: string[] } | null;
+
+        return {
+          id: conv.id,
+          status,
+          unread_count: conv.unread_agent ?? 0,
+          counterpart: {
+            name: `訪客-${conv.consumer_session_id?.slice(-4).toUpperCase() ?? 'XXXX'}`,
+          },
+          property: conv.property_id && propertyData
+            ? {
+                id: conv.property_id,
+                title: propertyData.title ?? '物件',
+                image: propertyData.images?.[0],
+              }
+            : undefined,
+          last_message: lastMsg
+            ? {
+                content: lastMsg.content,
+                created_at: lastMsg.created_at,
+                sender_type: senderType,
+              }
+            : undefined,
+        };
+      });
 
       return items;
     },
     enabled: !!user?.id,
-    staleTime: 30_000, // 30 秒
-    refetchInterval: 60_000, // 1 分鐘自動刷新
+    staleTime: 30_000,
+    refetchInterval: 60_000,
   });
 
   return {
     conversations: data ?? [],
     isLoading,
-    error: error as Error | null,
+    error: error instanceof Error ? error : null,
     refetch,
   };
 }

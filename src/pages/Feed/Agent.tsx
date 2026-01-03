@@ -7,6 +7,7 @@ import { AgentSidebar } from '../../components/Feed/AgentSidebar';
 import { UagSummaryCard } from '../../components/Feed/UagSummaryCard';
 import { useAgentFeed } from './useAgentFeed';
 import { useAuth } from '../../hooks/useAuth';
+import { useAgentConversations } from '../../hooks/useAgentConversations';
 import { STRINGS } from '../../constants/strings';
 import { MockToggle } from '../../components/common/MockToggle';
 
@@ -31,6 +32,7 @@ export default function AgentPage({ userId, forceMock }: AgentPageProps) {
     } = useAgentFeed(userId, forceMock);
 
     const { user } = useAuth();
+    const { conversations } = useAgentConversations();
 
     const userProfile = useMemo(() => ({
         id: user?.id || 'demo-agent',
@@ -117,6 +119,7 @@ export default function AgentPage({ userId, forceMock }: AgentPageProps) {
                     stats={performanceStats}
                     todos={todoList}
                     hotPosts={data.sidebarData?.hotPosts || []}
+                    conversations={conversations}
                 />
 
             </div>

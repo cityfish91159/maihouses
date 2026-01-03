@@ -61,9 +61,8 @@ function UAGPageContent() {
 
   // MSG-5: Agent ID 和 Session ID
   const agentId = user?.id ?? 'demo-agent';
-  // 使用 lead.id 作為 session 識別符（穩定值，可追溯）
-  // TODO: 未來應從 uag_lead_purchases.session_id 取得真實消費者 session
-  const consumerSessionId = purchasedLead?.id ?? 'unknown-session';
+  // 使用 lead 的 session_id（來自消費者瀏覽記錄）
+  const consumerSessionId = purchasedLead?.session_id ?? 'unknown-session';
 
   return (
     <div className={styles['uag-page']}>
@@ -106,7 +105,7 @@ function UAGPageContent() {
           lead={purchasedLead}
           agentId={agentId}
           sessionId={consumerSessionId}
-          propertyId={purchasedLead.prop}
+          {...(purchasedLead.property_id ? { propertyId: purchasedLead.property_id } : {})}
         />
       )}
     </div>

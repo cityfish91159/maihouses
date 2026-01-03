@@ -1,44 +1,107 @@
 import { AppData, Lead, Listing, FeedPost, Grade, LeadStatus } from './types/uag.types';
 
+// Mock UUIDs - 符合 RFC 4122 v4 格式: xxxxxxxx-xxxx-4xxx-[89ab]xxx-xxxxxxxxxxxx
+const MOCK_UUIDS = {
+  leads: {
+    S5566: 'a1111111-1111-4111-a111-111111111101',
+    S9011: 'a1111111-1111-4111-a111-111111111102',
+    A7788: 'a1111111-1111-4111-a111-111111111103',
+    A6600: 'a1111111-1111-4111-a111-111111111104',
+    B218: 'a1111111-1111-4111-a111-111111111105',
+    A103: 'a1111111-1111-4111-a111-111111111106',
+    S901: 'a1111111-1111-4111-a111-111111111107',
+    S880: 'a1111111-1111-4111-a111-111111111108',
+    C055: 'a1111111-1111-4111-a111-111111111109',
+    A230: 'a1111111-1111-4111-a111-11111111110a',
+    A550: 'a1111111-1111-4111-a111-11111111110b',
+    D330: 'a1111111-1111-4111-a111-11111111110c',
+    B778: 'a1111111-1111-4111-a111-11111111110d',
+    C021: 'a1111111-1111-4111-a111-11111111110e',
+    C990: 'a1111111-1111-4111-a111-11111111110f',
+    H009: 'a1111111-1111-4111-a111-111111111110',
+    F778: 'a1111111-1111-4111-a111-111111111111',
+  },
+  properties: {
+    metro: 'b2222222-2222-4222-8222-222222222201',
+    highview: 'b2222222-2222-4222-8222-222222222202',
+    school: 'b2222222-2222-4222-8222-222222222203',
+    presale: 'b2222222-2222-4222-8222-222222222204',
+    metro3room: 'b2222222-2222-4222-8222-222222222205',
+    huiyu12f: 'b2222222-2222-4222-8222-222222222206',
+    nantun: 'b2222222-2222-4222-8222-222222222207',
+    subhigh: 'b2222222-2222-4222-8222-222222222208',
+    park: 'b2222222-2222-4222-8222-222222222209',
+    metrolife: 'b2222222-2222-4222-8222-22222222220a',
+    invest: 'b2222222-2222-4222-8222-22222222220b',
+    oldhouse: 'b2222222-2222-4222-8222-22222222220c',
+    studio: 'b2222222-2222-4222-8222-22222222220d',
+    small: 'b2222222-2222-4222-8222-22222222220e',
+    rental: 'b2222222-2222-4222-8222-22222222220f',
+  },
+  sessions: {
+    S5566: 'sess-S5566-abc123',
+    S9011: 'sess-S9011-def456',
+    A7788: 'sess-A7788-ghi789',
+    A6600: 'sess-A6600-jkl012',
+    B218: 'sess-B218-mno345',
+    A103: 'sess-A103-pqr678',
+    S901: 'sess-S901-stu901',
+    S880: 'sess-S880-vwx234',
+    C055: 'sess-C055-yza567',
+    A230: 'sess-A230-bcd890',
+    A550: 'sess-A550-efg123',
+    D330: 'sess-D330-hij456',
+    B778: 'sess-B778-klm789',
+    C021: 'sess-C021-nop012',
+    C990: 'sess-C990-qrs345',
+    H009: 'sess-H009-tuv678',
+    F778: 'sess-F778-wxy901',
+  },
+};
+
 export const MOCK_DB: AppData = {
   user: { points: 1280, quota: { s: 2, a: 3 } },
   leads: [
     // 已購：只保留 S/A 四則
-    { 
-      id: 'S-5566', name: '買家 S-5566', grade: 'S', intent: 98, prop: '捷運宅', visit: 15, price: 20, status: 'purchased', 
-      purchased_at: Date.now() - 2 * 3600000, ai: 'S 級熱度拉滿，請優先處理。', remainingHours: 118 
+    {
+      id: MOCK_UUIDS.leads.S5566, name: '買家 S-5566', grade: 'S', intent: 98, prop: '捷運宅', visit: 15, price: 20, status: 'purchased',
+      purchased_at: Date.now() - 2 * 3600000, ai: 'S 級熱度拉滿，請優先處理。', remainingHours: 118,
+      session_id: MOCK_UUIDS.sessions.S5566, property_id: MOCK_UUIDS.properties.metro
     },
-    { 
-      id: 'S-9011', name: '買家 S-9011', grade: 'S', intent: 93, prop: '高樓景觀宅', visit: 11, price: 20, status: 'purchased', 
-      purchased_at: Date.now() - 6 * 3600000, ai: '已連續三天造訪同社區。', remainingHours: 114 
+    {
+      id: MOCK_UUIDS.leads.S9011, name: '買家 S-9011', grade: 'S', intent: 93, prop: '高樓景觀宅', visit: 11, price: 20, status: 'purchased',
+      purchased_at: Date.now() - 6 * 3600000, ai: '已連續三天造訪同社區。', remainingHours: 114,
+      session_id: MOCK_UUIDS.sessions.S9011, property_id: MOCK_UUIDS.properties.highview
     },
-    { 
-      id: 'A-7788', name: '買家 A-7788', grade: 'A', intent: 79, prop: '學區房', visit: 6, price: 10, status: 'purchased', 
-      purchased_at: Date.now() - 20 * 3600000, ai: 'A 級學區需求穩定。', remainingHours: 52 
+    {
+      id: MOCK_UUIDS.leads.A7788, name: '買家 A-7788', grade: 'A', intent: 79, prop: '學區房', visit: 6, price: 10, status: 'purchased',
+      purchased_at: Date.now() - 20 * 3600000, ai: 'A 級學區需求穩定。', remainingHours: 52,
+      session_id: MOCK_UUIDS.sessions.A7788, property_id: MOCK_UUIDS.properties.school
     },
-    { 
-      id: 'A-6600', name: '買家 A-6600', grade: 'A', intent: 74, prop: '預售捷運宅', visit: 5, price: 10, status: 'purchased', 
-      purchased_at: Date.now() - 10 * 3600000, ai: '適合搭配預售案一次推薦。', remainingHours: 62 
+    {
+      id: MOCK_UUIDS.leads.A6600, name: '買家 A-6600', grade: 'A', intent: 74, prop: '預售捷運宅', visit: 5, price: 10, status: 'purchased',
+      purchased_at: Date.now() - 10 * 3600000, ai: '適合搭配預售案一次推薦。', remainingHours: 62,
+      session_id: MOCK_UUIDS.sessions.A6600, property_id: MOCK_UUIDS.properties.presale
     },
 
     // 雷達：更多可購買的模擬圓點 (status = new)
-    { id: 'B218', name: '買家 B218', grade: 'S', intent: 92, prop: '捷運共構 3 房', visit: 7, price: 20, status: 'new', ai: '🔥 強烈建議立即發送訊息！', x: 25, y: 25 },
-    { id: 'A103', name: '買家 A103', grade: 'S', intent: 88, prop: '惠宇上晴 12F', visit: 12, price: 20, status: 'new', ai: '建議立即發送獨家邀約！', x: 15, y: 45 },
-    { id: 'S901', name: '買家 S901', grade: 'S', intent: 94, prop: '高樓景觀宅', visit: 9, price: 20, status: 'new', ai: '重複詢問同一社區，請發送簡訊跟進。', x: 40, y: 32 },
-    { id: 'S880', name: '買家 S880', grade: 'S', intent: 90, prop: '預售捷運宅', visit: 8, price: 20, status: 'new', ai: '對捷運沿線有強烈偏好。', x: 60, y: 40 },
+    { id: MOCK_UUIDS.leads.B218, name: '買家 B218', grade: 'S', intent: 92, prop: '捷運共構 3 房', visit: 7, price: 20, status: 'new', ai: '🔥 強烈建議立即發送訊息！', x: 25, y: 25, session_id: MOCK_UUIDS.sessions.B218, property_id: MOCK_UUIDS.properties.metro3room },
+    { id: MOCK_UUIDS.leads.A103, name: '買家 A103', grade: 'S', intent: 88, prop: '惠宇上晴 12F', visit: 12, price: 20, status: 'new', ai: '建議立即發送獨家邀約！', x: 15, y: 45, session_id: MOCK_UUIDS.sessions.A103, property_id: MOCK_UUIDS.properties.huiyu12f },
+    { id: MOCK_UUIDS.leads.S901, name: '買家 S901', grade: 'S', intent: 94, prop: '高樓景觀宅', visit: 9, price: 20, status: 'new', ai: '重複詢問同一社區，請發送簡訊跟進。', x: 40, y: 32, session_id: MOCK_UUIDS.sessions.S901, property_id: MOCK_UUIDS.properties.highview },
+    { id: MOCK_UUIDS.leads.S880, name: '買家 S880', grade: 'S', intent: 90, prop: '預售捷運宅', visit: 8, price: 20, status: 'new', ai: '對捷運沿線有強烈偏好。', x: 60, y: 40, session_id: MOCK_UUIDS.sessions.S880, property_id: MOCK_UUIDS.properties.presale },
 
-    { id: 'C055', name: '買家 C055', grade: 'A', intent: 75, prop: '南屯學區宅', visit: 4, price: 10, status: 'new', ai: 'A 級學區需求明確。', x: 60, y: 20 },
-    { id: 'A230', name: '買家 A230', grade: 'A', intent: 71, prop: '次高樓層 3 房', visit: 3, price: 10, status: 'new', ai: '已追蹤兩個以上相似物件。', x: 70, y: 30 },
-    { id: 'A550', name: '買家 A550', grade: 'A', intent: 69, prop: '公園首排', visit: 3, price: 10, status: 'new', ai: '假日時段瀏覽頻繁。', x: 50, y: 15 },
+    { id: MOCK_UUIDS.leads.C055, name: '買家 C055', grade: 'A', intent: 75, prop: '南屯學區宅', visit: 4, price: 10, status: 'new', ai: 'A 級學區需求明確。', x: 60, y: 20, session_id: MOCK_UUIDS.sessions.C055, property_id: MOCK_UUIDS.properties.nantun },
+    { id: MOCK_UUIDS.leads.A230, name: '買家 A230', grade: 'A', intent: 71, prop: '次高樓層 3 房', visit: 3, price: 10, status: 'new', ai: '已追蹤兩個以上相似物件。', x: 70, y: 30, session_id: MOCK_UUIDS.sessions.A230, property_id: MOCK_UUIDS.properties.subhigh },
+    { id: MOCK_UUIDS.leads.A550, name: '買家 A550', grade: 'A', intent: 69, prop: '公園首排', visit: 3, price: 10, status: 'new', ai: '假日時段瀏覽頻繁。', x: 50, y: 15, session_id: MOCK_UUIDS.sessions.A550, property_id: MOCK_UUIDS.properties.park },
 
-    { id: 'D330', name: '買家 D330', grade: 'B', intent: 62, prop: '捷運生活圈', visit: 3, price: 3, status: 'new', ai: '建議發送訊息提供車位資訊。', x: 40, y: 60 },
-    { id: 'B778', name: '買家 B778', grade: 'B', intent: 58, prop: '小坪數投資宅', visit: 2, price: 3, status: 'new', ai: '屬於投資族群，可搭配多案推薦。', x: 30, y: 70 },
+    { id: MOCK_UUIDS.leads.D330, name: '買家 D330', grade: 'B', intent: 62, prop: '捷運生活圈', visit: 3, price: 3, status: 'new', ai: '建議發送訊息提供車位資訊。', x: 40, y: 60, session_id: MOCK_UUIDS.sessions.D330, property_id: MOCK_UUIDS.properties.metrolife },
+    { id: MOCK_UUIDS.leads.B778, name: '買家 B778', grade: 'B', intent: 58, prop: '小坪數投資宅', visit: 2, price: 3, status: 'new', ai: '屬於投資族群，可搭配多案推薦。', x: 30, y: 70, session_id: MOCK_UUIDS.sessions.B778, property_id: MOCK_UUIDS.properties.invest },
 
-    { id: 'C021', name: '買家 C021', grade: 'C', intent: 48, prop: '老屋翻新', visit: 2, price: 1, status: 'new', ai: '對低總價物件有興趣。', x: 75, y: 55 },
-    { id: 'C990', name: '買家 C990', grade: 'C', intent: 42, prop: '套房', visit: 1, price: 1, status: 'new', ai: '瀏覽時間短，建議先以訊息觸及。', x: 82, y: 65 },
+    { id: MOCK_UUIDS.leads.C021, name: '買家 C021', grade: 'C', intent: 48, prop: '老屋翻新', visit: 2, price: 1, status: 'new', ai: '對低總價物件有興趣。', x: 75, y: 55, session_id: MOCK_UUIDS.sessions.C021, property_id: MOCK_UUIDS.properties.oldhouse },
+    { id: MOCK_UUIDS.leads.C990, name: '買家 C990', grade: 'C', intent: 42, prop: '套房', visit: 1, price: 1, status: 'new', ai: '瀏覽時間短，建議先以訊息觸及。', x: 82, y: 65, session_id: MOCK_UUIDS.sessions.C990, property_id: MOCK_UUIDS.properties.studio },
 
-    { id: 'H009', name: '買家 H009', grade: 'F', intent: 28, prop: '小坪數', visit: 1, price: 0.5, status: 'new', ai: '潛在客戶。', x: 70, y: 75 },
-    { id: 'F778', name: '買家 F778', grade: 'F', intent: 22, prop: '套房出租', visit: 1, price: 0.5, status: 'new', ai: '互動較少，可作為備選追蹤。', x: 55, y: 80 }
+    { id: MOCK_UUIDS.leads.H009, name: '買家 H009', grade: 'F', intent: 28, prop: '小坪數', visit: 1, price: 0.5, status: 'new', ai: '潛在客戶。', x: 70, y: 75, session_id: MOCK_UUIDS.sessions.H009, property_id: MOCK_UUIDS.properties.small },
+    { id: MOCK_UUIDS.leads.F778, name: '買家 F778', grade: 'F', intent: 22, prop: '套房出租', visit: 1, price: 0.5, status: 'new', ai: '互動較少，可作為備選追蹤。', x: 55, y: 80, session_id: MOCK_UUIDS.sessions.F778, property_id: MOCK_UUIDS.properties.rental }
   ],
   listings: [
     { title: '惠宇上晴｜12/15F 視野戶・雙平車', tags: ['南屯區','近捷運','雙平車'], view: 1284, click: 214, fav: 37, thumbColor: '#eef2ff' },

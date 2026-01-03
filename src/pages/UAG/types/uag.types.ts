@@ -8,7 +8,7 @@ export type LeadStatus = z.infer<typeof LeadStatusSchema>;
 
 // Schema for data coming directly from Supabase
 export const SupabaseLeadSchema = z.object({
-  id: z.string(),
+  id: z.string().uuid(),
   name: z.string(),
   grade: GradeSchema,
   intent: z.number(),
@@ -24,6 +24,8 @@ export const SupabaseLeadSchema = z.object({
   x: z.number().optional(),
   y: z.number().optional(),
   created_at: z.string().optional(),
+  session_id: z.string().optional(),
+  property_id: z.string().uuid().optional(),
 }).passthrough(); // Allow extra fields
 
 // Schema for the transformed Lead object used in the UI

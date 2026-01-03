@@ -77,21 +77,28 @@ export async function sendMessage(req: SendMessageRequest): Promise<Message> {
     throw new Error('訊息資料格式錯誤');
   }
 
-  // 更新對話的未讀數（對方 +1）
-  const unreadField = req.sender_type === 'agent' ? 'unread_consumer' : 'unread_agent';
+  // 更新對話的未讀數（對方 +1）- 直接 fetch-then-update
+  const isAgent = req.sender_type === 'agent';
+  const unreadField = isAgent ? 'unread_consumer' : 'unread_agent';
 
-  const { error: rpcError } = await supabase.rpc('increment_unread', {
-    p_conversation_id: req.conversation_id,
-    p_field: unreadField,
-  });
+  const { data: conv, error: fetchError } = await supabase
+    .from('conversations')
+    .select('unread_consumer, unread_agent')
+    .eq('id', req.conversation_id)
+    .single();
 
-  if (rpcError) {
-    // 非致命錯誤，記錄但不拋出
-    logger.warn('[messagingService] Failed to increment unread count', {
-      error: rpcError.message,
-      conversationId: req.conversation_id,
-      field: unreadField,
-    });
+  if (!fetchError && conv) {
+    const currentCount = conv[unreadField] ?? 0;
+    const { error: updateError } = await supabase
+      .from('conversations')
+      .update({ [unreadField]: currentCount + 1 })
+      .eq('id', req.conversation_id);
+
+    if (updateError) {
+      logger.warn('[messagingService] Failed to update unread count', { error: updateError.message });
+    }
+  } else if (fetchError) {
+    logger.warn('[messagingService] Failed to fetch conversation for unread update', { error: fetchError.message });
   }
 
   return parsed.data;
