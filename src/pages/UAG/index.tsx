@@ -32,6 +32,8 @@ function UAGPageContent() {
   // MSG-5: Modal 狀態
   const [showMessageModal, setShowMessageModal] = useState(false);
   const [purchasedLead, setPurchasedLead] = useState<Lead | null>(null);
+  // MSG-5 FIX: 保存購買後回傳的 conversation_id (UAG-13)
+  const [currentConversationId, setCurrentConversationId] = useState<string | undefined>(undefined);
 
   /**
    * MSG-5 FIX 1: 使用 await 確認購買成功後才顯示 Modal
@@ -46,6 +48,8 @@ function UAGPageContent() {
     
     if (result.success && result.lead) {
       setPurchasedLead(result.lead);
+      // UAG-13: 如果有回傳 conversation_id，存起來傳給 Modal
+      setCurrentConversationId(result.conversation_id);
       setShowMessageModal(true);
     }
     // 失敗時 useUAG 已經顯示 toast 錯誤訊息
@@ -54,6 +58,7 @@ function UAGPageContent() {
   const handleCloseModal = () => {
     setShowMessageModal(false);
     setPurchasedLead(null);
+    setCurrentConversationId(undefined);
   };
 
   if (isLoading) return <UAGLoadingSkeleton />;
@@ -112,6 +117,7 @@ function UAGPageContent() {
           lead={purchasedLead}
           agentId={agentId}
           sessionId={consumerSessionId}
+          {...(currentConversationId && { conversationId: currentConversationId })} // UAG-13 Safe
           {...(purchasedLead.property_id ? { propertyId: purchasedLead.property_id } : {})}
         />
       )}

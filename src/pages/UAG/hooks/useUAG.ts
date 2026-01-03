@@ -33,6 +33,7 @@ function getInitialMockMode(): boolean {
 export interface BuyLeadResult {
   success: boolean;
   lead?: Lead;
+  conversation_id?: string; // UAG-13 [NEW]
   error?: string;
 }
 
@@ -198,7 +199,11 @@ export function useUAG() {
             purchased_at: new Date().toISOString(),
           };
 
-          resolve({ success: true, lead: updatedLead });
+          resolve({ 
+            success: true, 
+            lead: updatedLead,
+            ...(result?.conversation_id && { conversation_id: result.conversation_id }), // UAG-13 [NEW]
+          });
         },
         onError: (err) => {
           resolve({ success: false, error: err instanceof Error ? err.message : 'Unknown error' });

@@ -586,8 +586,12 @@ npx web-push generate-vapid-keys
     -   RPC `purchase_lead` 修改：交易內呼叫 `fn_create_conversation`。
     -   強制 `agent_id::UUID`轉型。
     -   回傳 `conversation_id`。
-3.  **Frontend**: 更新 `uagService.ts` 支援 `conversation_id` 類型。
-**驗證**: `npm run typecheck` 通過。已備妥 SQL 驗證腳本。
+3.  **Frontend (Full Stack)**:
+    -   `uagService`: Schema 支援。
+    -   `useUAG`: 正確傳遞 `conversation_id` (修復了丟棄數據的 Bug)。
+    -   `index.tsx`: 串接 State 到 Modal。
+    -   `SendMessageModal`: 邏輯優化，優先使用既有 ID。
+**驗證**: `npm run typecheck` 通過。全鏈路數據流打通。
 
 **前置依賴**:
 - MSG-1（conversations 表）

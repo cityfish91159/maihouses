@@ -37,6 +37,8 @@ interface SendMessageModalProps {
   sessionId: string;
   /** MSG-5 FIX 6: 可選的物件 ID */
   propertyId?: string;
+  /** UAG-13: 預先建立的對話 ID (若有則直接發送訊息) */
+  conversationId?: string;
 }
 
 /**
@@ -54,6 +56,7 @@ export function SendMessageModal({
   agentId,
   sessionId,
   propertyId,
+  conversationId,
 }: SendMessageModalProps): React.ReactElement | null {
   const navigate = useNavigate();
   const [message, setMessage] = useState('');
@@ -67,17 +70,31 @@ export function SendMessageModal({
 
     setIsSending(true);
     try {
-      const result = await messagingService.createConversationAndSendMessage(
-        {
-          agent_id: agentId,
-          consumer_session_id: sessionId,
-          property_id: propertyId,
-          // 問題 #A 修復：購買成功後 lead.id 已更新為 purchase_id (UUID)，可以安全傳遞
-          lead_id: lead.id,
-        },
-        message.trim(),
-        agentId
-      );
+      let result;
+      // UAG-13: 如果已經有 conversationId，直接發送訊息 (Skip Create)
+      if (conversationId) {
+        const msg = await messagingService.sendMessage({
+          conversation_id: conversationId,
+          sender_type: 'agent',
+          sender_id: agentId,
+          content: message.trim(),
+        });
+        // 構造與 createConversationAndSendMessage 相同的回傳格式供後續跳轉使用
+        result = { conversation: { id: conversationId }, message: msg };
+      } else {
+        // Fallback: 既有邏輯 (建立 + 發送)
+        result = await messagingService.createConversationAndSendMessage(
+          {
+            agent_id: agentId,
+            consumer_session_id: sessionId,
+            property_id: propertyId,
+            // 問題 #A 修復：購買成功後 lead.id 已更新為 purchase_id (UUID)，可以安全傳遞
+            lead_id: lead.id,
+          },
+          message.trim(),
+          agentId
+        );
+      }
 
       notify.success(S.SUCCESS, S.SUCCESS_DESC);
       onClose();
