@@ -20,7 +20,7 @@
 | **P0** | MSG-2 鈴鐺通知（消費者+房仲） | ✅ | 2hr | Frontend | MSG-1 |
 | **P0** | MSG-3 消費者 Feed 橫條提醒 | ✅ | 1hr | Frontend | MSG-1 |
 | **P0** | MSG-4 對話頁面 | ✅ | 3hr | Frontend | MSG-1 |
-| **P0** | MSG-5 房仲訊息發送介面 | ⬜ | 2hr | Frontend | MSG-1, UAG-13 |
+| **P0** | MSG-5 房仲訊息發送介面 | ⚠️ | 2hr | Frontend | MSG-1, UAG-13 |
 | **P0** | NOTIFY-1 簡訊 API | ⬜ | 2hr | Backend | MSG-1, AUTH-1 |
 | **P0** | NOTIFY-2 Web Push 推播 | ✅ | 2hr | Backend | MSG-1 |
 | **P0** | AUTH-1 註冊流程 phone 必填 | ⬜ | 1hr | Frontend | - |
@@ -437,81 +437,45 @@ MessageList 虛擬滾動
 
 ---
 
-### MSG-5: 房仲訊息發送介面 ✅
+### MSG-5: 房仲訊息發送介面 ⚠️
 
 **目標**: 房仲購買客戶後編輯並發送第一則訊息
 
-**觸發點**: UAG 頁面購買成功後
+**檔案**:
+- `src/services/messagingService.ts` - 對話建立與訊息發送
+- `src/components/UAG/SendMessageModal.tsx` - 訊息發送 Modal
+- `src/pages/UAG/index.tsx` - 整合 Modal
+- `src/components/Feed/AgentConversationList.tsx` - 側欄對話列表
 
-**現有架構**:
-```
-src/pages/UAG/index.tsx
-└── 購買成功後目前只顯示 toast
+#### 🔍 Code Review（2026-01-03 二次審核）
 
-src/pages/Feed/Agent.tsx
-├── Line 56: GlobalHeader mode="agent"
-└── 需要增加對話列表入口
-```
+**評分**: 4.5 / 10（Reject）
 
-**流程設計**:
-```
-購買成功
-    ↓
-彈出 Modal（訊息編輯框）
-    ├── 顯示客戶資訊（匿名：訪客-A3F2）
-    ├── 顯示物件資訊
-    ├── 訊息輸入框（可輸入聯絡資料）
-    └── [發送] [稍後再說]
-    ↓
-發送後跳轉到對話頁面
-```
+#### 🚨 致命問題
 
-**房仲 Feed 對話列表**:
-- 新增側欄區塊「我的客戶」
-- 列表項目：訪客-A3F2 → 惠宇上晴 12F → 等待回覆
-- 消費者回覆後：顯示真實姓名 + 對話中
+| # | 問題 | 位置 | 修復 |
+|---|------|------|------|
+| 1 | propertyId 未傳入（文件說修但沒改） | `UAG/index.tsx:104-112` | 加 `propertyId={purchasedLead?.prop}` |
+| 2 | session_id 用 `Date.now()` 每次變 | `UAG/index.tsx:66-68` | 從 lead 或 API 取真實值 |
+| 3 | 對話列表 API 不存在 | 缺失 | 建 `useAgentConversations` hook |
 
-**檔案修改/新增**:
-```
-修改:
-- src/pages/UAG/index.tsx （購買成功彈 Modal）
-- src/pages/Feed/Agent.tsx （對話列表入口）
-- src/components/Feed/AgentSidebar.tsx （加入對話列表）
+#### 🟠 嚴重問題
 
-新增:
-- src/components/UAG/SendMessageModal.tsx
-- src/components/Feed/AgentConversationList.tsx
-```
+| # | 問題 | 位置 | 修復 |
+|---|------|------|------|
+| 4 | `as` 類型斷言違規 | `messagingService.ts:41,82` | Zod `.parse()` |
+| 5 | types 無 Zod schema | `messaging.types.ts` | 新增 schema |
+| 6 | ROUTES.UAG 硬編碼 URL | `routes.ts:34` | 改相對路徑 |
+| 7 | Lead 缺 `consumer_session_id` | `uag.types.ts` | 增欄位 |
 
-**實作完成**: 2026-01-03
+#### ⏳ 待修復
 
-#### 📁 新增/修改檔案
-
-| 檔案 | 用途 |
-|------|------|
-| `src/services/messagingService.ts` | 對話建立與訊息發送 API |
-| `src/components/UAG/SendMessageModal.tsx` | 購買成功後訊息發送 Modal |
-| `src/pages/UAG/index.tsx` | 整合 Modal 於購買流程 |
-| `src/components/Feed/AgentConversationList.tsx` | 側欄客戶對話列表 |
-
-  #### ✅ 驗證結果
-  
-  - [x] TypeScript 0 errors
-  - [x] Build 成功 (49.62s)
-  - [x] MSG-5 檔案無 lint 錯誤
-
-  #### 🔍 Code Review（MSG-5）
-
-  **評分**: 6.0 / 10（Needs changes）
-
-  **重點問題**:
-  - 購買成功與否未關聯就開 Modal，購買失敗仍可能發送訊息/建立對話。(`src/pages/UAG/index.tsx:36-49`, `src/pages/UAG/hooks/useUAG.ts:121-151`)
-  - `consumer_session_id` 用 `lead.id` 代替，RLS/歸屬判斷會錯且難以回溯消費者。(`src/pages/UAG/index.tsx:60-64`, `src/components/UAG/SendMessageModal.tsx:66-71`)
-  - `createConversationAndSendMessage` 非原子操作，訊息失敗會留孤兒對話。(`src/services/messagingService.ts:76-95`)
-  - 導向用 `/chat/...`，但路由應為 `/maihouses/chat/...`，易 404。(`src/components/UAG/SendMessageModal.tsx:79-80`, `src/constants/routes.ts:42-43`)
-  - 房仲對話列表未整合到側欄/頁面，功能不可見。(`src/components/Feed/AgentConversationList.tsx`, `src/components/Feed/AgentSidebar.tsx:14-85`)
-  - 建立對話未帶 `property_id`，後續列表難以顯示物件資訊。(`src/components/UAG/SendMessageModal.tsx:66-71`, `src/services/messagingService.ts:24-28`)
-  - 未讀數 RPC 未處理錯誤，可能 silent failure。(`src/services/messagingService.ts:64-71`)
+- [ ] UAG/index.tsx 傳 propertyId
+- [ ] 取得真實 consumer_session_id
+- [ ] 新增 useAgentConversations hook
+- [ ] messagingService Zod 驗證
+- [ ] messaging.types 新增 Zod
+- [ ] ROUTES.UAG 改相對路徑
 
 ---
 
