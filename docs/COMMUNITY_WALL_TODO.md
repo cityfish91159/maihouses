@@ -494,11 +494,24 @@ src/pages/Feed/Agent.tsx
 | `src/pages/UAG/index.tsx` | 整合 Modal 於購買流程 |
 | `src/components/Feed/AgentConversationList.tsx` | 側欄客戶對話列表 |
 
-#### ✅ 驗證結果
+  #### ✅ 驗證結果
+  
+  - [x] TypeScript 0 errors
+  - [x] Build 成功 (49.62s)
+  - [x] MSG-5 檔案無 lint 錯誤
 
-- [x] TypeScript 0 errors
-- [x] Build 成功 (49.62s)
-- [x] MSG-5 檔案無 lint 錯誤
+  #### 🔍 Code Review（MSG-5）
+
+  **評分**: 6.0 / 10（Needs changes）
+
+  **重點問題**:
+  - 購買成功與否未關聯就開 Modal，購買失敗仍可能發送訊息/建立對話。(`src/pages/UAG/index.tsx:36-49`, `src/pages/UAG/hooks/useUAG.ts:121-151`)
+  - `consumer_session_id` 用 `lead.id` 代替，RLS/歸屬判斷會錯且難以回溯消費者。(`src/pages/UAG/index.tsx:60-64`, `src/components/UAG/SendMessageModal.tsx:66-71`)
+  - `createConversationAndSendMessage` 非原子操作，訊息失敗會留孤兒對話。(`src/services/messagingService.ts:76-95`)
+  - 導向用 `/chat/...`，但路由應為 `/maihouses/chat/...`，易 404。(`src/components/UAG/SendMessageModal.tsx:79-80`, `src/constants/routes.ts:42-43`)
+  - 房仲對話列表未整合到側欄/頁面，功能不可見。(`src/components/Feed/AgentConversationList.tsx`, `src/components/Feed/AgentSidebar.tsx:14-85`)
+  - 建立對話未帶 `property_id`，後續列表難以顯示物件資訊。(`src/components/UAG/SendMessageModal.tsx:66-71`, `src/services/messagingService.ts:24-28`)
+  - 未讀數 RPC 未處理錯誤，可能 silent failure。(`src/services/messagingService.ts:64-71`)
 
 ---
 
