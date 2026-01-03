@@ -45,7 +45,8 @@ CREATE POLICY "push_subscriptions_insert" ON push_subscriptions
 CREATE POLICY "push_subscriptions_update" ON push_subscriptions
   FOR UPDATE
   TO authenticated
-  USING (profile_id = auth.uid());
+  USING (profile_id = auth.uid())
+  WITH CHECK (profile_id = auth.uid());
 
 -- 用戶只能刪除自己的訂閱
 CREATE POLICY "push_subscriptions_delete" ON push_subscriptions
@@ -82,10 +83,15 @@ CREATE OR REPLACE FUNCTION fn_upsert_push_subscription(
 RETURNS UUID
 LANGUAGE plpgsql
 SECURITY DEFINER
+SET search_path = public
 AS $$
 DECLARE
   v_subscription_id UUID;
 BEGIN
+  IF auth.role() <> 'service_role' AND p_profile_id <> auth.uid() THEN
+    RAISE EXCEPTION 'permission denied';
+  END IF;
+
   INSERT INTO push_subscriptions (profile_id, endpoint, p256dh, auth, user_agent)
   VALUES (p_profile_id, p_endpoint, p_p256dh, p_auth, p_user_agent)
   ON CONFLICT (profile_id, endpoint)
@@ -110,15 +116,20 @@ CREATE OR REPLACE FUNCTION fn_delete_push_subscription(
 RETURNS BOOLEAN
 LANGUAGE plpgsql
 SECURITY DEFINER
+SET search_path = public
 AS $$
 DECLARE
-  v_deleted BOOLEAN;
+  v_rowcount INT;
 BEGIN
+  IF auth.role() <> 'service_role' AND p_profile_id <> auth.uid() THEN
+    RAISE EXCEPTION 'permission denied';
+  END IF;
+
   DELETE FROM push_subscriptions
   WHERE profile_id = p_profile_id AND endpoint = p_endpoint;
 
-  GET DIAGNOSTICS v_deleted = ROW_COUNT;
-  RETURN v_deleted > 0;
+  GET DIAGNOSTICS v_rowcount = ROW_COUNT;
+  RETURN v_rowcount > 0;
 END;
 $$;
 
@@ -135,8 +146,13 @@ RETURNS TABLE (
 )
 LANGUAGE plpgsql
 SECURITY DEFINER
+SET search_path = public
 AS $$
 BEGIN
+  IF auth.role() <> 'service_role' AND p_profile_id <> auth.uid() THEN
+    RAISE EXCEPTION 'permission denied';
+  END IF;
+
   RETURN QUERY
   SELECT ps.endpoint, ps.p256dh, ps.auth
   FROM push_subscriptions ps

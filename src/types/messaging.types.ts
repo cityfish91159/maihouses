@@ -46,8 +46,8 @@ export interface Message {
 export interface CreateConversationRequest {
   agent_id: string;
   consumer_session_id: string;
-  property_id?: string;
-  lead_id?: string;
+  property_id?: string | undefined;
+  lead_id?: string | undefined;
 }
 
 export interface SendMessageRequest {

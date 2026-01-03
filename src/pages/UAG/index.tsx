@@ -26,27 +26,29 @@ import type { Lead } from './types/uag.types';
 function UAGPageContent() {
   const { data: appData, isLoading, buyLead, isBuying, useMock, toggleMode } = useUAG();
   const { selectedLead, selectLead, close } = useLeadSelection();
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   const actionPanelRef = useRef<HTMLDivElement>(null);
 
   // MSG-5: Modal 狀態
   const [showMessageModal, setShowMessageModal] = useState(false);
   const [purchasedLead, setPurchasedLead] = useState<Lead | null>(null);
 
+  /**
+   * MSG-5 FIX 1: 使用 await 確認購買成功後才顯示 Modal
+   */
   const onBuyLead = async (leadId: string) => {
     if (!appData || isBuying) return;
 
-    // 找到被購買的 lead
-    const lead = appData.leads.find(l => l.id === leadId);
-    if (!lead) return;
-
-    // 執行購買
-    buyLead(leadId);
     close();
-
-    // MSG-5: 購買成功後顯示發送訊息 Modal
-    setPurchasedLead(lead);
-    setShowMessageModal(true);
+    
+    // 等待購買結果，只有成功才顯示 Modal
+    const result = await buyLead(leadId);
+    
+    if (result.success && result.lead) {
+      setPurchasedLead(result.lead);
+      setShowMessageModal(true);
+    }
+    // 失敗時 useUAG 已經顯示 toast 錯誤訊息
   };
 
   const handleCloseModal = () => {
@@ -57,10 +59,13 @@ function UAGPageContent() {
   if (isLoading) return <UAGLoadingSkeleton />;
   if (!appData) return null;
 
-  // MSG-5: 取得 agent_id 和 session_id
+  // MSG-5 FIX 2: 使用真實的 agent 和 session ID
   const agentId = user?.id || 'demo-agent';
-  // 對於 mock 模式，使用 lead 的 id 作為 session_id
-  const sessionId = purchasedLead?.id || 'demo-session';
+  // 使用真實 session_id，而非 lead.id
+  // 對於 mock 模式，生成一個基於時間的 session_id
+  const consumerSessionId = session?.user?.id 
+    ? `session-${Date.now()}-${purchasedLead?.id?.slice(-4) || 'xxxx'}`
+    : `mock-session-${Date.now()}`;
 
   return (
     <div className={styles['uag-page']}>
@@ -102,7 +107,7 @@ function UAGPageContent() {
           onClose={handleCloseModal}
           lead={purchasedLead}
           agentId={agentId}
-          sessionId={sessionId}
+          sessionId={consumerSessionId}
         />
       )}
     </div>

@@ -6,7 +6,7 @@ const DEFAULT_COMMUNITY_API_BASE = '/api/community';
 type RequiredKey = (typeof REQUIRED_KEYS)[number];
 type OptionalKey = (typeof OPTIONAL_KEYS)[number];
 
-type EnvShape = Record<RequiredKey, string> & Partial<Record<OptionalKey, string>>;
+type EnvShape = Record<RequiredKey, string> & Partial<Record<OptionalKey, string | undefined>>;
 
 const trimTrailingSlash = (value: string) => value.replace(/\/+$/, '');
 

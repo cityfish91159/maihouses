@@ -11,6 +11,7 @@ import type { Lead } from '../../pages/UAG/types/uag.types';
 import { messagingService } from '../../services/messagingService';
 import { notify } from '../../lib/notify';
 import { logger } from '../../lib/logger';
+import { ROUTES } from '../../constants/routes';
 
 const S = {
   TITLE: '發送訊息給客戶',
@@ -34,6 +35,8 @@ interface SendMessageModalProps {
   lead: Lead;
   agentId: string;
   sessionId: string;
+  /** MSG-5 FIX 6: 可選的物件 ID */
+  propertyId?: string;
 }
 
 /**
@@ -50,6 +53,7 @@ export function SendMessageModal({
   lead,
   agentId,
   sessionId,
+  propertyId,
 }: SendMessageModalProps): React.ReactElement | null {
   const navigate = useNavigate();
   const [message, setMessage] = useState('');
@@ -68,6 +72,8 @@ export function SendMessageModal({
           agent_id: agentId,
           consumer_session_id: sessionId,
           lead_id: lead.id,
+          // MSG-5 FIX 6: 傳入 property_id
+          property_id: propertyId,
         },
         message.trim(),
         agentId
@@ -76,8 +82,8 @@ export function SendMessageModal({
       notify.success(S.SUCCESS, S.SUCCESS_DESC);
       onClose();
       
-      // 跳轉到對話頁面
-      navigate(`/chat/${result.conversation.id}`);
+      // MSG-5 FIX 4: 使用 ROUTES.CHAT 確保路徑正確 (/maihouses/chat/...)
+      navigate(ROUTES.CHAT(result.conversation.id));
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : '請稍後再試';
       logger.error('[SendMessageModal] Failed to send message', { error: errorMessage });
@@ -85,7 +91,7 @@ export function SendMessageModal({
     } finally {
       setIsSending(false);
     }
-  }, [message, isSending, agentId, sessionId, lead.id, onClose, navigate]);
+  }, [message, isSending, agentId, sessionId, lead.id, propertyId, onClose, navigate]);
 
   const handleLater = useCallback(() => {
     onClose();

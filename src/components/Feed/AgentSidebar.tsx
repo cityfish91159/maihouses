@@ -1,19 +1,32 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import type { PerformanceStats, TodoItem } from '../../types/agent';
+import type { ConversationListItem } from '../../types/messaging.types';
 import { STRINGS } from '../../constants/strings';
 import { ROUTES } from '../../constants/routes';
+import { AgentConversationList } from './AgentConversationList';
 
 interface AgentSidebarProps {
     stats: PerformanceStats;
     todos: TodoItem[];
     hotPosts?: { id: string | number; title: string; communityName: string; likes: number }[];
+    /** MSG-5 FIX 5: 客戶對話列表 */
+    conversations?: ConversationListItem[];
     className?: string;
 }
 
-export const AgentSidebar: React.FC<AgentSidebarProps> = ({ stats, todos, hotPosts = [], className = '' }) => {
+export const AgentSidebar: React.FC<AgentSidebarProps> = ({ 
+    stats, 
+    todos, 
+    hotPosts = [], 
+    conversations = [],
+    className = '' 
+}) => {
     return (
         <aside className={`sticky top-[70px] hidden w-[280px] shrink-0 flex-col gap-3 self-start md:flex ${className}`}>
+            {/* MSG-5 FIX 5: 客戶對話列表（優先顯示） */}
+            <AgentConversationList conversations={conversations} />
+
             {/* Navigation Card */}
             <div className="rounded-[14px] border border-[#e6edf7] bg-white p-[14px] shadow-[0_4px_14px_rgba(0,51,102,0.04)]">
                 <h4 className="m-0 mb-2.5 text-[14px] font-bold text-[#00385a]">{STRINGS.AGENT.SIDEBAR.NAV_TITLE}</h4>

@@ -243,19 +243,31 @@ export function usePushNotifications(): UsePushNotificationsReturn {
         }
       }
 
-      // 3. 訂閱推播
+      // 3. 若已訂閱，直接同步到資料庫
+      const existingSubscription = await registration.pushManager.getSubscription();
+      if (existingSubscription) {
+        const existingKeys = extractSubscriptionKeys(existingSubscription.toJSON());
+        if (existingKeys) {
+          await saveSubscriptionToDatabase(existingKeys);
+          setIsSubscribed(true);
+          logger.info('usePushNotifications.subscribe.alreadySubscribed', { userId: user.id });
+          return true;
+        }
+      }
+
+      // 4. 訂閱推播
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToArrayBuffer(vapidPublicKey),
       });
 
-      // 4. 提取訂閱金鑰
+      // 5. 提取訂閱金鑰
       const keys = extractSubscriptionKeys(subscription.toJSON());
       if (!keys) {
         throw new Error('Failed to extract subscription keys');
       }
 
-      // 5. 儲存到資料庫
+      // 6. 儲存到資料庫
       await saveSubscriptionToDatabase(keys);
 
       setIsSubscribed(true);

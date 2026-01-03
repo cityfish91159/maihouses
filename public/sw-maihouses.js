@@ -69,6 +69,25 @@ self.addEventListener('push', (event) => {
   event.waitUntil(self.registration.showNotification(title, options));
 });
 
+function resolveTargetUrl(data) {
+  if (data.conversationId) {
+    return `/maihouses/chat/${data.conversationId}`;
+  }
+
+  if (data.url) {
+    try {
+      const url = new URL(data.url, self.location.origin);
+      if (url.origin === self.location.origin && url.pathname.startsWith('/maihouses/')) {
+        return `${url.pathname}${url.search}${url.hash}`;
+      }
+    } catch {
+      // fallback to default
+    }
+  }
+
+  return '/maihouses/';
+}
+
 /**
  * 處理通知點擊事件
  * 導向至對應的對話頁面或首頁
@@ -77,14 +96,7 @@ self.addEventListener('notificationclick', (event) => {
   event.notification.close();
 
   const data = event.notification.data || {};
-  let targetUrl = '/maihouses/';
-
-  // 優先使用 conversationId 導向對話頁面
-  if (data.conversationId) {
-    targetUrl = `/maihouses/chat/${data.conversationId}`;
-  } else if (data.url) {
-    targetUrl = data.url;
-  }
+  const targetUrl = resolveTargetUrl(data);
 
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {

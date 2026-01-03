@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { UAGService } from '../services/uagService';
-import { AppData, Grade, LeadStatus } from '../types/uag.types';
+import { AppData, Grade, Lead, LeadStatus } from '../types/uag.types';
 import { MOCK_DB } from '../mockData';
 import { notify } from '../../../lib/notify';
 import { useAuth } from '../../../hooks/useAuth';
@@ -29,6 +29,13 @@ function getInitialMockMode(): boolean {
   return true;
 }
 
+/** 購買結果類型 */
+export interface BuyLeadResult {
+  success: boolean;
+  lead?: Lead;
+  error?: string;
+}
+
 export function useUAG() {
   const { session } = useAuth();
   const [useMock, setUseMock] = useState<boolean>(getInitialMockMode);
@@ -49,16 +56,14 @@ export function useUAG() {
     queryKey: ['uagData', useMock, session?.user?.id],
     queryFn: async () => {
       if (useMock) {
-        // Simulate delay
-        // await new Promise(resolve => setTimeout(resolve, 500));
         return MOCK_DB as unknown as AppData;
       }
       if (!session?.user?.id) throw new Error('Not authenticated');
       return UAGService.fetchAppData(session.user.id);
     },
     enabled: useMock || !!session?.user?.id,
-    staleTime: 1000 * 10, // 10 seconds for leads
-    refetchInterval: useMock ? false : 30000, // Auto refresh every 30s for live data
+    staleTime: 1000 * 10,
+    refetchInterval: useMock ? false : 30000,
   });
 
   const buyLeadMutation = useMutation({
@@ -75,7 +80,6 @@ export function useUAG() {
       const previousData = queryClient.getQueryData<AppData>(['uagData', useMock, session?.user?.id]);
 
       if (previousData) {
-        // Optimistic validation
         const lead = previousData.leads.find(l => l.id === leadId);
         if (lead) {
           const { valid, error } = validateQuota(lead, previousData.user);
@@ -107,7 +111,7 @@ export function useUAG() {
 
       return { previousData };
     },
-    onError: (err, newTodo, context) => {
+    onError: (err, _variables, context) => {
       if (context?.previousData) {
         queryClient.setQueryData(['uagData', useMock, session?.user?.id], context.previousData);
       }
@@ -118,44 +122,56 @@ export function useUAG() {
     },
   });
 
-  const buyLead = async (leadId: string) => {
-    if (!data || buyLeadMutation.isPending) return;
+  /**
+   * MSG-5 FIX: 購買客戶，回傳 Promise 以便追蹤成功/失敗
+   * @returns Promise<BuyLeadResult> 包含購買結果
+   */
+  const buyLead = useCallback(async (leadId: string): Promise<BuyLeadResult> => {
+    if (!data || buyLeadMutation.isPending) {
+      return { success: false, error: '無法購買' };
+    }
 
     const lead = data.leads.find(l => l.id === leadId);
     if (!lead) {
       notify.error('客戶不存在');
-      return;
+      return { success: false, error: '客戶不存在' };
     }
 
     if (lead.status !== 'new') {
       notify.error('此客戶已被購買');
-      return;
+      return { success: false, error: '此客戶已被購買' };
     }
 
-    const { valid, error } = validateQuota(lead, data.user);
+    const { valid, error: quotaError } = validateQuota(lead, data.user);
     if (!valid) {
-      notify.error(error || '配額不足');
-      return;
+      notify.error(quotaError || '配額不足');
+      return { success: false, error: quotaError || '配額不足' };
     }
 
     const cost = lead.price || 10;
     if (data.user.points < cost) {
       notify.error('點數不足');
-      return;
+      return { success: false, error: '點數不足' };
     }
 
-    buyLeadMutation.mutate({ leadId, cost, grade: lead.grade }, {
-      onSuccess: () => {
-        notify.success('購買成功');
-      }
+    return new Promise((resolve) => {
+      buyLeadMutation.mutate({ leadId, cost, grade: lead.grade }, {
+        onSuccess: () => {
+          notify.success('購買成功');
+          resolve({ success: true, lead });
+        },
+        onError: (err) => {
+          resolve({ success: false, error: err instanceof Error ? err.message : 'Unknown error' });
+        }
+      });
     });
-  };
+  }, [data, buyLeadMutation]);
 
   return {
     data,
     isLoading,
     error,
-    buyLead, // Expose the wrapper function
+    buyLead,
     isBuying: buyLeadMutation.isPending,
     useMock,
     toggleMode,

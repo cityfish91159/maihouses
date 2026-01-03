@@ -645,6 +645,11 @@ Response: { success: boolean, message_id?: string }
   - `subscribe()` 未先檢查既有 subscription，已訂閱時會丟 `InvalidStateError` 或重複寫入。(`src/hooks/usePushNotifications.ts:205-260`)
   - 通知 payload 的 `data.url` 未做同源驗證，若後端誤送可能導向外部。(`public/sw-maihouses.js:79-87`)
 
+  **修復更新**:
+  - SQL: SECURITY DEFINER 加入 `auth.uid()` 驗證 + `SET search_path`，修正 `ROW_COUNT` 型別問題，補上 `WITH CHECK`。(`supabase/migrations/20260103_001_push_subscriptions.sql`)
+  - Hook: 先檢查已存在 subscription，避免重複訂閱/錯誤。(`src/hooks/usePushNotifications.ts`)
+  - SW: 僅允許站內路徑導向，避免外部跳轉。(`public/sw-maihouses.js`)
+
 #### ⚠️ 後續步驟（部署前）
 
 1. **生成 VAPID 金鑰**:
