@@ -6,12 +6,12 @@
  */
 
 import { memo, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Home, MessageCircle, ChevronRight } from 'lucide-react';
 import type { ActiveTransaction } from '../../types/feed';
 import type { ConversationListItem } from '../../types/messaging.types';
 import { STRINGS } from '../../constants/strings';
 import { ROUTES } from '../../constants/routes';
-import { notify } from '../../lib/notify';
 import { logger } from '../../lib/logger';
 
 const S_TX = STRINGS.FEED.TX_BANNER;
@@ -88,15 +88,6 @@ function truncateName(name: string, maxLength = 12): string {
 }
 
 /**
- * MSG-3: 處理查看私訊點擊
- * 由於 MSG-4 尚未完成，點擊時顯示 toast 提示
- */
-function handleMessageClick(e: React.MouseEvent<HTMLButtonElement>): void {
-  e.preventDefault();
-  notify.info(S_MSG.COMING_SOON, S_MSG.COMING_SOON_DESC);
-}
-
-/**
  * TxBanner 組件
  *
  * 顯示進行中的交易或未讀私訊通知的橫幅
@@ -107,6 +98,7 @@ export const TxBanner = memo(function TxBanner({
   messageNotification,
   className = '',
 }: TxBannerProps) {
+  const navigate = useNavigate();
   // MSG-3: 私訊優先級高於交易
   // 使用 useMemo 優化性能，只在相關資料變化時重新計算
   const messageContent = useMemo(() => {
@@ -121,6 +113,7 @@ export const TxBanner = memo(function TxBanner({
     const displayName = truncateName(messageNotification.counterpart.name);
 
     return {
+      conversationId: messageNotification.id,
       propertyTitle: messageNotification.property?.title || S_MSG.PROPERTY_FALLBACK,
       counterpartName: displayName,
       timeLabel,
@@ -156,10 +149,10 @@ export const TxBanner = memo(function TxBanner({
             </p>
           </div>
 
-          {/* Action - MSG-4 未完成，使用 button + toast */}
+          {/* Action - 導航至對話頁面 */}
           <button
             type="button"
-            onClick={handleMessageClick}
+            onClick={() => navigate(`/maihouses/chat/${messageContent.conversationId}`)}
             className="inline-flex shrink-0 items-center gap-1 rounded-full bg-brand-600 px-3 py-1.5 text-xs font-bold text-white shadow-sm transition-all hover:bg-brand-700 active:scale-95"
             aria-label="查看房仲私訊"
           >

@@ -23,8 +23,6 @@ export const STRINGS = {
       TITLE: '💬 有房仲想聯繫您',
       PROPERTY_FALLBACK: '物件諮詢',
       VIEW_BTN: '查看',
-      COMING_SOON: '對話功能開發中',
-      COMING_SOON_DESC: '敬請期待',
     },
     SIDEBAR: {
       NAV_TITLE: '快速導航',
