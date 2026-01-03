@@ -21,6 +21,7 @@ const PurchaseLeadResultSchema = z.object({
   success: z.boolean(),
   used_quota: z.boolean().optional(),
   purchase_id: z.string().uuid().optional(),
+  conversation_id: z.string().uuid().optional(), // UAG-13 [NEW]
   error: z.string().optional(),
 });
 

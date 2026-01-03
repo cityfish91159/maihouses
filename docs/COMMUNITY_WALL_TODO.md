@@ -578,9 +578,16 @@ npx web-push generate-vapid-keys
 
 ---
 
-### UAG-13: purchase_lead 觸發通知 ⬜
-
-**目標**: 購買成功後自動建立 conversation 並觸發通知
+### UAG-13: purchase_lead 觸發通知 ✅
+**狀態**: 完成 (Done) - 2026/01/05
+**完成項目**:
+1.  **驗證**: 建立 `supabase/tests/UAG-13_verification.sql`，包含 Atomicity, RLS, FK 檢查。
+2.  **Backend**: 建立 `supabase/migrations/20260105_uag_13_auto_conversation.sql`。
+    -   RPC `purchase_lead` 修改：交易內呼叫 `fn_create_conversation`。
+    -   強制 `agent_id::UUID`轉型。
+    -   回傳 `conversation_id`。
+3.  **Frontend**: 更新 `uagService.ts` 支援 `conversation_id` 類型。
+**驗證**: `npm run typecheck` 通過。已備妥 SQL 驗證腳本。
 
 **前置依賴**:
 - MSG-1（conversations 表）
