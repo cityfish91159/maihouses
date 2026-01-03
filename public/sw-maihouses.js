@@ -117,11 +117,33 @@ self.addEventListener('notificationclick', (event) => {
 });
 
 /**
- * 處理通知關閉事件（可用於統計）
+ * 處理訂閱過期或撤銷事件
+ * 當瀏覽器的 push subscription 過期時，嘗試重新訂閱
  */
-self.addEventListener('notificationclose', (event) => {
-  // 可在此處發送統計資料
-  // 例如：用戶忽略通知的次數
+self.addEventListener('pushsubscriptionchange', (event) => {
+  const resubscribe = async () => {
+    try {
+      // 取得新的訂閱
+      const newSubscription = await self.registration.pushManager.subscribe(
+        event.oldSubscription?.options ?? { userVisibleOnly: true }
+      );
+
+      // 通知主頁面更新訂閱
+      const clients = await self.clients.matchAll({ type: 'window' });
+      for (const client of clients) {
+        client.postMessage({
+          type: 'SUBSCRIPTION_CHANGED',
+          subscription: newSubscription.toJSON(),
+        });
+      }
+    } catch (err) {
+      // 重新訂閱失敗，用戶需要手動重新訂閱
+      // eslint-disable-next-line no-console
+      console.warn('[SW] Failed to resubscribe:', err);
+    }
+  };
+
+  event.waitUntil(resubscribe());
 });
 
 // ============ 訊息處理 ============

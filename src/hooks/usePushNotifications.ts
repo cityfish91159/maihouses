@@ -336,6 +336,26 @@ export function usePushNotifications(): UsePushNotificationsReturn {
     }
   }, [user, removeSubscriptionFromDatabase]);
 
+  /**
+   * 處理 Service Worker 的訂閱變更訊息
+   */
+  const handleSubscriptionChange = useCallback(
+    async (subscriptionJSON: PushSubscriptionJSON) => {
+      if (!user?.id) return;
+
+      const keys = extractSubscriptionKeys(subscriptionJSON);
+      if (keys) {
+        try {
+          await saveSubscriptionToDatabase(keys);
+          logger.info('usePushNotifications.subscriptionChanged.synced', { userId: user.id });
+        } catch (err) {
+          logger.error('usePushNotifications.subscriptionChanged.failed', { error: err });
+        }
+      }
+    },
+    [user, saveSubscriptionToDatabase]
+  );
+
   // 初始化：註冊 Service Worker 並檢查訂閱狀態
   useEffect(() => {
     if (!isPushSupported()) {
@@ -370,9 +390,28 @@ export function usePushNotifications(): UsePushNotificationsReturn {
     };
   }, [registerServiceWorker, checkSubscription]);
 
+  // 監聽 Service Worker 的訂閱變更訊息
+  useEffect(() => {
+    if (!isPushSupported()) return;
+
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data?.type === 'SUBSCRIPTION_CHANGED' && event.data?.subscription) {
+        handleSubscriptionChange(event.data.subscription);
+      }
+    };
+
+    navigator.serviceWorker.addEventListener('message', handleMessage);
+
+    return () => {
+      navigator.serviceWorker.removeEventListener('message', handleMessage);
+    };
+  }, [handleSubscriptionChange]);
+
   // 監聽權限變更
   useEffect(() => {
     if (!isPushSupported()) return;
+
+    let permissionStatus: PermissionStatus | null = null;
 
     const handlePermissionChange = () => {
       setPermission(getPermissionState());
@@ -380,12 +419,19 @@ export function usePushNotifications(): UsePushNotificationsReturn {
 
     // 某些瀏覽器支援 permission change 事件
     if ('permissions' in navigator) {
-      navigator.permissions.query({ name: 'notifications' }).then((permissionStatus) => {
+      navigator.permissions.query({ name: 'notifications' }).then((status) => {
+        permissionStatus = status;
         permissionStatus.onchange = handlePermissionChange;
       }).catch(() => {
         // 忽略不支援的情況
       });
     }
+
+    return () => {
+      if (permissionStatus) {
+        permissionStatus.onchange = null;
+      }
+    };
   }, []);
 
   return {
