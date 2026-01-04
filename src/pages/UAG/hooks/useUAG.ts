@@ -74,8 +74,15 @@ export function useUAG() {
       if (useMock) {
         await new Promise(resolve => setTimeout(resolve, 500));
         // ✅ Mock 模式：生成符合 UUID 格式的假 purchase_id
+        // ✅ Mock 模式：生成符合 UUID 格式的假 purchase_id 與 conversation_id
         const mockPurchaseId = crypto.randomUUID();
-        return { success: true, used_quota: false, purchase_id: mockPurchaseId };
+        const mockConversationId = crypto.randomUUID();
+        return { 
+          success: true, 
+          used_quota: false, 
+          purchase_id: mockPurchaseId,
+          conversation_id: mockConversationId // UAG-13 Mock Parity
+        };
       }
       if (!session?.user?.id) throw new Error('Not authenticated');
       return UAGService.purchaseLead(session.user.id, leadId, cost, grade);
