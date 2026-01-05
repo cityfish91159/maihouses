@@ -19,7 +19,7 @@ const usePropertyTracker = (
 ) => {
   // 使用 useState 惰性初始化，避免在 render 中調用 Date.now()
   const [enterTime] = useState(() => Date.now());
-  const actions = useRef({ click_photos: 0, click_line: 0, click_call: 0, scroll_depth: 0 });
+  const actions = useRef({ click_photos: 0, click_line: 0, click_call: 0, click_map: 0, scroll_depth: 0 });
   const hasSent = useRef(false);
   const sendLock = useRef(false);
   const currentGrade = useRef<string>('F');
@@ -161,7 +161,8 @@ const usePropertyTracker = (
   return {
     trackPhotoClick: () => { actions.current.click_photos++; },
     trackLineClick: () => { actions.current.click_line = 1; sendEvent('click_line'); },
-    trackCallClick: () => { actions.current.click_call = 1; sendEvent('click_call'); }
+    trackCallClick: () => { actions.current.click_call = 1; sendEvent('click_call'); },
+    trackMapClick: () => { actions.current.click_map = 1; sendEvent('click_map'); }
   };
 };
 
@@ -419,7 +420,17 @@ export const PropertyDetailPage: React.FC = () => {
 
               <div className="mt-2 flex items-center gap-2 text-sm text-slate-500">
                 <MapPin size={16} />
-                {property.address}
+                <span>{property.address}</span>
+                <a
+                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(property.address)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={tracker.trackMapClick}
+                  className="ml-2 flex items-center gap-1 rounded-full bg-blue-50 px-2 py-1 text-xs font-medium text-blue-600 transition-colors hover:bg-blue-100"
+                >
+                  <MapPin size={12} />
+                  查看地圖
+                </a>
               </div>
 
               <div className="mt-4 flex items-baseline gap-2">

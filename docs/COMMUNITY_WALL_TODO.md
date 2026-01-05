@@ -699,133 +699,22 @@ pm run typecheck - 通過
 
 ---
 
-### UAG-7: 地圖點擊追蹤 ⬜
+### UAG-7: 地圖點擊追蹤 ✅ (Completed)
 
-**問題**：`actions.click_map` 有欄位但沒有監聽
+**修改檔案**: `src/pages/PropertyDetailPage.tsx`
 
-**當前代碼**：
-```javascript
-// public/js/tracker.js
+**實作摘要**:
+- ✅ 新增 `actions.current.click_map` 欄位
+- ✅ 新增 `trackMapClick()` 方法（含 `sendEvent('click_map')` 立即發送）
+- ✅ 新增地圖按鈕 UI（Google Maps 連結 + 安全編碼）
 
-this.actions = {
-  click_photos: 0,
-  click_map: 0,      // ❌ 有欄位但沒追蹤
-  click_line: 0,
-  click_call: 0,
-  scroll_depth: 0
-};
-```
+**驗收結果**:
+- ✅ TypeScript 檢查通過
+- ✅ ESLint 無新增錯誤
+- ✅ Code review 通過（已修復 blocking issue）
+- ✅ public/js/tracker.js 已有完整監聽實現（v8.6）
 
-**修復方案**：
-
-#### 7.1 新增地圖點擊監聽
-```javascript
-// public/js/tracker.js
-
-initListeners() {
-  document.addEventListener('click', e => {
-    const t = e.target.closest('a, button, div');
-    if (!t) return;
-    const text = (t.innerText || '').toLowerCase();
-
-    // ✅ 新增：地圖按鈕
-    if (text.includes('地圖') ||
-        text.includes('map') ||
-        text.includes('位置') ||
-        t.classList.contains('map-button') ||
-        t.classList.contains('location-button') ||
-        t.dataset.action === 'open-map') {
-      this.actions.click_map++;
-      console.log('[UAG] Map clicked');
-    }
-
-    // LINE 按鈕
-    if (text.includes('line') || t.href?.includes('line.me')) {
-      this.actions.click_line++;
-      this.trackImmediate('click_line');
-    }
-
-    // 電話按鈕
-    if (text.includes('電話') || t.href?.includes('tel:')) {
-      this.actions.click_call++;
-      this.trackImmediate('click_call');
-    }
-
-    // 照片點擊
-    if (t.tagName === 'IMG' || t.classList.contains('photo')) {
-      this.actions.click_photos++;
-    }
-  });
-
-  // ...其他監聽器
-}
-```
-
-#### 7.2 React Hook 版本同步
-```typescript
-// src/pages/PropertyDetailPage.tsx
-
-const usePropertyTracker = (...) => {
-  const actions = useRef({
-    click_photos: 0,
-    click_line: 0,
-    click_call: 0,
-    click_map: 0,  // ✅ 新增
-    scroll_depth: 0
-  });
-
-  // 暴露追蹤方法
-  return {
-    trackPhotoClick: () => {
-      actions.current.click_photos++;
-    },
-    trackLineClick: () => {
-      actions.current.click_line = 1;
-      sendEvent('click_line');
-    },
-    trackCallClick: () => {
-      actions.current.click_call = 1;
-      sendEvent('click_call');
-    },
-    trackMapClick: () => {  // ✅ 新增
-      actions.current.click_map++;
-      console.log('[UAG] Map clicked');
-    }
-  };
-};
-```
-
-#### 7.3 在 JSX 中綁定
-```typescript
-// PropertyDetailPage 組件內
-
-const { trackPhotoClick, trackLineClick, trackCallClick, trackMapClick } = usePropertyTracker(...);
-
-// 地圖按鈕
-<button onClick={trackMapClick} className="map-button">
-  📍 查看地圖
-</button>
-
-// 或使用 Google Maps 連結
-<a
-  href={`https://www.google.com/maps?q=${property.address}`}
-  onClick={trackMapClick}
-  target="_blank"
-  rel="noopener noreferrer"
->
-  在 Google Maps 開啟
-</a>
-```
-
-**驗收標準**：
-- [x] HTML 追蹤器已新增地圖監聽
-- [x] React Hook 已新增 `trackMapClick`
-- [x] JSX 已綁定點擊事件
-- [x] Console 確認點擊有記錄
-- [x] API 確認 `actions.click_map` 有資料
-
-**預估工時**: 0.5hr
-**優先級**: P1（完善追蹤數據）
+**完成時間**: 2026-01-05
 
 ---
 
