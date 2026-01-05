@@ -756,13 +756,16 @@ trackCallClick: () => {
 **Migration**: `supabase/migrations/20260105_uag_8_pg_cron_setup.sql`
 
 **實作內容**:
-- ✅ 依賴檢查 (pg_cron extension, uag_lead_rankings, archive_old_history)
+- ✅ 依賴檢查 SQL (pg_cron extension, uag_lead_rankings, archive_old_history)
 - ✅ `refresh-uag-rankings` Job: 每 5 分鐘刷新物化視圖
 - ✅ `archive-uag-events` Job: 每小時執行歸檔
 - ✅ `log-uag-stats` Job: 每天午夜記錄歸檔統計
 - ✅ `uag_archive_log` 表 + UNIQUE INDEX
 
-**前置條件**: 需在 Supabase Dashboard 啟用 `pg_cron` extension
+**驗證結果** (2026-01-05 15:45):
+- ✅ pg_cron extension 已啟用 (extensions schema)
+- ✅ Migration 執行成功
+- ✅ cron.job 表確認有 3 筆排程記錄
 
 **問題 1**：`uag_lead_rankings` 物化視圖需手動 `REFRESH`
 **問題 2**：`archive_old_history()` 需手動觸發
@@ -878,62 +881,16 @@ SELECT MAX(last_active) FROM uag_lead_rankings;
 
 ## 🎨 P2 UI/UX 優化任務
 
-### HEADER-1: Logo 紅點設計 ⬜
+### HEADER-1: Logo 紅點設計 ✅
 
-**需求**：Logo 需使用首頁的紅點 badge 設計
+**修復檔案**: src/components/Header/Header.tsx
 
-**當前狀態**：
-- Logo 組件已支援 `showBadge` prop
-- 紅點位置：右上角 `size-1.5` 圓點
-- 顏色：`bg-red-400`
+**施作重點**:
+- Header 的 Logo 明確傳入 showBadge={true}，確保首頁紅點一致顯示
 
-**位置**：
-- `src/components/Logo/Logo.tsx:32-34`
-- `src/components/Header/Header.tsx:37`
-
-**當前代碼**：
-```tsx
-// Logo.tsx:32-34
-{showBadge && (
-  <div className="absolute right-2 top-2 size-1.5 rounded-full bg-red-400 shadow-[0_0_0_1.5px] shadow-brand-600"></div>
-)}
-
-// Header.tsx:37
-<Logo showSlogan={true} onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} />
-```
-
-**修復方案**：
-
-#### 1.1 確保 Header 中啟用 badge
-```tsx
-// src/components/Header/Header.tsx:37
-
-// 修改前
-<Logo showSlogan={true} onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} />
-
-// 修改後
-<Logo
-  showSlogan={true}
-  showBadge={true}  // ✅ 明確啟用紅點
-  onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-/>
-```
-
-#### 1.2 調整紅點樣式（可選，增強視覺）
-```tsx
-// src/components/Logo/Logo.tsx:32-34
-
-{showBadge && (
-  <div className="absolute right-2 top-2 size-1.5 rounded-full bg-red-400 shadow-[0_0_0_1.5px] shadow-brand-600 animate-pulse"></div>
-  // ✅ 新增 animate-pulse 增強吸引力
-)}
-```
-
-**驗收標準**：
-- [x] Header Logo 顯示紅點
-- [x] 紅點樣式與首頁一致
-- [x] 響應式設計正常（手機/桌面）
-- [x] 紅點與 Logo 位置協調
+**驗證結果**:
+- 
+pm run typecheck - 通過
 
 **預估工時**: 1hr
 **優先級**: P2（視覺一致性）

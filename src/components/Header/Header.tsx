@@ -34,7 +34,11 @@ export default function Header({ onOpenAIStudio }: HeaderProps) {
       <header className="sticky top-0 z-overlay border-b border-brand-100 bg-white/95 shadow-sm backdrop-blur-sm transition-all">
         <div className="mx-auto flex h-16 max-w-[1120px] items-center justify-between px-4">
           {/* Logo Section */}
-          <Logo showSlogan={true} onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} />
+          <Logo
+            showSlogan={true}
+            showBadge={true}
+            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          />
 
           {/* Desktop Nav - 桌面版 */}
           <nav className="hidden items-center gap-1 md:flex md:gap-2" aria-label="主要動作">
