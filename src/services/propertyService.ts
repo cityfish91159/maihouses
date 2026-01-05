@@ -1,6 +1,7 @@
 import { supabase } from '../lib/supabase';
 import { Agent, Imported591Data } from '../lib/types';
 import { computeAddressFingerprint, normalizeCommunityName } from '../utils/address';
+import { logger } from '../lib/logger';
 import { z } from 'zod';
 
 /**
@@ -163,7 +164,7 @@ export const propertyService: PropertyService = {
         .single();
 
       if (error || !data) {
-        console.warn('查無正式資料，使用預設資料', error);
+        logger.warn('查無正式資料，使用預設資料', { error });
         // 如果是開發環境或特定 ID，回傳預設資料以維持畫面
         if (publicId === 'MH-100001' || import.meta.env.DEV) {
           return DEFAULT_PROPERTY;
@@ -230,7 +231,7 @@ export const propertyService: PropertyService = {
 
       return result;
     } catch (e) {
-      console.error('Service Error:', e);
+      logger.error('Service Error', { error: e });
       return DEFAULT_PROPERTY;
     }
   },
@@ -289,7 +290,7 @@ export const propertyService: PropertyService = {
             });
 
           if (error) {
-            console.error('Image upload error:', error);
+            logger.error('Image upload error', { error });
             failed.push({ file, error: error.message });
             return null;
           }
@@ -301,7 +302,7 @@ export const propertyService: PropertyService = {
           return data.publicUrl;
         } catch (e: unknown) {
           const errorMessage = e instanceof Error ? e.message : '上傳失敗';
-          console.error('Image upload exception:', e);
+          logger.error('Image upload exception', { error: e });
           failed.push({ file, error: errorMessage });
           return null;
         } finally {
@@ -336,7 +337,7 @@ export const propertyService: PropertyService = {
       .remove(fileNames);
 
     if (error) {
-      console.error('Failed to cleanup images:', error);
+      logger.error('Failed to cleanup images', { error });
       // 這裡不拋出錯誤，因為這是清理流程，不應阻斷主流程的錯誤回報
     }
   },
@@ -369,7 +370,7 @@ export const propertyService: PropertyService = {
     const agentId = user?.id || 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
 
     if (!user && import.meta.env.DEV) {
-      console.warn('⚠️ [DEV] 使用 Mock Agent ID 發佈物件');
+      logger.warn('[DEV] 使用 Mock Agent ID 發佈物件');
     }
 
     // 🏢 社區處理邏輯
@@ -466,7 +467,7 @@ export const propertyService: PropertyService = {
           communityId = newCommunity.id;
           isNewCommunity = true;
         } else {
-          console.error('❌ 建立社區失敗:', communityError);
+          logger.error('建立社區失敗', { error: communityError });
         }
       }
     }
@@ -534,7 +535,7 @@ export const propertyService: PropertyService = {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ communityId })
-      }).catch(err => console.warn('AI 總結背景執行中:', err));
+      }).catch(err => logger.warn('AI 總結背景執行中', { error: err }));
     }
 
     // 回傳包含社區資訊
@@ -579,7 +580,7 @@ export async function getFeaturedProperties(): Promise<FeaturedProperty[]> {
     const response = await fetch('/api/home/featured-properties');
 
     if (!response.ok) {
-      console.warn('[propertyService] API 回應非 200:', response.status);
+      logger.warn('[propertyService] API 回應非 200', { status: response.status });
       return [];
     }
 
@@ -589,10 +590,10 @@ export async function getFeaturedProperties(): Promise<FeaturedProperty[]> {
       return json.data;
     }
 
-    console.warn('[propertyService] API 回傳格式錯誤:', json);
+    logger.warn('[propertyService] API 回傳格式錯誤', { json });
     return [];
   } catch (error) {
-    console.error('[propertyService] getFeaturedProperties 失敗:', error);
+    logger.error('[propertyService] getFeaturedProperties 失敗', { error });
     return []; // Level 3: 回傳空陣列，讓前端維持顯示初始 Mock
   }
 }
