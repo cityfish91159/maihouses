@@ -1,3 +1,5 @@
+import { logger } from '../lib/logger';
+
 const REQUIRED_KEYS = ['VITE_SUPABASE_URL', 'VITE_SUPABASE_ANON_KEY'] as const;
 const OPTIONAL_KEYS = ['VITE_API_BASE_URL', 'VITE_APP_URL'] as const;
 
@@ -110,11 +112,11 @@ function readEnv(): EnvShape {
 
   // 驗證 VITE_API_BASE_URL 格式（如果有設定）
   if (env.VITE_API_BASE_URL && !isValidHttpUrl(env.VITE_API_BASE_URL) && !env.VITE_API_BASE_URL.startsWith('/')) {
-    console.warn('[env] VITE_API_BASE_URL 格式無效，應為 HTTP(S) URL 或以 / 開頭的路徑');
+    logger.warn('[env] VITE_API_BASE_URL 格式無效，應為 HTTP(S) URL 或以 / 開頭的路徑');
   }
 
   if (!env.VITE_API_BASE_URL && import.meta.env.DEV) {
-    console.warn('[env] VITE_API_BASE_URL 未設定，預設為 /api');
+    logger.warn('[env] VITE_API_BASE_URL 未設定，預設為 /api');
   }
 
   return env;
@@ -126,14 +128,14 @@ function resolveCommunityApiBase(envShape: EnvShape): string {
   if (!envShape.VITE_API_BASE_URL) {
     // 正式環境使用同 origin 的 /api/community
     if (import.meta.env.PROD) {
-      console.warn('[env] VITE_API_BASE_URL 未設定，使用預設 /api/community');
+      logger.warn('[env] VITE_API_BASE_URL 未設定，使用預設 /api/community');
     }
     return DEFAULT_COMMUNITY_API_BASE;
   }
 
   const normalized = envShape.VITE_API_BASE_URL.trim();
   if (!normalized) {
-    console.warn('[env] VITE_API_BASE_URL 為空字串，使用預設 /api/community');
+    logger.warn('[env] VITE_API_BASE_URL 為空字串，使用預設 /api/community');
     return DEFAULT_COMMUNITY_API_BASE;
   }
 
