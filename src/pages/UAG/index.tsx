@@ -77,7 +77,7 @@ function UAGPageContent() {
 
   return (
     <div className={styles['uag-page']}>
-      <UAGHeader />
+      <UAGHeader user={user} />
 
       <main className={styles['uag-container']}>
         <div className={styles['uag-grid']}>

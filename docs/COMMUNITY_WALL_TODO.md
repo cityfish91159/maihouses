@@ -898,20 +898,21 @@ SELECT MAX(last_active) FROM uag_lead_rankings;
 
 ---
 
-### HEADER-2: UAG 頁面 Header 優化 ⬜
+### HEADER-2: UAG 頁面 Header 優化 ✅
 
-**需求**：優化 UAG 頁面的 Header 設計
+**修復檔案**:
+- `src/pages/UAG/components/UAGHeader.tsx`
+- `src/pages/UAG/index.tsx`
+- `src/pages/UAG/UAG.module.css`
 
-> ⚠️ **任務調整**：桌面版 UAG 入口已透過首頁膠囊提供，無需在主導航新增。本任務僅優化 UAG 頁面內的 Header。
+**施作過程摘要**:
+- `UAGHeader` 新增返回首頁連結（`ROUTES.HOME`）與右側操作區塊
+- `UAGHeader` 顯示已登入用戶名稱/Email（未登入不顯示）
+- `UAGPageContent` 傳入 `user`，Header 依 `useAuth()` 狀態渲染
+- 補齊 Header 操作區塊與行動版樣式，維持主站一致性
 
-**當前狀態**：
-- UAG 頁面使用獨立的 `UAGHeader` 組件
-- 位置：`src/pages/UAG/components/UAGHeader.tsx`
-
-**優化項目**：
-1. 統一 Header 視覺風格與主站一致
-2. 加入返回首頁連結
-3. 顯示用戶資訊（已登入時）
+**驗證結果**:
+- `npm run typecheck` - 通過
 
 **預估工時**: 1hr
 **優先級**: P2（視覺一致性）
