@@ -11,6 +11,7 @@ import { getPermissions } from '../types';
 import { useGuestVisibleItems } from '../../../hooks/useGuestVisibleItems';
 import { LockedOverlay } from './LockedOverlay';
 import { formatRelativeTimeLabel } from '../../../lib/time';
+import { logger } from '../../../lib/logger';
 
 interface QACardProps {
   q: Question & { hasMoreAnswers?: boolean; totalAnswers?: number };
@@ -228,7 +229,7 @@ export function QASection({ viewerRole, questions: questionsProp, onAskQuestion,
       }
     }
     if (import.meta.env.DEV) {
-      console.warn('[QASection] focusSafeElement: 找不到可聚焦的 fallback 元素');
+      logger.warn('[QASection] focusSafeElement: 找不到可聚焦的 fallback 元素');
     }
   };
 
@@ -379,7 +380,7 @@ export function QASection({ viewerRole, questions: questionsProp, onAskQuestion,
       resetAskModal();
       setFeedback('✅ 問題已送出，住戶將收到通知。');
     } catch (err) {
-      console.error('Failed to submit question', err);
+      logger.error('[QASection] Failed to submit question', { error: err });
       setAskError('送出失敗，請稍後再試。');
     } finally {
       setSubmitting(null);
@@ -408,7 +409,7 @@ export function QASection({ viewerRole, questions: questionsProp, onAskQuestion,
       resetAnswerModal();
       setFeedback('✅ 回答已送出，感謝你的協助。');
     } catch (err) {
-      console.error('Failed to submit answer', err);
+      logger.error('[QASection] Failed to submit answer', { error: err });
       setAnswerError('送出失敗，請稍後再試。');
     } finally {
       setSubmitting(null);

@@ -9,6 +9,7 @@
  */
 
 import React from 'react';
+import { logger } from '../../../lib/logger';
 
 type ErrorCategory = 'network' | 'permission' | 'notFound' | 'runtime' | 'unknown';
 
@@ -107,10 +108,10 @@ export class WallErrorBoundary extends React.Component<Props, State> {
     this.setState({ errorInfo });
 
     if (import.meta.env.DEV) {
-      console.groupCollapsed('🔴 Community Wall Error');
-      console.error(error);
-      console.error(errorInfo.componentStack);
-      console.groupEnd();
+      logger.error('[WallErrorBoundary] Community Wall Error', {
+        error,
+        componentStack: errorInfo.componentStack
+      });
     }
 
     if (import.meta.env.PROD && typeof window !== 'undefined') {
@@ -129,7 +130,7 @@ export class WallErrorBoundary extends React.Component<Props, State> {
           timestamp: new Date().toISOString(),
         }),
       }).catch((reportError) => {
-        console.error('[WallErrorBoundary] Failed to report error', reportError);
+        logger.error('[WallErrorBoundary] Failed to report error', { error: reportError });
       });
     }
 
@@ -154,7 +155,7 @@ export class WallErrorBoundary extends React.Component<Props, State> {
 
     if (navigator?.clipboard) {
       navigator.clipboard.writeText(payload).catch(() => {
-        console.warn('[WallErrorBoundary] Failed to copy error details');
+        logger.warn('[WallErrorBoundary] Failed to copy error details');
       });
     }
   };

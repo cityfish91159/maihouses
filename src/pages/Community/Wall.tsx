@@ -26,6 +26,7 @@ import { notify } from '../../lib/notify';
 import { MockToggle } from '../../components/common/MockToggle';
 import { mhEnv } from '../../lib/mhEnv';
 import { safeLocalStorage } from '../../lib/safeStorage';
+import { logger } from '../../lib/logger';
 
 // Types
 import type { Role, WallTab } from './types';
@@ -213,13 +214,13 @@ function WallInner() {
     try {
       await toggleLike(postId);
     } catch (err) {
-      console.error('Failed to toggle like', err);
+      logger.error('[Wall] Failed to toggle like', { error: err });
       notify.error('按讚失敗', '請稍後再試');
     }
   }, [toggleLike, isAuthenticated]);
 
   const handleUnlock = useCallback((id?: string) => {
-    console.log('Unlock post:', id);
+    logger.debug('[Wall] Unlock post', { id });
     notify.info('功能開發中', '解鎖功能即將上線');
   }, []);
 
@@ -228,7 +229,7 @@ function WallInner() {
     try {
       await createPost(content, visibility);
     } catch (err) {
-      console.error('Failed to create post', err);
+      logger.error('[Wall] Failed to create post', { error: err });
       notify.error('發文失敗', '請稍後再試');
     }
   }, [createPost]);
@@ -237,7 +238,7 @@ function WallInner() {
     try {
       await askQuestion(question);
     } catch (err) {
-      console.error('Failed to submit question', err);
+      logger.error('[Wall] Failed to submit question', { error: err });
       notify.error('提問失敗', '請稍後再試');
       throw err;
     }
@@ -247,7 +248,7 @@ function WallInner() {
     try {
       await answerQuestion(questionId, content);
     } catch (err) {
-      console.error('Failed to submit answer', err);
+      logger.error('[Wall] Failed to submit answer', { error: err });
       notify.error('回答失敗', '請稍後再試');
       throw err;
     }
@@ -259,7 +260,7 @@ function WallInner() {
     try {
       await refresh();
     } catch (err) {
-      console.error('Failed to refresh community wall', err);
+      logger.error('[Wall] Failed to refresh community wall', { error: err });
     } finally {
       setIsReloading(false);
     }
