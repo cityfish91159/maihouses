@@ -1,5 +1,6 @@
 import { apiFetch, getSessionId } from './api'
 import { safeLocalStorage } from '../lib/safeStorage'
+import { logger } from '../lib/logger'
 
 type Uag = {
   event: string
@@ -93,7 +94,7 @@ function uuidv4() {
 
 export function trackEvent(event: string, page: string, targetId?: string) {
   if (!event?.trim() || !page?.trim()) {
-    console.warn('[UAG] 無效的事件或頁面名稱，已忽略上報')
+    logger.warn('[UAG] 無效的事件或頁面名稱，已忽略上報')
     return
   }
 

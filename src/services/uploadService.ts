@@ -1,6 +1,7 @@
 
 import { supabase } from '../lib/supabase';
 import { v4 as uuidv4 } from 'uuid';
+import { logger } from '../lib/logger';
 
 export interface UploadResult {
     url: string;
@@ -42,7 +43,7 @@ export const uploadService = {
             });
 
         if (error) {
-            console.error('[UploadService] Upload failed:', error);
+            logger.error('[UploadService] Upload failed', { error });
             throw error;
         }
 
