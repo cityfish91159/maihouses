@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+﻿import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { Home, Heart, Phone, MessageCircle, Hash, MapPin, ArrowLeft, Shield, Eye, Users, Calendar, Flame, Star, Lock, ChevronRight, CheckCircle, FileText } from 'lucide-react';
 import { AgentTrustCard } from '../components/AgentTrustCard';
@@ -20,6 +20,7 @@ const usePropertyTracker = (
   const [enterTime] = useState(() => Date.now());
   const actions = useRef({ click_photos: 0, click_line: 0, click_call: 0, scroll_depth: 0 });
   const hasSent = useRef(false);
+  const sendLock = useRef(false);
   const currentGrade = useRef<string>('F');
 
   // 取得或建立 session_id
@@ -54,6 +55,12 @@ const usePropertyTracker = (
   // 發送追蹤事件 (支援 S 級回調)
   const sendEvent = useCallback(async (eventType: string, useBeacon = false) => {
     const payload = buildPayload(eventType);
+
+    if (eventType === 'page_exit') {
+      if (sendLock.current) return;
+      sendLock.current = true;
+      hasSent.current = true;
+    }
 
     // page_exit 或強制使用 beacon (確保離開頁面也能送出)
     if (useBeacon || eventType === 'page_exit') {
@@ -115,18 +122,21 @@ const usePropertyTracker = (
 
     // 離開頁面時發送 page_exit
     const handleUnload = () => {
-      if (!hasSent.current) {
-        hasSent.current = true;
-        sendEvent('page_exit', true);
+      if (hasSent.current) return;
+      sendEvent('page_exit', true);
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        handleUnload();
       }
     };
 
-    window.addEventListener('pagehide', handleUnload);
-    window.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'hidden') handleUnload();
-    });
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('pagehide', handleUnload, { once: true });
 
     return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('pagehide', handleUnload);
       handleUnload();
     };
