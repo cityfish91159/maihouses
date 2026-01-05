@@ -1,5 +1,6 @@
-import { Transaction, Step } from '../hooks/useTrustRoom';
+import { Transaction, Step, StepData } from '../hooks/useTrustRoom';
 import { safeSessionStorage } from '../lib/safeStorage';
+import { logger } from '../lib/logger';
 
 // --- TYPES ---
 // Re-exporting or defining types if needed, but for now we use the ones from hook or define here
@@ -8,7 +9,7 @@ import { safeSessionStorage } from '../lib/safeStorage';
 
 export interface TrustService {
   fetchData: (caseId: string, token: string) => Promise<Transaction | null>;
-  submit: (caseId: string, token: string, step: string, data: any) => Promise<boolean>;
+  submit: (caseId: string, token: string, step: string, data: StepData) => Promise<boolean>;
   confirm: (caseId: string, token: string, step: string, note?: string) => Promise<boolean>;
   payment: (caseId: string, token: string) => Promise<boolean>;
   checklist: (caseId: string, token: string, itemId: string, checked: boolean) => Promise<boolean>;
@@ -54,18 +55,19 @@ export const mockService = {
     return getMockTx(caseId);
   },
 
-  dispatch: async (action: string, caseId: string, role: string, body: any): Promise<{ success: boolean; tx?: Transaction; error?: string }> => {
+  dispatch: async (action: string, caseId: string, role: string, body: Record<string, unknown>): Promise<{ success: boolean; tx?: Transaction; error?: string }> => {
     await new Promise(r => setTimeout(r, 600)); // Simulate delay
     const tx = getMockTx(caseId);
     const newTx = JSON.parse(JSON.stringify(tx)) as Transaction;
-    const stepNum = parseInt(body.step || newTx.currentStep);
+    const stepNum = parseInt(String(body.step ?? newTx.currentStep), 10);
 
     try {
       switch (action) {
         case 'submit':
           if (role !== 'agent') throw new Error("權限不足");
           if (newTx.steps[stepNum]) {
-            newTx.steps[stepNum].data = { ...newTx.steps[stepNum].data, ...body.data };
+            const submitData = body.data as StepData | undefined;
+            newTx.steps[stepNum].data = { ...newTx.steps[stepNum].data, ...submitData };
             newTx.steps[stepNum].agentStatus = 'submitted';
           }
           break;
@@ -74,8 +76,9 @@ export const mockService = {
           if (role !== 'buyer') throw new Error("權限不足");
           if (newTx.steps[stepNum]) {
             newTx.steps[stepNum].buyerStatus = 'confirmed';
-            if (body.note) {
-              newTx.steps[stepNum].data = { ...newTx.steps[stepNum].data, buyerNote: body.note };
+            const noteValue = body.note as string | undefined;
+            if (noteValue) {
+              newTx.steps[stepNum].data = { ...newTx.steps[stepNum].data, buyerNote: noteValue };
             }
           }
 
@@ -116,9 +119,10 @@ export const mockService = {
         case 'checklist':
           const step6 = newTx.steps[6];
           if (step6 && step6.checklist) {
-            const item = step6.checklist.find(i => i.id === body.itemId);
+            const itemId = body.itemId as string;
+            const item = step6.checklist.find(i => i.id === itemId);
             if (item) {
-              item.checked = body.checked;
+              item.checked = Boolean(body.checked);
             }
           }
           break;
@@ -126,7 +130,7 @@ export const mockService = {
         case 'supplement':
           newTx.supplements.push({
             role,
-            content: body.content,
+            content: String(body.content ?? ''),
             timestamp: Date.now()
           });
           break;
@@ -138,15 +142,15 @@ export const mockService = {
       }
       saveMockTx(newTx);
       return { success: true, tx: newTx };
-    } catch (e: any) {
-      return { success: false, error: e.message };
+    } catch (e) {
+      return { success: false, error: e instanceof Error ? e.message : 'Unknown error' };
     }
   }
 };
 
 // --- REAL IMPLEMENTATION ---
 export const realService = {
-  fetchData: async (caseId: string, token: string) => {
+  fetchData: async (caseId: string, _token: string) => {
     try {
       const res = await fetch(`/api/trust/status?id=${caseId}`);
       if (res.ok) {
@@ -156,14 +160,14 @@ export const realService = {
         throw new Error("UNAUTHORIZED");
       }
       return null;
-    } catch (e: any) {
-      if (e.message === "UNAUTHORIZED") throw e;
-      console.error(e);
+    } catch (e) {
+      if (e instanceof Error && e.message === "UNAUTHORIZED") throw e;
+      logger.error('Trust service fetch error', { error: e });
       return null;
     }
   },
 
-  dispatch: async (endpoint: string, caseId: string, token: string, body: any) => {
+  dispatch: async (endpoint: string, caseId: string, _token: string, body: Record<string, unknown>) => {
     try {
       const res = await fetch(`/api/trust/${endpoint}?id=${caseId}`, {
         method: 'POST',
@@ -183,8 +187,8 @@ export const realService = {
       } else {
         return { success: true, tx: d.state || d }; // Some APIs return { success: true, state: ... }
       }
-    } catch (e: any) {
-      return { success: false, error: e.message };
+    } catch (e) {
+      return { success: false, error: e instanceof Error ? e.message : 'Unknown error' };
     }
   }
 };

@@ -59,8 +59,8 @@ export const PropertyEditPage: React.FC = () => {
         setProperty(data);
         setNewCommunityName(data.community_name || '');
         setNewCommunityId(data.community_id || undefined);
-      } catch (e: any) {
-        setError('無法載入物件資料：' + e.message);
+      } catch (e) {
+        setError('無法載入物件資料：' + (e instanceof Error ? e.message : 'Unknown error'));
       } finally {
         setLoading(false);
       }
@@ -99,8 +99,8 @@ export const PropertyEditPage: React.FC = () => {
       navigate(`/property/${publicId}`, {
         state: { message: '社區歸屬已更新！' }
       });
-    } catch (e: any) {
-      setError('儲存失敗：' + e.message);
+    } catch (e) {
+      setError('儲存失敗：' + (e instanceof Error ? e.message : 'Unknown error'));
     } finally {
       setSaving(false);
     }

@@ -57,8 +57,8 @@ export async function optimizePropertyImage(file: File, options: OptimizeOptions
         preserveExif: true,
         fileType: 'image/jpeg' // 確保輸出為 JPEG
       });
-    } catch (error: any) {
-      if (error.name === 'RangeError') {
+    } catch (error) {
+      if (error instanceof Error && error.name === 'RangeError') {
         throw new Error('記憶體不足 (OOM)，請嘗試上傳較小的圖片');
       }
       if (retryCount < 1) {
@@ -107,7 +107,7 @@ export async function optimizePropertyImage(file: File, options: OptimizeOptions
       ratio: compressed.size / originalSize,
       skipped: false,
     };
-  } catch (err: any) {
+  } catch (err) {
     return {
       file,
       originalSize,
@@ -115,7 +115,7 @@ export async function optimizePropertyImage(file: File, options: OptimizeOptions
       ratio: 1,
       skipped: true,
       reason: 'failed',
-      error: err.message || '壓縮失敗'
+      error: err instanceof Error ? err.message : '壓縮失敗'
     };
   }
 }
@@ -147,8 +147,8 @@ export async function optimizeImages(
           if (res.skipped && res.reason === 'under-threshold') skippedCount++;
           optimized.push(res.file);
         }
-      } catch (e: any) {
-        warnings.push(`${file.name}: ${e.message}`);
+      } catch (e) {
+        warnings.push(`${file.name}: ${e instanceof Error ? e.message : 'Unknown error'}`);
       } finally {
         processedCount++;
         options.onProgress?.(Math.round((processedCount / files.length) * 100));
