@@ -1,5 +1,6 @@
 import { Component, ReactNode } from 'react'
 import { trackEvent } from '../services/analytics'
+import { logger } from '../lib/logger'
 
 interface Props { children: ReactNode }
 type State = { hasError: boolean }
@@ -12,7 +13,7 @@ export default class ErrorBoundary extends Component<Props, State> {
   }
   
   override componentDidCatch(err: unknown) {
-    console.error(err)
+    logger.error('[ErrorBoundary] Uncaught error', { error: err })
     try {
       trackEvent('error_boundary', '*', String((err as Error).message || err))
     } catch {}
