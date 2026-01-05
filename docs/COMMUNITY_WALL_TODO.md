@@ -28,7 +28,7 @@
 | **P1** | UAG-5 配置統一重構 | ✅ | 1hr | Frontend | - |
 | **P1** | UAG-6 page_exit 去重 | ✅ | 1hr | Frontend |
 | **P1** | UAG-7 地圖點擊追蹤 | ✅ | 0.5hr | Frontend |
-| **P1** | UAG-8 自動刷新設定 | ⬜ | 1hr | DevOps |
+| **P1** | UAG-8 自動刷新設定 | ✅ | 1hr | DevOps |
 | **P2** | HEADER-1 Logo 紅點設計 | ⬜ | 1hr | Design |
 | **P2** | HEADER-2 導航優化 | ⬜ | 2hr | Frontend |
 | **P2** | UI-1 首頁主色統一 | ⬜ | 2hr | Design |
@@ -750,7 +750,19 @@ trackCallClick: () => {
 
 ---
 
-### UAG-8: 自動刷新設定 ⬜
+### UAG-8: 自動刷新設定 ✅
+
+**完成日期**: 2026-01-05
+**Migration**: `supabase/migrations/20260105_uag_8_pg_cron_setup.sql`
+
+**實作內容**:
+- ✅ 依賴檢查 (pg_cron extension, uag_lead_rankings, archive_old_history)
+- ✅ `refresh-uag-rankings` Job: 每 5 分鐘刷新物化視圖
+- ✅ `archive-uag-events` Job: 每小時執行歸檔
+- ✅ `log-uag-stats` Job: 每天午夜記錄歸檔統計
+- ✅ `uag_archive_log` 表 + UNIQUE INDEX
+
+**前置條件**: 需在 Supabase Dashboard 啟用 `pg_cron` extension
 
 **問題 1**：`uag_lead_rankings` 物化視圖需手動 `REFRESH`
 **問題 2**：`archive_old_history()` 需手動觸發
