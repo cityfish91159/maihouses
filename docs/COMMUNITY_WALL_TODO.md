@@ -898,135 +898,23 @@ SELECT MAX(last_active) FROM uag_lead_rankings;
 
 ---
 
-### HEADER-2: 導航優化 ⬜
+### HEADER-2: UAG 頁面 Header 優化 ⬜
 
-**需求**：優化 Header 導航設計，確保用戶流暢進入 UAG 和其他頁面
+**需求**：優化 UAG 頁面的 Header 設計
+
+> ⚠️ **任務調整**：桌面版 UAG 入口已透過首頁膠囊提供，無需在主導航新增。本任務僅優化 UAG 頁面內的 Header。
 
 **當前狀態**：
-- Desktop: 房地產列表、登入、註冊
-- Mobile: 漢堡選單 + 登入/註冊按鈕
-- 房仲專區（UAG）在漢堡選單內（僅手機版）
+- UAG 頁面使用獨立的 `UAGHeader` 組件
+- 位置：`src/pages/UAG/components/UAGHeader.tsx`
 
-**位置**：`src/components/Header/Header.tsx`
+**優化項目**：
+1. 統一 Header 視覺風格與主站一致
+2. 加入返回首頁連結
+3. 顯示用戶資訊（已登入時）
 
-**問題分析**：
-1. **桌面版沒有 UAG 入口**：用戶需點擊首頁膠囊才能進入
-2. **導航層級不清晰**：房仲專區應與房地產列表同級
-3. **缺少視覺引導**：UAG 是核心功能，應有突出設計
-
-**修復方案**：
-
-#### 2.1 桌面版新增 UAG 入口
-```tsx
-// src/components/Header/Header.tsx:40-57
-
-{/* Desktop Nav - 桌面版 */}
-<nav className="hidden items-center gap-1 md:flex md:gap-2" aria-label="主要動作">
-  {/* Column 1: List */}
-  <a href={ROUTES.PROPERTY_LIST} className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-[15px] font-bold text-brand-700 transition-all hover:bg-brand-50/80 hover:text-brand-600 active:scale-[0.98]">
-    <List size={18} strokeWidth={2.5} className="opacity-80" />
-    <span>房地產列表</span>
-  </a>
-
-  {/* ✅ 新增：Column 2: UAG */}
-  <a
-    href={ROUTES.UAG}
-    target="_blank"
-    rel="noopener noreferrer"
-    className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-[15px] font-bold text-brand-700 transition-all hover:bg-brand-50/80 hover:text-brand-600 active:scale-[0.98]"
-  >
-    <svg className="size-[18px] opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-      <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
-      <line x1="8" y1="21" x2="16" y2="21"/>
-      <line x1="12" y1="17" x2="12" y2="21"/>
-    </svg>
-    <span>房仲專區</span>
-    {/* ✅ 新標籤 */}
-    <span className="ml-1 rounded-full bg-red-500 px-2 py-0.5 text-[10px] font-black text-white">NEW</span>
-  </a>
-
-  {/* Column 3: Login */}
-  <a href={`${ROUTES.AUTH}?mode=login`} className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-[15px] font-bold text-brand-700 transition-all hover:bg-brand-50/80 hover:text-brand-600 active:scale-[0.98]">
-    <LogIn size={18} strokeWidth={2.5} className="opacity-80" />
-    <span>登入</span>
-  </a>
-
-  {/* Column 4: Register (CTA) */}
-  <a href={`${ROUTES.AUTH}?mode=signup`} className="ml-1 flex items-center gap-2 rounded-xl border border-transparent bg-brand-700 px-5 py-2.5 text-[15px] font-bold text-white shadow-md shadow-brand-700/10 transition-all hover:-translate-y-0.5 hover:bg-brand-600 hover:shadow-lg hover:shadow-brand-700/20 active:scale-[0.98]">
-    <UserPlus size={18} strokeWidth={2.5} />
-    <span>免費註冊</span>
-  </a>
-</nav>
-```
-
-#### 2.2 手機版優化順序
-```tsx
-// src/components/Header/Header.tsx:90-129
-
-{/* Mobile Dropdown Menu - 手機版下拉選單 */}
-{mobileMenuOpen && (
-  <div className="absolute inset-x-0 top-full border-b border-brand-100 bg-white shadow-lg md:hidden">
-    <nav className="mx-auto max-w-[1120px] px-4 py-3">
-
-      {/* ✅ 優先顯示：房地產列表 */}
-      <a
-        href={ROUTES.PROPERTY_LIST}
-        className="flex items-center gap-3 rounded-xl px-4 py-3 text-[15px] font-bold text-brand-700 transition-all hover:bg-brand-50"
-        onClick={() => setMobileMenuOpen(false)}
-      >
-        <List size={20} strokeWidth={2.5} className="opacity-80" />
-        <span>房地產列表</span>
-      </a>
-
-      {/* ✅ 其次：房仲專區（NEW 標籤） */}
-      <a
-        href={ROUTES.UAG}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="flex items-center justify-between rounded-xl px-4 py-3 text-[15px] font-bold text-brand-700 transition-all hover:bg-brand-50"
-        onClick={() => setMobileMenuOpen(false)}
-      >
-        <div className="flex items-center gap-3">
-          <svg className="size-5 opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-            <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
-            <line x1="8" y1="21" x2="16" y2="21"/>
-            <line x1="12" y1="17" x2="12" y2="21"/>
-          </svg>
-          <span>房仲專區</span>
-        </div>
-        <span className="rounded-full bg-red-500 px-2 py-0.5 text-[10px] font-black text-white">NEW</span>
-      </a>
-
-      {/* 第三：社區評價 */}
-      <a
-        href={ROUTES.COMMUNITY_WALL_MVP}
-        className="flex items-center gap-3 rounded-xl px-4 py-3 text-[15px] font-bold text-brand-700 transition-all hover:bg-brand-50"
-        onClick={() => setMobileMenuOpen(false)}
-      >
-        <svg className="size-5 opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-          <circle cx="9" cy="7" r="4"/>
-          <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-          <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-        </svg>
-        <span>社區評價</span>
-      </a>
-
-    </nav>
-  </div>
-)}
-```
-
-**驗收標準**：
-- [x] 桌面版顯示 UAG 入口
-- [x] UAG 有 NEW 標籤
-- [x] 手機版選單順序優化
-- [x] 所有連結正常運作
-- [x] target="_blank" 正確設定
-- [x] 響應式設計正常
-
-**預估工時**: 2hr
-**優先級**: P2（提升用戶體驗）
+**預估工時**: 1hr
+**優先級**: P2（視覺一致性）
 
 ---
 
