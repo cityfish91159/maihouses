@@ -1,5 +1,7 @@
+import { logger } from '../lib/logger';
+
 // 簡易埋點（事件命名更貼近用戶語意）
-export async function track(event: string, payload?: Record<string, any>) {
+export async function track(event: string, payload?: Record<string, unknown>) {
   try {
     await fetch('/api/analytics', {
       method: 'POST',
@@ -7,9 +9,9 @@ export async function track(event: string, payload?: Record<string, any>) {
       body: JSON.stringify({ event, ...payload }),
       keepalive: true
     });
-    console.debug("[track]", event, payload || {});
+    logger.debug('[track]', { event, payload: payload || {} });
   } catch (err) {
-    console.error('[Analytics] Track failed:', err);
+    logger.error('[Analytics] Track failed', { error: err });
   }
 }
 export const Events = {
