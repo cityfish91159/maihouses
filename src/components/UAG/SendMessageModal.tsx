@@ -68,19 +68,34 @@ export function SendMessageModal({
   const handleSend = useCallback(async () => {
     if (!message.trim() || isSending) return;
 
+    // [UAG-13 FIX] 驗證 conversationId 格式 (防禦性編程)
+    let validConversationId = conversationId;
+    if (conversationId) {
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (!uuidRegex.test(conversationId)) {
+        logger.warn('[SendMessageModal] Invalid conversationId format, fallback to create flow', {
+          invalidId: conversationId,
+          leadId: lead.id
+        });
+        validConversationId = undefined; // 強制走建立流程
+      }
+    }
+
     setIsSending(true);
     try {
       let result;
       // UAG-13: 如果已經有 conversationId，直接發送訊息 (Skip Create)
-      if (conversationId) {
+      if (validConversationId) {
+        // Type narrowing: 在 if 塊內確保是 string
+        const safeConversationId: string = validConversationId;
         const msg = await messagingService.sendMessage({
-          conversation_id: conversationId,
+          conversation_id: safeConversationId,
           sender_type: 'agent',
           sender_id: agentId,
           content: message.trim(),
         });
         // 構造與 createConversationAndSendMessage 相同的回傳格式供後續跳轉使用
-        result = { conversation: { id: conversationId }, message: msg };
+        result = { conversation: { id: safeConversationId }, message: msg };
       } else {
         // Fallback: 既有邏輯 (建立 + 發送)
         result = await messagingService.createConversationAndSendMessage(
@@ -98,9 +113,11 @@ export function SendMessageModal({
 
       notify.success(S.SUCCESS, S.SUCCESS_DESC);
       onClose();
-      
+
       // MSG-5 FIX 4: 使用 ROUTES.CHAT 確保路徑正確 (/maihouses/chat/...)
-      navigate(ROUTES.CHAT(result.conversation.id));
+      if (result?.conversation?.id) {
+        navigate(ROUTES.CHAT(result.conversation.id));
+      }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : '請稍後再試';
       logger.error('[SendMessageModal] Failed to send message', { error: errorMessage });
@@ -108,7 +125,7 @@ export function SendMessageModal({
     } finally {
       setIsSending(false);
     }
-  }, [message, isSending, agentId, sessionId, propertyId, onClose, navigate]);
+  }, [message, isSending, agentId, sessionId, propertyId, onClose, navigate, conversationId, lead.id]);
 
   const handleLater = useCallback(() => {
     onClose();

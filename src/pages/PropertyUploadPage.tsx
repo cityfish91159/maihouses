@@ -56,9 +56,11 @@ const PropertyUploadContent: React.FC = () => {
   const thinkingDelayTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    // 檢查是否有草稿可用
-    setDraftAvailable(hasDraft());
-    setDraftPreview(getDraftPreview());
+    // 延遲檢查草稿狀態，避免同步級聯渲染
+    const timer = setTimeout(() => {
+      setDraftAvailable(hasDraft());
+      setDraftPreview(getDraftPreview());
+    }, 0);
 
     const onStorage = (event: StorageEvent) => {
       if (event.key && event.key.startsWith('mh_draft_upload')) {
@@ -67,7 +69,10 @@ const PropertyUploadContent: React.FC = () => {
       }
     };
     window.addEventListener('storage', onStorage);
-    return () => window.removeEventListener('storage', onStorage);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('storage', onStorage);
+    };
   }, [userId]);
 
   // OPT-2: 組件卸載時清理所有 Timer (防止 SPA 靈異滾動/匯入)

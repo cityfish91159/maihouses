@@ -23,11 +23,23 @@ export default function MascotMaiMai({ isThinking = false, isSuccess = false, ha
   const [successFlash, setSuccessFlash] = useState(false);
 
   // 問答成功時短暫 excited + 撒花
+  // 使用 setTimeout(0) 延遲 setState，避免同步級聯渲染
   useEffect(() => {
     if (!isSuccess) return;
-    setSuccessFlash(true);
-    const timer = setTimeout(() => setSuccessFlash(false), 1800);
-    return () => clearTimeout(timer);
+
+    let mounted = true;
+    const startTimer = setTimeout(() => {
+      if (mounted) setSuccessFlash(true);
+    }, 0);
+    const endTimer = setTimeout(() => {
+      if (mounted) setSuccessFlash(false);
+    }, 1800);
+
+    return () => {
+      mounted = false;
+      clearTimeout(startTimer);
+      clearTimeout(endTimer);
+    };
   }, [isSuccess]);
 
   // 心情狀態機：輸入/請求 → thinking；成功 → excited/celebrate；錯誤 → shy

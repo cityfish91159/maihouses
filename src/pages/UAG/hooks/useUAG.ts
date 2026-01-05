@@ -33,7 +33,7 @@ function getInitialMockMode(): boolean {
 export interface BuyLeadResult {
   success: boolean;
   lead?: Lead;
-  conversation_id?: string; // UAG-13 [NEW]
+  conversation_id?: string | undefined; // UAG-13 [NEW] - 明確允許 undefined (exactOptionalPropertyTypes)
   error?: string;
 }
 
@@ -206,10 +206,11 @@ export function useUAG() {
             purchased_at: new Date().toISOString(),
           };
 
-          resolve({ 
-            success: true, 
+          resolve({
+            success: true,
             lead: updatedLead,
-            ...(result?.conversation_id && { conversation_id: result.conversation_id }), // UAG-13 [NEW]
+            // [UAG-13 FIX] 明確賦值，避免 conditional spreading 的型別模糊
+            conversation_id: result?.conversation_id,
           });
         },
         onError: (err) => {

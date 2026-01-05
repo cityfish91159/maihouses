@@ -7,7 +7,7 @@
  * 3. 地址模糊比對
  */
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '../../lib/supabase';
 import { Building2, Search, Plus, Check, Loader2, Home } from 'lucide-react';
 import { computeAddressFingerprint } from '../../utils/address';
@@ -48,7 +48,7 @@ export function CommunityPicker({ value, address, onChange, className = '', requ
   };
 
   // 搜尋社區（含 race condition 防護）
-  const searchCommunities = async (term: string, addr: string) => {
+  const searchCommunities = useCallback(async (term: string, addr: string) => {
     if (!term && !addr) {
       setSuggestions([]);
       return;
@@ -119,7 +119,7 @@ export function CommunityPicker({ value, address, onChange, className = '', requ
         setLoading(false);
       }
     }
-  };
+  }, []);
 
   // Debounce 搜尋
   useEffect(() => {
@@ -127,7 +127,7 @@ export function CommunityPicker({ value, address, onChange, className = '', requ
       searchCommunities(searchTerm, address);
     }, 300);
     return () => clearTimeout(timer);
-  }, [searchTerm, address]);
+  }, [searchTerm, address, searchCommunities]);
 
   // 清理 AbortController
   useEffect(() => {

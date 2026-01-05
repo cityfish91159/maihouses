@@ -61,12 +61,16 @@ export function usePropertyDraft(
     flag.current = true;
     notify.warning(title, description);
   }, []);
-  if (!tabIdRef.current) {
-    const hasCrypto = typeof globalThis !== 'undefined' && typeof globalThis.crypto !== 'undefined';
-    tabIdRef.current = hasCrypto && globalThis.crypto.randomUUID
-      ? globalThis.crypto.randomUUID()
-      : Math.random().toString(36).slice(2);
-  }
+
+  // 初始化 tabId（使用 useEffect 避免在 render 期間調用不純函數）
+  useEffect(() => {
+    if (!tabIdRef.current) {
+      const hasCrypto = typeof globalThis !== 'undefined' && typeof globalThis.crypto !== 'undefined';
+      tabIdRef.current = hasCrypto && globalThis.crypto.randomUUID
+        ? globalThis.crypto.randomUUID()
+        : Math.random().toString(36).slice(2);
+    }
+  }, []);
 
   const draftKey = useMemo(() => {
     const keyUser = userId ? userId : 'anonymous';
