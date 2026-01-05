@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { Phone, Eye, DollarSign, FileText, Home, ChevronRight, RefreshCw, Plus, Check, AlertCircle, Zap } from 'lucide-react';
 import styles from '../UAG.module.css';
+import { logger } from '../../../lib/logger';
 
 // ==================== Types ====================
 interface TrustCase {
@@ -139,7 +140,7 @@ export default function TrustFlow() {
         }
       }
     } catch (e) {
-      console.error('Failed to load cases:', e);
+      logger.error('[TrustFlow] Failed to load cases', { error: e });
     } finally {
       setLoading(false);
     }

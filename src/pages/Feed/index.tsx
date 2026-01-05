@@ -12,6 +12,7 @@ import { supabase } from '../../lib/supabase';
 import Consumer from './Consumer';
 import Agent from './Agent';
 import { RoleToggle } from '../../components/Feed/RoleToggle';
+import { logger } from '../../lib/logger';
 
 type Role = 'agent' | 'member' | 'guest';
 
@@ -55,7 +56,7 @@ export default function Feed() {
         if (error) throw error;
         setRole((data?.role as Role) || 'member');
       } catch (err) {
-        console.error('[Feed] Failed to fetch role:', err);
+        logger.error('[Feed] Failed to fetch role', { error: err });
         setRole('member');
       } finally {
         setLoading(false);

@@ -168,7 +168,7 @@ export function useConsumer(userId?: string, forceMock?: boolean) {
 
     const handleReply = useCallback((postId: string | number) => {
         if (import.meta.env.DEV) {
-            console.debug('[Consumer] Reply toggled for post:', postId);
+            logger.debug('[Consumer] Reply toggled for post', { postId });
         }
         // 測試期望：reply 為 no-op，不彈出通知
     }, []);
