@@ -7,6 +7,7 @@ import { ContactModal } from '../components/ContactModal';
 import { ReportGenerator } from './Report';
 import { LineShareAction } from '../components/social/LineShareAction';
 import { buildKeyCapsuleTags, formatArea, formatLayout, formatFloor } from '../utils/keyCapsules';
+import { track } from '../analytics/track';
 
 // UAG Tracker Hook v8.1 - 追蹤用戶行為 + S級攔截
 // 優化: 1.修正district傳遞 2.S級即時回調 3.互動事件用fetch獲取等級
@@ -56,10 +57,19 @@ const usePropertyTracker = (
   const sendEvent = useCallback(async (eventType: string, useBeacon = false) => {
     const payload = buildPayload(eventType);
 
+    // UAG-6 修復: page_exit 去重邏輯（單一檢查點，鎖在第一時間）
     if (eventType === 'page_exit') {
-      if (sendLock.current) return;
-      sendLock.current = true;
+      if (sendLock.current) {
+        console.log('[UAG-6] 🛑 已阻擋重複的 page_exit');
+        // UAG-6 建議4: 監控去重效果
+        track('uag.page_exit_dedupe_blocked', { property_id: propertyId });
+        return;
+      }
+      sendLock.current = true;  // ✅ 在任何異步操作前鎖住
       hasSent.current = true;
+      console.log('[UAG-6] ✅ 正在發送 page_exit');
+      // UAG-6 建議4: 監控發送成功
+      track('uag.page_exit_sent', { property_id: propertyId });
     }
 
     // page_exit 或強制使用 beacon (確保離開頁面也能送出)
@@ -98,7 +108,7 @@ const usePropertyTracker = (
       const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
       navigator.sendBeacon('/api/uag-track', blob);
     }
-  }, [buildPayload, onGradeUpgrade]);
+  }, [buildPayload, onGradeUpgrade, propertyId]);
 
   // 追蹤滾動深度
   useEffect(() => {
@@ -121,14 +131,16 @@ const usePropertyTracker = (
     sendEvent('page_view', true);
 
     // 離開頁面時發送 page_exit
+    // UAG-6 修復: 移除外層檢查，讓 sendEvent 統一處理鎖機制
     const handleUnload = () => {
-      if (hasSent.current) return;
       sendEvent('page_exit', true);
     };
 
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'hidden') {
         handleUnload();
+        // UAG-6 建議2: 發送後移除監聽器，避免重複觸發
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
       }
     };
 
@@ -138,7 +150,10 @@ const usePropertyTracker = (
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('pagehide', handleUnload);
-      handleUnload();
+      // UAG-6 修復: 只在未發送過 page_exit 時才發送（避免重複）
+      if (!hasSent.current) {
+        handleUnload();
+      }
     };
   }, [propertyId, sendEvent]);
 
