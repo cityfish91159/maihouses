@@ -12,6 +12,7 @@ import { safeLocalStorage } from '../lib/safeStorage';
 import { useCommunityWall } from './useCommunityWallQuery';
 import { supabase } from '../lib/supabase';
 import { mhEnv } from '../lib/mhEnv';
+import { logger } from '../lib/logger';
 import type { CommunityWallData } from '../services/communityService';
 import type { CommunityInfo, Post, Review, Question, Role } from '../pages/Community/types';
 import { MOCK_DATA, createMockPost, createMockQuestion, createMockAnswer } from '../pages/Community/mockData';
@@ -86,7 +87,7 @@ const loadPersistedMockState = (fallback: UnifiedWallData): UnifiedWallData => {
     const parsed = JSON.parse(raw);
     return mergeMockState(fallback, parsed);
   } catch (err) {
-    console.error('Failed to load community wall mock state', err);
+    logger.error('[useCommunityWallData] Failed to load mock state', { error: err });
     return fallback;
   }
 };
@@ -95,7 +96,7 @@ const saveMockState = (data: UnifiedWallData) => {
   try {
     safeLocalStorage.setItem(MOCK_DATA_STORAGE_KEY, JSON.stringify(data));
   } catch (err) {
-    console.error('Failed to persist community wall mock state', err);
+    logger.error('[useCommunityWallData] Failed to persist mock state', { error: err });
   }
 };
 
@@ -185,7 +186,7 @@ export function useCommunityWallData(
       } catch (err) {
         // 未登入或取得失敗，維持 undefined
         if (import.meta.env.DEV) {
-          console.warn('[useCommunityWallData] 無法取得使用者 ID:', err);
+          logger.warn('[useCommunityWallData] 無法取得使用者 ID', { error: err });
         }
       }
     };
