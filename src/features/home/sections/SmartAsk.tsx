@@ -4,6 +4,7 @@ import { postLLM, setJustChatMode } from '../../../services/ai';
 import MascotInteractive from '../../../components/MascotInteractive';
 import ChatMessage from '../components/ChatMessage';
 import { safeLocalStorage } from '../../../lib/safeStorage';
+import { logger } from '../../../lib/logger';
 import {
     QUICK_TAGS_LIFESTYLE,
     QUICK_TAGS_EXPLORE,
@@ -145,7 +146,7 @@ export default function SmartAsk() {
             void fullResponse; // 使用變數避免 lint 警告
             setStatus('success');
         } catch (e) {
-            console.error(e);
+            logger.error('[SmartAsk] Chat error', { error: e });
             setMessages(prev => {
                 const newMsgs = [...prev];
                 const last = newMsgs.at(-1);
@@ -232,7 +233,7 @@ export default function SmartAsk() {
                     role="log"
                     aria-live="polite"
                 >
-                    <div className="flex flex-shrink-0 justify-center pt-16">
+                    <div className="flex shrink-0 justify-center pt-16">
                         <MascotInteractive
                             size="lg"
                             messages={messages.map(m => m.content)}

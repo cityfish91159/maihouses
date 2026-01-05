@@ -7,6 +7,7 @@
 
 import { useState, useCallback, useMemo } from 'react';
 import { checkContent, ContentCheckResult } from '../utils/contentCheck';
+import { logger } from '../lib/logger';
 
 // 驗證規則配置
 export const VALIDATION_RULES = {
@@ -155,12 +156,12 @@ export async function validateImageAsync(file: File): Promise<ImageValidationRes
     if (!isJpeg && !isPng && !isRiff) {
        // 寬容模式：若無法識別但不確定是惡意，暫時放行但記錄警告
        // 嚴格模式應 return valid: false
-       console.warn(`Unknown file header: ${header} for ${file.name}`);
+       logger.warn('[validateImageMagicBytes] Unknown file header', { header, fileName: file.name });
     }
     
     return { valid: true, file };
   } catch (e) {
-    console.error('Magic bytes check failed:', e);
+    logger.error('[validateImageMagicBytes] Magic bytes check failed', { error: e });
     return { valid: false, file, error: '檔案讀取失敗' };
   }
 }
