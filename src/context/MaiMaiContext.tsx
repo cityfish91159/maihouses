@@ -1,6 +1,7 @@
 import React, { createContext, useCallback, useContext, useMemo, useState } from 'react';
 import type { MaiMaiMood } from '../components/MaiMai/types';
 import { safeLocalStorage } from '../lib/safeStorage';
+import { logger } from '../lib/logger';
 
 /**
  * MaiMai 全站統一狀態管理
@@ -65,7 +66,7 @@ export const MaiMaiProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     try {
       safeLocalStorage.setItem(STORAGE_KEY_MOOD, newMood);
     } catch (e) {
-      console.warn('Failed to save mood:', e);
+      logger.warn('[MaiMaiContext] Failed to save mood', { error: e });
     }
   }, []);
 
@@ -79,7 +80,7 @@ export const MaiMaiProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       try {
         safeLocalStorage.setItem(STORAGE_KEY_MESSAGES, JSON.stringify(updated));
       } catch (e) {
-        console.warn('Failed to save messages:', e);
+        logger.warn('[MaiMaiContext] Failed to save messages', { error: e });
       }
       return updated;
     });
@@ -91,7 +92,7 @@ export const MaiMaiProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     try {
       safeLocalStorage.setItem(STORAGE_KEY_MESSAGES, JSON.stringify([]));
     } catch (e) {
-      console.warn('Failed to reset messages:', e);
+      logger.warn('[MaiMaiContext] Failed to reset messages', { error: e });
     }
   }, []);
 
