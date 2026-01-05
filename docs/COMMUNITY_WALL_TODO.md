@@ -883,14 +883,15 @@ SELECT MAX(last_active) FROM uag_lead_rankings;
 
 ### HEADER-1: Logo 紅點設計 ✅
 
-**修復檔案**: src/components/Header/Header.tsx
+**修復檔案**: `src/components/Header/Header.tsx`
 
-**施作重點**:
-- Header 的 Logo 明確傳入 showBadge={true}，確保首頁紅點一致顯示
+**施作過程摘要**:
+- 在 Header 的 `Logo` 明確加入 `showBadge={true}`，避免依賴預設值
+- 紅點樣式沿用 `Logo.tsx` 既有設計，維持首頁一致性
+- 首頁渲染路徑：`src/pages/Home.tsx` → `src/components/Header/Header.tsx` → `src/components/Logo/Logo.tsx`
 
 **驗證結果**:
-- 
-pm run typecheck - 通過
+- `npm run typecheck` - 通過
 
 **預估工時**: 1hr
 **優先級**: P2（視覺一致性）
