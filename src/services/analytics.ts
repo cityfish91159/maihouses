@@ -20,7 +20,7 @@ declare global {
   var __UAG__: { queue: Uag[]; timer?: number; backoff: number; attempts: number } | undefined
 }
 
-const _global = (typeof globalThis !== 'undefined' ? globalThis : typeof window !== 'undefined' ? window : typeof self !== 'undefined' ? self : {}) as any;
+const _global = (typeof globalThis !== 'undefined' ? globalThis : typeof window !== 'undefined' ? window : typeof self !== 'undefined' ? self : {}) as typeof globalThis & { __UAG__?: { queue: Uag[]; timer?: number; backoff: number; attempts: number } };
 const G = _global.__UAG__ || (_global.__UAG__ = { queue: [], backoff: 10000, attempts: 0 });
 
 try {
@@ -53,7 +53,8 @@ async function flush(batch: Uag[]) {
     G.backoff = 10000
   } else {
     G.attempts++
-    const ra = (r as any)?.data?.retryAfterMs
+    const responseData = r as { data?: { retryAfterMs?: number } };
+    const ra = responseData.data?.retryAfterMs;
     G.backoff = Math.min(ra ?? (G.backoff * 2), MAX)
   }
 }

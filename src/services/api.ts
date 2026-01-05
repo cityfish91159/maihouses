@@ -57,9 +57,9 @@ export async function apiFetch<T = unknown>(endpoint: string, options: RequestIn
     const data = await res.json()
     return { ok: true, data }
   } catch (e) {
-    if ((e as any)?.name === 'AbortError')
+    if (e instanceof Error && e.name === 'AbortError')
       return { ok: false, error: { code: 'NETWORK_TIMEOUT', message: '請求超時' } }
-    return { ok: false, error: { code: 'NETWORK_ERROR', message: (e as Error).message } }
+    return { ok: false, error: { code: 'NETWORK_ERROR', message: e instanceof Error ? e.message : 'Network error' } }
   } finally {
     clearTimeout(id)
   }
