@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { notify } from '../../lib/notify';
 import { STRINGS } from '../../constants/strings';
 import { Image, X } from 'lucide-react';
+import { logger } from '../../lib/logger';
 
 interface InlineComposerProps {
     onSubmit: (content: string, images?: File[]) => Promise<void>;
@@ -86,7 +87,7 @@ export function InlineComposer({
             if (fileInputRef.current) fileInputRef.current.value = '';
             notify.success(STRINGS.COMPOSER.SUCCESS);
         } catch (err) {
-            console.error('Failed to create post', err);
+            logger.error('[InlineComposer] Failed to create post', { error: err });
             notify.error(STRINGS.COMPOSER.ERROR_TITLE);
         } finally {
             setIsSubmitting(false);

@@ -1,4 +1,5 @@
 import { Component, ErrorInfo, ReactNode } from 'react';
+import { logger } from '../../lib/logger';
 
 interface Props {
     children: ReactNode;
@@ -18,7 +19,7 @@ export class FeedErrorBoundary extends Component<Props, State> {
     }
 
     public override componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-        console.error('Uncaught error:', error, errorInfo);
+        logger.error('[FeedErrorBoundary] Uncaught error', { error, errorInfo });
     }
 
     public override render() {
