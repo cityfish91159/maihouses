@@ -1,10 +1,12 @@
 /**
  * Safe Storage Wrapper
- * 
- * iOS Safari in Private Mode (and some other restrictive environments) 
+ *
+ * iOS Safari in Private Mode (and some other restrictive environments)
  * throws a "SecurityError" when accessing localStorage/sessionStorage.
  * This wrapper catches these errors to prevent the app from crashing.
  */
+
+import { logger } from './logger';
 
 const noopStorage = {
     getItem: (_key: string) => null,
@@ -52,7 +54,7 @@ export const storage = {
         try {
             safeLocalStorage.setItem(key, value);
         } catch (e) {
-            console.warn('Storage setItem failed:', e);
+            logger.warn('[safeStorage] Storage setItem failed', { error: e });
         }
     },
     remove: (key: string) => safeLocalStorage.removeItem(key),

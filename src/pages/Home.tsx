@@ -9,6 +9,7 @@ import { trackEvent } from '../services/analytics'
 import type { AppConfig, RuntimeOverrides } from '../app/config'
 import { WarmWelcomeBar } from '../components/WarmWelcomeBar'
 import { cmp } from '../lib/utils'
+import { logger } from '../lib/logger'
 
 export default function Home({ config }: { readonly config: AppConfig & RuntimeOverrides }) {
   const [banner, setBanner] = useState<string | null>(null)
@@ -17,7 +18,7 @@ export default function Home({ config }: { readonly config: AppConfig & RuntimeO
     getMeta().then((r) => {
       if (r.ok && r.data) {
         if (r.data.maintenance || cmp(r.data.backendVersion, config.minBackend) < 0) {
-          console.warn('版本不相容或維護中')
+          logger.warn('[Home] 版本不相容或維護中')
           setBanner('版本不相容或維護中')
         }
       }

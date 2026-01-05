@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import type { TrustRoomView, TrustStep, ConfirmResult } from '../types/trust.types';
 import { STEP_ICONS, STEP_DESCRIPTIONS } from '../types/trust.types';
+import { logger } from '../lib/logger';
 
 const COLORS = {
     primary: '#1749D7', primaryLight: '#EBF0FF', success: '#10B981', successLight: '#D1FAE5',
@@ -54,7 +55,7 @@ export default function TrustRoom() {
             setData(result[0] as TrustRoomView);
             setError(null);
         } catch (err) {
-            console.error('載入失敗:', err);
+            logger.error('[TrustRoom] 載入失敗', { error: err });
             setError('載入失敗，請稍後再試');
         } finally {
             setLoading(false);
@@ -108,7 +109,7 @@ export default function TrustRoom() {
                 showMessage('error', result?.error || '確認失敗');
             }
         } catch (err) {
-            console.error('確認失敗:', err);
+            logger.error('[TrustRoom] 確認失敗', { error: err });
             setData(oldData);
             showMessage('error', '確認失敗，請稍後再試');
         } finally {
