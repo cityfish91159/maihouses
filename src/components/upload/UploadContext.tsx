@@ -6,6 +6,7 @@ import { notify } from '../../lib/notify';
 import { supabase } from '../../lib/supabase';
 import { optimizeImages } from '../../services/imageService';
 import { safeLocalStorage } from '../../lib/safeStorage';
+import { logger } from '../../lib/logger';
 import {
   uploadReducer,
   createInitialState,
@@ -124,9 +125,13 @@ export const UploadFormProvider: React.FC<{ children: ReactNode }> = ({ children
   // ============================================================
   // Object URL Cleanup on Unmount
   // ============================================================
+  // 使用 ref 追蹤需要清理的 URL，避免 closure 問題
+  const managedImagesRef = useRef(state.managedImages);
+  managedImagesRef.current = state.managedImages;
+
   useEffect(() => {
     return () => {
-      state.managedImages.forEach(img => URL.revokeObjectURL(img.previewUrl));
+      managedImagesRef.current.forEach(img => URL.revokeObjectURL(img.previewUrl));
     };
   }, []);
 
@@ -302,7 +307,7 @@ export const UploadFormProvider: React.FC<{ children: ReactNode }> = ({ children
     // 檢查：排序後的第一張圖是否標記為封面
     // 如果沒有封面，這是 Validation Error，應告知用戶而非偷偷修改
     if (sortedImages.length > 0 && sortedImages[0]?.isCover !== true) {
-      console.error('[UP-3.D] Validation Failed: No cover image selected.');
+      logger.error('[UP-3.D] Validation Failed: No cover image selected.');
       // MVP: 阻擋上傳並通知用戶 (避免靜默失敗)
       if (typeof window !== 'undefined') {
         window.alert('系統偵測到封面設定異常，請重新整理頁面或重新選擇封面。');
@@ -313,7 +318,9 @@ export const UploadFormProvider: React.FC<{ children: ReactNode }> = ({ children
     // Dev Assertion
     if (process.env.NODE_ENV !== 'production') {
       const isHealthy = sortedImages.length === 0 || sortedImages[0]?.isCover === true;
-      console.assert(isHealthy, '[UP-3.D] Invariant Violation: Cover image missing at index 0');
+      if (!isHealthy) {
+        logger.error('[UP-3.D] Invariant Violation: Cover image missing at index 0');
+      }
     }
 
     const filesToUpload = sortedImages.map(img => img.file);
