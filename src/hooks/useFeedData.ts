@@ -28,6 +28,7 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { mhEnv } from '../lib/mhEnv';
 import { safeLocalStorage } from '../lib/safeStorage';
+import { logger } from '../lib/logger';
 import { supabase } from '../lib/supabase';
 import type { Post, Role } from '../types/community';
 import { useAuth } from './useAuth';
@@ -195,7 +196,7 @@ const loadPersistedFeedMockState = (fallback: UnifiedFeedData): UnifiedFeedData 
       sidebarData: deriveSidebarData(posts),
     };
   } catch (err) {
-    console.error('[useFeedData] Failed to load mock state', err);
+    logger.error('[useFeedData] Failed to load mock state', { error: err });
     return fallback;
   }
 };
@@ -204,7 +205,7 @@ const saveFeedMockState = (data: UnifiedFeedData): void => {
   try {
     safeLocalStorage.setItem(FEED_MOCK_STORAGE_KEY, JSON.stringify(data));
   } catch (err) {
-    console.error('[useFeedData] Failed to persist mock state', err);
+    logger.error('[useFeedData] Failed to persist mock state', { error: err });
   }
 };
 
@@ -222,7 +223,7 @@ const buildProfileMap = async (authorIds: string[]): Promise<Map<string, Profile
     .in('id', uncached);
 
   if (error) {
-    console.error('[useFeedData] Fetch profiles failed', error);
+    logger.error('[useFeedData] Fetch profiles failed', { error });
     return cached;
   }
 
@@ -494,7 +495,7 @@ export function useFeedData(
       const error = err instanceof Error ? err : new Error('載入信息流失敗');
       setApiError(error);
       if (import.meta.env.DEV) {
-        console.error('[useFeedData] API error:', err);
+        logger.error('[useFeedData] API error', { error: err });
       }
     } finally {
       setApiLoading(false);
@@ -696,7 +697,7 @@ export function useFeedData(
 
     const resolvedCommunityId = communityId ?? options.communityId;
     if (resolvedCommunityId && !isValidCommunityId(resolvedCommunityId)) {
-      console.warn('[useFeedData] Invalid communityId provided, fallback to undefined');
+      logger.warn('[useFeedData] Invalid communityId provided, fallback to undefined');
     }
     const safeCommunityId = resolvedCommunityId && isValidCommunityId(resolvedCommunityId)
       ? resolvedCommunityId
@@ -783,7 +784,7 @@ export function useFeedData(
       // 4. Refresh
       await fetchApiData();
     } catch (err) {
-      console.error('[useFeedData] Create post failed', err);
+      logger.error('[useFeedData] Create post failed', { error: err });
       // Rollback
       setApiData(prev => {
         if (!prev) return prev;
@@ -875,7 +876,7 @@ export function useFeedData(
       // F2 Fix: Removed console.error for production safety
       // Only log in DEV mode for debugging
       if (import.meta.env.DEV) {
-        console.warn('[useFeedData] Add comment failed (Check Schema: community_comments?)', err);
+        logger.warn('[useFeedData] Add comment failed (Check Schema: community_comments?)', { error: err });
       }
       setApiData(previousApiData);
       setApiError(err as Error);
