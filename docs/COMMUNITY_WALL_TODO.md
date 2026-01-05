@@ -24,10 +24,10 @@
 | **P0** | NOTIFY-1 簡訊 API | ⬜ | 2hr | Backend | MSG-1, AUTH-1 |
 | **P0** | NOTIFY-2 Web Push 推播 | ✅ | 2hr | Backend | MSG-1 |
 | **P0** | AUTH-1 註冊流程 phone 必填 | ✅ | 1hr | Frontend | - |
-| **P0** | UAG-13 purchase_lead 觸發通知 | ⬜ | 2hr | Backend | MSG-1 |
+| **P0** | UAG-13 purchase_lead 觸發通知 | ✅ | 2hr | Backend | MSG-1 |
 | **P1** | UAG-5 配置統一重構 | ✅ | 1hr | Frontend | - |
-| **P1** | UAG-6 page_exit 去重 | ⬜ | 1hr | Frontend |
-| **P1** | UAG-7 地圖點擊追蹤 | ⬜ | 0.5hr | Frontend |
+| **P1** | UAG-6 page_exit 去重 | ✅ | 1hr | Frontend |
+| **P1** | UAG-7 地圖點擊追蹤 | ✅ | 0.5hr | Frontend |
 | **P1** | UAG-8 自動刷新設定 | ⬜ | 1hr | DevOps |
 | **P2** | HEADER-1 Logo 紅點設計 | ⬜ | 1hr | Design |
 | **P2** | HEADER-2 導航優化 | ⬜ | 2hr | Frontend |
@@ -703,16 +703,48 @@ pm run typecheck - 通過
 
 **修改檔案**: `src/pages/PropertyDetailPage.tsx`
 
-**實作摘要**:
-- ✅ 新增 `actions.current.click_map` 欄位
-- ✅ 新增 `trackMapClick()` 方法（含 `sendEvent('click_map')` 立即發送）
-- ✅ 新增地圖按鈕 UI（Google Maps 連結 + 安全編碼）
+**架構說明**:
+- PropertyDetailPage 為 React SPA 路由 (`/property/:id`)
+- 使用 `index.html` 入口（不載入 tracker.js）
+- `public/js/tracker.js` 僅用於 Legacy 靜態頁面（property.html）
+- **無雙重追蹤問題**（React Hook 與 tracker.js 完全分離）
+
+**實作位置**:
+- Hook: `src/pages/PropertyDetailPage.tsx:22` (click_map 欄位)
+- Methods: `src/pages/PropertyDetailPage.tsx:163-178` (tracking methods + Analytics)
+- UI: `src/pages/PropertyDetailPage.tsx:413-422` (地圖按鈕)
+
+**關鍵實作**:
+```typescript
+trackMapClick: () => {
+  actions.current.click_map = 1;
+  track('uag.map_clicked', { property_id: propertyId, district });  // Analytics
+  sendEvent('click_map');  // UAG Backend
+}
+
+trackLineClick: () => {
+  actions.current.click_line = 1;
+  track('uag.line_clicked', { property_id: propertyId });
+  sendEvent('click_line');
+}
+
+trackCallClick: () => {
+  actions.current.click_call = 1;
+  track('uag.call_clicked', { property_id: propertyId });
+  sendEvent('click_call');
+}
+```
+
+**Code Review 修復**:
+- ✅ 問題一：雙重追蹤疑慮 → 已驗證無此問題（React SPA 不載入 tracker.js）
+- ✅ 問題二：click_map 業務價值 → 確認為輔助數據（不影響評分）
+- ✅ 問題三：缺少 Analytics → 已補上 track() 調用（支援產品分析）
 
 **驗收結果**:
-- ✅ TypeScript 檢查通過
+- ✅ TypeScript 檢查通過 (2026-01-05)
 - ✅ ESLint 無新增錯誤
-- ✅ Code review 通過（已修復 blocking issue）
-- ✅ public/js/tracker.js 已有完整監聽實現（v8.6）
+- ✅ 雙層追蹤架構：UAG Backend (評分) + Product Analytics (分析)
+- ✅ 架構驗證通過（index.html 不載入 tracker.js）
 
 **完成時間**: 2026-01-05
 

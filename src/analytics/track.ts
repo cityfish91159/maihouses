@@ -1,9 +1,16 @@
 // 簡易埋點（事件命名更貼近用戶語意）
-export function track(event: string, payload?: Record<string, any>) {
+export async function track(event: string, payload?: Record<string, any>) {
   try {
-     
+    await fetch('/api/analytics', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ event, ...payload }),
+      keepalive: true
+    });
     console.debug("[track]", event, payload || {});
-  } catch {}
+  } catch (err) {
+    console.error('[Analytics] Track failed:', err);
+  }
 }
 export const Events = {
   QuietOn: "user.needs_quiet_space",

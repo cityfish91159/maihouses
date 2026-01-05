@@ -23,6 +23,7 @@ const usePropertyTracker = (
   const hasSent = useRef(false);
   const sendLock = useRef(false);
   const currentGrade = useRef<string>('F');
+  const clickSent = useRef({ line: false, call: false, map: false }); // 防重複點擊
 
   // 取得或建立 session_id
   const getSessionId = useCallback(() => {
@@ -160,9 +161,51 @@ const usePropertyTracker = (
   // 暴露追蹤方法
   return {
     trackPhotoClick: () => { actions.current.click_photos++; },
-    trackLineClick: () => { actions.current.click_line = 1; sendEvent('click_line'); },
-    trackCallClick: () => { actions.current.click_call = 1; sendEvent('click_call'); },
-    trackMapClick: () => { actions.current.click_map = 1; sendEvent('click_map'); }
+    trackLineClick: async () => {
+      if (clickSent.current.line) return; // 防重複點擊
+      clickSent.current.line = true;
+
+      try {
+        actions.current.click_line = 1;
+        await Promise.all([
+          track('uag.line_clicked', { property_id: propertyId }),
+          sendEvent('click_line')
+        ]);
+      } catch (error) {
+        console.error('[UAG] Track LINE click failed:', error);
+        sendEvent('click_line'); // 降級：至少確保 UAG Backend 收到
+      }
+    },
+    trackCallClick: async () => {
+      if (clickSent.current.call) return; // 防重複點擊
+      clickSent.current.call = true;
+
+      try {
+        actions.current.click_call = 1;
+        await Promise.all([
+          track('uag.call_clicked', { property_id: propertyId }),
+          sendEvent('click_call')
+        ]);
+      } catch (error) {
+        console.error('[UAG] Track call click failed:', error);
+        sendEvent('click_call');
+      }
+    },
+    trackMapClick: async () => {
+      if (clickSent.current.map) return; // 防重複點擊
+      clickSent.current.map = true;
+
+      try {
+        actions.current.click_map = 1;
+        await Promise.all([
+          track('uag.map_clicked', { property_id: propertyId, district }),
+          sendEvent('click_map')
+        ]);
+      } catch (error) {
+        console.error('[UAG] Track map click failed:', error);
+        sendEvent('click_map');
+      }
+    }
   };
 };
 
