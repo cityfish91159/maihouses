@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { notify } from '../lib/notify';
+import { logger } from '../lib/logger';
 import type { TrustTransaction, TrustStep } from '../types/trust.types';
 import { STEP_NAMES, STEP_ICONS } from '../types/trust.types';
 import { ROUTES } from '../constants/routes';
@@ -37,7 +38,7 @@ export default function TrustManager({ defaultCaseName = '', showList = true, li
                 .order('created_at', { ascending: false });
             if (error) throw error;
             setCases((data || []) as TrustTransaction[]);
-        } catch (err) { console.error(err); } finally { setListLoading(false); }
+        } catch (err) { logger.error('Load cases failed', { error: err }); } finally { setListLoading(false); }
     }, []);
 
     useEffect(() => {
@@ -67,7 +68,7 @@ export default function TrustManager({ defaultCaseName = '', showList = true, li
             if (error) throw error;
             await copyLink(data as TrustTransaction);
             setNewCaseName(''); setShowForm(false); await loadCases(currentUserId);
-        } catch (err: any) { notify.error('建立失敗', err.message); } finally { setLoading(false); }
+        } catch (err) { notify.error('建立失敗', err instanceof Error ? err.message : '未知錯誤'); } finally { setLoading(false); }
     };
 
     const copyLink = async (tx: TrustTransaction) => {
@@ -165,7 +166,7 @@ export default function TrustManager({ defaultCaseName = '', showList = true, li
                         const isExpanded = expandedId === tx.id;
                         return (
                             <div key={tx.id} style={styles.caseItem}>
-                                <div style={styles.caseHeader} onClick={() => setExpandedId(isExpanded ? null : tx.id)}>
+                                <div style={styles.caseHeader} role="button" tabIndex={0} onClick={() => setExpandedId(isExpanded ? null : tx.id)} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setExpandedId(isExpanded ? null : tx.id); } }}>
                                     <div style={styles.caseInfo}><span style={styles.caseName}>{tx.case_name}</span></div>
                                     <div style={styles.caseActions}>
                                         <button onClick={(e) => { e.stopPropagation(); copyLink(tx); }} style={styles.iconButton}>📋</button>

@@ -38,14 +38,18 @@ async function fetchJson(url: string) {
   return r.json()
 }
 
-function isValidConfig(obj: any): obj is AppConfig {
+function isValidConfig(obj: unknown): obj is AppConfig {
   return (
-    obj &&
+    obj !== null &&
     typeof obj === 'object' &&
-    typeof obj.apiBaseUrl === 'string' &&
-    typeof obj.appVersion === 'string' &&
-    typeof obj.minBackend === 'string' &&
-    typeof obj.features === 'object'
+    'apiBaseUrl' in obj &&
+    typeof (obj as Record<string, unknown>).apiBaseUrl === 'string' &&
+    'appVersion' in obj &&
+    typeof (obj as Record<string, unknown>).appVersion === 'string' &&
+    'minBackend' in obj &&
+    typeof (obj as Record<string, unknown>).minBackend === 'string' &&
+    'features' in obj &&
+    typeof (obj as Record<string, unknown>).features === 'object'
   )
 }
 
@@ -102,12 +106,13 @@ export async function getConfig(): Promise<AppConfig & RuntimeOverrides> {
   try {
     const base = await readBase()
     const o = pickParams()
+    const baseWithOverrides = base as AppConfig & Partial<RuntimeOverrides>;
     const merged: AppConfig & RuntimeOverrides = {
       ...base,
       ...o,
-      mock: o.mock ?? (base as any).mock ?? true,
-      latency: o.latency ?? (base as any).latency ?? 0,
-      error: o.error ?? (base as any).error ?? 0,
+      mock: o.mock ?? baseWithOverrides.mock ?? true,
+      latency: o.latency ?? baseWithOverrides.latency ?? 0,
+      error: o.error ?? baseWithOverrides.error ?? 0,
     }
 
     try {

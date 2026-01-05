@@ -87,9 +87,9 @@ export function useCommunityWall(
           ...(includePrivate ? wallData.posts.private : []),
         ]);
       }
-    } catch (err: any) {
+    } catch (err) {
       if (mountedRef.current) {
-        setError(err.message || '載入社區牆失敗');
+        setError(err instanceof Error ? err.message : '載入社區牆失敗');
       }
     } finally {
       if (mountedRef.current) {
@@ -218,8 +218,8 @@ export function useCommunityPosts(
       setPosts(prev => [...prev, ...items]);
       setPage(prev => prev + 1);
       setHasMore(posts.length + items.length < total);
-    } catch (err: any) {
-      setError(err.message || '載入失敗');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '載入失敗');
     } finally {
       setIsLoading(false);
     }
@@ -232,10 +232,14 @@ export function useCommunityPosts(
     setError(null);
   }, []);
 
+  // 使用 ref 追蹤 loadMore，避免 useEffect 無限迴圈
+  const loadMoreRef = useRef(loadMore);
+  loadMoreRef.current = loadMore;
+
   // 初次載入
   useEffect(() => {
     if (communityId) {
-      loadMore();
+      loadMoreRef.current();
     }
   }, [communityId]);
 

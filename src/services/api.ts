@@ -1,6 +1,7 @@
 import { v4 as uuidv4 } from 'uuid'
 import { getConfig } from '../app/config'
 import { postLLM } from './ai'
+import { logger } from '../lib/logger'
 import type { ApiResponse, Paginated, PropertyCard, ReviewSnippet, AiAskReq, AiAskRes, CommunityPreview } from '../types'
 
 let sessionId = uuidv4()
@@ -84,14 +85,11 @@ export const getCommunities = () => apiFetch<CommunityPreview[]>('/api/v1/commun
 export const aiAsk = async (req: AiAskReq, onChunk?: (chunk: string) => void): Promise<ApiResponse<AiAskRes>> => {
   try {
     const messages = req.messages.map(m => ({ role: m.role, content: m.content }))
-    console.log('🟢 發送訊息:', messages)
     const result = await postLLM(messages, onChunk)
-    console.log('🟢 postLLM 回傳:', result)
     const aiResult: AiAskRes = { answers: [result], recommends: [] }
-    console.log('🟢 最終 aiResult:', aiResult)
     return { ok: true, data: aiResult }
   } catch (error) {
-    console.error('AI Ask 失敗:', error)
+    logger.error('AI Ask failed', { error })
     return { ok: false, error: { code: 'AI_ERROR', message: error instanceof Error ? error.message : 'AI 暫時無法使用' } }
   }
 }

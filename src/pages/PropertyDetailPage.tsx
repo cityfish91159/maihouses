@@ -8,6 +8,7 @@ import { ReportGenerator } from './Report';
 import { LineShareAction } from '../components/social/LineShareAction';
 import { buildKeyCapsuleTags, formatArea, formatLayout, formatFloor } from '../utils/keyCapsules';
 import { track } from '../analytics/track';
+import { logger } from '../lib/logger';
 
 // UAG Tracker Hook v8.1 - 追蹤用戶行為 + S級攔截
 // 優化: 1.修正district傳遞 2.S級即時回調 3.互動事件用fetch獲取等級
@@ -61,14 +62,14 @@ const usePropertyTracker = (
     // UAG-6 修復: page_exit 去重邏輯（單一檢查點，鎖在第一時間）
     if (eventType === 'page_exit') {
       if (sendLock.current) {
-        console.log('[UAG-6] 🛑 已阻擋重複的 page_exit');
+        logger.debug('[UAG-6] 已阻擋重複的 page_exit');
         // UAG-6 建議4: 監控去重效果
         track('uag.page_exit_dedupe_blocked', { property_id: propertyId });
         return;
       }
       sendLock.current = true;  // ✅ 在任何異步操作前鎖住
       hasSent.current = true;
-      console.log('[UAG-6] ✅ 正在發送 page_exit');
+      logger.debug('[UAG-6] 正在發送 page_exit');
       // UAG-6 建議4: 監控發送成功
       track('uag.page_exit_sent', { property_id: propertyId });
     }
@@ -172,7 +173,7 @@ const usePropertyTracker = (
           sendEvent('click_line')
         ]);
       } catch (error) {
-        console.error('[UAG] Track LINE click failed:', error);
+        logger.error('[UAG] Track LINE click failed:', { error });
         sendEvent('click_line'); // 降級：至少確保 UAG Backend 收到
       }
     },
@@ -187,7 +188,7 @@ const usePropertyTracker = (
           sendEvent('click_call')
         ]);
       } catch (error) {
-        console.error('[UAG] Track call click failed:', error);
+        logger.error('[UAG] Track call click failed:', { error });
         sendEvent('click_call');
       }
     },
@@ -202,7 +203,7 @@ const usePropertyTracker = (
           sendEvent('click_map')
         ]);
       } catch (error) {
-        console.error('[UAG] Track map click failed:', error);
+        logger.error('[UAG] Track map click failed:', { error });
         sendEvent('click_map');
       }
     }
@@ -320,7 +321,7 @@ export const PropertyDetailPage: React.FC = () => {
           setProperty(data);
         }
       } catch (error) {
-        console.error('Fetch error:', error);
+        logger.error('Property fetch error:', { error });
         // 發生錯誤時，保持顯示預設資料，不讓畫面崩壞
       }
     };

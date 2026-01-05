@@ -40,13 +40,13 @@ export const PoliteRewrite: React.FC<{ onAdopt?: (text: string) => void }> = ({ 
       <div style={{ fontWeight: 600, marginBottom: 6 }}>禮貌改寫小幫手</div>
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 8 }}>
         <label>對象
-          <select value={audience} onChange={e => setAudience(e.target.value as any)} style={{ marginLeft: 6, padding: 6, borderRadius: 8, border: "1px solid #ddd" }}>
+          <select value={audience} onChange={e => setAudience(e.target.value as "owner" | "agent")} style={{ marginLeft: 6, padding: 6, borderRadius: 8, border: "1px solid #ddd" }}>
             <option value="agent">仲介</option>
             <option value="owner">屋主</option>
           </select>
         </label>
         <label>目的
-          <select value={intent} onChange={e => setIntent(e.target.value as any)} style={{ marginLeft: 6, padding: 6, borderRadius: 8, border: "1px solid #ddd" }}>
+          <select value={intent} onChange={e => setIntent(e.target.value as "view" | "detail" | "pet" | "price")} style={{ marginLeft: 6, padding: 6, borderRadius: 8, border: "1px solid #ddd" }}>
             <option value="detail">詢問細節</option>
             <option value="view">預約看房</option>
             <option value="pet">可否養寵物</option>
