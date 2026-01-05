@@ -1,4 +1,5 @@
 import { safeLocalStorage } from '../lib/safeStorage';
+import { logger } from '../lib/logger';
 
 export interface AppConfig {
   apiBaseUrl: string
@@ -70,7 +71,7 @@ async function readBase(): Promise<AppConfig & Partial<RuntimeOverrides>> {
     const remote = await fetchJson(url)
     if (isValidConfig(remote)) return remote
   } catch (err) {
-    console.warn('[config] fetch app.config.json failed, fallback to DEFAULT_CONFIG', err)
+    logger.warn('[config] fetch app.config.json failed, fallback to DEFAULT_CONFIG', { error: err })
   }
 
   // 3) hardcoded default to prevent white screen
@@ -121,7 +122,7 @@ export async function getConfig(): Promise<AppConfig & RuntimeOverrides> {
 
     return merged
   } catch (err) {
-    console.error('[config] getConfig failed, using DEFAULT_CONFIG', err)
+    logger.error('[config] getConfig failed, using DEFAULT_CONFIG', { error: err })
     const merged: AppConfig & RuntimeOverrides = {
       ...DEFAULT_CONFIG,
       ...pickParams(),
