@@ -17,6 +17,8 @@ function header(options: RequestInit, key: string) {
   return o[key] ?? o[key.toLowerCase()]
 }
 
+export async function mockHandler(endpoint: '/api/v1/communities/preview', options: RequestInit): Promise<ApiResponse<import('../../types').CommunityPreview[]>>;
+export async function mockHandler<T = unknown>(endpoint: string, options: RequestInit): Promise<ApiResponse<T>>;
 export async function mockHandler<T = unknown>(endpoint: string, options: RequestInit): Promise<ApiResponse<T>> {
   const cfg = await getConfig()
   await delay(cfg.latency ?? 0)
