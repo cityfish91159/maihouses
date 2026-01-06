@@ -1,0 +1,19 @@
+#!/bin/sh
+
+# 1. 檢查守門員是否被收買 (Hash Check)
+# Hash calculated from Get-FileHash (SHA256)
+EXPECTED_HASH="12B213F775505A76546E7FCD04F937B44B0B3D9B832F0B423A13EA577A09DA7A"
+
+# Calculate current hash (normalize to uppercase to match EXPECTED_HASH)
+CURRENT_HASH=$(sha256sum scripts/quality-gate.cjs | awk '{print $1}' | tr '[:lower:]' '[:upper:]')
+
+if [ "$CURRENT_HASH" != "$EXPECTED_HASH" ]; then
+  echo "🚨 安全警報：scripts/quality-gate.cjs 已被竄改！"
+  echo "拒絕執行提交。請還原該檔案。"
+  echo "預期腳本指紋: $EXPECTED_HASH"
+  echo "實際腳本指紋: $CURRENT_HASH"
+  exit 1
+fi
+
+# 2. 執行守門員
+node scripts/quality-gate.cjs

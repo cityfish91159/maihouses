@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 /**
- * Quality Gate Script - Claude Code Stop Hook
- *
- * 執行品質檢查，任何失敗都會阻止 Claude 回應
- * 這是 Layer 1 防護，無法被 AI 修改繞過
+ * 🔒 LOCKED FILE: DO NOT EDIT
+ * This script is read-only. Any attempt to modify it will fail.
+ * Quality Gate Script - Enhanced
+ * 執行品質檢查，任何失敗都會阻止提交/回應。
  */
 
 const { execSync } = require('child_process');
@@ -12,12 +12,13 @@ const path = require('path');
 
 const ROOT = path.resolve(__dirname, '..');
 
-// 顏色輸出
+// 顏色與格式
 const c = {
   red: '\x1b[31m',
   green: '\x1b[32m',
   yellow: '\x1b[33m',
   cyan: '\x1b[36m',
+  bgRed: '\x1b[41m\x1b[37m',
   reset: '\x1b[0m',
   bold: '\x1b[1m',
 };
@@ -26,129 +27,169 @@ function log(msg, color = 'reset') {
   console.error(`${c[color]}${msg}${c.reset}`);
 }
 
-// ═══════════════════════════════════════════════════════════════
-// 檢查項目
-// ═══════════════════════════════════════════════════════════════
+function header(title) {
+  console.error(`\n${c.cyan}══════════════════════════════════════════════════════${c.reset}`);
+  console.error(`${c.bold} ${title}${c.reset}`);
+  console.error(`${c.cyan}══════════════════════════════════════════════════════${c.reset}`);
+}
 
 const checks = [];
 let hasError = false;
 
+// ═══════════════════════════════════════════════════════════════
 // 1. TypeScript 檢查
-log('\n[1/3] TypeScript 類型檢查...', 'cyan');
+// ═══════════════════════════════════════════════════════════════
+header('[1/4] TypeScript 類型檢查');
 try {
+  // 使用 --noEmit 加快檢查速度，不產生檔案
   execSync('npm run typecheck', { cwd: ROOT, stdio: 'pipe' });
   checks.push({ name: 'TypeScript', status: 'pass' });
-  log('  ✓ 通過', 'green');
+  log(' ✅ 通過', 'green');
 } catch (err) {
-  checks.push({ name: 'TypeScript', status: 'fail', error: err.stdout?.toString() || err.message });
-  log('  ✗ 失敗', 'red');
+  const output = err.stdout?.toString() || err.message;
+  // 擷取前幾行錯誤，避免洗版
+  const shortError = output.split('\n').slice(0, 5).join('\n') + '\n... (more)';
+  checks.push({ name: 'TypeScript', status: 'fail', error: 'Type check failed' });
+  log(' ❌ 失敗', 'red');
+  console.error(c.yellow + shortError + c.reset);
   hasError = true;
 }
 
-// 2. ESLint 檢查 (只檢查 error，忽略 warning)
-log('\n[2/3] ESLint 錯誤檢查...', 'cyan');
+// ═══════════════════════════════════════════════════════════════
+// 2. ESLint 檢查 (使用 JSON 模式解析，更精準)
+// ═══════════════════════════════════════════════════════════════
+header('[2/4] ESLint 錯誤檢查');
 try {
-  const lintOutput = execSync('npm run lint 2>&1', { cwd: ROOT, encoding: 'utf-8' });
-
-  // 解析錯誤數量
-  const errorMatch = lintOutput.match(/(\d+)\s+error/);
-  const errorCount = errorMatch ? parseInt(errorMatch[1], 10) : 0;
-
-  if (errorCount > 0) {
-    checks.push({ name: 'ESLint', status: 'fail', error: `${errorCount} errors` });
-    log(`  ✗ ${errorCount} 個錯誤`, 'red');
+  // 嘗試強制輸出 JSON 格式以便解析
+  const lintCmd = 'npm run lint -- --format json'; 
+  const lintOutput = execSync(lintCmd, { cwd: ROOT, encoding: 'utf-8', stdio: ['ignore', 'pipe', 'ignore'] });
+  
+  const results = JSON.parse(lintOutput || '[]');
+  const totalErrors = results.reduce((acc, curr) => acc + curr.errorCount, 0);
+  
+  if (totalErrors > 0) {
+    checks.push({ name: 'ESLint', status: 'fail', error: `${totalErrors} errors` });
+    log(` ❌ 發現 ${totalErrors} 個錯誤`, 'red');
     hasError = true;
   } else {
     checks.push({ name: 'ESLint', status: 'pass' });
-    log('  ✓ 無錯誤 (warnings 忽略)', 'green');
+    log(' ✅ 無錯誤', 'green');
   }
 } catch (err) {
-  // lint 失敗時檢查輸出
-  const output = err.stdout?.toString() || '';
-  const errorMatch = output.match(/(\d+)\s+error/);
-  const errorCount = errorMatch ? parseInt(errorMatch[1], 10) : 0;
-
-  if (errorCount > 0) {
-    checks.push({ name: 'ESLint', status: 'fail', error: `${errorCount} errors` });
-    log(`  ✗ ${errorCount} 個錯誤`, 'red');
-    hasError = true;
-  } else {
-    // 可能是其他錯誤
-    checks.push({ name: 'ESLint', status: 'fail', error: err.message });
-    log(`  ✗ 執行失敗: ${err.message}`, 'red');
+  try {
+    const output = err.stdout?.toString();
+    if (output && output.trim().startsWith('[')) {
+       const results = JSON.parse(output);
+       const totalErrors = results.reduce((acc, curr) => acc + curr.errorCount, 0);
+       if (totalErrors > 0) {
+         checks.push({ name: 'ESLint', status: 'fail', error: `${totalErrors} errors` });
+         log(` ❌ 發現 ${totalErrors} 個錯誤`, 'red');
+         hasError = true;
+       }
+    } else {
+       // 如果不是 JSON，可能是指令錯誤，顯示原始訊息
+       checks.push({ name: 'ESLint', status: 'fail', error: 'Lint command failed' });
+       log(` ❌ Lint 執行失敗 (非代碼錯誤): ${err.message}`, 'red');
+       hasError = true;
+    }
+  } catch (parseErr) {
+    checks.push({ name: 'ESLint', status: 'fail', error: 'Execution failed' });
+    log(` ❌ 執行失敗或解析錯誤`, 'red');
     hasError = true;
   }
 }
 
-// 3. 檢查 staged 檔案中的 console.log
-log('\n[3/3] console.log 檢查...', 'cyan');
+// 取得 Staged Files (供後續步驟使用)
+let stagedFiles = [];
 try {
-  const stagedFiles = execSync('git diff --cached --name-only --diff-filter=ACM', {
+  stagedFiles = execSync('git diff --cached --name-only --diff-filter=ACM', {
     cwd: ROOT,
     encoding: 'utf-8'
-  }).split('\n').filter(f => f.trim() && (f.endsWith('.ts') || f.endsWith('.tsx')));
+  }).split('\n').filter(f => f.trim());
+} catch (e) {
+  // 如果不在 git 環境，這步跳過
+}
 
+// ═══════════════════════════════════════════════════════════════
+// 3. 敏感資訊與 console.log 檢查 (掃描 Staged Files)
+// ═══════════════════════════════════════════════════════════════
+header('[3/4] 代碼內容掃描 (Logs & Secrets)');
+
+if (stagedFiles.length > 0) {
   let consoleLogCount = 0;
+  let secretCount = 0;
   const filesWithConsoleLog = [];
+  const filesWithSecrets = [];
 
-  // 排除的目錄（開發/調試用頁面）
-  const EXCLUDED_PATHS = [
-    'src/pages/Muse/',
-    'src/pages/Admin/GodView',
+  // 敏感關鍵字 Regex (簡易版)
+  const secretPatterns = [
+    /AIza[0-9A-Za-z-_]{35}/, // Google API Key
+    /sk-[a-zA-Z0-9]{20,}/,   // OpenAI Key
+    /AWS_ACCESS_KEY_ID/,
+    /Authorization:\s*Bearer/i
   ];
 
   for (const file of stagedFiles) {
     const fullPath = path.join(ROOT, file);
     if (!fs.existsSync(fullPath)) continue;
-    if (file.includes('.test.') || file.includes('__tests__')) continue;
-    // 排除 Muse 和 GodView 頁面
-    if (EXCLUDED_PATHS.some(p => file.includes(p))) continue;
+    // 只檢查代碼檔
+    if (!/\.(ts|tsx|js|jsx|cjs|mjs|py|go|env)$/.test(file)) continue; 
 
     const content = fs.readFileSync(fullPath, 'utf-8');
     const lines = content.split('\n');
 
     lines.forEach((line, i) => {
-      if (line.trim().startsWith('//')) return;
+      const trimmed = line.trim();
+      if (trimmed.startsWith('//') || trimmed.startsWith('#')) return;
+      
+      // Check: console.log
       if (/console\.log\(/.test(line)) {
         consoleLogCount++;
         filesWithConsoleLog.push(`${file}:${i + 1}`);
       }
+
+      // Check: Secrets
+      for (const pattern of secretPatterns) {
+        if (pattern.test(line)) {
+            secretCount++;
+            filesWithSecrets.push(`${file}:${i + 1}`);
+        }
+      }
     });
+  }
+
+  if (secretCount > 0) {
+    checks.push({ name: 'Security', status: 'fail', error: 'Secrets detected' });
+    log(` ❌ 發現 ${secretCount} 個潛在敏感資訊 (API Keys)!`, 'red');
+    filesWithSecrets.forEach(f => log(`    ${f}`, 'red'));
+    hasError = true;
+  } else {
+    checks.push({ name: 'Security', status: 'pass' });
+    log(' ✅ 安全掃描通過', 'green');
   }
 
   if (consoleLogCount > 0) {
     checks.push({ name: 'console.log', status: 'warn', count: consoleLogCount });
-    log(`  ⚠ ${consoleLogCount} 個 console.log (staged files)`, 'yellow');
+    log(` ⚠️ 發現 ${consoleLogCount} 個 console.log`, 'yellow');
     filesWithConsoleLog.slice(0, 5).forEach(f => log(`    ${f}`, 'yellow'));
-    // 警告但不阻止
   } else {
     checks.push({ name: 'console.log', status: 'pass' });
-    log('  ✓ 無 console.log', 'green');
+    log(' ✅ 無 console.log', 'green');
   }
-} catch {
-  // git 錯誤時跳過此檢查
-  checks.push({ name: 'console.log', status: 'skip' });
-  log('  ⏭ 跳過 (非 git 環境)', 'cyan');
+
+} else {
+  log(' ⏭ 無 staged files，跳過內容掃描', 'cyan');
 }
 
 // ═══════════════════════════════════════════════════════════════
-// 結果輸出
+// 4. 總結
 // ═══════════════════════════════════════════════════════════════
 
-log('\n' + '═'.repeat(50), hasError ? 'red' : 'green');
-
+console.log('\n');
 if (hasError) {
-  log('❌ QUALITY GATE FAILED', 'red');
-  log('', 'reset');
-  checks.filter(c => c.status === 'fail').forEach(c => {
-    log(`  • ${c.name}: ${c.error || 'failed'}`, 'red');
-  });
-  log('', 'reset');
-  log('請修復以上問題後再繼續', 'yellow');
-  log('═'.repeat(50) + '\n', 'red');
+  console.log(c.bgRed + ' 🛑 QUALITY GATE FAILED ' + c.reset);
   process.exit(1);
+} else {
+  console.log(c.green + c.bold + ' 🚀 QUALITY GATE PASSED ' + c.reset);
+  process.exit(0);
 }
-
-log('✅ QUALITY GATE PASSED', 'green');
-log('═'.repeat(50) + '\n', 'green');
-process.exit(0);

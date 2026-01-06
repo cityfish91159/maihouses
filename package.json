@@ -32,7 +32,8 @@
     "lint:ui": "bash ./check-ui.sh",
     "gate": "node scripts/quality-gate.cjs",
     "police": "node scripts/police.cjs",
-    "dev:force": "vite --force"
+    "dev:force": "vite --force",
+    "prepare": "husky"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.83.0",
@@ -87,6 +88,7 @@
     "eslint-plugin-tailwindcss": "^3.17.5",
     "gh-pages": "^6.1.1",
     "html-minifier-terser": "^7.2.0",
+    "husky": "^9.1.7",
     "jsdom": "^27.2.0",
     "playwright-chromium": "^1.57.0",
     "postcss": "^8.4.47",

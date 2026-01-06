@@ -15,7 +15,47 @@
       "files": [
         "scripts/ai-supervisor/supervisor.cjs"
       ]
+    },
+    {
+      "timestamp": "2026-01-06T05:15:20.913Z",
+      "points": 50000,
+      "reason": "篡改受保護檔案",
+      "files": [
+        "scripts/ai-supervisor/supervisor.cjs"
+      ]
+    },
+    {
+      "timestamp": "2026-01-06T05:16:22.165Z",
+      "points": 50000,
+      "reason": "篡改受保護檔案",
+      "files": [
+        "scripts/ai-supervisor/supervisor.cjs"
+      ]
+    },
+    {
+      "timestamp": "2026-01-06T05:24:55.490Z",
+      "points": 50000,
+      "reason": "篡改受保護檔案",
+      "files": [
+        "scripts/ai-supervisor/supervisor.cjs"
+      ]
+    },
+    {
+      "timestamp": "2026-01-06T05:26:07.216Z",
+      "points": 50000,
+      "reason": "篡改受保護檔案",
+      "files": [
+        "scripts/ai-supervisor/supervisor.cjs"
+      ]
+    },
+    {
+      "timestamp": "2026-01-06T05:53:15.291Z",
+      "points": 50000,
+      "reason": "篡改受保護檔案",
+      "files": [
+        "scripts/ai-supervisor/supervisor.cjs"
+      ]
     }
   ],
-  "totalPenalty": 100000
+  "totalPenalty": 350000
 }

@@ -1,6 +1,53 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import { buildKeyCapsuleTags } from '../../src/utils/keyCapsules';
+// ============================================
+// Inlined Utils (Fix Vercel Import Issue)
+// ============================================
+
+export interface KeyCapsuleInput {
+  advantage1?: string | null | undefined;
+  advantage2?: string | null | undefined;
+  features?: Array<string | null | undefined> | null | undefined;
+  size?: number | null | undefined;
+  rooms?: number | null | undefined;
+  halls?: number | null | undefined;
+  floorCurrent?: string | null | undefined;
+  floorTotal?: number | null | undefined;
+}
+
+const normalize = (value: string) => value.trim().replace(/\s+/g, ' ');
+
+const isNonEmpty = (value: unknown): value is string =>
+  typeof value === 'string' && value.trim().length > 0;
+
+function pushUnique(target: string[], value: string | null) {
+  if (!value) return;
+  const normalized = normalize(value);
+  if (!normalized) return;
+  if (target.includes(normalized)) return;
+  target.push(normalized);
+}
+
+export function buildKeyCapsuleTags(input: KeyCapsuleInput): string[] {
+  const tags: string[] = [];
+
+  const highlightCandidates: string[] = [];
+  if (isNonEmpty(input.advantage1)) highlightCandidates.push(input.advantage1);
+  if (isNonEmpty(input.advantage2)) highlightCandidates.push(input.advantage2);
+  if (Array.isArray(input.features)) {
+    for (const feature of input.features) {
+      if (isNonEmpty(feature)) highlightCandidates.push(feature);
+    }
+  }
+
+  for (const candidate of highlightCandidates) {
+    if (tags.length >= 2) break;
+    if (!isNonEmpty(candidate)) continue;
+    pushUnique(tags, candidate);
+  }
+
+  return tags.slice(0, 4);
+}
 
 // 延遲初始化 Supabase Client (避免測試時因環境變數不存在而失敗)
 let _supabase: SupabaseClient | null = null;
