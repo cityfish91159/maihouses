@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, vi, type Mock } from 'vitest';
 import { createClient } from '@supabase/supabase-js';
 
 // Mock Supabase client
@@ -12,15 +12,19 @@ interface PurchaseLeadResult {
   used_quota?: boolean;
 }
 
+interface MockSupabaseClient {
+  rpc: Mock;
+}
+
 describe('purchase_lead RPC Function', () => {
-  let mockSupabase: any;
+  let mockSupabase: MockSupabaseClient;
 
   beforeEach(() => {
     // Setup mock Supabase client
     mockSupabase = {
       rpc: vi.fn(),
     };
-    (createClient as any).mockReturnValue(mockSupabase);
+    vi.mocked(createClient).mockReturnValue(mockSupabase as unknown as ReturnType<typeof createClient>);
   });
 
   describe('成功購買場景', () => {
