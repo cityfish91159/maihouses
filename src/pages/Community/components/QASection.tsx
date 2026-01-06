@@ -5,7 +5,7 @@
  * 重構：使用 LockedOverlay + Tailwind brand 色系
  */
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import type { Role, Question, Permissions } from '../types';
 import { getPermissions } from '../types';
 import { useGuestVisibleItems } from '../../../hooks/useGuestVisibleItems';
@@ -181,11 +181,11 @@ export function QASection({ viewerRole, questions: questionsProp, onAskQuestion,
     setAnswerModalOpen(true);
   };
 
-  const getActiveDialog = (): HTMLDivElement | null => {
+  const getActiveDialog = useCallback((): HTMLDivElement | null => {
     return askModalOpen ? askDialogRef.current : answerModalOpen ? answerDialogRef.current : null;
-  };
+  }, [askModalOpen, answerModalOpen]);
 
-  const getFocusableElements = (container: HTMLElement | null) => {
+  const getFocusableElements = useCallback((container: HTMLElement | null) => {
     if (!container) return [] as HTMLElement[];
     const selector = 'a[href], button, textarea, input, select, [tabindex]';
     return Array.from(container.querySelectorAll<HTMLElement>(selector)).filter(el => {
@@ -196,7 +196,7 @@ export function QASection({ viewerRole, questions: questionsProp, onAskQuestion,
       const isNegativeTabIndex = typeof tabIndex === 'number' && tabIndex < 0;
       return !isDisabled && !isHidden && !isNegativeTabIndex;
     });
-  };
+  }, []);
 
   /**
    * 安全聚焦 helper：依序嘗試 main、[data-app-root]、#root、body
@@ -233,12 +233,12 @@ export function QASection({ viewerRole, questions: questionsProp, onAskQuestion,
     }
   };
 
-  const trapFocusWithinModal = (event: KeyboardEvent) => {
+  const trapFocusWithinModal = useCallback((event: KeyboardEvent) => {
     if (event.key !== 'Tab') return;
     const container = getActiveDialog();
     if (!container) return;
     const focusable = getFocusableElements(container);
-    
+
     // 若無可聚焦元素，將焦點設到對話框本身
     if (!focusable.length) {
       const prevTabIndex = container.getAttribute('tabindex');
@@ -248,7 +248,7 @@ export function QASection({ viewerRole, questions: questionsProp, onAskQuestion,
       event.preventDefault();
       return;
     }
-    
+
     const [first] = focusable;
     const last = focusable.at(-1);
     const active = document.activeElement as HTMLElement | null;
@@ -265,7 +265,7 @@ export function QASection({ viewerRole, questions: questionsProp, onAskQuestion,
       last?.focus();
       event.preventDefault();
     }
-  };
+  }, [getActiveDialog, getFocusableElements]);
 
   useEffect(() => {
     const activeDialog = getActiveDialog();
@@ -328,7 +328,7 @@ export function QASection({ viewerRole, questions: questionsProp, onAskQuestion,
       }
       restoreFocusRef.current = null;
     };
-  }, [askModalOpen, answerModalOpen, submitting]);
+  }, [askModalOpen, answerModalOpen, submitting, getActiveDialog, trapFocusWithinModal, getFocusableElements]);
 
   useEffect(() => {
     if (!feedback) return () => undefined;

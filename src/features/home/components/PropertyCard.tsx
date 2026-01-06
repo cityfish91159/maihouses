@@ -39,7 +39,7 @@ export default function PropertyCard({ property }: { property: FeaturedProperty 
                         .map((tag, i) => (
                             <span
                                 key={i}
-                                className="duration-120 rounded-full border border-brand-100 bg-brand-50 px-2.5 py-0.5 font-extrabold text-ink-700 transition-all ease-out group-hover:-translate-y-px group-hover:shadow-[0_4px_10px_rgba(0,56,90,0.10)]"
+                                className="duration-120 rounded-full border border-brand-100 bg-brand-50 px-2.5 py-0.5 font-extrabold text-ink-700 transition-all ease-out group-hover:-translate-y-px group-hover:shadow-brand-md"
                             >
                                 {tag}
                             </span>
@@ -55,7 +55,7 @@ export default function PropertyCard({ property }: { property: FeaturedProperty 
 
                 {/* Reviews Mini */}
                 <div className="mt-2.5 rounded-xl border border-brand-100 bg-gradient-to-b from-brand-50 to-white px-3 py-2.5">
-                    <div className="mb-2 flex items-center gap-2 text-[13px] font-black text-black/85 before:text-xs before:leading-none before:text-brand-700 before:drop-shadow-[0_1px_0_rgba(0,56,90,0.12)] before:content-['★']">
+                    <div className="mb-2 flex items-center gap-2 text-[13px] font-black text-black/85 before:text-xs before:leading-none before:text-brand-700 before:drop-shadow-brand-xs before:content-['★']">
                         住戶真實留言
                     </div>
 
@@ -64,7 +64,7 @@ export default function PropertyCard({ property }: { property: FeaturedProperty 
                             key={i}
                             className={`flex items-start gap-2.5 py-2 ${i !== 0 ? 'border-t border-dashed border-black/10' : ''}`}
                         >
-                            <div className="grid size-[30px] flex-none place-items-center rounded-full bg-gradient-to-b from-[#F2F5F8] to-[#E1E6EB] text-xs font-black text-brand-700 shadow-[inset_0_0_0_1px_rgba(0,56,90,0.15)]">
+                            <div className="grid size-[30px] flex-none place-items-center rounded-full bg-gradient-to-b from-neutral-150 to-neutral-200 text-xs font-black text-brand-700 ring-1 ring-inset ring-brand-700/15">
                                 {review.avatar}
                             </div>
                             <div className="min-w-0 flex-1">
@@ -84,7 +84,7 @@ export default function PropertyCard({ property }: { property: FeaturedProperty 
 
                     <button
                         type="button"
-                        className="mt-2.5 w-full cursor-pointer rounded-xl border border-brand-700/30 bg-gradient-to-b from-white to-[#F5F7FA] px-3 py-2.5 text-[13px] font-black text-brand-700 transition-all duration-150 ease-out hover:from-white hover:to-[#E8F0FF] hover:shadow-[0_6px_14px_rgba(0,56,90,0.18)] active:translate-y-px"
+                        className="mt-2.5 w-full cursor-pointer rounded-xl border border-brand-700/30 bg-gradient-to-b from-white to-neutral-100 px-3 py-2.5 text-[13px] font-black text-brand-700 transition-all duration-150 ease-out hover:from-white hover:to-neutral-80 hover:shadow-brand-lg active:translate-y-px"
                     >
                         註冊後看更多評價
                     </button>

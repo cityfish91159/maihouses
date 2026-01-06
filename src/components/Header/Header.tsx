@@ -181,7 +181,7 @@ export default function Header({ onOpenAIStudio }: HeaderProps) {
 
             {/* Search Box */}
             <div className="group relative z-20">
-              <div className="flex h-[60px] items-center rounded-full border border-brand-100 bg-white pl-[28px] pr-2 shadow-[0_8px_30px_rgba(0,56,90,0.08)] transition-all duration-300 focus-within:border-brand-300 focus-within:ring-4 focus-within:ring-brand-50 group-hover:shadow-[0_12px_40px_rgba(0,56,90,0.12)]">
+              <div className="flex h-[60px] items-center rounded-full border border-brand-100 bg-white pl-[28px] pr-2 shadow-brand-lg transition-all duration-300 focus-within:border-brand-300 focus-within:ring-4 focus-within:ring-brand-50 group-hover:shadow-brand-xl">
 
                 {/* Search Icon */}
                 <div className="pr-4 text-gray-400 transition-colors group-focus-within:text-gray-600">

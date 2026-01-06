@@ -65,7 +65,11 @@ interface ReviewsSectionProps {
 }
 
 export function ReviewsSection({ viewerRole, reviews: reviewsProp, onUnlock }: ReviewsSectionProps) {
-  const reviews = Array.isArray(reviewsProp) ? reviewsProp : (reviewsProp?.items ?? []);
+  // Memoize reviews to ensure stable identity for downstream useMemo
+  const reviews = useMemo(
+    () => Array.isArray(reviewsProp) ? reviewsProp : (reviewsProp?.items ?? []),
+    [reviewsProp]
+  );
   const perm = getPermissions(viewerRole);
 
   const reviewEntries = useMemo<ReviewEntry[]>(() => {

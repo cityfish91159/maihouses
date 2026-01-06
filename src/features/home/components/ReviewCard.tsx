@@ -10,8 +10,8 @@ interface ReviewProps {
 
 export const ReviewCard = React.memo(({ id, name, rating, tags, content }: ReviewProps) => {
   return (
-    <article className="relative flex gap-3 rounded-2xl border border-brand-100 bg-white p-3.5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(0,56,90,0.08)]">
-      <div className="flex size-[38px] shrink-0 items-center justify-center rounded-full border border-brand-100 bg-gradient-to-b from-[#F2F5F8] to-[#E1E6EB] text-[15px] font-black text-brand-700 shadow-[inset_0_1px_2px_rgba(255,255,255,0.8),0_2px_4px_rgba(0,56,90,0.05)]">
+    <article className="relative flex gap-3 rounded-2xl border border-brand-100 bg-white p-3.5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-brand-md">
+      <div className="flex size-[38px] shrink-0 items-center justify-center rounded-full border border-brand-100 bg-gradient-to-b from-neutral-150 to-neutral-200 text-[15px] font-black text-brand-700 shadow-brand-xs">
         {id}
       </div>
       <div className="min-w-0 flex-1">

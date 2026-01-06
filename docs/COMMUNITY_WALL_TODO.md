@@ -1090,25 +1090,22 @@ SELECT MAX(last_active) FROM uag_lead_rankings;
 
 **需求**：確保首頁所有元素使用統一的品牌主色
 
-**施作摘要（2026-01-06 Gemini 完成）**：
+**施作摘要（2026-01-06 Gemini 完成 - v2 系統化）**：
 
-1. **P0 CSS 變數修復**：`public/main.css` `--brand-primary` 從 `#1A5FDB` → `#00385a`
-2. **P1 硬編碼顏色替換 (32 處)**：
-   | 檔案 | 替換數 |
-   |------|-------|
-   | `CommunityTeaser.tsx` | 10 |
-   | `PropertyGrid.tsx` | 4 |
-   | `PropertyCard.tsx` | 9 |
-   | `ReviewCard.tsx` | 4 |
-   | `SmartAsk.tsx` | 2 |
-   | `HeroAssure.tsx` | 3 |
-3. **Hooks 修復**：`useTrustRoom.ts:97` fetchData dependency 移除
-4. **驗證**：TypeScript 0 errors, ESLint 0 errors, Build ✅
-5. **部署**：Commit `c5dce347` → Vercel 自動部署
+**第一階段：Find & Replace (Commit c5dce347)**
+- 替換 32 處硬編碼顏色為 Tailwind `brand-*` 類
+
+**第二階段：系統化架構 (Commit 1ea98080)**
+1. **CSS Variable Driven**: `tailwind.config.cjs` 改用 `var(--brand)` 引用
+2. **Semantic boxShadow**: 新增 `shadow-brand-sm`, `shadow-card-glow`, `shadow-header`, `shadow-alert-glow`
+3. **Design Token**: `--brand-primary-rgb: 0, 56, 90` 用於 `rgba(var())`
+4. **Accent Colors**: 紅點 `#E63946` → `accent-alert` (保留設計意圖)
+5. **Arbitrary Value**: `bg-white/96` → `bg-bg-card-blur`
+6. **ESLint Guardrails**: `no-restricted-syntax` 禁止 `#00385a` 等硬編碼
 
 **當前狀態**：
-- 品牌主色：`brand-700` (#00385a) - 已統一
-- Tailwind 配置：`tailwind.config.cjs` - 已正確定義
+- 品牌主色：CSS Variable Driven (`var(--brand)`)
+- 設計系統：SSOT (Single Source of Truth)
 
 **問題分析**：
 1. 部分組件使用硬編碼顏色

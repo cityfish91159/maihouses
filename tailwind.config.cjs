@@ -58,12 +58,22 @@ module.exports = {
           muted: 'var(--text-muted)',
           ink: 'var(--text-primary)',
         },
+        // Neutral Gradient Colors - 用於 avatar/card 漸層
+        neutral: {
+          150: '#F2F5F8',  // gradient from
+          200: '#E1E6EB',  // gradient to
+          100: '#F5F7FA',  // button hover
+          80: '#E8F0FF',   // button hover alt
+        },
       },
       /**
        * 🌑 Semantic Box Shadows - rgba(var()) Pattern
        * - 使用 CSS 變數的 RGB 值實現動態陰影
        * - 消除所有 hardcoded rgba(0,56,90,...) 
        */
+      dropShadow: {
+        'brand-xs': '0 1px 0 rgba(var(--brand-primary-rgb, 0, 56, 90), 0.12)',
+      },
       boxShadow: {
         // Brand Shadows (使用 --brand-primary-rgb: 0, 56, 90)
         'brand-xs': '0 1px 2px rgba(var(--brand-primary-rgb, 0, 56, 90), 0.05)',

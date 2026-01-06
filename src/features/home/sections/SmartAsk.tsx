@@ -174,7 +174,7 @@ export default function SmartAsk() {
     }, [status]);
 
     return (
-        <section className="group relative isolate overflow-hidden rounded-[24px] border border-brand-100 bg-gradient-to-br from-white via-[#F8FAFC] to-brand-700/[0.03] shadow-[0_8px_24px_rgba(0,56,90,0.06)] transition-all duration-300 hover:shadow-[0_12px_32px_rgba(0,56,90,0.1)]">
+        <section className="group relative isolate overflow-hidden rounded-[24px] border border-brand-100 bg-gradient-to-br from-white via-[#F8FAFC] to-brand-700/[0.03] shadow-brand-lg transition-all duration-300 hover:shadow-brand-xl">
 
             {/* --- Background Elements --- */}
             <div className="pointer-events-none absolute -right-24 -top-24 size-80 rounded-full bg-brand-100/30 mix-blend-multiply blur-3xl"></div>

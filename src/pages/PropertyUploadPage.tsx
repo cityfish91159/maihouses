@@ -74,7 +74,7 @@ const PropertyUploadContent: React.FC = () => {
       clearTimeout(timer);
       window.removeEventListener('storage', onStorage);
     };
-  }, [userId]);
+  }, [userId, hasDraft, getDraftPreview]);
 
   // OPT-2: 組件卸載時清理所有 Timer (防止 SPA 靈異滾動/匯入)
   useEffect(() => {
