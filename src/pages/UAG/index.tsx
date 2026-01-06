@@ -26,7 +26,7 @@ import type { Lead } from './types/uag.types';
 function UAGPageContent() {
   const { data: appData, isLoading, buyLead, isBuying, useMock, toggleMode } = useUAG();
   const { selectedLead, selectLead, close } = useLeadSelection();
-  const { user } = useAuth();
+  const { user, loading: authLoading, error: authError, signOut } = useAuth();
   const actionPanelRef = useRef<HTMLDivElement>(null);
 
   // MSG-5: Modal 狀態
@@ -34,6 +34,17 @@ function UAGPageContent() {
   const [purchasedLead, setPurchasedLead] = useState<Lead | null>(null);
   // MSG-5 FIX: 保存購買後回傳的 conversation_id (UAG-13)
   const [currentConversationId, setCurrentConversationId] = useState<string | undefined>(undefined);
+  // Header signOut 狀態
+  const [isSigningOut, setIsSigningOut] = useState(false);
+
+  const handleSignOut = async () => {
+    setIsSigningOut(true);
+    try {
+      await signOut();
+    } finally {
+      setIsSigningOut(false);
+    }
+  };
 
   /**
    * MSG-5 FIX 1: 使用 await 確認購買成功後才顯示 Modal
@@ -77,7 +88,13 @@ function UAGPageContent() {
 
   return (
     <div className={styles['uag-page']}>
-      <UAGHeader user={user} />
+      <UAGHeader
+          user={user}
+          isLoading={authLoading}
+          error={authError}
+          onSignOut={handleSignOut}
+          isSigningOut={isSigningOut}
+        />
 
       <main className={styles['uag-container']}>
         <div className={styles['uag-grid']}>
