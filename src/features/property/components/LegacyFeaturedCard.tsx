@@ -24,7 +24,16 @@ const LegacyFeaturedCard: React.FC<LegacyFeaturedCardProps> = ({ data, variant }
             </div>
 
             <div className="property-content">
-                <h3 className="property-title" onClick={handleNavigate} style={{ cursor: 'pointer' }}>{data.title}</h3>
+                <h3 className="property-title">
+                    <button
+                        type="button"
+                        onClick={handleNavigate}
+                        className="property-title-btn"
+                        style={{ cursor: 'pointer', background: 'none', border: 'none', padding: 0, font: 'inherit', color: 'inherit', textAlign: 'inherit', width: '100%' }}
+                    >
+                        {data.title}
+                    </button>
+                </h3>
                 <div className="property-location">{data.location}</div>
 
                 <div className="property-tags-row" style={{ display: 'flex', gap: '0.375rem', marginBottom: '0.625rem' }}>

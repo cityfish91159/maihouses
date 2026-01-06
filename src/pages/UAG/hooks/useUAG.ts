@@ -218,7 +218,7 @@ export function useUAG() {
         }
       });
     });
-  }, [data, buyLeadMutation]);
+  }, [data, buyLeadMutation, queryClient, useMock, session?.user?.id]);
 
   return {
     data,

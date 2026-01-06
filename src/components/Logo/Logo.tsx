@@ -6,6 +6,7 @@ interface LogoProps {
   onClick?: () => void;
   href?: string;
   showBadge?: boolean;
+  ariaLabel?: string;
 }
 
 interface LogoContentProps {
@@ -56,13 +57,14 @@ export const Logo: React.FC<LogoProps> = ({
   className = "",
   onClick,
   href = "/maihouses/",
-  showBadge = true
+  showBadge = true,
+  ariaLabel
 }) => {
   const contentProps = { showSlogan, className, showBadge };
 
   if (href) {
     return (
-      <a href={href} onClick={onClick} className="no-underline">
+      <a href={href} onClick={onClick} className="no-underline" aria-label={ariaLabel}>
         <LogoContent {...contentProps} />
       </a>
     );
@@ -74,6 +76,7 @@ export const Logo: React.FC<LogoProps> = ({
       tabIndex={0}
       onClick={onClick}
       onKeyDown={(e) => { if ((e.key === 'Enter' || e.key === ' ') && onClick) onClick(); }}
+      aria-label={ariaLabel}
     >
       <LogoContent {...contentProps} />
     </div>

@@ -1,4 +1,18 @@
-export default async function handler(req: any, res: any) {
+import type { VercelRequest, VercelResponse } from '@vercel/node';
+
+interface ChatMessage {
+  role: 'system' | 'user' | 'assistant';
+  content: string;
+}
+
+interface ChatRequestBody {
+  messages?: ChatMessage[];
+  model?: string;
+  temperature?: number;
+  stream?: boolean;
+}
+
+export default async function handler(req: VercelRequest, res: VercelResponse) {
   // 設定 CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -89,8 +103,9 @@ export default async function handler(req: any, res: any) {
 
       res.end();
 
-    } catch (error: any) {
-      res.write(`data: ${JSON.stringify({ error: 'Stream error', message: error.message })}\n\n`);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      res.write(`data: ${JSON.stringify({ error: 'Stream error', message })}\n\n`);
       res.end();
     }
   } else {
@@ -121,10 +136,11 @@ export default async function handler(req: any, res: any) {
       const data = await response.json();
       return res.status(200).json(data);
 
-    } catch (error: any) {
-      return res.status(500).json({ 
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      return res.status(500).json({
         error: 'Internal server error',
-        message: error.message
+        message
       });
     }
   }

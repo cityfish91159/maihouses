@@ -101,6 +101,7 @@ type AnswerRow = {
   is_best: boolean | null;
   likes_count: number | null;
   created_at: string;
+  author?: { name: string; avatar_url: string | null } | null;
   [key: string]: unknown;
 };
 
@@ -896,7 +897,7 @@ async function getAll(
     const allAnswers = q.answers || [];
     return {
       ...q,
-      answers: allAnswers.map((a: any) => ({
+      answers: allAnswers.map((a: AnswerRow) => ({
         id: a.id,
         author_id: a.author_id,
         content: a.answer, // DB 欄位是 answer，前端期望 content

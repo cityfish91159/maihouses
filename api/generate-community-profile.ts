@@ -121,7 +121,10 @@ ${allDisadvantages.join('、') || '無'}
       throw new Error(`OpenAI API error: ${aiResponse.status}`);
     }
 
-    const aiData: any = await aiResponse.json();
+    interface OpenAIResponse {
+      choices?: Array<{ message?: { content?: string } }>;
+    }
+    const aiData = await aiResponse.json() as OpenAIResponse;
     const aiContent = aiData.choices?.[0]?.message?.content || '';
 
     // 5. 解析 JSON
@@ -161,8 +164,8 @@ ${allDisadvantages.join('、') || '無'}
       result: aiResult
     });
 
-  } catch (error: any) {
-    console.error('API Error:', error);
-    return res.status(500).json({ error: error.message });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    return res.status(500).json({ error: message });
   }
 }

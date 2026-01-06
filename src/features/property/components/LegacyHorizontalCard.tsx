@@ -26,7 +26,14 @@ const LegacyHorizontalCard: React.FC<LegacyHorizontalCardProps> = ({ data }) => 
                 <div className="horizontal-main">
                     <div>
                         <div className="horizontal-title-row">
-                            <strong onClick={handleNavigate} style={{ cursor: 'pointer' }}>{data.title}</strong>
+                            <button
+                                type="button"
+                                onClick={handleNavigate}
+                                className="horizontal-title-btn"
+                                style={{ cursor: 'pointer', background: 'none', border: 'none', padding: 0, font: 'inherit', color: 'inherit', fontWeight: 'bold' }}
+                            >
+                                {data.title}
+                            </button>
                             {firstTag && (
                                 <span className="horizontal-tag">{firstTag}</span>
                             )}

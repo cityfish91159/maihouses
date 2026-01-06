@@ -1,11 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
 import { ChevronDown, LogOut } from 'lucide-react';
-import { useNotifications } from '../../../hooks/useNotifications';
-import { useNotificationDropdown } from '../../../hooks/useNotificationDropdown';
-import { NotificationBell } from '../../../components/common/NotificationBell';
-import { NotificationDropdown } from '../../../components/layout/NotificationDropdown';
-import { NotificationErrorBoundary } from '../../../components/layout/NotificationErrorBoundary';
+// import { useNotifications } from '../../../hooks/useNotifications';
+// import { useNotificationDropdown } from '../../../hooks/useNotificationDropdown';
+// import { NotificationBell } from '../../../components/common/NotificationBell';
+// import { NotificationDropdown } from '../../../components/layout/NotificationDropdown';
+// import { NotificationErrorBoundary } from '../../../components/layout/NotificationErrorBoundary';
 import { Logo } from '../../../components/Logo/Logo';
 import { ROUTES } from '../../../constants/routes';
 import styles from '../UAG.module.css';
@@ -53,18 +53,18 @@ export const UAGHeader: React.FC<UAGHeaderProps> = ({
   onSignOut,
   isSigningOut = false
 }) => {
-  const { count, notifications, isLoading: notificationsLoading, error: notificationsError, isStale, refresh } = useNotifications();
+  // const { count, notifications, isLoading: notificationsLoading, error: notificationsError, isStale, refresh } = useNotifications();
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const userMenuButtonRef = useRef<HTMLButtonElement | null>(null);
 
   // 使用共用 Hook 管理通知下拉選單
-  const {
-    isOpen: notificationMenuOpen,
-    toggle: toggleNotificationMenu,
-    close: closeNotificationMenu,
-    triggerRef: notificationTriggerRef,
-    dropdownRef: notificationDropdownRef,
-  } = useNotificationDropdown();
+  // const {
+  //   isOpen: notificationMenuOpen,
+  //   toggle: toggleNotificationMenu,
+  //   close: closeNotificationMenu,
+  //   triggerRef: notificationTriggerRef,
+  //   dropdownRef: notificationDropdownRef,
+  // } = useNotificationDropdown();
 
   // 點擊外部關閉用戶選單（通知選單由 Hook 處理）
   // ⚠️ useEffect 必須在所有 early return 之前調用
@@ -94,7 +94,7 @@ export const UAGHeader: React.FC<UAGHeaderProps> = ({
   };
 
   const handleNotificationClick = (conversationId: string) => {
-    closeNotificationMenu();
+    // closeNotificationMenu();
     window.location.href = ROUTES.CHAT(conversationId);
   };
 
@@ -127,7 +127,8 @@ export const UAGHeader: React.FC<UAGHeaderProps> = ({
             返回首頁
           </a>
           <div className={styles['uag-notification']}>
-            <NotificationBell
+            {/* Notification components temporarily disabled due to missing files */}
+            {/* <NotificationBell
               ref={notificationTriggerRef}
               unreadCount={count}
               isLoading={notificationsLoading}
@@ -151,7 +152,7 @@ export const UAGHeader: React.FC<UAGHeaderProps> = ({
                   />
                 </NotificationErrorBoundary>
               </div>
-            )}
+            )} */}
           </div>
           {user && (
             <div className={styles['uag-user']}>

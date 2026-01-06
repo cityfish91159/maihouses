@@ -3,7 +3,22 @@
  * 用於 GitHub Copilot 整合和進階 AI 對話
  */
 
-export default async function handler(req: any, res: any) {
+import type { VercelRequest, VercelResponse } from '@vercel/node';
+
+interface ChatMessage {
+  role: 'system' | 'user' | 'assistant';
+  content: string;
+}
+
+interface ClaudeRequestBody {
+  messages?: ChatMessage[];
+  model?: string;
+  max_tokens?: number;
+  temperature?: number;
+  stream?: boolean;
+}
+
+export default async function handler(req: VercelRequest, res: VercelResponse) {
   // 設定 CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -45,7 +60,7 @@ export default async function handler(req: any, res: any) {
   }
 
   // 轉換訊息格式（如果需要從 OpenAI 格式轉換）
-  const claudeMessages = messages.map((msg: any) => {
+  const claudeMessages = messages.map((msg: ChatMessage) => {
     if (msg.role === 'system') {
       // Claude 不支援 system role 在 messages 中
       return null;
@@ -57,7 +72,7 @@ export default async function handler(req: any, res: any) {
   }).filter(Boolean);
 
   // 提取 system message
-  const systemMessage = messages.find((msg: any) => msg.role === 'system')?.content || undefined;
+  const systemMessage = messages.find((msg: ChatMessage) => msg.role === 'system')?.content || undefined;
 
   try {
     // 如果要求串流
@@ -166,11 +181,11 @@ export default async function handler(req: any, res: any) {
 
       return res.status(200).json(result);
     }
-  } catch (error: any) {
-    console.error('Claude API Error:', error);
-    return res.status(500).json({ 
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    return res.status(500).json({
       error: 'Claude API request failed',
-      details: error.message 
+      details: message
     });
   }
 }
