@@ -11,6 +11,13 @@
 import React from 'react';
 import { logger } from '../../../lib/logger';
 
+// DEV 模式除錯用
+declare global {
+  interface Window {
+    __triggerCommunityWallError?: () => void;
+  }
+}
+
 type ErrorCategory = 'network' | 'permission' | 'notFound' | 'runtime' | 'unknown';
 
 interface CategorizedError {
@@ -239,7 +246,7 @@ export class WallErrorBoundary extends React.Component<Props, State> {
 }
 
 if (import.meta.env.DEV) {
-  (window as any).__triggerCommunityWallError = () => {
+  window.__triggerCommunityWallError = () => {
     throw new Error('手動觸發社區牆 ErrorBoundary 測試錯誤');
   };
 }
