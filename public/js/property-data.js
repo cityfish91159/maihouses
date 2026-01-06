@@ -1,4 +1,15 @@
-window.propertyMockData = {
+/**
+ * Property Page Mock Data
+ * 
+ * ⚠️ SSOT 警告：此檔案內容必須與 public/data/seed-property-page.json 保持同步！
+ * 
+ * 為了首屏 0ms 載入，保留 JS 物件形式（瀏覽器直接解析）
+ * 後端 API 失敗時也會使用 seed-property-page.json 作為 fallback
+ * 
+ * @see public/data/seed-property-page.json - 單一真理來源
+ * @see api/property/page-data.ts - 後端聚合 API
+ */
+export const propertyMockData = {
   default: {
     featured: {
       main: {
@@ -285,3 +296,10 @@ window.propertyMockData = {
     ]
   }
 };
+
+// 保留全域以支援舊版引用
+if (typeof window !== 'undefined') {
+  window.propertyMockData = propertyMockData;
+}
+
+export default propertyMockData;

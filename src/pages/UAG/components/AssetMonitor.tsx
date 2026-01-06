@@ -1,14 +1,14 @@
 import React from 'react';
 import { Lead } from '../types/uag.types';
 import styles from '../UAG.module.css';
-import { GRADE_HOURS } from '../uag-config';
+import { GRADE_PROTECTION_HOURS } from '../uag-config';
 
 interface AssetMonitorProps {
   readonly leads: Lead[];
 }
 
 const calculateProtection = (lead: Lead) => {
-  const total = GRADE_HOURS[lead.grade] ?? 336;
+  const total = GRADE_PROTECTION_HOURS[lead.grade] ?? 336;
   const remaining = lead.remainingHours ?? total;
   const percent = Math.max(0, Math.min(100, (remaining / total) * 100));
   const isExclusive = (lead.grade === 'S' || lead.grade === 'A');

@@ -16,6 +16,7 @@ import { ComposerModal } from '../../../components/Composer/ComposerModal';
 import { formatRelativeTimeLabel } from '../../../lib/time';
 import { notify } from '../../../lib/notify';
 import { STRINGS } from '../../../constants/strings';
+import { logger } from '../../../lib/logger';
 
 // 解構 COMMUNITY 命名空間以簡化引用
 const { COMMUNITY: S } = STRINGS;
@@ -74,7 +75,7 @@ function PostCard({ post, onLike }: PostCardProps) {
       try {
         await onLike(post.id);
       } catch (error) {
-        console.error('Failed to toggle like', error);
+        logger.error('[PostsSection] Failed to toggle like', { error });
         notify.error('按讚失敗', '請稍後重試');
       } finally {
         if (isMountedRef.current) {
@@ -227,7 +228,7 @@ export function PostsSection({
     }
     event.preventDefault();
 
-    const lastAvailableTab = activeTabs[activeTabs.length - 1];
+    const lastAvailableTab = activeTabs.at(-1);
 
     if (event.key === 'Home') {
       focusTab('public');

@@ -5,7 +5,7 @@
 export const ROUTES = {
   /** 首頁 */
   HOME: '/maihouses/',
-  
+
   /** 房地產列表 */
   PROPERTY_LIST: '/maihouses/property.html',
 
@@ -31,20 +31,26 @@ export const ROUTES = {
   COMMUNITY_WALL_MVP: '/maihouses/community-wall_mvp.html',
 
   /** UAG 評分系統 */
-  UAG: 'https://maihouses.vercel.app/maihouses/uag',
+  UAG: '/maihouses/uag',
 
   /** 信任交易 */
   TRUST: '/trust',
 
   /** 認證頁面 */
   AUTH: '/maihouses/auth.html',
-  
+
+  /** 對話頁面 */
+  CHAT: (conversationId: string): string => `/maihouses/chat/${conversationId}`,
+
+  /** 對話入口 */
+  CHAT_HOME: '/maihouses/chat',
+
   /** 社區頁面 - 需要 communityId 參數 */
   COMMUNITY: (communityId: string): string => `/maihouses/community/${communityId}`,
-  
+
   /** 社區牆頁面 - 需要 communityId 參數 */
   COMMUNITY_WALL: (communityId: string): string => `/maihouses/community/${communityId}/wall`,
-  
+
   /** 房源詳情頁 - 需要 propertyId 參數 */
   PROPERTY: (propertyId: string): string => `/maihouses/p/${propertyId}`,
 } as const;
@@ -55,7 +61,7 @@ export const RouteUtils = {
   isActive: (currentPath: string, route: string): boolean => {
     return currentPath === route || currentPath.startsWith(route);
   },
-  
+
   /** 取得帶有查詢參數的路由 */
   withQuery: (route: string, params: Record<string, string>): string => {
     const query = new URLSearchParams(params).toString();

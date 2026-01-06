@@ -1,109 +1,85 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
+import { MaiMaiBase, useMaiMaiMood } from './MaiMai';
+import { MaiMaiSpeech } from './MaiMai/MaiMaiSpeech';
+import useConfetti from './MaiMai/useConfetti';
+import type { MaiMaiMood } from './MaiMai';
 
-export default function MascotMaiMai() {
-  const [mood, setMood] = useState(0);
-  
-  // 簡單的待命動畫
+interface MascotMaiMaiProps {
+  /** SmartAsk 是否正在輸入或請求 */
+  isThinking?: boolean;
+  /** SmartAsk 問答是否剛成功（用於 excited + 撒花） */
+  isSuccess?: boolean;
+  /** SmartAsk 是否發生錯誤 */
+  hasError?: boolean;
+  /** 對話訊息（取最後 3 句顯示氣泡） */
+  messages?: string[];
+}
+
+/**
+ * MascotMaiMai - 簡化版公仔（SmartAsk 使用）
+ * @description 使用 MaiMai 原子組件重構，保持原有循環動畫行為
+ */
+export default function MascotMaiMai({ isThinking = false, isSuccess = false, hasError = false, messages = [] }: MascotMaiMaiProps) {
+  const [successFlash, setSuccessFlash] = useState(false);
+
+  // 問答成功時短暫 excited + 撒花
+  // 使用 setTimeout(0) 延遲 setState，避免同步級聯渲染
   useEffect(() => {
-    const interval = setInterval(() => {
-      setMood(m => (m + 1) % 3);
-    }, 3000);
-    return () => clearInterval(interval);
-  }, []);
+    if (!isSuccess) return;
 
-  // 手勢變化
-  const getArms = () => {
-    switch (mood) {
-      case 0: // 待命
-        return { left: 'M 55 130 L 35 145', right: 'M 145 130 L 165 145' };
-      case 1: // 揮手
-        return { left: 'M 55 130 L 35 145', right: 'M 145 130 L 175 100' };
-      case 2: // 雙手張開歡迎
-        return { left: 'M 55 130 L 25 115', right: 'M 145 130 L 175 115' };
-      default:
-        return { left: 'M 55 130 L 35 145', right: 'M 145 130 L 165 145' };
+    let mounted = true;
+    const startTimer = setTimeout(() => {
+      if (mounted) setSuccessFlash(true);
+    }, 0);
+    const endTimer = setTimeout(() => {
+      if (mounted) setSuccessFlash(false);
+    }, 1800);
+
+    return () => {
+      mounted = false;
+      clearTimeout(startTimer);
+      clearTimeout(endTimer);
+    };
+  }, [isSuccess]);
+
+  // 心情狀態機：輸入/請求 → thinking；成功 → excited/celebrate；錯誤 → shy
+  const { mood, handleClick } = useMaiMaiMood({
+    externalMood: successFlash ? 'excited' : undefined,
+    isSuccess: successFlash,
+    hasError,
+    isLoading: isThinking,
+  });
+
+  const { fireConfetti, ConfettiCanvas } = useConfetti({ particleCount: 14 });
+  const prevMoodRef = useRef<MaiMaiMood>(mood);
+
+  useEffect(() => {
+    if ((mood === 'celebrate' || mood === 'excited') && prevMoodRef.current !== mood) {
+      fireConfetti();
+      window.dispatchEvent(new CustomEvent('mascot:celebrate'));
     }
-  };
+    prevMoodRef.current = mood;
+  }, [mood, fireConfetti]);
 
-  const arms = getArms();
+  // 氣泡內容：取最後 3 句文字
+  const speechMessages = useMemo(() => messages.map(m => m.trim()).filter(Boolean), [messages]);
 
   return (
     <div className="relative mb-4 h-40 w-32 text-brand">
-        <div className="absolute left-1/2 top-1/2 -z-10 size-24 -translate-x-1/2 -translate-y-1/2 rounded-full bg-brand-100/50 blur-2xl"></div>
-        
-        <svg viewBox="0 0 200 240" className="size-full animate-float drop-shadow-sm">
-          
-          {/* M-Antenna */}
-          <path 
-            d="M 85 40 L 85 15 L 100 30 L 115 15 L 115 40" 
-            stroke="currentColor" 
-            strokeWidth="5" 
-            fill="none" 
-            strokeLinecap="round" 
-            strokeLinejoin="round"
-          />
-          
-          {/* House Body & Roof */}
-          <path 
-            d="M 40 80 L 100 40 L 160 80" 
-            stroke="currentColor" 
-            strokeWidth="6" 
-            fill="none" 
-            strokeLinecap="round" 
-            strokeLinejoin="round"
-          />
-          <rect 
-            x="55" y="80" 
-            width="90" height="100" 
-            stroke="currentColor" 
-            strokeWidth="6" 
-            fill="none" 
-            strokeLinecap="round" 
-            strokeLinejoin="round"
-          />
-          
-          {/* 領結 - 簡化版 */}
-          <circle cx="100" cy="85" r="4" fill="currentColor" />
-          
-          {/* Eyebrows */}
-          <path d="M 78 110 Q 85 105 92 110" stroke="currentColor" strokeWidth="4" fill="none" strokeLinecap="round" />
-          <path d="M 108 110 Q 115 105 122 110" stroke="currentColor" strokeWidth="4" fill="none" strokeLinecap="round" />
-          
-          {/* Eyes */}
-          <circle cx="85" cy="125" r="4" stroke="currentColor" strokeWidth="3" fill="none" />
-          <circle cx="115" cy="125" r="4" stroke="currentColor" strokeWidth="3" fill="none" />
-          
-          {/* 嘴巴 - 微笑 */}
-          <path 
-            d="M 90 145 Q 100 155 110 145" 
-            stroke="currentColor" 
-            strokeWidth="3" 
-            fill="none" 
-            strokeLinecap="round"
-          />
-          
-          {/* Hands - 動態 */}
-          <path 
-            d={arms.left}
-            stroke="currentColor" 
-            strokeWidth="5" 
-            fill="none" 
-            strokeLinecap="round"
-            className="transition-all duration-500"
-          />
-          <path 
-            d={arms.right}
-            stroke="currentColor" 
-            strokeWidth="5" 
-            fill="none" 
-            strokeLinecap="round"
-            className="transition-all duration-500"
-          />
-
-          {/* Legs */}
-          <path d="M 85 180 L 85 215 L 75 215" stroke="currentColor" strokeWidth="5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-          <path d="M 115 180 L 115 215 L 125 215" stroke="currentColor" strokeWidth="5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
+      <div className="absolute left-1/2 top-1/2 -z-10 size-24 -translate-x-1/2 -translate-y-1/2 rounded-full bg-brand-100/50 blur-2xl" />
+      {speechMessages.length > 0 && (
+        <MaiMaiSpeech messages={speechMessages} />
+      )}
+      <ConfettiCanvas />
+      <MaiMaiBase
+        mood={mood}
+        size="lg"
+        className="size-full"
+        animated={true}
+        showEffects={true}
+        onClick={handleClick}
+      />
     </div>
   );
 }
+

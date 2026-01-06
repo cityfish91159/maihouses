@@ -18,6 +18,12 @@ export const STRINGS = {
       TITLE: '您有一筆交易進行中',
       ENTER_BTN: '進入戰情室',
     },
+    // MSG-3: 私訊提醒橫幅文案
+    MSG_BANNER: {
+      TITLE: '💬 有房仲想聯繫您',
+      PROPERTY_FALLBACK: '物件諮詢',
+      VIEW_BTN: '查看',
+    },
     SIDEBAR: {
       NAV_TITLE: '快速導航',
       HOT_TITLE: '社區動態',
@@ -32,6 +38,24 @@ export const STRINGS = {
       HOT_COMMUNITIES_UNIT: '個',
       SALE_PREFIX: '目前有',
       SALE_SUFFIX: '戶待售',
+    },
+    // P5 Optimization Round 2
+    DEFAULT_USER: 'Mike',
+    DEFAULT_COMMUNITY_NAME: '惠宇上晴',
+    DEFAULT_COMMUNITY_ID: 'test-uuid',
+    DEFAULT_COMMUNITY_LABEL: '社區',
+    NOTIFY: {
+      LOGIN_REQUIRED: '請先登入',
+      LOGIN_REQUIRED_LIKE: '登入後才能按讚',
+      LOGIN_REQUIRED_POST: '登入後才能發文',
+      LIKE_FAILED: '按讚失敗',
+      LIKE_FAILED_DESC: '請稍後再試',
+      FEATURE_WIP: '功能開發中',
+      REPLY_WIP: '回覆功能即將上線',
+      SHARE_WIP: '分享功能即將上線',
+      // P6-REFACTOR: 留言相關
+      COMMENT_SUCCESS: '留言成功',
+      COMMENT_SUCCESS_DESC: '您的留言已發佈',
     },
     POST: {
       LIKE_BTN: '讚',
@@ -49,6 +73,10 @@ export const STRINGS = {
       BADGE_OFFICIAL: '公告',
       VIEWS: (n: number) => `${n} 次瀏覽`,
       PINNED: '可預約看屋',
+      COMMENT_SUCCESS: {
+        TITLE: '留言成功',
+        DESC: '您的留言已發佈',
+      },
     },
     AI_INSIGHT: {
       TITLE: 'AI 社區洞察',
@@ -65,6 +93,10 @@ export const STRINGS = {
     EMPTY: {
       TITLE: '還沒有貼文',
       DESC: '成為第一個發布貼文的人吧！',
+    },
+    TABS: {
+      PUBLIC: '公開牆',
+      PRIVATE: '私密牆',
     },
     ERROR: {
       LOAD_FAILED: '載入失敗',
@@ -140,5 +172,58 @@ export const STRINGS = {
     EMPTY_DEFAULT: '目前沒有任何貼文',
     LOADING_LABEL: '載入中...',
   },
+  AGENT: {
+    ROLE: {
+      AGENT: '房仲',
+      CONSUMER: '住戶',
+    },
+    OOS: {
+      SWITCH_TO_CONSUMER: '切換至消費者視角',
+      SWITCH_TO_AGENT: '切換至房仲視角',
+    },
+    PROFILE: {
+      FROM_STORE: '來自21世紀河南店',
+      BADGE_GOLD: '黃金住戶',
+      BADGE_VERIFIED: '認證房仲',
+      LINK_WORKBENCH: '🏷️ 業務後台',
+      LINK_WALL: '🧱 前往我的社區牆 ➡️',
+      STATS_SCORE: '📊 積分',
+      STATS_DAYS: '📅 互動',
+      STATS_LIKED: '❤️ 被感謝',
+    },
+    SIDEBAR: {
+      NAV_TITLE: '🧭 快速導航',
+      LINK_UAG: '📊 客戶工作臺',
+      LINK_STATS: '📈 業績統計',
+      LINK_TRUST: '🛡️ 安心留痕',
+      LINK_WALL: '🧱 我的社區牆',
+      PERF_TITLE: '📊 業績總覽',
+      PERF_DEAL_COUNT_PREFIX: '本月成交',
+      PERF_DEAL_COUNT_UNIT: '件',
+      PERF_AMOUNT_PREFIX: '成交金額',
+      PERF_CLIENTS_PREFIX: '服務中客戶',
+      PERF_CLIENTS_UNIT: '位',
+      TODO_TITLE: '🎯 今日待辦',
+      TODO_EMPTY: '無待辦事項',
+    },
+    UAG: {
+      TITLE: 'UAG 精準獲客',
+      LINK_WORKBENCH: '查看全部',
+      CARD_PREDICT: '預測需求：',
+      CARD_UNIT: '單元二三房',
+      CARD_BUDGET: '總價 1,600–1,900 萬',
+      CARD_PREF: '願看 12F 以上',
+    },
+    TRUST: {
+      TITLE: '安心留痕',
+      DESC_1: '11:30–12:05 帶看完成。簽到、位置軌跡、現場照片 3 張與對話摘要已留存。',
+      DESC_2: '憑證號 MJ-2025-11-10-0007。僅你與 買方 可見（個資受保護）。',
+      TAG_COMPLETED: '帶看完成',
+      TAG_CERT: '留痕憑證',
+      TAG_PRIVATE: '僅雙方可見',
+      BTN_LIKE: '👍 讚',
+      BTN_REPLY: '💬 回覆',
+      BTN_DETAIL: '➡️ 看詳情',
+    },
+  },
 };
-

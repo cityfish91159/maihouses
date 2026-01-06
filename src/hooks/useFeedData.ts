@@ -18,109 +18,88 @@
  * - P2-C4: API createPost 加入樂觀更新，立即顯示新貼文
  * - P2-C5: 暴露 isLiked helper 函數，方便 UI 判斷按讚狀態
  * - P2-C6: COMMUNITY_NAME_MAP 抽到 src/constants/communities.ts
+ * 
+ * P6-AUDIT Phase 1 (2025-12-11):
+ * - Extract Magic Numbers (HOT_POSTS_LIMIT)
+ * - Dynamic Sidebar Data (deriveSidebarData)
+ * - Comment Types & Mock Data (FeedComment)
  */
 
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { mhEnv } from '../lib/mhEnv';
+import { safeLocalStorage } from '../lib/safeStorage';
+import { logger } from '../lib/logger';
 import { supabase } from '../lib/supabase';
 import type { Post, Role } from '../types/community';
 import { useAuth } from './useAuth';
 import { getCommunityName, isValidCommunityId } from '../constants';
+
+import { MOCK_SALE_ITEMS } from '../services/mock/feed';
+import { STRINGS } from '../constants/strings';
+import type { FeedComment } from '../types/comment';
+import { getConsumerFeedData, createMockPost as createMockPostFromFactory } from '../pages/Feed/mockData';
+import { usePermission } from './usePermission';
+import { PERMISSIONS } from '../types/permissions';
+import { uploadService } from '../services/uploadService';
+const S = STRINGS.FEED;
 
 // ============ Feed 專用型別 ============
 export interface FeedPost extends Post {
   /** 貼文所屬社區（信息流可能跨社區） */
   communityId?: string | undefined;
   communityName?: string | undefined;
+  /** 貼文留言列表 */
+  commentList?: FeedComment[];
+  /** 貼文圖片 (P6-REFACTOR: 支援圖片) */
+  images?: { src: string; alt: string }[];
+  /** 私密貼文標記 (P7: Private Wall) */
+  private?: boolean;
+}
+
+export interface SidebarData {
+  hotPosts: { id: string | number; title: string; communityName: string; likes: number }[];
+  saleItems: typeof MOCK_SALE_ITEMS;
 }
 
 export interface UnifiedFeedData {
   posts: FeedPost[];
   totalPosts: number;
+  sidebarData: SidebarData;
 }
 
 // ============ 常數 ============
 const FEED_MOCK_STORAGE_KEY = 'feed-mock-data-v1';
 const MOCK_LATENCY_MS = 250;
+const HOT_POSTS_LIMIT = 3;
+
+// Helper to derive Sidebar Data
+const deriveSidebarData = (posts: FeedPost[]): SidebarData => {
+  const hotPosts = [...posts]
+    .sort((a, b) => (b.likes || 0) - (a.likes || 0))
+    .slice(0, HOT_POSTS_LIMIT)
+    .map(p => ({
+      id: p.id,
+      title: p.title,
+      communityName: p.communityName || S.DEFAULT_COMMUNITY_LABEL,
+      likes: p.likes || 0,
+    }));
+
+  return {
+    hotPosts,
+    saleItems: MOCK_SALE_ITEMS,
+  };
+};
 
 const EMPTY_FEED_DATA: UnifiedFeedData = {
   posts: [],
   totalPosts: 0,
+  sidebarData: { hotPosts: [], saleItems: [] },
 };
 
-// ============ Mock 資料 ============
-const FEED_MOCK_POSTS: FeedPost[] = [
-  {
-    id: 1001,
-    author: '陳小姐',
-    floor: '12F',
-    type: 'resident',
-    time: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-    title: '有人要團購掃地機嗎？🤖',
-    content: '這款 iRobot 打折，滿 5 台有團購價～',
-    likes: 31,
-    comments: 14,
-    communityId: 'test-uuid',
-    communityName: '惠宇上晴',
-  },
-  {
-    id: 1002,
-    author: '游杰倫',
-    type: 'agent',
-    time: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-    title: '🏡 惠宇上晴 12F｜雙陽台視野戶',
-    content: '客廳光線很好，上週屋主剛降價 50 萬，有興趣可私訊。',
-    views: 89,
-    likes: 0,
-    comments: 5,
-    communityId: 'test-uuid',
-    communityName: '惠宇上晴',
-  },
-  {
-    id: 1003,
-    author: '李先生',
-    floor: '8F',
-    type: 'resident',
-    time: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-    title: '停車位交流 🚗',
-    content: '我有 B2-128 想與 B1 交換，方便接送小孩',
-    likes: 12,
-    comments: 8,
-    communityId: 'community-2',
-    communityName: '遠雄中央公園',
-  },
-  {
-    id: 1004,
-    author: '王太太',
-    floor: '5F',
-    type: 'resident',
-    time: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-    title: '推薦水電師傅',
-    content: '上次找的師傅很專業，價格公道，需要的鄰居私訊我',
-    likes: 25,
-    comments: 6,
-    communityId: 'community-3',
-    communityName: '國泰建設',
-  },
-  {
-    id: 1005,
-    author: '林經理',
-    type: 'agent',
-    time: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000).toISOString(),
-    title: '🏡 惠宇上晴 8F｜三房車位',
-    content: '屋況極新，前屋主自住保養好',
-    views: 156,
-    likes: 0,
-    comments: 12,
-    communityId: 'test-uuid',
-    communityName: '惠宇上晴',
-  },
-];
-
-const FEED_MOCK_DATA: UnifiedFeedData = {
-  posts: FEED_MOCK_POSTS,
-  totalPosts: FEED_MOCK_POSTS.length,
-};
+// ============ Default Mock Data (from external mockData module) ============
+// P6-REFACTOR: Mock data moved to src/pages/Feed/mockData/
+// Using getter function to ensure deep copy and prevent state mutation
+const getDefaultMockData = (): UnifiedFeedData => getConsumerFeedData();
 
 type SupabasePostRow = {
   id: string;
@@ -143,6 +122,48 @@ type ProfileRow = {
   role: Role | null;
 };
 
+// ============ Profile Cache (P5-5 優化) ============
+interface ProfileCacheEntry {
+  profile: ProfileRow;
+  timestamp: number;
+}
+
+const PROFILE_CACHE_TTL_MS = 5 * 60 * 1000;
+const profileCache = new Map<string, ProfileCacheEntry>();
+
+const isProfileCacheValid = (entry: ProfileCacheEntry): boolean => {
+  return Date.now() - entry.timestamp < PROFILE_CACHE_TTL_MS;
+};
+
+const getProfilesFromCache = (authorIds: string[]): {
+  cached: Map<string, ProfileRow>;
+  uncached: string[];
+} => {
+  const cached = new Map<string, ProfileRow>();
+  const uncached: string[] = [];
+
+  for (const id of authorIds) {
+    const entry = profileCache.get(id);
+    if (entry && isProfileCacheValid(entry)) {
+      cached.set(id, entry.profile);
+    } else {
+      uncached.push(id);
+      if (entry) {
+        profileCache.delete(id);
+      }
+    }
+  }
+
+  return { cached, uncached };
+};
+
+const setProfilesToCache = (profiles: ProfileRow[]): void => {
+  const now = Date.now();
+  for (const profile of profiles) {
+    profileCache.set(profile.id, { profile, timestamp: now });
+  }
+};
+
 const filterMockData = (source: UnifiedFeedData, targetCommunityId?: string): UnifiedFeedData => {
   const filteredPosts = targetCommunityId
     ? source.posts.filter(p => p.communityId === targetCommunityId)
@@ -151,6 +172,7 @@ const filterMockData = (source: UnifiedFeedData, targetCommunityId?: string): Un
   return {
     posts: filteredPosts,
     totalPosts: filteredPosts.length,
+    sidebarData: deriveSidebarData(filteredPosts),
   };
 };
 
@@ -162,52 +184,58 @@ const deriveTitleFromContent = (content: string): string => {
   return content.length > 40 ? `${content.slice(0, 40)}...` : content;
 };
 
-const canUseMockStorage = (): boolean => {
-  try {
-    return typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
-  } catch {
-    return false;
-  }
-};
-
 const loadPersistedFeedMockState = (fallback: UnifiedFeedData): UnifiedFeedData => {
-  if (!canUseMockStorage()) return fallback;
+  const raw = safeLocalStorage.getItem(FEED_MOCK_STORAGE_KEY);
+  if (!raw) return fallback;
   try {
-    const raw = window.localStorage.getItem(FEED_MOCK_STORAGE_KEY);
-    if (!raw) return fallback;
     const parsed = JSON.parse(raw) as Partial<UnifiedFeedData>;
+    const posts = parsed.posts ?? fallback.posts;
     return {
-      posts: parsed.posts ?? fallback.posts,
+      posts,
       totalPosts: parsed.totalPosts ?? fallback.totalPosts,
+      sidebarData: deriveSidebarData(posts),
     };
   } catch (err) {
-    console.error('[useFeedData] Failed to load mock state', err);
+    logger.error('[useFeedData] Failed to load mock state', { error: err });
     return fallback;
   }
 };
 
 const saveFeedMockState = (data: UnifiedFeedData): void => {
-  if (!canUseMockStorage()) return;
   try {
-    window.localStorage.setItem(FEED_MOCK_STORAGE_KEY, JSON.stringify(data));
+    safeLocalStorage.setItem(FEED_MOCK_STORAGE_KEY, JSON.stringify(data));
   } catch (err) {
-    console.error('[useFeedData] Failed to persist mock state', err);
+    logger.error('[useFeedData] Failed to persist mock state', { error: err });
   }
 };
 
 const buildProfileMap = async (authorIds: string[]): Promise<Map<string, ProfileRow>> => {
   if (!authorIds.length) return new Map();
+
+  const { cached, uncached } = getProfilesFromCache(authorIds);
+  if (uncached.length === 0) {
+    return cached;
+  }
+
   const { data, error } = await supabase
     .from('profiles')
     .select('id, name, floor, role')
-    .in('id', authorIds);
+    .in('id', uncached);
 
   if (error) {
-    console.error('[useFeedData] Fetch profiles failed', error);
-    return new Map();
+    logger.error('[useFeedData] Fetch profiles failed', { error });
+    return cached;
   }
 
-  return new Map((data ?? []).map(profile => [profile.id, profile as ProfileRow]));
+  const fetchedProfiles = (data ?? []).map(profile => profile as ProfileRow);
+  setProfilesToCache(fetchedProfiles);
+
+  const result = new Map(cached);
+  for (const profile of fetchedProfiles) {
+    result.set(profile.id, profile);
+  }
+
+  return result;
 };
 
 const mapSupabasePostsToFeed = async (rows: SupabasePostRow[]): Promise<UnifiedFeedData> => {
@@ -236,6 +264,7 @@ const mapSupabasePostsToFeed = async (rows: SupabasePostRow[]): Promise<UnifiedF
       communityId: row.community_id,
       communityName: getCommunityName(row.community_id),
       liked_by: likedBy,
+      private: row.visibility === 'private',
     };
     return profile?.floor ? { ...base, floor: profile.floor } : base;
   });
@@ -243,6 +272,7 @@ const mapSupabasePostsToFeed = async (rows: SupabasePostRow[]): Promise<UnifiedF
   return {
     posts,
     totalPosts: posts.length,
+    sidebarData: deriveSidebarData(posts),
   };
 };
 
@@ -263,6 +293,7 @@ export const createFeedMockPost = (
   pinned: false,
   communityId,
   communityName,
+  commentList: [],
 });
 
 // ============ Hook 選項 ============
@@ -291,13 +322,15 @@ export interface UseFeedDataReturn {
   /** 按讚 */
   toggleLike: (postId: string | number) => Promise<void>;
   /** 發文 */
-  createPost: (content: string, communityId?: string) => Promise<void>;
+  createPost: (content: string, communityId?: string, images?: File[]) => Promise<void>;
   /** 後端判定的使用者身份 */
   viewerRole: Role;
   /** 是否登入 */
   isAuthenticated: boolean;
   /** 判斷某貼文是否已按讚（P2-C5 修復：暴露給消費者） */
   isLiked: (postId: string | number) => boolean;
+  /** 新增留言 */
+  addComment: (postId: string | number, content: string) => Promise<void>;
 }
 
 // ============ Main Hook ============
@@ -316,9 +349,15 @@ export function useFeedData(
   const { user: authUser, role: authRole, isAuthenticated, loading: authLoading } = useAuth();
   const {
     communityId,
-    initialMockData = FEED_MOCK_DATA,
+    initialMockData,
     persistMockState = true,
   } = options;
+
+  const { hasPermission } = usePermission();
+  const canViewPrivate = hasPermission(PERMISSIONS.VIEW_PRIVATE_WALL);
+
+  // P6-REFACTOR: Use getter to ensure fresh deep copy of mock data
+  const resolvedInitialMockData = initialMockData ?? getDefaultMockData();
 
   // ============ Mock 控制 ============
   const [useMock, setUseMockState] = useState<boolean>(() => mhEnv.isMockEnabled());
@@ -331,9 +370,19 @@ export function useFeedData(
   const currentUserId = authUser?.id;
 
   // ============ Mock 狀態 ============
-  const [mockData, setMockData] = useState<UnifiedFeedData>(() =>
-    persistMockState ? loadPersistedFeedMockState(initialMockData) : initialMockData
-  );
+  const [mockData, setMockData] = useState<UnifiedFeedData>(() => {
+    const rawData = persistMockState ? loadPersistedFeedMockState(resolvedInitialMockData) : resolvedInitialMockData;
+    const securePosts = rawData.posts.filter(p => {
+      if (p.private && !canViewPrivate) return false;
+      return true;
+    });
+    return {
+      ...rawData,
+      posts: securePosts,
+      totalPosts: securePosts.length,
+      sidebarData: deriveSidebarData(securePosts)
+    };
+  });
   const hasRestoredFromStorage = useRef(false);
   const [likedPosts, setLikedPosts] = useState<Set<string | number>>(() => new Set());
 
@@ -355,8 +404,21 @@ export function useFeedData(
       hasRestoredFromStorage.current = true;
       return;
     }
-    setMockData(loadPersistedFeedMockState(initialMockData));
-  }, [useMock, persistMockState, initialMockData]);
+    const loadedData = loadPersistedFeedMockState(resolvedInitialMockData);
+
+    // P7-6 OPTIMIZATION: State Level Security for Mock Data
+    const securePosts = loadedData.posts.filter(p => {
+      if (p.private && !canViewPrivate) return false;
+      return true;
+    });
+
+    setMockData({
+      ...loadedData,
+      posts: securePosts,
+      totalPosts: securePosts.length,
+      sidebarData: deriveSidebarData(securePosts)
+    });
+  }, [useMock, persistMockState, resolvedInitialMockData, canViewPrivate]);
 
   // 持久化 Mock 資料
   useEffect(() => {
@@ -369,7 +431,7 @@ export function useFeedData(
   const [apiLoading, setApiLoading] = useState(false);
   const [apiError, setApiError] = useState<Error | null>(null);
   const lastApiDataRef = useRef<UnifiedFeedData | null>(null);
-  
+
   // P2-C2/C4 修復：API 按讚狀態（用於樂觀更新）
   const [apiLikedPosts, setApiLikedPosts] = useState<Set<string | number>>(() => new Set());
 
@@ -391,14 +453,33 @@ export function useFeedData(
         query.eq('community_id', communityId);
       }
 
+      // P7-Audit-B4: API Level Security (Prevent data leakage over wire)
+      if (!canViewPrivate) {
+        query.eq('visibility', 'public');
+      }
+
       const { data, error } = await query;
       if (error) {
         throw error;
       }
 
       const mapped = await mapSupabasePostsToFeed((data ?? []) as SupabasePostRow[]);
-      setApiData(mapped);
-      lastApiDataRef.current = mapped;
+
+      // Security Filter
+      const securePosts = mapped.posts.filter(p => {
+        if (p.private && !canViewPrivate) return false;
+        return true;
+      });
+
+      const secureData = {
+        ...mapped,
+        posts: securePosts,
+        totalPosts: securePosts.length,
+        sidebarData: deriveSidebarData(securePosts),
+      };
+
+      setApiData(secureData);
+      lastApiDataRef.current = secureData;
 
       if (currentUserId) {
         const initialLiked = new Set<string | number>();
@@ -414,12 +495,12 @@ export function useFeedData(
       const error = err instanceof Error ? err : new Error('載入信息流失敗');
       setApiError(error);
       if (import.meta.env.DEV) {
-        console.error('[useFeedData] API error:', err);
+        logger.error('[useFeedData] API error', { error: err });
       }
     } finally {
       setApiLoading(false);
     }
-  }, [useMock, communityId, currentUserId]);
+  }, [useMock, communityId, currentUserId, canViewPrivate]);
 
   // 初始載入
   useEffect(() => {
@@ -431,7 +512,6 @@ export function useFeedData(
   // ============ 統一資料來源 ============
   const data = useMemo<UnifiedFeedData>(() => {
     if (useMock) {
-      // Mock 模式：根據 communityId 篩選
       return filterMockData(mockData, communityId);
     }
 
@@ -440,9 +520,16 @@ export function useFeedData(
       return apiData;
     }
 
-    // API 尚未返回時使用上次成功資料或空資料
-    return lastApiDataRef.current ?? EMPTY_FEED_DATA;
-  }, [useMock, apiData, mockData, communityId]);
+    const rawData = lastApiDataRef.current ?? EMPTY_FEED_DATA;
+
+    if (!canViewPrivate) {
+      return {
+        ...rawData,
+        posts: rawData.posts.filter(p => !p.private),
+      };
+    }
+    return rawData;
+  }, [useMock, apiData, mockData, communityId, canViewPrivate]);
 
   // ============ viewerRole ============
   const viewerRole = useMemo<Role>(() => authRole ?? 'guest', [authRole]);
@@ -450,11 +537,10 @@ export function useFeedData(
   // P2-C1 修復：Mock likedPosts 初始化（加 ref 保護，只執行一次）
   useEffect(() => {
     if (!useMock || !currentUserId) return;
-    
-    // 已初始化就跳過，避免 mockData 變化時重複執行
+
     if (hasInitializedLikedPosts.current) return;
     hasInitializedLikedPosts.current = true;
-    
+
     const initialLiked = new Set<string | number>();
     mockData.posts.forEach(p => {
       if (p.liked_by?.includes(currentUserId)) {
@@ -468,10 +554,10 @@ export function useFeedData(
   const getMockUserId = useCallback((): string => {
     if (currentUserId) return currentUserId;
     const storageKey = 'mock_user_id';
-    let mockId = localStorage.getItem(storageKey);
+    let mockId = safeLocalStorage.getItem(storageKey);
     if (!mockId) {
       mockId = `mock-user-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-      localStorage.setItem(storageKey, mockId);
+      safeLocalStorage.setItem(storageKey, mockId);
     }
     return mockId;
   }, [currentUserId]);
@@ -487,7 +573,6 @@ export function useFeedData(
   // ============ 操作方法 ============
   const refresh = useCallback(async () => {
     if (useMock) {
-      // Mock 模式：觸發重新渲染
       setMockData(prev => ({ ...prev }));
       return;
     }
@@ -503,7 +588,7 @@ export function useFeedData(
     if (useMock) {
       const mockUserId = getMockUserId();
       const currentlyLiked = likedPosts.has(postId);
-      
+
       setMockData(prev => ({
         ...prev,
         posts: prev.posts.map(post => {
@@ -519,7 +604,7 @@ export function useFeedData(
           };
         }),
       }));
-      
+
       setLikedPosts(prev => {
         const next = new Set(prev);
         if (next.has(postId)) {
@@ -531,8 +616,7 @@ export function useFeedData(
       });
       return;
     }
-    
-    // P2-C2 修復：API 模式樂觀更新
+
     const actingUserId = currentUserId;
     if (!actingUserId) {
       throw new Error('缺少使用者身份');
@@ -542,8 +626,7 @@ export function useFeedData(
     const currentlyLiked = apiLikedPosts.has(postId);
     const previousApiData = apiData;
     const previousApiLikedPosts = new Set(apiLikedPosts);
-    
-    // 1. 樂觀更新本地狀態（立即顯示變化）
+
     setApiData(prev => {
       if (!prev) return prev;
       return {
@@ -563,7 +646,7 @@ export function useFeedData(
         }),
       };
     });
-    
+
     setApiLikedPosts(prev => {
       const next = new Set(prev);
       if (next.has(postId)) {
@@ -573,15 +656,13 @@ export function useFeedData(
       }
       return next;
     });
-    
+
     try {
-      // 2. 呼叫 Supabase RPC（真實 API）
       const { data, error } = await supabase.rpc('toggle_like', { post_id: postIdStr });
       if (error) {
         throw error;
       }
 
-      // 3. 以伺服器結果校正 likes/liked_by（避免快取與伺服器不一致）
       setApiData(prev => {
         if (!prev) return prev;
         return {
@@ -602,31 +683,32 @@ export function useFeedData(
         };
       });
     } catch (err) {
-      // 4. 失敗時回滾
       setApiData(previousApiData);
       setApiLikedPosts(previousApiLikedPosts);
       throw err instanceof Error ? err : new Error('按讚失敗，請稍後再試');
     }
   }, [useMock, likedPosts, apiLikedPosts, apiData, getMockUserId, isAuthenticated, currentUserId]);
 
-  // P2-C4 修復：API 模式加入樂觀更新
-  const createPost = useCallback(async (content: string, targetCommunityId?: string) => {
+  // P2-C4 修復：API 模式加入樂觀更新 (Updated for P0 Image Upload)
+  const createPost = useCallback(async (content: string, communityId?: string, images?: File[]) => {
     if (!useMock && !isAuthenticated) {
       throw new Error('請先登入後再發文');
     }
 
-    const resolvedCommunityId = targetCommunityId ?? communityId;
+    const resolvedCommunityId = communityId ?? options.communityId;
     if (resolvedCommunityId && !isValidCommunityId(resolvedCommunityId)) {
-      console.warn('[useFeedData] Invalid communityId provided, fallback to undefined');
+      logger.warn('[useFeedData] Invalid communityId provided, fallback to undefined');
     }
     const safeCommunityId = resolvedCommunityId && isValidCommunityId(resolvedCommunityId)
       ? resolvedCommunityId
       : undefined;
+
     if (!useMock && !safeCommunityId) {
       throw new Error('請先選擇社區後再發文');
     }
-    const resolvedCommunityName = getCommunityName(safeCommunityId); // P2-C6：使用共用函數
+    const resolvedCommunityName = getCommunityName(safeCommunityId);
 
+    // Mock Mode
     if (useMock) {
       const newPost = createFeedMockPost(
         content,
@@ -634,102 +716,188 @@ export function useFeedData(
         resolvedCommunityName
       );
 
+      // Mock Images
+      if (images && images.length > 0) {
+        newPost.images = images.map((_, i) => ({
+          src: `https://picsum.photos/seed/${Date.now() + i}/400/300`,
+          alt: 'Mock Image'
+        }));
+      }
+
       setMockData(prev => ({
         ...prev,
         posts: [newPost, ...prev.posts],
         totalPosts: prev.totalPosts + 1,
+        sidebarData: deriveSidebarData([newPost, ...prev.posts]),
       }));
       return;
     }
-    
-    // P2-C4 修復：API 模式樂觀更新
+
+    // API Mode
     const tempId = -Date.now();
     const tempPost: FeedPost = {
       id: tempId,
-      author: authUser?.email?.split('@')[0] ?? '用戶',
-      type: authRole === 'agent' ? 'agent' : 'resident',
+      author: authUser?.user_metadata?.name || authUser?.email || '我',
+      type: (['agent', 'resident', 'official'].includes(authRole || '') ? authRole : 'member') as FeedPost['type'],
       time: new Date().toISOString(),
-      title: deriveTitleFromContent(content),
-      content,
+      title: content.substring(0, 20),
+      content: content,
       likes: 0,
       comments: 0,
+      pinned: false,
       communityId: safeCommunityId,
       communityName: resolvedCommunityName,
+      commentList: [],
+      ...(images && images.length > 0 ? { images: images.map(f => ({ src: URL.createObjectURL(f), alt: f.name })) } : {})
     };
-    
-    const previousApiData = apiData;
-    
-    // 1. 樂觀更新（立即顯示新貼文）
+
+    // 1. 樂觀插入
     setApiData(prev => {
-      if (!prev) {
-        return {
-          posts: [tempPost],
-          totalPosts: 1,
-        };
-      }
+      if (!prev) return prev;
       return {
         ...prev,
         posts: [tempPost, ...prev.posts],
         totalPosts: prev.totalPosts + 1,
+        sidebarData: deriveSidebarData([tempPost, ...prev.posts]),
       };
     });
-    
-    try {
-      // 2. 呼叫 Supabase 寫入真實資料
-      const { data, error } = await supabase
-        .from('community_posts')
-        .insert({
-          community_id: safeCommunityId,
-          author_id: currentUserId,
-          content,
-          visibility: 'public',
-          post_type: 'general',
-          is_pinned: false,
-        })
-        .select('id, community_id, author_id, content, visibility, likes_count, comments_count, liked_by, is_pinned, created_at, post_type')
-        .single();
 
-      if (error) {
-        throw error;
+    try {
+      // 2. Upload Images First (D2: Use Batch Upload)
+      let uploadedImages: { src: string; alt: string }[] = [];
+      if (images && images.length > 0) {
+        const results = await uploadService.uploadFiles(images);
+        uploadedImages = results.map(res => ({ src: res.url, alt: 'Post Image' }));
       }
 
-      const mapped = await mapSupabasePostsToFeed([(data as SupabasePostRow)]);
-      const realPost = mapped.posts[0];
+      // 3. Insert Post
+      const { error } = await supabase.from('community_posts').insert({
+        content,
+        community_id: safeCommunityId,
+        author_id: currentUserId,
+        post_type: 'general',
+        images: uploadedImages
+      });
 
+      if (error) throw error;
+
+      // 4. Refresh
+      await fetchApiData();
+    } catch (err) {
+      logger.error('[useFeedData] Create post failed', { error: err });
+      // Rollback
       setApiData(prev => {
-        if (!prev || !realPost) return prev;
+        if (!prev) return prev;
         return {
           ...prev,
-          posts: prev.posts.map(p => (p.id === tempId ? realPost : p)),
-          totalPosts: prev.totalPosts,
+          posts: prev.posts.filter(p => p.id !== tempId),
+          totalPosts: prev.totalPosts - 1,
+          sidebarData: deriveSidebarData(prev.posts.filter(p => p.id !== tempId)),
         };
       });
-    } catch (err) {
-      // 3. 失敗時回滾
-      setApiData(previousApiData);
-      throw err instanceof Error ? err : new Error('發文失敗，請稍後再試');
+      throw err;
     }
-  }, [useMock, communityId, apiData, authUser, authRole, isAuthenticated, currentUserId]);
+  }, [useMock, isAuthenticated, options.communityId, authUser, authRole, currentUserId, fetchApiData]); // E2: Added fetchApiData dependency
 
-  const setUseMock = useCallback((value: boolean) => {
-    const next = mhEnv.setMock(value);
-    setUseMockState(next);
-  }, []);
+  const addComment = useCallback(async (postId: string | number, content: string) => {
+    if (!useMock && !isAuthenticated) {
+      throw new Error('請先登入後再留言');
+    }
 
-  // ============ 回傳 ============
+    // Prepare Comment Object (Shared for Mock and Optimistic UI)
+    const tempId = useMock ? Date.now() : -Date.now();
+    const commentObj: FeedComment = {
+      id: tempId,
+      postId: postId,
+      author: authUser?.user_metadata?.name || '測試用戶',
+      role: (['agent', 'resident', 'official'].includes(authRole || '') ? authRole : 'member') as FeedComment['role'],
+      content,
+      time: new Date().toISOString(),
+      likes: 0,
+      isLiked: false,
+    };
+
+    // Mock Mode
+    if (useMock) {
+      setMockData(prev => ({
+        ...prev,
+        posts: prev.posts.map(post => {
+          if (post.id !== postId) return post;
+          const updatedComments = [...(post.commentList || []), commentObj];
+          return {
+            ...post,
+            comments: updatedComments.length,
+            commentList: updatedComments
+          };
+        })
+      }));
+      return;
+    }
+
+    // API Mode (E1 Best Practice: Optimistic + Real DB)
+    const previousApiData = apiData;
+
+    // 1. Optimistic Update
+    setApiData(prev => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        posts: prev.posts.map(post => {
+          if (post.id !== postId) return post;
+          const updatedComments = [...(post.commentList || []), commentObj];
+          return {
+            ...post,
+            comments: updatedComments.length,
+            commentList: updatedComments
+          };
+        })
+      };
+    });
+
+    try {
+      setApiLoading(true);
+
+      // 2. Real API Call
+      const { error } = await supabase
+        .from('community_comments')
+        .insert({
+          post_id: postId,
+          community_id: options.communityId,
+          user_id: currentUserId,
+          content: content
+        });
+
+      if (error) throw error;
+
+      // 3. Refresh data to get Real ID
+      await fetchApiData();
+
+    } catch (err) {
+      // F2 Fix: Removed console.error for production safety
+      // Only log in DEV mode for debugging
+      if (import.meta.env.DEV) {
+        logger.warn('[useFeedData] Add comment failed (Check Schema: community_comments?)', { error: err });
+      }
+      setApiData(previousApiData);
+      setApiError(err as Error);
+      throw err;
+    } finally {
+      setApiLoading(false);
+    }
+  }, [useMock, isAuthenticated, authUser, authRole, currentUserId, options.communityId, apiData, fetchApiData]);
+
   return {
     data,
     useMock,
-    setUseMock,
-    isLoading: authLoading || (!useMock && apiLoading),
+    setUseMock: setUseMockState,
+    isLoading: useMock ? false : apiLoading,
     error: useMock ? null : apiError,
     refresh,
     toggleLike,
     createPost,
+    addComment,
     viewerRole,
     isAuthenticated,
-    isLiked, // P2-C5 修復：暴露給消費者
+    isLiked,
   };
 }
-
-export default useFeedData;

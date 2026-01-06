@@ -11,10 +11,16 @@ export interface DetectionBox {
   mode?: DetectionMode;
 }
 
+interface RawDetection {
+  box?: [number, number, number, number];
+  label?: string;
+  score?: number;
+}
+
 export interface DetectionResult {
   ok: boolean;
   id: string;
-  output: any;
+  output: RawDetection[] | unknown;
   mode: DetectionMode;
   boxes?: DetectionBox[];
 }
@@ -74,11 +80,11 @@ export async function visualizeDetections(
 }
 
 // 轉換模型輸出為標準化 boxes
-function convertOutputToBoxes(output: any, mode: DetectionMode): DetectionBox[] {
+function convertOutputToBoxes(output: RawDetection[] | unknown, mode: DetectionMode): DetectionBox[] {
   // 根據不同模型格式進行轉換
   // 這裡假設是 Grounding DINO 格式
   if (Array.isArray(output)) {
-    return output.map((det: any) => ({
+    return output.map((det: RawDetection) => ({
       x: det.box?.[0] || 0,
       y: det.box?.[1] || 0,
       w: det.box?.[2] || 0,

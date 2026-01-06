@@ -17,6 +17,8 @@ const roleNames: Record<Role, string> = {
   member: '會員模式',
   resident: '住戶模式',
   agent: '房仲模式',
+  official: '官方模式',
+  admin: '管理員',
 };
 
 const roleLabels: Record<Role, string> = {
@@ -24,6 +26,8 @@ const roleLabels: Record<Role, string> = {
   member: '👥 一般會員',
   resident: '🏠 已驗證住戶',
   agent: '🏢 認證房仲',
+  official: '⚖️ 官方代表',
+  admin: '🔑 系統管理員',
 };
 
 export function RoleSwitcher({ role, onRoleChange }: RoleSwitcherProps) {
@@ -41,7 +45,7 @@ export function RoleSwitcher({ role, onRoleChange }: RoleSwitcherProps) {
         🕶️ <span>{roleNames[role]}</span> ▾
       </button>
       {isOpen && (
-        <div 
+        <div
           className="absolute bottom-[50px] right-0 min-w-[180px] rounded-xl border border-[var(--border)] bg-white p-2 shadow-[0_8px_30px_rgba(0,0,0,0.15)]"
           role="listbox"
           aria-label="選擇身份"

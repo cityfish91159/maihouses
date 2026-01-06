@@ -1,9 +1,23 @@
 import React, { useState, useEffect } from 'react';
+import { 
+  Antenna, 
+  Roof, 
+  Body, 
+  Eyebrows, 
+  Eyes, 
+  Mouth, 
+  Legs 
+} from './MaiMai';
+import type { MaiMaiMood } from './MaiMai';
 
 interface MascotHouseProps {
   animated?: boolean;
 }
 
+/**
+ * MascotHouse - 首頁安心留痕區公仔
+ * @description 6 階段交易流程動畫，使用 MaiMai 原子組件
+ */
 export default function MascotHouse({ animated = true }: MascotHouseProps) {
   const [phase, setPhase] = useState(0);
   
@@ -18,55 +32,39 @@ export default function MascotHouse({ animated = true }: MascotHouseProps) {
     return () => clearInterval(interval);
   }, [animated]);
 
-  // 根據階段決定表情和姿勢
-  const getExpression = () => {
+  // 階段對應的心情
+  const phaseMoods: MaiMaiMood[] = ['wave', 'excited', 'thinking', 'happy', 'celebrate', 'idle'];
+  const currentMood: MaiMaiMood = phaseMoods[phase] ?? 'idle';
+
+  // 根據階段決定手臂姿勢
+  const getArmPaths = () => {
     switch (phase) {
       case 0: // 電聯 - 揮手打招呼
-        return { leftArm: 'M 55 130 L 25 100', rightArm: 'M 145 130 L 175 90', eyeY: 125, mouthCurve: 'smile' };
+        return { left: 'M 55 130 L 25 100', right: 'M 145 130 L 175 90' };
       case 1: // 帶看 - 驚喜睜大眼
-        return { leftArm: 'M 55 130 L 30 130', rightArm: 'M 145 130 L 170 130', eyeY: 123, eyeSize: 6, mouthCurve: 'wow' };
+        return { left: 'M 55 130 L 30 130', right: 'M 145 130 L 170 130' };
       case 2: // 出價 - 專注認真（托下巴思考）
-        return { leftArm: 'M 55 130 L 45 150', rightArm: 'M 145 130 L 155 145', eyeY: 125, mouthCurve: 'focused' };
+        return { left: 'M 55 130 L 45 150', right: 'M 145 130 L 155 145' };
       case 3: // 斡旋 - 期待加油（握拳打氣）
-        return { leftArm: 'M 55 130 L 30 105', rightArm: 'M 145 130 L 170 105', eyeY: 124, mouthCurve: 'hopeful' };
+        return { left: 'M 55 130 L 30 105', right: 'M 145 130 L 170 105' };
       case 4: // 成交 - 開心跳躍
-        return { leftArm: 'M 55 130 L 20 95', rightArm: 'M 145 130 L 180 95', eyeY: 122, mouthCurve: 'happy', bounce: true };
+        return { left: 'M 55 130 L 20 95', right: 'M 145 130 L 180 95' };
       case 5: // 交屋 - 滿足微笑
-        return { leftArm: 'M 55 130 L 25 120', rightArm: 'M 145 130 L 175 120', eyeY: 125, mouthCurve: 'proud' };
+        return { left: 'M 55 130 L 25 120', right: 'M 145 130 L 175 120' };
       default:
-        return { leftArm: 'M 55 130 L 25 110', rightArm: 'M 145 130 L 175 110', eyeY: 125, mouthCurve: 'smile' };
+        return { left: 'M 55 130 L 25 110', right: 'M 145 130 L 175 110' };
     }
   };
 
-  const expr = getExpression();
-  const eyeSize = expr.eyeSize || 4;
-
-  // 嘴巴形狀
-  const getMouth = () => {
-    switch (expr.mouthCurve) {
-      case 'smile':
-        return <path d="M 90 145 Q 100 155 110 145" stroke="currentColor" strokeWidth="3" fill="none" strokeLinecap="round" />;
-      case 'wow':
-        return <ellipse cx="100" cy="148" rx="6" ry="8" stroke="currentColor" strokeWidth="3" fill="none" />;
-      case 'focused':
-        return <path d="M 92 145 Q 100 152 108 145" stroke="currentColor" strokeWidth="3" fill="none" strokeLinecap="round" />;
-      case 'hopeful':
-        return <path d="M 90 144 Q 100 156 110 144" stroke="currentColor" strokeWidth="3" fill="none" strokeLinecap="round" />;
-      case 'happy':
-        return <path d="M 85 142 Q 100 165 115 142" stroke="currentColor" strokeWidth="3" fill="none" strokeLinecap="round" />;
-      case 'proud':
-        return <path d="M 88 145 Q 100 158 112 145" stroke="currentColor" strokeWidth="3" fill="none" strokeLinecap="round" />;
-      default:
-        return <path d="M 90 145 Q 100 155 110 145" stroke="currentColor" strokeWidth="3" fill="none" strokeLinecap="round" />;
-    }
-  };
+  const arms = getArmPaths();
+  const isBouncing = phase === 4;
 
   return (
     <svg 
       viewBox="0 0 200 240" 
       className={`size-full text-brand drop-shadow-sm transition-transform duration-500 ${
         animated ? 'hover:scale-105' : ''
-      } ${expr.bounce ? 'animate-bounce' : ''}`}
+      } ${isBouncing ? 'animate-bounce' : ''}`}
     >
       {/* 開心時的愛心裝飾 */}
       {phase === 4 && (
@@ -76,97 +74,27 @@ export default function MascotHouse({ animated = true }: MascotHouseProps) {
         </>
       )}
 
-      {/* M-Antenna */}
-      <path 
-        d="M 85 40 L 85 15 L 100 30 L 115 15 L 115 40" 
-        stroke="currentColor" 
-        strokeWidth="5" 
-        fill="none" 
-        strokeLinecap="round" 
-        strokeLinejoin="round"
-        className={phase === 4 ? 'animate-pulse' : ''}
-      />
+      {/* 天線 - 使用原子組件 */}
+      <Antenna mood={currentMood} animated={animated} />
 
-      {/* House Body & Roof */}
-      <path 
-        d="M 40 80 L 100 40 L 160 80" 
-        stroke="currentColor" 
-        strokeWidth="6" 
-        fill="none" 
-        strokeLinecap="round" 
-        strokeLinejoin="round"
-      />
-      <rect 
-        x="55" y="80" 
-        width="90" height="100" 
-        stroke="currentColor" 
-        strokeWidth="6" 
-        fill="none" 
-        strokeLinecap="round" 
-        strokeLinejoin="round"
-      />
+      {/* 屋頂 - 使用原子組件 */}
+      <Roof />
 
-      {/* Eyebrows - 根據表情變化 */}
-      {phase === 1 ? (
-        // 驚訝 - 挑眉
-        <>
-          <path d="M 75 105 Q 85 98 95 105" stroke="currentColor" strokeWidth="4" fill="none" strokeLinecap="round" />
-          <path d="M 105 105 Q 115 98 125 105" stroke="currentColor" strokeWidth="4" fill="none" strokeLinecap="round" />
-        </>
-      ) : phase === 2 ? (
-        // 專注 - 單邊微挑眉（認真樣）
-        <>
-          <path d="M 78 108 Q 85 105 92 109" stroke="currentColor" strokeWidth="4" fill="none" strokeLinecap="round" />
-          <path d="M 108 107 Q 115 104 122 109" stroke="currentColor" strokeWidth="4" fill="none" strokeLinecap="round" />
-        </>
-      ) : phase === 3 ? (
-        // 期待 - 開心挑眉（加油樣）
-        <>
-          <path d="M 76 108 Q 85 103 94 108" stroke="currentColor" strokeWidth="4" fill="none" strokeLinecap="round" />
-          <path d="M 106 108 Q 115 103 124 108" stroke="currentColor" strokeWidth="4" fill="none" strokeLinecap="round" />
-        </>
-      ) : (
-        // 正常/開心
-        <>
-          <path d="M 78 110 Q 85 105 92 110" stroke="currentColor" strokeWidth="4" fill="none" strokeLinecap="round" />
-          <path d="M 108 110 Q 115 105 122 110" stroke="currentColor" strokeWidth="4" fill="none" strokeLinecap="round" />
-        </>
-      )}
+      {/* 身體 - 使用原子組件 */}
+      <Body />
+
+      {/* 眉毛 - 使用原子組件 */}
+      <Eyebrows mood={currentMood} />
       
-      {/* Eyes - 動態位置和大小 */}
-      <circle 
-        cx="85" 
-        cy={expr.eyeY} 
-        r={eyeSize} 
-        stroke="currentColor" 
-        strokeWidth="3" 
-        fill={phase === 4 ? 'currentColor' : 'none'} 
-        className="transition-all duration-300"
-      />
-      <circle 
-        cx="115" 
-        cy={expr.eyeY} 
-        r={eyeSize} 
-        stroke="currentColor" 
-        strokeWidth="3" 
-        fill={phase === 4 ? 'currentColor' : 'none'}
-        className="transition-all duration-300"
-      />
-      
-      {/* 開心時的眼睛弧線（笑眼）*/}
-      {phase === 4 && (
-        <>
-          <path d="M 78 122 Q 85 128 92 122" stroke="white" strokeWidth="2" fill="none" strokeLinecap="round" />
-          <path d="M 108 122 Q 115 128 122 122" stroke="white" strokeWidth="2" fill="none" strokeLinecap="round" />
-        </>
-      )}
+      {/* 眼睛 - 使用原子組件 */}
+      <Eyes mood={currentMood} />
 
-      {/* Mouth - 動態表情 */}
-      {getMouth()}
+      {/* 嘴巴 - 使用原子組件 */}
+      <Mouth mood={currentMood} />
 
-      {/* Hands - 動態姿勢 */}
+      {/* 手臂 - 保持自訂動畫姿勢 */}
       <path 
-        d={expr.leftArm} 
+        d={arms.left} 
         stroke="currentColor" 
         strokeWidth="5" 
         fill="none" 
@@ -174,7 +102,7 @@ export default function MascotHouse({ animated = true }: MascotHouseProps) {
         className="transition-all duration-500"
       />
       <path 
-        d={expr.rightArm} 
+        d={arms.right} 
         stroke="currentColor" 
         strokeWidth="5" 
         fill="none" 
@@ -182,7 +110,7 @@ export default function MascotHouse({ animated = true }: MascotHouseProps) {
         className="transition-all duration-500"
       />
 
-      {/* Legs - 動態走路 */}
+      {/* 腿 - 動態走路 */}
       <path 
         d={phase % 2 === 0 ? "M 85 180 L 85 215 L 75 215" : "M 85 180 L 80 215 L 70 212"} 
         stroke="currentColor" 

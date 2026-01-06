@@ -1,240 +1,524 @@
-
 /**
- * Property Page Renderer
- * Handles rendering of property cards based on the provided data set.
- * Optimized for performance with DocumentFragment and template literals.
- * 
- * v2.0 - 支援新的資料架構 (PropertyAPI + DataAdapter)
+ * Property Page Renderer (ESM)
+ * - Version guarded rendering to prevent stale updates
+ * - Optional image preload to reduce flicker
  */
 
-const PropertyRenderer = {
-  // 快取 DOM 元素
-  containers: null,
-  
-  init() {
+export class PropertyRenderer {
+  constructor() {
+    this.renderVersion = 0;
+    this.containers = null;
+    this.versionLog = [];
+    this.versionLogCapacity = 50;
+    this.versionLogIndex = 0;
+    
+    // M1: 使用 getter 暴露 versionLog，避免每次手動更新 window
+    if (typeof window !== 'undefined') {
+      Object.defineProperty(window, '__renderVersionLog', {
+        get: () => this.getVersionLog(),
+        configurable: true
+      });
+    }
+  }
+
+  logVersion(entry) {
+    // M1: 實作 Ring Buffer 避免 O(n) 陣列搬移
+    if (this.versionLog.length < this.versionLogCapacity) {
+      this.versionLog.push(entry);
+    } else {
+      this.versionLog[this.versionLogIndex] = entry;
+      this.versionLogIndex = (this.versionLogIndex + 1) % this.versionLogCapacity;
+    }
+  }
+
+  clearLog() {
+    this.versionLog = [];
+    this.versionLogIndex = 0;
+  }
+
+  getVersionLog() {
+    if (!this.versionLogCapacity || this.versionLog.length < this.versionLogCapacity) {
+      return [...this.versionLog];
+    }
+    // 重新排序 Ring Buffer
+    return [
+      ...this.versionLog.slice(this.versionLogIndex),
+      ...this.versionLog.slice(0, this.versionLogIndex)
+    ];
+  }
+
+  ensureContainers() {
+    if (this.containers) return;
     this.containers = {
       main: document.getElementById('featured-main-container'),
       sideTop: document.getElementById('featured-side-top-container'),
       sideBottom: document.getElementById('featured-side-bottom-container'),
       listings: document.getElementById('listing-grid-container')
     };
-  },
+  }
 
-  /**
-   * v2 渲染方法 - 使用 PropertyAPI
-   */
-  async renderAsync() {
-    if (!this.containers) this.init();
-    
-    try {
-      // 並行取得精選和列表資料
-      const [featured, listings] = await Promise.all([
-        window.PropertyAPI.getFeatured(),
-        window.PropertyAPI.getListings()
-      ]);
+  escapeHtml(str) {
+    if (typeof str !== 'string') return str;
+    return str.replace(/[&<>"']/g, (m) => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;'
+    }[m]));
+  }
+
+  async preloadImages(data) {
+    const rawUrls = [
+      data?.featured?.main?.image,
+      data?.featured?.sideTop?.image,
+      data?.featured?.sideBottom?.image,
+      ...(data?.listings || []).map((item) => item.image)
+    ].filter(Boolean);
+
+    const urls = [...new Set(rawUrls)];
+
+    const summary = {
+      attempted: urls.length,
+      loaded: 0,
+      failed: [],
+      durationMs: 0,
+      coverage: 0
+    };
+
+    const start = typeof performance !== 'undefined' && performance.now ? performance.now() : Date.now();
+
+    await Promise.all(urls.map((url) => new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        summary.loaded += 1;
+        resolve();
+      };
+      img.onerror = () => {
+        summary.failed.push(url);
+        resolve();
+      };
+      img.src = url;
+    })));
+
+    summary.durationMs = (typeof performance !== 'undefined' && performance.now ? performance.now() : Date.now()) - start;
+    summary.coverage = summary.attempted === 0 ? 1 : summary.loaded / summary.attempted;
+    return summary;
+  }
+
+  render(data, context = {}) {
+    if (!data) return;
+    this.ensureContainers();
+
+    const currentVersion = ++this.renderVersion;
+    requestAnimationFrame(() => {
+      if (currentVersion !== this.renderVersion) return;
+
+      const eventMeta = {
+        version: currentVersion,
+        source: context.source || 'unknown',
+        reason: context.reason || null,
+        ts: (typeof performance !== 'undefined' && performance.now ? performance.now() : Date.now())
+      };
+
+      // S4: 抽取共用渲染邏輯
+      this.renderFeaturedCard(data?.featured?.main, this.containers?.main, 'main');
+      this.renderFeaturedCard(data?.featured?.sideTop, this.containers?.sideTop, 'sideTop');
+      this.renderFeaturedCard(data?.featured?.sideBottom, this.containers?.sideBottom, 'sideBottom');
       
-      // 使用 requestAnimationFrame 確保渲染效能
-      requestAnimationFrame(() => {
-        if (featured.main) this.renderFeaturedMain(featured.main);
-        if (featured.sideTop) this.renderFeaturedSide(featured.sideTop, 'sideTop');
-        if (featured.sideBottom) this.renderFeaturedSide(featured.sideBottom, 'sideBottom');
-        if (listings.items) this.renderListings(listings.items);
-        
-        // 更新列表計數
-        this.updateListingCount(listings.total);
-      });
-    } catch (error) {
-      console.error('[PropertyRenderer] renderAsync error:', error);
-      // Fallback 到舊版渲染
-      this.render('default');
-    }
-  },
+      this.renderListings(data?.listings || []);
+      this.updateListingCount(Array.isArray(data?.listings) ? data.listings.length : 0);
 
-  /**
-   * 更新列表計數顯示
-   */
+      this.logVersion(eventMeta);
+    });
+
+    return currentVersion;
+  }
+
   updateListingCount(total) {
     const countEl = document.querySelector('.listing-header .small-text');
-    if (countEl && total) {
+    if (countEl && typeof total === 'number' && total > 0) {
       countEl.textContent = `共 ${total} 個社區`;
     }
-  },
+  }
 
-  /**
-   * v1 渲染方法 - 保留向下相容 (使用舊版 propertyMockData)
-   * @deprecated 請使用 renderAsync()
-   */
-  render(dataSetKey = 'default') {
-    const data = window.propertyMockData?.[dataSetKey];
-    if (!data) {
-      console.error(`Data set '${dataSetKey}' not found.`);
-      return;
-    }
-    
-    if (!this.containers) this.init();
-
-    // 使用 requestAnimationFrame 確保渲染效能
-    requestAnimationFrame(() => {
-      this.renderFeaturedMain(data.featured.main);
-      this.renderFeaturedSide(data.featured.sideTop, 'sideTop');
-      this.renderFeaturedSide(data.featured.sideBottom, 'sideBottom');
-      this.renderListings(data.listings);
-    });
-  },
-
-  // 建立評論 HTML（共用函式）
-  createReviewHtml(review, compact = false) {
+  createReviewElement(review, compact = false) {
+    const container = document.createElement('div');
     if (compact) {
-      return `<div class="review-item-compact">
-        <span class="review-badge">${review.badge}</span>
-        <p class="review-text">${review.content}</p>
-      </div>`;
+      container.className = 'review-item-compact';
+      const badgeSpan = document.createElement('span');
+      badgeSpan.className = 'review-badge';
+      badgeSpan.textContent = review?.badge || '';
+
+      const contentP = document.createElement('p');
+      contentP.className = 'review-text';
+      contentP.textContent = review?.content || '';
+
+      container.appendChild(badgeSpan);
+      container.appendChild(contentP);
+      return container;
     }
-    
-    const tagsHtml = review.tags?.map(tag => `<span class="review-tag">${tag}</span>`).join('') || '';
-    return `<div class="property-review-item">
-      <div class="review-header">
-        <span class="review-stars">${review.stars}</span>
-        <span class="review-author">${review.author}</span>
-      </div>
-      ${tagsHtml ? `<div class="review-tags">${tagsHtml}</div>` : ''}
-      <p class="review-content">${review.content}</p>
-    </div>`;
-  },
 
-  renderFeaturedMain(item) {
-    const container = this.containers?.main;
-    if (!container) return;
+    container.className = 'property-review-item';
+    const header = document.createElement('div');
+    header.className = 'review-header';
 
-    const detailsHtml = item.details.map(d => `<div style="margin-bottom:0.25rem">${d}</div>`).join('');
-    const reviewsHtml = item.reviews.map(r => this.createReviewHtml(r)).join('');
+    const stars = document.createElement('span');
+    stars.className = 'review-stars';
+    stars.textContent = review?.stars || '';
 
-    container.innerHTML = `
-      <article class="property-card">
-        <div class="property-media">
-          <img src="${item.image}" alt="${item.title}" loading="lazy" decoding="async" />
-          <span class="property-badge">${item.badge}</span>
-        </div>
-        <div class="property-content">
-          <h3 class="property-title">${item.title}</h3>
-          <div class="property-location">${item.location}</div>
-          <div class="small-text" style="margin-bottom:0.5rem;color:var(--text-secondary)">${detailsHtml}</div>
-          <div class="tiny-text" style="margin-bottom:0.5rem;color:var(--primary)">${item.highlights}</div>
-          <div class="property-rating"><span class="star">★</span>${item.rating}</div>
-          <div class="property-reviews"><strong>住戶真實評價：</strong>${reviewsHtml}</div>
-          <div class="property-more-reviews">
-            <div style="display:flex;align-items:center;gap:0.5rem">
-              <span class="lock-icon">🔒</span><span>還有 ${item.lockCount} 則評價</span>
-            </div>
-            <button class="register-btn" type="button">註冊查看</button>
-          </div>
-          <div class="property-price">${item.price}<span>${item.size}</span></div>
-          <div class="property-cta">
-            <button class="btn-primary" type="button">查看詳情</button>
-            <button class="heart-btn" type="button" aria-label="加入收藏">♡</button>
-          </div>
-        </div>
-      </article>`;
-  },
+    const author = document.createElement('span');
+    author.className = 'review-author';
+    author.textContent = review?.author || '';
 
-  renderFeaturedSide(item, key) {
-    const container = this.containers?.[key];
-    if (!container) return;
+    header.appendChild(stars);
+    header.appendChild(author);
+    container.appendChild(header);
 
-    const detailsHtml = item.details.join('・');
-    const reviewsHtml = item.reviews.map(r => this.createReviewHtml(r)).join('');
+    if (Array.isArray(review?.tags) && review.tags.length > 0) {
+      const tagsDiv = document.createElement('div');
+      tagsDiv.className = 'review-tags';
+      review.tags.forEach((tag) => {
+        const tagSpan = document.createElement('span');
+        tagSpan.className = 'review-tag';
+        tagSpan.textContent = tag;
+        tagsDiv.appendChild(tagSpan);
+      });
+      container.appendChild(tagsDiv);
+    }
 
-    container.innerHTML = `
-      <article class="property-card" style="height:100%">
-        <div class="property-media" style="aspect-ratio:2/1">
-          <img src="${item.image}" alt="${item.title}" loading="lazy" decoding="async" />
-          <span class="property-badge">${item.badge}</span>
-        </div>
-        <div class="property-content">
-          <h3 class="property-title" style="font-size:1rem">${item.title}</h3>
-          <div class="property-location" style="font-size:0.75rem">${item.location}</div>
-          <div class="tiny-text" style="margin-bottom:0.5rem">${detailsHtml}</div>
-          <div class="property-rating" style="font-size:0.8125rem"><span class="star">★</span>${item.rating}</div>
-          <div class="property-reviews">${reviewsHtml}</div>
-          <div class="property-more-reviews" style="padding:0.375rem;margin:0.5rem 0">
-            <div style="display:flex;align-items:center;gap:0.25rem;font-size:0.75rem">
-              <span class="lock-icon">🔒</span><span>${item.lockCount} 則評價</span>
-            </div>
-            <button class="register-btn" type="button" style="padding:0.125rem 0.5rem;min-height:1.5rem">查看</button>
-          </div>
-          <div class="property-price" style="font-size:1rem;margin-bottom:0.5rem">${item.price}<span style="font-size:0.75rem">${item.size}</span></div>
-        </div>
-      </article>`;
-  },
+    const contentP = document.createElement('p');
+    contentP.className = 'review-content';
+    contentP.textContent = review?.content || '';
+    container.appendChild(contentP);
+
+    return container;
+  }
+
+  renderFeaturedCard(item, container, variant = 'main') {
+    if (!container || !item) return;
+
+    const config = {
+      main: {
+        cardClass: '',
+        chipClass: '',
+        showHighlights: true,
+        lockPrefix: '還有 ',
+        btnText: '註冊查看',
+        showCta: true
+      },
+      sideTop: {
+        cardClass: 'variant-side',
+        chipClass: 'capsule-chip-sm',
+        showHighlights: false,
+        lockPrefix: '',
+        btnText: '查看',
+        showCta: false
+      },
+      sideBottom: {
+        cardClass: 'variant-side',
+        chipClass: 'capsule-chip-sm',
+        showHighlights: false,
+        lockPrefix: '',
+        btnText: '查看',
+        showCta: false
+      }
+    }[variant] || config.main;
+
+    const article = document.createElement('article');
+    article.className = `property-card ${config.cardClass}`.trim();
+
+    // Media Section
+    const mediaDiv = document.createElement('div');
+    mediaDiv.className = 'property-media';
+    const img = document.createElement('img');
+    img.src = item.image;
+    img.alt = item.title;
+    img.loading = 'lazy';
+    img.decoding = 'async';
+    const badge = document.createElement('span');
+    badge.className = 'property-badge';
+    badge.textContent = item.badge;
+    mediaDiv.appendChild(img);
+    mediaDiv.appendChild(badge);
+
+    // Content Section
+    const contentDiv = document.createElement('div');
+    contentDiv.className = 'property-content';
+
+    const title = document.createElement('h3');
+    title.className = 'property-title';
+    title.textContent = item.title;
+
+    const location = document.createElement('div');
+    location.className = 'property-location';
+    location.textContent = item.location;
+
+    const tagsRow = document.createElement('div');
+    tagsRow.className = 'property-tags-row';
+    (item.tags || []).slice(0, 3).forEach((t) => {
+      const span = document.createElement('span');
+      span.className = `capsule-chip ${config.chipClass}`.trim();
+      span.textContent = t;
+      tagsRow.appendChild(span);
+    });
+
+    contentDiv.appendChild(title);
+    contentDiv.appendChild(location);
+    contentDiv.appendChild(tagsRow);
+
+    if (config.showHighlights) {
+      const highlights = document.createElement('div');
+      highlights.className = 'tiny-text tiny-text-highlight';
+      highlights.textContent = item.highlights || '';
+      contentDiv.appendChild(highlights);
+    }
+
+    const rating = document.createElement('div');
+    rating.className = 'property-rating';
+    const star = document.createElement('span');
+    star.className = 'star';
+    star.textContent = '★';
+    rating.appendChild(star);
+    rating.appendChild(document.createTextNode(item.rating));
+    contentDiv.appendChild(rating);
+
+    const reviewsHost = document.createElement('div');
+    reviewsHost.className = 'property-reviews';
+    const nodes = (item.reviews || []).map((r) => this.createReviewElement(r));
+    reviewsHost.replaceChildren(...nodes);
+    contentDiv.appendChild(reviewsHost);
+
+    const moreReviews = document.createElement('div');
+    moreReviews.className = 'property-more-reviews';
+    const lockInfo = document.createElement('div');
+    lockInfo.className = 'lock-info';
+    const lockIcon = document.createElement('span');
+    lockIcon.className = 'lock-icon';
+    lockIcon.textContent = '🔒';
+    const lockText = document.createElement('span');
+    lockText.textContent = `${config.lockPrefix}${item.lockCount} 則評價`;
+    lockInfo.appendChild(lockIcon);
+    lockInfo.appendChild(lockText);
+    const regBtn = document.createElement('button');
+    regBtn.className = 'register-btn';
+    regBtn.type = 'button';
+    regBtn.textContent = config.btnText;
+    moreReviews.appendChild(lockInfo);
+    moreReviews.appendChild(regBtn);
+    contentDiv.appendChild(moreReviews);
+
+    const price = document.createElement('div');
+    price.className = 'property-price';
+    price.textContent = item.price;
+    const size = document.createElement('span');
+    size.textContent = item.size;
+    price.appendChild(size);
+    contentDiv.appendChild(price);
+
+    if (config.showCta) {
+      const cta = document.createElement('div');
+      cta.className = 'property-cta';
+      const detailBtn = document.createElement('button');
+      detailBtn.className = 'btn-primary';
+      detailBtn.type = 'button';
+      detailBtn.textContent = '查看詳情';
+      const heartBtn = document.createElement('button');
+      heartBtn.className = 'heart-btn';
+      heartBtn.type = 'button';
+      heartBtn.setAttribute('aria-label', '加入收藏');
+      heartBtn.textContent = '♡';
+      cta.appendChild(detailBtn);
+      cta.appendChild(heartBtn);
+      contentDiv.appendChild(cta);
+    }
+
+    article.appendChild(mediaDiv);
+    article.appendChild(contentDiv);
+
+    container.replaceChildren(article);
+  }
 
   renderListings(items) {
     const container = this.containers?.listings;
     if (!container) return;
 
-    // 使用 DocumentFragment 減少 reflow
+    // S1: 實作 DOM Diffing (Key-based Update with stable keys and signature)
+    const existingCards = Array.from(container.querySelectorAll('.horizontal-card'));
+    const existingMap = new Map();
+    existingCards.forEach((card) => {
+      const key = card.getAttribute('data-key');
+      if (key) existingMap.set(key, card);
+    });
+
+    const newKeys = new Set();
     const fragment = document.createDocumentFragment();
-    const template = document.createElement('template');
-    
-    template.innerHTML = items.map(item => {
-      const reviewsHtml = item.reviews.map(r => this.createReviewHtml(r, true)).join('');
-      return `
-        <article class="horizontal-card">
-          <div class="horizontal-left">
-            <div class="horizontal-thumb">
-              <img src="${item.image}" alt="${item.title}" loading="lazy" decoding="async" />
-            </div>
-            <div class="horizontal-main">
-              <div class="horizontal-title-row">
-                <span>📍</span><strong>${item.title}</strong>
-                <span class="horizontal-tag">${item.tag}</span>
-              </div>
-              <div class="horizontal-price">${item.price}<span>${item.size}</span></div>
-              <div class="horizontal-rating"><span class="star">★</span>${item.rating}</div>
-              <div class="horizontal-reviews">${reviewsHtml}</div>
-              <div class="horizontal-bottom-note">${item.note}</div>
-            </div>
-          </div>
-          <div class="horizontal-right">
-            <div class="horizontal-price">${item.price}<span>${item.size}</span></div>
-            <div class="lock-row">
-              <div class="lock-header">
-                <span class="lock-icon">🔒</span>
-                <div class="lock-text">
-                  <span class="lock-label">${item.lockLabel}</span>
-                  <span class="lock-count">還有 ${item.lockCount} 則評價</span>
-                </div>
-              </div>
-              <button class="lock-btn" type="button">註冊查看更多評價</button>
-            </div>
-            <div class="horizontal-cta-row">
-              <button class="btn-outline" type="button">查看</button>
-              <button class="heart-btn" type="button" aria-label="加入收藏">♡</button>
-            </div>
-          </div>
-        </article>`;
-    }).join('');
-    
-    fragment.appendChild(template.content);
-    container.innerHTML = '';
-    container.appendChild(fragment);
+
+    (items || []).forEach((item, idx) => {
+      const baseKey = item.id || item.title || `listing-${idx}`;
+      let key = baseKey;
+      // 保證同一批資料中 key 唯一
+      while (newKeys.has(key)) {
+        key = `${baseKey}-${idx}`;
+      }
+      newKeys.add(key);
+
+      const chipTags = Array.isArray(item.tags) ? item.tags.slice(0, 3) : [];
+      const signature = [
+        item.image,
+        item.title,
+        item.price,
+        item.size,
+        item.rating,
+        item.note,
+        chipTags.join(','),
+        item.lockLabel,
+        item.lockCount
+      ].join('|');
+
+      const article = document.createElement('article');
+      article.className = 'horizontal-card';
+      article.setAttribute('data-key', key);
+      article.dataset.sig = signature;
+
+      // Left Section
+      const leftDiv = document.createElement('div');
+      leftDiv.className = 'horizontal-left';
+      
+      const thumbDiv = document.createElement('div');
+      thumbDiv.className = 'horizontal-thumb';
+      const img = document.createElement('img');
+      img.src = item.image;
+      img.alt = item.title;
+      img.loading = 'lazy';
+      img.decoding = 'async';
+      thumbDiv.appendChild(img);
+
+      const mainDiv = document.createElement('div');
+      mainDiv.className = 'horizontal-main';
+      
+      const titleRow = document.createElement('div');
+      titleRow.className = 'horizontal-title-row';
+      const pin = document.createElement('span');
+      pin.textContent = '📍';
+      const strong = document.createElement('strong');
+      strong.textContent = item.title;
+      titleRow.appendChild(pin);
+      titleRow.appendChild(strong);
+      chipTags.forEach((t) => {
+        const span = document.createElement('span');
+        span.className = 'capsule-chip capsule-chip-sm';
+        span.textContent = t;
+        titleRow.appendChild(span);
+      });
+
+      const priceDiv = document.createElement('div');
+      priceDiv.className = 'horizontal-price';
+      priceDiv.textContent = item.price;
+      const sizeSpan = document.createElement('span');
+      sizeSpan.textContent = item.size;
+      priceDiv.appendChild(sizeSpan);
+
+      const ratingDiv = document.createElement('div');
+      ratingDiv.className = 'horizontal-rating';
+      const star = document.createElement('span');
+      star.className = 'star';
+      star.textContent = '★';
+      ratingDiv.appendChild(star);
+      ratingDiv.appendChild(document.createTextNode(item.rating));
+
+      const reviewsHost = document.createElement('div');
+      reviewsHost.className = 'horizontal-reviews';
+      const nodes = (item.reviews || []).map((r) => this.createReviewElement(r, true));
+      reviewsHost.replaceChildren(...nodes);
+
+      const noteDiv = document.createElement('div');
+      noteDiv.className = 'horizontal-bottom-note';
+      noteDiv.textContent = item.note || '';
+
+      mainDiv.appendChild(titleRow);
+      mainDiv.appendChild(priceDiv);
+      mainDiv.appendChild(ratingDiv);
+      mainDiv.appendChild(reviewsHost);
+      mainDiv.appendChild(noteDiv);
+
+      leftDiv.appendChild(thumbDiv);
+      leftDiv.appendChild(mainDiv);
+
+      // Right Section
+      const rightDiv = document.createElement('div');
+      rightDiv.className = 'horizontal-right';
+      
+      const rightPrice = priceDiv.cloneNode(true);
+      
+      const lockRow = document.createElement('div');
+      lockRow.className = 'lock-row';
+      const lockHeader = document.createElement('div');
+      lockHeader.className = 'lock-header';
+      const lockIcon = document.createElement('span');
+      lockIcon.className = 'lock-icon';
+      lockIcon.textContent = '🔒';
+      const lockText = document.createElement('div');
+      lockText.className = 'lock-text';
+      const lockLabel = document.createElement('span');
+      lockLabel.className = 'lock-label';
+      lockLabel.textContent = item.lockLabel || '';
+      const lockCount = document.createElement('span');
+      lockCount.className = 'lock-count';
+      lockCount.textContent = `還有 ${item.lockCount} 則評價`;
+      lockText.appendChild(lockLabel);
+      lockText.appendChild(lockCount);
+      lockHeader.appendChild(lockIcon);
+      lockHeader.appendChild(lockText);
+      const lockBtn = document.createElement('button');
+      lockBtn.className = 'lock-btn';
+      lockBtn.type = 'button';
+      lockBtn.textContent = '註冊查看更多評價';
+      lockRow.appendChild(lockHeader);
+      lockRow.appendChild(lockBtn);
+
+      const ctaRow = document.createElement('div');
+      ctaRow.className = 'horizontal-cta-row';
+      const viewBtn = document.createElement('button');
+      viewBtn.className = 'btn-outline';
+      viewBtn.type = 'button';
+      viewBtn.textContent = '查看';
+      const heartBtn = document.createElement('button');
+      heartBtn.className = 'heart-btn';
+      heartBtn.type = 'button';
+      heartBtn.setAttribute('aria-label', '加入收藏');
+      heartBtn.textContent = '♡';
+      ctaRow.appendChild(viewBtn);
+      ctaRow.appendChild(heartBtn);
+
+      rightDiv.appendChild(rightPrice);
+      rightDiv.appendChild(lockRow);
+      rightDiv.appendChild(ctaRow);
+
+      article.appendChild(leftDiv);
+      article.appendChild(rightDiv);
+
+      // S1: DOM Diffing - 如果已存在相同 key 的 card 且簽名不同才更新
+      const existingCard = existingMap.get(key);
+      if (existingCard) {
+        if (existingCard.dataset.sig !== signature) {
+          existingCard.replaceChildren(...article.childNodes);
+          existingCard.dataset.sig = signature;
+        }
+        fragment.appendChild(existingCard);
+      } else {
+        fragment.appendChild(article);
+      }
+    });
+
+    existingMap.forEach((card, key) => {
+      if (!newKeys.has(key)) {
+        card.remove();
+      }
+    });
+
+    container.replaceChildren(fragment);
   }
-};
+}
 
-// Initialize with new async method (v2)
-document.addEventListener('DOMContentLoaded', () => {
-  PropertyRenderer.init();
-  
-  // 優先使用新架構
-  if (window.PropertyAPI && window.MockProperties) {
-    PropertyRenderer.renderAsync();
-  } else {
-    // Fallback 到舊版
-    PropertyRenderer.render('default');
-  }
-});
-
-// Expose for switching datasets (保留向下相容)
-window.renderPropertyPage = (key) => PropertyRenderer.render(key);
-
-// Expose async render method
-window.renderPropertyPageAsync = () => PropertyRenderer.renderAsync();
+export default PropertyRenderer;

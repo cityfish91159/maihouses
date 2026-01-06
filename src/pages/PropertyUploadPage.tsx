@@ -1,657 +1,545 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { supabase } from '../lib/supabase';
-import { propertyService, PropertyFormInput } from '../services/propertyService';
-import { CommunityPicker } from '../components/ui/CommunityPicker';
-import { usePropertyFormValidation, validateImages, VALIDATION_RULES } from '../hooks/usePropertyFormValidation';
-import { notify } from '../lib/notify';
-import { 
-  Loader2, Upload, X, Sparkles, ThumbsUp, ThumbsDown, 
-  Download, Check, Home, MapPin, Shield, ArrowLeft, Building2, AlertTriangle, Edit3
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
+import {
+  Loader2, Download, Check, Home, ArrowLeft, Building2, Edit3, RotateCcw
 } from 'lucide-react';
+import { notify } from '../lib/notify';
+import { Logo } from '../components/Logo/Logo'; // Atomic Logo w/ M Icon
+import { useMaiMai } from '../context/MaiMaiContext';
+import { parse591Content, detect591Content } from '../lib/parse591';
+import { logger } from '../lib/logger';
 
-// 上傳結果介面
-interface UploadResult {
-  public_id: string;
-  community_id: string | null;
-  community_name: string | null;
-  is_new_community: boolean;
-}
+// 抽離的子組件 (HP-2.2)
+import { BasicInfoSection } from '../components/upload/BasicInfoSection';
+import { FeaturesSection } from '../components/upload/FeaturesSection';
+import { TwoGoodsSection } from '../components/upload/TwoGoodsSection';
+import { MediaSection } from '../components/upload/MediaSection';
+import { PreviewSection } from '../components/upload/PreviewSection';
+import { UploadFormProvider, useUploadForm } from '../components/upload/UploadContext';
 
-export const PropertyUploadPage: React.FC = () => {
+const PropertyUploadContent: React.FC = () => {
   const navigate = useNavigate();
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  
-  const [loading, setLoading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState<{ current: number; total: number } | null>(null);
-  const [images, setImages] = useState<string[]>([]);
-  const [imageFiles, setImageFiles] = useState<File[]>([]);
-  const [user, setUser] = useState<any>(null);
-  const [selectedCommunityId, setSelectedCommunityId] = useState<string | undefined>();
-  
-  // 上傳成功後的確認狀態
-  const [uploadResult, setUploadResult] = useState<UploadResult | null>(null);
-  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  const [form, setForm] = useState<PropertyFormInput>({
-    title: '', price: '', address: '', communityName: '', size: '', age: '', 
-    floorCurrent: '', floorTotal: '', rooms: '3', halls: '2', bathrooms: '2', 
-    type: '電梯大樓', description: '',
-    advantage1: '', advantage2: '', disadvantage: '',
-    sourceExternalId: ''
-  });
+  const {
+    loading,
+    setLoading,
+    uploadProgress,
+    setForm,
+    validation,
+    handleSubmit,
+    uploadResult,
+    showConfirmation,
+    // Draft 功能
+    hasDraft,
+    restoreDraft,
+    getDraftPreview,
+    clearDraft,
+    userId
+  } = useUploadForm();
+
+  // IM-1: MaiMai 狀態管理
+  const { setMood, addMessage } = useMaiMai();
+
+  const [draftAvailable, setDraftAvailable] = useState(false);
+  const [draftPreview, setDraftPreview] = useState<{ title: string; savedAt: string } | null>(null);
+
+  // IM-3: 重複匯入偵測
+  const lastImportedIdRef = useRef<string | null>(null);
+
+  // IM-4: iOS 捷徑支援 - 記錄已處理的 importText 值 (非 boolean，以支援 SPA 多次導航)
+  const lastProcessedImportTextRef = useRef<string | null>(null);
+
+  // OPT-2: Timer 清理機制 (解決 SPA 導航 Bug)
+  const scrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const importTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // OPT-2.5: thinkingDelay timer (信心度延遲)
+  const thinkingDelayTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      setUser(data.user);
-    });
+    // 延遲檢查草稿狀態，避免同步級聯渲染
+    const timer = setTimeout(() => {
+      setDraftAvailable(hasDraft());
+      setDraftPreview(getDraftPreview());
+    }, 0);
+
+    const onStorage = (event: StorageEvent) => {
+      if (event.key && event.key.startsWith('mh_draft_upload')) {
+        setDraftAvailable(hasDraft());
+        setDraftPreview(getDraftPreview());
+      }
+    };
+    window.addEventListener('storage', onStorage);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('storage', onStorage);
+    };
+  }, [userId]);
+
+  // OPT-2: 組件卸載時清理所有 Timer (防止 SPA 靈異滾動/匯入)
+  useEffect(() => {
+    return () => {
+      if (scrollTimerRef.current) {
+        clearTimeout(scrollTimerRef.current);
+        scrollTimerRef.current = null;
+      }
+      // OPT-2.5: 清理 thinkingDelay timer
+      if (thinkingDelayTimerRef.current) {
+        clearTimeout(thinkingDelayTimerRef.current);
+        thinkingDelayTimerRef.current = null;
+      }
+    };
   }, []);
 
-  const handleInput = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+  // 還原草稿
+  const handleRestoreDraft = () => {
+    const draftData = restoreDraft();
+    if (!draftData) {
+      notify.error('草稿還原失敗', '草稿可能已過期或損壞，已為你清除');
+      clearDraft();
+      setDraftAvailable(false);
+      setDraftPreview(null);
+      return;
+    }
+    setForm(prev => ({
+      ...prev,
+      ...draftData,
+      images: prev.images // 保留當前圖片（不覆蓋）
+    }));
+    setDraftAvailable(false);
+    const preview = getDraftPreview();
+    setDraftPreview(preview);
+    notify.success('草稿已還原', preview ? `標題：${preview.title.slice(0, 20)}... / 儲存於 ${preview.savedAt}` : '已載入上次編輯內容');
   };
 
-  // 社區選擇處理
-  const handleCommunityChange = (name: string, communityId?: string) => {
-    setForm({ ...form, communityName: name });
-    setSelectedCommunityId(communityId);
+  const handleDiscardDraft = () => {
+    const confirmDiscard = window.confirm('確定要捨棄草稿嗎？此操作無法復原');
+    if (!confirmDiscard) return;
+    clearDraft();
+    setDraftAvailable(false);
+    setDraftPreview(null);
+    notify.info('草稿已捨棄', '已清除本機草稿');
   };
 
-  // 使用驗證 Hook
-  const validation = usePropertyFormValidation(
-    {
-      title: form.title,
-      price: form.price,
-      address: form.address,
-      communityName: form.communityName,
-      advantage1: form.advantage1,
-      advantage2: form.advantage2,
-      disadvantage: form.disadvantage,
-    },
-    imageFiles.length
-  );
+  // IM-1: 智慧貼上處理函數
+  // IM-AC3: SCROLL_DELAY_MS - 3 秒後自動滾動至「兩好一公道」區塊
+  const SCROLL_DELAY_MS = 3000;
+  const TWO_GOODS_SECTION_ID = 'two-goods-section';
 
-  const canSubmit = validation.canSubmit;
-
-  // 591 搬家
-  const handleImport591 = () => {
-    const url = prompt('請貼上 591 網址');
-    if(!url) return;
+  const handle591Import = useCallback((text: string, source: 'paste' | 'url' | 'button' = 'paste') => {
     setLoading(true);
-    setTimeout(() => {
-      setForm(prev => ({ 
-        ...prev, 
-        title: '【急售】信義區捷運景觀豪邸', 
-        price: '2880', 
-        address: '台北市信義區忠孝東路', 
-        size: '45.2',
-        sourceExternalId: '591-MOCK-ID' 
-      }));
-      setLoading(false);
-    }, 1000);
-  };
+    setMood('thinking');
+    addMessage('正在解析 591 物件資料...');
 
-  // 圖片處理（含驗證）
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      const files = Array.from(e.target.files);
-      
-      // 驗證圖片
-      const { validFiles, invalidFiles, allValid } = validateImages(files);
-      
-      // 顯示無效檔案的錯誤
-      if (!allValid) {
-        invalidFiles.forEach(({ file, error }) => {
-          notify.warning(`${file.name} 無法上傳`, error || '檔案格式或大小不符合要求', { duration: 5000 });
+    // 先同步解析（不阻塞 UI）
+    const parsed = parse591Content(text);
+
+    // IM-5: 追蹤解析品質 (非同步,不阻塞主流程)
+    const trackImportQuality = async () => {
+      try {
+        await fetch('/api/analytics/import', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            textLength: text.length,
+            confidence: parsed.confidence,
+            fieldsFound: parsed.fieldsFound,
+            fieldStatus: {
+              title: !!parsed.title,
+              price: !!parsed.price,
+              size: !!parsed.size,
+              layout: !!(parsed.rooms && parsed.halls && parsed.bathrooms),
+              address: !!parsed.address,
+              listingId: !!parsed.listingId,
+            },
+            missingFields: parsed.missingFields || [],
+            source,
+            userAgent: navigator.userAgent,
+          }),
         });
+      } catch (error) {
+        // 靜默失敗,不影響用戶體驗
+        logger.warn('[IM-5] Analytics tracking failed', { error });
       }
-      
-      // 只加入有效檔案
-      if (validFiles.length > 0) {
-        setImageFiles(prev => [...prev, ...validFiles]);
-        const urls = validFiles.map(file => URL.createObjectURL(file));
-        setImages(prev => [...prev, ...urls]);
-      }
-    }
-  };
+    };
 
-  const removeImage = (index: number) => {
-    setImages(prev => prev.filter((_, i) => i !== index));
-    setImageFiles(prev => prev.filter((_, i) => i !== index));
-  };
+    // 非阻塞追蹤
+    trackImportQuality();
 
-  // 發布
-  const publish = async () => {
-    // 使用驗證結果檢查
-    if (!validation.basicValid) {
-      notify.error(
-        '請完成必填欄位',
-        validation.errors
-          .filter(e => ['title', 'price', 'address', 'communityName'].includes(e.field))
-          .map(e => e.message)
-          .join('、')
+    // IM-3: 重複匯入偵測 (ID 不同時詢問)
+    if (parsed.listingId && lastImportedIdRef.current && parsed.listingId !== lastImportedIdRef.current) {
+      const confirmOverwrite = window.confirm(
+        '檢測到您剛剛已匯入過另一個物件，確定要覆蓋嗎？\n\n' +
+        '點擊「確定」將填入新物件資料。\n' +
+        '點擊「取消」將保留目前內容。'
       );
-      return;
-    }
-    if (!validation.twoGoodOneFairValid) {
-      notify.error(
-        '兩好一公道字數不足',
-        `優點至少各 ${VALIDATION_RULES.advantage.minLength} 字，公道話至少 ${VALIDATION_RULES.disadvantage.minLength} 字`
-      );
-      return;
-    }
-    if (!validation.images.valid) {
-      notify.error('請上傳照片', '至少需要一張物件照片');
-      return;
-    }
-    
-    setLoading(true);
-    setUploadProgress({ current: 0, total: imageFiles.length });
-    
-    try {
-      // 上傳圖片（含進度回報）
-      const uploadResult = await propertyService.uploadImages(imageFiles, {
-        concurrency: 3,
-        onProgress: (current, total) => setUploadProgress({ current, total }),
-      });
       
-      // 檢查是否有失敗的圖片
-      if (!uploadResult.allSuccess) {
-        const failedNames = uploadResult.failed.map(f => f.file.name).join('、');
-        notify.warning('部分圖片上傳失敗', `${failedNames} 未能上傳，其他照片已成功`, { duration: 5000 });
+      if (!confirmOverwrite) {
+        setLoading(false);
+        setMood('confused');
+        addMessage('已取消匯入');
+        notify.info('已取消', '保留了原本的物件資料');
+        return;
       }
       
-      // 如果所有圖片都失敗
-      if (uploadResult.urls.length === 0) {
-        throw new Error('所有圖片上傳失敗，請檢查網路連線後重試');
-      }
-      
-      // 建立物件
-      const result = await propertyService.createPropertyWithForm(form, uploadResult.urls, selectedCommunityId);
-      
-      // 顯示成功 Toast
-      notify.success('🎉 刊登成功！', `物件編號：${result.public_id}`, { duration: 3000 });
-      
-      // 顯示確認頁
-      setUploadResult({
-        public_id: result.public_id,
-        community_id: result.community_id,
-        community_name: result.community_name || form.communityName,
-        is_new_community: !selectedCommunityId && result.community_id !== null
-      });
-      setShowConfirmation(true);
-      
-    } catch (e: any) {
-      console.error('Publish error:', e);
-      notify.error('刊登失敗', e?.message || '發生未知錯誤', {
-        actionLabel: '重試',
-        onAction: publish,
-        duration: 5500,
-      });
-    } finally {
+      // 若確認覆蓋，清空上一個物件 ID，確保後續邏輯視為新匯入
+      // (表單清空邏輯由 setForm 處理，這裡主要阻擋流程)
+    }
+
+    // IM-2.8: 解析失敗時立即回饋（0ms），不強制等待
+    if (parsed.confidence === 0) {
+      setMood('confused');
+      const missingMsg = parsed.missingFields?.length > 0 
+        ? `缺少：${parsed.missingFields.join('、')}` 
+        : '未能從內容中提取有效資訊';
+      addMessage(`解析失敗 😢 ${missingMsg}`);
       setLoading(false);
-      setUploadProgress(null);
+      notify.warning('解析失敗', missingMsg);
+      return;
     }
+
+    // IM-2.8 / P2: 統一延遲規格，高信心 500ms 展示撒花，低信心 200ms
+    const isHighConfidence = parsed.confidence >= 80;
+    const thinkingDelay = isHighConfidence ? 500 : 200;
+
+    const completeImport = () => {
+      // 填入表單
+      setForm(prev => ({
+        ...prev,
+        ...(parsed.title && { title: parsed.title }),
+        ...(parsed.price && { price: parsed.price }),
+        ...(parsed.address && { address: parsed.address }),
+        ...(parsed.size && { size: parsed.size }),
+        ...(parsed.rooms && { rooms: parsed.rooms }),
+        ...(parsed.halls && { halls: parsed.halls }),
+        ...(parsed.bathrooms && { bathrooms: parsed.bathrooms }),
+        ...(parsed.listingId && { sourceExternalId: `591-${parsed.listingId}` })
+      }));
+
+      // IM-3: 記錄本次匯入的 ID
+      if (parsed.listingId) {
+        lastImportedIdRef.current = parsed.listingId;
+      }
+
+      // 根據信心分數顯示不同的 MaiMai 反應
+      if (isHighConfidence) {
+        setMood('excited');
+        addMessage(`完美！成功解析了 ${parsed.fieldsFound} 個欄位 ✨`);
+        // 觸發慶祝動畫
+        window.dispatchEvent(new CustomEvent('mascot:celebrate'));
+      } else if (parsed.confidence >= 40) {
+        setMood('happy');
+        const missingHint = parsed.missingFields?.length > 0 
+          ? `（缺少：${parsed.missingFields.join('、')}）` 
+          : '';
+        addMessage(`已填入 ${parsed.fieldsFound} 個欄位${missingHint}，剩下的再補齊吧～`);
+      } else {
+        setMood('confused');
+        const missingHint = parsed.missingFields?.length > 0 
+          ? `缺少：${parsed.missingFields.join('、')}` 
+          : '內容可能不完整';
+        addMessage(`只找到了 ${parsed.fieldsFound} 個欄位 🤔 ${missingHint}`);
+      }
+
+      setLoading(false);
+      
+      const notifyMsg = parsed.missingFields?.length > 0 
+        ? `已填入 ${parsed.fieldsFound} 個欄位，缺少：${parsed.missingFields.join('、')}`
+        : `已自動填入 ${parsed.fieldsFound} 個欄位`;
+      notify.success('匯入成功', `${notifyMsg}（信心度 ${parsed.confidence}%）`);
+
+      // IM-AC3: 匯入成功後 3 秒，自動滾動至「兩好一公道」區塊
+      // OPT-2: 使用 ref 儲存 timer，支援組件卸載時清理
+      if (scrollTimerRef.current) clearTimeout(scrollTimerRef.current);
+      scrollTimerRef.current = setTimeout(() => {
+        const twoGoodsSection = document.getElementById(TWO_GOODS_SECTION_ID);
+        if (twoGoodsSection) {
+          twoGoodsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+        scrollTimerRef.current = null;
+      }, SCROLL_DELAY_MS);
+    };
+
+    // 根據信心度決定是否延遲
+    // OPT-2.5: 使用 ref 儲存 timer，支援組件卸載時清理
+    if (thinkingDelay > 0) {
+      if (thinkingDelayTimerRef.current) clearTimeout(thinkingDelayTimerRef.current);
+      thinkingDelayTimerRef.current = setTimeout(() => {
+        completeImport();
+        thinkingDelayTimerRef.current = null;
+      }, thinkingDelay);
+    } else {
+      completeImport();
+    }
+  }, [setForm, setLoading, setMood, addMessage]);
+
+  // IM-4: iOS 捷徑支援 - 監聽 URL ?importText= 參數
+  // OPT-2: 重寫以修復 SPA 導航 Bug、冗餘解碼、記憶體洩漏
+  useEffect(() => {
+    const importText = searchParams.get('importText');
+
+    // OPT-2.2: 改用值比較而非 boolean 鎖，支援 SPA 中多次不同參數導航
+    if (!importText || importText.trim().length === 0) return;
+    if (lastProcessedImportTextRef.current === importText) return;
+
+    // 標記當前值已處理
+    lastProcessedImportTextRef.current = importText;
+
+    // OPT-2.3: 移除冗餘 decodeURIComponent
+    // searchParams.get() 已自動處理 URL 解碼，再次解碼會導致 % 符號異常
+    const textToImport = importText;
+
+    // IM-4.3: 處理後清除 URL 參數 (replace: true 避免污染歷史紀錄)
+    const newParams = new URLSearchParams(searchParams);
+    newParams.delete('importText');
+    setSearchParams(newParams, { replace: true });
+
+    // 觸發匯入 (使用現有的 handle591Import 函數)
+    if (detect591Content(textToImport)) {
+      // OPT-2.4: 使用 ref 儲存 timer，組件卸載時可清理
+      if (importTimerRef.current) clearTimeout(importTimerRef.current);
+      importTimerRef.current = setTimeout(() => {
+        handle591Import(textToImport, 'url'); // IM-5: 標記來源為 URL
+        importTimerRef.current = null;
+      }, 300);
+    } else {
+      notify.warning('URL 參數格式錯誤', '匯入的內容不符合 591 格式');
+    }
+
+    // OPT-2.1: Cleanup function - 組件卸載時清理所有 timer
+    return () => {
+      if (importTimerRef.current) {
+        clearTimeout(importTimerRef.current);
+        importTimerRef.current = null;
+      }
+    };
+  }, [searchParams, setSearchParams, handle591Import]);
+
+  // IM-1: 全域 paste 事件監聽器
+  useEffect(() => {
+    const handlePaste = (e: ClipboardEvent) => {
+      // IM-1.2: 排除 INPUT/TEXTAREA 焦點衝突
+      const activeEl = document.activeElement;
+      if (activeEl?.tagName === 'INPUT' || activeEl?.tagName === 'TEXTAREA') {
+        return;
+      }
+
+      const text = e.clipboardData?.getData('text') || '';
+
+      // IM-1.3: 智慧偵測 591 內容
+      if (detect591Content(text)) {
+        e.preventDefault();
+        handle591Import(text, 'paste'); // IM-5: 標記來源為 paste
+      }
+    };
+
+    document.addEventListener('paste', handlePaste);
+    return () => document.removeEventListener('paste', handlePaste);
+  }, [handle591Import]);
+
+
+
+  // 591 搬家（保留舊的按鈕功能）
+  const handleImport591 = () => {
+    const url = prompt('請貼上 591 網址或內容');
+    if (!url) return;
+
+    // 如果貼上的是 URL，顯示提示
+    if (url.startsWith('http')) {
+      notify.info('提示', '請直接從 591 頁面複製物件資訊，然後在空白處按 Ctrl+V 貼上即可自動填表');
+      return;
+    }
+
+    // 否則當作內容處理
+    handle591Import(url, 'button'); // IM-5: 標記來源為 button
   };
 
-  const inputClass = "w-full p-3 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-[#003366] focus:border-transparent outline-none text-sm";
-
-  // ========================================
-  // 上傳成功確認頁
-  // ========================================
   if (showConfirmation && uploadResult) {
     return (
-      <div className="min-h-screen bg-[#f8fafc] font-sans text-slate-800">
-        <nav className="sticky top-0 z-overlay flex h-16 items-center border-b border-slate-100 bg-white/90 px-4 shadow-sm backdrop-blur-md">
-          <div className="flex items-center gap-2 text-xl font-extrabold text-[#003366]">
-            <div className="flex size-8 items-center justify-center rounded-lg bg-gradient-to-br from-[#003366] to-[#00A8E8] text-white">
-              <Home size={18} />
+      <div className="min-h-screen bg-slate-50 px-4 py-12">
+        <div className="mx-auto max-w-md overflow-hidden rounded-3xl bg-white shadow-2xl">
+          <div className="bg-green-500 py-10 text-center text-white">
+            <div className="mx-auto mb-4 flex size-20 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm">
+              <Check size={40} strokeWidth={3} />
             </div>
-            邁房子
-          </div>
-        </nav>
-
-        <main className="mx-auto max-w-lg p-6 py-12">
-          {/* 成功圖示 */}
-          <div className="mb-8 text-center">
-            <div className="mx-auto mb-4 flex size-20 items-center justify-center rounded-full bg-green-100">
-              <Check size={40} className="text-green-600" />
-            </div>
-            <h1 className="text-2xl font-bold text-slate-800">🎉 刊登成功！</h1>
-            <p className="mt-2 text-slate-500">物件編號：{uploadResult.public_id}</p>
+            <h1 className="text-2xl font-black">上傳成功！</h1>
+            <p className="mt-1 opacity-90">您的物件已正式發佈</p>
           </div>
 
-          {/* 社區歸屬確認 */}
-          {uploadResult.community_name && uploadResult.community_name !== '無' && (
-            <section className="mb-6 rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
-              <div className="flex items-start gap-3">
-                <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-blue-100">
-                  <Building2 size={20} className="text-blue-600" />
+          <div className="p-8">
+            <div className="mb-8 space-y-4">
+              <div className="flex items-center gap-4 rounded-2xl bg-slate-50 p-4">
+                <div className="flex size-12 items-center justify-center rounded-xl bg-blue-100 text-blue-600">
+                  <Home size={24} />
                 </div>
-                <div className="flex-1">
-                  <h3 className="font-bold text-slate-800">社區牆歸屬</h3>
-                  <p className="mt-1 text-lg font-medium text-[#003366]">
-                    {uploadResult.community_name}
-                  </p>
-                  {uploadResult.is_new_community ? (
-                    <p className="mt-1 flex items-center gap-1 text-sm text-amber-600">
-                      <AlertTriangle size={14} />
-                      新建立的社區牆，待審核後公開
-                    </p>
-                  ) : (
-                    <p className="mt-1 flex items-center gap-1 text-sm text-green-600">
-                      <Check size={14} />
-                      已歸入現有社區牆
-                    </p>
-                  )}
+                <div>
+                  <p className="text-xs font-bold uppercase text-slate-400">物件編號</p>
+                  <p className="font-mono font-bold text-slate-700">{uploadResult.public_id}</p>
                 </div>
               </div>
 
-              {/* 社區牆預覽連結 */}
+              {uploadResult.community_name && (
+                <div className="flex items-center gap-4 rounded-2xl bg-slate-50 p-4">
+                  <div className="flex size-12 items-center justify-center rounded-xl bg-orange-100 text-orange-600">
+                    <Building2 size={24} />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold uppercase text-slate-400">社區牆</p>
+                    <p className="font-bold text-slate-700">{uploadResult.community_name}</p>
+                    {uploadResult.is_new_community && (
+                      <span className="mt-0.5 inline-block rounded bg-orange-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
+                        新建立
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 gap-3">
+              <Link
+                to={`/p/${uploadResult.public_id}`}
+                className="flex items-center justify-center gap-2 rounded-xl bg-maihouses-dark py-4 font-bold text-white transition-all hover:bg-[#002244] active:scale-[0.98]"
+              >
+                查看物件詳情
+              </Link>
               {uploadResult.community_id && (
-                <Link 
+                <Link
                   to={`/community/${uploadResult.community_id}`}
-                  className="mt-4 block w-full rounded-xl bg-blue-50 py-2 text-center text-sm font-medium text-blue-600 transition hover:bg-blue-100"
+                  className="flex items-center justify-center gap-2 rounded-xl border-2 border-maihouses-dark py-4 font-bold text-maihouses-dark transition-all hover:bg-blue-50 active:scale-[0.98]"
                 >
-                  🏘️ 查看社區牆
+                  前往社區牆
                 </Link>
               )}
-            </section>
-          )}
-
-          {/* 發現社區有誤？修正區塊 */}
-          {uploadResult.community_name && uploadResult.community_name !== '無' && (
-            <section className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 p-4">
-              <div className="flex items-center gap-2 text-amber-800">
-                <AlertTriangle size={18} />
-                <span className="font-medium">社區歸屬有誤？</span>
-              </div>
-              <p className="mt-2 text-sm text-amber-700">
-                如果發現物件歸入了錯誤的社區牆，可以立即修正。
-              </p>
               <button
-                onClick={() => {
-                  // 跳轉到物件編輯頁的社區修正功能
-                  navigate(`/property/${uploadResult.public_id}/edit?fix=community`);
-                }}
-                className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-amber-100 py-2 text-sm font-medium text-amber-800 transition hover:bg-amber-200"
+                onClick={() => window.location.reload()}
+                className="mt-2 text-sm font-bold text-slate-400 hover:text-slate-600"
               >
-                <Edit3 size={16} />
-                修正社區歸屬
+                繼續上傳下一個
               </button>
-            </section>
-          )}
-
-          {/* 操作按鈕 */}
-          <div className="space-y-3">
-            <Link
-              to={`/property/${uploadResult.public_id}`}
-              className="block w-full rounded-xl bg-gradient-to-r from-[#003366] to-[#00A8E8] py-4 text-center font-bold text-white shadow-lg"
-            >
-              查看物件頁面
-            </Link>
-            <button
-              onClick={() => {
-                setShowConfirmation(false);
-                setUploadResult(null);
-                // 清空表單
-                setForm({
-                  title: '', price: '', address: '', communityName: '', size: '', age: '', 
-                  floorCurrent: '', floorTotal: '', rooms: '3', halls: '2', bathrooms: '2', 
-                  type: '電梯大樓', description: '',
-                  advantage1: '', advantage2: '', disadvantage: '',
-                  sourceExternalId: ''
-                });
-                setImages([]);
-                setImageFiles([]);
-                setSelectedCommunityId(undefined);
-              }}
-              className="block w-full rounded-xl bg-slate-100 py-3 text-center font-medium text-slate-600 transition hover:bg-slate-200"
-            >
-              繼續上傳新物件
-            </button>
+            </div>
           </div>
-        </main>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] font-sans text-slate-800">
+    <div className="min-h-screen bg-slate-50 pb-20">
       {/* Header */}
-      <nav className="sticky top-0 z-overlay flex h-16 items-center justify-between border-b border-slate-100 bg-white/90 px-4 shadow-sm backdrop-blur-md">
-        <div className="flex items-center gap-3">
-          <button onClick={() => navigate(-1)} className="rounded-full p-2 transition-colors hover:bg-slate-100">
-            <ArrowLeft size={20} className="text-slate-600" />
-          </button>
-          <div className="flex items-center gap-2 text-xl font-extrabold text-[#003366]">
-            <div className="flex size-8 items-center justify-center rounded-lg bg-gradient-to-br from-[#003366] to-[#00A8E8] text-white">
-              <Home size={18} />
-            </div>
-            邁房子
-          </div>
-        </div>
-        
-        <button onClick={handleImport591} disabled={loading} className="flex items-center gap-1 rounded-lg border border-blue-100 bg-blue-50 px-3 py-1.5 text-xs font-bold text-[#00A8E8] hover:bg-blue-100">
-          {loading ? <Loader2 size={12} className="animate-spin"/> : <Download size={12}/>}
-          591 搬家
-        </button>
-      </nav>
-
-      <main className="mx-auto max-w-2xl space-y-5 p-4 pb-32">
-        
-        {/* 區塊 1: 基本資料 */}
-        <section className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
-          <h2 className="mb-4 flex items-center gap-2 text-lg font-bold text-[#003366]">
-            <Home size={18}/> 基本資料
-          </h2>
-          
-          <div className="space-y-3">
-            <div>
-              <label htmlFor="upload-title" className="mb-1 block text-xs font-medium text-slate-600">物件標題 *</label>
-              <input id="upload-title" name="title" value={form.title} onChange={handleInput} className={inputClass + " font-bold"} placeholder="例如：信義區101景觀全新裝潢大三房" />
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label htmlFor="upload-price" className="mb-1 block text-xs font-medium text-slate-600">價格 (萬) *</label>
-                <input id="upload-price" name="price" type="number" value={form.price} onChange={handleInput} className={inputClass} placeholder="0" />
+      <header className="sticky top-0 z-30 border-b border-brand-100 bg-white/95 backdrop-blur-md">
+        <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => navigate(-1)}
+              className="rounded-xl p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
+            >
+              <ArrowLeft size={20} />
+            </button>
+            {/* Atomic Logo Component */}
+            <div className="flex items-center gap-4">
+              <div className="origin-left scale-90">
+                <Logo showSlogan={false} showBadge={true} />
               </div>
-              <div>
-                <label htmlFor="upload-address" className="mb-1 block text-xs font-medium text-slate-600">地址 *</label>
-                <input id="upload-address" name="address" value={form.address} onChange={handleInput} className={inputClass} placeholder="台北市信義區..." />
-              </div>
-            </div>
-
-            {/* 社區名稱 - 必填 */}
-            <div>
-              <span id="upload-community-label" className="mb-1 block text-xs font-medium text-slate-600">
-                社區名稱 * <span className="text-slate-400">(透天/店面請選「無社區」)</span>
-              </span>
-              <CommunityPicker
-                value={form.communityName}
-                address={form.address}
-                onChange={handleCommunityChange}
-                required={true}
-              />
-              {!validation.communityValid && form.communityName.length > 0 && (
-                <p className="mt-1 text-[10px] text-red-500">
-                  請輸入完整社區名稱（至少2字）
-                </p>
-              )}
-            </div>
-
-            <div className="grid grid-cols-4 gap-3">
-              <div>
-                <label htmlFor="upload-size" className="mb-1 block text-xs font-medium text-slate-600">坪數</label>
-                <input id="upload-size" name="size" type="number" value={form.size} onChange={handleInput} className={inputClass} placeholder="0" />
-              </div>
-              <div>
-                <label htmlFor="upload-age" className="mb-1 block text-xs font-medium text-slate-600">屋齡</label>
-                <input id="upload-age" name="age" type="number" value={form.age} onChange={handleInput} className={inputClass} placeholder="0" />
-              </div>
-              <div className="col-span-2">
-                <label htmlFor="upload-type" className="mb-1 block text-xs font-medium text-slate-600">類型</label>
-                <select id="upload-type" name="type" value={form.type} onChange={handleInput} className={inputClass}>
-                  <option>電梯大樓</option>
-                  <option>公寓</option>
-                  <option>透天</option>
-                  <option>套房</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-3 gap-3">
-              <div>
-                <label htmlFor="upload-rooms" className="mb-1 block text-xs font-medium text-slate-600">房</label>
-                <input id="upload-rooms" name="rooms" type="number" value={form.rooms} onChange={handleInput} className={inputClass} />
-              </div>
-              <div>
-                <label htmlFor="upload-halls" className="mb-1 block text-xs font-medium text-slate-600">廳</label>
-                <input id="upload-halls" name="halls" type="number" value={form.halls} onChange={handleInput} className={inputClass} />
-              </div>
-              <div>
-                <label htmlFor="upload-bathrooms" className="mb-1 block text-xs font-medium text-slate-600">衛</label>
-                <input id="upload-bathrooms" name="bathrooms" type="number" value={form.bathrooms} onChange={handleInput} className={inputClass} />
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* 區塊 2: 兩好一公道 */}
-        <section className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
-          <div className="mb-4 flex items-center gap-2">
-            <Shield className="text-orange-500" size={20} />
-            <div>
-              <h2 className="text-lg font-bold text-[#003366]">兩好一公道</h2>
-              <p className="text-xs text-slate-500">誠實揭露，建立買賣信任</p>
+              <div className="h-6 w-px bg-slate-200" />
+              <h1 className="text-lg font-bold text-slate-700">刊登物件</h1>
             </div>
           </div>
 
-          <div className="space-y-3">
-            <div>
-              <label htmlFor="upload-advantage1" className="mb-1 flex items-center gap-1.5 text-xs font-medium text-green-700">
-                <ThumbsUp size={14}/> 優點 1 (至少 5 字)
-              </label>
-              <input
-                id="upload-advantage1"
-                name="advantage1"
-                value={form.advantage1}
-                onChange={handleInput}
-                className={inputClass + (validation.adv1Valid ? ' border-green-300 bg-green-50/50' : '') + (validation.advantage1.contentWarning ? ' border-red-300' : '')}
-                placeholder="例如：格局方正，採光極佳"
-              />
-              <div className="mt-0.5 flex items-center justify-between">
-                <span className={"text-xs " + (validation.adv1Valid ? 'text-green-600' : 'text-slate-400')}>
-                  {form.advantage1.length}/5 字 {validation.adv1Valid && '✓'}
-                </span>
-                {validation.advantage1.contentWarning && (
-                  <span className="flex items-center gap-1 text-xs text-red-500">
-                    <AlertTriangle size={12} /> {validation.advantage1.contentWarning}
-                  </span>
-                )}
-              </div>
-            </div>
-
-            <div>
-              <label htmlFor="upload-advantage2" className="mb-1 flex items-center gap-1.5 text-xs font-medium text-green-700">
-                <ThumbsUp size={14}/> 優點 2 (至少 5 字)
-              </label>
-              <input
-                id="upload-advantage2"
-                name="advantage2"
-                value={form.advantage2}
-                onChange={handleInput}
-                className={inputClass + (validation.adv2Valid ? ' border-green-300 bg-green-50/50' : '') + (validation.advantage2.contentWarning ? ' border-red-300' : '')}
-                placeholder="例如：近捷運站，生活機能好"
-              />
-              <div className="mt-0.5 flex items-center justify-between">
-                <span className={"text-xs " + (validation.adv2Valid ? 'text-green-600' : 'text-slate-400')}>
-                  {form.advantage2.length}/5 字 {validation.adv2Valid && '✓'}
-                </span>
-                {validation.advantage2.contentWarning && (
-                  <span className="flex items-center gap-1 text-xs text-red-500">
-                    <AlertTriangle size={12} /> {validation.advantage2.contentWarning}
-                  </span>
-                )}
-              </div>
-            </div>
-
-            <div>
-              <label htmlFor="upload-disadvantage" className="mb-1 flex items-center gap-1.5 text-xs font-medium text-orange-700">
-                <ThumbsDown size={14}/> 誠實公道話 (至少 10 字)
-              </label>
-              <input
-                id="upload-disadvantage"
-                name="disadvantage"
-                value={form.disadvantage}
-                onChange={handleInput}
-                className={inputClass + (validation.disValid ? ' border-orange-300 bg-orange-50/50' : '') + (validation.disadvantage.contentWarning ? ' border-red-300' : '')}
-                placeholder="例如：臨路有車流聲，建議加裝氣密窗"
-              />
-              <div className="mt-0.5 flex items-center justify-between">
-                <span className={"text-xs " + (validation.disValid ? 'text-orange-600' : 'text-red-400')}>
-                  {form.disadvantage.length}/10 字 {validation.disValid ? '✓' : '(請更詳細描述)'}
-                </span>
-                {validation.disadvantage.contentWarning && (
-                  <span className="flex items-center gap-1 text-xs text-red-500">
-                    <AlertTriangle size={12} /> {validation.disadvantage.contentWarning}
-                  </span>
-                )}
-              </div>
-            </div>
-          </div>
-          
-          {/* 敏感詞警告區塊 */}
-          {validation.contentCheck.hasIssues && (
-            <div className={`mt-4 flex items-start gap-2 rounded-lg p-3 ${validation.contentCheck.blockSubmit ? 'border border-red-200 bg-red-50' : 'border border-yellow-200 bg-yellow-50'}`}>
-              <AlertTriangle className={validation.contentCheck.blockSubmit ? 'text-red-500' : 'text-yellow-600'} size={18} />
-              <div>
-                <p className={`text-sm font-medium ${validation.contentCheck.blockSubmit ? 'text-red-700' : 'text-yellow-700'}`}>
-                  {validation.contentCheck.blockSubmit ? '內容不符合發布規範' : '內容需要注意'}
-                </p>
-                <ul className="mt-1 space-y-0.5 text-xs text-slate-600">
-                  {validation.contentCheck.warnings.map((w, i) => (
-                    <li key={i}>• {w}</li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          )}
-        </section>
-
-        {/* 區塊 3: 文案與照片 */}
-        <section className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
-          <h2 className="mb-4 flex items-center gap-2 text-lg font-bold text-[#003366]">
-            <Sparkles size={18} className="text-yellow-500"/> 文案與照片
-          </h2>
-
-          <div className="space-y-4">
-            <div>
-              <label htmlFor="upload-description" className="mb-1 block text-xs font-medium text-slate-600">物件描述</label>
-              <textarea
-                id="upload-description"
-                name="description"
-                value={form.description}
-                onChange={handleInput}
-                rows={4}
-                className={inputClass + " resize-none"}
-                placeholder="詳細介紹這個物件的特色、生活機能、交通便利性..."
-              />
-            </div>
-
-            <div>
-              <span id="upload-photos-label" className="mb-2 block text-xs font-medium text-slate-600">
-                物件照片 * <span className="text-slate-400">(至少 1 張)</span>
-              </span>
-              <div className="grid grid-cols-4 gap-3">
-                {images.map((url, i) => (
-                  <div key={i} className="group relative aspect-square overflow-hidden rounded-xl border border-slate-200">
-                    <img src={url} alt="" className="size-full object-cover"/>
-                    <button 
-                      onClick={() => removeImage(i)} 
-                      className="absolute right-1 top-1 rounded-full bg-red-500 p-1 text-white opacity-0 transition group-hover:opacity-100"
-                    >
-                      <X size={12}/>
-                    </button>
-                    {i === 0 && (
-                      <span className="absolute bottom-1 left-1 rounded bg-[#003366] px-1.5 py-0.5 text-[10px] text-white">
-                        封面
-                      </span>
-                    )}
-                  </div>
-                ))}
-                <button 
-                  onClick={() => fileInputRef.current?.click()} 
-                  className="flex aspect-square flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-300 text-slate-400 transition-colors hover:border-[#00A8E8] hover:text-[#00A8E8]"
+          <div className="flex items-center gap-3">
+            {draftAvailable && (
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleRestoreDraft}
+                  className="flex items-center gap-2 rounded-full bg-[#003366] px-4 py-2 text-sm font-bold text-white shadow-md shadow-blue-900/10 transition-all hover:bg-[#002244] hover:shadow-lg active:scale-95"
                 >
-                  <Upload size={24}/>
-                  <span className="mt-1 text-xs">上傳</span>
+                  <RotateCcw size={16} /> 還原草稿
+                  {draftPreview && (
+                    <span className="ml-1 border-l border-white/20 pl-2 text-[11px] font-medium opacity-80">{draftPreview.savedAt}</span>
+                  )}
                 </button>
-                <input type="file" multiple ref={fileInputRef} onChange={handleFileSelect} className="hidden" accept="image/*" />
+                <button
+                  onClick={handleDiscardDraft}
+                  className="rounded-full px-3 py-2 text-xs font-bold text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
+                >
+                  捨棄
+                </button>
+              </div>
+            )}
+            <button
+              onClick={handleImport591}
+              className="hidden items-center gap-2 rounded-full border-2 border-[#003366] bg-white px-4 py-1.5 text-sm font-bold text-[#003366] transition-all hover:bg-blue-50 sm:flex"
+            >
+              <Download size={16} /> 591 搬家
+            </button>
+
+            {!userId && (
+              <Link to="/auth" className="ml-2 text-sm font-bold text-[#003366] hover:underline">登入同步</Link>
+            )}
+          </div>
+        </div>
+      </header>
+
+      <main className="mx-auto mt-8 max-w-5xl px-4">
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
+          {/* Left: Form */}
+          <div className="space-y-8 lg:col-span-7">
+            <BasicInfoSection />
+            <FeaturesSection />
+            <TwoGoodsSection />
+            <MediaSection />
+          </div>
+
+          {/* Right: Preview & Submit */}
+          <div className="lg:col-span-5">
+            <div className="sticky top-24 space-y-6">
+              <PreviewSection />
+
+              <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
+                <div className="mb-4 flex items-center justify-between">
+                  <h3 className="text-sm font-bold uppercase tracking-wider text-slate-500">發佈確認</h3>
+                  <span className={`text-xs font-bold ${validation.canSubmit ? 'text-green-500' : 'text-red-400'}`}>
+                    {validation.canSubmit ? '✓ 資料已齊全' : '⚠ 尚有必填欄位'}
+                  </span>
+                </div>
+
+                <button
+                  onClick={handleSubmit}
+                  disabled={!validation.canSubmit || loading}
+                  className={`group relative w-full overflow-hidden rounded-xl py-4 font-black text-white transition-all active:scale-[0.98] ${validation.canSubmit && !loading
+                    ? 'bg-gradient-to-r from-maihouses-dark to-maihouses-light shadow-lg shadow-blue-200 hover:translate-y-[-2px] hover:shadow-xl'
+                    : 'cursor-not-allowed bg-slate-300'
+                    }`}
+                >
+                  {loading ? (
+                    <div className="flex items-center justify-center gap-3">
+                      <Loader2 className="animate-spin" size={20} />
+                      <span>{uploadProgress ? `上傳中 ${Math.round((uploadProgress.current / uploadProgress.total) * 100)}%` : '處理中...'}</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center gap-2">
+                      <Edit3 size={20} />
+                      <span>立即發佈物件</span>
+                    </div>
+                  )}
+                </button>
+
+                <p className="mt-4 text-center text-[11px] leading-relaxed text-slate-400">
+                  點擊發佈即代表您同意 <Link to="/terms" className="underline">服務條款</Link> 與 <Link to="/privacy" className="underline">隱私權政策</Link>，並保證所提供之資訊真實無誤。
+                </p>
               </div>
             </div>
           </div>
-        </section>
-
-        {/* 預覽區 */}
-        {(form.title || form.price || images.length > 0) && (
-          <section className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-            <h3 className="mb-3 flex items-center gap-2 text-sm font-bold text-slate-500">
-              <MapPin size={14}/> 即時預覽
-            </h3>
-            <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
-              {images.length > 0 && (
-                <div className="aspect-video">
-                  <img src={images[0]} alt="" className="size-full object-cover"/>
-                </div>
-              )}
-              <div className="p-4">
-                <h4 className="font-bold text-slate-900">{form.title || '物件標題'}</h4>
-                <p className="mt-1 text-xs text-slate-500">{form.address || '地址'}</p>
-                <div className="mt-2 flex items-baseline gap-1">
-                  <span className="text-xl font-extrabold text-[#003366]">{form.price || '0'}</span>
-                  <span className="text-sm text-slate-500">萬</span>
-                </div>
-                <div className="mt-2 flex flex-wrap gap-1">
-                  {[form.type, form.size && (form.size + '坪'), form.rooms + '房' + form.halls + '廳' + form.bathrooms + '衛'].filter(Boolean).map((tag, i) => (
-                    <span key={i} className="rounded-full bg-blue-50 px-2 py-0.5 text-xs text-[#003366]">{tag}</span>
-                  ))}
-                </div>
-                {/* 社區牆預覽提示 */}
-                {form.communityName && (
-                  <div className="mt-3 border-t border-slate-100 pt-2 text-xs text-slate-500">
-                    <span className="flex items-center gap-1">
-                      🏘️ 社區牆：
-                      <span className={selectedCommunityId ? 'font-medium text-green-600' : 'font-medium text-blue-600'}>
-                        {form.communityName}
-                      </span>
-                      {selectedCommunityId ? (
-                        <span className="text-green-600">（使用現有）</span>
-                      ) : (
-                        <span className="text-blue-600">（將自動建立）</span>
-                      )}
-                    </span>
-                  </div>
-                )}
-              </div>
-            </div>
-          </section>
-        )}
-
-      </main>
-
-      {/* 底部發布按鈕 */}
-      <div className="fixed inset-x-0 bottom-0 z-overlay border-t border-slate-100 bg-white p-4">
-        <div className="mx-auto max-w-2xl">
-          <button 
-            onClick={publish} 
-            disabled={loading || !canSubmit}
-            className={"w-full py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-2 transition-all " +
-              (canSubmit 
-                ? 'bg-gradient-to-r from-[#003366] to-[#00A8E8] text-white shadow-lg shadow-blue-900/20 hover:scale-[1.01]' 
-                : 'bg-slate-200 text-slate-400 cursor-not-allowed'
-              )}
-          >
-            {loading ? <Loader2 className="animate-spin" size={20}/> : <Check size={20}/>}
-            {loading ? '上傳中...' : canSubmit ? '確認刊登物件' : '請完成必填欄位'}
-          </button>
-          
-          {!canSubmit && (
-            <div className="mt-2 flex justify-center gap-4 text-xs text-slate-400">
-              <span className={validation.basicValid ? 'text-green-600' : ''}>
-                {validation.basicValid ? '✓ 基本資料' : '○ 基本資料'}
-              </span>
-              <span className={validation.twoGoodOneFairValid ? 'text-green-600' : ''}>
-                {validation.twoGoodOneFairValid ? '✓ 兩好一公道' : '○ 兩好一公道'}
-              </span>
-              <span className={imageFiles.length > 0 ? 'text-green-600' : ''}>
-                {imageFiles.length > 0 ? '✓ 照片' : '○ 照片'}
-              </span>
-            </div>
-          )}
         </div>
-      </div>
+      </main>
     </div>
+  );
+};
+
+export const PropertyUploadPage: React.FC = () => {
+  return (
+    <UploadFormProvider>
+      <PropertyUploadContent />
+    </UploadFormProvider>
   );
 };

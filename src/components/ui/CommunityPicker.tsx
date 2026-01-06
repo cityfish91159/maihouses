@@ -7,10 +7,11 @@
  * 3. 地址模糊比對
  */
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '../../lib/supabase';
 import { Building2, Search, Plus, Check, Loader2, Home } from 'lucide-react';
 import { computeAddressFingerprint } from '../../utils/address';
+import { logger } from '../../lib/logger';
 
 interface Community {
   id: string;
@@ -48,7 +49,7 @@ export function CommunityPicker({ value, address, onChange, className = '', requ
   };
 
   // 搜尋社區（含 race condition 防護）
-  const searchCommunities = async (term: string, addr: string) => {
+  const searchCommunities = useCallback(async (term: string, addr: string) => {
     if (!term && !addr) {
       setSuggestions([]);
       return;
@@ -108,10 +109,10 @@ export function CommunityPicker({ value, address, onChange, className = '', requ
 
       if (error) throw error;
       setSuggestions(data || []);
-    } catch (err: any) {
+    } catch (err) {
       // 忽略 abort 錯誤
-      if (err?.name === 'AbortError') return;
-      console.error('搜尋社區失敗:', err);
+      if (err instanceof Error && err.name === 'AbortError') return;
+      logger.error('搜尋社區失敗', { error: err });
       setSuggestions([]);
     } finally {
       // 只有最新請求才更新 loading 狀態
@@ -119,7 +120,7 @@ export function CommunityPicker({ value, address, onChange, className = '', requ
         setLoading(false);
       }
     }
-  };
+  }, []);
 
   // Debounce 搜尋
   useEffect(() => {
@@ -127,7 +128,7 @@ export function CommunityPicker({ value, address, onChange, className = '', requ
       searchCommunities(searchTerm, address);
     }, 300);
     return () => clearTimeout(timer);
-  }, [searchTerm, address]);
+  }, [searchTerm, address, searchCommunities]);
 
   // 清理 AbortController
   useEffect(() => {

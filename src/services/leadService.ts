@@ -4,6 +4,7 @@
  */
 
 import { supabase } from '../lib/supabase';
+import { logger } from '../lib/logger';
 
 // Lead 狀態類型
 export type LeadStatus = 
@@ -103,14 +104,14 @@ export async function createLead(params: CreateLeadParams): Promise<CreateLeadRe
     });
 
     if (error) {
-      console.error('[LeadService] Create lead error:', error);
+      logger.error('[LeadService] Create lead error', { error });
       return { success: false, error: error.message };
     }
 
     return { success: true, leadId: data };
   } catch (err) {
     const errorMessage = err instanceof Error ? err.message : '未知錯誤';
-    console.error('[LeadService] Create lead exception:', err);
+    logger.error('[LeadService] Create lead exception', { error: err });
     return { success: false, error: errorMessage };
   }
 }
@@ -127,13 +128,13 @@ export async function getLeadsForAgent(agentId: string): Promise<Lead[]> {
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('[LeadService] Get leads error:', error);
+      logger.error('[LeadService] Get leads error', { error });
       return [];
     }
 
     return data || [];
   } catch (err) {
-    console.error('[LeadService] Get leads exception:', err);
+    logger.error('[LeadService] Get leads exception', { error: err });
     return [];
   }
 }
@@ -150,13 +151,13 @@ export async function getLeadsForProperty(propertyId: string): Promise<Lead[]> {
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('[LeadService] Get property leads error:', error);
+      logger.error('[LeadService] Get property leads error', { error });
       return [];
     }
 
     return data || [];
   } catch (err) {
-    console.error('[LeadService] Get property leads exception:', err);
+    logger.error('[LeadService] Get property leads exception', { error: err });
     return [];
   }
 }
@@ -180,7 +181,7 @@ export async function updateLeadStatus(
       .eq('id', leadId);
 
     if (updateError) {
-      console.error('[LeadService] Update status error:', updateError);
+      logger.error('[LeadService] Update status error', { error: updateError });
       return false;
     }
 
@@ -191,7 +192,7 @@ export async function updateLeadStatus(
 
     return true;
   } catch (err) {
-    console.error('[LeadService] Update status exception:', err);
+    logger.error('[LeadService] Update status exception', { error: err });
     return false;
   }
 }
@@ -213,13 +214,13 @@ export async function recordFirstResponse(leadId: string): Promise<boolean> {
       .is('first_response_at', null); // 只更新尚未回應的
 
     if (error) {
-      console.error('[LeadService] Record response error:', error);
+      logger.error('[LeadService] Record response error', { error });
       return false;
     }
 
     return true;
   } catch (err) {
-    console.error('[LeadService] Record response exception:', err);
+    logger.error('[LeadService] Record response exception', { error: err });
     return false;
   }
 }
@@ -248,13 +249,13 @@ export async function addLeadEvent(
       });
 
     if (error) {
-      console.error('[LeadService] Add event error:', error);
+      logger.error('[LeadService] Add event error', { error });
       return false;
     }
 
     return true;
   } catch (err) {
-    console.error('[LeadService] Add event exception:', err);
+    logger.error('[LeadService] Add event exception', { error: err });
     return false;
   }
 }
@@ -271,13 +272,13 @@ export async function getLeadEvents(leadId: string): Promise<LeadEvent[]> {
       .order('created_at', { ascending: true });
 
     if (error) {
-      console.error('[LeadService] Get events error:', error);
+      logger.error('[LeadService] Get events error', { error });
       return [];
     }
 
     return data || [];
   } catch (err) {
-    console.error('[LeadService] Get events exception:', err);
+    logger.error('[LeadService] Get events exception', { error: err });
     return [];
   }
 }
@@ -300,7 +301,7 @@ export async function getAgentLeadStats(agentId: string): Promise<{
       .eq('agent_id', agentId);
 
     if (error) {
-      console.error('[LeadService] Get stats error:', error);
+      logger.error('[LeadService] Get stats error', { error });
       return { total: 0, new: 0, contacted: 0, scheduled: 0, closedWon: 0, avgResponseTime: null };
     }
 
@@ -320,7 +321,7 @@ export async function getAgentLeadStats(agentId: string): Promise<{
         : null
     };
   } catch (err) {
-    console.error('[LeadService] Get stats exception:', err);
+    logger.error('[LeadService] Get stats exception', { error: err });
     return { total: 0, new: 0, contacted: 0, scheduled: 0, closedWon: 0, avgResponseTime: null };
   }
 }

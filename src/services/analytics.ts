@@ -1,4 +1,6 @@
 import { apiFetch, getSessionId } from './api'
+import { safeLocalStorage } from '../lib/safeStorage'
+import { logger } from '../lib/logger'
 
 type Uag = {
   event: string
@@ -19,21 +21,23 @@ declare global {
   var __UAG__: { queue: Uag[]; timer?: number; backoff: number; attempts: number } | undefined
 }
 
-const G = globalThis.__UAG__ || (globalThis.__UAG__ = { queue: [], backoff: 10_000, attempts: 0 })
+const _global = (typeof globalThis !== 'undefined' ? globalThis : typeof window !== 'undefined' ? window : typeof self !== 'undefined' ? self : {}) as typeof globalThis & { __UAG__?: { queue: Uag[]; timer?: number; backoff: number; attempts: number } };
+const G = _global.__UAG__ || (_global.__UAG__ = { queue: [], backoff: 10000, attempts: 0 });
 
 try {
-  G.queue = JSON.parse(localStorage.getItem(KEY) || '[]')
+  const stored = safeLocalStorage.getItem(KEY)
+  G.queue = JSON.parse(stored || '[]')
 } catch {
   G.queue = []
 }
 
 const save = () => {
   try {
-    localStorage.setItem(KEY, JSON.stringify(G.queue.slice(-CAP)))
-  } catch {}
+    safeLocalStorage.setItem(KEY, JSON.stringify(G.queue.slice(-CAP)))
+  } catch { }
 }
 
-const MAX = 300_000
+const MAX = 300000
 
 async function flush(batch: Uag[]) {
   const r = await apiFetch<{ retryAfterMs?: number } | null>('/api/v1/uag/events', {
@@ -44,13 +48,14 @@ async function flush(batch: Uag[]) {
 
   if (r.ok) {
     const ids = new Set(batch.map((b) => b.requestId))
-    G.queue = G.queue.filter((x) => !ids.has(x.requestId))
+    G.queue = G.queue.filter((x: Uag) => !ids.has(x.requestId))
     save()
     G.attempts = 0
-    G.backoff = 10_000
+    G.backoff = 10000
   } else {
     G.attempts++
-    const ra = (r as any)?.data?.retryAfterMs
+    const responseData = r as { data?: { retryAfterMs?: number } };
+    const ra = responseData.data?.retryAfterMs;
     G.backoff = Math.min(ra ?? (G.backoff * 2), MAX)
   }
 }
@@ -89,7 +94,7 @@ function uuidv4() {
 
 export function trackEvent(event: string, page: string, targetId?: string) {
   if (!event?.trim() || !page?.trim()) {
-    console.warn('[UAG] 無效的事件或頁面名稱，已忽略上報')
+    logger.warn('[UAG] 無效的事件或頁面名稱，已忽略上報')
     return
   }
 
@@ -102,13 +107,13 @@ export function trackEvent(event: string, page: string, targetId?: string) {
     meta: { origin: 'gh-pages' },
     requestId: uuidv4()
   }
-  
+
   if (targetId) ev.targetId = targetId
-  
+
   G.queue.push(ev)
   if (G.queue.length > CAP) G.queue = G.queue.slice(-CAP)
   save()
-  
+
   flush([ev]).catch(() => {
     G.attempts++
     G.backoff = Math.min(G.backoff * 2, MAX)

@@ -1,4 +1,5 @@
 import { ExternalLink, Building2, MapPin, Maximize, DollarSign } from 'lucide-react';
+import { isSpecTag } from '../../../lib/tagUtils';
 
 /**
  * ============================================
@@ -100,17 +101,17 @@ function getMockData(propertyId: string): MockProperty {
 }
 // ============================================
 
-export default function ChatPropertyCard({ 
+export default function ChatPropertyCard({
   community,
   propertyId
 }: ChatPropertyCardProps) {
   const property = getMockData(propertyId);
-  
+
   // TODO: 改為動態連結 /property.html?id={propertyId}
   const propertyUrl = '/property.html';
-  
+
   return (
-    <a 
+    <a
       href={propertyUrl}
       target="_blank"
       rel="noopener noreferrer"
@@ -128,7 +129,7 @@ export default function ChatPropertyCard({
           </p>
         </div>
         <div className="flex items-center gap-2">
-          {property.highlight && (
+          {property.highlight && !isSpecTag(property.highlight) && (
             <span className="whitespace-nowrap rounded-full bg-orange-500 px-2 py-0.5 text-[10px] font-medium text-white">
               {property.highlight}
             </span>
@@ -136,7 +137,7 @@ export default function ChatPropertyCard({
           <ExternalLink size={14} className="text-orange-400 transition-colors group-hover:text-orange-600" />
         </div>
       </div>
-      
+
       {/* 價格與坪數 */}
       <div className="mb-2 grid grid-cols-2 gap-2">
         <div className="flex items-center gap-1 text-sm">

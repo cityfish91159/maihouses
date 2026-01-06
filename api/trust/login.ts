@@ -1,12 +1,13 @@
+import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { JWT_SECRET, SYSTEM_API_KEY, cors } from './_utils';
 import jwt from 'jsonwebtoken';
 import { serialize } from 'cookie';
 
-export default async function handler(req: any, res: any) {
+export default async function handler(req: VercelRequest, res: VercelResponse) {
     cors(req, res);
     if (req.method === 'OPTIONS') return res.status(200).end();
     if (req.method !== 'POST') return res.status(405).end();
-    
+
     try {
         // Security Check
         const systemKey = req.headers['x-system-key'];
@@ -36,7 +37,8 @@ export default async function handler(req: any, res: any) {
         }));
 
         res.json({ token });
-    } catch (e: any) {
-        res.status(500).json({ error: e.message });
+    } catch (e) {
+        const message = e instanceof Error ? e.message : 'Unknown error';
+        res.status(500).json({ error: message });
     }
 }

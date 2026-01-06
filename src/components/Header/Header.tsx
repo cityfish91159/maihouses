@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Search, LogIn, UserPlus, List, Menu, X } from 'lucide-react';
 import { Logo } from '../Logo/Logo';
-import { ROUTES } from '../../constants/routes';
+import { ROUTES, RouteUtils } from '../../constants/routes';
 
 interface HeaderProps {
   readonly onOpenAIStudio?: () => void;
@@ -9,6 +9,24 @@ interface HeaderProps {
 
 export default function Header({ onOpenAIStudio }: HeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  /** 執行搜尋：導航到房源列表頁帶上搜尋參數 */
+  const handleSearch = useCallback(() => {
+    const trimmed = searchQuery.trim();
+    if (trimmed) {
+      window.location.href = RouteUtils.withQuery(ROUTES.PROPERTY_LIST, { q: trimmed });
+    } else {
+      window.location.href = ROUTES.PROPERTY_LIST;
+    }
+  }, [searchQuery]);
+
+  /** 鍵盤事件：Enter 觸發搜尋 */
+  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  }, [handleSearch]);
 
   return (
     <>
@@ -16,7 +34,11 @@ export default function Header({ onOpenAIStudio }: HeaderProps) {
       <header className="sticky top-0 z-overlay border-b border-brand-100 bg-white/95 shadow-sm backdrop-blur-sm transition-all">
         <div className="mx-auto flex h-16 max-w-[1120px] items-center justify-between px-4">
           {/* Logo Section */}
-          <Logo showSlogan={true} onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} />
+          <Logo
+            showSlogan={true}
+            showBadge={true}
+            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          />
 
           {/* Desktop Nav - 桌面版 */}
           <nav className="hidden items-center gap-1 md:flex md:gap-2" aria-label="主要動作">
@@ -169,12 +191,19 @@ export default function Header({ onOpenAIStudio }: HeaderProps) {
                 {/* Input */}
                 <input
                   type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={handleKeyDown}
                   placeholder="找評價最高的社區、捷運站周邊好屋..."
                   className="size-full bg-transparent text-lg font-bold text-gray-700 outline-none placeholder:font-medium placeholder:text-gray-400"
                 />
 
                 {/* Button */}
-                <button className="flex h-[46px] items-center justify-center whitespace-nowrap rounded-full bg-brand-700 px-8 text-base font-bold tracking-wide text-white shadow-md transition-colors hover:bg-brand-600 hover:shadow-lg active:translate-y-px">
+                <button
+                  type="button"
+                  onClick={handleSearch}
+                  className="flex h-[46px] items-center justify-center whitespace-nowrap rounded-full bg-brand-700 px-8 text-base font-bold tracking-wide text-white shadow-md transition-colors hover:bg-brand-600 hover:shadow-lg active:translate-y-px"
+                >
                   搜尋
                 </button>
               </div>

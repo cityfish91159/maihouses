@@ -377,6 +377,31 @@ gate_7_empty_state_required() {
 }
 
 # ============================================================================
+# G8: JSON Schema 同步檢查 (D4/D11 對齊)
+# ============================================================================
+gate_schema_sync() {
+    if [ -f "$PROJECT_ROOT/scripts/generate-json-schema.ts" ]; then
+        echo ""
+        echo -e "${CYAN}🔍 [Schema] 檢查 JSON Schema 是否與 Zod 定義同步...${NC}"
+
+        (cd "$PROJECT_ROOT" && npm run generate:schema > /dev/null 2>&1)
+
+        if ! git -C "$PROJECT_ROOT" diff --quiet public/data/seed-property-page.schema.json 2>/dev/null; then
+            echo -e "${YELLOW}⚠️  警告：JSON Schema 已過期或未提交。${NC}"
+            echo -e "${CYAN}🔄 正在自動更新 Schema...${NC}"
+            (cd "$PROJECT_ROOT" && npm run generate:schema)
+            git -C "$PROJECT_ROOT" add public/data/seed-property-page.schema.json
+            echo "✅ Schema 已更新並加入暫存區。"
+            echo "⚠️  注意：以下檔案已自動加入此次 commit:"
+            echo "    • public/data/seed-property-page.schema.json"
+            echo "    如非預期，請執行 git reset HEAD -- public/data/seed-property-page.schema.json"
+        else
+            echo "✅ JSON Schema 已是最新。"
+        fi
+    fi
+}
+
+# ============================================================================
 # 主程式
 # ============================================================================
 main() {
@@ -396,6 +421,9 @@ main() {
                 echo "No staged files"
                 exit 0
             fi
+
+            # G8: JSON Schema 同步檢查（自動加入時提示）
+            gate_schema_sync || exit 1
 
             # G6: 偷懶代碼檢查 (最重要！)
             gate_6_no_laziness "$staged" || exit 1

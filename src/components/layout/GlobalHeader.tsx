@@ -10,12 +10,18 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Bell, User, LogOut, ChevronDown } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
+import { useNotifications } from '../../hooks/useNotifications';
 import { Logo } from '../Logo/Logo';
 import { notify } from '../../lib/notify';
+import { logger } from '../../lib/logger';
 import { HEADER_STRINGS, GlobalHeaderMode } from '../../constants/header';
 import { ROUTES } from '../../constants/routes';
+import { MESSAGING_CONFIG } from '../../constants/messaging';
+import { NotificationDropdown } from './NotificationDropdown';
+import { NotificationErrorBoundary } from './NotificationErrorBoundary';
 
 interface GlobalHeaderProps {
   /** 顯示模式：社區牆 | 消費者端 | 房仲端 */
@@ -24,8 +30,8 @@ interface GlobalHeaderProps {
   title?: string;
   /** 額外樣式 */
   className?: string;
-  /** 通知數量 (Optional) */
-  notificationCount?: number;
+  /** 搜尋回調 (Optional) */
+  onSearch?: (query: string) => void;
 }
 
 // Helper to map role to display string
@@ -39,9 +45,12 @@ const getRoleLabel = (role: string | undefined) => {
   }
 };
 
-export function GlobalHeader({ mode, title, className = '', notificationCount = 0 }: GlobalHeaderProps) {
+export function GlobalHeader({ mode, title, className = '' }: GlobalHeaderProps) {
   const { isAuthenticated, user, signOut, role } = useAuth();
+  const { count: notificationCount, notifications, isLoading: notificationsLoading, isStale, refresh } = useNotifications();
+  const navigate = useNavigate();
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [notificationMenuOpen, setNotificationMenuOpen] = useState(false);
 
   // 處理登出
   const handleSignOut = async () => {
@@ -49,10 +58,9 @@ export function GlobalHeader({ mode, title, className = '', notificationCount = 
       await signOut();
       notify.success(HEADER_STRINGS.MSG_LOGOUT_SUCCESS, HEADER_STRINGS.MSG_LOGOUT_DESC);
       setUserMenuOpen(false);
-      // P3-AUDIT-FIX: Graceful redirect instead of reload
-      window.location.href = ROUTES.HOME;
+      navigate(ROUTES.HOME);
     } catch (error) {
-      console.error('Logout failed:', error);
+      logger.error('GlobalHeader.handleSignOut.failed', { error, userId: user?.id });
       notify.error(HEADER_STRINGS.MSG_LOGOUT_ERROR, HEADER_STRINGS.MSG_LOGOUT_RETRY);
     }
   };
@@ -64,10 +72,19 @@ export function GlobalHeader({ mode, title, className = '', notificationCount = 
       if (!target.closest('#gh-user-menu-btn') && !target.closest('#gh-user-menu-dropdown')) {
         setUserMenuOpen(false);
       }
+      if (!target.closest('#gh-notification-btn') && !target.closest('#gh-notification-dropdown')) {
+        setNotificationMenuOpen(false);
+      }
     };
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
   }, []);
+
+  // 處理通知點擊跳轉（使用 React Router）
+  const handleNotificationClick = (conversationId: string) => {
+    setNotificationMenuOpen(false);
+    navigate(ROUTES.CHAT(conversationId));
+  };
 
   // 渲染左側區域 (Logo)
   const renderLeft = () => {
@@ -115,83 +132,122 @@ export function GlobalHeader({ mode, title, className = '', notificationCount = 
 
         {/* Right: Actions */}
         <div className="flex items-center gap-3">
-        {/* Notifications */}
-        <button 
-          className="relative inline-flex items-center justify-center rounded-xl border border-brand-100 bg-white p-2 text-brand-700 transition-all hover:bg-brand-50"
-          aria-label={HEADER_STRINGS.LABEL_NOTIFICATIONS}
-        >
-          <Bell size={18} strokeWidth={2.5} />
-          {notificationCount > 0 && (
-            <span className="absolute -right-1 -top-1 flex h-[16px] min-w-[16px] items-center justify-center rounded-full border-2 border-white bg-red-600 text-[10px] font-bold text-white shadow-sm">
-              {notificationCount > 99 ? '99+' : notificationCount}
-            </span>
-          )}
-        </button>
-
-        {/* User Menu */}
-        {isAuthenticated ? (
+          {/* Notifications */}
           <div className="relative">
             <button
-              id="gh-user-menu-btn"
-              onClick={() => setUserMenuOpen(!userMenuOpen)}
-              className="flex items-center gap-1.5 rounded-xl border border-brand-100 bg-white py-1 pl-1 pr-2.5 transition-all hover:bg-brand-50 hover:shadow-sm active:scale-95"
-              aria-label={HEADER_STRINGS.LABEL_AVATAR}
-              aria-expanded={userMenuOpen}
+              id="gh-notification-btn"
+              onClick={() => setNotificationMenuOpen(!notificationMenuOpen)}
+              className="relative inline-flex items-center justify-center rounded-xl border border-brand-100 bg-white p-2 text-brand-700 transition-all hover:bg-brand-50 active:scale-95"
+              aria-label={HEADER_STRINGS.LABEL_NOTIFICATIONS}
+              aria-expanded={notificationMenuOpen}
             >
-              <div className="flex size-7 items-center justify-center rounded-full bg-brand-50 text-xs font-bold text-brand-700 ring-1 ring-brand-100">
-                {user?.email?.charAt(0).toUpperCase() || 'U'}
-              </div>
-              <span className="hidden max-w-[80px] truncate text-xs font-bold text-brand-700 md:block">
-                {user?.user_metadata?.name || '我的'}
-              </span>
-              <ChevronDown size={14} className={`text-brand-400 transition-transform ${userMenuOpen ? 'rotate-180' : ''}`} />
+              <Bell size={18} strokeWidth={2.5} />
+              {notificationCount > 0 && (
+                <span
+                  className="absolute -right-1 -top-1 flex h-[16px] min-w-[16px] items-center justify-center rounded-full border-2 border-white bg-red-600 text-[10px] font-bold text-white shadow-sm"
+                  aria-live="polite"
+                  aria-atomic="true"
+                >
+                  {notificationCount > MESSAGING_CONFIG.UNREAD_BADGE_MAX ? `${MESSAGING_CONFIG.UNREAD_BADGE_MAX}+` : notificationCount}
+                </span>
+              )}
             </button>
 
-            {/* Dropdown */}
-            {userMenuOpen && (
-              <div 
-                id="gh-user-menu-dropdown"
-                className="animate-in fade-in zoom-in-95 absolute right-0 top-full mt-2 w-48 origin-top-right rounded-xl border border-brand-100 bg-white p-1 shadow-xl ring-1 ring-black/5 duration-100 focus:outline-none"
-                role="menu"
-              >
-                <div className="mb-1 border-b border-gray-50 px-3 py-2">
-                  <p className="text-brand-900 truncate text-xs font-bold">{user?.email}</p>
-                  <p className="text-[10px] text-gray-500">{getRoleLabel(role)}</p>
-                </div>
-                
-                <button
-                  className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-bold text-gray-700 transition-colors hover:bg-brand-50 hover:text-brand-700"
-                  role="menuitem"
-                  onClick={() => {
-                    notify.info(HEADER_STRINGS.MSG_FEATURE_DEV, HEADER_STRINGS.MSG_PROFILE_SOON);
-                    setUserMenuOpen(false);
-                  }}
-                >
-                  <User size={16} />
-                  {HEADER_STRINGS.MENU_PROFILE}
-                </button>
-                
-                <button
-                  onClick={handleSignOut}
-                  className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-bold text-red-600 transition-colors hover:bg-red-50"
-                  role="menuitem"
-                >
-                  <LogOut size={16} />
-                  {HEADER_STRINGS.BTN_LOGOUT}
-                </button>
+            {/* Notification Dropdown */}
+            {notificationMenuOpen && (
+              <div id="gh-notification-dropdown">
+                <NotificationErrorBoundary onClose={() => setNotificationMenuOpen(false)}>
+                  <NotificationDropdown
+                    notifications={notifications}
+                    isLoading={notificationsLoading}
+                    isStale={isStale}
+                    onClose={() => setNotificationMenuOpen(false)}
+                    onNotificationClick={handleNotificationClick}
+                    onRefresh={refresh}
+                  />
+                </NotificationErrorBoundary>
               </div>
             )}
           </div>
-        ) : (
-          <a 
-            href="/maihouses/auth.html?mode=login"
-            className="flex items-center gap-1 rounded-xl bg-brand-700 px-3 py-1.5 text-xs font-bold text-white shadow-sm transition-all hover:bg-brand-600 hover:shadow-md active:scale-95"
-          >
-            <User size={14} strokeWidth={2.5} />
-            <span>{HEADER_STRINGS.BTN_LOGIN}</span>
-          </a>
-        )}
-      </div>
+
+          {/* User Menu */}
+          {isAuthenticated ? (
+            <div className="relative">
+              <button
+                id="gh-user-menu-btn"
+                onClick={() => setUserMenuOpen(!userMenuOpen)}
+                className="flex items-center gap-1.5 rounded-xl border border-brand-100 bg-white py-1 pl-1 pr-2.5 transition-all hover:bg-brand-50 hover:shadow-sm active:scale-95"
+                aria-label={HEADER_STRINGS.LABEL_AVATAR}
+                aria-expanded={userMenuOpen}
+              >
+                <div className="flex size-7 items-center justify-center rounded-full bg-brand-50 text-xs font-bold text-brand-700 ring-1 ring-brand-100">
+                  {user?.email?.charAt(0).toUpperCase() || 'U'}
+                </div>
+                <span className="hidden max-w-[80px] truncate text-xs font-bold text-brand-700 md:block">
+                  {user?.user_metadata?.name || '我的'}
+                </span>
+                <ChevronDown size={14} className={`text-brand-400 transition-transform ${userMenuOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {/* Dropdown */}
+              {userMenuOpen && (
+                <div
+                  id="gh-user-menu-dropdown"
+                  className="animate-in fade-in zoom-in-95 absolute right-0 top-full mt-2 w-48 origin-top-right rounded-xl border border-brand-100 bg-white p-1 shadow-xl ring-1 ring-black/5 duration-100 focus:outline-none"
+                  role="menu"
+                >
+                  <div className="mb-1 border-b border-gray-50 px-3 py-2">
+                    <p className="text-brand-900 truncate text-xs font-bold">{user?.email}</p>
+                    <p className="text-[10px] text-gray-500">{getRoleLabel(role)}</p>
+                  </div>
+
+                  <button
+                    className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-bold text-gray-700 transition-colors hover:bg-brand-50 hover:text-brand-700"
+                    role="menuitem"
+                    onClick={() => {
+                      // E5/F4 Fix: Robust Navigation
+                      const targetPath = ROUTES.FEED_CONSUMER;
+                      const targetHash = 'profile';
+
+                      if (location.pathname === targetPath || location.pathname.includes('/feed/consumer')) {
+                        // Already on page: force hash update and scroll
+                        window.location.hash = targetHash;
+                        // Dispatch event for listeners just in case
+                        window.dispatchEvent(new HashChangeEvent('hashchange'));
+                        // Fallback manual scroll if listener misses it
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      } else {
+                        // Navigate to page with hash
+                        window.location.href = `${targetPath}#${targetHash}`;
+                      }
+                      setUserMenuOpen(false);
+                    }}
+                  >
+                    <User size={16} />
+                    {HEADER_STRINGS.MENU_PROFILE}
+                  </button>
+
+                  <button
+                    onClick={handleSignOut}
+                    className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-bold text-red-600 transition-colors hover:bg-red-50"
+                    role="menuitem"
+                  >
+                    <LogOut size={16} />
+                    {HEADER_STRINGS.BTN_LOGOUT}
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <a
+              href="/maihouses/auth.html?mode=login"
+              className="flex items-center gap-1 rounded-xl bg-brand-700 px-3 py-1.5 text-xs font-bold text-white shadow-sm transition-all hover:bg-brand-600 hover:shadow-md active:scale-95"
+            >
+              <User size={14} strokeWidth={2.5} />
+              <span>{HEADER_STRINGS.BTN_LOGIN}</span>
+            </a>
+          )}
+        </div>
       </div>
     </header>
   );

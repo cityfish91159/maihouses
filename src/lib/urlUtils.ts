@@ -1,3 +1,5 @@
+import { safeLocalStorage } from './safeStorage';
+
 /**
  * URL 工具函數 - 統一管理物件連結 (UAG v8.4)
  * 
@@ -11,7 +13,7 @@
  */
 
 // 來源類型定義
-export type TrafficSource = 
+export type TrafficSource =
   | 'list_home'          // 首頁列表
   | 'list_community'     // 社區牆
   | 'list_search'        // 搜尋結果
@@ -47,7 +49,7 @@ export function buildPropertyUrl({
   searchQuery
 }: PropertyUrlParams): string {
   const params = new URLSearchParams();
-  
+
   if (agentId && agentId !== 'unknown') {
     params.set('aid', agentId);
   }
@@ -63,7 +65,7 @@ export function buildPropertyUrl({
   if (searchQuery) {
     params.set('q', searchQuery);
   }
-  
+
   const queryString = params.toString();
   return `/props/${propertyId}${queryString ? `?${queryString}` : ''}`;
 }
@@ -76,23 +78,23 @@ export function buildShareUrl(
   agentId: string,
   channel: 'line' | 'fb' | 'copy' = 'line'
 ): string {
-  const baseUrl = typeof window !== 'undefined' 
-    ? window.location.origin 
+  const baseUrl = typeof window !== 'undefined'
+    ? window.location.origin
     : 'https://maihouses.com';
-  
+
   // 產生唯一的分享 ID
   const shareId = `s_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`;
-  
-  const source: TrafficSource = channel === 'line' ? 'line_share' : 
-                                 channel === 'fb' ? 'fb_share' : 'agent_share';
-  
+
+  const source: TrafficSource = channel === 'line' ? 'line_share' :
+    channel === 'fb' ? 'fb_share' : 'agent_share';
+
   const path = buildPropertyUrl({
     propertyId,
     agentId,
     source,
     shareId
   });
-  
+
   return `${baseUrl}${path}`;
 }
 
@@ -100,19 +102,19 @@ export function buildShareUrl(
  * 產生 QR Code 用 URL
  */
 export function buildQRCodeUrl(propertyId: string, agentId: string): string {
-  const baseUrl = typeof window !== 'undefined' 
-    ? window.location.origin 
+  const baseUrl = typeof window !== 'undefined'
+    ? window.location.origin
     : 'https://maihouses.com';
-  
+
   const shareId = `qr_${Date.now().toString(36)}`;
-  
+
   const path = buildPropertyUrl({
     propertyId,
     agentId,
     source: 'qrcode',
     shareId
   });
-  
+
   return `${baseUrl}${path}`;
 }
 
@@ -129,25 +131,25 @@ export function parseTrackingParams(): {
   if (typeof window === 'undefined') {
     return { agentId: 'unknown', source: 'direct', shareId: null, listingId: null, searchQuery: null };
   }
-  
+
   const params = new URLSearchParams(window.location.search);
-  
+
   // 優先從 URL 取，其次從 localStorage
   let agentId = params.get('aid');
   if (!agentId || agentId === 'unknown') {
-    agentId = localStorage.getItem('uag_last_aid') || 'unknown';
+    agentId = safeLocalStorage.getItem('uag_last_aid') || 'unknown';
   } else {
     // 記住這個 agent
-    localStorage.setItem('uag_last_aid', agentId);
+    safeLocalStorage.setItem('uag_last_aid', agentId);
   }
-  
+
   const srcParam = params.get('src') as TrafficSource | null;
   const source: TrafficSource = srcParam || 'direct';
-  
+
   const shareId = params.get('sid');
   const listingId = params.get('lid');
   const searchQuery = params.get('q');
-  
+
   return { agentId, source, shareId, listingId, searchQuery };
 }
 
@@ -167,10 +169,10 @@ export function buildListingClickUrl(
     recommend: 'list_recommend',
     favorite: 'list_favorite'
   };
-  
+
   // 產生列表來源 ID（用於追蹤哪個列表帶來流量）
   const listingId = `${listingType}_${Date.now().toString(36)}`;
-  
+
   return buildPropertyUrl({
     propertyId,
     agentId,

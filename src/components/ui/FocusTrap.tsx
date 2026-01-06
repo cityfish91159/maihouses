@@ -58,7 +58,7 @@ export function FocusTrap({ children, isActive, initialFocusRef }: FocusTrapProp
       );
       
       const firstElement = focusableElements[0] as HTMLElement;
-      const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement;
+      const lastElement = Array.from(focusableElements).at(-1) as HTMLElement;
 
       if (e.shiftKey) {
         // Shift + Tab: 如果當前是第一個，跳到最後一個

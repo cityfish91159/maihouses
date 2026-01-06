@@ -31,7 +31,7 @@ export default function AssureDetail() {
   // Note: Token handling and initialization is now managed by useTrustRoom hook
   // We just need to handle the "No Token" state in the UI
 
-  const handleAction = async (endpoint: string, body: any = {}) => {
+  const handleAction = async (endpoint: string, body: Record<string, unknown> = {}) => {
       const success = await dispatchAction(endpoint, body);
       if (success) {
           setInputBuffer('');

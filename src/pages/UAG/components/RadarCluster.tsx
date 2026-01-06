@@ -32,6 +32,25 @@ export default function RadarCluster({ leads, onSelectLead }: RadarClusterProps)
     return durations;
   }, [liveLeads]);
 
+  // 產生「等級-序號」標籤（例如 S-01, A-05）
+  const leadLabels = useMemo(() => {
+    const labels: Record<string, string> = {};
+    const gradeCounters: Record<string, number> = { S: 0, A: 0, B: 0, C: 0, F: 0 };
+    
+    // 依照等級排序，確保序號順序一致
+    const sortedLeads = [...liveLeads].sort((a, b) => {
+      const gradeOrder: Record<string, number> = { S: 1, A: 2, B: 3, C: 4, F: 5 };
+      return (gradeOrder[a.grade] || 99) - (gradeOrder[b.grade] || 99);
+    });
+    
+    for (const lead of sortedLeads) {
+      gradeCounters[lead.grade] = (gradeCounters[lead.grade] || 0) + 1;
+      const seq = String(gradeCounters[lead.grade]).padStart(2, '0');
+      labels[lead.id] = `${lead.grade}-${seq}`;
+    }
+    return labels;
+  }, [liveLeads]);
+
   return (
     <section className={`${styles['uag-card']} ${styles['k-span-6']}`} id="radar-section" style={{ minHeight: '450px' }}>
       <div className={styles['uag-card-header']}>
@@ -80,7 +99,7 @@ export default function RadarCluster({ leads, onSelectLead }: RadarClusterProps)
             >
               <div className={styles['uag-bubble-grade']} style={{ background: `var(--grade-${lead.grade.toLowerCase()})`, color: '#fff' }}>{lead.grade}</div>
               <div style={{ textAlign: 'center', lineHeight: 1.2 }}>
-                <div style={{ fontWeight: 800, fontSize: '14px' }}>{lead.id}</div>
+                <div style={{ fontWeight: 800, fontSize: '14px' }}>{leadLabels[lead.id] || lead.grade}</div>
                 <div style={{ fontSize: '11px', color: '#64748b' }}>{lead.intent}%</div>
               </div>
               <div className={styles['uag-bubble-label']}>{lead.prop}</div>

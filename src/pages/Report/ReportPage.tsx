@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { Phone, MessageCircle, Calendar, MapPin, Home, ChevronLeft, ChevronRight, Share2, ExternalLink } from 'lucide-react';
 import { notify } from '../../lib/notify';
+import { logger } from '../../lib/logger';
 import { PropertyReportData, HIGHLIGHT_OPTIONS } from './types';
 
 // 預設報告資料
@@ -85,7 +86,7 @@ export default function ReportPage() {
           })
         });
       } catch (e) {
-        console.log('Track failed:', e);
+        logger.debug('[ReportPage] Track failed', { error: e });
       }
     };
 
@@ -104,7 +105,7 @@ export default function ReportPage() {
         setProperty(DEFAULT_REPORT_DATA);
         setViewCount(Math.floor(Math.random() * 20) + 5);
       } catch (e) {
-        console.error('Load report failed:', e);
+        logger.error('[ReportPage] Load report failed', { error: e });
       } finally {
         setIsLoading(false);
       }
@@ -129,7 +130,7 @@ export default function ReportPage() {
       try {
         await navigator.share({ title: text, url });
       } catch (e) {
-        console.log('Share cancelled');
+        logger.debug('[ReportPage] Share cancelled');
       }
     } else {
       await navigator.clipboard.writeText(url);

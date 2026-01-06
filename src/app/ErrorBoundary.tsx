@@ -1,5 +1,6 @@
 import { Component, ReactNode } from 'react'
 import { trackEvent } from '../services/analytics'
+import { logger } from '../lib/logger'
 
 interface Props { children: ReactNode }
 type State = { hasError: boolean }
@@ -12,7 +13,7 @@ export default class ErrorBoundary extends Component<Props, State> {
   }
   
   override componentDidCatch(err: unknown) {
-    console.error(err)
+    logger.error('[ErrorBoundary] Uncaught error', { error: err })
     try {
       trackEvent('error_boundary', '*', String((err as Error).message || err))
     } catch {}
@@ -20,7 +21,7 @@ export default class ErrorBoundary extends Component<Props, State> {
   
   override render() {
     return this.state.hasError ? (
-      <div className="rounded-[var(--r-lg)] bg-white p-4 text-[var(--danger)] shadow-[var(--shadow-card)]">
+      <div className="rounded-2xl bg-white p-4 text-red-600 shadow-md">
         區塊錯誤，請重試。
       </div>
     ) : (

@@ -1,16 +1,17 @@
+import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { getTx, saveTx, logAudit, verifyToken, cors, TIMEOUTS } from './_utils';
 
-export default async function handler(req: any, res: any) {
+export default async function handler(req: VercelRequest, res: VercelResponse) {
     cors(req, res);
     if (req.method === 'OPTIONS') return res.status(200).end();
     if (req.method !== 'POST') return res.status(405).end();
 
     try {
         const user = verifyToken(req);
-        const { id } = req.query;
+        const { id } = req.query as { id: string };
 
         if (user.role !== 'buyer') return res.status(403).json({ error: "Forbidden" });
-        if (user.caseId && user.caseId !== id) return res.status(403).json({ error: "Access denied" });
+        if (user.txId && user.txId !== id) return res.status(403).json({ error: "Access denied" });
 
         const { step, note } = req.body;
         const stepNum = parseInt(step);
@@ -32,7 +33,7 @@ export default async function handler(req: any, res: any) {
                 tx.steps[5].paymentDeadline = Date.now() + TIMEOUTS[5];
             }
         } else if (stepNum === 6) {
-             const allChecked = tx.steps[6].checklist.every((i: any) => i.checked);
+             const allChecked = tx.steps[6].checklist.every((i: { checked: boolean }) => i.checked);
              if(!allChecked) return res.status(400).json({error: "Checklist incomplete"});
              tx.steps[6].locked = true;
         } else {
@@ -43,7 +44,8 @@ export default async function handler(req: any, res: any) {
         await saveTx(id, tx);
         await logAudit(id, `BUYER_CONFIRM_${step}`, user);
         res.json({ success: true, state: tx });
-    } catch (e: any) {
-        res.status(500).json({ error: e.message });
+    } catch (e) {
+        const message = e instanceof Error ? e.message : 'Unknown error';
+        res.status(500).json({ error: message });
     }
 }

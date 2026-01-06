@@ -5,20 +5,24 @@
  * 顯示用戶的社區動態、跨社區貼文、交易狀態等
  */
 
-import { useState, useCallback, useEffect, useMemo } from 'react';
 import { Home, Search, Bell, User } from 'lucide-react';
+
 
 import { GlobalHeader } from '../../components/layout/GlobalHeader';
 import { FeedPostCard, ProfileCard, TxBanner, FeedSidebar, InlineComposer } from '../../components/Feed';
+// FeedSkeleton is defined locally in this file
+import { FeedErrorBoundary } from '../../components/Feed/FeedErrorBoundary';
 import { MockToggle } from '../../components/common/MockToggle';
-import { notify } from '../../lib/notify';
 
-import { useFeedData } from '../../hooks/useFeedData';
-import { useAuth } from '../../hooks/useAuth';
+import { DEFAULTS } from '../../constants/defaults';
 
-import type { UserProfile, ActiveTransaction, SidebarData } from '../../types/feed';
+import { useConsumer } from './useConsumer';
 import { STRINGS } from '../../constants/strings';
 import { ROUTES } from '../../constants/routes';
+import { RequirePermission } from '../../components/auth/Guard';
+import { PERMISSIONS } from '../../types/permissions';
+import PrivateWallLocked from '../../components/Feed/PrivateWallLocked';
+import { useState, useEffect } from 'react';
 
 const S = STRINGS.FEED;
 
@@ -119,118 +123,75 @@ interface ConsumerProps {
   forceMock?: boolean;
 }
 
-/** Main Consumer Page */
-export default function Consumer({ userId, forceMock }: ConsumerProps) {
-  const { user, isAuthenticated, role, loading: authLoading } = useAuth();
+/** Main Consumer Page Content */
+function ConsumerContent({ userId, forceMock }: ConsumerProps) {
   const {
-    data,
-    useMock,
-    setUseMock,
+    authLoading,
+    activeTransaction,
+    userProfile,
+    userInitial,
+    isAuthenticated,
     isLoading,
     error,
+    data,
+    sidebarData,
+    useMock,
+    setUseMock,
     refresh,
-    toggleLike,
-    createPost,
     isLiked,
-  } = useFeedData();
+    handleLike,
+    handleCreatePost,
+    handleReply,
+    handleComment,
+    handleShare,
+    // MSG-3: 通知資料
+    latestNotification,
+  } = useConsumer(userId, forceMock);
 
-  // 根據 forceMock 設置初始 mock 狀態
+  // F6/E5 Fix: Deep Linking and Profile Navigation
   useEffect(() => {
-    if (forceMock !== undefined) {
-      setUseMock(forceMock);
-    }
-  }, [forceMock, setUseMock]);
-
-  // 設置頁面標題
-  useEffect(() => {
-    document.title = S.PAGE_TITLE;
-  }, []);
-
-  // Mock 用戶資料
-  const userProfile = useMemo<UserProfile | null>(() => {
-    if (!isAuthenticated || !user) return null;
-    return {
-      id: user.id,
-      name: user.user_metadata?.name || user.email?.split('@')[0] || '用戶',
-      role: role || 'member',
-      stats: {
-        days: 128,
-        liked: 73,
-        contributions: 15,
-      },
-      communityId: 'test-uuid',
-      communityName: '惠宇上晴',
-    };
-  }, [isAuthenticated, user, role]);
-
-  // Mock 交易狀態
-  const [activeTransaction] = useState<ActiveTransaction>(() => {
-    try {
-      const hasActive = localStorage.getItem('mai_active_tx') === 'true';
-      if (hasActive) {
-        return {
-          hasActive: true,
-          propertyName: '惠宇上晴 12F',
-          stage: 'negotiation' as const,
-        };
+    // 1. Handle Profile Navigation (#profile)
+    const handleNavigation = () => {
+      if (window.location.hash === '#profile') {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
       }
-      return { hasActive: false };
-    } catch {
-      return { hasActive: false };
+    };
+
+    handleNavigation();
+    window.addEventListener('hashchange', handleNavigation);
+
+    // 2. Handle Post Deep Linking (F6 Fix)
+    // Runs once on mount to handle initial load
+    const params = new URLSearchParams(window.location.search);
+    const postId = params.get('post');
+    if (postId) {
+      // Use retry mechanism for async post loading
+      const tryScroll = (retries = 0) => {
+        const element = document.getElementById(`post-${postId}`);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          element.classList.add('ring-2', 'ring-brand-500', 'ring-offset-2');
+          setTimeout(() => element.classList.remove('ring-2', 'ring-brand-500', 'ring-offset-2'), 2000);
+        } else if (retries < 10) {
+          setTimeout(() => tryScroll(retries + 1), 500);
+        }
+      };
+      setTimeout(() => tryScroll(), 500);
     }
+
+    return () => window.removeEventListener('hashchange', handleNavigation);
+  }, [data.posts]); // Re-run when posts load
+
+  const handleSearch = (_q: string) => {
+    // 搜尋功能待實作
+  };
+
+  const [activeTab, setActiveTab] = useState<'public' | 'private'>('public');
+
+  const filteredPosts = data.posts.filter(post => {
+    if (activeTab === 'private') return post.private;
+    return !post.private;
   });
-
-  // Mock 側邊欄資料
-  const sidebarData = useMemo<SidebarData>(() => ({
-    hotPosts: data.posts.slice(0, 3).map((p) => ({
-      id: p.id,
-      title: p.title,
-      communityName: p.communityName || '社區',
-      likes: p.likes || 0,
-    })),
-    saleItems: [
-      { id: '1', title: '惠宇上晴 12F', price: 1280, priceUnit: '萬', communityName: '惠宇上晴' },
-      { id: '2', title: '惠宇上晴 8F', price: 1150, priceUnit: '萬', communityName: '惠宇上晴' },
-    ],
-  }), [data.posts]);
-
-  const handleLike = useCallback(async (postId: string | number) => {
-    if (!isAuthenticated) {
-      notify.error('請先登入', '登入後才能按讚');
-      return;
-    }
-    try {
-      await toggleLike(postId);
-    } catch (err) {
-      console.error('Failed to toggle like', err);
-      notify.error('按讚失敗', '請稍後再試');
-    }
-  }, [toggleLike, isAuthenticated]);
-
-  const handleCreatePost = useCallback(async (content: string) => {
-    if (!isAuthenticated) {
-      notify.error('請先登入', '登入後才能發文');
-      return;
-    }
-    try {
-      await createPost(content, userProfile?.communityId);
-    } catch (err) {
-      console.error('Failed to create post', err);
-      throw err;
-    }
-  }, [createPost, isAuthenticated, userProfile]);
-
-  const handleReply = useCallback((postId: string | number) => {
-    notify.info('功能開發中', '回覆功能即將上線');
-    console.log('Reply to post:', postId);
-  }, []);
-
-  const handleShare = useCallback((postId: string | number) => {
-    notify.info('功能開發中', '分享功能即將上線');
-    console.log('Share post:', postId);
-  }, []);
-
-  const userInitial = userProfile?.name.charAt(0).toUpperCase() || 'U';
 
   // Auth 載入中
   if (authLoading) {
@@ -245,12 +206,19 @@ export default function Consumer({ userId, forceMock }: ConsumerProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-brand-50 to-brand-100/50">
-      <GlobalHeader mode="consumer" notificationCount={2} />
-
-      {/* 交易橫幅 */}
-      {activeTransaction.hasActive && (
-        <TxBanner transaction={activeTransaction} className="mt-2" />
+    <div className="min-h-screen bg-gray-50 pb-20 md:pb-0">
+      <GlobalHeader
+        mode="consumer"
+        onSearch={handleSearch}
+        className="sticky top-0 z-30"
+      />
+      {/* MSG-3: 交易橫幅（現在也支援私訊提醒，私訊優先） */}
+      {(latestNotification || activeTransaction.hasActive) && (
+        <TxBanner
+          transaction={activeTransaction}
+          messageNotification={latestNotification}
+          className="mt-2"
+        />
       )}
 
       {/* 主要布局 */}
@@ -261,46 +229,120 @@ export default function Consumer({ userId, forceMock }: ConsumerProps) {
           {userProfile && <ProfileCard profile={userProfile} />}
 
           {/* 發文框 */}
+          {/* 發文框 */}
           {isAuthenticated && (
             <InlineComposer
-              onSubmit={handleCreatePost}
+              onSubmit={(content, images) => (images && images.length > 0
+                ? handleCreatePost(content, images)
+                : handleCreatePost(content))}
               disabled={isLoading}
               userInitial={userInitial}
             />
           )}
+
+          {/* P7: Wall Tabs */}
+          <div className="flex rounded-lg bg-white p-1 shadow-sm">
+            <button
+              onClick={() => setActiveTab('public')}
+              className={`flex-1 rounded-md py-2 text-sm font-bold transition-all ${activeTab === 'public'
+                ? 'bg-brand-50 text-brand-700 shadow-sm'
+                : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
+                }`}
+            >
+              {S.TABS.PUBLIC}
+            </button>
+            <button
+              onClick={() => setActiveTab('private')}
+              className={`flex-1 rounded-md py-2 text-sm font-bold transition-all ${activeTab === 'private'
+                ? 'bg-brand-50 text-brand-700 shadow-sm'
+                : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
+                }`}
+            >
+              {S.TABS.PRIVATE}
+            </button>
+          </div>
 
           {/* 貼文列表 */}
           {isLoading ? (
             <FeedSkeleton />
           ) : error ? (
             <ErrorState message={error.message} onRetry={refresh} />
-          ) : data.posts.length === 0 ? (
-            <EmptyState />
           ) : (
-            <div className="space-y-3">
-              {data.posts.map((post) => (
-                <FeedPostCard
-                  key={post.id}
-                  post={post}
-                  isLiked={isLiked(post.id)}
-                  onLike={handleLike}
-                  onReply={handleReply}
-                  onShare={handleShare}
-                />
-              ))}
-            </div>
+            <>
+              {activeTab === 'private' ? (
+                /* 私密牆守衛 */
+                <RequirePermission
+                  permission={PERMISSIONS.VIEW_PRIVATE_WALL}
+                  fallback={<PrivateWallLocked />}
+                >
+                  {filteredPosts.length === 0 ? (
+                    <EmptyState />
+                  ) : (
+                    <div className="space-y-3">
+                      {filteredPosts.map((post) => (
+                        <FeedPostCard
+                          key={post.id}
+                          post={post}
+                          isLiked={isLiked(post.id)}
+                          onLike={handleLike}
+                          onReply={handleReply}
+                          onComment={handleComment}
+                          onShare={handleShare}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </RequirePermission>
+              ) : (
+                /* 公開牆直接顯示 */
+                filteredPosts.length === 0 ? (
+                  <EmptyState />
+                ) : (
+                  <div className="space-y-3">
+                    {filteredPosts.map((post) => (
+                      <div key={post.id} id={`post-${post.id}`} className="space-y-3">
+                        <FeedPostCard
+                          post={post}
+                          isLiked={isLiked(post.id)}
+                          onLike={handleLike}
+                          onReply={handleReply}
+                          onComment={handleComment}
+                          onShare={handleShare}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )
+              )}
+            </>
           )}
         </main>
 
-        {/* 桌面版側邊欄 */}
-        <FeedSidebar data={sidebarData} />
+        <aside className="hidden w-[380px] lg:block">
+          <FeedSidebar
+            data={data.sidebarData}
+          />
+          {/* Debug/Demo Toggle */}
+          <div className="mt-4 flex justify-center">
+            <MockToggle useMock={useMock} onToggle={() => setUseMock(!useMock)} />
+          </div>
+        </aside>
       </div>
-
-      {/* 手機版底部導航 */}
-      <BottomNav activeId="community" />
-
-      {/* Mock 切換 */}
-      <MockToggle useMock={useMock} onToggle={() => setUseMock(!useMock)} />
-    </div>
+    </div >
   );
 }
+
+/** 
+ * Main Consumer Page 
+ * P7-Audit-C11: Error Boundary must wrap the content (which uses hooks)
+ * to catch errors during rendering of the content.
+ */
+export default function Consumer(props: ConsumerProps) {
+  return (
+    <FeedErrorBoundary>
+      <ConsumerContent {...props} />
+    </FeedErrorBoundary>
+  );
+}
+
+

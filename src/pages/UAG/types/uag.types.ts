@@ -7,8 +7,9 @@ export const LeadStatusSchema = z.enum(['new', 'purchased']);
 export type LeadStatus = z.infer<typeof LeadStatusSchema>;
 
 // Schema for data coming directly from Supabase
+// 注意：id 可能是 uag_lead_purchases.id (UUID) 或 session_id (非 UUID)
 export const SupabaseLeadSchema = z.object({
-  id: z.string(),
+  id: z.string(), // 購買前為 session_id，購買後為 purchase UUID
   name: z.string(),
   grade: GradeSchema,
   intent: z.number(),
@@ -24,6 +25,8 @@ export const SupabaseLeadSchema = z.object({
   x: z.number().optional(),
   y: z.number().optional(),
   created_at: z.string().optional(),
+  session_id: z.string(), // 必填：追蹤匿名消費者
+  property_id: z.string().optional(), // TEXT 格式如 'MH-100001'，不是 UUID
 }).passthrough(); // Allow extra fields
 
 // Schema for the transformed Lead object used in the UI
@@ -34,19 +37,23 @@ export const LeadSchema = SupabaseLeadSchema.extend({
 
 export type Lead = z.infer<typeof LeadSchema>;
 
-export const ListingSchema = z.object({
+export const SupabaseListingSchema = z.object({
   title: z.string(),
   tags: z.array(z.string()).optional().nullable(),
   view_count: z.number().optional(),
   click_count: z.number().optional(),
   fav_count: z.number().optional(),
   thumb_color: z.string().optional(),
-  // Transformed fields
+}).passthrough();
+
+export type SupabaseListing = z.infer<typeof SupabaseListingSchema>;
+
+export const ListingSchema = SupabaseListingSchema.extend({
   view: z.number().optional(),
   click: z.number().optional(),
   fav: z.number().optional(),
   thumbColor: z.string().optional(),
-}).passthrough();
+});
 
 export type Listing = z.infer<typeof ListingSchema>;
 
@@ -68,6 +75,17 @@ export const UserDataSchema = z.object({
 });
 
 export type UserData = z.infer<typeof UserDataSchema>;
+
+export const PropertyViewStatsSchema = z.object({
+  property_id: z.string(),
+  view_count: z.number(),
+  unique_sessions: z.number(),
+  total_duration: z.number(),
+  line_clicks: z.number(),
+  call_clicks: z.number(),
+});
+
+export type PropertyViewStats = z.infer<typeof PropertyViewStatsSchema>;
 
 export const AppDataSchema = z.object({
   user: UserDataSchema,

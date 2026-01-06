@@ -1,7 +1,29 @@
+import { useState, useEffect } from 'react';
 import { PROPERTIES } from '../../../constants/data';
 import PropertyCard from '../components/PropertyCard';
+import { getFeaturedProperties } from '../../../services/propertyService';
+import type { FeaturedProperty } from '../../../types/property';
 
 export default function PropertyGrid() {
+  // 🚀 關鍵 1: 初始狀態直接給 Seed (零秒載入，無閃爍)
+  // PROPERTIES 已有 source: 'seed'，型別安全
+  const [properties, setProperties] = useState<FeaturedProperty[]>(PROPERTIES);
+
+  useEffect(() => {
+    // React 18 最佳實踐: 使用 AbortController 取代 isMounted flag
+    const controller = new AbortController();
+
+    // 🚀 關鍵 2: 背景靜默更新
+    getFeaturedProperties().then(data => {
+      if (!controller.signal.aborted && data && data.length > 0) {
+        setProperties(data);
+      }
+      // 如果 API 失敗或回傳空陣列，維持顯示初始 Seed (Level 3)
+    });
+
+    return () => { controller.abort(); };
+  }, []);
+
   return (
     <div className="w-full">
       {/* Header Section */}
@@ -25,7 +47,7 @@ export default function PropertyGrid() {
         aria-label="房源清單"
         title="房源清單"
       >
-        {PROPERTIES.map((property) => (
+        {properties.map((property) => (
           <PropertyCard key={property.id} property={property} />
         ))}
       </div>

@@ -8,9 +8,11 @@
  */
 
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
+import { safeLocalStorage } from '../lib/safeStorage';
 import { useCommunityWall } from './useCommunityWallQuery';
 import { supabase } from '../lib/supabase';
 import { mhEnv } from '../lib/mhEnv';
+import { logger } from '../lib/logger';
 import type { CommunityWallData } from '../services/communityService';
 import type { CommunityInfo, Post, Review, Question, Role } from '../pages/Community/types';
 import { MOCK_DATA, createMockPost, createMockQuestion, createMockAnswer } from '../pages/Community/mockData';
@@ -55,14 +57,6 @@ const EMPTY_WALL_DATA: UnifiedWallData = {
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-const canUseMockStorage = (): boolean => {
-  try {
-    return typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
-  } catch {
-    return false;
-  }
-};
-
 const mergeMockState = (
   fallback: UnifiedWallData,
   stored: Partial<UnifiedWallData> | null
@@ -87,24 +81,22 @@ const mergeMockState = (
 };
 
 const loadPersistedMockState = (fallback: UnifiedWallData): UnifiedWallData => {
-  if (!canUseMockStorage()) return fallback;
   try {
-    const raw = window.localStorage.getItem(MOCK_DATA_STORAGE_KEY);
+    const raw = safeLocalStorage.getItem(MOCK_DATA_STORAGE_KEY);
     if (!raw) return fallback;
     const parsed = JSON.parse(raw);
     return mergeMockState(fallback, parsed);
   } catch (err) {
-    console.error('Failed to load community wall mock state', err);
+    logger.error('[useCommunityWallData] Failed to load mock state', { error: err });
     return fallback;
   }
 };
 
 const saveMockState = (data: UnifiedWallData) => {
-  if (!canUseMockStorage()) return;
   try {
-    window.localStorage.setItem(MOCK_DATA_STORAGE_KEY, JSON.stringify(data));
+    safeLocalStorage.setItem(MOCK_DATA_STORAGE_KEY, JSON.stringify(data));
   } catch (err) {
-    console.error('Failed to persist community wall mock state', err);
+    logger.error('[useCommunityWallData] Failed to persist mock state', { error: err });
   }
 };
 
@@ -194,7 +186,7 @@ export function useCommunityWallData(
       } catch (err) {
         // 未登入或取得失敗，維持 undefined
         if (import.meta.env.DEV) {
-          console.warn('[useCommunityWallData] 無法取得使用者 ID:', err);
+          logger.warn('[useCommunityWallData] 無法取得使用者 ID', { error: err });
         }
       }
     };
@@ -228,16 +220,16 @@ export function useCommunityWallData(
   }, [mockData, persistMockState, useMock]);
 
   // API 查詢（傳入 currentUserId 供樂觀更新使用）
-  const { 
-    data: apiData, 
-    isLoading: apiLoading, 
+  const {
+    data: apiData,
+    isLoading: apiLoading,
     error: apiError,
     refresh: apiRefresh,
     toggleLike: apiToggleLike,
     createPost: apiCreatePost,
     askQuestion: apiAskQuestion,
     answerQuestion: apiAnswerQuestion,
-  } = useCommunityWall(communityId, { 
+  } = useCommunityWall(communityId, {
     enabled: !useMock,
     includePrivate,
     currentUserId,
@@ -292,10 +284,10 @@ export function useCommunityWallData(
     if (currentUserId) return currentUserId;
     // 未登入時，從 localStorage 取得或建立假 ID
     const storageKey = 'mock_user_id';
-    let mockId = localStorage.getItem(storageKey);
+    let mockId = safeLocalStorage.getItem(storageKey);
     if (!mockId) {
       mockId = `mock-user-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-      localStorage.setItem(storageKey, mockId);
+      safeLocalStorage.setItem(storageKey, mockId);
     }
     return mockId;
   }, [currentUserId]);
@@ -307,7 +299,7 @@ export function useCommunityWallData(
       // Mock 模式：實際更新本地狀態（包含 likes 和 liked_by）
       const isLiked = likedPosts.has(postId);
       setMockData(prev => {
-        const updatePosts = (posts: Post[]): Post[] => 
+        const updatePosts = (posts: Post[]): Post[] =>
           posts.map(post => {
             if (post.id !== postId) return post;
             const currentLikes = post.likes ?? 0;
@@ -393,7 +385,7 @@ export function useCommunityWallData(
           ...prev.questions,
           items: prev.questions.items.map(q => {
             if (q.id.toString() !== questionId) return q;
-            
+
             const newAnswer = createMockAnswer(content);
 
             return {

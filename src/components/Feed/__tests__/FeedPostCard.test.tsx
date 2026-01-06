@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import { FeedPostCard } from '../FeedPostCard';
 import { STRINGS } from '../../../constants/strings';
 
@@ -39,7 +39,11 @@ describe('FeedPostCard', () => {
         render(<FeedPostCard post={mockPost} onLike={handleLike} />);
 
         const likeBtn = screen.getByText(STRINGS.FEED.POST.LIKE_BTN);
-        fireEvent.click(likeBtn);
+
+        // Wrap in act to handle internal state updates
+        await act(() => {
+            fireEvent.click(likeBtn);
+        });
 
         expect(handleLike).toHaveBeenCalledWith('1');
     });

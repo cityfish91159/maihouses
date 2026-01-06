@@ -90,8 +90,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       message: visibility === 'private' ? '已發布到私密牆' : '已發布到公開牆'
     });
 
-  } catch (error: any) {
-    console.error('Post Error:', error);
-    return res.status(500).json({ error: error.message });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    return res.status(500).json({ error: message });
   }
 }

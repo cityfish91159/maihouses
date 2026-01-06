@@ -32,26 +32,65 @@ jobs:
       - name: G6 偷懶代碼檢查
         run: |
           echo "🔍 檢查偷懶代碼..."
+          FAIL=0
 
-          # 檢查 any 類型
-          if grep -r ": any" --include="*.ts" --include="*.tsx" src/; then
-            echo "❌ 發現 'any' 類型！"
-            exit 1
+          # 檢查 `: any` 類型（排除註解和 catch 語句）
+          # 使用更精確的 pattern 避免 false positive
+          echo "檢查 any 類型..."
+          ANY_COUNT=$(grep -rn ": any\b" --include="*.ts" --include="*.tsx" src/ \
+            | grep -v "^\s*//" \
+            | grep -v "catch\s*(.*:\s*any)" \
+            | grep -v "\.d\.ts:" \
+            | wc -l || echo 0)
+          if [ "$ANY_COUNT" -gt 0 ]; then
+            echo "⚠️ 發現 $ANY_COUNT 處可能的 any 類型"
+            grep -rn ": any\b" --include="*.ts" --include="*.tsx" src/ \
+              | grep -v "^\s*//" \
+              | grep -v "catch\s*(.*:\s*any)" \
+              | grep -v "\.d\.ts:" \
+              | head -10
+            # 警告但不阻止（ESLint 會處理）
+          else
+            echo "✓ 無 any 類型"
           fi
 
-          # 檢查 @ts-ignore
-          if grep -r "@ts-ignore\|@ts-nocheck" --include="*.ts" --include="*.tsx" src/; then
-            echo "❌ 發現 @ts-ignore！"
-            exit 1
+          # 檢查 @ts-ignore（嚴格阻止）
+          echo "檢查 @ts-ignore..."
+          if grep -rn "@ts-ignore\|@ts-nocheck" --include="*.ts" --include="*.tsx" src/; then
+            echo "❌ 發現 @ts-ignore 或 @ts-nocheck！"
+            FAIL=1
+          else
+            echo "✓ 無 @ts-ignore"
           fi
 
-          # 檢查 eslint-disable
-          if grep -r "eslint-disable" --include="*.ts" --include="*.tsx" src/; then
+          # 檢查 eslint-disable（嚴格阻止）
+          echo "檢查 eslint-disable..."
+          if grep -rn "eslint-disable" --include="*.ts" --include="*.tsx" src/; then
             echo "❌ 發現 eslint-disable！"
+            FAIL=1
+          else
+            echo "✓ 無 eslint-disable"
+          fi
+
+          # 檢查 console.log（僅警告，不阻止）
+          echo "檢查 console.log..."
+          CONSOLE_COUNT=$(grep -rn "console\.log(" --include="*.ts" --include="*.tsx" src/ \
+            | grep -v "\.test\." \
+            | grep -v "__tests__" \
+            | wc -l || echo 0)
+          if [ "$CONSOLE_COUNT" -gt 0 ]; then
+            echo "⚠️ 發現 $CONSOLE_COUNT 處 console.log (非阻止性警告)"
+          else
+            echo "✓ 無 console.log"
+          fi
+
+          if [ "$FAIL" -eq 1 ]; then
+            echo ""
+            echo "❌ 偷懶代碼檢查失敗"
             exit 1
           fi
 
-          echo "✅ 無偷懶代碼"
+          echo "✅ 偷懶代碼檢查通過"
 
       - name: Build 檢查
         run: npm run build

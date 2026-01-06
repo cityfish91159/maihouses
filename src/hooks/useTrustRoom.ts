@@ -1,14 +1,29 @@
 import { useState, useEffect, useCallback } from 'react';
 import { notify } from '../lib/notify';
+import { logger } from '../lib/logger';
 import { mockService, realService } from '../services/trustService';
 
 // --- TYPES ---
+export interface StepRisks {
+  water: boolean;
+  wall: boolean;
+  structure: boolean;
+  other: boolean;
+}
+
+export interface StepData {
+  note?: string;
+  buyerNote?: string;
+  risks?: StepRisks;
+  [key: string]: string | StepRisks | undefined;
+}
+
 export interface Step {
   name: string;
   agentStatus: 'pending' | 'submitted';
   buyerStatus: 'pending' | 'confirmed';
   locked: boolean;
-  data: any;
+  data: StepData;
   paymentStatus?: 'pending' | 'initiated' | 'completed' | 'expired';
   paymentDeadline?: number | null;
   checklist?: { id: string; label: string; checked: boolean }[];
@@ -52,7 +67,7 @@ export function useTrustRoom() {
             body: JSON.stringify({ token: t })
           });
         } catch (e) {
-          console.error("Session exchange failed", e);
+          logger.error("Session exchange failed", { error: e });
           notify.error('無效的連結或憑證');
         }
       }
@@ -72,7 +87,7 @@ export function useTrustRoom() {
           setLoading(false);
         }
       } catch (e) {
-        console.error(e);
+        logger.error("Session check failed", { error: e });
         setLoading(false);
       }
     };
@@ -115,9 +130,9 @@ export function useTrustRoom() {
       } else if (!isMock) {
         // If real mode and no data/error, maybe session expired
       }
-    } catch (e: any) {
-      console.error(e);
-      if (e.message === "UNAUTHORIZED") {
+    } catch (e) {
+      logger.error("Fetch data failed", { error: e });
+      if (e instanceof Error && e.message === "UNAUTHORIZED") {
         setAuthError(true);
         notify.error('連線逾時，請重新登入');
       }
@@ -159,7 +174,7 @@ export function useTrustRoom() {
   }, [tx, isMock, fetchData]);
 
   // Unified Action Handler
-  const dispatchAction = useCallback(async (endpoint: string, body: any = {}) => {
+  const dispatchAction = useCallback(async (endpoint: string, body: Record<string, unknown> = {}) => {
     if (isBusy) return;
     setIsBusy(true);
 
@@ -190,7 +205,7 @@ export function useTrustRoom() {
           return false;
       }
     } catch (e) {
-      console.error(e);
+      logger.error("Dispatch action failed", { error: e });
       notify.error('發生未預期的錯誤');
       return false;
     } finally {

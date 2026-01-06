@@ -1,25 +1,11 @@
 import React from 'react';
+import type { FeaturedProperty, PropertyReview } from '../../../types/property';
+import { isSpecTag } from '../../../lib/tagUtils';
 
-export type Review = {
-    avatar: string;
-    name: string;
-    role: string;
-    tag: string;
-    text: string;
-};
+// Re-export for backward compatibility
+export type { PropertyReview as Review, FeaturedProperty as Property };
 
-export type Property = {
-    id: number;
-    image: string;
-    badge: string;
-    title: string;
-    tags: string[];
-    price: string;
-    location: string;
-    reviews: Review[];
-};
-
-export default function PropertyCard({ property }: { property: Property }) {
+export default function PropertyCard({ property }: { property: FeaturedProperty }) {
     return (
         <article
             className="group relative isolate overflow-hidden rounded-2xl border border-[#E6EDF7] bg-white shadow-none transition-all duration-[180ms] ease-out hover:-translate-y-0.5 hover:border-[#1749d738] hover:shadow-[0_10px_26px_rgba(13,39,94,0.12)]"
@@ -46,14 +32,18 @@ export default function PropertyCard({ property }: { property: Property }) {
                 </div>
 
                 <div className="mb-1.5 flex flex-wrap items-center gap-2 text-[13px] text-[#6C7B91]">
-                    {property.tags.map((tag, i) => (
-                        <span
-                            key={i}
-                            className="duration-120 rounded-full border border-[#E6EDF7] bg-[#F6F9FF] px-2.5 py-0.5 font-extrabold text-[#2A2F3A] transition-all ease-out group-hover:-translate-y-px group-hover:shadow-[0_4px_10px_rgba(0,56,90,0.10)]"
-                        >
-                            {tag}
-                        </span>
-                    ))}
+                    {/* UP-4.2: 僅渲染前 2 個非規格亮點 */}
+                    {property.tags
+                        .filter(tag => !isSpecTag(tag)) // 過濾規格
+                        .slice(0, 2) // 取前兩位
+                        .map((tag, i) => (
+                            <span
+                                key={i}
+                                className="duration-120 rounded-full border border-[#E6EDF7] bg-[#F6F9FF] px-2.5 py-0.5 font-extrabold text-[#2A2F3A] transition-all ease-out group-hover:-translate-y-px group-hover:shadow-[0_4px_10px_rgba(0,56,90,0.10)]"
+                            >
+                                {tag}
+                            </span>
+                        ))}
                 </div>
 
                 <div className="my-2 mb-1 text-[19px] font-black tracking-[0.2px] text-[#111]">

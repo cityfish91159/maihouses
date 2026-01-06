@@ -35,9 +35,6 @@ export async function callOpenAI(
   // 僅保留最近少量訊息（避免無限增長）
   const recent = messages.slice(-6)
 
-  // 優先使用 Vercel serverless API，不再直連 OpenAI
-  const envAny = (import.meta as any).env || {}
-  
   // 根據環境自動選擇 API 端點
   let upstreamUrl: string
   if (window.location.hostname.includes('vercel.app')) {
@@ -46,7 +43,7 @@ export async function callOpenAI(
     upstreamUrl = 'https://maihouses.vercel.app/api/chat'
   } else {
     // 本地開發：預設用 Vercel
-    upstreamUrl = envAny.VITE_AI_PROXY_URL || 'https://maihouses.vercel.app/api/chat'
+    upstreamUrl = import.meta.env.VITE_AI_PROXY_URL || 'https://maihouses.vercel.app/api/chat'
   }
 
   const headers: Record<string, string> = {
@@ -116,9 +113,7 @@ export async function callOpenAI(
   let text = ''
   try {
     const data: OpenAIResponse = await resp.json()
-    console.log('🔵 OpenAI 完整回應:', data)
     text = data?.choices?.[0]?.message?.content || ''
-    console.log('🔵 提取的文字內容:', text)
   } catch (_) {
     text = ''
   }

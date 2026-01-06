@@ -102,8 +102,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       likes_count: newLikedBy.length
     });
 
-  } catch (error: any) {
-    console.error('Like API Error:', error);
-    return res.status(500).json({ error: error.message });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    return res.status(500).json({ error: message });
   }
 }

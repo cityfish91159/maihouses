@@ -96,8 +96,8 @@ export function useCommunityWall(
     // 降低 retry 次數和延遲，避免用戶等待太久
     retry: (failureCount, error) => {
       // 400/401/403/404 錯誤不重試
-      const status = (error as any)?.status;
-      if (status && [400, 401, 403, 404].includes(status)) {
+      const errorWithStatus = error as { status?: number };
+      if (errorWithStatus.status && [400, 401, 403, 404].includes(errorWithStatus.status)) {
         return false;
       }
       return failureCount < 1; // 最多重試 1 次

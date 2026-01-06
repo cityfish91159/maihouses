@@ -1,9 +1,9 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import Consumer from '../Consumer';
 
-// Mock env to prevent side effects
+// Mock env
 vi.mock('../../../config/env', () => ({
     env: {
         VITE_SUPABASE_URL: 'https://mock.supabase.co',
@@ -13,125 +13,129 @@ vi.mock('../../../config/env', () => ({
     },
 }));
 
-// Mock dependencies
-vi.mock('../../../hooks/useAuth', () => ({
-    useAuth: vi.fn(),
+// Mock hooks
+const { mockUseConsumer } = vi.hoisted(() => {
+    return { mockUseConsumer: vi.fn() };
+});
+
+vi.mock('../useConsumer', () => ({
+    useConsumer: mockUseConsumer,
 }));
 
-vi.mock('../../../hooks/useFeedData', () => ({
-    useFeedData: vi.fn(),
-}));
-
-// Mock child components to avoid deep rendering issues
+// Mock child components
 vi.mock('../../../components/layout/GlobalHeader', () => ({
-    GlobalHeader: () => <div data-testid="global-header">Header</div>,
+    GlobalHeader: () => <div data-testid="global-header">GlobalHeader</div>,
 }));
 
 vi.mock('../../../components/Feed', () => ({
-    FeedPostCard: ({ post }: any) => <div>Post: {post.title}</div>,
-    ProfileCard: ({ profile }: any) => <div>Profile: {profile.name}</div>,
+    FeedPostCard: ({ post, onLike }: { post: { id: string; title: string }; onLike: (id: string) => void }) => (
+        <div data-testid={`post-${post.id}`}>
+            {post.title}
+            <button onClick={() => onLike(post.id)}>Like</button>
+        </div>
+    ),
+    ProfileCard: ({ profile }: { profile: { name: string } }) => <div>Profile: {profile.name}</div>,
     TxBanner: () => <div>TxBanner</div>,
-    FeedSidebar: () => <div>Sidebar</div>,
-    InlineComposer: () => <div>InlineComposer</div>,
+    FeedSidebar: () => <div>FeedSidebar</div>,
+    InlineComposer: ({ onSubmit }: { onSubmit: (content: string) => void }) => (
+        <div>
+            <input data-testid="composer-input" />
+            <button onClick={() => onSubmit('New Post')}>Submit Post</button>
+        </div>
+    ),
 }));
 
-// Import mocked hooks to set return values
-// Using absolute path alias or ensuring correct relative path. 
-// Vitest with vite-tsconfig-paths should handle this, but let's try strict relative.
-import { useAuth } from '../../../hooks/useAuth';
-import { useFeedData } from '../../../hooks/useFeedData';
+vi.mock('../../../components/common/MockToggle', () => ({
+    MockToggle: () => <div>MockToggle</div>,
+}));
 
 describe('Consumer Page', () => {
-    const mockUser = {
-        id: 'user-1',
-        user_metadata: { name: 'Test User' },
-    };
-
-    const mockFeedData = {
-        posts: [
-            { id: '1', title: 'Post 1', author: 'Author 1', content: 'Content 1', likes: 1, comments: 0, type: 'resident' },
-            { id: '2', title: 'Post 2', author: 'Author 2', content: 'Content 2', likes: 2, comments: 1, type: 'agent' },
-        ],
+    const defaultMockReturn = {
+        authLoading: false,
+        activeTransaction: { hasActive: false },
+        userProfile: { name: 'Test User' },
+        userInitial: 'T',
+        isAuthenticated: true,
+        isLoading: false,
+        error: null,
+        data: {
+            posts: [
+                { id: '1', title: 'Post 1' },
+                { id: '2', title: 'Post 2' },
+            ],
+            sidebarData: { hotPosts: [], saleItems: [] },
+        },
+        sidebarData: { hotPosts: [], saleItems: [] },
+        useMock: false,
+        setUseMock: vi.fn(),
+        refresh: vi.fn(),
+        isLiked: vi.fn(),
+        handleLike: vi.fn(),
+        handleCreatePost: vi.fn(),
+        handleReply: vi.fn(),
+        handleComment: vi.fn(),
+        handleShare: vi.fn(),
+        latestNotification: null,
     };
 
     beforeEach(() => {
         vi.clearAllMocks();
-
-        // Default mocks
-        (useAuth as any).mockReturnValue({
-            user: mockUser,
-            isAuthenticated: true,
-            role: 'member',
-            loading: false,
-        });
-
-        (useFeedData as any).mockReturnValue({
-            data: mockFeedData,
-            useMock: false,
-            setUseMock: vi.fn(),
-            isLoading: false,
-            error: null,
-            refresh: vi.fn(),
-            toggleLike: vi.fn(),
-            createPost: vi.fn(),
-            isLiked: vi.fn().mockReturnValue(false),
-        });
+        mockUseConsumer.mockReturnValue(defaultMockReturn);
     });
 
-    it('renders correctly', () => {
-        render(<Consumer userId="user-1" />);
-        expect(screen.getByTestId('global-header')).toBeDefined();
-        expect(screen.getByText('Profile: Test User')).toBeDefined();
-        expect(screen.getByText('Post: Post 1')).toBeDefined();
-        expect(screen.getByText('Post: Post 2')).toBeDefined();
-        expect(screen.getByText('Sidebar')).toBeDefined();
-    });
-
-    it('shows loading skeleton when feed is loading', () => {
-        (useFeedData as any).mockReturnValue({
-            ...((useFeedData as any)().data), // keep previous structure if needed, but actually we overwrite return
-            data: { posts: [] },
+    it('renders loading state', () => {
+        mockUseConsumer.mockReturnValue({
+            ...defaultMockReturn,
             isLoading: true,
-            error: null,
+            data: { posts: [], sidebarData: { hotPosts: [], saleItems: [] } },
         });
-
-        render(<Consumer userId="user-1" />);
-        // Since we didn't mock FeedSkeleton, it should render (it's internal to Consumer or imported?)
-        // Wait, FeedSkeleton is defined INSIDE Consumer.tsx or imported?
-        // In Consumer.tsx, FeedSkeleton is defined in the same file.
-        // So checking for class 'animate-pulse' or similar is a way.
-        // However, since we mock components/Feed, and InlineComposer/etc are mocked.
-        // The skeleton is internal.
-        // But Consumer.tsx does not export FeedSkeleton, so we can't mock it easily if it's internal.
-        // We can check for "animate-pulse" class.
-
-        // Adjust mock to ensure data.posts is empty or undefined if loading logic depends on it?
-        // Logic: isLoading ? <FeedSkeleton /> : ...
-        // So we just need isLoading: true.
+        render(<Consumer />);
+        // Initial fetch loading skeleton check could be more specific if skeleton has testid
+        // But here we just assume skeleton renders some distinct elements or we check absence of empty state
     });
 
-    it('shows error state when feed fails', () => {
-        (useFeedData as any).mockReturnValue({
-            data: { posts: [] },
-            isLoading: false,
-            error: { message: 'Network Error' },
-            refresh: vi.fn(),
+    it('renders empty state', () => {
+        mockUseConsumer.mockReturnValue({
+            ...defaultMockReturn,
+            data: { posts: [], sidebarData: { hotPosts: [], saleItems: [] } },
         });
-
-        render(<Consumer userId="user-1" />);
-        expect(screen.getByText('Network Error')).toBeDefined();
-    });
-
-    it('shows empty state when no posts', () => {
-        (useFeedData as any).mockReturnValue({
-            data: { posts: [] },
-            isLoading: false,
-            error: null,
-        });
-
-        render(<Consumer userId="user-1" />);
-        // Check for empty state text
-        // STRINGS.FEED.EMPTY.TITLE is "還沒有貼文"
+        render(<Consumer />);
         expect(screen.getByText('還沒有貼文')).toBeDefined();
+    });
+
+    it('renders error state', () => {
+        mockUseConsumer.mockReturnValue({
+            ...defaultMockReturn,
+            data: { posts: [], sidebarData: { hotPosts: [], saleItems: [] } },
+            error: { message: 'Failed to load' },
+        });
+        render(<Consumer />);
+        expect(screen.getByText('Failed to load')).toBeDefined();
+    });
+
+    it('renders posts and interactions', async () => {
+        render(<Consumer />);
+
+        expect(screen.getByText('Post 1')).toBeDefined();
+        expect(screen.getByText('Post 2')).toBeDefined();
+
+        // Test Like Interaction
+        const likeBtn = screen.getByTestId('post-1').querySelector('button');
+        fireEvent.click(likeBtn!);
+        expect(defaultMockReturn.handleLike).toHaveBeenCalledWith('1');
+
+        // Test Create Post Interaction
+        const submitBtn = screen.getByText('Submit Post');
+        fireEvent.click(submitBtn);
+        expect(defaultMockReturn.handleCreatePost).toHaveBeenCalledWith('New Post');
+    });
+
+    it('handles auth loading', () => {
+        mockUseConsumer.mockReturnValue({
+            ...defaultMockReturn,
+            authLoading: true,
+        });
+        render(<Consumer />);
+        expect(screen.getByTestId('global-header')).toBeDefined();
     });
 });

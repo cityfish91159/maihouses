@@ -1,3 +1,6 @@
+import { safeLocalStorage } from '../lib/safeStorage';
+import { logger } from '../lib/logger';
+
 export interface AppConfig {
   apiBaseUrl: string
   appVersion: string
@@ -18,34 +21,61 @@ export type RuntimeOverrides = {
 
 const LS = 'maihouse_config'
 
+const DEFAULT_CONFIG: AppConfig & Partial<RuntimeOverrides> = {
+  apiBaseUrl: '/api',
+  appVersion: 'local',
+  minBackend: '0',
+  features: {},
+  mock: true,
+  latency: 0,
+  error: 0,
+}
+
 async function fetchJson(url: string) {
   const r = await fetch(url)
+  if (!r.ok) {
+    throw new Error(`Failed to fetch ${url}: ${r.status}`)
+  }
   return r.json()
 }
 
-function isValidConfig(obj: any): obj is AppConfig {
+function isValidConfig(obj: unknown): obj is AppConfig {
   return (
-    obj &&
+    obj !== null &&
     typeof obj === 'object' &&
-    typeof obj.apiBaseUrl === 'string' &&
-    typeof obj.appVersion === 'string' &&
-    typeof obj.minBackend === 'string' &&
-    typeof obj.features === 'object'
+    'apiBaseUrl' in obj &&
+    typeof (obj as Record<string, unknown>).apiBaseUrl === 'string' &&
+    'appVersion' in obj &&
+    typeof (obj as Record<string, unknown>).appVersion === 'string' &&
+    'minBackend' in obj &&
+    typeof (obj as Record<string, unknown>).minBackend === 'string' &&
+    'features' in obj &&
+    typeof (obj as Record<string, unknown>).features === 'object'
   )
 }
 
 async function readBase(): Promise<AppConfig & Partial<RuntimeOverrides>> {
+  // 1) localStorage cache
   try {
-    const cache = localStorage.getItem(LS)
+    const cache = safeLocalStorage.getItem(LS)
     if (cache) {
       const parsed = JSON.parse(cache)
-      if (isValidConfig(parsed)) return { ...parsed, ...pickParams() }
+      if (isValidConfig(parsed)) return parsed
     }
-  } catch {}
-  
+  } catch { }
+
+  // 2) remote app.config.json
   const baseUrl = import.meta.env.BASE_URL || '/'
   const url = `${window.location.origin}${baseUrl}app.config.json`
-  return fetchJson(url)
+  try {
+    const remote = await fetchJson(url)
+    if (isValidConfig(remote)) return remote
+  } catch (err) {
+    logger.warn('[config] fetch app.config.json failed, fallback to DEFAULT_CONFIG', { error: err })
+  }
+
+  // 3) hardcoded default to prevent white screen
+  return DEFAULT_CONFIG
 }
 
 function getParamFromBoth(key: string): string | undefined {
@@ -60,7 +90,7 @@ function pickParams() {
   const features = slots
     ? slots.split(',').reduce<Record<string, boolean>>((a, s) => ((a[s.trim()] = true), a), {})
     : undefined
-  
+
   return {
     apiBaseUrl: getParamFromBoth('api'),
     features,
@@ -74,19 +104,32 @@ function pickParams() {
 }
 
 export async function getConfig(): Promise<AppConfig & RuntimeOverrides> {
-  const base = await readBase()
-  const o = pickParams()
-  const merged: AppConfig & RuntimeOverrides = {
-    ...base,
-    ...o,
-    mock: o.mock ?? (base as any).mock ?? true,
-    latency: o.latency ?? (base as any).latency ?? 0,
-    error: o.error ?? (base as any).error ?? 0
-  }
-  
   try {
-    localStorage.setItem(LS, JSON.stringify(merged))
-  } catch {}
-  
-  return merged
+    const base = await readBase()
+    const o = pickParams()
+    const baseWithOverrides = base as AppConfig & Partial<RuntimeOverrides>;
+    const merged: AppConfig & RuntimeOverrides = {
+      ...base,
+      ...o,
+      mock: o.mock ?? baseWithOverrides.mock ?? true,
+      latency: o.latency ?? baseWithOverrides.latency ?? 0,
+      error: o.error ?? baseWithOverrides.error ?? 0,
+    }
+
+    try {
+      safeLocalStorage.setItem(LS, JSON.stringify(merged))
+    } catch { }
+
+    return merged
+  } catch (err) {
+    logger.error('[config] getConfig failed, using DEFAULT_CONFIG', { error: err })
+    const merged: AppConfig & RuntimeOverrides = {
+      ...DEFAULT_CONFIG,
+      ...pickParams(),
+      mock: true,
+      latency: 0,
+      error: 0,
+    }
+    return merged
+  }
 }

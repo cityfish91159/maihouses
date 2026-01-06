@@ -1,4 +1,10 @@
 // src/services/replicate.ts
+export interface ReplicateMetrics {
+  predict_time?: number;
+  total_time?: number;
+  [key: string]: number | undefined;
+}
+
 export interface ReplicateResponse {
   ok?: boolean;
   id: string;
@@ -6,7 +12,7 @@ export interface ReplicateResponse {
   output?: string[] | string;
   error?: string;
   logs?: string;
-  metrics?: any;
+  metrics?: ReplicateMetrics;
 }
 
 export async function genImage(prompt: string, deployment?: string): Promise<string[]> {

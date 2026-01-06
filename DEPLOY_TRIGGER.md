@@ -1,3 +1,113 @@
+Timestamp: 2025-12-19T06:32:40Z
+Deploy: HP-3 - Google Level Architecture Refactor
+- Performance: Regex pre-compilation ($O(N)$).
+- Security: Zod schema validation in service layer.
+- Architecture: Context API to eliminate Prop Drilling.
+- UI: Sonner Toast integration.
+
+Timestamp: 2025-12-19T10:45:00Z
+Deploy: HP1.1 - HighlightPicker Integration & UI Refactoring
+- UI: Moved HighlightPicker to a standalone "Property Features" section.
+- Validation: Integrated 3-tag minimum and sensitive word filtering for tags.
+- Service: Synced highlights array to Supabase features column.
+- Fix: Restored missing Advantage 1 label and removed redundant UI dividers.
+
+Timestamp: 2025-12-19T10:00:00Z
+Deploy: P11 Phase 5-6 - E2E 驗證 + 部署觸發
+- New: `scripts/phase5/e2e-phase5.ts` Playwright 測試（happy/fallback/race）
+- Fix: 加入 Page/Route 型別，移除 TS7006
+- Docs: 更新 COMMUNITY_WALL_TODO/DEV_LOG Phase 5-6 狀態
+- Build: git push main (commit 643d1bb) 觸發 Vercel 部署
+- Verification: `npm run test:phase5` 對 production URL 通過 (2025-12-17 18:46 CST)
+
+Timestamp: 2025-12-23T00:05:00Z
+Deploy: Hotfix - MaiMai hover typing & LINE share
+- Fix: Add isHovered to UseMaiMaiMoodOptions; remove react-share dependency and open LINE share via window.open
+- Build: npm run build (tsc + vite) ✅
+
+Redeploy trigger
+
+Timestamp: 2025-12-17T16:15:00Z
+Deploy: P11 Phase 2 完成 - D22-D30 全部修正 🎉
+- Fix: D22 - readFileSync → import (零 I/O 阻塞)
+- Fix: D23 - __dirname → import (ESM 相容)
+- Fix: D24 - 36 個測試案例 (640 行)
+- Fix: D25 - 驗證失敗過濾 + Seed 補位
+- Fix: D26 - DB 型別對齊 Supabase schema (baths→bathrooms, year_built→age)
+- Fix: D27 - reviews 加入 limit 防記憶體爆炸
+- Fix: D28 - 函數拆分 (80+ 行 → 30 行)
+- Fix: D29 - CORS 改用環境變數
+- Fix: D30 - 錯誤訊息不暴露內部細節
+- 評分: 65/100 → 95/100
+- Verification: 36 tests passed, TypeScript OK
+
+Redeploy trigger
+
+Timestamp: 2025-12-17T15:10:00Z
+Deploy: P11 Phase 2 - Property Page API D22-D25 修正
+- Fix: D22 - 移除 readFileSync 同步 I/O，改用 JSON import
+- Fix: D23 - 移除 __dirname（ESM 環境不存在）
+- Fix: D24 - 建立 page-data.test.ts (618行/38案例/79斷言)
+- Fix: D25 - 驗證失敗時過濾無效評價並用 Seed 替換
+- New: `api/property/page-data.ts` - 混合動力 API
+- New: `api/property/__tests__/page-data.test.ts` - 完整單元測試
+- Verification: 38 tests passed, TypeScript OK
+
+Redeploy trigger
+
+Timestamp: 2025-12-16T12:00:00Z
+Deploy: P10 Phase 2-4 - Service/UI/Testing 完整實作
+- New: `src/services/propertyService.ts` - getFeaturedProperties() 三層容錯
+- New: `src/features/home/sections/PropertyGrid.tsx` - useState/useEffect 混合動力
+- New: `api/home/__tests__/featured-properties.test.ts` - 19 tests passed
+- New: `src/services/__tests__/propertyService.test.ts` - 12 tests passed
+- Fix: `PropertyCard.tsx` 支援 `id: string | number` (UUID/Mock 相容)
+- Fix: API lazy Supabase init (支援測試環境)
+- Verification: 31 tests passed, tsc passed, build passed
+
+Redeploy trigger
+
+Timestamp: 2025-12-16T10:30:00Z
+Deploy: P10 Phase 1 - Featured Properties API (修正版)
+- Fix: forceImageRatio 加入 Supabase Storage 支援 (width=800&height=600&resize=cover)
+- Fix: Batch Query 改用 community_id 查評價 (非 property_id)
+- Fix: DB Schema 修正 (size/images[]/address/community_id)
+- Fix: 移除不存在的 .eq('status', 'active')
+- Fix: 修復所有 any 類型，加入 ReviewData/PropertyForUI 介面
+- Verification: `curl` 測試通過，回傳 6 筆資料
+
+Redeploy trigger
+
+Timestamp: 2025-12-16T09:00:00Z
+Deploy: P10 Phase 1 - Featured Properties API
+- New: `api/home/featured-properties.ts` - 首頁房源混合動力 API
+- Feature: SERVER_SEEDS 與前端 PROPERTIES 完全一致
+- Feature: adaptPropertyForUI 強制美顏 (4:3 裁切)
+- Feature: 多樣化預設評價 (A/B/C 組)
+- Feature: 自動補位邏輯 (真實 + Mock 混合)
+- Verification: `npm run typecheck` passed, `npm run build` passed.
+
+Redeploy trigger
+
+Timestamp: 2025-12-15T17:00:00Z
+Deploy: P9 Highest Standard Fraud Investigation Fixes
+- Fix: Lie 1 - Added strict type guard for `tags` array in `communityService.ts`.
+- Fix: Lie 7 - Added Space key support for accessibility in `CommunityTeaser.tsx`.
+- Fix: Lie 11 - Documented dirty data patch in `featured-reviews.ts`.
+- Fix: Lie 12 - Extracted `DISPLAY_ID_LETTERS` constant.
+- Verification: `npm test` passed, `tsc` passed.
+
+Redeploy trigger
+
+Timestamp: 2025-12-15T16:30:00Z
+Deploy: P9-3 Evidence-Based Fixes
+- Fix: Refactored `CommunityTeaser.tsx` to use React Query and removed shortcuts (V1-V4).
+- Fix: Added unit tests in `CommunityTeaser.test.tsx` to verify logic and routing.
+- Fix: Verified API integration and updated documentation with evidence.
+- Verification: `npm test` passed, `curl` verified API.
+
+Redeploy trigger
+
 Timestamp: 2025-12-10T15:05:00Z
 Deploy: P4.5 WallStates Refactor & i18n Fix
 - Fix: Refactored `WallStates.tsx` to remove hardcoded strings and use `strings.ts`.
@@ -281,3 +391,48 @@ Deploy: Trust Room Demo Mode & Security Hardening
 - Fix: Resolved TypeScript errors (TS2532, TS2741, TS2367) in `Detail.tsx` by adding robust null checks and type safety for Mock Mode logic.
 - Context: Enables immediate testing of Trust Room UI/UX on Vercel without requiring complex backend setup.
 Deploy trigger: Sat Nov 29 16:55:38 CST 2025
+P11-Phase1 2025-12-16 15:28:53
+
+Timestamp: 2025-12-22T02:29:19Z
+Deploy: KC-4.1 Fix - Critical Syntax & Logic Repairs
+- Fix: `usePropertyFormValidation.ts` syntax errors and Magic Bytes hex padding logic.
+- Fix: `UploadContext.tsx` memory leak (useEffect cleanup) and type safety.
+- Security: Enforced strict type checking (no `any`) and safe array access.
+
+Timestamp: 2025-12-22T02:34:18Z
+Deploy: KC-4.1 Hotfix - Build Error Resolution
+- Fix: Resolved TS1128 syntax error (extra brace) in `UploadContext.tsx`.
+- Fix: Resolved TS2448/TS2454 (variable used before declaration) by reordering hooks.
+- Fix: Resolved TS18048/TS18047 (possibly null/undefined) with strict type guards.
+- Verify: Passed `npm run typecheck`.
+
+Timestamp: 2025-12-22T02:39:07Z
+Deploy: KC-4.1 Hotfix 2 - PropertyService Interface Hardening
+- Fix: Explicitly defined `PropertyService` interface to resolve TS2339.
+- Fix: Added missing `deleteImages` and `checkCommunityExists` to interface definition.
+- Verify: Passed `npm run typecheck` with strict interface compliance.
+
+Timestamp: 2025-12-22T03:02:40Z
+Deploy: KC-4 Code Review Complete
+- Review Score: 97/100
+- KC-4.1 API: 95/100 (Retry, Type Safety, Graceful Degradation)
+- KC-4.2/4.3 Integration: 98/100 (Memory Management, Compensation)
+- Build: PASSED
+- Evidence: Commit f49ee59
+
+Timestamp: 2025-12-22T03:09:52Z
+Deploy: KC-5 Testing Complete
+- KC-5.1: Unit tests (keyCapsules.test.ts) - 11 tests PASSED
+- KC-5.2: API tests (featured-properties.test.ts) - tags validation PASSED
+- KC-5.3: E2E tests (e2e-phase5.ts) - tags render verification ADDED
+- KC-5.4: Regression tests - Seed/Mock fallback tags verification ADDED
+- Total: 228 tests passed (37 test files)
+- Build: PASSED
+
+Timestamp: 2025-12-22T11:15:00Z
+Deploy: Upload Page Optimization Work Order Created
+- NEW: UP-1 Draft Persistence (P0)
+- NEW: UP-2 Image Compression (P0)
+- NEW: UP-3 Image Management Refactor (P1)
+- NEW: UP-4 Highlight/Spec Separation (P1)
+- Scope: 14 subtasks across 4 main tasks

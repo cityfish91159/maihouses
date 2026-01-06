@@ -27,3 +27,23 @@ node_modules
 
 # Build output
 dist/
+
+# Arena results (generated artifacts)
+arena/results/
+
+# Test artifacts (P43 修正)
+*.png
+test-results/
+playwright-report/
+blob-report/
+**/__tests__/*.json
+!public/data/*.json
+
+# 🔒 私密功能 - 不提交到 GitHub
+src/pages/Muse/
+src/pages/Admin/GodView.tsx
+api/muse-*.ts
+public/sw-shadow.js
+docs/museai_todo.md
+supabase/migrations/*muse*.sql
+supabase/migrations/*godview*.sql

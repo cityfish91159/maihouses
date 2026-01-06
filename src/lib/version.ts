@@ -32,6 +32,6 @@ const formatTwDateTime = (date: Date) =>
 export const APP_VERSION = rawVersion;
 export const BUILD_TIME_ISO = buildDate.toISOString();
 export const BUILD_TIME_TW = formatTwDateTime(buildDate);
-export const VERSION_LABEL = `v${APP_VERSION}`;
+export const VERSION_LABEL = `v${APP_VERSION}·KC1`;
 
-export const VERSION_TOOLTIP = `版本 ${APP_VERSION} · 建置 ${BUILD_TIME_TW}`;
+export const VERSION_TOOLTIP = `版本 ${APP_VERSION}（Key Capsules SSOT v1）· 建置 ${BUILD_TIME_TW}`;

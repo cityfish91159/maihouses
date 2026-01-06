@@ -1,9 +1,18 @@
+import { logger } from '../lib/logger';
+
 // 簡易埋點（事件命名更貼近用戶語意）
-export function track(event: string, payload?: Record<string, any>) {
+export async function track(event: string, payload?: Record<string, unknown>) {
   try {
-     
-    console.debug("[track]", event, payload || {});
-  } catch {}
+    await fetch('/api/analytics', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ event, ...payload }),
+      keepalive: true
+    });
+    logger.debug('[track]', { event, payload: payload || {} });
+  } catch (err) {
+    logger.error('[Analytics] Track failed', { error: err });
+  }
 }
 export const Events = {
   QuietOn: "user.needs_quiet_space",
