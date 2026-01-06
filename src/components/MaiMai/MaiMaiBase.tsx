@@ -555,17 +555,24 @@ export function MaiMaiBase({
     ? (e: React.KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') onClick(); }
     : undefined;
 
+  // 如果沒有 onClick，不需要 a11y 屬性
+  const interactiveProps = onClick
+    ? {
+        onClick,
+        role: 'button' as const,
+        tabIndex: 0,
+        onKeyDown: handleKeyDown,
+        'aria-label': 'MaiMai mascot button',
+      }
+    : {};
+
   return (
     <div
       className={`relative ${SIZE_CLASSES[size]} ${className} ${onClick ? 'cursor-pointer' : ''}`}
-      onClick={onClick}
-      role={onClick ? 'button' : undefined}
-      tabIndex={onClick ? 0 : undefined}
-      onKeyDown={handleKeyDown}
-      aria-label={onClick ? 'MaiMai mascot button' : undefined}
+      {...interactiveProps}
     >
       {/* 背景光暈 */}
-      <div className="absolute left-1/2 top-1/2 -z-10 size-3/4 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[var(--brand)]/10 blur-2xl animate-pulse" />
+      <div className="bg-[var(--brand)]/10 absolute left-1/2 top-1/2 -z-10 size-3/4 -translate-x-1/2 -translate-y-1/2 animate-pulse rounded-full blur-2xl" />
 
       <svg
         viewBox={`0 0 ${CANVAS_SIZE} ${CANVAS_HEIGHT}`}

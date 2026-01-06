@@ -18,7 +18,14 @@ const LegacyFeaturedCard: React.FC<LegacyFeaturedCardProps> = ({ data, variant }
 
     return (
         <div className="property-card">
-            <div className="property-media" onClick={handleNavigate} style={{ cursor: 'pointer' }}>
+            <div
+                className="property-media"
+                onClick={handleNavigate}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleNavigate(); }}
+                role="button"
+                tabIndex={0}
+                style={{ cursor: 'pointer' }}
+            >
                 <img src={data.image} alt={data.title} />
                 <div className="property-badge">{data.badge}</div>
             </div>
@@ -89,7 +96,14 @@ const LegacyFeaturedCard: React.FC<LegacyFeaturedCardProps> = ({ data, variant }
                             ))}
                         </div>
 
-                        <div className="property-more-reviews" onClick={handleNavigate} style={{ cursor: 'pointer' }}>
+                        <div
+                            className="property-more-reviews"
+                            onClick={handleNavigate}
+                            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleNavigate(); }}
+                            role="button"
+                            tabIndex={0}
+                            style={{ cursor: 'pointer' }}
+                        >
                             <span className="lock-icon">🔒</span>
                             <span>查看其他 {data.lockCount} 則住戶真實評價</span>
                             <button className="register-btn">免費註冊</button>
@@ -122,7 +136,14 @@ const LegacyFeaturedCard: React.FC<LegacyFeaturedCardProps> = ({ data, variant }
                             ))}
                         </div>
 
-                        <div className="property-more-reviews" onClick={handleNavigate} style={{ cursor: 'pointer' }}>
+                        <div
+                            className="property-more-reviews"
+                            onClick={handleNavigate}
+                            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleNavigate(); }}
+                            role="button"
+                            tabIndex={0}
+                            style={{ cursor: 'pointer' }}
+                        >
                             <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                                 <span className="lock-icon">🔒</span>
                                 <span>{data.lockCount} 則評價</span>

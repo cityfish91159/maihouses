@@ -35,22 +35,19 @@ export const CompressionComparison: React.FC<CompressionComparisonProps> = ({
     };
 
     return (
-        // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
         <div
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
             onClick={onClose}
             onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}
-            role="dialog"
-            aria-modal="true"
-            aria-label="壓縮效果對比"
-            tabIndex={-1}
+            role="button"
+            aria-label="關閉對話框"
+            tabIndex={0}
         >
-            {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions */}
             <div
                 className="relative w-full max-w-4xl overflow-hidden rounded-lg bg-gray-900 shadow-2xl"
                 onClick={e => e.stopPropagation()}
                 onKeyDown={e => e.stopPropagation()}
-                role="document"
+                role="presentation"
             >
                 <div className="flex items-center justify-between bg-gray-800 px-4 py-3 text-white">
                     <h3 className="font-bold">壓縮效果對比</h3>

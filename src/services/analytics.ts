@@ -17,11 +17,10 @@ const KEY = 'uag_queue'
 const CAP = 10000
 const MAX_BATCH = 200
 
-declare global {
-  var __UAG__: { queue: Uag[]; timer?: number; backoff: number; attempts: number } | undefined
-}
+/** UAG 全域狀態類型 */
+type UagGlobalState = { queue: Uag[]; timer?: number; backoff: number; attempts: number };
 
-const _global = (typeof globalThis !== 'undefined' ? globalThis : typeof window !== 'undefined' ? window : typeof self !== 'undefined' ? self : {}) as typeof globalThis & { __UAG__?: { queue: Uag[]; timer?: number; backoff: number; attempts: number } };
+const _global = (typeof globalThis !== 'undefined' ? globalThis : typeof window !== 'undefined' ? window : typeof self !== 'undefined' ? self : {}) as typeof globalThis & { __UAG__?: UagGlobalState };
 const G = _global.__UAG__ || (_global.__UAG__ = { queue: [], backoff: 10000, attempts: 0 });
 
 try {

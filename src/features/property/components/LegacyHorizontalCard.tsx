@@ -20,7 +20,14 @@ const LegacyHorizontalCard: React.FC<LegacyHorizontalCardProps> = ({ data }) => 
     return (
         <div className="horizontal-card">
             <div className="horizontal-left">
-                <div className="horizontal-thumb" onClick={handleNavigate} style={{ cursor: 'pointer' }}>
+                <div
+                    className="horizontal-thumb"
+                    onClick={handleNavigate}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleNavigate(); }}
+                    role="button"
+                    tabIndex={0}
+                    style={{ cursor: 'pointer' }}
+                >
                     <img src={data.image} alt={data.title} loading="lazy" />
                 </div>
                 <div className="horizontal-main">

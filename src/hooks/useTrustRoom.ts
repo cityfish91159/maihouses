@@ -93,6 +93,8 @@ export function useTrustRoom() {
     };
 
     init();
+    // fetchData is defined later, but used inside init() - no need in deps since init only runs once
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Mock Mode Toggle

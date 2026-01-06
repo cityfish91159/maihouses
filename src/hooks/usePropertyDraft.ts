@@ -142,7 +142,7 @@ export function usePropertyDraft(
         clearTimeout(saveTimeoutRef.current);
       }
     };
-  }, [form, draftKey]);
+  }, [form, draftKey, showWarningOnce]);
 
   // 檢查是否有草稿
   const hasDraft = useCallback((): boolean => {
@@ -192,7 +192,7 @@ export function usePropertyDraft(
       );
       return null;
     }
-  }, [draftKey]);
+  }, [draftKey, showWarningOnce]);
 
   // 清除草稿
   const clearDraft = useCallback(() => {
@@ -206,7 +206,7 @@ export function usePropertyDraft(
         '請檢查瀏覽器儲存空間或權限設定，草稿可能尚未移除'
       );
     }
-  }, [draftKey]);
+  }, [draftKey, showWarningOnce]);
 
   // 遷移草稿 (anonymous -> userId)
   const migrateDraft = useCallback((fromUserId: string | undefined, toUserId: string | undefined) => {
@@ -225,7 +225,7 @@ export function usePropertyDraft(
         '匿名草稿未能移轉到登入帳號，請重新登入後再試'
       );
     }
-  }, []);
+  }, [showWarningOnce]);
 
   // 取得草稿預覽 (用於顯示提示)
   const getDraftPreview = useCallback((): { title: string; savedAt: string } | null => {
