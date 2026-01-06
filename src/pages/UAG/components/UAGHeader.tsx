@@ -119,13 +119,6 @@ export const UAGHeader: React.FC<UAGHeaderProps> = ({
           <span className={`${styles['uag-badge']} ${styles['uag-badge--pro']}`}>專業版 PRO</span>
         </div>
         <div className={styles['uag-header-actions']}>
-          <a
-            href={ROUTES.HOME}
-            className={styles['uag-home-link']}
-            aria-label="返回邁房子首頁"
-          >
-            返回首頁
-          </a>
           <div className={styles['uag-notification']}>
             {/* Notification components temporarily disabled due to missing files */}
             {/* <NotificationBell
