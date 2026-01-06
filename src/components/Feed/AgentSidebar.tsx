@@ -31,10 +31,10 @@ export const AgentSidebar: React.FC<AgentSidebarProps> = ({
             <AgentConversationList conversations={conversations} />
 
             {/* Navigation Card */}
-            <div className="rounded-[14px] border border-[#e6edf7] bg-white p-[14px] shadow-[0_4px_14px_rgba(0,51,102,0.04)]">
-                <h4 className="m-0 mb-2.5 text-[14px] font-bold text-[#00385a]">{STRINGS.AGENT.SIDEBAR.NAV_TITLE}</h4>
+            <div className="rounded-[14px] border border-brand-100 bg-white p-[14px] shadow-card">
+                <h4 className="m-0 mb-2.5 text-[14px] font-bold text-brand-700">{STRINGS.AGENT.SIDEBAR.NAV_TITLE}</h4>
                 <div className="flex flex-col gap-1.5">
-                    <Link to={ROUTES.UAG} className="flex items-center gap-2 rounded-[10px] bg-gradient-to-br from-[#00385a] to-[#005282] p-2.5 text-[13px] font-semibold text-white no-underline">
+                    <Link to={ROUTES.UAG} className="flex items-center gap-2 rounded-[10px] bg-gradient-to-br from-brand-700 to-brand-500 p-2.5 text-[13px] font-semibold text-white no-underline">
                         {STRINGS.AGENT.SIDEBAR.LINK_UAG}
                     </Link>
                     <Link to={`${ROUTES.UAG}#stats`} className="flex items-center gap-2 rounded-[10px] p-2.5 text-[13px] font-semibold text-[#0b214a] no-underline transition-colors hover:bg-[#f0f7ff]">
@@ -52,19 +52,19 @@ export const AgentSidebar: React.FC<AgentSidebarProps> = ({
             </div>
 
             {/* Performance Card */}
-            <div className="rounded-[14px] border border-[#e6edf7] bg-white p-[14px] shadow-[0_4px_14px_rgba(0,51,102,0.04)]">
-                <h4 className="m-0 mb-2.5 text-[14px] font-bold text-[#00385a]">{STRINGS.AGENT.SIDEBAR.PERF_TITLE}</h4>
+            <div className="rounded-[14px] border border-brand-100 bg-white p-[14px] shadow-card">
+                <h4 className="m-0 mb-2.5 text-[14px] font-bold text-brand-700">{STRINGS.AGENT.SIDEBAR.PERF_TITLE}</h4>
                 <p className="m-0 text-[13px] leading-[1.8] text-[#6c7b91]">
-                    {STRINGS.AGENT.SIDEBAR.PERF_DEAL_COUNT_PREFIX} <b className="text-[#00385a]">2</b> {STRINGS.AGENT.SIDEBAR.PERF_DEAL_COUNT_UNIT}<br />
-                    {STRINGS.AGENT.SIDEBAR.PERF_AMOUNT_PREFIX} <b className="text-[#00385a]">$3,280萬</b><br />
-                    {STRINGS.AGENT.SIDEBAR.PERF_CLIENTS_PREFIX} <b className="text-[#00385a]">18</b> {STRINGS.AGENT.SIDEBAR.PERF_CLIENTS_UNIT}
+                    {STRINGS.AGENT.SIDEBAR.PERF_DEAL_COUNT_PREFIX} <b className="text-brand-700">2</b> {STRINGS.AGENT.SIDEBAR.PERF_DEAL_COUNT_UNIT}<br />
+                    {STRINGS.AGENT.SIDEBAR.PERF_AMOUNT_PREFIX} <b className="text-brand-700">$3,280萬</b><br />
+                    {STRINGS.AGENT.SIDEBAR.PERF_CLIENTS_PREFIX} <b className="text-brand-700">18</b> {STRINGS.AGENT.SIDEBAR.PERF_CLIENTS_UNIT}
                 </p>
             </div>
 
             {/* Todos Card */}
-            <div className="rounded-[14px] border border-[#e6edf7] bg-white p-[14px] shadow-[0_4px_14px_rgba(0,51,102,0.04)]">
+            <div className="rounded-[14px] border border-brand-100 bg-white p-[14px] shadow-card">
                 <div className="mb-2.5 flex items-center justify-between">
-                    <h4 className="m-0 text-[14px] font-bold text-[#00385a]">{STRINGS.AGENT.SIDEBAR.TODO_TITLE}</h4>
+                    <h4 className="m-0 text-[14px] font-bold text-brand-700">{STRINGS.AGENT.SIDEBAR.TODO_TITLE}</h4>
                     {todos.length > 0 && (
                         <span className="rounded-full bg-red-100 px-1.5 py-0.5 text-[10px] font-bold text-red-600">{todos.length}</span>
                     )}
@@ -82,8 +82,8 @@ export const AgentSidebar: React.FC<AgentSidebarProps> = ({
 
             {/* Hot Posts (Added for M2) */}
             {hotPosts.length > 0 && (
-                <div className="rounded-[14px] border border-[#e6edf7] bg-white p-[14px] shadow-[0_4px_14px_rgba(0,51,102,0.04)]">
-                    <h4 className="m-0 mb-2.5 text-[14px] font-bold text-[#00385a]">{STRINGS.FEED.SIDEBAR.HOT_TITLE}</h4>
+                <div className="rounded-[14px] border border-brand-100 bg-white p-[14px] shadow-card">
+                    <h4 className="m-0 mb-2.5 text-[14px] font-bold text-brand-700">{STRINGS.FEED.SIDEBAR.HOT_TITLE}</h4>
                     <ul className="m-0 flex list-none flex-col gap-3 p-0">
                         {hotPosts.map(post => (
                             <li key={post.id} className="text-[13px] leading-tight">

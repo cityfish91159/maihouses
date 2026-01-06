@@ -55,10 +55,10 @@ export function AgentConversationList({
 }: AgentConversationListProps): React.ReactElement {
   if (conversations.length === 0) {
     return (
-      <div className={`rounded-[14px] border border-[#e6edf7] bg-white p-[14px] shadow-[0_4px_14px_rgba(0,51,102,0.04)] ${className}`}>
+      <div className={`rounded-[14px] border border-brand-100 bg-white p-[14px] shadow-card ${className}`}>
         <div className="mb-2.5 flex items-center gap-2">
           <MessageCircle className="size-4 text-brand-600" />
-          <h4 className="m-0 text-[14px] font-bold text-[#00385a]">我的客戶</h4>
+          <h4 className="m-0 text-[14px] font-bold text-brand-700">我的客戶</h4>
         </div>
         <p className="text-xs text-gray-400">尚無客戶對話</p>
       </div>
@@ -66,11 +66,11 @@ export function AgentConversationList({
   }
 
   return (
-    <div className={`rounded-[14px] border border-[#e6edf7] bg-white p-[14px] shadow-[0_4px_14px_rgba(0,51,102,0.04)] ${className}`}>
+    <div className={`rounded-[14px] border border-brand-100 bg-white p-[14px] shadow-card ${className}`}>
       <div className="mb-2.5 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <MessageCircle className="size-4 text-brand-600" />
-          <h4 className="m-0 text-[14px] font-bold text-[#00385a]">我的客戶</h4>
+          <h4 className="m-0 text-[14px] font-bold text-brand-700">我的客戶</h4>
         </div>
         {conversations.length > 0 && (
           <span className="rounded-full bg-brand-100 px-1.5 py-0.5 text-[10px] font-bold text-brand-600">

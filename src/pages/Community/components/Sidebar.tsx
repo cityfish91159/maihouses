@@ -112,7 +112,7 @@ export function Sidebar({ info, questions: questionsProp, posts }: SidebarProps)
 
       {/* 公仔卡片 */}
       <div className="rounded-[14px] border border-[var(--line)] bg-gradient-to-br from-[#f0f7ff] to-[#e8f4ff] p-3.5 text-center shadow-[0_4px_14px_rgba(0,51,102,0.04)]">
-        <svg className="mx-auto mb-2 h-24 w-20 text-[#00385a]" viewBox="0 0 200 240" aria-hidden="true">
+        <svg className="mx-auto mb-2 h-24 w-20 text-brand-700" viewBox="0 0 200 240" aria-hidden="true">
           <path d="M 85 40 L 85 15 L 100 30 L 115 15 L 115 40" stroke="currentColor" strokeWidth="5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
           <path d="M 40 80 L 100 40 L 160 80" stroke="currentColor" strokeWidth="6" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
           <rect x="55" y="80" width="90" height="100" stroke="currentColor" strokeWidth="6" fill="none" strokeLinecap="round" strokeLinejoin="round"/>

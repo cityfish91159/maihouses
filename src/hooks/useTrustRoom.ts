@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { notify } from '../lib/notify';
 import { logger } from '../lib/logger';
 import { mockService, realService } from '../services/trustService';
@@ -43,6 +43,9 @@ export function useTrustRoom() {
   const [caseId, setCaseId] = useState('');
   const [role, setRole] = useState<'agent' | 'buyer'>('agent');
   const [tx, setTx] = useState<Transaction | null>(null);
+
+  // Ref to hold fetchData for use in init effect without circular dependency
+  const fetchDataRef = useRef<((id?: string) => Promise<void>) | null>(null);
   const [loading, setLoading] = useState(true);
   const [isBusy, setIsBusy] = useState(false);
   const [timeLeft, setTimeLeft] = useState('--:--:--');
@@ -81,7 +84,7 @@ export function useTrustRoom() {
           setCaseId(user.caseId);
           setIsMock(false);
           setAuthError(false);
-          await fetchData(user.caseId);
+          await fetchDataRef.current?.(user.caseId);
         } else {
           // Not logged in
           setLoading(false);
@@ -93,8 +96,6 @@ export function useTrustRoom() {
     };
 
     init();
-    // fetchData is defined later, but used inside init() - no need in deps since init only runs once
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Mock Mode Toggle
@@ -142,6 +143,11 @@ export function useTrustRoom() {
       setLoading(false);
     }
   }, [isMock, caseId, authError]);
+
+  // Keep ref in sync with fetchData for use in init effect
+  useEffect(() => {
+    fetchDataRef.current = fetchData;
+  }, [fetchData]);
 
   // Polling
   useEffect(() => {

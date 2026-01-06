@@ -31,7 +31,7 @@ function ReviewCard({ entry }: ReviewCardProps) {
   const hasDeals = entry.deals > 0;
 
   return (
-    <div className="rounded-[14px] border border-border-light bg-white p-3.5 transition-all hover:border-brand/15 hover:shadow-[0_2px_8px_rgba(0,56,90,0.04)]">
+    <div className="rounded-[14px] border border-border-light bg-white p-3.5 transition-all hover:border-brand/15 hover:shadow-brand-xs">
       <div className="mb-2.5 flex items-center gap-2.5">
         <div 
           className="flex size-[38px] items-center justify-center rounded-full border-2 border-brand bg-gradient-to-br from-brand-100/50 to-white text-sm font-extrabold text-brand" 

@@ -56,7 +56,7 @@ export function RoleSwitcher({ role, onRoleChange }: RoleSwitcherProps) {
               role="option"
               aria-selected={role === r}
               onClick={() => { onRoleChange(r); setIsOpen(false); }}
-              className={`block w-full rounded-lg px-3 py-2.5 text-left text-xs ${role === r ? 'bg-[rgba(0,56,90,0.1)] font-bold text-[var(--primary)]' : 'text-[var(--text-primary)] hover:bg-[#f6f9ff]'}`}
+              className={`block w-full rounded-lg px-3 py-2.5 text-left text-xs ${role === r ? 'bg-brand-700/10 font-bold text-[var(--primary)]' : 'text-[var(--text-primary)] hover:bg-[#f6f9ff]'}`}
             >
               {roleLabels[r]}
             </button>

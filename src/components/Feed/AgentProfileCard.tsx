@@ -23,10 +23,10 @@ export const AgentProfileCard = memo(function AgentProfileCard({
     const communityLabel = profile.communityName || STRINGS.FEED.DEFAULT_COMMUNITY_NAME;
 
     return (
-        <section className={`flex flex-col gap-3.5 rounded-2xl border border-[#e6edf7] bg-white p-4 shadow-[0_4px_14px_rgba(0,51,102,0.04)] ${className}`}>
+        <section className={`flex flex-col gap-3.5 rounded-2xl border border-brand-100 bg-white p-4 shadow-card ${className}`}>
             {/* Header Row */}
             <div className="flex items-center gap-3.5">
-                <div className="flex size-[60px] items-center justify-center rounded-full border border-[#e6edf7] bg-gradient-to-br from-[#eef3ff] to-white text-[22px] font-black text-[#00385a]">
+                <div className="flex size-[60px] items-center justify-center rounded-full border border-brand-100 bg-gradient-to-br from-[#eef3ff] to-white text-[22px] font-black text-brand-700">
                     {avatarLetter}
                 </div>
                 <div className="flex-1">
@@ -54,12 +54,12 @@ export const AgentProfileCard = memo(function AgentProfileCard({
 
             {/* Links Row */}
             <div className="flex flex-wrap justify-start gap-2.5">
-                <Link to={ROUTES.UAG} className="inline-flex items-center justify-center gap-1.5 rounded-full border-none bg-gradient-to-br from-[#00385a] to-[#005282] px-4 py-2.5 text-[13px] font-bold text-white no-underline opacity-100 transition-all hover:opacity-100">
+                <Link to={ROUTES.UAG} className="inline-flex items-center justify-center gap-1.5 rounded-full border-none bg-gradient-to-br from-brand-700 to-brand-500 px-4 py-2.5 text-[13px] font-bold text-white no-underline opacity-100 transition-all hover:opacity-100">
                     {STRINGS.AGENT.PROFILE.LINK_WORKBENCH}
                 </Link>
                 <Link
                     to={`/community/${profile.communityId || DEFAULT_COMMUNITY_ID}/wall`}
-                    className="ml-auto inline-flex items-center justify-center gap-1.5 rounded-full border border-solid border-[#bfdbfe] bg-[#eff6ff] px-4 py-2.5 text-[13px] font-bold text-[#00385a] no-underline opacity-100 transition-all max-[400px]:ml-0 max-[400px]:w-full"
+                    className="ml-auto inline-flex items-center justify-center gap-1.5 rounded-full border border-solid border-[#bfdbfe] bg-[#eff6ff] px-4 py-2.5 text-[13px] font-bold text-brand-700 no-underline opacity-100 transition-all max-[400px]:ml-0 max-[400px]:w-full"
                 >
                     {STRINGS.AGENT.PROFILE.LINK_WALL}
                 </Link>
