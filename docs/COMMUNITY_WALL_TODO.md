@@ -33,7 +33,7 @@
 | **P1** | UAG-8 自動刷新設定 | ✅ | 1hr | DevOps |
 | **P2** | HEADER-1 Logo 紅點設計 | ✅ | 1hr | Design |
 | **P2** | HEADER-2 UAG Header 優化 | ✅ | 2hr | Frontend |
-| **P2** | UI-1 首頁主色統一 | ⬜ | 2hr | Design |
+| **P2** | UI-1 首頁主色統一 | ✅ | 2hr | Design |
 | **P2** | MAIMAI-1 教學提示系統 | ⬜ | 3hr | Frontend |
 | **P2** | FEED-1 業務後台連結 | ⬜ | 1hr | Frontend |
 | **P2** | FEED-2 Mock/API 切換驗證 | ⬜ | 1hr | QA |
@@ -994,7 +994,8 @@ SELECT MAX(last_active) FROM uag_lead_rankings;
 
 ---
 
-### HEADER-2: UAG 頁面 Header 優化 ✅ (100/100)
+### 
+ Header 優化 ✅ (100/100)
 
 **完成日期**: 2026-01-05
 **實作版本**: Plan B（完整優化，30 分鐘）
@@ -1085,13 +1086,19 @@ SELECT MAX(last_active) FROM uag_lead_rankings;
 
 ---
 
-### UI-1: 首頁主色統一 ⬜
+### UI-1: 首頁主色統一 ✅
 
 **需求**：確保首頁所有元素使用統一的品牌主色
 
+**施作摘要（2026-01-06）**：
+1. **CSS 變數驗證**：React 首頁使用 `--brand: #00385a`（正確）
+2. **視覺檢查**：Puppeteer 截圖確認 Header、搜尋按鈕、三大主按鈕、流程圖標色彩統一
+3. **public/main.css 的 `--brand-primary: #1A5FDB`** 只影響靜態 HTML，不影響 React 首頁
+4. **Tailwind 類名**：Header.tsx 使用 `brand-*` 系列類名
+
 **當前狀態**：
-- 品牌主色：`brand-700` (#003D5C)
-- Tailwind 配置：`tailwind.config.cjs`
+- 品牌主色：`brand-700` (#00385a) - 已統一
+- Tailwind 配置：`tailwind.config.cjs` - 已正確定義
 
 **位置**：
 - `src/pages/Home.tsx`
