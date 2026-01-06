@@ -80,7 +80,7 @@ export default function AgentPage({ userId, forceMock }: AgentPageProps) {
                         <div className="flex items-center gap-3 border-b border-[#f1f5f9] pb-2.5">
                             <div className="flex size-10 items-center justify-center rounded-full border border-brand-100 bg-[#eef3ff] font-black text-[#173a7c]">安</div>
                             <div className="flex-1 leading-[1.3]">
-                                <b className="block text-[15px] text-[#0f172a]">{STRINGS.AGENT.TRUST.TITLE}</b>
+                                <b className="block text-[15px] text-ink-900">{STRINGS.AGENT.TRUST.TITLE}</b>
                                 <div className="text-[12px] text-[#6c7b91]">帶看完成 · 惠宇上晴 12F A2 · 剛剛</div>
                             </div>
                         </div>

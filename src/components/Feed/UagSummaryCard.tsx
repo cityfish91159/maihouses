@@ -15,7 +15,7 @@ export const UagSummaryCard: React.FC<UagSummaryCardProps> = ({ data, className 
             <div className="flex items-center gap-3 border-b border-[#f1f5f9] pb-2.5">
                 <div className="flex size-10 items-center justify-center rounded-full border border-brand-100 bg-[#faefe5] font-black text-[#92400e]">客</div>
                 <div className="flex-1 leading-[1.3]">
-                    <b className="block text-[15px] text-[#0f172a]">{STRINGS.AGENT.UAG.TITLE}</b>
+                    <b className="block text-[15px] text-ink-900">{STRINGS.AGENT.UAG.TITLE}</b>
                     <div className="text-[12px] text-[#6c7b91]">UAG 精準獲客 · 即時</div>
                 </div>
             </div>

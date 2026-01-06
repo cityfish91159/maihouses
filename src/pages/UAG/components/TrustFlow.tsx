@@ -331,7 +331,7 @@ export default function TrustFlow() {
                   {formatTime(event.timestamp)}
                 </div>
                 <div>
-                  <div style={{ fontSize: 12, color: '#0f172a' }}>
+                  <div style={{ fontSize: 12, color: 'var(--ink)' }}>
                     <b>{event.stepName} {event.action}</b>
                     <span style={{ color: '#64748b' }}>｜{event.actor === 'agent' ? '房仲' : event.actor === 'buyer' ? '買方' : '系統'}</span>
                   </div>
