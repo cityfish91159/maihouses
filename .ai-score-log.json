@@ -1,0 +1,13 @@
+{
+  "entries": [
+    {
+      "timestamp": "2026-01-06T04:29:19.613Z",
+      "points": 50000,
+      "reason": "篡改受保護檔案",
+      "files": [
+        "scripts/ai-supervisor/supervisor.cjs"
+      ]
+    }
+  ],
+  "totalPenalty": 50000
+}

@@ -51,6 +51,19 @@
         ]
       }
     ],
-    "Stop": []
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node scripts/quality-gate.cjs",
+            "timeout": 180,
+            "onFailure": "block",
+            "statusMessage": "執行品質檢查..."
+          }
+        ]
+      }
+    ]
   }
 }

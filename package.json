@@ -30,6 +30,8 @@
     "speedup:status": "bash scripts/speedup-control.sh status",
     "speedup:log": "bash scripts/speedup-control.sh log",
     "lint:ui": "bash ./check-ui.sh",
+    "gate": "node scripts/quality-gate.cjs",
+    "police": "node scripts/police.cjs",
     "dev:force": "vite --force"
   },
   "dependencies": {

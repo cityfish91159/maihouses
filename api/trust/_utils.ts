@@ -53,15 +53,15 @@ if (!SYSTEM_API_KEY) throw new Error("Missing SYSTEM_API_KEY env var");
 
 export const TIMEOUTS: Record<number, number> = { 5: 12 * 3600 * 1000 }; // 12 hours
 
-export const createInitialState = (id: string) => ({
+export const createInitialState = (id: string): TrustState => ({
     id, currentStep: 1, isPaid: false,
     steps: {
-        1: { name: "已電聯", agentStatus: 'pending', buyerStatus: 'pending', data: {}, locked: false },
-        2: { name: "已帶看", agentStatus: 'pending', buyerStatus: 'pending', locked: false, data: { risks: { water: false, wall: false, structure: false, other: false } } },
-        3: { name: "已出價", agentStatus: 'pending', buyerStatus: 'pending', data: {}, locked: false },
-        4: { name: "已斡旋", agentStatus: 'pending', buyerStatus: 'pending', data: {}, locked: false },
-        5: { name: "已成交", agentStatus: 'pending', buyerStatus: 'pending', locked: false, paymentStatus: 'pending', paymentDeadline: null, data: {} },
-        6: { name: "已交屋", agentStatus: 'pending', buyerStatus: 'pending', locked: false, checklist: [], data: {} }
+        1: { name: "已電聯", agentStatus: 'pending' as const, buyerStatus: 'pending' as const, data: {}, locked: false },
+        2: { name: "已帶看", agentStatus: 'pending' as const, buyerStatus: 'pending' as const, locked: false, data: { risks: { water: false, wall: false, structure: false, other: false } } },
+        3: { name: "已出價", agentStatus: 'pending' as const, buyerStatus: 'pending' as const, data: {}, locked: false },
+        4: { name: "已斡旋", agentStatus: 'pending' as const, buyerStatus: 'pending' as const, data: {}, locked: false },
+        5: { name: "已成交", agentStatus: 'pending' as const, buyerStatus: 'pending' as const, locked: false, paymentStatus: 'pending' as const, paymentDeadline: null, data: {} },
+        6: { name: "已交屋", agentStatus: 'pending' as const, buyerStatus: 'pending' as const, locked: false, checklist: [], data: {} }
     },
     supplements: []
 });
