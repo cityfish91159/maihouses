@@ -293,36 +293,6 @@
   }
 }
 
-/* Mobile Header - 768px and below */
-@media (max-width: 768px) {
-  .uag-header-inner {
-    flex-wrap: nowrap;
-    padding: 10px 12px;
-    gap: 8px;
-  }
-  .uag-breadcrumb {
-    display: none; /* Logo 已可返回首頁，隱藏重複資訊 */
-  }
-  .uag-home-link {
-    display: none; /* Logo 已可返回首頁 */
-  }
-  .uag-header-actions {
-    width: auto;
-    margin-left: auto;
-  }
-  .uag-user-button {
-    padding: 2px 6px 2px 2px;
-  }
-  .uag-user-info {
-    display: none; /* 手機版只顯示頭像 */
-  }
-  .uag-user-avatar {
-    width: 28px;
-    height: 28px;
-    font-size: 12px;
-  }
-}
-
 /* ====== Cards ====== */
 .uag-card{
   background:var(--bg-card);

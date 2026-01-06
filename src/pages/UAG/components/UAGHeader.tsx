@@ -165,7 +165,7 @@ export const UAGHeader: React.FC<UAGHeaderProps> = ({
                 aria-label={`用戶選單：${displayName}`}
                 aria-expanded={userMenuOpen}
               >
-                <div className={styles['uag-user-avatar']} aria-hidden="true">
+                <div className={styles['uag-user-avatar']} aria-label={`用戶頭像：${displayName}`}>
                   {displayName.charAt(0).toUpperCase()}
                 </div>
                 <div className={styles['uag-user-info']}>

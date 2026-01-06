@@ -26,24 +26,8 @@ import type { Lead } from './types/uag.types';
 function UAGPageContent() {
   const { data: appData, isLoading, buyLead, isBuying, useMock, toggleMode } = useUAG();
   const { selectedLead, selectLead, close } = useLeadSelection();
-  const { user, signOut, loading: authLoading } = useAuth();
+  const { user } = useAuth();
   const actionPanelRef = useRef<HTMLDivElement>(null);
-  const [isSigningOut, setIsSigningOut] = useState(false);
-
-  // 代理商資料從 user metadata 取得
-  const agentProfile = user ? {
-    name: user.user_metadata?.name ?? user.email?.split('@')[0] ?? null,
-    company: user.user_metadata?.company ?? null,
-  } : null;
-
-  const handleSignOut = async () => {
-    setIsSigningOut(true);
-    try {
-      await signOut();
-    } finally {
-      setIsSigningOut(false);
-    }
-  };
 
   // MSG-5: Modal 狀態
   const [showMessageModal, setShowMessageModal] = useState(false);
@@ -93,13 +77,7 @@ function UAGPageContent() {
 
   return (
     <div className={styles['uag-page']}>
-      <UAGHeader
-        user={user}
-        agentProfile={agentProfile}
-        isLoading={authLoading}
-        onSignOut={handleSignOut}
-        isSigningOut={isSigningOut}
-      />
+      <UAGHeader user={user} />
 
       <main className={styles['uag-container']}>
         <div className={styles['uag-grid']}>
