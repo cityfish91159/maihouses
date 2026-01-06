@@ -39,12 +39,12 @@ export const PreviewSection: React.FC = () => {
             <MapPin size={14} /> {form.address || '地址'}
           </p>
           <div className="mt-3 flex items-baseline gap-1.5">
-            <span className="text-2xl font-black text-maihouses-dark">{form.price || '0'}</span>
+            <span className="text-maihouses-dark text-2xl font-black">{form.price || '0'}</span>
             <span className="text-sm font-bold text-slate-500">萬</span>
           </div>
           <div className="mt-4 flex flex-wrap gap-2">
             {tags.map((tag, i) => (
-              <span key={i} className="rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-xs font-bold text-maihouses-dark">
+              <span key={i} className="text-maihouses-dark rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-xs font-bold">
                 {tag}
               </span>
             ))}

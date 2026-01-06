@@ -43,19 +43,19 @@ export default function Header({ onOpenAIStudio }: HeaderProps) {
           {/* Desktop Nav - 桌面版 */}
           <nav className="hidden items-center gap-1 md:flex md:gap-2" aria-label="主要動作">
             {/* Column 1: List */}
-            <a href={ROUTES.PROPERTY_LIST} className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-[15px] font-bold text-brand-700 transition-all hover:bg-brand-50/80 hover:text-brand-600 active:scale-[0.98]">
+            <a href={ROUTES.PROPERTY_LIST} className="hover:bg-brand-50/80 flex items-center gap-2 rounded-xl px-4 py-2.5 text-[15px] font-bold text-brand-700 transition-all hover:text-brand-600 active:scale-[0.98]">
               <List size={18} strokeWidth={2.5} className="opacity-80" />
               <span>房地產列表</span>
             </a>
 
             {/* Column 2: Login */}
-            <a href={`${ROUTES.AUTH}?mode=login`} className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-[15px] font-bold text-brand-700 transition-all hover:bg-brand-50/80 hover:text-brand-600 active:scale-[0.98]">
+            <a href={`${ROUTES.AUTH}?mode=login`} className="hover:bg-brand-50/80 flex items-center gap-2 rounded-xl px-4 py-2.5 text-[15px] font-bold text-brand-700 transition-all hover:text-brand-600 active:scale-[0.98]">
               <LogIn size={18} strokeWidth={2.5} className="opacity-80" />
               <span>登入</span>
             </a>
 
             {/* Column 3: Register (CTA) */}
-            <a href={`${ROUTES.AUTH}?mode=signup`} className="ml-1 flex items-center gap-2 rounded-xl border border-transparent bg-brand-700 px-5 py-2.5 text-[15px] font-bold text-white shadow-md shadow-brand-700/10 transition-all hover:-translate-y-0.5 hover:bg-brand-600 hover:shadow-lg hover:shadow-brand-700/20 active:scale-[0.98]">
+            <a href={`${ROUTES.AUTH}?mode=signup`} className="shadow-brand-700/10 hover:shadow-brand-700/20 ml-1 flex items-center gap-2 rounded-xl border border-transparent bg-brand-700 px-5 py-2.5 text-[15px] font-bold text-white shadow-md transition-all hover:-translate-y-0.5 hover:bg-brand-600 hover:shadow-lg active:scale-[0.98]">
               <UserPlus size={18} strokeWidth={2.5} />
               <span>免費註冊</span>
             </a>
@@ -136,7 +136,7 @@ export default function Header({ onOpenAIStudio }: HeaderProps) {
       </header>
 
       {/* Hero Section */}
-      <div className="relative border-b border-brand-100/50 bg-brand-50">
+      <div className="border-brand-100/50 relative border-b bg-brand-50">
 
         {/* Content Container */}
         <div className="relative z-10 mx-auto max-w-[1120px] px-4 pb-6 pt-24">

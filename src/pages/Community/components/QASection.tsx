@@ -27,7 +27,7 @@ interface QACardProps {
 function QACard({ q, perm, isUnanswered = false, onAnswer, isAnswering, onUnlock, hideUnlockButton = false }: QACardProps) {
   const displayTime = formatRelativeTimeLabel(q.time);
   return (
-    <article className={`rounded-[12px] border p-3 transition-all hover:border-brand/15 ${isUnanswered ? 'border-brand-light/30 bg-gradient-to-br from-brand-50 to-brand-100/30' : 'border-border-light bg-white'}`}>
+    <article className={`hover:border-brand/15 rounded-[12px] border p-3 transition-all ${isUnanswered ? 'border-brand-light/30 to-brand-100/30 bg-gradient-to-br from-brand-50' : 'border-border-light bg-white'}`}>
       <div className="mb-1.5 text-[13px] font-bold leading-snug text-brand-700">Q: {q.question}</div>
       <div className="mb-2 flex flex-wrap items-center gap-1.5 text-[11px] text-ink-600">
         <span>👤 準住戶</span>
@@ -59,7 +59,7 @@ function QACard({ q, perm, isUnanswered = false, onAnswer, isAnswering, onUnlock
           
           {/* 非會員：顯示「還有 X 則回答」+ 註冊按鈕（但在 LockedOverlay 內不顯示） */}
           {!hideUnlockButton && q.hasMoreAnswers && q.totalAnswers && (
-            <div className="mt-2 rounded-lg border border-brand/10 bg-gradient-to-r from-brand-50 to-brand-100/50 p-3 text-center">
+            <div className="border-brand/10 to-brand-100/50 mt-2 rounded-lg border bg-gradient-to-r from-brand-50 p-3 text-center">
               <p className="mb-2 text-[13px] text-ink-700">
                 🔒 還有 <span className="font-bold text-brand">{q.totalAnswers - q.answers.length}</span> 則回答
               </p>
@@ -418,7 +418,7 @@ export function QASection({ viewerRole, questions: questionsProp, onAskQuestion,
 
   return (
     <section className="bg-white/98 scroll-mt-20 overflow-hidden rounded-[18px] border border-border-light shadow-[0_2px_12px_rgba(0,51,102,0.04)]" aria-labelledby="qa-heading" id="qa-section">
-      <div className="from-brand/3 to-brand-600/1 flex items-center justify-between border-b border-brand/5 bg-gradient-to-br px-4 py-3.5">
+      <div className="from-brand/3 to-brand-600/1 border-brand/5 flex items-center justify-between border-b bg-gradient-to-br px-4 py-3.5">
         <div>
           <h2 id="qa-heading" className="flex items-center gap-1.5 text-[15px] font-extrabold text-brand-700">
             🙋 準住戶問答
@@ -492,7 +492,7 @@ export function QASection({ viewerRole, questions: questionsProp, onAskQuestion,
             <button
               type="button"
               onClick={openAskModal}
-              className="bg-brand/6 hover:bg-brand/12 flex w-full items-center justify-center gap-1 rounded-lg border border-brand/10 px-2.5 py-1.5 text-[11px] font-semibold text-brand transition"
+              className="bg-brand/6 hover:bg-brand/12 border-brand/10 flex w-full items-center justify-center gap-1 rounded-lg border px-2.5 py-1.5 text-[11px] font-semibold text-brand transition"
             >
               {perm.canAskQuestion ? '我想問問題' : '登入後發問'}
             </button>
@@ -501,7 +501,7 @@ export function QASection({ viewerRole, questions: questionsProp, onAskQuestion,
 
         {/* 訪客固定顯示註冊 CTA，放在還沒人回答區塊下方 */}
         {shouldShowUnlockCta && (
-          <div className="bg-brand/4 rounded-[12px] border border-brand/10 p-3 text-center">
+          <div className="bg-brand/4 border-brand/10 rounded-[12px] border p-3 text-center">
             <div className="text-sm font-bold text-brand-700">免費註冊 / 登入</div>
             <p className="mt-1 text-[12px] text-ink-600">
               {remainingAnsweredCount > 0

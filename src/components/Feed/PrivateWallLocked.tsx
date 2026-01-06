@@ -68,7 +68,7 @@ const PrivateWallLocked = memo(function PrivateWallLocked() {
 
                 <button
                     onClick={handleAction}
-                    className="rounded-full bg-brand-600 px-8 py-3 text-base font-bold text-white shadow-lg transition-all hover:scale-105 hover:bg-brand-700 focus:outline-none focus:ring-4 focus:ring-brand-500/30 active:scale-95"
+                    className="focus:ring-brand-500/30 rounded-full bg-brand-600 px-8 py-3 text-base font-bold text-white shadow-lg transition-all hover:scale-105 hover:bg-brand-700 focus:outline-none focus:ring-4 active:scale-95"
                     aria-label={isAuthenticated ? STRINGS.COMMUNITY.BTN_UNLOCK_USER : STRINGS.COMMUNITY.BTN_UNLOCK_GUEST}
                 >
                     {isAuthenticated

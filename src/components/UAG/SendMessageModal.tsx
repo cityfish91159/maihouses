@@ -226,7 +226,7 @@ export function SendMessageModal({
               placeholder={S.MESSAGE_PLACEHOLDER}
               maxLength={500}
               rows={4}
-              className="w-full resize-none rounded-xl border border-gray-200 p-3 text-sm transition-colors focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+              className="focus:ring-brand-500/20 w-full resize-none rounded-xl border border-gray-200 p-3 text-sm transition-colors focus:border-brand-500 focus:outline-none focus:ring-2"
               aria-label={S.MESSAGE_LABEL}
               disabled={isSending}
             />

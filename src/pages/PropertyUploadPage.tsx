@@ -399,14 +399,14 @@ const PropertyUploadContent: React.FC = () => {
             <div className="grid grid-cols-1 gap-3">
               <Link
                 to={`/p/${uploadResult.public_id}`}
-                className="flex items-center justify-center gap-2 rounded-xl bg-maihouses-dark py-4 font-bold text-white transition-all hover:bg-[#002244] active:scale-[0.98]"
+                className="bg-maihouses-dark flex items-center justify-center gap-2 rounded-xl py-4 font-bold text-white transition-all hover:bg-[#002244] active:scale-[0.98]"
               >
                 查看物件詳情
               </Link>
               {uploadResult.community_id && (
                 <Link
                   to={`/community/${uploadResult.community_id}`}
-                  className="flex items-center justify-center gap-2 rounded-xl border-2 border-maihouses-dark py-4 font-bold text-maihouses-dark transition-all hover:bg-blue-50 active:scale-[0.98]"
+                  className="border-maihouses-dark text-maihouses-dark flex items-center justify-center gap-2 rounded-xl border-2 py-4 font-bold transition-all hover:bg-blue-50 active:scale-[0.98]"
                 >
                   前往社區牆
                 </Link>
@@ -507,7 +507,7 @@ const PropertyUploadContent: React.FC = () => {
                   onClick={handleSubmit}
                   disabled={!validation.canSubmit || loading}
                   className={`group relative w-full overflow-hidden rounded-xl py-4 font-black text-white transition-all active:scale-[0.98] ${validation.canSubmit && !loading
-                    ? 'bg-gradient-to-r from-maihouses-dark to-maihouses-light shadow-lg shadow-blue-200 hover:translate-y-[-2px] hover:shadow-xl'
+                    ? 'from-maihouses-dark to-maihouses-light bg-gradient-to-r shadow-lg shadow-blue-200 hover:translate-y-[-2px] hover:shadow-xl'
                     : 'cursor-not-allowed bg-slate-300'
                     }`}
                 >

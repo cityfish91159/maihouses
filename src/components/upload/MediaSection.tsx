@@ -33,7 +33,7 @@ export const MediaSection: React.FC = () => {
 
   return (
     <section className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
-      <h2 className="mb-5 flex items-center gap-2 text-lg font-bold text-maihouses-dark">
+      <h2 className="text-maihouses-dark mb-5 flex items-center gap-2 text-lg font-bold">
         <Sparkles size={20} className="text-yellow-500" /> 文案與照片
       </h2>
 
@@ -112,7 +112,7 @@ export const MediaSection: React.FC = () => {
             {/* 上傳按鈕 */}
             <button
               onClick={() => fileInputRef.current?.click()}
-              className="flex aspect-square flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 text-slate-400 transition-all hover:border-maihouses-light hover:bg-blue-50 hover:text-maihouses-light"
+              className="hover:border-maihouses-light hover:text-maihouses-light flex aspect-square flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 text-slate-400 transition-all hover:bg-blue-50"
             >
               <Upload size={28} />
               <span className="mt-2 text-xs font-bold">上傳照片</span>

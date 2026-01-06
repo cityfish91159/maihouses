@@ -31,10 +31,10 @@ function ReviewCard({ entry }: ReviewCardProps) {
   const hasDeals = entry.deals > 0;
 
   return (
-    <div className="rounded-[14px] border border-border-light bg-white p-3.5 transition-all hover:border-brand/15 hover:shadow-brand-xs">
+    <div className="hover:border-brand/15 rounded-[14px] border border-border-light bg-white p-3.5 transition-all hover:shadow-brand-xs">
       <div className="mb-2.5 flex items-center gap-2.5">
         <div 
-          className="flex size-[38px] items-center justify-center rounded-full border-2 border-brand bg-gradient-to-br from-brand-100/50 to-white text-sm font-extrabold text-brand" 
+          className="from-brand-100/50 flex size-[38px] items-center justify-center rounded-full border-2 border-brand bg-gradient-to-br to-white text-sm font-extrabold text-brand" 
           aria-hidden="true"
         >
           {entry.author.charAt(0)}
@@ -50,7 +50,7 @@ function ReviewCard({ entry }: ReviewCardProps) {
           )}
         </div>
       </div>
-      <div className={`flex items-start gap-2.5 rounded-[10px] p-2 text-[13px] leading-relaxed ${isPro ? 'bg-gradient-to-br from-brand-50 to-brand-100/50' : 'bg-gradient-to-br from-brand-100/30 to-brand-100'}`}>
+      <div className={`flex items-start gap-2.5 rounded-[10px] p-2 text-[13px] leading-relaxed ${isPro ? 'to-brand-100/50 bg-gradient-to-br from-brand-50' : 'from-brand-100/30 bg-gradient-to-br to-brand-100'}`}>
         <span className="flex size-6 shrink-0 items-center justify-center text-base" aria-hidden="true">{isPro ? '✅' : '⚖️'}</span>
         <span className="flex-1 text-ink-900">{entry.text}</span>
       </div>
@@ -110,7 +110,7 @@ export function ReviewsSection({ viewerRole, reviews: reviewsProp, onUnlock }: R
 
   return (
     <section className="bg-white/98 overflow-hidden rounded-[18px] border border-border-light shadow-[0_2px_12px_rgba(0,51,102,0.04)]" aria-labelledby="reviews-heading">
-      <div className="from-brand/8 to-brand-600/4 flex items-center justify-between border-b border-brand/5 bg-gradient-to-br px-4 py-3.5">
+      <div className="from-brand/8 to-brand-600/4 border-brand/5 flex items-center justify-between border-b bg-gradient-to-br px-4 py-3.5">
         <div>
           <h2 id="reviews-heading" className="flex items-center gap-1.5 text-[15px] font-extrabold text-brand-700">⭐ 社區評價</h2>
           <p className="mt-0.5 text-[11px] text-ink-600">來自最真實的評價</p>

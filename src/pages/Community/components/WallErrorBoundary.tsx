@@ -189,7 +189,7 @@ export class WallErrorBoundary extends React.Component<Props, State> {
               {categorized.onAction && (
                 <button
                   onClick={categorized.onAction ?? this.resetErrorBoundary}
-                  className="rounded-lg border border-brand/40 px-4 py-2 text-sm font-semibold text-brand transition hover:bg-brand/10"
+                  className="border-brand/40 hover:bg-brand/10 rounded-lg border px-4 py-2 text-sm font-semibold text-brand transition"
                 >
                   {categorized.actionText}
                 </button>
@@ -205,7 +205,7 @@ export class WallErrorBoundary extends React.Component<Props, State> {
               {!categorized.onAction && !categorized.actionHref && (
                 <button
                   onClick={this.resetErrorBoundary}
-                  className="rounded-lg border border-brand/40 px-4 py-2 text-sm font-semibold text-brand transition hover:bg-brand/10"
+                  className="border-brand/40 hover:bg-brand/10 rounded-lg border px-4 py-2 text-sm font-semibold text-brand transition"
                 >
                   🔄 重試
                 </button>

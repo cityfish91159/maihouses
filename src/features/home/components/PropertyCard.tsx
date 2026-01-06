@@ -8,7 +8,7 @@ export type { PropertyReview as Review, FeaturedProperty as Property };
 export default function PropertyCard({ property }: { property: FeaturedProperty }) {
     return (
         <article
-            className="group relative isolate overflow-hidden rounded-2xl border border-brand-100 bg-white shadow-none transition-all duration-[180ms] ease-out hover:-translate-y-0.5 hover:border-brand-700/20 hover:shadow-[0_10px_26px_rgba(13,39,94,0.12)]"
+            className="hover:border-brand-700/20 group relative isolate overflow-hidden rounded-2xl border border-brand-100 bg-white shadow-none transition-all duration-[180ms] ease-out hover:-translate-y-0.5 hover:shadow-[0_10px_26px_rgba(13,39,94,0.12)]"
         >
             {/* Background Glow Effect */}
             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_60%_at_80%_-10%,rgba(23,73,215,0.12),transparent_60%)] opacity-80" />
@@ -64,14 +64,14 @@ export default function PropertyCard({ property }: { property: FeaturedProperty 
                             key={i}
                             className={`flex items-start gap-2.5 py-2 ${i !== 0 ? 'border-t border-dashed border-black/10' : ''}`}
                         >
-                            <div className="grid size-[30px] flex-none place-items-center rounded-full bg-gradient-to-b from-neutral-150 to-neutral-200 text-xs font-black text-brand-700 ring-1 ring-inset ring-brand-700/15">
+                            <div className="ring-brand-700/15 grid size-[30px] flex-none place-items-center rounded-full bg-gradient-to-b from-neutral-150 to-neutral-200 text-xs font-black text-brand-700 ring-1 ring-inset">
                                 {review.avatar}
                             </div>
                             <div className="min-w-0 flex-1">
                                 <div className="mb-0.5 flex items-center gap-1.5 text-xs text-black/60">
                                     <span className="font-black text-black/85">{review.name} · {review.role}</span>
                                     <span className="inline-block size-1 rounded-full bg-black/20" />
-                                    <span className="rounded-full bg-brand-700/10 px-2 py-0.5 font-black text-brand-700">
+                                    <span className="bg-brand-700/10 rounded-full px-2 py-0.5 font-black text-brand-700">
                                         {review.tag}
                                     </span>
                                 </div>
@@ -84,7 +84,7 @@ export default function PropertyCard({ property }: { property: FeaturedProperty 
 
                     <button
                         type="button"
-                        className="mt-2.5 w-full cursor-pointer rounded-xl border border-brand-700/30 bg-gradient-to-b from-white to-neutral-100 px-3 py-2.5 text-[13px] font-black text-brand-700 transition-all duration-150 ease-out hover:from-white hover:to-neutral-80 hover:shadow-brand-lg active:translate-y-px"
+                        className="border-brand-700/30 mt-2.5 w-full cursor-pointer rounded-xl border bg-gradient-to-b from-white to-neutral-100 px-3 py-2.5 text-[13px] font-black text-brand-700 transition-all duration-150 ease-out hover:from-white hover:to-neutral-80 hover:shadow-brand-lg active:translate-y-px"
                     >
                         註冊後看更多評價
                     </button>

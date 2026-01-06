@@ -66,7 +66,7 @@ export default function MascotMaiMai({ isThinking = false, isSuccess = false, ha
 
   return (
     <div className="relative mb-4 h-40 w-32 text-brand">
-      <div className="absolute left-1/2 top-1/2 -z-10 size-24 -translate-x-1/2 -translate-y-1/2 rounded-full bg-brand-100/50 blur-2xl" />
+      <div className="bg-brand-100/50 absolute left-1/2 top-1/2 -z-10 size-24 -translate-x-1/2 -translate-y-1/2 rounded-full blur-2xl" />
       {speechMessages.length > 0 && (
         <MaiMaiSpeech messages={speechMessages} />
       )}

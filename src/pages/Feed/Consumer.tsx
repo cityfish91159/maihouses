@@ -196,7 +196,7 @@ function ConsumerContent({ userId, forceMock }: ConsumerProps) {
   // Auth 載入中
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-brand-50 to-brand-100/50">
+      <div className="to-brand-100/50 min-h-screen bg-gradient-to-b from-brand-50">
         <GlobalHeader mode="consumer" />
         <div className="mx-auto max-w-[960px] p-4">
           <FeedSkeleton />

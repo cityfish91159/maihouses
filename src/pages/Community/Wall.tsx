@@ -272,7 +272,7 @@ function WallInner() {
   if (!communityId) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-[var(--bg-base)] to-[var(--bg-alt)]">
-        <div className="rounded-2xl border border-brand/10 bg-white px-8 py-10 text-center shadow-[0_10px_30px_rgba(0,34,73,0.08)]">
+        <div className="border-brand/10 rounded-2xl border bg-white px-8 py-10 text-center shadow-[0_10px_30px_rgba(0,34,73,0.08)]">
           <div className="mb-3 text-4xl">🧭</div>
           <p className="mb-4 text-base font-semibold text-ink-900">找不到指定的社區牆</p>
           <p className="mb-6 text-sm text-ink-600">請確認網址是否正確，或回到首頁重新選擇社區。</p>
@@ -358,7 +358,7 @@ function WallInner() {
                 onClick={handleReload}
                 disabled={isReloading}
                 aria-busy={isReloading}
-                className={`rounded-lg border border-brand/40 px-4 py-2 text-sm font-semibold transition hover:bg-brand/10 ${isReloading ? 'cursor-not-allowed text-brand/60' : 'text-brand'}`}
+                className={`border-brand/40 hover:bg-brand/10 rounded-lg border px-4 py-2 text-sm font-semibold transition ${isReloading ? 'text-brand/60 cursor-not-allowed' : 'text-brand'}`}
               >
                 {isReloading ? '⏳ 重新整理中…' : '🔄 重新整理'}
               </button>

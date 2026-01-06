@@ -183,7 +183,7 @@ export default function CommunityTeaser() {
       </div>
 
       <a
-        className="group relative mt-4 flex items-center gap-2.5 rounded-xl border border-brand-100 bg-gradient-to-b from-white to-brand-50 p-3.5 font-black text-brand-700 no-underline transition-all duration-200 hover:border-brand-700/20 hover:shadow-brand-md active:translate-y-px lg:justify-center lg:text-center"
+        className="hover:border-brand-700/20 group relative mt-4 flex items-center gap-2.5 rounded-xl border border-brand-100 bg-gradient-to-b from-white to-brand-50 p-3.5 font-black text-brand-700 no-underline transition-all duration-200 hover:shadow-brand-md active:translate-y-px lg:justify-center lg:text-center"
         href={SEED_REVIEWS_URL}
         aria-label="點我看更多社區評價"
       >

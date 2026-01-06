@@ -19,7 +19,7 @@ interface LogoContentProps {
 const LogoContent: React.FC<LogoContentProps> = ({ showSlogan, className, showBadge }) => (
   <div className={`group flex cursor-pointer items-center gap-3 ${className}`}>
     {/* Logo Icon */}
-    <div className="relative flex size-[42px] items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-brand-700 to-brand-600 shadow-lg shadow-brand-700/20 transition-all duration-300 group-hover:scale-105 group-hover:shadow-brand-700/30">
+    <div className="shadow-brand-700/20 group-hover:shadow-brand-700/30 relative flex size-[42px] items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-brand-700 to-brand-600 shadow-lg transition-all duration-300 group-hover:scale-105">
       {/* Shine Effect */}
       <div className="absolute inset-0 translate-y-full bg-gradient-to-tr from-transparent via-white/10 to-transparent transition-transform duration-700 ease-out group-hover:translate-y-0"></div>
 
@@ -42,7 +42,7 @@ const LogoContent: React.FC<LogoContentProps> = ({ showSlogan, className, showBa
       </div>
 
       {showSlogan && (
-        <div className="ml-3 hidden h-5 items-center border-l-2 border-brand-100/80 pl-3 sm:flex">
+        <div className="border-brand-100/80 ml-3 hidden h-5 items-center border-l-2 pl-3 sm:flex">
           <span className="pt-px text-[15px] font-bold uppercase leading-none tracking-[0.15em] text-brand-500 transition-colors group-hover:text-brand-700">
             讓家，不只是地址
           </span>

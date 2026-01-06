@@ -174,12 +174,17 @@ export default function SmartAsk() {
     }, [status]);
 
     return (
-        <section className="group relative isolate overflow-hidden rounded-[24px] border border-brand-100 bg-gradient-to-br from-white via-[#F8FAFC] to-brand-700/[0.03] shadow-brand-lg transition-all duration-300 hover:shadow-brand-xl">
+        <section className="to-brand-700/[0.03] group relative isolate overflow-hidden rounded-[24px] border border-brand-100 bg-gradient-to-br from-white via-[#F8FAFC] shadow-brand-lg transition-all duration-300 hover:shadow-brand-xl">
 
             {/* --- Background Elements --- */}
-            <div className="pointer-events-none absolute -right-24 -top-24 size-80 rounded-full bg-brand-100/30 mix-blend-multiply blur-3xl"></div>
-            <div className="pointer-events-none absolute -bottom-24 -left-24 size-96 rounded-full bg-brand-700/5 mix-blend-multiply blur-3xl"></div>
-            <div className="pointer-events-none absolute inset-0 z-0 bg-[linear-gradient(to_right,rgba(0,56,90,0.03)_1px,transparent_1px),linear-gradient(to_bottom,rgba(0,56,90,0.03)_1px,transparent_1px)] [background-size:24px_24px] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000_70%,transparent_100%)]"></div>
+            <div className="bg-brand-100/30 pointer-events-none absolute -right-24 -top-24 size-80 rounded-full mix-blend-multiply blur-3xl"></div>
+            <div className="bg-brand-700/5 pointer-events-none absolute -bottom-24 -left-24 size-96 rounded-full mix-blend-multiply blur-3xl"></div>
+            <div 
+              className="pointer-events-none absolute inset-0 z-0 [background-size:24px_24px] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000_70%,transparent_100%)]"
+              style={{
+                backgroundImage: `linear-gradient(to right, rgba(var(--brand-primary-rgb), 0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(var(--brand-primary-rgb), 0.03) 1px, transparent 1px)`
+              }}
+            ></div>
 
             {/* Decorative Top Bar */}
             <div className="relative z-20 h-1.5 w-full bg-gradient-to-r from-brand-700 via-brand-600 to-brand-500"></div>
@@ -229,7 +234,7 @@ export default function SmartAsk() {
                 {/* Chat Display Area */}
                 <div
                     ref={chatRef}
-                    className="mb-4 flex h-[380px] flex-col gap-4 overflow-y-auto scroll-smooth rounded-2xl border border-brand-100/60 bg-white/50 p-5 shadow-inner backdrop-blur-md"
+                    className="border-brand-100/60 mb-4 flex h-[380px] flex-col gap-4 overflow-y-auto scroll-smooth rounded-2xl border bg-white/50 p-5 shadow-inner backdrop-blur-md"
                     role="log"
                     aria-live="polite"
                 >
@@ -278,7 +283,7 @@ export default function SmartAsk() {
                 <div className="group/input relative">
                     <input
                         type="text"
-                        className="w-full rounded-xl border-2 border-brand-100 bg-white/80 py-4 pl-5 pr-14 text-[15px] font-bold text-ink-900 shadow-sm backdrop-blur-sm transition-all placeholder:text-ink-400/80 hover:border-brand-300 focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-50/50"
+                        className="focus:ring-brand-50/50 w-full rounded-xl border-2 border-brand-100 bg-white/80 py-4 pl-5 pr-14 text-[15px] font-bold text-ink-900 shadow-sm backdrop-blur-sm transition-all placeholder:text-ink-400/80 hover:border-brand-300 focus:border-brand-500 focus:outline-none focus:ring-4"
                         placeholder="說說你今天過得如何，或任何想聊的..."
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
