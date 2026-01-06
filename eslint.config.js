@@ -37,6 +37,15 @@ export default [
       'jsx-a11y/click-events-have-key-events': 'warn',
       'jsx-a11y/no-static-element-interactions': 'warn',
       'jsx-a11y/alt-text': 'error',
+
+      // 🛡️ Design Token Guardrails - 禁止硬編碼 Brand Hex Codes
+      'no-restricted-syntax': [
+        'warn',
+        {
+          selector: 'Literal[value=/(#00385a|#004E7C|#005585|#E6EDF7|rgba\\(0,\\s*56,\\s*90)/i]',
+          message: '禁止硬編碼 Brand Color。請使用 Tailwind token (brand-700, accent-alert 等) 或 CSS 變數 (var(--brand))。'
+        }
+      ],
     },
     settings: {
       tailwindcss: {
