@@ -16,6 +16,8 @@ interface ImportMetaEnv {
   readonly VITE_APP_URL?: string;
   /** VAPID 公鑰（Web Push 推播用，可選） */
   readonly VITE_VAPID_PUBLIC_KEY?: string;
+  /** AI Proxy URL（可選） */
+  readonly VITE_AI_PROXY_URL?: string;
 }
 
 interface ImportMeta {
