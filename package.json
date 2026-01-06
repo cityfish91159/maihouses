@@ -13,7 +13,7 @@
   "scripts": {
     "dev": "vite",
     "dev:story": "vite --clearScreen false --open /maimai-story.html",
-    "build": "npx tsc && vite build",
+    "build": "./node_modules/.bin/tsc && vite build",
     "build:local": "node scripts/quality-gate.cjs && tsc && vite build",
     "preview": "vite preview --port 4173",
     "dev:maimai-story": "vite --open /maihouses/maimai-story.html",
