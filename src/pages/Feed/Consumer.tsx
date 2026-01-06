@@ -182,8 +182,8 @@ function ConsumerContent({ userId, forceMock }: ConsumerProps) {
     return () => window.removeEventListener('hashchange', handleNavigation);
   }, [data.posts]); // Re-run when posts load
 
-  const handleSearch = (q: string) => {
-    // console.log('Search:', q);
+  const handleSearch = (_q: string) => {
+    // 搜尋功能待實作
   };
 
   const [activeTab, setActiveTab] = useState<'public' | 'private'>('public');
