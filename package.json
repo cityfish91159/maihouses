@@ -6,10 +6,14 @@
   "engines": {
     "node": "22.x"
   },
+  "overrides": {
+    "path-to-regexp": "8.0.0",
+    "esbuild": "0.27.2"
+  },
   "scripts": {
     "dev": "vite",
     "dev:story": "vite --clearScreen false --open /maimai-story.html",
-    "build": "tsc && vite build",
+    "build": "npx tsc && vite build",
     "build:local": "node scripts/quality-gate.cjs && tsc && vite build",
     "preview": "vite preview --port 4173",
     "dev:maimai-story": "vite --open /maihouses/maimai-story.html",
@@ -43,7 +47,7 @@
     "@types/jsonwebtoken": "^9.0.10",
     "browser-image-compression": "^2.0.2",
     "canvas-confetti": "^1.9.4",
-    "cloudinary": "^1.41.0",
+    "cloudinary": "^2.8.0",
     "clsx": "^2.1.1",
     "cookie": "^1.1.0",
     "exif-js": "^2.3.0",
@@ -74,12 +78,13 @@
     "@testing-library/user-event": "^14.6.1",
     "@types/canvas-confetti": "^1.9.0",
     "@types/exif-js": "^2.3.1",
+    "@types/node": "^25.0.3",
     "@types/react": "^18.3.4",
     "@types/react-dom": "^18.3.0",
     "@types/uuid": "^9.0.8",
     "@typescript-eslint/parser": "^8.13.0",
-    "@vercel/node": "^5.5.13",
-    "@vitejs/plugin-legacy": "^5.4.3",
+    "@vercel/node": "^2.3.0",
+    "@vitejs/plugin-legacy": "^7.2.1",
     "@vitejs/plugin-react": "^4.3.2",
     "autoprefixer": "^10.4.20",
     "eruda": "^3.4.3",
@@ -99,9 +104,9 @@
     "ts-node": "^10.9.2",
     "tsx": "^4.21.0",
     "typescript": "^5.6.2",
-    "vite": "^5.4.21",
+    "vite": "^7.3.0",
     "vite-plugin-checker": "^0.11.0",
-    "vitest": "^2.0.0",
+    "vitest": "^4.0.16",
     "zod-to-json-schema": "^3.25.0"
   }
 }
