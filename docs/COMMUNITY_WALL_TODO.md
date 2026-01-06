@@ -33,7 +33,7 @@
 | **P1** | UAG-8 自動刷新設定 | ✅ | 1hr | DevOps |
 | **P2** | HEADER-1 Logo 紅點設計 | ✅ | 1hr | Design |
 | **P2** | HEADER-2 UAG Header 優化 | ✅ | 2hr | Frontend |
-| **P2** | UI-1 首頁主色統一 | ✅ | 2hr | Design |
+| **P2** | UI-1 首頁主色統一 | ⚠️ | 2hr | Design |
 | **P2** | MAIMAI-1 教學提示系統 | ⬜ | 3hr | Frontend |
 | **P2** | FEED-1 業務後台連結 | ⬜ | 1hr | Frontend |
 | **P2** | FEED-2 Mock/API 切換驗證 | ⬜ | 1hr | QA |
@@ -1086,123 +1086,26 @@ SELECT MAX(last_active) FROM uag_lead_rankings;
 
 ---
 
-### UI-1: 首頁主色統一 ✅
+### UI-1: 首頁主色統一 ⚠️
 
-**需求**：確保首頁所有元素使用統一的品牌主色
+**需求**：所有 UI 元素使用 Design Token，禁止硬編碼顏色
 
-**施作摘要（2026-01-06 Gemini 完成 - v2 系統化）**：
+**已完成** (2026-01-06)：
+- ✅ CSS Variable 架構：`var(--brand)` 系統化
+- ✅ ESLint Guardrails：`no-restricted-syntax` 禁止 `#00385a`
+- ✅ Semantic Shadow：`shadow-brand-sm`, `shadow-card-glow`
 
-**第一階段：Find & Replace (Commit c5dce347)**
-- 替換 32 處硬編碼顏色為 Tailwind `brand-*` 類
+**待修復** (審核發現)：
+| 檔案 | 問題 | 修復方式 |
+|------|------|----------|
+| `src/components/Feed/UagSummaryCard.tsx` | `text-[#0f172a]` | → `text-ink-900` |
+| `src/pages/Feed/Agent.tsx` | `text-[#0f172a]` | → `text-ink-900` |
+| `src/pages/UAG/components/RadarCluster.tsx` | `color: '#0f172a'` | → `color: 'var(--ink)'` |
+| `src/pages/UAG/components/TrustFlow.tsx` | `color: '#0f172a'` | → `color: 'var(--ink)'` |
 
-**第二階段：系統化架構 (Commit 1ea98080)**
-1. **CSS Variable Driven**: `tailwind.config.cjs` 改用 `var(--brand)` 引用
-2. **Semantic boxShadow**: 新增 `shadow-brand-sm`, `shadow-card-glow`, `shadow-header`, `shadow-alert-glow`
-3. **Design Token**: `--brand-primary-rgb: 0, 56, 90` 用於 `rgba(var())`
-4. **Accent Colors**: 紅點 `#E63946` → `accent-alert` (保留設計意圖)
-5. **Arbitrary Value**: `bg-white/96` → `bg-bg-card-blur`
-6. **ESLint Guardrails**: `no-restricted-syntax` 禁止 `#00385a` 等硬編碼
+**防護升級**：ESLint 規則加入 `#0f172a` 檢測
 
-**當前狀態**：
-- 品牌主色：CSS Variable Driven (`var(--brand)`)
-- 設計系統：SSOT (Single Source of Truth)
-
-**問題分析**：
-1. 部分組件使用硬編碼顏色
-2. Gradient 顏色不一致
-3. Shadow 顏色混用
-
-**修復方案**：
-
-#### 1.1 檢查並統一顏色使用
-
-**檔案 1**: `src/components/Header/Header.tsx`
-```tsx
-// 檢查所有顏色使用
-grep -n "bg-" src/components/Header/Header.tsx
-grep -n "text-" src/components/Header/Header.tsx
-grep -n "border-" src/components/Header/Header.tsx
-
-// 確保使用 brand- 開頭的顏色
-// ✅ 正確: bg-brand-700, text-brand-700, border-brand-100
-// ❌ 錯誤: bg-blue-600, text-gray-700
-```
-
-**檔案 2**: `src/features/home/sections/*.tsx`
-```bash
-# 批量檢查所有首頁組件
-for file in src/features/home/sections/*.tsx; do
-  echo "Checking $file"
-  grep -n "bg-\|text-\|border-" "$file" | grep -v "brand-"
-done
-
-# 如果有輸出，表示有非 brand 顏色需要統一
-```
-
-#### 1.2 更新 Tailwind 配置（如需要）
-```javascript
-// tailwind.config.cjs
-
-module.exports = {
-  theme: {
-    extend: {
-      colors: {
-        brand: {
-          50: '#F0F7FA',   // 極淺藍
-          100: '#E0EFF5',  // 淺藍背景
-          200: '#B3D9E8',  // 按鈕 hover
-          300: '#80C3DB',  // 次要文字
-          400: '#4DADCE',  // 圖標
-          500: '#2697C1',  // 鏈接
-          600: '#0081B4',  // 深色按鈕
-          700: '#003D5C',  // 主色（深藍）
-          800: '#002D44',  // 深色背景
-          900: '#001D2C',  // 極深背景
-        },
-        ink: {
-          700: '#0f172a',  // 文字主色（保留，避免過藍）
-        }
-      },
-      // ...
-    }
-  }
-};
-```
-
-#### 1.3 創建顏色使用指南
-```markdown
-# 首頁顏色使用規範
-
-## 主要元素
-- **背景**: bg-brand-50 (極淺藍) / bg-white
-- **卡片**: bg-white + border-brand-100
-- **主按鈕**: bg-brand-700 hover:bg-brand-600
-- **次按鈕**: border-brand-700 text-brand-700 hover:bg-brand-50
-- **標題**: text-brand-700
-- **正文**: text-ink-700 (避免過藍)
-- **次要文字**: text-brand-500
-
-## 交互元素
-- **鏈接**: text-brand-600 hover:text-brand-700
-- **圖標**: text-brand-700 opacity-80
-- **分隔線**: border-brand-100
-- **陰影**: shadow-brand-700/10
-
-## 禁止使用
-- ❌ bg-blue-*（使用 bg-brand-* 替代）
-- ❌ text-gray-*（使用 text-ink-700 或 text-brand-* 替代）
-- ❌ border-gray-*（使用 border-brand-100 替代）
-```
-
-**驗收標準**：
-- [x] 所有首頁組件使用 `brand-*` 顏色
-- [x] Tailwind 配置完整
-- [x] 顏色使用指南已創建
-- [x] 視覺檢查無色差
-- [x] Dark mode 預留（如有需要）
-
-**預估工時**: 2hr
-**優先級**: P2（品牌一致性）
+**驗收**：`npm run lint` 0 warning
 
 ---
 
