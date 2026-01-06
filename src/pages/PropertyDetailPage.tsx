@@ -744,10 +744,16 @@ export const PropertyDetailPage: React.FC = () => {
         <div
           className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4"
           onClick={() => setShowVipModal(false)}
+          onKeyDown={(e) => { if (e.key === 'Escape') setShowVipModal(false); }}
+          role="button"
+          tabIndex={0}
+          aria-label="關閉 VIP 彈窗"
         >
           <div
             className="animate-in zoom-in-95 w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl duration-300"
             onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => e.stopPropagation()}
+            role="presentation"
           >
             {/* Header */}
             <div className="mb-4 text-center">

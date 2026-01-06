@@ -1090,20 +1090,25 @@ SELECT MAX(last_active) FROM uag_lead_rankings;
 
 **需求**：確保首頁所有元素使用統一的品牌主色
 
-**施作摘要（2026-01-06）**：
-1. **CSS 變數驗證**：React 首頁使用 `--brand: #00385a`（正確）
-2. **視覺檢查**：Puppeteer 截圖確認 Header、搜尋按鈕、三大主按鈕、流程圖標色彩統一
-3. **public/main.css 的 `--brand-primary: #1A5FDB`** 只影響靜態 HTML，不影響 React 首頁
-4. **Tailwind 類名**：Header.tsx 使用 `brand-*` 系列類名
+**施作摘要（2026-01-06 Gemini 完成）**：
+
+1. **P0 CSS 變數修復**：`public/main.css` `--brand-primary` 從 `#1A5FDB` → `#00385a`
+2. **P1 硬編碼顏色替換 (32 處)**：
+   | 檔案 | 替換數 |
+   |------|-------|
+   | `CommunityTeaser.tsx` | 10 |
+   | `PropertyGrid.tsx` | 4 |
+   | `PropertyCard.tsx` | 9 |
+   | `ReviewCard.tsx` | 4 |
+   | `SmartAsk.tsx` | 2 |
+   | `HeroAssure.tsx` | 3 |
+3. **Hooks 修復**：`useTrustRoom.ts:97` fetchData dependency 移除
+4. **驗證**：TypeScript 0 errors, ESLint 0 errors, Build ✅
+5. **部署**：Commit `c5dce347` → Vercel 自動部署
 
 **當前狀態**：
 - 品牌主色：`brand-700` (#00385a) - 已統一
 - Tailwind 配置：`tailwind.config.cjs` - 已正確定義
-
-**位置**：
-- `src/pages/Home.tsx`
-- `src/components/Header/Header.tsx`
-- `tailwind.config.cjs`
 
 **問題分析**：
 1. 部分組件使用硬編碼顏色

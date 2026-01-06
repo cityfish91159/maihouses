@@ -132,6 +132,10 @@ export default function ReportGenerator({ property, isOpen, onClose }: ReportGen
       <div
         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
         onClick={handleClose}
+        onKeyDown={(e) => { if (e.key === 'Escape') handleClose(); }}
+        role="button"
+        tabIndex={0}
+        aria-label="關閉報告生成器"
       />
 
       {/* Modal */}

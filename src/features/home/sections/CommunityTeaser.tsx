@@ -99,11 +99,11 @@ export default function CommunityTeaser() {
   // Loading skeleton
   if (isLoading) {
     return (
-      <HomeCard className="border border-brand-100 bg-white/96 p-3 shadow-[0_4px_20px_rgba(0,56,90,0.03)] backdrop-blur-md">
-        <div className="relative mb-4 flex items-center justify-between overflow-hidden rounded-2xl bg-gradient-to-r from-brand-700 to-brand-600 px-4 py-3 shadow-[0_2px_8px_rgba(0,56,90,0.15)]">
+      <HomeCard className="border border-brand-100 bg-bg-card-blur p-3 shadow-card-glow backdrop-blur-md">
+        <div className="relative mb-4 flex items-center justify-between overflow-hidden rounded-2xl bg-gradient-to-r from-brand-700 to-brand-600 px-4 py-3 shadow-header">
           <div className="pointer-events-none absolute -right-6 -top-6 size-24 rounded-full bg-white/5 blur-2xl" />
           <div className="relative z-10 flex items-center gap-2.5">
-            <div className="size-1.5 rounded-full bg-[#E63946] shadow-[0_0_8px_rgba(230,57,70,0.6)]" />
+            <div className="size-1.5 rounded-full bg-accent-alert shadow-alert-glow" />
             <h3 className="text-shadow-sm m-0 text-lg font-black tracking-wide text-white">社區評價</h3>
             <span className="rounded-full border border-white/20 bg-white/95 px-2.5 py-0.5 text-[11px] font-bold text-brand-700 shadow-sm backdrop-blur-sm">
               聚合
@@ -134,13 +134,13 @@ export default function CommunityTeaser() {
   }
 
   return (
-    <HomeCard className="border border-brand-100 bg-white/96 p-3 shadow-[0_4px_20px_rgba(0,56,90,0.03)] backdrop-blur-md">
-      <div className="relative mb-4 flex items-center justify-between overflow-hidden rounded-2xl bg-gradient-to-r from-brand-700 to-brand-600 px-4 py-3 shadow-[0_2px_8px_rgba(0,56,90,0.15)]">
+    <HomeCard className="border border-brand-100 bg-bg-card-blur p-3 shadow-card-glow backdrop-blur-md">
+      <div className="relative mb-4 flex items-center justify-between overflow-hidden rounded-2xl bg-gradient-to-r from-brand-700 to-brand-600 px-4 py-3 shadow-header">
         {/* Decorative circle for texture */}
         <div className="pointer-events-none absolute -right-6 -top-6 size-24 rounded-full bg-white/5 blur-2xl" />
 
         <div className="relative z-10 flex items-center gap-2.5">
-          <div className="size-1.5 rounded-full bg-[#E63946] shadow-[0_0_8px_rgba(230,57,70,0.6)]" />
+          <div className="size-1.5 rounded-full bg-accent-alert shadow-alert-glow" />
           <h3 className="text-shadow-sm m-0 text-lg font-black tracking-wide text-white">社區評價</h3>
           <span className="rounded-full border border-white/20 bg-white/95 px-2.5 py-0.5 text-[11px] font-bold text-brand-700 shadow-sm backdrop-blur-sm">
             聚合

@@ -2,45 +2,83 @@ module.exports = {
   content: ['./index.html', './src/**/*.{ts,tsx}'],
   theme: {
     extend: {
+      /**
+       * 🎨 Design Tokens - CSS Variable Driven (SSOT)
+       * - 所有顏色引用 CSS 變數 (src/index.css / public/main.css)
+       * - 語意化命名，禁止硬編碼 Hex
+       */
       colors: {
+        // Brand Colors - 引用 CSS 變數
         brand: {
-          DEFAULT: '#00385a', // Unified brand color
-          light: '#009FE8',
-          dark: '#00385a',
-          700: '#00385a',
-          600: '#004E7C',
-          500: '#00629B',
-          300: '#7EA5FF',
-          100: '#E6EDF7',
-          50: '#F6F9FF',
+          DEFAULT: 'var(--brand)',           // #00385a
+          light: 'var(--brand-light)',       // #009FE8
+          dark: 'var(--primary-dark)',       // #002a44
+          700: 'var(--brand)',               // #00385a
+          600: 'var(--brand-600)',           // #004E7C
+          500: 'var(--primary-light)',       // #005282
+          300: '#7EA5FF',                    // 暫無 CSS 變數，待補充
+          100: 'var(--border)',              // #E6EDF7
+          50: 'var(--bg-base)',              // #F6F9FF
         },
+        // Ink (Text) Colors
         ink: {
-          900: '#0A2246',
+          900: 'var(--text-primary)',        // #0A2246
           700: '#2A2F3A',
-          600: '#6C7B91',
+          600: 'var(--text-muted)',          // #6C7B91
           400: '#94A3B8',
         },
-        primary: '#0A2246',
-        success: '#0f6a23',
+        // Accent Colors - 消除 Magic Colors
+        accent: {
+          alert: '#E63946',                  // 紅點、警告
+          'alert-rgb': '230, 57, 70',        // 用於 shadow
+        },
+        // Semantic
+        primary: 'var(--text-primary)',
+        success: 'var(--success)',
+        danger: 'var(--danger)',
+        // Background
         bg: {
-          base: '#f6f9ff',
-          card: 'rgba(255, 255, 255, 0.92)',
-          soft: '#F6F9FF',
+          base: 'var(--bg-base)',
+          page: 'var(--bg-page)',
+          card: 'var(--bg-elevated)',
+          soft: 'var(--bg-alt)',
+          // 消除 bg-white/96 - 使用語意化 token
+          'card-blur': 'rgba(255, 255, 255, 0.96)',
         },
+        // Border
         border: {
-          light: '#E6EDF7',
+          DEFAULT: 'var(--border)',
+          light: 'var(--border-light)',
         },
+        // Text (legacy support)
         text: {
           primary: 'var(--text-primary)',
           secondary: 'var(--text-secondary)',
           tertiary: 'var(--text-tertiary)',
-          muted: '#6C7B91',
-          ink: '#0A2246',
+          muted: 'var(--text-muted)',
+          ink: 'var(--text-primary)',
         },
-        maihouses: {
-          dark: '#003366', // Was hardcoded
-          light: '#00A8E8', // Was hardcoded
-        }
+      },
+      /**
+       * 🌑 Semantic Box Shadows - rgba(var()) Pattern
+       * - 使用 CSS 變數的 RGB 值實現動態陰影
+       * - 消除所有 hardcoded rgba(0,56,90,...) 
+       */
+      boxShadow: {
+        // Brand Shadows (使用 --brand-primary-rgb: 0, 56, 90)
+        'brand-xs': '0 1px 2px rgba(var(--brand-primary-rgb, 0, 56, 90), 0.05)',
+        'brand-sm': '0 2px 6px rgba(var(--brand-primary-rgb, 0, 56, 90), 0.08)',
+        'brand-md': '0 4px 12px rgba(var(--brand-primary-rgb, 0, 56, 90), 0.10)',
+        'brand-lg': '0 8px 24px rgba(var(--brand-primary-rgb, 0, 56, 90), 0.12)',
+        'brand-xl': '0 12px 32px rgba(var(--brand-primary-rgb, 0, 56, 90), 0.15)',
+        // Card Shadows (語意化)
+        'card': '0 2px 8px rgba(var(--brand-primary-rgb, 0, 56, 90), 0.06)',
+        'card-hover': '0 10px 26px rgba(13, 39, 94, 0.12)',
+        'card-glow': '0 4px 20px rgba(var(--brand-primary-rgb, 0, 56, 90), 0.03)',
+        // Header/Banner Shadows
+        'header': '0 2px 8px rgba(var(--brand-primary-rgb, 0, 56, 90), 0.15)',
+        // Accent/Alert Shadows (紅點光暈)
+        'alert-glow': '0 0 8px rgba(230, 57, 70, 0.6)',
       },
       maxWidth: {
         'container': '1080px',

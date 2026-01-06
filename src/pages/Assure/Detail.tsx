@@ -197,9 +197,13 @@ export default function AssureDetail() {
                 {key === '6' && !step.locked && tx.isPaid && (
                   <div className="mt-2 space-y-2">
                     {step.checklist?.map((item) => (
-                      <div 
-                        key={item.id} 
-                        onClick={() => toggleCheck(item.id, !item.checked)} 
+                      <div
+                        key={item.id}
+                        onClick={() => toggleCheck(item.id, !item.checked)}
+                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') toggleCheck(item.id, !item.checked); }}
+                        role="checkbox"
+                        aria-checked={item.checked}
+                        tabIndex={0}
                         className={`flex cursor-pointer items-center rounded border p-4 transition ${item.checked ? 'border-indigo-200 bg-indigo-50' : 'hover:bg-gray-50'}`}
                       >
                         <div className={`flex size-5 items-center justify-center rounded border bg-white ${item.checked ? 'border-indigo-600 bg-indigo-600' : ''}`}>

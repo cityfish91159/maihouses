@@ -7,6 +7,7 @@
   :root {
     /* === 統一色票系統 (以 Tailwind Config 為準) === */
     --brand: #00385a;        /* 深藍 */
+    --brand-primary-rgb: 0, 56, 90;  /* 用於 rgba() shadows */
     --brand-light: #009FE8;  /* 亮藍 */
     --brand-600: #004E7C;
     --primary: #00385a;
