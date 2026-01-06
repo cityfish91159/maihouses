@@ -73,7 +73,7 @@ export const BasicInfoSection: React.FC = () => {
             required={true}
           />
           {!validation.communityValid && form.communityName.length > 0 && (
-            <p className="mt-1.5 text-[11px] text-red-500 font-medium">
+            <p className="mt-1.5 text-[11px] font-medium text-red-500">
               請輸入完整社區名稱（至少2字）
             </p>
           )}

@@ -236,8 +236,12 @@ describe('NotificationDropdown', () => {
             const outerClickHandler = vi.fn();
 
             render(
-                // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
-                <div onClick={outerClickHandler}>
+                <div
+                    onClick={outerClickHandler}
+                    onKeyDown={(e) => e.key === 'Enter' && outerClickHandler()}
+                    role="button"
+                    tabIndex={0}
+                >
                     <NotificationDropdown {...defaultProps} notifications={notifications} />
                 </div>
             );

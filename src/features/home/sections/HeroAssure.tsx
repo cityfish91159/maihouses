@@ -24,11 +24,11 @@ export default function HeroAssure() {
 
         {/* Text Content */}
         <div className="flex-1 text-center md:text-left">
-          <div className="border-[var(--brand)]/20 mb-3 inline-flex items-center gap-2 rounded-full border bg-[var(--bg-page)] px-3 py-1 text-xs font-bold text-[var(--brand)]">
+          <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-brand-700/20 bg-brand-50 px-3 py-1 text-xs font-bold text-brand-700">
             <ShieldCheck size={14} />
             <span>全程透明．安心留痕</span>
           </div>
-          <h3 className="mb-3 text-2xl font-black tracking-tight text-[var(--brand)] md:text-3xl">
+          <h3 className="mb-3 text-2xl font-black tracking-tight text-brand-700 md:text-3xl">
             安心留痕保障
           </h3>
           <p className="max-w-2xl text-sm font-medium leading-relaxed text-[var(--text-secondary)] md:text-base">
@@ -38,7 +38,7 @@ export default function HeroAssure() {
           </p>
         </div>
 
-        <a href="/#policy" className="hidden shrink-0 items-center gap-2 rounded-xl border-2 border-[var(--brand)] bg-white px-5 py-2.5 text-sm font-bold text-[var(--brand)] shadow-sm transition-all hover:bg-[var(--brand)] hover:text-white md:flex">
+        <a href="/#policy" className="hidden shrink-0 items-center gap-2 rounded-xl border-2 border-brand-700 bg-white px-5 py-2.5 text-sm font-bold text-brand-700 shadow-sm transition-all hover:bg-brand-700 hover:text-white md:flex">
           履保規範 <ArrowRight size={16} />
         </a>
       </div>

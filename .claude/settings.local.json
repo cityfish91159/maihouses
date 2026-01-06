@@ -53,7 +53,8 @@
       "Bash(git merge-base:*)",
       "mcp__filesystem__list_allowed_directories",
       "Bash(npx supabase migration list:*)",
-      "Bash(gemini --version:*)"
+      "Bash(gemini --version:*)",
+      "Bash(dir:*)"
     ]
   },
   "model": "claude-opus-4-5-20251101",

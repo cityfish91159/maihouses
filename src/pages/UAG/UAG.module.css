@@ -60,11 +60,13 @@
   padding:12px 24px;
   display:flex; align-items:center; justify-content:space-between;
 }
+/* ====== UAG Header Actions ====== */
 .uag-header-actions{
   display:flex;
   align-items:center;
   gap:12px;
 }
+/* UAG Breadcrumb */
 .uag-breadcrumb{
   display:flex;
   align-items:center;
@@ -81,6 +83,7 @@
   font-size:11px;
   font-weight:700;
 }
+/* Home Link Button */
 .uag-home-link{
   text-decoration:none;
   color:var(--uag-brand);
@@ -97,6 +100,7 @@
   color:var(--uag-brand);
   box-shadow:0 8px 18px rgba(23,73,215,0.18);
 }
+/* Notification System */
 .uag-notification{position:relative;}
 .uag-notification-btn{
   position:relative;
@@ -132,6 +136,7 @@
   justify-content:center;
   border:2px solid #fff;
 }
+/* User Info Container */
 .uag-user{position:relative;}
 .uag-user-button{
   display:flex;

@@ -309,9 +309,7 @@ export const UploadFormProvider: React.FC<{ children: ReactNode }> = ({ children
     if (sortedImages.length > 0 && sortedImages[0]?.isCover !== true) {
       logger.error('[UP-3.D] Validation Failed: No cover image selected.');
       // MVP: 阻擋上傳並通知用戶 (避免靜默失敗)
-      if (typeof window !== 'undefined') {
-        window.alert('系統偵測到封面設定異常，請重新整理頁面或重新選擇封面。');
-      }
+      notify.error('系統偵測到封面設定異常，請重新整理頁面或重新選擇封面。');
       return;
     }
 

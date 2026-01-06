@@ -15,11 +15,11 @@ export function MaiMaiSpeech({ messages, className = '' }: MaiMaiSpeechProps) {
   return (
     <div
       className={`
-        absolute bottom-full left-1/2 z-10 mb-3 -translate-x-1/2
-        min-w-[120px] max-w-[85vw] sm:max-w-[280px]
-        rounded-xl bg-white px-3 py-2
-        shadow-lg ring-1 ring-slate-200
-        animate-in fade-in slide-in-from-bottom-2 duration-300
+        animate-in fade-in slide-in-from-bottom-2 absolute bottom-full left-1/2
+        z-10 mb-3 min-w-[120px]
+        max-w-[85vw] -translate-x-1/2 rounded-xl bg-white
+        px-3 py-2 shadow-lg
+        ring-1 ring-slate-200 duration-300 sm:max-w-[280px]
         ${className}
       `}
       role="status"

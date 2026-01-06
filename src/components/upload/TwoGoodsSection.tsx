@@ -24,7 +24,7 @@ export const TwoGoodsSection: React.FC = () => {
       <div className="space-y-5">
         {/* 優點 1 */}
         <div>
-          <label htmlFor="upload-advantage1" className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold text-green-700 uppercase tracking-wider">
+          <label htmlFor="upload-advantage1" className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-green-700">
             <ThumbsUp size={14} /> 優點 1
           </label>
           <input
@@ -40,7 +40,7 @@ export const TwoGoodsSection: React.FC = () => {
               {form.advantage1.length} 字 {validation.advantage1.valid ? '✓' : `(需 ${validation.advantage1.message})`}
             </span>
             {validation.advantage1.contentWarning && (
-              <span className="flex items-center gap-1 text-[11px] text-red-500 font-medium">
+              <span className="flex items-center gap-1 text-[11px] font-medium text-red-500">
                 <AlertTriangle size={12} /> {validation.advantage1.contentWarning}
               </span>
             )}
@@ -49,7 +49,7 @@ export const TwoGoodsSection: React.FC = () => {
 
         {/* 優點 2 */}
         <div>
-          <label htmlFor="upload-advantage2" className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold text-green-700 uppercase tracking-wider">
+          <label htmlFor="upload-advantage2" className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-green-700">
             <ThumbsUp size={14} /> 優點 2
           </label>
           <input
@@ -65,7 +65,7 @@ export const TwoGoodsSection: React.FC = () => {
               {form.advantage2.length} 字 {validation.advantage2.valid ? '✓' : `(需 ${validation.advantage2.message})`}
             </span>
             {validation.advantage2.contentWarning && (
-              <span className="flex items-center gap-1 text-[11px] text-red-500 font-medium">
+              <span className="flex items-center gap-1 text-[11px] font-medium text-red-500">
                 <AlertTriangle size={12} /> {validation.advantage2.contentWarning}
               </span>
             )}
@@ -74,7 +74,7 @@ export const TwoGoodsSection: React.FC = () => {
 
         {/* 公道話 */}
         <div>
-          <label htmlFor="upload-disadvantage" className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold text-orange-700 uppercase tracking-wider">
+          <label htmlFor="upload-disadvantage" className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-orange-700">
             <ThumbsDown size={14} /> 誠實公道話
           </label>
           <input
@@ -90,7 +90,7 @@ export const TwoGoodsSection: React.FC = () => {
               {form.disadvantage.length} 字 {validation.disadvantage.valid ? '✓' : `(需 ${validation.disadvantage.message})`}
             </span>
             {validation.disadvantage.contentWarning && (
-              <span className="flex items-center gap-1 text-[11px] text-red-500 font-medium">
+              <span className="flex items-center gap-1 text-[11px] font-medium text-red-500">
                 <AlertTriangle size={12} /> {validation.disadvantage.contentWarning}
               </span>
             )}

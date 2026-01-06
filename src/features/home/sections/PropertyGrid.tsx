@@ -28,15 +28,15 @@ export default function PropertyGrid() {
     <div className="w-full">
       {/* Header Section */}
       <div className="my-[18px] mb-3 flex items-center gap-2.5" aria-label="智能房源推薦">
-        <div className="inline-flex items-center gap-2 rounded-full border border-[#E6EDF7] bg-gradient-to-b from-white to-[#F6F9FF] px-3 py-1.5 text-sm font-black tracking-[0.2px] text-[#00385a]">
-          <span className="grid size-[18px] place-items-center rounded-md bg-gradient-to-b from-[#00385a] to-[#004E7C] text-xs font-black text-white shadow-[0_2px_6px_rgba(0,56,90,0.18)]">
+        <div className="inline-flex items-center gap-2 rounded-full border border-brand-100 bg-gradient-to-b from-white to-brand-50 px-3 py-1.5 text-sm font-black tracking-[0.2px] text-brand-700">
+          <span className="grid size-[18px] place-items-center rounded-md bg-gradient-to-b from-brand-700 to-brand-600 text-xs font-black text-white shadow-[0_2px_6px_rgba(0,56,90,0.18)]">
             ★
           </span>
           <span className="text-base leading-none md:text-lg md:font-bold">〔智能房源推薦〕</span>
-          <span className="ml-1.5 text-sm font-bold text-[#6C7B91]">依瀏覽行為與社區口碑輔助排序</span>
+          <span className="ml-1.5 text-sm font-bold text-ink-600">依瀏覽行為與社區口碑輔助排序</span>
         </div>
         <div
-          className="animate-mhRecoBar ml-2.5 h-1.5 flex-1 rounded-full bg-gradient-to-r from-[#00385a] via-[#004E7C] to-[#7EA5FF] bg-[length:200%_100%] opacity-25"
+          className="animate-mhRecoBar ml-2.5 h-1.5 flex-1 rounded-full bg-gradient-to-r from-brand-700 via-brand-600 to-brand-300 bg-[length:200%_100%] opacity-25"
           aria-hidden="true"
         />
       </div>

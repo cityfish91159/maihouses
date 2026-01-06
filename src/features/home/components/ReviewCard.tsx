@@ -10,8 +10,8 @@ interface ReviewProps {
 
 export const ReviewCard = React.memo(({ id, name, rating, tags, content }: ReviewProps) => {
   return (
-    <article className="relative flex gap-3 rounded-2xl border border-[#E6EDF7] bg-white p-3.5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(0,56,90,0.08)]">
-      <div className="flex size-[38px] shrink-0 items-center justify-center rounded-full border border-[#E6EDF7] bg-gradient-to-b from-[#F2F5F8] to-[#E1E6EB] text-[15px] font-black text-[#00385a] shadow-[inset_0_1px_2px_rgba(255,255,255,0.8),0_2px_4px_rgba(0,56,90,0.05)]">
+    <article className="relative flex gap-3 rounded-2xl border border-brand-100 bg-white p-3.5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(0,56,90,0.08)]">
+      <div className="flex size-[38px] shrink-0 items-center justify-center rounded-full border border-brand-100 bg-gradient-to-b from-[#F2F5F8] to-[#E1E6EB] text-[15px] font-black text-brand-700 shadow-[inset_0_1px_2px_rgba(255,255,255,0.8),0_2px_4px_rgba(0,56,90,0.05)]">
         {id}
       </div>
       <div className="min-w-0 flex-1">
@@ -21,14 +21,14 @@ export const ReviewCard = React.memo(({ id, name, rating, tags, content }: Revie
           </div>
           <div className="flex gap-0.5" aria-label={`${rating} stars`}>
             {Array.from({ length: 5 }).map((_, i) => (
-              <span key={i} className={`text-xs ${i < rating ? 'text-[#00385a]' : 'text-[#E6EDF7]'}`}>★</span>
+              <span key={i} className={`text-xs ${i < rating ? 'text-brand-700' : 'text-brand-100'}`}>★</span>
             ))}
           </div>
         </div>
 
         <div className="mb-2 flex flex-wrap gap-1.5">
           {tags.map(tag => (
-            <span key={tag} className="rounded-md border border-[#E6EDF7] bg-[#F6F9FF] px-2 py-0.5 text-[11px] font-bold tracking-wide text-[#00385a]">
+            <span key={tag} className="rounded-md border border-brand-100 bg-brand-50 px-2 py-0.5 text-[11px] font-bold tracking-wide text-brand-700">
               {tag}
             </span>
           ))}
