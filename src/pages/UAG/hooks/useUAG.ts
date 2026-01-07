@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { UAGService } from "../services/uagService";
 import { AppData, Grade, Lead, LeadStatus } from "../types/uag.types";
@@ -8,6 +8,8 @@ import { useAuth } from "../../../hooks/useAuth";
 import { GRADE_PROTECTION_HOURS } from "../uag-config";
 import { validateQuota } from "../utils/validation";
 import { safeLocalStorage } from "../../../lib/safeStorage";
+import { supabase } from "../../../lib/supabase";
+import { logger } from "../../../lib/logger";
 
 /** 從 URL 或 localStorage 取得初始 mock 模式設定 */
 function getInitialMockMode(): boolean {
@@ -264,6 +266,67 @@ export function useUAG() {
     },
     [data, buyLeadMutation, queryClient, useMock, session?.user?.id],
   );
+
+  /**
+   * UAG-11: 訂閱 S 級升級 Realtime 通知
+   * 當客戶升級到 S 級時，即時推播通知房仲
+   */
+  useEffect(() => {
+    // 只在 live 模式且已登入時訂閱
+    if (useMock || !session?.user?.id) return;
+
+    const userId = session.user.id;
+    const channelName = `uag-s-upgrades-${userId}`;
+
+    logger.info("useUAG.realtimeSubscription.subscribing", {
+      channelName,
+      userId,
+    });
+
+    const channel = supabase
+      .channel(channelName)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "uag_s_grade_upgrades",
+          filter: `agent_id=eq.${userId}`,
+        },
+        (payload) => {
+          logger.info("useUAG.realtimeSubscription.sGradeUpgrade", {
+            sessionId: payload.new?.session_id,
+            previousGrade: payload.new?.previous_grade,
+          });
+
+          // 顯示 UI 通知
+          notify.success(`🎉 新的 S 級客戶！請查看 UAG Radar 檢視詳細資訊`);
+
+          // 刷新數據以顯示新的 S 級客戶
+          refetch();
+        },
+      )
+      .subscribe((status) => {
+        if (status === "SUBSCRIBED") {
+          logger.info("useUAG.realtimeSubscription.subscribed", {
+            channelName,
+          });
+        } else if (status === "CHANNEL_ERROR") {
+          logger.error("useUAG.realtimeSubscription.error", {
+            channelName,
+            status,
+          });
+        }
+      });
+
+    // 清理訂閱
+    return () => {
+      logger.info("useUAG.realtimeSubscription.unsubscribing", {
+        channelName,
+      });
+      supabase.removeChannel(channel);
+    };
+  }, [useMock, session?.user?.id, refetch]);
 
   return {
     data,

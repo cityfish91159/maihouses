@@ -1779,27 +1779,47 @@ open https://maihouses.vercel.app/maihouses/feed/demo-agent?mock=true
 
 ---
 
-### UAG-11: S 級推播 ⬜
+### UAG-11: S 級推播 ✅
 
 **功能**：當客戶升級到 S 級時，即時推播通知房仲
 
 **現有基礎設施**：
 - ✅ Web Push (NOTIFY-2 已完成)
-- ⬜ 簡訊 API (依賴 NOTIFY-1)
+- ⬜ 簡訊 API (依賴 NOTIFY-1，未完成)
 
 **實現方式**：
-- Supabase Realtime (監聽 grade 變更)
-- Web Push 推播 (已有 Hook)
-- 簡訊通知 (待 NOTIFY-1 完成)
+- ✅ Supabase Realtime (監聽 grade 變更)
+- ⬜ Web Push 推播 (待 NOTIFY-1 完成後整合)
+- ⬜ 簡訊通知 (待 NOTIFY-1 完成)
 
-**待實作**：
-1. S 級升級 DB Trigger
-2. 房仲端 Realtime 訂閱 (grade 變更)
-3. 整合 NOTIFY-1 簡訊 (待完成)
+**已完成**：
+1. ✅ 創建 S 級升級事件記錄表 (`uag_s_grade_upgrades`)
+2. ✅ DB Trigger：監聽 `uag_sessions.grade` 變更為 'S'
+3. ✅ 房仲端 Realtime 訂閱邏輯 (`useUAG` hook)
+4. ✅ UI 通知顯示（toast 提示）
+5. ✅ 自動刷新數據以顯示新的 S 級客戶
 
-**依賴**: NOTIFY-1 簡訊 API
+**技術實現**：
+- **資料庫層**：
+  - 表：`uag_s_grade_upgrades` (記錄所有 S 級升級事件)
+  - 觸發器：`trg_log_s_grade_upgrade` (自動記錄升級)
+  - RPC：`mark_s_upgrade_notified()`, `get_s_grade_upgrades()`
+- **前端層**：
+  - Realtime 訂閱：`useUAG.ts` (監聽 `uag_s_grade_upgrades` INSERT 事件)
+  - 通知顯示：`notify.success()` toast 提示
+  - 數據刷新：自動調用 `refetch()` 更新 UAG Radar
 
-**預估工時**: 3hr (不含 NOTIFY-1)
+**未完成（依賴 NOTIFY-1）**：
+- ⬜ Web Push 推播整合
+- ⬜ 簡訊通知整合
+
+**檔案清單**：
+- `supabase/migrations/20260107_uag_11_s_grade_notification.sql` (DB trigger)
+- `src/pages/UAG/hooks/useUAG.ts` (Realtime 訂閱)
+
+**預估工時**: 3hr → **實際**: 2hr
+
+**完成日期**: 2026-01-07
 
 ---
 
