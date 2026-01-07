@@ -1,8 +1,8 @@
 import { safeLocalStorage } from "../lib/safeStorage";
 
 export type UserMilestones = {
-  birthday?: string;      // YYYY-MM-DD
-  move_in_date?: string;  // YYYY-MM-DD
+  birthday?: string; // YYYY-MM-DD
+  move_in_date?: string; // YYYY-MM-DD
 };
 export type UserProfile = {
   tags: string[];
@@ -27,7 +27,7 @@ export function loadProfile(): UserProfile {
 export function saveProfile(p: UserProfile) {
   try {
     safeLocalStorage.setItem(STORAGE_KEY, JSON.stringify(p));
-  } catch { }
+  } catch {}
 }
 export function upsertTags(newTags: string[]) {
   const p = loadProfile();
@@ -92,7 +92,12 @@ export function getMilestoneHint(ms?: UserMilestones): string | null {
   }
   return null;
 }
-function nearAnnual(dateStr: string, now: Date, days = 7, label?: string): string | null {
+function nearAnnual(
+  dateStr: string,
+  now: Date,
+  days = 7,
+  label?: string,
+): string | null {
   const [y, m, d] = dateStr.split("-").map((x) => Number(x));
   if (!y || !m || !d) return null;
   const thisYear = new Date(now.getFullYear(), m - 1, d);

@@ -1,4 +1,4 @@
-import { useCallback, useRef, useEffect } from 'react';
+import { useCallback, useRef, useEffect } from "react";
 
 /**
  * useThrottle Hook
@@ -17,7 +17,7 @@ export interface UseThrottleOptions {
 export function useThrottle<T extends (...args: unknown[]) => unknown>(
   callback: T,
   delay: number,
-  options: UseThrottleOptions = {}
+  options: UseThrottleOptions = {},
 ): (...args: Parameters<T>) => void {
   const { leading = true, trailing = false } = options;
   const lastRun = useRef(0);
@@ -78,7 +78,7 @@ export function useThrottle<T extends (...args: unknown[]) => unknown>(
         }, remaining);
       }
     },
-    [delay, leading, trailing]
+    [delay, leading, trailing],
   );
 
   return throttled;

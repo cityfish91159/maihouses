@@ -1,20 +1,20 @@
 /**
  * useCommunityWall
- * 
+ *
  * 社區牆資料獲取 Hook
  * 提供 SWR 風格的資料獲取與快取
  */
 
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { 
-  getCommunityWall, 
-  getPublicPosts, 
+import { useState, useEffect, useCallback, useRef } from "react";
+import {
+  getCommunityWall,
+  getPublicPosts,
   getPrivatePosts,
   toggleLike as apiToggleLike,
   createPost as apiCreatePost,
   CommunityWallData,
   CommunityPost,
-} from '../services/communityService';
+} from "../services/communityService";
 
 export interface UseCommunityWallOptions {
   /** 是否包含私密貼文（需登入） */
@@ -39,16 +39,19 @@ export interface UseCommunityWallReturn {
   /** 按讚/取消按讚 */
   toggleLike: (postId: string) => Promise<void>;
   /** 發布貼文 */
-  createPost: (content: string, visibility?: 'public' | 'private') => Promise<void>;
+  createPost: (
+    content: string,
+    visibility?: "public" | "private",
+  ) => Promise<void>;
   /** 樂觀更新後的貼文列表（即時反映 UI） */
   optimisticPosts: CommunityPost[];
 }
 
 export function useCommunityWall(
   communityId: string | undefined,
-  options: UseCommunityWallOptions = {}
+  options: UseCommunityWallOptions = {},
 ): UseCommunityWallReturn {
-  const { 
+  const {
     includePrivate = false,
     refreshInterval = 0,
     refreshOnFocus = true,
@@ -59,44 +62,47 @@ export function useCommunityWall(
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [optimisticPosts, setOptimisticPosts] = useState<CommunityPost[]>([]);
-  
+
   const mountedRef = useRef(true);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // 獲取資料
-  const fetchData = useCallback(async (_force = false) => {
-    if (!communityId) {
-      setIsLoading(false);
-      return;
-    }
-
-    try {
-      setIsLoading(true);
-      setError(null);
-      
-      // 註：forceRefresh 參數已移除，快取由 React Query 管理
-      const wallData = await getCommunityWall(communityId, {
-        includePrivate,
-      });
-      
-      if (mountedRef.current) {
-        setData(wallData);
-        // 初始化樂觀更新列表
-        setOptimisticPosts([
-          ...wallData.posts.public,
-          ...(includePrivate ? wallData.posts.private : []),
-        ]);
-      }
-    } catch (err) {
-      if (mountedRef.current) {
-        setError(err instanceof Error ? err.message : '載入社區牆失敗');
-      }
-    } finally {
-      if (mountedRef.current) {
+  const fetchData = useCallback(
+    async (_force = false) => {
+      if (!communityId) {
         setIsLoading(false);
+        return;
       }
-    }
-  }, [communityId, includePrivate]);
+
+      try {
+        setIsLoading(true);
+        setError(null);
+
+        // 註：forceRefresh 參數已移除，快取由 React Query 管理
+        const wallData = await getCommunityWall(communityId, {
+          includePrivate,
+        });
+
+        if (mountedRef.current) {
+          setData(wallData);
+          // 初始化樂觀更新列表
+          setOptimisticPosts([
+            ...wallData.posts.public,
+            ...(includePrivate ? wallData.posts.private : []),
+          ]);
+        }
+      } catch (err) {
+        if (mountedRef.current) {
+          setError(err instanceof Error ? err.message : "載入社區牆失敗");
+        }
+      } finally {
+        if (mountedRef.current) {
+          setIsLoading(false);
+        }
+      }
+    },
+    [communityId, includePrivate],
+  );
 
   // 手動刷新（註：快取已改由 React Query 管理，此處只觸發重新 fetch）
   const refresh = useCallback(async () => {
@@ -104,42 +110,47 @@ export function useCommunityWall(
   }, [fetchData]);
 
   // 按讚（樂觀更新）
-  const toggleLike = useCallback(async (postId: string) => {
-    // 樂觀更新 UI
-    const userId = currentUserId ?? 'anonymous-user';
-    setOptimisticPosts(prev => 
-      prev.map(post => {
-        if (post.id !== postId) return post;
-        const isLiked = post.liked_by.includes(userId);
-        return {
-          ...post,
-          likes_count: isLiked ? Math.max(0, post.likes_count - 1) : post.likes_count + 1,
-          liked_by: isLiked 
-            ? post.liked_by.filter(id => id !== userId)
-            : [...post.liked_by, userId],
-        };
-      })
-    );
+  const toggleLike = useCallback(
+    async (postId: string) => {
+      // 樂觀更新 UI
+      const userId = currentUserId ?? "anonymous-user";
+      setOptimisticPosts((prev) =>
+        prev.map((post) => {
+          if (post.id !== postId) return post;
+          const isLiked = post.liked_by.includes(userId);
+          return {
+            ...post,
+            likes_count: isLiked
+              ? Math.max(0, post.likes_count - 1)
+              : post.likes_count + 1,
+            liked_by: isLiked
+              ? post.liked_by.filter((id) => id !== userId)
+              : [...post.liked_by, userId],
+          };
+        }),
+      );
 
-    try {
-      await apiToggleLike(postId);
-      // 成功後不需要做什麼，樂觀更新已經處理了
-    } catch (err) {
-      // 失敗時回滾
-      await refresh();
-    }
-  }, [refresh, currentUserId]);
+      try {
+        await apiToggleLike(postId);
+        // 成功後不需要做什麼，樂觀更新已經處理了
+      } catch (err) {
+        // 失敗時回滾
+        await refresh();
+      }
+    },
+    [refresh, currentUserId],
+  );
 
   // 發布貼文
-  const createPost = useCallback(async (
-    content: string, 
-    visibility: 'public' | 'private' = 'public'
-  ) => {
-    if (!communityId) throw new Error('缺少社區 ID');
-    
-    await apiCreatePost(communityId, content, visibility);
-    await refresh();
-  }, [communityId, refresh]);
+  const createPost = useCallback(
+    async (content: string, visibility: "public" | "private" = "public") => {
+      if (!communityId) throw new Error("缺少社區 ID");
+
+      await apiCreatePost(communityId, content, visibility);
+      await refresh();
+    },
+    [communityId, refresh],
+  );
 
   // 初次載入
   useEffect(() => {
@@ -172,9 +183,9 @@ export function useCommunityWall(
       fetchData(true);
     };
 
-    window.addEventListener('focus', handleFocus);
+    window.addEventListener("focus", handleFocus);
     return () => {
-      window.removeEventListener('focus', handleFocus);
+      window.removeEventListener("focus", handleFocus);
     };
   }, [refreshOnFocus, fetchData]);
 
@@ -194,11 +205,11 @@ export function useCommunityWall(
  */
 export function useCommunityPosts(
   communityId: string | undefined,
-  visibility: 'public' | 'private' = 'public',
-  options: { pageSize?: number } = {}
+  visibility: "public" | "private" = "public",
+  options: { pageSize?: number } = {},
 ) {
   const { pageSize = 20 } = options;
-  
+
   const [posts, setPosts] = useState<CommunityPost[]>([]);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
@@ -212,18 +223,30 @@ export function useCommunityPosts(
     setError(null);
 
     try {
-      const fetcher = visibility === 'public' ? getPublicPosts : getPrivatePosts;
-      const { items, total } = await fetcher(communityId, { page, limit: pageSize });
-      
-      setPosts(prev => [...prev, ...items]);
-      setPage(prev => prev + 1);
+      const fetcher =
+        visibility === "public" ? getPublicPosts : getPrivatePosts;
+      const { items, total } = await fetcher(communityId, {
+        page,
+        limit: pageSize,
+      });
+
+      setPosts((prev) => [...prev, ...items]);
+      setPage((prev) => prev + 1);
       setHasMore(posts.length + items.length < total);
     } catch (err) {
-      setError(err instanceof Error ? err.message : '載入失敗');
+      setError(err instanceof Error ? err.message : "載入失敗");
     } finally {
       setIsLoading(false);
     }
-  }, [communityId, visibility, page, pageSize, isLoading, hasMore, posts.length]);
+  }, [
+    communityId,
+    visibility,
+    page,
+    pageSize,
+    isLoading,
+    hasMore,
+    posts.length,
+  ]);
 
   const reset = useCallback(() => {
     setPosts([]);

@@ -1,9 +1,9 @@
 /**
  * 🏠 Property Types - 單一真理來源
- * 
+ *
  * P10 Phase 3 審查修正 #2: 型別定義集中化
  * 所有 property 相關的型別定義都在此檔案
- * 
+ *
  * @see docs/COMMUNITY_WALL_TODO.md - P3 審查報告
  */
 
@@ -20,7 +20,7 @@ export interface PropertyReview {
 
 /**
  * 首頁房源卡片資料
- * 
+ *
  * 用於：
  * - PropertyCard 組件
  * - PropertyGrid 組件
@@ -45,15 +45,15 @@ export interface FeaturedProperty {
   /** 評價列表 */
   reviews: PropertyReview[];
   /** 資料來源: 'real' (真實) | 'seed' (Seed/Mock) */
-  source: 'real' | 'seed';
+  source: "real" | "seed";
 }
 
 /**
  * Seed 房源資料 (前端靜態 Mock)
- * 
+ *
  * 與 FeaturedProperty 相同，但 source 固定為 'seed'
  * 用於 src/constants/data.ts 的 PROPERTIES 常數
  */
-export type SeedProperty = Omit<FeaturedProperty, 'source'> & {
-  source: 'seed';
+export type SeedProperty = Omit<FeaturedProperty, "source"> & {
+  source: "seed";
 };

@@ -6,7 +6,7 @@
   --primary-light: #e0f4ff;
   /* 淺藍背景 */
   --primary-dark: #002a44;
-  --primary-cyan: #009FE8;
+  --primary-cyan: #009fe8;
   /* 亮藍/青色 (保留部分淺藍) */
 
   /* 背景色系 */
@@ -43,8 +43,14 @@
 }
 
 .legacy-property-page {
-  font-family: "Noto Sans TC", -apple-system, BlinkMacSystemFont,
-    "PingFang TC", "Hiragino Sans", "Microsoft JhengHei", sans-serif;
+  font-family:
+    "Noto Sans TC",
+    -apple-system,
+    BlinkMacSystemFont,
+    "PingFang TC",
+    "Hiragino Sans",
+    "Microsoft JhengHei",
+    sans-serif;
   font-size: 0.9375rem;
   /* 15px */
   line-height: 1.5;
@@ -129,9 +135,9 @@
   right: 0.5rem;
   width: 0.375rem;
   height: 0.375rem;
-  background-color: #FF6B6B;
+  background-color: #ff6b6b;
   border-radius: 50%;
-  box-shadow: 0 0 0 1.5px #004E7C;
+  box-shadow: 0 0 0 1.5px #004e7c;
 }
 
 .legacy-property-page .logo-text-group {
@@ -164,7 +170,7 @@
   font-size: 0.9375rem;
   /* 15px */
   font-weight: 700;
-  color: #00629B;
+  color: #00629b;
   /* brand-500 */
   letter-spacing: 0.15em;
   text-transform: uppercase;
@@ -187,7 +193,9 @@
   border: 1px solid var(--border-light);
   background: #ffffff;
   cursor: pointer;
-  transition: opacity 0.2s ease, background-color 0.2s ease;
+  transition:
+    opacity 0.2s ease,
+    background-color 0.2s ease;
   touch-action: manipulation;
 }
 
@@ -368,7 +376,9 @@
   border-radius: var(--radius-lg);
   overflow: hidden;
   box-shadow: var(--shadow-md);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
 }
 
 .legacy-property-page .property-card:hover {
@@ -630,7 +640,10 @@
   border: 1px solid var(--border-light);
   border-radius: var(--radius-sm);
   cursor: pointer;
-  transition: transform 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease;
   touch-action: manipulation;
 }
 
@@ -675,7 +688,9 @@
   border-radius: var(--radius-md);
   overflow: hidden;
   box-shadow: var(--shadow-sm);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
 }
 
 .legacy-property-page .horizontal-card:hover {

@@ -3,34 +3,34 @@
  * 用於房仲追蹤與管理潛在客戶
  */
 
-import { supabase } from '../lib/supabase';
-import { logger } from '../lib/logger';
+import { supabase } from "../lib/supabase";
+import { logger } from "../lib/logger";
 
 // Lead 狀態類型
-export type LeadStatus = 
-  | 'new'           // 新線索
-  | 'contacted'     // 已聯繫
-  | 'qualified'     // 已確認需求
-  | 'scheduled'     // 已約看
-  | 'visited'       // 已看屋
-  | 'negotiating'   // 議價中
-  | 'closed_won'    // 成交
-  | 'closed_lost';  // 流失
+export type LeadStatus =
+  | "new" // 新線索
+  | "contacted" // 已聯繫
+  | "qualified" // 已確認需求
+  | "scheduled" // 已約看
+  | "visited" // 已看屋
+  | "negotiating" // 議價中
+  | "closed_won" // 成交
+  | "closed_lost"; // 流失
 
 // Lead 事件類型
-export type LeadEventType = 
-  | 'INITIAL_CONTACT'     // 初次聯繫表單
-  | 'CALL_SUMMARY'        // 通話摘要
-  | 'LINE_MESSAGE'        // LINE 訊息
-  | 'VISIT_SCHEDULED'     // 預約看屋
-  | 'VISIT_COMPLETE'      // 看屋完成
-  | 'VISIT_CANCELLED'     // 看屋取消
-  | 'OFFER_SUBMITTED'     // 出價
-  | 'OFFER_ACCEPTED'      // 出價接受
-  | 'OFFER_REJECTED'      // 出價拒絕
-  | 'CONTRACT_SIGNED'     // 簽約
-  | 'STATUS_CHANGE'       // 狀態變更
-  | 'NOTE_ADDED';         // 備註新增
+export type LeadEventType =
+  | "INITIAL_CONTACT" // 初次聯繫表單
+  | "CALL_SUMMARY" // 通話摘要
+  | "LINE_MESSAGE" // LINE 訊息
+  | "VISIT_SCHEDULED" // 預約看屋
+  | "VISIT_COMPLETE" // 看屋完成
+  | "VISIT_CANCELLED" // 看屋取消
+  | "OFFER_SUBMITTED" // 出價
+  | "OFFER_ACCEPTED" // 出價接受
+  | "OFFER_REJECTED" // 出價拒絕
+  | "CONTRACT_SIGNED" // 簽約
+  | "STATUS_CHANGE" // 狀態變更
+  | "NOTE_ADDED"; // 備註新增
 
 // Lead 資料結構
 export interface Lead {
@@ -41,7 +41,7 @@ export interface Lead {
   customer_line_id?: string;
   agent_id: string;
   property_id: string;
-  source: 'sidebar' | 'mobile_bar' | 'booking' | 'direct';
+  source: "sidebar" | "mobile_bar" | "booking" | "direct";
   status: LeadStatus;
   budget_range?: string;
   preferred_contact_time?: string;
@@ -71,7 +71,7 @@ export interface CreateLeadParams {
   customerLineId?: string;
   agentId: string;
   propertyId: string;
-  source: 'sidebar' | 'mobile_bar' | 'booking' | 'direct';
+  source: "sidebar" | "mobile_bar" | "booking" | "direct";
   budgetRange?: string;
   preferredContactTime?: string;
   needsDescription?: string;
@@ -87,10 +87,12 @@ export interface CreateLeadResponse {
 /**
  * 建立新的客戶線索
  */
-export async function createLead(params: CreateLeadParams): Promise<CreateLeadResponse> {
+export async function createLead(
+  params: CreateLeadParams,
+): Promise<CreateLeadResponse> {
   try {
     // 使用 RPC 函數建立 lead（包含自動事件記錄）
-    const { data, error } = await supabase.rpc('create_lead', {
+    const { data, error } = await supabase.rpc("create_lead", {
       p_customer_name: params.customerName,
       p_customer_phone: params.customerPhone,
       p_customer_email: params.customerEmail || null,
@@ -100,18 +102,18 @@ export async function createLead(params: CreateLeadParams): Promise<CreateLeadRe
       p_source: params.source,
       p_budget_range: params.budgetRange || null,
       p_preferred_contact_time: params.preferredContactTime || null,
-      p_needs_description: params.needsDescription || null
+      p_needs_description: params.needsDescription || null,
     });
 
     if (error) {
-      logger.error('[LeadService] Create lead error', { error });
+      logger.error("[LeadService] Create lead error", { error });
       return { success: false, error: error.message };
     }
 
     return { success: true, leadId: data };
   } catch (err) {
-    const errorMessage = err instanceof Error ? err.message : '未知錯誤';
-    logger.error('[LeadService] Create lead exception', { error: err });
+    const errorMessage = err instanceof Error ? err.message : "未知錯誤";
+    logger.error("[LeadService] Create lead exception", { error: err });
     return { success: false, error: errorMessage };
   }
 }
@@ -122,19 +124,19 @@ export async function createLead(params: CreateLeadParams): Promise<CreateLeadRe
 export async function getLeadsForAgent(agentId: string): Promise<Lead[]> {
   try {
     const { data, error } = await supabase
-      .from('leads')
-      .select('*')
-      .eq('agent_id', agentId)
-      .order('created_at', { ascending: false });
+      .from("leads")
+      .select("*")
+      .eq("agent_id", agentId)
+      .order("created_at", { ascending: false });
 
     if (error) {
-      logger.error('[LeadService] Get leads error', { error });
+      logger.error("[LeadService] Get leads error", { error });
       return [];
     }
 
     return data || [];
   } catch (err) {
-    logger.error('[LeadService] Get leads exception', { error: err });
+    logger.error("[LeadService] Get leads exception", { error: err });
     return [];
   }
 }
@@ -145,19 +147,19 @@ export async function getLeadsForAgent(agentId: string): Promise<Lead[]> {
 export async function getLeadsForProperty(propertyId: string): Promise<Lead[]> {
   try {
     const { data, error } = await supabase
-      .from('leads')
-      .select('*')
-      .eq('property_id', propertyId)
-      .order('created_at', { ascending: false });
+      .from("leads")
+      .select("*")
+      .eq("property_id", propertyId)
+      .order("created_at", { ascending: false });
 
     if (error) {
-      logger.error('[LeadService] Get property leads error', { error });
+      logger.error("[LeadService] Get property leads error", { error });
       return [];
     }
 
     return data || [];
   } catch (err) {
-    logger.error('[LeadService] Get property leads exception', { error: err });
+    logger.error("[LeadService] Get property leads exception", { error: err });
     return [];
   }
 }
@@ -166,33 +168,38 @@ export async function getLeadsForProperty(propertyId: string): Promise<Lead[]> {
  * 更新 Lead 狀態
  */
 export async function updateLeadStatus(
-  leadId: string, 
+  leadId: string,
   newStatus: LeadStatus,
-  notes?: string
+  notes?: string,
 ): Promise<boolean> {
   try {
     // 更新狀態
     const { error: updateError } = await supabase
-      .from('leads')
-      .update({ 
+      .from("leads")
+      .update({
         status: newStatus,
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
       })
-      .eq('id', leadId);
+      .eq("id", leadId);
 
     if (updateError) {
-      logger.error('[LeadService] Update status error', { error: updateError });
+      logger.error("[LeadService] Update status error", { error: updateError });
       return false;
     }
 
     // 記錄狀態變更事件
-    await addLeadEvent(leadId, 'STATUS_CHANGE', { 
-      new_status: newStatus 
-    }, notes);
+    await addLeadEvent(
+      leadId,
+      "STATUS_CHANGE",
+      {
+        new_status: newStatus,
+      },
+      notes,
+    );
 
     return true;
   } catch (err) {
-    logger.error('[LeadService] Update status exception', { error: err });
+    logger.error("[LeadService] Update status exception", { error: err });
     return false;
   }
 }
@@ -203,24 +210,24 @@ export async function updateLeadStatus(
 export async function recordFirstResponse(leadId: string): Promise<boolean> {
   try {
     const now = new Date().toISOString();
-    
+
     const { error } = await supabase
-      .from('leads')
-      .update({ 
+      .from("leads")
+      .update({
         first_response_at: now,
-        updated_at: now
+        updated_at: now,
       })
-      .eq('id', leadId)
-      .is('first_response_at', null); // 只更新尚未回應的
+      .eq("id", leadId)
+      .is("first_response_at", null); // 只更新尚未回應的
 
     if (error) {
-      logger.error('[LeadService] Record response error', { error });
+      logger.error("[LeadService] Record response error", { error });
       return false;
     }
 
     return true;
   } catch (err) {
-    logger.error('[LeadService] Record response exception', { error: err });
+    logger.error("[LeadService] Record response exception", { error: err });
     return false;
   }
 }
@@ -232,30 +239,30 @@ export async function addLeadEvent(
   leadId: string,
   eventType: LeadEventType,
   eventData: Record<string, unknown> = {},
-  notes?: string
+  notes?: string,
 ): Promise<boolean> {
   try {
     // 取得當前用戶
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-    const { error } = await supabase
-      .from('lead_events')
-      .insert({
-        lead_id: leadId,
-        event_type: eventType,
-        event_data: eventData,
-        notes: notes || null,
-        created_by: user?.id || null
-      });
+    const { error } = await supabase.from("lead_events").insert({
+      lead_id: leadId,
+      event_type: eventType,
+      event_data: eventData,
+      notes: notes || null,
+      created_by: user?.id || null,
+    });
 
     if (error) {
-      logger.error('[LeadService] Add event error', { error });
+      logger.error("[LeadService] Add event error", { error });
       return false;
     }
 
     return true;
   } catch (err) {
-    logger.error('[LeadService] Add event exception', { error: err });
+    logger.error("[LeadService] Add event exception", { error: err });
     return false;
   }
 }
@@ -266,19 +273,19 @@ export async function addLeadEvent(
 export async function getLeadEvents(leadId: string): Promise<LeadEvent[]> {
   try {
     const { data, error } = await supabase
-      .from('lead_events')
-      .select('*')
-      .eq('lead_id', leadId)
-      .order('created_at', { ascending: true });
+      .from("lead_events")
+      .select("*")
+      .eq("lead_id", leadId)
+      .order("created_at", { ascending: true });
 
     if (error) {
-      logger.error('[LeadService] Get events error', { error });
+      logger.error("[LeadService] Get events error", { error });
       return [];
     }
 
     return data || [];
   } catch (err) {
-    logger.error('[LeadService] Get events exception', { error: err });
+    logger.error("[LeadService] Get events exception", { error: err });
     return [];
   }
 }
@@ -296,33 +303,50 @@ export async function getAgentLeadStats(agentId: string): Promise<{
 }> {
   try {
     const { data, error } = await supabase
-      .from('leads')
-      .select('status, response_time_seconds')
-      .eq('agent_id', agentId);
+      .from("leads")
+      .select("status, response_time_seconds")
+      .eq("agent_id", agentId);
 
     if (error) {
-      logger.error('[LeadService] Get stats error', { error });
-      return { total: 0, new: 0, contacted: 0, scheduled: 0, closedWon: 0, avgResponseTime: null };
+      logger.error("[LeadService] Get stats error", { error });
+      return {
+        total: 0,
+        new: 0,
+        contacted: 0,
+        scheduled: 0,
+        closedWon: 0,
+        avgResponseTime: null,
+      };
     }
 
     const leads = data || [];
     const responseTimes = leads
-      .map(l => l.response_time_seconds)
+      .map((l) => l.response_time_seconds)
       .filter((t): t is number => t !== null && t !== undefined);
 
     return {
       total: leads.length,
-      new: leads.filter(l => l.status === 'new').length,
-      contacted: leads.filter(l => l.status === 'contacted').length,
-      scheduled: leads.filter(l => l.status === 'scheduled').length,
-      closedWon: leads.filter(l => l.status === 'closed_won').length,
-      avgResponseTime: responseTimes.length > 0 
-        ? Math.round(responseTimes.reduce((a, b) => a + b, 0) / responseTimes.length)
-        : null
+      new: leads.filter((l) => l.status === "new").length,
+      contacted: leads.filter((l) => l.status === "contacted").length,
+      scheduled: leads.filter((l) => l.status === "scheduled").length,
+      closedWon: leads.filter((l) => l.status === "closed_won").length,
+      avgResponseTime:
+        responseTimes.length > 0
+          ? Math.round(
+              responseTimes.reduce((a, b) => a + b, 0) / responseTimes.length,
+            )
+          : null,
     };
   } catch (err) {
-    logger.error('[LeadService] Get stats exception', { error: err });
-    return { total: 0, new: 0, contacted: 0, scheduled: 0, closedWon: 0, avgResponseTime: null };
+    logger.error("[LeadService] Get stats exception", { error: err });
+    return {
+      total: 0,
+      new: 0,
+      contacted: 0,
+      scheduled: 0,
+      closedWon: 0,
+      avgResponseTime: null,
+    };
   }
 }
 
@@ -333,12 +357,12 @@ export async function recordCallSummary(
   leadId: string,
   duration: number,
   summary: string,
-  outcome: 'interested' | 'follow_up' | 'not_interested'
+  outcome: "interested" | "follow_up" | "not_interested",
 ): Promise<boolean> {
-  return addLeadEvent(leadId, 'CALL_SUMMARY', {
+  return addLeadEvent(leadId, "CALL_SUMMARY", {
     duration_seconds: duration,
     summary,
-    outcome
+    outcome,
   });
 }
 
@@ -349,17 +373,22 @@ export async function scheduleVisit(
   leadId: string,
   visitDate: string,
   visitTime: string,
-  notes?: string
+  notes?: string,
 ): Promise<boolean> {
   // 更新狀態為已約看
-  const statusUpdated = await updateLeadStatus(leadId, 'scheduled');
+  const statusUpdated = await updateLeadStatus(leadId, "scheduled");
   if (!statusUpdated) return false;
 
   // 記錄預約事件
-  return addLeadEvent(leadId, 'VISIT_SCHEDULED', {
-    visit_date: visitDate,
-    visit_time: visitTime
-  }, notes);
+  return addLeadEvent(
+    leadId,
+    "VISIT_SCHEDULED",
+    {
+      visit_date: visitDate,
+      visit_time: visitTime,
+    },
+    notes,
+  );
 }
 
 /**
@@ -367,17 +396,22 @@ export async function scheduleVisit(
  */
 export async function completeVisit(
   leadId: string,
-  feedback: 'very_interested' | 'interested' | 'neutral' | 'not_interested',
-  notes?: string
+  feedback: "very_interested" | "interested" | "neutral" | "not_interested",
+  notes?: string,
 ): Promise<boolean> {
   // 更新狀態
-  const statusUpdated = await updateLeadStatus(leadId, 'visited');
+  const statusUpdated = await updateLeadStatus(leadId, "visited");
   if (!statusUpdated) return false;
 
   // 記錄看屋完成事件
-  return addLeadEvent(leadId, 'VISIT_COMPLETE', {
-    customer_feedback: feedback
-  }, notes);
+  return addLeadEvent(
+    leadId,
+    "VISIT_COMPLETE",
+    {
+      customer_feedback: feedback,
+    },
+    notes,
+  );
 }
 
 export const leadService = {
@@ -391,5 +425,5 @@ export const leadService = {
   getAgentLeadStats,
   recordCallSummary,
   scheduleVisit,
-  completeVisit
+  completeVisit,
 };

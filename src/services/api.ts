@@ -1,95 +1,144 @@
-import { v4 as uuidv4 } from 'uuid'
-import { getConfig } from '../app/config'
-import { postLLM } from './ai'
-import { logger } from '../lib/logger'
-import type { ApiResponse, Paginated, PropertyCard, ReviewSnippet, AiAskReq, AiAskRes, CommunityPreview } from '../types'
+import { v4 as uuidv4 } from "uuid";
+import { getConfig } from "../app/config";
+import { postLLM } from "./ai";
+import { logger } from "../lib/logger";
+import type {
+  ApiResponse,
+  Paginated,
+  PropertyCard,
+  ReviewSnippet,
+  AiAskReq,
+  AiAskRes,
+  CommunityPreview,
+} from "../types";
 
-let sessionId = uuidv4()
-export const getSessionId = () => sessionId
+let sessionId = uuidv4();
+export const getSessionId = () => sessionId;
 
-export async function apiFetch<T = unknown>(endpoint: string, options: RequestInit = {}): Promise<ApiResponse<T>> {
-  const cfg = await getConfig()
-  const url = `${cfg.apiBaseUrl}${endpoint}`
-  const method = (options.method || 'GET').toUpperCase()
+export async function apiFetch<T = unknown>(
+  endpoint: string,
+  options: RequestInit = {},
+): Promise<ApiResponse<T>> {
+  const cfg = await getConfig();
+  const url = `${cfg.apiBaseUrl}${endpoint}`;
+  const method = (options.method || "GET").toUpperCase();
 
   const baseHeaders: Record<string, string> = {
-    Accept: 'application/json',
-    'X-API-Version': 'v1',
-    'X-App-Version': cfg.appVersion,
-    'X-Session-Id': sessionId,
-    'X-Request-Id': uuidv4(),
-    'Accept-Language': 'zh-Hant-TW'
-  }
+    Accept: "application/json",
+    "X-API-Version": "v1",
+    "X-App-Version": cfg.appVersion,
+    "X-Session-Id": sessionId,
+    "X-Request-Id": uuidv4(),
+    "Accept-Language": "zh-Hant-TW",
+  };
 
   const userHeaders: Record<string, string> = (() => {
-    const h = options.headers
-    if (!h) return {}
+    const h = options.headers;
+    if (!h) return {};
     if (h instanceof Headers) {
-      const o: Record<string, string> = {}
+      const o: Record<string, string> = {};
       for (const [k, v] of h) {
-        o[k] = v
+        o[k] = v;
       }
-      return o
+      return o;
     }
-    if (Array.isArray(h)) return Object.fromEntries(h)
-    return h
-  })()
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  })();
 
-  if (method === 'POST' && !userHeaders['Idempotency-Key'] && !userHeaders['idempotency-key']) {
-    userHeaders['Idempotency-Key'] = uuidv4()
+  if (
+    method === "POST" &&
+    !userHeaders["Idempotency-Key"] &&
+    !userHeaders["idempotency-key"]
+  ) {
+    userHeaders["Idempotency-Key"] = uuidv4();
   }
 
-  const headers = { ...baseHeaders, ...userHeaders }
+  const headers = { ...baseHeaders, ...userHeaders };
 
   if (cfg.mock) {
-    const { mockHandler } = await import('./mock')
-    return mockHandler<T>(endpoint, { ...options, headers })
+    const { mockHandler } = await import("./mock");
+    return mockHandler<T>(endpoint, { ...options, headers });
   }
 
-  const controller = new AbortController()
-  const id = setTimeout(() => controller.abort(), 8000)
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), 8000);
 
   try {
-    const res = await fetch(url, { ...options, headers, signal: controller.signal })
+    const res = await fetch(url, {
+      ...options,
+      headers,
+      signal: controller.signal,
+    });
     if (!res.ok) {
-      return { ok: false, error: { code: 'API_ERROR', message: 'API 請求失敗' } }
+      return {
+        ok: false,
+        error: { code: "API_ERROR", message: "API 請求失敗" },
+      };
     }
-    const data = await res.json()
-    return { ok: true, data }
+    const data = await res.json();
+    return { ok: true, data };
   } catch (e) {
-    if (e instanceof Error && e.name === 'AbortError')
-      return { ok: false, error: { code: 'NETWORK_TIMEOUT', message: '請求超時' } }
-    return { ok: false, error: { code: 'NETWORK_ERROR', message: e instanceof Error ? e.message : 'Network error' } }
+    if (e instanceof Error && e.name === "AbortError")
+      return {
+        ok: false,
+        error: { code: "NETWORK_TIMEOUT", message: "請求超時" },
+      };
+    return {
+      ok: false,
+      error: {
+        code: "NETWORK_ERROR",
+        message: e instanceof Error ? e.message : "Network error",
+      },
+    };
   } finally {
-    clearTimeout(id)
+    clearTimeout(id);
   }
 }
 
 export const getMeta = () =>
-  apiFetch<{ backendVersion: string; apiVersion: string; maintenance: boolean }>('/api/v1/meta')
+  apiFetch<{
+    backendVersion: string;
+    apiVersion: string;
+    maintenance: boolean;
+  }>("/api/v1/meta");
 
 export const getProperties = (page: number, pageSize: number, q?: string) =>
   apiFetch<Paginated<PropertyCard>>(
-    `/api/v1/properties?${new URLSearchParams({ page: String(page), pageSize: String(pageSize), ...(q ? { q } : {}) })}`
-  )
+    `/api/v1/properties?${new URLSearchParams({ page: String(page), pageSize: String(pageSize), ...(q ? { q } : {}) })}`,
+  );
 
-export const getProperty = (id: string) => apiFetch<PropertyCard>(`/api/v1/properties/${id}`)
+export const getProperty = (id: string) =>
+  apiFetch<PropertyCard>(`/api/v1/properties/${id}`);
 
 export const getReviews = (communityId: string, limit = 2, offset = 0) =>
   apiFetch<ReviewSnippet[]>(
-    `/api/v1/communities/${communityId}/reviews?${new URLSearchParams({ limit: String(limit), offset: String(offset) })}`
-  )
+    `/api/v1/communities/${communityId}/reviews?${new URLSearchParams({ limit: String(limit), offset: String(offset) })}`,
+  );
 
-export const getCommunities = () => apiFetch<CommunityPreview[]>('/api/v1/communities/preview')
+export const getCommunities = () =>
+  apiFetch<CommunityPreview[]>("/api/v1/communities/preview");
 
-export const aiAsk = async (req: AiAskReq, onChunk?: (chunk: string) => void): Promise<ApiResponse<AiAskRes>> => {
+export const aiAsk = async (
+  req: AiAskReq,
+  onChunk?: (chunk: string) => void,
+): Promise<ApiResponse<AiAskRes>> => {
   try {
-    const messages = req.messages.map(m => ({ role: m.role, content: m.content }))
-    const result = await postLLM(messages, onChunk)
-    const aiResult: AiAskRes = { answers: [result], recommends: [] }
-    return { ok: true, data: aiResult }
+    const messages = req.messages.map((m) => ({
+      role: m.role,
+      content: m.content,
+    }));
+    const result = await postLLM(messages, onChunk);
+    const aiResult: AiAskRes = { answers: [result], recommends: [] };
+    return { ok: true, data: aiResult };
   } catch (error) {
-    logger.error('AI Ask failed', { error })
-    return { ok: false, error: { code: 'AI_ERROR', message: error instanceof Error ? error.message : 'AI 暫時無法使用' } }
+    logger.error("AI Ask failed", { error });
+    return {
+      ok: false,
+      error: {
+        code: "AI_ERROR",
+        message: error instanceof Error ? error.message : "AI 暫時無法使用",
+      },
+    };
   }
-}
+};

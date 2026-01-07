@@ -6,30 +6,30 @@
  * - member → 消費者版
  */
 
-import { useParams, useSearchParams } from 'react-router-dom';
-import { useState, useEffect } from 'react';
-import { supabase } from '../../lib/supabase';
-import Consumer from './Consumer';
-import Agent from './Agent';
-import { RoleToggle } from '../../components/Feed/RoleToggle';
-import { logger } from '../../lib/logger';
+import { useParams, useSearchParams } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { supabase } from "../../lib/supabase";
+import Consumer from "./Consumer";
+import Agent from "./Agent";
+import { RoleToggle } from "../../components/Feed/RoleToggle";
+import { logger } from "../../lib/logger";
 
-type Role = 'agent' | 'member' | 'guest';
+type Role = "agent" | "member" | "guest";
 
-const DEMO_IDS = ['demo-001', 'demo-consumer', 'demo-agent'];
+const DEMO_IDS = ["demo-001", "demo-consumer", "demo-agent"];
 
 export default function Feed() {
   const { userId } = useParams<{ userId: string }>();
   const [searchParams] = useSearchParams();
 
-  const [role, setRole] = useState<Role>('member');
+  const [role, setRole] = useState<Role>("member");
   const [overrideRole, setOverrideRole] = useState<Role | null>(null); // Toggle state
   const [loading, setLoading] = useState(true);
 
   // 判斷是否強制 Mock
-  const mockParam = searchParams.get('mock');
+  const mockParam = searchParams.get("mock");
   const isDemo = userId ? DEMO_IDS.includes(userId) : false;
-  const forceMock = mockParam === 'true' || isDemo;
+  const forceMock = mockParam === "true" || isDemo;
 
   useEffect(() => {
     if (!userId) {
@@ -38,14 +38,14 @@ export default function Feed() {
     }
 
     if (forceMock) {
-      setRole(userId === 'demo-agent' ? 'agent' : 'member');
+      setRole(userId === "demo-agent" ? "agent" : "member");
       setLoading(false);
       return;
     }
 
     // Demo 預設給 Agent 讓他們可以切換
     if (isDemo) {
-      setRole(userId === 'demo-agent' ? 'agent' : 'member');
+      setRole(userId === "demo-agent" ? "agent" : "member");
       setLoading(false);
       return;
     }
@@ -54,16 +54,16 @@ export default function Feed() {
     const fetchRole = async () => {
       try {
         const { data, error } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', userId)
+          .from("profiles")
+          .select("role")
+          .eq("id", userId)
           .single();
 
         if (error) throw error;
-        setRole((data?.role as Role) || 'member');
+        setRole((data?.role as Role) || "member");
       } catch (err) {
-        logger.error('[Feed] Failed to fetch role', { error: err });
-        setRole('member');
+        logger.error("[Feed] Failed to fetch role", { error: err });
+        setRole("member");
       } finally {
         setLoading(false);
       }
@@ -76,7 +76,7 @@ export default function Feed() {
   const activeRole = overrideRole || role;
 
   const handleRoleToggle = () => {
-    const next = activeRole === 'agent' ? 'member' : 'agent';
+    const next = activeRole === "agent" ? "member" : "agent";
     setOverrideRole(next);
   };
 
@@ -98,7 +98,7 @@ export default function Feed() {
 
   return (
     <>
-      {activeRole === 'agent' ? (
+      {activeRole === "agent" ? (
         <Agent userId={userId} forceMock={forceMock} />
       ) : (
         <Consumer userId={userId} forceMock={forceMock} />
@@ -106,7 +106,7 @@ export default function Feed() {
 
       {forceMock && (
         <RoleToggle
-          currentRole={activeRole as 'agent' | 'member'}
+          currentRole={activeRole as "agent" | "member"}
           onToggle={handleRoleToggle}
         />
       )}

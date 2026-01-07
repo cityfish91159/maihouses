@@ -6,33 +6,33 @@
 @layer base {
   :root {
     /* === 統一色票系統 (以 Tailwind Config 為準) === */
-    --brand: #00385a;        /* 深藍 */
-    --brand-primary-rgb: 0, 56, 90;  /* 用於 rgba() shadows */
-    --brand-light: #009FE8;  /* 亮藍 */
-    --brand-600: #004E7C;
+    --brand: #00385a; /* 深藍 */
+    --brand-primary-rgb: 0, 56, 90; /* 用於 rgba() shadows */
+    --brand-light: #009fe8; /* 亮藍 */
+    --brand-600: #004e7c;
     --primary: #00385a;
     --primary-dark: #002a44;
     --primary-light: #005282;
     --text-primary: #0a2246;
     --text-secondary: #526070;
     --text-tertiary: #8a95a5;
-    --text-muted: #6C7B91;
-    --bg-page: #EEF2F7;
+    --text-muted: #6c7b91;
+    --bg-page: #eef2f7;
     --bg-base: #f6f9ff;
     --bg-alt: #eef3ff;
     --bg-elevated: #ffffff;
     --success: #0f6a23;
-    --border: #E6EDF7;
+    --border: #e6edf7;
     --border-light: #e8f0f8;
     --line: #e6edf7;
-    
+
     /* === 常用參數 === */
     --r-sm: 12px;
     --r-md: 16px;
     --r-lg: 16px;
     --r-2xl: 32px;
     --r-pill: 999px;
-    
+
     /* === 缺失的 CSS 變數補充（防止手機白屏） === */
     --danger: #dc2626;
     --shadow-card: 0 2px 8px rgba(15, 23, 42, 0.08);
@@ -46,9 +46,12 @@
   body {
     @apply bg-[var(--bg-page)] text-[var(--text-primary)] font-sans antialiased;
   }
-  
+
   /* 防止手機誤觸縮放 */
-  input, textarea, button, select {
+  input,
+  textarea,
+  button,
+  select {
     touch-action: manipulation;
   }
 }
@@ -59,7 +62,7 @@
     @apply rounded-[var(--r-sm)] bg-white border border-slate-200 transition-all duration-200;
     box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
   }
-  
+
   .mh-card:hover {
     box-shadow: 0 12px 32px rgba(0, 78, 124, 0.15);
     @apply -translate-y-1 border-[var(--brand)];
@@ -69,7 +72,7 @@
     @apply rounded-[var(--r-2xl)];
     box-shadow: 0 12px 32px rgba(0, 78, 124, 0.15);
   }
-  
+
   .mh-card--hero:hover {
     box-shadow: 0 16px 40px rgba(0, 78, 124, 0.2);
   }
@@ -83,7 +86,7 @@
   .mh-ai-input {
     @apply flex-1 rounded-full border-2 border-slate-200 bg-white px-5 py-2.5 text-sm outline-none transition-colors;
   }
-  
+
   .mh-ai-input:focus {
     @apply border-[var(--brand)] shadow-sm;
   }
@@ -96,8 +99,12 @@
 
 /* 推薦列表漸層動畫 - Tailwind 無對應 */
 @keyframes mhRecoBar {
-  0% { background-position: 0% 0; }
-  100% { background-position: 200% 0; }
+  0% {
+    background-position: 0% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
 }
 
 /* === 動畫 class ===

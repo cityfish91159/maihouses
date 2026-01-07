@@ -1,11 +1,11 @@
-import { useEffect, useRef } from 'react';
-import { useAuth } from '../../hooks/useAuth';
-import { useComposer, ComposerData } from '../../hooks/useComposer';
-import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
-import { notify } from '../../lib/notify';
-import { FocusTrap } from '../ui/FocusTrap';
-import { LoginPrompt } from './LoginPrompt';
-import { STRINGS } from '../../constants/strings';
+import { useEffect, useRef } from "react";
+import { useAuth } from "../../hooks/useAuth";
+import { useComposer, ComposerData } from "../../hooks/useComposer";
+import { useBodyScrollLock } from "../../hooks/useBodyScrollLock";
+import { notify } from "../../lib/notify";
+import { FocusTrap } from "../ui/FocusTrap";
+import { LoginPrompt } from "./LoginPrompt";
+import { STRINGS } from "../../constants/strings";
 
 const FOCUS_DELAY_MS = 50; // 延遲讓 textarea 正確聚焦
 
@@ -13,8 +13,8 @@ interface ComposerModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (data: ComposerData) => Promise<void>;
-  mode: 'feed' | 'community';
-  initialVisibility?: 'public' | 'private';
+  mode: "feed" | "community";
+  initialVisibility?: "public" | "private";
   placeholder?: string;
 }
 
@@ -23,7 +23,7 @@ export function ComposerModal({
   onClose,
   onSubmit,
   mode,
-  initialVisibility = 'public',
+  initialVisibility = "public",
   placeholder,
 }: ComposerModalProps) {
   const { isAuthenticated } = useAuth();
@@ -56,13 +56,14 @@ export function ComposerModal({
   });
 
   // Body scroll lock & inert background
-  useBodyScrollLock(isOpen, { inertTargetId: 'root' });
+  useBodyScrollLock(isOpen, { inertTargetId: "root" });
 
   // Auto-resize textarea
   useEffect(() => {
     if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto';
-      textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px';
+      textareaRef.current.style.height = "auto";
+      textareaRef.current.style.height =
+        textareaRef.current.scrollHeight + "px";
     }
   }, [content, isOpen]);
 
@@ -76,20 +77,20 @@ export function ComposerModal({
   // Close on Escape & Shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !isSubmitting) {
+      if (e.key === "Escape" && !isSubmitting) {
         onClose();
       }
       // P4-A6: 支援 Ctrl+Enter 送出
-      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+      if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
         if (isValid && !isSubmitting) {
           submit();
         }
       }
     };
     if (isOpen) {
-      window.addEventListener('keydown', handleKeyDown);
+      window.addEventListener("keydown", handleKeyDown);
     }
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onClose, isSubmitting, isValid, submit]);
 
   // Focus on open
@@ -108,12 +109,14 @@ export function ComposerModal({
     return <LoginPrompt isOpen={isOpen} onClose={onClose} />;
   }
 
-  const isPrivate = visibility === 'private';
-  const displayPlaceholder = placeholder || (
-    mode === 'community' 
-      ? (isPrivate ? STRINGS.COMPOSER.PLACEHOLDER_COMMUNITY_PRIVATE : STRINGS.COMPOSER.PLACEHOLDER_COMMUNITY_PUBLIC)
-      : STRINGS.COMPOSER.PLACEHOLDER_FEED
-  );
+  const isPrivate = visibility === "private";
+  const displayPlaceholder =
+    placeholder ||
+    (mode === "community"
+      ? isPrivate
+        ? STRINGS.COMPOSER.PLACEHOLDER_COMMUNITY_PRIVATE
+        : STRINGS.COMPOSER.PLACEHOLDER_COMMUNITY_PUBLIC
+      : STRINGS.COMPOSER.PLACEHOLDER_FEED);
 
   return (
     <FocusTrap isActive={isOpen} initialFocusRef={textareaRef}>
@@ -137,8 +140,13 @@ export function ComposerModal({
         >
           {/* Header */}
           <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
-            <h2 id="composer-title" className="flex items-center gap-2 text-lg font-bold text-gray-800">
-              {mode === 'community' && isPrivate ? STRINGS.COMPOSER.TITLE_PRIVATE : STRINGS.COMPOSER.TITLE_PUBLIC}
+            <h2
+              id="composer-title"
+              className="flex items-center gap-2 text-lg font-bold text-gray-800"
+            >
+              {mode === "community" && isPrivate
+                ? STRINGS.COMPOSER.TITLE_PRIVATE
+                : STRINGS.COMPOSER.TITLE_PUBLIC}
             </h2>
             <button
               onClick={onClose}
@@ -153,26 +161,26 @@ export function ComposerModal({
           {/* Body */}
           <div className="flex-1 overflow-y-auto p-4">
             {/* Visibility Toggle (Community Mode Only) */}
-            {mode === 'community' && (
+            {mode === "community" && (
               <div className="mb-4 flex gap-2">
                 <button
                   type="button"
-                  onClick={() => setVisibility('public')}
+                  onClick={() => setVisibility("public")}
                   className={`flex-1 rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
-                    visibility === 'public'
-                      ? 'border-brand-200 bg-brand-50 text-brand-700'
-                      : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
+                    visibility === "public"
+                      ? "border-brand-200 bg-brand-50 text-brand-700"
+                      : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
                   }`}
                 >
                   {STRINGS.COMPOSER.VISIBILITY_PUBLIC}
                 </button>
                 <button
                   type="button"
-                  onClick={() => setVisibility('private')}
+                  onClick={() => setVisibility("private")}
                   className={`flex-1 rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
-                    visibility === 'private'
-                      ? 'border-amber-200 bg-amber-50 text-amber-700'
-                      : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
+                    visibility === "private"
+                      ? "border-amber-200 bg-amber-50 text-amber-700"
+                      : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
                   }`}
                 >
                   {STRINGS.COMPOSER.VISIBILITY_PRIVATE}
@@ -204,7 +212,10 @@ export function ComposerModal({
             </div>
 
             {error && (
-              <div className="mt-3 rounded-lg bg-red-50 p-3 text-sm text-red-600" role="alert">
+              <div
+                className="mt-3 rounded-lg bg-red-50 p-3 text-sm text-red-600"
+                role="alert"
+              >
                 {error}
               </div>
             )}
@@ -214,7 +225,7 @@ export function ComposerModal({
           <div className="flex items-center justify-between rounded-b-2xl border-t border-gray-100 bg-gray-50 px-4 py-3">
             <span
               id="composer-counter"
-              className={`text-xs ${charCount > maxLength ? 'text-red-500' : 'text-gray-400'}`}
+              className={`text-xs ${charCount > maxLength ? "text-red-500" : "text-gray-400"}`}
             >
               {charCount} / {maxLength}
             </span>
@@ -233,7 +244,9 @@ export function ComposerModal({
                 disabled={!isValid || isSubmitting}
                 className="rounded-lg bg-brand-600 px-6 py-2 font-bold text-white shadow-sm transition-colors hover:bg-brand-700 hover:shadow disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {isSubmitting ? STRINGS.COMPOSER.SUBMITTING : STRINGS.COMPOSER.SUBMIT}
+                {isSubmitting
+                  ? STRINGS.COMPOSER.SUBMITTING
+                  : STRINGS.COMPOSER.SUBMIT}
               </button>
             </div>
           </div>

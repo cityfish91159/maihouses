@@ -1,8 +1,8 @@
-import { BudgetLite } from '../../components/BudgetLite'
-import { PoliteRewrite } from '../../components/PoliteRewrite'
-import { NoteWithEcho } from '../../components/NoteWithEcho'
-import { DebriefMini } from '../../components/DebriefMini'
-import { ELI5Tooltip } from '../../components/ELI5Tooltip'
+import { BudgetLite } from "../../components/BudgetLite";
+import { PoliteRewrite } from "../../components/PoliteRewrite";
+import { NoteWithEcho } from "../../components/NoteWithEcho";
+import { DebriefMini } from "../../components/DebriefMini";
+import { ELI5Tooltip } from "../../components/ELI5Tooltip";
 
 export default function Detail() {
   return (
@@ -38,9 +38,11 @@ export default function Detail() {
       <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
         <h2 className="mb-3 text-lg font-medium">專有名詞解釋</h2>
         <p className="text-sm text-gray-600">
-          這個物件的<ELI5Tooltip text="容積率" /> 和<ELI5Tooltip text="建蔽率" /> 都符合法規標準。
+          這個物件的
+          <ELI5Tooltip text="容積率" /> 和<ELI5Tooltip text="建蔽率" />{" "}
+          都符合法規標準。
         </p>
       </div>
     </section>
-  )
+  );
 }

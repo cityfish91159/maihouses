@@ -1,4 +1,4 @@
-declare module 'canvas-confetti' {
+declare module "canvas-confetti" {
   export interface Options {
     particleCount?: number;
     angle?: number;
@@ -13,7 +13,7 @@ declare module 'canvas-confetti' {
       y?: number;
     };
     colors?: string[];
-    shapes?: Array<'square' | 'circle'>;
+    shapes?: Array<"square" | "circle">;
     scalar?: number;
     zIndex?: number;
     disableForReducedMotion?: boolean;
@@ -32,7 +32,10 @@ declare module 'canvas-confetti' {
       reset(): void;
     }
 
-    function create(canvas: HTMLCanvasElement | null, options?: CreateOptions): CreateTypes;
+    function create(
+      canvas: HTMLCanvasElement | null,
+      options?: CreateOptions,
+    ): CreateTypes;
     function reset(): void;
   }
 

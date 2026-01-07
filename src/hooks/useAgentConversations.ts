@@ -4,11 +4,15 @@
  * 獲取房仲的客戶對話列表
  */
 
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '../lib/supabase';
-import { useAuth } from './useAuth';
-import { logger } from '../lib/logger';
-import { ConversationStatusSchema, SenderTypeSchema, type ConversationListItem } from '../types/messaging.types';
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "../lib/supabase";
+import { useAuth } from "./useAuth";
+import { logger } from "../lib/logger";
+import {
+  ConversationStatusSchema,
+  SenderTypeSchema,
+  type ConversationListItem,
+} from "../types/messaging.types";
 
 interface UseAgentConversationsResult {
   conversations: ConversationListItem[];
@@ -24,7 +28,7 @@ export function useAgentConversations(): UseAgentConversationsResult {
   const { user } = useAuth();
 
   const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ['agentConversations', user?.id],
+    queryKey: ["agentConversations", user?.id],
     queryFn: async (): Promise<ConversationListItem[]> => {
       if (!user?.id) return [];
 
@@ -32,8 +36,9 @@ export function useAgentConversations(): UseAgentConversationsResult {
       // 注意：conversations.property_id 是 TEXT (如 'MH-100001')，無法直接 JOIN properties.id (UUID)
       // 需要額外查詢 properties 表並用 public_id 匹配
       const { data: conversations, error: queryError } = await supabase
-        .from('conversations')
-        .select(`
+        .from("conversations")
+        .select(
+          `
           id,
           status,
           unread_agent,
@@ -45,13 +50,16 @@ export function useAgentConversations(): UseAgentConversationsResult {
             created_at,
             sender_type
           )
-        `)
-        .eq('agent_id', user.id)
-        .order('updated_at', { ascending: false })
+        `,
+        )
+        .eq("agent_id", user.id)
+        .order("updated_at", { ascending: false })
         .limit(20);
 
       if (queryError) {
-        logger.error('[useAgentConversations] Query failed', { error: queryError.message });
+        logger.error("[useAgentConversations] Query failed", {
+          error: queryError.message,
+        });
         throw new Error(queryError.message);
       }
 
@@ -61,20 +69,26 @@ export function useAgentConversations(): UseAgentConversationsResult {
 
       // 收集所有 property_id，用於批次查詢 properties 表
       const propertyIds = conversations
-        .map(c => c.property_id)
+        .map((c) => c.property_id)
         .filter((id): id is string => id !== null && id !== undefined);
 
       // 批次查詢 properties（用 public_id 匹配）
-      let propertiesMap: Map<string, { title: string; images: string[] | null }> = new Map();
+      let propertiesMap: Map<
+        string,
+        { title: string; images: string[] | null }
+      > = new Map();
       if (propertyIds.length > 0) {
         const { data: properties } = await supabase
-          .from('properties')
-          .select('public_id, title, images')
-          .in('public_id', propertyIds);
+          .from("properties")
+          .select("public_id, title, images")
+          .in("public_id", propertyIds);
 
         if (properties) {
           propertiesMap = new Map(
-            properties.map(p => [p.public_id, { title: p.title, images: p.images }])
+            properties.map((p) => [
+              p.public_id,
+              { title: p.title, images: p.images },
+            ]),
           );
         }
       }
@@ -83,28 +97,35 @@ export function useAgentConversations(): UseAgentConversationsResult {
       const items: ConversationListItem[] = conversations.map((conv) => {
         // Zod 驗證 status
         const statusResult = ConversationStatusSchema.safeParse(conv.status);
-        const status = statusResult.success ? statusResult.data : 'pending';
+        const status = statusResult.success ? statusResult.data : "pending";
 
         // 取得最後一則訊息（按 created_at 排序）- 使用展開運算符避免突變原陣列
         const messages = Array.isArray(conv.messages) ? conv.messages : [];
-        const sortedMessages = [...messages].sort((a, b) =>
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        const sortedMessages = [...messages].sort(
+          (a, b) =>
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
         );
         const lastMsg = sortedMessages[0];
 
         // Zod 驗證 sender_type
-        const senderTypeResult = lastMsg ? SenderTypeSchema.safeParse(lastMsg.sender_type) : null;
-        const senderType = senderTypeResult?.success ? senderTypeResult.data : 'consumer';
+        const senderTypeResult = lastMsg
+          ? SenderTypeSchema.safeParse(lastMsg.sender_type)
+          : null;
+        const senderType = senderTypeResult?.success
+          ? senderTypeResult.data
+          : "consumer";
 
         // 從 propertiesMap 取得物件資訊（用 public_id 匹配）
-        const propertyData = conv.property_id ? propertiesMap.get(conv.property_id) : null;
+        const propertyData = conv.property_id
+          ? propertiesMap.get(conv.property_id)
+          : null;
 
         return {
           id: conv.id,
           status,
           unread_count: conv.unread_agent ?? 0,
           counterpart: {
-            name: `訪客-${conv.consumer_session_id?.slice(-4).toUpperCase() ?? 'XXXX'}`,
+            name: `訪客-${conv.consumer_session_id?.slice(-4).toUpperCase() ?? "XXXX"}`,
           },
           property: conv.property_id
             ? {

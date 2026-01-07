@@ -46,7 +46,7 @@ import {
   getSuggestedCommunities,
   shouldShowQuiz,
   getRandomQuiz,
-  shouldTriggerLifeAnchor
+  shouldTriggerLifeAnchor,
 } from "../constants/maimai-persona";
 
 type ChatMessage = { role: "system" | "user" | "assistant"; content: string };
@@ -89,8 +89,15 @@ export function isJustChatMode(): boolean {
 
 // 檢查是否應該自動退出純陪聊模式
 function shouldExitJustChatMode(message: string): boolean {
-  const exitKeywords = ['買房', '看房', '找房', '有推薦', '想搬家', '哪個社區好'];
-  return exitKeywords.some(k => message.includes(k));
+  const exitKeywords = [
+    "買房",
+    "看房",
+    "找房",
+    "有推薦",
+    "想搬家",
+    "哪個社區好",
+  ];
+  return exitKeywords.some((k) => message.includes(k));
 }
 
 // 導出重設狀態供外部使用
@@ -104,12 +111,17 @@ function composeSystemPrompt(recentMessages?: ChatMessage[]): string {
   // 安靜模式優先
   if (isZen) return SYS_ZEN;
 
-  const mood = (safeLocalStorage.getItem("mai-mood-v1") as "neutral" | "stress" | "rest") || "neutral";
+  const mood =
+    (safeLocalStorage.getItem("mai-mood-v1") as
+      | "neutral"
+      | "stress"
+      | "rest") || "neutral";
   const profile = loadProfile();
   const profileTags = (profile.tags || []).slice(0, 5);
 
   // 分析對話
-  const lastUserMsg = recentMessages?.filter(m => m.role === 'user').pop()?.content || '';
+  const lastUserMsg =
+    recentMessages?.filter((m) => m.role === "user").pop()?.content || "";
 
   // ============================================
   // v5.5：載入用戶生活檔案 + v5.6：載入購買準備度
@@ -122,9 +134,12 @@ function composeSystemPrompt(recentMessages?: ChatMessage[]): string {
   // ============================================
   if (detectNegativeEmotion(lastUserMsg)) {
     const careResponse = generateCareResponse();
-    return SYS_JUST_CHAT + `\n\n【🤗 情緒關懷模式】
+    return (
+      SYS_JUST_CHAT +
+      `\n\n【🤗 情緒關懷模式】
 偵測到用戶可能心情不好，請優先關心，不要推薦任何東西！
-建議回應風格：「${careResponse}」`;
+建議回應風格：「${careResponse}」`
+    );
   }
 
   // ============================================
@@ -148,8 +163,11 @@ function composeSystemPrompt(recentMessages?: ChatMessage[]): string {
   if (exitSignal) {
     trackRejection();
     // 如果用戶明確拒絕，返回純陪聊模式的 prompt
-    if (exitSignal === 'no-need' || exitSignal === 'negative-emotion') {
-      return SYS_JUST_CHAT + `\n\n【重要】用戶剛剛表示「${exitSignal === 'no-need' ? '不需要' : '情緒不好'}」，請 100% 同理陪伴，完全不要提任何房產話題！`;
+    if (exitSignal === "no-need" || exitSignal === "negative-emotion") {
+      return (
+        SYS_JUST_CHAT +
+        `\n\n【重要】用戶剛剛表示「${exitSignal === "no-need" ? "不需要" : "情緒不好"}」，請 100% 同理陪伴，完全不要提任何房產話題！`
+      );
     }
   }
 
@@ -214,11 +232,11 @@ function composeSystemPrompt(recentMessages?: ChatMessage[]): string {
     emotionalState,
     chitchatRounds,
     topCategory,
-    userShowedInterest
+    userShowedInterest,
   );
 
   // 如果這輪是鋪墊，記錄下來
-  if (recommendationPhase === 'pave' && topCategory) {
+  if (recommendationPhase === "pave" && topCategory) {
     markPaved(topCategory);
   }
 
@@ -236,16 +254,20 @@ function composeSystemPrompt(recentMessages?: ChatMessage[]): string {
     recommendationPhase,
     topCategory,
     chitchatRounds,
-    style
+    style,
   );
 
   // ============================================
   // v5.2：生活小側寫服務
   // ============================================
   let totalScore = 0;
-  accTags.forEach(score => { totalScore += score; });
+  accTags.forEach((score) => {
+    totalScore += score;
+  });
 
-  if (shouldTriggerLifeProfile(userState, totalScore, timing as TimingQuality)) {
+  if (
+    shouldTriggerLifeProfile(userState, totalScore, timing as TimingQuality)
+  ) {
     const profileSummary = generateLifeProfileSummary(accTags);
     if (profileSummary) {
       basePrompt += `\n\n【🎁 服務機會：生活小側寫】
@@ -260,10 +282,10 @@ ${profileSummary}`;
   // ============================================
   // v5.2：Few-Shot 對話腳本
   // ============================================
-  if (userState === 'semi-warm' && recommendationPhase === 'pave') {
+  if (userState === "semi-warm" && recommendationPhase === "pave") {
     basePrompt += `\n\n【📚 對話範例參考】
 ${FEW_SHOT_SCRIPTS.rentalToWall}`;
-  } else if (userState === 'explicit') {
+  } else if (userState === "explicit") {
     basePrompt += `\n\n【📚 對話範例參考】
 ${FEW_SHOT_SCRIPTS.explicitToListing}`;
   }
@@ -273,7 +295,7 @@ ${FEW_SHOT_SCRIPTS.explicitToListing}`;
   // ============================================
   const warmthStrategy = getWarmthLevel();
   let warmthPrompt = `\n\n【🌡️ 當前溫暖度：${warmthStrategy.label}】\n建議策略：`;
-  warmthStrategy.tactics.forEach(t => {
+  warmthStrategy.tactics.forEach((t) => {
     warmthPrompt += `\n- ${t}`;
   });
   if (!warmthStrategy.canRecommend) {
@@ -289,19 +311,26 @@ ${FEW_SHOT_SCRIPTS.explicitToListing}`;
   // v5.5：用戶生活檔案記憶
   // ============================================
   const userProfile = getUserProfile();
-  let profilePrompt = '';
-  if (userProfile.workArea || userProfile.homeArea || userProfile.commutePain || userProfile.familyStatus) {
+  let profilePrompt = "";
+  if (
+    userProfile.workArea ||
+    userProfile.homeArea ||
+    userProfile.commutePain ||
+    userProfile.familyStatus
+  ) {
     profilePrompt = `\n\n【👤 用戶生活檔案】`;
-    if (userProfile.workArea) profilePrompt += `\n- 上班地點：${userProfile.workArea}`;
-    if (userProfile.homeArea) profilePrompt += `\n- 目前住：${userProfile.homeArea}`;
+    if (userProfile.workArea)
+      profilePrompt += `\n- 上班地點：${userProfile.workArea}`;
+    if (userProfile.homeArea)
+      profilePrompt += `\n- 目前住：${userProfile.homeArea}`;
     if (userProfile.commutePain) profilePrompt += `\n- 通勤困擾：有`;
     if (userProfile.familyStatus) {
       const statusMap: Record<string, string> = {
-        'single': '單身',
-        'couple': '有伴侶',
-        'newlywed': '新婚',
-        'with-kids': '有小孩',
-        'with-parents': '和父母同住'
+        single: "單身",
+        couple: "有伴侶",
+        newlywed: "新婚",
+        "with-kids": "有小孩",
+        "with-parents": "和父母同住",
       };
       profilePrompt += `\n- 家庭狀態：${statusMap[userProfile.familyStatus] || userProfile.familyStatus}`;
     }
@@ -311,20 +340,20 @@ ${FEW_SHOT_SCRIPTS.explicitToListing}`;
   // ============================================
   // v5.6：精準社區推薦
   // ============================================
-  let communityPrompt = '';
+  let communityPrompt = "";
   const suggestedCommunities = getSuggestedCommunities(topCategory);
-  if (suggestedCommunities && recommendationPhase === 'pave') {
+  if (suggestedCommunities && recommendationPhase === "pave") {
     communityPrompt = `\n\n【🏘️ 推薦社區參考】
 根據用戶需求（${topCategory}），可以提到：
-- 社區：${suggestedCommunities.communities.slice(0, 2).join('、')}
-- 特色：${suggestedCommunities.features.join('、')}
+- 社區：${suggestedCommunities.communities.slice(0, 2).join("、")}
+- 特色：${suggestedCommunities.features.join("、")}
 💡 鋪墊時自然帶入這些社區名稱`;
   }
 
   // ============================================
   // v5.6：購買準備度檢查
   // ============================================
-  let readinessPrompt = '';
+  let readinessPrompt = "";
   const readinessScore = getBuyingReadinessScore();
   if (isReadyToBook()) {
     readinessPrompt = `\n\n【🎯 購買準備度：${readinessScore}/6 - 可以邀約看房！】
@@ -338,14 +367,14 @@ ${FEW_SHOT_SCRIPTS.explicitToListing}`;
   // ============================================
   // v5.6：小測驗觸發
   // ============================================
-  let quizPrompt = '';
+  let quizPrompt = "";
   if (shouldShowQuiz(chitchatRounds)) {
     const quiz = getRandomQuiz();
     if (quiz && quiz.options.length >= 4) {
       quizPrompt = `\n\n【🎮 可以玩個小測驗】
 「${quiz.question}」
-A) ${quiz.options[0]?.text ?? ''}  B) ${quiz.options[1]?.text ?? ''}
-C) ${quiz.options[2]?.text ?? ''}  D) ${quiz.options[3]?.text ?? ''}
+A) ${quiz.options[0]?.text ?? ""}  B) ${quiz.options[1]?.text ?? ""}
+C) ${quiz.options[2]?.text ?? ""}  D) ${quiz.options[3]?.text ?? ""}
 💡 這樣可以自然了解用戶偏好，也增加互動樂趣`;
     }
   }
@@ -364,18 +393,33 @@ C) ${quiz.options[2]?.text ?? ''}  D) ${quiz.options[3]?.text ?? ''}
     : "";
 
   // Debug 資訊（生產環境可移除）
-  const debugInfo = `\n\n[DEBUG] 狀態：${userState} | 情緒：${emotionalState} | 階段：${recommendationPhase} | 標籤：${topCategory || '無'} | 閒聊輪數：${chitchatRounds} | 溫暖度：${warmthStrategy.level} | 準備度：${readinessScore}/6`;
+  const debugInfo = `\n\n[DEBUG] 狀態：${userState} | 情緒：${emotionalState} | 階段：${recommendationPhase} | 標籤：${topCategory || "無"} | 閒聊輪數：${chitchatRounds} | 溫暖度：${warmthStrategy.level} | 準備度：${readinessScore}/6`;
 
-  return basePrompt + warmthPrompt + timePrompt + profilePrompt + communityPrompt + readinessPrompt + quizPrompt + tone + memory + debugInfo;
+  return (
+    basePrompt +
+    warmthPrompt +
+    timePrompt +
+    profilePrompt +
+    communityPrompt +
+    readinessPrompt +
+    quizPrompt +
+    tone +
+    memory +
+    debugInfo
+  );
 }
 
 export async function postLLM(
   messages: ChatMessage[],
-  optionsOrCallback?: { temperature?: number; max_tokens?: number } | ((chunk: string) => void),
-  maybeOptions?: { temperature?: number; max_tokens?: number }
+  optionsOrCallback?:
+    | { temperature?: number; max_tokens?: number }
+    | ((chunk: string) => void),
+  maybeOptions?: { temperature?: number; max_tokens?: number },
 ) {
-  const onChunk = typeof optionsOrCallback === 'function' ? optionsOrCallback : undefined;
-  const options = typeof optionsOrCallback === 'object' ? optionsOrCallback : maybeOptions;
+  const onChunk =
+    typeof optionsOrCallback === "function" ? optionsOrCallback : undefined;
+  const options =
+    typeof optionsOrCallback === "object" ? optionsOrCallback : maybeOptions;
 
   const systemPrompt = composeSystemPrompt(messages);
 
@@ -383,13 +427,10 @@ export async function postLLM(
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      messages: [
-        { role: "system", content: systemPrompt },
-        ...messages
-      ],
+      messages: [{ role: "system", content: systemPrompt }, ...messages],
       temperature: options?.temperature ?? 0.85,
       max_tokens: options?.max_tokens ?? 350,
-      stream: !!onChunk
+      stream: !!onChunk,
     }),
   });
 
@@ -400,19 +441,19 @@ export async function postLLM(
   if (onChunk && res.body) {
     const reader = res.body.getReader();
     const decoder = new TextDecoder();
-    let fullText = '';
+    let fullText = "";
 
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
 
       const chunk = decoder.decode(value, { stream: true });
-      const lines = chunk.split('\n');
+      const lines = chunk.split("\n");
 
       for (const line of lines) {
-        if (line.startsWith('data: ')) {
+        if (line.startsWith("data: ")) {
           const data = line.slice(6);
-          if (data === '[DONE]') continue;
+          if (data === "[DONE]") continue;
 
           try {
             const parsed = JSON.parse(data);
@@ -436,15 +477,26 @@ export async function postLLM(
   return text as string;
 }
 
-export async function politeRewrite(draft: string, opts?: { audience?: "owner" | "agent"; intent?: "view" | "detail" | "pet" | "price" }) {
+export async function politeRewrite(
+  draft: string,
+  opts?: {
+    audience?: "owner" | "agent";
+    intent?: "view" | "detail" | "pet" | "price";
+  },
+) {
   const who = opts?.audience === "owner" ? "屋主" : "仲介";
   const why = (() => {
     switch (opts?.intent) {
-      case "view": return "預約看房";
-      case "detail": return "詢問物件細節";
-      case "pet": return "確認是否可養寵物";
-      case "price": return "詢問價格與議價空間";
-      default: return "一般詢問";
+      case "view":
+        return "預約看房";
+      case "detail":
+        return "詢問物件細節";
+      case "pet":
+        return "確認是否可養寵物";
+      case "price":
+        return "詢問價格與議價空間";
+      default:
+        return "一般詢問";
     }
   })();
   const prompt = `請將以下訊息改寫成「禮貌、簡短、尊重」的兩個版本（V1/V2），情境：要發給「${who}」，目的：「${why}」。維持原意，避免命令語：\n---\n${draft}\n---\n格式：\nV1：...\nV2：...`;

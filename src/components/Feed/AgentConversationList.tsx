@@ -1,14 +1,14 @@
 /**
  * MSG-5: AgentConversationList
- * 
+ *
  * 房仲側欄的客戶對話列表
  */
 
-import React from 'react';
-import { Link } from 'react-router-dom';
-import { MessageCircle, ChevronRight } from 'lucide-react';
-import type { ConversationListItem } from '../../types/messaging.types';
-import { ROUTES } from '../../constants/routes';
+import React from "react";
+import { Link } from "react-router-dom";
+import { MessageCircle, ChevronRight } from "lucide-react";
+import type { ConversationListItem } from "../../types/messaging.types";
+import { ROUTES } from "../../constants/routes";
 
 interface AgentConversationListProps {
   conversations: ConversationListItem[];
@@ -26,36 +26,41 @@ function formatRelativeTime(timestamp: string): string {
   const diffHours = Math.floor(diffMins / 60);
   const diffDays = Math.floor(diffHours / 24);
 
-  if (diffMins < 1) return '剛剛';
+  if (diffMins < 1) return "剛剛";
   if (diffMins < 60) return `${diffMins}分鐘前`;
   if (diffHours < 24) return `${diffHours}小時前`;
   if (diffDays < 7) return `${diffDays}天前`;
-  return time.toLocaleDateString('zh-TW', { month: 'short', day: 'numeric' });
+  return time.toLocaleDateString("zh-TW", { month: "short", day: "numeric" });
 }
 
 /**
  * 取得狀態標籤
  */
-function getStatusLabel(status: ConversationListItem['status']): { text: string; color: string } {
+function getStatusLabel(status: ConversationListItem["status"]): {
+  text: string;
+  color: string;
+} {
   switch (status) {
-    case 'pending':
-      return { text: '等待回覆', color: 'text-amber-600 bg-amber-50' };
-    case 'active':
-      return { text: '對話中', color: 'text-green-600 bg-green-50' };
-    case 'closed':
-      return { text: '已結束', color: 'text-gray-500 bg-gray-100' };
+    case "pending":
+      return { text: "等待回覆", color: "text-amber-600 bg-amber-50" };
+    case "active":
+      return { text: "對話中", color: "text-green-600 bg-green-50" };
+    case "closed":
+      return { text: "已結束", color: "text-gray-500 bg-gray-100" };
     default:
-      return { text: '未知', color: 'text-gray-500 bg-gray-100' };
+      return { text: "未知", color: "text-gray-500 bg-gray-100" };
   }
 }
 
 export function AgentConversationList({
   conversations,
-  className = '',
+  className = "",
 }: AgentConversationListProps): React.ReactElement {
   if (conversations.length === 0) {
     return (
-      <div className={`rounded-[14px] border border-brand-100 bg-white p-[14px] shadow-card ${className}`}>
+      <div
+        className={`rounded-[14px] border border-brand-100 bg-white p-[14px] shadow-card ${className}`}
+      >
         <div className="mb-2.5 flex items-center gap-2">
           <MessageCircle className="size-4 text-brand-600" />
           <h4 className="m-0 text-[14px] font-bold text-brand-700">我的客戶</h4>
@@ -66,7 +71,9 @@ export function AgentConversationList({
   }
 
   return (
-    <div className={`rounded-[14px] border border-brand-100 bg-white p-[14px] shadow-card ${className}`}>
+    <div
+      className={`rounded-[14px] border border-brand-100 bg-white p-[14px] shadow-card ${className}`}
+    >
       <div className="mb-2.5 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <MessageCircle className="size-4 text-brand-600" />
@@ -84,7 +91,7 @@ export function AgentConversationList({
           const statusInfo = getStatusLabel(conv.status);
           const timeLabel = conv.last_message
             ? formatRelativeTime(conv.last_message.created_at)
-            : '';
+            : "";
 
           return (
             <Link
@@ -105,16 +112,18 @@ export function AgentConversationList({
                   </span>
                   {conv.unread_count > 0 && (
                     <span className="flex size-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
-                      {conv.unread_count > 9 ? '9+' : conv.unread_count}
+                      {conv.unread_count > 9 ? "9+" : conv.unread_count}
                     </span>
                   )}
                 </div>
                 <div className="flex items-center gap-1 text-[11px] text-gray-500">
                   <span className="truncate">
-                    {conv.property?.title || '物件諮詢'}
+                    {conv.property?.title || "物件諮詢"}
                   </span>
                   <span>·</span>
-                  <span className={`rounded px-1 py-0.5 text-[10px] ${statusInfo.color}`}>
+                  <span
+                    className={`rounded px-1 py-0.5 text-[10px] ${statusInfo.color}`}
+                  >
                     {statusInfo.text}
                   </span>
                 </div>

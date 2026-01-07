@@ -1,4 +1,4 @@
-import clsx from 'clsx';
+import clsx from "clsx";
 
 interface ChatHeaderProps {
   isLoading?: boolean;
@@ -59,11 +59,15 @@ export function ChatHeader({
         </div>
         <div className="flex items-center gap-3">
           <div className="flex size-12 items-center justify-center rounded-full bg-brand-50 text-lg font-black text-brand-700">
-            {counterpartName?.charAt(0).toUpperCase() || '?'}
+            {counterpartName?.charAt(0).toUpperCase() || "?"}
           </div>
           <div>
-            <p className="text-base font-bold text-slate-900">{counterpartName || '未知使用者'}</p>
-            <p className="text-xs text-slate-500">{counterpartSubtitle || '未提供資訊'}</p>
+            <p className="text-base font-bold text-slate-900">
+              {counterpartName || "未知使用者"}
+            </p>
+            <p className="text-xs text-slate-500">
+              {counterpartSubtitle || "未提供資訊"}
+            </p>
           </div>
         </div>
       </div>
@@ -73,14 +77,22 @@ export function ChatHeader({
         <div className="flex items-center gap-3">
           <div
             className={clsx(
-              'h-16 w-20 overflow-hidden rounded-xl border border-brand-100 bg-slate-50',
-              propertyImage && 'bg-cover bg-center'
+              "h-16 w-20 overflow-hidden rounded-xl border border-brand-100 bg-slate-50",
+              propertyImage && "bg-cover bg-center",
             )}
-            style={propertyImage ? { backgroundImage: `url(${propertyImage})` } : undefined}
+            style={
+              propertyImage
+                ? { backgroundImage: `url(${propertyImage})` }
+                : undefined
+            }
           />
           <div>
-            <p className="text-base font-bold text-slate-900">{propertyTitle || '未提供物件'}</p>
-            <p className="text-xs text-slate-500">{propertySubtitle || '尚無地址資訊'}</p>
+            <p className="text-base font-bold text-slate-900">
+              {propertyTitle || "未提供物件"}
+            </p>
+            <p className="text-xs text-slate-500">
+              {propertySubtitle || "尚無地址資訊"}
+            </p>
           </div>
         </div>
       </div>

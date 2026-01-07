@@ -1,11 +1,11 @@
-import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { Search, LogIn, UserPlus, List, Menu, X } from 'lucide-react';
-import { Logo } from '../Logo/Logo';
-import { ROUTES, RouteUtils } from '../../constants/routes';
-import { useMaiMai } from '../../context/MaiMaiContext';
-import { MaiMaiBase } from '../MaiMai/MaiMaiBase';
-import { MaiMaiSpeech } from '../MaiMai/MaiMaiSpeech';
-import { TUTORIAL_CONFIG } from '../../constants/tutorial';
+import React, { useState, useCallback, useEffect, useRef } from "react";
+import { Search, LogIn, UserPlus, List, Menu, X } from "lucide-react";
+import { Logo } from "../Logo/Logo";
+import { ROUTES, RouteUtils } from "../../constants/routes";
+import { useMaiMai } from "../../context/MaiMaiContext";
+import { MaiMaiBase } from "../MaiMai/MaiMaiBase";
+import { MaiMaiSpeech } from "../MaiMai/MaiMaiSpeech";
+import { TUTORIAL_CONFIG } from "../../constants/tutorial";
 
 export default function Header() {
   // MaiMai 教學系統
@@ -14,13 +14,15 @@ export default function Header() {
 
   // Header 原有 state
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
 
   /** 執行搜尋:導航到房源列表頁帶上搜尋參數 */
   const handleSearch = useCallback(() => {
     const trimmed = searchQuery.trim();
     if (trimmed) {
-      window.location.href = RouteUtils.withQuery(ROUTES.PROPERTY_LIST, { q: trimmed });
+      window.location.href = RouteUtils.withQuery(ROUTES.PROPERTY_LIST, {
+        q: trimmed,
+      });
     } else {
       window.location.href = ROUTES.PROPERTY_LIST;
     }
@@ -29,11 +31,11 @@ export default function Header() {
   /** 鍵盤事件:Enter 觸發搜尋 */
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLInputElement>) => {
-      if (e.key === 'Enter') {
+      if (e.key === "Enter") {
         handleSearch();
       }
     },
-    [handleSearch]
+    [handleSearch],
   );
 
   // Track previous clickCount to detect celebration trigger
@@ -41,7 +43,7 @@ export default function Header() {
 
   /** MaiMai 點擊互動：Pure state update only */
   const handleMaiMaiClick = useCallback(() => {
-    setClickCount(prev => {
+    setClickCount((prev) => {
       const next = prev + 1;
       // Pure calculation - reset at threshold
       if (next === TUTORIAL_CONFIG.CELEBRATE_CLICK_COUNT_THRESHOLD) {
@@ -60,10 +62,13 @@ export default function Header() {
     if (prev === clickCount) return;
 
     // Detect celebration (reached threshold, now reset to 0)
-    if (prev === TUTORIAL_CONFIG.CELEBRATE_CLICK_COUNT_THRESHOLD - 1 && clickCount === 0) {
-      setMood('celebrate');
+    if (
+      prev === TUTORIAL_CONFIG.CELEBRATE_CLICK_COUNT_THRESHOLD - 1 &&
+      clickCount === 0
+    ) {
+      setMood("celebrate");
       addMessage(TUTORIAL_CONFIG.MESSAGES.CELEBRATE);
-      window.dispatchEvent(new CustomEvent('mascot:celebrate'));
+      window.dispatchEvent(new CustomEvent("mascot:celebrate"));
       return;
     }
 
@@ -72,14 +77,14 @@ export default function Header() {
 
     // Normal click progress
     const tips = TUTORIAL_CONFIG.CLICK_TIPS;
-    const message = tips[clickCount - 1] || tips[0] || '';
-    setMood('happy');
+    const message = tips[clickCount - 1] || tips[0] || "";
+    setMood("happy");
     addMessage(message);
   }, [clickCount, setMood, addMessage]);
 
   /** 搜尋框聚焦:顯示搜尋提示 */
   const handleSearchFocus = useCallback(() => {
-    setMood('thinking');
+    setMood("thinking");
     addMessage(TUTORIAL_CONFIG.MESSAGES.SEARCH_HINT);
   }, [setMood, addMessage]);
 
@@ -100,11 +105,14 @@ export default function Header() {
           <Logo
             showSlogan={true}
             showBadge={true}
-            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
           />
 
           {/* Desktop Nav - 桌面版 */}
-          <nav className="hidden items-center gap-1 md:flex md:gap-2" aria-label="主要動作">
+          <nav
+            className="hidden items-center gap-1 md:flex md:gap-2"
+            aria-label="主要動作"
+          >
             {/* Column 1: List */}
             <a
               href={ROUTES.PROPERTY_LIST}
@@ -158,7 +166,11 @@ export default function Header() {
               className="flex items-center justify-center rounded-lg p-2 text-brand-700 transition-all hover:bg-brand-50 active:scale-95"
               aria-label="開啟選單"
             >
-              {mobileMenuOpen ? <X size={22} strokeWidth={2.5} /> : <Menu size={22} strokeWidth={2.5} />}
+              {mobileMenuOpen ? (
+                <X size={22} strokeWidth={2.5} />
+              ) : (
+                <Menu size={22} strokeWidth={2.5} />
+              )}
             </button>
           </div>
         </div>
@@ -230,29 +242,100 @@ export default function Header() {
           {/* Search Bar Area Wrapper */}
           <div className="relative mx-auto max-w-3xl">
             {/* Mascot & Bubble Group */}
-            <div className="pointer-events-none absolute right-[5%] top-[-44px] z-0 select-none md:right-[10%]">
-              {/* Dynamic Speech Bubble - MaiMaiSpeech 組件 */}
-              {messages.length > 0 && (
-                <div className="absolute bottom-[92%] right-[55%] md:bottom-[94%] md:right-[65%]">
-                  <MaiMaiSpeech messages={messages} className="w-[260px] md:w-auto md:max-w-none" />
-                </div>
-              )}
+            <div className="pointer-events-none absolute right-[5%] top-[-44px] z-0 animate-float select-none md:right-[10%] md:animate-float-desktop">
+              {/* Speech Bubble */}
+              <div className="absolute bottom-[92%] right-[55%] w-[260px] origin-bottom-right animate-fadeIn whitespace-normal rounded-2xl rounded-br-none border-2 border-brand-100 bg-white px-5 py-2 shadow-lg md:bottom-[94%] md:right-[65%] md:w-auto md:max-w-none md:whitespace-nowrap md:py-3">
+                <p className="text-left text-[11px] font-bold leading-relaxed text-ink-700 md:text-sm">
+                  買房這麼大的事，先到{" "}
+                  <span className="font-black text-brand-700">邁鄰居</span>
+                  ，為未來的家查口碑、找評價，最放心！
+                </p>
+                {/* Bubble Tail */}
+                <div className="absolute -bottom-2.5 right-3 size-5 rotate-45 border-b-2 border-r-2 border-brand-100 bg-white"></div>
+              </div>
 
-              {/* Dynamic MaiMai Mascot - MaiMaiBase 組件 */}
-              <div
-                className="pointer-events-auto relative z-10 size-20 cursor-pointer md:size-24"
-                onClick={handleMaiMaiClick}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    handleMaiMaiClick();
-                  }
-                }}
-                aria-label="邁邁小助手,點擊互動"
-              >
-                <MaiMaiBase mood={mood} size="md" animated={true} />
+              {/* Mascot SVG */}
+              <div className="relative z-10 size-20 md:size-24">
+                <svg
+                  viewBox="0 0 200 240"
+                  className="size-full text-brand-700 drop-shadow-sm"
+                >
+                  {/* M-Antenna */}
+                  <path
+                    d="M 85 40 L 85 15 L 100 30 L 115 15 L 115 40"
+                    stroke="currentColor"
+                    strokeWidth="5"
+                    fill="none"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  {/* House Body & Roof */}
+                  <path
+                    d="M 40 80 L 100 40 L 160 80"
+                    stroke="currentColor"
+                    strokeWidth="6"
+                    fill="none"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <rect
+                    x="55"
+                    y="80"
+                    width="90"
+                    height="100"
+                    stroke="currentColor"
+                    strokeWidth="6"
+                    fill="#F6F9FF"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  {/* Face */}
+                  <path
+                    d="M 78 110 Q 85 105 92 110"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                    fill="none"
+                    strokeLinecap="round"
+                  />
+                  <path
+                    d="M 108 110 Q 115 105 122 110"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                    fill="none"
+                    strokeLinecap="round"
+                  />
+                  <circle
+                    cx="85"
+                    cy="125"
+                    r="4"
+                    stroke="currentColor"
+                    strokeWidth="3"
+                    fill="none"
+                  />
+                  <circle
+                    cx="115"
+                    cy="125"
+                    r="4"
+                    stroke="currentColor"
+                    strokeWidth="3"
+                    fill="none"
+                  />
+                  {/* Hands - Waving */}
+                  <path
+                    d="M 55 130 L 35 100"
+                    stroke="currentColor"
+                    strokeWidth="5"
+                    fill="none"
+                    strokeLinecap="round"
+                  />
+                  <path
+                    d="M 145 130 L 165 100"
+                    stroke="currentColor"
+                    strokeWidth="5"
+                    fill="none"
+                    strokeLinecap="round"
+                  />
+                </svg>
               </div>
             </div>
 
@@ -288,21 +371,21 @@ export default function Header() {
 
             {/* Capsules */}
             <div className="relative z-10 mt-6 grid grid-cols-3 gap-2">
-              {['社區評價', '房仲專區', '邁鄰居'].map((text) => {
+              {["社區評價", "房仲專區", "邁鄰居"].map((text) => {
                 const getHref = (label: string) => {
-                  if (label === '社區評價') return ROUTES.COMMUNITY_WALL_MVP;
-                  if (label === '房仲專區') return ROUTES.UAG;
-                  return '#';
+                  if (label === "社區評價") return ROUTES.COMMUNITY_WALL_MVP;
+                  if (label === "房仲專區") return ROUTES.UAG;
+                  return "#";
                 };
                 const href = getHref(text);
-                const target = text === '房仲專區' ? '_blank' : undefined;
+                const target = text === "房仲專區" ? "_blank" : undefined;
 
                 return (
                   <a
                     key={text}
                     href={href}
                     target={target}
-                    rel={target ? 'noopener noreferrer' : undefined}
+                    rel={target ? "noopener noreferrer" : undefined}
                     className="flex items-center justify-center rounded-2xl border border-brand-700 bg-brand-700 py-3 text-lg font-bold tracking-wide text-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-brand-600 hover:shadow-md active:scale-[0.98]"
                   >
                     {text}

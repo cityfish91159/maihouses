@@ -1,6 +1,6 @@
-import type { ReactNode } from 'react';
-import { GlobalHeader } from '../../components/layout/GlobalHeader';
-import type { GlobalHeaderMode } from '../../constants/header';
+import type { ReactNode } from "react";
+import { GlobalHeader } from "../../components/layout/GlobalHeader";
+import type { GlobalHeaderMode } from "../../constants/header";
 
 interface ChatErrorLayoutProps {
   mode: GlobalHeaderMode;

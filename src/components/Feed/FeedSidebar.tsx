@@ -5,10 +5,10 @@
  * 包含：快速導航、社區動態、待售物件
  */
 
-import { memo } from 'react';
-import { Home, Search, Star, Clock, ChevronRight } from 'lucide-react';
-import type { SidebarData, HotPost, SaleItem } from '../../types/feed';
-import { STRINGS } from '../../constants/strings';
+import { memo } from "react";
+import { Home, Search, Star, Clock, ChevronRight } from "lucide-react";
+import type { SidebarData, HotPost, SaleItem } from "../../types/feed";
+import { STRINGS } from "../../constants/strings";
 
 const S = STRINGS.FEED.SIDEBAR;
 
@@ -26,10 +26,25 @@ interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { id: 'my-community', label: '我的社區牆', icon: <Home size={16} />, href: '#my-community' },
-  { id: 'explore', label: '探索其他社區', icon: <Search size={16} />, href: '#explore' },
-  { id: 'fav', label: '我的收藏', icon: <Star size={16} />, href: '#fav' },
-  { id: 'history', label: '瀏覽紀錄', icon: <Clock size={16} />, href: '#history' },
+  {
+    id: "my-community",
+    label: "我的社區牆",
+    icon: <Home size={16} />,
+    href: "#my-community",
+  },
+  {
+    id: "explore",
+    label: "探索其他社區",
+    icon: <Search size={16} />,
+    href: "#explore",
+  },
+  { id: "fav", label: "我的收藏", icon: <Star size={16} />, href: "#fav" },
+  {
+    id: "history",
+    label: "瀏覽紀錄",
+    icon: <Clock size={16} />,
+    href: "#history",
+  },
 ];
 
 /** 側邊欄卡片容器 */
@@ -58,10 +73,11 @@ function NavList({ activeNav }: { activeNav?: string }) {
           <a
             key={item.id}
             href={item.href}
-            className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition-all ${isActive
-              ? 'bg-gradient-to-r from-brand-700 to-brand-600 text-white shadow-sm'
-              : 'text-gray-700 hover:bg-brand-50'
-              }`}
+            className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition-all ${
+              isActive
+                ? "bg-gradient-to-r from-brand-700 to-brand-600 text-white shadow-sm"
+                : "text-gray-700 hover:bg-brand-50"
+            }`}
           >
             {item.icon}
             <span>{item.label}</span>
@@ -88,11 +104,13 @@ function HotPostsCard({ posts }: { posts: HotPost[] | undefined }) {
   return (
     <SidebarCard title={`📊 ${S.HOT_TITLE}`}>
       <p className="text-sm leading-relaxed text-gray-600">
-        {S.HOT_NEW_POSTS}{' '}
-        <span className="font-bold text-brand-700">{totalPosts}</span> {S.HOT_POSTS_UNIT}
+        {S.HOT_NEW_POSTS}{" "}
+        <span className="font-bold text-brand-700">{totalPosts}</span>{" "}
+        {S.HOT_POSTS_UNIT}
         <br />
-        {S.HOT_ACTIVE_COMMUNITIES}{' '}
-        <span className="font-bold text-brand-700">{uniqueCommunities}</span> {S.HOT_COMMUNITIES_UNIT}
+        {S.HOT_ACTIVE_COMMUNITIES}{" "}
+        <span className="font-bold text-brand-700">{uniqueCommunities}</span>{" "}
+        {S.HOT_COMMUNITIES_UNIT}
       </p>
     </SidebarCard>
   );
@@ -111,8 +129,8 @@ function SaleItemsCard({ items }: { items: SaleItem[] | undefined }) {
   return (
     <SidebarCard title={`🏠 ${S.SALE_TITLE}`}>
       <p className="text-sm leading-relaxed text-gray-600">
-        {S.SALE_PREFIX}{' '}
-        <span className="font-bold text-brand-700">{items.length}</span>{' '}
+        {S.SALE_PREFIX}{" "}
+        <span className="font-bold text-brand-700">{items.length}</span>{" "}
         {S.SALE_SUFFIX}
         <br />
         <a
@@ -129,8 +147,8 @@ function SaleItemsCard({ items }: { items: SaleItem[] | undefined }) {
 
 export const FeedSidebar = memo(function FeedSidebar({
   data,
-  activeNav = 'my-community',
-  className = '',
+  activeNav = "my-community",
+  className = "",
 }: FeedSidebarProps) {
   return (
     <aside

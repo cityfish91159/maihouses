@@ -1,17 +1,17 @@
-import { logger } from '../lib/logger';
+import { logger } from "../lib/logger";
 
 // 簡易埋點（事件命名更貼近用戶語意）
 export async function track(event: string, payload?: Record<string, unknown>) {
   try {
-    await fetch('/api/analytics', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+    await fetch("/api/analytics", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ event, ...payload }),
-      keepalive: true
+      keepalive: true,
     });
-    logger.debug('[track]', { event, payload: payload || {} });
+    logger.debug("[track]", { event, payload: payload || {} });
   } catch (err) {
-    logger.error('[Analytics] Track failed', { error: err });
+    logger.error("[Analytics] Track failed", { error: err });
   }
 }
 export const Events = {

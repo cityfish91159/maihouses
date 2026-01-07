@@ -1,11 +1,11 @@
 /**
  * BottomCTA Component
- * 
+ *
  * 底部 CTA 區塊
  */
 
-import type { Role } from '../types';
-import { getPermissions } from '../types';
+import type { Role } from "../types";
+import { getPermissions } from "../types";
 
 interface BottomCTAProps {
   viewerRole: Role;
@@ -24,13 +24,15 @@ export function BottomCTA({ viewerRole }: BottomCTAProps) {
   return (
     <div className="fixed inset-x-0 bottom-0 z-overlay flex items-center justify-center gap-3 border-t border-[var(--border)] bg-[rgba(255,255,255,0.95)] px-4 py-3 backdrop-blur-md">
       <p className="text-xs text-[var(--text-secondary)]">
-        {isMember ? '🏠 驗證住戶身份，解鎖私密牆' : '🔓 登入解鎖完整評價 + 更多功能'}
+        {isMember
+          ? "🏠 驗證住戶身份，解鎖私密牆"
+          : "🔓 登入解鎖完整評價 + 更多功能"}
       </p>
-      <button 
-        onClick={() => window.location.href = '/maihouses/auth.html'}
+      <button
+        onClick={() => (window.location.href = "/maihouses/auth.html")}
         className="rounded-full bg-gradient-to-br from-[var(--primary)] to-[#005282] px-5 py-2.5 text-[13px] font-bold text-white shadow-lg transition-transform hover:scale-105 active:scale-95"
       >
-        {isMember ? '驗證住戶' : '免費註冊'}
+        {isMember ? "驗證住戶" : "免費註冊"}
       </button>
     </div>
   );

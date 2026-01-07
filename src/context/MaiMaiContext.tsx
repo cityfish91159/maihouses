@@ -1,7 +1,13 @@
-import React, { createContext, useCallback, useContext, useMemo, useState } from 'react';
-import type { MaiMaiMood } from '../components/MaiMai/types';
-import { safeLocalStorage } from '../lib/safeStorage';
-import { logger } from '../lib/logger';
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useMemo,
+  useState,
+} from "react";
+import type { MaiMaiMood } from "../components/MaiMai/types";
+import { safeLocalStorage } from "../lib/safeStorage";
+import { logger } from "../lib/logger";
 
 /**
  * MaiMai 全站統一狀態管理
@@ -23,27 +29,37 @@ export interface MaiMaiContextValue {
 
 const MaiMaiContext = createContext<MaiMaiContextValue | null>(null);
 
-const STORAGE_KEY_MOOD = 'maimai-mood-v1';
-const STORAGE_KEY_MESSAGES = 'maimai-messages-v1';
+const STORAGE_KEY_MOOD = "maimai-mood-v1";
+const STORAGE_KEY_MESSAGES = "maimai-messages-v1";
 const MAX_MESSAGES = 3;
 
 const VALID_MOODS = new Set<MaiMaiMood>([
-  'idle', 'wave', 'peek', 'happy', 'thinking', 
-  'excited', 'confused', 'celebrate', 'shy', 'sleep'
+  "idle",
+  "wave",
+  "peek",
+  "happy",
+  "thinking",
+  "excited",
+  "confused",
+  "celebrate",
+  "shy",
+  "sleep",
 ]);
 
 function isValidMood(mood: unknown): mood is MaiMaiMood {
-  return typeof mood === 'string' && VALID_MOODS.has(mood as MaiMaiMood);
+  return typeof mood === "string" && VALID_MOODS.has(mood as MaiMaiMood);
 }
 
-export const MaiMaiProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const MaiMaiProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   // 從 localStorage 初始化 mood
   const [mood, setMoodState] = useState<MaiMaiMood>(() => {
     const stored = safeLocalStorage.getItem(STORAGE_KEY_MOOD);
     if (isValidMood(stored)) {
       return stored;
     }
-    return 'idle';
+    return "idle";
   });
 
   // 從 localStorage 初始化 messages
@@ -66,7 +82,7 @@ export const MaiMaiProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     try {
       safeLocalStorage.setItem(STORAGE_KEY_MOOD, newMood);
     } catch (e) {
-      logger.warn('[MaiMaiContext] Failed to save mood', { error: e });
+      logger.warn("[MaiMaiContext] Failed to save mood", { error: e });
     }
   }, []);
 
@@ -80,7 +96,7 @@ export const MaiMaiProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       try {
         safeLocalStorage.setItem(STORAGE_KEY_MESSAGES, JSON.stringify(updated));
       } catch (e) {
-        logger.warn('[MaiMaiContext] Failed to save messages', { error: e });
+        logger.warn("[MaiMaiContext] Failed to save messages", { error: e });
       }
       return updated;
     });
@@ -92,7 +108,7 @@ export const MaiMaiProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     try {
       safeLocalStorage.setItem(STORAGE_KEY_MESSAGES, JSON.stringify([]));
     } catch (e) {
-      logger.warn('[MaiMaiContext] Failed to reset messages', { error: e });
+      logger.warn("[MaiMaiContext] Failed to reset messages", { error: e });
     }
   }, []);
 
@@ -105,10 +121,12 @@ export const MaiMaiProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       addMessage,
       resetMessages,
     }),
-    [mood, setMood, messages, addMessage, resetMessages]
+    [mood, setMood, messages, addMessage, resetMessages],
   );
 
-  return <MaiMaiContext.Provider value={value}>{children}</MaiMaiContext.Provider>;
+  return (
+    <MaiMaiContext.Provider value={value}>{children}</MaiMaiContext.Provider>
+  );
 };
 
 /**
@@ -118,7 +136,7 @@ export const MaiMaiProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 export function useMaiMai(): MaiMaiContextValue {
   const ctx = useContext(MaiMaiContext);
   if (!ctx) {
-    throw new Error('useMaiMai must be used within MaiMaiProvider');
+    throw new Error("useMaiMai must be used within MaiMaiProvider");
   }
   return ctx;
 }

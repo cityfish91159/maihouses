@@ -1,14 +1,17 @@
-import { memo, useCallback } from 'react';
-import { FocusTrap } from '../ui/FocusTrap';
-import { STRINGS } from '../../constants/strings';
-import { ROUTES } from '../../constants/routes';
+import { memo, useCallback } from "react";
+import { FocusTrap } from "../ui/FocusTrap";
+import { STRINGS } from "../../constants/strings";
+import { ROUTES } from "../../constants/routes";
 
 interface LoginPromptProps {
   readonly isOpen: boolean;
   readonly onClose: () => void;
 }
 
-export const LoginPrompt = memo(function LoginPrompt({ isOpen, onClose }: LoginPromptProps) {
+export const LoginPrompt = memo(function LoginPrompt({
+  isOpen,
+  onClose,
+}: LoginPromptProps) {
   const handleClose = useCallback(() => {
     onClose();
   }, [onClose]);
@@ -17,7 +20,7 @@ export const LoginPrompt = memo(function LoginPrompt({ isOpen, onClose }: LoginP
 
   return (
     <FocusTrap isActive={isOpen}>
-      <div 
+      <div
         className="fixed inset-0 z-modal flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
         role="dialog"
         aria-modal="true"
@@ -27,9 +30,7 @@ export const LoginPrompt = memo(function LoginPrompt({ isOpen, onClose }: LoginP
           <h3 id="login-title" className="mb-2 text-xl font-bold text-gray-900">
             {STRINGS.COMPOSER.LOGIN_TITLE}
           </h3>
-          <p className="mb-6 text-gray-600">
-            {STRINGS.COMPOSER.LOGIN_DESC}
-          </p>
+          <p className="mb-6 text-gray-600">{STRINGS.COMPOSER.LOGIN_DESC}</p>
           <div className="flex justify-center gap-4">
             <button
               type="button"

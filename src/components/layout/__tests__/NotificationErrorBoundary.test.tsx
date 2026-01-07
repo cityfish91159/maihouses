@@ -3,263 +3,265 @@
  * MSG-2: 通知錯誤邊界
  */
 
-import { render, screen, fireEvent } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { NotificationErrorBoundary } from '../NotificationErrorBoundary';
+import { render, screen, fireEvent } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { NotificationErrorBoundary } from "../NotificationErrorBoundary";
 
 // Mock logger
-vi.mock('../../../lib/logger', () => ({
-    logger: {
-        error: vi.fn()
-    }
+vi.mock("../../../lib/logger", () => ({
+  logger: {
+    error: vi.fn(),
+  },
 }));
 
 // Component that throws an error
 const ThrowError = ({ shouldThrow }: { shouldThrow: boolean }) => {
-    if (shouldThrow) {
-        throw new Error('Test error from child component');
-    }
-    return <div>Child Content</div>;
+  if (shouldThrow) {
+    throw new Error("Test error from child component");
+  }
+  return <div>Child Content</div>;
 };
 
 // Suppress console.error during error boundary tests
 const originalError = console.error;
 beforeEach(() => {
-    console.error = vi.fn();
+  console.error = vi.fn();
 });
 afterEach(() => {
-    console.error = originalError;
+  console.error = originalError;
 });
 
-describe('NotificationErrorBoundary', () => {
-    beforeEach(() => {
-        vi.clearAllMocks();
+describe("NotificationErrorBoundary", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  describe("normal operation", () => {
+    it("should render children when no error", () => {
+      render(
+        <NotificationErrorBoundary>
+          <div>Normal Content</div>
+        </NotificationErrorBoundary>,
+      );
+
+      expect(screen.getByText("Normal Content")).toBeDefined();
     });
 
-    describe('normal operation', () => {
-        it('should render children when no error', () => {
-            render(
-                <NotificationErrorBoundary>
-                    <div>Normal Content</div>
-                </NotificationErrorBoundary>
-            );
+    it("should not show error UI when no error", () => {
+      render(
+        <NotificationErrorBoundary>
+          <div>Normal Content</div>
+        </NotificationErrorBoundary>,
+      );
 
-            expect(screen.getByText('Normal Content')).toBeDefined();
-        });
+      expect(screen.queryByText("無法載入通知")).toBeNull();
+    });
+  });
 
-        it('should not show error UI when no error', () => {
-            render(
-                <NotificationErrorBoundary>
-                    <div>Normal Content</div>
-                </NotificationErrorBoundary>
-            );
+  describe("error handling", () => {
+    it("should catch error and show error UI", () => {
+      render(
+        <NotificationErrorBoundary>
+          <ThrowError shouldThrow={true} />
+        </NotificationErrorBoundary>,
+      );
 
-            expect(screen.queryByText('無法載入通知')).toBeNull();
-        });
+      expect(screen.getByText("無法載入通知")).toBeDefined();
+      expect(screen.getByText("請稍後再試")).toBeDefined();
     });
 
-    describe('error handling', () => {
-        it('should catch error and show error UI', () => {
-            render(
-                <NotificationErrorBoundary>
-                    <ThrowError shouldThrow={true} />
-                </NotificationErrorBoundary>
-            );
+    it("should show retry button", () => {
+      render(
+        <NotificationErrorBoundary>
+          <ThrowError shouldThrow={true} />
+        </NotificationErrorBoundary>,
+      );
 
-            expect(screen.getByText('無法載入通知')).toBeDefined();
-            expect(screen.getByText('請稍後再試')).toBeDefined();
-        });
-
-        it('should show retry button', () => {
-            render(
-                <NotificationErrorBoundary>
-                    <ThrowError shouldThrow={true} />
-                </NotificationErrorBoundary>
-            );
-
-            expect(screen.getByText('重試')).toBeDefined();
-        });
-
-        it('should log error to logger', async () => {
-            const { logger } = await import('../../../lib/logger');
-
-            render(
-                <NotificationErrorBoundary>
-                    <ThrowError shouldThrow={true} />
-                </NotificationErrorBoundary>
-            );
-
-            expect(logger.error).toHaveBeenCalledWith(
-                'NotificationErrorBoundary.caught',
-                expect.objectContaining({
-                    error: 'Test error from child component'
-                })
-            );
-        });
+      expect(screen.getByText("重試")).toBeDefined();
     });
 
-    describe('retry functionality', () => {
-        it('should reset error state on retry click', async () => {
-            const user = userEvent.setup();
-            let shouldThrow = true;
+    it("should log error to logger", async () => {
+      const { logger } = await import("../../../lib/logger");
 
-            const { rerender } = render(
-                <NotificationErrorBoundary>
-                    <ThrowError shouldThrow={shouldThrow} />
-                </NotificationErrorBoundary>
-            );
+      render(
+        <NotificationErrorBoundary>
+          <ThrowError shouldThrow={true} />
+        </NotificationErrorBoundary>,
+      );
 
-            // Error UI should be shown
-            expect(screen.getByText('無法載入通知')).toBeDefined();
+      expect(logger.error).toHaveBeenCalledWith(
+        "NotificationErrorBoundary.caught",
+        expect.objectContaining({
+          error: "Test error from child component",
+        }),
+      );
+    });
+  });
 
-            // Fix the error
-            shouldThrow = false;
+  describe("retry functionality", () => {
+    it("should reset error state on retry click", async () => {
+      const user = userEvent.setup();
+      let shouldThrow = true;
 
-            // Click retry
-            const retryButton = screen.getByText('重試');
-            await user.click(retryButton);
+      const { rerender } = render(
+        <NotificationErrorBoundary>
+          <ThrowError shouldThrow={shouldThrow} />
+        </NotificationErrorBoundary>,
+      );
 
-            // Re-render with fixed component
-            rerender(
-                <NotificationErrorBoundary>
-                    <ThrowError shouldThrow={shouldThrow} />
-                </NotificationErrorBoundary>
-            );
+      // Error UI should be shown
+      expect(screen.getByText("無法載入通知")).toBeDefined();
 
-            // Should show children now (error state cleared)
-            // Note: This tests that hasError is reset; the actual re-render depends on React's behavior
-        });
+      // Fix the error
+      shouldThrow = false;
+
+      // Click retry
+      const retryButton = screen.getByText("重試");
+      await user.click(retryButton);
+
+      // Re-render with fixed component
+      rerender(
+        <NotificationErrorBoundary>
+          <ThrowError shouldThrow={shouldThrow} />
+        </NotificationErrorBoundary>,
+      );
+
+      // Should show children now (error state cleared)
+      // Note: This tests that hasError is reset; the actual re-render depends on React's behavior
+    });
+  });
+
+  describe("close button", () => {
+    it("should show close button when onClose is provided", () => {
+      render(
+        <NotificationErrorBoundary onClose={() => {}}>
+          <ThrowError shouldThrow={true} />
+        </NotificationErrorBoundary>,
+      );
+
+      expect(screen.getByText("關閉")).toBeDefined();
     });
 
-    describe('close button', () => {
-        it('should show close button when onClose is provided', () => {
-            render(
-                <NotificationErrorBoundary onClose={() => {}}>
-                    <ThrowError shouldThrow={true} />
-                </NotificationErrorBoundary>
-            );
+    it("should not show close button when onClose is not provided", () => {
+      render(
+        <NotificationErrorBoundary>
+          <ThrowError shouldThrow={true} />
+        </NotificationErrorBoundary>,
+      );
 
-            expect(screen.getByText('關閉')).toBeDefined();
-        });
-
-        it('should not show close button when onClose is not provided', () => {
-            render(
-                <NotificationErrorBoundary>
-                    <ThrowError shouldThrow={true} />
-                </NotificationErrorBoundary>
-            );
-
-            expect(screen.queryByText('關閉')).toBeNull();
-        });
-
-        it('should call onClose when close button is clicked', async () => {
-            const user = userEvent.setup();
-            const onClose = vi.fn();
-
-            render(
-                <NotificationErrorBoundary onClose={onClose}>
-                    <ThrowError shouldThrow={true} />
-                </NotificationErrorBoundary>
-            );
-
-            const closeButton = screen.getByText('關閉');
-            await user.click(closeButton);
-
-            expect(onClose).toHaveBeenCalled();
-        });
+      expect(screen.queryByText("關閉")).toBeNull();
     });
 
-    describe('error UI styling', () => {
-        it('should have proper container styling', () => {
-            render(
-                <NotificationErrorBoundary>
-                    <ThrowError shouldThrow={true} />
-                </NotificationErrorBoundary>
-            );
+    it("should call onClose when close button is clicked", async () => {
+      const user = userEvent.setup();
+      const onClose = vi.fn();
 
-            const container = screen.getByText('無法載入通知').closest('div[class*="absolute"]');
-            expect(container).toBeDefined();
-        });
+      render(
+        <NotificationErrorBoundary onClose={onClose}>
+          <ThrowError shouldThrow={true} />
+        </NotificationErrorBoundary>,
+      );
 
-        it('should show error icon', () => {
-            render(
-                <NotificationErrorBoundary>
-                    <ThrowError shouldThrow={true} />
-                </NotificationErrorBoundary>
-            );
+      const closeButton = screen.getByText("關閉");
+      await user.click(closeButton);
 
-            // The AlertCircle icon is wrapped in a container
-            const iconContainer = document.querySelector('.bg-red-50');
-            expect(iconContainer).toBeDefined();
-        });
+      expect(onClose).toHaveBeenCalled();
+    });
+  });
+
+  describe("error UI styling", () => {
+    it("should have proper container styling", () => {
+      render(
+        <NotificationErrorBoundary>
+          <ThrowError shouldThrow={true} />
+        </NotificationErrorBoundary>,
+      );
+
+      const container = screen
+        .getByText("無法載入通知")
+        .closest('div[class*="absolute"]');
+      expect(container).toBeDefined();
     });
 
-    describe('state management', () => {
-        it('should track hasError state correctly', () => {
-            const { rerender } = render(
-                <NotificationErrorBoundary>
-                    <ThrowError shouldThrow={false} />
-                </NotificationErrorBoundary>
-            );
+    it("should show error icon", () => {
+      render(
+        <NotificationErrorBoundary>
+          <ThrowError shouldThrow={true} />
+        </NotificationErrorBoundary>,
+      );
 
-            // Initially no error
-            expect(screen.queryByText('無法載入通知')).toBeNull();
+      // The AlertCircle icon is wrapped in a container
+      const iconContainer = document.querySelector(".bg-red-50");
+      expect(iconContainer).toBeDefined();
+    });
+  });
 
-            // Trigger error
-            rerender(
-                <NotificationErrorBoundary>
-                    <ThrowError shouldThrow={true} />
-                </NotificationErrorBoundary>
-            );
+  describe("state management", () => {
+    it("should track hasError state correctly", () => {
+      const { rerender } = render(
+        <NotificationErrorBoundary>
+          <ThrowError shouldThrow={false} />
+        </NotificationErrorBoundary>,
+      );
 
-            // Error should be caught
-            expect(screen.getByText('無法載入通知')).toBeDefined();
-        });
+      // Initially no error
+      expect(screen.queryByText("無法載入通知")).toBeNull();
 
-        it('should capture error details', () => {
-            render(
-                <NotificationErrorBoundary>
-                    <ThrowError shouldThrow={true} />
-                </NotificationErrorBoundary>
-            );
+      // Trigger error
+      rerender(
+        <NotificationErrorBoundary>
+          <ThrowError shouldThrow={true} />
+        </NotificationErrorBoundary>,
+      );
 
-            // Error is captured internally (verified by error UI showing)
-            expect(screen.getByText('無法載入通知')).toBeDefined();
-        });
+      // Error should be caught
+      expect(screen.getByText("無法載入通知")).toBeDefined();
     });
 
-    describe('getDerivedStateFromError', () => {
-        it('should return correct state shape', () => {
-            // This tests the static method behavior through the component
-            render(
-                <NotificationErrorBoundary>
-                    <ThrowError shouldThrow={true} />
-                </NotificationErrorBoundary>
-            );
+    it("should capture error details", () => {
+      render(
+        <NotificationErrorBoundary>
+          <ThrowError shouldThrow={true} />
+        </NotificationErrorBoundary>,
+      );
 
-            // If getDerivedStateFromError works correctly, error UI is shown
-            expect(screen.getByText('無法載入通知')).toBeDefined();
-        });
+      // Error is captured internally (verified by error UI showing)
+      expect(screen.getByText("無法載入通知")).toBeDefined();
     });
+  });
 
-    describe('componentDidCatch', () => {
-        it('should log complete error info including stack', async () => {
-            const { logger } = await import('../../../lib/logger');
+  describe("getDerivedStateFromError", () => {
+    it("should return correct state shape", () => {
+      // This tests the static method behavior through the component
+      render(
+        <NotificationErrorBoundary>
+          <ThrowError shouldThrow={true} />
+        </NotificationErrorBoundary>,
+      );
 
-            render(
-                <NotificationErrorBoundary>
-                    <ThrowError shouldThrow={true} />
-                </NotificationErrorBoundary>
-            );
-
-            expect(logger.error).toHaveBeenCalledWith(
-                'NotificationErrorBoundary.caught',
-                expect.objectContaining({
-                    error: expect.any(String),
-                    stack: expect.any(String),
-                    componentStack: expect.any(String)
-                })
-            );
-        });
+      // If getDerivedStateFromError works correctly, error UI is shown
+      expect(screen.getByText("無法載入通知")).toBeDefined();
     });
+  });
+
+  describe("componentDidCatch", () => {
+    it("should log complete error info including stack", async () => {
+      const { logger } = await import("../../../lib/logger");
+
+      render(
+        <NotificationErrorBoundary>
+          <ThrowError shouldThrow={true} />
+        </NotificationErrorBoundary>,
+      );
+
+      expect(logger.error).toHaveBeenCalledWith(
+        "NotificationErrorBoundary.caught",
+        expect.objectContaining({
+          error: expect.any(String),
+          stack: expect.any(String),
+          componentStack: expect.any(String),
+        }),
+      );
+    });
+  });
 });

@@ -1,17 +1,17 @@
 /**
  * QASection Component
- * 
+ *
  * 準住戶問答區塊
  * 重構：使用 LockedOverlay + Tailwind brand 色系
  */
 
-import { useState, useEffect, useRef, useCallback } from 'react';
-import type { Role, Question, Permissions } from '../types';
-import { getPermissions } from '../types';
-import { useGuestVisibleItems } from '../../../hooks/useGuestVisibleItems';
-import { LockedOverlay } from './LockedOverlay';
-import { formatRelativeTimeLabel } from '../../../lib/time';
-import { logger } from '../../../lib/logger';
+import { useState, useEffect, useRef, useCallback } from "react";
+import type { Role, Question, Permissions } from "../types";
+import { getPermissions } from "../types";
+import { useGuestVisibleItems } from "../../../hooks/useGuestVisibleItems";
+import { LockedOverlay } from "./LockedOverlay";
+import { formatRelativeTimeLabel } from "../../../lib/time";
+import { logger } from "../../../lib/logger";
 
 interface QACardProps {
   q: Question & { hasMoreAnswers?: boolean; totalAnswers?: number };
@@ -24,11 +24,23 @@ interface QACardProps {
   hideUnlockButton?: boolean;
 }
 
-function QACard({ q, perm, isUnanswered = false, onAnswer, isAnswering, onUnlock, hideUnlockButton = false }: QACardProps) {
+function QACard({
+  q,
+  perm,
+  isUnanswered = false,
+  onAnswer,
+  isAnswering,
+  onUnlock,
+  hideUnlockButton = false,
+}: QACardProps) {
   const displayTime = formatRelativeTimeLabel(q.time);
   return (
-    <article className={`hover:border-brand/15 rounded-[12px] border p-3 transition-all ${isUnanswered ? 'border-brand-light/30 to-brand-100/30 bg-gradient-to-br from-brand-50' : 'border-border-light bg-white'}`}>
-      <div className="mb-1.5 text-[13px] font-bold leading-snug text-brand-700">Q: {q.question}</div>
+    <article
+      className={`hover:border-brand/15 rounded-[12px] border p-3 transition-all ${isUnanswered ? "border-brand-light/30 to-brand-100/30 bg-gradient-to-br from-brand-50" : "border-border-light bg-white"}`}
+    >
+      <div className="mb-1.5 text-[13px] font-bold leading-snug text-brand-700">
+        Q: {q.question}
+      </div>
       <div className="mb-2 flex flex-wrap items-center gap-1.5 text-[11px] text-ink-600">
         <span>👤 準住戶</span>
         <span>· {displayTime}</span>
@@ -38,7 +50,7 @@ function QACard({ q, perm, isUnanswered = false, onAnswer, isAnswering, onUnlock
           <span>· {q.answersCount} 則回覆</span>
         )}
       </div>
-      
+
       {isUnanswered ? (
         <div className="bg-brand/2 mt-2 rounded-[10px] p-4 text-center text-[13px] text-ink-600">
           🙋 還沒有人回答，成為第一個回答的人！
@@ -48,20 +60,34 @@ function QACard({ q, perm, isUnanswered = false, onAnswer, isAnswering, onUnlock
           {q.answers.map((a, idx) => (
             <div key={idx} className="py-1.5 text-[12px] leading-relaxed">
               <div className="mb-1 flex flex-wrap items-center gap-1">
-                <span className={`rounded px-2 py-0.5 text-[10px] font-bold ${a.type === 'agent' ? 'bg-brand-100 text-brand-600' : a.type === 'official' ? 'bg-brand-50 text-brand' : 'bg-brand-100 text-brand'}`}>
-                  {a.type === 'agent' ? '🏢 認證房仲' : a.type === 'official' ? `📋 ${a.author}` : `🏠 ${a.author}`}
+                <span
+                  className={`rounded px-2 py-0.5 text-[10px] font-bold ${a.type === "agent" ? "bg-brand-100 text-brand-600" : a.type === "official" ? "bg-brand-50 text-brand" : "bg-brand-100 text-brand"}`}
+                >
+                  {a.type === "agent"
+                    ? "🏢 認證房仲"
+                    : a.type === "official"
+                      ? `📋 ${a.author}`
+                      : `🏠 ${a.author}`}
                 </span>
-                {a.expert && <span className="rounded bg-brand-100 px-2 py-0.5 text-[10px] font-bold text-brand-600">⭐ 專家回答</span>}
+                {a.expert && (
+                  <span className="rounded bg-brand-100 px-2 py-0.5 text-[10px] font-bold text-brand-600">
+                    ⭐ 專家回答
+                  </span>
+                )}
               </div>
               {a.content}
             </div>
           ))}
-          
+
           {/* 非會員：顯示「還有 X 則回答」+ 註冊按鈕（但在 LockedOverlay 內不顯示） */}
           {!hideUnlockButton && q.hasMoreAnswers && q.totalAnswers && (
             <div className="border-brand/10 to-brand-100/50 mt-2 rounded-lg border bg-gradient-to-r from-brand-50 p-3 text-center">
               <p className="mb-2 text-[13px] text-ink-700">
-                🔒 還有 <span className="font-bold text-brand">{q.totalAnswers - q.answers.length}</span> 則回答
+                🔒 還有{" "}
+                <span className="font-bold text-brand">
+                  {q.totalAnswers - q.answers.length}
+                </span>{" "}
+                則回答
               </p>
               <button
                 type="button"
@@ -77,15 +103,17 @@ function QACard({ q, perm, isUnanswered = false, onAnswer, isAnswering, onUnlock
 
       {perm.canAnswer && (
         <div className="mt-2">
-          <button 
+          <button
             type="button"
-            className={`flex w-full items-center justify-center gap-1 rounded-lg border px-2.5 py-1.5 text-[11px] font-semibold transition-all ${isUnanswered ? 'border-brand-light/30 bg-brand-light/10 text-brand-600' : 'bg-brand/6 border-brand/10 text-brand'} hover:bg-brand/12`}
+            className={`flex w-full items-center justify-center gap-1 rounded-lg border px-2.5 py-1.5 text-[11px] font-semibold transition-all ${isUnanswered ? "border-brand-light/30 bg-brand-light/10 text-brand-600" : "bg-brand/6 border-brand/10 text-brand"} hover:bg-brand/12`}
             onClick={() => onAnswer?.(q)}
             disabled={isAnswering}
             aria-busy={isAnswering}
-            aria-label={isUnanswered ? '搶先回答這個問題' : '回答這個問題'}
+            aria-label={isUnanswered ? "搶先回答這個問題" : "回答這個問題"}
           >
-            {isAnswering ? '⏳ 傳送中…' : `💬 ${isUnanswered ? '搶先回答' : '我來回答'}${perm.isAgent ? '（專家）' : ''}`}
+            {isAnswering
+              ? "⏳ 傳送中…"
+              : `💬 ${isUnanswered ? "搶先回答" : "我來回答"}${perm.isAgent ? "（專家）" : ""}`}
           </button>
         </div>
       )}
@@ -97,23 +125,35 @@ interface QASectionProps {
   viewerRole: Role;
   questions: Question[] | { items: Question[] };
   onAskQuestion?: (question: string) => Promise<void> | void;
-  onAnswerQuestion?: (questionId: string, content: string) => Promise<void> | void;
+  onAnswerQuestion?: (
+    questionId: string,
+    content: string,
+  ) => Promise<void> | void;
   feedbackDurationMs?: number;
   onUnlock?: () => void;
 }
 
-export function QASection({ viewerRole, questions: questionsProp, onAskQuestion, onAnswerQuestion, feedbackDurationMs = 5000, onUnlock }: QASectionProps) {
-  const questions = Array.isArray(questionsProp) ? questionsProp : (questionsProp?.items || []);
+export function QASection({
+  viewerRole,
+  questions: questionsProp,
+  onAskQuestion,
+  onAnswerQuestion,
+  feedbackDurationMs = 5000,
+  onUnlock,
+}: QASectionProps) {
+  const questions = Array.isArray(questionsProp)
+    ? questionsProp
+    : questionsProp?.items || [];
   const perm = getPermissions(viewerRole);
   const [askModalOpen, setAskModalOpen] = useState(false);
-  const [askInput, setAskInput] = useState('');
+  const [askInput, setAskInput] = useState("");
   const [answerModalOpen, setAnswerModalOpen] = useState(false);
-  const [answerInput, setAnswerInput] = useState('');
+  const [answerInput, setAnswerInput] = useState("");
   const [activeQuestion, setActiveQuestion] = useState<Question | null>(null);
-  const [submitting, setSubmitting] = useState<'ask' | 'answer' | null>(null);
-  const [askError, setAskError] = useState('');
-  const [answerError, setAnswerError] = useState('');
-  const [feedback, setFeedback] = useState('');
+  const [submitting, setSubmitting] = useState<"ask" | "answer" | null>(null);
+  const [askError, setAskError] = useState("");
+  const [answerError, setAnswerError] = useState("");
+  const [feedback, setFeedback] = useState("");
   const askDialogRef = useRef<HTMLDivElement | null>(null);
   const answerDialogRef = useRef<HTMLDivElement | null>(null);
   const askTextareaRef = useRef<HTMLTextAreaElement | null>(null);
@@ -123,28 +163,38 @@ export function QASection({ viewerRole, questions: questionsProp, onAskQuestion,
 
   // 使用 totalAnswers（API 回傳總數）或 answersCount 判斷是否有回答
   // 這樣即使 API 對非會員限流，也能正確分類
-  const answeredQuestions = questions.filter(q => (q.totalAnswers ?? q.answersCount ?? q.answers.length) > 0);
-  const unansweredQuestions = questions.filter(q => (q.totalAnswers ?? q.answersCount ?? q.answers.length) === 0);
+  const answeredQuestions = questions.filter(
+    (q) => (q.totalAnswers ?? q.answersCount ?? q.answers.length) > 0,
+  );
+  const unansweredQuestions = questions.filter(
+    (q) => (q.totalAnswers ?? q.answersCount ?? q.answers.length) === 0,
+  );
 
   // 使用統一的 hook 處理訪客可見項目
-  const { visible: visibleAnswered, hiddenCount, nextHidden: nextHiddenQuestion } = 
-    useGuestVisibleItems(answeredQuestions, perm.isLoggedIn);
-  const remainingAnsweredCount = answeredQuestions.length - visibleAnswered.length;
+  const {
+    visible: visibleAnswered,
+    hiddenCount,
+    nextHidden: nextHiddenQuestion,
+  } = useGuestVisibleItems(answeredQuestions, perm.isLoggedIn);
+  const remainingAnsweredCount =
+    answeredQuestions.length - visibleAnswered.length;
 
   const showGuestUnlockCta = !perm.isLoggedIn;
-  const shouldShowUnlockCta = !!onUnlock && (showGuestUnlockCta || hiddenCount > 0 || remainingAnsweredCount > 0);
+  const shouldShowUnlockCta =
+    !!onUnlock &&
+    (showGuestUnlockCta || hiddenCount > 0 || remainingAnsweredCount > 0);
 
   const MIN_QUESTION_LENGTH = 10;
   const MIN_ANSWER_LENGTH = 5;
 
   const resetAskModal = () => {
-    setAskInput('');
-    setAskError('');
+    setAskInput("");
+    setAskError("");
   };
 
   const resetAnswerModal = () => {
-    setAnswerInput('');
-    setAnswerError('');
+    setAnswerInput("");
+    setAnswerError("");
     setActiveQuestion(null);
   };
 
@@ -158,7 +208,7 @@ export function QASection({ viewerRole, questions: questionsProp, onAskQuestion,
         onUnlock();
         return;
       }
-      setFeedback('⚠️ 請登入後再發問。');
+      setFeedback("⚠️ 請登入後再發問。");
       return;
     }
     rememberTriggerFocus();
@@ -172,7 +222,7 @@ export function QASection({ viewerRole, questions: questionsProp, onAskQuestion,
         onUnlock();
         return;
       }
-      setFeedback('⚠️ 只有住戶或房仲可以回答問題。');
+      setFeedback("⚠️ 只有住戶或房仲可以回答問題。");
       return;
     }
     rememberTriggerFocus();
@@ -182,20 +232,29 @@ export function QASection({ viewerRole, questions: questionsProp, onAskQuestion,
   };
 
   const getActiveDialog = useCallback((): HTMLDivElement | null => {
-    return askModalOpen ? askDialogRef.current : answerModalOpen ? answerDialogRef.current : null;
+    return askModalOpen
+      ? askDialogRef.current
+      : answerModalOpen
+        ? answerDialogRef.current
+        : null;
   }, [askModalOpen, answerModalOpen]);
 
   const getFocusableElements = useCallback((container: HTMLElement | null) => {
     if (!container) return [] as HTMLElement[];
-    const selector = 'a[href], button, textarea, input, select, [tabindex]';
-    return Array.from(container.querySelectorAll<HTMLElement>(selector)).filter(el => {
-      const tabIndexAttr = el.getAttribute('tabindex');
-      const tabIndex = typeof tabIndexAttr === 'string' ? Number(tabIndexAttr) : undefined;
-      const isDisabled = el.hasAttribute('disabled') || el.getAttribute('aria-disabled') === 'true';
-      const isHidden = el.hasAttribute('aria-hidden');
-      const isNegativeTabIndex = typeof tabIndex === 'number' && tabIndex < 0;
-      return !isDisabled && !isHidden && !isNegativeTabIndex;
-    });
+    const selector = "a[href], button, textarea, input, select, [tabindex]";
+    return Array.from(container.querySelectorAll<HTMLElement>(selector)).filter(
+      (el) => {
+        const tabIndexAttr = el.getAttribute("tabindex");
+        const tabIndex =
+          typeof tabIndexAttr === "string" ? Number(tabIndexAttr) : undefined;
+        const isDisabled =
+          el.hasAttribute("disabled") ||
+          el.getAttribute("aria-disabled") === "true";
+        const isHidden = el.hasAttribute("aria-hidden");
+        const isNegativeTabIndex = typeof tabIndex === "number" && tabIndex < 0;
+        return !isDisabled && !isHidden && !isNegativeTabIndex;
+      },
+    );
   }, []);
 
   /**
@@ -204,22 +263,22 @@ export function QASection({ viewerRole, questions: questionsProp, onAskQuestion,
    */
   const focusSafeElement = (): void => {
     const candidates = [
-      document.querySelector('main'),
-      document.querySelector('[data-app-root]'),
-      document.getElementById('root'),
+      document.querySelector("main"),
+      document.querySelector("[data-app-root]"),
+      document.getElementById("root"),
       document.body,
     ];
     for (const el of candidates) {
       if (el instanceof HTMLElement) {
-        const prevTabIndex = el.getAttribute('tabindex');
-        el.dataset.prevTabindex = prevTabIndex ?? '';
+        const prevTabIndex = el.getAttribute("tabindex");
+        el.dataset.prevTabindex = prevTabIndex ?? "";
         el.tabIndex = -1;
         el.focus();
         // 還原 tabIndex（使用 setTimeout 確保 focus 完成）
         setTimeout(() => {
           const stored = el.dataset.prevTabindex;
-          if (stored === '') {
-            el.removeAttribute('tabindex');
+          if (stored === "") {
+            el.removeAttribute("tabindex");
           } else if (stored !== undefined) {
             el.tabIndex = Number(stored);
           }
@@ -229,55 +288,62 @@ export function QASection({ viewerRole, questions: questionsProp, onAskQuestion,
       }
     }
     if (import.meta.env.DEV) {
-      logger.warn('[QASection] focusSafeElement: 找不到可聚焦的 fallback 元素');
+      logger.warn("[QASection] focusSafeElement: 找不到可聚焦的 fallback 元素");
     }
   };
 
-  const trapFocusWithinModal = useCallback((event: KeyboardEvent) => {
-    if (event.key !== 'Tab') return;
-    const container = getActiveDialog();
-    if (!container) return;
-    const focusable = getFocusableElements(container);
+  const trapFocusWithinModal = useCallback(
+    (event: KeyboardEvent) => {
+      if (event.key !== "Tab") return;
+      const container = getActiveDialog();
+      if (!container) return;
+      const focusable = getFocusableElements(container);
 
-    // 若無可聚焦元素，將焦點設到對話框本身
-    if (!focusable.length) {
-      const prevTabIndex = container.getAttribute('tabindex');
-      container.dataset.prevTabindex = prevTabIndex ?? '';
-      container.tabIndex = -1;
-      container.focus();
-      event.preventDefault();
-      return;
-    }
+      // 若無可聚焦元素，將焦點設到對話框本身
+      if (!focusable.length) {
+        const prevTabIndex = container.getAttribute("tabindex");
+        container.dataset.prevTabindex = prevTabIndex ?? "";
+        container.tabIndex = -1;
+        container.focus();
+        event.preventDefault();
+        return;
+      }
 
-    const [first] = focusable;
-    const last = focusable.at(-1);
-    const active = document.activeElement as HTMLElement | null;
-    if (!active || !container.contains(active)) {
-      first?.focus();
-      event.preventDefault();
-      return;
-    }
-    if (!event.shiftKey && active === last) {
-      first?.focus();
-      event.preventDefault();
-    }
-    if (event.shiftKey && active === first) {
-      last?.focus();
-      event.preventDefault();
-    }
-  }, [getActiveDialog, getFocusableElements]);
+      const [first] = focusable;
+      const last = focusable.at(-1);
+      const active = document.activeElement as HTMLElement | null;
+      if (!active || !container.contains(active)) {
+        first?.focus();
+        event.preventDefault();
+        return;
+      }
+      if (!event.shiftKey && active === last) {
+        first?.focus();
+        event.preventDefault();
+      }
+      if (event.shiftKey && active === first) {
+        last?.focus();
+        event.preventDefault();
+      }
+    },
+    [getActiveDialog, getFocusableElements],
+  );
 
   useEffect(() => {
     const activeDialog = getActiveDialog();
     if (!activeDialog) {
-      document.body.style.overflow = '';
+      document.body.style.overflow = "";
       return;
     }
 
-    document.body.style.overflow = 'hidden';
+    document.body.style.overflow = "hidden";
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && submitting !== 'ask' && submitting !== 'answer') {
+      if (
+        event.key === "Escape" &&
+        submitting !== "ask" &&
+        submitting !== "answer"
+      ) {
         if (askModalOpen) {
           setAskModalOpen(false);
           resetAskModal();
@@ -299,19 +365,19 @@ export function QASection({ viewerRole, questions: questionsProp, onAskQuestion,
       }
     };
 
-    document.addEventListener('keydown', handleKeyDown);
-    document.addEventListener('focusin', ensureFocusStaysInside);
+    document.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("focusin", ensureFocusStaysInside);
 
     return () => {
-      document.body.style.overflow = '';
-      document.removeEventListener('keydown', handleKeyDown);
-      document.removeEventListener('focusin', ensureFocusStaysInside);
+      document.body.style.overflow = "";
+      document.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("focusin", ensureFocusStaysInside);
 
       // 還原對話框的 tabIndex（若之前被設為 -1）
       if (activeDialog && activeDialog.dataset.prevTabindex !== undefined) {
         const stored = activeDialog.dataset.prevTabindex;
-        if (stored === '') {
-          activeDialog.removeAttribute('tabindex');
+        if (stored === "") {
+          activeDialog.removeAttribute("tabindex");
         } else {
           activeDialog.tabIndex = Number(stored);
         }
@@ -328,7 +394,14 @@ export function QASection({ viewerRole, questions: questionsProp, onAskQuestion,
       }
       restoreFocusRef.current = null;
     };
-  }, [askModalOpen, answerModalOpen, submitting, getActiveDialog, trapFocusWithinModal, getFocusableElements]);
+  }, [
+    askModalOpen,
+    answerModalOpen,
+    submitting,
+    getActiveDialog,
+    trapFocusWithinModal,
+    getFocusableElements,
+  ]);
 
   useEffect(() => {
     if (!feedback) return () => undefined;
@@ -336,7 +409,7 @@ export function QASection({ viewerRole, questions: questionsProp, onAskQuestion,
       clearTimeout(feedbackTimeoutRef.current);
     }
     feedbackTimeoutRef.current = window.setTimeout(() => {
-      setFeedback('');
+      setFeedback("");
     }, feedbackDurationMs);
     return () => {
       if (feedbackTimeoutRef.current) {
@@ -369,19 +442,19 @@ export function QASection({ viewerRole, questions: questionsProp, onAskQuestion,
       return;
     }
     if (!onAskQuestion) {
-      setAskError('目前無法送出問題，請稍後再試。');
+      setAskError("目前無法送出問題，請稍後再試。");
       return;
     }
-    setSubmitting('ask');
-    setAskError('');
+    setSubmitting("ask");
+    setAskError("");
     try {
       await onAskQuestion(trimmed);
       setAskModalOpen(false);
       resetAskModal();
-      setFeedback('✅ 問題已送出，住戶將收到通知。');
+      setFeedback("✅ 問題已送出，住戶將收到通知。");
     } catch (err) {
-      logger.error('[QASection] Failed to submit question', { error: err });
-      setAskError('送出失敗，請稍後再試。');
+      logger.error("[QASection] Failed to submit question", { error: err });
+      setAskError("送出失敗，請稍後再試。");
     } finally {
       setSubmitting(null);
     }
@@ -390,7 +463,7 @@ export function QASection({ viewerRole, questions: questionsProp, onAskQuestion,
   const handleAnswerSubmit = async () => {
     const trimmed = answerInput.trim();
     if (!activeQuestion) {
-      setAnswerError('找不到問題，請重新選擇。');
+      setAnswerError("找不到問題，請重新選擇。");
       return;
     }
     if (trimmed.length < MIN_ANSWER_LENGTH) {
@@ -398,29 +471,36 @@ export function QASection({ viewerRole, questions: questionsProp, onAskQuestion,
       return;
     }
     if (!onAnswerQuestion) {
-      setAnswerError('目前無法送出回答，請稍後再試。');
+      setAnswerError("目前無法送出回答，請稍後再試。");
       return;
     }
-    setSubmitting('answer');
-    setAnswerError('');
+    setSubmitting("answer");
+    setAnswerError("");
     try {
       await onAnswerQuestion(String(activeQuestion.id), trimmed);
       setAnswerModalOpen(false);
       resetAnswerModal();
-      setFeedback('✅ 回答已送出，感謝你的協助。');
+      setFeedback("✅ 回答已送出，感謝你的協助。");
     } catch (err) {
-      logger.error('[QASection] Failed to submit answer', { error: err });
-      setAnswerError('送出失敗，請稍後再試。');
+      logger.error("[QASection] Failed to submit answer", { error: err });
+      setAnswerError("送出失敗，請稍後再試。");
     } finally {
       setSubmitting(null);
     }
   };
 
   return (
-    <section className="bg-white/98 scroll-mt-20 overflow-hidden rounded-[18px] border border-border-light shadow-[0_2px_12px_rgba(0,51,102,0.04)]" aria-labelledby="qa-heading" id="qa-section">
+    <section
+      className="bg-white/98 scroll-mt-20 overflow-hidden rounded-[18px] border border-border-light shadow-[0_2px_12px_rgba(0,51,102,0.04)]"
+      aria-labelledby="qa-heading"
+      id="qa-section"
+    >
       <div className="from-brand/3 to-brand-600/1 border-brand/5 flex items-center justify-between border-b bg-gradient-to-br px-4 py-3.5">
         <div>
-          <h2 id="qa-heading" className="flex items-center gap-1.5 text-[15px] font-extrabold text-brand-700">
+          <h2
+            id="qa-heading"
+            className="flex items-center gap-1.5 text-[15px] font-extrabold text-brand-700"
+          >
             🙋 準住戶問答
             {unansweredQuestions.length > 0 && (
               <span className="ml-1.5 rounded-full bg-brand-100 px-2 py-0.5 text-xs font-bold text-brand-600">
@@ -428,18 +508,20 @@ export function QASection({ viewerRole, questions: questionsProp, onAskQuestion,
               </span>
             )}
           </h2>
-          <p className="mt-0.5 text-[11px] text-ink-600">買房前，先問問鄰居怎麼說</p>
+          <p className="mt-0.5 text-[11px] text-ink-600">
+            買房前，先問問鄰居怎麼說
+          </p>
         </div>
       </div>
       <div className="flex flex-col gap-2.5 p-3.5 pb-12">
         {/* 有回答的問題 */}
-        {visibleAnswered.map(q => (
+        {visibleAnswered.map((q) => (
           <QACard
             key={q.id}
             q={q}
             perm={perm}
             onAnswer={openAnswerModal}
-            isAnswering={submitting === 'answer' && activeQuestion?.id === q.id}
+            isAnswering={submitting === "answer" && activeQuestion?.id === q.id}
             {...(onUnlock && { onUnlock })}
           />
         ))}
@@ -449,7 +531,7 @@ export function QASection({ viewerRole, questions: questionsProp, onAskQuestion,
           visible={hiddenCount > 0 && !!nextHiddenQuestion}
           hiddenCount={hiddenCount}
           countLabel="則問答"
-          benefits={['查看完整問答', '新回答通知']}
+          benefits={["查看完整問答", "新回答通知"]}
           {...(onUnlock ? { onCtaClick: onUnlock } : {})}
         >
           {nextHiddenQuestion && (
@@ -457,7 +539,10 @@ export function QASection({ viewerRole, questions: questionsProp, onAskQuestion,
               q={nextHiddenQuestion}
               perm={perm}
               onAnswer={openAnswerModal}
-              isAnswering={submitting === 'answer' && activeQuestion?.id === nextHiddenQuestion.id}
+              isAnswering={
+                submitting === "answer" &&
+                activeQuestion?.id === nextHiddenQuestion.id
+              }
               hideUnlockButton
             />
           )}
@@ -466,16 +551,20 @@ export function QASection({ viewerRole, questions: questionsProp, onAskQuestion,
         {/* 還沒人回答區塊 - 移至註冊 CTA 上方 */}
         <div className="bg-brand/3 rounded-[14px] border border-dashed border-border-light p-3.5">
           <div className="space-y-2">
-            <div className="text-[12px] font-semibold text-brand-700">還沒人回答的問題</div>
+            <div className="text-[12px] font-semibold text-brand-700">
+              還沒人回答的問題
+            </div>
             {unansweredQuestions.length > 0 ? (
-              unansweredQuestions.map(q => (
+              unansweredQuestions.map((q) => (
                 <QACard
                   key={q.id}
                   q={q}
                   perm={perm}
                   isUnanswered
                   onAnswer={openAnswerModal}
-                  isAnswering={submitting === 'answer' && activeQuestion?.id === q.id}
+                  isAnswering={
+                    submitting === "answer" && activeQuestion?.id === q.id
+                  }
                   {...(onUnlock && { onUnlock })}
                 />
               ))
@@ -487,14 +576,18 @@ export function QASection({ viewerRole, questions: questionsProp, onAskQuestion,
           </div>
 
           <div className="mt-3 flex flex-col gap-1">
-            <div className="text-sm font-bold text-ink-600">💬 你也有問題想問？</div>
-            <p className="text-xs text-ink-600">問題會通知該社區住戶，通常 24 小時內會有回覆</p>
+            <div className="text-sm font-bold text-ink-600">
+              💬 你也有問題想問？
+            </div>
+            <p className="text-xs text-ink-600">
+              問題會通知該社區住戶，通常 24 小時內會有回覆
+            </p>
             <button
               type="button"
               onClick={openAskModal}
               className="bg-brand/6 hover:bg-brand/12 border-brand/10 flex w-full items-center justify-center gap-1 rounded-lg border px-2.5 py-1.5 text-[11px] font-semibold text-brand transition"
             >
-              {perm.canAskQuestion ? '我想問問題' : '登入後發問'}
+              {perm.canAskQuestion ? "我想問問題" : "登入後發問"}
             </button>
           </div>
         </div>
@@ -502,11 +595,13 @@ export function QASection({ viewerRole, questions: questionsProp, onAskQuestion,
         {/* 訪客固定顯示註冊 CTA，放在還沒人回答區塊下方 */}
         {shouldShowUnlockCta && (
           <div className="bg-brand/4 border-brand/10 rounded-[12px] border p-3 text-center">
-            <div className="text-sm font-bold text-brand-700">免費註冊 / 登入</div>
+            <div className="text-sm font-bold text-brand-700">
+              免費註冊 / 登入
+            </div>
             <p className="mt-1 text-[12px] text-ink-600">
               {remainingAnsweredCount > 0
                 ? `還有 ${remainingAnsweredCount} 則問答可解鎖，追蹤最新回覆`
-                : '解鎖更多問答、追蹤最新回覆'}
+                : "解鎖更多問答、追蹤最新回覆"}
             </p>
             <button
               type="button"
@@ -519,7 +614,11 @@ export function QASection({ viewerRole, questions: questionsProp, onAskQuestion,
         )}
 
         {feedback && (
-          <p className="text-center text-[11px] text-brand-600" role="status" aria-live="polite">
+          <p
+            className="text-center text-[11px] text-brand-600"
+            role="status"
+            aria-live="polite"
+          >
             {feedback}
           </p>
         )}
@@ -537,14 +636,21 @@ export function QASection({ viewerRole, questions: questionsProp, onAskQuestion,
           >
             <div className="mb-3 flex items-center justify-between">
               <div>
-                <h3 id="ask-modal-title" className="text-base font-bold text-ink-700">提出你的問題</h3>
-                <p className="text-ink-500 text-xs">請描述情境，方便住戶提供建議</p>
+                <h3
+                  id="ask-modal-title"
+                  className="text-base font-bold text-ink-700"
+                >
+                  提出你的問題
+                </h3>
+                <p className="text-ink-500 text-xs">
+                  請描述情境，方便住戶提供建議
+                </p>
               </div>
               <button
                 type="button"
                 className="text-sm text-ink-400 transition hover:text-ink-700"
                 onClick={() => {
-                  if (submitting === 'ask') return;
+                  if (submitting === "ask") return;
                   setAskModalOpen(false);
                   resetAskModal();
                 }}
@@ -554,18 +660,27 @@ export function QASection({ viewerRole, questions: questionsProp, onAskQuestion,
               </button>
             </div>
             <div className="space-y-3">
-              <label className="block text-xs font-semibold text-ink-600" htmlFor="qa-ask-textarea">問題內容</label>
+              <label
+                className="block text-xs font-semibold text-ink-600"
+                htmlFor="qa-ask-textarea"
+              >
+                問題內容
+              </label>
               <textarea
                 ref={askTextareaRef}
                 id="qa-ask-textarea"
                 className="bg-ink-50/40 h-28 w-full rounded-xl border border-border-light p-3 text-sm outline-none focus:border-brand"
                 placeholder="例：晚上車流聲音大嗎？管理費包含哪些服務？"
                 value={askInput}
-                onChange={e => setAskInput(e.target.value)}
+                onChange={(e) => setAskInput(e.target.value)}
                 maxLength={500}
-                disabled={submitting === 'ask'}
+                disabled={submitting === "ask"}
               />
-              {askError && <p className="text-error-500 text-xs" role="alert">{askError}</p>}
+              {askError && (
+                <p className="text-error-500 text-xs" role="alert">
+                  {askError}
+                </p>
+              )}
               <div className="flex items-center justify-between text-[11px] text-ink-400">
                 <span>至少 {MIN_QUESTION_LENGTH} 個字</span>
                 <span>{askInput.length}/500</span>
@@ -573,10 +688,10 @@ export function QASection({ viewerRole, questions: questionsProp, onAskQuestion,
               <button
                 type="button"
                 onClick={handleAskSubmit}
-                disabled={submitting === 'ask'}
-                className={`w-full rounded-xl bg-brand px-4 py-2 text-sm font-semibold text-white transition ${submitting === 'ask' ? 'opacity-70' : 'hover:bg-brand-600'}`}
+                disabled={submitting === "ask"}
+                className={`w-full rounded-xl bg-brand px-4 py-2 text-sm font-semibold text-white transition ${submitting === "ask" ? "opacity-70" : "hover:bg-brand-600"}`}
               >
-                {submitting === 'ask' ? '送出中…' : '送出問題'}
+                {submitting === "ask" ? "送出中…" : "送出問題"}
               </button>
             </div>
           </div>
@@ -595,14 +710,21 @@ export function QASection({ viewerRole, questions: questionsProp, onAskQuestion,
           >
             <div className="mb-3 flex items-center justify-between">
               <div>
-                <h3 id="answer-modal-title" className="text-base font-bold text-ink-700">回答問題</h3>
-                <p className="text-ink-500 text-xs">{activeQuestion.question}</p>
+                <h3
+                  id="answer-modal-title"
+                  className="text-base font-bold text-ink-700"
+                >
+                  回答問題
+                </h3>
+                <p className="text-ink-500 text-xs">
+                  {activeQuestion.question}
+                </p>
               </div>
               <button
                 type="button"
                 className="text-sm text-ink-400 transition hover:text-ink-700"
                 onClick={() => {
-                  if (submitting === 'answer') return;
+                  if (submitting === "answer") return;
                   setAnswerModalOpen(false);
                   resetAnswerModal();
                 }}
@@ -612,18 +734,27 @@ export function QASection({ viewerRole, questions: questionsProp, onAskQuestion,
               </button>
             </div>
             <div className="space-y-3">
-              <label className="block text-xs font-semibold text-ink-600" htmlFor="qa-answer-textarea">回答內容</label>
+              <label
+                className="block text-xs font-semibold text-ink-600"
+                htmlFor="qa-answer-textarea"
+              >
+                回答內容
+              </label>
               <textarea
                 ref={answerTextareaRef}
                 id="qa-answer-textarea"
                 className="bg-ink-50/40 h-32 w-full rounded-xl border border-border-light p-3 text-sm outline-none focus:border-brand"
                 placeholder="提供實際經驗、噪音狀況、交通建議等"
                 value={answerInput}
-                onChange={e => setAnswerInput(e.target.value)}
+                onChange={(e) => setAnswerInput(e.target.value)}
                 maxLength={800}
-                disabled={submitting === 'answer'}
+                disabled={submitting === "answer"}
               />
-              {answerError && <p className="text-error-500 text-xs" role="alert">{answerError}</p>}
+              {answerError && (
+                <p className="text-error-500 text-xs" role="alert">
+                  {answerError}
+                </p>
+              )}
               <div className="flex items-center justify-between text-[11px] text-ink-400">
                 <span>至少 {MIN_ANSWER_LENGTH} 個字</span>
                 <span>{answerInput.length}/800</span>
@@ -631,10 +762,10 @@ export function QASection({ viewerRole, questions: questionsProp, onAskQuestion,
               <button
                 type="button"
                 onClick={handleAnswerSubmit}
-                disabled={submitting === 'answer'}
-                className={`w-full rounded-xl bg-brand px-4 py-2 text-sm font-semibold text-white transition ${submitting === 'answer' ? 'opacity-70' : 'hover:bg-brand-600'}`}
+                disabled={submitting === "answer"}
+                className={`w-full rounded-xl bg-brand px-4 py-2 text-sm font-semibold text-white transition ${submitting === "answer" ? "opacity-70" : "hover:bg-brand-600"}`}
               >
-                {submitting === 'answer' ? '送出中…' : '送出回答'}
+                {submitting === "answer" ? "送出中…" : "送出回答"}
               </button>
             </div>
           </div>

@@ -1,7 +1,11 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import clsx from 'clsx';
-import { List, type ListImperativeAPI, type RowComponentProps } from 'react-window';
-import type { Message, SenderType } from '../../types/messaging.types';
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import clsx from "clsx";
+import {
+  List,
+  type ListImperativeAPI,
+  type RowComponentProps,
+} from "react-window";
+import type { Message, SenderType } from "../../types/messaging.types";
 
 interface MessageListProps {
   messages: Message[];
@@ -12,10 +16,18 @@ interface MessageListProps {
 
 function formatTime(timestamp: string) {
   const time = new Date(timestamp);
-  return time.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' });
+  return time.toLocaleTimeString("zh-TW", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
-export function MessageList({ messages, currentSender, isLoading, error }: MessageListProps) {
+export function MessageList({
+  messages,
+  currentSender,
+  isLoading,
+  error,
+}: MessageListProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const listRef = useRef<ListImperativeAPI | null>(null);
   const [listHeight, setListHeight] = useState(360);
@@ -25,7 +37,7 @@ export function MessageList({ messages, currentSender, isLoading, error }: Messa
     if (!containerRef.current) return;
 
     // 使用 ResizeObserver 動態監聽容器高度
-    if (typeof ResizeObserver !== 'undefined') {
+    if (typeof ResizeObserver !== "undefined") {
       const observer = new ResizeObserver((entries) => {
         const entry = entries[0];
         if (entry) {
@@ -46,7 +58,11 @@ export function MessageList({ messages, currentSender, isLoading, error }: Messa
 
   useEffect(() => {
     if (messages.length === 0) return;
-    listRef.current?.scrollToRow({ index: messages.length - 1, align: 'end', behavior: 'smooth' });
+    listRef.current?.scrollToRow({
+      index: messages.length - 1,
+      align: "end",
+      behavior: "smooth",
+    });
   }, [messages.length]);
 
   if (isLoading) {
@@ -82,7 +98,13 @@ export function MessageList({ messages, currentSender, isLoading, error }: Messa
   }
 
   return (
-    <div ref={containerRef} className="h-full" role="log" aria-label="訊息列表" aria-live="polite">
+    <div
+      ref={containerRef}
+      className="h-full"
+      role="log"
+      aria-label="訊息列表"
+      aria-live="polite"
+    >
       <List
         listRef={listRef}
         rowCount={messages.length}
@@ -92,34 +114,46 @@ export function MessageList({ messages, currentSender, isLoading, error }: Messa
           const msg = messages[index];
           if (!msg) return <div style={style} />;
           const isSelf = msg.sender_type === currentSender;
-          const senderLabel = isSelf ? '我' : '對方';
+          const senderLabel = isSelf ? "我" : "對方";
           return (
             <div
               style={style}
-              className={clsx('flex px-1', isSelf ? 'justify-end' : 'justify-start')}
+              className={clsx(
+                "flex px-1",
+                isSelf ? "justify-end" : "justify-start",
+              )}
               role="article"
-              aria-label={`${senderLabel}的訊息：${msg.content.slice(0, 50)}${msg.content.length > 50 ? '...' : ''}`}
+              aria-label={`${senderLabel}的訊息：${msg.content.slice(0, 50)}${msg.content.length > 50 ? "..." : ""}`}
             >
               <div
                 className={clsx(
-                  'max-w-[78%] rounded-2xl px-4 py-3 text-sm shadow-sm',
-                  isSelf ? 'bg-brand-700 text-white' : 'border border-brand-100 bg-white text-slate-900'
+                  "max-w-[78%] rounded-2xl px-4 py-3 text-sm shadow-sm",
+                  isSelf
+                    ? "bg-brand-700 text-white"
+                    : "border border-brand-100 bg-white text-slate-900",
                 )}
               >
-                <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
-                <div className={clsx('mt-2 text-[10px]', isSelf ? 'text-white/70' : 'text-slate-400')}>
+                <p className="whitespace-pre-wrap leading-relaxed">
+                  {msg.content}
+                </p>
+                <div
+                  className={clsx(
+                    "mt-2 text-[10px]",
+                    isSelf ? "text-white/70" : "text-slate-400",
+                  )}
+                >
                   {formatTime(msg.created_at)}
                 </div>
                 {isSelf && (
                   <div className="mt-1 text-[10px] text-white/70">
-                    {msg.read_at ? '已讀' : '已送出'}
+                    {msg.read_at ? "已讀" : "已送出"}
                   </div>
                 )}
               </div>
             </div>
           );
         }}
-        style={{ height: listHeight, width: '100%' }}
+        style={{ height: listHeight, width: "100%" }}
         defaultHeight={listHeight}
       />
     </div>

@@ -1,32 +1,32 @@
 /**
  * MSG-5: SendMessageModal
- * 
+ *
  * 購買客戶成功後彈出的訊息發送 Modal
  */
 
-import React, { useState, useCallback, useEffect } from 'react';
-import { X, Send, MessageCircle, User, Home } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import type { Lead } from '../../pages/UAG/types/uag.types';
-import { messagingService } from '../../services/messagingService';
-import { notify } from '../../lib/notify';
-import { logger } from '../../lib/logger';
-import { ROUTES } from '../../constants/routes';
+import React, { useState, useCallback, useEffect } from "react";
+import { X, Send, MessageCircle, User, Home } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import type { Lead } from "../../pages/UAG/types/uag.types";
+import { messagingService } from "../../services/messagingService";
+import { notify } from "../../lib/notify";
+import { logger } from "../../lib/logger";
+import { ROUTES } from "../../constants/routes";
 
 const S = {
-  TITLE: '發送訊息給客戶',
-  CUSTOMER_LABEL: '客戶',
-  PROPERTY_LABEL: '感興趣物件',
-  MESSAGE_LABEL: '訊息內容',
-  MESSAGE_PLACEHOLDER: '您好！我是專業房仲，很高興為您服務...',
-  SEND_BTN: '發送訊息',
-  LATER_BTN: '稍後再說',
-  SENDING: '發送中...',
-  SUCCESS: '訊息已發送',
-  SUCCESS_DESC: '客戶會收到通知',
-  ERROR: '發送失敗',
-  SAVED_FOR_LATER: '已儲存客戶資料',
-  SAVED_FOR_LATER_DESC: '您可以稍後在「我的客戶」中發送訊息',
+  TITLE: "發送訊息給客戶",
+  CUSTOMER_LABEL: "客戶",
+  PROPERTY_LABEL: "感興趣物件",
+  MESSAGE_LABEL: "訊息內容",
+  MESSAGE_PLACEHOLDER: "您好！我是專業房仲，很高興為您服務...",
+  SEND_BTN: "發送訊息",
+  LATER_BTN: "稍後再說",
+  SENDING: "發送中...",
+  SUCCESS: "訊息已發送",
+  SUCCESS_DESC: "客戶會收到通知",
+  ERROR: "發送失敗",
+  SAVED_FOR_LATER: "已儲存客戶資料",
+  SAVED_FOR_LATER_DESC: "您可以稍後在「我的客戶」中發送訊息",
 };
 
 interface SendMessageModalProps {
@@ -59,11 +59,11 @@ export function SendMessageModal({
   conversationId,
 }: SendMessageModalProps): React.ReactElement | null {
   const navigate = useNavigate();
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = useState("");
   const [isSending, setIsSending] = useState(false);
 
   const customerName = getAnonymousName(lead.id);
-  const propertyName = lead.prop || '物件諮詢';
+  const propertyName = lead.prop || "物件諮詢";
 
   const handleSend = useCallback(async () => {
     if (!message.trim() || isSending) return;
@@ -71,12 +71,16 @@ export function SendMessageModal({
     // [UAG-13 FIX] 驗證 conversationId 格式 (防禦性編程)
     let validConversationId = conversationId;
     if (conversationId) {
-      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      const uuidRegex =
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
       if (!uuidRegex.test(conversationId)) {
-        logger.warn('[SendMessageModal] Invalid conversationId format, fallback to create flow', {
-          invalidId: conversationId,
-          leadId: lead.id
-        });
+        logger.warn(
+          "[SendMessageModal] Invalid conversationId format, fallback to create flow",
+          {
+            invalidId: conversationId,
+            leadId: lead.id,
+          },
+        );
         validConversationId = undefined; // 強制走建立流程
       }
     }
@@ -90,7 +94,7 @@ export function SendMessageModal({
         const safeConversationId: string = validConversationId;
         const msg = await messagingService.sendMessage({
           conversation_id: safeConversationId,
-          sender_type: 'agent',
+          sender_type: "agent",
           sender_id: agentId,
           content: message.trim(),
         });
@@ -107,7 +111,7 @@ export function SendMessageModal({
             lead_id: lead.id,
           },
           message.trim(),
-          agentId
+          agentId,
         );
       }
 
@@ -119,13 +123,25 @@ export function SendMessageModal({
         navigate(ROUTES.CHAT(result.conversation.id));
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : '請稍後再試';
-      logger.error('[SendMessageModal] Failed to send message', { error: errorMessage });
+      const errorMessage = err instanceof Error ? err.message : "請稍後再試";
+      logger.error("[SendMessageModal] Failed to send message", {
+        error: errorMessage,
+      });
       notify.error(S.ERROR, errorMessage);
     } finally {
       setIsSending(false);
     }
-  }, [message, isSending, agentId, sessionId, propertyId, onClose, navigate, conversationId, lead.id]);
+  }, [
+    message,
+    isSending,
+    agentId,
+    sessionId,
+    propertyId,
+    onClose,
+    navigate,
+    conversationId,
+    lead.id,
+  ]);
 
   const handleLater = useCallback(() => {
     onClose();
@@ -137,24 +153,24 @@ export function SendMessageModal({
     if (!isOpen) return;
 
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
+      if (e.key === "Escape") {
         onClose();
       }
     };
 
-    document.addEventListener('keydown', handleEscape);
-    return () => document.removeEventListener('keydown', handleEscape);
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
   }, [isOpen, onClose]);
 
   // Ctrl+Enter handler for textarea
   const handleTextareaKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-      if (e.key === 'Enter' && e.ctrlKey) {
+      if (e.key === "Enter" && e.ctrlKey) {
         e.preventDefault();
         handleSend();
       }
     },
-    [handleSend]
+    [handleSend],
   );
 
   if (!isOpen) return null;
@@ -165,14 +181,20 @@ export function SendMessageModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="send-message-title"
-        onSubmit={(e) => { e.preventDefault(); handleSend(); }}
+        onSubmit={(e) => {
+          e.preventDefault();
+          handleSend();
+        }}
         className="animate-in fade-in zoom-in-95 w-full max-w-md rounded-2xl bg-white shadow-2xl duration-200"
       >
         {/* Header */}
         <div className="flex items-center justify-between border-b border-gray-100 p-4">
           <div className="flex items-center gap-2">
             <MessageCircle className="size-5 text-brand-600" />
-            <h2 id="send-message-title" className="text-lg font-bold text-gray-900">
+            <h2
+              id="send-message-title"
+              className="text-lg font-bold text-gray-900"
+            >
               {S.TITLE}
             </h2>
           </div>

@@ -1,33 +1,35 @@
-import { z } from 'zod';
+import { z } from "zod";
 
-export const GradeSchema = z.enum(['S', 'A', 'B', 'C', 'F']);
+export const GradeSchema = z.enum(["S", "A", "B", "C", "F"]);
 export type Grade = z.infer<typeof GradeSchema>;
 
-export const LeadStatusSchema = z.enum(['new', 'purchased']);
+export const LeadStatusSchema = z.enum(["new", "purchased"]);
 export type LeadStatus = z.infer<typeof LeadStatusSchema>;
 
 // Schema for data coming directly from Supabase
 // 注意：id 可能是 uag_lead_purchases.id (UUID) 或 session_id (非 UUID)
-export const SupabaseLeadSchema = z.object({
-  id: z.string(), // 購買前為 session_id，購買後為 purchase UUID
-  name: z.string(),
-  grade: GradeSchema,
-  intent: z.number(),
-  prop: z.string(),
-  visit: z.number(),
-  price: z.number(),
-  status: LeadStatusSchema,
-  purchased_at: z.union([z.string(), z.number(), z.null()]).optional(),
-  purchased_by: z.string().nullable().optional(),
-  transaction_hash: z.string().nullable().optional(),
-  ai: z.string(),
-  remaining_hours: z.number().nullable().optional(),
-  x: z.number().optional(),
-  y: z.number().optional(),
-  created_at: z.string().optional(),
-  session_id: z.string(), // 必填：追蹤匿名消費者
-  property_id: z.string().optional(), // TEXT 格式如 'MH-100001'，不是 UUID
-}).passthrough(); // Allow extra fields
+export const SupabaseLeadSchema = z
+  .object({
+    id: z.string(), // 購買前為 session_id，購買後為 purchase UUID
+    name: z.string(),
+    grade: GradeSchema,
+    intent: z.number(),
+    prop: z.string(),
+    visit: z.number(),
+    price: z.number(),
+    status: LeadStatusSchema,
+    purchased_at: z.union([z.string(), z.number(), z.null()]).optional(),
+    purchased_by: z.string().nullable().optional(),
+    transaction_hash: z.string().nullable().optional(),
+    ai: z.string(),
+    remaining_hours: z.number().nullable().optional(),
+    x: z.number().optional(),
+    y: z.number().optional(),
+    created_at: z.string().optional(),
+    session_id: z.string(), // 必填：追蹤匿名消費者
+    property_id: z.string().optional(), // TEXT 格式如 'MH-100001'，不是 UUID
+  })
+  .passthrough(); // Allow extra fields
 
 // Schema for the transformed Lead object used in the UI
 export const LeadSchema = SupabaseLeadSchema.extend({
@@ -37,14 +39,16 @@ export const LeadSchema = SupabaseLeadSchema.extend({
 
 export type Lead = z.infer<typeof LeadSchema>;
 
-export const SupabaseListingSchema = z.object({
-  title: z.string(),
-  tags: z.array(z.string()).optional().nullable(),
-  view_count: z.number().optional(),
-  click_count: z.number().optional(),
-  fav_count: z.number().optional(),
-  thumb_color: z.string().optional(),
-}).passthrough();
+export const SupabaseListingSchema = z
+  .object({
+    title: z.string(),
+    tags: z.array(z.string()).optional().nullable(),
+    view_count: z.number().optional(),
+    click_count: z.number().optional(),
+    fav_count: z.number().optional(),
+    thumb_color: z.string().optional(),
+  })
+  .passthrough();
 
 export type SupabaseListing = z.infer<typeof SupabaseListingSchema>;
 
@@ -57,12 +61,14 @@ export const ListingSchema = SupabaseListingSchema.extend({
 
 export type Listing = z.infer<typeof ListingSchema>;
 
-export const FeedPostSchema = z.object({
-  title: z.string(),
-  meta: z.string(),
-  body: z.string(),
-  created_at: z.string().optional(),
-}).passthrough();
+export const FeedPostSchema = z
+  .object({
+    title: z.string(),
+    meta: z.string(),
+    body: z.string(),
+    created_at: z.string().optional(),
+  })
+  .passthrough();
 
 export type FeedPost = z.infer<typeof FeedPostSchema>;
 

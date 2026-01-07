@@ -1,14 +1,47 @@
-﻿import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { useParams, useSearchParams } from 'react-router-dom';
-import { Home, Heart, Phone, MessageCircle, Hash, MapPin, ArrowLeft, Shield, Eye, Users, Calendar, Flame, Star, Lock, ChevronRight, CheckCircle, FileText } from 'lucide-react';
-import { AgentTrustCard } from '../components/AgentTrustCard';
-import { propertyService, DEFAULT_PROPERTY, PropertyData } from '../services/propertyService';
-import { ContactModal } from '../components/ContactModal';
-import { ReportGenerator } from './Report';
-import { LineShareAction } from '../components/social/LineShareAction';
-import { buildKeyCapsuleTags, formatArea, formatLayout, formatFloor } from '../utils/keyCapsules';
-import { track } from '../analytics/track';
-import { logger } from '../lib/logger';
+﻿import React, {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  useMemo,
+} from "react";
+import { useParams, useSearchParams } from "react-router-dom";
+import {
+  Home,
+  Heart,
+  Phone,
+  MessageCircle,
+  Hash,
+  MapPin,
+  ArrowLeft,
+  Shield,
+  Eye,
+  Users,
+  Calendar,
+  Flame,
+  Star,
+  Lock,
+  ChevronRight,
+  CheckCircle,
+  FileText,
+} from "lucide-react";
+import { AgentTrustCard } from "../components/AgentTrustCard";
+import {
+  propertyService,
+  DEFAULT_PROPERTY,
+  PropertyData,
+} from "../services/propertyService";
+import { ContactModal } from "../components/ContactModal";
+import { ReportGenerator } from "./Report";
+import { LineShareAction } from "../components/social/LineShareAction";
+import {
+  buildKeyCapsuleTags,
+  formatArea,
+  formatLayout,
+  formatFloor,
+} from "../utils/keyCapsules";
+import { track } from "../analytics/track";
+import { logger } from "../lib/logger";
 
 // UAG Tracker Hook v8.1 - 追蹤用戶行為 + S級攔截
 // 優化: 1.修正district傳遞 2.S級即時回調 3.互動事件用fetch獲取等級
@@ -16,113 +49,140 @@ const usePropertyTracker = (
   propertyId: string,
   agentId: string,
   district: string,
-  onGradeUpgrade?: (newGrade: string, reason?: string) => void
+  onGradeUpgrade?: (newGrade: string, reason?: string) => void,
 ) => {
   // 使用 useState 惰性初始化，避免在 render 中調用 Date.now()
   const [enterTime] = useState(() => Date.now());
-  const actions = useRef({ click_photos: 0, click_line: 0, click_call: 0, click_map: 0, scroll_depth: 0 });
+  const actions = useRef({
+    click_photos: 0,
+    click_line: 0,
+    click_call: 0,
+    click_map: 0,
+    scroll_depth: 0,
+  });
   const hasSent = useRef(false);
   const sendLock = useRef(false);
-  const currentGrade = useRef<string>('F');
+  const currentGrade = useRef<string>("F");
   const clickSent = useRef({ line: false, call: false, map: false }); // 防重複點擊
 
   // 取得或建立 session_id
   const getSessionId = useCallback(() => {
-    let sid = localStorage.getItem('uag_session');
+    let sid = localStorage.getItem("uag_session");
     if (!sid) {
       sid = `u_${Math.random().toString(36).substring(2, 11)}`;
-      localStorage.setItem('uag_session', sid);
+      localStorage.setItem("uag_session", sid);
     }
     return sid;
   }, []);
 
   // 建構 payload
-  const buildPayload = useCallback((eventType: string) => ({
-    session_id: getSessionId(),
-    agent_id: agentId,
-    fingerprint: btoa(JSON.stringify({
-      screen: `${screen.width}x${screen.height}`,
-      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-      language: navigator.language
-    })),
-    event: {
-      type: eventType,
-      property_id: propertyId,
-      district: district || 'unknown', // 修正: 使用傳入的 district
-      duration: Math.round((Date.now() - enterTime) / 1000),
-      actions: { ...actions.current },
-      focus: []
-    }
-  }), [propertyId, agentId, district, getSessionId, enterTime]);
+  const buildPayload = useCallback(
+    (eventType: string) => ({
+      session_id: getSessionId(),
+      agent_id: agentId,
+      fingerprint: btoa(
+        JSON.stringify({
+          screen: `${screen.width}x${screen.height}`,
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          language: navigator.language,
+        }),
+      ),
+      event: {
+        type: eventType,
+        property_id: propertyId,
+        district: district || "unknown", // 修正: 使用傳入的 district
+        duration: Math.round((Date.now() - enterTime) / 1000),
+        actions: { ...actions.current },
+        focus: [],
+      },
+    }),
+    [propertyId, agentId, district, getSessionId, enterTime],
+  );
 
   // 發送追蹤事件 (支援 S 級回調)
-  const sendEvent = useCallback(async (eventType: string, useBeacon = false) => {
-    const payload = buildPayload(eventType);
+  const sendEvent = useCallback(
+    async (eventType: string, useBeacon = false) => {
+      const payload = buildPayload(eventType);
 
-    // UAG-6 修復: page_exit 去重邏輯（單一檢查點，鎖在第一時間）
-    if (eventType === 'page_exit') {
-      if (sendLock.current) {
-        logger.debug('[UAG-6] 已阻擋重複的 page_exit');
-        // UAG-6 建議4: 監控去重效果
-        track('uag.page_exit_dedupe_blocked', { property_id: propertyId });
+      // UAG-6 修復: page_exit 去重邏輯（單一檢查點，鎖在第一時間）
+      if (eventType === "page_exit") {
+        if (sendLock.current) {
+          logger.debug("[UAG-6] 已阻擋重複的 page_exit");
+          // UAG-6 建議4: 監控去重效果
+          track("uag.page_exit_dedupe_blocked", { property_id: propertyId });
+          return;
+        }
+        sendLock.current = true; // ✅ 在任何異步操作前鎖住
+        hasSent.current = true;
+        logger.debug("[UAG-6] 正在發送 page_exit");
+        // UAG-6 建議4: 監控發送成功
+        track("uag.page_exit_sent", { property_id: propertyId });
+      }
+
+      // page_exit 或強制使用 beacon (確保離開頁面也能送出)
+      if (useBeacon || eventType === "page_exit") {
+        const blob = new Blob([JSON.stringify(payload)], {
+          type: "application/json",
+        });
+        navigator.sendBeacon("/api/uag-track", blob);
         return;
       }
-      sendLock.current = true;  // ✅ 在任何異步操作前鎖住
-      hasSent.current = true;
-      logger.debug('[UAG-6] 正在發送 page_exit');
-      // UAG-6 建議4: 監控發送成功
-      track('uag.page_exit_sent', { property_id: propertyId });
-    }
 
-    // page_exit 或強制使用 beacon (確保離開頁面也能送出)
-    if (useBeacon || eventType === 'page_exit') {
-      const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
-      navigator.sendBeacon('/api/uag-track', blob);
-      return;
-    }
+      // 互動事件用 fetch，以便獲取等級回傳
+      try {
+        const res = await fetch("/api/uag-track", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+          keepalive: true, // 防止頁面切換時中斷
+        });
+        const data = await res.json();
 
-    // 互動事件用 fetch，以便獲取等級回傳
-    try {
-      const res = await fetch('/api/uag-track', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-        keepalive: true // 防止頁面切換時中斷
-      });
-      const data = await res.json();
+        // 檢查是否升級到 S 級
+        if (data.success && data.grade) {
+          const gradeRank: Record<string, number> = {
+            S: 5,
+            A: 4,
+            B: 3,
+            C: 2,
+            F: 1,
+          };
+          const newRank = gradeRank[data.grade] || 1;
+          const oldRank = gradeRank[currentGrade.current] || 1;
 
-      // 檢查是否升級到 S 級
-      if (data.success && data.grade) {
-        const gradeRank: Record<string, number> = { S: 5, A: 4, B: 3, C: 2, F: 1 };
-        const newRank = gradeRank[data.grade] || 1;
-        const oldRank = gradeRank[currentGrade.current] || 1;
-
-        if (newRank > oldRank) {
-          currentGrade.current = data.grade;
-          // S 級即時通知 (含 reason)
-          if (data.grade === 'S' && onGradeUpgrade) {
-            onGradeUpgrade('S', data.reason);
+          if (newRank > oldRank) {
+            currentGrade.current = data.grade;
+            // S 級即時通知 (含 reason)
+            if (data.grade === "S" && onGradeUpgrade) {
+              onGradeUpgrade("S", data.reason);
+            }
           }
         }
+      } catch (e) {
+        // 失敗時 fallback 到 beacon
+        const blob = new Blob([JSON.stringify(payload)], {
+          type: "application/json",
+        });
+        navigator.sendBeacon("/api/uag-track", blob);
       }
-    } catch (e) {
-      // 失敗時 fallback 到 beacon
-      const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
-      navigator.sendBeacon('/api/uag-track', blob);
-    }
-  }, [buildPayload, onGradeUpgrade, propertyId]);
+    },
+    [buildPayload, onGradeUpgrade, propertyId],
+  );
 
   // 追蹤滾動深度
   useEffect(() => {
     const handleScroll = () => {
-      const depth = Math.round((window.scrollY + window.innerHeight) / document.body.scrollHeight * 100);
+      const depth = Math.round(
+        ((window.scrollY + window.innerHeight) / document.body.scrollHeight) *
+          100,
+      );
       if (depth > actions.current.scroll_depth) {
         actions.current.scroll_depth = depth;
       }
     };
 
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   // 初始化：發送 page_view，離開時發送 page_exit
@@ -130,28 +190,31 @@ const usePropertyTracker = (
     if (!propertyId) return;
 
     // 發送 page_view (用 beacon，不需等回應)
-    sendEvent('page_view', true);
+    sendEvent("page_view", true);
 
     // 離開頁面時發送 page_exit
     // UAG-6 修復: 移除外層檢查，讓 sendEvent 統一處理鎖機制
     const handleUnload = () => {
-      sendEvent('page_exit', true);
+      sendEvent("page_exit", true);
     };
 
     const handleVisibilityChange = () => {
-      if (document.visibilityState === 'hidden') {
+      if (document.visibilityState === "hidden") {
         handleUnload();
         // UAG-6 建議2: 發送後移除監聽器，避免重複觸發
-        document.removeEventListener('visibilitychange', handleVisibilityChange);
+        document.removeEventListener(
+          "visibilitychange",
+          handleVisibilityChange,
+        );
       }
     };
 
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('pagehide', handleUnload, { once: true });
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("pagehide", handleUnload, { once: true });
 
     return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('pagehide', handleUnload);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("pagehide", handleUnload);
       // UAG-6 修復: 只在未發送過 page_exit 時才發送（避免重複）
       if (!hasSent.current) {
         handleUnload();
@@ -161,7 +224,9 @@ const usePropertyTracker = (
 
   // 暴露追蹤方法
   return {
-    trackPhotoClick: () => { actions.current.click_photos++; },
+    trackPhotoClick: () => {
+      actions.current.click_photos++;
+    },
     trackLineClick: async () => {
       if (clickSent.current.line) return; // 防重複點擊
       clickSent.current.line = true;
@@ -169,12 +234,12 @@ const usePropertyTracker = (
       try {
         actions.current.click_line = 1;
         await Promise.all([
-          track('uag.line_clicked', { property_id: propertyId }),
-          sendEvent('click_line')
+          track("uag.line_clicked", { property_id: propertyId }),
+          sendEvent("click_line"),
         ]);
       } catch (error) {
-        logger.error('[UAG] Track LINE click failed:', { error });
-        sendEvent('click_line'); // 降級：至少確保 UAG Backend 收到
+        logger.error("[UAG] Track LINE click failed:", { error });
+        sendEvent("click_line"); // 降級：至少確保 UAG Backend 收到
       }
     },
     trackCallClick: async () => {
@@ -184,12 +249,12 @@ const usePropertyTracker = (
       try {
         actions.current.click_call = 1;
         await Promise.all([
-          track('uag.call_clicked', { property_id: propertyId }),
-          sendEvent('click_call')
+          track("uag.call_clicked", { property_id: propertyId }),
+          sendEvent("click_call"),
         ]);
       } catch (error) {
-        logger.error('[UAG] Track call click failed:', { error });
-        sendEvent('click_call');
+        logger.error("[UAG] Track call click failed:", { error });
+        sendEvent("click_call");
       }
     },
     trackMapClick: async () => {
@@ -199,14 +264,14 @@ const usePropertyTracker = (
       try {
         actions.current.click_map = 1;
         await Promise.all([
-          track('uag.map_clicked', { property_id: propertyId, district }),
-          sendEvent('click_map')
+          track("uag.map_clicked", { property_id: propertyId, district }),
+          sendEvent("click_map"),
         ]);
       } catch (error) {
-        logger.error('[UAG] Track map click failed:', { error });
-        sendEvent('click_map');
+        logger.error("[UAG] Track map click failed:", { error });
+        sendEvent("click_map");
       }
-    }
+    },
   };
 };
 
@@ -223,11 +288,13 @@ export const PropertyDetailPage: React.FC = () => {
 
   // ContactModal 狀態
   const [showContactModal, setShowContactModal] = useState(false);
-  const [contactSource, setContactSource] = useState<'sidebar' | 'mobile_bar' | 'booking'>('sidebar');
+  const [contactSource, setContactSource] = useState<
+    "sidebar" | "mobile_bar" | "booking"
+  >("sidebar");
 
   // S 級 VIP 攔截 Modal
   const [showVipModal, setShowVipModal] = useState(false);
-  const [vipReason, setVipReason] = useState<string>('');
+  const [vipReason, setVipReason] = useState<string>("");
 
   // 報告生成器 Modal
   const [showReportGenerator, setShowReportGenerator] = useState(false);
@@ -237,15 +304,15 @@ export const PropertyDetailPage: React.FC = () => {
 
   // 取得 agent_id (從 URL 參數或 localStorage)
   const getAgentId = () => {
-    let aid = searchParams.get('aid');
-    if (!aid) aid = localStorage.getItem('uag_last_aid');
-    if (aid && aid !== 'unknown') localStorage.setItem('uag_last_aid', aid);
-    return aid || 'unknown';
+    let aid = searchParams.get("aid");
+    if (!aid) aid = localStorage.getItem("uag_last_aid");
+    if (aid && aid !== "unknown") localStorage.setItem("uag_last_aid", aid);
+    return aid || "unknown";
   };
 
   // S 級客戶即時攔截回調
   const handleGradeUpgrade = useCallback((grade: string, reason?: string) => {
-    if (grade === 'S') {
+    if (grade === "S") {
       if (reason) setVipReason(reason);
       // 延遲 500ms 顯示，避免太突兀
       setTimeout(() => setShowVipModal(true), 500);
@@ -255,23 +322,23 @@ export const PropertyDetailPage: React.FC = () => {
   // 從 address 提取行政區 (例如 "台北市信義區..." -> "信義區")
   const extractDistrict = (address: string): string => {
     const match = address.match(/[市縣](.{2,3}[區鄉鎮市])/);
-    return match?.[1] ?? 'unknown';
+    return match?.[1] ?? "unknown";
   };
 
   // 初始化追蹤器 (傳入 district + S級回調)
   const tracker = usePropertyTracker(
-    id || '',
+    id || "",
     getAgentId(),
     extractDistrict(property.address),
-    handleGradeUpgrade
+    handleGradeUpgrade,
   );
 
   // 開啟聯絡 Modal 的處理函數
-  const openContactModal = (source: 'sidebar' | 'mobile_bar' | 'booking') => {
+  const openContactModal = (source: "sidebar" | "mobile_bar" | "booking") => {
     setContactSource(source);
     setShowContactModal(true);
     // 同時追蹤點擊事件
-    if (source === 'mobile_bar') {
+    if (source === "mobile_bar") {
       tracker.trackLineClick();
     } else {
       tracker.trackCallClick();
@@ -283,9 +350,9 @@ export const PropertyDetailPage: React.FC = () => {
     // 基於 property.publicId 產生穩定的隨機數
     const seed = property.publicId?.charCodeAt(3) || 0;
     return {
-      currentViewers: Math.floor(seed % 5) + 2,      // 2-6 人正在瀏覽
-      weeklyBookings: Math.floor(seed % 8) + 5,      // 5-12 組預約
-      isHot: seed % 3 === 0                           // 1/3 機率顯示為熱門
+      currentViewers: Math.floor(seed % 5) + 2, // 2-6 人正在瀏覽
+      weeklyBookings: Math.floor(seed % 8) + 5, // 5-12 組預約
+      isHot: seed % 3 === 0, // 1/3 機率顯示為熱門
     };
   }, [property.publicId]);
 
@@ -298,7 +365,7 @@ export const PropertyDetailPage: React.FC = () => {
       floorTotal: property.floorTotal,
       size: property.size,
       rooms: property.rooms,
-      halls: property.halls
+      halls: property.halls,
     }).slice(0, 4);
   }, [
     property.advantage1,
@@ -308,7 +375,7 @@ export const PropertyDetailPage: React.FC = () => {
     property.floorTotal,
     property.size,
     property.rooms,
-    property.halls
+    property.halls,
   ]);
 
   useEffect(() => {
@@ -321,7 +388,7 @@ export const PropertyDetailPage: React.FC = () => {
           setProperty(data);
         }
       } catch (error) {
-        logger.error('Property fetch error:', { error });
+        logger.error("Property fetch error:", { error });
         // 發生錯誤時，保持顯示預設資料，不讓畫面崩壞
       }
     };
@@ -329,14 +396,16 @@ export const PropertyDetailPage: React.FC = () => {
   }, [id]);
 
   // [Safety] 確保有圖片可顯示，防止空陣列導致破圖
-  const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80';
+  const FALLBACK_IMAGE =
+    "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80";
 
-  let displayImage = (property.images && property.images.length > 0 && property.images[0])
-    ? property.images[0]
-    : FALLBACK_IMAGE;
+  let displayImage =
+    property.images && property.images.length > 0 && property.images[0]
+      ? property.images[0]
+      : FALLBACK_IMAGE;
 
   // [Double Safety] 前端攔截 picsum
-  if (displayImage && displayImage.includes('picsum')) {
+  if (displayImage && displayImage.includes("picsum")) {
     displayImage = FALLBACK_IMAGE;
   }
 
@@ -359,7 +428,10 @@ export const PropertyDetailPage: React.FC = () => {
         {/* 僅顯示公開編號 */}
         <div className="flex items-center rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 font-mono text-xs text-slate-500">
           <Hash size={12} className="mr-1 text-gray-400" />
-          編號：<span className="ml-1 font-bold text-[#003366]">{property.publicId}</span>
+          編號：
+          <span className="ml-1 font-bold text-[#003366]">
+            {property.publicId}
+          </span>
         </div>
       </nav>
 
@@ -380,7 +452,9 @@ export const PropertyDetailPage: React.FC = () => {
             />
             <div className="absolute bottom-4 right-4 flex items-center gap-1 rounded-full bg-black/50 px-3 py-1.5 text-xs text-white backdrop-blur-md">
               <Home size={12} />
-              <span>{currentImageIndex + 1} / {property.images?.length || 1}</span>
+              <span>
+                {currentImageIndex + 1} / {property.images?.length || 1}
+              </span>
             </div>
           </div>
 
@@ -394,15 +468,18 @@ export const PropertyDetailPage: React.FC = () => {
                     setCurrentImageIndex(i);
                     tracker.trackPhotoClick();
                   }}
-                  className={`h-14 w-20 shrink-0 overflow-hidden rounded-lg border-2 transition-all ${i === currentImageIndex
-                    ? 'border-[#003366] ring-2 ring-[#003366]/20'
-                    : 'border-transparent opacity-70 hover:opacity-100'
-                    }`}
+                  className={`h-14 w-20 shrink-0 overflow-hidden rounded-lg border-2 transition-all ${
+                    i === currentImageIndex
+                      ? "border-[#003366] ring-2 ring-[#003366]/20"
+                      : "border-transparent opacity-70 hover:opacity-100"
+                  }`}
                 >
                   <img
                     src={img}
                     alt={`照片 ${i + 1}`}
-                    onError={(e) => { e.currentTarget.src = FALLBACK_IMAGE; }}
+                    onError={(e) => {
+                      e.currentTarget.src = FALLBACK_IMAGE;
+                    }}
                     className="size-full object-cover"
                   />
                 </button>
@@ -416,14 +493,14 @@ export const PropertyDetailPage: React.FC = () => {
           <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-lg">
             <div className="flex gap-3">
               <button
-                onClick={() => openContactModal('mobile_bar')}
+                onClick={() => openContactModal("mobile_bar")}
                 className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#003366] py-4 text-base font-bold text-white shadow-lg"
               >
                 <Phone size={20} />
                 立即聯絡經紀人
               </button>
               <button
-                onClick={() => openContactModal('mobile_bar')}
+                onClick={() => openContactModal("mobile_bar")}
                 className="flex w-14 items-center justify-center rounded-xl bg-[#06C755] text-white shadow-lg"
               >
                 <MessageCircle size={22} />
@@ -455,9 +532,12 @@ export const PropertyDetailPage: React.FC = () => {
                   />
                   <button
                     onClick={() => setIsFavorite(!isFavorite)}
-                    className={`rounded-full p-2 transition-all ${isFavorite ? 'bg-red-50 text-red-500' : 'bg-slate-50 text-slate-400 hover:bg-slate-100'}`}
+                    className={`rounded-full p-2 transition-all ${isFavorite ? "bg-red-50 text-red-500" : "bg-slate-50 text-slate-400 hover:bg-slate-100"}`}
                   >
-                    <Heart size={24} fill={isFavorite ? "currentColor" : "none"} />
+                    <Heart
+                      size={24}
+                      fill={isFavorite ? "currentColor" : "none"}
+                    />
                   </button>
                 </div>
               </div>
@@ -478,9 +558,13 @@ export const PropertyDetailPage: React.FC = () => {
               </div>
 
               <div className="mt-4 flex items-baseline gap-2">
-                <span className="text-3xl font-extrabold text-[#003366]">{property.price}</span>
+                <span className="text-3xl font-extrabold text-[#003366]">
+                  {property.price}
+                </span>
                 <span className="text-lg font-medium text-slate-500">萬</span>
-                <span className="ml-2 text-sm font-medium text-red-500">可議價</span>
+                <span className="ml-2 text-sm font-medium text-red-500">
+                  可議價
+                </span>
               </div>
 
               {/* 社會證明提示 - FOMO */}
@@ -504,8 +588,11 @@ export const PropertyDetailPage: React.FC = () => {
 
             {/* Tags */}
             <div className="flex flex-wrap gap-2">
-              {capsuleTags.map(tag => (
-                <span key={tag} className="rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-[#003366]">
+              {capsuleTags.map((tag) => (
+                <span
+                  key={tag}
+                  className="rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-[#003366]"
+                >
                   {tag}
                 </span>
               ))}
@@ -515,19 +602,33 @@ export const PropertyDetailPage: React.FC = () => {
             <div className="grid grid-cols-2 gap-4 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm sm:grid-cols-4">
               <div className="flex flex-col">
                 <span className="text-xs text-slate-400">建案坪數</span>
-                <span className="text-sm font-bold text-slate-800">{formatArea(property.size ?? DEFAULT_PROPERTY.size) || '--'}</span>
+                <span className="text-sm font-bold text-slate-800">
+                  {formatArea(property.size ?? DEFAULT_PROPERTY.size) || "--"}
+                </span>
               </div>
               <div className="flex flex-col">
                 <span className="text-xs text-slate-400">格局</span>
-                <span className="text-sm font-bold text-slate-800">{formatLayout(property.rooms ?? DEFAULT_PROPERTY.rooms, property.halls ?? DEFAULT_PROPERTY.halls) || '--'}</span>
+                <span className="text-sm font-bold text-slate-800">
+                  {formatLayout(
+                    property.rooms ?? DEFAULT_PROPERTY.rooms,
+                    property.halls ?? DEFAULT_PROPERTY.halls,
+                  ) || "--"}
+                </span>
               </div>
               <div className="flex flex-col">
                 <span className="text-xs text-slate-400">樓層</span>
-                <span className="text-sm font-bold text-slate-800">{formatFloor(property.floorCurrent ?? DEFAULT_PROPERTY.floorCurrent, property.floorTotal ?? DEFAULT_PROPERTY.floorTotal) || '--'}</span>
+                <span className="text-sm font-bold text-slate-800">
+                  {formatFloor(
+                    property.floorCurrent ?? DEFAULT_PROPERTY.floorCurrent,
+                    property.floorTotal ?? DEFAULT_PROPERTY.floorTotal,
+                  ) || "--"}
+                </span>
               </div>
               <div className="flex flex-col">
                 <span className="text-xs text-slate-400">編號</span>
-                <span className="text-sm font-bold text-slate-800">{property.publicId}</span>
+                <span className="text-sm font-bold text-slate-800">
+                  {property.publicId}
+                </span>
               </div>
             </div>
 
@@ -535,7 +636,9 @@ export const PropertyDetailPage: React.FC = () => {
 
             {/* Description */}
             <div className="prose prose-slate max-w-none">
-              <h3 className="mb-3 text-lg font-bold text-slate-900">物件特色</h3>
+              <h3 className="mb-3 text-lg font-bold text-slate-900">
+                物件特色
+              </h3>
               <p className="whitespace-pre-line leading-relaxed text-slate-600">
                 {property.description}
               </p>
@@ -545,7 +648,11 @@ export const PropertyDetailPage: React.FC = () => {
             <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
               <div className="mb-4 flex items-center justify-between">
                 <h3 className="flex items-center gap-2 text-lg font-bold text-slate-900">
-                  <Star size={18} className="text-yellow-500" fill="currentColor" />
+                  <Star
+                    size={18}
+                    className="text-yellow-500"
+                    fill="currentColor"
+                  />
                   社區評價
                 </h3>
                 <span className="rounded-full bg-slate-50 px-2 py-1 text-xs text-slate-500">
@@ -561,7 +668,9 @@ export const PropertyDetailPage: React.FC = () => {
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="mb-1 flex items-center gap-2">
-                      <span className="text-sm font-bold text-slate-800">J***</span>
+                      <span className="text-sm font-bold text-slate-800">
+                        J***
+                      </span>
                       <span className="text-xs text-slate-500">B棟住戶</span>
                       <span className="text-xs text-yellow-500">★★★★★</span>
                     </div>
@@ -577,7 +686,9 @@ export const PropertyDetailPage: React.FC = () => {
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="mb-1 flex items-center gap-2">
-                      <span className="text-sm font-bold text-slate-800">W***</span>
+                      <span className="text-sm font-bold text-slate-800">
+                        W***
+                      </span>
                       <span className="text-xs text-slate-500">12F住戶</span>
                       <span className="text-xs text-yellow-500">★★★★☆</span>
                     </div>
@@ -590,20 +701,26 @@ export const PropertyDetailPage: React.FC = () => {
 
               {/* 第三則（未登入時模糊隱藏，登入後正常顯示） */}
               <div className="relative mt-3 overflow-hidden rounded-xl">
-                <div className={`flex gap-3 bg-slate-50 p-3 ${!isLoggedIn ? 'select-none blur-sm' : ''}`}>
+                <div
+                  className={`flex gap-3 bg-slate-50 p-3 ${!isLoggedIn ? "select-none blur-sm" : ""}`}
+                >
                   <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-green-500 text-lg font-bold text-white">
                     L
                   </div>
                   <div className="flex-1">
                     <div className="mb-1 flex items-center gap-2">
-                      <span className="text-sm font-bold text-slate-800">L***</span>
+                      <span className="text-sm font-bold text-slate-800">
+                        L***
+                      </span>
                       <span className="text-xs text-slate-500">C棟住戶</span>
-                      {isLoggedIn && <span className="text-xs text-yellow-500">★★★★★</span>}
+                      {isLoggedIn && (
+                        <span className="text-xs text-yellow-500">★★★★★</span>
+                      )}
                     </div>
                     <p className="text-sm text-slate-600">
                       {isLoggedIn
-                        ? '頂樓排水設計不錯，颱風天也沒有積水問題。管委會有固定請人清理排水孔，很放心。'
-                        : '頂樓排水設計不錯，颱風天也沒有積水問題...'}
+                        ? "頂樓排水設計不錯，颱風天也沒有積水問題。管委會有固定請人清理排水孔，很放心。"
+                        : "頂樓排水設計不錯，颱風天也沒有積水問題..."}
                     </p>
                   </div>
                 </div>
@@ -613,7 +730,7 @@ export const PropertyDetailPage: React.FC = () => {
                   <div className="absolute inset-0 flex items-end justify-center bg-gradient-to-b from-transparent via-white/80 to-white pb-3">
                     <button
                       onClick={() => {
-                        window.location.href = '/auth.html?redirect=community';
+                        window.location.href = "/auth.html?redirect=community";
                       }}
                       className="flex items-center gap-2 rounded-full bg-[#003366] px-4 py-2 text-sm font-bold text-white shadow-lg transition-colors hover:bg-[#004488]"
                     >
@@ -631,7 +748,10 @@ export const PropertyDetailPage: React.FC = () => {
                   💬 加入社區牆，與現任住戶交流
                 </p>
                 <button
-                  onClick={() => window.location.href = '/maihouses/community-wall_mvp.html'}
+                  onClick={() =>
+                    (window.location.href =
+                      "/maihouses/community-wall_mvp.html")
+                  }
                   className="flex items-center gap-1 text-xs font-bold text-[#003366] hover:underline"
                 >
                   前往社區牆
@@ -646,9 +766,9 @@ export const PropertyDetailPage: React.FC = () => {
             <div className="sticky top-24 space-y-4">
               <AgentTrustCard
                 agent={property.agent}
-                onLineClick={() => openContactModal('sidebar')}
-                onCallClick={() => openContactModal('sidebar')}
-                onBookingClick={() => openContactModal('booking')}
+                onLineClick={() => openContactModal("sidebar")}
+                onCallClick={() => openContactModal("sidebar")}
+                onBookingClick={() => openContactModal("booking")}
               />
 
               <div className="rounded-xl border border-blue-100 bg-blue-50 p-4">
@@ -678,9 +798,9 @@ export const PropertyDetailPage: React.FC = () => {
 
       {/* 📱 30秒回電浮動按鈕 - 高轉換 */}
       <button
-        onClick={() => openContactModal('booking')}
+        onClick={() => openContactModal("booking")}
         className="fixed bottom-28 right-4 z-40 flex size-16 animate-bounce flex-col items-center justify-center rounded-full bg-orange-500 text-xs font-bold text-white shadow-2xl transition-transform hover:scale-110 hover:bg-orange-600 lg:bottom-8"
-        style={{ animationDuration: '2s' }}
+        style={{ animationDuration: "2s" }}
       >
         <Phone size={22} />
         <span className="mt-0.5 text-[10px]">30秒回電</span>
@@ -710,16 +830,15 @@ export const PropertyDetailPage: React.FC = () => {
         <div className="flex gap-2">
           {/* 左按鈕：加 LINE（低門檻）*/}
           <button
-            onClick={() => openContactModal('mobile_bar')}
+            onClick={() => openContactModal("mobile_bar")}
             className="flex flex-[4] items-center justify-center gap-2 rounded-xl bg-[#06C755] py-3 font-bold text-white shadow-lg shadow-green-500/20"
           >
-            <MessageCircle size={20} />
-            加 LINE 諮詢
+            <MessageCircle size={20} />加 LINE 諮詢
           </button>
 
           {/* 右按鈕：預約看屋（高意圖）*/}
           <button
-            onClick={() => openContactModal('booking')}
+            onClick={() => openContactModal("booking")}
             className="flex flex-[6] items-center justify-center gap-2 rounded-xl bg-[#003366] py-3 font-bold text-white shadow-lg shadow-blue-900/20"
           >
             <Calendar size={20} />
@@ -735,7 +854,7 @@ export const PropertyDetailPage: React.FC = () => {
         propertyId={property.publicId}
         propertyTitle={property.title}
         agentId={getAgentId()}
-        agentName={property.agent?.name || '專屬業務'}
+        agentName={property.agent?.name || "專屬業務"}
         source={contactSource}
       />
 
@@ -744,7 +863,9 @@ export const PropertyDetailPage: React.FC = () => {
         <div
           className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4"
           onClick={() => setShowVipModal(false)}
-          onKeyDown={(e) => { if (e.key === 'Escape') setShowVipModal(false); }}
+          onKeyDown={(e) => {
+            if (e.key === "Escape") setShowVipModal(false);
+          }}
           role="button"
           tabIndex={0}
           aria-label="關閉 VIP 彈窗"
@@ -760,9 +881,11 @@ export const PropertyDetailPage: React.FC = () => {
               <div className="mx-auto mb-3 flex size-16 items-center justify-center rounded-full bg-gradient-to-br from-orange-400 to-red-500">
                 <Flame size={32} className="text-white" />
               </div>
-              <h3 className="text-xl font-bold text-slate-800">發現您對此物件很有興趣！</h3>
+              <h3 className="text-xl font-bold text-slate-800">
+                發現您對此物件很有興趣！
+              </h3>
               <p className="mt-1 text-sm text-slate-500">
-                {vipReason || '專屬 VIP 服務為您優先安排'}
+                {vipReason || "專屬 VIP 服務為您優先安排"}
               </p>
             </div>
 
@@ -788,7 +911,7 @@ export const PropertyDetailPage: React.FC = () => {
                 onClick={() => {
                   tracker.trackLineClick();
                   setShowVipModal(false);
-                  openContactModal('mobile_bar');
+                  openContactModal("mobile_bar");
                 }}
                 className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#06C755] py-3 font-bold text-white shadow-lg"
               >
@@ -799,7 +922,7 @@ export const PropertyDetailPage: React.FC = () => {
                 onClick={() => {
                   tracker.trackCallClick();
                   setShowVipModal(false);
-                  openContactModal('booking');
+                  openContactModal("booking");
                 }}
                 className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#003366] py-3 font-bold text-white"
               >
@@ -845,8 +968,8 @@ export const PropertyDetailPage: React.FC = () => {
             avatarUrl: property.agent.avatarUrl,
             company: property.agent.company,
             trustScore: property.agent.trustScore,
-            reviewCount: property.agent.encouragementCount
-          }
+            reviewCount: property.agent.encouragementCount,
+          },
         }}
         isOpen={showReportGenerator}
         onClose={() => setShowReportGenerator(false)}

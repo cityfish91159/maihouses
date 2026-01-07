@@ -1,16 +1,17 @@
-import { logger } from '../lib/logger';
+import { logger } from "../lib/logger";
 
-const REQUIRED_KEYS = ['VITE_SUPABASE_URL', 'VITE_SUPABASE_ANON_KEY'] as const;
-const OPTIONAL_KEYS = ['VITE_API_BASE_URL', 'VITE_APP_URL'] as const;
+const REQUIRED_KEYS = ["VITE_SUPABASE_URL", "VITE_SUPABASE_ANON_KEY"] as const;
+const OPTIONAL_KEYS = ["VITE_API_BASE_URL", "VITE_APP_URL"] as const;
 
-const DEFAULT_COMMUNITY_API_BASE = '/api/community';
+const DEFAULT_COMMUNITY_API_BASE = "/api/community";
 
 type RequiredKey = (typeof REQUIRED_KEYS)[number];
 type OptionalKey = (typeof OPTIONAL_KEYS)[number];
 
-type EnvShape = Record<RequiredKey, string> & Partial<Record<OptionalKey, string | undefined>>;
+type EnvShape = Record<RequiredKey, string> &
+  Partial<Record<OptionalKey, string | undefined>>;
 
-const trimTrailingSlash = (value: string) => value.replace(/\/+$/, '');
+const trimTrailingSlash = (value: string) => value.replace(/\/+$/, "");
 
 /**
  * 驗證字串是否為有效的 HTTP(S) URL
@@ -18,7 +19,7 @@ const trimTrailingSlash = (value: string) => value.replace(/\/+$/, '');
 const isValidHttpUrl = (str: string): boolean => {
   try {
     const url = new URL(str);
-    return url.protocol === 'http:' || url.protocol === 'https:';
+    return url.protocol === "http:" || url.protocol === "https:";
   } catch {
     return false;
   }
@@ -31,18 +32,18 @@ const isValidHttpUrl = (str: string): boolean => {
 const resolveAppBaseHref = (): string => {
   // Vite 在 build 時會根據 vite.config.ts 的 base 設定注入 BASE_URL
   const viteBase = import.meta.env.BASE_URL;
-  if (viteBase && viteBase !== '/') {
+  if (viteBase && viteBase !== "/") {
     // 確保結尾只有一個 /
-    return viteBase.endsWith('/') ? viteBase : `${viteBase}/`;
+    return viteBase.endsWith("/") ? viteBase : `${viteBase}/`;
   }
 
   // SSR 或特殊情境下從 document.baseURI 取得
-  if (typeof document !== 'undefined' && document.baseURI) {
+  if (typeof document !== "undefined" && document.baseURI) {
     try {
       const baseUrl = new URL(document.baseURI);
       const pathname = baseUrl.pathname;
-      if (pathname && pathname !== '/') {
-        return pathname.endsWith('/') ? pathname : `${pathname}/`;
+      if (pathname && pathname !== "/") {
+        return pathname.endsWith("/") ? pathname : `${pathname}/`;
       }
     } catch {
       // 解析失敗則繼續 fallback
@@ -50,14 +51,14 @@ const resolveAppBaseHref = (): string => {
   }
 
   // 最終 fallback：本專案部署於 /maihouses/
-  return '/maihouses/';
+  return "/maihouses/";
 };
 
 /**
  * 顯示友善錯誤頁面（用於 PROD 環境關鍵錯誤）
  */
 const showFriendlyErrorPage = (title: string, message: string): void => {
-  if (typeof document !== 'undefined' && document.body) {
+  if (typeof document !== "undefined" && document.body) {
     const homeHref = resolveAppBaseHref();
     document.body.innerHTML = `
       <div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:system-ui,-apple-system,sans-serif;background:#f8fafc;">
@@ -73,32 +74,36 @@ const showFriendlyErrorPage = (title: string, message: string): void => {
 };
 
 function readEnv(): EnvShape {
-  const isTest = import.meta.env.MODE === 'test' || Boolean(import.meta.env.VITEST);
+  const isTest =
+    import.meta.env.MODE === "test" || Boolean(import.meta.env.VITEST);
 
   if (isTest) {
     // 測試環境提供安全的預設值，避免因缺少 .env 而中斷
     return {
-      VITE_SUPABASE_URL: import.meta.env.VITE_SUPABASE_URL || 'https://test.supabase.co',
-      VITE_SUPABASE_ANON_KEY: import.meta.env.VITE_SUPABASE_ANON_KEY || 'test-anon-key',
-      VITE_API_BASE_URL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:4173/api',
-      VITE_APP_URL: import.meta.env.VITE_APP_URL || 'http://localhost:4173'
+      VITE_SUPABASE_URL:
+        import.meta.env.VITE_SUPABASE_URL || "https://test.supabase.co",
+      VITE_SUPABASE_ANON_KEY:
+        import.meta.env.VITE_SUPABASE_ANON_KEY || "test-anon-key",
+      VITE_API_BASE_URL:
+        import.meta.env.VITE_API_BASE_URL || "http://localhost:4173/api",
+      VITE_APP_URL: import.meta.env.VITE_APP_URL || "http://localhost:4173",
     };
   }
 
   const missing = REQUIRED_KEYS.filter((key) => !import.meta.env[key]);
   if (missing.length > 0) {
-    const message = `缺少必要的環境變數：${missing.join(', ')}`;
+    const message = `缺少必要的環境變數：${missing.join(", ")}`;
     if (import.meta.env.PROD) {
-      showFriendlyErrorPage('系統設定錯誤', '請聯繫管理員');
+      showFriendlyErrorPage("系統設定錯誤", "請聯繫管理員");
     }
     throw new Error(message);
   }
 
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL!;
   if (!isValidHttpUrl(supabaseUrl)) {
-    const message = 'VITE_SUPABASE_URL 必須是有效的 HTTP(S) URL';
+    const message = "VITE_SUPABASE_URL 必須是有效的 HTTP(S) URL";
     if (import.meta.env.PROD) {
-      showFriendlyErrorPage('系統設定錯誤', '請聯繫管理員');
+      showFriendlyErrorPage("系統設定錯誤", "請聯繫管理員");
     }
     throw new Error(message);
   }
@@ -111,12 +116,18 @@ function readEnv(): EnvShape {
   };
 
   // 驗證 VITE_API_BASE_URL 格式（如果有設定）
-  if (env.VITE_API_BASE_URL && !isValidHttpUrl(env.VITE_API_BASE_URL) && !env.VITE_API_BASE_URL.startsWith('/')) {
-    logger.warn('[env] VITE_API_BASE_URL 格式無效，應為 HTTP(S) URL 或以 / 開頭的路徑');
+  if (
+    env.VITE_API_BASE_URL &&
+    !isValidHttpUrl(env.VITE_API_BASE_URL) &&
+    !env.VITE_API_BASE_URL.startsWith("/")
+  ) {
+    logger.warn(
+      "[env] VITE_API_BASE_URL 格式無效，應為 HTTP(S) URL 或以 / 開頭的路徑",
+    );
   }
 
   if (!env.VITE_API_BASE_URL && import.meta.env.DEV) {
-    logger.warn('[env] VITE_API_BASE_URL 未設定，預設為 /api');
+    logger.warn("[env] VITE_API_BASE_URL 未設定，預設為 /api");
   }
 
   return env;
@@ -128,14 +139,14 @@ function resolveCommunityApiBase(envShape: EnvShape): string {
   if (!envShape.VITE_API_BASE_URL) {
     // 正式環境使用同 origin 的 /api/community
     if (import.meta.env.PROD) {
-      logger.warn('[env] VITE_API_BASE_URL 未設定，使用預設 /api/community');
+      logger.warn("[env] VITE_API_BASE_URL 未設定，使用預設 /api/community");
     }
     return DEFAULT_COMMUNITY_API_BASE;
   }
 
   const normalized = envShape.VITE_API_BASE_URL.trim();
   if (!normalized) {
-    logger.warn('[env] VITE_API_BASE_URL 為空字串，使用預設 /api/community');
+    logger.warn("[env] VITE_API_BASE_URL 為空字串，使用預設 /api/community");
     return DEFAULT_COMMUNITY_API_BASE;
   }
 

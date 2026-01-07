@@ -1,11 +1,11 @@
-import React from 'react';
-import type { MaiMaiSpeechProps } from './types';
+import React from "react";
+import type { MaiMaiSpeechProps } from "./types";
 
 /**
  * MaiMai 對話氣泡組件
  * @description 顯示最近 3 句對話，最新一句粗體，舊訊息淡出
  */
-export function MaiMaiSpeech({ messages, className = '' }: MaiMaiSpeechProps) {
+export function MaiMaiSpeech({ messages, className = "" }: MaiMaiSpeechProps) {
   if (!messages.length) return null;
 
   // 只取最後 3 句
@@ -29,7 +29,7 @@ export function MaiMaiSpeech({ messages, className = '' }: MaiMaiSpeechProps) {
     >
       {/* 氣泡尾巴 - 置中 */}
       <div className="absolute -bottom-2 left-1/2 size-4 -translate-x-1/2 rotate-45 bg-white ring-1 ring-slate-200" />
-      
+
       <div className="relative space-y-0.5">
         {recentMessages.map((message, index) => {
           const isLast = index === lastIndex;
@@ -40,11 +40,12 @@ export function MaiMaiSpeech({ messages, className = '' }: MaiMaiSpeechProps) {
               key={`${index}-${message.slice(0, 10)}`}
               className={`
                 text-sm leading-snug transition-all duration-300
-                ${isLast 
-                  ? 'font-bold text-slate-700' 
-                  : isOld 
-                    ? 'text-[10px] text-slate-400 line-through opacity-50'
-                    : 'text-xs text-slate-500'
+                ${
+                  isLast
+                    ? "font-bold text-slate-700"
+                    : isOld
+                      ? "text-[10px] text-slate-400 line-through opacity-50"
+                      : "text-xs text-slate-500"
                 }
               `}
             >

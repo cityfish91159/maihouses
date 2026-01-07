@@ -1,6 +1,6 @@
 /**
  * PostSkeleton Component
- * 
+ *
  * 載入中的骨架屏動畫
  * 注意：不設 aria-hidden，讓父層 WallSkeleton 統一管理 a11y
  */
@@ -46,7 +46,7 @@ export function WallSkeleton() {
           <div className="h-24 w-full animate-pulse rounded-[14px] bg-gray-100" />
         </div>
       </div>
-      
+
       {/* Posts Skeleton */}
       <div className="bg-white/98 overflow-hidden rounded-[18px] border border-border-light p-4">
         <div className="mb-3 flex items-center gap-2">

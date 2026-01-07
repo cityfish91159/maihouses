@@ -26,8 +26,9 @@ export const QuietBanner: React.FC = () => {
 
   if (!isActive()) return null;
 
-  const minutesLeft =
-    state.untilTs ? Math.max(0, Math.ceil((state.untilTs - now) / 60000)) : null;
+  const minutesLeft = state.untilTs
+    ? Math.max(0, Math.ceil((state.untilTs - now) / 60000))
+    : null;
   const turnsLeft = state.remainingTurns ?? null;
 
   return (
@@ -39,7 +40,15 @@ export const QuietBanner: React.FC = () => {
       <button
         onClick={clearQuiet}
         aria-label="解除安靜模式"
-        style={{ marginLeft: 12, padding: "2px 8px", borderRadius: 6, border: "1px solid #fff", background: "transparent", color: "#fff", cursor: "pointer" }}
+        style={{
+          marginLeft: 12,
+          padding: "2px 8px",
+          borderRadius: 6,
+          border: "1px solid #fff",
+          background: "transparent",
+          color: "#fff",
+          cursor: "pointer",
+        }}
       >
         解除
       </button>

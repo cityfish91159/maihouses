@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 
 interface LogoProps {
   showSlogan?: boolean;
@@ -16,7 +16,11 @@ interface LogoContentProps {
 }
 
 // 將 Content 移到組件外部，避免每次渲染時重新創建
-const LogoContent: React.FC<LogoContentProps> = ({ showSlogan, className, showBadge }) => (
+const LogoContent: React.FC<LogoContentProps> = ({
+  showSlogan,
+  className,
+  showBadge,
+}) => (
   <div className={`group flex cursor-pointer items-center gap-3 ${className}`}>
     {/* Logo Icon */}
     <div className="shadow-brand-700/20 group-hover:shadow-brand-700/30 relative flex size-[42px] items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-brand-700 to-brand-600 shadow-lg transition-all duration-300 group-hover:scale-105">
@@ -24,7 +28,15 @@ const LogoContent: React.FC<LogoContentProps> = ({ showSlogan, className, showBa
       <div className="absolute inset-0 translate-y-full bg-gradient-to-tr from-transparent via-white/10 to-transparent transition-transform duration-700 ease-out group-hover:translate-y-0"></div>
 
       {/* Icon SVG */}
-      <svg className="relative z-10 size-[22px] text-white drop-shadow-sm transition-transform duration-300 group-hover:-translate-y-px" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <svg
+        className="relative z-10 size-[22px] text-white drop-shadow-sm transition-transform duration-300 group-hover:-translate-y-px"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
         <path d="M3 9.5L12 3L21 9.5V20.5C21 21.0523 20.5523 21.5 20 21.5H4C3.44772 21.5 3 21.0523 3 20.5V9.5Z" />
         <path d="M9 21.5V13H15V21.5" />
       </svg>
@@ -38,7 +50,9 @@ const LogoContent: React.FC<LogoContentProps> = ({ showSlogan, className, showBa
     <div className="flex items-center">
       <div className="flex items-baseline gap-1">
         {/* Font serif, Brand Dark Blue */}
-        <span className="font-serif text-[24px] font-bold leading-none tracking-wide text-brand-700">邁房子</span>
+        <span className="font-serif text-[24px] font-bold leading-none tracking-wide text-brand-700">
+          邁房子
+        </span>
       </div>
 
       {showSlogan && (
@@ -58,13 +72,18 @@ export const Logo: React.FC<LogoProps> = ({
   onClick,
   href = "/maihouses/",
   showBadge = true,
-  ariaLabel
+  ariaLabel,
 }) => {
   const contentProps = { showSlogan, className, showBadge };
 
   if (href) {
     return (
-      <a href={href} onClick={onClick} className="no-underline" aria-label={ariaLabel}>
+      <a
+        href={href}
+        onClick={onClick}
+        className="no-underline"
+        aria-label={ariaLabel}
+      >
         <LogoContent {...contentProps} />
       </a>
     );
@@ -75,7 +94,9 @@ export const Logo: React.FC<LogoProps> = ({
       role="button"
       tabIndex={0}
       onClick={onClick}
-      onKeyDown={(e) => { if ((e.key === 'Enter' || e.key === ' ') && onClick) onClick(); }}
+      onKeyDown={(e) => {
+        if ((e.key === "Enter" || e.key === " ") && onClick) onClick();
+      }}
       aria-label={ariaLabel}
     >
       <LogoContent {...contentProps} />

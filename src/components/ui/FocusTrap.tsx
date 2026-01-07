@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef } from "react";
 
 interface FocusTrapProps {
   children: React.ReactNode;
@@ -8,14 +8,18 @@ interface FocusTrapProps {
 
 /**
  * FocusTrap Component
- * 
+ *
  * 實現無障礙焦點鎖定 (Focus Trap)
  * 1. 鎖定 Tab 鍵循環焦點
  * 2. 初始焦點設置
  * 3. 關閉時還原焦點
  * 4. 點擊外部不丟失焦點
  */
-export function FocusTrap({ children, isActive, initialFocusRef }: FocusTrapProps) {
+export function FocusTrap({
+  children,
+  isActive,
+  initialFocusRef,
+}: FocusTrapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
 
@@ -29,7 +33,7 @@ export function FocusTrap({ children, isActive, initialFocusRef }: FocusTrapProp
       } else if (containerRef.current) {
         // 尋找第一個可聚焦元素
         const focusable = containerRef.current.querySelectorAll(
-          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
         );
         if (focusable.length > 0) {
           (focusable[0] as HTMLElement).focus();
@@ -48,15 +52,15 @@ export function FocusTrap({ children, isActive, initialFocusRef }: FocusTrapProp
     if (!isActive) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key !== 'Tab') return;
+      if (e.key !== "Tab") return;
 
       const container = containerRef.current;
       if (!container) return;
 
       const focusableElements = container.querySelectorAll(
-        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
       );
-      
+
       const firstElement = focusableElements[0] as HTMLElement;
       const lastElement = Array.from(focusableElements).at(-1) as HTMLElement;
 
@@ -75,13 +79,9 @@ export function FocusTrap({ children, isActive, initialFocusRef }: FocusTrapProp
       }
     };
 
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
   }, [isActive]);
 
-  return (
-    <div ref={containerRef}>
-      {children}
-    </div>
-  );
+  return <div ref={containerRef}>{children}</div>;
 }

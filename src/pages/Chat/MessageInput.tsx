@@ -1,6 +1,6 @@
-import { useState } from 'react';
-import { Send } from 'lucide-react';
-import { notify } from '../../lib/notify';
+import { useState } from "react";
+import { Send } from "lucide-react";
+import { notify } from "../../lib/notify";
 
 interface MessageInputProps {
   onSend: (content: string) => Promise<void> | void;
@@ -9,17 +9,22 @@ interface MessageInputProps {
   onTyping?: () => void;
 }
 
-export function MessageInput({ onSend, disabled, isSending, onTyping }: MessageInputProps) {
-  const [value, setValue] = useState('');
+export function MessageInput({
+  onSend,
+  disabled,
+  isSending,
+  onTyping,
+}: MessageInputProps) {
+  const [value, setValue] = useState("");
 
   const handleSend = async () => {
     const trimmed = value.trim();
     if (!trimmed || disabled) return;
     try {
       await onSend(trimmed);
-      setValue('');
+      setValue("");
     } catch {
-      notify.error('訊息發送失敗', '請重試');
+      notify.error("訊息發送失敗", "請重試");
     }
   };
 
@@ -36,7 +41,7 @@ export function MessageInput({ onSend, disabled, isSending, onTyping }: MessageI
           onTyping?.();
         }}
         onKeyDown={(event) => {
-          if (event.key === 'Enter' && !event.shiftKey) {
+          if (event.key === "Enter" && !event.shiftKey) {
             event.preventDefault();
             handleSend();
           }
@@ -49,7 +54,7 @@ export function MessageInput({ onSend, disabled, isSending, onTyping }: MessageI
         disabled={disabled || !value.trim()}
         className="inline-flex items-center gap-2 rounded-2xl bg-brand-700 px-4 py-2 text-sm font-bold text-white shadow-sm transition-all hover:bg-brand-600 disabled:cursor-not-allowed disabled:bg-slate-300"
       >
-        {isSending ? '傳送中' : '發送'}
+        {isSending ? "傳送中" : "發送"}
         <Send size={16} />
       </button>
     </div>

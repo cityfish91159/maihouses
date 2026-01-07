@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
-import { Session, User } from '@supabase/supabase-js';
-import { supabase } from '../lib/supabase';
-import type { Role } from '../types/community';
+import { useEffect, useState } from "react";
+import { Session, User } from "@supabase/supabase-js";
+import { supabase } from "../lib/supabase";
+import type { Role } from "../types/community";
 
 interface AuthState {
   session: Session | null;
@@ -13,19 +13,25 @@ interface AuthState {
 }
 
 const deriveRole = (user: User | null): Role => {
-  if (!user) return 'guest';
-  const metadataRole = (user.app_metadata as Record<string, unknown>)?.role ?? (user.user_metadata as Record<string, unknown>)?.role;
-  if (metadataRole === 'resident' || metadataRole === 'agent' || metadataRole === 'member') {
+  if (!user) return "guest";
+  const metadataRole =
+    (user.app_metadata as Record<string, unknown>)?.role ??
+    (user.user_metadata as Record<string, unknown>)?.role;
+  if (
+    metadataRole === "resident" ||
+    metadataRole === "agent" ||
+    metadataRole === "member"
+  ) {
     return metadataRole;
   }
-  return 'member';
+  return "member";
 };
 
 export function useAuth() {
   const [state, setState] = useState<AuthState>({
     session: null,
     user: null,
-    role: 'guest',
+    role: "guest",
     isAuthenticated: false,
     loading: true,
     error: null,
@@ -57,7 +63,10 @@ export function useAuth() {
         }
         syncState(data.session, null);
       } catch (err) {
-        syncState(null, err instanceof Error ? err : new Error('Failed to fetch session'));
+        syncState(
+          null,
+          err instanceof Error ? err : new Error("Failed to fetch session"),
+        );
       }
     };
 

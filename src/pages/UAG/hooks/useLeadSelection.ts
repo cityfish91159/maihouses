@@ -1,12 +1,15 @@
-import { useState, useCallback, useMemo } from 'react';
-import { Lead } from '../types/uag.types';
-import { useWindowSize } from './useWindowSize';
-import { BREAKPOINTS } from '../uag-config';
+import { useState, useCallback, useMemo } from "react";
+import { Lead } from "../types/uag.types";
+import { useWindowSize } from "./useWindowSize";
+import { BREAKPOINTS } from "../uag-config";
 
 export function useLeadSelection() {
   // 使用元組儲存 [lead, 當時的 width 是否為手機]
   // 這樣當 width 變大（桌面）時，可以判斷是否要顯示
-  const [selectionState, setSelectionState] = useState<{ lead: Lead; selectedOnMobile: boolean } | null>(null);
+  const [selectionState, setSelectionState] = useState<{
+    lead: Lead;
+    selectedOnMobile: boolean;
+  } | null>(null);
   const { width } = useWindowSize();
 
   // 只有在手機上選擇的 lead，且當前仍在手機上，才會顯示
@@ -25,7 +28,9 @@ export function useLeadSelection() {
     // Using requestAnimationFrame for better timing
     requestAnimationFrame(() => {
       if (isMobile) {
-        document.getElementById('action-panel-container')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        document
+          .getElementById("action-panel-container")
+          ?.scrollIntoView({ behavior: "smooth", block: "center" });
       }
     });
   }, []);

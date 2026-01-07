@@ -1,6 +1,6 @@
 /**
  * Services Barrel Export
- * 
+ *
  * 統一匯出所有服務層的型別與函數
  * 外部模組應從此入口引入，避免直接 import 來源檔案
  */
@@ -11,7 +11,7 @@ export type {
   CommunityReview,
   CommunityQuestion,
   CommunityWallData,
-} from './communityService';
+} from "./communityService";
 
 export {
   getCommunityWall,
@@ -24,7 +24,7 @@ export {
   askQuestion,
   answerQuestion,
   clearCommunityCache,
-} from './communityService';
+} from "./communityService";
 
 // ========== Lead Service ==========
 export type {
@@ -34,7 +34,7 @@ export type {
   LeadEvent,
   CreateLeadParams,
   CreateLeadResponse,
-} from './leadService';
+} from "./leadService";
 
 export {
   createLead,
@@ -43,7 +43,7 @@ export {
   updateLeadStatus,
   recordFirstResponse,
   addLeadEvent,
-} from './leadService';
+} from "./leadService";
 
 // 未來可擴充其他服務
 // export * from './auth';

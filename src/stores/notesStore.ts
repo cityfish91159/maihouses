@@ -1,4 +1,4 @@
-import { safeLocalStorage } from '../lib/safeStorage';
+import { safeLocalStorage } from "../lib/safeStorage";
 
 export type NoteItem = {
   id: string;
@@ -19,7 +19,7 @@ function loadAll(): NoteItem[] {
 function saveAll(items: NoteItem[]) {
   try {
     safeLocalStorage.setItem(KEY, JSON.stringify(items));
-  } catch { }
+  } catch {}
 }
 export function addNote(note: string, echo?: string): NoteItem {
   const items = loadAll();
@@ -33,5 +33,9 @@ export function addNote(note: string, echo?: string): NoteItem {
   saveAll(items);
   return item;
 }
-export function listNotes(): NoteItem[] { return loadAll(); }
-export function clearNotes() { saveAll([]); }
+export function listNotes(): NoteItem[] {
+  return loadAll();
+}
+export function clearNotes() {
+  saveAll([]);
+}

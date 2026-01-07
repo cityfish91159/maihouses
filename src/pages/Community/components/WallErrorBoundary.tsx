@@ -1,6 +1,6 @@
 /**
  * WallErrorBoundary
- * 
+ *
  * 社區牆專用 Error Boundary
  * - 捕獲 runtime errors，防止白屏
  * - 提供友善的錯誤 UI
@@ -8,8 +8,8 @@
  * - 生產環境記錄錯誤（可整合 Sentry）
  */
 
-import React from 'react';
-import { logger } from '../../../lib/logger';
+import React from "react";
+import { logger } from "../../../lib/logger";
 
 // DEV 模式除錯用
 declare global {
@@ -18,7 +18,12 @@ declare global {
   }
 }
 
-type ErrorCategory = 'network' | 'permission' | 'notFound' | 'runtime' | 'unknown';
+type ErrorCategory =
+  | "network"
+  | "permission"
+  | "notFound"
+  | "runtime"
+  | "unknown";
 
 interface CategorizedError {
   category: ErrorCategory;
@@ -39,47 +44,55 @@ const getErrorMessage = (error: Error): string => {
     messages.push(current.message);
     current = current.cause;
   }
-  return messages.join(' ').toLowerCase();
+  return messages.join(" ").toLowerCase();
 };
 
 const categorizeError = (error: Error): CategorizedError => {
   const message = getErrorMessage(error);
 
-  if (message.includes('401') || message.includes('403') || message.includes('unauthorized')) {
+  if (
+    message.includes("401") ||
+    message.includes("403") ||
+    message.includes("unauthorized")
+  ) {
     return {
-      category: 'permission',
-      title: '需要登入',
-      message: '請先登入後再查看社區牆內容',
-      actionText: '前往登入',
-      actionHref: '/auth',
+      category: "permission",
+      title: "需要登入",
+      message: "請先登入後再查看社區牆內容",
+      actionText: "前往登入",
+      actionHref: "/auth",
     };
   }
 
-  if (message.includes('404') || message.includes('not found')) {
+  if (message.includes("404") || message.includes("not found")) {
     return {
-      category: 'notFound',
-      title: '找不到社區牆',
-      message: '此社區不存在或已被移除',
-      actionText: '回到首頁',
-      actionHref: '/maihouses/',
+      category: "notFound",
+      title: "找不到社區牆",
+      message: "此社區不存在或已被移除",
+      actionText: "回到首頁",
+      actionHref: "/maihouses/",
     };
   }
 
-  if (message.includes('network') || message.includes('fetch') || message.includes('timeout')) {
+  if (
+    message.includes("network") ||
+    message.includes("fetch") ||
+    message.includes("timeout")
+  ) {
     return {
-      category: 'network',
-      title: '連線異常',
-      message: '目前無法連接到伺服器，請稍後重試',
-      actionText: '重新載入',
+      category: "network",
+      title: "連線異常",
+      message: "目前無法連接到伺服器，請稍後重試",
+      actionText: "重新載入",
       onAction: () => window.location.reload(),
     };
   }
 
   return {
-    category: 'runtime',
-    title: '載入失敗',
-    message: error.message || '發生未預期的錯誤，我們正在處理中',
-    actionText: '重試',
+    category: "runtime",
+    title: "載入失敗",
+    message: error.message || "發生未預期的錯誤，我們正在處理中",
+    actionText: "重試",
   };
 };
 
@@ -115,16 +128,16 @@ export class WallErrorBoundary extends React.Component<Props, State> {
     this.setState({ errorInfo });
 
     if (import.meta.env.DEV) {
-      logger.error('[WallErrorBoundary] Community Wall Error', {
+      logger.error("[WallErrorBoundary] Community Wall Error", {
         error,
-        componentStack: errorInfo.componentStack
+        componentStack: errorInfo.componentStack,
       });
     }
 
-    if (import.meta.env.PROD && typeof window !== 'undefined') {
-      fetch('/api/log-error', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+    if (import.meta.env.PROD && typeof window !== "undefined") {
+      fetch("/api/log-error", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           error: {
             message: error.message,
@@ -137,7 +150,9 @@ export class WallErrorBoundary extends React.Component<Props, State> {
           timestamp: new Date().toISOString(),
         }),
       }).catch((reportError) => {
-        logger.error('[WallErrorBoundary] Failed to report error', { error: reportError });
+        logger.error("[WallErrorBoundary] Failed to report error", {
+          error: reportError,
+        });
       });
     }
 
@@ -145,7 +160,12 @@ export class WallErrorBoundary extends React.Component<Props, State> {
   }
 
   resetErrorBoundary = () => {
-    this.setState({ hasError: false, error: null, errorInfo: null, errorId: null });
+    this.setState({
+      hasError: false,
+      error: null,
+      errorInfo: null,
+      errorId: null,
+    });
   };
 
   copyErrorToClipboard = () => {
@@ -153,16 +173,18 @@ export class WallErrorBoundary extends React.Component<Props, State> {
     const { error, errorInfo, errorId } = this.state;
     const payload = [
       `Message: ${error.message}`,
-      `Stack: ${error.stack ?? 'N/A'}`,
-      `Component Stack: ${errorInfo?.componentStack ?? 'N/A'}`,
-      `URL: ${typeof window !== 'undefined' ? window.location.href : 'N/A'}`,
+      `Stack: ${error.stack ?? "N/A"}`,
+      `Component Stack: ${errorInfo?.componentStack ?? "N/A"}`,
+      `URL: ${typeof window !== "undefined" ? window.location.href : "N/A"}`,
       `Timestamp: ${new Date().toISOString()}`,
       errorId ? `Error ID: ${errorId}` : null,
-    ].filter(Boolean).join('\n');
+    ]
+      .filter(Boolean)
+      .join("\n");
 
     if (navigator?.clipboard) {
       navigator.clipboard.writeText(payload).catch(() => {
-        logger.warn('[WallErrorBoundary] Failed to copy error details');
+        logger.warn("[WallErrorBoundary] Failed to copy error details");
       });
     }
   };
@@ -177,13 +199,15 @@ export class WallErrorBoundary extends React.Component<Props, State> {
         <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-bg-base to-bg-soft px-4">
           <div className="border-error-200 max-w-md rounded-2xl border bg-white p-8 text-center shadow-xl">
             <div className="mb-4 text-5xl">
-              {categorized.category === 'network' && '📡'}
-              {categorized.category === 'permission' && '🔒'}
-              {categorized.category === 'notFound' && '🔍'}
-              {categorized.category === 'runtime' && '💥'}
-              {categorized.category === 'unknown' && '⚠️'}
+              {categorized.category === "network" && "📡"}
+              {categorized.category === "permission" && "🔒"}
+              {categorized.category === "notFound" && "🔍"}
+              {categorized.category === "runtime" && "💥"}
+              {categorized.category === "unknown" && "⚠️"}
             </div>
-            <h2 className="mb-2 text-xl font-bold text-ink-900">{categorized.title}</h2>
+            <h2 className="mb-2 text-xl font-bold text-ink-900">
+              {categorized.title}
+            </h2>
             <p className="mb-6 text-sm text-ink-600">{categorized.message}</p>
             <div className="flex flex-col gap-2 sm:flex-row sm:justify-center">
               {categorized.onAction && (
@@ -247,6 +271,6 @@ export class WallErrorBoundary extends React.Component<Props, State> {
 
 if (import.meta.env.DEV) {
   window.__triggerCommunityWallError = () => {
-    throw new Error('手動觸發社區牆 ErrorBoundary 測試錯誤');
+    throw new Error("手動觸發社區牆 ErrorBoundary 測試錯誤");
   };
 }

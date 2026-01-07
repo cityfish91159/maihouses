@@ -1,26 +1,39 @@
-import { useEffect } from 'react';
-import { useParams } from 'react-router-dom';
-import { GlobalHeader } from '../../components/layout/GlobalHeader';
-import { HEADER_MODES } from '../../constants/header';
-import { useAuth } from '../../hooks/useAuth';
-import { ChatHeader } from './ChatHeader';
-import { ChatErrorLayout } from './ErrorLayout';
-import { MessageInput } from './MessageInput';
-import { MessageList } from './MessageList';
-import { useChat } from './useChat';
+import { useEffect } from "react";
+import { useParams } from "react-router-dom";
+import { GlobalHeader } from "../../components/layout/GlobalHeader";
+import { HEADER_MODES } from "../../constants/header";
+import { useAuth } from "../../hooks/useAuth";
+import { ChatHeader } from "./ChatHeader";
+import { ChatErrorLayout } from "./ErrorLayout";
+import { MessageInput } from "./MessageInput";
+import { MessageList } from "./MessageList";
+import { useChat } from "./useChat";
 
 export default function ChatPage() {
   const { conversationId } = useParams();
   const { isAuthenticated, loading: authLoading, role } = useAuth();
-  const { header, messages, isLoading, isSending, isTyping, error, sendMessage, sendTyping, isAgent } = useChat(conversationId);
-  const headerMode = role === 'agent' ? HEADER_MODES.AGENT : HEADER_MODES.CONSUMER;
+  const {
+    header,
+    messages,
+    isLoading,
+    isSending,
+    isTyping,
+    error,
+    sendMessage,
+    sendTyping,
+    isAgent,
+  } = useChat(conversationId);
+  const headerMode =
+    role === "agent" ? HEADER_MODES.AGENT : HEADER_MODES.CONSUMER;
 
   useEffect(() => {
-    document.title = '對話 | MaiHouses';
+    document.title = "對話 | MaiHouses";
   }, []);
 
   if (!conversationId) {
-    return <ChatErrorLayout mode={headerMode}>無效的對話連結。</ChatErrorLayout>;
+    return (
+      <ChatErrorLayout mode={headerMode}>無效的對話連結。</ChatErrorLayout>
+    );
   }
 
   if (authLoading) {
@@ -32,7 +45,10 @@ export default function ChatPage() {
       <ChatErrorLayout mode={headerMode}>
         <div className="rounded-2xl border border-brand-100 bg-white p-6 text-sm text-slate-600 shadow-sm">
           請先登入才能查看對話內容。
-          <a className="ml-2 font-bold text-brand-700" href="/maihouses/auth.html?mode=login">
+          <a
+            className="ml-2 font-bold text-brand-700"
+            href="/maihouses/auth.html?mode=login"
+          >
             前往登入
           </a>
         </div>
@@ -58,7 +74,7 @@ export default function ChatPage() {
           <div className="flex-1 overflow-hidden p-4">
             <MessageList
               messages={messages}
-              currentSender={isAgent ? 'agent' : 'consumer'}
+              currentSender={isAgent ? "agent" : "consumer"}
               isLoading={isLoading}
               error={error}
             />

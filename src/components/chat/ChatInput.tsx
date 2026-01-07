@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useQuietMode } from "../../context/QuietModeContext";
 import { Events, track } from "../../analytics/track";
 
-type Props = { onSend: (text: string) => Promise<void> | void; };
+type Props = { onSend: (text: string) => Promise<void> | void };
 
 export const ChatInput: React.FC<Props> = ({ onSend }) => {
   const { isActive, decrementTurn } = useQuietMode();
@@ -20,7 +20,8 @@ export const ChatInput: React.FC<Props> = ({ onSend }) => {
       }
     };
     window.addEventListener("mai:chat:start", handler as EventListener);
-    return () => window.removeEventListener("mai:chat:start", handler as EventListener);
+    return () =>
+      window.removeEventListener("mai:chat:start", handler as EventListener);
   }, []);
 
   const handleSend = async () => {
@@ -47,7 +48,12 @@ export const ChatInput: React.FC<Props> = ({ onSend }) => {
         value={text}
         onChange={(e) => setText(e.target.value)}
         placeholder={isActive() ? "安靜模式：只聊天,不推內容" : "輸入訊息…"}
-        style={{ flex: 1, padding: "10px 12px", borderRadius: 10, border: "1px solid #ddd" }}
+        style={{
+          flex: 1,
+          padding: "10px 12px",
+          borderRadius: 10,
+          border: "1px solid #ddd",
+        }}
         onKeyDown={(e) => {
           if (e.key === "Enter" && !e.shiftKey) {
             e.preventDefault();
@@ -55,7 +61,16 @@ export const ChatInput: React.FC<Props> = ({ onSend }) => {
           }
         }}
       />
-      <button onClick={handleSend} style={{ padding: "8px 12px", borderRadius: 10, background: "#1749D7", color: "#fff", border: "1px solid #1749D7" }}>
+      <button
+        onClick={handleSend}
+        style={{
+          padding: "8px 12px",
+          borderRadius: 10,
+          background: "#1749D7",
+          color: "#fff",
+          border: "1px solid #1749D7",
+        }}
+      >
         發送
       </button>
     </div>

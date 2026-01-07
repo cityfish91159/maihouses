@@ -1,9 +1,10 @@
-import React from 'react';
-import { Sparkles, Upload, X, Star } from 'lucide-react';
-import { useUploadForm } from './UploadContext';
-import { CompressionComparison } from './CompressionComparison';
+import React from "react";
+import { Sparkles, Upload, X, Star } from "lucide-react";
+import { useUploadForm } from "./UploadContext";
+import { CompressionComparison } from "./CompressionComparison";
 
-const inputClass = "w-full p-3 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-maihouses-dark focus:border-transparent outline-none text-sm transition-all";
+const inputClass =
+  "w-full p-3 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-maihouses-dark focus:border-transparent outline-none text-sm transition-all";
 
 export const MediaSection: React.FC = () => {
   // UP-3: 使用 managedImages 與 setCover
@@ -15,20 +16,20 @@ export const MediaSection: React.FC = () => {
     removeImage,
     setCover,
     compressionProgress,
-    managedImages
+    managedImages,
   } = useUploadForm();
   const [showComparison, setShowComparison] = React.useState(false);
 
   // Mock data for demonstration
   const mockComparison = {
-    originalUrl: form.images[0] || '',
-    compressedUrl: form.images[0] || '',
+    originalUrl: form.images[0] || "",
+    compressedUrl: form.images[0] || "",
     originalSize: 5000000,
-    compressedSize: 1000000
+    compressedSize: 1000000,
   };
 
   const onInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
+    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
   return (
@@ -39,7 +40,12 @@ export const MediaSection: React.FC = () => {
 
       <div className="space-y-5">
         <div>
-          <label htmlFor="upload-description" className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-500">物件描述</label>
+          <label
+            htmlFor="upload-description"
+            className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-500"
+          >
+            物件描述
+          </label>
           <textarea
             id="upload-description"
             name="description"
@@ -53,7 +59,12 @@ export const MediaSection: React.FC = () => {
 
         <div>
           <span className="mb-3 flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-slate-500">
-            <span>物件照片 * <span className="font-normal text-slate-400">(至少 1 張，點擊 ⭐ 設為封面)</span></span>
+            <span>
+              物件照片 *{" "}
+              <span className="font-normal text-slate-400">
+                (至少 1 張，點擊 ⭐ 設為封面)
+              </span>
+            </span>
             {managedImages.length > 0 && (
               <button
                 onClick={() => setShowComparison(true)}
@@ -69,8 +80,11 @@ export const MediaSection: React.FC = () => {
             {managedImages.map((img) => (
               <div
                 key={img.id}
-                className={`group relative aspect-square overflow-hidden rounded-xl border-2 shadow-sm transition-all ${img.isCover ? 'border-yellow-400 ring-2 ring-yellow-200' : 'border-slate-200'
-                  }`}
+                className={`group relative aspect-square overflow-hidden rounded-xl border-2 shadow-sm transition-all ${
+                  img.isCover
+                    ? "border-yellow-400 ring-2 ring-yellow-200"
+                    : "border-slate-200"
+                }`}
               >
                 <img
                   src={img.previewUrl}
@@ -91,13 +105,17 @@ export const MediaSection: React.FC = () => {
                 {/* UP-3.3: 設為封面按鈕 */}
                 <button
                   onClick={() => setCover(img.id)}
-                  className={`absolute left-1.5 top-1.5 rounded-full p-1.5 shadow-lg transition-transform hover:scale-110 ${img.isCover
-                      ? 'bg-yellow-400 text-yellow-900'
-                      : 'bg-white/80 text-slate-400 hover:bg-yellow-100 hover:text-yellow-600'
-                    }`}
-                  title={img.isCover ? '目前封面' : '設為封面'}
+                  className={`absolute left-1.5 top-1.5 rounded-full p-1.5 shadow-lg transition-transform hover:scale-110 ${
+                    img.isCover
+                      ? "bg-yellow-400 text-yellow-900"
+                      : "bg-white/80 text-slate-400 hover:bg-yellow-100 hover:text-yellow-600"
+                  }`}
+                  title={img.isCover ? "目前封面" : "設為封面"}
                 >
-                  <Star size={14} fill={img.isCover ? 'currentColor' : 'none'} />
+                  <Star
+                    size={14}
+                    fill={img.isCover ? "currentColor" : "none"}
+                  />
                 </button>
 
                 {/* 封面標籤 */}
@@ -117,7 +135,14 @@ export const MediaSection: React.FC = () => {
               <Upload size={28} />
               <span className="mt-2 text-xs font-bold">上傳照片</span>
             </button>
-            <input type="file" multiple ref={fileInputRef} onChange={handleFileSelect} className="hidden" accept="image/*" />
+            <input
+              type="file"
+              multiple
+              ref={fileInputRef}
+              onChange={handleFileSelect}
+              className="hidden"
+              accept="image/*"
+            />
           </div>
 
           {/* UP-2.A: 壓縮進度 UI */}

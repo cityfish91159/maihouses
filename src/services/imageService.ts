@@ -1,5 +1,5 @@
-import imageCompression from 'browser-image-compression';
-import heic2any from 'heic2any';
+import imageCompression from "browser-image-compression";
+import heic2any from "heic2any";
 
 export interface OptimizeOptions {
   maxWidthOrHeight?: number;
@@ -18,7 +18,7 @@ export interface OptimizeResult {
   error?: string;
 }
 
-const DEFAULT_OPTIONS: Required<Omit<OptimizeOptions, 'onProgress'>> = {
+const DEFAULT_OPTIONS: Required<Omit<OptimizeOptions, "onProgress">> = {
   maxWidthOrHeight: 2048,
   maxSizeMB: 1.5,
   quality: 0.85,
@@ -27,12 +27,16 @@ const DEFAULT_OPTIONS: Required<Omit<OptimizeOptions, 'onProgress'>> = {
 /**
  * 壓縮單張圖片 (含重試機制與 HEIC 轉檔 - Highest Standard Explicit Handling)
  */
-export async function optimizePropertyImage(file: File, options: OptimizeOptions = {}): Promise<OptimizeResult> {
+export async function optimizePropertyImage(
+  file: File,
+  options: OptimizeOptions = {},
+): Promise<OptimizeResult> {
   const opts = { ...DEFAULT_OPTIONS, ...options };
   const originalSize = file.size;
   const targetBytes = opts.maxSizeMB * 1024 * 1024;
 
-  const isHeic = file.type === 'image/heic' || file.name.toLowerCase().endsWith('.heic');
+  const isHeic =
+    file.type === "image/heic" || file.name.toLowerCase().endsWith(".heic");
 
   // 若非 HEIC 且原始檔已低於目標大小，跳過壓縮
   if (originalSize <= targetBytes && !isHeic) {
@@ -42,12 +46,16 @@ export async function optimizePropertyImage(file: File, options: OptimizeOptions
       compressedSize: originalSize,
       ratio: 1,
       skipped: true,
-      reason: 'under-threshold',
+      reason: "under-threshold",
     };
   }
 
   // 內部重試函式
-  const attemptCompression = async (input: File | Blob, quality: number, retryCount = 0): Promise<File> => {
+  const attemptCompression = async (
+    input: File | Blob,
+    quality: number,
+    retryCount = 0,
+  ): Promise<File> => {
     try {
       return await imageCompression(input as File, {
         maxWidthOrHeight: opts.maxWidthOrHeight,
@@ -55,11 +63,11 @@ export async function optimizePropertyImage(file: File, options: OptimizeOptions
         initialQuality: quality,
         useWebWorker: true,
         preserveExif: true,
-        fileType: 'image/jpeg' // 確保輸出為 JPEG
+        fileType: "image/jpeg", // 確保輸出為 JPEG
       });
     } catch (error) {
-      if (error instanceof Error && error.name === 'RangeError') {
-        throw new Error('記憶體不足 (OOM)，請嘗試上傳較小的圖片');
+      if (error instanceof Error && error.name === "RangeError") {
+        throw new Error("記憶體不足 (OOM)，請嘗試上傳較小的圖片");
       }
       if (retryCount < 1) {
         return attemptCompression(input, quality * 0.8, retryCount + 1);
@@ -76,8 +84,8 @@ export async function optimizePropertyImage(file: File, options: OptimizeOptions
       try {
         const result = await heic2any({
           blob: file,
-          toType: 'image/jpeg',
-          quality: opts.quality
+          toType: "image/jpeg",
+          quality: opts.quality,
         });
         // heic2any returns Blob or Blob[]
         const outputBlob = Array.isArray(result) ? result[0] : result;
@@ -92,8 +100,8 @@ export async function optimizePropertyImage(file: File, options: OptimizeOptions
           compressedSize: originalSize,
           ratio: 1,
           skipped: true,
-          reason: 'heic-conversion-failed',
-          error: 'iOS HEIC 格式轉換失敗，請改用 JPEG 格式的照片'
+          reason: "heic-conversion-failed",
+          error: "iOS HEIC 格式轉換失敗，請改用 JPEG 格式的照片",
         };
       }
     }
@@ -114,8 +122,8 @@ export async function optimizePropertyImage(file: File, options: OptimizeOptions
       compressedSize: originalSize,
       ratio: 1,
       skipped: true,
-      reason: 'failed',
-      error: err instanceof Error ? err.message : '壓縮失敗'
+      reason: "failed",
+      error: err instanceof Error ? err.message : "壓縮失敗",
     };
   }
 }
@@ -125,7 +133,7 @@ export async function optimizePropertyImage(file: File, options: OptimizeOptions
  */
 export async function optimizeImages(
   files: File[],
-  options: OptimizeOptions = {}
+  options: OptimizeOptions = {},
 ): Promise<{ optimized: File[]; warnings: string[]; skipped: number }> {
   const warnings: string[] = [];
   const optimized: File[] = [];
@@ -144,11 +152,13 @@ export async function optimizeImages(
         if (res.error) {
           warnings.push(`${file.name}: ${res.error}`);
         } else {
-          if (res.skipped && res.reason === 'under-threshold') skippedCount++;
+          if (res.skipped && res.reason === "under-threshold") skippedCount++;
           optimized.push(res.file);
         }
       } catch (e) {
-        warnings.push(`${file.name}: ${e instanceof Error ? e.message : 'Unknown error'}`);
+        warnings.push(
+          `${file.name}: ${e instanceof Error ? e.message : "Unknown error"}`,
+        );
       } finally {
         processedCount++;
         options.onProgress?.(Math.round((processedCount / files.length) * 100));

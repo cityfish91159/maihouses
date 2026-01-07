@@ -1,8 +1,8 @@
-import React, { useEffect, useMemo, useState, useRef } from 'react';
-import { MaiMaiBase, useMaiMaiMood } from './MaiMai';
-import { MaiMaiSpeech } from './MaiMai/MaiMaiSpeech';
-import useConfetti from './MaiMai/useConfetti';
-import type { MaiMaiMood } from './MaiMai';
+import React, { useEffect, useMemo, useState, useRef } from "react";
+import { MaiMaiBase, useMaiMaiMood } from "./MaiMai";
+import { MaiMaiSpeech } from "./MaiMai/MaiMaiSpeech";
+import useConfetti from "./MaiMai/useConfetti";
+import type { MaiMaiMood } from "./MaiMai";
 
 interface MascotMaiMaiProps {
   /** SmartAsk 是否正在輸入或請求 */
@@ -19,7 +19,12 @@ interface MascotMaiMaiProps {
  * MascotMaiMai - 簡化版公仔（SmartAsk 使用）
  * @description 使用 MaiMai 原子組件重構，保持原有循環動畫行為
  */
-export default function MascotMaiMai({ isThinking = false, isSuccess = false, hasError = false, messages = [] }: MascotMaiMaiProps) {
+export default function MascotMaiMai({
+  isThinking = false,
+  isSuccess = false,
+  hasError = false,
+  messages = [],
+}: MascotMaiMaiProps) {
   const [successFlash, setSuccessFlash] = useState(false);
 
   // 問答成功時短暫 excited + 撒花
@@ -44,7 +49,7 @@ export default function MascotMaiMai({ isThinking = false, isSuccess = false, ha
 
   // 心情狀態機：輸入/請求 → thinking；成功 → excited/celebrate；錯誤 → shy
   const { mood, handleClick } = useMaiMaiMood({
-    externalMood: successFlash ? 'excited' : undefined,
+    externalMood: successFlash ? "excited" : undefined,
     isSuccess: successFlash,
     hasError,
     isLoading: isThinking,
@@ -54,22 +59,26 @@ export default function MascotMaiMai({ isThinking = false, isSuccess = false, ha
   const prevMoodRef = useRef<MaiMaiMood>(mood);
 
   useEffect(() => {
-    if ((mood === 'celebrate' || mood === 'excited') && prevMoodRef.current !== mood) {
+    if (
+      (mood === "celebrate" || mood === "excited") &&
+      prevMoodRef.current !== mood
+    ) {
       fireConfetti();
-      window.dispatchEvent(new CustomEvent('mascot:celebrate'));
+      window.dispatchEvent(new CustomEvent("mascot:celebrate"));
     }
     prevMoodRef.current = mood;
   }, [mood, fireConfetti]);
 
   // 氣泡內容：取最後 3 句文字
-  const speechMessages = useMemo(() => messages.map(m => m.trim()).filter(Boolean), [messages]);
+  const speechMessages = useMemo(
+    () => messages.map((m) => m.trim()).filter(Boolean),
+    [messages],
+  );
 
   return (
     <div className="relative mb-4 h-40 w-32 text-brand">
       <div className="bg-brand-100/50 absolute left-1/2 top-1/2 -z-10 size-24 -translate-x-1/2 -translate-y-1/2 rounded-full blur-2xl" />
-      {speechMessages.length > 0 && (
-        <MaiMaiSpeech messages={speechMessages} />
-      )}
+      {speechMessages.length > 0 && <MaiMaiSpeech messages={speechMessages} />}
       <ConfettiCanvas />
       <MaiMaiBase
         mood={mood}
@@ -82,4 +91,3 @@ export default function MascotMaiMai({ isThinking = false, isSuccess = false, ha
     </div>
   );
 }
-

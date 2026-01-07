@@ -1,14 +1,14 @@
-import { supabase } from '../lib/supabase'
+import { supabase } from "../lib/supabase";
 
 export interface User {
-  id: string
-  email: string
-  created_at: string
+  id: string;
+  email: string;
+  created_at: string;
 }
 
 export interface AuthError {
-  message: string
-  status?: number
+  message: string;
+  status?: number;
 }
 
 /**
@@ -18,10 +18,10 @@ export async function signUp(email: string, password: string) {
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
-  })
-  
-  if (error) throw error
-  return data
+  });
+
+  if (error) throw error;
+  return data;
 }
 
 /**
@@ -31,10 +31,10 @@ export async function signIn(email: string, password: string) {
   const { data, error } = await supabase.auth.signInWithPassword({
     email,
     password,
-  })
-  
-  if (error) throw error
-  return data
+  });
+
+  if (error) throw error;
+  return data;
 }
 
 /**
@@ -42,34 +42,36 @@ export async function signIn(email: string, password: string) {
  */
 export async function signInWithGoogle() {
   const { data, error } = await supabase.auth.signInWithOAuth({
-    provider: 'google',
+    provider: "google",
     options: {
       redirectTo: `${globalThis.location.origin}/`,
       queryParams: {
-        access_type: 'offline',
-        prompt: 'consent',
+        access_type: "offline",
+        prompt: "consent",
       },
     },
-  })
-  
-  if (error) throw error
-  return data
+  });
+
+  if (error) throw error;
+  return data;
 }
 
 /**
  * 登出
  */
 export async function signOut() {
-  const { error } = await supabase.auth.signOut()
-  if (error) throw error
+  const { error } = await supabase.auth.signOut();
+  if (error) throw error;
 }
 
 /**
  * 取得當前使用者
  */
 export async function getCurrentUser() {
-  const { data: { user } } = await supabase.auth.getUser()
-  return user
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  return user;
 }
 
 /**
@@ -77,8 +79,8 @@ export async function getCurrentUser() {
  */
 export function onAuthStateChange(callback: (user: User | null) => void) {
   return supabase.auth.onAuthStateChange((_event, session) => {
-    callback(session?.user as User | null)
-  })
+    callback(session?.user as User | null);
+  });
 }
 
 /**
@@ -87,9 +89,9 @@ export function onAuthStateChange(callback: (user: User | null) => void) {
 export async function resetPassword(email: string) {
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
     redirectTo: `${globalThis.location.origin}/reset-password`,
-  })
-  
-  if (error) throw error
+  });
+
+  if (error) throw error;
 }
 
 /**
@@ -98,7 +100,7 @@ export async function resetPassword(email: string) {
 export async function updatePassword(newPassword: string) {
   const { error } = await supabase.auth.updateUser({
     password: newPassword,
-  })
-  
-  if (error) throw error
+  });
+
+  if (error) throw error;
 }

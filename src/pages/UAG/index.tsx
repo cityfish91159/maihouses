@@ -1,30 +1,37 @@
-import React, { useRef, useState } from 'react';
-import { ErrorBoundary } from 'react-error-boundary';
-import { QueryErrorResetBoundary } from '@tanstack/react-query';
+import React, { useRef, useState } from "react";
+import { ErrorBoundary } from "react-error-boundary";
+import { QueryErrorResetBoundary } from "@tanstack/react-query";
 
-import styles from './UAG.module.css';
-import { useUAG } from './hooks/useUAG';
-import { useLeadSelection } from './hooks/useLeadSelection';
-import { useAuth } from '../../hooks/useAuth';
+import styles from "./UAG.module.css";
+import { useUAG } from "./hooks/useUAG";
+import { useLeadSelection } from "./hooks/useLeadSelection";
+import { useAuth } from "../../hooks/useAuth";
 
-import { UAGHeader } from './components/UAGHeader';
-import { UAGFooter } from './components/UAGFooter';
-import { UAGLoadingSkeleton } from './components/UAGLoadingSkeleton';
-import { UAGErrorState } from './components/UAGErrorState';
+import { UAGHeader } from "./components/UAGHeader";
+import { UAGFooter } from "./components/UAGFooter";
+import { UAGLoadingSkeleton } from "./components/UAGLoadingSkeleton";
+import { UAGErrorState } from "./components/UAGErrorState";
 
-import RadarCluster from './components/RadarCluster';
-import ActionPanel from './components/ActionPanel';
-import AssetMonitor from './components/AssetMonitor';
-import ListingFeed from './components/ListingFeed';
-import ReportGenerator from './components/ReportGenerator';
-import TrustFlow from './components/TrustFlow';
+import RadarCluster from "./components/RadarCluster";
+import ActionPanel from "./components/ActionPanel";
+import AssetMonitor from "./components/AssetMonitor";
+import ListingFeed from "./components/ListingFeed";
+import ReportGenerator from "./components/ReportGenerator";
+import TrustFlow from "./components/TrustFlow";
 
 // MSG-5: 購買成功後發送訊息 Modal
-import { SendMessageModal } from '../../components/UAG/SendMessageModal';
-import type { Lead } from './types/uag.types';
+import { SendMessageModal } from "../../components/UAG/SendMessageModal";
+import type { Lead } from "./types/uag.types";
 
 function UAGPageContent() {
-  const { data: appData, isLoading, buyLead, isBuying, useMock, toggleMode } = useUAG();
+  const {
+    data: appData,
+    isLoading,
+    buyLead,
+    isBuying,
+    useMock,
+    toggleMode,
+  } = useUAG();
   const { selectedLead, selectLead, close } = useLeadSelection();
   const { user, loading: authLoading, error: authError, signOut } = useAuth();
   const actionPanelRef = useRef<HTMLDivElement>(null);
@@ -33,7 +40,9 @@ function UAGPageContent() {
   const [showMessageModal, setShowMessageModal] = useState(false);
   const [purchasedLead, setPurchasedLead] = useState<Lead | null>(null);
   // MSG-5 FIX: 保存購買後回傳的 conversation_id (UAG-13)
-  const [currentConversationId, setCurrentConversationId] = useState<string | undefined>(undefined);
+  const [currentConversationId, setCurrentConversationId] = useState<
+    string | undefined
+  >(undefined);
   // Header signOut 狀態
   const [isSigningOut, setIsSigningOut] = useState(false);
 
@@ -53,10 +62,10 @@ function UAGPageContent() {
     if (!appData || isBuying) return;
 
     close();
-    
+
     // 等待購買結果，只有成功才顯示 Modal
     const result = await buyLead(leadId);
-    
+
     if (result.success && result.lead) {
       setPurchasedLead(result.lead);
       // UAG-13: 如果有回傳 conversation_id，存起來傳給 Modal
@@ -87,26 +96,26 @@ function UAGPageContent() {
   const canSendMessage = Boolean(agentId && consumerSessionId);
 
   return (
-    <div className={styles['uag-page']}>
+    <div className={styles["uag-page"]}>
       <UAGHeader
-          user={user}
-          isLoading={authLoading}
-          error={authError}
-          onSignOut={handleSignOut}
-          isSigningOut={isSigningOut}
-        />
+        user={user}
+        isLoading={authLoading}
+        error={authError}
+        onSignOut={handleSignOut}
+        isSigningOut={isSigningOut}
+      />
 
-      <main className={styles['uag-container']}>
-        <div className={styles['uag-grid']}>
+      <main className={styles["uag-container"]}>
+        <div className={styles["uag-grid"]}>
           {/* [1] UAG Radar */}
           <RadarCluster leads={appData.leads} onSelectLead={selectLead} />
 
           {/* [Action Panel] */}
-          <ActionPanel 
+          <ActionPanel
             ref={actionPanelRef}
-            selectedLead={selectedLead} 
-            onBuyLead={onBuyLead} 
-            isProcessing={isBuying} 
+            selectedLead={selectedLead}
+            onBuyLead={onBuyLead}
+            isProcessing={isBuying}
           />
 
           {/* [2] Asset Monitor */}
@@ -123,7 +132,11 @@ function UAGPageContent() {
         </div>
       </main>
 
-      <UAGFooter user={appData.user} useMock={useMock} toggleMode={toggleMode} />
+      <UAGFooter
+        user={appData.user}
+        useMock={useMock}
+        toggleMode={toggleMode}
+      />
 
       {/* MSG-5: 購買成功後發送訊息 Modal */}
       {/* 問題 #10-11 修復：只有在有真實 agentId 和 sessionId 時才渲染 */}
@@ -134,8 +147,12 @@ function UAGPageContent() {
           lead={purchasedLead}
           agentId={agentId}
           sessionId={consumerSessionId}
-          {...(currentConversationId && { conversationId: currentConversationId })} // UAG-13 Safe
-          {...(purchasedLead.property_id ? { propertyId: purchasedLead.property_id } : {})}
+          {...(currentConversationId && {
+            conversationId: currentConversationId,
+          })} // UAG-13 Safe
+          {...(purchasedLead.property_id
+            ? { propertyId: purchasedLead.property_id }
+            : {})}
         />
       )}
     </div>
@@ -146,10 +163,7 @@ export default function UAGPage() {
   return (
     <QueryErrorResetBoundary>
       {({ reset }) => (
-        <ErrorBoundary
-          onReset={reset}
-          FallbackComponent={UAGErrorState}
-        >
+        <ErrorBoundary onReset={reset} FallbackComponent={UAGErrorState}>
           <UAGPageContent />
         </ErrorBoundary>
       )}

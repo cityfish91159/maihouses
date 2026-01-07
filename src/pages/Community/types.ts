@@ -1,19 +1,19 @@
 /**
  * Community Wall Types
- * 
+ *
  * 社區牆共用型別定義
  * (Re-export from domain types)
  */
 
-import { 
-  Role, 
-  WallTab, 
-  Post, 
-  Review, 
-  Question, 
-  CommunityInfo, 
-  UnifiedWallData 
-} from '../../types/community';
+import {
+  Role,
+  WallTab,
+  Post,
+  Review,
+  Question,
+  CommunityInfo,
+  UnifiedWallData,
+} from "../../types/community";
 
 export type { Role, WallTab, Post, Review, Question, CommunityInfo };
 export type MockData = UnifiedWallData;
@@ -37,10 +37,10 @@ export interface Permissions {
 
 // ============ Permission Helper ============
 export function getPermissions(role: Role): Permissions {
-  const isGuest = role === 'guest';
-  const isMember = role === 'member';
-  const isResident = role === 'resident';
-  const isAgent = role === 'agent';
+  const isGuest = role === "guest";
+  const isMember = role === "member";
+  const isResident = role === "resident";
+  const isAgent = role === "agent";
 
   return {
     isGuest,

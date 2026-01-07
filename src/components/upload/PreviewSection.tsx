@@ -1,7 +1,7 @@
-import React, { useMemo } from 'react';
-import { MapPin } from 'lucide-react';
-import { buildKeyCapsuleTags } from '../../utils/keyCapsules';
-import { useUploadForm } from './UploadContext';
+import React, { useMemo } from "react";
+import { MapPin } from "lucide-react";
+import { buildKeyCapsuleTags } from "../../utils/keyCapsules";
+import { useUploadForm } from "./UploadContext";
 
 export const PreviewSection: React.FC = () => {
   const { form, selectedCommunityId } = useUploadForm();
@@ -30,26 +30,39 @@ export const PreviewSection: React.FC = () => {
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-md transition-all hover:shadow-lg">
         {form.images.length > 0 && (
           <div className="aspect-video overflow-hidden">
-            <img src={form.images[0]} alt="" className="size-full object-cover" />
+            <img
+              src={form.images[0]}
+              alt=""
+              className="size-full object-cover"
+            />
           </div>
         )}
         <div className="p-5">
-          <h4 className="text-lg font-bold leading-tight text-slate-900">{form.title || '物件標題'}</h4>
+          <h4 className="text-lg font-bold leading-tight text-slate-900">
+            {form.title || "物件標題"}
+          </h4>
           <p className="mt-1.5 flex items-center gap-1 text-sm text-slate-500">
-            <MapPin size={14} /> {form.address || '地址'}
+            <MapPin size={14} /> {form.address || "地址"}
           </p>
           <div className="mt-3 flex items-baseline gap-1.5">
-            <span className="text-maihouses-dark text-2xl font-black">{form.price || '0'}</span>
+            <span className="text-maihouses-dark text-2xl font-black">
+              {form.price || "0"}
+            </span>
             <span className="text-sm font-bold text-slate-500">萬</span>
           </div>
           <div className="mt-4 flex flex-wrap gap-2">
             {tags.map((tag, i) => (
-              <span key={i} className="text-maihouses-dark rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-xs font-bold">
+              <span
+                key={i}
+                className="text-maihouses-dark rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-xs font-bold"
+              >
                 {tag}
               </span>
             ))}
             {tags.length === 0 && (
-              <span className="text-xs italic text-slate-400">尚未生成標籤</span>
+              <span className="text-xs italic text-slate-400">
+                尚未生成標籤
+              </span>
             )}
           </div>
 
@@ -58,13 +71,23 @@ export const PreviewSection: React.FC = () => {
             <div className="mt-4 border-t border-slate-100 pt-3 text-xs text-slate-500">
               <span className="flex items-center gap-1.5">
                 🏘️ 社區牆：
-                <span className={selectedCommunityId ? 'font-bold text-green-600' : 'font-bold text-blue-600'}>
+                <span
+                  className={
+                    selectedCommunityId
+                      ? "font-bold text-green-600"
+                      : "font-bold text-blue-600"
+                  }
+                >
                   {form.communityName}
                 </span>
                 {selectedCommunityId ? (
-                  <span className="rounded bg-green-50 px-1.5 py-0.5 text-green-600">已連結現有社區</span>
+                  <span className="rounded bg-green-50 px-1.5 py-0.5 text-green-600">
+                    已連結現有社區
+                  </span>
                 ) : (
-                  <span className="rounded bg-blue-50 px-1.5 py-0.5 text-blue-600">將自動建立新社區</span>
+                  <span className="rounded bg-blue-50 px-1.5 py-0.5 text-blue-600">
+                    將自動建立新社區
+                  </span>
                 )}
               </span>
             </div>

@@ -4,2259 +4,2259 @@
  */
 
 export interface paths {
-    "/hello": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * 健康檢查端點
-         * @description Edge Runtime 健康檢查
-         */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description 成功 */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            /** @example true */
-                            success?: boolean;
-                            data?: {
-                                /** @example world */
-                                hello?: string;
-                                /** @example edge */
-                                runtime?: string;
-                            };
-                        };
-                    };
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+  "/hello": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/community/wall": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * 取得社區牆資料（貼文、評價、問答）
-         * @description 統一入口點，支援多種資料類型
-         *     - guest: 只能看 2 則 + blur
-         *     - member: 看全部公開
-         *     - resident: 看公開 + 私密
-         */
-        get: {
-            parameters: {
-                query: {
-                    communityId: string;
-                    type?: "posts" | "reviews" | "questions" | "all";
-                    visibility?: "public" | "private";
-                };
-                header?: never;
-                path?: never;
-                cookie?: never;
+    /**
+     * 健康檢查端點
+     * @description Edge Runtime 健康檢查
+     */
+    get: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description 成功 */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": {
+              /** @example true */
+              success?: boolean;
+              data?: {
+                /** @example world */
+                hello?: string;
+                /** @example edge */
+                runtime?: string;
+              };
             };
-            requestBody?: never;
-            responses: {
-                /** @description 成功 */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            success?: boolean;
-                            data?: components["schemas"]["Post"][];
-                            total?: number;
-                            /** @description 是否受訪客限制 */
-                            limited?: boolean;
-                            visibleCount?: number;
-                        };
-                    };
-                };
-                400: components["responses"]["BadRequest"];
-            };
+          };
         };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+      };
     };
-    "/community/post": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** 發表社區貼文 */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": {
-                        /** Format: uuid */
-                        communityId: string;
-                        content: string;
-                        /**
-                         * @default public
-                         * @enum {string}
-                         */
-                        visibility?: "public" | "private";
-                        /**
-                         * @default general
-                         * @enum {string}
-                         */
-                        postType?: "general" | "review" | "question";
-                        images?: string[];
-                    };
-                };
-            };
-            responses: {
-                /** @description 發文成功 */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            success?: boolean;
-                            data?: components["schemas"]["Post"];
-                            message?: string;
-                        };
-                    };
-                };
-                401: components["responses"]["Unauthorized"];
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/community/wall": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/community/like": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
+    /**
+     * 取得社區牆資料（貼文、評價、問答）
+     * @description 統一入口點，支援多種資料類型
+     *     - guest: 只能看 2 則 + blur
+     *     - member: 看全部公開
+     *     - resident: 看公開 + 私密
+     */
+    get: {
+      parameters: {
+        query: {
+          communityId: string;
+          type?: "posts" | "reviews" | "questions" | "all";
+          visibility?: "public" | "private";
         };
-        get?: never;
-        put?: never;
-        /** 按讚/取消讚 */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description 成功 */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": {
+              success?: boolean;
+              data?: components["schemas"]["Post"][];
+              total?: number;
+              /** @description 是否受訪客限制 */
+              limited?: boolean;
+              visibleCount?: number;
             };
-            requestBody: {
-                content: {
-                    "application/json": {
-                        /** Format: uuid */
-                        postId: string;
-                    };
-                };
-            };
-            responses: {
-                /** @description 成功 */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            success?: boolean;
-                            data?: {
-                                liked?: boolean;
-                                likesCount?: number;
-                            };
-                        };
-                    };
-                };
-                401: components["responses"]["Unauthorized"];
-                404: components["responses"]["NotFound"];
-            };
+          };
         };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+        400: components["responses"]["BadRequest"];
+      };
     };
-    "/community/question": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** 發問或回答社區問題 */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": {
-                        /** @enum {string} */
-                        action: "ask" | "answer";
-                        /**
-                         * Format: uuid
-                         * @description 發問時必填
-                         */
-                        communityId?: string;
-                        /**
-                         * Format: uuid
-                         * @description 回答時必填
-                         */
-                        questionId?: string;
-                        content?: string;
-                        /** @default true */
-                        isAnonymous?: boolean;
-                    };
-                };
-            };
-            responses: {
-                /** @description 成功 */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            success?: boolean;
-                            data?: components["schemas"]["Question"];
-                            message?: string;
-                        };
-                    };
-                };
-                401: components["responses"]["Unauthorized"];
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/community/post": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/community/posts": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
+    get?: never;
+    put?: never;
+    /** 發表社區貼文 */
+    post: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody: {
+        content: {
+          "application/json": {
+            /** Format: uuid */
+            communityId: string;
+            content: string;
+            /**
+             * @default public
+             * @enum {string}
+             */
+            visibility?: "public" | "private";
+            /**
+             * @default general
+             * @enum {string}
+             */
+            postType?: "general" | "review" | "question";
+            images?: string[];
+          };
         };
-        /**
-         * 取得社區貼文（含分頁、權限過濾）
-         * @description - guest: 只能看 2 則 + blur
-         *     - member: 看全部公開
-         *     - resident: 看公開 + 私密
-         */
-        get: {
-            parameters: {
-                query: {
-                    community_id: string;
-                    visibility?: "public" | "private";
-                    /** @description 分頁游標 */
-                    cursor?: string;
-                    limit?: number;
-                };
-                header?: never;
-                path?: never;
-                cookie?: never;
+      };
+      responses: {
+        /** @description 發文成功 */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": {
+              success?: boolean;
+              data?: components["schemas"]["Post"];
+              message?: string;
             };
-            requestBody?: never;
-            responses: {
-                /** @description 成功 */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            /** @example true */
-                            success?: boolean;
-                            data?: components["schemas"]["Post"][];
-                            meta?: components["schemas"]["PaginationMeta"];
-                        };
-                    };
-                };
-                401: components["responses"]["Unauthorized"];
-                500: components["responses"]["ServerError"];
-            };
+          };
         };
-        put?: never;
-        /**
-         * 發表社區貼文
-         * @description 需要 member 以上權限
-         */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": {
-                        /** Format: uuid */
-                        community_id: string;
-                        content: string;
-                        /**
-                         * @default public
-                         * @enum {string}
-                         */
-                        visibility?: "public" | "private";
-                    };
-                };
-            };
-            responses: {
-                /** @description 發文成功 */
-                201: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            /** @example true */
-                            success?: boolean;
-                            data?: components["schemas"]["Post"];
-                        };
-                    };
-                };
-                401: components["responses"]["Unauthorized"];
-                403: components["responses"]["Forbidden"];
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+        401: components["responses"]["Unauthorized"];
+      };
     };
-    "/community/reviews": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** 取得房仲評價 */
-        get: {
-            parameters: {
-                query?: {
-                    agent_id?: string;
-                    community_id?: string;
-                };
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description 成功 */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            success?: boolean;
-                            data?: components["schemas"]["Review"][];
-                        };
-                    };
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/community/like": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/community/questions": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
+    get?: never;
+    put?: never;
+    /** 按讚/取消讚 */
+    post: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody: {
+        content: {
+          "application/json": {
+            /** Format: uuid */
+            postId: string;
+          };
         };
-        /** 取得社區問答 */
-        get: {
-            parameters: {
-                query: {
-                    community_id: string;
-                };
-                header?: never;
-                path?: never;
-                cookie?: never;
+      };
+      responses: {
+        /** @description 成功 */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": {
+              success?: boolean;
+              data?: {
+                liked?: boolean;
+                likesCount?: number;
+              };
             };
-            requestBody?: never;
-            responses: {
-                /** @description 成功 */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            success?: boolean;
-                            data?: components["schemas"]["Question"][];
-                        };
-                    };
-                };
-            };
+          };
         };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+        401: components["responses"]["Unauthorized"];
+        404: components["responses"]["NotFound"];
+      };
     };
-    "/chat": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * AI 房產諮詢
-         * @description 與 AI 助理對話，獲取房產建議
-         *     - 支援多輪對話（傳入 history）
-         *     - 回應使用繁體中文
-         */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": {
-                        /**
-                         * @description 用戶訊息
-                         * @example 我想在大安區找 3 房的新房子
-                         */
-                        message: string;
-                        /** @description 對話歷史 */
-                        history?: {
-                            /** @enum {string} */
-                            role?: "user" | "assistant";
-                            content?: string;
-                        }[];
-                    };
-                };
-            };
-            responses: {
-                /** @description AI 回覆 */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            /** @example true */
-                            success?: boolean;
-                            /** @description AI 回覆內容 */
-                            reply?: string;
-                            /** @description 推薦追問 */
-                            suggestions?: string[];
-                        };
-                    };
-                };
-                /** @description 請求過於頻繁 */
-                429: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["Error"];
-                    };
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/community/question": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/trust/transactions": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
+    get?: never;
+    put?: never;
+    /** 發問或回答社區問題 */
+    post: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody: {
+        content: {
+          "application/json": {
+            /** @enum {string} */
+            action: "ask" | "answer";
+            /**
+             * Format: uuid
+             * @description 發問時必填
+             */
+            communityId?: string;
+            /**
+             * Format: uuid
+             * @description 回答時必填
+             */
+            questionId?: string;
+            content?: string;
+            /** @default true */
+            isAnonymous?: boolean;
+          };
         };
-        /** 取得交易列表 */
-        get: {
-            parameters: {
-                query?: {
-                    status?: "pending" | "in_progress" | "completed" | "cancelled";
-                };
-                header?: never;
-                path?: never;
-                cookie?: never;
+      };
+      responses: {
+        /** @description 成功 */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": {
+              success?: boolean;
+              data?: components["schemas"]["Question"];
+              message?: string;
             };
-            requestBody?: never;
-            responses: {
-                /** @description 成功 */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            success?: boolean;
-                            data?: components["schemas"]["Transaction"][];
-                        };
-                    };
-                };
-            };
+          };
         };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+        401: components["responses"]["Unauthorized"];
+      };
     };
-    "/trust/transactions/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** 取得單筆交易詳情 */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    id: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description 成功 */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            success?: boolean;
-                            data?: components["schemas"]["Transaction"];
-                        };
-                    };
-                };
-                404: components["responses"]["NotFound"];
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/community/posts": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/trust/login": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
+    /**
+     * 取得社區貼文（含分頁、權限過濾）
+     * @description - guest: 只能看 2 則 + blur
+     *     - member: 看全部公開
+     *     - resident: 看公開 + 私密
+     */
+    get: {
+      parameters: {
+        query: {
+          community_id: string;
+          visibility?: "public" | "private";
+          /** @description 分頁游標 */
+          cursor?: string;
+          limit?: number;
         };
-        get?: never;
-        put?: never;
-        /**
-         * Trust Room 登入（系統內部用）
-         * @description 使用系統金鑰產生 JWT Token，設定 HttpOnly Cookie
-         */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description 成功 */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": {
+              /** @example true */
+              success?: boolean;
+              data?: components["schemas"]["Post"][];
+              meta?: components["schemas"]["PaginationMeta"];
             };
-            requestBody: {
-                content: {
-                    "application/json": {
-                        /** @enum {string} */
-                        role: "agent" | "buyer";
-                        caseId?: string;
-                    };
-                };
-            };
-            responses: {
-                /** @description 登入成功 */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            success?: boolean;
-                            data?: {
-                                token?: string;
-                            };
-                        };
-                    };
-                };
-                401: components["responses"]["Unauthorized"];
-            };
+          };
         };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+        401: components["responses"]["Unauthorized"];
+        500: components["responses"]["ServerError"];
+      };
     };
-    "/trust/me": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
+    put?: never;
+    /**
+     * 發表社區貼文
+     * @description 需要 member 以上權限
+     */
+    post: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody: {
+        content: {
+          "application/json": {
+            /** Format: uuid */
+            community_id: string;
+            content: string;
+            /**
+             * @default public
+             * @enum {string}
+             */
+            visibility?: "public" | "private";
+          };
         };
-        /** 取得當前用戶資訊 */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
+      };
+      responses: {
+        /** @description 發文成功 */
+        201: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": {
+              /** @example true */
+              success?: boolean;
+              data?: components["schemas"]["Post"];
             };
-            requestBody?: never;
-            responses: {
-                /** @description 成功 */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            success?: boolean;
-                            data?: {
-                                /** @enum {string} */
-                                role?: "agent" | "buyer";
-                                caseId?: string;
-                            };
-                        };
-                    };
-                };
-                401: components["responses"]["Unauthorized"];
-            };
+          };
         };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+        401: components["responses"]["Unauthorized"];
+        403: components["responses"]["Forbidden"];
+      };
     };
-    "/trust/session": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * 設定 Session Cookie
-         * @description 驗證 Token 並設定 HttpOnly Cookie
-         */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": {
-                        token: string;
-                    };
-                };
-            };
-            responses: {
-                /** @description 成功 */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            success?: boolean;
-                        };
-                    };
-                };
-                401: components["responses"]["Unauthorized"];
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/community/reviews": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/trust/status": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
+    /** 取得房仲評價 */
+    get: {
+      parameters: {
+        query?: {
+          agent_id?: string;
+          community_id?: string;
         };
-        /** 取得交易狀態 */
-        get: {
-            parameters: {
-                query: {
-                    id: string;
-                };
-                header?: never;
-                path?: never;
-                cookie?: never;
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description 成功 */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": {
+              success?: boolean;
+              data?: components["schemas"]["Review"][];
             };
-            requestBody?: never;
-            responses: {
-                /** @description 成功 */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            success?: boolean;
-                            data?: components["schemas"]["TrustTransaction"];
-                        };
-                    };
-                };
-                403: components["responses"]["Forbidden"];
-            };
+          };
         };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+      };
     };
-    "/trust/submit": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * 房仲提交步驟資料
-         * @description 只有 agent 角色可以提交
-         */
-        post: {
-            parameters: {
-                query: {
-                    id: string;
-                };
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": {
-                        step: number;
-                        data: Record<string, never>;
-                    };
-                };
-            };
-            responses: {
-                /** @description 提交成功 */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            success?: boolean;
-                            data?: components["schemas"]["TrustTransaction"];
-                        };
-                    };
-                };
-                403: components["responses"]["Forbidden"];
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/community/questions": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/trust/confirm": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
+    /** 取得社區問答 */
+    get: {
+      parameters: {
+        query: {
+          community_id: string;
         };
-        get?: never;
-        put?: never;
-        /**
-         * 買家確認步驟
-         * @description 只有 buyer 角色可以確認
-         */
-        post: {
-            parameters: {
-                query: {
-                    id: string;
-                };
-                header?: never;
-                path?: never;
-                cookie?: never;
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description 成功 */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": {
+              success?: boolean;
+              data?: components["schemas"]["Question"][];
             };
-            requestBody: {
-                content: {
-                    "application/json": {
-                        step: number;
-                        /** @description 買家備註 */
-                        note?: string;
-                    };
-                };
-            };
-            responses: {
-                /** @description 確認成功 */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            success?: boolean;
-                            data?: components["schemas"]["TrustTransaction"];
-                        };
-                    };
-                };
-                400: components["responses"]["BadRequest"];
-                403: components["responses"]["Forbidden"];
-            };
+          };
         };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+      };
     };
-    "/trust/checklist": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * 更新驗屋清單項目
-         * @description 步驟 6 的驗屋清單勾選
-         */
-        post: {
-            parameters: {
-                query: {
-                    id: string;
-                };
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": {
-                        index: number;
-                        checked: boolean;
-                    };
-                };
-            };
-            responses: {
-                /** @description 成功 */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            success?: boolean;
-                            data?: components["schemas"]["TrustTransaction"];
-                        };
-                    };
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/chat": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/trust/payment": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
+    get?: never;
+    put?: never;
+    /**
+     * AI 房產諮詢
+     * @description 與 AI 助理對話，獲取房產建議
+     *     - 支援多輪對話（傳入 history）
+     *     - 回應使用繁體中文
+     */
+    post: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody: {
+        content: {
+          "application/json": {
+            /**
+             * @description 用戶訊息
+             * @example 我想在大安區找 3 房的新房子
+             */
+            message: string;
+            /** @description 對話歷史 */
+            history?: {
+              /** @enum {string} */
+              role?: "user" | "assistant";
+              content?: string;
+            }[];
+          };
         };
-        get?: never;
-        put?: never;
-        /**
-         * 完成付款
-         * @description Agent 確認收款後更新付款狀態
-         */
-        post: {
-            parameters: {
-                query: {
-                    id: string;
-                };
-                header?: never;
-                path?: never;
-                cookie?: never;
+      };
+      responses: {
+        /** @description AI 回覆 */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": {
+              /** @example true */
+              success?: boolean;
+              /** @description AI 回覆內容 */
+              reply?: string;
+              /** @description 推薦追問 */
+              suggestions?: string[];
             };
-            requestBody?: never;
-            responses: {
-                /** @description 付款成功 */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            success?: boolean;
-                            data?: components["schemas"]["TrustTransaction"];
-                        };
-                    };
-                };
-                400: components["responses"]["BadRequest"];
-            };
+          };
         };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+        /** @description 請求過於頻繁 */
+        429: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["Error"];
+          };
+        };
+      };
     };
-    "/trust/reset": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * 重置交易狀態
-         * @description 開發/測試用，重置交易到初始狀態
-         */
-        post: {
-            parameters: {
-                query: {
-                    id: string;
-                };
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description 重置成功 */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            success?: boolean;
-                        };
-                    };
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/trust/transactions": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/trust/supplement": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
+    /** 取得交易列表 */
+    get: {
+      parameters: {
+        query?: {
+          status?: "pending" | "in_progress" | "completed" | "cancelled";
         };
-        get?: never;
-        put?: never;
-        /** 添加補充說明 */
-        post: {
-            parameters: {
-                query: {
-                    id: string;
-                };
-                header?: never;
-                path?: never;
-                cookie?: never;
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description 成功 */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": {
+              success?: boolean;
+              data?: components["schemas"]["Transaction"][];
             };
-            requestBody: {
-                content: {
-                    "application/json": {
-                        content: string;
-                    };
-                };
-            };
-            responses: {
-                /** @description 成功 */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            success?: boolean;
-                            data?: components["schemas"]["TrustTransaction"];
-                        };
-                    };
-                };
-            };
+          };
         };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+      };
     };
-    "/trust/token": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** 產生 Token（內部用） */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": {
-                        apiKey: string;
-                        caseId: string;
-                        /** @enum {string} */
-                        role: "agent" | "buyer";
-                    };
-                };
-            };
-            responses: {
-                /** @description 成功 */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            success?: boolean;
-                            data?: {
-                                token?: string;
-                            };
-                        };
-                    };
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/trust/transactions/{id}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/uag-track": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
+    /** 取得單筆交易詳情 */
+    get: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path: {
+          id: string;
         };
-        get?: never;
-        put?: never;
-        /**
-         * 追蹤用戶行為事件
-         * @description UAG (User Activity & Grade) 系統追蹤端點
-         *     - 呼叫 Supabase RPC: track_uag_event_v8_2
-         *     - 返回即時分級結果
-         */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description 成功 */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": {
+              success?: boolean;
+              data?: components["schemas"]["Transaction"];
             };
-            requestBody: {
-                content: {
-                    "application/json": {
-                        session_id: string;
-                        agent_id?: string;
-                        fingerprint?: string;
-                        event: {
-                            /** Format: uuid */
-                            property_id: string;
-                            duration?: number;
-                            scroll_depth?: number;
-                            clicked_contact?: boolean;
-                        };
-                    };
-                };
-            };
-            responses: {
-                /** @description 追蹤成功 */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            success?: boolean;
-                            data?: {
-                                /** @enum {string} */
-                                grade?: "S" | "A" | "B" | "C" | "F";
-                                score?: number;
-                                reason?: string;
-                            };
-                        };
-                    };
-                };
-            };
+          };
         };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+        404: components["responses"]["NotFound"];
+      };
     };
-    "/session-recovery": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * 恢復會話
-         * @description 根據 fingerprint 找回最近 7 天內的活躍 session
-         */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": {
-                        fingerprint: string;
-                        agentId?: string;
-                    };
-                };
-            };
-            responses: {
-                /** @description 成功 */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            success?: boolean;
-                            data?: {
-                                recovered?: boolean;
-                                session_id?: string;
-                                /** @enum {string} */
-                                grade?: "S" | "A" | "B" | "C" | "F";
-                            };
-                        };
-                    };
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/trust/login": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/quick-filter": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
+    get?: never;
+    put?: never;
+    /**
+     * Trust Room 登入（系統內部用）
+     * @description 使用系統金鑰產生 JWT Token，設定 HttpOnly Cookie
+     */
+    post: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody: {
+        content: {
+          "application/json": {
+            /** @enum {string} */
+            role: "agent" | "buyer";
+            caseId?: string;
+          };
         };
-        /**
-         * 快速篩選熱門潛客
-         * @description 取得指定 agent 的 HOT/WARM 潛客列表
-         */
-        get: {
-            parameters: {
-                query: {
-                    agentId: string;
-                    grade?: "S" | "A" | "B" | "C";
-                    limit?: number;
-                };
-                header?: never;
-                path?: never;
-                cookie?: never;
+      };
+      responses: {
+        /** @description 登入成功 */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": {
+              success?: boolean;
+              data?: {
+                token?: string;
+              };
             };
-            requestBody?: never;
-            responses: {
-                /** @description 成功 */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            success?: boolean;
-                            data?: {
-                                leads?: components["schemas"]["UAGLead"][];
-                                count?: number;
-                                /** Format: date-time */
-                                cached_at?: string;
-                            };
-                        };
-                    };
-                };
-            };
+          };
         };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+        401: components["responses"]["Unauthorized"];
+      };
     };
-    "/archive-handler": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * 歸檔舊事件
-         * @description Cron 觸發，歸檔超過閾值的歷史數據
-         */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description 成功 */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            success?: boolean;
-                            data?: {
-                                archived_count?: number;
-                                /** Format: date-time */
-                                timestamp?: string;
-                            };
-                        };
-                    };
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/trust/me": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/report/create": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
+    /** 取得當前用戶資訊 */
+    get: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description 成功 */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": {
+              success?: boolean;
+              data?: {
+                /** @enum {string} */
+                role?: "agent" | "buyer";
+                caseId?: string;
+              };
+            };
+          };
         };
-        get?: never;
-        put?: never;
-        /**
-         * 建立分享報告
-         * @description 產生短連結供分享房源資訊
-         */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": {
-                        propertyId: string;
-                        agentId: string;
-                        /** @enum {string} */
-                        style?: "simple" | "investment" | "marketing";
-                        highlights?: string[];
-                        photos?: number[];
-                        customMessage?: string;
-                    };
-                };
-            };
-            responses: {
-                /** @description 成功 */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            success?: boolean;
-                            data?: {
-                                id?: string;
-                                shortCode?: string;
-                                /** Format: date-time */
-                                expiresAt?: string;
-                            };
-                        };
-                    };
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+        401: components["responses"]["Unauthorized"];
+      };
     };
-    "/report/track": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * 追蹤報告瀏覽
-         * @description 記錄客戶開啟報告的行為
-         */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": {
-                        reportId: string;
-                        agentId?: string;
-                        source?: string;
-                        userAgent?: string;
-                    };
-                };
-            };
-            responses: {
-                /** @description 成功 */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            success?: boolean;
-                            message?: string;
-                        };
-                    };
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/trust/session": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/generate-community-profile": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
+    get?: never;
+    put?: never;
+    /**
+     * 設定 Session Cookie
+     * @description 驗證 Token 並設定 HttpOnly Cookie
+     */
+    post: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody: {
+        content: {
+          "application/json": {
+            token: string;
+          };
         };
-        get?: never;
-        put?: never;
-        /**
-         * AI 生成社區摘要
-         * @description 從評價數據生成 story_vibe / two_good / one_fair
-         */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
+      };
+      responses: {
+        /** @description 成功 */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": {
+              success?: boolean;
             };
-            requestBody: {
-                content: {
-                    "application/json": {
-                        /** Format: uuid */
-                        communityId: string;
-                    };
-                };
-            };
-            responses: {
-                /** @description 成功 */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            success?: boolean;
-                            data?: {
-                                story_vibe?: string;
-                                two_good?: string[];
-                                one_fair?: string;
-                                lifestyle_tags?: string[];
-                                best_for?: string[];
-                            };
-                        };
-                    };
-                };
-                404: components["responses"]["NotFound"];
-            };
+          };
         };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+        401: components["responses"]["Unauthorized"];
+      };
     };
-    "/openai-proxy": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * OpenAI API 代理
-         * @description 代理 OpenAI Chat Completions API，支援串流
-         */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": {
-                        messages: {
-                            /** @enum {string} */
-                            role?: "system" | "user" | "assistant";
-                            content?: string;
-                        }[];
-                        /** @default gpt-4o-mini */
-                        model?: string;
-                        /** @default 0.3 */
-                        temperature?: number;
-                        /** @default false */
-                        stream?: boolean;
-                    };
-                };
-            };
-            responses: {
-                /** @description 成功（非串流） */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            success?: boolean;
-                            data?: {
-                                content?: string;
-                                usage?: Record<string, never>;
-                            };
-                        };
-                    };
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/trust/status": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/replicate-detect": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
+    /** 取得交易狀態 */
+    get: {
+      parameters: {
+        query: {
+          id: string;
         };
-        get?: never;
-        put?: never;
-        /**
-         * 物件偵測
-         * @description 使用 YOLO/Grounding-DINO 偵測圖片物件
-         */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description 成功 */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": {
+              success?: boolean;
+              data?: components["schemas"]["TrustTransaction"];
             };
-            requestBody: {
-                content: {
-                    "application/json": {
-                        /** Format: uri */
-                        image: string;
-                        labels?: string[];
-                        /**
-                         * @default general
-                         * @enum {string}
-                         */
-                        mode?: "curtain" | "general";
-                        /** @enum {string} */
-                        model?: "yolov8" | "grounding-dino";
-                    };
-                };
-            };
-            responses: {
-                /** @description 成功 */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            success?: boolean;
-                            data?: {
-                                detections?: components["schemas"]["Detection"][];
-                                predictionId?: string;
-                            };
-                        };
-                    };
-                };
-            };
+          };
         };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+        403: components["responses"]["Forbidden"];
+      };
     };
-    "/replicate-generate": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * AI 生成圖片
-         * @description 使用 Flux/SDXL 生成圖片
-         */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": {
-                        prompt: string;
-                        /** @enum {string} */
-                        model?: "flux" | "flux-dev" | "sdxl";
-                        deployment?: string;
-                    };
-                };
-            };
-            responses: {
-                /** @description 成功 */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            success?: boolean;
-                            data?: {
-                                output?: string[];
-                                predictionId?: string;
-                            };
-                        };
-                    };
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/trust/submit": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/x-raymike": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
+    get?: never;
+    put?: never;
+    /**
+     * 房仲提交步驟資料
+     * @description 只有 agent 角色可以提交
+     */
+    post: {
+      parameters: {
+        query: {
+          id: string;
         };
-        get?: never;
-        put?: never;
-        /**
-         * X-Ray 透視處理
-         * @description 對圖片進行透視處理
-         */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": {
-                        /** Format: uri */
-                        image: string;
-                        version?: string;
-                    };
-                };
-            };
-            responses: {
-                /** @description 成功 */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            success?: boolean;
-                            data?: {
-                                /** Format: uri */
-                                output?: string;
-                                predictionId?: string;
-                            };
-                        };
-                    };
-                };
-            };
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody: {
+        content: {
+          "application/json": {
+            step: number;
+            data: Record<string, never>;
+          };
         };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+      };
+      responses: {
+        /** @description 提交成功 */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": {
+              success?: boolean;
+              data?: components["schemas"]["TrustTransaction"];
+            };
+          };
+        };
+        403: components["responses"]["Forbidden"];
+      };
     };
-    "/visualize-detections": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * 視覺化偵測結果
-         * @description 將偵測框疊加到原圖上，返回 SVG
-         */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": {
-                        /** Format: uri */
-                        image: string;
-                        boxes: {
-                            x?: number;
-                            y?: number;
-                            w?: number;
-                            h?: number;
-                            label?: string;
-                            score?: number;
-                        }[];
-                        /** @enum {string} */
-                        mode?: "curtain" | "general";
-                    };
-                };
-            };
-            responses: {
-                /** @description SVG 圖片 */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "image/svg+xml": string;
-                    };
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/trust/confirm": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/health-replicate": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
+    get?: never;
+    put?: never;
+    /**
+     * 買家確認步驟
+     * @description 只有 buyer 角色可以確認
+     */
+    post: {
+      parameters: {
+        query: {
+          id: string;
         };
-        /**
-         * Replicate 健康檢查
-         * @description 檢查 Replicate API Token 和 Deployment 設定
-         */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description 成功 */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            success?: boolean;
-                            data?: {
-                                hasToken?: boolean;
-                                hasDeployment?: boolean;
-                                tokenPrefix?: string;
-                                deployment?: string;
-                            };
-                        };
-                    };
-                };
-            };
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody: {
+        content: {
+          "application/json": {
+            step: number;
+            /** @description 買家備註 */
+            note?: string;
+          };
         };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+      };
+      responses: {
+        /** @description 確認成功 */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": {
+              success?: boolean;
+              data?: components["schemas"]["TrustTransaction"];
+            };
+          };
+        };
+        400: components["responses"]["BadRequest"];
+        403: components["responses"]["Forbidden"];
+      };
     };
-    "/upload-imgix": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * 上傳圖片到 imgix
-         * @description 透過 S3 上傳圖片，返回 imgix CDN URL
-         */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": {
-                        /**
-                         * Format: byte
-                         * @description Base64 編碼的圖片
-                         */
-                        imageData: string;
-                    };
-                };
-            };
-            responses: {
-                /** @description 成功 */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            success?: boolean;
-                            /** Format: uri */
-                            url?: string;
-                            filename?: string;
-                            /** @enum {string} */
-                            method?: "s3" | "base64";
-                        };
-                    };
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/trust/checklist": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/cloud-test": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
+    get?: never;
+    put?: never;
+    /**
+     * 更新驗屋清單項目
+     * @description 步驟 6 的驗屋清單勾選
+     */
+    post: {
+      parameters: {
+        query: {
+          id: string;
         };
-        /** Cloudinary 連線測試 */
-        get: {
-            parameters: {
-                query?: {
-                    ping?: "1";
-                };
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description 成功 */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            success?: boolean;
-                            data?: {
-                                /** Format: uri */
-                                url?: string;
-                                public_id?: string;
-                                cloud_name?: string;
-                            };
-                        };
-                    };
-                };
-            };
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody: {
+        content: {
+          "application/json": {
+            index: number;
+            checked: boolean;
+          };
         };
-        put?: never;
-        /** Cloudinary 上傳測試 */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
+      };
+      responses: {
+        /** @description 成功 */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": {
+              success?: boolean;
+              data?: components["schemas"]["TrustTransaction"];
             };
-            requestBody?: never;
-            responses: {
-                /** @description 成功 */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            success?: boolean;
-                            data?: {
-                                url?: string;
-                                public_id?: string;
-                            };
-                        };
-                    };
-                };
-            };
+          };
         };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+      };
     };
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/trust/payment": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * 完成付款
+     * @description Agent 確認收款後更新付款狀態
+     */
+    post: {
+      parameters: {
+        query: {
+          id: string;
+        };
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description 付款成功 */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": {
+              success?: boolean;
+              data?: components["schemas"]["TrustTransaction"];
+            };
+          };
+        };
+        400: components["responses"]["BadRequest"];
+      };
+    };
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/trust/reset": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * 重置交易狀態
+     * @description 開發/測試用，重置交易到初始狀態
+     */
+    post: {
+      parameters: {
+        query: {
+          id: string;
+        };
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description 重置成功 */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": {
+              success?: boolean;
+            };
+          };
+        };
+      };
+    };
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/trust/supplement": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** 添加補充說明 */
+    post: {
+      parameters: {
+        query: {
+          id: string;
+        };
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody: {
+        content: {
+          "application/json": {
+            content: string;
+          };
+        };
+      };
+      responses: {
+        /** @description 成功 */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": {
+              success?: boolean;
+              data?: components["schemas"]["TrustTransaction"];
+            };
+          };
+        };
+      };
+    };
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/trust/token": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** 產生 Token（內部用） */
+    post: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody: {
+        content: {
+          "application/json": {
+            apiKey: string;
+            caseId: string;
+            /** @enum {string} */
+            role: "agent" | "buyer";
+          };
+        };
+      };
+      responses: {
+        /** @description 成功 */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": {
+              success?: boolean;
+              data?: {
+                token?: string;
+              };
+            };
+          };
+        };
+      };
+    };
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/uag-track": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * 追蹤用戶行為事件
+     * @description UAG (User Activity & Grade) 系統追蹤端點
+     *     - 呼叫 Supabase RPC: track_uag_event_v8_2
+     *     - 返回即時分級結果
+     */
+    post: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody: {
+        content: {
+          "application/json": {
+            session_id: string;
+            agent_id?: string;
+            fingerprint?: string;
+            event: {
+              /** Format: uuid */
+              property_id: string;
+              duration?: number;
+              scroll_depth?: number;
+              clicked_contact?: boolean;
+            };
+          };
+        };
+      };
+      responses: {
+        /** @description 追蹤成功 */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": {
+              success?: boolean;
+              data?: {
+                /** @enum {string} */
+                grade?: "S" | "A" | "B" | "C" | "F";
+                score?: number;
+                reason?: string;
+              };
+            };
+          };
+        };
+      };
+    };
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/session-recovery": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * 恢復會話
+     * @description 根據 fingerprint 找回最近 7 天內的活躍 session
+     */
+    post: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody: {
+        content: {
+          "application/json": {
+            fingerprint: string;
+            agentId?: string;
+          };
+        };
+      };
+      responses: {
+        /** @description 成功 */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": {
+              success?: boolean;
+              data?: {
+                recovered?: boolean;
+                session_id?: string;
+                /** @enum {string} */
+                grade?: "S" | "A" | "B" | "C" | "F";
+              };
+            };
+          };
+        };
+      };
+    };
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/quick-filter": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * 快速篩選熱門潛客
+     * @description 取得指定 agent 的 HOT/WARM 潛客列表
+     */
+    get: {
+      parameters: {
+        query: {
+          agentId: string;
+          grade?: "S" | "A" | "B" | "C";
+          limit?: number;
+        };
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description 成功 */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": {
+              success?: boolean;
+              data?: {
+                leads?: components["schemas"]["UAGLead"][];
+                count?: number;
+                /** Format: date-time */
+                cached_at?: string;
+              };
+            };
+          };
+        };
+      };
+    };
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/archive-handler": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * 歸檔舊事件
+     * @description Cron 觸發，歸檔超過閾值的歷史數據
+     */
+    post: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description 成功 */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": {
+              success?: boolean;
+              data?: {
+                archived_count?: number;
+                /** Format: date-time */
+                timestamp?: string;
+              };
+            };
+          };
+        };
+      };
+    };
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/report/create": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * 建立分享報告
+     * @description 產生短連結供分享房源資訊
+     */
+    post: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody: {
+        content: {
+          "application/json": {
+            propertyId: string;
+            agentId: string;
+            /** @enum {string} */
+            style?: "simple" | "investment" | "marketing";
+            highlights?: string[];
+            photos?: number[];
+            customMessage?: string;
+          };
+        };
+      };
+      responses: {
+        /** @description 成功 */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": {
+              success?: boolean;
+              data?: {
+                id?: string;
+                shortCode?: string;
+                /** Format: date-time */
+                expiresAt?: string;
+              };
+            };
+          };
+        };
+      };
+    };
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/report/track": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * 追蹤報告瀏覽
+     * @description 記錄客戶開啟報告的行為
+     */
+    post: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody: {
+        content: {
+          "application/json": {
+            reportId: string;
+            agentId?: string;
+            source?: string;
+            userAgent?: string;
+          };
+        };
+      };
+      responses: {
+        /** @description 成功 */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": {
+              success?: boolean;
+              message?: string;
+            };
+          };
+        };
+      };
+    };
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/generate-community-profile": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * AI 生成社區摘要
+     * @description 從評價數據生成 story_vibe / two_good / one_fair
+     */
+    post: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody: {
+        content: {
+          "application/json": {
+            /** Format: uuid */
+            communityId: string;
+          };
+        };
+      };
+      responses: {
+        /** @description 成功 */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": {
+              success?: boolean;
+              data?: {
+                story_vibe?: string;
+                two_good?: string[];
+                one_fair?: string;
+                lifestyle_tags?: string[];
+                best_for?: string[];
+              };
+            };
+          };
+        };
+        404: components["responses"]["NotFound"];
+      };
+    };
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/openai-proxy": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * OpenAI API 代理
+     * @description 代理 OpenAI Chat Completions API，支援串流
+     */
+    post: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody: {
+        content: {
+          "application/json": {
+            messages: {
+              /** @enum {string} */
+              role?: "system" | "user" | "assistant";
+              content?: string;
+            }[];
+            /** @default gpt-4o-mini */
+            model?: string;
+            /** @default 0.3 */
+            temperature?: number;
+            /** @default false */
+            stream?: boolean;
+          };
+        };
+      };
+      responses: {
+        /** @description 成功（非串流） */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": {
+              success?: boolean;
+              data?: {
+                content?: string;
+                usage?: Record<string, never>;
+              };
+            };
+          };
+        };
+      };
+    };
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/replicate-detect": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * 物件偵測
+     * @description 使用 YOLO/Grounding-DINO 偵測圖片物件
+     */
+    post: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody: {
+        content: {
+          "application/json": {
+            /** Format: uri */
+            image: string;
+            labels?: string[];
+            /**
+             * @default general
+             * @enum {string}
+             */
+            mode?: "curtain" | "general";
+            /** @enum {string} */
+            model?: "yolov8" | "grounding-dino";
+          };
+        };
+      };
+      responses: {
+        /** @description 成功 */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": {
+              success?: boolean;
+              data?: {
+                detections?: components["schemas"]["Detection"][];
+                predictionId?: string;
+              };
+            };
+          };
+        };
+      };
+    };
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/replicate-generate": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * AI 生成圖片
+     * @description 使用 Flux/SDXL 生成圖片
+     */
+    post: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody: {
+        content: {
+          "application/json": {
+            prompt: string;
+            /** @enum {string} */
+            model?: "flux" | "flux-dev" | "sdxl";
+            deployment?: string;
+          };
+        };
+      };
+      responses: {
+        /** @description 成功 */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": {
+              success?: boolean;
+              data?: {
+                output?: string[];
+                predictionId?: string;
+              };
+            };
+          };
+        };
+      };
+    };
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/x-raymike": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * X-Ray 透視處理
+     * @description 對圖片進行透視處理
+     */
+    post: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody: {
+        content: {
+          "application/json": {
+            /** Format: uri */
+            image: string;
+            version?: string;
+          };
+        };
+      };
+      responses: {
+        /** @description 成功 */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": {
+              success?: boolean;
+              data?: {
+                /** Format: uri */
+                output?: string;
+                predictionId?: string;
+              };
+            };
+          };
+        };
+      };
+    };
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/visualize-detections": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * 視覺化偵測結果
+     * @description 將偵測框疊加到原圖上，返回 SVG
+     */
+    post: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody: {
+        content: {
+          "application/json": {
+            /** Format: uri */
+            image: string;
+            boxes: {
+              x?: number;
+              y?: number;
+              w?: number;
+              h?: number;
+              label?: string;
+              score?: number;
+            }[];
+            /** @enum {string} */
+            mode?: "curtain" | "general";
+          };
+        };
+      };
+      responses: {
+        /** @description SVG 圖片 */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "image/svg+xml": string;
+          };
+        };
+      };
+    };
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/health-replicate": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Replicate 健康檢查
+     * @description 檢查 Replicate API Token 和 Deployment 設定
+     */
+    get: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description 成功 */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": {
+              success?: boolean;
+              data?: {
+                hasToken?: boolean;
+                hasDeployment?: boolean;
+                tokenPrefix?: string;
+                deployment?: string;
+              };
+            };
+          };
+        };
+      };
+    };
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/upload-imgix": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * 上傳圖片到 imgix
+     * @description 透過 S3 上傳圖片，返回 imgix CDN URL
+     */
+    post: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody: {
+        content: {
+          "application/json": {
+            /**
+             * Format: byte
+             * @description Base64 編碼的圖片
+             */
+            imageData: string;
+          };
+        };
+      };
+      responses: {
+        /** @description 成功 */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": {
+              success?: boolean;
+              /** Format: uri */
+              url?: string;
+              filename?: string;
+              /** @enum {string} */
+              method?: "s3" | "base64";
+            };
+          };
+        };
+      };
+    };
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/cloud-test": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Cloudinary 連線測試 */
+    get: {
+      parameters: {
+        query?: {
+          ping?: "1";
+        };
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description 成功 */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": {
+              success?: boolean;
+              data?: {
+                /** Format: uri */
+                url?: string;
+                public_id?: string;
+                cloud_name?: string;
+              };
+            };
+          };
+        };
+      };
+    };
+    put?: never;
+    /** Cloudinary 上傳測試 */
+    post: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description 成功 */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": {
+              success?: boolean;
+              data?: {
+                url?: string;
+                public_id?: string;
+              };
+            };
+          };
+        };
+      };
+    };
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
 }
 export type webhooks = Record<string, never>;
 export interface components {
-    schemas: {
-        Error: {
-            /** @example false */
-            success?: boolean;
-            error?: string;
-            code?: string;
-        };
-        PaginationMeta: {
-            hasMore?: boolean;
-            nextCursor?: string | null;
-            total?: number;
-        };
-        Post: {
-            /** Format: uuid */
-            id?: string;
-            content?: string;
-            /** Format: uuid */
-            author_id?: string;
-            /** @enum {string} */
-            author_role?: "resident" | "agent" | "admin";
-            author_name?: string;
-            /** @enum {string} */
-            visibility?: "public" | "private";
-            likes_count?: number;
-            comments_count?: number;
-            is_pinned?: boolean;
-            /** Format: date-time */
-            created_at?: string;
-            /** Format: date-time */
-            updated_at?: string;
-        };
-        Review: {
-            /** Format: uuid */
-            id?: string;
-            /** Format: uuid */
-            agent_id?: string;
-            /** Format: uuid */
-            reviewer_id?: string;
-            rating?: number;
-            content?: string;
-            /** Format: uuid */
-            transaction_id?: string;
-            /** Format: date-time */
-            created_at?: string;
-        };
-        Question: {
-            /** Format: uuid */
-            id?: string;
-            /** Format: uuid */
-            community_id?: string;
-            /** Format: uuid */
-            asker_id?: string;
-            title?: string;
-            content?: string;
-            answers_count?: number;
-            is_resolved?: boolean;
-            /** Format: date-time */
-            created_at?: string;
-        };
-        Transaction: {
-            /** Format: uuid */
-            id?: string;
-            /** Format: uuid */
-            buyer_id?: string;
-            /** Format: uuid */
-            seller_id?: string;
-            /** Format: uuid */
-            property_id?: string;
-            /**
-             * @description 交易階段：
-             *     1 = 意向確認
-             *     2 = 合約審閱
-             *     3 = 付款
-             *     4 = 過戶
-             *     5 = 交屋
-             *     6 = 完成
-             */
-            stage?: number;
-            /** @enum {string} */
-            status?: "pending" | "in_progress" | "completed" | "cancelled";
-            /** Format: decimal */
-            escrow_amount?: number;
-            /** Format: date-time */
-            created_at?: string;
-            /** Format: date-time */
-            updated_at?: string;
-        };
-        /** @description 房源資料（符合 Schema.org RealEstateListing） */
-        Property: {
-            /** Format: uuid */
-            id?: string;
-            title?: string;
-            price?: number;
-            /** @description 每坪單價 */
-            price_per_ping?: number;
-            address?: string;
-            city?: string;
-            district?: string;
-            /** @description 總坪數 */
-            total_area?: number;
-            /** @description 主建物坪數 */
-            main_area?: number;
-            rooms?: number;
-            bathrooms?: number;
-            floor?: number;
-            total_floors?: number;
-            building_age?: number;
-            has_parking?: boolean;
-            management_fee?: number;
-            images?: string[];
-            /** @enum {string} */
-            status?: "active" | "sold" | "rented" | "removed";
-            /** Format: date-time */
-            created_at?: string;
-        };
-        /** @description UAG 會話摘要 */
-        UAGSession: {
-            session_id?: string;
-            /** Format: uuid */
-            user_id?: string | null;
-            /**
-             * @description 用戶分級：
-             *     S = 🔥 點擊聯繫 + 長停留
-             *     A = ⭐ 停留 90s + 滾動 80%
-             *     B = 👀 停留 60s 或回訪 2+
-             *     C = 📌 停留 20s
-             *     F = 路過
-             * @enum {string}
-             */
-            grade?: "S" | "A" | "B" | "C" | "F";
-            /** @description 總停留秒數 */
-            total_time?: number;
-            /** @description 最大滾動深度 */
-            max_scroll?: number;
-            contact_clicked?: boolean;
-            properties_viewed?: string[];
-            /** Format: date-time */
-            created_at?: string;
-            /** Format: date-time */
-            updated_at?: string;
-        };
-        /** @description UAG 潛客資料 */
-        UAGLead: {
-            session_id?: string;
-            agent_id?: string;
-            /** @enum {string} */
-            grade?: "S" | "A" | "B" | "C" | "F";
-            /** @enum {string} */
-            temperature?: "HOT" | "WARM" | "COLD";
-            rank?: number;
-            /** Format: date-time */
-            last_active_at?: string;
-        };
-        /** @description Trust Room 交易狀態 */
-        TrustTransaction: {
-            id?: string;
-            currentStep?: number;
-            isPaid?: boolean;
-            steps?: {
-                [key: string]: {
-                    /** @enum {string} */
-                    agentStatus?: "pending" | "submitted";
-                    /** @enum {string} */
-                    buyerStatus?: "pending" | "confirmed";
-                    locked?: boolean;
-                    data?: Record<string, never>;
-                };
-            };
-            supplements?: {
-                role?: string;
-                content?: string;
-                timestamp?: number;
-            }[];
-        };
-        /** @description 物件偵測結果 */
-        Detection: {
-            /** @description 左上角 X 座標（0-1 normalized） */
-            x?: number;
-            /** @description 左上角 Y 座標（0-1 normalized） */
-            y?: number;
-            /** @description 寬度（0-1 normalized） */
-            w?: number;
-            /** @description 高度（0-1 normalized） */
-            h?: number;
-            /** @description 物件標籤 */
-            label?: string;
-            /** @description 信心分數（0-1） */
-            score?: number;
-        };
+  schemas: {
+    Error: {
+      /** @example false */
+      success?: boolean;
+      error?: string;
+      code?: string;
     };
-    responses: {
-        /** @description 請求格式錯誤 */
-        BadRequest: {
-            headers: {
-                [name: string]: unknown;
-            };
-            content: {
-                /**
-                 * @example {
-                 *       "success": false,
-                 *       "error": "缺少必要欄位"
-                 *     }
-                 */
-                "application/json": components["schemas"]["Error"];
-            };
-        };
-        /** @description 未授權 */
-        Unauthorized: {
-            headers: {
-                [name: string]: unknown;
-            };
-            content: {
-                /**
-                 * @example {
-                 *       "success": false,
-                 *       "error": "請先登入"
-                 *     }
-                 */
-                "application/json": components["schemas"]["Error"];
-            };
-        };
-        /** @description 權限不足 */
-        Forbidden: {
-            headers: {
-                [name: string]: unknown;
-            };
-            content: {
-                /**
-                 * @example {
-                 *       "success": false,
-                 *       "error": "權限不足"
-                 *     }
-                 */
-                "application/json": components["schemas"]["Error"];
-            };
-        };
-        /** @description 資源不存在 */
-        NotFound: {
-            headers: {
-                [name: string]: unknown;
-            };
-            content: {
-                /**
-                 * @example {
-                 *       "success": false,
-                 *       "error": "找不到該資源"
-                 *     }
-                 */
-                "application/json": components["schemas"]["Error"];
-            };
-        };
-        /** @description 伺服器錯誤 */
-        ServerError: {
-            headers: {
-                [name: string]: unknown;
-            };
-            content: {
-                /**
-                 * @example {
-                 *       "success": false,
-                 *       "error": "伺服器錯誤，請稍後再試"
-                 *     }
-                 */
-                "application/json": components["schemas"]["Error"];
-            };
-        };
+    PaginationMeta: {
+      hasMore?: boolean;
+      nextCursor?: string | null;
+      total?: number;
     };
-    parameters: never;
-    requestBodies: never;
-    headers: never;
-    pathItems: never;
+    Post: {
+      /** Format: uuid */
+      id?: string;
+      content?: string;
+      /** Format: uuid */
+      author_id?: string;
+      /** @enum {string} */
+      author_role?: "resident" | "agent" | "admin";
+      author_name?: string;
+      /** @enum {string} */
+      visibility?: "public" | "private";
+      likes_count?: number;
+      comments_count?: number;
+      is_pinned?: boolean;
+      /** Format: date-time */
+      created_at?: string;
+      /** Format: date-time */
+      updated_at?: string;
+    };
+    Review: {
+      /** Format: uuid */
+      id?: string;
+      /** Format: uuid */
+      agent_id?: string;
+      /** Format: uuid */
+      reviewer_id?: string;
+      rating?: number;
+      content?: string;
+      /** Format: uuid */
+      transaction_id?: string;
+      /** Format: date-time */
+      created_at?: string;
+    };
+    Question: {
+      /** Format: uuid */
+      id?: string;
+      /** Format: uuid */
+      community_id?: string;
+      /** Format: uuid */
+      asker_id?: string;
+      title?: string;
+      content?: string;
+      answers_count?: number;
+      is_resolved?: boolean;
+      /** Format: date-time */
+      created_at?: string;
+    };
+    Transaction: {
+      /** Format: uuid */
+      id?: string;
+      /** Format: uuid */
+      buyer_id?: string;
+      /** Format: uuid */
+      seller_id?: string;
+      /** Format: uuid */
+      property_id?: string;
+      /**
+       * @description 交易階段：
+       *     1 = 意向確認
+       *     2 = 合約審閱
+       *     3 = 付款
+       *     4 = 過戶
+       *     5 = 交屋
+       *     6 = 完成
+       */
+      stage?: number;
+      /** @enum {string} */
+      status?: "pending" | "in_progress" | "completed" | "cancelled";
+      /** Format: decimal */
+      escrow_amount?: number;
+      /** Format: date-time */
+      created_at?: string;
+      /** Format: date-time */
+      updated_at?: string;
+    };
+    /** @description 房源資料（符合 Schema.org RealEstateListing） */
+    Property: {
+      /** Format: uuid */
+      id?: string;
+      title?: string;
+      price?: number;
+      /** @description 每坪單價 */
+      price_per_ping?: number;
+      address?: string;
+      city?: string;
+      district?: string;
+      /** @description 總坪數 */
+      total_area?: number;
+      /** @description 主建物坪數 */
+      main_area?: number;
+      rooms?: number;
+      bathrooms?: number;
+      floor?: number;
+      total_floors?: number;
+      building_age?: number;
+      has_parking?: boolean;
+      management_fee?: number;
+      images?: string[];
+      /** @enum {string} */
+      status?: "active" | "sold" | "rented" | "removed";
+      /** Format: date-time */
+      created_at?: string;
+    };
+    /** @description UAG 會話摘要 */
+    UAGSession: {
+      session_id?: string;
+      /** Format: uuid */
+      user_id?: string | null;
+      /**
+       * @description 用戶分級：
+       *     S = 🔥 點擊聯繫 + 長停留
+       *     A = ⭐ 停留 90s + 滾動 80%
+       *     B = 👀 停留 60s 或回訪 2+
+       *     C = 📌 停留 20s
+       *     F = 路過
+       * @enum {string}
+       */
+      grade?: "S" | "A" | "B" | "C" | "F";
+      /** @description 總停留秒數 */
+      total_time?: number;
+      /** @description 最大滾動深度 */
+      max_scroll?: number;
+      contact_clicked?: boolean;
+      properties_viewed?: string[];
+      /** Format: date-time */
+      created_at?: string;
+      /** Format: date-time */
+      updated_at?: string;
+    };
+    /** @description UAG 潛客資料 */
+    UAGLead: {
+      session_id?: string;
+      agent_id?: string;
+      /** @enum {string} */
+      grade?: "S" | "A" | "B" | "C" | "F";
+      /** @enum {string} */
+      temperature?: "HOT" | "WARM" | "COLD";
+      rank?: number;
+      /** Format: date-time */
+      last_active_at?: string;
+    };
+    /** @description Trust Room 交易狀態 */
+    TrustTransaction: {
+      id?: string;
+      currentStep?: number;
+      isPaid?: boolean;
+      steps?: {
+        [key: string]: {
+          /** @enum {string} */
+          agentStatus?: "pending" | "submitted";
+          /** @enum {string} */
+          buyerStatus?: "pending" | "confirmed";
+          locked?: boolean;
+          data?: Record<string, never>;
+        };
+      };
+      supplements?: {
+        role?: string;
+        content?: string;
+        timestamp?: number;
+      }[];
+    };
+    /** @description 物件偵測結果 */
+    Detection: {
+      /** @description 左上角 X 座標（0-1 normalized） */
+      x?: number;
+      /** @description 左上角 Y 座標（0-1 normalized） */
+      y?: number;
+      /** @description 寬度（0-1 normalized） */
+      w?: number;
+      /** @description 高度（0-1 normalized） */
+      h?: number;
+      /** @description 物件標籤 */
+      label?: string;
+      /** @description 信心分數（0-1） */
+      score?: number;
+    };
+  };
+  responses: {
+    /** @description 請求格式錯誤 */
+    BadRequest: {
+      headers: {
+        [name: string]: unknown;
+      };
+      content: {
+        /**
+         * @example {
+         *       "success": false,
+         *       "error": "缺少必要欄位"
+         *     }
+         */
+        "application/json": components["schemas"]["Error"];
+      };
+    };
+    /** @description 未授權 */
+    Unauthorized: {
+      headers: {
+        [name: string]: unknown;
+      };
+      content: {
+        /**
+         * @example {
+         *       "success": false,
+         *       "error": "請先登入"
+         *     }
+         */
+        "application/json": components["schemas"]["Error"];
+      };
+    };
+    /** @description 權限不足 */
+    Forbidden: {
+      headers: {
+        [name: string]: unknown;
+      };
+      content: {
+        /**
+         * @example {
+         *       "success": false,
+         *       "error": "權限不足"
+         *     }
+         */
+        "application/json": components["schemas"]["Error"];
+      };
+    };
+    /** @description 資源不存在 */
+    NotFound: {
+      headers: {
+        [name: string]: unknown;
+      };
+      content: {
+        /**
+         * @example {
+         *       "success": false,
+         *       "error": "找不到該資源"
+         *     }
+         */
+        "application/json": components["schemas"]["Error"];
+      };
+    };
+    /** @description 伺服器錯誤 */
+    ServerError: {
+      headers: {
+        [name: string]: unknown;
+      };
+      content: {
+        /**
+         * @example {
+         *       "success": false,
+         *       "error": "伺服器錯誤，請稍後再試"
+         *     }
+         */
+        "application/json": components["schemas"]["Error"];
+      };
+    };
+  };
+  parameters: never;
+  requestBodies: never;
+  headers: never;
+  pathItems: never;
 }
 export type $defs = Record<string, never>;
 export type operations = Record<string, never>;

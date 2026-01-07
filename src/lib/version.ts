@@ -4,12 +4,14 @@
  * 將 Vite define 注入的 commit 與建置時間整理成 UI 可用的字串。
  */
 
-const rawVersion = typeof __APP_VERSION__ === 'string' && __APP_VERSION__.length > 0
-  ? __APP_VERSION__
-  : 'dev';
-const rawBuildTime = typeof __BUILD_TIME__ === 'string' && __BUILD_TIME__.length > 0
-  ? __BUILD_TIME__
-  : new Date().toISOString();
+const rawVersion =
+  typeof __APP_VERSION__ === "string" && __APP_VERSION__.length > 0
+    ? __APP_VERSION__
+    : "dev";
+const rawBuildTime =
+  typeof __BUILD_TIME__ === "string" && __BUILD_TIME__.length > 0
+    ? __BUILD_TIME__
+    : new Date().toISOString();
 
 const parsedBuildTime = (() => {
   const parsed = new Date(rawBuildTime);
@@ -22,11 +24,11 @@ const parsedBuildTime = (() => {
 const buildDate = parsedBuildTime ?? new Date();
 
 const formatTwDateTime = (date: Date) =>
-  new Intl.DateTimeFormat('zh-TW', {
-    dateStyle: 'short',
-    timeStyle: 'medium',
+  new Intl.DateTimeFormat("zh-TW", {
+    dateStyle: "short",
+    timeStyle: "medium",
     hour12: false,
-    timeZone: 'Asia/Taipei',
+    timeZone: "Asia/Taipei",
   }).format(date);
 
 export const APP_VERSION = rawVersion;

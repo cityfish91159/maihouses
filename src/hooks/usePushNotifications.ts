@@ -5,25 +5,25 @@
  * 管理瀏覽器推播權限、訂閱與取消訂閱
  */
 
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { useAuth } from './useAuth';
-import { supabase } from '../lib/supabase';
-import { logger } from '../lib/logger';
+import { useState, useEffect, useCallback, useRef } from "react";
+import { useAuth } from "./useAuth";
+import { supabase } from "../lib/supabase";
+import { logger } from "../lib/logger";
 import type {
   PushPermissionState,
   UsePushNotificationsReturn,
   PushSubscriptionKeys,
-} from '../types/push.types';
-import { PUSH_CONSTANTS } from '../types/push.types';
+} from "../types/push.types";
+import { PUSH_CONSTANTS } from "../types/push.types";
 
 /**
  * 檢查瀏覽器是否支援 Web Push
  */
 function isPushSupported(): boolean {
   return (
-    'serviceWorker' in navigator &&
-    'PushManager' in window &&
-    'Notification' in window
+    "serviceWorker" in navigator &&
+    "PushManager" in window &&
+    "Notification" in window
   );
 }
 
@@ -31,11 +31,13 @@ function isPushSupported(): boolean {
  * 將 NotificationPermission 轉換為 PushPermissionState
  * 使用 type guard 避免 `as` 斷言
  */
-function toPermissionState(permission: NotificationPermission): PushPermissionState {
+function toPermissionState(
+  permission: NotificationPermission,
+): PushPermissionState {
   // NotificationPermission: 'default' | 'denied' | 'granted'
   // PushPermissionState: 'prompt' | 'granted' | 'denied' | 'unsupported'
-  if (permission === 'default') {
-    return 'prompt';
+  if (permission === "default") {
+    return "prompt";
   }
   return permission; // 'granted' | 'denied' 直接返回
 }
@@ -45,7 +47,7 @@ function toPermissionState(permission: NotificationPermission): PushPermissionSt
  */
 function getPermissionState(): PushPermissionState {
   if (!isPushSupported()) {
-    return 'unsupported';
+    return "unsupported";
   }
   return toPermissionState(Notification.permission);
 }
@@ -59,8 +61,8 @@ function getPermissionState(): PushPermissionState {
  * 創建，保證底層 buffer 一定是 ArrayBuffer。
  */
 function urlBase64ToArrayBuffer(base64String: string): ArrayBuffer {
-  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
-  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
   const rawData = atob(base64);
   const outputArray = new Uint8Array(rawData.length);
   for (let i = 0; i < rawData.length; ++i) {
@@ -73,7 +75,9 @@ function urlBase64ToArrayBuffer(base64String: string): ArrayBuffer {
 /**
  * 從 PushSubscription 提取金鑰資料
  */
-function extractSubscriptionKeys(subscription: PushSubscriptionJSON): PushSubscriptionKeys | null {
+function extractSubscriptionKeys(
+  subscription: PushSubscriptionJSON,
+): PushSubscriptionKeys | null {
   if (!subscription.endpoint || !subscription.keys) {
     return null;
   }
@@ -94,7 +98,8 @@ function extractSubscriptionKeys(subscription: PushSubscriptionJSON): PushSubscr
 
 export function usePushNotifications(): UsePushNotificationsReturn {
   const { isAuthenticated, user } = useAuth();
-  const [permission, setPermission] = useState<PushPermissionState>(getPermissionState);
+  const [permission, setPermission] =
+    useState<PushPermissionState>(getPermissionState);
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
@@ -109,8 +114,8 @@ export function usePushNotifications(): UsePushNotificationsReturn {
   const getVapidPublicKey = useCallback((): string | null => {
     const key = import.meta.env.VITE_VAPID_PUBLIC_KEY;
     if (!key) {
-      logger.warn('usePushNotifications.getVapidPublicKey.missing', {
-        message: 'VITE_VAPID_PUBLIC_KEY is not set',
+      logger.warn("usePushNotifications.getVapidPublicKey.missing", {
+        message: "VITE_VAPID_PUBLIC_KEY is not set",
       });
       return null;
     }
@@ -120,32 +125,35 @@ export function usePushNotifications(): UsePushNotificationsReturn {
   /**
    * 註冊 Service Worker
    */
-  const registerServiceWorker = useCallback(async (): Promise<ServiceWorkerRegistration | null> => {
-    if (!isPushSupported()) {
-      logger.info('usePushNotifications.registerServiceWorker.unsupported');
-      return null;
-    }
+  const registerServiceWorker =
+    useCallback(async (): Promise<ServiceWorkerRegistration | null> => {
+      if (!isPushSupported()) {
+        logger.info("usePushNotifications.registerServiceWorker.unsupported");
+        return null;
+      }
 
-    try {
-      const registration = await navigator.serviceWorker.register(
-        PUSH_CONSTANTS.SW_PATH,
-        { scope: PUSH_CONSTANTS.SW_SCOPE }
-      );
+      try {
+        const registration = await navigator.serviceWorker.register(
+          PUSH_CONSTANTS.SW_PATH,
+          { scope: PUSH_CONSTANTS.SW_SCOPE },
+        );
 
-      // 等待 Service Worker 就緒
-      await navigator.serviceWorker.ready;
-      swRegistrationRef.current = registration;
+        // 等待 Service Worker 就緒
+        await navigator.serviceWorker.ready;
+        swRegistrationRef.current = registration;
 
-      logger.info('usePushNotifications.registerServiceWorker.success', {
-        scope: registration.scope,
-      });
+        logger.info("usePushNotifications.registerServiceWorker.success", {
+          scope: registration.scope,
+        });
 
-      return registration;
-    } catch (err) {
-      logger.error('usePushNotifications.registerServiceWorker.failed', { error: err });
-      throw err;
-    }
-  }, []);
+        return registration;
+      } catch (err) {
+        logger.error("usePushNotifications.registerServiceWorker.failed", {
+          error: err,
+        });
+        throw err;
+      }
+    }, []);
 
   /**
    * 檢查目前是否已訂閱
@@ -156,10 +164,13 @@ export function usePushNotifications(): UsePushNotificationsReturn {
     }
 
     try {
-      const subscription = await swRegistrationRef.current.pushManager.getSubscription();
+      const subscription =
+        await swRegistrationRef.current.pushManager.getSubscription();
       return subscription !== null;
     } catch (err) {
-      logger.warn('usePushNotifications.checkSubscription.failed', { error: err });
+      logger.warn("usePushNotifications.checkSubscription.failed", {
+        error: err,
+      });
       return false;
     }
   }, []);
@@ -170,26 +181,29 @@ export function usePushNotifications(): UsePushNotificationsReturn {
   const saveSubscriptionToDatabase = useCallback(
     async (keys: PushSubscriptionKeys): Promise<void> => {
       if (!user?.id) {
-        throw new Error('User not authenticated');
+        throw new Error("User not authenticated");
       }
 
-      const { error: dbError } = await supabase.rpc('fn_upsert_push_subscription', {
-        p_profile_id: user.id,
-        p_endpoint: keys.endpoint,
-        p_p256dh: keys.p256dh,
-        p_auth: keys.auth,
-        p_user_agent: navigator.userAgent,
-      });
+      const { error: dbError } = await supabase.rpc(
+        "fn_upsert_push_subscription",
+        {
+          p_profile_id: user.id,
+          p_endpoint: keys.endpoint,
+          p_p256dh: keys.p256dh,
+          p_auth: keys.auth,
+          p_user_agent: navigator.userAgent,
+        },
+      );
 
       if (dbError) {
         throw dbError;
       }
 
-      logger.info('usePushNotifications.saveSubscriptionToDatabase.success', {
+      logger.info("usePushNotifications.saveSubscriptionToDatabase.success", {
         userId: user.id,
       });
     },
-    [user]
+    [user],
   );
 
   /**
@@ -198,23 +212,29 @@ export function usePushNotifications(): UsePushNotificationsReturn {
   const removeSubscriptionFromDatabase = useCallback(
     async (endpoint: string): Promise<void> => {
       if (!user?.id) {
-        throw new Error('User not authenticated');
+        throw new Error("User not authenticated");
       }
 
-      const { error: dbError } = await supabase.rpc('fn_delete_push_subscription', {
-        p_profile_id: user.id,
-        p_endpoint: endpoint,
-      });
+      const { error: dbError } = await supabase.rpc(
+        "fn_delete_push_subscription",
+        {
+          p_profile_id: user.id,
+          p_endpoint: endpoint,
+        },
+      );
 
       if (dbError) {
         throw dbError;
       }
 
-      logger.info('usePushNotifications.removeSubscriptionFromDatabase.success', {
-        userId: user.id,
-      });
+      logger.info(
+        "usePushNotifications.removeSubscriptionFromDatabase.success",
+        {
+          userId: user.id,
+        },
+      );
     },
-    [user]
+    [user],
   );
 
   /**
@@ -222,18 +242,18 @@ export function usePushNotifications(): UsePushNotificationsReturn {
    */
   const subscribe = useCallback(async (): Promise<boolean> => {
     if (!isPushSupported()) {
-      setError(new Error('Push notifications are not supported'));
+      setError(new Error("Push notifications are not supported"));
       return false;
     }
 
     if (!isAuthenticated || !user) {
-      setError(new Error('User not authenticated'));
+      setError(new Error("User not authenticated"));
       return false;
     }
 
     const vapidPublicKey = getVapidPublicKey();
     if (!vapidPublicKey) {
-      setError(new Error('VAPID public key not configured'));
+      setError(new Error("VAPID public key not configured"));
       return false;
     }
 
@@ -245,8 +265,8 @@ export function usePushNotifications(): UsePushNotificationsReturn {
       const permissionResult = await Notification.requestPermission();
       setPermission(toPermissionState(permissionResult));
 
-      if (permissionResult !== 'granted') {
-        logger.info('usePushNotifications.subscribe.permissionDenied', {
+      if (permissionResult !== "granted") {
+        logger.info("usePushNotifications.subscribe.permissionDenied", {
           permission: permissionResult,
         });
         return false;
@@ -257,18 +277,23 @@ export function usePushNotifications(): UsePushNotificationsReturn {
       if (!registration) {
         registration = await registerServiceWorker();
         if (!registration) {
-          throw new Error('Failed to register service worker');
+          throw new Error("Failed to register service worker");
         }
       }
 
       // 3. 若已訂閱，直接同步到資料庫
-      const existingSubscription = await registration.pushManager.getSubscription();
+      const existingSubscription =
+        await registration.pushManager.getSubscription();
       if (existingSubscription) {
-        const existingKeys = extractSubscriptionKeys(existingSubscription.toJSON());
+        const existingKeys = extractSubscriptionKeys(
+          existingSubscription.toJSON(),
+        );
         if (existingKeys) {
           await saveSubscriptionToDatabase(existingKeys);
           setIsSubscribed(true);
-          logger.info('usePushNotifications.subscribe.alreadySubscribed', { userId: user.id });
+          logger.info("usePushNotifications.subscribe.alreadySubscribed", {
+            userId: user.id,
+          });
           return true;
         }
       }
@@ -282,23 +307,34 @@ export function usePushNotifications(): UsePushNotificationsReturn {
       // 5. 提取訂閱金鑰
       const keys = extractSubscriptionKeys(subscription.toJSON());
       if (!keys) {
-        throw new Error('Failed to extract subscription keys');
+        throw new Error("Failed to extract subscription keys");
       }
 
       // 6. 儲存到資料庫
       await saveSubscriptionToDatabase(keys);
 
       setIsSubscribed(true);
-      logger.info('usePushNotifications.subscribe.success', { userId: user.id });
+      logger.info("usePushNotifications.subscribe.success", {
+        userId: user.id,
+      });
       return true;
     } catch (err) {
-      logger.error('usePushNotifications.subscribe.failed', { error: err, userId: user?.id });
-      setError(err instanceof Error ? err : new Error('Failed to subscribe'));
+      logger.error("usePushNotifications.subscribe.failed", {
+        error: err,
+        userId: user?.id,
+      });
+      setError(err instanceof Error ? err : new Error("Failed to subscribe"));
       return false;
     } finally {
       setIsLoading(false);
     }
-  }, [isAuthenticated, user, getVapidPublicKey, registerServiceWorker, saveSubscriptionToDatabase]);
+  }, [
+    isAuthenticated,
+    user,
+    getVapidPublicKey,
+    registerServiceWorker,
+    saveSubscriptionToDatabase,
+  ]);
 
   /**
    * 取消訂閱推播通知
@@ -312,7 +348,8 @@ export function usePushNotifications(): UsePushNotificationsReturn {
     setError(null);
 
     try {
-      const subscription = await swRegistrationRef.current.pushManager.getSubscription();
+      const subscription =
+        await swRegistrationRef.current.pushManager.getSubscription();
 
       if (subscription) {
         const endpoint = subscription.endpoint;
@@ -325,11 +362,16 @@ export function usePushNotifications(): UsePushNotificationsReturn {
       }
 
       setIsSubscribed(false);
-      logger.info('usePushNotifications.unsubscribe.success', { userId: user?.id });
+      logger.info("usePushNotifications.unsubscribe.success", {
+        userId: user?.id,
+      });
       return true;
     } catch (err) {
-      logger.error('usePushNotifications.unsubscribe.failed', { error: err, userId: user?.id });
-      setError(err instanceof Error ? err : new Error('Failed to unsubscribe'));
+      logger.error("usePushNotifications.unsubscribe.failed", {
+        error: err,
+        userId: user?.id,
+      });
+      setError(err instanceof Error ? err : new Error("Failed to unsubscribe"));
       return false;
     } finally {
       setIsLoading(false);
@@ -347,19 +389,23 @@ export function usePushNotifications(): UsePushNotificationsReturn {
       if (keys) {
         try {
           await saveSubscriptionToDatabase(keys);
-          logger.info('usePushNotifications.subscriptionChanged.synced', { userId: user.id });
+          logger.info("usePushNotifications.subscriptionChanged.synced", {
+            userId: user.id,
+          });
         } catch (err) {
-          logger.error('usePushNotifications.subscriptionChanged.failed', { error: err });
+          logger.error("usePushNotifications.subscriptionChanged.failed", {
+            error: err,
+          });
         }
       }
     },
-    [user, saveSubscriptionToDatabase]
+    [user, saveSubscriptionToDatabase],
   );
 
   // 初始化：註冊 Service Worker 並檢查訂閱狀態
   useEffect(() => {
     if (!isPushSupported()) {
-      setPermission('unsupported');
+      setPermission("unsupported");
       return;
     }
 
@@ -378,7 +424,7 @@ export function usePushNotifications(): UsePushNotificationsReturn {
         }
       } catch (err) {
         if (isMounted) {
-          logger.warn('usePushNotifications.init.failed', { error: err });
+          logger.warn("usePushNotifications.init.failed", { error: err });
         }
       }
     };
@@ -395,15 +441,18 @@ export function usePushNotifications(): UsePushNotificationsReturn {
     if (!isPushSupported()) return;
 
     const handleMessage = (event: MessageEvent) => {
-      if (event.data?.type === 'SUBSCRIPTION_CHANGED' && event.data?.subscription) {
+      if (
+        event.data?.type === "SUBSCRIPTION_CHANGED" &&
+        event.data?.subscription
+      ) {
         handleSubscriptionChange(event.data.subscription);
       }
     };
 
-    navigator.serviceWorker.addEventListener('message', handleMessage);
+    navigator.serviceWorker.addEventListener("message", handleMessage);
 
     return () => {
-      navigator.serviceWorker.removeEventListener('message', handleMessage);
+      navigator.serviceWorker.removeEventListener("message", handleMessage);
     };
   }, [handleSubscriptionChange]);
 
@@ -418,13 +467,16 @@ export function usePushNotifications(): UsePushNotificationsReturn {
     };
 
     // 某些瀏覽器支援 permission change 事件
-    if ('permissions' in navigator) {
-      navigator.permissions.query({ name: 'notifications' }).then((status) => {
-        permissionStatus = status;
-        permissionStatus.onchange = handlePermissionChange;
-      }).catch(() => {
-        // 忽略不支援的情況
-      });
+    if ("permissions" in navigator) {
+      navigator.permissions
+        .query({ name: "notifications" })
+        .then((status) => {
+          permissionStatus = status;
+          permissionStatus.onchange = handlePermissionChange;
+        })
+        .catch(() => {
+          // 忽略不支援的情況
+        });
     }
 
     return () => {

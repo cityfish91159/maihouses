@@ -1,14 +1,14 @@
 /**
  * Community Wall Page
- * 
+ *
  * 社區牆主頁面
  * 重構版 - 統一資料來源、組件化、React Query、a11y 優化
  */
 
-import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { useState, useCallback, useEffect, useMemo, useRef } from "react";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 
-import { GlobalHeader } from '../../components/layout/GlobalHeader';
+import { GlobalHeader } from "../../components/layout/GlobalHeader";
 
 // Components
 import {
@@ -21,35 +21,41 @@ import {
   WallSkeleton,
   WallErrorBoundary,
   VersionBadge,
-} from './components';
-import { notify } from '../../lib/notify';
-import { MockToggle } from '../../components/common/MockToggle';
-import { mhEnv } from '../../lib/mhEnv';
-import { safeLocalStorage } from '../../lib/safeStorage';
-import { logger } from '../../lib/logger';
+} from "./components";
+import { notify } from "../../lib/notify";
+import { MockToggle } from "../../components/common/MockToggle";
+import { mhEnv } from "../../lib/mhEnv";
+import { safeLocalStorage } from "../../lib/safeStorage";
+import { logger } from "../../lib/logger";
 
 // Types
-import type { Role, WallTab } from './types';
-import { getPermissions } from './types';
+import type { Role, WallTab } from "./types";
+import { getPermissions } from "./types";
 
 // Hooks - 統一資料來源
-import { useCommunityWallData } from '../../hooks/useCommunityWallData';
-import { useAuth } from '../../hooks/useAuth';
-import { ROUTES } from '../../constants/routes';
+import { useCommunityWallData } from "../../hooks/useCommunityWallData";
+import { useAuth } from "../../hooks/useAuth";
+import { ROUTES } from "../../constants/routes";
 
 // ============ URL / Storage Helpers ============
-const ROLE_PARAM = 'role';
-const ROLE_STORAGE_KEY = 'community-wall-dev-role';
-const VALID_ROLES: Role[] = ['guest', 'member', 'resident', 'agent'];
-const rawMockFlag = `${import.meta.env.VITE_COMMUNITY_WALL_ALLOW_MOCK ?? ''}`.trim().toLowerCase();
-const GLOBAL_MOCK_TOGGLE_ENABLED = rawMockFlag !== 'false';
+const ROLE_PARAM = "role";
+const ROLE_STORAGE_KEY = "community-wall-dev-role";
+const VALID_ROLES: Role[] = ["guest", "member", "resident", "agent"];
+const rawMockFlag = `${import.meta.env.VITE_COMMUNITY_WALL_ALLOW_MOCK ?? ""}`
+  .trim()
+  .toLowerCase();
+const GLOBAL_MOCK_TOGGLE_ENABLED = rawMockFlag !== "false";
 
 const parseRoleParam = (value: string | null): Role | null => {
   if (!value) return null;
   return VALID_ROLES.includes(value as Role) ? (value as Role) : null;
 };
 
-const updateURLParam = (params: URLSearchParams, key: string, value: string | null) => {
+const updateURLParam = (
+  params: URLSearchParams,
+  key: string,
+  value: string | null,
+) => {
   const next = new URLSearchParams(params);
   if (!value) {
     next.delete(key);
@@ -73,7 +79,7 @@ function WallInner() {
 
   // 初始化 role：僅開發環境從 URL/localStorage 讀取
   const initialRole = useMemo<Role>(() => {
-    if (!import.meta.env.DEV) return 'guest';
+    if (!import.meta.env.DEV) return "guest";
     const urlRole = parseRoleParam(searchParamsRef.current.get(ROLE_PARAM));
     if (urlRole) {
       return urlRole;
@@ -82,22 +88,28 @@ function WallInner() {
     if (stored && VALID_ROLES.includes(stored)) {
       return stored;
     }
-    return 'guest';
+    return "guest";
   }, []);
 
   const [role, setRoleInternal] = useState<Role>(initialRole);
-  const [currentTab, setCurrentTab] = useState<WallTab>('public');
+  const [currentTab, setCurrentTab] = useState<WallTab>("public");
   const [isReloading, setIsReloading] = useState(false);
 
   // B1/B4/B5: 統一 auth 狀態，單一來源
-  const { isAuthenticated, role: authRole, loading: authLoading, error: authError } = useAuth();
+  const {
+    isAuthenticated,
+    role: authRole,
+    loading: authLoading,
+    error: authError,
+  } = useAuth();
 
   // B4: 統一計算 effectiveRole，子組件不再自行計算
   const effectiveRole = useMemo<Role>(() => {
-    if (authLoading) return 'guest'; // loading 時預設 guest
-    const allowMockRole = import.meta.env.DEV && GLOBAL_MOCK_TOGGLE_ENABLED && role !== 'guest';
+    if (authLoading) return "guest"; // loading 時預設 guest
+    const allowMockRole =
+      import.meta.env.DEV && GLOBAL_MOCK_TOGGLE_ENABLED && role !== "guest";
     if (allowMockRole) return role;
-    return isAuthenticated ? authRole : 'guest';
+    return isAuthenticated ? authRole : "guest";
   }, [authRole, isAuthenticated, role, authLoading]);
 
   const perm = useMemo(() => getPermissions(effectiveRole), [effectiveRole]);
@@ -116,7 +128,7 @@ function WallInner() {
     askQuestion,
     answerQuestion,
     viewerRole,
-  } = useCommunityWallData(communityId ?? '', {
+  } = useCommunityWallData(communityId ?? "", {
     includePrivate: perm.canAccessPrivate,
   });
 
@@ -127,7 +139,7 @@ function WallInner() {
   // 提前處理 auth 錯誤 toast
   useEffect(() => {
     if (authError) {
-      notify.error('登入狀態異常', authError.message);
+      notify.error("登入狀態異常", authError.message);
     }
   }, [authError]);
 
@@ -145,18 +157,25 @@ function WallInner() {
   }, [setUseMock]);
 
   // 包裝 setRole，同步 URL 和 localStorage（僅開發環境）
-  const setRole = useCallback((newRole: Role) => {
-    if (!allowManualRoleSwitch) return;
-    setRoleInternal(newRole);
+  const setRole = useCallback(
+    (newRole: Role) => {
+      if (!allowManualRoleSwitch) return;
+      setRoleInternal(newRole);
 
-    if (!import.meta.env.DEV) {
-      return;
-    }
+      if (!import.meta.env.DEV) {
+        return;
+      }
 
-    const nextParams = updateURLParam(searchParamsRef.current, ROLE_PARAM, newRole);
-    setSearchParams(nextParams, { replace: true });
-    safeLocalStorage.setItem(ROLE_STORAGE_KEY, newRole);
-  }, [allowManualRoleSwitch, setSearchParams]);
+      const nextParams = updateURLParam(
+        searchParamsRef.current,
+        ROLE_PARAM,
+        newRole,
+      );
+      setSearchParams(nextParams, { replace: true });
+      safeLocalStorage.setItem(ROLE_STORAGE_KEY, newRole);
+    },
+    [allowManualRoleSwitch, setSearchParams],
+  );
 
   useEffect(() => {
     if (!import.meta.env.DEV) return;
@@ -167,7 +186,7 @@ function WallInner() {
   }, [role, searchParams, setRoleInternal]);
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === "undefined") return;
     const handleStorage = (event: StorageEvent) => {
       // safeLocalStorage uses standard localStorage so this event still fires.
       // However, reading from event.newValue is safe (it's a string or null).
@@ -180,8 +199,8 @@ function WallInner() {
         }
       }
     };
-    window.addEventListener('storage', handleStorage);
-    return () => window.removeEventListener('storage', handleStorage);
+    window.addEventListener("storage", handleStorage);
+    return () => window.removeEventListener("storage", handleStorage);
   }, [role, setRoleInternal]);
 
   const handleLogin = useCallback(() => {
@@ -189,70 +208,84 @@ function WallInner() {
     window.location.href = ROUTES.AUTH;
   }, []);
 
-
   // Tab 切換
-  const handleTabChange = useCallback((tab: WallTab) => {
-    if (tab === 'private' && !perm.canAccessPrivate) {
-      return;
-    }
-    setCurrentTab(tab);
-  }, [perm.canAccessPrivate]);
+  const handleTabChange = useCallback(
+    (tab: WallTab) => {
+      if (tab === "private" && !perm.canAccessPrivate) {
+        return;
+      }
+      setCurrentTab(tab);
+    },
+    [perm.canAccessPrivate],
+  );
 
   // 如果身份變更導致無法存取私密牆，切回公開牆
   useEffect(() => {
-    if (currentTab === 'private' && !perm.canAccessPrivate) {
-      setCurrentTab('public');
+    if (currentTab === "private" && !perm.canAccessPrivate) {
+      setCurrentTab("public");
     }
   }, [currentTab, perm.canAccessPrivate]);
 
   // 按讚處理 - B6: 加入 auth guard
-  const handleLike = useCallback(async (postId: number | string) => {
-    if (!isAuthenticated) {
-      notify.error('請先登入', '登入後才能按讚');
-      return;
-    }
-    try {
-      await toggleLike(postId);
-    } catch (err) {
-      logger.error('[Wall] Failed to toggle like', { error: err });
-      notify.error('按讚失敗', '請稍後再試');
-    }
-  }, [toggleLike, isAuthenticated]);
+  const handleLike = useCallback(
+    async (postId: number | string) => {
+      if (!isAuthenticated) {
+        notify.error("請先登入", "登入後才能按讚");
+        return;
+      }
+      try {
+        await toggleLike(postId);
+      } catch (err) {
+        logger.error("[Wall] Failed to toggle like", { error: err });
+        notify.error("按讚失敗", "請稍後再試");
+      }
+    },
+    [toggleLike, isAuthenticated],
+  );
 
   const handleUnlock = useCallback((id?: string) => {
-    logger.debug('[Wall] Unlock post', { id });
-    notify.info('功能開發中', '解鎖功能即將上線');
+    logger.debug("[Wall] Unlock post", { id });
+    notify.info("功能開發中", "解鎖功能即將上線");
   }, []);
 
   // 發文處理
-  const handleCreatePost = useCallback(async (content: string, visibility: 'public' | 'private' = 'public') => {
-    try {
-      await createPost(content, visibility);
-    } catch (err) {
-      logger.error('[Wall] Failed to create post', { error: err });
-      notify.error('發文失敗', '請稍後再試');
-    }
-  }, [createPost]);
+  const handleCreatePost = useCallback(
+    async (content: string, visibility: "public" | "private" = "public") => {
+      try {
+        await createPost(content, visibility);
+      } catch (err) {
+        logger.error("[Wall] Failed to create post", { error: err });
+        notify.error("發文失敗", "請稍後再試");
+      }
+    },
+    [createPost],
+  );
 
-  const handleAskQuestion = useCallback(async (question: string) => {
-    try {
-      await askQuestion(question);
-    } catch (err) {
-      logger.error('[Wall] Failed to submit question', { error: err });
-      notify.error('提問失敗', '請稍後再試');
-      throw err;
-    }
-  }, [askQuestion]);
+  const handleAskQuestion = useCallback(
+    async (question: string) => {
+      try {
+        await askQuestion(question);
+      } catch (err) {
+        logger.error("[Wall] Failed to submit question", { error: err });
+        notify.error("提問失敗", "請稍後再試");
+        throw err;
+      }
+    },
+    [askQuestion],
+  );
 
-  const handleAnswerQuestion = useCallback(async (questionId: string, content: string) => {
-    try {
-      await answerQuestion(questionId, content);
-    } catch (err) {
-      logger.error('[Wall] Failed to submit answer', { error: err });
-      notify.error('回答失敗', '請稍後再試');
-      throw err;
-    }
-  }, [answerQuestion]);
+  const handleAnswerQuestion = useCallback(
+    async (questionId: string, content: string) => {
+      try {
+        await answerQuestion(questionId, content);
+      } catch (err) {
+        logger.error("[Wall] Failed to submit answer", { error: err });
+        notify.error("回答失敗", "請稍後再試");
+        throw err;
+      }
+    },
+    [answerQuestion],
+  );
 
   const handleReload = useCallback(async () => {
     if (isReloading) return;
@@ -260,7 +293,7 @@ function WallInner() {
     try {
       await refresh();
     } catch (err) {
-      logger.error('[Wall] Failed to refresh community wall', { error: err });
+      logger.error("[Wall] Failed to refresh community wall", { error: err });
     } finally {
       setIsReloading(false);
     }
@@ -274,8 +307,12 @@ function WallInner() {
       <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-[var(--bg-base)] to-[var(--bg-alt)]">
         <div className="border-brand/10 rounded-2xl border bg-white px-8 py-10 text-center shadow-[0_10px_30px_rgba(0,34,73,0.08)]">
           <div className="mb-3 text-4xl">🧭</div>
-          <p className="mb-4 text-base font-semibold text-ink-900">找不到指定的社區牆</p>
-          <p className="mb-6 text-sm text-ink-600">請確認網址是否正確，或回到首頁重新選擇社區。</p>
+          <p className="mb-4 text-base font-semibold text-ink-900">
+            找不到指定的社區牆
+          </p>
+          <p className="mb-6 text-sm text-ink-600">
+            請確認網址是否正確，或回到首頁重新選擇社區。
+          </p>
           <a
             href={ROUTES.HOME}
             className="inline-flex items-center justify-center rounded-full bg-brand px-5 py-2.5 text-sm font-bold text-white shadow hover:bg-brand-600"
@@ -335,19 +372,22 @@ function WallInner() {
 
   // Error 狀態（僅 API 模式）
   if (error) {
-    const errorMsg = error.message || '';
-    const isAuthError = errorMsg.includes('401') || errorMsg.includes('403') || errorMsg.includes('權限');
+    const errorMsg = error.message || "";
+    const isAuthError =
+      errorMsg.includes("401") ||
+      errorMsg.includes("403") ||
+      errorMsg.includes("權限");
 
     return (
       <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-bg-base to-bg-soft">
         <div className="text-center">
-          <div className="mb-2 text-2xl">{isAuthError ? '🔐' : '😢'}</div>
+          <div className="mb-2 text-2xl">{isAuthError ? "🔐" : "😢"}</div>
           <div className="mb-2 text-sm text-ink-600">
-            {isAuthError ? '請先登入' : '載入失敗，請稍後再試'}
+            {isAuthError ? "請先登入" : "載入失敗，請稍後再試"}
           </div>
           {isAuthError ? (
             <button
-              onClick={() => window.location.href = '/auth'}
+              onClick={() => (window.location.href = "/auth")}
               className="rounded-lg bg-brand px-4 py-2 text-sm text-white"
             >
               前往登入
@@ -358,9 +398,9 @@ function WallInner() {
                 onClick={handleReload}
                 disabled={isReloading}
                 aria-busy={isReloading}
-                className={`border-brand/40 hover:bg-brand/10 rounded-lg border px-4 py-2 text-sm font-semibold transition ${isReloading ? 'text-brand/60 cursor-not-allowed' : 'text-brand'}`}
+                className={`border-brand/40 hover:bg-brand/10 rounded-lg border px-4 py-2 text-sm font-semibold transition ${isReloading ? "text-brand/60 cursor-not-allowed" : "text-brand"}`}
               >
-                {isReloading ? '⏳ 重新整理中…' : '🔄 重新整理'}
+                {isReloading ? "⏳ 重新整理中…" : "🔄 重新整理"}
               </button>
               <button
                 onClick={forceEnableMock}
@@ -386,7 +426,11 @@ function WallInner() {
       <div className="mx-auto flex max-w-[960px] gap-5 p-2.5 pb-[calc(80px+env(safe-area-inset-bottom,20px))] lg:p-2.5">
         {/* 主內容區 */}
         <main className="flex max-w-[600px] flex-1 animate-[fadeInUp_0.5s_ease-out] flex-col gap-3">
-          <ReviewsSection viewerRole={effectiveRole} reviews={reviews} onUnlock={handleUnlock} />
+          <ReviewsSection
+            viewerRole={effectiveRole}
+            reviews={reviews}
+            onUnlock={handleUnlock}
+          />
           <PostsSection
             viewerRole={effectiveRole}
             currentTab={currentTab}

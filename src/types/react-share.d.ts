@@ -1,5 +1,5 @@
-declare module 'react-share' {
-  import * as React from 'react';
+declare module "react-share" {
+  import * as React from "react";
 
   export interface ShareButtonProps {
     url: string;

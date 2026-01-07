@@ -1,14 +1,18 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { z } from 'zod';
-import { supabase } from '../../lib/supabase';
-import { logger } from '../../lib/logger';
-import { useAuth } from '../../hooks/useAuth';
-import type { Conversation, Message, SenderType } from '../../types/messaging.types';
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { z } from "zod";
+import { supabase } from "../../lib/supabase";
+import { logger } from "../../lib/logger";
+import { useAuth } from "../../hooks/useAuth";
+import type {
+  Conversation,
+  Message,
+  SenderType,
+} from "../../types/messaging.types";
 
 const MessageSchema = z.object({
   id: z.string().uuid(),
   conversation_id: z.string().uuid(),
-  sender_type: z.enum(['agent', 'consumer']),
+  sender_type: z.enum(["agent", "consumer"]),
   sender_id: z.string().uuid().nullable(),
   content: z.string(),
   created_at: z.string(),
@@ -35,7 +39,7 @@ const PropertyQueryResultSchema = z.array(PropertySchema);
  */
 const ConversationSchema = z.object({
   id: z.string().uuid(),
-  status: z.enum(['pending', 'active', 'closed']),
+  status: z.enum(["pending", "active", "closed"]),
   agent_id: z.string(),
   consumer_session_id: z.string(),
   consumer_profile_id: z.string().uuid().nullable(),
@@ -52,7 +56,7 @@ const ConversationSchema = z.object({
 
 const ConversationUpdateSchema = z.object({
   id: z.string().uuid(),
-  status: z.enum(['pending', 'active', 'closed']),
+  status: z.enum(["pending", "active", "closed"]),
   updated_at: z.string(),
 });
 
@@ -68,24 +72,24 @@ export interface ChatHeaderData {
 }
 
 const getUagSessionId = () => {
-  if (typeof window === 'undefined') return null;
+  if (typeof window === "undefined") return null;
   try {
-    return localStorage.getItem('uag_session');
+    return localStorage.getItem("uag_session");
   } catch {
     return null;
   }
 };
 
-const STATUS_LABELS: Record<Conversation['status'], string> = {
-  pending: '等待回覆',
-  active: '對話中',
-  closed: '已結束',
+const STATUS_LABELS: Record<Conversation["status"], string> = {
+  pending: "等待回覆",
+  active: "對話中",
+  closed: "已結束",
 };
 
 export function useChat(conversationId?: string) {
   const { user, role, isAuthenticated } = useAuth();
-  const isAgent = role === 'agent';
-  const senderType: SenderType = isAgent ? 'agent' : 'consumer';
+  const isAgent = role === "agent";
+  const senderType: SenderType = isAgent ? "agent" : "consumer";
 
   const [conversation, setConversation] = useState<Conversation | null>(null);
   const [header, setHeader] = useState<ChatHeaderData | null>(null);
@@ -100,7 +104,7 @@ export function useChat(conversationId?: string) {
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
   const statusLabel = useMemo(() => {
-    if (!conversation) return '';
+    if (!conversation) return "";
     return STATUS_LABELS[conversation.status];
   }, [conversation]);
 
@@ -112,8 +116,9 @@ export function useChat(conversationId?: string) {
 
     // 1. 查詢對話（不含 property JOIN）
     const { data, error } = await supabase
-      .from('conversations')
-      .select(`
+      .from("conversations")
+      .select(
+        `
         id,
         status,
         agent_id,
@@ -127,8 +132,9 @@ export function useChat(conversationId?: string) {
         updated_at,
         agent_profile:profiles!agent_id(name, email),
         consumer_profile:profiles!consumer_profile_id(name, email)
-      `)
-      .eq('id', conversationId)
+      `,
+      )
+      .eq("id", conversationId)
       .single();
 
     if (error) {
@@ -139,20 +145,26 @@ export function useChat(conversationId?: string) {
     const sessionId = getUagSessionId();
     const isParticipant = isAgent
       ? row.agent_id === user.id
-      : row.consumer_profile_id === user.id || (!!sessionId && row.consumer_session_id === sessionId);
+      : row.consumer_profile_id === user.id ||
+        (!!sessionId && row.consumer_session_id === sessionId);
     if (!isParticipant) {
-      setError(new Error('您無權查看此對話'));
-      throw new Error('Unauthorized');
+      setError(new Error("您無權查看此對話"));
+      throw new Error("Unauthorized");
     }
     setHasAccess(true);
     setConversation(row);
 
-    const profileData = isAgent ? row.consumer_profile?.[0] : row.agent_profile?.[0];
-    const fallbackName = isAgent && row.consumer_session_id
-      ? `訪客-${row.consumer_session_id.slice(-4).toUpperCase()}`
-      : '對方';
-    const counterpartName = profileData?.name || profileData?.email?.split('@')[0] || fallbackName;
-    const counterpartSubtitle = profileData?.email || (isAgent ? '匿名訪客' : '認證房仲');
+    const profileData = isAgent
+      ? row.consumer_profile?.[0]
+      : row.agent_profile?.[0];
+    const fallbackName =
+      isAgent && row.consumer_session_id
+        ? `訪客-${row.consumer_session_id.slice(-4).toUpperCase()}`
+        : "對方";
+    const counterpartName =
+      profileData?.name || profileData?.email?.split("@")[0] || fallbackName;
+    const counterpartSubtitle =
+      profileData?.email || (isAgent ? "匿名訪客" : "認證房仲");
 
     // 2. 問題 #5 修復：分開查詢 property（用 public_id 匹配）
     let propertyTitle: string | undefined;
@@ -161,24 +173,27 @@ export function useChat(conversationId?: string) {
 
     if (row.property_id) {
       const { data: propertyData, error: propertyError } = await supabase
-        .from('properties')
-        .select('public_id, title, images, address')
-        .eq('public_id', row.property_id)
+        .from("properties")
+        .select("public_id, title, images, address")
+        .eq("public_id", row.property_id)
         .maybeSingle();
 
       if (propertyError) {
-        logger.warn('chat.loadProperty.failed', { error: propertyError, property_id: row.property_id });
+        logger.warn("chat.loadProperty.failed", {
+          error: propertyError,
+          property_id: row.property_id,
+        });
       }
 
       if (propertyData) {
         const parsed = PropertySchema.safeParse(propertyData);
         if (parsed.success) {
-          propertyTitle = parsed.data.title ?? '物件資訊';
+          propertyTitle = parsed.data.title ?? "物件資訊";
           propertySubtitle = parsed.data.address ?? `編號 ${row.property_id}`;
           propertyImage = parsed.data.images?.[0];
         }
       } else {
-        propertyTitle = '物件資訊';
+        propertyTitle = "物件資訊";
         propertySubtitle = `編號 ${row.property_id}`;
       }
     }
@@ -196,10 +211,12 @@ export function useChat(conversationId?: string) {
   const loadMessages = useCallback(async () => {
     if (!conversationId || !user) return;
     const { data, error } = await supabase
-      .from('messages')
-      .select('id, conversation_id, sender_type, sender_id, content, created_at, read_at')
-      .eq('conversation_id', conversationId)
-      .order('created_at', { ascending: true });
+      .from("messages")
+      .select(
+        "id, conversation_id, sender_type, sender_id, content, created_at, read_at",
+      )
+      .eq("conversation_id", conversationId)
+      .order("created_at", { ascending: true });
 
     if (error) {
       throw error;
@@ -211,12 +228,16 @@ export function useChat(conversationId?: string) {
 
   const markRead = useCallback(async () => {
     if (!conversationId || !isAuthenticated || !user || !hasAccess) return;
-    const { error } = await supabase.rpc('fn_mark_messages_read', {
+    const { error } = await supabase.rpc("fn_mark_messages_read", {
       p_conversation_id: conversationId,
       p_reader_type: senderType,
     });
     if (error) {
-      logger.warn('chat.markRead.failed', { error, conversationId, senderType });
+      logger.warn("chat.markRead.failed", {
+        error,
+        conversationId,
+        senderType,
+      });
     }
   }, [conversationId, isAuthenticated, user, senderType, hasAccess]);
 
@@ -239,12 +260,15 @@ export function useChat(conversationId?: string) {
       setIsSending(true);
       setMessages((prev) => [...prev, optimisticMessage]);
       try {
-        const { data: messageId, error } = await supabase.rpc('fn_send_message', {
-          p_conversation_id: conversationId,
-          p_sender_type: senderType,
-          p_sender_id: user.id,
-          p_content: trimmed,
-        });
+        const { data: messageId, error } = await supabase.rpc(
+          "fn_send_message",
+          {
+            p_conversation_id: conversationId,
+            p_sender_type: senderType,
+            p_sender_id: user.id,
+            p_content: trimmed,
+          },
+        );
 
         if (error) {
           throw error;
@@ -257,26 +281,32 @@ export function useChat(conversationId?: string) {
                     ...msg,
                     id: String(messageId),
                   }
-                : msg
-            )
+                : msg,
+            ),
           );
         }
       } catch (err) {
-        logger.error('chat.sendMessage.failed', { err, conversationId, senderType });
-        setError(err instanceof Error ? err : new Error('Failed to send message'));
+        logger.error("chat.sendMessage.failed", {
+          err,
+          conversationId,
+          senderType,
+        });
+        setError(
+          err instanceof Error ? err : new Error("Failed to send message"),
+        );
         setMessages((prev) => prev.filter((msg) => msg.id !== tempId));
       } finally {
         setIsSending(false);
       }
     },
-    [conversationId, isAuthenticated, user, senderType, hasAccess]
+    [conversationId, isAuthenticated, user, senderType, hasAccess],
   );
 
   useEffect(() => {
     let isMounted = true;
     if (!conversationId) {
       setIsLoading(false);
-      setError(new Error('Missing conversation ID'));
+      setError(new Error("Missing conversation ID"));
       return;
     }
     if (!isAuthenticated || !user) {
@@ -300,8 +330,12 @@ export function useChat(conversationId?: string) {
         }
       } catch (err) {
         if (isMounted) {
-          logger.error('chat.load.failed', { err, conversationId });
-          setError(err instanceof Error ? err : new Error('Failed to load conversation'));
+          logger.error("chat.load.failed", { err, conversationId });
+          setError(
+            err instanceof Error
+              ? err
+              : new Error("Failed to load conversation"),
+          );
         }
       } finally {
         if (isMounted) {
@@ -314,34 +348,44 @@ export function useChat(conversationId?: string) {
     return () => {
       isMounted = false;
     };
-  }, [conversationId, isAuthenticated, user, loadConversation, loadMessages, markRead]);
+  }, [
+    conversationId,
+    isAuthenticated,
+    user,
+    loadConversation,
+    loadMessages,
+    markRead,
+  ]);
 
   useEffect(() => {
     if (!conversationId || !conversation || !user || !hasAccess) return;
 
     const channel = supabase
       .channel(`chat-${conversationId}`)
-      .on(
-        'broadcast',
-        { event: 'typing' },
-        ({ payload }) => {
-          if (payload?.senderId === user.id) return;
-          setIsTyping(true);
-          if (typingTimeoutRef.current) {
-            clearTimeout(typingTimeoutRef.current);
-          }
-          typingTimeoutRef.current = window.setTimeout(() => {
-            setIsTyping(false);
-          }, 1500);
+      .on("broadcast", { event: "typing" }, ({ payload }) => {
+        if (payload?.senderId === user.id) return;
+        setIsTyping(true);
+        if (typingTimeoutRef.current) {
+          clearTimeout(typingTimeoutRef.current);
         }
-      )
+        typingTimeoutRef.current = window.setTimeout(() => {
+          setIsTyping(false);
+        }, 1500);
+      })
       .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'messages', filter: `conversation_id=eq.${conversationId}` },
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "messages",
+          filter: `conversation_id=eq.${conversationId}`,
+        },
         (payload) => {
           const parsedIncoming = MessageSchema.safeParse(payload.new);
           if (!parsedIncoming.success) {
-            logger.warn('chat.realtime.invalidMessage', { errors: parsedIncoming.error.issues });
+            logger.warn("chat.realtime.invalidMessage", {
+              errors: parsedIncoming.error.issues,
+            });
             return;
           }
           const incoming = parsedIncoming.data;
@@ -354,28 +398,43 @@ export function useChat(conversationId?: string) {
           if (incoming.sender_type !== senderType) {
             markRead();
           }
-        }
+        },
       )
       .on(
-        'postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'conversations', filter: `id=eq.${conversationId}` },
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "conversations",
+          filter: `id=eq.${conversationId}`,
+        },
         (payload) => {
           const parsedUpdate = ConversationUpdateSchema.safeParse(payload.new);
           if (!parsedUpdate.success) {
-            logger.warn('chat.realtime.invalidConversation', { errors: parsedUpdate.error.issues });
+            logger.warn("chat.realtime.invalidConversation", {
+              errors: parsedUpdate.error.issues,
+            });
             return;
           }
           const updated = parsedUpdate.data;
-          setConversation((prev) => (prev ? { ...prev, status: updated.status, updated_at: updated.updated_at } : prev));
+          setConversation((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  status: updated.status,
+                  updated_at: updated.updated_at,
+                }
+              : prev,
+          );
           setHeader((prev) =>
             prev
               ? {
                   ...prev,
                   statusLabel: STATUS_LABELS[updated.status],
                 }
-              : prev
+              : prev,
           );
-        }
+        },
       )
       .subscribe();
 
@@ -393,8 +452,8 @@ export function useChat(conversationId?: string) {
     if (now - typingSentAtRef.current < 1000) return;
     typingSentAtRef.current = now;
     channelRef.current.send({
-      type: 'broadcast',
-      event: 'typing',
+      type: "broadcast",
+      event: "typing",
       payload: { senderId: user.id },
     });
   }, [user, hasAccess]);

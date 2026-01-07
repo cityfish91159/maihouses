@@ -18,14 +18,14 @@ export const BODY_HEIGHT = 100;
 
 // ============ 肩膀 ============
 
-export const SHOULDER_L_X = BODY_X;          // 55
+export const SHOULDER_L_X = BODY_X; // 55
 export const SHOULDER_R_X = BODY_X + BODY_WIDTH; // 145
-export const SHOULDER_Y = BODY_Y + 50;       // 130
+export const SHOULDER_Y = BODY_Y + 50; // 130
 
 // ============ 眼睛 ============
 
-export const EYE_L_X = CENTER_X - 15;        // 85
-export const EYE_R_X = CENTER_X + 15;        // 115
+export const EYE_L_X = CENTER_X - 15; // 85
+export const EYE_R_X = CENTER_X + 15; // 115
 export const EYE_Y = 125;
 export const EYE_RADIUS = 4;
 export const EYE_PUPIL_RADIUS = 1.5;
@@ -54,10 +54,10 @@ export const BLUSH_RADIUS = 8;
 
 // ============ 髖部與腿 ============
 
-export const HIP_L_X = EYE_L_X;              // 85
-export const HIP_R_X = EYE_R_X;              // 115
-export const HIP_Y = BODY_Y + BODY_HEIGHT;   // 180
-export const LEG_Y = HIP_Y + 35;             // 215
+export const HIP_L_X = EYE_L_X; // 85
+export const HIP_R_X = EYE_R_X; // 115
+export const HIP_Y = BODY_Y + BODY_HEIGHT; // 180
+export const LEG_Y = HIP_Y + 35; // 215
 export const LEG_FOOT_OFFSET = 10;
 export const LEG_HIP_OFFSET = 5;
 export const LEG_BEND_X = 10;
@@ -76,7 +76,7 @@ export const ANTENNA_DROOP_Y = 5;
 // ============ 屋頂 ============
 
 export const ROOF_OVERHANG = 15;
-export const ROOF_PEAK_Y = ANTENNA_Y;        // 40
+export const ROOF_PEAK_Y = ANTENNA_Y; // 40
 
 // ============ 揮手特效 ============
 
@@ -101,7 +101,10 @@ export const ARM = {
   wave: [17, 18],
   celebrate: [40, 48],
   think: [20, 10],
-  shy: [[13, 12], [19, -2]] as [[number, number], [number, number]],
+  shy: [
+    [13, 12],
+    [19, -2],
+  ] as [[number, number], [number, number]],
   confused: [15, -6],
   sleep: [17, -22],
 } as const;
@@ -121,18 +124,18 @@ export const ARM_THINK_R_HAND_OFFSET = 8;
 
 // ============ 特效顏色 ============
 
-export const EFFECT_COLOR_GOLD = '#FFD700';
-export const EFFECT_COLOR_CONFETTI_RED = '#FF6B6B';
-export const EFFECT_COLOR_CONFETTI_TEAL = '#4ECDC4';
-export const EFFECT_COLOR_CONFETTI_YELLOW = '#FFE66D';
-export const EFFECT_COLOR_SHY_BLUE = '#87CEEB';
+export const EFFECT_COLOR_GOLD = "#FFD700";
+export const EFFECT_COLOR_CONFETTI_RED = "#FF6B6B";
+export const EFFECT_COLOR_CONFETTI_TEAL = "#4ECDC4";
+export const EFFECT_COLOR_CONFETTI_YELLOW = "#FFE66D";
+export const EFFECT_COLOR_SHY_BLUE = "#87CEEB";
 export const STAR_INNER_RATIO = 0.4;
 export const SPARKLE_DIAGONAL_RATIO = 0.6;
 
 /** 五角星單位圓頂點 (10 個點,外5內5交錯) */
 export const STAR_UNIT_VERTICES = Array.from({ length: 10 }, (_, i) => {
   const isOuter = i % 2 === 0;
-  const angle = (i * 36 - 90) * Math.PI / 180;
+  const angle = ((i * 36 - 90) * Math.PI) / 180;
   const radius = isOuter ? 1 : STAR_INNER_RATIO;
   return {
     x: radius * Math.cos(angle),
@@ -154,16 +157,19 @@ export const CONFETTI_RECT_3_HEIGHT_RATIO = 1.0;
 // ============ 尺寸配置 ============
 
 /** 尺寸 CSS 類別對照表 */
-export const SIZE_CLASSES: Record<'xs' | 'sm' | 'md' | 'lg' | 'xl', string> = {
-  xs: 'w-12 h-12',
-  sm: 'w-20 h-20',
-  md: 'w-32 h-32',
-  lg: 'w-40 h-40',
-  xl: 'w-56 h-56',
+export const SIZE_CLASSES: Record<"xs" | "sm" | "md" | "lg" | "xl", string> = {
+  xs: "w-12 h-12",
+  sm: "w-20 h-20",
+  md: "w-32 h-32",
+  lg: "w-40 h-40",
+  xl: "w-56 h-56",
 };
 
 // ============ 工具函式 ============
 
 /** 鏡像 SVG 路徑 (x -> 200-x) */
 export const mirrorPath = (path: string) =>
-  path.replace(/(\d+)\s+(\d+)/g, (_, x, y) => `${CANVAS_SIZE - parseInt(x)} ${y}`);
+  path.replace(
+    /(\d+)\s+(\d+)/g,
+    (_, x, y) => `${CANVAS_SIZE - parseInt(x)} ${y}`,
+  );

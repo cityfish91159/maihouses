@@ -1,17 +1,20 @@
-import React from 'react';
-import { STRINGS } from '../../../constants/strings';
+import React from "react";
+import { STRINGS } from "../../../constants/strings";
 
 // Loading State
 export const WallLoading: React.FC = () => {
   return (
-    <div 
-      className="space-y-4" 
-      role="status" 
-      aria-busy="true" 
+    <div
+      className="space-y-4"
+      role="status"
+      aria-busy="true"
       aria-label={STRINGS.WALL_STATES.LOADING_LABEL}
     >
       {[1, 2, 3].map((i) => (
-        <div key={i} className="animate-pulse rounded-lg border border-gray-100 bg-white p-4 shadow-sm">
+        <div
+          key={i}
+          className="animate-pulse rounded-lg border border-gray-100 bg-white p-4 shadow-sm"
+        >
           <div className="mb-2 flex items-start justify-between">
             <div className="flex items-center gap-2">
               <div className="h-4 w-20 rounded bg-gray-200"></div>
@@ -43,14 +46,18 @@ interface WallErrorProps {
   icon?: React.ReactNode;
 }
 
-export const WallError: React.FC<WallErrorProps> = ({ 
+export const WallError: React.FC<WallErrorProps> = ({
   title = STRINGS.WALL_STATES.ERROR_TITLE,
-  message = STRINGS.WALL_STATES.ERROR_DEFAULT, 
+  message = STRINGS.WALL_STATES.ERROR_DEFAULT,
   onRetry,
-  icon = <span className="text-4xl" role="img" aria-hidden="true">😵</span>
+  icon = (
+    <span className="text-4xl" role="img" aria-hidden="true">
+      😵
+    </span>
+  ),
 }) => {
   return (
-    <div 
+    <div
       className="flex flex-col items-center justify-center py-12 text-center"
       role="alert"
     >
@@ -58,7 +65,7 @@ export const WallError: React.FC<WallErrorProps> = ({
       <h3 className="mb-2 text-lg font-medium text-gray-900">{title}</h3>
       <p className="mb-6 text-gray-500">{message}</p>
       {onRetry && (
-        <button 
+        <button
           onClick={onRetry}
           className="rounded-md bg-brand-500 px-4 py-2 text-white transition-colors hover:bg-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2"
         >
@@ -76,10 +83,14 @@ interface WallEmptyProps {
   icon?: React.ReactNode;
 }
 
-export const WallEmpty: React.FC<WallEmptyProps> = ({ 
+export const WallEmpty: React.FC<WallEmptyProps> = ({
   title = STRINGS.WALL_STATES.EMPTY_TITLE,
   message = STRINGS.WALL_STATES.EMPTY_DEFAULT,
-  icon = <span className="text-4xl" role="img" aria-hidden="true">🍃</span>
+  icon = (
+    <span className="text-4xl" role="img" aria-hidden="true">
+      🍃
+    </span>
+  ),
 }) => {
   return (
     <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-gray-200 bg-gray-50 py-12 text-center">

@@ -4,8 +4,8 @@
  */
 
 // 核心組件
-export { MaiMaiBase } from './MaiMaiBase';
-export { MaiMaiSpeech } from './MaiMaiSpeech';
+export { MaiMaiBase } from "./MaiMaiBase";
+export { MaiMaiSpeech } from "./MaiMaiSpeech";
 
 // SVG 部件（可用於組合）
 export {
@@ -19,11 +19,11 @@ export {
   Legs,
   Blush,
   Effects,
-} from './MaiMaiBase';
+} from "./MaiMaiBase";
 
 // Hooks
-export { useMaiMaiMood, useMascotCelebrateEvent } from './useMaiMaiMood';
-export { useConfetti } from './useConfetti';
+export { useMaiMaiMood, useMascotCelebrateEvent } from "./useMaiMaiMood";
+export { useConfetti } from "./useConfetti";
 
 // 型別
 export type {
@@ -35,7 +35,7 @@ export type {
   ArmPose,
   EyeState,
   MouthShape,
-} from './types';
+} from "./types";
 
 // 常數
-export { SIZE_CLASSES } from './types';
+export { SIZE_CLASSES } from "./types";

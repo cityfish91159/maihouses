@@ -1,112 +1,124 @@
-import { safeLocalStorage } from '../lib/safeStorage';
-import { logger } from '../lib/logger';
+import { safeLocalStorage } from "../lib/safeStorage";
+import { logger } from "../lib/logger";
 
 export interface AppConfig {
-  apiBaseUrl: string
-  appVersion: string
-  minBackend: string
-  features: Record<string, boolean>
+  apiBaseUrl: string;
+  appVersion: string;
+  minBackend: string;
+  features: Record<string, boolean>;
 }
 
 export type RuntimeOverrides = {
-  mock?: boolean
-  latency?: number
-  error?: number
-  q?: string
-  devtools?: '1' | '0'
-  features?: Record<string, boolean>
-  apiBaseUrl?: string
-  mockSeed?: string
-}
+  mock?: boolean;
+  latency?: number;
+  error?: number;
+  q?: string;
+  devtools?: "1" | "0";
+  features?: Record<string, boolean>;
+  apiBaseUrl?: string;
+  mockSeed?: string;
+};
 
-const LS = 'maihouse_config'
+const LS = "maihouse_config";
 
 const DEFAULT_CONFIG: AppConfig & Partial<RuntimeOverrides> = {
-  apiBaseUrl: '/api',
-  appVersion: 'local',
-  minBackend: '0',
+  apiBaseUrl: "/api",
+  appVersion: "local",
+  minBackend: "0",
   features: {},
   mock: true,
   latency: 0,
   error: 0,
-}
+};
 
 async function fetchJson(url: string) {
-  const r = await fetch(url)
+  const r = await fetch(url);
   if (!r.ok) {
-    throw new Error(`Failed to fetch ${url}: ${r.status}`)
+    throw new Error(`Failed to fetch ${url}: ${r.status}`);
   }
-  return r.json()
+  return r.json();
 }
 
 function isValidConfig(obj: unknown): obj is AppConfig {
   return (
     obj !== null &&
-    typeof obj === 'object' &&
-    'apiBaseUrl' in obj &&
-    typeof (obj as Record<string, unknown>).apiBaseUrl === 'string' &&
-    'appVersion' in obj &&
-    typeof (obj as Record<string, unknown>).appVersion === 'string' &&
-    'minBackend' in obj &&
-    typeof (obj as Record<string, unknown>).minBackend === 'string' &&
-    'features' in obj &&
-    typeof (obj as Record<string, unknown>).features === 'object'
-  )
+    typeof obj === "object" &&
+    "apiBaseUrl" in obj &&
+    typeof (obj as Record<string, unknown>).apiBaseUrl === "string" &&
+    "appVersion" in obj &&
+    typeof (obj as Record<string, unknown>).appVersion === "string" &&
+    "minBackend" in obj &&
+    typeof (obj as Record<string, unknown>).minBackend === "string" &&
+    "features" in obj &&
+    typeof (obj as Record<string, unknown>).features === "object"
+  );
 }
 
 async function readBase(): Promise<AppConfig & Partial<RuntimeOverrides>> {
   // 1) localStorage cache
   try {
-    const cache = safeLocalStorage.getItem(LS)
+    const cache = safeLocalStorage.getItem(LS);
     if (cache) {
-      const parsed = JSON.parse(cache)
-      if (isValidConfig(parsed)) return parsed
+      const parsed = JSON.parse(cache);
+      if (isValidConfig(parsed)) return parsed;
     }
-  } catch { }
+  } catch {}
 
   // 2) remote app.config.json
-  const baseUrl = import.meta.env.BASE_URL || '/'
-  const url = `${window.location.origin}${baseUrl}app.config.json`
+  const baseUrl = import.meta.env.BASE_URL || "/";
+  const url = `${window.location.origin}${baseUrl}app.config.json`;
   try {
-    const remote = await fetchJson(url)
-    if (isValidConfig(remote)) return remote
+    const remote = await fetchJson(url);
+    if (isValidConfig(remote)) return remote;
   } catch (err) {
-    logger.warn('[config] fetch app.config.json failed, fallback to DEFAULT_CONFIG', { error: err })
+    logger.warn(
+      "[config] fetch app.config.json failed, fallback to DEFAULT_CONFIG",
+      { error: err },
+    );
   }
 
   // 3) hardcoded default to prevent white screen
-  return DEFAULT_CONFIG
+  return DEFAULT_CONFIG;
 }
 
 function getParamFromBoth(key: string): string | undefined {
-  const search = new URLSearchParams(location.search).get(key)
-  const i = location.hash.indexOf('?')
-  const hash = i > -1 ? new URLSearchParams(location.hash.slice(i)).get(key) : null
-  return (hash ?? search) ?? undefined
+  const search = new URLSearchParams(location.search).get(key);
+  const i = location.hash.indexOf("?");
+  const hash =
+    i > -1 ? new URLSearchParams(location.hash.slice(i)).get(key) : null;
+  return hash ?? search ?? undefined;
 }
 
 function pickParams() {
-  const slots = getParamFromBoth('slots')
+  const slots = getParamFromBoth("slots");
   const features = slots
-    ? slots.split(',').reduce<Record<string, boolean>>((a, s) => ((a[s.trim()] = true), a), {})
-    : undefined
+    ? slots
+        .split(",")
+        .reduce<
+          Record<string, boolean>
+        >((a, s) => ((a[s.trim()] = true), a), {})
+    : undefined;
 
   return {
-    apiBaseUrl: getParamFromBoth('api'),
+    apiBaseUrl: getParamFromBoth("api"),
     features,
-    mock: getParamFromBoth('mock') ? getParamFromBoth('mock') === '1' : undefined,
-    latency: getParamFromBoth('latency') ? +getParamFromBoth('latency')! : undefined,
-    error: getParamFromBoth('error') ? +getParamFromBoth('error')! : undefined,
-    q: getParamFromBoth('q'),
-    devtools: getParamFromBoth('devtools') as '1' | '0' | undefined,
-    mockSeed: getParamFromBoth('seed')
-  } as RuntimeOverrides
+    mock: getParamFromBoth("mock")
+      ? getParamFromBoth("mock") === "1"
+      : undefined,
+    latency: getParamFromBoth("latency")
+      ? +getParamFromBoth("latency")!
+      : undefined,
+    error: getParamFromBoth("error") ? +getParamFromBoth("error")! : undefined,
+    q: getParamFromBoth("q"),
+    devtools: getParamFromBoth("devtools") as "1" | "0" | undefined,
+    mockSeed: getParamFromBoth("seed"),
+  } as RuntimeOverrides;
 }
 
 export async function getConfig(): Promise<AppConfig & RuntimeOverrides> {
   try {
-    const base = await readBase()
-    const o = pickParams()
+    const base = await readBase();
+    const o = pickParams();
     const baseWithOverrides = base as AppConfig & Partial<RuntimeOverrides>;
     const merged: AppConfig & RuntimeOverrides = {
       ...base,
@@ -114,22 +126,24 @@ export async function getConfig(): Promise<AppConfig & RuntimeOverrides> {
       mock: o.mock ?? baseWithOverrides.mock ?? true,
       latency: o.latency ?? baseWithOverrides.latency ?? 0,
       error: o.error ?? baseWithOverrides.error ?? 0,
-    }
+    };
 
     try {
-      safeLocalStorage.setItem(LS, JSON.stringify(merged))
-    } catch { }
+      safeLocalStorage.setItem(LS, JSON.stringify(merged));
+    } catch {}
 
-    return merged
+    return merged;
   } catch (err) {
-    logger.error('[config] getConfig failed, using DEFAULT_CONFIG', { error: err })
+    logger.error("[config] getConfig failed, using DEFAULT_CONFIG", {
+      error: err,
+    });
     const merged: AppConfig & RuntimeOverrides = {
       ...DEFAULT_CONFIG,
       ...pickParams(),
       mock: true,
       latency: 0,
       error: 0,
-    }
-    return merged
+    };
+    return merged;
   }
 }

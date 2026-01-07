@@ -1,14 +1,14 @@
-import { useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
-import { BACKUP_REVIEWS } from '../../../constants/data'
-import { HomeCard } from '../components/HomeCard'
-import { ReviewCard } from '../components/ReviewCard'
-import { getFeaturedHomeReviews } from '../../../services/communityService'
-import type { ReviewForUI } from '../../../types/review'
+import { useCallback } from "react";
+import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { BACKUP_REVIEWS } from "../../../constants/data";
+import { HomeCard } from "../components/HomeCard";
+import { ReviewCard } from "../components/ReviewCard";
+import { getFeaturedHomeReviews } from "../../../services/communityService";
+import type { ReviewForUI } from "../../../types/review";
 
 // V4: Extract hardcoded URL
-const SEED_REVIEWS_URL = '/maihouses/community-wall_mvp.html';
+const SEED_REVIEWS_URL = "/maihouses/community-wall_mvp.html";
 
 /**
  * 將 ReviewForUI 轉換為 ReviewCard 所需格式
@@ -17,13 +17,13 @@ const SEED_REVIEWS_URL = '/maihouses/community-wall_mvp.html';
  * - 保留 source 和 communityId 供點擊導向使用
  */
 interface ReviewWithNavigation {
-  originalId: string;   // 原始 UUID，用於 React key
-  displayId: string;    // 顯示用字母 (給 ReviewCard)
+  originalId: string; // 原始 UUID，用於 React key
+  displayId: string; // 顯示用字母 (給 ReviewCard)
   name: string;
   rating: number;
   tags: string[];
   content: string;
-  source: 'real' | 'seed';
+  source: "real" | "seed";
   communityId: string | null;
 }
 
@@ -33,7 +33,7 @@ interface ReviewWithNavigation {
  */
 function mapToReviewWithNavigation(review: ReviewForUI): ReviewWithNavigation {
   return {
-    originalId: review.id,      // 原始 UUID
+    originalId: review.id, // 原始 UUID
     displayId: review.displayId, // 顯示用字母
     name: review.name,
     rating: review.rating,
@@ -49,10 +49,12 @@ function mapToReviewWithNavigation(review: ReviewForUI): ReviewWithNavigation {
  * backup.id 本身就是唯一字母，同時用於 originalId 和 displayId
  * V3: BACKUP_REVIEWS 現在已包含 source 和 communityId
  */
-function mapBackupToReviewWithNavigation(backup: typeof BACKUP_REVIEWS[number]): ReviewWithNavigation {
+function mapBackupToReviewWithNavigation(
+  backup: (typeof BACKUP_REVIEWS)[number],
+): ReviewWithNavigation {
   return {
     originalId: backup.id, // H5: Use stable ID directly
-    displayId: backup.id,  // 顯示用字母
+    displayId: backup.id, // 顯示用字母
     name: backup.name,
     rating: backup.rating,
     tags: backup.tags,
@@ -64,7 +66,7 @@ function mapBackupToReviewWithNavigation(backup: typeof BACKUP_REVIEWS[number]):
 
 /**
  * P9-3: 首頁社區評價區塊
- * 
+ *
  * 改用 React Query 從 API 取得資料 (V2)
  * - Loading 時顯示 skeleton
  * - Error 時使用 BACKUP_REVIEWS 保底
@@ -74,8 +76,12 @@ export default function CommunityTeaser() {
   const navigate = useNavigate();
 
   // V2: Use React Query instead of useEffect + useState
-  const { data: apiReviews, isLoading, isError } = useQuery({
-    queryKey: ['featured-reviews'],
+  const {
+    data: apiReviews,
+    isLoading,
+    isError,
+  } = useQuery({
+    queryKey: ["featured-reviews"],
     queryFn: getFeaturedHomeReviews,
     staleTime: 5 * 60 * 1000, // 5 minutes
     retry: 1, // U2: Retry once (handled by React Query now)
@@ -83,18 +89,22 @@ export default function CommunityTeaser() {
 
   // Determine which reviews to show
   // If error or no data, fallback to BACKUP_REVIEWS
-  const reviews = isError || !apiReviews
-    ? BACKUP_REVIEWS.map(mapBackupToReviewWithNavigation)
-    : apiReviews.map(mapToReviewWithNavigation);
+  const reviews =
+    isError || !apiReviews
+      ? BACKUP_REVIEWS.map(mapBackupToReviewWithNavigation)
+      : apiReviews.map(mapToReviewWithNavigation);
 
   // V1: Extract click handler with useCallback to avoid duplication
-  const handleReviewClick = useCallback((review: ReviewWithNavigation) => {
-    if (review.source === 'real' && review.communityId) {
-      navigate(`/community/${review.communityId}/wall`);
-    } else {
-      window.location.href = SEED_REVIEWS_URL; // V4: Use constant
-    }
-  }, [navigate]);
+  const handleReviewClick = useCallback(
+    (review: ReviewWithNavigation) => {
+      if (review.source === "real" && review.communityId) {
+        navigate(`/community/${review.communityId}/wall`);
+      } else {
+        window.location.href = SEED_REVIEWS_URL; // V4: Use constant
+      }
+    },
+    [navigate],
+  );
 
   // Loading skeleton
   if (isLoading) {
@@ -104,7 +114,9 @@ export default function CommunityTeaser() {
           <div className="pointer-events-none absolute -right-6 -top-6 size-24 rounded-full bg-white/5 blur-2xl" />
           <div className="relative z-10 flex items-center gap-2.5">
             <div className="size-1.5 rounded-full bg-accent-alert shadow-alert-glow" />
-            <h3 className="text-shadow-sm m-0 text-lg font-black tracking-wide text-white">社區評價</h3>
+            <h3 className="text-shadow-sm m-0 text-lg font-black tracking-wide text-white">
+              社區評價
+            </h3>
             <span className="rounded-full border border-white/20 bg-white/95 px-2.5 py-0.5 text-[11px] font-bold text-brand-700 shadow-sm backdrop-blur-sm">
               聚合
             </span>
@@ -114,7 +126,10 @@ export default function CommunityTeaser() {
         {/* Skeleton Grid */}
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div key={i} className="animate-pulse rounded-2xl border border-brand-100 bg-white p-3.5">
+            <div
+              key={i}
+              className="animate-pulse rounded-2xl border border-brand-100 bg-white p-3.5"
+            >
               <div className="flex gap-3">
                 <div className="size-[38px] rounded-full bg-gray-200" />
                 <div className="flex-1 space-y-2">
@@ -141,12 +156,14 @@ export default function CommunityTeaser() {
 
         <div className="relative z-10 flex items-center gap-2.5">
           <div className="size-1.5 rounded-full bg-accent-alert shadow-alert-glow" />
-          <h3 className="text-shadow-sm m-0 text-lg font-black tracking-wide text-white">社區評價</h3>
+          <h3 className="text-shadow-sm m-0 text-lg font-black tracking-wide text-white">
+            社區評價
+          </h3>
           <span className="rounded-full border border-white/20 bg-white/95 px-2.5 py-0.5 text-[11px] font-bold text-brand-700 shadow-sm backdrop-blur-sm">
             聚合
           </span>
         </div>
-        
+
         {/* Error indicator - 小提示，不影響 UI */}
         {isError && (
           <span className="relative z-10 rounded-full bg-yellow-500/20 px-2 py-0.5 text-[10px] text-yellow-100">
@@ -161,7 +178,8 @@ export default function CommunityTeaser() {
             key={review.originalId}
             onClick={() => handleReviewClick(review)}
             onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') { // Fix Lie 7: Support Space key
+              if (e.key === "Enter" || e.key === " ") {
+                // Fix Lie 7: Support Space key
                 e.preventDefault(); // Prevent scrolling for Space
                 handleReviewClick(review);
               }
@@ -195,6 +213,5 @@ export default function CommunityTeaser() {
         </span>
       </a>
     </HomeCard>
-  )
+  );
 }
-

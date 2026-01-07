@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import React, { memo } from "react";
 
 export const EmptyState = memo(() => {
   return (
@@ -9,7 +9,8 @@ export const EmptyState = memo(() => {
           歡迎來到邁房子 ☺️
         </p>
         <p className="mx-auto text-sm leading-relaxed text-slate-500">
-          買房不只看物件，更要看生活。<br/>
+          買房不只看物件，更要看生活。
+          <br />
           這裡有真實住戶分享，我們一起慢慢看
         </p>
       </div>
@@ -17,4 +18,4 @@ export const EmptyState = memo(() => {
   );
 });
 
-EmptyState.displayName = 'EmptyState';
+EmptyState.displayName = "EmptyState";
