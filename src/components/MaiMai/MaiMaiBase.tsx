@@ -137,7 +137,7 @@ export function Body() {
       height={BODY_HEIGHT}
       stroke="currentColor"
       strokeWidth="6"
-      fill="none"
+      fill="var(--maimai-body-fill, none)"
       strokeLinecap="round"
       strokeLinejoin="round"
     />
@@ -296,6 +296,10 @@ export function Eyes({ mood = "idle" }: { mood?: MaiMaiMood }) {
 /** 嘴巴 */
 export function Mouth({ mood = "idle" }: { mood?: MaiMaiMood }) {
   const config = MOOD_CONFIGS[mood] || MOOD_CONFIGS.default;
+
+  // header 模式無嘴巴（空字串）
+  if (!config.mouth) return null;
+
   return (
     <path
       d={config.mouth}
@@ -746,6 +750,7 @@ export function MaiMaiBase({
   animated = true,
   onClick,
   showEffects = true,
+  style,
 }: MaiMaiBaseProps) {
   const activeMood = mood;
 
@@ -788,6 +793,7 @@ export function MaiMaiBase({
   return (
     <div
       className={`relative ${SIZE_CLASSES[size]} ${className} ${onClick ? "cursor-pointer" : ""}`}
+      style={style}
       {...interactiveProps}
     >
       {/* 背景光暈 */}

@@ -237,6 +237,7 @@ export const EFFECT_POSITIONS: Record<MaiMaiMood | "default", EffectItem[]> = {
   idle: [],
   peek: [],
   confused: [],
+  header: [], // Header 專用：無特效
   celebrate: CONFETTI_EFFECTS,
   excited: CONFETTI_EFFECTS,
   happy: [
@@ -353,5 +354,14 @@ export const MOOD_CONFIGS: Record<MaiMaiMood | "default", MoodConfig> = {
     mouth: mouth.sleep(),
     arms: { left: arm(ARM.sleep) },
     antenna: { droopy: true },
+  },
+
+  // Header 專用：與原版 SVG 完全一致
+  // - 無嘴巴、無眨眼動畫、手臂向上揮舞
+  header: {
+    eyebrows: brow.neutral(),
+    eyes: eyes.circle(false), // 禁用眨眼動畫
+    mouth: "", // 空字串：無嘴巴
+    arms: { left: arm(ARM.header, "up") }, // 手臂向上 [20, 30]
   },
 };

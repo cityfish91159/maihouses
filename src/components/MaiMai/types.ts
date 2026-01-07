@@ -16,7 +16,8 @@ export type MaiMaiMood =
   | "confused" // 困惑
   | "celebrate" // 慶祝,撒花
   | "shy" // 害羞/錯誤
-  | "sleep"; // 睡著
+  | "sleep" // 睡著
+  | "header"; // Header 專用：靜態揮手,無嘴巴,無眨眼
 
 /** 尺寸配置 */
 export type MaiMaiSize = "xs" | "sm" | "md" | "lg" | "xl";
@@ -69,6 +70,8 @@ export interface MaiMaiBaseProps {
   onClick?: () => void;
   speechBubble?: string;
   showEffects?: boolean;
+  /** CSS 樣式（支援 CSS variables 如 --maimai-body-fill） */
+  style?: React.CSSProperties;
 }
 
 /** MaiMai 心情狀態機 Hook 參數 */

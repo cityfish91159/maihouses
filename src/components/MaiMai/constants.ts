@@ -101,6 +101,7 @@ export const ARM = {
   wave: [17, 18],
   celebrate: [40, 48],
   think: [20, 10],
+  header: [20, 30], // Header 專用：向上揮手，與原版 SVG 完全一致
   shy: [
     [13, 12],
     [19, -2],

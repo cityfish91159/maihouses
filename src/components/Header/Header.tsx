@@ -1,18 +1,10 @@
-import React, { useState, useCallback, useEffect, useRef } from "react";
+import React, { useState, useCallback } from "react";
 import { Search, LogIn, UserPlus, List, Menu, X } from "lucide-react";
 import { Logo } from "../Logo/Logo";
 import { ROUTES, RouteUtils } from "../../constants/routes";
-import { useMaiMai } from "../../context/MaiMaiContext";
-import { MaiMaiBase } from "../MaiMai/MaiMaiBase";
-import { MaiMaiSpeech } from "../MaiMai/MaiMaiSpeech";
-import { TUTORIAL_CONFIG } from "../../constants/tutorial";
+import { MaiMaiBase } from "../MaiMai";
 
 export default function Header() {
-  // MaiMai 教學系統
-  const { mood, setMood, messages, addMessage } = useMaiMai();
-  const [clickCount, setClickCount] = useState(0);
-
-  // Header 原有 state
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -38,66 +30,8 @@ export default function Header() {
     [handleSearch],
   );
 
-  // Track previous clickCount to detect celebration trigger
-  const prevClickCountRef = useRef(clickCount);
-
-  /** MaiMai 點擊互動：Pure state update only */
-  const handleMaiMaiClick = useCallback(() => {
-    setClickCount((prev) => {
-      const next = prev + 1;
-      // Pure calculation - reset at threshold
-      if (next === TUTORIAL_CONFIG.CELEBRATE_CLICK_COUNT_THRESHOLD) {
-        return 0;
-      }
-      return next;
-    });
-  }, []);
-
-  // Side effects: Monitor clickCount changes
-  useEffect(() => {
-    const prev = prevClickCountRef.current;
-    prevClickCountRef.current = clickCount;
-
-    // Skip initial render
-    if (prev === clickCount) return;
-
-    // Detect celebration (reached threshold, now reset to 0)
-    if (
-      prev === TUTORIAL_CONFIG.CELEBRATE_CLICK_COUNT_THRESHOLD - 1 &&
-      clickCount === 0
-    ) {
-      setMood("celebrate");
-      addMessage(TUTORIAL_CONFIG.MESSAGES.CELEBRATE);
-      window.dispatchEvent(new CustomEvent("mascot:celebrate"));
-      return;
-    }
-
-    // Skip if reset without celebration
-    if (clickCount === 0) return;
-
-    // Normal click progress
-    const tips = TUTORIAL_CONFIG.CLICK_TIPS;
-    const message = tips[clickCount - 1] || tips[0] || "";
-    setMood("happy");
-    addMessage(message);
-  }, [clickCount, setMood, addMessage]);
-
-  /** 搜尋框聚焦:顯示搜尋提示 */
-  const handleSearchFocus = useCallback(() => {
-    setMood("thinking");
-    addMessage(TUTORIAL_CONFIG.MESSAGES.SEARCH_HINT);
-  }, [setMood, addMessage]);
-
   return (
     <>
-      {/* ARIA Live Region for Screen Readers */}
-      <div
-        id={TUTORIAL_CONFIG.ARIA.LIVE_REGION_ID}
-        aria-live={TUTORIAL_CONFIG.ARIA.POLITENESS}
-        aria-atomic="true"
-        className="sr-only"
-      />
-
       {/* Navigation Bar */}
       <header className="sticky top-0 z-overlay border-b border-brand-100 bg-white/95 shadow-sm backdrop-blur-sm transition-all">
         <div className="mx-auto flex h-16 max-w-[1120px] items-center justify-between px-4">
@@ -254,89 +188,16 @@ export default function Header() {
                 <div className="absolute -bottom-2.5 right-3 size-5 rotate-45 border-b-2 border-r-2 border-brand-100 bg-white"></div>
               </div>
 
-              {/* Mascot SVG */}
-              <div className="relative z-10 size-20 md:size-24">
-                <svg
-                  viewBox="0 0 200 240"
-                  className="size-full text-brand-700 drop-shadow-sm"
-                >
-                  {/* M-Antenna */}
-                  <path
-                    d="M 85 40 L 85 15 L 100 30 L 115 15 L 115 40"
-                    stroke="currentColor"
-                    strokeWidth="5"
-                    fill="none"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                  {/* House Body & Roof */}
-                  <path
-                    d="M 40 80 L 100 40 L 160 80"
-                    stroke="currentColor"
-                    strokeWidth="6"
-                    fill="none"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                  <rect
-                    x="55"
-                    y="80"
-                    width="90"
-                    height="100"
-                    stroke="currentColor"
-                    strokeWidth="6"
-                    fill="#F6F9FF"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                  {/* Face */}
-                  <path
-                    d="M 78 110 Q 85 105 92 110"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                    fill="none"
-                    strokeLinecap="round"
-                  />
-                  <path
-                    d="M 108 110 Q 115 105 122 110"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                    fill="none"
-                    strokeLinecap="round"
-                  />
-                  <circle
-                    cx="85"
-                    cy="125"
-                    r="4"
-                    stroke="currentColor"
-                    strokeWidth="3"
-                    fill="none"
-                  />
-                  <circle
-                    cx="115"
-                    cy="125"
-                    r="4"
-                    stroke="currentColor"
-                    strokeWidth="3"
-                    fill="none"
-                  />
-                  {/* Hands - Waving */}
-                  <path
-                    d="M 55 130 L 35 100"
-                    stroke="currentColor"
-                    strokeWidth="5"
-                    fill="none"
-                    strokeLinecap="round"
-                  />
-                  <path
-                    d="M 145 130 L 165 100"
-                    stroke="currentColor"
-                    strokeWidth="5"
-                    fill="none"
-                    strokeLinecap="round"
-                  />
-                </svg>
-              </div>
+              {/* Mascot - MaiMaiBase Component */}
+              <MaiMaiBase
+                mood="header"
+                className="relative z-10 size-20 md:size-24"
+                animated={false}
+                showEffects={false}
+                style={
+                  { "--maimai-body-fill": "#F6F9FF" } as React.CSSProperties
+                }
+              />
             </div>
 
             {/* Search Box */}
@@ -353,7 +214,6 @@ export default function Header() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  onFocus={handleSearchFocus}
                   placeholder="找評價最高的社區、捷運站周邊好屋..."
                   className="size-full bg-transparent text-lg font-bold text-gray-700 outline-none placeholder:font-medium placeholder:text-gray-400"
                 />
