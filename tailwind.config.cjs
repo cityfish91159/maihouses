@@ -65,6 +65,37 @@ module.exports = {
           100: '#F5F7FA',  // button hover
           80: '#E8F0FF',   // button hover alt
         },
+        // Grade Colors - UAG 評級徽章
+        grade: {
+          s: {
+            bg: '#e8faef',
+            border: '#cbead4',
+            text: '#107a39',
+          },
+          a: {
+            bg: '#e8faef',
+            border: '#cbead4',
+            text: '#107a39',
+          },
+          b: {
+            bg: '#f1f5f9',
+            border: '#e2e8f0',
+            text: '#64748b',
+          },
+        },
+        // Badge Colors - 各類徽章
+        badge: {
+          customer: {
+            bg: '#faefe5',
+            border: '#f5d0a9',
+            text: '#92400e',
+          },
+          trust: {
+            bg: '#eef3ff',
+            border: '#cddcff',
+            text: '#173a7c',
+          },
+        },
       },
       /**
        * 🌑 Semantic Box Shadows - rgba(var()) Pattern
