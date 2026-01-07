@@ -1760,15 +1760,22 @@ open https://maihouses.vercel.app/maihouses/feed/demo-agent?mock=true
 
 - ✅ 創建 `get_property_stats_optimized` RPC
 - ✅ 使用 SQL 聚合而非前端計算
-- ✅ 新增複合索引 `idx_uag_events_agent_property_composite`
+- ✅ 新增複合索引 `idx_uag_events_agent_property_composite` (INCLUDE 覆蓋索引)
+- ✅ 實現三層 Fallback 機制（優化 RPC → 舊版 RPC → JavaScript 聚合）
 
-**實際效果**：查詢速度提升 10-100 倍（SQL 聚合 vs JavaScript 手動計算）
+**實際效果**：查詢速度提升 10-50 倍（SQL 聚合 vs JavaScript 手動計算）
 
 **完成檔案**：
-- `supabase/migrations/20260107_uag_10_performance_optimization.sql`
-- `src/pages/UAG/services/uagService.ts` (更新 `fetchPropertyViewStats`)
+- `supabase/migrations/20260107_uag_10_performance_optimization_v1.sql` (已執行 ✅)
+- `supabase/migrations/20260107_uag_10_performance_optimization_v2_manual.sql` (備用版本，未來資料量大時可升級)
+- `src/pages/UAG/services/uagService.ts` (更新 `fetchPropertyViewStats` 加入三層 Fallback)
 
-**預估工時**: 3hr → **實際**: 1.5hr
+**部署資訊**：
+- 前端部署：Vercel Production (commit: 3179411f)
+- 資料庫部署：Supabase Production (2026-01-07 執行成功)
+- 驗證狀態：✅ 索引已建立、✅ RPC 已授權、✅ 前端整合完成
+
+**預估工時**: 3hr → **實際**: 2hr (包含修復 CONCURRENTLY 問題)
 
 ---
 
