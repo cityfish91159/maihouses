@@ -1,8 +1,8 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import Feed from '../index';
 import { ROUTES } from '../../../constants/routes';
+import { STRINGS } from '../../../constants/strings';
 
 // Mock child components to focus on routing and role logic
 // Mock child components to focus on routing and role logic
@@ -149,4 +149,22 @@ describe('Feed Integration & Routing Flow', () => {
         fireEvent.click(toggleBtnBack);
         expect(await screen.findByTestId('agent-page')).toBeInTheDocument();
     });
+
+    it('Flow 4: Mock Param Bypasses Role Lookup', async () => {
+        render(
+            <MemoryRouter initialEntries={['/maihouses/feed/real-agent?mock=true']}>
+                <Routes>
+                    <Route path="/maihouses/feed/:userId" element={<Feed />} />
+                </Routes>
+            </MemoryRouter>
+        );
+
+        expect(await screen.findByTestId('consumer-page')).toBeInTheDocument();
+        expect(mockFrom).not.toHaveBeenCalled();
+
+        const toggleBtn = await screen.findByTitle(STRINGS.AGENT.OOS.SWITCH_TO_AGENT);
+        fireEvent.click(toggleBtn);
+        expect(await screen.findByTestId('agent-page')).toBeInTheDocument();
+    });
+
 });

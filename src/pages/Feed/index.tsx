@@ -37,6 +37,12 @@ export default function Feed() {
       return;
     }
 
+    if (forceMock) {
+      setRole(userId === 'demo-agent' ? 'agent' : 'member');
+      setLoading(false);
+      return;
+    }
+
     // Demo 預設給 Agent 讓他們可以切換
     if (isDemo) {
       setRole(userId === 'demo-agent' ? 'agent' : 'member');
@@ -64,7 +70,7 @@ export default function Feed() {
     };
 
     fetchRole();
-  }, [userId, isDemo]);
+  }, [userId, isDemo, forceMock]);
 
   // Decide active role
   const activeRole = overrideRole || role;

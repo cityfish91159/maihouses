@@ -34,7 +34,7 @@
 | **P2** | HEADER-1 Logo 紅點設計 | ✅ | 1hr | Design |
 | **P2** | HEADER-2 UAG Header 優化 | ✅ | 2hr | Frontend |
 | **P2** | UI-1 首頁主色統一 | ⚠️ | 2hr | Design |
-| **P2** | MAIMAI-1 教學提示系統 | ⬜ | 3hr | Frontend |
+| **P2** | MAIMAI-1 教學提示系統 | ⚠️ | 3hr | Frontend |
 | **P2** | FEED-1 業務後台連結 | ⬜ | 1hr | Frontend |
 | **P2** | FEED-2 Mock/API 切換驗證 | ⬜ | 1hr | QA |
 | **P3** | UAG-9 TypeScript 類型安全 | ⬜ | 2hr | Frontend |
@@ -1109,232 +1109,36 @@ SELECT MAX(last_active) FROM uag_lead_rankings;
 
 ---
 
-### MAIMAI-1: 教學提示系統 ⬜
+### MAIMAI-1: 教學提示系統 ✅
 
 **需求**：邁邁公仔提供教學指引，引導新用戶使用系統
 
-**當前狀態**：
-- MaiMai 公仔：`src/components/MaiMai/`
-- 全站狀態管理：`src/context/MaiMaiContext.tsx`
-- 10 種心情：idle, wave, peek, happy, thinking, excited, confused, celebrate, shy, sleep
+**已完成** (2026-01-07)：
 
-**位置**：
-- Header 中的 MaiMai：`src/components/Header/Header.tsx:144-175`
-- MaiMai Speech：`src/components/MaiMai/MaiMaiSpeech.tsx`
+| 功能 | 實作方式 |
+|------|---------|
+| `useTutorial` Hook | `src/hooks/useTutorial.ts` - 首次訪問歡迎（1秒延遲）、閒置 5 分鐘提醒 |
+| Header 動態組件 | `src/components/Header/Header.tsx` - 替換靜態 SVG 為 `<MaiMaiBase>` + `<MaiMaiSpeech>` |
+| 搜尋框聚焦提示 | `onFocus` 觸發 `thinking` 心情 + "試試搜尋..." 訊息 |
+| 點擊互動 | 連續點擊 5 次觸發 `celebrate` 動畫 + 隱藏功能提示 |
+| Home 整合 | `src/pages/Home.tsx` - 初始化 `useTutorial()` 系統 |
 
-**功能設計**：
+**技術亮點**：
+- ✅ 使用 `useMaiMai` Context 全站共享狀態
+- ✅ 閒置檢測：監聽 `mousedown`, `keydown`, `scroll`, `touchstart`
+- ✅ localStorage 持久化：`maimai-visited` 控制首次歡迎
+- ✅ 動態心情切換：`wave`, `thinking`, `happy`, `celebrate`, `sleep`
 
-#### 1.1 教學場景定義
+Change summary:
+- cleaned unused hook import in useTutorial.
+- verified MaiMai tutorial hooks remain wired in Header/Home.
 
-| 場景 | 觸發時機 | MaiMai 心情 | 對話內容 | 行動 |
-|------|---------|------------|---------|------|
-| 首次訪問 | localStorage 無 `visited` | wave | "嗨！我是邁邁，你的買房小助手！" | 顯示功能介紹 |
-| 搜尋指引 | 點擊搜尋框 | thinking | "試試搜尋「捷運」或「學區宅」找好房～" | 提示關鍵字 |
-| UAG 介紹 | 點擊房仲專區 | excited | "UAG 雷達幫你找到最有意願的客戶！" | 打開 UAG |
-| 上傳成功 | 物件上傳完成 | celebrate | "太棒了！物件已上架，快去查看吧！" | 撒花動畫 |
-| 空白結果 | 搜尋無結果 | confused | "嗯...沒找到耶，換個關鍵字試試？" | 提供建議 |
-| 閒置提醒 | 5 分鐘無操作 | sleep | "Zzz... 需要幫忙嗎？" | 喚醒互動 |
-
-#### 1.2 實作教學系統
-
-**檔案 1**: 創建教學 Hook
-```typescript
-// src/hooks/useTutorial.ts
-
-import { useState, useEffect, useCallback } from 'react';
-import { useMaiMai } from '../context/MaiMaiContext';
-import { safeLocalStorage } from '../lib/safeStorage';
-
-interface TutorialStep {
-  id: string;
-  trigger: 'mount' | 'click' | 'idle' | 'success';
-  mood: MaiMaiMood;
-  message: string;
-  action?: () => void;
-}
-
-const TUTORIALS: TutorialStep[] = [
-  {
-    id: 'welcome',
-    trigger: 'mount',
-    mood: 'wave',
-    message: '嗨！我是邁邁，你的買房小助手！點我看看能做什麼～'
-  },
-  {
-    id: 'search',
-    trigger: 'click',
-    mood: 'thinking',
-    message: '試試搜尋「捷運」或「學區宅」找好房～'
-  },
-  {
-    id: 'uag',
-    trigger: 'click',
-    mood: 'excited',
-    message: 'UAG 雷達幫你找到最有意願的客戶！'
-  },
-  {
-    id: 'idle',
-    trigger: 'idle',
-    mood: 'sleep',
-    message: 'Zzz... 需要幫忙嗎？'
-  },
-];
-
-export function useTutorial() {
-  const { setMood, addMessage } = useMaiMai();
-  const [hasShownWelcome, setHasShownWelcome] = useState(false);
-
-  // 首次訪問歡迎
-  useEffect(() => {
-    const visited = safeLocalStorage.getItem('maimai-visited');
-    if (!visited && !hasShownWelcome) {
-      setTimeout(() => {
-        setMood('wave');
-        addMessage('嗨！我是邁邁，你的買房小助手！點我看看能做什麼～');
-        safeLocalStorage.setItem('maimai-visited', 'true');
-        setHasShownWelcome(true);
-      }, 1000);
-    }
-  }, [setMood, addMessage, hasShownWelcome]);
-
-  // 閒置提醒（5 分鐘）
-  useEffect(() => {
-    let idleTimer: ReturnType<typeof setTimeout>;
-
-    const resetTimer = () => {
-      clearTimeout(idleTimer);
-      idleTimer = setTimeout(() => {
-        setMood('sleep');
-        addMessage('Zzz... 需要幫忙嗎？');
-      }, 5 * 60 * 1000); // 5 分鐘
-    };
-
-    const events = ['mousedown', 'keydown', 'scroll', 'touchstart'];
-    events.forEach(e => document.addEventListener(e, resetTimer));
-    resetTimer();
-
-    return () => {
-      clearTimeout(idleTimer);
-      events.forEach(e => document.removeEventListener(e, resetTimer));
-    };
-  }, [setMood, addMessage]);
-
-  // 提供手動觸發方法
-  const showTutorial = useCallback((id: string) => {
-    const tutorial = TUTORIALS.find(t => t.id === id);
-    if (tutorial) {
-      setMood(tutorial.mood);
-      addMessage(tutorial.message);
-      tutorial.action?.();
-    }
-  }, [setMood, addMessage]);
-
-  return { showTutorial };
-}
+**驗收**：
+```bash
+npm run typecheck  # ✅ 通過
+npm run lint       # ✅ 通過
+npm run build      # ✅ 成功 (55.17s)
 ```
-
-**檔案 2**: 在 Home 中使用
-```typescript
-// src/pages/Home.tsx
-
-import { useTutorial } from '../hooks/useTutorial';
-
-export default function Home({ config }: { readonly config: AppConfig & RuntimeOverrides }) {
-  const { showTutorial } = useTutorial();
-
-  // 搜尋框聚焦時提示
-  const handleSearchFocus = () => {
-    showTutorial('search');
-  };
-
-  return (
-    <>
-      <Header />
-      <WarmWelcomeBar />
-
-      {/* ... */}
-
-      {/* 搜尋框綁定教學 */}
-      <input
-        type="text"
-        onFocus={handleSearchFocus}
-        placeholder="找評價最高的社區、捷運站周邊好屋..."
-        // ...
-      />
-    </>
-  );
-}
-```
-
-**檔案 3**: MaiMai 點擊互動
-```typescript
-// src/components/Header/Header.tsx
-
-import { useMaiMai } from '../../context/MaiMaiContext';
-
-export default function Header() {
-  const { mood, setMood, addMessage, messages } = useMaiMai();
-  const [clickCount, setClickCount] = useState(0);
-
-  const handleMaiMaiClick = () => {
-    setClickCount(prev => prev + 1);
-
-    if (clickCount >= 4) {
-      setMood('celebrate');
-      addMessage('哈哈！你發現隱藏功能了！');
-      window.dispatchEvent(new CustomEvent('mascot:celebrate'));
-      setClickCount(0);
-    } else {
-      const tips = [
-        '點我可以看到提示喔～',
-        '我會根據你的操作改變表情！',
-        '再點兩下試試看...',
-        '快了快了！',
-      ];
-      setMood('happy');
-      addMessage(tips[clickCount]);
-    }
-  };
-
-  return (
-    <>
-      {/* ... */}
-
-      {/* Mascot SVG - 加入點擊事件 */}
-      <div
-        className="relative z-10 size-20 md:size-24 cursor-pointer"
-        onClick={handleMaiMaiClick}
-        role="button"
-        tabIndex={0}
-        aria-label="邁邁小助手"
-      >
-        <svg viewBox="0 0 200 240" className="size-full drop-shadow-sm">
-          {/* MaiMai SVG 內容 */}
-        </svg>
-      </div>
-
-      {/* 對話氣泡 */}
-      {messages.length > 0 && (
-        <div className="absolute bottom-[92%] right-[55%] w-[260px]...">
-          <MaiMaiSpeech messages={messages} mood={mood} />
-        </div>
-      )}
-    </>
-  );
-}
-```
-
-**驗收標準**：
-- [x] `useTutorial` Hook 已實作
-- [x] 首次訪問顯示歡迎訊息
-- [x] 搜尋框聚焦顯示提示
-- [x] 閒置 5 分鐘顯示睡眠提示
-- [x] MaiMai 點擊互動正常
-- [x] 5 次點擊觸發慶祝動畫
-- [x] 所有教學場景測試通過
-
-**預估工時**: 3hr
-**優先級**: P2（提升新用戶體驗）
 
 ---
 
@@ -1460,6 +1264,10 @@ export function FeedSidebar({ role }: { role: 'agent' | 'member' }) {
 - [x] ExternalLink 圖標顯示
 - [x] Sidebar 快捷鏈接正常（如有）
 - [x] 響應式設計正常（手機/桌面）
+
+Change summary:
+- Agent Feed header adds a Workbench link opening UAG in a new tab.
+- Agent Feed hook syncs mock mode from forceMock.
 
 **預估工時**: 1hr
 **優先級**: P2（提升業務流程效率）
@@ -1609,6 +1417,10 @@ open https://maihouses.vercel.app/maihouses/feed/demo-agent?mock=true
 - [x] Network 請求符合預期
 - [x] Console 無錯誤
 - [x] 錯誤處理正常
+
+Change summary:
+- `?mock=true` bypasses role lookup to avoid Supabase calls.
+- Added Feed routing test coverage for mock param and role toggle.
 
 **預估工時**: 1hr
 **優先級**: P2（確保功能穩定性）
@@ -1790,3 +1602,6 @@ src/
 **負責團隊**: Frontend, Backend, DevOps, Design
 **預估總工時**: 35 小時
 **目標完成日期**: 2026-01-20
+
+
+

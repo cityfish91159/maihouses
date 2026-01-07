@@ -1,13 +1,12 @@
 import { renderHook, act } from '@testing-library/react';
-import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { MaiMaiProvider, useMaiMai } from '../MaiMaiContext';
 import { safeLocalStorage } from '../../lib/safeStorage';
 
 // Mock safeLocalStorage
 vi.mock('../../lib/safeStorage', () => ({
   safeLocalStorage: {
-    getItem: vi.fn(),
-    setItem: vi.fn(),
+    getItem: vi.fn<(key: string) => string | null>(),
+    setItem: vi.fn<(key: string, value: string) => void>(),
   },
 }));
 
@@ -44,24 +43,30 @@ describe('MaiMaiContext', () => {
       });
 
       it('initializes with valid mood from storage', () => {
-        vi.mocked(safeLocalStorage.getItem).mockImplementation((key) => {
+        const mockGetItem = safeLocalStorage.getItem as unknown as {
+          mockImplementation: (fn: (key: string) => string | null) => void;
+        };
+        mockGetItem.mockImplementation((key: string) => {
           if (key === 'maimai-mood-v1') return 'happy';
           return null;
         });
 
         const { result } = renderHook(() => useMaiMai(), { wrapper });
-        
+
         expect(result.current.mood).toBe('happy');
       });
 
       it('initializes with idle when storage has invalid mood', () => {
-        vi.mocked(safeLocalStorage.getItem).mockImplementation((key) => {
+        const mockGetItem = safeLocalStorage.getItem as unknown as {
+          mockImplementation: (fn: (key: string) => string | null) => void;
+        };
+        mockGetItem.mockImplementation((key: string) => {
           if (key === 'maimai-mood-v1') return 'invalid_matrix_mood';
           return null;
         });
 
         const { result } = renderHook(() => useMaiMai(), { wrapper });
-        
+
         expect(result.current.mood).toBe('idle'); // Should fallback to idle
       });
 
@@ -162,13 +167,16 @@ describe('MaiMaiContext', () => {
       });
 
       it('handles corrupted message storage gracefully', () => {
-        vi.mocked(safeLocalStorage.getItem).mockImplementation((key) => {
+        const mockGetItem = safeLocalStorage.getItem as unknown as {
+          mockImplementation: (fn: (key: string) => string | null) => void;
+        };
+        mockGetItem.mockImplementation((key: string) => {
           if (key === 'maimai-messages-v1') return '{invalid_json}';
           return null;
         });
 
         const { result } = renderHook(() => useMaiMai(), { wrapper });
-        
+
         expect(result.current.messages).toEqual([]);
       });
 

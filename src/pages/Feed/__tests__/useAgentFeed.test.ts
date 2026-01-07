@@ -1,7 +1,8 @@
-import { describe, it, expect, vi } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useAgentFeed } from '../useAgentFeed';
 import { notify } from '../../../lib/notify';
+
+const mockSetUseMock = vi.fn();
 
 // Mock useFeedData
 vi.mock('../../../hooks/useFeedData', () => ({
@@ -13,6 +14,8 @@ vi.mock('../../../hooks/useFeedData', () => ({
         isLiked: vi.fn(() => false),
         viewerRole: 'agent',
         isAuthenticated: true,
+        useMock: false,
+        setUseMock: mockSetUseMock,
     }))
 }));
 
@@ -25,6 +28,9 @@ vi.mock('../../../lib/notify', () => ({
 }));
 
 describe('useAgentFeed Hook', () => {
+    beforeEach(() => {
+        mockSetUseMock.mockClear();
+    });
     it('should return combined feed data and agent stats', () => {
         const { result } = renderHook(() => useAgentFeed('agent-123'));
 
@@ -52,4 +58,10 @@ describe('useAgentFeed Hook', () => {
 
         expect(notify.success).toHaveBeenCalledWith('留言成功', '您的留言已發佈');
     });
+
+    it('should apply forceMock to feed state', () => {
+        renderHook(() => useAgentFeed('agent-123', true));
+        expect(mockSetUseMock).toHaveBeenCalledWith(true);
+    });
+
 });

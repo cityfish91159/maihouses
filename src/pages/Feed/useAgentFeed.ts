@@ -5,7 +5,7 @@
  * P6-REFACTOR: Mock 資料已抽離至 mockData/posts/agent.ts
  */
 
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useEffect } from 'react';
 import { useFeedData } from '../../hooks/useFeedData';
 import { notify } from '../../lib/notify';
 import { STRINGS } from '../../constants/strings';
@@ -46,6 +46,12 @@ export function useAgentFeed(userId?: string, forceMock?: boolean) {
         setUseMock,
         isAuthenticated
     } = feed;
+
+    useEffect(() => {
+        if (forceMock !== undefined) {
+            setUseMock(forceMock);
+        }
+    }, [forceMock, setUseMock]);
     // ...
     const handleComment = useCallback(async (postId: string | number, content: string) => {
         try {

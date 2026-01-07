@@ -4,7 +4,6 @@
  */
 
 import { renderHook, waitFor, act } from '@testing-library/react';
-import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
 
 // Mock dependencies BEFORE importing the hook
 const mockUseAuth = vi.fn();
@@ -14,7 +13,7 @@ vi.mock('../useAuth', () => ({
 
 // Mock Supabase with proper chain (including abortSignal)
 const mockSelectReturn = vi.fn();
-const mockSupabaseFrom = vi.fn(() => ({
+const mockSupabaseFrom = vi.fn((table: string) => ({
     select: () => ({
         eq: () => ({
             gt: () => ({
@@ -29,7 +28,7 @@ const mockSupabaseFrom = vi.fn(() => ({
 }));
 
 const mockChannelOn = vi.fn();
-const mockSubscribe = vi.fn();
+const mockSubscribe = vi.fn<(cb?: (status: string) => void) => { on: typeof mockChannelOn }>();
 const mockRemoveChannel = vi.fn();
 
 const createChannelMock = () => ({
@@ -42,9 +41,9 @@ const createChannelMock = () => ({
 
 vi.mock('../../lib/supabase', () => ({
     supabase: {
-        from: (...args: unknown[]) => mockSupabaseFrom(...args),
-        channel: () => createChannelMock(),
-        removeChannel: (...args: unknown[]) => mockRemoveChannel(...args)
+        from: (table: string) => mockSupabaseFrom(table),
+        channel: createChannelMock,
+        removeChannel: mockRemoveChannel
     }
 }));
 
@@ -158,10 +157,10 @@ describe('useNotifications', () => {
             });
 
             const notification = result.current.notifications[0];
-            expect(notification.id).toBe('conv-123');
-            expect(notification.counterpart.name).toBe('John Doe');
-            expect(notification.unread_count).toBe(3); // unread_agent
-            expect(notification.property?.title).toBe('Luxury Apartment');
+            expect(notification?.id).toBe('conv-123');
+            expect(notification?.counterpart.name).toBe('John Doe');
+            expect(notification?.unread_count).toBe(3); // unread_agent
+            expect(notification?.property?.title).toBe('Luxury Apartment');
         });
 
         it('should handle guest visitor naming for agent', async () => {
@@ -174,7 +173,7 @@ describe('useNotifications', () => {
             const { result } = renderHook(() => useNotifications());
 
             await waitFor(() => {
-                expect(result.current.notifications[0].counterpart.name).toBe('訪客-1234');
+                expect(result.current.notifications[0]?.counterpart.name).toBe('訪客-1234');
             });
         });
     });
@@ -208,7 +207,7 @@ describe('useNotifications', () => {
             const { result } = renderHook(() => useNotifications());
 
             await waitFor(() => {
-                expect(result.current.notifications[0].unread_count).toBe(7);
+                expect(result.current.notifications[0]?.unread_count).toBe(7);
             });
         });
 
@@ -219,7 +218,7 @@ describe('useNotifications', () => {
             const { result } = renderHook(() => useNotifications());
 
             await waitFor(() => {
-                expect(result.current.notifications[0].counterpart.name).toBe('Agent Smith');
+                expect(result.current.notifications[0]?.counterpart.name).toBe('Agent Smith');
             });
         });
     });
@@ -289,7 +288,7 @@ describe('useNotifications', () => {
             const { result } = renderHook(() => useNotifications());
 
             await waitFor(() => {
-                expect(result.current.notifications[0].last_message?.content).toBe('Latest message');
+                expect(result.current.notifications[0]?.last_message?.content).toBe('Latest message');
             });
         });
 
@@ -300,7 +299,7 @@ describe('useNotifications', () => {
             const { result } = renderHook(() => useNotifications());
 
             await waitFor(() => {
-                expect(result.current.notifications[0].last_message).toBeUndefined();
+                expect(result.current.notifications[0]?.last_message).toBeUndefined();
             });
         });
 
@@ -311,7 +310,7 @@ describe('useNotifications', () => {
             const { result } = renderHook(() => useNotifications());
 
             await waitFor(() => {
-                expect(result.current.notifications[0].property).toBeUndefined();
+                expect(result.current.notifications[0]?.property).toBeUndefined();
             });
         });
     });

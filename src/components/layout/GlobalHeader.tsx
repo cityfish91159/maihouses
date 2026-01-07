@@ -11,13 +11,14 @@
 
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bell, User, LogOut, ChevronDown } from 'lucide-react';
+import { Bell, User, LogOut, ChevronDown, ExternalLink } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { useNotifications } from '../../hooks/useNotifications';
 import { Logo } from '../Logo/Logo';
 import { notify } from '../../lib/notify';
 import { logger } from '../../lib/logger';
 import { HEADER_STRINGS, GlobalHeaderMode } from '../../constants/header';
+import { STRINGS } from '../../constants/strings';
 import { ROUTES } from '../../constants/routes';
 import { MESSAGING_CONFIG } from '../../constants/messaging';
 import { NotificationDropdown } from './NotificationDropdown';
@@ -132,6 +133,18 @@ export function GlobalHeader({ mode, title, className = '' }: GlobalHeaderProps)
 
         {/* Right: Actions */}
         <div className="flex items-center gap-3">
+          {mode === 'agent' && (
+            <a
+              href={ROUTES.UAG}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 rounded-xl bg-brand-700 px-3 py-1.5 text-xs font-bold text-white shadow-sm transition-all hover:bg-brand-600 hover:shadow-md active:scale-95"
+              aria-label={STRINGS.AGENT.PROFILE.LINK_WORKBENCH}
+            >
+              <span className="hidden sm:inline">{STRINGS.AGENT.PROFILE.LINK_WORKBENCH}</span>
+              <ExternalLink size={14} strokeWidth={2.5} />
+            </a>
+          )}
           {/* Notifications */}
           <div className="relative">
             <button

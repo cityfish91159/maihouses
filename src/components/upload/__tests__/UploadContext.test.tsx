@@ -1,6 +1,5 @@
 import React from 'react';
 import { render, fireEvent, waitFor, screen } from '@testing-library/react';
-import { vi, describe, it, expect, beforeEach, Mock } from 'vitest';
 import { UploadFormProvider, useUploadForm } from '../UploadContext';
 
 const mockValidate = vi.fn();
@@ -92,7 +91,7 @@ describe('UploadContext - handleFileSelect', () => {
   beforeEach(() => {
     mockValidate.mockReset();
     mockOptimize.mockReset();
-    (global as unknown as { URL: { createObjectURL: Mock; revokeObjectURL: Mock } }).URL = {
+    (global as unknown as { URL: { createObjectURL: (value: string | Blob) => string; revokeObjectURL: (value: string) => void } }).URL = {
       createObjectURL: vi.fn(() => 'blob:test'),
       revokeObjectURL: vi.fn(),
     };
