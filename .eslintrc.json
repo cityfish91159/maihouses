@@ -9,20 +9,12 @@
     "ecmaVersion": 2022,
     "sourceType": "module"
   },
-  "plugins": [
-    "tailwindcss"
-  ],
-  "extends": [
-    "plugin:tailwindcss/recommended"
-  ],
+  "plugins": ["tailwindcss"],
+  "extends": ["plugin:tailwindcss/recommended"],
   "settings": {
     "tailwindcss": {
       "config": "tailwind.config.cjs"
     }
   },
-  "ignorePatterns": [
-    "**/*.d.ts",
-    "node_modules",
-    "dist"
-  ]
+  "ignorePatterns": ["**/*.d.ts", "node_modules", "dist"]
 }

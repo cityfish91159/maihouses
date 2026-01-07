@@ -7,6 +7,7 @@
 ## 🚨 核心原則 (Core Principles)
 
 ### 絕對禁止 (NEVER DO)
+
 1. **禁止便宜行事** - 不可用簡單但錯誤的方案敷衍
 2. **禁止跳過步驟** - 必須按順序完成每個步驟
 3. **禁止腦補需求** - 不清楚就問，不可假設用戶意圖
@@ -14,6 +15,7 @@
 5. **禁止亂讀檔案** - 必須讀正確的相關檔案，不是隨便找檔案敷衍
 
 ### 絕對必須 (ALWAYS DO)
+
 1. **先搜尋工具** - 面對複雜任務時，先搜尋 Skills Marketplace 找專業工具
 2. **先讀後寫** - 修改任何檔案前必須先 `Read` 該檔案
 3. **讀對檔案** - 必須讀取所有相關的前端、後端、類型定義檔案
@@ -139,54 +141,54 @@
 
 ```typescript
 // ❌ 禁止 - 便宜行事
-const data: any = fetchData()
-const handleClick = (e: any) => {}
+const data: any = fetchData();
+const handleClick = (e: any) => {};
 function process(input: any): any {}
 
 // ✅ 正確 - 最高規格
 interface UserData {
-  id: string
-  name: string
-  email: string
+  id: string;
+  name: string;
+  email: string;
 }
-const data: UserData = fetchData()
-const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {}
+const data: UserData = fetchData();
+const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {};
 function process(input: ProcessInput): ProcessOutput {}
 ```
 
 ```typescript
 // ❌ 禁止 - 偷懶省略錯誤處理
 const fetchUser = async (id: string) => {
-  const res = await fetch(`/api/user/${id}`)
-  return res.json()
-}
+  const res = await fetch(`/api/user/${id}`);
+  return res.json();
+};
 
 // ✅ 正確 - 完整錯誤處理
 const fetchUser = async (id: string): Promise<User> => {
   try {
-    const res = await fetch(`/api/user/${id}`)
+    const res = await fetch(`/api/user/${id}`);
     if (!res.ok) {
-      throw new Error(`Failed to fetch user: ${res.status}`)
+      throw new Error(`Failed to fetch user: ${res.status}`);
     }
-    return res.json()
+    return res.json();
   } catch (error) {
-    console.error('fetchUser error:', error)
-    throw error
+    console.error("fetchUser error:", error);
+    throw error;
   }
-}
+};
 ```
 
 ### 禁止清單 (Prohibited Patterns)
 
-| 模式 | 原因 | 替代方案 |
-|------|------|----------|
-| `: any` | 失去類型安全 | 定義具體 interface/type |
-| `console.log` | 生產環境不應有 | 使用正式 logger 或移除 |
-| `// @ts-ignore` | 隱藏類型錯誤 | 修復根本問題 |
-| `eslint-disable` | 隱藏代碼問題 | 修復根本問題 |
-| 硬編碼字串/數字 | 難以維護 | 使用常數或配置 |
-| 超過 50 行的函數 | 難以測試維護 | 拆分成小函數 |
-| 複製貼上代碼 | 違反 DRY 原則 | 抽取共用函數 |
+| 模式             | 原因           | 替代方案                |
+| ---------------- | -------------- | ----------------------- |
+| `: any`          | 失去類型安全   | 定義具體 interface/type |
+| `console.log`    | 生產環境不應有 | 使用正式 logger 或移除  |
+| `// @ts-ignore`  | 隱藏類型錯誤   | 修復根本問題            |
+| `eslint-disable` | 隱藏代碼問題   | 修復根本問題            |
+| 硬編碼字串/數字  | 難以維護       | 使用常數或配置          |
+| 超過 50 行的函數 | 難以測試維護   | 拆分成小函數            |
+| 複製貼上代碼     | 違反 DRY 原則  | 抽取共用函數            |
 
 ---
 
@@ -215,16 +217,19 @@ const fetchUser = async (id: string): Promise<User> => {
 ## 完成摘要
 
 ### 修改的檔案
+
 - `path/to/file1.tsx` - 修改原因
 - `path/to/file2.ts` - 修改原因
 
 ### 驗證結果
+
 - [x] TypeScript 檢查通過
 - [x] ESLint 檢查通過
 - [x] 單元測試通過
 - [x] 構建成功
 
 ### 如何測試
+
 1. 步驟一
 2. 步驟二
 ```
@@ -234,6 +239,7 @@ const fetchUser = async (id: string): Promise<User> => {
 ## 🚫 違規處理 (Violation Handling)
 
 如果 AI 違反以上任何規則：
+
 1. 立即停止當前操作
 2. 回滾到上一個正確狀態
 3. 重新按照正確流程執行

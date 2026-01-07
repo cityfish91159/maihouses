@@ -1,8 +1,8 @@
 /**
  * UAG Score 測試資料生成器
- * 
+ *
  * ⚠️ AI 看不到這裡的邏輯
- * 
+ *
  * 生成：
  * 1. Fuzz 測試（邊界、異常、極端值）
  * 2. Stress 測試（大量資料）
@@ -15,16 +15,16 @@
 
 export function generateFuzzInput(): unknown {
   const r = Math.random();
-  
+
   // 10% 完全空
   if (r < 0.1) return {};
-  
+
   // 10% null
   if (r < 0.2) return null;
-  
+
   // 10% 錯誤類型
   if (r < 0.3) return "not an object";
-  
+
   // 10% 部分欄位
   if (r < 0.4) {
     return {
@@ -32,7 +32,7 @@ export function generateFuzzInput(): unknown {
       // 其他欄位故意不給
     };
   }
-  
+
   // 10% 極端數值
   if (r < 0.5) {
     return {
@@ -46,12 +46,12 @@ export function generateFuzzInput(): unknown {
       updateFrequency: undefined,
     };
   }
-  
+
   // 10% 錯誤類型欄位
   if (r < 0.6) {
     return {
-      hasVerifiedOwner: "yes",  // 應該是 boolean
-      hasRealPhotos: 1,          // 應該是 boolean
+      hasVerifiedOwner: "yes", // 應該是 boolean
+      hasRealPhotos: 1, // 應該是 boolean
       hasPriceHistory: null,
       responseTimeHours: "fast", // 應該是 number
       reviewCount: [],
@@ -60,7 +60,7 @@ export function generateFuzzInput(): unknown {
       updateFrequency: "often",
     };
   }
-  
+
   // 10% 多餘欄位
   if (r < 0.7) {
     return {
@@ -78,17 +78,26 @@ export function generateFuzzInput(): unknown {
       extraField: "should be ignored",
     };
   }
-  
+
   // 30% 邊界值
   const boundaryValues = [0, 0.001, 0.999, 1, 1.001, 4.999, 5, 5.001, -0.001];
-  
+
   return {
-    hasVerifiedOwner: [true, false, null, undefined][Math.floor(Math.random() * 4)],
-    hasRealPhotos: [true, false, null, undefined][Math.floor(Math.random() * 4)],
-    hasPriceHistory: [true, false, null, undefined][Math.floor(Math.random() * 4)],
-    responseTimeHours: boundaryValues[Math.floor(Math.random() * boundaryValues.length)],
-    reviewCount: boundaryValues[Math.floor(Math.random() * boundaryValues.length)],
-    avgRating: boundaryValues[Math.floor(Math.random() * boundaryValues.length)],
+    hasVerifiedOwner: [true, false, null, undefined][
+      Math.floor(Math.random() * 4)
+    ],
+    hasRealPhotos: [true, false, null, undefined][
+      Math.floor(Math.random() * 4)
+    ],
+    hasPriceHistory: [true, false, null, undefined][
+      Math.floor(Math.random() * 4)
+    ],
+    responseTimeHours:
+      boundaryValues[Math.floor(Math.random() * boundaryValues.length)],
+    reviewCount:
+      boundaryValues[Math.floor(Math.random() * boundaryValues.length)],
+    avgRating:
+      boundaryValues[Math.floor(Math.random() * boundaryValues.length)],
     listingAgeDays: Math.floor(Math.random() * 1000),
     updateFrequency: Math.random() * 10,
   };
@@ -100,7 +109,7 @@ export function generateFuzzInput(): unknown {
 
 export function generateStressInput(size: number): unknown[] {
   const inputs = [];
-  
+
   for (let i = 0; i < size; i++) {
     inputs.push({
       hasVerifiedOwner: Math.random() > 0.5,
@@ -113,7 +122,7 @@ export function generateStressInput(size: number): unknown[] {
       updateFrequency: Math.random() * 10,
     });
   }
-  
+
   return inputs;
 }
 

@@ -31,6 +31,7 @@ MCP 是連接 Claude 與外部工具、API、數據庫的開放標準協議。
 ```
 
 **關係：**
+
 - **Skills** 定義「流程和規範」（使用 Read, Grep, Bash 等內建工具）
 - **MCP** 提供「外部能力」（訪問數據庫、API、服務等）
 
@@ -39,15 +40,18 @@ MCP 是連接 Claude 與外部工具、API、數據庫的開放標準協議。
 ## 📋 已配置的 MCP Servers
 
 ### 1. filesystem
+
 **功能：** 檔案系統訪問（超越 Claude Code 內建的 Read/Write）
 
 **用途：**
+
 - 批量文件操作
 - 目錄遍歷
 - 文件搜尋
 - 權限管理
 
 **範例：**
+
 ```
 「搜尋所有包含 'TODO' 的檔案並列出」
 「批量重命名 src/components 下的檔案」
@@ -56,15 +60,18 @@ MCP 是連接 Claude 與外部工具、API、數據庫的開放標準協議。
 ---
 
 ### 2. puppeteer
+
 **功能：** Web 自動化和網頁截圖
 
 **用途：**
+
 - 網頁截圖
 - 表單自動填寫
 - 網頁測試
 - 數據抓取
 
 **範例：**
+
 ```
 「打開我們的網站並截圖」
 「測試登入流程是否正常」
@@ -74,15 +81,18 @@ MCP 是連接 Claude 與外部工具、API、數據庫的開放標準協議。
 ---
 
 ### 3. fetch
+
 **功能：** HTTP 請求（GET, POST, PUT, DELETE）
 
 **用途：**
+
 - 調用外部 API
 - 測試 API endpoints
 - 數據獲取
 - Webhook 測試
 
 **範例：**
+
 ```
 「調用 /api/users 並顯示返回結果」
 「測試我們的 API 是否正常運作」
@@ -92,15 +102,18 @@ MCP 是連接 Claude 與外部工具、API、數據庫的開放標準協議。
 ---
 
 ### 4. git
+
 **功能：** Git 操作（超越 Bash git 命令）
 
 **用途：**
+
 - 複雜的 Git 操作
 - 多倉庫管理
 - Git 歷史分析
 - 分支策略執行
 
 **範例：**
+
 ```
 「分析最近 30 天的提交記錄」
 「找出修改最頻繁的檔案」
@@ -146,7 +159,11 @@ Claude：✓ 使用 puppeteer MCP - 測試網頁登入
   "mcpServers": {
     "filesystem": {
       "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/home/user/maihouses"],
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "/home/user/maihouses"
+      ],
       "env": {}
     },
     "puppeteer": {
@@ -161,7 +178,11 @@ Claude：✓ 使用 puppeteer MCP - 測試網頁登入
     },
     "git": {
       "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-git", "/home/user/maihouses"],
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-git",
+        "/home/user/maihouses"
+      ],
       "env": {}
     }
   }
@@ -169,6 +190,7 @@ Claude：✓ 使用 puppeteer MCP - 測試網頁登入
 ```
 
 **說明：**
+
 - `command`: 執行命令（npx, uvx, node 等）
 - `args`: 命令參數
 - `env`: 環境變數（API keys 等）
@@ -241,7 +263,7 @@ Claude：✓ 使用 puppeteer MCP - 測試網頁登入
 // ❌ 不要這樣做
 {
   "env": {
-    "API_KEY": "sk_live_12345"  // 會洩露
+    "API_KEY": "sk_live_12345" // 會洩露
   }
 }
 ```
@@ -252,12 +274,13 @@ Claude：✓ 使用 puppeteer MCP - 測試網頁登入
 // ✅ 這樣做
 {
   "env": {
-    "API_KEY": "${OPENAI_API_KEY}"  // 從環境變數讀取
+    "API_KEY": "${OPENAI_API_KEY}" // 從環境變數讀取
   }
 }
 ```
 
 然後在 `.env` 或系統環境變數中設置：
+
 ```bash
 export OPENAI_API_KEY=sk_live_12345
 ```
@@ -301,6 +324,7 @@ export MAX_MCP_OUTPUT_TOKENS=50000
    - 不提交 tokens 到 git
 
 3. **測試連接**
+
    ```bash
    # 使用 CLI 測試（如果有）
    claude mcp get filesystem
@@ -320,9 +344,11 @@ export MAX_MCP_OUTPUT_TOKENS=50000
 ## 🌐 更多 MCP Servers
 
 官方 MCP Servers 列表：
+
 - https://github.com/modelcontextprotocol/servers
 
 社群貢獻的 MCP Servers：
+
 - https://github.com/topics/mcp-server
 - https://mcpcat.io/ (MCP Servers 目錄)
 

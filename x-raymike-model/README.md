@@ -18,6 +18,7 @@ X-Ray Mike 是一個專業的圖像透視處理模型，集成了多種學術級
 ### 前置要求
 
 1. **安裝 Docker**
+
    ```bash
    # 檢查 Docker 是否安裝
    docker --version
@@ -26,6 +27,7 @@ X-Ray Mike 是一個專業的圖像透視處理模型，集成了多種學術級
    ```
 
 2. **安裝 Cog**
+
    ```bash
    # macOS/Linux
    sudo curl -o /usr/local/bin/cog -L https://github.com/replicate/cog/releases/latest/download/cog_$(uname -s)_$(uname -m)
@@ -72,6 +74,7 @@ cog push r8.im/cityfish91159/x-raymike
 #### 4. 驗證部署
 
 訪問你的模型頁面：
+
 ```
 https://replicate.com/cityfish91159/x-raymike
 ```
@@ -133,21 +136,27 @@ cog predict -i image=@test.jpg
 ## 🔧 故障排除
 
 ### 問題 1: Docker 未啟動
+
 ```
 Error: Cannot connect to the Docker daemon
 ```
+
 **解決**: 啟動 Docker Desktop
 
 ### 問題 2: Cog 構建失敗
+
 ```
 Error: Failed to build image
 ```
+
 **解決**: 檢查 cog.yaml 語法，確保所有依賴版本兼容
 
 ### 問題 3: 推送失敗
+
 ```
 Error: authentication required
 ```
+
 **解決**: 運行 `cog login` 重新登入
 
 ## 📚 參考資料

@@ -1,12 +1,20 @@
 import { renderHook, act } from "@testing-library/react";
 import { MaiMaiProvider, useMaiMai } from "../MaiMaiContext";
 import { safeLocalStorage } from "../../lib/safeStorage";
+import * as loggerModule from "../../lib/logger";
 
 // Mock safeLocalStorage
 vi.mock("../../lib/safeStorage", () => ({
   safeLocalStorage: {
     getItem: vi.fn<(key: string) => string | null>(),
     setItem: vi.fn<(key: string, value: string) => void>(),
+  },
+}));
+
+// Mock logger
+vi.mock("../../lib/logger", () => ({
+  logger: {
+    warn: vi.fn(),
   },
 }));
 
@@ -88,9 +96,6 @@ describe("MaiMaiContext", () => {
       });
 
       it("handles storage errors gracefully when setting mood", () => {
-        const consoleSpy = vi
-          .spyOn(console, "warn")
-          .mockImplementation(() => {});
         vi.mocked(safeLocalStorage.getItem).mockReturnValue(null);
         vi.mocked(safeLocalStorage.setItem).mockImplementation(() => {
           throw new Error("QuotaExceeded");
@@ -105,12 +110,10 @@ describe("MaiMaiContext", () => {
 
         // State should still update even if storage fails
         expect(result.current.mood).toBe("shy");
-        expect(consoleSpy).toHaveBeenCalledWith(
-          "Failed to save mood:",
-          expect.any(Error),
+        expect(loggerModule.logger.warn).toHaveBeenCalledWith(
+          "[MaiMaiContext] Failed to save mood",
+          expect.objectContaining({ error: expect.any(Error) }),
         );
-
-        consoleSpy.mockRestore();
       });
     });
 
@@ -194,9 +197,6 @@ describe("MaiMaiContext", () => {
       });
 
       it("handles storage errors gracefully when adding messages", () => {
-        const consoleSpy = vi
-          .spyOn(console, "warn")
-          .mockImplementation(() => {});
         vi.mocked(safeLocalStorage.getItem).mockReturnValue(null);
         vi.mocked(safeLocalStorage.setItem).mockImplementation(() => {
           throw new Error("QuotaExceeded");
@@ -210,12 +210,10 @@ describe("MaiMaiContext", () => {
 
         // State update works
         expect(result.current.messages).toContain("Important Message");
-        expect(consoleSpy).toHaveBeenCalledWith(
-          "Failed to save messages:",
-          expect.any(Error),
+        expect(loggerModule.logger.warn).toHaveBeenCalledWith(
+          "[MaiMaiContext] Failed to save messages",
+          expect.objectContaining({ error: expect.any(Error) }),
         );
-
-        consoleSpy.mockRestore();
       });
     });
   });

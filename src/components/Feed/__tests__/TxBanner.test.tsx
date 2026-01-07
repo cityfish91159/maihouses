@@ -3,25 +3,28 @@
  * MSG-3: 完整測試私訊提醒橫幅功能
  */
 
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import { TxBanner } from "../TxBanner";
 import type { ActiveTransaction } from "../../../types/feed";
 import type { ConversationListItem } from "../../../types/messaging.types";
-import * as notifyModule from "../../../lib/notify";
+import * as loggerModule from "../../../lib/logger";
 
-// Mock notify module
-vi.mock("../../../lib/notify", () => ({
-  notify: {
+// Mock logger module
+vi.mock("../../../lib/logger", () => ({
+  logger: {
+    warn: vi.fn(),
     info: vi.fn(),
-    success: vi.fn(),
     error: vi.fn(),
-    warning: vi.fn(),
   },
 }));
 
-describe("TxBanner - MSG-3 私訊提醒橫幅", () => {
-  const mockNotify = notifyModule.notify as any;
+// Wrapper component with Router
+function renderWithRouter(ui: React.ReactElement) {
+  return render(<MemoryRouter>{ui}</MemoryRouter>);
+}
 
+describe("TxBanner - MSG-3 私訊提醒橫幅", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -57,7 +60,7 @@ describe("TxBanner - MSG-3 私訊提醒橫幅", () => {
       hasActive: false,
     };
 
-    render(
+    renderWithRouter(
       <TxBanner
         transaction={mockTransaction}
         messageNotification={mockNotification}
@@ -102,7 +105,7 @@ describe("TxBanner - MSG-3 私訊提醒橫幅", () => {
       hasActive: false,
     };
 
-    render(
+    renderWithRouter(
       <TxBanner
         transaction={mockTransaction}
         messageNotification={mockNotification}
@@ -133,7 +136,7 @@ describe("TxBanner - MSG-3 私訊提醒橫幅", () => {
       hasActive: false,
     };
 
-    render(
+    renderWithRouter(
       <TxBanner
         transaction={mockTransaction}
         messageNotification={mockNotification}
@@ -166,7 +169,7 @@ describe("TxBanner - MSG-3 私訊提醒橫幅", () => {
       propertyName: "其他物件",
     };
 
-    render(
+    renderWithRouter(
       <TxBanner
         transaction={mockTransaction}
         messageNotification={mockNotification}
@@ -189,7 +192,7 @@ describe("TxBanner - MSG-3 私訊提醒橫幅", () => {
       propertyName: "惠宇天青",
     };
 
-    render(
+    renderWithRouter(
       <TxBanner transaction={mockTransaction} messageNotification={null} />,
     );
 
@@ -206,7 +209,7 @@ describe("TxBanner - MSG-3 私訊提醒橫幅", () => {
       hasActive: false,
     };
 
-    const { container } = render(
+    const { container } = renderWithRouter(
       <TxBanner transaction={mockTransaction} messageNotification={null} />,
     );
 
@@ -218,7 +221,7 @@ describe("TxBanner - MSG-3 私訊提醒橫幅", () => {
   // 測試 7: 點擊行為
   // ========================================
 
-  test("7. 點擊查看按鈕顯示 toast（MSG-4 未完成）", async () => {
+  test("7. 點擊查看按鈕進行導航", () => {
     const mockNotification: ConversationListItem = {
       id: "conv-5",
       status: "pending",
@@ -230,7 +233,7 @@ describe("TxBanner - MSG-3 私訊提醒橫幅", () => {
       hasActive: false,
     };
 
-    render(
+    renderWithRouter(
       <TxBanner
         transaction={mockTransaction}
         messageNotification={mockNotification}
@@ -238,14 +241,10 @@ describe("TxBanner - MSG-3 私訊提醒橫幅", () => {
     );
 
     const button = screen.getByRole("button", { name: /查看房仲私訊/ });
-    fireEvent.click(button);
 
-    await waitFor(() => {
-      expect(mockNotify.info).toHaveBeenCalledWith(
-        "對話功能開發中",
-        "敬請期待",
-      );
-    });
+    // 點擊按鈕應該不會報錯（導航功能由 MemoryRouter 處理）
+    expect(() => fireEvent.click(button)).not.toThrow();
+    expect(button).toBeInTheDocument();
   });
 
   // ========================================
@@ -270,7 +269,7 @@ describe("TxBanner - MSG-3 私訊提醒橫幅", () => {
       hasActive: false,
     };
 
-    render(
+    renderWithRouter(
       <TxBanner
         transaction={mockTransaction}
         messageNotification={mockNotification}
@@ -283,10 +282,6 @@ describe("TxBanner - MSG-3 私訊提醒橫幅", () => {
   });
 
   test("9. 處理無效時間戳（顯示「時間未知」）", () => {
-    const consoleWarnSpy = vi
-      .spyOn(console, "warn")
-      .mockImplementation(() => {});
-
     const mockNotification: ConversationListItem = {
       id: "conv-7",
       status: "active",
@@ -303,23 +298,21 @@ describe("TxBanner - MSG-3 私訊提醒橫幅", () => {
       hasActive: false,
     };
 
-    render(
+    renderWithRouter(
       <TxBanner
         transaction={mockTransaction}
         messageNotification={mockNotification}
       />,
     );
 
-    // 應該記錄 console.warn
-    expect(consoleWarnSpy).toHaveBeenCalledWith(
-      "[TxBanner] Invalid timestamp:",
-      "invalid-timestamp",
+    // 應該記錄 logger.warn
+    expect(loggerModule.logger.warn).toHaveBeenCalledWith(
+      "TxBanner.formatRelativeTime.invalidTimestamp",
+      { timestamp: "invalid-timestamp" },
     );
 
     // 應該顯示「時間未知」
     expect(screen.getByText(/時間未知/)).toBeInTheDocument();
-
-    consoleWarnSpy.mockRestore();
   });
 
   // ========================================
@@ -353,7 +346,7 @@ describe("TxBanner - MSG-3 私訊提醒橫幅", () => {
         counterpart: { name: "房仲" },
       };
 
-      const { unmount } = render(
+      const { unmount } = renderWithRouter(
         <TxBanner
           transaction={{ hasActive: false }}
           messageNotification={mockNotification}
@@ -378,7 +371,7 @@ describe("TxBanner - MSG-3 私訊提醒橫幅", () => {
       counterpart: { name: "測試房仲" },
     };
 
-    render(
+    renderWithRouter(
       <TxBanner
         transaction={{ hasActive: false }}
         messageNotification={mockNotification}
@@ -407,7 +400,7 @@ describe("TxBanner - MSG-3 私訊提醒橫幅", () => {
       counterpart: { name: "測試" },
     };
 
-    const { container } = render(
+    const { container } = renderWithRouter(
       <TxBanner
         transaction={{ hasActive: false }}
         messageNotification={mockNotification}

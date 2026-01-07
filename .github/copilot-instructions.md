@@ -22,17 +22,17 @@
 
 ## 🔧 工具搜尋關鍵字對照表
 
-| 任務類型 | 必搜關鍵字 | 額外關鍵字 |
-|---------|-----------|-----------|
-| 前端 UI | `react`, `component` | `tailwind`, `ui`, `form`, `modal` |
-| API 開發 | `api`, `rest` | `fetch`, `serverless`, `endpoint` |
-| 資料庫 | `database`, `supabase` | `postgres`, `sql`, `query` |
-| 認證 | `auth`, `authentication` | `jwt`, `oauth`, `session` |
-| 測試 | `test`, `testing` | `jest`, `playwright`, `e2e` |
-| 部署 | `deploy`, `vercel` | `ci/cd`, `github-actions` |
-| AI/LLM | `openai`, `claude` | `llm`, `chat`, `embedding` |
-| 圖片處理 | `image`, `upload` | `imgix`, `compression` |
-| 工具 | `utility`, `helper` | `validation`, `formatting` |
+| 任務類型 | 必搜關鍵字               | 額外關鍵字                        |
+| -------- | ------------------------ | --------------------------------- |
+| 前端 UI  | `react`, `component`     | `tailwind`, `ui`, `form`, `modal` |
+| API 開發 | `api`, `rest`            | `fetch`, `serverless`, `endpoint` |
+| 資料庫   | `database`, `supabase`   | `postgres`, `sql`, `query`        |
+| 認證     | `auth`, `authentication` | `jwt`, `oauth`, `session`         |
+| 測試     | `test`, `testing`        | `jest`, `playwright`, `e2e`       |
+| 部署     | `deploy`, `vercel`       | `ci/cd`, `github-actions`         |
+| AI/LLM   | `openai`, `claude`       | `llm`, `chat`, `embedding`        |
+| 圖片處理 | `image`, `upload`        | `imgix`, `compression`            |
+| 工具     | `utility`, `helper`      | `validation`, `formatting`        |
 
 ---
 
@@ -124,21 +124,21 @@
 
 ## 🚫 違規行為（任一觸發 = 任務失敗）
 
-| 違規 | 說明 | 懲罰 |
-|------|------|------|
-| 沒搜尋工具 | 沒有先搜尋相關工具 | 任務失敗 |
-| 沒輸出任務接收 | 第一個輸出不是「📋 任務接收」框 | 任務失敗 |
-| 沒列工作清單 | 沒有在開始時分析並列出所有子任務 | 任務失敗 |
-| 沒閱讀檔案 | 修改前沒有先讀取相關檔案 | 任務失敗 |
-| 跳過進度報告 | 完成子任務後沒有輸出進度報告 | -10 分 |
-| 清單不完整 | 漏掉子任務，後來才發現要補做 | -20 分 |
-| 沒輸出完成報告 | 任務結束時沒有輸出「🏁 任務完成」框 | -10 分 |
-| 使用 any | 使用了 any 類型 | -20 分 |
-| 空的 catch | catch 區塊沒有處理錯誤 | -20 分 |
-| 硬編碼密鑰 | 在代碼中硬編碼 API Key | 立即終止 |
-| 跳過測試 | 沒有執行驗證命令 | -30 分 |
-| 腦補需求 | 假設用戶意圖而不詢問 | 任務失敗 |
-| 便宜行事 | 用簡單但錯誤的方案 | 任務失敗 |
+| 違規           | 說明                                | 懲罰     |
+| -------------- | ----------------------------------- | -------- |
+| 沒搜尋工具     | 沒有先搜尋相關工具                  | 任務失敗 |
+| 沒輸出任務接收 | 第一個輸出不是「📋 任務接收」框     | 任務失敗 |
+| 沒列工作清單   | 沒有在開始時分析並列出所有子任務    | 任務失敗 |
+| 沒閱讀檔案     | 修改前沒有先讀取相關檔案            | 任務失敗 |
+| 跳過進度報告   | 完成子任務後沒有輸出進度報告        | -10 分   |
+| 清單不完整     | 漏掉子任務，後來才發現要補做        | -20 分   |
+| 沒輸出完成報告 | 任務結束時沒有輸出「🏁 任務完成」框 | -10 分   |
+| 使用 any       | 使用了 any 類型                     | -20 分   |
+| 空的 catch     | catch 區塊沒有處理錯誤              | -20 分   |
+| 硬編碼密鑰     | 在代碼中硬編碼 API Key              | 立即終止 |
+| 跳過測試       | 沒有執行驗證命令                    | -30 分   |
+| 腦補需求       | 假設用戶意圖而不詢問                | 任務失敗 |
+| 便宜行事       | 用簡單但錯誤的方案                  | 任務失敗 |
 
 ---
 
@@ -223,8 +223,8 @@ try {
   const result = await fetchData();
   return result;
 } catch (error) {
-  const message = error instanceof Error ? error.message : '未知錯誤';
-  console.error('Fetch failed:', message);
+  const message = error instanceof Error ? error.message : "未知錯誤";
+  console.error("Fetch failed:", message);
   throw new Error(`無法取得資料: ${message}`);
 }
 ```
@@ -252,14 +252,14 @@ npm run build
 
 ## 🌐 語言規範
 
-| 場景 | 語言 |
-|------|------|
-| AI 回覆 | 繁體中文（台灣用語） |
-| UI 文字 | 繁體中文 |
-| 錯誤訊息 | 繁體中文 |
-| 變數/函數名 | 英文 camelCase |
-| 類型/介面名 | 英文 PascalCase |
-| 註解 | 繁體中文或英文 |
+| 場景        | 語言                 |
+| ----------- | -------------------- |
+| AI 回覆     | 繁體中文（台灣用語） |
+| UI 文字     | 繁體中文             |
+| 錯誤訊息    | 繁體中文             |
+| 變數/函數名 | 英文 camelCase       |
+| 類型/介面名 | 英文 PascalCase      |
+| 註解        | 繁體中文或英文       |
 
 ---
 
@@ -328,5 +328,5 @@ SUPABASE_SERVICE_ROLE_KEY=eyJxxxxxx
 
 ---
 
-*版本：v11.0 強制工具搜尋版*
-*最後更新：2025/12/24*
+_版本：v11.0 強制工具搜尋版_
+_最後更新：2025/12/24_

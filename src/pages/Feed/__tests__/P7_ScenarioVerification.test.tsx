@@ -14,6 +14,8 @@
  */
 
 import { render, screen, fireEvent } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import Consumer from "../Consumer";
 import { useAuth } from "../../../hooks/useAuth";
 import { useFeedData } from "../../../hooks/useFeedData";
@@ -29,9 +31,13 @@ const mocks = vi.hoisted(() => ({
 // Mock Dependencies
 vi.mock("../../../hooks/useAuth");
 vi.mock("../../../hooks/useFeedData");
-vi.mock("react-router-dom", () => ({
-  useNavigate: () => mocks.navigate,
-}));
+vi.mock("react-router-dom", async () => {
+  const actual = await vi.importActual("react-router-dom");
+  return {
+    ...actual,
+    useNavigate: () => mocks.navigate,
+  };
+});
 vi.mock("../../../lib/notify", () => ({ notify: mocks.notify }));
 
 // Mock Env to bypass strict check
@@ -46,6 +52,10 @@ vi.mock("../../../config/env", () => ({
 vi.mock("../../../lib/supabase", () => ({
   supabase: {
     from: () => ({ select: () => ({ data: [], error: null }) }),
+    channel: () => ({
+      on: () => ({ on: () => ({ subscribe: vi.fn() }) }),
+    }),
+    removeChannel: vi.fn(),
   },
 }));
 
@@ -57,6 +67,20 @@ Object.defineProperty(window, "location", {
 });
 
 describe("P7 Scenario Verification (L7+ Standard)", () => {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: { retry: false },
+    },
+  });
+
+  const renderWithProviders = (ui: React.ReactElement) => {
+    return render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>{ui}</MemoryRouter>
+      </QueryClientProvider>,
+    );
+  };
+
   beforeEach(() => {
     vi.clearAllMocks();
     mockLocation.href = "";
@@ -122,7 +146,7 @@ describe("P7 Scenario Verification (L7+ Standard)", () => {
     setupAuth("guest", false);
     setupFeedMock(false);
 
-    render(<Consumer />);
+    renderWithProviders(<Consumer />);
 
     const privateTab = screen.getByText(STRINGS.FEED.TABS.PRIVATE);
     expect(privateTab).toBeDefined();
@@ -144,7 +168,7 @@ describe("P7 Scenario Verification (L7+ Standard)", () => {
     setupAuth("member", true);
     setupFeedMock(false);
 
-    render(<Consumer />);
+    renderWithProviders(<Consumer />);
     fireEvent.click(screen.getByText(STRINGS.FEED.TABS.PRIVATE));
 
     expect(screen.getByText(STRINGS.COMMUNITY.LOCKED_TITLE)).toBeDefined();
@@ -167,7 +191,7 @@ describe("P7 Scenario Verification (L7+ Standard)", () => {
     setupAuth("resident", true);
     setupFeedMock(true);
 
-    render(<Consumer />);
+    renderWithProviders(<Consumer />);
     fireEvent.click(screen.getByText(STRINGS.FEED.TABS.PRIVATE));
 
     expect(screen.queryByText(STRINGS.COMMUNITY.LOCKED_TITLE)).toBeNull();
@@ -178,7 +202,7 @@ describe("P7 Scenario Verification (L7+ Standard)", () => {
     setupAuth("agent", true);
     setupFeedMock(true);
 
-    render(<Consumer />);
+    renderWithProviders(<Consumer />);
     fireEvent.click(screen.getByText(STRINGS.FEED.TABS.PRIVATE));
 
     expect(screen.getByText("Secret Content")).toBeDefined();

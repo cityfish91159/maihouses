@@ -20,6 +20,6 @@ export function getTaiwanHour(): number {
 export function getTaiwanDate(): Date {
   const now = new Date();
   // 獲取 UTC 毫秒數，加上 8 小時
-  const taiwanTimestamp = now.getTime() + (8 * 3600000);
+  const taiwanTimestamp = now.getTime() + 8 * 3600000;
   return new Date(taiwanTimestamp);
 }

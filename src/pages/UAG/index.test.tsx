@@ -92,7 +92,7 @@ describe("UAGPage", () => {
     renderWithQueryClient();
 
     // Wait for data to load (mock mode is default)
-    const leadBubble = await screen.findByText("B218");
+    const leadBubble = await screen.findByLabelText(/買家 B218/);
     fireEvent.click(leadBubble);
 
     expect(screen.getByText("S級｜買家 B218")).toBeInTheDocument();

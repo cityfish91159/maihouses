@@ -1,4 +1,5 @@
 # 📊 邁房子 UAG 完整系統指南
+
 ## User Activity & Grade - 消費者瀏覽行為追蹤與客戶分級系統
 
 > 版本: v8.0 | 最後更新: 2025/11/29  
@@ -53,13 +54,13 @@
 
 ### 檔案位置對照表
 
-| 功能 | 檔案路徑 | 說明 |
-|------|----------|------|
-| 前端追蹤器 (HTML) | `/public/js/tracker.js` | 用於靜態 HTML 頁面 |
-| 前端追蹤器 (React) | `/src/pages/PropertyDetailPage.tsx` | React Hook 版本 |
-| 後端 API | `/api/uag-track.js` | Vercel Serverless Function |
-| 資料庫 Schema | `/supabase-uag-tracking.sql` | PostgreSQL 完整腳本 |
-| UAG 後台 | `/public/p/uag-dashboard.html` | 業務儀表板 |
+| 功能               | 檔案路徑                            | 說明                       |
+| ------------------ | ----------------------------------- | -------------------------- |
+| 前端追蹤器 (HTML)  | `/public/js/tracker.js`             | 用於靜態 HTML 頁面         |
+| 前端追蹤器 (React) | `/src/pages/PropertyDetailPage.tsx` | React Hook 版本            |
+| 後端 API           | `/api/uag-track.js`                 | Vercel Serverless Function |
+| 資料庫 Schema      | `/supabase-uag-tracking.sql`        | PostgreSQL 完整腳本        |
+| UAG 後台           | `/public/p/uag-dashboard.html`      | 業務儀表板                 |
 
 ---
 
@@ -163,13 +164,13 @@ Session: u_abc123xyz (同一消費者)
 
 ### 3.1 分級標準表
 
-| 等級 | 條件 | 說明 |
-|:----:|------|------|
+| 等級  | 條件                                                               | 說明                  |
+| :---: | ------------------------------------------------------------------ | --------------------- |
 | **S** | 點擊 LINE/電話 **且** (停留 ≥120秒 **或** 同區其他物件停留 ≥300秒) | 🔥 最高意願，立即跟進 |
-| **A** | 停留 ≥90秒 + 滾動 ≥80% **或** 同區競品停留 ≥180秒 | ⭐ 高度興趣 |
-| **B** | 停留 ≥60秒 **或** (回訪 ≥2次 + 停留 ≥30秒) | 👀 中度興趣 |
-| **C** | 停留 ≥20秒 | 📌 輕度興趣 |
-| **F** | 其他 | 路過 |
+| **A** | 停留 ≥90秒 + 滾動 ≥80% **或** 同區競品停留 ≥180秒                  | ⭐ 高度興趣           |
+| **B** | 停留 ≥60秒 **或** (回訪 ≥2次 + 停留 ≥30秒)                         | 👀 中度興趣           |
+| **C** | 停留 ≥20秒                                                         | 📌 輕度興趣           |
+| **F** | 其他                                                               | 路過                  |
 
 ### 3.2 加分機制 (District Bonus)
 
@@ -198,7 +199,7 @@ BEGIN
         RETURN 'S';
      END IF;
   END IF;
-  
+
   -- A Grade: 深度瀏覽
   IF p_duration >= 90 AND (p_actions->>'scroll_depth')::INT >= 80 THEN
     RETURN 'A';
@@ -206,7 +207,7 @@ BEGIN
   IF p_competitor_duration >= 180 AND p_duration >= 10 THEN
     RETURN 'A';
   END IF;
-  
+
   -- B Grade (含區域加分)
   IF p_duration >= 60 OR (p_revisits >= 2 AND p_duration >= 30) THEN
     IF p_district_count >= 3 THEN
@@ -214,7 +215,7 @@ BEGIN
     END IF;
     RETURN 'B';
   END IF;
-  
+
   -- C Grade (含區域加分)
   IF p_duration >= 20 THEN
     IF p_district_count >= 3 THEN
@@ -222,7 +223,7 @@ BEGIN
     END IF;
     RETURN 'C';
   END IF;
-  
+
   RETURN 'F';
 END;
 $$ LANGUAGE plpgsql IMMUTABLE;
@@ -245,22 +246,28 @@ class EnhancedTracker {
     this.agentId = this.getAgentId();
     this.batcher = new EventBatcher(this);
     this.enterTime = Date.now();
-    this.actions = { click_photos: 0, click_map: 0, click_line: 0, click_call: 0, scroll_depth: 0 };
-    
+    this.actions = {
+      click_photos: 0,
+      click_map: 0,
+      click_line: 0,
+      click_call: 0,
+      scroll_depth: 0,
+    };
+
     this.initListeners();
     this.recoverSession();
-    this.trackImmediate('page_view');
+    this.trackImmediate("page_view");
   }
 
   // ═══════════════════════════════════════════════════════════
   // Session 管理 (多重備援)
   // ═══════════════════════════════════════════════════════════
-  
+
   getOrCreateSessionId() {
     // 優先級：LocalStorage > SessionStorage > Cookie > 新建
-    let sid = localStorage.getItem('uag_session');
-    if (!sid) sid = sessionStorage.getItem('uag_session_temp');
-    if (!sid) sid = this.getCookie('uag_sid');
+    let sid = localStorage.getItem("uag_session");
+    if (!sid) sid = sessionStorage.getItem("uag_session_temp");
+    if (!sid) sid = this.getCookie("uag_sid");
     if (!sid) {
       sid = `u_${Math.random().toString(36).substr(2, 9)}`;
       this.persistSession(sid);
@@ -269,41 +276,41 @@ class EnhancedTracker {
   }
 
   persistSession(sid) {
-    localStorage.setItem('uag_session', sid);
-    sessionStorage.setItem('uag_session_temp', sid);
-    this.setCookie('uag_sid', sid, 30); // 30 天有效
+    localStorage.setItem("uag_session", sid);
+    sessionStorage.setItem("uag_session_temp", sid);
+    this.setCookie("uag_sid", sid, 30); // 30 天有效
   }
 
   getCookie(name) {
     const value = `; ${document.cookie}`;
     const parts = value.split(`; ${name}=`);
-    if (parts.length === 2) return parts.pop().split(';').shift();
+    if (parts.length === 2) return parts.pop().split(";").shift();
   }
 
   setCookie(name, value, days) {
     const d = new Date();
-    d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
+    d.setTime(d.getTime() + days * 24 * 60 * 60 * 1000);
     document.cookie = `${name}=${value};expires=${d.toUTCString()};path=/`;
   }
 
   // ═══════════════════════════════════════════════════════════
   // Agent ID 追蹤 (業務歸屬)
   // ═══════════════════════════════════════════════════════════
-  
+
   getAgentId() {
     // 優先從 URL 參數取得 ?aid=xxx
-    let aid = new URLSearchParams(location.search).get('aid');
+    let aid = new URLSearchParams(location.search).get("aid");
     // 若無，從 localStorage 取得上次的 aid
-    if (!aid) aid = localStorage.getItem('uag_last_aid');
+    if (!aid) aid = localStorage.getItem("uag_last_aid");
     // 記住有效的 aid
-    if (aid && aid !== 'unknown') localStorage.setItem('uag_last_aid', aid);
-    return aid || 'unknown';
+    if (aid && aid !== "unknown") localStorage.setItem("uag_last_aid", aid);
+    return aid || "unknown";
   }
 
   // ═══════════════════════════════════════════════════════════
   // Fingerprint 指紋 (跨設備識別輔助)
   // ═══════════════════════════════════════════════════════════
-  
+
   generateFingerprint() {
     try {
       const fp = {
@@ -312,93 +319,104 @@ class EnhancedTracker {
         language: navigator.language,
         platform: navigator.platform,
         cores: navigator.hardwareConcurrency,
-        memory: navigator.deviceMemory
+        memory: navigator.deviceMemory,
       };
       return btoa(JSON.stringify(fp));
     } catch (e) {
-      return 'unknown_fp';
+      return "unknown_fp";
     }
   }
 
   // ═══════════════════════════════════════════════════════════
   // Session Recovery (可選功能)
   // ═══════════════════════════════════════════════════════════
-  
+
   async recoverSession() {
-    if (!localStorage.getItem('uag_session_recovered')) {
+    if (!localStorage.getItem("uag_session_recovered")) {
       try {
-        const res = await fetch('/api/session-recovery', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ fingerprint: this.fingerprint, agentId: this.agentId })
+        const res = await fetch("/api/session-recovery", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            fingerprint: this.fingerprint,
+            agentId: this.agentId,
+          }),
         });
         const data = await res.json();
         if (data.recovered) {
           this.sessionId = data.session_id;
           this.persistSession(this.sessionId);
-          localStorage.setItem('uag_session_recovered', 'true');
-          console.log('[UAG] Session Recovered:', this.sessionId);
+          localStorage.setItem("uag_session_recovered", "true");
+          console.log("[UAG] Session Recovered:", this.sessionId);
         }
-      } catch (e) { console.error('Recovery failed', e); }
+      } catch (e) {
+        console.error("Recovery failed", e);
+      }
     }
   }
 
   // ═══════════════════════════════════════════════════════════
   // 事件監聽器
   // ═══════════════════════════════════════════════════════════
-  
+
   initListeners() {
     // 點擊追蹤
-    document.addEventListener('click', e => {
-      const t = e.target.closest('a, button, div');
+    document.addEventListener("click", (e) => {
+      const t = e.target.closest("a, button, div");
       if (!t) return;
-      const text = (t.innerText || '').toLowerCase();
-      
+      const text = (t.innerText || "").toLowerCase();
+
       // LINE 按鈕
-      if (text.includes('line') || t.href?.includes('line.me')) {
+      if (text.includes("line") || t.href?.includes("line.me")) {
         this.actions.click_line++;
-        this.trackImmediate('click_line'); // 強信號立即送出
+        this.trackImmediate("click_line"); // 強信號立即送出
       }
       // 電話按鈕
-      if (text.includes('電話') || t.href?.includes('tel:')) {
+      if (text.includes("電話") || t.href?.includes("tel:")) {
         this.actions.click_call++;
-        this.trackImmediate('click_call'); // 強信號立即送出
+        this.trackImmediate("click_call"); // 強信號立即送出
       }
       // 照片點擊
-      if (t.tagName === 'IMG' || t.classList.contains('photo')) {
+      if (t.tagName === "IMG" || t.classList.contains("photo")) {
         this.actions.click_photos++;
       }
     });
 
     // 滾動深度追蹤
-    window.addEventListener('scroll', () => {
-      const depth = Math.round((window.scrollY + window.innerHeight) / document.body.scrollHeight * 100);
+    window.addEventListener("scroll", () => {
+      const depth = Math.round(
+        ((window.scrollY + window.innerHeight) / document.body.scrollHeight) *
+          100,
+      );
       if (depth > this.actions.scroll_depth) {
         this.actions.scroll_depth = depth;
       }
     });
 
     // 離開頁面追蹤
-    const sendFinal = () => this.trackImmediate('page_exit');
-    window.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'hidden') sendFinal();
+    const sendFinal = () => this.trackImmediate("page_exit");
+    window.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "hidden") sendFinal();
     });
-    window.addEventListener('pagehide', sendFinal);
+    window.addEventListener("pagehide", sendFinal);
   }
 
   // ═══════════════════════════════════════════════════════════
   // 事件發送
   // ═══════════════════════════════════════════════════════════
-  
+
   trackImmediate(type) {
-    this.batcher.add({
-      type,
-      property_id: window.propertyId || location.pathname.split('/').pop(),
-      district: window.propertyDistrict || 'unknown',
-      duration: Math.round((Date.now() - this.enterTime) / 1000),
-      actions: { ...this.actions },
-      focus: []
-    }, true);
+    this.batcher.add(
+      {
+        type,
+        property_id: window.propertyId || location.pathname.split("/").pop(),
+        district: window.propertyDistrict || "unknown",
+        duration: Math.round((Date.now() - this.enterTime) / 1000),
+        actions: { ...this.actions },
+        focus: [],
+      },
+      true,
+    );
   }
 }
 
@@ -429,7 +447,7 @@ class EventBatcher {
 
   flush() {
     if (this.queue.length === 0) return;
-    
+
     // 取最新狀態發送 (duration 和 actions 是累積的)
     const latestEvent = this.queue.at(-1);
     this.queue = [];
@@ -438,12 +456,14 @@ class EventBatcher {
       session_id: this.tracker.sessionId,
       agent_id: this.tracker.agentId,
       fingerprint: this.tracker.fingerprint,
-      event: latestEvent
+      event: latestEvent,
     };
 
     // 使用 sendBeacon 確保離開頁面也能送出
-    const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
-    navigator.sendBeacon('/api/uag-track', blob);
+    const blob = new Blob([JSON.stringify(payload)], {
+      type: "application/json",
+    });
+    navigator.sendBeacon("/api/uag-track", blob);
   }
 }
 
@@ -552,8 +572,8 @@ const { trackPhotoClick, trackLineClick, trackCallClick } = usePropertyTracker(p
 <!-- property.html 底部 -->
 <script>
   // 設定物件資訊供追蹤器使用
-  window.propertyId = 'prop_12345';
-  window.propertyDistrict = '西屯區';
+  window.propertyId = "prop_12345";
+  window.propertyDistrict = "西屯區";
 </script>
 <script src="/js/tracker.js"></script>
 ```
@@ -565,64 +585,71 @@ const { trackPhotoClick, trackLineClick, trackCallClick } = usePropertyTracker(p
 ### 5.1 追蹤 API (`/api/uag-track.js`)
 
 ```javascript
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from "@supabase/supabase-js";
 
 // Initialize Supabase Client
 const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY;
+const supabaseKey =
+  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 export default async function handler(req, res) {
   // CORS Headers
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
-  if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+  if (req.method === "OPTIONS") return res.status(200).end();
+  if (req.method !== "POST")
+    return res.status(405).json({ error: "Method not allowed" });
 
   try {
     let data = req.body;
-    if (typeof data === 'string') {
-      try { data = JSON.parse(data); } catch (e) { return res.status(400).json({ error: 'Invalid JSON' }); }
+    if (typeof data === "string") {
+      try {
+        data = JSON.parse(data);
+      } catch (e) {
+        return res.status(400).json({ error: "Invalid JSON" });
+      }
     }
 
     const { session_id, agent_id, event, fingerprint } = data;
 
     // 驗證必要欄位
     if (!session_id || !event) {
-      return res.status(400).json({ error: 'Missing required fields: session_id or event' });
+      return res
+        .status(400)
+        .json({ error: "Missing required fields: session_id or event" });
     }
 
-    if (typeof event !== 'object' || !event.property_id || !event.duration) {
-       return res.status(400).json({ error: 'Invalid event structure' });
+    if (typeof event !== "object" || !event.property_id || !event.duration) {
+      return res.status(400).json({ error: "Invalid event structure" });
     }
 
     // 呼叫資料庫 RPC 函數
-    const { data: result, error } = await supabase.rpc('track_uag_event_v8', {
+    const { data: result, error } = await supabase.rpc("track_uag_event_v8", {
       p_session_id: session_id,
-      p_agent_id: agent_id || 'unknown',
+      p_agent_id: agent_id || "unknown",
       p_fingerprint: fingerprint || null,
-      p_event_data: event
+      p_event_data: event,
     });
 
     if (error) {
-      console.error('Supabase RPC Error:', error);
+      console.error("Supabase RPC Error:", error);
       return res.status(500).json({ error: error.message });
     }
 
     // S 級客戶即時通知 (可選)
-    if (result && result.grade === 'S') {
+    if (result && result.grade === "S") {
       console.log(`[UAG] 🔥 S-Grade Lead Detected! Session: ${session_id}`);
       // 可接入 webhook 或推播通知業務
       // await sendWebhookToAgent(agent_id, session_id);
     }
 
     return res.status(200).json(result);
-
   } catch (err) {
-    console.error('UAG Track Error:', err);
-    return res.status(500).json({ error: 'Internal Server Error' });
+    console.error("UAG Track Error:", err);
+    return res.status(500).json({ error: "Internal Server Error" });
   }
 }
 ```
@@ -721,19 +748,19 @@ CREATE TABLE IF NOT EXISTS public.uag_events_archive (
 -- ══════════════════════════════════════════════════════════════════════════════
 DROP MATERIALIZED VIEW IF EXISTS public.uag_lead_rankings;
 CREATE MATERIALIZED VIEW public.uag_lead_rankings AS
-SELECT 
+SELECT
   session_id,
   agent_id,
   grade,
   last_active,
-  CASE 
+  CASE
     WHEN last_active > NOW() - INTERVAL '3 hours' THEN 'HOT'
     WHEN last_active > NOW() - INTERVAL '24 hours' THEN 'WARM'
     ELSE 'COLD'
   END as temperature,
   ROW_NUMBER() OVER (
-    PARTITION BY agent_id 
-    ORDER BY 
+    PARTITION BY agent_id
+    ORDER BY
       CASE grade WHEN 'S' THEN 1 WHEN 'A' THEN 2 WHEN 'B' THEN 3 WHEN 'C' THEN 4 ELSE 5 END,
       last_active DESC
   ) as rank
@@ -760,7 +787,7 @@ BEGIN
         RETURN 'S';
      END IF;
   END IF;
-  
+
   -- A: 深度瀏覽
   IF p_duration >= 90 AND (p_actions->>'scroll_depth')::INT >= 80 THEN
     RETURN 'A';
@@ -768,19 +795,19 @@ BEGIN
   IF p_competitor_duration >= 180 AND p_duration >= 10 THEN
     RETURN 'A';
   END IF;
-  
+
   -- B: 中度興趣 (含區域加分)
   IF p_duration >= 60 OR (p_revisits >= 2 AND p_duration >= 30) THEN
     IF p_district_count >= 3 THEN RETURN 'A'; END IF;
     RETURN 'B';
   END IF;
-  
+
   -- C: 輕度興趣 (含區域加分)
   IF p_duration >= 20 THEN
     IF p_district_count >= 3 THEN RETURN 'B'; END IF;
     RETURN 'C';
   END IF;
-  
+
   RETURN 'F';
 END;
 $$ LANGUAGE plpgsql IMMUTABLE;
@@ -795,7 +822,7 @@ AS $$
 DECLARE v_count INTEGER;
 BEGIN
     WITH archived AS (
-      INSERT INTO public.uag_events_archive 
+      INSERT INTO public.uag_events_archive
       SELECT * FROM public.uag_events WHERE created_at < NOW() - INTERVAL '3 hours'
       RETURNING id
     ),
@@ -851,15 +878,15 @@ BEGIN
 
     -- 2. Insert Event
     INSERT INTO public.uag_events (session_id, agent_id, property_id, district, duration, actions, focus)
-    VALUES (p_session_id, p_agent_id, v_pid, v_district, v_duration, v_actions, 
+    VALUES (p_session_id, p_agent_id, v_pid, v_district, v_duration, v_actions,
             ARRAY(SELECT jsonb_array_elements_text(p_event_data->'focus')));
 
     -- 3. 更新 Summary
     v_new_summary := COALESCE(v_session.summary, '{}'::jsonb);
     IF v_district IS NOT NULL THEN
         v_new_summary := jsonb_set(
-            v_new_summary, 
-            ARRAY['district_counts', v_district], 
+            v_new_summary,
+            ARRAY['district_counts', v_district],
             to_jsonb(COALESCE((v_new_summary->'district_counts'->>v_district)::INT, 0) + 1)
         );
     END IF;
@@ -884,15 +911,15 @@ BEGIN
 
     -- 6. 更新 Session (等級只升不降)
     UPDATE public.uag_sessions
-    SET 
+    SET
         total_duration = v_new_total_duration,
         property_count = (SELECT COUNT(DISTINCT property_id) FROM public.uag_events WHERE session_id = p_session_id),
         summary = v_new_summary
     WHERE session_id = p_session_id;
-    
+
     UPDATE public.uag_sessions
     SET grade = v_new_grade
-    WHERE session_id = p_session_id 
+    WHERE session_id = p_session_id
       AND (CASE grade WHEN 'S' THEN 5 WHEN 'A' THEN 4 WHEN 'B' THEN 3 WHEN 'C' THEN 2 ELSE 1 END)
         < (CASE v_new_grade WHEN 'S' THEN 5 WHEN 'A' THEN 4 WHEN 'B' THEN 3 WHEN 'C' THEN 2 ELSE 1 END);
 
@@ -911,12 +938,12 @@ CREATE POLICY "Allow anon insert" ON public.uag_sessions FOR INSERT TO anon WITH
 CREATE POLICY "Allow anon insert" ON public.uag_events FOR INSERT TO anon WITH CHECK (true);
 
 -- 業務只能看自己的客戶
-CREATE POLICY "Agent can read own sessions" ON public.uag_sessions 
-  FOR SELECT TO authenticated 
+CREATE POLICY "Agent can read own sessions" ON public.uag_sessions
+  FOR SELECT TO authenticated
   USING (agent_id = auth.uid()::text);
 
-CREATE POLICY "Agent can read own events" ON public.uag_events 
-  FOR SELECT TO authenticated 
+CREATE POLICY "Agent can read own events" ON public.uag_events
+  FOR SELECT TO authenticated
   USING (agent_id = auth.uid()::text);
 ```
 
@@ -969,30 +996,30 @@ CREATE POLICY "Agent can read own events" ON public.uag_events
 
 ### 7.1 高優先級 (必須修復)
 
-| # | 問題 | 現狀 | 解決方案 |
-|---|------|------|----------|
-| 1 | **district 未傳遞** | React 版永遠送 'unknown' | 從物件資料取得 `property.district` 傳入 tracker |
-| 2 | **UAG Dashboard 查詢欄位錯誤** | 查 `ts`, `event`, `page` (舊欄位) | 改為 `created_at`, `property_id`, `actions` |
-| 3 | **資料庫未部署** | SQL 只存在檔案中 | 需在 Supabase Dashboard 執行 `supabase-uag-tracking.sql` |
-| 4 | **缺少 session-recovery API** | 前端會呼叫但 API 不存在 | 新增 `/api/session-recovery.js` 或移除前端呼叫 |
+| #   | 問題                           | 現狀                              | 解決方案                                                 |
+| --- | ------------------------------ | --------------------------------- | -------------------------------------------------------- |
+| 1   | **district 未傳遞**            | React 版永遠送 'unknown'          | 從物件資料取得 `property.district` 傳入 tracker          |
+| 2   | **UAG Dashboard 查詢欄位錯誤** | 查 `ts`, `event`, `page` (舊欄位) | 改為 `created_at`, `property_id`, `actions`              |
+| 3   | **資料庫未部署**               | SQL 只存在檔案中                  | 需在 Supabase Dashboard 執行 `supabase-uag-tracking.sql` |
+| 4   | **缺少 session-recovery API**  | 前端會呼叫但 API 不存在           | 新增 `/api/session-recovery.js` 或移除前端呼叫           |
 
 ### 7.2 中優先級 (建議優化)
 
-| # | 問題 | 現狀 | 解決方案 |
-|---|------|------|----------|
-| 5 | **重複送出 page_exit** | 可能送多次 | 加入 debounce 或 flag 確保只送一次 |
-| 6 | **未追蹤地圖點擊** | actions.click_map 有欄位但沒監聽 | 在 tracker 中加入地圖按鈕監聽 |
-| 7 | **Materialized View 未自動刷新** | 需手動 REFRESH | 設定 pg_cron 定時刷新 |
-| 8 | **歸檔未自動執行** | archive_old_history() 需手動觸發 | 設定 pg_cron 每小時執行 |
+| #   | 問題                             | 現狀                             | 解決方案                           |
+| --- | -------------------------------- | -------------------------------- | ---------------------------------- |
+| 5   | **重複送出 page_exit**           | 可能送多次                       | 加入 debounce 或 flag 確保只送一次 |
+| 6   | **未追蹤地圖點擊**               | actions.click_map 有欄位但沒監聽 | 在 tracker 中加入地圖按鈕監聽      |
+| 7   | **Materialized View 未自動刷新** | 需手動 REFRESH                   | 設定 pg_cron 定時刷新              |
+| 8   | **歸檔未自動執行**               | archive_old_history() 需手動觸發 | 設定 pg_cron 每小時執行            |
 
 ### 7.3 低優先級 (未來增強)
 
-| # | 功能 | 說明 |
-|---|------|------|
-| 9 | S 級客戶即時推播 | 當客戶升級 S 級時，推播通知給業務 |
-| 10 | 熱力圖追蹤 | 使用 IntersectionObserver 記錄用戶關注的頁面區塊 |
-| 11 | A/B 測試支援 | 記錄實驗分組，分析不同版本轉換率 |
-| 12 | 跨設備合併 | 利用 fingerprint + 登入後 user_id 合併 Session |
+| #   | 功能             | 說明                                             |
+| --- | ---------------- | ------------------------------------------------ |
+| 9   | S 級客戶即時推播 | 當客戶升級 S 級時，推播通知給業務                |
+| 10  | 熱力圖追蹤       | 使用 IntersectionObserver 記錄用戶關注的頁面區塊 |
+| 11  | A/B 測試支援     | 記錄實驗分組，分析不同版本轉換率                 |
+| 12  | 跨設備合併       | 利用 fingerprint + 登入後 user_id 合併 Session   |
 
 ---
 
@@ -1007,7 +1034,7 @@ CREATE POLICY "Agent can read own events" ON public.uag_events
 # 4. 確認無錯誤
 
 # 驗證表格建立
-SELECT table_name FROM information_schema.tables 
+SELECT table_name FROM information_schema.tables
 WHERE table_schema = 'public' AND table_name LIKE 'uag%';
 
 # 預期結果:
@@ -1035,10 +1062,10 @@ VITE_SUPABASE_ANON_KEY=eyJxxxxxx
 console.log(window.uagTracker); // 應該有值
 
 // 檢查 Session ID
-console.log(localStorage.getItem('uag_session')); // 應該有值
+console.log(localStorage.getItem("uag_session")); // 應該有值
 
 // 手動觸發測試
-window.uagTracker.trackImmediate('test_event');
+window.uagTracker.trackImmediate("test_event");
 ```
 
 ### 8.4 API 測試
@@ -1068,26 +1095,30 @@ curl -X POST https://maihouses.vercel.app/api/uag-track \
 ## 📝 附錄：快速啟動指南
 
 ### Step 1: 部署資料庫
+
 ```
 在 Supabase Dashboard 執行 supabase-uag-tracking.sql
 ```
 
 ### Step 2: 設定環境變數
+
 ```
 在 Vercel Dashboard 設定 SUPABASE_URL 和 SUPABASE_SERVICE_ROLE_KEY
 ```
 
 ### Step 3: 確認前端追蹤
+
 ```html
 <!-- 在物件頁面確保有載入 -->
 <script>
-  window.propertyId = '物件ID';
-  window.propertyDistrict = '行政區';
+  window.propertyId = "物件ID";
+  window.propertyDistrict = "行政區";
 </script>
 <script src="/js/tracker.js"></script>
 ```
 
 ### Step 4: 驗證數據流
+
 ```
 1. 瀏覽物件頁面
 2. 打開 DevTools > Network

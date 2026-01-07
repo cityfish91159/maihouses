@@ -30,6 +30,7 @@ description: 安裝 code-review-excellence 和 type-checker MCP 工具
 ```
 
 // turbo-all
+
 ## 3. 驗證安裝
 
 ```powershell

@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import Home from "./Home";
 import { MemoryRouter } from "react-router-dom";
+import { MaiMaiProvider } from "../context/MaiMaiContext";
 import type { AppConfig, RuntimeOverrides } from "../app/config";
 
 // Mock services to prevent network calls
@@ -53,9 +54,11 @@ const mockConfig: AppConfig & RuntimeOverrides = {
 describe("Home Page", () => {
   it("renders all main sections when features are enabled", () => {
     render(
-      <MemoryRouter>
-        <Home config={mockConfig} />
-      </MemoryRouter>,
+      <MaiMaiProvider>
+        <MemoryRouter>
+          <Home config={mockConfig} />
+        </MemoryRouter>
+      </MaiMaiProvider>,
     );
 
     expect(screen.getByTestId("mock-header")).toBeInTheDocument();
@@ -80,9 +83,11 @@ describe("Home Page", () => {
     };
 
     render(
-      <MemoryRouter>
-        <Home config={disabledConfig} />
-      </MemoryRouter>,
+      <MaiMaiProvider>
+        <MemoryRouter>
+          <Home config={disabledConfig} />
+        </MemoryRouter>
+      </MaiMaiProvider>,
     );
 
     expect(screen.queryByTestId("mock-hero")).not.toBeInTheDocument();

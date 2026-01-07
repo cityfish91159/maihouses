@@ -29,7 +29,13 @@
     "transform"
   ],
   "categories": {
-    "Testing & Security": ["testing", "test", "security", "audit", "vulnerability"],
+    "Testing & Security": [
+      "testing",
+      "test",
+      "security",
+      "audit",
+      "vulnerability"
+    ],
     "DevOps": ["docker", "deploy", "ci", "cd", "github-actions", "kubernetes"],
     "Documentation": ["documentation", "api doc", "readme", "openapi"],
     "Data & AI": ["data", "csv", "json", "transform", "ml", "ai"],

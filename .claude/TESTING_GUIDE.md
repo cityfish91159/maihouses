@@ -23,6 +23,7 @@ head -n 5 .claude/skills/*/SKILL.md
 ```
 
 **預期結果：**
+
 - ✅ skills 目錄存在，包含 4 個 skill 資料夾
 - ✅ settings.json 包含 `"allow": ["Skill"]`
 - ✅ .mcp.json 包含 4 個 MCP servers
@@ -47,6 +48,7 @@ EOF
 ```
 
 **測試對話:**
+
 ```
 您對 Claude 說：
 「請審查 /tmp/test-bad-code.ts 的代碼品質」
@@ -357,6 +359,7 @@ grep "description:" .claude/skills/*/SKILL.md
 ```
 
 **解決方法：**
+
 - 確保 settings.json 有 `"allow": ["Skill"]`
 - 確保每個 SKILL.md 有正確的 YAML frontmatter
 - 確保 description 清楚描述觸發時機
@@ -377,6 +380,7 @@ npx -y @modelcontextprotocol/server-filesystem --help
 ```
 
 **解決方法：**
+
 - 確保 Node.js 和 npx 已安裝
 - 首次使用時，MCP server 會自動下載
 - 檢查網絡連接
@@ -392,6 +396,7 @@ ls -la .mcp.json
 ```
 
 **解決方法：**
+
 ```bash
 # 如果權限不對，修復：
 chmod -R 755 .claude/skills/

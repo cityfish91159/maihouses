@@ -51,7 +51,12 @@ export default async function handler(req, res) {
   if (hasUrl) {
     cloudinary.config({ secure: true });
   } else {
-    cloudinary.config({ cloud_name: name, api_key: key, api_secret: secret, secure: true });
+    cloudinary.config({
+      cloud_name: name,
+      api_key: key,
+      api_secret: secret,
+      secure: true,
+    });
   }
 
   try {
@@ -59,10 +64,15 @@ export default async function handler(req, res) {
     // 不使用 upload_preset，直接伺服器端上傳
     const r = await cloudinary.uploader.upload(
       "https://res.cloudinary.com/demo/image/upload/sample.jpg",
-      { folder: "raw" }
+      { folder: "raw" },
     );
 
-    return res.status(200).json({ ok: true, url: r.secure_url, public_id: r.public_id, cloud_name: cfg.cloud_name });
+    return res.status(200).json({
+      ok: true,
+      url: r.secure_url,
+      public_id: r.public_id,
+      cloud_name: cfg.cloud_name,
+    });
   } catch (e) {
     return res.status(500).json({
       ok: false,

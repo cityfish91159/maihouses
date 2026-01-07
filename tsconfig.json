@@ -1,11 +1,7 @@
 {
   "compilerOptions": {
     "target": "ES2020",
-    "lib": [
-      "ES2022",
-      "DOM",
-      "DOM.Iterable"
-    ],
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "module": "ESNext",
     "moduleResolution": "bundler",
     "skipLibCheck": true,
@@ -18,19 +14,8 @@
     "exactOptionalPropertyTypes": true,
     "noImplicitOverride": true,
     "noFallthroughCasesInSwitch": true,
-    "types": [
-      "node",
-      "vite/client",
-      "vitest/globals"
-    ]
+    "types": ["node", "vite/client", "vitest/globals"]
   },
-  "include": [
-    "src"
-  ],
-  "exclude": [
-    "api",
-    "public",
-    "docs",
-    "node_modules"
-  ]
+  "include": ["src"],
+  "exclude": ["api", "public", "docs", "node_modules"]
 }

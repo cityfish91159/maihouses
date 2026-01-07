@@ -217,6 +217,7 @@ Edit: file_path="src/hooks/useAuth.ts" ...
 ### 閱讀覆蓋率報告
 
 #### 已閱讀 ✅
+
 - [x] src/pages/Login.tsx (要修改的檔案)
 - [x] src/types/auth.ts (類型定義)
 - [x] src/api/auth.ts (API 層)
@@ -252,6 +253,7 @@ Edit: file_path="src/hooks/useAuth.ts" ...
 專案已配置 hooks 監督系統（見 `settings.json`），會在 Edit/Write 前檢查是否已 Read。
 
 如果違反規則，會看到：
+
 ```
 🚫 [監督系統] Edit 被阻止！必須先 Read 該檔案
 ```

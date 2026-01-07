@@ -11,6 +11,7 @@ allowed-tools: Read, Grep, Bash, Edit
 ## 🎯 執行時機
 
 當以下情況發生時，Claude 會自動使用此 skill：
+
 - 修改任何 `.ts` 或 `.tsx` 檔案後
 - 用戶要求代碼審查
 - 用戶要求檢查代碼品質
@@ -80,11 +81,13 @@ npm run lint
 ### 檔案：path/to/file.tsx
 
 #### ✅ 通過項目
+
 - TypeScript 類型檢查通過
 - ESLint 檢查通過
 - 無禁止模式
 
 #### ❌ 發現問題
+
 1. **行 42**: 使用了 `any` 類型
    - 建議：定義具體的 interface
 
@@ -92,9 +95,11 @@ npm run lint
    - 建議：在 async 函數中加入 try-catch
 
 #### 🔧 修復建議
+
 [具體的修復步驟]
 
 ### 整體評分
+
 - 類型安全: ⭐⭐⭐⭐⭐
 - 錯誤處理: ⭐⭐⭐⭐☆
 - 代碼風格: ⭐⭐⭐⭐⭐

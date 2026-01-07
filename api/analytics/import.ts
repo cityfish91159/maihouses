@@ -6,9 +6,9 @@
  * @version 1.0.0 - 2025-12-30
  */
 
-import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import { z } from 'zod';
+import type { VercelRequest, VercelResponse } from "@vercel/node";
+import { createClient, SupabaseClient } from "@supabase/supabase-js";
+import { z } from "zod";
 
 // ============ Supabase Client ============
 
@@ -21,7 +21,7 @@ function getSupabase(): SupabaseClient {
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!url || !key) {
-    throw new Error('缺少 SUPABASE_URL 或 SUPABASE_SERVICE_ROLE_KEY 環境變數');
+    throw new Error("缺少 SUPABASE_URL 或 SUPABASE_SERVICE_ROLE_KEY 環境變數");
   }
 
   supabase = createClient(url, key);
@@ -50,7 +50,7 @@ const ImportAnalyticsSchema = z.object({
   missingFields: z.array(z.string()).max(10),
 
   // 來源資訊
-  source: z.enum(['paste', 'url', 'button']).default('paste'),
+  source: z.enum(["paste", "url", "button"]).default("paste"),
   userAgent: z.string().max(500).optional(),
 
   // 時間戳
@@ -61,33 +61,33 @@ type ImportAnalyticsPayload = z.infer<typeof ImportAnalyticsSchema>;
 
 // ============ Main Handler ============
 
-export default async function handler(
-  req: VercelRequest,
-  res: VercelResponse
-) {
+export default async function handler(req: VercelRequest, res: VercelResponse) {
   // CORS
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
-  if (req.method === 'OPTIONS') {
+  if (req.method === "OPTIONS") {
     return res.status(204).end();
   }
 
-  if (req.method !== 'POST') {
-    return res.status(405).json({ success: false, error: 'Method not allowed' });
+  if (req.method !== "POST") {
+    return res
+      .status(405)
+      .json({ success: false, error: "Method not allowed" });
   }
 
   try {
     // 1. 驗證 Payload
-    const rawBody = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+    const rawBody =
+      typeof req.body === "string" ? JSON.parse(req.body) : req.body;
     const validation = ImportAnalyticsSchema.safeParse(rawBody);
 
     if (!validation.success) {
-      console.error('[Analytics Import] Validation failed:', validation.error);
+      console.error("[Analytics Import] Validation failed:", validation.error);
       return res.status(400).json({
         success: false,
-        error: 'Invalid payload',
+        error: "Invalid payload",
         details: validation.error.issues,
       });
     }
@@ -109,32 +109,35 @@ export default async function handler(
     // 3. 寫入 Supabase
     const client = getSupabase();
     const { error, data } = await client
-      .from('import_analytics')
+      .from("import_analytics")
       .insert(record)
-      .select('id')
+      .select("id")
       .single();
 
     if (error) {
-      console.error('[Analytics Import] Supabase insert failed:', error);
+      console.error("[Analytics Import] Supabase insert failed:", error);
 
       // 如果是 table 不存在,返回友善錯誤
-      if (error.message.includes('relation') && error.message.includes('does not exist')) {
+      if (
+        error.message.includes("relation") &&
+        error.message.includes("does not exist")
+      ) {
         return res.status(503).json({
           success: false,
-          error: 'Analytics table not initialized',
-          hint: 'Run migration: CREATE TABLE import_analytics',
+          error: "Analytics table not initialized",
+          hint: "Run migration: CREATE TABLE import_analytics",
         });
       }
 
       return res.status(500).json({
         success: false,
-        error: 'Database insert failed',
+        error: "Database insert failed",
         details: error.message,
       });
     }
 
     // 4. 成功回應
-    console.log('[Analytics Import] Recorded:', {
+    console.log("[Analytics Import] Recorded:", {
       id: data?.id,
       confidence: payload.confidence,
       fieldsFound: payload.fieldsFound,
@@ -145,13 +148,12 @@ export default async function handler(
       id: data?.id,
       recordedAt: record.created_at,
     });
-
   } catch (error) {
-    console.error('[Analytics Import] Unexpected error:', error);
+    console.error("[Analytics Import] Unexpected error:", error);
     return res.status(500).json({
       success: false,
-      error: 'Internal server error',
-      message: error instanceof Error ? error.message : 'Unknown error',
+      error: "Internal server error",
+      message: error instanceof Error ? error.message : "Unknown error",
     });
   }
 }

@@ -21,6 +21,7 @@ bash deploy.sh
 ```
 
 腳本會自動：
+
 1. 檢查環境（Docker、Cog）
 2. 本地測試（如果有測試圖片）
 3. 構建容器
@@ -31,6 +32,7 @@ bash deploy.sh
 #### 1. 安裝依賴
 
 **安裝 Docker**
+
 ```bash
 # 檢查是否已安裝
 docker --version
@@ -40,6 +42,7 @@ docker --version
 ```
 
 **安裝 Cog**
+
 ```bash
 # macOS/Linux
 sudo curl -o /usr/local/bin/cog -L https://github.com/replicate/cog/releases/latest/download/cog_$(uname -s)_$(uname -m)
@@ -92,11 +95,13 @@ cog push r8.im/cityfish91159/x-raymike
 #### 6. 驗證部署
 
 訪問模型頁面：
+
 ```
 https://replicate.com/cityfish91159/x-raymike
 ```
 
 在網頁測試或使用 API：
+
 ```bash
 curl -X POST https://api.replicate.com/v1/predictions \
   -H "Authorization: Bearer $REPLICATE_API_TOKEN" \
@@ -131,7 +136,7 @@ def _apply_custom(self, img: np.ndarray, intensity: float) -> np.ndarray:
 
 ```yaml
 python_packages:
-  - "scikit-learn==1.3.0"  # 新增依賴
+  - "scikit-learn==1.3.0" # 新增依賴
 ```
 
 ### 測試更改
@@ -152,11 +157,13 @@ cog push r8.im/cityfish91159/x-raymike
 ### 問題 1: Docker 未啟動
 
 **錯誤**:
+
 ```
 Cannot connect to the Docker daemon
 ```
 
 **解決**:
+
 ```bash
 # macOS: 打開 Docker Desktop
 # Linux: sudo systemctl start docker
@@ -166,11 +173,13 @@ Cannot connect to the Docker daemon
 ### 問題 2: Cog 構建失敗
 
 **錯誤**:
+
 ```
 Error building image
 ```
 
 **解決**:
+
 1. 檢查 `cog.yaml` 語法
 2. 確保 Python 版本兼容（3.8-3.11）
 3. 檢查依賴版本衝突
@@ -179,11 +188,13 @@ Error building image
 ### 問題 3: 推送超時
 
 **錯誤**:
+
 ```
 Error: push timeout
 ```
 
 **解決**:
+
 1. 檢查網絡連接
 2. 重試推送（會斷點續傳）
 3. 如果反覆失敗，檢查防火牆設置
@@ -191,11 +202,13 @@ Error: push timeout
 ### 問題 4: 未登入
 
 **錯誤**:
+
 ```
 authentication required
 ```
 
 **解決**:
+
 ```bash
 # 重新登入
 cog login
@@ -207,11 +220,13 @@ cog whoami
 ### 問題 5: 本地測試失敗
 
 **錯誤**:
+
 ```
 Error in predict.py
 ```
 
 **解決**:
+
 1. 檢查 Python 語法
 2. 確保所有 import 都在 cog.yaml 中
 3. 測試依賴：`cog run python -c "import torch; print(torch.__version__)"`
@@ -222,6 +237,7 @@ Error in predict.py
 ### 減少構建時間
 
 1. **使用 Cog 緩存**
+
    ```bash
    # 不清除緩存
    cog build  # 後續構建會更快
@@ -231,7 +247,7 @@ Error in predict.py
    ```yaml
    # cog.yaml
    build:
-     gpu: true  # 只有需要 GPU 時才開啟
+     gpu: true # 只有需要 GPU 時才開啟
    ```
 
 ### 減少模型大小

@@ -11,40 +11,51 @@ vi.mock("../useAuth", () => ({
   useAuth: () => mockUseAuth(),
 }));
 
-// Mock Supabase with proper chain (including abortSignal)
-const mockSelectReturn = vi.fn();
-const mockSupabaseFrom = vi.fn((table: string) => ({
-  select: () => ({
-    eq: () => ({
-      gt: () => ({
-        order: () => ({
-          limit: () => ({
-            abortSignal: mockSelectReturn,
+// Mock Supabase with proper chain (including abortSignal) - Use hoisted to avoid initialization issues
+const mocks = vi.hoisted(() => {
+  const mockSelectReturn = vi.fn();
+  const mockChannelOn = vi.fn();
+  const mockSubscribe =
+    vi.fn<(cb?: (status: string) => void) => { on: typeof mockChannelOn }>();
+  const mockRemoveChannel = vi.fn();
+
+  const mockSupabaseFrom = vi.fn((table: string) => ({
+    select: () => ({
+      eq: () => ({
+        gt: () => ({
+          order: () => ({
+            limit: () => ({
+              abortSignal: mockSelectReturn,
+            }),
           }),
         }),
       }),
     }),
-  }),
-}));
+  }));
 
-const mockChannelOn = vi.fn();
-const mockSubscribe =
-  vi.fn<(cb?: (status: string) => void) => { on: typeof mockChannelOn }>();
-const mockRemoveChannel = vi.fn();
+  const createChannelMock = () => ({
+    on: mockChannelOn.mockReturnThis(),
+    subscribe: mockSubscribe.mockImplementation((cb) => {
+      if (cb) cb("SUBSCRIBED");
+      return { on: mockChannelOn };
+    }),
+  });
 
-const createChannelMock = () => ({
-  on: mockChannelOn.mockReturnThis(),
-  subscribe: mockSubscribe.mockImplementation((cb) => {
-    if (cb) cb("SUBSCRIBED");
-    return { on: mockChannelOn };
-  }),
+  return {
+    mockSelectReturn,
+    mockSupabaseFrom,
+    mockChannelOn,
+    mockSubscribe,
+    mockRemoveChannel,
+    createChannelMock,
+  };
 });
 
 vi.mock("../../lib/supabase", () => ({
   supabase: {
-    from: (table: string) => mockSupabaseFrom(table),
-    channel: createChannelMock,
-    removeChannel: mockRemoveChannel,
+    from: (table: string) => mocks.mockSupabaseFrom(table),
+    channel: mocks.createChannelMock,
+    removeChannel: mocks.mockRemoveChannel,
   },
 }));
 
@@ -59,6 +70,15 @@ vi.mock("../../lib/logger", () => ({
 
 // Import AFTER mocks are set up
 import { useNotifications } from "../useNotifications";
+
+// Destructure mocks for use in tests
+const {
+  mockSelectReturn,
+  mockSupabaseFrom,
+  mockChannelOn,
+  mockSubscribe,
+  mockRemoveChannel,
+} = mocks;
 
 // Test data fixtures
 const createMockConversation = (overrides = {}) => ({

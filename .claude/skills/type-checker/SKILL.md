@@ -26,11 +26,13 @@ npm run typecheck
 ### 2. 分析錯誤輸出
 
 TypeScript 錯誤格式：
+
 ```
 src/components/Login.tsx:42:15 - error TS7006: Parameter 'user' implicitly has an 'any' type.
 ```
 
 需要提取：
+
 - 檔案路徑: `src/components/Login.tsx`
 - 行號: `42`
 - 錯誤碼: `TS7006`
@@ -62,7 +64,7 @@ src/components/Login.tsx:42:15 - error TS7006: Parameter 'user' implicitly has a
 function handleUser(user: any) {}
 
 // ✅ 使用專案中已定義的類型
-import { User } from '@/types/user'
+import { User } from "@/types/user";
 function handleUser(user: User) {}
 ```
 
@@ -73,10 +75,10 @@ function handleUser(user: User) {}
 ```typescript
 // 在 src/types/[domain].ts 中定義
 export interface UserProfile {
-  id: string
-  name: string
-  email: string
-  role: 'admin' | 'user' | 'guest'
+  id: string;
+  name: string;
+  email: string;
+  role: "admin" | "user" | "guest";
 }
 ```
 
@@ -96,10 +98,10 @@ function fetchData<T>(url: string): Promise<T> {}
 
 ```typescript
 // ❌ 錯誤
-const handleClick = (e) => {}
+const handleClick = (e) => {};
 
 // ✅ 修復
-const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {}
+const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {};
 ```
 
 #### TS2339: 屬性不存在
@@ -107,14 +109,14 @@ const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {}
 ```typescript
 // ❌ 錯誤
 interface User {
-  name: string
+  name: string;
 }
-user.email // Property 'email' does not exist
+user.email; // Property 'email' does not exist
 
 // ✅ 修復：擴展 interface
 interface User {
-  name: string
-  email: string
+  name: string;
+  email: string;
 }
 ```
 
@@ -123,28 +125,28 @@ interface User {
 ```typescript
 // ❌ 錯誤
 function greet(name: string) {}
-greet(123)
+greet(123);
 
 // ✅ 修復：確保參數類型正確
-greet(String(123))
+greet(String(123));
 // 或
-greet(userId.toString())
+greet(userId.toString());
 ```
 
 #### TS18046: 可能為 undefined
 
 ```typescript
 // ❌ 錯誤
-const user = users.find(u => u.id === id)
-console.log(user.name) // 'user' is possibly 'undefined'
+const user = users.find((u) => u.id === id);
+console.log(user.name); // 'user' is possibly 'undefined'
 
 // ✅ 修復：加入 null check
-const user = users.find(u => u.id === id)
+const user = users.find((u) => u.id === id);
 if (user) {
-  console.log(user.name)
+  console.log(user.name);
 }
 // 或使用可選鏈
-console.log(user?.name)
+console.log(user?.name);
 ```
 
 ### 6. React 特定類型
@@ -152,22 +154,22 @@ console.log(user?.name)
 ```typescript
 // Props 類型
 interface ButtonProps {
-  label: string
-  onClick: () => void
-  disabled?: boolean
+  label: string;
+  onClick: () => void;
+  disabled?: boolean;
 }
 
 // Event handlers
-const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {}
-const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {}
-const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {}
+const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {};
+const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {};
+const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {};
 
 // State 類型
-const [user, setUser] = useState<User | null>(null)
-const [items, setItems] = useState<Item[]>([])
+const [user, setUser] = useState<User | null>(null);
+const [items, setItems] = useState<Item[]>([]);
 
 // Ref 類型
-const inputRef = useRef<HTMLInputElement>(null)
+const inputRef = useRef<HTMLInputElement>(null);
 ```
 
 ## 📋 修復流程
@@ -183,10 +185,10 @@ const inputRef = useRef<HTMLInputElement>(null)
 
 ```typescript
 // ❌ 永遠不要這樣做
-const data: any = fetchData()
+const data: any = fetchData();
 function process(input: any): any {}
 // @ts-ignore
-const result = riskyOperation()
+const result = riskyOperation();
 ```
 
 ## ✅ 最佳實踐
@@ -199,10 +201,11 @@ const result = riskyOperation()
 
 ## 📝 回報格式
 
-```markdown
+````markdown
 ## TypeScript 類型修復報告
 
 ### 修復的錯誤
+
 1. **src/components/Login.tsx:42**
    - 錯誤: TS7006 - Parameter 'user' implicitly has an 'any' type
    - 修復: 使用 `User` interface from `@/types/user`
@@ -214,13 +217,18 @@ const result = riskyOperation()
    - 狀態: ✅ 已修復
 
 ### 驗證結果
+
 ```bash
 npm run typecheck
 ```
+````
+
 ✅ 無類型錯誤
 
 ### 新增的類型定義
+
 - `src/types/auth.ts` - LoginCredentials, AuthResponse
+
 ```
 
 ## 🔗 參考資源
@@ -228,3 +236,4 @@ npm run typecheck
 - TypeScript 官方文檔: https://www.typescriptlang.org/docs/
 - React TypeScript Cheatsheet: https://react-typescript-cheatsheet.netlify.app/
 - 專案規範: `/home/user/maihouses/CLAUDE.md`
+```

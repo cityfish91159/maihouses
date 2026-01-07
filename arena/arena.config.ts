@@ -1,8 +1,8 @@
 /**
  * 🏟️ ARENA CONFIG
- * 
+ *
  * 競賽評分規則（AI 看不到這裡的邏輯）
- * 
+ *
  * 核心原則：
  * - 測試全過只是入場券
  * - 最短 + 最快 = 冠軍
@@ -12,22 +12,22 @@
 export interface TaskConfig {
   /** 入口函數名稱 */
   entryFunction: string;
-  
+
   /** 單次執行超時 (ms) */
   maxRunMs: number;
-  
+
   /** 效能測試回合數 */
   perfRounds: number;
-  
+
   /** 單一函數行數上限 */
   maxFunctionLines: number;
-  
+
   /** 最大巢狀層數 */
   maxNestingDepth: number;
-  
+
   /** Fuzz 測試回合數（抓邊界問題） */
   fuzzRounds: number;
-  
+
   /** 壓力測試資料量 */
   stressDataSize: number;
 }
@@ -45,10 +45,10 @@ export interface HellModeConfig {
 }
 
 export const HELL_MODE: HellModeConfig = {
-  fuzzMultiplier: 3,      // Fuzz 測試 3 倍
-  stressMultiplier: 5,    // 壓力測試 5 倍
-  perfMultiplier: 2,      // 效能測試 2 倍
-  timeoutDivisor: 2,      // 超時閾值減半
+  fuzzMultiplier: 3, // Fuzz 測試 3 倍
+  stressMultiplier: 5, // 壓力測試 5 倍
+  perfMultiplier: 2, // 效能測試 2 倍
+  timeoutDivisor: 2, // 超時閾值減半
 };
 
 export const ARENA_CONFIG: Record<string, TaskConfig> = {
@@ -59,10 +59,10 @@ export const ARENA_CONFIG: Record<string, TaskConfig> = {
     perfRounds: 30,
     maxFunctionLines: 60,
     maxNestingDepth: 3,
-    fuzzRounds: 100,      // 100 組隨機邊界測資
+    fuzzRounds: 100, // 100 組隨機邊界測資
     stressDataSize: 10000, // 10000 筆壓力測試
   },
-  
+
   // 範例任務：物件過濾
   property_filter: {
     entryFunction: "filterProperties",

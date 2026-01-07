@@ -8,19 +8,19 @@
    ======================================== */
 :root {
   /* Brand Colors - 統一使用原版色碼 */
-  --brand-primary: #1A5FDB;
+  --brand-primary: #1a5fdb;
   --brand-primary-light: #6aa4ff;
   --brand-primary-dark: #0d3399;
   --brand-primary-rgb: 26, 95, 219;
-  
+
   /* Neutral Colors */
-  --neutral-50: #f6f9ff;      /* 背景 */
-  --neutral-100: #f0f5ff;     /* Info 區起點（淺藍） */
-  --neutral-150: #e8f1ff;     /* Info 區終點 */
-  --neutral-200: #d1e3ff;     /* 邊框 */
-  --neutral-700: #2d3748;     /* 次要文字 */
-  --neutral-900: #0a2246;     /* 主文字 */
-  
+  --neutral-50: #f6f9ff; /* 背景 */
+  --neutral-100: #f0f5ff; /* Info 區起點（淺藍） */
+  --neutral-150: #e8f1ff; /* Info 區終點 */
+  --neutral-200: #d1e3ff; /* 邊框 */
+  --neutral-700: #2d3748; /* 次要文字 */
+  --neutral-900: #0a2246; /* 主文字 */
+
   /* Semantic Colors */
   --success: #22c55e;
   --success-rgb: 34, 197, 94;
@@ -28,72 +28,71 @@
   --warning-rgb: 251, 146, 60;
   --info: #9333ea;
   --info-rgb: 147, 51, 234;
-  
+
   /* Typography Scale - 精確匹配原版尺寸 */
-  --text-xs: 0.75rem;      /* 12px */
-  --text-sm: 0.8125rem;    /* 13px - 膠囊標籤 */
-  --text-base: 0.9375rem;  /* 15px - Filter Pills */
-  --text-lg: 1.125rem;     /* 18px */
-  
+  --text-xs: 0.75rem; /* 12px */
+  --text-sm: 0.8125rem; /* 13px - 膠囊標籤 */
+  --text-base: 0.9375rem; /* 15px - Filter Pills */
+  --text-lg: 1.125rem; /* 18px */
+
   /* Hero 字體使用精確 px 值（避免 rem 浮點誤差）*/
   /* --text-xl ~ --text-4xl 僅供參考，實際使用 px */
-  --text-xl: 1.25rem;      /* 20px - Hero 手機 */
-  --text-2xl: 1.5rem;      /* 24px - Hero 平板 */
-  --text-3xl: 1.75rem;     /* 28px - Hero 桌機 */
-  --text-4xl: 1.875rem;    /* 30px - Hero 超寬 */
-  
+  --text-xl: 1.25rem; /* 20px - Hero 手機 */
+  --text-2xl: 1.5rem; /* 24px - Hero 平板 */
+  --text-3xl: 1.75rem; /* 28px - Hero 桌機 */
+  --text-4xl: 1.875rem; /* 30px - Hero 超寬 */
+
   /* Font Weights */
   --font-normal: 400;
   --font-medium: 500;
-  --font-semibold: 600;  /* Hero 標語 */
-  --font-bold: 700;      /* 膠囊標籤 */
+  --font-semibold: 600; /* Hero 標語 */
+  --font-bold: 700; /* 膠囊標籤 */
   --font-black: 900;
-  
+
   /* Line Heights */
   --line-height-tight: 1.2;
   --line-height-snug: 1.3;
-  --line-height-normal: 1.4;  /* Hero */
+  --line-height-normal: 1.4; /* Hero */
   --line-height-relaxed: 1.6; /* Body */
-  
+
   /* Letter Spacing */
-  --tracking-tight: -0.01em;  /* Hero */
+  --tracking-tight: -0.01em; /* Hero */
   --tracking-normal: 0;
-  
+
   /* Spacing Scale (8px grid) */
   --space-0: 0;
-  --space-1: 0.5rem;    /* 8px */
-  --space-2: 1rem;      /* 16px */
-  --space-3: 1.5rem;    /* 24px */
-  --space-4: 2rem;      /* 32px */
-  --space-5: 2.5rem;    /* 40px */
-  --space-6: 3rem;      /* 48px */
-  
+  --space-1: 0.5rem; /* 8px */
+  --space-2: 1rem; /* 16px */
+  --space-3: 1.5rem; /* 24px */
+  --space-4: 2rem; /* 32px */
+  --space-5: 2.5rem; /* 40px */
+  --space-6: 3rem; /* 48px */
+
   /* Border Radius */
-  --radius-md: 0.5rem;     /* 8px - Info 區使用 */
-  --radius-lg: 0.75rem;    /* 12px - Filter Pills 使用 */
-  --radius-xl: 1rem;       /* 16px - Assurance Card 使用 */
-  --radius-full: 9999px;   /* 膠囊標籤使用 */
-  
+  --radius-md: 0.5rem; /* 8px - Info 區使用 */
+  --radius-lg: 0.75rem; /* 12px - Filter Pills 使用 */
+  --radius-xl: 1rem; /* 16px - Assurance Card 使用 */
+  --radius-full: 9999px; /* 膠囊標籤使用 */
+
   /* Shadows - 匹配原版增強效果 */
-  --shadow-neumorphic: 
+  --shadow-neumorphic:
     10px 10px 30px rgba(9, 15, 30, 0.22),
     -10px -10px 30px rgba(255, 255, 255, 0.95),
     0 8px 24px rgba(26, 95, 219, 0.12);
-  
+
   /* Filter Pills Shadow */
-  --shadow-pill: 
+  --shadow-pill:
     10px 10px 24px rgba(9, 15, 30, 0.25),
-    -10px -10px 24px rgba(255, 255, 255, 0.9),
-    0 4px 8px rgba(0, 0, 0, 0.08);
-    
+    -10px -10px 24px rgba(255, 255, 255, 0.9), 0 4px 8px rgba(0, 0, 0, 0.08);
+
   --shadow-pill-hover:
     12px 12px 28px rgba(9, 15, 30, 0.28),
     -12px -12px 28px rgba(255, 255, 255, 0.95);
-  
+
   /* Transitions */
   --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
   --transition-base: 250ms cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-bounce: 250ms cubic-bezier(0.34, 1.56, 0.64, 1);  /* 匹配原版 */
+  --transition-bounce: 250ms cubic-bezier(0.34, 1.56, 0.64, 1); /* 匹配原版 */
 }
 
 /* ========================================
@@ -113,7 +112,15 @@ body {
   margin: 0;
   background: var(--neutral-50);
   color: var(--neutral-900);
-  font-family: 'Noto Sans TC', 'PingFang TC', -apple-system, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+  font-family:
+    "Noto Sans TC",
+    "PingFang TC",
+    -apple-system,
+    "Segoe UI",
+    "Roboto",
+    "Helvetica Neue",
+    Arial,
+    sans-serif;
   font-size: 1rem;
   line-height: var(--line-height-relaxed);
   -webkit-font-smoothing: antialiased;
@@ -124,8 +131,8 @@ body {
    Hero Section - 標語區（完全匹配原版）
    ======================================== */
 .marquee-container {
-  font-size: 20px;  /* 精確 px，避免 rem 浮點誤差 */
-  font-weight: var(--font-semibold);  /* 600 */
+  font-size: 20px; /* 精確 px，避免 rem 浮點誤差 */
+  font-weight: var(--font-semibold); /* 600 */
   letter-spacing: var(--tracking-tight);
   line-height: var(--line-height-normal);
   color: var(--neutral-900);
@@ -138,20 +145,30 @@ body {
 
 /* 微光掃過效果 */
 .marquee-container::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.4),
+    transparent
+  );
   animation: shine 2.5s 0.3s ease-in-out;
   pointer-events: none;
 }
 
 /* 品牌名漸層動態 */
 .marquee-container .brand-highlight {
-  background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-primary-light) 50%, var(--brand-primary) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--brand-primary) 0%,
+    var(--brand-primary-light) 50%,
+    var(--brand-primary) 100%
+  );
   background-size: 200% auto;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -164,7 +181,7 @@ body {
 /* 平板 */
 @media (min-width: 768px) {
   .marquee-container {
-    font-size: 24px;    /* 精確 px，避免 rem 浮點誤差 */
+    font-size: 24px; /* 精確 px，避免 rem 浮點誤差 */
     padding: 14px 18px;
   }
 }
@@ -203,7 +220,7 @@ body {
   background: linear-gradient(135deg, var(--neutral-100), var(--neutral-150));
   border: 2px dashed rgba(var(--brand-primary-rgb), 0.6);
   border-radius: var(--radius-md);
-  padding: 14px 16px;  /* 精確 px，避免 rem 浮點誤差 */
+  padding: 14px 16px; /* 精確 px，避免 rem 浮點誤差 */
   font-size: var(--text-sm);
   color: var(--neutral-700);
   box-shadow: 0 2px 8px rgba(var(--brand-primary-rgb), 0.06);
@@ -214,9 +231,9 @@ body {
   display: inline-flex;
   align-items: center;
   gap: var(--space-1);
-  font-size: var(--text-sm);     /* 13px */
-  font-weight: var(--font-bold);  /* 700 */
-  padding: 0.375rem 0.75rem;     /* 6px 12px */
+  font-size: var(--text-sm); /* 13px */
+  font-weight: var(--font-bold); /* 700 */
+  padding: 0.375rem 0.75rem; /* 6px 12px */
   border-radius: var(--radius-full);
   border: 2px solid var(--brand-primary);
   background: #ffffff;
@@ -232,9 +249,9 @@ body {
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
-  font-size: var(--text-base);   /* 15px */
+  font-size: var(--text-base); /* 15px */
   font-weight: var(--font-medium);
-  padding: 1.3125rem 1rem;       /* 21px 16px */
+  padding: 1.3125rem 1rem; /* 21px 16px */
   border-radius: var(--radius-lg);
   background: #ffffff;
   color: var(--neutral-900);
@@ -267,21 +284,21 @@ body {
 
 /* 彩色光暈 hover */
 .pill-community:hover {
-  box-shadow: 
+  box-shadow:
     12px 12px 28px rgba(9, 15, 30, 0.28),
     -12px -12px 28px rgba(255, 255, 255, 0.95),
     0 0 0 2px rgba(var(--success-rgb), 0.5);
 }
 
 .pill-location:hover {
-  box-shadow: 
+  box-shadow:
     12px 12px 28px rgba(9, 15, 30, 0.28),
     -12px -12px 28px rgba(255, 255, 255, 0.95),
     0 0 0 2px rgba(var(--warning-rgb), 0.5);
 }
 
 .pill-transit:hover {
-  box-shadow: 
+  box-shadow:
     12px 12px 28px rgba(9, 15, 30, 0.28),
     -12px -12px 28px rgba(255, 255, 255, 0.95),
     0 0 0 2px rgba(var(--info-rgb), 0.5);
@@ -325,13 +342,18 @@ body {
 
 /* 微光掃過 */
 @keyframes shine {
-  0% { left: -100%; }
-  100% { left: 100%; }
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
 }
 
 /* 品牌漸層流動 */
 @keyframes gradientFlow {
-  0%, 100% {
+  0%,
+  100% {
     background-position: 0% 50%;
   }
   50% {
@@ -353,7 +375,8 @@ body {
 
 /* 圓點呼吸閃爍 */
 @keyframes dotPulse {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 1;
     transform: scale(1);
   }

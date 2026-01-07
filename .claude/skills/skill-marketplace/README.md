@@ -7,11 +7,13 @@
 ### 1. 自動觸發（推薦）
 
 Agent 會在以下情況自動搜尋市集：
+
 - 面對複雜任務（測試生成、Docker 部署、API 文檔）
 - 需要專業工具
 - 本地 skills 無法滿足需求
 
 **範例：**
+
 ```
 用戶: "幫我生成這個 API 的測試案例"
 Agent: [自動搜尋市集] → 找到 api-test-generator → 安裝 → 使用
@@ -20,11 +22,13 @@ Agent: [自動搜尋市集] → 找到 api-test-generator → 安裝 → 使用
 ### 2. 手動測試
 
 **搜尋市集：**
+
 ```bash
 node .claude/skills/skill-marketplace/search-marketplace.cjs "testing"
 ```
 
 **模擬安裝：**
+
 ```bash
 # 查看幫助
 node .claude/skills/skill-marketplace/install-skill.cjs --help
@@ -61,24 +65,26 @@ skill-marketplace/
 
 ## 🎯 支援的任務類型
 
-| 任務類型 | 搜尋關鍵字 | 市集分類 |
-|---------|-----------|---------|
-| API 測試 | `testing`, `api`, `jest` | Testing & Security |
-| Docker 部署 | `docker`, `container` | DevOps |
-| API 文檔 | `documentation`, `openapi` | Documentation |
-| 資料處理 | `data`, `csv`, `json` | Data & AI |
-| CI/CD | `github-actions`, `ci` | DevOps |
-| 安全掃描 | `security`, `audit` | Testing & Security |
+| 任務類型    | 搜尋關鍵字                 | 市集分類           |
+| ----------- | -------------------------- | ------------------ |
+| API 測試    | `testing`, `api`, `jest`   | Testing & Security |
+| Docker 部署 | `docker`, `container`      | DevOps             |
+| API 文檔    | `documentation`, `openapi` | Documentation      |
+| 資料處理    | `data`, `csv`, `json`      | Data & AI          |
+| CI/CD       | `github-actions`, `ci`     | DevOps             |
+| 安全掃描    | `security`, `audit`        | Testing & Security |
 
 ## 🛡️ 安全機制
 
 **安裝前自動檢查：**
+
 - ✅ YAML frontmatter 格式正確
 - ✅ allowed-tools 無危險指令
 - ✅ 來源為可信任的 GitHub repo
 - ✅ 無可疑的外部連結或 shell 指令
 
 **危險模式警告：**
+
 - `Bash(rm -rf)`
 - `Bash(sudo)`
 - `curl | bash`
@@ -87,6 +93,7 @@ skill-marketplace/
 ## 📊 範例輸出
 
 **搜尋 "testing":**
+
 ```
 🔍 搜尋市集: "testing"
 ✅ 找到 2 個相關 skills:
@@ -109,9 +116,9 @@ skill-marketplace/
   "skills": {
     "marketplace": {
       "enabled": true,
-      "auto_install": false,      // 是否自動安裝（false=詢問用戶）
-      "min_stars": 50,            // 最低星數要求
-      "cleanup_after_use": true   // 使用後清理臨時 skills
+      "auto_install": false, // 是否自動安裝（false=詢問用戶）
+      "min_stars": 50, // 最低星數要求
+      "cleanup_after_use": true // 使用後清理臨時 skills
     }
   }
 }

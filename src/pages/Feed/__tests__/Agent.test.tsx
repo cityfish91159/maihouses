@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import AgentPage from "../Agent";
 import { STRINGS } from "../../../constants/strings";
 
@@ -58,13 +59,21 @@ vi.mock("../../hooks/useAuth", () => ({
 }));
 
 describe("Agent Page", () => {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: { retry: false },
+    },
+  });
+
   it("renders all main sections", () => {
     render(
-      <MemoryRouter
-        future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
-      >
-        <AgentPage userId="u1" />
-      </MemoryRouter>,
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter
+          future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
+        >
+          <AgentPage userId="u1" />
+        </MemoryRouter>
+      </QueryClientProvider>,
     );
 
     expect(screen.getByTestId("agent-profile-card")).toBeInTheDocument();

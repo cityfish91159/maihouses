@@ -1,16 +1,16 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+import type { VercelRequest, VercelResponse } from "@vercel/node";
 
 /**
  * 報告建立 API
  * POST /api/report/create
- * 
+ *
  * 建立報告記錄並生成短連結
  */
 
 interface CreatePayload {
   propertyId: string;
   agentId: string;
-  style: 'simple' | 'investment' | 'marketing';
+  style: "simple" | "investment" | "marketing";
   highlights: string[];
   photos: number[];
   customMessage?: string;
@@ -18,36 +18,34 @@ interface CreatePayload {
 
 // 生成短碼
 function generateShortCode(length = 8): string {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
-  let result = '';
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
+  let result = "";
   for (let i = 0; i < length; i++) {
     result += chars.charAt(Math.floor(Math.random() * chars.length));
   }
   return result;
 }
 
-export default async function handler(
-  req: VercelRequest,
-  res: VercelResponse
-) {
+export default async function handler(req: VercelRequest, res: VercelResponse) {
   // CORS
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
-  if (req.method === 'OPTIONS') {
+  if (req.method === "OPTIONS") {
     return res.status(200).end();
   }
 
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Method not allowed" });
   }
 
   try {
-    const { propertyId, agentId, style, highlights, photos, customMessage } = req.body as CreatePayload;
+    const { propertyId, agentId, style, highlights, photos, customMessage } =
+      req.body as CreatePayload;
 
     if (!propertyId || !agentId) {
-      return res.status(400).json({ error: 'Missing required fields' });
+      return res.status(400).json({ error: "Missing required fields" });
     }
 
     const shortCode = generateShortCode();
@@ -81,21 +79,20 @@ export default async function handler(
       customMessage,
       viewCount: 0,
       createdAt: new Date().toISOString(),
-      expiresAt: expiresAt.toISOString()
+      expiresAt: expiresAt.toISOString(),
     };
 
-    console.log('[Report Created]', reportData);
+    console.log("[Report Created]", reportData);
 
     return res.status(200).json({
       success: true,
-      data: reportData
+      data: reportData,
     });
-
   } catch (error) {
-    console.error('[Report Create Error]', error);
+    console.error("[Report Create Error]", error);
     return res.status(500).json({
       success: false,
-      error: 'Internal server error'
+      error: "Internal server error",
     });
   }
 }

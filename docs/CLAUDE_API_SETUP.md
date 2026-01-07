@@ -3,6 +3,7 @@
 ## 🎯 用途
 
 Claude API 用於：
+
 - **GitHub Copilot** 整合（AI 程式碼輔助）
 - **進階對話功能**（比 GPT-4o-mini 更強大）
 - **多模態分析**（圖片理解、長文本處理）
@@ -30,10 +31,10 @@ https://vercel.com/cityfish91159/maihouses/settings/environment-variables
 
 **新增變數：**
 
-| Key | Value | Environments |
-|-----|-------|--------------|
-| `ANTHROPIC_API_KEY` | `sk-ant-api03-...` | ✅ Production<br>✅ Preview<br>✅ Development |
-| `ANTHROPIC_MODEL` | `claude-3-5-sonnet-20241022` | ✅ All (可選) |
+| Key                 | Value                        | Environments                                  |
+| ------------------- | ---------------------------- | --------------------------------------------- |
+| `ANTHROPIC_API_KEY` | `sk-ant-api03-...`           | ✅ Production<br>✅ Preview<br>✅ Development |
+| `ANTHROPIC_MODEL`   | `claude-3-5-sonnet-20241022` | ✅ All (可選)                                 |
 
 **⚠️ 重要**：設定後需要 **重新部署** 才會生效！
 
@@ -114,21 +115,23 @@ curl -X POST https://maihouses.vercel.app/api/claude \
 
 ```typescript
 // src/services/claude.ts
-export async function chatWithClaude(messages: Array<{role: string, content: string}>) {
-  const response = await fetch('/api/claude', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+export async function chatWithClaude(
+  messages: Array<{ role: string; content: string }>,
+) {
+  const response = await fetch("/api/claude", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       messages,
-      model: 'claude-3-5-sonnet-20241022',
-      max_tokens: 4096
-    })
+      model: "claude-3-5-sonnet-20241022",
+      max_tokens: 4096,
+    }),
   });
-  
+
   if (!response.ok) {
     throw new Error(`Claude API error: ${response.statusText}`);
   }
-  
+
   return response.json();
 }
 ```
@@ -142,6 +145,7 @@ export async function chatWithClaude(messages: Array<{role: string, content: str
 **原因**：環境變數未設定或未重新部署
 
 **解決方法**：
+
 1. 確認 Vercel Dashboard 已設定 `ANTHROPIC_API_KEY`
 2. 重新部署專案：
    ```bash
@@ -154,6 +158,7 @@ export async function chatWithClaude(messages: Array<{role: string, content: str
 **原因**：超過 API 配額限制
 
 **解決方法**：
+
 1. 前往 [Anthropic Console → Usage](https://console.anthropic.com/settings/usage) 查看用量
 2. 考慮升級方案或實作快取機制
 
@@ -162,6 +167,7 @@ export async function chatWithClaude(messages: Array<{role: string, content: str
 **原因**：模型名稱錯誤
 
 **可用模型**：
+
 - `claude-3-5-sonnet-20241022` (最新，推薦)
 - `claude-3-opus-20240229` (最強)
 - `claude-3-sonnet-20240229`
@@ -171,13 +177,14 @@ export async function chatWithClaude(messages: Array<{role: string, content: str
 
 ## 💰 計費說明
 
-| 模型 | Input (每百萬 tokens) | Output (每百萬 tokens) |
-|------|----------------------|------------------------|
-| Claude 3.5 Sonnet | $3 | $15 |
-| Claude 3 Opus | $15 | $75 |
-| Claude 3 Haiku | $0.25 | $1.25 |
+| 模型              | Input (每百萬 tokens) | Output (每百萬 tokens) |
+| ----------------- | --------------------- | ---------------------- |
+| Claude 3.5 Sonnet | $3                    | $15                    |
+| Claude 3 Opus     | $15                   | $75                    |
+| Claude 3 Haiku    | $0.25                 | $1.25                  |
 
 **範例**：
+
 - 1000 次對話（每次 500 tokens input + 1000 tokens output）
 - 使用 Claude 3.5 Sonnet
 - 費用：(0.5M × $3) + (1M × $15) = $1.5 + $15 = **$16.5**
@@ -187,22 +194,24 @@ export async function chatWithClaude(messages: Array<{role: string, content: str
 ## 🔐 安全性建議
 
 1. **絕不在前端暴露 API Key**：
+
    ```typescript
    // ❌ 錯誤
    const ANTHROPIC_API_KEY = "sk-ant-api03-xxx"; // 會被看到！
-   
+
    // ✅ 正確
    fetch('/api/claude', { ... }); // 透過後端代理
    ```
 
 2. **實作速率限制**：
+
    ```typescript
    // api/claude.ts
-   import rateLimit from 'express-rate-limit';
-   
+   import rateLimit from "express-rate-limit";
+
    const limiter = rateLimit({
      windowMs: 15 * 60 * 1000, // 15 分鐘
-     max: 100 // 最多 100 次請求
+     max: 100, // 最多 100 次請求
    });
    ```
 
@@ -220,4 +229,4 @@ export async function chatWithClaude(messages: Array<{role: string, content: str
 
 ---
 
-*最後更新：2024-12-24*
+_最後更新：2024-12-24_

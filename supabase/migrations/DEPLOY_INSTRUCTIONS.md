@@ -5,6 +5,7 @@
 ### 方式一：Supabase Dashboard（推薦）
 
 1. **打開 Supabase Dashboard**
+
    ```
    https://supabase.com/dashboard/project/mtqnjmoisrvjofdxhwhi/sql/new
    ```
@@ -19,6 +20,7 @@
    - 等待執行完成（約 10-15 秒）
 
 4. **驗證部署**
+
    ```sql
    -- 檢查表格
    SELECT table_name

@@ -8,19 +8,19 @@ OpenAI 兼容聊天代理（SSE 串流）
 
 ## 部署步驟
 
-1) 安裝 wrangler（本機或 Codespaces）
+1. 安裝 wrangler（本機或 Codespaces）
 
 ```bash
 npm i -g wrangler
 ```
 
-2) 建立 KV namespace（會回傳 ID，貼到 wrangler.toml）
+2. 建立 KV namespace（會回傳 ID，貼到 wrangler.toml）
 
 ```bash
 wrangler kv:namespace create RATE
 ```
 
-3) 設定 secrets（不會寫入 repo）
+3. 設定 secrets（不會寫入 repo）
 
 ```bash
 wrangler secret put OPENAI_API_KEY
@@ -28,7 +28,7 @@ wrangler secret put OPENAI_BASE_URL   # 可略
 wrangler secret put OPENAI_MODEL      # 可略，例如 gpt-4o-mini
 ```
 
-4) 部署
+4. 部署
 
 ```bash
 wrangler deploy
@@ -50,7 +50,7 @@ Body（OpenAI 兼容）：
 
 ```json
 {
-  "messages": [ { "role": "user", "content": "你好" } ],
+  "messages": [{ "role": "user", "content": "你好" }],
   "temperature": 0.7
 }
 ```

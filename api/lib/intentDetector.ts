@@ -3,31 +3,31 @@
  * 負責分析用戶訊息，判斷意圖和情緒狀態
  */
 
-import { OpenAI } from 'openai';
-import { z } from 'zod';
-import { getTaiwanHour } from './timeUtils';
+import { OpenAI } from "openai";
+import { z } from "zod";
+import { getTaiwanHour } from "./timeUtils";
 
 // ═══════════════════════════════════════════════════════════════
 // 類型定義
 // ═══════════════════════════════════════════════════════════════
 
 export type UserIntent =
-  | 'solve_problem'   // 想解決問題（工作、技術）
-  | 'seek_comfort'    // 尋求慰藉（壓力、難過）
-  | 'casual_chat'     // 日常閒聊
-  | 'intimate'        // 親密暗示（曖昧、撩人）
-  | 'intimate_photo'  // 要傳私密照
-  | 'desire_help';    // 有慾望需要引導
+  | "solve_problem" // 想解決問題（工作、技術）
+  | "seek_comfort" // 尋求慰藉（壓力、難過）
+  | "casual_chat" // 日常閒聊
+  | "intimate" // 親密暗示（曖昧、撩人）
+  | "intimate_photo" // 要傳私密照
+  | "desire_help"; // 有慾望需要引導
 
-export type SignalType = 'explicit' | 'hint' | 'neutral' | 'reject';
+export type SignalType = "explicit" | "hint" | "neutral" | "reject";
 
 export interface IntentResult {
   intent: UserIntent;
-  bodyPart?: string;         // 如果是 intimate_photo，描述部位
-  moodLevel: number;         // 情緒等級 1-10
+  bodyPart?: string; // 如果是 intimate_photo，描述部位
+  moodLevel: number; // 情緒等級 1-10
   signalType: SignalType;
-  willingToChat: boolean;    // 願不願意聊親密話題
-  desireCues?: string;       // 偵測到的慾望線索
+  willingToChat: boolean; // 願不願意聊親密話題
+  desireCues?: string; // 偵測到的慾望線索
   shouldAskPreference: boolean; // 是否適合問性癖問題
 }
 
@@ -36,12 +36,19 @@ export interface IntentResult {
 // ═══════════════════════════════════════════════════════════════
 
 const combinedDetectionSchema = z.object({
-  intent: z.enum(['solve_problem', 'seek_comfort', 'casual_chat', 'intimate', 'intimate_photo', 'desire_help']),
+  intent: z.enum([
+    "solve_problem",
+    "seek_comfort",
+    "casual_chat",
+    "intimate",
+    "intimate_photo",
+    "desire_help",
+  ]),
   body_part: z.string().optional(),
   mood_level: z.number().min(1).max(10),
-  signal_type: z.enum(['explicit', 'hint', 'neutral', 'reject']),
+  signal_type: z.enum(["explicit", "hint", "neutral", "reject"]),
   willing_to_chat: z.boolean(),
-  desire_cues: z.string().optional()
+  desire_cues: z.string().optional(),
 });
 
 // ═══════════════════════════════════════════════════════════════
@@ -99,32 +106,32 @@ reject: 拒絕迴避（「不想」「算了」「好累」「不要」）
 export async function detectIntent(
   openai: OpenAI,
   message: string,
-  useGrok: boolean = false
+  useGrok: boolean = false,
 ): Promise<IntentResult> {
-  const model = useGrok ? 'grok-3-mini-fast-beta' : 'gpt-4o-mini';
+  const model = useGrok ? "grok-3-mini-fast-beta" : "gpt-4o-mini";
 
   try {
     const response = await openai.chat.completions.create({
       model,
       messages: [
-        { role: 'system', content: INTENT_DETECTION_PROMPT },
-        { role: 'user', content: message }
+        { role: "system", content: INTENT_DETECTION_PROMPT },
+        { role: "user", content: message },
       ],
-      response_format: { type: 'json_object' }
+      response_format: { type: "json_object" },
     });
 
-    const rawContent = response.choices[0].message.content || '{}';
+    const rawContent = response.choices[0].message.content || "{}";
     const parsed = JSON.parse(rawContent);
     const validated = combinedDetectionSchema.safeParse(parsed);
 
     if (validated.success) {
       const data = validated.data;
 
-      console.log('🧠 意圖檢測結果:', {
+      console.log("🧠 意圖檢測結果:", {
         intent: data.intent,
         mood: data.mood_level,
         signal: data.signal_type,
-        message: message.substring(0, 30) + '...'
+        message: message.substring(0, 30) + "...",
       });
 
       return {
@@ -134,20 +141,20 @@ export async function detectIntent(
         signalType: data.signal_type,
         willingToChat: data.willing_to_chat,
         desireCues: data.desire_cues,
-        shouldAskPreference: data.mood_level >= 6 && data.willing_to_chat
+        shouldAskPreference: data.mood_level >= 6 && data.willing_to_chat,
       };
     }
   } catch (error) {
-    console.error('❌ 意圖檢測失敗:', error);
+    console.error("❌ 意圖檢測失敗:", error);
   }
 
   // 預設值
   return {
-    intent: 'casual_chat',
+    intent: "casual_chat",
     moodLevel: 5,
-    signalType: 'neutral',
+    signalType: "neutral",
     willingToChat: true,
-    shouldAskPreference: false
+    shouldAskPreference: false,
   };
 }
 
@@ -159,7 +166,7 @@ export async function detectIntent(
  * 判斷是否為色情意圖
  */
 export function isSexyIntent(intent: UserIntent): boolean {
-  return ['intimate', 'desire_help', 'intimate_photo'].includes(intent);
+  return ["intimate", "desire_help", "intimate_photo"].includes(intent);
 }
 
 /**
@@ -175,7 +182,7 @@ export function isRestrictedHours(): boolean {
  */
 export function shouldBlockSexyContent(
   intent: UserIntent,
-  sexyUnlocked: boolean
+  sexyUnlocked: boolean,
 ): { blocked: boolean; reason?: string } {
   if (!isSexyIntent(intent)) {
     return { blocked: false };
@@ -191,6 +198,6 @@ export function shouldBlockSexyContent(
 
   return {
     blocked: true,
-    reason: 'sexy_content_restricted'
+    reason: "sexy_content_restricted",
   };
 }
