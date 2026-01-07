@@ -201,9 +201,9 @@ export default function Header() {
           {/* Search Bar Area Wrapper */}
           <div className="relative mx-auto max-w-3xl">
             {/* Mascot & Bubble Group */}
-            <div className="absolute right-[5%] top-[-24px] z-0 animate-float select-none md:right-[10%] md:animate-float-desktop">
+            <div className="absolute right-[5%] top-[-44px] z-0 animate-float select-none md:right-[10%] md:animate-float-desktop">
               {/* Speech Bubble */}
-              <div className="pointer-events-none absolute bottom-full right-[55%] w-[260px] origin-bottom-right animate-fadeIn whitespace-normal rounded-2xl rounded-br-none border-2 border-brand-100 bg-white px-5 py-2 shadow-lg md:bottom-[102%] md:right-[65%] md:w-auto md:max-w-none md:whitespace-nowrap md:py-3">
+              <div className="pointer-events-none absolute bottom-[92%] right-[55%] w-[260px] origin-bottom-right animate-fadeIn whitespace-normal rounded-2xl rounded-br-none border-2 border-brand-100 bg-white px-5 py-2 shadow-lg md:bottom-[94%] md:right-[65%] md:w-auto md:max-w-none md:whitespace-nowrap md:py-3">
                 <p className="text-left text-[11px] font-bold leading-relaxed text-ink-700 md:text-sm">
                   買房這麼大的事，先到{" "}
                   <span className="font-black text-brand-700">邁鄰居</span>
