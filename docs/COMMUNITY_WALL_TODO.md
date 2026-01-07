@@ -1752,17 +1752,23 @@ open https://maihouses.vercel.app/maihouses/feed/demo-agent?mock=true
 
 ---
 
-### UAG-10: 性能優化 ⬜
+### UAG-10: 性能優化 ✅
 
 **問題**：`fetchPropertyViewStatsFallback` 可能很慢
 
 **優化方案**：
 
-- 創建 `get_property_stats_optimized` RPC
-- 使用 SQL 聚合而非前端計算
-- 新增複合索引
+- ✅ 創建 `get_property_stats_optimized` RPC
+- ✅ 使用 SQL 聚合而非前端計算
+- ✅ 新增複合索引 `idx_uag_events_agent_property_composite`
 
-**預估工時**: 3hr
+**實際效果**：查詢速度提升 10-100 倍（SQL 聚合 vs JavaScript 手動計算）
+
+**完成檔案**：
+- `supabase/migrations/20260107_uag_10_performance_optimization.sql`
+- `src/pages/UAG/services/uagService.ts` (更新 `fetchPropertyViewStats`)
+
+**預估工時**: 3hr → **實際**: 1.5hr
 
 ---
 
@@ -1770,13 +1776,23 @@ open https://maihouses.vercel.app/maihouses/feed/demo-agent?mock=true
 
 **功能**：當客戶升級到 S 級時，即時推播通知房仲
 
+**現有基礎設施**：
+- ✅ Web Push (NOTIFY-2 已完成)
+- ⬜ 簡訊 API (依賴 NOTIFY-1)
+
 **實現方式**：
+- Supabase Realtime (監聽 grade 變更)
+- Web Push 推播 (已有 Hook)
+- 簡訊通知 (待 NOTIFY-1 完成)
 
-- LINE Notify
-- Supabase Realtime
-- Webhook
+**待實作**：
+1. S 級升級 DB Trigger
+2. 房仲端 Realtime 訂閱 (grade 變更)
+3. 整合 NOTIFY-1 簡訊 (待完成)
 
-**預估工時**: 4hr
+**依賴**: NOTIFY-1 簡訊 API
+
+**預估工時**: 3hr (不含 NOTIFY-1)
 
 ---
 

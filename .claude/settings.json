@@ -14,6 +14,19 @@
     ]
   },
   "hooks": {
+    "UserPromptSubmit": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "agent",
+            "prompt": "檢查即將發送給用戶的回應內容。如果回應中包含大量英文說明文字（不包括代碼、指令、專有名詞），必須回應 BLOCK 並要求重新用繁體中文撰寫。根據 CLAUDE.md 的語言規範 (第 7-52 行)，這是最高優先級 (Priority 0) 的要求。",
+            "timeout": 15,
+            "statusMessage": "檢查語言規範遵循情況..."
+          }
+        ]
+      }
+    ],
     "PreToolUse": [
       {
         "matcher": "Edit|Write",

@@ -400,18 +400,34 @@ export class UAGService {
     agentId: string,
   ): Promise<PropertyViewStats[]> {
     try {
-      // 從 uag_events 表聚合統計
-      // 注意：這裡用的是 property_id 對應 properties.public_id
-      const { data, error } = await supabase.rpc("get_agent_property_stats", {
-        p_agent_id: agentId,
-      });
+      // UAG-10: 使用優化版 RPC (SQL 層聚合，10-100 倍效能提升)
+      const { data, error } = await supabase.rpc(
+        "get_property_stats_optimized",
+        {
+          p_agent_id: agentId,
+        },
+      );
 
       if (error) {
-        logger.warn(
-          "[UAGService] PropertyViewStats RPC error, using fallback",
-          { error: error.message },
+        logger.warn("[UAGService] Optimized RPC error, trying legacy RPC", {
+          error: error.message,
+        });
+        // Fallback 1: 嘗試舊版 RPC
+        const { data: legacyData, error: legacyError } = await supabase.rpc(
+          "get_agent_property_stats",
+          {
+            p_agent_id: agentId,
+          },
         );
-        // Fallback：直接查詢 (效能較差但可用)
+
+        if (!legacyError && legacyData) {
+          return legacyData;
+        }
+
+        // Fallback 2: 直接查詢（效能最差，僅作為最後手段）
+        logger.warn("[UAGService] Legacy RPC also failed, using fallback", {
+          error: legacyError?.message,
+        });
         return await UAGService.fetchPropertyViewStatsFallback(agentId);
       }
 

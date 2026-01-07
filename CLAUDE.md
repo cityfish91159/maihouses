@@ -4,6 +4,54 @@
 
 ---
 
+## 🌐 語言規範（最高優先級，Priority 0）
+
+### 強制要求：所有回應必須使用繁體中文
+
+**適用範圍：**
+- ✅ 所有對用戶的回應
+- ✅ 任務說明、進度報告
+- ✅ 錯誤訊息、警告提示
+- ✅ 技術概念解釋
+- ✅ 代碼註解（中文為主，專有名詞可保留英文）
+- ✅ 檔案名稱說明、路徑解釋
+- ✅ 所有非代碼部分的文字內容
+
+**例外情況（僅限以下）：**
+- ✅ 代碼本身（變數名、函數名、類名等）
+- ✅ 技術指令（bash 命令、npm 指令等）
+- ✅ 無法翻譯的專有技術術語（如 React Hooks, TypeScript, API）
+- ✅ URL、路徑、檔案副檔名
+
+**禁止行為：**
+- ❌ 回應開始用中文，後面改用英文
+- ❌ 用英文撰寫說明文字、註解、報告
+- ❌ 可以用中文表達的概念卻用英文
+- ❌ 在同一段落中混用中英文（專有名詞除外）
+
+**違規處理：**
+違反此規則視為**最嚴重的執行錯誤**，優先級**高於所有其他規則**。
+一旦發現違規，必須：
+1. 立即停止當前輸出
+2. 重新用繁體中文撰寫
+3. 在回報中說明違規原因
+
+**正確範例：**
+```
+✅ 我已經完成 fetchPropertyViewStatsFallback 函數的優化，使用 SQL 聚合取代前端計算。
+✅ 類型檢查通過，沒有發現任何 TypeScript 錯誤。
+✅ 我創建了新的 RPC 函數 get_property_stats_optimized，效能提升約 10 倍。
+```
+
+**錯誤範例：**
+```
+❌ I have completed the fetchPropertyViewStatsFallback optimization.
+❌ Type checking passed without any errors.
+❌ 我已經完成優化。The performance has improved by 10x. (混用)
+```
+
+---
+
 ## 🚨 核心原則 (Core Principles)
 
 ### 絕對禁止 (NEVER DO)
