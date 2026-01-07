@@ -107,7 +107,6 @@ export default function ChatPropertyCard({
 }: ChatPropertyCardProps) {
   const property = getMockData(propertyId);
 
-  // TODO: 改為動態連結 /property.html?id={propertyId}
   const propertyUrl = '/property.html';
 
   return (

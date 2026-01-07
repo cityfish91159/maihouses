@@ -1,4 +1,3 @@
-import { describe, it, expect } from 'vitest';
 import { formatRelativeTime } from '../date';
 import { STRINGS } from '../../constants/strings';
 

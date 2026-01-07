@@ -9,10 +9,42 @@ import {
   ListingSchema,
   FeedPostSchema,
   FeedPost,
-  UserDataSchema
+  UserDataSchema,
+  SupabaseListing, // UAG-9: Import SupabaseListing
 } from '../types/uag.types';
 import { GRADE_PROTECTION_HOURS } from '../uag-config';
 import { logger } from '../../../lib/logger';
+
+// UAG-9: Define Supabase-sourced types for better safety
+type SupabaseFeedPost = z.infer<typeof FeedPostSchema>;
+
+interface SupabaseSession {
+  session_id: string;
+  agent_id: string;
+  grade: string;
+  total_duration: number;
+  property_count: number;
+  last_active: string;
+  summary: string | null;
+}
+
+interface SupabasePurchasedLead {
+  session_id: string;
+  id: string;
+  created_at: string;
+}
+
+interface SupabaseUagEvent {
+  session_id: string;
+  property_id: string | null;
+}
+
+interface UagEventRow {
+  property_id: string;
+  session_id: string;
+  duration: number | null;
+  actions: Record<string, number> | null;
+}
 
 /**
  * purchase_lead RPC 返回類型
@@ -55,11 +87,12 @@ interface SupabaseLeadData {
   [key: string]: unknown;
 }
 
+// UAG-9: Use stricter types for incoming data
 const transformSupabaseData = (
   userData: SupabaseUserData,
   leadsData: SupabaseLeadData[],
-  listingsData: unknown[],
-  feedData: unknown[]
+  listingsData: SupabaseListing[],
+  feedData: SupabaseFeedPost[]
 ): AppData => {
   // 1. Validate User Data (Critical)
   const userRaw = {
@@ -100,10 +133,11 @@ const transformSupabaseData = (
   // 3. Transform and Validate Listings
   const validListings: Listing[] = [];
   for (const l of listingsData) {
+    // Safe cast because we validate with Zod immediately after
     const listing = l as Record<string, unknown>;
     const transformed = {
       ...listing,
-      title: listing.title as string,
+      title: (listing.title as string) || '',
       tags: (listing.tags as string[] | null) ?? [],
       view: (listing.view_count as number | undefined) ?? 0,
       click: (listing.click_count as number | undefined) ?? 0,

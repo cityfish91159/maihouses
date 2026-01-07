@@ -203,7 +203,7 @@ export default function TrustFlow() {
                 <div style={{ fontSize: 12, fontWeight: 700, color: isActive ? '#1749d7' : '#334155', marginBottom: 2 }}>
                   {c.buyerName}
                 </div>
-                <div style={{ fontSize: 11, color: '#64748b', marginBottom: 4, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 120 }}>
+                <div style={{ fontSize: 11, color: 'var(--ink-300)', marginBottom: 4, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 120 }}>
                   {c.propertyTitle}
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -235,7 +235,7 @@ export default function TrustFlow() {
               alignItems: 'center',
               justifyContent: 'center',
               minWidth: 60,
-              color: '#64748b',
+              color: 'var(--ink-300)',
             }}
             onClick={() => {/* TODO: New case modal */}}
           >
@@ -303,7 +303,7 @@ export default function TrustFlow() {
             padding: '8px 12px',
             fontSize: 11,
             fontWeight: 600,
-            color: '#64748b',
+            color: 'var(--ink-300)',
             background: '#f1f5f9',
             borderBottom: '1px solid #e2e8f0',
           }}>
@@ -327,16 +327,16 @@ export default function TrustFlow() {
                   alignItems: 'start',
                 }}
               >
-                <div style={{ fontSize: 11, color: '#64748b' }}>
+                <div style={{ fontSize: 11, color: 'var(--ink-300)' }}>
                   {formatTime(event.timestamp)}
                 </div>
                 <div>
                   <div style={{ fontSize: 12, color: 'var(--ink)' }}>
                     <b>{event.stepName} {event.action}</b>
-                    <span style={{ color: '#64748b' }}>｜{event.actor === 'agent' ? '房仲' : event.actor === 'buyer' ? '買方' : '系統'}</span>
+                    <span style={{ color: 'var(--ink-300)' }}>｜{event.actor === 'agent' ? '房仲' : event.actor === 'buyer' ? '買方' : '系統'}</span>
                   </div>
                   {event.detail && (
-                    <div style={{ fontSize: 11, color: '#64748b', marginTop: 2 }}>
+                    <div style={{ fontSize: 11, color: 'var(--ink-300)', marginTop: 2 }}>
                       {event.detail}
                     </div>
                   )}
@@ -348,7 +348,7 @@ export default function TrustFlow() {
                       padding: '3px 8px',
                       borderRadius: 4,
                       background: isCurrent ? '#fef3c7' : '#f1f5f9',
-                      color: isCurrent ? '#92400e' : '#64748b',
+                      color: isCurrent ? 'var(--grade-s)' : 'var(--ink-300)',
                       border: isCurrent ? '1px solid #fcd34d' : '1px solid #e2e8f0',
                       fontFamily: 'monospace',
                     }}>
@@ -383,7 +383,7 @@ export default function TrustFlow() {
 
       {/* Empty State */}
       {!selectedCase && !loading && (
-        <div style={{ textAlign: 'center', padding: '32px 16px', color: '#64748b' }}>
+        <div style={{ textAlign: 'center', padding: '32px 16px', color: 'var(--ink-300)' }}>
           <AlertCircle size={32} style={{ margin: '0 auto 8px', opacity: 0.5 }} />
           <div style={{ fontSize: 13, marginBottom: 8 }}>目前沒有進行中的案件</div>
           <button className={`${styles['uag-btn']} ${styles['primary']}`}>
@@ -395,7 +395,7 @@ export default function TrustFlow() {
 
       {/* Loading State */}
       {loading && (
-        <div style={{ textAlign: 'center', padding: '24px', color: '#64748b' }}>
+        <div style={{ textAlign: 'center', padding: '24px', color: 'var(--ink-300)' }}>
           <RefreshCw size={20} className="animate-spin" style={{ margin: '0 auto 8px' }} />
           <div style={{ fontSize: 12 }}>載入中...</div>
         </div>
@@ -413,7 +413,7 @@ export default function TrustFlow() {
             <ChevronRight size={14} />
           </Link>
           {selectedCase.currentStep === 3 && selectedCase.offerPrice && (
-            <button className={styles['uag-btn']} style={{ background: '#fef3c7', borderColor: '#fcd34d', color: '#92400e' }}>
+            <button className={styles['uag-btn']} style={{ background: '#fef3c7', borderColor: '#fcd34d', color: 'var(--grade-s)' }}>
               <DollarSign size={14} style={{ marginRight: 4 }} />
               回應出價
             </button>
@@ -432,19 +432,19 @@ export default function TrustFlow() {
         }}>
           <div style={{ textAlign: 'center' }}>
             <div style={{ fontSize: 20, fontWeight: 700, color: '#1749d7' }}>{cases.length}</div>
-            <div style={{ fontSize: 11, color: '#64748b' }}>進行中案件</div>
+            <div style={{ fontSize: 11, color: 'var(--ink-300)' }}>進行中案件</div>
           </div>
           <div style={{ textAlign: 'center' }}>
             <div style={{ fontSize: 20, fontWeight: 700, color: '#16a34a' }}>
               {cases.filter(c => c.currentStep >= 3).length}
             </div>
-            <div style={{ fontSize: 11, color: '#64748b' }}>已出價</div>
+            <div style={{ fontSize: 11, color: 'var(--ink-300)' }}>已出價</div>
           </div>
           <div style={{ textAlign: 'center' }}>
             <div style={{ fontSize: 20, fontWeight: 700, color: '#f59e0b' }}>
               {cases.filter(c => c.status === 'pending').length || 0}
             </div>
-            <div style={{ fontSize: 11, color: '#64748b' }}>待處理</div>
+            <div style={{ fontSize: 11, color: 'var(--ink-300)' }}>待處理</div>
           </div>
         </div>
       )}

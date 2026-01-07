@@ -3,9 +3,9 @@
  * @description 驗證 MOOD_CONFIGS 完整性與一致性
  */
 
-import { describe, it, expect } from 'vitest';
-import { MOOD_CONFIGS, EFFECT_POSITIONS, mirrorPath, CANVAS_SIZE } from './types';
-import type { MaiMaiMood } from './types';
+import { MOOD_CONFIGS, EFFECT_POSITIONS } from './configs';
+import { mirrorPath, CANVAS_SIZE } from './types';
+import type { EffectItem, MaiMaiMood } from './types';
 
 describe('MaiMai MOOD_CONFIGS', () => {
   const allMoods: (MaiMaiMood | 'default')[] = [
@@ -112,7 +112,7 @@ describe('EFFECT_POSITIONS', () => {
     const effectsWithItems: MaiMaiMood[] = ['celebrate', 'excited', 'happy', 'thinking', 'sleep', 'shy', 'wave'];
 
     effectsWithItems.forEach(mood => {
-      EFFECT_POSITIONS[mood].forEach(effect => {
+      EFFECT_POSITIONS[mood].forEach((effect: EffectItem) => {
         expect(effect).toHaveProperty('kind');
         expect(effect).toHaveProperty('x');
         expect(effect).toHaveProperty('y');
@@ -125,7 +125,7 @@ describe('EFFECT_POSITIONS', () => {
     const effectsWithItems: MaiMaiMood[] = ['celebrate', 'excited', 'happy'];
 
     effectsWithItems.forEach(mood => {
-      EFFECT_POSITIONS[mood].forEach(effect => {
+      EFFECT_POSITIONS[mood].forEach((effect: EffectItem) => {
         // x 座標應該在 -100 到 100 之間（相對於中心點）
         expect(effect.x).toBeGreaterThanOrEqual(-100);
         expect(effect.x).toBeLessThanOrEqual(100);

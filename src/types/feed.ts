@@ -117,3 +117,27 @@ export interface ConsumerPageState {
   transaction: ActiveTransaction | null;
   sidebar: SidebarData | null;
 }
+
+// ============ useFeedData 專用型別 (避免循環依賴) ============
+
+import type { FeedComment } from './comment';
+
+/** Feed 貼文（useFeedData 使用） */
+export interface FeedPost extends Post {
+  /** 貼文所屬社區（信息流可能跨社區） */
+  communityId?: string | undefined;
+  communityName?: string | undefined;
+  /** 貼文留言列表 */
+  commentList?: FeedComment[];
+  /** 貼文圖片 (P6-REFACTOR: 支援圖片) */
+  images?: { src: string; alt: string }[];
+  /** 私密貼文標記 (P7: Private Wall) */
+  private?: boolean;
+}
+
+/** 統一信息流資料 */
+export interface UnifiedFeedData {
+  posts: FeedPost[];
+  totalPosts: number;
+  sidebarData: SidebarData;
+}

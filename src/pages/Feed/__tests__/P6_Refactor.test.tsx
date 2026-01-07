@@ -1,4 +1,3 @@
-import { describe, it, expect } from 'vitest';
 import { render } from '@testing-library/react';
 import { getConsumerFeedData, getConsumerMockPosts } from '../mockData';
 import { CONSUMER_MOCK_POSTS } from '../mockData/posts/consumer';
@@ -35,18 +34,18 @@ describe('P6 Refactor Verification', () => {
         const copy2 = getConsumerMockPosts();
 
         // Subit mutation
-        copy1[0].title = 'Mutated Title';
+        if (copy1[0]) copy1[0].title = 'Mutated Title';
 
-        expect(copy2[0].title).not.toBe('Mutated Title');
-        expect(original[0].title).not.toBe('Mutated Title');
-        expect(copy1[0].title).toBe('Mutated Title');
+        expect(copy2[0]?.title).not.toBe('Mutated Title');
+        expect(original[0]?.title).not.toBe('Mutated Title');
+        expect(copy1[0]?.title).toBe('Mutated Title');
     });
 
     // Test 8: No Hardcoded Mock
     it('should match the defined constant mock data source', () => {
         const data = getConsumerMockPosts();
         expect(data).toHaveLength(CONSUMER_MOCK_POSTS.length);
-        expect(data[0].id).toBe(CONSUMER_MOCK_POSTS[0].id);
+        expect(data[0]?.id).toBe(CONSUMER_MOCK_POSTS[0]?.id);
     });
 
     // Specific P6 Requirement: Image Handling

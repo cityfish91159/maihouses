@@ -52,6 +52,9 @@ function deepScan() {
     // 金鑰洩漏
     { regex: /AIza[0-9A-Za-z-_]{35}/, label: 'Google API Key (安全風險)' },
     { regex: /sk-[a-zA-Z0-9]{20,}/, label: 'OpenAI Key (安全風險)' },
+
+    // 🎨 禁止硬編碼顏色
+    { regex: /#(00385a|004E7C|005585|E6EDF7|0f172a|faefe5|92400e|6c7b91|64748b|cbead4|e8faef|107a39)/i, label: 'Hardcoded Color (請用 Tailwind Token 或 CSS Var)' },
   ];
 
   let errors = 0;

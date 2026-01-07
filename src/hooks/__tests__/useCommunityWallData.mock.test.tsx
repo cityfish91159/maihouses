@@ -1,5 +1,4 @@
 import { renderHook, act } from '@testing-library/react';
-import { describe, it, expect, vi } from 'vitest';
 import { useCommunityWallData } from '../useCommunityWallData';
 import type { UnifiedWallData } from '../useCommunityWallData';
 import type { UseCommunityWallReturn } from '../useCommunityWallQuery';

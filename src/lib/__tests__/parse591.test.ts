@@ -3,7 +3,6 @@
  * @description 使用真實 591 複製內容驗證解析器容錯性
  */
 
-import { describe, it, expect } from 'vitest';
 import { parse591Content, detect591Content, type Parse591Result } from '../parse591';
 
 // ============ 真實 591 複製範例 ============

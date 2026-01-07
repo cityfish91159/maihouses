@@ -1,4 +1,3 @@
-import { describe, expect, it } from 'vitest';
 import { buildKeyCapsuleTags, formatArea, formatLayout, formatFloor } from '../keyCapsules';
 
 describe('formatArea', () => {

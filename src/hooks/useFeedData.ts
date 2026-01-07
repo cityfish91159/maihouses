@@ -41,31 +41,11 @@ import { getConsumerFeedData, createMockPost as createMockPostFromFactory } from
 import { usePermission } from './usePermission';
 import { PERMISSIONS } from '../types/permissions';
 import { uploadService } from '../services/uploadService';
+import type { FeedPost, UnifiedFeedData, SidebarData } from '../types/feed';
 const S = STRINGS.FEED;
 
-// ============ Feed 專用型別 ============
-export interface FeedPost extends Post {
-  /** 貼文所屬社區（信息流可能跨社區） */
-  communityId?: string | undefined;
-  communityName?: string | undefined;
-  /** 貼文留言列表 */
-  commentList?: FeedComment[];
-  /** 貼文圖片 (P6-REFACTOR: 支援圖片) */
-  images?: { src: string; alt: string }[];
-  /** 私密貼文標記 (P7: Private Wall) */
-  private?: boolean;
-}
-
-export interface SidebarData {
-  hotPosts: { id: string | number; title: string; communityName: string; likes: number }[];
-  saleItems: typeof MOCK_SALE_ITEMS;
-}
-
-export interface UnifiedFeedData {
-  posts: FeedPost[];
-  totalPosts: number;
-  sidebarData: SidebarData;
-}
+// Re-export types for backward compatibility
+export type { FeedPost, UnifiedFeedData, SidebarData };
 
 // ============ 常數 ============
 const FEED_MOCK_STORAGE_KEY = 'feed-mock-data-v1';

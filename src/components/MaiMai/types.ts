@@ -110,7 +110,7 @@ export type EffectItem =
   | { kind: 'ellipse'; x: number; y: number; rx: number; ry: number; className?: string };
 
 // ============ Re-exports ============
-// 為了向後相容,從 constants 和 configs 重新匯出所有內容
+// 為了向後相容,從 constants 重新匯出所有內容
+// Note: configs.ts 已移除重新匯出以避免循環依賴,請直接從 './configs' 引入
 
 export * from './constants';
-export * from './configs';

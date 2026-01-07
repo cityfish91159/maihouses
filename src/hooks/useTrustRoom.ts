@@ -2,40 +2,10 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { notify } from '../lib/notify';
 import { logger } from '../lib/logger';
 import { mockService, realService } from '../services/trustService';
+import type { Transaction, Step, StepData, StepRisks } from '../types/trust';
 
-// --- TYPES ---
-export interface StepRisks {
-  water: boolean;
-  wall: boolean;
-  structure: boolean;
-  other: boolean;
-}
-
-export interface StepData {
-  note?: string;
-  buyerNote?: string;
-  risks?: StepRisks;
-  [key: string]: string | StepRisks | undefined;
-}
-
-export interface Step {
-  name: string;
-  agentStatus: 'pending' | 'submitted';
-  buyerStatus: 'pending' | 'confirmed';
-  locked: boolean;
-  data: StepData;
-  paymentStatus?: 'pending' | 'initiated' | 'completed' | 'expired';
-  paymentDeadline?: number | null;
-  checklist?: { id: string; label: string; checked: boolean }[];
-}
-
-export interface Transaction {
-  id: string;
-  currentStep: number;
-  isPaid: boolean;
-  steps: Record<string, Step>;
-  supplements: { role: string; content: string; timestamp: number }[];
-}
+// Re-export types for backward compatibility
+export type { Transaction, Step, StepData, StepRisks };
 
 export function useTrustRoom() {
   // States

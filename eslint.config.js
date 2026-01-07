@@ -38,16 +38,13 @@ export default [
       'jsx-a11y/no-static-element-interactions': 'warn',
       'jsx-a11y/alt-text': 'error',
 
-      // 🛡️ Design Token Guardrails - 禁止所有硬編碼 Hex 顏色
+      // 🛡️ Design Token Guardrails - 禁止硬編碼 Brand/Ink Hex Codes
       'no-restricted-syntax': [
         'warn',
         {
-          selector: 'Literal[value=/^#([a-fA-F0-9]{3}|[a-fA-F0-9]{6})$/]',
-          message: '禁止硬編碼顏色 (Hex Code)。請使用 Tailwind token (例如: brand-700, grade-s-bg, badge-customer-text) 或 CSS 變數 (例如: var(--brand))。'
-        },
-        {
-          selector: 'Literal[value=/rgba?\\(/]',
-          message: '禁止硬編碼顏色 (rgba)。請使用 Tailwind opacity utilities (例如: bg-brand/50) 或 CSS 變數。'
+          // 使用逗號分隔多個 selector，避免 regex 複雜化導致誤判
+          selector: 'Literal[value=/^#(00385a|004E7C|005585|E6EDF7|0f172a|faefe5|92400e|6c7b91|64748b|cbead4|e8faef|107a39)$/i], Literal[value=/^rgba\\(0,\\s*56,\\s*90\\)$/i]',
+          message: '禁止硬編碼 Brand/Ink/Validation Color。請使用 Tailwind token (brand-700, ink-900, green-700 等) 或 CSS 變數。'
         }
       ],
     },

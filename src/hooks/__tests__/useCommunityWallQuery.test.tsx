@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach, afterEach, Mock } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
+import type { Mock } from 'vitest';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useCommunityWall, communityWallKeys } from '../useCommunityWallQuery';
 import type { ReactNode } from 'react';

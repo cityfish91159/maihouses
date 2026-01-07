@@ -1,12 +1,10 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
     uploadReducer,
     createInitialState,
     createManagedImage,
     getSortedImages,
-    UploadState,
-    ManagedImage,
 } from '../uploadReducer';
+import type { UploadState, ManagedImage } from '../../../types/upload';
 
 // Mock URL.createObjectURL and URL.revokeObjectURL
 const mockCreateObjectURL = vi.fn(() => `blob:mock-${Math.random()}`);
@@ -84,7 +82,7 @@ describe('uploadReducer', () => {
             ];
 
             const newState = uploadReducer(initialState, { type: 'ADD_IMAGES', payload: images });
-            expect(newState.managedImages[0].isCover).toBe(true);
+            expect(newState.managedImages[0]?.isCover).toBe(true);
             expect(newState.managedImages.filter(img => img.isCover).length).toBe(1);
             expect(newState.managedImages.slice(1).every(img => !img.isCover)).toBe(true);
         });
@@ -101,8 +99,8 @@ describe('uploadReducer', () => {
 
             const newState = uploadReducer(stateWithImages, { type: 'ADD_IMAGES', payload: newImages });
             expect(newState.managedImages.length).toBe(2);
-            expect(newState.managedImages[0].isCover).toBe(true);
-            expect(newState.managedImages[1].isCover).toBe(false);
+            expect(newState.managedImages[0]?.isCover).toBe(true);
+            expect(newState.managedImages[1]?.isCover).toBe(false);
         });
 
         it('should update form.images with sorted preview URLs', () => {
@@ -139,9 +137,9 @@ describe('uploadReducer', () => {
 
             const newState = uploadReducer(stateWithImages, { type: 'REMOVE_IMAGE', payload: 'cover' });
             expect(newState.managedImages.length).toBe(2);
-            expect(newState.managedImages[0].id).toBe('second');
-            expect(newState.managedImages[0].isCover).toBe(true);
-            expect(newState.managedImages[0].isCover).toBe(true);
+            expect(newState.managedImages[0]?.id).toBe('second');
+            expect(newState.managedImages[0]?.isCover).toBe(true);
+            expect(newState.managedImages[0]?.isCover).toBe(true);
             expect(newState.managedImages.filter(img => img.isCover).length).toBe(1);
         });
 
@@ -155,8 +153,8 @@ describe('uploadReducer', () => {
 
             const newState = uploadReducer(stateWithImages, { type: 'REMOVE_IMAGE', payload: 'normal' });
             expect(newState.managedImages.length).toBe(1);
-            expect(newState.managedImages[0].id).toBe('cover');
-            expect(newState.managedImages[0].isCover).toBe(true);
+            expect(newState.managedImages[0]?.id).toBe('cover');
+            expect(newState.managedImages[0]?.isCover).toBe(true);
         });
 
         it('should handle removing non-existent image gracefully', () => {
@@ -219,7 +217,7 @@ describe('uploadReducer', () => {
             const newState = uploadReducer(stateWithImages, { type: 'SET_COVER', payload: 'non-existent' });
             // 修正：目標 id 不存在時應保持原狀，不應清除既有封面
             expect(newState.managedImages.filter(img => img.isCover).length).toBe(1);
-            expect(newState.managedImages[0].isCover).toBe(true);
+            expect(newState.managedImages[0]?.isCover).toBe(true);
         });
 
         it('should handle setting same cover twice', () => {
@@ -327,8 +325,8 @@ describe('getSortedImages', () => {
         ];
 
         const sorted = getSortedImages(images);
-        expect(sorted[0].id).toBe('b');
-        expect(sorted[0].isCover).toBe(true);
+        expect(sorted[0]?.id).toBe('b');
+        expect(sorted[0]?.isCover).toBe(true);
     });
 
     it('should preserve order when no cover', () => {
@@ -338,8 +336,8 @@ describe('getSortedImages', () => {
         ];
 
         const sorted = getSortedImages(images);
-        expect(sorted[0].id).toBe('a');
-        expect(sorted[1].id).toBe('b');
+        expect(sorted[0]?.id).toBe('a');
+        expect(sorted[1]?.id).toBe('b');
     });
 
     it('should handle empty array', () => {

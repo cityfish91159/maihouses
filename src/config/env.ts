@@ -64,7 +64,7 @@ const showFriendlyErrorPage = (title: string, message: string): void => {
         <div style="text-align:center;max-width:400px;padding:2rem;">
           <div style="font-size:3rem;margin-bottom:1rem;">⚠️</div>
           <h1 style="font-size:1.25rem;font-weight:600;color:#1e293b;margin-bottom:0.5rem;">${title}</h1>
-          <p style="color:#64748b;margin-bottom:1.5rem;">${message}</p>
+          <p style="color:#475569;margin-bottom:1.5rem;">${message}</p>
           <a href="${homeHref}" style="display:inline-block;padding:0.75rem 1.5rem;background:#3b82f6;color:white;border-radius:0.5rem;text-decoration:none;font-weight:500;">回到首頁</a>
         </div>
       </div>

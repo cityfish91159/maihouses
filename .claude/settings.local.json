@@ -54,7 +54,10 @@
       "mcp__filesystem__list_allowed_directories",
       "Bash(npx supabase migration list:*)",
       "Bash(gemini --version:*)",
-      "Bash(dir:*)"
+      "Bash(dir:*)",
+      "Bash(npx vitest:*)",
+      "Bash(npm view:*)",
+      "Bash(npx madge:*)"
     ]
   },
   "model": "claude-opus-4-5-20251101",

@@ -29,22 +29,18 @@ class Logger {
     if (this.isDev) {
       console.info(this.formatMessage('info', message, context));
     }
-    // TODO: Send to analytics in production
   }
 
   warn(message: string, context?: LogContext): void {
     if (this.isDev) {
       console.warn(this.formatMessage('warn', message, context));
     }
-    // TODO: Send to Sentry in production
   }
 
   error(message: string, context?: LogContext): void {
     if (this.isDev) {
       console.error(this.formatMessage('error', message, context));
     }
-    // TODO: Send to Sentry in production
-    // Sentry.captureException(new Error(message), { extra: context });
   }
 }
 

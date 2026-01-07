@@ -5,7 +5,6 @@
 
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { NotificationDropdown } from '../NotificationDropdown';
 import type { ConversationListItem } from '../../../types/messaging.types';
 

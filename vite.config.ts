@@ -78,8 +78,10 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'jsdom',
-    setupFiles: './src/test/setup.ts',
     exclude: ['**/node_modules/**', '**/dist/**', '**/tests/e2e/**'], // Exclude Playwright E2E tests from vitest
+    include: ['src/**/*.{test,spec}.{ts,tsx}', 'api/**/*.{test,spec}.{ts,tsx}'], // Explicit test file patterns
+    root: process.cwd(), // Fix Windows path case-sensitivity issue
+    setupFiles: ['./src/setupTests.ts'], // Load jest-dom matchers
   },
   server: {
     host: true,

@@ -32,7 +32,7 @@ import {
   AGENT_TODO_LIST,
   AGENT_SAFETY_TRACE_POSTS,
 } from './posts/agent';
-import type { FeedPost } from '../../../hooks/useFeedData';
+import type { FeedPost } from '../../../types/feed';
 import type { UagSummary, PerformanceStats, TodoItem } from '../../../types/agent';
 import type { SafetyTracePost } from './posts/agent';
 
@@ -84,7 +84,7 @@ export const getAgentSafetyTracePosts = (): SafetyTracePost[] => deepClone(AGENT
 
 // ============ Combined Data for useFeedData ============
 
-import type { UnifiedFeedData, SidebarData } from '../../../hooks/useFeedData';
+import type { UnifiedFeedData, SidebarData } from '../../../types/feed';
 import { MOCK_SALE_ITEMS } from '../../../services/mock/feed';
 
 /**

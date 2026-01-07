@@ -1,4 +1,3 @@
-import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { RoleToggle } from '../../Feed/RoleToggle';
 import { STRINGS } from '../../../constants/strings';

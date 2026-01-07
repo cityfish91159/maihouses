@@ -1,4 +1,3 @@
-import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import { FeedPostCard } from '../FeedPostCard';
 import { STRINGS } from '../../../constants/strings';

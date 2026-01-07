@@ -1,12 +1,8 @@
-import { Transaction, Step, StepData } from '../hooks/useTrustRoom';
+import type { Transaction, Step, StepData } from '../types/trust';
 import { safeSessionStorage } from '../lib/safeStorage';
 import { logger } from '../lib/logger';
 
-// --- TYPES ---
-// Re-exporting or defining types if needed, but for now we use the ones from hook or define here
-// Ideally types should be in a separate file, e.g., src/types/trust.ts
-// For this refactor, I'll assume we might move types later, but for now I'll import or redefine compatible structures.
-
+// --- SERVICE INTERFACE ---
 export interface TrustService {
   fetchData: (caseId: string, token: string) => Promise<Transaction | null>;
   submit: (caseId: string, token: string, step: string, data: StepData) => Promise<boolean>;

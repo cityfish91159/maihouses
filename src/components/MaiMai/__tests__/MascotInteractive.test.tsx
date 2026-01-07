@@ -1,6 +1,5 @@
 import React from 'react';
 import { render, cleanup } from '@testing-library/react';
-import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
 import MascotInteractive from '../../MascotInteractive';
 
 const mockFireConfetti = vi.fn();

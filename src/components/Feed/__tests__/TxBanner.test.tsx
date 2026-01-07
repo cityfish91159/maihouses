@@ -3,7 +3,6 @@
  * MSG-3: 完整測試私訊提醒橫幅功能
  */
 
-import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { TxBanner } from '../TxBanner';
 import type { ActiveTransaction } from '../../../types/feed';

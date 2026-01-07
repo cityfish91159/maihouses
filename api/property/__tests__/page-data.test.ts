@@ -10,7 +10,6 @@
  * @see docs/COMMUNITY_WALL_TODO.md D24
  * @updated D26: 修正 DBProperty/DBReview 結構對齊 Supabase schema
  */
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { __testHelpers, type DBProperty, type DBReview } from '../page-data';
 import type { FeaturedPropertyCard, ListingPropertyCard } from '../../../src/types/property-page';
 

@@ -113,8 +113,6 @@ const PropertyUploadContent: React.FC = () => {
   };
 
   const handleDiscardDraft = () => {
-    const confirmDiscard = window.confirm('確定要捨棄草稿嗎？此操作無法復原');
-    if (!confirmDiscard) return;
     clearDraft();
     setDraftAvailable(false);
     setDraftPreview(null);
@@ -166,24 +164,9 @@ const PropertyUploadContent: React.FC = () => {
     // 非阻塞追蹤
     trackImportQuality();
 
-    // IM-3: 重複匯入偵測 (ID 不同時詢問)
+    // IM-3: 重複匯入偵測 (ID 不同時通知)
     if (parsed.listingId && lastImportedIdRef.current && parsed.listingId !== lastImportedIdRef.current) {
-      const confirmOverwrite = window.confirm(
-        '檢測到您剛剛已匯入過另一個物件，確定要覆蓋嗎？\n\n' +
-        '點擊「確定」將填入新物件資料。\n' +
-        '點擊「取消」將保留目前內容。'
-      );
-      
-      if (!confirmOverwrite) {
-        setLoading(false);
-        setMood('confused');
-        addMessage('已取消匯入');
-        notify.info('已取消', '保留了原本的物件資料');
-        return;
-      }
-      
-      // 若確認覆蓋，清空上一個物件 ID，確保後續邏輯視為新匯入
-      // (表單清空邏輯由 setForm 處理，這裡主要阻擋流程)
+      notify.info('偵測到新物件', '正在覆蓋先前的資料...');
     }
 
     // IM-2.8: 解析失敗時立即回饋（0ms），不強制等待

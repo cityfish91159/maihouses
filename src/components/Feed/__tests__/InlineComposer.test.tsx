@@ -1,4 +1,3 @@
-import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { InlineComposer } from '../InlineComposer';
 import { STRINGS } from '../../../constants/strings';

@@ -42,7 +42,6 @@ import {
   PEEK_BAR_GAP,
   BLUSH_OFFSET_X,
   BLUSH_RADIUS,
-  EFFECT_POSITIONS,
   EFFECT_COLOR_GOLD,
   EFFECT_COLOR_CONFETTI_RED,
   EFFECT_COLOR_CONFETTI_TEAL,
@@ -61,11 +60,10 @@ import {
   CONFETTI_RECT_3_WIDTH_RATIO,
   CONFETTI_RECT_3_HEIGHT_RATIO,
   mirrorPath,
-
-  MOOD_CONFIGS,
   EyeData
 } from './types';
-import type { MaiMaiMood, MaiMaiBaseProps } from './types';
+import { MOOD_CONFIGS, EFFECT_POSITIONS } from './configs';
+import type { EffectItem, MaiMaiMood, MaiMaiBaseProps } from './types';
 
 /**
  * MaiMai 公仔 SVG 骨架組件
@@ -458,7 +456,7 @@ export function Effects({ mood }: { mood: MaiMaiMood }) {
 
   return (
     <>
-      {items.map((p, i) => {
+      {items.map((p: EffectItem, i: number) => {
         const cx = CENTER_X + p.x;
         const cy = p.y;
         const key = `${mood}-${p.kind}-${i}`;

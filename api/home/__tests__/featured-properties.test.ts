@@ -1,4 +1,3 @@
-import { describe, expect, it } from 'vitest';
 import { __testHelpers, type RealPropertyRow, type ReviewData } from '../featured-properties';
 
 const { formatPrice, adaptRealPropertyForUI, SERVER_SEEDS, REQUIRED_COUNT } = __testHelpers;

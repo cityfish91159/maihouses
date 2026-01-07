@@ -31,8 +31,6 @@
     "api",
     "public",
     "docs",
-    "node_modules",
-    "src/**/__tests__/*",
-    "**/*.test.ts"
+    "node_modules"
   ]
 }

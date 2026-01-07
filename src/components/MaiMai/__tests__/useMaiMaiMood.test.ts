@@ -1,4 +1,3 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useMaiMaiMood, useMascotCelebrateEvent } from '../useMaiMaiMood';
 import type { UseMaiMaiMoodOptions } from '../types';

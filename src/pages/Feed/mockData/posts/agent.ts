@@ -6,7 +6,7 @@
  */
 
 import type { UagSummary, PerformanceStats, TodoItem } from '../../../../types/agent';
-import type { FeedPost } from '../../../../hooks/useFeedData';
+import type { FeedPost } from '../../../../types/feed';
 import {
   mockTimestampHoursAgo,
   mockTimestampDaysAgo,

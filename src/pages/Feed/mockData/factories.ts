@@ -6,7 +6,7 @@
  */
 
 import type { FeedComment } from '../../../types/comment';
-import type { FeedPost } from '../../../hooks/useFeedData';
+import type { FeedPost } from '../../../types/feed';
 import { generateMockId, MOCK_AUTHORS } from './shared';
 
 // ============ Post Factory ============

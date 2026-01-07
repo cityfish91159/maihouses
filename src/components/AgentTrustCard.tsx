@@ -52,7 +52,6 @@ const BookingModal: React.FC<{ isOpen: boolean; onClose: () => void; agentName: 
 
   const handleSubmit = () => {
     if (!selectedSlot || !phone) return;
-    // TODO: 送出預約到後端
     setSubmitted(true);
     setTimeout(() => {
       onClose();

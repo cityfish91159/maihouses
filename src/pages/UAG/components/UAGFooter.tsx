@@ -16,7 +16,7 @@ export const UAGFooter: React.FC<UAGFooterProps> = ({ user, useMock, toggleMode 
     </div>
     <button className={styles['uag-btn']}>方案設定</button>
     <button className={`${styles['uag-btn']} ${styles['primary']}`}>加值點數</button>
-    <span className={styles['uag-badge']} style={{ fontSize: '14px', background: '#fff8dc', color: '#92400e', borderColor: '#fcd34d' }}>
+    <span className={styles['uag-badge']} style={{ fontSize: '14px', background: '#fff8dc', color: 'var(--grade-s)', borderColor: '#fcd34d' }}>
       點數 <span id="user-points">{user.points}</span>
     </span>
   </div>

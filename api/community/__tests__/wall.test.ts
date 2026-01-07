@@ -1,4 +1,3 @@
-import { describe, expect, it } from 'vitest';
 import { __reviewTestHelpers, type AgentRow, type PropertyRow, type ReviewRow } from '../wall';
 
 const { cleanText, normalizeCount, buildAgentPayload, transformReviewRecord } = __reviewTestHelpers;

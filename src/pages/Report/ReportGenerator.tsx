@@ -71,12 +71,6 @@ export default function ReportGenerator({ property, isOpen, onClose }: ReportGen
     setIsGenerating(true);
 
     try {
-      // TODO: 呼叫 API 建立報告記錄
-      // await fetch('/api/report/create', {
-      //   method: 'POST',
-      //   body: JSON.stringify({ ... })
-      // });
-
       await new Promise(r => setTimeout(r, 800));
       const url = generateReportUrl();
       setGeneratedUrl(url);

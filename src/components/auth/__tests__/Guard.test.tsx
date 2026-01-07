@@ -2,7 +2,6 @@
 import { render, screen } from '@testing-library/react';
 
 import { PERMISSIONS, type Permission } from '../../../types/permissions';
-import { vi, describe, it, expect } from 'vitest';
 import { usePermission } from '../../../hooks/usePermission';
 
 // Mock usePermission

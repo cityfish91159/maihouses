@@ -54,7 +54,7 @@ export const AgentSidebar: React.FC<AgentSidebarProps> = ({
             {/* Performance Card */}
             <div className="rounded-[14px] border border-brand-100 bg-white p-[14px] shadow-card">
                 <h4 className="m-0 mb-2.5 text-[14px] font-bold text-brand-700">{STRINGS.AGENT.SIDEBAR.PERF_TITLE}</h4>
-                <p className="m-0 text-[13px] leading-[1.8] text-[#6c7b91]">
+                <p className="m-0 text-[13px] leading-[1.8] text-slate-500">
                     {STRINGS.AGENT.SIDEBAR.PERF_DEAL_COUNT_PREFIX} <b className="text-brand-700">2</b> {STRINGS.AGENT.SIDEBAR.PERF_DEAL_COUNT_UNIT}<br />
                     {STRINGS.AGENT.SIDEBAR.PERF_AMOUNT_PREFIX} <b className="text-brand-700">$3,280萬</b><br />
                     {STRINGS.AGENT.SIDEBAR.PERF_CLIENTS_PREFIX} <b className="text-brand-700">18</b> {STRINGS.AGENT.SIDEBAR.PERF_CLIENTS_UNIT}
@@ -71,7 +71,7 @@ export const AgentSidebar: React.FC<AgentSidebarProps> = ({
                 </div>
                 <div className="flex flex-col gap-2">
                     {todos.map(todo => (
-                        <div key={todo.id} className="flex gap-1.5 align-baseline text-[13px] leading-tight text-[#6c7b91]">
+                        <div key={todo.id} className="flex gap-1.5 align-baseline text-[13px] leading-tight text-slate-500">
                             <span className="shrink-0">{todo.type === 'contact' ? '📞' : '🔔'}</span>
                             <span>{todo.content}</span>
                         </div>

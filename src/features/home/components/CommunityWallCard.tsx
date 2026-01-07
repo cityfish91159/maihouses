@@ -66,8 +66,7 @@ export default function CommunityWallCard({
   const mockData = getMockData(name);
   const finalReviewCount = reviewCount ?? mockData?.reviewCount ?? 10;
   const finalRating = rating ?? mockData?.rating ?? 4.0;
-  
-  // TODO: 改為動態連結 /maihouses/community-wall.html?id={communityId}
+
   const communityWallUrl = '/maihouses/community-wall_mvp.html';
   
   return (

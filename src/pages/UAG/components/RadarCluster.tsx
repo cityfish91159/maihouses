@@ -100,7 +100,7 @@ export default function RadarCluster({ leads, onSelectLead }: RadarClusterProps)
               <div className={styles['uag-bubble-grade']} style={{ background: `var(--grade-${lead.grade.toLowerCase()})`, color: '#fff' }}>{lead.grade}</div>
               <div style={{ textAlign: 'center', lineHeight: 1.2 }}>
                 <div style={{ fontWeight: 800, fontSize: '14px' }}>{leadLabels[lead.id] || lead.grade}</div>
-                <div style={{ fontSize: '11px', color: '#64748b' }}>{lead.intent}%</div>
+                <div style={{ fontSize: '11px', color: 'var(--ink-300)' }}>{lead.intent}%</div>
               </div>
               <div className={styles['uag-bubble-label']}>{lead.prop}</div>
             </div>

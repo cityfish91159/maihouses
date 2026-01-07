@@ -14,7 +14,6 @@
  */
 
 import { render, screen, fireEvent } from '@testing-library/react';
-import { vi, describe, it, expect, beforeEach } from 'vitest';
 import Consumer from '../Consumer';
 import { useAuth } from '../../../hooks/useAuth';
 import { useFeedData } from '../../../hooks/useFeedData';

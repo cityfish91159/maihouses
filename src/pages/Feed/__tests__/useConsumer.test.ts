@@ -1,5 +1,4 @@
 import { renderHook, act } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Mock env before imports that use it
 vi.mock('../../../config/env', () => ({

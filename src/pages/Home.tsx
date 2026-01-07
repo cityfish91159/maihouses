@@ -10,8 +10,12 @@ import type { AppConfig, RuntimeOverrides } from '../app/config'
 import { WarmWelcomeBar } from '../components/WarmWelcomeBar'
 import { cmp } from '../lib/utils'
 import { logger } from '../lib/logger'
+import { useTutorial } from '../hooks/useTutorial'
 
 export default function Home({ config }: { readonly config: AppConfig & RuntimeOverrides }) {
+  // 初始化教學系統（首次訪問歡迎 + 閒置提醒）
+  useTutorial();
+
   const [banner, setBanner] = useState<string | null>(null)
 
   useEffect(() => {

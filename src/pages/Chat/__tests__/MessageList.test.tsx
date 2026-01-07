@@ -1,4 +1,3 @@
-import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { MessageList } from '../MessageList';
 import type { Message } from '../../../types/messaging.types';

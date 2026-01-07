@@ -1,4 +1,3 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom'; // Fix: Import jest-dom for matchers
 import CommunityTeaser from '../CommunityTeaser';
@@ -95,7 +94,7 @@ describe('CommunityTeaser', () => {
     render(<CommunityTeaser />);
 
     // Should show backup reviews
-    expect(screen.getByText(`${BACKUP_REVIEWS[0].name}: ${BACKUP_REVIEWS[0].content}`)).toBeInTheDocument();
+    expect(screen.getByText(`${BACKUP_REVIEWS[0]?.name}: ${BACKUP_REVIEWS[0]?.content}`)).toBeInTheDocument();
     
     // Should show error badge
     expect(screen.getByText('使用備用資料')).toBeInTheDocument();

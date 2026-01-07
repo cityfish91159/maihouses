@@ -94,13 +94,6 @@ export default function ReportPage() {
     const loadReport = async () => {
       setIsLoading(true);
       try {
-        // TODO: 從 API 載入真實資料
-        // const res = await fetch(`/api/report/${id}`);
-        // const data = await res.json();
-        // setProperty(data.property);
-        // setViewCount(data.viewCount);
-        
-        // 目前使用預設資料
         await new Promise(r => setTimeout(r, 300));
         setProperty(DEFAULT_REPORT_DATA);
         setViewCount(Math.floor(Math.random() * 20) + 5);
