@@ -3,10 +3,14 @@ import { Search, LogIn, UserPlus, List, Menu, X } from "lucide-react";
 import { Logo } from "../Logo/Logo";
 import { ROUTES, RouteUtils } from "../../constants/routes";
 import { MaiMaiBase } from "../MaiMai";
+import { useMaiMai } from "../../context/MaiMaiContext";
+import { TUTORIAL_CONFIG } from "../../constants/tutorial";
 
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [clickCount, setClickCount] = useState(0);
+  const { setMood, addMessage } = useMaiMai();
 
   /** 執行搜尋:導航到房源列表頁帶上搜尋參數 */
   const handleSearch = useCallback(() => {
@@ -29,6 +33,27 @@ export default function Header() {
     },
     [handleSearch],
   );
+
+  /** MaiMai 點擊處理：計數並觸發 celebrate */
+  const handleMaiMaiClick = useCallback(() => {
+    const newCount = clickCount + 1;
+    setClickCount(newCount);
+
+    if (newCount >= TUTORIAL_CONFIG.CELEBRATE_CLICK_COUNT_THRESHOLD) {
+      setMood("celebrate");
+      addMessage(TUTORIAL_CONFIG.MESSAGES.CELEBRATE);
+      window.dispatchEvent(
+        new CustomEvent("mascot:celebrate", { detail: { clicks: newCount } }),
+      );
+      setClickCount(0); // 重置計數器
+    }
+  }, [clickCount, setMood, addMessage]);
+
+  /** 搜尋框 focus 處理：觸發搜尋提示 */
+  const handleSearchFocus = useCallback(() => {
+    setMood("thinking");
+    addMessage(TUTORIAL_CONFIG.MESSAGES.SEARCH_HINT);
+  }, [setMood, addMessage]);
 
   return (
     <>
@@ -176,9 +201,9 @@ export default function Header() {
           {/* Search Bar Area Wrapper */}
           <div className="relative mx-auto max-w-3xl">
             {/* Mascot & Bubble Group */}
-            <div className="pointer-events-none absolute right-[5%] top-[-44px] z-0 animate-float select-none md:right-[10%] md:animate-float-desktop">
+            <div className="absolute right-[5%] top-[-44px] z-0 animate-float select-none md:right-[10%] md:animate-float-desktop">
               {/* Speech Bubble */}
-              <div className="absolute bottom-[92%] right-[55%] w-[260px] origin-bottom-right animate-fadeIn whitespace-normal rounded-2xl rounded-br-none border-2 border-brand-100 bg-white px-5 py-2 shadow-lg md:bottom-[94%] md:right-[65%] md:w-auto md:max-w-none md:whitespace-nowrap md:py-3">
+              <div className="pointer-events-none absolute bottom-[92%] right-[55%] w-[260px] origin-bottom-right animate-fadeIn whitespace-normal rounded-2xl rounded-br-none border-2 border-brand-100 bg-white px-5 py-2 shadow-lg md:bottom-[94%] md:right-[65%] md:w-auto md:max-w-none md:whitespace-nowrap md:py-3">
                 <p className="text-left text-[11px] font-bold leading-relaxed text-ink-700 md:text-sm">
                   買房這麼大的事，先到{" "}
                   <span className="font-black text-brand-700">邁鄰居</span>
@@ -188,16 +213,23 @@ export default function Header() {
                 <div className="absolute -bottom-2.5 right-3 size-5 rotate-45 border-b-2 border-r-2 border-brand-100 bg-white"></div>
               </div>
 
-              {/* Mascot - MaiMaiBase Component */}
-              <MaiMaiBase
-                mood="header"
-                className="relative z-10 size-20 md:size-24"
-                animated={false}
-                showEffects={false}
-                style={
-                  { "--maimai-body-fill": "#F6F9FF" } as React.CSSProperties
-                }
-              />
+              {/* Mascot - MaiMaiBase Component (可點擊) */}
+              <button
+                type="button"
+                onClick={handleMaiMaiClick}
+                className="pointer-events-auto relative z-10 size-20 cursor-pointer transition-transform hover:scale-105 active:scale-95 md:size-24"
+                aria-label="點擊邁邁查看提示"
+              >
+                <MaiMaiBase
+                  mood="header"
+                  className="size-full"
+                  animated={false}
+                  showEffects={false}
+                  style={
+                    { "--maimai-body-fill": "#F6F9FF" } as React.CSSProperties
+                  }
+                />
+              </button>
             </div>
 
             {/* Search Box */}
@@ -214,6 +246,7 @@ export default function Header() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyDown={handleKeyDown}
+                  onFocus={handleSearchFocus}
                   placeholder="找評價最高的社區、捷運站周邊好屋..."
                   className="size-full bg-transparent text-lg font-bold text-gray-700 outline-none placeholder:font-medium placeholder:text-gray-400"
                 />
