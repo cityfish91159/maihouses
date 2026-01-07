@@ -29,19 +29,11 @@
       }
     },
     {
-      "src": "/maihouses/community-wall_mvp.html",
-      "dest": "/maihouses/community-wall_mvp.html"
-    },
-    {
-      "src": "/maihouses/(.*)",
-      "dest": "/$1"
-    },
-    {
-      "src": "/maihouses",
-      "dest": "/index.html"
-    },
-    {
       "handle": "filesystem"
+    },
+    {
+      "src": "/maihouses/?.*",
+      "dest": "/index.html"
     },
     {
       "src": "/(.*)",

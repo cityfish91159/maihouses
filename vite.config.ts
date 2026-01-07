@@ -55,8 +55,8 @@ export default defineConfig({
     __APP_VERSION__: JSON.stringify(gitSha),
     __BUILD_TIME__: JSON.stringify(buildTimestamp),
   },
-  // 統一使用 /maihouses/ 路徑，以配合 vercel.json 的重定向設定
-  base: '/maihouses/',
+  // Vercel 環境使用根路徑，避免靜態資源 MIME type 錯誤
+  base: isVercel ? '/' : '/maihouses/',
   build: {
     outDir: 'dist', // Standardize to dist for Vercel
     sourcemap: false, // legacy build + sourcemap 容易 OOM，先關閉避免白屏無法部署
