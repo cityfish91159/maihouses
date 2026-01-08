@@ -1,4 +1,3 @@
-import React from "react";
 import { Lead } from "../types/uag.types";
 import styles from "../UAG.module.css";
 import { GRADE_PROTECTION_HOURS } from "../uag-config";
@@ -22,6 +21,73 @@ const calculateProtection = (lead: Lead) => {
   }
 
   return { total, remaining, percent, isExclusive, timeDisplay };
+};
+
+type NotificationStatus =
+  | "sent"
+  | "no_line"
+  | "unreachable"
+  | "pending"
+  | "failed"
+  | "skipped";
+
+interface NotificationDisplay {
+  text: string;
+  bgColor: string;
+  textColor: string;
+}
+
+/**
+ * 根據通知狀態返回顯示配置
+ */
+const getNotificationDisplay = (
+  status: NotificationStatus | undefined,
+): NotificationDisplay => {
+  switch (status) {
+    case "sent":
+      return {
+        text: "LINE + 站內信",
+        bgColor: "#f0fdf4",
+        textColor: "#16a34a",
+      };
+    case "no_line":
+      return {
+        text: "僅站內信",
+        bgColor: "#f1f5f9",
+        textColor: "#64748b",
+      };
+    case "unreachable":
+      return {
+        text: "LINE 無法送達",
+        bgColor: "#fff7ed",
+        textColor: "#ea580c",
+      };
+    case "pending":
+      return {
+        text: "待發送",
+        bgColor: "#fefce8",
+        textColor: "#ca8a04",
+      };
+    case "failed":
+      return {
+        text: "LINE 發送失敗",
+        bgColor: "#fef2f2",
+        textColor: "#dc2626",
+      };
+    case "skipped":
+      return {
+        text: "僅站內信",
+        bgColor: "#f1f5f9",
+        textColor: "#64748b",
+      };
+    default:
+      // 預設：尚未發送或舊資料
+      return {
+        text: "站內信已發送",
+        bgColor: "#f0fdf4",
+        textColor: "#16a34a",
+      };
+  }
 };
 
 export default function AssetMonitor({ leads }: AssetMonitorProps) {
@@ -131,16 +197,23 @@ export default function AssetMonitor({ leads }: AssetMonitorProps) {
                       </div>
                     </td>
                     <td data-label="目前狀態">
-                      <span
-                        className={styles["uag-badge"]}
-                        style={{
-                          background: "#f0fdf4",
-                          color: "#16a34a",
-                          border: "none",
-                        }}
-                      >
-                        簡訊已發送
-                      </span>
+                      {(() => {
+                        const notifStatus = (lead as Record<string, unknown>)
+                          .notification_status as NotificationStatus | undefined;
+                        const display = getNotificationDisplay(notifStatus);
+                        return (
+                          <span
+                            className={styles["uag-badge"]}
+                            style={{
+                              background: display.bgColor,
+                              color: display.textColor,
+                              border: "none",
+                            }}
+                          >
+                            {display.text}
+                          </span>
+                        );
+                      })()}
                     </td>
                     <td data-label="操作">
                       <button
