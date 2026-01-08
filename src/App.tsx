@@ -13,6 +13,7 @@ import Suggested from "./pages/Community/Suggested";
 import Detail from "./pages/Property/Detail";
 import AssureDetail from "./pages/Assure/Detail";
 import ChatPage from "./pages/Chat";
+import ChatConnect from "./pages/Chat/Connect";
 import ChatStandalone from "./pages/Chat/Standalone";
 import ErrorBoundary from "./app/ErrorBoundary";
 import { QuietModeProvider } from "./context/QuietModeContext";
@@ -173,6 +174,14 @@ export default function App() {
                 element={
                   <ErrorBoundary>
                     <ChatStandalone />
+                  </ErrorBoundary>
+                }
+              />
+              <Route
+                path="/chat/connect"
+                element={
+                  <ErrorBoundary>
+                    <ChatConnect />
                   </ErrorBoundary>
                 }
               />

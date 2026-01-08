@@ -39,6 +39,8 @@ interface SendMessageModalProps {
   propertyId?: string;
   /** UAG-13: 預先建立的對話 ID (若有則直接發送訊息) */
   conversationId?: string;
+  /** UAG-14: 房仲名稱 (用於 LINE 通知) */
+  agentName: string;
 }
 
 /**
@@ -57,6 +59,7 @@ export function SendMessageModal({
   sessionId,
   propertyId,
   conversationId,
+  agentName,
 }: SendMessageModalProps): React.ReactElement | null {
   const navigate = useNavigate();
   const [message, setMessage] = useState("");
@@ -87,40 +90,66 @@ export function SendMessageModal({
 
     setIsSending(true);
     try {
-      let result;
-      // UAG-13: 如果已經有 conversationId，直接發送訊息 (Skip Create)
+      // UAG-13: 如果已經有 conversationId，直接發送訊息 (Skip Create，不推 LINE)
       if (validConversationId) {
-        // Type narrowing: 在 if 塊內確保是 string
         const safeConversationId: string = validConversationId;
-        const msg = await messagingService.sendMessage({
+        await messagingService.sendMessage({
           conversation_id: safeConversationId,
           sender_type: "agent",
           sender_id: agentId,
           content: message.trim(),
         });
-        // 構造與 createConversationAndSendMessage 相同的回傳格式供後續跳轉使用
-        result = { conversation: { id: safeConversationId }, message: msg };
-      } else {
-        // Fallback: 既有邏輯 (建立 + 發送)
-        result = await messagingService.createConversationAndSendMessage(
-          {
-            agent_id: agentId,
-            consumer_session_id: sessionId,
-            property_id: propertyId,
-            // 問題 #A 修復：購買成功後 lead.id 已更新為 purchase_id (UUID)，可以安全傳遞
-            lead_id: lead.id,
-          },
-          message.trim(),
-          agentId,
-        );
+
+        notify.success(S.SUCCESS, S.SUCCESS_DESC);
+        onClose();
+        navigate(ROUTES.CHAT(safeConversationId));
+        return;
       }
 
-      notify.success(S.SUCCESS, S.SUCCESS_DESC);
+      // UAG-14: 新購買後首次訊息，使用整合式 API（建立對話 + 發送訊息 + LINE 推播）
+      const response = await fetch("/api/uag/send-message", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          agentId,
+          sessionId,
+          purchaseId: lead.id,
+          propertyId,
+          message: message.trim(),
+          agentName,
+          propertyTitle: lead.prop,
+          grade: lead.grade,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!result.success) {
+        throw new Error(result.error || "發送失敗");
+      }
+
+      // 根據 LINE 狀態顯示不同提示
+      switch (result.lineStatus) {
+        case "sent":
+          notify.success("訊息已發送", "已同時透過 LINE 通知客戶");
+          break;
+        case "no_line":
+          notify.success("訊息已發送", "客戶未綁定 LINE，僅發送站內訊息");
+          break;
+        case "unreachable":
+          notify.warning("訊息已發送", "LINE 無法送達（客戶可能已封鎖）");
+          break;
+        case "pending":
+          notify.success("訊息已發送", "LINE 通知稍後送達");
+          break;
+        default:
+          notify.success(S.SUCCESS, S.SUCCESS_DESC);
+      }
+
       onClose();
 
-      // MSG-5 FIX 4: 使用 ROUTES.CHAT 確保路徑正確 (/maihouses/chat/...)
-      if (result?.conversation?.id) {
-        navigate(ROUTES.CHAT(result.conversation.id));
+      if (result.conversationId) {
+        navigate(ROUTES.CHAT(result.conversationId));
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "請稍後再試";
@@ -141,6 +170,9 @@ export function SendMessageModal({
     navigate,
     conversationId,
     lead.id,
+    lead.prop,
+    lead.grade,
+    agentName,
   ]);
 
   const handleLater = useCallback(() => {

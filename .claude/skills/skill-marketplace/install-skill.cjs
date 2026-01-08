@@ -7,10 +7,10 @@
  * Usage: node install-skill.js <skill-url> [--temp]
  */
 
-const https = require('https');
-const http = require('http');
-const fs = require('fs');
-const path = require('path');
+const https = require("https");
+const http = require("http");
+const fs = require("fs");
+const path = require("path");
 
 /**
  * 安裝 skill
@@ -19,64 +19,62 @@ const path = require('path');
  * @returns {Promise<object>} - 安裝結果
  */
 async function installSkill(skillUrl, options = {}) {
-  const {
-    temporary = false,
-    targetDir = null,
-    force = false
-  } = options;
+  const { temporary = false, targetDir = null, force = false } = options;
 
   console.log(`📥 開始安裝 skill...`);
   console.log(`   URL: ${skillUrl}`);
-  console.log(`   模式: ${temporary ? '臨時' : '永久'}\n`);
+  console.log(`   模式: ${temporary ? "臨時" : "永久"}\n`);
 
   try {
     // 1. 下載 SKILL.md
-    console.log('⏳ 下載 SKILL.md...');
+    console.log("⏳ 下載 SKILL.md...");
     const content = await downloadFile(skillUrl);
 
     // 2. 解析 frontmatter
-    console.log('🔍 解析 frontmatter...');
+    console.log("🔍 解析 frontmatter...");
     const { metadata, body } = parseFrontmatter(content);
 
     if (!metadata.name) {
-      throw new Error('SKILL.md 缺少 name 欄位');
+      throw new Error("SKILL.md 缺少 name 欄位");
     }
 
     console.log(`✅ Skill name: ${metadata.name}`);
     console.log(`   Description: ${metadata.description}`);
-    console.log(`   Allowed tools: ${metadata['allowed-tools'] || 'N/A'}\n`);
+    console.log(`   Allowed tools: ${metadata["allowed-tools"] || "N/A"}\n`);
 
     // 3. 安全檢查
-    console.log('🛡️  執行安全檢查...');
+    console.log("🛡️  執行安全檢查...");
     const safetyCheck = performSafetyCheck(metadata, body);
 
     if (!safetyCheck.safe) {
-      console.warn('⚠️  安全檢查警告:');
-      safetyCheck.warnings.forEach(w => console.warn(`   - ${w}`));
+      console.warn("⚠️  安全檢查警告:");
+      safetyCheck.warnings.forEach((w) => console.warn(`   - ${w}`));
 
       if (!force && safetyCheck.critical) {
-        throw new Error('安全檢查失敗，使用 --force 強制安裝');
+        throw new Error("安全檢查失敗，使用 --force 強制安裝");
       }
     } else {
-      console.log('✅ 安全檢查通過\n');
+      console.log("✅ 安全檢查通過\n");
     }
 
     // 4. 決定安裝目錄
-    const skillsDir = path.join(process.cwd(), '.claude', 'skills');
-    const installDir = targetDir || path.join(
-      skillsDir,
-      temporary ? 'marketplace-temp' : 'marketplace',
-      metadata.name
-    );
+    const skillsDir = path.join(process.cwd(), ".claude", "skills");
+    const installDir =
+      targetDir ||
+      path.join(
+        skillsDir,
+        temporary ? "marketplace-temp" : "marketplace",
+        metadata.name,
+      );
 
     // 5. 檢查是否已存在
     if (fs.existsSync(installDir) && !force) {
       console.log(`⚠️  Skill 已存在: ${installDir}`);
-      console.log('   使用 --force 覆蓋安裝\n');
+      console.log("   使用 --force 覆蓋安裝\n");
       return {
         success: false,
-        reason: 'already_exists',
-        path: installDir
+        reason: "already_exists",
+        path: installDir,
       };
     }
 
@@ -84,10 +82,10 @@ async function installSkill(skillUrl, options = {}) {
     console.log(`📁 安裝到: ${installDir}`);
     fs.mkdirSync(installDir, { recursive: true });
 
-    const skillPath = path.join(installDir, 'SKILL.md');
-    fs.writeFileSync(skillPath, content, 'utf8');
+    const skillPath = path.join(installDir, "SKILL.md");
+    fs.writeFileSync(skillPath, content, "utf8");
 
-    console.log('✅ 安裝成功！\n');
+    console.log("✅ 安裝成功！\n");
 
     // 7. 返回結果
     return {
@@ -96,14 +94,13 @@ async function installSkill(skillUrl, options = {}) {
       path: installDir,
       skillPath: skillPath,
       temporary: temporary,
-      metadata: metadata
+      metadata: metadata,
     };
-
   } catch (error) {
-    console.error('❌ 安裝失敗:', error.message);
+    console.error("❌ 安裝失敗:", error.message);
     return {
       success: false,
-      error: error.message
+      error: error.message,
     };
   }
 }
@@ -113,24 +110,26 @@ async function installSkill(skillUrl, options = {}) {
  */
 function downloadFile(url) {
   return new Promise((resolve, reject) => {
-    const protocol = url.startsWith('https') ? https : http;
+    const protocol = url.startsWith("https") ? https : http;
 
-    protocol.get(url, (res) => {
-      if (res.statusCode === 302 || res.statusCode === 301) {
-        // 處理重定向
-        return downloadFile(res.headers.location).then(resolve).catch(reject);
-      }
+    protocol
+      .get(url, (res) => {
+        if (res.statusCode === 302 || res.statusCode === 301) {
+          // 處理重定向
+          return downloadFile(res.headers.location).then(resolve).catch(reject);
+        }
 
-      if (res.statusCode !== 200) {
-        reject(new Error(`HTTP ${res.statusCode}: ${res.statusMessage}`));
-        return;
-      }
+        if (res.statusCode !== 200) {
+          reject(new Error(`HTTP ${res.statusCode}: ${res.statusMessage}`));
+          return;
+        }
 
-      let data = '';
-      res.on('data', chunk => data += chunk);
-      res.on('end', () => resolve(data));
-      res.on('error', reject);
-    }).on('error', reject);
+        let data = "";
+        res.on("data", (chunk) => (data += chunk));
+        res.on("end", () => resolve(data));
+        res.on("error", reject);
+      })
+      .on("error", reject);
   });
 }
 
@@ -138,15 +137,15 @@ function downloadFile(url) {
  * 解析 YAML frontmatter
  */
 function parseFrontmatter(content) {
-  const lines = content.split('\n');
+  const lines = content.split("\n");
 
-  if (lines[0] !== '---') {
+  if (lines[0] !== "---") {
     return { metadata: {}, body: content };
   }
 
   let endIndex = -1;
   for (let i = 1; i < lines.length; i++) {
-    if (lines[i] === '---') {
+    if (lines[i] === "---") {
       endIndex = i;
       break;
     }
@@ -156,12 +155,12 @@ function parseFrontmatter(content) {
     return { metadata: {}, body: content };
   }
 
-  const frontmatter = lines.slice(1, endIndex).join('\n');
-  const body = lines.slice(endIndex + 1).join('\n');
+  const frontmatter = lines.slice(1, endIndex).join("\n");
+  const body = lines.slice(endIndex + 1).join("\n");
 
   // 簡單的 YAML 解析
   const metadata = {};
-  frontmatter.split('\n').forEach(line => {
+  frontmatter.split("\n").forEach((line) => {
     const match = line.match(/^(\S+):\s*(.+)$/);
     if (match) {
       metadata[match[1]] = match[2].trim();
@@ -179,10 +178,10 @@ function performSafetyCheck(metadata, body) {
   let critical = false;
 
   // 檢查 allowed-tools
-  const allowedTools = metadata['allowed-tools'] || '';
-  const dangerousTools = ['Bash(rm', 'Bash(sudo', 'Write(/etc', 'Write(/sys'];
+  const allowedTools = metadata["allowed-tools"] || "";
+  const dangerousTools = ["Bash(rm", "Bash(sudo", "Write(/etc", "Write(/sys"];
 
-  dangerousTools.forEach(tool => {
+  dangerousTools.forEach((tool) => {
     if (allowedTools.includes(tool)) {
       warnings.push(`包含危險工具: ${tool}`);
       critical = true;
@@ -194,10 +193,10 @@ function performSafetyCheck(metadata, body) {
     /curl.*\|\s*bash/i,
     /eval\(/i,
     /process\.env\[['"]PASSWORD['"]\]/i,
-    /rm\s+-rf\s+\//
+    /rm\s+-rf\s+\//,
   ];
 
-  suspiciousPatterns.forEach(pattern => {
+  suspiciousPatterns.forEach((pattern) => {
     if (pattern.test(body)) {
       warnings.push(`包含可疑模式: ${pattern}`);
       critical = true;
@@ -206,20 +205,21 @@ function performSafetyCheck(metadata, body) {
 
   // 檢查是否有外部連結
   const externalLinks = body.match(/https?:\/\/[^\s)]+/g) || [];
-  const suspiciousDomains = externalLinks.filter(link =>
-    !link.includes('github.com') &&
-    !link.includes('skillsmp.com') &&
-    !link.includes('anthropic.com')
+  const suspiciousDomains = externalLinks.filter(
+    (link) =>
+      !link.includes("github.com") &&
+      !link.includes("skillsmp.com") &&
+      !link.includes("anthropic.com"),
   );
 
   if (suspiciousDomains.length > 0) {
-    warnings.push(`包含外部連結: ${suspiciousDomains.join(', ')}`);
+    warnings.push(`包含外部連結: ${suspiciousDomains.join(", ")}`);
   }
 
   return {
     safe: warnings.length === 0,
     warnings: warnings,
-    critical: critical
+    critical: critical,
   };
 }
 
@@ -227,10 +227,10 @@ function performSafetyCheck(metadata, body) {
  * 移除 skill
  */
 function uninstallSkill(skillName) {
-  const skillsDir = path.join(process.cwd(), '.claude', 'skills');
+  const skillsDir = path.join(process.cwd(), ".claude", "skills");
   const paths = [
-    path.join(skillsDir, 'marketplace-temp', skillName),
-    path.join(skillsDir, 'marketplace', skillName)
+    path.join(skillsDir, "marketplace-temp", skillName),
+    path.join(skillsDir, "marketplace", skillName),
   ];
 
   for (const skillPath of paths) {
@@ -249,28 +249,30 @@ function uninstallSkill(skillName) {
 if (require.main === module) {
   const args = process.argv.slice(2);
 
-  if (args[0] === 'uninstall') {
+  if (args[0] === "uninstall") {
     const skillName = args[1];
     if (!skillName) {
-      console.error('Usage: node install-skill.js uninstall <skill-name>');
+      console.error("Usage: node install-skill.js uninstall <skill-name>");
       process.exit(1);
     }
     uninstallSkill(skillName);
   } else {
     const skillUrl = args[0];
     if (!skillUrl) {
-      console.error('Usage: node install-skill.js <skill-url> [--temp] [--force]');
+      console.error(
+        "Usage: node install-skill.js <skill-url> [--temp] [--force]",
+      );
       process.exit(1);
     }
 
     const options = {
-      temporary: args.includes('--temp'),
-      force: args.includes('--force')
+      temporary: args.includes("--temp"),
+      force: args.includes("--force"),
     };
 
-    installSkill(skillUrl, options).then(result => {
+    installSkill(skillUrl, options).then((result) => {
       if (result.success) {
-        console.log('🎉 Skill 安裝完成！');
+        console.log("🎉 Skill 安裝完成！");
         console.log(`\n使用方式:`);
         console.log(`  在對話中提到 "${result.name}" 相關的任務`);
         console.log(`  或明確呼叫: /skill ${result.name}\n`);

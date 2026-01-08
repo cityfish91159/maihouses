@@ -1,6 +1,6 @@
-const fs = require('fs');
-const path = require('path');
-const { execSync } = require('child_process');
+const fs = require("fs");
+const path = require("path");
+const { execSync } = require("child_process");
 
 /**
  * Remove vitest imports from test files to use global mode
@@ -8,14 +8,17 @@ const { execSync } = require('child_process');
  */
 function fixVitestImports() {
   // Find all test files using ripgrep
-  const output = execSync('git ls-files "*.test.ts" "*.test.tsx" "*.spec.ts" "*.spec.tsx"', {
-    encoding: 'utf8',
-    cwd: process.cwd(),
-  });
+  const output = execSync(
+    'git ls-files "*.test.ts" "*.test.tsx" "*.spec.ts" "*.spec.tsx"',
+    {
+      encoding: "utf8",
+      cwd: process.cwd(),
+    },
+  );
 
   const testFiles = output
     .trim()
-    .split('\n')
+    .split("\n")
     .filter(Boolean)
     .map((f) => path.join(process.cwd(), f));
 
@@ -26,7 +29,7 @@ function fixVitestImports() {
 
   for (const file of testFiles) {
     try {
-      const content = fs.readFileSync(file, 'utf8');
+      const content = fs.readFileSync(file, "utf8");
 
       // Patterns to remove
       const patterns = [
@@ -43,13 +46,13 @@ function fixVitestImports() {
 
       for (const pattern of patterns) {
         if (pattern.test(newContent)) {
-          newContent = newContent.replace(pattern, '');
+          newContent = newContent.replace(pattern, "");
           changed = true;
         }
       }
 
       if (changed) {
-        fs.writeFileSync(file, newContent, 'utf8');
+        fs.writeFileSync(file, newContent, "utf8");
         console.log(`✓ Fixed: ${path.relative(process.cwd(), file)}`);
         fixed++;
       } else {

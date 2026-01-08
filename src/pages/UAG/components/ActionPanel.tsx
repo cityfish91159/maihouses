@@ -141,7 +141,7 @@ const ActionPanel = forwardRef<HTMLDivElement, ActionPanelProps>(
                   onClick={handleBuyClick}
                   disabled={isProcessing}
                 >
-                  {isProcessing ? "處理中..." : "🚀 獲取聯絡權限 (簡訊/站內信)"}
+                  {isProcessing ? "處理中..." : "🚀 獲取聯絡權限 (LINE/站內信)"}
                 </button>
               ) : (
                 <div style={{ display: "flex", gap: "10px" }}>
@@ -174,9 +174,9 @@ const ActionPanel = forwardRef<HTMLDivElement, ActionPanelProps>(
                   marginTop: "8px",
                 }}
               >
-                符合個資法規範：僅能以簡訊/站內信聯繫
+                符合個資法規範：僅能以 LINE/站內信聯繫
                 <br />
-                系統將自動發送您的名片與電話給客戶
+                系統將透過 LINE 通知客戶
               </div>
             </div>
           </div>

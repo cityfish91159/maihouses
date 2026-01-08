@@ -1,9 +1,9 @@
-const fs = require('fs');
-const path = require('path');
+const fs = require("fs");
+const path = require("path");
 
 const fixes = [
   {
-    file: 'src/features/home/sections/__tests__/CommunityTeaser.test.tsx',
+    file: "src/features/home/sections/__tests__/CommunityTeaser.test.tsx",
     replacements: [
       {
         old: `expect(screen.getByText(\`\${BACKUP_REVIEWS[0].name}: \${BACKUP_REVIEWS[0].content}\`)).toBeInTheDocument();`,
@@ -12,21 +12,33 @@ const fixes = [
     ],
   },
   {
-    file: 'src/hooks/__tests__/useNotifications.test.ts',
+    file: "src/hooks/__tests__/useNotifications.test.ts",
     patterns: [
-      { search: /notification\.id/g, replace: 'notification?.id' },
-      { search: /notification\.type/g, replace: 'notification?.type' },
-      { search: /notification\.title/g, replace: 'notification?.title' },
-      { search: /notification\.message/g, replace: 'notification?.message' },
-      { search: /result\.current\.(\w+)\[0\]\.id/g, replace: 'result.current.$1[0]?.id' },
-      { search: /result\.current\.(\w+)\[0\]\.type/g, replace: 'result.current.$1[0]?.type' },
+      { search: /notification\.id/g, replace: "notification?.id" },
+      { search: /notification\.type/g, replace: "notification?.type" },
+      { search: /notification\.title/g, replace: "notification?.title" },
+      { search: /notification\.message/g, replace: "notification?.message" },
+      {
+        search: /result\.current\.(\w+)\[0\]\.id/g,
+        replace: "result.current.$1[0]?.id",
+      },
+      {
+        search: /result\.current\.(\w+)\[0\]\.type/g,
+        replace: "result.current.$1[0]?.type",
+      },
     ],
   },
   {
-    file: 'src/pages/Feed/__tests__/P6_Refactor.test.tsx',
+    file: "src/pages/Feed/__tests__/P6_Refactor.test.tsx",
     patterns: [
-      { search: /screen\.getByTestId\('([^']+)'\)\[0\]/g, replace: "screen.getByTestId('$1')[0]" },
-      { search: /\.children\[0\]\.textContent/g, replace: '.children[0]?.textContent' },
+      {
+        search: /screen\.getByTestId\('([^']+)'\)\[0\]/g,
+        replace: "screen.getByTestId('$1')[0]",
+      },
+      {
+        search: /\.children\[0\]\.textContent/g,
+        replace: ".children[0]?.textContent",
+      },
     ],
   },
 ];
@@ -39,7 +51,7 @@ for (const fix of fixes) {
     continue;
   }
 
-  let content = fs.readFileSync(fullPath, 'utf8');
+  let content = fs.readFileSync(fullPath, "utf8");
   let changed = false;
 
   // Apply direct replacements
@@ -64,9 +76,9 @@ for (const fix of fixes) {
   }
 
   if (changed) {
-    fs.writeFileSync(fullPath, content, 'utf8');
+    fs.writeFileSync(fullPath, content, "utf8");
     console.log(`✓ Fixed ${fix.file}`);
   }
 }
 
-console.log('\nDone!');
+console.log("\nDone!");

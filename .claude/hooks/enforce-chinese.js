@@ -31,10 +31,29 @@ const englishWords = (withoutCode.match(/\b[a-zA-Z]{3,}\b/g) || []).length; // �
 
 // 常見技術術語白名單（不計入違規）
 const techTerms = [
-  "React", "TypeScript", "API", "Hook", "Props", "Component",
-  "JavaScript", "CSS", "HTML", "JSON", "SQL", "RPC",
-  "Supabase", "PostgreSQL", "Vercel", "npm", "git",
-  "interface", "type", "function", "const", "let", "async"
+  "React",
+  "TypeScript",
+  "API",
+  "Hook",
+  "Props",
+  "Component",
+  "JavaScript",
+  "CSS",
+  "HTML",
+  "JSON",
+  "SQL",
+  "RPC",
+  "Supabase",
+  "PostgreSQL",
+  "Vercel",
+  "npm",
+  "git",
+  "interface",
+  "type",
+  "function",
+  "const",
+  "let",
+  "async",
 ];
 
 let whitelistCount = 0;
@@ -73,5 +92,7 @@ if (hasMostlyEnglish || hasExcessiveEnglish) {
   process.exit(1);
 }
 
-console.log(`✅ 語言檢查通過 (中文: ${chineseChars}, 英文: ${actualEnglish}, 比例: ${(ratio * 100).toFixed(1)}%)`);
+console.log(
+  `✅ 語言檢查通過 (中文: ${chineseChars}, 英文: ${actualEnglish}, 比例: ${(ratio * 100).toFixed(1)}%)`,
+);
 process.exit(0);

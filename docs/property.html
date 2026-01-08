@@ -17,7 +17,7 @@
         --primary: #00385a;
         --primary-light: #e0f4ff; /* 淺藍背景 */
         --primary-dark: #002a44;
-        --primary-cyan: #009FE8; /* 亮藍/青色 (保留部分淺藍) */
+        --primary-cyan: #009fe8; /* 亮藍/青色 (保留部分淺藍) */
 
         /* 背景色系 */
         --bg-base: #f6f9ff;
@@ -59,8 +59,14 @@
       body {
         margin: 0;
         padding: 0;
-        font-family: "Noto Sans TC", -apple-system, BlinkMacSystemFont,
-          "PingFang TC", "Hiragino Sans", "Microsoft JhengHei", sans-serif;
+        font-family:
+          "Noto Sans TC",
+          -apple-system,
+          BlinkMacSystemFont,
+          "PingFang TC",
+          "Hiragino Sans",
+          "Microsoft JhengHei",
+          sans-serif;
         font-size: 0.9375rem; /* 15px */
         line-height: 1.5;
         color: var(--text-primary);
@@ -134,9 +140,9 @@
         right: 0.5rem;
         width: 0.375rem;
         height: 0.375rem;
-        background-color: #FF6B6B;
+        background-color: #ff6b6b;
         border-radius: 50%;
-        box-shadow: 0 0 0 1.5px #004E7C;
+        box-shadow: 0 0 0 1.5px #004e7c;
       }
 
       .logo-text-group {
@@ -147,7 +153,8 @@
       .logo-text-main {
         font-size: 1.5rem; /* 24px */
         font-weight: 700;
-        font-family: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+        font-family:
+          ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
         color: #00385a;
         letter-spacing: 0.025em;
         line-height: 1;
@@ -164,7 +171,7 @@
       .logo-slogan {
         font-size: 0.9375rem; /* 15px */
         font-weight: 700;
-        color: #00629B; /* brand-500 */
+        color: #00629b; /* brand-500 */
         letter-spacing: 0.15em;
         text-transform: uppercase;
         padding-top: 1px;
@@ -185,7 +192,9 @@
         border: 1px solid var(--border-light);
         background: #ffffff;
         cursor: pointer;
-        transition: opacity 0.2s ease, background-color 0.2s ease;
+        transition:
+          opacity 0.2s ease,
+          background-color 0.2s ease;
         touch-action: manipulation;
       }
 
@@ -347,7 +356,9 @@
         border-radius: var(--radius-lg);
         overflow: hidden;
         box-shadow: var(--shadow-md);
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        transition:
+          transform 0.3s ease,
+          box-shadow 0.3s ease;
       }
 
       .property-card:hover {
@@ -586,7 +597,10 @@
         border: 1px solid var(--border-light);
         border-radius: var(--radius-sm);
         cursor: pointer;
-        transition: transform 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+        transition:
+          transform 0.2s ease,
+          color 0.2s ease,
+          border-color 0.2s ease;
         touch-action: manipulation;
       }
 
@@ -630,7 +644,9 @@
         border-radius: var(--radius-md);
         overflow: hidden;
         box-shadow: var(--shadow-sm);
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        transition:
+          transform 0.3s ease,
+          box-shadow 0.3s ease;
       }
 
       .horizontal-card:hover {
@@ -839,7 +855,9 @@
         border: 1px solid var(--primary);
         border-radius: var(--radius-sm);
         cursor: pointer;
-        transition: opacity 0.2s ease, background-color 0.2s ease;
+        transition:
+          opacity 0.2s ease,
+          background-color 0.2s ease;
         touch-action: manipulation;
         min-height: 2.25rem; /* 36px */
       }
@@ -926,7 +944,7 @@
         }
 
         /* A3. 只顯示第一則評論 */
-        .property-review-item:nth-of-type(n+2) {
+        .property-review-item:nth-of-type(n + 2) {
           display: none;
         }
 
@@ -972,7 +990,7 @@
         }
 
         /* A5. 只顯示第一則評論 */
-        .one-line-review:nth-of-type(n+2) {
+        .one-line-review:nth-of-type(n + 2) {
           display: none;
         }
 
@@ -1175,7 +1193,7 @@
         }
 
         /* B4. 社區概況收合 - 只顯示前 3 項 */
-        .property-reviews > div:nth-of-type(n+4) {
+        .property-reviews > div:nth-of-type(n + 4) {
           display: none;
         }
 
@@ -1343,15 +1361,24 @@
       .variant-side .property-price span {
         font-size: 0.75rem;
       }
-
     </style>
   </head>
   <body>
     <header>
       <a href="/maihouses/" class="logo-container">
         <div class="logo-icon-box">
-          <svg class="logo-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M3 9.5L12 3L21 9.5V20.5C21 21.0523 20.5523 21.5 20 21.5H4C3.44772 21.5 3 21.0523 3 20.5V9.5Z" />
+          <svg
+            class="logo-icon-svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path
+              d="M3 9.5L12 3L21 9.5V20.5C21 21.0523 20.5523 21.5 20 21.5H4C3.44772 21.5 3 21.0523 3 20.5V9.5Z"
+            />
             <path d="M9 21.5V13H15V21.5" />
           </svg>
           <div class="logo-badge"></div>
@@ -1407,10 +1434,16 @@
             <!-- 右側容器:上下兩張小卡 - 在 480px 以下會打散成滑動項 -->
             <div class="featured-side-container">
               <!-- 右上小卡:遠雄新未來 -->
-              <div class="featured-side-top" id="featured-side-top-container"></div>
+              <div
+                class="featured-side-top"
+                id="featured-side-top-container"
+              ></div>
 
               <!-- 右下小卡:國家大苑 -->
-              <div class="featured-side-bottom" id="featured-side-bottom-container"></div>
+              <div
+                class="featured-side-bottom"
+                id="featured-side-bottom-container"
+              ></div>
             </div>
           </div>
         </div>
@@ -1428,7 +1461,7 @@
     </main>
     <!-- ESM 入口：顯式初始化以避免 import 副作用 (P42 修正) -->
     <script type="module">
-      import { bootstrap } from './js/property-main.js';
+      import { bootstrap } from "./js/property-main.js";
       void bootstrap();
     </script>
     <script src="js/tracker.js" defer></script>
