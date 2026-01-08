@@ -18,7 +18,7 @@ interface ConnectTokenPayload {
 // Constants
 // ============================================================================
 
-const SESSION_STORAGE_KEY = "maihouses_consumer_session";
+const SESSION_STORAGE_KEY = "uag_session";
 
 // ============================================================================
 // Helper Functions
@@ -71,10 +71,10 @@ function parseConnectToken(token: string): ConnectTokenPayload | null {
  */
 function setConsumerSession(sessionId: string): void {
   try {
-    sessionStorage.setItem(SESSION_STORAGE_KEY, sessionId);
+    localStorage.setItem(SESSION_STORAGE_KEY, sessionId);
   } catch {
-    // sessionStorage 不可用時忽略
-    console.warn("sessionStorage not available");
+    // localStorage 不可用時忽略
+    console.warn("localStorage not available");
   }
 }
 
