@@ -91,9 +91,9 @@ function UAGPageContent() {
   const agentId = user?.id;
   // UAG-14: 取得房仲名稱（優先使用 user_metadata.full_name，fallback 到 email 前綴）
   const agentName =
-    (user?.user_metadata as Record<string, unknown> | undefined)?.full_name as
+    ((user?.user_metadata as Record<string, unknown> | undefined)?.full_name as
       | string
-      | undefined ??
+      | undefined) ??
     user?.email?.split("@")[0] ??
     "房仲";
   // 使用 lead 的 session_id（來自消費者瀏覽記錄）

@@ -53,8 +53,8 @@ const getNotificationDisplay = (
     case "no_line":
       return {
         text: "僅站內信",
-        bgColor: "#f1f5f9",
-        textColor: "#64748b",
+        bgColor: "var(--ink-500)",
+        textColor: "var(--ink-100)",
       };
     case "unreachable":
       return {
@@ -77,8 +77,8 @@ const getNotificationDisplay = (
     case "skipped":
       return {
         text: "僅站內信",
-        bgColor: "#f1f5f9",
-        textColor: "#64748b",
+        bgColor: "var(--ink-500)",
+        textColor: "var(--ink-100)",
       };
     default:
       // 預設：尚未發送或舊資料
@@ -199,7 +199,9 @@ export default function AssetMonitor({ leads }: AssetMonitorProps) {
                     <td data-label="目前狀態">
                       {(() => {
                         const notifStatus = (lead as Record<string, unknown>)
-                          .notification_status as NotificationStatus | undefined;
+                          .notification_status as
+                          | NotificationStatus
+                          | undefined;
                         const display = getNotificationDisplay(notifStatus);
                         return (
                           <span
