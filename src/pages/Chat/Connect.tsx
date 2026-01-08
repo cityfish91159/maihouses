@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { GlobalHeader } from "../../components/layout/GlobalHeader";
@@ -147,8 +147,9 @@ export default function ConnectPage() {
 
   const token = searchParams.get("token");
 
-  // 解析 token 並計算狀態（同步，在 render 時完成）
-  const { status, payload } = (() => {
+  // 解析 token 並計算狀態（使用 useState 延遲初始化確保 purity）
+  const [tokenState] = useState(() => {
+    const now = Date.now();
     if (!token) {
       return { status: "invalid" as const, payload: null };
     }
@@ -158,14 +159,13 @@ export default function ConnectPage() {
       return { status: "invalid" as const, payload: null };
     }
 
-    // 注意：Date.now() 在這裡是安全的，因為這是初始計算
-    // eslint-disable-next-line react-hooks/purity
-    if (parsed.exp < Date.now()) {
+    if (parsed.exp < now) {
       return { status: "expired" as const, payload: null };
     }
 
     return { status: "redirecting" as const, payload: parsed };
-  })();
+  });
+  const { status, payload } = tokenState;
 
   // 只在 token 有效時執行導向（副作用）
   useEffect(() => {
