@@ -22,9 +22,20 @@
   --ink-100: #0f172a;
   --ink-200: #334155;
   --ink-300: #64748b;
+  --ink-400: #94a3b8;
   --bg-page: #f8fafc;
   --bg-card: #ffffff;
   --bg-alt: #f1f5f9;
+
+  /* Notification Status Colors */
+  --notif-success-bg: #f0fdf4;
+  --notif-success-text: #16a34a;
+  --notif-warning-bg: #fff7ed;
+  --notif-warning-text: #ea580c;
+  --notif-pending-bg: #fefce8;
+  --notif-pending-text: #ca8a04;
+  --notif-error-bg: #fef2f2;
+  --notif-error-text: #dc2626;
   --line: rgba(23, 73, 215, 0.12);
   --line-soft: #e2e8f0;
 

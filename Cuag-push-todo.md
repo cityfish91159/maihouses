@@ -13,8 +13,9 @@
 
 | # | 項目 | 狀態 |
 |---|------|------|
-| 修1 | Session Key 不一致 | ⏳ |
-| 修2 | Chat Page 強制登入 | ⏳ |
+| 修1 | Session Key 不一致 | ✅ 已修正 (localStorage uag_session) |
+| 補1 | 硬編碼顏色修復 | ✅ (AssetMonitor.tsx + UAG.module.css) |
+| 修2 | Chat Page 強制登入 | ✅ 已修正 (支援 uag_session 匿名用戶) |
 | 修3 | LINE 訊息缺物件連結 | ⏳ |
 | 修4 | Connect Token 未帶物件 | ⏳ |
 | 測1 | 站內訊息 100% 成功 | ⏳ |

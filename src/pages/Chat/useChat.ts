@@ -3,6 +3,7 @@ import { z } from "zod";
 import { supabase } from "../../lib/supabase";
 import { logger } from "../../lib/logger";
 import { useAuth } from "../../hooks/useAuth";
+import { useConsumerSession } from "../../hooks/useConsumerSession";
 import type {
   Conversation,
   Message,
@@ -71,14 +72,6 @@ export interface ChatHeaderData {
   propertyImage?: string | undefined;
 }
 
-const getUagSessionId = () => {
-  if (typeof window === "undefined") return null;
-  try {
-    return localStorage.getItem("uag_session");
-  } catch {
-    return null;
-  }
-};
 
 const STATUS_LABELS: Record<Conversation["status"], string> = {
   pending: "等待回覆",
@@ -88,6 +81,8 @@ const STATUS_LABELS: Record<Conversation["status"], string> = {
 
 export function useChat(conversationId?: string) {
   const { user, role, isAuthenticated } = useAuth();
+  // 使用統一的 session hook（含過期檢查）
+  const { sessionId, hasValidSession } = useConsumerSession();
   const isAgent = role === "agent";
   const senderType: SenderType = isAgent ? "agent" : "consumer";
 
@@ -110,9 +105,12 @@ export function useChat(conversationId?: string) {
 
   /**
    * 問題 #5 修復：移除 property JOIN，改為分開查詢
+   * 修2: 允許匿名用戶（有 sessionId）載入對話
    */
   const loadConversation = useCallback(async () => {
-    if (!conversationId || !user) return;
+    if (!conversationId) return;
+    // 修2: 允許有 sessionId 的匿名用戶
+    if (!user && !hasValidSession) return;
 
     // 1. 查詢對話（不含 property JOIN）
     const { data, error } = await supabase
@@ -142,11 +140,11 @@ export function useChat(conversationId?: string) {
     }
 
     const row = ConversationSchema.parse(data);
-    const sessionId = getUagSessionId();
+    // 修2: 權限檢查支援匿名用戶（user 可能為 null）
     const isParticipant = isAgent
-      ? row.agent_id === user.id
-      : row.consumer_profile_id === user.id ||
-        (!!sessionId && row.consumer_session_id === sessionId);
+      ? user && row.agent_id === user.id
+      : (user && row.consumer_profile_id === user.id) ||
+        (hasValidSession && row.consumer_session_id === sessionId);
     if (!isParticipant) {
       setError(new Error("您無權查看此對話"));
       throw new Error("Unauthorized");
@@ -206,10 +204,12 @@ export function useChat(conversationId?: string) {
       propertySubtitle,
       propertyImage,
     });
-  }, [conversationId, isAgent, user]);
+  }, [conversationId, isAgent, user, hasValidSession, sessionId]);
 
   const loadMessages = useCallback(async () => {
-    if (!conversationId || !user) return;
+    // 修2: 允許匿名用戶載入訊息
+    if (!conversationId) return;
+    if (!user && !hasValidSession) return;
     const { data, error } = await supabase
       .from("messages")
       .select(
@@ -224,7 +224,7 @@ export function useChat(conversationId?: string) {
 
     const validatedMessages = MessageListSchema.parse(data ?? []);
     setMessages(validatedMessages);
-  }, [conversationId, user]);
+  }, [conversationId, user, hasValidSession]);
 
   const markRead = useCallback(async () => {
     if (!conversationId || !isAuthenticated || !user || !hasAccess) return;
@@ -309,7 +309,8 @@ export function useChat(conversationId?: string) {
       setError(new Error("Missing conversation ID"));
       return;
     }
-    if (!isAuthenticated || !user) {
+    // 修2: 允許有 sessionId 的匿名用戶
+    if (!isAuthenticated && !hasValidSession) {
       setIsLoading(false);
       return;
     }
@@ -351,6 +352,7 @@ export function useChat(conversationId?: string) {
   }, [
     conversationId,
     isAuthenticated,
+    hasValidSession,
     user,
     loadConversation,
     loadMessages,

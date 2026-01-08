@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import { GlobalHeader } from "../../components/layout/GlobalHeader";
 import { HEADER_MODES } from "../../constants/header";
 import { useAuth } from "../../hooks/useAuth";
+import { useConsumerSession } from "../../hooks/useConsumerSession";
 import { ChatHeader } from "./ChatHeader";
 import { ChatErrorLayout } from "./ErrorLayout";
 import { MessageInput } from "./MessageInput";
@@ -12,6 +13,8 @@ import { useChat } from "./useChat";
 export default function ChatPage() {
   const { conversationId } = useParams();
   const { isAuthenticated, loading: authLoading, role } = useAuth();
+  // 使用統一的 session hook（含過期檢查）
+  const { hasValidSession, isExpired } = useConsumerSession();
   const {
     header,
     messages,
@@ -40,7 +43,21 @@ export default function ChatPage() {
     return <ChatErrorLayout mode={headerMode}>載入中...</ChatErrorLayout>;
   }
 
-  if (!isAuthenticated) {
+  // Session 過期提示
+  if (isExpired) {
+    return (
+      <ChatErrorLayout mode={headerMode}>
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-sm text-amber-800 shadow-sm">
+          您的對話連結已過期（超過 7 天）。
+          <br />
+          請聯繫房仲重新發送連結。
+        </div>
+      </ChatErrorLayout>
+    );
+  }
+
+  // 有 session 或已登入都允許進入
+  if (!isAuthenticated && !hasValidSession) {
     return (
       <ChatErrorLayout mode={headerMode}>
         <div className="rounded-2xl border border-brand-100 bg-white p-6 text-sm text-slate-600 shadow-sm">

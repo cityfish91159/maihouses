@@ -47,45 +47,45 @@ const getNotificationDisplay = (
     case "sent":
       return {
         text: "LINE + 站內信",
-        bgColor: "#f0fdf4",
-        textColor: "#16a34a",
+        bgColor: "var(--notif-success-bg)",
+        textColor: "var(--notif-success-text)",
       };
     case "no_line":
       return {
         text: "僅站內信",
-        bgColor: "var(--ink-500)",
-        textColor: "var(--ink-100)",
+        bgColor: "var(--bg-alt)",
+        textColor: "var(--ink-300)",
       };
     case "unreachable":
       return {
         text: "LINE 無法送達",
-        bgColor: "#fff7ed",
-        textColor: "#ea580c",
+        bgColor: "var(--notif-warning-bg)",
+        textColor: "var(--notif-warning-text)",
       };
     case "pending":
       return {
         text: "待發送",
-        bgColor: "#fefce8",
-        textColor: "#ca8a04",
+        bgColor: "var(--notif-pending-bg)",
+        textColor: "var(--notif-pending-text)",
       };
     case "failed":
       return {
         text: "LINE 發送失敗",
-        bgColor: "#fef2f2",
-        textColor: "#dc2626",
+        bgColor: "var(--notif-error-bg)",
+        textColor: "var(--notif-error-text)",
       };
     case "skipped":
       return {
         text: "僅站內信",
-        bgColor: "var(--ink-500)",
-        textColor: "var(--ink-100)",
+        bgColor: "var(--bg-alt)",
+        textColor: "var(--ink-300)",
       };
     default:
       // 預設：尚未發送或舊資料
       return {
         text: "站內信已發送",
-        bgColor: "#f0fdf4",
-        textColor: "#16a34a",
+        bgColor: "var(--notif-success-bg)",
+        textColor: "var(--notif-success-text)",
       };
   }
 };
@@ -124,7 +124,7 @@ export default function AssetMonitor({ leads }: AssetMonitorProps) {
                   style={{
                     textAlign: "center",
                     padding: "20px",
-                    color: "#94a3b8",
+                    color: "var(--ink-400)",
                   }}
                 >
                   尚無已購資產，請從上方雷達進攻。
@@ -150,7 +150,7 @@ export default function AssetMonitor({ leads }: AssetMonitorProps) {
                             borderRadius: "50%",
                             fontSize: "11px",
                             fontWeight: 900,
-                            color: "#fff",
+                            color: "var(--bg-card)",
                             marginRight: "8px",
                             background: colorVar,
                           }}
