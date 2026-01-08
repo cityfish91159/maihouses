@@ -72,7 +72,6 @@ export interface ChatHeaderData {
   propertyImage?: string | undefined;
 }
 
-
 const STATUS_LABELS: Record<Conversation["status"], string> = {
   pending: "等待回覆",
   active: "對話中",

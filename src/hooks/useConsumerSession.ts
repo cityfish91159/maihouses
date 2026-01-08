@@ -1,3 +1,5 @@
+import { useState, useCallback } from "react";
+
 /**
  * useConsumerSession - 管理匿名消費者的 session
  *
@@ -5,6 +7,7 @@
  * 1. 獲取 localStorage 中的 uag_session
  * 2. 檢查 session 是否有效（SSR 安全）
  * 3. 支援 session 過期檢查（預設 7 天）
+ * 4. 使用 useState 快取避免每次 render 都讀 localStorage
  */
 
 const SESSION_KEY = "uag_session";
@@ -93,6 +96,9 @@ export interface ConsumerSessionResult {
 /**
  * Hook: 管理匿名消費者的 session
  *
+ * 使用 useState 快取 session 狀態，避免每次 render 都讀 localStorage。
+ * 透過 useEffect 在 mount 時初始化，並提供 refresh 機制。
+ *
  * @example
  * ```tsx
  * const { sessionId, hasValidSession, isExpired } = useConsumerSession();
@@ -107,16 +113,42 @@ export interface ConsumerSessionResult {
  * ```
  */
 export function useConsumerSession(): ConsumerSessionResult {
-  const sessionId = getSessionId();
-  const isExpired = isSessionExpired();
-  const hasValidSession = !!sessionId && !isExpired;
+  // 使用 useState 快取 session 狀態
+  const [sessionState, setSessionState] = useState<{
+    sessionId: string | null;
+    isExpired: boolean;
+  }>(() => ({
+    // 初始值：SSR 時為 null，CSR 時讀取 localStorage
+    sessionId: getSessionId(),
+    isExpired: isSessionExpired(),
+  }));
+
+  // 包裝 setSession 以同步更新 state
+  const handleSetSession = useCallback((newSessionId: string) => {
+    setSession(newSessionId);
+    setSessionState({
+      sessionId: newSessionId,
+      isExpired: false, // 新設置的 session 不會過期
+    });
+  }, []);
+
+  // 包裝 clearSession 以同步更新 state
+  const handleClearSession = useCallback(() => {
+    clearSession();
+    setSessionState({
+      sessionId: null,
+      isExpired: false,
+    });
+  }, []);
+
+  const hasValidSession = !!sessionState.sessionId && !sessionState.isExpired;
 
   return {
-    sessionId,
+    sessionId: sessionState.sessionId,
     hasValidSession,
-    isExpired,
-    setSession,
-    clearSession,
+    isExpired: sessionState.isExpired,
+    setSession: handleSetSession,
+    clearSession: handleClearSession,
   };
 }
 

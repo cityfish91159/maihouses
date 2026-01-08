@@ -16,6 +16,7 @@
 | 修1 | Session Key 不一致 | ✅ 已修正 (localStorage uag_session) |
 | 補1 | 硬編碼顏色修復 | ✅ (AssetMonitor.tsx + UAG.module.css) |
 | 修2 | Chat Page 強制登入 | ✅ 已修正 (支援 uag_session 匿名用戶) |
+| 補2 | useConsumerSession Hook | ✅ 審核通過 (SSR安全+7天過期+統一API) |
 | 修3 | LINE 訊息缺物件連結 | ⏳ |
 | 修4 | Connect Token 未帶物件 | ⏳ |
 | 測1 | 站內訊息 100% 成功 | ⏳ |
@@ -54,28 +55,104 @@
 ---
 
 ### 測1：站內訊息 100% 成功
-- **驗證**：LINE 失敗時，站內訊息仍正常發送
+- **前置條件**：模擬 LINE 發送失敗（可暫時改錯 LINE_CHANNEL_ACCESS_TOKEN）
+- **步驟**：
+  1. 房仲登入 → 進入 UAG 頁面
+  2. 購買一個有 LINE 綁定的 Lead
+  3. 點擊 SendMessageModal 發送訊息
+- **預期結果**：
+  - [ ] API 回傳 `success: true`
+  - [ ] `lineStatus: "pending"` 或 `"error"`
+  - [ ] 站內訊息正常進入 `messages` 表
+  - [ ] Toast 顯示「訊息已發送」（非失敗）
 
 ### 測2：有綁定 LINE 測試
-- **驗證**：收到 LINE 通知 → 點連結 → 進正確聊天室
+- **前置條件**：確認 `uag_line_bindings` 有測試帳號綁定
+- **步驟**：
+  1. 房仲發送訊息給已綁定 LINE 的客戶
+  2. 等待手機收到 LINE 推播
+  3. 在 LINE 內點擊連結
+- **預期結果**：
+  - [ ] 手機收到 LINE 通知
+  - [ ] 訊息包含房仲名稱
+  - [ ] 點連結進入正確的 Chat 頁面
+  - [ ] Chat 頁面載入成功，顯示對話內容
 
 ### 測3：封鎖 OA 測試
-- **驗證**：webhook unfollow 後，AssetMonitor 顯示「LINE 無法送達」
+- **前置條件**：用測試帳號封鎖邁房子官方帳號
+- **步驟**：
+  1. 在 LINE 中封鎖官方帳號
+  2. 等待 Webhook 收到 unfollow 事件
+  3. 檢查 `uag_line_bindings` 表
+  4. 再次發送訊息給該用戶
+- **預期結果**：
+  - [ ] `line_status` 變為 `'blocked'`
+  - [ ] 發送訊息時 `lineStatus: "unreachable"`
+  - [ ] Toast 顯示「LINE 無法送達」
 
 ### 測4：連按 3 次不重複發
-- **驗證**：X-Line-Retry-Key 冪等性，只發一則 LINE
+- **前置條件**：有綁定且未封鎖的測試帳號
+- **步驟**：
+  1. 快速連續點擊「發送」按鈕 3 次
+  2. 檢查 `uag_line_notification_queue` 表
+  3. 檢查手機 LINE 收到的訊息數量
+- **預期結果**：
+  - [ ] Queue 表只有 1 筆記錄（`message_id UNIQUE`）
+  - [ ] 手機只收到 1 則 LINE 訊息
+  - [ ] 發送按鈕有 `isSending` disabled 狀態
 
 ### 測5：ActionPanel 文字確認
-- **驗證**：L144, L177, L179 三處「簡訊」已改「LINE」
+- **步驟**：
+  1. 登入房仲帳號
+  2. 進入 UAG 頁面
+  3. 查看 Lead 列表的 ActionPanel
+- **預期結果**：
+  - [ ] L144: 顯示「獲取聯絡權限 (LINE/站內信)」
+  - [ ] L177: 顯示「LINE/站內信聯繫」
+  - [ ] L179: 顯示「透過 LINE 通知客戶」
+  - [ ] **不**出現「簡訊」字樣
 
-### 測6：手動測試有綁定
-- **驗證**：發送 → 收 LINE → 點連結 → 進聊天室 → 能對話
+### 測6：手動測試有綁定（完整流程）
+- **前置條件**：
+  - 房仲帳號已登入
+  - 測試 session 已綁定 LINE
+- **步驟**：
+  1. 購買 Lead → 開啟 SendMessageModal
+  2. 輸入訊息「測試訊息 - 有綁定」
+  3. 點擊發送
+  4. 等待 LINE 通知
+  5. 在 LINE 內點擊連結
+  6. 在 Chat 頁面回覆訊息
+- **預期結果**：
+  - [ ] Toast 顯示「已同時透過 LINE 通知客戶」
+  - [ ] 手機 LINE 收到通知
+  - [ ] 點連結進入 Chat 頁面
+  - [ ] 可正常回覆訊息（雙向溝通）
 
 ### 測7：手動測試未綁定
-- **驗證**：只發站內訊息，AssetMonitor 顯示「僅站內信」
+- **前置條件**：
+  - Lead 對應的 session 無 LINE 綁定
+- **步驟**：
+  1. 購買未綁定 LINE 的 Lead
+  2. 發送訊息
+- **預期結果**：
+  - [ ] Toast 顯示「客戶未綁定 LINE，僅發送站內訊息」
+  - [ ] `notification_status` 為 `'no_line'`
+  - [ ] 站內訊息正常發送
+  - [ ] 手機**不會**收到 LINE 通知
 
 ### 測8：手動測試跨裝置
-- **驗證**：LINE 內建瀏覽器點連結能正確開啟聊天室
+- **前置條件**：已完成測6
+- **步驟**：
+  1. 在手機 LINE 收到通知
+  2. 使用 LINE 內建瀏覽器開啟連結
+  3. 確認 Chat 頁面正常載入
+  4. 嘗試在 LINE 瀏覽器內發送訊息
+- **預期結果**：
+  - [ ] LINE WebView 正確開啟 Chat 頁面
+  - [ ] Session 正確恢復（無需登入）
+  - [ ] 頁面顯示正確的對話內容
+  - [ ] 可在 LINE 瀏覽器內正常對話
 
 ---
 
