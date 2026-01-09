@@ -114,8 +114,9 @@ function UAGPageContent() {
   /**
    * 問題 #10-11 修復：不使用假數據 fallback
    * 如果沒有真實的 user.id 或 session_id，不應該嘗試建立對話
+   * UAG-15 FIX: Mock 模式下使用 Mock agentId 以支援測試
    */
-  const agentId = user?.id;
+  const agentId = user?.id ?? (useMock ? "mock-agent-001" : undefined);
   // UAG-14: 取得房仲名稱（優先使用 user_metadata.full_name，fallback 到 email 前綴）
   const agentName =
     ((user?.user_metadata as Record<string, unknown> | undefined)?.full_name as
