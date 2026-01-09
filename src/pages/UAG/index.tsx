@@ -81,6 +81,48 @@ function UAGPageContent() {
     setAssetMessageLead(null);
   }, []);
 
+  // 修9: AssetMonitor 發送訊息成功回調
+  const handleAssetMessageSuccess = useCallback(
+    (conversationId?: string) => {
+      if (!assetMessageLead) return;
+
+      // 更新 React Query cache - 設置 conversation_id 和 notification_status
+      queryClient.setQueryData<AppData>(
+        ["uagData", useMock, user?.id],
+        (oldData) => {
+          if (!oldData) return oldData;
+
+          return {
+            ...oldData,
+            leads: oldData.leads.map((item) => {
+              if (item.id === assetMessageLead.id) {
+                // Mock 模式：生成 Mock conversation ID
+                // API 模式：使用後端返回的 conversationId
+                const finalConversationId =
+                  conversationId ||
+                  (useMock
+                    ? `mock-conv-${assetMessageLead.id}-${Date.now()}`
+                    : undefined);
+
+                return {
+                  ...item,
+                  conversation_id: finalConversationId,
+                  notification_status: "sent" as const,
+                };
+              }
+              return item;
+            }),
+          };
+        },
+      );
+
+      // 關閉 Modal
+      setShowAssetMessageModal(false);
+      setAssetMessageLead(null);
+    },
+    [assetMessageLead, queryClient, useMock, user?.id],
+  );
+
   const handleSignOut = async () => {
     setIsSigningOut(true);
     try {
@@ -254,6 +296,7 @@ function UAGPageContent() {
         <SendMessageModal
           isOpen={showAssetMessageModal}
           onClose={handleCloseAssetModal}
+          onSuccess={handleAssetMessageSuccess}
           lead={assetMessageLead}
           agentId={agentId}
           sessionId={assetMessageLead.session_id}
