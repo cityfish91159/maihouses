@@ -25,6 +25,12 @@ function getInitialMockMode(): boolean {
 
   const saved = safeLocalStorage.getItem("uag_mode");
   if (saved === "mock" || saved === "live") {
+    // 修復白屏：如果是 live 模式，清除設定強制回 mock
+    // 讓用戶登入後再手動切換到 live
+    if (saved === "live") {
+      safeLocalStorage.removeItem("uag_mode");
+      return true;
+    }
     return saved === "mock";
   }
 
