@@ -41,8 +41,8 @@ interface SendMessageModalProps {
   conversationId?: string;
   /** UAG-14: 房仲名稱 (用於 LINE 通知) */
   agentName: string;
-  /** 發送成功回調（用於 Mock 模式更新 UI） */
-  onSuccess?: () => void;
+  /** 發送成功回調（傳入 conversationId 用於更新 cache） */
+  onSuccess?: (conversationId?: string) => void;
 }
 
 /**
@@ -85,7 +85,8 @@ export function SendMessageModal({
         await new Promise((resolve) => setTimeout(resolve, 800));
 
         notify.success("訊息已發送", "客戶會收到通知");
-        onSuccess?.(); // 通知父組件更新狀態
+        // Mock 模式：不傳 conversationId，讓父組件生成
+        onSuccess?.();
         onClose();
         // Mock 模式下不導航，直接關閉 Modal 回到 UAG 頁面
         return;
@@ -166,6 +167,8 @@ export function SendMessageModal({
           notify.success(S.SUCCESS, S.SUCCESS_DESC);
       }
 
+      // API 模式：傳遞真實的 conversationId 給父組件更新 cache
+      onSuccess?.(result.conversationId);
       onClose();
 
       if (result.conversationId) {

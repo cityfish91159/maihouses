@@ -1,9 +1,10 @@
 import React, { useCallback, useRef, useState } from "react";
 import { ErrorBoundary } from "react-error-boundary";
-import { QueryErrorResetBoundary } from "@tanstack/react-query";
+import { QueryErrorResetBoundary, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { ROUTES } from "../../constants/routes";
 import { notify } from "../../lib/notify";
+import type { AppData } from "./types/uag.types";
 
 import styles from "./UAG.module.css";
 import { useUAG } from "./hooks/useUAG";
@@ -29,6 +30,7 @@ import type { Lead } from "./types/uag.types";
 
 function UAGPageContent() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const {
     data: appData,
     isLoading,
@@ -114,13 +116,48 @@ function UAGPageContent() {
     setCurrentConversationId(undefined);
   }, []);
 
-  // Mock 模式下發送訊息成功的回調
-  const handleMessageSentSuccess = useCallback(() => {
-    // 關閉 Modal 並重新載入數據以更新狀態
-    setShowMessageModal(false);
-    setPurchasedLead(null);
-    setCurrentConversationId(undefined);
-  }, []);
+  // 發送訊息成功的回調（Mock 和 API 模式都會調用）
+  const handleMessageSentSuccess = useCallback(
+    (conversationId?: string) => {
+      if (!purchasedLead) return;
+
+      // 更新 React Query cache - 設置 conversation_id 和 notification_status
+      queryClient.setQueryData<AppData>(
+        ["uagData", useMock, user?.id],
+        (oldData) => {
+          if (!oldData) return oldData;
+
+          return {
+            ...oldData,
+            leads: oldData.leads.map((item) => {
+              if (item.id === purchasedLead.id) {
+                // Mock 模式：生成 Mock conversation ID
+                // API 模式：使用後端返回的 conversationId（如果有的話）
+                const finalConversationId =
+                  conversationId ||
+                  (useMock
+                    ? `mock-conv-${purchasedLead.id}-${Date.now()}`
+                    : undefined);
+
+                return {
+                  ...item,
+                  conversation_id: finalConversationId,
+                  notification_status: "sent" as const,
+                };
+              }
+              return item;
+            }),
+          };
+        },
+      );
+
+      // 關閉 Modal
+      setShowMessageModal(false);
+      setPurchasedLead(null);
+      setCurrentConversationId(undefined);
+    },
+    [purchasedLead, queryClient, useMock, user?.id],
+  );
 
   if (isLoading) return <UAGLoadingSkeleton />;
   if (!appData) return null;
