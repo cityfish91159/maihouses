@@ -169,6 +169,8 @@ export const HighlightPicker: React.FC<HighlightPickerProps> = ({
             {customInputs.map((input, index) => (
               <div key={index} className="flex items-center gap-1">
                 <input
+                  id={`highlight-custom-${index}`}
+                  name={`highlightCustom${index}`}
                   type="text"
                   value={input}
                   onChange={(e) => handleCustomInput(index, e.target.value)}

@@ -251,6 +251,8 @@ export function CommunityPicker({
           <Building2 size={16} />
         </div>
         <input
+          id="community-search"
+          name="communitySearch"
           type="text"
           value={searchTerm}
           onChange={(e) => {

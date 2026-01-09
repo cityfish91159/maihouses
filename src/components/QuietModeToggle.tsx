@@ -84,6 +84,8 @@ export const QuietModeToggle: React.FC = () => {
         今天別推薦了
       </button>
       <input
+        id="quiet-mode-minutes"
+        name="quietMinutes"
         type="number"
         min={0}
         placeholder="分鐘(可選)"
@@ -100,6 +102,8 @@ export const QuietModeToggle: React.FC = () => {
         }}
       />
       <input
+        id="quiet-mode-turns"
+        name="quietTurns"
         type="number"
         min={1}
         placeholder="回合(預設10)"
@@ -116,6 +120,8 @@ export const QuietModeToggle: React.FC = () => {
         }}
       />
       <input
+        id="quiet-mode-reason"
+        name="quietReason"
         type="text"
         placeholder="原因(可選)"
         value={reason}

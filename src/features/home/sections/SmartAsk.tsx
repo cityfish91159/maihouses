@@ -319,6 +319,8 @@ export default function SmartAsk() {
         {/* Input Area */}
         <div className="group/input relative">
           <input
+            id="maimai-chat-input"
+            name="chatMessage"
             type="text"
             className="focus:ring-brand-50/50 w-full rounded-xl border-2 border-brand-100 bg-white/80 py-4 pl-5 pr-14 text-[15px] font-bold text-ink-900 shadow-sm backdrop-blur-sm transition-all placeholder:text-ink-400/80 hover:border-brand-300 focus:border-brand-500 focus:outline-none focus:ring-4"
             placeholder="說說你今天過得如何，或任何想聊的..."

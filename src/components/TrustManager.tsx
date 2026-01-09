@@ -258,6 +258,8 @@ export default function TrustManager({
       {showForm && (
         <div style={styles.formContainer}>
           <input
+            id="trust-case-name"
+            name="caseName"
             type="text"
             placeholder="輸入案件名稱"
             value={newCaseName}
