@@ -57,10 +57,31 @@
       "Bash(dir:*)",
       "Bash(npx vitest:*)",
       "Bash(npm view:*)",
-      "Bash(npx madge:*)"
+      "Bash(npx madge:*)",
+      "Bash(claude /doctor)",
+      "Bash(timeout 5 cat:*)",
+      "Bash(for f in .claude/plugins/installed_plugins.json .claude/plugins/known_marketplaces.json)",
+      "Bash(do node -e \"JSON.parse\\(require\\(''fs''\\).readFileSync\\(''$f'', ''utf8''\\)\\); console.log\\(''$f: Valid''\\)\")",
+      "Bash(echo:*)",
+      "Bash(done)",
+      "Bash(find ~/.claude -name \"*.json\" -type f -exec sh -c 'node -e \"\"JSON.parse\\(require\\(\\\\\"\"fs\\\\\"\"\\).readFileSync\\(\\\\\"\"$1\\\\\"\", \\\\\"\"utf8\\\\\"\"\\)\\)\"\" -- \"\"$1\"\" 2>/dev/null || echo \"\"INVALID: $1\"\"' _ {} ;)",
+      "Bash(for:*)",
+      "Bash(do node -e \"JSON.parse\\(require\\(''fs''\\).readFileSync\\(''$f'', ''utf8''\\)\\)\")",
+      "Bash(claude --version:*)",
+      "Bash(claude doctor:*)",
+      "Bash(timeout 10 claude:*)",
+      "Bash(claude config list:*)",
+      "Bash(npm audit fix:*)",
+      "Bash(npm audit:*)",
+      "mcp__filesystem__read_text_file"
     ]
   },
   "model": "claude-opus-4-5-20251101",
   "enableAllProjectMcpServers": true,
-  "enabledMcpjsonServers": ["filesystem", "puppeteer", "fetch", "git"]
+  "enabledMcpjsonServers": [
+    "filesystem",
+    "puppeteer",
+    "fetch",
+    "git"
+  ]
 }

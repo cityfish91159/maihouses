@@ -19,14 +19,30 @@
 | 補2 | useConsumerSession Hook | ✅ 審核通過 (11 tests + useState/useCallback 效能優化) |
 | 修3 | LINE 訊息缺物件連結 | ✅ 已修正 (buildLineMessage 加入 propertyUrl) |
 | 修4 | Connect Token 未帶物件 | ✅ 已修正 (ConnectTokenPayload 加入 propertyId) |
-| 測1 | 站內訊息 100% 成功 | ⏳ |
-| 測2 | 有綁定 LINE 測試 | ⏳ |
+| 測1 | 站內訊息 100% 成功 | ✅ 審核通過 (12 容錯測試 + Toast 邏輯驗證) |
+| 測2 | 有綁定 LINE 測試 | ✅ 100% 完成 (65 tests - LINE SDK/Connect/Chat 全驗證) |
 | 測3 | 封鎖 OA 測試 | ⏳ |
 | 測4 | 連按 3 次不重複發 | ⏳ |
 | 測5 | ActionPanel 文字確認 | ⏳ |
 | 測6 | 手動測試有綁定 | ⏳ |
 | 測7 | 手動測試未綁定 | ⏳ |
 | 測8 | 手動測試跨裝置 | ⏳ |
+
+---
+
+## UAG-15 進度（6 修 + 3 測）
+
+| # | 項目 | 狀態 |
+|---|------|------|
+| 修5 | uagService 讀取 notification_status | ⏳ |
+| 修6 | uagService 關聯 conversation_id | ⏳ |
+| 修7 | Lead 類型新增欄位 | ⏳ |
+| 修8 | AssetMonitor 動態按鈕 | ⏳ |
+| 修9 | UAG index 傳遞回調 | ⏳ |
+| 修10 | 新增「未發送」狀態顯示 | ⏳ |
+| 測9 | 購買後立即發送流程 | ⏳ |
+| 測10 | 購買後稍後發送流程 | ⏳ |
+| 測11 | 查看已發送對話流程 | ⏳ |
 
 ---
 
@@ -68,15 +84,22 @@
 
 ### 測2：有綁定 LINE 測試
 - **前置條件**：確認 `uag_line_bindings` 有測試帳號綁定
-- **步驟**：
+- **程式碼測試**：✅ 100% 完成（65 tests）
+  - ✅ LINE SDK pushMessage 整合（10 tests）
+  - ✅ Connect.tsx 導向邏輯（14 tests）
+  - ✅ Chat 頁面整合（17 tests）
+  - ✅ 修3/修4 完整驗證（24 tests）
+- **手動測試步驟**：
   1. 房仲發送訊息給已綁定 LINE 的客戶
   2. 等待手機收到 LINE 推播
   3. 在 LINE 內點擊連結
 - **預期結果**：
   - [ ] 手機收到 LINE 通知
   - [ ] 訊息包含房仲名稱
+  - [ ] **訊息包含物件詳情連結（修3）**
   - [ ] 點連結進入正確的 Chat 頁面
   - [ ] Chat 頁面載入成功，顯示對話內容
+  - [ ] **物件資訊正確顯示（修4）**
 
 ### 測3：封鎖 OA 測試
 - **前置條件**：用測試帳號封鎖邁房子官方帳號
@@ -153,6 +176,108 @@
   - [ ] Session 正確恢復（無需登入）
   - [ ] 頁面顯示正確的對話內容
   - [ ] 可在 LINE 瀏覽器內正常對話
+
+---
+
+## UAG-15: AssetMonitor 點擊發送訊息功能
+
+### 問題描述
+
+泡泡購買後客戶會出現在「已購客戶資產與保護監控」表列，但：
+1. 「寫紀錄 / 預約」按鈕無功能（靜態按鈕）
+2. `notification_status` 未從資料庫讀取
+3. `conversation_id` 未關聯到 Lead
+4. 購買後若點「稍後再說」，狀態顯示不明確
+
+### 工單清單
+
+| # | 項目 | 狀態 |
+|---|------|------|
+| 修5 | uagService 讀取 notification_status | ⏳ |
+| 修6 | uagService 關聯 conversation_id | ⏳ |
+| 修7 | Lead 類型新增欄位 | ⏳ |
+| 修8 | AssetMonitor 動態按鈕 | ⏳ |
+| 修9 | UAG index 傳遞回調 | ⏳ |
+| 修10 | 新增「未發送」狀態顯示 | ⏳ |
+| 測9 | 購買後立即發送流程 | ⏳ |
+| 測10 | 購買後稍後發送流程 | ⏳ |
+| 測11 | 查看已發送對話流程 | ⏳ |
+
+---
+
+### 修5：uagService 讀取 notification_status 🔴
+- **問題**：`uag_lead_purchases` 查詢只讀取 `session_id, id, created_at`
+- **檔案**：`src/pages/UAG/services/uagService.ts` L295-297
+- **修法**：擴充 select 加入 `notification_status`
+
+### 修6：uagService 關聯 conversation_id 🔴
+- **問題**：已購客戶沒有關聯的 `conversation_id`
+- **檔案**：`src/pages/UAG/services/uagService.ts` L295-297
+- **修法**：使用 Supabase 反向關聯 `conversations(id)`
+- **關聯**：`conversations.lead_id` → `uag_lead_purchases.id`
+
+### 修7：Lead 類型新增欄位 🟠
+- **問題**：Lead 類型缺少 `notification_status` 和 `conversation_id`
+- **檔案**：`src/pages/UAG/types/uag.types.ts`
+- **修法**：
+  ```typescript
+  notification_status?: "pending" | "sent" | "no_line" | "unreachable" | "failed" | "skipped" | "unsent";
+  conversation_id?: string;
+  ```
+
+### 修8：AssetMonitor 動態按鈕 🔴
+- **問題**：「寫紀錄 / 預約」按鈕是靜態無功能的
+- **檔案**：`src/pages/UAG/components/AssetMonitor.tsx` L221-227
+- **修法**：
+  - 新增 Props：`onSendMessage(lead)`, `onViewChat(conversationId)`
+  - 未發送 → 顯示「發送訊息」→ 開啟 SendMessageModal
+  - 已發送 → 顯示「查看對話」→ 導向聊天室
+
+### 修9：UAG index 傳遞回調 🟠
+- **問題**：UAG 主頁面未傳遞回調給 AssetMonitor
+- **檔案**：`src/pages/UAG/index.tsx` L129
+- **修法**：
+  - 新增 `handleSendMessageFromAsset(lead)` 開啟 Modal
+  - 新增 `handleViewChat(conversationId)` 導向聊天室
+  - 傳遞回調給 `<AssetMonitor />`
+
+### 修10：新增「未發送」狀態顯示 🟡
+- **問題**：購買後選「稍後再說」，狀態顯示不明確
+- **檔案**：`src/pages/UAG/components/AssetMonitor.tsx` L43-91
+- **修法**：
+  - `notification_status` 為 `undefined` 或 `"unsent"` 時顯示「未發送」
+  - 使用黃色警告色徽章
+
+---
+
+### 測9：購買後立即發送流程
+- **步驟**：
+  1. 在 RadarCluster 點擊泡泡
+  2. 在 ActionPanel 確認購買
+  3. 在 SendMessageModal 輸入訊息並發送
+- **預期結果**：
+  - [ ] AssetMonitor 顯示「LINE + 站內信」或「僅站內信」
+  - [ ] 操作按鈕顯示「查看對話」
+  - [ ] 點擊「查看對話」導向聊天室
+
+### 測10：購買後稍後發送流程
+- **步驟**：
+  1. 購買成功後點擊「稍後再說」
+  2. 查看 AssetMonitor 狀態
+  3. 點擊「發送訊息」按鈕
+- **預期結果**：
+  - [ ] AssetMonitor 顯示「未發送」狀態（黃色徽章）
+  - [ ] 操作按鈕顯示「發送訊息」
+  - [ ] 點擊後 SendMessageModal 彈出，可編輯並發送
+
+### 測11：查看已發送對話流程
+- **前置條件**：已完成測9
+- **步驟**：
+  1. 對已發送訊息的客戶點擊「查看對話」
+  2. 確認頁面跳轉
+- **預期結果**：
+  - [ ] 導向至 `/chat/{conversationId}` 頁面
+  - [ ] 聊天室正確顯示對話內容
 
 ---
 

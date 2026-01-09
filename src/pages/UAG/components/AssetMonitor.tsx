@@ -99,7 +99,7 @@ export default function AssetMonitor({ leads }: AssetMonitorProps) {
         <div>
           <div className={styles["uag-card-title"]}>已購客戶資產與保護監控</div>
           <div className={styles["uag-card-sub"]}>
-            S 級 120hr / A 級 72hr 獨家倒數｜B/C/F 級 14 天防撞
+            S 級 72hr / A 級 48hr 獨家倒數｜B 級 24hr / C 級 12hr 去重
           </div>
         </div>
         <div className={styles["uag-actions"]}>

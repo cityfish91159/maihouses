@@ -69,5 +69,10 @@
   },
   "[json]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
-  }
+  },
+  "claudeCode.disableLoginPrompt": true,
+  "claudeCode.terminalMode": false,
+  "claudeCode.environmentVariables": [
+
+  ]
 }
