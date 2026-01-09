@@ -153,7 +153,7 @@ export const MOCK_DB: AppData = {
       session_id: MOCK_IDS.sessions.A6600,
       property_id: MOCK_IDS.properties.presale,
       notification_status: "pending",
-      conversation_id: "mock-conv-A6600-004",
+      // 待發送狀態：無 conversation_id，顯示「發送訊息」按鈕
     },
 
     // 雷達：更多可購買的模擬圓點 (status = new)
