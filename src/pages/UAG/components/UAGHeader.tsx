@@ -9,11 +9,7 @@ import { ChevronDown, LogOut } from "lucide-react";
 import { Logo } from "../../../components/Logo/Logo";
 import { ROUTES } from "../../../constants/routes";
 import styles from "../UAG.module.css";
-
-interface AgentProfile {
-  name?: string | null;
-  company?: string | null;
-}
+import type { AgentProfile } from "../types/uag.types";
 
 interface UAGHeaderProps {
   user?: User | null;
@@ -118,6 +114,12 @@ export const UAGHeader: React.FC<UAGHeaderProps> = ({
     await onSignOut?.();
   };
 
+  // 從 AgentProfile 取得統計數據
+  const trustScore = agentProfile?.trustScore ?? 80;
+  const visitCount = agentProfile?.visitCount ?? 0;
+  const dealCount = agentProfile?.dealCount ?? 0;
+  const internalCode = agentProfile?.internalCode;
+
   return (
     <header className={styles["uag-header"]}>
       <div className={styles["uag-header-inner"]}>
@@ -219,6 +221,34 @@ export const UAGHeader: React.FC<UAGHeaderProps> = ({
           )}
         </div>
       </div>
+
+      {/* 房仲資訊條 */}
+      {user && agentProfile && (
+        <div className={styles["agent-bar"]}>
+          <div className={styles["agent-bar-avatar"]}>
+            {displayName.charAt(0).toUpperCase()}
+          </div>
+          <div className={styles["agent-bar-info"]}>
+            <div className={styles["agent-bar-name-row"]}>
+              <span>{displayName}</span>
+              {internalCode && (
+                <span className={styles["agent-bar-code"]}>#{internalCode}</span>
+              )}
+            </div>
+            <div className={styles["agent-bar-stats"]}>
+              <span className={`${styles["agent-bar-stat"]} ${styles["trust"]}`}>
+                <strong>{trustScore}</strong> 信任分
+              </span>
+              <span className={styles["agent-bar-stat"]}>
+                <strong>{visitCount}</strong> 帶看
+              </span>
+              <span className={styles["agent-bar-stat"]}>
+                <strong>{dealCount}</strong> 成交
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
     </header>
   );
 };

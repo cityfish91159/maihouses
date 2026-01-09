@@ -68,7 +68,9 @@ describe("Connect.tsx 導向邏輯測試", () => {
     });
 
     it("應該拒絕無效的 token", () => {
-      function parseConnectToken(token: string): { conversationId: string } | null {
+      function parseConnectToken(
+        token: string,
+      ): { conversationId: string } | null {
         try {
           const base64 = token.replace(/-/g, "+").replace(/_/g, "/");
           const padded = base64 + "=".repeat((4 - (base64.length % 4)) % 4);

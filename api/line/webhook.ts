@@ -16,6 +16,7 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import crypto from "crypto";
 import { messagingApi } from "@line/bot-sdk";
+import { createClient } from "@supabase/supabase-js";
 
 interface LineEvent {
   type: string;
@@ -121,6 +122,38 @@ ${userId}
 
       case "unfollow":
         console.log(`[LINE] 用戶取消好友: ${userId}`);
+
+        // 更新綁定狀態為 blocked
+        if (userId) {
+          const supabaseUrl = process.env.SUPABASE_URL;
+          const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+          if (supabaseUrl && supabaseServiceKey) {
+            try {
+              const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
+                auth: { persistSession: false },
+              });
+
+              const { error } = await supabaseAdmin
+                .from("uag_line_bindings")
+                .update({
+                  line_status: "blocked",
+                  updated_at: new Date().toISOString(),
+                })
+                .eq("line_user_id", userId);
+
+              if (error) {
+                console.error("[LINE] Failed to update blocked status:", error);
+              } else {
+                console.log(`[LINE] Updated status to blocked: ${userId}`);
+              }
+            } catch (err) {
+              console.error("[LINE] Update error:", err);
+            }
+          } else {
+            console.error("[LINE] Missing Supabase config for unfollow update");
+          }
+        }
         break;
 
       case "message":

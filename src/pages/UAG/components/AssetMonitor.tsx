@@ -1,9 +1,12 @@
-import { Lead } from "../types/uag.types";
+import { Lead, NotificationStatus } from "../types/uag.types";
 import styles from "../UAG.module.css";
 import { GRADE_PROTECTION_HOURS } from "../uag-config";
 
 interface AssetMonitorProps {
   readonly leads: Lead[];
+  // 修8/修9: 動態按鈕回調（optional，待實作）
+  readonly onSendMessage?: (lead: Lead) => void;
+  readonly onViewChat?: (conversationId: string) => void;
 }
 
 const calculateProtection = (lead: Lead) => {
@@ -22,14 +25,6 @@ const calculateProtection = (lead: Lead) => {
 
   return { total, remaining, percent, isExclusive, timeDisplay };
 };
-
-type NotificationStatus =
-  | "sent"
-  | "no_line"
-  | "unreachable"
-  | "pending"
-  | "failed"
-  | "skipped";
 
 interface NotificationDisplay {
   text: string;
@@ -90,7 +85,11 @@ const getNotificationDisplay = (
   }
 };
 
-export default function AssetMonitor({ leads }: AssetMonitorProps) {
+export default function AssetMonitor({
+  leads,
+  onSendMessage,
+  onViewChat,
+}: AssetMonitorProps) {
   const boughtLeads = leads.filter((l) => l.status === "purchased");
 
   return (
@@ -198,11 +197,9 @@ export default function AssetMonitor({ leads }: AssetMonitorProps) {
                     </td>
                     <td data-label="目前狀態">
                       {(() => {
-                        const notifStatus = (lead as Record<string, unknown>)
-                          .notification_status as
-                          | NotificationStatus
-                          | undefined;
-                        const display = getNotificationDisplay(notifStatus);
+                        const display = getNotificationDisplay(
+                          lead.notification_status,
+                        );
                         return (
                           <span
                             className={styles["uag-badge"]}
@@ -218,12 +215,25 @@ export default function AssetMonitor({ leads }: AssetMonitorProps) {
                       })()}
                     </td>
                     <td data-label="操作">
-                      <button
-                        className={`${styles["uag-btn"]} ${styles["primary"]}`}
-                        style={{ padding: "4px 12px", fontSize: "12px" }}
-                      >
-                        寫紀錄 / 預約
-                      </button>
+                      {lead.conversation_id ? (
+                        <button
+                          className={`${styles["uag-btn"]} ${styles["secondary"]}`}
+                          onClick={() => {
+                            if (lead.conversation_id) {
+                              onViewChat?.(lead.conversation_id);
+                            }
+                          }}
+                        >
+                          查看對話
+                        </button>
+                      ) : (
+                        <button
+                          className={`${styles["uag-btn"]} ${styles["primary"]} ${styles["small"]}`}
+                          onClick={() => onSendMessage?.(lead)}
+                        >
+                          發送訊息
+                        </button>
+                      )}
                     </td>
                   </tr>
                 );

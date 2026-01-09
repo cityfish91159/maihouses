@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UAG 房仲資料卡設計 Demo</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      /* 首頁深藍品牌色 - 統一使用 */
+      --brand: #00385a;
+      --brand-light: #004e7c;
+      --brand-dark: #002a44;
+
+      /* 輔助色 */
+      --accent: #10b981;
+      --warning: #f59e0b;
+
+      /* 中性色 */
+      --ink-100: #0f172a;
+      --ink-200: #334155;
+      --ink-300: #64748b;
+      --ink-400: #94a3b8;
+      --bg-page: #f8fafc;
+      --bg-card: #ffffff;
+      --line-soft: #e2e8f0;
+
+      /* 等級色 */
+      --grade-s: #ea580c;
+      --grade-a: #16a34a;
+      --grade-b: #2563eb;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Inter", "Noto Sans TC", sans-serif;
+      background: var(--bg-page);
+      color: var(--ink-100);
+      line-height: 1.5;
+      padding: 40px 20px;
+    }
+
+    .demo-container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .demo-title {
+      font-size: 24px;
+      font-weight: 800;
+      margin-bottom: 8px;
+      color: var(--ink-100);
+    }
+
+    .demo-subtitle {
+      font-size: 14px;
+      color: var(--ink-300);
+      margin-bottom: 32px;
+    }
+
+    .demo-section {
+      margin-bottom: 48px;
+    }
+
+    .demo-section-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--ink-200);
+      margin-bottom: 16px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--line-soft);
+    }
+
+    .demo-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 24px;
+    }
+
+    /* ========================================
+       房仲資料卡設計 - 方案 A: 緊湊橫向卡片
+       ======================================== */
+    .agent-card-a {
+      background: var(--bg-card);
+      border-radius: 16px;
+      padding: 20px;
+      border: 1px solid var(--line-soft);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+    }
+
+    .agent-card-a .agent-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .agent-card-a .agent-avatar {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--brand), var(--brand-light));
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      font-weight: 800;
+      flex-shrink: 0;
+    }
+
+    .agent-card-a .agent-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .agent-card-a .agent-name {
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--ink-100);
+      margin-bottom: 4px;
+    }
+
+    .agent-card-a .agent-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--ink-300);
+    }
+
+    .agent-card-a .agent-code {
+      font-weight: 600;
+      color: var(--brand);
+    }
+
+    .agent-card-a .agent-company {
+      padding: 2px 8px;
+      background: rgba(0, 56, 90, 0.08);
+      border-radius: 4px;
+      font-weight: 600;
+      color: var(--brand);
+    }
+
+    .agent-card-a .agent-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      padding-top: 16px;
+      border-top: 1px solid var(--line-soft);
+    }
+
+    .agent-card-a .stat-item {
+      text-align: center;
+    }
+
+    .agent-card-a .stat-value {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--ink-100);
+    }
+
+    .agent-card-a .stat-label {
+      font-size: 12px;
+      color: var(--ink-300);
+      margin-top: 2px;
+    }
+
+    /* ========================================
+       房仲資料卡設計 - 方案 B: 帶漸層標題
+       ======================================== */
+    .agent-card-b {
+      background: var(--bg-card);
+      border-radius: 16px;
+      overflow: hidden;
+      border: 1px solid var(--line-soft);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+    }
+
+    .agent-card-b .agent-banner {
+      background: linear-gradient(135deg, var(--brand), var(--brand-light));
+      padding: 20px;
+      color: #fff;
+    }
+
+    .agent-card-b .agent-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .agent-card-b .agent-avatar {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.2);
+      border: 2px solid rgba(255, 255, 255, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      font-weight: 800;
+      flex-shrink: 0;
+    }
+
+    .agent-card-b .agent-info {
+      flex: 1;
+    }
+
+    .agent-card-b .agent-name {
+      font-size: 17px;
+      font-weight: 700;
+    }
+
+    .agent-card-b .agent-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      opacity: 0.85;
+      margin-top: 4px;
+    }
+
+    .agent-card-b .agent-stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      padding: 16px;
+    }
+
+    .agent-card-b .stat-item {
+      text-align: center;
+      padding: 12px 8px;
+      background: var(--bg-page);
+      border-radius: 10px;
+    }
+
+    .agent-card-b .stat-value {
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--brand);
+    }
+
+    .agent-card-b .stat-label {
+      font-size: 11px;
+      color: var(--ink-300);
+      margin-top: 2px;
+    }
+
+    /* ========================================
+       房仲資料卡設計 - 方案 C: 極簡左右佈局
+       ======================================== */
+    .agent-card-c {
+      background: var(--bg-card);
+      border-radius: 16px;
+      padding: 20px;
+      border: 1px solid var(--line-soft);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .agent-card-c .agent-avatar {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: var(--bg-page);
+      border: 3px solid var(--brand);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--brand);
+      flex-shrink: 0;
+    }
+
+    .agent-card-c .agent-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .agent-card-c .agent-name {
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--ink-100);
+    }
+
+    .agent-card-c .agent-meta {
+      font-size: 13px;
+      color: var(--ink-300);
+      margin-top: 4px;
+    }
+
+    .agent-card-c .agent-stats {
+      display: flex;
+      gap: 16px;
+      margin-top: 12px;
+    }
+
+    .agent-card-c .stat-item {
+      display: flex;
+      align-items: baseline;
+      gap: 4px;
+    }
+
+    .agent-card-c .stat-value {
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--brand);
+    }
+
+    .agent-card-c .stat-label {
+      font-size: 12px;
+      color: var(--ink-300);
+    }
+
+    /* ========================================
+       房仲資料卡設計 - 方案 D: 信任分數強調
+       ======================================== */
+    .agent-card-d {
+      background: var(--bg-card);
+      border-radius: 16px;
+      padding: 20px;
+      border: 1px solid var(--line-soft);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+    }
+
+    .agent-card-d .agent-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .agent-card-d .agent-avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--brand), var(--brand-light));
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      font-weight: 800;
+      flex-shrink: 0;
+    }
+
+    .agent-card-d .agent-info {
+      flex: 1;
+    }
+
+    .agent-card-d .agent-name {
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--ink-100);
+    }
+
+    .agent-card-d .agent-meta {
+      font-size: 12px;
+      color: var(--ink-300);
+      margin-top: 2px;
+    }
+
+    .agent-card-d .trust-score {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+      border: 1px solid #86efac;
+      border-radius: 20px;
+    }
+
+    .agent-card-d .trust-score svg {
+      width: 16px;
+      height: 16px;
+      color: var(--accent);
+    }
+
+    .agent-card-d .trust-score span {
+      font-size: 14px;
+      font-weight: 800;
+      color: #15803d;
+    }
+
+    .agent-card-d .agent-stats {
+      display: flex;
+      gap: 24px;
+    }
+
+    .agent-card-d .stat-item {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .agent-card-d .stat-value {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--ink-100);
+    }
+
+    .agent-card-d .stat-label {
+      font-size: 12px;
+      color: var(--ink-300);
+    }
+
+    /* ========================================
+       整合到 UAG 頁面的模擬
+       ======================================== */
+    .uag-mock {
+      background: var(--bg-page);
+      background-image:
+        radial-gradient(circle at top, rgba(0, 56, 90, 0.06), transparent 55%),
+        linear-gradient(to right, rgba(148, 163, 184, 0.1) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(148, 163, 184, 0.1) 1px, transparent 1px);
+      background-size: 100% 100%, 40px 40px, 40px 40px;
+      border-radius: 16px;
+      padding: 24px;
+      border: 1px solid var(--line-soft);
+    }
+
+    .uag-mock-header {
+      background: rgba(255, 255, 255, 0.96);
+      backdrop-filter: blur(14px);
+      border-radius: 12px;
+      padding: 12px 20px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border: 1px solid var(--line-soft);
+    }
+
+    .uag-mock-logo {
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--brand);
+    }
+
+    .uag-mock-nav {
+      display: flex;
+      gap: 12px;
+    }
+
+    .uag-mock-nav span {
+      font-size: 12px;
+      color: var(--ink-300);
+    }
+
+    .uag-mock-grid {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      gap: 20px;
+    }
+
+    .uag-mock-sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .uag-mock-main {
+      background: var(--bg-card);
+      border-radius: 16px;
+      padding: 24px;
+      border: 1px solid var(--line-soft);
+      min-height: 300px;
+    }
+
+    .uag-mock-main-title {
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--ink-100);
+      border-left: 4px solid var(--brand);
+      padding-left: 12px;
+      margin-bottom: 20px;
+    }
+
+    .uag-mock-placeholder {
+      height: 200px;
+      background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--ink-300);
+      font-size: 14px;
+    }
+
+    /* 推薦的側邊欄卡片 */
+    .agent-card-sidebar {
+      background: var(--bg-card);
+      border-radius: 16px;
+      overflow: hidden;
+      border: 1px solid var(--line-soft);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+    }
+
+    .agent-card-sidebar .card-header {
+      background: linear-gradient(135deg, var(--brand), var(--brand-light));
+      padding: 16px;
+      color: #fff;
+    }
+
+    .agent-card-sidebar .card-header-inner {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .agent-card-sidebar .avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.2);
+      border: 2px solid rgba(255, 255, 255, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      font-weight: 800;
+    }
+
+    .agent-card-sidebar .info h3 {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 2px;
+    }
+
+    .agent-card-sidebar .info p {
+      font-size: 12px;
+      opacity: 0.85;
+    }
+
+    .agent-card-sidebar .card-body {
+      padding: 16px;
+    }
+
+    .agent-card-sidebar .stats-row {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+
+    .agent-card-sidebar .stat {
+      text-align: center;
+      padding: 12px;
+      background: var(--bg-page);
+      border-radius: 10px;
+    }
+
+    .agent-card-sidebar .stat-value {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--brand);
+    }
+
+    .agent-card-sidebar .stat-label {
+      font-size: 11px;
+      color: var(--ink-300);
+      margin-top: 2px;
+    }
+
+    .agent-card-sidebar .badge-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .agent-card-sidebar .badge {
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .agent-card-sidebar .badge-trust {
+      background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+      color: #15803d;
+      border: 1px solid #86efac;
+    }
+
+    .agent-card-sidebar .badge-verified {
+      background: linear-gradient(135deg, #eff6ff, #dbeafe);
+      color: #1d4ed8;
+      border: 1px solid #93c5fd;
+    }
+
+    @media (max-width: 768px) {
+      .uag-mock-grid {
+        grid-template-columns: 1fr;
+      }
+      .demo-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="demo-container">
+    <h1 class="demo-title">UAG 房仲資料卡設計 Demo</h1>
+    <p class="demo-subtitle">品牌色統一使用首頁深藍 #00385a | 移除 AI 感的浮誇動畫</p>
+
+    <!-- 獨立卡片方案 -->
+    <div class="demo-section">
+      <h2 class="demo-section-title">方案比較（獨立卡片）</h2>
+      <div class="demo-grid">
+
+        <!-- 方案 A -->
+        <div>
+          <h4 style="margin-bottom: 12px; color: var(--ink-300); font-size: 13px;">方案 A：緊湊橫向</h4>
+          <div class="agent-card-a">
+            <div class="agent-header">
+              <div class="agent-avatar">王</div>
+              <div class="agent-info">
+                <div class="agent-name">王小明</div>
+                <div class="agent-meta">
+                  <span class="agent-code">#12345</span>
+                  <span class="agent-company">邁房子</span>
+                </div>
+              </div>
+            </div>
+            <div class="agent-stats">
+              <div class="stat-item">
+                <div class="stat-value">92</div>
+                <div class="stat-label">信任分</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-value">45</div>
+                <div class="stat-label">帶看次數</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-value">8</div>
+                <div class="stat-label">成交戶數</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 方案 B -->
+        <div>
+          <h4 style="margin-bottom: 12px; color: var(--ink-300); font-size: 13px;">方案 B：漸層標題（推薦）</h4>
+          <div class="agent-card-b">
+            <div class="agent-banner">
+              <div class="agent-header">
+                <div class="agent-avatar">王</div>
+                <div class="agent-info">
+                  <div class="agent-name">王小明</div>
+                  <div class="agent-meta">
+                    <span>#12345</span>
+                    <span>•</span>
+                    <span>邁房子</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="agent-stats">
+              <div class="stat-item">
+                <div class="stat-value">92</div>
+                <div class="stat-label">信任分</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-value">12</div>
+                <div class="stat-label">鼓勵</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-value">45</div>
+                <div class="stat-label">帶看</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-value">8</div>
+                <div class="stat-label">成交</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 方案 C -->
+        <div>
+          <h4 style="margin-bottom: 12px; color: var(--ink-300); font-size: 13px;">方案 C：極簡左右</h4>
+          <div class="agent-card-c">
+            <div class="agent-avatar">王</div>
+            <div class="agent-content">
+              <div class="agent-name">王小明</div>
+              <div class="agent-meta">#12345 • 邁房子</div>
+              <div class="agent-stats">
+                <div class="stat-item">
+                  <span class="stat-value">92</span>
+                  <span class="stat-label">分</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-value">45</span>
+                  <span class="stat-label">帶看</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-value">8</span>
+                  <span class="stat-label">成交</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 方案 D -->
+        <div>
+          <h4 style="margin-bottom: 12px; color: var(--ink-300); font-size: 13px;">方案 D：信任強調</h4>
+          <div class="agent-card-d">
+            <div class="agent-header">
+              <div class="agent-avatar">王</div>
+              <div class="agent-info">
+                <div class="agent-name">王小明</div>
+                <div class="agent-meta">#12345 • 邁房子</div>
+              </div>
+              <div class="trust-score">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                </svg>
+                <span>92</span>
+              </div>
+            </div>
+            <div class="agent-stats">
+              <div class="stat-item">
+                <div class="stat-value">12</div>
+                <div class="stat-label">獲得鼓勵</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-value">45</div>
+                <div class="stat-label">帶看次數</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-value">8</div>
+                <div class="stat-label">成交戶數</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- 整合到 UAG 頁面的模擬 -->
+    <div class="demo-section">
+      <h2 class="demo-section-title">整合到 UAG 頁面（側邊欄配置）</h2>
+      <div class="uag-mock">
+        <div class="uag-mock-header">
+          <span class="uag-mock-logo">MaiHouses 邁房子</span>
+          <div class="uag-mock-nav">
+            <span>首頁</span>
+            <span>信息流</span>
+            <span style="color: var(--brand); font-weight: 700;">工作台</span>
+          </div>
+        </div>
+
+        <div class="uag-mock-grid">
+          <!-- 側邊欄 -->
+          <div class="uag-mock-sidebar">
+            <!-- 房仲資料卡 - 推薦配置 -->
+            <div class="agent-card-sidebar">
+              <div class="card-header">
+                <div class="card-header-inner">
+                  <div class="avatar">王</div>
+                  <div class="info">
+                    <h3>王小明</h3>
+                    <p>#12345 • 邁房子</p>
+                  </div>
+                </div>
+              </div>
+              <div class="card-body">
+                <div class="stats-row">
+                  <div class="stat">
+                    <div class="stat-value">92</div>
+                    <div class="stat-label">信任分</div>
+                  </div>
+                  <div class="stat">
+                    <div class="stat-value">12</div>
+                    <div class="stat-label">獲得鼓勵</div>
+                  </div>
+                  <div class="stat">
+                    <div class="stat-value">45</div>
+                    <div class="stat-label">帶看次數</div>
+                  </div>
+                  <div class="stat">
+                    <div class="stat-value">8</div>
+                    <div class="stat-label">成交戶數</div>
+                  </div>
+                </div>
+                <div class="badge-row">
+                  <span class="badge badge-trust">✓ 已認證</span>
+                  <span class="badge badge-verified">金牌經紀</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- 快速統計 -->
+            <div style="background: var(--bg-card); border-radius: 12px; padding: 16px; border: 1px solid var(--line-soft);">
+              <div style="font-size: 13px; font-weight: 700; color: var(--ink-200); margin-bottom: 12px;">今日數據</div>
+              <div style="display: flex; justify-content: space-between;">
+                <div style="text-align: center;">
+                  <div style="font-size: 24px; font-weight: 800; color: var(--grade-s);">3</div>
+                  <div style="font-size: 11px; color: var(--ink-300);">新客戶</div>
+                </div>
+                <div style="text-align: center;">
+                  <div style="font-size: 24px; font-weight: 800; color: var(--grade-a);">2</div>
+                  <div style="font-size: 11px; color: var(--ink-300);">已購買</div>
+                </div>
+                <div style="text-align: center;">
+                  <div style="font-size: 24px; font-weight: 800; color: var(--brand);">15</div>
+                  <div style="font-size: 11px; color: var(--ink-300);">剩餘點數</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 主內容區 -->
+          <div class="uag-mock-main">
+            <div class="uag-mock-main-title">UAG 精準導客雷達</div>
+            <div class="uag-mock-placeholder">
+              客戶泡泡區域（RadarCluster）
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 設計說明 -->
+    <div class="demo-section">
+      <h2 class="demo-section-title">設計原則</h2>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px;">
+        <div style="padding: 16px; background: #fff; border-radius: 12px; border: 1px solid var(--line-soft);">
+          <h4 style="font-size: 14px; font-weight: 700; color: var(--ink-100); margin-bottom: 8px;">✓ 品牌色統一</h4>
+          <p style="font-size: 13px; color: var(--ink-300);">使用首頁深藍 #00385a 取代 UAG 的 #1749d7，保持整體一致性</p>
+        </div>
+        <div style="padding: 16px; background: #fff; border-radius: 12px; border: 1px solid var(--line-soft);">
+          <h4 style="font-size: 14px; font-weight: 700; color: var(--ink-100); margin-bottom: 8px;">✓ 移除 AI 感動畫</h4>
+          <p style="font-size: 13px; color: var(--ink-300);">移除 pulse、float 等浮誇動畫，改用 subtle hover 效果</p>
+        </div>
+        <div style="padding: 16px; background: #fff; border-radius: 12px; border: 1px solid var(--line-soft);">
+          <h4 style="font-size: 14px; font-weight: 700; color: var(--ink-100); margin-bottom: 8px;">✓ 專業極簡風格</h4>
+          <p style="font-size: 13px; color: var(--ink-300);">Swiss Style 設計原則：清晰、功能性、高對比度</p>
+        </div>
+        <div style="padding: 16px; background: #fff; border-radius: 12px; border: 1px solid var(--line-soft);">
+          <h4 style="font-size: 14px; font-weight: 700; color: var(--ink-100); margin-bottom: 8px;">✓ 無 Emoji 圖標</h4>
+          <p style="font-size: 13px; color: var(--ink-300);">使用 SVG 圖標（Lucide/Heroicons）取代 emoji</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</body>
+</html>

@@ -92,6 +92,72 @@
   align-items: center;
   justify-content: space-between;
 }
+
+/* ====== Agent Bar (房仲資訊條) ====== */
+.agent-bar {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 8px 24px;
+  background: linear-gradient(90deg, rgba(0, 56, 90, 0.04), transparent);
+  border-top: 1px solid var(--line-soft);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.agent-bar-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #00385a;
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-size: 13px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.agent-bar-info {
+  flex: 1;
+  min-width: 0;
+}
+.agent-bar-name-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink-100);
+}
+.agent-bar-code {
+  font-size: 11px;
+  color: #00385a;
+  font-weight: 600;
+}
+.agent-bar-stats {
+  display: flex;
+  gap: 12px;
+  font-size: 11px;
+  color: var(--ink-300);
+  margin-top: 2px;
+}
+.agent-bar-stat strong {
+  color: var(--ink-100);
+  font-weight: 700;
+  margin-right: 2px;
+  font-variant-numeric: tabular-nums;
+}
+.agent-bar-stat.trust strong {
+  color: #0f6a23;
+}
+@media (max-width: 1024px) {
+  .agent-bar {
+    padding: 8px 12px;
+    gap: 10px;
+  }
+  .agent-bar-stats {
+    gap: 8px;
+  }
+}
 /* ====== UAG Header Actions ====== */
 .uag-header-actions {
   display: flex;
@@ -473,6 +539,20 @@
   cursor: not-allowed;
   background: #cbd5e1;
   border-color: #cbd5e1;
+}
+
+/* UAG-15/修7: AssetMonitor 按鈕樣式 */
+.uag-btn.secondary {
+  padding: 4px 12px;
+  font-size: 12px;
+  background-color: var(--bg-alt);
+  color: var(--ink-200);
+  border: 1px solid var(--ink-400);
+}
+
+.uag-btn.small {
+  padding: 4px 12px;
+  font-size: 12px;
 }
 
 .uag-badge {

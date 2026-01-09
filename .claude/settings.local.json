@@ -73,7 +73,20 @@
       "Bash(claude config list:*)",
       "Bash(npm audit fix:*)",
       "Bash(npm audit:*)",
-      "mcp__filesystem__read_text_file"
+      "mcp__filesystem__read_text_file",
+      "WebFetch(domain:github.com)",
+      "Bash(uipro init:*)",
+      "Bash(python3:*)",
+      "Bash(python:*)",
+      "Bash(PYTHONIOENCODING=utf-8 python:*)",
+      "WebFetch(domain:www.sinyi.com.tw)",
+      "WebFetch(domain:sale.591.com.tw)",
+      "WebFetch(domain:help.ibigfun.com)",
+      "WebFetch(domain:www.adobe.com)",
+      "Bash(npx prettier:*)",
+      "Bash(xargs ls:*)",
+      "Bash(find:*)",
+      "Bash(chcp 65001)"
     ]
   },
   "model": "claude-opus-4-5-20251101",

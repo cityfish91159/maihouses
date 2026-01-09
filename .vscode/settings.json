@@ -74,5 +74,6 @@
   "claudeCode.terminalMode": false,
   "claudeCode.environmentVariables": [
 
-  ]
+  ],
+  "terminal.integrated.accessibleViewFocusOnCommandExecution": false
 }

@@ -32,6 +32,8 @@ interface SupabasePurchasedLead {
   session_id: string;
   id: string;
   created_at: string;
+  notification_status: string | null;
+  conversations: { id: string }[]; // 修6: 關聯對話 ID
 }
 
 interface SupabaseUagEvent {
@@ -291,9 +293,11 @@ export class UAGService {
           .order("last_active", { ascending: false })
           .limit(50),
         // 問題 #3-4 修復：查詢已購買的 session_id
+        // UAG-15/修5: 加入 notification_status
         supabase
           .from("uag_lead_purchases")
-          .select("session_id, id, created_at")
+          // 修6: 關聯 conversation_id
+          .select("session_id, id, created_at, notification_status, conversations(id)")
           .eq("agent_id", userId),
         supabase.from("listings").select("*").eq("agent_id", userId),
         supabase
@@ -315,9 +319,24 @@ export class UAGService {
     if (feedRes.error) throw feedRes.error;
 
     // 問題 #3-4 修復：建立已購買 session_id 集合
-    const purchasedMap = new Map<string, { id: string; created_at: string }>();
+    // UAG-15/修5: 擴充 Map 包含 notification_status
+    const purchasedMap = new Map<
+      string,
+      {
+        id: string;
+        created_at: string;
+        notification_status: string | undefined;
+        conversation_id: string | undefined; // 修6
+      }
+    >();
     for (const p of purchasedRes.data ?? []) {
-      purchasedMap.set(p.session_id, { id: p.id, created_at: p.created_at });
+      purchasedMap.set(p.session_id, {
+        id: p.id,
+        created_at: p.created_at,
+        notification_status: p.notification_status ?? undefined,
+        // 修6: 取第一個關聯的 conversation_id
+        conversation_id: p.conversations?.[0]?.id,
+      });
     }
 
     // 獲取每個 session 最近瀏覽的物件
@@ -381,6 +400,10 @@ export class UAGService {
                   purchased.created_at,
                   grade as Grade,
                 ),
+                // UAG-15/修5: 加入通知狀態
+                notification_status: purchased.notification_status,
+                // 修6: 加入對話 ID
+                conversation_id: purchased.conversation_id,
               }
             : {}),
         };

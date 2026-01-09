@@ -29,6 +29,8 @@ type ReportStyle = "simple" | "investment" | "marketing";
 // Props 介面
 interface ReportGeneratorProps {
   listings?: Listing[];
+  agentName?: string;
+  agentPhone?: string;
 }
 
 // 亮點類型
@@ -324,6 +326,8 @@ const REPORT_STYLES: {
 
 export default function ReportGenerator({
   listings = [],
+  agentName = "專屬顧問",
+  agentPhone,
 }: ReportGeneratorProps) {
   const [step, setStep] = useState<1 | 2 | 3 | 4 | 5>(1);
   const [selectedProperty, setSelectedProperty] = useState<PropertyData | null>(
@@ -786,7 +790,9 @@ export default function ReportGenerator({
                   </span>
                 </div>
                 <div className={styles.reportPreviewDetailItem}>
-                  <span className={styles.reportPreviewDetailLabel}>管理費</span>
+                  <span className={styles.reportPreviewDetailLabel}>
+                    管理費
+                  </span>
                   <span className={styles.reportPreviewDetailValue}>
                     {selectedProperty.managementFee.toLocaleString()}/月
                   </span>
@@ -854,7 +860,7 @@ export default function ReportGenerator({
             <div className={styles.reportPreviewAgent}>
               <div className={styles.reportPreviewAgentAvatar} />
               <div className={styles.reportPreviewAgentInfo}>
-                <strong>您的專屬顧問</strong>
+                <strong>{agentName}</strong>
                 <span>MaiHouses 邁房子</span>
               </div>
               <div className={styles.reportPreviewAgentCta}>
@@ -863,11 +869,13 @@ export default function ReportGenerator({
                 >
                   <MessageCircle size={16} />
                 </button>
-                <button
-                  className={`${styles.reportPreviewAgentBtn} ${styles.primary}`}
-                >
-                  <Phone size={16} />
-                </button>
+                {agentPhone && (
+                  <button
+                    className={`${styles.reportPreviewAgentBtn} ${styles.primary}`}
+                  >
+                    <Phone size={16} />
+                  </button>
+                )}
               </div>
             </div>
 

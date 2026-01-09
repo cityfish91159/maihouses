@@ -31,10 +31,24 @@ export const SupabaseLeadSchema = z
   })
   .passthrough(); // Allow extra fields
 
+// UAG-15/修5: 通知狀態 Schema
+export const NotificationStatusSchema = z.enum([
+  "pending",
+  "sent",
+  "no_line",
+  "unreachable",
+  "failed",
+  "skipped",
+]);
+export type NotificationStatus = z.infer<typeof NotificationStatusSchema>;
+
 // Schema for the transformed Lead object used in the UI
 export const LeadSchema = SupabaseLeadSchema.extend({
   remainingHours: z.number().optional(),
-  // We might want to standardize to camelCase in the future, but for now keep compatibility
+  // UAG-15/修5: 通知狀態
+  notification_status: NotificationStatusSchema.optional(),
+  // 修6: 對話 ID
+  conversation_id: z.string().optional(),
 });
 
 export type Lead = z.infer<typeof LeadSchema>;
@@ -101,3 +115,18 @@ export const AppDataSchema = z.object({
 });
 
 export type AppData = z.infer<typeof AppDataSchema>;
+
+// 房仲個人資料（用於 UAG Header）
+export const AgentProfileSchema = z.object({
+  id: z.string(),
+  internalCode: z.number().optional(),
+  name: z.string(),
+  avatarUrl: z.string().nullable().optional(),
+  company: z.string(),
+  trustScore: z.number(),
+  encouragementCount: z.number(),
+  visitCount: z.number(),
+  dealCount: z.number(),
+});
+
+export type AgentProfile = z.infer<typeof AgentProfileSchema>;

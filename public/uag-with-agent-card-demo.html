@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>UAG 房仲小卡整合 Demo - 手機優先緊湊版</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      /* 統一品牌色為首頁深藍 */
+      --brand: #00385a;
+      --brand-light: #004e7c;
+      --brand-bg: rgba(0, 56, 90, 0.08);
+
+      /* 功能色 */
+      --accent: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+
+      /* 等級色 */
+      --grade-s: #ef4444;
+      --grade-a: #f97316;
+      --grade-b: #fbbf24;
+      --grade-c: #60a5fa;
+
+      /* 中性色 */
+      --ink-100: #0f172a;
+      --ink-200: #334155;
+      --ink-300: #64748b;
+      --ink-400: #94a3b8;
+      --bg-page: #f8fafc;
+      --bg-card: #ffffff;
+      --bg-alt: #f1f5f9;
+      --line-soft: #e2e8f0;
+
+      --font: -apple-system, BlinkMacSystemFont, "Inter", "Noto Sans TC", sans-serif;
+    }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg-page);
+      color: var(--ink-100);
+      line-height: 1.5;
+      max-width: 430px;
+      margin: 0 auto;
+      min-height: 100vh;
+    }
+
+    /* ============ UAG Header ============ */
+    .uag-header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: rgba(255, 255, 255, 0.96);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--line-soft);
+      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
+      padding: 10px 12px;
+    }
+
+    .uag-header-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .uag-logo {
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--brand);
+    }
+
+    .uag-header-stats {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+    }
+
+    .stat-chip {
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: var(--brand-bg);
+      color: var(--brand);
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .uag-user-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--brand-bg);
+      color: var(--brand);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 800;
+      border: none;
+      cursor: pointer;
+    }
+
+    /* ============ 房仲小卡（緊湊版）============ */
+    .agent-card-compact {
+      background: linear-gradient(135deg, #ffffff, #fafbff);
+      border: 1px solid var(--line-soft);
+      border-radius: 12px;
+      padding: 12px;
+      margin: 12px;
+      box-shadow: 0 2px 8px rgba(0, 56, 90, 0.08);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      transition: all 200ms ease;
+    }
+
+    .agent-card-compact:active {
+      transform: scale(0.98);
+    }
+
+    /* 頭像區 */
+    .agent-avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: var(--brand);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      font-weight: 700;
+      flex-shrink: 0;
+      box-shadow: 0 2px 8px rgba(0, 56, 90, 0.2);
+    }
+
+    /* 資訊區 */
+    .agent-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .agent-name {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--ink-100);
+      margin-bottom: 2px;
+    }
+
+    .agent-meta {
+      font-size: 11px;
+      color: var(--ink-300);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .agent-code {
+      color: var(--brand);
+      font-weight: 600;
+    }
+
+    /* 績效區（2x2 緊湊網格）*/
+    .agent-stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid var(--line-soft);
+    }
+
+    .stat-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+    }
+
+    .stat-value {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--brand);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .stat-label {
+      font-size: 10px;
+      color: var(--ink-300);
+      white-space: nowrap;
+    }
+
+    /* 信任分特殊樣式 */
+    .stat-item.trust .stat-value {
+      color: var(--accent);
+    }
+
+    /* ============ UAG 內容區（簡化版）============ */
+    .uag-content {
+      padding: 0 12px 80px;
+    }
+
+    .section-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--ink-200);
+      margin: 16px 0 8px;
+      padding-left: 8px;
+      border-left: 3px solid var(--brand);
+    }
+
+    /* Radar 簡化卡片 */
+    .radar-card {
+      background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+      border: 2px solid #bae6fd;
+      border-radius: 12px;
+      padding: 16px;
+      text-align: center;
+      margin-bottom: 12px;
+    }
+
+    .radar-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--brand);
+      margin-bottom: 8px;
+    }
+
+    .radar-count {
+      font-size: 32px;
+      font-weight: 900;
+      color: var(--brand);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .radar-label {
+      font-size: 12px;
+      color: var(--ink-300);
+    }
+
+    /* Action Panel 簡化 */
+    .action-panel {
+      background: white;
+      border: 1px solid var(--line-soft);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 12px;
+      box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+    }
+
+    .panel-label {
+      font-size: 12px;
+      color: var(--ink-300);
+      margin-bottom: 4px;
+    }
+
+    .panel-value {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--ink-100);
+    }
+
+    .buy-btn {
+      width: 100%;
+      padding: 14px;
+      margin-top: 12px;
+      border: none;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--brand), var(--brand-light));
+      color: white;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0, 56, 90, 0.3);
+      transition: all 200ms;
+    }
+
+    .buy-btn:active {
+      transform: scale(0.97);
+    }
+
+    /* Asset Monitor 簡化 */
+    .asset-item {
+      background: white;
+      border: 1px solid var(--line-soft);
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 8px;
+      box-shadow: 0 1px 4px rgba(15, 23, 42, 0.05);
+    }
+
+    .asset-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .asset-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--ink-100);
+    }
+
+    .grade-badge {
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      color: white;
+    }
+
+    .grade-badge.s { background: var(--grade-s); }
+    .grade-badge.a { background: var(--grade-a); }
+
+    .progress-bar {
+      width: 100%;
+      height: 4px;
+      background: var(--line-soft);
+      border-radius: 999px;
+      overflow: hidden;
+      margin-bottom: 4px;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), #34d399);
+      border-radius: 999px;
+      transition: width 1s;
+    }
+
+    .time-left {
+      font-size: 11px;
+      color: var(--ink-300);
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Footer */
+    .uag-footer {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      max-width: 430px;
+      margin: 0 auto;
+      background: rgba(255, 255, 255, 0.96);
+      backdrop-filter: blur(10px);
+      border-top: 1px solid var(--line-soft);
+      padding: 10px 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 -2px 8px rgba(15, 23, 42, 0.06);
+    }
+
+    .footer-info {
+      font-size: 11px;
+      color: var(--ink-300);
+    }
+
+    .mode-toggle {
+      padding: 6px 12px;
+      border: 1px solid var(--line-soft);
+      border-radius: 999px;
+      background: white;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--brand);
+      cursor: pointer;
+    }
+
+    /* Demo 標籤 */
+    .demo-label {
+      position: sticky;
+      top: 56px;
+      z-index: 40;
+      background: linear-gradient(135deg, #fef3c7, #fde68a);
+      color: #92400e;
+      text-align: center;
+      padding: 8px;
+      font-size: 11px;
+      font-weight: 700;
+      border-bottom: 2px solid #fbbf24;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- UAG Header -->
+  <div class="uag-header">
+    <div class="uag-header-inner">
+      <div class="uag-logo">邁房子 UAG</div>
+      <div class="uag-header-stats">
+        <div class="stat-chip">💎 1,250</div>
+        <div class="stat-chip">S: 3</div>
+      </div>
+      <button class="uag-user-btn">王</button>
+    </div>
+  </div>
+
+  <!-- Demo 說明 -->
+  <div class="demo-label">
+    📱 手機優先緊湊版 - 房仲小卡已整合
+  </div>
+
+  <!-- 房仲小卡（緊湊版）-->
+  <div class="agent-card-compact">
+    <div class="agent-avatar">王</div>
+    <div class="agent-info">
+      <div class="agent-name">王小明</div>
+      <div class="agent-meta">
+        <span class="agent-code">#12345</span>
+        <span>|</span>
+        <span>邁房子</span>
+      </div>
+
+      <!-- 績效統計（2x2 緊湊網格）-->
+      <div class="agent-stats-grid">
+        <div class="stat-item trust">
+          <div class="stat-value">92</div>
+          <div class="stat-label">信任分</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">12</div>
+          <div class="stat-label">鼓勵</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">45</div>
+          <div class="stat-label">帶看</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">8</div>
+          <div class="stat-label">成交</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- UAG 內容區 -->
+  <div class="uag-content">
+
+    <!-- [1] UAG Radar 簡化版 -->
+    <div class="section-title">精準導客雷達</div>
+    <div class="radar-card">
+      <div class="radar-title">🔴 高價值客戶</div>
+      <div class="radar-count">8</div>
+      <div class="radar-label">S/A 級待購買</div>
+    </div>
+
+    <!-- Action Panel 簡化版 -->
+    <div class="action-panel">
+      <div class="panel-label">選中客戶</div>
+      <div class="panel-value">訪客-S01 (S 級)</div>
+      <div style="margin-top: 12px; font-size: 12px; color: var(--ink-300);">
+        意向分數: <strong style="color: var(--accent);">95%</strong> • 成本: <strong>500 點</strong>
+      </div>
+      <button class="buy-btn">🚀 獲取聯絡權限</button>
+    </div>
+
+    <!-- [2] Asset Monitor 簡化版 -->
+    <div class="section-title">已購客戶資產</div>
+
+    <div class="asset-item">
+      <div class="asset-header">
+        <div class="asset-name">訪客-A03</div>
+        <div class="grade-badge a">A</div>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill" style="width: 65%;"></div>
+      </div>
+      <div class="time-left">⏱ 剩餘 31.2h / 48h</div>
+    </div>
+
+    <div class="asset-item">
+      <div class="asset-header">
+        <div class="asset-name">訪客-S02</div>
+        <div class="grade-badge s">S</div>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill" style="width: 42%;"></div>
+      </div>
+      <div class="time-left">⏱ 剩餘 30.5h / 72h</div>
+    </div>
+
+    <!-- [3] Listings 簡化版 -->
+    <div class="section-title">我的房源</div>
+    <div class="asset-item">
+      <div class="asset-name">台北市大安區豪宅</div>
+      <div style="font-size: 12px; color: var(--ink-300); margin-top: 4px;">
+        👁 45 瀏覽 • ❤️ 12 收藏
+      </div>
+    </div>
+
+    <div class="asset-item">
+      <div class="asset-name">新北市永和區公寓</div>
+      <div style="font-size: 12px; color: var(--ink-300); margin-top: 4px;">
+        👁 28 瀏覽 • ❤️ 5 收藏
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Footer -->
+  <div class="uag-footer">
+    <div class="footer-info">v2.0 • Mock Mode</div>
+    <button class="mode-toggle">切換模式</button>
+  </div>
+
+  <script>
+    // 簡單的互動效果
+    const buyBtn = document.querySelector('.buy-btn');
+    buyBtn.addEventListener('click', () => {
+      alert('購買功能示範（Demo）\n\n實際版本會開啟發送訊息 Modal');
+    });
+
+    const modeToggle = document.querySelector('.mode-toggle');
+    modeToggle.addEventListener('click', () => {
+      alert('模式切換功能（Demo）\n\n可切換真實數據 / 模擬數據');
+    });
+  </script>
+
+</body>
+</html>

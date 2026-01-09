@@ -1,10 +1,13 @@
-import React, { useRef, useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { QueryErrorResetBoundary } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
+import { ROUTES } from "../../constants/routes";
 
 import styles from "./UAG.module.css";
 import { useUAG } from "./hooks/useUAG";
 import { useLeadSelection } from "./hooks/useLeadSelection";
+import { useAgentProfile } from "./hooks/useAgentProfile";
 import { useAuth } from "../../hooks/useAuth";
 
 import { UAGHeader } from "./components/UAGHeader";
@@ -24,6 +27,7 @@ import { SendMessageModal } from "../../components/UAG/SendMessageModal";
 import type { Lead } from "./types/uag.types";
 
 function UAGPageContent() {
+  const navigate = useNavigate();
   const {
     data: appData,
     isLoading,
@@ -34,6 +38,7 @@ function UAGPageContent() {
   } = useUAG();
   const { selectedLead, selectLead, close } = useLeadSelection();
   const { user, loading: authLoading, error: authError, signOut } = useAuth();
+  const { profile: agentProfile } = useAgentProfile(user?.id);
   const actionPanelRef = useRef<HTMLDivElement>(null);
 
   // MSG-5: Modal 狀態
@@ -45,6 +50,28 @@ function UAGPageContent() {
   >(undefined);
   // Header signOut 狀態
   const [isSigningOut, setIsSigningOut] = useState(false);
+
+  // 修9: AssetMonitor 發送訊息狀態
+  const [assetMessageLead, setAssetMessageLead] = useState<Lead | null>(null);
+  const [showAssetMessageModal, setShowAssetMessageModal] = useState(false);
+
+  // 修9: AssetMonitor 回調
+  const handleSendMessageFromAsset = useCallback((lead: Lead) => {
+    setAssetMessageLead(lead);
+    setShowAssetMessageModal(true);
+  }, []);
+
+  const handleViewChat = useCallback(
+    (conversationId: string) => {
+      navigate(ROUTES.CHAT(conversationId));
+    },
+    [navigate],
+  );
+
+  const handleCloseAssetModal = useCallback(() => {
+    setShowAssetMessageModal(false);
+    setAssetMessageLead(null);
+  }, []);
 
   const handleSignOut = async () => {
     setIsSigningOut(true);
@@ -106,6 +133,7 @@ function UAGPageContent() {
     <div className={styles["uag-page"]}>
       <UAGHeader
         user={user}
+        agentProfile={agentProfile}
         isLoading={authLoading}
         error={authError}
         onSignOut={handleSignOut}
@@ -126,13 +154,17 @@ function UAGPageContent() {
           />
 
           {/* [2] Asset Monitor */}
-          <AssetMonitor leads={appData.leads} />
+          <AssetMonitor
+            leads={appData.leads}
+            onSendMessage={handleSendMessageFromAsset}
+            onViewChat={handleViewChat}
+          />
 
           {/* [3] Listings & [4] Feed */}
           <ListingFeed listings={appData.listings} feed={appData.feed} />
 
           {/* [5] 手機報告生成器 */}
-          <ReportGenerator listings={appData.listings} />
+          <ReportGenerator listings={appData.listings} agentName={agentName} />
 
           {/* [6] Trust Flow */}
           <TrustFlow />
@@ -160,6 +192,24 @@ function UAGPageContent() {
           })} // UAG-13 Safe
           {...(purchasedLead.property_id
             ? { propertyId: purchasedLead.property_id }
+            : {})}
+        />
+      )}
+
+      {/* 修9: AssetMonitor 發送訊息 Modal */}
+      {assetMessageLead && agentId && (
+        <SendMessageModal
+          isOpen={showAssetMessageModal}
+          onClose={handleCloseAssetModal}
+          lead={assetMessageLead}
+          agentId={agentId}
+          sessionId={assetMessageLead.session_id}
+          agentName={agentName}
+          {...(assetMessageLead.conversation_id && {
+            conversationId: assetMessageLead.conversation_id,
+          })}
+          {...(assetMessageLead.property_id
+            ? { propertyId: assetMessageLead.property_id }
             : {})}
         />
       )}
