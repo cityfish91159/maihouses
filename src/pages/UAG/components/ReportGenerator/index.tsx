@@ -17,6 +17,7 @@ import {
   Sparkles,
   X,
   ExternalLink,
+  Phone,
 } from "lucide-react";
 import uagStyles from "../../UAG.module.css";
 import styles from "./ReportGenerator.module.css";
@@ -50,6 +51,7 @@ interface PropertyData {
   size: number;
   rooms: string;
   floor: string;
+  floorTotal: number;
   age: number;
   direction: string;
   parking: string;
@@ -57,6 +59,8 @@ interface PropertyData {
   community: string;
   communityYear: number;
   communityUnits: number;
+  propertyType: string;
+  description: string;
   images: string[];
   highlights: Highlight[];
 }
@@ -64,22 +68,28 @@ interface PropertyData {
 // 預設物件資料
 const DEFAULT_PROPERTY: PropertyData = {
   id: "demo-001",
-  title: "惠宇上晴 12F｜3房2廳2衛",
+  title: "12F 高樓層｜3房2廳2衛｜平面車位",
   address: "台中市南屯區惠文路 168 號",
   district: "南屯區",
   price: 32880000,
   pricePerPing: 521000,
   size: 67.3,
   rooms: "3房2廳2衛",
-  floor: "12F/15F",
+  floor: "12",
+  floorTotal: 15,
   age: 5,
-  direction: "朝南",
+  direction: "南",
   parking: "平面車位",
   managementFee: 3500,
   community: "惠宇上晴",
   communityYear: 2019,
   communityUnits: 280,
-  images: [],
+  propertyType: "電梯大樓",
+  description:
+    "高樓層景觀戶，採光通風極佳。格局方正實用，三面採光無暗房。社區管理完善，24小時警衛駐守。步行5分鐘至捷運市政府站，生活機能完善。屋況維護良好，可隨時交屋。",
+  images: [
+    "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=600&q=80",
+  ],
   highlights: [
     {
       id: "commute",
@@ -138,22 +148,28 @@ const MY_LISTINGS: PropertyData[] = [
   DEFAULT_PROPERTY,
   {
     id: "demo-002",
-    title: "冠德美麗大直｜4房2廳3衛",
+    title: "18F 高樓層｜4房2廳3衛｜機械車位",
     address: "台北市中山區北安路 256 號",
     district: "中山區",
     price: 88000000,
     pricePerPing: 1120000,
     size: 78.5,
     rooms: "4房2廳3衛",
-    floor: "18F/22F",
+    floor: "18",
+    floorTotal: 22,
     age: 3,
-    direction: "朝東",
+    direction: "東",
     parking: "機械車位",
     managementFee: 6800,
     community: "冠德美麗大直",
     communityYear: 2021,
     communityUnits: 156,
-    images: [],
+    propertyType: "電梯大樓",
+    description:
+      "大直水岸第一排，高樓層遠眺 101 與基隆河景觀。飯店式管理，公設完善包含游泳池、健身房。屋況全新，全室大理石地板，可直接入住。",
+    images: [
+      "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=600&q=80",
+    ],
     highlights: [
       {
         id: "commute",
@@ -208,22 +224,28 @@ const MY_LISTINGS: PropertyData[] = [
   },
   {
     id: "demo-003",
-    title: "國泰天母｜2房1廳1衛",
+    title: "5F 中樓層｜2房1廳1衛｜無車位",
     address: "台北市士林區天母西路 88 號",
     district: "士林區",
     price: 24500000,
     pricePerPing: 680000,
     size: 36.0,
     rooms: "2房1廳1衛",
-    floor: "5F/12F",
+    floor: "5",
+    floorTotal: 12,
     age: 15,
-    direction: "朝西",
+    direction: "西",
     parking: "無",
     managementFee: 2200,
     community: "國泰天母",
     communityYear: 2009,
     communityUnits: 88,
-    images: [],
+    propertyType: "電梯大樓",
+    description:
+      "天母商圈核心地段，SOGO、新光三越步行可達。天母國小明星學區，環境清幽適合家庭。北歐風格溫馨裝潢，採光佳，即可入住。",
+    images: [
+      "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=600&q=80",
+    ],
     highlights: [
       {
         id: "amenity",
@@ -432,22 +454,28 @@ export default function ReportGenerator({
 
       const detectedProperty: PropertyData = {
         id: "detected-001",
-        title: "偵測結果：帝寶 18F｜豪宅規格",
+        title: "18F 高樓層｜4房3廳4衛｜坡道平面",
         address: "台北市大安區仁愛路三段",
         district: "大安區",
         price: 188000000,
         pricePerPing: 1560000,
         size: 120.5,
         rooms: "4房3廳4衛",
-        floor: "18F/24F",
+        floor: "18",
+        floorTotal: 24,
         age: 10,
-        direction: "朝南",
+        direction: "南",
         parking: "坡道平面",
         managementFee: 15000,
         community: "帝寶",
         communityYear: 2014,
         communityUnits: 52,
-        images: [],
+        propertyType: "豪宅大樓",
+        description:
+          "帝寶頂級豪宅，俯瞰仁愛路林蔭大道。全棟僅 52 戶，飯店式管理，隱私安全兼具。名人聚集，資產保值性高。",
+        images: [
+          "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=600&q=80",
+        ],
         highlights: [
           {
             id: "view",
@@ -655,9 +683,6 @@ export default function ReportGenerator({
   const renderStep4 = () => {
     if (!selectedProperty) return null;
 
-    const selectedHighlights = highlights.filter((h) => h.selected);
-    const monthlyPayment = calculateMonthlyPayment(selectedProperty.price);
-
     return (
       <div className={styles.reportStep}>
         <div className={styles.reportStepHeader}>
@@ -671,7 +696,9 @@ export default function ReportGenerator({
         <div className={styles.reportPhoneFrame}>
           <div className={styles.reportPhoneNotch} />
           <div className={styles.reportPhoneContent}>
+            {/* Hero 圖片 */}
             <div className={styles.reportPreviewHero}>
+              <div className={styles.reportPreviewHeroTag}>精選推薦</div>
               {selectedProperty.images?.[0] ? (
                 <img
                   src={selectedProperty.images[0]}
@@ -684,8 +711,8 @@ export default function ReportGenerator({
                 </div>
               )}
               <div className={styles.reportPreviewHeroOverlay}>
-                <div className={styles.reportPreviewPrice}>
-                  NT$ {formatPrice(selectedProperty.price)}
+                <div className={styles.reportPreviewCommunity}>
+                  {selectedProperty.community}社區
                 </div>
                 <div className={styles.reportPreviewTitle}>
                   {selectedProperty.title}
@@ -693,48 +720,160 @@ export default function ReportGenerator({
               </div>
             </div>
 
-            <div className={styles.reportPreviewSpecs}>
-              <div>
-                <Ruler size={14} /> {selectedProperty.size} 坪
+            {/* 價格區塊 */}
+            <div className={styles.reportPreviewPriceSection}>
+              <div className={styles.reportPreviewPriceMain}>
+                <div className={styles.reportPreviewPriceLabel}>開價總價</div>
+                <div className={styles.reportPreviewPriceTotal}>
+                  {formatPrice(selectedProperty.price)}
+                  <small>萬</small>
+                </div>
               </div>
-              <div>
-                <Building size={14} /> {selectedProperty.floor}
-              </div>
-              <div>
-                <Calendar size={14} /> {selectedProperty.age} 年
-              </div>
-              <div>
-                <Compass size={14} /> {selectedProperty.direction}
-              </div>
-            </div>
-
-            <div className={styles.reportPreviewMortgage}>
-              <div className={styles.reportPreviewMortgageLabel}>
-                貸款 8 成・30 年
-              </div>
-              <div className={styles.reportPreviewMortgageValue}>
-                月付約 NT$ {monthlyPayment.toLocaleString()}
+              <div className={styles.reportPreviewPriceUnit}>
+                <div className={styles.reportPreviewPriceUnitLabel}>單價</div>
+                <div className={styles.reportPreviewPriceUnitValue}>
+                  {(selectedProperty.pricePerPing / 10000).toFixed(1)}
+                  <small>萬/坪</small>
+                </div>
               </div>
             </div>
 
-            <div className={styles.reportPreviewHighlights}>
-              {selectedHighlights.map((h) => (
-                <div key={h.id} className={styles.reportPreviewHighlight}>
-                  <span>{h.icon}</span>
-                  <div>
-                    <strong>{h.title}</strong>
-                    <p>{h.description}</p>
+            {/* 核心規格 */}
+            <div className={styles.reportPreviewSpecsGrid}>
+              <div className={styles.reportPreviewSpecItem}>
+                <div className={styles.reportPreviewSpecValue}>
+                  {selectedProperty.size}
+                  <small>坪</small>
+                </div>
+                <div className={styles.reportPreviewSpecLabel}>權狀坪數</div>
+              </div>
+              <div className={styles.reportPreviewSpecItem}>
+                <div className={styles.reportPreviewSpecValue}>
+                  {selectedProperty.floor}
+                  <small>/{selectedProperty.floorTotal}F</small>
+                </div>
+                <div className={styles.reportPreviewSpecLabel}>樓層</div>
+              </div>
+              <div className={styles.reportPreviewSpecItem}>
+                <div className={styles.reportPreviewSpecValue}>
+                  {selectedProperty.age}
+                  <small>年</small>
+                </div>
+                <div className={styles.reportPreviewSpecLabel}>屋齡</div>
+              </div>
+              <div className={styles.reportPreviewSpecItem}>
+                <div className={styles.reportPreviewSpecValue}>
+                  {selectedProperty.direction}
+                </div>
+                <div className={styles.reportPreviewSpecLabel}>座向</div>
+              </div>
+            </div>
+
+            {/* 物件資訊 */}
+            <div className={styles.reportPreviewDetails}>
+              <div className={styles.reportPreviewSectionTitle}>物件資訊</div>
+              <div className={styles.reportPreviewDetailsGrid}>
+                <div className={styles.reportPreviewDetailItem}>
+                  <span className={styles.reportPreviewDetailLabel}>格局</span>
+                  <span className={styles.reportPreviewDetailValue}>
+                    {selectedProperty.rooms}
+                  </span>
+                </div>
+                <div className={styles.reportPreviewDetailItem}>
+                  <span className={styles.reportPreviewDetailLabel}>車位</span>
+                  <span className={styles.reportPreviewDetailValue}>
+                    {selectedProperty.parking}
+                  </span>
+                </div>
+                <div className={styles.reportPreviewDetailItem}>
+                  <span className={styles.reportPreviewDetailLabel}>管理費</span>
+                  <span className={styles.reportPreviewDetailValue}>
+                    {selectedProperty.managementFee.toLocaleString()}/月
+                  </span>
+                </div>
+                <div className={styles.reportPreviewDetailItem}>
+                  <span className={styles.reportPreviewDetailLabel}>型態</span>
+                  <span className={styles.reportPreviewDetailValue}>
+                    {selectedProperty.propertyType}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* 社區資訊 */}
+            <div className={styles.reportPreviewCommunitySection}>
+              <div className={styles.reportPreviewSectionTitle}>社區資訊</div>
+              <div className={styles.reportPreviewCommunityInfo}>
+                <div className={styles.reportPreviewCommunityStat}>
+                  <div className={styles.reportPreviewCommunityStatValue}>
+                    {selectedProperty.communityYear}
+                  </div>
+                  <div className={styles.reportPreviewCommunityStatLabel}>
+                    建成年份
                   </div>
                 </div>
-              ))}
+                <div className={styles.reportPreviewCommunityStat}>
+                  <div className={styles.reportPreviewCommunityStatValue}>
+                    {selectedProperty.communityUnits}
+                  </div>
+                  <div className={styles.reportPreviewCommunityStatLabel}>
+                    總戶數
+                  </div>
+                </div>
+                <div className={styles.reportPreviewCommunityStat}>
+                  <div className={styles.reportPreviewCommunityStatValue}>
+                    {selectedProperty.floorTotal}
+                  </div>
+                  <div className={styles.reportPreviewCommunityStatLabel}>
+                    總樓層
+                  </div>
+                </div>
+              </div>
             </div>
 
+            {/* 物件說明 */}
+            <div className={styles.reportPreviewDescription}>
+              <div className={styles.reportPreviewSectionTitle}>物件說明</div>
+              <div className={styles.reportPreviewDescriptionText}>
+                {selectedProperty.description}
+              </div>
+            </div>
+
+            {/* 地址位置 */}
+            <div className={styles.reportPreviewLocation}>
+              <div className={styles.reportPreviewLocationIcon}>
+                <MapPin size={16} />
+              </div>
+              <div className={styles.reportPreviewLocationText}>
+                {selectedProperty.address}
+                <small>{selectedProperty.district}</small>
+              </div>
+            </div>
+
+            {/* 業務資訊 */}
             <div className={styles.reportPreviewAgent}>
-              <div className={styles.reportPreviewAgentAvatar}>👤</div>
+              <div className={styles.reportPreviewAgentAvatar} />
               <div className={styles.reportPreviewAgentInfo}>
                 <strong>您的專屬顧問</strong>
                 <span>MaiHouses 邁房子</span>
               </div>
+              <div className={styles.reportPreviewAgentCta}>
+                <button
+                  className={`${styles.reportPreviewAgentBtn} ${styles.secondary}`}
+                >
+                  <MessageCircle size={16} />
+                </button>
+                <button
+                  className={`${styles.reportPreviewAgentBtn} ${styles.primary}`}
+                >
+                  <Phone size={16} />
+                </button>
+              </div>
+            </div>
+
+            {/* 品牌浮水印 */}
+            <div className={styles.reportPreviewWatermark}>
+              由 <strong>MaiHouses 邁房子</strong> 提供
             </div>
           </div>
         </div>

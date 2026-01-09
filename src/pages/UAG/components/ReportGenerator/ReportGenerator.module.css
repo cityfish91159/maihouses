@@ -373,22 +373,38 @@
 }
 
 .reportPhoneContent {
-  background: linear-gradient(to bottom, #ffffff, #fafafa);
+  background: #fff;
   border-radius: 24px;
   overflow: hidden;
-  max-height: 400px;
+  max-height: 480px;
   overflow-y: auto;
 }
 
-/* 預覽內容 */
+.reportPhoneContent::-webkit-scrollbar {
+  width: 0;
+}
+
+/* ==================== 預覽內容 V2 ==================== */
+
+/* Hero 圖片區 */
 .reportPreviewHero {
   position: relative;
-  height: 120px;
-  background: linear-gradient(135deg, #1749d7, #3b82f6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  height: 160px;
+  background: #000;
   overflow: hidden;
+}
+
+.reportPreviewHeroTag {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: #1749d7;
+  color: #fff;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  z-index: 2;
 }
 
 .reportPreviewHeroImg {
@@ -403,6 +419,7 @@
   justify-content: center;
   width: 100%;
   height: 100%;
+  background: linear-gradient(135deg, #1749d7, #3b82f6);
   color: rgba(255, 255, 255, 0.35);
 }
 
@@ -411,128 +428,312 @@
   bottom: 0;
   left: 0;
   right: 0;
-  padding: 10px 12px;
-  background: linear-gradient(
-    to top,
-    rgba(0, 0, 0, 0.8) 0%,
-    rgba(0, 0, 0, 0.4) 60%,
-    transparent 100%
-  );
+  padding: 40px 12px 10px;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0.4) 60%, transparent 100%);
   color: #fff;
 }
 
-.reportPreviewPrice {
-  font-size: 18px;
-  font-weight: 800;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+.reportPreviewCommunity {
+  font-size: 10px;
+  opacity: 0.9;
+  margin-bottom: 2px;
 }
 
 .reportPreviewTitle {
-  font-size: 11px;
-  margin-top: 2px;
-  opacity: 0.9;
-}
-
-.reportPreviewSpecs {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 6px;
-  padding: 8px 10px;
-  background: linear-gradient(to bottom, #f8fafc, #f1f5f9);
-  font-size: 9px;
-  color: #64748b;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
-}
-
-.reportPreviewSpecs div {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-}
-
-.reportPreviewMortgage {
-  padding: 6px 10px;
-  background: linear-gradient(135deg, #fef3c7, #fde68a);
-  text-align: center;
-  box-shadow: 0 1px 2px rgba(146, 64, 14, 0.08) inset;
-}
-
-.reportPreviewMortgageLabel {
-  font-size: 9px;
-  color: #92400e;
-}
-
-.reportPreviewMortgageValue {
   font-size: 13px;
   font-weight: 700;
-  color: #92400e;
+  line-height: 1.3;
 }
 
-.reportPreviewHighlights {
-  padding: 8px 10px;
+/* 價格區塊 */
+.reportPreviewPriceSection {
+  background: linear-gradient(135deg, #1749d7, #0f3399);
+  padding: 12px;
+  color: #fff;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+
+.reportPreviewPriceMain {
   display: flex;
   flex-direction: column;
+}
+
+.reportPreviewPriceLabel {
+  font-size: 9px;
+  opacity: 0.8;
+  margin-bottom: 2px;
+}
+
+.reportPreviewPriceTotal {
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  line-height: 1;
+}
+
+.reportPreviewPriceTotal small {
+  font-size: 12px;
+  font-weight: 600;
+  margin-left: 2px;
+}
+
+.reportPreviewPriceUnit {
+  text-align: right;
+}
+
+.reportPreviewPriceUnitLabel {
+  font-size: 9px;
+  opacity: 0.7;
+}
+
+.reportPreviewPriceUnitValue {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.reportPreviewPriceUnitValue small {
+  font-size: 9px;
+  font-weight: 500;
+}
+
+/* 核心規格 */
+.reportPreviewSpecsGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.reportPreviewSpecItem {
+  padding: 10px 6px;
+  text-align: center;
+  border-right: 1px solid #e2e8f0;
+}
+
+.reportPreviewSpecItem:last-child {
+  border-right: none;
+}
+
+.reportPreviewSpecValue {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.2;
+}
+
+.reportPreviewSpecValue small {
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.reportPreviewSpecLabel {
+  font-size: 8px;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+/* 區塊標題 */
+.reportPreviewSectionTitle {
+  font-size: 10px;
+  font-weight: 600;
+  color: #0f172a;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
   gap: 6px;
 }
 
-.reportPreviewHighlight {
+.reportPreviewSectionTitle::before {
+  content: '';
+  width: 3px;
+  height: 10px;
+  background: #1749d7;
+  border-radius: 2px;
+}
+
+/* 物件資訊 */
+.reportPreviewDetails {
+  padding: 10px 12px;
+  background: #f8fafc;
+}
+
+.reportPreviewDetailsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+}
+
+.reportPreviewDetailItem {
   display: flex;
-  gap: 8px;
-  font-size: 10px;
-  padding: 4px 6px;
-  background: rgba(248, 250, 252, 0.6);
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 8px;
+  background: #fff;
   border-radius: 6px;
+  font-size: 10px;
 }
 
-.reportPreviewHighlight span {
-  font-size: 14px;
+.reportPreviewDetailLabel {
+  color: #64748b;
 }
 
-.reportPreviewHighlight strong {
-  display: block;
-  font-size: 11px;
+.reportPreviewDetailValue {
+  font-weight: 600;
   color: #0f172a;
 }
 
-.reportPreviewHighlight p {
-  margin: 1px 0 0;
-  color: #64748b;
-  font-size: 9px;
+/* 社區資訊 */
+.reportPreviewCommunitySection {
+  padding: 10px 12px;
+  border-bottom: 1px solid #e2e8f0;
 }
 
-.reportPreviewAgent {
+.reportPreviewCommunityInfo {
   display: flex;
-  align-items: center;
   gap: 8px;
-  padding: 8px 10px;
-  background: linear-gradient(to bottom, #f8fafc, #f1f5f9);
-  border-top: 1px solid #e2e8f0;
 }
 
-.reportPreviewAgentAvatar {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #1749d7, #3b82f6);
+.reportPreviewCommunityStat {
+  flex: 1;
+  background: #f8fafc;
+  padding: 8px;
+  border-radius: 6px;
+  text-align: center;
+}
+
+.reportPreviewCommunityStatValue {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1749d7;
+}
+
+.reportPreviewCommunityStatLabel {
+  font-size: 8px;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+/* 物件說明 */
+.reportPreviewDescription {
+  padding: 10px 12px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.reportPreviewDescriptionText {
+  font-size: 10px;
+  line-height: 1.6;
+  color: #64748b;
+}
+
+/* 地址位置 */
+.reportPreviewLocation {
+  padding: 10px 12px;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.reportPreviewLocationIcon {
+  width: 24px;
+  height: 24px;
+  background: rgba(23, 73, 215, 0.1);
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
+  color: #1749d7;
+  flex-shrink: 0;
+}
+
+.reportPreviewLocationText {
+  font-size: 11px;
+  color: #0f172a;
+  line-height: 1.4;
+}
+
+.reportPreviewLocationText small {
+  display: block;
+  font-size: 9px;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+/* 業務資訊 */
+.reportPreviewAgent {
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(to right, #f8fafc, #fff);
+}
+
+.reportPreviewAgentAvatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #1749d7, #3b82f6);
+  border: 2px solid #fff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
 .reportPreviewAgentInfo {
-  font-size: 9px;
+  flex: 1;
 }
 
 .reportPreviewAgentInfo strong {
   display: block;
-  font-size: 10px;
+  font-size: 11px;
+  font-weight: 600;
   color: #0f172a;
 }
 
 .reportPreviewAgentInfo span {
+  font-size: 9px;
   color: #64748b;
+}
+
+.reportPreviewAgentCta {
+  display: flex;
+  gap: 6px;
+}
+
+.reportPreviewAgentBtn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
+}
+
+.reportPreviewAgentBtn.primary {
+  background: #1749d7;
+  color: #fff;
+  box-shadow: 0 4px 10px rgba(23, 73, 215, 0.3);
+}
+
+.reportPreviewAgentBtn.secondary {
+  background: #fff;
+  color: #1749d7;
+  border: 1px solid #e2e8f0;
+}
+
+/* 品牌浮水印 */
+.reportPreviewWatermark {
+  padding: 8px 12px;
+  text-align: center;
+  font-size: 9px;
+  color: #64748b;
+  background: #f8fafc;
+}
+
+.reportPreviewWatermark strong {
+  color: #1749d7;
+  font-weight: 600;
 }
 
 /* 生成按鈕 */
