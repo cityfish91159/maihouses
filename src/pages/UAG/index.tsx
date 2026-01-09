@@ -108,11 +108,19 @@ function UAGPageContent() {
     // 失敗時 useUAG 已經顯示 toast 錯誤訊息
   };
 
-  const handleCloseModal = () => {
+  const handleCloseModal = useCallback(() => {
     setShowMessageModal(false);
     setPurchasedLead(null);
     setCurrentConversationId(undefined);
-  };
+  }, []);
+
+  // Mock 模式下發送訊息成功的回調
+  const handleMessageSentSuccess = useCallback(() => {
+    // 關閉 Modal 並重新載入數據以更新狀態
+    setShowMessageModal(false);
+    setPurchasedLead(null);
+    setCurrentConversationId(undefined);
+  }, []);
 
   if (isLoading) return <UAGLoadingSkeleton />;
   if (!appData) return null;
@@ -190,6 +198,7 @@ function UAGPageContent() {
         <SendMessageModal
           isOpen={showMessageModal}
           onClose={handleCloseModal}
+          onSuccess={handleMessageSentSuccess}
           lead={purchasedLead}
           agentId={agentId}
           sessionId={consumerSessionId}

@@ -45,10 +45,6 @@ export function useUAG() {
   const queryClient = useQueryClient();
 
   const toggleMode = () => {
-    if (import.meta.env.PROD) {
-      notify.error("生產環境無法切換模式");
-      return;
-    }
     const newMode = !useMock;
     setUseMock(newMode);
     safeLocalStorage.setItem("uag_mode", newMode ? "mock" : "live");
@@ -223,10 +219,10 @@ export function useUAG() {
                           ...item,
                           id: result?.purchase_id ?? item.id, // 更新為 purchase UUID
                           purchased_at: new Date().toISOString(),
-                          // ✅ 設置 conversation_id (Mock/API 模式都有)
-                          conversation_id: result?.conversation_id,
-                          // ✅ Mock 模式下設置預設 notification_status
-                          notification_status: useMock ? "sent" : undefined,
+                          // ❌ 不在購買時設置 conversation_id
+                          // conversation_id 應該在發送訊息後才設置
+                          // ✅ Mock 模式下設置預設 notification_status 為 pending
+                          notification_status: useMock ? "pending" : undefined,
                         };
                       }
                       return item;

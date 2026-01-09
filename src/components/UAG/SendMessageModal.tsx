@@ -41,6 +41,8 @@ interface SendMessageModalProps {
   conversationId?: string;
   /** UAG-14: 房仲名稱 (用於 LINE 通知) */
   agentName: string;
+  /** 發送成功回調（用於 Mock 模式更新 UI） */
+  onSuccess?: () => void;
 }
 
 /**
@@ -60,6 +62,7 @@ export function SendMessageModal({
   propertyId,
   conversationId,
   agentName,
+  onSuccess,
 }: SendMessageModalProps): React.ReactElement | null {
   const navigate = useNavigate();
   const [message, setMessage] = useState("");
@@ -81,13 +84,10 @@ export function SendMessageModal({
         // Mock 模式：模擬延遲 + 成功
         await new Promise((resolve) => setTimeout(resolve, 800));
 
-        // 生成 Mock conversation ID (如果沒有)
-        const mockConversationId =
-          conversationId || `mock-conv-${lead.id}-${Date.now()}`;
-
-        notify.success("訊息已發送", "Mock 模式：訊息模擬發送成功");
+        notify.success("訊息已發送", "客戶會收到通知");
+        onSuccess?.(); // 通知父組件更新狀態
         onClose();
-        navigate(ROUTES.CHAT(mockConversationId));
+        // Mock 模式下不導航，直接關閉 Modal 回到 UAG 頁面
         return;
       }
 
@@ -187,6 +187,7 @@ export function SendMessageModal({
     sessionId,
     propertyId,
     onClose,
+    onSuccess,
     navigate,
     conversationId,
     lead.id,

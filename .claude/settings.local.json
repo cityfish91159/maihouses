@@ -86,7 +86,11 @@
       "Bash(npx prettier:*)",
       "Bash(xargs ls:*)",
       "Bash(find:*)",
-      "Bash(chcp 65001)"
+      "Bash(chcp 65001)",
+      "Bash(netsh wlan show interfaces:*)",
+      "Bash(netsh wlan show networks:*)",
+      "mcp__filesystem__read_multiple_files",
+      "Bash(wc:*)"
     ]
   },
   "model": "claude-opus-4-5-20251101",
