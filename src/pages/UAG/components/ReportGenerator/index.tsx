@@ -672,9 +672,17 @@ export default function ReportGenerator({
           <div className={styles.reportPhoneNotch} />
           <div className={styles.reportPhoneContent}>
             <div className={styles.reportPreviewHero}>
-              <div className={styles.reportPreviewHeroImg}>
-                <Home size={48} />
-              </div>
+              {selectedProperty.images?.[0] ? (
+                <img
+                  src={selectedProperty.images[0]}
+                  alt={selectedProperty.title}
+                  className={styles.reportPreviewHeroImg}
+                />
+              ) : (
+                <div className={styles.reportPreviewHeroPlaceholder}>
+                  <Home size={36} />
+                </div>
+              )}
               <div className={styles.reportPreviewHeroOverlay}>
                 <div className={styles.reportPreviewPrice}>
                   NT$ {formatPrice(selectedProperty.price)}
