@@ -458,7 +458,7 @@
   - ✅ onViewChat 未傳入時點擊不報錯
   - ✅ onSendMessage 未傳入時點擊不報錯
 - **驗證**：
-  - ✅ 18/18 tests 通過
+  - ✅ 3/3 tests 通過
 
 ---
 

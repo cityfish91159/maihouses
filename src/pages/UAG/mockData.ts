@@ -1,5 +1,6 @@
 import {
   AppData,
+  AgentProfile,
   Lead,
   Listing,
   FeedPost,
@@ -67,6 +68,19 @@ const MOCK_IDS = {
     H009: "sess-H009-tuv678",
     F778: "sess-F778-wxy901",
   },
+};
+
+// Mock 房仲個人資料（用於 UAG Header 房仲資訊條）
+export const MOCK_AGENT_PROFILE: AgentProfile = {
+  id: "mock-agent-001",
+  internalCode: 12345,
+  name: "游杰倫",
+  avatarUrl: null,
+  company: "邁房子",
+  trustScore: 92,
+  encouragementCount: 18,
+  visitCount: 45,
+  dealCount: 8,
 };
 
 export const MOCK_DB: AppData = {
