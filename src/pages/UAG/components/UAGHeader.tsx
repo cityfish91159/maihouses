@@ -222,8 +222,8 @@ export const UAGHeader: React.FC<UAGHeaderProps> = ({
         </div>
       </div>
 
-      {/* 房仲資訊條 */}
-      {user && agentProfile && (
+      {/* 房仲資訊條：只要有 agentProfile 就顯示（支援 mock 模式） */}
+      {agentProfile && (
         <div className={styles["agent-bar"]}>
           <div className={styles["agent-bar-avatar"]}>
             {displayName.charAt(0).toUpperCase()}
