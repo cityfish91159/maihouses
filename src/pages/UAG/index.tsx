@@ -3,6 +3,7 @@ import { ErrorBoundary } from "react-error-boundary";
 import { QueryErrorResetBoundary } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { ROUTES } from "../../constants/routes";
+import { notify } from "../../lib/notify";
 
 import styles from "./UAG.module.css";
 import { useUAG } from "./hooks/useUAG";
@@ -63,9 +64,14 @@ function UAGPageContent() {
 
   const handleViewChat = useCallback(
     (conversationId: string) => {
+      // Mock 模式下的聊天室導航處理
+      if (useMock && conversationId.startsWith("mock-conv-")) {
+        notify.info("Mock 模式", "聊天室功能需要切換到 Live 模式");
+        return;
+      }
       navigate(ROUTES.CHAT(conversationId));
     },
-    [navigate],
+    [navigate, useMock],
   );
 
   const handleCloseAssetModal = useCallback(() => {

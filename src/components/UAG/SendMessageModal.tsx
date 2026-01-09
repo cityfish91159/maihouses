@@ -71,25 +71,45 @@ export function SendMessageModal({
   const handleSend = useCallback(async () => {
     if (!message.trim() || isSending) return;
 
-    // [UAG-13 FIX] 驗證 conversationId 格式 (防禦性編程)
-    let validConversationId = conversationId;
-    if (conversationId) {
-      const uuidRegex =
-        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-      if (!uuidRegex.test(conversationId)) {
-        logger.warn(
-          "[SendMessageModal] Invalid conversationId format, fallback to create flow",
-          {
-            invalidId: conversationId,
-            leadId: lead.id,
-          },
-        );
-        validConversationId = undefined; // 強制走建立流程
-      }
-    }
-
     setIsSending(true);
+
     try {
+      // ========== Mock 模式檢測 ==========
+      const isMockMode = agentId === "mock-agent-001";
+
+      if (isMockMode) {
+        // Mock 模式：模擬延遲 + 成功
+        await new Promise((resolve) => setTimeout(resolve, 800));
+
+        // 生成 Mock conversation ID (如果沒有)
+        const mockConversationId =
+          conversationId || `mock-conv-${lead.id}-${Date.now()}`;
+
+        notify.success("訊息已發送", "Mock 模式：訊息模擬發送成功");
+        onClose();
+        navigate(ROUTES.CHAT(mockConversationId));
+        return;
+      }
+
+      // ========== API 模式（原有邏輯）==========
+
+      // [UAG-13 FIX] 驗證 conversationId 格式 (防禦性編程)
+      let validConversationId = conversationId;
+      if (conversationId) {
+        const uuidRegex =
+          /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        if (!uuidRegex.test(conversationId)) {
+          logger.warn(
+            "[SendMessageModal] Invalid conversationId format, fallback to create flow",
+            {
+              invalidId: conversationId,
+              leadId: lead.id,
+            },
+          );
+          validConversationId = undefined; // 強制走建立流程
+        }
+      }
+
       // UAG-13: 如果已經有 conversationId，直接發送訊息 (Skip Create，不推 LINE)
       if (validConversationId) {
         const safeConversationId: string = validConversationId;

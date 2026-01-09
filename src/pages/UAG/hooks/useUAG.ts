@@ -223,6 +223,10 @@ export function useUAG() {
                           ...item,
                           id: result?.purchase_id ?? item.id, // 更新為 purchase UUID
                           purchased_at: new Date().toISOString(),
+                          // ✅ 設置 conversation_id (Mock/API 模式都有)
+                          conversation_id: result?.conversation_id,
+                          // ✅ Mock 模式下設置預設 notification_status
+                          notification_status: useMock ? "sent" : undefined,
                         };
                       }
                       return item;

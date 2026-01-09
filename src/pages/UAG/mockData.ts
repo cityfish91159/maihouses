@@ -101,6 +101,8 @@ export const MOCK_DB: AppData = {
       remainingHours: 118,
       session_id: MOCK_IDS.sessions.S5566,
       property_id: MOCK_IDS.properties.metro,
+      notification_status: "sent",
+      conversation_id: "mock-conv-S5566-001",
     },
     {
       id: MOCK_IDS.leads.S9011,
@@ -116,6 +118,8 @@ export const MOCK_DB: AppData = {
       remainingHours: 114,
       session_id: MOCK_IDS.sessions.S9011,
       property_id: MOCK_IDS.properties.highview,
+      notification_status: "no_line",
+      conversation_id: "mock-conv-S9011-002",
     },
     {
       id: MOCK_IDS.leads.A7788,
@@ -131,6 +135,8 @@ export const MOCK_DB: AppData = {
       remainingHours: 52,
       session_id: MOCK_IDS.sessions.A7788,
       property_id: MOCK_IDS.properties.school,
+      notification_status: "unreachable",
+      conversation_id: "mock-conv-A7788-003",
     },
     {
       id: MOCK_IDS.leads.A6600,
@@ -146,6 +152,8 @@ export const MOCK_DB: AppData = {
       remainingHours: 62,
       session_id: MOCK_IDS.sessions.A6600,
       property_id: MOCK_IDS.properties.presale,
+      notification_status: "pending",
+      conversation_id: "mock-conv-A6600-004",
     },
 
     // 雷達：更多可購買的模擬圓點 (status = new)
