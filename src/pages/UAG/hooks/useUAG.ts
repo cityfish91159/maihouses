@@ -46,9 +46,15 @@ export function useUAG() {
 
   const toggleMode = () => {
     const newMode = !useMock;
+
+    // 切換到 Live 模式時，檢查是否已登入
+    if (!newMode && !session?.user?.id) {
+      notify.error("請先登入", "切換到 Live 模式需要登入");
+      return;
+    }
+
     setUseMock(newMode);
     safeLocalStorage.setItem("uag_mode", newMode ? "mock" : "live");
-    queryClient.invalidateQueries({ queryKey: ["uagData"] });
   };
 
   const { data, isLoading, error, refetch } = useQuery({
