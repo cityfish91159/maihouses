@@ -11,6 +11,7 @@ import { HEADER_MODES } from "../../constants/header";
 interface ConnectTokenPayload {
   conversationId: string;
   sessionId: string;
+  propertyId?: string;
   exp: number;
 }
 

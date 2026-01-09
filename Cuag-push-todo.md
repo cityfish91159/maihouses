@@ -16,9 +16,9 @@
 | 修1 | Session Key 不一致 | ✅ 已修正 (localStorage uag_session) |
 | 補1 | 硬編碼顏色修復 | ✅ (AssetMonitor.tsx + UAG.module.css) |
 | 修2 | Chat Page 強制登入 | ✅ 已修正 (支援 uag_session 匿名用戶) |
-| 補2 | useConsumerSession Hook | ✅ 審核通過 (SSR安全+7天過期+統一API) |
-| 修3 | LINE 訊息缺物件連結 | ⏳ |
-| 修4 | Connect Token 未帶物件 | ⏳ |
+| 補2 | useConsumerSession Hook | ✅ 審核通過 (11 tests + useState/useCallback 效能優化) |
+| 修3 | LINE 訊息缺物件連結 | ✅ 已修正 (buildLineMessage 加入 propertyUrl) |
+| 修4 | Connect Token 未帶物件 | ✅ 已修正 (ConnectTokenPayload 加入 propertyId) |
 | 測1 | 站內訊息 100% 成功 | ⏳ |
 | 測2 | 有綁定 LINE 測試 | ⏳ |
 | 測3 | 封鎖 OA 測試 | ⏳ |
@@ -156,4 +156,4 @@
 
 ---
 
-> 更新：2026-01-08
+> 更新：2026-01-09

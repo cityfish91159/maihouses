@@ -41,12 +41,14 @@ interface LineBindingResult {
 interface ConnectTokenPayload {
   conversationId: string;
   sessionId: string;
+  propertyId?: string;
   exp: number;
 }
 
 interface LineMessageData {
   agentName: string;
   propertyTitle?: string;
+  propertyId?: string;
   connectUrl: string;
   grade?: string;
 }
@@ -76,14 +78,23 @@ function buildLineMessage(
   agentName: string,
   connectUrl: string,
   propertyTitle?: string,
+  propertyId?: string,
   grade?: string,
 ): string {
   const gradePrefix = getGradePrefix(grade);
+  const baseUrl = "https://maihouses.vercel.app/maihouses";
+  const propertyUrl = propertyId ? `${baseUrl}/#/property/${propertyId}` : null;
 
-  return `${gradePrefix}
-房仲：${agentName}${propertyTitle ? `（${propertyTitle}）` : ""}
+  let message = `${gradePrefix}
+房仲：${agentName}${propertyTitle ? `（${propertyTitle}）` : ""}`;
 
-點此查看並回覆：${connectUrl}`;
+  if (propertyUrl) {
+    message += `\n\n物件詳情：${propertyUrl}`;
+  }
+
+  message += `\n\n點此查看並回覆：${connectUrl}`;
+
+  return message;
 }
 
 /**
@@ -92,10 +103,12 @@ function buildLineMessage(
 function generateConnectToken(
   conversationId: string,
   sessionId: string,
+  propertyId?: string,
 ): string {
   const payload: ConnectTokenPayload = {
     conversationId,
     sessionId,
+    propertyId,
     exp: Date.now() + 7 * 24 * 60 * 60 * 1000, // 7 天有效
   };
   return Buffer.from(JSON.stringify(payload)).toString("base64url");
@@ -161,6 +174,7 @@ async function pushLineMessage(
     data.agentName,
     data.connectUrl,
     data.propertyTitle,
+    data.propertyId,
     data.grade,
   );
 
@@ -382,7 +396,7 @@ export default async function handler(
     }
 
     // ========== 3. 產生 Connect Token ==========
-    const connectToken = generateConnectToken(conversationId, sessionId);
+    const connectToken = generateConnectToken(conversationId, sessionId, propertyId);
     const connectUrl = `${baseUrl || "https://maihouses.vercel.app"}/maihouses/chat/connect?token=${connectToken}`;
 
     // ========== 4. 寫入通知佇列（防重複 + 支援重試）==========
@@ -416,6 +430,7 @@ export default async function handler(
         {
           agentName,
           propertyTitle,
+          propertyId,
           connectUrl,
           grade,
         },
