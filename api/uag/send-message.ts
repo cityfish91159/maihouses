@@ -3,7 +3,7 @@ import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import { messagingApi } from "@line/bot-sdk";
 import { v4 as uuidv4 } from "uuid";
 import { verifyAgentAuth, sendAuthError, isDevEnvironment } from "../lib/auth";
-import { encryptConnectToken } from "../lib/crypto";
+import { encryptConnectToken, ConnectTokenPayload } from "../lib/crypto";
 import {
   withSentryHandler,
   captureError,

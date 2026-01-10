@@ -135,10 +135,5 @@ export function sendAuthError(
   });
 }
 
-/**
- * 檢查是否為開發環境（允許跳過認證）
- */
-export function isDevEnvironment(): boolean {
-  return process.env.NODE_ENV === "development" ||
-         process.env.VERCEL_ENV === "development";
-}
+// isDevEnvironment 已在 env.ts 中定義，使用 re-export
+export { isDevEnvironment } from "./env";

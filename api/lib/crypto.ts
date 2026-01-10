@@ -40,13 +40,21 @@ function getSecretKey(): Buffer {
   return keyBuffer.subarray(0, 32);
 }
 
+/** Connect Token Payload 類型 */
+export interface ConnectTokenPayload {
+  conversationId: string;
+  sessionId: string;
+  propertyId?: string;
+  exp: number;
+}
+
 /**
  * 加密 Connect Token 資料
  *
- * @param payload - 要加密的 JSON 物件
+ * @param payload - 要加密的 Connect Token 物件
  * @returns 加密後的 base64url 字串
  */
-export function encryptConnectToken(payload: Record<string, unknown>): string {
+export function encryptConnectToken(payload: ConnectTokenPayload): string {
   const key = getSecretKey();
   const iv = randomBytes(IV_LENGTH);
   const plaintext = JSON.stringify(payload);
