@@ -1,6 +1,7 @@
 import React, { forwardRef, useState, useRef } from "react";
 import { Lead } from "../types/uag.types";
 import styles from "../UAG.module.css";
+import { isExclusiveLead } from "../utils/leadHelpers";
 
 export interface ActionPanelProps {
   selectedLead: Lead | null;
@@ -70,8 +71,7 @@ const ActionPanel = forwardRef<HTMLDivElement, ActionPanelProps>(
       );
     }
 
-    const isExclusive =
-      selectedLead.grade === "S" || selectedLead.grade === "A";
+    const isExclusive = isExclusiveLead(selectedLead);
 
     const handleBuyClick = () => {
       setIsConfirming(true);

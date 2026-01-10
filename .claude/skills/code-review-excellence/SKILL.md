@@ -1,3 +1,9 @@
+---
+name: code-review-excellence
+description: 程式碼審查最佳實踐指南。當進行 PR review、代碼審查或用戶提到「review」、「審查」時使用。
+allowed-tools: Read, Grep
+---
+
 # Code Review Excellence Skill
 
 本地快取版本，來源：[wshobson/agents](https://github.com/wshobson/agents)

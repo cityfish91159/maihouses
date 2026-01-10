@@ -22,6 +22,8 @@ import { MaiMaiProvider } from "./context/MaiMaiContext";
 import { CookieConsent } from "./components/CookieConsent";
 
 import UAGPage from "./pages/UAG";
+import UAGDeAIDemo from "./pages/UAG/UAGDeAIDemo";
+import UAGDeAIDemoV2 from "./pages/UAG/UAGDeAIDemoV2";
 import { PropertyDetailPage } from "./pages/PropertyDetailPage";
 import { PropertyUploadPage } from "./pages/PropertyUploadPage";
 import PropertyListPage from "./pages/PropertyListPage";
@@ -97,6 +99,8 @@ export default function App() {
                 }
               />
               <Route path="/uag" element={<UAGPage />} />
+              <Route path="/uag-deai" element={<UAGDeAIDemo />} />
+              <Route path="/uag-deai-v2" element={<UAGDeAIDemoV2 />} />
               <Route
                 path="/community/:id/wall"
                 element={

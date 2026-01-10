@@ -1,0 +1,1304 @@
+/**
+ * UAG De-AI Demo v2 - 完整去除 AI 感設計
+ *
+ * 所有設計元素來自 ui-ux-pro-max 資料庫：
+ *
+ * 【風格】
+ * - Flat Design: 2D, minimalist, bold colors, no shadows, clean lines
+ *   Effects: No gradients/shadows, simple hover (color/opacity shift),
+ *   fast loading, clean transitions (150-200ms ease)
+ *
+ * - Minimalism & Swiss Style: Clean, simple, spacious, functional
+ *   Effects: Subtle hover (200-250ms), smooth transitions, sharp shadows if any
+ *
+ * 【產品】
+ * - Real Estate/Property: Trust Blue (#0077B6) + Gold accents + White
+ *   Dashboard Style: Sales Intelligence Dashboard
+ *
+ * 【字體】
+ * - Corporate Trust: Lexend (heading) + Source Sans 3 (body)
+ *   CSS Import: @import url('https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&family=Source+Sans+3:wght@300;400;500;600;700&display=swap');
+ *
+ * 【顏色】
+ * - Financial Dashboard:
+ *   Primary: #3B82F6, Secondary: #60A5FA, CTA: #F97316
+ *   Background: #F8FAFC, Text: #1E293B, Border: #E2E8F0
+ *
+ * 【動畫】
+ * - Micro-interactions: Small hover (50-100ms), success/error state anim
+ * - Sales Intelligence Dashboard: Deal movement animations, status change highlights
+ * - UX Guideline: "Continuous Animation - Use for loading indicators only"
+ *   但 Sales Dashboard 允許 "status change highlights" 吸引注意
+ *
+ * 【Tailwind Stack】
+ * - Buttons: px-4 py-2 text-sm
+ * - Cards: rounded-2xl shadow-lg p-6, space-y-4
+ */
+
+/* ====== CSS Variables ====== */
+/* ui-ux-pro-max: Real Estate + Financial Dashboard 色盤 */
+.deai-v2 {
+  /* 品牌色 - 採用你的深藍 + ui-ux-pro-max Trust Blue 混合 */
+  --brand: #00385a;
+  --brand-light: #0077B6;
+  --brand-dark: #002a44;
+
+  /* ui-ux-pro-max: Financial Dashboard 色盤 */
+  --primary: #3B82F6;
+  --secondary: #60A5FA;
+  --cta: #F97316;
+  --bg: #F8FAFC;
+  --text: #1E293B;
+  --text-muted: #64748B;
+  --border: #E2E8F0;
+
+  /* ui-ux-pro-max: Sales Intelligence Dashboard 等級色 */
+  --grade-s: #c2410c;
+  --grade-s-bg: #fff7ed;
+  --grade-a: #15803d;
+  --grade-a-bg: #f0fdf4;
+  --grade-b: #1d4ed8;
+  --grade-b-bg: #eff6ff;
+  --grade-c: #475569;
+  --grade-c-bg: #f8fafc;
+  --grade-f: #64748b;
+  --grade-f-bg: #f1f5f9;
+
+  /* ui-ux-pro-max: Micro-interactions - feedback colors */
+  --success: #22C55E;
+  --error: #EF4444;
+  --warning: #F59E0B;
+
+  /* ui-ux-pro-max: Flat Design 過渡 (150-200ms) */
+  --transition-fast: 100ms ease;
+  --transition: 150ms ease;
+  --transition-slow: 200ms ease;
+
+  /* ui-ux-pro-max: html-tailwind stack - rounded-2xl = 16px, rounded-lg = 8px */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 16px;
+
+  /* ui-ux-pro-max: Flat Design - no shadows, 但允許極淡陰影 */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.06);
+
+  /* ui-ux-pro-max: Corporate Trust 字體 */
+  --font-heading: 'Lexend', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-body: 'Source Sans 3', -apple-system, BlinkMacSystemFont, 'Noto Sans TC', sans-serif;
+}
+
+/* ====== Page Base ====== */
+/* ui-ux-pro-max: Flat Design - clean, no decorative patterns */
+.deai-v2-page {
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.5;
+  padding-bottom: 72px;
+  min-height: 100vh;
+}
+
+/* ====== Header ====== */
+/* ui-ux-pro-max: Flat Design - no blur, simple border */
+.deai-v2-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: #fff;
+  border-bottom: 1px solid var(--border);
+}
+
+.deai-v2-header-inner {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 12px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* ====== Logo ====== */
+.deai-v2-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.deai-v2-logo-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  background: var(--brand);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.deai-v2-logo-text {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 18px;
+  color: var(--text);
+}
+
+/* ====== Navigation ====== */
+.deai-v2-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ui-ux-pro-max: Flat Design badges - no gradients, solid colors */
+.deai-v2-badge {
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid var(--border);
+  background: #fff;
+  color: var(--text-muted);
+}
+
+.deai-v2-badge--active {
+  background: var(--brand);
+  color: #fff;
+  border-color: var(--brand);
+}
+
+/* ====== Agent Bar ====== */
+.deai-v2-agent-bar {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 10px 24px;
+  background: #fff;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.deai-v2-agent-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  background: var(--brand);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.deai-v2-agent-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.deai-v2-agent-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text);
+}
+
+.deai-v2-agent-code {
+  font-size: 11px;
+  color: var(--brand);
+  font-weight: 600;
+}
+
+.deai-v2-agent-stats {
+  display: flex;
+  gap: 16px;
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.deai-v2-agent-stat strong {
+  color: var(--text);
+  font-weight: 700;
+  margin-right: 2px;
+}
+
+.deai-v2-agent-stat--trust strong {
+  color: var(--success);
+}
+
+/* ====== Main Layout ====== */
+.deai-v2-main {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 24px;
+  display: grid;
+  grid-template-columns: 1fr 360px;
+  gap: 24px;
+}
+
+@media (max-width: 1024px) {
+  .deai-v2-main {
+    grid-template-columns: 1fr;
+    padding: 16px;
+    gap: 16px;
+  }
+}
+
+/* ====== Card ====== */
+/* ui-ux-pro-max: html-tailwind stack - rounded-2xl shadow-lg p-6 */
+.deai-v2-card {
+  background: #fff;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  padding: 24px;
+  box-shadow: var(--shadow-md);
+}
+
+.deai-v2-card-header {
+  margin-bottom: 16px;
+}
+
+.deai-v2-card-title {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 18px;
+  color: var(--text);
+  border-left: 3px solid var(--brand);
+  padding-left: 12px;
+}
+
+.deai-v2-card-sub {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-top: 4px;
+  padding-left: 15px;
+}
+
+/* ====== Radar Cluster ====== */
+/* ui-ux-pro-max: Flat Design - clean background */
+.deai-v2-cluster {
+  position: relative;
+  min-height: 420px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: #fff;
+  overflow: hidden;
+}
+
+/* ui-ux-pro-max: Swiss Style - simple crosshair */
+.deai-v2-cluster::before,
+.deai-v2-cluster::after {
+  content: '';
+  position: absolute;
+  background: var(--border);
+  pointer-events: none;
+}
+
+.deai-v2-cluster::before {
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  transform: translateX(-50%);
+}
+
+.deai-v2-cluster::after {
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  transform: translateY(-50%);
+}
+
+/* Live Badge */
+.deai-v2-live {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  z-index: 10;
+}
+
+.deai-v2-live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--success);
+}
+
+/* ====== Bubble ====== */
+/* ui-ux-pro-max: Micro-interactions - Small hover (50-100ms) */
+/* ui-ux-pro-max: Sales Intelligence Dashboard - status change highlights */
+.deai-v2-bubble {
+  position: absolute;
+  width: var(--size);
+  height: var(--size);
+  border-radius: 50%;
+  background: #fff;
+  border: 2px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  z-index: 10;
+}
+
+/* ui-ux-pro-max: Micro-interactions - hover (50-100ms), subtle visual change */
+.deai-v2-bubble:hover {
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px rgba(0, 56, 90, 0.1);
+}
+
+.deai-v2-bubble:focus {
+  outline: none;
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px rgba(0, 56, 90, 0.15);
+}
+
+/* ui-ux-pro-max: Flat Design - solid background colors */
+.deai-v2-bubble[data-grade="S"] {
+  background: var(--grade-s-bg);
+  border-color: var(--grade-s);
+}
+
+.deai-v2-bubble[data-grade="A"] {
+  background: var(--grade-a-bg);
+  border-color: var(--grade-a);
+}
+
+.deai-v2-bubble[data-grade="B"] {
+  background: var(--grade-b-bg);
+  border-color: var(--grade-b);
+}
+
+.deai-v2-bubble[data-grade="C"] {
+  background: var(--grade-c-bg);
+  border-color: var(--grade-c);
+}
+
+.deai-v2-bubble[data-grade="F"] {
+  background: var(--grade-f-bg);
+  border-color: var(--grade-f);
+}
+
+/* ====== Bubble 微動畫 ====== */
+/* ui-ux-pro-max: Sales Intelligence Dashboard - "status change highlights"
+ * ui-ux-pro-max: Micro-interactions - "success/error state anim"
+ *
+ * 設計理念：S/A 級是高價值客戶，用微動畫吸引購買
+ * 動畫類型：subtle scale + opacity 呼吸效果（非 decorative，是 status indicator）
+ */
+.deai-v2-bubble[data-grade="S"],
+.deai-v2-bubble[data-grade="A"] {
+  animation: statusHighlight 3s ease-in-out infinite;
+}
+
+@keyframes statusHighlight {
+  0%, 100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.03);
+    opacity: 0.95;
+  }
+}
+
+/* ui-ux-pro-max: UX Guideline - prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  .deai-v2-bubble[data-grade="S"],
+  .deai-v2-bubble[data-grade="A"] {
+    animation: none;
+  }
+}
+
+/* Bubble Grade Badge */
+.deai-v2-bubble-grade {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #fff;
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 10px;
+  color: var(--text);
+}
+
+.deai-v2-bubble[data-grade="S"] .deai-v2-bubble-grade {
+  background: var(--grade-s);
+  color: #fff;
+  border-color: var(--grade-s);
+}
+
+.deai-v2-bubble[data-grade="A"] .deai-v2-bubble-grade {
+  background: var(--grade-a);
+  color: #fff;
+  border-color: var(--grade-a);
+}
+
+.deai-v2-bubble[data-grade="B"] .deai-v2-bubble-grade {
+  background: var(--grade-b);
+  color: #fff;
+  border-color: var(--grade-b);
+}
+
+/* Bubble Content */
+.deai-v2-bubble-id {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text);
+}
+
+.deai-v2-bubble-intent {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+/* Bubble Label */
+.deai-v2-bubble-label {
+  position: absolute;
+  bottom: -22px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #fff;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* ====== Action Panel ====== */
+.deai-v2-panel {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+}
+
+.deai-v2-panel-head {
+  padding: 16px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--text);
+}
+
+.deai-v2-panel-body {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Stats */
+.deai-v2-stat {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.deai-v2-stat:last-of-type {
+  border-bottom: none;
+}
+
+.deai-v2-stat-label {
+  color: var(--text-muted);
+}
+
+.deai-v2-stat-value {
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* Grade Badge in Panel */
+.deai-v2-grade-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.deai-v2-grade-badge--s {
+  background: var(--grade-s-bg);
+  color: var(--grade-s);
+}
+
+.deai-v2-grade-badge--a {
+  background: var(--grade-a-bg);
+  color: var(--grade-a);
+}
+
+.deai-v2-grade-badge--b {
+  background: var(--grade-b-bg);
+  color: var(--grade-b);
+}
+
+.deai-v2-grade-badge--c {
+  background: var(--grade-c-bg);
+  color: var(--grade-c);
+}
+
+.deai-v2-grade-badge--f {
+  background: var(--grade-f-bg);
+  color: var(--grade-f);
+}
+
+/* AI Box - ui-ux-pro-max: Flat Design, simple feedback */
+.deai-v2-ai-box {
+  padding: 12px;
+  border-radius: var(--radius-md);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+.deai-v2-ai-box--success {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+  color: #15803d;
+}
+
+/* ====== CTA Button ====== */
+/* ui-ux-pro-max: html-tailwind stack - px-4 py-2 */
+/* ui-ux-pro-max: Flat Design - solid color, no gradient */
+.deai-v2-btn-cta {
+  width: 100%;
+  padding: 14px 24px;
+  border: none;
+  border-radius: var(--radius-md);
+  background: var(--brand);
+  color: #fff;
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 15px;
+  cursor: pointer;
+  transition: background var(--transition);
+}
+
+/* ui-ux-pro-max: Flat Design - simple hover (color/opacity shift) */
+.deai-v2-btn-cta:hover {
+  background: var(--brand-dark);
+}
+
+.deai-v2-btn-cta:disabled {
+  background: #cbd5e1;
+  cursor: not-allowed;
+}
+
+/* Empty State */
+.deai-v2-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.deai-v2-empty-icon {
+  width: 48px;
+  height: 48px;
+  margin-bottom: 12px;
+  color: var(--border);
+}
+
+/* ====== Footer ====== */
+/* ui-ux-pro-max: Flat Design - simple, clean */
+.deai-v2-footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 12px 24px;
+  background: #fff;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  z-index: 100;
+}
+
+/* ui-ux-pro-max: Flat Design buttons */
+.deai-v2-btn {
+  padding: 6px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: border-color var(--transition), color var(--transition);
+}
+
+.deai-v2-btn:hover {
+  border-color: var(--brand);
+  color: var(--brand);
+}
+
+.deai-v2-btn--primary {
+  background: var(--brand);
+  color: #fff;
+  border-color: var(--brand);
+}
+
+.deai-v2-btn--primary:hover {
+  background: var(--brand-dark);
+  border-color: var(--brand-dark);
+}
+
+/* Points Badge */
+.deai-v2-points {
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.deai-v2-points strong {
+  color: var(--text);
+  margin-left: 4px;
+}
+
+/* ====== Container & Grid ====== */
+/* ui-ux-pro-max: html-tailwind - grid gap-6 */
+.deai-v2-container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.deai-v2-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 20px;
+}
+
+.deai-v2-span-3 {
+  grid-column: span 3;
+}
+
+.deai-v2-span-6 {
+  grid-column: span 6;
+}
+
+@media (max-width: 1024px) {
+  .deai-v2-grid {
+    grid-template-columns: 1fr;
+  }
+  .deai-v2-span-3,
+  .deai-v2-span-6 {
+    grid-column: span 1;
+  }
+}
+
+/* ====== Table (Asset Monitor) ====== */
+/* ui-ux-pro-max: html-tailwind - table layout */
+.deai-v2-table-wrap {
+  overflow-x: auto;
+}
+
+.deai-v2-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.deai-v2-table th {
+  text-align: left;
+  padding: 10px 12px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  font-weight: 600;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.deai-v2-table td {
+  padding: 12px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+
+.deai-v2-table-lead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.deai-v2-table-grade {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.deai-v2-table-name {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.deai-v2-table-prop {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* Progress Bar */
+.deai-v2-progress-info {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.deai-v2-countdown {
+  color: var(--text-muted);
+  font-family: monospace;
+}
+
+.deai-v2-progress-bg {
+  height: 6px;
+  background: var(--border);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.deai-v2-progress-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width var(--transition);
+}
+
+/* Status Badge */
+.deai-v2-status-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.deai-v2-status--sent {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.deai-v2-status--pending {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+/* ====== Listings ====== */
+/* ui-ux-pro-max: html-tailwind - space-y-4 */
+.deai-v2-listings {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.deai-v2-listing {
+  display: flex;
+  gap: 12px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: border-color var(--transition);
+}
+
+/* ui-ux-pro-max: Interaction - hover:bg-gray-100 cursor-pointer */
+.deai-v2-listing:hover {
+  border-color: var(--brand);
+}
+
+.deai-v2-listing-thumb {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-md);
+  flex-shrink: 0;
+}
+
+.deai-v2-listing-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.deai-v2-listing-title {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.deai-v2-listing-tags {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+
+.deai-v2-listing-tag {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  color: var(--text-muted);
+}
+
+.deai-v2-listing-kpi {
+  display: flex;
+  gap: 12px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.deai-v2-listing-kpi b {
+  color: var(--text);
+  margin-left: 2px;
+}
+
+/* ====== Feed ====== */
+.deai-v2-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.deai-v2-feed-post {
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: border-color var(--transition);
+}
+
+.deai-v2-feed-post:hover {
+  border-color: var(--brand);
+}
+
+.deai-v2-feed-title {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.deai-v2-feed-meta {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.deai-v2-feed-body {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ====== Report Generator ====== */
+.deai-v2-report-step {
+  padding: 16px 0;
+}
+
+.deai-v2-report-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.deai-v2-report-header h3 {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0;
+}
+
+.deai-v2-report-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 22px;
+  border-radius: var(--radius-sm);
+  background: var(--brand);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.deai-v2-report-import {
+  width: 100%;
+  padding: 20px;
+  border: 2px dashed var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: border-color var(--transition);
+  color: var(--text-muted);
+}
+
+.deai-v2-report-import:hover {
+  border-color: var(--brand);
+}
+
+.deai-v2-report-import span {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.deai-v2-report-import small {
+  font-size: 11px;
+}
+
+.deai-v2-report-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 16px 0;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.deai-v2-report-divider::before,
+.deai-v2-report-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.deai-v2-report-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.deai-v2-report-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: #fff;
+  cursor: pointer;
+  transition: border-color var(--transition);
+  text-align: left;
+  width: 100%;
+}
+
+.deai-v2-report-item:hover {
+  border-color: var(--brand);
+}
+
+.deai-v2-report-thumb {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.deai-v2-report-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.deai-v2-report-title {
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--text);
+}
+
+.deai-v2-report-meta {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* ====== Trust Flow ====== */
+.deai-v2-trust-cases {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.deai-v2-trust-case {
+  padding: 8px 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: #fff;
+  cursor: pointer;
+  text-align: left;
+  min-width: 120px;
+  transition: all var(--transition);
+}
+
+.deai-v2-trust-case:hover {
+  border-color: var(--brand);
+}
+
+.deai-v2-trust-case--active {
+  border-color: var(--brand);
+  background: #eef2ff;
+}
+
+.deai-v2-trust-case-name {
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+
+.deai-v2-trust-case-prop {
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100px;
+  margin-bottom: 4px;
+}
+
+.deai-v2-trust-case-step {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  background: #dcfce7;
+  color: #16a34a;
+  display: inline-block;
+  font-weight: 600;
+}
+
+.deai-v2-trust-add {
+  padding: 8px 12px;
+  border-radius: var(--radius-md);
+  border: 1px dashed var(--border);
+  background: var(--bg);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 48px;
+  color: var(--text-muted);
+  transition: border-color var(--transition);
+}
+
+.deai-v2-trust-add:hover {
+  border-color: var(--brand);
+}
+
+/* Progress Steps - ui-ux-pro-max: Flat Design */
+.deai-v2-trust-steps {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin-bottom: 16px;
+}
+
+.deai-v2-trust-step {
+  flex: 1;
+  text-align: center;
+}
+
+.deai-v2-trust-step-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  margin: 0 auto 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--border);
+  color: var(--text-muted);
+  transition: all var(--transition);
+}
+
+.deai-v2-trust-step--past {
+  background: var(--success);
+  color: #fff;
+}
+
+.deai-v2-trust-step--current {
+  background: var(--brand);
+  color: #fff;
+}
+
+.deai-v2-trust-step-name {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.deai-v2-trust-step-name--past {
+  color: var(--success);
+}
+
+.deai-v2-trust-step-name--current {
+  font-weight: 700;
+  color: var(--brand);
+}
+
+.deai-v2-trust-line {
+  flex: 0.5;
+  height: 2px;
+  background: var(--border);
+  margin-bottom: 18px;
+}
+
+.deai-v2-trust-line--past {
+  background: var(--success);
+}
+
+/* Trust Footer & Stats */
+.deai-v2-trust-footer {
+  display: flex;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  margin-bottom: 12px;
+}
+
+.deai-v2-trust-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.deai-v2-trust-stat {
+  text-align: center;
+}
+
+.deai-v2-trust-stat-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--brand);
+}
+
+.deai-v2-trust-stat--success {
+  color: var(--success);
+}
+
+.deai-v2-trust-stat--warning {
+  color: var(--warning);
+}
+
+.deai-v2-trust-stat-label {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* ====== Button Variants ====== */
+.deai-v2-btn--secondary {
+  background: #fff;
+  color: var(--text-muted);
+  border-color: var(--border);
+}
+
+.deai-v2-btn--secondary:hover {
+  border-color: var(--brand);
+  color: var(--brand);
+}
+
+.deai-v2-btn--small {
+  padding: 4px 10px;
+  font-size: 12px;
+}
+
+/* ====== RWD ====== */
+@media (max-width: 768px) {
+  .deai-v2-header-inner {
+    padding: 10px 16px;
+  }
+
+  .deai-v2-agent-bar {
+    padding: 10px 16px;
+  }
+
+  .deai-v2-container {
+    padding: 16px;
+  }
+
+  .deai-v2-cluster {
+    min-height: 320px;
+  }
+
+  .deai-v2-footer {
+    padding: 10px 16px;
+    gap: 8px;
+  }
+
+  .deai-v2-trust-steps {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .deai-v2-trust-line {
+    display: none;
+  }
+}

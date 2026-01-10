@@ -1,8 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "../../../lib/supabase";
-import { safeLocalStorage } from "../../../lib/safeStorage";
 import type { AgentProfile } from "../types/uag.types";
 import { MOCK_AGENT_PROFILE } from "../mockData";
+import { useUAGModeStore } from "../../../stores/uagModeStore";
 
 interface UseAgentProfileResult {
   profile: AgentProfile | null;
@@ -10,22 +10,16 @@ interface UseAgentProfileResult {
   error: Error | null;
 }
 
-/** 取得目前 UAG 模式（mock 或 live） */
-function getUAGMode(): boolean {
-  if (typeof window === "undefined") return true;
-  const saved = safeLocalStorage.getItem("uag_mode");
-  return saved !== "live"; // 預設 mock
-}
-
 /**
  * 查詢房仲個人資料（用於 UAG Header 房仲資訊條）
  * 從 agents 表查詢：信任分、帶看數、成交數等
- * 支援 mock 模式：與 useUAG 同步使用 localStorage 判斷
+ * 使用統一的 Zustand store 判斷 Mock/Live 模式
  */
 export function useAgentProfile(
   userId: string | undefined,
 ): UseAgentProfileResult {
-  const useMock = getUAGMode();
+  // 使用統一的 store 取得模式狀態
+  const useMock = useUAGModeStore((state) => state.useMock);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["agentProfile", userId, useMock],

@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import styles from "../UAG.module.css";
 import { logger } from "../../../lib/logger";
+import { useUAGModeStore, selectUseMock } from "../../../stores/uagModeStore";
 
 // ==================== Types ====================
 interface TrustCase {
@@ -201,7 +202,10 @@ function getStatusBadge(status: TrustCase["status"]) {
 
 // ==================== Component ====================
 export default function TrustFlow() {
-  const [useMock, setUseMock] = useState(true);
+  // Selector 優化：useMock 是狀態，需要訂閱變化觸發 re-render
+  const useMock = useUAGModeStore(selectUseMock);
+  // 函數引用穩定，用 getState() 取得即可，無需 selector 訂閱
+  const { toggleMode } = useUAGModeStore.getState();
   const [cases, setCases] = useState<TrustCase[]>([]);
   const [selectedCaseId, setSelectedCaseId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -263,7 +267,7 @@ export default function TrustFlow() {
         <div className={styles["uag-actions"]}>
           <button
             className={styles["uag-btn"]}
-            onClick={() => setUseMock(!useMock)}
+            onClick={toggleMode}
             title={useMock ? "切換到真實模式" : "切換到模擬模式"}
           >
             <Zap size={14} style={{ marginRight: 4 }} />

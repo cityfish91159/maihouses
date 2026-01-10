@@ -297,7 +297,9 @@ export class UAGService {
         supabase
           .from("uag_lead_purchases")
           // 修6: 關聯 conversation_id
-          .select("session_id, id, created_at, notification_status, conversations(id)")
+          .select(
+            "session_id, id, created_at, notification_status, conversations(id)",
+          )
           .eq("agent_id", userId),
         supabase.from("listings").select("*").eq("agent_id", userId),
         supabase
@@ -340,21 +342,45 @@ export class UAGService {
     }
 
     // 獲取每個 session 最近瀏覽的物件
+    // N+1 優化：使用 RPC 批次查詢，而非逐一查詢
     const sessionIds = (sessionsRes.data ?? []).map((s) => s.session_id);
     const propertyMap = new Map<string, string>();
 
     if (sessionIds.length > 0) {
-      const { data: events } = await supabase
-        .from("uag_events")
-        .select("session_id, property_id")
-        .in("session_id", sessionIds)
-        .order("created_at", { ascending: false });
+      // 優先使用優化版 RPC（SQL 層 DISTINCT ON）
+      const { data: latestProperties, error: rpcError } = await supabase.rpc(
+        "get_latest_property_per_session",
+        { p_session_ids: sessionIds },
+      );
 
-      // 每個 session 取第一個（最近的）property_id
-      if (events) {
-        for (const evt of events) {
-          if (!propertyMap.has(evt.session_id) && evt.property_id) {
-            propertyMap.set(evt.session_id, evt.property_id);
+      if (!rpcError && latestProperties) {
+        // RPC 成功，直接使用結果
+        for (const item of latestProperties) {
+          if (item.property_id) {
+            propertyMap.set(item.session_id, item.property_id);
+          }
+        }
+      } else {
+        // Fallback: 使用原本的查詢方式
+        logger.warn(
+          "[UAGService] get_latest_property_per_session RPC failed, using fallback",
+          {
+            error: rpcError?.message,
+          },
+        );
+
+        const { data: events } = await supabase
+          .from("uag_events")
+          .select("session_id, property_id")
+          .in("session_id", sessionIds)
+          .order("created_at", { ascending: false });
+
+        // 每個 session 取第一個（最近的）property_id
+        if (events) {
+          for (const evt of events) {
+            if (!propertyMap.has(evt.session_id) && evt.property_id) {
+              propertyMap.set(evt.session_id, evt.property_id);
+            }
           }
         }
       }

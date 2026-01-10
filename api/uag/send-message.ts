@@ -2,6 +2,21 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import { messagingApi } from "@line/bot-sdk";
 import { v4 as uuidv4 } from "uuid";
+import { verifyAgentAuth, sendAuthError, isDevEnvironment } from "../lib/auth";
+import { encryptConnectToken } from "../lib/crypto";
+import {
+  withSentryHandler,
+  captureError,
+  addBreadcrumb,
+  setUserContext,
+} from "../lib/sentry";
+
+// ============================================================================
+// Constants
+// ============================================================================
+
+/** LINE 推播最大重試次數 */
+const MAX_LINE_RETRY_COUNT = 5;
 
 // ============================================================================
 // Type Definitions
@@ -98,7 +113,8 @@ function buildLineMessage(
 }
 
 /**
- * 產生 Connect Token（base64url 編碼的 JSON）
+ * 產生 Connect Token（AES-256-GCM 加密）
+ * 加密後的 token 包含 conversationId、sessionId、propertyId 和過期時間
  */
 function generateConnectToken(
   conversationId: string,
@@ -111,7 +127,10 @@ function generateConnectToken(
     propertyId,
     exp: Date.now() + 7 * 24 * 60 * 60 * 1000, // 7 天有效
   };
-  return Buffer.from(JSON.stringify(payload)).toString("base64url");
+
+  // 使用 AES-256-GCM 加密（環境變數 UAG_TOKEN_SECRET 控制密鑰）
+  // 開發環境會使用預設密鑰，生產環境需配置
+  return encryptConnectToken(payload);
 }
 
 /**
@@ -217,7 +236,7 @@ function validateRequest(body: unknown): SendMessageRequest | null {
 // Main Handler
 // ============================================================================
 
-export default async function handler(
+async function handler(
   req: VercelRequest,
   res: VercelResponse,
 ): Promise<VercelResponse> {
@@ -255,6 +274,13 @@ export default async function handler(
     } satisfies SendMessageResponse);
   }
 
+  // 生產環境 LINE Token 驗證（警告但不阻斷，允許僅使用站內訊息）
+  if (!isDevEnvironment() && !lineChannelToken) {
+    console.warn(
+      "LINE_CHANNEL_ACCESS_TOKEN not configured in production. LINE notifications will be skipped.",
+    );
+  }
+
   // 驗證請求參數
   const validatedBody = validateRequest(req.body);
   if (!validatedBody) {
@@ -276,6 +302,24 @@ export default async function handler(
     propertyTitle,
     grade,
   } = validatedBody;
+
+  // ========== 認證檢查（生產環境強制）==========
+  // 開發環境允許跳過認證以便測試
+  if (!isDevEnvironment()) {
+    const authResult = await verifyAgentAuth(req, agentId);
+    if (!authResult.success) {
+      return sendAuthError(res, authResult);
+    }
+  }
+
+  // 設置 Sentry 用戶上下文（用於錯誤追蹤）
+  setUserContext(agentId);
+  addBreadcrumb("Starting message send", "api", {
+    agentId,
+    sessionId,
+    purchaseId,
+    propertyId,
+  });
 
   // 初始化 Supabase Admin Client
   const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
@@ -330,10 +374,10 @@ export default async function handler(
       } satisfies SendMessageResponse);
     }
 
-    // ========== 2. 查詢 LINE 綁定狀態 ==========
+    // ========== 2. 查詢 LINE 綁定狀態（使用增強版 RPC，驗證 agent_id）==========
     const { data: binding, error: bindError } = await supabaseAdmin.rpc(
-      "fn_get_line_binding",
-      { p_session_id: sessionId },
+      "fn_get_line_binding_v2",
+      { p_session_id: sessionId, p_agent_id: agentId },
     );
 
     if (bindError) {
@@ -396,30 +440,39 @@ export default async function handler(
     }
 
     // ========== 3. 產生 Connect Token ==========
-    const connectToken = generateConnectToken(conversationId, sessionId, propertyId);
+    const connectToken = generateConnectToken(
+      conversationId,
+      sessionId,
+      propertyId,
+    );
     const connectUrl = `${baseUrl || "https://maihouses.vercel.app"}/maihouses/chat/connect?token=${connectToken}`;
 
     // ========== 4. 寫入通知佇列（防重複 + 支援重試）==========
     const retryKey = uuidv4();
 
-    try {
-      await supabaseAdmin.from("uag_line_notification_queue").insert({
-        message_id: messageId,
-        purchase_id: purchaseId,
-        line_user_id: lineBinding.line_user_id,
-        connect_url: connectUrl,
-        agent_name: agentName,
-        property_title: propertyTitle ?? null,
-        grade: grade ?? null,
-        status: "pending",
-      });
-    } catch (queueError) {
-      // 重複插入會因 UNIQUE 失敗，忽略
-      const errorMessage =
-        queueError instanceof Error ? queueError.message : "";
-      if (!errorMessage.includes("duplicate")) {
-        console.error("Queue insert error:", queueError);
-      }
+    // 使用 upsert + onConflict 處理重複插入，避免異常處理
+    const { error: queueError } = await supabaseAdmin
+      .from("uag_line_notification_queue")
+      .upsert(
+        {
+          message_id: messageId,
+          purchase_id: purchaseId,
+          line_user_id: lineBinding.line_user_id,
+          connect_url: connectUrl,
+          agent_name: agentName,
+          property_title: propertyTitle ?? null,
+          grade: grade ?? null,
+          status: "pending",
+        },
+        {
+          onConflict: "message_id",
+          ignoreDuplicates: true,
+        },
+      );
+
+    if (queueError) {
+      // 記錄非重複相關的錯誤
+      console.error("Queue upsert error:", queueError);
     }
 
     // ========== 5. 立即嘗試發送（失敗會由 Cron 重試）==========
@@ -464,41 +517,75 @@ export default async function handler(
         lineStatus: "sent",
       } satisfies SendMessageResponse);
     } catch (lineError) {
-      // 發送失敗，更新錯誤訊息（Cron 會重試）
+      // 發送失敗，更新錯誤訊息
       const errorMessage =
         lineError instanceof Error ? lineError.message : String(lineError);
 
+      // 查詢當前重試次數
+      const { data: queueItem } = await supabaseAdmin
+        .from("uag_line_notification_queue")
+        .select("retry_count")
+        .eq("message_id", messageId)
+        .single();
+
+      const currentRetryCount = queueItem?.retry_count ?? 0;
+      const newRetryCount = currentRetryCount + 1;
+      const hasExceededRetryLimit = newRetryCount >= MAX_LINE_RETRY_COUNT;
+
+      // 更新佇列狀態（超過上限則標記為 failed）
       await supabaseAdmin
         .from("uag_line_notification_queue")
         .update({
           last_error: errorMessage,
-          retry_count: 1,
+          retry_count: newRetryCount,
+          status: hasExceededRetryLimit ? "failed" : "pending",
         })
         .eq("message_id", messageId);
+
+      // 如果超過重試上限，更新購買記錄通知狀態為 failed
+      if (hasExceededRetryLimit) {
+        await updateNotificationStatus(
+          supabaseAdmin,
+          purchaseId,
+          "failed",
+          retryKey,
+        );
+      }
 
       await logLineAudit(
         supabaseAdmin,
         purchaseId,
         sessionId,
         retryKey,
-        "failed",
+        hasExceededRetryLimit ? "failed_permanently" : "failed",
         {
           error: errorMessage,
+          retryCount: newRetryCount,
+          maxRetries: MAX_LINE_RETRY_COUNT,
         },
       );
 
-      // 站內訊息已成功，LINE 暫時失敗（會重試）
+      // 站內訊息已成功，LINE 暫時失敗
       return res.json({
         success: true,
         conversationId,
-        lineStatus: "pending",
-        error: "LINE send failed, will retry",
+        lineStatus: hasExceededRetryLimit ? "error" : "pending",
+        error: hasExceededRetryLimit
+          ? `LINE send failed after ${MAX_LINE_RETRY_COUNT} retries`
+          : "LINE send failed, will retry",
       } satisfies SendMessageResponse);
     }
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error";
     console.error("send-message handler error:", error);
+
+    // 捕獲錯誤到 Sentry
+    captureError(error, {
+      handler: "send-message",
+      method: req.method,
+      body: req.body,
+    });
 
     return res.status(500).json({
       success: false,
@@ -507,3 +594,6 @@ export default async function handler(
     } satisfies SendMessageResponse);
   }
 }
+
+// 使用 Sentry wrapper 導出
+export default withSentryHandler(handler, "uag/send-message");

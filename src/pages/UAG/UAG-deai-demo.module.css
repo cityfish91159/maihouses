@@ -1,0 +1,672 @@
+/**
+ * UAG De-AI Demo Stylesheet
+ *
+ * 完全基於 ui-ux-pro-max 資料庫建議：
+ *
+ * 1. Style: Minimalism & Swiss Style
+ *    - Clean, simple, spacious, functional, white space
+ *    - High contrast, geometric, sans-serif, grid-based
+ *    - Subtle hover (200-250ms), smooth transitions
+ *    - Sharp shadows if any, clear type hierarchy
+ *    - Framework: Tailwind 10/10
+ *    - Accessibility: WCAG AAA
+ *
+ * 2. Typography: Corporate Trust
+ *    - Heading: Lexend (corporate, trustworthy, accessible)
+ *    - Body: Source Sans 3 (readable, professional)
+ *
+ * 3. Color Palette: Real Estate/Property (adapted to brand #00385a)
+ *    - Trust Blue as primary
+ *    - High contrast for accessibility
+ *
+ * 4. UX Guidelines:
+ *    - hover:bg-gray-100 cursor-pointer (Hover States)
+ *    - onClick handler (not onMouseEnter only)
+ *    - Z-index scale system (10 20 30 50)
+ *    - Minimum 4.5:1 contrast ratio
+ */
+
+/* ====== Brand Color System (Based on #00385a) ====== */
+:root {
+  /* Primary Brand - Deep Trust Blue */
+  --brand-primary: #00385a;
+  --brand-primary-rgb: 0, 56, 90;
+  --brand-secondary: #004e7c;
+  --brand-light: #005282;
+  --brand-hover: #002a44;
+
+  /* Swiss Minimalism: Monochromatic base */
+  --swiss-black: #0a2246;
+  --swiss-white: #ffffff;
+  --swiss-gray-50: #f8fafc;
+  --swiss-gray-100: #f1f5f9;
+  --swiss-gray-200: #e2e8f0;
+  --swiss-gray-300: #cbd5e1;
+  --swiss-gray-400: #94a3b8;
+  --swiss-gray-500: #64748b;
+  --swiss-gray-600: #475569;
+  --swiss-gray-700: #334155;
+  --swiss-gray-800: #1e293b;
+  --swiss-gray-900: #0f172a;
+
+  /* Grade Colors - Higher contrast, less gradient */
+  /* Based on ui-ux-pro-max: single vibrant accent only */
+  --grade-s: #b45309; /* Amber-700: deeper, less AI */
+  --grade-s-bg: #fffbeb;
+  --grade-s-border: #fcd34d;
+
+  --grade-a: #047857; /* Emerald-700: deeper green */
+  --grade-a-bg: #ecfdf5;
+  --grade-a-border: #6ee7b7;
+
+  --grade-b: #1d4ed8; /* Blue-700: deeper blue */
+  --grade-b-bg: #eff6ff;
+  --grade-b-border: #93c5fd;
+
+  --grade-c: #374151; /* Gray-700 */
+  --grade-c-bg: #f9fafb;
+  --grade-c-border: #d1d5db;
+
+  --grade-f: #6b7280; /* Gray-500 */
+  --grade-f-bg: #f9fafb;
+  --grade-f-border: #e5e7eb;
+
+  /* Swiss Style: Sharp shadows */
+  --shadow-sharp-sm: 0 1px 2px rgba(0, 56, 90, 0.08);
+  --shadow-sharp-md:
+    0 2px 4px rgba(0, 56, 90, 0.06), 0 4px 8px rgba(0, 56, 90, 0.04);
+  --shadow-sharp-lg:
+    0 4px 6px rgba(0, 56, 90, 0.04), 0 10px 20px rgba(0, 56, 90, 0.06);
+
+  /* Typography: Corporate Trust from ui-ux-pro-max */
+  --font-heading: "Lexend", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-body: "Source Sans 3", -apple-system, BlinkMacSystemFont, sans-serif;
+
+  /* Swiss Style: Mathematical spacing */
+  --space-unit: 8px;
+  --space-xs: calc(var(--space-unit) * 0.5); /* 4px */
+  --space-sm: var(--space-unit); /* 8px */
+  --space-md: calc(var(--space-unit) * 2); /* 16px */
+  --space-lg: calc(var(--space-unit) * 3); /* 24px */
+  --space-xl: calc(var(--space-unit) * 4); /* 32px */
+
+  /* Border radius: Swiss Style = geometric, not too rounded */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+
+  /* Transitions: ui-ux-pro-max recommends 200-250ms */
+  --transition-fast: 150ms ease;
+  --transition-normal: 200ms ease;
+  --transition-slow: 250ms ease;
+}
+
+/* ====== De-AI Page Base ====== */
+.deai-page {
+  font-family: var(--font-body);
+  background: var(--swiss-gray-50);
+  color: var(--swiss-gray-900);
+  line-height: 1.5;
+  /* Swiss Style: No radial gradients, clean solid background */
+}
+
+/* Remove AI grid pattern - use clean background instead */
+.deai-page::before {
+  display: none;
+}
+
+/* ====== De-AI Header ====== */
+.deai-header {
+  position: sticky;
+  top: 0;
+  z-index: 50; /* ui-ux-pro-max: z-index scale 10 20 30 50 */
+  background: var(--swiss-white);
+  border-bottom: 1px solid var(--swiss-gray-200);
+  /* Swiss Style: Sharp shadow, no blur */
+  box-shadow: var(--shadow-sharp-sm);
+}
+
+.deai-header-inner {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: var(--space-md) var(--space-lg);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* ====== De-AI Cards ====== */
+.deai-card {
+  background: var(--swiss-white);
+  /* Swiss Style: geometric radius */
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  /* Sharp shadow instead of soft glow */
+  box-shadow: var(--shadow-sharp-md);
+  /* Clean border, no rgba opacity games */
+  border: 1px solid var(--swiss-gray-200);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  /* ui-ux-pro-max: subtle hover 200-250ms */
+  transition:
+    box-shadow var(--transition-normal),
+    border-color var(--transition-normal);
+}
+
+/* ui-ux-pro-max: hover:bg-gray-100 cursor-pointer */
+.deai-card:hover {
+  box-shadow: var(--shadow-sharp-lg);
+  border-color: var(--brand-primary);
+}
+
+.deai-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+}
+
+.deai-card-title {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 18px;
+  color: var(--swiss-gray-900);
+  /* Swiss Style: clean left border accent */
+  border-left: 3px solid var(--brand-primary);
+  padding-left: var(--space-sm);
+}
+
+.deai-card-sub {
+  font-size: 13px;
+  color: var(--swiss-gray-500);
+  margin-top: 2px;
+  margin-left: calc(3px + var(--space-sm));
+}
+
+/* ====== De-AI Radar Cluster ====== */
+.deai-cluster {
+  position: relative;
+  min-height: 450px;
+  /* Swiss Style: clean border, no fancy gradients */
+  border: 1px solid var(--swiss-gray-300);
+  border-radius: var(--radius-lg);
+  /* Solid background with very subtle tint of brand color */
+  background: linear-gradient(
+    180deg,
+    var(--swiss-white) 0%,
+    rgba(0, 56, 90, 0.02) 100%
+  );
+  overflow: hidden;
+  box-shadow: var(--shadow-sharp-md);
+}
+
+/* Swiss Style grid lines: clean, mathematical */
+.deai-cluster::before,
+.deai-cluster::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  background: var(--swiss-gray-300);
+  pointer-events: none;
+}
+
+.deai-cluster::before {
+  width: 100%;
+  height: 1px;
+  transform: translate(-50%, -50%);
+}
+
+.deai-cluster::after {
+  width: 1px;
+  height: 100%;
+  transform: translate(-50%, -50%);
+}
+
+/* Reference circles: dashed, subtle */
+.deai-cluster-ring {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  border: 1px dashed var(--swiss-gray-300);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.deai-cluster-ring--outer {
+  width: 300px;
+  height: 300px;
+}
+
+.deai-cluster-ring--inner {
+  width: 150px;
+  height: 150px;
+}
+
+/* Live indicator: professional, not playful */
+.deai-live-badge {
+  position: absolute;
+  left: var(--space-md);
+  top: var(--space-md);
+  background: var(--swiss-white);
+  padding: var(--space-xs) var(--space-sm);
+  /* Swiss Style: geometric radius */
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--swiss-gray-700);
+  box-shadow: var(--shadow-sharp-sm);
+  border: 1px solid var(--swiss-gray-200);
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.deai-live-dot {
+  width: 6px;
+  height: 6px;
+  background: #059669; /* Emerald-600 */
+  border-radius: 50%;
+  /* Subtle pulse, not distracting */
+  animation: deai-pulse 2s ease-in-out infinite;
+}
+
+@keyframes deai-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* ====== De-AI Bubbles ====== */
+.deai-bubble {
+  position: absolute;
+  width: var(--bubble-size, 100px);
+  height: var(--bubble-size, 100px);
+  border-radius: 50%;
+  background: var(--swiss-white);
+  /* Swiss Style: clean solid border, not rgba */
+  border: 2px solid var(--swiss-gray-300);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  /* ui-ux-pro-max: cursor-pointer for clickable */
+  cursor: pointer;
+  /* Swiss Style: subtle hover 200-250ms */
+  transition:
+    transform var(--transition-normal),
+    box-shadow var(--transition-normal),
+    border-color var(--transition-normal);
+  z-index: 10;
+  /* Remove AI floating animation */
+  animation: none;
+}
+
+/* ui-ux-pro-max: Visual feedback on interactive elements */
+.deai-bubble:hover {
+  transform: scale(1.08);
+  z-index: 20;
+  box-shadow: var(--shadow-sharp-lg);
+  border-color: var(--brand-primary);
+}
+
+.deai-bubble:focus {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+}
+
+/* Grade-specific styling: solid colors, no gradients */
+.deai-bubble[data-grade="S"] {
+  background: var(--grade-s-bg);
+  border-color: var(--grade-s);
+}
+
+.deai-bubble[data-grade="A"] {
+  background: var(--grade-a-bg);
+  border-color: var(--grade-a);
+}
+
+.deai-bubble[data-grade="B"] {
+  background: var(--grade-b-bg);
+  border-color: var(--grade-b);
+}
+
+.deai-bubble[data-grade="C"] {
+  background: var(--grade-c-bg);
+  border-color: var(--grade-c);
+}
+
+.deai-bubble[data-grade="F"] {
+  background: var(--grade-f-bg);
+  border-color: var(--grade-f);
+}
+
+/* Grade badge: solid color, no gradient */
+.deai-bubble-grade {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 11px;
+  color: var(--swiss-white);
+  /* Solid background based on grade */
+  background: var(--grade-s);
+  border: 2px solid var(--swiss-white);
+  box-shadow: var(--shadow-sharp-sm);
+}
+
+.deai-bubble[data-grade="S"] .deai-bubble-grade {
+  background: var(--grade-s);
+}
+.deai-bubble[data-grade="A"] .deai-bubble-grade {
+  background: var(--grade-a);
+}
+.deai-bubble[data-grade="B"] .deai-bubble-grade {
+  background: var(--grade-b);
+}
+.deai-bubble[data-grade="C"] .deai-bubble-grade {
+  background: var(--grade-c);
+}
+.deai-bubble[data-grade="F"] .deai-bubble-grade {
+  background: var(--grade-f);
+}
+
+/* Bubble content */
+.deai-bubble-id {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--swiss-gray-900);
+}
+
+.deai-bubble-intent {
+  font-size: 12px;
+  color: var(--swiss-gray-500);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Bubble label: geometric, not pill */
+.deai-bubble-label {
+  position: absolute;
+  bottom: -22px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--swiss-white);
+  padding: 2px var(--space-sm);
+  /* Swiss Style: geometric radius */
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--swiss-gray-700);
+  white-space: nowrap;
+  border: 1px solid var(--swiss-gray-200);
+  box-shadow: var(--shadow-sharp-sm);
+  pointer-events: none;
+}
+
+/* ====== De-AI Buttons ====== */
+.deai-btn {
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  padding: var(--space-sm) var(--space-md);
+  /* Swiss Style: geometric radius */
+  border-radius: var(--radius-md);
+  border: 1px solid var(--swiss-gray-300);
+  background: var(--swiss-white);
+  color: var(--swiss-gray-700);
+  /* ui-ux-pro-max: cursor-pointer */
+  cursor: pointer;
+  /* Transition 200ms */
+  transition:
+    background var(--transition-normal),
+    border-color var(--transition-normal),
+    color var(--transition-normal),
+    box-shadow var(--transition-normal);
+  white-space: nowrap;
+}
+
+/* ui-ux-pro-max: hover:bg-gray-100 */
+.deai-btn:hover {
+  background: var(--swiss-gray-100);
+  border-color: var(--brand-primary);
+  color: var(--brand-primary);
+}
+
+.deai-btn:focus {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+}
+
+.deai-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Primary button: solid brand color */
+.deai-btn--primary {
+  background: var(--brand-primary);
+  color: var(--swiss-white);
+  border-color: var(--brand-primary);
+  box-shadow: var(--shadow-sharp-sm);
+}
+
+.deai-btn--primary:hover {
+  background: var(--brand-hover);
+  border-color: var(--brand-hover);
+  color: var(--swiss-white);
+}
+
+/* Attack button: prominent but professional */
+.deai-btn--attack {
+  width: 100%;
+  padding: var(--space-md);
+  font-family: var(--font-heading);
+  font-size: 15px;
+  font-weight: 600;
+  background: var(--brand-primary);
+  color: var(--swiss-white);
+  border: none;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sharp-md);
+  /* Remove shimmer animation - too AI-like */
+}
+
+.deai-btn--attack:hover {
+  background: var(--brand-hover);
+  box-shadow: var(--shadow-sharp-lg);
+}
+
+/* ====== De-AI Badges ====== */
+.deai-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-xs) var(--space-sm);
+  /* Swiss Style: geometric, not pill */
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid var(--swiss-gray-200);
+  background: var(--swiss-gray-50);
+  color: var(--swiss-gray-700);
+}
+
+.deai-badge--s {
+  background: var(--grade-s-bg);
+  color: var(--grade-s);
+  border-color: var(--grade-s-border);
+}
+
+.deai-badge--a {
+  background: var(--grade-a-bg);
+  color: var(--grade-a);
+  border-color: var(--grade-a-border);
+}
+
+.deai-badge--b {
+  background: var(--grade-b-bg);
+  color: var(--grade-b);
+  border-color: var(--grade-b-border);
+}
+
+/* ====== De-AI Table ====== */
+.deai-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.deai-table th {
+  text-align: left;
+  padding: var(--space-sm) var(--space-md);
+  background: var(--swiss-gray-50);
+  color: var(--swiss-gray-500);
+  font-weight: 600;
+  font-size: 12px;
+  /* Swiss Style: clean border */
+  border-bottom: 1px solid var(--swiss-gray-200);
+}
+
+.deai-table td {
+  padding: var(--space-sm) var(--space-md);
+  border-bottom: 1px solid var(--swiss-gray-100);
+  vertical-align: middle;
+  color: var(--swiss-gray-700);
+}
+
+.deai-table tr:last-child td {
+  border-bottom: none;
+}
+
+/* ui-ux-pro-max: hover feedback on rows */
+.deai-table tbody tr {
+  transition: background var(--transition-fast);
+}
+
+.deai-table tbody tr:hover {
+  background: var(--swiss-gray-50);
+}
+
+/* ====== De-AI Action Panel ====== */
+.deai-action-panel {
+  background: var(--swiss-white);
+  border: 1px solid var(--swiss-gray-200);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-sharp-md);
+}
+
+.deai-action-panel-head {
+  background: var(--swiss-gray-50);
+  padding: var(--space-md);
+  border-bottom: 1px solid var(--swiss-gray-200);
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--swiss-gray-900);
+}
+
+.deai-action-panel-body {
+  padding: var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+/* ====== De-AI Stats ====== */
+.deai-stat {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: var(--space-sm);
+  border-bottom: 1px solid var(--swiss-gray-100);
+  font-size: 13px;
+  color: var(--swiss-gray-500);
+}
+
+.deai-stat:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.deai-stat-value {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--swiss-gray-900);
+}
+
+/* ====== De-AI AI Box (recommendation) ====== */
+.deai-ai-box {
+  background: var(--swiss-gray-50);
+  border: 1px solid var(--swiss-gray-200);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  font-size: 13px;
+  color: var(--swiss-gray-700);
+  line-height: 1.5;
+  /* No fancy shadows or glows */
+}
+
+.deai-ai-box--success {
+  background: var(--grade-a-bg);
+  border-color: var(--grade-a-border);
+  color: var(--grade-a);
+}
+
+.deai-ai-box--warning {
+  background: var(--grade-s-bg);
+  border-color: var(--grade-s-border);
+  color: var(--grade-s);
+}
+
+/* ====== De-AI Footer ====== */
+.deai-footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: var(--space-md) var(--space-lg);
+  background: var(--swiss-white);
+  border-top: 1px solid var(--swiss-gray-200);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-md);
+  box-shadow: 0 -2px 4px rgba(0, 56, 90, 0.04);
+  z-index: 50;
+}
+
+/* ====== Utility: No Animation ====== */
+.deai-no-animation {
+  animation: none !important;
+}
+
+/* ====== Accessibility: Focus visible ====== */
+.deai-focus-visible:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+}
+
+/* ====== Print styles ====== */
+@media print {
+  .deai-header,
+  .deai-footer {
+    display: none;
+  }
+}

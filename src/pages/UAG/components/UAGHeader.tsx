@@ -232,11 +232,15 @@ export const UAGHeader: React.FC<UAGHeaderProps> = ({
             <div className={styles["agent-bar-name-row"]}>
               <span>{displayName}</span>
               {internalCode && (
-                <span className={styles["agent-bar-code"]}>#{internalCode}</span>
+                <span className={styles["agent-bar-code"]}>
+                  #{internalCode}
+                </span>
               )}
             </div>
             <div className={styles["agent-bar-stats"]}>
-              <span className={`${styles["agent-bar-stat"]} ${styles["trust"]}`}>
+              <span
+                className={`${styles["agent-bar-stat"]} ${styles["trust"]}`}
+              >
                 <strong>{trustScore}</strong> 信任分
               </span>
               <span className={styles["agent-bar-stat"]}>

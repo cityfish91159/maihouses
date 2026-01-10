@@ -3,6 +3,10 @@ import { Helmet } from "react-helmet-async";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { GlobalHeader } from "../../components/layout/GlobalHeader";
 import { HEADER_MODES } from "../../constants/header";
+import {
+  parseConnectToken,
+  isTokenExpired,
+} from "../../lib/connectTokenCrypto";
 
 // ============================================================================
 // Type Definitions
@@ -20,52 +24,6 @@ interface ConnectTokenPayload {
 // ============================================================================
 
 const SESSION_STORAGE_KEY = "uag_session";
-
-// ============================================================================
-// Helper Functions
-// ============================================================================
-
-/**
- * 安全的 base64url 解碼（處理 unicode 和特殊字元）
- */
-function safeBase64Decode(base64url: string): string | null {
-  try {
-    // base64url -> base64
-    const base64 = base64url.replace(/-/g, "+").replace(/_/g, "/");
-    const padded = base64 + "=".repeat((4 - (base64.length % 4)) % 4);
-
-    // 使用 Uint8Array 處理 unicode
-    const binaryString = atob(padded);
-    const bytes = new Uint8Array(binaryString.length);
-    for (let i = 0; i < binaryString.length; i++) {
-      bytes[i] = binaryString.charCodeAt(i);
-    }
-    return new TextDecoder().decode(bytes);
-  } catch {
-    return null;
-  }
-}
-
-/**
- * 解析 base64url 編碼的 Connect Token
- */
-function parseConnectToken(token: string): ConnectTokenPayload | null {
-  const decoded = safeBase64Decode(token);
-  if (!decoded) return null;
-
-  try {
-    const payload = JSON.parse(decoded) as ConnectTokenPayload;
-
-    // 驗證必要欄位
-    if (!payload.conversationId || !payload.sessionId || !payload.exp) {
-      return null;
-    }
-
-    return payload;
-  } catch {
-    return null;
-  }
-}
 
 /**
  * 設置 Consumer Session（讓聊天室知道是哪個用戶）
@@ -131,11 +89,18 @@ function LoadingDisplay() {
 // Main Component
 // ============================================================================
 
+type TokenStatus = "loading" | "invalid" | "expired" | "redirecting";
+
+interface TokenState {
+  status: TokenStatus;
+  payload: ConnectTokenPayload | null;
+}
+
 /**
  * Connect Page - LINE 通知點擊後的入口頁面
  *
  * 功能：
- * 1. 解析 URL 中的 token 參數
+ * 1. 解析 URL 中的 token 參數（支援加密格式）
  * 2. 驗證 token 有效性和過期時間
  * 3. 設置 consumer session（恢復用戶身份）
  * 4. 自動導向到對應的聊天室
@@ -148,25 +113,37 @@ export default function ConnectPage() {
 
   const token = searchParams.get("token");
 
-  // 解析 token 並計算狀態（使用 useState 延遲初始化確保 purity）
-  const [tokenState] = useState(() => {
-    const now = Date.now();
-    if (!token) {
-      return { status: "invalid" as const, payload: null };
-    }
-
-    const parsed = parseConnectToken(token);
-    if (!parsed) {
-      return { status: "invalid" as const, payload: null };
-    }
-
-    if (parsed.exp < now) {
-      return { status: "expired" as const, payload: null };
-    }
-
-    return { status: "redirecting" as const, payload: parsed };
+  // Token 狀態（異步解密需要 loading 狀態）
+  const [tokenState, setTokenState] = useState<TokenState>({
+    status: "loading",
+    payload: null,
   });
   const { status, payload } = tokenState;
+
+  // 異步解析 token（支援加密格式）
+  useEffect(() => {
+    async function parseToken() {
+      if (!token) {
+        setTokenState({ status: "invalid", payload: null });
+        return;
+      }
+
+      const parsed = await parseConnectToken(token);
+      if (!parsed) {
+        setTokenState({ status: "invalid", payload: null });
+        return;
+      }
+
+      if (isTokenExpired(parsed)) {
+        setTokenState({ status: "expired", payload: null });
+        return;
+      }
+
+      setTokenState({ status: "redirecting", payload: parsed });
+    }
+
+    parseToken();
+  }, [token]);
 
   // 只在 token 有效時執行導向（副作用）
   useEffect(() => {

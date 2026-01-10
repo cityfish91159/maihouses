@@ -17,6 +17,7 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 import crypto from "crypto";
 import { messagingApi } from "@line/bot-sdk";
 import { createClient } from "@supabase/supabase-js";
+import { withSentryHandler, captureError, addBreadcrumb } from "../lib/sentry";
 
 interface LineEvent {
   type: string;
@@ -47,7 +48,7 @@ function verifySignature(
   return hash === signature;
 }
 
-export default async function handler(
+async function handler(
   req: VercelRequest,
   res: VercelResponse,
 ): Promise<VercelResponse> {
@@ -93,6 +94,9 @@ export default async function handler(
   for (const event of events) {
     const userId = event.source.userId;
 
+    // 添加事件追蹤
+    addBreadcrumb(`LINE event: ${event.type}`, "line", { userId });
+
     switch (event.type) {
       case "follow":
         // ⭐ 用戶加好友 - 直接回覆 User ID
@@ -116,6 +120,7 @@ ${userId}
             });
           } catch (err) {
             console.error("[LINE] Reply failed:", err);
+            captureError(err, { event: "follow", userId });
           }
         }
         break;
@@ -130,9 +135,13 @@ ${userId}
 
           if (supabaseUrl && supabaseServiceKey) {
             try {
-              const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
-                auth: { persistSession: false },
-              });
+              const supabaseAdmin = createClient(
+                supabaseUrl,
+                supabaseServiceKey,
+                {
+                  auth: { persistSession: false },
+                },
+              );
 
               const { error } = await supabaseAdmin
                 .from("uag_line_bindings")
@@ -144,11 +153,13 @@ ${userId}
 
               if (error) {
                 console.error("[LINE] Failed to update blocked status:", error);
+                captureError(error, { event: "unfollow", userId });
               } else {
                 console.log(`[LINE] Updated status to blocked: ${userId}`);
               }
             } catch (err) {
               console.error("[LINE] Update error:", err);
+              captureError(err, { event: "unfollow", userId });
             }
           } else {
             console.error("[LINE] Missing Supabase config for unfollow update");
@@ -171,6 +182,7 @@ ${userId}
             });
           } catch (err) {
             console.error("[LINE] Reply failed:", err);
+            captureError(err, { event: "message", userId });
           }
         }
         break;
@@ -182,3 +194,6 @@ ${userId}
 
   return res.status(200).json({ message: "OK" });
 }
+
+// 使用 Sentry wrapper 導出
+export default withSentryHandler(handler, "line/webhook");

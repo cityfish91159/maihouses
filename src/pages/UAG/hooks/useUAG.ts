@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { UAGService } from "../services/uagService";
 import { AppData, Grade, Lead, LeadStatus } from "../types/uag.types";
@@ -7,35 +7,9 @@ import { notify } from "../../../lib/notify";
 import { useAuth } from "../../../hooks/useAuth";
 import { GRADE_PROTECTION_HOURS } from "../uag-config";
 import { validateQuota } from "../utils/validation";
-import { safeLocalStorage } from "../../../lib/safeStorage";
 import { supabase } from "../../../lib/supabase";
 import { logger } from "../../../lib/logger";
-
-/** 從 URL 或 localStorage 取得初始 mock 模式設定 */
-function getInitialMockMode(): boolean {
-  if (typeof window === "undefined") return true;
-
-  const params = new URLSearchParams(window.location.search);
-  const urlMode = params.get("mode");
-
-  if (urlMode === "mock" || urlMode === "live") {
-    safeLocalStorage.setItem("uag_mode", urlMode);
-    return urlMode === "mock";
-  }
-
-  const saved = safeLocalStorage.getItem("uag_mode");
-  if (saved === "mock" || saved === "live") {
-    // 修復白屏：如果是 live 模式，清除設定強制回 mock
-    // 讓用戶登入後再手動切換到 live
-    if (saved === "live") {
-      safeLocalStorage.removeItem("uag_mode");
-      return true;
-    }
-    return saved === "mock";
-  }
-
-  return true;
-}
+import { useUAGModeStore, selectUseMock } from "../../../stores/uagModeStore";
 
 /** 購買結果類型 */
 export interface BuyLeadResult {
@@ -47,10 +21,18 @@ export interface BuyLeadResult {
 
 export function useUAG() {
   const { session } = useAuth();
-  const [useMock, setUseMock] = useState<boolean>(getInitialMockMode);
+  // Selector 優化：useMock 是狀態，需要訂閱變化觸發 re-render
+  const useMock = useUAGModeStore(selectUseMock);
+  // 函數引用穩定，用 getState() 取得即可，無需 selector 訂閱
+  const { setUseMock, initializeMode } = useUAGModeStore.getState();
   const queryClient = useQueryClient();
 
-  const toggleMode = () => {
+  // 初始化模式（根據 URL 參數）
+  useEffect(() => {
+    initializeMode();
+  }, [initializeMode]);
+
+  const toggleMode = useCallback(() => {
     const newMode = !useMock;
 
     // 切換到 Live 模式時，檢查是否已登入
@@ -60,8 +42,7 @@ export function useUAG() {
     }
 
     setUseMock(newMode);
-    safeLocalStorage.setItem("uag_mode", newMode ? "mock" : "live");
-  };
+  }, [useMock, session?.user?.id, setUseMock]);
 
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["uagData", useMock, session?.user?.id],

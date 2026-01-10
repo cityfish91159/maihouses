@@ -1,6 +1,10 @@
-import { Lead, NotificationStatus } from "../types/uag.types";
+import { Lead } from "../types/uag.types";
 import styles from "../UAG.module.css";
-import { GRADE_PROTECTION_HOURS } from "../uag-config";
+import {
+  calculateProtectionInfo,
+  getProtectionText,
+} from "../utils/leadHelpers";
+import { getNotificationDisplay } from "../utils/notificationDisplay";
 
 interface AssetMonitorProps {
   readonly leads: Lead[];
@@ -8,82 +12,6 @@ interface AssetMonitorProps {
   readonly onSendMessage?: (lead: Lead) => void;
   readonly onViewChat?: (conversationId: string) => void;
 }
-
-const calculateProtection = (lead: Lead) => {
-  const total = GRADE_PROTECTION_HOURS[lead.grade] ?? 336;
-  const remaining = lead.remainingHours ?? total;
-  const percent = Math.max(0, Math.min(100, (remaining / total) * 100));
-  const isExclusive = lead.grade === "S" || lead.grade === "A";
-
-  let timeDisplay = "";
-  if (isExclusive) {
-    timeDisplay = `${remaining.toFixed(1)} 小時`;
-  } else {
-    const days = (remaining / 24).toFixed(1);
-    timeDisplay = `${days} 天`;
-  }
-
-  return { total, remaining, percent, isExclusive, timeDisplay };
-};
-
-interface NotificationDisplay {
-  text: string;
-  bgColor: string;
-  textColor: string;
-}
-
-/**
- * 根據通知狀態返回顯示配置
- */
-const getNotificationDisplay = (
-  status: NotificationStatus | undefined,
-): NotificationDisplay => {
-  switch (status) {
-    case "sent":
-      return {
-        text: "LINE + 站內信",
-        bgColor: "var(--notif-success-bg)",
-        textColor: "var(--notif-success-text)",
-      };
-    case "no_line":
-      return {
-        text: "僅站內信",
-        bgColor: "var(--bg-alt)",
-        textColor: "var(--ink-300)",
-      };
-    case "unreachable":
-      return {
-        text: "LINE 無法送達",
-        bgColor: "var(--notif-warning-bg)",
-        textColor: "var(--notif-warning-text)",
-      };
-    case "pending":
-      return {
-        text: "待發送",
-        bgColor: "var(--notif-pending-bg)",
-        textColor: "var(--notif-pending-text)",
-      };
-    case "failed":
-      return {
-        text: "LINE 發送失敗",
-        bgColor: "var(--notif-error-bg)",
-        textColor: "var(--notif-error-text)",
-      };
-    case "skipped":
-      return {
-        text: "僅站內信",
-        bgColor: "var(--bg-alt)",
-        textColor: "var(--ink-300)",
-      };
-    default:
-      // 預設：尚未發送或舊資料
-      return {
-        text: "站內信已發送",
-        bgColor: "var(--notif-success-bg)",
-        textColor: "var(--notif-success-text)",
-      };
-  }
-};
 
 export default function AssetMonitor({
   leads,
@@ -131,10 +59,9 @@ export default function AssetMonitor({
               </tr>
             ) : (
               boughtLeads.map((lead) => {
-                const { percent, isExclusive, timeDisplay } =
-                  calculateProtection(lead);
+                const { percent, timeDisplay } = calculateProtectionInfo(lead);
                 const colorVar = `var(--grade-${lead.grade.toLowerCase()})`;
-                const protectText = isExclusive ? "獨家鎖定中" : "去重保護中";
+                const protectText = getProtectionText(lead);
 
                 return (
                   <tr key={lead.id}>

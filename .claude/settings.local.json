@@ -90,15 +90,19 @@
       "Bash(netsh wlan show interfaces:*)",
       "Bash(netsh wlan show networks:*)",
       "mcp__filesystem__read_multiple_files",
-      "Bash(wc:*)"
+      "Bash(wc:*)",
+      "Bash(npx:*)",
+      "Bash(where:*)",
+      "mcp__ide__getDiagnostics",
+      "Bash(timeout 10 npx:*)",
+      "Bash(head:*)",
+      "Bash(timeout 15 cat:*)"
     ]
   },
   "model": "claude-opus-4-5-20251101",
   "enableAllProjectMcpServers": true,
   "enabledMcpjsonServers": [
     "filesystem",
-    "puppeteer",
-    "fetch",
-    "git"
+    "puppeteer"
   ]
 }
