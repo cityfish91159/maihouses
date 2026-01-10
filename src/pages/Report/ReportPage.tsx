@@ -1,125 +1,125 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
-import { Phone, MessageCircle, MapPin, Home } from "lucide-react";
+import {
+  Phone,
+  MessageCircle,
+  Calendar,
+  MapPin,
+  Home,
+  ChevronLeft,
+  ChevronRight,
+  Share2,
+  ExternalLink,
+} from "lucide-react";
 import { notify } from "../../lib/notify";
 import { logger } from "../../lib/logger";
-import styles from "./ReportPage.module.css";
+import { PropertyReportData, HIGHLIGHT_OPTIONS } from "./types";
 
-// 報告資料類型
-interface ReportPropertyData {
-  id: string;
-  title: string;
-  address: string;
-  district: string;
-  price: number;
-  pricePerPing: number;
-  size: number;
-  rooms: string;
-  floor: string;
-  floorTotal: number;
-  age: number;
-  direction: string;
-  parking: string;
-  managementFee: number;
-  community: string;
-  communityYear: number;
-  communityUnits: number;
-  propertyType: string;
-  description: string;
-  images: string[];
-}
-
-interface ReportAgentData {
-  name: string;
-  phone?: string;
-  company: string;
-}
-
-// 預設物件資料
-const DEFAULT_PROPERTY: ReportPropertyData = {
-  id: "demo-001",
-  title: "12F 高樓層｜3房2廳2衛｜平面車位",
-  address: "台中市南屯區惠文路 168 號",
-  district: "南屯區",
-  price: 32880000,
-  pricePerPing: 521000,
-  size: 67.3,
-  rooms: "3房2廳2衛",
-  floor: "12",
-  floorTotal: 15,
-  age: 5,
-  direction: "南",
-  parking: "平面車位",
-  managementFee: 3500,
-  community: "惠宇上晴",
-  communityYear: 2019,
-  communityUnits: 280,
-  propertyType: "電梯大樓",
-  description:
-    "高樓層景觀戶，採光通風極佳。格局方正實用，三面採光無暗房。社區管理完善，24小時警衛駐守。步行5分鐘至捷運市政府站，生活機能完善。屋況維護良好，可隨時交屋。",
+// 預設報告資料
+const DEFAULT_REPORT_DATA: PropertyReportData = {
+  id: "demo",
+  publicId: "MH-100001",
+  title: "信義區101景觀全新裝潢大三房",
+  price: 3680,
+  address: "台北市信義區松仁路100號",
+  description: "絕佳地段，近捷運象山站，生活機能完善，採光通風佳。",
   images: [
-    "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=600&q=80",
+    "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800",
+    "https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=800",
+    "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800",
+    "https://images.unsplash.com/photo-1600573472592-401b489a3cdc?w=800",
   ],
+  size: 45.2,
+  age: 8,
+  rooms: 3,
+  halls: 2,
+  bathrooms: 2,
+  floorCurrent: "12",
+  floorTotal: 15,
+  propertyType: "大樓",
+  direction: "朝南",
+  parking: "平面車位",
+  communityName: "信義之星",
+  communityYear: 2016,
+  communityUnits: 420,
+  managementFee: 80,
+  advantage1: "採光超棒，全日照無遮蔽",
+  advantage2: "管委會運作良好，公設維護佳",
+  disadvantage: "西曬需加裝窗簾",
+  agent: {
+    id: "agent-1",
+    name: "王小明",
+    avatarUrl:
+      "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=200",
+    company: "邁房子信義店",
+    phone: "0912-345-678",
+    lineId: "@maihouses",
+    trustScore: 92,
+    reviewCount: 156,
+    experience: 10,
+  },
 };
 
-const DEFAULT_AGENT: ReportAgentData = {
-  name: "專屬顧問",
-  company: "MaiHouses 邁房子",
-};
-
-// 價格格式化
-function formatPrice(price: number): string {
-  if (price >= 100000000) {
-    return `${(price / 100000000).toFixed(2)}`;
-  }
-  return `${(price / 10000).toFixed(0)}`;
-}
-
-// 解碼 URL 參數中的報告資料
-function decodeReportData(searchParams: URLSearchParams): {
-  property: ReportPropertyData;
-  agent: ReportAgentData;
-} {
-  try {
-    const dataParam = searchParams.get("d");
-    if (dataParam) {
-      const decoded = JSON.parse(
-        decodeURIComponent(escape(atob(decodeURIComponent(dataParam))))
-      ) as {
-        property: ReportPropertyData;
-        agent: ReportAgentData;
-      };
-      return decoded;
-    }
-  } catch (e) {
-    logger.debug("[ReportPage] Failed to decode report data", { error: e });
-  }
-  return { property: DEFAULT_PROPERTY, agent: DEFAULT_AGENT };
+// 計算月付金額
+function calculateMonthlyPayment(
+  price: number,
+  loanRatio = 0.8,
+  years = 30,
+  rate = 0.02,
+): number {
+  const principal = price * 10000 * loanRatio;
+  const monthlyRate = rate / 12;
+  const numPayments = years * 12;
+  const payment =
+    (principal * (monthlyRate * Math.pow(1 + monthlyRate, numPayments))) /
+    (Math.pow(1 + monthlyRate, numPayments) - 1);
+  return Math.round(payment);
 }
 
 export default function ReportPage() {
   const { id } = useParams<{ id: string }>();
   const [searchParams] = useSearchParams();
-  const [isLoading, setIsLoading] = useState(true);
   const [property, setProperty] =
-    useState<ReportPropertyData>(DEFAULT_PROPERTY);
-  const [agent, setAgent] = useState<ReportAgentData>(DEFAULT_AGENT);
+    useState<PropertyReportData>(DEFAULT_REPORT_DATA);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [viewCount, setViewCount] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // 從 URL 取得參數
+  const agentId = searchParams.get("aid");
+  const source = searchParams.get("src") || "direct";
+  const highlights = searchParams.get("h")?.split(",") || [
+    "commute",
+    "school",
+    "community",
+  ];
 
   useEffect(() => {
-    const loadReport = () => {
-      setIsLoading(true);
+    // 記錄報告瀏覽
+    const trackView = async () => {
       try {
-        const { property: decodedProperty, agent: decodedAgent } =
-          decodeReportData(searchParams);
-        setProperty(decodedProperty);
-        setAgent(decodedAgent);
-
-        // 記錄報告瀏覽
-        fetch("/api/report/track", {
+        await fetch("/api/report/track", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ reportId: id, userAgent: navigator.userAgent }),
-        }).catch(() => {});
+          body: JSON.stringify({
+            reportId: id,
+            agentId,
+            source,
+            userAgent: navigator.userAgent,
+          }),
+        });
+      } catch (e) {
+        logger.debug("[ReportPage] Track failed", { error: e });
+      }
+    };
+
+    // 載入報告資料
+    const loadReport = async () => {
+      setIsLoading(true);
+      try {
+        await new Promise((r) => setTimeout(r, 300));
+        setProperty(DEFAULT_REPORT_DATA);
+        setViewCount(Math.floor(Math.random() * 20) + 5);
       } catch (e) {
         logger.error("[ReportPage] Load report failed", { error: e });
       } finally {
@@ -127,202 +127,343 @@ export default function ReportPage() {
       }
     };
 
+    trackView();
     loadReport();
-  }, [id, searchParams]);
+  }, [id, agentId, source]);
 
-  // LINE 諮詢
-  const handleLineChat = () => {
-    const message = encodeURIComponent(
-      `【${property.title}】\n\n${formatPrice(property.price)}萬\n\n${window.location.href}`
-    );
-    window.open(`https://line.me/R/msg/text/?${message}`, "_blank");
-  };
+  // 取得選中的亮點
+  const selectedHighlights = HIGHLIGHT_OPTIONS.filter((h) =>
+    highlights.includes(h.id),
+  );
 
-  // 撥打電話
-  const handleCall = () => {
-    if (agent.phone) {
-      window.location.href = `tel:${agent.phone}`;
+  // 月付試算
+  const monthlyPayment = calculateMonthlyPayment(property.price);
+
+  // 分享功能
+  const handleShare = async () => {
+    const url = window.location.href;
+    const text = `${property.title} - NT$${property.price}萬`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: text, url });
+      } catch (e) {
+        logger.debug("[ReportPage] Share cancelled");
+      }
     } else {
-      notify.info("請透過 LINE 聯繫顧問");
+      await navigator.clipboard.writeText(url);
+      notify.success("連結已複製", "已複製報告連結，可直接分享");
     }
   };
 
   if (isLoading) {
     return (
-      <div className={styles.loadingContainer}>
-        <div className={styles.loadingSpinner} />
-        <p>載入報告中...</p>
+      <div className="flex min-h-screen items-center justify-center bg-slate-50">
+        <div className="text-center">
+          <div className="mx-auto mb-4 size-12 animate-spin rounded-full border-4 border-blue-600 border-t-transparent"></div>
+          <p className="text-slate-500">載入報告中...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className={styles.reportPage}>
-      <div className={styles.reportContent}>
-        {/* Hero 圖片 */}
-        <div className={styles.hero}>
-          <div className={styles.heroTag}>精選推薦</div>
-          {property.images[0] ? (
-            <img
-              src={property.images[0]}
-              alt={property.title}
-              className={styles.heroImg}
-            />
-          ) : (
-            <div className={styles.heroPlaceholder}>
-              <Home size={36} />
-            </div>
+    <div className="min-h-screen bg-slate-50">
+      {/* ① Hero 區 - 主圖輪播 */}
+      <section className="relative">
+        <div className="aspect-[4/3] overflow-hidden bg-slate-200">
+          <img
+            src={property.images[currentImageIndex]}
+            alt={property.title}
+            className="size-full object-cover"
+          />
+
+          {/* 圖片導航 */}
+          {property.images.length > 1 && (
+            <>
+              <button
+                onClick={() =>
+                  setCurrentImageIndex((i) =>
+                    i > 0 ? i - 1 : property.images.length - 1,
+                  )
+                }
+                className="absolute left-2 top-1/2 flex size-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/30 text-white transition hover:bg-black/50"
+              >
+                <ChevronLeft size={24} />
+              </button>
+              <button
+                onClick={() =>
+                  setCurrentImageIndex((i) =>
+                    i < property.images.length - 1 ? i + 1 : 0,
+                  )
+                }
+                className="absolute right-2 top-1/2 flex size-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/30 text-white transition hover:bg-black/50"
+              >
+                <ChevronRight size={24} />
+              </button>
+
+              {/* 圖片指示器 */}
+              <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-1.5">
+                {property.images.map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setCurrentImageIndex(i)}
+                    className={`size-2 rounded-full transition ${i === currentImageIndex ? "bg-white" : "bg-white/50"}`}
+                  />
+                ))}
+              </div>
+            </>
           )}
-          <div className={styles.heroOverlay}>
-            <div className={styles.community}>{property.community}社區</div>
-            <div className={styles.title}>{property.title}</div>
+
+          {/* 品牌浮水印 */}
+          <div className="absolute right-4 top-4 flex items-center gap-1.5 rounded-full bg-white/90 px-3 py-1.5 text-sm font-bold text-[#003366] backdrop-blur">
+            <Home size={14} />
+            邁房子
           </div>
         </div>
+      </section>
 
-        {/* 價格區塊 */}
-        <div className={styles.priceSection}>
-          <div className={styles.priceMain}>
-            <div className={styles.priceLabel}>開價總價</div>
-            <div className={styles.priceTotal}>
-              {formatPrice(property.price)}
-              <small>{property.price >= 100000000 ? "億" : "萬"}</small>
+      {/* ② 價格 + 地址 */}
+      <section className="border-b border-slate-100 bg-white px-4 py-5">
+        <div className="mb-1 text-3xl font-black text-[#003366]">
+          NT$ {property.price.toLocaleString()} 萬
+        </div>
+        <h1 className="mb-2 text-lg font-bold text-slate-800">
+          {property.title}
+        </h1>
+        <div className="flex items-center text-sm text-slate-500">
+          <MapPin size={14} className="mr-1" />
+          {property.address}
+        </div>
+      </section>
+
+      {/* ③ 核心規格條 */}
+      <section className="border-b border-slate-100 bg-white p-4">
+        <div className="grid grid-cols-3 gap-3 text-center">
+          <div className="rounded-xl bg-slate-50 py-3">
+            <div className="text-lg font-bold text-slate-800">
+              {property.rooms}房{property.halls}廳{property.bathrooms}衛
             </div>
+            <div className="text-xs text-slate-500">格局</div>
           </div>
-          <div className={styles.priceUnit}>
-            <div className={styles.priceUnitLabel}>單價</div>
-            <div className={styles.priceUnitValue}>
-              {(property.pricePerPing / 10000).toFixed(1)}
-              <small>萬/坪</small>
+          <div className="rounded-xl bg-slate-50 py-3">
+            <div className="text-lg font-bold text-slate-800">
+              {property.size} 坪
             </div>
+            <div className="text-xs text-slate-500">權狀坪數</div>
+          </div>
+          <div className="rounded-xl bg-slate-50 py-3">
+            <div className="text-lg font-bold text-slate-800">
+              {property.age} 年
+            </div>
+            <div className="text-xs text-slate-500">屋齡</div>
+          </div>
+          <div className="rounded-xl bg-slate-50 py-3">
+            <div className="text-lg font-bold text-slate-800">
+              {property.floorCurrent}/{property.floorTotal}F
+            </div>
+            <div className="text-xs text-slate-500">樓層</div>
+          </div>
+          <div className="rounded-xl bg-slate-50 py-3">
+            <div className="text-lg font-bold text-slate-800">
+              {property.direction}
+            </div>
+            <div className="text-xs text-slate-500">座向</div>
+          </div>
+          <div className="rounded-xl bg-slate-50 py-3">
+            <div className="text-lg font-bold text-slate-800">
+              {property.parking || "無"}
+            </div>
+            <div className="text-xs text-slate-500">車位</div>
           </div>
         </div>
+      </section>
 
-        {/* 核心規格 */}
-        <div className={styles.specsGrid}>
-          <div className={styles.specItem}>
-            <div className={styles.specValue}>
-              {property.size}
-              <small>坪</small>
-            </div>
-            <div className={styles.specLabel}>權狀坪數</div>
+      {/* ④ 月付試算 */}
+      <section className="border-b border-slate-100 bg-white p-4">
+        <h2 className="mb-3 flex items-center gap-2 text-sm font-bold text-slate-800">
+          💰 月付試算
+        </h2>
+        <div className="rounded-xl border border-blue-100 bg-gradient-to-r from-blue-50 to-cyan-50 p-4">
+          <div className="mb-2 flex items-center justify-between">
+            <span className="text-sm text-slate-600">貸款 8 成・30 年期</span>
+            <span className="text-xs text-slate-400">利率 2%</span>
           </div>
-          <div className={styles.specItem}>
-            <div className={styles.specValue}>
-              {property.floor}
-              <small>/{property.floorTotal}F</small>
-            </div>
-            <div className={styles.specLabel}>樓層</div>
-          </div>
-          <div className={styles.specItem}>
-            <div className={styles.specValue}>
-              {property.age}
-              <small>年</small>
-            </div>
-            <div className={styles.specLabel}>屋齡</div>
-          </div>
-          <div className={styles.specItem}>
-            <div className={styles.specValue}>{property.direction}</div>
-            <div className={styles.specLabel}>座向</div>
+          <div className="text-2xl font-black text-[#003366]">
+            月付約 NT$ {monthlyPayment.toLocaleString()}
           </div>
         </div>
+      </section>
 
-        {/* 物件資訊 */}
-        <div className={styles.details}>
-          <div className={styles.sectionTitle}>物件資訊</div>
-          <div className={styles.detailsGrid}>
-            <div className={styles.detailItem}>
-              <span className={styles.detailLabel}>格局</span>
-              <span className={styles.detailValue}>{property.rooms}</span>
+      {/* ⑤ 精選亮點 */}
+      <section className="border-b border-slate-100 bg-white p-4">
+        <h2 className="mb-3 flex items-center gap-2 text-sm font-bold text-slate-800">
+          ⭐ 為您精選的亮點
+        </h2>
+        <div className="space-y-3">
+          {selectedHighlights.map((h) => (
+            <div
+              key={h.id}
+              className="flex items-start gap-3 rounded-xl bg-slate-50 p-3"
+            >
+              <span className="text-2xl">{h.icon}</span>
+              <div>
+                <div className="font-bold text-slate-800">{h.title}</div>
+                <div className="text-sm text-slate-500">{h.description}</div>
+              </div>
             </div>
-            <div className={styles.detailItem}>
-              <span className={styles.detailLabel}>車位</span>
-              <span className={styles.detailValue}>{property.parking}</span>
-            </div>
-            <div className={styles.detailItem}>
-              <span className={styles.detailLabel}>管理費</span>
-              <span className={styles.detailValue}>
-                {property.managementFee.toLocaleString()}/月
+          ))}
+        </div>
+      </section>
+
+      {/* ⑥ 社區資訊 */}
+      {property.communityName && (
+        <section className="border-b border-slate-100 bg-white p-4">
+          <h2 className="mb-3 flex items-center gap-2 text-sm font-bold text-slate-800">
+            🏢 社區資訊
+          </h2>
+          <div className="space-y-2 rounded-xl bg-slate-50 p-4">
+            <div className="flex justify-between">
+              <span className="text-slate-500">社區名稱</span>
+              <span className="font-medium text-slate-800">
+                {property.communityName}
               </span>
             </div>
-            <div className={styles.detailItem}>
-              <span className={styles.detailLabel}>型態</span>
-              <span className={styles.detailValue}>{property.propertyType}</span>
+            <div className="flex justify-between">
+              <span className="text-slate-500">完工年份</span>
+              <span className="font-medium text-slate-800">
+                {property.communityYear} 年
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-slate-500">總戶數</span>
+              <span className="font-medium text-slate-800">
+                {property.communityUnits} 戶
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-slate-500">管理費</span>
+              <span className="font-medium text-slate-800">
+                {property.managementFee} 元/坪
+              </span>
             </div>
           </div>
-        </div>
+        </section>
+      )}
 
-        {/* 社區資訊 */}
-        <div className={styles.communitySection}>
-          <div className={styles.sectionTitle}>社區資訊</div>
-          <div className={styles.communityInfo}>
-            <div className={styles.communityStat}>
-              <div className={styles.communityStatValue}>
-                {property.communityYear}
-              </div>
-              <div className={styles.communityStatLabel}>建成年份</div>
-            </div>
-            <div className={styles.communityStat}>
-              <div className={styles.communityStatValue}>
-                {property.communityUnits}
-              </div>
-              <div className={styles.communityStatLabel}>總戶數</div>
-            </div>
-            <div className={styles.communityStat}>
-              <div className={styles.communityStatValue}>
-                {property.floorTotal}
-              </div>
-              <div className={styles.communityStatLabel}>總樓層</div>
-            </div>
-          </div>
-        </div>
-
-        {/* 物件說明 */}
-        <div className={styles.description}>
-          <div className={styles.sectionTitle}>物件說明</div>
-          <div className={styles.descriptionText}>{property.description}</div>
-        </div>
-
-        {/* 地址位置 */}
-        <div className={styles.location}>
-          <div className={styles.locationIcon}>
-            <MapPin size={16} />
-          </div>
-          <div className={styles.locationText}>
-            {property.address}
-            <small>{property.district}</small>
-          </div>
-        </div>
-
-        {/* 業務資訊 */}
-        <div className={styles.agent}>
-          <div className={styles.agentAvatar} />
-          <div className={styles.agentInfo}>
-            <strong>{agent.name}</strong>
-            <span>{agent.company}</span>
-          </div>
-          <div className={styles.agentCta}>
-            <button
-              className={`${styles.agentBtn} ${styles.secondary}`}
-              onClick={handleLineChat}
-            >
-              <MessageCircle size={16} />
-            </button>
-            {agent.phone && (
+      {/* ⑦ 更多照片 */}
+      {property.images.length > 1 && (
+        <section className="border-b border-slate-100 bg-white p-4">
+          <h2 className="mb-3 flex items-center gap-2 text-sm font-bold text-slate-800">
+            📸 更多照片
+          </h2>
+          <div className="grid grid-cols-3 gap-2">
+            {property.images.slice(0, 6).map((img, i) => (
               <button
-                className={`${styles.agentBtn} ${styles.primary}`}
-                onClick={handleCall}
+                key={i}
+                onClick={() => setCurrentImageIndex(i)}
+                className="aspect-square overflow-hidden rounded-lg bg-slate-100"
               >
-                <Phone size={16} />
+                <img src={img} alt="" className="size-full object-cover" />
               </button>
-            )}
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* ⑧ 經紀人小卡 */}
+      <section className="border-b border-slate-100 bg-white px-4 py-5">
+        <h2 className="mb-4 flex items-center gap-2 text-sm font-bold text-slate-800">
+          👤 您的專屬顧問
+        </h2>
+        <div className="mb-4 flex items-center gap-4">
+          <img
+            src={property.agent.avatarUrl}
+            alt={property.agent.name}
+            className="size-16 rounded-full border-2 border-slate-100 object-cover"
+          />
+          <div className="flex-1">
+            <div className="text-lg font-bold text-slate-800">
+              {property.agent.name}
+            </div>
+            <div className="text-sm text-slate-500">
+              {property.agent.company}
+            </div>
+            <div className="mt-1 flex items-center gap-2">
+              <span className="text-sm text-amber-500">
+                ⭐ {(property.agent.trustScore! / 20).toFixed(1)}
+              </span>
+              <span className="text-xs text-slate-400">
+                ({property.agent.reviewCount} 則評價)
+              </span>
+              {property.agent.experience && (
+                <span className="text-xs text-slate-400">
+                  ・{property.agent.experience}年經驗
+                </span>
+              )}
+            </div>
           </div>
         </div>
 
-        {/* 品牌浮水印 */}
-        <div className={styles.watermark}>
-          由 <strong>MaiHouses 邁房子</strong> 提供
+        {/* CTA 按鈕 */}
+        <div className="space-y-3">
+          <a
+            href={`tel:${property.agent.phone}`}
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#003366] py-3.5 font-bold text-white transition hover:bg-[#002244]"
+          >
+            <Phone size={18} />
+            立即撥打 {property.agent.phone}
+          </a>
+          <a
+            href={`https://line.me/R/ti/p/${property.agent.lineId}`}
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#06C755] py-3.5 font-bold text-white transition hover:bg-[#05a847]"
+          >
+            <MessageCircle size={18} />
+            LINE 諮詢
+          </a>
+          <button className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-slate-200 py-3.5 font-bold text-slate-700 transition hover:border-slate-300">
+            <Calendar size={18} />
+            預約看屋
+          </button>
         </div>
-      </div>
+      </section>
+
+      {/* ⑨ Footer */}
+      <section className="bg-slate-100 px-4 py-6 text-center">
+        <div className="mb-2 flex items-center justify-center gap-2 font-bold text-[#003366]">
+          <Home size={18} />
+          MaiHouses 邁房子
+        </div>
+        <div className="mb-3 text-sm text-slate-500">讓家，不只是地址</div>
+
+        {viewCount > 0 && (
+          <div className="mb-2 text-xs text-slate-400">
+            📊 此報告已被瀏覽 {viewCount} 次
+          </div>
+        )}
+
+        <div className="text-xs text-slate-400">
+          報告生成：{new Date().toLocaleDateString("zh-TW")}
+        </div>
+
+        {/* 分享按鈕 */}
+        <button
+          onClick={handleShare}
+          className="mt-4 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm text-slate-600 transition hover:bg-slate-50"
+        >
+          <Share2 size={14} />
+          分享此報告
+        </button>
+
+        {/* 查看完整詳情 */}
+        <a
+          href={`/maihouses/property/${property.publicId}?aid=${agentId || ""}&src=report`}
+          className="mt-3 flex items-center justify-center gap-1 text-sm text-[#003366] hover:underline"
+        >
+          查看完整物件詳情
+          <ExternalLink size={14} />
+        </a>
+      </section>
     </div>
   );
 }
