@@ -53,12 +53,7 @@ interface LineBindingResult {
   line_status: "active" | "blocked";
 }
 
-interface ConnectTokenPayload {
-  conversationId: string;
-  sessionId: string;
-  propertyId?: string;
-  exp: number;
-}
+// ConnectTokenPayload 已從 crypto.ts 導入
 
 interface LineMessageData {
   agentName: string;
