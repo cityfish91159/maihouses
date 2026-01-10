@@ -404,10 +404,39 @@ export default function ReportGenerator({
     const toastId = notify.loading("正在生成精美報告...");
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
 
+      // 準備報告資料
+      const selectedHighlights = highlights
+        .filter((h) => h.selected)
+        .map((h) => ({
+          id: h.id,
+          icon: h.icon,
+          title: h.title,
+          description: h.description,
+        }));
+
+      const reportData = {
+        property: {
+          ...selectedProperty,
+          highlights: selectedHighlights,
+        },
+        agent: {
+          name: agentName,
+          phone: agentPhone,
+          company: "MaiHouses 邁房子",
+        },
+      };
+
+      // 編碼資料到 URL（使用 encodeURIComponent 確保中文正確編碼）
+      const encodedData = encodeURIComponent(btoa(unescape(encodeURIComponent(JSON.stringify(reportData)))));
       const reportId = `R-${Date.now().toString(36).toUpperCase()}`;
-      const url = `${window.location.origin}/r/${reportId}`;
+
+      // 根據當前路徑判斷 basename
+      const basename = window.location.pathname.startsWith("/maihouses")
+        ? "/maihouses"
+        : "";
+      const url = `${window.location.origin}${basename}/r/${reportId}?d=${encodedData}`;
 
       setReportUrl(url);
       setStep(5);

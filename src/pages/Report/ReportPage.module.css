@@ -1,0 +1,568 @@
+/* ====== 報告頁面樣式 - 手機優先設計 ====== */
+
+/* 載入狀態 */
+.loadingContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: #f8fafc;
+  gap: 16px;
+}
+
+.loadingContainer p {
+  color: #64748b;
+  font-size: 14px;
+}
+
+.loadingSpinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #e2e8f0;
+  border-top-color: #1749d7;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 主容器 - 手機優先 */
+.reportPage {
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: #fff;
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+/* 桌面版限制寬度 */
+@media (min-width: 768px) {
+  .reportPage {
+    max-width: 480px;
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.1);
+  }
+}
+
+/* ==================== Hero 區塊 ==================== */
+.hero {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  background: #000;
+  overflow: hidden;
+}
+
+.heroTag {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  background: #1749d7;
+  color: #fff;
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  z-index: 2;
+  letter-spacing: 0.5px;
+}
+
+.heroImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.heroPlaceholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #1749d7, #3b82f6);
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.heroOverlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 60px 20px 20px;
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.9) 0%,
+    rgba(0, 0, 0, 0.5) 50%,
+    transparent 100%
+  );
+  color: #fff;
+}
+
+.heroCommunity {
+  font-size: 13px;
+  opacity: 0.9;
+  margin-bottom: 6px;
+}
+
+.heroTitle {
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1.3;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* ==================== 價格區塊 ==================== */
+.priceSection {
+  background: linear-gradient(135deg, #1749d7, #0f3399);
+  padding: 20px;
+  color: #fff;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+
+.priceMain {
+  display: flex;
+  flex-direction: column;
+}
+
+.priceLabel {
+  font-size: 12px;
+  opacity: 0.85;
+  margin-bottom: 4px;
+}
+
+.priceTotal {
+  font-size: 36px;
+  font-weight: 900;
+  letter-spacing: -1px;
+  line-height: 1;
+}
+
+.priceTotal small {
+  font-size: 18px;
+  font-weight: 700;
+  margin-left: 4px;
+}
+
+.priceUnit {
+  text-align: right;
+}
+
+.priceUnitLabel {
+  font-size: 11px;
+  opacity: 0.75;
+}
+
+.priceUnitValue {
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.priceUnitValue small {
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* ==================== 核心規格 ==================== */
+.specsGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.specItem {
+  padding: 16px 8px;
+  text-align: center;
+  border-right: 1px solid #e2e8f0;
+}
+
+.specItem:last-child {
+  border-right: none;
+}
+
+.specValue {
+  font-size: 20px;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.2;
+}
+
+.specValue small {
+  font-size: 12px;
+  font-weight: 500;
+  color: #64748b;
+}
+
+.specLabel {
+  font-size: 11px;
+  color: #64748b;
+  margin-top: 4px;
+}
+
+/* ==================== 通用區塊標題 ==================== */
+.sectionTitle {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sectionTitle::before {
+  content: "";
+  width: 4px;
+  height: 16px;
+  background: #1749d7;
+  border-radius: 2px;
+}
+
+/* ==================== 月付試算 ==================== */
+.monthlySection {
+  padding: 20px;
+  background: #f8fafc;
+}
+
+.monthlyCard {
+  background: linear-gradient(135deg, #e0f2fe, #dbeafe);
+  border: 1px solid #bae6fd;
+  border-radius: 16px;
+  padding: 16px 20px;
+}
+
+.monthlyInfo {
+  font-size: 12px;
+  color: #64748b;
+  margin-bottom: 8px;
+}
+
+.monthlyAmount {
+  font-size: 22px;
+  font-weight: 800;
+  color: #0369a1;
+}
+
+/* ==================== 物件資訊 ==================== */
+.detailsSection {
+  padding: 20px;
+  background: #fff;
+}
+
+.detailsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.detailItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: #f8fafc;
+  border-radius: 10px;
+}
+
+.detailLabel {
+  font-size: 13px;
+  color: #64748b;
+}
+
+.detailValue {
+  font-size: 14px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+/* ==================== 精選亮點 ==================== */
+.highlightsSection {
+  padding: 20px;
+  background: #fff;
+  border-top: 8px solid #f8fafc;
+}
+
+.highlightsList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.highlightItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 16px;
+  background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+  border: 1px solid #bbf7d0;
+  border-radius: 14px;
+}
+
+.highlightIcon {
+  font-size: 28px;
+  flex-shrink: 0;
+}
+
+.highlightContent {
+  flex: 1;
+}
+
+.highlightTitle {
+  font-size: 15px;
+  font-weight: 700;
+  color: #166534;
+  margin-bottom: 4px;
+}
+
+.highlightDesc {
+  font-size: 13px;
+  color: #22c55e;
+  line-height: 1.4;
+}
+
+/* ==================== 社區資訊 ==================== */
+.communitySection {
+  padding: 20px;
+  background: #fff;
+  border-top: 1px solid #e2e8f0;
+}
+
+.communityStats {
+  display: flex;
+  gap: 12px;
+}
+
+.communityStat {
+  flex: 1;
+  background: #f8fafc;
+  padding: 14px;
+  border-radius: 12px;
+  text-align: center;
+}
+
+.communityStatValue {
+  font-size: 22px;
+  font-weight: 800;
+  color: #1749d7;
+}
+
+.communityStatLabel {
+  font-size: 11px;
+  color: #64748b;
+  margin-top: 4px;
+}
+
+/* ==================== 物件說明 ==================== */
+.descriptionSection {
+  padding: 20px;
+  background: #fff;
+  border-top: 1px solid #e2e8f0;
+}
+
+.descriptionText {
+  font-size: 14px;
+  line-height: 1.8;
+  color: #475569;
+}
+
+/* ==================== 地址位置 ==================== */
+.locationSection {
+  padding: 16px 20px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: #f8fafc;
+  border-top: 1px solid #e2e8f0;
+}
+
+.locationIcon {
+  width: 36px;
+  height: 36px;
+  background: rgba(23, 73, 215, 0.1);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #1749d7;
+  flex-shrink: 0;
+}
+
+.locationText {
+  font-size: 14px;
+  color: #0f172a;
+  line-height: 1.5;
+}
+
+.locationText small {
+  display: block;
+  font-size: 12px;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+/* ==================== 業務資訊 ==================== */
+.agentSection {
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: linear-gradient(to right, #f8fafc, #fff);
+  border-top: 1px solid #e2e8f0;
+}
+
+.agentAvatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #1749d7, #3b82f6);
+  border: 3px solid #fff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  flex-shrink: 0;
+}
+
+.agentInfo {
+  flex: 1;
+}
+
+.agentInfo strong {
+  display: block;
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.agentInfo span {
+  font-size: 13px;
+  color: #64748b;
+}
+
+.agentCta {
+  display: flex;
+  gap: 10px;
+}
+
+.agentBtn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.agentBtn.primary {
+  background: #1749d7;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(23, 73, 215, 0.4);
+}
+
+.agentBtn.primary:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 16px rgba(23, 73, 215, 0.5);
+}
+
+.agentBtn.secondary {
+  background: #fff;
+  color: #1749d7;
+  border: 2px solid #e2e8f0;
+}
+
+.agentBtn.secondary:hover {
+  border-color: #1749d7;
+}
+
+/* ==================== CTA 按鈕區 ==================== */
+.ctaSection {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: #fff;
+  border-top: 8px solid #f8fafc;
+}
+
+.ctaPrimary,
+.ctaLine,
+.ctaShare {
+  width: 100%;
+  padding: 16px;
+  border-radius: 14px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: all 0.2s;
+  border: none;
+}
+
+.ctaPrimary {
+  background: linear-gradient(135deg, #1749d7, #3b82f6);
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(23, 73, 215, 0.35);
+}
+
+.ctaPrimary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(23, 73, 215, 0.45);
+}
+
+.ctaLine {
+  background: linear-gradient(135deg, #06c755, #00b900);
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(6, 199, 85, 0.35);
+}
+
+.ctaLine:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(6, 199, 85, 0.45);
+}
+
+.ctaShare {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.ctaShare:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+/* ==================== 品牌浮水印 ==================== */
+.watermark {
+  padding: 24px 20px;
+  text-align: center;
+  font-size: 13px;
+  color: #64748b;
+  background: #f8fafc;
+  border-top: 1px solid #e2e8f0;
+}
+
+.watermark strong {
+  color: #1749d7;
+  font-weight: 700;
+}
+
+.watermarkDate {
+  font-size: 11px;
+  color: #94a3b8;
+  margin-top: 8px;
+}
+
+/* ==================== Safe Area（iPhone 底部安全區） ==================== */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .ctaSection {
+    padding-bottom: calc(20px + env(safe-area-inset-bottom));
+  }
+}
