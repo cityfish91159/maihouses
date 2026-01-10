@@ -1,4 +1,4 @@
-/* ====== 報告頁面樣式 - 手機優先設計 ====== */
+/* ====== 報告頁面樣式 - 與預覽完全一致 ====== */
 
 /* 載入狀態 */
 .loadingContainer {
@@ -8,7 +8,7 @@
   justify-content: center;
   min-height: 100vh;
   min-height: 100dvh;
-  background: #f8fafc;
+  background: #fff;
   gap: 16px;
 }
 
@@ -18,8 +18,8 @@
 }
 
 .loadingSpinner {
-  width: 40px;
-  height: 40px;
+  width: 32px;
+  height: 32px;
   border: 3px solid #e2e8f0;
   border-top-color: #1749d7;
   border-radius: 50%;
@@ -37,39 +37,42 @@
   min-height: 100vh;
   min-height: 100dvh;
   background: #fff;
-  max-width: 100%;
-  margin: 0 auto;
+  display: flex;
+  justify-content: center;
 }
 
-/* 桌面版限制寬度 */
-@media (min-width: 768px) {
-  .reportPage {
-    max-width: 480px;
-    box-shadow: 0 0 40px rgba(0, 0, 0, 0.1);
-  }
+.reportContent {
+  width: 100%;
+  max-width: 480px;
+  background: #fff;
+  overflow: hidden;
 }
 
 /* ==================== Hero 區塊 ==================== */
 .hero {
   position: relative;
-  width: 100%;
-  aspect-ratio: 4 / 3;
+  height: 280px;
   background: #000;
   overflow: hidden;
 }
 
+@media (max-width: 480px) {
+  .hero {
+    height: 240px;
+  }
+}
+
 .heroTag {
   position: absolute;
-  top: 16px;
-  left: 16px;
+  top: 12px;
+  left: 12px;
   background: #1749d7;
   color: #fff;
-  padding: 6px 14px;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 700;
+  padding: 5px 12px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
   z-index: 2;
-  letter-spacing: 0.5px;
 }
 
 .heroImg {
@@ -85,7 +88,7 @@
   width: 100%;
   height: 100%;
   background: linear-gradient(135deg, #1749d7, #3b82f6);
-  color: rgba(255, 255, 255, 0.4);
+  color: rgba(255, 255, 255, 0.35);
 }
 
 .heroOverlay {
@@ -93,33 +96,32 @@
   bottom: 0;
   left: 0;
   right: 0;
-  padding: 60px 20px 20px;
+  padding: 48px 14px 12px;
   background: linear-gradient(
     to top,
-    rgba(0, 0, 0, 0.9) 0%,
-    rgba(0, 0, 0, 0.5) 50%,
+    rgba(0, 0, 0, 0.85) 0%,
+    rgba(0, 0, 0, 0.4) 60%,
     transparent 100%
   );
   color: #fff;
 }
 
-.heroCommunity {
-  font-size: 13px;
+.community {
+  font-size: 11px;
   opacity: 0.9;
-  margin-bottom: 6px;
+  margin-bottom: 3px;
 }
 
-.heroTitle {
-  font-size: 20px;
-  font-weight: 800;
+.title {
+  font-size: 15px;
+  font-weight: 700;
   line-height: 1.3;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 /* ==================== 價格區塊 ==================== */
 .priceSection {
   background: linear-gradient(135deg, #1749d7, #0f3399);
-  padding: 20px;
+  padding: 14px;
   color: #fff;
   display: flex;
   justify-content: space-between;
@@ -132,22 +134,22 @@
 }
 
 .priceLabel {
-  font-size: 12px;
-  opacity: 0.85;
-  margin-bottom: 4px;
+  font-size: 10px;
+  opacity: 0.8;
+  margin-bottom: 2px;
 }
 
 .priceTotal {
-  font-size: 36px;
-  font-weight: 900;
-  letter-spacing: -1px;
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
   line-height: 1;
 }
 
 .priceTotal small {
-  font-size: 18px;
-  font-weight: 700;
-  margin-left: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  margin-left: 2px;
 }
 
 .priceUnit {
@@ -155,17 +157,17 @@
 }
 
 .priceUnitLabel {
-  font-size: 11px;
-  opacity: 0.75;
+  font-size: 10px;
+  opacity: 0.7;
 }
 
 .priceUnitValue {
-  font-size: 20px;
+  font-size: 16px;
   font-weight: 700;
 }
 
 .priceUnitValue small {
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 500;
 }
 
@@ -177,7 +179,7 @@
 }
 
 .specItem {
-  padding: 16px 8px;
+  padding: 12px 6px;
   text-align: center;
   border-right: 1px solid #e2e8f0;
 }
@@ -187,205 +189,130 @@
 }
 
 .specValue {
-  font-size: 20px;
-  font-weight: 800;
+  font-size: 16px;
+  font-weight: 700;
   color: #0f172a;
   line-height: 1.2;
 }
 
 .specValue small {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 500;
-  color: #64748b;
 }
 
 .specLabel {
-  font-size: 11px;
+  font-size: 9px;
   color: #64748b;
-  margin-top: 4px;
+  margin-top: 2px;
 }
 
-/* ==================== 通用區塊標題 ==================== */
+/* ==================== 區塊標題 ==================== */
 .sectionTitle {
-  font-size: 14px;
-  font-weight: 700;
+  font-size: 11px;
+  font-weight: 600;
   color: #0f172a;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .sectionTitle::before {
   content: "";
-  width: 4px;
-  height: 16px;
+  width: 3px;
+  height: 12px;
   background: #1749d7;
   border-radius: 2px;
 }
 
-/* ==================== 月付試算 ==================== */
-.monthlySection {
-  padding: 20px;
-  background: #f8fafc;
-}
-
-.monthlyCard {
-  background: linear-gradient(135deg, #e0f2fe, #dbeafe);
-  border: 1px solid #bae6fd;
-  border-radius: 16px;
-  padding: 16px 20px;
-}
-
-.monthlyInfo {
-  font-size: 12px;
-  color: #64748b;
-  margin-bottom: 8px;
-}
-
-.monthlyAmount {
-  font-size: 22px;
-  font-weight: 800;
-  color: #0369a1;
-}
-
 /* ==================== 物件資訊 ==================== */
-.detailsSection {
-  padding: 20px;
-  background: #fff;
+.details {
+  padding: 12px 14px;
+  background: #f8fafc;
 }
 
 .detailsGrid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
+  gap: 6px;
 }
 
 .detailItem {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 16px;
-  background: #f8fafc;
-  border-radius: 10px;
+  padding: 8px 10px;
+  background: #fff;
+  border-radius: 6px;
+  font-size: 11px;
 }
 
 .detailLabel {
-  font-size: 13px;
   color: #64748b;
 }
 
 .detailValue {
-  font-size: 14px;
   font-weight: 600;
   color: #0f172a;
 }
 
-/* ==================== 精選亮點 ==================== */
-.highlightsSection {
-  padding: 20px;
-  background: #fff;
-  border-top: 8px solid #f8fafc;
-}
-
-.highlightsList {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.highlightItem {
-  display: flex;
-  align-items: flex-start;
-  gap: 14px;
-  padding: 16px;
-  background: linear-gradient(135deg, #f0fdf4, #dcfce7);
-  border: 1px solid #bbf7d0;
-  border-radius: 14px;
-}
-
-.highlightIcon {
-  font-size: 28px;
-  flex-shrink: 0;
-}
-
-.highlightContent {
-  flex: 1;
-}
-
-.highlightTitle {
-  font-size: 15px;
-  font-weight: 700;
-  color: #166534;
-  margin-bottom: 4px;
-}
-
-.highlightDesc {
-  font-size: 13px;
-  color: #22c55e;
-  line-height: 1.4;
-}
-
 /* ==================== 社區資訊 ==================== */
 .communitySection {
-  padding: 20px;
-  background: #fff;
-  border-top: 1px solid #e2e8f0;
+  padding: 12px 14px;
+  border-bottom: 1px solid #e2e8f0;
 }
 
-.communityStats {
+.communityInfo {
   display: flex;
-  gap: 12px;
+  gap: 8px;
 }
 
 .communityStat {
   flex: 1;
   background: #f8fafc;
-  padding: 14px;
-  border-radius: 12px;
+  padding: 10px;
+  border-radius: 6px;
   text-align: center;
 }
 
 .communityStatValue {
-  font-size: 22px;
-  font-weight: 800;
+  font-size: 16px;
+  font-weight: 700;
   color: #1749d7;
 }
 
 .communityStatLabel {
-  font-size: 11px;
+  font-size: 9px;
   color: #64748b;
-  margin-top: 4px;
+  margin-top: 2px;
 }
 
 /* ==================== 物件說明 ==================== */
-.descriptionSection {
-  padding: 20px;
-  background: #fff;
-  border-top: 1px solid #e2e8f0;
+.description {
+  padding: 12px 14px;
+  border-bottom: 1px solid #e2e8f0;
 }
 
 .descriptionText {
-  font-size: 14px;
-  line-height: 1.8;
-  color: #475569;
+  font-size: 11px;
+  line-height: 1.6;
+  color: #64748b;
 }
 
 /* ==================== 地址位置 ==================== */
-.locationSection {
-  padding: 16px 20px;
+.location {
+  padding: 12px 14px;
   display: flex;
   align-items: flex-start;
-  gap: 12px;
-  background: #f8fafc;
-  border-top: 1px solid #e2e8f0;
+  gap: 8px;
+  border-bottom: 1px solid #e2e8f0;
 }
 
 .locationIcon {
-  width: 36px;
-  height: 36px;
+  width: 28px;
+  height: 28px;
   background: rgba(23, 73, 215, 0.1);
-  border-radius: 10px;
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -394,36 +321,34 @@
 }
 
 .locationText {
-  font-size: 14px;
+  font-size: 12px;
   color: #0f172a;
-  line-height: 1.5;
+  line-height: 1.4;
 }
 
 .locationText small {
   display: block;
-  font-size: 12px;
+  font-size: 10px;
   color: #64748b;
   margin-top: 2px;
 }
 
 /* ==================== 業務資訊 ==================== */
-.agentSection {
-  padding: 20px;
+.agent {
+  padding: 12px 14px;
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 10px;
   background: linear-gradient(to right, #f8fafc, #fff);
-  border-top: 1px solid #e2e8f0;
 }
 
 .agentAvatar {
-  width: 52px;
-  height: 52px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   background: linear-gradient(135deg, #1749d7, #3b82f6);
-  border: 3px solid #fff;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  flex-shrink: 0;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
 .agentInfo {
@@ -432,137 +357,59 @@
 
 .agentInfo strong {
   display: block;
-  font-size: 16px;
-  font-weight: 700;
+  font-size: 12px;
+  font-weight: 600;
   color: #0f172a;
 }
 
 .agentInfo span {
-  font-size: 13px;
+  font-size: 10px;
   color: #64748b;
 }
 
 .agentCta {
   display: flex;
-  gap: 10px;
+  gap: 6px;
 }
 
 .agentBtn {
-  width: 44px;
-  height: 44px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   border: none;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: transform 0.15s;
+}
+
+.agentBtn:active {
+  transform: scale(0.95);
 }
 
 .agentBtn.primary {
   background: #1749d7;
   color: #fff;
-  box-shadow: 0 4px 12px rgba(23, 73, 215, 0.4);
-}
-
-.agentBtn.primary:hover {
-  transform: scale(1.05);
-  box-shadow: 0 6px 16px rgba(23, 73, 215, 0.5);
+  box-shadow: 0 4px 10px rgba(23, 73, 215, 0.3);
 }
 
 .agentBtn.secondary {
   background: #fff;
   color: #1749d7;
-  border: 2px solid #e2e8f0;
-}
-
-.agentBtn.secondary:hover {
-  border-color: #1749d7;
-}
-
-/* ==================== CTA 按鈕區 ==================== */
-.ctaSection {
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  background: #fff;
-  border-top: 8px solid #f8fafc;
-}
-
-.ctaPrimary,
-.ctaLine,
-.ctaShare {
-  width: 100%;
-  padding: 16px;
-  border-radius: 14px;
-  font-size: 16px;
-  font-weight: 700;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  transition: all 0.2s;
-  border: none;
-}
-
-.ctaPrimary {
-  background: linear-gradient(135deg, #1749d7, #3b82f6);
-  color: #fff;
-  box-shadow: 0 4px 16px rgba(23, 73, 215, 0.35);
-}
-
-.ctaPrimary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(23, 73, 215, 0.45);
-}
-
-.ctaLine {
-  background: linear-gradient(135deg, #06c755, #00b900);
-  color: #fff;
-  box-shadow: 0 4px 16px rgba(6, 199, 85, 0.35);
-}
-
-.ctaLine:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(6, 199, 85, 0.45);
-}
-
-.ctaShare {
-  background: #f1f5f9;
-  color: #64748b;
-}
-
-.ctaShare:hover {
-  background: #e2e8f0;
-  color: #0f172a;
+  border: 1px solid #e2e8f0;
 }
 
 /* ==================== 品牌浮水印 ==================== */
 .watermark {
-  padding: 24px 20px;
+  padding: 10px 14px;
   text-align: center;
-  font-size: 13px;
+  font-size: 10px;
   color: #64748b;
   background: #f8fafc;
-  border-top: 1px solid #e2e8f0;
 }
 
 .watermark strong {
   color: #1749d7;
-  font-weight: 700;
-}
-
-.watermarkDate {
-  font-size: 11px;
-  color: #94a3b8;
-  margin-top: 8px;
-}
-
-/* ==================== Safe Area（iPhone 底部安全區） ==================== */
-@supports (padding-bottom: env(safe-area-inset-bottom)) {
-  .ctaSection {
-    padding-bottom: calc(20px + env(safe-area-inset-bottom));
-  }
+  font-weight: 600;
 }
