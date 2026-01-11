@@ -329,12 +329,10 @@ export default function ReportGenerator({
   agentName = "專屬顧問",
   agentPhone,
 }: ReportGeneratorProps) {
-  const [step, setStep] = useState<1 | 2 | 3 | 4 | 5>(1);
+  const [step, setStep] = useState<1 | 2 | 3>(1);
   const [selectedProperty, setSelectedProperty] = useState<PropertyData | null>(
     null,
   );
-  const [selectedStyle, setSelectedStyle] = useState<ReportStyle>("simple");
-  const [highlights, setHighlights] = useState<Highlight[]>([]);
   const [reportUrl, setReportUrl] = useState<string>("");
   const [isGenerating, setIsGenerating] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -363,38 +361,7 @@ export default function ReportGenerator({
 
   const handleSelectProperty = (property: PropertyData) => {
     setSelectedProperty(property);
-    setHighlights(property.highlights);
-    setStep(2);
-  };
-
-  const handleSelectStyle = (style: ReportStyle) => {
-    setSelectedStyle(style);
-    setStep(3);
-  };
-
-  const toggleHighlight = (id: string) => {
-    const selectedCount = highlights.filter((h) => h.selected).length;
-    setHighlights((prev) =>
-      prev.map((h) => {
-        if (h.id === id) {
-          if (!h.selected && selectedCount >= 3) {
-            notify.error("最多只能選擇 3 個亮點");
-            return h;
-          }
-          return { ...h, selected: !h.selected };
-        }
-        return h;
-      }),
-    );
-  };
-
-  const confirmHighlights = () => {
-    const selectedCount = highlights.filter((h) => h.selected).length;
-    if (selectedCount < 1) {
-      notify.error("請至少選擇 1 個亮點");
-      return;
-    }
-    setStep(4);
+    setStep(2); // 直接跳到預覽
   };
 
   const generateReport = async () => {
@@ -406,21 +373,9 @@ export default function ReportGenerator({
     try {
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
-      // 準備報告資料
-      const selectedHighlights = highlights
-        .filter((h) => h.selected)
-        .map((h) => ({
-          id: h.id,
-          icon: h.icon,
-          title: h.title,
-          description: h.description,
-        }));
-
+      // 準備報告資料（不包含亮點）
       const reportData = {
-        property: {
-          ...selectedProperty,
-          highlights: selectedHighlights,
-        },
+        property: selectedProperty,
         agent: {
           name: agentName,
           phone: agentPhone,
@@ -439,7 +394,7 @@ export default function ReportGenerator({
       const url = `${window.location.origin}${basename}/r/${reportId}?d=${encodedData}`;
 
       setReportUrl(url);
-      setStep(5);
+      setStep(3); // 改為 step 3 (完成)
       notify.success("報告生成成功！", undefined, { id: toastId });
     } catch {
       notify.error("生成失敗，請重試", undefined, { id: toastId });
@@ -467,8 +422,6 @@ export default function ReportGenerator({
   const reset = () => {
     setStep(1);
     setSelectedProperty(null);
-    setSelectedStyle("simple");
-    setHighlights([]);
     setReportUrl("");
   };
 
@@ -563,8 +516,7 @@ export default function ReportGenerator({
       };
 
       setSelectedProperty(detectedProperty);
-      setHighlights(detectedProperty.highlights);
-      setStep(2);
+      setStep(2); // 直接跳到預覽
       notify.success("AI 分析完成！已自動帶入物件資訊", undefined, {
         id: toastId,
       });
@@ -627,102 +579,16 @@ export default function ReportGenerator({
     </div>
   );
 
-  const renderStep2 = () => (
-    <div className={styles.reportStep}>
-      <div className={styles.reportStepHeader}>
-        <button className={styles.reportBackBtn} onClick={() => setStep(1)}>
-          <ChevronLeft size={20} />
-        </button>
-        <span className={styles.reportStepBadge}>2/4</span>
-        <h3>選擇報告樣式</h3>
-      </div>
-
-      <div className={styles.reportSelectedProperty}>
-        <Home size={18} />
-        <span>{selectedProperty?.title}</span>
-      </div>
-
-      <div className={styles.reportStyles}>
-        {REPORT_STYLES.map((style) => (
-          <button
-            key={style.id}
-            className={`${styles.reportStyleItem} ${selectedStyle === style.id ? styles.selected : ""}`}
-            onClick={() => handleSelectStyle(style.id)}
-          >
-            <span className={styles.reportStyleIcon}>{style.icon}</span>
-            <div className={styles.reportStyleInfo}>
-              <div className={styles.reportStyleTitle}>{style.title}</div>
-              <div className={styles.reportStyleDesc}>{style.desc}</div>
-            </div>
-            {selectedStyle === style.id && (
-              <CheckCircle size={20} className={styles.reportStyleCheck} />
-            )}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-
-  const renderStep3 = () => (
-    <div className={styles.reportStep}>
-      <div className={styles.reportStepHeader}>
-        <button className={styles.reportBackBtn} onClick={() => setStep(2)}>
-          <ChevronLeft size={20} />
-        </button>
-        <span className={styles.reportStepBadge}>3/4</span>
-        <h3>選擇 3 個亮點</h3>
-      </div>
-
-      <p className={styles.reportStepHint}>
-        系統已為您分析此物件，請選擇最適合客戶的賣點
-      </p>
-
-      <div className={styles.reportHighlights}>
-        {highlights.map((highlight) => (
-          <button
-            key={highlight.id}
-            className={`${styles.reportHighlightItem} ${highlight.selected ? styles.selected : ""}`}
-            onClick={() => toggleHighlight(highlight.id)}
-          >
-            <span className={styles.reportHighlightIcon}>{highlight.icon}</span>
-            <div className={styles.reportHighlightInfo}>
-              <div className={styles.reportHighlightTitle}>
-                {highlight.title}
-              </div>
-              <div className={styles.reportHighlightDesc}>
-                {highlight.description}
-              </div>
-            </div>
-            <div className={styles.reportHighlightCheck}>
-              {highlight.selected ? (
-                <CheckCircle size={20} />
-              ) : (
-                <div className={styles.reportHighlightUnchecked} />
-              )}
-            </div>
-          </button>
-        ))}
-      </div>
-
-      <div className={styles.reportStepFooter}>
-        <span>已選 {highlights.filter((h) => h.selected).length}/3</span>
-        <button className={styles.reportNextBtn} onClick={confirmHighlights}>
-          下一步 <ChevronRight size={18} />
-        </button>
-      </div>
-    </div>
-  );
-
   const renderStep4 = () => {
     if (!selectedProperty) return null;
 
     return (
       <div className={styles.reportStep}>
         <div className={styles.reportStepHeader}>
-          <button className={styles.reportBackBtn} onClick={() => setStep(3)}>
+          <button className={styles.reportBackBtn} onClick={() => setStep(1)}>
             <ChevronLeft size={20} />
           </button>
-          <span className={styles.reportStepBadge}>4/4</span>
+          <span className={styles.reportStepBadge}>2/2</span>
           <h3>預覽報告</h3>
         </div>
 
@@ -1002,10 +868,8 @@ export default function ReportGenerator({
 
       <div className={styles.reportContainer}>
         {step === 1 && renderStep1()}
-        {step === 2 && renderStep2()}
-        {step === 3 && renderStep3()}
-        {step === 4 && renderStep4()}
-        {step === 5 && renderStep5()}
+        {step === 2 && renderStep4()} {/* 直接用預覽,改編號為step2 */}
+        {step === 3 && renderStep5()} {/* 完成頁面,改編號為step3 */}
       </div>
     </section>
   );

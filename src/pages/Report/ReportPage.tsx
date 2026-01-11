@@ -13,7 +13,8 @@ import {
 } from "lucide-react";
 import { notify } from "../../lib/notify";
 import { logger } from "../../lib/logger";
-import { PropertyReportData, HIGHLIGHT_OPTIONS } from "./types";
+import { PropertyReportData } from "./types";
+import { decodeReportDataFromURL, convertPropertyData } from "./utils/dataAdapter";
 
 // 預設報告資料
 const DEFAULT_REPORT_DATA: PropertyReportData = {
@@ -88,16 +89,36 @@ export default function ReportPage() {
   // 從 URL 取得參數
   const agentId = searchParams.get("aid");
   const source = searchParams.get("src") || "direct";
-  const highlights = searchParams.get("h")?.split(",") || [
-    "commute",
-    "school",
-    "community",
-  ];
 
   useEffect(() => {
-    // 記錄報告瀏覽
-    const trackView = async () => {
+    const loadReport = async () => {
+      setIsLoading(true);
       try {
+        // 1. 嘗試從 URL 解碼資料
+        const decodedData = decodeReportDataFromURL(searchParams);
+
+        if (decodedData) {
+          // 2. 轉換資料格式（包含亮點資料）
+          const convertedProperty = convertPropertyData(decodedData.property);
+
+          // 3. 更新經紀人資訊
+          const updatedProperty: PropertyReportData = {
+            ...convertedProperty,
+            agent: {
+              ...convertedProperty.agent,
+              name: decodedData.agent.name,
+              ...(decodedData.agent.phone ? { phone: decodedData.agent.phone } : {}),
+              company: decodedData.agent.company,
+            },
+          };
+
+          setProperty(updatedProperty);
+        } else {
+          // 4. 降級使用預設資料
+          setProperty(DEFAULT_REPORT_DATA);
+        }
+
+        // 5. 追蹤報告瀏覽
         await fetch("/api/report/track", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -107,37 +128,19 @@ export default function ReportPage() {
             source,
             userAgent: navigator.userAgent,
           }),
-        });
-      } catch (e) {
-        logger.debug("[ReportPage] Track failed", { error: e });
-      }
-    };
+        }).catch(() => {});
 
-    // 載入報告資料
-    const loadReport = async () => {
-      setIsLoading(true);
-      try {
-        await new Promise((r) => setTimeout(r, 300));
-        setProperty(DEFAULT_REPORT_DATA);
         setViewCount(Math.floor(Math.random() * 20) + 5);
       } catch (e) {
         logger.error("[ReportPage] Load report failed", { error: e });
+        setProperty(DEFAULT_REPORT_DATA);
       } finally {
         setIsLoading(false);
       }
     };
 
-    trackView();
     loadReport();
-  }, [id, agentId, source]);
-
-  // 取得選中的亮點
-  const selectedHighlights = HIGHLIGHT_OPTIONS.filter((h) =>
-    highlights.includes(h.id),
-  );
-
-  // 月付試算
-  const monthlyPayment = calculateMonthlyPayment(property.price);
+  }, [id, agentId, source, searchParams]);
 
   // 分享功能
   const handleShare = async () => {
@@ -279,44 +282,7 @@ export default function ReportPage() {
         </div>
       </section>
 
-      {/* ④ 月付試算 */}
-      <section className="border-b border-slate-100 bg-white p-4">
-        <h2 className="mb-3 flex items-center gap-2 text-sm font-bold text-slate-800">
-          💰 月付試算
-        </h2>
-        <div className="rounded-xl border border-blue-100 bg-gradient-to-r from-blue-50 to-cyan-50 p-4">
-          <div className="mb-2 flex items-center justify-between">
-            <span className="text-sm text-slate-600">貸款 8 成・30 年期</span>
-            <span className="text-xs text-slate-400">利率 2%</span>
-          </div>
-          <div className="text-2xl font-black text-[#003366]">
-            月付約 NT$ {monthlyPayment.toLocaleString()}
-          </div>
-        </div>
-      </section>
-
-      {/* ⑤ 精選亮點 */}
-      <section className="border-b border-slate-100 bg-white p-4">
-        <h2 className="mb-3 flex items-center gap-2 text-sm font-bold text-slate-800">
-          ⭐ 為您精選的亮點
-        </h2>
-        <div className="space-y-3">
-          {selectedHighlights.map((h) => (
-            <div
-              key={h.id}
-              className="flex items-start gap-3 rounded-xl bg-slate-50 p-3"
-            >
-              <span className="text-2xl">{h.icon}</span>
-              <div>
-                <div className="font-bold text-slate-800">{h.title}</div>
-                <div className="text-sm text-slate-500">{h.description}</div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ⑥ 社區資訊 */}
+      {/* ④ 社區資訊 */}
       {property.communityName && (
         <section className="border-b border-slate-100 bg-white p-4">
           <h2 className="mb-3 flex items-center gap-2 text-sm font-bold text-slate-800">
@@ -351,27 +317,7 @@ export default function ReportPage() {
         </section>
       )}
 
-      {/* ⑦ 更多照片 */}
-      {property.images.length > 1 && (
-        <section className="border-b border-slate-100 bg-white p-4">
-          <h2 className="mb-3 flex items-center gap-2 text-sm font-bold text-slate-800">
-            📸 更多照片
-          </h2>
-          <div className="grid grid-cols-3 gap-2">
-            {property.images.slice(0, 6).map((img, i) => (
-              <button
-                key={i}
-                onClick={() => setCurrentImageIndex(i)}
-                className="aspect-square overflow-hidden rounded-lg bg-slate-100"
-              >
-                <img src={img} alt="" className="size-full object-cover" />
-              </button>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* ⑧ 經紀人小卡 */}
+      {/* ⑤ 經紀人小卡 */}
       <section className="border-b border-slate-100 bg-white px-4 py-5">
         <h2 className="mb-4 flex items-center gap-2 text-sm font-bold text-slate-800">
           👤 您的專屬顧問

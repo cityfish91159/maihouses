@@ -61,6 +61,9 @@ export interface PropertyReportData {
   advantage2?: string;
   disadvantage?: string;
 
+  // 亮點
+  highlights?: ReportHighlight[];
+
   // 經紀人
   agent: {
     id: string;
