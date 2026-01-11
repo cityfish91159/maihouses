@@ -86,7 +86,8 @@ export default function ReportPage() {
 
         if (decodedData) {
           // 移除 highlights 欄位 (不需要顯示亮點)
-          const { highlights: _, ...propertyWithoutHighlights } = decodedData.property;
+          const { highlights: _, ...propertyWithoutHighlights } =
+            decodedData.property;
           setProperty({ ...propertyWithoutHighlights, highlights: [] });
           setAgent(decodedData.agent);
           logger.debug("[ReportPage] Loaded report from URL", {

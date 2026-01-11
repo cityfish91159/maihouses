@@ -385,7 +385,9 @@ export default function ReportGenerator({
       };
 
       // 編碼資料到 URL（使用 encodeURIComponent 確保中文正確編碼）
-      const encodedData = encodeURIComponent(btoa(unescape(encodeURIComponent(JSON.stringify(reportData)))));
+      const encodedData = encodeURIComponent(
+        btoa(unescape(encodeURIComponent(JSON.stringify(reportData)))),
+      );
       const reportId = `R-${Date.now().toString(36).toUpperCase()}`;
 
       // 根據當前路徑判斷 basename

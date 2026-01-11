@@ -9,7 +9,14 @@
  */
 
 import { useState } from "react";
-import { Rocket, Sparkles, MousePointerClick, Coins, X, Send } from "lucide-react";
+import {
+  Rocket,
+  Sparkles,
+  MousePointerClick,
+  Coins,
+  X,
+  Send,
+} from "lucide-react";
 
 /**
  * ============================================================================
@@ -61,7 +68,8 @@ import { Rocket, Sparkles, MousePointerClick, Coins, X, Send } from "lucide-reac
 
 const styles = {
   container: {
-    fontFamily: '-apple-system, BlinkMacSystemFont, "Inter", "Noto Sans TC", sans-serif',
+    fontFamily:
+      '-apple-system, BlinkMacSystemFont, "Inter", "Noto Sans TC", sans-serif',
     padding: "32px",
     maxWidth: "1000px",
     margin: "0 auto",
@@ -174,7 +182,9 @@ const styles = {
 function EmptyStateDemo() {
   return (
     <div style={styles.section}>
-      <h2 style={styles.sectionTitle}>1. 空狀態圖標：👆 → Lucide MousePointerClick</h2>
+      <h2 style={styles.sectionTitle}>
+        1. 空狀態圖標：👆 → Lucide MousePointerClick
+      </h2>
       <p style={{ fontSize: "13px", color: "#64748b", marginBottom: "16px" }}>
         位置：<code>ActionPanel.tsx:61</code>
       </p>
@@ -242,7 +252,8 @@ function EmptyStateDemo() {
           </div>
 
           <div style={styles.fixBox}>
-            <strong>修正：</strong>使用 Lucide <code>&lt;MousePointerClick /&gt;</code>
+            <strong>修正：</strong>使用 Lucide{" "}
+            <code>&lt;MousePointerClick /&gt;</code>
           </div>
 
           <div style={styles.sourceBox}>
@@ -352,7 +363,9 @@ function BuyButtonDemo() {
 
   return (
     <div style={styles.section}>
-      <h2 style={styles.sectionTitle}>3. 購買按鈕：🚀 → Lucide Rocket + Hover 優化</h2>
+      <h2 style={styles.sectionTitle}>
+        3. 購買按鈕：🚀 → Lucide Rocket + Hover 優化
+      </h2>
       <p style={{ fontSize: "13px", color: "#64748b", marginBottom: "16px" }}>
         位置：<code>ActionPanel.tsx:144</code>
       </p>
@@ -396,8 +409,8 @@ function BuyButtonDemo() {
             第 163 行：「No emoji icons」
             <br />
             第 173 行：「Hover feedback - Provide visual feedback」
-            <br />
-            第 210 行 Checklist：「Focus states visible for keyboard navigation」
+            <br />第 210 行 Checklist：「Focus states visible for keyboard
+            navigation」
           </div>
         </div>
 
@@ -455,8 +468,7 @@ function BuyButtonDemo() {
             第 163 行：「Use SVG icons (Lucide)」
             <br />
             第 173 行：「Provide visual feedback (color, shadow, border)」
-            <br />
-            第 174 行：「transition-colors duration-200」
+            <br />第 174 行：「transition-colors duration-200」
           </div>
         </div>
       </div>
@@ -469,7 +481,9 @@ function BuyButtonDemo() {
 // =============================================================================
 
 function ConfirmButtonDemo() {
-  const [step, setStep] = useState<"initial" | "confirm" | "loading">("initial");
+  const [step, setStep] = useState<"initial" | "confirm" | "loading">(
+    "initial",
+  );
 
   const handleBuy = () => setStep("confirm");
   const handleConfirm = () => {
@@ -662,8 +676,12 @@ function ConfirmButtonDemo() {
           <div style={styles.fixBox}>
             <strong>修正：</strong>
             <ul style={{ margin: "8px 0 0 16px", padding: 0 }}>
-              <li>確認按鈕添加 <code>&lt;Coins /&gt;</code> 圖標</li>
-              <li>取消按鈕改為 outline 樣式 + <code>&lt;X /&gt;</code></li>
+              <li>
+                確認按鈕添加 <code>&lt;Coins /&gt;</code> 圖標
+              </li>
+              <li>
+                取消按鈕改為 outline 樣式 + <code>&lt;X /&gt;</code>
+              </li>
               <li>添加 loading spinner 狀態</li>
               <li>按鈕有 box-shadow + transition</li>
             </ul>
@@ -718,8 +736,12 @@ function SourceSummary() {
         <thead>
           <tr style={{ background: "#dbeafe" }}>
             <th style={{ padding: "10px", textAlign: "left" }}>修改項目</th>
-            <th style={{ padding: "10px", textAlign: "left" }}>UI/UX Pro Max 來源</th>
-            <th style={{ padding: "10px", textAlign: "left" }}>位置/搜尋指令</th>
+            <th style={{ padding: "10px", textAlign: "left" }}>
+              UI/UX Pro Max 來源
+            </th>
+            <th style={{ padding: "10px", textAlign: "left" }}>
+              位置/搜尋指令
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -730,7 +752,14 @@ function SourceSummary() {
             <td style={{ padding: "10px", borderBottom: "1px solid #e2e8f0" }}>
               SKILL.md - No emoji icons
             </td>
-            <td style={{ padding: "10px", borderBottom: "1px solid #e2e8f0", fontFamily: "monospace", fontSize: "11px" }}>
+            <td
+              style={{
+                padding: "10px",
+                borderBottom: "1px solid #e2e8f0",
+                fontFamily: "monospace",
+                fontSize: "11px",
+              }}
+            >
               SKILL.md 第 163 行
             </td>
           </tr>
@@ -741,7 +770,14 @@ function SourceSummary() {
             <td style={{ padding: "10px", borderBottom: "1px solid #e2e8f0" }}>
               SKILL.md - No emoji icons
             </td>
-            <td style={{ padding: "10px", borderBottom: "1px solid #e2e8f0", fontFamily: "monospace", fontSize: "11px" }}>
+            <td
+              style={{
+                padding: "10px",
+                borderBottom: "1px solid #e2e8f0",
+                fontFamily: "monospace",
+                fontSize: "11px",
+              }}
+            >
               SKILL.md 第 163 行
             </td>
           </tr>
@@ -752,7 +788,14 @@ function SourceSummary() {
             <td style={{ padding: "10px", borderBottom: "1px solid #e2e8f0" }}>
               SKILL.md - No emoji icons
             </td>
-            <td style={{ padding: "10px", borderBottom: "1px solid #e2e8f0", fontFamily: "monospace", fontSize: "11px" }}>
+            <td
+              style={{
+                padding: "10px",
+                borderBottom: "1px solid #e2e8f0",
+                fontFamily: "monospace",
+                fontSize: "11px",
+              }}
+            >
               SKILL.md 第 163 行
             </td>
           </tr>
@@ -763,7 +806,14 @@ function SourceSummary() {
             <td style={{ padding: "10px", borderBottom: "1px solid #e2e8f0" }}>
               SKILL.md - Hover feedback
             </td>
-            <td style={{ padding: "10px", borderBottom: "1px solid #e2e8f0", fontFamily: "monospace", fontSize: "11px" }}>
+            <td
+              style={{
+                padding: "10px",
+                borderBottom: "1px solid #e2e8f0",
+                fontFamily: "monospace",
+                fontSize: "11px",
+              }}
+            >
               SKILL.md 第 173 行
             </td>
           </tr>
@@ -774,7 +824,14 @@ function SourceSummary() {
             <td style={{ padding: "10px", borderBottom: "1px solid #e2e8f0" }}>
               SKILL.md - Smooth transitions
             </td>
-            <td style={{ padding: "10px", borderBottom: "1px solid #e2e8f0", fontFamily: "monospace", fontSize: "11px" }}>
+            <td
+              style={{
+                padding: "10px",
+                borderBottom: "1px solid #e2e8f0",
+                fontFamily: "monospace",
+                fontSize: "11px",
+              }}
+            >
               SKILL.md 第 174 行
             </td>
           </tr>
@@ -785,18 +842,27 @@ function SourceSummary() {
             <td style={{ padding: "10px", borderBottom: "1px solid #e2e8f0" }}>
               ux-guidelines.csv - Submit Feedback
             </td>
-            <td style={{ padding: "10px", borderBottom: "1px solid #e2e8f0", fontFamily: "monospace", fontSize: "11px" }}>
+            <td
+              style={{
+                padding: "10px",
+                borderBottom: "1px solid #e2e8f0",
+                fontFamily: "monospace",
+                fontSize: "11px",
+              }}
+            >
               --domain ux "confirm danger"
             </td>
           </tr>
           <tr>
-            <td style={{ padding: "10px" }}>
-              確認按鈕 Coins 圖標
-            </td>
-            <td style={{ padding: "10px" }}>
-              SKILL.md - Use SVG icons
-            </td>
-            <td style={{ padding: "10px", fontFamily: "monospace", fontSize: "11px" }}>
+            <td style={{ padding: "10px" }}>確認按鈕 Coins 圖標</td>
+            <td style={{ padding: "10px" }}>SKILL.md - Use SVG icons</td>
+            <td
+              style={{
+                padding: "10px",
+                fontFamily: "monospace",
+                fontSize: "11px",
+              }}
+            >
               SKILL.md 第 163 行
             </td>
           </tr>
@@ -815,7 +881,8 @@ export default function UIUXDemo() {
     <div style={styles.container}>
       <h1 style={styles.title}>UAG ActionPanel 購買按鈕 UI/UX 優化 Demo</h1>
       <p style={styles.subtitle}>
-        專注優化 ActionPanel 的 4 個 UI 元素，所有修改皆標註 /ui-ux-pro-max 來源位置
+        專注優化 ActionPanel 的 4 個 UI 元素，所有修改皆標註 /ui-ux-pro-max
+        來源位置
       </p>
 
       <EmptyStateDemo />

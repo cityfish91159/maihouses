@@ -73,15 +73,12 @@ function parseRoomString(rooms: string): {
  * @param size 權狀坪數
  * @returns 每坪管理費 (四捨五入)
  */
-function calculateManagementFeePerPing(
-  totalFee: number,
-  size: number,
-): number {
+function calculateManagementFeePerPing(totalFee: number, size: number): number {
   if (size <= 0) {
-    logger.warn(
-      "[dataAdapter] Invalid size for management fee calculation",
-      { totalFee, size },
-    );
+    logger.warn("[dataAdapter] Invalid size for management fee calculation", {
+      totalFee,
+      size,
+    });
     return 0;
   }
   return Math.round(totalFee / size);

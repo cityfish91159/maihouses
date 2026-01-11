@@ -40,17 +40,17 @@
 .deai-v2 {
   /* 品牌色 - 採用你的深藍 + ui-ux-pro-max Trust Blue 混合 */
   --brand: #00385a;
-  --brand-light: #0077B6;
+  --brand-light: #0077b6;
   --brand-dark: #002a44;
 
   /* ui-ux-pro-max: Financial Dashboard 色盤 */
-  --primary: #3B82F6;
-  --secondary: #60A5FA;
-  --cta: #F97316;
-  --bg: #F8FAFC;
-  --text: #1E293B;
-  --text-muted: #64748B;
-  --border: #E2E8F0;
+  --primary: #3b82f6;
+  --secondary: #60a5fa;
+  --cta: #f97316;
+  --bg: #f8fafc;
+  --text: #1e293b;
+  --text-muted: #64748b;
+  --border: #e2e8f0;
 
   /* ui-ux-pro-max: Sales Intelligence Dashboard 等級色 */
   --grade-s: #c2410c;
@@ -65,9 +65,9 @@
   --grade-f-bg: #f1f5f9;
 
   /* ui-ux-pro-max: Micro-interactions - feedback colors */
-  --success: #22C55E;
-  --error: #EF4444;
-  --warning: #F59E0B;
+  --success: #22c55e;
+  --error: #ef4444;
+  --warning: #f59e0b;
 
   /* ui-ux-pro-max: Flat Design 過渡 (150-200ms) */
   --transition-fast: 100ms ease;
@@ -84,8 +84,10 @@
   --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.06);
 
   /* ui-ux-pro-max: Corporate Trust 字體 */
-  --font-heading: 'Lexend', -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-body: 'Source Sans 3', -apple-system, BlinkMacSystemFont, 'Noto Sans TC', sans-serif;
+  --font-heading: "Lexend", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-body:
+    "Source Sans 3", -apple-system, BlinkMacSystemFont, "Noto Sans TC",
+    sans-serif;
 }
 
 /* ====== Page Base ====== */
@@ -296,7 +298,7 @@
 /* ui-ux-pro-max: Swiss Style - simple crosshair */
 .deai-v2-cluster::before,
 .deai-v2-cluster::after {
-  content: '';
+  content: "";
   position: absolute;
   background: var(--border);
   pointer-events: none;
@@ -358,7 +360,9 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  transition:
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast);
   z-index: 10;
 }
 
@@ -413,7 +417,8 @@
 }
 
 @keyframes statusHighlight {
-  0%, 100% {
+  0%,
+  100% {
     transform: translate(-50%, -50%) scale(1);
     opacity: 1;
   }
@@ -670,7 +675,9 @@
   font-weight: 600;
   color: var(--text-muted);
   cursor: pointer;
-  transition: border-color var(--transition), color var(--transition);
+  transition:
+    border-color var(--transition),
+    color var(--transition);
 }
 
 .deai-v2-btn:hover {
@@ -1021,7 +1028,7 @@
 
 .deai-v2-report-divider::before,
 .deai-v2-report-divider::after {
-  content: '';
+  content: "";
   flex: 1;
   height: 1px;
   background: var(--border);

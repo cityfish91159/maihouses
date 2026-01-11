@@ -664,7 +664,10 @@ export default function UAGDeAIDemoV2() {
                             <div className={styles["deai-v2-progress-bg"]}>
                               <div
                                 className={styles["deai-v2-progress-fill"]}
-                                style={{ width: `${percent}%`, background: colorVar }}
+                                style={{
+                                  width: `${percent}%`,
+                                  background: colorVar,
+                                }}
                               />
                             </div>
                           </td>
@@ -794,9 +797,7 @@ export default function UAGDeAIDemoV2() {
           >
             <div className={styles["deai-v2-card-header"]}>
               <div>
-                <h2 className={styles["deai-v2-card-title"]}>
-                  手機報告生成器
-                </h2>
+                <h2 className={styles["deai-v2-card-title"]}>手機報告生成器</h2>
                 <p className={styles["deai-v2-card-sub"]}>
                   取代 Word 說明書・一鍵分享給客戶
                 </p>
@@ -959,7 +960,9 @@ export default function UAGDeAIDemoV2() {
 
       {/* ========== Footer ========== */}
       <footer className={styles["deai-v2-footer"]}>
-        <span style={{ fontSize: "12px", color: "#64748B", marginRight: "auto" }}>
+        <span
+          style={{ fontSize: "12px", color: "#64748B", marginRight: "auto" }}
+        >
           系統模式：
           <span style={{ color: "#00385a", fontWeight: 600 }}>Demo v2</span>
         </span>
