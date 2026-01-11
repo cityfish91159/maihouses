@@ -392,7 +392,11 @@ export default function UAGDeAIDemoV2() {
 
           {/* User */}
           <div className={styles["deai-v2-logo"]}>
-            <span style={{ fontSize: "13px", color: "#64748B" }}>游杰倫</span>
+            <span
+              style={{ fontSize: "13px", color: "var(--ink-300)" }}
+            >
+              游杰倫
+            </span>
             <div className={styles["deai-v2-logo-icon"]}>游</div>
           </div>
         </div>
@@ -961,10 +965,16 @@ export default function UAGDeAIDemoV2() {
       {/* ========== Footer ========== */}
       <footer className={styles["deai-v2-footer"]}>
         <span
-          style={{ fontSize: "12px", color: "#64748B", marginRight: "auto" }}
+          style={{
+            fontSize: "12px",
+            color: "var(--ink-300)",
+            marginRight: "auto",
+          }}
         >
           系統模式：
-          <span style={{ color: "#00385a", fontWeight: 600 }}>Demo v2</span>
+          <span style={{ color: "var(--ink-100)", fontWeight: 600 }}>
+            Demo v2
+          </span>
         </span>
         <button className={styles["deai-v2-btn"]}>方案設定</button>
         <button

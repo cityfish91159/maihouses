@@ -80,13 +80,13 @@ const styles = {
   title: {
     fontSize: "24px",
     fontWeight: 900,
-    color: "#0f172a",
+    color: "var(--ink-100)",
     marginBottom: "8px",
   } as React.CSSProperties,
 
   subtitle: {
     fontSize: "14px",
-    color: "#64748b",
+    color: "var(--ink-300)",
     marginBottom: "32px",
     lineHeight: 1.6,
   } as React.CSSProperties,
@@ -98,9 +98,9 @@ const styles = {
   sectionTitle: {
     fontSize: "18px",
     fontWeight: 800,
-    color: "#0f172a",
+    color: "var(--ink-100)",
     marginBottom: "16px",
-    borderLeft: "4px solid #2563eb",
+    borderLeft: "4px solid var(--uag-brand-light)",
     paddingLeft: "12px",
   } as React.CSSProperties,
 
@@ -185,7 +185,7 @@ function EmptyStateDemo() {
       <h2 style={styles.sectionTitle}>
         1. 空狀態圖標：👆 → Lucide MousePointerClick
       </h2>
-      <p style={{ fontSize: "13px", color: "#64748b", marginBottom: "16px" }}>
+      <p style={{ fontSize: "13px", color: "var(--ink-300)", marginBottom: "16px" }}>
         位置：<code>ActionPanel.tsx:61</code>
       </p>
 
@@ -205,7 +205,7 @@ function EmptyStateDemo() {
             }}
           >
             <div style={{ fontSize: "40px", marginBottom: "10px" }}>👆</div>
-            <div style={{ color: "#64748b", fontSize: "13px" }}>
+            <div style={{ color: "var(--ink-300)", fontSize: "13px" }}>
               請點擊上方雷達泡泡
               <br />
               查看分析與購買
@@ -242,9 +242,9 @@ function EmptyStateDemo() {
             <MousePointerClick
               size={40}
               strokeWidth={1.5}
-              style={{ color: "#94a3b8", marginBottom: "10px" }}
+              style={{ color: "var(--ink-400)", marginBottom: "10px" }}
             />
-            <div style={{ color: "#64748b", fontSize: "13px" }}>
+            <div style={{ color: "var(--ink-300)", fontSize: "13px" }}>
               請點擊上方雷達泡泡
               <br />
               查看分析與購買
@@ -275,7 +275,7 @@ function ExclusiveBadgeDemo() {
   return (
     <div style={styles.section}>
       <h2 style={styles.sectionTitle}>2. 獨家權益標籤：✨ → Lucide Sparkles</h2>
-      <p style={{ fontSize: "13px", color: "#64748b", marginBottom: "16px" }}>
+      <p style={{ fontSize: "13px", color: "var(--ink-300)", marginBottom: "16px" }}>
         位置：<code>ActionPanel.tsx:134</code>
       </p>
 
@@ -366,7 +366,7 @@ function BuyButtonDemo() {
       <h2 style={styles.sectionTitle}>
         3. 購買按鈕：🚀 → Lucide Rocket + Hover 優化
       </h2>
-      <p style={{ fontSize: "13px", color: "#64748b", marginBottom: "16px" }}>
+      <p style={{ fontSize: "13px", color: "var(--ink-300)", marginBottom: "16px" }}>
         位置：<code>ActionPanel.tsx:144</code>
       </p>
 
@@ -495,7 +495,7 @@ function ConfirmButtonDemo() {
   return (
     <div style={styles.section}>
       <h2 style={styles.sectionTitle}>4. 確認購買按鈕：樣式 + Loading 狀態</h2>
-      <p style={{ fontSize: "13px", color: "#64748b", marginBottom: "16px" }}>
+      <p style={{ fontSize: "13px", color: "var(--ink-300)", marginBottom: "16px" }}>
         位置：<code>ActionPanel.tsx:146-166</code>
       </p>
 
@@ -620,10 +620,10 @@ function ConfirmButtonDemo() {
                 style={{
                   flex: 1,
                   padding: "16px",
-                  border: "1px solid #e2e8f0",
+                  border: "1px solid var(--line-soft)",
                   borderRadius: "12px",
                   background: "#fff",
-                  color: "#64748b",
+                  color: "var(--ink-300)",
                   fontWeight: 700,
                   fontSize: "15px",
                   cursor: "pointer",

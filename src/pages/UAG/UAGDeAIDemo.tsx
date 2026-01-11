@@ -220,11 +220,11 @@ export default function UAGDeAIDemo() {
                 width: "36px",
                 height: "36px",
                 borderRadius: "6px",
-                background: "#00385a",
+                background: "var(--brand-primary)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                color: "#fff",
+                color: "var(--swiss-white)",
                 fontWeight: 700,
                 fontSize: "14px",
               }}
@@ -247,26 +247,26 @@ export default function UAGDeAIDemo() {
           <nav style={{ display: "flex", alignItems: "center", gap: "8px" }}>
             <span
               className={styles["deai-badge"]}
-              style={{ background: "#00385a", color: "#fff", border: "none" }}
+              style={{ background: "var(--brand-primary)", color: "var(--swiss-white)", border: "none" }}
             >
               UAG 客戶雷達
             </span>
-            <span style={{ color: "#94A3B8" }}>·</span>
-            <span style={{ fontSize: "13px", color: "#64748B" }}>邁房子</span>
-            <span style={{ color: "#94A3B8" }}>·</span>
+            <span style={{ color: "var(--swiss-gray-400)" }}>·</span>
+            <span style={{ fontSize: "13px", color: "var(--swiss-gray-500)" }}>邁房子</span>
+            <span style={{ color: "var(--swiss-gray-400)" }}>·</span>
             <span className={styles["deai-badge"]}>專業版 PRO</span>
           </nav>
 
           {/* User info placeholder */}
           <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            <span style={{ fontSize: "13px", color: "#64748B" }}>游杰倫</span>
+            <span style={{ fontSize: "13px", color: "var(--swiss-gray-500)" }}>游杰倫</span>
             <div
               style={{
                 width: "32px",
                 height: "32px",
                 borderRadius: "6px",
-                background: "#00385a",
-                color: "#fff",
+                background: "var(--brand-primary)",
+                color: "var(--swiss-white)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -298,8 +298,8 @@ export default function UAGDeAIDemo() {
             width: "32px",
             height: "32px",
             borderRadius: "50%",
-            background: "#00385a",
-            color: "#fff",
+            background: "var(--brand-primary)",
+            color: "var(--swiss-white)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -324,7 +324,7 @@ export default function UAGDeAIDemo() {
             <span
               style={{
                 fontSize: "11px",
-                color: "#00385a",
+                color: "var(--brand-primary)",
                 fontWeight: 600,
               }}
             >
@@ -336,7 +336,7 @@ export default function UAGDeAIDemo() {
               display: "flex",
               gap: "16px",
               fontSize: "11px",
-              color: "#64748B",
+              color: "var(--swiss-gray-500)",
               marginTop: "2px",
             }}
           >
@@ -444,7 +444,7 @@ export default function UAGDeAIDemo() {
                   alignItems: "center",
                   justifyContent: "center",
                   height: "200px",
-                  color: "#64748B",
+                  color: "var(--swiss-gray-500)",
                   fontSize: "13px",
                 }}
               >
@@ -470,9 +470,9 @@ export default function UAGDeAIDemo() {
 
       {/* Footer - Swiss Style */}
       <footer className={styles["deai-footer"]}>
-        <span style={{ fontSize: "12px", color: "#64748B" }}>
+        <span style={{ fontSize: "12px", color: "var(--swiss-gray-500)" }}>
           系統模式：
-          <span style={{ color: "#00385a", fontWeight: 600 }}>Demo</span>
+          <span style={{ color: "var(--brand-primary)", fontWeight: 600 }}>Demo</span>
         </span>
         <button className={styles["deai-btn"]}>方案設定</button>
         <button

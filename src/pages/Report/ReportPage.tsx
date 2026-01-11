@@ -131,7 +131,7 @@ export default function ReportPage() {
           minHeight: "100vh",
           alignItems: "center",
           justifyContent: "center",
-          backgroundColor: "#f8fafc",
+          backgroundColor: "var(--bg-page)",
         }}
       >
         <div style={{ textAlign: "center" }}>
@@ -140,13 +140,13 @@ export default function ReportPage() {
               width: "48px",
               height: "48px",
               margin: "0 auto 16px",
-              border: "4px solid #2563eb",
+              border: "4px solid var(--uag-brand-light)",
               borderTopColor: "transparent",
               borderRadius: "50%",
               animation: "spin 1s linear infinite",
             }}
           />
-          <p style={{ color: "#64748b" }}>載入報告中...</p>
+          <p style={{ color: "var(--ink-300)" }}>載入報告中...</p>
         </div>
       </div>
     );
@@ -156,7 +156,7 @@ export default function ReportPage() {
     <div
       style={{
         minHeight: "100vh",
-        backgroundColor: "#f8fafc",
+        backgroundColor: "var(--bg-page)",
       }}
     >
       <div

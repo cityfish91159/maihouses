@@ -132,14 +132,14 @@ const ActionPanel = forwardRef<HTMLDivElement, ActionPanelProps>(
               {isExclusive && (
                 <div
                   style={{
-                    background: "#fff7ed",
-                    color: "#ea580c",
+                    background: "var(--notif-warning-bg)",
+                    color: "var(--notif-warning-text)",
                     fontWeight: 700,
                     fontSize: "12px",
                     textAlign: "center",
                     padding: "6px",
                     borderRadius: "4px",
-                    border: "1px solid #ffedd5",
+                    border: "1px solid var(--notif-warning-bg)",
                     marginBottom: "10px",
                     display: "flex",
                     alignItems: "center",
