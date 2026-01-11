@@ -561,9 +561,9 @@ export default function UAGDeAIDemoV2() {
 
                   <button
                     className={styles["deai-v2-btn-cta"]}
-                    onClick={() =>
-                      alert(`購買 ${selectedLead.grade} 級名單`)
-                    }
+                    onClick={() => {
+                      // Demo placeholder - 實際應用中應使用 Modal 或 Toast 通知
+                    }}
                   >
                     {selectedLead.grade === "S" || selectedLead.grade === "A"
                       ? "購買獨家聯絡權"

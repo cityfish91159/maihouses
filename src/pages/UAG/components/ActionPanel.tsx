@@ -1,4 +1,5 @@
 import React, { forwardRef, useState, useRef } from "react";
+import { MousePointerClick, Sparkles, Rocket, Coins, X, Loader2 } from "lucide-react";
 import { Lead } from "../types/uag.types";
 import styles from "../UAG.module.css";
 import { isExclusiveLead } from "../utils/leadHelpers";
@@ -58,7 +59,11 @@ const ActionPanel = forwardRef<HTMLDivElement, ActionPanelProps>(
               }}
             >
               <div>
-                <div style={{ fontSize: "40px", marginBottom: "10px" }}>👆</div>
+                <MousePointerClick
+                  size={40}
+                  strokeWidth={1.5}
+                  style={{ color: "var(--ink-300)", marginBottom: "10px" }}
+                />
                 <div>
                   請點擊上方雷達泡泡
                   <br />
@@ -129,9 +134,15 @@ const ActionPanel = forwardRef<HTMLDivElement, ActionPanelProps>(
                     borderRadius: "4px",
                     border: "1px solid #ffedd5",
                     marginBottom: "10px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "6px",
                   }}
                 >
-                  ✨ 此客戶包含獨家訊息聯絡權 ✨
+                  <Sparkles size={14} />
+                  此客戶包含獨家訊息聯絡權
+                  <Sparkles size={14} />
                 </div>
               )}
 
@@ -141,26 +152,40 @@ const ActionPanel = forwardRef<HTMLDivElement, ActionPanelProps>(
                   onClick={handleBuyClick}
                   disabled={isProcessing}
                 >
-                  {isProcessing ? "處理中..." : "🚀 獲取聯絡權限 (LINE/站內信)"}
+                  {isProcessing ? (
+                    "處理中..."
+                  ) : (
+                    <>
+                      <Rocket size={18} />
+                      獲取聯絡權限 (LINE/站內信)
+                    </>
+                  )}
                 </button>
               ) : (
                 <div style={{ display: "flex", gap: "10px" }}>
                   <button
-                    className={styles["btn-attack"]}
-                    style={{ background: "#ef4444", flex: 1 }}
+                    className={`${styles["btn-attack"]} ${styles["btn-confirm"]}`}
                     onClick={handleConfirm}
                     disabled={isProcessing}
                   >
-                    {isProcessing
-                      ? "處理中..."
-                      : `確定花費 ${selectedLead.price} 點?`}
+                    {isProcessing ? (
+                      <>
+                        <Loader2 size={16} className={styles["spin"]} />
+                        處理中...
+                      </>
+                    ) : (
+                      <>
+                        <Coins size={16} />
+                        確定花費 {selectedLead.price} 點
+                      </>
+                    )}
                   </button>
                   <button
-                    className={styles["btn-attack"]}
-                    style={{ background: "#94a3b8", flex: 1 }}
+                    className={`${styles["btn-attack"]} ${styles["btn-cancel"]}`}
                     onClick={handleCancel}
                     disabled={isProcessing}
                   >
+                    <X size={16} />
                     取消
                   </button>
                 </div>
