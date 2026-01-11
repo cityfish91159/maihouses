@@ -96,7 +96,13 @@
       "mcp__ide__getDiagnostics",
       "Bash(timeout 10 npx:*)",
       "Bash(head:*)",
-      "Bash(timeout 15 cat:*)"
+      "Bash(timeout 15 cat:*)",
+      "Bash(chcp 6500)",
+      "Bash(set PYTHONIOENCODING=utf-8:*)",
+      "WebFetch(domain:120.79.175.18)",
+      "mcp__filesystem__write_file",
+      "Bash(start:*)",
+      "Bash(del nul)"
     ]
   },
   "model": "claude-opus-4-5-20251101",
