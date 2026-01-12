@@ -912,6 +912,17 @@
 .monitor-table tr:last-child td {
   border-bottom: none;
 }
+/* 工單 3: 表格行 Hover 效果 */
+/* 規則: ux-guidelines.csv - Hover States */
+/* Do: Change cursor and add subtle visual change */
+/* Code: hover:bg-gray-100 cursor-pointer */
+.monitor-table tbody tr {
+  transition: background-color 0.15s ease;
+  cursor: pointer;
+}
+.monitor-table tbody tr:hover {
+  background-color: #F8FAFC;
+}
 
 @media (max-width: 768px) {
   .monitor-table,
@@ -931,6 +942,13 @@
     background: #fff;
     padding: 12px;
     box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
+    /* 工單 3: 手機版卡片 Hover */
+    /* 規則: ux-guidelines.csv - Hover States */
+    transition: box-shadow 0.2s ease, border-color 0.2s ease;
+  }
+  .monitor-table tr:hover {
+    border-color: var(--uag-brand-light);
+    box-shadow: 0 4px 12px rgba(23, 73, 215, 0.08);
   }
   .monitor-table td {
     padding: 8px 0;
@@ -951,24 +969,63 @@
     color: var(--ink-300);
     font-size: 12px;
   }
+  /* 工單 1: 手機版「保護期倒數」欄位修正 */
+  /* 規則: ux-guidelines.csv - Table Handling: card layout */
+  .monitor-table td[data-label="保護期倒數"] {
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
+  }
+  .monitor-table td[data-label="保護期倒數"]::before {
+    margin-bottom: 4px;
+  }
+  .monitor-table td[data-label="保護期倒數"] > div {
+    width: 100%;
+  }
+  /* 工單 4: 按鈕觸控區域優化 */
+  /* 規則: ux-guidelines.csv - Touch Target Size */
+  /* Do: Minimum 44x44px touch targets */
+  /* Code: min-h-[44px] min-w-[44px] */
+  /* Severity: High */
   .monitor-table td[data-label="操作"] {
     justify-content: flex-end;
     padding-top: 12px;
+    gap: 8px; /* Touch Spacing: gap-2 (8px) */
+  }
+  /* 按鈕最小觸控尺寸 */
+  .monitor-table .uag-btn {
+    min-height: 44px;
+    min-width: 44px;
+    padding: 10px 16px;
+    font-size: 14px;
+  }
+  .monitor-table .uag-btn.small {
+    min-height: 40px;
+    padding: 8px 14px;
   }
 }
 
+/* 工單 2: 進度條視覺優化 */
+/* 規則: ux-guidelines.csv - Duration Timing */
+/* Do: Use 150-300ms for micro-interactions */
+/* Code: transition-all duration-200 */
 .progress-bg {
   width: 100%;
-  height: 6px;
-  background: var(--line-soft);
-  border-radius: 99px;
+  height: 4px;
+  background: #F1F5F9;
+  border-radius: 2px;
   overflow: hidden;
   margin-top: 6px;
 }
 .progress-fill {
   height: 100%;
-  border-radius: 99px;
-  transition: width 1s linear;
+  border-radius: 2px;
+  transition: width 0.2s ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .progress-fill {
+    transition: none;
+  }
 }
 .t-countdown {
   font-size: 12px;

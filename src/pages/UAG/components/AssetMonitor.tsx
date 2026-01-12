@@ -67,13 +67,16 @@ export default function AssetMonitor({
                   <tr key={lead.id}>
                     <td data-label="客戶等級/名稱">
                       <div style={{ display: "flex", alignItems: "center" }}>
+                        {/* 工單 6: 等級徽章圓角優化 */}
+                        {/* 規則: html-tailwind.csv Row 38 - Card structure */}
+                        {/* Code: rounded-lg (8px) 風格，避免圓形 AI 感 */}
                         <span
                           style={{
                             display: "inline-grid",
                             placeItems: "center",
                             width: "24px",
                             height: "24px",
-                            borderRadius: "50%",
+                            borderRadius: "6px", // 從 50% 改為 6px
                             fontSize: "11px",
                             fontWeight: 900,
                             color: "var(--bg-card)",

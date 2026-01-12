@@ -15,6 +15,9 @@ export interface NotificationDisplay {
  * 根據通知狀態返回顯示配置
  * @param status - 通知狀態
  * @returns 顯示配置（文字、背景色、文字顏色）
+ *
+ * 顏色使用 CSS 變數（定義於 UAG.module.css）
+ * 符合 /ui-ux-pro-max styles.csv Row 29 - Data-Dense Dashboard 規則
  */
 export function getNotificationDisplay(
   status: NotificationStatus | undefined,
@@ -35,8 +38,8 @@ export function getNotificationDisplay(
     case "unreachable":
       return {
         text: "LINE 無法送達",
-        bgColor: "var(--notif-warning-bg)",
-        textColor: "var(--notif-warning-text)",
+        bgColor: "var(--notif-error-bg)",
+        textColor: "var(--notif-error-text)",
       };
     case "pending":
       return {
