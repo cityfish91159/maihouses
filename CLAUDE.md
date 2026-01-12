@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
----
+所有ui/ux設計都必須來自/ui-ux-pro-max 嚴格禁止自己亂做
 
 ## 開發指令
 
