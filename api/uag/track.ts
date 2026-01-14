@@ -7,6 +7,7 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { createClient } from "@supabase/supabase-js";
 import { withSentryHandler, captureError, addBreadcrumb } from "../lib/sentry";
+import { logger } from "../lib/logger";
 
 // ============================================================================
 // Types
@@ -115,7 +116,7 @@ async function handler(
     });
 
     if (error) {
-      console.error("Supabase RPC Error:", error);
+      logger.error("[UAG] Supabase RPC failed", error, { rpcName, session_id });
 
       // Fallback 到舊版 RPC
       if (UAG_RPC_VERSION === "v8_2") {
@@ -140,9 +141,11 @@ async function handler(
 
     // Realtime Trigger - S-Grade Alert
     if (trackResult && trackResult.grade === "S") {
-      console.log(
-        `[UAG] 🎯 S-Grade Lead! Session: ${session_id}, Score: ${trackResult.score}, Reason: ${trackResult.reason}`,
-      );
+      logger.info("[UAG] S-Grade Lead detected", {
+        session_id,
+        score: trackResult.score,
+        reason: trackResult.reason,
+      });
       addBreadcrumb("S-Grade lead detected", "uag", {
         session_id,
         score: trackResult.score,
@@ -151,7 +154,7 @@ async function handler(
 
     return res.status(200).json(trackResult);
   } catch (err) {
-    console.error("UAG Track Error:", err);
+    logger.error("[UAG] Track handler error", err, { handler: "uag/track" });
     captureError(err, { handler: "uag/track" });
     return res.status(500).json({ error: "Internal Server Error" });
   }

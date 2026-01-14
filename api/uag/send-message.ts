@@ -10,6 +10,7 @@ import {
   addBreadcrumb,
   setUserContext,
 } from "../lib/sentry";
+import { logger } from "../lib/logger";
 
 // ============================================================================
 // Constants
@@ -147,7 +148,7 @@ async function updateNotificationStatus(
     .eq("id", purchaseId);
 
   if (error) {
-    console.error("updateNotificationStatus error:", error);
+    logger.error("[UAG] updateNotificationStatus failed", error, { purchaseId });
   }
 }
 
@@ -171,7 +172,7 @@ async function logLineAudit(
   });
 
   if (error) {
-    console.error("logLineAudit error:", error);
+    logger.error("[UAG] logLineAudit failed", error, { purchaseId, sessionId });
   }
 }
 
@@ -261,7 +262,7 @@ async function handler(
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
 
   if (!supabaseUrl || !supabaseServiceKey) {
-    console.error("Missing Supabase configuration");
+    logger.error("[UAG] Missing Supabase configuration");
     return res.status(500).json({
       success: false,
       lineStatus: "error",
@@ -271,9 +272,7 @@ async function handler(
 
   // 生產環境 LINE Token 驗證（警告但不阻斷，允許僅使用站內訊息）
   if (!isDevEnvironment() && !lineChannelToken) {
-    console.warn(
-      "LINE_CHANNEL_ACCESS_TOKEN not configured in production. LINE notifications will be skipped.",
-    );
+    logger.warn("[UAG] LINE_CHANNEL_ACCESS_TOKEN not configured. LINE notifications will be skipped.");
   }
 
   // 驗證請求參數
@@ -340,7 +339,7 @@ async function handler(
     );
 
     if (convError) {
-      console.error("fn_create_conversation error:", convError);
+      logger.error("[UAG] fn_create_conversation failed", convError, { agentId, sessionId });
       return res.status(500).json({
         success: false,
         lineStatus: "error",
@@ -359,7 +358,7 @@ async function handler(
     );
 
     if (msgError) {
-      console.error("fn_send_message error:", msgError);
+      logger.error("[UAG] fn_send_message failed", msgError, { conversationId, agentId });
       // 站內訊息失敗是嚴重錯誤
       return res.status(500).json({
         success: false,
@@ -376,7 +375,7 @@ async function handler(
     );
 
     if (bindError) {
-      console.error("fn_get_line_binding error:", bindError);
+      logger.error("[UAG] fn_get_line_binding failed", bindError, { sessionId, agentId });
       // LINE 查詢失敗不影響站內訊息成功
       return res.json({
         success: true,
@@ -467,7 +466,7 @@ async function handler(
 
     if (queueError) {
       // 記錄非重複相關的錯誤
-      console.error("Queue upsert error:", queueError);
+      logger.error("[UAG] Queue upsert failed", queueError, { messageId, purchaseId });
     }
 
     // ========== 5. 立即嘗試發送（失敗會由 Cron 重試）==========
@@ -573,7 +572,7 @@ async function handler(
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error";
-    console.error("send-message handler error:", error);
+    logger.error("[UAG] send-message handler error", error, { agentId, sessionId, purchaseId });
 
     // 捕獲錯誤到 Sentry
     captureError(error, {

@@ -12,6 +12,7 @@ import {
   type PostgrestError,
 } from "@supabase/supabase-js";
 import { z } from "zod";
+import { logger } from "../lib/logger";
 
 // 延遲初始化 Supabase client，避免模組載入時因環境變數缺失而崩潰
 let supabase: SupabaseClient | null = null;
@@ -151,16 +152,15 @@ async function buildProfileMap(
     .in("id", authorIds);
 
   if (error) {
-    console.error("[community/wall] fetch profiles failed:", error);
+    logger.error("[community/wall] fetch profiles failed", error);
     return new Map();
   }
 
   const parsed = ProfileRowSchema.array().safeParse(data || []);
   if (!parsed.success) {
-    console.error(
-      "[community/wall] profiles schema validation failed:",
-      parsed.error.flatten(),
-    );
+    logger.error("[community/wall] profiles schema validation failed", parsed.error, {
+      flattenedErrors: parsed.error.flatten(),
+    });
     return new Map();
   }
 
@@ -428,19 +428,19 @@ async function fetchReviewRows(communityId: string, limit?: number) {
       }
       // 只在開發時記錄詳細錯誤
       if (process.env.NODE_ENV !== "production") {
-        console.warn(
-          "ReviewRow validation failed:",
+        logger.debug("[community/wall] ReviewRow validation failed", {
           item,
-          result.error.flatten(),
-        );
+          errors: result.error.flatten(),
+        });
       }
     }
   }
 
   if (invalidCount.total > 0) {
-    console.warn(
-      `fetchReviewRows: ${invalidCount.total} rows failed validation, skipped. IDs: ${invalidCount.ids.slice(0, 5).join(", ")}${invalidCount.ids.length > 5 ? "..." : ""}`,
-    );
+    logger.warn("[community/wall] fetchReviewRows validation skipped rows", {
+      skippedCount: invalidCount.total,
+      sampleIds: invalidCount.ids.slice(0, 5),
+    });
   }
 
   return {
@@ -558,7 +558,11 @@ async function resolveViewerContext(
 
     // PGRST116 = 查無資料，42P01 = 表不存在
     if (error && error.code !== "PGRST116" && error.code !== "42P01") {
-      console.warn("resolveViewerContext error:", error.code, error.message);
+      logger.warn("[community/wall] resolveViewerContext error", {
+        code: error.code,
+        message: error.message,
+        communityId,
+      });
       // 不 throw，降級為 member 權限
       return { role: "member", canAccessPrivate: false };
     }
@@ -593,7 +597,10 @@ async function resolveViewerContext(
     };
   } catch (err) {
     // 任何未預期的錯誤都降級為 member
-    console.warn("resolveViewerContext unexpected error:", err);
+    logger.warn("[community/wall] resolveViewerContext unexpected error", {
+      error: err instanceof Error ? err.message : String(err),
+      communityId,
+    });
     return { role: "member", canAccessPrivate: false };
   }
 }
@@ -649,7 +656,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         userId = user.id;
       }
     } catch (e) {
-      console.warn("Token 驗證失敗");
+      logger.debug("[community/wall] Token 驗證失敗");
     }
   }
 
@@ -696,7 +703,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     }
 
-    console.error("API Error:", error);
+    logger.error("[community/wall] API handler error", error);
     return res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : "未知錯誤",
@@ -794,10 +801,7 @@ async function getReviews(
   try {
     reviewResult = await fetchReviewsWithAgents(communityId, limit);
   } catch (err) {
-    console.error(
-      "[community/wall] getReviews fetchReviewsWithAgents failed:",
-      err,
-    );
+    logger.error("[community/wall] getReviews fetchReviewsWithAgents failed", err, { communityId });
   }
 
   try {
@@ -808,10 +812,7 @@ async function getReviews(
       .single();
     communityData = data ?? null;
   } catch (err) {
-    console.error(
-      "[community/wall] getReviews fetch community summary failed:",
-      err,
-    );
+    logger.error("[community/wall] getReviews fetch community summary failed", err, { communityId });
   }
 
   return res.status(200).json({
@@ -935,7 +936,7 @@ async function getAll(
     // Reviews: 取得帶房仲統計資訊的評價
     // 若評價表缺資料或異常，不要整個 API 502，回傳空列表即可
     fetchReviewsWithAgents(communityId, reviewLimit).catch((err) => {
-      console.error("[community/wall] fetchReviewsWithAgents failed:", err);
+      logger.error("[community/wall] fetchReviewsWithAgents failed", err, { communityId });
       return { items: [], total: 0 };
     }),
 

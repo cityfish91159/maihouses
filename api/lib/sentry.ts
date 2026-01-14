@@ -41,6 +41,26 @@ interface SentryConfig {
 let isInitialized = false;
 
 /**
+ * 基礎設施層日誌輸出
+ *
+ * 在 Sentry/Logger 初始化之前使用，避免循環依賴
+ * 使用 stderr 輸出，符合 logger 設計原則
+ */
+function infraLog(level: "info" | "error", message: string): void {
+  const isProduction = process.env.NODE_ENV === "production";
+
+  // 生產環境：僅輸出 error 級別（嚴重配置問題）
+  // 開發環境：輸出所有級別
+  if (isProduction && level !== "error") {
+    return;
+  }
+
+  const timestamp = new Date().toISOString();
+  const formatted = `[${timestamp}] [${level.toUpperCase()}] ${message}\n`;
+  process.stderr.write(formatted);
+}
+
+/**
  * 獲取 Sentry 配置
  */
 function getSentryConfig(): SentryConfig {
@@ -66,8 +86,9 @@ export function initSentry(): void {
 
   if (!config.dsn) {
     if (config.isProduction) {
-      // 生產環境缺少 DSN 應該被記錄
-      console.error(
+      // 生產環境缺少 DSN 是嚴重配置錯誤，必須記錄
+      infraLog(
+        "error",
         "[SENTRY] CRITICAL: SENTRY_DSN not configured in production. Error monitoring disabled.",
       );
     }
@@ -103,7 +124,8 @@ export function initSentry(): void {
   });
 
   isInitialized = true;
-  console.log(`[SENTRY] Initialized (env: ${config.environment})`);
+  // 開發環境：輸出初始化確認（生產環境會被 infraLog 過濾）
+  infraLog("info", `[SENTRY] Initialized (env: ${config.environment})`);
 }
 
 // ============================================================================

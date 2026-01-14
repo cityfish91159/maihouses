@@ -7,6 +7,7 @@ export * from "./auth";
 export * from "./crypto";
 export * from "./env";
 export * from "./intentDetector";
+export * from "./logger";
 export * from "./sentry";
 export * from "./taskManager";
 export * from "./timeUtils";
