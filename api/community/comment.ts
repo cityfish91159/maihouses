@@ -133,31 +133,35 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         // 並行驗證 postId/communityId 一致性 + parentId 所屬（減少 DB 往返）
         const validationPromises: Promise<{ type: string; valid: boolean; error?: string }>[] = [
           // 驗證 postId 與 communityId 一致性
-          getSupabase()
-            .from("community_posts")
-            .select("community_id")
-            .eq("id", postId)
-            .single()
-            .then(({ data: post, error: postError }) => {
-              if (postError || !post) return { type: "post", valid: false, error: "貼文不存在" };
-              if (post.community_id !== communityId) return { type: "post", valid: false, error: "communityId 與貼文所屬社區不符" };
-              return { type: "post", valid: true };
-            }),
+          Promise.resolve(
+            getSupabase()
+              .from("community_posts")
+              .select("community_id")
+              .eq("id", postId)
+              .single()
+              .then(({ data: post, error: postError }) => {
+                if (postError || !post) return { type: "post", valid: false, error: "貼文不存在" };
+                if (post.community_id !== communityId) return { type: "post", valid: false, error: "communityId 與貼文所屬社區不符" };
+                return { type: "post", valid: true };
+              })
+          ),
         ];
 
         // 有 parentId 時才驗證
         if (parentId) {
           validationPromises.push(
-            getSupabase()
-              .from("community_comments")
-              .select("post_id")
-              .eq("id", parentId)
-              .single()
-              .then(({ data: parentComment, error: parentError }) => {
-                if (parentError || !parentComment) return { type: "parent", valid: false, error: "父留言不存在" };
-                if (parentComment.post_id !== postId) return { type: "parent", valid: false, error: "parentId 與 postId 不符" };
-                return { type: "parent", valid: true };
-              }),
+            Promise.resolve(
+              getSupabase()
+                .from("community_comments")
+                .select("post_id")
+                .eq("id", parentId)
+                .single()
+                .then(({ data: parentComment, error: parentError }) => {
+                  if (parentError || !parentComment) return { type: "parent", valid: false, error: "父留言不存在" };
+                  if (parentComment.post_id !== postId) return { type: "parent", valid: false, error: "parentId 與 postId 不符" };
+                  return { type: "parent", valid: true };
+                })
+            ),
           );
         }
 
