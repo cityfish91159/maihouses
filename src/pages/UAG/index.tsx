@@ -4,6 +4,8 @@ import { QueryErrorResetBoundary, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { ROUTES } from "../../constants/routes";
 import { notify } from "../../lib/notify";
+import { logger } from "../../lib/logger";
+import { createPost } from "../../services/communityService";
 import type { AppData } from "./types/uag.types";
 
 import styles from "./UAG.module.css";
@@ -201,6 +203,35 @@ function UAGPageContent() {
     [purchasedLead, queryClient, useMock, user?.id],
   );
 
+  // FEED-01 Phase 10: 從 feed 提取可用社區列表（去重）
+  // 注意：必須在所有 early return 之前呼叫 hooks
+  const availableCommunities = React.useMemo(() => {
+    if (!appData) return [];
+    const communityMap = new Map<string, string>();
+    for (const post of appData.feed) {
+      if (post.communityId && post.communityName) {
+        communityMap.set(post.communityId, post.communityName);
+      }
+    }
+    return Array.from(communityMap.entries()).map(([id, name]) => ({ id, name }));
+  }, [appData]);
+
+  // FEED-01 Phase 10: 發文處理函數
+  const handleCreatePost = useCallback(
+    async (content: string, communityId: string) => {
+      try {
+        await createPost(communityId, content, "public");
+        // 成功後重新載入資料
+        queryClient.invalidateQueries({ queryKey: ["uagData"] });
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "發文失敗";
+        logger.error("[UAG] handleCreatePost failed", { error: message });
+        throw err; // 讓 ListingFeed 顯示錯誤
+      }
+    },
+    [queryClient],
+  );
+
   if (isLoading) return <UAGLoadingSkeleton />;
   if (!appData) return null;
 
@@ -255,7 +286,12 @@ function UAGPageContent() {
           />
 
           {/* [3] Listings & [4] Feed */}
-          <ListingFeed listings={appData.listings} feed={appData.feed} />
+          <ListingFeed
+            listings={appData.listings}
+            feed={appData.feed}
+            onCreatePost={handleCreatePost}
+            availableCommunities={availableCommunities}
+          />
 
           {/* [5] 手機報告生成器 */}
           <ReportGenerator listings={appData.listings} agentName={agentName} />
