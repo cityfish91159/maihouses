@@ -3,15 +3,18 @@
  *
  * 信息流貼文卡片組件
  * 支援：住戶貼文、房仲物件、管理員公告、AI 快訊
+ *
+ * Phase 7: 整合 useComments Hook
  */
 
-import { useState, useCallback, memo } from "react";
+import { useState, useCallback, useRef, useEffect, memo, useMemo } from "react";
 import { Heart, MessageCircle, Share2, Calendar, Eye } from "lucide-react";
 import type { FeedPost } from "../../hooks/useFeedData";
 import { STRINGS } from "../../constants/strings";
 import { formatRelativeTime } from "../../utils/date";
 import { CommentList } from "./CommentList";
 import { CommentInput } from "./CommentInput";
+import { useComments } from "../../hooks/useComments";
 
 const S = STRINGS.FEED.POST;
 
@@ -21,8 +24,12 @@ interface FeedPostCardProps {
   onLike?: (postId: string | number) => Promise<void>;
   onReply?: (postId: string | number) => void;
   onShare?: (postId: string | number) => void;
-  onComment?: (postId: string | number, content: string) => Promise<void>; // P6 Phase 1: New prop
+  onComment?: (postId: string | number, content: string) => Promise<void>;
   className?: string;
+  // Phase 7: 新增留言系統必要 props
+  communityId?: string | undefined;
+  currentUserId?: string | undefined;
+  userInitial?: string | undefined;
 }
 
 /** 根據作者類型取得 Avatar 樣式 */
@@ -48,6 +55,73 @@ function getAuthorBadge(type: FeedPost["type"]): string | null {
   }
 }
 
+/**
+ * FeedPostCommentSection
+ * Phase 7: 獨立留言區組件，整合 useComments Hook
+ */
+interface FeedPostCommentSectionProps {
+  postId: string;
+  communityId: string;
+  currentUserId: string | undefined;
+  userInitial: string;
+}
+
+function FeedPostCommentSection({
+  postId,
+  communityId,
+  currentUserId,
+  userInitial,
+}: FeedPostCommentSectionProps) {
+  const {
+    comments,
+    isLoading,
+    addComment,
+    toggleLike,
+    deleteComment,
+    loadReplies,
+    refresh,
+  } = useComments({ postId, communityId });
+
+  // Phase 6 Bug 4 修正：hasLoadedRef 防止重複載入
+  const hasLoadedRef = useRef(false);
+  useEffect(() => {
+    if (!hasLoadedRef.current) {
+      hasLoadedRef.current = true;
+      refresh();
+    }
+  }, [refresh]);
+
+  const isLoggedIn = useMemo(() => currentUserId !== undefined, [currentUserId]);
+
+  if (isLoading && comments.length === 0) {
+    return (
+      <div className="mt-4 flex items-center justify-center py-4">
+        <div className="size-5 animate-spin rounded-full border-2 border-indigo-600 border-t-transparent" />
+        <span className="ml-2 text-sm text-gray-500">載入留言中...</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="animate-fade-in">
+      <CommentList
+        comments={comments}
+        currentUserId={currentUserId}
+        onAddComment={addComment}
+        onToggleLike={toggleLike}
+        onDeleteComment={deleteComment}
+        onLoadReplies={loadReplies}
+      />
+      <CommentInput
+        onSubmit={(content) => addComment(content)}
+        disabled={!isLoggedIn}
+        userInitial={userInitial}
+        placeholder={isLoggedIn ? "寫下您的留言..." : "請先登入後留言"}
+      />
+    </div>
+  );
+}
+
 export const FeedPostCard = memo(function FeedPostCard({
   post,
   isLiked = false,
@@ -56,15 +130,21 @@ export const FeedPostCard = memo(function FeedPostCard({
   onShare,
   onComment,
   className = "",
+  // Phase 7: 新增 props
+  communityId,
+  currentUserId,
+  userInitial = "U",
 }: FeedPostCardProps) {
   const [isLiking, setIsLiking] = useState(false);
-  const [isCommentsOpen, setIsCommentsOpen] = useState(false); // P6 Phase 1: Toggle state
+  const [isCommentsOpen, setIsCommentsOpen] = useState(false);
 
   const handleLike = useCallback(async () => {
     if (!onLike || isLiking) return;
     setIsLiking(true);
     try {
       await onLike(post.id);
+    } catch {
+      // 錯誤已在 onLike 處理（Consumer/Agent hooks 有 notify）
     } finally {
       setIsLiking(false);
     }
@@ -238,11 +318,19 @@ export const FeedPostCard = memo(function FeedPostCard({
         </div>
       )}
 
-      {/* Comment Section (P6 Phase 1) */}
-      {isCommentsOpen && (
-        <div className="animate-fade-in">
-          <CommentList comments={post.commentList || []} />
-          <CommentInput onSubmit={handleSubmitComment} />
+      {/* Phase 7: 整合 useComments Hook 的留言區 */}
+      {isCommentsOpen && communityId && (
+        <FeedPostCommentSection
+          postId={String(post.id)}
+          communityId={communityId}
+          currentUserId={currentUserId}
+          userInitial={userInitial}
+        />
+      )}
+      {/* Bug 1 修正：若無 communityId，顯示提示而非 no-op fallback */}
+      {isCommentsOpen && !communityId && (
+        <div className="mt-4 rounded-lg bg-gray-50 p-4 text-center text-sm text-gray-500">
+          留言功能暫時無法使用
         </div>
       )}
     </article>

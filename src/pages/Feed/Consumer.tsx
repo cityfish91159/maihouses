@@ -183,6 +183,8 @@ function ConsumerContent({ userId, forceMock }: ConsumerProps) {
     handleShare,
     // MSG-3: 通知資料
     latestNotification,
+    // Phase 7: 留言系統需要的 currentUserId
+    currentUserId,
   } = useConsumer(userId, forceMock);
 
   // F6/E5 Fix: Deep Linking and Profile Navigation
@@ -337,6 +339,9 @@ function ConsumerContent({ userId, forceMock }: ConsumerProps) {
                           onReply={handleReply}
                           onComment={handleComment}
                           onShare={handleShare}
+                          communityId={post.communityId}
+                          currentUserId={currentUserId}
+                          userInitial={userInitial}
                         />
                       ))}
                     </div>
@@ -360,6 +365,9 @@ function ConsumerContent({ userId, forceMock }: ConsumerProps) {
                         onReply={handleReply}
                         onComment={handleComment}
                         onShare={handleShare}
+                        communityId={post.communityId}
+                        currentUserId={currentUserId}
+                        userInitial={userInitial}
                       />
                     </div>
                   ))}

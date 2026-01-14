@@ -27,6 +27,8 @@ export default function AgentPage({ userId, forceMock }: AgentPageProps) {
     toggleLike,
     isLiked,
     handleComment,
+    handleReply,
+    handleShare,
     useMock,
     setUseMock,
   } = useAgentFeed(userId, forceMock);
@@ -127,8 +129,13 @@ export default function AgentPage({ userId, forceMock }: AgentPageProps) {
               post={post}
               isLiked={isLiked(post.id)}
               onLike={() => toggleLike(post.id)}
+              onReply={handleReply}
+              onShare={handleShare}
               onComment={handleComment}
               className="animate-in fade-in slide-in-from-bottom-4 duration-500"
+              communityId={post.communityId}
+              currentUserId={user?.id}
+              userInitial={userProfile.name.charAt(0).toUpperCase()}
             />
           ))}
         </main>

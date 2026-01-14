@@ -59,12 +59,31 @@ export function useAgentFeed(userId?: string, forceMock?: boolean) {
           await addComment(postId, content);
         }
         notify.success("留言成功", "您的留言已發佈");
-      } catch (err) {
+      } catch {
         notify.error("留言失敗", "請稍後再試");
       }
     },
     [addComment],
   );
+
+  // Bug 2 修正：新增 handleReply 和 handleShare
+  const handleReply = useCallback((_postId: string | number) => {
+    // Agent 版 reply 只是 toggle 留言區，邏輯在 FeedPostCard 內
+  }, []);
+
+  const handleShare = useCallback(async (postId: string | number) => {
+    const shareUrl = `${window.location.origin}${window.location.pathname}?post=${postId}`;
+    if (navigator?.clipboard?.writeText) {
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+        notify.success("連結已複製", "您可以將連結分享給朋友");
+      } catch {
+        notify.error("複製失敗", "請手動複製網址");
+      }
+    } else {
+      notify.info("分享功能暫未支援", "請在瀏覽器中操作");
+    }
+  }, []);
 
   return {
     ...feed,
@@ -72,5 +91,7 @@ export function useAgentFeed(userId?: string, forceMock?: boolean) {
     performanceStats,
     todoList,
     handleComment,
+    handleReply,
+    handleShare,
   };
 }

@@ -878,16 +878,23 @@ export function useFeedData(
       // Prepare Comment Object (Shared for Mock and Optimistic UI)
       const tempId = useMock ? Date.now() : -Date.now();
       const commentObj: FeedComment = {
-        id: tempId,
-        postId: postId,
-        author: authUser?.user_metadata?.name || "測試用戶",
-        role: (["agent", "resident", "official"].includes(authRole || "")
-          ? authRole
-          : "member") as FeedComment["role"],
+        id: String(tempId),
+        postId: String(postId),
+        author: {
+          id: authUser?.id || "",
+          name: authUser?.user_metadata?.name || "測試用戶",
+          role: (["agent", "resident", "official"].includes(authRole || "")
+            ? authRole
+            : "member") as "agent" | "resident" | "official" | "member",
+        },
         content,
+        createdAt: new Date().toISOString(),
+        likesCount: 0,
+        isLiked: false,
+        repliesCount: 0,
+        // 相容舊欄位
         time: new Date().toISOString(),
         likes: 0,
-        isLiked: false,
       };
 
       // Mock Mode
@@ -934,7 +941,7 @@ export function useFeedData(
         const { error } = await supabase.from("community_comments").insert({
           post_id: postId,
           community_id: options.communityId,
-          user_id: currentUserId,
+          author_id: currentUserId,
           content: content,
         });
 

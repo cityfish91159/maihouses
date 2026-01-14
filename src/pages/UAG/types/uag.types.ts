@@ -53,14 +53,19 @@ export const LeadSchema = SupabaseLeadSchema.extend({
 
 export type Lead = z.infer<typeof LeadSchema>;
 
+// UAG-20: 修復「我的房源總覽」資料連接 - Phase 1
 export const SupabaseListingSchema = z
   .object({
+    public_id: z.string(), // UAG-20: 新增 - 對應 properties.public_id
     title: z.string(),
-    tags: z.array(z.string()).optional().nullable(),
+    images: z.array(z.string()).optional().nullable(), // UAG-20: 新增 - 對應 properties.images
+    features: z.array(z.string()).optional().nullable(), // UAG-20: 新增 - 對應 properties.features
+    community_id: z.string().optional().nullable(), // FEED-01 Phase 8: 用於過濾社區貼文
+    // REMOVED: tags - 改用 features 從資料庫查詢
     view_count: z.number().optional(),
     click_count: z.number().optional(),
     fav_count: z.number().optional(),
-    thumb_color: z.string().optional(),
+    // REMOVED: thumb_color - 改用實際圖片 URL
   })
   .passthrough();
 
@@ -70,16 +75,23 @@ export const ListingSchema = SupabaseListingSchema.extend({
   view: z.number().optional(),
   click: z.number().optional(),
   fav: z.number().optional(),
-  thumbColor: z.string().optional(),
+  thumbnail: z.string().optional(), // UAG-20: 新增 - 圖片 URL (images[0])
+  tags: z.array(z.string()).optional(), // UAG-20: 新增 - 轉換自 features
+  // REMOVED: thumbColor - 改用 thumbnail
 });
 
 export type Listing = z.infer<typeof ListingSchema>;
 
 export const FeedPostSchema = z
   .object({
+    id: z.string(), // FEED-01 Phase 8: community_posts.id
     title: z.string(),
     meta: z.string(),
     body: z.string(),
+    communityId: z.string().optional(), // FEED-01 Phase 8: 社區 ID
+    communityName: z.string().optional(), // FEED-01 Phase 8: 社區名稱
+    likesCount: z.number().optional(), // FEED-01 Phase 8: 讚數
+    commentsCount: z.number().optional(), // FEED-01 Phase 8: 留言數
     created_at: z.string().optional(),
   })
   .passthrough();

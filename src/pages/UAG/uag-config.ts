@@ -47,3 +47,15 @@ export const GRADE_PRICE: Record<Grade, number> = {
   C: 80,
   F: 20,
 } as const;
+
+/**
+ * FEED-01 Phase 8: Feed 貼文標題預覽長度
+ * 定義：社區牆貼文在 UAG 信息流中顯示的標題截取字數
+ */
+export const FEED_TITLE_PREVIEW_LENGTH = 40;
+
+/**
+ * 客戶等級保護時效預設值（小時）
+ * 當 grade 不在 GRADE_PROTECTION_HOURS 中時使用
+ */
+export const DEFAULT_PROTECTION_HOURS = 336;

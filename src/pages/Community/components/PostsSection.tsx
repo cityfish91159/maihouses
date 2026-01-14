@@ -18,8 +18,11 @@ import type { Role, Post, WallTab } from "../types";
 import { getPermissions } from "../types";
 import { useGuestVisibleItems } from "../../../hooks/useGuestVisibleItems";
 import { useThrottle } from "../../../hooks/useThrottle";
+import { useComments } from "../../../hooks/useComments";
 import { LockedOverlay } from "./LockedOverlay";
 import { ComposerModal } from "../../../components/Composer/ComposerModal";
+import { CommentList } from "../../../components/Feed/CommentList";
+import { CommentInput } from "../../../components/Feed/CommentInput";
 import { formatRelativeTimeLabel } from "../../../lib/time";
 import { notify } from "../../../lib/notify";
 import { STRINGS } from "../../../constants/strings";
@@ -60,11 +63,15 @@ function PostBadge({ post }: { post: Post }) {
 
 interface PostCardProps {
   post: Post;
+  communityId: string;
+  currentUserId: string | undefined;
+  userInitial: string;
   onLike?: (postId: number | string) => Promise<void> | void;
 }
 
-function PostCard({ post, onLike }: PostCardProps) {
+function PostCard({ post, communityId, currentUserId, userInitial, onLike }: PostCardProps) {
   const [isLiking, setIsLiking] = useState(false);
+  const [isCommentsOpen, setIsCommentsOpen] = useState(false);
   const isMountedRef = useRef(true);
   const isAgent = post.type === "agent";
   const displayTime = formatRelativeTimeLabel(post.time);
@@ -194,10 +201,14 @@ function PostCard({ post, onLike }: PostCardProps) {
                 )}
               </button>
               <button
-                className="bg-brand/6 border-brand/10 text-brand/50 flex cursor-not-allowed items-center gap-1 rounded-lg border px-2.5 py-1.5 text-[11px] font-semibold opacity-60 transition-all"
+                className={`flex items-center gap-1 rounded-lg border px-2.5 py-1.5 text-[11px] font-semibold transition-all ${
+                  isCommentsOpen
+                    ? "border-brand bg-brand/12 text-brand"
+                    : "bg-brand/6 hover:bg-brand/12 border-brand/10 text-brand"
+                }`}
                 aria-label={S.BTN_REPLY_ARIA}
-                title={S.BTN_REPLY_TOOLTIP}
-                disabled
+                aria-expanded={isCommentsOpen}
+                onClick={() => setIsCommentsOpen(!isCommentsOpen)}
               >
                 <span role="img" aria-label="對話框">
                   💬
@@ -207,8 +218,84 @@ function PostCard({ post, onLike }: PostCardProps) {
             </>
           )}
         </div>
+
+        {/* 留言區塊 */}
+        {isCommentsOpen && (
+          <PostCommentSection
+            postId={String(post.id)}
+            communityId={communityId}
+            currentUserId={currentUserId}
+            userInitial={userInitial}
+          />
+        )}
       </div>
     </article>
+  );
+}
+
+// 留言區塊子組件（使用 useComments hook）
+interface PostCommentSectionProps {
+  postId: string;
+  communityId: string;
+  currentUserId: string | undefined;
+  userInitial: string;
+}
+
+function PostCommentSection({
+  postId,
+  communityId,
+  currentUserId,
+  userInitial,
+}: PostCommentSectionProps) {
+  const {
+    comments,
+    isLoading,
+    addComment,
+    toggleLike,
+    deleteComment,
+    loadReplies,
+    refresh,
+  } = useComments({ postId, communityId });
+
+  // Bug 4 修正：只在首次載入時 refresh，避免重複載入
+  const hasLoadedRef = useRef(false);
+  useEffect(() => {
+    if (!hasLoadedRef.current) {
+      hasLoadedRef.current = true;
+      refresh();
+    }
+  }, [refresh]);
+
+  const isLoggedIn = currentUserId !== undefined;
+
+  if (isLoading && comments.length === 0) {
+    return (
+      <div className="mt-3 border-t border-border-light pt-3">
+        <div className="flex items-center justify-center py-4 text-xs text-ink-600">
+          <span className="animate-pulse">載入留言中...</span>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-3 border-t border-border-light pt-3">
+      <CommentList
+        comments={comments}
+        currentUserId={currentUserId}
+        onAddComment={addComment}
+        onToggleLike={toggleLike}
+        onDeleteComment={deleteComment}
+        onLoadReplies={loadReplies}
+      />
+      {/* Bug 1 & 3 修正：傳遞 disabled 和 userInitial */}
+      <CommentInput
+        onSubmit={(content) => addComment(content)}
+        disabled={!isLoggedIn}
+        userInitial={userInitial}
+        placeholder={isLoggedIn ? "寫下您的留言..." : "請先登入後留言"}
+      />
+    </div>
   );
 }
 
@@ -218,6 +305,9 @@ interface PostsSectionProps {
   onTabChange: (tab: WallTab) => void;
   publicPosts: Post[];
   privatePosts: Post[];
+  communityId: string;
+  currentUserId: string | undefined;
+  userInitial: string;
   onLike?: (postId: number | string) => Promise<void> | void;
   onCreatePost?: (content: string, visibility: "public" | "private") => void;
   onUnlock?: () => void;
@@ -229,6 +319,9 @@ export function PostsSection({
   onTabChange,
   publicPosts,
   privatePosts,
+  communityId,
+  currentUserId,
+  userInitial,
   onLike,
   onCreatePost,
   onUnlock,
@@ -427,6 +520,9 @@ export function PostsSection({
               <PostCard
                 key={post.id}
                 post={post}
+                communityId={communityId}
+                currentUserId={currentUserId}
+                userInitial={userInitial}
                 {...(onLike ? { onLike } : {})}
               />
             ))}
@@ -443,7 +539,14 @@ export function PostsSection({
               showCta
               {...(onUnlock ? { onCtaClick: onUnlock } : {})}
             >
-              {nextHiddenPost && <PostCard post={nextHiddenPost} />}
+              {nextHiddenPost && (
+                <PostCard
+                  post={nextHiddenPost}
+                  communityId={communityId}
+                  currentUserId={currentUserId}
+                  userInitial={userInitial}
+                />
+              )}
             </LockedOverlay>
 
             {perm.canPostPublic && (
@@ -466,6 +569,9 @@ export function PostsSection({
               <PostCard
                 key={post.id}
                 post={post}
+                communityId={communityId}
+                currentUserId={currentUserId}
+                userInitial={userInitial}
                 {...(onLike ? { onLike } : {})}
               />
             ))}

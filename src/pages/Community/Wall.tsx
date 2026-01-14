@@ -101,7 +101,19 @@ function WallInner() {
     role: authRole,
     loading: authLoading,
     error: authError,
+    user,
   } = useAuth();
+
+  // 取得 currentUserId 和 userInitial 供留言系統使用
+  const currentUserId = user?.id;
+  const userName =
+    (user?.user_metadata as Record<string, unknown> | undefined)?.name ??
+    (user?.user_metadata as Record<string, unknown> | undefined)?.full_name ??
+    user?.email;
+  const userInitial =
+    typeof userName === "string" && userName.length > 0
+      ? userName.charAt(0).toUpperCase()
+      : "U";
 
   // B4: 統一計算 effectiveRole，子組件不再自行計算
   const effectiveRole = useMemo<Role>(() => {
@@ -437,6 +449,9 @@ function WallInner() {
             onTabChange={handleTabChange}
             publicPosts={posts.public}
             privatePosts={posts.private}
+            communityId={communityId}
+            currentUserId={currentUserId}
+            userInitial={userInitial}
             onLike={handleLike}
             onCreatePost={handleCreatePost}
             onUnlock={handleUnlock}

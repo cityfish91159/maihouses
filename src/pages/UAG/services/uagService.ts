@@ -12,11 +12,21 @@ import {
   UserDataSchema,
   SupabaseListing, // UAG-9: Import SupabaseListing
 } from "../types/uag.types";
-import { GRADE_PROTECTION_HOURS } from "../uag-config";
+import { GRADE_PROTECTION_HOURS, FEED_TITLE_PREVIEW_LENGTH, DEFAULT_PROTECTION_HOURS } from "../uag-config";
 import { logger } from "../../../lib/logger";
 
-// UAG-9: Define Supabase-sourced types for better safety
-type SupabaseFeedPost = z.infer<typeof FeedPostSchema>;
+// FEED-01 Phase 8: community_posts 查詢返回類型
+// 注意：Supabase 的 JOIN 返回類型可能是 object 或 array，使用 unknown 再 narrow
+interface SupabaseCommunityPost {
+  id: string;
+  community_id: string;
+  content: string;
+  visibility: string;
+  likes_count: number;
+  comments_count: number;
+  created_at: string;
+  community: unknown; // Supabase JOIN 返回類型不穩定，手動處理
+}
 
 interface SupabaseSession {
   session_id: string;
@@ -68,7 +78,7 @@ const calculateRemainingHours = (
 ): number => {
   if (!purchasedAt) return 0;
 
-  const totalHours = GRADE_PROTECTION_HOURS[grade] || 336;
+  const totalHours = GRADE_PROTECTION_HOURS[grade] || DEFAULT_PROTECTION_HOURS;
   const purchasedTime = new Date(purchasedAt).getTime();
   const elapsedHours = (Date.now() - purchasedTime) / (1000 * 60 * 60);
 
@@ -90,11 +100,13 @@ interface SupabaseLeadData {
 }
 
 // UAG-9: Use stricter types for incoming data
+// FEED-01 Phase 8: feedData 改為 SupabaseCommunityPost[]
 const transformSupabaseData = (
   userData: SupabaseUserData,
   leadsData: SupabaseLeadData[],
   listingsData: SupabaseListing[],
-  feedData: SupabaseFeedPost[],
+  feedData: SupabaseCommunityPost[],
+  statsData: Array<{ property_id: string; view_count: number; click_count: number }> | null, // UAG-20-Phase3
 ): AppData => {
   // 1. Validate User Data (Critical)
   const userRaw = {
@@ -140,19 +152,23 @@ const transformSupabaseData = (
     }
   }
 
-  // 3. Transform and Validate Listings
+  // 3. Transform and Validate Listings (UAG-20: 修改資料轉換邏輯)
+  // UAG-20-Phase3: 建立統計數據 Map
+  const statsMap = new Map(
+    (statsData ?? []).map((s) => [s.property_id, s]),
+  );
+
   const validListings: Listing[] = [];
-  for (const l of listingsData) {
-    // Safe cast because we validate with Zod immediately after
-    const listing = l as Record<string, unknown>;
+  for (const listing of listingsData) {
+    const stats = statsMap.get(listing.public_id);
+
     const transformed = {
       ...listing,
-      title: (listing.title as string) || "",
-      tags: (listing.tags as string[] | null) ?? [],
-      view: (listing.view_count as number | undefined) ?? 0,
-      click: (listing.click_count as number | undefined) ?? 0,
-      fav: (listing.fav_count as number | undefined) ?? 0,
-      thumbColor: (listing.thumb_color as string | undefined) ?? "#e5e7eb",
+      tags: listing.features ?? [],
+      thumbnail: listing.images?.[0] ?? undefined,
+      view: stats?.view_count ?? 0,
+      click: stats?.click_count ?? 0,
+      fav: 0, // TODO(UAG-20-Future): 收藏功能
     };
 
     const result = ListingSchema.safeParse(transformed);
@@ -165,10 +181,29 @@ const transformSupabaseData = (
     }
   }
 
-  // 4. Validate Feed
+  // 4. Validate Feed (FEED-01 Phase 8: 轉換 community_posts 為 UAG FeedPost 格式)
   const validFeed: FeedPost[] = [];
   for (const post of feedData) {
-    const result = FeedPostSchema.safeParse(post);
+    const content = post.content ?? "";
+    const contentPreview = content.slice(0, FEED_TITLE_PREVIEW_LENGTH);
+    const title = contentPreview + (content.length > FEED_TITLE_PREVIEW_LENGTH ? "..." : "");
+    // FEED-01 Phase 8: 使用 extractCommunityName helper 處理 Supabase JOIN 返回
+    const communityName = extractCommunityName(post.community);
+    const meta = `來自：${communityName}・${post.comments_count || 0} 則留言`;
+
+    const transformed = {
+      id: post.id,
+      title,
+      meta,
+      body: content, // FEED-01 Phase 8 優化：使用處理後的 content（已處理 null）
+      communityId: post.community_id,
+      communityName,
+      likesCount: post.likes_count ?? 0,
+      commentsCount: post.comments_count ?? 0,
+      created_at: post.created_at,
+    };
+
+    const result = FeedPostSchema.safeParse(transformed);
     if (result.success) {
       validFeed.push(result.data);
     } else {
@@ -194,6 +229,21 @@ export interface PropertyViewStats {
   total_duration: number;
   line_clicks: number;
   call_clicks: number;
+}
+
+/**
+ * FEED-01 Phase 8: 安全提取 community name
+ * Supabase JOIN 返回類型不穩定，可能是 object 或 array
+ */
+function extractCommunityName(community: unknown, fallback = "社區牆"): string {
+  if (Array.isArray(community) && community[0]?.name) {
+    return community[0].name;
+  }
+  if (community && typeof community === "object" && "name" in community) {
+    const record = community as Record<string, unknown>;
+    return String(record.name) || fallback;
+  }
+  return fallback;
 }
 
 /**
@@ -278,10 +328,10 @@ export class UAGService {
    * 問題 #3-4 修復：排除已購買的 session + 正確設置 status
    */
   static async fetchAppData(userId: string): Promise<AppData> {
-    // 1. 並行查詢：用戶資料、sessions、已購買記錄、listings、feed
-    const [userRes, sessionsRes, purchasedRes, listingsRes, feedRes] =
+    // 1. 並行查詢：用戶資料、sessions、已購買記錄、listings（含 community_id）
+    const [userRes, sessionsRes, purchasedRes, listingsRes] =
       await Promise.all([
-        supabase.from("users").select("points, quota_s, quota_a").single(),
+        supabase.from("users").select("points, quota_s, quota_a").eq("id", userId).single(),
         // 正確數據源：uag_sessions（匿名瀏覽行為），不是 leads（真實個資）
         supabase
           .from("uag_sessions")
@@ -301,14 +351,16 @@ export class UAGService {
             "session_id, id, created_at, notification_status, conversations(id)",
           )
           .eq("agent_id", userId),
-        supabase.from("listings").select("*").eq("agent_id", userId),
+        // UAG-20: 改查 properties 表（listings 表不存在）
+        // FEED-01 Phase 8 Bug 1: 加入 community_id 用於過濾 feed
         supabase
-          .from("feed")
-          .select("*")
-          .order("created_at", { ascending: false })
-          .limit(5),
+          .from("properties")
+          .select("public_id, title, images, features, created_at, community_id")
+          .eq("agent_id", userId)
+          .order("created_at", { ascending: false }),
       ]);
 
+    // FEED-01 Phase 8 優化：錯誤檢查必須在使用 data 之前
     if (userRes.error) throw userRes.error;
     if (sessionsRes.error) throw sessionsRes.error;
     // purchasedRes.error 不阻斷，只記錄警告
@@ -318,7 +370,60 @@ export class UAGService {
       });
     }
     if (listingsRes.error) throw listingsRes.error;
-    if (feedRes.error) throw feedRes.error;
+
+    // FEED-01 Phase 8: 從房仲的房源中提取 community_id（去重）
+    const agentCommunityIds = [
+      ...new Set(
+        (listingsRes.data ?? [])
+          .map((p) => p.community_id)
+          .filter((id): id is string => id != null),
+      ),
+    ];
+
+    // FEED-01 Phase 8: 查詢房仲相關社區的貼文（需要等待 listingsRes 完成）
+    const feedRes =
+      agentCommunityIds.length > 0
+        ? await supabase
+            .from("community_posts")
+            .select(`
+              id,
+              community_id,
+              content,
+              visibility,
+              likes_count,
+              comments_count,
+              created_at,
+              community:communities(name)
+            `)
+            .in("community_id", agentCommunityIds)
+            .eq("visibility", "public")
+            .order("likes_count", { ascending: false })
+            .order("created_at", { ascending: false })
+            .limit(5)
+        : { data: [] as SupabaseCommunityPost[], error: null };
+
+    // FEED-01 Phase 8: feedRes 錯誤不阻斷，只記錄警告（feed 非核心功能）
+    if (feedRes.error) {
+      logger.warn("[UAGService] Failed to fetch community posts", {
+        error: feedRes.error.message,
+      });
+    }
+
+    // UAG-20-Phase3: 查詢房源統計數據
+    const propertyIds = (listingsRes.data ?? []).map((p) => p.public_id);
+    const statsRes =
+      propertyIds.length > 0
+        ? await supabase
+            .from("property_view_stats")
+            .select("property_id, view_count, click_count")
+            .in("property_id", propertyIds)
+        : { data: null, error: null };
+
+    if (statsRes.error) {
+      logger.warn("[UAGService] Failed to fetch property stats", {
+        error: statsRes.error.message,
+      });
+    }
 
     // 問題 #3-4 修復：建立已購買 session_id 集合
     // UAG-15/修5: 擴充 Map 包含 notification_status
@@ -440,7 +545,8 @@ export class UAGService {
       userRes.data,
       leadsData,
       listingsRes.data,
-      feedRes.data,
+      feedRes.data ?? [], // FEED-01 Phase 8: feedRes 可能為 null（錯誤時）
+      statsRes.data, // UAG-20-Phase3
     );
   }
 

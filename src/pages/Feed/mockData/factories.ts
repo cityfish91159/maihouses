@@ -62,7 +62,7 @@ export const createMockPost = (
 
 export interface CreateCommentOptions {
   author?: string;
-  role?: FeedComment["role"];
+  role?: "resident" | "member" | "agent" | "official";
 }
 
 /**
@@ -77,10 +77,19 @@ export const createMockComment = (
 
   return {
     id: `c-${postId}-${generateMockId()}`,
-    postId,
-    author,
-    role,
+    postId: String(postId),
+    author: {
+      id: "mock-user-id",
+      name: author,
+      role,
+    },
     content,
+    createdAt: new Date().toISOString(),
+    likesCount: 0,
+    isLiked: false,
+    repliesCount: 0,
+    // 相容舊欄位
+    authorName: author,
     time: new Date().toISOString(),
     likes: 0,
   };

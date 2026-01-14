@@ -121,7 +121,8 @@
       "Bash(findstr:*)",
       "Bash(cmd /c \"chcp 65001 >nul && python .claude/skills/ui-ux-pro-max/scripts/search.py \"\"success warning error status\"\" --domain color\")",
       "Bash(timeout:*)",
-      "Bash(del \"C:\\\\Users\\\\陳世瑜\\\\.claude\\\\plans\\\\vectorized-shimmying-ocean.md\")"
+      "Bash(del \"C:\\\\Users\\\\陳世瑜\\\\.claude\\\\plans\\\\vectorized-shimmying-ocean.md\")",
+      "Bash(cd:*)"
     ]
   },
   "model": "claude-opus-4-5-20251101",

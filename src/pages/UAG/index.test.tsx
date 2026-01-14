@@ -99,7 +99,7 @@ describe("UAGPage", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /獲取聯絡權限/ }));
     const confirmButton = await screen.findByRole("button", {
-      name: /確定花費 20 點\?/,
+      name: /確定花費 20 點/,
     });
     fireEvent.click(confirmButton);
 

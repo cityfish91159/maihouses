@@ -247,19 +247,27 @@ export default function UAGDeAIDemo() {
           <nav style={{ display: "flex", alignItems: "center", gap: "8px" }}>
             <span
               className={styles["deai-badge"]}
-              style={{ background: "var(--brand-primary)", color: "var(--swiss-white)", border: "none" }}
+              style={{
+                background: "var(--brand-primary)",
+                color: "var(--swiss-white)",
+                border: "none",
+              }}
             >
               UAG 客戶雷達
             </span>
             <span style={{ color: "var(--swiss-gray-400)" }}>·</span>
-            <span style={{ fontSize: "13px", color: "var(--swiss-gray-500)" }}>邁房子</span>
+            <span style={{ fontSize: "13px", color: "var(--swiss-gray-500)" }}>
+              邁房子
+            </span>
             <span style={{ color: "var(--swiss-gray-400)" }}>·</span>
             <span className={styles["deai-badge"]}>專業版 PRO</span>
           </nav>
 
           {/* User info placeholder */}
           <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            <span style={{ fontSize: "13px", color: "var(--swiss-gray-500)" }}>游杰倫</span>
+            <span style={{ fontSize: "13px", color: "var(--swiss-gray-500)" }}>
+              游杰倫
+            </span>
             <div
               style={{
                 width: "32px",
@@ -472,7 +480,9 @@ export default function UAGDeAIDemo() {
       <footer className={styles["deai-footer"]}>
         <span style={{ fontSize: "12px", color: "var(--swiss-gray-500)" }}>
           系統模式：
-          <span style={{ color: "var(--brand-primary)", fontWeight: 600 }}>Demo</span>
+          <span style={{ color: "var(--brand-primary)", fontWeight: 600 }}>
+            Demo
+          </span>
         </span>
         <button className={styles["deai-btn"]}>方案設定</button>
         <button

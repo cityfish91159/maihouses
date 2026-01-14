@@ -253,6 +253,9 @@ export function useConsumer(userId?: string, forceMock?: boolean) {
 
   const userInitial = userProfile?.name.charAt(0).toUpperCase() || "U";
 
+  // Phase 7: 提供 currentUserId 給留言系統
+  const currentUserId = realAuth && user ? user.id : undefined;
+
   return {
     authLoading,
     activeTransaction,
@@ -274,5 +277,7 @@ export function useConsumer(userId?: string, forceMock?: boolean) {
     handleShare,
     // MSG-3: 新增通知相關資料
     latestNotification,
+    // Phase 7: 留言系統需要的 currentUserId
+    currentUserId,
   };
 }

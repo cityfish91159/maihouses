@@ -392,9 +392,7 @@ export default function UAGDeAIDemoV2() {
 
           {/* User */}
           <div className={styles["deai-v2-logo"]}>
-            <span
-              style={{ fontSize: "13px", color: "var(--ink-300)" }}
-            >
+            <span style={{ fontSize: "13px", color: "var(--ink-300)" }}>
               游杰倫
             </span>
             <div className={styles["deai-v2-logo-icon"]}>游</div>
