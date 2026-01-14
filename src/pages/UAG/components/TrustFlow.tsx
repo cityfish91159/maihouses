@@ -201,11 +201,17 @@ function getStatusBadge(status: TrustCase["status"]) {
 }
 
 // ==================== Component ====================
-export default function TrustFlow() {
+interface TrustFlowProps {
+  /**
+   * 切換 Mock/Live 模式的函數
+   * 應該從父組件（useUAG）傳入，確保有登入檢查
+   */
+  toggleMode: () => void;
+}
+
+export default function TrustFlow({ toggleMode }: TrustFlowProps) {
   // Selector 優化：useMock 是狀態，需要訂閱變化觸發 re-render
   const useMock = useUAGModeStore(selectUseMock);
-  // 函數引用穩定，用 getState() 取得即可，無需 selector 訂閱
-  const { toggleMode } = useUAGModeStore.getState();
   const [cases, setCases] = useState<TrustCase[]>([]);
   const [selectedCaseId, setSelectedCaseId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);

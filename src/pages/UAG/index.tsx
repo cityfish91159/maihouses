@@ -297,7 +297,7 @@ function UAGPageContent() {
           <ReportGenerator listings={appData.listings} agentName={agentName} />
 
           {/* [6] Trust Flow */}
-          <TrustFlow />
+          <TrustFlow toggleMode={toggleMode} />
         </div>
       </main>
 

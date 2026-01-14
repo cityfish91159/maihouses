@@ -99,10 +99,38 @@ export default function App() {
                   </ErrorBoundary>
                 }
               />
-              <Route path="/uag" element={<UAGPage />} />
-              <Route path="/uag-deai" element={<UAGDeAIDemo />} />
-              <Route path="/uag-deai-v2" element={<UAGDeAIDemoV2 />} />
-              <Route path="/uag-uiux-demo" element={<UIUXDemo />} />
+              <Route
+                path="/uag"
+                element={
+                  <ErrorBoundary>
+                    <UAGPage />
+                  </ErrorBoundary>
+                }
+              />
+              <Route
+                path="/uag-deai"
+                element={
+                  <ErrorBoundary>
+                    <UAGDeAIDemo />
+                  </ErrorBoundary>
+                }
+              />
+              <Route
+                path="/uag-deai-v2"
+                element={
+                  <ErrorBoundary>
+                    <UAGDeAIDemoV2 />
+                  </ErrorBoundary>
+                }
+              />
+              <Route
+                path="/uag-uiux-demo"
+                element={
+                  <ErrorBoundary>
+                    <UIUXDemo />
+                  </ErrorBoundary>
+                }
+              />
               <Route
                 path="/community/:id/wall"
                 element={
