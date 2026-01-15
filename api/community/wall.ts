@@ -13,6 +13,12 @@ import {
 } from "@supabase/supabase-js";
 import { z } from "zod";
 import { logger } from "../lib/logger";
+import {
+  successResponse,
+  errorResponse,
+  API_ERROR_CODES,
+  API_WARNING_CODES,
+} from "../lib/apiResponse";
 
 // 延遲初始化 Supabase client，避免模組載入時因環境變數缺失而崩潰
 let supabase: SupabaseClient | null = null;
@@ -165,34 +171,6 @@ async function buildProfileMap(
   }
 
   return new Map(parsed.data.map((profile) => [profile.id, profile]));
-}
-
-function resolveSupabaseErrorDetails(error: unknown) {
-  if (error && typeof error === "object" && "code" in error) {
-    const supabaseError = error as PostgrestError;
-    return {
-      code: supabaseError.code ?? null,
-      details: supabaseError.details ?? null,
-      hint: supabaseError.hint ?? null,
-      message: supabaseError.message ?? null,
-    };
-  }
-
-  if (error instanceof Error) {
-    return {
-      code: null,
-      details: error.message,
-      hint: null,
-      message: error.message,
-    };
-  }
-
-  return {
-    code: null,
-    details: null,
-    hint: null,
-    message: null,
-  };
 }
 
 function buildReviewSelectFields(): string {
@@ -620,12 +598,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   );
 
   if (!queryParseResult.success) {
-    return res.status(400).json({
-      success: false,
-      error: "查詢參數格式錯誤",
-      code: "INVALID_QUERY",
-      details: queryParseResult.error.flatten(),
-    });
+    return res
+      .status(400)
+      .json(
+        errorResponse(
+          API_ERROR_CODES.INVALID_QUERY,
+          "查詢參數格式錯誤",
+          process.env.NODE_ENV !== "production"
+            ? queryParseResult.error.flatten()
+            : undefined,
+        ),
+      );
   }
 
   const { communityId: communityIdStr, includePrivate: wantsPrivate } =
@@ -633,11 +616,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const resolvedCommunityId = resolveCommunityId(communityIdStr);
 
   if (!resolvedCommunityId) {
-    return res.status(400).json({
-      success: false,
-      error: "找不到對應的社區，請確認網址是否正確",
-      code: "COMMUNITY_NOT_FOUND",
-    });
+    return res
+      .status(400)
+      .json(
+        errorResponse(
+          API_ERROR_CODES.COMMUNITY_NOT_FOUND,
+          "找不到對應的社區，請確認網址是否正確",
+        ),
+      );
   }
   const requestType: WallQueryType = queryParseResult.data.type;
   const visibilityFilter: VisibilityFilter = queryParseResult.data.visibility;
@@ -692,22 +678,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
   } catch (error: unknown) {
     if (error instanceof ReviewFetchError) {
-      const formatted = resolveSupabaseErrorDetails(error.originalError);
-      return res.status(502).json({
-        success: false,
-        error: error.message,
+      // 記錄詳細錯誤但不暴露給前端
+      logger.error("[community/wall] ReviewFetchError", error.originalError, {
         code: error.code,
-        hint: formatted.hint,
-        details: formatted.details,
-        cause: formatted.message,
+        communityId: resolvedCommunityId,
       });
+
+      return res
+        .status(502)
+        .json(errorResponse(error.code, error.message));
     }
 
-    logger.error("[community/wall] API handler error", error);
-    return res.status(500).json({
-      success: false,
-      error: error instanceof Error ? error.message : "未知錯誤",
+    logger.error("[community/wall] API handler error", error, {
+      communityId: resolvedCommunityId,
     });
+    return res
+      .status(500)
+      .json(
+        errorResponse(API_ERROR_CODES.INTERNAL_ERROR, "資料載入失敗，請稍後再試"),
+      );
   }
 }
 
@@ -756,11 +745,14 @@ async function getPosts(
     query = query.eq("visibility", "public").limit(DEFAULT_LIST_LIMIT);
   } else if (visibility === "private") {
     if (!canAccessPrivate) {
-      return res.status(403).json({
-        success: false,
-        error: "無權限檢視私密貼文",
-        code: "FORBIDDEN_PRIVATE_POSTS",
-      });
+      return res
+        .status(403)
+        .json(
+          errorResponse(
+            API_ERROR_CODES.FORBIDDEN_PRIVATE_POSTS,
+            "無權限檢視私密貼文",
+          ),
+        );
     }
     query = query.eq("visibility", "private").limit(DEFAULT_LIST_LIMIT);
   }
@@ -774,12 +766,13 @@ async function getPosts(
   // 快取 60 秒，300 秒內可返回舊資料同時重新驗證
   res.setHeader("Cache-Control", "s-maxage=60, stale-while-revalidate=300");
 
-  return res.status(200).json({
-    success: true,
-    data: dataWithAuthors,
-    total: count || data?.length || 0,
-    limited: !isAuthenticated,
-  });
+  return res.status(200).json(
+    successResponse({
+      data: dataWithAuthors,
+      total: count || data?.length || 0,
+      limited: !isAuthenticated,
+    }),
+  );
 }
 
 // 取得評價
@@ -798,10 +791,20 @@ async function getReviews(
   let communityData: Record<string, unknown> | null = null;
 
   // 若 VIEW 缺欄位或查詢失敗，回傳空陣列避免 500
+  const warnings: Array<{ code: string; message: string }> = [];
+
   try {
     reviewResult = await fetchReviewsWithAgents(communityId, limit);
   } catch (err) {
-    logger.error("[community/wall] getReviews fetchReviewsWithAgents failed", err, { communityId });
+    logger.error(
+      "[community/wall] getReviews fetchReviewsWithAgents failed",
+      err,
+      { communityId },
+    );
+    warnings.push({
+      code: API_WARNING_CODES.REVIEWS_FETCH_FAILED,
+      message: "評價資料載入失敗",
+    });
   }
 
   try {
@@ -812,16 +815,28 @@ async function getReviews(
       .single();
     communityData = data ?? null;
   } catch (err) {
-    logger.error("[community/wall] getReviews fetch community summary failed", err, { communityId });
+    logger.error(
+      "[community/wall] getReviews fetch community summary failed",
+      err,
+      { communityId },
+    );
+    warnings.push({
+      code: API_WARNING_CODES.COMMUNITY_DATA_INCOMPLETE,
+      message: "社區摘要資料載入失敗",
+    });
   }
 
-  return res.status(200).json({
-    success: true,
-    data: reviewResult.items,
-    summary: communityData,
-    total: reviewResult.total,
-    limited: !isAuthenticated,
-  });
+  return res.status(200).json(
+    successResponse(
+      {
+        data: reviewResult.items,
+        summary: communityData,
+        total: reviewResult.total,
+        limited: !isAuthenticated,
+      },
+      warnings.length > 0 ? warnings : undefined,
+    ),
+  );
 }
 
 // 取得問答
@@ -849,12 +864,13 @@ async function getQuestions(
 
   const answersWithAuthors = await attachAuthorsToAnswers(data || []);
 
-  return res.status(200).json({
-    success: true,
-    data: answersWithAuthors,
-    total: count || 0,
-    limited: !isAuthenticated,
-  });
+  return res.status(200).json(
+    successResponse({
+      data: answersWithAuthors,
+      total: count || 0,
+      limited: !isAuthenticated,
+    }),
+  );
 }
 
 async function attachAuthorsToAnswers<T extends { answers?: AnswerRow[] }>(
@@ -936,7 +952,9 @@ async function getAll(
     // Reviews: 取得帶房仲統計資訊的評價
     // 若評價表缺資料或異常，不要整個 API 502，回傳空列表即可
     fetchReviewsWithAgents(communityId, reviewLimit).catch((err) => {
-      logger.error("[community/wall] fetchReviewsWithAgents failed", err, { communityId });
+      logger.error("[community/wall] fetchReviewsWithAgents failed", err, {
+        communityId,
+      });
       return { items: [], total: 0 };
     }),
 
@@ -1026,26 +1044,27 @@ async function getAll(
     };
   });
 
-  return res.status(200).json({
-    success: true,
-    communityInfo,
-    posts: {
-      public: enrichedPublicPosts,
-      private: enrichedPrivatePosts,
-      publicTotal: publicPostsResult.count || 0,
-      privateTotal: privatePostsResult.count || 0,
-    },
-    reviews: {
-      items: reviewsResult.items,
-      total: reviewsResult.total,
-    },
-    questions: {
-      items: transformedQuestions,
-      total: questionsResult.count || 0,
-    },
-    isAuthenticated,
-    viewerRole,
-  });
+  return res.status(200).json(
+    successResponse({
+      communityInfo,
+      posts: {
+        public: enrichedPublicPosts,
+        private: enrichedPrivatePosts,
+        publicTotal: publicPostsResult.count || 0,
+        privateTotal: privatePostsResult.count || 0,
+      },
+      reviews: {
+        items: reviewsResult.items,
+        total: reviewsResult.total,
+      },
+      questions: {
+        items: transformedQuestions,
+        total: questionsResult.count || 0,
+      },
+      isAuthenticated,
+      viewerRole,
+    }),
+  );
 }
 // Deploy trigger: Fri Dec  5 15:10:16 CST 2025
 // Deploy trigger: Fri Dec  5 15:55:41 CST 2025

@@ -8,6 +8,11 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { createClient } from "@supabase/supabase-js";
 import { withSentryHandler, captureError, addBreadcrumb } from "../lib/sentry";
 import { logger } from "../lib/logger";
+import {
+  successResponse,
+  errorResponse,
+  API_ERROR_CODES,
+} from "../lib/apiResponse";
 
 // ============================================================================
 // Types
@@ -57,7 +62,9 @@ async function handler(
 
   if (req.method === "OPTIONS") return res.status(200).end();
   if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
+    return res
+      .status(405)
+      .json(errorResponse("METHOD_NOT_ALLOWED", "僅支援 POST 請求"));
   }
 
   // 驗證環境變數
@@ -66,7 +73,14 @@ async function handler(
     process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY;
 
   if (!supabaseUrl || !supabaseKey) {
-    return res.status(500).json({ error: "Server configuration error" });
+    return res
+      .status(500)
+      .json(
+        errorResponse(
+          API_ERROR_CODES.SERVICE_UNAVAILABLE,
+          "伺服器配置錯誤，請稍後再試",
+        ),
+      );
   }
 
   const supabase = createClient(supabaseUrl, supabaseKey);
@@ -78,7 +92,9 @@ async function handler(
       try {
         data = JSON.parse(data);
       } catch {
-        return res.status(400).json({ error: "Invalid JSON" });
+        return res
+          .status(400)
+          .json(errorResponse(API_ERROR_CODES.INVALID_INPUT, "JSON 格式錯誤"));
       }
     }
 
@@ -87,12 +103,19 @@ async function handler(
     if (!session_id || !event) {
       return res
         .status(400)
-        .json({ error: "Missing required fields: session_id or event" });
+        .json(
+          errorResponse(
+            API_ERROR_CODES.INVALID_INPUT,
+            "缺少必要欄位：session_id 或 event",
+          ),
+        );
     }
 
     // Basic Event Validation - 放寬驗證，duration 可以是 0 (page_view)
     if (typeof event !== "object" || !event.property_id) {
-      return res.status(400).json({ error: "Invalid event structure" });
+      return res
+        .status(400)
+        .json(errorResponse(API_ERROR_CODES.INVALID_INPUT, "事件格式錯誤"));
     }
 
     // 添加追蹤
@@ -134,7 +157,14 @@ async function handler(
       }
 
       captureError(error, { rpcName, session_id });
-      return res.status(500).json({ error: error.message });
+      return res
+        .status(500)
+        .json(
+          errorResponse(
+            API_ERROR_CODES.INTERNAL_ERROR,
+            "事件追蹤失敗，請稍後再試",
+          ),
+        );
     }
 
     const trackResult = result as TrackResult;
@@ -152,11 +182,18 @@ async function handler(
       });
     }
 
-    return res.status(200).json(trackResult);
+    return res.status(200).json(successResponse(trackResult));
   } catch (err) {
     logger.error("[UAG] Track handler error", err, { handler: "uag/track" });
     captureError(err, { handler: "uag/track" });
-    return res.status(500).json({ error: "Internal Server Error" });
+    return res
+      .status(500)
+      .json(
+        errorResponse(
+          API_ERROR_CODES.INTERNAL_ERROR,
+          "事件追蹤失敗，請稍後再試",
+        ),
+      );
   }
 }
 

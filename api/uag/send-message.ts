@@ -11,6 +11,7 @@ import {
   setUserContext,
 } from "../lib/sentry";
 import { logger } from "../lib/logger";
+import { errorResponse, API_ERROR_CODES } from "../lib/apiResponse";
 
 // ============================================================================
 // Constants
@@ -249,9 +250,8 @@ async function handler(
   // 只允許 POST
   if (req.method !== "POST") {
     return res.status(405).json({
-      success: false,
+      ...errorResponse("METHOD_NOT_ALLOWED", "僅支援 POST 請求"),
       lineStatus: "error",
-      error: "Method not allowed",
     } satisfies SendMessageResponse);
   }
 
@@ -264,9 +264,11 @@ async function handler(
   if (!supabaseUrl || !supabaseServiceKey) {
     logger.error("[UAG] Missing Supabase configuration");
     return res.status(500).json({
-      success: false,
+      ...errorResponse(
+        API_ERROR_CODES.SERVICE_UNAVAILABLE,
+        "伺服器配置錯誤，請稍後再試",
+      ),
       lineStatus: "error",
-      error: "Server configuration error",
     } satisfies SendMessageResponse);
   }
 
@@ -279,10 +281,11 @@ async function handler(
   const validatedBody = validateRequest(req.body);
   if (!validatedBody) {
     return res.status(400).json({
-      success: false,
+      ...errorResponse(
+        API_ERROR_CODES.INVALID_INPUT,
+        "請求參數錯誤，缺少必要欄位",
+      ),
       lineStatus: "error",
-      error:
-        "Invalid request body. Required: agentId, sessionId, purchaseId, message, agentName",
     } satisfies SendMessageResponse);
   }
 
@@ -339,11 +342,16 @@ async function handler(
     );
 
     if (convError) {
-      logger.error("[UAG] fn_create_conversation failed", convError, { agentId, sessionId });
+      logger.error("[UAG] fn_create_conversation failed", convError, {
+        agentId,
+        sessionId,
+      });
       return res.status(500).json({
-        success: false,
+        ...errorResponse(
+          API_ERROR_CODES.INTERNAL_ERROR,
+          "建立對話失敗，請稍後再試",
+        ),
         lineStatus: "error",
-        error: "Failed to create conversation",
       } satisfies SendMessageResponse);
     }
 
@@ -358,13 +366,18 @@ async function handler(
     );
 
     if (msgError) {
-      logger.error("[UAG] fn_send_message failed", msgError, { conversationId, agentId });
+      logger.error("[UAG] fn_send_message failed", msgError, {
+        conversationId,
+        agentId,
+      });
       // 站內訊息失敗是嚴重錯誤
       return res.status(500).json({
-        success: false,
+        ...errorResponse(
+          API_ERROR_CODES.INTERNAL_ERROR,
+          "訊息發送失敗，請稍後再試",
+        ),
         conversationId,
         lineStatus: "error",
-        error: "Failed to send in-app message",
       } satisfies SendMessageResponse);
     }
 
@@ -375,13 +388,16 @@ async function handler(
     );
 
     if (bindError) {
-      logger.error("[UAG] fn_get_line_binding failed", bindError, { sessionId, agentId });
+      logger.error("[UAG] fn_get_line_binding failed", bindError, {
+        sessionId,
+        agentId,
+      });
       // LINE 查詢失敗不影響站內訊息成功
       return res.json({
         success: true,
         conversationId,
         lineStatus: "error",
-        error: "Failed to query LINE binding",
+        error: "LINE 綁定查詢失敗",
       } satisfies SendMessageResponse);
     }
 
@@ -429,7 +445,7 @@ async function handler(
         success: true,
         conversationId,
         lineStatus: "skipped",
-        error: "LINE not configured",
+        error: "LINE 通知功能未啟用",
       } satisfies SendMessageResponse);
     }
 
@@ -570,9 +586,11 @@ async function handler(
       } satisfies SendMessageResponse);
     }
   } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
-    logger.error("[UAG] send-message handler error", error, { agentId, sessionId, purchaseId });
+    logger.error("[UAG] send-message handler error", error, {
+      agentId,
+      sessionId,
+      purchaseId,
+    });
 
     // 捕獲錯誤到 Sentry
     captureError(error, {
@@ -582,9 +600,11 @@ async function handler(
     });
 
     return res.status(500).json({
-      success: false,
+      ...errorResponse(
+        API_ERROR_CODES.INTERNAL_ERROR,
+        "訊息發送失敗，請稍後再試",
+      ),
       lineStatus: "error",
-      error: errorMessage,
     } satisfies SendMessageResponse);
   }
 }
