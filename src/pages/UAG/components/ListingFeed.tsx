@@ -32,8 +32,14 @@ function FeedPostContent({ post }: FeedPostContentProps) {
       <div className={styles["fp-meta"]}>
         {post.meta}
         <span className={styles["fp-stats"]}>
-          <span role="img" aria-label="讚數">❤️</span> {post.likesCount ?? 0} ·{" "}
-          <span role="img" aria-label="留言數">💬</span> {post.commentsCount ?? 0}
+          <span role="img" aria-label="讚數">
+            ❤️
+          </span>{" "}
+          {post.likesCount ?? 0} ·{" "}
+          <span role="img" aria-label="留言數">
+            💬
+          </span>{" "}
+          {post.commentsCount ?? 0}
         </span>
       </div>
       <div className={styles["fp-body"]}>{post.body}</div>
@@ -53,14 +59,18 @@ export default function ListingFeed({
   // FEED-01 Phase 10: Modal 狀態
   const [isComposerOpen, setIsComposerOpen] = useState(false);
   const [postContent, setPostContent] = useState("");
-  const [selectedCommunity, setSelectedCommunity] = useState<string | null>(null);
+  const [selectedCommunity, setSelectedCommunity] = useState<string | null>(
+    null,
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
 
   // 當 availableCommunities 變化時，驗證 selectedCommunity 是否仍有效
   useEffect(() => {
     if (selectedCommunity) {
-      const isValid = availableCommunities.some((c) => c.id === selectedCommunity);
+      const isValid = availableCommunities.some(
+        (c) => c.id === selectedCommunity,
+      );
       if (!isValid) {
         // 選擇的社區不再存在，重置為第一個或 null
         const firstCommunity = availableCommunities[0];
@@ -89,7 +99,7 @@ export default function ListingFeed({
 
     const modal = modalRef.current;
     const focusableElements = modal.querySelectorAll<HTMLElement>(
-      'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
     );
     const firstElement = focusableElements[0];
     const lastElement = focusableElements[focusableElements.length - 1];
@@ -127,18 +137,23 @@ export default function ListingFeed({
   }, [availableCommunities]);
 
   // 點擊 overlay 關閉
-  const handleOverlayClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    if (e.target === e.currentTarget && !isSubmitting) {
-      setIsComposerOpen(false);
-    }
-  }, [isSubmitting]);
+  const handleOverlayClick = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      if (e.target === e.currentTarget && !isSubmitting) {
+        setIsComposerOpen(false);
+      }
+    },
+    [isSubmitting],
+  );
 
   // FEED-01 Phase 10: 發文處理
   const handleSubmitPost = useCallback(async () => {
     if (!postContent.trim() || !selectedCommunity || !onCreatePost) return;
 
     // 驗證 selectedCommunity 是否在 availableCommunities 中
-    const isValidCommunity = availableCommunities.some((c) => c.id === selectedCommunity);
+    const isValidCommunity = availableCommunities.some(
+      (c) => c.id === selectedCommunity,
+    );
     if (!isValidCommunity) {
       notify.error("發文失敗", "選擇的社區無效，請重新選擇");
       return;
@@ -211,7 +226,10 @@ export default function ListingFeed({
                     <div className={styles["l-title"]}>{item.title}</div>
                     <div className={styles["l-tags"]}>
                       {item.tags?.map((t) => (
-                        <span className={styles["l-tag"]} key={`${item.public_id}-${t}`}>
+                        <span
+                          className={styles["l-tag"]}
+                          key={`${item.public_id}-${t}`}
+                        >
                           {t}
                         </span>
                       ))}
@@ -295,7 +313,10 @@ export default function ListingFeed({
 
             {/* 社區選擇 */}
             <div className={styles["modal-field"]}>
-              <label htmlFor="community-select" className={styles["modal-label"]}>
+              <label
+                htmlFor="community-select"
+                className={styles["modal-label"]}
+              >
                 選擇社區
               </label>
               <select
@@ -357,7 +378,12 @@ export default function ListingFeed({
               <button
                 type="button"
                 onClick={handleSubmitPost}
-                disabled={isSubmitting || !postContent.trim() || !selectedCommunity || isOverLimit}
+                disabled={
+                  isSubmitting ||
+                  !postContent.trim() ||
+                  !selectedCommunity ||
+                  isOverLimit
+                }
                 className={`${styles["uag-btn"]} ${styles["primary"]}`}
               >
                 {isSubmitting ? "發佈中..." : "發佈"}

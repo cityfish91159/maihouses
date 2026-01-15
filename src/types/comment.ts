@@ -38,10 +38,18 @@ export interface FeedComment {
 }
 
 // 有效角色列表
-const VALID_ROLES: CommentAuthor["role"][] = ["resident", "member", "agent", "official"];
+const VALID_ROLES: CommentAuthor["role"][] = [
+  "resident",
+  "member",
+  "agent",
+  "official",
+];
 
 function isValidRole(role: unknown): role is CommentAuthor["role"] {
-  return typeof role === "string" && VALID_ROLES.includes(role as CommentAuthor["role"]);
+  return (
+    typeof role === "string" &&
+    VALID_ROLES.includes(role as CommentAuthor["role"])
+  );
 }
 
 // API 回傳格式轉換

@@ -213,7 +213,10 @@ function UAGPageContent() {
         communityMap.set(post.communityId, post.communityName);
       }
     }
-    return Array.from(communityMap.entries()).map(([id, name]) => ({ id, name }));
+    return Array.from(communityMap.entries()).map(([id, name]) => ({
+      id,
+      name,
+    }));
   }, [appData]);
 
   // FEED-01 Phase 10: 發文處理函數

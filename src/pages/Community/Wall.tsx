@@ -31,6 +31,7 @@ import { logger } from "../../lib/logger";
 // Types
 import type { Role, WallTab } from "./types";
 import { getPermissions } from "./types";
+import { canPerformAction } from "./lib";
 
 // Hooks - 統一資料來源
 import { useCommunityWallData } from "../../hooks/useCommunityWallData";
@@ -127,6 +128,7 @@ function WallInner() {
   const perm = useMemo(() => getPermissions(effectiveRole), [effectiveRole]);
   const allowManualMockToggle = GLOBAL_MOCK_TOGGLE_ENABLED;
 
+  // AUDIT-01 Phase 7: 使用統一權限檢查函數
   // 統一資料來源 Hook - 必須在所有條件渲染之前呼叫
   const {
     data,
@@ -141,7 +143,7 @@ function WallInner() {
     answerQuestion,
     viewerRole,
   } = useCommunityWallData(communityId ?? "", {
-    includePrivate: perm.canAccessPrivate,
+    includePrivate: canPerformAction(perm, "view_private"),
   });
 
   const canToggleMock = allowManualMockToggle || useMock;
@@ -223,20 +225,20 @@ function WallInner() {
   // Tab 切換
   const handleTabChange = useCallback(
     (tab: WallTab) => {
-      if (tab === "private" && !perm.canAccessPrivate) {
+      if (tab === "private" && !canPerformAction(perm, "view_private")) {
         return;
       }
       setCurrentTab(tab);
     },
-    [perm.canAccessPrivate],
+    [perm],
   );
 
   // 如果身份變更導致無法存取私密牆，切回公開牆
   useEffect(() => {
-    if (currentTab === "private" && !perm.canAccessPrivate) {
+    if (currentTab === "private" && !canPerformAction(perm, "view_private")) {
       setCurrentTab("public");
     }
-  }, [currentTab, perm.canAccessPrivate]);
+  }, [currentTab, perm]);
 
   // 按讚處理 - B6: 加入 auth guard
   const handleLike = useCallback(

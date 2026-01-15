@@ -1,332 +1,101 @@
-import { useCallback, useEffect } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { UAGService } from "../services/uagService";
-import { AppData, Grade, Lead, LeadStatus } from "../types/uag.types";
-import { MOCK_DB } from "../mockData";
-import { notify } from "../../../lib/notify";
-import { useAuth } from "../../../hooks/useAuth";
-import { GRADE_PROTECTION_HOURS } from "../uag-config";
-import { validateQuota } from "../utils/validation";
-import { supabase } from "../../../lib/supabase";
-import { logger } from "../../../lib/logger";
-import { useUAGModeStore, selectUseMock } from "../../../stores/uagModeStore";
+/**
+ * UAG 主 Hook（整合層）
+ *
+ * 此 Hook 作為 facade，整合以下子 Hooks：
+ * - useUAGData: 數據獲取與 Mock/Live 模式管理
+ * - useLeadPurchase: Lead 購買邏輯與樂觀更新
+ * - useRealtimeUpdates: S 級升級 Realtime 訂閱
+ *
+ * @module useUAG
+ *
+ * @example
+ * ```tsx
+ * const {
+ *   data,
+ *   isLoading,
+ *   buyLead,
+ *   isBuying,
+ *   useMock,
+ *   toggleMode,
+ *   refetch,
+ * } = useUAG();
+ * ```
+ */
 
-/** 購買結果類型 */
-export interface BuyLeadResult {
-  success: boolean;
-  lead?: Lead;
-  conversation_id?: string | undefined; // UAG-13 [NEW] - 明確允許 undefined (exactOptionalPropertyTypes)
-  error?: string;
+import { useUAGData } from "./useUAGData";
+import { useLeadPurchase, type BuyLeadResult } from "./useLeadPurchase";
+import { useRealtimeUpdates } from "./useRealtimeUpdates";
+import type { AppData } from "../types/uag.types";
+
+// ============================================================================
+// Re-exports
+// ============================================================================
+
+// 重新導出類型，保持向後兼容
+export type { BuyLeadResult } from "./useLeadPurchase";
+export { UAG_QUERY_KEY } from "./useUAGData";
+
+// ============================================================================
+// Types
+// ============================================================================
+
+/** useUAG 返回值類型 */
+export interface UseUAGReturn {
+  /** UAG 應用數據 */
+  data: AppData | undefined;
+  /** 是否載入中 */
+  isLoading: boolean;
+  /** 錯誤狀態 */
+  error: Error | null;
+  /** 購買 Lead */
+  buyLead: (leadId: string) => Promise<BuyLeadResult>;
+  /** 是否購買中 */
+  isBuying: boolean;
+  /** 是否使用 Mock 模式 */
+  useMock: boolean;
+  /** 切換 Mock/Live 模式 */
+  toggleMode: () => void;
+  /** 手動刷新數據 */
+  refetch: () => Promise<unknown>;
 }
 
-export function useUAG() {
-  const { session } = useAuth();
-  // Selector 優化：useMock 是狀態，需要訂閱變化觸發 re-render
-  const useMock = useUAGModeStore(selectUseMock);
-  // 函數引用穩定，用 getState() 取得即可，無需 selector 訂閱
-  const { setUseMock, initializeMode } = useUAGModeStore.getState();
-  const queryClient = useQueryClient();
+// ============================================================================
+// Hook Implementation
+// ============================================================================
 
-  // 初始化模式（根據 URL 參數）
-  useEffect(() => {
-    initializeMode();
-  }, [initializeMode]);
+/**
+ * UAG 主 Hook
+ *
+ * 整合所有 UAG 相關功能：
+ * 1. 數據獲取與快取管理
+ * 2. Lead 購買與樂觀更新
+ * 3. S 級升級 Realtime 訂閱
+ */
+export function useUAG(): UseUAGReturn {
+  // 1. 數據獲取
+  const { data, isLoading, error, refetch, useMock, toggleMode, userId } =
+    useUAGData();
 
-  const toggleMode = useCallback(() => {
-    const newMode = !useMock;
-
-    // 切換到 Live 模式時，檢查是否已登入
-    if (!newMode && !session?.user?.id) {
-      notify.error("請先登入", "切換到 Live 模式需要登入");
-      return;
-    }
-
-    setUseMock(newMode);
-  }, [useMock, session?.user?.id, setUseMock]);
-
-  const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ["uagData", useMock, session?.user?.id],
-    queryFn: async () => {
-      if (useMock) {
-        return MOCK_DB as unknown as AppData;
-      }
-      if (!session?.user?.id) throw new Error("Not authenticated");
-      return UAGService.fetchAppData(session.user.id);
-    },
-    enabled: useMock || !!session?.user?.id,
-    // 漏洞 5 修復：staleTime 與 refetchInterval 一致，避免不必要的 refetch
-    // 購買操作的即時更新依賴 onSuccess 手動 cache 更新，不依賴 refetch
-    staleTime: 1000 * 30,
-    refetchInterval: useMock ? false : 30000,
+  // 2. 購買邏輯
+  const { buyLead, isBuying } = useLeadPurchase({
+    data,
+    useMock,
+    userId,
   });
 
-  const buyLeadMutation = useMutation({
-    mutationFn: async ({
-      leadId,
-      cost,
-      grade,
-    }: {
-      leadId: string;
-      cost: number;
-      grade: Grade;
-    }) => {
-      if (useMock) {
-        await new Promise((resolve) => setTimeout(resolve, 500));
-        // ✅ Mock 模式：生成符合 UUID 格式的假 purchase_id
-        // ✅ Mock 模式：生成符合 UUID 格式的假 purchase_id 與 conversation_id
-        const mockPurchaseId = crypto.randomUUID();
-        const mockConversationId = crypto.randomUUID();
-        return {
-          success: true,
-          used_quota: false,
-          purchase_id: mockPurchaseId,
-          conversation_id: mockConversationId, // UAG-13 Mock Parity
-        };
-      }
-      if (!session?.user?.id) throw new Error("Not authenticated");
-      return UAGService.purchaseLead(session.user.id, leadId, cost, grade);
-    },
-    onMutate: async ({ leadId, cost, grade }) => {
-      await queryClient.cancelQueries({ queryKey: ["uagData"] });
-      const previousData = queryClient.getQueryData<AppData>([
-        "uagData",
-        useMock,
-        session?.user?.id,
-      ]);
-
-      if (previousData) {
-        const lead = previousData.leads.find((l) => l.id === leadId);
-        if (lead) {
-          const { valid, error } = validateQuota(lead, previousData.user);
-          if (!valid) {
-            notify.error(error || "配額不足");
-            throw new Error(error || "配額不足 (Optimistic Check)");
-          }
-        }
-
-        const newData = {
-          ...previousData,
-          user: {
-            ...previousData.user,
-            points: previousData.user.points - cost,
-            quota: {
-              ...previousData.user.quota,
-              s:
-                grade === "S"
-                  ? previousData.user.quota.s - 1
-                  : previousData.user.quota.s,
-              a:
-                grade === "A"
-                  ? previousData.user.quota.a - 1
-                  : previousData.user.quota.a,
-            },
-          },
-          leads: previousData.leads.map((l) =>
-            l.id === leadId
-              ? {
-                  ...l,
-                  status: "purchased" as LeadStatus,
-                  remainingHours: GRADE_PROTECTION_HOURS[grade] || 48,
-                }
-              : l,
-          ),
-        };
-        queryClient.setQueryData(
-          ["uagData", useMock, session?.user?.id],
-          newData,
-        );
-      }
-
-      return { previousData };
-    },
-    onError: (err, _variables, context) => {
-      if (context?.previousData) {
-        queryClient.setQueryData(
-          ["uagData", useMock, session?.user?.id],
-          context.previousData,
-        );
-      }
-      notify.error(
-        `購買失敗: ${err instanceof Error ? err.message : "Unknown error"}`,
-      );
-    },
-    // ❌ 移除 onSettled：避免與局部 onSuccess 競態
-    // onSuccess 會手動更新 query cache（包含新的 purchase_id）
+  // 3. Realtime 訂閱
+  useRealtimeUpdates({
+    useMock,
+    userId,
+    refetch,
   });
-
-  /**
-   * MSG-5 FIX: 購買客戶，回傳 Promise 以便追蹤成功/失敗
-   * 問題 #19 修復：返回更新後的 lead 數據（status = 'purchased'）
-   * @returns Promise<BuyLeadResult> 包含購買結果
-   */
-  const buyLead = useCallback(
-    async (leadId: string): Promise<BuyLeadResult> => {
-      if (!data || buyLeadMutation.isPending) {
-        return { success: false, error: "無法購買" };
-      }
-
-      const lead = data.leads.find((l) => l.id === leadId);
-      if (!lead) {
-        notify.error("客戶不存在");
-        return { success: false, error: "客戶不存在" };
-      }
-
-      if (lead.status !== "new") {
-        notify.error("此客戶已被購買");
-        return { success: false, error: "此客戶已被購買" };
-      }
-
-      const { valid, error: quotaError } = validateQuota(lead, data.user);
-      if (!valid) {
-        notify.error(quotaError || "配額不足");
-        return { success: false, error: quotaError || "配額不足" };
-      }
-
-      const cost = lead.price ?? 10;
-      if (data.user.points < cost) {
-        notify.error("點數不足");
-        return { success: false, error: "點數不足" };
-      }
-
-      return new Promise((resolve) => {
-        buyLeadMutation.mutate(
-          { leadId, cost, grade: lead.grade },
-          {
-            onSuccess: (result) => {
-              notify.success("購買成功");
-
-              // ✅ 漏洞 3 修復：手動更新 Query Cache（解決列表與 Modal 數據不一致）
-              queryClient.setQueryData<AppData>(
-                ["uagData", useMock, session?.user?.id],
-                (oldData) => {
-                  if (!oldData) return oldData;
-
-                  return {
-                    ...oldData,
-                    // 遍歷 leads 陣列，找到目標並替換
-                    leads: oldData.leads.map((item) => {
-                      // ⚠️ 用舊的 leadId (session_id) 來匹配，因為此時 cache 中還是舊 ID
-                      if (item.id === leadId) {
-                        // ✅ 使用 oldData 中的 lead（保留 onMutate 的更新）
-                        return {
-                          ...item,
-                          id: result?.purchase_id ?? item.id, // 更新為 purchase UUID
-                          purchased_at: new Date().toISOString(),
-                          // ❌ 不在購買時設置 conversation_id
-                          // conversation_id 應該在發送訊息後才設置
-                          // ✅ Mock 模式下設置預設 notification_status 為 pending
-                          notification_status: useMock ? "pending" : undefined,
-                        };
-                      }
-                      return item;
-                    }),
-                  };
-                },
-              );
-
-              // 從更新後的 cache 中取得最終 lead
-              const finalData = queryClient.getQueryData<AppData>([
-                "uagData",
-                useMock,
-                session?.user?.id,
-              ]);
-              const updatedLead = finalData?.leads.find(
-                (l) => l.id === result?.purchase_id,
-              ) ?? {
-                ...lead,
-                id: result?.purchase_id ?? lead.id,
-                status: "purchased" as LeadStatus,
-                remainingHours: GRADE_PROTECTION_HOURS[lead.grade] ?? 48,
-                purchased_at: new Date().toISOString(),
-              };
-
-              resolve({
-                success: true,
-                lead: updatedLead,
-                // [UAG-13 FIX] 明確賦值，避免 conditional spreading 的型別模糊
-                conversation_id: result?.conversation_id,
-              });
-            },
-            onError: (err) => {
-              resolve({
-                success: false,
-                error: err instanceof Error ? err.message : "Unknown error",
-              });
-            },
-          },
-        );
-      });
-    },
-    [data, buyLeadMutation, queryClient, useMock, session?.user?.id],
-  );
-
-  /**
-   * UAG-11: 訂閱 S 級升級 Realtime 通知
-   * 當客戶升級到 S 級時，即時推播通知房仲
-   */
-  useEffect(() => {
-    // 只在 live 模式且已登入時訂閱
-    if (useMock || !session?.user?.id) return;
-
-    const userId = session.user.id;
-    const channelName = `uag-s-upgrades-${userId}`;
-
-    logger.info("useUAG.realtimeSubscription.subscribing", {
-      channelName,
-      userId,
-    });
-
-    const channel = supabase
-      .channel(channelName)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "uag_s_grade_upgrades",
-          filter: `agent_id=eq.${userId}`,
-        },
-        (payload) => {
-          logger.info("useUAG.realtimeSubscription.sGradeUpgrade", {
-            sessionId: payload.new?.session_id,
-            previousGrade: payload.new?.previous_grade,
-          });
-
-          // 顯示 UI 通知
-          notify.success(`🎉 新的 S 級客戶！請查看 UAG Radar 檢視詳細資訊`);
-
-          // 刷新數據以顯示新的 S 級客戶
-          refetch();
-        },
-      )
-      .subscribe((status) => {
-        if (status === "SUBSCRIBED") {
-          logger.info("useUAG.realtimeSubscription.subscribed", {
-            channelName,
-          });
-        } else if (status === "CHANNEL_ERROR") {
-          logger.error("useUAG.realtimeSubscription.error", {
-            channelName,
-            status,
-          });
-        }
-      });
-
-    // 清理訂閱
-    return () => {
-      logger.info("useUAG.realtimeSubscription.unsubscribing", {
-        channelName,
-      });
-      supabase.removeChannel(channel);
-    };
-  }, [useMock, session?.user?.id, refetch]);
 
   return {
     data,
     isLoading,
     error,
     buyLead,
-    isBuying: buyLeadMutation.isPending,
+    isBuying,
     useMock,
     toggleMode,
     refetch,

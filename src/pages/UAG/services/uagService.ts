@@ -12,7 +12,11 @@ import {
   UserDataSchema,
   SupabaseListing, // UAG-9: Import SupabaseListing
 } from "../types/uag.types";
-import { GRADE_PROTECTION_HOURS, FEED_TITLE_PREVIEW_LENGTH, DEFAULT_PROTECTION_HOURS } from "../uag-config";
+import {
+  GRADE_PROTECTION_HOURS,
+  FEED_TITLE_PREVIEW_LENGTH,
+  DEFAULT_PROTECTION_HOURS,
+} from "../uag-config";
 import { logger } from "../../../lib/logger";
 
 // FEED-01 Phase 8: community_posts 查詢返回類型
@@ -106,7 +110,11 @@ const transformSupabaseData = (
   leadsData: SupabaseLeadData[],
   listingsData: SupabaseListing[],
   feedData: SupabaseCommunityPost[],
-  statsData: Array<{ property_id: string; view_count: number; click_count: number }> | null, // UAG-20-Phase3
+  statsData: Array<{
+    property_id: string;
+    view_count: number;
+    click_count: number;
+  }> | null, // UAG-20-Phase3
 ): AppData => {
   // 1. Validate User Data (Critical)
   const userRaw = {
@@ -154,9 +162,7 @@ const transformSupabaseData = (
 
   // 3. Transform and Validate Listings (UAG-20: 修改資料轉換邏輯)
   // UAG-20-Phase3: 建立統計數據 Map
-  const statsMap = new Map(
-    (statsData ?? []).map((s) => [s.property_id, s]),
-  );
+  const statsMap = new Map((statsData ?? []).map((s) => [s.property_id, s]));
 
   const validListings: Listing[] = [];
   for (const listing of listingsData) {
@@ -186,7 +192,9 @@ const transformSupabaseData = (
   for (const post of feedData) {
     const content = post.content ?? "";
     const contentPreview = content.slice(0, FEED_TITLE_PREVIEW_LENGTH);
-    const title = contentPreview + (content.length > FEED_TITLE_PREVIEW_LENGTH ? "..." : "");
+    const title =
+      contentPreview +
+      (content.length > FEED_TITLE_PREVIEW_LENGTH ? "..." : "");
     // FEED-01 Phase 8: 使用 extractCommunityName helper 處理 Supabase JOIN 返回
     const communityName = extractCommunityName(post.community);
     const meta = `來自：${communityName}・${post.comments_count || 0} 則留言`;
@@ -329,9 +337,13 @@ export class UAGService {
    */
   static async fetchAppData(userId: string): Promise<AppData> {
     // 1. 並行查詢：用戶資料、sessions、已購買記錄、listings（含 community_id）
-    const [userRes, sessionsRes, purchasedRes, listingsRes] =
-      await Promise.all([
-        supabase.from("users").select("points, quota_s, quota_a").eq("id", userId).single(),
+    const [userRes, sessionsRes, purchasedRes, listingsRes] = await Promise.all(
+      [
+        supabase
+          .from("users")
+          .select("points, quota_s, quota_a")
+          .eq("id", userId)
+          .single(),
         // 正確數據源：uag_sessions（匿名瀏覽行為），不是 leads（真實個資）
         supabase
           .from("uag_sessions")
@@ -355,10 +367,13 @@ export class UAGService {
         // FEED-01 Phase 8 Bug 1: 加入 community_id 用於過濾 feed
         supabase
           .from("properties")
-          .select("public_id, title, images, features, created_at, community_id")
+          .select(
+            "public_id, title, images, features, created_at, community_id",
+          )
           .eq("agent_id", userId)
           .order("created_at", { ascending: false }),
-      ]);
+      ],
+    );
 
     // FEED-01 Phase 8 優化：錯誤檢查必須在使用 data 之前
     if (userRes.error) throw userRes.error;
@@ -385,7 +400,8 @@ export class UAGService {
       agentCommunityIds.length > 0
         ? await supabase
             .from("community_posts")
-            .select(`
+            .select(
+              `
               id,
               community_id,
               content,
@@ -394,7 +410,8 @@ export class UAGService {
               comments_count,
               created_at,
               community:communities(name)
-            `)
+            `,
+            )
             .in("community_id", agentCommunityIds)
             .eq("visibility", "public")
             .order("likes_count", { ascending: false })
@@ -492,6 +509,10 @@ export class UAGService {
     }
 
     // 轉換 uag_sessions 為 Lead 格式
+    // AUDIT-01 Phase 5: Lead.id 語義說明
+    // - 未購買 (status="new"): id = session_id (如 sess-B218-mno345)
+    // - 已購買 (status="purchased"): id = purchase UUID (如 57a4097a-...)
+    // session_id 欄位永不變化，始終用於追蹤匿名消費者
     const leadsData: SupabaseLeadData[] = (sessionsRes.data ?? []).map(
       (session, index) => {
         const grade = session.grade || "F";
@@ -507,7 +528,9 @@ export class UAGService {
         const hash = stableHash(sessionId);
 
         return {
-          // 問題 #3 修復：如果已購買，使用 purchase.id (UUID)，否則用 session_id
+          // AUDIT-01 Phase 5: id 根據購買狀態設定不同值
+          // isPurchased=true: id = purchase UUID (from uag_lead_purchases.id)
+          // isPurchased=false: id = session_id (用於購買 API 的參數)
           id: isPurchased ? purchased.id : sessionId,
           name: `訪客-${sessionId.slice(-4).toUpperCase()}`,
           grade,

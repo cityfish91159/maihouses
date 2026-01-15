@@ -16,6 +16,7 @@ import {
 import type { KeyboardEvent } from "react";
 import type { Role, Post, WallTab } from "../types";
 import { getPermissions } from "../types";
+import { canPerformAction, getPermissionDeniedMessage } from "../lib";
 import { useGuestVisibleItems } from "../../../hooks/useGuestVisibleItems";
 import { useThrottle } from "../../../hooks/useThrottle";
 import { useComments } from "../../../hooks/useComments";
@@ -69,7 +70,13 @@ interface PostCardProps {
   onLike?: (postId: number | string) => Promise<void> | void;
 }
 
-function PostCard({ post, communityId, currentUserId, userInitial, onLike }: PostCardProps) {
+function PostCard({
+  post,
+  communityId,
+  currentUserId,
+  userInitial,
+  onLike,
+}: PostCardProps) {
   const [isLiking, setIsLiking] = useState(false);
   const [isCommentsOpen, setIsCommentsOpen] = useState(false);
   const isMountedRef = useRef(true);
@@ -203,7 +210,7 @@ function PostCard({ post, communityId, currentUserId, userInitial, onLike }: Pos
               <button
                 className={`flex items-center gap-1 rounded-lg border px-2.5 py-1.5 text-[11px] font-semibold transition-all ${
                   isCommentsOpen
-                    ? "border-brand bg-brand/12 text-brand"
+                    ? "bg-brand/12 border-brand text-brand"
                     : "bg-brand/6 hover:bg-brand/12 border-brand/10 text-brand"
                 }`}
                 aria-label={S.BTN_REPLY_ARIA}
@@ -344,17 +351,16 @@ export function PostsSection({
     "public" | "private"
   >("public");
 
+  // AUDIT-01 Phase 7: 使用統一權限檢查函數
   const openPostModal = (visibility: "public" | "private") => {
     if (isGuest) {
       notify.error(S.NOTIFY_LOGIN_TITLE, S.NOTIFY_LOGIN_DESC);
       return;
     }
-    if (visibility === "public" && !perm.canPostPublic) {
-      notify.error(S.NOTIFY_PERM_ERROR, S.NOTIFY_PERM_CHECK);
-      return;
-    }
-    if (visibility === "private" && !perm.canPostPrivate) {
-      notify.error(S.NOTIFY_PRIVATE_ONLY);
+    const action = visibility === "public" ? "post_public" : "post_private";
+    if (!canPerformAction(perm, action)) {
+      const msg = getPermissionDeniedMessage(action);
+      notify.error(msg.title, msg.description);
       return;
     }
     setPostModalVisibility(visibility);
@@ -373,11 +379,13 @@ export function PostsSection({
   }, []);
 
   const activeTabs = useMemo<WallTab[]>(() => {
-    return perm.canAccessPrivate ? ["public", "private"] : ["public"];
-  }, [perm.canAccessPrivate]);
+    return canPerformAction(perm, "view_private")
+      ? ["public", "private"]
+      : ["public"];
+  }, [perm]);
 
   const handlePrivateClick = () => {
-    if (!perm.canAccessPrivate) {
+    if (!canPerformAction(perm, "view_private")) {
       notify.error(
         perm.isGuest
           ? S.NOTIFY_PRIVATE_ACCESS_DENIED
@@ -430,7 +438,7 @@ export function PostsSection({
         return;
       }
 
-      if (nextTab === "private" && !perm.canAccessPrivate) {
+      if (nextTab === "private" && !canPerformAction(perm, "view_private")) {
         focusTab("public");
         onTabChange("public");
         return;
@@ -439,7 +447,7 @@ export function PostsSection({
       focusTab(nextTab);
       onTabChange(nextTab);
     },
-    [activeTabs, currentTab, focusTab, onTabChange, perm.canAccessPrivate],
+    [activeTabs, currentTab, focusTab, onTabChange, perm],
   );
 
   return (
@@ -489,16 +497,20 @@ export function PostsSection({
           }}
           aria-selected={currentTab === "private"}
           aria-controls={panelId}
-          aria-disabled={!perm.canAccessPrivate}
+          aria-disabled={!canPerformAction(perm, "view_private")}
           onClick={handlePrivateClick}
           onKeyDown={(event) => handleTabKeyDown(event, "private")}
           tabIndex={
-            perm.canAccessPrivate ? (currentTab === "private" ? 0 : -1) : -1
+            canPerformAction(perm, "view_private")
+              ? currentTab === "private"
+                ? 0
+                : -1
+              : -1
           }
-          className={`rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-all ${currentTab === "private" ? "bg-brand/10 border-brand-600 font-bold text-brand" : "hover:bg-brand/8 bg-brand-100/80 border-transparent text-ink-600 hover:text-brand"} ${!perm.canAccessPrivate ? "opacity-60" : ""}`}
+          className={`rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-all ${currentTab === "private" ? "bg-brand/10 border-brand-600 font-bold text-brand" : "hover:bg-brand/8 bg-brand-100/80 border-transparent text-ink-600 hover:text-brand"} ${!canPerformAction(perm, "view_private") ? "opacity-60" : ""}`}
         >
           {S.TAB_PRIVATE}{" "}
-          {!perm.canAccessPrivate && (
+          {!canPerformAction(perm, "view_private") && (
             <span role="img" aria-label="鎖頭">
               🔒
             </span>
@@ -549,7 +561,7 @@ export function PostsSection({
               )}
             </LockedOverlay>
 
-            {perm.canPostPublic && (
+            {canPerformAction(perm, "post_public") && (
               <div className="bg-brand/3 flex justify-center rounded-[14px] border border-dashed border-border-light p-5">
                 <button
                   onClick={() => openPostModal("public")}
@@ -563,7 +575,7 @@ export function PostsSection({
               </div>
             )}
           </>
-        ) : perm.canAccessPrivate ? (
+        ) : canPerformAction(perm, "view_private") ? (
           <>
             {privatePosts.map((post) => (
               <PostCard
@@ -575,7 +587,7 @@ export function PostsSection({
                 {...(onLike ? { onLike } : {})}
               />
             ))}
-            {perm.canPostPrivate ? (
+            {canPerformAction(perm, "post_private") ? (
               <div className="bg-brand/3 flex justify-center rounded-[14px] border border-dashed border-border-light p-5">
                 <button
                   onClick={() => openPostModal("private")}

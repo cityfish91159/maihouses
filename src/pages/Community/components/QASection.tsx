@@ -6,12 +6,20 @@
  */
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import type { Role, Question, Permissions } from "../types";
 import { getPermissions } from "../types";
+import { canPerformAction, getPermissionDeniedMessage } from "../lib";
 import { useGuestVisibleItems } from "../../../hooks/useGuestVisibleItems";
 import { LockedOverlay } from "./LockedOverlay";
 import { formatRelativeTimeLabel } from "../../../lib/time";
 import { logger } from "../../../lib/logger";
+
+/** 虛擬化啟用門檻：超過此數量才啟用虛擬化 */
+const VIRTUALIZATION_THRESHOLD = 10;
+
+/** QACard 預估高度（px），用於虛擬化計算 */
+const ESTIMATED_CARD_HEIGHT = 180;
 
 interface QACardProps {
   q: Question & { hasMoreAnswers?: boolean; totalAnswers?: number };
@@ -101,7 +109,7 @@ function QACard({
         </div>
       )}
 
-      {perm.canAnswer && (
+      {canPerformAction(perm, "answer_question") && (
         <div className="mt-2">
           <button
             type="button"
@@ -119,6 +127,159 @@ function QACard({
       )}
     </article>
   );
+}
+
+/**
+ * AUDIT-01 Phase 8: 虛擬化 QA 列表
+ *
+ * 當問題數量超過門檻時，使用虛擬化渲染提升效能
+ * - 減少 DOM 節點數量
+ * - 降低記憶體占用
+ * - 提升滾動流暢度
+ */
+interface VirtualizedQAListProps {
+  questions: (Question & { hasMoreAnswers?: boolean; totalAnswers?: number })[];
+  perm: Permissions;
+  isUnanswered?: boolean | undefined;
+  onAnswer?: ((question: Question) => void) | undefined;
+  activeQuestionId?: string | number | null | undefined;
+  isAnswering?: boolean | undefined;
+  onUnlock?: (() => void) | undefined;
+  /** 容器最大高度（px），超過此高度會出現滾動條 */
+  maxHeight?: number | undefined;
+}
+
+/**
+ * 非虛擬化渲染：當問題數量 <= 門檻時使用
+ * 獨立組件避免 useVirtualizer hook 被調用
+ */
+function SimpleQAList({
+  questions,
+  perm,
+  isUnanswered = false,
+  onAnswer,
+  activeQuestionId,
+  isAnswering,
+  onUnlock,
+}: Omit<VirtualizedQAListProps, "maxHeight">) {
+  return (
+    <div className="flex flex-col gap-2.5">
+      {questions.map((q) => {
+        const cardIsAnswering = isAnswering === true && activeQuestionId === q.id;
+        return (
+          <QACard
+            key={q.id}
+            q={q}
+            perm={perm}
+            isUnanswered={isUnanswered}
+            isAnswering={cardIsAnswering}
+            {...(onAnswer ? { onAnswer } : {})}
+            {...(onUnlock ? { onUnlock } : {})}
+          />
+        );
+      })}
+    </div>
+  );
+}
+
+/** 虛擬化容器預設最大高度（px） */
+const DEFAULT_VIRTUAL_MAX_HEIGHT = 600;
+
+/** 已回答問題區塊最大高度（px） */
+const ANSWERED_SECTION_MAX_HEIGHT = 500;
+
+/** 未回答問題區塊最大高度（px） */
+const UNANSWERED_SECTION_MAX_HEIGHT = 400;
+
+/**
+ * 虛擬化渲染：當問題數量 > 門檻時使用
+ * 獨立組件確保 useVirtualizer hook 只在需要時調用
+ */
+function VirtualizedQAListInner({
+  questions,
+  perm,
+  isUnanswered = false,
+  onAnswer,
+  activeQuestionId,
+  isAnswering,
+  onUnlock,
+  maxHeight = DEFAULT_VIRTUAL_MAX_HEIGHT,
+}: VirtualizedQAListProps) {
+  const parentRef = useRef<HTMLDivElement>(null);
+
+  const virtualizer = useVirtualizer({
+    count: questions.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => ESTIMATED_CARD_HEIGHT,
+    overscan: 2, // 預渲染前後 2 項確保滾動流暢
+  });
+
+  const virtualItems = virtualizer.getVirtualItems();
+  const totalSize = virtualizer.getTotalSize();
+
+  return (
+    <div
+      ref={parentRef}
+      className="overflow-auto"
+      style={{ maxHeight }}
+      data-testid="virtualized-container"
+    >
+      <div
+        style={{
+          height: `${totalSize}px`,
+          width: "100%",
+          position: "relative",
+        }}
+      >
+        {virtualItems.map((virtualItem, idx) => {
+          const q = questions[virtualItem.index];
+          if (!q) return null;
+          const cardIsAnswering = isAnswering === true && activeQuestionId === q.id;
+          const isLastItem = idx === virtualItems.length - 1;
+          return (
+            <div
+              key={virtualItem.key}
+              data-index={virtualItem.index}
+              ref={virtualizer.measureElement}
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                width: "100%",
+                transform: `translateY(${virtualItem.start}px)`,
+              }}
+              // P3 修復：最後一項不加底部間距，避免多餘空白
+              className={isLastItem ? "" : "pb-2.5"}
+            >
+              <QACard
+                q={q}
+                perm={perm}
+                isUnanswered={isUnanswered}
+                isAnswering={cardIsAnswering}
+                {...(onAnswer ? { onAnswer } : {})}
+                {...(onUnlock ? { onUnlock } : {})}
+              />
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * 智慧選擇列表組件
+ * - 數量 <= 門檻：使用 SimpleQAList（不調用 useVirtualizer）
+ * - 數量 > 門檻：使用 VirtualizedQAListInner（啟用虛擬化）
+ */
+function VirtualizedQAList(props: VirtualizedQAListProps) {
+  const shouldVirtualize = props.questions.length > VIRTUALIZATION_THRESHOLD;
+
+  if (!shouldVirtualize) {
+    return <SimpleQAList {...props} />;
+  }
+
+  return <VirtualizedQAListInner {...props} />;
 }
 
 interface QASectionProps {
@@ -202,13 +363,15 @@ export function QASection({
     restoreFocusRef.current = document.activeElement as HTMLElement | null;
   };
 
+  // AUDIT-01 Phase 7: 使用統一權限檢查函數
   const openAskModal = () => {
-    if (!perm.canAskQuestion) {
+    if (!canPerformAction(perm, "ask_question")) {
       if (onUnlock) {
         onUnlock();
         return;
       }
-      setFeedback("⚠️ 請登入後再發問。");
+      const msg = getPermissionDeniedMessage("ask_question");
+      setFeedback(`⚠️ ${msg.title}`);
       return;
     }
     rememberTriggerFocus();
@@ -217,12 +380,13 @@ export function QASection({
   };
 
   const openAnswerModal = (question: Question) => {
-    if (!perm.canAnswer) {
+    if (!canPerformAction(perm, "answer_question")) {
       if (onUnlock) {
         onUnlock();
         return;
       }
-      setFeedback("⚠️ 只有住戶或房仲可以回答問題。");
+      const msg = getPermissionDeniedMessage("answer_question");
+      setFeedback(`⚠️ ${msg.title}`);
       return;
     }
     rememberTriggerFocus();
@@ -514,17 +678,16 @@ export function QASection({
         </div>
       </div>
       <div className="flex flex-col gap-2.5 p-3.5 pb-12">
-        {/* 有回答的問題 */}
-        {visibleAnswered.map((q) => (
-          <QACard
-            key={q.id}
-            q={q}
-            perm={perm}
-            onAnswer={openAnswerModal}
-            isAnswering={submitting === "answer" && activeQuestion?.id === q.id}
-            {...(onUnlock && { onUnlock })}
-          />
-        ))}
+        {/* AUDIT-01 Phase 8: 使用虛擬化列表渲染已回答問題 */}
+        <VirtualizedQAList
+          questions={visibleAnswered}
+          perm={perm}
+          onAnswer={openAnswerModal}
+          activeQuestionId={activeQuestion?.id}
+          isAnswering={submitting === "answer"}
+          onUnlock={onUnlock}
+          maxHeight={ANSWERED_SECTION_MAX_HEIGHT}
+        />
 
         {/* 使用 LockedOverlay 組件 */}
         <LockedOverlay
@@ -554,20 +717,18 @@ export function QASection({
             <div className="text-[12px] font-semibold text-brand-700">
               還沒人回答的問題
             </div>
+            {/* AUDIT-01 Phase 8: 使用虛擬化列表渲染未回答問題 */}
             {unansweredQuestions.length > 0 ? (
-              unansweredQuestions.map((q) => (
-                <QACard
-                  key={q.id}
-                  q={q}
-                  perm={perm}
-                  isUnanswered
-                  onAnswer={openAnswerModal}
-                  isAnswering={
-                    submitting === "answer" && activeQuestion?.id === q.id
-                  }
-                  {...(onUnlock && { onUnlock })}
-                />
-              ))
+              <VirtualizedQAList
+                questions={unansweredQuestions}
+                perm={perm}
+                isUnanswered
+                onAnswer={openAnswerModal}
+                activeQuestionId={activeQuestion?.id}
+                isAnswering={submitting === "answer"}
+                onUnlock={onUnlock}
+                maxHeight={UNANSWERED_SECTION_MAX_HEIGHT}
+              />
             ) : (
               <div className="rounded-[10px] border border-dashed border-border-light bg-white/80 p-3 text-center text-[12px] text-ink-600">
                 目前沒有待回答的問題，登入後可解鎖更多或發問。
@@ -587,7 +748,9 @@ export function QASection({
               onClick={openAskModal}
               className="bg-brand/6 hover:bg-brand/12 border-brand/10 flex w-full items-center justify-center gap-1 rounded-lg border px-2.5 py-1.5 text-[11px] font-semibold text-brand transition"
             >
-              {perm.canAskQuestion ? "我想問問題" : "登入後發問"}
+              {canPerformAction(perm, "ask_question")
+                ? "我想問問題"
+                : "登入後發問"}
             </button>
           </div>
         </div>

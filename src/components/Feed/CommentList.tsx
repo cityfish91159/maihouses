@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useRef } from "react";
 import { FeedComment } from "../../types/comment";
 import { formatRelativeTime } from "../../utils/date";
 import { notify } from "../../lib/notify";
@@ -39,6 +39,8 @@ const CommentItem: React.FC<CommentItemProps> = ({
   const [isDeleting, setIsDeleting] = useState(false);
   const [isLiking, setIsLiking] = useState(false);
   const [isLoadingReplies, setIsLoadingReplies] = useState(false);
+  // useRef 追蹤 isLiking 以避免在 useCallback 依賴中造成不必要的重建
+  const isLikingRef = useRef(false);
 
   const authorName = comment.author.name || "匿名";
   const authorRole = comment.author.role;
@@ -47,15 +49,17 @@ const CommentItem: React.FC<CommentItemProps> = ({
   const hasReplies = comment.repliesCount > 0;
   const repliesLoaded = comment.replies !== undefined;
 
-  // Bug 1 修正：加入 try-catch 錯誤處理，移除 isLiking 依賴
+  // Bug 1 修正：加入 try-catch 錯誤處理，使用 ref 追蹤狀態
   const handleToggleLike = useCallback(async () => {
-    if (isLiking) return;
+    if (isLikingRef.current) return;
+    isLikingRef.current = true;
     setIsLiking(true);
     try {
       await onToggleLike(comment.id);
     } catch {
       // 錯誤已在 useComments 處理（notify + logger）
     } finally {
+      isLikingRef.current = false;
       setIsLiking(false);
     }
   }, [comment.id, onToggleLike]);

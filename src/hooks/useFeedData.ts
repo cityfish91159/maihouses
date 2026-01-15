@@ -23,6 +23,10 @@
  * - Extract Magic Numbers (HOT_POSTS_LIMIT)
  * - Dynamic Sidebar Data (deriveSidebarData)
  * - Comment Types & Mock Data (FeedComment)
+ *
+ * Phase 4 重構 (2026-01-15):
+ * - 純函數抽取至 ./feed/feedUtils.ts
+ * - 保留 React hooks 邏輯於此檔案
  */
 
 import { useState, useCallback, useMemo, useEffect, useRef } from "react";
@@ -30,250 +34,41 @@ import { mhEnv } from "../lib/mhEnv";
 import { safeLocalStorage } from "../lib/safeStorage";
 import { logger } from "../lib/logger";
 import { supabase } from "../lib/supabase";
-import type { Post, Role } from "../types/community";
+import type { Role } from "../types/community";
 import { useAuth } from "./useAuth";
 import { getCommunityName, isValidCommunityId } from "../constants";
 
-import { MOCK_SALE_ITEMS } from "../services/mock/feed";
-import { STRINGS } from "../constants/strings";
 import type { FeedComment } from "../types/comment";
-import {
-  getConsumerFeedData,
-  createMockPost as createMockPostFromFactory,
-} from "../pages/Feed/mockData";
+import { getConsumerFeedData } from "../pages/Feed/mockData";
 import { usePermission } from "./usePermission";
 import { PERMISSIONS } from "../types/permissions";
 import { uploadService } from "../services/uploadService";
 import type { FeedPost, UnifiedFeedData, SidebarData } from "../types/feed";
-const S = STRINGS.FEED;
+
+// Phase 4: 從 feedUtils 導入純函數
+import {
+  FEED_MOCK_STORAGE_KEY,
+  EMPTY_FEED_DATA,
+  type SupabasePostRow,
+  type ProfileRow,
+  deriveSidebarData,
+  deriveTitleFromContent,
+  loadPersistedFeedMockState,
+  saveFeedMockState,
+  buildProfileMap,
+  mapSupabasePostsToFeed,
+  filterMockData,
+  filterSecurePosts,
+  createSecureFeedData,
+} from "./feed";
 
 // Re-export types for backward compatibility
 export type { FeedPost, UnifiedFeedData, SidebarData };
-
-// ============ 常數 ============
-const FEED_MOCK_STORAGE_KEY = "feed-mock-data-v1";
-const MOCK_LATENCY_MS = 250;
-const HOT_POSTS_LIMIT = 3;
-
-// Helper to derive Sidebar Data
-const deriveSidebarData = (posts: FeedPost[]): SidebarData => {
-  const hotPosts = [...posts]
-    .sort((a, b) => (b.likes || 0) - (a.likes || 0))
-    .slice(0, HOT_POSTS_LIMIT)
-    .map((p) => ({
-      id: p.id,
-      title: p.title,
-      communityName: p.communityName || S.DEFAULT_COMMUNITY_LABEL,
-      likes: p.likes || 0,
-    }));
-
-  return {
-    hotPosts,
-    saleItems: MOCK_SALE_ITEMS,
-  };
-};
-
-const EMPTY_FEED_DATA: UnifiedFeedData = {
-  posts: [],
-  totalPosts: 0,
-  sidebarData: { hotPosts: [], saleItems: [] },
-};
 
 // ============ Default Mock Data (from external mockData module) ============
 // P6-REFACTOR: Mock data moved to src/pages/Feed/mockData/
 // Using getter function to ensure deep copy and prevent state mutation
 const getDefaultMockData = (): UnifiedFeedData => getConsumerFeedData();
-
-type SupabasePostRow = {
-  id: string;
-  community_id: string;
-  author_id: string | null;
-  content: string;
-  visibility: string | null;
-  likes_count: number | null;
-  comments_count: number | null;
-  liked_by: string[] | null;
-  is_pinned: boolean | null;
-  created_at: string;
-  post_type: string | null;
-};
-
-type ProfileRow = {
-  id: string;
-  name: string | null;
-  floor: string | null;
-  role: Role | null;
-};
-
-// ============ Profile Cache (P5-5 優化) ============
-interface ProfileCacheEntry {
-  profile: ProfileRow;
-  timestamp: number;
-}
-
-const PROFILE_CACHE_TTL_MS = 5 * 60 * 1000;
-const profileCache = new Map<string, ProfileCacheEntry>();
-
-const isProfileCacheValid = (entry: ProfileCacheEntry): boolean => {
-  return Date.now() - entry.timestamp < PROFILE_CACHE_TTL_MS;
-};
-
-const getProfilesFromCache = (
-  authorIds: string[],
-): {
-  cached: Map<string, ProfileRow>;
-  uncached: string[];
-} => {
-  const cached = new Map<string, ProfileRow>();
-  const uncached: string[] = [];
-
-  for (const id of authorIds) {
-    const entry = profileCache.get(id);
-    if (entry && isProfileCacheValid(entry)) {
-      cached.set(id, entry.profile);
-    } else {
-      uncached.push(id);
-      if (entry) {
-        profileCache.delete(id);
-      }
-    }
-  }
-
-  return { cached, uncached };
-};
-
-const setProfilesToCache = (profiles: ProfileRow[]): void => {
-  const now = Date.now();
-  for (const profile of profiles) {
-    profileCache.set(profile.id, { profile, timestamp: now });
-  }
-};
-
-const filterMockData = (
-  source: UnifiedFeedData,
-  targetCommunityId?: string,
-): UnifiedFeedData => {
-  const filteredPosts = targetCommunityId
-    ? source.posts.filter((p) => p.communityId === targetCommunityId)
-    : source.posts;
-
-  return {
-    posts: filteredPosts,
-    totalPosts: filteredPosts.length,
-    sidebarData: deriveSidebarData(filteredPosts),
-  };
-};
-
-// ============ 工具函數 ============
-const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
-const deriveTitleFromContent = (content: string): string => {
-  if (!content) return "（無標題）";
-  return content.length > 40 ? `${content.slice(0, 40)}...` : content;
-};
-
-const loadPersistedFeedMockState = (
-  fallback: UnifiedFeedData,
-): UnifiedFeedData => {
-  const raw = safeLocalStorage.getItem(FEED_MOCK_STORAGE_KEY);
-  if (!raw) return fallback;
-  try {
-    const parsed = JSON.parse(raw) as Partial<UnifiedFeedData>;
-    const posts = parsed.posts ?? fallback.posts;
-    return {
-      posts,
-      totalPosts: parsed.totalPosts ?? fallback.totalPosts,
-      sidebarData: deriveSidebarData(posts),
-    };
-  } catch (err) {
-    logger.error("[useFeedData] Failed to load mock state", { error: err });
-    return fallback;
-  }
-};
-
-const saveFeedMockState = (data: UnifiedFeedData): void => {
-  try {
-    safeLocalStorage.setItem(FEED_MOCK_STORAGE_KEY, JSON.stringify(data));
-  } catch (err) {
-    logger.error("[useFeedData] Failed to persist mock state", { error: err });
-  }
-};
-
-const buildProfileMap = async (
-  authorIds: string[],
-): Promise<Map<string, ProfileRow>> => {
-  if (!authorIds.length) return new Map();
-
-  const { cached, uncached } = getProfilesFromCache(authorIds);
-  if (uncached.length === 0) {
-    return cached;
-  }
-
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("id, name, floor, role")
-    .in("id", uncached);
-
-  if (error) {
-    logger.error("[useFeedData] Fetch profiles failed", { error });
-    return cached;
-  }
-
-  const fetchedProfiles = (data ?? []).map((profile) => profile as ProfileRow);
-  setProfilesToCache(fetchedProfiles);
-
-  const result = new Map(cached);
-  for (const profile of fetchedProfiles) {
-    result.set(profile.id, profile);
-  }
-
-  return result;
-};
-
-const mapSupabasePostsToFeed = async (
-  rows: SupabasePostRow[],
-): Promise<UnifiedFeedData> => {
-  const authorIds = Array.from(
-    new Set(
-      rows.map((r) => r.author_id).filter((id): id is string => Boolean(id)),
-    ),
-  );
-  const profileMap = await buildProfileMap(authorIds);
-
-  const posts: FeedPost[] = rows.map((row) => {
-    const profile = row.author_id ? profileMap.get(row.author_id) : undefined;
-    const likedBy = row.liked_by ?? [];
-    const normalizedRole: FeedPost["type"] =
-      profile?.role === "agent"
-        ? "agent"
-        : profile?.role === "resident"
-          ? "resident"
-          : "member";
-
-    const base: FeedPost = {
-      id: row.id,
-      author: profile?.name ?? "住戶",
-      type: normalizedRole,
-      time: row.created_at ?? new Date().toISOString(),
-      title: deriveTitleFromContent(row.content),
-      content: row.content,
-      likes: row.likes_count ?? likedBy.length ?? 0,
-      comments: row.comments_count ?? 0,
-      pinned: row.is_pinned ?? false,
-      communityId: row.community_id,
-      communityName: getCommunityName(row.community_id),
-      liked_by: likedBy,
-      private: row.visibility === "private",
-    };
-    return profile?.floor ? { ...base, floor: profile.floor } : base;
-  });
-
-  return {
-    posts,
-    totalPosts: posts.length,
-    sidebarData: deriveSidebarData(posts),
-  };
-};
 
 // ============ Mock Factory ============
 export const createFeedMockPost = (
@@ -598,13 +393,21 @@ export function useFeedData(
     await fetchApiData();
   }, [useMock, fetchApiData]);
 
-  // P2-C2 修復：API 模式加入樂觀更新
+  /**
+   * 按讚貼文
+   *
+   * AUDIT-01 Phase 6: 競態條件修復
+   * - API 模式：使用「反向操作」回滾，而非「捕獲舊狀態」
+   * - 避免快速連擊時丟失中間操作
+   * - Mock 模式：保持原有邏輯（本地操作無競態問題）
+   */
   const toggleLike = useCallback(
     async (postId: string | number) => {
       if (!useMock && !isAuthenticated) {
         throw new Error("請先登入後再按讚");
       }
 
+      // Mock 模式：本地操作，無競態問題
       if (useMock) {
         const mockUserId = getMockUserId();
         const currentlyLiked = likedPosts.has(postId);
@@ -639,39 +442,47 @@ export function useFeedData(
         return;
       }
 
+      // API 模式：需要處理競態條件
       const actingUserId = currentUserId;
       if (!actingUserId) {
         throw new Error("缺少使用者身份");
       }
 
       const postIdStr = String(postId);
-      const currentlyLiked = apiLikedPosts.has(postId);
-      const previousApiData = apiData;
-      const previousApiLikedPosts = new Set(apiLikedPosts);
 
-      setApiData((prev) => {
-        if (!prev) return prev;
+      /**
+       * 輔助函數：套用按讚切換（可用於樂觀更新和回滾）
+       * 反向操作 = 再次調用同一函數
+       */
+      const applyLikeToggle = (
+        data: UnifiedFeedData | null,
+        userId: string,
+      ): UnifiedFeedData | null => {
+        if (!data) return data;
         return {
-          ...prev,
-          posts: prev.posts.map((post) => {
+          ...data,
+          posts: data.posts.map((post) => {
             if (post.id !== postId) return post;
             const currentLikes = post.likes ?? 0;
             const currentLikedBy = post.liked_by ?? [];
-            const nextLikedBy = currentlyLiked
-              ? currentLikedBy.filter((id) => id !== actingUserId)
-              : [...currentLikedBy, actingUserId];
+            const isCurrentlyLiked = currentLikedBy.includes(userId);
+            const nextLikedBy = isCurrentlyLiked
+              ? currentLikedBy.filter((id) => id !== userId)
+              : [...currentLikedBy, userId];
             return {
               ...post,
-              likes: currentlyLiked
+              likes: isCurrentlyLiked
                 ? Math.max(0, currentLikes - 1)
                 : currentLikes + 1,
               liked_by: nextLikedBy,
             };
           }),
         };
-      });
+      };
 
-      setApiLikedPosts((prev) => {
+      const toggleLikedPostsSet = (
+        prev: Set<string | number>,
+      ): Set<string | number> => {
         const next = new Set(prev);
         if (next.has(postId)) {
           next.delete(postId);
@@ -679,7 +490,11 @@ export function useFeedData(
           next.add(postId);
         }
         return next;
-      });
+      };
+
+      // 1. 樂觀更新
+      setApiData((prev) => applyLikeToggle(prev, actingUserId));
+      setApiLikedPosts(toggleLikedPostsSet);
 
       try {
         const { data, error } = await supabase.rpc("toggle_like", {
@@ -689,6 +504,7 @@ export function useFeedData(
           throw error;
         }
 
+        // 2. 使用伺服器值同步（確保數據一致性）
         setApiData((prev) => {
           if (!prev) return prev;
           return {
@@ -715,20 +531,19 @@ export function useFeedData(
           };
         });
       } catch (err) {
-        setApiData(previousApiData);
-        setApiLikedPosts(previousApiLikedPosts);
+        // 3. 回滾：使用反向操作（再次 toggle = 還原）
+        // 這種方式不依賴閉包捕獲的舊狀態，避免競態條件
+        setApiData((prev) => applyLikeToggle(prev, actingUserId));
+        setApiLikedPosts(toggleLikedPostsSet);
+        logger.warn("[useFeedData] toggleLike rollback", {
+          postId,
+          error: err instanceof Error ? err.message : String(err),
+          reason: "API_FAILURE",
+        });
         throw err instanceof Error ? err : new Error("按讚失敗，請稍後再試");
       }
     },
-    [
-      useMock,
-      likedPosts,
-      apiLikedPosts,
-      apiData,
-      getMockUserId,
-      isAuthenticated,
-      currentUserId,
-    ],
+    [useMock, likedPosts, getMockUserId, isAuthenticated, currentUserId],
   );
 
   // P2-C4 修復：API 模式加入樂觀更新 (Updated for P0 Image Upload)

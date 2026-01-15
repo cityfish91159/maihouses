@@ -6,16 +6,18 @@
 
 import type { Role } from "../types";
 import { getPermissions } from "../types";
+import { canPerformAction } from "../lib";
 
 interface BottomCTAProps {
   viewerRole: Role;
 }
 
+// AUDIT-01 Phase 7: 使用統一權限檢查函數
 export function BottomCTA({ viewerRole }: BottomCTAProps) {
   const perm = getPermissions(viewerRole);
 
-  // 住戶和房仲不顯示 CTA
-  if (perm.canAccessPrivate) return null;
+  // 住戶和房仲不顯示 CTA（他們已有私密牆存取權限）
+  if (canPerformAction(perm, "view_private")) return null;
 
   // 根據身份決定顯示內容
   const isGuest = perm.isGuest;

@@ -91,7 +91,10 @@ function FeedPostCommentSection({
     }
   }, [refresh]);
 
-  const isLoggedIn = useMemo(() => currentUserId !== undefined, [currentUserId]);
+  const isLoggedIn = useMemo(
+    () => currentUserId !== undefined,
+    [currentUserId],
+  );
 
   if (isLoading && comments.length === 0) {
     return (

@@ -42,7 +42,19 @@ export const NotificationStatusSchema = z.enum([
 ]);
 export type NotificationStatus = z.infer<typeof NotificationStatusSchema>;
 
-// Schema for the transformed Lead object used in the UI
+// ============================================================================
+// Lead Schema 定義
+// ============================================================================
+
+/**
+ * LeadSchema - 完整的 Lead Zod Schema（向後兼容）
+ *
+ * 注意：id 欄位的語義在購買前後會改變：
+ * - 未購買時（status === "new"）：id = session_id（格式：sess-XXXX-xxx）
+ * - 已購買時（status === "purchased"）：id = purchase UUID
+ *
+ * session_id 欄位永不變化，始終追蹤匿名消費者
+ */
 export const LeadSchema = SupabaseLeadSchema.extend({
   remainingHours: z.number().optional(),
   // UAG-15/修5: 通知狀態
@@ -51,7 +63,123 @@ export const LeadSchema = SupabaseLeadSchema.extend({
   conversation_id: z.string().optional(),
 });
 
+/**
+ * Lead 類型（從 Zod Schema 推導）
+ *
+ * AUDIT-01 Phase 5: 重構說明
+ * Lead.id 的語義在購買前後改變：
+ * - status === "new" → id 是 session_id（如 sess-B218-mno345）
+ * - status === "purchased" → id 是 purchase UUID（如 57a4097a-...）
+ *
+ * 使用類型守衛 isPurchasedLead/isUnpurchasedLead 來區分使用場景
+ */
 export type Lead = z.infer<typeof LeadSchema>;
+
+// ============================================================================
+// 類型別名（語義化區分）
+// ============================================================================
+
+/**
+ * 未購買 Lead 類型
+ *
+ * - id = session_id（格式：sess-XXXX-xxx）
+ * - status = "new"
+ *
+ * @example
+ * ```ts
+ * if (isUnpurchasedLead(lead)) {
+ *   // TypeScript 知道 lead 是 UnpurchasedLead
+ *   // lead.id 在此處語義上是 session_id
+ * }
+ * ```
+ */
+export type UnpurchasedLead = Lead & { status: "new" };
+
+/**
+ * 已購買 Lead 類型
+ *
+ * - id = purchase UUID（來自 uag_lead_purchases.id）
+ * - status = "purchased"
+ * - 包含 notification_status、conversation_id 等購買後欄位
+ *
+ * @example
+ * ```ts
+ * if (isPurchasedLead(lead)) {
+ *   // TypeScript 知道 lead 是 PurchasedLead
+ *   // lead.id 在此處語義上是 purchase UUID
+ *   // lead.notification_status、lead.conversation_id 可安全存取
+ * }
+ * ```
+ */
+export type PurchasedLead = Lead & { status: "purchased" };
+
+// ============================================================================
+// 類型守衛
+// ============================================================================
+
+/**
+ * 檢查 Lead 是否為已購買狀態
+ *
+ * 使用此守衛後，TypeScript 可以正確推導：
+ * - lead.id 語義上是 purchase UUID
+ * - lead.notification_status 可安全存取
+ * - lead.conversation_id 可安全存取
+ *
+ * @example
+ * ```ts
+ * if (isPurchasedLead(lead)) {
+ *   // lead.notification_status 可用
+ *   // lead.conversation_id 可用
+ *   // lead.id 是 purchase UUID
+ *   const convId = lead.conversation_id;
+ * }
+ * ```
+ */
+export function isPurchasedLead(lead: Lead): lead is PurchasedLead {
+  return lead.status === "purchased";
+}
+
+/**
+ * 檢查 Lead 是否為未購買狀態
+ *
+ * 使用此守衛後，TypeScript 可以正確推導：
+ * - lead.id 語義上是 session_id
+ * - lead.status === "new"
+ *
+ * @example
+ * ```ts
+ * if (isUnpurchasedLead(lead)) {
+ *   // lead.id 是 session_id
+ *   // lead.status === "new"
+ *   onBuyLead(lead.id); // 傳遞 session_id 給購買 API
+ * }
+ * ```
+ */
+export function isUnpurchasedLead(lead: Lead): lead is UnpurchasedLead {
+  return lead.status === "new";
+}
+
+/**
+ * Exhaustive check helper - 確保所有 LeadStatus 都被處理
+ *
+ * 用於 switch 語句確保完整性，如果新增狀態會在編譯期報錯
+ *
+ * @example
+ * ```ts
+ * function handleLead(lead: Lead) {
+ *   if (isPurchasedLead(lead)) {
+ *     // 處理已購買
+ *   } else if (isUnpurchasedLead(lead)) {
+ *     // 處理未購買
+ *   } else {
+ *     assertNeverLeadStatus(lead.status);
+ *   }
+ * }
+ * ```
+ */
+export function assertNeverLeadStatus(status: never): never {
+  throw new Error(`Unexpected LeadStatus: ${status}`);
+}
 
 // UAG-20: 修復「我的房源總覽」資料連接 - Phase 1
 export const SupabaseListingSchema = z
