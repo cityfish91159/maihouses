@@ -11,7 +11,6 @@ import {
   setUserContext,
 } from "../lib/sentry";
 import { logger } from "../lib/logger";
-import { errorResponse, API_ERROR_CODES } from "../lib/apiResponse";
 
 // ============================================================================
 // Constants
@@ -250,8 +249,9 @@ async function handler(
   // 只允許 POST
   if (req.method !== "POST") {
     return res.status(405).json({
-      ...errorResponse("METHOD_NOT_ALLOWED", "僅支援 POST 請求"),
+      success: false,
       lineStatus: "error",
+      error: "僅支援 POST 請求",
     } satisfies SendMessageResponse);
   }
 
@@ -264,11 +264,9 @@ async function handler(
   if (!supabaseUrl || !supabaseServiceKey) {
     logger.error("[UAG] Missing Supabase configuration");
     return res.status(500).json({
-      ...errorResponse(
-        API_ERROR_CODES.SERVICE_UNAVAILABLE,
-        "伺服器配置錯誤，請稍後再試",
-      ),
+      success: false,
       lineStatus: "error",
+      error: "伺服器配置錯誤，請稍後再試",
     } satisfies SendMessageResponse);
   }
 
@@ -281,11 +279,9 @@ async function handler(
   const validatedBody = validateRequest(req.body);
   if (!validatedBody) {
     return res.status(400).json({
-      ...errorResponse(
-        API_ERROR_CODES.INVALID_INPUT,
-        "請求參數錯誤，缺少必要欄位",
-      ),
+      success: false,
       lineStatus: "error",
+      error: "請求參數錯誤，缺少必要欄位",
     } satisfies SendMessageResponse);
   }
 
@@ -347,11 +343,9 @@ async function handler(
         sessionId,
       });
       return res.status(500).json({
-        ...errorResponse(
-          API_ERROR_CODES.INTERNAL_ERROR,
-          "建立對話失敗，請稍後再試",
-        ),
+        success: false,
         lineStatus: "error",
+        error: "建立對話失敗，請稍後再試",
       } satisfies SendMessageResponse);
     }
 
@@ -372,12 +366,10 @@ async function handler(
       });
       // 站內訊息失敗是嚴重錯誤
       return res.status(500).json({
-        ...errorResponse(
-          API_ERROR_CODES.INTERNAL_ERROR,
-          "訊息發送失敗，請稍後再試",
-        ),
+        success: false,
         conversationId,
         lineStatus: "error",
+        error: "訊息發送失敗，請稍後再試",
       } satisfies SendMessageResponse);
     }
 
@@ -600,11 +592,9 @@ async function handler(
     });
 
     return res.status(500).json({
-      ...errorResponse(
-        API_ERROR_CODES.INTERNAL_ERROR,
-        "訊息發送失敗，請稍後再試",
-      ),
+      success: false,
       lineStatus: "error",
+      error: "訊息發送失敗，請稍後再試",
     } satisfies SendMessageResponse);
   }
 }
