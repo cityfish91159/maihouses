@@ -6,6 +6,7 @@
 import { OpenAI } from "openai";
 import { z } from "zod";
 import { getTaiwanHour } from "./timeUtils";
+import { logger } from "./logger";
 
 // ═══════════════════════════════════════════════════════════════
 // 類型定義
@@ -127,7 +128,7 @@ export async function detectIntent(
     if (validated.success) {
       const data = validated.data;
 
-      console.log("🧠 意圖檢測結果:", {
+      logger.debug("[intentDetector] 意圖檢測結果", {
         intent: data.intent,
         mood: data.mood_level,
         signal: data.signal_type,
@@ -145,7 +146,7 @@ export async function detectIntent(
       };
     }
   } catch (error) {
-    console.error("❌ 意圖檢測失敗:", error);
+    logger.error("[intentDetector] 意圖檢測失敗", error);
   }
 
   // 預設值

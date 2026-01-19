@@ -1,3 +1,10 @@
+/**
+ * Mock API Handler
+ *
+ * [NASA TypeScript Safety] 此檔案中的 `as T` 類型斷言是 Mock 實作的預期行為。
+ * 這些斷言用於將已知結構的 mock 資料轉換為泛型回傳類型。
+ * 由於 mock 資料是由 fixtures 生成的已知結構，這些轉換是安全的。
+ */
 import { getConfig } from "../../app/config";
 import {
   makePropertiesDeterministic,

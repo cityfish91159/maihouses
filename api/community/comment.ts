@@ -13,6 +13,7 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
+import { logger } from "../lib/logger";
 
 // Zod Schemas
 const CreateCommentSchema = z.object({
@@ -264,6 +265,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           .json({ success: false, error: "Method not allowed" });
     }
   } catch (error: unknown) {
+    logger.error("[community/comment] API error", error, {
+      method: req.method,
+      userId: user.id,
+    });
     const message = error instanceof Error ? error.message : "伺服器錯誤";
     return res.status(500).json({
       success: false,

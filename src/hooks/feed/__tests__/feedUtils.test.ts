@@ -355,7 +355,8 @@ describe("deriveTitleFromContent", () => {
 
   it("should handle Chinese characters correctly", () => {
     // 41 個中文字元 - 應該被截斷
-    const chinese = "一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一";
+    const chinese =
+      "一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一";
     expect(chinese.length).toBe(41); // 確認超過 40 字
     const result = deriveTitleFromContent(chinese);
     expect(result.endsWith("...")).toBe(true);

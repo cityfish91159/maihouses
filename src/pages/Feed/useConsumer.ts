@@ -127,7 +127,8 @@ export function useConsumer(userId?: string, forceMock?: boolean) {
       return {
         id: "demo-user",
         name: S.DEFAULT_USER, // '用戶'
-        role: (userId === "demo-agent" ? "agent" : "member") as Role,
+        // [NASA TypeScript Safety] 使用條件表達式取代 as Role
+        role: userId === "demo-agent" ? ("agent" as const) : ("member" as const),
         stats: MOCK_FEED_STATS,
         communityId: S.DEFAULT_COMMUNITY_ID,
         communityName: S.DEFAULT_COMMUNITY_NAME,
@@ -229,7 +230,8 @@ export function useConsumer(userId?: string, forceMock?: boolean) {
       try {
         await navigator.share(shareData);
       } catch (err) {
-        if ((err as Error).name !== "AbortError") {
+        // [NASA TypeScript Safety] 使用 instanceof 取代 as Error
+        if (!(err instanceof Error) || err.name !== "AbortError") {
           notify.error("分享失敗", "請稍後再試");
         }
       }

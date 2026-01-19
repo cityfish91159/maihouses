@@ -172,7 +172,8 @@ export default function ReportGenerator({
         {/* 進度指示 */}
         <div className="border-b border-slate-100 bg-slate-50 px-5 py-3">
           <div className="flex items-center gap-2 text-sm">
-            {(["style", "highlights", "photos", "preview"] as Step[]).map(
+            {/* [NASA TypeScript Safety] 定義為常數陣列避免 as Step[] */}
+            {(["style", "highlights", "photos", "preview"] satisfies Step[]).map(
               (s, i) => (
                 <React.Fragment key={s}>
                   <div
@@ -228,7 +229,13 @@ export default function ReportGenerator({
               {Object.values(REPORT_STYLES).map((style) => (
                 <button
                   key={style.id}
-                  onClick={() => setSelectedStyle(style.id as ReportStyle)}
+                  onClick={() => {
+                    // [NASA TypeScript Safety] style.id 來自 REPORT_STYLES，已是 ReportStyle 類型
+                    const styleId = style.id;
+                    if (styleId === "simple" || styleId === "investment" || styleId === "marketing") {
+                      setSelectedStyle(styleId);
+                    }
+                  }}
                   className={`w-full rounded-xl border-2 p-4 text-left transition ${
                     selectedStyle === style.id
                       ? "border-[#003366] bg-blue-50"

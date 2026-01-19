@@ -38,7 +38,6 @@ export const ELI5Tooltip: React.FC<{ text: string }> = ({ text }) => {
       fetchAns();
     }
   }, [text, fetchAns]);
-  // ...
 
   const toggle = async () => {
     const next = !open;

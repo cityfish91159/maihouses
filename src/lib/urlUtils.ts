@@ -155,8 +155,17 @@ export function parseTrackingParams(): {
     safeLocalStorage.setItem("uag_last_aid", agentId);
   }
 
-  const srcParam = params.get("src") as TrafficSource | null;
-  const source: TrafficSource = srcParam || "direct";
+  // [NASA TypeScript Safety] 使用類型守衛取代 as TrafficSource
+  const srcParam = params.get("src");
+  const validSources: TrafficSource[] = [
+    "list_home", "list_community", "list_search", "list_recommend",
+    "list_favorite", "agent_share", "line_share", "fb_share",
+    "edm", "qrcode", "sms", "push", "direct",
+  ];
+  const source: TrafficSource =
+    srcParam && validSources.includes(srcParam as TrafficSource)
+      ? (srcParam as TrafficSource)
+      : "direct";
 
   const shareId = params.get("sid");
   const listingId = params.get("lid");

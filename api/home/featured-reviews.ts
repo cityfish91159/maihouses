@@ -21,6 +21,7 @@
 
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
+import { logger } from "../lib/logger";
 
 // ============================================
 // Inlined Constants & Types (Fix Vercel Import Issue)
@@ -161,7 +162,7 @@ async function logError(
   };
 
   // 1. Server log (必定執行)
-  console.error(errorData.context, errorData);
+  logger.error(errorData.context, null, errorData);
 
   // 2. 嘗試上報到 /api/log-error (非阻塞)
   try {

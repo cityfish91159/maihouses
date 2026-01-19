@@ -74,7 +74,9 @@ export const UAGHeader: React.FC<UAGHeaderProps> = ({
   // ⚠️ useEffect 必須在所有 early return 之前調用
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
+      // [NASA TypeScript Safety] 使用類型守衛取代 as HTMLElement
+      const target = e.target;
+      if (!(target instanceof HTMLElement)) return;
       if (
         !target.closest("#uag-user-menu-btn") &&
         !target.closest("#uag-user-menu-dropdown")

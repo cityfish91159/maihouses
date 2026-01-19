@@ -6,6 +6,27 @@
 
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
+import { z } from "zod";
+import { logger } from "../lib/logger";
+
+// Zod Schemas for request validation
+const AskRequestSchema = z.object({
+  action: z.literal("ask"),
+  communityId: z.string().uuid("communityId 必須是有效的 UUID"),
+  content: z.string().min(5, "問題至少需要 5 個字").max(2000),
+  isAnonymous: z.boolean().optional().default(true),
+});
+
+const AnswerRequestSchema = z.object({
+  action: z.literal("answer"),
+  questionId: z.string().uuid("questionId 必須是有效的 UUID"),
+  content: z.string().min(10, "回答至少需要 10 個字").max(5000),
+});
+
+const QuestionRequestSchema = z.discriminatedUnion("action", [
+  AskRequestSchema,
+  AnswerRequestSchema,
+]);
 
 // 延遲初始化 Supabase client
 let supabase: SupabaseClient | null = null;
@@ -55,27 +76,26 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const {
-      action,
-      communityId,
-      questionId,
-      content,
-      isAnonymous = true,
-    } = req.body;
-
-    if (!action) {
-      return res.status(400).json({ error: "缺少 action 參數" });
+    // 驗證 request body
+    const parsed = QuestionRequestSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({
+        error: "Invalid request",
+        details: parsed.error.flatten(),
+      });
     }
 
-    switch (action) {
-      case "ask":
-        return await handleAsk(res, user.id, communityId, content, isAnonymous);
-      case "answer":
-        return await handleAnswer(res, user.id, questionId, content);
-      default:
-        return res.status(400).json({ error: "無效的 action" });
+    const data = parsed.data;
+    if (data.action === "ask") {
+      return await handleAsk(res, user.id, data.communityId, data.content, data.isAnonymous);
+    } else {
+      return await handleAnswer(res, user.id, data.questionId, data.content);
     }
   } catch (error: unknown) {
+    logger.error("[community/question] API error", error, {
+      userId: user.id,
+      action: req.body?.action,
+    });
     const message = error instanceof Error ? error.message : "Unknown error";
     return res.status(500).json({ error: message });
   }
@@ -89,14 +109,7 @@ async function handleAsk(
   question: string,
   isAnonymous: boolean,
 ) {
-  if (!communityId || !question) {
-    return res.status(400).json({ error: "缺少 communityId 或 question" });
-  }
-
-  if (question.length < 5) {
-    return res.status(400).json({ error: "問題至少需要 5 個字" });
-  }
-
+  // Zod 已驗證，直接執行
   const { data, error } = await getSupabase()
     .from("community_questions")
     .insert({
@@ -124,14 +137,7 @@ async function handleAnswer(
   questionId: string,
   answer: string,
 ) {
-  if (!questionId || !answer) {
-    return res.status(400).json({ error: "缺少 questionId 或 answer" });
-  }
-
-  if (answer.length < 10) {
-    return res.status(400).json({ error: "回答至少需要 10 個字" });
-  }
-
+  // Zod 已驗證，直接執行
   // 判斷回答者類型：查詢是否為房仲
   let authorType: "resident" | "agent" = "resident";
 

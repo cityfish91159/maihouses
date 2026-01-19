@@ -1,4 +1,6 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
+import { z } from "zod";
+import { logger } from "./lib/logger";
 
 /**
  * Line Notify API - 發送 Line 通知給管理員
@@ -7,6 +9,12 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
  * 1. 去 https://notify-bot.line.me/my/ 取得個人 Access Token
  * 2. 將 Token 設定為環境變數 LINE_NOTIFY_TOKEN
  */
+
+// Zod Schema for request validation
+const LineNotifyRequestSchema = z.object({
+  message: z.string().min(1, "message 不能為空").max(1000),
+  type: z.enum(["activity", "intimate", "photo", "unlock_request", "default"]).optional().default("activity"),
+});
 
 const LINE_NOTIFY_API = "https://notify-api.line.me/api/notify";
 
@@ -24,11 +32,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const { message, type = "activity" } = req.body;
+  // 驗證 request body
+  const parsed = LineNotifyRequestSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({
+      error: "Invalid request",
+      details: parsed.error.flatten(),
+    });
+  }
+  const { message, type } = parsed.data;
   const lineToken = process.env.LINE_NOTIFY_TOKEN;
 
   if (!lineToken) {
-    console.error("LINE_NOTIFY_TOKEN not configured");
+    logger.error("[line-notify] LINE_NOTIFY_TOKEN not configured");
     return res.status(500).json({ error: "Line Notify not configured" });
   }
 
@@ -68,7 +84,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("Line Notify error:", errorText);
+      logger.error("[line-notify] Line Notify error", null, { errorText });
       return res
         .status(response.status)
         .json({ error: "Line Notify failed", details: errorText });
@@ -77,7 +93,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const result = await response.json();
     return res.status(200).json({ success: true, result });
   } catch (error) {
-    console.error("Line Notify error:", error);
+    logger.error("[line-notify] Internal server error", error);
     return res.status(500).json({ error: "Internal server error" });
   }
 }

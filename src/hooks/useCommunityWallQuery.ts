@@ -7,6 +7,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useState } from "react";
+import { z } from "zod";
 import {
   getCommunityWall,
   toggleLike as apiToggleLike,
@@ -16,6 +17,19 @@ import {
   type CommunityWallData,
   type CommunityPost,
 } from "../services/communityService";
+
+// [NASA TypeScript Safety] Zod Schema 用於驗證錯誤物件的 status 屬性
+const ErrorWithStatusSchema = z.object({
+  status: z.number().optional(),
+});
+
+/**
+ * [NASA TypeScript Safety] 類型守衛：檢查錯誤物件是否有 status 屬性
+ */
+function hasErrorStatus(error: unknown): error is { status: number } {
+  const result = ErrorWithStatusSchema.safeParse(error);
+  return result.success && typeof result.data.status === "number";
+}
 
 // Query Keys
 export const communityWallKeys = {
@@ -92,13 +106,13 @@ export function useCommunityWall(
     refetchOnWindowFocus,
     // 降低 retry 次數和延遲，避免用戶等待太久
     retry: (failureCount, error) => {
+      // [NASA TypeScript Safety] 使用類型守衛驗證錯誤狀態碼
       // 400/401/403/404 錯誤不重試
-      const errorWithStatus = error as { status?: number };
-      if (
-        errorWithStatus.status &&
-        [400, 401, 403, 404].includes(errorWithStatus.status)
-      ) {
-        return false;
+      if (hasErrorStatus(error)) {
+        const nonRetryableStatuses = [400, 401, 403, 404];
+        if (nonRetryableStatuses.includes(error.status)) {
+          return false;
+        }
       }
       return failureCount < 1; // 最多重試 1 次
     },
@@ -256,11 +270,14 @@ export function useCommunityWall(
     [answerQuestionMutation],
   );
 
+  // [NASA TypeScript Safety] 類型守衛確保 error 為 Error 或 null
+  const safeError = error instanceof Error ? error : null;
+
   return {
     data,
     isLoading,
     isFetching,
-    error: error as Error | null,
+    error: safeError,
     refresh,
     toggleLike,
     createPost,

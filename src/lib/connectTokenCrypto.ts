@@ -30,6 +30,17 @@ interface ConnectTokenPayload {
   exp: number;
 }
 
+// [NASA TypeScript Safety] 類型守衛驗證 ConnectTokenPayload
+function isConnectTokenPayload(obj: unknown): obj is ConnectTokenPayload {
+  if (typeof obj !== "object" || obj === null) return false;
+  const record = obj as Record<string, unknown>;
+  return (
+    typeof record.conversationId === "string" &&
+    typeof record.sessionId === "string" &&
+    typeof record.exp === "number"
+  );
+}
+
 type TokenFormat = "encrypted" | "legacy" | "invalid";
 
 interface ParseResult {
@@ -175,7 +186,10 @@ async function tryDecryptToken(
     );
 
     const plaintext = new TextDecoder().decode(decrypted);
-    return JSON.parse(plaintext) as ConnectTokenPayload;
+    const parsed: unknown = JSON.parse(plaintext);
+    // [NASA TypeScript Safety] 使用類型守衛取代 as ConnectTokenPayload
+    if (isConnectTokenPayload(parsed)) return parsed;
+    return null;
   } catch {
     return null;
   }
@@ -188,14 +202,13 @@ function tryDecodeOldToken(token: string): ConnectTokenPayload | null {
   try {
     const bytes = base64UrlDecode(token);
     const decoded = new TextDecoder().decode(bytes);
-    const payload = JSON.parse(decoded) as ConnectTokenPayload;
-
-    // 驗證必要欄位
-    if (!payload.conversationId || !payload.sessionId || !payload.exp) {
+    const parsed: unknown = JSON.parse(decoded);
+    // [NASA TypeScript Safety] 使用類型守衛取代 as ConnectTokenPayload
+    if (!isConnectTokenPayload(parsed)) {
       return null;
     }
 
-    return payload;
+    return parsed;
   } catch {
     return null;
   }

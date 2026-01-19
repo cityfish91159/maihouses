@@ -6,6 +6,7 @@
 
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { createClient } from "@supabase/supabase-js";
+import { z } from "zod";
 import { withSentryHandler, captureError, addBreadcrumb } from "../lib/sentry";
 import { logger } from "../lib/logger";
 import {
@@ -13,6 +14,13 @@ import {
   errorResponse,
   API_ERROR_CODES,
 } from "../lib/apiResponse";
+
+// [NASA TypeScript Safety] Track Result Schema
+const TrackResultSchema = z.object({
+  grade: z.string(),
+  score: z.number(),
+  reason: z.string().optional(),
+});
 
 // ============================================================================
 // Types
@@ -167,10 +175,26 @@ async function handler(
         );
     }
 
-    const trackResult = result as TrackResult;
+    // [NASA TypeScript Safety] 使用 Zod safeParse 取代 as TrackResult
+    const trackParseResult = TrackResultSchema.safeParse(result);
+    if (!trackParseResult.success) {
+      logger.error("[UAG] Track result validation failed", null, {
+        error: trackParseResult.error.message,
+        result,
+      });
+      return res
+        .status(500)
+        .json(
+          errorResponse(
+            API_ERROR_CODES.INTERNAL_ERROR,
+            "追蹤結果格式錯誤",
+          ),
+        );
+    }
+    const trackResult = trackParseResult.data;
 
     // Realtime Trigger - S-Grade Alert
-    if (trackResult && trackResult.grade === "S") {
+    if (trackResult.grade === "S") {
       logger.info("[UAG] S-Grade Lead detected", {
         session_id,
         score: trackResult.score,

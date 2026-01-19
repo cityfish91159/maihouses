@@ -2,6 +2,8 @@ import { createClient } from "@supabase/supabase-js";
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import jwt from "jsonwebtoken";
 import { parse } from "cookie";
+import { z } from "zod";
+import { logger } from "../lib/logger";
 
 // Types for Trust Room transactions
 export interface TrustStep {
@@ -31,6 +33,20 @@ export interface JwtUser {
   exp?: number;
 }
 
+/** [NASA TypeScript Safety] JWT Payload Zod Schema */
+const JwtUserSchema = z.object({
+  id: z.string(),
+  role: z.enum(["agent", "buyer"]),
+  txId: z.string(),
+  iat: z.number().optional(),
+  exp: z.number().optional(),
+});
+
+/** [NASA TypeScript Safety] Trust Query Schema - 共用於 6 個舊版 API */
+export const TrustQuerySchema = z.object({
+  id: z.string().min(1, "Transaction ID is required"),
+});
+
 export interface AuditUser extends JwtUser {
   ip: string;
   agent: string;
@@ -40,7 +56,7 @@ const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!supabaseUrl || !supabaseKey) {
-  console.error("Missing Supabase credentials");
+  logger.error("[trust/_utils] Missing Supabase credentials");
 }
 
 export const supabase = createClient(supabaseUrl!, supabaseKey!);
@@ -140,10 +156,20 @@ export async function logAudit(txId: string, action: string, user: AuditUser) {
       ip: user.ip || "unknown",
       user_agent: user.agent || "unknown",
     });
-    if (error) console.error("Audit log failed:", error);
+    if (error) logger.error("[trust/_utils] Audit log failed", error, { txId, action });
   } catch (e) {
-    console.error("Audit log exception:", e);
+    logger.error("[trust/_utils] Audit log exception", e, { txId, action });
   }
+}
+
+/** [NASA TypeScript Safety] 安全取得字串 header */
+function getStringHeader(value: string | string[] | undefined): string {
+  if (typeof value === "string") return value;
+  if (Array.isArray(value) && value.length > 0) {
+    const first = value[0];
+    return typeof first === "string" ? first : "unknown";
+  }
+  return "unknown";
 }
 
 export function verifyToken(req: VercelRequest): AuditUser {
@@ -164,15 +190,21 @@ export function verifyToken(req: VercelRequest): AuditUser {
   if (!token) throw new Error("Unauthorized");
 
   try {
-    const user = jwt.verify(token, JWT_SECRET, {
-      algorithms: ["HS256"],
-    }) as JwtUser;
+    const decoded = jwt.verify(token, JWT_SECRET, { algorithms: ["HS256"] });
+    // [NASA TypeScript Safety] 使用 Zod safeParse 取代 as JwtUser
+    const parseResult = JwtUserSchema.safeParse(decoded);
+    if (!parseResult.success) {
+      logger.error("[trust/_utils] JWT payload validation failed", { error: parseResult.error.message });
+      throw new Error("Invalid token payload");
+    }
+    const user = parseResult.data;
     return {
       ...user,
-      ip: (req.headers["x-forwarded-for"] as string) || "unknown",
+      ip: getStringHeader(req.headers["x-forwarded-for"]),
       agent: req.headers["user-agent"] || "unknown",
     };
-  } catch {
+  } catch (e) {
+    if (e instanceof Error && e.message === "Invalid token payload") throw e;
     throw new Error("Token expired or invalid");
   }
 }
@@ -183,12 +215,13 @@ export function cors(req: VercelRequest, res: VercelResponse) {
     "http://localhost:5173",
     "http://127.0.0.1:5173",
   ];
-  const origin = req?.headers?.origin as string | undefined;
+  // [NASA TypeScript Safety] 使用類型守衛取代 as string
+  const rawOrigin = req?.headers?.origin;
+  const origin = typeof rawOrigin === "string" ? rawOrigin : undefined;
 
   if (origin && allowedOrigins.includes(origin)) {
     res.setHeader("Access-Control-Allow-Origin", origin);
   } else {
-    // Default to first allowed origin or null if strict
     res.setHeader("Access-Control-Allow-Origin", "https://maihouses.com");
   }
 

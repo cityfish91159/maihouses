@@ -3,6 +3,7 @@ import { z } from "zod";
 import {
   AppData,
   Grade,
+  GradeSchema,
   Lead,
   LeadSchema,
   Listing,
@@ -137,10 +138,11 @@ const transformSupabaseData = (
       l.remaining_hours != null ? Number(l.remaining_hours) : undefined;
 
     if (remainingHours == null && l.purchased_at && l.status === "purchased") {
-      remainingHours = calculateRemainingHours(
-        l.purchased_at,
-        l.grade as Grade,
-      );
+      // [NASA TypeScript Safety] 使用 Zod safeParse 取代 as Grade
+      const gradeResult = GradeSchema.safeParse(l.grade);
+      if (gradeResult.success) {
+        remainingHours = calculateRemainingHours(l.purchased_at, gradeResult.data);
+      }
     }
 
     const transformed = {
@@ -174,7 +176,7 @@ const transformSupabaseData = (
       thumbnail: listing.images?.[0] ?? undefined,
       view: stats?.view_count ?? 0,
       click: stats?.click_count ?? 0,
-      fav: 0, // TODO(UAG-20-Future): 收藏功能
+      fav: 0,
     };
 
     const result = ListingSchema.safeParse(transformed);
@@ -248,8 +250,9 @@ function extractCommunityName(community: unknown, fallback = "社區牆"): strin
     return community[0].name;
   }
   if (community && typeof community === "object" && "name" in community) {
-    const record = community as Record<string, unknown>;
-    return String(record.name) || fallback;
+    // [NASA TypeScript Safety] 使用類型守衛取代 as Record
+    const nameValue = (community as { name: unknown }).name;
+    return typeof nameValue === "string" && nameValue ? nameValue : fallback;
   }
   return fallback;
 }
@@ -417,7 +420,7 @@ export class UAGService {
             .order("likes_count", { ascending: false })
             .order("created_at", { ascending: false })
             .limit(5)
-        : { data: [] as SupabaseCommunityPost[], error: null };
+        : { data: [] satisfies SupabaseCommunityPost[], error: null };
 
     // FEED-01 Phase 8: feedRes 錯誤不阻斷，只記錄警告（feed 非核心功能）
     if (feedRes.error) {
@@ -550,10 +553,11 @@ export class UAGService {
           // 如果已購買，計算剩餘保護時間
           ...(isPurchased
             ? {
-                remainingHours: calculateRemainingHours(
-                  purchased.created_at,
-                  grade as Grade,
-                ),
+                // [NASA TypeScript Safety] 使用 Zod safeParse 取代 as Grade
+                remainingHours: (() => {
+                  const gradeResult = GradeSchema.safeParse(grade);
+                  return gradeResult.success ? calculateRemainingHours(purchased.created_at, gradeResult.data) : 0;
+                })(),
                 // UAG-15/修5: 加入通知狀態
                 notification_status: purchased.notification_status,
                 // 修6: 加入對話 ID
@@ -659,9 +663,12 @@ export class UAGService {
       stat.view_count++;
       stat.total_duration += evt.duration || 0;
 
-      const actions = evt.actions as Record<string, number> | null;
-      if (actions?.click_line) stat.line_clicks++;
-      if (actions?.click_call) stat.call_clicks++;
+      // [NASA TypeScript Safety] 使用類型守衛取代 as Record
+      const actions = evt.actions;
+      if (actions && typeof actions === "object") {
+        if ("click_line" in actions && typeof actions.click_line === "number" && actions.click_line) stat.line_clicks++;
+        if ("click_call" in actions && typeof actions.click_call === "number" && actions.click_call) stat.call_clicks++;
+      }
     }
 
     // 計算 unique sessions

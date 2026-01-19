@@ -196,7 +196,9 @@ export function useComments({
           return {
             ...c,
             isLiked: newIsLiked,
-            likesCount: newIsLiked ? c.likesCount + 1 : Math.max(0, c.likesCount - 1),
+            likesCount: newIsLiked
+              ? c.likesCount + 1
+              : Math.max(0, c.likesCount - 1),
           };
         }
         // 檢查 replies
@@ -209,7 +211,9 @@ export function useComments({
                 return {
                   ...r,
                   isLiked: newIsLiked,
-                  likesCount: newIsLiked ? r.likesCount + 1 : Math.max(0, r.likesCount - 1),
+                  likesCount: newIsLiked
+                    ? r.likesCount + 1
+                    : Math.max(0, r.likesCount - 1),
                 };
               }
               return r;

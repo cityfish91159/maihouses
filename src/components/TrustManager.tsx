@@ -1,10 +1,51 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { z } from "zod";
 import { supabase } from "../lib/supabase";
 import { notify } from "../lib/notify";
 import { logger } from "../lib/logger";
 import type { TrustTransaction, TrustStep } from "../types/trust.types";
 import { STEP_NAMES, STEP_ICONS } from "../types/trust.types";
 import { ROUTES } from "../constants/routes";
+
+// [NASA TypeScript Safety] Zod schema 用於驗證外部資料
+// 注意：使用 transform 來處理 optional 欄位，確保類型與 TrustStep 介面相容
+const TrustStepSchema = z
+  .object({
+    step: z.number(),
+    name: z.string(),
+    done: z.boolean(),
+    confirmed: z.boolean(),
+    date: z.string().nullable(),
+    note: z.string(),
+    confirmedAt: z.string().optional(),
+  })
+  .transform((data): TrustStep => ({
+    step: data.step,
+    name: data.name,
+    done: data.done,
+    confirmed: data.confirmed,
+    date: data.date,
+    note: data.note,
+    ...(data.confirmedAt !== undefined && { confirmedAt: data.confirmedAt }),
+  }));
+
+const TrustTransactionSchema = z
+  .object({
+    id: z.string(),
+    created_at: z.string(),
+    updated_at: z.string(),
+    case_name: z.string(),
+    agent_id: z.string(),
+    agent_name: z.string().nullable(),
+    guest_token: z.string(),
+    token_expires_at: z.string(),
+    current_step: z.number(),
+    steps_data: z.array(TrustStepSchema),
+    status: z.enum(["active", "completed", "cancelled"]),
+  })
+  .transform((data): TrustTransaction => data);
+
+const TrustTransactionArraySchema = z.array(TrustTransactionSchema);
 
 const COLORS = {
   primary: "#1749D7",
@@ -50,7 +91,17 @@ export default function TrustManager({
         .eq("status", "active")
         .order("created_at", { ascending: false });
       if (error) throw error;
-      setCases((data || []) as TrustTransaction[]);
+
+      // [NASA TypeScript Safety] 使用 Zod safeParse 驗證外部資料
+      const parseResult = TrustTransactionArraySchema.safeParse(data || []);
+      if (!parseResult.success) {
+        logger.error("Load cases data validation failed", {
+          error: parseResult.error,
+        });
+        setCases([]);
+        return;
+      }
+      setCases(parseResult.data);
     } catch (err) {
       logger.error("Load cases failed", { error: err });
     } finally {
@@ -95,7 +146,17 @@ export default function TrustManager({
         .single();
 
       if (error) throw error;
-      await copyLink(data as TrustTransaction);
+
+      // [NASA TypeScript Safety] 使用 Zod safeParse 驗證新建立的案件資料
+      const parseResult = TrustTransactionSchema.safeParse(data);
+      if (!parseResult.success) {
+        logger.error("Create case data validation failed", {
+          error: parseResult.error,
+        });
+        notify.error("資料驗證失敗", "建立的案件資料格式不正確");
+        return;
+      }
+      await copyLink(parseResult.data);
       setNewCaseName("");
       setShowForm(false);
       await loadCases(currentUserId);

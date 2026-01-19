@@ -50,7 +50,8 @@ export function RoleSwitcher({ role, onRoleChange }: RoleSwitcherProps) {
           role="listbox"
           aria-label="選擇身份"
         >
-          {(Object.keys(roleLabels) as Role[]).map((r) => (
+          {/* [NASA TypeScript Safety] 定義具體的 role 陣列避免 as Role[] */}
+          {(["guest", "member", "resident", "agent", "official", "admin"] satisfies Role[]).map((r) => (
             <button
               key={r}
               role="option"

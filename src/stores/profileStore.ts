@@ -15,11 +15,21 @@ const STORAGE_KEY = "mai-user-profile-v1";
 const FIRST_SEEN_KEY = "mai-first-seen-ts";
 const WARM_DISMISS_KEY = "mai-warmbar-dismissed-date"; // YYYY-MM-DD
 
+// [NASA TypeScript Safety] 類型守衛驗證 UserProfile
+function isUserProfile(obj: unknown): obj is UserProfile {
+  if (typeof obj !== "object" || obj === null) return false;
+  const record = obj as Record<string, unknown>;
+  return Array.isArray(record.tags);
+}
+
 export function loadProfile(): UserProfile {
   try {
     const raw = safeLocalStorage.getItem(STORAGE_KEY);
     if (!raw) return { tags: [] };
-    return JSON.parse(raw) as UserProfile;
+    const parsed: unknown = JSON.parse(raw);
+    // [NASA TypeScript Safety] 使用類型守衛取代 as UserProfile
+    if (isUserProfile(parsed)) return parsed;
+    return { tags: [] };
   } catch {
     return { tags: [] };
   }

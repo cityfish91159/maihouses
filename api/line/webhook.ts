@@ -18,20 +18,27 @@ import crypto from "crypto";
 import { messagingApi } from "@line/bot-sdk";
 import { createClient } from "@supabase/supabase-js";
 import { withSentryHandler, captureError, addBreadcrumb } from "../lib/sentry";
+import { logger } from "../lib/logger";
 
-interface LineEvent {
-  type: string;
-  source: {
-    type: string;
-    userId?: string;
-  };
-  timestamp: number;
-  replyToken?: string;
-}
+import { z } from "zod";
 
-interface LineWebhookBody {
-  events: LineEvent[];
-}
+// [NASA TypeScript Safety] LINE Webhook Zod Schemas
+const LineEventSchema = z.object({
+  type: z.string(),
+  source: z.object({
+    type: z.string(),
+    userId: z.string().optional(),
+  }),
+  timestamp: z.number(),
+  replyToken: z.string().optional(),
+});
+
+const LineWebhookBodySchema = z.object({
+  events: z.array(LineEventSchema),
+});
+
+type LineEvent = z.infer<typeof LineEventSchema>;
+type LineWebhookBody = z.infer<typeof LineWebhookBodySchema>;
 
 /**
  * 驗證 LINE Webhook 簽章
@@ -69,12 +76,18 @@ async function handler(
     const body = JSON.stringify(req.body);
 
     if (!verifySignature(body, signature, channelSecret)) {
-      console.error("[LINE Webhook] Invalid signature");
+      logger.warn("[LINE Webhook] Invalid signature");
       return res.status(401).json({ error: "Invalid signature" });
     }
   }
 
-  const { events } = req.body as LineWebhookBody;
+  // [NASA TypeScript Safety] 使用 Zod safeParse 取代 as LineWebhookBody
+  const bodyParseResult = LineWebhookBodySchema.safeParse(req.body);
+  if (!bodyParseResult.success) {
+    logger.warn("[LINE Webhook] Invalid request body format");
+    return res.status(400).json({ error: "Invalid request body" });
+  }
+  const { events } = bodyParseResult.data;
 
   if (!events || events.length === 0) {
     // LINE 會發送空 events 來驗證 webhook
@@ -100,7 +113,7 @@ async function handler(
     switch (event.type) {
       case "follow":
         // ⭐ 用戶加好友 - 直接回覆 User ID
-        console.log(`[LINE] 新用戶加好友: ${userId}`);
+        logger.info(`[LINE] 新用戶加好友: ${userId}`);
 
         if (lineClient && event.replyToken && userId) {
           try {
@@ -119,14 +132,14 @@ ${userId}
               ],
             });
           } catch (err) {
-            console.error("[LINE] Reply failed:", err);
+            logger.error("[LINE] Reply failed", err, { event: "follow", userId });
             captureError(err, { event: "follow", userId });
           }
         }
         break;
 
       case "unfollow":
-        console.log(`[LINE] 用戶取消好友: ${userId}`);
+        logger.info(`[LINE] 用戶取消好友: ${userId}`);
 
         // 更新綁定狀態為 blocked
         if (userId) {
@@ -152,17 +165,17 @@ ${userId}
                 .eq("line_user_id", userId);
 
               if (error) {
-                console.error("[LINE] Failed to update blocked status:", error);
+                logger.error("[LINE] Failed to update blocked status", error, { userId });
                 captureError(error, { event: "unfollow", userId });
               } else {
-                console.log(`[LINE] Updated status to blocked: ${userId}`);
+                logger.info(`[LINE] Updated status to blocked: ${userId}`);
               }
             } catch (err) {
-              console.error("[LINE] Update error:", err);
+              logger.error("[LINE] Update error", err, { userId });
               captureError(err, { event: "unfollow", userId });
             }
           } else {
-            console.error("[LINE] Missing Supabase config for unfollow update");
+            logger.warn("[LINE] Missing Supabase config for unfollow update");
           }
         }
         break;
@@ -181,14 +194,14 @@ ${userId}
               ],
             });
           } catch (err) {
-            console.error("[LINE] Reply failed:", err);
+            logger.error("[LINE] Reply failed", err, { event: "message", userId });
             captureError(err, { event: "message", userId });
           }
         }
         break;
 
       default:
-        console.log(`[LINE] 未處理的事件類型: ${event.type}`);
+        logger.debug(`[LINE] 未處理的事件類型: ${event.type}`);
     }
   }
 

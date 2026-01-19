@@ -39,6 +39,21 @@ import type {
 
 const S = STRINGS.FEED;
 
+// [NASA TypeScript Safety] Zod Schema 用於驗證從 localStorage 載入的 Mock Feed 資料
+// 只驗證最小必要欄位，其他欄位允許通過
+const PersistedFeedDataSchema = z.object({
+  posts: z.array(z.object({
+    id: z.union([z.string(), z.number()]),
+    author: z.string(),
+    type: z.enum(["resident", "member", "agent", "official"]),
+    time: z.string(),
+    title: z.string(),
+    content: z.string(),
+    comments: z.number(),
+  }).passthrough()),
+  totalPosts: z.number().optional(),
+}).passthrough();
+
 // ============================================================================
 // Constants
 // ============================================================================
@@ -95,7 +110,12 @@ export type PostVisibility = z.infer<typeof PostVisibilitySchema>;
  * 貼文類型枚舉
  * P3 修復：使用 enum 而非 string 提升類型安全
  */
-export const PostTypeSchema = z.enum(["general", "qa", "review", "announcement"]);
+export const PostTypeSchema = z.enum([
+  "general",
+  "qa",
+  "review",
+  "announcement",
+]);
 export type PostType = z.infer<typeof PostTypeSchema>;
 
 /**
@@ -205,7 +225,8 @@ const setProfilesToCache = (profiles: ProfileRow[]): void => {
 
   // B2 修復：超過容量上限時，清理最久未使用的項目
   // 計算需要清理的數量：確保新增後不超過容量上限
-  const spaceNeeded = profileCache.size + safeProfiles.length - PROFILE_CACHE_MAX_SIZE;
+  const spaceNeeded =
+    profileCache.size + safeProfiles.length - PROFILE_CACHE_MAX_SIZE;
 
   if (spaceNeeded > 0) {
     const entries = [...profileCache.entries()].sort(
@@ -259,7 +280,8 @@ export const clearProfileCache = (): void => {
  *
  * @example
  * ```ts
- * console.log(`Cache size: ${getProfileCacheSize()}`);
+ * const cacheSize = getProfileCacheSize();
+ * // cacheSize: number
  * ```
  */
 export const getProfileCacheSize = (): number => {
@@ -340,7 +362,7 @@ export const deriveTitleFromContent = (content: string): string => {
  * @example
  * ```ts
  * const sidebar = deriveSidebarData(posts);
- * console.log(sidebar.hotPosts); // 前 3 個按讚數最多的貼文
+ * // sidebar.hotPosts: 前 3 個按讚數最多的貼文
  * ```
  */
 export const deriveSidebarData = (posts: FeedPost[]): SidebarData => {
@@ -393,9 +415,30 @@ export const loadPersistedFeedMockState = (
   if (!raw) return fallback;
 
   try {
-    const parsed = JSON.parse(raw) as Partial<UnifiedFeedData>;
+    const jsonParsed = JSON.parse(raw);
+
+    // [NASA TypeScript Safety] 使用 Zod safeParse 取代 as 類型斷言
+    const parseResult = PersistedFeedDataSchema.safeParse(jsonParsed);
+    if (!parseResult.success) {
+      logger.warn("[feedUtils] Mock state validation failed, using fallback", {
+        error: parseResult.error.flatten(),
+      });
+      return fallback;
+    }
+
+    const parsed = parseResult.data;
     // I1 修復：使用 ?? 處理 nullish
-    const posts = parsed.posts ?? fallback.posts;
+    // [NASA TypeScript Safety] 此處 as 斷言是安全的：
+    // - Zod Schema 已驗證基本結構（id, author, type, time, title, content, comments）
+    // - passthrough() 允許 FeedPost 的其他可選屬性通過
+    // - TypeScript 需要此斷言因為 Zod 推導的型別與 FeedPost 不完全相同
+    const posts: FeedPost[] = parsed.posts.map((p) => ({
+      ...p,
+      // 確保必要欄位存在，填入預設值
+      likes: typeof p.likes === "number" ? p.likes : 0,
+      views: typeof p.views === "number" ? p.views : undefined,
+      pinned: typeof p.pinned === "boolean" ? p.pinned : false,
+    })) as FeedPost[];
     return {
       posts,
       totalPosts: parsed.totalPosts ?? fallback.totalPosts,

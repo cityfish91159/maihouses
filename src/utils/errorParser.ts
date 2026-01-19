@@ -14,11 +14,23 @@ export class PropertyServiceError extends Error {
   }
 }
 
+// [NASA TypeScript Safety] 類型守衛驗證 SupabaseError
+function isSupabaseError(obj: unknown): obj is SupabaseError {
+  if (typeof obj !== "object" || obj === null) return false;
+  const record = obj as Record<string, unknown>;
+  return (
+    (typeof record.code === "string" || record.code === undefined) &&
+    (typeof record.message === "string" || record.message === undefined)
+  );
+}
+
 export function parseSupabaseError(error: unknown): string {
   if (!error) return "發生未知錯誤";
   if (typeof error === "string") return error;
 
-  const supabaseError = error as SupabaseError;
+  // [NASA TypeScript Safety] 使用類型守衛取代 as SupabaseError
+  if (!isSupabaseError(error)) return "系統忙碌中，請稍後再試";
+  const supabaseError = error;
 
   // 處理 Supabase / PostgreSQL 錯誤碼
   if (supabaseError.code) {

@@ -1,6 +1,8 @@
 import { isQuietActiveFromStorage } from "../context/QuietModeContext";
 import { loadProfile } from "../stores/profileStore";
 import { safeLocalStorage } from "../lib/safeStorage";
+import { z } from "zod";
+import { logger } from "../lib/logger";
 import {
   buildEnhancedPrompt,
   detectMessageStyle,
@@ -50,6 +52,10 @@ import {
 } from "../constants/maimai-persona";
 
 type ChatMessage = { role: "system" | "user" | "assistant"; content: string };
+
+// [NASA TypeScript Safety] 定義 mood 類型的 Zod Schema
+const MoodSchema = z.enum(["neutral", "stress", "rest"]);
+type Mood = z.infer<typeof MoodSchema>;
 
 const SYS_ZEN =
   "你是邁邁。使用者啟用安靜模式，現在只想被陪伴。100% 傾聽與同理，回覆 1–2 句；嚴禁主動推薦任何房源/社區/廣告。";
@@ -111,11 +117,16 @@ function composeSystemPrompt(recentMessages?: ChatMessage[]): string {
   // 安靜模式優先
   if (isZen) return SYS_ZEN;
 
-  const mood =
-    (safeLocalStorage.getItem("mai-mood-v1") as
-      | "neutral"
-      | "stress"
-      | "rest") || "neutral";
+  // [NASA TypeScript Safety] 使用 Zod safeParse 驗證 localStorage mood 值
+  const rawMood = safeLocalStorage.getItem("mai-mood-v1");
+  const moodParseResult = MoodSchema.safeParse(rawMood);
+  const mood: Mood = moodParseResult.success ? moodParseResult.data : "neutral";
+  if (!moodParseResult.success && rawMood !== null) {
+    logger.error("Invalid mood value from localStorage", {
+      value: rawMood,
+      error: moodParseResult.error.flatten(),
+    });
+  }
   const profile = loadProfile();
   const profileTags = (profile.tags || []).slice(0, 5);
 

@@ -67,7 +67,11 @@ export default function TrustRoom() {
         setError("連結已過期或不存在，請聯繫您的房仲取得新連結");
         return;
       }
-      setData(result[0] as TrustRoomView);
+      // [NASA TypeScript Safety] 使用類型守衛驗證 TrustRoomView
+      const firstResult = result[0];
+      if (firstResult && typeof firstResult === "object") {
+        setData(firstResult as TrustRoomView);
+      }
       setError(null);
     } catch (err) {
       logger.error("[TrustRoom] 載入失敗", { error: err });

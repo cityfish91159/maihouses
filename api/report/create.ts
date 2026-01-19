@@ -1,4 +1,16 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
+import { z } from "zod";
+import { logger } from "../lib/logger";
+
+// [NASA TypeScript Safety] Create Payload Schema
+const CreatePayloadSchema = z.object({
+  propertyId: z.string(),
+  agentId: z.string(),
+  style: z.enum(["simple", "investment", "marketing"]),
+  highlights: z.array(z.string()),
+  photos: z.array(z.number()),
+  customMessage: z.string().optional(),
+});
 
 /**
  * 報告建立 API
@@ -41,12 +53,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const { propertyId, agentId, style, highlights, photos, customMessage } =
-      req.body as CreatePayload;
-
-    if (!propertyId || !agentId) {
+    // [NASA TypeScript Safety] 使用 Zod safeParse 取代 as CreatePayload
+    const parseResult = CreatePayloadSchema.safeParse(req.body);
+    if (!parseResult.success) {
       return res.status(400).json({ error: "Missing required fields" });
     }
+    const { propertyId, agentId, style, highlights, photos, customMessage } = parseResult.data;
 
     const shortCode = generateShortCode();
     const expiresAt = new Date();
@@ -82,14 +94,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       expiresAt: expiresAt.toISOString(),
     };
 
-    console.log("[Report Created]", reportData);
+    logger.info("[report/create] Report created", reportData);
 
     return res.status(200).json({
       success: true,
       data: reportData,
     });
   } catch (error) {
-    console.error("[Report Create Error]", error);
+    logger.error("[report/create] Error", error);
     return res.status(500).json({
       success: false,
       error: "Internal server error",

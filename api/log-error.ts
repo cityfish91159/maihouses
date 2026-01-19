@@ -1,4 +1,19 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
+import { z } from "zod";
+import { logger } from "./lib/logger";
+
+// [NASA TypeScript Safety] Error Payload Schema
+const IncomingErrorPayloadSchema = z.object({
+  error: z.object({
+    message: z.string().optional(),
+    stack: z.string().optional(),
+    name: z.string().optional(),
+  }).optional(),
+  componentStack: z.string().optional(),
+  url: z.string().optional(),
+  userAgent: z.string().optional(),
+  timestamp: z.string().optional(),
+});
 
 type IncomingErrorPayload = {
   error?: {
@@ -32,7 +47,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const rawBody =
       typeof req.body === "string" ? JSON.parse(req.body) : req.body;
-    const payload = rawBody as IncomingErrorPayload;
+    // [NASA TypeScript Safety] 使用 Zod safeParse 取代 as IncomingErrorPayload
+    const parseResult = IncomingErrorPayloadSchema.safeParse(rawBody);
+    if (!parseResult.success) {
+      return res
+        .status(400)
+        .json({ success: false, error: "Invalid error payload format" });
+    }
+    const payload = parseResult.data;
 
     if (!payload?.error?.message) {
       return res
@@ -52,13 +74,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       timestamp: payload.timestamp ?? new Date().toISOString(),
     };
 
-    console.error("[CommunityWall] Client error reported", sanitized);
+    logger.error("[log-error] Client error reported", null, sanitized);
 
     return res
       .status(200)
       .json({ success: true, recordedAt: sanitized.timestamp });
   } catch (error) {
-    console.error("[log-error] Failed to record client error", error);
+    logger.error("[log-error] Failed to record client error", error);
     return res
       .status(400)
       .json({ success: false, error: "Invalid JSON payload" });

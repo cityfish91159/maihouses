@@ -5,9 +5,6 @@
  */
 
 // Permission utilities
-export {
-  canPerformAction,
-  getPermissionDeniedMessage,
-} from "./permissions";
+export { canPerformAction, getPermissionDeniedMessage } from "./permissions";
 
 export type { CommunityAction } from "./permissions";

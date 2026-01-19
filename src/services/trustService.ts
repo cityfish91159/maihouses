@@ -2,6 +2,91 @@ import type { Transaction, Step, StepData } from "../types/trust";
 import { safeSessionStorage } from "../lib/safeStorage";
 import { logger } from "../lib/logger";
 
+// [NASA TypeScript Safety] Type Guard 驗證 Step 結構
+function isValidStep(obj: unknown): obj is Step {
+  if (typeof obj !== "object" || obj === null) return false;
+  const step = obj as Record<string, unknown>;
+  return (
+    typeof step.name === "string" &&
+    (step.agentStatus === "pending" || step.agentStatus === "submitted") &&
+    (step.buyerStatus === "pending" || step.buyerStatus === "confirmed") &&
+    typeof step.locked === "boolean" &&
+    typeof step.data === "object" &&
+    step.data !== null
+  );
+}
+
+// [NASA TypeScript Safety] Type Guard 驗證 Transaction 結構
+function isValidTransaction(obj: unknown): obj is Transaction {
+  if (typeof obj !== "object" || obj === null) return false;
+  const tx = obj as Record<string, unknown>;
+
+  if (
+    typeof tx.id !== "string" ||
+    typeof tx.currentStep !== "number" ||
+    typeof tx.isPaid !== "boolean" ||
+    typeof tx.steps !== "object" ||
+    tx.steps === null ||
+    !Array.isArray(tx.supplements)
+  ) {
+    return false;
+  }
+
+  // 驗證每個 step
+  const steps = tx.steps as Record<string, unknown>;
+  for (const key of Object.keys(steps)) {
+    if (!isValidStep(steps[key])) return false;
+  }
+
+  // 驗證 supplements 陣列元素
+  for (const supplement of tx.supplements) {
+    if (typeof supplement !== "object" || supplement === null) return false;
+    const s = supplement as Record<string, unknown>;
+    if (
+      typeof s.role !== "string" ||
+      typeof s.content !== "string" ||
+      typeof s.timestamp !== "number"
+    ) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+// [NASA TypeScript Safety] Type Guard 驗證 dispatch body
+interface ValidatedDispatchBody {
+  step?: string | number;
+  data?: StepData;
+  note?: string;
+  itemId?: string;
+  checked?: boolean;
+  content?: string;
+}
+
+function isValidDispatchBody(obj: unknown): obj is ValidatedDispatchBody {
+  if (typeof obj !== "object" || obj === null) return false;
+  const body = obj as Record<string, unknown>;
+
+  // 所有欄位都是可選的，但如果存在則必須是正確的類型
+  if (body.step !== undefined) {
+    if (typeof body.step !== "string" && typeof body.step !== "number") {
+      return false;
+    }
+  }
+  if (body.data !== undefined && typeof body.data !== "object") return false;
+  if (body.note !== undefined && typeof body.note !== "string") return false;
+  if (body.itemId !== undefined && typeof body.itemId !== "string") return false;
+  if (body.checked !== undefined && typeof body.checked !== "boolean") {
+    return false;
+  }
+  if (body.content !== undefined && typeof body.content !== "string") {
+    return false;
+  }
+
+  return true;
+}
+
 // --- SERVICE INTERFACE ---
 export interface TrustService {
   fetchData: (caseId: string, token: string) => Promise<Transaction | null>;
@@ -95,7 +180,23 @@ const getMockTx = (id: string): Transaction => {
   if (typeof window === "undefined") return createMockState(id);
   // Use sessionStorage to avoid polluting global localStorage and keep it session-based
   const saved = safeSessionStorage.getItem(`mock_tx_${id}`);
-  return saved ? JSON.parse(saved) : createMockState(id);
+  if (!saved) return createMockState(id);
+
+  // [NASA TypeScript Safety] 使用 Type Guard 驗證 JSON 資料
+  try {
+    const parsed: unknown = JSON.parse(saved);
+    if (isValidTransaction(parsed)) {
+      return parsed;
+    }
+    logger.error("Invalid transaction data from storage", {
+      id,
+      parsed,
+    });
+    return createMockState(id);
+  } catch (e) {
+    logger.error("Failed to parse transaction JSON", { error: e });
+    return createMockState(id);
+  }
 };
 
 const saveMockTx = (tx: Transaction) => {
@@ -119,19 +220,44 @@ export const mockService = {
   ): Promise<{ success: boolean; tx?: Transaction; error?: string }> => {
     await new Promise((r) => setTimeout(r, 600)); // Simulate delay
     const tx = getMockTx(caseId);
-    const newTx = JSON.parse(JSON.stringify(tx)) as Transaction;
-    const stepNum = parseInt(String(body.step ?? newTx.currentStep), 10);
+
+    // [NASA TypeScript Safety] 使用 Type Guard 驗證後深拷貝
+    const txCopy: unknown = JSON.parse(JSON.stringify(tx));
+    if (!isValidTransaction(txCopy)) {
+      logger.error("Invalid transaction structure during dispatch", {
+        caseId,
+      });
+      return { success: false, error: "Invalid transaction structure" };
+    }
+    const newTx = txCopy;
+
+    // [NASA TypeScript Safety] 驗證 body 參數
+    if (!isValidDispatchBody(body)) {
+      logger.error("Invalid dispatch body", {
+        body,
+      });
+      return { success: false, error: "Invalid request body" };
+    }
+    const validatedBody = body;
+
+    const stepNum = parseInt(
+      String(validatedBody.step ?? newTx.currentStep),
+      10,
+    );
 
     try {
       switch (action) {
         case "submit":
           if (role !== "agent") throw new Error("權限不足");
           if (newTx.steps[stepNum]) {
-            const submitData = body.data as StepData | undefined;
-            newTx.steps[stepNum].data = {
-              ...newTx.steps[stepNum].data,
-              ...submitData,
-            };
+            // [NASA TypeScript Safety] 已透過 Type Guard 驗證 body.data
+            const submitData = validatedBody.data;
+            if (submitData && typeof submitData === "object") {
+              newTx.steps[stepNum].data = {
+                ...newTx.steps[stepNum].data,
+                ...submitData,
+              };
+            }
             newTx.steps[stepNum].agentStatus = "submitted";
           }
           break;
@@ -140,8 +266,9 @@ export const mockService = {
           if (role !== "buyer") throw new Error("權限不足");
           if (newTx.steps[stepNum]) {
             newTx.steps[stepNum].buyerStatus = "confirmed";
-            const noteValue = body.note as string | undefined;
-            if (noteValue) {
+            // [NASA TypeScript Safety] 已透過 Type Guard 驗證 body.note
+            const noteValue = validatedBody.note;
+            if (typeof noteValue === "string" && noteValue) {
               newTx.steps[stepNum].data = {
                 ...newTx.steps[stepNum].data,
                 buyerNote: noteValue,
@@ -191,29 +318,34 @@ export const mockService = {
           }
           break;
 
-        case "checklist":
+        case "checklist": {
           const step6 = newTx.steps[6];
           if (step6 && step6.checklist) {
-            const itemId = body.itemId as string;
-            const item = step6.checklist.find((i) => i.id === itemId);
-            if (item) {
-              item.checked = Boolean(body.checked);
+            // [NASA TypeScript Safety] 已透過 Zod 驗證 body.itemId
+            const itemId = validatedBody.itemId;
+            if (itemId) {
+              const item = step6.checklist.find((i) => i.id === itemId);
+              if (item) {
+                item.checked = Boolean(validatedBody.checked);
+              }
             }
           }
           break;
+        }
 
         case "supplement":
           newTx.supplements.push({
             role,
-            content: String(body.content ?? ""),
+            content: String(validatedBody.content ?? ""),
             timestamp: Date.now(),
           });
           break;
 
-        case "reset":
+        case "reset": {
           const resetState = createMockState(caseId);
           saveMockTx(resetState);
           return { success: true, tx: resetState };
+        }
       }
       saveMockTx(newTx);
       return { success: true, tx: newTx };

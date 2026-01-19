@@ -7,11 +7,27 @@ export type NoteItem = {
   echo?: string;
 };
 const KEY = "mai-notes-v1";
+// [NASA TypeScript Safety] 類型守衛驗證 NoteItem
+function isNoteItem(obj: unknown): obj is NoteItem {
+  if (typeof obj !== "object" || obj === null) return false;
+  const record = obj as Record<string, unknown>;
+  return (
+    typeof record.id === "string" &&
+    typeof record.createdAt === "number" &&
+    typeof record.note === "string"
+  );
+}
+
 function loadAll(): NoteItem[] {
   try {
     const raw = safeLocalStorage.getItem(KEY);
     if (!raw) return [];
-    return JSON.parse(raw) as NoteItem[];
+    const parsed: unknown = JSON.parse(raw);
+    // [NASA TypeScript Safety] 使用類型守衛取代 as NoteItem[]
+    if (Array.isArray(parsed)) {
+      return parsed.filter(isNoteItem);
+    }
+    return [];
   } catch {
     return [];
   }

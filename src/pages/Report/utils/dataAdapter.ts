@@ -45,6 +45,18 @@ interface DecodedReportData {
   };
 }
 
+// [NASA TypeScript Safety] 類型守衛驗證 DecodedReportData
+function isDecodedReportData(obj: unknown): obj is DecodedReportData {
+  if (typeof obj !== "object" || obj === null) return false;
+  const record = obj as Record<string, unknown>;
+  return (
+    typeof record.property === "object" &&
+    record.property !== null &&
+    typeof record.agent === "object" &&
+    record.agent !== null
+  );
+}
+
 /**
  * 解析格局字串
  * @param rooms 格局字串 (例: "3房2廳2衛")
@@ -103,7 +115,13 @@ export function decodeReportDataFromURL(
     const decodedString = decodeURIComponent(encodedData);
     const base64Decoded = atob(decodedString);
     const utf8Decoded = decodeURIComponent(escape(base64Decoded));
-    const data = JSON.parse(utf8Decoded) as DecodedReportData;
+    const parsed: unknown = JSON.parse(utf8Decoded);
+    // [NASA TypeScript Safety] 使用類型守衛取代 as DecodedReportData
+    if (!isDecodedReportData(parsed)) {
+      logger.error("[dataAdapter] Invalid report data structure");
+      return null;
+    }
+    const data = parsed;
 
     logger.debug("[dataAdapter] Successfully decoded report data", {
       reportId: data.property.id,

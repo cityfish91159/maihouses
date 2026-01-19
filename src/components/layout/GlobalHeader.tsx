@@ -93,7 +93,10 @@ export function GlobalHeader({
   // 點擊外部關閉選單
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
+      // [NASA TypeScript Safety] 使用 instanceof 類型守衛驗證 DOM 元素
+      const target = e.target;
+      if (!(target instanceof HTMLElement)) return;
+
       if (
         !target.closest("#gh-user-menu-btn") &&
         !target.closest("#gh-user-menu-dropdown")

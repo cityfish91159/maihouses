@@ -1,4 +1,14 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
+import { z } from "zod";
+import { logger } from "../lib/logger";
+
+// [NASA TypeScript Safety] Track Payload Schema
+const TrackPayloadSchema = z.object({
+  reportId: z.string(),
+  agentId: z.string().optional(),
+  source: z.string().optional(),
+  userAgent: z.string().optional(),
+});
 
 /**
  * 報告瀏覽追蹤 API
@@ -29,11 +39,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const { reportId, agentId, source, userAgent } = req.body as TrackPayload;
-
-    if (!reportId) {
+    // [NASA TypeScript Safety] 使用 Zod safeParse 取代 as TrackPayload
+    const parseResult = TrackPayloadSchema.safeParse(req.body);
+    if (!parseResult.success) {
       return res.status(400).json({ error: "Missing reportId" });
     }
+    const { reportId, agentId, source, userAgent } = parseResult.data;
 
     // TODO: 實際儲存到 Supabase
     // const { error } = await supabase
@@ -48,7 +59,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     //   });
 
     // 目前只記錄 log
-    console.log("[Report Track]", {
+    logger.info("[report/track] Report tracked", {
       reportId,
       agentId,
       source,
@@ -60,7 +71,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       message: "Tracked successfully",
     });
   } catch (error) {
-    console.error("[Report Track Error]", error);
+    logger.error("[report/track] Error", error);
     return res.status(500).json({
       success: false,
       error: "Internal server error",

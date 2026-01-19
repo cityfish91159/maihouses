@@ -401,8 +401,15 @@ async function fetchReviewRows(communityId: string, limit?: number) {
       validRows.push(result.data);
     } else {
       invalidCount.total++;
-      if (item && typeof item === "object" && "id" in item) {
-        invalidCount.ids.push(String((item as Record<string, unknown>).id));
+      // [NASA TypeScript Safety] 使用類型守衛取代 as Record<string, unknown>
+      if (
+        item &&
+        typeof item === "object" &&
+        "id" in item &&
+        (typeof (item as { id: unknown }).id === "string" ||
+          typeof (item as { id: unknown }).id === "number")
+      ) {
+        invalidCount.ids.push(String((item as { id: string | number }).id));
       }
       // 只在開發時記錄詳細錯誤
       if (process.env.NODE_ENV !== "production") {
@@ -703,7 +710,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 async function attachAuthorsToPosts<T extends PostRow>(
   posts: T[],
 ): Promise<Array<T & { author: ProfileRow | null }>> {
-  if (!posts?.length) return posts as Array<T & { author: ProfileRow | null }>;
+  // [NASA TypeScript Safety] 空陣列早期返回，無需類型斷言
+  if (!posts?.length) return [];
 
   const authorIds = Array.from(
     new Set(

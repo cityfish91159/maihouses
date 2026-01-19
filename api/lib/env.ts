@@ -5,6 +5,8 @@
  * 生產環境缺少必要配置時會拋出錯誤
  */
 
+import { logger } from "./logger";
+
 // ============================================================================
 // Types
 // ============================================================================
@@ -91,13 +93,13 @@ export function ensureValidEnv(): void {
 
   // 記錄警告
   for (const warning of result.warnings) {
-    console.warn(`[ENV] WARNING: ${warning}`);
+    logger.warn(`[ENV] WARNING: ${warning}`);
   }
 
   // 錯誤時拋出
   if (!result.valid) {
     const errorMessage = result.errors.join("; ");
-    console.error(`[ENV] FATAL: ${errorMessage}`);
+    logger.error(`[ENV] FATAL: ${errorMessage}`);
 
     if (process.env.NODE_ENV === "production") {
       throw new Error(`Environment validation failed: ${errorMessage}`);

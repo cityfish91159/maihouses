@@ -10,18 +10,20 @@ export const ChatInput: React.FC<Props> = ({ onSend }) => {
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
+    // [NASA TypeScript Safety] 使用類型守衛驗證 CustomEvent
     const handler = (e: Event) => {
-      const ce = e as CustomEvent<{ text?: string }>;
-      const seed = ce.detail?.text || "";
+      // 檢查是否為 CustomEvent 並具有 detail 屬性
+      if (!(e instanceof CustomEvent)) return;
+      const detail = e.detail as { text?: string } | null | undefined;
+      const seed = detail?.text || "";
       if (seed) {
         setText(seed);
         inputRef.current?.focus();
         track("ui.warmbar_prefill", { from: "warmbar" });
       }
     };
-    window.addEventListener("mai:chat:start", handler as EventListener);
-    return () =>
-      window.removeEventListener("mai:chat:start", handler as EventListener);
+    window.addEventListener("mai:chat:start", handler);
+    return () => window.removeEventListener("mai:chat:start", handler);
   }, []);
 
   const handleSend = async () => {

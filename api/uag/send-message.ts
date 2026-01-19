@@ -2,6 +2,7 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import { messagingApi } from "@line/bot-sdk";
 import { v4 as uuidv4 } from "uuid";
+import { z } from "zod";
 import { verifyAgentAuth, sendAuthError, isDevEnvironment } from "../lib/auth";
 import { encryptConnectToken, ConnectTokenPayload } from "../lib/crypto";
 import {
@@ -11,6 +12,24 @@ import {
   setUserContext,
 } from "../lib/sentry";
 import { logger } from "../lib/logger";
+
+// [NASA TypeScript Safety] Request Body Schema
+const SendMessageRequestSchema = z.object({
+  agentId: z.string(),
+  sessionId: z.string(),
+  purchaseId: z.string(),
+  propertyId: z.string().optional(),
+  message: z.string(),
+  agentName: z.string(),
+  propertyTitle: z.string().optional(),
+  grade: z.enum(["S", "A", "B", "C"]).optional(),
+});
+
+// [NASA TypeScript Safety] LINE Binding Result Schema
+const LineBindingResultSchema = z.object({
+  line_user_id: z.string().nullable(),
+  line_status: z.enum(["active", "blocked"]),
+});
 
 // ============================================================================
 // Constants
@@ -204,28 +223,14 @@ async function pushLineMessage(
 
 /**
  * 驗證請求參數
+ * [NASA TypeScript Safety] 使用 Zod safeParse 取代 as 斷言
  */
 function validateRequest(body: unknown): SendMessageRequest | null {
-  if (!body || typeof body !== "object") {
+  const parseResult = SendMessageRequestSchema.safeParse(body);
+  if (!parseResult.success) {
     return null;
   }
-
-  const { agentId, sessionId, purchaseId, message, agentName } = body as Record<
-    string,
-    unknown
-  >;
-
-  if (
-    typeof agentId !== "string" ||
-    typeof sessionId !== "string" ||
-    typeof purchaseId !== "string" ||
-    typeof message !== "string" ||
-    typeof agentName !== "string"
-  ) {
-    return null;
-  }
-
-  return body as SendMessageRequest;
+  return parseResult.data;
 }
 
 // ============================================================================
@@ -393,7 +398,9 @@ async function handler(
       } satisfies SendMessageResponse);
     }
 
-    const lineBinding = binding as LineBindingResult | null;
+    // [NASA TypeScript Safety] 使用 Zod safeParse 取代 as LineBindingResult
+    const lineBindingResult = LineBindingResultSchema.safeParse(binding);
+    const lineBinding = lineBindingResult.success ? lineBindingResult.data : null;
 
     // 未綁定 LINE
     if (!lineBinding?.line_user_id) {

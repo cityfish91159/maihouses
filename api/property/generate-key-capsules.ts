@@ -1,4 +1,18 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
+import { z } from "zod";
+import { logger } from "../lib/logger";
+
+// [NASA TypeScript Safety] OpenAI Response Schema
+const OpenAIResponseSchema = z.object({
+  choices: z.array(z.object({
+    message: z.object({
+      content: z.string(),
+    }),
+  })),
+  usage: z.object({
+    total_tokens: z.number(),
+  }),
+});
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // CORS
@@ -87,19 +101,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const response = await fetchWithRetry();
 
-    // 定義 OpenAI 回應介面以解決 unknown 類型錯誤
-    interface OpenAIResponse {
-      choices: Array<{
-        message: {
-          content: string;
-        };
-      }>;
-      usage: {
-        total_tokens: number;
-      };
+    // [NASA TypeScript Safety] 使用 Zod safeParse 取代 as OpenAIResponse
+    const rawData: unknown = await response.json();
+    const parseResult = OpenAIResponseSchema.safeParse(rawData);
+    if (!parseResult.success) {
+      logger.error("[property/generate-key-capsules] OpenAI response validation failed", null, {
+        error: parseResult.error.message,
+      });
+      return res.status(200).json({
+        capsules: [],
+        metadata: { status: "error", message: "AI response validation failed" },
+      });
     }
-
-    const data = (await response.json()) as OpenAIResponse;
+    const data = parseResult.data;
     let content = data.choices[0]?.message?.content?.trim() || "[]";
 
     // 強健的 JSON 清洗邏輯
@@ -132,6 +146,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       },
     });
   } catch (error: unknown) {
+    logger.error("[property/generate-key-capsules] API error", error);
     const message = error instanceof Error ? error.message : "Unknown error";
     return res.status(200).json({
       capsules: [],

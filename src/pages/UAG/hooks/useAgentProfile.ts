@@ -66,9 +66,12 @@ export function useAgentProfile(
     retry: 1,
   });
 
+  // [NASA TypeScript Safety] 使用類型守衛取代 as Error | null
+  const typedError = error instanceof Error ? error : null;
+
   return {
     profile: data ?? null,
     isLoading,
-    error: error as Error | null,
+    error: typedError,
   };
 }

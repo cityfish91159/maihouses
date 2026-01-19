@@ -245,12 +245,15 @@ function UAGPageContent() {
    */
   const agentId = user?.id ?? (useMock ? "mock-agent-001" : undefined);
   // UAG-14: 取得房仲名稱（優先使用 user_metadata.full_name，fallback 到 email 前綴）
-  const agentName =
-    ((user?.user_metadata as Record<string, unknown> | undefined)?.full_name as
-      | string
-      | undefined) ??
-    user?.email?.split("@")[0] ??
-    "房仲";
+  // [NASA TypeScript Safety] 使用類型守衛取代 as Record
+  const agentName = (() => {
+    const metadata = user?.user_metadata;
+    if (metadata && typeof metadata === "object" && "full_name" in metadata) {
+      const fullName = metadata.full_name;
+      if (typeof fullName === "string" && fullName) return fullName;
+    }
+    return user?.email?.split("@")[0] ?? "房仲";
+  })();
   // 使用 lead 的 session_id（來自消費者瀏覽記錄）
   const consumerSessionId = purchasedLead?.session_id;
 

@@ -1,5 +1,13 @@
 import { createClient } from "@supabase/supabase-js";
 import type { VercelRequest, VercelResponse } from "@vercel/node";
+import { z } from "zod";
+import { logger } from "./lib/logger";
+
+// [NASA TypeScript Safety] Request Body Schema
+const SessionRecoveryRequestSchema = z.object({
+  fingerprint: z.string(),
+  agentId: z.string().optional(),
+});
 
 // ============================================================================
 // Types
@@ -73,7 +81,16 @@ export default async function handler(
     return;
   }
 
-  const { fingerprint, agentId } = req.body as SessionRecoveryRequest;
+  // [NASA TypeScript Safety] 使用 Zod safeParse 取代 as SessionRecoveryRequest
+  const parseResult = SessionRecoveryRequestSchema.safeParse(req.body);
+  if (!parseResult.success) {
+    res.status(400).json({
+      error: "Invalid request body",
+      recovered: false,
+    });
+    return;
+  }
+  const { fingerprint, agentId } = parseResult.data;
 
   // 驗證必填參數
   if (!fingerprint) {
@@ -107,9 +124,7 @@ export default async function handler(
 
     // PGRST116 = "Row not found" - 這是正常情況，不是錯誤
     if (error && error.code !== "PGRST116") {
-      console.error("[session-recovery] Supabase error:", {
-        code: error.code,
-        message: error.message,
+      logger.error("[session-recovery] Supabase error", error, {
         fingerprint: fingerprint.substring(0, 20) + "...",
         agentId,
       });
@@ -118,7 +133,7 @@ export default async function handler(
 
     // 成功找到可恢復的 session
     if (data) {
-      console.log("[session-recovery] ✅ Session recovered:", {
+      logger.info("[session-recovery] Session recovered", {
         session_id: data.session_id,
         grade: data.grade,
         last_active: data.last_active,
@@ -135,17 +150,16 @@ export default async function handler(
     }
 
     // 沒有找到可恢復的 session
-    console.log("[session-recovery] No session found for fingerprint:", {
+    logger.info("[session-recovery] No session found for fingerprint", {
       fingerprint: fingerprint.substring(0, 20) + "...",
       agentId,
     });
 
     res.status(200).json({ recovered: false });
   } catch (err) {
-    const error = err as Error;
-    console.error("[session-recovery] Unexpected error:", {
-      message: error.message,
-      stack: error.stack,
+    // [NASA TypeScript Safety] 使用 instanceof 類型守衛取代 as Error
+    const error = err instanceof Error ? err : new Error(String(err));
+    logger.error("[session-recovery] Unexpected error", error, {
       fingerprint: fingerprint
         ? fingerprint.substring(0, 20) + "..."
         : "undefined",

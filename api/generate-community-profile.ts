@@ -7,6 +7,17 @@
 
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { createClient } from "@supabase/supabase-js";
+import { z } from "zod";
+import { logger } from "./lib/logger";
+
+// [NASA TypeScript Safety] OpenAI Response Schema
+const OpenAIResponseSchema = z.object({
+  choices: z.array(z.object({
+    message: z.object({
+      content: z.string().optional(),
+    }).optional(),
+  })).optional(),
+});
 
 const supabase = createClient(
   process.env.SUPABASE_URL!,
@@ -122,10 +133,16 @@ ${allDisadvantages.join("、") || "無"}
       throw new Error(`OpenAI API error: ${aiResponse.status}`);
     }
 
-    interface OpenAIResponse {
-      choices?: Array<{ message?: { content?: string } }>;
+    // [NASA TypeScript Safety] 使用 Zod safeParse 取代 as OpenAIResponse
+    const rawData: unknown = await aiResponse.json();
+    const parseResult = OpenAIResponseSchema.safeParse(rawData);
+    if (!parseResult.success) {
+      logger.error("[generate-community-profile] OpenAI response validation failed", null, {
+        error: parseResult.error.message,
+      });
+      return res.status(500).json({ error: "AI 回覆格式錯誤" });
     }
-    const aiData = (await aiResponse.json()) as OpenAIResponse;
+    const aiData = parseResult.data;
     const aiContent = aiData.choices?.[0]?.message?.content || "";
 
     // 5. 解析 JSON
@@ -134,7 +151,7 @@ ${allDisadvantages.join("、") || "無"}
       const jsonStr = aiContent.replace(/```json\n?|\n?```/g, "").trim();
       aiResult = JSON.parse(jsonStr);
     } catch {
-      console.error("AI parse failed:", aiContent);
+      logger.error("[generate-community-profile] AI parse failed", null, { aiContent });
       return res.status(500).json({ error: "AI 回覆格式錯誤" });
     }
 
@@ -165,6 +182,9 @@ ${allDisadvantages.join("、") || "無"}
       result: aiResult,
     });
   } catch (error: unknown) {
+    logger.error("[generate-community-profile] API error", error, {
+      communityId: req.body?.communityId,
+    });
     const message = error instanceof Error ? error.message : "Unknown error";
     return res.status(500).json({ error: message });
   }

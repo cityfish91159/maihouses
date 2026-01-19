@@ -5,8 +5,40 @@ import {
   useRef,
   MutableRefObject,
 } from "react";
+import { z } from "zod";
 import { notify } from "../lib/notify";
 import { safeLocalStorage } from "../lib/safeStorage";
+
+// [NASA TypeScript Safety] Zod Schema 用於驗證草稿資料結構
+const DraftFormDataSchema = z.object({
+  title: z.string(),
+  price: z.string(),
+  address: z.string(),
+  communityName: z.string(),
+  size: z.string(),
+  age: z.string(),
+  floorCurrent: z.string(),
+  floorTotal: z.string(),
+  rooms: z.string(),
+  halls: z.string(),
+  bathrooms: z.string(),
+  type: z.string(),
+  description: z.string(),
+  advantage1: z.string(),
+  advantage2: z.string(),
+  disadvantage: z.string(),
+  highlights: z.array(z.string()),
+  sourceExternalId: z.string(),
+});
+
+// [NASA TypeScript Safety] 完整草稿儲存結構 Schema
+const DraftStorageSchema = DraftFormDataSchema.extend({
+  _version: z.number(),
+  _savedAt: z.number(),
+  _tabId: z.string(),
+});
+
+type DraftStorageValidated = z.infer<typeof DraftStorageSchema>;
 
 const DRAFT_KEY_PREFIX = "mh_draft_upload";
 const AUTO_SAVE_DELAY_MS = 1000;
@@ -18,8 +50,6 @@ const DRAFT_EXPIRY_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
  * 僅包含文字欄位，不含圖片 (blob URL 無法序列化)
  */
 export interface DraftFormData {
-  // ... existing imports ...
-
   title: string;
   price: string;
   address: string;
@@ -40,11 +70,8 @@ export interface DraftFormData {
   sourceExternalId: string;
 }
 
-type DraftStorage = DraftFormData & {
-  _version: number;
-  _savedAt: number;
-  _tabId: string;
-};
+// [NASA TypeScript Safety] 使用 Zod 推導的類型，確保類型與驗證一致
+type DraftStorage = DraftStorageValidated;
 
 /**
  * 表單自動快照 Hook (UP-1)
@@ -107,8 +134,6 @@ export function usePropertyDraft(form: DraftFormData, userId?: string) {
       clearTimeout(saveTimeoutRef.current);
     }
 
-    // ...
-
     saveTimeoutRef.current = setTimeout(() => {
       try {
         const draftData: DraftStorage = {
@@ -164,7 +189,15 @@ export function usePropertyDraft(form: DraftFormData, userId?: string) {
     try {
       const saved = safeLocalStorage.getItem(draftKey);
       if (!saved) return false;
-      const parsed = JSON.parse(saved) as DraftStorage;
+
+      // [NASA TypeScript Safety] 使用 Zod safeParse 取代 as 類型斷言
+      const parseResult = DraftStorageSchema.safeParse(JSON.parse(saved));
+      if (!parseResult.success) {
+        safeLocalStorage.removeItem(draftKey);
+        return false;
+      }
+
+      const parsed = parseResult.data;
       if (parsed._version !== DRAFT_VERSION) {
         safeLocalStorage.removeItem(draftKey);
         return false;
@@ -191,7 +224,14 @@ export function usePropertyDraft(form: DraftFormData, userId?: string) {
       const saved = safeLocalStorage.getItem(draftKey);
       if (!saved) return null;
 
-      const parsed = JSON.parse(saved) as DraftStorage;
+      // [NASA TypeScript Safety] 使用 Zod safeParse 取代 as 類型斷言
+      const parseResult = DraftStorageSchema.safeParse(JSON.parse(saved));
+      if (!parseResult.success) {
+        safeLocalStorage.removeItem(draftKey);
+        return null;
+      }
+
+      const parsed = parseResult.data;
       if (parsed._version !== DRAFT_VERSION) {
         safeLocalStorage.removeItem(draftKey);
         return null;
@@ -257,7 +297,12 @@ export function usePropertyDraft(form: DraftFormData, userId?: string) {
     try {
       const saved = safeLocalStorage.getItem(draftKey);
       if (!saved) return null;
-      const parsed = JSON.parse(saved) as DraftStorage;
+
+      // [NASA TypeScript Safety] 使用 Zod safeParse 取代 as 類型斷言
+      const parseResult = DraftStorageSchema.safeParse(JSON.parse(saved));
+      if (!parseResult.success) return null;
+
+      const parsed = parseResult.data;
       if (parsed._version !== DRAFT_VERSION) return null;
       return {
         title: parsed.title || "未命名物件",

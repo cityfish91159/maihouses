@@ -33,7 +33,9 @@ function applyLikeToggle(
       return {
         ...c,
         isLiked: newIsLiked,
-        likesCount: newIsLiked ? c.likesCount + 1 : Math.max(0, c.likesCount - 1),
+        likesCount: newIsLiked
+          ? c.likesCount + 1
+          : Math.max(0, c.likesCount - 1),
       };
     }
     // 檢查 replies
@@ -46,7 +48,9 @@ function applyLikeToggle(
             return {
               ...r,
               isLiked: newIsLiked,
-              likesCount: newIsLiked ? r.likesCount + 1 : Math.max(0, r.likesCount - 1),
+              likesCount: newIsLiked
+                ? r.likesCount + 1
+                : Math.max(0, r.likesCount - 1),
             };
           }
           return r;

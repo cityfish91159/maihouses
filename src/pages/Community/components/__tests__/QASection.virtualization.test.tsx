@@ -83,12 +83,8 @@ describe("QASection 虛擬化測試", () => {
       expect(virtualContainer).toBeNull();
 
       // 應該能找到第一個和最後一個問題（驗證所有問題都被渲染）
-      expect(
-        screen.getByText(/Q: 已回答問題第1題/),
-      ).toBeInTheDocument();
-      expect(
-        screen.getByText(/Q: 已回答問題第10題/),
-      ).toBeInTheDocument();
+      expect(screen.getByText(/Q: 已回答問題第1題/)).toBeInTheDocument();
+      expect(screen.getByText(/Q: 已回答問題第10題/)).toBeInTheDocument();
     });
 
     it(`超過 ${VIRTUALIZATION_THRESHOLD} 個問題時，啟用虛擬化（有 data-testid="virtualized-container"）`, () => {
@@ -242,9 +238,7 @@ describe("QASection 虛擬化測試", () => {
     it("關閉 modal 後，activeQuestion 應重置", () => {
       const questions = generateAnsweredQuestions(5);
 
-      render(
-        <QASection viewerRole="resident" questions={questions} />,
-      );
+      render(<QASection viewerRole="resident" questions={questions} />);
 
       // 開啟 modal
       const answerButton = screen.getAllByRole("button", { name: /回答/ })[0]!;
@@ -300,16 +294,11 @@ describe("QASection 虛擬化測試", () => {
       const questions = generateAnsweredQuestions(5);
 
       render(
-        <QASection
-          viewerRole="resident"
-          questions={{ items: questions }}
-        />,
+        <QASection viewerRole="resident" questions={{ items: questions }} />,
       );
 
       // 應該能找到第一個問題
-      expect(
-        screen.getByText(/Q: 已回答問題第1題/),
-      ).toBeInTheDocument();
+      expect(screen.getByText(/Q: 已回答問題第1題/)).toBeInTheDocument();
     });
 
     it("混合已回答與未回答問題時應分別處理", () => {

@@ -1,16 +1,19 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
+import { z } from "zod";
+import { logger } from "./lib/logger";
 
-interface ChatMessage {
-  role: "system" | "user" | "assistant";
-  content: string;
-}
+// Zod Schema for request validation
+const ChatMessageSchema = z.object({
+  role: z.enum(["system", "user", "assistant"]),
+  content: z.string(),
+});
 
-interface ChatRequestBody {
-  messages?: ChatMessage[];
-  model?: string;
-  temperature?: number;
-  stream?: boolean;
-}
+const ChatRequestSchema = z.object({
+  messages: z.array(ChatMessageSchema).min(1, "messages 不能為空"),
+  model: z.string().optional(),
+  temperature: z.number().min(0).max(2).optional(),
+  stream: z.boolean().optional(),
+});
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // 設定 CORS
@@ -37,14 +40,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     });
   }
 
-  // 解析 request body
-  const { messages, model, temperature, stream } = req.body || {};
-  if (!messages || !Array.isArray(messages)) {
+  // 解析並驗證 request body
+  const parsed = ChatRequestSchema.safeParse(req.body);
+  if (!parsed.success) {
     return res.status(400).json({
       error: "Invalid request",
-      hint: "Expected: { messages: [...] }",
+      details: parsed.error.flatten(),
     });
   }
+  const { messages, model, temperature, stream } = parsed.data;
 
   // 如果要求串流
   if (stream) {
@@ -108,6 +112,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       res.end();
     } catch (error: unknown) {
+      logger.error("[chat] Stream error", error);
       const message = error instanceof Error ? error.message : "Unknown error";
       res.write(
         `data: ${JSON.stringify({ error: "Stream error", message })}\n\n`,
@@ -145,6 +150,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const data = await response.json();
       return res.status(200).json(data);
     } catch (error: unknown) {
+      logger.error("[chat] Non-stream error", error);
       const message = error instanceof Error ? error.message : "Unknown error";
       return res.status(500).json({
         error: "Internal server error",

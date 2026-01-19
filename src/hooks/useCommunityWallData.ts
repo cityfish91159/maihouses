@@ -8,6 +8,7 @@
  */
 
 import { useState, useCallback, useMemo, useEffect, useRef } from "react";
+import { z } from "zod";
 import { safeLocalStorage } from "../lib/safeStorage";
 import { useCommunityWall } from "./useCommunityWallQuery";
 import { supabase } from "../lib/supabase";
@@ -29,6 +30,16 @@ import {
 } from "../pages/Community/mockData";
 import { convertApiData, sortPostsWithPinned } from "./communityWallConverters";
 import type { UnifiedWallData } from "./communityWallConverters";
+
+// [NASA TypeScript Safety] Zod Schema 用於驗證 viewerRole
+const RoleSchema = z.enum(["guest", "member", "resident", "agent", "official", "admin"]);
+
+/**
+ * [NASA TypeScript Safety] 類型守衛：驗證 viewerRole 是否為有效的 Role
+ */
+function isValidRole(value: unknown): value is Role {
+  return RoleSchema.safeParse(value).success;
+}
 
 // ============ 統一輸出型別 ============
 export type { Post, Review, Question, CommunityInfo };
@@ -114,16 +125,14 @@ const saveMockState = (data: UnifiedWallData) => {
   }
 };
 
-const VALID_VIEWER_ROLES: Role[] = ["guest", "member", "resident", "agent"];
+// [NASA TypeScript Safety] 使用 Zod 驗證取代 as 類型斷言
 const resolveViewerRole = (
   rawRole: unknown,
   hasAuthenticatedUser: boolean,
 ): Role => {
-  if (
-    typeof rawRole === "string" &&
-    VALID_VIEWER_ROLES.includes(rawRole as Role)
-  ) {
-    return rawRole as Role;
+  // [NASA TypeScript Safety] 使用類型守衛進行運行時驗證
+  if (isValidRole(rawRole)) {
+    return rawRole;
   }
   return hasAuthenticatedUser ? "member" : "guest";
 };

@@ -23,7 +23,11 @@ export const MoodProvider: React.FC<{ children: React.ReactNode }> = ({
 }) => {
   const [mood, setMoodState] = useState<Mood>(() => {
     const raw = safeLocalStorage.getItem("mai-mood-v1");
-    return (raw as Mood) || "neutral";
+    // [NASA TypeScript Safety] 使用類型守衛取代 as Mood
+    if (raw === "neutral" || raw === "stress" || raw === "rest") {
+      return raw;
+    }
+    return "neutral";
   });
 
   // 使用 useCallback 確保 setMood 引用穩定

@@ -12,6 +12,13 @@
 
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { messagingApi } from "@line/bot-sdk";
+import { z } from "zod";
+
+// [NASA TypeScript Safety] Test Request Schema
+const TestRequestSchema = z.object({
+  lineUserId: z.string(),
+  message: z.string().optional(),
+});
 
 interface TestRequest {
   lineUserId: string;
@@ -44,9 +51,9 @@ export default async function handler(
     });
   }
 
-  // 驗證請求參數
-  const { lineUserId, message } = req.body as TestRequest;
-  if (!lineUserId) {
+  // [NASA TypeScript Safety] 使用 Zod safeParse 取代 as TestRequest
+  const parseResult = TestRequestSchema.safeParse(req.body);
+  if (!parseResult.success) {
     return res.status(400).json({
       error: "Missing lineUserId",
       hint: "請提供 LINE User ID (U 開頭的 33 字元字串)",
@@ -56,6 +63,7 @@ export default async function handler(
       },
     });
   }
+  const { lineUserId, message } = parseResult.data;
 
   // 驗證 LINE User ID 格式
   if (!lineUserId.startsWith("U") || lineUserId.length !== 33) {

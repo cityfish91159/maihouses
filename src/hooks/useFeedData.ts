@@ -38,12 +38,43 @@ import type { Role } from "../types/community";
 import { useAuth } from "./useAuth";
 import { getCommunityName, isValidCommunityId } from "../constants";
 
-import type { FeedComment } from "../types/comment";
+import type { FeedComment, FeedCommentAuthorRole } from "../types/comment";
 import { getConsumerFeedData } from "../pages/Feed/mockData";
 import { usePermission } from "./usePermission";
 import { PERMISSIONS } from "../types/permissions";
 import { uploadService } from "../services/uploadService";
 import type { FeedPost, UnifiedFeedData, SidebarData } from "../types/feed";
+
+// [NASA TypeScript Safety] 定義有效的 FeedPost type 值
+const VALID_POST_TYPES = ["agent", "resident", "official", "member"] as const;
+type ValidPostType = (typeof VALID_POST_TYPES)[number];
+
+/**
+ * [NASA TypeScript Safety] 類型守衛：驗證角色是否為有效的 FeedPost type
+ */
+function isValidPostType(value: unknown): value is ValidPostType {
+  return typeof value === "string" && VALID_POST_TYPES.includes(value as ValidPostType);
+}
+
+/**
+ * [NASA TypeScript Safety] 安全轉換角色為 FeedPost type
+ */
+function toFeedPostType(role: string | undefined | null): FeedPost["type"] {
+  if (isValidPostType(role)) {
+    return role;
+  }
+  return "member";
+}
+
+/**
+ * [NASA TypeScript Safety] 安全轉換角色為 FeedComment author role
+ */
+function toCommentAuthorRole(role: string | undefined | null): FeedCommentAuthorRole {
+  if (role === "agent" || role === "resident" || role === "official" || role === "member") {
+    return role;
+  }
+  return "member";
+}
 
 // Phase 4: 從 feedUtils 導入純函數
 import {
@@ -51,6 +82,7 @@ import {
   EMPTY_FEED_DATA,
   type SupabasePostRow,
   type ProfileRow,
+  SupabasePostRowSchema,
   deriveSidebarData,
   deriveTitleFromContent,
   loadPersistedFeedMockState,
@@ -272,9 +304,19 @@ export function useFeedData(
         throw error;
       }
 
-      const mapped = await mapSupabasePostsToFeed(
-        (data ?? []) as SupabasePostRow[],
-      );
+      // [NASA TypeScript Safety] 使用 Zod safeParse 取代 as 類型斷言
+      const parseResult = SupabasePostRowSchema.array().safeParse(data ?? []);
+      if (!parseResult.success) {
+        logger.warn("[useFeedData] Supabase post data validation failed", {
+          error: parseResult.error.flatten(),
+        });
+        // 降級處理：使用空陣列
+        const mapped = await mapSupabasePostsToFeed([]);
+        setApiData(mapped);
+        return;
+      }
+
+      const mapped = await mapSupabasePostsToFeed(parseResult.data);
 
       // Security Filter
       const securePosts = mapped.posts.filter((p) => {
@@ -599,9 +641,8 @@ export function useFeedData(
       const tempPost: FeedPost = {
         id: tempId,
         author: authUser?.user_metadata?.name || authUser?.email || "我",
-        type: (["agent", "resident", "official"].includes(authRole || "")
-          ? authRole
-          : "member") as FeedPost["type"],
+        // [NASA TypeScript Safety] 使用類型守衛取代 as 類型斷言
+        type: toFeedPostType(authRole),
         time: new Date().toISOString(),
         title: content.substring(0, 20),
         content: content,
@@ -698,9 +739,8 @@ export function useFeedData(
         author: {
           id: authUser?.id || "",
           name: authUser?.user_metadata?.name || "測試用戶",
-          role: (["agent", "resident", "official"].includes(authRole || "")
-            ? authRole
-            : "member") as "agent" | "resident" | "official" | "member",
+          // [NASA TypeScript Safety] 使用類型守衛取代 as 類型斷言
+          role: toCommentAuthorRole(authRole),
         },
         content,
         createdAt: new Date().toISOString(),
@@ -774,7 +814,8 @@ export function useFeedData(
           );
         }
         setApiData(previousApiData);
-        setApiError(err as Error);
+        // [NASA TypeScript Safety] 使用 instanceof 取代 as Error
+        setApiError(err instanceof Error ? err : new Error(String(err)));
         throw err;
       } finally {
         setApiLoading(false);

@@ -208,8 +208,9 @@ const ID_PATTERNS = [
 
 // ============ 標題評分函數 ============
 
-// ... (這部分沿用之前的邏輯，只需確認 2.5 審查意見)
-// 2.5: 扣掉價格/地址/ID 行... 選最高分
+/**
+ * 標題評分邏輯：扣掉價格/地址/ID 行，選最高分
+ */
 function scoreTitleLine(line: string, allText: string): number {
   const trimmed = line.trim();
   let score = 0;

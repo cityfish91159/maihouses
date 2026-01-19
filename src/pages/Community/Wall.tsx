@@ -47,9 +47,13 @@ const rawMockFlag = `${import.meta.env.VITE_COMMUNITY_WALL_ALLOW_MOCK ?? ""}`
   .toLowerCase();
 const GLOBAL_MOCK_TOGGLE_ENABLED = rawMockFlag !== "false";
 
+// [NASA TypeScript Safety] 使用類型守衛取代 as Role
 const parseRoleParam = (value: string | null): Role | null => {
   if (!value) return null;
-  return VALID_ROLES.includes(value as Role) ? (value as Role) : null;
+  if (VALID_ROLES.includes(value as never)) {
+    return value as Role;
+  }
+  return null;
 };
 
 const updateURLParam = (
@@ -85,9 +89,10 @@ function WallInner() {
     if (urlRole) {
       return urlRole;
     }
-    const stored = safeLocalStorage.getItem(ROLE_STORAGE_KEY) as Role | null;
-    if (stored && VALID_ROLES.includes(stored)) {
-      return stored;
+    // [NASA TypeScript Safety] 使用類型守衛取代 as Role
+    const stored = safeLocalStorage.getItem(ROLE_STORAGE_KEY);
+    if (stored && VALID_ROLES.includes(stored as never)) {
+      return stored as Role;
     }
     return "guest";
   }, []);
@@ -107,10 +112,16 @@ function WallInner() {
 
   // 取得 currentUserId 和 userInitial 供留言系統使用
   const currentUserId = user?.id;
-  const userName =
-    (user?.user_metadata as Record<string, unknown> | undefined)?.name ??
-    (user?.user_metadata as Record<string, unknown> | undefined)?.full_name ??
-    user?.email;
+  // [NASA TypeScript Safety] 使用類型守衛取代 as Record
+  const userMetadata = user?.user_metadata;
+  const userName = (() => {
+    if (typeof userMetadata === "object" && userMetadata !== null) {
+      const meta = userMetadata as Record<string, unknown>;
+      if (typeof meta.name === "string") return meta.name;
+      if (typeof meta.full_name === "string") return meta.full_name;
+    }
+    return user?.email;
+  })();
   const userInitial =
     typeof userName === "string" && userName.length > 0
       ? userName.charAt(0).toUpperCase()

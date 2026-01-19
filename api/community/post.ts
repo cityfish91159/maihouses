@@ -8,22 +8,18 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 import type { SupabaseClient, PostgrestError } from "@supabase/supabase-js";
 import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
+import { logger } from "../lib/logger";
 
 // ============================================
 // Types
 // ============================================
 
-/** 社區成員角色 */
-type CommunityRole = "resident" | "agent" | "moderator" | "member" | "visitor";
+/** [NASA TypeScript Safety] 社區成員角色 Schema */
+const CommunityRoleSchema = z.enum(["resident", "agent", "moderator", "member", "visitor"]);
+type CommunityRole = z.infer<typeof CommunityRoleSchema>;
 
 /** 所有有效的社區角色（用於運行時驗證） */
-const VALID_COMMUNITY_ROLES: readonly CommunityRole[] = [
-  "resident",
-  "agent",
-  "moderator",
-  "member",
-  "visitor",
-] as const;
+const VALID_COMMUNITY_ROLES: readonly CommunityRole[] = CommunityRoleSchema.options;
 
 /** 社區成員驗證結果 */
 interface MembershipVerifyResult {
@@ -106,10 +102,9 @@ async function verifyCommunityMember(
     return { isMember: false, role: null, error: null };
   }
 
-  // P1: Type Safety - 運行時驗證角色是否有效
-  const rawRole = membership.role as string;
-  const isValidRole = VALID_COMMUNITY_ROLES.includes(rawRole as CommunityRole);
-  const role: CommunityRole | null = isValidRole ? (rawRole as CommunityRole) : null;
+  // [NASA TypeScript Safety] 使用 Zod safeParse 取代 as CommunityRole
+  const roleResult = CommunityRoleSchema.safeParse(membership.role);
+  const role: CommunityRole | null = roleResult.success ? roleResult.data : null;
 
   return {
     isMember: true,
@@ -276,6 +271,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       message: visibility === "private" ? "已發布到私密牆" : "已發布到公開牆",
     });
   } catch (error: unknown) {
+    logger.error("[community/post] API error", error, {
+      userId: user.id,
+      communityId: req.body?.communityId,
+    });
     const message = error instanceof Error ? error.message : "Unknown error";
     return res.status(500).json({ error: message });
   }

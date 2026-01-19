@@ -1,8 +1,5 @@
 import { safeLocalStorage } from "../lib/safeStorage";
 
-// ... (existing imports, but this file doesn't seem to have any imports at the top, it exports constants)
-// So I will just add the import at the top.
-
 export function savePainPointsToStorage(): void {
   safeLocalStorage.setItem("maimai_pain_points", JSON.stringify(painPoints));
 }
@@ -22,8 +19,6 @@ export function resetPainPoints(): void {
   painPoints = [];
   safeLocalStorage.removeItem("maimai_pain_points");
 }
-
-// ...
 
 export function saveUserProfileToStorage(): void {
   safeLocalStorage.setItem("maimai_user_profile", JSON.stringify(userProfile));

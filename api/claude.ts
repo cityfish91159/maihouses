@@ -4,19 +4,34 @@
  */
 
 import type { VercelRequest, VercelResponse } from "@vercel/node";
+import { z } from "zod";
+import { logger } from "./lib/logger";
 
-interface ChatMessage {
-  role: "system" | "user" | "assistant";
-  content: string;
-}
+// Zod Schema for request validation
+const ChatMessageSchema = z.object({
+  role: z.enum(["system", "user", "assistant"]),
+  content: z.string(),
+});
 
-interface ClaudeRequestBody {
-  messages?: ChatMessage[];
-  model?: string;
-  max_tokens?: number;
-  temperature?: number;
-  stream?: boolean;
-}
+const ClaudeRequestSchema = z.object({
+  messages: z.array(ChatMessageSchema).min(1, "messages 不能為空"),
+  model: z.string().optional(),
+  max_tokens: z.number().int().min(1).max(100000).optional(),
+  temperature: z.number().min(0).max(1).optional(),
+  stream: z.boolean().optional(),
+});
+
+// [NASA TypeScript Safety] Claude API Response Schema
+const ClaudeResponseSchema = z.object({
+  id: z.string(),
+  model: z.string(),
+  content: z.array(z.object({ text: z.string(), type: z.string() })),
+  stop_reason: z.string(),
+  usage: z.object({
+    input_tokens: z.number(),
+    output_tokens: z.number(),
+  }).optional(),
+});
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // 設定 CORS
@@ -43,23 +58,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     });
   }
 
-  // 解析 request body
+  // 解析並驗證 request body
+  const parsed = ClaudeRequestSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({
+      error: "Invalid request",
+      details: parsed.error.flatten(),
+    });
+  }
   const {
     messages,
     model = "claude-sonnet-4-5-20250514",
     max_tokens = 4096,
     temperature = 1.0,
     stream = false,
-  } = req.body || {};
-
-  if (!messages || !Array.isArray(messages)) {
-    return res.status(400).json({
-      error: "Invalid request",
-      hint: "Expected: { messages: [...] }",
-    });
-  }
+  } = parsed.data;
 
   // 轉換訊息格式（如果需要從 OpenAI 格式轉換）
+  type ChatMessage = z.infer<typeof ChatMessageSchema>;
   const claudeMessages = messages
     .map((msg: ChatMessage) => {
       if (msg.role === "system") {
@@ -146,19 +162,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         throw new Error(JSON.stringify(error));
       }
 
-      // Claude API 回應類型
-      interface ClaudeResponse {
-        id: string;
-        model: string;
-        content: Array<{ text: string; type: string }>;
-        stop_reason: string;
-        usage?: {
-          input_tokens: number;
-          output_tokens: number;
-        };
+      // [NASA TypeScript Safety] 使用 Zod safeParse 取代 as ClaudeResponse
+      const rawData: unknown = await response.json();
+      const parseResult = ClaudeResponseSchema.safeParse(rawData);
+      if (!parseResult.success) {
+        logger.error("[claude] Response validation failed", { error: parseResult.error.message });
+        throw new Error("Invalid Claude API response");
       }
-
-      const data = (await response.json()) as ClaudeResponse;
+      const data = parseResult.data;
 
       // 轉換為 OpenAI 格式（相容性）
       const result = {
@@ -188,6 +199,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(200).json(result);
     }
   } catch (error: unknown) {
+    logger.error("[claude] API request failed", error);
     const message = error instanceof Error ? error.message : "Unknown error";
     return res.status(500).json({
       error: "Claude API request failed",

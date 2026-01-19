@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { getTx, saveTx, logAudit, verifyToken, cors } from "./_utils";
+import { getTx, saveTx, logAudit, verifyToken, cors, TrustQuerySchema } from "./_utils";
+import { logger } from "../lib/logger";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   cors(req, res);
@@ -8,7 +9,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     const user = verifyToken(req);
-    const { id } = req.query as { id: string };
+    // [NASA TypeScript Safety] Zod safeParse 取代 as 斷言
+    const queryParsed = TrustQuerySchema.safeParse(req.query);
+    if (!queryParsed.success) {
+      logger.error("[trust/supplement] Invalid query params", { error: queryParsed.error.message });
+      return res.status(400).json({ error: "Invalid transaction ID" });
+    }
+    const { id } = queryParsed.data;
     if (user.txId && user.txId !== id)
       return res.status(403).json({ error: "Access denied" });
 

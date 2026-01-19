@@ -12,8 +12,9 @@
 import { useCallback, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { UAGService } from "../services/uagService";
-import type { AppData } from "../types/uag.types";
+import { AppDataSchema, type AppData } from "../types/uag.types";
 import { MOCK_DB } from "../mockData";
+import { logger } from "../../../lib/logger";
 import { notify } from "../../../lib/notify";
 import { useAuth } from "../../../hooks/useAuth";
 import { useUAGModeStore, selectUseMock } from "../../../stores/uagModeStore";
@@ -108,7 +109,13 @@ export function useUAGData(): UseUAGDataReturn {
     queryKey: [UAG_QUERY_KEY, useMock, userId],
     queryFn: async (): Promise<AppData> => {
       if (useMock) {
-        return MOCK_DB as unknown as AppData;
+        // [NASA TypeScript Safety] 使用 Zod safeParse 取代 as unknown as AppData
+        const parseResult = AppDataSchema.safeParse(MOCK_DB);
+        if (!parseResult.success) {
+          logger.error("[useUAGData] Mock data validation failed", { error: parseResult.error.message });
+          throw new Error("Invalid mock data structure");
+        }
+        return parseResult.data;
       }
       if (!userId) {
         throw new Error("Not authenticated");

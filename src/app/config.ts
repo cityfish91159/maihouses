@@ -39,18 +39,19 @@ async function fetchJson(url: string) {
   return r.json();
 }
 
+// [NASA TypeScript Safety] 使用類型守衛取代 as Record<string, unknown>
 function isValidConfig(obj: unknown): obj is AppConfig {
+  if (obj === null || typeof obj !== "object") return false;
+  const record = obj as Record<string, unknown>;
   return (
-    obj !== null &&
-    typeof obj === "object" &&
-    "apiBaseUrl" in obj &&
-    typeof (obj as Record<string, unknown>).apiBaseUrl === "string" &&
-    "appVersion" in obj &&
-    typeof (obj as Record<string, unknown>).appVersion === "string" &&
-    "minBackend" in obj &&
-    typeof (obj as Record<string, unknown>).minBackend === "string" &&
-    "features" in obj &&
-    typeof (obj as Record<string, unknown>).features === "object"
+    "apiBaseUrl" in record &&
+    typeof record.apiBaseUrl === "string" &&
+    "appVersion" in record &&
+    typeof record.appVersion === "string" &&
+    "minBackend" in record &&
+    typeof record.minBackend === "string" &&
+    "features" in record &&
+    typeof record.features === "object"
   );
 }
 
@@ -99,20 +100,38 @@ function pickParams() {
         >((a, s) => ((a[s.trim()] = true), a), {})
     : undefined;
 
-  return {
-    apiBaseUrl: getParamFromBoth("api"),
-    features,
-    mock: getParamFromBoth("mock")
-      ? getParamFromBoth("mock") === "1"
-      : undefined,
-    latency: getParamFromBoth("latency")
-      ? +getParamFromBoth("latency")!
-      : undefined,
-    error: getParamFromBoth("error") ? +getParamFromBoth("error")! : undefined,
-    q: getParamFromBoth("q"),
-    devtools: getParamFromBoth("devtools") as "1" | "0" | undefined,
-    mockSeed: getParamFromBoth("seed"),
-  } as RuntimeOverrides;
+  // [NASA TypeScript Safety] 構建類型安全的 RuntimeOverrides
+  const devtoolsParam = getParamFromBoth("devtools");
+  const devtools: "1" | "0" | undefined =
+    devtoolsParam === "1" ? "1" : devtoolsParam === "0" ? "0" : undefined;
+  const latencyParam = getParamFromBoth("latency");
+  const errorParam = getParamFromBoth("error");
+
+  // [NASA TypeScript Safety] exactOptionalPropertyTypes 要求不能賦值 undefined
+  // 使用 Object spread 來建構物件，只包含有值的屬性
+  const result: RuntimeOverrides = {};
+
+  const apiBaseUrl = getParamFromBoth("api");
+  if (apiBaseUrl !== undefined) result.apiBaseUrl = apiBaseUrl;
+
+  if (features !== undefined) result.features = features;
+
+  const mockParam = getParamFromBoth("mock");
+  if (mockParam !== undefined) result.mock = mockParam === "1";
+
+  if (latencyParam !== undefined) result.latency = +latencyParam;
+
+  if (errorParam !== undefined) result.error = +errorParam;
+
+  const q = getParamFromBoth("q");
+  if (q !== undefined) result.q = q;
+
+  if (devtools !== undefined) result.devtools = devtools;
+
+  const mockSeed = getParamFromBoth("seed");
+  if (mockSeed !== undefined) result.mockSeed = mockSeed;
+
+  return result;
 }
 
 export async function getConfig(): Promise<AppConfig & RuntimeOverrides> {

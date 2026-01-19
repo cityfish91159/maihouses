@@ -30,12 +30,21 @@ type QuietAPI = {
 const STORAGE_KEY = "mai-quiet-mode-v1";
 const QuietModeContext = createContext<QuietAPI | null>(null);
 
+// [NASA TypeScript Safety] 類型守衛驗證 QuietState
+function isQuietState(obj: unknown): obj is QuietState {
+  if (typeof obj !== "object" || obj === null) return false;
+  const record = obj as Record<string, unknown>;
+  return typeof record.isQuiet === "boolean";
+}
+
 function readStorage(): QuietState {
   try {
     const raw = safeLocalStorage.getItem(STORAGE_KEY);
     if (!raw) return { isQuiet: false, untilTs: null, remainingTurns: null };
-    const parsed = JSON.parse(raw) as QuietState;
-    return parsed;
+    const parsed: unknown = JSON.parse(raw);
+    // [NASA TypeScript Safety] 使用類型守衛取代 as QuietState
+    if (isQuietState(parsed)) return parsed;
+    return { isQuiet: false, untilTs: null, remainingTurns: null };
   } catch {
     return { isQuiet: false, untilTs: null, remainingTurns: null };
   }
@@ -170,7 +179,10 @@ export function isQuietActiveFromStorage(): boolean {
   try {
     const raw = safeLocalStorage.getItem("mai-quiet-mode-v1");
     if (!raw) return false;
-    const s = JSON.parse(raw) as QuietState;
+    const parsed: unknown = JSON.parse(raw);
+    // [NASA TypeScript Safety] 使用類型守衛取代 as QuietState
+    if (!isQuietState(parsed)) return false;
+    const s = parsed;
     const now = Date.now();
     if (!s.isQuiet) return false;
     if (s.untilTs && now > s.untilTs) return false;

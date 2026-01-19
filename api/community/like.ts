@@ -6,6 +6,13 @@
 
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
+import { z } from "zod";
+import { logger } from "../lib/logger";
+
+// Zod Schema for request validation
+const LikeRequestSchema = z.object({
+  postId: z.string().uuid("postId 必須是有效的 UUID"),
+});
 
 // 延遲初始化 Supabase client
 let supabase: SupabaseClient | null = null;
@@ -55,11 +62,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const { postId } = req.body;
-
-    if (!postId) {
-      return res.status(400).json({ error: "缺少 postId" });
+    // 驗證 request body
+    const parsed = LikeRequestSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({
+        error: "Invalid request",
+        details: parsed.error.flatten(),
+      });
     }
+    const { postId } = parsed.data;
 
     // 取得貼文（含 visibility 以檢查權限）
     const { data: post, error: fetchError } = await getSupabase()
@@ -105,6 +116,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       likes_count: newLikedBy.length,
     });
   } catch (error: unknown) {
+    logger.error("[community/like] API error", error, {
+      userId: user.id,
+      postId: req.body?.postId,
+    });
     const message = error instanceof Error ? error.message : "Unknown error";
     return res.status(500).json({ error: message });
   }

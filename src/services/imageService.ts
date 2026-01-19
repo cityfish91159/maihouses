@@ -1,5 +1,7 @@
 import imageCompression from "browser-image-compression";
 import heic2any from "heic2any";
+import { z } from "zod";
+import { logger } from "../lib/logger";
 
 export interface OptimizeOptions {
   maxWidthOrHeight?: number;
@@ -50,6 +52,11 @@ export async function optimizePropertyImage(
     };
   }
 
+  // [NASA TypeScript Safety] Type Guard 驗證輸入是否為有效的 File 物件
+  const isValidFile = (input: File | Blob): input is File => {
+    return input instanceof File || (input instanceof Blob && "name" in input);
+  };
+
   // 內部重試函式
   const attemptCompression = async (
     input: File | Blob,
@@ -57,7 +64,12 @@ export async function optimizePropertyImage(
     retryCount = 0,
   ): Promise<File> => {
     try {
-      return await imageCompression(input as File, {
+      // [NASA TypeScript Safety] 使用 Type Guard 驗證後再傳入
+      const fileInput = isValidFile(input)
+        ? input
+        : new File([input], "converted.jpg", { type: "image/jpeg" });
+
+      return await imageCompression(fileInput, {
         maxWidthOrHeight: opts.maxWidthOrHeight,
         maxSizeMB: opts.maxSizeMB,
         initialQuality: quality,

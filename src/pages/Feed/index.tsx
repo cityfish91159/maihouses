@@ -60,7 +60,13 @@ export default function Feed() {
           .single();
 
         if (error) throw error;
-        setRole((data?.role as Role) || "member");
+        // [NASA TypeScript Safety] 驗證 role 值而非使用 as Role
+        const dbRole = data?.role;
+        if (dbRole === "agent" || dbRole === "member" || dbRole === "guest") {
+          setRole(dbRole);
+        } else {
+          setRole("member");
+        }
       } catch (err) {
         logger.error("[Feed] Failed to fetch role", { error: err });
         setRole("member");

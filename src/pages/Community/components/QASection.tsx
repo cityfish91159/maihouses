@@ -5,8 +5,7 @@
  * 重構：使用 LockedOverlay + Tailwind brand 色系
  */
 
-import { useState, useEffect, useRef, useCallback } from "react";
-import { useVirtualizer } from "@tanstack/react-virtual";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import type { Role, Question, Permissions } from "../types";
 import { getPermissions } from "../types";
 import { canPerformAction, getPermissionDeniedMessage } from "../lib";
@@ -165,7 +164,8 @@ function SimpleQAList({
   return (
     <div className="flex flex-col gap-2.5">
       {questions.map((q) => {
-        const cardIsAnswering = isAnswering === true && activeQuestionId === q.id;
+        const cardIsAnswering =
+          isAnswering === true && activeQuestionId === q.id;
         return (
           <QACard
             key={q.id}
@@ -206,47 +206,72 @@ function VirtualizedQAListInner({
   maxHeight = DEFAULT_VIRTUAL_MAX_HEIGHT,
 }: VirtualizedQAListProps) {
   const parentRef = useRef<HTMLDivElement>(null);
+  const [scrollTop, setScrollTop] = useState(0);
 
-  const virtualizer = useVirtualizer({
-    count: questions.length,
-    getScrollElement: () => parentRef.current,
-    estimateSize: () => ESTIMATED_CARD_HEIGHT,
-    overscan: 2, // 預渲染前後 2 項確保滾動流暢
-  });
+  const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
+    setScrollTop(e.currentTarget.scrollTop);
+  }, []);
 
-  const virtualItems = virtualizer.getVirtualItems();
-  const totalSize = virtualizer.getTotalSize();
+  const { visibleItems, totalHeight } = useMemo(() => {
+    const containerHeight =
+      typeof maxHeight === "string" ? parseInt(maxHeight) : maxHeight;
+    const overscan = 2;
+
+    const startIndex = Math.max(
+      0,
+      Math.floor(scrollTop / ESTIMATED_CARD_HEIGHT) - overscan,
+    );
+    const endIndex = Math.min(
+      questions.length - 1,
+      Math.ceil((scrollTop + containerHeight) / ESTIMATED_CARD_HEIGHT) +
+        overscan,
+    );
+
+    const items = [];
+    for (let i = startIndex; i <= endIndex; i++) {
+      items.push({
+        index: i,
+        offsetTop: i * ESTIMATED_CARD_HEIGHT,
+      });
+    }
+
+    return {
+      visibleItems: items,
+      totalHeight: questions.length * ESTIMATED_CARD_HEIGHT,
+    };
+  }, [scrollTop, questions.length, maxHeight]);
 
   return (
     <div
       ref={parentRef}
       className="overflow-auto"
       style={{ maxHeight }}
+      onScroll={handleScroll}
       data-testid="virtualized-container"
     >
       <div
         style={{
-          height: `${totalSize}px`,
+          height: `${totalHeight}px`,
           width: "100%",
           position: "relative",
         }}
       >
-        {virtualItems.map((virtualItem, idx) => {
-          const q = questions[virtualItem.index];
+        {visibleItems.map((item, idx) => {
+          const q = questions[item.index];
           if (!q) return null;
-          const cardIsAnswering = isAnswering === true && activeQuestionId === q.id;
-          const isLastItem = idx === virtualItems.length - 1;
+          const cardIsAnswering =
+            isAnswering === true && activeQuestionId === q.id;
+          const isLastItem = item.index === questions.length - 1;
           return (
             <div
-              key={virtualItem.key}
-              data-index={virtualItem.index}
-              ref={virtualizer.measureElement}
+              key={q.id}
+              data-index={item.index}
               style={{
                 position: "absolute",
                 top: 0,
                 left: 0,
                 width: "100%",
-                transform: `translateY(${virtualItem.start}px)`,
+                transform: `translateY(${item.offsetTop}px)`,
               }}
               // P3 修復：最後一項不加底部間距，避免多餘空白
               className={isLastItem ? "" : "pb-2.5"}
@@ -360,7 +385,9 @@ export function QASection({
   };
 
   const rememberTriggerFocus = () => {
-    restoreFocusRef.current = document.activeElement as HTMLElement | null;
+    // [NASA TypeScript Safety] 使用 instanceof 檢查取代 as HTMLElement
+    const active = document.activeElement;
+    restoreFocusRef.current = active instanceof HTMLElement ? active : null;
   };
 
   // AUDIT-01 Phase 7: 使用統一權限檢查函數
@@ -403,8 +430,8 @@ export function QASection({
         : null;
   }, [askModalOpen, answerModalOpen]);
 
-  const getFocusableElements = useCallback((container: HTMLElement | null) => {
-    if (!container) return [] as HTMLElement[];
+  const getFocusableElements = useCallback((container: HTMLElement | null): HTMLElement[] => {
+    if (!container) return [];
     const selector = "a[href], button, textarea, input, select, [tabindex]";
     return Array.from(container.querySelectorAll<HTMLElement>(selector)).filter(
       (el) => {
@@ -475,7 +502,9 @@ export function QASection({
 
       const [first] = focusable;
       const last = focusable.at(-1);
-      const active = document.activeElement as HTMLElement | null;
+      // [NASA TypeScript Safety] 使用 instanceof 檢查取代 as HTMLElement
+      const activeEl = document.activeElement;
+      const active = activeEl instanceof HTMLElement ? activeEl : null;
       if (!active || !container.contains(active)) {
         first?.focus();
         event.preventDefault();
@@ -521,7 +550,9 @@ export function QASection({
     };
 
     const ensureFocusStaysInside = (event: FocusEvent) => {
-      if (!activeDialog.contains(event.target as Node)) {
+      // [NASA TypeScript Safety] 使用 instanceof 檢查取代 as Node
+      const targetNode = event.target instanceof Node ? event.target : null;
+      if (!targetNode || !activeDialog.contains(targetNode)) {
         const focusable = getFocusableElements(activeDialog);
         focusable[0]?.focus();
         event.preventDefault();

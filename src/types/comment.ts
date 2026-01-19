@@ -3,11 +3,14 @@
  * FEED-01: 支援巢狀回覆
  */
 
+// [NASA TypeScript Safety] 導出 role 類型供外部使用
+export type FeedCommentAuthorRole = "resident" | "member" | "agent" | "official";
+
 export interface CommentAuthor {
   id: string;
   name: string;
   avatarUrl?: string;
-  role: "resident" | "member" | "agent" | "official";
+  role: FeedCommentAuthorRole;
   floor?: string;
 }
 

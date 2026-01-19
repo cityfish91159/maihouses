@@ -12,8 +12,8 @@
 import { useCallback } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { UAGService, type PurchaseLeadResult } from "../services/uagService";
-import type { AppData, Grade, Lead, LeadStatus } from "../types/uag.types";
-import { isUnpurchasedLead } from "../types/uag.types";
+import type { AppData, Grade, Lead } from "../types/uag.types";
+import { isUnpurchasedLead, LeadStatusSchema } from "../types/uag.types";
 import { notify } from "../../../lib/notify";
 import { GRADE_PROTECTION_HOURS } from "../uag-config";
 import { validateQuota } from "../utils/validation";
@@ -172,7 +172,8 @@ export function useLeadPurchase({
             l.id === leadId
               ? {
                   ...l,
-                  status: "purchased" as LeadStatus,
+                  // [NASA TypeScript Safety] 使用 Zod parse 取代 as LeadStatus
+                  status: LeadStatusSchema.parse("purchased"),
                   remainingHours: GRADE_PROTECTION_HOURS[grade] || 48,
                 }
               : l,
@@ -291,7 +292,8 @@ export function useLeadPurchase({
               ) ?? {
                 ...lead,
                 id: result?.purchase_id ?? lead.id,
-                status: "purchased" as LeadStatus,
+                // [NASA TypeScript Safety] 使用 Zod parse 取代 as LeadStatus
+                status: LeadStatusSchema.parse("purchased"),
                 remainingHours: GRADE_PROTECTION_HOURS[lead.grade] || 48,
                 purchased_at: new Date().toISOString(),
               };

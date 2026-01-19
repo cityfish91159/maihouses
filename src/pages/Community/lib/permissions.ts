@@ -75,15 +75,24 @@ interface PermissionDeniedMessage {
  * 統一管理所有權限相關的錯誤訊息
  * 使用 strings.ts 中定義的原始訊息以保持一致性
  */
-const PERMISSION_DENIED_MESSAGES: Record<CommunityAction, PermissionDeniedMessage> = {
+const PERMISSION_DENIED_MESSAGES: Record<
+  CommunityAction,
+  PermissionDeniedMessage
+> = {
   view_public: { title: "" },
-  view_private: { title: S.NOTIFY_PRIVATE_ACCESS_DENIED, description: S.NOTIFY_PRIVATE_ACCESS_DENIED_DESC },
+  view_private: {
+    title: S.NOTIFY_PRIVATE_ACCESS_DENIED,
+    description: S.NOTIFY_PRIVATE_ACCESS_DENIED_DESC,
+  },
   post_public: { title: S.NOTIFY_PERM_ERROR, description: S.NOTIFY_PERM_CHECK },
   post_private: { title: S.NOTIFY_PRIVATE_ONLY },
   like: { title: "請先登入", description: "登入後才能按讚" },
   comment: { title: "請先登入", description: "登入後才能留言" },
   ask_question: { title: "請先登入", description: "登入後才能發問" },
-  answer_question: { title: S.NOTIFY_VERIFY_REQUIRED, description: "只有住戶或房仲可以回答問題" },
+  answer_question: {
+    title: S.NOTIFY_VERIFY_REQUIRED,
+    description: "只有住戶或房仲可以回答問題",
+  },
 };
 
 /**
@@ -92,6 +101,8 @@ const PERMISSION_DENIED_MESSAGES: Record<CommunityAction, PermissionDeniedMessag
  * @param action - 被拒絕的動作
  * @returns 錯誤訊息物件（包含 title 和可選的 description）
  */
-export function getPermissionDeniedMessage(action: CommunityAction): PermissionDeniedMessage {
+export function getPermissionDeniedMessage(
+  action: CommunityAction,
+): PermissionDeniedMessage {
   return PERMISSION_DENIED_MESSAGES[action];
 }

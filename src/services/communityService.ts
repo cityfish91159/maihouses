@@ -401,6 +401,9 @@ export async function getFeaturedHomeReviews(): Promise<ReviewForUI[]> {
  * T2 修復：不只驗證外層，也驗證陣列元素的必要欄位
  * U1 修復：驗證全部陣列元素，不只第一個
  * U3 修復：驗證 meta 結構
+ *
+ * [NASA TypeScript Safety] 此 Type Guard 內部的 `as Record<string, unknown>`
+ * 是安全的類型收窄操作，因為在轉換前已驗證 typeof 為 "object" 且非 null
  */
 function isValidFeaturedReviewsResponse(
   data: unknown,
@@ -409,6 +412,7 @@ function isValidFeaturedReviewsResponse(
     return false;
   }
 
+  // [NASA TypeScript Safety] 安全的類型收窄 - 已驗證 data 是非 null 的物件
   const response = data as Record<string, unknown>;
 
   // 驗證外層結構
@@ -420,6 +424,7 @@ function isValidFeaturedReviewsResponse(
   if (typeof response.meta !== "object" || response.meta === null) {
     return false;
   }
+  // [NASA TypeScript Safety] 安全的類型收窄 - 已驗證 meta 是非 null 的物件
   const meta = response.meta as Record<string, unknown>;
   if (
     typeof meta.total !== "number" ||
@@ -435,6 +440,7 @@ function isValidFeaturedReviewsResponse(
   if (!Array.isArray(items)) return false;
 
   for (const item of items) {
+    // [NASA TypeScript Safety] 安全的類型收窄 - 用於逐一驗證陣列元素屬性
     const review = item as Record<string, unknown>;
     // 檢查 ReviewForUI 必要欄位
     if (

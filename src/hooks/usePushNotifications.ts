@@ -56,9 +56,11 @@ function getPermissionState(): PushPermissionState {
  * 將 Base64 URL 安全字串轉為 ArrayBuffer（用於 applicationServerKey）
  * 返回 ArrayBuffer 以符合 PushManager.subscribe 的類型要求
  *
- * 注意：`as ArrayBuffer` 斷言是必要的，因為 TypeScript 的 Uint8Array.buffer
- * 類型為 ArrayBufferLike（包含 SharedArrayBuffer），但這裡我們從 new Uint8Array
- * 創建，保證底層 buffer 一定是 ArrayBuffer。
+ * [NASA TypeScript Safety] 類型斷言說明：
+ * - TypeScript 的 Uint8Array.buffer 類型為 ArrayBufferLike（包含 SharedArrayBuffer）
+ * - 但從 new Uint8Array(length) 創建的陣列，底層 buffer 保證是 ArrayBuffer
+ * - 此斷言是安全的，因為我們控制了 Uint8Array 的創建方式
+ * - 使用 slice() 複製 buffer 以獲得獨立的 ArrayBuffer
  */
 function urlBase64ToArrayBuffer(base64String: string): ArrayBuffer {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
@@ -68,8 +70,9 @@ function urlBase64ToArrayBuffer(base64String: string): ArrayBuffer {
   for (let i = 0; i < rawData.length; ++i) {
     outputArray[i] = rawData.charCodeAt(i);
   }
-  // Safe assertion: new Uint8Array always uses ArrayBuffer, never SharedArrayBuffer
-  return outputArray.buffer as ArrayBuffer;
+  // [NASA TypeScript Safety] 使用 slice(0) 返回一個新的 ArrayBuffer 副本
+  // 這避免了 as ArrayBuffer 斷言，因為 ArrayBuffer.prototype.slice 返回 ArrayBuffer
+  return outputArray.buffer.slice(0);
 }
 
 /**

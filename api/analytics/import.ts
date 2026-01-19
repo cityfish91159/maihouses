@@ -9,6 +9,7 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
+import { logger } from "../lib/logger";
 
 // ============ Supabase Client ============
 
@@ -84,7 +85,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const validation = ImportAnalyticsSchema.safeParse(rawBody);
 
     if (!validation.success) {
-      console.error("[Analytics Import] Validation failed:", validation.error);
+      logger.warn("[analytics/import] Validation failed", {
+        error: validation.error.issues,
+      });
       return res.status(400).json({
         success: false,
         error: "Invalid payload",
@@ -115,7 +118,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .single();
 
     if (error) {
-      console.error("[Analytics Import] Supabase insert failed:", error);
+      logger.error("[analytics/import] Supabase insert failed", error);
 
       // 如果是 table 不存在,返回友善錯誤
       if (
@@ -137,7 +140,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // 4. 成功回應
-    console.log("[Analytics Import] Recorded:", {
+    logger.info("[analytics/import] Recorded", {
       id: data?.id,
       confidence: payload.confidence,
       fieldsFound: payload.fieldsFound,
@@ -149,7 +152,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       recordedAt: record.created_at,
     });
   } catch (error) {
-    console.error("[Analytics Import] Unexpected error:", error);
+    logger.error("[analytics/import] Unexpected error", error);
     return res.status(500).json({
       success: false,
       error: "Internal server error",

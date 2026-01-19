@@ -18,6 +18,8 @@
  */
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
+import { z } from "zod";
+import { logger } from "../lib/logger";
 // D22/D23 修正：移除 fs 和 path import，改用 JSON import
 import seedJson from "../../public/data/seed-property-page.json";
 import {
@@ -164,6 +166,61 @@ interface DBReview {
   // - tags (VIEW 沒有)
 }
 
+// [NASA TypeScript Safety] Zod Schema for DB types
+const DBPropertySchema = z.object({
+  id: z.string(),
+  public_id: z.string(),
+  title: z.string().nullable(),
+  price: z.number().nullable(),
+  address: z.string().nullable(),
+  images: z.array(z.string()).nullable(),
+  community_id: z.string().nullable(),
+  community_name: z.string().nullable(),
+  size: z.number().nullable(),
+  rooms: z.number().nullable(),
+  halls: z.number().nullable(),
+  bathrooms: z.number().nullable(),
+  floor_current: z.string().nullable(),
+  floor_total: z.number().nullable(),
+  features: z.array(z.string()).nullable(),
+  advantage_1: z.string().nullable(),
+  advantage_2: z.string().nullable(),
+  disadvantage: z.string().nullable(),
+  age: z.number().nullable(),
+});
+
+const DBReviewSchema = z.object({
+  id: z.string(),
+  community_id: z.string(),
+  property_id: z.string(),
+  author_id: z.string().nullable(),
+  advantage_1: z.string().nullable(),
+  advantage_2: z.string().nullable(),
+  disadvantage: z.string().nullable(),
+  source_platform: z.string().nullable(),
+  source: z.string().nullable(),
+  content: z.object({
+    pros: z.array(z.string().nullable()),
+    cons: z.string().nullable(),
+    property_title: z.string(),
+  }).nullable(),
+  created_at: z.string(),
+});
+
+/**
+ * [NASA TypeScript Safety] 類型守衛：驗證是否為有效的 DBProperty
+ */
+function isValidDBProperty(item: unknown): item is DBProperty {
+  return DBPropertySchema.safeParse(item).success;
+}
+
+/**
+ * [NASA TypeScript Safety] 類型守衛：驗證是否為有效的 DBReview
+ */
+function isValidDBReview(item: unknown): item is DBReview {
+  return DBReviewSchema.safeParse(item).success;
+}
+
 // ============================================
 // Adapter Functions
 // D28: 拆分成小函數，符合單一職責原則
@@ -223,7 +280,7 @@ function buildFeaturedReviews(
   adaptedReviews = adaptedReviews.filter((r) => {
     const normalized = normalizeFeaturedReview(r);
     if (!normalized.author || !normalized.content) {
-      console.warn("[API] 無效評價已過濾，將使用 Seed 替換");
+      logger.debug("[API] 無效評價已過濾，將使用 Seed 替換");
       return false;
     }
     return true;
@@ -319,10 +376,7 @@ function adaptToListingCard(
       r.content.includes("「") &&
       r.content.includes("—")
     ) {
-      console.warn(
-        "[API] 無效 Listing 評價已過濾，將使用 Seed 替換:",
-        r.content,
-      );
+      logger.debug("[API] 無效 Listing 評價已過濾，將使用 Seed 替換", { content: r.content });
       return false;
     }
     return true;
@@ -429,7 +483,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .limit(11);
 
     if (propError) {
-      console.error("[API] Properties query error:", propError);
+      logger.error("[API] Properties query error", propError);
       throw propError;
     }
 
@@ -464,14 +518,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         .limit(maxReviews); // D27: 防止記憶體爆炸
 
       if (revError) {
-        console.warn("[API] Reviews query error (non-fatal):", revError);
+        logger.warn("[API] Reviews query error (non-fatal)", { error: revError });
       } else if (reviews) {
-        // 按 community_id 分組
+        // [NASA TypeScript Safety] 使用類型守衛取代 as DBReview
         reviews.forEach((r) => {
+          if (!isValidDBReview(r)) {
+            logger.debug("[API] Invalid review row skipped", { id: r?.id });
+            return;
+          }
           if (!reviewsMap[r.community_id]) {
             reviewsMap[r.community_id] = [];
           }
-          reviewsMap[r.community_id].push(r as DBReview);
+          reviewsMap[r.community_id].push(r);
         });
       }
     }
@@ -479,42 +537,46 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // 3. 組裝資料
     const realProperties = properties || [];
 
+    // [NASA TypeScript Safety] 使用類型守衛過濾有效的 DBProperty
+    const validProperties = realProperties.filter(isValidDBProperty);
+
     // Featured: 取前 3 筆
-    const featuredProps = realProperties.slice(0, 3);
+    const featuredProps = validProperties.slice(0, 3);
     const featured = {
       main: featuredProps[0]
         ? adaptToFeaturedCard(
-            featuredProps[0] as DBProperty,
+            featuredProps[0],
             reviewsMap[featuredProps[0].community_id || ""] || [],
             seed.featured.main,
           )
         : seed.featured.main,
       sideTop: featuredProps[1]
         ? adaptToFeaturedCard(
-            featuredProps[1] as DBProperty,
+            featuredProps[1],
             reviewsMap[featuredProps[1].community_id || ""] || [],
             seed.featured.sideTop,
           )
         : seed.featured.sideTop,
       sideBottom: featuredProps[2]
         ? adaptToFeaturedCard(
-            featuredProps[2] as DBProperty,
+            featuredProps[2],
             reviewsMap[featuredProps[2].community_id || ""] || [],
             seed.featured.sideBottom,
           )
         : seed.featured.sideBottom,
     };
 
-    // Listings: 取第 4-11 筆
-    const listingProps = realProperties.slice(3, 11);
+    // Listings: 取第 4-11 筆（已經過類型守衛驗證）
+    const listingProps = validProperties.slice(3, 11);
     const listings: ListingPropertyCard[] = [];
 
     for (let i = 0; i < 8; i++) {
-      if (listingProps[i]) {
+      const prop = listingProps[i];
+      if (prop) {
         listings.push(
           adaptToListingCard(
-            listingProps[i] as DBProperty,
-            reviewsMap[listingProps[i].community_id || ""] || [],
+            prop,
+            reviewsMap[prop.community_id || ""] || [],
             seed.listings[i] || seed.listings[0],
           ),
         );
@@ -533,9 +595,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       listings,
     };
 
-    console.log(
-      `[API] Success: ${realProperties.length} properties, ${Object.keys(reviewsMap).length} communities with reviews`,
-    );
+    logger.info(`[API] Success: ${realProperties.length} properties, ${Object.keys(reviewsMap).length} communities with reviews`);
 
     return res.status(200).json({
       success: true,
@@ -548,7 +608,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     });
   } catch (error) {
     // D30: 錯誤時回傳 Seed，不暴露內部錯誤訊息給前端
-    console.error("[API] Error, falling back to seed:", error);
+    logger.error("[API] Error, falling back to seed", error);
 
     return res.status(200).json({
       success: false,

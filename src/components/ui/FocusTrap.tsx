@@ -26,7 +26,11 @@ export function FocusTrap({
   // 1. 儲存與還原焦點
   useEffect(() => {
     if (isActive) {
-      previousFocusRef.current = document.activeElement as HTMLElement;
+      // [NASA TypeScript Safety] 使用 instanceof 類型守衛驗證 activeElement
+      const activeElement = document.activeElement;
+      if (activeElement instanceof HTMLElement) {
+        previousFocusRef.current = activeElement;
+      }
       // 嘗試設置初始焦點
       if (initialFocusRef?.current) {
         initialFocusRef.current.focus();
@@ -35,8 +39,10 @@ export function FocusTrap({
         const focusable = containerRef.current.querySelectorAll(
           'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
         );
-        if (focusable.length > 0) {
-          (focusable[0] as HTMLElement).focus();
+        // [NASA TypeScript Safety] 使用 instanceof 類型守衛驗證可聚焦元素
+        const firstFocusable = focusable[0];
+        if (firstFocusable instanceof HTMLElement) {
+          firstFocusable.focus();
         }
       }
     } else {
@@ -61,8 +67,13 @@ export function FocusTrap({
         'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
       );
 
-      const firstElement = focusableElements[0] as HTMLElement;
-      const lastElement = Array.from(focusableElements).at(-1) as HTMLElement;
+      // [NASA TypeScript Safety] 使用 instanceof 類型守衛驗證可聚焦元素
+      const firstElement = focusableElements[0];
+      const lastElement = Array.from(focusableElements).at(-1);
+
+      // 確保元素存在且為 HTMLElement
+      if (!(firstElement instanceof HTMLElement)) return;
+      if (!(lastElement instanceof HTMLElement)) return;
 
       if (e.shiftKey) {
         // Shift + Tab: 如果當前是第一個，跳到最後一個

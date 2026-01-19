@@ -1,5 +1,7 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
+import { z } from "zod";
+import { logger } from "../lib/logger";
 // ============================================
 // Inlined Utils (Fix Vercel Import Issue)
 // ============================================
@@ -248,6 +250,34 @@ interface RealPropertyRow {
   advantage_1: string | null; // 兩好一公道
   advantage_2: string | null;
   disadvantage: string | null;
+}
+
+// [NASA TypeScript Safety] Zod Schema for RealPropertyRow
+const RealPropertyRowSchema = z.object({
+  id: z.string(),
+  public_id: z.string(),
+  title: z.string().nullable(),
+  price: z.number().nullable(),
+  address: z.string().nullable(),
+  images: z.array(z.string()).nullable(),
+  community_id: z.string().nullable(),
+  community_name: z.string().nullable(),
+  size: z.number().nullable(),
+  rooms: z.number().nullable(),
+  halls: z.number().nullable(),
+  floor_current: z.string().nullable(),
+  floor_total: z.number().nullable(),
+  features: z.array(z.string()).nullable(),
+  advantage_1: z.string().nullable(),
+  advantage_2: z.string().nullable(),
+  disadvantage: z.string().nullable(),
+});
+
+/**
+ * [NASA TypeScript Safety] 類型守衛：驗證是否為有效的 RealPropertyRow
+ */
+function isValidRealPropertyRow(item: unknown): item is RealPropertyRow {
+  return RealPropertyRowSchema.safeParse(item).success;
 }
 
 // Supabase 回傳的評價資料型別
@@ -516,19 +546,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
 
       // 3. 填充與適配
+      // [NASA TypeScript Safety] 使用類型守衛取代 as RealPropertyRow
       for (const row of realData) {
+        if (!isValidRealPropertyRow(row)) {
+          logger.debug("[featured-properties] Invalid row skipped", { id: row?.id });
+          continue;
+        }
         // 根據 property 的 community_id 找評價
         const reviews = row.community_id
           ? reviewsMap[row.community_id] || []
           : [];
         // 呼叫適配器
         mixedProperties.push(
-          adaptRealPropertyForUI(row as RealPropertyRow, reviews),
+          adaptRealPropertyForUI(row, reviews),
         );
       }
     }
   } catch (error) {
-    console.error("API Error", error);
+    logger.error("[featured-properties] API Error", error);
   }
 
   // 4. 自動補位 (Auto-fill)

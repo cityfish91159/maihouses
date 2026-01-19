@@ -29,8 +29,9 @@ interface CommunityPickerProps {
   required?: boolean; // 是否必填
 }
 
+// [NASA TypeScript Safety] 使用 satisfies 確保類型安全
 // 無社區選項（透天、店面用）
-const NO_COMMUNITY_OPTION = {
+const NO_COMMUNITY_OPTION: Community = {
   id: "NONE",
   name: "無",
   address: "透天/店面/獨棟",
@@ -154,10 +155,11 @@ export function CommunityPicker({
   // 點擊外部關閉
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (
-        wrapperRef.current &&
-        !wrapperRef.current.contains(e.target as Node)
-      ) {
+      // [NASA TypeScript Safety] 使用 instanceof 類型守衛驗證 DOM 節點
+      const target = e.target;
+      if (!(target instanceof Node)) return;
+
+      if (wrapperRef.current && !wrapperRef.current.contains(target)) {
         setIsOpen(false);
       }
     };
@@ -177,7 +179,8 @@ export function CommunityPicker({
 
   // 選擇「無社區」
   const handleSelectNoCommunity = () => {
-    setSelectedCommunity(NO_COMMUNITY_OPTION as Community);
+    // [NASA TypeScript Safety] NO_COMMUNITY_OPTION 已有明確類型定義
+    setSelectedCommunity(NO_COMMUNITY_OPTION);
     setSearchTerm("無");
     onChange("無", undefined);
     setIsOpen(false);

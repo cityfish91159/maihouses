@@ -51,7 +51,7 @@ export function useAgentFeed(userId?: string, forceMock?: boolean) {
       setUseMock(forceMock);
     }
   }, [forceMock, setUseMock]);
-  // ...
+
   const handleComment = useCallback(
     async (postId: string | number, content: string) => {
       try {

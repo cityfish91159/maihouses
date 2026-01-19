@@ -79,12 +79,18 @@ export function useRealtimeUpdates({
           filter: `agent_id=eq.${userId}`,
         },
         (payload) => {
-          // 型別安全：payload.new 是 Record<string, unknown>
-          const newRecord = payload.new as Record<string, unknown> | undefined;
+          // [NASA TypeScript Safety] 使用類型守衛取代 as Record
+          const newRecord = payload.new;
+          const sessionId = newRecord && typeof newRecord === "object" && "session_id" in newRecord
+            ? String(newRecord.session_id)
+            : undefined;
+          const previousGrade = newRecord && typeof newRecord === "object" && "previous_grade" in newRecord
+            ? String(newRecord.previous_grade)
+            : undefined;
 
           logger.info("useRealtimeUpdates.sGradeUpgrade", {
-            sessionId: newRecord?.session_id,
-            previousGrade: newRecord?.previous_grade,
+            sessionId,
+            previousGrade,
           });
 
           // 顯示 UI 通知

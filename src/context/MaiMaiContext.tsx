@@ -46,8 +46,9 @@ const VALID_MOODS = new Set<MaiMaiMood>([
   "sleep",
 ]);
 
+// [NASA TypeScript Safety] 類型守衛驗證 MaiMaiMood
 function isValidMood(mood: unknown): mood is MaiMaiMood {
-  return typeof mood === "string" && VALID_MOODS.has(mood as MaiMaiMood);
+  return typeof mood === "string" && VALID_MOODS.has(mood as never);
 }
 
 export const MaiMaiProvider: React.FC<{ children: React.ReactNode }> = ({

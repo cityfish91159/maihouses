@@ -17,7 +17,9 @@ export default class ErrorBoundary extends Component<Props, State> {
   override componentDidCatch(err: unknown) {
     logger.error("[ErrorBoundary] Uncaught error", { error: err });
     try {
-      trackEvent("error_boundary", "*", String((err as Error).message || err));
+      // [NASA TypeScript Safety] 使用 instanceof 類型守衛取代 as Error
+      const message = err instanceof Error ? err.message : String(err);
+      trackEvent("error_boundary", "*", message);
     } catch {}
   }
 

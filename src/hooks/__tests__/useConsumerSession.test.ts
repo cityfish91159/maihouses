@@ -25,15 +25,26 @@ describe("useConsumerSession", () => {
   describe("SSR 安全", () => {
     it("在沒有 window 時應該返回 null", () => {
       // 模擬 SSR 環境（localStorage 不可用）
+      // 使用 Object.defineProperty 暫時隱藏 window，無需 TypeScript 指令
       const originalWindow = global.window;
-      // @ts-expect-error - 模擬 SSR
-      delete global.window;
+      const windowDescriptor = Object.getOwnPropertyDescriptor(global, "window");
+
+      Object.defineProperty(global, "window", {
+        value: undefined,
+        writable: true,
+        configurable: true,
+      });
 
       // 重新 import 會很複雜，直接測試函數邏輯
       // 這裡測試 localStorage 不存在的情況
       expect(getSessionId()).toBe(null);
 
-      global.window = originalWindow;
+      // 恢復 window
+      if (windowDescriptor) {
+        Object.defineProperty(global, "window", windowDescriptor);
+      } else {
+        global.window = originalWindow;
+      }
     });
   });
 
