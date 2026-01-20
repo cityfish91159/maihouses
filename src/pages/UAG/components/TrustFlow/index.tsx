@@ -14,7 +14,6 @@ import {
   Plus,
   AlertCircle,
   Zap,
-  DollarSign,
 } from "lucide-react";
 import styles from "../../UAG.module.css";
 import { logger } from "../../../../lib/logger";
@@ -270,19 +269,6 @@ export default function TrustFlow({ toggleMode }: TrustFlowProps) {
             進入 Trust Room
             <ChevronRight size={14} />
           </Link>
-          {selectedCase.currentStep === 3 && selectedCase.offerPrice && (
-            <button
-              className={styles["uag-btn"]}
-              style={{
-                background: "#fef3c7",
-                borderColor: "#fcd34d",
-                color: "var(--grade-s)",
-              }}
-            >
-              <DollarSign size={14} style={{ marginRight: 4 }} />
-              回應出價
-            </button>
-          )}
         </div>
       )}
 
