@@ -74,7 +74,7 @@
 
 ---
 
-## DB-1｜資料庫加 trust_enabled 欄位
+## DB-1 | 資料庫加 trust_enabled 欄位
 
 **為什麼**
 物件要能標記「有沒有開安心留痕」，詳情頁才知道要不要顯示徽章，上傳頁才有東西可以存。
@@ -95,7 +95,7 @@ SELECT trust_enabled FROM properties LIMIT 1;
 
 ---
 
-## DB-2｜資料庫加案件狀態欄位
+## DB-2 |資料庫加案件狀態欄位
 
 **為什麼**
 案件要能休眠、關閉，不能永遠「進行中」。100 個案件只有 1 個成交，另外 99 個要能自動處理掉。
@@ -125,7 +125,7 @@ SELECT status, dormant_at, closed_at FROM trust_cases LIMIT 1;
 
 ---
 
-## DB-3｜資料庫加 token 欄位
+## DB-3 |資料庫加 token 欄位
 
 **為什麼**
 消費者要能用 Token 連結進入 Trust Room，不用登入也能看進度。Token 要有過期時間。
@@ -149,7 +149,7 @@ SELECT token, token_expires_at FROM trust_cases LIMIT 1;
 
 ---
 
-## DB-4｜資料庫加 buyer 欄位
+## DB-4 |資料庫加 buyer 欄位
 
 **為什麼**
 案件要記錄「買方是誰」，可能是已註冊用戶（user_id）或未註冊用戶（line_id）。這樣才知道要通知誰。
@@ -174,7 +174,7 @@ SELECT buyer_user_id, buyer_line_id FROM trust_cases LIMIT 1;
 
 ---
 
-## FE-1｜上傳頁加安心服務開關
+## FE-1 |上傳頁加安心服務開關
 
 **為什麼**
 房仲上傳物件時要能選「開不開安心留痕」。現在上傳頁沒這個選項，房仲想開也開不了。
@@ -201,7 +201,7 @@ SELECT buyer_user_id, buyer_line_id FROM trust_cases LIMIT 1;
 
 ---
 
-## FE-2｜詳情頁加安心徽章
+## FE-2 |詳情頁加安心徽章
 
 **為什麼**
 消費者看物件時要知道「這物件有沒有安心留痕」。現在詳情頁看不出來，房仲開了服務消費者也不知道。
@@ -229,7 +229,7 @@ trust_enabled=true 時顯示徽章：
 
 ---
 
-## FE-3｜Trust Room 加註冊引導
+## FE-3 |Trust Room 加註冊引導
 
 **為什麼**
 消費者用 Token 連結進 Trust Room 看完進度就走了，沒有任何東西引導他註冊。平台流失潛在會員。
@@ -257,7 +257,7 @@ trust_enabled=true 時顯示徽章：
 
 ---
 
-## FE-4｜Feed 頁加交易列表
+## FE-4 |Feed 頁加交易列表
 
 **為什麼**
 已註冊的消費者登入後，沒地方看「我有幾筆交易在進行」。每次都要翻找房仲發的連結，很麻煩。
@@ -294,7 +294,7 @@ trust_enabled=true 時顯示徽章：
 
 ---
 
-## FE-5｜Trust Room 狀態 Banner
+## FE-5 |Trust Room 狀態 Banner
 
 **為什麼**
 案件有 6 種狀態（active、dormant、completed、closed_*），Trust Room 要顯示對應的 Banner 讓消費者知道狀況。
@@ -360,7 +360,7 @@ trust_enabled=true 時顯示徽章：
 
 ---
 
-## FE-6｜UAG 休眠案件 UI
+## FE-6 |UAG 休眠案件 UI
 
 **為什麼**
 房仲要能看到哪些案件休眠了，並且能「喚醒」它們。現在休眠案件跟進行中案件混在一起看不出來。
@@ -397,7 +397,7 @@ trust_enabled=true 時顯示徽章：
 
 ---
 
-## BE-1｜上傳 API 存 trust_enabled
+## BE-1 |上傳 API 存 trust_enabled
 
 **為什麼**
 FE-1 前端加了開關，後端要能接收並存進資料庫。
@@ -413,7 +413,7 @@ FE-1 前端加了開關，後端要能接收並存進資料庫。
 
 ---
 
-## BE-2｜補開安心服務 API
+## BE-2 |補開安心服務 API
 
 **為什麼**
 已上傳但沒開安心服務的物件，房仲要能「補開」。但開了不能關（不然房仲都關掉就不用付錢）。
@@ -436,7 +436,7 @@ Body: { propertyId: "xxx" }
 
 ---
 
-## BE-3｜LINE 查詢交易 API
+## BE-3 |LINE 查詢交易 API
 
 **為什麼**
 LINE webhook 收到「我的交易」關鍵字時，要能查出這個 LINE 用戶有哪些案件。
@@ -461,7 +461,7 @@ GET /api/trust/my-cases?lineUserId=Uxxxxxxx
 
 ---
 
-## BE-4｜LINE webhook 處理「我的交易」
+## BE-4 |LINE webhook 處理「我的交易」
 
 **為什麼**
 消費者在 LINE 輸入「我的交易」，要能查到自己所有進行中的案件。現在只會回「你的 LINE User ID」。
@@ -490,7 +490,7 @@ LINE 輸入「我的交易」，回傳正確格式
 
 ---
 
-## BE-5｜進度更新推播
+## BE-5 |進度更新推播
 
 **為什麼**
 房仲推進步驟時，消費者要收到 LINE 通知。不然消費者不知道進度有變化。
@@ -515,7 +515,7 @@ M2 帶看 → M3 出價
 
 ---
 
-## BE-6｜消費者案件列表 API
+## BE-6 |消費者案件列表 API
 
 **為什麼**
 FE-4 前端要顯示交易列表，需要 API 查詢「這個用戶有哪些案件」。
@@ -540,7 +540,7 @@ GET /api/trust/consumer-cases?userId=xxx
 
 ---
 
-## BE-7｜查詢通知目標
+## BE-7 |查詢通知目標
 
 **為什麼**
 發通知時要知道「通知誰」。消費者可能是已註冊用戶（用 push）或未註冊用戶（用 LINE）。要有優先順序。
@@ -573,7 +573,7 @@ async function getNotifyTarget(caseId: string) {
 
 ---
 
-## BE-8｜推播失敗處理
+## BE-8 |推播失敗處理
 
 **為什麼**
 LINE 可能限流、用戶可能封鎖。推播失敗不能就這樣算了，要重試，還要有降級機制。
@@ -615,7 +615,7 @@ async function sendNotification(target, message) {
 
 ---
 
-## BE-9｜案件關閉通知
+## BE-9 |案件關閉通知
 
 **為什麼**
 案件被關閉時消費者要知道。不同關閉原因要有不同文案。
@@ -635,7 +635,7 @@ async function sendNotification(target, message) {
 
 ---
 
-## BE-10｜喚醒休眠 API
+## BE-10 |喚醒休眠 API
 
 **為什麼**
 休眠的案件要能「喚醒」回到 active 狀態。房仲或消費者都可能觸發。
@@ -677,7 +677,7 @@ async function wake(caseId: string) {
 
 ---
 
-## LC-1｜成交時關閉其他案件
+## LC-1 |成交時關閉其他案件
 
 **為什麼**
 一個物件有 100 個案件，其中 1 個成交了，另外 99 個要自動關閉（標記為「物件已由他人成交」）。
@@ -702,7 +702,7 @@ WHERE property_id = $property_id
 
 ---
 
-## LC-2｜物件下架時關閉案件
+## LC-2 |物件下架時關閉案件
 
 **為什麼**
 房仲把物件下架了，所有相關案件要關閉（標記為「物件已下架」）。
@@ -726,7 +726,7 @@ WHERE property_id = $property_id
 
 ---
 
-## LC-3｜每日休眠檢查
+## LC-3 |每日休眠檢查
 
 **為什麼**
 案件 30 天沒有任何互動（沒推進步驟、沒確認），要標記為「休眠」。
@@ -750,7 +750,7 @@ Vercel cron 設定每日 03:00 執行
 
 ---
 
-## LC-4｜休眠過期自動關閉
+## LC-4 |休眠過期自動關閉
 
 **為什麼**
 休眠狀態持續 60 天還是沒互動，要自動關閉（標記為「過期關閉」）。
