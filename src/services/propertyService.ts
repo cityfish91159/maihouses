@@ -67,7 +67,7 @@ export interface PropertyData {
   advantage1?: string;
   advantage2?: string;
   disadvantage?: string;
-  // 安心留痕
+  // 安心留痕：房仲上傳時選擇是否開啟，影響詳情頁徽章顯示
   trustEnabled?: boolean;
 }
 
@@ -92,7 +92,7 @@ export interface PropertyFormInput {
   highlights?: string[]; // 新增：重點膠囊陣列
   images: string[]; // 新增：圖片 URL 陣列
   sourceExternalId: string;
-  // 安心留痕
+  // 安心留痕：上傳表單的開關狀態，存入 DB trust_enabled 欄位
   trustEnabled?: boolean;
 }
 
