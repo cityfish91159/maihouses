@@ -590,7 +590,8 @@ export const propertyService: PropertyService = {
         source_external_id: form.sourceExternalId || null,
 
         // 安心留痕：DB 欄位 trust_enabled，預設 false
-        trust_enabled: form.trustEnabled ?? false,
+        // NASA Safety: 明確轉換為 boolean，防止字串 "true" 誤判
+        trust_enabled: form.trustEnabled === true,
       })
       .select()
       .single();
@@ -602,7 +603,7 @@ export const propertyService: PropertyService = {
       propertyId: data.id,
       publicId: data.public_id,
       agentId: agentId,
-      trustEnabled: form.trustEnabled ?? false,
+      trustEnabled: form.trustEnabled === true,
       isNewCommunity,
       communityId: communityId || null,
     });
