@@ -7,10 +7,16 @@
 - **Current Phase**: 安心留痕工單施作 (2026-01-21 v9)
 - **Immediate Goal**: 完成 DB-1~DB-4, BE-1~BE-10, FE-1~FE-6, LC-1~LC-4 共 24 項任務
 - **Latest Achievement** (2026-01-21 v9 - DB-1 完成):
-  - ✅ **DB-1** 資料庫加 trust_enabled 欄位
-    - Migration 檔案：`20260122_add_trust_enabled.sql`
-    - TypeScript 類型：`PropertyRow.trust_enabled` 新增於 `supabase-schema.ts`
-    - RLS 驗證：現有政策已足夠
+  - ✅ **DB-1** 資料庫加 trust_enabled 欄位（12 Skills 完整執行）
+    - Migration：`20260122_add_trust_enabled.sql`（含 WHY 註解）
+    - DB 類型：`supabase-schema.ts` L67 `trust_enabled: boolean`
+    - 服務層：`propertyService.ts` 5 處修改
+      - L71: `PropertyData.trustEnabled`
+      - L96: `PropertyFormInput.trustEnabled`
+      - L157: `DEFAULT_PROPERTY.trustEnabled`
+      - L258-259: `getPropertyByPublicId` 讀取映射
+      - L592-593: `createPropertyWithForm` insert
+    - 驗證：`npm run gate` 通過、grep 6 處確認
 - **Previous Phase**: Trust Legacy APIs 12 Skills 修復 (2026-01-19 v8) ✅
 - **Previous Immediate Goal**: ✅ 修復 6 個舊版 Trust API 的 `as { id: string }` 斷言
 - **Latest Achievement** (2026-01-19 v8 - Trust Legacy APIs 完整修復):

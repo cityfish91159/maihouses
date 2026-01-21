@@ -67,6 +67,8 @@ export interface PropertyData {
   advantage1?: string;
   advantage2?: string;
   disadvantage?: string;
+  // 安心留痕
+  trustEnabled?: boolean;
 }
 
 // 上傳表單輸入介面
@@ -90,6 +92,8 @@ export interface PropertyFormInput {
   highlights?: string[]; // 新增：重點膠囊陣列
   images: string[]; // 新增：圖片 URL 陣列
   sourceExternalId: string;
+  // 安心留痕
+  trustEnabled?: boolean;
 }
 
 // 定義 Property 建立結果
@@ -150,6 +154,7 @@ export const DEFAULT_PROPERTY: PropertyData = {
   advantage1: "",
   advantage2: "",
   disadvantage: "",
+  trustEnabled: false,
   agent: {
     id: "",
     internalCode: 0,
@@ -250,6 +255,8 @@ export const propertyService: PropertyService = {
       if (data.advantage_1) result.advantage1 = data.advantage_1;
       if (data.advantage_2) result.advantage2 = data.advantage_2;
       if (data.disadvantage) result.disadvantage = data.disadvantage;
+      // 安心留痕：DB 欄位為 trust_enabled，前端為 trustEnabled
+      result.trustEnabled = data.trust_enabled ?? false;
 
       // 針對 Demo 物件：若 DB 有資料但缺少結構化欄位，回退到 DEFAULT_PROPERTY（只補缺的欄位）
       if (publicId === "MH-100001") {
@@ -581,6 +588,9 @@ export const propertyService: PropertyService = {
 
         source_platform: form.sourceExternalId ? "591" : "MH",
         source_external_id: form.sourceExternalId || null,
+
+        // 安心留痕：DB 欄位 trust_enabled，預設 false
+        trust_enabled: form.trustEnabled ?? false,
       })
       .select()
       .single();

@@ -94,10 +94,16 @@ SELECT trust_enabled FROM properties LIMIT 1;
 ```
 
 **施作紀錄** (2026-01-21)
-- Migration 檔案已存在：`20260122_add_trust_enabled.sql`
-- 新增 TypeScript 類型：`src/types/supabase-schema.ts` PropertyRow.trust_enabled
-- RLS 檢查：現有 UPDATE 政策 (`auth.uid() = agent_id`) 已足夠保護
-- `npm run gate` 通過
+- Migration 檔案已存在：`20260122_add_trust_enabled.sql`（含 WHY 註解）
+- TypeScript DB 類型：`src/types/supabase-schema.ts` L67 `trust_enabled: boolean`
+- 前端服務層 `src/services/propertyService.ts`：
+  - L71: `PropertyData.trustEnabled?: boolean`
+  - L96: `PropertyFormInput.trustEnabled?: boolean`
+  - L157: `DEFAULT_PROPERTY.trustEnabled: false`
+  - L258-259: `getPropertyByPublicId` 讀取映射
+  - L592-593: `createPropertyWithForm` insert 語句
+- RLS 檢查：現有 UPDATE 政策足夠保護
+- 驗證：`npm run gate` 通過、grep 確認 6 處皆有
 
 ---
 
