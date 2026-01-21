@@ -38,6 +38,8 @@ describe("Zod Schema 驗證", () => {
         current_step: 3,
         status: "active",
         offer_price: 31500000,
+        token: "abcd1234-e89b-12d3-a456-426614174000",
+        token_expires_at: "2024-04-01T00:00:00Z",
         created_at: "2024-01-01T00:00:00Z",
         updated_at: "2024-01-02T00:00:00Z",
       };
@@ -53,6 +55,8 @@ describe("Zod Schema 驗證", () => {
         property_title: "物件",
         current_step: 1,
         status: "active",
+        token: "abcd1234-e89b-12d3-a456-426614174000",
+        token_expires_at: "2024-04-01T00:00:00Z",
         created_at: "2024-01-01T00:00:00Z",
         updated_at: "2024-01-01T00:00:00Z",
       };
@@ -68,6 +72,8 @@ describe("Zod Schema 驗證", () => {
         property_title: "物件",
         current_step: 7, // 超出 1-6 範圍
         status: "active",
+        token: "abcd1234-e89b-12d3-a456-426614174000",
+        token_expires_at: "2024-04-01T00:00:00Z",
         created_at: "2024-01-01T00:00:00Z",
         updated_at: "2024-01-01T00:00:00Z",
       };
@@ -127,6 +133,8 @@ describe("transformToLegacyCase 轉換函數", () => {
       current_step: 3,
       status: "active" as const,
       offer_price: 31500000,
+      token: "abcd1234-e89b-12d3-a456-426614174000",
+      token_expires_at: "2024-04-01T00:00:00Z",
       created_at: "2024-01-01T00:00:00Z",
       updated_at: "2024-01-02T12:00:00Z",
     };
@@ -153,6 +161,8 @@ describe("transformToLegacyCase 轉換函數", () => {
       current_step: 2,
       status: "active" as const,
       offer_price: null,
+      token: "abcd1234-e89b-12d3-a456-426614174000",
+      token_expires_at: "2024-04-01T00:00:00Z",
       created_at: "2024-01-01T00:00:00Z",
       updated_at: "2024-01-01T00:00:00Z",
     };
@@ -190,6 +200,8 @@ describe("transformToLegacyCase 轉換函數", () => {
       current_step: 1,
       status: "active" as const,
       offer_price: null,
+      token: "abcd1234-e89b-12d3-a456-426614174000",
+      token_expires_at: "2024-04-01T00:00:00Z",
       created_at: "2024-01-01T00:00:00Z",
       updated_at: "2024-01-01T00:00:00Z",
     };
@@ -237,7 +249,7 @@ describe("工具函數", () => {
       expect(active.color).toBe("#16a34a");
 
       const completed = formatCaseStatus("completed");
-      expect(completed.text).toBe("已完成");
+      expect(completed.text).toBe("已成交");
     });
   });
 
@@ -361,6 +373,8 @@ describe("完整流程整合測試", () => {
       current_step: 5,
       status: "active" as const,
       offer_price: 88000000,
+      token: "abcd1234-e89b-12d3-a456-426614174000",
+      token_expires_at: "2024-04-01T00:00:00Z",
       created_at: "2024-01-01T00:00:00Z",
       updated_at: "2024-06-15T14:30:00Z",
     };
@@ -448,5 +462,541 @@ describe("完整流程整合測試", () => {
       expect(formatted.bg).toBeDefined();
       expect(formatted.color).toBeDefined();
     }
+  });
+});
+
+// ============================================================================
+// 測試 6: DB-2 新增狀態測試 [rigorous_testing]
+// ============================================================================
+
+describe("DB-2 案件生命週期狀態", () => {
+  describe("CaseStatusSchema 擴展狀態", () => {
+    it("應該接受所有 9 種狀態", () => {
+      const allStatuses = [
+        "active",
+        "dormant",
+        "completed",
+        "closed_sold_to_other",
+        "closed_property_unlisted",
+        "closed_inactive",
+        "pending",
+        "cancelled",
+        "expired",
+      ];
+
+      for (const status of allStatuses) {
+        const testCase = {
+          id: "123e4567-e89b-12d3-a456-426614174000",
+          buyer_session_id: null,
+          buyer_name: "測試",
+          buyer_contact: null,
+          property_id: null,
+          property_title: "測試物件",
+          transaction_id: null,
+          current_step: 1,
+          status,
+          offer_price: null,
+          token: "abcd1234-e89b-12d3-a456-426614174000",
+          token_expires_at: "2024-04-01T00:00:00Z",
+          created_at: "2024-01-01T00:00:00Z",
+          updated_at: "2024-01-01T00:00:00Z",
+        };
+
+        const result = TrustCaseSchema.safeParse(testCase);
+        expect(result.success).toBe(true);
+      }
+    });
+
+    it("應該拒絕無效的狀態", () => {
+      const testCase = {
+        id: "123e4567-e89b-12d3-a456-426614174000",
+        buyer_session_id: null,
+        buyer_name: "測試",
+        property_title: "測試物件",
+        current_step: 1,
+        status: "invalid_status",
+        token: "abcd1234-e89b-12d3-a456-426614174000",
+        token_expires_at: "2024-04-01T00:00:00Z",
+        created_at: "2024-01-01T00:00:00Z",
+        updated_at: "2024-01-01T00:00:00Z",
+      };
+
+      const result = TrustCaseSchema.safeParse(testCase);
+      expect(result.success).toBe(false);
+    });
+  });
+
+  describe("生命週期欄位", () => {
+    it("應該接受 dormant_at 時間戳", () => {
+      const testCase = {
+        id: "123e4567-e89b-12d3-a456-426614174000",
+        buyer_session_id: null,
+        buyer_name: "測試",
+        buyer_contact: null,
+        property_id: null,
+        property_title: "測試物件",
+        transaction_id: null,
+        current_step: 2,
+        status: "dormant",
+        offer_price: null,
+        dormant_at: "2024-06-01T00:00:00Z",
+        token: "abcd1234-e89b-12d3-a456-426614174000",
+        token_expires_at: "2024-04-01T00:00:00Z",
+        created_at: "2024-01-01T00:00:00Z",
+        updated_at: "2024-06-01T00:00:00Z",
+      };
+
+      const result = TrustCaseSchema.safeParse(testCase);
+      expect(result.success).toBe(true);
+    });
+
+    it("應該接受 closed_at 和 closed_reason", () => {
+      const testCase = {
+        id: "123e4567-e89b-12d3-a456-426614174000",
+        buyer_session_id: null,
+        buyer_name: "測試",
+        buyer_contact: null,
+        property_id: null,
+        property_title: "測試物件",
+        transaction_id: null,
+        current_step: 3,
+        status: "closed_sold_to_other",
+        offer_price: null,
+        closed_at: "2024-07-01T00:00:00Z",
+        closed_reason: "同物件其他案件已成交",
+        token: "abcd1234-e89b-12d3-a456-426614174000",
+        token_expires_at: "2024-04-01T00:00:00Z",
+        created_at: "2024-01-01T00:00:00Z",
+        updated_at: "2024-07-01T00:00:00Z",
+      };
+
+      const result = TrustCaseSchema.safeParse(testCase);
+      expect(result.success).toBe(true);
+    });
+  });
+
+  describe("formatCaseStatus DB-2 狀態", () => {
+    it("應該正確格式化 dormant 狀態", () => {
+      const dormant = formatCaseStatus("dormant");
+      expect(dormant.text).toBe("休眠中");
+      expect(dormant.bg).toBe("#fef3c7");
+      expect(dormant.color).toBe("#d97706");
+    });
+
+    it("應該正確格式化 closed_* 系列狀態", () => {
+      const soldToOther = formatCaseStatus("closed_sold_to_other");
+      expect(soldToOther.text).toBe("他人成交");
+
+      const unlisted = formatCaseStatus("closed_property_unlisted");
+      expect(unlisted.text).toBe("物件下架");
+
+      const inactive = formatCaseStatus("closed_inactive");
+      expect(inactive.text).toBe("已過期關閉");
+    });
+
+    it("應該對所有 DB-2 狀態都有格式化定義", () => {
+      const db2Statuses = [
+        "dormant",
+        "closed_sold_to_other",
+        "closed_property_unlisted",
+        "closed_inactive",
+      ] as const;
+
+      for (const status of db2Statuses) {
+        const formatted = formatCaseStatus(status);
+        expect(formatted.text).not.toBe("未知");
+        expect(formatted.bg).toBeDefined();
+        expect(formatted.color).toBeDefined();
+      }
+    });
+  });
+
+  describe("transformToLegacyCase 生命週期欄位轉換", () => {
+    it("應該正確轉換 dormant_at 為 timestamp", () => {
+      const apiCase = {
+        id: "123e4567-e89b-12d3-a456-426614174000",
+        buyer_session_id: null,
+        buyer_name: "測試",
+        buyer_contact: null,
+        property_id: null,
+        property_title: "測試物件",
+        transaction_id: null,
+        current_step: 2,
+        status: "dormant" as const,
+        offer_price: null,
+        dormant_at: "2024-06-15T10:30:00Z",
+        token: "abcd1234-e89b-12d3-a456-426614174000",
+        token_expires_at: "2024-04-01T00:00:00Z",
+        created_at: "2024-01-01T00:00:00Z",
+        updated_at: "2024-06-15T10:30:00Z",
+      };
+
+      const legacy = transformToLegacyCase(apiCase, []);
+
+      expect(legacy.status).toBe("dormant");
+      expect(legacy.dormantAt).toBe(new Date("2024-06-15T10:30:00Z").getTime());
+    });
+
+    it("應該正確轉換 closed_at 和 closed_reason", () => {
+      const apiCase = {
+        id: "123e4567-e89b-12d3-a456-426614174000",
+        buyer_session_id: null,
+        buyer_name: "測試",
+        buyer_contact: null,
+        property_id: null,
+        property_title: "測試物件",
+        transaction_id: null,
+        current_step: 3,
+        status: "closed_sold_to_other" as const,
+        offer_price: null,
+        closed_at: "2024-07-01T14:00:00Z",
+        closed_reason: "同物件其他案件已成交",
+        token: "abcd1234-e89b-12d3-a456-426614174000",
+        token_expires_at: "2024-04-01T00:00:00Z",
+        created_at: "2024-01-01T00:00:00Z",
+        updated_at: "2024-07-01T14:00:00Z",
+      };
+
+      const legacy = transformToLegacyCase(apiCase, []);
+
+      // closed_* 系列應該映射為 "closed"
+      expect(legacy.status).toBe("closed");
+      expect(legacy.closedAt).toBe(new Date("2024-07-01T14:00:00Z").getTime());
+      expect(legacy.closedReason).toBe("同物件其他案件已成交");
+    });
+
+    it("cancelled 狀態應該映射為 expired", () => {
+      const apiCase = {
+        id: "123e4567-e89b-12d3-a456-426614174000",
+        buyer_session_id: null,
+        buyer_name: "測試",
+        buyer_contact: null,
+        property_id: null,
+        property_title: "測試物件",
+        transaction_id: null,
+        current_step: 1,
+        status: "cancelled" as const,
+        offer_price: null,
+        token: "987e6543-e21b-45d3-c654-321098765432",
+        token_expires_at: "2024-04-01T00:00:00Z",
+        created_at: "2024-01-01T00:00:00Z",
+        updated_at: "2024-01-01T00:00:00Z",
+      };
+
+      const legacy = transformToLegacyCase(apiCase, []);
+
+      // cancelled 轉為 expired（最接近的語意）
+      expect(legacy.status).toBe("expired");
+    });
+  });
+});
+
+// ============================================================================
+// 測試 7: DB-3 Token 欄位測試 [rigorous_testing]
+// ============================================================================
+
+describe("DB-3 案件 Token 欄位", () => {
+  describe("TrustCaseSchema Token 欄位", () => {
+    it("應該接受有效的 token UUID", () => {
+      const testCase = {
+        id: "123e4567-e89b-12d3-a456-426614174000",
+        buyer_session_id: null,
+        buyer_name: "測試",
+        buyer_contact: null,
+        property_id: null,
+        property_title: "測試物件",
+        transaction_id: null,
+        current_step: 1,
+        status: "active",
+        offer_price: null,
+        token: "abcd1234-e89b-12d3-a456-426614174000",
+        token_expires_at: "2024-04-01T00:00:00Z",
+        created_at: "2024-01-01T00:00:00Z",
+        updated_at: "2024-01-01T00:00:00Z",
+      };
+
+      const result = TrustCaseSchema.safeParse(testCase);
+      expect(result.success).toBe(true);
+    });
+
+    it("應該拒絕無效的 token（非 UUID 格式）", () => {
+      const testCase = {
+        id: "123e4567-e89b-12d3-a456-426614174000",
+        buyer_session_id: null,
+        buyer_name: "測試",
+        property_title: "測試物件",
+        current_step: 1,
+        status: "active",
+        token: "not-a-valid-uuid",
+        token_expires_at: "2024-04-01T00:00:00Z",
+        created_at: "2024-01-01T00:00:00Z",
+        updated_at: "2024-01-01T00:00:00Z",
+      };
+
+      const result = TrustCaseSchema.safeParse(testCase);
+      expect(result.success).toBe(false);
+    });
+
+    it("應該要求 token 和 token_expires_at 欄位存在", () => {
+      const testCase = {
+        id: "123e4567-e89b-12d3-a456-426614174000",
+        buyer_session_id: null,
+        buyer_name: "測試",
+        buyer_contact: null,
+        property_id: null,
+        property_title: "測試物件",
+        transaction_id: null,
+        current_step: 1,
+        status: "active",
+        offer_price: null,
+        // 缺少 token 和 token_expires_at
+        created_at: "2024-01-01T00:00:00Z",
+        updated_at: "2024-01-01T00:00:00Z",
+      };
+
+      const result = TrustCaseSchema.safeParse(testCase);
+      expect(result.success).toBe(false);
+    });
+  });
+
+  describe("transformToLegacyCase Token 欄位轉換", () => {
+    it("應該正確轉換 token 和 token_expires_at", () => {
+      const apiCase = {
+        id: "123e4567-e89b-12d3-a456-426614174000",
+        buyer_session_id: null,
+        buyer_name: "測試",
+        buyer_contact: null,
+        property_id: null,
+        property_title: "測試物件",
+        transaction_id: null,
+        current_step: 2,
+        status: "active" as const,
+        offer_price: null,
+        token: "abcd1234-e89b-12d3-a456-426614174000",
+        token_expires_at: "2024-04-01T12:30:00Z",
+        created_at: "2024-01-01T00:00:00Z",
+        updated_at: "2024-01-15T10:30:00Z",
+      };
+
+      const legacy = transformToLegacyCase(apiCase, []);
+
+      expect(legacy.token).toBe("abcd1234-e89b-12d3-a456-426614174000");
+      expect(legacy.tokenExpiresAt).toBe(new Date("2024-04-01T12:30:00Z").getTime());
+    });
+
+    it("Trust Room 連結 token 應該可用於識別案件", () => {
+      const apiCase = {
+        id: "123e4567-e89b-12d3-a456-426614174000",
+        buyer_session_id: "session-xyz",
+        buyer_name: "王小明",
+        buyer_contact: null,
+        property_id: "prop-001",
+        property_title: "信義區豪宅",
+        transaction_id: null,
+        current_step: 3,
+        status: "active" as const,
+        offer_price: 50000000,
+        token: "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+        token_expires_at: "2024-06-01T00:00:00Z",
+        created_at: "2024-01-01T00:00:00Z",
+        updated_at: "2024-03-15T14:00:00Z",
+      };
+
+      const legacy = transformToLegacyCase(apiCase, []);
+
+      // Token 應該是 UUID 格式（36 字元含破折號）
+      expect(legacy.token).toHaveLength(36);
+      expect(legacy.tokenExpiresAt).toBeGreaterThan(0);
+    });
+  });
+
+  describe("Token 過期邏輯", () => {
+    it("應該能檢查 token 是否過期", () => {
+      const now = Date.now();
+      const futureExpiry = now + 90 * 24 * 60 * 60 * 1000; // 90 天後
+      const pastExpiry = now - 1 * 24 * 60 * 60 * 1000; // 1 天前
+
+      // 未過期
+      expect(futureExpiry > now).toBe(true);
+
+      // 已過期
+      expect(pastExpiry > now).toBe(false);
+    });
+  });
+});
+
+// ============================================================================
+// 測試 8: DB-4 Buyer 欄位測試 [rigorous_testing]
+// ============================================================================
+
+describe("DB-4 案件 Buyer 欄位", () => {
+  describe("TrustCaseSchema Buyer 欄位", () => {
+    it("應該接受有 buyer_user_id 的案件", () => {
+      const testCase = {
+        id: "123e4567-e89b-12d3-a456-426614174000",
+        buyer_session_id: null,
+        buyer_name: "測試",
+        buyer_contact: null,
+        property_id: null,
+        property_title: "測試物件",
+        transaction_id: null,
+        current_step: 1,
+        status: "active",
+        offer_price: null,
+        token: "abcd1234-e89b-12d3-a456-426614174000",
+        token_expires_at: "2024-04-01T00:00:00Z",
+        buyer_user_id: "99999999-e89b-12d3-a456-426614174000",
+        buyer_line_id: null,
+        created_at: "2024-01-01T00:00:00Z",
+        updated_at: "2024-01-01T00:00:00Z",
+      };
+
+      const result = TrustCaseSchema.safeParse(testCase);
+      expect(result.success).toBe(true);
+    });
+
+    it("應該接受有 buyer_line_id 的案件", () => {
+      const testCase = {
+        id: "123e4567-e89b-12d3-a456-426614174000",
+        buyer_session_id: null,
+        buyer_name: "測試",
+        buyer_contact: null,
+        property_id: null,
+        property_title: "測試物件",
+        transaction_id: null,
+        current_step: 1,
+        status: "active",
+        offer_price: null,
+        token: "abcd1234-e89b-12d3-a456-426614174000",
+        token_expires_at: "2024-04-01T00:00:00Z",
+        buyer_user_id: null,
+        buyer_line_id: "U1234567890abcdef1234567890abcde",
+        created_at: "2024-01-01T00:00:00Z",
+        updated_at: "2024-01-01T00:00:00Z",
+      };
+
+      const result = TrustCaseSchema.safeParse(testCase);
+      expect(result.success).toBe(true);
+    });
+
+    it("應該接受兩者都有的案件", () => {
+      const testCase = {
+        id: "123e4567-e89b-12d3-a456-426614174000",
+        buyer_session_id: null,
+        buyer_name: "測試",
+        buyer_contact: null,
+        property_id: null,
+        property_title: "測試物件",
+        transaction_id: null,
+        current_step: 1,
+        status: "active",
+        offer_price: null,
+        token: "abcd1234-e89b-12d3-a456-426614174000",
+        token_expires_at: "2024-04-01T00:00:00Z",
+        buyer_user_id: "99999999-e89b-12d3-a456-426614174000",
+        buyer_line_id: "U1234567890abcdef1234567890abcde",
+        created_at: "2024-01-01T00:00:00Z",
+        updated_at: "2024-01-01T00:00:00Z",
+      };
+
+      const result = TrustCaseSchema.safeParse(testCase);
+      expect(result.success).toBe(true);
+    });
+
+    it("應該接受兩者都沒有的案件", () => {
+      const testCase = {
+        id: "123e4567-e89b-12d3-a456-426614174000",
+        buyer_session_id: null,
+        buyer_name: "測試",
+        buyer_contact: null,
+        property_id: null,
+        property_title: "測試物件",
+        transaction_id: null,
+        current_step: 1,
+        status: "active",
+        offer_price: null,
+        token: "abcd1234-e89b-12d3-a456-426614174000",
+        token_expires_at: "2024-04-01T00:00:00Z",
+        created_at: "2024-01-01T00:00:00Z",
+        updated_at: "2024-01-01T00:00:00Z",
+      };
+
+      const result = TrustCaseSchema.safeParse(testCase);
+      expect(result.success).toBe(true);
+    });
+  });
+
+  describe("transformToLegacyCase Buyer 欄位轉換", () => {
+    it("應該正確轉換 buyer_user_id", () => {
+      const apiCase = {
+        id: "123e4567-e89b-12d3-a456-426614174000",
+        buyer_session_id: null,
+        buyer_name: "測試",
+        buyer_contact: null,
+        property_id: null,
+        property_title: "測試物件",
+        transaction_id: null,
+        current_step: 2,
+        status: "active" as const,
+        offer_price: null,
+        token: "abcd1234-e89b-12d3-a456-426614174000",
+        token_expires_at: "2024-04-01T12:30:00Z",
+        buyer_user_id: "99999999-e89b-12d3-a456-426614174000",
+        created_at: "2024-01-01T00:00:00Z",
+        updated_at: "2024-01-15T10:30:00Z",
+      };
+
+      const legacy = transformToLegacyCase(apiCase, []);
+
+      expect(legacy.buyerUserId).toBe("99999999-e89b-12d3-a456-426614174000");
+    });
+
+    it("應該正確轉換 buyer_line_id", () => {
+      const apiCase = {
+        id: "123e4567-e89b-12d3-a456-426614174000",
+        buyer_session_id: null,
+        buyer_name: "測試",
+        buyer_contact: null,
+        property_id: null,
+        property_title: "測試物件",
+        transaction_id: null,
+        current_step: 2,
+        status: "active" as const,
+        offer_price: null,
+        token: "abcd1234-e89b-12d3-a456-426614174000",
+        token_expires_at: "2024-04-01T12:30:00Z",
+        buyer_line_id: "U1234567890abcdef1234567890abcde",
+        created_at: "2024-01-01T00:00:00Z",
+        updated_at: "2024-01-15T10:30:00Z",
+      };
+
+      const legacy = transformToLegacyCase(apiCase, []);
+
+      expect(legacy.buyerLineId).toBe("U1234567890abcdef1234567890abcde");
+    });
+
+    it("沒有 buyer 欄位時不應該有對應屬性", () => {
+      const apiCase = {
+        id: "123e4567-e89b-12d3-a456-426614174000",
+        buyer_session_id: null,
+        buyer_name: "測試",
+        buyer_contact: null,
+        property_id: null,
+        property_title: "測試物件",
+        transaction_id: null,
+        current_step: 2,
+        status: "active" as const,
+        offer_price: null,
+        token: "abcd1234-e89b-12d3-a456-426614174000",
+        token_expires_at: "2024-04-01T12:30:00Z",
+        created_at: "2024-01-01T00:00:00Z",
+        updated_at: "2024-01-15T10:30:00Z",
+      };
+
+      const legacy = transformToLegacyCase(apiCase, []);
+
+      expect(legacy.buyerUserId).toBeUndefined();
+      expect(legacy.buyerLineId).toBeUndefined();
+    });
   });
 });

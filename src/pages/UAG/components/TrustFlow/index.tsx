@@ -61,6 +61,8 @@ export default function TrustFlow({ toggleMode }: TrustFlowProps) {
             currentStep: 1,
             status: "active",
             lastUpdate: Date.now(),
+            token: crypto.randomUUID(),
+            tokenExpiresAt: Date.now() + 90 * 24 * 60 * 60 * 1000,
             events: [
               {
                 id: `${caseId}-e1`,

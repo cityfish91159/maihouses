@@ -274,33 +274,9 @@ async function createNewCommunity(
   return data?.id || null;
 }
 
-/** 建立社區評價關聯並觸發 AI 總結 */
-async function linkCommunityReview(
-  communityId: string,
-  propertyId: string,
-  form: PropertyFormInput,
-): Promise<void> {
-  if (!form.advantage1 && !form.advantage2 && !form.disadvantage) return;
-
-  await supabase.from("community_reviews").insert({
-    community_id: communityId,
-    property_id: propertyId,
-    source: "agent",
-    advantage_1: form.advantage1 || null,
-    advantage_2: form.advantage2 || null,
-    disadvantage: form.disadvantage || null,
-  });
-
-  // 🤖 Fire-and-forget：觸發 AI 重新總結
-  fetch("/api/generate-community-profile", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ communityId }),
-  }).catch((err) => logger.warn("AI 總結背景執行中", { error: err }));
-}
-
 // ============================================
 // 定義 Service 介面 (Explicit Interface)
+// NOTE: linkCommunityReview 已移至 RPC fn_create_property_with_review
 export interface PropertyService {
   getPropertyByPublicId(publicId: string): Promise<PropertyData | null>;
   createProperty(
@@ -607,8 +583,8 @@ export const propertyService: PropertyService = {
     return result.urls;
   },
 
-  // 4. 建立物件 (NASA Safety 重構版)
-  // 原 222 行 → 拆分為 5 個 helper functions，主函數 55 行
+  // 4. 建立物件 (NASA Safety 重構版 + Transaction 保護)
+  // WHY: 使用 RPC 確保 property INSERT 與 community_review 在同一 Transaction
   createPropertyWithForm: async (
     form: PropertyFormInput,
     images: string[],
@@ -621,71 +597,85 @@ export const propertyService: PropertyService = {
     const { communityId, communityName, isNewCommunity } =
       await resolveOrCreateCommunity(form, existingCommunityId);
 
-    // Step 3: 計算地址指紋
+    // Step 3: 計算地址指紋與 features
     const addressFingerprint = form.address
       ? computeAddressFingerprint(form.address)
       : null;
 
-    // Step 4: 插入物件
-    const { data, error } = await supabase
-      .from("properties")
-      .insert({
-        agent_id: agentId,
-        title: form.title,
-        price: Number(form.price),
-        address: form.address,
-        address_fingerprint: addressFingerprint,
-        community_name: communityName,
-        community_id: communityId,
-        size: Number(form.size || 0),
-        age: Number(form.age || 0),
-        rooms: Number(form.rooms),
-        halls: Number(form.halls),
-        bathrooms: Number(form.bathrooms),
-        floor_current: form.floorCurrent,
-        floor_total: Number(form.floorTotal || 0),
-        property_type: form.type,
-        advantage_1: form.advantage1,
-        advantage_2: form.advantage2,
-        disadvantage: form.disadvantage,
-        description: form.description,
-        images: images,
-        features: Array.from(
-          new Set([
-            form.type,
-            ...(form.highlights || []),
-            ...(!form.highlights || form.highlights.length === 0
-              ? [form.advantage1, form.advantage2]
-              : []),
-          ]),
-        ).filter(Boolean) as string[],
-        source_platform: form.sourceExternalId ? "591" : "MH",
-        source_external_id: form.sourceExternalId || null,
-        // NASA Safety: 嚴格 boolean 比較
-        trust_enabled: form.trustEnabled === true,
-      })
-      .select()
-      .single();
+    const features = Array.from(
+      new Set([
+        form.type,
+        ...(form.highlights || []),
+        ...(!form.highlights || form.highlights.length === 0
+          ? [form.advantage1, form.advantage2]
+          : []),
+      ]),
+    ).filter(Boolean) as string[];
 
-    if (error) throw error;
+    // Step 4: 使用 RPC 原子性建立物件 + 社區評價
+    // WHY: Transaction 保護，避免中途失敗導致資料不一致
+    const { data: rpcResult, error: rpcError } = await supabase.rpc(
+      "fn_create_property_with_review",
+      {
+        p_agent_id: agentId,
+        p_title: form.title,
+        p_price: Number(form.price),
+        p_address: form.address,
+        p_address_fingerprint: addressFingerprint,
+        p_community_name: communityName,
+        p_community_id: communityId,
+        p_size: Number(form.size || 0),
+        p_age: Number(form.age || 0),
+        p_rooms: Number(form.rooms),
+        p_halls: Number(form.halls),
+        p_bathrooms: Number(form.bathrooms),
+        p_floor_current: form.floorCurrent,
+        p_floor_total: Number(form.floorTotal || 0),
+        p_property_type: form.type,
+        p_advantage_1: form.advantage1,
+        p_advantage_2: form.advantage2,
+        p_disadvantage: form.disadvantage,
+        p_description: form.description,
+        p_images: images,
+        p_features: features,
+        p_source_platform: form.sourceExternalId ? "591" : "MH",
+        p_source_external_id: form.sourceExternalId || null,
+        p_trust_enabled: form.trustEnabled === true,
+      },
+    );
+
+    if (rpcError) throw rpcError;
+
+    // 驗證 RPC 回傳結構
+    const result = rpcResult as { success: boolean; id?: string; public_id?: string; error?: string };
+    if (!result.success) {
+      throw new Error(result.error || "RPC failed");
+    }
 
     // Step 5: Audit Log
     logger.info("Property created", {
-      propertyId: data.id,
-      publicId: data.public_id,
+      propertyId: result.id,
+      publicId: result.public_id,
       agentId,
       trustEnabled: form.trustEnabled === true,
       isNewCommunity,
       communityId: communityId || null,
     });
 
-    // Step 6: 建立社區評價關聯 (23 行 helper)
+    // Step 6: Fire-and-forget AI 總結（非關鍵路徑）
     if (communityId) {
-      await linkCommunityReview(communityId, data.id, form);
+      fetch("/api/generate-community-profile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ communityId }),
+      }).catch((err) => logger.warn("AI 總結背景執行中", { error: err }));
     }
 
     return {
-      ...data,
+      id: result.id ?? "",
+      public_id: result.public_id ?? "",
+      community_id: communityId,
+      community_name: communityName,
       is_new_community: isNewCommunity,
     };
   },

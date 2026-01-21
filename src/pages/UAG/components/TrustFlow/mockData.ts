@@ -17,6 +17,8 @@ export const MOCK_CASES: TrustCase[] = [
     status: "active",
     lastUpdate: Date.now() - 30 * 60000,
     offerPrice: 31500000,
+    token: "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    tokenExpiresAt: Date.now() + 90 * 24 * 60 * 60 * 1000,
     events: [
       {
         id: "e1",
@@ -57,6 +59,8 @@ export const MOCK_CASES: TrustCase[] = [
     currentStep: 2,
     status: "active",
     lastUpdate: Date.now() - 2 * 3600000,
+    token: "b2c3d4e5-f6a7-8901-bcde-f23456789012",
+    tokenExpiresAt: Date.now() + 90 * 24 * 60 * 60 * 1000,
     events: [
       {
         id: "e4",
@@ -88,6 +92,8 @@ export const MOCK_CASES: TrustCase[] = [
     status: "active",
     lastUpdate: Date.now() - 12 * 3600000,
     offerPrice: 28800000,
+    token: "c3d4e5f6-a7b8-9012-cdef-345678901234",
+    tokenExpiresAt: Date.now() + 90 * 24 * 60 * 60 * 1000,
     events: [
       {
         id: "e6",
@@ -137,6 +143,8 @@ export const MOCK_CASES: TrustCase[] = [
     status: "completed",
     lastUpdate: Date.now() - 1 * 86400000,
     offerPrice: 45000000,
+    token: "d4e5f6a7-b8c9-0123-defa-456789012345",
+    tokenExpiresAt: Date.now() + 90 * 24 * 60 * 60 * 1000,
     events: [
       {
         id: "e10",

@@ -58,11 +58,30 @@ export const TRUST_STEP_ICONS: Record<number, string> = {
 // Zod Schemas
 // ============================================================================
 
-/** 案件狀態 Schema */
+/**
+ * 案件狀態 Schema
+ *
+ * [DB-2] 擴展狀態定義，支援案件生命週期管理
+ *
+ * 狀態說明:
+ * - active: 進行中（預設）
+ * - dormant: 休眠（30 天無互動）
+ * - completed: 成交（M5 完成）
+ * - closed_sold_to_other: 他人成交（同物件其他案件 M5）
+ * - closed_property_unlisted: 物件下架（房仲下架物件）
+ * - closed_inactive: 過期關閉（休眠超過 60 天）
+ * - pending: 待處理（向後相容）
+ * - cancelled: 已取消（向後相容）
+ * - expired: 已過期（向後相容）
+ */
 export const CaseStatusSchema = z.enum([
   "active",
-  "pending",
+  "dormant",
   "completed",
+  "closed_sold_to_other",
+  "closed_property_unlisted",
+  "closed_inactive",
+  "pending",
   "cancelled",
   "expired",
 ]);
@@ -85,7 +104,12 @@ export const TrustCaseEventSchema = z.object({
 });
 export type TrustCaseEvent = z.infer<typeof TrustCaseEventSchema>;
 
-/** 案件 Schema */
+/**
+ * 案件 Schema
+ *
+ * [DB-2] 新增 dormant_at, closed_at, closed_reason 欄位
+ * [DB-3] 新增 token, token_expires_at 欄位
+ */
 export const TrustCaseSchema = z.object({
   id: z.string().uuid(),
   buyer_session_id: z.string().nullable(),
@@ -97,6 +121,18 @@ export const TrustCaseSchema = z.object({
   current_step: z.number().int().min(1).max(6),
   status: CaseStatusSchema,
   offer_price: z.number().nullable(),
+  // [DB-2] 生命週期欄位
+  dormant_at: z.string().nullable().optional(),
+  closed_at: z.string().nullable().optional(),
+  closed_reason: z.string().nullable().optional(),
+  // [DB-3] Token 欄位（消費者用 Token 連結進入 Trust Room）
+  token: z.string().uuid(),
+  token_expires_at: z.string(),
+  token_revoked_at: z.string().nullable().optional(),
+  // [DB-4] Buyer 欄位（通知用）
+  buyer_user_id: z.string().uuid().nullable().optional(),
+  buyer_line_id: z.string().nullable().optional(),
+  // 時間戳
   created_at: z.string(),
   updated_at: z.string(),
   events_count: z.number().optional(),
@@ -192,6 +228,9 @@ export interface LegacyTrustEvent {
 /**
  * TrustFlow.tsx 使用的舊格式案件
  * 用於轉換層
+ *
+ * [DB-2] 新增 dormant 和 closed 狀態支援
+ * [DB-3] 新增 token 和 tokenExpiresAt 欄位
  */
 export interface LegacyTrustCase {
   id: string;
@@ -199,24 +238,48 @@ export interface LegacyTrustCase {
   buyerName: string;
   propertyTitle: string;
   currentStep: number;
-  status: "active" | "completed" | "pending" | "expired";
+  status: "active" | "dormant" | "completed" | "closed" | "pending" | "expired";
   lastUpdate: number;
   offerPrice?: number;
   events: LegacyTrustEvent[];
+  // [DB-2] 生命週期欄位
+  dormantAt?: number;
+  closedAt?: number;
+  closedReason?: string;
+  // [DB-3] Token 欄位
+  token: string;
+  tokenExpiresAt: number;
+  tokenRevokedAt?: number;
+  // [DB-4] Buyer 欄位
+  buyerUserId?: string;
+  buyerLineId?: string;
 }
 
 // ============================================================================
 // Transform Functions
 // ============================================================================
 
-/** Legacy 狀態 Schema - 用於安全轉換 */
-const LegacyStatusSchema = z.enum(["active", "completed", "pending", "expired"]);
+/** Legacy 狀態 Schema - 用於安全轉換 [DB-2] 新增 dormant, closed */
+const LegacyStatusSchema = z.enum([
+  "active",
+  "dormant",
+  "completed",
+  "closed",
+  "pending",
+  "expired",
+]);
 
 /**
  * 安全轉換狀態 [NASA TypeScript Safety]
- * CaseStatus 包含 cancelled，但 LegacyTrustCase 不支援
+ * 將新狀態映射到 Legacy 格式
+ *
+ * [DB-2] closed_* 系列統一映射為 "closed"
  */
 function toSafeLegacyStatus(status: CaseStatus): LegacyTrustCase["status"] {
+  // 先檢查 closed_* 系列，統一映射為 "closed"
+  if (status.startsWith("closed_")) {
+    return "closed";
+  }
   const result = LegacyStatusSchema.safeParse(status);
   if (result.success) return result.data;
   // cancelled 轉為 expired（最接近的語意）
@@ -229,6 +292,8 @@ function toSafeLegacyStatus(status: CaseStatus): LegacyTrustCase["status"] {
  * @param apiCase - API 返回的案件資料
  * @param events - API 返回的事件列表
  * @returns LegacyTrustCase 格式
+ *
+ * [DB-2] 新增 dormantAt, closedAt, closedReason 欄位轉換
  */
 export function transformToLegacyCase(
   apiCase: TrustCase,
@@ -243,6 +308,9 @@ export function transformToLegacyCase(
     currentStep: apiCase.current_step,
     status: toSafeLegacyStatus(apiCase.status),
     lastUpdate: new Date(apiCase.updated_at).getTime(),
+    // [DB-3] Token 欄位
+    token: apiCase.token,
+    tokenExpiresAt: new Date(apiCase.token_expires_at).getTime(),
     events: events.map((e) => {
       const event: LegacyTrustEvent = {
         id: e.id,
@@ -266,6 +334,30 @@ export function transformToLegacyCase(
   // 只有非 null 時才設定 offerPrice
   if (apiCase.offer_price !== null) {
     result.offerPrice = apiCase.offer_price;
+  }
+
+  // [DB-2] 生命週期欄位轉換
+  if (apiCase.dormant_at) {
+    result.dormantAt = new Date(apiCase.dormant_at).getTime();
+  }
+  if (apiCase.closed_at) {
+    result.closedAt = new Date(apiCase.closed_at).getTime();
+  }
+  if (apiCase.closed_reason) {
+    result.closedReason = apiCase.closed_reason;
+  }
+
+  // [DB-3] Token 撤銷欄位轉換
+  if (apiCase.token_revoked_at) {
+    result.tokenRevokedAt = new Date(apiCase.token_revoked_at).getTime();
+  }
+
+  // [DB-4] Buyer 欄位轉換
+  if (apiCase.buyer_user_id) {
+    result.buyerUserId = apiCase.buyer_user_id;
+  }
+  if (apiCase.buyer_line_id) {
+    result.buyerLineId = apiCase.buyer_line_id;
   }
 
   return result;
@@ -327,6 +419,8 @@ export function isValidStep(step: number): boolean {
 
 /**
  * 格式化案件狀態
+ *
+ * [DB-2] 新增 dormant 和 closed_* 狀態的格式化
  */
 export function formatCaseStatus(status: CaseStatus): {
   text: string;
@@ -336,8 +430,16 @@ export function formatCaseStatus(status: CaseStatus): {
   switch (status) {
     case "active":
       return { text: "進行中", bg: "#dcfce7", color: "#16a34a" };
+    case "dormant":
+      return { text: "休眠中", bg: "#fef3c7", color: "#d97706" };
     case "completed":
-      return { text: "已完成", bg: "#dbeafe", color: "#2563eb" };
+      return { text: "已成交", bg: "#dbeafe", color: "#2563eb" };
+    case "closed_sold_to_other":
+      return { text: "他人成交", bg: "#f3f4f6", color: "#6b7280" };
+    case "closed_property_unlisted":
+      return { text: "物件下架", bg: "#f3f4f6", color: "#6b7280" };
+    case "closed_inactive":
+      return { text: "已過期關閉", bg: "#f3f4f6", color: "#6b7280" };
     case "pending":
       return { text: "待處理", bg: "#fef3c7", color: "#d97706" };
     case "cancelled":

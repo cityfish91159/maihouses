@@ -27,16 +27,27 @@ export function formatRelativeTime(ts: number): string {
 
 /**
  * 取得案件狀態的顯示樣式
+ *
+ * [DB-2] 新增 dormant 和 closed 狀態支援
+ *
+ * 注意：此函數處理 LegacyTrustCase 的 6 種狀態
+ * closed_* 系列已由 toSafeLegacyStatus 統一映射為 "closed"
  */
 export function getStatusBadge(status: TrustCase["status"]): StatusBadge {
   switch (status) {
     case "active":
       return { text: "進行中", bg: "#dcfce7", color: "#16a34a" };
+    case "dormant":
+      return { text: "休眠中", bg: "#fef3c7", color: "#d97706" };
     case "completed":
-      return { text: "已完成", bg: "#dbeafe", color: "#2563eb" };
+      return { text: "已成交", bg: "#dbeafe", color: "#2563eb" };
+    case "closed":
+      return { text: "已關閉", bg: "#f3f4f6", color: "#6b7280" };
     case "pending":
       return { text: "待處理", bg: "#fef3c7", color: "#d97706" };
     case "expired":
       return { text: "已過期", bg: "#fee2e2", color: "#dc2626" };
+    default:
+      return { text: "未知", bg: "#f3f4f6", color: "#6b7280" };
   }
 }

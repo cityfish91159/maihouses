@@ -6,9 +6,9 @@
 | # | 任務 | 狀態 |
 |---|------|------|
 | DB-1 | 資料庫加 trust_enabled 欄位 | ✅ |
-| DB-2 | 資料庫加案件狀態欄位 | □ |
-| DB-3 | 資料庫加 token 欄位 | □ |
-| DB-4 | 資料庫加 buyer 欄位 | □ |
+| DB-2 | 資料庫加案件狀態欄位 | ✅ |
+| DB-3 | 資料庫加 token 欄位 | ✅ |
+| DB-4 | 資料庫加 buyer 欄位 | ✅ |
 
 ### Phase 2：核心後端 API
 | # | 任務 | 狀態 |
@@ -107,7 +107,7 @@ SELECT trust_enabled FROM properties LIMIT 1;
 
 ---
 
-## DB-2 |資料庫加案件狀態欄位
+## DB-2 | 資料庫加案件狀態欄位 ✅
 
 **為什麼**
 案件要能休眠、關閉，不能永遠「進行中」。100 個案件只有 1 個成交，另外 99 個要能自動處理掉。
@@ -135,9 +135,26 @@ SELECT status, dormant_at, closed_at FROM trust_cases LIMIT 1;
 -- 有欄位就是成功
 ```
 
+**施作紀錄** (2026-01-21)
+- Migration 檔案已建立：`20260122_add_case_status.sql`（含 WHY 註解）
+  - 擴展 CHECK 約束：9 種狀態（active, dormant, completed, closed_sold_to_other, closed_property_unlisted, closed_inactive, pending, cancelled, expired）
+  - 新增 dormant_at, closed_at, closed_reason 欄位
+  - 新增 idx_trust_cases_dormant_at, idx_trust_cases_active_updated 索引（Cron Job 使用）
+- TypeScript 類型更新：`src/types/trust-flow.types.ts`
+  - CaseStatusSchema 擴展至 9 種狀態
+  - TrustCaseSchema 新增生命週期欄位
+  - LegacyTrustCase 新增 dormantAt, closedAt, closedReason
+  - formatCaseStatus 函數支援所有 9 種狀態
+  - toSafeLegacyStatus 函數將 closed_* 映射為 "closed"
+  - transformToLegacyCase 新增生命週期欄位轉換
+- 前端適配：`src/pages/UAG/components/TrustFlow/utils.ts`
+  - getStatusBadge 支援 6 種 Legacy 狀態
+- 測試：新增 DB-2 測試組（9 測試案例），共 36 測試通過
+- 驗證：`npm run gate` 通過
+
 ---
 
-## DB-3 |資料庫加 token 欄位
+## DB-3 | 資料庫加 token 欄位 ✅
 
 **為什麼**
 消費者要能用 Token 連結進入 Trust Room，不用登入也能看進度。Token 要有過期時間。
@@ -158,6 +175,25 @@ CREATE UNIQUE INDEX idx_trust_cases_token ON trust_cases(token);
 SELECT token, token_expires_at FROM trust_cases LIMIT 1;
 -- 有 UUID 和過期時間就是成功
 ```
+
+**施作紀錄** (2026-01-21)
+- Migration 檔案已建立：`20260122_add_case_token.sql`（164 行，含 WHY 註解）
+  - Step 1: 新增 `token UUID NOT NULL DEFAULT gen_random_uuid()` 欄位
+  - Step 2: 新增 `token_expires_at TIMESTAMPTZ NOT NULL DEFAULT NOW() + INTERVAL '90 days'` 欄位
+  - Step 3: 建立 UNIQUE INDEX `idx_trust_cases_token`
+  - Step 4: 新增 RLS 政策 `trust_cases_public_token_select`（允許公開用 token 查詢）
+  - Step 5: 建立 RPC 函數 `fn_get_trust_case_by_token`（用 token 查詢案件）
+  - Step 6: 授權 anon/authenticated/service_role 執行 RPC
+  - Step 7: 更新 `fn_create_trust_case` 回傳 token 和 token_expires_at
+- TypeScript 類型更新：`src/types/trust-flow.types.ts`
+  - TrustCaseSchema 新增 `token: z.string().uuid()` 和 `token_expires_at: z.string()`
+  - LegacyTrustCase 新增 `token: string` 和 `tokenExpiresAt: number`
+  - transformToLegacyCase 新增 token 欄位轉換
+- Mock 資料更新：`src/pages/UAG/components/TrustFlow/mockData.ts` 4 個案件加入 token
+- 前端組件更新：`src/pages/UAG/components/TrustFlow/index.tsx` 新建案件加入 token
+- 測試：新增 DB-3 測試組（7 測試案例），共 42 測試通過
+- 安全評估：UUID v4 122 bits 熵值足夠安全，90 天過期 + Rate Limit 建議
+- 驗證：`npm run gate` 通過
 
 ---
 
@@ -183,6 +219,19 @@ CREATE INDEX idx_trust_cases_buyer_line ON trust_cases(buyer_line_id);
 SELECT buyer_user_id, buyer_line_id FROM trust_cases LIMIT 1;
 -- 有欄位就是成功
 ```
+
+**施作紀錄** (2026-01-21)
+- Migration 檔案已更新：`20260122_add_case_buyer.sql`（39 行，含 WHY 註解）
+  - Step 1: 新增 `buyer_user_id UUID REFERENCES auth.users(id)` 欄位
+  - Step 2: 新增 `buyer_line_id TEXT` 欄位
+  - Step 3-4: 建立索引 `idx_trust_cases_buyer_user`、`idx_trust_cases_buyer_line`
+  - 每個欄位加 COMMENT ON COLUMN 說明用途
+- TypeScript 類型：`src/types/trust-flow.types.ts`
+  - L132-134: TrustCaseSchema 已有 buyer_user_id、buyer_line_id
+  - L253-255: LegacyTrustCase 已有 buyerUserId、buyerLineId
+  - L355-361: transformToLegacyCase 已有 buyer 欄位轉換
+- 測試：`src/types/__tests__/trust-flow.types.test.ts` L828-1002 已有 7 個 DB-4 測試
+- 驗證：`npm run gate` 通過
 
 ---
 
