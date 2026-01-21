@@ -8,8 +8,9 @@
  * @see supabase/migrations/20241201_property_community_link.sql
  * @see supabase/migrations/20251127_property_upload_schema.sql
  * @see supabase/migrations/20251206_fix_community_reviews_view.sql
+ * @see supabase/migrations/20260122_add_trust_enabled.sql
  *
- * 最後更新: 2025-12-17
+ * 最後更新: 2026-01-21
  */
 
 // ============================================
@@ -61,6 +62,9 @@ export interface PropertyRow {
   advantage_1: string | null; // TEXT
   advantage_2: string | null; // TEXT
   disadvantage: string | null; // TEXT
+
+  // 安心留痕 (20260122_add_trust_enabled.sql)
+  trust_enabled: boolean; // BOOLEAN NOT NULL DEFAULT false
 
   // 時間戳記
   created_at: string; // TIMESTAMPTZ DEFAULT NOW()

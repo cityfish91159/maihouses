@@ -5,7 +5,7 @@
 ### Phase 1：資料庫
 | # | 任務 | 狀態 |
 |---|------|------|
-| DB-1 | 資料庫加 trust_enabled 欄位 | □ |
+| DB-1 | 資料庫加 trust_enabled 欄位 | ✅ |
 | DB-2 | 資料庫加案件狀態欄位 | □ |
 | DB-3 | 資料庫加 token 欄位 | □ |
 | DB-4 | 資料庫加 buyer 欄位 | □ |
@@ -74,7 +74,7 @@
 
 ---
 
-## DB-1 | 資料庫加 trust_enabled 欄位
+## DB-1 | 資料庫加 trust_enabled 欄位 ✅
 
 **為什麼**
 物件要能標記「有沒有開安心留痕」，詳情頁才知道要不要顯示徽章，上傳頁才有東西可以存。
@@ -92,6 +92,12 @@ ALTER TABLE properties ADD COLUMN trust_enabled BOOLEAN DEFAULT false;
 SELECT trust_enabled FROM properties LIMIT 1;
 -- 有回傳 false 就是成功
 ```
+
+**施作紀錄** (2026-01-21)
+- Migration 檔案已存在：`20260122_add_trust_enabled.sql`
+- 新增 TypeScript 類型：`src/types/supabase-schema.ts` PropertyRow.trust_enabled
+- RLS 檢查：現有 UPDATE 政策 (`auth.uid() = agent_id`) 已足夠保護
+- `npm run gate` 通過
 
 ---
 

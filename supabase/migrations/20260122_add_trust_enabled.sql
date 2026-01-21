@@ -1,0 +1,2 @@
+ALTER TABLE public.properties
+ADD COLUMN IF NOT EXISTS trust_enabled BOOLEAN NOT NULL DEFAULT false;

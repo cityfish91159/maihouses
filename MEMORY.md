@@ -1,11 +1,18 @@
 # 🧠 Project Memory Bank: MaiHouses
 
-> **Last Updated**: 2026-01-19 (v8 - Trust Legacy APIs 12 Skills 修復)
+> **Last Updated**: 2026-01-21 (v9 - 安心留痕工單 DB-1)
 > **Maintainer**: Claude / Antigravity
 
 ## 1. Active Context (當前焦點)
-- **Current Phase**: Trust Legacy APIs 12 Skills 修復 (2026-01-19 v8) ✅
-- **Immediate Goal**: ✅ 修復 6 個舊版 Trust API 的 `as { id: string }` 斷言
+- **Current Phase**: 安心留痕工單施作 (2026-01-21 v9)
+- **Immediate Goal**: 完成 DB-1~DB-4, BE-1~BE-10, FE-1~FE-6, LC-1~LC-4 共 24 項任務
+- **Latest Achievement** (2026-01-21 v9 - DB-1 完成):
+  - ✅ **DB-1** 資料庫加 trust_enabled 欄位
+    - Migration 檔案：`20260122_add_trust_enabled.sql`
+    - TypeScript 類型：`PropertyRow.trust_enabled` 新增於 `supabase-schema.ts`
+    - RLS 驗證：現有政策已足夠
+- **Previous Phase**: Trust Legacy APIs 12 Skills 修復 (2026-01-19 v8) ✅
+- **Previous Immediate Goal**: ✅ 修復 6 個舊版 Trust API 的 `as { id: string }` 斷言
 - **Latest Achievement** (2026-01-19 v8 - Trust Legacy APIs 完整修復):
   - ✅ **Phase 1 [高優先] 修復 6 個 API**
     - `api/trust/_utils.ts`: 新增 TrustQuerySchema 共用 Schema
