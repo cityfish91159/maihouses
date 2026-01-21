@@ -83,6 +83,38 @@
 
 **用途：** 強制執行「先讀後寫」規範
 
+---
+
+### 5. code-review (NEW - 扣分制嚴格審查)
+
+**用途：** 生產級代碼審查 - 深度思考流程，扣分制評分（可為負分）
+
+**自動觸發時機：**
+
+- 任務標記完成前
+- PR 合併前
+- 用戶要求嚴格 review 時
+
+**評分標準：**
+
+| 分數 | 等級 | 結論 |
+|------|------|------|
+| 90-100 | 🟢 優秀 | 可合併 |
+| 80-89 | 🟡 良好 | 修正後可合併 |
+| 60-79 | 🟠 需改進 | 必須修正 |
+| 0-59 | 🔴 不合格 | 重寫 |
+| <0 | ⛔ 災難 | 拒絕，需嚴肅檢討 |
+
+**審查流程：**
+
+1. Step 0: 基礎檢查 (typecheck, lint, test)
+2. Step 1: 理解意圖
+3. Step 2: 追蹤資料流
+4. Step 3: 質疑假設
+5. Step 4: 模擬極端 (邊界值、併發、中途失敗)
+6. Step 5: 名稱 vs 實作對照
+7. Step 6: 可維護性
+
 **自動觸發時機：**
 
 - 每次使用 `Edit` 工具前
@@ -163,7 +195,9 @@ Skills 權限已在 `.claude/settings.json` 中啟用：
 │   └── SKILL.md
 ├── pre-commit-validator/
 │   └── SKILL.md
-└── read-before-edit/
+├── read-before-edit/
+│   └── SKILL.md
+└── code-review/          # NEW: 扣分制嚴格審查
     └── SKILL.md
 ```
 
@@ -176,7 +210,8 @@ Skills 權限已在 `.claude/settings.json` 中啟用：
 1. **read-before-edit** - 最高優先級，任何修改前都會觸發
 2. **type-checker** - 類型相關問題
 3. **code-validator** - 代碼品質審查
-4. **pre-commit-validator** - 提交前完整驗證
+4. **code-review** - 扣分制嚴格審查（任務完成/PR 合併前）
+5. **pre-commit-validator** - 提交前完整驗證
 
 ---
 
@@ -231,7 +266,7 @@ grep -A 3 "permissions" .claude/settings.json
 
 ## ✅ 驗證清單
 
-- [x] 4 個 skills 全部創建
+- [x] 5 個 skills 全部創建
 - [x] 每個 skill 有正確的 YAML frontmatter
 - [x] description 清楚描述觸發時機
 - [x] allowed-tools 合理配置
