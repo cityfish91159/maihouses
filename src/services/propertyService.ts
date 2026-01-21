@@ -597,6 +597,16 @@ export const propertyService: PropertyService = {
 
     if (error) throw error;
 
+    // 📝 Audit Log：物件建立成功
+    logger.info("Property created", {
+      propertyId: data.id,
+      publicId: data.public_id,
+      agentId: agentId,
+      trustEnabled: form.trustEnabled ?? false,
+      isNewCommunity,
+      communityId: communityId || null,
+    });
+
     // 📝 把兩好一公道存進 community_reviews（不管新舊社區）
     if (
       communityId &&
