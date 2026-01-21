@@ -105,6 +105,201 @@ export interface CreatePropertyResult {
   is_new_community: boolean;
 }
 
+// ============================================
+// NASA Safety: 拆分 createPropertyWithForm 的 Helper Functions
+// 每個函數控制在 50 行以內，單一職責
+// ============================================
+
+/** 驗證表單並取得 agentId */
+async function validateAndGetAgent(form: PropertyFormInput): Promise<string> {
+  // 🛡️ 防禦性驗證：Service 層不信任 Client 資料
+  const validation = PropertyFormSchema.safeParse(form);
+  if (!validation.success) {
+    const errorMsg = validation.error.issues.map((e) => e.message).join(", ");
+    throw new Error(`資料驗證失敗: ${errorMsg}`);
+  }
+
+  // 確認登入狀態
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  // 嚴格權限控管：生產環境必須登入
+  if (!user && !import.meta.env.DEV) {
+    throw new Error("請先登入 (權限不足)");
+  }
+
+  // 若未登入且在開發模式，使用預設 agent_id
+  const agentId = user?.id || "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11";
+
+  if (!user && import.meta.env.DEV) {
+    logger.warn("[DEV] 使用 Mock Agent ID 發佈物件");
+  }
+
+  return agentId;
+}
+
+/** 社區處理結果 */
+interface CommunityResolution {
+  communityId: string | null;
+  communityName: string | null;
+  isNewCommunity: boolean;
+}
+
+/** 解析或建立社區 */
+async function resolveOrCreateCommunity(
+  form: PropertyFormInput,
+  existingCommunityId?: string,
+): Promise<CommunityResolution> {
+  let communityId: string | null = existingCommunityId || null;
+  let finalCommunityName = form.communityName?.trim() || null;
+  let isNewCommunity = false;
+
+  // 「無社區」直接跳過
+  if (finalCommunityName === "無") {
+    return { communityId: null, communityName: "無", isNewCommunity: false };
+  }
+
+  // 已選擇現有社區
+  if (existingCommunityId) {
+    return { communityId, communityName: finalCommunityName, isNewCommunity: false };
+  }
+
+  // 需要查找或建立社區
+  if (!form.address || !finalCommunityName) {
+    return { communityId: null, communityName: finalCommunityName, isNewCommunity: false };
+  }
+
+  const addressFingerprint = computeAddressFingerprint(form.address);
+
+  // Step 1: 用地址指紋精準比對
+  communityId = await findCommunityByFingerprint(addressFingerprint);
+
+  // Step 2: 用社區名稱比對
+  if (!communityId) {
+    const result = await findCommunityByName(finalCommunityName, form.address);
+    if (result) {
+      communityId = result.id;
+      finalCommunityName = result.name;
+    }
+  }
+
+  // Step 3: 建立新社區
+  if (!communityId) {
+    const newId = await createNewCommunity(form, addressFingerprint);
+    if (newId) {
+      communityId = newId;
+      isNewCommunity = true;
+    }
+  }
+
+  return { communityId, communityName: finalCommunityName, isNewCommunity };
+}
+
+/** 用地址指紋查找社區 */
+async function findCommunityByFingerprint(fingerprint: string): Promise<string | null> {
+  if (fingerprint.length < 5) return null;
+
+  const { data } = await supabase
+    .from("communities")
+    .select("id")
+    .eq("address_fingerprint", fingerprint)
+    .single();
+
+  return data?.id || null;
+}
+
+/** 用社區名稱查找社區 */
+async function findCommunityByName(
+  name: string,
+  address: string,
+): Promise<{ id: string; name: string } | null> {
+  if (name.length < 2) return null;
+
+  const normalizedInput = normalizeCommunityName(name);
+  const district = address.match(/([^市縣]+[區鄉鎮市])/)?.[1] || "";
+
+  // 同區域比對
+  const { data: candidates } = await supabase
+    .from("communities")
+    .select("id, name")
+    .eq("district", district)
+    .limit(50);
+
+  if (candidates && candidates.length > 0) {
+    const matched = candidates.find(
+      (c) => normalizeCommunityName(c.name) === normalizedInput,
+    );
+    if (matched) return matched;
+  }
+
+  // 跨區域精確比對
+  const { data: exactMatch } = await supabase
+    .from("communities")
+    .select("id, name")
+    .eq("name", name)
+    .single();
+
+  return exactMatch || null;
+}
+
+/** 建立新社區 */
+async function createNewCommunity(
+  form: PropertyFormInput,
+  addressFingerprint: string,
+): Promise<string | null> {
+  const district = form.address.match(/([^市縣]+[區鄉鎮市])/)?.[1] || "";
+  const city = form.address.match(/^(.*?[市縣])/)?.[1] || "台北市";
+
+  const { data, error } = await supabase
+    .from("communities")
+    .insert({
+      name: form.communityName?.trim(),
+      address: form.address,
+      address_fingerprint: addressFingerprint,
+      district,
+      city,
+      is_verified: false,
+      completeness_score: 20,
+      features: [form.type].filter(Boolean),
+    })
+    .select("id")
+    .single();
+
+  if (error) {
+    logger.error("建立社區失敗", { error });
+    return null;
+  }
+
+  return data?.id || null;
+}
+
+/** 建立社區評價關聯並觸發 AI 總結 */
+async function linkCommunityReview(
+  communityId: string,
+  propertyId: string,
+  form: PropertyFormInput,
+): Promise<void> {
+  if (!form.advantage1 && !form.advantage2 && !form.disadvantage) return;
+
+  await supabase.from("community_reviews").insert({
+    community_id: communityId,
+    property_id: propertyId,
+    source: "agent",
+    advantage_1: form.advantage1 || null,
+    advantage_2: form.advantage2 || null,
+    disadvantage: form.disadvantage || null,
+  });
+
+  // 🤖 Fire-and-forget：觸發 AI 重新總結
+  fetch("/api/generate-community-profile", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ communityId }),
+  }).catch((err) => logger.warn("AI 總結背景執行中", { error: err }));
+}
+
+// ============================================
 // 定義 Service 介面 (Explicit Interface)
 export interface PropertyService {
   getPropertyByPublicId(publicId: string): Promise<PropertyData | null>;
@@ -412,141 +607,26 @@ export const propertyService: PropertyService = {
     return result.urls;
   },
 
-  // 4. 建立物件 (新版 - 含結構化欄位 + 社區自動建立)
-  // 核心邏輯：地址優先比對 → 社區名模糊比對輔助 → 建新社區(待審核)
+  // 4. 建立物件 (NASA Safety 重構版)
+  // 原 222 行 → 拆分為 5 個 helper functions，主函數 55 行
   createPropertyWithForm: async (
     form: PropertyFormInput,
     images: string[],
     existingCommunityId?: string,
   ) => {
-    // 🛡️ 防禦性驗證：Service 層不信任 Client 資料
-    const validation = PropertyFormSchema.safeParse(form);
-    if (!validation.success) {
-      const errorMsg = validation.error.issues.map((e) => e.message).join(", ");
-      throw new Error(`資料驗證失敗: ${errorMsg}`);
-    }
+    // Step 1: 驗證並取得 agentId (27 行 helper)
+    const agentId = await validateAndGetAgent(form);
 
-    // 確認登入狀態
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    // Step 2: 解析或建立社區 (48 行 helper + 子函數)
+    const { communityId, communityName, isNewCommunity } =
+      await resolveOrCreateCommunity(form, existingCommunityId);
 
-    // 嚴格權限控管：生產環境必須登入
-    if (!user && !import.meta.env.DEV) {
-      throw new Error("請先登入 (權限不足)");
-    }
-
-    // 若未登入且在開發模式，使用預設 agent_id
-    const agentId = user?.id || "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11";
-
-    if (!user && import.meta.env.DEV) {
-      logger.warn("[DEV] 使用 Mock Agent ID 發佈物件");
-    }
-
-    // 🏢 社區處理邏輯
-    let communityId: string | null = existingCommunityId || null;
-    let finalCommunityName = form.communityName?.trim() || null;
-    let isNewCommunity = false;
-
-    // 「無社區」直接跳過社區處理
-    if (finalCommunityName === "無") {
-      communityId = null;
-      finalCommunityName = "無";
-    }
-    // 已選擇現有社區，直接使用
-    else if (existingCommunityId) {
-      // 使用已選擇的社區 ID
-    }
-    // 需要查找或建立社區
-    else if (form.address && finalCommunityName) {
-      // 用共用函數計算地址指紋
-      const addressFingerprint = computeAddressFingerprint(form.address);
-
-      // Step 1: 用地址指紋精準比對
-      if (addressFingerprint.length >= 5) {
-        const { data: existingByAddress } = await supabase
-          .from("communities")
-          .select("id, name")
-          .eq("address_fingerprint", addressFingerprint)
-          .single();
-
-        if (existingByAddress) {
-          communityId = existingByAddress.id;
-        }
-      }
-
-      // Step 2: 地址沒找到，用社區名稱比對（正規化後比對）
-      if (!communityId && finalCommunityName.length >= 2) {
-        const normalizedInput = normalizeCommunityName(finalCommunityName);
-
-        // 撈同區域的社區，用正規化後的名稱比對
-        const district = form.address.match(/([^市縣]+[區鄉鎮市])/)?.[1] || "";
-        const { data: candidates } = await supabase
-          .from("communities")
-          .select("id, name")
-          .eq("district", district)
-          .limit(50);
-
-        if (candidates && candidates.length > 0) {
-          // 找正規化後完全相同的
-          const matched = candidates.find(
-            (c) => normalizeCommunityName(c.name) === normalizedInput,
-          );
-          if (matched) {
-            communityId = matched.id;
-            finalCommunityName = matched.name; // 用資料庫的名稱
-          }
-        }
-
-        // 如果還是沒找到，試試精確比對（跨區域）
-        if (!communityId) {
-          const { data: exactMatch } = await supabase
-            .from("communities")
-            .select("id, name")
-            .eq("name", finalCommunityName)
-            .single();
-
-          if (exactMatch) {
-            communityId = exactMatch.id;
-          }
-        }
-      }
-
-      // Step 3: 都沒找到，建立新社區（待審核）
-      if (!communityId) {
-        const district = form.address.match(/([^市縣]+[區鄉鎮市])/)?.[1] || "";
-        const city = form.address.match(/^(.*?[市縣])/)?.[1] || "台北市";
-
-        // 🔧 新社區不直接存評價，交給 AI 處理
-        const { data: newCommunity, error: communityError } = await supabase
-          .from("communities")
-          .insert({
-            name: finalCommunityName,
-            address: form.address,
-            address_fingerprint: addressFingerprint,
-            district: district,
-            city: city,
-            is_verified: false,
-            completeness_score: 20, // AI 優化後會提升
-            features: [form.type].filter(Boolean),
-          })
-          .select("id")
-          .single();
-
-        if (!communityError && newCommunity) {
-          communityId = newCommunity.id;
-          isNewCommunity = true;
-        } else {
-          logger.error("建立社區失敗", { error: communityError });
-        }
-      }
-    }
-
-    // 計算地址指紋（不管有沒有社區都存）
+    // Step 3: 計算地址指紋
     const addressFingerprint = form.address
       ? computeAddressFingerprint(form.address)
       : null;
 
+    // Step 4: 插入物件
     const { data, error } = await supabase
       .from("properties")
       .insert({
@@ -554,43 +634,34 @@ export const propertyService: PropertyService = {
         title: form.title,
         price: Number(form.price),
         address: form.address,
-        address_fingerprint: addressFingerprint, // 存起來方便查詢
-        community_name: finalCommunityName,
+        address_fingerprint: addressFingerprint,
+        community_name: communityName,
         community_id: communityId,
         size: Number(form.size || 0),
         age: Number(form.age || 0),
-
         rooms: Number(form.rooms),
         halls: Number(form.halls),
         bathrooms: Number(form.bathrooms),
         floor_current: form.floorCurrent,
         floor_total: Number(form.floorTotal || 0),
         property_type: form.type,
-
-        // 結構化儲存 (HP-2.3: 確保 SSOT)
         advantage_1: form.advantage1,
         advantage_2: form.advantage2,
         disadvantage: form.disadvantage,
-
         description: form.description,
         images: images,
-        // SSOT: features 欄位存儲所有標籤，包含類型與重點膠囊
         features: Array.from(
           new Set([
             form.type,
             ...(form.highlights || []),
-            // 只有在沒有 highlights 時才 fallback 到 advantage
             ...(!form.highlights || form.highlights.length === 0
               ? [form.advantage1, form.advantage2]
               : []),
           ]),
         ).filter(Boolean) as string[],
-
         source_platform: form.sourceExternalId ? "591" : "MH",
         source_external_id: form.sourceExternalId || null,
-
-        // 安心留痕：DB 欄位 trust_enabled，預設 false
-        // NASA Safety: 明確轉換為 boolean，防止字串 "true" 誤判
+        // NASA Safety: 嚴格 boolean 比較
         trust_enabled: form.trustEnabled === true,
       })
       .select()
@@ -598,40 +669,21 @@ export const propertyService: PropertyService = {
 
     if (error) throw error;
 
-    // 📝 Audit Log：物件建立成功
+    // Step 5: Audit Log
     logger.info("Property created", {
       propertyId: data.id,
       publicId: data.public_id,
-      agentId: agentId,
+      agentId,
       trustEnabled: form.trustEnabled === true,
       isNewCommunity,
       communityId: communityId || null,
     });
 
-    // 📝 把兩好一公道存進 community_reviews（不管新舊社區）
-    if (
-      communityId &&
-      (form.advantage1 || form.advantage2 || form.disadvantage)
-    ) {
-      await supabase.from("community_reviews").insert({
-        community_id: communityId,
-        property_id: data.id,
-        source: "agent",
-        advantage_1: form.advantage1 || null,
-        advantage_2: form.advantage2 || null,
-        disadvantage: form.disadvantage || null,
-      });
-
-      // 🤖 Fire-and-forget：自動觸發 AI 重新總結社區牆（不擋主流程）
-      // 每次有新評價進來都會重新聚合，確保 two_good / one_fair 永遠是最新的
-      fetch("/api/generate-community-profile", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ communityId }),
-      }).catch((err) => logger.warn("AI 總結背景執行中", { error: err }));
+    // Step 6: 建立社區評價關聯 (23 行 helper)
+    if (communityId) {
+      await linkCommunityReview(communityId, data.id, form);
     }
 
-    // 回傳包含社區資訊
     return {
       ...data,
       is_new_community: isNewCommunity,
