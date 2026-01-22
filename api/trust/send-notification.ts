@@ -1,4 +1,4 @@
-/**
+﻿/**
  * BE-8 | 推播失敗處理
  *
  * 提供 Trust Flow 通知發送功能，含重試和降級機制
@@ -92,15 +92,6 @@ export interface SendResult {
   fallback?: boolean;
 }
 
-/**
- * 完整通知目標（含降級 LINE ID）
- * 用於降級機制：Push 失敗時嘗試 LINE
- */
-interface FullNotifyTarget {
-  primary: NotifyTarget;
-  fallbackLineId: string | null;
-}
-
 // ============================================================================
 // Zod Schemas
 // ============================================================================
@@ -179,7 +170,7 @@ function buildLineMessageText(
   trustRoomUrl: string,
 ): string {
   const emoji = getMessageEmoji(message.type);
-  return `${emoji} ${message.title}\n\n${message.body}\n\n📱 查看詳情：${trustRoomUrl}`;
+  return `${emoji} ${message.title}\n\n${message.body}\n\n🔗 查看詳情：${trustRoomUrl}`;
 }
 
 /**
@@ -189,13 +180,13 @@ function buildLineMessageText(
 function getMessageEmoji(type: NotificationMessage["type"]): string {
   switch (type) {
     case "step_update":
-      return "🔔";
+      return "📝";
     case "case_closed":
-      return "📋";
+      return "🔒";
     case "case_wake":
-      return "⏰";
+      return "🔔";
     case "custom":
-      return "💬";
+      return "📣";
   }
 }
 
@@ -490,51 +481,12 @@ async function processSendResults(
 
     if (!sub) continue; // 安全檢查
 
-    if (result.status === "fulfilled") {
-      successCount++;
-      logger.info("[send-notification] Push sent successfully", {
-        endpoint: sub.endpoint.slice(0, 50) + "...",
-      });
-    } else {
-      failCount++;
-      const statusCode = getErrorStatusCode(result.reason);
-      const errorMessage = getErrorMessage(result.reason);
-
-      if (statusCode && EXPIRED_SUBSCRIPTION_STATUS_CODES.has(statusCode)) {
-        logger.info("[send-notification] Subscription expired, queue delete", {
-          endpoint: sub.endpoint.slice(0, 50) + "...",
-          statusCode,
-        });
-        expiredEndpoints.add(sub.endpoint);
-      } else {
-        logger.error("[send-notification] Push send failed", {
-          endpoint: sub.endpoint.slice(0, 50) + "...",
-          statusCode,
-          message: errorMessage,
-        });
-      }
-    }
+    const resultStats = handleSinglePushResult(result, sub, expiredEndpoints);
+    successCount += resultStats.success;
+    failCount += resultStats.fail;
   }
 
-  if (expiredEndpoints.size > 0) {
-    const endpoints = Array.from(expiredEndpoints);
-    const { error: deleteError } = await supabase
-      .from("push_subscriptions")
-      .delete()
-      .eq("profile_id", userId)
-      .in("endpoint", endpoints);
-
-    if (deleteError) {
-      logger.error("[send-notification] Failed to delete expired subscriptions", {
-        error: deleteError.message,
-        count: endpoints.length,
-      });
-    } else {
-      logger.info("[send-notification] Deleted expired subscriptions", {
-        count: endpoints.length,
-      });
-    }
-  }
+  await deleteExpiredSubscriptions(userId, expiredEndpoints);
 
   logger.info("[send-notification] Push send summary", {
     userIdMasked: maskUUID(userId),
@@ -544,6 +496,63 @@ async function processSendResults(
   });
 
   return { successCount, failCount };
+}
+
+function handleSinglePushResult(
+  result: PromiseSettledResult<unknown>,
+  sub: PushSubscriptionRow,
+  expiredEndpoints: Set<string>,
+): { success: number; fail: number } {
+  if (result.status === "fulfilled") {
+    logger.info("[send-notification] Push sent successfully", {
+      endpoint: sub.endpoint.slice(0, 50) + "...",
+    });
+    return { success: 1, fail: 0 };
+  }
+
+  const statusCode = getErrorStatusCode(result.reason);
+  const errorMessage = getErrorMessage(result.reason);
+
+  if (statusCode && EXPIRED_SUBSCRIPTION_STATUS_CODES.has(statusCode)) {
+    logger.info("[send-notification] Subscription expired, queue delete", {
+      endpoint: sub.endpoint.slice(0, 50) + "...",
+      statusCode,
+    });
+    expiredEndpoints.add(sub.endpoint);
+  } else {
+    logger.error("[send-notification] Push send failed", {
+      endpoint: sub.endpoint.slice(0, 50) + "...",
+      statusCode,
+      message: errorMessage,
+    });
+  }
+
+  return { success: 0, fail: 1 };
+}
+
+async function deleteExpiredSubscriptions(
+  userId: string,
+  expiredEndpoints: Set<string>,
+): Promise<void> {
+  if (expiredEndpoints.size === 0) return;
+
+  const endpoints = Array.from(expiredEndpoints);
+  const { error: deleteError } = await supabase
+    .from("push_subscriptions")
+    .delete()
+    .eq("profile_id", userId)
+    .in("endpoint", endpoints);
+
+  if (deleteError) {
+    logger.error("[send-notification] Failed to delete expired subscriptions", {
+      error: deleteError.message,
+      count: endpoints.length,
+    });
+  } else {
+    logger.info("[send-notification] Deleted expired subscriptions", {
+      count: endpoints.length,
+    });
+  }
 }
 
 /**
@@ -565,23 +574,51 @@ export async function defaultSendPush(
   message: NotificationMessage,
   trustRoomUrl: string,
 ): Promise<void> {
-  // [NASA TypeScript Safety] 驗證 userId 格式
+  validateUserIdOrThrow(userId);
+  logSendPushStart(userId, message.type);
+
+  await ensureVapidConfigured();
+
+  const subscriptions = await fetchSubscriptionsOrThrow(userId);
+  const { payload, pushOptions } = buildPushPayloadAndOptions(
+    message,
+    trustRoomUrl,
+    userId,
+  );
+
+  const results = await sendPushNotifications(subscriptions, payload, pushOptions);
+  const { successCount, failCount } = await processSendResults(
+    results,
+    subscriptions,
+    userId,
+  );
+
+  if (successCount === 0) {
+    throw new Error(`All ${failCount} push subscriptions failed`);
+  }
+}
+
+function validateUserIdOrThrow(userId: string): void {
   const userIdResult = UUIDSchema.safeParse(userId);
   if (!userIdResult.success) {
     throw new Error(`Invalid userId format: ${userId}`);
   }
+}
 
+function logSendPushStart(
+  userId: string,
+  messageType: NotificationMessage["type"],
+): void {
   logger.info("[send-notification] sendPush called", {
     userIdMasked: maskUUID(userId),
-    messageType: message.type,
+    messageType,
   });
+}
 
-  // Step 1: 確保 VAPID 已設定
-  await ensureVapidConfigured();
-
-  // Step 2: 查詢訂閱
+async function fetchSubscriptionsOrThrow(
+  userId: string,
+): Promise<PushSubscriptionRow[]> {
   const subscriptions = await fetchSubscriptions(userId);
-
   if (subscriptions.length === 0) {
     logger.warn("[send-notification] No push subscriptions found", {
       userIdMasked: maskUUID(userId),
@@ -594,7 +631,17 @@ export async function defaultSendPush(
     count: subscriptions.length,
   });
 
-  // Step 3: 準備 payload
+  return subscriptions;
+}
+
+function buildPushPayloadAndOptions(
+  message: NotificationMessage,
+  trustRoomUrl: string,
+  userId: string,
+): {
+  payload: string;
+  pushOptions: { TTL: number; urgency: "very-low" | "low" | "normal" | "high"; topic: string };
+} {
   const { payload, trimmed } = buildPushPayload(message, trustRoomUrl);
   if (trimmed) {
     logger.warn("[send-notification] Push payload trimmed due to size limit", {
@@ -603,9 +650,15 @@ export async function defaultSendPush(
     });
   }
   const pushOptions = buildPushOptions(message);
+  return { payload, pushOptions };
+}
 
-  // Step 4: 發送到每個訂閱
-  const results = await Promise.allSettled(
+async function sendPushNotifications(
+  subscriptions: PushSubscriptionRow[],
+  payload: string,
+  pushOptions: { TTL: number; urgency: "very-low" | "low" | "normal" | "high"; topic: string },
+): Promise<PromiseSettledResult<unknown>[]> {
+  return Promise.allSettled(
     subscriptions.map((sub) =>
       webpush.sendNotification(
         {
@@ -617,14 +670,6 @@ export async function defaultSendPush(
       ),
     ),
   );
-
-  // Step 5: 處理結果
-  const { successCount, failCount } = await processSendResults(results, subscriptions, userId);
-
-  // 全部失敗時拋出錯誤
-  if (successCount === 0) {
-    throw new Error(`All ${failCount} push subscriptions failed`);
-  }
 }
 
 /**
@@ -900,87 +945,111 @@ async function sendWithPushAndFallback(
   message: NotificationMessage,
   trustRoomUrl: string,
 ): Promise<SendResult> {
-  // 第一次嘗試
+  const pushAttempt = await retryPushSend(target.userId, message, trustRoomUrl);
+  if (pushAttempt.success) {
+    return {
+      success: true,
+      channel: "push",
+      retried: pushAttempt.retried,
+    };
+  }
+
+  return attemptLineFallback(
+    caseId,
+    target,
+    message,
+    trustRoomUrl,
+    pushAttempt.error ?? "Unknown error",
+  );
+}
+
+async function retryPushSend(
+  userId: string,
+  message: NotificationMessage,
+  trustRoomUrl: string,
+): Promise<{ success: boolean; retried?: boolean; error?: string }> {
   try {
-    await pushSender(target.userId, message, trustRoomUrl);
-    return { success: true, channel: "push" };
+    await pushSender(userId, message, trustRoomUrl);
+    return { success: true };
   } catch (firstError) {
     const firstErrorMsg =
       firstError instanceof Error ? firstError.message : "Unknown error";
     logger.warn("[send-notification] Push failed, retrying", {
       error: firstErrorMsg,
     });
+  }
 
-    // 重試一次
-    await delay(RETRY_DELAY_MS);
+  await delay(RETRY_DELAY_MS);
 
-    try {
-      await pushSender(target.userId, message, trustRoomUrl);
-      return { success: true, channel: "push", retried: true };
-    } catch (retryError) {
-      const retryErrorMsg =
-        retryError instanceof Error ? retryError.message : "Unknown error";
+  try {
+    await pushSender(userId, message, trustRoomUrl);
+    return { success: true, retried: true };
+  } catch (retryError) {
+    const retryErrorMsg =
+      retryError instanceof Error ? retryError.message : "Unknown error";
+    return { success: false, retried: true, error: retryErrorMsg };
+  }
+}
 
-      // Push 重試失敗，嘗試降級到 LINE
-      const fallbackLineId = await getFallbackLineId(caseId);
+async function attemptLineFallback(
+  caseId: string,
+  target: NotifyTargetPush,
+  message: NotificationMessage,
+  trustRoomUrl: string,
+  pushErrorMsg: string,
+): Promise<SendResult> {
+  const fallbackLineId = await getFallbackLineId(caseId);
+  if (!fallbackLineId) {
+    await logNotificationFailure(
+      caseId,
+      target,
+      message,
+      pushErrorMsg,
+      "push",
+      true,
+    );
 
-      if (fallbackLineId) {
-        logger.info("[send-notification] Attempting LINE fallback", {
-          caseIdMasked: maskUUID(caseId),
-        });
+    return {
+      success: false,
+      channel: "push",
+      error: pushErrorMsg,
+      retried: true,
+    };
+  }
 
-        try {
-          await sendLine(fallbackLineId, message, trustRoomUrl);
-          logger.info("[send-notification] LINE fallback succeeded");
-          return {
-            success: true,
-            channel: "fallback_line",
-            retried: true,
-            fallback: true,
-          };
-        } catch (fallbackError) {
-          const fallbackErrorMsg =
-            fallbackError instanceof Error
-              ? fallbackError.message
-              : "Unknown error";
+  logger.info("[send-notification] Attempting LINE fallback", {
+    caseIdMasked: maskUUID(caseId),
+  });
 
-          // 所有方式都失敗
-          await logNotificationFailure(
-            caseId,
-            target,
-            message,
-            `Push failed: ${retryErrorMsg}, LINE fallback failed: ${fallbackErrorMsg}`,
-            "fallback_line",
-            true,
-          );
+  try {
+    await sendLine(fallbackLineId, message, trustRoomUrl);
+    logger.info("[send-notification] LINE fallback succeeded");
+    return {
+      success: true,
+      channel: "fallback_line",
+      retried: true,
+      fallback: true,
+    };
+  } catch (fallbackError) {
+    const fallbackErrorMsg =
+      fallbackError instanceof Error ? fallbackError.message : "Unknown error";
 
-          return {
-            success: false,
-            channel: "fallback_line",
-            error: fallbackErrorMsg,
-            retried: true,
-            fallback: true,
-          };
-        }
-      } else {
-        // 無 LINE ID 可降級
-        await logNotificationFailure(
-          caseId,
-          target,
-          message,
-          retryErrorMsg,
-          "push",
-          true,
-        );
+    await logNotificationFailure(
+      caseId,
+      target,
+      message,
+      `Push failed: ${pushErrorMsg}, LINE fallback failed: ${fallbackErrorMsg}`,
+      "fallback_line",
+      true,
+    );
 
-        return {
-          success: false,
-          channel: "push",
-          error: retryErrorMsg,
-          retried: true,
-        };
-      }
-    }
+    return {
+      success: false,
+      channel: "fallback_line",
+      error: fallbackErrorMsg,
+      retried: true,
+      fallback: true,
+    };
   }
 }
 
@@ -994,20 +1063,9 @@ async function sendWithLineAndRetry(
   message: NotificationMessage,
   trustRoomUrl: string,
 ): Promise<SendResult> {
-  // 檢查 LINE Client 是否可用
-  const lineClient = getLineClient();
-  if (!lineClient) {
-    logger.warn("[send-notification] LINE not available, skipping", {
-      caseIdMasked: maskUUID(caseId),
-    });
-    return {
-      success: false,
-      channel: "skipped",
-      error: "LINE client not configured",
-    };
-  }
+  const skipResult = ensureLineClientAvailable(caseId);
+  if (skipResult) return skipResult;
 
-  // 第一次嘗試
   try {
     await sendLine(target.lineId, message, trustRoomUrl);
     return { success: true, channel: "line" };
@@ -1046,6 +1104,20 @@ async function sendWithLineAndRetry(
       };
     }
   }
+}
+
+function ensureLineClientAvailable(caseId: string): SendResult | null {
+  const lineClient = getLineClient();
+  if (lineClient) return null;
+
+  logger.warn("[send-notification] LINE not available, skipping", {
+    caseIdMasked: maskUUID(caseId),
+  });
+  return {
+    success: false,
+    channel: "skipped",
+    error: "LINE client not configured",
+  };
 }
 
 // ============================================================================
@@ -1135,3 +1207,6 @@ export async function sendCaseWakeNotification(
 
   return sendNotification(caseId, message);
 }
+
+
+

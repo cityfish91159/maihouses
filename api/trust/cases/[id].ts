@@ -6,7 +6,7 @@
  *
  * Skills Applied:
  * - [Backend Safeguard] RLS + 權限驗證
- * - [NASA TypeScript Safety] 完整類型定義 + Zod 驗證 + 函數 ≤60 行
+ * - [NASA TypeScript Safety] 完整類型定義 + Zod 驗證 + 函數 ≤50 行
  * - [Audit Logging] 審計日誌
  * - [No Lazy Implementation] 完整實作
  */
@@ -20,6 +20,7 @@ import {
   API_ERROR_CODES,
 } from "../../lib/apiResponse";
 import { logger } from "../../lib/logger";
+import { sendStepUpdateNotification } from "../send-notification";
 
 // ============================================================================
 // Types & Schemas [NASA TypeScript Safety]
@@ -38,7 +39,7 @@ const UpdateStepRequestSchema = z.object({
 
 const TrustCaseEventSchema = z.object({
   id: z.string().uuid(),
-  step: z.number().int().min(1).max(6),
+  step: z.number().int().min(0).max(6), // 0=系統事件, 1-6=交易步驟
   step_name: z.string(),
   action: z.string(),
   actor: ActorTypeSchema,
@@ -67,7 +68,9 @@ const TrustCaseDetailSchema = z.object({
 const UpdateStepResultSchema = z.object({
   success: z.boolean(),
   case_id: z.string().uuid().optional(),
-  new_step: z.number().int().optional(),
+  old_step: z.number().int().min(1).max(6).optional(),
+  new_step: z.number().int().min(1).max(6).optional(),
+  property_title: z.string().optional(),
   event_hash: z.string().optional(),
   error: z.string().optional(),
 });
@@ -96,7 +99,7 @@ function validateAgentAuth(req: VercelRequest): AuthResult | AuthError {
     }
     return { success: true, user };
   } catch {
-    return { success: false, status: 401, code: API_ERROR_CODES.UNAUTHORIZED, message: "未登入或 Token 已過期" };
+    return { success: false, status: 401, code: API_ERROR_CODES.UNAUTHORIZED, message: "未登入或 Token 已逾期" };
   }
 }
 
@@ -159,7 +162,7 @@ async function handleGetCaseDetail(req: VercelRequest, res: VercelResponse): Pro
     }
 
     const detail = parseResult.data;
-    if (detail.error) return void res.status(403).json(errorResponse(API_ERROR_CODES.FORBIDDEN, "無權存取此案件"));
+    if (detail.error) return void res.status(403).json(errorResponse(API_ERROR_CODES.FORBIDDEN, "無法存取此案件"));
 
     logger.info("[trust/cases/[id]] GET success", { agent_id: user.id, case_id: caseId, events_count: detail.events.length });
     res.status(200).json(successResponse(detail));
@@ -201,7 +204,7 @@ async function handleUpdateStep(req: VercelRequest, res: VercelResponse): Promis
     const parseResult = UpdateStepResultSchema.safeParse(data);
     if (!parseResult.success) {
       logger.error("[trust/cases/[id]] Validation failed", { error: parseResult.error.message, case_id: caseId });
-      return void res.status(500).json(errorResponse(API_ERROR_CODES.INTERNAL_ERROR, "回應格式驗證失敗"));
+      return void res.status(500).json(errorResponse(API_ERROR_CODES.INTERNAL_ERROR, "回傳格式驗證失敗"));
     }
 
     const result = parseResult.data;
@@ -213,9 +216,44 @@ async function handleUpdateStep(req: VercelRequest, res: VercelResponse): Promis
 
     await logAudit(caseId, `UPDATE_TRUST_CASE_STEP_${new_step}`, user);
     logger.info("[trust/cases/[id]] PATCH success", { agent_id: user.id, case_id: caseId, new_step, event_hash: result.event_hash });
+
+    // BE-5: 非阻塞發送進度更新推播（通知失敗不影響 API 回傳）
+    // 使用 RPC 回傳的 old_step 和 property_title（不信任前端）
+    // 類型嚴格檢查：JSONB 可能回傳 null，需確認是 number
+    enqueueStepUpdateNotification(caseId, result.old_step, new_step, result.property_title);
+
     res.status(200).json(successResponse({ case_id: result.case_id, new_step: result.new_step, event_hash: result.event_hash }));
   } catch (e) {
     logger.error("[trust/cases/[id]] PATCH error", { error: e instanceof Error ? e.message : "Unknown" });
     res.status(500).json(errorResponse(API_ERROR_CODES.INTERNAL_ERROR, "伺服器內部錯誤"));
+  }
+}
+
+function enqueueStepUpdateNotification(
+  caseId: string,
+  oldStep: number | null | undefined,
+  newStep: number,
+  propertyTitle: string | null | undefined,
+): void {
+  if (typeof oldStep !== "number" || oldStep === newStep) return;
+
+  try {
+    void sendStepUpdateNotification(caseId, oldStep, newStep, propertyTitle ?? undefined).catch(
+      (notifyErr) => {
+        logger.error("[trust/cases/[id]] Notification failed (non-blocking)", {
+          case_id: caseId,
+          old_step: oldStep,
+          new_step: newStep,
+          error: notifyErr instanceof Error ? notifyErr.message : "Unknown",
+        });
+      },
+    );
+  } catch (notifyErr) {
+    logger.error("[trust/cases/[id]] Notification failed (sync)", {
+      case_id: caseId,
+      old_step: oldStep,
+      new_step: newStep,
+      error: notifyErr instanceof Error ? notifyErr.message : "Unknown",
+    });
   }
 }
