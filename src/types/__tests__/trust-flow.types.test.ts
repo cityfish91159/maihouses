@@ -454,7 +454,13 @@ describe("完整流程整合測試", () => {
   });
 
   it("所有狀態應該都有對應的格式化函數", () => {
-    const statuses = ["active", "pending", "completed", "cancelled", "expired"] as const;
+    const statuses = [
+      "active",
+      "pending",
+      "completed",
+      "cancelled",
+      "expired",
+    ] as const;
 
     for (const status of statuses) {
       const formatted = formatCaseStatus(status);
@@ -781,7 +787,9 @@ describe("DB-3 案件 Token 欄位", () => {
       const legacy = transformToLegacyCase(apiCase, []);
 
       expect(legacy.token).toBe("abcd1234-e89b-12d3-a456-426614174000");
-      expect(legacy.tokenExpiresAt).toBe(new Date("2024-04-01T12:30:00Z").getTime());
+      expect(legacy.tokenExpiresAt).toBe(
+        new Date("2024-04-01T12:30:00Z").getTime(),
+      );
     });
 
     it("Trust Room 連結 token 應該可用於識別案件", () => {

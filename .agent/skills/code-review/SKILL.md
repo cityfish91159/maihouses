@@ -127,66 +127,7 @@ description: 生產級代碼審查 - 深度思考流程
 
 ---
 
-## Step 0：基礎檢查（必須先做）
 
-**在任何深度審查之前，先執行：**
-
-```bash
-npm run typecheck
-npm run lint
-npm run test
-npm run gate
-```
-
-### 檢查項目
-
-| 檢查 | 指令 | 標準 | 失敗扣分 |
-|------|------|------|----------|
-| TypeScript | `npm run typecheck` | 零錯誤 | -20/錯誤 |
-| ESLint | `npm run lint` | 零錯誤零警告 | -10/錯誤, -5/警告 |
-| 測試 | `npm run test` | 100% 通過 | -30/失敗 |
-| Gate | `npm run gate` | 通過 | -30 |
-
-### 掃描禁用項
-
-```bash
-# 搜尋 any
-grep -rn ": any" --include="*.ts" --include="*.tsx" src/
-
-# 搜尋 @ts-ignore / @ts-expect-error
-grep -rn "@ts-ignore\|@ts-expect-error" --include="*.ts" --include="*.tsx" src/
-
-# 搜尋強制轉型
-grep -rn "as unknown as" --include="*.ts" --include="*.tsx" src/
-
-# 搜尋 non-null assertion (!)
-grep -rn "\!\\." --include="*.ts" --include="*.tsx" src/
-
-# 搜尋 console.log（生產代碼不應有）
-grep -rn "console.log" --include="*.ts" --include="*.tsx" src/
-
-# 搜尋 .only（會跳過其他測試）
-grep -rn "\\.only(" --include="*.test.ts" --include="*.spec.ts" src/
-
-# 搜尋 TODO/FIXME（未完成的工作）
-grep -rn "TODO\|FIXME" --include="*.ts" --include="*.tsx" src/
-```
-
-### 禁用項扣分標準
-
-| 項目 | 扣分 |
-|------|------|
-| `any` | -15/處 |
-| `@ts-ignore` / `@ts-expect-error` | -20/處 |
-| `as unknown as` | -15/處 |
-| `!.` non-null assertion（無註解說明） | -5/處 |
-| `console.log`（非 error/warn） | -5/處 |
-| `.only` 在測試中 | -20/處 |
-| `TODO` / `FIXME` 未處理 | -3/處 |
-
-**每發現一處，立即扣分。**
-
----
 
 ## Step 1：理解意圖
 
@@ -372,7 +313,7 @@ grep -rn "TODO\|FIXME" --include="*.ts" --include="*.tsx" src/
 為了確保審查品質，Agent **必須**在以下階段結束時呼叫 `notify_user` 暫停執行，等待用戶確認：
 
 ### Checkpoint A：基礎檢查結束後
-*   **動作**：回報 Step 0 的執行結果（Pass/Fail）與目前扣分。
+*   **動作**：回報基礎檢查（Lint/Test/Typecheck）的執行結果與目前扣分。
 *   **目的**：讓用戶決定在基礎設施不穩定的情況下，是否仍要進行深度審查。
 
 ### Checkpoint B：邏輯與假設分析後 (Step 4 結束)

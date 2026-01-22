@@ -4,6 +4,7 @@ import jwt from "jsonwebtoken";
 import { parse } from "cookie";
 import { z } from "zod";
 import { logger } from "../lib/logger";
+import { cors as sharedCors } from "../lib/cors";
 
 // Types for Trust Room transactions
 export interface TrustStep {
@@ -209,26 +210,10 @@ export function verifyToken(req: VercelRequest): AuditUser {
   }
 }
 
-export function cors(req: VercelRequest, res: VercelResponse) {
-  const allowedOrigins = [
-    "https://maihouses.com",
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-  ];
-  // [NASA TypeScript Safety] 使用類型守衛取代 as string
-  const rawOrigin = req?.headers?.origin;
-  const origin = typeof rawOrigin === "string" ? rawOrigin : undefined;
-
-  if (origin && allowedOrigins.includes(origin)) {
-    res.setHeader("Access-Control-Allow-Origin", origin);
-  } else {
-    res.setHeader("Access-Control-Allow-Origin", "https://maihouses.com");
-  }
-
-  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-  res.setHeader(
-    "Access-Control-Allow-Headers",
-    "Content-Type, Authorization, x-system-key",
-  );
-  res.setHeader("Access-Control-Allow-Credentials", "true");
+/**
+ * CORS 設定 - 使用共用模組
+ * @deprecated 請直接 import { cors } from "../lib/cors"
+ */
+export function cors(req: VercelRequest, res: VercelResponse): void {
+  sharedCors(req, res);
 }

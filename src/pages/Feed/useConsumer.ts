@@ -128,7 +128,8 @@ export function useConsumer(userId?: string, forceMock?: boolean) {
         id: "demo-user",
         name: S.DEFAULT_USER, // '用戶'
         // [NASA TypeScript Safety] 使用條件表達式取代 as Role
-        role: userId === "demo-agent" ? ("agent" as const) : ("member" as const),
+        role:
+          userId === "demo-agent" ? ("agent" as const) : ("member" as const),
         stats: MOCK_FEED_STATS,
         communityId: S.DEFAULT_COMMUNITY_ID,
         communityName: S.DEFAULT_COMMUNITY_NAME,

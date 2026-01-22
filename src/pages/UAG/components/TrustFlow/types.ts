@@ -5,7 +5,10 @@
  * [agentic_architecture] 模組邊界清晰化
  */
 
-import type { LegacyTrustCase, LegacyTrustEvent } from "../../../../types/trust-flow.types";
+import type {
+  LegacyTrustCase,
+  LegacyTrustEvent,
+} from "../../../../types/trust-flow.types";
 
 // 重新匯出給子組件使用
 export type TrustCase = LegacyTrustCase;

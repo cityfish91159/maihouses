@@ -4,14 +4,7 @@
  * [code-simplifier] 抽取常數定義到獨立檔案
  */
 
-import {
-  Phone,
-  Eye,
-  DollarSign,
-  FileText,
-  Handshake,
-  Key,
-} from "lucide-react";
+import { Phone, Eye, DollarSign, FileText, Handshake, Key } from "lucide-react";
 import type { StepDefinition } from "./types";
 
 /** 六階段步驟定義 [NASA TypeScript Safety] */

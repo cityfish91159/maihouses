@@ -81,12 +81,18 @@ export function useRealtimeUpdates({
         (payload) => {
           // [NASA TypeScript Safety] 使用類型守衛取代 as Record
           const newRecord = payload.new;
-          const sessionId = newRecord && typeof newRecord === "object" && "session_id" in newRecord
-            ? String(newRecord.session_id)
-            : undefined;
-          const previousGrade = newRecord && typeof newRecord === "object" && "previous_grade" in newRecord
-            ? String(newRecord.previous_grade)
-            : undefined;
+          const sessionId =
+            newRecord &&
+            typeof newRecord === "object" &&
+            "session_id" in newRecord
+              ? String(newRecord.session_id)
+              : undefined;
+          const previousGrade =
+            newRecord &&
+            typeof newRecord === "object" &&
+            "previous_grade" in newRecord
+              ? String(newRecord.previous_grade)
+              : undefined;
 
           logger.info("useRealtimeUpdates.sGradeUpgrade", {
             sessionId,

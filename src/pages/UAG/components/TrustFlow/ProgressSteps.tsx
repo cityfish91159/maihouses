@@ -54,11 +54,7 @@ export function ProgressSteps({ currentStep }: ProgressStepsProps) {
                 style={{
                   fontSize: 11,
                   fontWeight: isCurrent ? 700 : 500,
-                  color: isPast
-                    ? "#16a34a"
-                    : isCurrent
-                      ? "#1749d7"
-                      : "#94a3b8",
+                  color: isPast ? "#16a34a" : isCurrent ? "#1749d7" : "#94a3b8",
                 }}
               >
                 {step.name}

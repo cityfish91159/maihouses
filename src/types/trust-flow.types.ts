@@ -297,7 +297,7 @@ function toSafeLegacyStatus(status: CaseStatus): LegacyTrustCase["status"] {
  */
 export function transformToLegacyCase(
   apiCase: TrustCase,
-  events: TrustCaseEvent[] = []
+  events: TrustCaseEvent[] = [],
 ): LegacyTrustCase {
   // [NASA TypeScript Safety] 使用 Zod safeParse 取代 type assertion
   const result: LegacyTrustCase = {
@@ -370,7 +370,7 @@ export function transformToLegacyCase(
  * @returns CreateCaseRequest 格式
  */
 export function transformToCreateRequest(
-  legacyCase: Partial<LegacyTrustCase>
+  legacyCase: Partial<LegacyTrustCase>,
 ): CreateCaseRequest {
   return {
     buyer_name: legacyCase.buyerName ?? "",

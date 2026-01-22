@@ -27,7 +27,10 @@ describe("useConsumerSession", () => {
       // 模擬 SSR 環境（localStorage 不可用）
       // 使用 Object.defineProperty 暫時隱藏 window，無需 TypeScript 指令
       const originalWindow = global.window;
-      const windowDescriptor = Object.getOwnPropertyDescriptor(global, "window");
+      const windowDescriptor = Object.getOwnPropertyDescriptor(
+        global,
+        "window",
+      );
 
       Object.defineProperty(global, "window", {
         value: undefined,

@@ -118,9 +118,10 @@ export function CreateCaseModal({
 
       // [frontend_mastery] Focus Trap: Tab 循環在 Modal 內
       if (e.key === "Tab" && modalRef.current) {
-        const focusableElements = modalRef.current.querySelectorAll<HTMLElement>(
-          'button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])'
-        );
+        const focusableElements =
+          modalRef.current.querySelectorAll<HTMLElement>(
+            'button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])',
+          );
         const firstElement = focusableElements[0];
         const lastElement = focusableElements[focusableElements.length - 1];
 
@@ -232,7 +233,7 @@ export function CreateCaseModal({
       e.preventDefault();
       handleCreate();
     },
-    [handleCreate]
+    [handleCreate],
   );
 
   if (!isOpen) return null;

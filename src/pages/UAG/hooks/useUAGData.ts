@@ -112,7 +112,9 @@ export function useUAGData(): UseUAGDataReturn {
         // [NASA TypeScript Safety] 使用 Zod safeParse 取代 as unknown as AppData
         const parseResult = AppDataSchema.safeParse(MOCK_DB);
         if (!parseResult.success) {
-          logger.error("[useUAGData] Mock data validation failed", { error: parseResult.error.message });
+          logger.error("[useUAGData] Mock data validation failed", {
+            error: parseResult.error.message,
+          });
           throw new Error("Invalid mock data structure");
         }
         return parseResult.data;

@@ -4,7 +4,11 @@
  */
 
 // [NASA TypeScript Safety] 導出 role 類型供外部使用
-export type FeedCommentAuthorRole = "resident" | "member" | "agent" | "official";
+export type FeedCommentAuthorRole =
+  | "resident"
+  | "member"
+  | "agent"
+  | "official";
 
 export interface CommentAuthor {
   id: string;

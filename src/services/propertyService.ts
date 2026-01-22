@@ -21,6 +21,7 @@ const PropertyFormSchema = z
     advantage2: z.string().max(100),
     disadvantage: z.string().min(10, "缺點至少需要 10 個字").max(200),
     highlights: z.array(z.string()).optional(),
+    trustEnabled: z.boolean().optional(),
   })
   .refine(
     (data) => {
@@ -44,6 +45,17 @@ const UPLOAD_CONFIG = {
   CACHE_CONTROL: "31536000", // 1 年快取
   BUCKET: "property-images",
 } as const;
+
+/**
+ * BE-1: RPC 回傳結構 Zod Schema
+ * 取代 `as` 類型斷言，確保類型安全
+ */
+const CreatePropertyRpcResultSchema = z.object({
+  success: z.boolean(),
+  id: z.string().uuid().optional(),
+  public_id: z.string().optional(),
+  error: z.string().optional(),
+});
 
 // 定義物件資料介面
 export interface PropertyData {
@@ -162,12 +174,20 @@ async function resolveOrCreateCommunity(
 
   // 已選擇現有社區
   if (existingCommunityId) {
-    return { communityId, communityName: finalCommunityName, isNewCommunity: false };
+    return {
+      communityId,
+      communityName: finalCommunityName,
+      isNewCommunity: false,
+    };
   }
 
   // 需要查找或建立社區
   if (!form.address || !finalCommunityName) {
-    return { communityId: null, communityName: finalCommunityName, isNewCommunity: false };
+    return {
+      communityId: null,
+      communityName: finalCommunityName,
+      isNewCommunity: false,
+    };
   }
 
   const addressFingerprint = computeAddressFingerprint(form.address);
@@ -197,7 +217,9 @@ async function resolveOrCreateCommunity(
 }
 
 /** 用地址指紋查找社區 */
-async function findCommunityByFingerprint(fingerprint: string): Promise<string | null> {
+async function findCommunityByFingerprint(
+  fingerprint: string,
+): Promise<string | null> {
   if (fingerprint.length < 5) return null;
 
   const { data } = await supabase
@@ -640,16 +662,34 @@ export const propertyService: PropertyService = {
         p_features: features,
         p_source_platform: form.sourceExternalId ? "591" : "MH",
         p_source_external_id: form.sourceExternalId || null,
-        p_trust_enabled: form.trustEnabled === true,
+        p_trust_enabled: Boolean(form.trustEnabled),
       },
     );
 
     if (rpcError) throw rpcError;
 
-    // 驗證 RPC 回傳結構
-    const result = rpcResult as { success: boolean; id?: string; public_id?: string; error?: string };
+    // BE-1: 使用 Zod safeParse 取代 `as` 類型斷言
+    const parseResult = CreatePropertyRpcResultSchema.safeParse(rpcResult);
+    if (!parseResult.success) {
+      logger.error("RPC response validation failed", {
+        issues: parseResult.error.issues,
+        rawResult: rpcResult,
+      });
+      throw new Error("RPC 回傳結構驗證失敗");
+    }
+
+    const result = parseResult.data;
     if (!result.success) {
       throw new Error(result.error || "RPC failed");
+    }
+
+    // BE-1: 驗證必要欄位存在，success=true 時 id 和 public_id 必須有值
+    if (!result.id || !result.public_id) {
+      logger.error("RPC success but missing required fields", {
+        id: result.id,
+        public_id: result.public_id,
+      });
+      throw new Error("RPC 回傳成功但缺少必要欄位");
     }
 
     // Step 5: Audit Log
@@ -657,7 +697,7 @@ export const propertyService: PropertyService = {
       propertyId: result.id,
       publicId: result.public_id,
       agentId,
-      trustEnabled: form.trustEnabled === true,
+      trustEnabled: Boolean(form.trustEnabled),
       isNewCommunity,
       communityId: communityId || null,
     });
@@ -672,8 +712,8 @@ export const propertyService: PropertyService = {
     }
 
     return {
-      id: result.id ?? "",
-      public_id: result.public_id ?? "",
+      id: result.id,
+      public_id: result.public_id,
       community_id: communityId,
       community_name: communityName,
       is_new_community: isNewCommunity,

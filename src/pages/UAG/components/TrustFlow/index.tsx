@@ -8,16 +8,13 @@
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Link } from "react-router-dom";
-import {
-  ChevronRight,
-  RefreshCw,
-  Plus,
-  AlertCircle,
-  Zap,
-} from "lucide-react";
+import { ChevronRight, RefreshCw, Plus, AlertCircle, Zap } from "lucide-react";
 import styles from "../../UAG.module.css";
 import { logger } from "../../../../lib/logger";
-import { useUAGModeStore, selectUseMock } from "../../../../stores/uagModeStore";
+import {
+  useUAGModeStore,
+  selectUseMock,
+} from "../../../../stores/uagModeStore";
 import {
   TrustCasesApiResponseSchema,
   transformToLegacyCase,
@@ -80,7 +77,7 @@ export default function TrustFlow({ toggleMode }: TrustFlowProps) {
         setLoading(false);
       }, 300);
     },
-    [useMock]
+    [useMock],
   );
 
   // Load data [Backend Safeguard] + [NASA TypeScript Safety]
@@ -115,7 +112,7 @@ export default function TrustFlow({ toggleMode }: TrustFlowProps) {
           const data = parseResult.data;
           if (data.success && data.data?.cases) {
             const loadedCases: TrustCase[] = data.data.cases.map((c) =>
-              transformToLegacyCase(c, [])
+              transformToLegacyCase(c, []),
             );
             setCases(loadedCases);
             if (!isInitializedRef.current && loadedCases.length > 0) {

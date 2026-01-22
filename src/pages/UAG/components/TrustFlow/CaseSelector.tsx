@@ -25,9 +25,7 @@ export function CaseSelector({
   if (cases.length === 0) return null;
 
   return (
-    <div
-      style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 4 }}
-    >
+    <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 4 }}>
       {cases.map((c) => {
         const isActive = c.id === selectedCaseId;
         const statusBadge = getStatusBadge(c.status);

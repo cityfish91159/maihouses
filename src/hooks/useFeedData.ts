@@ -53,7 +53,10 @@ type ValidPostType = (typeof VALID_POST_TYPES)[number];
  * [NASA TypeScript Safety] 類型守衛：驗證角色是否為有效的 FeedPost type
  */
 function isValidPostType(value: unknown): value is ValidPostType {
-  return typeof value === "string" && VALID_POST_TYPES.includes(value as ValidPostType);
+  return (
+    typeof value === "string" &&
+    VALID_POST_TYPES.includes(value as ValidPostType)
+  );
 }
 
 /**
@@ -69,8 +72,15 @@ function toFeedPostType(role: string | undefined | null): FeedPost["type"] {
 /**
  * [NASA TypeScript Safety] 安全轉換角色為 FeedComment author role
  */
-function toCommentAuthorRole(role: string | undefined | null): FeedCommentAuthorRole {
-  if (role === "agent" || role === "resident" || role === "official" || role === "member") {
+function toCommentAuthorRole(
+  role: string | undefined | null,
+): FeedCommentAuthorRole {
+  if (
+    role === "agent" ||
+    role === "resident" ||
+    role === "official" ||
+    role === "member"
+  ) {
     return role;
   }
   return "member";

@@ -76,7 +76,8 @@ function isValidDispatchBody(obj: unknown): obj is ValidatedDispatchBody {
   }
   if (body.data !== undefined && typeof body.data !== "object") return false;
   if (body.note !== undefined && typeof body.note !== "string") return false;
-  if (body.itemId !== undefined && typeof body.itemId !== "string") return false;
+  if (body.itemId !== undefined && typeof body.itemId !== "string")
+    return false;
   if (body.checked !== undefined && typeof body.checked !== "boolean") {
     return false;
   }

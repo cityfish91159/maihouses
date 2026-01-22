@@ -173,47 +173,42 @@ export default function ReportGenerator({
         <div className="border-b border-slate-100 bg-slate-50 px-5 py-3">
           <div className="flex items-center gap-2 text-sm">
             {/* [NASA TypeScript Safety] 定義為常數陣列避免 as Step[] */}
-            {(["style", "highlights", "photos", "preview"] satisfies Step[]).map(
-              (s, i) => (
-                <React.Fragment key={s}>
+            {(
+              ["style", "highlights", "photos", "preview"] satisfies Step[]
+            ).map((s, i) => (
+              <React.Fragment key={s}>
+                <div
+                  className={`flex items-center gap-1.5 ${step === s ? "font-bold text-[#003366]" : "text-slate-400"}`}
+                >
                   <div
-                    className={`flex items-center gap-1.5 ${step === s ? "font-bold text-[#003366]" : "text-slate-400"}`}
+                    className={`flex size-6 items-center justify-center rounded-full text-xs font-bold ${
+                      step === s
+                        ? "bg-[#003366] text-white"
+                        : ["style", "highlights", "photos", "preview"].indexOf(
+                              step,
+                            ) > i
+                          ? "bg-green-500 text-white"
+                          : "bg-slate-200"
+                    }`}
                   >
-                    <div
-                      className={`flex size-6 items-center justify-center rounded-full text-xs font-bold ${
-                        step === s
-                          ? "bg-[#003366] text-white"
-                          : [
-                                "style",
-                                "highlights",
-                                "photos",
-                                "preview",
-                              ].indexOf(step) > i
-                            ? "bg-green-500 text-white"
-                            : "bg-slate-200"
-                      }`}
-                    >
-                      {["style", "highlights", "photos", "preview"].indexOf(
-                        step,
-                      ) > i ? (
-                        <Check size={14} />
-                      ) : (
-                        i + 1
-                      )}
-                    </div>
-                    <span className="hidden sm:inline">
-                      {s === "style" && "選樣式"}
-                      {s === "highlights" && "選亮點"}
-                      {s === "photos" && "選照片"}
-                      {s === "preview" && "完成"}
-                    </span>
+                    {["style", "highlights", "photos", "preview"].indexOf(
+                      step,
+                    ) > i ? (
+                      <Check size={14} />
+                    ) : (
+                      i + 1
+                    )}
                   </div>
-                  {i < 3 && (
-                    <ChevronRight size={16} className="text-slate-300" />
-                  )}
-                </React.Fragment>
-              ),
-            )}
+                  <span className="hidden sm:inline">
+                    {s === "style" && "選樣式"}
+                    {s === "highlights" && "選亮點"}
+                    {s === "photos" && "選照片"}
+                    {s === "preview" && "完成"}
+                  </span>
+                </div>
+                {i < 3 && <ChevronRight size={16} className="text-slate-300" />}
+              </React.Fragment>
+            ))}
           </div>
         </div>
 
@@ -232,7 +227,11 @@ export default function ReportGenerator({
                   onClick={() => {
                     // [NASA TypeScript Safety] style.id 來自 REPORT_STYLES，已是 ReportStyle 類型
                     const styleId = style.id;
-                    if (styleId === "simple" || styleId === "investment" || styleId === "marketing") {
+                    if (
+                      styleId === "simple" ||
+                      styleId === "investment" ||
+                      styleId === "marketing"
+                    ) {
                       setSelectedStyle(styleId);
                     }
                   }}

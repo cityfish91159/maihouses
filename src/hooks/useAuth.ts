@@ -5,12 +5,21 @@ import { supabase } from "../lib/supabase";
 import type { Role } from "../types/community";
 
 // [NASA TypeScript Safety] Zod Schema 用於驗證 user metadata 中的 role
-const RoleSchema = z.enum(["guest", "member", "resident", "agent", "official", "admin"]);
+const RoleSchema = z.enum([
+  "guest",
+  "member",
+  "resident",
+  "agent",
+  "official",
+  "admin",
+]);
 
 // [NASA TypeScript Safety] Zod Schema 用於驗證 metadata 結構
-const MetadataSchema = z.object({
-  role: z.unknown().optional(),
-}).passthrough();
+const MetadataSchema = z
+  .object({
+    role: z.unknown().optional(),
+  })
+  .passthrough();
 
 /**
  * [NASA TypeScript Safety] 從 metadata 安全提取 role

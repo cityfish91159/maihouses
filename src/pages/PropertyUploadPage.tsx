@@ -20,6 +20,7 @@ import { logger } from "../lib/logger";
 import { BasicInfoSection } from "../components/upload/BasicInfoSection";
 import { FeaturesSection } from "../components/upload/FeaturesSection";
 import { TwoGoodsSection } from "../components/upload/TwoGoodsSection";
+import { TrustToggleSection } from "../components/upload/TrustToggleSection";
 import { MediaSection } from "../components/upload/MediaSection";
 import { PreviewSection } from "../components/upload/PreviewSection";
 import {
@@ -120,6 +121,7 @@ const PropertyUploadContent: React.FC = () => {
       ...prev,
       ...draftData,
       images: prev.images, // 保留當前圖片（不覆蓋）
+      // FE-1: trustEnabled 由 Zod Schema default(false) 保證有值，無需 ?? fallback
     }));
     setDraftAvailable(false);
     const preview = getDraftPreview();
@@ -528,6 +530,7 @@ const PropertyUploadContent: React.FC = () => {
             <BasicInfoSection />
             <FeaturesSection />
             <TwoGoodsSection />
+            <TrustToggleSection />
             <MediaSection />
           </div>
 

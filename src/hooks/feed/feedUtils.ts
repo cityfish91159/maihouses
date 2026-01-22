@@ -41,18 +41,24 @@ const S = STRINGS.FEED;
 
 // [NASA TypeScript Safety] Zod Schema 用於驗證從 localStorage 載入的 Mock Feed 資料
 // 只驗證最小必要欄位，其他欄位允許通過
-const PersistedFeedDataSchema = z.object({
-  posts: z.array(z.object({
-    id: z.union([z.string(), z.number()]),
-    author: z.string(),
-    type: z.enum(["resident", "member", "agent", "official"]),
-    time: z.string(),
-    title: z.string(),
-    content: z.string(),
-    comments: z.number(),
-  }).passthrough()),
-  totalPosts: z.number().optional(),
-}).passthrough();
+const PersistedFeedDataSchema = z
+  .object({
+    posts: z.array(
+      z
+        .object({
+          id: z.union([z.string(), z.number()]),
+          author: z.string(),
+          type: z.enum(["resident", "member", "agent", "official"]),
+          time: z.string(),
+          title: z.string(),
+          content: z.string(),
+          comments: z.number(),
+        })
+        .passthrough(),
+    ),
+    totalPosts: z.number().optional(),
+  })
+  .passthrough();
 
 // ============================================================================
 // Constants

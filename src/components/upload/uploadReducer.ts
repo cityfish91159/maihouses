@@ -82,6 +82,7 @@ export const createInitialState = (): UploadState => ({
     highlights: [],
     images: [],
     sourceExternalId: "",
+    trustEnabled: false,
   },
   managedImages: [],
   selectedCommunityId: undefined,

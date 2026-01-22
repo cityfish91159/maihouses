@@ -19,15 +19,17 @@ const TrustStepSchema = z
     note: z.string(),
     confirmedAt: z.string().optional(),
   })
-  .transform((data): TrustStep => ({
-    step: data.step,
-    name: data.name,
-    done: data.done,
-    confirmed: data.confirmed,
-    date: data.date,
-    note: data.note,
-    ...(data.confirmedAt !== undefined && { confirmedAt: data.confirmedAt }),
-  }));
+  .transform(
+    (data): TrustStep => ({
+      step: data.step,
+      name: data.name,
+      done: data.done,
+      confirmed: data.confirmed,
+      date: data.date,
+      note: data.note,
+      ...(data.confirmedAt !== undefined && { confirmedAt: data.confirmedAt }),
+    }),
+  );
 
 const TrustTransactionSchema = z
   .object({

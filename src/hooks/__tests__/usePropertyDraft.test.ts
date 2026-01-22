@@ -20,6 +20,8 @@ const baseForm: DraftFormData = {
   disadvantage: "bad",
   highlights: [],
   sourceExternalId: "src",
+  // FE-1: 安心留痕開關狀態
+  trustEnabled: false,
 };
 
 describe("usePropertyDraft", () => {
@@ -140,5 +142,144 @@ describe("usePropertyDraft", () => {
     rerender({ uid: "user99" });
     const restored = result.current.restoreDraft();
     expect(restored?.title).toBe("t");
+  });
+
+  // FE-1: trustEnabled 草稿儲存/還原測試
+  it("saves and restores trustEnabled state", () => {
+    const formWithTrust: DraftFormData = {
+      ...baseForm,
+      trustEnabled: true,
+    };
+    const { result } = renderHook(() =>
+      usePropertyDraft(formWithTrust, "trust-test"),
+    );
+
+    // 等待自動存檔
+    act(() => vi.advanceTimersByTime(1000));
+
+    // 驗證 localStorage 有儲存 trustEnabled
+    const saved = JSON.parse(
+      localStorage.getItem("mh_draft_upload_trust-test") || "{}",
+    );
+    expect(saved.trustEnabled).toBe(true);
+
+    // 驗證還原時 trustEnabled 正確
+    const restored = result.current.restoreDraft();
+    expect(restored?.trustEnabled).toBe(true);
+  });
+
+  it("restores trustEnabled=false for old drafts missing the field", () => {
+    // 模擬舊版草稿（沒有 trustEnabled 欄位）
+    const oldDraft = {
+      title: "old",
+      price: "100",
+      address: "addr",
+      communityName: "comm",
+      size: "20",
+      age: "5",
+      floorCurrent: "3",
+      floorTotal: "10",
+      rooms: "2",
+      halls: "1",
+      bathrooms: "1",
+      type: "公寓",
+      description: "old desc",
+      advantage1: "adv1",
+      advantage2: "adv2",
+      disadvantage: "dis",
+      highlights: [],
+      sourceExternalId: "",
+      // 注意：沒有 trustEnabled - 模擬舊草稿
+      _version: 1,
+      _savedAt: Date.now(),
+      _tabId: "old",
+    };
+    localStorage.setItem("mh_draft_upload_old-test", JSON.stringify(oldDraft));
+
+    const { result } = renderHook(() => usePropertyDraft(baseForm, "old-test"));
+    const restored = result.current.restoreDraft();
+
+    // Zod schema 會給 default false
+    expect(restored?.trustEnabled).toBe(false);
+  });
+
+  // FE-1: 完整流程整合測試
+  describe("trustEnabled integration", () => {
+    it("preserves trustEnabled=true through save-restore cycle", () => {
+      // 1. 建立開啟 trustEnabled 的表單
+      const formWithTrustOn: DraftFormData = {
+        ...baseForm,
+        title: "Trust Test Property",
+        trustEnabled: true,
+      };
+
+      // 2. 初始化 hook 並等待自動存檔
+      const { result } = renderHook(() =>
+        usePropertyDraft(formWithTrustOn, "integration-test"),
+      );
+      act(() => vi.advanceTimersByTime(1000));
+
+      // 3. 驗證 localStorage 正確儲存
+      const rawSaved = localStorage.getItem("mh_draft_upload_integration-test");
+      expect(rawSaved).not.toBeNull();
+      const saved = JSON.parse(rawSaved!);
+      expect(saved.trustEnabled).toBe(true);
+      expect(saved.title).toBe("Trust Test Property");
+
+      // 4. 模擬頁面重載：清除 hook 狀態，重新還原
+      const restored = result.current.restoreDraft();
+      expect(restored).not.toBeNull();
+      expect(restored!.trustEnabled).toBe(true);
+      expect(restored!.title).toBe("Trust Test Property");
+    });
+
+    it("preserves trustEnabled=false through save-restore cycle", () => {
+      const formWithTrustOff: DraftFormData = {
+        ...baseForm,
+        title: "No Trust Property",
+        trustEnabled: false,
+      };
+
+      const { result } = renderHook(() =>
+        usePropertyDraft(formWithTrustOff, "integration-off-test"),
+      );
+      act(() => vi.advanceTimersByTime(1000));
+
+      const restored = result.current.restoreDraft();
+      expect(restored).not.toBeNull();
+      expect(restored!.trustEnabled).toBe(false);
+    });
+
+    it("updates trustEnabled when form changes", () => {
+      // 1. 開始時 trustEnabled = false
+      const initialForm: DraftFormData = {
+        ...baseForm,
+        trustEnabled: false,
+      };
+
+      const { result, rerender } = renderHook(
+        ({ form }) => usePropertyDraft(form, "toggle-test"),
+        { initialProps: { form: initialForm } },
+      );
+      act(() => vi.advanceTimersByTime(1000));
+
+      // 2. 用戶切換 Toggle → trustEnabled = true
+      const updatedForm: DraftFormData = {
+        ...baseForm,
+        trustEnabled: true,
+      };
+      rerender({ form: updatedForm });
+      act(() => vi.advanceTimersByTime(1000));
+
+      // 3. 驗證新值已存檔
+      const saved = JSON.parse(
+        localStorage.getItem("mh_draft_upload_toggle-test") || "{}",
+      );
+      expect(saved.trustEnabled).toBe(true);
+
+      // 4. 還原應該得到最新值
+      const restored = result.current.restoreDraft();
+      expect(restored!.trustEnabled).toBe(true);
+    });
   });
 });

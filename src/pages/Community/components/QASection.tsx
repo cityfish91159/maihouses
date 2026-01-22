@@ -430,11 +430,13 @@ export function QASection({
         : null;
   }, [askModalOpen, answerModalOpen]);
 
-  const getFocusableElements = useCallback((container: HTMLElement | null): HTMLElement[] => {
-    if (!container) return [];
-    const selector = "a[href], button, textarea, input, select, [tabindex]";
-    return Array.from(container.querySelectorAll<HTMLElement>(selector)).filter(
-      (el) => {
+  const getFocusableElements = useCallback(
+    (container: HTMLElement | null): HTMLElement[] => {
+      if (!container) return [];
+      const selector = "a[href], button, textarea, input, select, [tabindex]";
+      return Array.from(
+        container.querySelectorAll<HTMLElement>(selector),
+      ).filter((el) => {
         const tabIndexAttr = el.getAttribute("tabindex");
         const tabIndex =
           typeof tabIndexAttr === "string" ? Number(tabIndexAttr) : undefined;
@@ -444,9 +446,10 @@ export function QASection({
         const isHidden = el.hasAttribute("aria-hidden");
         const isNegativeTabIndex = typeof tabIndex === "number" && tabIndex < 0;
         return !isDisabled && !isHidden && !isNegativeTabIndex;
-      },
-    );
-  }, []);
+      });
+    },
+    [],
+  );
 
   /**
    * 安全聚焦 helper：依序嘗試 main、[data-app-root]、#root、body

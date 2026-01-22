@@ -32,7 +32,14 @@ import { convertApiData, sortPostsWithPinned } from "./communityWallConverters";
 import type { UnifiedWallData } from "./communityWallConverters";
 
 // [NASA TypeScript Safety] Zod Schema 用於驗證 viewerRole
-const RoleSchema = z.enum(["guest", "member", "resident", "agent", "official", "admin"]);
+const RoleSchema = z.enum([
+  "guest",
+  "member",
+  "resident",
+  "agent",
+  "official",
+  "admin",
+]);
 
 /**
  * [NASA TypeScript Safety] 類型守衛：驗證 viewerRole 是否為有效的 Role

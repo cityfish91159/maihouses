@@ -126,6 +126,8 @@ export const UploadFormProvider: React.FC<{ children: ReactNode }> = ({
       disadvantage: state.form.disadvantage,
       highlights: state.form.highlights ?? [],
       sourceExternalId: state.form.sourceExternalId,
+      // FE-1: 安心留痕開關狀態須納入草稿（boolean 直接使用，避免 undefined）
+      trustEnabled: Boolean(state.form.trustEnabled),
     }),
     [
       state.form.title,
@@ -146,6 +148,8 @@ export const UploadFormProvider: React.FC<{ children: ReactNode }> = ({
       state.form.disadvantage,
       state.form.highlights,
       state.form.sourceExternalId,
+      // FE-1: 依賴陣列須包含 trustEnabled
+      state.form.trustEnabled,
     ],
   );
 

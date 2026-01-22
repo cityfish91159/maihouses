@@ -69,9 +69,7 @@ export function EventTimeline({ selectedCase }: EventTimelineProps) {
                 borderRadius: 4,
                 background: isCurrent ? "#fef3c7" : "#f1f5f9",
                 color: isCurrent ? "var(--grade-s)" : "var(--ink-300)",
-                border: isCurrent
-                  ? "1px solid #fcd34d"
-                  : "1px solid #e2e8f0",
+                border: isCurrent ? "1px solid #fcd34d" : "1px solid #e2e8f0",
                 fontFamily: "monospace",
               }}
             >
@@ -84,9 +82,7 @@ export function EventTimeline({ selectedCase }: EventTimelineProps) {
   };
 
   return (
-    <div
-      style={{ background: "#f8fafc", borderRadius: 8, overflow: "hidden" }}
-    >
+    <div style={{ background: "#f8fafc", borderRadius: 8, overflow: "hidden" }}>
       {/* Header */}
       <div
         style={{

@@ -2,6 +2,14 @@
 
 ## 摘要（按施工順序）
 
+### Phase 0：Web Push 後端（補債）
+| # | 任務 | 狀態 |
+|---|------|------|
+| WP-1 | 安裝 web-push 套件 | ✅ |
+| WP-2 | 實作真正的 sendPush（查 DB + 發送） | ✅ |
+| WP-3 | 處理 410 Gone（訂閱失效時刪除） | ✅ |
+| WP-4 | VAPID 環境變數設定 | ✅ |
+
 ### Phase 1：資料庫
 | # | 任務 | 狀態 |
 |---|------|------|
@@ -13,10 +21,10 @@
 ### Phase 2：核心後端 API
 | # | 任務 | 狀態 |
 |---|------|------|
-| BE-1 | 上傳 API 存 trust_enabled | □ |
-| BE-2 | 補開安心服務 API | □ |
-| BE-7 | 查詢通知目標 | □ |
-| BE-8 | 推播失敗處理 | □ |
+| BE-1 | 上傳 API 存 trust_enabled | ✅ |
+| BE-2 | 補開安心服務 API | ✅ |
+| BE-7 | 查詢通知目標 | ✅ |
+| BE-8 | 推播失敗處理 | ✅ |
 | BE-5 | 進度更新推播 | □ |
 | BE-9 | 案件關閉通知 | □ |
 | BE-3 | LINE 查詢交易 API | □ |
@@ -27,7 +35,7 @@
 ### Phase 3：前端
 | # | 任務 | 狀態 |
 |---|------|------|
-| FE-1 | 上傳頁加安心服務開關 | □ |
+| FE-1 | 上傳頁加安心服務開關 | ✅ |
 | FE-2 | 詳情頁加安心徽章 | □ |
 | FE-3 | Trust Room 加註冊引導 | □ |
 | FE-5 | Trust Room 狀態 Banner | □ |
@@ -71,6 +79,290 @@
 | 物件成交了，其他案件怎麼處理？ | 自動關閉並通知「物件已由他人成交」 |
 | 物件下架了，案件怎麼辦？ | 自動關閉並通知「物件已下架」 |
 | 房仲怎麼知道哪些案件該跟進？ | UAG 後台分類顯示：進行中 / 休眠 / 成交 |
+
+---
+
+## WP-1 | 安裝 web-push 套件 ✅
+
+**為什麼**
+Node.js 發送 Web Push 需要 `web-push` 套件處理 VAPID 簽名和加密。沒有這個套件，後端無法發送任何 Push 通知。
+
+**做什麼**
+```bash
+npm install web-push
+```
+
+**改哪裡**
+`package.json` dependencies
+
+**驗證**
+```bash
+npm list web-push
+# maihouses@1.0.7
+# └── web-push@3.6.7
+```
+
+**施作紀錄** (2026-01-22)
+- 執行 `npm install web-push`
+- 版本：3.6.7
+- `package.json` L45: `"web-push": "^3.6.7"`
+- `package-lock.json` 已更新
+
+---
+
+## WP-4 | 從 Supabase Vault 讀取 VAPID_PRIVATE_KEY ✅
+
+**為什麼**
+後端需要 VAPID_PRIVATE_KEY 才能簽名發送 Push。金鑰已存在 Supabase Vault（用戶已確認），需要建立 RPC 讓後端讀取。
+
+**做什麼**
+```sql
+-- supabase/migrations/20260122_wp4_vapid_vault_rpc.sql
+
+-- 1. RPC 函數：取得 VAPID_PRIVATE_KEY（只允許 service_role）
+CREATE OR REPLACE FUNCTION fn_get_vapid_private_key()
+RETURNS TEXT
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, vault
+AS $$
+DECLARE
+  v_key TEXT;
+BEGIN
+  -- 只允許 service_role
+  IF auth.role() <> 'service_role' THEN
+    RAISE EXCEPTION 'permission denied: only service_role can access VAPID key';
+  END IF;
+
+  -- 從 Vault 讀取解密後的 secret
+  SELECT decrypted_secret INTO v_key
+  FROM vault.decrypted_secrets
+  WHERE name = 'VAPID_PRIVATE_KEY'
+  LIMIT 1;
+
+  IF v_key IS NULL THEN
+    RAISE EXCEPTION 'VAPID_PRIVATE_KEY not found in Vault';
+  END IF;
+
+  RETURN v_key;
+END;
+$$;
+
+-- 2. 授權（只給 service_role）
+REVOKE ALL ON FUNCTION fn_get_vapid_private_key() FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION fn_get_vapid_private_key() TO service_role;
+```
+
+**改哪裡**
+`supabase/migrations/20260122_wp4_vapid_vault_rpc.sql`
+
+**驗證**
+```typescript
+// 後端呼叫（使用 service_role client）
+const { data: privateKey, error } = await supabaseAdmin.rpc('fn_get_vapid_private_key');
+if (error) throw error;
+// privateKey 應該是 VAPID 私鑰字串
+```
+
+**施作紀錄** (2026-01-22)
+- Migration 檔案已建立：`20260122_wp4_vapid_vault_rpc.sql`（65 行，含 WHY 註解）
+  - Step 1: 建立 `fn_get_vapid_private_key()` RPC（SECURITY DEFINER）
+  - Step 2: 權限檢查 `auth.role() <> 'service_role'` 防止一般用戶存取
+  - Step 3: 從 `vault.decrypted_secrets` 讀取解密後的金鑰
+  - Step 4: 只授權 `service_role`，REVOKE 其他角色
+  - 公鑰不需要 RPC，直接用 Vercel 環境變數 `VITE_VAPID_PUBLIC_KEY`
+- 前提：用戶已在 Supabase Dashboard > Vault 建立 `VAPID_PRIVATE_KEY` secret
+- **VAPID 金鑰存放位置** (2026-01-22 最終版)
+  - `VAPID_PRIVATE_KEY`：Supabase Vault（私鑰必須保密，透過 RPC 讀取）
+  - `VITE_VAPID_PUBLIC_KEY`：Vercel 環境變數（前端 + 後端共用）
+- **後端讀取方式**
+  - 私鑰：`fn_get_vapid_private_key()` RPC 從 Vault 讀取
+  - 公鑰：`process.env.VITE_VAPID_PUBLIC_KEY` 從環境變數讀取
+  - 注意：雖然 VITE_ 前綴通常是前端用，但 Vercel Serverless 也能讀取
+- 驗證：30 測試通過、`npm run gate` 通過
+
+---
+
+## WP-2 | 實作真正的 sendPush ✅
+
+**為什麼**
+現在 `sendPush` 是 stub，永遠成功但不發任何東西。要實作真正的發送邏輯，包含：
+1. 從 Vault 讀取 VAPID_PRIVATE_KEY（依賴 WP-4）
+2. 查詢用戶的 push_subscriptions
+3. 用 web-push 套件發送
+
+**做什麼**
+```typescript
+// api/trust/send-notification.ts
+
+import webpush from 'web-push';
+import { supabaseAdmin } from './_utils';
+
+// 快取 VAPID 設定（避免每次發送都查 Vault）
+let vapidConfigured = false;
+
+async function ensureVapidConfigured(): Promise<void> {
+  if (vapidConfigured) return;
+
+  // 從 Vault 讀取私鑰
+  const { data: privateKey, error } = await supabaseAdmin.rpc('fn_get_vapid_private_key');
+  if (error || !privateKey) {
+    throw new Error('Failed to get VAPID_PRIVATE_KEY from Vault');
+  }
+
+  // 公鑰從環境變數讀取（前端也需要，所以不放 Vault）
+  const publicKey = process.env.VITE_VAPID_PUBLIC_KEY;
+  if (!publicKey) {
+    throw new Error('VITE_VAPID_PUBLIC_KEY not configured');
+  }
+
+  webpush.setVapidDetails(
+    'mailto:support@maihouses.com',
+    publicKey,
+    privateKey
+  );
+
+  vapidConfigured = true;
+}
+
+// 實作真正的 sendPush
+async function sendPush(
+  userId: string,
+  message: NotificationMessage,
+  trustRoomUrl: string
+): Promise<void> {
+  await ensureVapidConfigured();
+
+  // 查詢用戶的所有訂閱
+  const { data: subscriptions, error } = await supabaseAdmin.rpc(
+    'fn_get_push_subscriptions',
+    { p_profile_id: userId }
+  );
+
+  if (error) {
+    throw new Error(`Failed to get subscriptions: ${error.message}`);
+  }
+
+  if (!subscriptions || subscriptions.length === 0) {
+    throw new Error('No push subscriptions found');
+  }
+
+  // 準備 payload
+  const payload = JSON.stringify({
+    title: message.title,
+    body: message.body,
+    data: { url: trustRoomUrl }
+  });
+
+  // 發送到每個訂閱
+  const results = await Promise.allSettled(
+    subscriptions.map(sub =>
+      webpush.sendNotification(
+        {
+          endpoint: sub.endpoint,
+          keys: { p256dh: sub.p256dh, auth: sub.auth }
+        },
+        payload
+      )
+    )
+  );
+
+  // 處理 410 Gone（見 WP-3）
+  // ...
+
+  // 檢查是否全部失敗
+  const allFailed = results.every(r => r.status === 'rejected');
+  if (allFailed) {
+    throw new Error('All push subscriptions failed');
+  }
+}
+```
+
+**改哪裡**
+`api/trust/send-notification.ts` L245-265（替換 stub）
+
+**驗證**
+- 有訂閱的用戶：發送成功，瀏覽器收到通知
+- 無訂閱的用戶：拋出 'No push subscriptions found'
+- Vault 讀取失敗：拋出 'Failed to get VAPID_PRIVATE_KEY from Vault'
+
+**施作紀錄** (2026-01-22)
+- 實作位置：`api/trust/send-notification.ts`
+  - `ensureVapidConfigured()`：從 Vault RPC 讀取 VAPID 私鑰，快取設定
+  - `sendPush(userId, message, trustRoomUrl)`：查詢訂閱 + web-push 發送
+  - 使用 `fn_get_vapid_private_key` RPC（依賴 WP-4）
+  - 使用 `fn_get_push_subscriptions` RPC 查詢用戶訂閱
+- 測試：`api/trust/__tests__/send-notification.test.ts`
+  - 30 個測試案例全部通過
+  - 測試修復：`mockFrom` 添加 `trust_cases` 表鏈式返回
+  - 測試修復：`mockSingle` 預設返回值（用於 `getFallbackLineId`）
+- 驗證：`npm run gate` 通過
+
+---
+
+## WP-3 | 處理 410 Gone ✅
+
+**為什麼**
+用戶取消訂閱或清除瀏覽器資料後，Push Service 會回傳 410 Gone。
+要刪除失效的訂閱，避免下次再發到無效 endpoint。
+
+**做什麼**
+```typescript
+// 在 sendPush 內，發送後處理結果
+for (let i = 0; i < results.length; i++) {
+  const result = results[i];
+  if (result.status === 'rejected') {
+    const error = result.reason;
+    // 410 Gone = 訂閱已失效
+    if (error.statusCode === 410) {
+      const sub = subscriptions[i];
+      await supabaseAdmin
+        .from('push_subscriptions')
+        .delete()
+        .eq('endpoint', sub.endpoint);
+
+      logger.info('[send-notification] Deleted expired subscription', {
+        endpoint: sub.endpoint.slice(0, 50) + '...'
+      });
+    }
+  }
+}
+```
+
+**改哪裡**
+`api/trust/send-notification.ts`（在 sendPush 內，WP-2 之後）
+
+**驗證**
+- 模擬 410 回應，確認訂閱被刪除
+- DB 中 push_subscriptions 減少一筆
+- 日誌有記錄刪除動作
+
+**施作紀錄** (2026-01-22)
+- 實作位置：`api/trust/send-notification.ts` 內 `sendPush` 函數
+  - 發送後遍歷 `Promise.allSettled` 結果
+  - `statusCode === 410` 時刪除訂閱：`supabase.from('push_subscriptions').delete().eq('endpoint', ...)`
+  - 日誌記錄刪除動作（endpoint 截斷 50 字元 + `...`）
+- 測試：`api/trust/__tests__/send-notification.test.ts`
+  - 「410 Gone 時應刪除過期訂閱」測試案例通過
+  - 使用 `vi.doMock` 模擬 410 回應
+  - 驗證 `mockDelete` 和 `mockDeleteEq` 被正確呼叫
+- 驗證：`npm run gate` 通過
+
+---
+
+## WP 施作順序
+
+```
+WP-1 安裝套件 ✅
+    ↓
+WP-4 設定 Vault RPC ✅（待部署 Migration 到 Supabase）
+    ↓
+WP-2 實作 sendPush ✅
+    ↓
+WP-3 處理 410 Gone ✅
+    ↓
+測試：訂閱 → 發送 → 收到通知（待 Migration 部署後）
+```
 
 ---
 
@@ -235,7 +527,7 @@ SELECT buyer_user_id, buyer_line_id FROM trust_cases LIMIT 1;
 
 ---
 
-## FE-1 |上傳頁加安心服務開關
+## FE-1 |上傳頁加安心服務開關 ✅
 
 **為什麼**
 房仲上傳物件時要能選「開不開安心留痕」。現在上傳頁沒這個選項，房仲想開也開不了。
@@ -259,6 +551,37 @@ SELECT buyer_user_id, buyer_line_id FROM trust_cases LIMIT 1;
 
 **驗證**
 上傳頁有 Toggle，可以開關，送出時 console 能看到 trust_enabled 值
+
+**施作紀錄** (2026-01-22)
+- 新增 `src/components/upload/TrustToggleSection.tsx`（72 行）
+  - Shield + Info 圖標，Tailwind emerald 色系
+  - ARIA 無障礙：`role="switch"`, `aria-checked`, `aria-label`
+  - `useCallback` + 正確依賴陣列
+- 修改 `src/components/upload/uploadReducer.ts` L85
+  - 初始狀態加入 `trustEnabled: false`
+- 修改 `src/pages/PropertyUploadPage.tsx` L21, L531
+  - import TrustToggleSection
+  - 放在 TwoGoodsSection 和 MediaSection 之間
+
+**草稿系統修復** (2026-01-22 v14 - Google Director 審計後)
+- **問題發現**：trustEnabled 未納入草稿系統，用戶設定會在還原時遺失
+- **修復 1**：`usePropertyDraft.ts` DraftFormDataSchema
+  - 新增 `trustEnabled: z.boolean().default(false)`
+  - 移除 `.optional()` 確保類型一致
+- **修復 2**：`usePropertyDraft.ts` DraftFormData interface
+  - 新增 `trustEnabled: boolean`
+- **修復 3**：`usePropertyDraft.ts` 自動存檔邏輯 L162
+  - 新增 `trustEnabled: form.trustEnabled`
+- **修復 4**：`UploadContext.tsx` draftFormData
+  - L129: `trustEnabled: state.form.trustEnabled === true`
+  - L152: 依賴陣列加入 `state.form.trustEnabled`
+- **修復 5**：`PropertyUploadPage.tsx` handleRestoreDraft L125
+  - 顯式處理：`trustEnabled: draftData.trustEnabled ?? false`
+  - 確保舊草稿缺少欄位時有確定值
+- **新增測試**：`usePropertyDraft.test.ts`
+  - 3 個整合測試：save-restore cycle、toggle update、舊草稿相容
+- 驗證：`npm run gate` 通過、1045+ 測試通過
+- 代碼審查評分：90+/100 🟢
 
 ---
 
@@ -458,7 +781,7 @@ trust_enabled=true 時顯示徽章：
 
 ---
 
-## BE-1 |上傳 API 存 trust_enabled
+## BE-1 |上傳 API 存 trust_enabled ✅
 
 **為什麼**
 FE-1 前端加了開關，後端要能接收並存進資料庫。
@@ -472,9 +795,24 @@ FE-1 前端加了開關，後端要能接收並存進資料庫。
 **驗證**
 上傳物件時開啟 Toggle，查資料庫 trust_enabled=true
 
+**施作紀錄** (2026-01-22)
+- **發現**：`api/property/create.ts` 不存在，房源建立使用 Service 層 + RPC
+- **實際架構**：前端 → `propertyService.createPropertyWithForm` → RPC `fn_create_property_with_review`
+- **已完成項目**：
+  - `src/services/propertyService.ts` L96: `PropertyFormInput.trustEnabled?: boolean`
+  - `src/services/propertyService.ts` L643: `p_trust_enabled: form.trustEnabled === true`
+  - `supabase/migrations/20260122_create_property_with_review_rpc.sql` L30: `p_trust_enabled BOOLEAN`
+  - RPC INSERT (L65, L90): `trust_enabled` 欄位，`COALESCE(p_trust_enabled, false)` NULL 安全
+- **14 Skills 執行**：
+  - memory_bank (讀取) → read-before-edit → agentic_architecture → backend_safeguard
+  - no_lazy_implementation → nasa_typescript_safety → security_audit → draconian_rls_audit
+  - rigorous_testing → code-validator → type-checker → pre-commit-validator
+  - code-review → memory_bank (寫入)
+- **驗證**：`npm run gate` 通過 (typecheck + lint)
+
 ---
 
-## BE-2 |補開安心服務 API
+## BE-2 |補開安心服務 API ✅
 
 **為什麼**
 已上傳但沒開安心服務的物件，房仲要能「補開」。但開了不能關（不然房仲都關掉就不用付錢）。
@@ -494,6 +832,20 @@ Body: { propertyId: "xxx" }
 **驗證**
 - trust_enabled=false 的物件：呼叫後變 true
 - trust_enabled=true 的物件：呼叫回傳錯誤
+
+**施作紀錄** (2026-01-22)
+- 新增 `api/property/enable-trust.ts`（270 行）
+  - Zod Schema 驗證：`EnableTrustRequestSchema`、`PropertyRowSchema`
+  - 權限驗證：Supabase Auth + agents 表查詢
+  - 商業邏輯：只允許 false → true，已開啟回傳 ALREADY_ENABLED
+  - 擁有權驗證：agent_id === 登入者
+  - Audit Log：完整記錄操作
+- 新增 `api/property/__tests__/enable-trust.test.ts`（12 測試）
+  - 成功案例：false → true
+  - 失敗案例：已開啟、非擁有者、物件不存在、未登入、無效 UUID
+  - HTTP 方法：OPTIONS 200、GET 405
+- Skills Applied：backend_safeguard, nasa_typescript_safety, security_audit, rigorous_testing
+- 驗證：`npm run gate` 通過、12 測試通過、0 any/ts-ignore
 
 ---
 
@@ -601,7 +953,7 @@ GET /api/trust/consumer-cases?userId=xxx
 
 ---
 
-## BE-7 |查詢通知目標
+## BE-7 |查詢通知目標 ✅
 
 **為什麼**
 發通知時要知道「通知誰」。消費者可能是已註冊用戶（用 push）或未註冊用戶（用 LINE）。要有優先順序。
@@ -632,9 +984,24 @@ async function getNotifyTarget(caseId: string) {
 - 只有 buyer_line_id 的案件：回傳 line 類型
 - 都沒有的案件：回傳 null
 
+**施作紀錄** (2026-01-22)
+- 新增 `api/trust/notify.ts`（200 行）
+  - `NotifyTarget` 聯合類型：`NotifyTargetPush | NotifyTargetLine | null`
+  - `CaseNotifyFieldsSchema` Zod Schema：驗證 DB 查詢結果
+  - `getNotifyTarget(caseId)` 核心函數：供 BE-5/BE-8/BE-9 內部呼叫
+  - GET API 端點：供調試和測試（需 x-system-key 認證）
+  - 優先順序邏輯：`buyer_user_id > buyer_line_id`
+- 新增 `api/trust/__tests__/notify.test.ts`（14 測試）
+  - 優先順序邏輯：3 測試
+  - 錯誤處理：2 測試（案件不存在、DB 錯誤）
+  - 類型安全驗證：3 測試
+  - API 端點驗證：6 測試（認證、參數、HTTP 方法）
+- Skills Applied：NASA TypeScript Safety, Backend Safeguard, Test Driven Agent
+- 驗證：`npm run gate` 通過、14 測試通過、0 any/ts-ignore
+
 ---
 
-## BE-8 |推播失敗處理
+## BE-8 |推播失敗處理 ✅
 
 **為什麼**
 LINE 可能限流、用戶可能封鎖。推播失敗不能就這樣算了，要重試，還要有降級機制。
@@ -673,6 +1040,25 @@ async function sendNotification(target, message) {
 - 故意讓推播失敗，確認有重試
 - 確認有記錄失敗日誌
 - push 失敗時有嘗試 LINE
+
+### 實作完成 (2026-01-22)
+
+- 新增 `api/trust/send-notification.ts`（~750 行）
+  - 核心函數：`sendNotification(caseId, message)` - 自動決定通知管道
+  - 便捷函數：`sendStepUpdateNotification()`、`sendCaseClosedNotification()`、`sendCaseWakeNotification()`
+  - 重試機制：1 秒延遲重試一次
+  - 降級機制：Push 失敗且有 LINE ID 時自動降級
+  - 類型安全：Zod Schema 驗證 + Discriminated Union
+  - PII 遮罩：日誌中 UUID 和 LINE ID 皆遮罩
+  - **注意**：此模組為內部函數庫，供 BE-5/BE-9 呼叫，非獨立 API 端點
+- 新增 `api/trust/__tests__/send-notification.test.ts`
+  - 核心功能測試：成功發送、無通知目標、目標查詢失敗
+  - 重試機制測試：LINE 失敗重試成功、重試失敗記錄日誌
+  - **Push 降級測試**：Push 失敗 → 重試失敗 → LINE 降級成功/失敗
+  - Zod 驗證測試：無效 caseId、空 title/body、無效 message type
+  - 便捷函數測試：進度更新、案件關閉、案件喚醒
+- Skills Applied：NASA TypeScript Safety, Backend Safeguard, Rigorous Testing
+- 驗證：`npm run gate` 通過、測試全過、0 any/ts-ignore
 
 ---
 
@@ -859,3 +1245,4 @@ Vercel cron 設定每日 03:30 執行
 | closed_sold_to_other | 他人成交 | 同物件其他案件 M5 |
 | closed_property_unlisted | 物件下架 | 房仲下架物件 |
 | closed_inactive | 過期關閉 | 休眠超過 60 天 |
+

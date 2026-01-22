@@ -141,7 +141,10 @@ const transformSupabaseData = (
       // [NASA TypeScript Safety] 使用 Zod safeParse 取代 as Grade
       const gradeResult = GradeSchema.safeParse(l.grade);
       if (gradeResult.success) {
-        remainingHours = calculateRemainingHours(l.purchased_at, gradeResult.data);
+        remainingHours = calculateRemainingHours(
+          l.purchased_at,
+          gradeResult.data,
+        );
       }
     }
 
@@ -556,7 +559,12 @@ export class UAGService {
                 // [NASA TypeScript Safety] 使用 Zod safeParse 取代 as Grade
                 remainingHours: (() => {
                   const gradeResult = GradeSchema.safeParse(grade);
-                  return gradeResult.success ? calculateRemainingHours(purchased.created_at, gradeResult.data) : 0;
+                  return gradeResult.success
+                    ? calculateRemainingHours(
+                        purchased.created_at,
+                        gradeResult.data,
+                      )
+                    : 0;
                 })(),
                 // UAG-15/修5: 加入通知狀態
                 notification_status: purchased.notification_status,
@@ -666,8 +674,18 @@ export class UAGService {
       // [NASA TypeScript Safety] 使用類型守衛取代 as Record
       const actions = evt.actions;
       if (actions && typeof actions === "object") {
-        if ("click_line" in actions && typeof actions.click_line === "number" && actions.click_line) stat.line_clicks++;
-        if ("click_call" in actions && typeof actions.click_call === "number" && actions.click_call) stat.call_clicks++;
+        if (
+          "click_line" in actions &&
+          typeof actions.click_line === "number" &&
+          actions.click_line
+        )
+          stat.line_clicks++;
+        if (
+          "click_call" in actions &&
+          typeof actions.click_call === "number" &&
+          actions.click_call
+        )
+          stat.call_clicks++;
       }
     }
 

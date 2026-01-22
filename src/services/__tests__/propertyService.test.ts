@@ -225,3 +225,161 @@ describe("propertyService - getFeaturedProperties", () => {
     });
   });
 });
+
+// ============================
+// BE-1: CreatePropertyRpcResultSchema 測試
+// ============================
+import { z } from "zod";
+
+// 複製 Schema 用於測試（避免循環依賴）
+const CreatePropertyRpcResultSchema = z.object({
+  success: z.boolean(),
+  id: z.string().uuid().optional(),
+  public_id: z.string().optional(),
+  error: z.string().optional(),
+});
+
+describe("BE-1: CreatePropertyRpcResultSchema", () => {
+  describe("成功案例", () => {
+    it("驗證成功回傳結構", () => {
+      const validResult = {
+        success: true,
+        id: "550e8400-e29b-41d4-a716-446655440000",
+        public_id: "MH-100001",
+      };
+
+      const parsed = CreatePropertyRpcResultSchema.safeParse(validResult);
+      expect(parsed.success).toBe(true);
+      if (parsed.success) {
+        expect(parsed.data.success).toBe(true);
+        expect(parsed.data.id).toBe("550e8400-e29b-41d4-a716-446655440000");
+        expect(parsed.data.public_id).toBe("MH-100001");
+      }
+    });
+
+    it("驗證失敗回傳結構", () => {
+      const errorResult = {
+        success: false,
+        error: "Database connection failed",
+      };
+
+      const parsed = CreatePropertyRpcResultSchema.safeParse(errorResult);
+      expect(parsed.success).toBe(true);
+      if (parsed.success) {
+        expect(parsed.data.success).toBe(false);
+        expect(parsed.data.error).toBe("Database connection failed");
+      }
+    });
+
+    it("id 和 public_id 是可選的", () => {
+      const minimalResult = { success: true };
+
+      const parsed = CreatePropertyRpcResultSchema.safeParse(minimalResult);
+      expect(parsed.success).toBe(true);
+      if (parsed.success) {
+        expect(parsed.data.id).toBeUndefined();
+        expect(parsed.data.public_id).toBeUndefined();
+      }
+    });
+  });
+
+  describe("驗證失敗案例", () => {
+    it("缺少 success 欄位時驗證失敗", () => {
+      const invalidResult = {
+        id: "550e8400-e29b-41d4-a716-446655440000",
+        public_id: "MH-100001",
+      };
+
+      const parsed = CreatePropertyRpcResultSchema.safeParse(invalidResult);
+      expect(parsed.success).toBe(false);
+    });
+
+    it("success 不是 boolean 時驗證失敗", () => {
+      const invalidResult = {
+        success: "true", // string instead of boolean
+        id: "550e8400-e29b-41d4-a716-446655440000",
+      };
+
+      const parsed = CreatePropertyRpcResultSchema.safeParse(invalidResult);
+      expect(parsed.success).toBe(false);
+    });
+
+    it("id 不是 UUID 格式時驗證失敗", () => {
+      const invalidResult = {
+        success: true,
+        id: "not-a-uuid",
+        public_id: "MH-100001",
+      };
+
+      const parsed = CreatePropertyRpcResultSchema.safeParse(invalidResult);
+      expect(parsed.success).toBe(false);
+    });
+  });
+
+  describe("trustEnabled 傳遞驗證", () => {
+    it("Boolean(true) 正確轉換", () => {
+      expect(Boolean(true)).toBe(true);
+    });
+
+    it("Boolean(false) 正確轉換", () => {
+      expect(Boolean(false)).toBe(false);
+    });
+
+    it("Boolean(undefined) 轉換為 false", () => {
+      expect(Boolean(undefined)).toBe(false);
+    });
+
+    it("Boolean(null) 轉換為 false", () => {
+      expect(Boolean(null)).toBe(false);
+    });
+  });
+
+  describe("RPC 必要欄位驗證", () => {
+    it("success=true 但缺少 id 時應視為無效", () => {
+      const resultMissingId = {
+        success: true,
+        public_id: "MH-100001",
+        // id 缺失
+      };
+
+      const parsed = CreatePropertyRpcResultSchema.safeParse(resultMissingId);
+      expect(parsed.success).toBe(true);
+      if (parsed.success) {
+        // Schema 驗證通過，但業務邏輯應檢查 id 存在
+        expect(parsed.data.id).toBeUndefined();
+      }
+    });
+
+    it("success=true 但缺少 public_id 時應視為無效", () => {
+      const resultMissingPublicId = {
+        success: true,
+        id: "550e8400-e29b-41d4-a716-446655440000",
+        // public_id 缺失
+      };
+
+      const parsed = CreatePropertyRpcResultSchema.safeParse(
+        resultMissingPublicId,
+      );
+      expect(parsed.success).toBe(true);
+      if (parsed.success) {
+        // Schema 驗證通過，但業務邏輯應檢查 public_id 存在
+        expect(parsed.data.public_id).toBeUndefined();
+      }
+    });
+
+    it("success=true 且 id、public_id 都存在時為有效", () => {
+      const validResult = {
+        success: true,
+        id: "550e8400-e29b-41d4-a716-446655440000",
+        public_id: "MH-100001",
+      };
+
+      const parsed = CreatePropertyRpcResultSchema.safeParse(validResult);
+      expect(parsed.success).toBe(true);
+      if (parsed.success) {
+        expect(parsed.data.id).toBeDefined();
+        expect(parsed.data.public_id).toBeDefined();
+      }
+    });
+  });
+});

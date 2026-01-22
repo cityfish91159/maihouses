@@ -29,6 +29,9 @@ const DraftFormDataSchema = z.object({
   disadvantage: z.string(),
   highlights: z.array(z.string()),
   sourceExternalId: z.string(),
+  // FE-1: 安心留痕開關狀態 (草稿須保留用戶選擇)
+  // 使用 default(false) 處理舊草稿缺少此欄位的情況，不需要 optional()
+  trustEnabled: z.boolean().default(false),
 });
 
 // [NASA TypeScript Safety] 完整草稿儲存結構 Schema
@@ -68,6 +71,8 @@ export interface DraftFormData {
   disadvantage: string;
   highlights: string[];
   sourceExternalId: string;
+  // FE-1: 安心留痕開關狀態
+  trustEnabled: boolean;
 }
 
 // [NASA TypeScript Safety] 使用 Zod 推導的類型，確保類型與驗證一致
@@ -155,6 +160,8 @@ export function usePropertyDraft(form: DraftFormData, userId?: string) {
           disadvantage: form.disadvantage,
           highlights: form.highlights ?? [],
           sourceExternalId: form.sourceExternalId,
+          // FE-1: 保存安心留痕開關狀態
+          trustEnabled: form.trustEnabled,
           _version: DRAFT_VERSION,
           _savedAt: Date.now(),
           _tabId: tabIdRef.current,
