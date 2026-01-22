@@ -826,10 +826,10 @@ export async function sendNotification(
     message,
   });
   if (!paramsResult.success) {
-    const zodErrors = paramsResult.error?.errors ?? [];
+    const zodErrors = paramsResult.error?.issues ?? [];
     const errorMsg =
       zodErrors.length > 0
-        ? zodErrors.map((e) => e.message).join(", ")
+        ? zodErrors.map((e: { message: string }) => e.message).join(", ")
         : "Invalid parameters";
     logger.warn("[send-notification] Invalid params", {
       error: errorMsg,

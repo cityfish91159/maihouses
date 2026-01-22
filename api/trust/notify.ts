@@ -260,10 +260,10 @@ export default async function handler(
   // 驗證查詢參數
   const queryResult = QuerySchema.safeParse(req.query);
   if (!queryResult.success) {
-    const zodErrors = queryResult.error?.errors ?? [];
+    const zodErrors = queryResult.error?.issues ?? [];
     const errorMessage =
       zodErrors.length > 0
-        ? zodErrors.map((e) => e.message).join(", ")
+        ? zodErrors.map((e: { message: string }) => e.message).join(", ")
         : "Invalid query parameters";
     res
       .status(400)
