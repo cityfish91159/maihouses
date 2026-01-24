@@ -2,7 +2,7 @@
  * BE-7 | 查詢通知目標 API 測試
  *
  * 測試案例：
- * 1. getNotifyTarget 函數 - 優先順序邏輯、錯誤處理、輸入驗證
+ * 1. getNotifyTarget 函數 - 優先順序邏輯、驗證處理、輸入驗證
  * 2. API Handler - 真正呼叫 handler，驗證 HTTP 回應
  *
  * Skills Applied:
@@ -26,6 +26,7 @@ const VALID_USER_ID_2 = "b2c3d4e5-f6a7-8901-bcde-f12345678901";
 /** 有效的 LINE User ID 格式：U + 32 個十六進位字元 = 33 字元 */
 const VALID_LINE_ID = "U1234567890abcdef1234567890abcdef";
 const VALID_LINE_ID_2 = "Uabcdef1234567890abcdef1234567890";
+const VALID_LINE_ID_UPPER = "UABCDEF1234567890ABCDEF1234567890";
 
 /** 無效格式 */
 const INVALID_UUID = "not-a-valid-uuid";
@@ -185,6 +186,24 @@ describe("BE-7 | getNotifyTarget - 核心函數", () => {
       expect(result).toEqual({
         type: "line",
         lineId: VALID_LINE_ID,
+      });
+    });
+
+    it("大寫 LINE ID 也能通過驗證", async () => {
+      mockSingle.mockResolvedValueOnce({
+        data: {
+          buyer_user_id: null,
+          buyer_line_id: VALID_LINE_ID_UPPER,
+        },
+        error: null,
+      });
+
+      const { getNotifyTarget } = await import("../notify");
+      const result = await getNotifyTarget(VALID_CASE_ID);
+
+      expect(result).toEqual({
+        type: "line",
+        lineId: VALID_LINE_ID_UPPER,
       });
     });
 
@@ -624,19 +643,20 @@ describe("BE-7 | 類型安全驗證", () => {
 
     expect(target.type).toBe("line");
     expect(target.lineId).toBe(VALID_LINE_ID);
-    expect(target.lineId).toMatch(/^U[a-f0-9]{32}$/);
+    expect(target.lineId).toMatch(/^U[a-fA-F0-9]{32}$/);
     expect(target.lineId).toHaveLength(33);
   });
 
   it("LINE User ID 格式驗證", () => {
     // 有效格式
-    expect(VALID_LINE_ID).toMatch(/^U[a-f0-9]{32}$/);
-    expect(VALID_LINE_ID_2).toMatch(/^U[a-f0-9]{32}$/);
+    expect(VALID_LINE_ID).toMatch(/^U[a-fA-F0-9]{32}$/);
+    expect(VALID_LINE_ID_2).toMatch(/^U[a-fA-F0-9]{32}$/);
+    expect(VALID_LINE_ID_UPPER).toMatch(/^U[a-fA-F0-9]{32}$/);
 
     // 無效格式
-    expect(INVALID_LINE_ID).not.toMatch(/^U[a-f0-9]{32}$/);
-    expect("U123").not.toMatch(/^U[a-f0-9]{32}$/); // 太短
-    expect("X1234567890abcdef1234567890abcdef").not.toMatch(/^U[a-f0-9]{32}$/); // 錯誤前綴
+    expect(INVALID_LINE_ID).not.toMatch(/^U[a-fA-F0-9]{32}$/);
+    expect("U123").not.toMatch(/^U[a-fA-F0-9]{32}$/); // 太短
+    expect("X1234567890abcdef1234567890abcdef").not.toMatch(/^U[a-fA-F0-9]{32}$/); // 錯誤前綴
   });
 
   it("UUID v4 格式驗證", () => {

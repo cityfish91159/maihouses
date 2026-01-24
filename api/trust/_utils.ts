@@ -1,3 +1,14 @@
+/**
+ * Trust Flow 共用工具模組
+ *
+ * 提供 Trust Room API 共用的功能：
+ * - Supabase 客戶端
+ * - JWT 驗證
+ * - 審計日誌
+ * - CORS 處理
+ * - IP/User-Agent 取得
+ */
+
 import { createClient } from "@supabase/supabase-js";
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import jwt from "jsonwebtoken";
@@ -28,7 +39,7 @@ export interface TrustState {
 
 export interface JwtUser {
   id: string;
-  role: "agent" | "buyer";
+  role: "agent" | "buyer" | "system";
   txId: string;
   iat?: number;
   exp?: number;
@@ -37,7 +48,7 @@ export interface JwtUser {
 /** [NASA TypeScript Safety] JWT Payload Zod Schema */
 const JwtUserSchema = z.object({
   id: z.string(),
-  role: z.enum(["agent", "buyer"]),
+  role: z.enum(["agent", "buyer", "system"]),
   txId: z.string(),
   iat: z.number().optional(),
   exp: z.number().optional(),
@@ -56,11 +67,14 @@ export interface AuditUser extends JwtUser {
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
+// 修復 #4: 缺憑證時 fail-fast
 if (!supabaseUrl || !supabaseKey) {
-  logger.error("[trust/_utils] Missing Supabase credentials");
+  const errMsg = "[trust/_utils] Missing Supabase credentials";
+  logger.error(errMsg);
+  throw new Error(errMsg);
 }
 
-export const supabase = createClient(supabaseUrl!, supabaseKey!);
+export const supabase = createClient(supabaseUrl, supabaseKey);
 
 export const JWT_SECRET = process.env.JWT_SECRET!;
 if (!JWT_SECRET) throw new Error("Missing JWT_SECRET env var");
@@ -126,19 +140,61 @@ export const createInitialState = (id: string): TrustState => ({
   supplements: [],
 });
 
-export async function getTx(id: string) {
+/** TrustState Zod Schema 用於驗證 DB 回傳資料 */
+const TrustStateSchema = z.object({
+  id: z.string(),
+  currentStep: z.number(),
+  isPaid: z.boolean(),
+  steps: z.record(z.string(), z.object({
+    name: z.string(),
+    agentStatus: z.enum(["pending", "confirmed"]),
+    buyerStatus: z.enum(["pending", "confirmed"]),
+    locked: z.boolean(),
+    data: z.record(z.unknown()),
+    paymentStatus: z.enum(["pending", "paid"]).optional(),
+    paymentDeadline: z.string().nullable().optional(),
+    checklist: z.array(z.object({ id: z.string(), text: z.string(), checked: z.boolean() })).optional(),
+  })),
+  supplements: z.array(z.object({ id: z.string(), content: z.string(), timestamp: z.string() })),
+});
+
+// 修復 #5, #6: 區分 "不存在" 和 "真正錯誤"，並驗證 data.state
+export async function getTx(id: string): Promise<TrustState> {
   const { data, error } = await supabase
     .from("transactions")
     .select("state")
     .eq("id", id)
     .single();
 
-  if (error || !data) {
+  // 只有 PGRST116 (not found) 才自動建立
+  if (error) {
+    if (error.code === "PGRST116") {
+      const newState = createInitialState(id);
+      await saveTx(id, newState);
+      return newState;
+    }
+    // 真正的 DB 錯誤要拋出
+    logger.error("[trust/_utils] getTx DB error", { error: error.message, id });
+    throw new Error(`getTx failed: ${error.message}`);
+  }
+
+  if (!data) {
     const newState = createInitialState(id);
     await saveTx(id, newState);
     return newState;
   }
-  return data.state;
+
+  // 驗證 state 結構
+  const parseResult = TrustStateSchema.safeParse(data.state);
+  if (!parseResult.success) {
+    logger.error("[trust/_utils] getTx invalid state schema", {
+      id,
+      issues: parseResult.error.issues,
+    });
+    throw new Error("Invalid transaction state schema");
+  }
+
+  return parseResult.data;
 }
 
 export async function saveTx(id: string, state: TrustState) {
@@ -171,6 +227,19 @@ function getStringHeader(value: string | string[] | undefined): string {
     return typeof first === "string" ? first : "unknown";
   }
   return "unknown";
+}
+
+/** 取得 Client IP（用於稽核紀錄） */
+export function getClientIp(req: VercelRequest): string {
+  const value = req.headers["x-forwarded-for"];
+  if (typeof value === "string") return value.split(",")[0].trim();
+  if (Array.isArray(value) && value.length > 0) return value[0] ?? "unknown";
+  return "unknown";
+}
+
+/** 取得 User-Agent（用於稽核紀錄） */
+export function getUserAgent(req: VercelRequest): string {
+  return req.headers["user-agent"] ?? "unknown";
 }
 
 export function verifyToken(req: VercelRequest): AuditUser {

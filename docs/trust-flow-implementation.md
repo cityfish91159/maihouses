@@ -1,4 +1,4 @@
-# 安心留痕工單
+﻿# 安心留痕工單
 
 ## 摘要（按施工順序）
 
@@ -25,12 +25,12 @@
 | BE-2 | 補開安心服務 API | ✅ |
 | BE-7 | 查詢通知目標 | ✅ |
 | BE-8 | 推播失敗處理 | ✅ |
-| BE-5 | 進度更新推播 | □ |
-| BE-9 | 案件關閉通知 | □ |
-| BE-3 | LINE 查詢交易 API | □ |
-| BE-4 | LINE webhook 處理「我的交易」 | □ |
-| BE-6 | 消費者案件列表 API | □ |
-| BE-10 | 喚醒休眠 API | □ |
+| BE-5 | 進度更新推播 | ✅ |
+| BE-9 | 案件關閉通知 | ✅ |
+| BE-3 | LINE 查詢交易 API | ✅ |
+| BE-4 | LINE webhook 處理「我的交易」 | ✅ |
+| BE-6 | 消費者案件列表 API | ✅ |
+| BE-10 | 喚醒休眠 API | ✅ |
 
 ### Phase 3：前端
 | # | 任務 | 狀態 |
@@ -849,7 +849,7 @@ Body: { propertyId: "xxx" }
 
 ---
 
-## BE-3 |LINE 查詢交易 API
+## BE-3 |LINE 查詢交易 API ✅
 
 **為什麼**
 LINE webhook 收到「我的交易」關鍵字時，要能查出這個 LINE 用戶有哪些案件。
@@ -872,38 +872,85 @@ GET /api/trust/my-cases?lineUserId=Uxxxxxxx
 **驗證**
 用有案件的 LINE User ID 呼叫，回傳正確案件列表
 
+**施作紀錄** (2026-01-23)
+- 新增 `api/trust/my-cases.ts`（220 行）
+  - GET /api/trust/my-cases?lineUserId=Uxxxxxxx
+  - x-system-key 認證（只有 LINE webhook 能呼叫）
+  - 只回傳 active/dormant 狀態案件
+  - 批次查詢 agents 表取得房仲名稱
+  - LINE User ID 格式驗證（U + 32 hex）
+  - PII 遮罩日誌
+- 新增 `api/trust/__tests__/my-cases.test.ts`（10 測試）
+  - OPTIONS 200, POST 405
+  - 無/錯誤 x-system-key 401
+  - 缺少/無效 lineUserId 400
+  - 有案件/無案件 200
+  - DB 錯誤 500
+  - agents 查詢失敗仍回傳案件
+- Skills Applied：Backend Safeguard, NASA TypeScript Safety, Security Audit
+- 驗證：`npm run gate` 通過、10 測試通過、0 any/ts-ignore
+- **待 Codex 額度重置後審查**
+
 ---
 
-## BE-4 |LINE webhook 處理「我的交易」
+## BE-4 |LINE webhook 處理「我的交易」 ✅
 
 **為什麼**
 消費者在 LINE 輸入「我的交易」，要能查到自己所有進行中的案件。現在只會回「你的 LINE User ID」。
 
 **做什麼**
-收到「我的交易」時，呼叫 BE-3 API，組成回覆訊息：
-```
-📋 您目前有 2 筆進行中的交易：
+收到「我的交易」時，呼叫業務邏輯層查詢，組成 Flex Message 回覆：
+- 有案件：Flex Carousel，每個案件一個 Bubble，含「查看詳情」按鈕
+- 無案件：純文字訊息
+- 錯誤：友善錯誤訊息
 
-1️⃣ 信義區三房
-   房仲：王小明
-   進度：M3 出價
-   [查看詳情] ← Trust Room 連結
-
-2️⃣ 大安區兩房
-   房仲：李小華
-   進度：M2 帶看
-   [查看詳情]
-```
+**支援關鍵字**
+- 我的交易、查詢交易、交易查詢、我的案件、查詢案件
 
 **改哪裡**
-`api/line/webhook.ts`（在 message 事件加判斷）
+- `api/line/webhook.ts`（在 message 事件加判斷）
+- `api/line/formatters/my-cases-formatter.ts`（新增）
+- `api/trust/services/case-query.ts`（新增）
 
 **驗證**
-LINE 輸入「我的交易」，回傳正確格式
+LINE 輸入「我的交易」，回傳 Flex Message 格式
+
+**施作紀錄** (2026-01-23)
+- 新增 `api/line/constants/my-cases.ts`（共用常數）
+  - MY_CASES_KEYWORDS（5 個關鍵字）
+  - TEST_CASE_ID、TEST_LINE_USER_ID 等測試常數
+  - MSG_NO_CASES、MSG_ERROR 訊息常數
+- 新增 `api/trust/services/case-query.ts`（純業務邏輯層）
+  - queryMyCases()：查詢用戶案件
+  - getStepName()：步驟名稱
+  - generateTrustRoomUrl()：Trust Room URL
+- 重構 `api/trust/my-cases.ts`（精簡 HTTP handler）
+  - 移除重複的查詢邏輯，改呼叫 case-query
+- 新增 `api/line/formatters/my-cases-formatter.ts`（LINE 格式化層）
+  - formatMyCasesReply()：回傳 Flex Message
+  - formatMyCasesReplyText()：純文字版本
+  - formatErrorReply()：錯誤訊息
+  - isMyTransactionQuery()：關鍵字判斷
+- 修改 `api/line/webhook.ts`
+  - handleMyCasesQuery() 處理查詢
+  - 回覆 Flex Message 或純文字
+- 測試（共 4 個測試檔案）
+  - case-query.test.ts（7 測試）
+  - my-cases-formatter.test.ts（17 測試）
+  - webhook-my-cases.test.ts（9 測試）
+  - my-cases.test.ts（10 測試）
+- Skills Applied：Backend Safeguard, NASA TypeScript Safety, Google Grade Reviewer
+- 驗證：`npm run gate` 通過、所有測試通過、0 any/ts-ignore
 
 ---
 
-## BE-5 |進度更新推播
+### REGEX 統一 (2026-01-24)
+- 新增 `api/trust/constants/validation.ts`：統一 LINE_USER_ID_REGEX（支援大小寫）、LineUserIdSchema、TRUST_ROOM_BASE_URL、ACTIVE_STATUSES
+- 相關模組改用共用常數：my-cases / case-query / notify / send-notification
+- 新增 `api/trust/constants/messages.ts`：統一錯誤訊息常數（ERR_INVALID_LINE_ID / ERR_DB_QUERY_FAILED / ERR_UNEXPECTED）
+- 測試 mock 補強：webhook-my-cases.test.ts 改用完整 Flex Carousel 結構
+
+## BE-5 |進度更新推播 ✅
 
 **為什麼**
 房仲推進步驟時，消費者要收到 LINE 通知。不然消費者不知道進度有變化。
@@ -926,30 +973,91 @@ M2 帶看 → M3 出價
 **驗證**
 推進步驟後，消費者 LINE 收到通知
 
+**施作紀錄** (2026-01-22)
+- 修改 `api/trust/cases/[id].ts`
+  - L23: import `sendStepUpdateNotification` from `../send-notification`
+  - L32-40: `UpdateStepRequestSchema` 新增 `old_step` 和 `property_title` 參數
+  - L191: 解構 `old_step` 和 `property_title`
+  - L220-228: PATCH 成功後非阻塞呼叫 `sendStepUpdateNotification`
+    - 使用 `void` 關鍵字不等待結果
+    - 通知失敗只記錄日誌，不影響 API 回應
+- 新增測試：`api/trust/__tests__/cases.test.ts`
+  - BE-5 進度更新推播觸發（3 測試）
+  - UpdateStepRequestSchema 驗證（3 測試）
+  - 通知觸發邏輯（3 測試）
+- Skills Applied: Backend Safeguard, NASA TypeScript Safety, Rigorous Testing
+- 驗證：`npm run gate` 通過、1138 測試通過
+
 ---
 
-## BE-6 |消費者案件列表 API
+## BE-6 |消費者案件列表 API ✅
 
 **為什麼**
 FE-4 前端要顯示交易列表，需要 API 查詢「這個用戶有哪些案件」。
 
 **做什麼**
 ```
-GET /api/trust/consumer-cases?userId=xxx
+GET /api/trust/my-cases
+
+支援雙認證模式：
+1. JWT 認證（消費者前端）→ 用 buyer_user_id 查詢
+2. x-system-key 認證（LINE webhook）→ 需 lineUserId 參數，用 buyer_line_id 查詢
 
 回傳：
 {
   cases: [
-    { id, caseName, propertyTitle, agentName, currentStep, status, trustRoomUrl }
+    { id, propertyTitle, agentName, currentStep, stepName, status, trustRoomUrl, updatedAt }
   ]
 }
 ```
 
 **改哪裡**
-新增 `api/trust/consumer-cases.ts`
+- 重構 `api/trust/my-cases.ts`（支援雙認證）
+- 刪除 `api/trust/consumer-cases.ts`（功能合併）
+- 更新 `api/trust/services/case-query.ts`（CaseData 加 updatedAt）
 
 **驗證**
-用有案件的用戶 ID 呼叫，回傳正確案件列表
+- JWT 認證：消費者前端呼叫，回傳正確案件列表
+- system-key 認證：LINE webhook 呼叫，回傳正確案件列表
+
+**施作紀錄** (2026-01-24)
+
+**架構重構**
+- 重構 `api/trust/my-cases.ts`（201 行）
+  - 雙認證模式：JWT 優先 → fallback system-key
+  - JWT 模式：從 token 取 userId，用 `queryCasesByIdentity({ userId })` 查詢
+  - system-key 模式：需 lineUserId 參數，用 `queryCasesByIdentity({ lineUserId })` 查詢
+  - 新增 `stepName`、`trustRoomUrl`、`updatedAt` 欄位
+  - 移除重複的 `caseName` 欄位（= propertyTitle）
+- 更新 `api/trust/services/case-query.ts`（446 行）
+  - 新增統一入口函數 `queryCasesByIdentity({ userId?, lineUserId? })`
+  - 支援雙欄位 OR 查詢 + 去重（以 case id 為準）
+  - 結果按 `updated_at DESC` 排序
+  - `@deprecated` 標註舊函數 `queryCasesByUserId` 和 `queryMyCases`
+  - `CaseData` 介面新增 `updatedAt: string`
+- 刪除 `api/trust/consumer-cases.ts`（功能合併到 my-cases）
+- 刪除 `api/trust/__tests__/consumer-cases.test.ts`
+
+**測試覆蓋** (30 測試)
+- `api/trust/__tests__/my-cases.test.ts`（16 測試）
+  - HTTP 基本行為：OPTIONS 200, POST 405
+  - system-key 認證模式：9 測試
+  - JWT 認證模式：5 測試（含 JWT 優先於 system-key 驗證）
+- `api/trust/services/__tests__/case-query.test.ts`（14 測試）
+  - queryMyCases 基本功能：6 測試
+  - getStepName / generateTrustRoomUrl：3 測試
+  - queryCasesByIdentity 統一入口：5 測試（OR 查詢、去重、排序）
+
+**品質驗收**
+- `npm run typecheck` 通過
+- `npm run lint` 通過（無 any / @ts-ignore / eslint-disable）
+- `npm run gate` PASSED
+- 1225+ 測試全部通過
+
+**向後相容**
+- consumer-cases.ts 已刪除（前端未使用，確認安全）
+- 新增欄位（stepName, updatedAt, trustRoomUrl）不破壞舊客戶端
+- 舊函數 `queryCasesByUserId` / `queryMyCases` 保留但標記 @deprecated
 
 ---
 
@@ -1062,7 +1170,7 @@ async function sendNotification(target, message) {
 
 ---
 
-## BE-9 |案件關閉通知
+## BE-9 |案件關閉通知 ✅
 
 **為什麼**
 案件被關閉時消費者要知道。不同關閉原因要有不同文案。
@@ -1080,9 +1188,41 @@ async function sendNotification(target, message) {
 **驗證**
 案件被關閉時，消費者 LINE 收到對應文案的通知
 
+**施作紀錄** (2026-01-23 - 10 Skills + Codex 協作)
+- 新增 `api/trust/close.ts`（342 行）
+  - POST /api/trust/close
+  - Body: `{ caseId: UUID, reason: CloseReason }`
+  - 雙認證：JWT (房仲) 或 x-system-key (系統/Cron)
+  - 3 種關閉原因：closed_sold_to_other, closed_property_unlisted, closed_inactive
+  - 狀態限制：僅 active/dormant 可關閉
+  - 權限驗證：JWT 路徑檢查 agent_id 擁有權（L240-246）
+  - 非阻塞通知：`enqueueCaseClosedNotification()` 調用 `sendCaseClosedNotification`
+  - 完整審計日誌：區分 JWT/SYSTEM 來源
+- 新增 `api/trust/__tests__/close.test.ts`（14 測試案例）
+  - OPTIONS 200, GET 405, 無認證 401
+  - System Key 認證成功/錯誤
+  - JWT 非 agent 403, 無效 caseId 400, 無效 reason 400
+  - 案件不存在 404, 非擁有者 403, 已關閉 400
+  - 成功關閉 active/dormant 案件
+  - 通知函數呼叫驗證
+- **10 Skills 執行紀錄**：
+  | # | Skill | 執行結果 |
+  |---|-------|----------|
+  | 1 | memory_bank (read) | 確認 BE-8 sendCaseClosedNotification 可用 |
+  | 2 | read-before-edit | 讀取 _utils, apiResponse, send-notification |
+  | 3 | agentic_architecture | Codex 確認獨立 API 端點架構 |
+  | 4 | no_lazy_implementation | Codex 生成 342 行完整代碼 |
+  | 5 | nasa_typescript_safety | `npm run typecheck` 通過 |
+  | 6 | rigorous_testing | 14/14 測試通過 |
+  | 7 | security_audit | System key bypass (設計), Zod 問題, PII 日誌 |
+  | 8 | draconian_rls_audit | service_role 繞過 RLS, JWT 有程式碼層檢查 |
+  | 9 | code-review | `npm run gate` PASSED |
+  | 10 | memory_bank (write) | MEMORY.md v16 更新 |
+- 驗證：`npm run gate` 通過、14 測試通過、0 any/ts-ignore
+
 ---
 
-## BE-10 |喚醒休眠 API
+## BE-10 |喚醒休眠 API ✅
 
 **為什麼**
 休眠的案件要能「喚醒」回到 active 狀態。房仲或消費者都可能觸發。
@@ -1121,6 +1261,31 @@ async function wake(caseId: string) {
 - 休眠案件呼叫後狀態變 active
 - 非休眠案件呼叫回傳錯誤
 - 雙方收到通知
+
+**施作紀錄** (2026-01-24)
+- 新增 `api/trust/wake.ts`（350 行）
+  - POST /api/trust/wake
+  - Body: `{ caseId: UUID }`
+  - 三種認證模式：
+    - JWT (agent): 只能喚醒自己的案件 (`agent_id === user.id`)
+    - JWT (buyer): 只能喚醒自己的案件 (`buyer_user_id === user.id`)
+    - x-system-key (system): 可喚醒任意案件（供 Cron 使用）
+  - 狀態限制：僅 dormant 可喚醒 → active
+  - 競態條件防護：原子更新 + 狀態驗證 + 擁有權驗證
+  - 審計日誌：區分 WAKE_TRUST_CASE_AGENT / BUYER / SYSTEM
+  - 非阻塞通知：`sendCaseWakeNotification()` (Phase 1 僅通知消費者)
+  - PII 遮罩：`maskUUID()` 日誌保護
+- 新增 `api/trust/__tests__/wake.test.ts`（41 測試案例）
+  - HTTP 基本行為：OPTIONS 200, GET/PUT/DELETE/PATCH 405
+  - 認證測試：無認證 401, 錯誤 system-key 401, JWT 過期 401
+  - 請求驗證：缺少 caseId 400, 空 body 400, 無效 UUID 400
+  - 權限測試：agent/buyer 自己成功, 他人 403, buyer_user_id null 403, JWT system role 403
+  - System Key：可喚醒任意案件
+  - 狀態驗證：active/closed/closed_*/completed 400
+  - 並發測試：PGRST116 → 409
+  - 通知/審計測試：函數呼叫驗證, 失敗不影響 200
+- Skills Applied：Backend Safeguard, NASA TypeScript Safety, Security Audit, Rigorous Testing
+- 驗證：`npm run gate` 通過、41 測試通過、0 any/ts-ignore
 
 ---
 
@@ -1245,4 +1410,3 @@ Vercel cron 設定每日 03:30 執行
 | closed_sold_to_other | 他人成交 | 同物件其他案件 M5 |
 | closed_property_unlisted | 物件下架 | 房仲下架物件 |
 | closed_inactive | 過期關閉 | 休眠超過 60 天 |
-

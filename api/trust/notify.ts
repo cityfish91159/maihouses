@@ -17,21 +17,12 @@ import { z } from "zod";
 import { supabase, SYSTEM_API_KEY } from "./_utils";
 import { cors } from "../lib/cors";
 import { logger } from "../lib/logger";
+import { LineUserIdSchema } from "./constants/validation";
 import {
   successResponse,
   errorResponse,
   API_ERROR_CODES,
 } from "../lib/apiResponse";
-
-// ============================================================================
-// Constants
-// ============================================================================
-
-/**
- * LINE User ID 格式：U + 32 個十六進位字元 = 33 字元
- * @see https://developers.line.biz/en/docs/messaging-api/getting-user-ids/
- */
-const LINE_USER_ID_REGEX = /^U[a-f0-9]{32}$/;
 
 // ============================================================================
 // Types
@@ -71,14 +62,6 @@ export type NotifyTarget = NotifyTargetPush | NotifyTargetLine | null;
  * UUID Schema - 共用
  */
 const UUIDSchema = z.string().uuid();
-
-/**
- * LINE User ID Schema
- * 格式：U + 32 個十六進位字元
- */
-const LineUserIdSchema = z.string().regex(LINE_USER_ID_REGEX, {
-  message: "LINE User ID 格式錯誤，應為 U + 32 個十六進位字元",
-});
 
 /**
  * 案件通知欄位 Schema

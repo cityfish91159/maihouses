@@ -1,4 +1,4 @@
-﻿/**
+/**
  * BE-8 | 推播失敗處理
  *
  * 提供 Trust Flow 通知發送功能，含重試和降級機制
@@ -29,6 +29,7 @@ import {
 } from "./notify";
 import { logger } from "../lib/logger";
 import { captureError, addBreadcrumb } from "../lib/sentry";
+import { LineUserIdSchema, TRUST_ROOM_BASE_URL } from "./constants/validation";
 
 // ============================================================================
 // Constants
@@ -36,13 +37,6 @@ import { captureError, addBreadcrumb } from "../lib/sentry";
 
 /** 重試延遲時間（毫秒） */
 const RETRY_DELAY_MS = 1000;
-
-/** LINE User ID 格式驗證 */
-const LINE_USER_ID_REGEX = /^U[a-f0-9]{32}$/;
-
-/** Trust Room 基礎 URL */
-const TRUST_ROOM_BASE_URL =
-  process.env.NEXT_PUBLIC_BASE_URL || "https://maihouses.vercel.app";
 
 /** Max payload bytes for Web Push (keep margin below 4KB limit) */
 const MAX_PUSH_PAYLOAD_BYTES = 3800;
@@ -99,11 +93,6 @@ export interface SendResult {
 /** UUID Schema */
 const UUIDSchema = z.string().uuid();
 
-/** LINE User ID Schema */
-const LineUserIdSchema = z.string().regex(LINE_USER_ID_REGEX, {
-  message: "LINE User ID 格式錯誤，應為 U + 32 個十六進位字元",
-});
-
 /** 通知訊息 Schema */
 const NotificationMessageSchema = z.object({
   type: z.enum(["step_update", "case_closed", "case_wake", "custom"]),
@@ -151,6 +140,33 @@ function maskLineId(lineId: string): string {
  */
 function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * 修復 #8: 共用重試邏輯（消除 Push/LINE 重複）
+ * @internal
+ */
+async function withRetry<T>(
+  fn: () => Promise<T>,
+  channel: "push" | "line",
+): Promise<{ success: true; result: T; retried?: boolean } | { success: false; error: string; retried: true }> {
+  try {
+    const result = await fn();
+    return { success: true, result };
+  } catch (firstError) {
+    const firstErrorMsg = firstError instanceof Error ? firstError.message : "Unknown error";
+    logger.warn(`[send-notification] ${channel} failed, retrying`, { error: firstErrorMsg });
+  }
+
+  await delay(RETRY_DELAY_MS);
+
+  try {
+    const result = await fn();
+    return { success: true, result, retried: true };
+  } catch (retryError) {
+    const retryErrorMsg = retryError instanceof Error ? retryError.message : "Unknown error";
+    return { success: false, error: retryErrorMsg, retried: true };
+  }
 }
 
 /**
@@ -812,12 +828,29 @@ async function getFallbackLineId(caseId: string): Promise<string | null> {
     .eq("id", caseId)
     .single();
 
-  if (error || !data) {
+  // 修復 #7: DB 錯誤要 log
+  if (error) {
+    logger.error("[send-notification] getFallbackLineId DB error", {
+      caseIdMasked: maskUUID(caseId),
+      error: error.message,
+      code: error.code,
+    });
+    return null;
+  }
+
+  if (!data) {
+    logger.warn("[send-notification] getFallbackLineId no data", {
+      caseIdMasked: maskUUID(caseId),
+    });
     return null;
   }
 
   const parseResult = CaseFallbackFieldsSchema.safeParse(data);
   if (!parseResult.success) {
+    logger.warn("[send-notification] getFallbackLineId invalid schema", {
+      caseIdMasked: maskUUID(caseId),
+      issues: parseResult.error.issues,
+    });
     return null;
   }
 
@@ -968,27 +1001,14 @@ async function retryPushSend(
   message: NotificationMessage,
   trustRoomUrl: string,
 ): Promise<{ success: boolean; retried?: boolean; error?: string }> {
-  try {
-    await pushSender(userId, message, trustRoomUrl);
-    return { success: true };
-  } catch (firstError) {
-    const firstErrorMsg =
-      firstError instanceof Error ? firstError.message : "Unknown error";
-    logger.warn("[send-notification] Push failed, retrying", {
-      error: firstErrorMsg,
-    });
-  }
-
-  await delay(RETRY_DELAY_MS);
-
-  try {
-    await pushSender(userId, message, trustRoomUrl);
-    return { success: true, retried: true };
-  } catch (retryError) {
-    const retryErrorMsg =
-      retryError instanceof Error ? retryError.message : "Unknown error";
-    return { success: false, retried: true, error: retryErrorMsg };
-  }
+  // 使用共用重試邏輯
+  const result = await withRetry(
+    () => pushSender(userId, message, trustRoomUrl),
+    "push",
+  );
+  return result.success
+    ? { success: true, retried: result.retried }
+    : { success: false, retried: result.retried, error: result.error };
 }
 
 async function attemptLineFallback(
@@ -1066,44 +1086,32 @@ async function sendWithLineAndRetry(
   const skipResult = ensureLineClientAvailable(caseId);
   if (skipResult) return skipResult;
 
-  try {
-    await sendLine(target.lineId, message, trustRoomUrl);
-    return { success: true, channel: "line" };
-  } catch (firstError) {
-    const firstErrorMsg =
-      firstError instanceof Error ? firstError.message : "Unknown error";
-    logger.warn("[send-notification] LINE failed, retrying", {
-      error: firstErrorMsg,
-    });
+  // 使用共用重試邏輯
+  const result = await withRetry(
+    () => sendLine(target.lineId, message, trustRoomUrl),
+    "line",
+  );
 
-    // 重試一次
-    await delay(RETRY_DELAY_MS);
-
-    try {
-      await sendLine(target.lineId, message, trustRoomUrl);
-      return { success: true, channel: "line", retried: true };
-    } catch (retryError) {
-      const retryErrorMsg =
-        retryError instanceof Error ? retryError.message : "Unknown error";
-
-      // LINE 重試失敗
-      await logNotificationFailure(
-        caseId,
-        target,
-        message,
-        retryErrorMsg,
-        "line",
-        true,
-      );
-
-      return {
-        success: false,
-        channel: "line",
-        error: retryErrorMsg,
-        retried: true,
-      };
-    }
+  if (result.success) {
+    return { success: true, channel: "line", retried: result.retried };
   }
+
+  // LINE 重試失敗
+  await logNotificationFailure(
+    caseId,
+    target,
+    message,
+    result.error,
+    "line",
+    true,
+  );
+
+  return {
+    success: false,
+    channel: "line",
+    error: result.error,
+    retried: true,
+  };
 }
 
 function ensureLineClientAvailable(caseId: string): SendResult | null {
@@ -1138,17 +1146,10 @@ export async function sendStepUpdateNotification(
   toStep: number,
   propertyTitle?: string,
 ): Promise<SendResult> {
-  const stepNames: Record<number, string> = {
-    1: "M1 接洽",
-    2: "M2 帶看",
-    3: "M3 出價",
-    4: "M4 斡旋",
-    5: "M5 成交",
-    6: "M6 交屋",
-  };
-
-  const fromName = stepNames[fromStep] ?? `步驟 ${fromStep}`;
-  const toName = stepNames[toStep] ?? `步驟 ${toStep}`;
+  // 使用共用的步驟名稱函數
+  const { getStepName } = await import("./services/case-query");
+  const fromName = getStepName(fromStep);
+  const toName = getStepName(toStep);
 
   const message: NotificationMessage = {
     type: "step_update",
@@ -1158,6 +1159,16 @@ export async function sendStepUpdateNotification(
 
   return sendNotification(caseId, message);
 }
+
+/** 關閉原因類型 - 導出供 close.ts 使用 */
+export type CloseReason = "closed_sold_to_other" | "closed_property_unlisted" | "closed_inactive";
+
+/** 關閉原因對應文字 */
+export const CLOSE_REASON_TEXTS: Record<CloseReason, string> = {
+  closed_sold_to_other: "此物件已由其他買方成交，感謝您的關注",
+  closed_property_unlisted: "此物件已下架，案件已關閉",
+  closed_inactive: "案件因長期無互動已自動關閉",
+};
 
 /**
  * 發送案件關閉通知
@@ -1174,16 +1185,10 @@ export async function sendCaseClosedNotification(
     | "closed_inactive",
   propertyTitle?: string,
 ): Promise<SendResult> {
-  const reasonTexts: Record<string, string> = {
-    closed_sold_to_other: "此物件已由其他買方成交，感謝您的關注",
-    closed_property_unlisted: "此物件已下架，案件已關閉",
-    closed_inactive: "案件因長期無互動已自動關閉",
-  };
-
   const message: NotificationMessage = {
     type: "case_closed",
     title: propertyTitle ? `${propertyTitle} 案件已關閉` : "案件已關閉",
-    body: reasonTexts[reason] ?? "案件已關閉",
+    body: CLOSE_REASON_TEXTS[reason] ?? "案件已關閉",
   };
 
   return sendNotification(caseId, message);
@@ -1207,6 +1212,7 @@ export async function sendCaseWakeNotification(
 
   return sendNotification(caseId, message);
 }
+
 
 
 

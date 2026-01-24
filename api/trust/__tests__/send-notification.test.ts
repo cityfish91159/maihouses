@@ -24,6 +24,7 @@ const VALID_USER_ID = "a1b2c3d4-e5f6-7890-abcd-ef1234567890";
 
 /** 有效的 LINE User ID 格式：U + 32 個十六進位字元 = 33 字元 */
 const VALID_LINE_ID = "U1234567890abcdef1234567890abcdef";
+const VALID_LINE_ID_UPPER = "UABCDEF1234567890ABCDEF1234567890";
 
 /** 無效格式 */
 const INVALID_UUID = "not-a-valid-uuid";
@@ -317,7 +318,7 @@ describe("BE-8 | sendNotification - 核心函數", () => {
       });
 
       // Mock delete 鏈
-      // 新的刪除邏輯：.delete().eq("profile_id", userId).in("endpoint", endpoints)
+      // 新的刪除邏輯：delete().eq("profile_id", userId).in("endpoint", endpoints)
       const localMockDeleteIn = vi.fn().mockResolvedValue({ error: null });
       const localMockDeleteEq = vi.fn().mockReturnValue({ in: localMockDeleteIn });
       const localMockDelete = vi.fn().mockReturnValue({ eq: localMockDeleteEq });
@@ -383,7 +384,7 @@ describe("BE-8 | sendNotification - 核心函數", () => {
         body: "測試內容",
       });
 
-      // 驗證：410 時應刪除訂閱
+      // 驗證 410 時應刪除訂閱
       // 新邏輯：.delete().eq("profile_id", userId).in("endpoint", [endpoints])
       expect(localMockDelete).toHaveBeenCalled();
       expect(localMockDeleteEq).toHaveBeenCalledWith("profile_id", VALID_USER_ID);
@@ -437,6 +438,52 @@ describe("BE-8 | sendNotification - 核心函數", () => {
       const result = await sendNotification(VALID_CASE_ID, {
         type: "step_update",
         title: "測試",
+        body: "測試內容",
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.channel).toBe("line");
+      expect(localMockPushMessage).toHaveBeenCalledTimes(1);
+    });
+
+    it("LINE 可接受大寫 LINE ID", async () => {
+      vi.resetModules();
+
+      const localMockPushMessage = vi.fn().mockResolvedValue({});
+
+      vi.doMock("../notify", () => ({
+        getNotifyTarget: () =>
+          Promise.resolve({ type: "line", lineId: VALID_LINE_ID_UPPER }),
+      }));
+
+      vi.doMock("../_utils", () => ({
+        supabase: { from: mockFrom },
+        SYSTEM_API_KEY: "test-system-api-key",
+        JWT_SECRET: "test-jwt-secret",
+      }));
+
+      vi.doMock("../../lib/logger", () => ({
+        logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
+      }));
+
+      vi.doMock("../../lib/sentry", () => ({
+        captureError: vi.fn(),
+        addBreadcrumb: vi.fn(),
+      }));
+
+      vi.doMock("@line/bot-sdk", () => ({
+        messagingApi: {
+          MessagingApiClient: class {
+            pushMessage = localMockPushMessage;
+          },
+        },
+      }));
+
+      const { sendNotification } = await import("../send-notification");
+
+      const result = await sendNotification(VALID_CASE_ID, {
+        type: "custom",
+        title: "測試標題",
         body: "測試內容",
       });
 
@@ -923,7 +970,7 @@ describe("BE-8 | 便利函數", () => {
       expect(localMockPushMessage).toHaveBeenCalled();
     });
 
-    it("無物件標題時應使用預設標題", async () => {
+    it("無物件名稱時應使用預設名稱", async () => {
       vi.resetModules();
 
       const localMockPushMessage = vi.fn().mockResolvedValue({});
