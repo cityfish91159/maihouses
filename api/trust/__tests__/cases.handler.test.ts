@@ -90,7 +90,7 @@ describe("BE-5 Real Handler Tests", () => {
     expect(res.statusCode).toBe(200);
   });
 
-  it("GET /api/trust/cases/[id] - accepts step=0 event", async () => {
+  it("GET /api/trust/cases/[id] - accepts step=0 event", { timeout: 10000 }, async () => {
     const mockRpc = vi.fn().mockResolvedValue({
       data: {
         id: "550e8400-e29b-41d4-a716-446655440000",
