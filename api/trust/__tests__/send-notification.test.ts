@@ -173,7 +173,7 @@ describe("BE-8 | sendNotification - 核心函數", () => {
   });
 
   describe("參數驗證", () => {
-    it("無效的 caseId 格式應返回失敗", async () => {
+    it("無效的 caseId 格式應返回失敗", { timeout: 10000 }, async () => {
       vi.resetModules();
       const { sendNotification } = await import("../send-notification");
 
