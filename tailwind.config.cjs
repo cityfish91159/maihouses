@@ -83,6 +83,11 @@ module.exports = {
             text: "#64748b",
           },
         },
+        // MaiHouses Brand Alias - 語意化品牌色（消除 text-maihouses-dark 等警告）
+        maihouses: {
+          dark: "var(--brand)", // #00385a
+          light: "var(--brand-light)", // #009FE8
+        },
         // Badge Colors - 各類徽章
         badge: {
           customer: {
