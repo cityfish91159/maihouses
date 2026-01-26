@@ -26,6 +26,7 @@ import {
   FileText,
 } from "lucide-react";
 import { AgentTrustCard } from "../components/AgentTrustCard";
+import { TrustBadge } from "../components/TrustBadge";
 import {
   propertyService,
   DEFAULT_PROPERTY,
@@ -770,6 +771,9 @@ export const PropertyDetailPage: React.FC = () => {
                 onCallClick={() => openContactModal("sidebar")}
                 onBookingClick={() => openContactModal("booking")}
               />
+
+              {/* FE-2: 安心留痕徽章（僅當房仲開啟服務時顯示） */}
+              {property.trustEnabled && <TrustBadge />}
 
               <div className="rounded-xl border border-blue-100 bg-blue-50 p-4">
                 <h4 className="mb-2 flex items-center gap-2 text-sm font-bold text-[#003366]">

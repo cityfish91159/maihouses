@@ -347,7 +347,7 @@ export const DEFAULT_PROPERTY: PropertyData = {
   advantage1: "",
   advantage2: "",
   disadvantage: "",
-  trustEnabled: false,
+  trustEnabled: true,
   agent: {
     id: "",
     internalCode: 0,
