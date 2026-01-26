@@ -27,6 +27,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const tx = await getTx(id);
     const s5 = tx.steps[5];
 
+    // 修復 TS 錯誤：檢查 s5 是否存在
+    if (!s5) {
+      return res.status(400).json({ error: "Step 5 not found" });
+    }
+
     // Agent pays, so we check if payment is initiated (which means buyer confirmed contract)
     // Actually, if Agent pays, maybe we don't need buyer confirmation?
     // But the flow is: Agent submits contract -> Buyer confirms -> Payment initiated -> Agent pays.
@@ -35,7 +40,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: "Contract not confirmed" });
     if (s5.paymentStatus !== "initiated")
       return res.status(400).json({ error: "Invalid status" });
-    if (Date.now() > s5.paymentDeadline)
+    // 修復 TS2365/TS18049: 安全比較 deadline
+    const deadline = s5.paymentDeadline;
+    if (deadline !== null && deadline !== undefined && Date.now() > Number(deadline))
       return res.status(400).json({ error: "Expired" });
 
     tx.isPaid = true;
@@ -43,20 +50,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     s5.locked = true;
     tx.currentStep = 6;
 
-    const risks = tx.steps[2].data.risks || {};
-    tx.steps[6].checklist = [
-      { label: "🚰 水電瓦斯功能正常", checked: false },
-      { label: "🪟 門窗鎖具開關正常", checked: false },
-      { label: "🔑 鑰匙門禁卡點交", checked: false },
-      {
-        label: `🧱 驗證房仲承諾：${risks.water ? "有" : "無"}漏水`,
-        checked: false,
-      },
-      {
-        label: `🧱 驗證房仲承諾：${risks.wall ? "有" : "無"}壁癌`,
-        checked: false,
-      },
-    ];
+    // 修復 TS 錯誤：安全存取 risks
+    const step2Data = tx.steps[2]?.data as Record<string, unknown> | undefined;
+    const risks = (step2Data?.risks ?? {}) as Record<string, boolean>;
+    const step6 = tx.steps[6];
+    if (step6) {
+      step6.checklist = [
+        { label: "🚰 水電瓦斯功能正常", checked: false },
+        { label: "🪟 門窗鎖具開關正常", checked: false },
+        { label: "🔑 鑰匙門禁卡點交", checked: false },
+        {
+          label: `🧱 驗證房仲承諾：${risks.water ? "有" : "無"}漏水`,
+          checked: false,
+        },
+        {
+          label: `🧱 驗證房仲承諾：${risks.wall ? "有" : "無"}壁癌`,
+          checked: false,
+        },
+      ];
+    }
 
     await saveTx(id, tx);
     await logAudit(id, `PAYMENT_COMPLETED`, user);

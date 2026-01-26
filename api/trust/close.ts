@@ -231,7 +231,7 @@ export default async function handler(
       }
 
       logger.error("[trust/close] Update failed", {
-        error: updateError?.message ?? "Unknown",
+        error: updateError instanceof Error ? updateError.message : String(updateError ?? "Unknown"),
         caseId,
       });
       res

@@ -20,13 +20,17 @@ import { cors as sharedCors } from "../lib/cors";
 // Types for Trust Room transactions
 export interface TrustStep {
   name: string;
-  agentStatus: "pending" | "confirmed";
+  // 修復 TS 錯誤：擴展狀態類型以符合實際業務流程
+  agentStatus: "pending" | "confirmed" | "submitted";
   buyerStatus: "pending" | "confirmed";
   locked: boolean;
   data: Record<string, unknown>;
-  paymentStatus?: "pending" | "paid";
-  paymentDeadline?: string | null;
-  checklist?: Array<{ id: string; text: string; checked: boolean }>;
+  // 修復 TS 錯誤：擴展 paymentStatus 以符合完整付款流程
+  paymentStatus?: "pending" | "initiated" | "paid" | "completed" | "expired";
+  // 修復 TS 錯誤：deadline 可能是 number（timestamp）或 string（ISO）
+  paymentDeadline?: number | string | null;
+  // 修復 TS 錯誤：checklist item 使用 label 而非 text
+  checklist?: Array<{ label: string; checked: boolean }>;
 }
 
 export interface TrustState {
@@ -34,7 +38,13 @@ export interface TrustState {
   currentStep: number;
   isPaid: boolean;
   steps: Record<number, TrustStep>;
-  supplements: Array<{ id: string; content: string; timestamp: string }>;
+  // 修復 TS 錯誤：supplements 欄位與實際使用一致
+  supplements: Array<{
+    id?: string;
+    role?: string;
+    content: string;
+    timestamp: string | number;
+  }>;
 }
 
 export interface JwtUser {
@@ -147,15 +157,25 @@ const TrustStateSchema = z.object({
   isPaid: z.boolean(),
   steps: z.record(z.string(), z.object({
     name: z.string(),
-    agentStatus: z.enum(["pending", "confirmed"]),
+    // 修復 TS 錯誤：擴展狀態類型
+    agentStatus: z.enum(["pending", "confirmed", "submitted"]),
     buyerStatus: z.enum(["pending", "confirmed"]),
     locked: z.boolean(),
     data: z.record(z.unknown()),
-    paymentStatus: z.enum(["pending", "paid"]).optional(),
-    paymentDeadline: z.string().nullable().optional(),
-    checklist: z.array(z.object({ id: z.string(), text: z.string(), checked: z.boolean() })).optional(),
+    // 修復 TS 錯誤：擴展 paymentStatus
+    paymentStatus: z.enum(["pending", "initiated", "paid", "completed", "expired"]).optional(),
+    // 修復 TS 錯誤：deadline 可能是 number 或 string
+    paymentDeadline: z.union([z.number(), z.string()]).nullable().optional(),
+    // 修復 TS 錯誤：checklist 使用 label
+    checklist: z.array(z.object({ label: z.string(), checked: z.boolean() })).optional(),
   })),
-  supplements: z.array(z.object({ id: z.string(), content: z.string(), timestamp: z.string() })),
+  // 修復 TS 錯誤：supplements 的 timestamp 可能是 number
+  supplements: z.array(z.object({
+    id: z.string().optional(),
+    role: z.string().optional(),
+    content: z.string(),
+    timestamp: z.union([z.string(), z.number()]),
+  })),
 });
 
 // 修復 #5, #6: 區分 "不存在" 和 "真正錯誤"，並驗證 data.state

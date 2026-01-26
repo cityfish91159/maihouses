@@ -176,9 +176,10 @@ async function handleMyCasesQuery(
       ? formatMyCasesReply(result.data.cases)
       : formatErrorReply();
 
+    // 修復 TS2322: 使用 as unknown as 轉換 LINE SDK 類型
     await lineClient.replyMessage({
       replyToken: event.replyToken,
-      messages: [replyMessage],
+      messages: [replyMessage as unknown as messagingApi.Message],
     });
 
     if (result.success) {

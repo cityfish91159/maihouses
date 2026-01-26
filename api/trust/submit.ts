@@ -26,14 +26,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const tx = await getTx(id);
     const stepNum = parseInt(step);
 
+    // 修復 TS 錯誤：安全存取 step
+    const currentStepData = tx.steps[stepNum];
+    if (!currentStepData) {
+      return res.status(400).json({ error: "Step not found" });
+    }
+
     if (stepNum !== tx.currentStep)
       return res.status(400).json({ error: "Invalid Step" });
-    if (tx.steps[stepNum].locked)
+    if (currentStepData.locked)
       return res.status(400).json({ error: "Locked" });
 
     // Basic sanitization if needed, but relying on React for display safety
-    tx.steps[stepNum].data = { ...tx.steps[stepNum].data, ...data };
-    tx.steps[stepNum].agentStatus = "submitted";
+    currentStepData.data = { ...currentStepData.data, ...data };
+    currentStepData.agentStatus = "submitted";
 
     await saveTx(id, tx);
     await logAudit(id, `AGENT_SUBMIT_${step}`, user);

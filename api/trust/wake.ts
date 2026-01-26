@@ -266,7 +266,7 @@ export default async function handler(
       }
 
       logger.error("[trust/wake] Update failed", {
-        error: updateError?.message ?? "Unknown",
+        error: updateError instanceof Error ? updateError.message : String(updateError ?? "Unknown"),
         caseIdMasked: maskUUID(caseId),
       });
       res

@@ -27,7 +27,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (tx.currentStep !== 6)
       return res.status(400).json({ error: "Invalid step" });
 
-    tx.steps[6].checklist[index].checked = checked;
+    // 修復 TS2532: checklist 可能 undefined
+    const checklist = tx.steps[6]?.checklist;
+    if (!checklist || !checklist[index]) {
+      return res.status(400).json({ error: "Checklist not found" });
+    }
+    checklist[index].checked = checked;
     await saveTx(id, tx);
     res.json({ success: true, state: tx });
   } catch (e) {

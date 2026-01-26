@@ -26,36 +26,45 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const stepNum = parseInt(step);
     const tx = await getTx(id);
 
+    const currentStepData = tx.steps[stepNum];
+    if (!currentStepData) {
+      return res.status(400).json({ error: "Step not found" });
+    }
+
     if (stepNum !== tx.currentStep)
       return res.status(400).json({ error: "Invalid Step" });
-    if (tx.steps[stepNum].agentStatus !== "submitted")
+    if (currentStepData.agentStatus !== "submitted")
       return res.status(400).json({ error: "Agent not submitted" });
+
+    const step5 = tx.steps[5];
     if (
       stepNum === 6 &&
-      (!tx.isPaid || tx.steps[5].paymentStatus !== "completed")
+      (!tx.isPaid || step5?.paymentStatus !== "completed")
     )
       return res.status(400).json({ error: "Unpaid" });
 
     if (note) {
-      tx.steps[stepNum].data = { ...tx.steps[stepNum].data, buyerNote: note };
+      currentStepData.data = { ...currentStepData.data, buyerNote: note };
     }
 
-    tx.steps[stepNum].buyerStatus = "confirmed";
+    currentStepData.buyerStatus = "confirmed";
 
-    if (stepNum === 5) {
-      if (tx.steps[5].paymentStatus === "pending") {
-        tx.steps[5].paymentStatus = "initiated";
-        tx.steps[5].paymentDeadline = Date.now() + TIMEOUTS[5];
+    if (stepNum === 5 && step5) {
+      if (step5.paymentStatus === "pending") {
+        step5.paymentStatus = "initiated";
+        step5.paymentDeadline = Date.now() + (TIMEOUTS[5] ?? 0);
       }
     } else if (stepNum === 6) {
-      const allChecked = tx.steps[6].checklist.every(
+      const step6 = tx.steps[6];
+      const checklist = step6?.checklist ?? [];
+      const allChecked = checklist.every(
         (i: { checked: boolean }) => i.checked,
       );
       if (!allChecked)
         return res.status(400).json({ error: "Checklist incomplete" });
-      tx.steps[6].locked = true;
+      if (step6) step6.locked = true;
     } else {
-      tx.steps[stepNum].locked = true;
+      currentStepData.locked = true;
       tx.currentStep += 1;
     }
 

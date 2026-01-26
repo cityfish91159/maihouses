@@ -23,13 +23,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const tx = await getTx(id);
 
     // Auto check expiration
-    if (
-      tx.steps[5].paymentDeadline &&
-      Date.now() > tx.steps[5].paymentDeadline &&
-      tx.steps[5].paymentStatus === "initiated"
-    ) {
-      tx.steps[5].paymentStatus = "expired";
-      await saveTx(id, tx);
+    const step5 = tx.steps[5];
+    if (step5) {
+      const deadline = step5.paymentDeadline;
+      if (
+        deadline !== null &&
+        deadline !== undefined &&
+        Date.now() > Number(deadline) &&
+        step5.paymentStatus === "initiated"
+      ) {
+        step5.paymentStatus = "expired";
+        await saveTx(id, tx);
+      }
     }
 
     res.json(tx);

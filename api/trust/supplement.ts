@@ -26,7 +26,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     tx.supplements.push({
       role: user.role,
       content: content,
-      timestamp: Date.now(),
+      // 修復 TS2322: timestamp 使用 ISO 字串格式
+      timestamp: new Date().toISOString(),
     });
 
     await saveTx(id, tx);
