@@ -252,12 +252,12 @@ export default async function handler(
       .single();
 
     // Step 7: 處理並發衝突
-    if (updateError || !updatedCase) {
+    if (updateError) {
       // PGRST116 = no rows returned，可能是並發狀態變更
-      if (updateError?.code === "PGRST116" || !updatedCase) {
+      if (updateError.code === "PGRST116") {
         logger.warn("[trust/wake] Concurrent update conflict", {
           caseIdMasked: maskUUID(caseId),
-          error: updateError?.message,
+          error: updateError.message,
         });
         res
           .status(409)
@@ -266,12 +266,20 @@ export default async function handler(
       }
 
       logger.error("[trust/wake] Update failed", {
-        error: updateError instanceof Error ? updateError.message : String(updateError ?? "Unknown"),
+        error: updateError.message ?? "Unknown",
         caseIdMasked: maskUUID(caseId),
       });
       res
         .status(500)
         .json(errorResponse(API_ERROR_CODES.INTERNAL_ERROR, "案件更新失敗"));
+      return;
+    }
+
+    if (!updatedCase) {
+      logger.warn("[trust/wake] No data returned", { caseIdMasked: maskUUID(caseId) });
+      res
+        .status(409)
+        .json(errorResponse(API_ERROR_CODES.CONFLICT, "案件狀態已變更，請重新操作"));
       return;
     }
 

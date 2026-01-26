@@ -161,7 +161,7 @@ const TrustStateSchema = z.object({
     agentStatus: z.enum(["pending", "confirmed", "submitted"]),
     buyerStatus: z.enum(["pending", "confirmed"]),
     locked: z.boolean(),
-    data: z.record(z.unknown()),
+    data: z.record(z.string(), z.unknown()),
     // 修復 TS 錯誤：擴展 paymentStatus
     paymentStatus: z.enum(["pending", "initiated", "paid", "completed", "expired"]).optional(),
     // 修復 TS 錯誤：deadline 可能是 number 或 string
