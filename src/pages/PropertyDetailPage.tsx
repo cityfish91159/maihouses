@@ -94,6 +94,9 @@ export const PropertyDetailPage: React.FC = () => {
   // 安心留痕要求處理狀態
   const [isRequestingTrust, setIsRequestingTrust] = useState(false);
 
+  // 開發測試：trustEnabled 狀態切換 (僅 Mock 頁面)
+  const [mockTrustEnabled, setMockTrustEnabled] = useState<boolean | null>(null);
+
   // 初始化直接使用 DEFAULT_PROPERTY，確保第一幀就有畫面，絕不留白
   const [property, setProperty] = useState<PropertyData>(DEFAULT_PROPERTY);
 
@@ -176,6 +179,13 @@ export const PropertyDetailPage: React.FC = () => {
     property.halls,
   ]);
 
+  // 當 mockTrustEnabled 改變時，更新 property
+  useEffect(() => {
+    if (id === 'MH-100001' && mockTrustEnabled !== null) {
+      setProperty(prev => ({ ...prev, trustEnabled: mockTrustEnabled }));
+    }
+  }, [mockTrustEnabled, id]);
+
   useEffect(() => {
     const fetchProperty = async () => {
       if (!id) return;
@@ -183,7 +193,12 @@ export const PropertyDetailPage: React.FC = () => {
       try {
         const data = await propertyService.getPropertyByPublicId(id);
         if (data) {
-          setProperty(data);
+          // 如果是 Mock 頁面且有開發測試狀態，覆寫 trustEnabled
+          if (id === 'MH-100001' && mockTrustEnabled !== null) {
+            setProperty({ ...data, trustEnabled: mockTrustEnabled });
+          } else {
+            setProperty(data);
+          }
         }
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);
@@ -216,6 +231,8 @@ export const PropertyDetailPage: React.FC = () => {
       }
     };
     fetchProperty();
+    // mockTrustEnabled 由獨立 useEffect 處理，不需加入依賴
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   // [Safety] 確保有圖片可顯示，防止空陣列導致破圖
@@ -257,6 +274,38 @@ export const PropertyDetailPage: React.FC = () => {
           </span>
         </div>
       </nav>
+
+      {/* 開發測試按鈕 - 僅 MH-100001 Mock 頁面顯示 */}
+      {id === 'MH-100001' && (
+        <div className="mx-auto max-w-4xl px-4 pt-4">
+          <div className="flex items-center gap-2 rounded-lg border-2 border-dashed border-amber-300 bg-amber-50 p-3">
+            <div className="flex-1">
+              <p className="text-xs font-bold text-amber-900">
+                🧪 開發測試模式 (僅 Mock 頁面)
+              </p>
+              <p className="text-[10px] text-amber-700">
+                切換安心留痕狀態查看不同 UI 效果
+              </p>
+            </div>
+            <button
+              onClick={() => setMockTrustEnabled(prev => {
+                const newValue = prev === null ? true : !prev;
+                toast.info(`切換為：${newValue ? '已開啟' : '未開啟'}`, {
+                  duration: 1500,
+                });
+                return newValue;
+              })}
+              className="rounded-lg bg-amber-600 px-4 py-2 text-xs font-bold text-white transition hover:bg-amber-700 active:scale-95"
+            >
+              {mockTrustEnabled === null
+                ? '啟動測試'
+                : mockTrustEnabled
+                  ? '✅ 已開啟'
+                  : '❌ 未開啟'}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* 安心留痕服務橫幅 */}
       {property && (
