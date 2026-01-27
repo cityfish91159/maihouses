@@ -2,10 +2,78 @@
 
 **工單編號**: FE-7
 **優先級**: P0 (高)
-**預計工時**: 3.5 小時
-**狀態**: ✅ Phase 1 完成
+**預計工時**: 10.5 小時 (Phase 1: 2h ✅ | Phase 1.5: 7h ⏳ | Phase 2: 1.5h)
+**狀態**: ⏳ Phase 1.5 進行中 (Phase 1 已完成)
 **建立日期**: 2026-01-27
-**完成日期**: 2026-01-27
+**更新日期**: 2026-01-27 (新增 Phase 1.5 消費者自主發起流程)
+**完成日期**: 待定
+
+---
+
+## 📋 任務總覽 - 快速打勾清單
+
+### Phase 1: 核心 UI 實作 (2 小時) ✅ 已完成
+- [x] 建立 `TrustServiceBanner.tsx` 組件
+- [x] 修改 `PropertyDetailPage.tsx` 整合橫幅
+- [x] 刪除舊 mock 保障區塊 (L806-825)
+- [x] 撰寫 6 個單元測試
+- [x] 通過 `npm run typecheck`
+- [x] 通過 `npm run lint`
+- [x] 部署到 Vercel 生產環境
+
+### Phase 1.5: 消費者自主發起流程 (7 小時) ⏳ 待實作
+- [ ] **任務 1**: 移除「了解更多」邏輯,改為「進入服務」
+  - [ ] 修改 `TrustServiceBanner.tsx` Props (刪除 `onLearnMore`, 新增 `onEnterService`)
+  - [ ] 修改按鈕文案與回調
+  - [ ] 新增 Loading 狀態 (`isRequesting` prop)
+  - [ ] 更新 ARIA 標籤
+  - [ ] 更新單元測試
+
+- [ ] **任務 2**: 實作自動建立案件 API
+  - [ ] 新增後端 API: `api/trust/auto-create-case.ts`
+  - [ ] 前端整合 `useTrustActions.ts`
+  - [ ] 實作 API 呼叫流程
+  - [ ] Token 重新導向邏輯
+  - [ ] 錯誤處理與 Toast 提示
+
+- [ ] **任務 3**: 匿名使用者臨時代號機制
+  - [ ] 後端生成 4 碼隨機代號
+  - [ ] 資料庫欄位規劃 (`buyer_temp_code`)
+  - [ ] 前端顯示邏輯 (Trust Room)
+
+- [ ] **任務 4**: M4 資料收集 Modal
+  - [ ] 新增組件: `DataCollectionModal.tsx`
+  - [ ] 觸發邏輯 (M4 階段 + 臨時代號)
+  - [ ] API: `POST /api/trust/complete-buyer-info`
+  - [ ] localStorage 避免重複彈出
+
+- [ ] **任務 5**: Token 升級機制
+  - [ ] 註冊流程綁定 Token
+  - [ ] 後端 API: `api/trust/upgrade-case.ts`
+  - [ ] 升級案件資料 (user_id + name)
+
+- [ ] **任務 6**: 隱私保護顯示邏輯
+  - [ ] Trust Room 買方視角 (顯示房仲姓名)
+  - [ ] UAG 房仲視角 (顯示買方代號)
+  - [ ] 後端資料庫完整記錄
+
+- [ ] **品質驗證**
+  - [ ] `npm run typecheck` 通過
+  - [ ] `npm run lint` 通過
+  - [ ] 單元測試通過 (15/15 tests)
+  - [ ] E2E 測試新增 6 個案例
+
+### Phase 2: 測試與優化 (1.5 小時) ⏳ 待實作
+- [ ] E2E 測試 (6 案例)
+- [ ] 響應式驗證 (Desktop/Tablet/Mobile)
+- [ ] 可訪問性審計 (Lighthouse ≥ 95)
+- [ ] 效能測試 (Bundle Size < +5KB)
+
+### Phase 3: 未來優化 (2 小時) - 可選
+- [ ] 實作 `/api/property/request-trust-enable` API
+- [ ] 整合房仲通知系統 (BE-5)
+- [ ] Toast 提示優化
+- [ ] Modal 詳細說明
 
 ---
 
@@ -36,6 +104,248 @@
   - [x] `npm run typecheck` 通過 (0 errors)
   - [x] `npm run lint` 通過 (0 warnings, 自動修復)
   - [x] 單元測試通過 (6/6 tests, 執行時間 578ms)
+
+### Phase 1.5: 消費者自主發起安心留痕流程 (7 小時) ⏳ 待實作
+**基於使用者需求澄清，實作消費者點擊「進入服務」自動建立案件流程**
+
+#### 核心邏輯修正
+- **取消「了解更多」按鈕**: 已開啟狀態改為「進入服務」，未開啟保持「要求房仲開啟」
+- **消費者發起機制**: 由消費者點擊按鈕觸發案件建立，非房仲主動建立
+- **匿名使用者支援**: 未註冊用戶使用臨時代號「買方-{4碼}」，M4 階段再收集真實資料
+
+---
+
+- [ ] **任務 1: 移除「了解更多」邏輯，改為「進入服務」(P0 Critical)**
+  - [ ] 修改 `TrustServiceBanner.tsx` Props 介面
+    - [ ] 刪除 `onLearnMore` prop
+    - [ ] 新增 `onEnterService` prop
+    - [ ] 新增 `isRequesting` prop (顯示 loading 狀態)
+  - [ ] 修改 bannerConfig 邏輯 (Line 81-107)
+    - [ ] `trustEnabled=true` 按鈕文案: "了解更多" → **"進入服務"**
+    - [ ] 按鈕回調: `onLearnMore` → `onEnterService`
+  - [ ] 更新 ARIA 標籤
+    - [ ] `aria-label="開啟安心留痕說明頁面"` → `"進入安心留痕服務"`
+  - [ ] 新增 Loading 按鈕狀態
+    ```tsx
+    {isRequesting ? (
+      <>
+        <Loader2 className="size-5 animate-spin" />
+        處理中...
+      </>
+    ) : (
+      <>
+        {buttonText}
+        <ChevronRight className="size-5" />
+      </>
+    )}
+    ```
+  - [ ] 更新單元測試 (修改現有 + 新增 loading 測試)
+
+---
+
+- [ ] **任務 2: 實作「進入服務」自動建立案件流程 (P0 Critical)**
+  - [ ] 新增後端 API: `api/trust/auto-create-case.ts`
+    ```typescript
+    // POST /api/trust/auto-create-case
+    // Body: { propertyId: string, userId?: string, userName?: string }
+    // 邏輯:
+    // 1. 驗證 propertyId 存在且 trust_enabled=true
+    // 2. 已註冊: 使用 user.name, user.id
+    // 3. 未註冊: 生成 buyer_name="買方-{4碼}", buyer_user_id=null
+    // 4. 建立 trust_cases 記錄
+    // 5. 生成 Token (90 天有效)
+    // 6. 回傳: { case_id, token, buyer_name }
+    ```
+  - [ ] 前端整合 `useTrustActions.ts`
+    - [ ] 修改 `handleLearnMoreTrust` → `handleEnterService`
+    - [ ] 新增狀態: `const [isRequesting, setIsRequesting] = useState(false);`
+    - [ ] API 呼叫流程:
+    ```typescript
+    setIsRequesting(true);
+    try {
+      // 1. 檢查 auth 狀態
+      const { user } = await supabase.auth.getUser();
+
+      // 2. 呼叫 API 建立案件
+      const res = await fetch('/api/trust/auto-create-case', {
+        method: 'POST',
+        body: JSON.stringify({
+          propertyId: property.publicId,
+          userId: user?.id,
+          userName: user?.user_metadata?.name
+        })
+      });
+
+      if (!res.ok) throw new Error('Failed to create case');
+
+      const { token } = await res.json();
+
+      // 3. 重新導向至 Trust Room (帶 Token)
+      window.location.href = `/maihouses/trust/room#token=${token}`;
+    } catch (error) {
+      notify.error('無法進入服務', '請稍後再試');
+    } finally {
+      setIsRequesting(false);
+    }
+    ```
+  - [ ] 傳遞 `isRequesting` 給 TrustServiceBanner
+
+---
+
+- [ ] **任務 3: 實作匿名使用者臨時代號機制 (P0 Critical)**
+  - [ ] 後端生成邏輯 (`api/trust/auto-create-case.ts`)
+    ```typescript
+    function generateBuyerCode(): string {
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // 去除易混淆字元
+      let code = '';
+      for (let i = 0; i < 4; i++) {
+        code += chars[Math.floor(Math.random() * chars.length)];
+      }
+      return code;
+    }
+
+    const buyer_name = user?.name || `買方-${generateBuyerCode()}`;
+    ```
+  - [ ] 資料庫欄位規劃
+    ```sql
+    -- trust_cases 表
+    buyer_name VARCHAR(50) NOT NULL  -- "買方-A7B2" 或真實姓名
+    buyer_user_id UUID NULL          -- 未註冊為 null
+    buyer_temp_code VARCHAR(4) NULL  -- 臨時代號 "A7B2"
+    ```
+  - [ ] 前端顯示邏輯 (Trust Room 頁面)
+    ```tsx
+    {case.buyer_name.startsWith('買方-') ? (
+      <span className="text-gray-500">
+        {case.buyer_name} (您的臨時代號)
+      </span>
+    ) : (
+      <span>{case.buyer_name}</span>
+    )}
+    ```
+
+---
+
+- [ ] **任務 4: 實作 M4 階段資料收集 Modal (P1 High)**
+  - [ ] 新增組件: `src/components/TrustRoom/DataCollectionModal.tsx`
+    ```tsx
+    interface Props {
+      isOpen: boolean;
+      onSubmit: (data: { name: string; phone: string; email: string }) => void;
+      onSkip: () => void;
+    }
+
+    // 內容:
+    // - 標題: "請填寫基本資料以保全交易過程全貌"
+    // - 表單: 姓名 (必填)、電話 (必填)、Email (選填)
+    // - 按鈕: "送出" / "稍後再說"
+    // - 說明: "此資訊僅供法律留痕使用，不會公開給房仲"
+    ```
+  - [ ] 觸發邏輯 (`src/pages/Assure/Detail.tsx`)
+    ```typescript
+    useEffect(() => {
+      if (
+        tx.stage === 4 && // M4 斡旋階段
+        tx.buyer_name.startsWith('買方-') // 仍使用臨時代號
+      ) {
+        setShowDataModal(true);
+      }
+    }, [tx.stage, tx.buyer_name]);
+    ```
+  - [ ] API 整合: `POST /api/trust/complete-buyer-info`
+    ```typescript
+    // Body: { case_id, name, phone, email }
+    // 邏輯: UPDATE trust_cases SET buyer_name=?, buyer_phone=?, buyer_email=?
+    ```
+  - [ ] 儲存 localStorage 記錄避免重複彈出
+    ```typescript
+    localStorage.setItem(`data_collected_${caseId}`, 'true');
+    ```
+
+---
+
+- [ ] **任務 5: 實作 Token 升級機制 (P1 High)**
+  - [ ] 註冊流程綁定 Token
+    ```typescript
+    // 註冊頁面 (Login.tsx)
+    useEffect(() => {
+      const pendingToken = localStorage.getItem('pending_trust_token');
+      if (pendingToken && user) {
+        // 呼叫 API 升級案件
+        fetch('/api/trust/upgrade-case', {
+          method: 'POST',
+          body: JSON.stringify({
+            token: pendingToken,
+            userId: user.id,
+            userName: user.user_metadata.name
+          })
+        });
+        localStorage.removeItem('pending_trust_token');
+      }
+    }, [user]);
+    ```
+  - [ ] 後端 API: `api/trust/upgrade-case.ts`
+    ```typescript
+    // POST /api/trust/upgrade-case
+    // Body: { token, userId, userName }
+    // 邏輯:
+    // 1. 驗證 token 有效
+    // 2. UPDATE trust_cases SET buyer_user_id=?, buyer_name=?
+    // 3. 保留舊 buyer_temp_code 供查詢
+    ```
+
+---
+
+- [ ] **任務 6: 實作隱私保護顯示邏輯 (P2 Normal)**
+  - [ ] Trust Room 買方視角
+    ```tsx
+    // 顯示: 房仲姓名 + 公司
+    <p>對接房仲: {case.agent_name} ({case.agent_company})</p>
+    ```
+  - [ ] Trust Room 房仲視角 (UAG Dashboard)
+    ```tsx
+    // 顯示: 買方代號 (隱藏真實姓名)
+    <p>買方: {case.buyer_temp_code || '買方-****'}</p>
+    ```
+  - [ ] 後端資料庫完整記錄
+    ```sql
+    -- 法律留痕用途，雙方資料完整儲存
+    buyer_name VARCHAR(50)    -- 完整姓名 (M4 後更新)
+    buyer_user_id UUID        -- User ID (註冊後更新)
+    agent_name VARCHAR(50)    -- 房仲姓名
+    agent_user_id UUID        -- 房仲 User ID
+    ```
+
+---
+
+- [ ] **品質驗證**
+  - [ ] `npm run typecheck` 通過 (0 errors)
+  - [ ] `npm run lint` 通過 (0 warnings)
+  - [ ] 單元測試更新並通過 (15/15 tests)
+  - [ ] E2E 測試新增 6 個案例
+    - [ ] 已註冊用戶點擊「進入服務」
+    - [ ] 未註冊用戶點擊「進入服務」
+    - [ ] M4 階段彈出資料收集 Modal
+    - [ ] 註冊後 Token 自動升級
+    - [ ] 房仲視角無法看到買方姓名
+    - [ ] 買方視角可看到房仲姓名
+
+---
+
+**商業邏輯依據**:
+- 消費者主動發起，非房仲建立 (房仲無法得知誰瀏覽了頁面)
+- 房仲僅需在後台開啟 `trust_enabled`，消費者點擊後自動建立案件
+- 匿名使用者使用臨時代號保護隱私，M4 斡旋時再收集真實資料
+- Token 綁定升級機制確保註冊後仍能訪問原案件
+
+**影響範圍**:
+- 修改檔案 (3): TrustServiceBanner.tsx, useTrustActions.ts, Assure/Detail.tsx
+- 新增檔案 (4):
+  - `api/trust/auto-create-case.ts` (自動建立案件)
+  - `api/trust/complete-buyer-info.ts` (M4 資料收集)
+  - `api/trust/upgrade-case.ts` (Token 升級)
+  - `src/components/TrustRoom/DataCollectionModal.tsx` (資料收集 Modal)
+- 測試檔案 (2): TrustServiceBanner.test.tsx (更新), trust-auto-create.spec.ts (新增)
 
 ### Phase 2: 測試與優化 (1.5 小時)
 - [ ] **E2E 測試**: `tests/e2e/property-detail-trust-banner.spec.ts` (6 案例)
