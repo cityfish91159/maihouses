@@ -43,7 +43,7 @@ describe('useTrustActions', () => {
         result.current.learnMore();
       });
 
-      expect(mockWindowOpen).toHaveBeenCalledWith(expect.stringContaining('/maihouses/trust-room'), '_blank', 'noopener,noreferrer');
+      expect(mockWindowOpen).toHaveBeenCalledWith(expect.stringContaining('/maihouses/assure?case=TR-2024-001'), '_blank', 'noopener,noreferrer');
     });
 
     it('當彈窗被阻擋時應該顯示 Toast 提示', () => {

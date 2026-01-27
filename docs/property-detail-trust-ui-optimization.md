@@ -74,7 +74,7 @@
   - [ ] 主標題: "本物件已開啟安心留痕服務"
   - [ ] 副標題: "六階段交易追蹤 · 每步驟數位留痕 · 雙方確認機制"
   - [ ] 按鈕: "了解更多"
-  - [ ] 點擊開啟新分頁 `/maihouses/trust-room`
+  - [x] 點擊開啟新分頁 `/maihouses/assure?case=TR-2024-001` (Demo Trust Room)
   - [ ] 側邊欄顯示 TrustBadge 徽章
 
 - [ ] **未開啟狀態** (trustEnabled = false)

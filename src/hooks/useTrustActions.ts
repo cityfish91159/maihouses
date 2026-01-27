@@ -33,7 +33,8 @@ export const useTrustActions = (propertyId: string) => {
   const learnMore = useCallback(() => {
     logger.info('User clicked learn more on trust banner', { propertyId });
 
-    const trustRoomUrl = `${window.location.origin}/maihouses/trust-room`;
+    // Demo Trust Room URL - 展示安心留痕服務的完整流程
+    const trustRoomUrl = `${window.location.origin}/maihouses/assure?case=TR-2024-001`;
 
     const newWindow = window.open(
       trustRoomUrl,
