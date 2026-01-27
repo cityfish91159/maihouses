@@ -6,6 +6,7 @@ import React, {
   useMemo,
 } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
+import { toast } from "sonner";
 import {
   Home,
   Heart,
@@ -27,6 +28,7 @@ import {
 } from "lucide-react";
 import { AgentTrustCard } from "../components/AgentTrustCard";
 import { TrustBadge } from "../components/TrustBadge";
+import { TrustServiceBanner } from "../components/TrustServiceBanner";
 import {
   propertyService,
   DEFAULT_PROPERTY,
@@ -43,239 +45,28 @@ import {
 } from "../utils/keyCapsules";
 import { track } from "../analytics/track";
 import { logger } from "../lib/logger";
+import { useTrustActions } from "../hooks/useTrustActions";
+import { usePropertyTracker } from "../hooks/usePropertyTracker";
+import { ErrorBoundary } from "react-error-boundary";
+import { TrustBannerFallback } from "../components/ErrorBoundary/TrustBannerFallback";
+import { TOAST_DURATION } from "../constants/toast";
 
-// UAG Tracker Hook v8.1 - 追蹤用戶行為 + S級攔截
-// 優化: 1.修正district傳遞 2.S級即時回調 3.互動事件用fetch獲取等級
-const usePropertyTracker = (
-  propertyId: string,
-  agentId: string,
-  district: string,
-  onGradeUpgrade?: (newGrade: string, reason?: string) => void,
-) => {
-  // 使用 useState 惰性初始化，避免在 render 中調用 Date.now()
-  const [enterTime] = useState(() => Date.now());
-  const actions = useRef({
-    click_photos: 0,
-    click_line: 0,
-    click_call: 0,
-    click_map: 0,
-    scroll_depth: 0,
-  });
-  const hasSent = useRef(false);
-  const sendLock = useRef(false);
-  const currentGrade = useRef<string>("F");
-  const clickSent = useRef({ line: false, call: false, map: false }); // 防重複點擊
 
-  // 取得或建立 session_id
-  const getSessionId = useCallback(() => {
-    let sid = localStorage.getItem("uag_session");
-    if (!sid) {
-      sid = `u_${Math.random().toString(36).substring(2, 11)}`;
-      localStorage.setItem("uag_session", sid);
-    }
-    return sid;
-  }, []);
-
-  // 建構 payload
-  const buildPayload = useCallback(
-    (eventType: string) => ({
-      session_id: getSessionId(),
-      agent_id: agentId,
-      fingerprint: btoa(
-        JSON.stringify({
-          screen: `${screen.width}x${screen.height}`,
-          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-          language: navigator.language,
-        }),
-      ),
-      event: {
-        type: eventType,
-        property_id: propertyId,
-        district: district || "unknown", // 修正: 使用傳入的 district
-        duration: Math.round((Date.now() - enterTime) / 1000),
-        actions: { ...actions.current },
-        focus: [],
-      },
-    }),
-    [propertyId, agentId, district, getSessionId, enterTime],
-  );
-
-  // 發送追蹤事件 (支援 S 級回調)
-  const sendEvent = useCallback(
-    async (eventType: string, useBeacon = false) => {
-      const payload = buildPayload(eventType);
-
-      // UAG-6 修復: page_exit 去重邏輯（單一檢查點，鎖在第一時間）
-      if (eventType === "page_exit") {
-        if (sendLock.current) {
-          logger.debug("[UAG-6] 已阻擋重複的 page_exit");
-          // UAG-6 建議4: 監控去重效果
-          track("uag.page_exit_dedupe_blocked", { property_id: propertyId });
-          return;
-        }
-        sendLock.current = true; // ✅ 在任何異步操作前鎖住
-        hasSent.current = true;
-        logger.debug("[UAG-6] 正在發送 page_exit");
-        // UAG-6 建議4: 監控發送成功
-        track("uag.page_exit_sent", { property_id: propertyId });
-      }
-
-      // page_exit 或強制使用 beacon (確保離開頁面也能送出)
-      if (useBeacon || eventType === "page_exit") {
-        const blob = new Blob([JSON.stringify(payload)], {
-          type: "application/json",
-        });
-        navigator.sendBeacon("/api/uag-track", blob);
-        return;
-      }
-
-      // 互動事件用 fetch，以便獲取等級回傳
-      try {
-        const res = await fetch("/api/uag-track", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-          keepalive: true, // 防止頁面切換時中斷
-        });
-        const data = await res.json();
-
-        // 檢查是否升級到 S 級
-        if (data.success && data.grade) {
-          const gradeRank: Record<string, number> = {
-            S: 5,
-            A: 4,
-            B: 3,
-            C: 2,
-            F: 1,
-          };
-          const newRank = gradeRank[data.grade] || 1;
-          const oldRank = gradeRank[currentGrade.current] || 1;
-
-          if (newRank > oldRank) {
-            currentGrade.current = data.grade;
-            // S 級即時通知 (含 reason)
-            if (data.grade === "S" && onGradeUpgrade) {
-              onGradeUpgrade("S", data.reason);
-            }
-          }
-        }
-      } catch (e) {
-        // 失敗時 fallback 到 beacon
-        const blob = new Blob([JSON.stringify(payload)], {
-          type: "application/json",
-        });
-        navigator.sendBeacon("/api/uag-track", blob);
-      }
-    },
-    [buildPayload, onGradeUpgrade, propertyId],
-  );
-
-  // 追蹤滾動深度
-  useEffect(() => {
-    const handleScroll = () => {
-      const depth = Math.round(
-        ((window.scrollY + window.innerHeight) / document.body.scrollHeight) *
-          100,
-      );
-      if (depth > actions.current.scroll_depth) {
-        actions.current.scroll_depth = depth;
-      }
-    };
-
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
-  // 初始化：發送 page_view，離開時發送 page_exit
-  useEffect(() => {
-    if (!propertyId) return;
-
-    // 發送 page_view (用 beacon，不需等回應)
-    sendEvent("page_view", true);
-
-    // 離開頁面時發送 page_exit
-    // UAG-6 修復: 移除外層檢查，讓 sendEvent 統一處理鎖機制
-    const handleUnload = () => {
-      sendEvent("page_exit", true);
-    };
-
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "hidden") {
-        handleUnload();
-        // UAG-6 建議2: 發送後移除監聽器，避免重複觸發
-        document.removeEventListener(
-          "visibilitychange",
-          handleVisibilityChange,
-        );
-      }
-    };
-
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-    window.addEventListener("pagehide", handleUnload, { once: true });
-
-    return () => {
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-      window.removeEventListener("pagehide", handleUnload);
-      // UAG-6 修復: 只在未發送過 page_exit 時才發送（避免重複）
-      if (!hasSent.current) {
-        handleUnload();
-      }
-    };
-  }, [propertyId, sendEvent]);
-
-  // 暴露追蹤方法
-  return {
-    trackPhotoClick: () => {
-      actions.current.click_photos++;
-    },
-    trackLineClick: async () => {
-      if (clickSent.current.line) return; // 防重複點擊
-      clickSent.current.line = true;
-
-      try {
-        actions.current.click_line = 1;
-        await Promise.all([
-          track("uag.line_clicked", { property_id: propertyId }),
-          sendEvent("click_line"),
-        ]);
-      } catch (error) {
-        logger.error("[UAG] Track LINE click failed:", { error });
-        sendEvent("click_line"); // 降級：至少確保 UAG Backend 收到
-      }
-    },
-    trackCallClick: async () => {
-      if (clickSent.current.call) return; // 防重複點擊
-      clickSent.current.call = true;
-
-      try {
-        actions.current.click_call = 1;
-        await Promise.all([
-          track("uag.call_clicked", { property_id: propertyId }),
-          sendEvent("click_call"),
-        ]);
-      } catch (error) {
-        logger.error("[UAG] Track call click failed:", { error });
-        sendEvent("click_call");
-      }
-    },
-    trackMapClick: async () => {
-      if (clickSent.current.map) return; // 防重複點擊
-      clickSent.current.map = true;
-
-      try {
-        actions.current.click_map = 1;
-        await Promise.all([
-          track("uag.map_clicked", { property_id: propertyId, district }),
-          sendEvent("click_map"),
-        ]);
-      } catch (error) {
-        logger.error("[UAG] Track map click failed:", { error });
-        sendEvent("click_map");
-      }
-    },
-  };
-};
-
+/**
+ * 房源詳情頁面
+ *
+ * 顯示房源的完整資訊,包含:
+ * - 圖片輪播
+ * - 基本資訊 (價格、地址、坪數、格局)
+ * - 安心留痕服務橫幅
+ * - 社區評價
+ * - 經紀人資訊
+ * - 聯絡 CTA
+ *
+ * @remarks
+ * 使用 UAG 追蹤系統記錄用戶行為。
+ * 使用 Error Boundary 保護安心留痕橫幅。
+ */
 export const PropertyDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [searchParams] = useSearchParams();
@@ -299,6 +90,9 @@ export const PropertyDetailPage: React.FC = () => {
 
   // 報告生成器 Modal
   const [showReportGenerator, setShowReportGenerator] = useState(false);
+
+  // 安心留痕要求處理狀態
+  const [isRequestingTrust, setIsRequestingTrust] = useState(false);
 
   // 初始化直接使用 DEFAULT_PROPERTY，確保第一幀就有畫面，絕不留白
   const [property, setProperty] = useState<PropertyData>(DEFAULT_PROPERTY);
@@ -327,7 +121,7 @@ export const PropertyDetailPage: React.FC = () => {
   };
 
   // 初始化追蹤器 (傳入 district + S級回調)
-  const tracker = usePropertyTracker(
+  const propertyTracker = usePropertyTracker(
     id || "",
     getAgentId(),
     extractDistrict(property.address),
@@ -340,9 +134,9 @@ export const PropertyDetailPage: React.FC = () => {
     setShowContactModal(true);
     // 同時追蹤點擊事件
     if (source === "mobile_bar") {
-      tracker.trackLineClick();
+      propertyTracker.trackLineClick();
     } else {
-      tracker.trackCallClick();
+      propertyTracker.trackCallClick();
     }
   };
 
@@ -356,6 +150,9 @@ export const PropertyDetailPage: React.FC = () => {
       isHot: seed % 3 === 0, // 1/3 機率顯示為熱門
     };
   }, [property.publicId]);
+
+  // 安心留痕服務操作
+  const trustActions = useTrustActions(property.publicId);
 
   const capsuleTags = useMemo(() => {
     return buildKeyCapsuleTags({
@@ -389,8 +186,33 @@ export const PropertyDetailPage: React.FC = () => {
           setProperty(data);
         }
       } catch (error) {
-        logger.error("Property fetch error:", { error });
-        // 發生錯誤時，保持顯示預設資料，不讓畫面崩壞
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        let description = '無法取得物件詳情，請重新整理頁面';
+
+        // 錯誤分類
+        if (errorMessage.includes('NetworkError') || errorMessage.includes('Failed to fetch')) {
+          description = '網路連線異常，請檢查網路後重試';
+        } else if (errorMessage.includes('404') || errorMessage.includes('not found')) {
+          description = '此物件不存在或已下架';
+        } else if (errorMessage.includes('500')) {
+          description = '伺服器異常，請稍後再試';
+        }
+
+        logger.error("Failed to load property details", {
+          error,
+          propertyId: id,
+          errorMessage,
+          errorType: error instanceof Error ? error.constructor.name : typeof error
+        });
+
+        toast.error('載入失敗', {
+          description,
+          action: {
+            label: '重新載入',
+            onClick: () => window.location.reload()
+          },
+          duration: TOAST_DURATION.ERROR
+        });
       }
     };
     fetchProperty();
@@ -436,6 +258,36 @@ export const PropertyDetailPage: React.FC = () => {
         </div>
       </nav>
 
+      {/* 安心留痕服務橫幅 */}
+      {property && (
+        <ErrorBoundary FallbackComponent={TrustBannerFallback}>
+          <TrustServiceBanner
+            trustEnabled={property.trustEnabled ?? false}
+            propertyId={property.publicId}
+            className="my-4"
+            onLearnMore={trustActions.learnMore}
+            onRequestEnable={async () => {
+              setIsRequestingTrust(true);
+              try {
+                await trustActions.requestEnable();
+              } catch (error) {
+                logger.error('Failed to request trust enable', {
+                  error,
+                  propertyId: property.publicId,
+                });
+                toast.error('要求失敗', {
+                  description: '無法送出開啟要求,請稍後再試',
+                  duration: TOAST_DURATION.ERROR,
+                });
+              } finally {
+                setIsRequestingTrust(false);
+              }
+            }}
+            isRequesting={isRequestingTrust}
+          />
+        </ErrorBoundary>
+      )}
+
       <main className="mx-auto max-w-4xl p-4 pb-24">
         {/* Image Gallery - 橫向滾動多圖 */}
         <div className="mb-4">
@@ -467,7 +319,7 @@ export const PropertyDetailPage: React.FC = () => {
                   key={i}
                   onClick={() => {
                     setCurrentImageIndex(i);
-                    tracker.trackPhotoClick();
+                    propertyTracker.trackPhotoClick();
                   }}
                   className={`h-14 w-20 shrink-0 overflow-hidden rounded-lg border-2 transition-all ${
                     i === currentImageIndex
@@ -526,7 +378,7 @@ export const PropertyDetailPage: React.FC = () => {
                   <LineShareAction
                     url={`${window.location.origin}/maihouses/property/${property.publicId}`}
                     title={`【邁房子推薦】${property.title} | 總價 ${property.price} 萬`}
-                    onShareClick={() => tracker.trackLineClick()}
+                    onShareClick={() => propertyTracker.trackLineClick()}
                     className="rounded-full bg-[#06C755] p-2 text-white transition-all hover:bg-[#05a847] hover:shadow-md"
                     showIcon={true}
                     btnText=""
@@ -550,7 +402,7 @@ export const PropertyDetailPage: React.FC = () => {
                   href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(property.address)}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  onClick={tracker.trackMapClick}
+                  onClick={propertyTracker.trackMapClick}
                   className="ml-2 flex items-center gap-1 rounded-full bg-blue-50 px-2 py-1 text-xs font-medium text-blue-600 transition-colors hover:bg-blue-100"
                 >
                   <MapPin size={12} />
@@ -775,26 +627,6 @@ export const PropertyDetailPage: React.FC = () => {
               {/* FE-2: 安心留痕徽章（僅當房仲開啟服務時顯示） */}
               {property.trustEnabled && <TrustBadge />}
 
-              <div className="rounded-xl border border-blue-100 bg-blue-50 p-4">
-                <h4 className="mb-2 flex items-center gap-2 text-sm font-bold text-[#003366]">
-                  <Shield size={16} />
-                  安心交易保障
-                </h4>
-                <ul className="space-y-2">
-                  <li className="flex items-center gap-2 text-xs text-slate-600">
-                    <div className="size-1 rounded-full bg-blue-400" />
-                    產權調查確認
-                  </li>
-                  <li className="flex items-center gap-2 text-xs text-slate-600">
-                    <div className="size-1 rounded-full bg-blue-400" />
-                    履約保證專戶
-                  </li>
-                  <li className="flex items-center gap-2 text-xs text-slate-600">
-                    <div className="size-1 rounded-full bg-blue-400" />
-                    凶宅查詢過濾
-                  </li>
-                </ul>
-              </div>
             </div>
           </div>
         </div>
@@ -913,7 +745,7 @@ export const PropertyDetailPage: React.FC = () => {
             <div className="space-y-2">
               <button
                 onClick={() => {
-                  tracker.trackLineClick();
+                  propertyTracker.trackLineClick();
                   setShowVipModal(false);
                   openContactModal("mobile_bar");
                 }}
@@ -924,7 +756,7 @@ export const PropertyDetailPage: React.FC = () => {
               </button>
               <button
                 onClick={() => {
-                  tracker.trackCallClick();
+                  propertyTracker.trackCallClick();
                   setShowVipModal(false);
                   openContactModal("booking");
                 }}

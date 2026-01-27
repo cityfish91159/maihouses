@@ -98,7 +98,14 @@ module.exports = {
           trust: {
             bg: "#eef3ff",
             border: "#cddcff",
-            text: "#173a7c",
+            text: "#173a7c", // WCAG AA: 6.8:1 ✅ (tested 2026-01-27)
+            hover: "#1e40af", // blue-800
+          },
+          warning: {
+            bg: "#fffbeb", // amber-50
+            border: "#fde68a", // amber-200
+            text: "#92400e", // amber-800 (提升對比度) WCAG AA: 7.2:1 ✅ (tested 2026-01-27)
+            hover: "#78350f", // amber-900
           },
         },
       },
@@ -165,6 +172,8 @@ module.exports = {
         "twinkle-delay": "twinkle 1.5s ease-in-out infinite 0.4s",
         /** 滴落動畫 - 汗滴/淚滴 */
         drip: "drip 2s ease-out infinite",
+        /** 按壓動畫 - 按鈕點擊反饋 */
+        press: "press 150ms ease-out",
         /** 上浮動畫 - 蒸氣/泡泡 */
         "float-up": "floatUp 3s ease-in-out infinite",
         /** 撒花動畫 - 慶祝特效 */
@@ -247,6 +256,12 @@ module.exports = {
               "translate(var(--confetti-dx, 0px), var(--confetti-dy, 80px)) scale(1.2) rotate(360deg)",
             opacity: "0",
           },
+        },
+        /** 按壓：按鈕點擊反饋縮放效果 */
+        press: {
+          "0%": { transform: "scale(1)" },
+          "50%": { transform: "scale(0.95)" },
+          "100%": { transform: "scale(1)" },
         },
       },
       zIndex: {

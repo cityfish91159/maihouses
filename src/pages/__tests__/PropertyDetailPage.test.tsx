@@ -1,66 +1,263 @@
 /**
- * FE-2: PropertyDetailPage TrustBadge Integration Test
+ * PropertyDetailPage Integration Tests
  *
- * 測試策略：由於 PropertyDetailPage 非常複雜，包含大量依賴（AgentTrustCard, ContactModal, ReportGenerator 等），
- * 完整的頁面級整合測試會很脆弱且維護成本高。
- *
- * 實務上，我們已透過以下方式驗證整合：
- * 1. TrustBadge 組件本身的單元測試（TrustBadge.test.tsx）✅
- * 2. PropertyDetailPage 的 TypeScript 編譯檢查（確保 import 和使用正確）✅
- * 3. 條件渲染邏輯（{property.trustEnabled && <TrustBadge />}）在運行時的正確性
- *
- * 本測試檔案保留作為未來 E2E 測試的基礎（使用 Playwright）。
+ * 測試策略：真實用戶行為測試 + 錯誤場景 + 邊緣案例
+ * - 用戶互動流程測試
+ * - 錯誤處理驗證
+ * - 邊緣案例覆蓋
  */
 
-import { describe, it, expect } from "vitest";
-import { TrustBadge } from "../../components/TrustBadge";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router-dom";
+import { PropertyDetailPage } from "../PropertyDetailPage";
+import { propertyService } from "../../services/propertyService";
+import { toast } from "sonner";
 
-describe("PropertyDetailPage - Trust Badge Integration", () => {
-  describe("Conditional Rendering Logic", () => {
-    it("verifies trustEnabled boolean logic for display", () => {
-      // 模擬 PropertyDetailPage 中的條件渲染邏輯
-      const scenarios = [
-        { trustEnabled: true, shouldDisplay: true },
-        { trustEnabled: false, shouldDisplay: false },
-        { trustEnabled: undefined, shouldDisplay: false },
-      ];
+// Mock navigator.sendBeacon
+Object.defineProperty(global.navigator, 'sendBeacon', {
+  writable: true,
+  value: vi.fn(() => true),
+});
 
-      scenarios.forEach(({ trustEnabled, shouldDisplay }) => {
-        const shouldRender = Boolean(trustEnabled);
-        expect(shouldRender).toBe(shouldDisplay);
-      });
+// Mock react-router-dom useParams
+vi.mock("react-router-dom", async () => {
+  const actual = await vi.importActual("react-router-dom");
+  return {
+    ...actual,
+    useParams: () => ({ id: "MH-100001" }),
+  };
+});
+
+// Mock dependencies
+vi.mock("../../services/propertyService", () => ({
+  propertyService: {
+    getPropertyByPublicId: vi.fn(),
+  },
+  DEFAULT_PROPERTY: {
+    id: "test-id",
+    publicId: "MH-100001",
+    title: "測試物件",
+    price: 12800000,
+    trustEnabled: false,
+    address: "台北市信義區",
+    description: "測試描述",
+    images: ["https://example.com/image.jpg"],
+    size: 30,
+    rooms: 2,
+    halls: 1,
+    bathrooms: 1,
+    floorCurrent: "3",
+    floorTotal: 10,
+    features: [],
+    advantage1: "",
+    advantage2: "",
+    disadvantage: "",
+    agent: {
+      id: "default-agent",
+      internalCode: 0,
+      name: "預設經紀人",
+      avatarUrl: "https://example.com/avatar.jpg",
+      company: "預設公司",
+      trustScore: 0,
+      encouragementCount: 0,
+    },
+  },
+}));
+
+vi.mock("sonner", () => ({
+  toast: {
+    success: vi.fn(),
+    error: vi.fn(),
+    warning: vi.fn(),
+  },
+}));
+
+vi.mock("../../hooks/useTrustActions", () => ({
+  useTrustActions: () => ({
+    learnMore: vi.fn(),
+    requestEnable: vi.fn().mockResolvedValue(undefined),
+  }),
+}));
+
+vi.mock("../../hooks/usePropertyTracker", () => ({
+  usePropertyTracker: () => ({
+    trackPhotoClick: vi.fn(),
+    trackLineClick: vi.fn(),
+    trackCallClick: vi.fn(),
+    trackMapClick: vi.fn(),
+  }),
+}));
+
+const mockPropertyData = {
+  publicId: "MH-100001",
+  title: "新光晴川 B棟 12樓",
+  price: 12800000,
+  trustEnabled: true,
+  address: "台北市信義區",
+  images: ["https://example.com/image.jpg"],
+  size: 30,
+  rooms: 2,
+  halls: 1,
+  bathrooms: 1,
+  agent: {
+    id: "agent-001",
+    name: "測試經紀人",
+    phone: "0912345678",
+    avatarUrl: "https://example.com/avatar.jpg",
+    company: "測試房仲",
+    trustScore: 95,
+  },
+  district: "信義區",
+};
+
+describe("PropertyDetailPage - User Behavior Tests", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  describe("真實用戶行為測試", () => {
+    it("trustEnabled=true 時應顯示已開啟狀態橫幅", async () => {
+      vi.mocked(propertyService.getPropertyByPublicId).mockResolvedValue(
+        mockPropertyData as any
+      );
+
+      render(
+        <MemoryRouter initialEntries={["/maihouses/property/MH-100001"]}>
+          <PropertyDetailPage />
+        </MemoryRouter>
+      );
+
+      await waitFor(() => {
+        expect(
+          screen.getByText("本物件已開啟安心留痕服務")
+        ).toBeInTheDocument();
+      }, { timeout: 5000 });
     });
 
-    it("verifies TrustBadge component is exported correctly", () => {
-      // 確保 TrustBadge 可以被正確 import（TypeScript 編譯時已驗證）
-      expect(TrustBadge).toBeDefined();
-      expect(typeof TrustBadge).toBe("function");
+    it("trustEnabled=false 時應顯示未開啟狀態橫幅", async () => {
+      vi.mocked(propertyService.getPropertyByPublicId).mockResolvedValue({
+        ...mockPropertyData,
+        trustEnabled: false,
+      } as any);
+
+      render(
+        <MemoryRouter initialEntries={["/maihouses/property/MH-100001"]}>
+          <PropertyDetailPage />
+        </MemoryRouter>
+      );
+
+      await waitFor(() => {
+        expect(
+          screen.getByText("本物件尚未開啟安心留痕服務")
+        ).toBeInTheDocument();
+      }, { timeout: 5000 });
     });
 
-    it("documents integration points for manual testing", () => {
-      const integrationChecklist = {
-        importStatement: 'import { TrustBadge } from "../components/TrustBadge"',
-        conditionalRender: "{property.trustEnabled && <TrustBadge />}",
-        location: "PropertyDetailPage.tsx L773 (between AgentTrustCard and safety card)",
-        testUrls: {
-          withTrust: "http://localhost:5173/maihouses/property/MH-TEST-001 (trustEnabled=true)",
-          withoutTrust: "http://localhost:5173/maihouses/property/MH-TEST-002 (trustEnabled=false)",
-        },
-      };
+    it("頁面載入時應顯示正確的房源標題", async () => {
+      vi.mocked(propertyService.getPropertyByPublicId).mockResolvedValue(
+        mockPropertyData as any
+      );
 
-      expect(integrationChecklist).toBeDefined();
+      render(
+        <MemoryRouter initialEntries={["/maihouses/property/MH-100001"]}>
+          <PropertyDetailPage />
+        </MemoryRouter>
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText(/新光晴川/)).toBeInTheDocument();
+      }, { timeout: 5000 });
     });
   });
 
-  describe("E2E Test Placeholder", () => {
-    it("should be implemented with Playwright for full page testing", () => {
-      // TODO: 未來使用 Playwright 實作完整的頁面級測試
-      // - 啟動開發伺服器
-      // - 訪問 trustEnabled=true 的物件，確認徽章顯示
-      // - 訪問 trustEnabled=false 的物件，確認徽章不顯示
-      // - 檢查徽章位置（AgentTrustCard 下方）
-      // - 驗證響應式佈局（desktop + mobile）
-      expect(true).toBe(true);
+  describe("Error Scenarios", () => {
+    it("網路錯誤時應顯示錯誤訊息", async () => {
+      vi.mocked(propertyService.getPropertyByPublicId).mockRejectedValue(
+        new Error("NetworkError: Failed to fetch")
+      );
+
+      render(
+        <MemoryRouter initialEntries={["/maihouses/property/MH-100001"]}>
+          <PropertyDetailPage />
+        </MemoryRouter>
+      );
+
+      await waitFor(() => {
+        expect(toast.error).toHaveBeenCalledWith(
+          "載入失敗",
+          expect.objectContaining({
+            description: expect.stringContaining("網路"),
+          })
+        );
+      }, { timeout: 5000 });
+    });
+
+    it("API 500 錯誤時應顯示重試選項", async () => {
+      vi.mocked(propertyService.getPropertyByPublicId).mockRejectedValue(
+        new Error("500 Internal Server Error")
+      );
+
+      render(
+        <MemoryRouter initialEntries={["/maihouses/property/MH-100001"]}>
+          <PropertyDetailPage />
+        </MemoryRouter>
+      );
+
+      await waitFor(() => {
+        expect(toast.error).toHaveBeenCalledWith(
+          "載入失敗",
+          expect.objectContaining({
+            description: expect.stringContaining("伺服器異常"),
+            action: expect.objectContaining({
+              label: "重新載入",
+            }),
+          })
+        );
+      }, { timeout: 5000 });
+    });
+
+    it("404 錯誤時應顯示物件不存在訊息", async () => {
+      vi.mocked(propertyService.getPropertyByPublicId).mockRejectedValue(
+        new Error("404 not found")
+      );
+
+      render(
+        <MemoryRouter initialEntries={["/maihouses/property/MH-100001"]}>
+          <PropertyDetailPage />
+        </MemoryRouter>
+      );
+
+      await waitFor(() => {
+        expect(toast.error).toHaveBeenCalledWith(
+          "載入失敗",
+          expect.objectContaining({
+            description: expect.stringContaining("不存在或已下架"),
+          })
+        );
+      }, { timeout: 5000 });
+    });
+  });
+
+  describe("Edge Cases", () => {
+    it("trustEnabled=undefined 時應顯示未開啟狀態（fallback）", async () => {
+      vi.mocked(propertyService.getPropertyByPublicId).mockResolvedValue({
+        ...mockPropertyData,
+        trustEnabled: undefined,
+      } as any);
+
+      render(
+        <MemoryRouter initialEntries={["/maihouses/property/MH-100001"]}>
+          <PropertyDetailPage />
+        </MemoryRouter>
+      );
+
+      await waitFor(() => {
+        expect(
+          screen.getByText("本物件尚未開啟安心留痕服務")
+        ).toBeInTheDocument();
+      }, { timeout: 5000 });
     });
   });
 });
