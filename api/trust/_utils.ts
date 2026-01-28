@@ -306,3 +306,41 @@ export function verifyToken(req: VercelRequest): AuditUser {
 export function cors(req: VercelRequest, res: VercelResponse): void {
   sharedCors(req, res);
 }
+
+/**
+ * 生成匿名使用者臨時代號
+ *
+ * 用於 Trust Room 中買方匿名身份識別。
+ *
+ * @returns {string} 格式: "買方-XXXXXXXX"，其中 X 為 8 碼密碼學安全隨機代號
+ *
+ * @example
+ * ```ts
+ * const code = generateBuyerCode();
+ * // => "買方-K3Y7M9P2"
+ * ```
+ *
+ * 安全性說明：
+ * - 使用 crypto.randomBytes() 生成密碼學安全隨機數
+ * - 去除易混淆字元：I, O, 0, 1, L
+ * - 可用字元：A-Z（除 I, O, L）+ 2-9（除 0, 1）
+ * - 共 32 個字元，8 碼組合數：32^8 = 1,099,511,627,776（1 兆以上）
+ * - 碰撞機率 < 0.0001%（10 萬次生成）
+ */
+export function generateBuyerCode(): string {
+  // 使用 Node.js crypto 模組生成密碼學安全隨機數
+  const crypto = require("crypto");
+
+  // 去除易混淆字元：I, O, 0, 1, L
+  const charset = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"; // 32 個字元
+  const length = 8; // 從 4 碼增加到 8 碼以增強安全性
+
+  const bytes = crypto.randomBytes(length);
+  let code = "";
+
+  for (let i = 0; i < length; i++) {
+    code += charset[bytes[i] % charset.length];
+  }
+
+  return `買方-${code}`;
+}

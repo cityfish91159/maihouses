@@ -20,7 +20,7 @@ export const TwoGoodsSection: React.FC = () => {
       <div className="mb-5 flex items-center gap-2">
         <Shield className="text-orange-500" size={22} />
         <div>
-          <h2 className="text-maihouses-dark text-lg font-bold">兩好一公道</h2>
+          <h2 className="text-lg font-bold text-maihouses-dark">兩好一公道</h2>
           <p className="text-xs text-slate-500">誠實揭露，建立買賣信任</p>
         </div>
       </div>

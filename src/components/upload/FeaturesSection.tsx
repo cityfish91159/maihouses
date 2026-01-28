@@ -12,7 +12,7 @@ export const FeaturesSection: React.FC = () => {
 
   return (
     <section className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
-      <h2 className="text-maihouses-dark mb-5 flex items-center gap-2 text-lg font-bold">
+      <h2 className="mb-5 flex items-center gap-2 text-lg font-bold text-maihouses-dark">
         <Sparkles size={20} className="text-maihouses-light" /> 物件特色
       </h2>
       <div className="rounded-xl border border-blue-100/50 bg-blue-50/30 p-5">

@@ -22,7 +22,7 @@ export const BasicInfoSection: React.FC = () => {
 
   return (
     <section className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
-      <h2 className="text-maihouses-dark mb-5 flex items-center gap-2 text-lg font-bold">
+      <h2 className="mb-5 flex items-center gap-2 text-lg font-bold text-maihouses-dark">
         <Home size={20} className="text-maihouses-light" /> 基本資料
       </h2>
 

@@ -45,7 +45,7 @@ export const PreviewSection: React.FC = () => {
             <MapPin size={14} /> {form.address || "地址"}
           </p>
           <div className="mt-3 flex items-baseline gap-1.5">
-            <span className="text-maihouses-dark text-2xl font-black">
+            <span className="text-2xl font-black text-maihouses-dark">
               {form.price || "0"}
             </span>
             <span className="text-sm font-bold text-slate-500">萬</span>
@@ -54,7 +54,7 @@ export const PreviewSection: React.FC = () => {
             {tags.map((tag, i) => (
               <span
                 key={i}
-                className="text-maihouses-dark rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-xs font-bold"
+                className="rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-xs font-bold text-maihouses-dark"
               >
                 {tag}
               </span>

@@ -8,6 +8,7 @@ import React from "react";
 import { Plus } from "lucide-react";
 import type { TrustCase } from "./types";
 import { formatRelativeTime, getStatusBadge } from "./utils";
+import { getBuyerDisplayName } from "../../../../lib/trustPrivacy";
 
 interface CaseSelectorProps {
   cases: TrustCase[];
@@ -29,6 +30,7 @@ export function CaseSelector({
       {cases.map((c) => {
         const isActive = c.id === selectedCaseId;
         const statusBadge = getStatusBadge(c.status);
+        const buyerDisplay = getBuyerDisplayName(c, "agent");
         return (
           <button
             key={c.id}
@@ -52,7 +54,7 @@ export function CaseSelector({
                 marginBottom: 2,
               }}
             >
-              {c.buyerName}
+              {buyerDisplay.name}
             </div>
             <div
               style={{

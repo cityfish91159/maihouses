@@ -7,6 +7,7 @@
 import React, { useState } from "react";
 import type { TrustCase, TrustEvent } from "./types";
 import { formatTime } from "./utils";
+import { getBuyerDisplayName } from "../../../../lib/trustPrivacy";
 
 interface EventTimelineProps {
   selectedCase: TrustCase;
@@ -44,7 +45,7 @@ export function EventTimeline({ selectedCase }: EventTimelineProps) {
               {event.actor === "agent"
                 ? "房仲"
                 : event.actor === "buyer"
-                  ? "買方"
+                  ? getBuyerDisplayName(selectedCase, "agent").name
                   : "系統"}
             </span>
           </div>

@@ -15,7 +15,7 @@ interface TrustServiceBannerProps {
   propertyId: string;
 
   className?: string;
-  onLearnMore?: () => void;
+  onEnterService?: () => void;
   onRequestEnable?: () => void;
 
   /**
@@ -29,15 +29,15 @@ interface TrustServiceBannerProps {
  * 安心留痕服務狀態橫幅組件
  *
  * 根據物件的 trustEnabled 狀態顯示不同樣式的提示橫幅:
- * - 已開啟: 藍色系橫幅 + "了解更多" CTA
+ * - 已開啟: 藍色系橫幅 + "進入服務" CTA
  * - 未開啟: 琥珀色系橫幅 + "要求房仲開啟" CTA
  *
  * @param props - 組件 Props
  * @param props.trustEnabled - 是否已開啟安心留痕服務
  * @param props.propertyId - 物件 public ID (例如: MH-100001)
  * @param props.className - 自訂 CSS class
- * @param props.onLearnMore - 「了解更多」點擊回調
- * @param props.onRequestEnable - 「要求房仲開啟」點擊回調
+ * @param props.onEnterService - 「進入服務」點擊回調 (已開啟狀態)
+ * @param props.onRequestEnable - 「要求房仲開啟」點擊回調 (未開啟狀態)
  * @param props.isRequesting - 是否正在提交要求 (顯示 loading 狀態)
  *
  * @returns React 組件
@@ -48,7 +48,7 @@ interface TrustServiceBannerProps {
  * <TrustServiceBanner
  *   trustEnabled={true}
  *   propertyId="MH-100001"
- *   onLearnMore={() => navigate('/trust-room')}
+ *   onEnterService={() => navigate('/trust-room')}
  * />
  *
  * // 未開啟安心留痕的物件 (with loading)
@@ -71,7 +71,7 @@ export const TrustServiceBanner: React.FC<TrustServiceBannerProps> = ({
   trustEnabled,
   propertyId,
   className = '',
-  onLearnMore,
+  onEnterService,
   onRequestEnable,
   isRequesting = false,
 }) => {
@@ -89,8 +89,8 @@ export const TrustServiceBanner: React.FC<TrustServiceBannerProps> = ({
         icon: Shield,
         title: '本物件已開啟安心留痕服務',
         subtitle: '六階段交易追蹤 · 每步驟數位留痕 · 雙方確認機制',
-        buttonText: '了解更多',
-        onButtonClick: onLearnMore,
+        buttonText: '進入服務',
+        onButtonClick: onEnterService,
       }
     : {
         bgColor: 'bg-badge-warning-bg',
@@ -140,15 +140,15 @@ export const TrustServiceBanner: React.FC<TrustServiceBannerProps> = ({
           aria-busy={isRequesting}
           aria-label={
             trustEnabled
-              ? '開啟安心留痕說明頁面'
+              ? '進入安心留痕服務'
               : '要求房仲開啟安心留痕服務'
           }
           title={
             trustEnabled
-              ? '在新分頁查看詳細說明'
+              ? '進入安心留痕服務頁面'
               : '向房仲提出開啟服務的要求'
           }
-          className={`inline-flex min-h-[48px] w-full shrink-0 cursor-pointer items-center justify-center gap-2 rounded-full px-4 py-3 text-xs font-bold text-white shadow-sm transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 md:w-auto lg:w-auto ${bannerConfig.buttonBg} ${bannerConfig.buttonHover}`}
+          className={`inline-flex min-h-[48px] w-full shrink-0 cursor-pointer items-center justify-center gap-2 rounded-full px-4 py-3 text-xs font-bold text-white shadow-sm transition-all duration-200 hover:scale-[1.02] focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 active:opacity-85 disabled:cursor-not-allowed disabled:opacity-50 md:w-auto lg:w-auto ${bannerConfig.buttonBg} ${bannerConfig.buttonHover}`}
         >
           {isRequesting ? (
             <>

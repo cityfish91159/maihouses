@@ -34,4 +34,11 @@ export interface Transaction {
   isPaid: boolean;
   steps: Record<string, Step>;
   supplements: { role: string; content: string; timestamp: number }[];
+  // 隱私保護相關欄位
+  agentName?: string | null;
+  agentCompany?: string | null;
+  buyerName?: string | null;
+  buyerId?: string | null;
+  // [Team 3 修復] M4 資料收集所需欄位
+  buyerUserId?: string | null;
 }

@@ -1,4 +1,5 @@
 import { toast } from "sonner";
+import { TOAST_DURATION } from "../constants/toast";
 
 export type NotifyOptions = {
   id?: string | number;
@@ -46,22 +47,22 @@ const mapOptions = (
 
 export const notify = {
   success: (title: string, description?: string, options?: NotifyOptions) =>
-    toast.success(title, mapOptions(options, description, 3200)),
+    toast.success(title, mapOptions(options, description, TOAST_DURATION.SUCCESS)),
 
   error: (title: string, description?: string, options?: NotifyOptions) =>
     toast.error(
       title,
-      mapOptions(options, description, options?.duration ?? 5000),
+      mapOptions(options, description, options?.duration ?? TOAST_DURATION.ERROR),
     ),
 
   warning: (title: string, description?: string, options?: NotifyOptions) =>
     toast.warning(
       title,
-      mapOptions(options, description, options?.duration ?? 4500),
+      mapOptions(options, description, options?.duration ?? TOAST_DURATION.WARNING),
     ),
 
   info: (title: string, description?: string, options?: NotifyOptions) =>
-    toast.info(title, mapOptions(options, description, 3200)),
+    toast.info(title, mapOptions(options, description, TOAST_DURATION.INFO)),
 
   loading: (title: string, options?: NotifyOptions) =>
     toast.loading(

@@ -1,0 +1,22 @@
+# Vercel Headers 設定
+# 參考: https://vercel.com/docs/projects/project-configuration#headers
+
+/*
+  # Content Security Policy (CSP)
+  # Team Alpha - S-02: 完整的 CSP 策略
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https: blob:; connect-src 'self' https://*.supabase.co https://www.google-analytics.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'
+
+  # X-Frame-Options: 防止 Clickjacking
+  X-Frame-Options: DENY
+
+  # X-Content-Type-Options: 防止 MIME sniffing
+  X-Content-Type-Options: nosniff
+
+  # Referrer-Policy: 控制 Referrer 資訊
+  Referrer-Policy: strict-origin-when-cross-origin
+
+  # Permissions-Policy: 控制瀏覽器功能
+  Permissions-Policy: geolocation=(), microphone=(), camera=()
+
+  # Strict-Transport-Security: 強制 HTTPS
+  Strict-Transport-Security: max-age=31536000; includeSubDomains; preload

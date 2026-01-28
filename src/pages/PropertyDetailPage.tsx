@@ -45,6 +45,11 @@ import {
 } from "../utils/keyCapsules";
 import { track } from "../analytics/track";
 import { logger } from "../lib/logger";
+import { supabase } from "../lib/supabase";
+import { notify } from "../lib/notify";
+import { z } from "zod";
+import { secureStorage, migrateLegacyData } from "../lib/secureStorage";
+import { SkeletonBanner } from "../components/SkeletonScreen";
 import { useTrustActions } from "../hooks/useTrustActions";
 import { usePropertyTracker } from "../hooks/usePropertyTracker";
 import { ErrorBoundary } from "react-error-boundary";
@@ -93,6 +98,7 @@ export const PropertyDetailPage: React.FC = () => {
 
   // 安心留痕要求處理狀態
   const [isRequestingTrust, setIsRequestingTrust] = useState(false);
+  const [isRequesting, setIsRequesting] = useState(false);
 
   // 開發測試：trustEnabled 狀態切換 (僅 Mock 頁面)
   const [mockTrustEnabled, setMockTrustEnabled] = useState<boolean | null>(null);
@@ -156,6 +162,73 @@ export const PropertyDetailPage: React.FC = () => {
 
   // 安心留痕服務操作
   const trustActions = useTrustActions(property.publicId);
+
+  const handleEnterService = useCallback(async () => {
+    setIsRequesting(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      const res = await fetch('/api/trust/auto-create-case', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          propertyId: property.publicId,
+          userId: user?.id,
+          userName: user?.user_metadata?.name
+        })
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({ error: '系統錯誤' }));
+        throw new Error(errorData.error || 'Failed to create case');
+      }
+
+      // [Team 4 修復] 加入 API 回應驗證
+      const responseSchema = z.object({
+        data: z.object({
+          token: z.string().uuid(),
+          case_id: z.string().uuid(),
+          buyer_name: z.string(),
+        }),
+      });
+
+      const json = await res.json();
+      const parseResult = responseSchema.safeParse(json);
+
+      if (!parseResult.success) {
+        logger.error('Invalid API response from auto-create-case', {
+          error: parseResult.error.message,
+          response: json,
+        });
+        notify.error('系統錯誤', '請稍後再試');
+        return;
+      }
+
+      const { data } = parseResult.data;
+
+      // [Team Alpha - S-01] 儲存加密 Token 到 localStorage (AES-256)
+      secureStorage.setItem('trustToken', data.token);
+      secureStorage.setItem('trustCaseId', data.case_id);
+
+      // [Team 14 修復] 追蹤 GA 事件
+      if (typeof window !== 'undefined' && 'gtag' in window) {
+        (window as any).gtag('event', 'trust_service_enter', {
+          event_category: 'trust_flow',
+          event_label: property.publicId,
+          value: 1,
+        });
+      }
+
+      window.location.href = `/maihouses/assure?token=${data.token}`;
+    } catch (error) {
+      logger.error('handleEnterService error', {
+        error: error instanceof Error ? error.message : 'Unknown',
+        propertyId: property.publicId,
+      });
+      notify.error('無法進入服務', error instanceof Error ? error.message : '請稍後再試');
+    } finally {
+      setIsRequesting(false);
+    }
+  }, [property.publicId]);
 
   const capsuleTags = useMemo(() => {
     return buildKeyCapsuleTags({
@@ -308,13 +381,15 @@ export const PropertyDetailPage: React.FC = () => {
       )}
 
       {/* 安心留痕服務橫幅 */}
-      {property && (
+      {!property ? (
+        <SkeletonBanner className="my-4" />
+      ) : (
         <ErrorBoundary FallbackComponent={TrustBannerFallback}>
           <TrustServiceBanner
             trustEnabled={property.trustEnabled ?? false}
             propertyId={property.publicId}
             className="my-4"
-            onLearnMore={trustActions.learnMore}
+            onEnterService={handleEnterService}
             onRequestEnable={async () => {
               setIsRequestingTrust(true);
               try {
@@ -332,7 +407,7 @@ export const PropertyDetailPage: React.FC = () => {
                 setIsRequestingTrust(false);
               }
             }}
-            isRequesting={isRequestingTrust}
+            isRequesting={isRequesting}
           />
         </ErrorBoundary>
       )}

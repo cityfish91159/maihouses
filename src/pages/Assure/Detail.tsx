@@ -16,6 +16,10 @@ import {
   Briefcase,
   Zap,
 } from "lucide-react";
+import { getAgentDisplayInfo } from "../../lib/trustPrivacy";
+import { DataCollectionModal } from "../../components/TrustRoom/DataCollectionModal";
+import { toast } from "sonner";
+import { logger } from "../../lib/logger";
 
 export default function AssureDetail() {
   const location = useLocation();
@@ -38,6 +42,10 @@ export default function AssureDetail() {
   // Inputs
   const [inputBuffer, setInputBuffer] = useState("");
   const [supplementInput, setSupplementInput] = useState("");
+
+  // [Team 3 修復] M4 Modal 狀態管理
+  const [showDataModal, setShowDataModal] = useState(false);
+  const [isSubmittingData, setIsSubmittingData] = useState(false);
 
   // Dev Helper
   const isDev =
@@ -78,6 +86,79 @@ export default function AssureDetail() {
   const toggleRole = () => {
     const newRole = role === "agent" ? "buyer" : "agent";
     setRole(newRole);
+  };
+
+  // [Team 3 修復] M4 資料收集 Modal 觸發邏輯
+  useEffect(() => {
+    if (!tx || role !== "buyer") return;
+
+    // 檢查是否需要顯示 Modal（stage === 4 且為臨時代號）
+    const isStage4 = tx.currentStep === 4;
+    const isTempBuyer =
+      tx.buyerName?.startsWith("買方-") && tx.buyerUserId === null;
+
+    if (isStage4 && isTempBuyer && !showDataModal) {
+      // 延遲 500ms 顯示 Modal，避免與頁面渲染衝突
+      const timer = setTimeout(() => {
+        setShowDataModal(true);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [tx, role, showDataModal]);
+
+  // [Team 3 修復] M4 資料收集表單提交
+  const handleDataSubmit = async (data: {
+    name: string;
+    phone: string;
+    email: string;
+  }) => {
+    setIsSubmittingData(true);
+    try {
+      const res = await fetch("/api/trust/complete-buyer-info", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          caseId: caseId,
+          name: data.name,
+          phone: data.phone,
+          email: data.email || undefined,
+        }),
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({
+          error: "提交失敗",
+        }));
+        throw new Error(errorData.error || "提交失敗");
+      }
+
+      toast.success("資料提交成功！", {
+        description: "您的資料已安全儲存，感謝您的配合。",
+      });
+      setShowDataModal(false);
+
+      // 重新載入案件資料（觸發 useTrustRoom 重新 fetch）
+      // Note: useTrustRoom 會自動偵測 tx 變化並重新載入
+      window.location.reload();
+    } catch (error) {
+      logger.error("handleDataSubmit error", {
+        error: error instanceof Error ? error.message : "Unknown",
+        caseId,
+      });
+      toast.error("提交失敗", {
+        description: error instanceof Error ? error.message : "請稍後再試",
+      });
+    } finally {
+      setIsSubmittingData(false);
+    }
+  };
+
+  // [Team 3 修復] M4 Modal 跳過處理
+  const handleDataSkip = () => {
+    toast.info("已跳過資料填寫", {
+      description: "您可以稍後在案件頁面中補充資料。",
+    });
+    setShowDataModal(false);
   };
 
   // --- RENDERING ---
@@ -153,6 +234,16 @@ export default function AssureDetail() {
             <span>案號: {caseId}</span>
             {loading && <span className="animate-pulse">●</span>}
           </div>
+          {/* 房仲資訊顯示（買方視角） */}
+          {tx && role === "buyer" && (
+            <div className="mt-1 text-xs text-blue-200">
+              {getAgentDisplayInfo(
+                tx.agentName,
+                tx.agentCompany,
+                "buyer",
+              ).fullText}
+            </div>
+          )}
         </div>
         <div className="flex gap-2">
           <button
@@ -461,6 +552,16 @@ export default function AssureDetail() {
           </div>
         </div>
       </div>
+
+      {/* [Team 3 修復] M4 資料收集 Modal */}
+      {showDataModal && (
+        <DataCollectionModal
+          isOpen={showDataModal}
+          onSubmit={handleDataSubmit}
+          onSkip={handleDataSkip}
+          isSubmitting={isSubmittingData}
+        />
+      )}
     </div>
   );
 }

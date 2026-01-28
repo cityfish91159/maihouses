@@ -36,7 +36,7 @@ test.describe('PropertyDetailPage - TrustServiceBanner Integration', () => {
     await expect(successToast).toBeVisible({ timeout: 3000 });
   });
 
-  test('trustEnabled=true 時應該顯示已開啟狀態並可以點擊了解更多', async ({ page, context }) => {
+  test('trustEnabled=true 時應該顯示已開啟狀態並可以點擊進入服務', async ({ page, context }) => {
     // Mock trustEnabled=true
     await page.route('**/api/property/**', async (route) => {
       await route.fulfill({
@@ -66,17 +66,17 @@ test.describe('PropertyDetailPage - TrustServiceBanner Integration', () => {
     const banner = page.locator('text=本物件已開啟安心留痕服務');
     await expect(banner).toBeVisible();
 
-    // Check "了解更多" button
-    const learnMoreButton = page.getByRole('button', { name: /開啟安心留痕說明頁面/ });
-    await expect(learnMoreButton).toBeVisible();
+    // Check "進入服務" button
+    const enterServiceButton = page.getByRole('button', { name: /進入安心留痕服務/ });
+    await expect(enterServiceButton).toBeVisible();
 
     // Listen for popup
     const popupPromise = context.waitForEvent('page');
-    await learnMoreButton.click();
+    await enterServiceButton.click();
 
     // Verify new tab opened
     const popup = await popupPromise;
-    await expect(popup).toHaveURL(/\/maihouses\/trust-room/);
+    await expect(popup).toHaveURL(/\/maihouses\/assure/);
   });
 
   test('按鈕點擊時應該顯示 loading 狀態', async ({ page }) => {
