@@ -1,0 +1,13 @@
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "tools/call",
+  "params": {
+    "name": "codex",
+    "arguments": {
+      "prompt": "Strictly audit these BE-9 files: api/trust/close.ts, api/trust/_utils.ts, api/trust/send-notification.ts. Find ALL issues: type safety, security, error handling, duplication. Output numbered defect list with file:line.",
+      "workingDirectory": "C:\\Users\\陳世瑜\\maihouses",
+      "reasoningEffort": "high"
+    }
+  }
+}

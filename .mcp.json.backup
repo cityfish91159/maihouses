@@ -12,7 +12,7 @@
     },
     "codex": {
       "command": "npx",
-      "args": ["-y", "@cexll/codex-mcp-server"],
+      "args": ["-y", "codex-mcp-server"],
       "env": {}
     }
   }

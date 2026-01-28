@@ -17,7 +17,7 @@
 
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { z } from "zod";
-import { supabase, cors, logAudit } from "./_utils";
+import { supabase, cors, logAudit, withTimeout } from "./_utils";
 import {
   successResponse,
   errorResponse,
@@ -153,16 +153,18 @@ async function handleAutoCreateCase(
     const { buyerName, buyerUserId } = buyerInfo;
 
     // 4. 呼叫 RPC 建立案件（自動生成 token）
-    const { data: rpcData, error: rpcError } = await supabase.rpc(
-      "fn_create_trust_case",
-      {
+    // [Team 8 修復] 添加 15 秒 timeout 保護
+    const { data: rpcData, error: rpcError } = await withTimeout(
+      supabase.rpc("fn_create_trust_case", {
         p_agent_id: property.agent_id,
         p_buyer_name: buyerName,
         p_property_title: property.title,
         p_buyer_session_id: null, // Phase 1.5 不需要 UAG session
         p_buyer_contact: null,
         p_property_id: propertyId,
-      }
+      }),
+      15000,
+      "RPC call timed out after 15 seconds",
     );
 
     if (rpcError) {

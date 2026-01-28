@@ -1601,6 +1601,48 @@
 
             if (role) setLS("mh.auth.role", role);
 
+            // ============================================================================
+            // Token 升級機制：將匿名 token 綁定到已登入用戶
+            // ============================================================================
+            const pendingToken = getLS("pending_trust_token");
+            if (pendingToken) {
+              try {
+                // 取得用戶名稱（優先使用 metadata.name，否則使用 email 的前綴）
+                const userName =
+                  user.user_metadata?.name ||
+                  user.user_metadata?.full_name ||
+                  user.email?.split("@")[0] ||
+                  "用戶";
+
+                // 呼叫 API 升級案件
+                const response = await fetch("/api/trust/upgrade-case", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    token: pendingToken,
+                    userId: user.id,
+                    userName: userName,
+                  }),
+                });
+
+                if (response.ok) {
+                  const result = await response.json();
+                  console.info("[auth] Trust case upgraded successfully:", result);
+                  // 成功後移除 localStorage 中的 token
+                  localStorage.removeItem("pending_trust_token");
+                } else {
+                  const errorData = await response.json();
+                  console.warn("[auth] Trust case upgrade failed:", errorData);
+                  // 即使失敗也移除 token，避免重複嘗試
+                  localStorage.removeItem("pending_trust_token");
+                }
+              } catch (upgradeError) {
+                console.error("[auth] Trust case upgrade error:", upgradeError);
+                // 發生錯誤時也移除 token
+                localStorage.removeItem("pending_trust_token");
+              }
+            }
+
             // P7-FIX: Redirect to React Feed App (Unified Entry)
             go(`/maihouses/feed/${user.id}`);
             return;

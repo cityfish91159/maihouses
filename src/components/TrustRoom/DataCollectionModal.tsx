@@ -37,13 +37,24 @@ const S = {
 // Zod Schema [NASA TypeScript Safety]
 // ============================================================================
 
+/**
+ * [Team 7 修復] 前後端驗證規則統一
+ *
+ * 與後端 complete-buyer-info.ts Schema 保持一致：
+ * - name: 僅允許中英文 + 空格
+ * - phone: 台灣手機格式 09XXXXXXXX (10碼)
+ * - email: 標準 Email 格式
+ */
 const DataCollectionFormSchema = z.object({
-  name: z.string().min(1, "姓名不可為空").max(50, "姓名最多 50 字"),
+  name: z
+    .string()
+    .min(1, "姓名不可為空")
+    .max(50, "姓名最多 50 字")
+    .regex(/^[\u4e00-\u9fa5a-zA-Z\s]+$/, "姓名僅能包含中英文"),
   phone: z
     .string()
     .min(1, "電話不可為空")
-    .max(20, "電話最多 20 字")
-    .regex(/^[0-9\-+() ]+$/, "電話格式不正確"),
+    .regex(/^09\d{8}$/, "請輸入正確的台灣手機號碼（09 開頭 10 碼）"),
   email: z
     .string()
     .max(100, "Email 最多 100 字")
@@ -60,7 +71,7 @@ export type DataCollectionFormData = z.infer<typeof DataCollectionFormSchema>;
 
 export interface DataCollectionModalProps {
   isOpen: boolean;
-  onSubmit: (data: { name: string; phone: string; email: string }) => void;
+  onSubmit: (data: { name: string; phone: string; email: string }) => void | Promise<void>;
   onSkip: () => void;
   isSubmitting?: boolean;
 }
@@ -166,7 +177,7 @@ export function DataCollectionModal({
 
   // Handle submit
   const handleSubmit = useCallback(
-    (e: React.FormEvent) => {
+    async (e: React.FormEvent) => {
       e.preventDefault();
 
       if (isSubmitting) return;
@@ -174,7 +185,15 @@ export function DataCollectionModal({
       const formData = validateForm();
       if (!formData) return;
 
-      onSubmit(formData);
+      // [Team 8 修復] 添加錯誤處理，防止 onSubmit 拋出錯誤時 Modal 卡住
+      try {
+        await onSubmit(formData);
+      } catch (error) {
+        logger.error("[DataCollectionModal] Submit failed", {
+          error: error instanceof Error ? error.message : "Unknown",
+        });
+        notify.error("送出失敗", "請稍後再試或聯繫客服");
+      }
     },
     [validateForm, isSubmitting, onSubmit],
   );
@@ -277,7 +296,7 @@ export function DataCollectionModal({
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               placeholder={S.PHONE_PLACEHOLDER}
-              maxLength={20}
+              maxLength={10}
               className={`w-full rounded-xl border px-4 py-2.5 text-sm transition-colors focus:outline-none focus:ring-2 ${
                 errors.phone
                   ? "border-red-300 focus:border-red-500 focus:ring-red-500/20"

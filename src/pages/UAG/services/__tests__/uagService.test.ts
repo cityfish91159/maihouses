@@ -113,7 +113,7 @@ const mockPosts = [
 // Helper: 建立 Supabase Mock 鏈
 // ============================================================================
 
-const createMockChain = (data: any, error: any = null) => {
+const createMockChain = (data: unknown, error: unknown = null) => {
   const chain = {
     select: vi.fn().mockReturnThis(),
     eq: vi.fn().mockReturnThis(),

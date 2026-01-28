@@ -218,8 +218,8 @@ describe('TrustServiceBanner - Edge Cases', () => {
     );
     const button = screen.getByRole('button', { name: /進入安心留痕服務/ });
 
-    // 檢查是否包含 active:scale-95 類別
-    expect(button).toHaveClass('active:scale-95');
+    // [Team 8 第五位修復] 按鈕實際使用 active:opacity-85 而非 active:scale-95
+    expect(button).toHaveClass('active:opacity-85');
   });
 
   it('應該在 isRequesting=true 時禁用按鈕並顯示 Loading', () => {

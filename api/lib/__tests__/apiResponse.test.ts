@@ -268,7 +268,7 @@ describe("apiResponse", () => {
     });
 
     it("應安全處理循環引用的 details", () => {
-      const circular: any = { a: 1, b: 2 };
+      const circular: { a: number; b: number; self?: unknown } = { a: 1, b: 2 };
       circular.self = circular; // 循環引用
 
       // 建立回應不應崩潰

@@ -76,7 +76,10 @@ describe("Session Recovery API Types", () => {
 });
 
 describe("Session Recovery API Logic", () => {
-  let mockSupabase: any;
+  let mockSupabase: {
+    from: ReturnType<typeof vi.fn>;
+    rpc: ReturnType<typeof vi.fn>;
+  };
 
   beforeEach(() => {
     vi.clearAllMocks();

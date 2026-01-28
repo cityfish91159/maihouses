@@ -20,7 +20,7 @@
 
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { z } from "zod";
-import { supabase, verifyToken, cors, logAudit, SYSTEM_API_KEY, getClientIp, getUserAgent } from "./_utils";
+import { supabase, verifyToken, cors, logAudit, SYSTEM_API_KEY, getClientIp, getUserAgent, withTimeout } from "./_utils";
 import {
   successResponse,
   errorResponse,
@@ -177,11 +177,16 @@ export default async function handler(
     const { caseId, name, phone, email } = bodyResult.data;
 
     // Step 3: 查詢案件是否存在
-    const { data: caseRow, error: caseError } = await supabase
-      .from("trust_cases")
-      .select("id, agent_id, status, buyer_name")
-      .eq("id", caseId)
-      .single();
+    // [Team 8 第三位修復] 添加 15 秒 timeout 保護
+    const { data: caseRow, error: caseError } = await withTimeout(
+      supabase
+        .from("trust_cases")
+        .select("id, agent_id, status, buyer_name")
+        .eq("id", caseId)
+        .single(),
+      15000,
+      "Database query timed out after 15 seconds",
+    );
 
     if (caseError || !caseRow) {
       if (caseError?.code === "PGRST116") {
@@ -257,11 +262,14 @@ export default async function handler(
       updateQuery = updateQuery.eq("agent_id", user.id);
     }
 
-    const { data: updatedCase, error: updateError } = await updateQuery
-      .select("id, buyer_name, buyer_phone, buyer_email")
-      .single();
+    // [Team 8 第三位修復] 為 update 查詢添加 timeout
+    const { data: updatedCase, error: updateError } = await withTimeout(
+      updateQuery.select("id, buyer_name, buyer_phone, buyer_email").single(),
+      15000,
+      "Update operation timed out after 15 seconds",
+    );
 
-    // 區分並發衝突與真正錯誤
+    // [Team 8 修復] 區分並發衝突與真正錯誤，細分 PGRST 錯誤碼
     if (updateError) {
       // PGRST116 = no rows returned，可能是並發狀態變更
       if (updateError.code === "PGRST116") {
@@ -275,8 +283,22 @@ export default async function handler(
         return;
       }
 
+      // PGRST301 = 權限不足（RLS 拒絕）
+      if (updateError.code === "PGRST301") {
+        logger.warn("[trust/complete-buyer-info] Permission denied by RLS", {
+          caseId,
+          error: updateError.message,
+        });
+        res
+          .status(403)
+          .json(errorResponse(API_ERROR_CODES.FORBIDDEN, "無權限操作此案件"));
+        return;
+      }
+
+      // 其他資料庫錯誤
       logger.error("[trust/complete-buyer-info] Update failed", {
         error: updateError.message ?? "Unknown",
+        code: updateError.code,
         caseId,
       });
       res
@@ -306,11 +328,16 @@ export default async function handler(
           };
 
     // [Team 5 修復] 改為阻塞模式審計日誌
+    // [Team 8 第五位修復] 為 logAudit 添加 timeout 保護
     try {
-      await logAudit(
-        caseId,
-        `COMPLETE_BUYER_INFO_${authSource.toUpperCase()}`,
-        auditUser,
+      await withTimeout(
+        logAudit(
+          caseId,
+          `COMPLETE_BUYER_INFO_${authSource.toUpperCase()}`,
+          auditUser,
+        ),
+        5000,
+        "Audit log timeout after 5 seconds",
       );
     } catch (auditErr) {
       logger.error("[trust/complete-buyer-info] Audit log failed", {

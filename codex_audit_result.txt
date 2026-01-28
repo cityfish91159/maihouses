@@ -1,0 +1,9 @@
+1) api/trust/_utils.ts:70 — Error handling/best practice: missing Supabase env vars only logged, then `createClient(supabaseUrl!, supabaseKey!)` still runs, leading to runtime failures with undefined credentials; should hard-fail early.  
+2) api/trust/_utils.ts:147 — Error handling/data integrity: `getTx` creates a new transaction state on any DB error (not just “not found”), which can mask outages/permission errors and create incorrect state.  
+3) api/trust/_utils.ts:228 — Type safety: `agent` is assigned `req.headers["user-agent"] || "unknown"`; header can be `string[]`, violating the `AuditUser.agent: string` contract and risking log serialization issues.  
+4) api/trust/close.ts:93 — Type safety: `systemKey` is `string | string[] | undefined`; comparing directly to `SYSTEM_API_KEY` can reject valid keys when multiple headers are present. Normalize before compare.  
+5) api/trust/send-notification.ts:152 — Functional bug: template uses `{trustRoomUrl}` instead of `${trustRoomUrl}`, so LINE message never includes the URL.  
+6) api/trust/send-notification.ts:685 — Observability/error handling: `action` string uses `?{message.type}` without `${}`, so logs store a literal placeholder instead of the actual type.  
+7) api/trust/send-notification.ts:687 — Observability/error handling: `detail` string uses `{retried ? ...}` and `{error}` without `${}`, so failure details are lost in logs/DB.  
+8) api/trust/send-notification.ts:702 — Error handling gap: `getFallbackLineId` returns `null` on DB errors or parse failures without logging; failures become silent and hard to diagnose.  
+9) api/trust/send-notification.ts:813 and api/trust/send-notification.ts:904 — Code duplication/best practice: retry logic for push and LINE is duplicated; consider a shared retry helper to keep behavior consistent and reduce drift.

@@ -55,18 +55,39 @@ const resolveAppBaseHref = (): string => {
 };
 
 /**
+ * HTML 轉義函數 - 防止 XSS 攻擊
+ * 
+ * [Team 5 修復] 安全防護
+ * @param str - 要轉義的字串
+ * @returns 轉義後的字串
+ */
+const escapeHtml = (str: string): string => {
+  const div = document.createElement("div");
+  div.textContent = str;
+  return div.innerHTML;
+};
+
+/**
  * 顯示友善錯誤頁面（用於 PROD 環境關鍵錯誤）
+ * 
+ * [Team 5 修復] XSS 防護:
+ * - 使用 escapeHtml 轉義所有用戶輸入
+ * - 防止惡意腳本注入
  */
 const showFriendlyErrorPage = (title: string, message: string): void => {
   if (typeof document !== "undefined" && document.body) {
     const homeHref = resolveAppBaseHref();
+    const safeTitle = escapeHtml(title);
+    const safeMessage = escapeHtml(message);
+    const safeHomeHref = escapeHtml(homeHref);
+
     document.body.innerHTML = `
       <div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:system-ui,-apple-system,sans-serif;background:#f8fafc;">
         <div style="text-align:center;max-width:400px;padding:2rem;">
           <div style="font-size:3rem;margin-bottom:1rem;">⚠️</div>
-          <h1 style="font-size:1.25rem;font-weight:600;color:#1e293b;margin-bottom:0.5rem;">${title}</h1>
-          <p style="color:#475569;margin-bottom:1.5rem;">${message}</p>
-          <a href="${homeHref}" style="display:inline-block;padding:0.75rem 1.5rem;background:#3b82f6;color:white;border-radius:0.5rem;text-decoration:none;font-weight:500;">回到首頁</a>
+          <h1 style="font-size:1.25rem;font-weight:600;color:#1e293b;margin-bottom:0.5rem;">${safeTitle}</h1>
+          <p style="color:#475569;margin-bottom:1.5rem;">${safeMessage}</p>
+          <a href="${safeHomeHref}" style="display:inline-block;padding:0.75rem 1.5rem;background:#3b82f6;color:white;border-radius:0.5rem;text-decoration:none;font-weight:500;">回到首頁</a>
         </div>
       </div>
     `;

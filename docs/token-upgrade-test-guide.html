@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Token 升級機制測試指南</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 40px 20px;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 16px;
+      padding: 40px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+
+    h1 {
+      color: #333;
+      margin-bottom: 10px;
+      font-size: 32px;
+    }
+
+    .subtitle {
+      color: #666;
+      margin-bottom: 30px;
+      font-size: 16px;
+    }
+
+    .section {
+      margin-bottom: 30px;
+      padding: 20px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      border-left: 4px solid #667eea;
+    }
+
+    .section h2 {
+      color: #667eea;
+      margin-bottom: 15px;
+      font-size: 20px;
+    }
+
+    .section p {
+      color: #555;
+      line-height: 1.6;
+      margin-bottom: 10px;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 15px;
+    }
+
+    button {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .btn-primary {
+      background: #667eea;
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #5568d3;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-secondary {
+      background: #48bb78;
+      color: white;
+    }
+
+    .btn-secondary:hover {
+      background: #38a169;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(72, 187, 120, 0.4);
+    }
+
+    .btn-danger {
+      background: #f56565;
+      color: white;
+    }
+
+    .btn-danger:hover {
+      background: #e53e3e;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(245, 101, 101, 0.4);
+    }
+
+    .btn-info {
+      background: #4299e1;
+      color: white;
+    }
+
+    .btn-info:hover {
+      background: #3182ce;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(66, 153, 225, 0.4);
+    }
+
+    .status {
+      margin-top: 15px;
+      padding: 15px;
+      border-radius: 8px;
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .status.success {
+      background: #c6f6d5;
+      color: #22543d;
+      border: 1px solid #9ae6b4;
+    }
+
+    .status.error {
+      background: #fed7d7;
+      color: #742a2a;
+      border: 1px solid #fc8181;
+    }
+
+    .status.info {
+      background: #bee3f8;
+      color: #2c5282;
+      border: 1px solid #90cdf4;
+    }
+
+    .code {
+      background: #2d3748;
+      color: #e2e8f0;
+      padding: 15px;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      line-height: 1.5;
+      margin-top: 10px;
+    }
+
+    .steps {
+      list-style: none;
+      counter-reset: step-counter;
+    }
+
+    .steps li {
+      counter-increment: step-counter;
+      margin-bottom: 15px;
+      padding-left: 40px;
+      position: relative;
+      color: #555;
+      line-height: 1.6;
+    }
+
+    .steps li::before {
+      content: counter(step-counter);
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 28px;
+      height: 28px;
+      background: #667eea;
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 14px;
+    }
+
+    .note {
+      background: #fffbeb;
+      border: 1px solid #f6e05e;
+      border-left: 4px solid #ed8936;
+      padding: 15px;
+      border-radius: 8px;
+      margin-top: 15px;
+    }
+
+    .note strong {
+      color: #c05621;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔧 Token 升級機制測試指南</h1>
+    <p class="subtitle">手動測試 Trust Room Token 升級功能</p>
+
+    <!-- 第一步：設定 Token -->
+    <div class="section">
+      <h2>步驟 1：設定待升級 Token</h2>
+      <p>點擊下方按鈕，將測試 Token 存入 localStorage</p>
+      <div class="button-group">
+        <button class="btn-primary" onclick="setTestToken()">
+          設定測試 Token
+        </button>
+        <button class="btn-info" onclick="checkToken()">
+          檢查當前 Token
+        </button>
+        <button class="btn-danger" onclick="clearToken()">
+          清除 Token
+        </button>
+      </div>
+      <div id="tokenStatus"></div>
+    </div>
+
+    <!-- 第二步：前往登入頁面 -->
+    <div class="section">
+      <h2>步驟 2：前往登入頁面</h2>
+      <p>點擊下方按鈕前往邁房子登入頁面（Token 已設定在 localStorage）</p>
+      <div class="button-group">
+        <button class="btn-secondary" onclick="goToLogin()">
+          前往登入頁面
+        </button>
+      </div>
+      <div class="note">
+        <strong>💡 提示：</strong> 在登入頁面開啟開發者工具（F12），切換到 Console 標籤，觀察日誌輸出
+      </div>
+    </div>
+
+    <!-- 第三步：觀察結果 -->
+    <div class="section">
+      <h2>步驟 3：觀察測試結果</h2>
+      <p>登入成功後，檢查以下項目：</p>
+      <ol class="steps">
+        <li>Console 顯示 <code>[auth] Trust case upgraded successfully</code></li>
+        <li>localStorage 中的 <code>pending_trust_token</code> 已被清除</li>
+        <li>Network 標籤顯示 <code>/api/trust/upgrade-case</code> 請求成功（200）</li>
+        <li>案件已綁定到登入的用戶帳號</li>
+      </ol>
+    </div>
+
+    <!-- 測試腳本 -->
+    <div class="section">
+      <h2>📋 測試腳本（Console 使用）</h2>
+      <p>複製以下代碼到瀏覽器 Console 執行：</p>
+      <div class="code">
+// 設定測試 Token
+localStorage.setItem('pending_trust_token', '00000000-0000-0000-0000-000000000001');
+
+// 檢查 Token
+console.log('Token:', localStorage.getItem('pending_trust_token'));
+
+// 清除 Token
+localStorage.removeItem('pending_trust_token');
+      </div>
+    </div>
+
+    <!-- 預期行為 -->
+    <div class="section">
+      <h2>✅ 預期行為</h2>
+      <ul class="steps">
+        <li>
+          <strong>正常流程：</strong>
+          登入成功 → API 呼叫 → Token 升級 → localStorage 清除 → 重定向到 Feed
+        </li>
+        <li>
+          <strong>API 失敗：</strong>
+          登入成功 → API 呼叫失敗 → Console 顯示警告 → localStorage 清除 → 正常重定向
+        </li>
+        <li>
+          <strong>無 Token：</strong>
+          登入成功 → 跳過升級邏輯 → 直接重定向
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <script>
+    // 生成測試用 UUID
+    function generateTestUUID() {
+      return '00000000-0000-4000-8000-' + Date.now().toString().padStart(12, '0').slice(-12);
+    }
+
+    // 設定測試 Token
+    function setTestToken() {
+      const token = generateTestUUID();
+      localStorage.setItem('pending_trust_token', token);
+      showStatus('tokenStatus', `✅ Token 已設定：${token}`, 'success');
+    }
+
+    // 檢查 Token
+    function checkToken() {
+      const token = localStorage.getItem('pending_trust_token');
+      if (token) {
+        showStatus('tokenStatus', `📋 當前 Token：${token}`, 'info');
+      } else {
+        showStatus('tokenStatus', `⚠️ 尚未設定 Token`, 'error');
+      }
+    }
+
+    // 清除 Token
+    function clearToken() {
+      localStorage.removeItem('pending_trust_token');
+      showStatus('tokenStatus', `🗑️ Token 已清除`, 'info');
+    }
+
+    // 前往登入頁面
+    function goToLogin() {
+      const token = localStorage.getItem('pending_trust_token');
+      if (!token) {
+        alert('⚠️ 請先設定測試 Token！');
+        return;
+      }
+
+      // 開啟新視窗前往登入頁面
+      const loginUrl = '/maihouses/auth.html';
+      window.open(loginUrl, '_blank');
+
+      showStatus('tokenStatus', `🚀 已開啟登入頁面（新視窗）`, 'success');
+    }
+
+    // 顯示狀態訊息
+    function showStatus(elementId, message, type) {
+      const statusEl = document.getElementById(elementId);
+      statusEl.className = `status ${type}`;
+      statusEl.textContent = message;
+      statusEl.style.display = 'block';
+    }
+
+    // 頁面載入時檢查 Token
+    window.addEventListener('DOMContentLoaded', () => {
+      checkToken();
+    });
+  </script>
+</body>
+</html>

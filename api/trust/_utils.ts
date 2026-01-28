@@ -77,20 +77,102 @@ export interface AuditUser extends JwtUser {
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-// 修復 #4: 缺憑證時 fail-fast
-if (!supabaseUrl || !supabaseKey) {
-  const errMsg = "[trust/_utils] Missing Supabase credentials";
-  logger.error(errMsg);
-  throw new Error(errMsg);
+// [Team 8 第四位修復] 延遲驗證：只在實際使用時檢查，避免測試環境 import 失敗
+function validateSupabaseCredentials(): void {
+  if (!supabaseUrl || !supabaseKey) {
+    const errMsg = "[trust/_utils] Missing Supabase credentials";
+    logger.error(errMsg);
+    throw new Error(errMsg);
+  }
 }
 
-export const supabase = createClient(supabaseUrl, supabaseKey);
+// [Team 8 第四位修復] 條件式初始化：測試環境可以 mock，生產環境驗證
+export const supabase = (() => {
+  // 如果是測試環境且沒有設定環境變數，返回空 mock
+  if (process.env.VITEST && (!supabaseUrl || !supabaseKey)) {
+    return {} as ReturnType<typeof createClient>;
+  }
 
-export const JWT_SECRET = process.env.JWT_SECRET!;
-if (!JWT_SECRET) throw new Error("Missing JWT_SECRET env var");
+  // 生產環境：驗證憑證
+  validateSupabaseCredentials();
 
-export const SYSTEM_API_KEY = process.env.SYSTEM_API_KEY!;
-if (!SYSTEM_API_KEY) throw new Error("Missing SYSTEM_API_KEY env var");
+  return createClient(supabaseUrl!, supabaseKey!, {
+    db: {
+      schema: "public",
+    },
+    global: {
+      headers: {
+        "x-request-timeout": "15000", // 15 秒 timeout
+      },
+    },
+    auth: {
+      persistSession: false, // API 端不需要持久化 session
+    },
+  });
+})();
+
+/**
+ * [Team 8 修復] Timeout 包裹函數
+ *
+ * 為任何 Promise 添加 timeout 保護，防止請求長時間懸掛
+ *
+ * @param promise - 要執行的 Promise
+ * @param timeoutMs - Timeout 時間（毫秒）
+ * @param errorMessage - Timeout 錯誤訊息
+ * @returns Promise with timeout
+ */
+export async function withTimeout<T>(
+  promise: Promise<T>,
+  timeoutMs: number,
+  errorMessage = "Operation timed out",
+): Promise<T> {
+  let timeoutHandle: NodeJS.Timeout;
+
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timeoutHandle = setTimeout(() => {
+      reject(new Error(errorMessage));
+    }, timeoutMs);
+  });
+
+  try {
+    const result = await Promise.race([promise, timeoutPromise]);
+    clearTimeout(timeoutHandle!);
+    return result;
+  } catch (error) {
+    clearTimeout(timeoutHandle!);
+    throw error;
+  }
+}
+
+// [Team 8 第四位修復] JWT_SECRET 條件式初始化
+export const JWT_SECRET = (() => {
+  // 測試環境：返回測試用 secret
+  if (process.env.VITEST && !process.env.JWT_SECRET) {
+    return "test-jwt-secret-for-vitest";
+  }
+
+  // 生產環境：驗證並返回
+  const jwtSecret = process.env.JWT_SECRET;
+  if (!jwtSecret) {
+    throw new Error("Missing JWT_SECRET env var");
+  }
+  return jwtSecret;
+})();
+
+// [Team 8 第四位修復] SYSTEM_API_KEY 條件式初始化
+export const SYSTEM_API_KEY = (() => {
+  // 測試環境：返回測試用 API key
+  if (process.env.VITEST && !process.env.SYSTEM_API_KEY) {
+    return "test-system-api-key-for-vitest";
+  }
+
+  // 生產環境：驗證並返回
+  const systemApiKey = process.env.SYSTEM_API_KEY;
+  if (!systemApiKey) {
+    throw new Error("Missing SYSTEM_API_KEY env var");
+  }
+  return systemApiKey;
+})();
 
 export const TIMEOUTS: Record<number, number> = { 5: 12 * 3600 * 1000 }; // 12 hours
 
