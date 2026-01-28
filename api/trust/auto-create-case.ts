@@ -8,16 +8,21 @@
  * - 未註冊用戶：生成匿名買方名稱（買方-XXXX）
  * - 自動生成 90 天有效的 Token
  *
+ * 認證方式：
+ * - System API Key 驗證 (x-system-key header)
+ * - 僅允許前端系統呼叫
+ *
  * Skills Applied:
- * - [Backend Safeguard] RLS + 完整驗證
+ * - [Backend Safeguard] System API Key 認證 + RLS
  * - [NASA TypeScript Safety] 完整類型定義 + Zod 驗證
  * - [Audit Logging] 審計日誌
  * - [No Lazy Implementation] 完整實作
+ * - [Security Audit] 防止未授權建立案件 (Team 9 修復)
  */
 
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { z } from "zod";
-import { supabase, cors, logAudit, withTimeout } from "./_utils";
+import { supabase, cors, logAudit, withTimeout, SYSTEM_API_KEY } from "./_utils";
 import {
   successResponse,
   errorResponse,
@@ -98,6 +103,19 @@ async function handleAutoCreateCase(
   req: VercelRequest,
   res: VercelResponse
 ): Promise<void> {
+  // [Team 9 修復] Step 0: System API Key 認證
+  // 此 API 僅允許前端系統呼叫,防止惡意建立案件
+  const systemKey = req.headers["x-system-key"];
+  if (systemKey !== SYSTEM_API_KEY) {
+    logger.warn("[trust/auto-create-case] Unauthorized access attempt", {
+      ip: getClientIp(req),
+      agent: getUserAgent(req),
+    });
+    return void res
+      .status(401)
+      .json(errorResponse(API_ERROR_CODES.UNAUTHORIZED, "未授權的存取"));
+  }
+
   // [Team 2 修復] Rate Limiting (10 requests per minute)
   const rateLimitError = rateLimitMiddleware(req, 10, 60000);
   if (rateLimitError) {
@@ -236,9 +254,10 @@ async function handleAutoCreateCase(
     }
 
     // Task 2: 審計日誌
+    // [Team 9 修復] 增強匿名用戶追蹤資訊
     parallelTasks.push(
       logAudit(result.case_id ?? "unknown", "AUTO_CREATE_CASE", {
-        id: buyerUserId ?? "anonymous",
+        id: buyerUserId ?? `anonymous-${getClientIp(req).replace(/\./g, "-")}`,
         role: "buyer" as const,
         txId: result.case_id ?? "unknown",
         ip: getClientIp(req),
@@ -249,11 +268,16 @@ async function handleAutoCreateCase(
     // 等待所有並行任務完成（使用 Promise.allSettled 避免單一失敗影響整體）
     await Promise.allSettled(parallelTasks);
 
+    // [Team 9 修復] 增強日誌記錄,便於安全審計
     logger.info("[trust/auto-create-case] Success", {
       case_id: result.case_id,
       buyer_name: buyerName,
       property_id: propertyId,
       is_registered: Boolean(buyerUserId),
+      buyer_user_id: buyerUserId ?? null,
+      client_ip: getClientIp(req),
+      user_agent: getUserAgent(req),
+      timestamp: new Date().toISOString(),
     });
 
     res.status(201).json(

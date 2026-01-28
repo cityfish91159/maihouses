@@ -83,6 +83,8 @@ const TrustCaseRowSchema = z.object({
   agent_id: z.string(),
   status: CaseStatusSchema,
   buyer_name: z.string(),
+  token_expires_at: z.string().optional(), // [Team 9 修復] 添加 token 過期檢查
+  token_revoked_at: z.string().nullable().optional(), // [Team 9 修復] 添加 token 撤銷檢查
 });
 
 // ============================================================================
@@ -178,10 +180,11 @@ export default async function handler(
 
     // Step 3: 查詢案件是否存在
     // [Team 8 第三位修復] 添加 15 秒 timeout 保護
+    // [Team 9 修復] 添加 token_expires_at 和 token_revoked_at 欄位查詢
     const { data: caseRow, error: caseError } = await withTimeout(
       supabase
         .from("trust_cases")
-        .select("id, agent_id, status, buyer_name")
+        .select("id, agent_id, status, buyer_name, token_expires_at, token_revoked_at")
         .eq("id", caseId)
         .single(),
       15000,
@@ -228,6 +231,32 @@ export default async function handler(
           .json(errorResponse(API_ERROR_CODES.FORBIDDEN, "無權限操作此案件"));
         return;
       }
+    }
+
+    // [Team 9 修復] Step 4.5: 驗證 Token 有效性
+    if (currentCase.token_expires_at) {
+      const expiresAt = new Date(currentCase.token_expires_at);
+      if (expiresAt < new Date()) {
+        logger.warn("[trust/complete-buyer-info] Token expired", {
+          caseId,
+          token_expires_at: currentCase.token_expires_at,
+        });
+        res
+          .status(403)
+          .json(errorResponse(API_ERROR_CODES.FORBIDDEN, "案件 Token 已過期"));
+        return;
+      }
+    }
+
+    if (currentCase.token_revoked_at) {
+      logger.warn("[trust/complete-buyer-info] Token revoked", {
+        caseId,
+        token_revoked_at: currentCase.token_revoked_at,
+      });
+      res
+        .status(403)
+        .json(errorResponse(API_ERROR_CODES.FORBIDDEN, "案件 Token 已撤銷"));
+      return;
     }
 
     // Step 5: 驗證狀態（僅允許 active / dormant）

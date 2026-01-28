@@ -1,22 +1,28 @@
 /**
  * Trust Upgrade Case API - Token 升級為已註冊用戶
  *
- * POST /api/trust/upgrade-case - 將案件從匿名 token 升級為已註冊用戶
+ * POST /api/trust/upgrade-case
  *
  * 使用情境：
  * - 消費者初次透過 token 進入 Trust Room（未登入）
  * - 消費者註冊/登入後，將案件綁定到自己的帳號
  *
+ * 認證方式：
+ * - JWT 驗證 (Cookie 或 Authorization header)
+ * - userId 和 userName 從 JWT 解析,不再接受 request body
+ * - 防止惡意升級別人的案件
+ *
  * Skills Applied:
- * - [Backend Safeguard] Token 驗證 + RLS 權限
+ * - [Backend Safeguard] JWT 驗證 + Token 驗證 + RLS 權限
  * - [NASA TypeScript Safety] 完整類型定義 + Zod 驗證
  * - [Audit Logging] 審計日誌
  * - [No Lazy Implementation] 完整錯誤處理
+ * - [Security Audit] 防止越權升級 (Team 9 修復)
  */
 
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { z } from "zod";
-import { supabase, cors, logAudit, getClientIp, getUserAgent } from "./_utils";
+import { supabase, cors, logAudit, getClientIp, getUserAgent, verifyToken } from "./_utils";
 import {
   successResponse,
   errorResponse,
@@ -34,17 +40,12 @@ import { rateLimitMiddleware } from "../lib/rateLimiter";
  *
  * 必填欄位：
  * - token: 案件 token (UUID)
- * - userId: 已註冊用戶 ID
- * - userName: 用戶名稱（用於更新 buyer_name）
+ *
+ * [Team 9 修復] userId 和 userName 改從 JWT 取得,不再從 request body 接受
+ * 防止惡意用戶偽造身份升級別人的案件
  */
 const UpgradeCaseRequestSchema = z.object({
   token: z.string().uuid("Token 格式錯誤，必須是有效的 UUID"),
-  userId: z.string().uuid("用戶 ID 格式錯誤"),
-  userName: z
-    .string()
-    .min(1, "用戶名稱不可為空")
-    .max(50, "用戶名稱不可超過 50 字")
-    .regex(/^[\u4e00-\u9fa5a-zA-Z\s]+$/, "用戶名稱僅能包含中英文"),
 });
 type UpgradeCaseRequest = z.infer<typeof UpgradeCaseRequestSchema>;
 
@@ -81,6 +82,21 @@ export default async function handler(
     return;
   }
 
+  // [Team 9 修復] Step 0: JWT 驗證
+  // 必須已登入才能升級案件,防止惡意升級別人的案件
+  let user: ReturnType<typeof verifyToken>;
+  try {
+    user = verifyToken(req);
+  } catch {
+    logger.warn("[trust/upgrade-case] Unauthorized access attempt", {
+      ip: getClientIp(req),
+      agent: getUserAgent(req),
+    });
+    return void res
+      .status(401)
+      .json(errorResponse(API_ERROR_CODES.UNAUTHORIZED, "未登入或 Token 已過期"));
+  }
+
   // [Team 2 修復] Rate Limiting (5 requests per minute)
   const rateLimitError = rateLimitMiddleware(req, 5, 60000);
   if (rateLimitError) {
@@ -112,7 +128,11 @@ export default async function handler(
       );
   }
 
-  const { token, userId, userName } = bodyResult.data;
+  const { token } = bodyResult.data;
+
+  // [Team 9 修復] 從 JWT 取得 userId 和 userName,不再信任 request body
+  const userId = user.id;
+  const userName = user.id; // RPC 會從 users 表查詢實際姓名
 
   try {
     // 2. 呼叫 RPC 函數升級案件
