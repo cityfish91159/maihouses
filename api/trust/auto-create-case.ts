@@ -209,26 +209,27 @@ async function handleAutoCreateCase(
 
     // 5. [Team Bravo - P-02] 並行執行非阻塞操作（效能優化）
     // 將 buyer_user_id 更新和審計日誌並行執行，減少總響應時間
-    const parallelTasks: Promise<unknown>[] = [];
+    const parallelTasks: Promise<void>[] = [];
 
     // Task 1: 更新 buyer_user_id（若有）
     if (buyerUserId && result.case_id) {
       parallelTasks.push(
-        supabase
-          .from("trust_cases")
-          .update({ buyer_user_id: buyerUserId })
-          .eq("id", result.case_id)
-          .then(({ error }) => {
-            if (error) {
-              logger.error(
-                "[trust/auto-create-case] Failed to update buyer_user_id",
-                {
-                  error: error.message,
-                  case_id: result.case_id,
-                }
-              );
-            }
-          })
+        (async () => {
+          const { error } = await supabase
+            .from("trust_cases")
+            .update({ buyer_user_id: buyerUserId })
+            .eq("id", result.case_id);
+
+          if (error) {
+            logger.error(
+              "[trust/auto-create-case] Failed to update buyer_user_id",
+              {
+                error: error.message,
+                case_id: result.case_id,
+              }
+            );
+          }
+        })()
       );
     }
 
