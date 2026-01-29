@@ -178,7 +178,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
       .eq('id', caseId)
       .single();
     const { data: caseRow, error: caseError } = await withTimeout(
-      caseQuery.then((res) => res),
+      Promise.resolve(caseQuery),
       15000,
       'Database query timed out after 15 seconds'
     );
@@ -273,7 +273,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     // 注意：Supabase builder 需要 .then() 轉換為 Promise
     const updateFinalQuery = updateQuery.select('id, buyer_name, buyer_phone, buyer_email').single();
     const { data: updatedCase, error: updateError } = await withTimeout(
-      updateFinalQuery.then((res) => res),
+      Promise.resolve(updateFinalQuery),
       15000,
       'Update operation timed out after 15 seconds'
     );

@@ -158,7 +158,7 @@ async function handleAutoCreateCase(req: VercelRequest, res: VercelResponse): Pr
       p_property_id: propertyId,
     });
     const { data: rpcData, error: rpcError } = await withTimeout(
-      rpcQuery.then((res) => res),
+      Promise.resolve(rpcQuery),
       15000,
       'RPC call timed out after 15 seconds'
     );
