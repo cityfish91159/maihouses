@@ -20,7 +20,6 @@ import { SkeletonBanner } from '../components/SkeletonScreen';
 import { useTrustActions } from '../hooks/useTrustActions';
 import { usePropertyTracker } from '../hooks/usePropertyTracker';
 import { TOAST_DURATION } from '../constants/toast';
-import { isDemoPropertyId } from '../constants/property';
 
 // 優化方案 1: 拆分組件並使用 React.memo
 import {
@@ -208,11 +207,7 @@ export const PropertyDetailPage: React.FC = () => {
   const [mockTrustEnabled, setMockTrustEnabled] = useState<boolean | null>(null);
 
   // 初始化直接使用 DEFAULT_PROPERTY，確保第一幀就有畫面，絕不留白
-  const [property, setProperty] = useState<PropertyData>(() => ({
-    ...DEFAULT_PROPERTY,
-    publicId: id ?? DEFAULT_PROPERTY.publicId,
-    isDemo: isDemoPropertyId(id),
-  }));
+  const [property, setProperty] = useState<PropertyData>(DEFAULT_PROPERTY);
 
   // ✅ 快取 agent_id，只在 mount 時讀取一次 localStorage
   const agentId = useMemo(() => {
@@ -278,11 +273,6 @@ export const PropertyDetailPage: React.FC = () => {
     if (isRequesting) return;
     setIsRequesting(true);
     try {
-      if (property.isDemo) {
-        window.location.href = '/maihouses/assure?mock=true';
-        return;
-      }
-
       const {
         data: { user },
       } = await supabase.auth.getUser();
@@ -347,7 +337,7 @@ export const PropertyDetailPage: React.FC = () => {
     } finally {
       setIsRequesting(false);
     }
-  }, [property.publicId, property.isDemo, isRequesting]);
+  }, [property.publicId, isRequesting]);
 
   // ✅ 現在 trustActions 已經穩定，不會造成不必要的重新渲染
   const handleRequestEnable = useCallback(async () => {
@@ -421,10 +411,10 @@ export const PropertyDetailPage: React.FC = () => {
 
   // 當 mockTrustEnabled 改變時，更新 property
   useEffect(() => {
-    if (property.isDemo && mockTrustEnabled !== null) {
+    if (id === 'MH-100001' && mockTrustEnabled !== null) {
       setProperty((prev) => ({ ...prev, trustEnabled: mockTrustEnabled }));
     }
-  }, [mockTrustEnabled, property.isDemo]);
+  }, [mockTrustEnabled, id]);
 
   useEffect(() => {
     const fetchProperty = async () => {
@@ -434,7 +424,7 @@ export const PropertyDetailPage: React.FC = () => {
         const data = await propertyService.getPropertyByPublicId(id);
         if (data) {
           // 如果是 Mock 頁面且有開發測試狀態，覆寫 trustEnabled
-          if (data.isDemo && mockTrustEnabled !== null) {
+          if (id === 'MH-100001' && mockTrustEnabled !== null) {
             setProperty({ ...data, trustEnabled: mockTrustEnabled });
           } else {
             setProperty(data);
@@ -500,8 +490,8 @@ export const PropertyDetailPage: React.FC = () => {
           </div>
         </nav>
 
-        {/* 開發測試按鈕 - 僅 Demo Mock 頁面顯示 */}
-        {property.isDemo && (
+        {/* 開發測試按鈕 - 僅 MH-100001 Mock 頁面顯示 */}
+        {id === 'MH-100001' && (
           <div className="mx-auto max-w-4xl px-4 pt-4">
             <div className="flex items-center gap-2 rounded-lg border-2 border-dashed border-amber-300 bg-amber-50 p-3">
               <div className="flex-1">

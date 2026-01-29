@@ -2,7 +2,6 @@ import { supabase } from '../lib/supabase';
 import { Agent, Imported591Data } from '../lib/types';
 import { computeAddressFingerprint, normalizeCommunityName } from '../utils/address';
 import { logger } from '../lib/logger';
-import { isDemoPropertyId } from '../constants/property';
 import { z } from 'zod';
 
 /**
@@ -75,8 +74,6 @@ export interface PropertyData {
   disadvantage?: string;
   // 安心留痕：房仲上傳時選擇是否開啟，影響詳情頁徽章顯示
   trustEnabled?: boolean;
-  // 演示用物件（mock/demo）
-  isDemo?: boolean;
 }
 
 // 上傳表單輸入介面
@@ -337,7 +334,6 @@ export const DEFAULT_PROPERTY: PropertyData = {
   advantage2: '',
   disadvantage: '',
   trustEnabled: true,
-  isDemo: false,
   agent: {
     id: '',
     internalCode: 0,
@@ -352,7 +348,6 @@ export const DEFAULT_PROPERTY: PropertyData = {
 export const propertyService: PropertyService = {
   // 1. 獲取物件詳情
   getPropertyByPublicId: async (publicId: string): Promise<PropertyData | null> => {
-    const isDemo = isDemoPropertyId(publicId);
     const coerceNumber = (value: unknown): number | null => {
       if (value == null) return null;
       if (typeof value === 'number') return Number.isFinite(value) ? value : null;
@@ -388,8 +383,8 @@ export const propertyService: PropertyService = {
       if (error || !data) {
         logger.warn('查無正式資料，使用預設資料', { error });
         // 如果是開發環境或特定 ID，回傳預設資料以維持畫面
-        if (isDemo || import.meta.env.DEV) {
-          return { ...DEFAULT_PROPERTY, publicId, isDemo };
+        if (publicId === 'MH-100001' || import.meta.env.DEV) {
+          return DEFAULT_PROPERTY;
         }
         return null;
       }
@@ -412,7 +407,6 @@ export const propertyService: PropertyService = {
           trustScore: data.agent.trust_score,
           encouragementCount: data.agent.encouragement_count,
         },
-        isDemo,
       };
 
       const size = coerceNumber(data.size);
@@ -441,7 +435,7 @@ export const propertyService: PropertyService = {
       result.trustEnabled = data.trust_enabled ?? false;
 
       // 針對 Demo 物件：若 DB 有資料但缺少結構化欄位，回退到 DEFAULT_PROPERTY（只補缺的欄位）
-      if (isDemo) {
+      if (publicId === 'MH-100001') {
         if (result.size == null && DEFAULT_PROPERTY.size != null)
           result.size = DEFAULT_PROPERTY.size;
         if (result.rooms == null && DEFAULT_PROPERTY.rooms != null)
@@ -467,7 +461,7 @@ export const propertyService: PropertyService = {
       return result;
     } catch (e) {
       logger.error('Service Error', { error: e });
-      return { ...DEFAULT_PROPERTY, publicId, isDemo };
+      return DEFAULT_PROPERTY;
     }
   },
 
