@@ -46,6 +46,7 @@ mkdir -p .claude/context
 # 📊 MaiHouses 開發進度
 
 ## 最後更新
+
 - **時間**: 2026-01-15T00:00:00
 - **Session ID**: initial
 - **當前任務**: 無
@@ -67,19 +68,22 @@ mkdir -p .claude/context
 ## 📝 學習筆記
 
 ### TypeScript
+
 - `exactOptionalPropertyTypes: true` 需要 `prop?: T | undefined`
 - `noUncheckedIndexedAccess` 讓 `arr[0]` 返回 `T | undefined`
 
 ### 測試
+
 - 使用 `data-testid` 精確定位元素
 - 避免數字匹配歧義（「問題 1」會匹配「問題 10」）
 
 ---
 
 ## 🔮 下次恢復指令
-
 ```
+
 請讀取 @progress.md 和 @fix_plan.md，確認當前狀態後繼續作業。
+
 ```
 
 ---
@@ -150,6 +154,7 @@ EXECUTE → VALIDATE → (PASS? EXIT : ITERATE)
 ```
 
 **關鍵原則**：
+
 - **迭代優於完美**：持續改進，而非一次到位
 - **失敗是數據**：錯誤可預測且有資訊價值
 - **持久化為王**：狀態必須能跨 session 恢復
@@ -183,11 +188,11 @@ EXECUTE → VALIDATE → (PASS? EXIT : ITERATE)
 
 ### 2.3 三層持久化機制
 
-| 層級 | 檔案 | 用途 | 恢復優先級 |
-|------|------|------|-----------|
-| **Layer 1** | `@progress.md` | 人類可讀摘要、學習筆記、恢復指令 | 🔴 最高 |
-| **Layer 2** | `@fix_plan.md` | 結構化待辦清單 | 🟡 高 |
-| **Layer 3** | Git History | 代碼真實狀態 | 🟢 基礎 |
+| 層級        | 檔案           | 用途                             | 恢復優先級 |
+| ----------- | -------------- | -------------------------------- | ---------- |
+| **Layer 1** | `@progress.md` | 人類可讀摘要、學習筆記、恢復指令 | 🔴 最高    |
+| **Layer 2** | `@fix_plan.md` | 結構化待辦清單                   | 🟡 高      |
+| **Layer 3** | Git History    | 代碼真實狀態                     | 🟢 基礎    |
 
 ---
 
@@ -263,22 +268,22 @@ EXECUTE → VALIDATE → (PASS? EXIT : ITERATE)
 
 **Stage 1: Spec Compliance（必須通過才能進入 Stage 2）**
 
-| 檢查項目 | 判斷標準 |
-|----------|----------|
-| 需求滿足 | 所有規格要求都已實作 |
-| 用例覆蓋 | 所有使用情境都能正常運作 |
-| 約束遵守 | 沒有違反任何限制條件 |
+| 檢查項目 | 判斷標準                       |
+| -------- | ------------------------------ |
+| 需求滿足 | 所有規格要求都已實作           |
+| 用例覆蓋 | 所有使用情境都能正常運作       |
+| 約束遵守 | 沒有違反任何限制條件           |
 | 邊界處理 | 空值、極端值、錯誤輸入都有處理 |
 
 **Stage 2: Code Quality（Stage 1 通過後執行）**
 
-| 檢查項目 | 驗證方式 |
-|----------|----------|
-| 類型安全 | `npm run typecheck` 零錯誤 |
-| 代碼風格 | `npm run lint` 零警告 |
-| 測試通過 | `npm test` 100% 通過 |
-| 效能可接受 | 無明顯效能問題 |
-| 安全合規 | 無 OWASP Top 10 漏洞 |
+| 檢查項目   | 驗證方式                   |
+| ---------- | -------------------------- |
+| 類型安全   | `npm run typecheck` 零錯誤 |
+| 代碼風格   | `npm run lint` 零警告      |
+| 測試通過   | `npm test` 100% 通過       |
+| 效能可接受 | 無明顯效能問題             |
+| 安全合規   | 無 OWASP Top 10 漏洞       |
 
 ### 3.3 3-Fix Rule 詳解
 
@@ -327,6 +332,7 @@ EXECUTE → VALIDATE → (PASS? EXIT : ITERATE)
 # 📊 MaiHouses 開發進度
 
 ## 最後更新
+
 - **時間**: 2026-01-15T15:30:00
 - **Session ID**: abc123
 - **當前任務**: AUDIT-01 Phase 5
@@ -336,9 +342,10 @@ EXECUTE → VALIDATE → (PASS? EXIT : ITERATE)
 ## ✅ 已完成
 
 ### AUDIT-01 三頁品質審計
+
 - [x] Phase 1-2: 安全修復與日誌規範化
   - Commit: 87a1ff33
-  - 修改: logger.ts, api/*.ts
+  - 修改: logger.ts, api/\*.ts
 - [x] Phase 6: 留言按讚競態條件修復
   - Commit: def5678
   - 修改: useComments.ts
@@ -354,6 +361,7 @@ EXECUTE → VALIDATE → (PASS? EXIT : ITERATE)
 ## 🔄 進行中
 
 ### Phase 5: Lead 類型定義重構
+
 - **狀態**: 計劃已批准，Step 3 READ 完成
 - **當前步驟**: Step 4 EXECUTE
 - **預計修改檔案**:
@@ -372,21 +380,25 @@ EXECUTE → VALIDATE → (PASS? EXIT : ITERATE)
 ## 📝 學習筆記
 
 ### TypeScript 技巧
+
 - `exactOptionalPropertyTypes: true` 需要 `prop?: T | undefined` 而非 `prop?: T`
 - `noUncheckedIndexedAccess` 會讓 `arr[0]` 返回 `T | undefined`
 - 使用 `Omit<T, 'key'>` 排除不需要的屬性
 
 ### 測試技巧
+
 - 避免數字匹配歧義：「問題 1」會匹配「問題 10」，改用「第1題」
 - 使用 `data-testid` 精確定位虛擬化容器
 - JSDOM 環境中虛擬化列表不會渲染內容（無實際尺寸）
 
 ### 架構決策
+
 - 拆分組件避免 hook 提前執行：SimpleList vs VirtualizedListInner
 - 使用常數取代硬編碼魔術數字
 - 最後一項不加間距避免多餘空白
 
 ### 專案特定
+
 - MaiHouses 使用 `npm run gate` 合併 typecheck + lint
 - 品質關卡必須 100% 通過
 - 禁止使用 `any` 類型
@@ -394,8 +406,8 @@ EXECUTE → VALIDATE → (PASS? EXIT : ITERATE)
 ---
 
 ## 🔮 下次恢復指令
-
 ```
+
 我正在進行 AUDIT-01 Phase 5: Lead 類型定義重構
 
 請執行以下恢復流程：
@@ -415,6 +427,7 @@ EXECUTE → VALIDATE → (PASS? EXIT : ITERATE)
    - 讀取 src/pages/UAG/types/uag.types.ts
    - 繼續實作類型守衛函數 isPurchasedLead, isUnpurchasedLead
    - 使用 TodoWrite 追蹤進度
+
 ```
 
 ---
@@ -454,6 +467,7 @@ EXECUTE → VALIDATE → (PASS? EXIT : ITERATE)
 > MaiHouses 待辦清單，用於 Ralph 循環追蹤
 >
 > **規則**：
+>
 > - Priority 1 必須先完成
 > - Blocked 項目需人工介入
 > - 完成後立即打勾 [x]
@@ -509,11 +523,11 @@ EXECUTE → VALIDATE → (PASS? EXIT : ITERATE)
 
 ## 📋 完成歷史
 
-| 日期 | 任務 | Commit |
-|------|------|--------|
+| 日期       | 任務          | Commit   |
+| ---------- | ------------- | -------- |
 | 2026-01-14 | P1-2 安全修復 | 87a1ff33 |
-| 2026-01-15 | P6 競態條件 | def5678 |
-| 2026-01-15 | P8 QA 虛擬化 | ghi9012 |
+| 2026-01-15 | P6 競態條件   | def5678  |
+| 2026-01-15 | P8 QA 虛擬化  | ghi9012  |
 ```
 
 ---
@@ -559,33 +573,39 @@ EXECUTE → VALIDATE → (PASS? EXIT : ITERATE)
 
 ### 1. 讀取狀態
 ```
+
 Read @progress.md
 Read @fix_plan.md
-```
+
+````
 
 ### 2. 確認代碼狀態
 ```bash
 git status
 git stash list
 git log --oneline -5
-```
+````
 
 ### 3. 恢復未完成變更（如有）
+
 ```bash
 git stash pop  # 如果有 stash
 ```
 
 ### 4. 繼續作業
+
 - 根據 @progress.md 的「下次恢復指令」
 - 使用 TodoWrite 建立追蹤
 - 完成後更新狀態檔案
 
 ### 5. 完成標準
+
 - npm run gate 通過
 - npm test 通過
 - @progress.md 已更新
 - @fix_plan.md 已更新
-```
+
+````
 
 ### 5.3 緊急保存指令
 
@@ -613,7 +633,7 @@ git stash pop  # 如果有 stash
 4. **輸出恢復指令**
    - 輸出完整的恢復 prompt
    - 包含所有必要的上下文
-```
+````
 
 ---
 
@@ -621,18 +641,18 @@ git stash pop  # 如果有 stash
 
 ### 6.1 循環階段 vs Skills 對應表
 
-| 循環階段 | 使用的 Skills | 自動/手動 | 觸發條件 |
-|----------|--------------|-----------|----------|
-| **CONTEXT** | `/read-before-edit` | 自動 | 任何讀取動作 |
-| **PLAN** | `/code-review-excellence` | 手動 | 計劃審核時 |
-| **READ** | `/read-before-edit` | 強制 | Edit/Write 前 |
-| **EXECUTE** | `/code-validator` | 自動 | 代碼修改後 |
-| **EXECUTE** | `/type-checker` | 自動 | 類型錯誤時 |
-| **REVIEW** | `/rigorous_testing` | 自動 | 驗證階段 |
-| **REVIEW** | `/security_audit` | 按需 | 安全相關修改 |
-| **FIX** | `/type-checker` | 自動 | 修復類型錯誤 |
-| **FIX** | `/code-validator` | 自動 | 修復代碼問題 |
-| **COMMIT** | `/pre-commit-validator` | 強制 | git commit 前 |
+| 循環階段    | 使用的 Skills             | 自動/手動 | 觸發條件      |
+| ----------- | ------------------------- | --------- | ------------- |
+| **CONTEXT** | `/read-before-edit`       | 自動      | 任何讀取動作  |
+| **PLAN**    | `/code-review-excellence` | 手動      | 計劃審核時    |
+| **READ**    | `/read-before-edit`       | 強制      | Edit/Write 前 |
+| **EXECUTE** | `/code-validator`         | 自動      | 代碼修改後    |
+| **EXECUTE** | `/type-checker`           | 自動      | 類型錯誤時    |
+| **REVIEW**  | `/rigorous_testing`       | 自動      | 驗證階段      |
+| **REVIEW**  | `/security_audit`         | 按需      | 安全相關修改  |
+| **FIX**     | `/type-checker`           | 自動      | 修復類型錯誤  |
+| **FIX**     | `/code-validator`         | 自動      | 修復代碼問題  |
+| **COMMIT**  | `/pre-commit-validator`   | 強制      | git commit 前 |
 
 ### 6.2 完整 Skills 清單
 
@@ -731,14 +751,14 @@ git stash pop  # 如果有 stash
 interface ExitCondition {
   // 條件 1: 客觀指標 (至少 2 個)
   completionIndicators: {
-    testsPass: boolean;      // npm test 通過
-    typeCheckPass: boolean;  // npm run typecheck 通過
-    lintPass: boolean;       // npm run lint 通過
-    todoComplete: boolean;   // TodoWrite 全部完成
+    testsPass: boolean; // npm test 通過
+    typeCheckPass: boolean; // npm run typecheck 通過
+    lintPass: boolean; // npm run lint 通過
+    todoComplete: boolean; // TodoWrite 全部完成
   };
 
   // 條件 2: Claude 明確確認
-  exitSignal: boolean;  // 必須為 true
+  exitSignal: boolean; // 必須為 true
 }
 
 // 退出邏輯
@@ -750,12 +770,12 @@ const canExit = (c: ExitCondition): boolean => {
 
 ### 7.3 防止無限循環
 
-| 機制 | 說明 | 觸發動作 |
-|------|------|----------|
-| **3-Fix Rule** | 同一問題最多修復 3 次 | 標記 Blocked，跳過 |
-| **Circuit Breaker** | 連續失敗檢測 | 暫停循環 |
-| **雙條件退出** | 客觀指標 + 主觀確認 | 防止假完成 |
-| **Rate Limit 檢測** | 用量上限預警 | 保存狀態，優雅退出 |
+| 機制                | 說明                  | 觸發動作           |
+| ------------------- | --------------------- | ------------------ |
+| **3-Fix Rule**      | 同一問題最多修復 3 次 | 標記 Blocked，跳過 |
+| **Circuit Breaker** | 連續失敗檢測          | 暫停循環           |
+| **雙條件退出**      | 客觀指標 + 主觀確認   | 防止假完成         |
+| **Rate Limit 檢測** | 用量上限預警          | 保存狀態，優雅退出 |
 
 ---
 
@@ -769,17 +789,20 @@ const canExit = (c: ExitCondition): boolean => {
 ## 任務：實作 QA 卡片虛擬化
 
 **背景**：
+
 - QA 卡片超過 10 個時 DOM 膨脹
 - 需要使用 @tanstack/react-virtual
 
 **完成標準**：
+
 - [ ] npm run gate 通過
 - [ ] npm test 通過
 - [ ] 10 個以下不虛擬化
 - [ ] 11 個以上啟用虛擬化
 
 **參考檔案**：
-- .claude/tickets/AUDIT-01-*.md (Phase 8)
+
+- .claude/tickets/AUDIT-01-\*.md (Phase 8)
 - src/pages/Community/components/QASection.tsx
 ```
 
@@ -797,6 +820,7 @@ const canExit = (c: ExitCondition): boolean => {
 ## 📝 學習筆記
 
 ### [日期] [類別]
+
 - **問題**：描述遇到的問題
 - **解決方案**：如何解決
 - **關鍵學習**：可重用的知識
@@ -850,9 +874,11 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 **任務**: [描述任務]
 
 **參考文件**:
+
 - [相關文件路徑]
 
 **完成標準**:
+
 - [ ] npm run gate 通過
 - [ ] npm test 通過
 - [ ] 無 any 類型
@@ -861,6 +887,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 - [ ] @fix_plan.md 已更新
 
 請執行 7-Step 循環：
+
 1. CONTEXT - 讀取狀態檔案和參考文件
 2. PLAN - 使用 TodoWrite 建立任務清單
 3. READ - 讀取要修改的檔案
@@ -925,11 +952,13 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 **變更範圍**: [描述]
 
 **Stage 1: Spec Compliance**
+
 - [ ] 需求滿足
 - [ ] 邊界處理
 - [ ] 約束遵守
 
 **Stage 2: Code Quality**
+
 - [ ] npm run typecheck
 - [ ] npm run lint
 - [ ] npm test
@@ -961,22 +990,24 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### 10.1 常見問題
 
-| 問題 | 原因 | 解決方案 |
-|------|------|----------|
-| 恢復後不知道做到哪 | @progress.md 未更新 | 查看 git log，重建狀態 |
-| 同一錯誤反覆出現 | 未解決根因 | 使用 3-Fix Rule 升級 |
-| 測試一直失敗 | 環境問題或真實 bug | 檢查 node_modules，重裝依賴 |
-| 類型錯誤無法修復 | 類型定義不完整 | 使用 /type-checker skill |
-| 循環卡住不動 | Circuit Breaker 觸發 | 檢查 @progress.md，人工介入 |
+| 問題               | 原因                 | 解決方案                    |
+| ------------------ | -------------------- | --------------------------- |
+| 恢復後不知道做到哪 | @progress.md 未更新  | 查看 git log，重建狀態      |
+| 同一錯誤反覆出現   | 未解決根因           | 使用 3-Fix Rule 升級        |
+| 測試一直失敗       | 環境問題或真實 bug   | 檢查 node_modules，重裝依賴 |
+| 類型錯誤無法修復   | 類型定義不完整       | 使用 /type-checker skill    |
+| 循環卡住不動       | Circuit Breaker 觸發 | 檢查 @progress.md，人工介入 |
 
 ### 10.2 檢查清單
 
 **開始任務前**：
+
 - [ ] @progress.md 存在且最新
 - [ ] @fix_plan.md 存在且最新
 - [ ] git status 乾淨
 
 **任務完成後**：
+
 - [ ] npm run gate 通過
 - [ ] npm test 通過
 - [ ] git commit 完成
@@ -984,6 +1015,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 - [ ] @fix_plan.md 已更新
 
 **Rate Limit 前**：
+
 - [ ] 當前進度已記錄
 - [ ] 恢復指令已生成
 - [ ] 代碼已 commit 或 stash
@@ -1014,13 +1046,13 @@ Claude Code 2.1.9 版本帶來了多項重要功能，可以顯著優化 Ralph L
 
 **關鍵功能**：
 
-| 功能 | 對 Ralph Loop 的影響 |
-|------|----------------------|
-| PreToolUse Hook | 自動上下文注入，解決 Step 1 CONTEXT 手動恢復痛點 |
-| `${CLAUDE_SESSION_ID}` | 精確 Session 追蹤，自動更新 @progress.md |
-| `plansDirectory` | 統一管理計劃檔案，避免散落 |
-| Skills 巢狀目錄 | 更好的組織和分類 |
-| 穩定性修復 | 長 Session 更可靠 |
+| 功能                   | 對 Ralph Loop 的影響                             |
+| ---------------------- | ------------------------------------------------ |
+| PreToolUse Hook        | 自動上下文注入，解決 Step 1 CONTEXT 手動恢復痛點 |
+| `${CLAUDE_SESSION_ID}` | 精確 Session 追蹤，自動更新 @progress.md         |
+| `plansDirectory`       | 統一管理計劃檔案，避免散落                       |
+| Skills 巢狀目錄        | 更好的組織和分類                                 |
+| 穩定性修復             | 長 Session 更可靠                                |
 
 ### 11.2 PreToolUse Hook 自動上下文注入
 
@@ -1048,10 +1080,12 @@ Claude Code 2.1.9 版本帶來了多項重要功能，可以顯著優化 Ralph L
 ## 🔄 Ralph Context Auto-Inject
 
 ### 當前狀態
+
 - 參考 @progress.md 的「進行中」區塊
 - 參考 @fix_plan.md 的 Priority 1 項目
 
 ### 必讀規則
+
 1. 修改前必須先讀取目標檔案
 2. 使用 TodoWrite 追蹤進度
 3. 完成後更新狀態檔案
@@ -1083,8 +1117,9 @@ Claude Code 2.1.9 版本帶來了多項重要功能，可以顯著優化 Ralph L
 
 ```markdown
 ## 最後更新
+
 - **時間**: 2026-01-16T10:30:00
-- **Session ID**: a1b2c3d4-e5f6-7890  ← 自動更新
+- **Session ID**: a1b2c3d4-e5f6-7890 ← 自動更新
 - **當前任務**: AUDIT-01 Phase 5
 ```
 
@@ -1154,23 +1189,22 @@ name: ralph-resume
 description: Ralph 恢復協議，一鍵恢復上次作業狀態
 trigger: 用戶說「恢復作業」或開始新 Session
 ---
-
 ## 執行步驟
 
 1. **讀取狀態**
-   - Read @progress.md
-   - Read @fix_plan.md
-   - 執行 git status
+- Read @progress.md
+- Read @fix_plan.md
+- 執行 git status
 
 2. **恢復代碼**
-   - 如有 stash → `git stash pop`
+- 如有 stash → `git stash pop`
 
 3. **重建上下文**
-   - 根據「下次恢復指令」恢復
-   - 使用 TodoWrite 建立追蹤清單
+- 根據「下次恢復指令」恢復
+- 使用 TodoWrite 建立追蹤清單
 
 4. **繼續循環**
-   - 從中斷的 Step 繼續
+- 從中斷的 Step 繼續
 ```
 
 ### 11.6 Skills 目錄重組
@@ -1205,11 +1239,11 @@ trigger: 用戶說「恢復作業」或開始新 Session
 
 2.1.9 版本修復了以下問題，Ralph Loop 會自動受益：
 
-| 修復項目 | 對 Ralph 的影響 |
-|----------|-----------------|
+| 修復項目                    | 對 Ralph 的影響                            |
+| --------------------------- | ------------------------------------------ |
 | **長 Session 平行工具呼叫** | 長時間作業更穩定，不會因為多工具呼叫而失敗 |
-| **MCP 伺服器重連** | 工具服務更可靠，減少意外中斷 |
-| **計劃模式退出修復** | EnterPlanMode/ExitPlanMode 更可靠 |
+| **MCP 伺服器重連**          | 工具服務更可靠，減少意外中斷               |
+| **計劃模式退出修復**        | EnterPlanMode/ExitPlanMode 更可靠          |
 
 ### 11.8 升級檢查清單
 
@@ -1250,10 +1284,10 @@ claude "/ralph-resume"
 
 ## 📝 版本歷史
 
-| 版本 | 日期 | 變更 |
-|------|------|------|
+| 版本  | 日期       | 變更                                     |
+| ----- | ---------- | ---------------------------------------- |
 | 1.1.0 | 2026-01-16 | 新增第 11 章：Claude Code 2.1.9 優化整合 |
-| 1.0.0 | 2026-01-15 | 初始版本 |
+| 1.0.0 | 2026-01-15 | 初始版本                                 |
 
 ---
 

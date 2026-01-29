@@ -39,6 +39,7 @@
     "police": "node scripts/police.cjs",
     "ultimate-gate": "node scripts/ultimate-gate.cjs",
     "dev:force": "vite --force",
+    "check:utf8": "node scripts/check-utf8.cjs",
     "prepare": "husky"
   },
   "dependencies": {

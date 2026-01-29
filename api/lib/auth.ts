@@ -3,8 +3,8 @@
  * 使用 Supabase Auth 驗證 JWT Token
  */
 
-import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { createClient } from "@supabase/supabase-js";
+import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { createClient } from '@supabase/supabase-js';
 
 // 認證結果類型
 interface AuthResult {
@@ -27,8 +27,8 @@ export type AuthVerificationResult = AuthResult | AuthError;
 function extractBearerToken(authHeader: string | undefined): string | null {
   if (!authHeader) return null;
 
-  const parts = authHeader.split(" ");
-  if (parts.length !== 2 || parts[0]?.toLowerCase() !== "bearer") {
+  const parts = authHeader.split(' ');
+  if (parts.length !== 2 || parts[0]?.toLowerCase() !== 'bearer') {
     return null;
   }
 
@@ -41,16 +41,14 @@ function extractBearerToken(authHeader: string | undefined): string | null {
  * @param req - Vercel Request 物件
  * @returns 驗證結果，包含 userId 或錯誤訊息
  */
-export async function verifyAuth(
-  req: VercelRequest,
-): Promise<AuthVerificationResult> {
+export async function verifyAuth(req: VercelRequest): Promise<AuthVerificationResult> {
   const supabaseUrl = process.env.SUPABASE_URL;
   const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
 
   if (!supabaseUrl || !supabaseAnonKey) {
     return {
       success: false,
-      error: "Server configuration error: Missing Supabase credentials",
+      error: 'Server configuration error: Missing Supabase credentials',
       statusCode: 500,
     };
   }
@@ -62,7 +60,7 @@ export async function verifyAuth(
   if (!token) {
     return {
       success: false,
-      error: "Missing or invalid Authorization header",
+      error: 'Missing or invalid Authorization header',
       statusCode: 401,
     };
   }
@@ -76,12 +74,15 @@ export async function verifyAuth(
     },
   });
 
-  const { data: { user }, error } = await supabase.auth.getUser();
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
 
   if (error || !user) {
     return {
       success: false,
-      error: error?.message ?? "Invalid or expired token",
+      error: error?.message ?? 'Invalid or expired token',
       statusCode: 401,
     };
   }
@@ -102,7 +103,7 @@ export async function verifyAuth(
  */
 export async function verifyAgentAuth(
   req: VercelRequest,
-  agentId: string,
+  agentId: string
 ): Promise<AuthVerificationResult> {
   const authResult = await verifyAuth(req);
 
@@ -114,7 +115,7 @@ export async function verifyAgentAuth(
   if (authResult.userId !== agentId) {
     return {
       success: false,
-      error: "Unauthorized: Agent ID does not match authenticated user",
+      error: 'Unauthorized: Agent ID does not match authenticated user',
       statusCode: 403,
     };
   }
@@ -125,10 +126,7 @@ export async function verifyAgentAuth(
 /**
  * 認證錯誤回應的輔助函數
  */
-export function sendAuthError(
-  res: VercelResponse,
-  authResult: AuthError,
-): VercelResponse {
+export function sendAuthError(res: VercelResponse, authResult: AuthError): VercelResponse {
   return res.status(authResult.statusCode).json({
     success: false,
     error: authResult.error,
@@ -136,4 +134,4 @@ export function sendAuthError(
 }
 
 // isDevEnvironment 已在 env.ts 中定義，使用 re-export
-export { isDevEnvironment } from "./env";
+export { isDevEnvironment } from './env';

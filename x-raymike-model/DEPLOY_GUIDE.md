@@ -136,7 +136,7 @@ def _apply_custom(self, img: np.ndarray, intensity: float) -> np.ndarray:
 
 ```yaml
 python_packages:
-  - "scikit-learn==1.3.0" # 新增依賴
+  - 'scikit-learn==1.3.0' # 新增依賴
 ```
 
 ### 測試更改

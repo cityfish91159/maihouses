@@ -9,11 +9,11 @@
  */
 
 const write = (msg: string): void => {
-  process.stdout.write(msg + "\n");
+  process.stdout.write(msg + '\n');
 };
 
 const writeErr = (msg: string): void => {
-  process.stderr.write(msg + "\n");
+  process.stderr.write(msg + '\n');
 };
 
 export const log = {
@@ -30,36 +30,29 @@ export const log = {
   error: (msg: string): void => writeErr(`❌ ${msg}`),
 
   /** 空行 */
-  blank: (): void => write(""),
+  blank: (): void => write(''),
 
   /** 標題框 */
   header: (title: string): void => {
-    write("╔════════════════════════════════════════════════════════════════╗");
+    write('╔════════════════════════════════════════════════════════════════╗');
     write(`║ ${title.padEnd(62)}║`);
-    write("╚════════════════════════════════════════════════════════════════╝");
+    write('╚════════════════════════════════════════════════════════════════╝');
   },
 
   /** 分隔線 */
-  divider: (char = "━"): void => {
+  divider: (char = '━'): void => {
     write(char.repeat(66));
   },
 
   /** 排行榜項目 */
   rank: (position: number, name: string, stats: string): void => {
-    const medal =
-      position === 1
-        ? "🥇"
-        : position === 2
-          ? "🥈"
-          : position === 3
-            ? "🥉"
-            : "  ";
+    const medal = position === 1 ? '🥇' : position === 2 ? '🥈' : position === 3 ? '🥉' : '  ';
     write(`  ${medal} #${position} ${name.padEnd(25)} ${stats}`);
   },
 
   /** 表格行 */
   row: (cols: string[]): void => {
-    write("  " + cols.join(" | "));
+    write('  ' + cols.join(' | '));
   },
 };
 

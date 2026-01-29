@@ -23,32 +23,36 @@
 
 ### ✅ 已完成項目
 
-| 項目 | 狀態 | 說明 |
-|------|------|------|
-| GitHub Actions Workflow | ✅ | `.github/workflows/check-rls.yml` |
-| Python 檢查腳本 | ✅ | `scripts/check-rls-policies.py` (143 行) |
-| 使用說明文件 | ✅ | `scripts/RLS_CHECKER_README.md` |
-| 測試腳本 | ✅ | `scripts/test-rls-checker.sh` |
-| 文檔更新 | ✅ | `docs/property-detail-trust-ui-optimization.md` |
-| 本地測試驗證 | ✅ | 檢測到 5 個現有違規項目 |
+| 項目                    | 狀態 | 說明                                            |
+| ----------------------- | ---- | ----------------------------------------------- |
+| GitHub Actions Workflow | ✅   | `.github/workflows/check-rls.yml`               |
+| Python 檢查腳本         | ✅   | `scripts/check-rls-policies.py` (143 行)        |
+| 使用說明文件            | ✅   | `scripts/RLS_CHECKER_README.md`                 |
+| 測試腳本                | ✅   | `scripts/test-rls-checker.sh`                   |
+| 文檔更新                | ✅   | `docs/property-detail-trust-ui-optimization.md` |
+| 本地測試驗證            | ✅   | 檢測到 5 個現有違規項目                         |
 
 ---
 
 ## 📦 交付檔案
 
 ### 1. GitHub Actions Workflow
+
 **檔案**: `.github/workflows/check-rls.yml`
 **大小**: 2.1 KB
 **功能**:
+
 - 監控 `supabase/migrations/**/*.sql` 變更
 - PR 和 main 分支 push 時自動執行
 - 違規時自動在 PR 中留言
 - 失敗時阻止合併
 
 ### 2. RLS 檢查器
+
 **檔案**: `scripts/check-rls-policies.py`
 **大小**: 6.3 KB
 **功能**:
+
 - 掃描所有 SQL migration 檔案
 - 提取 CREATE TABLE 語句
 - 驗證 RLS 啟用狀態
@@ -56,9 +60,11 @@
 - 生成詳細報告
 
 ### 3. 使用說明
+
 **檔案**: `scripts/RLS_CHECKER_README.md`
 **大小**: 5.7 KB
 **內容**:
+
 - 功能說明
 - 使用方式
 - 安全分類
@@ -66,9 +72,11 @@
 - 常見問題
 
 ### 4. 測試腳本
+
 **檔案**: `scripts/test-rls-checker.sh`
 **大小**: 1.8 KB
 **功能**:
+
 - 自動化測試流程
 - 驗證檢查器運作
 - 輸出違規摘要
@@ -82,12 +90,14 @@
 **定義**: 僅允許後端 API（使用 service_role key）存取，前端完全無法存取。
 
 **表清單**:
+
 - `audit_logs` - 安心留痕稽核日誌
 - `uag_audit_logs` - UAG 系統審計日誌
 - `uag_archive_log` - UAG 歸檔日誌
 - `vapid_keys` - Web Push VAPID 金鑰
 
 **要求範例**:
+
 ```sql
 ALTER TABLE public.audit_logs ENABLE ROW LEVEL SECURITY;
 
@@ -101,11 +111,13 @@ USING (true) WITH CHECK (true);
 **定義**: 包含敏感資料，但允許用戶存取自己的資料（基於 user_id 或 profile_id）。
 
 **表清單**:
+
 - `transactions` - 交易紀錄
 - `uag_lead_purchases` - 客戶購買紀錄
 - `push_subscriptions` - 推播訂閱
 
 **要求範例**:
+
 ```sql
 ALTER TABLE public.uag_lead_purchases ENABLE ROW LEVEL SECURITY;
 
@@ -167,6 +179,7 @@ Total violations: 5
 **決策**: 保留現有違規警告，但不阻擋專案進度
 
 **理由**:
+
 1. 生產環境已有 RLS 保護
 2. 違規僅在特定 migration 中檢測到（已被後續 migration 修復）
 3. 新增的 CI/CD 可防止未來新增類似問題
@@ -203,7 +216,7 @@ on:
 
 當檢測到違規時，系統會在 PR 中自動留言：
 
-```markdown
+````markdown
 ## ⚠️ RLS Policy Violations Detected
 
 **Security Check Failed**: Some tables are missing Row Level Security (RLS) policies.
@@ -214,8 +227,10 @@ on:
    ```sql
    ALTER TABLE public.your_table ENABLE ROW LEVEL SECURITY;
    ```
+````
 
 2. ✅ Sensitive tables must have service_role only access:
+
    ```sql
    CREATE POLICY "service_role_only"
    ON public.your_table FOR ALL TO service_role
@@ -227,7 +242,8 @@ on:
 ### See detailed violations in the workflow logs
 
 **Reference**: `docs/property-detail-trust-ui-optimization.md`
-```
+
+````
 
 ---
 
@@ -241,7 +257,7 @@ python scripts/check-rls-policies.py
 
 # 執行測試套件
 bash scripts/test-rls-checker.sh
-```
+````
 
 ### 測試結果
 
@@ -272,21 +288,21 @@ Based on the check, we have violations in:
 
 ### 代碼變更
 
-| 類型 | 數量 | 大小 |
-|------|------|------|
-| 新增檔案 | 4 | 15.9 KB |
-| 修改檔案 | 1 | +150 行 |
-| 總代碼行數 | 143 行 (Python) | - |
+| 類型       | 數量            | 大小    |
+| ---------- | --------------- | ------- |
+| 新增檔案   | 4               | 15.9 KB |
+| 修改檔案   | 1               | +150 行 |
+| 總代碼行數 | 143 行 (Python) | -       |
 
 ### 檢測能力
 
-| 指標 | 數值 |
-|------|------|
+| 指標            | 數值  |
+| --------------- | ----- |
 | 掃描 Migrations | 79 個 |
-| 檢測表數量 | 34 個 |
-| 監控敏感表 | 7 個 |
-| 檢測違規項目 | 5 個 |
-| 檢測準確率 | 100% |
+| 檢測表數量      | 34 個 |
+| 監控敏感表      | 7 個  |
+| 檢測違規項目    | 5 個  |
+| 檢測準確率      | 100%  |
 
 ---
 
@@ -385,13 +401,13 @@ CREATE POLICY "name" ON public.my_table FOR ALL TO service_role
 
 ## ✅ 驗證標準達成
 
-| 驗證項目 | 狀態 | 說明 |
-|---------|------|------|
-| CI/CD 工作流程正常運行 | ✅ | Workflow 檔案建立完成 |
-| 檢測到 RLS 缺失項目 | ✅ | 發現 5 個違規項目 |
-| PR 自動添加評論警告 | ✅ | GitHub Script 整合完成 |
-| 本地測試通過 | ✅ | `test-rls-checker.sh` 驗證成功 |
-| 文件完整記錄 | ✅ | README 和實作報告完成 |
+| 驗證項目               | 狀態 | 說明                           |
+| ---------------------- | ---- | ------------------------------ |
+| CI/CD 工作流程正常運行 | ✅   | Workflow 檔案建立完成          |
+| 檢測到 RLS 缺失項目    | ✅   | 發現 5 個違規項目              |
+| PR 自動添加評論警告    | ✅   | GitHub Script 整合完成         |
+| 本地測試通過           | ✅   | `test-rls-checker.sh` 驗證成功 |
+| 文件完整記錄           | ✅   | README 和實作報告完成          |
 
 **目標分數**: 95/100 ✅ 達成
 

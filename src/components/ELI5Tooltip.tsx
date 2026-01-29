@@ -1,13 +1,13 @@
-import React, { useEffect, useState, useCallback, useRef } from "react";
-import { eli5Term } from "../services/ai";
-import { Events, track } from "../analytics/track";
-import { safeLocalStorage } from "../lib/safeStorage";
+import React, { useEffect, useState, useCallback, useRef } from 'react';
+import { eli5Term } from '../services/ai';
+import { Events, track } from '../analytics/track';
+import { safeLocalStorage } from '../lib/safeStorage';
 
-const KEYWORDS = ["持分", "使用分區", "公設比", "地上權", "都更", "容積率"];
+const KEYWORDS = ['持分', '使用分區', '公設比', '地上權', '都更', '容積率'];
 
 export const ELI5Tooltip: React.FC<{ text: string }> = ({ text }) => {
   const [open, setOpen] = useState(false);
-  const [ans, setAns] = useState<string>("");
+  const [ans, setAns] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const hasSuggestedRef = useRef(false);
 
@@ -29,11 +29,10 @@ export const ELI5Tooltip: React.FC<{ text: string }> = ({ text }) => {
 
     const today = new Date().toISOString().slice(0, 10);
     const k = `mai-eli5-suggest-${today}`;
-    const shouldSuggest =
-      KEYWORDS.some((w) => text.includes(w)) && !safeLocalStorage.getItem(k);
+    const shouldSuggest = KEYWORDS.some((w) => text.includes(w)) && !safeLocalStorage.getItem(k);
     if (shouldSuggest) {
       hasSuggestedRef.current = true;
-      safeLocalStorage.setItem(k, "1");
+      safeLocalStorage.setItem(k, '1');
       setOpen(true);
       fetchAns();
     }
@@ -48,9 +47,9 @@ export const ELI5Tooltip: React.FC<{ text: string }> = ({ text }) => {
   return (
     <span
       style={{
-        display: "inline-flex",
-        alignItems: "center",
-        position: "relative",
+        display: 'inline-flex',
+        alignItems: 'center',
+        position: 'relative',
       }}
     >
       <button
@@ -61,11 +60,11 @@ export const ELI5Tooltip: React.FC<{ text: string }> = ({ text }) => {
           width: 18,
           height: 18,
           borderRadius: 999,
-          border: "1px solid #C9D5FF",
-          background: "#F5F8FF",
-          color: "#1749D7",
+          border: '1px solid #C9D5FF',
+          background: '#F5F8FF',
+          color: '#1749D7',
           fontSize: 12,
-          cursor: "pointer",
+          cursor: 'pointer',
         }}
       >
         ?
@@ -73,24 +72,22 @@ export const ELI5Tooltip: React.FC<{ text: string }> = ({ text }) => {
       {open && (
         <div
           style={{
-            position: "absolute",
-            top: "120%",
+            position: 'absolute',
+            top: '120%',
             left: 0,
-            background: "#fff",
-            border: "1px solid #E6ECFF",
+            background: '#fff',
+            border: '1px solid #E6ECFF',
             borderRadius: 8,
             padding: 10,
             width: 280,
-            boxShadow: "0 10px 24px rgba(0,0,0,0.08)",
+            boxShadow: '0 10px 24px rgba(0,0,0,0.08)',
             zIndex: 50,
           }}
         >
-          <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 6 }}>
+          <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 6 }}>
             白話解釋（僅供參考，非法律意見）
           </div>
-          <div style={{ whiteSpace: "pre-wrap" }}>
-            {loading ? "生成中…" : ans}
-          </div>
+          <div style={{ whiteSpace: 'pre-wrap' }}>{loading ? '生成中…' : ans}</div>
         </div>
       )}
     </span>

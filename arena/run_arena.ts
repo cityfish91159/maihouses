@@ -3,25 +3,25 @@
  * 🏟️ ARENA RUNNER（強度 5x 版）
  */
 
-import * as fs from "fs";
-import * as path from "path";
-import { fileURLToPath } from "url";
-import { performance } from "perf_hooks";
-import log from "./logger";
+import * as fs from 'fs';
+import * as path from 'path';
+import { fileURLToPath } from 'url';
+import { performance } from 'perf_hooks';
+import log from './logger';
 import {
   ARENA_CONFIG,
   RANKING_WEIGHTS,
   ELIMINATION_RULES,
   TaskConfig,
   HELL_MODE,
-} from "./arena.config";
+} from './arena.config';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 interface CandidateResult {
   name: string;
-  status: "PASS" | "ELIMINATED";
+  status: 'PASS' | 'ELIMINATED';
   eliminationReason?: string;
   testsPassed: boolean;
   fuzzFailRate: number;
@@ -44,23 +44,23 @@ interface ArenaResult {
 // ============================================================================
 
 function countLines(filePath: string): number {
-  const content = fs.readFileSync(filePath, "utf-8");
+  const content = fs.readFileSync(filePath, 'utf-8');
   return content
-    .split("\n")
+    .split('\n')
     .filter(
       (l) =>
         l.trim() &&
-        !l.trim().startsWith("//") &&
-        !l.trim().startsWith("/*") &&
-        !l.trim().startsWith("*"),
+        !l.trim().startsWith('//') &&
+        !l.trim().startsWith('/*') &&
+        !l.trim().startsWith('*')
     ).length;
 }
 
 function checkFunctionLength(
   filePath: string,
-  maxLines: number,
+  maxLines: number
 ): { valid: boolean; longest: number } {
-  const content = fs.readFileSync(filePath, "utf-8");
+  const content = fs.readFileSync(filePath, 'utf-8');
   const fnPattern =
     /(?:function\s+\w+|(?:const|let|var)\s+\w+\s*=\s*(?:async\s*)?\([^)]*\)\s*(?::\s*\w+)?\s*=>|(?:async\s+)?function\s*\()/g;
   let longest = 0,
@@ -68,7 +68,7 @@ function checkFunctionLength(
     inFunction = false,
     braceCount = 0;
 
-  for (const line of content.split("\n")) {
+  for (const line of content.split('\n')) {
     if (fnPattern.test(line)) {
       inFunction = true;
       current = 0;
@@ -76,8 +76,7 @@ function checkFunctionLength(
     }
     if (inFunction) {
       current++;
-      braceCount +=
-        (line.match(/{/g) || []).length - (line.match(/}/g) || []).length;
+      braceCount += (line.match(/{/g) || []).length - (line.match(/}/g) || []).length;
       if (braceCount <= 0 && current > 1) {
         longest = Math.max(longest, current);
         inFunction = false;
@@ -94,13 +93,13 @@ function checkFunctionLength(
 async function runTests(
   candidatePath: string,
   testPath: string,
-  entryFn: string,
+  entryFn: string
 ): Promise<{ passed: boolean; errors: string[] }> {
   const errors: string[] = [];
   try {
     const mod = await import(candidatePath);
     const fn = mod[entryFn];
-    if (typeof fn !== "function")
+    if (typeof fn !== 'function')
       return { passed: false, errors: [`Entry '${entryFn}' not found`] };
 
     const testMod = await import(testPath);
@@ -111,7 +110,7 @@ async function runTests(
         const result = await fn(test.input);
         if (JSON.stringify(result) !== JSON.stringify(test.expected)) {
           errors.push(
-            `Test '${test.name}': expected ${JSON.stringify(test.expected)}, got ${JSON.stringify(result)}`,
+            `Test '${test.name}': expected ${JSON.stringify(test.expected)}, got ${JSON.stringify(result)}`
           );
         }
       } catch (e) {
@@ -131,7 +130,7 @@ async function runTests(
 async function runPerformance(
   candidatePath: string,
   entryFn: string,
-  rounds: number,
+  rounds: number
 ): Promise<number> {
   const mod = await import(candidatePath);
   const fn = mod[entryFn];
@@ -160,7 +159,7 @@ async function runArena(taskName: string): Promise<ArenaResult> {
   const config = ARENA_CONFIG[taskName];
   if (!config) throw new Error(`Task '${taskName}' not found`);
 
-  const hellMode = process.env.ARENA_HELL_MODE === "1";
+  const hellMode = process.env.ARENA_HELL_MODE === '1';
   const effectiveConfig = hellMode
     ? {
         ...config,
@@ -171,36 +170,31 @@ async function runArena(taskName: string): Promise<ArenaResult> {
       }
     : config;
 
-  const tasksDir = path.join(__dirname, "tasks", taskName);
-  const candidatesDir = path.join(__dirname, "candidates", taskName);
+  const tasksDir = path.join(__dirname, 'tasks', taskName);
+  const candidatesDir = path.join(__dirname, 'candidates', taskName);
 
-  if (!fs.existsSync(candidatesDir))
-    throw new Error(`No candidates: ${candidatesDir}`);
+  if (!fs.existsSync(candidatesDir)) throw new Error(`No candidates: ${candidatesDir}`);
 
-  const testPath = path.join(tasksDir, "reference_tests.ts");
-  const candidateFiles = fs
-    .readdirSync(candidatesDir)
-    .filter((f) => f.endsWith(".ts"));
+  const testPath = path.join(tasksDir, 'reference_tests.ts');
+  const candidateFiles = fs.readdirSync(candidatesDir).filter((f) => f.endsWith('.ts'));
 
-  log.header(
-    `🏟️ ARENA: ${taskName.toUpperCase()}${hellMode ? " [HELL MODE]" : ""}`,
-  );
+  log.header(`🏟️ ARENA: ${taskName.toUpperCase()}${hellMode ? ' [HELL MODE]' : ''}`);
   log.info(`📋 Candidates: ${candidateFiles.length}`);
   log.info(
-    `⚙️ Config: maxRunMs=${effectiveConfig.maxRunMs}, fuzzRounds=${effectiveConfig.fuzzRounds}`,
+    `⚙️ Config: maxRunMs=${effectiveConfig.maxRunMs}, fuzzRounds=${effectiveConfig.fuzzRounds}`
   );
 
   const results: CandidateResult[] = [];
 
   for (const file of candidateFiles) {
-    const name = file.replace(".ts", "");
+    const name = file.replace('.ts', '');
     const candidatePath = path.join(candidatesDir, file);
     log.divider();
     log.info(`━━━ ${name} ━━━`);
 
     const result: CandidateResult = {
       name,
-      status: "PASS",
+      status: 'PASS',
       testsPassed: false,
       fuzzFailRate: 0,
       stressPassed: true,
@@ -214,12 +208,9 @@ async function runArena(taskName: string): Promise<ArenaResult> {
     log.info(`  📏 Lines: ${result.codeLines}`);
 
     // Function length check
-    const fnCheck = checkFunctionLength(
-      candidatePath,
-      effectiveConfig.maxFunctionLines,
-    );
+    const fnCheck = checkFunctionLength(candidatePath, effectiveConfig.maxFunctionLines);
     if (!fnCheck.valid) {
-      result.status = "ELIMINATED";
+      result.status = 'ELIMINATED';
       result.eliminationReason = `Function too long: ${fnCheck.longest} > ${effectiveConfig.maxFunctionLines}`;
       log.error(`  ${result.eliminationReason}`);
       results.push(result);
@@ -227,14 +218,10 @@ async function runArena(taskName: string): Promise<ArenaResult> {
     }
 
     // Run tests
-    const testResult = await runTests(
-      candidatePath,
-      testPath,
-      config.entryFunction,
-    );
+    const testResult = await runTests(candidatePath, testPath, config.entryFunction);
     result.testsPassed = testResult.passed;
     if (!testResult.passed) {
-      result.status = "ELIMINATED";
+      result.status = 'ELIMINATED';
       result.eliminationReason = `Tests failed: ${testResult.errors[0]}`;
       log.error(`  ${result.eliminationReason}`);
       results.push(result);
@@ -246,12 +233,12 @@ async function runArena(taskName: string): Promise<ArenaResult> {
     result.avgRuntimeMs = await runPerformance(
       candidatePath,
       config.entryFunction,
-      effectiveConfig.perfRounds,
+      effectiveConfig.perfRounds
     );
     log.info(`  ⚡ Avg runtime: ${result.avgRuntimeMs.toFixed(3)}ms`);
 
     if (result.avgRuntimeMs > effectiveConfig.maxRunMs) {
-      result.status = "ELIMINATED";
+      result.status = 'ELIMINATED';
       result.eliminationReason = `Too slow: ${result.avgRuntimeMs.toFixed(2)}ms > ${effectiveConfig.maxRunMs}ms`;
       log.error(`  ${result.eliminationReason}`);
       results.push(result);
@@ -262,7 +249,7 @@ async function runArena(taskName: string): Promise<ArenaResult> {
   }
 
   // Calculate scores
-  const survivors = results.filter((r) => r.status === "PASS");
+  const survivors = results.filter((r) => r.status === 'PASS');
   if (survivors.length > 0) {
     const minTime = Math.min(...survivors.map((s) => s.avgRuntimeMs));
     const maxTime = Math.max(...survivors.map((s) => s.avgRuntimeMs));
@@ -275,8 +262,7 @@ async function runArena(taskName: string): Promise<ArenaResult> {
       const perfScore = 100 * (1 - (s.avgRuntimeMs - minTime) / timeRange);
       const sizeScore = 100 * (1 - (s.codeLines - minLines) / lineRange);
       s.score = Math.round(
-        RANKING_WEIGHTS.performance * perfScore +
-          RANKING_WEIGHTS.codeSize * sizeScore,
+        RANKING_WEIGHTS.performance * perfScore + RANKING_WEIGHTS.codeSize * sizeScore
       );
     }
   }
@@ -286,25 +272,25 @@ async function runArena(taskName: string): Promise<ArenaResult> {
 
   // Print leaderboard
   log.blank();
-  log.header("🏆 LEADERBOARD");
+  log.header('🏆 LEADERBOARD');
   if (leaderboard.length > 0) {
     leaderboard.forEach((c, i) => {
       log.rank(
         i + 1,
         c.name,
-        `${c.avgRuntimeMs.toFixed(2)}ms | ${c.codeLines} lines | score=${c.score}`,
+        `${c.avgRuntimeMs.toFixed(2)}ms | ${c.codeLines} lines | score=${c.score}`
       );
     });
     log.blank();
     log.success(`CHAMPION: ${champion}`);
   } else {
-    log.error("無人存活");
+    log.error('無人存活');
   }
 
-  const eliminated = results.filter((r) => r.status === "ELIMINATED");
+  const eliminated = results.filter((r) => r.status === 'ELIMINATED');
   if (eliminated.length > 0) {
     log.blank();
-    log.error("ELIMINATED:");
+    log.error('ELIMINATED:');
     eliminated.forEach((e) => log.info(`   ${e.name}: ${e.eliminationReason}`));
   }
 
@@ -323,18 +309,14 @@ async function runArena(taskName: string): Promise<ArenaResult> {
 
 const taskName = process.argv[2];
 if (!taskName) {
-  log.info("Usage: npx tsx arena/run_arena.ts <task_name>");
-  log.info("Tasks: " + Object.keys(ARENA_CONFIG).join(", "));
+  log.info('Usage: npx tsx arena/run_arena.ts <task_name>');
+  log.info('Tasks: ' + Object.keys(ARENA_CONFIG).join(', '));
   process.exit(1);
 }
 
 runArena(taskName)
   .then((result) => {
-    const outputPath = path.join(
-      __dirname,
-      "results",
-      `${taskName}-${Date.now()}.json`,
-    );
+    const outputPath = path.join(__dirname, 'results', `${taskName}-${Date.now()}.json`);
     fs.mkdirSync(path.dirname(outputPath), { recursive: true });
     fs.writeFileSync(outputPath, JSON.stringify(result, null, 2));
     log.blank();

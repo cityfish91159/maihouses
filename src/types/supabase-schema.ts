@@ -204,23 +204,23 @@ export interface ProfileRow {
  */
 export type PropertyForAPI = Pick<
   PropertyRow,
-  | "id"
-  | "public_id"
-  | "title"
-  | "price"
-  | "address"
-  | "images"
-  | "community_id"
-  | "community_name"
-  | "size"
-  | "rooms"
-  | "halls"
-  | "bathrooms"
-  | "features"
-  | "advantage_1"
-  | "advantage_2"
-  | "disadvantage"
-  | "age"
+  | 'id'
+  | 'public_id'
+  | 'title'
+  | 'price'
+  | 'address'
+  | 'images'
+  | 'community_id'
+  | 'community_name'
+  | 'size'
+  | 'rooms'
+  | 'halls'
+  | 'bathrooms'
+  | 'features'
+  | 'advantage_1'
+  | 'advantage_2'
+  | 'disadvantage'
+  | 'age'
 >;
 
 /**

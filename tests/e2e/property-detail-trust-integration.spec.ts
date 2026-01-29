@@ -84,7 +84,7 @@ test.describe('PropertyDetailPage - TrustServiceBanner Integration', () => {
 
     // Slow down network to see loading state
     await page.route('**/api/**', async (route) => {
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 500));
       await route.continue();
     });
 

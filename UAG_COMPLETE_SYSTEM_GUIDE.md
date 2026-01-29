@@ -256,7 +256,7 @@ class EnhancedTracker {
 
     this.initListeners();
     this.recoverSession();
-    this.trackImmediate("page_view");
+    this.trackImmediate('page_view');
   }
 
   // ═══════════════════════════════════════════════════════════
@@ -265,9 +265,9 @@ class EnhancedTracker {
 
   getOrCreateSessionId() {
     // 優先級：LocalStorage > SessionStorage > Cookie > 新建
-    let sid = localStorage.getItem("uag_session");
-    if (!sid) sid = sessionStorage.getItem("uag_session_temp");
-    if (!sid) sid = this.getCookie("uag_sid");
+    let sid = localStorage.getItem('uag_session');
+    if (!sid) sid = sessionStorage.getItem('uag_session_temp');
+    if (!sid) sid = this.getCookie('uag_sid');
     if (!sid) {
       sid = `u_${Math.random().toString(36).substr(2, 9)}`;
       this.persistSession(sid);
@@ -276,15 +276,15 @@ class EnhancedTracker {
   }
 
   persistSession(sid) {
-    localStorage.setItem("uag_session", sid);
-    sessionStorage.setItem("uag_session_temp", sid);
-    this.setCookie("uag_sid", sid, 30); // 30 天有效
+    localStorage.setItem('uag_session', sid);
+    sessionStorage.setItem('uag_session_temp', sid);
+    this.setCookie('uag_sid', sid, 30); // 30 天有效
   }
 
   getCookie(name) {
     const value = `; ${document.cookie}`;
     const parts = value.split(`; ${name}=`);
-    if (parts.length === 2) return parts.pop().split(";").shift();
+    if (parts.length === 2) return parts.pop().split(';').shift();
   }
 
   setCookie(name, value, days) {
@@ -299,12 +299,12 @@ class EnhancedTracker {
 
   getAgentId() {
     // 優先從 URL 參數取得 ?aid=xxx
-    let aid = new URLSearchParams(location.search).get("aid");
+    let aid = new URLSearchParams(location.search).get('aid');
     // 若無，從 localStorage 取得上次的 aid
-    if (!aid) aid = localStorage.getItem("uag_last_aid");
+    if (!aid) aid = localStorage.getItem('uag_last_aid');
     // 記住有效的 aid
-    if (aid && aid !== "unknown") localStorage.setItem("uag_last_aid", aid);
-    return aid || "unknown";
+    if (aid && aid !== 'unknown') localStorage.setItem('uag_last_aid', aid);
+    return aid || 'unknown';
   }
 
   // ═══════════════════════════════════════════════════════════
@@ -323,7 +323,7 @@ class EnhancedTracker {
       };
       return btoa(JSON.stringify(fp));
     } catch (e) {
-      return "unknown_fp";
+      return 'unknown_fp';
     }
   }
 
@@ -332,11 +332,11 @@ class EnhancedTracker {
   // ═══════════════════════════════════════════════════════════
 
   async recoverSession() {
-    if (!localStorage.getItem("uag_session_recovered")) {
+    if (!localStorage.getItem('uag_session_recovered')) {
       try {
-        const res = await fetch("/api/session-recovery", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+        const res = await fetch('/api/session-recovery', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             fingerprint: this.fingerprint,
             agentId: this.agentId,
@@ -346,11 +346,11 @@ class EnhancedTracker {
         if (data.recovered) {
           this.sessionId = data.session_id;
           this.persistSession(this.sessionId);
-          localStorage.setItem("uag_session_recovered", "true");
-          console.log("[UAG] Session Recovered:", this.sessionId);
+          localStorage.setItem('uag_session_recovered', 'true');
+          console.log('[UAG] Session Recovered:', this.sessionId);
         }
       } catch (e) {
-        console.error("Recovery failed", e);
+        console.error('Recovery failed', e);
       }
     }
   }
@@ -361,32 +361,31 @@ class EnhancedTracker {
 
   initListeners() {
     // 點擊追蹤
-    document.addEventListener("click", (e) => {
-      const t = e.target.closest("a, button, div");
+    document.addEventListener('click', (e) => {
+      const t = e.target.closest('a, button, div');
       if (!t) return;
-      const text = (t.innerText || "").toLowerCase();
+      const text = (t.innerText || '').toLowerCase();
 
       // LINE 按鈕
-      if (text.includes("line") || t.href?.includes("line.me")) {
+      if (text.includes('line') || t.href?.includes('line.me')) {
         this.actions.click_line++;
-        this.trackImmediate("click_line"); // 強信號立即送出
+        this.trackImmediate('click_line'); // 強信號立即送出
       }
       // 電話按鈕
-      if (text.includes("電話") || t.href?.includes("tel:")) {
+      if (text.includes('電話') || t.href?.includes('tel:')) {
         this.actions.click_call++;
-        this.trackImmediate("click_call"); // 強信號立即送出
+        this.trackImmediate('click_call'); // 強信號立即送出
       }
       // 照片點擊
-      if (t.tagName === "IMG" || t.classList.contains("photo")) {
+      if (t.tagName === 'IMG' || t.classList.contains('photo')) {
         this.actions.click_photos++;
       }
     });
 
     // 滾動深度追蹤
-    window.addEventListener("scroll", () => {
+    window.addEventListener('scroll', () => {
       const depth = Math.round(
-        ((window.scrollY + window.innerHeight) / document.body.scrollHeight) *
-          100,
+        ((window.scrollY + window.innerHeight) / document.body.scrollHeight) * 100
       );
       if (depth > this.actions.scroll_depth) {
         this.actions.scroll_depth = depth;
@@ -394,11 +393,11 @@ class EnhancedTracker {
     });
 
     // 離開頁面追蹤
-    const sendFinal = () => this.trackImmediate("page_exit");
-    window.addEventListener("visibilitychange", () => {
-      if (document.visibilityState === "hidden") sendFinal();
+    const sendFinal = () => this.trackImmediate('page_exit');
+    window.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') sendFinal();
     });
-    window.addEventListener("pagehide", sendFinal);
+    window.addEventListener('pagehide', sendFinal);
   }
 
   // ═══════════════════════════════════════════════════════════
@@ -409,13 +408,13 @@ class EnhancedTracker {
     this.batcher.add(
       {
         type,
-        property_id: window.propertyId || location.pathname.split("/").pop(),
-        district: window.propertyDistrict || "unknown",
+        property_id: window.propertyId || location.pathname.split('/').pop(),
+        district: window.propertyDistrict || 'unknown',
         duration: Math.round((Date.now() - this.enterTime) / 1000),
         actions: { ...this.actions },
         focus: [],
       },
-      true,
+      true
     );
   }
 }
@@ -461,9 +460,9 @@ class EventBatcher {
 
     // 使用 sendBeacon 確保離開頁面也能送出
     const blob = new Blob([JSON.stringify(payload)], {
-      type: "application/json",
+      type: 'application/json',
     });
-    navigator.sendBeacon("/api/uag-track", blob);
+    navigator.sendBeacon('/api/uag-track', blob);
   }
 }
 
@@ -572,8 +571,8 @@ const { trackPhotoClick, trackLineClick, trackCallClick } = usePropertyTracker(p
 <!-- property.html 底部 -->
 <script>
   // 設定物件資訊供追蹤器使用
-  window.propertyId = "prop_12345";
-  window.propertyDistrict = "西屯區";
+  window.propertyId = 'prop_12345';
+  window.propertyDistrict = '西屯區';
 </script>
 <script src="/js/tracker.js"></script>
 ```
@@ -585,31 +584,29 @@ const { trackPhotoClick, trackLineClick, trackCallClick } = usePropertyTracker(p
 ### 5.1 追蹤 API (`/api/uag-track.js`)
 
 ```javascript
-import { createClient } from "@supabase/supabase-js";
+import { createClient } from '@supabase/supabase-js';
 
 // Initialize Supabase Client
 const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-const supabaseKey =
-  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 export default async function handler(req, res) {
   // CORS Headers
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-  if (req.method === "OPTIONS") return res.status(200).end();
-  if (req.method !== "POST")
-    return res.status(405).json({ error: "Method not allowed" });
+  if (req.method === 'OPTIONS') return res.status(200).end();
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
     let data = req.body;
-    if (typeof data === "string") {
+    if (typeof data === 'string') {
       try {
         data = JSON.parse(data);
       } catch (e) {
-        return res.status(400).json({ error: "Invalid JSON" });
+        return res.status(400).json({ error: 'Invalid JSON' });
       }
     }
 
@@ -617,30 +614,28 @@ export default async function handler(req, res) {
 
     // 驗證必要欄位
     if (!session_id || !event) {
-      return res
-        .status(400)
-        .json({ error: "Missing required fields: session_id or event" });
+      return res.status(400).json({ error: 'Missing required fields: session_id or event' });
     }
 
-    if (typeof event !== "object" || !event.property_id || !event.duration) {
-      return res.status(400).json({ error: "Invalid event structure" });
+    if (typeof event !== 'object' || !event.property_id || !event.duration) {
+      return res.status(400).json({ error: 'Invalid event structure' });
     }
 
     // 呼叫資料庫 RPC 函數
-    const { data: result, error } = await supabase.rpc("track_uag_event_v8", {
+    const { data: result, error } = await supabase.rpc('track_uag_event_v8', {
       p_session_id: session_id,
-      p_agent_id: agent_id || "unknown",
+      p_agent_id: agent_id || 'unknown',
       p_fingerprint: fingerprint || null,
       p_event_data: event,
     });
 
     if (error) {
-      console.error("Supabase RPC Error:", error);
+      console.error('Supabase RPC Error:', error);
       return res.status(500).json({ error: error.message });
     }
 
     // S 級客戶即時通知 (可選)
-    if (result && result.grade === "S") {
+    if (result && result.grade === 'S') {
       console.log(`[UAG] 🔥 S-Grade Lead Detected! Session: ${session_id}`);
       // 可接入 webhook 或推播通知業務
       // await sendWebhookToAgent(agent_id, session_id);
@@ -648,8 +643,8 @@ export default async function handler(req, res) {
 
     return res.status(200).json(result);
   } catch (err) {
-    console.error("UAG Track Error:", err);
-    return res.status(500).json({ error: "Internal Server Error" });
+    console.error('UAG Track Error:', err);
+    return res.status(500).json({ error: 'Internal Server Error' });
   }
 }
 ```
@@ -1062,10 +1057,10 @@ VITE_SUPABASE_ANON_KEY=eyJxxxxxx
 console.log(window.uagTracker); // 應該有值
 
 // 檢查 Session ID
-console.log(localStorage.getItem("uag_session")); // 應該有值
+console.log(localStorage.getItem('uag_session')); // 應該有值
 
 // 手動觸發測試
-window.uagTracker.trackImmediate("test_event");
+window.uagTracker.trackImmediate('test_event');
 ```
 
 ### 8.4 API 測試
@@ -1111,8 +1106,8 @@ curl -X POST https://maihouses.vercel.app/api/uag-track \
 ```html
 <!-- 在物件頁面確保有載入 -->
 <script>
-  window.propertyId = "物件ID";
-  window.propertyDistrict = "行政區";
+  window.propertyId = '物件ID';
+  window.propertyDistrict = '行政區';
 </script>
 <script src="/js/tracker.js"></script>
 ```

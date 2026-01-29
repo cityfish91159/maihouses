@@ -1,20 +1,17 @@
-import { PropertyFormInput } from "../../services/propertyService";
+import { PropertyFormInput } from '../../services/propertyService';
 import {
   UploadState,
   UploadAction,
   ManagedImage,
   UploadResult,
   UploadError,
-} from "../../types/upload";
+} from '../../types/upload';
 
 // ============================================================
 // Helper: 建立 ManagedImage
 // ============================================================
 
-export function createManagedImage(
-  file: File,
-  isCover: boolean = false,
-): ManagedImage {
+export function createManagedImage(file: File, isCover: boolean = false): ManagedImage {
   return {
     id: crypto.randomUUID(),
     file,
@@ -39,15 +36,11 @@ export function getSortedImages(images: ManagedImage[]): ManagedImage[] {
 // ============================================================
 export function autoSetCover(
   currentImages: ManagedImage[],
-  newImages: ManagedImage[],
+  newImages: ManagedImage[]
 ): ManagedImage[] {
-  const hasCover =
-    currentImages.some((img) => img.isCover) ||
-    newImages.some((img) => img.isCover);
+  const hasCover = currentImages.some((img) => img.isCover) || newImages.some((img) => img.isCover);
   if (!hasCover && currentImages.length === 0 && newImages.length > 0) {
-    return newImages.map((img, idx) =>
-      idx === 0 ? { ...img, isCover: true } : img,
-    );
+    return newImages.map((img, idx) => (idx === 0 ? { ...img, isCover: true } : img));
   }
   return newImages;
 }
@@ -63,25 +56,25 @@ export const createInitialState = (): UploadState => ({
   uploadProgress: null,
   compressionProgress: null,
   form: {
-    title: "",
-    price: "",
-    address: "",
-    communityName: "",
-    size: "",
-    age: "",
-    floorCurrent: "",
-    floorTotal: "",
-    rooms: "3",
-    halls: "2",
-    bathrooms: "2",
-    type: "電梯大樓",
-    description: "",
-    advantage1: "",
-    advantage2: "",
-    disadvantage: "",
+    title: '',
+    price: '',
+    address: '',
+    communityName: '',
+    size: '',
+    age: '',
+    floorCurrent: '',
+    floorTotal: '',
+    rooms: '3',
+    halls: '2',
+    bathrooms: '2',
+    type: '電梯大樓',
+    description: '',
+    advantage1: '',
+    advantage2: '',
+    disadvantage: '',
     highlights: [],
     images: [],
-    sourceExternalId: "",
+    sourceExternalId: '',
     trustEnabled: false,
   },
   managedImages: [],
@@ -96,20 +89,17 @@ export const createInitialState = (): UploadState => ({
 // Reducer
 // ============================================================
 
-export function uploadReducer(
-  state: UploadState,
-  action: UploadAction,
-): UploadState {
+export function uploadReducer(state: UploadState, action: UploadAction): UploadState {
   switch (action.type) {
     // --- Loading States ---
-    case "SET_LOADING":
+    case 'SET_LOADING':
       return { ...state, loading: action.payload };
 
-    case "SET_VALIDATING":
+    case 'SET_VALIDATING':
       return { ...state, validating: action.payload };
 
     // --- Compression Flow ---
-    case "START_COMPRESSION":
+    case 'START_COMPRESSION':
       return {
         ...state,
         compressing: true,
@@ -117,10 +107,10 @@ export function uploadReducer(
         lastError: null,
       };
 
-    case "UPDATE_COMPRESSION_PROGRESS":
+    case 'UPDATE_COMPRESSION_PROGRESS':
       return { ...state, compressionProgress: action.payload };
 
-    case "FINISH_COMPRESSION": {
+    case 'FINISH_COMPRESSION': {
       const newImages = action.payload;
       // UP-3.F: 使用 helper 自動設封面
       const imagesToAdd = autoSetCover(state.managedImages, newImages);
@@ -137,13 +127,13 @@ export function uploadReducer(
       };
     }
 
-    case "COMPRESSION_FAILED":
+    case 'COMPRESSION_FAILED':
       return {
         ...state,
         compressing: false,
         compressionProgress: null,
         lastError: {
-          type: "compression",
+          type: 'compression',
           message: action.payload.message,
           canFallback: action.payload.canFallback,
           originalFiles: action.payload.originalFiles,
@@ -151,7 +141,7 @@ export function uploadReducer(
       };
 
     // --- Image Management (UP-3) ---
-    case "ADD_IMAGES": {
+    case 'ADD_IMAGES': {
       const newImages = action.payload;
       const imagesToAdd = autoSetCover(state.managedImages, newImages);
       const allImages = [...state.managedImages, ...imagesToAdd];
@@ -165,20 +155,14 @@ export function uploadReducer(
       };
     }
 
-    case "REMOVE_IMAGE": {
+    case 'REMOVE_IMAGE': {
       const idToRemove = action.payload;
-      const imageToRemove = state.managedImages.find(
-        (img) => img.id === idToRemove,
-      );
+      const imageToRemove = state.managedImages.find((img) => img.id === idToRemove);
       // Note: URL.revokeObjectURL moved to UploadContext to keep reducer pure
-      let remaining = state.managedImages.filter(
-        (img) => img.id !== idToRemove,
-      );
+      let remaining = state.managedImages.filter((img) => img.id !== idToRemove);
       // 若移除的是封面，將第一張設為新封面
       if (imageToRemove?.isCover && remaining.length > 0) {
-        remaining = remaining.map((img, idx) =>
-          idx === 0 ? { ...img, isCover: true } : img,
-        );
+        remaining = remaining.map((img, idx) => (idx === 0 ? { ...img, isCover: true } : img));
       }
       return {
         ...state,
@@ -191,12 +175,10 @@ export function uploadReducer(
     }
 
     // UP-3.3: 設為封面
-    case "SET_COVER": {
+    case 'SET_COVER': {
       const coverId = action.payload;
       // 檢查目標 id 是否存在
-      const targetExists = state.managedImages.some(
-        (img) => img.id === coverId,
-      );
+      const targetExists = state.managedImages.some((img) => img.id === coverId);
       if (!targetExists) {
         // 目標不存在，保持原狀
         return state;
@@ -216,14 +198,14 @@ export function uploadReducer(
     }
 
     // --- Form ---
-    case "SET_FORM":
+    case 'SET_FORM':
       return { ...state, form: action.payload };
 
-    case "UPDATE_FORM":
+    case 'UPDATE_FORM':
       return { ...state, form: { ...state.form, ...action.payload } };
 
     // --- Upload Flow ---
-    case "START_UPLOAD":
+    case 'START_UPLOAD':
       return {
         ...state,
         loading: true,
@@ -231,10 +213,10 @@ export function uploadReducer(
         lastError: null,
       };
 
-    case "UPDATE_UPLOAD_PROGRESS":
+    case 'UPDATE_UPLOAD_PROGRESS':
       return { ...state, uploadProgress: action.payload };
 
-    case "UPLOAD_SUCCESS":
+    case 'UPLOAD_SUCCESS':
       return {
         ...state,
         loading: false,
@@ -243,7 +225,7 @@ export function uploadReducer(
         showConfirmation: true,
       };
 
-    case "UPLOAD_FAILED":
+    case 'UPLOAD_FAILED':
       return {
         ...state,
         loading: false,
@@ -252,21 +234,21 @@ export function uploadReducer(
       };
 
     // --- User & Community ---
-    case "SET_USER_ID":
+    case 'SET_USER_ID':
       return { ...state, userId: action.payload };
 
-    case "SET_COMMUNITY_ID":
+    case 'SET_COMMUNITY_ID':
       return { ...state, selectedCommunityId: action.payload };
 
     // --- Error Management ---
-    case "CLEAR_ERROR":
+    case 'CLEAR_ERROR':
       return { ...state, lastError: null };
 
-    case "SET_ERROR":
+    case 'SET_ERROR':
       return { ...state, lastError: action.payload };
 
     // --- Reset ---
-    case "RESET_UPLOAD_STATE":
+    case 'RESET_UPLOAD_STATE':
       return createInitialState();
 
     default:

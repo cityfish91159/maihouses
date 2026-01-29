@@ -1,17 +1,14 @@
-import { memo, useCallback } from "react";
-import { FocusTrap } from "../ui/FocusTrap";
-import { STRINGS } from "../../constants/strings";
-import { ROUTES } from "../../constants/routes";
+import { memo, useCallback } from 'react';
+import { FocusTrap } from '../ui/FocusTrap';
+import { STRINGS } from '../../constants/strings';
+import { ROUTES } from '../../constants/routes';
 
 interface LoginPromptProps {
   readonly isOpen: boolean;
   readonly onClose: () => void;
 }
 
-export const LoginPrompt = memo(function LoginPrompt({
-  isOpen,
-  onClose,
-}: LoginPromptProps) {
+export const LoginPrompt = memo(function LoginPrompt({ isOpen, onClose }: LoginPromptProps) {
   const handleClose = useCallback(() => {
     onClose();
   }, [onClose]);

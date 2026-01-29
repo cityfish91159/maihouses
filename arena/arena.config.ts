@@ -54,7 +54,7 @@ export const HELL_MODE: HellModeConfig = {
 export const ARENA_CONFIG: Record<string, TaskConfig> = {
   // 範例任務：UAG 評分
   uag_score: {
-    entryFunction: "uagScore",
+    entryFunction: 'uagScore',
     maxRunMs: 200,
     perfRounds: 30,
     maxFunctionLines: 60,
@@ -65,7 +65,7 @@ export const ARENA_CONFIG: Record<string, TaskConfig> = {
 
   // 範例任務：物件過濾
   property_filter: {
-    entryFunction: "filterProperties",
+    entryFunction: 'filterProperties',
     maxRunMs: 150,
     perfRounds: 50,
     maxFunctionLines: 40,

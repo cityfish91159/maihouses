@@ -2,10 +2,7 @@
 <html lang="zh-Hant">
   <head>
     <meta charset="utf-8" />
-    <meta
-      content="width=device-width, initial-scale=1, viewport-fit=cover"
-      name="viewport"
-    />
+    <meta content="width=device-width, initial-scale=1, viewport-fit=cover" name="viewport" />
     <title>邁房子｜個人信息流（MVP・消費者版 v4.2）</title>
     <meta
       name="description"
@@ -34,8 +31,7 @@
         margin: 0;
         background: linear-gradient(180deg, var(--bg1), var(--bg2));
         color: var(--ink);
-        font-family:
-          "Noto Sans TC", "PingFang TC", "Helvetica Neue", Arial, sans-serif;
+        font-family: 'Noto Sans TC', 'PingFang TC', 'Helvetica Neue', Arial, sans-serif;
         -webkit-font-smoothing: antialiased;
       }
       .page {
@@ -306,7 +302,7 @@
       }
 
       @media (max-width: 375px) {
-        .links a[href="#my-community"] {
+        .links a[href='#my-community'] {
           margin-left: 20px;
         }
       }
@@ -416,7 +412,7 @@
       }
 
       /* 定位調整：將個人卡中的「查看我的社區牆」膠囊，平行往右移 30px */
-      .links a[href="#my-community"] {
+      .links a[href='#my-community'] {
         margin-left: 60px;
       }
 
@@ -453,14 +449,7 @@
             <a href="auth.html?action=logout" role="menuitem">🚪 登出</a>
           </div>
         </details>
-        <button
-          type="button"
-          class="icon badge"
-          data-badge="2"
-          aria-label="通知"
-        >
-          🔔 通知
-        </button>
+        <button type="button" class="icon badge" data-badge="2" aria-label="通知">🔔 通知</button>
         <button type="button" class="icon" aria-label="訊息">💬 訊息</button>
       </div>
     </header>
@@ -469,11 +458,11 @@
       (async function () {
         try {
           // 1. Auto Login as Buyer for Demo Case
-          const caseId = "demo-v10";
-          const res = await fetch("/api/trust/login", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ role: "buyer", caseId }),
+          const caseId = 'demo-v10';
+          const res = await fetch('/api/trust/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ role: 'buyer', caseId }),
           });
           const { token } = await res.json();
 
@@ -487,20 +476,20 @@
             // 3. If case exists (it always does with our mock backend), show link
             // In a real app, you might check if tx.currentStep > 0 or similar
             if (tx && tx.id) {
-              const menu = document.getElementById("myMenu");
-              const link = document.createElement("a");
+              const menu = document.getElementById('myMenu');
+              const link = document.createElement('a');
               link.href = `/maihouses/trust/room#token=${token}`;
-              link.role = "menuitem";
+              link.role = 'menuitem';
               link.innerHTML =
                 '🏠 <b>安心戰情室</b> <span style="font-size:10px;background:#e0f2fe;color:#0284c7;padding:2px 6px;border-radius:99px">進行中</span>';
-              link.style.color = "#0284c7";
+              link.style.color = '#0284c7';
 
               // Insert as the first item
               menu.insertBefore(link, menu.firstChild);
             }
           }
         } catch (e) {
-          console.error("Trust Room Link Error:", e);
+          console.error('Trust Room Link Error:', e);
         }
       })();
     </script>
@@ -538,14 +527,8 @@
           </div>
         </div>
         <div class="body">
-          <p>
-            <b>11:30–12:05 帶看完成。</b>簽到、位置軌跡、現場照片 3
-            張與對話摘要已留存。
-          </p>
-          <p>
-            <b>憑證號 MJ-2025-11-10-0007。</b>僅你與
-            <b>王仲</b> 可見（個資受保護）。
-          </p>
+          <p><b>11:30–12:05 帶看完成。</b>簽到、位置軌跡、現場照片 3 張與對話摘要已留存。</p>
+          <p><b>憑證號 MJ-2025-11-10-0007。</b>僅你與 <b>王仲</b> 可見（個資受保護）。</p>
           <div class="tags">
             <span class="tag ok">看屋完成</span>
             <span class="tag">留痕憑證</span>
@@ -638,8 +621,7 @@
           </div>
         </div>
         <div class="actions">
-          <button class="btn">🔎 看完整報告</button
-          ><button class="btn">💬 討論</button>
+          <button class="btn">🔎 看完整報告</button><button class="btn">💬 討論</button>
         </div>
       </article>
       <article class="post">
@@ -674,13 +656,9 @@
           </div>
         </div>
         <div class="body">
-          <p>
-            為什麼 12F
-            視野戶總是熱門？分享帶看心得：動線、採光與周遭噪音的實勘筆記。
-          </p>
+          <p>為什麼 12F 視野戶總是熱門？分享帶看心得：動線、採光與周遭噪音的實勘筆記。</p>
           <div class="tags">
-            <span class="tag ok">誠實揭露</span
-            ><span class="tag">帶看筆記</span>
+            <span class="tag ok">誠實揭露</span><span class="tag">帶看筆記</span>
           </div>
           <div class="sub">互動 23 · 收藏 9</div>
         </div>
@@ -723,28 +701,27 @@
       // ==== MVP behavior layer (no visual changes) ====
       (function () {
         const $ = (sel, root = document) => root.querySelector(sel);
-        const $$ = (sel, root = document) =>
-          Array.from(root.querySelectorAll(sel));
+        const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
         // 1) Event delegation for like / reply / details menus / notifications
         document.addEventListener(
-          "click",
+          'click',
           function (e) {
-            const btn = e.target.closest("button, a");
+            const btn = e.target.closest('button, a');
             if (!btn) return;
 
             // Like toggle
-            if (btn.classList.contains("btn") && /讚/.test(btn.textContent)) {
+            if (btn.classList.contains('btn') && /讚/.test(btn.textContent)) {
               e.preventDefault();
-              const liked = btn.getAttribute("aria-pressed") === "true";
-              btn.setAttribute("aria-pressed", liked ? "false" : "true");
+              const liked = btn.getAttribute('aria-pressed') === 'true';
+              btn.setAttribute('aria-pressed', liked ? 'false' : 'true');
               // lightweight feedback without new UI
               const was = btn.textContent;
               if (!liked) {
                 btn.dataset._orig = was;
-                btn.textContent = "✅ 已讚";
+                btn.textContent = '✅ 已讚';
               } else {
-                btn.textContent = btn.dataset._orig || "👍 讚";
+                btn.textContent = btn.dataset._orig || '👍 讚';
               }
               // throttle: ignore rapid double clicks
               btn.disabled = true;
@@ -755,81 +732,76 @@
             }
 
             // Publish handler (Composer)
-            if (btn.closest(".composer") && btn.classList.contains("btn")) {
+            if (btn.closest('.composer') && btn.classList.contains('btn')) {
               e.preventDefault();
-              const input = $(".composer input, .composer textarea");
+              const input = $('.composer input, .composer textarea');
               if (!input) return;
-              const raw = input.value || "";
+              const raw = input.value || '';
               const sanitized = raw.replace(
                 /[<>&"']/g,
                 (s) =>
                   ({
-                    "<": "&lt;",
-                    ">": "&gt;",
-                    "&": "&amp;",
-                    '"': "&quot;",
-                    "'": "&#39;",
-                  })[s],
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '&': '&amp;',
+                    '"': '&quot;',
+                    "'": '&#39;',
+                  })[s]
               );
               // Minimal payload (console only; no backend)
               const payload = {
                 content: sanitized.trim(),
-                userId: "me",
-                communityId: "default",
+                userId: 'me',
+                communityId: 'default',
                 createdAt: new Date().toISOString(),
-                visibility: "community",
-                source: "mvp-v4.2",
+                visibility: 'community',
+                source: 'mvp-v4.2',
               };
               if (!payload.content) {
                 // non-intrusive feedback
-                console.log("內容為空，未發佈。");
+                console.log('內容為空，未發佈。');
                 return;
               }
-              console.log("發佈成功（本地占位）：", payload);
+              console.log('發佈成功（本地占位）：', payload);
               try {
-                localStorage.removeItem("composerDraft:v4.2");
+                localStorage.removeItem('composerDraft:v4.2');
               } catch {}
-              input.value = "";
-              alert("發佈成功（示意，未上傳）");
+              input.value = '';
+              alert('發佈成功（示意，未上傳）');
               return;
             }
 
             // Notifications/message placeholder
-            if (
-              btn.classList.contains("icon") &&
-              /通知|訊息/.test(btn.textContent)
-            ) {
+            if (btn.classList.contains('icon') && /通知|訊息/.test(btn.textContent)) {
               e.preventDefault();
-              alert(btn.textContent.trim() + "：功能開發中（示意）。");
+              alert(btn.textContent.trim() + '：功能開發中（示意）。');
               return;
             }
           },
-          { passive: true },
+          { passive: true }
         );
 
         // 2) Composer progressive disclosure (expand on focus, collapse on blur)
         (function () {
-          const comp = $(".composer");
+          const comp = $('.composer');
           if (!comp) return;
-          const input = $(".composer input, .composer textarea", comp);
+          const input = $('.composer input, .composer textarea', comp);
           if (!input) return;
           function expand() {
-            comp.classList.add("expanded");
+            comp.classList.add('expanded');
           }
           function collapse() {
-            if (!input.value) comp.classList.remove("expanded");
+            if (!input.value) comp.classList.remove('expanded');
           }
-          input.addEventListener("focus", expand);
-          input.addEventListener("blur", collapse);
+          input.addEventListener('focus', expand);
+          input.addEventListener('blur', collapse);
         })();
 
         // 3) Local draft autosave (60s debounce)
         (function () {
-          const input = document.querySelector(
-            ".composer input, .composer textarea",
-          );
+          const input = document.querySelector('.composer input, .composer textarea');
           if (!input) return;
-          const KEY = "composerDraft:v4.2";
+          const KEY = 'composerDraft:v4.2';
           // restore
           try {
             const v = localStorage.getItem(KEY);
@@ -838,10 +810,10 @@
           let t = null;
           function save() {
             try {
-              localStorage.setItem(KEY, input.value || "");
+              localStorage.setItem(KEY, input.value || '');
             } catch {}
           }
-          input.addEventListener("input", () => {
+          input.addEventListener('input', () => {
             clearTimeout(t);
             t = setTimeout(save, 60000);
           });
@@ -849,19 +821,19 @@
 
         // 4) Add loading="lazy" to images (safety if HTML missed)
         (function () {
-          $$("img:not([loading])").forEach((img) => (img.loading = "lazy"));
+          $$('img:not([loading])').forEach((img) => (img.loading = 'lazy'));
         })();
 
         // 5) Sorting toggle (?sort=reco) — purely local, default off
         (function () {
           const params = new URLSearchParams(location.search);
-          if (params.get("sort") !== "reco") return;
-          const container = document.querySelector("main.page");
+          if (params.get('sort') !== 'reco') return;
+          const container = document.querySelector('main.page');
           if (!container) return;
-          const items = Array.from(container.querySelectorAll("article.post"));
+          const items = Array.from(container.querySelectorAll('article.post'));
           if (items.length < 2) return;
           function score(el) {
-            const txt = el.textContent || "";
+            const txt = el.textContent || '';
             let s = 0;
             // recency heuristic
             if (/剛剛|分鐘前/.test(txt)) s += 0.5;
@@ -873,52 +845,48 @@
           }
           items.sort((a, b) => score(b) - score(a));
           items.forEach((el) => container.appendChild(el));
-          console.log("已套用本地排序（reco）。");
+          console.log('已套用本地排序（reco）。');
         })();
 
         // 6) Details <summary> keyboard a11y enhancement
         (function () {
-          document.querySelectorAll("details.menu > summary").forEach((sum) => {
-            sum.setAttribute("role", "button");
+          document.querySelectorAll('details.menu > summary').forEach((sum) => {
+            sum.setAttribute('role', 'button');
             sum.setAttribute(
-              "aria-expanded",
-              sum.parentElement.hasAttribute("open") ? "true" : "false",
+              'aria-expanded',
+              sum.parentElement.hasAttribute('open') ? 'true' : 'false'
             );
-            sum.addEventListener("click", () => {
-              const open = sum.parentElement.hasAttribute("open");
+            sum.addEventListener('click', () => {
+              const open = sum.parentElement.hasAttribute('open');
               // toggle via native click; update aria after microtask
-              setTimeout(
-                () =>
-                  sum.setAttribute("aria-expanded", open ? "false" : "true"),
-                0,
-              );
+              setTimeout(() => sum.setAttribute('aria-expanded', open ? 'false' : 'true'), 0);
             });
-            sum.addEventListener("keydown", (e) => {
-              if (e.key === "Enter" || e.key === " ") {
+            sum.addEventListener('keydown', (e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault();
                 sum.click();
-              } else if (e.key === "Escape") {
+              } else if (e.key === 'Escape') {
                 const d = sum.parentElement;
-                if (d.hasAttribute("open")) d.removeAttribute("open");
-                sum.setAttribute("aria-expanded", "false");
+                if (d.hasAttribute('open')) d.removeAttribute('open');
+                sum.setAttribute('aria-expanded', 'false');
               }
             });
           });
           // close menu on outside click
-          document.addEventListener("click", (e) => {
-            document.querySelectorAll("details.menu[open]").forEach((d) => {
-              if (!d.contains(e.target)) d.removeAttribute("open");
+          document.addEventListener('click', (e) => {
+            document.querySelectorAll('details.menu[open]').forEach((d) => {
+              if (!d.contains(e.target)) d.removeAttribute('open');
             });
           });
         })();
 
         // 7) Error monitoring (console only; no new UI)
         (function () {
-          window.addEventListener("error", function (ev) {
-            console.debug("[caught error]", ev.message);
+          window.addEventListener('error', function (ev) {
+            console.debug('[caught error]', ev.message);
           });
-          window.addEventListener("unhandledrejection", function (ev) {
-            console.debug("[unhandled rejection]", ev.reason);
+          window.addEventListener('unhandledrejection', function (ev) {
+            console.debug('[unhandled rejection]', ev.reason);
           });
         })();
       })();

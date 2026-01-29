@@ -1,46 +1,39 @@
-import React, { useCallback, useRef, useState } from "react";
-import { ErrorBoundary } from "react-error-boundary";
-import { QueryErrorResetBoundary, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
-import { ROUTES } from "../../constants/routes";
-import { notify } from "../../lib/notify";
-import { logger } from "../../lib/logger";
-import { createPost } from "../../services/communityService";
-import type { AppData } from "./types/uag.types";
+import React, { useCallback, useRef, useState } from 'react';
+import { ErrorBoundary } from 'react-error-boundary';
+import { QueryErrorResetBoundary, useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
+import { ROUTES } from '../../constants/routes';
+import { notify } from '../../lib/notify';
+import { logger } from '../../lib/logger';
+import { createPost } from '../../services/communityService';
+import type { AppData } from './types/uag.types';
 
-import styles from "./UAG.module.css";
-import { useUAG } from "./hooks/useUAG";
-import { useLeadSelection } from "./hooks/useLeadSelection";
-import { useAgentProfile } from "./hooks/useAgentProfile";
-import { useAuth } from "../../hooks/useAuth";
+import styles from './UAG.module.css';
+import { useUAG } from './hooks/useUAG';
+import { useLeadSelection } from './hooks/useLeadSelection';
+import { useAgentProfile } from './hooks/useAgentProfile';
+import { useAuth } from '../../hooks/useAuth';
 
-import { UAGHeader } from "./components/UAGHeader";
-import { UAGFooter } from "./components/UAGFooter";
-import { UAGLoadingSkeleton } from "./components/UAGLoadingSkeleton";
-import { UAGErrorState } from "./components/UAGErrorState";
+import { UAGHeader } from './components/UAGHeader';
+import { UAGFooter } from './components/UAGFooter';
+import { UAGLoadingSkeleton } from './components/UAGLoadingSkeleton';
+import { UAGErrorState } from './components/UAGErrorState';
 
-import RadarCluster from "./components/RadarCluster";
-import ActionPanel from "./components/ActionPanel";
-import AssetMonitor from "./components/AssetMonitor";
-import ListingFeed from "./components/ListingFeed";
-import ReportGenerator from "./components/ReportGenerator";
-import TrustFlow from "./components/TrustFlow";
+import RadarCluster from './components/RadarCluster';
+import ActionPanel from './components/ActionPanel';
+import AssetMonitor from './components/AssetMonitor';
+import ListingFeed from './components/ListingFeed';
+import ReportGenerator from './components/ReportGenerator';
+import TrustFlow from './components/TrustFlow';
 
 // MSG-5: 購買成功後發送訊息 Modal
-import { SendMessageModal } from "../../components/UAG/SendMessageModal";
-import type { Lead } from "./types/uag.types";
+import { SendMessageModal } from '../../components/UAG/SendMessageModal';
+import type { Lead } from './types/uag.types';
 
 function UAGPageContent() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const {
-    data: appData,
-    isLoading,
-    buyLead,
-    isBuying,
-    useMock,
-    toggleMode,
-  } = useUAG();
+  const { data: appData, isLoading, buyLead, isBuying, useMock, toggleMode } = useUAG();
   const { selectedLead, selectLead, close } = useLeadSelection();
   const { user, loading: authLoading, error: authError, signOut } = useAuth();
   const { profile: agentProfile } = useAgentProfile(user?.id);
@@ -50,9 +43,7 @@ function UAGPageContent() {
   const [showMessageModal, setShowMessageModal] = useState(false);
   const [purchasedLead, setPurchasedLead] = useState<Lead | null>(null);
   // MSG-5 FIX: 保存購買後回傳的 conversation_id (UAG-13)
-  const [currentConversationId, setCurrentConversationId] = useState<
-    string | undefined
-  >(undefined);
+  const [currentConversationId, setCurrentConversationId] = useState<string | undefined>(undefined);
   // Header signOut 狀態
   const [isSigningOut, setIsSigningOut] = useState(false);
 
@@ -69,13 +60,13 @@ function UAGPageContent() {
   const handleViewChat = useCallback(
     (conversationId: string) => {
       // Mock 模式下的聊天室導航處理
-      if (useMock && conversationId.startsWith("mock-conv-")) {
-        notify.info("Mock 模式", "聊天室功能需要切換到 Live 模式");
+      if (useMock && conversationId.startsWith('mock-conv-')) {
+        notify.info('Mock 模式', '聊天室功能需要切換到 Live 模式');
         return;
       }
       navigate(ROUTES.CHAT(conversationId));
     },
-    [navigate, useMock],
+    [navigate, useMock]
   );
 
   const handleCloseAssetModal = useCallback(() => {
@@ -89,40 +80,35 @@ function UAGPageContent() {
       if (!assetMessageLead) return;
 
       // 更新 React Query cache - 設置 conversation_id 和 notification_status
-      queryClient.setQueryData<AppData>(
-        ["uagData", useMock, user?.id],
-        (oldData) => {
-          if (!oldData) return oldData;
+      queryClient.setQueryData<AppData>(['uagData', useMock, user?.id], (oldData) => {
+        if (!oldData) return oldData;
 
-          return {
-            ...oldData,
-            leads: oldData.leads.map((item) => {
-              if (item.id === assetMessageLead.id) {
-                // Mock 模式：生成 Mock conversation ID
-                // API 模式：使用後端返回的 conversationId
-                const finalConversationId =
-                  conversationId ||
-                  (useMock
-                    ? `mock-conv-${assetMessageLead.id}-${Date.now()}`
-                    : undefined);
+        return {
+          ...oldData,
+          leads: oldData.leads.map((item) => {
+            if (item.id === assetMessageLead.id) {
+              // Mock 模式：生成 Mock conversation ID
+              // API 模式：使用後端返回的 conversationId
+              const finalConversationId =
+                conversationId ||
+                (useMock ? `mock-conv-${assetMessageLead.id}-${Date.now()}` : undefined);
 
-                return {
-                  ...item,
-                  conversation_id: finalConversationId,
-                  notification_status: "sent" as const,
-                };
-              }
-              return item;
-            }),
-          };
-        },
-      );
+              return {
+                ...item,
+                conversation_id: finalConversationId,
+                notification_status: 'sent' as const,
+              };
+            }
+            return item;
+          }),
+        };
+      });
 
       // 關閉 Modal
       setShowAssetMessageModal(false);
       setAssetMessageLead(null);
     },
-    [assetMessageLead, queryClient, useMock, user?.id],
+    [assetMessageLead, queryClient, useMock, user?.id]
   );
 
   const handleSignOut = async () => {
@@ -166,41 +152,36 @@ function UAGPageContent() {
       if (!purchasedLead) return;
 
       // 更新 React Query cache - 設置 conversation_id 和 notification_status
-      queryClient.setQueryData<AppData>(
-        ["uagData", useMock, user?.id],
-        (oldData) => {
-          if (!oldData) return oldData;
+      queryClient.setQueryData<AppData>(['uagData', useMock, user?.id], (oldData) => {
+        if (!oldData) return oldData;
 
-          return {
-            ...oldData,
-            leads: oldData.leads.map((item) => {
-              if (item.id === purchasedLead.id) {
-                // Mock 模式：生成 Mock conversation ID
-                // API 模式：使用後端返回的 conversationId（如果有的話）
-                const finalConversationId =
-                  conversationId ||
-                  (useMock
-                    ? `mock-conv-${purchasedLead.id}-${Date.now()}`
-                    : undefined);
+        return {
+          ...oldData,
+          leads: oldData.leads.map((item) => {
+            if (item.id === purchasedLead.id) {
+              // Mock 模式：生成 Mock conversation ID
+              // API 模式：使用後端返回的 conversationId（如果有的話）
+              const finalConversationId =
+                conversationId ||
+                (useMock ? `mock-conv-${purchasedLead.id}-${Date.now()}` : undefined);
 
-                return {
-                  ...item,
-                  conversation_id: finalConversationId,
-                  notification_status: "sent" as const,
-                };
-              }
-              return item;
-            }),
-          };
-        },
-      );
+              return {
+                ...item,
+                conversation_id: finalConversationId,
+                notification_status: 'sent' as const,
+              };
+            }
+            return item;
+          }),
+        };
+      });
 
       // 關閉 Modal
       setShowMessageModal(false);
       setPurchasedLead(null);
       setCurrentConversationId(undefined);
     },
-    [purchasedLead, queryClient, useMock, user?.id],
+    [purchasedLead, queryClient, useMock, user?.id]
   );
 
   // FEED-01 Phase 10: 從 feed 提取可用社區列表（去重）
@@ -223,16 +204,16 @@ function UAGPageContent() {
   const handleCreatePost = useCallback(
     async (content: string, communityId: string) => {
       try {
-        await createPost(communityId, content, "public");
+        await createPost(communityId, content, 'public');
         // 成功後重新載入資料
-        queryClient.invalidateQueries({ queryKey: ["uagData"] });
+        queryClient.invalidateQueries({ queryKey: ['uagData'] });
       } catch (err) {
-        const message = err instanceof Error ? err.message : "發文失敗";
-        logger.error("[UAG] handleCreatePost failed", { error: message });
+        const message = err instanceof Error ? err.message : '發文失敗';
+        logger.error('[UAG] handleCreatePost failed', { error: message });
         throw err; // 讓 ListingFeed 顯示錯誤
       }
     },
-    [queryClient],
+    [queryClient]
   );
 
   if (isLoading) return <UAGLoadingSkeleton />;
@@ -243,16 +224,16 @@ function UAGPageContent() {
    * 如果沒有真實的 user.id 或 session_id，不應該嘗試建立對話
    * UAG-15 FIX: Mock 模式下使用 Mock agentId 以支援測試
    */
-  const agentId = user?.id ?? (useMock ? "mock-agent-001" : undefined);
+  const agentId = user?.id ?? (useMock ? 'mock-agent-001' : undefined);
   // UAG-14: 取得房仲名稱（優先使用 user_metadata.full_name，fallback 到 email 前綴）
   // [NASA TypeScript Safety] 使用類型守衛取代 as Record
   const agentName = (() => {
     const metadata = user?.user_metadata;
-    if (metadata && typeof metadata === "object" && "full_name" in metadata) {
+    if (metadata && typeof metadata === 'object' && 'full_name' in metadata) {
       const fullName = metadata.full_name;
-      if (typeof fullName === "string" && fullName) return fullName;
+      if (typeof fullName === 'string' && fullName) return fullName;
     }
-    return user?.email?.split("@")[0] ?? "房仲";
+    return user?.email?.split('@')[0] ?? '房仲';
   })();
   // 使用 lead 的 session_id（來自消費者瀏覽記錄）
   const consumerSessionId = purchasedLead?.session_id;
@@ -261,7 +242,7 @@ function UAGPageContent() {
   const canSendMessage = Boolean(agentId && consumerSessionId);
 
   return (
-    <div className={styles["uag-page"]}>
+    <div className={styles['uag-page']}>
       <UAGHeader
         user={user}
         agentProfile={agentProfile}
@@ -271,8 +252,8 @@ function UAGPageContent() {
         isSigningOut={isSigningOut}
       />
 
-      <main className={styles["uag-container"]}>
-        <div className={styles["uag-grid"]}>
+      <main className={styles['uag-container']}>
+        <div className={styles['uag-grid']}>
           {/* [1] UAG Radar */}
           <RadarCluster leads={appData.leads} onSelectLead={selectLead} />
 
@@ -307,11 +288,7 @@ function UAGPageContent() {
         </div>
       </main>
 
-      <UAGFooter
-        user={appData.user}
-        useMock={useMock}
-        toggleMode={toggleMode}
-      />
+      <UAGFooter user={appData.user} useMock={useMock} toggleMode={toggleMode} />
 
       {/* MSG-5: 購買成功後發送訊息 Modal */}
       {/* 問題 #10-11 修復：只有在有真實 agentId 和 sessionId 時才渲染 */}
@@ -327,9 +304,7 @@ function UAGPageContent() {
           {...(currentConversationId && {
             conversationId: currentConversationId,
           })} // UAG-13 Safe
-          {...(purchasedLead.property_id
-            ? { propertyId: purchasedLead.property_id }
-            : {})}
+          {...(purchasedLead.property_id ? { propertyId: purchasedLead.property_id } : {})}
         />
       )}
 
@@ -346,9 +321,7 @@ function UAGPageContent() {
           {...(assetMessageLead.conversation_id && {
             conversationId: assetMessageLead.conversation_id,
           })}
-          {...(assetMessageLead.property_id
-            ? { propertyId: assetMessageLead.property_id }
-            : {})}
+          {...(assetMessageLead.property_id ? { propertyId: assetMessageLead.property_id } : {})}
         />
       )}
     </div>

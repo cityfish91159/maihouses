@@ -1,9 +1,9 @@
-import { useState, useCallback, useEffect } from "react";
-import { STRINGS } from "../constants/strings";
+import { useState, useCallback, useEffect } from 'react';
+import { STRINGS } from '../constants/strings';
 
 export interface ComposerData {
   content: string;
-  visibility: "public" | "private";
+  visibility: 'public' | 'private';
   communityId?: string | undefined;
   images?: File[] | undefined;
 }
@@ -12,7 +12,7 @@ interface UseComposerOptions {
   onSubmit: (data: ComposerData) => Promise<void>;
   onSuccess?: () => void;
   onError?: (error: Error) => void;
-  initialVisibility?: "public" | "private";
+  initialVisibility?: 'public' | 'private';
   minLength?: number;
   maxLength?: number;
 }
@@ -21,14 +21,12 @@ export function useComposer({
   onSubmit,
   onSuccess,
   onError,
-  initialVisibility = "public",
+  initialVisibility = 'public',
   minLength = 5, // P4-A3: 修正預設值為 5
   maxLength = 500, // P4-A3: 修正預設值為 500
 }: UseComposerOptions) {
-  const [content, setContent] = useState("");
-  const [visibility, setVisibility] = useState<"public" | "private">(
-    initialVisibility,
-  );
+  const [content, setContent] = useState('');
+  const [visibility, setVisibility] = useState<'public' | 'private'>(initialVisibility);
   const [communityId, setCommunityId] = useState<string | undefined>(undefined);
   const [images, setImages] = useState<File[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -40,7 +38,7 @@ export function useComposer({
   }, [initialVisibility]);
 
   const reset = useCallback(() => {
-    setContent("");
+    setContent('');
     setVisibility(initialVisibility);
     setCommunityId(undefined);
     setImages([]);
@@ -84,24 +82,13 @@ export function useComposer({
       onSuccess?.();
       reset();
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : STRINGS.VALIDATION.SUBMIT_ERROR;
+      const message = err instanceof Error ? err.message : STRINGS.VALIDATION.SUBMIT_ERROR;
       setError(message);
       onError?.(err instanceof Error ? err : new Error(message));
     } finally {
       setIsSubmitting(false);
     }
-  }, [
-    content,
-    visibility,
-    communityId,
-    images,
-    onSubmit,
-    onSuccess,
-    onError,
-    reset,
-    validate,
-  ]);
+  }, [content, visibility, communityId, images, onSubmit, onSuccess, onError, reset, validate]);
 
   return {
     content,

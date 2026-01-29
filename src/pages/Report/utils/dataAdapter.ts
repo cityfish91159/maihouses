@@ -1,5 +1,5 @@
-import { logger } from "../../../lib/logger";
-import type { PropertyReportData } from "../types";
+import { logger } from '../../../lib/logger';
+import type { PropertyReportData } from '../types';
 
 // Generator 的亮點格式
 interface GeneratorHighlight {
@@ -47,12 +47,12 @@ interface DecodedReportData {
 
 // [NASA TypeScript Safety] 類型守衛驗證 DecodedReportData
 function isDecodedReportData(obj: unknown): obj is DecodedReportData {
-  if (typeof obj !== "object" || obj === null) return false;
+  if (typeof obj !== 'object' || obj === null) return false;
   const record = obj as Record<string, unknown>;
   return (
-    typeof record.property === "object" &&
+    typeof record.property === 'object' &&
     record.property !== null &&
-    typeof record.agent === "object" &&
+    typeof record.agent === 'object' &&
     record.agent !== null
   );
 }
@@ -69,13 +69,13 @@ function parseRoomString(rooms: string): {
 } {
   const match = rooms.match(/(\d+)房(\d+)廳(\d+)衛/);
   if (!match) {
-    logger.warn("[dataAdapter] Unable to parse room string", { rooms });
+    logger.warn('[dataAdapter] Unable to parse room string', { rooms });
     return { rooms: 0, halls: 0, bathrooms: 0 };
   }
   return {
-    rooms: parseInt(match[1] ?? "0", 10),
-    halls: parseInt(match[2] ?? "0", 10),
-    bathrooms: parseInt(match[3] ?? "0", 10),
+    rooms: parseInt(match[1] ?? '0', 10),
+    halls: parseInt(match[2] ?? '0', 10),
+    bathrooms: parseInt(match[3] ?? '0', 10),
   };
 }
 
@@ -87,7 +87,7 @@ function parseRoomString(rooms: string): {
  */
 function calculateManagementFeePerPing(totalFee: number, size: number): number {
   if (size <= 0) {
-    logger.warn("[dataAdapter] Invalid size for management fee calculation", {
+    logger.warn('[dataAdapter] Invalid size for management fee calculation', {
       totalFee,
       size,
     });
@@ -101,10 +101,8 @@ function calculateManagementFeePerPing(totalFee: number, size: number): number {
  * @param searchParams URL 搜尋參數
  * @returns 解碼後的報告資料,失敗返回 null
  */
-export function decodeReportDataFromURL(
-  searchParams: URLSearchParams,
-): DecodedReportData | null {
-  const encodedData = searchParams.get("d");
+export function decodeReportDataFromURL(searchParams: URLSearchParams): DecodedReportData | null {
+  const encodedData = searchParams.get('d');
   if (!encodedData) {
     logger.debug("[dataAdapter] No 'd' parameter found in URL");
     return null;
@@ -118,18 +116,18 @@ export function decodeReportDataFromURL(
     const parsed: unknown = JSON.parse(utf8Decoded);
     // [NASA TypeScript Safety] 使用類型守衛取代 as DecodedReportData
     if (!isDecodedReportData(parsed)) {
-      logger.error("[dataAdapter] Invalid report data structure");
+      logger.error('[dataAdapter] Invalid report data structure');
       return null;
     }
     const data = parsed;
 
-    logger.debug("[dataAdapter] Successfully decoded report data", {
+    logger.debug('[dataAdapter] Successfully decoded report data', {
       reportId: data.property.id,
     });
 
     return data;
   } catch (e) {
-    logger.error("[dataAdapter] URL decode failed", {
+    logger.error('[dataAdapter] URL decode failed', {
       error: e,
       urlParam: encodedData.substring(0, 50),
     });
@@ -142,17 +140,12 @@ export function decodeReportDataFromURL(
  * @param generator Generator 的物件資料
  * @returns 轉換後的 PropertyReportData
  */
-export function convertPropertyData(
-  generator: GeneratorPropertyData,
-): PropertyReportData {
+export function convertPropertyData(generator: GeneratorPropertyData): PropertyReportData {
   // 解析格局
   const { rooms, halls, bathrooms } = parseRoomString(generator.rooms);
 
   // 計算每坪管理費
-  const managementFee = calculateManagementFeePerPing(
-    generator.managementFee,
-    generator.size,
-  );
+  const managementFee = calculateManagementFeePerPing(generator.managementFee, generator.size);
 
   return {
     id: generator.id,
@@ -178,10 +171,10 @@ export function convertPropertyData(
     managementFee,
     // agent 資訊會在 ReportPage 中單獨處理
     agent: {
-      id: "temp",
-      name: "",
-      avatarUrl: "",
-      company: "",
+      id: 'temp',
+      name: '',
+      avatarUrl: '',
+      company: '',
     },
   };
 }

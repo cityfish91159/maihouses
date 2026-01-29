@@ -6,27 +6,24 @@
  * [agentic_architecture] 清晰的模組邊界
  */
 
-import React, { useState, useEffect, useCallback, useRef } from "react";
-import { Link } from "react-router-dom";
-import { ChevronRight, RefreshCw, Plus, AlertCircle, Zap } from "lucide-react";
-import styles from "../../UAG.module.css";
-import { logger } from "../../../../lib/logger";
-import {
-  useUAGModeStore,
-  selectUseMock,
-} from "../../../../stores/uagModeStore";
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { Link } from 'react-router-dom';
+import { ChevronRight, RefreshCw, Plus, AlertCircle, Zap } from 'lucide-react';
+import styles from '../../UAG.module.css';
+import { logger } from '../../../../lib/logger';
+import { useUAGModeStore, selectUseMock } from '../../../../stores/uagModeStore';
 import {
   TrustCasesApiResponseSchema,
   transformToLegacyCase,
-} from "../../../../types/trust-flow.types";
-import { CreateCaseModal } from "../CreateCaseModal";
+} from '../../../../types/trust-flow.types';
+import { CreateCaseModal } from '../CreateCaseModal';
 
 // 子組件
-import type { TrustCase } from "./types";
-import { CaseSelector } from "./CaseSelector";
-import { ProgressSteps } from "./ProgressSteps";
-import { EventTimeline } from "./EventTimeline";
-import { MOCK_CASES } from "./mockData";
+import type { TrustCase } from './types';
+import { CaseSelector } from './CaseSelector';
+import { ProgressSteps } from './ProgressSteps';
+import { EventTimeline } from './EventTimeline';
+import { MOCK_CASES } from './mockData';
 
 // ==================== Component ====================
 interface TrustFlowProps {
@@ -54,9 +51,9 @@ export default function TrustFlow({ toggleMode }: TrustFlowProps) {
             id: caseId,
             buyerId: caseId.slice(-4).toUpperCase(),
             buyerName: `新案件 ${caseId.slice(-4)}`,
-            propertyTitle: "新建案件",
+            propertyTitle: '新建案件',
             currentStep: 1,
-            status: "active",
+            status: 'active',
             lastUpdate: Date.now(),
             token: crypto.randomUUID(),
             tokenExpiresAt: Date.now() + 90 * 24 * 60 * 60 * 1000,
@@ -64,9 +61,9 @@ export default function TrustFlow({ toggleMode }: TrustFlowProps) {
               {
                 id: `${caseId}-e1`,
                 step: 1,
-                stepName: "M1 接洽",
-                action: "初次接洽建立",
-                actor: "agent",
+                stepName: 'M1 接洽',
+                action: '初次接洽建立',
+                actor: 'agent',
                 timestamp: Date.now(),
                 hash: `${Math.random().toString(16).slice(2, 6)}...${Math.random().toString(16).slice(2, 6)}`,
               },
@@ -77,7 +74,7 @@ export default function TrustFlow({ toggleMode }: TrustFlowProps) {
         setLoading(false);
       }, 300);
     },
-    [useMock],
+    [useMock]
   );
 
   // Load data [Backend Safeguard] + [NASA TypeScript Safety]
@@ -95,15 +92,15 @@ export default function TrustFlow({ toggleMode }: TrustFlowProps) {
           isInitializedRef.current = true;
         }
       } else {
-        const res = await fetch("/api/trust/cases", {
-          credentials: "include",
+        const res = await fetch('/api/trust/cases', {
+          credentials: 'include',
         });
         if (res.ok) {
           const rawData: unknown = await res.json();
           // [NASA TypeScript Safety] Zod 驗證 API 回應，取代不安全的 type assertion
           const parseResult = TrustCasesApiResponseSchema.safeParse(rawData);
           if (!parseResult.success) {
-            logger.error("[TrustFlow] API response validation failed", {
+            logger.error('[TrustFlow] API response validation failed', {
               error: parseResult.error.message,
             });
             setCases([]);
@@ -112,7 +109,7 @@ export default function TrustFlow({ toggleMode }: TrustFlowProps) {
           const data = parseResult.data;
           if (data.success && data.data?.cases) {
             const loadedCases: TrustCase[] = data.data.cases.map((c) =>
-              transformToLegacyCase(c, []),
+              transformToLegacyCase(c, [])
             );
             setCases(loadedCases);
             if (!isInitializedRef.current && loadedCases.length > 0) {
@@ -123,19 +120,19 @@ export default function TrustFlow({ toggleMode }: TrustFlowProps) {
               isInitializedRef.current = true;
             }
           } else {
-            logger.warn("[TrustFlow] API returned non-success", { data });
+            logger.warn('[TrustFlow] API returned non-success', { data });
             setCases([]);
           }
         } else if (res.status === 401) {
-          logger.warn("[TrustFlow] Unauthorized, please login");
+          logger.warn('[TrustFlow] Unauthorized, please login');
           setCases([]);
         } else {
-          logger.error("[TrustFlow] API error", { status: res.status });
+          logger.error('[TrustFlow] API error', { status: res.status });
           setCases([]);
         }
       }
     } catch (e) {
-      logger.error("[TrustFlow] Failed to load cases", { error: e });
+      logger.error('[TrustFlow] Failed to load cases', { error: e });
       setCases([]);
     } finally {
       setLoading(false);
@@ -151,35 +148,29 @@ export default function TrustFlow({ toggleMode }: TrustFlowProps) {
   const selectedCase = cases.find((c) => c.id === selectedCaseId);
 
   return (
-    <section className={`${styles["uag-card"]} ${styles["k-span-3"]}`}>
+    <section className={`${styles['uag-card']} ${styles['k-span-3']}`}>
       {/* Header */}
-      <div className={styles["uag-card-header"]}>
+      <div className={styles['uag-card-header']}>
         <div>
-          <div className={styles["uag-card-title"]}>安心流程管理</div>
-          <div className={styles["uag-card-sub"]}>
+          <div className={styles['uag-card-title']}>安心流程管理</div>
+          <div className={styles['uag-card-sub']}>
             六階段・交易留痕
             {useMock && (
-              <span style={{ marginLeft: 8, color: "#f59e0b", fontSize: 11 }}>
-                ● Mock
-              </span>
+              <span style={{ marginLeft: 8, color: '#f59e0b', fontSize: 11 }}>● Mock</span>
             )}
           </div>
         </div>
-        <div className={styles["uag-actions"]}>
+        <div className={styles['uag-actions']}>
           <button
-            className={styles["uag-btn"]}
+            className={styles['uag-btn']}
             onClick={toggleMode}
-            title={useMock ? "切換到真實模式" : "切換到模擬模式"}
+            title={useMock ? '切換到真實模式' : '切換到模擬模式'}
           >
             <Zap size={14} style={{ marginRight: 4 }} />
-            {useMock ? "Mock" : "Live"}
+            {useMock ? 'Mock' : 'Live'}
           </button>
-          <button
-            className={styles["uag-btn"]}
-            onClick={loadCases}
-            disabled={loading}
-          >
-            <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
+          <button className={styles['uag-btn']} onClick={loadCases} disabled={loading}>
+            <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
           </button>
         </div>
       </div>
@@ -202,20 +193,15 @@ export default function TrustFlow({ toggleMode }: TrustFlowProps) {
       {!selectedCase && !loading && (
         <div
           style={{
-            textAlign: "center",
-            padding: "32px 16px",
-            color: "var(--ink-300)",
+            textAlign: 'center',
+            padding: '32px 16px',
+            color: 'var(--ink-300)',
           }}
         >
-          <AlertCircle
-            size={32}
-            style={{ margin: "0 auto 8px", opacity: 0.5 }}
-          />
-          <div style={{ fontSize: 13, marginBottom: 8 }}>
-            目前沒有進行中的案件
-          </div>
+          <AlertCircle size={32} style={{ margin: '0 auto 8px', opacity: 0.5 }} />
+          <div style={{ fontSize: 13, marginBottom: 8 }}>目前沒有進行中的案件</div>
           <button
-            className={`${styles["uag-btn"]} ${styles["primary"]}`}
+            className={`${styles['uag-btn']} ${styles['primary']}`}
             onClick={() => setIsCreateModalOpen(true)}
           >
             <Plus size={14} style={{ marginRight: 4 }} />
@@ -228,16 +214,12 @@ export default function TrustFlow({ toggleMode }: TrustFlowProps) {
       {loading && (
         <div
           style={{
-            textAlign: "center",
-            padding: "24px",
-            color: "var(--ink-300)",
+            textAlign: 'center',
+            padding: '24px',
+            color: 'var(--ink-300)',
           }}
         >
-          <RefreshCw
-            size={20}
-            className="animate-spin"
-            style={{ margin: "0 auto 8px" }}
-          />
+          <RefreshCw size={20} className="animate-spin" style={{ margin: '0 auto 8px' }} />
           <div style={{ fontSize: 12 }}>載入中...</div>
         </div>
       )}
@@ -246,22 +228,22 @@ export default function TrustFlow({ toggleMode }: TrustFlowProps) {
       {selectedCase && (
         <div
           style={{
-            display: "flex",
+            display: 'flex',
             gap: 8,
             paddingTop: 8,
-            borderTop: "1px solid #e2e8f0",
+            borderTop: '1px solid #e2e8f0',
           }}
         >
           <Link
             to={`/assure?case=${selectedCase.id}`}
-            className={`${styles["uag-btn"]} ${styles["primary"]}`}
+            className={`${styles['uag-btn']} ${styles['primary']}`}
             style={{
               flex: 1,
-              textAlign: "center",
-              textDecoration: "none",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
+              textAlign: 'center',
+              textDecoration: 'none',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
               gap: 6,
             }}
           >
@@ -275,32 +257,28 @@ export default function TrustFlow({ toggleMode }: TrustFlowProps) {
       {cases.length > 0 && (
         <div
           style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(3, 1fr)",
+            display: 'grid',
+            gridTemplateColumns: 'repeat(3, 1fr)',
             gap: 8,
-            padding: "12px 0 0",
-            borderTop: "1px solid #e2e8f0",
+            padding: '12px 0 0',
+            borderTop: '1px solid #e2e8f0',
           }}
         >
-          <div style={{ textAlign: "center" }}>
-            <div style={{ fontSize: 20, fontWeight: 700, color: "#1749d7" }}>
-              {cases.length}
-            </div>
-            <div style={{ fontSize: 11, color: "var(--ink-300)" }}>
-              進行中案件
-            </div>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: 20, fontWeight: 700, color: '#1749d7' }}>{cases.length}</div>
+            <div style={{ fontSize: 11, color: 'var(--ink-300)' }}>進行中案件</div>
           </div>
-          <div style={{ textAlign: "center" }}>
-            <div style={{ fontSize: 20, fontWeight: 700, color: "#16a34a" }}>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: 20, fontWeight: 700, color: '#16a34a' }}>
               {cases.filter((c) => c.currentStep >= 3).length}
             </div>
-            <div style={{ fontSize: 11, color: "var(--ink-300)" }}>已出價</div>
+            <div style={{ fontSize: 11, color: 'var(--ink-300)' }}>已出價</div>
           </div>
-          <div style={{ textAlign: "center" }}>
-            <div style={{ fontSize: 20, fontWeight: 700, color: "#f59e0b" }}>
-              {cases.filter((c) => c.status === "pending").length || 0}
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: 20, fontWeight: 700, color: '#f59e0b' }}>
+              {cases.filter((c) => c.status === 'pending').length || 0}
             </div>
-            <div style={{ fontSize: 11, color: "var(--ink-300)" }}>待處理</div>
+            <div style={{ fontSize: 11, color: 'var(--ink-300)' }}>待處理</div>
           </div>
         </div>
       )}

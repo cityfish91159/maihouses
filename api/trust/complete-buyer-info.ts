@@ -18,16 +18,21 @@
  * - [Security Audit] 防止越權操作
  */
 
-import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { z } from "zod";
-import { supabase, verifyToken, cors, logAudit, SYSTEM_API_KEY, getClientIp, getUserAgent, withTimeout } from "./_utils";
+import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { z } from 'zod';
 import {
-  successResponse,
-  errorResponse,
-  API_ERROR_CODES,
-} from "../lib/apiResponse";
-import { logger } from "../lib/logger";
-import { rateLimitMiddleware } from "../lib/rateLimiter";
+  supabase,
+  verifyToken,
+  cors,
+  logAudit,
+  SYSTEM_API_KEY,
+  getClientIp,
+  getUserAgent,
+  withTimeout,
+} from './_utils';
+import { successResponse, errorResponse, API_ERROR_CODES } from '../lib/apiResponse';
+import { logger } from '../lib/logger';
+import { rateLimitMiddleware } from '../lib/rateLimiter';
 
 // ============================================================================
 // Zod Schemas [NASA TypeScript Safety]
@@ -45,36 +50,36 @@ import { rateLimitMiddleware } from "../lib/rateLimiter";
  * - email: 買方電子郵件
  */
 const CompleteBuyerInfoRequestSchema = z.object({
-  caseId: z.string().uuid("案件 ID 格式錯誤"),
+  caseId: z.string().uuid('案件 ID 格式錯誤'),
   name: z
     .string()
-    .min(1, "姓名不可為空")
-    .max(50, "姓名不可超過 50 字")
-    .regex(/^[\u4e00-\u9fa5a-zA-Z\s]+$/, "姓名僅能包含中英文"),
+    .min(1, '姓名不可為空')
+    .max(50, '姓名不可超過 50 字')
+    .regex(/^[\u4e00-\u9fa5a-zA-Z\s]+$/, '姓名僅能包含中英文'),
   phone: z
     .string()
-    .min(1, "電話不可為空")
-    .regex(/^09\d{8}$/, "請輸入正確的台灣手機號碼（09 開頭 10 碼）"),
+    .min(1, '電話不可為空')
+    .regex(/^09\d{8}$/, '請輸入正確的台灣手機號碼（09 開頭 10 碼）'),
   email: z
     .string()
-    .email("請輸入正確的 Email 格式")
-    .max(100, "Email 不可超過 100 字")
+    .email('請輸入正確的 Email 格式')
+    .max(100, 'Email 不可超過 100 字')
     .optional()
-    .or(z.literal("")),
-  note: z.string().max(500, "備註不可超過 500 字").optional(),
+    .or(z.literal('')),
+  note: z.string().max(500, '備註不可超過 500 字').optional(),
 });
 
 type CompleteBuyerInfoRequest = z.infer<typeof CompleteBuyerInfoRequestSchema>;
 
 /** 案件狀態 Schema - 僅包含 active/dormant/closed */
 const CaseStatusSchema = z.enum([
-  "active",
-  "dormant",
-  "closed",
-  "pending",
-  "completed",
-  "cancelled",
-  "expired",
+  'active',
+  'dormant',
+  'closed',
+  'pending',
+  'completed',
+  'cancelled',
+  'expired',
 ]);
 
 /** trust_cases 查詢結果 Schema */
@@ -91,69 +96,58 @@ const TrustCaseRowSchema = z.object({
 // Handler
 // ============================================================================
 
-export default async function handler(
-  req: VercelRequest,
-  res: VercelResponse,
-): Promise<void> {
+export default async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
   // CORS
   cors(req, res);
 
   // OPTIONS 預檢
-  if (req.method === "OPTIONS") {
+  if (req.method === 'OPTIONS') {
     res.status(200).end();
     return;
   }
 
   // 僅允許 POST
-  if (req.method !== "POST") {
-    res
-      .status(405)
-      .json(errorResponse(API_ERROR_CODES.METHOD_NOT_ALLOWED, "只允許 POST 方法"));
+  if (req.method !== 'POST') {
+    res.status(405).json(errorResponse(API_ERROR_CODES.METHOD_NOT_ALLOWED, '只允許 POST 方法'));
     return;
   }
 
   // [Team 2 修復] Rate Limiting (10 requests per minute)
   const rateLimitError = rateLimitMiddleware(req, 10, 60000);
   if (rateLimitError) {
-    res.setHeader("X-RateLimit-Remaining", rateLimitError.remaining.toString());
-    res.setHeader("Retry-After", rateLimitError.retryAfter?.toString() || "60");
-    return void res.status(429).json(
-      errorResponse(
-        API_ERROR_CODES.RATE_LIMIT_EXCEEDED,
-        "請求過於頻繁，請稍後再試",
-        { retryAfter: rateLimitError.retryAfter }
-      )
-    );
+    res.setHeader('X-RateLimit-Remaining', rateLimitError.remaining.toString());
+    res.setHeader('Retry-After', rateLimitError.retryAfter?.toString() || '60');
+    return void res
+      .status(429)
+      .json(
+        errorResponse(API_ERROR_CODES.RATE_LIMIT_EXCEEDED, '請求過於頻繁，請稍後再試', {
+          retryAfter: rateLimitError.retryAfter,
+        })
+      );
   }
 
   try {
     // Step 1: 雙認證（JWT 或 System Key）
-    const systemKey = req.headers["x-system-key"];
-    let authSource: "jwt" | "system" = "jwt";
+    const systemKey = req.headers['x-system-key'];
+    let authSource: 'jwt' | 'system' = 'jwt';
     let user: ReturnType<typeof verifyToken> | null = null;
 
     if (systemKey) {
       if (systemKey !== SYSTEM_API_KEY) {
-        res
-          .status(401)
-          .json(errorResponse(API_ERROR_CODES.UNAUTHORIZED, "未授權的存取"));
+        res.status(401).json(errorResponse(API_ERROR_CODES.UNAUTHORIZED, '未授權的存取'));
         return;
       }
-      authSource = "system";
+      authSource = 'system';
     } else {
       try {
         user = verifyToken(req);
       } catch {
-        res
-          .status(401)
-          .json(errorResponse(API_ERROR_CODES.UNAUTHORIZED, "未登入或 Token 已過期"));
+        res.status(401).json(errorResponse(API_ERROR_CODES.UNAUTHORIZED, '未登入或 Token 已過期'));
         return;
       }
 
-      if (user.role !== "agent") {
-        res
-          .status(403)
-          .json(errorResponse(API_ERROR_CODES.FORBIDDEN, "只有房仲可以操作案件"));
+      if (user.role !== 'agent') {
+        res.status(403).json(errorResponse(API_ERROR_CODES.FORBIDDEN, '只有房仲可以操作案件'));
         return;
       }
     }
@@ -161,17 +155,13 @@ export default async function handler(
     // Step 2: 檢查請求 Body
     const bodyResult = CompleteBuyerInfoRequestSchema.safeParse(req.body);
     if (!bodyResult.success) {
-      logger.warn("[trust/complete-buyer-info] Invalid request body", {
+      logger.warn('[trust/complete-buyer-info] Invalid request body', {
         error: bodyResult.error.message,
       });
       res
         .status(400)
         .json(
-          errorResponse(
-            API_ERROR_CODES.INVALID_INPUT,
-            "請求參數格式錯誤",
-            bodyResult.error.issues,
-          ),
+          errorResponse(API_ERROR_CODES.INVALID_INPUT, '請求參數格式錯誤', bodyResult.error.issues)
         );
       return;
     }
@@ -183,52 +173,44 @@ export default async function handler(
     // [Team 9 修復] 添加 token_expires_at 和 token_revoked_at 欄位查詢
     const { data: caseRow, error: caseError } = await withTimeout(
       supabase
-        .from("trust_cases")
-        .select("id, agent_id, status, buyer_name, token_expires_at, token_revoked_at")
-        .eq("id", caseId)
+        .from('trust_cases')
+        .select('id, agent_id, status, buyer_name, token_expires_at, token_revoked_at')
+        .eq('id', caseId)
         .single(),
       15000,
-      "Database query timed out after 15 seconds",
+      'Database query timed out after 15 seconds'
     );
 
     if (caseError || !caseRow) {
-      if (caseError?.code === "PGRST116") {
-        res
-          .status(404)
-          .json(errorResponse(API_ERROR_CODES.NOT_FOUND, "找不到案件"));
+      if (caseError?.code === 'PGRST116') {
+        res.status(404).json(errorResponse(API_ERROR_CODES.NOT_FOUND, '找不到案件'));
         return;
       }
 
-      logger.error("[trust/complete-buyer-info] Database error", {
-        error: caseError?.message ?? "Unknown",
+      logger.error('[trust/complete-buyer-info] Database error', {
+        error: caseError?.message ?? 'Unknown',
         caseId,
       });
-      res
-        .status(500)
-        .json(errorResponse(API_ERROR_CODES.DATA_FETCH_FAILED, "案件載入失敗"));
+      res.status(500).json(errorResponse(API_ERROR_CODES.DATA_FETCH_FAILED, '案件載入失敗'));
       return;
     }
 
     const caseParseResult = TrustCaseRowSchema.safeParse(caseRow);
     if (!caseParseResult.success) {
-      logger.error("[trust/complete-buyer-info] Case data validation failed", {
+      logger.error('[trust/complete-buyer-info] Case data validation failed', {
         caseId,
         issues: caseParseResult.error.issues,
       });
-      res
-        .status(500)
-        .json(errorResponse(API_ERROR_CODES.INTERNAL_ERROR, "資料格式驗證失敗"));
+      res.status(500).json(errorResponse(API_ERROR_CODES.INTERNAL_ERROR, '資料格式驗證失敗'));
       return;
     }
 
     const currentCase = caseParseResult.data;
 
     // Step 4: 驗證權限（僅 JWT 需要）
-    if (authSource === "jwt" && user) {
+    if (authSource === 'jwt' && user) {
       if (currentCase.agent_id !== user.id) {
-        res
-          .status(403)
-          .json(errorResponse(API_ERROR_CODES.FORBIDDEN, "無權限操作此案件"));
+        res.status(403).json(errorResponse(API_ERROR_CODES.FORBIDDEN, '無權限操作此案件'));
         return;
       }
     }
@@ -237,35 +219,29 @@ export default async function handler(
     if (currentCase.token_expires_at) {
       const expiresAt = new Date(currentCase.token_expires_at);
       if (expiresAt < new Date()) {
-        logger.warn("[trust/complete-buyer-info] Token expired", {
+        logger.warn('[trust/complete-buyer-info] Token expired', {
           caseId,
           token_expires_at: currentCase.token_expires_at,
         });
-        res
-          .status(403)
-          .json(errorResponse(API_ERROR_CODES.FORBIDDEN, "案件 Token 已過期"));
+        res.status(403).json(errorResponse(API_ERROR_CODES.FORBIDDEN, '案件 Token 已過期'));
         return;
       }
     }
 
     if (currentCase.token_revoked_at) {
-      logger.warn("[trust/complete-buyer-info] Token revoked", {
+      logger.warn('[trust/complete-buyer-info] Token revoked', {
         caseId,
         token_revoked_at: currentCase.token_revoked_at,
       });
-      res
-        .status(403)
-        .json(errorResponse(API_ERROR_CODES.FORBIDDEN, "案件 Token 已撤銷"));
+      res.status(403).json(errorResponse(API_ERROR_CODES.FORBIDDEN, '案件 Token 已撤銷'));
       return;
     }
 
     // Step 5: 驗證狀態（僅允許 active / dormant）
-    if (currentCase.status !== "active" && currentCase.status !== "dormant") {
+    if (currentCase.status !== 'active' && currentCase.status !== 'dormant') {
       res
         .status(400)
-        .json(
-          errorResponse(API_ERROR_CODES.INVALID_INPUT, "案件狀態不允許更新買方資訊"),
-        );
+        .json(errorResponse(API_ERROR_CODES.INVALID_INPUT, '案件狀態不允許更新買方資訊'));
       return;
     }
 
@@ -281,77 +257,69 @@ export default async function handler(
     }
 
     let updateQuery = supabase
-      .from("trust_cases")
+      .from('trust_cases')
       .update(updateData)
-      .eq("id", caseId)
-      .in("status", ["active", "dormant"]);
+      .eq('id', caseId)
+      .in('status', ['active', 'dormant']);
 
     // JWT 認證時加入 agent_id 驗證防止競態條件
-    if (authSource === "jwt" && user) {
-      updateQuery = updateQuery.eq("agent_id", user.id);
+    if (authSource === 'jwt' && user) {
+      updateQuery = updateQuery.eq('agent_id', user.id);
     }
 
     // [Team 8 第三位修復] 為 update 查詢添加 timeout
     const { data: updatedCase, error: updateError } = await withTimeout(
-      updateQuery.select("id, buyer_name, buyer_phone, buyer_email").single(),
+      updateQuery.select('id, buyer_name, buyer_phone, buyer_email').single(),
       15000,
-      "Update operation timed out after 15 seconds",
+      'Update operation timed out after 15 seconds'
     );
 
     // [Team 8 修復] 區分並發衝突與真正錯誤，細分 PGRST 錯誤碼
     if (updateError) {
       // PGRST116 = no rows returned，可能是並發狀態變更
-      if (updateError.code === "PGRST116") {
-        logger.warn("[trust/complete-buyer-info] Concurrent update conflict", {
+      if (updateError.code === 'PGRST116') {
+        logger.warn('[trust/complete-buyer-info] Concurrent update conflict', {
           caseId,
           error: updateError.message,
         });
-        res
-          .status(409)
-          .json(errorResponse(API_ERROR_CODES.CONFLICT, "案件狀態已變更，請重新操作"));
+        res.status(409).json(errorResponse(API_ERROR_CODES.CONFLICT, '案件狀態已變更，請重新操作'));
         return;
       }
 
       // PGRST301 = 權限不足（RLS 拒絕）
-      if (updateError.code === "PGRST301") {
-        logger.warn("[trust/complete-buyer-info] Permission denied by RLS", {
+      if (updateError.code === 'PGRST301') {
+        logger.warn('[trust/complete-buyer-info] Permission denied by RLS', {
           caseId,
           error: updateError.message,
         });
-        res
-          .status(403)
-          .json(errorResponse(API_ERROR_CODES.FORBIDDEN, "無權限操作此案件"));
+        res.status(403).json(errorResponse(API_ERROR_CODES.FORBIDDEN, '無權限操作此案件'));
         return;
       }
 
       // 其他資料庫錯誤
-      logger.error("[trust/complete-buyer-info] Update failed", {
-        error: updateError.message ?? "Unknown",
+      logger.error('[trust/complete-buyer-info] Update failed', {
+        error: updateError.message ?? 'Unknown',
         code: updateError.code,
         caseId,
       });
-      res
-        .status(500)
-        .json(errorResponse(API_ERROR_CODES.INTERNAL_ERROR, "案件更新失敗"));
+      res.status(500).json(errorResponse(API_ERROR_CODES.INTERNAL_ERROR, '案件更新失敗'));
       return;
     }
 
     if (!updatedCase) {
-      logger.warn("[trust/complete-buyer-info] No data returned", { caseId });
-      res
-        .status(409)
-        .json(errorResponse(API_ERROR_CODES.CONFLICT, "案件狀態已變更，請重新操作"));
+      logger.warn('[trust/complete-buyer-info] No data returned', { caseId });
+      res.status(409).json(errorResponse(API_ERROR_CODES.CONFLICT, '案件狀態已變更，請重新操作'));
       return;
     }
 
     // Step 7: 寫入審計紀錄（標記來源 jwt/system）
     const auditUser =
-      authSource === "jwt" && user
+      authSource === 'jwt' && user
         ? user
         : {
-            id: "system",
-            role: "system" as const,
-            txId: "system",
+            id: 'system',
+            role: 'system' as const,
+            txId: 'system',
             ip: getClientIp(req),
             agent: getUserAgent(req),
           };
@@ -360,34 +328,25 @@ export default async function handler(
     // [Team 8 第五位修復] 為 logAudit 添加 timeout 保護
     try {
       await withTimeout(
-        logAudit(
-          caseId,
-          `COMPLETE_BUYER_INFO_${authSource.toUpperCase()}`,
-          auditUser,
-        ),
+        logAudit(caseId, `COMPLETE_BUYER_INFO_${authSource.toUpperCase()}`, auditUser),
         5000,
-        "Audit log timeout after 5 seconds",
+        'Audit log timeout after 5 seconds'
       );
     } catch (auditErr) {
-      logger.error("[trust/complete-buyer-info] Audit log failed", {
+      logger.error('[trust/complete-buyer-info] Audit log failed', {
         case_id: caseId,
-        error: auditErr instanceof Error ? auditErr.message : "Unknown",
+        error: auditErr instanceof Error ? auditErr.message : 'Unknown',
       });
       return void res
         .status(500)
-        .json(
-          errorResponse(
-            API_ERROR_CODES.INTERNAL_ERROR,
-            "Audit logging failed"
-          )
-        );
+        .json(errorResponse(API_ERROR_CODES.INTERNAL_ERROR, 'Audit logging failed'));
     }
 
-    logger.info("[trust/complete-buyer-info] Buyer info updated", {
+    logger.info('[trust/complete-buyer-info] Buyer info updated', {
       case_id: caseId,
       name,
       phone,
-      email: email ?? "N/A",
+      email: email ?? 'N/A',
       source: authSource,
     });
 
@@ -397,14 +356,12 @@ export default async function handler(
         success: true,
         caseId,
         buyerName: updatedCase.buyer_name,
-      }),
+      })
     );
   } catch (e) {
-    logger.error("[trust/complete-buyer-info] Unexpected error", {
-      error: e instanceof Error ? e.message : "Unknown",
+    logger.error('[trust/complete-buyer-info] Unexpected error', {
+      error: e instanceof Error ? e.message : 'Unknown',
     });
-    res
-      .status(500)
-      .json(errorResponse(API_ERROR_CODES.INTERNAL_ERROR, "伺服器內部錯誤"));
+    res.status(500).json(errorResponse(API_ERROR_CODES.INTERNAL_ERROR, '伺服器內部錯誤'));
   }
 }

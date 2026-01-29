@@ -3,18 +3,18 @@
 
 export const CURTAIN_LABELS = [
   // 結構
-  "curtain",
-  "drape",
-  "window curtain",
-  "sheer curtain",
+  'curtain',
+  'drape',
+  'window curtain',
+  'sheer curtain',
   // 紋理
-  "fabric fold",
-  "curtain pleat",
-  "fabric texture",
-  "drapery",
+  'fabric fold',
+  'curtain pleat',
+  'fabric texture',
+  'drapery',
 ];
 
-export const GENERAL_LABELS = ["object", "item", "detail", "shape"];
+export const GENERAL_LABELS = ['object', 'item', 'detail', 'shape'];
 
 export const MODE_CONFIGS = {
   curtain: {
@@ -25,9 +25,9 @@ export const MODE_CONFIGS = {
       box_threshold: 0.12,
       iou_threshold: 0.5,
     },
-    color: "#9370db", // 紫
-    tag: "🪟",
-    name: "FABRIC DETAIL",
+    color: '#9370db', // 紫
+    tag: '🪟',
+    name: 'FABRIC DETAIL',
   },
   general: {
     labels: GENERAL_LABELS,
@@ -37,9 +37,9 @@ export const MODE_CONFIGS = {
       box_threshold: 0.15,
       iou_threshold: 0.45,
     },
-    color: "#4ade80", // 綠
-    tag: "📦",
-    name: "OBJECT",
+    color: '#4ade80', // 綠
+    tag: '📦',
+    name: 'OBJECT',
   },
 } as const;
 

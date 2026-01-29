@@ -1,13 +1,7 @@
-import {
-  useEffect,
-  useCallback,
-  useMemo,
-  useRef,
-  MutableRefObject,
-} from "react";
-import { z } from "zod";
-import { notify } from "../lib/notify";
-import { safeLocalStorage } from "../lib/safeStorage";
+import { useEffect, useCallback, useMemo, useRef, MutableRefObject } from 'react';
+import { z } from 'zod';
+import { notify } from '../lib/notify';
+import { safeLocalStorage } from '../lib/safeStorage';
 
 // [NASA TypeScript Safety] Zod Schema 用於驗證草稿資料結構
 const DraftFormDataSchema = z.object({
@@ -43,7 +37,7 @@ const DraftStorageSchema = DraftFormDataSchema.extend({
 
 type DraftStorageValidated = z.infer<typeof DraftStorageSchema>;
 
-const DRAFT_KEY_PREFIX = "mh_draft_upload";
+const DRAFT_KEY_PREFIX = 'mh_draft_upload';
 const AUTO_SAVE_DELAY_MS = 1000;
 const DRAFT_VERSION = 1;
 const DRAFT_EXPIRY_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
@@ -85,7 +79,7 @@ type DraftStorage = DraftStorageValidated;
  * - 發布成功後清除
  */
 export function usePropertyDraft(form: DraftFormData, userId?: string) {
-  const tabIdRef = useRef<string>("");
+  const tabIdRef = useRef<string>('');
   const autoSaveWarnedRef = useRef(false);
   const restoreWarnedRef = useRef(false);
   const clearWarnedRef = useRef(false);
@@ -97,15 +91,14 @@ export function usePropertyDraft(form: DraftFormData, userId?: string) {
       flag.current = true;
       notify.warning(title, description);
     },
-    [],
+    []
   );
 
   // 初始化 tabId（使用 useEffect 避免在 render 期間調用不純函數）
   useEffect(() => {
     if (!tabIdRef.current) {
       const hasCrypto =
-        typeof globalThis !== "undefined" &&
-        typeof globalThis.crypto !== "undefined";
+        typeof globalThis !== 'undefined' && typeof globalThis.crypto !== 'undefined';
       tabIdRef.current =
         hasCrypto && globalThis.crypto.randomUUID
           ? globalThis.crypto.randomUUID()
@@ -114,12 +107,12 @@ export function usePropertyDraft(form: DraftFormData, userId?: string) {
   }, []);
 
   const draftKey = useMemo(() => {
-    const keyUser = userId ? userId : "anonymous";
+    const keyUser = userId ? userId : 'anonymous';
     return `${DRAFT_KEY_PREFIX}_${keyUser}`;
   }, [userId]);
 
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const lastSavedRef = useRef<string>("");
+  const lastSavedRef = useRef<string>('');
 
   // 自動存檔 (debounced)
   useEffect(() => {
@@ -177,8 +170,8 @@ export function usePropertyDraft(form: DraftFormData, userId?: string) {
       } catch (e) {
         showWarningOnce(
           autoSaveWarnedRef,
-          "草稿自動存檔失敗",
-          "瀏覽器儲存空間或隱私設定可能阻擋自動存檔，請稍後重試",
+          '草稿自動存檔失敗',
+          '瀏覽器儲存空間或隱私設定可能阻擋自動存檔，請稍後重試'
         );
       }
     }, AUTO_SAVE_DELAY_MS);
@@ -251,11 +244,7 @@ export function usePropertyDraft(form: DraftFormData, userId?: string) {
       const { _version, _savedAt, _tabId, ...rest } = parsed;
       return rest;
     } catch (e) {
-      showWarningOnce(
-        restoreWarnedRef,
-        "草稿還原失敗",
-        "草稿檔案可能已損壞或版本不符，已取消還原",
-      );
+      showWarningOnce(restoreWarnedRef, '草稿還原失敗', '草稿檔案可能已損壞或版本不符，已取消還原');
       return null;
     }
   }, [draftKey, showWarningOnce]);
@@ -264,12 +253,12 @@ export function usePropertyDraft(form: DraftFormData, userId?: string) {
   const clearDraft = useCallback(() => {
     try {
       safeLocalStorage.removeItem(draftKey);
-      lastSavedRef.current = "";
+      lastSavedRef.current = '';
     } catch (e) {
       showWarningOnce(
         clearWarnedRef,
-        "草稿清除失敗",
-        "請檢查瀏覽器儲存空間或權限設定，草稿可能尚未移除",
+        '草稿清除失敗',
+        '請檢查瀏覽器儲存空間或權限設定，草稿可能尚未移除'
       );
     }
   }, [draftKey, showWarningOnce]);
@@ -277,8 +266,8 @@ export function usePropertyDraft(form: DraftFormData, userId?: string) {
   // 遷移草稿 (anonymous -> userId)
   const migrateDraft = useCallback(
     (fromUserId: string | undefined, toUserId: string | undefined) => {
-      const fromKey = `${DRAFT_KEY_PREFIX}_${fromUserId ?? "anonymous"}`;
-      const toKey = `${DRAFT_KEY_PREFIX}_${toUserId ?? "anonymous"}`;
+      const fromKey = `${DRAFT_KEY_PREFIX}_${fromUserId ?? 'anonymous'}`;
+      const toKey = `${DRAFT_KEY_PREFIX}_${toUserId ?? 'anonymous'}`;
       if (fromKey === toKey) return;
       try {
         const saved = safeLocalStorage.getItem(fromKey);
@@ -288,12 +277,12 @@ export function usePropertyDraft(form: DraftFormData, userId?: string) {
       } catch (e) {
         showWarningOnce(
           migrateWarnedRef,
-          "草稿遷移失敗",
-          "匿名草稿未能移轉到登入帳號，請重新登入後再試",
+          '草稿遷移失敗',
+          '匿名草稿未能移轉到登入帳號，請重新登入後再試'
         );
       }
     },
-    [showWarningOnce],
+    [showWarningOnce]
   );
 
   // 取得草稿預覽 (用於顯示提示)
@@ -312,7 +301,7 @@ export function usePropertyDraft(form: DraftFormData, userId?: string) {
       const parsed = parseResult.data;
       if (parsed._version !== DRAFT_VERSION) return null;
       return {
-        title: parsed.title || "未命名物件",
+        title: parsed.title || '未命名物件',
         savedAt: formatRelative(parsed._savedAt),
       };
     } catch {
@@ -334,7 +323,7 @@ function formatRelative(time: number): string {
   const minute = 60 * 1000;
   const hour = 60 * minute;
   const day = 24 * hour;
-  if (diff < minute) return "剛剛";
+  if (diff < minute) return '剛剛';
   if (diff < hour) return `${Math.floor(diff / minute)} 分鐘前`;
   if (diff < day) return `${Math.floor(diff / hour)} 小時前`;
   return `${Math.floor(diff / day)} 天前`;

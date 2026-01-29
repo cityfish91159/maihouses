@@ -1,8 +1,8 @@
-import { useState, useRef, useEffect } from "react";
-import { notify } from "../../lib/notify";
-import { STRINGS } from "../../constants/strings";
-import { Image, X } from "lucide-react";
-import { logger } from "../../lib/logger";
+import { useState, useRef, useEffect } from 'react';
+import { notify } from '../../lib/notify';
+import { STRINGS } from '../../constants/strings';
+import { Image, X } from 'lucide-react';
+import { logger } from '../../lib/logger';
 
 interface InlineComposerProps {
   onSubmit: (content: string, images?: File[]) => Promise<void>;
@@ -11,14 +11,10 @@ interface InlineComposerProps {
 }
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
-const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
+const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
-export function InlineComposer({
-  onSubmit,
-  disabled,
-  userInitial,
-}: InlineComposerProps) {
-  const [content, setContent] = useState("");
+export function InlineComposer({ onSubmit, disabled, userInitial }: InlineComposerProps) {
+  const [content, setContent] = useState('');
   const [isExpanded, setIsExpanded] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
@@ -53,7 +49,7 @@ export function InlineComposer({
 
       // Limit to 4 images
       if (selectedFiles.length + validFiles.length > 4) {
-        notify.error("最多只能上傳 4 張圖片");
+        notify.error('最多只能上傳 4 張圖片');
         return;
       }
 
@@ -80,14 +76,14 @@ export function InlineComposer({
       } else {
         await onSubmit(trimmed);
       }
-      setContent("");
+      setContent('');
       // Cleanup old URLs handled by Effect
       setSelectedFiles([]);
       setIsExpanded(false);
-      if (fileInputRef.current) fileInputRef.current.value = "";
+      if (fileInputRef.current) fileInputRef.current.value = '';
       notify.success(STRINGS.COMPOSER.SUCCESS);
     } catch (err) {
-      logger.error("[InlineComposer] Failed to create post", { error: err });
+      logger.error('[InlineComposer] Failed to create post', { error: err });
       notify.error(STRINGS.COMPOSER.ERROR_TITLE);
     } finally {
       setIsSubmitting(false);
@@ -97,7 +93,7 @@ export function InlineComposer({
   return (
     <div
       className={`rounded-2xl border bg-white p-3 shadow-sm transition-all ${
-        isExpanded ? "border-brand-200 shadow-md" : "border-brand-100"
+        isExpanded ? 'border-brand-200 shadow-md' : 'border-brand-100'
       }`}
     >
       <div className="flex items-start gap-2.5">
@@ -123,11 +119,7 @@ export function InlineComposer({
                   key={url}
                   className="relative size-16 overflow-hidden rounded-lg border border-gray-200"
                 >
-                  <img
-                    src={url}
-                    alt="Preview"
-                    className="size-full object-cover"
-                  />
+                  <img src={url} alt="Preview" className="size-full object-cover" />
                   <button
                     type="button"
                     onClick={() => removeFile(i)}
@@ -166,15 +158,11 @@ export function InlineComposer({
                 type="button"
                 onClick={handleSubmit}
                 disabled={
-                  disabled ||
-                  isSubmitting ||
-                  (!content.trim() && selectedFiles.length === 0)
+                  disabled || isSubmitting || (!content.trim() && selectedFiles.length === 0)
                 }
                 className="rounded-full bg-brand-700 px-4 py-2 text-xs font-bold text-white shadow-sm transition-all hover:bg-brand-600 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {isSubmitting
-                  ? STRINGS.COMPOSER.SUBMITTING
-                  : STRINGS.COMPOSER.SUBMIT}
+                {isSubmitting ? STRINGS.COMPOSER.SUBMITTING : STRINGS.COMPOSER.SUBMIT}
               </button>
             </div>
           )}
@@ -186,9 +174,7 @@ export function InlineComposer({
             disabled={disabled || isSubmitting || !content.trim()}
             className="shrink-0 rounded-full bg-brand-700 px-4 py-2 text-xs font-bold text-white shadow-sm transition-all hover:bg-brand-600 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {isSubmitting
-              ? STRINGS.COMPOSER.SUBMITTING
-              : STRINGS.COMPOSER.SUBMIT}
+            {isSubmitting ? STRINGS.COMPOSER.SUBMITTING : STRINGS.COMPOSER.SUBMIT}
           </button>
         )}
       </div>

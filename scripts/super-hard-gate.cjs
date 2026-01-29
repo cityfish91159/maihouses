@@ -17,11 +17,11 @@ const c = {
 // 🔧 執行器
 function runStep(stepName, command, args) {
   console.log(`\n${c.cyan}➤ [檢查] ${stepName}...${c.reset}`);
-  
-  const result = spawnSync(command, args, { 
-    stdio: 'inherit', 
+
+  const result = spawnSync(command, args, {
+    stdio: 'inherit',
     shell: true,
-    cwd: process.cwd() 
+    cwd: process.cwd(),
   });
 
   if (result.status !== 0) {
@@ -35,26 +35,30 @@ function runStep(stepName, command, args) {
 function deepScan() {
   console.log(`\n${c.cyan}➤ [掃描] 深度代碼衛生檢查 (Dirty Code & Cheating)...${c.reset}`);
   console.log(`${c.gray}ℹ️  已豁免 'muse' / 'god-muse' 相關檔案${c.reset}`);
-  
+
   const forbidden = [
     // 基本髒亂
     { regex: /console\.log\(/, label: 'console.log (請刪除調試日誌)' },
     { regex: /debugger/, label: 'debugger (請刪除斷點)' },
-    
+
     // 禁止作弊 (這是最嚴格的一條)
     { regex: /@ts-ignore/, label: '@ts-ignore (禁止無視類型錯誤，請修正它)' },
     { regex: /eslint-disable/, label: 'eslint-disable (禁止關閉 Lint 規則)' },
-    
+
     // 老舊或危險語法
     { regex: /\bvar\s+/, label: 'var (禁止使用 var，請改用 let 或 const)' },
     { regex: /alert\(/, label: 'alert() (禁止使用原生彈窗)' },
-    
+
     // 金鑰洩漏
     { regex: /AIza[0-9A-Za-z-_]{35}/, label: 'Google API Key (安全風險)' },
     { regex: /sk-[a-zA-Z0-9]{20,}/, label: 'OpenAI Key (安全風險)' },
 
     // 🎨 禁止硬編碼顏色
-    { regex: /#(00385a|004E7C|005585|E6EDF7|0f172a|faefe5|92400e|6c7b91|64748b|cbead4|e8faef|107a39)/i, label: 'Hardcoded Color (請用 Tailwind Token 或 CSS Var)' },
+    {
+      regex:
+        /#(00385a|004E7C|005585|E6EDF7|0f172a|faefe5|92400e|6c7b91|64748b|cbead4|e8faef|107a39)/i,
+      label: 'Hardcoded Color (請用 Tailwind Token 或 CSS Var)',
+    },
   ];
 
   let errors = 0;
@@ -62,30 +66,32 @@ function deepScan() {
   function walkDir(dir) {
     // 1. 資料夾層級過濾 (加速掃描)
     if (
-      dir.includes('node_modules') || 
-      dir.includes('.next') || 
-      dir.includes('.git') || 
+      dir.includes('node_modules') ||
+      dir.includes('.next') ||
+      dir.includes('.git') ||
       dir.includes('dist') ||
       dir.includes('build') ||
       dir.includes('coverage') ||
       dir.toLowerCase().includes('muse') || // 🔥 豁免 muse
       dir.toLowerCase().includes('god-muse') // 🔥 豁免 god-muse
-    ) return;
+    )
+      return;
 
     const files = fs.readdirSync(dir);
     for (const file of files) {
       const fullPath = path.join(dir, file);
-      
+
       // 2. 檔案名稱層級過濾
       if (
-        file.toLowerCase().includes('muse') || 
+        file.toLowerCase().includes('muse') ||
         file.toLowerCase().includes('god-muse') ||
         file.endsWith('.d.ts') || // 跳過定義檔
         file.includes('eslint') // 跳過 eslint 設定檔
-      ) continue;
+      )
+        continue;
 
       const stat = fs.statSync(fullPath);
-      
+
       if (stat.isDirectory()) {
         walkDir(fullPath);
       } else if (/\.(js|ts|tsx|jsx)$/.test(file)) {
@@ -98,10 +104,16 @@ function deepScan() {
         lines.forEach((line, index) => {
           // 忽略一般註解，但如果有 TODO/FIXME/ts-ignore 還是要抓
           const isComment = line.trim().startsWith('//') || line.trim().startsWith('/*');
-          
-          forbidden.forEach(rule => {
+
+          forbidden.forEach((rule) => {
             // 如果是註解行，但規則不是針對註解的 (ex: console.log)，就跳過
-            if (isComment && !rule.label.includes('註解') && !rule.label.includes('ignore') && !rule.label.includes('disable')) return;
+            if (
+              isComment &&
+              !rule.label.includes('註解') &&
+              !rule.label.includes('ignore') &&
+              !rule.label.includes('disable')
+            )
+              return;
 
             if (rule.regex.test(line)) {
               console.log(`${c.yellow}⚠️  ${fullPath}:${index + 1}${c.reset}`);
@@ -117,9 +129,11 @@ function deepScan() {
 
   try {
     if (fs.existsSync('src')) walkDir('src');
-    
+
     if (errors > 0) {
-      console.log(`\n${c.bgRed} 🛑 掃描失敗: 發現 ${errors} 個違規項目！嚴格模式不允許通過。 ${c.reset}`);
+      console.log(
+        `\n${c.bgRed} 🛑 掃描失敗: 發現 ${errors} 個違規項目！嚴格模式不允許通過。 ${c.reset}`
+      );
       process.exit(1);
     }
     console.log(`${c.green}✅ 代碼衛生檢查通過${c.reset}`);

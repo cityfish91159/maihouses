@@ -1,10 +1,7 @@
-import React from "react";
-import { FallbackProps } from "react-error-boundary";
+import React from 'react';
+import { FallbackProps } from 'react-error-boundary';
 
-export const UAGErrorState: React.FC<FallbackProps> = ({
-  error,
-  resetErrorBoundary,
-}) => {
+export const UAGErrorState: React.FC<FallbackProps> = ({ error, resetErrorBoundary }) => {
   const errorMessage = error instanceof Error ? error.message : String(error);
   return (
     <div role="alert" className="p-6 text-center text-red-600">

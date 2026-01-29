@@ -1,9 +1,9 @@
-import { z } from "zod";
+import { z } from 'zod';
 
-export const GradeSchema = z.enum(["S", "A", "B", "C", "F"]);
+export const GradeSchema = z.enum(['S', 'A', 'B', 'C', 'F']);
 export type Grade = z.infer<typeof GradeSchema>;
 
-export const LeadStatusSchema = z.enum(["new", "purchased"]);
+export const LeadStatusSchema = z.enum(['new', 'purchased']);
 export type LeadStatus = z.infer<typeof LeadStatusSchema>;
 
 // Schema for data coming directly from Supabase
@@ -33,12 +33,12 @@ export const SupabaseLeadSchema = z
 
 // UAG-15/修5: 通知狀態 Schema
 export const NotificationStatusSchema = z.enum([
-  "pending",
-  "sent",
-  "no_line",
-  "unreachable",
-  "failed",
-  "skipped",
+  'pending',
+  'sent',
+  'no_line',
+  'unreachable',
+  'failed',
+  'skipped',
 ]);
 export type NotificationStatus = z.infer<typeof NotificationStatusSchema>;
 
@@ -93,7 +93,7 @@ export type Lead = z.infer<typeof LeadSchema>;
  * }
  * ```
  */
-export type UnpurchasedLead = Lead & { status: "new" };
+export type UnpurchasedLead = Lead & { status: 'new' };
 
 /**
  * 已購買 Lead 類型
@@ -111,7 +111,7 @@ export type UnpurchasedLead = Lead & { status: "new" };
  * }
  * ```
  */
-export type PurchasedLead = Lead & { status: "purchased" };
+export type PurchasedLead = Lead & { status: 'purchased' };
 
 // ============================================================================
 // 類型守衛
@@ -136,7 +136,7 @@ export type PurchasedLead = Lead & { status: "purchased" };
  * ```
  */
 export function isPurchasedLead(lead: Lead): lead is PurchasedLead {
-  return lead.status === "purchased";
+  return lead.status === 'purchased';
 }
 
 /**
@@ -156,7 +156,7 @@ export function isPurchasedLead(lead: Lead): lead is PurchasedLead {
  * ```
  */
 export function isUnpurchasedLead(lead: Lead): lead is UnpurchasedLead {
-  return lead.status === "new";
+  return lead.status === 'new';
 }
 
 /**

@@ -91,6 +91,7 @@ curl -X POST https://example.com/api/trust/auto-create-case \
 ```
 
 **預期結果：**
+
 - 使用提供的 `userName`（王小明）
 - `buyer_user_id` 設為提供的 `userId`
 - 回傳 `case_id`、`token`、`buyer_name`
@@ -107,6 +108,7 @@ curl -X POST https://example.com/api/trust/auto-create-case \
 ```
 
 **預期結果：**
+
 - 從 `users` 表查詢用戶名稱
 - 若用戶 `name` 為 null，生成匿名買方名稱（買方-XXXX）
 - `buyer_user_id` 設為提供的 `userId`
@@ -122,6 +124,7 @@ curl -X POST https://example.com/api/trust/auto-create-case \
 ```
 
 **預期結果：**
+
 - 生成匿名買方名稱（買方-1234 到買方-9999）
 - `buyer_user_id` 為 null
 - 回傳 `case_id`、`token`、`buyer_name`
@@ -137,6 +140,7 @@ curl -X POST https://example.com/api/trust/auto-create-case \
 ```
 
 **預期結果：**
+
 - 回傳 404 錯誤
 - 錯誤訊息：「找不到對應的物件」
 
@@ -151,6 +155,7 @@ curl -X POST https://example.com/api/trust/auto-create-case \
 ```
 
 **預期結果（假設 MH-100002 的 trust_enabled=false）：**
+
 - 回傳 400 錯誤
 - 錯誤訊息：「此物件未開啟安心留痕服務」
 
@@ -165,6 +170,7 @@ curl -X POST https://example.com/api/trust/auto-create-case \
 ```
 
 **預期結果：**
+
 - 回傳 400 錯誤
 - 錯誤訊息包含 Zod 驗證詳情
 
@@ -179,6 +185,7 @@ curl -X POST https://example.com/api/trust/auto-create-case \
 ### 2. 決定買方資訊
 
 優先順序：
+
 1. 提供 `userId` + `userName`：直接使用
 2. 只提供 `userId`：查詢 `users` 表取得 `name`
 3. 都不提供：生成匿名買方名稱（買方-XXXX）
@@ -186,6 +193,7 @@ curl -X POST https://example.com/api/trust/auto-create-case \
 ### 3. 建立案件
 
 呼叫 RPC 函數 `fn_create_trust_case`：
+
 - 自動生成 `token`（UUID）
 - `token_expires_at` 設為 NOW() + 90 天
 - 建立初始事件（M1 接洽）

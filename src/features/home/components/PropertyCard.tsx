@@ -1,15 +1,11 @@
-import React from "react";
-import type { FeaturedProperty, PropertyReview } from "../../../types/property";
-import { isSpecTag } from "../../../lib/tagUtils";
+import React from 'react';
+import type { FeaturedProperty, PropertyReview } from '../../../types/property';
+import { isSpecTag } from '../../../lib/tagUtils';
 
 // Re-export for backward compatibility
 export type { PropertyReview as Review, FeaturedProperty as Property };
 
-export default function PropertyCard({
-  property,
-}: {
-  property: FeaturedProperty;
-}) {
+export default function PropertyCard({ property }: { property: FeaturedProperty }) {
   return (
     <article className="hover:border-brand-700/20 group relative isolate overflow-hidden rounded-2xl border border-brand-100 bg-white shadow-none transition-all duration-[180ms] ease-out hover:-translate-y-0.5 hover:shadow-[0_10px_26px_rgba(13,39,94,0.12)]">
       {/* Background Glow Effect */}
@@ -65,7 +61,7 @@ export default function PropertyCard({
           {property.reviews.map((review, i) => (
             <div
               key={i}
-              className={`flex items-start gap-2.5 py-2 ${i !== 0 ? "border-t border-dashed border-black/10" : ""}`}
+              className={`flex items-start gap-2.5 py-2 ${i !== 0 ? 'border-t border-dashed border-black/10' : ''}`}
             >
               <div className="ring-brand-700/15 grid size-[30px] flex-none place-items-center rounded-full bg-gradient-to-b from-neutral-150 to-neutral-200 text-xs font-black text-brand-700 ring-1 ring-inset">
                 {review.avatar}
@@ -80,9 +76,7 @@ export default function PropertyCard({
                     {review.tag}
                   </span>
                 </div>
-                <div className="text-[13px] leading-[1.6] text-black/85">
-                  {review.text}
-                </div>
+                <div className="text-[13px] leading-[1.6] text-black/85">{review.text}</div>
               </div>
             </div>
           ))}

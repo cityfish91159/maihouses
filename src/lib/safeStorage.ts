@@ -6,7 +6,7 @@
  * This wrapper catches these errors to prevent the app from crashing.
  */
 
-import { logger } from "./logger";
+import { logger } from './logger';
 
 const noopStorage = {
   getItem: (_key: string) => null,
@@ -17,9 +17,9 @@ const noopStorage = {
   key: (_index: number) => null,
 };
 
-function getStorage(type: "localStorage" | "sessionStorage") {
+function getStorage(type: 'localStorage' | 'sessionStorage') {
   // 1. 先檢查 window 是否存在（SSR 安全）
-  if (typeof window === "undefined") {
+  if (typeof window === 'undefined') {
     return noopStorage;
   }
 
@@ -27,15 +27,14 @@ function getStorage(type: "localStorage" | "sessionStorage") {
   //    可能在任何存取 localStorage 的步驟都拋 SecurityError
   try {
     // 直接嘗試取得 storage，不做任何前置檢查
-    const storage =
-      type === "localStorage" ? window.localStorage : window.sessionStorage;
+    const storage = type === 'localStorage' ? window.localStorage : window.sessionStorage;
 
     if (!storage) {
       return noopStorage;
     }
 
     // Test storage to verify it actually works
-    const x = "__storage_test__";
+    const x = '__storage_test__';
     storage.setItem(x, x);
     storage.removeItem(x);
     return storage;
@@ -45,8 +44,8 @@ function getStorage(type: "localStorage" | "sessionStorage") {
   }
 }
 
-export const safeLocalStorage = getStorage("localStorage");
-export const safeSessionStorage = getStorage("sessionStorage");
+export const safeLocalStorage = getStorage('localStorage');
+export const safeSessionStorage = getStorage('sessionStorage');
 
 // Helper for type-safe usage (optional)
 export const storage = {
@@ -55,7 +54,7 @@ export const storage = {
     try {
       safeLocalStorage.setItem(key, value);
     } catch (e) {
-      logger.warn("[safeStorage] Storage setItem failed", { error: e });
+      logger.warn('[safeStorage] Storage setItem failed', { error: e });
     }
   },
   remove: (key: string) => safeLocalStorage.removeItem(key),

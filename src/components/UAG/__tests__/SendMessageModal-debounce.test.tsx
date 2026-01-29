@@ -3,9 +3,9 @@
  * 驗證 SendMessageModal.tsx L72, L91, L305 的 isSending 邏輯
  */
 
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-describe("測4：連按 3 次不重複發", () => {
+describe('測4：連按 3 次不重複發', () => {
   /**
    * 模擬 SendMessageModal 的狀態機制
    */
@@ -17,11 +17,11 @@ describe("測4：連按 3 次不重複發", () => {
   /**
    * 核心測試：isSending 防重複邏輯（L72）
    */
-  describe("isSending 防重複邏輯（L72）", () => {
-    it("isSending 為 true 時，handleSend 應提早返回", () => {
+  describe('isSending 防重複邏輯（L72）', () => {
+    it('isSending 為 true 時，handleSend 應提早返回', () => {
       const state: SendMessageState = {
         isSending: true,
-        message: "測試訊息",
+        message: '測試訊息',
       };
 
       const sendCalls: string[] = [];
@@ -31,7 +31,7 @@ describe("測4：連按 3 次不重複發", () => {
         // L72: 防重複檢查
         if (!state.message.trim() || state.isSending) return;
 
-        sendCalls.push("send_message");
+        sendCalls.push('send_message');
       }
 
       // 快速連續呼叫 3 次
@@ -43,17 +43,17 @@ describe("測4：連按 3 次不重複發", () => {
       expect(sendCalls).toHaveLength(0);
     });
 
-    it("訊息為空時，handleSend 應提早返回", () => {
+    it('訊息為空時，handleSend 應提早返回', () => {
       const state: SendMessageState = {
         isSending: false,
-        message: "   ", // 空白字串
+        message: '   ', // 空白字串
       };
 
       const sendCalls: string[] = [];
 
       function handleSend(): void {
         if (!state.message.trim() || state.isSending) return;
-        sendCalls.push("send_message");
+        sendCalls.push('send_message');
       }
 
       handleSend();
@@ -63,17 +63,17 @@ describe("測4：連按 3 次不重複發", () => {
       expect(sendCalls).toHaveLength(0);
     });
 
-    it("isSending 為 false 且有訊息時，應執行發送", () => {
+    it('isSending 為 false 且有訊息時，應執行發送', () => {
       const state: SendMessageState = {
         isSending: false,
-        message: "測試訊息",
+        message: '測試訊息',
       };
 
       const sendCalls: string[] = [];
 
       function handleSend(): void {
         if (!state.message.trim() || state.isSending) return;
-        sendCalls.push("send_message");
+        sendCalls.push('send_message');
       }
 
       handleSend();
@@ -85,8 +85,8 @@ describe("測4：連按 3 次不重複發", () => {
   /**
    * 完整流程：setIsSending 狀態管理（L91）
    */
-  describe("setIsSending 狀態管理（L91）", () => {
-    it("發送前應設定 isSending = true", async () => {
+  describe('setIsSending 狀態管理（L91）', () => {
+    it('發送前應設定 isSending = true', async () => {
       let isSending = false;
 
       // 模擬 L91-172
@@ -118,7 +118,7 @@ describe("測4：連按 3 次不重複發", () => {
       expect(isSending).toBe(false);
     });
 
-    it("finally 區塊應確保 isSending 復原", async () => {
+    it('finally 區塊應確保 isSending 復原', async () => {
       let isSending = false;
 
       async function handleSend(shouldError: boolean): Promise<void> {
@@ -128,7 +128,7 @@ describe("測4：連按 3 次不重複發", () => {
 
         try {
           if (shouldError) {
-            throw new Error("發送失敗");
+            throw new Error('發送失敗');
           }
           await new Promise((resolve) => setTimeout(resolve, 10));
         } finally {
@@ -153,10 +153,10 @@ describe("測4：連按 3 次不重複發", () => {
   /**
    * 按鈕 disabled 狀態（L305）
    */
-  describe("按鈕 disabled 狀態（L305）", () => {
-    it("isSending 為 true 時，發送按鈕應 disabled", () => {
+  describe('按鈕 disabled 狀態（L305）', () => {
+    it('isSending 為 true 時，發送按鈕應 disabled', () => {
       const state = {
-        message: "測試訊息",
+        message: '測試訊息',
         isSending: true,
       };
 
@@ -166,9 +166,9 @@ describe("測4：連按 3 次不重複發", () => {
       expect(isDisabled).toBe(true);
     });
 
-    it("訊息為空時，發送按鈕應 disabled", () => {
+    it('訊息為空時，發送按鈕應 disabled', () => {
       const state = {
-        message: "",
+        message: '',
         isSending: false,
       };
 
@@ -177,9 +177,9 @@ describe("測4：連按 3 次不重複發", () => {
       expect(isDisabled).toBe(true);
     });
 
-    it("有訊息且未發送時，發送按鈕應啟用", () => {
+    it('有訊息且未發送時，發送按鈕應啟用', () => {
       const state = {
-        message: "測試訊息",
+        message: '測試訊息',
         isSending: false,
       };
 
@@ -188,7 +188,7 @@ describe("測4：連按 3 次不重複發", () => {
       expect(isDisabled).toBe(false);
     });
 
-    it("稍後按鈕在發送時應 disabled（L298）", () => {
+    it('稍後按鈕在發送時應 disabled（L298）', () => {
       const isSending = true;
 
       // L298: disabled={isSending}
@@ -201,20 +201,20 @@ describe("測4：連按 3 次不重複發", () => {
   /**
    * 按鈕文字切換（L308-310）
    */
-  describe("按鈕文字顯示（L308-310）", () => {
+  describe('按鈕文字顯示（L308-310）', () => {
     it("isSending 為 true 時，顯示 S.SENDING（'發送中...'）", () => {
       const isSending = true;
 
       // L24: const S = { SENDING: "發送中...", SEND_BTN: "發送訊息" }
       const S = {
-        SENDING: "發送中...",
-        SEND_BTN: "發送訊息",
+        SENDING: '發送中...',
+        SEND_BTN: '發送訊息',
       };
 
       // L309: {isSending ? S.SENDING : ...}
       const buttonText = isSending ? S.SENDING : S.SEND_BTN;
 
-      expect(buttonText).toBe("發送中...");
+      expect(buttonText).toBe('發送中...');
       expect(buttonText).toBe(S.SENDING);
     });
 
@@ -222,13 +222,13 @@ describe("測4：連按 3 次不重複發", () => {
       const isSending = false;
 
       const S = {
-        SENDING: "發送中...",
-        SEND_BTN: "發送訊息",
+        SENDING: '發送中...',
+        SEND_BTN: '發送訊息',
       };
 
       const buttonText = isSending ? S.SENDING : S.SEND_BTN;
 
-      expect(buttonText).toBe("發送訊息");
+      expect(buttonText).toBe('發送訊息');
       expect(buttonText).toBe(S.SEND_BTN);
     });
   });
@@ -236,28 +236,28 @@ describe("測4：連按 3 次不重複發", () => {
   /**
    * Race Condition 測試
    */
-  describe("Race Condition 防護", () => {
-    it("快速連續點擊 3 次，只執行 1 次發送", async () => {
+  describe('Race Condition 防護', () => {
+    it('快速連續點擊 3 次，只執行 1 次發送', async () => {
       let isSending = false;
       const executionLog: string[] = [];
 
       async function handleSend(): Promise<void> {
         // 防重複檢查
         if (isSending) {
-          executionLog.push("blocked");
+          executionLog.push('blocked');
           return;
         }
 
-        executionLog.push("start");
+        executionLog.push('start');
         isSending = true;
 
         try {
           // 模擬 API 呼叫（50ms）
           await new Promise((resolve) => setTimeout(resolve, 50));
-          executionLog.push("sent");
+          executionLog.push('sent');
         } finally {
           isSending = false;
-          executionLog.push("reset");
+          executionLog.push('reset');
         }
       }
 
@@ -268,15 +268,15 @@ describe("測4：連按 3 次不重複發", () => {
 
       // 驗證執行順序
       expect(executionLog).toEqual([
-        "start", // 第 1 次點擊開始
-        "blocked", // 第 2 次點擊被阻擋
-        "blocked", // 第 3 次點擊被阻擋
-        "sent", // 第 1 次點擊完成
-        "reset", // isSending 復原
+        'start', // 第 1 次點擊開始
+        'blocked', // 第 2 次點擊被阻擋
+        'blocked', // 第 3 次點擊被阻擋
+        'sent', // 第 1 次點擊完成
+        'reset', // isSending 復原
       ]);
     });
 
-    it("模擬使用者極快速點擊（0ms 間隔）", async () => {
+    it('模擬使用者極快速點擊（0ms 間隔）', async () => {
       let isSending = false;
       let sendCount = 0;
 
@@ -304,8 +304,8 @@ describe("測4：連按 3 次不重複發", () => {
   /**
    * 與 message_id UNIQUE 整合驗證
    */
-  describe("與資料庫 UNIQUE 約束整合", () => {
-    it("前端防重複 + 後端 UNIQUE 雙重保護", () => {
+  describe('與資料庫 UNIQUE 約束整合', () => {
+    it('前端防重複 + 後端 UNIQUE 雙重保護', () => {
       interface QueueRecord {
         message_id: string;
         status: string;
@@ -331,12 +331,12 @@ describe("測4：連按 3 次不重複發", () => {
           return false;
         }
 
-        queue.push({ message_id: messageId, status: "pending" });
+        queue.push({ message_id: messageId, status: 'pending' });
         isSending = false;
         return true;
       }
 
-      const messageId = "msg-test-123";
+      const messageId = 'msg-test-123';
 
       // 快速連續嘗試 3 次
       const result1 = attemptSend(messageId);
@@ -354,50 +354,46 @@ describe("測4：連按 3 次不重複發", () => {
   /**
    * 完整使用者場景測試
    */
-  describe("完整使用者場景", () => {
-    it("場景 1: 使用者快速點擊 3 次發送按鈕", async () => {
+  describe('完整使用者場景', () => {
+    it('場景 1: 使用者快速點擊 3 次發送按鈕', async () => {
       const scenario: string[] = [];
       let isSending = false;
 
       async function handleButtonClick(): Promise<void> {
-        scenario.push("click");
+        scenario.push('click');
 
         // L72 防重複檢查
         if (isSending) {
-          scenario.push("blocked_by_isSending");
+          scenario.push('blocked_by_isSending');
           return;
         }
 
-        scenario.push("start_send");
+        scenario.push('start_send');
         isSending = true; // L91
 
         try {
           await new Promise((resolve) => setTimeout(resolve, 20));
-          scenario.push("api_success");
+          scenario.push('api_success');
         } finally {
           isSending = false; // L161
         }
       }
 
       // 使用者快速點擊 3 次
-      await Promise.all([
-        handleButtonClick(),
-        handleButtonClick(),
-        handleButtonClick(),
-      ]);
+      await Promise.all([handleButtonClick(), handleButtonClick(), handleButtonClick()]);
 
       expect(scenario).toEqual([
-        "click", // 第 1 次點擊
-        "start_send",
-        "click", // 第 2 次點擊
-        "blocked_by_isSending", // 被阻擋
-        "click", // 第 3 次點擊
-        "blocked_by_isSending", // 被阻擋
-        "api_success", // 第 1 次完成
+        'click', // 第 1 次點擊
+        'start_send',
+        'click', // 第 2 次點擊
+        'blocked_by_isSending', // 被阻擋
+        'click', // 第 3 次點擊
+        'blocked_by_isSending', // 被阻擋
+        'api_success', // 第 1 次完成
       ]);
     });
 
-    it("場景 2: API 失敗後，可以重新發送", async () => {
+    it('場景 2: API 失敗後，可以重新發送', async () => {
       let isSending = false;
       let attemptCount = 0;
 
@@ -409,7 +405,7 @@ describe("測4：連按 3 次不重複發", () => {
 
         try {
           if (shouldFail) {
-            throw new Error("API Error");
+            throw new Error('API Error');
           }
         } finally {
           isSending = false;

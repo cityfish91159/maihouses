@@ -1,5 +1,5 @@
-import { supabase } from "../../../lib/supabase";
-import { z } from "zod";
+import { supabase } from '../../../lib/supabase';
+import { z } from 'zod';
 import {
   AppData,
   Grade,
@@ -12,13 +12,13 @@ import {
   FeedPost,
   UserDataSchema,
   SupabaseListing, // UAG-9: Import SupabaseListing
-} from "../types/uag.types";
+} from '../types/uag.types';
 import {
   GRADE_PROTECTION_HOURS,
   FEED_TITLE_PREVIEW_LENGTH,
   DEFAULT_PROTECTION_HOURS,
-} from "../uag-config";
-import { logger } from "../../../lib/logger";
+} from '../uag-config';
+import { logger } from '../../../lib/logger';
 
 // FEED-01 Phase 8: community_posts 查詢返回類型
 // 注意：Supabase 的 JOIN 返回類型可能是 object 或 array，使用 unknown 再 narrow
@@ -79,7 +79,7 @@ export type PurchaseLeadResult = z.infer<typeof PurchaseLeadResultSchema>;
 // Helper function for remaining hours calculation
 const calculateRemainingHours = (
   purchasedAt: number | string | undefined | null,
-  grade: Grade,
+  grade: Grade
 ): number => {
   if (!purchasedAt) return 0;
 
@@ -115,7 +115,7 @@ const transformSupabaseData = (
     property_id: string;
     view_count: number;
     click_count: number;
-  }> | null, // UAG-20-Phase3
+  }> | null // UAG-20-Phase3
 ): AppData => {
   // 1. Validate User Data (Critical)
   const userRaw = {
@@ -125,26 +125,22 @@ const transformSupabaseData = (
 
   const userResult = UserDataSchema.safeParse(userRaw);
   if (!userResult.success) {
-    logger.error("[UAGService] User Data Validation Failed", {
+    logger.error('[UAGService] User Data Validation Failed', {
       error: userResult.error.message,
     });
-    throw new Error("Failed to load user profile");
+    throw new Error('Failed to load user profile');
   }
 
   // 2. Transform and Validate Leads (Resilient)
   const validLeads: Lead[] = [];
   for (const l of leadsData) {
-    let remainingHours =
-      l.remaining_hours != null ? Number(l.remaining_hours) : undefined;
+    let remainingHours = l.remaining_hours != null ? Number(l.remaining_hours) : undefined;
 
-    if (remainingHours == null && l.purchased_at && l.status === "purchased") {
+    if (remainingHours == null && l.purchased_at && l.status === 'purchased') {
       // [NASA TypeScript Safety] 使用 Zod safeParse 取代 as Grade
       const gradeResult = GradeSchema.safeParse(l.grade);
       if (gradeResult.success) {
-        remainingHours = calculateRemainingHours(
-          l.purchased_at,
-          gradeResult.data,
-        );
+        remainingHours = calculateRemainingHours(l.purchased_at, gradeResult.data);
       }
     }
 
@@ -159,7 +155,7 @@ const transformSupabaseData = (
     if (result.success) {
       validLeads.push(result.data);
     } else {
-      logger.warn("[UAGService] Skipping invalid lead", {
+      logger.warn('[UAGService] Skipping invalid lead', {
         error: result.error.issues,
       });
     }
@@ -186,7 +182,7 @@ const transformSupabaseData = (
     if (result.success) {
       validListings.push(result.data);
     } else {
-      logger.warn("[UAGService] Skipping invalid listing", {
+      logger.warn('[UAGService] Skipping invalid listing', {
         error: result.error.issues,
       });
     }
@@ -195,11 +191,9 @@ const transformSupabaseData = (
   // 4. Validate Feed (FEED-01 Phase 8: 轉換 community_posts 為 UAG FeedPost 格式)
   const validFeed: FeedPost[] = [];
   for (const post of feedData) {
-    const content = post.content ?? "";
+    const content = post.content ?? '';
     const contentPreview = content.slice(0, FEED_TITLE_PREVIEW_LENGTH);
-    const title =
-      contentPreview +
-      (content.length > FEED_TITLE_PREVIEW_LENGTH ? "..." : "");
+    const title = contentPreview + (content.length > FEED_TITLE_PREVIEW_LENGTH ? '...' : '');
     // FEED-01 Phase 8: 使用 extractCommunityName helper 處理 Supabase JOIN 返回
     const communityName = extractCommunityName(post.community);
     const meta = `來自：${communityName}・${post.comments_count || 0} 則留言`;
@@ -220,7 +214,7 @@ const transformSupabaseData = (
     if (result.success) {
       validFeed.push(result.data);
     } else {
-      logger.warn("[UAGService] Skipping invalid feed post", {
+      logger.warn('[UAGService] Skipping invalid feed post', {
         error: result.error.issues,
       });
     }
@@ -248,14 +242,14 @@ export interface PropertyViewStats {
  * FEED-01 Phase 8: 安全提取 community name
  * Supabase JOIN 返回類型不穩定，可能是 object 或 array
  */
-function extractCommunityName(community: unknown, fallback = "社區牆"): string {
+function extractCommunityName(community: unknown, fallback = '社區牆'): string {
   if (Array.isArray(community) && community[0]?.name) {
     return community[0].name;
   }
-  if (community && typeof community === "object" && "name" in community) {
+  if (community && typeof community === 'object' && 'name' in community) {
     // [NASA TypeScript Safety] 使用類型守衛取代 as Record
     const nameValue = (community as { name: unknown }).name;
-    return typeof nameValue === "string" && nameValue ? nameValue : fallback;
+    return typeof nameValue === 'string' && nameValue ? nameValue : fallback;
   }
   return fallback;
 }
@@ -281,13 +275,13 @@ function stableHash(str: string): number {
 function gradeToIntent(grade: string, sessionId: string): number {
   const hash = stableHash(sessionId);
   switch (grade) {
-    case "S":
+    case 'S':
       return 90 + (hash % 10); // 90-99
-    case "A":
+    case 'A':
       return 70 + (hash % 20); // 70-89
-    case "B":
+    case 'B':
       return 50 + (hash % 20); // 50-69
-    case "C":
+    case 'C':
       return 30 + (hash % 20); // 30-49
     default:
       return 10 + (hash % 20); // 10-29
@@ -299,13 +293,13 @@ function gradeToIntent(grade: string, sessionId: string): number {
  */
 function gradeToPrice(grade: string): number {
   switch (grade) {
-    case "S":
+    case 'S':
       return 20;
-    case "A":
+    case 'A':
       return 10;
-    case "B":
+    case 'B':
       return 3;
-    case "C":
+    case 'C':
       return 1;
     default:
       return 0.5;
@@ -316,23 +310,19 @@ function gradeToPrice(grade: string): number {
  * 生成 AI 建議
  */
 function generateAiSuggestion(grade: string, visitCount: number): string {
-  if (grade === "S") {
-    return visitCount >= 3
-      ? "🔥 強烈建議立即發送訊息！"
-      : "高意願客戶，請優先處理";
+  if (grade === 'S') {
+    return visitCount >= 3 ? '🔥 強烈建議立即發送訊息！' : '高意願客戶，請優先處理';
   }
-  if (grade === "A") {
-    return visitCount >= 2
-      ? "深度瀏覽用戶，建議發送邀約"
-      : "A 級客戶，適合推薦物件";
+  if (grade === 'A') {
+    return visitCount >= 2 ? '深度瀏覽用戶，建議發送邀約' : 'A 級客戶，適合推薦物件';
   }
-  if (grade === "B") {
-    return "中度興趣，可發送物件資訊";
+  if (grade === 'B') {
+    return '中度興趣，可發送物件資訊';
   }
-  if (grade === "C") {
-    return "輕度興趣，建議先觀察";
+  if (grade === 'C') {
+    return '輕度興趣，建議先觀察';
   }
-  return "潛在客戶";
+  return '潛在客戶';
 }
 
 export class UAGService {
@@ -343,50 +333,38 @@ export class UAGService {
    */
   static async fetchAppData(userId: string): Promise<AppData> {
     // 1. 並行查詢：用戶資料、sessions、已購買記錄、listings（含 community_id）
-    const [userRes, sessionsRes, purchasedRes, listingsRes] = await Promise.all(
-      [
-        supabase
-          .from("users")
-          .select("points, quota_s, quota_a")
-          .eq("id", userId)
-          .single(),
-        // 正確數據源：uag_sessions（匿名瀏覽行為），不是 leads（真實個資）
-        supabase
-          .from("uag_sessions")
-          .select(
-            "session_id, agent_id, grade, total_duration, property_count, last_active, summary",
-          )
-          .eq("agent_id", userId)
-          .in("grade", ["S", "A", "B", "C", "F"])
-          .order("last_active", { ascending: false })
-          .limit(50),
-        // 問題 #3-4 修復：查詢已購買的 session_id
-        // UAG-15/修5: 加入 notification_status
-        supabase
-          .from("uag_lead_purchases")
-          // 修6: 關聯 conversation_id
-          .select(
-            "session_id, id, created_at, notification_status, conversations(id)",
-          )
-          .eq("agent_id", userId),
-        // UAG-20: 改查 properties 表（listings 表不存在）
-        // FEED-01 Phase 8 Bug 1: 加入 community_id 用於過濾 feed
-        supabase
-          .from("properties")
-          .select(
-            "public_id, title, images, features, created_at, community_id",
-          )
-          .eq("agent_id", userId)
-          .order("created_at", { ascending: false }),
-      ],
-    );
+    const [userRes, sessionsRes, purchasedRes, listingsRes] = await Promise.all([
+      supabase.from('users').select('points, quota_s, quota_a').eq('id', userId).single(),
+      // 正確數據源：uag_sessions（匿名瀏覽行為），不是 leads（真實個資）
+      supabase
+        .from('uag_sessions')
+        .select('session_id, agent_id, grade, total_duration, property_count, last_active, summary')
+        .eq('agent_id', userId)
+        .in('grade', ['S', 'A', 'B', 'C', 'F'])
+        .order('last_active', { ascending: false })
+        .limit(50),
+      // 問題 #3-4 修復：查詢已購買的 session_id
+      // UAG-15/修5: 加入 notification_status
+      supabase
+        .from('uag_lead_purchases')
+        // 修6: 關聯 conversation_id
+        .select('session_id, id, created_at, notification_status, conversations(id)')
+        .eq('agent_id', userId),
+      // UAG-20: 改查 properties 表（listings 表不存在）
+      // FEED-01 Phase 8 Bug 1: 加入 community_id 用於過濾 feed
+      supabase
+        .from('properties')
+        .select('public_id, title, images, features, created_at, community_id')
+        .eq('agent_id', userId)
+        .order('created_at', { ascending: false }),
+    ]);
 
     // FEED-01 Phase 8 優化：錯誤檢查必須在使用 data 之前
     if (userRes.error) throw userRes.error;
     if (sessionsRes.error) throw sessionsRes.error;
     // purchasedRes.error 不阻斷，只記錄警告
     if (purchasedRes.error) {
-      logger.warn("[UAGService] Failed to fetch purchased leads", {
+      logger.warn('[UAGService] Failed to fetch purchased leads', {
         error: purchasedRes.error.message,
       });
     }
@@ -395,9 +373,7 @@ export class UAGService {
     // FEED-01 Phase 8: 從房仲的房源中提取 community_id（去重）
     const agentCommunityIds = [
       ...new Set(
-        (listingsRes.data ?? [])
-          .map((p) => p.community_id)
-          .filter((id): id is string => id != null),
+        (listingsRes.data ?? []).map((p) => p.community_id).filter((id): id is string => id != null)
       ),
     ];
 
@@ -405,7 +381,7 @@ export class UAGService {
     const feedRes =
       agentCommunityIds.length > 0
         ? await supabase
-            .from("community_posts")
+            .from('community_posts')
             .select(
               `
               id,
@@ -416,18 +392,18 @@ export class UAGService {
               comments_count,
               created_at,
               community:communities(name)
-            `,
+            `
             )
-            .in("community_id", agentCommunityIds)
-            .eq("visibility", "public")
-            .order("likes_count", { ascending: false })
-            .order("created_at", { ascending: false })
+            .in('community_id', agentCommunityIds)
+            .eq('visibility', 'public')
+            .order('likes_count', { ascending: false })
+            .order('created_at', { ascending: false })
             .limit(5)
         : { data: [] satisfies SupabaseCommunityPost[], error: null };
 
     // FEED-01 Phase 8: feedRes 錯誤不阻斷，只記錄警告（feed 非核心功能）
     if (feedRes.error) {
-      logger.warn("[UAGService] Failed to fetch community posts", {
+      logger.warn('[UAGService] Failed to fetch community posts', {
         error: feedRes.error.message,
       });
     }
@@ -437,13 +413,13 @@ export class UAGService {
     const statsRes =
       propertyIds.length > 0
         ? await supabase
-            .from("property_view_stats")
-            .select("property_id, view_count, click_count")
-            .in("property_id", propertyIds)
+            .from('property_view_stats')
+            .select('property_id, view_count, click_count')
+            .in('property_id', propertyIds)
         : { data: null, error: null };
 
     if (statsRes.error) {
-      logger.warn("[UAGService] Failed to fetch property stats", {
+      logger.warn('[UAGService] Failed to fetch property stats', {
         error: statsRes.error.message,
       });
     }
@@ -477,8 +453,8 @@ export class UAGService {
     if (sessionIds.length > 0) {
       // 優先使用優化版 RPC（SQL 層 DISTINCT ON）
       const { data: latestProperties, error: rpcError } = await supabase.rpc(
-        "get_latest_property_per_session",
-        { p_session_ids: sessionIds },
+        'get_latest_property_per_session',
+        { p_session_ids: sessionIds }
       );
 
       if (!rpcError && latestProperties) {
@@ -490,18 +466,15 @@ export class UAGService {
         }
       } else {
         // Fallback: 使用原本的查詢方式
-        logger.warn(
-          "[UAGService] get_latest_property_per_session RPC failed, using fallback",
-          {
-            error: rpcError?.message,
-          },
-        );
+        logger.warn('[UAGService] get_latest_property_per_session RPC failed, using fallback', {
+          error: rpcError?.message,
+        });
 
         const { data: events } = await supabase
-          .from("uag_events")
-          .select("session_id, property_id")
-          .in("session_id", sessionIds)
-          .order("created_at", { ascending: false });
+          .from('uag_events')
+          .select('session_id, property_id')
+          .in('session_id', sessionIds)
+          .order('created_at', { ascending: false });
 
         // 每個 session 取第一個（最近的）property_id
         if (events) {
@@ -519,95 +492,85 @@ export class UAGService {
     // - 未購買 (status="new"): id = session_id (如 sess-B218-mno345)
     // - 已購買 (status="purchased"): id = purchase UUID (如 57a4097a-...)
     // session_id 欄位永不變化，始終用於追蹤匿名消費者
-    const leadsData: SupabaseLeadData[] = (sessionsRes.data ?? []).map(
-      (session, index) => {
-        const grade = session.grade || "F";
-        const propertyId = propertyMap.get(session.session_id);
-        const sessionId = session.session_id;
+    const leadsData: SupabaseLeadData[] = (sessionsRes.data ?? []).map((session, index) => {
+      const grade = session.grade || 'F';
+      const propertyId = propertyMap.get(session.session_id);
+      const sessionId = session.session_id;
 
-        // 問題 #3-4 修復：從 purchasedMap 確定 status
-        const purchased = purchasedMap.get(sessionId);
-        const isPurchased = purchased !== undefined;
-        const status = isPurchased ? "purchased" : "new";
+      // 問題 #3-4 修復：從 purchasedMap 確定 status
+      const purchased = purchasedMap.get(sessionId);
+      const isPurchased = purchased !== undefined;
+      const status = isPurchased ? 'purchased' : 'new';
 
-        // 問題 #6-7 修復：使用 stableHash 生成穩定的 intent 和坐標
-        const hash = stableHash(sessionId);
+      // 問題 #6-7 修復：使用 stableHash 生成穩定的 intent 和坐標
+      const hash = stableHash(sessionId);
 
-        return {
-          // AUDIT-01 Phase 5: id 根據購買狀態設定不同值
-          // isPurchased=true: id = purchase UUID (from uag_lead_purchases.id)
-          // isPurchased=false: id = session_id (用於購買 API 的參數)
-          id: isPurchased ? purchased.id : sessionId,
-          name: `訪客-${sessionId.slice(-4).toUpperCase()}`,
-          grade,
-          intent: gradeToIntent(grade, sessionId),
-          prop: propertyId ?? "物件瀏覽",
-          visit: session.property_count ?? 1,
-          price: gradeToPrice(grade),
-          status,
-          purchased_at: isPurchased ? purchased.created_at : null,
-          ai: generateAiSuggestion(grade, session.property_count ?? 1),
-          session_id: sessionId, // 必填
-          property_id: propertyId,
-          // 問題 #7 修復：用 hash 生成穩定坐標
-          x: 15 + (hash % 5) * 15 + ((hash >> 8) % 10),
-          y: 15 + Math.floor(index / 5) * 15 + ((hash >> 16) % 10),
-          created_at: session.last_active,
-          // 如果已購買，計算剩餘保護時間
-          ...(isPurchased
-            ? {
-                // [NASA TypeScript Safety] 使用 Zod safeParse 取代 as Grade
-                remainingHours: (() => {
-                  const gradeResult = GradeSchema.safeParse(grade);
-                  return gradeResult.success
-                    ? calculateRemainingHours(
-                        purchased.created_at,
-                        gradeResult.data,
-                      )
-                    : 0;
-                })(),
-                // UAG-15/修5: 加入通知狀態
-                notification_status: purchased.notification_status,
-                // 修6: 加入對話 ID
-                conversation_id: purchased.conversation_id,
-              }
-            : {}),
-        };
-      },
-    );
+      return {
+        // AUDIT-01 Phase 5: id 根據購買狀態設定不同值
+        // isPurchased=true: id = purchase UUID (from uag_lead_purchases.id)
+        // isPurchased=false: id = session_id (用於購買 API 的參數)
+        id: isPurchased ? purchased.id : sessionId,
+        name: `訪客-${sessionId.slice(-4).toUpperCase()}`,
+        grade,
+        intent: gradeToIntent(grade, sessionId),
+        prop: propertyId ?? '物件瀏覽',
+        visit: session.property_count ?? 1,
+        price: gradeToPrice(grade),
+        status,
+        purchased_at: isPurchased ? purchased.created_at : null,
+        ai: generateAiSuggestion(grade, session.property_count ?? 1),
+        session_id: sessionId, // 必填
+        property_id: propertyId,
+        // 問題 #7 修復：用 hash 生成穩定坐標
+        x: 15 + (hash % 5) * 15 + ((hash >> 8) % 10),
+        y: 15 + Math.floor(index / 5) * 15 + ((hash >> 16) % 10),
+        created_at: session.last_active,
+        // 如果已購買，計算剩餘保護時間
+        ...(isPurchased
+          ? {
+              // [NASA TypeScript Safety] 使用 Zod safeParse 取代 as Grade
+              remainingHours: (() => {
+                const gradeResult = GradeSchema.safeParse(grade);
+                return gradeResult.success
+                  ? calculateRemainingHours(purchased.created_at, gradeResult.data)
+                  : 0;
+              })(),
+              // UAG-15/修5: 加入通知狀態
+              notification_status: purchased.notification_status,
+              // 修6: 加入對話 ID
+              conversation_id: purchased.conversation_id,
+            }
+          : {}),
+      };
+    });
 
     return transformSupabaseData(
       userRes.data,
       leadsData,
       listingsRes.data,
       feedRes.data ?? [], // FEED-01 Phase 8: feedRes 可能為 null（錯誤時）
-      statsRes.data, // UAG-20-Phase3
+      statsRes.data // UAG-20-Phase3
     );
   }
 
   // 獲取某房仲所有房源的瀏覽統計
-  static async fetchPropertyViewStats(
-    agentId: string,
-  ): Promise<PropertyViewStats[]> {
+  static async fetchPropertyViewStats(agentId: string): Promise<PropertyViewStats[]> {
     try {
       // UAG-10: 使用優化版 RPC (SQL 層聚合，10-100 倍效能提升)
-      const { data, error } = await supabase.rpc(
-        "get_property_stats_optimized",
-        {
-          p_agent_id: agentId,
-        },
-      );
+      const { data, error } = await supabase.rpc('get_property_stats_optimized', {
+        p_agent_id: agentId,
+      });
 
       if (error) {
-        logger.warn("[UAGService] Optimized RPC error, trying legacy RPC", {
+        logger.warn('[UAGService] Optimized RPC error, trying legacy RPC', {
           error: error.message,
         });
         // Fallback 1: 嘗試舊版 RPC
         const { data: legacyData, error: legacyError } = await supabase.rpc(
-          "get_agent_property_stats",
+          'get_agent_property_stats',
           {
             p_agent_id: agentId,
-          },
+          }
         );
 
         if (!legacyError && legacyData) {
@@ -615,7 +578,7 @@ export class UAGService {
         }
 
         // Fallback 2: 直接查詢（效能最差，僅作為最後手段）
-        logger.warn("[UAGService] Legacy RPC also failed, using fallback", {
+        logger.warn('[UAGService] Legacy RPC also failed, using fallback', {
           error: legacyError?.message,
         });
         return await UAGService.fetchPropertyViewStatsFallback(agentId);
@@ -623,8 +586,8 @@ export class UAGService {
 
       return data || [];
     } catch (e) {
-      logger.error("[UAGService] fetchPropertyViewStats error", {
-        error: e instanceof Error ? e.message : "Unknown",
+      logger.error('[UAGService] fetchPropertyViewStats error', {
+        error: e instanceof Error ? e.message : 'Unknown',
       });
       return [];
     }
@@ -632,13 +595,13 @@ export class UAGService {
 
   // Fallback 方法：直接從 uag_events 查詢
   private static async fetchPropertyViewStatsFallback(
-    agentId: string,
+    agentId: string
   ): Promise<PropertyViewStats[]> {
     // 先取得該房仲的所有房源 public_id
     const { data: properties, error: propError } = await supabase
-      .from("properties")
-      .select("public_id")
-      .eq("agent_id", agentId);
+      .from('properties')
+      .select('public_id')
+      .eq('agent_id', agentId);
 
     if (propError || !properties?.length) return [];
 
@@ -646,9 +609,9 @@ export class UAGService {
 
     // 查詢這些房源的事件統計
     const { data: events, error: evtError } = await supabase
-      .from("uag_events")
-      .select("property_id, session_id, duration, actions")
-      .in("property_id", publicIds);
+      .from('uag_events')
+      .select('property_id, session_id, duration, actions')
+      .in('property_id', publicIds);
 
     if (evtError || !events) return [];
 
@@ -673,18 +636,10 @@ export class UAGService {
 
       // [NASA TypeScript Safety] 使用類型守衛取代 as Record
       const actions = evt.actions;
-      if (actions && typeof actions === "object") {
-        if (
-          "click_line" in actions &&
-          typeof actions.click_line === "number" &&
-          actions.click_line
-        )
+      if (actions && typeof actions === 'object') {
+        if ('click_line' in actions && typeof actions.click_line === 'number' && actions.click_line)
           stat.line_clicks++;
-        if (
-          "click_call" in actions &&
-          typeof actions.click_call === "number" &&
-          actions.click_call
-        )
+        if ('click_call' in actions && typeof actions.click_call === 'number' && actions.click_call)
           stat.call_clicks++;
       }
     }
@@ -715,9 +670,9 @@ export class UAGService {
     userId: string,
     leadId: string,
     cost: number,
-    grade: Grade,
+    grade: Grade
   ): Promise<PurchaseLeadResult> {
-    const { data, error } = await supabase.rpc("purchase_lead", {
+    const { data, error } = await supabase.rpc('purchase_lead', {
       p_user_id: userId,
       p_lead_id: leadId,
       p_cost: cost,
@@ -725,7 +680,7 @@ export class UAGService {
     });
 
     if (error) {
-      logger.error("[UAGService] purchaseLead RPC error", {
+      logger.error('[UAGService] purchaseLead RPC error', {
         error: error.message,
       });
       throw error;
@@ -734,10 +689,10 @@ export class UAGService {
     // Zod 驗證 RPC 返回值
     const parsed = PurchaseLeadResultSchema.safeParse(data);
     if (!parsed.success) {
-      logger.error("[UAGService] Invalid purchaseLead response", {
+      logger.error('[UAGService] Invalid purchaseLead response', {
         error: parsed.error.message,
       });
-      return { success: false, error: "Invalid RPC response" };
+      return { success: false, error: 'Invalid RPC response' };
     }
 
     return parsed.data;

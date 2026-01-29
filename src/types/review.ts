@@ -34,7 +34,7 @@ export interface ReviewForUI {
   communityId: string | null;
 
   /** 資料來源: 'real' = 真實資料, 'seed' = Mock 補位 */
-  source: "real" | "seed";
+  source: 'real' | 'seed';
 
   /** 區域標識 */
   region: string;
@@ -80,5 +80,5 @@ export interface ServerSeed {
   rating: number;
   tags: string[];
   content: string;
-  source: "seed";
+  source: 'seed';
 }

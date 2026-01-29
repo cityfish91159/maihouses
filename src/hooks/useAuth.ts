@@ -1,18 +1,11 @@
-import { useEffect, useState } from "react";
-import { Session, User } from "@supabase/supabase-js";
-import { z } from "zod";
-import { supabase } from "../lib/supabase";
-import type { Role } from "../types/community";
+import { useEffect, useState } from 'react';
+import { Session, User } from '@supabase/supabase-js';
+import { z } from 'zod';
+import { supabase } from '../lib/supabase';
+import type { Role } from '../types/community';
 
 // [NASA TypeScript Safety] Zod Schema 用於驗證 user metadata 中的 role
-const RoleSchema = z.enum([
-  "guest",
-  "member",
-  "resident",
-  "agent",
-  "official",
-  "admin",
-]);
+const RoleSchema = z.enum(['guest', 'member', 'resident', 'agent', 'official', 'admin']);
 
 // [NASA TypeScript Safety] Zod Schema 用於驗證 metadata 結構
 const MetadataSchema = z
@@ -45,7 +38,7 @@ interface AuthState {
 
 // [NASA TypeScript Safety] 使用 Zod safeParse 取代 as 類型斷言
 const deriveRole = (user: User | null): Role => {
-  if (!user) return "guest";
+  if (!user) return 'guest';
 
   // [NASA TypeScript Safety] 依序嘗試從 app_metadata 和 user_metadata 提取 role
   const appRole = extractRoleFromMetadata(user.app_metadata);
@@ -54,14 +47,14 @@ const deriveRole = (user: User | null): Role => {
   const userRole = extractRoleFromMetadata(user.user_metadata);
   if (userRole) return userRole;
 
-  return "member";
+  return 'member';
 };
 
 export function useAuth() {
   const [state, setState] = useState<AuthState>({
     session: null,
     user: null,
-    role: "guest",
+    role: 'guest',
     isAuthenticated: false,
     loading: true,
     error: null,
@@ -93,10 +86,7 @@ export function useAuth() {
         }
         syncState(data.session, null);
       } catch (err) {
-        syncState(
-          null,
-          err instanceof Error ? err : new Error("Failed to fetch session"),
-        );
+        syncState(null, err instanceof Error ? err : new Error('Failed to fetch session'));
       }
     };
 

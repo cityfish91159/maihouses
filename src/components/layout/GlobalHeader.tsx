@@ -9,20 +9,20 @@
  * 靜態頁面的 Header 是手動複製的，若不同步會導致視覺與功能不一致。
  */
 
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { Bell, User, LogOut, ChevronDown, ExternalLink } from "lucide-react";
-import { useAuth } from "../../hooks/useAuth";
-import { useNotifications } from "../../hooks/useNotifications";
-import { Logo } from "../Logo/Logo";
-import { notify } from "../../lib/notify";
-import { logger } from "../../lib/logger";
-import { HEADER_STRINGS, GlobalHeaderMode } from "../../constants/header";
-import { STRINGS } from "../../constants/strings";
-import { ROUTES } from "../../constants/routes";
-import { MESSAGING_CONFIG } from "../../constants/messaging";
-import { NotificationDropdown } from "./NotificationDropdown";
-import { NotificationErrorBoundary } from "./NotificationErrorBoundary";
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Bell, User, LogOut, ChevronDown, ExternalLink } from 'lucide-react';
+import { useAuth } from '../../hooks/useAuth';
+import { useNotifications } from '../../hooks/useNotifications';
+import { Logo } from '../Logo/Logo';
+import { notify } from '../../lib/notify';
+import { logger } from '../../lib/logger';
+import { HEADER_STRINGS, GlobalHeaderMode } from '../../constants/header';
+import { STRINGS } from '../../constants/strings';
+import { ROUTES } from '../../constants/routes';
+import { MESSAGING_CONFIG } from '../../constants/messaging';
+import { NotificationDropdown } from './NotificationDropdown';
+import { NotificationErrorBoundary } from './NotificationErrorBoundary';
 
 interface GlobalHeaderProps {
   /** 顯示模式：社區牆 | 消費者端 | 房仲端 */
@@ -38,24 +38,20 @@ interface GlobalHeaderProps {
 // Helper to map role to display string
 const getRoleLabel = (role: string | undefined) => {
   switch (role) {
-    case "resident":
+    case 'resident':
       return HEADER_STRINGS.ROLE_RESIDENT;
-    case "agent":
+    case 'agent':
       return HEADER_STRINGS.ROLE_AGENT;
-    case "official":
+    case 'official':
       return HEADER_STRINGS.ROLE_OFFICIAL;
-    case "guest":
+    case 'guest':
       return HEADER_STRINGS.ROLE_GUEST;
     default:
       return HEADER_STRINGS.ROLE_MEMBER;
   }
 };
 
-export function GlobalHeader({
-  mode,
-  title,
-  className = "",
-}: GlobalHeaderProps) {
+export function GlobalHeader({ mode, title, className = '' }: GlobalHeaderProps) {
   const { isAuthenticated, user, signOut, role } = useAuth();
   const {
     count: notificationCount,
@@ -72,21 +68,15 @@ export function GlobalHeader({
   const handleSignOut = async () => {
     try {
       await signOut();
-      notify.success(
-        HEADER_STRINGS.MSG_LOGOUT_SUCCESS,
-        HEADER_STRINGS.MSG_LOGOUT_DESC,
-      );
+      notify.success(HEADER_STRINGS.MSG_LOGOUT_SUCCESS, HEADER_STRINGS.MSG_LOGOUT_DESC);
       setUserMenuOpen(false);
       navigate(ROUTES.HOME);
     } catch (error) {
-      logger.error("GlobalHeader.handleSignOut.failed", {
+      logger.error('GlobalHeader.handleSignOut.failed', {
         error,
         userId: user?.id,
       });
-      notify.error(
-        HEADER_STRINGS.MSG_LOGOUT_ERROR,
-        HEADER_STRINGS.MSG_LOGOUT_RETRY,
-      );
+      notify.error(HEADER_STRINGS.MSG_LOGOUT_ERROR, HEADER_STRINGS.MSG_LOGOUT_RETRY);
     }
   };
 
@@ -97,21 +87,15 @@ export function GlobalHeader({
       const target = e.target;
       if (!(target instanceof HTMLElement)) return;
 
-      if (
-        !target.closest("#gh-user-menu-btn") &&
-        !target.closest("#gh-user-menu-dropdown")
-      ) {
+      if (!target.closest('#gh-user-menu-btn') && !target.closest('#gh-user-menu-dropdown')) {
         setUserMenuOpen(false);
       }
-      if (
-        !target.closest("#gh-notification-btn") &&
-        !target.closest("#gh-notification-dropdown")
-      ) {
+      if (!target.closest('#gh-notification-btn') && !target.closest('#gh-notification-dropdown')) {
         setNotificationMenuOpen(false);
       }
     };
-    document.addEventListener("click", handleClickOutside);
-    return () => document.removeEventListener("click", handleClickOutside);
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
   }, []);
 
   // 處理通知點擊跳轉（使用 React Router）
@@ -124,16 +108,16 @@ export function GlobalHeader({
   const renderLeft = () => {
     // P3-AUDIT-FIX: Smart Home Link based on role
     let homeLink: string = ROUTES.HOME;
-    if (role === "agent") {
+    if (role === 'agent') {
       homeLink = ROUTES.FEED_AGENT;
-    } else if (role === "resident" || role === "member") {
+    } else if (role === 'resident' || role === 'member') {
       homeLink = ROUTES.FEED_CONSUMER;
     }
 
     return (
       <div className="flex items-center gap-2">
         <Logo showSlogan={false} href={homeLink} showBadge={true} />
-        {mode === "agent" && (
+        {mode === 'agent' && (
           <span className="rounded bg-gradient-to-br from-amber-400 to-amber-600 px-2 py-0.5 text-[10px] font-extrabold text-white shadow-sm">
             {HEADER_STRINGS.AGENT_BADGE}
           </span>
@@ -144,15 +128,11 @@ export function GlobalHeader({
 
   // 渲染中間區域 (標題)
   const renderCenter = () => {
-    if (mode === "community" && title) {
+    if (mode === 'community' && title) {
       return (
         <div className="flex-1 text-center">
-          <h1 className="text-brand-900 m-0 text-base font-extrabold">
-            {title}
-          </h1>
-          <p className="text-ink-500 m-0 text-[11px]">
-            {HEADER_STRINGS.SUBTITLE_WALL}
-          </p>
+          <h1 className="text-brand-900 m-0 text-base font-extrabold">{title}</h1>
+          <p className="text-ink-500 m-0 text-[11px]">{HEADER_STRINGS.SUBTITLE_WALL}</p>
         </div>
       );
     }
@@ -172,7 +152,7 @@ export function GlobalHeader({
 
         {/* Right: Actions */}
         <div className="flex items-center gap-3">
-          {mode === "agent" && (
+          {mode === 'agent' && (
             <a
               href={ROUTES.UAG}
               target="_blank"
@@ -180,9 +160,7 @@ export function GlobalHeader({
               className="inline-flex items-center gap-1 rounded-xl bg-brand-700 px-3 py-1.5 text-xs font-bold text-white shadow-sm transition-all hover:bg-brand-600 hover:shadow-md active:scale-95"
               aria-label={STRINGS.AGENT.PROFILE.LINK_WORKBENCH}
             >
-              <span className="hidden sm:inline">
-                {STRINGS.AGENT.PROFILE.LINK_WORKBENCH}
-              </span>
+              <span className="hidden sm:inline">{STRINGS.AGENT.PROFILE.LINK_WORKBENCH}</span>
               <ExternalLink size={14} strokeWidth={2.5} />
             </a>
           )}
@@ -212,9 +190,7 @@ export function GlobalHeader({
             {/* Notification Dropdown */}
             {notificationMenuOpen && (
               <div id="gh-notification-dropdown">
-                <NotificationErrorBoundary
-                  onClose={() => setNotificationMenuOpen(false)}
-                >
+                <NotificationErrorBoundary onClose={() => setNotificationMenuOpen(false)}>
                   <NotificationDropdown
                     notifications={notifications}
                     isLoading={notificationsLoading}
@@ -239,14 +215,14 @@ export function GlobalHeader({
                 aria-expanded={userMenuOpen}
               >
                 <div className="flex size-7 items-center justify-center rounded-full bg-brand-50 text-xs font-bold text-brand-700 ring-1 ring-brand-100">
-                  {user?.email?.charAt(0).toUpperCase() || "U"}
+                  {user?.email?.charAt(0).toUpperCase() || 'U'}
                 </div>
                 <span className="hidden max-w-[80px] truncate text-xs font-bold text-brand-700 md:block">
-                  {user?.user_metadata?.name || "我的"}
+                  {user?.user_metadata?.name || '我的'}
                 </span>
                 <ChevronDown
                   size={14}
-                  className={`text-brand-400 transition-transform ${userMenuOpen ? "rotate-180" : ""}`}
+                  className={`text-brand-400 transition-transform ${userMenuOpen ? 'rotate-180' : ''}`}
                 />
               </button>
 
@@ -258,12 +234,8 @@ export function GlobalHeader({
                   role="menu"
                 >
                   <div className="mb-1 border-b border-gray-50 px-3 py-2">
-                    <p className="text-brand-900 truncate text-xs font-bold">
-                      {user?.email}
-                    </p>
-                    <p className="text-[10px] text-gray-500">
-                      {getRoleLabel(role)}
-                    </p>
+                    <p className="text-brand-900 truncate text-xs font-bold">{user?.email}</p>
+                    <p className="text-[10px] text-gray-500">{getRoleLabel(role)}</p>
                   </div>
 
                   <button
@@ -272,18 +244,18 @@ export function GlobalHeader({
                     onClick={() => {
                       // E5/F4 Fix: Robust Navigation
                       const targetPath = ROUTES.FEED_CONSUMER;
-                      const targetHash = "profile";
+                      const targetHash = 'profile';
 
                       if (
                         location.pathname === targetPath ||
-                        location.pathname.includes("/feed/consumer")
+                        location.pathname.includes('/feed/consumer')
                       ) {
                         // Already on page: force hash update and scroll
                         window.location.hash = targetHash;
                         // Dispatch event for listeners just in case
-                        window.dispatchEvent(new HashChangeEvent("hashchange"));
+                        window.dispatchEvent(new HashChangeEvent('hashchange'));
                         // Fallback manual scroll if listener misses it
-                        window.scrollTo({ top: 0, behavior: "smooth" });
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
                       } else {
                         // Navigate to page with hash
                         window.location.href = `${targetPath}#${targetHash}`;

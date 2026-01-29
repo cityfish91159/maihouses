@@ -1042,10 +1042,10 @@ export default useCommunityWall;
  * 包含快取策略與錯誤處理
  */
 
-import { supabase } from "../lib/supabase";
+import { supabase } from '../lib/supabase';
 
 // API 基礎路徑
-const API_BASE = "/api/community";
+const API_BASE = '/api/community';
 
 // 快取時間（毫秒）
 const CACHE_TTL = {
@@ -1076,14 +1076,14 @@ export interface CommunityPost {
   community_id: string;
   author_id: string;
   content: string;
-  visibility: "public" | "private";
+  visibility: 'public' | 'private';
   likes_count: number;
   liked_by: string[];
   created_at: string;
   author?: {
     name: string;
     avatar_url?: string;
-    role?: "resident" | "agent" | "member";
+    role?: 'resident' | 'agent' | 'member';
   };
 }
 
@@ -1140,14 +1140,11 @@ async function getAuthToken(): Promise<string | null> {
 }
 
 // 通用 fetch 包裝
-async function fetchAPI<T>(
-  endpoint: string,
-  options: RequestInit = {},
-): Promise<T> {
+async function fetchAPI<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const token = await getAuthToken();
 
   const headers: HeadersInit = {
-    "Content-Type": "application/json",
+    'Content-Type': 'application/json',
     ...(token && { Authorization: `Bearer ${token}` }),
     ...options.headers,
   };
@@ -1158,7 +1155,7 @@ async function fetchAPI<T>(
   });
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: "請求失敗" }));
+    const error = await response.json().catch(() => ({ error: '請求失敗' }));
     throw new Error(error.error || `HTTP ${response.status}`);
   }
 
@@ -1173,7 +1170,7 @@ export async function getCommunityWall(
   options: {
     forceRefresh?: boolean;
     includePrivate?: boolean;
-  } = {},
+  } = {}
 ): Promise<CommunityWallData> {
   const cacheKey = `wall:${communityId}:${options.includePrivate}`;
 
@@ -1182,9 +1179,7 @@ export async function getCommunityWall(
     if (cached) return cached;
   }
 
-  const data = await fetchAPI<CommunityWallData>(
-    `/wall?communityId=${communityId}&type=all`,
-  );
+  const data = await fetchAPI<CommunityWallData>(`/wall?communityId=${communityId}&type=all`);
 
   setCachedData(cacheKey, data);
   return data;
@@ -1195,13 +1190,13 @@ export async function getCommunityWall(
  */
 export async function getPublicPosts(
   communityId: string,
-  options: { page?: number; limit?: number } = {},
+  options: { page?: number; limit?: number } = {}
 ): Promise<{ items: CommunityPost[]; total: number }> {
   const { page = 1, limit = 20 } = options;
   const offset = (page - 1) * limit;
 
   return fetchAPI(
-    `/wall?communityId=${communityId}&type=posts&visibility=public&offset=${offset}&limit=${limit}`,
+    `/wall?communityId=${communityId}&type=posts&visibility=public&offset=${offset}&limit=${limit}`
   );
 }
 
@@ -1210,13 +1205,13 @@ export async function getPublicPosts(
  */
 export async function getPrivatePosts(
   communityId: string,
-  options: { page?: number; limit?: number } = {},
+  options: { page?: number; limit?: number } = {}
 ): Promise<{ items: CommunityPost[]; total: number }> {
   const { page = 1, limit = 20 } = options;
   const offset = (page - 1) * limit;
 
   return fetchAPI(
-    `/wall?communityId=${communityId}&type=posts&visibility=private&offset=${offset}&limit=${limit}`,
+    `/wall?communityId=${communityId}&type=posts&visibility=private&offset=${offset}&limit=${limit}`
   );
 }
 
@@ -1224,17 +1219,17 @@ export async function getPrivatePosts(
  * 取得評價（來自 properties 的兩好一公道）
  */
 export async function getReviews(
-  communityId: string,
+  communityId: string
 ): Promise<{ items: CommunityReview[]; total: number }> {
   const cacheKey = `reviews:${communityId}`;
   const cached = getCachedData<{ items: CommunityReview[]; total: number }>(
     cacheKey,
-    CACHE_TTL.reviews,
+    CACHE_TTL.reviews
   );
   if (cached) return cached;
 
   const data = await fetchAPI<{ items: CommunityReview[]; total: number }>(
-    `/wall?communityId=${communityId}&type=reviews`,
+    `/wall?communityId=${communityId}&type=reviews`
   );
 
   setCachedData(cacheKey, data);
@@ -1245,17 +1240,17 @@ export async function getReviews(
  * 取得問答
  */
 export async function getQuestions(
-  communityId: string,
+  communityId: string
 ): Promise<{ items: CommunityQuestion[]; total: number }> {
   const cacheKey = `questions:${communityId}`;
   const cached = getCachedData<{ items: CommunityQuestion[]; total: number }>(
     cacheKey,
-    CACHE_TTL.questions,
+    CACHE_TTL.questions
   );
   if (cached) return cached;
 
   const data = await fetchAPI<{ items: CommunityQuestion[]; total: number }>(
-    `/wall?communityId=${communityId}&type=questions`,
+    `/wall?communityId=${communityId}&type=questions`
   );
 
   setCachedData(cacheKey, data);
@@ -1268,14 +1263,14 @@ export async function getQuestions(
 export async function createPost(
   communityId: string,
   content: string,
-  visibility: "public" | "private" = "public",
+  visibility: 'public' | 'private' = 'public'
 ): Promise<CommunityPost> {
   // 清除快取
   cache.delete(`wall:${communityId}:false`);
   cache.delete(`wall:${communityId}:true`);
 
-  return fetchAPI("/post", {
-    method: "POST",
+  return fetchAPI('/post', {
+    method: 'POST',
     body: JSON.stringify({ communityId, content, visibility }),
   });
 }
@@ -1283,11 +1278,9 @@ export async function createPost(
 /**
  * 按讚/取消按讚
  */
-export async function toggleLike(
-  postId: string,
-): Promise<{ liked: boolean; likes_count: number }> {
-  return fetchAPI("/like", {
-    method: "POST",
+export async function toggleLike(postId: string): Promise<{ liked: boolean; likes_count: number }> {
+  return fetchAPI('/like', {
+    method: 'POST',
     body: JSON.stringify({ postId }),
   });
 }
@@ -1297,13 +1290,13 @@ export async function toggleLike(
  */
 export async function askQuestion(
   communityId: string,
-  question: string,
+  question: string
 ): Promise<CommunityQuestion> {
   // 清除快取
   cache.delete(`questions:${communityId}`);
 
-  return fetchAPI("/question", {
-    method: "POST",
+  return fetchAPI('/question', {
+    method: 'POST',
     body: JSON.stringify({ communityId, question }),
   });
 }
@@ -1313,10 +1306,10 @@ export async function askQuestion(
  */
 export async function answerQuestion(
   questionId: string,
-  content: string,
+  content: string
 ): Promise<{ id: string; content: string }> {
-  return fetchAPI("/question", {
-    method: "PUT",
+  return fetchAPI('/question', {
+    method: 'PUT',
     body: JSON.stringify({ questionId, content }),
   });
 }

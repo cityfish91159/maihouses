@@ -1,4 +1,5 @@
 # 拆分驗證報告 - usePropertyTracker Hook 分離
+
 **驗證時間**: 2026-01-27 11:30 UTC+8
 **驗證者**: 拆分驗證團隊
 **任務**: 驗證 Team C1 完成的 Hook 分離工作
@@ -12,6 +13,7 @@
 **文件路徑**: `C:\Users\陳世瑜\maihouses\src\hooks\usePropertyTracker.ts`
 
 #### 程式碼完整性檢查
+
 - [x] **Export 聲明**: ✅ 正確使用 `export const usePropertyTracker`（第 46 行）
 - [x] **Hook 簽名完整**: ✅ 包含所有 4 個參數
   ```typescript
@@ -22,13 +24,14 @@
   ```
 - [x] **返回值結構**: ✅ 完整包含 4 個追蹤方法
   ```typescript
-  trackPhotoClick()      // 點擊圖片
-  trackLineClick()       // LINE 點擊 + 防重複
-  trackCallClick()       // 電話點擊 + 防重複
-  trackMapClick()        // 地圖點擊 + 防重複
+  trackPhotoClick(); // 點擊圖片
+  trackLineClick(); // LINE 點擊 + 防重複
+  trackCallClick(); // 電話點擊 + 防重複
+  trackMapClick(); // 地圖點擊 + 防重複
   ```
 
 #### 核心功能驗證
+
 - [x] **state 初始化**: ✅ 使用 useState 惰性初始化 enterTime（避免每次 render 調用 Date.now()）
 - [x] **useRef 狀態**: ✅ 正確管理 6 個 ref：
   - `actions`: 追蹤行為計數
@@ -45,14 +48,15 @@
   - `handleScroll()`: 追蹤滾動深度
 
 #### 依賴檢查
+
 - [x] **React Hooks**: ✅ 正確導入
   ```typescript
-  import { useState, useRef, useEffect, useCallback } from "react";
+  import { useState, useRef, useEffect, useCallback } from 'react';
   ```
 - [x] **服務依賴**: ✅ 正確導入
   ```typescript
-  import { track } from "../analytics/track";
-  import { logger } from "../lib/logger";
+  import { track } from '../analytics/track';
+  import { logger } from '../lib/logger';
   ```
 - [x] **所有依賴正確**: ✅ 沒有遺漏，無 `any` 類型
 
@@ -63,19 +67,21 @@
 **文件路徑**: `C:\Users\陳世瑜\maihouses\src\pages\PropertyDetailPage.tsx`
 
 #### Import 驗證
+
 - [x] **Hook 導入**: ✅ 第 49 行正確導入
   ```typescript
-  import { usePropertyTracker } from "../hooks/usePropertyTracker";
+  import { usePropertyTracker } from '../hooks/usePropertyTracker';
   ```
 
 #### Hook 調用驗證
+
 - [x] **調用位置**: ✅ 第 124 行正確調用
   ```typescript
   const propertyTracker = usePropertyTracker(
-    id || "",
+    id || '',
     getAgentId(),
     extractDistrict(property.address),
-    handleGradeUpgrade,
+    handleGradeUpgrade
   );
   ```
 
@@ -93,6 +99,7 @@
 | 734 | `propertyTracker.trackCallClick()` | ✅ 正確 | 正確 |
 
 **問題分析**:
+
 - Hook 返回值存儲在 `propertyTracker` 變數中
 - 第 356、380 行使用了未定義的 `tracker` 變數
 - 這導致 TypeScript 編譯錯誤
@@ -118,6 +125,7 @@ src/pages/PropertyDetailPage.tsx(734,19): error TS2552: Cannot find name 'tracke
 **總計錯誤數**: 7 處 TS2552 錯誤（未定義的變數）
 
 #### ESLint 檢查
+
 - ✅ **狀態**: 通過（無檢查結果輸出表示沒有 ESLint 問題）
 
 ---
@@ -125,6 +133,7 @@ src/pages/PropertyDetailPage.tsx(734,19): error TS2552: Cannot find name 'tracke
 ### 📋 4. 代碼品質檢查
 
 #### usePropertyTracker Hook
+
 - ✅ **無 `any` 類型**: 全部使用具體類型定義
 - ✅ **錯誤處理完整**: 所有 async 操作都有 try-catch
 - ✅ **評論文檔**: JSDoc 完整清晰
@@ -134,6 +143,7 @@ src/pages/PropertyDetailPage.tsx(734,19): error TS2552: Cannot find name 'tracke
   - 鎖定在異步操作前（第 144 行）
 
 #### PropertyDetailPage.tsx
+
 - ✅ **組件結構**: 清晰組織，邏輯分離
 - ✅ **State 管理**: 正確使用 useState、useCallback、useMemo
 - ✅ **依賴陣列**: 大部分正確（除外：第 124 行 usePropertyTracker 調用中 extractDistrict 可能觸發重新創建）
@@ -144,28 +154,31 @@ src/pages/PropertyDetailPage.tsx(734,19): error TS2552: Cannot find name 'tracke
 
 ## 總結評分
 
-| 項目 | 結果 | 分數 |
-|------|------|------|
-| Hook 文件完整性 | ✅ 優秀 | 10/10 |
-| Hook 導入正確性 | ✅ 正確 | 10/10 |
-| TypeScript 類型 | ✅ 正確 | 10/10 |
-| Hook 依賴管理 | ✅ 完整 | 10/10 |
-| PropertyDetailPage 集成 | ❌ 有誤 | 3/10 |
-| 變數名稱一致性 | ❌ 不一致 | 0/10 |
-| 代碼質量 | ✅ 高質 | 9/10 |
-| **總體評分** | ⚠️ **部分失敗** | **52/70** |
+| 項目                    | 結果            | 分數      |
+| ----------------------- | --------------- | --------- |
+| Hook 文件完整性         | ✅ 優秀         | 10/10     |
+| Hook 導入正確性         | ✅ 正確         | 10/10     |
+| TypeScript 類型         | ✅ 正確         | 10/10     |
+| Hook 依賴管理           | ✅ 完整         | 10/10     |
+| PropertyDetailPage 集成 | ❌ 有誤         | 3/10      |
+| 變數名稱一致性          | ❌ 不一致       | 0/10      |
+| 代碼質量                | ✅ 高質         | 9/10      |
+| **總體評分**            | ⚠️ **部分失敗** | **52/70** |
 
 ---
 
 ## 問題詳情
 
 ### 根本原因
+
 PropertyDetailPage.tsx 在集成時出現 Hook 返回值變數名稱不一致：
+
 - **定義**: `const propertyTracker = usePropertyTracker(...)`
 - **某些位置使用**: `tracker.trackLineClick()` （錯誤）
 - **其他位置正確使用**: `propertyTracker.trackLineClick()`
 
 ### 影響範圍
+
 - **2 處代碼錯誤**（第 356、380 行）
 - **TypeScript 編譯失敗**（7 個 TS2552 錯誤）
 - **構建將阻止**: 無法通過 `npm run build` 或 `npm run typecheck`
@@ -175,6 +188,7 @@ PropertyDetailPage.tsx 在集成時出現 Hook 返回值變數名稱不一致：
 **需要修復的兩處**:
 
 1. **第 356 行**（LineShareAction 組件）
+
    ```typescript
    // ❌ 錯誤
    onShareClick={() => tracker.trackLineClick()}
@@ -184,6 +198,7 @@ PropertyDetailPage.tsx 在集成時出現 Hook 返回值變數名稱不一致：
    ```
 
 2. **第 380 行**（Google Maps 連結）
+
    ```typescript
    // ❌ 錯誤
    onClick={tracker.trackMapClick}

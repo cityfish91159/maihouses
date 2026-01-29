@@ -18,16 +18,24 @@
  * - [Security Audit] 防止越權操作
  */
 
-import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { z } from "zod";
-import { supabase, verifyToken, cors, logAudit, SYSTEM_API_KEY, getClientIp, getUserAgent } from "./_utils";
+import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { z } from 'zod';
 import {
-  successResponse,
-  errorResponse,
-  API_ERROR_CODES,
-} from "../lib/apiResponse";
-import { logger } from "../lib/logger";
-import { sendCaseClosedNotification, CLOSE_REASON_TEXTS, type CloseReason } from "./send-notification";
+  supabase,
+  verifyToken,
+  cors,
+  logAudit,
+  SYSTEM_API_KEY,
+  getClientIp,
+  getUserAgent,
+} from './_utils';
+import { successResponse, errorResponse, API_ERROR_CODES } from '../lib/apiResponse';
+import { logger } from '../lib/logger';
+import {
+  sendCaseClosedNotification,
+  CLOSE_REASON_TEXTS,
+  type CloseReason,
+} from './send-notification';
 
 // ============================================================================
 // Zod Schemas [NASA TypeScript Safety]
@@ -35,23 +43,19 @@ import { sendCaseClosedNotification, CLOSE_REASON_TEXTS, type CloseReason } from
 
 /** 關閉原因白名單 - 類型從 send-notification.ts 導入 */
 const CloseReasonSchema = z.enum([
-  "closed_sold_to_other",
-  "closed_property_unlisted",
-  "closed_inactive",
+  'closed_sold_to_other',
+  'closed_property_unlisted',
+  'closed_inactive',
 ] as const satisfies readonly CloseReason[]);
 
 /** 關閉案件請求 Schema */
 const CloseCaseRequestSchema = z.object({
-  caseId: z.string().uuid("caseId 必須是有效的 UUID"),
+  caseId: z.string().uuid('caseId 必須是有效的 UUID'),
   reason: CloseReasonSchema,
 });
 
 /** 案件狀態 Schema - 僅包含 BE-9 使用的狀態 */
-const CaseStatusSchema = z.enum([
-  "active",
-  "dormant",
-  "closed",
-]);
+const CaseStatusSchema = z.enum(['active', 'dormant', 'closed']);
 
 /** trust_cases 查詢結果 Schema */
 const TrustCaseRowSchema = z.object({
@@ -67,55 +71,44 @@ const TrustCaseRowSchema = z.object({
 // Handler
 // ============================================================================
 
-export default async function handler(
-  req: VercelRequest,
-  res: VercelResponse,
-): Promise<void> {
+export default async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
   // CORS
   cors(req, res);
 
   // OPTIONS 預檢
-  if (req.method === "OPTIONS") {
+  if (req.method === 'OPTIONS') {
     res.status(200).end();
     return;
   }
 
   // 僅允許 POST
-  if (req.method !== "POST") {
-    res
-      .status(405)
-      .json(errorResponse(API_ERROR_CODES.METHOD_NOT_ALLOWED, "只允許 POST 方法"));
+  if (req.method !== 'POST') {
+    res.status(405).json(errorResponse(API_ERROR_CODES.METHOD_NOT_ALLOWED, '只允許 POST 方法'));
     return;
   }
 
   try {
     // Step 1: 雙認證（JWT 或 System Key）
-    const systemKey = req.headers["x-system-key"];
-    let authSource: "jwt" | "system" = "jwt";
+    const systemKey = req.headers['x-system-key'];
+    let authSource: 'jwt' | 'system' = 'jwt';
     let user: ReturnType<typeof verifyToken> | null = null;
 
     if (systemKey) {
       if (systemKey !== SYSTEM_API_KEY) {
-        res
-          .status(401)
-          .json(errorResponse(API_ERROR_CODES.UNAUTHORIZED, "未授權的存取"));
+        res.status(401).json(errorResponse(API_ERROR_CODES.UNAUTHORIZED, '未授權的存取'));
         return;
       }
-      authSource = "system";
+      authSource = 'system';
     } else {
       try {
         user = verifyToken(req);
       } catch {
-        res
-          .status(401)
-          .json(errorResponse(API_ERROR_CODES.UNAUTHORIZED, "未登入或 Token 已過期"));
+        res.status(401).json(errorResponse(API_ERROR_CODES.UNAUTHORIZED, '未登入或 Token 已過期'));
         return;
       }
 
-      if (user.role !== "agent") {
-        res
-          .status(403)
-          .json(errorResponse(API_ERROR_CODES.FORBIDDEN, "只有房仲可以操作案件"));
+      if (user.role !== 'agent') {
+        res.status(403).json(errorResponse(API_ERROR_CODES.FORBIDDEN, '只有房仲可以操作案件'));
         return;
       }
     }
@@ -123,14 +116,7 @@ export default async function handler(
     // Step 2: 檢查請求 Body
     const bodyResult = CloseCaseRequestSchema.safeParse(req.body);
     if (!bodyResult.success) {
-      res
-        .status(400)
-        .json(
-          errorResponse(
-            API_ERROR_CODES.INVALID_INPUT,
-            "請求參數格式錯誤",
-          ),
-        );
+      res.status(400).json(errorResponse(API_ERROR_CODES.INVALID_INPUT, '請求參數格式錯誤'));
       return;
     }
 
@@ -138,125 +124,105 @@ export default async function handler(
 
     // Step 3: 查詢案件是否存在
     const { data: caseRow, error: caseError } = await supabase
-      .from("trust_cases")
-      .select("id, agent_id, status, property_title, closed_at, closed_reason")
-      .eq("id", caseId)
+      .from('trust_cases')
+      .select('id, agent_id, status, property_title, closed_at, closed_reason')
+      .eq('id', caseId)
       .single();
 
     if (caseError || !caseRow) {
-      if (caseError?.code === "PGRST116") {
-        res
-          .status(404)
-          .json(errorResponse(API_ERROR_CODES.NOT_FOUND, "找不到案件"));
+      if (caseError?.code === 'PGRST116') {
+        res.status(404).json(errorResponse(API_ERROR_CODES.NOT_FOUND, '找不到案件'));
         return;
       }
 
-      logger.error("[trust/close] Database error", {
-        error: caseError?.message ?? "Unknown",
+      logger.error('[trust/close] Database error', {
+        error: caseError?.message ?? 'Unknown',
         caseId,
       });
-      res
-        .status(500)
-        .json(errorResponse(API_ERROR_CODES.DATA_FETCH_FAILED, "案件載入失敗"));
+      res.status(500).json(errorResponse(API_ERROR_CODES.DATA_FETCH_FAILED, '案件載入失敗'));
       return;
     }
 
     const caseParseResult = TrustCaseRowSchema.safeParse(caseRow);
     if (!caseParseResult.success) {
-      logger.error("[trust/close] Case data validation failed", {
+      logger.error('[trust/close] Case data validation failed', {
         caseId,
         issues: caseParseResult.error.issues,
       });
-      res
-        .status(500)
-        .json(errorResponse(API_ERROR_CODES.INTERNAL_ERROR, "資料格式驗證失敗"));
+      res.status(500).json(errorResponse(API_ERROR_CODES.INTERNAL_ERROR, '資料格式驗證失敗'));
       return;
     }
 
     const currentCase = caseParseResult.data;
 
     // Step 4: 驗證權限（僅 JWT 需要）
-    if (authSource === "jwt" && user) {
+    if (authSource === 'jwt' && user) {
       if (currentCase.agent_id !== user.id) {
-        res
-          .status(403)
-          .json(errorResponse(API_ERROR_CODES.FORBIDDEN, "無權限關閉此案件"));
+        res.status(403).json(errorResponse(API_ERROR_CODES.FORBIDDEN, '無權限關閉此案件'));
         return;
       }
     }
 
     // Step 5: 驗證狀態（僅允許 active / dormant）
-    if (currentCase.status !== "active" && currentCase.status !== "dormant") {
-      res
-        .status(400)
-        .json(
-          errorResponse(API_ERROR_CODES.INVALID_INPUT, "案件狀態不允許關閉"),
-        );
+    if (currentCase.status !== 'active' && currentCase.status !== 'dormant') {
+      res.status(400).json(errorResponse(API_ERROR_CODES.INVALID_INPUT, '案件狀態不允許關閉'));
       return;
     }
 
     // Step 6: 單一更新（原子性）- 修復 #2: 加入 agent_id 防止 TOCTOU
     const closedAt = new Date().toISOString();
     let updateQuery = supabase
-      .from("trust_cases")
+      .from('trust_cases')
       .update({
-        status: "closed",
+        status: 'closed',
         closed_at: closedAt,
         closed_reason: reason,
       })
-      .eq("id", caseId)
-      .in("status", ["active", "dormant"]);
+      .eq('id', caseId)
+      .in('status', ['active', 'dormant']);
 
     // JWT 認證時加入 agent_id 驗證防止競態條件
-    if (authSource === "jwt" && user) {
-      updateQuery = updateQuery.eq("agent_id", user.id);
+    if (authSource === 'jwt' && user) {
+      updateQuery = updateQuery.eq('agent_id', user.id);
     }
 
     const { data: updatedCase, error: updateError } = await updateQuery
-      .select("id, agent_id, status, property_title, closed_at, closed_reason")
+      .select('id, agent_id, status, property_title, closed_at, closed_reason')
       .single();
 
     // 修復 #3: 區分並發衝突與真正錯誤
     if (updateError) {
       // PGRST116 = no rows returned，可能是並發狀態變更
-      if (updateError.code === "PGRST116") {
-        logger.warn("[trust/close] Concurrent update conflict", {
+      if (updateError.code === 'PGRST116') {
+        logger.warn('[trust/close] Concurrent update conflict', {
           caseId,
           error: updateError.message,
         });
-        res
-          .status(409)
-          .json(errorResponse(API_ERROR_CODES.CONFLICT, "案件狀態已變更，請重新操作"));
+        res.status(409).json(errorResponse(API_ERROR_CODES.CONFLICT, '案件狀態已變更，請重新操作'));
         return;
       }
 
-      logger.error("[trust/close] Update failed", {
-        error: updateError.message ?? "Unknown",
+      logger.error('[trust/close] Update failed', {
+        error: updateError.message ?? 'Unknown',
         caseId,
       });
-      res
-        .status(500)
-        .json(errorResponse(API_ERROR_CODES.INTERNAL_ERROR, "案件更新失敗"));
+      res.status(500).json(errorResponse(API_ERROR_CODES.INTERNAL_ERROR, '案件更新失敗'));
       return;
     }
 
     if (!updatedCase) {
-      logger.warn("[trust/close] No data returned", { caseId });
-      res
-        .status(409)
-        .json(errorResponse(API_ERROR_CODES.CONFLICT, "案件狀態已變更，請重新操作"));
+      logger.warn('[trust/close] No data returned', { caseId });
+      res.status(409).json(errorResponse(API_ERROR_CODES.CONFLICT, '案件狀態已變更，請重新操作'));
       return;
     }
 
     const updatedParseResult = TrustCaseRowSchema.safeParse(updatedCase);
     if (!updatedParseResult.success) {
-      logger.error("[trust/close] Updated data validation failed", {
+      logger.error('[trust/close] Updated data validation failed', {
         caseId,
         issues: updatedParseResult.error.issues,
       });
-      res
-        .status(500)
-        .json(errorResponse(API_ERROR_CODES.INTERNAL_ERROR, "回應格式驗證失敗"));
+      res.status(500).json(errorResponse(API_ERROR_CODES.INTERNAL_ERROR, '回應格式驗證失敗'));
       return;
     }
 
@@ -264,28 +230,26 @@ export default async function handler(
 
     // Step 7: 寫入審計紀錄（標記來源 jwt/system）
     const auditUser =
-      authSource === "jwt" && user
+      authSource === 'jwt' && user
         ? user
         : {
-            id: "system",
-            role: "system" as const,
-            txId: "system",
+            id: 'system',
+            role: 'system' as const,
+            txId: 'system',
             ip: getClientIp(req),
             agent: getUserAgent(req),
           };
 
-    void logAudit(
-      caseId,
-      `CLOSE_TRUST_CASE_${authSource.toUpperCase()}`,
-      auditUser,
-    ).catch((auditErr) => {
-      logger.error("[trust/close] Audit log failed (non-blocking)", {
-        case_id: caseId,
-        error: auditErr instanceof Error ? auditErr.message : "Unknown",
-      });
-    });
+    void logAudit(caseId, `CLOSE_TRUST_CASE_${authSource.toUpperCase()}`, auditUser).catch(
+      (auditErr) => {
+        logger.error('[trust/close] Audit log failed (non-blocking)', {
+          case_id: caseId,
+          error: auditErr instanceof Error ? auditErr.message : 'Unknown',
+        });
+      }
+    );
 
-    logger.info("[trust/close] Case closed", {
+    logger.info('[trust/close] Case closed', {
       case_id: caseId,
       reason,
       reason_text: CLOSE_REASON_TEXTS[reason],
@@ -293,15 +257,12 @@ export default async function handler(
     });
 
     // Step 8: 非阻塞通知
-    void sendCaseClosedNotification(
-      caseId,
-      reason,
-      updated.property_title ?? undefined,
-    ).catch((err) =>
-      logger.error("[trust/close] Notification failed", {
-        case_id: caseId,
-        error: err instanceof Error ? err.message : "Unknown",
-      }),
+    void sendCaseClosedNotification(caseId, reason, updated.property_title ?? undefined).catch(
+      (err) =>
+        logger.error('[trust/close] Notification failed', {
+          case_id: caseId,
+          error: err instanceof Error ? err.message : 'Unknown',
+        })
     );
 
     // Step 9: 成功回傳
@@ -310,16 +271,12 @@ export default async function handler(
         caseId,
         status: updated.status,
         closedAt: updated.closed_at,
-      }),
+      })
     );
   } catch (e) {
-    logger.error("[trust/close] Unexpected error", {
-      error: e instanceof Error ? e.message : "Unknown",
+    logger.error('[trust/close] Unexpected error', {
+      error: e instanceof Error ? e.message : 'Unknown',
     });
-    res
-      .status(500)
-      .json(errorResponse(API_ERROR_CODES.INTERNAL_ERROR, "伺服器內部錯誤"));
+    res.status(500).json(errorResponse(API_ERROR_CODES.INTERNAL_ERROR, '伺服器內部錯誤'));
   }
 }
-
-

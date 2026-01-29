@@ -114,7 +114,7 @@ def _apply_custom(self, img: np.ndarray, intensity: float) -> np.ndarray:
 
 ```yaml
 python_packages:
-  - "your-package==version"
+  - 'your-package==version'
 ```
 
 ### 測試更改

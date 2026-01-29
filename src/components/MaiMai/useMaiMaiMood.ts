@@ -1,5 +1,5 @@
-import { useMemo, useState, useCallback, useEffect } from "react";
-import type { MaiMaiMood, UseMaiMaiMoodOptions } from "./types";
+import { useMemo, useState, useCallback, useEffect } from 'react';
+import type { MaiMaiMood, UseMaiMaiMoodOptions } from './types';
 
 /**
  * MaiMai 心情狀態機 Hook
@@ -69,28 +69,28 @@ export function useMaiMaiMood(options: UseMaiMaiMoodOptions = {}): {
     if (externalMood) return externalMood;
 
     // 優先級 2: 慶祝狀態（點擊或外部觸發）
-    if (internalCelebrating || externalCelebrating) return "celebrate";
+    if (internalCelebrating || externalCelebrating) return 'celebrate';
 
     // 優先級 3: 成功
-    if (isSuccess) return "celebrate";
+    if (isSuccess) return 'celebrate';
 
     // 優先級 4: 錯誤
-    if (hasError) return "shy";
+    if (hasError) return 'shy';
 
     // 優先級 5: 載入中
-    if (isLoading) return "thinking";
+    if (isLoading) return 'thinking';
 
     // 優先級 6: 輸入密碼
-    if (isTypingPassword) return "peek";
+    if (isTypingPassword) return 'peek';
 
     // 優先級 7: 輸入 email
-    if (isTypingEmail) return "happy";
+    if (isTypingEmail) return 'happy';
 
     // 優先級 8: hover
-    if (isHovered) return "wave";
+    if (isHovered) return 'wave';
 
     // 預設
-    return "idle";
+    return 'idle';
   }, [
     externalMood,
     internalCelebrating,
@@ -117,7 +117,7 @@ export function useMaiMaiMood(options: UseMaiMaiMoodOptions = {}): {
 export function useMascotCelebrateEvent(onCelebrate: () => void) {
   useEffect(() => {
     const handler = () => onCelebrate();
-    window.addEventListener("mascot:celebrate", handler);
-    return () => window.removeEventListener("mascot:celebrate", handler);
+    window.addEventListener('mascot:celebrate', handler);
+    return () => window.removeEventListener('mascot:celebrate', handler);
   }, [onCelebrate]);
 }

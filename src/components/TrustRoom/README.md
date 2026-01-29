@@ -10,14 +10,15 @@
 
 ```typescript
 interface DataCollectionModalProps {
-  isOpen: boolean;               // Modal 開啟狀態
-  onSubmit: (data: {             // 送出回調
+  isOpen: boolean; // Modal 開啟狀態
+  onSubmit: (data: {
+    // 送出回調
     name: string;
     phone: string;
     email: string;
   }) => void;
-  onSkip: () => void;            // 跳過/關閉回調
-  isSubmitting?: boolean;        // 送出中狀態（選填）
+  onSkip: () => void; // 跳過/關閉回調
+  isSubmitting?: boolean; // 送出中狀態（選填）
 }
 ```
 
@@ -98,6 +99,7 @@ function MyComponent() {
 ### 樣式規範
 
 組件使用專案的 Design Tokens：
+
 - 品牌色：`brand-600`, `brand-700`
 - 語意化陰影：`shadow-2xl`
 - 動畫：`animate-in fade-in zoom-in-95`

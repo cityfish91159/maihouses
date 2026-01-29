@@ -1,15 +1,15 @@
-import { renderHook, act } from "@testing-library/react";
-import { useTutorial } from "../useTutorial";
-import { MaiMaiProvider } from "../../context/MaiMaiContext";
-import { safeLocalStorage } from "../../lib/safeStorage";
-import { TUTORIAL_CONFIG } from "../../constants/tutorial";
+import { renderHook, act } from '@testing-library/react';
+import { useTutorial } from '../useTutorial';
+import { MaiMaiProvider } from '../../context/MaiMaiContext';
+import { safeLocalStorage } from '../../lib/safeStorage';
+import { TUTORIAL_CONFIG } from '../../constants/tutorial';
 
 // Mock MaiMaiContext
 const mockSetMood = vi.fn();
 const mockAddMessage = vi.fn();
 
-vi.mock("../../context/MaiMaiContext", async () => {
-  const actual = await vi.importActual("../../context/MaiMaiContext");
+vi.mock('../../context/MaiMaiContext', async () => {
+  const actual = await vi.importActual('../../context/MaiMaiContext');
   return {
     ...actual,
     useMaiMai: () => ({
@@ -19,7 +19,7 @@ vi.mock("../../context/MaiMaiContext", async () => {
   };
 });
 
-describe("useTutorial Hook", () => {
+describe('useTutorial Hook', () => {
   beforeEach(() => {
     vi.useFakeTimers();
     mockSetMood.mockClear();
@@ -32,7 +32,7 @@ describe("useTutorial Hook", () => {
     vi.clearAllMocks();
   });
 
-  it("First visit: Should show welcome message after delay", () => {
+  it('First visit: Should show welcome message after delay', () => {
     renderHook(() => useTutorial());
 
     // Not shown immediately
@@ -43,15 +43,13 @@ describe("useTutorial Hook", () => {
       vi.advanceTimersByTime(TUTORIAL_CONFIG.WELCOME_DELAY_MS);
     });
 
-    expect(mockSetMood).toHaveBeenCalledWith("wave");
-    expect(mockAddMessage).toHaveBeenCalledWith(
-      TUTORIAL_CONFIG.MESSAGES.WELCOME,
-    );
-    expect(safeLocalStorage.getItem("maimai-visited")).toBe("true");
+    expect(mockSetMood).toHaveBeenCalledWith('wave');
+    expect(mockAddMessage).toHaveBeenCalledWith(TUTORIAL_CONFIG.MESSAGES.WELCOME);
+    expect(safeLocalStorage.getItem('maimai-visited')).toBe('true');
   });
 
-  it("Second visit: Should NOT show welcome message", () => {
-    safeLocalStorage.setItem("maimai-visited", "true");
+  it('Second visit: Should NOT show welcome message', () => {
+    safeLocalStorage.setItem('maimai-visited', 'true');
     renderHook(() => useTutorial());
 
     act(() => {
@@ -61,31 +59,29 @@ describe("useTutorial Hook", () => {
     expect(mockSetMood).not.toHaveBeenCalled();
   });
 
-  it("Idle Timer: Should trigger sleep mode after 5 minutes", () => {
+  it('Idle Timer: Should trigger sleep mode after 5 minutes', () => {
     renderHook(() => useTutorial());
 
     act(() => {
       vi.advanceTimersByTime(TUTORIAL_CONFIG.IDLE_TIMEOUT_MS);
     });
 
-    expect(mockSetMood).toHaveBeenCalledWith("sleep");
-    expect(mockAddMessage).toHaveBeenCalledWith(
-      TUTORIAL_CONFIG.MESSAGES.IDLE_WAKEUP,
-    );
+    expect(mockSetMood).toHaveBeenCalledWith('sleep');
+    expect(mockAddMessage).toHaveBeenCalledWith(TUTORIAL_CONFIG.MESSAGES.IDLE_WAKEUP);
   });
 
-  it("Activity: Should reset idle timer", () => {
+  it('Activity: Should reset idle timer', () => {
     renderHook(() => useTutorial());
 
     // Advance 4 minutes (not yet idle)
     act(() => {
       vi.advanceTimersByTime(TUTORIAL_CONFIG.IDLE_TIMEOUT_MS - 60000);
     });
-    expect(mockSetMood).not.toHaveBeenCalledWith("sleep");
+    expect(mockSetMood).not.toHaveBeenCalledWith('sleep');
 
     // Trigger activity (simulate user click)
     act(() => {
-      document.dispatchEvent(new Event("mousedown"));
+      document.dispatchEvent(new Event('mousedown'));
     });
 
     // Advance another 2 minutes (total 6 mins if not reset, but should be 2 mins after reset)
@@ -94,7 +90,7 @@ describe("useTutorial Hook", () => {
     });
 
     // Should NOT be sleeping yet because timer reset
-    expect(mockSetMood).not.toHaveBeenCalledWith("sleep");
+    expect(mockSetMood).not.toHaveBeenCalledWith('sleep');
 
     // Advance remaining 3 mins
     act(() => {
@@ -102,19 +98,17 @@ describe("useTutorial Hook", () => {
     });
 
     // Now it should trigger
-    expect(mockSetMood).toHaveBeenCalledWith("sleep");
+    expect(mockSetMood).toHaveBeenCalledWith('sleep');
   });
 
-  it("showTutorial: Should manually trigger tutorial steps", () => {
+  it('showTutorial: Should manually trigger tutorial steps', () => {
     const { result } = renderHook(() => useTutorial());
 
     act(() => {
-      result.current.showTutorial("search");
+      result.current.showTutorial('search');
     });
 
-    expect(mockSetMood).toHaveBeenCalledWith("thinking");
-    expect(mockAddMessage).toHaveBeenCalledWith(
-      TUTORIAL_CONFIG.MESSAGES.SEARCH_HINT,
-    );
+    expect(mockSetMood).toHaveBeenCalledWith('thinking');
+    expect(mockAddMessage).toHaveBeenCalledWith(TUTORIAL_CONFIG.MESSAGES.SEARCH_HINT);
   });
 });

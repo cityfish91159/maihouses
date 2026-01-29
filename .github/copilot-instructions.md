@@ -223,8 +223,8 @@ try {
   const result = await fetchData();
   return result;
 } catch (error) {
-  const message = error instanceof Error ? error.message : "未知錯誤";
-  console.error("Fetch failed:", message);
+  const message = error instanceof Error ? error.message : '未知錯誤';
+  console.error('Fetch failed:', message);
   throw new Error(`無法取得資料: ${message}`);
 }
 ```

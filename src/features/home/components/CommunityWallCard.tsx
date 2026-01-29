@@ -1,4 +1,4 @@
-import { ExternalLink, Star, MessageSquare } from "lucide-react";
+import { ExternalLink, Star, MessageSquare } from 'lucide-react';
 
 /**
  * ============================================
@@ -40,10 +40,7 @@ type CommunityWallCardProps = {
 // ============================================
 // 🎭 MOCK 資料 - 之後替換為 API 查詢
 // ============================================
-const MOCK_COMMUNITY_DATA: Record<
-  string,
-  { reviewCount: number; rating: number }
-> = {
+const MOCK_COMMUNITY_DATA: Record<string, { reviewCount: number; rating: number }> = {
   快樂花園: { reviewCount: 28, rating: 4.3 },
   遠雄二代宅: { reviewCount: 45, rating: 4.1 },
   美河市: { reviewCount: 67, rating: 3.9 },
@@ -55,13 +52,13 @@ const MOCK_COMMUNITY_DATA: Record<
 };
 
 function getMockData(name: string) {
-  return MOCK_COMMUNITY_DATA[name] || MOCK_COMMUNITY_DATA["default"];
+  return MOCK_COMMUNITY_DATA[name] || MOCK_COMMUNITY_DATA['default'];
 }
 // ============================================
 
 export default function CommunityWallCard({
   name,
-  topic = "住戶真實評價",
+  topic = '住戶真實評價',
   reviewCount,
   rating,
 }: CommunityWallCardProps) {
@@ -70,7 +67,7 @@ export default function CommunityWallCard({
   const finalReviewCount = reviewCount ?? mockData?.reviewCount ?? 10;
   const finalRating = rating ?? mockData?.rating ?? 4.0;
 
-  const communityWallUrl = "/maihouses/community-wall_mvp.html";
+  const communityWallUrl = '/maihouses/community-wall_mvp.html';
 
   return (
     <a
@@ -97,9 +94,7 @@ export default function CommunityWallCard({
       </div>
 
       {/* Topic */}
-      <p className="mb-3 line-clamp-2 text-xs font-medium text-ink-600">
-        💬 {topic}
-      </p>
+      <p className="mb-3 line-clamp-2 text-xs font-medium text-ink-600">💬 {topic}</p>
 
       {/* Stats */}
       <div className="text-ink-500 flex items-center gap-4 text-[11px]">

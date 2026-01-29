@@ -12,7 +12,7 @@ export interface TestCase {
 
 export const tests: TestCase[] = [
   {
-    name: "完美房源",
+    name: '完美房源',
     input: {
       hasVerifiedOwner: true,
       hasRealPhotos: true,
@@ -25,7 +25,7 @@ export const tests: TestCase[] = [
     },
     expected: {
       score: 96,
-      level: "S",
+      level: 'S',
       breakdown: {
         verification: 30,
         quality: 25,
@@ -35,7 +35,7 @@ export const tests: TestCase[] = [
     },
   },
   {
-    name: "最差房源",
+    name: '最差房源',
     input: {
       hasVerifiedOwner: false,
       hasRealPhotos: false,
@@ -48,7 +48,7 @@ export const tests: TestCase[] = [
     },
     expected: {
       score: 5,
-      level: "F",
+      level: 'F',
       breakdown: {
         verification: 0,
         quality: 5,
@@ -58,7 +58,7 @@ export const tests: TestCase[] = [
     },
   },
   {
-    name: "中等房源",
+    name: '中等房源',
     input: {
       hasVerifiedOwner: true,
       hasRealPhotos: false,
@@ -71,7 +71,7 @@ export const tests: TestCase[] = [
     },
     expected: {
       score: 40,
-      level: "C",
+      level: 'C',
       breakdown: {
         verification: 15,
         quality: 17,

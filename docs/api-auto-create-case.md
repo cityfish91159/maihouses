@@ -183,13 +183,13 @@ export function TrustServiceBanner({ propertyId, trustEnabled }: TrustServiceBan
 
 ### 常見錯誤
 
-| HTTP Status | Error Code | 說明 | 處理建議 |
-|-------------|-----------|------|---------|
-| 400 | `INVALID_INPUT` | 參數格式錯誤 | 檢查必填欄位 |
-| 400 | `INVALID_INPUT` | 物件未開啟安心留痕 | 隱藏「發起交易」按鈕 |
-| 404 | `NOT_FOUND` | 物件不存在 | 提示用戶重新整理頁面 |
-| 404 | `NOT_FOUND` | 用戶不存在 | 清除本地用戶狀態，重新登入 |
-| 500 | `INTERNAL_ERROR` | 伺服器錯誤 | 提示用戶稍後再試 |
+| HTTP Status | Error Code       | 說明               | 處理建議                   |
+| ----------- | ---------------- | ------------------ | -------------------------- |
+| 400         | `INVALID_INPUT`  | 參數格式錯誤       | 檢查必填欄位               |
+| 400         | `INVALID_INPUT`  | 物件未開啟安心留痕 | 隱藏「發起交易」按鈕       |
+| 404         | `NOT_FOUND`      | 物件不存在         | 提示用戶重新整理頁面       |
+| 404         | `NOT_FOUND`      | 用戶不存在         | 清除本地用戶狀態，重新登入 |
+| 500         | `INTERNAL_ERROR` | 伺服器錯誤         | 提示用戶稍後再試           |
 
 ### 錯誤處理範例
 
@@ -254,20 +254,21 @@ async function handleCreateCase(propertyId: string) {
 
 ### Phase 1（房仲建立）vs Phase 1.5（消費者建立）
 
-| 項目 | Phase 1 | Phase 1.5 |
-|------|---------|-----------|
-| 發起者 | 房仲 | 消費者 |
-| API | `POST /api/trust/cases` | `POST /api/trust/auto-create-case` |
-| 認證 | 需要房仲 Token | 無需認證（公開 API） |
-| buyer_session_id | 可選 | 不需要 |
-| buyer_user_id | 無 | 已註冊用戶會設定 |
-| 匿名買方 | 不支援 | 支援（買方-XXXX） |
+| 項目             | Phase 1                 | Phase 1.5                          |
+| ---------------- | ----------------------- | ---------------------------------- |
+| 發起者           | 房仲                    | 消費者                             |
+| API              | `POST /api/trust/cases` | `POST /api/trust/auto-create-case` |
+| 認證             | 需要房仲 Token          | 無需認證（公開 API）               |
+| buyer_session_id | 可選                    | 不需要                             |
+| buyer_user_id    | 無                      | 已註冊用戶會設定                   |
+| 匿名買方         | 不支援                  | 支援（買方-XXXX）                  |
 
 ## 安全性注意事項
 
 ### 1. Token 保護
 
 回傳的 `token` 是存取 Trust Room 的憑證，必須：
+
 - 透過 HTTPS 傳輸
 - 儲存在安全的地方（不要放在 URL query）
 - 90 天後自動過期
@@ -275,12 +276,14 @@ async function handleCreateCase(propertyId: string) {
 ### 2. CORS 處理
 
 此 API 已啟用 CORS，但建議：
+
 - 前端驗證 `trust_enabled` 再顯示「發起交易」按鈕
 - 不要在公開環境暴露 propertyId
 
 ### 3. 速率限制
 
 建議實施：
+
 - 每個 IP 每分鐘最多 10 次請求
 - 每個 propertyId 每小時最多 100 次請求
 
@@ -392,6 +395,7 @@ test('consumer can initiate trust case', async ({ page }) => {
 ### Q: 匿名買方名稱會重複嗎？
 
 A: 有可能。目前生成 1000-9999 共 9000 個可能值。若需要完全唯一，建議改用：
+
 ```typescript
 const randomCode = crypto.randomUUID().slice(0, 8);
 return `買方-${randomCode}`;
@@ -404,6 +408,7 @@ A: 房仲可以透過 `fn_regenerate_trust_case_token` RPC 重新生成。前端
 ### Q: 如何防止惡意建立大量案件？
 
 A: 建議實施：
+
 1. 速率限制（Rate Limiting）
 2. reCAPTCHA 驗證
 3. 監控異常流量並自動封鎖 IP
@@ -411,6 +416,7 @@ A: 建議實施：
 ### Q: 如何取得案件詳情？
 
 A: 使用 token 呼叫 `fn_get_trust_case_by_token` RPC：
+
 ```typescript
 const { data } = await supabase.rpc('fn_get_trust_case_by_token', {
   p_token: token,

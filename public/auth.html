@@ -22,12 +22,7 @@
         --brand-50: #f6f9ff;
 
         /* 漸層 */
-        --gradient-brand: linear-gradient(
-          135deg,
-          #00385a 0%,
-          #004e7c 50%,
-          #00629b 100%
-        );
+        --gradient-brand: linear-gradient(135deg, #00385a 0%, #004e7c 50%, #00629b 100%);
         --gradient-card: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
         --gradient-glow: radial-gradient(
           ellipse at 50% -20%,
@@ -57,14 +52,9 @@
 
         /* 陰影 */
         --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
-        --shadow-md:
-          0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
-        --shadow-lg:
-          0 10px 15px -3px rgba(0, 56, 90, 0.1),
-          0 4px 6px -4px rgba(0, 0, 0, 0.04);
-        --shadow-xl:
-          0 20px 25px -5px rgba(0, 56, 90, 0.12),
-          0 8px 10px -6px rgba(0, 0, 0, 0.04);
+        --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+        --shadow-lg: 0 10px 15px -3px rgba(0, 56, 90, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
+        --shadow-xl: 0 20px 25px -5px rgba(0, 56, 90, 0.12), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
         --shadow-glow: 0 0 40px rgba(0, 56, 90, 0.12);
 
         /* 過渡 */
@@ -231,10 +221,10 @@
       body {
         min-height: 100vh;
         font-family:
-          "Noto Sans TC",
+          'Noto Sans TC',
           -apple-system,
           BlinkMacSystemFont,
-          "Segoe UI",
+          'Segoe UI',
           Roboto,
           sans-serif;
         color: var(--text-primary);
@@ -599,7 +589,7 @@
       }
 
       .mascot-speech::after {
-        content: "";
+        content: '';
         position: absolute;
         bottom: -6px;
         left: 50%;
@@ -715,14 +705,10 @@
       }
 
       .btn-primary::before {
-        content: "";
+        content: '';
         position: absolute;
         inset: 0;
-        background: linear-gradient(
-          135deg,
-          rgba(255, 255, 255, 0.2),
-          transparent
-        );
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), transparent);
         opacity: 0;
         transition: var(--transition);
       }
@@ -744,7 +730,7 @@
 
       .divider::before,
       .divider::after {
-        content: "";
+        content: '';
         flex: 1;
         height: 1px;
         background: var(--border);
@@ -860,7 +846,7 @@
         margin: 20px 0;
       }
 
-      .checkbox-field input[type="checkbox"] {
+      .checkbox-field input[type='checkbox'] {
         width: 20px;
         height: 20px;
         margin-top: 2px;
@@ -1013,9 +999,7 @@
               <div class="mascot-container">
                 <div class="mascot-wrapper idle" id="mascot">
                   <!-- 對話泡泡 -->
-                  <div class="mascot-speech" id="mascotSpeech">
-                    嗨！歡迎回來 👋
-                  </div>
+                  <div class="mascot-speech" id="mascotSpeech">嗨！歡迎回來 👋</div>
 
                   <!-- 愛心動畫 -->
                   <div class="mascot-hearts">
@@ -1214,21 +1198,13 @@
                   autocomplete="tel"
                   maxlength="10"
                 />
-                <span class="error" id="errPhone"
-                  >請輸入正確的手機號碼 (09xxxxxxxx)</span
-                >
+                <span class="error" id="errPhone">請輸入正確的手機號碼 (09xxxxxxxx)</span>
               </div>
 
               <!-- Role Select (Signup Only) -->
               <div class="role-select hidden" id="roleField">
                 <div class="role-option">
-                  <input
-                    type="radio"
-                    name="role"
-                    value="member"
-                    id="roleMember"
-                    checked
-                  />
+                  <input type="radio" name="role" value="member" id="roleMember" checked />
                   <label for="roleMember">
                     <span class="role-icon">🏠</span>
                     <span class="role-title">我是買家</span>
@@ -1236,12 +1212,7 @@
                   </label>
                 </div>
                 <div class="role-option">
-                  <input
-                    type="radio"
-                    name="role"
-                    value="agent"
-                    id="roleAgent"
-                  />
+                  <input type="radio" name="role" value="agent" id="roleAgent" />
                   <label for="roleAgent">
                     <span class="role-icon">💼</span>
                     <span class="role-title">我是業務</span>
@@ -1255,9 +1226,7 @@
               <div class="checkbox-field hidden" id="termsField">
                 <input type="checkbox" id="terms" />
                 <label for="terms">
-                  我同意<a href="#/terms">《服務條款》</a>與<a href="#/privacy"
-                    >《隱私權政策》</a
-                  >
+                  我同意<a href="#/terms">《服務條款》</a>與<a href="#/privacy">《隱私權政策》</a>
                 </label>
               </div>
               <span
@@ -1285,9 +1254,7 @@
               </button>
 
               <!-- Forgot Password -->
-              <a href="#/forgot" class="forgot-link" id="forgotLink"
-                >忘記密碼？</a
-              >
+              <a href="#/forgot" class="forgot-link" id="forgotLink">忘記密碼？</a>
             </form>
 
             <!-- Features -->
@@ -1349,78 +1316,76 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
     <script>
       // Ensure Supabase is loaded
-      if (typeof window.supabase === "undefined") {
-        alert(
-          "系統載入失敗 (Supabase Client Missing)，請重新整理頁面或檢查網路連線。",
-        );
+      if (typeof window.supabase === 'undefined') {
+        alert('系統載入失敗 (Supabase Client Missing)，請重新整理頁面或檢查網路連線。');
       }
 
-      const supabaseUrl = "https://mtqnjmoisrvjofdxhwhi.supabase.co";
+      const supabaseUrl = 'https://mtqnjmoisrvjofdxhwhi.supabase.co';
       const supabaseKey =
-        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im10cW5qbW9pc3J2am9mZHhod2hpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1MjE1MDEsImV4cCI6MjA3OTA5NzUwMX0.P2o5n09PQChfryl-WLT7v6wRVWhDK6Oik7ajjcwyNrc";
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im10cW5qbW9pc3J2am9mZHhod2hpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1MjE1MDEsImV4cCI6MjA3OTA5NzUwMX0.P2o5n09PQChfryl-WLT7v6wRVWhDK6Oik7ajjcwyNrc';
       const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
       // Helpers
       const qs = (k) => new URLSearchParams(location.search).get(k);
       const setLS = (k, v) =>
-        localStorage.setItem(k, typeof v === "string" ? v : JSON.stringify(v));
+        localStorage.setItem(k, typeof v === 'string' ? v : JSON.stringify(v));
       const getLS = (k, d = null) => {
         try {
           const v = localStorage.getItem(k);
           return v ?? d;
         } catch (e) {
-          console.debug("localStorage read error:", e);
+          console.debug('localStorage read error:', e);
           return d;
         }
       };
       const go = (u) => (location.href = u);
 
       // Elements
-      const tabLogin = document.getElementById("tabLogin");
-      const tabSignup = document.getElementById("tabSignup");
-      const cardTitle = document.getElementById("cardTitle");
-      const cardSubtitle = document.getElementById("cardSubtitle");
-      const googleText = document.getElementById("googleText");
-      const submitText = document.getElementById("submitText");
-      const btnGoogle = document.getElementById("btnGoogle");
-      const authForm = document.getElementById("authForm");
+      const tabLogin = document.getElementById('tabLogin');
+      const tabSignup = document.getElementById('tabSignup');
+      const cardTitle = document.getElementById('cardTitle');
+      const cardSubtitle = document.getElementById('cardSubtitle');
+      const googleText = document.getElementById('googleText');
+      const submitText = document.getElementById('submitText');
+      const btnGoogle = document.getElementById('btnGoogle');
+      const authForm = document.getElementById('authForm');
 
       // 吉祥物元素
-      const mascot = document.getElementById("mascot");
-      const mascotSpeech = document.getElementById("mascotSpeech");
-      const emailInput = document.getElementById("email");
-      const passwordInput = document.getElementById("password");
-      const confirmPasswordInput = document.getElementById("confirmPassword");
+      const mascot = document.getElementById('mascot');
+      const mascotSpeech = document.getElementById('mascotSpeech');
+      const emailInput = document.getElementById('email');
+      const passwordInput = document.getElementById('password');
+      const confirmPasswordInput = document.getElementById('confirmPassword');
 
-      const confirmField = document.getElementById("confirmField");
-      const phoneField = document.getElementById("phoneField");
-      const termsField = document.getElementById("termsField");
-      const roleField = document.getElementById("roleField");
-      const errRole = document.getElementById("errRole");
-      const terms = document.getElementById("terms");
-      const forgotLink = document.getElementById("forgotLink");
+      const confirmField = document.getElementById('confirmField');
+      const phoneField = document.getElementById('phoneField');
+      const termsField = document.getElementById('termsField');
+      const roleField = document.getElementById('roleField');
+      const errRole = document.getElementById('errRole');
+      const terms = document.getElementById('terms');
+      const forgotLink = document.getElementById('forgotLink');
 
-      const errEmail = document.getElementById("errEmail");
-      const errPassword = document.getElementById("errPassword");
-      const errConfirm = document.getElementById("errConfirm");
-      const errPhone = document.getElementById("errPhone");
-      const errTerms = document.getElementById("errTerms");
+      const errEmail = document.getElementById('errEmail');
+      const errPassword = document.getElementById('errPassword');
+      const errConfirm = document.getElementById('errConfirm');
+      const errPhone = document.getElementById('errPhone');
+      const errTerms = document.getElementById('errTerms');
 
-      let mode = qs("mode") || "login";
+      let mode = qs('mode') || 'login';
 
       // 吉祥物狀態管理
-      let mascotMood = "idle";
+      let mascotMood = 'idle';
       let speechTimeout = null;
 
       function setMascotMood(mood, duration = 0) {
         if (!mascot) return;
-        mascot.className = "mascot-wrapper " + mood;
+        mascot.className = 'mascot-wrapper ' + mood;
         mascotMood = mood;
 
         if (duration > 0) {
           setTimeout(() => {
             if (mascotMood === mood) {
-              setMascotMood("idle");
+              setMascotMood('idle');
             }
           }, duration);
         }
@@ -1431,153 +1396,141 @@
         if (speechTimeout) clearTimeout(speechTimeout);
 
         mascotSpeech.textContent = text;
-        mascotSpeech.classList.add("show");
+        mascotSpeech.classList.add('show');
 
         speechTimeout = setTimeout(() => {
-          mascotSpeech.classList.remove("show");
+          mascotSpeech.classList.remove('show');
         }, duration);
       }
 
       // 點擊吉祥物互動
-      mascot?.addEventListener("click", () => {
-        const moods = ["wave", "happy", "shy"];
-        const speeches = ["嗨！👋", "很高興見到你！💙", "(*´∀`*)"];
+      mascot?.addEventListener('click', () => {
+        const moods = ['wave', 'happy', 'shy'];
+        const speeches = ['嗨！👋', '很高興見到你！💙', '(*´∀`*)'];
         const idx = Math.floor(Math.random() * moods.length);
         setMascotMood(moods[idx], 1500);
         showSpeech(speeches[idx]);
       });
 
       // Email 輸入時 - 思考
-      emailInput?.addEventListener("focus", () => {
-        setMascotMood("thinking");
-        showSpeech("輸入你的 Email...", 2000);
+      emailInput?.addEventListener('focus', () => {
+        setMascotMood('thinking');
+        showSpeech('輸入你的 Email...', 2000);
       });
 
-      emailInput?.addEventListener("blur", () => {
+      emailInput?.addEventListener('blur', () => {
         if (
           document.activeElement !== passwordInput &&
           document.activeElement !== confirmPasswordInput
         ) {
-          setMascotMood("idle");
+          setMascotMood('idle');
         }
       });
 
       // 密碼輸入時 - 遮眼
-      passwordInput?.addEventListener("focus", () => {
-        setMascotMood("peek");
-        showSpeech("我不偷看 🙈", 2000);
+      passwordInput?.addEventListener('focus', () => {
+        setMascotMood('peek');
+        showSpeech('我不偷看 🙈', 2000);
       });
 
-      passwordInput?.addEventListener("blur", () => {
+      passwordInput?.addEventListener('blur', () => {
         if (document.activeElement !== confirmPasswordInput) {
-          setMascotMood("idle");
+          setMascotMood('idle');
         }
       });
 
       // 確認密碼時 - 繼續遮眼
-      confirmPasswordInput?.addEventListener("focus", () => {
-        setMascotMood("peek");
-        showSpeech("再輸入一次～", 2000);
+      confirmPasswordInput?.addEventListener('focus', () => {
+        setMascotMood('peek');
+        showSpeech('再輸入一次～', 2000);
       });
 
-      confirmPasswordInput?.addEventListener("blur", () => {
-        setMascotMood("idle");
+      confirmPasswordInput?.addEventListener('blur', () => {
+        setMascotMood('idle');
       });
 
       // Phone Input Formatting (Auto-strip non-digits)
-      const phoneInput = document.getElementById("phone");
-      phoneInput?.addEventListener("input", (e) => {
+      const phoneInput = document.getElementById('phone');
+      phoneInput?.addEventListener('input', (e) => {
         // 移除所有非數字字符
-        const val = e.target.value.replace(/\D/g, "");
+        const val = e.target.value.replace(/\D/g, '');
         if (val !== e.target.value) {
           e.target.value = val;
         }
       });
 
-      phoneInput?.addEventListener("focus", () => {
-        setMascotMood("thinking");
-        showSpeech("09...", 1500);
+      phoneInput?.addEventListener('focus', () => {
+        setMascotMood('thinking');
+        showSpeech('09...', 1500);
       });
 
       // 頁面載入時揮手
       setTimeout(() => {
-        setMascotMood("wave", 2000);
-        showSpeech(mode === "login" ? "嗨！歡迎回來 👋" : "歡迎加入！✨", 2500);
+        setMascotMood('wave', 2000);
+        showSpeech(mode === 'login' ? '嗨！歡迎回來 👋' : '歡迎加入！✨', 2500);
       }, 500);
 
       function syncMode(replace = true) {
-        const isLogin = mode === "login";
+        const isLogin = mode === 'login';
 
         // Update UI classes
-        tabLogin?.classList.toggle("active", isLogin);
-        tabSignup?.classList.toggle("active", !isLogin);
+        tabLogin?.classList.toggle('active', isLogin);
+        tabSignup?.classList.toggle('active', !isLogin);
 
         // Update header
-        if (cardTitle)
-          cardTitle.textContent = isLogin ? "歡迎回來" : "加入邁房子";
+        if (cardTitle) cardTitle.textContent = isLogin ? '歡迎回來' : '加入邁房子';
         if (cardSubtitle)
-          cardSubtitle.textContent = isLogin
-            ? "登入你的邁房子帳號"
-            : "30 秒建立新帳號";
+          cardSubtitle.textContent = isLogin ? '登入你的邁房子帳號' : '30 秒建立新帳號';
         if (googleText)
-          googleText.textContent = isLogin
-            ? "使用 Google 繼續"
-            : "用 Google 快速註冊";
-        if (submitText) submitText.textContent = isLogin ? "登入" : "建立帳號";
+          googleText.textContent = isLogin ? '使用 Google 繼續' : '用 Google 快速註冊';
+        if (submitText) submitText.textContent = isLogin ? '登入' : '建立帳號';
 
         // 吉祥物反應
-        setMascotMood("wave", 1500);
-        showSpeech(isLogin ? "歡迎回來！👋" : "來加入我們吧！✨", 2000);
+        setMascotMood('wave', 1500);
+        showSpeech(isLogin ? '歡迎回來！👋' : '來加入我們吧！✨', 2000);
 
         // Toggle visibility
-        confirmField?.classList.toggle("hidden", isLogin);
-        phoneField?.classList.toggle("hidden", isLogin);
-        roleField?.classList.toggle("hidden", isLogin);
-        termsField?.classList.toggle("hidden", isLogin);
-        forgotLink?.classList.toggle("hidden", !isLogin);
+        confirmField?.classList.toggle('hidden', isLogin);
+        phoneField?.classList.toggle('hidden', isLogin);
+        roleField?.classList.toggle('hidden', isLogin);
+        termsField?.classList.toggle('hidden', isLogin);
+        forgotLink?.classList.toggle('hidden', !isLogin);
 
         // Update URL
         const url = new URL(location.href);
-        url.searchParams.set("mode", mode);
+        url.searchParams.set('mode', mode);
         if (replace) {
-          history.replaceState(null, "", url);
+          history.replaceState(null, '', url);
         } else {
-          history.pushState(null, "", url);
+          history.pushState(null, '', url);
         }
       }
 
       function clearErrors() {
-        for (const el of [
-          errEmail,
-          errPassword,
-          errConfirm,
-          errPhone,
-          errTerms,
-          errRole,
-        ]) {
+        for (const el of [errEmail, errPassword, errConfirm, errPhone, errTerms, errRole]) {
           if (el) {
-            el.classList.remove("show");
-            el.style.display = "none";
+            el.classList.remove('show');
+            el.style.display = 'none';
           }
         }
       }
 
       async function successRedirect(isLogin) {
         // 吉祥物慶祝
-        setMascotMood("happy", 3000);
-        showSpeech(isLogin ? "登入成功！🎉" : "歡迎加入！💙", 2500);
+        setMascotMood('happy', 3000);
+        showSpeech(isLogin ? '登入成功！🎉' : '歡迎加入！💙', 2500);
 
         // 稍等讓動畫播放
         await new Promise((r) => setTimeout(r, 800));
 
-        const ret = qs("return");
+        const ret = qs('return');
         if (ret) {
           go(ret);
           return;
         }
 
         // Determine role
-        let role = getLS("mh.auth.role");
+        let role = getLS('mh.auth.role');
 
         try {
           const {
@@ -1590,34 +1543,34 @@
             }
             // 2. If no metadata role, check pending role from localStorage (for Google Signup)
             else {
-              const pending = getLS("mh.auth.pending_role");
+              const pending = getLS('mh.auth.pending_role');
               if (pending) {
                 role = pending;
                 // Try to update metadata for future
                 supabase.auth.updateUser({ data: { role: pending } });
-                localStorage.removeItem("mh.auth.pending_role");
+                localStorage.removeItem('mh.auth.pending_role');
               }
             }
 
-            if (role) setLS("mh.auth.role", role);
+            if (role) setLS('mh.auth.role', role);
 
             // ============================================================================
             // Token 升級機制：將匿名 token 綁定到已登入用戶
             // ============================================================================
-            const pendingToken = getLS("pending_trust_token");
+            const pendingToken = getLS('pending_trust_token');
             if (pendingToken) {
               try {
                 // 取得用戶名稱（優先使用 metadata.name，否則使用 email 的前綴）
                 const userName =
                   user.user_metadata?.name ||
                   user.user_metadata?.full_name ||
-                  user.email?.split("@")[0] ||
-                  "用戶";
+                  user.email?.split('@')[0] ||
+                  '用戶';
 
                 // 呼叫 API 升級案件
-                const response = await fetch("/api/trust/upgrade-case", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
+                const response = await fetch('/api/trust/upgrade-case', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({
                     token: pendingToken,
                     userId: user.id,
@@ -1627,19 +1580,19 @@
 
                 if (response.ok) {
                   const result = await response.json();
-                  console.info("[auth] Trust case upgraded successfully:", result);
+                  console.info('[auth] Trust case upgraded successfully:', result);
                   // 成功後移除 localStorage 中的 token
-                  localStorage.removeItem("pending_trust_token");
+                  localStorage.removeItem('pending_trust_token');
                 } else {
                   const errorData = await response.json();
-                  console.warn("[auth] Trust case upgrade failed:", errorData);
+                  console.warn('[auth] Trust case upgrade failed:', errorData);
                   // 即使失敗也移除 token，避免重複嘗試
-                  localStorage.removeItem("pending_trust_token");
+                  localStorage.removeItem('pending_trust_token');
                 }
               } catch (upgradeError) {
-                console.error("[auth] Trust case upgrade error:", upgradeError);
+                console.error('[auth] Trust case upgrade error:', upgradeError);
                 // 發生錯誤時也移除 token
-                localStorage.removeItem("pending_trust_token");
+                localStorage.removeItem('pending_trust_token');
               }
             }
 
@@ -1648,36 +1601,36 @@
             return;
           }
         } catch (err) {
-          console.error("Error fetching user role:", err.message || err);
+          console.error('Error fetching user role:', err.message || err);
         }
 
         // Fallback if user ID not found (Should not happen if logged in)
-        go("/maihouses/");
+        go('/maihouses/');
       }
 
       syncMode(true);
       window.onpopstate = () => {
-        mode = qs("mode") || "login";
+        mode = qs('mode') || 'login';
         syncMode(true);
       };
-      tabLogin?.addEventListener("click", () => {
-        mode = "login";
+      tabLogin?.addEventListener('click', () => {
+        mode = 'login';
         syncMode(false);
         clearErrors();
       });
-      tabSignup?.addEventListener("click", () => {
-        mode = "signup";
+      tabSignup?.addEventListener('click', () => {
+        mode = 'signup';
         syncMode(false);
         clearErrors();
       });
 
       // Handle Logout Action
-      const isLogout = qs("action") === "logout";
+      const isLogout = qs('action') === 'logout';
       if (isLogout) {
-        if (cardSubtitle) cardSubtitle.textContent = "已成功登出";
+        if (cardSubtitle) cardSubtitle.textContent = '已成功登出';
         // Clear session immediately
         supabase.auth.signOut().then(() => {
-          localStorage.removeItem("mh.auth.role");
+          localStorage.removeItem('mh.auth.role');
         });
       }
 
@@ -1686,76 +1639,73 @@
         // If we are in logout mode, ignore any session presence to prevent auto-redirect
         if (isLogout) return;
 
-        if (event === "SIGNED_IN" && session) {
+        if (event === 'SIGNED_IN' && session) {
           successRedirect(true);
         }
       });
 
       // Google sign-in
-      btnGoogle?.addEventListener("click", async () => {
+      btnGoogle?.addEventListener('click', async () => {
         try {
           // Capture selected role if in signup mode
-          if (mode === "signup") {
-            const roleSel = (
-              document.querySelector('input[name="role"]:checked') || {}
-            ).value;
-            if (roleSel) setLS("mh.auth.pending_role", roleSel);
+          if (mode === 'signup') {
+            const roleSel = (document.querySelector('input[name="role"]:checked') || {}).value;
+            if (roleSel) setLS('mh.auth.pending_role', roleSel);
           }
 
           // Determine redirect URL based on environment
-          let redirectUrl = window.location.origin + "/maihouses/auth.html";
+          let redirectUrl = window.location.origin + '/maihouses/auth.html';
           // Force production URL if not on localhost to ensure it matches Supabase whitelist
           if (
-            window.location.hostname !== "localhost" &&
-            window.location.hostname !== "127.0.0.1"
+            window.location.hostname !== 'localhost' &&
+            window.location.hostname !== '127.0.0.1'
           ) {
-            redirectUrl = "https://maihouses.vercel.app/maihouses/auth.html";
+            redirectUrl = 'https://maihouses.vercel.app/maihouses/auth.html';
           }
 
           const { error } = await supabase.auth.signInWithOAuth({
-            provider: "google",
+            provider: 'google',
             options: {
               redirectTo: redirectUrl,
               queryParams: {
-                access_type: "offline",
-                prompt: "consent",
+                access_type: 'offline',
+                prompt: 'consent',
               },
             },
           });
           if (error) throw error;
         } catch (e) {
           console.error(e);
-          alert("Google 連線失敗，請再試一次");
+          alert('Google 連線失敗，請再試一次');
         }
       });
 
       // Email form
-      authForm?.addEventListener("submit", async (e) => {
+      authForm?.addEventListener('submit', async (e) => {
         e.preventDefault();
         clearErrors();
-        const email = document.getElementById("email")?.value.trim();
-        const password = document.getElementById("password")?.value;
-        const confirmPassword =
-          document.getElementById("confirmPassword")?.value || "";
+        const email = document.getElementById('email')?.value.trim();
+        const password = document.getElementById('password')?.value;
+        const confirmPassword = document.getElementById('confirmPassword')?.value || '';
 
-        const isLogin = mode === "login";
+        const isLogin = mode === 'login';
         let ok = true;
 
         // Phone (Signup only)
-        const phone = document.getElementById("phone")?.value.trim() || "";
+        const phone = document.getElementById('phone')?.value.trim() || '';
 
         // Validation
-        if (!email || !email.includes("@")) {
+        if (!email || !email.includes('@')) {
           if (errEmail) {
-            errEmail.classList.add("show");
-            errEmail.style.display = "block";
+            errEmail.classList.add('show');
+            errEmail.style.display = 'block';
           }
           ok = false;
         }
         if (!password || password.length < 6) {
           if (errPassword) {
-            errPassword.classList.add("show");
-            errPassword.style.display = "block";
+            errPassword.classList.add('show');
+            errPassword.style.display = 'block';
           }
           ok = false;
         }
@@ -1763,8 +1713,8 @@
         if (!isLogin) {
           if (password !== confirmPassword) {
             if (errConfirm) {
-              errConfirm.classList.add("show");
-              errConfirm.style.display = "block";
+              errConfirm.classList.add('show');
+              errConfirm.style.display = 'block';
             }
             ok = false;
           }
@@ -1772,26 +1722,24 @@
           // Validate Phone (Taiwan Format: 09xxxxxxxx)
           if (!/^09\d{8}$/.test(phone)) {
             if (errPhone) {
-              errPhone.classList.add("show");
-              errPhone.style.display = "block";
+              errPhone.classList.add('show');
+              errPhone.style.display = 'block';
             }
             ok = false;
           }
 
           if (terms && !terms.checked) {
             if (errTerms) {
-              errTerms.classList.add("show");
-              errTerms.style.display = "block";
+              errTerms.classList.add('show');
+              errTerms.style.display = 'block';
             }
             ok = false;
           }
-          const role = (
-            document.querySelector('input[name="role"]:checked') || {}
-          ).value;
+          const role = (document.querySelector('input[name="role"]:checked') || {}).value;
           if (!role) {
             if (errRole) {
-              errRole.classList.add("show");
-              errRole.style.display = "block";
+              errRole.classList.add('show');
+              errRole.style.display = 'block';
             }
             ok = false;
           }
@@ -1808,53 +1756,51 @@
             if (error) throw error;
           } else {
             const role =
-              (document.querySelector('input[name="role"]:checked') || {})
-                .value || "member";
+              (document.querySelector('input[name="role"]:checked') || {}).value || 'member';
             const { error } = await supabase.auth.signUp({
               email,
               password,
               options: { data: { role, phone } },
             });
             if (error) throw error;
-            alert("註冊成功！請檢查您的信箱以驗證帳號。");
-            setLS("mh.auth.role", role);
+            alert('註冊成功！請檢查您的信箱以驗證帳號。');
+            setLS('mh.auth.role', role);
           }
 
           // Save selected role on signup (already handled above for signup, but good for redundancy)
           if (!isLogin) {
             const roleSel =
-              (document.querySelector('input[name="role"]:checked') || {})
-                .value || "member";
-            setLS("mh.auth.role", roleSel);
+              (document.querySelector('input[name="role"]:checked') || {}).value || 'member';
+            setLS('mh.auth.role', roleSel);
           }
 
           await successRedirect(isLogin);
         } catch (e) {
           console.error(e);
-          const msg = e.message || "";
-          if (msg.includes("Invalid login credentials")) {
+          const msg = e.message || '';
+          if (msg.includes('Invalid login credentials')) {
             if (errPassword) {
-              errPassword.textContent = "帳號或密碼錯誤";
-              errPassword.classList.add("show");
-              errPassword.style.display = "block";
+              errPassword.textContent = '帳號或密碼錯誤';
+              errPassword.classList.add('show');
+              errPassword.style.display = 'block';
             }
-          } else if (msg.includes("User already registered")) {
+          } else if (msg.includes('User already registered')) {
             if (errEmail) {
-              errEmail.textContent = "帳號已存在";
-              errEmail.classList.add("show");
-              errEmail.style.display = "block";
+              errEmail.textContent = '帳號已存在';
+              errEmail.classList.add('show');
+              errEmail.style.display = 'block';
             }
-          } else if (msg.includes("Email not confirmed")) {
+          } else if (msg.includes('Email not confirmed')) {
             if (errEmail) {
-              errEmail.textContent = "請先至信箱收取驗證信啟用帳號";
-              errEmail.classList.add("show");
-              errEmail.style.display = "block";
+              errEmail.textContent = '請先至信箱收取驗證信啟用帳號';
+              errEmail.classList.add('show');
+              errEmail.style.display = 'block';
             }
           } else {
             if (errEmail) {
-              errEmail.textContent = "操作失敗：" + msg;
-              errEmail.classList.add("show");
-              errEmail.style.display = "block";
+              errEmail.textContent = '操作失敗：' + msg;
+              errEmail.classList.add('show');
+              errEmail.style.display = 'block';
             }
           }
         }

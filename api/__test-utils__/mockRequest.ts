@@ -5,7 +5,7 @@
  * 這是第四位開發者建立的正確工具，第五位錯誤刪除。
  */
 
-import { vi } from "vitest";
+import { vi } from 'vitest';
 
 export interface MockRequest {
   method: string;
@@ -32,14 +32,14 @@ export function createMockRequest(options: {
   headers?: Record<string, string | string[] | undefined>;
 }): MockRequest {
   return {
-    method: options.method ?? "POST",
+    method: options.method ?? 'POST',
     body: options.body ?? {},
     query: options.query,
     headers: {
       authorization: options.authToken ? `Bearer ${options.authToken}` : undefined,
-      origin: "https://maihouses.com",
-      "x-forwarded-for": "127.0.0.1",
-      "user-agent": "vitest-test-agent",
+      origin: 'https://maihouses.com',
+      'x-forwarded-for': '127.0.0.1',
+      'user-agent': 'vitest-test-agent',
       ...options.headers,
     },
   };
@@ -48,7 +48,7 @@ export function createMockRequest(options: {
 export function createMockResponse(): MockResponse {
   const res = {
     statusCode: 0,
-    _json: "",
+    _json: '',
     status: vi.fn().mockImplementation((code: number) => {
       res.statusCode = code;
       return res;

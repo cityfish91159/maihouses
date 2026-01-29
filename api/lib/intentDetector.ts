@@ -3,24 +3,24 @@
  * 負責分析用戶訊息，判斷意圖和情緒狀態
  */
 
-import { OpenAI } from "openai";
-import { z } from "zod";
-import { getTaiwanHour } from "./timeUtils";
-import { logger } from "./logger";
+import { OpenAI } from 'openai';
+import { z } from 'zod';
+import { getTaiwanHour } from './timeUtils';
+import { logger } from './logger';
 
 // ═══════════════════════════════════════════════════════════════
 // 類型定義
 // ═══════════════════════════════════════════════════════════════
 
 export type UserIntent =
-  | "solve_problem" // 想解決問題（工作、技術）
-  | "seek_comfort" // 尋求慰藉（壓力、難過）
-  | "casual_chat" // 日常閒聊
-  | "intimate" // 親密暗示（曖昧、撩人）
-  | "intimate_photo" // 要傳私密照
-  | "desire_help"; // 有慾望需要引導
+  | 'solve_problem' // 想解決問題（工作、技術）
+  | 'seek_comfort' // 尋求慰藉（壓力、難過）
+  | 'casual_chat' // 日常閒聊
+  | 'intimate' // 親密暗示（曖昧、撩人）
+  | 'intimate_photo' // 要傳私密照
+  | 'desire_help'; // 有慾望需要引導
 
-export type SignalType = "explicit" | "hint" | "neutral" | "reject";
+export type SignalType = 'explicit' | 'hint' | 'neutral' | 'reject';
 
 export interface IntentResult {
   intent: UserIntent;
@@ -38,16 +38,16 @@ export interface IntentResult {
 
 const combinedDetectionSchema = z.object({
   intent: z.enum([
-    "solve_problem",
-    "seek_comfort",
-    "casual_chat",
-    "intimate",
-    "intimate_photo",
-    "desire_help",
+    'solve_problem',
+    'seek_comfort',
+    'casual_chat',
+    'intimate',
+    'intimate_photo',
+    'desire_help',
   ]),
   body_part: z.string().optional(),
   mood_level: z.number().min(1).max(10),
-  signal_type: z.enum(["explicit", "hint", "neutral", "reject"]),
+  signal_type: z.enum(['explicit', 'hint', 'neutral', 'reject']),
   willing_to_chat: z.boolean(),
   desire_cues: z.string().optional(),
 });
@@ -107,32 +107,32 @@ reject: 拒絕迴避（「不想」「算了」「好累」「不要」）
 export async function detectIntent(
   openai: OpenAI,
   message: string,
-  useGrok: boolean = false,
+  useGrok: boolean = false
 ): Promise<IntentResult> {
-  const model = useGrok ? "grok-3-mini-fast-beta" : "gpt-4o-mini";
+  const model = useGrok ? 'grok-3-mini-fast-beta' : 'gpt-4o-mini';
 
   try {
     const response = await openai.chat.completions.create({
       model,
       messages: [
-        { role: "system", content: INTENT_DETECTION_PROMPT },
-        { role: "user", content: message },
+        { role: 'system', content: INTENT_DETECTION_PROMPT },
+        { role: 'user', content: message },
       ],
-      response_format: { type: "json_object" },
+      response_format: { type: 'json_object' },
     });
 
-    const rawContent = response.choices[0].message.content || "{}";
+    const rawContent = response.choices[0].message.content || '{}';
     const parsed = JSON.parse(rawContent);
     const validated = combinedDetectionSchema.safeParse(parsed);
 
     if (validated.success) {
       const data = validated.data;
 
-      logger.debug("[intentDetector] 意圖檢測結果", {
+      logger.debug('[intentDetector] 意圖檢測結果', {
         intent: data.intent,
         mood: data.mood_level,
         signal: data.signal_type,
-        message: message.substring(0, 30) + "...",
+        message: message.substring(0, 30) + '...',
       });
 
       return {
@@ -146,14 +146,14 @@ export async function detectIntent(
       };
     }
   } catch (error) {
-    logger.error("[intentDetector] 意圖檢測失敗", error);
+    logger.error('[intentDetector] 意圖檢測失敗', error);
   }
 
   // 預設值
   return {
-    intent: "casual_chat",
+    intent: 'casual_chat',
     moodLevel: 5,
-    signalType: "neutral",
+    signalType: 'neutral',
     willingToChat: true,
     shouldAskPreference: false,
   };
@@ -167,7 +167,7 @@ export async function detectIntent(
  * 判斷是否為色情意圖
  */
 export function isSexyIntent(intent: UserIntent): boolean {
-  return ["intimate", "desire_help", "intimate_photo"].includes(intent);
+  return ['intimate', 'desire_help', 'intimate_photo'].includes(intent);
 }
 
 /**
@@ -183,7 +183,7 @@ export function isRestrictedHours(): boolean {
  */
 export function shouldBlockSexyContent(
   intent: UserIntent,
-  sexyUnlocked: boolean,
+  sexyUnlocked: boolean
 ): { blocked: boolean; reason?: string } {
   if (!isSexyIntent(intent)) {
     return { blocked: false };
@@ -199,6 +199,6 @@ export function shouldBlockSexyContent(
 
   return {
     blocked: true,
-    reason: "sexy_content_restricted",
+    reason: 'sexy_content_restricted',
   };
 }

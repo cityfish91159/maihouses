@@ -7,7 +7,7 @@
  * @module Permissions
  */
 
-import { Role } from "./community";
+import { Role } from './community';
 
 /**
  * 權限能力定義 (Use 'as const' for literal types)
@@ -16,19 +16,19 @@ import { Role } from "./community";
 export const PERMISSIONS = {
   // === 私密牆模組 ===
   /** 查看私密牆內容 */
-  VIEW_PRIVATE_WALL: "view:private_wall",
+  VIEW_PRIVATE_WALL: 'view:private_wall',
   /** 發佈私密貼文 */
-  POST_PRIVATE_WALL: "post:private_wall",
+  POST_PRIVATE_WALL: 'post:private_wall',
 
   // === 房仲模組 ===
   /** 查看房仲數據 (UAG/績效) */
-  VIEW_AGENT_STATS: "view:agent_stats",
+  VIEW_AGENT_STATS: 'view:agent_stats',
   /** 管理客戶資料 */
-  MANAGE_CLIENTS: "manage:clients",
+  MANAGE_CLIENTS: 'manage:clients',
 
   // === 管理員模組 ===
   /** 社區管理權限 */
-  MANAGE_COMMUNITY: "manage:community",
+  MANAGE_COMMUNITY: 'manage:community',
 } as const;
 
 /**
@@ -56,11 +56,7 @@ export const ROLE_PERMISSIONS: Record<Role, readonly Permission[]> = {
     PERMISSIONS.POST_PRIVATE_WALL,
   ],
   /** 房仲: 可透視社區狀態以服務客戶，但不可在私密牆發言 */
-  agent: [
-    PERMISSIONS.VIEW_PRIVATE_WALL,
-    PERMISSIONS.VIEW_AGENT_STATS,
-    PERMISSIONS.MANAGE_CLIENTS,
-  ],
+  agent: [PERMISSIONS.VIEW_PRIVATE_WALL, PERMISSIONS.VIEW_AGENT_STATS, PERMISSIONS.MANAGE_CLIENTS],
 
   // 管理員 (已啟用)
   admin: [

@@ -39,13 +39,17 @@ allowed-tools:
 ```typescript
 // ❌ 模糊命名
 const d = new Date();
-const arr = users.filter(u => u.active);
-const handleClick = () => { /* 複雜邏輯 */ };
+const arr = users.filter((u) => u.active);
+const handleClick = () => {
+  /* 複雜邏輯 */
+};
 
 // ✅ 清晰命名
 const currentDate = new Date();
-const activeUsers = users.filter(user => user.isActive);
-const handleUserRegistration = () => { /* 複雜邏輯 */ };
+const activeUsers = users.filter((user) => user.isActive);
+const handleUserRegistration = () => {
+  /* 複雜邏輯 */
+};
 ```
 
 ### 2.2 函數拆分
@@ -109,9 +113,9 @@ setTimeout(fn, ONE_DAY_MS);
 
 ```typescript
 // ❌ 深層巢狀
-users.forEach(user => {
-  user.orders.forEach(order => {
-    order.items.forEach(item => {
+users.forEach((user) => {
+  user.orders.forEach((order) => {
+    order.items.forEach((item) => {
       if (item.inStock) {
         processItem(item);
       }
@@ -121,9 +125,9 @@ users.forEach(user => {
 
 // ✅ 扁平化處理
 const allItems = users
-  .flatMap(user => user.orders)
-  .flatMap(order => order.items)
-  .filter(item => item.inStock);
+  .flatMap((user) => user.orders)
+  .flatMap((order) => order.items)
+  .filter((item) => item.inStock);
 
 allItems.forEach(processItem);
 ```
@@ -184,9 +188,9 @@ function UserDashboard() {
   useEffect(() => {
     setLoading(true);
     fetch('/api/users')
-      .then(res => res.json())
-      .then(data => setUsers(data))
-      .catch(err => setError(err))
+      .then((res) => res.json())
+      .then((data) => setUsers(data))
+      .catch((err) => setError(err))
       .finally(() => setLoading(false));
   }, []);
 
@@ -199,7 +203,9 @@ function useUsers() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  useEffect(() => { /* fetch 邏輯 */ }, []);
+  useEffect(() => {
+    /* fetch 邏輯 */
+  }, []);
 
   return { users, loading, error };
 }
@@ -227,6 +233,7 @@ git diff --name-only main...HEAD
 ### 步驟 2：分析複雜度
 
 檢查以下指標：
+
 - 函數長度（> 30 行需關注）
 - 巢狀深度（> 3 層需關注）
 - 認知複雜度
@@ -262,12 +269,12 @@ npm run lint
 ```typescript
 // 不要為了簡化而犧牲可讀性
 // ❌ 過度壓縮
-const r = u.filter(x => x.a && x.b.c > 5).map(x => x.d);
+const r = u.filter((x) => x.a && x.b.c > 5).map((x) => x.d);
 
 // ✅ 保持可讀
 const activeUsersWithHighScore = users
-  .filter(user => user.isActive && user.stats.score > 5)
-  .map(user => user.name);
+  .filter((user) => user.isActive && user.stats.score > 5)
+  .map((user) => user.name);
 ```
 
 ### ❌ 過早抽象
@@ -299,12 +306,12 @@ const name = user.name ?? 'Anonymous';
 
 ## 6. 與其他 Skills 整合
 
-| 階段 | 整合 Skill | 說明 |
-|------|-----------|------|
-| 簡化前 | `/read-before-edit` | 完整理解現有代碼 |
-| 簡化中 | `/type-checker` | 確保類型正確 |
-| 簡化後 | `/rigorous_testing` | 確保功能不變 |
-| 提交前 | `/pre-commit-validator` | 完整品質檢查 |
+| 階段   | 整合 Skill              | 說明             |
+| ------ | ----------------------- | ---------------- |
+| 簡化前 | `/read-before-edit`     | 完整理解現有代碼 |
+| 簡化中 | `/type-checker`         | 確保類型正確     |
+| 簡化後 | `/rigorous_testing`     | 確保功能不變     |
+| 提交前 | `/pre-commit-validator` | 完整品質檢查     |
 
 ---
 

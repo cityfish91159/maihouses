@@ -4,9 +4,9 @@
  * [code-simplifier] 從 TrustFlow.tsx 抽取的子組件
  */
 
-import React from "react";
-import { Check } from "lucide-react";
-import { STEPS } from "./constants";
+import React from 'react';
+import { Check } from 'lucide-react';
+import { STEPS } from './constants';
 
 interface ProgressStepsProps {
   currentStep: number;
@@ -16,8 +16,8 @@ export function ProgressSteps({ currentStep }: ProgressStepsProps) {
   return (
     <div
       style={{
-        display: "flex",
-        alignItems: "center",
+        display: 'flex',
+        alignItems: 'center',
         gap: 0,
         marginBottom: 8,
       }}
@@ -29,23 +29,19 @@ export function ProgressSteps({ currentStep }: ProgressStepsProps) {
 
         return (
           <React.Fragment key={step.key}>
-            <div style={{ flex: 1, textAlign: "center" }}>
+            <div style={{ flex: 1, textAlign: 'center' }}>
               <div
                 style={{
                   width: 32,
                   height: 32,
-                  borderRadius: "50%",
-                  margin: "0 auto 4px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  background: isPast
-                    ? "#16a34a"
-                    : isCurrent
-                      ? "#1749d7"
-                      : "#e5e7eb",
-                  color: isPast || isCurrent ? "#fff" : "#6b7280",
-                  transition: "all 0.3s",
+                  borderRadius: '50%',
+                  margin: '0 auto 4px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: isPast ? '#16a34a' : isCurrent ? '#1749d7' : '#e5e7eb',
+                  color: isPast || isCurrent ? '#fff' : '#6b7280',
+                  transition: 'all 0.3s',
                 }}
               >
                 {isPast ? <Check size={16} /> : <Icon size={14} />}
@@ -54,7 +50,7 @@ export function ProgressSteps({ currentStep }: ProgressStepsProps) {
                 style={{
                   fontSize: 11,
                   fontWeight: isCurrent ? 700 : 500,
-                  color: isPast ? "#16a34a" : isCurrent ? "#1749d7" : "#94a3b8",
+                  color: isPast ? '#16a34a' : isCurrent ? '#1749d7' : '#94a3b8',
                 }}
               >
                 {step.name}
@@ -65,7 +61,7 @@ export function ProgressSteps({ currentStep }: ProgressStepsProps) {
                 style={{
                   flex: 0.5,
                   height: 2,
-                  background: isPast ? "#16a34a" : "#e5e7eb",
+                  background: isPast ? '#16a34a' : '#e5e7eb',
                   marginBottom: 20,
                 }}
               />

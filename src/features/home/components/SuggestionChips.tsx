@@ -1,5 +1,5 @@
-import React, { memo } from "react";
-import { QUICK_QUESTIONS } from "../../../constants/data";
+import React, { memo } from 'react';
+import { QUICK_QUESTIONS } from '../../../constants/data';
 
 interface SuggestionChipsProps {
   onSelect: (text: string) => void;
@@ -23,4 +23,4 @@ export const SuggestionChips = memo(({ onSelect }: SuggestionChipsProps) => {
   );
 });
 
-SuggestionChips.displayName = "SuggestionChips";
+SuggestionChips.displayName = 'SuggestionChips';

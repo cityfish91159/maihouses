@@ -51,7 +51,7 @@ export interface PushNotificationPayload {
 export interface PushNotificationData {
   conversationId?: string; // 對話 ID
   url?: string; // 自定義導向 URL
-  type?: "message" | "system"; // 通知類型
+  type?: 'message' | 'system'; // 通知類型
 }
 
 // =============================================================================
@@ -61,11 +61,7 @@ export interface PushNotificationData {
 /**
  * 推播權限狀態
  */
-export type PushPermissionState =
-  | "prompt"
-  | "granted"
-  | "denied"
-  | "unsupported";
+export type PushPermissionState = 'prompt' | 'granted' | 'denied' | 'unsupported';
 
 /**
  * usePushNotifications hook 返回值
@@ -117,13 +113,13 @@ export interface SendPushNotificationRequest {
  */
 export const PUSH_CONSTANTS = {
   /** Service Worker 路徑 */
-  SW_PATH: "/maihouses/sw-maihouses.js",
+  SW_PATH: '/maihouses/sw-maihouses.js',
   /** Service Worker scope */
-  SW_SCOPE: "/maihouses/",
+  SW_SCOPE: '/maihouses/',
   /** 預設通知標題 */
-  DEFAULT_TITLE: "邁邁房屋",
+  DEFAULT_TITLE: '邁邁房屋',
   /** 預設通知內容 */
-  DEFAULT_BODY: "有房仲想聯繫您，點擊查看",
+  DEFAULT_BODY: '有房仲想聯繫您，點擊查看',
   /** 預設圖示 */
-  DEFAULT_ICON: "/maihouses/logo-192.png",
+  DEFAULT_ICON: '/maihouses/logo-192.png',
 } as const;

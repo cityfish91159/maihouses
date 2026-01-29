@@ -14,14 +14,15 @@
 **位置**: `api/community/wall.ts:176-202`
 
 **問題描述**:
+
 ```typescript
 function resolveSupabaseErrorDetails(error: unknown) {
-  if (error && typeof error === "object" && "code" in error) {
+  if (error && typeof error === 'object' && 'code' in error) {
     const supabaseError = error as PostgrestError;
     return {
       code: supabaseError.code ?? null,
-      details: supabaseError.details ?? null,  // ❌ 洩露 PostgreSQL 細節
-      hint: supabaseError.hint ?? null,        // ❌ 洩露 PostgreSQL 提示
+      details: supabaseError.details ?? null, // ❌ 洩露 PostgreSQL 細節
+      hint: supabaseError.hint ?? null, // ❌ 洩露 PostgreSQL 提示
       message: supabaseError.message ?? null,
     };
   }
@@ -40,12 +41,13 @@ function resolveSupabaseErrorDetails(error: unknown) {
 **位置**: `api/lib/apiResponse.ts:124`
 
 **問題描述**:
+
 ```typescript
 export function errorResponse(
-  code: string,  // ❌ 接受任意字串，無法強制使用常數
+  code: string, // ❌ 接受任意字串，無法強制使用常數
   message: string,
-  details?: unknown,
-): ApiResponse<never>
+  details?: unknown
+): ApiResponse<never>;
 ```
 
 **影響**: 無法強制使用 `API_ERROR_CODES` 常數
@@ -59,6 +61,7 @@ export function errorResponse(
 **位置**: `api/lib/apiResponse.ts:101, 134`
 
 **問題描述**:
+
 ```typescript
 ...(warnings && warnings.length > 0 ? { warnings } : {})
 ...(details !== undefined ? { details } : {})
@@ -77,9 +80,10 @@ export function errorResponse(
 **問題描述**: 未導出型別，無法在其他檔案使用
 **扣分**: -1 分
 **修復方案**:
+
 ```typescript
-export type ApiErrorCode = typeof API_ERROR_CODES[keyof typeof API_ERROR_CODES];
-export type ApiWarningCode = typeof API_WARNING_CODES[keyof typeof API_WARNING_CODES];
+export type ApiErrorCode = (typeof API_ERROR_CODES)[keyof typeof API_ERROR_CODES];
+export type ApiWarningCode = (typeof API_WARNING_CODES)[keyof typeof API_WARNING_CODES];
 ```
 
 ---
@@ -89,6 +93,7 @@ export type ApiWarningCode = typeof API_WARNING_CODES[keyof typeof API_WARNING_C
 **位置**: `api/lib/__tests__/apiResponse.test.ts`
 
 **問題描述**: 缺少以下測試
+
 - warnings 為 undefined 時不應包含該欄位
 - 極大 details 物件處理
 - 循環引用 details 處理
@@ -100,13 +105,13 @@ export type ApiWarningCode = typeof API_WARNING_CODES[keyof typeof API_WARNING_C
 
 ## 🎯 修復目標
 
-| 指標 | 修復前 | 修復後 |
-|------|--------|--------|
-| 總分 | 88/100 | **98/100** |
-| 安全問題 | 1 個 | 0 個 |
-| 型別安全 | 4/5 ⭐ | 5/5 ⭐ |
-| 測試覆蓋 | 19 個 | 27+ 個 |
-| 架構一致性 | ⚠️ | ✅ |
+| 指標       | 修復前 | 修復後     |
+| ---------- | ------ | ---------- |
+| 總分       | 88/100 | **98/100** |
+| 安全問題   | 1 個   | 0 個       |
+| 型別安全   | 4/5 ⭐ | 5/5 ⭐     |
+| 測試覆蓋   | 19 個  | 27+ 個     |
+| 架構一致性 | ⚠️     | ✅         |
 
 ---
 

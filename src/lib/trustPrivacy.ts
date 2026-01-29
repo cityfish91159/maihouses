@@ -10,12 +10,12 @@
  * - [Agentic Architecture] 統一隱私邏輯，單一職責
  */
 
-import type { LegacyTrustCase } from "../types/trust-flow.types";
+import type { LegacyTrustCase } from '../types/trust-flow.types';
 
 type TrustCase = LegacyTrustCase;
 
 /** 檢視者角色 */
-export type ViewerRole = "agent" | "buyer" | "system";
+export type ViewerRole = 'agent' | 'buyer' | 'system';
 
 /** 房仲顯示資訊 */
 export interface AgentDisplayInfo {
@@ -50,20 +50,20 @@ export interface BuyerDisplayInfo {
  * - system 視角：顯示完整資訊
  */
 export function getBuyerDisplayName(
-  trustCase: Pick<TrustCase, "id" | "buyerName" | "buyerId">,
-  viewerRole: ViewerRole,
+  trustCase: Pick<TrustCase, 'id' | 'buyerName' | 'buyerId'>,
+  viewerRole: ViewerRole
 ): BuyerDisplayInfo {
   // [NASA TypeScript Safety] 確保資料完整性
   if (!trustCase.buyerName) {
     return {
-      name: "買方資訊未提供",
+      name: '買方資訊未提供',
       isAnonymous: true,
-      fullText: "買方資訊未提供",
+      fullText: '買方資訊未提供',
     };
   }
 
   switch (viewerRole) {
-    case "buyer":
+    case 'buyer':
       // 買方看到自己的真實姓名
       return {
         name: trustCase.buyerName,
@@ -71,7 +71,7 @@ export function getBuyerDisplayName(
         fullText: trustCase.buyerName,
       };
 
-    case "agent":
+    case 'agent':
       // 房仲只看到買方代號
       const tempCode = generateBuyerTempCode(trustCase);
       return {
@@ -80,7 +80,7 @@ export function getBuyerDisplayName(
         fullText: `買方: ${tempCode}`,
       };
 
-    case "system":
+    case 'system':
       // 系統視角顯示完整資訊
       return {
         name: trustCase.buyerName,
@@ -106,13 +106,13 @@ export function getBuyerDisplayName(
 export function getAgentDisplayInfo(
   agentName: string | null | undefined,
   agentCompany: string | null | undefined,
-  viewerRole: ViewerRole,
+  viewerRole: ViewerRole
 ): AgentDisplayInfo {
-  const name = agentName ?? "房仲";
+  const name = agentName ?? '房仲';
   const company = agentCompany ?? undefined;
 
   switch (viewerRole) {
-    case "buyer": {
+    case 'buyer': {
       // 買方看到完整房仲資訊
       const result: AgentDisplayInfo = {
         name,
@@ -124,11 +124,11 @@ export function getAgentDisplayInfo(
       return result;
     }
 
-    case "agent": {
+    case 'agent': {
       // 房仲看到自己
       const result: AgentDisplayInfo = {
-        name: "您",
-        fullText: company ? `您 (${company})` : "您",
+        name: '您',
+        fullText: company ? `您 (${company})` : '您',
       };
       if (company) {
         result.company = company;
@@ -136,7 +136,7 @@ export function getAgentDisplayInfo(
       return result;
     }
 
-    case "system": {
+    case 'system': {
       // 系統視角顯示完整資訊
       const result: AgentDisplayInfo = {
         name,
@@ -158,9 +158,7 @@ export function getAgentDisplayInfo(
  * @param trustCase - Trust Case 資料
  * @returns 買方臨時代號
  */
-function generateBuyerTempCode(
-  trustCase: Pick<TrustCase, "id" | "buyerId">,
-): string {
+function generateBuyerTempCode(trustCase: Pick<TrustCase, 'id' | 'buyerId'>): string {
   // 優先使用 buyerId 前 4 碼
   const buyerId = String(trustCase.buyerId);
   if (buyerId && buyerId.length >= 4) {
@@ -174,7 +172,7 @@ function generateBuyerTempCode(
   }
 
   // 最終 fallback
-  return "買方-****";
+  return '買方-****';
 }
 
 /**
@@ -191,8 +189,8 @@ function generateBuyerTempCode(
  */
 export function shouldShowSensitiveInfo(
   viewerRole: ViewerRole,
-  targetRole: "agent" | "buyer",
+  targetRole: 'agent' | 'buyer'
 ): boolean {
-  if (viewerRole === "system") return true;
+  if (viewerRole === 'system') return true;
   return viewerRole === targetRole;
 }

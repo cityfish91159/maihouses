@@ -1,455 +1,456 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-TW">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>UAG Professional - 房仲後台</title>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>UAG Professional - 房仲後台</title>
 
-  <!-- Google Fonts: Modern Professional (Poppins + Open Sans) -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&family=Poppins:wght@600;700;800&family=Noto+Sans+TC:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Google Fonts: Modern Professional (Poppins + Open Sans) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&family=Poppins:wght@600;700;800&family=Noto+Sans+TC:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
 
-  <style>
-    /* ========== Design Tokens (UI/UX Pro Max Guidelines) ========== */
-    :root {
-      /* SaaS Color Palette */
-      --primary: #2563EB;        /* Trust blue */
-      --primary-hover: #3B82F6;
-      --cta: #F97316;            /* Orange accent */
-      --background: #F8FAFC;     /* Light grey */
-      --text: #1E293B;           /* Dark slate */
-      --border: #E2E8F0;         /* Soft border */
+    <style>
+      /* ========== Design Tokens (UI/UX Pro Max Guidelines) ========== */
+      :root {
+        /* SaaS Color Palette */
+        --primary: #2563eb; /* Trust blue */
+        --primary-hover: #3b82f6;
+        --cta: #f97316; /* Orange accent */
+        --background: #f8fafc; /* Light grey */
+        --text: #1e293b; /* Dark slate */
+        --border: #e2e8f0; /* Soft border */
 
-      /* Functional colors */
-      --success: #10B981;
-      --warning: #F59E0B;
-      --danger: #EF4444;
+        /* Functional colors */
+        --success: #10b981;
+        --warning: #f59e0b;
+        --danger: #ef4444;
 
-      /* Typography (Modern Professional) */
-      --font-heading: 'Poppins', 'Noto Sans TC', sans-serif;
-      --font-body: 'Open Sans', 'Noto Sans TC', sans-serif;
+        /* Typography (Modern Professional) */
+        --font-heading: 'Poppins', 'Noto Sans TC', sans-serif;
+        --font-body: 'Open Sans', 'Noto Sans TC', sans-serif;
 
-      /* Spacing (8px grid) */
-      --space-1: 0.25rem;  /* 4px */
-      --space-2: 0.5rem;   /* 8px */
-      --space-3: 0.75rem;  /* 12px */
-      --space-4: 1rem;     /* 16px */
-      --space-6: 1.5rem;   /* 24px */
-      --space-8: 2rem;     /* 32px */
+        /* Spacing (8px grid) */
+        --space-1: 0.25rem; /* 4px */
+        --space-2: 0.5rem; /* 8px */
+        --space-3: 0.75rem; /* 12px */
+        --space-4: 1rem; /* 16px */
+        --space-6: 1.5rem; /* 24px */
+        --space-8: 2rem; /* 32px */
 
-      /* Shadows (Tailwind-based) */
-      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        /* Shadows (Tailwind-based) */
+        --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
 
-      /* Radius */
-      --radius-md: 0.5rem;   /* 8px */
-      --radius-lg: 0.75rem;  /* 12px */
-    }
+        /* Radius */
+        --radius-md: 0.5rem; /* 8px */
+        --radius-lg: 0.75rem; /* 12px */
+      }
 
-    /* ========== Base Styles ========== */
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+      /* ========== Base Styles ========== */
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
 
-    body {
-      font-family: var(--font-body);
-      background: var(--background);
-      color: var(--text);
-      line-height: 1.6;
-      max-width: 430px;
-      margin: 0 auto;
-      -webkit-font-smoothing: antialiased;
-    }
+      body {
+        font-family: var(--font-body);
+        background: var(--background);
+        color: var(--text);
+        line-height: 1.6;
+        max-width: 430px;
+        margin: 0 auto;
+        -webkit-font-smoothing: antialiased;
+      }
 
-    /* ========== Header ========== */
-    .header {
-      background: white;
-      border-bottom: 1px solid var(--border);
-      padding: var(--space-3) var(--space-4);
-      display: grid;
-      grid-template-columns: auto 1fr auto;
-      gap: var(--space-3);
-      align-items: center;
-      position: sticky;
-      top: 0;
-      z-index: 50;
-      box-shadow: var(--shadow-sm);
-    }
+      /* ========== Header ========== */
+      .header {
+        background: white;
+        border-bottom: 1px solid var(--border);
+        padding: var(--space-3) var(--space-4);
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        gap: var(--space-3);
+        align-items: center;
+        position: sticky;
+        top: 0;
+        z-index: 50;
+        box-shadow: var(--shadow-sm);
+      }
 
-    .logo {
-      font-family: var(--font-heading);
-      font-size: 0.875rem;
-      font-weight: 700;
-      color: var(--primary);
-    }
+      .logo {
+        font-family: var(--font-heading);
+        font-size: 0.875rem;
+        font-weight: 700;
+        color: var(--primary);
+      }
 
-    .stats {
-      display: flex;
-      gap: var(--space-2);
-      justify-content: flex-end;
-      font-size: 0.75rem;
-      font-weight: 600;
-      color: var(--text);
-    }
+      .stats {
+        display: flex;
+        gap: var(--space-2);
+        justify-content: flex-end;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: var(--text);
+      }
 
-    .stat-badge {
-      padding: var(--space-1) var(--space-2);
-      background: #EFF6FF;
-      color: var(--primary);
-      border-radius: var(--radius-md);
-      font-variant-numeric: tabular-nums;
-      white-space: nowrap;
-    }
+      .stat-badge {
+        padding: var(--space-1) var(--space-2);
+        background: #eff6ff;
+        color: var(--primary);
+        border-radius: var(--radius-md);
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+      }
 
-    .user-avatar {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      background: var(--primary);
-      color: white;
-      display: grid;
-      place-items: center;
-      font-size: 0.75rem;
-      font-weight: 700;
-      font-family: var(--font-heading);
-    }
+      .user-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: var(--primary);
+        color: white;
+        display: grid;
+        place-items: center;
+        font-size: 0.75rem;
+        font-weight: 700;
+        font-family: var(--font-heading);
+      }
 
-    /* ========== Agent Card (Swiss Modernism) ========== */
-    .agent-card {
-      background: white;
-      border-bottom: 1px solid var(--border);
-      padding: var(--space-4);
-      display: grid;
-      grid-template-columns: auto 1fr;
-      gap: var(--space-3);
-      align-items: center;
-    }
+      /* ========== Agent Card (Swiss Modernism) ========== */
+      .agent-card {
+        background: white;
+        border-bottom: 1px solid var(--border);
+        padding: var(--space-4);
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: var(--space-3);
+        align-items: center;
+      }
 
-    .avatar {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      background: var(--primary);
-      color: white;
-      display: grid;
-      place-items: center;
-      font-size: 1.125rem;
-      font-weight: 700;
-      font-family: var(--font-heading);
-    }
+      .avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: var(--primary);
+        color: white;
+        display: grid;
+        place-items: center;
+        font-size: 1.125rem;
+        font-weight: 700;
+        font-family: var(--font-heading);
+      }
 
-    .agent-info {
-      display: grid;
-      gap: var(--space-1);
-    }
+      .agent-info {
+        display: grid;
+        gap: var(--space-1);
+      }
 
-    .agent-name {
-      font-family: var(--font-heading);
-      font-size: 0.9375rem;
-      font-weight: 700;
-      color: var(--text);
-      letter-spacing: -0.01em;
-    }
+      .agent-name {
+        font-family: var(--font-heading);
+        font-size: 0.9375rem;
+        font-weight: 700;
+        color: var(--text);
+        letter-spacing: -0.01em;
+      }
 
-    .agent-meta {
-      font-size: 0.75rem;
-      color: #64748B;
-      display: flex;
-      gap: var(--space-2);
-      align-items: center;
-    }
+      .agent-meta {
+        font-size: 0.75rem;
+        color: #64748b;
+        display: flex;
+        gap: var(--space-2);
+        align-items: center;
+      }
 
-    .agent-code {
-      color: var(--primary);
-      font-weight: 600;
-      font-variant-numeric: tabular-nums;
-    }
+      .agent-code {
+        color: var(--primary);
+        font-weight: 600;
+        font-variant-numeric: tabular-nums;
+      }
 
-    .stats-inline {
-      display: flex;
-      gap: var(--space-3);
-      font-size: 0.75rem;
-      margin-top: var(--space-1);
-    }
+      .stats-inline {
+        display: flex;
+        gap: var(--space-3);
+        font-size: 0.75rem;
+        margin-top: var(--space-1);
+      }
 
-    .stat {
-      color: #64748B;
-    }
+      .stat {
+        color: #64748b;
+      }
 
-    .stat strong {
-      color: var(--text);
-      font-weight: 700;
-      margin-right: 2px;
-      font-variant-numeric: tabular-nums;
-    }
+      .stat strong {
+        color: var(--text);
+        font-weight: 700;
+        margin-right: 2px;
+        font-variant-numeric: tabular-nums;
+      }
 
-    .stat.highlight strong {
-      color: var(--success);
-    }
+      .stat.highlight strong {
+        color: var(--success);
+      }
 
-    /* ========== Content Sections ========== */
-    .content {
-      padding: var(--space-4);
-      padding-bottom: 80px;
-      display: grid;
-      gap: var(--space-6);
-    }
+      /* ========== Content Sections ========== */
+      .content {
+        padding: var(--space-4);
+        padding-bottom: 80px;
+        display: grid;
+        gap: var(--space-6);
+      }
 
-    .section-title {
-      font-family: var(--font-heading);
-      font-size: 0.8125rem;
-      font-weight: 700;
-      color: #475569;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      margin-bottom: var(--space-3);
-    }
+      .section-title {
+        font-family: var(--font-heading);
+        font-size: 0.8125rem;
+        font-weight: 700;
+        color: #475569;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: var(--space-3);
+      }
 
-    /* Card Component (Tailwind guidelines) */
-    .card {
-      background: white;
-      border-radius: var(--radius-lg);
-      padding: var(--space-4);
-      box-shadow: var(--shadow-md);
-      border: 1px solid var(--border);
-    }
+      /* Card Component (Tailwind guidelines) */
+      .card {
+        background: white;
+        border-radius: var(--radius-lg);
+        padding: var(--space-4);
+        box-shadow: var(--shadow-md);
+        border: 1px solid var(--border);
+      }
 
-    /* Executive Dashboard KPIs */
-    .kpi-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: var(--space-4);
-    }
+      /* Executive Dashboard KPIs */
+      .kpi-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: var(--space-4);
+      }
 
-    .kpi {
-      text-align: center;
-    }
+      .kpi {
+        text-align: center;
+      }
 
-    .kpi-value {
-      font-family: var(--font-heading);
-      font-size: 2rem;
-      font-weight: 800;
-      color: var(--primary);
-      line-height: 1;
-      font-variant-numeric: tabular-nums;
-    }
+      .kpi-value {
+        font-family: var(--font-heading);
+        font-size: 2rem;
+        font-weight: 800;
+        color: var(--primary);
+        line-height: 1;
+        font-variant-numeric: tabular-nums;
+      }
 
-    .kpi-label {
-      font-size: 0.75rem;
-      color: #64748B;
-      margin-top: var(--space-1);
-    }
+      .kpi-label {
+        font-size: 0.75rem;
+        color: #64748b;
+        margin-top: var(--space-1);
+      }
 
-    /* Action Panel */
-    .action-panel {
-      background: #FFF7ED;
-      border: 1px solid #FDBA74;
-      border-radius: var(--radius-lg);
-      padding: var(--space-4);
-      margin-top: var(--space-3);
-    }
+      /* Action Panel */
+      .action-panel {
+        background: #fff7ed;
+        border: 1px solid #fdba74;
+        border-radius: var(--radius-lg);
+        padding: var(--space-4);
+        margin-top: var(--space-3);
+      }
 
-    .action-info {
-      font-size: 0.8125rem;
-      color: #9A3412;
-      margin-bottom: var(--space-3);
-      line-height: 1.5;
-    }
+      .action-info {
+        font-size: 0.8125rem;
+        color: #9a3412;
+        margin-bottom: var(--space-3);
+        line-height: 1.5;
+      }
 
-    .btn-primary {
-      width: 100%;
-      padding: var(--space-3);
-      background: var(--primary);
-      color: white;
-      border: none;
-      border-radius: var(--radius-md);
-      font-family: var(--font-heading);
-      font-size: 0.875rem;
-      font-weight: 700;
-      cursor: pointer;
-      transition: all 200ms;
-      box-shadow: var(--shadow-md);
-    }
+      .btn-primary {
+        width: 100%;
+        padding: var(--space-3);
+        background: var(--primary);
+        color: white;
+        border: none;
+        border-radius: var(--radius-md);
+        font-family: var(--font-heading);
+        font-size: 0.875rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 200ms;
+        box-shadow: var(--shadow-md);
+      }
 
-    .btn-primary:hover {
-      background: var(--primary-hover);
-      box-shadow: var(--shadow-lg);
-    }
+      .btn-primary:hover {
+        background: var(--primary-hover);
+        box-shadow: var(--shadow-lg);
+      }
 
-    .btn-primary:active {
-      transform: translateY(1px);
-    }
+      .btn-primary:active {
+        transform: translateY(1px);
+      }
 
-    /* List Items */
-    .list {
-      display: grid;
-      gap: var(--space-3);
-    }
+      /* List Items */
+      .list {
+        display: grid;
+        gap: var(--space-3);
+      }
 
-    .list-item {
-      padding: var(--space-3);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-md);
-      background: white;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
+      .list-item {
+        padding: var(--space-3);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        background: white;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
 
-    .item-title {
-      font-size: 0.875rem;
-      font-weight: 600;
-      color: var(--text);
-    }
+      .item-title {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--text);
+      }
 
-    .item-meta {
-      font-size: 0.75rem;
-      color: #64748B;
-      margin-top: 2px;
-      font-variant-numeric: tabular-nums;
-    }
+      .item-meta {
+        font-size: 0.75rem;
+        color: #64748b;
+        margin-top: 2px;
+        font-variant-numeric: tabular-nums;
+      }
 
-    .badge {
-      padding: var(--space-1) var(--space-2);
-      border-radius: 9999px;
-      font-size: 0.6875rem;
-      font-weight: 700;
-      color: white;
-    }
+      .badge {
+        padding: var(--space-1) var(--space-2);
+        border-radius: 9999px;
+        font-size: 0.6875rem;
+        font-weight: 700;
+        color: white;
+      }
 
-    .badge-s { background: var(--danger); }
-    .badge-a { background: var(--cta); }
+      .badge-s {
+        background: var(--danger);
+      }
+      .badge-a {
+        background: var(--cta);
+      }
 
-    /* Footer */
-    .footer {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      max-width: 430px;
-      margin: 0 auto;
-      background: white;
-      border-top: 1px solid var(--border);
-      padding: var(--space-3) var(--space-4);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 0.75rem;
-      color: #64748B;
-    }
-  </style>
-</head>
-<body>
-
-  <!-- Header -->
-  <div class="header">
-    <div class="logo">邁房子 UAG</div>
-    <div class="stats">
-      <div class="stat-badge">1,250</div>
-      <div class="stat-badge">S: 3</div>
+      /* Footer */
+      .footer {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        max-width: 430px;
+        margin: 0 auto;
+        background: white;
+        border-top: 1px solid var(--border);
+        padding: var(--space-3) var(--space-4);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.75rem;
+        color: #64748b;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Header -->
+    <div class="header">
+      <div class="logo">邁房子 UAG</div>
+      <div class="stats">
+        <div class="stat-badge">1,250</div>
+        <div class="stat-badge">S: 3</div>
+      </div>
+      <div class="user-avatar">王</div>
     </div>
-    <div class="user-avatar">王</div>
-  </div>
 
-  <!-- Agent Card (Swiss Modernism: clean, grid-based) -->
-  <div class="agent-card">
-    <div class="avatar">王</div>
-    <div class="agent-info">
-      <div class="agent-name">王小明</div>
-      <div class="agent-meta">
-        <span class="agent-code">#12345</span>
-        <span>邁房子</span>
-      </div>
-      <div class="stats-inline">
-        <div class="stat highlight"><strong>92</strong> 信任分</div>
-        <div class="stat"><strong>45</strong> 帶看</div>
-        <div class="stat"><strong>8</strong> 成交</div>
+    <!-- Agent Card (Swiss Modernism: clean, grid-based) -->
+    <div class="agent-card">
+      <div class="avatar">王</div>
+      <div class="agent-info">
+        <div class="agent-name">王小明</div>
+        <div class="agent-meta">
+          <span class="agent-code">#12345</span>
+          <span>邁房子</span>
+        </div>
+        <div class="stats-inline">
+          <div class="stat highlight"><strong>92</strong> 信任分</div>
+          <div class="stat"><strong>45</strong> 帶看</div>
+          <div class="stat"><strong>8</strong> 成交</div>
+        </div>
       </div>
     </div>
-  </div>
 
-  <!-- Content -->
-  <div class="content">
+    <!-- Content -->
+    <div class="content">
+      <!-- Radar (Executive Dashboard: large KPIs) -->
+      <section>
+        <h2 class="section-title">精準導客雷達</h2>
+        <div class="card">
+          <div class="kpi-grid">
+            <div class="kpi">
+              <div class="kpi-value">3</div>
+              <div class="kpi-label">S 級</div>
+            </div>
+            <div class="kpi">
+              <div class="kpi-value">5</div>
+              <div class="kpi-label">A 級</div>
+            </div>
+            <div class="kpi">
+              <div class="kpi-value">12</div>
+              <div class="kpi-label">總客戶</div>
+            </div>
+          </div>
 
-    <!-- Radar (Executive Dashboard: large KPIs) -->
-    <section>
-      <h2 class="section-title">精準導客雷達</h2>
-      <div class="card">
-        <div class="kpi-grid">
-          <div class="kpi">
-            <div class="kpi-value">3</div>
-            <div class="kpi-label">S 級</div>
-          </div>
-          <div class="kpi">
-            <div class="kpi-value">5</div>
-            <div class="kpi-label">A 級</div>
-          </div>
-          <div class="kpi">
-            <div class="kpi-value">12</div>
-            <div class="kpi-label">總客戶</div>
-          </div>
-        </div>
-
-        <div class="action-panel">
-          <div class="action-info">
-            選中：訪客-S01 (S級) • 意向 95% • 成本 500 點
-          </div>
-          <button class="btn-primary">購買聯絡權限</button>
-        </div>
-      </div>
-    </section>
-
-    <!-- Asset Monitor -->
-    <section>
-      <h2 class="section-title">已購客戶資產</h2>
-      <div class="list">
-        <div class="list-item">
-          <div>
-            <div class="item-title">訪客-A03</div>
-            <div class="item-meta">剩餘 31.2h / 48h</div>
-          </div>
-          <span class="badge badge-a">A</span>
-        </div>
-        <div class="list-item">
-          <div>
-            <div class="item-title">訪客-S02</div>
-            <div class="item-meta">剩餘 30.5h / 72h</div>
-          </div>
-          <span class="badge badge-s">S</span>
-        </div>
-      </div>
-    </section>
-
-    <!-- Listings -->
-    <section>
-      <h2 class="section-title">我的房源</h2>
-      <div class="list">
-        <div class="list-item">
-          <div>
-            <div class="item-title">台北市大安區豪宅</div>
-            <div class="item-meta">45 瀏覽 • 12 收藏</div>
+          <div class="action-panel">
+            <div class="action-info">選中：訪客-S01 (S級) • 意向 95% • 成本 500 點</div>
+            <button class="btn-primary">購買聯絡權限</button>
           </div>
         </div>
-        <div class="list-item">
-          <div>
-            <div class="item-title">新北市永和區公寓</div>
-            <div class="item-meta">28 瀏覽 • 5 收藏</div>
+      </section>
+
+      <!-- Asset Monitor -->
+      <section>
+        <h2 class="section-title">已購客戶資產</h2>
+        <div class="list">
+          <div class="list-item">
+            <div>
+              <div class="item-title">訪客-A03</div>
+              <div class="item-meta">剩餘 31.2h / 48h</div>
+            </div>
+            <span class="badge badge-a">A</span>
+          </div>
+          <div class="list-item">
+            <div>
+              <div class="item-title">訪客-S02</div>
+              <div class="item-meta">剩餘 30.5h / 72h</div>
+            </div>
+            <span class="badge badge-s">S</span>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
 
-  </div>
+      <!-- Listings -->
+      <section>
+        <h2 class="section-title">我的房源</h2>
+        <div class="list">
+          <div class="list-item">
+            <div>
+              <div class="item-title">台北市大安區豪宅</div>
+              <div class="item-meta">45 瀏覽 • 12 收藏</div>
+            </div>
+          </div>
+          <div class="list-item">
+            <div>
+              <div class="item-title">新北市永和區公寓</div>
+              <div class="item-meta">28 瀏覽 • 5 收藏</div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
 
-  <!-- Footer -->
-  <div class="footer">
-    <span>v2.0 Professional</span>
-    <span>Mock Mode</span>
-  </div>
-
-</body>
+    <!-- Footer -->
+    <div class="footer">
+      <span>v2.0 Professional</span>
+      <span>Mock Mode</span>
+    </div>
+  </body>
 </html>

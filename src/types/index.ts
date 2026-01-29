@@ -39,7 +39,7 @@ export type CommunityPreview = {
 };
 
 export type AiMessage = {
-  role: "user" | "assistant";
+  role: 'user' | 'assistant';
   content: string;
   timestamp?: string;
 };

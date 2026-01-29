@@ -9,12 +9,14 @@
 ## 背景
 
 ### 問題
+
 - 原生 `alert()` 會阻塞主執行緒,造成 UI 凍結
 - 樣式無法自訂,與現代化 UI 設計不一致
 - 無法控制顯示時間,用戶必須手動關閉
 - 缺乏漸進式顯示動畫,用戶體驗較差
 
 ### 解決方案
+
 使用已安裝的 `sonner` Toast library + 專案內建 `notify` 工具函數
 
 ---
@@ -24,6 +26,7 @@
 ### 選定方案: Sonner (已安裝)
 
 **優勢:**
+
 - ✅ 已安裝 (`sonner@2.0.7`)
 - ✅ 已整合到 App.tsx (`<Toaster>` 已配置)
 - ✅ 專案已封裝 `src/lib/notify.ts` 工具函數
@@ -33,6 +36,7 @@
 - ✅ 支援 action button 與自訂 duration
 
 **現有配置:**
+
 ```typescript
 // src/App.tsx (L73-79)
 <Toaster
@@ -45,6 +49,7 @@
 ```
 
 **現有 API:**
+
 ```typescript
 // src/lib/notify.ts
 import { notify } from '../lib/notify';
@@ -60,6 +65,7 @@ notify.loading('處理中...');
 ### 備選方案: react-hot-toast (未採用)
 
 **不採用原因:**
+
 - ❌ 需要額外安裝依賴
 - ❌ 會增加專案複雜度 (兩套 Toast 系統)
 - ❌ 現有 sonner 已滿足所有需求
@@ -73,27 +79,27 @@ notify.loading('處理中...');
 **位置:** `src/pages/PropertyDetailPage.tsx:386`
 
 **目前狀態 (Phase 1):**
+
 ```typescript
 // Phase 1: 改善訊息內容 (Phase 2: 將替換為 Toast notification)
 alert('✅ 您的要求已記錄\n\n系統將通知房仲開啟安心留痕服務,我們會透過 Email 通知您進度。');
 ```
 
 **Phase 2 遷移方案:**
+
 ```typescript
 // 移除 alert,改用 notify
 import { notify } from '../lib/notify';
 
 const handleRequestTrustEnable = useCallback(() => {
   logger.info('User requested trust enable', {
-    propertyId: property.publicId
+    propertyId: property.publicId,
   });
 
   // Phase 2: Toast notification
-  notify.success(
-    '要求已送出',
-    '系統將通知房仲開啟安心留痕服務,我們會透過 Email 通知您進度。',
-    { duration: 4000 }
-  );
+  notify.success('要求已送出', '系統將通知房仲開啟安心留痕服務,我們會透過 Email 通知您進度。', {
+    duration: 4000,
+  });
 }, [property.publicId]);
 ```
 
@@ -107,33 +113,31 @@ const handleRequestTrustEnable = useCallback(() => {
 **場景:** 彈出視窗攔截時的 fallback alert
 
 **目前代碼:**
+
 ```typescript
 if (!newWindow) {
   logger.warn('Popup blocked, showing fallback alert', {
-    propertyId: property.publicId
+    propertyId: property.publicId,
   });
   alert('彈出視窗被攔截,請允許彈出視窗或直接訪問信任說明頁面');
 }
 ```
 
 **遷移方案:**
+
 ```typescript
 if (!newWindow) {
   logger.warn('Popup blocked, showing fallback toast', {
-    propertyId: property.publicId
+    propertyId: property.publicId,
   });
 
-  notify.warning(
-    '彈出視窗被攔截',
-    '請允許彈出視窗,或點擊下方按鈕開啟信任說明頁面',
-    {
-      duration: 6000,
-      actionLabel: '開啟頁面',
-      onAction: () => {
-        window.location.href = 'https://maihouses.vercel.app/maihouses/trust-room';
-      }
-    }
-  );
+  notify.warning('彈出視窗被攔截', '請允許彈出視窗,或點擊下方按鈕開啟信任說明頁面', {
+    duration: 6000,
+    actionLabel: '開啟頁面',
+    onAction: () => {
+      window.location.href = 'https://maihouses.vercel.app/maihouses/trust-room';
+    },
+  });
 }
 ```
 
@@ -144,6 +148,7 @@ if (!newWindow) {
 ### 3. 其他檔案中的 alert 使用情況
 
 **搜尋結果:**
+
 ```bash
 $ grep -r "alert(" --include="*.ts" --include="*.tsx" src/
 # 僅發現以上兩處
@@ -196,13 +201,13 @@ $ grep -r "alert(" --include="*.ts" --include="*.tsx" src/
 
 ### Toast 類型選擇指南
 
-| 場景 | Toast 類型 | 範例 |
-|------|-----------|------|
+| 場景     | Toast 類型         | 範例                   |
+| -------- | ------------------ | ---------------------- |
 | 操作成功 | `notify.success()` | 表單送出、資料儲存成功 |
-| 錯誤 | `notify.error()` | API 呼叫失敗、驗證錯誤 |
-| 警告 | `notify.warning()` | 彈窗攔截、權限不足 |
-| 提示 | `notify.info()` | 一般資訊、功能說明 |
-| 載入中 | `notify.loading()` | 長時間 API 呼叫 |
+| 錯誤     | `notify.error()`   | API 呼叫失敗、驗證錯誤 |
+| 警告     | `notify.warning()` | 彈窗攔截、權限不足     |
+| 提示     | `notify.info()`    | 一般資訊、功能說明     |
+| 載入中   | `notify.loading()` | 長時間 API 呼叫        |
 
 ### 訊息撰寫原則
 
@@ -213,13 +218,13 @@ $ grep -r "alert(" --include="*.ts" --include="*.tsx" src/
 
 ### Duration 建議
 
-| 訊息重要性 | 建議時間 |
-|-----------|----------|
-| 一般成功 | 3200ms (預設) |
-| 重要成功 | 4000-5000ms |
-| 錯誤訊息 | 5000ms (預設) |
-| 警告訊息 | 4500ms (預設) |
-| 載入中 | Infinity (手動關閉) |
+| 訊息重要性 | 建議時間            |
+| ---------- | ------------------- |
+| 一般成功   | 3200ms (預設)       |
+| 重要成功   | 4000-5000ms         |
+| 錯誤訊息   | 5000ms (預設)       |
+| 警告訊息   | 4500ms (預設)       |
+| 載入中     | Infinity (手動關閉) |
 
 ---
 
@@ -287,13 +292,13 @@ test('should show toast when requesting trust enable', () => {
 
 ## 時程規劃
 
-| 階段 | 任務 | 預估時間 | 責任人 |
-|------|------|----------|--------|
-| Phase 1 ✅ | 改善 alert 訊息內容 | 10 分鐘 | Claude |
-| Phase 2-A | 替換為 Toast (核心) | 20 分鐘 | 開發者 |
-| Phase 2-B | 進階優化 (選做) | 30 分鐘 | 開發者 |
-| 測試 | 手動 + 自動化測試 | 30 分鐘 | QA |
-| **總計** | - | **1.5 小時** | - |
+| 階段       | 任務                | 預估時間     | 責任人 |
+| ---------- | ------------------- | ------------ | ------ |
+| Phase 1 ✅ | 改善 alert 訊息內容 | 10 分鐘      | Claude |
+| Phase 2-A  | 替換為 Toast (核心) | 20 分鐘      | 開發者 |
+| Phase 2-B  | 進階優化 (選做)     | 30 分鐘      | 開發者 |
+| 測試       | 手動 + 自動化測試   | 30 分鐘      | QA     |
+| **總計**   | -                   | **1.5 小時** | -      |
 
 ---
 
@@ -366,7 +371,7 @@ if (!confirmed) {
 // ✅ After
 notify.warning('請確認您的操作', '', {
   actionLabel: '確認',
-  onAction: () => handleConfirm()
+  onAction: () => handleConfirm(),
 });
 ```
 

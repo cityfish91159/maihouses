@@ -3,13 +3,13 @@
  * @see supabase/migrations/20251231_003_messaging_schema.sql
  */
 
-import { z } from "zod";
+import { z } from 'zod';
 
 // =============================================================================
 // Conversation (對話)
 // =============================================================================
 
-export const ConversationStatusSchema = z.enum(["pending", "active", "closed"]);
+export const ConversationStatusSchema = z.enum(['pending', 'active', 'closed']);
 export type ConversationStatus = z.infer<typeof ConversationStatusSchema>;
 
 export const ConversationSchema = z.object({
@@ -32,7 +32,7 @@ export type Conversation = z.infer<typeof ConversationSchema>;
 // Message (訊息)
 // =============================================================================
 
-export const SenderTypeSchema = z.enum(["agent", "consumer"]);
+export const SenderTypeSchema = z.enum(['agent', 'consumer']);
 export type SenderType = z.infer<typeof SenderTypeSchema>;
 
 export const MessageSchema = z.object({
@@ -58,9 +58,7 @@ export const CreateConversationRequestSchema = z.object({
   lead_id: z.string().uuid().optional(),
 });
 
-export type CreateConversationRequest = z.infer<
-  typeof CreateConversationRequestSchema
->;
+export type CreateConversationRequest = z.infer<typeof CreateConversationRequestSchema>;
 
 export const SendMessageRequestSchema = z.object({
   conversation_id: z.string().uuid(),
@@ -86,9 +84,7 @@ export const ConversationWithMessagesSchema = ConversationSchema.extend({
   messages: z.array(MessageSchema),
 });
 
-export type ConversationWithMessages = z.infer<
-  typeof ConversationWithMessagesSchema
->;
+export type ConversationWithMessages = z.infer<typeof ConversationWithMessagesSchema>;
 
 // =============================================================================
 // Conversation List Item (列表顯示用)

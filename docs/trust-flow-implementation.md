@@ -3,52 +3,57 @@
 ## 摘要（按施工順序）
 
 ### Phase 0：Web Push 後端（補債）
-| # | 任務 | 狀態 |
-|---|------|------|
-| WP-1 | 安裝 web-push 套件 | ✅ |
-| WP-2 | 實作真正的 sendPush（查 DB + 發送） | ✅ |
-| WP-3 | 處理 410 Gone（訂閱失效時刪除） | ✅ |
-| WP-4 | VAPID 環境變數設定 | ✅ |
+
+| #    | 任務                                | 狀態 |
+| ---- | ----------------------------------- | ---- |
+| WP-1 | 安裝 web-push 套件                  | ✅   |
+| WP-2 | 實作真正的 sendPush（查 DB + 發送） | ✅   |
+| WP-3 | 處理 410 Gone（訂閱失效時刪除）     | ✅   |
+| WP-4 | VAPID 環境變數設定                  | ✅   |
 
 ### Phase 1：資料庫
-| # | 任務 | 狀態 |
-|---|------|------|
-| DB-1 | 資料庫加 trust_enabled 欄位 | ✅ |
-| DB-2 | 資料庫加案件狀態欄位 | ✅ |
-| DB-3 | 資料庫加 token 欄位 | ✅ |
-| DB-4 | 資料庫加 buyer 欄位 | ✅ |
+
+| #    | 任務                        | 狀態 |
+| ---- | --------------------------- | ---- |
+| DB-1 | 資料庫加 trust_enabled 欄位 | ✅   |
+| DB-2 | 資料庫加案件狀態欄位        | ✅   |
+| DB-3 | 資料庫加 token 欄位         | ✅   |
+| DB-4 | 資料庫加 buyer 欄位         | ✅   |
 
 ### Phase 2：核心後端 API
-| # | 任務 | 狀態 |
-|---|------|------|
-| BE-1 | 上傳 API 存 trust_enabled | ✅ |
-| BE-2 | 補開安心服務 API | ✅ |
-| BE-7 | 查詢通知目標 | ✅ |
-| BE-8 | 推播失敗處理 | ✅ |
-| BE-5 | 進度更新推播 | ✅ |
-| BE-9 | 案件關閉通知 | ✅ |
-| BE-3 | LINE 查詢交易 API | ✅ |
-| BE-4 | LINE webhook 處理「我的交易」 | ✅ |
-| BE-6 | 消費者案件列表 API | ✅ |
-| BE-10 | 喚醒休眠 API | ✅ |
+
+| #     | 任務                          | 狀態 |
+| ----- | ----------------------------- | ---- |
+| BE-1  | 上傳 API 存 trust_enabled     | ✅   |
+| BE-2  | 補開安心服務 API              | ✅   |
+| BE-7  | 查詢通知目標                  | ✅   |
+| BE-8  | 推播失敗處理                  | ✅   |
+| BE-5  | 進度更新推播                  | ✅   |
+| BE-9  | 案件關閉通知                  | ✅   |
+| BE-3  | LINE 查詢交易 API             | ✅   |
+| BE-4  | LINE webhook 處理「我的交易」 | ✅   |
+| BE-6  | 消費者案件列表 API            | ✅   |
+| BE-10 | 喚醒休眠 API                  | ✅   |
 
 ### Phase 3：前端
-| # | 任務 | 狀態 |
-|---|------|------|
-| FE-1 | 上傳頁加安心服務開關 | ✅ |
-| FE-2 | 詳情頁加安心徽章 | ✅ |
-| FE-3 | Trust Room 加註冊引導 | □ |
-| FE-5 | Trust Room 狀態 Banner | □ |
-| FE-4 | Feed 頁加交易列表 | □ |
-| FE-6 | UAG 休眠案件 UI | □ |
+
+| #    | 任務                   | 狀態 |
+| ---- | ---------------------- | ---- |
+| FE-1 | 上傳頁加安心服務開關   | ✅   |
+| FE-2 | 詳情頁加安心徽章       | ✅   |
+| FE-3 | Trust Room 加註冊引導  | □    |
+| FE-5 | Trust Room 狀態 Banner | □    |
+| FE-4 | Feed 頁加交易列表      | □    |
+| FE-6 | UAG 休眠案件 UI        | □    |
 
 ### Phase 4：生命週期
-| # | 任務 | 狀態 |
-|---|------|------|
-| LC-1 | 成交時關閉其他案件 | □ |
-| LC-2 | 物件下架時關閉案件 | □ |
-| LC-3 | 每日休眠檢查 | □ |
-| LC-4 | 休眠過期自動關閉 | □ |
+
+| #    | 任務               | 狀態 |
+| ---- | ------------------ | ---- |
+| LC-1 | 成交時關閉其他案件 | □    |
+| LC-2 | 物件下架時關閉案件 | □    |
+| LC-3 | 每日休眠檢查       | □    |
+| LC-4 | 休眠過期自動關閉   | □    |
 
 ---
 
@@ -71,14 +76,14 @@
 
 ## 問題與解決
 
-| 問題 | 解決方案 |
-|------|----------|
+| 問題                                                      | 解決方案                                                  |
+| --------------------------------------------------------- | --------------------------------------------------------- |
 | 物件有多人詢問，但只有 1 個會成交，其他 99 個案件怎麼辦？ | 案件生命週期管理：30 天無互動 → 休眠，再 60 天 → 自動關閉 |
-| 消費者沒註冊怎麼追蹤交易？ | Token 連結 + LINE 綁定，輸入「我的交易」查詢所有案件 |
-| 消費者不知道進度有更新？ | 優先 push 通知，fallback LINE 推播 |
-| 物件成交了，其他案件怎麼處理？ | 自動關閉並通知「物件已由他人成交」 |
-| 物件下架了，案件怎麼辦？ | 自動關閉並通知「物件已下架」 |
-| 房仲怎麼知道哪些案件該跟進？ | UAG 後台分類顯示：進行中 / 休眠 / 成交 |
+| 消費者沒註冊怎麼追蹤交易？                                | Token 連結 + LINE 綁定，輸入「我的交易」查詢所有案件      |
+| 消費者不知道進度有更新？                                  | 優先 push 通知，fallback LINE 推播                        |
+| 物件成交了，其他案件怎麼處理？                            | 自動關閉並通知「物件已由他人成交」                        |
+| 物件下架了，案件怎麼辦？                                  | 自動關閉並通知「物件已下架」                              |
+| 房仲怎麼知道哪些案件該跟進？                              | UAG 後台分類顯示：進行中 / 休眠 / 成交                    |
 
 ---
 
@@ -88,6 +93,7 @@
 Node.js 發送 Web Push 需要 `web-push` 套件處理 VAPID 簽名和加密。沒有這個套件，後端無法發送任何 Push 通知。
 
 **做什麼**
+
 ```bash
 npm install web-push
 ```
@@ -96,6 +102,7 @@ npm install web-push
 `package.json` dependencies
 
 **驗證**
+
 ```bash
 npm list web-push
 # maihouses@1.0.7
@@ -103,6 +110,7 @@ npm list web-push
 ```
 
 **施作紀錄** (2026-01-22)
+
 - 執行 `npm install web-push`
 - 版本：3.6.7
 - `package.json` L45: `"web-push": "^3.6.7"`
@@ -116,6 +124,7 @@ npm list web-push
 後端需要 VAPID_PRIVATE_KEY 才能簽名發送 Push。金鑰已存在 Supabase Vault（用戶已確認），需要建立 RPC 讓後端讀取。
 
 **做什麼**
+
 ```sql
 -- supabase/migrations/20260122_wp4_vapid_vault_rpc.sql
 
@@ -157,6 +166,7 @@ GRANT EXECUTE ON FUNCTION fn_get_vapid_private_key() TO service_role;
 `supabase/migrations/20260122_wp4_vapid_vault_rpc.sql`
 
 **驗證**
+
 ```typescript
 // 後端呼叫（使用 service_role client）
 const { data: privateKey, error } = await supabaseAdmin.rpc('fn_get_vapid_private_key');
@@ -165,6 +175,7 @@ if (error) throw error;
 ```
 
 **施作紀錄** (2026-01-22)
+
 - Migration 檔案已建立：`20260122_wp4_vapid_vault_rpc.sql`（65 行，含 WHY 註解）
   - Step 1: 建立 `fn_get_vapid_private_key()` RPC（SECURITY DEFINER）
   - Step 2: 權限檢查 `auth.role() <> 'service_role'` 防止一般用戶存取
@@ -178,7 +189,7 @@ if (error) throw error;
 - **後端讀取方式**
   - 私鑰：`fn_get_vapid_private_key()` RPC 從 Vault 讀取
   - 公鑰：`process.env.VITE_VAPID_PUBLIC_KEY` 從環境變數讀取
-  - 注意：雖然 VITE_ 前綴通常是前端用，但 Vercel Serverless 也能讀取
+  - 注意：雖然 VITE\_ 前綴通常是前端用，但 Vercel Serverless 也能讀取
 - 驗證：30 測試通過、`npm run gate` 通過
 
 ---
@@ -187,11 +198,13 @@ if (error) throw error;
 
 **為什麼**
 現在 `sendPush` 是 stub，永遠成功但不發任何東西。要實作真正的發送邏輯，包含：
+
 1. 從 Vault 讀取 VAPID_PRIVATE_KEY（依賴 WP-4）
 2. 查詢用戶的 push_subscriptions
 3. 用 web-push 套件發送
 
 **做什麼**
+
 ```typescript
 // api/trust/send-notification.ts
 
@@ -216,11 +229,7 @@ async function ensureVapidConfigured(): Promise<void> {
     throw new Error('VITE_VAPID_PUBLIC_KEY not configured');
   }
 
-  webpush.setVapidDetails(
-    'mailto:support@maihouses.com',
-    publicKey,
-    privateKey
-  );
+  webpush.setVapidDetails('mailto:support@maihouses.com', publicKey, privateKey);
 
   vapidConfigured = true;
 }
@@ -234,10 +243,9 @@ async function sendPush(
   await ensureVapidConfigured();
 
   // 查詢用戶的所有訂閱
-  const { data: subscriptions, error } = await supabaseAdmin.rpc(
-    'fn_get_push_subscriptions',
-    { p_profile_id: userId }
-  );
+  const { data: subscriptions, error } = await supabaseAdmin.rpc('fn_get_push_subscriptions', {
+    p_profile_id: userId,
+  });
 
   if (error) {
     throw new Error(`Failed to get subscriptions: ${error.message}`);
@@ -251,16 +259,16 @@ async function sendPush(
   const payload = JSON.stringify({
     title: message.title,
     body: message.body,
-    data: { url: trustRoomUrl }
+    data: { url: trustRoomUrl },
   });
 
   // 發送到每個訂閱
   const results = await Promise.allSettled(
-    subscriptions.map(sub =>
+    subscriptions.map((sub) =>
       webpush.sendNotification(
         {
           endpoint: sub.endpoint,
-          keys: { p256dh: sub.p256dh, auth: sub.auth }
+          keys: { p256dh: sub.p256dh, auth: sub.auth },
         },
         payload
       )
@@ -271,7 +279,7 @@ async function sendPush(
   // ...
 
   // 檢查是否全部失敗
-  const allFailed = results.every(r => r.status === 'rejected');
+  const allFailed = results.every((r) => r.status === 'rejected');
   if (allFailed) {
     throw new Error('All push subscriptions failed');
   }
@@ -282,11 +290,13 @@ async function sendPush(
 `api/trust/send-notification.ts` L245-265（替換 stub）
 
 **驗證**
+
 - 有訂閱的用戶：發送成功，瀏覽器收到通知
 - 無訂閱的用戶：拋出 'No push subscriptions found'
 - Vault 讀取失敗：拋出 'Failed to get VAPID_PRIVATE_KEY from Vault'
 
 **施作紀錄** (2026-01-22)
+
 - 實作位置：`api/trust/send-notification.ts`
   - `ensureVapidConfigured()`：從 Vault RPC 讀取 VAPID 私鑰，快取設定
   - `sendPush(userId, message, trustRoomUrl)`：查詢訂閱 + web-push 發送
@@ -307,6 +317,7 @@ async function sendPush(
 要刪除失效的訂閱，避免下次再發到無效 endpoint。
 
 **做什麼**
+
 ```typescript
 // 在 sendPush 內，發送後處理結果
 for (let i = 0; i < results.length; i++) {
@@ -316,13 +327,10 @@ for (let i = 0; i < results.length; i++) {
     // 410 Gone = 訂閱已失效
     if (error.statusCode === 410) {
       const sub = subscriptions[i];
-      await supabaseAdmin
-        .from('push_subscriptions')
-        .delete()
-        .eq('endpoint', sub.endpoint);
+      await supabaseAdmin.from('push_subscriptions').delete().eq('endpoint', sub.endpoint);
 
       logger.info('[send-notification] Deleted expired subscription', {
-        endpoint: sub.endpoint.slice(0, 50) + '...'
+        endpoint: sub.endpoint.slice(0, 50) + '...',
       });
     }
   }
@@ -333,11 +341,13 @@ for (let i = 0; i < results.length; i++) {
 `api/trust/send-notification.ts`（在 sendPush 內，WP-2 之後）
 
 **驗證**
+
 - 模擬 410 回應，確認訂閱被刪除
 - DB 中 push_subscriptions 減少一筆
 - 日誌有記錄刪除動作
 
 **施作紀錄** (2026-01-22)
+
 - 實作位置：`api/trust/send-notification.ts` 內 `sendPush` 函數
   - 發送後遍歷 `Promise.allSettled` 結果
   - `statusCode === 410` 時刪除訂閱：`supabase.from('push_subscriptions').delete().eq('endpoint', ...)`
@@ -372,6 +382,7 @@ WP-3 處理 410 Gone ✅
 物件要能標記「有沒有開安心留痕」，詳情頁才知道要不要顯示徽章，上傳頁才有東西可以存。
 
 **做什麼**
+
 ```sql
 ALTER TABLE properties ADD COLUMN trust_enabled BOOLEAN DEFAULT false;
 ```
@@ -380,12 +391,14 @@ ALTER TABLE properties ADD COLUMN trust_enabled BOOLEAN DEFAULT false;
 `supabase/migrations/20260122_add_trust_enabled.sql`
 
 **驗證**
+
 ```sql
 SELECT trust_enabled FROM properties LIMIT 1;
 -- 有回傳 false 就是成功
 ```
 
 **施作紀錄** (2026-01-21)
+
 - Migration 檔案已存在：`20260122_add_trust_enabled.sql`（含 WHY 註解）
 - TypeScript DB 類型：`src/types/supabase-schema.ts` L67 `trust_enabled: boolean`
 - 前端服務層 `src/services/propertyService.ts`：
@@ -405,6 +418,7 @@ SELECT trust_enabled FROM properties LIMIT 1;
 案件要能休眠、關閉，不能永遠「進行中」。100 個案件只有 1 個成交，另外 99 個要能自動處理掉。
 
 **做什麼**
+
 ```sql
 -- 加狀態欄位
 ALTER TABLE trust_cases ADD COLUMN status VARCHAR(30) DEFAULT 'active';
@@ -422,12 +436,14 @@ ALTER TABLE trust_cases ADD COLUMN closed_reason TEXT;
 `supabase/migrations/20260122_add_case_status.sql`
 
 **驗證**
+
 ```sql
 SELECT status, dormant_at, closed_at FROM trust_cases LIMIT 1;
 -- 有欄位就是成功
 ```
 
 **施作紀錄** (2026-01-21)
+
 - Migration 檔案已建立：`20260122_add_case_status.sql`（含 WHY 註解）
   - 擴展 CHECK 約束：9 種狀態（active, dormant, completed, closed_sold_to_other, closed_property_unlisted, closed_inactive, pending, cancelled, expired）
   - 新增 dormant_at, closed_at, closed_reason 欄位
@@ -437,7 +453,7 @@ SELECT status, dormant_at, closed_at FROM trust_cases LIMIT 1;
   - TrustCaseSchema 新增生命週期欄位
   - LegacyTrustCase 新增 dormantAt, closedAt, closedReason
   - formatCaseStatus 函數支援所有 9 種狀態
-  - toSafeLegacyStatus 函數將 closed_* 映射為 "closed"
+  - toSafeLegacyStatus 函數將 closed\_\* 映射為 "closed"
   - transformToLegacyCase 新增生命週期欄位轉換
 - 前端適配：`src/pages/UAG/components/TrustFlow/utils.ts`
   - getStatusBadge 支援 6 種 Legacy 狀態
@@ -452,6 +468,7 @@ SELECT status, dormant_at, closed_at FROM trust_cases LIMIT 1;
 消費者要能用 Token 連結進入 Trust Room，不用登入也能看進度。Token 要有過期時間。
 
 **做什麼**
+
 ```sql
 ALTER TABLE trust_cases ADD COLUMN token UUID DEFAULT gen_random_uuid();
 ALTER TABLE trust_cases ADD COLUMN token_expires_at TIMESTAMPTZ DEFAULT NOW() + INTERVAL '90 days';
@@ -463,12 +480,14 @@ CREATE UNIQUE INDEX idx_trust_cases_token ON trust_cases(token);
 `supabase/migrations/20260122_add_case_token.sql`
 
 **驗證**
+
 ```sql
 SELECT token, token_expires_at FROM trust_cases LIMIT 1;
 -- 有 UUID 和過期時間就是成功
 ```
 
 **施作紀錄** (2026-01-21)
+
 - Migration 檔案已建立：`20260122_add_case_token.sql`（164 行，含 WHY 註解）
   - Step 1: 新增 `token UUID NOT NULL DEFAULT gen_random_uuid()` 欄位
   - Step 2: 新增 `token_expires_at TIMESTAMPTZ NOT NULL DEFAULT NOW() + INTERVAL '90 days'` 欄位
@@ -495,6 +514,7 @@ SELECT token, token_expires_at FROM trust_cases LIMIT 1;
 案件要記錄「買方是誰」，可能是已註冊用戶（user_id）或未註冊用戶（line_id）。這樣才知道要通知誰。
 
 **做什麼**
+
 ```sql
 ALTER TABLE trust_cases ADD COLUMN buyer_user_id UUID REFERENCES auth.users(id);
 ALTER TABLE trust_cases ADD COLUMN buyer_line_id TEXT;
@@ -507,12 +527,14 @@ CREATE INDEX idx_trust_cases_buyer_line ON trust_cases(buyer_line_id);
 `supabase/migrations/20260122_add_case_buyer.sql`
 
 **驗證**
+
 ```sql
 SELECT buyer_user_id, buyer_line_id FROM trust_cases LIMIT 1;
 -- 有欄位就是成功
 ```
 
 **施作紀錄** (2026-01-21)
+
 - Migration 檔案已更新：`20260122_add_case_buyer.sql`（39 行，含 WHY 註解）
   - Step 1: 新增 `buyer_user_id UUID REFERENCES auth.users(id)` 欄位
   - Step 2: 新增 `buyer_line_id TEXT` 欄位
@@ -534,6 +556,7 @@ SELECT buyer_user_id, buyer_line_id FROM trust_cases LIMIT 1;
 
 **做什麼**
 在上傳表單加一個 Toggle：
+
 ```
 ┌─────────────────────────────────────┐
 │ 🛡️ 安心留痕服務                     │
@@ -546,6 +569,7 @@ SELECT buyer_user_id, buyer_line_id FROM trust_cases LIMIT 1;
 ```
 
 **改哪裡**
+
 - `src/pages/PropertyUploadPage.tsx`（加 UI）
 - `src/components/upload/UploadContext.tsx`（加 state）
 
@@ -553,6 +577,7 @@ SELECT buyer_user_id, buyer_line_id FROM trust_cases LIMIT 1;
 上傳頁有 Toggle，可以開關，送出時 console 能看到 trust_enabled 值
 
 **施作紀錄** (2026-01-22)
+
 - 新增 `src/components/upload/TrustToggleSection.tsx`（72 行）
   - Shield + Info 圖標，Tailwind emerald 色系
   - ARIA 無障礙：`role="switch"`, `aria-checked`, `aria-label`
@@ -564,6 +589,7 @@ SELECT buyer_user_id, buyer_line_id FROM trust_cases LIMIT 1;
   - 放在 TwoGoodsSection 和 MediaSection 之間
 
 **草稿系統修復** (2026-01-22 v14 - Google Director 審計後)
+
 - **問題發現**：trustEnabled 未納入草稿系統，用戶設定會在還原時遺失
 - **修復 1**：`usePropertyDraft.ts` DraftFormDataSchema
   - 新增 `trustEnabled: z.boolean().default(false)`
@@ -592,6 +618,7 @@ SELECT buyer_user_id, buyer_line_id FROM trust_cases LIMIT 1;
 
 **做什麼**
 trust_enabled=true 時顯示徽章：
+
 ```
 ┌─────────────────────────────────────┐
 │ 🛡️ 安心留痕                         │
@@ -604,16 +631,19 @@ trust_enabled=true 時顯示徽章：
 ```
 
 **改哪裡**
+
 - 新增 `src/components/TrustBadge.tsx`
 - 修改 `src/pages/PropertyDetailPage.tsx`（引入並放在側邊欄）
 
 **驗證**
+
 - trust_enabled=true 的物件：顯示徽章
 - trust_enabled=false 的物件：不顯示
 
 ### 施作記錄（2026-01-26）
 
 **實作內容**：
+
 1. **新增 TrustBadge 組件** (`src/components/TrustBadge.tsx` - 68 行)
    - 支援 `default`（詳細版）和 `compact`（精簡版）兩種變體
    - 使用 Minimalism + Soft UI Evolution 風格
@@ -661,6 +691,7 @@ trust_enabled=true 時顯示徽章：
    - 狀態：⏳ 待生產環境執行
 
 **品質驗證**：
+
 - ✅ `npm run typecheck` 通過（0 errors）
 - ✅ `npm run lint` 通過（0 warnings）
 - ✅ `npm test` 通過（1289 個測試，包含 7 個 TrustBadge 單元測試 + 4 個整合測試）
@@ -669,22 +700,26 @@ trust_enabled=true 時顯示徽章：
 - ✅ 完整錯誤處理（資料流 `?? false` fallback）
 
 **Google 級代碼審查**：
+
 - 初始評分：95/100（Team 1）、97/100（Team 2）、98/100（Team 3）
 - 加權平均：**97/100** 🟢
 - P1 優化後：**99/100** 🟢🟢
   - 扣分項（1 分）：E2E 測試需實際 CI 執行驗證
 
 **關鍵技術決策**：
+
 1. **為何不用 Emoji**：UI/UX Pro Max 嚴格禁止 Emoji，改用 lucide-react 的 Shield 和 CheckCircle 圖標
 2. **為何加 compact 變體**：為未來列表頁使用預留（單行徽章，`rounded-full`）
 3. **為何在 L776 插入**：語義連貫（經紀人信任 → 物件安心服務 → 平台保障）
 4. **為何改 DEFAULT_PROPERTY.trustEnabled**：MH-100001 是 Mock/Fallback 設計，需在本地開發時直接顯示徽章
 
 **已排除問題**：
+
 - ❌ TEST-001 物件：此為社區牆 API 測試資料（2025-12-05 建立），與 PropertyDetailPage 無關
 - ✅ MH-100001：合法 Mock 設計，public_id 序列從 MH-100002 開始（`auto_increment_id.sql` L6）
 
 **部署檢查清單**（參考 `FE2_DEPLOYMENT_GUIDE.md`）：
+
 - [x] 所有代碼變更已合併至 main
 - [ ] SQL migration 已在生產環境執行
 - [ ] Vercel 部署成功（綠色勾勾）
@@ -702,6 +737,7 @@ trust_enabled=true 時顯示徽章：
 
 **做什麼**
 未登入時在頁面底部顯示：
+
 ```
 ┌─────────────────────────────────────┐
 │ 💡 註冊邁房子會員                   │
@@ -718,6 +754,7 @@ trust_enabled=true 時顯示徽章：
 `src/pages/TrustRoom.tsx`
 
 **驗證**
+
 - 未登入：看得到引導區塊
 - 已登入：看不到
 
@@ -730,6 +767,7 @@ trust_enabled=true 時顯示徽章：
 
 **做什麼**
 在 Feed 頁加「我的交易」區塊，列出所有進行中的案件：
+
 ```
 ┌─────────────────────────────────────┐
 │ 📋 我的交易 (2)                     │
@@ -751,6 +789,7 @@ trust_enabled=true 時顯示徽章：
 ```
 
 **改哪裡**
+
 - 新增 `src/components/Feed/TxList.tsx`（列表組件）
 - 新增 `src/components/Feed/TxCard.tsx`（卡片組件）
 - 修改 Feed 頁面引入
@@ -763,7 +802,7 @@ trust_enabled=true 時顯示徽章：
 ## FE-5 |Trust Room 狀態 Banner
 
 **為什麼**
-案件有 6 種狀態（active、dormant、completed、closed_*），Trust Room 要顯示對應的 Banner 讓消費者知道狀況。
+案件有 6 種狀態（active、dormant、completed、closed\_\*），Trust Room 要顯示對應的 Banner 讓消費者知道狀況。
 
 **做什麼**
 根據案件狀態顯示不同 Banner：
@@ -771,6 +810,7 @@ trust_enabled=true 時顯示徽章：
 **active（進行中）**：不顯示 Banner，正常顯示進度
 
 **dormant（休眠）**：
+
 ```
 ┌────────────────────────────┐
 │ 💤 此交易已休眠            │
@@ -781,6 +821,7 @@ trust_enabled=true 時顯示徽章：
 ```
 
 **completed（成交）**：
+
 ```
 ┌────────────────────────────┐
 │ 🎉 恭喜！交易已完成        │
@@ -790,6 +831,7 @@ trust_enabled=true 時顯示徽章：
 ```
 
 **closed_sold_to_other（他人成交）**：
+
 ```
 ┌────────────────────────────┐
 │ 此物件已由其他買方成交     │
@@ -800,6 +842,7 @@ trust_enabled=true 時顯示徽章：
 ```
 
 **closed_property_unlisted（物件下架）**：
+
 ```
 ┌────────────────────────────┐
 │ 此物件已下架               │
@@ -810,6 +853,7 @@ trust_enabled=true 時顯示徽章：
 ```
 
 **closed_inactive（過期關閉）**：
+
 ```
 ┌────────────────────────────┐
 │ 此案件因長期無互動已關閉   │
@@ -833,6 +877,7 @@ trust_enabled=true 時顯示徽章：
 
 **做什麼**
 休眠案件卡片加上標記和喚醒按鈕：
+
 ```
 ┌────────────────────────────┐
 │ 💤 信義區・陳○○           │
@@ -844,6 +889,7 @@ trust_enabled=true 時顯示徽章：
 ```
 
 房仲視角增加篩選和分類：
+
 ```
 ┌────────────────────────────┐
 │ 📋 我的案件 (15)   [篩選▼]│
@@ -857,6 +903,7 @@ trust_enabled=true 時顯示徽章：
 `src/pages/UAG/components/TrustFlow/CaseSelector.tsx`
 
 **驗證**
+
 - 休眠案件有 💤 標記和淡黃色背景
 - 有「喚醒案件」按鈕
 - 能篩選案件狀態
@@ -878,6 +925,7 @@ FE-1 前端加了開關，後端要能接收並存進資料庫。
 上傳物件時開啟 Toggle，查資料庫 trust_enabled=true
 
 **施作紀錄** (2026-01-22)
+
 - **發現**：`api/property/create.ts` 不存在，房源建立使用 Service 層 + RPC
 - **實際架構**：前端 → `propertyService.createPropertyWithForm` → RPC `fn_create_property_with_review`
 - **已完成項目**：
@@ -900,6 +948,7 @@ FE-1 前端加了開關，後端要能接收並存進資料庫。
 已上傳但沒開安心服務的物件，房仲要能「補開」。但開了不能關（不然房仲都關掉就不用付錢）。
 
 **做什麼**
+
 ```
 POST /api/property/enable-trust
 Body: { propertyId: "xxx" }
@@ -912,10 +961,12 @@ Body: { propertyId: "xxx" }
 新增 `api/property/enable-trust.ts`
 
 **驗證**
+
 - trust_enabled=false 的物件：呼叫後變 true
 - trust_enabled=true 的物件：呼叫回傳錯誤
 
 **施作紀錄** (2026-01-22)
+
 - 新增 `api/property/enable-trust.ts`（270 行）
   - Zod Schema 驗證：`EnableTrustRequestSchema`、`PropertyRowSchema`
   - 權限驗證：Supabase Auth + agents 表查詢
@@ -937,6 +988,7 @@ Body: { propertyId: "xxx" }
 LINE webhook 收到「我的交易」關鍵字時，要能查出這個 LINE 用戶有哪些案件。
 
 **做什麼**
+
 ```
 GET /api/trust/my-cases?lineUserId=Uxxxxxxx
 
@@ -955,6 +1007,7 @@ GET /api/trust/my-cases?lineUserId=Uxxxxxxx
 用有案件的 LINE User ID 呼叫，回傳正確案件列表
 
 **施作紀錄** (2026-01-23)
+
 - 新增 `api/trust/my-cases.ts`（220 行）
   - GET /api/trust/my-cases?lineUserId=Uxxxxxxx
   - x-system-key 認證（只有 LINE webhook 能呼叫）
@@ -982,14 +1035,17 @@ GET /api/trust/my-cases?lineUserId=Uxxxxxxx
 
 **做什麼**
 收到「我的交易」時，呼叫業務邏輯層查詢，組成 Flex Message 回覆：
+
 - 有案件：Flex Carousel，每個案件一個 Bubble，含「查看詳情」按鈕
 - 無案件：純文字訊息
 - 錯誤：友善錯誤訊息
 
 **支援關鍵字**
+
 - 我的交易、查詢交易、交易查詢、我的案件、查詢案件
 
 **改哪裡**
+
 - `api/line/webhook.ts`（在 message 事件加判斷）
 - `api/line/formatters/my-cases-formatter.ts`（新增）
 - `api/trust/services/case-query.ts`（新增）
@@ -998,6 +1054,7 @@ GET /api/trust/my-cases?lineUserId=Uxxxxxxx
 LINE 輸入「我的交易」，回傳 Flex Message 格式
 
 **施作紀錄** (2026-01-23)
+
 - 新增 `api/line/constants/my-cases.ts`（共用常數）
   - MY_CASES_KEYWORDS（5 個關鍵字）
   - TEST_CASE_ID、TEST_LINE_USER_ID 等測試常數
@@ -1027,6 +1084,7 @@ LINE 輸入「我的交易」，回傳 Flex Message 格式
 ---
 
 ### REGEX 統一 (2026-01-24)
+
 - 新增 `api/trust/constants/validation.ts`：統一 LINE_USER_ID_REGEX（支援大小寫）、LineUserIdSchema、TRUST_ROOM_BASE_URL、ACTIVE_STATUSES
 - 相關模組改用共用常數：my-cases / case-query / notify / send-notification
 - 新增 `api/trust/constants/messages.ts`：統一錯誤訊息常數（ERR_INVALID_LINE_ID / ERR_DB_QUERY_FAILED / ERR_UNEXPECTED）
@@ -1039,6 +1097,7 @@ LINE 輸入「我的交易」，回傳 Flex Message 格式
 
 **做什麼**
 步驟推進時發送 LINE 推播：
+
 ```
 🏠 信義區三房
 您的交易進度已更新！
@@ -1049,6 +1108,7 @@ M2 帶看 → M3 出價
 ```
 
 **改哪裡**
+
 - 新增 `api/trust/notify.ts`（推播函數）
 - 修改 `api/trust/advance-step.ts`（推進步驟時呼叫）
 
@@ -1056,6 +1116,7 @@ M2 帶看 → M3 出價
 推進步驟後，消費者 LINE 收到通知
 
 **施作紀錄** (2026-01-22)
+
 - 修改 `api/trust/cases/[id].ts`
   - L23: import `sendStepUpdateNotification` from `../send-notification`
   - L32-40: `UpdateStepRequestSchema` 新增 `old_step` 和 `property_title` 參數
@@ -1078,6 +1139,7 @@ M2 帶看 → M3 出價
 FE-4 前端要顯示交易列表，需要 API 查詢「這個用戶有哪些案件」。
 
 **做什麼**
+
 ```
 GET /api/trust/my-cases
 
@@ -1094,17 +1156,20 @@ GET /api/trust/my-cases
 ```
 
 **改哪裡**
+
 - 重構 `api/trust/my-cases.ts`（支援雙認證）
 - 刪除 `api/trust/consumer-cases.ts`（功能合併）
 - 更新 `api/trust/services/case-query.ts`（CaseData 加 updatedAt）
 
 **驗證**
+
 - JWT 認證：消費者前端呼叫，回傳正確案件列表
 - system-key 認證：LINE webhook 呼叫，回傳正確案件列表
 
 **施作紀錄** (2026-01-24)
 
 **架構重構**
+
 - 重構 `api/trust/my-cases.ts`（201 行）
   - 雙認證模式：JWT 優先 → fallback system-key
   - JWT 模式：從 token 取 userId，用 `queryCasesByIdentity({ userId })` 查詢
@@ -1121,6 +1186,7 @@ GET /api/trust/my-cases
 - 刪除 `api/trust/__tests__/consumer-cases.test.ts`
 
 **測試覆蓋** (30 測試)
+
 - `api/trust/__tests__/my-cases.test.ts`（16 測試）
   - HTTP 基本行為：OPTIONS 200, POST 405
   - system-key 認證模式：9 測試
@@ -1131,12 +1197,14 @@ GET /api/trust/my-cases
   - queryCasesByIdentity 統一入口：5 測試（OR 查詢、去重、排序）
 
 **品質驗收**
+
 - `npm run typecheck` 通過
 - `npm run lint` 通過（無 any / @ts-ignore / eslint-disable）
 - `npm run gate` PASSED
 - 1225+ 測試全部通過
 
 **向後相容**
+
 - consumer-cases.ts 已刪除（前端未使用，確認安全）
 - 新增欄位（stepName, updatedAt, trustRoomUrl）不破壞舊客戶端
 - 舊函數 `queryCasesByUserId` / `queryMyCases` 保留但標記 @deprecated
@@ -1149,6 +1217,7 @@ GET /api/trust/my-cases
 發通知時要知道「通知誰」。消費者可能是已註冊用戶（用 push）或未註冊用戶（用 LINE）。要有優先順序。
 
 **做什麼**
+
 ```typescript
 // 優先順序：user_id > line_id
 async function getNotifyTarget(caseId: string) {
@@ -1170,11 +1239,13 @@ async function getNotifyTarget(caseId: string) {
 `api/trust/notify.ts`
 
 **驗證**
+
 - 有 buyer_user_id 的案件：回傳 push 類型
 - 只有 buyer_line_id 的案件：回傳 line 類型
 - 都沒有的案件：回傳 null
 
 **施作紀錄** (2026-01-22)
+
 - 新增 `api/trust/notify.ts`（200 行）
   - `NotifyTarget` 聯合類型：`NotifyTargetPush | NotifyTargetLine | null`
   - `CaseNotifyFieldsSchema` Zod Schema：驗證 DB 查詢結果
@@ -1197,6 +1268,7 @@ async function getNotifyTarget(caseId: string) {
 LINE 可能限流、用戶可能封鎖。推播失敗不能就這樣算了，要重試，還要有降級機制。
 
 **做什麼**
+
 ```typescript
 async function sendNotification(target, message) {
   try {
@@ -1227,6 +1299,7 @@ async function sendNotification(target, message) {
 `api/trust/notify.ts`
 
 **驗證**
+
 - 故意讓推播失敗，確認有重試
 - 確認有記錄失敗日誌
 - push 失敗時有嘗試 LINE
@@ -1271,6 +1344,7 @@ async function sendNotification(target, message) {
 案件被關閉時，消費者 LINE 收到對應文案的通知
 
 **施作紀錄** (2026-01-23 - 10 Skills + Codex 協作)
+
 - 新增 `api/trust/close.ts`（342 行）
   - POST /api/trust/close
   - Body: `{ caseId: UUID, reason: CloseReason }`
@@ -1291,7 +1365,7 @@ async function sendNotification(target, message) {
   | # | Skill | 執行結果 |
   |---|-------|----------|
   | 1 | memory_bank (read) | 確認 BE-8 sendCaseClosedNotification 可用 |
-  | 2 | read-before-edit | 讀取 _utils, apiResponse, send-notification |
+  | 2 | read-before-edit | 讀取 \_utils, apiResponse, send-notification |
   | 3 | agentic_architecture | Codex 確認獨立 API 端點架構 |
   | 4 | no_lazy_implementation | Codex 生成 342 行完整代碼 |
   | 5 | nasa_typescript_safety | `npm run typecheck` 通過 |
@@ -1310,6 +1384,7 @@ async function sendNotification(target, message) {
 休眠的案件要能「喚醒」回到 active 狀態。房仲或消費者都可能觸發。
 
 **做什麼**
+
 ```typescript
 // POST /api/trust/wake
 async function wake(caseId: string) {
@@ -1324,15 +1399,12 @@ async function wake(caseId: string) {
     .update({
       status: 'active',
       dormant_at: null,
-      updated_at: new Date()
+      updated_at: new Date(),
     })
     .eq('id', caseId);
 
   // 通知對方
-  await sendNotification(
-    getNotifyTarget(caseId),
-    '您的交易已恢復進行中'
-  );
+  await sendNotification(getNotifyTarget(caseId), '您的交易已恢復進行中');
 }
 ```
 
@@ -1340,11 +1412,13 @@ async function wake(caseId: string) {
 新增 `api/trust/wake.ts`
 
 **驗證**
+
 - 休眠案件呼叫後狀態變 active
 - 非休眠案件呼叫回傳錯誤
 - 雙方收到通知
 
 **施作紀錄** (2026-01-24)
+
 - 新增 `api/trust/wake.ts`（350 行）
   - POST /api/trust/wake
   - Body: `{ caseId: UUID }`
@@ -1363,7 +1437,7 @@ async function wake(caseId: string) {
   - 請求驗證：缺少 caseId 400, 空 body 400, 無效 UUID 400
   - 權限測試：agent/buyer 自己成功, 他人 403, buyer_user_id null 403, JWT system role 403
   - System Key：可喚醒任意案件
-  - 狀態驗證：active/closed/closed_*/completed 400
+  - 狀態驗證：active/closed/closed\_\*/completed 400
   - 並發測試：PGRST116 → 409
   - 通知/審計測試：函數呼叫驗證, 失敗不影響 200
 - Skills Applied：Backend Safeguard, NASA TypeScript Safety, Security Audit, Rigorous Testing
@@ -1378,6 +1452,7 @@ async function wake(caseId: string) {
 
 **做什麼**
 案件達到 M5（成交）時：
+
 ```sql
 UPDATE trust_cases
 SET status = 'closed_sold_to_other',
@@ -1403,6 +1478,7 @@ WHERE property_id = $property_id
 
 **做什麼**
 物件下架時：
+
 ```sql
 UPDATE trust_cases
 SET status = 'closed_property_unlisted',
@@ -1427,6 +1503,7 @@ WHERE property_id = $property_id
 
 **做什麼**
 每日 Cron Job：
+
 ```sql
 UPDATE trust_cases
 SET status = 'dormant',
@@ -1451,6 +1528,7 @@ Vercel cron 設定每日 03:00 執行
 
 **做什麼**
 每日 Cron Job：
+
 ```sql
 UPDATE trust_cases
 SET status = 'closed_inactive',
@@ -1471,24 +1549,24 @@ Vercel cron 設定每日 03:30 執行
 
 ## 附錄：六階段說明
 
-| 階段 | 名稱 | 說明 | 收費 |
-|------|------|------|------|
-| M1 | 接洽 | 首次聯繫 | ❌ |
-| M2 | 帶看 | 實地看屋 | ❌ |
-| M3 | 出價 | 買方出價 | ❌ |
-| M4 | 斡旋 | 價格協商 | ❌ |
-| M5 | 成交 | 簽約完成 | ✅ 收費 |
-| M6 | 交屋 | 點交完成 | ❌ |
+| 階段 | 名稱 | 說明     | 收費    |
+| ---- | ---- | -------- | ------- |
+| M1   | 接洽 | 首次聯繫 | ❌      |
+| M2   | 帶看 | 實地看屋 | ❌      |
+| M3   | 出價 | 買方出價 | ❌      |
+| M4   | 斡旋 | 價格協商 | ❌      |
+| M5   | 成交 | 簽約完成 | ✅ 收費 |
+| M6   | 交屋 | 點交完成 | ❌      |
 
 ---
 
 ## 附錄：案件狀態說明
 
-| 狀態 | 說明 | 觸發條件 |
-|------|------|----------|
-| active | 進行中 | 建立案件時 |
-| dormant | 休眠 | 30 天無互動 |
-| completed | 成交 | M5 完成 |
-| closed_sold_to_other | 他人成交 | 同物件其他案件 M5 |
-| closed_property_unlisted | 物件下架 | 房仲下架物件 |
-| closed_inactive | 過期關閉 | 休眠超過 60 天 |
+| 狀態                     | 說明     | 觸發條件          |
+| ------------------------ | -------- | ----------------- |
+| active                   | 進行中   | 建立案件時        |
+| dormant                  | 休眠     | 30 天無互動       |
+| completed                | 成交     | M5 完成           |
+| closed_sold_to_other     | 他人成交 | 同物件其他案件 M5 |
+| closed_property_unlisted | 物件下架 | 房仲下架物件      |
+| closed_inactive          | 過期關閉 | 休眠超過 60 天    |

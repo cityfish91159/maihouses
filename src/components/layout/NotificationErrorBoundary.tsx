@@ -5,9 +5,9 @@
  * 捕獲通知組件的錯誤，顯示友善的錯誤訊息
  */
 
-import { Component, ErrorInfo, ReactNode } from "react";
-import { AlertCircle } from "lucide-react";
-import { logger } from "../../lib/logger";
+import { Component, ErrorInfo, ReactNode } from 'react';
+import { AlertCircle } from 'lucide-react';
+import { logger } from '../../lib/logger';
 
 interface Props {
   children: ReactNode;
@@ -30,7 +30,7 @@ export class NotificationErrorBoundary extends Component<Props, State> {
   }
 
   public override componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    logger.error("NotificationErrorBoundary.caught", {
+    logger.error('NotificationErrorBoundary.caught', {
       error: error.message,
       stack: error.stack,
       componentStack: errorInfo.componentStack,
@@ -49,9 +49,7 @@ export class NotificationErrorBoundary extends Component<Props, State> {
             <div className="mb-3 rounded-full bg-red-50 p-3">
               <AlertCircle size={24} className="text-red-500" />
             </div>
-            <h4 className="mb-1 text-sm font-bold text-gray-900">
-              無法載入通知
-            </h4>
+            <h4 className="mb-1 text-sm font-bold text-gray-900">無法載入通知</h4>
             <p className="mb-4 text-xs text-gray-500">請稍後再試</p>
             <div className="flex gap-2">
               <button

@@ -1,16 +1,13 @@
-import React, { useEffect, useState, useCallback, useMemo } from "react";
-import { useSearchParams } from "react-router-dom";
-import LegacyFeaturedCard from "../features/property/components/LegacyFeaturedCard";
-import LegacyHorizontalCard from "../features/property/components/LegacyHorizontalCard";
-import { SEED_DATA } from "../features/property/data/seed";
-import type {
-  PropertyPageData,
-  ListingPropertyCard,
-} from "../types/property-page";
-import "../styles/LegacyPropertyPage.css"; // Import strict legacy styles
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import LegacyFeaturedCard from '../features/property/components/LegacyFeaturedCard';
+import LegacyHorizontalCard from '../features/property/components/LegacyHorizontalCard';
+import { SEED_DATA } from '../features/property/data/seed';
+import type { PropertyPageData, ListingPropertyCard } from '../types/property-page';
+import '../styles/LegacyPropertyPage.css'; // Import strict legacy styles
 
 // Mimic legacy behavior: Fetch directly from the endpoint
-const API_ENDPOINT = "/api/property/page-data";
+const API_ENDPOINT = '/api/property/page-data';
 
 /**
  * 搜尋過濾函數 - 根據關鍵字過濾房源
@@ -18,10 +15,7 @@ const API_ENDPOINT = "/api/property/page-data";
  * @param query 搜尋關鍵字
  * @returns 過濾後的房源列表
  */
-function filterByQuery(
-  items: ListingPropertyCard[],
-  query: string,
-): ListingPropertyCard[] {
+function filterByQuery(items: ListingPropertyCard[], query: string): ListingPropertyCard[] {
   if (!query.trim()) return items;
 
   const lowerQuery = query.toLowerCase().trim();
@@ -35,7 +29,7 @@ function filterByQuery(
       ...item.reviews.map((r) => r.content),
     ]
       .filter(Boolean)
-      .join(" ")
+      .join(' ')
       .toLowerCase();
 
     return searchableText.includes(lowerQuery);
@@ -52,10 +46,8 @@ async function preloadImages(data: PropertyPageData): Promise<void> {
 
   // Featured 區塊的三張主要圖片
   if (data.featured?.main?.image) imageUrls.push(data.featured.main.image);
-  if (data.featured?.sideTop?.image)
-    imageUrls.push(data.featured.sideTop.image);
-  if (data.featured?.sideBottom?.image)
-    imageUrls.push(data.featured.sideBottom.image);
+  if (data.featured?.sideTop?.image) imageUrls.push(data.featured.sideTop.image);
+  if (data.featured?.sideBottom?.image) imageUrls.push(data.featured.sideBottom.image);
 
   // 只預載前 3 張 listing 圖片 (viewport 內可見)
   data.listings?.slice(0, 3).forEach((item) => {
@@ -70,7 +62,7 @@ async function preloadImages(data: PropertyPageData): Promise<void> {
         img.onload = () => resolve();
         img.onerror = () => resolve(); // 失敗也不阻塞
         img.src = url;
-      }),
+      })
   );
 
   await Promise.race([
@@ -82,11 +74,7 @@ async function preloadImages(data: PropertyPageData): Promise<void> {
 // Legacy Header Component (Inline for strict structure matching)
 const LegacyHeader = () => (
   <header className="legacy-header">
-    <a
-      href="/maihouses/"
-      className="logo-container"
-      style={{ textDecoration: "none" }}
-    >
+    <a href="/maihouses/" className="logo-container" style={{ textDecoration: 'none' }}>
       <div className="logo-icon-box">
         <svg
           className="logo-icon-svg"
@@ -109,11 +97,7 @@ const LegacyHeader = () => (
         </div>
       </div>
     </a>
-    <a
-      href="/maihouses/auth.html"
-      className="auth-btn"
-      style={{ textDecoration: "none" }}
-    >
+    <a href="/maihouses/auth.html" className="auth-btn" style={{ textDecoration: 'none' }}>
       登入/註冊
     </a>
   </header>
@@ -122,7 +106,7 @@ const LegacyHeader = () => (
 export default function PropertyListPage() {
   // URL 搜尋參數
   const [searchParams, setSearchParams] = useSearchParams();
-  const urlQuery = searchParams.get("q") || "";
+  const urlQuery = searchParams.get('q') || '';
 
   // S2: Instant Render with Mock Data (Legacy Behavior)
   const [data, setData] = useState<PropertyPageData>(SEED_DATA);
@@ -163,11 +147,11 @@ export default function PropertyListPage() {
   /** 鍵盤事件：Enter 觸發搜尋 */
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLInputElement>) => {
-      if (e.key === "Enter") {
+      if (e.key === 'Enter') {
         handleSearch();
       }
     },
-    [handleSearch],
+    [handleSearch]
   );
 
   /** 過濾後的房源列表 */
@@ -222,12 +206,12 @@ export default function PropertyListPage() {
           <div className="search-hint">
             {urlQuery ? (
               <>
-                搜尋「{urlQuery}」的結果 ·{" "}
+                搜尋「{urlQuery}」的結果 ·{' '}
                 <button
                   type="button"
                   className="text-brand-600 hover:underline"
                   onClick={() => {
-                    setSearchInput("");
+                    setSearchInput('');
                     setSearchParams({});
                   }}
                 >
@@ -252,10 +236,7 @@ export default function PropertyListPage() {
               {/* Main Card */}
               {data?.featured?.main && (
                 <div className="featured-main">
-                  <LegacyFeaturedCard
-                    data={data.featured.main}
-                    variant="main"
-                  />
+                  <LegacyFeaturedCard data={data.featured.main} variant="main" />
                 </div>
               )}
 
@@ -263,18 +244,12 @@ export default function PropertyListPage() {
               <div className="featured-side-container">
                 {data?.featured?.sideTop && (
                   <div className="featured-side-top">
-                    <LegacyFeaturedCard
-                      data={data.featured.sideTop}
-                      variant="side"
-                    />
+                    <LegacyFeaturedCard data={data.featured.sideTop} variant="side" />
                   </div>
                 )}
                 {data?.featured?.sideBottom && (
                   <div className="featured-side-bottom">
-                    <LegacyFeaturedCard
-                      data={data.featured.sideBottom}
-                      variant="side"
-                    />
+                    <LegacyFeaturedCard data={data.featured.sideBottom} variant="side" />
                   </div>
                 )}
               </div>
@@ -285,7 +260,7 @@ export default function PropertyListPage() {
         {/* Listing Section */}
         <section className="listing-section">
           <div className="listing-header">
-            <h2>{urlQuery ? "搜尋結果" : "更多精選房源"}</h2>
+            <h2>{urlQuery ? '搜尋結果' : '更多精選房源'}</h2>
             <span className="small-text">
               {urlQuery
                 ? `找到 ${filteredListings.length} 個符合的社區`
@@ -302,22 +277,22 @@ export default function PropertyListPage() {
               <div
                 className="empty-state"
                 style={{
-                  gridColumn: "1 / -1",
-                  textAlign: "center",
-                  padding: "3rem 1rem",
+                  gridColumn: '1 / -1',
+                  textAlign: 'center',
+                  padding: '3rem 1rem',
                 }}
               >
                 <p
                   style={{
-                    fontSize: "1.125rem",
+                    fontSize: '1.125rem',
                     fontWeight: 600,
-                    color: "#5b6b7b",
-                    marginBottom: "0.5rem",
+                    color: '#5b6b7b',
+                    marginBottom: '0.5rem',
                   }}
                 >
                   找不到符合「{urlQuery}」的房源
                 </p>
-                <p style={{ fontSize: "0.875rem", color: "#8b9cad" }}>
+                <p style={{ fontSize: '0.875rem', color: '#8b9cad' }}>
                   試試其他關鍵字，例如：林口、捷運、學區
                 </p>
               </div>

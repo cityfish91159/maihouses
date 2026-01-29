@@ -45,7 +45,7 @@ export interface FeaturedProperty {
   /** 評價列表 */
   reviews: PropertyReview[];
   /** 資料來源: 'real' (真實) | 'seed' (Seed/Mock) */
-  source: "real" | "seed";
+  source: 'real' | 'seed';
 }
 
 /**
@@ -54,6 +54,6 @@ export interface FeaturedProperty {
  * 與 FeaturedProperty 相同，但 source 固定為 'seed'
  * 用於 src/constants/data.ts 的 PROPERTIES 常數
  */
-export type SeedProperty = Omit<FeaturedProperty, "source"> & {
-  source: "seed";
+export type SeedProperty = Omit<FeaturedProperty, 'source'> & {
+  source: 'seed';
 };

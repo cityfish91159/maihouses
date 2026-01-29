@@ -1,18 +1,14 @@
-import React from "react";
-import { Link } from "react-router-dom";
-import type { UagSummary } from "../../types/agent";
-import { STRINGS } from "../../constants/strings";
-import { ROUTES } from "../../constants/routes";
+import { Link } from 'react-router-dom';
+import type { UagSummary } from '../../types/agent';
+import { STRINGS } from '../../constants/strings';
+import { ROUTES } from '../../constants/routes';
 
 interface UagSummaryCardProps {
   data: UagSummary;
-  className?: string; // Standardize prop
+  className?: string;
 }
 
-export const UagSummaryCard: React.FC<UagSummaryCardProps> = ({
-  data,
-  className = "",
-}) => {
+export function UagSummaryCard({ data, className = '' }: UagSummaryCardProps) {
   return (
     <article
       className={`animate-in fade-in slide-in-from-bottom-4 flex flex-col gap-3 rounded-2xl border border-brand-100 bg-white p-4 shadow-card duration-500 ${className}`}
@@ -22,9 +18,7 @@ export const UagSummaryCard: React.FC<UagSummaryCardProps> = ({
           客
         </div>
         <div className="flex-1 leading-[1.3]">
-          <b className="block text-[15px] text-ink-900">
-            {STRINGS.AGENT.UAG.TITLE}
-          </b>
+          <b className="block text-[15px] text-ink-900">{STRINGS.AGENT.UAG.TITLE}</b>
           <div className="text-[12px] text-ink-600">UAG 精準獲客 · 即時</div>
         </div>
       </div>
@@ -34,11 +28,11 @@ export const UagSummaryCard: React.FC<UagSummaryCardProps> = ({
         <div className="grid grid-cols-3 gap-2">
           {/* S Grade */}
           <div className="flex h-[34px] items-center justify-center rounded-full border border-grade-s-border bg-grade-s-bg text-[14px] font-semibold text-grade-s-text">
-            S {data.grade === "S" ? "2" : "0"}
+            S {data.grade === 'S' ? '2' : '0'}
           </div>
           {/* A Grade */}
           <div className="flex h-[34px] items-center justify-center rounded-full border border-grade-a-border bg-grade-a-bg text-[14px] font-semibold text-grade-a-text">
-            A {data.grade === "S" ? "1" : "0"}
+            A {data.grade === 'S' ? '1' : '0'}
           </div>
           {/* B Grade */}
           <div className="flex h-[34px] items-center justify-center rounded-full border border-grade-b-border bg-grade-b-bg text-[14px] font-semibold text-grade-b-text">
@@ -69,4 +63,4 @@ export const UagSummaryCard: React.FC<UagSummaryCardProps> = ({
       </div>
     </article>
   );
-};
+}

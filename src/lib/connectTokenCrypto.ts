@@ -17,7 +17,7 @@ const AUTH_TAG_LENGTH = 16;
  * 開發環境預設密鑰（需與後端一致）
  * 生產環境應通過環境變數配置
  */
-const DEV_SECRET_KEY = "dev-only-secret-key-32-bytes!!!!";
+const DEV_SECRET_KEY = 'dev-only-secret-key-32-bytes!!!!';
 
 // ============================================================================
 // Types
@@ -32,16 +32,16 @@ interface ConnectTokenPayload {
 
 // [NASA TypeScript Safety] 類型守衛驗證 ConnectTokenPayload
 function isConnectTokenPayload(obj: unknown): obj is ConnectTokenPayload {
-  if (typeof obj !== "object" || obj === null) return false;
+  if (typeof obj !== 'object' || obj === null) return false;
   const record = obj as Record<string, unknown>;
   return (
-    typeof record.conversationId === "string" &&
-    typeof record.sessionId === "string" &&
-    typeof record.exp === "number"
+    typeof record.conversationId === 'string' &&
+    typeof record.sessionId === 'string' &&
+    typeof record.exp === 'number'
   );
 }
 
-type TokenFormat = "encrypted" | "legacy" | "invalid";
+type TokenFormat = 'encrypted' | 'legacy' | 'invalid';
 
 interface ParseResult {
   success: boolean;
@@ -57,16 +57,12 @@ interface ParseResult {
 /**
  * 記錄 Token 解析結果（用於監控和除錯）
  */
-function logTokenParsing(
-  result: ParseResult,
-  durationMs: number,
-  tokenLength: number,
-): void {
+function logTokenParsing(result: ParseResult, durationMs: number, tokenLength: number): void {
   const isProduction = import.meta.env.PROD;
 
   // 開發環境詳細日誌
   if (!isProduction) {
-    console.debug("[ConnectToken]", {
+    console.debug('[ConnectToken]', {
       success: result.success,
       format: result.format,
       durationMs: durationMs.toFixed(2),
@@ -77,7 +73,7 @@ function logTokenParsing(
 
   // 生產環境只記錄失敗情況（簡化版）
   if (isProduction && !result.success) {
-    console.warn("[ConnectToken] Parse failed:", {
+    console.warn('[ConnectToken] Parse failed:', {
       format: result.format,
       error: result.error,
       tokenLength,
@@ -90,10 +86,7 @@ function logTokenParsing(
  */
 function recordMetric(name: string, value: number): void {
   // 使用 Performance API 記錄（如果可用）
-  if (
-    typeof performance !== "undefined" &&
-    typeof performance.measure === "function"
-  ) {
+  if (typeof performance !== 'undefined' && typeof performance.measure === 'function') {
     try {
       performance.measure(name, {
         start: performance.now() - value,
@@ -120,15 +113,9 @@ async function deriveKey(secret: string): Promise<CryptoKey> {
   const keyMaterial =
     keyData.length >= 32
       ? keyData.slice(0, 32)
-      : new Uint8Array(await crypto.subtle.digest("SHA-256", keyData));
+      : new Uint8Array(await crypto.subtle.digest('SHA-256', keyData));
 
-  return crypto.subtle.importKey(
-    "raw",
-    keyMaterial,
-    { name: "AES-GCM" },
-    false,
-    ["decrypt"],
-  );
+  return crypto.subtle.importKey('raw', keyMaterial, { name: 'AES-GCM' }, false, ['decrypt']);
 }
 
 /**
@@ -136,8 +123,8 @@ async function deriveKey(secret: string): Promise<CryptoKey> {
  */
 function base64UrlDecode(base64url: string): Uint8Array {
   // base64url -> base64
-  const base64 = base64url.replace(/-/g, "+").replace(/_/g, "/");
-  const padded = base64 + "=".repeat((4 - (base64.length % 4)) % 4);
+  const base64 = base64url.replace(/-/g, '+').replace(/_/g, '/');
+  const padded = base64 + '='.repeat((4 - (base64.length % 4)) % 4);
 
   const binaryString = atob(padded);
   const bytes = new Uint8Array(binaryString.length);
@@ -156,7 +143,7 @@ function base64UrlDecode(base64url: string): Uint8Array {
  */
 async function tryDecryptToken(
   token: string,
-  secretKey: string,
+  secretKey: string
 ): Promise<ConnectTokenPayload | null> {
   try {
     const combined = base64UrlDecode(token);
@@ -171,19 +158,13 @@ async function tryDecryptToken(
     const ciphertext = combined.slice(IV_LENGTH + AUTH_TAG_LENGTH);
 
     // 合併 ciphertext 和 authTag（Web Crypto API 要求）
-    const ciphertextWithTag = new Uint8Array(
-      ciphertext.length + authTag.length,
-    );
+    const ciphertextWithTag = new Uint8Array(ciphertext.length + authTag.length);
     ciphertextWithTag.set(ciphertext);
     ciphertextWithTag.set(authTag, ciphertext.length);
 
     const key = await deriveKey(secretKey);
 
-    const decrypted = await crypto.subtle.decrypt(
-      { name: "AES-GCM", iv },
-      key,
-      ciphertextWithTag,
-    );
+    const decrypted = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ciphertextWithTag);
 
     const plaintext = new TextDecoder().decode(decrypted);
     const parsed: unknown = JSON.parse(plaintext);
@@ -222,9 +203,7 @@ function tryDecodeOldToken(token: string): ConnectTokenPayload | null {
  * @param token - Connect Token 字串
  * @returns 解析後的 payload，或 null（無效/過期）
  */
-export async function parseConnectToken(
-  token: string,
-): Promise<ConnectTokenPayload | null> {
+export async function parseConnectToken(token: string): Promise<ConnectTokenPayload | null> {
   const startTime = performance.now();
   const tokenLength = token.length;
 
@@ -238,10 +217,10 @@ export async function parseConnectToken(
     const result: ParseResult = {
       success: true,
       payload: decrypted,
-      format: "encrypted",
+      format: 'encrypted',
     };
     logTokenParsing(result, duration, tokenLength);
-    recordMetric("connectToken.decrypt", duration);
+    recordMetric('connectToken.decrypt', duration);
     return decrypted;
   }
 
@@ -253,10 +232,10 @@ export async function parseConnectToken(
     const result: ParseResult = {
       success: true,
       payload: legacy,
-      format: "legacy",
+      format: 'legacy',
     };
     logTokenParsing(result, duration, tokenLength);
-    recordMetric("connectToken.decodeLegacy", duration);
+    recordMetric('connectToken.decodeLegacy', duration);
     return legacy;
   }
 
@@ -264,8 +243,8 @@ export async function parseConnectToken(
   const result: ParseResult = {
     success: false,
     payload: null,
-    format: "invalid",
-    error: "Unable to parse token with any known format",
+    format: 'invalid',
+    error: 'Unable to parse token with any known format',
   };
   logTokenParsing(result, duration, tokenLength);
   return null;

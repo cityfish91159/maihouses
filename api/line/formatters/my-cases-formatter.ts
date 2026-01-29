@@ -10,12 +10,9 @@
  * - 使用 Flex Message 提供「查看詳情」按鈕
  */
 
-import type { FlexMessage, FlexBubble, FlexBox, FlexComponent } from "@line/bot-sdk";
-import type { CaseData } from "../../trust/services/case-query";
-import {
-  getStepName,
-  generateTrustRoomUrl,
-} from "../../trust/services/case-query";
+import type { FlexMessage, FlexBubble, FlexBox, FlexComponent } from '@line/bot-sdk';
+import type { CaseData } from '../../trust/services/case-query';
+import { getStepName, generateTrustRoomUrl } from '../../trust/services/case-query';
 import {
   MY_CASES_KEYWORDS,
   MAX_DISPLAY_CASES,
@@ -24,7 +21,7 @@ import {
   MSG_ERROR,
   MSG_ERROR_CONTACT,
   getMsgMoreCases,
-} from "../constants/my-cases";
+} from '../constants/my-cases';
 
 // ============================================================================
 // Types
@@ -33,7 +30,7 @@ import {
 /**
  * LINE 訊息回傳類型（Flex Message 或純文字）
  */
-export type LineMessageResponse = FlexMessage | { type: "text"; text: string };
+export type LineMessageResponse = FlexMessage | { type: 'text'; text: string };
 
 // ============================================================================
 // Helper Functions
@@ -58,54 +55,54 @@ function createCaseBubble(c: CaseData, index: number): FlexBubble {
   const trustRoomUrl = generateTrustRoomUrl(c.id);
 
   return {
-    type: "bubble",
-    size: "kilo",
+    type: 'bubble',
+    size: 'kilo',
     body: {
-      type: "box",
-      layout: "vertical",
+      type: 'box',
+      layout: 'vertical',
       contents: [
         {
-          type: "text",
+          type: 'text',
           text: `${num} ${c.propertyTitle}`,
-          weight: "bold",
-          size: "md",
+          weight: 'bold',
+          size: 'md',
           wrap: true,
         },
         {
-          type: "box",
-          layout: "vertical",
-          margin: "md",
-          spacing: "sm",
+          type: 'box',
+          layout: 'vertical',
+          margin: 'md',
+          spacing: 'sm',
           contents: [
             {
-              type: "text",
+              type: 'text',
               text: `房仲：${c.agentName}`,
-              size: "sm",
-              color: "#666666",
+              size: 'sm',
+              color: '#666666',
             },
             {
-              type: "text",
+              type: 'text',
               text: `進度：${stepName}`,
-              size: "sm",
-              color: "#666666",
+              size: 'sm',
+              color: '#666666',
             },
           ],
         },
       ],
     },
     footer: {
-      type: "box",
-      layout: "vertical",
+      type: 'box',
+      layout: 'vertical',
       contents: [
         {
-          type: "button",
+          type: 'button',
           action: {
-            type: "uri",
-            label: "查看詳情",
+            type: 'uri',
+            label: '查看詳情',
             uri: trustRoomUrl,
           },
-          style: "primary",
-          height: "sm",
+          style: 'primary',
+          height: 'sm',
         },
       ],
     },
@@ -117,20 +114,20 @@ function createCaseBubble(c: CaseData, index: number): FlexBubble {
  */
 function createMoreCasesBubble(moreCount: number): FlexBubble {
   return {
-    type: "bubble",
-    size: "kilo",
+    type: 'bubble',
+    size: 'kilo',
     body: {
-      type: "box",
-      layout: "vertical",
-      justifyContent: "center",
+      type: 'box',
+      layout: 'vertical',
+      justifyContent: 'center',
       contents: [
         {
-          type: "text",
+          type: 'text',
           text: getMsgMoreCases(moreCount),
-          size: "sm",
-          color: "#666666",
+          size: 'sm',
+          color: '#666666',
           wrap: true,
-          align: "center",
+          align: 'center',
         },
       ],
     },
@@ -159,7 +156,7 @@ export function formatMyCasesReply(cases: CaseData[]): LineMessageResponse {
   // 無案件 - 回傳純文字
   if (cases.length === 0) {
     return {
-      type: "text",
+      type: 'text',
       text: MSG_NO_CASES,
     };
   }
@@ -179,10 +176,10 @@ export function formatMyCasesReply(cases: CaseData[]): LineMessageResponse {
 
   // 建立 Flex Message（Carousel 格式）
   const flexMessage: FlexMessage = {
-    type: "flex",
+    type: 'flex',
     altText: `您目前有 ${cases.length} 筆進行中的交易`,
     contents: {
-      type: "carousel",
+      type: 'carousel',
       contents,
     },
   };
@@ -213,19 +210,21 @@ export function formatMyCasesReplyText(cases: CaseData[]): string {
   const header = `您目前有 ${cases.length} 筆進行中的交易：`;
 
   // 案件列表
-  const caseLines = displayCases.map((c, i) => {
-    const num = getNumberMarker(i + 1);
-    const stepName = getStepName(c.currentStep);
-    const trustRoomUrl = generateTrustRoomUrl(c.id);
+  const caseLines = displayCases
+    .map((c, i) => {
+      const num = getNumberMarker(i + 1);
+      const stepName = getStepName(c.currentStep);
+      const trustRoomUrl = generateTrustRoomUrl(c.id);
 
-    return `${num} ${c.propertyTitle}
+      return `${num} ${c.propertyTitle}
    房仲：${c.agentName}
    進度：${stepName}
    ${trustRoomUrl}`;
-  }).join("\n\n");
+    })
+    .join('\n\n');
 
   // 超出提示
-  const footer = hasMore ? `\n\n${getMsgMoreCases(moreCount)}` : "";
+  const footer = hasMore ? `\n\n${getMsgMoreCases(moreCount)}` : '';
 
   return `${header}\n\n${caseLines}${footer}`;
 }
@@ -235,9 +234,9 @@ export function formatMyCasesReplyText(cases: CaseData[]): string {
  *
  * @returns LINE 純文字錯誤訊息
  */
-export function formatErrorReply(): { type: "text"; text: string } {
+export function formatErrorReply(): { type: 'text'; text: string } {
   return {
-    type: "text",
+    type: 'text',
     text: `${MSG_ERROR}\n\n${MSG_ERROR_CONTACT}`,
   };
 }
@@ -254,5 +253,5 @@ export function isMyTransactionQuery(text: string | null | undefined): boolean {
   const normalizedText = text.trim();
 
   // 使用共用常數，確保實作與測試同步
-  return MY_CASES_KEYWORDS.includes(normalizedText as typeof MY_CASES_KEYWORDS[number]);
+  return MY_CASES_KEYWORDS.includes(normalizedText as (typeof MY_CASES_KEYWORDS)[number]);
 }

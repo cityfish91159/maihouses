@@ -1,0 +1,24 @@
+* text=auto eol=lf working-tree-encoding=UTF-8
+
+*.png -text
+*.jpg -text
+*.jpeg -text
+*.gif -text
+*.webp -text
+*.ico -text
+*.pdf -text
+*.zip -text
+*.gz -text
+*.tgz -text
+*.bz2 -text
+*.7z -text
+*.rar -text
+*.mp4 -text
+*.mp3 -text
+*.wav -text
+*.woff -text
+*.woff2 -text
+*.ttf -text
+*.eot -text
+*.otf -text
+*.pyc -text

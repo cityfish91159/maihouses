@@ -1,26 +1,26 @@
 // api/openai-proxy.js
 export default async function handler(req, res) {
   // 設定 CORS
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
   // 處理 preflight request
-  if (req.method === "OPTIONS") {
+  if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
 
   // 只允許 POST
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   // 檢查環境變數
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
     return res.status(500).json({
-      error: "Missing API key",
-      hint: "Check Vercel environment variables",
+      error: 'Missing API key',
+      hint: 'Check Vercel environment variables',
     });
   }
 
@@ -28,41 +28,36 @@ export default async function handler(req, res) {
   const { messages, model, temperature, stream } = req.body || {};
   if (!messages || !Array.isArray(messages)) {
     return res.status(400).json({
-      error: "Invalid request",
-      hint: "Expected: { messages: [...] }",
+      error: 'Invalid request',
+      hint: 'Expected: { messages: [...] }',
     });
   }
 
   // 如果要求串流
   if (stream) {
     // 設定 SSE headers
-    res.setHeader("Content-Type", "text/event-stream");
-    res.setHeader("Cache-Control", "no-cache");
-    res.setHeader("Connection", "keep-alive");
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
 
     try {
-      const response = await fetch(
-        "https://api.openai.com/v1/chat/completions",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${apiKey}`,
-          },
-          body: JSON.stringify({
-            model: model || "gpt-4o-mini",
-            messages: messages,
-            temperature: temperature !== undefined ? temperature : 0.3,
-            stream: true,
-          }),
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${apiKey}`,
         },
-      );
+        body: JSON.stringify({
+          model: model || 'gpt-4o-mini',
+          messages: messages,
+          temperature: temperature !== undefined ? temperature : 0.3,
+          stream: true,
+        }),
+      });
 
       if (!response.ok) {
         const error = await response.text();
-        res.write(
-          `data: ${JSON.stringify({ error: "OpenAI API error", details: error })}\n\n`,
-        );
+        res.write(`data: ${JSON.stringify({ error: 'OpenAI API error', details: error })}\n\n`);
         return res.end();
       }
 
@@ -75,13 +70,13 @@ export default async function handler(req, res) {
         if (done) break;
 
         const chunk = decoder.decode(value);
-        const lines = chunk.split("\n").filter((line) => line.trim() !== "");
+        const lines = chunk.split('\n').filter((line) => line.trim() !== '');
 
         for (const line of lines) {
-          if (line.startsWith("data: ")) {
+          if (line.startsWith('data: ')) {
             const data = line.slice(6);
-            if (data === "[DONE]") {
-              res.write("data: [DONE]\n\n");
+            if (data === '[DONE]') {
+              res.write('data: [DONE]\n\n');
               return res.end();
             }
             // 轉發給前端
@@ -92,35 +87,30 @@ export default async function handler(req, res) {
 
       res.end();
     } catch (error) {
-      res.write(
-        `data: ${JSON.stringify({ error: "Stream error", message: error.message })}\n\n`,
-      );
+      res.write(`data: ${JSON.stringify({ error: 'Stream error', message: error.message })}\n\n`);
       res.end();
     }
   } else {
     // 非串流模式（保留原有邏輯）
     try {
-      const response = await fetch(
-        "https://api.openai.com/v1/chat/completions",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${apiKey}`,
-          },
-          body: JSON.stringify({
-            model: model || "gpt-4o-mini",
-            messages: messages,
-            temperature: temperature !== undefined ? temperature : 0.3,
-            stream: false,
-          }),
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${apiKey}`,
         },
-      );
+        body: JSON.stringify({
+          model: model || 'gpt-4o-mini',
+          messages: messages,
+          temperature: temperature !== undefined ? temperature : 0.3,
+          stream: false,
+        }),
+      });
 
       if (!response.ok) {
         const error = await response.text();
         return res.status(response.status).json({
-          error: "OpenAI API error",
+          error: 'OpenAI API error',
           details: error,
         });
       }
@@ -129,7 +119,7 @@ export default async function handler(req, res) {
       return res.status(200).json(data);
     } catch (error) {
       return res.status(500).json({
-        error: "Internal server error",
+        error: 'Internal server error',
         message: error.message,
       });
     }

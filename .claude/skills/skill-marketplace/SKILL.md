@@ -96,7 +96,7 @@ auto-invoke: true
 **情境 1: 用戶要求「幫我生成 API 測試」**
 
 ```javascript
-搜尋: "api testing skill site:skillsmp.com";
+搜尋: 'api testing skill site:skillsmp.com';
 過濾: ((category = Testing), stars > 100);
 結果: (api - test - generator, postman - converter, openapi - test);
 選擇: api - test - generator(最高分);
@@ -105,7 +105,7 @@ auto-invoke: true
 **情境 2: 用戶要求「自動化 Docker 部署」**
 
 ```javascript
-搜尋: "docker deployment automation site:skillsmp.com";
+搜尋: 'docker deployment automation site:skillsmp.com';
 過濾: ((category = DevOps), updated > 2024);
 結果: (docker - compose - gen, k8s - deployer, vercel - docker);
 選擇: docker - compose - gen(最相關);

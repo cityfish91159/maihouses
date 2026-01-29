@@ -84,10 +84,8 @@
   --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.06);
 
   /* ui-ux-pro-max: Corporate Trust 字體 */
-  --font-heading: "Lexend", -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-body:
-    "Source Sans 3", -apple-system, BlinkMacSystemFont, "Noto Sans TC",
-    sans-serif;
+  --font-heading: 'Lexend', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-body: 'Source Sans 3', -apple-system, BlinkMacSystemFont, 'Noto Sans TC', sans-serif;
 }
 
 /* ====== Page Base ====== */
@@ -298,7 +296,7 @@
 /* ui-ux-pro-max: Swiss Style - simple crosshair */
 .deai-v2-cluster::before,
 .deai-v2-cluster::after {
-  content: "";
+  content: '';
   position: absolute;
   background: var(--border);
   pointer-events: none;
@@ -379,27 +377,27 @@
 }
 
 /* ui-ux-pro-max: Flat Design - solid background colors */
-.deai-v2-bubble[data-grade="S"] {
+.deai-v2-bubble[data-grade='S'] {
   background: var(--grade-s-bg);
   border-color: var(--grade-s);
 }
 
-.deai-v2-bubble[data-grade="A"] {
+.deai-v2-bubble[data-grade='A'] {
   background: var(--grade-a-bg);
   border-color: var(--grade-a);
 }
 
-.deai-v2-bubble[data-grade="B"] {
+.deai-v2-bubble[data-grade='B'] {
   background: var(--grade-b-bg);
   border-color: var(--grade-b);
 }
 
-.deai-v2-bubble[data-grade="C"] {
+.deai-v2-bubble[data-grade='C'] {
   background: var(--grade-c-bg);
   border-color: var(--grade-c);
 }
 
-.deai-v2-bubble[data-grade="F"] {
+.deai-v2-bubble[data-grade='F'] {
   background: var(--grade-f-bg);
   border-color: var(--grade-f);
 }
@@ -411,8 +409,8 @@
  * 設計理念：S/A 級是高價值客戶，用微動畫吸引購買
  * 動畫類型：subtle scale + opacity 呼吸效果（非 decorative，是 status indicator）
  */
-.deai-v2-bubble[data-grade="S"],
-.deai-v2-bubble[data-grade="A"] {
+.deai-v2-bubble[data-grade='S'],
+.deai-v2-bubble[data-grade='A'] {
   animation: statusHighlight 3s ease-in-out infinite;
 }
 
@@ -430,8 +428,8 @@
 
 /* ui-ux-pro-max: UX Guideline - prefers-reduced-motion */
 @media (prefers-reduced-motion: reduce) {
-  .deai-v2-bubble[data-grade="S"],
-  .deai-v2-bubble[data-grade="A"] {
+  .deai-v2-bubble[data-grade='S'],
+  .deai-v2-bubble[data-grade='A'] {
     animation: none;
   }
 }
@@ -454,19 +452,19 @@
   color: var(--text);
 }
 
-.deai-v2-bubble[data-grade="S"] .deai-v2-bubble-grade {
+.deai-v2-bubble[data-grade='S'] .deai-v2-bubble-grade {
   background: var(--grade-s);
   color: #fff;
   border-color: var(--grade-s);
 }
 
-.deai-v2-bubble[data-grade="A"] .deai-v2-bubble-grade {
+.deai-v2-bubble[data-grade='A'] .deai-v2-bubble-grade {
   background: var(--grade-a);
   color: #fff;
   border-color: var(--grade-a);
 }
 
-.deai-v2-bubble[data-grade="B"] .deai-v2-bubble-grade {
+.deai-v2-bubble[data-grade='B'] .deai-v2-bubble-grade {
   background: var(--grade-b);
   color: #fff;
   border-color: var(--grade-b);
@@ -1028,7 +1026,7 @@
 
 .deai-v2-report-divider::before,
 .deai-v2-report-divider::after {
-  content: "";
+  content: '';
   flex: 1;
   height: 1px;
   background: var(--border);

@@ -6,39 +6,27 @@
  * MSG-3: 整合 useNotifications 支援未讀私訊提醒橫幅
  */
 
-import { useState, useMemo, useCallback, useEffect } from "react";
-import { useFeedData } from "../../hooks/useFeedData";
-import { useAuth } from "../../hooks/useAuth";
-import { useNotifications } from "../../hooks/useNotifications";
-import { notify } from "../../lib/notify";
-import { logger } from "../../lib/logger";
-import { STRINGS } from "../../constants/strings";
-import type {
-  UserProfile,
-  ActiveTransaction,
-  SidebarData,
-} from "../../types/feed";
-import type { Role } from "../../types/community";
-import type { ConversationListItem } from "../../types/messaging.types";
-import {
-  MOCK_FEED_STATS,
-  MOCK_ACTIVE_TRANSACTION,
-} from "../../services/mock/feed";
+import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useFeedData } from '../../hooks/useFeedData';
+import { useAuth } from '../../hooks/useAuth';
+import { useNotifications } from '../../hooks/useNotifications';
+import { notify } from '../../lib/notify';
+import { logger } from '../../lib/logger';
+import { STRINGS } from '../../constants/strings';
+import type { UserProfile, ActiveTransaction, SidebarData } from '../../types/feed';
+import type { Role } from '../../types/community';
+import type { ConversationListItem } from '../../types/messaging.types';
+import { MOCK_FEED_STATS, MOCK_ACTIVE_TRANSACTION } from '../../services/mock/feed';
 // P7-Audit-C6: Use shared mock data
-import { getConsumerFeedData } from "./mockData";
-import { safeLocalStorage } from "../../lib/safeStorage";
+import { getConsumerFeedData } from './mockData';
+import { safeLocalStorage } from '../../lib/safeStorage';
 
 const DEFAULT_MOCK_DATA = getConsumerFeedData();
 
 const S = STRINGS.FEED;
 
 export function useConsumer(userId?: string, forceMock?: boolean) {
-  const {
-    user,
-    isAuthenticated: realAuth,
-    role,
-    loading: authLoading,
-  } = useAuth();
+  const { user, isAuthenticated: realAuth, role, loading: authLoading } = useAuth();
 
   // MSG-3: 取得未讀私訊通知（只在真正登入時查詢）
   const { notifications, error: notificationsError } = useNotifications();
@@ -46,7 +34,7 @@ export function useConsumer(userId?: string, forceMock?: boolean) {
   // MSG-3: 處理通知查詢錯誤（不影響主要功能）
   useEffect(() => {
     if (notificationsError) {
-      logger.warn("useConsumer.notifications.loadFailed", {
+      logger.warn('useConsumer.notifications.loadFailed', {
         error: notificationsError,
       });
       // 不顯示 toast，避免干擾用戶體驗
@@ -87,7 +75,7 @@ export function useConsumer(userId?: string, forceMock?: boolean) {
   });
 
   // 判定是否為 Demo 模式 (forceMock or userId starts with demo-)
-  const isDemo = forceMock || userId?.startsWith("demo-");
+  const isDemo = forceMock || userId?.startsWith('demo-');
   // 在 Demo 模式下，如果沒有真實登入，則視為「模擬登入」
   const isAuthenticated = realAuth || isDemo;
 
@@ -111,11 +99,8 @@ export function useConsumer(userId?: string, forceMock?: boolean) {
     if (realAuth && user) {
       return {
         id: user.id,
-        name:
-          user.user_metadata?.name ||
-          user.email?.split("@")[0] ||
-          S.DEFAULT_USER,
-        role: role || "member",
+        name: user.user_metadata?.name || user.email?.split('@')[0] || S.DEFAULT_USER,
+        role: role || 'member',
         stats: MOCK_FEED_STATS,
         communityId: S.DEFAULT_COMMUNITY_ID,
         communityName: S.DEFAULT_COMMUNITY_NAME,
@@ -125,11 +110,10 @@ export function useConsumer(userId?: string, forceMock?: boolean) {
     // Demo 模式且未登入時，回傳模擬用戶資料
     if (isDemo) {
       return {
-        id: "demo-user",
+        id: 'demo-user',
         name: S.DEFAULT_USER, // '用戶'
         // [NASA TypeScript Safety] 使用條件表達式取代 as Role
-        role:
-          userId === "demo-agent" ? ("agent" as const) : ("member" as const),
+        role: userId === 'demo-agent' ? ('agent' as const) : ('member' as const),
         stats: MOCK_FEED_STATS,
         communityId: S.DEFAULT_COMMUNITY_ID,
         communityName: S.DEFAULT_COMMUNITY_NAME,
@@ -141,7 +125,7 @@ export function useConsumer(userId?: string, forceMock?: boolean) {
 
   // Mock 交易狀態
   const [activeTransaction] = useState<ActiveTransaction>(() => {
-    const hasActive = safeLocalStorage.getItem("mai_active_tx") === "true";
+    const hasActive = safeLocalStorage.getItem('mai_active_tx') === 'true';
     if (hasActive) {
       return MOCK_ACTIVE_TRANSACTION;
     }
@@ -150,10 +134,7 @@ export function useConsumer(userId?: string, forceMock?: boolean) {
 
   // Mock 側邊欄資料
   // P5-A2 修復：使用 useFeedData 提供的 sidebarData (來源：API 或 Mock)
-  const sidebarData = useMemo<SidebarData>(
-    () => data.sidebarData,
-    [data.sidebarData],
-  );
+  const sidebarData = useMemo<SidebarData>(() => data.sidebarData, [data.sidebarData]);
 
   const handleLike = useCallback(
     async (postId: string | number) => {
@@ -168,7 +149,7 @@ export function useConsumer(userId?: string, forceMock?: boolean) {
         notify.error(S.NOTIFY.LIKE_FAILED, S.NOTIFY.LIKE_FAILED_DESC);
       }
     },
-    [toggleLike, isAuthenticated],
+    [toggleLike, isAuthenticated]
   );
 
   const handleCreatePost = useCallback(
@@ -177,7 +158,7 @@ export function useConsumer(userId?: string, forceMock?: boolean) {
         notify.error(S.NOTIFY.LOGIN_REQUIRED, S.NOTIFY.LOGIN_REQUIRED_POST);
         return;
       }
-      const communityId = userProfile?.communityId || "mock-community";
+      const communityId = userProfile?.communityId || 'mock-community';
       try {
         if (images && images.length > 0) {
           await createPost(content, communityId, images);
@@ -189,12 +170,12 @@ export function useConsumer(userId?: string, forceMock?: boolean) {
         throw err;
       }
     },
-    [createPost, isAuthenticated, userProfile],
+    [createPost, isAuthenticated, userProfile]
   );
 
   const handleReply = useCallback((postId: string | number) => {
     if (import.meta.env.DEV) {
-      logger.debug("[Consumer] Reply toggled for post", { postId });
+      logger.debug('[Consumer] Reply toggled for post', { postId });
     }
     // 測試期望：reply 為 no-op，不彈出通知
   }, []);
@@ -207,23 +188,20 @@ export function useConsumer(userId?: string, forceMock?: boolean) {
       }
       try {
         await addComment(postId, content);
-        notify.success(
-          S.POST.COMMENT_SUCCESS.TITLE,
-          S.POST.COMMENT_SUCCESS.DESC,
-        );
+        notify.success(S.POST.COMMENT_SUCCESS.TITLE, S.POST.COMMENT_SUCCESS.DESC);
       } catch (err) {
         // E7 Fix: Removed console.error
-        notify.error("留言失敗", "請稍後再試");
+        notify.error('留言失敗', '請稍後再試');
       }
     },
-    [isAuthenticated, addComment],
+    [isAuthenticated, addComment]
   );
 
   const handleShare = useCallback(async (postId: string | number) => {
     const shareUrl = `${window.location.origin}${window.location.pathname}?post=${postId}`;
     const shareData = {
-      title: "MaiHouses 社區動態",
-      text: "來看看這則有趣的社區貼文！",
+      title: 'MaiHouses 社區動態',
+      text: '來看看這則有趣的社區貼文！',
       url: shareUrl,
     };
 
@@ -232,29 +210,29 @@ export function useConsumer(userId?: string, forceMock?: boolean) {
         await navigator.share(shareData);
       } catch (err) {
         // [NASA TypeScript Safety] 使用 instanceof 取代 as Error
-        if (!(err instanceof Error) || err.name !== "AbortError") {
-          notify.error("分享失敗", "請稍後再試");
+        if (!(err instanceof Error) || err.name !== 'AbortError') {
+          notify.error('分享失敗', '請稍後再試');
         }
       }
       return;
     }
 
     if (!navigator?.clipboard?.writeText) {
-      notify.info("分享功能暫未支援", "請在瀏覽器中操作");
+      notify.info('分享功能暫未支援', '請在瀏覽器中操作');
       return;
     }
 
     navigator.clipboard
       .writeText(shareUrl)
       .then(() => {
-        notify.success("連結已複製", "您可以將連結分享給朋友");
+        notify.success('連結已複製', '您可以將連結分享給朋友');
       })
       .catch(() => {
-        notify.error("複製失敗", "請手動複製網址");
+        notify.error('複製失敗', '請手動複製網址');
       });
   }, []);
 
-  const userInitial = userProfile?.name.charAt(0).toUpperCase() || "U";
+  const userInitial = userProfile?.name.charAt(0).toUpperCase() || 'U';
 
   // Phase 7: 提供 currentUserId 給留言系統
   const currentUserId = realAuth && user ? user.id : undefined;

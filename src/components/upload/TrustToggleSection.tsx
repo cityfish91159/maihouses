@@ -1,6 +1,6 @@
-import React, { useCallback } from "react";
-import { Shield, Info } from "lucide-react";
-import { useUploadForm } from "./UploadContext";
+import React, { useCallback } from 'react';
+import { Shield, Info } from 'lucide-react';
+import { useUploadForm } from './UploadContext';
 
 // T1: 圖標尺寸常數化
 const ICON_SIZE_MD = 20;
@@ -22,8 +22,9 @@ export const TrustToggleSection: React.FC = () => {
   const isTrustEnabled = form.trustEnabled;
 
   // T3: Tailwind class 常數化，避免過長
-  const toggleBaseClass = "relative inline-flex h-7 w-12 shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2";
-  const toggleActiveClass = isTrustEnabled ? "hover:bg-brand/90 bg-brand" : "bg-slate-200";
+  const toggleBaseClass =
+    'relative inline-flex h-7 w-12 shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2';
+  const toggleActiveClass = isTrustEnabled ? 'hover:bg-brand/90 bg-brand' : 'bg-slate-200';
 
   return (
     <section className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
@@ -39,18 +40,18 @@ export const TrustToggleSection: React.FC = () => {
               type="button"
               role="switch"
               aria-checked={isTrustEnabled}
-              aria-label={isTrustEnabled ? "關閉安心留痕服務" : "開啟安心留痕服務"}
+              aria-label={isTrustEnabled ? '關閉安心留痕服務' : '開啟安心留痕服務'}
               onClick={handleToggle}
               className={`${toggleBaseClass} ${toggleActiveClass}`}
             >
               <span
                 className={`inline-block size-5 rounded-full bg-white shadow-md transition-transform duration-200 ${
-                  isTrustEnabled ? "translate-x-6" : "translate-x-1"
+                  isTrustEnabled ? 'translate-x-6' : 'translate-x-1'
                 }`}
               />
             </button>
             <span className="text-sm font-bold text-slate-700">
-              {isTrustEnabled ? "已開啟安心留痕" : "開啟安心留痕"}
+              {isTrustEnabled ? '已開啟安心留痕' : '開啟安心留痕'}
             </span>
           </div>
 

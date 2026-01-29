@@ -1,39 +1,35 @@
-import { useEffect, useState, useCallback, useMemo } from "react";
-import { useSearchParams } from "react-router-dom";
-import { supabase } from "../lib/supabase";
-import type {
-  TrustRoomView,
-  TrustStep,
-  ConfirmResult,
-} from "../types/trust.types";
-import { STEP_ICONS, STEP_DESCRIPTIONS } from "../types/trust.types";
-import { logger } from "../lib/logger";
+import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { supabase } from '../lib/supabase';
+import type { TrustRoomView, TrustStep, ConfirmResult } from '../types/trust.types';
+import { STEP_ICONS, STEP_DESCRIPTIONS } from '../types/trust.types';
+import { logger } from '../lib/logger';
 
 const COLORS = {
-  primary: "#1749D7",
-  primaryLight: "#EBF0FF",
-  success: "#10B981",
-  successLight: "#D1FAE5",
-  warning: "#F59E0B",
-  warningLight: "#FEF3C7",
-  gray: "#6B7280",
-  grayLight: "#F3F4F6",
-  white: "#FFFFFF",
-  dark: "#0A2246",
-  red: "#EF4444",
+  primary: '#1749D7',
+  primaryLight: '#EBF0FF',
+  success: '#10B981',
+  successLight: '#D1FAE5',
+  warning: '#F59E0B',
+  warningLight: '#FEF3C7',
+  gray: '#6B7280',
+  grayLight: '#F3F4F6',
+  white: '#FFFFFF',
+  dark: '#0A2246',
+  red: '#EF4444',
 };
 
 export default function TrustRoom() {
   const [searchParams] = useSearchParams();
-  const id = searchParams.get("id");
-  const token = searchParams.get("token");
+  const id = searchParams.get('id');
+  const token = searchParams.get('token');
 
   const [data, setData] = useState<TrustRoomView | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [confirming, setConfirming] = useState<number | null>(null);
   const [message, setMessage] = useState<{
-    type: "success" | "error";
+    type: 'success' | 'error';
     text: string;
   } | null>(null);
 
@@ -44,38 +40,38 @@ export default function TrustRoom() {
     return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
   };
 
-  const showMessage = (type: "success" | "error", text: string) => {
+  const showMessage = (type: 'success' | 'error', text: string) => {
     setMessage({ type, text });
     setTimeout(() => setMessage(null), 3000);
   };
 
   const loadData = useCallback(async () => {
     if (!id || !token) {
-      setError("連結無效，請確認網址是否正確");
+      setError('連結無效，請確認網址是否正確');
       setLoading(false);
       return;
     }
 
     try {
-      const { data: result, error: rpcError } = await supabase.rpc(
-        "get_trust_room_by_token",
-        { p_id: id, p_token: token },
-      );
+      const { data: result, error: rpcError } = await supabase.rpc('get_trust_room_by_token', {
+        p_id: id,
+        p_token: token,
+      });
 
       if (rpcError) throw rpcError;
       if (!Array.isArray(result) || result.length === 0) {
-        setError("連結已過期或不存在，請聯繫您的房仲取得新連結");
+        setError('連結已過期或不存在，請聯繫您的房仲取得新連結');
         return;
       }
       // [NASA TypeScript Safety] 使用類型守衛驗證 TrustRoomView
       const firstResult = result[0];
-      if (firstResult && typeof firstResult === "object") {
+      if (firstResult && typeof firstResult === 'object') {
         setData(firstResult as TrustRoomView);
       }
       setError(null);
     } catch (err) {
-      logger.error("[TrustRoom] 載入失敗", { error: err });
-      setError("載入失敗，請稍後再試");
+      logger.error('[TrustRoom] 載入失敗', { error: err });
+      setError('載入失敗，請稍後再試');
     } finally {
       setLoading(false);
     }
@@ -88,11 +84,11 @@ export default function TrustRoom() {
     const channel = supabase
       .channel(`trust:${id}`)
       .on(
-        "postgres_changes",
+        'postgres_changes',
         {
-          event: "UPDATE",
-          schema: "public",
-          table: "trust_transactions",
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'trust_transactions',
           filter: `id=eq.${id}`,
         },
         (payload) => {
@@ -105,10 +101,10 @@ export default function TrustRoom() {
                     steps_data: payload.new.steps_data,
                     status: payload.new.status,
                   }
-                : null,
+                : null
             );
           }
-        },
+        }
       )
       .subscribe();
     return () => {
@@ -122,63 +118,61 @@ export default function TrustRoom() {
     const oldData = { ...data };
     setData({
       ...data,
-      steps_data: data.steps_data.map((s) =>
-        s.step === stepNum ? { ...s, confirmed: true } : s,
-      ),
+      steps_data: data.steps_data.map((s) => (s.step === stepNum ? { ...s, confirmed: true } : s)),
     });
 
     try {
-      const { data: result, error: rpcError } = (await supabase.rpc(
-        "confirm_trust_step",
-        { p_id: id, p_token: token, p_step: stepNum },
-      )) as { data: ConfirmResult | null; error: Error | null };
+      const { data: result, error: rpcError } = (await supabase.rpc('confirm_trust_step', {
+        p_id: id,
+        p_token: token,
+        p_step: stepNum,
+      })) as { data: ConfirmResult | null; error: Error | null };
 
       if (rpcError) throw rpcError;
 
       if (result?.success) {
-        showMessage("success", "確認成功！");
+        showMessage('success', '確認成功！');
       } else {
         setData(oldData);
-        showMessage("error", result?.error || "確認失敗");
+        showMessage('error', result?.error || '確認失敗');
       }
     } catch (err) {
-      logger.error("[TrustRoom] 確認失敗", { error: err });
+      logger.error('[TrustRoom] 確認失敗', { error: err });
       setData(oldData);
-      showMessage("error", "確認失敗，請稍後再試");
+      showMessage('error', '確認失敗，請稍後再試');
     } finally {
       setConfirming(null);
     }
   };
 
-  const { sortedSteps, progressPercent, completedCount, totalSteps } =
-    useMemo(() => {
-      if (!data || !Array.isArray(data.steps_data))
-        return {
-          sortedSteps: [],
-          progressPercent: 0,
-          completedCount: 0,
-          totalSteps: 0,
-        };
-      const sorted = [...data.steps_data].sort((a, b) => a.step - b.step);
-      const count = sorted.filter((s) => s.confirmed).length;
-      const total = sorted.length;
-      const percent = total > 0 ? (count / total) * 100 : 0;
+  const { sortedSteps, progressPercent, completedCount, totalSteps } = useMemo(() => {
+    if (!data || !Array.isArray(data.steps_data))
       return {
-        sortedSteps: sorted,
-        progressPercent: percent,
-        completedCount: count,
-        totalSteps: total,
+        sortedSteps: [],
+        progressPercent: 0,
+        completedCount: 0,
+        totalSteps: 0,
       };
-    }, [data]);
+    const sorted = [...data.steps_data].sort((a, b) => a.step - b.step);
+    const count = sorted.filter((s) => s.confirmed).length;
+    const total = sorted.length;
+    const percent = total > 0 ? (count / total) * 100 : 0;
+    return {
+      sortedSteps: sorted,
+      progressPercent: percent,
+      completedCount: count,
+      totalSteps: total,
+    };
+  }, [data]);
 
   if (loading)
     return (
       <div
         style={{
           ...styles.container,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
         }}
       >
         載入中...
@@ -189,10 +183,10 @@ export default function TrustRoom() {
       <div
         style={{
           ...styles.container,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          color: "red",
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: 'red',
         }}
       >
         {error}
@@ -207,8 +201,7 @@ export default function TrustRoom() {
         <div
           style={{
             ...styles.toast,
-            background:
-              message.type === "success" ? COLORS.success : COLORS.red,
+            background: message.type === 'success' ? COLORS.success : COLORS.red,
           }}
         >
           {message.text}
@@ -220,25 +213,18 @@ export default function TrustRoom() {
             <span style={styles.badge}>🛡️ 安心交易</span>
             {daysRemaining <= 7 && (
               <span style={styles.warningBadge}>
-                ⏰{" "}
-                {daysRemaining > 0 ? `${daysRemaining} 天後過期` : "即將過期"}
+                ⏰ {daysRemaining > 0 ? `${daysRemaining} 天後過期` : '即將過期'}
               </span>
             )}
           </div>
           <h1 style={styles.title}>{data.case_name}</h1>
-          {data.agent_name && (
-            <p style={styles.agentInfo}>承辦人：{data.agent_name}</p>
-          )}
-          <p style={styles.caseId}>
-            案件編號：{data.id.slice(0, 8).toUpperCase()}
-          </p>
+          {data.agent_name && <p style={styles.agentInfo}>承辦人：{data.agent_name}</p>}
+          <p style={styles.caseId}>案件編號：{data.id.slice(0, 8).toUpperCase()}</p>
         </div>
 
         <div style={styles.progressContainer}>
           <div style={styles.progressBar}>
-            <div
-              style={{ ...styles.progressFill, width: `${progressPercent}%` }}
-            />
+            <div style={{ ...styles.progressFill, width: `${progressPercent}%` }} />
           </div>
           <p style={styles.progressText}>
             已確認 {completedCount}/{totalSteps} 步驟
@@ -257,9 +243,7 @@ export default function TrustRoom() {
                   ...styles.stepItem,
                   opacity: step.step > data.current_step ? 0.4 : 1,
                   background: isCurrent ? COLORS.primaryLight : COLORS.white,
-                  border: isCurrent
-                    ? `2px solid ${COLORS.primary}`
-                    : "1px solid #eee",
+                  border: isCurrent ? `2px solid ${COLORS.primary}` : '1px solid #eee',
                 }}
               >
                 <div
@@ -270,26 +254,19 @@ export default function TrustRoom() {
                       : isCurrent
                         ? COLORS.primary
                         : isDone
-                          ? "#9CA3AF"
+                          ? '#9CA3AF'
                           : COLORS.grayLight,
-                    color:
-                      step.confirmed || isCurrent || isDone
-                        ? COLORS.white
-                        : COLORS.gray,
+                    color: step.confirmed || isCurrent || isDone ? COLORS.white : COLORS.gray,
                   }}
                 >
-                  {step.confirmed ? "✓" : STEP_ICONS[step.step] || step.step}
+                  {step.confirmed ? '✓' : STEP_ICONS[step.step] || step.step}
                 </div>
 
                 <div style={styles.stepContent}>
                   <div style={styles.stepHeader}>
                     <span style={styles.stepName}>{step.name}</span>
-                    {isCurrent && !isDone && (
-                      <span style={styles.currentBadge}>進行中</span>
-                    )}
-                    {step.confirmed && (
-                      <span style={styles.confirmedBadge}>✓ 已確認</span>
-                    )}
+                    {isCurrent && !isDone && <span style={styles.currentBadge}>進行中</span>}
+                    {step.confirmed && <span style={styles.confirmedBadge}>✓ 已確認</span>}
                   </div>
                   <p style={styles.stepDesc}>{STEP_DESCRIPTIONS[step.step]}</p>
                   {step.confirmedAt && (
@@ -304,13 +281,10 @@ export default function TrustRoom() {
                       style={{
                         ...styles.confirmButton,
                         opacity: confirming === step.step ? 0.7 : 1,
-                        cursor:
-                          confirming === step.step ? "not-allowed" : "pointer",
+                        cursor: confirming === step.step ? 'not-allowed' : 'pointer',
                       }}
                     >
-                      {confirming === step.step
-                        ? "處理中..."
-                        : "✓ 確認此步驟已完成"}
+                      {confirming === step.step ? '處理中...' : '✓ 確認此步驟已完成'}
                     </button>
                   )}
                 </div>
@@ -325,17 +299,17 @@ export default function TrustRoom() {
 
 const styles: Record<string, React.CSSProperties> = {
   container: {
-    minHeight: "100vh",
-    background: "linear-gradient(135deg, #F6F9FF 0%, #EBF0FF 100%)",
-    padding: "24px 16px",
-    fontFamily: "sans-serif",
+    minHeight: '100vh',
+    background: 'linear-gradient(135deg, #F6F9FF 0%, #EBF0FF 100%)',
+    padding: '24px 16px',
+    fontFamily: 'sans-serif',
   },
   toast: {
-    position: "fixed",
+    position: 'fixed',
     top: 20,
-    left: "50%",
-    transform: "translateX(-50%)",
-    padding: "12px 24px",
+    left: '50%',
+    transform: 'translateX(-50%)',
+    padding: '12px 24px',
     borderRadius: 8,
     color: COLORS.white,
     fontWeight: 600,
@@ -343,23 +317,23 @@ const styles: Record<string, React.CSSProperties> = {
   },
   card: {
     maxWidth: 480,
-    margin: "0 auto",
+    margin: '0 auto',
     background: COLORS.white,
     borderRadius: 16,
-    boxShadow: "0 4px 24px rgba(23, 73, 215, 0.1)",
-    overflow: "hidden",
+    boxShadow: '0 4px 24px rgba(23, 73, 215, 0.1)',
+    overflow: 'hidden',
   },
   header: {
-    padding: "24px 24px 16px",
+    padding: '24px 24px 16px',
     borderBottom: `1px solid ${COLORS.grayLight}`,
   },
-  badgeRow: { display: "flex", gap: 8, marginBottom: 12 },
+  badgeRow: { display: 'flex', gap: 8, marginBottom: 12 },
   badge: {
     background: COLORS.primaryLight,
     color: COLORS.primary,
     fontSize: 12,
     fontWeight: 600,
-    padding: "4px 12px",
+    padding: '4px 12px',
     borderRadius: 20,
   },
   warningBadge: {
@@ -367,58 +341,58 @@ const styles: Record<string, React.CSSProperties> = {
     color: COLORS.warning,
     fontSize: 12,
     fontWeight: 600,
-    padding: "4px 12px",
+    padding: '4px 12px',
     borderRadius: 20,
   },
   title: { margin: 0, fontSize: 22, fontWeight: 700, color: COLORS.dark },
-  agentInfo: { margin: "8px 0 0", fontSize: 14, color: COLORS.gray },
-  caseId: { margin: "4px 0 0", fontSize: 12, color: COLORS.gray },
-  progressContainer: { padding: "16px 24px", background: COLORS.grayLight },
+  agentInfo: { margin: '8px 0 0', fontSize: 14, color: COLORS.gray },
+  caseId: { margin: '4px 0 0', fontSize: 12, color: COLORS.gray },
+  progressContainer: { padding: '16px 24px', background: COLORS.grayLight },
   progressBar: {
     height: 8,
     background: COLORS.white,
     borderRadius: 4,
-    overflow: "hidden",
+    overflow: 'hidden',
   },
   progressFill: {
-    height: "100%",
+    height: '100%',
     background: `linear-gradient(90deg, ${COLORS.primary}, ${COLORS.success})`,
     borderRadius: 4,
-    transition: "width 0.5s ease",
+    transition: 'width 0.5s ease',
   },
   progressText: {
-    margin: "8px 0 0",
+    margin: '8px 0 0',
     fontSize: 13,
     fontWeight: 600,
     color: COLORS.gray,
-    textAlign: "center",
+    textAlign: 'center',
   },
   stepsContainer: { padding: 16 },
   stepItem: {
-    display: "flex",
+    display: 'flex',
     gap: 16,
     padding: 16,
     marginBottom: 12,
     borderRadius: 12,
-    transition: "all 0.2s ease",
+    transition: 'all 0.2s ease',
   },
   stepNumber: {
     width: 44,
     height: 44,
-    borderRadius: "50%",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
+    borderRadius: '50%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
     fontSize: 18,
     fontWeight: 600,
     flexShrink: 0,
   },
   stepContent: { flex: 1, minWidth: 0 },
   stepHeader: {
-    display: "flex",
-    alignItems: "center",
+    display: 'flex',
+    alignItems: 'center',
     gap: 8,
-    flexWrap: "wrap",
+    flexWrap: 'wrap',
   },
   stepName: { fontSize: 16, fontWeight: 700, color: COLORS.dark },
   currentBadge: {
@@ -426,7 +400,7 @@ const styles: Record<string, React.CSSProperties> = {
     fontWeight: 600,
     color: COLORS.primary,
     background: COLORS.white,
-    padding: "2px 8px",
+    padding: '2px 8px',
     borderRadius: 10,
     border: `1px solid ${COLORS.primary}`,
   },
@@ -435,25 +409,25 @@ const styles: Record<string, React.CSSProperties> = {
     fontWeight: 600,
     color: COLORS.success,
     background: COLORS.successLight,
-    padding: "2px 8px",
+    padding: '2px 8px',
     borderRadius: 10,
   },
   stepDesc: {
-    margin: "4px 0 0",
+    margin: '4px 0 0',
     fontSize: 13,
     color: COLORS.gray,
     lineHeight: 1.4,
   },
-  confirmedTime: { margin: "4px 0 0", fontSize: 11, color: COLORS.gray },
+  confirmedTime: { margin: '4px 0 0', fontSize: 11, color: COLORS.gray },
   confirmButton: {
     marginTop: 12,
-    padding: "10px 20px",
+    padding: '10px 20px',
     fontSize: 14,
     fontWeight: 600,
     color: COLORS.white,
     background: COLORS.primary,
-    border: "none",
+    border: 'none',
     borderRadius: 8,
-    width: "100%",
+    width: '100%',
   },
 };

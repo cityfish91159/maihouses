@@ -23,11 +23,11 @@
 
 ### Body (JSON)
 
-| 欄位 | 類型 | 必填 | 說明 |
-|------|------|------|------|
-| `token` | string (UUID) | 是 | 案件 token，從 URL 參數或 localStorage 取得 |
-| `userId` | string | 是 | 已註冊用戶的 ID（從 Supabase Auth 取得） |
-| `userName` | string | 是 | 用戶名稱，用於更新案件中的 `buyer_name` |
+| 欄位       | 類型          | 必填 | 說明                                        |
+| ---------- | ------------- | ---- | ------------------------------------------- |
+| `token`    | string (UUID) | 是   | 案件 token，從 URL 參數或 localStorage 取得 |
+| `userId`   | string        | 是   | 已註冊用戶的 ID（從 Supabase Auth 取得）    |
+| `userName` | string        | 是   | 用戶名稱，用於更新案件中的 `buyer_name`     |
 
 ### 請求範例
 

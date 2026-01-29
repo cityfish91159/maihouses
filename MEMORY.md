@@ -4,6 +4,7 @@
 > **Maintainer**: Claude / Antigravity
 
 ## 1. Active Context (當前焦點)
+
 - **Current Phase**: FE-7 詳情頁安心留痕 UI 優化 - Phase 1 完成 (2026-01-27)
 - **Immediate Goal**: Phase 2 測試與優化 (響應式驗證、可訪問性審計、效能測試)
 - **Latest Achievement** (2026-01-27 - FE-7 Phase 1 完成):
@@ -30,49 +31,51 @@
   - ⏳ **FE-1 優化工單清單** 確認與初始化（記憶團隊）
 
   ### 工單清單（29項）
+
   #### 🔴 P0 Critical（3 項） - PropertyUploadPage Timer cleanup + XSS 防護 + MediaSection form
-    - [ ] **P1**: PropertyUploadPage Timer cleanup 不完整（OPT-2/OPT-2.5 refs 未清理）
-    - [ ] **P2**: PropertyUploadPage prompt() XSS 風險（handleImport591 L373 需 DOMPurify）
-    - [ ] **M1**: MediaSection form.images[0] undefined（確保存在前再存取）
+  - [ ] **P1**: PropertyUploadPage Timer cleanup 不完整（OPT-2/OPT-2.5 refs 未清理）
+  - [ ] **P2**: PropertyUploadPage prompt() XSS 風險（handleImport591 L373 需 DOMPurify）
+  - [ ] **M1**: MediaSection form.images[0] undefined（確保存在前再存取）
 
   #### 🟠 P1 Major（12 項） - 長行/重複邏輯/useCallback/無障礙
-    - [ ] **P3**: PropertyUploadPage handle591Import 152行過長（需拆分）
-    - [ ] **P4**: PropertyUploadPage handleRestoreDraft 未用 useCallback
-    - [ ] **P5**: PropertyUploadPage handleDiscardDraft 未用 useCallback
-    - [ ] **P6**: PropertyUploadPage handleImport591 未用 useCallback
-    - [ ] **P7**: PropertyUploadPage Timer 設置邏輯重複（L69-74, L98-109）
-    - [ ] **P8**: PropertyUploadPage hover:translate-y layout shift（需 will-change）
-    - [ ] **P9**: PropertyUploadPage 返回按鈕缺 focus（focus ring）
-    - [ ] **P10**: PropertyUploadPage 還原草稿按鈕缺 focus
-    - [ ] **P11**: PropertyUploadPage 捨棄按鈕缺 focus
-    - [ ] **P12**: PropertyUploadPage 591搬家按鈕缺 focus
-    - [ ] **M2**: MediaSection onInput 未用 useCallback
-    - [ ] **M3**: MediaSection Mock data 硬編碼（需常數化）
-    - [ ] **M4**: MediaSection 魔術數字 5000000（需常數化）
+  - [ ] **P3**: PropertyUploadPage handle591Import 152行過長（需拆分）
+  - [ ] **P4**: PropertyUploadPage handleRestoreDraft 未用 useCallback
+  - [ ] **P5**: PropertyUploadPage handleDiscardDraft 未用 useCallback
+  - [ ] **P6**: PropertyUploadPage handleImport591 未用 useCallback
+  - [ ] **P7**: PropertyUploadPage Timer 設置邏輯重複（L69-74, L98-109）
+  - [ ] **P8**: PropertyUploadPage hover:translate-y layout shift（需 will-change）
+  - [ ] **P9**: PropertyUploadPage 返回按鈕缺 focus（focus ring）
+  - [ ] **P10**: PropertyUploadPage 還原草稿按鈕缺 focus
+  - [ ] **P11**: PropertyUploadPage 捨棄按鈕缺 focus
+  - [ ] **P12**: PropertyUploadPage 591搬家按鈕缺 focus
+  - [ ] **M2**: MediaSection onInput 未用 useCallback
+  - [ ] **M3**: MediaSection Mock data 硬編碼（需常數化）
+  - [ ] **M4**: MediaSection 魔術數字 5000000（需常數化）
 
   #### 🟡 P2 Minor FE-1（5 項） - 無障礙色系 + ARIA
-    - [ ] **F1**: MediaSection 刪除按鈕缺 focus
-    - [ ] **F2**: MediaSection 封面按鈕缺 focus
-    - [ ] **F3**: MediaSection inputClass focus ring 色系（需統一 brand）
-    - [ ] **F4**: MediaSection 上傳按鈕色系混用（bg-blue vs brand）
-    - [ ] **F5**: PropertyUploadPage 狀態指示器缺 aria-live
+  - [ ] **F1**: MediaSection 刪除按鈕缺 focus
+  - [ ] **F2**: MediaSection 封面按鈕缺 focus
+  - [ ] **F3**: MediaSection inputClass focus ring 色系（需統一 brand）
+  - [ ] **F4**: MediaSection 上傳按鈕色系混用（bg-blue vs brand）
+  - [ ] **F5**: PropertyUploadPage 狀態指示器缺 aria-live
 
   #### 🟢 P3 Minor 原有（9 項） - 常數化/色系/命名
-    - [ ] **P13**: PropertyUploadPage 魔術數字常數化（超時值、延遲值）
-    - [ ] **P14**: PropertyUploadPage L405 text-slate-400 → text-slate-500/600
-    - [ ] **P15**: PropertyUploadPage L420 text-slate-400 → text-slate-500/600
-    - [ ] **P16**: PropertyUploadPage L454 text-slate-400 → text-slate-500/600
-    - [ ] **P17**: PropertyUploadPage L508 text-slate-400 → text-slate-500/600
-    - [ ] **P18**: PropertyUploadPage L598 text-slate-400 → text-slate-500/600
-    - [ ] **M5**: MediaSection onInput 命名不清（onInputChange）
-    - [ ] **M6**: MediaSection useState 類型簽名（ImageState interface）
-    - [ ] **T1**: TrustToggleSection 魔術數字常數化
-    - [ ] **T2**: TrustToggleSection isEnabled 命名（isOpen/isExpanded）
-    - [ ] **T3**: TrustToggleSection class 過長（需拆分 className）
+  - [ ] **P13**: PropertyUploadPage 魔術數字常數化（超時值、延遲值）
+  - [ ] **P14**: PropertyUploadPage L405 text-slate-400 → text-slate-500/600
+  - [ ] **P15**: PropertyUploadPage L420 text-slate-400 → text-slate-500/600
+  - [ ] **P16**: PropertyUploadPage L454 text-slate-400 → text-slate-500/600
+  - [ ] **P17**: PropertyUploadPage L508 text-slate-400 → text-slate-500/600
+  - [ ] **P18**: PropertyUploadPage L598 text-slate-400 → text-slate-500/600
+  - [ ] **M5**: MediaSection onInput 命名不清（onInputChange）
+  - [ ] **M6**: MediaSection useState 類型簽名（ImageState interface）
+  - [ ] **T1**: TrustToggleSection 魔術數字常數化
+  - [ ] **T2**: TrustToggleSection isEnabled 命名（isOpen/isExpanded）
+  - [ ] **T3**: TrustToggleSection class 過長（需拆分 className）
 
   - **總計**：29 項工單已記錄，全部初始狀態「待做」
   - **追蹤方式**：完成 1 項改 `[ ]` → `[x]`
   - **記憶團隊職責**：每日追蹤工單進度，防止遺漏
+
 - **Previous Achievement** (2026-01-23 v16 - BE-9 案件關閉通知):
   - ✅ **BE-9** 案件關閉通知 API（10 Skills + Codex 協作完成）
     - 新增 `api/trust/close.ts`（342 行）
@@ -259,6 +262,7 @@
   - 測試 51/51 通過
 
 ## 2. Architecture & Tech Stack (架構決策)
+
 - **Frontend**: React 18 + Vite + Tailwind CSS.
   - **State**: `Zustand` (Client Global), `React Query` (Server State).
   - **Pattern**: Container/Presentational components, Custom Hooks (`useUAG.ts` facade).
@@ -269,15 +273,19 @@
   - **Security**: Mandatory RLS, Zod validation for all inputs.
 
 ## 3. Known Issues & Technical Debt (已知坑洞)
+
 ### 🔴 Critical
+
 - ~~**UAG Trust Flow**: `/api/trust/cases` 不存在~~ ✅ **已修復 (2026-01-19)**
 
 ### 🟡 Tech Debt
+
 - **Type Safety**: Some older files may still have loose types (User strictness: No `any`).
 - ~~**Tests**: UAG module lacks E2E coverage for the M1-M5 Trust Flow state machine.~~ ✅ 已新增 51 個測試
 - **部署**: 需要執行 `20260119_trust_cases_schema.sql` migration 到 Supabase
 
 ## 4. Operational Rules (操作守則)
+
 - **Anti-Laziness**: 禁止 `// ... rest of code`。大檔案必須分段完整輸出。
 - **Context Management**:
   - 先讀 `MEMORY.md`。
@@ -288,32 +296,34 @@
   - 測試失敗必須 Self-Heal，不可刪除測試。
 
 ## 5. Key Files Map (關鍵檔案)
+
 - **Guard Rules**: `CLAUDE.md`, `GEMINI.md`.
 - **Skills**: `.claude/skills/`.
 - **UAG Logic**: `src/pages/UAG/index.tsx`, `src/pages/UAG/hooks/useUAG.ts`.
 - **Backend Trust**: `api/trust/`.
 
 ## 6. Glossary (專案術語)
+
 - **UAG**: User Activity & Growth (導客系統).
 - **Trust Flow (安心流程)**: 交易六階段 (M1:接洽 → M2:帶看 → M3:出價 → M4:斡旋 → M5:成交 → M6:交屋).
 - **Community Wall**: 真實口碑牆.
 
 ## 7. Skills 使用紀錄 (2026-01-19 v8 - Trust Legacy APIs 12 Skills 修復)
 
-| # | Skill | 修復內容 | 檔案位置 | 證明 |
-|---|-------|----------|----------|------|
-| 1 | nasa_typescript_safety | 6 個 API `as { id }` → Zod safeParse | status, submit, confirm, payment, checklist, supplement | ✅ grep 0 匹配 |
-| 2 | read-before-edit | 修改前完整讀取 7 個檔案 | 所有修改皆有 Read | ✅ |
-| 3 | backend_safeguard | TrustQuerySchema Zod 驗證 + 400 錯誤 | api/trust/_utils.ts | z.object({ id }) |
-| 4 | code-simplifier | 提取共用 TrustQuerySchema 至 _utils.ts | api/trust/_utils.ts | export TrustQuerySchema |
-| 5 | agentic_architecture | 統一錯誤格式 `{ error: string }` | 6 個 API | ✅ |
-| 6 | draconian_rls_audit | 所有 query 參數經過 Zod 驗證 | 6 個 API | safeParse |
-| 7 | rigorous_testing | 新增 16 個測試 | legacy-apis.test.ts | ✅ 16/16 通過 |
-| 8 | no_lazy_implementation | 完整實作無 TODO/FIXME | grep 驗證 | ✅ 0 匹配 |
-| 9 | audit_logging | 所有 safeParse 失敗有 logger 記錄 | 6 個 API | logger.error |
-| 10 | context_mastery | grep 全面搜尋確認無遺漏 | api/trust/ | ✅ 0 `as { id` |
-| 11 | memory_bank | 更新 MEMORY.md v8 | MEMORY.md | ✅ 本紀錄 |
-| 12 | google_grade_reviewer | 最終代碼審查確認品質 | npm run gate | ✅ 通過 |
+| #   | Skill                  | 修復內容                                | 檔案位置                                                | 證明                    |
+| --- | ---------------------- | --------------------------------------- | ------------------------------------------------------- | ----------------------- |
+| 1   | nasa_typescript_safety | 6 個 API `as { id }` → Zod safeParse    | status, submit, confirm, payment, checklist, supplement | ✅ grep 0 匹配          |
+| 2   | read-before-edit       | 修改前完整讀取 7 個檔案                 | 所有修改皆有 Read                                       | ✅                      |
+| 3   | backend_safeguard      | TrustQuerySchema Zod 驗證 + 400 錯誤    | api/trust/\_utils.ts                                    | z.object({ id })        |
+| 4   | code-simplifier        | 提取共用 TrustQuerySchema 至 \_utils.ts | api/trust/\_utils.ts                                    | export TrustQuerySchema |
+| 5   | agentic_architecture   | 統一錯誤格式 `{ error: string }`        | 6 個 API                                                | ✅                      |
+| 6   | draconian_rls_audit    | 所有 query 參數經過 Zod 驗證            | 6 個 API                                                | safeParse               |
+| 7   | rigorous_testing       | 新增 16 個測試                          | legacy-apis.test.ts                                     | ✅ 16/16 通過           |
+| 8   | no_lazy_implementation | 完整實作無 TODO/FIXME                   | grep 驗證                                               | ✅ 0 匹配               |
+| 9   | audit_logging          | 所有 safeParse 失敗有 logger 記錄       | 6 個 API                                                | logger.error            |
+| 10  | context_mastery        | grep 全面搜尋確認無遺漏                 | api/trust/                                              | ✅ 0 `as { id`          |
+| 11  | memory_bank            | 更新 MEMORY.md v8                       | MEMORY.md                                               | ✅ 本紀錄               |
+| 12  | google_grade_reviewer  | 最終代碼審查確認品質                    | npm run gate                                            | ✅ 通過                 |
 
 ---
 
@@ -325,6 +335,7 @@
 ### 8.1 執行摘要
 
 #### 當前狀態
+
 - **代碼位置**: `src/components/TrustServiceBanner.tsx` (123 行)
 - **整合位置**: `src/pages/PropertyDetailPage.tsx` L473-482
 - **測試覆蓋**: `src/components/__tests__/TrustServiceBanner.test.tsx` (131 行)
@@ -333,18 +344,20 @@
 - **阻塞問題**: 2 個 alert() 待移除 (PropertyDetailPage L377, L388)
 
 #### 問題統計
-| 優先級 | 數量 | 已完成 | 進度 |
-|--------|------|--------|------|
-| **P0 阻塞** | 4 | 0 | 0% |
-| **P1 重要** | 5 | 0 | 0% |
-| **P2 優化** | 5 | 0 | 0% |
-| **總計** | 14 | 0 | 0% |
+
+| 優先級      | 數量 | 已完成 | 進度 |
+| ----------- | ---- | ------ | ---- |
+| **P0 阻塞** | 4    | 0      | 0%   |
+| **P1 重要** | 5    | 0      | 0%   |
+| **P2 優化** | 5    | 0      | 0%   |
+| **總計**    | 14   | 0      | 0%   |
 
 ---
 
 ### 8.2 完整問題追蹤清單
 
 #### P0-1: 移除 PropertyDetailPage L377 的 alert()
+
 - **文件**: `src/pages/PropertyDetailPage.tsx`
 - **位置**: L377
 - **替代方案**: 使用 `sonner` Toast (已安裝 v2.0.7)
@@ -352,6 +365,7 @@
 - **預計完成**: 2026-01-28
 
 #### P0-2: 移除 PropertyDetailPage L388 的 alert()
+
 - **文件**: `src/pages/PropertyDetailPage.tsx`
 - **位置**: L388
 - **替代方案**: 使用 `toast.success()`
@@ -359,6 +373,7 @@
 - **預計完成**: 2026-01-28
 
 #### P0-3: 新增 Error Boundary 保護 TrustServiceBanner
+
 - **文件**: `src/pages/PropertyDetailPage.tsx`
 - **位置**: L473-482
 - **風險**: 組件錯誤會導致整頁白屏
@@ -367,6 +382,7 @@
 - **預計完成**: 2026-01-28
 
 #### P0-4: 新增 Loading 狀態處理
+
 - **文件**: `src/components/TrustServiceBanner.tsx`
 - **問題**: `property.trustEnabled` 尚未載入時無顯示
 - **解決方案**: 新增 `isLoading` prop + Loading Skeleton
@@ -374,6 +390,7 @@
 - **預計完成**: 2026-01-29
 
 #### P1-1: 補充 JSDoc 文檔覆蓋率至 90%
+
 - **文件**: `src/components/TrustServiceBanner.tsx`
 - **當前覆蓋率**: ~5%
 - **需要補充**: Props 各欄位、bannerConfig 邏輯、事件處理
@@ -381,6 +398,7 @@
 - **預計完成**: 2026-01-30
 
 #### P1-2: 新增 Focus 可見狀態
+
 - **文件**: `src/components/TrustServiceBanner.tsx`
 - **位置**: L111-118 (按鈕元素)
 - **解決方案**: 新增 `focus:ring-2` 樣式
@@ -388,6 +406,7 @@
 - **預計完成**: 2026-01-30
 
 #### P1-3: 修復 Touch Target 尺寸 (32px → 40px)
+
 - **文件**: `src/components/TrustServiceBanner.tsx`
 - **位置**: L111-118
 - **解決方案**: `py-2` → `py-2.5 min-h-[40px]`
@@ -395,6 +414,7 @@
 - **預計完成**: 2026-01-30
 
 #### P1-4: 使用專案色彩系統
+
 - **文件**: `src/components/TrustServiceBanner.tsx`
 - **當前問題**: 硬編碼 `bg-blue-50`, `bg-amber-50`
 - **解決方案**: 使用 `badge-trust-*`, `badge-warning-*` (需在 tailwind.config.cjs 新增)
@@ -402,6 +422,7 @@
 - **預計完成**: 2026-01-31
 
 #### P1-5: 拆分 PropertyDetailPage (1009 行 → 6 個子組件)
+
 - **文件**: `src/pages/PropertyDetailPage.tsx`
 - **當前問題**: 單一檔案過長,違反 SRP
 - **優先順序**: Phase 2 重構 (不阻塞當前發布)
@@ -409,6 +430,7 @@
 - **預計完成**: 2026-02-05
 
 #### P2-1 ~ P2-5: 優化問題
+
 - **P2-1**: 新增整合測試 (與 PropertyDetailPage 整合)
 - **P2-2**: 優化錯誤訊息 (提供明確解決步驟)
 - **P2-3**: 新增 Loading Skeleton Shimmer 動畫
@@ -440,6 +462,7 @@ TrustServiceBanner.test.tsx (131 行)
 ### 8.4 風險評估
 
 #### 高風險 (需立即處理)
+
 1. **P0-1, P0-2: alert() 用戶體驗災難**
    - 影響: 阻塞 UI,移動裝置體驗極差
    - 機率: 100% (每次點擊必觸發)
@@ -451,6 +474,7 @@ TrustServiceBanner.test.tsx (131 行)
    - 緩解: 立即加上 Error Boundary
 
 #### 中風險 (P1 發布前完成)
+
 1. **P1-4: 硬編碼色彩**
    - 影響: 品牌色變更時需手動修改多處
    - 機率: 中 (未來品牌升級)
@@ -466,26 +490,31 @@ TrustServiceBanner.test.tsx (131 行)
 ### 8.5 團隊協調指南
 
 #### 給「UI/UX 團隊」
+
 - **任務**: 實作 P1-2 (Focus 狀態) + P1-3 (Touch Target)
 - **關鍵依賴**: Tailwind `focus:ring-2`, WCAG 2.1 Level AAA (40px)
 - **驗收**: `npm run dev` → Tab 鍵測試 Focus 圈
 
 #### 給「測試團隊」
+
 - **任務**: 實作 P2-1 (整合測試) + P2-4 (邊界測試)
 - **關鍵依賴**: Toast 測試需等 P0-1, P0-2 完成
 - **驗收**: `npm test -- --coverage` (目標: 90%+)
 
 #### 給「後端/API 團隊」
+
 - **任務**: Phase 2 - 實作 `/api/property/request-trust-enable` API
 - **API 路徑**: POST `/api/property/request-trust-enable`
 - **請求參數**: `{ propertyId: string, userId?: string }`
 
 #### 給「重構團隊」
+
 - **任務**: 實作 P1-5 (拆分 PropertyDetailPage)
 - **拆分計畫**: 6 個子組件,主檔案 < 200 行
 - **驗收**: `npx madge --circular src/pages/PropertyDetailPage/`
 
 #### 給「文檔團隊」
+
 - **任務**: 實作 P1-1 (補充 JSDoc 文檔)
 - **當前覆蓋率**: ~5%,目標: 90%
 - **驗收**: `npx typedoc --entryPoints src/components/TrustServiceBanner.tsx`
@@ -496,27 +525,29 @@ TrustServiceBanner.test.tsx (131 行)
 
 #### 本週目標 (2026-01-27 ~ 2026-01-31)
 
-| 任務 | 負責團隊 | 狀態 | 預計完成 |
-|------|----------|------|----------|
-| P0-1: 移除 alert() L377 | 前端 | 🔴 待開始 | 2026-01-28 |
-| P0-2: 移除 alert() L388 | 前端 | 🔴 待開始 | 2026-01-28 |
-| P0-3: Error Boundary | 前端 | 🔴 待開始 | 2026-01-28 |
-| P0-4: Loading 狀態 | 前端 | 🔴 待開始 | 2026-01-29 |
-| P1-1: JSDoc 文檔 | 文檔 | 🔴 待開始 | 2026-01-30 |
-| P1-2: Focus 狀態 | UI/UX | 🔴 待開始 | 2026-01-30 |
-| P1-3: Touch Target | UI/UX | 🔴 待開始 | 2026-01-30 |
-| P1-4: 色彩系統 | UI/UX | 🔴 待開始 | 2026-01-31 |
+| 任務                    | 負責團隊 | 狀態      | 預計完成   |
+| ----------------------- | -------- | --------- | ---------- |
+| P0-1: 移除 alert() L377 | 前端     | 🔴 待開始 | 2026-01-28 |
+| P0-2: 移除 alert() L388 | 前端     | 🔴 待開始 | 2026-01-28 |
+| P0-3: Error Boundary    | 前端     | 🔴 待開始 | 2026-01-28 |
+| P0-4: Loading 狀態      | 前端     | 🔴 待開始 | 2026-01-29 |
+| P1-1: JSDoc 文檔        | 文檔     | 🔴 待開始 | 2026-01-30 |
+| P1-2: Focus 狀態        | UI/UX    | 🔴 待開始 | 2026-01-30 |
+| P1-3: Touch Target      | UI/UX    | 🔴 待開始 | 2026-01-30 |
+| P1-4: 色彩系統          | UI/UX    | 🔴 待開始 | 2026-01-31 |
 
 ---
 
 ### 8.7 參考資料
 
 #### 內部文件
+
 - [CLAUDE.md](./CLAUDE.md) - 專案開發規範
 - [trust-flow-implementation.md](https://maihouses.vercel.app/maihouses/docs/trust-flow-implementation.md) - 信任流程規格
 - [tailwind.config.cjs](./tailwind.config.cjs) - 色彩系統定義
 
 #### 外部資源
+
 - [WCAG 2.1 Guidelines](https://www.w3.org/WAI/WCAG21/quickref/) - 無障礙性標準
 - [Sonner Toast](https://sonner.emilkowal.ski/) - Toast 套件文檔
 - [React Error Boundary](https://react.dev/reference/react/Component#catching-rendering-errors-with-an-error-boundary) - 錯誤邊界文檔

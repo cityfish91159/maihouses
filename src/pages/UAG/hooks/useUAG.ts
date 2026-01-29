@@ -22,18 +22,18 @@
  * ```
  */
 
-import { useUAGData } from "./useUAGData";
-import { useLeadPurchase, type BuyLeadResult } from "./useLeadPurchase";
-import { useRealtimeUpdates } from "./useRealtimeUpdates";
-import type { AppData } from "../types/uag.types";
+import { useUAGData } from './useUAGData';
+import { useLeadPurchase, type BuyLeadResult } from './useLeadPurchase';
+import { useRealtimeUpdates } from './useRealtimeUpdates';
+import type { AppData } from '../types/uag.types';
 
 // ============================================================================
 // Re-exports
 // ============================================================================
 
 // 重新導出類型，保持向後兼容
-export type { BuyLeadResult } from "./useLeadPurchase";
-export { UAG_QUERY_KEY } from "./useUAGData";
+export type { BuyLeadResult } from './useLeadPurchase';
+export { UAG_QUERY_KEY } from './useUAGData';
 
 // ============================================================================
 // Types
@@ -73,8 +73,7 @@ export interface UseUAGReturn {
  */
 export function useUAG(): UseUAGReturn {
   // 1. 數據獲取
-  const { data, isLoading, error, refetch, useMock, toggleMode, userId } =
-    useUAGData();
+  const { data, isLoading, error, refetch, useMock, toggleMode, userId } = useUAGData();
 
   // 2. 購買邏輯
   const { buyLead, isBuying } = useLeadPurchase({

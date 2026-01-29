@@ -60,12 +60,12 @@
         margin: 0;
         padding: 0;
         font-family:
-          "Noto Sans TC",
+          'Noto Sans TC',
           -apple-system,
           BlinkMacSystemFont,
-          "PingFang TC",
-          "Hiragino Sans",
-          "Microsoft JhengHei",
+          'PingFang TC',
+          'Hiragino Sans',
+          'Microsoft JhengHei',
           sans-serif;
         font-size: 0.9375rem; /* 15px */
         line-height: 1.5;
@@ -153,8 +153,7 @@
       .logo-text-main {
         font-size: 1.5rem; /* 24px */
         font-weight: 700;
-        font-family:
-          ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+        font-family: ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
         color: #00385a;
         letter-spacing: 0.025em;
         line-height: 1;
@@ -1434,16 +1433,10 @@
             <!-- 右側容器:上下兩張小卡 - 在 480px 以下會打散成滑動項 -->
             <div class="featured-side-container">
               <!-- 右上小卡:遠雄新未來 -->
-              <div
-                class="featured-side-top"
-                id="featured-side-top-container"
-              ></div>
+              <div class="featured-side-top" id="featured-side-top-container"></div>
 
               <!-- 右下小卡:國家大苑 -->
-              <div
-                class="featured-side-bottom"
-                id="featured-side-bottom-container"
-              ></div>
+              <div class="featured-side-bottom" id="featured-side-bottom-container"></div>
             </div>
           </div>
         </div>
@@ -1461,7 +1454,7 @@
     </main>
     <!-- ESM 入口：顯式初始化以避免 import 副作用 (P42 修正) -->
     <script type="module">
-      import { bootstrap } from "./js/property-main.js";
+      import { bootstrap } from './js/property-main.js';
       void bootstrap();
     </script>
     <script src="js/tracker.js" defer></script>

@@ -4,11 +4,7 @@
  */
 
 // [NASA TypeScript Safety] 導出 role 類型供外部使用
-export type FeedCommentAuthorRole =
-  | "resident"
-  | "member"
-  | "agent"
-  | "official";
+export type FeedCommentAuthorRole = 'resident' | 'member' | 'agent' | 'official';
 
 export interface CommentAuthor {
   id: string;
@@ -45,18 +41,10 @@ export interface FeedComment {
 }
 
 // 有效角色列表
-const VALID_ROLES: CommentAuthor["role"][] = [
-  "resident",
-  "member",
-  "agent",
-  "official",
-];
+const VALID_ROLES: CommentAuthor['role'][] = ['resident', 'member', 'agent', 'official'];
 
-function isValidRole(role: unknown): role is CommentAuthor["role"] {
-  return (
-    typeof role === "string" &&
-    VALID_ROLES.includes(role as CommentAuthor["role"])
-  );
+function isValidRole(role: unknown): role is CommentAuthor['role'] {
+  return typeof role === 'string' && VALID_ROLES.includes(role as CommentAuthor['role']);
 }
 
 // API 回傳格式轉換
@@ -67,9 +55,9 @@ export function transformApiComment(raw: Record<string, unknown>): FeedComment {
     id: String(raw.id),
     postId: String(raw.post_id),
     author: {
-      id: author?.id ? String(author.id) : "",
-      name: String(author?.name || "匿名用戶"),
-      role: isValidRole(author?.role) ? author.role : "member",
+      id: author?.id ? String(author.id) : '',
+      name: String(author?.name || '匿名用戶'),
+      role: isValidRole(author?.role) ? author.role : 'member',
     },
     content: String(raw.content),
     createdAt: String(raw.created_at),

@@ -5,15 +5,15 @@
  * 重構：使用 LockedOverlay + Tailwind brand 色系
  */
 
-import { useMemo } from "react";
-import type { Role, Review } from "../types";
-import { getPermissions } from "../types";
-import { useGuestVisibleItems } from "../../../hooks/useGuestVisibleItems";
-import { LockedOverlay } from "./LockedOverlay";
+import { useMemo } from 'react';
+import type { Role, Review } from '../types';
+import { getPermissions } from '../types';
+import { useGuestVisibleItems } from '../../../hooks/useGuestVisibleItems';
+import { LockedOverlay } from './LockedOverlay';
 
 interface ReviewEntry {
   id: string;
-  type: "pro" | "con";
+  type: 'pro' | 'con';
   text: string;
   author: string;
   company: string;
@@ -26,7 +26,7 @@ interface ReviewCardProps {
 }
 
 function ReviewCard({ entry }: ReviewCardProps) {
-  const isPro = entry.type === "pro";
+  const isPro = entry.type === 'pro';
   const hasVisits = entry.visits > 0;
   const hasDeals = entry.deals > 0;
 
@@ -42,25 +42,25 @@ function ReviewCard({ entry }: ReviewCardProps) {
         <div className="flex-1">
           <div className="text-[13px] font-bold text-ink-900">
             {entry.author}
-            {entry.company ? `｜${entry.company}` : ""}
+            {entry.company ? `｜${entry.company}` : ''}
           </div>
           {(hasVisits || hasDeals) && (
             <div className="text-[11px] text-ink-600">
               {hasVisits && `帶看 ${entry.visits} 次`}
-              {hasVisits && hasDeals && " · "}
+              {hasVisits && hasDeals && ' · '}
               {hasDeals && `成交 ${entry.deals} 戶`}
             </div>
           )}
         </div>
       </div>
       <div
-        className={`flex items-start gap-2.5 rounded-[10px] p-2 text-[13px] leading-relaxed ${isPro ? "to-brand-100/50 bg-gradient-to-br from-brand-50" : "from-brand-100/30 bg-gradient-to-br to-brand-100"}`}
+        className={`flex items-start gap-2.5 rounded-[10px] p-2 text-[13px] leading-relaxed ${isPro ? 'to-brand-100/50 bg-gradient-to-br from-brand-50' : 'from-brand-100/30 bg-gradient-to-br to-brand-100'}`}
       >
         <span
           className="flex size-6 shrink-0 items-center justify-center text-base"
           aria-hidden="true"
         >
-          {isPro ? "✅" : "⚖️"}
+          {isPro ? '✅' : '⚖️'}
         </span>
         <span className="flex-1 text-ink-900">{entry.text}</span>
       </div>
@@ -81,9 +81,8 @@ export function ReviewsSection({
 }: ReviewsSectionProps) {
   // Memoize reviews to ensure stable identity for downstream useMemo
   const reviews = useMemo(
-    () =>
-      Array.isArray(reviewsProp) ? reviewsProp : (reviewsProp?.items ?? []),
-    [reviewsProp],
+    () => (Array.isArray(reviewsProp) ? reviewsProp : (reviewsProp?.items ?? [])),
+    [reviewsProp]
   );
   const perm = getPermissions(viewerRole);
 
@@ -94,7 +93,7 @@ export function ReviewsSection({
         if (!pro) return;
         entries.push({
           id: `${review.id}-pro-${idx}`,
-          type: "pro",
+          type: 'pro',
           text: pro,
           author: review.author,
           company: review.company,
@@ -102,14 +101,12 @@ export function ReviewsSection({
           deals: review.deals,
         });
       });
-      const consArray = Array.isArray(review.cons)
-        ? review.cons
-        : [review.cons];
+      const consArray = Array.isArray(review.cons) ? review.cons : [review.cons];
       consArray.forEach((con, idx) => {
         if (!con) return;
         entries.push({
           id: `${review.id}-con-${idx}`,
-          type: "con",
+          type: 'con',
           text: con,
           author: review.author,
           company: review.company,
@@ -157,7 +154,7 @@ export function ReviewsSection({
           visible={hiddenReviewCount > 0 && !!nextHiddenEntry}
           hiddenCount={hiddenReviewCount}
           countLabel="則評價"
-          benefits={["查看全部評價", "新回答通知"]}
+          benefits={['查看全部評價', '新回答通知']}
           {...(onUnlock ? { onCtaClick: onUnlock } : {})}
         >
           {nextHiddenEntry && <ReviewCard entry={nextHiddenEntry} />}

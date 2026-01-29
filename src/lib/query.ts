@@ -22,16 +22,16 @@ export function parseFreeText(input: string): Query {
   const s = input.trim();
 
   // 城市／行政區
-  if (s.includes("台中") || s.includes("臺中")) q.city = "台中市";
-  if (s.includes("台北") || s.includes("臺北")) q.city = "台北市";
-  if (s.includes("新北")) q.city = "新北市";
+  if (s.includes('台中') || s.includes('臺中')) q.city = '台中市';
+  if (s.includes('台北') || s.includes('臺北')) q.city = '台北市';
+  if (s.includes('新北')) q.city = '新北市';
 
-  if (s.includes("西屯")) q.dist = "西屯區";
-  if (s.includes("北屯")) q.dist = "北屯區";
-  if (s.includes("南屯")) q.dist = "南屯區";
-  if (s.includes("中正")) q.dist = "中正區";
-  if (s.includes("大安")) q.dist = "大安區";
-  if (s.includes("信義")) q.dist = "信義區";
+  if (s.includes('西屯')) q.dist = '西屯區';
+  if (s.includes('北屯')) q.dist = '北屯區';
+  if (s.includes('南屯')) q.dist = '南屯區';
+  if (s.includes('中正')) q.dist = '中正區';
+  if (s.includes('大安')) q.dist = '大安區';
+  if (s.includes('信義')) q.dist = '信義區';
 
   // 房數（2房、3房、兩房、三房）
   const mRooms = s.match(/([0-9一二三四五兩]+)\s*房/);
@@ -61,7 +61,7 @@ export function parseFreeText(input: string): Query {
   if (mArea) q.area = Number(mArea[1]);
 
   // 捷運
-  if (s.includes("近捷運") || s.includes("捷運站")) q.nearMRT = true;
+  if (s.includes('近捷運') || s.includes('捷運站')) q.nearMRT = true;
 
   return q;
 }

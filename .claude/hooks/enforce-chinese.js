@@ -8,22 +8,22 @@
  * 使用方式：node enforce-chinese.js "回應內容"
  */
 
-const response = process.argv[2] || "";
+const response = process.argv[2] || '';
 
 if (!response) {
-  console.log("✅ 無內容，跳過檢查");
+  console.log('✅ 無內容，跳過檢查');
   process.exit(0);
 }
 
 // 移除代碼塊、指令、URL、路徑
 const withoutCode = response
-  .replace(/```[\s\S]*?```/g, "") // 代碼塊
-  .replace(/`[^`]+`/g, "") // 行內代碼
-  .replace(/https?:\/\/[^\s]+/g, "") // URL
-  .replace(/[a-zA-Z]:\\[^\s]+/g, "") // Windows 路徑
-  .replace(/\/[a-zA-Z0-9_\-/.]+/g, "") // Unix 路徑
-  .replace(/npm\s+[^\n]+/g, "") // npm 指令
-  .replace(/git\s+[^\n]+/g, ""); // git 指令
+  .replace(/```[\s\S]*?```/g, '') // 代碼塊
+  .replace(/`[^`]+`/g, '') // 行內代碼
+  .replace(/https?:\/\/[^\s]+/g, '') // URL
+  .replace(/[a-zA-Z]:\\[^\s]+/g, '') // Windows 路徑
+  .replace(/\/[a-zA-Z0-9_\-/.]+/g, '') // Unix 路徑
+  .replace(/npm\s+[^\n]+/g, '') // npm 指令
+  .replace(/git\s+[^\n]+/g, ''); // git 指令
 
 // 計算中英文比例
 const chineseChars = (withoutCode.match(/[\u4e00-\u9fa5]/g) || []).length;
@@ -31,34 +31,34 @@ const englishWords = (withoutCode.match(/\b[a-zA-Z]{3,}\b/g) || []).length; // �
 
 // 常見技術術語白名單（不計入違規）
 const techTerms = [
-  "React",
-  "TypeScript",
-  "API",
-  "Hook",
-  "Props",
-  "Component",
-  "JavaScript",
-  "CSS",
-  "HTML",
-  "JSON",
-  "SQL",
-  "RPC",
-  "Supabase",
-  "PostgreSQL",
-  "Vercel",
-  "npm",
-  "git",
-  "interface",
-  "type",
-  "function",
-  "const",
-  "let",
-  "async",
+  'React',
+  'TypeScript',
+  'API',
+  'Hook',
+  'Props',
+  'Component',
+  'JavaScript',
+  'CSS',
+  'HTML',
+  'JSON',
+  'SQL',
+  'RPC',
+  'Supabase',
+  'PostgreSQL',
+  'Vercel',
+  'npm',
+  'git',
+  'interface',
+  'type',
+  'function',
+  'const',
+  'let',
+  'async',
 ];
 
 let whitelistCount = 0;
 for (const term of techTerms) {
-  const regex = new RegExp(`\\b${term}\\b`, "gi");
+  const regex = new RegExp(`\\b${term}\\b`, 'gi');
   whitelistCount += (withoutCode.match(regex) || []).length;
 }
 
@@ -93,6 +93,6 @@ if (hasMostlyEnglish || hasExcessiveEnglish) {
 }
 
 console.log(
-  `✅ 語言檢查通過 (中文: ${chineseChars}, 英文: ${actualEnglish}, 比例: ${(ratio * 100).toFixed(1)}%)`,
+  `✅ 語言檢查通過 (中文: ${chineseChars}, 英文: ${actualEnglish}, 比例: ${(ratio * 100).toFixed(1)}%)`
 );
 process.exit(0);

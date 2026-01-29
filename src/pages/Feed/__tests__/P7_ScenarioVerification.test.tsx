@@ -13,14 +13,14 @@
  * - 資料層安全 (是否洩漏私密貼文)
  */
 
-import { render, screen, fireEvent } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import Consumer from "../Consumer";
-import { useAuth } from "../../../hooks/useAuth";
-import { useFeedData } from "../../../hooks/useFeedData";
-import { STRINGS } from "../../../constants/strings";
-import { ROUTES } from "../../../constants/routes";
+import { render, screen, fireEvent } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import Consumer from '../Consumer';
+import { useAuth } from '../../../hooks/useAuth';
+import { useFeedData } from '../../../hooks/useFeedData';
+import { STRINGS } from '../../../constants/strings';
+import { ROUTES } from '../../../constants/routes';
 
 // Define mocks using hoisting to avoid ReferenceError
 const mocks = vi.hoisted(() => ({
@@ -29,19 +29,19 @@ const mocks = vi.hoisted(() => ({
 }));
 
 // Mock Dependencies
-vi.mock("../../../hooks/useAuth");
-vi.mock("../../../hooks/useFeedData");
-vi.mock("react-router-dom", async () => {
-  const actual = await vi.importActual("react-router-dom");
+vi.mock('../../../hooks/useAuth');
+vi.mock('../../../hooks/useFeedData');
+vi.mock('react-router-dom', async () => {
+  const actual = await vi.importActual('react-router-dom');
   return {
     ...actual,
     useNavigate: () => mocks.navigate,
   };
 });
-vi.mock("../../../lib/notify", () => ({ notify: mocks.notify }));
+vi.mock('../../../lib/notify', () => ({ notify: mocks.notify }));
 
 // Mock Env to bypass strict check
-vi.mock("../../../config/env", () => ({
+vi.mock('../../../config/env', () => ({
   mhEnv: {
     isMockEnabled: () => true,
     subscribe: () => () => {},
@@ -49,7 +49,7 @@ vi.mock("../../../config/env", () => ({
 }));
 
 // Mock Supabase
-vi.mock("../../../lib/supabase", () => ({
+vi.mock('../../../lib/supabase', () => ({
   supabase: {
     from: () => ({ select: () => ({ data: [], error: null }) }),
     channel: () => ({
@@ -60,13 +60,13 @@ vi.mock("../../../lib/supabase", () => ({
 }));
 
 // Mock window.location
-const mockLocation = { href: "" };
-Object.defineProperty(window, "location", {
+const mockLocation = { href: '' };
+Object.defineProperty(window, 'location', {
   value: mockLocation,
   writable: true,
 });
 
-describe("P7 Scenario Verification (L7+ Standard)", () => {
+describe('P7 Scenario Verification (L7+ Standard)', () => {
   const queryClient = new QueryClient({
     defaultOptions: {
       queries: { retry: false },
@@ -77,20 +77,20 @@ describe("P7 Scenario Verification (L7+ Standard)", () => {
     return render(
       <QueryClientProvider client={queryClient}>
         <MemoryRouter>{ui}</MemoryRouter>
-      </QueryClientProvider>,
+      </QueryClientProvider>
     );
   };
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mockLocation.href = "";
+    mockLocation.href = '';
   });
 
   // Mock UseFeedData with controllable private posts
   const mockPrivatePost = {
     id: 1,
-    content: "Secret Content",
-    author: "Resident A",
+    content: 'Secret Content',
+    author: 'Resident A',
     private: true,
     likes: 5,
     comments: 2,
@@ -98,8 +98,8 @@ describe("P7 Scenario Verification (L7+ Standard)", () => {
 
   const mockPublicPost = {
     id: 2,
-    content: "Public Content",
-    author: "Resident B",
+    content: 'Public Content',
+    author: 'Resident B',
     private: false,
     likes: 10,
     comments: 0,
@@ -109,7 +109,7 @@ describe("P7 Scenario Verification (L7+ Standard)", () => {
     authLoading: false,
     activeTransaction: { hasActive: false },
     userProfile: null,
-    userInitial: "G",
+    userInitial: 'G',
     isAuthenticated: false,
     isLoading: false,
     error: null,
@@ -128,7 +128,7 @@ describe("P7 Scenario Verification (L7+ Standard)", () => {
 
   const setupAuth = (role: string, isAuthenticated: boolean) => {
     (useAuth as any).mockReturnValue({
-      user: isAuthenticated ? { id: "user-1" } : null,
+      user: isAuthenticated ? { id: 'user-1' } : null,
       role: role,
       isAuthenticated,
       loading: false,
@@ -142,8 +142,8 @@ describe("P7 Scenario Verification (L7+ Standard)", () => {
     });
   };
 
-  it("Scenario 1: Viewer is Guest", async () => {
-    setupAuth("guest", false);
+  it('Scenario 1: Viewer is Guest', async () => {
+    setupAuth('guest', false);
     setupFeedMock(false);
 
     renderWithProviders(<Consumer />);
@@ -154,9 +154,9 @@ describe("P7 Scenario Verification (L7+ Standard)", () => {
     fireEvent.click(privateTab);
 
     expect(screen.getByText(STRINGS.COMMUNITY.LOCKED_TITLE)).toBeDefined();
-    expect(screen.queryByText("Secret Content")).toBeNull();
+    expect(screen.queryByText('Secret Content')).toBeNull();
 
-    const unlockBtn = screen.getByRole("button", {
+    const unlockBtn = screen.getByRole('button', {
       name: STRINGS.COMMUNITY.BTN_UNLOCK_GUEST,
     });
     fireEvent.click(unlockBtn);
@@ -164,8 +164,8 @@ describe("P7 Scenario Verification (L7+ Standard)", () => {
     expect(window.location.href).toBe(ROUTES.AUTH);
   });
 
-  it("Scenario 2: Viewer is Member", async () => {
-    setupAuth("member", true);
+  it('Scenario 2: Viewer is Member', async () => {
+    setupAuth('member', true);
     setupFeedMock(false);
 
     renderWithProviders(<Consumer />);
@@ -175,36 +175,36 @@ describe("P7 Scenario Verification (L7+ Standard)", () => {
 
     expect(screen.getByText(STRINGS.COMMUNITY.LOCKED_DESC_USER)).toBeDefined();
 
-    const unlockBtn = screen.getByRole("button", {
+    const unlockBtn = screen.getByRole('button', {
       name: STRINGS.COMMUNITY.BTN_UNLOCK_USER,
     });
     fireEvent.click(unlockBtn);
 
     expect(mocks.notify.info).toHaveBeenCalledWith(
       STRINGS.COMMUNITY.NOTIFY_VERIFY_REQUIRED,
-      STRINGS.COMMUNITY.NOTIFY_VERIFY_REQUIRED_DESC,
+      STRINGS.COMMUNITY.NOTIFY_VERIFY_REQUIRED_DESC
     );
-    expect(window.location.href).toBe("");
+    expect(window.location.href).toBe('');
   });
 
-  it("Scenario 3: Viewer is Resident", async () => {
-    setupAuth("resident", true);
+  it('Scenario 3: Viewer is Resident', async () => {
+    setupAuth('resident', true);
     setupFeedMock(true);
 
     renderWithProviders(<Consumer />);
     fireEvent.click(screen.getByText(STRINGS.FEED.TABS.PRIVATE));
 
     expect(screen.queryByText(STRINGS.COMMUNITY.LOCKED_TITLE)).toBeNull();
-    expect(screen.getByText("Secret Content")).toBeDefined();
+    expect(screen.getByText('Secret Content')).toBeDefined();
   });
 
-  it("Scenario 4: Viewer is Agent", async () => {
-    setupAuth("agent", true);
+  it('Scenario 4: Viewer is Agent', async () => {
+    setupAuth('agent', true);
     setupFeedMock(true);
 
     renderWithProviders(<Consumer />);
     fireEvent.click(screen.getByText(STRINGS.FEED.TABS.PRIVATE));
 
-    expect(screen.getByText("Secret Content")).toBeDefined();
+    expect(screen.getByText('Secret Content')).toBeDefined();
   });
 });

@@ -1,11 +1,9 @@
-import { propertyMockData } from "./property-data.js";
-import PropertyRenderer from "./property-renderer.js";
-import propertyAPI from "./services/property-api.js";
+import { propertyMockData } from './property-data.js';
+import PropertyRenderer from './property-renderer.js';
+import propertyAPI from './services/property-api.js';
 
 const now = () =>
-  typeof performance !== "undefined" && performance.now
-    ? performance.now()
-    : Date.now();
+  typeof performance !== 'undefined' && performance.now ? performance.now() : Date.now();
 
 export function createTelemetry() {
   const events = [];
@@ -13,7 +11,7 @@ export function createTelemetry() {
   let fcp = null;
 
   const lcpObserver =
-    typeof PerformanceObserver !== "undefined"
+    typeof PerformanceObserver !== 'undefined'
       ? new PerformanceObserver((entryList) => {
           const entries = entryList.getEntries();
           if (entries.length > 0) {
@@ -24,15 +22,15 @@ export function createTelemetry() {
 
   if (lcpObserver) {
     try {
-      lcpObserver.observe({ type: "largest-contentful-paint", buffered: true });
+      lcpObserver.observe({ type: 'largest-contentful-paint', buffered: true });
     } catch (error) {
-      console.warn("[telemetry] LCP observer unavailable", error);
+      console.warn('[telemetry] LCP observer unavailable', error);
     }
   }
 
   const recordFcp = () => {
-    const paints = performance?.getEntriesByType?.("paint") || [];
-    const fcpEntry = paints.find((p) => p.name === "first-contentful-paint");
+    const paints = performance?.getEntriesByType?.('paint') || [];
+    const fcpEntry = paints.find((p) => p.name === 'first-contentful-paint');
     if (fcpEntry) {
       fcp = fcpEntry.startTime;
     }
@@ -50,12 +48,12 @@ export function createTelemetry() {
       try {
         lcpObserver.disconnect();
       } catch (error) {
-        console.warn("[telemetry] LCP observer disconnect failed", error);
+        console.warn('[telemetry] LCP observer disconnect failed', error);
       }
     }
 
     const snapshot = { events: [...events], lcp, fcp };
-    if (typeof window !== "undefined") {
+    if (typeof window !== 'undefined') {
       window.__phase4Telemetry = snapshot;
     }
     return snapshot;
@@ -68,14 +66,14 @@ export function createTelemetry() {
 export async function bootstrap() {
   const telemetry = createTelemetry();
   const renderer = new PropertyRenderer();
-  telemetry.log("bootstrap:start");
+  telemetry.log('bootstrap:start');
 
   // 1) 首屏：立即渲染 Mock，確保秒開
   const mockVersion = renderer.render(propertyMockData.default, {
-    source: "mock",
-    reason: "bootstrap",
+    source: 'mock',
+    reason: 'bootstrap',
   });
-  telemetry.log("render:mock", { version: mockVersion });
+  telemetry.log('render:mock', { version: mockVersion });
 
   // 2) 背景撈取真實資料並靜默更新
   try {
@@ -85,10 +83,10 @@ export async function bootstrap() {
 
     if (!data) {
       const fallbackVersion = renderer.render(propertyMockData.default, {
-        source: "fallback",
-        reason: "api-null",
+        source: 'fallback',
+        reason: 'api-null',
       });
-      telemetry.log("render:fallback", { version: fallbackVersion, apiMs });
+      telemetry.log('render:fallback', { version: fallbackVersion, apiMs });
       telemetry.expose();
       return;
     }
@@ -99,10 +97,10 @@ export async function bootstrap() {
     const preloadMs = now() - preloadStart;
 
     const realVersion = renderer.render(data, {
-      source: "api",
-      reason: "success",
+      source: 'api',
+      reason: 'success',
     });
-    telemetry.log("render:api", {
+    telemetry.log('render:api', {
       version: realVersion,
       apiMs,
       preloadMs,
@@ -112,22 +110,18 @@ export async function bootstrap() {
     telemetry.expose();
   } catch (error) {
     const fallbackVersion = renderer.render(propertyMockData.default, {
-      source: "fallback",
-      reason: "api-error",
+      source: 'fallback',
+      reason: 'api-error',
     });
-    telemetry.log("render:fallback", {
+    telemetry.log('render:fallback', {
       version: fallbackVersion,
       error: error?.message || error,
     });
     telemetry.expose();
-    console.warn(
-      "[property-main] background update skipped:",
-      error?.message || error,
-    );
+    console.warn('[property-main] background update skipped:', error?.message || error);
   }
 }
 
 // 移除自動執行的副作用，改由外部顯式呼叫 bootstrap()
 // 僅保留環境判斷邏輯供測試參考
-export const isTestEnv =
-  typeof globalThis !== "undefined" && Boolean(globalThis.__vitest_worker__);
+export const isTestEnv = typeof globalThis !== 'undefined' && Boolean(globalThis.__vitest_worker__);

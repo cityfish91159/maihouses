@@ -7,11 +7,11 @@
  * 3. 地址模糊比對
  */
 
-import React, { useState, useEffect, useRef, useCallback } from "react";
-import { supabase } from "../../lib/supabase";
-import { Building2, Search, Plus, Check, Loader2, Home } from "lucide-react";
-import { computeAddressFingerprint } from "../../utils/address";
-import { logger } from "../../lib/logger";
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { supabase } from '../../lib/supabase';
+import { Building2, Search, Plus, Check, Loader2, Home } from 'lucide-react';
+import { computeAddressFingerprint } from '../../utils/address';
+import { logger } from '../../lib/logger';
 
 interface Community {
   id: string;
@@ -32,25 +32,23 @@ interface CommunityPickerProps {
 // [NASA TypeScript Safety] 使用 satisfies 確保類型安全
 // 無社區選項（透天、店面用）
 const NO_COMMUNITY_OPTION: Community = {
-  id: "NONE",
-  name: "無",
-  address: "透天/店面/獨棟",
+  id: 'NONE',
+  name: '無',
+  address: '透天/店面/獨棟',
 };
 
 export function CommunityPicker({
   value,
   address,
   onChange,
-  className = "",
+  className = '',
   required = false,
 }: CommunityPickerProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState(value);
   const [suggestions, setSuggestions] = useState<Community[]>([]);
   const [loading, setLoading] = useState(false);
-  const [selectedCommunity, setSelectedCommunity] = useState<Community | null>(
-    null,
-  );
+  const [selectedCommunity, setSelectedCommunity] = useState<Community | null>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const searchIdRef = useRef<number>(0); // 用於識別最新請求
@@ -58,7 +56,7 @@ export function CommunityPicker({
   // 從地址提取區域
   const extractDistrict = (addr: string): string => {
     const match = addr.match(/([^市縣]+[區鄉鎮市])/);
-    return match?.[1] || "";
+    return match?.[1] || '';
   };
 
   // 搜尋社區（含 race condition 防護）
@@ -78,14 +76,14 @@ export function CommunityPicker({
     setLoading(true);
     try {
       const district = extractDistrict(addr);
-      const fingerprint = addr ? computeAddressFingerprint(addr) : "";
+      const fingerprint = addr ? computeAddressFingerprint(addr) : '';
 
       // 策略 1: 用地址指紋精準匹配
       if (fingerprint) {
         const { data: exactMatch } = await supabase
-          .from("communities")
-          .select("id, name, address, property_count, is_verified")
-          .eq("address_fingerprint", fingerprint)
+          .from('communities')
+          .select('id, name, address, property_count, is_verified')
+          .eq('address_fingerprint', fingerprint)
           .limit(1)
           .abortSignal(abortControllerRef.current.signal);
 
@@ -101,20 +99,20 @@ export function CommunityPicker({
 
       // 策略 2: 用名稱模糊搜尋
       let query = supabase
-        .from("communities")
-        .select("id, name, address, property_count, is_verified")
+        .from('communities')
+        .select('id, name, address, property_count, is_verified')
         .limit(8); // 增加到 8 筆
 
       if (term) {
-        query = query.ilike("name", `%${term}%`);
+        query = query.ilike('name', `%${term}%`);
       }
 
       if (district) {
-        query = query.eq("district", district);
+        query = query.eq('district', district);
       }
 
       const { data, error } = await query
-        .order("property_count", { ascending: false })
+        .order('property_count', { ascending: false })
         .abortSignal(abortControllerRef.current.signal);
 
       // 確保是最新請求的結果
@@ -124,8 +122,8 @@ export function CommunityPicker({
       setSuggestions(data || []);
     } catch (err) {
       // 忽略 abort 錯誤
-      if (err instanceof Error && err.name === "AbortError") return;
-      logger.error("搜尋社區失敗", { error: err });
+      if (err instanceof Error && err.name === 'AbortError') return;
+      logger.error('搜尋社區失敗', { error: err });
       setSuggestions([]);
     } finally {
       // 只有最新請求才更新 loading 狀態
@@ -163,8 +161,8 @@ export function CommunityPicker({
         setIsOpen(false);
       }
     };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   // 選擇現有社區
@@ -172,7 +170,7 @@ export function CommunityPicker({
     setSelectedCommunity(community);
     setSearchTerm(community.name);
     // 「無」社區不傳 ID
-    const communityId = community.id === "NONE" ? undefined : community.id;
+    const communityId = community.id === 'NONE' ? undefined : community.id;
     onChange(community.name, communityId);
     setIsOpen(false);
   };
@@ -181,8 +179,8 @@ export function CommunityPicker({
   const handleSelectNoCommunity = () => {
     // [NASA TypeScript Safety] NO_COMMUNITY_OPTION 已有明確類型定義
     setSelectedCommunity(NO_COMMUNITY_OPTION);
-    setSearchTerm("無");
-    onChange("無", undefined);
+    setSearchTerm('無');
+    onChange('無', undefined);
     setIsOpen(false);
   };
 
@@ -195,40 +193,32 @@ export function CommunityPicker({
   };
 
   // 判斷是否為完整社區名
-  const isValidCommunityName = (
-    name: string,
-  ): { valid: boolean; reason?: string } => {
+  const isValidCommunityName = (name: string): { valid: boolean; reason?: string } => {
     const trimmed = name.trim();
 
     // 長度檢查
     if (trimmed.length < 2) {
-      return { valid: false, reason: "名稱太短" };
+      return { valid: false, reason: '名稱太短' };
     }
 
     // 排除過於泛用的詞
-    const genericWords =
-      /^(透天|店面|華廈|公寓|套房|大樓|A棟|B棟|C區|[A-Z]\d*棟?)$/;
+    const genericWords = /^(透天|店面|華廈|公寓|套房|大樓|A棟|B棟|C區|[A-Z]\d*棟?)$/;
     if (genericWords.test(trimmed)) {
-      return { valid: false, reason: "請輸入正式社區名稱" };
+      return { valid: false, reason: '請輸入正式社區名稱' };
     }
 
     // 排除純地址（只有路街巷號但沒有社區名）
-    if (
-      /^.*[路街巷弄]\d+號?$/.test(trimmed) &&
-      !/社區|大樓|花園|莊園/.test(trimmed)
-    ) {
-      return { valid: false, reason: "這看起來是地址而非社區名" };
+    if (/^.*[路街巷弄]\d+號?$/.test(trimmed) && !/社區|大樓|花園|莊園/.test(trimmed)) {
+      return { valid: false, reason: '這看起來是地址而非社區名' };
     }
 
     // 排除廣告詞
     if (/超便宜|稀有|唯一|急售|降價|特價/.test(trimmed)) {
-      return { valid: false, reason: "請輸入正式社區名稱" };
+      return { valid: false, reason: '請輸入正式社區名稱' };
     }
 
     // 包含社區相關關鍵字 → 優先通過
-    if (
-      /社區|大樓|花園|莊園|雅築|官邸|華廈|別墅|山莊|天廈|豪邸|期$/.test(trimmed)
-    ) {
+    if (/社區|大樓|花園|莊園|雅築|官邸|華廈|別墅|山莊|天廈|豪邸|期$/.test(trimmed)) {
       return { valid: true };
     }
 
@@ -237,7 +227,7 @@ export function CommunityPicker({
       return { valid: true };
     }
 
-    return { valid: false, reason: "建議填寫正式社區名稱" };
+    return { valid: false, reason: '建議填寫正式社區名稱' };
   };
 
   const nameValidation = isValidCommunityName(searchTerm);
@@ -265,11 +255,7 @@ export function CommunityPicker({
           }}
           onFocus={() => setIsOpen(true)}
           placeholder="輸入或選擇社區名稱..."
-          className={`
-            w-full rounded-xl border bg-slate-50 px-10 py-3 text-sm outline-none
-            focus:border-transparent focus:ring-2 focus:ring-[#003366]
-            ${selectedCommunity ? "border-green-300 bg-green-50/50" : "border-slate-200"}
-          `}
+          className={`w-full rounded-xl border bg-slate-50 px-10 py-3 text-sm outline-none focus:border-transparent focus:ring-2 focus:ring-[#003366] ${selectedCommunity ? 'border-green-300 bg-green-50/50' : 'border-slate-200'} `}
         />
         <div className="absolute right-3 top-1/2 -translate-y-1/2">
           {loading ? (
@@ -283,16 +269,14 @@ export function CommunityPicker({
       </div>
 
       {/* 狀態提示 */}
-      {selectedCommunity && selectedCommunity.name !== "無" && (
+      {selectedCommunity && selectedCommunity.name !== '無' && (
         <p className="mt-1 flex items-center gap-1 text-xs text-green-600">
           <Check size={12} />
           已選擇「{selectedCommunity.name}」
-          {selectedCommunity.property_count
-            ? ` (${selectedCommunity.property_count} 個物件)`
-            : ""}
+          {selectedCommunity.property_count ? ` (${selectedCommunity.property_count} 個物件)` : ''}
         </p>
       )}
-      {selectedCommunity && selectedCommunity.name === "無" && (
+      {selectedCommunity && selectedCommunity.name === '無' && (
         <p className="mt-1 flex items-center gap-1 text-xs text-slate-500">
           🏠 此物件為透天/店面，不歸入社區牆
         </p>
@@ -303,15 +287,12 @@ export function CommunityPicker({
           」，請確認名稱正確（系統會比對相似名稱）
         </p>
       )}
-      {!selectedCommunity &&
-        searchTerm &&
-        !nameValidation.valid &&
-        searchTerm.length >= 2 && (
-          <p className="mt-1 text-xs text-amber-600">
-            ⚠️ {nameValidation.reason || "建議填寫正式社區名稱"}
-            （如：遠雄之星8期、惠文新象）
-          </p>
-        )}
+      {!selectedCommunity && searchTerm && !nameValidation.valid && searchTerm.length >= 2 && (
+        <p className="mt-1 text-xs text-amber-600">
+          ⚠️ {nameValidation.reason || '建議填寫正式社區名稱'}
+          （如：遠雄之星8期、惠文新象）
+        </p>
+      )}
 
       {/* 下拉選單 */}
       {isOpen && (
@@ -326,9 +307,7 @@ export function CommunityPicker({
             </div>
             <div>
               <span className="font-medium text-slate-600">無社區</span>
-              <span className="ml-2 text-xs text-slate-400">
-                （透天、店面、獨棟）
-              </span>
+              <span className="ml-2 text-xs text-slate-400">（透天、店面、獨棟）</span>
             </div>
           </button>
 
@@ -344,9 +323,7 @@ export function CommunityPicker({
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
-                  <span className="truncate font-medium text-slate-800">
-                    {community.name}
-                  </span>
+                  <span className="truncate font-medium text-slate-800">{community.name}</span>
                   {community.is_verified && (
                     <span className="rounded bg-green-100 px-1.5 py-0.5 text-[10px] text-green-700">
                       已驗證
@@ -354,14 +331,10 @@ export function CommunityPicker({
                   )}
                 </div>
                 {community.address && (
-                  <p className="truncate text-xs text-slate-500">
-                    {community.address}
-                  </p>
+                  <p className="truncate text-xs text-slate-500">{community.address}</p>
                 )}
                 {community.property_count ? (
-                  <p className="text-xs text-slate-400">
-                    {community.property_count} 個物件
-                  </p>
+                  <p className="text-xs text-slate-400">{community.property_count} 個物件</p>
                 ) : null}
               </div>
             </button>
@@ -379,30 +352,21 @@ export function CommunityPicker({
               <div>
                 <span className="font-medium text-amber-700">建立新社區：</span>
                 <span className="ml-1 text-amber-600">{searchTerm.trim()}</span>
-                <p className="mt-0.5 text-xs text-amber-600">
-                  ⚠️ 請確認找不到才建立
-                </p>
+                <p className="mt-0.5 text-xs text-amber-600">⚠️ 請確認找不到才建立</p>
               </div>
             </button>
           )}
 
           {/* 沒有結果提示 */}
-          {suggestions.length === 0 &&
-            !showCreateOption &&
-            searchTerm.length >= 2 &&
-            !loading && (
-              <div className="px-4 py-6 text-center">
-                <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-full bg-slate-100">
-                  <Search size={20} className="text-slate-400" />
-                </div>
-                <p className="text-sm font-medium text-slate-600">
-                  未找到相似社區
-                </p>
-                <p className="mt-1 text-xs text-slate-400">
-                  請確認名稱後選擇「建立新社區」
-                </p>
+          {suggestions.length === 0 && !showCreateOption && searchTerm.length >= 2 && !loading && (
+            <div className="px-4 py-6 text-center">
+              <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-full bg-slate-100">
+                <Search size={20} className="text-slate-400" />
               </div>
-            )}
+              <p className="text-sm font-medium text-slate-600">未找到相似社區</p>
+              <p className="mt-1 text-xs text-slate-400">請確認名稱後選擇「建立新社區」</p>
+            </div>
+          )}
 
           {/* Loading Skeleton */}
           {loading && suggestions.length === 0 && (

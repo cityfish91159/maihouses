@@ -5,12 +5,12 @@
 
 ## 📊 檔案大小分析
 
-| 模組 | 路徑 | 行數 | Token 估算 | 複雜度 | 優先級 |
-|------|------|------|-----------|--------|--------|
-| **useUAG.ts** | `src/pages/UAG/hooks/useUAG.ts` | 103 | ~400 | 低 (facade) | P1 ⭐⭐⭐ |
-| **uagService.ts** | `src/pages/UAG/services/uagService.ts` | 720 | ~3200 | 極高 | P2 ⭐⭐ |
-| **useFeedData.ts** | `src/hooks/useFeedData.ts` | 809 | ~3600 | 極高 | P3 ⭐ |
-| **wall.ts** | `api/community/wall.ts` | 1070 | ~5000 | 極高 | P4 ⭐ |
+| 模組               | 路徑                                   | 行數 | Token 估算 | 複雜度      | 優先級    |
+| ------------------ | -------------------------------------- | ---- | ---------- | ----------- | --------- |
+| **useUAG.ts**      | `src/pages/UAG/hooks/useUAG.ts`        | 103  | ~400       | 低 (facade) | P1 ⭐⭐⭐ |
+| **uagService.ts**  | `src/pages/UAG/services/uagService.ts` | 720  | ~3200      | 極高        | P2 ⭐⭐   |
+| **useFeedData.ts** | `src/hooks/useFeedData.ts`             | 809  | ~3600      | 極高        | P3 ⭐     |
+| **wall.ts**        | `api/community/wall.ts`                | 1070 | ~5000      | 極高        | P4 ⭐     |
 
 **總計**: 2,702 行代碼
 
@@ -30,6 +30,7 @@ useUAG.ts (103 行)
 ```
 
 **測試策略**: **Shallow Integration Testing**
+
 - Mock 所有 3 個子 hooks
 - 測試 facade 層的整合邏輯
 - 驗證返回值正確映射
@@ -50,6 +51,7 @@ uagService.ts (720 行)
 ```
 
 **測試策略**: **Unit Testing with Supabase Mock**
+
 - Mock Supabase client
 - 測試 API 呼叫正確性
 - 測試錯誤處理和 Zod 驗證
@@ -72,6 +74,7 @@ useFeedData.ts (809 行)
 ```
 
 **測試策略**: **Integration Testing**
+
 - Mock React Query + Supabase
 - 測試 Mock/Live 模式切換
 - 測試 Optimistic Updates
@@ -92,6 +95,7 @@ wall.ts (1070 行)
 ```
 
 **測試策略**: **API Integration Testing**
+
 - Mock NextApiRequest/Response
 - Mock Supabase server client
 - 測試權限檢查和錯誤處理
@@ -105,6 +109,7 @@ wall.ts (1070 行)
 ### Phase 1: useUAG.ts 測試
 
 **必讀**:
+
 - [x] `src/pages/UAG/hooks/useUAG.ts` (103 行)
 - [ ] `src/pages/UAG/hooks/useUAGData.ts` (134 行) - 了解子 hook 1
 - [ ] `src/pages/UAG/hooks/useLeadPurchase.ts` (323 行) - 了解子 hook 2
@@ -112,6 +117,7 @@ wall.ts (1070 行)
 - [ ] `src/pages/UAG/types/uag.types.ts` (273 行) - 了解類型定義
 
 **可選** (為撰寫 mock 提供參考):
+
 - [ ] `src/lib/notify.ts` - notify API
 - [ ] `src/hooks/useAuth.ts` - session 結構
 - [ ] `src/stores/uagModeStore.ts` - zustand store
@@ -123,6 +129,7 @@ wall.ts (1070 行)
 ### Phase 2: uagService.ts 測試
 
 **必讀**:
+
 - [ ] `src/pages/UAG/services/uagService.ts` (720 行) - 主要測試目標
 - [ ] `src/lib/supabase.ts` - client 初始化
 - [ ] `src/lib/logger.ts` - logger API
@@ -135,6 +142,7 @@ wall.ts (1070 行)
 ### Phase 3: useFeedData.ts 測試
 
 **必讀**:
+
 - [ ] `src/hooks/useFeedData.ts` (809 行) - 主要測試目標
 - [ ] `src/types/comment.ts` - 留言類型定義
 - [ ] `src/hooks/useAuth.ts` - auth hook
@@ -146,6 +154,7 @@ wall.ts (1070 行)
 ### Phase 4: api/community/wall.ts 測試
 
 **必讀**:
+
 - [ ] `api/community/wall.ts` (1070 行) - 主要測試目標
 - [ ] `api/lib/apiResponse.ts` (220 行) - 已讀 (Phase 9)
 
@@ -156,12 +165,14 @@ wall.ts (1070 行)
 ## 🎯 Token 優化策略
 
 ### 原則
+
 1. **分階段讀取** - 不要一次讀取所有 4 個測試目標
 2. **Grep 優先** - 使用 Grep 搜尋 import/export，不盲目讀取
 3. **最小讀取集合** - 僅讀取直接依賴
 4. **重用知識** - apiResponse.ts 已在 Phase 9 讀過
 
 ### 預估 Token 使用
+
 - Phase 1 (useUAG): ~1500
 - Phase 2 (uagService): ~3500
 - Phase 3 (useFeedData): ~4000

@@ -7,11 +7,13 @@ POST `/api/trust/complete-buyer-info` - 補完案件的買方資訊（姓名、�
 ## 請求格式
 
 ### HTTP Method
+
 `POST`
 
 ### Headers
 
 **方式 1: JWT 認證（房仲）**
+
 ```
 Cookie: mh_token=<JWT_TOKEN>
 或
@@ -19,6 +21,7 @@ Authorization: Bearer <JWT_TOKEN>
 ```
 
 **方式 2: System Key 認證（系統/Cron）**
+
 ```
 x-system-key: <SYSTEM_API_KEY>
 ```
@@ -30,18 +33,18 @@ x-system-key: <SYSTEM_API_KEY>
   "caseId": "11111111-1111-1111-1111-111111111111",
   "name": "王小明",
   "phone": "0912345678",
-  "email": "wang@example.com"  // 可選
+  "email": "wang@example.com" // 可選
 }
 ```
 
 #### 欄位說明
 
-| 欄位 | 類型 | 必填 | 說明 | 限制 |
-|------|------|------|------|------|
-| `caseId` | `string` | ✅ | 案件 ID | UUID 格式 |
-| `name` | `string` | ✅ | 買方姓名 | 1-100 字元 |
-| `phone` | `string` | ✅ | 買方電話 | 1-20 字元 |
-| `email` | `string` | ❌ | 買方 Email | Email 格式，最多 100 字元 |
+| 欄位     | 類型     | 必填 | 說明       | 限制                      |
+| -------- | -------- | ---- | ---------- | ------------------------- |
+| `caseId` | `string` | ✅   | 案件 ID    | UUID 格式                 |
+| `name`   | `string` | ✅   | 買方姓名   | 1-100 字元                |
+| `phone`  | `string` | ✅   | 買方電話   | 1-20 字元                 |
+| `email`  | `string` | ❌   | 買方 Email | Email 格式，最多 100 字元 |
 
 ## 回應格式
 
@@ -186,12 +189,7 @@ curl -X POST https://maihouses.vercel.app/api/trust/complete-buyer-info \
 ### 範例 3: TypeScript 前端呼叫
 
 ```typescript
-async function completeBuyerInfo(
-  caseId: string,
-  name: string,
-  phone: string,
-  email?: string
-) {
+async function completeBuyerInfo(caseId: string, name: string, phone: string, email?: string) {
   const response = await fetch('/api/trust/complete-buyer-info', {
     method: 'POST',
     headers: {
@@ -237,6 +235,7 @@ try {
 ```
 
 該 Migration 新增了以下欄位：
+
 - `buyer_phone` - 買方電話（TEXT）
 - `buyer_email` - 買方 Email（TEXT）
 

@@ -44,7 +44,7 @@
   }
 
   body {
-    @apply bg-[var(--bg-page)] text-[var(--text-primary)] font-sans antialiased;
+    @apply bg-[var(--bg-page)] font-sans text-[var(--text-primary)] antialiased;
   }
 
   /* 防止手機誤觸縮放 */
@@ -59,7 +59,7 @@
 @layer components {
   /* === 統一卡片樣式 (配合 HomeCard.tsx) === */
   .mh-card {
-    @apply rounded-[var(--r-sm)] bg-white border border-slate-200 transition-all duration-200;
+    @apply rounded-[var(--r-sm)] border border-slate-200 bg-white transition-all duration-200;
     box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
   }
 
@@ -79,7 +79,7 @@
 
   /* === AI 專用樣式 (配合 SmartAsk) === */
   .mh-ai-card {
-    @apply mh-card p-6 md:p-8 space-y-6;
+    @apply mh-card space-y-6 p-6 md:p-8;
     background: linear-gradient(135deg, #dbeafe 0%, #eff6ff 100%);
   }
 

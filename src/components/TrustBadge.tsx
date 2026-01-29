@@ -1,5 +1,5 @@
-import React from "react";
-import { Shield, CheckCircle } from "lucide-react";
+import React from 'react';
+import { Shield, CheckCircle } from 'lucide-react';
 
 const ICON_SIZE_MD = 16;
 const ICON_SIZE_SM = 14;
@@ -17,10 +17,7 @@ interface TrustBadgeProps {
  * WHY: 消費者在詳情頁需要一眼看出該物件是否支援安心留痕服務
  *      房仲開啟服務後，徽章提供信任背書，提升成交機率
  */
-export const TrustBadge: React.FC<TrustBadgeProps> = ({
-  variant = 'default',
-  className = '',
-}) => {
+export const TrustBadge: React.FC<TrustBadgeProps> = ({ variant = 'default', className = '' }) => {
   if (variant === 'default') {
     return (
       <div
@@ -32,9 +29,7 @@ export const TrustBadge: React.FC<TrustBadgeProps> = ({
           <Shield size={ICON_SIZE_MD} aria-hidden="true" />
           安心留痕
         </h4>
-        <p className="mb-3 text-xs leading-relaxed text-blue-800">
-          本物件支援安心交易留痕服務
-        </p>
+        <p className="mb-3 text-xs leading-relaxed text-blue-800">本物件支援安心交易留痕服務</p>
         <ul className="space-y-2">
           <li className="flex items-center gap-2 text-xs text-blue-700">
             <CheckCircle size={ICON_SIZE_SM} className="shrink-0" aria-hidden="true" />

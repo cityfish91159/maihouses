@@ -1,7 +1,13 @@
 const fs = require('fs');
 const path = require('path');
 
-const filePath = path.join(__dirname, 'src', 'components', 'TrustRoom', 'DataCollectionModal.test.tsx');
+const filePath = path.join(
+  __dirname,
+  'src',
+  'components',
+  'TrustRoom',
+  'DataCollectionModal.test.tsx'
+);
 let lines = fs.readFileSync(filePath, 'utf8').split('\n');
 
 // Find and replace Test 1 (lines 283-319)
@@ -66,7 +72,7 @@ const test1New = [
   '    await user.keyboard("{Tab}");',
   '    const submitButton = screen.getByText("送出");',
   '    expect(submitButton).toHaveFocus();',
-  '  });'
+  '  });',
 ];
 
 if (test1LineStart !== -1 && test1LineEnd !== -1) {

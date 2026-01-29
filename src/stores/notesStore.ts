@@ -1,4 +1,4 @@
-import { safeLocalStorage } from "../lib/safeStorage";
+import { safeLocalStorage } from '../lib/safeStorage';
 
 export type NoteItem = {
   id: string;
@@ -6,15 +6,15 @@ export type NoteItem = {
   note: string;
   echo?: string;
 };
-const KEY = "mai-notes-v1";
+const KEY = 'mai-notes-v1';
 // [NASA TypeScript Safety] 類型守衛驗證 NoteItem
 function isNoteItem(obj: unknown): obj is NoteItem {
-  if (typeof obj !== "object" || obj === null) return false;
+  if (typeof obj !== 'object' || obj === null) return false;
   const record = obj as Record<string, unknown>;
   return (
-    typeof record.id === "string" &&
-    typeof record.createdAt === "number" &&
-    typeof record.note === "string"
+    typeof record.id === 'string' &&
+    typeof record.createdAt === 'number' &&
+    typeof record.note === 'string'
   );
 }
 

@@ -1,914 +1,936 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-TW">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>物件報告書 - 設計樣品 V2</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+TC:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    body {
-      font-family: 'Noto Sans TC', 'Inter', sans-serif;
-      background: linear-gradient(135deg, #0a1628 0%, #1a2d4a 100%);
-      min-height: 100vh;
-      padding: 40px 20px;
-      color: #fff;
-    }
-
-    h1 {
-      text-align: center;
-      font-size: 24px;
-      margin-bottom: 8px;
-      font-weight: 700;
-    }
-
-    .subtitle {
-      text-align: center;
-      color: #94a3b8;
-      margin-bottom: 40px;
-      font-size: 14px;
-    }
-
-    .comparison {
-      display: flex;
-      gap: 48px;
-      justify-content: center;
-      flex-wrap: wrap;
-      align-items: flex-start;
-    }
-
-    .version {
-      text-align: center;
-    }
-
-    .version-label {
-      font-size: 13px;
-      font-weight: 600;
-      margin-bottom: 16px;
-      padding: 5px 14px;
-      border-radius: 20px;
-      display: inline-block;
-    }
-
-    .version-label.old {
-      background: rgba(239, 68, 68, 0.2);
-      color: #f87171;
-      border: 1px solid rgba(239, 68, 68, 0.3);
-    }
-
-    .version-label.new {
-      background: rgba(23, 73, 215, 0.2);
-      color: #60a5fa;
-      border: 1px solid rgba(23, 73, 215, 0.3);
-    }
-
-    /* ==================== 品牌色系：深藍 ==================== */
-    :root {
-      --brand-primary: #1749d7;
-      --brand-dark: #0f3399;
-      --brand-light: #3b82f6;
-      --accent-gold: #f59e0b;
-      --text-dark: #0f172a;
-      --text-muted: #64748b;
-      --bg-light: #f8fafc;
-    }
-
-    /* ==================== 手機框架通用 ==================== */
-    .phone {
-      position: relative;
-      width: 300px;
-      background: linear-gradient(145deg, #2a2a2a, #000);
-      border-radius: 44px;
-      padding: 14px;
-      box-shadow:
-        0 50px 100px -20px rgba(0, 0, 0, 0.5),
-        0 30px 60px -15px rgba(0, 0, 0, 0.4),
-        0 0 0 1px rgba(255, 255, 255, 0.1) inset,
-        0 1px 0 rgba(255, 255, 255, 0.15) inset;
-    }
-
-    .phone .notch {
-      position: absolute;
-      top: 14px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 90px;
-      height: 26px;
-      background: #000;
-      border-radius: 0 0 16px 16px;
-      z-index: 10;
-    }
-
-    .phone .screen {
-      background: #fff;
-      border-radius: 32px;
-      overflow: hidden;
-      height: 540px;
-      overflow-y: auto;
-    }
-
-    .phone .screen::-webkit-scrollbar {
-      width: 0;
-    }
-
-    /* ==================== 舊版設計 ==================== */
-    .phone-old .hero {
-      height: 120px;
-      background: linear-gradient(135deg, #1749d7, #3b82f6);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      position: relative;
-    }
-
-    .phone-old .hero-icon {
-      color: rgba(255,255,255,0.3);
-      font-size: 36px;
-    }
-
-    .phone-old .hero-overlay {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      padding: 10px 12px;
-      background: linear-gradient(transparent, rgba(0,0,0,0.7));
-      color: #fff;
-    }
-
-    .phone-old .price {
-      font-size: 18px;
-      font-weight: 800;
-    }
-
-    .phone-old .title {
-      font-size: 11px;
-      opacity: 0.9;
-    }
-
-    .phone-old .specs {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 6px;
-      padding: 8px 10px;
-      background: #f8fafc;
-      font-size: 9px;
-      color: #64748b;
-    }
-
-    .phone-old .specs div {
-      text-align: center;
-    }
-
-    .phone-old .mortgage {
-      padding: 6px 10px;
-      background: linear-gradient(135deg, #fef3c7, #fde68a);
-      text-align: center;
-    }
-
-    .phone-old .mortgage-label {
-      font-size: 9px;
-      color: #92400e;
-    }
-
-    .phone-old .mortgage-value {
-      font-size: 13px;
-      font-weight: 700;
-      color: #92400e;
-    }
-
-    .phone-old .highlights {
-      padding: 8px 10px;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    .phone-old .highlight {
-      display: flex;
-      gap: 8px;
-      font-size: 10px;
-      padding: 4px 6px;
-      background: rgba(248,250,252,0.6);
-      border-radius: 6px;
-      color: #334155;
-    }
-
-    .phone-old .highlight-icon {
-      font-size: 14px;
-    }
-
-    .phone-old .highlight strong {
-      display: block;
-      font-size: 11px;
-      color: #0f172a;
-    }
-
-    .phone-old .highlight p {
-      margin: 1px 0 0;
-      color: #64748b;
-      font-size: 9px;
-    }
-
-    .phone-old .agent {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 10px;
-      background: #f8fafc;
-      border-top: 1px solid #e2e8f0;
-    }
-
-    .phone-old .agent-avatar {
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #1749d7, #3b82f6);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 14px;
-    }
-
-    .phone-old .agent-info {
-      font-size: 9px;
-      color: #64748b;
-    }
-
-    .phone-old .agent-info strong {
-      display: block;
-      font-size: 10px;
-      color: #0f172a;
-    }
-
-    /* ==================== 新版設計 V2 ==================== */
-
-    /* Hero 圖片區 */
-    .phone-new .hero {
-      height: 180px;
-      position: relative;
-      background: #000;
-    }
-
-    .phone-new .hero-img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    .phone-new .hero-overlay {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      padding: 50px 14px 12px;
-      background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 60%, transparent 100%);
-      color: #fff;
-    }
-
-    .phone-new .hero-tag {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      background: var(--brand-primary);
-      color: #fff;
-      padding: 4px 10px;
-      border-radius: 4px;
-      font-size: 10px;
-      font-weight: 600;
-    }
-
-    .phone-new .hero-community {
-      font-size: 11px;
-      opacity: 0.9;
-      margin-bottom: 2px;
-    }
-
-    .phone-new .hero-title {
-      font-size: 15px;
-      font-weight: 700;
-      line-height: 1.3;
-    }
-
-    /* 價格區塊 - 最重要 */
-    .phone-new .price-section {
-      background: linear-gradient(135deg, var(--brand-primary), var(--brand-dark));
-      padding: 14px;
-      color: #fff;
-    }
-
-    .phone-new .price-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-end;
-    }
-
-    .phone-new .price-main {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .phone-new .price-label {
-      font-size: 10px;
-      opacity: 0.8;
-      margin-bottom: 2px;
-    }
-
-    .phone-new .price-total {
-      font-size: 28px;
-      font-weight: 800;
-      letter-spacing: -0.5px;
-      line-height: 1;
-    }
-
-    .phone-new .price-total small {
-      font-size: 14px;
-      font-weight: 600;
-      margin-left: 2px;
-    }
-
-    .phone-new .price-unit {
-      text-align: right;
-    }
-
-    .phone-new .price-unit-label {
-      font-size: 9px;
-      opacity: 0.7;
-    }
-
-    .phone-new .price-unit-value {
-      font-size: 16px;
-      font-weight: 700;
-    }
-
-    .phone-new .price-unit-value small {
-      font-size: 10px;
-      font-weight: 500;
-    }
-
-    /* 核心規格區 */
-    .phone-new .specs-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      border-bottom: 1px solid #e2e8f0;
-    }
-
-    .phone-new .spec-item {
-      padding: 12px 8px;
-      text-align: center;
-      border-right: 1px solid #e2e8f0;
-    }
-
-    .phone-new .spec-item:last-child {
-      border-right: none;
-    }
-
-    .phone-new .spec-value {
-      font-size: 16px;
-      font-weight: 700;
-      color: var(--text-dark);
-      line-height: 1.2;
-    }
-
-    .phone-new .spec-value small {
-      font-size: 11px;
-      font-weight: 500;
-    }
-
-    .phone-new .spec-label {
-      font-size: 9px;
-      color: var(--text-muted);
-      margin-top: 2px;
-    }
-
-    /* 詳細資訊區 */
-    .phone-new .details {
-      padding: 12px 14px;
-      background: var(--bg-light);
-    }
-
-    .phone-new .details-title {
-      font-size: 11px;
-      font-weight: 600;
-      color: var(--text-dark);
-      margin-bottom: 10px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .phone-new .details-title::before {
-      content: '';
-      width: 3px;
-      height: 12px;
-      background: var(--brand-primary);
-      border-radius: 2px;
-    }
-
-    .phone-new .details-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 8px;
-    }
-
-    .phone-new .detail-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 8px 10px;
-      background: #fff;
-      border-radius: 8px;
-      font-size: 11px;
-    }
-
-    .phone-new .detail-label {
-      color: var(--text-muted);
-    }
-
-    .phone-new .detail-value {
-      font-weight: 600;
-      color: var(--text-dark);
-    }
-
-    /* 社區資訊區 */
-    .phone-new .community {
-      padding: 12px 14px;
-      border-bottom: 1px solid #e2e8f0;
-    }
-
-    .phone-new .community-title {
-      font-size: 11px;
-      font-weight: 600;
-      color: var(--text-dark);
-      margin-bottom: 10px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .phone-new .community-title::before {
-      content: '';
-      width: 3px;
-      height: 12px;
-      background: var(--brand-primary);
-      border-radius: 2px;
-    }
-
-    .phone-new .community-info {
-      display: flex;
-      gap: 12px;
-    }
-
-    .phone-new .community-stat {
-      flex: 1;
-      background: var(--bg-light);
-      padding: 10px;
-      border-radius: 8px;
-      text-align: center;
-    }
-
-    .phone-new .community-stat-value {
-      font-size: 16px;
-      font-weight: 700;
-      color: var(--brand-primary);
-    }
-
-    .phone-new .community-stat-label {
-      font-size: 9px;
-      color: var(--text-muted);
-      margin-top: 2px;
-    }
-
-    /* 物件說明 */
-    .phone-new .description {
-      padding: 12px 14px;
-      border-bottom: 1px solid #e2e8f0;
-    }
-
-    .phone-new .description-title {
-      font-size: 11px;
-      font-weight: 600;
-      color: var(--text-dark);
-      margin-bottom: 8px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .phone-new .description-title::before {
-      content: '';
-      width: 3px;
-      height: 12px;
-      background: var(--brand-primary);
-      border-radius: 2px;
-    }
-
-    .phone-new .description-text {
-      font-size: 11px;
-      line-height: 1.7;
-      color: var(--text-muted);
-    }
-
-    /* 地址與位置 */
-    .phone-new .location {
-      padding: 12px 14px;
-      display: flex;
-      align-items: flex-start;
-      gap: 8px;
-      border-bottom: 1px solid #e2e8f0;
-    }
-
-    .phone-new .location-icon {
-      width: 28px;
-      height: 28px;
-      background: rgba(23, 73, 215, 0.1);
-      border-radius: 6px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--brand-primary);
-      flex-shrink: 0;
-    }
-
-    .phone-new .location-text {
-      font-size: 12px;
-      color: var(--text-dark);
-      line-height: 1.5;
-    }
-
-    .phone-new .location-text small {
-      display: block;
-      font-size: 10px;
-      color: var(--text-muted);
-      margin-top: 2px;
-    }
-
-    /* 業務資訊 */
-    .phone-new .agent {
-      padding: 12px 14px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      background: linear-gradient(to right, var(--bg-light), #fff);
-    }
-
-    .phone-new .agent-avatar {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      background: url('https://images.unsplash.com/photo-1560250097-0b93528c311a?w=100&q=80') center/cover;
-      border: 2px solid #fff;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-
-    .phone-new .agent-info {
-      flex: 1;
-    }
-
-    .phone-new .agent-name {
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--text-dark);
-    }
-
-    .phone-new .agent-company {
-      font-size: 10px;
-      color: var(--text-muted);
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-
-    .phone-new .agent-company::before {
-      content: '';
-      width: 16px;
-      height: 16px;
-      background: var(--brand-primary);
-      border-radius: 4px;
-    }
-
-    .phone-new .agent-cta {
-      display: flex;
-      gap: 8px;
-    }
-
-    .phone-new .agent-btn {
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border: none;
-      cursor: pointer;
-    }
-
-    .phone-new .agent-btn.primary {
-      background: var(--brand-primary);
-      color: #fff;
-      box-shadow: 0 4px 12px rgba(23, 73, 215, 0.3);
-    }
-
-    .phone-new .agent-btn.secondary {
-      background: #fff;
-      color: var(--brand-primary);
-      border: 1px solid #e2e8f0;
-    }
-
-    /* 品牌浮水印 */
-    .phone-new .watermark {
-      padding: 8px 14px;
-      text-align: center;
-      font-size: 9px;
-      color: var(--text-muted);
-      background: var(--bg-light);
-    }
-
-    .phone-new .watermark strong {
-      color: var(--brand-primary);
-      font-weight: 600;
-    }
-
-    /* SVG Icons */
-    .icon {
-      width: 16px;
-      height: 16px;
-      stroke: currentColor;
-      stroke-width: 2;
-      fill: none;
-    }
-
-    /* 說明列表 */
-    .features {
-      margin-top: 20px;
-      background: rgba(255,255,255,0.05);
-      border-radius: 12px;
-      padding: 14px;
-      max-width: 300px;
-    }
-
-    .features h4 {
-      font-size: 11px;
-      color: #94a3b8;
-      margin-bottom: 8px;
-    }
-
-    .features ul {
-      list-style: none;
-      font-size: 10px;
-      color: #cbd5e1;
-    }
-
-    .features li {
-      padding: 3px 0;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .features li::before {
-      content: '✗';
-      color: #ef4444;
-      font-weight: bold;
-      font-size: 9px;
-    }
-
-    .features.new li::before {
-      content: '✓';
-      color: #22c55e;
-    }
-  </style>
-</head>
-<body>
-  <h1>物件報告書 - 設計比較 V2</h1>
-  <p class="subtitle">品牌色：深藍 #1749d7 ｜ 重點：總價、單價、核心規格、社區資訊</p>
-
-  <div class="comparison">
-    <!-- 舊版設計 -->
-    <div class="version">
-      <span class="version-label old">現有版本</span>
-      <div class="phone phone-old">
-        <div class="notch"></div>
-        <div class="screen">
-          <div class="hero">
-            <div class="hero-icon">🏠</div>
-            <div class="hero-overlay">
-              <div class="price">NT$ 3,288 萬</div>
-              <div class="title">惠宇上晴 12F｜3房2廳2衛</div>
-            </div>
-          </div>
-
-          <div class="specs">
-            <div>📐 67.3坪</div>
-            <div>🏢 12F/15F</div>
-            <div>📅 5年</div>
-            <div>🧭 朝南</div>
-          </div>
-
-          <div class="mortgage">
-            <div class="mortgage-label">貸款 8 成・30 年</div>
-            <div class="mortgage-value">月付約 NT$ 98,500</div>
-          </div>
-
-          <div class="highlights">
-            <div class="highlight">
-              <span class="highlight-icon">🚇</span>
-              <div>
-                <strong>通勤便利</strong>
-                <p>距捷運站步行 5 分鐘</p>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>物件報告書 - 設計樣品 V2</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+TC:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: 'Noto Sans TC', 'Inter', sans-serif;
+        background: linear-gradient(135deg, #0a1628 0%, #1a2d4a 100%);
+        min-height: 100vh;
+        padding: 40px 20px;
+        color: #fff;
+      }
+
+      h1 {
+        text-align: center;
+        font-size: 24px;
+        margin-bottom: 8px;
+        font-weight: 700;
+      }
+
+      .subtitle {
+        text-align: center;
+        color: #94a3b8;
+        margin-bottom: 40px;
+        font-size: 14px;
+      }
+
+      .comparison {
+        display: flex;
+        gap: 48px;
+        justify-content: center;
+        flex-wrap: wrap;
+        align-items: flex-start;
+      }
+
+      .version {
+        text-align: center;
+      }
+
+      .version-label {
+        font-size: 13px;
+        font-weight: 600;
+        margin-bottom: 16px;
+        padding: 5px 14px;
+        border-radius: 20px;
+        display: inline-block;
+      }
+
+      .version-label.old {
+        background: rgba(239, 68, 68, 0.2);
+        color: #f87171;
+        border: 1px solid rgba(239, 68, 68, 0.3);
+      }
+
+      .version-label.new {
+        background: rgba(23, 73, 215, 0.2);
+        color: #60a5fa;
+        border: 1px solid rgba(23, 73, 215, 0.3);
+      }
+
+      /* ==================== 品牌色系：深藍 ==================== */
+      :root {
+        --brand-primary: #1749d7;
+        --brand-dark: #0f3399;
+        --brand-light: #3b82f6;
+        --accent-gold: #f59e0b;
+        --text-dark: #0f172a;
+        --text-muted: #64748b;
+        --bg-light: #f8fafc;
+      }
+
+      /* ==================== 手機框架通用 ==================== */
+      .phone {
+        position: relative;
+        width: 300px;
+        background: linear-gradient(145deg, #2a2a2a, #000);
+        border-radius: 44px;
+        padding: 14px;
+        box-shadow:
+          0 50px 100px -20px rgba(0, 0, 0, 0.5),
+          0 30px 60px -15px rgba(0, 0, 0, 0.4),
+          0 0 0 1px rgba(255, 255, 255, 0.1) inset,
+          0 1px 0 rgba(255, 255, 255, 0.15) inset;
+      }
+
+      .phone .notch {
+        position: absolute;
+        top: 14px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 90px;
+        height: 26px;
+        background: #000;
+        border-radius: 0 0 16px 16px;
+        z-index: 10;
+      }
+
+      .phone .screen {
+        background: #fff;
+        border-radius: 32px;
+        overflow: hidden;
+        height: 540px;
+        overflow-y: auto;
+      }
+
+      .phone .screen::-webkit-scrollbar {
+        width: 0;
+      }
+
+      /* ==================== 舊版設計 ==================== */
+      .phone-old .hero {
+        height: 120px;
+        background: linear-gradient(135deg, #1749d7, #3b82f6);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+      }
+
+      .phone-old .hero-icon {
+        color: rgba(255, 255, 255, 0.3);
+        font-size: 36px;
+      }
+
+      .phone-old .hero-overlay {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        padding: 10px 12px;
+        background: linear-gradient(transparent, rgba(0, 0, 0, 0.7));
+        color: #fff;
+      }
+
+      .phone-old .price {
+        font-size: 18px;
+        font-weight: 800;
+      }
+
+      .phone-old .title {
+        font-size: 11px;
+        opacity: 0.9;
+      }
+
+      .phone-old .specs {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 6px;
+        padding: 8px 10px;
+        background: #f8fafc;
+        font-size: 9px;
+        color: #64748b;
+      }
+
+      .phone-old .specs div {
+        text-align: center;
+      }
+
+      .phone-old .mortgage {
+        padding: 6px 10px;
+        background: linear-gradient(135deg, #fef3c7, #fde68a);
+        text-align: center;
+      }
+
+      .phone-old .mortgage-label {
+        font-size: 9px;
+        color: #92400e;
+      }
+
+      .phone-old .mortgage-value {
+        font-size: 13px;
+        font-weight: 700;
+        color: #92400e;
+      }
+
+      .phone-old .highlights {
+        padding: 8px 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .phone-old .highlight {
+        display: flex;
+        gap: 8px;
+        font-size: 10px;
+        padding: 4px 6px;
+        background: rgba(248, 250, 252, 0.6);
+        border-radius: 6px;
+        color: #334155;
+      }
+
+      .phone-old .highlight-icon {
+        font-size: 14px;
+      }
+
+      .phone-old .highlight strong {
+        display: block;
+        font-size: 11px;
+        color: #0f172a;
+      }
+
+      .phone-old .highlight p {
+        margin: 1px 0 0;
+        color: #64748b;
+        font-size: 9px;
+      }
+
+      .phone-old .agent {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 10px;
+        background: #f8fafc;
+        border-top: 1px solid #e2e8f0;
+      }
+
+      .phone-old .agent-avatar {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #1749d7, #3b82f6);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+      }
+
+      .phone-old .agent-info {
+        font-size: 9px;
+        color: #64748b;
+      }
+
+      .phone-old .agent-info strong {
+        display: block;
+        font-size: 10px;
+        color: #0f172a;
+      }
+
+      /* ==================== 新版設計 V2 ==================== */
+
+      /* Hero 圖片區 */
+      .phone-new .hero {
+        height: 180px;
+        position: relative;
+        background: #000;
+      }
+
+      .phone-new .hero-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .phone-new .hero-overlay {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        padding: 50px 14px 12px;
+        background: linear-gradient(
+          to top,
+          rgba(0, 0, 0, 0.85) 0%,
+          rgba(0, 0, 0, 0.4) 60%,
+          transparent 100%
+        );
+        color: #fff;
+      }
+
+      .phone-new .hero-tag {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        background: var(--brand-primary);
+        color: #fff;
+        padding: 4px 10px;
+        border-radius: 4px;
+        font-size: 10px;
+        font-weight: 600;
+      }
+
+      .phone-new .hero-community {
+        font-size: 11px;
+        opacity: 0.9;
+        margin-bottom: 2px;
+      }
+
+      .phone-new .hero-title {
+        font-size: 15px;
+        font-weight: 700;
+        line-height: 1.3;
+      }
+
+      /* 價格區塊 - 最重要 */
+      .phone-new .price-section {
+        background: linear-gradient(135deg, var(--brand-primary), var(--brand-dark));
+        padding: 14px;
+        color: #fff;
+      }
+
+      .phone-new .price-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+      }
+
+      .phone-new .price-main {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .phone-new .price-label {
+        font-size: 10px;
+        opacity: 0.8;
+        margin-bottom: 2px;
+      }
+
+      .phone-new .price-total {
+        font-size: 28px;
+        font-weight: 800;
+        letter-spacing: -0.5px;
+        line-height: 1;
+      }
+
+      .phone-new .price-total small {
+        font-size: 14px;
+        font-weight: 600;
+        margin-left: 2px;
+      }
+
+      .phone-new .price-unit {
+        text-align: right;
+      }
+
+      .phone-new .price-unit-label {
+        font-size: 9px;
+        opacity: 0.7;
+      }
+
+      .phone-new .price-unit-value {
+        font-size: 16px;
+        font-weight: 700;
+      }
+
+      .phone-new .price-unit-value small {
+        font-size: 10px;
+        font-weight: 500;
+      }
+
+      /* 核心規格區 */
+      .phone-new .specs-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        border-bottom: 1px solid #e2e8f0;
+      }
+
+      .phone-new .spec-item {
+        padding: 12px 8px;
+        text-align: center;
+        border-right: 1px solid #e2e8f0;
+      }
+
+      .phone-new .spec-item:last-child {
+        border-right: none;
+      }
+
+      .phone-new .spec-value {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--text-dark);
+        line-height: 1.2;
+      }
+
+      .phone-new .spec-value small {
+        font-size: 11px;
+        font-weight: 500;
+      }
+
+      .phone-new .spec-label {
+        font-size: 9px;
+        color: var(--text-muted);
+        margin-top: 2px;
+      }
+
+      /* 詳細資訊區 */
+      .phone-new .details {
+        padding: 12px 14px;
+        background: var(--bg-light);
+      }
+
+      .phone-new .details-title {
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--text-dark);
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .phone-new .details-title::before {
+        content: '';
+        width: 3px;
+        height: 12px;
+        background: var(--brand-primary);
+        border-radius: 2px;
+      }
+
+      .phone-new .details-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+      }
+
+      .phone-new .detail-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 10px;
+        background: #fff;
+        border-radius: 8px;
+        font-size: 11px;
+      }
+
+      .phone-new .detail-label {
+        color: var(--text-muted);
+      }
+
+      .phone-new .detail-value {
+        font-weight: 600;
+        color: var(--text-dark);
+      }
+
+      /* 社區資訊區 */
+      .phone-new .community {
+        padding: 12px 14px;
+        border-bottom: 1px solid #e2e8f0;
+      }
+
+      .phone-new .community-title {
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--text-dark);
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .phone-new .community-title::before {
+        content: '';
+        width: 3px;
+        height: 12px;
+        background: var(--brand-primary);
+        border-radius: 2px;
+      }
+
+      .phone-new .community-info {
+        display: flex;
+        gap: 12px;
+      }
+
+      .phone-new .community-stat {
+        flex: 1;
+        background: var(--bg-light);
+        padding: 10px;
+        border-radius: 8px;
+        text-align: center;
+      }
+
+      .phone-new .community-stat-value {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--brand-primary);
+      }
+
+      .phone-new .community-stat-label {
+        font-size: 9px;
+        color: var(--text-muted);
+        margin-top: 2px;
+      }
+
+      /* 物件說明 */
+      .phone-new .description {
+        padding: 12px 14px;
+        border-bottom: 1px solid #e2e8f0;
+      }
+
+      .phone-new .description-title {
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--text-dark);
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .phone-new .description-title::before {
+        content: '';
+        width: 3px;
+        height: 12px;
+        background: var(--brand-primary);
+        border-radius: 2px;
+      }
+
+      .phone-new .description-text {
+        font-size: 11px;
+        line-height: 1.7;
+        color: var(--text-muted);
+      }
+
+      /* 地址與位置 */
+      .phone-new .location {
+        padding: 12px 14px;
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+        border-bottom: 1px solid #e2e8f0;
+      }
+
+      .phone-new .location-icon {
+        width: 28px;
+        height: 28px;
+        background: rgba(23, 73, 215, 0.1);
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--brand-primary);
+        flex-shrink: 0;
+      }
+
+      .phone-new .location-text {
+        font-size: 12px;
+        color: var(--text-dark);
+        line-height: 1.5;
+      }
+
+      .phone-new .location-text small {
+        display: block;
+        font-size: 10px;
+        color: var(--text-muted);
+        margin-top: 2px;
+      }
+
+      /* 業務資訊 */
+      .phone-new .agent {
+        padding: 12px 14px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: linear-gradient(to right, var(--bg-light), #fff);
+      }
+
+      .phone-new .agent-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: url('https://images.unsplash.com/photo-1560250097-0b93528c311a?w=100&q=80')
+          center/cover;
+        border: 2px solid #fff;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      }
+
+      .phone-new .agent-info {
+        flex: 1;
+      }
+
+      .phone-new .agent-name {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--text-dark);
+      }
+
+      .phone-new .agent-company {
+        font-size: 10px;
+        color: var(--text-muted);
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+
+      .phone-new .agent-company::before {
+        content: '';
+        width: 16px;
+        height: 16px;
+        background: var(--brand-primary);
+        border-radius: 4px;
+      }
+
+      .phone-new .agent-cta {
+        display: flex;
+        gap: 8px;
+      }
+
+      .phone-new .agent-btn {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: none;
+        cursor: pointer;
+      }
+
+      .phone-new .agent-btn.primary {
+        background: var(--brand-primary);
+        color: #fff;
+        box-shadow: 0 4px 12px rgba(23, 73, 215, 0.3);
+      }
+
+      .phone-new .agent-btn.secondary {
+        background: #fff;
+        color: var(--brand-primary);
+        border: 1px solid #e2e8f0;
+      }
+
+      /* 品牌浮水印 */
+      .phone-new .watermark {
+        padding: 8px 14px;
+        text-align: center;
+        font-size: 9px;
+        color: var(--text-muted);
+        background: var(--bg-light);
+      }
+
+      .phone-new .watermark strong {
+        color: var(--brand-primary);
+        font-weight: 600;
+      }
+
+      /* SVG Icons */
+      .icon {
+        width: 16px;
+        height: 16px;
+        stroke: currentColor;
+        stroke-width: 2;
+        fill: none;
+      }
+
+      /* 說明列表 */
+      .features {
+        margin-top: 20px;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 12px;
+        padding: 14px;
+        max-width: 300px;
+      }
+
+      .features h4 {
+        font-size: 11px;
+        color: #94a3b8;
+        margin-bottom: 8px;
+      }
+
+      .features ul {
+        list-style: none;
+        font-size: 10px;
+        color: #cbd5e1;
+      }
+
+      .features li {
+        padding: 3px 0;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .features li::before {
+        content: '✗';
+        color: #ef4444;
+        font-weight: bold;
+        font-size: 9px;
+      }
+
+      .features.new li::before {
+        content: '✓';
+        color: #22c55e;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>物件報告書 - 設計比較 V2</h1>
+    <p class="subtitle">品牌色：深藍 #1749d7 ｜ 重點：總價、單價、核心規格、社區資訊</p>
+
+    <div class="comparison">
+      <!-- 舊版設計 -->
+      <div class="version">
+        <span class="version-label old">現有版本</span>
+        <div class="phone phone-old">
+          <div class="notch"></div>
+          <div class="screen">
+            <div class="hero">
+              <div class="hero-icon">🏠</div>
+              <div class="hero-overlay">
+                <div class="price">NT$ 3,288 萬</div>
+                <div class="title">惠宇上晴 12F｜3房2廳2衛</div>
               </div>
             </div>
-            <div class="highlight">
-              <span class="highlight-icon">🎓</span>
-              <div>
-                <strong>優質學區</strong>
-                <p>惠文國小學區內</p>
+
+            <div class="specs">
+              <div>📐 67.3坪</div>
+              <div>🏢 12F/15F</div>
+              <div>📅 5年</div>
+              <div>🧭 朝南</div>
+            </div>
+
+            <div class="mortgage">
+              <div class="mortgage-label">貸款 8 成・30 年</div>
+              <div class="mortgage-value">月付約 NT$ 98,500</div>
+            </div>
+
+            <div class="highlights">
+              <div class="highlight">
+                <span class="highlight-icon">🚇</span>
+                <div>
+                  <strong>通勤便利</strong>
+                  <p>距捷運站步行 5 分鐘</p>
+                </div>
+              </div>
+              <div class="highlight">
+                <span class="highlight-icon">🎓</span>
+                <div>
+                  <strong>優質學區</strong>
+                  <p>惠文國小學區內</p>
+                </div>
               </div>
             </div>
-          </div>
 
-          <div class="agent">
-            <div class="agent-avatar">👤</div>
-            <div class="agent-info">
-              <strong>您的專屬顧問</strong>
-              <span>MaiHouses 邁房子</span>
+            <div class="agent">
+              <div class="agent-avatar">👤</div>
+              <div class="agent-info">
+                <strong>您的專屬顧問</strong>
+                <span>MaiHouses 邁房子</span>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <div class="features">
-        <h4>問題</h4>
-        <ul>
-          <li>Emoji 當 icon，不專業</li>
-          <li>價格沒有單價資訊</li>
-          <li>貸款試算不是核心資訊</li>
-          <li>亮點是「選擇套用」太假</li>
-          <li>沒有社區真實資訊</li>
-          <li>沒有地址位置</li>
-          <li>資訊密度太低</li>
-        </ul>
-      </div>
-    </div>
-
-    <!-- 新版設計 V2 -->
-    <div class="version">
-      <span class="version-label new">優化版本 V2</span>
-      <div class="phone phone-new">
-        <div class="notch"></div>
-        <div class="screen">
-          <!-- Hero 圖片 -->
-          <div class="hero">
-            <div class="hero-tag">精選推薦</div>
-            <img class="hero-img" src="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=600&q=80" alt="房屋照片">
-            <div class="hero-overlay">
-              <div class="hero-community">惠宇上晴社區</div>
-              <div class="hero-title">12F 高樓層｜3房2廳2衛｜平面車位</div>
-            </div>
-          </div>
-
-          <!-- 價格區塊 - 最重要 -->
-          <div class="price-section">
-            <div class="price-row">
-              <div class="price-main">
-                <div class="price-label">開價總價</div>
-                <div class="price-total">3,288<small>萬</small></div>
-              </div>
-              <div class="price-unit">
-                <div class="price-unit-label">單價</div>
-                <div class="price-unit-value">52.1<small>萬/坪</small></div>
-              </div>
-            </div>
-          </div>
-
-          <!-- 核心規格 -->
-          <div class="specs-grid">
-            <div class="spec-item">
-              <div class="spec-value">67.3<small>坪</small></div>
-              <div class="spec-label">權狀坪數</div>
-            </div>
-            <div class="spec-item">
-              <div class="spec-value">12<small>/15F</small></div>
-              <div class="spec-label">樓層</div>
-            </div>
-            <div class="spec-item">
-              <div class="spec-value">5<small>年</small></div>
-              <div class="spec-label">屋齡</div>
-            </div>
-            <div class="spec-item">
-              <div class="spec-value">南</div>
-              <div class="spec-label">座向</div>
-            </div>
-          </div>
-
-          <!-- 詳細資訊 -->
-          <div class="details">
-            <div class="details-title">物件資訊</div>
-            <div class="details-grid">
-              <div class="detail-item">
-                <span class="detail-label">格局</span>
-                <span class="detail-value">3房2廳2衛</span>
-              </div>
-              <div class="detail-item">
-                <span class="detail-label">車位</span>
-                <span class="detail-value">平面車位</span>
-              </div>
-              <div class="detail-item">
-                <span class="detail-label">管理費</span>
-                <span class="detail-value">3,500/月</span>
-              </div>
-              <div class="detail-item">
-                <span class="detail-label">型態</span>
-                <span class="detail-value">電梯大樓</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- 社區資訊 -->
-          <div class="community">
-            <div class="community-title">社區資訊</div>
-            <div class="community-info">
-              <div class="community-stat">
-                <div class="community-stat-value">2019</div>
-                <div class="community-stat-label">建成年份</div>
-              </div>
-              <div class="community-stat">
-                <div class="community-stat-value">280</div>
-                <div class="community-stat-label">總戶數</div>
-              </div>
-              <div class="community-stat">
-                <div class="community-stat-value">15</div>
-                <div class="community-stat-label">總樓層</div>
-              </div>
-            </div>
-          </div>
-
-          <!-- 物件說明 -->
-          <div class="description">
-            <div class="description-title">物件說明</div>
-            <div class="description-text">
-              高樓層景觀戶，採光通風極佳。格局方正實用，三面採光無暗房。社區管理完善，24小時警衛駐守。步行5分鐘至捷運市政府站，生活機能完善。屋況維護良好，可隨時交屋。
-            </div>
-          </div>
-
-          <!-- 地址位置 -->
-          <div class="location">
-            <div class="location-icon">
-              <svg class="icon" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-            </div>
-            <div class="location-text">
-              台中市南屯區惠文路 168 號
-              <small>南屯區｜近捷運市政府站</small>
-            </div>
-          </div>
-
-          <!-- 業務資訊 -->
-          <div class="agent">
-            <div class="agent-avatar"></div>
-            <div class="agent-info">
-              <div class="agent-name">王小明 資深顧問</div>
-              <div class="agent-company">MaiHouses 邁房子</div>
-            </div>
-            <div class="agent-cta">
-              <button class="agent-btn secondary">
-                <svg class="icon" viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
-              </button>
-              <button class="agent-btn primary">
-                <svg class="icon" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-              </button>
-            </div>
-          </div>
-
-          <!-- 品牌浮水印 -->
-          <div class="watermark">
-            由 <strong>MaiHouses 邁房子</strong> 提供
-          </div>
+        <div class="features">
+          <h4>問題</h4>
+          <ul>
+            <li>Emoji 當 icon，不專業</li>
+            <li>價格沒有單價資訊</li>
+            <li>貸款試算不是核心資訊</li>
+            <li>亮點是「選擇套用」太假</li>
+            <li>沒有社區真實資訊</li>
+            <li>沒有地址位置</li>
+            <li>資訊密度太低</li>
+          </ul>
         </div>
       </div>
 
-      <div class="features new">
-        <h4>優化重點</h4>
-        <ul>
-          <li>深藍品牌色貫穿設計</li>
-          <li>總價 + 單價 雙價格呈現</li>
-          <li>真實房源圖片 180px</li>
-          <li>核心規格：坪數/樓層/屋齡/座向</li>
-          <li>真實物件資訊（格局/車位/管理費）</li>
-          <li>社區資訊：建成年/戶數/樓層</li>
-          <li>物件說明：業務撰寫的介紹文</li>
-          <li>完整地址與區域</li>
-          <li>SVG icon 取代 emoji</li>
-          <li>業務 CTA 按鈕（LINE/電話）</li>
-        </ul>
+      <!-- 新版設計 V2 -->
+      <div class="version">
+        <span class="version-label new">優化版本 V2</span>
+        <div class="phone phone-new">
+          <div class="notch"></div>
+          <div class="screen">
+            <!-- Hero 圖片 -->
+            <div class="hero">
+              <div class="hero-tag">精選推薦</div>
+              <img
+                class="hero-img"
+                src="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=600&q=80"
+                alt="房屋照片"
+              />
+              <div class="hero-overlay">
+                <div class="hero-community">惠宇上晴社區</div>
+                <div class="hero-title">12F 高樓層｜3房2廳2衛｜平面車位</div>
+              </div>
+            </div>
+
+            <!-- 價格區塊 - 最重要 -->
+            <div class="price-section">
+              <div class="price-row">
+                <div class="price-main">
+                  <div class="price-label">開價總價</div>
+                  <div class="price-total">3,288<small>萬</small></div>
+                </div>
+                <div class="price-unit">
+                  <div class="price-unit-label">單價</div>
+                  <div class="price-unit-value">52.1<small>萬/坪</small></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 核心規格 -->
+            <div class="specs-grid">
+              <div class="spec-item">
+                <div class="spec-value">67.3<small>坪</small></div>
+                <div class="spec-label">權狀坪數</div>
+              </div>
+              <div class="spec-item">
+                <div class="spec-value">12<small>/15F</small></div>
+                <div class="spec-label">樓層</div>
+              </div>
+              <div class="spec-item">
+                <div class="spec-value">5<small>年</small></div>
+                <div class="spec-label">屋齡</div>
+              </div>
+              <div class="spec-item">
+                <div class="spec-value">南</div>
+                <div class="spec-label">座向</div>
+              </div>
+            </div>
+
+            <!-- 詳細資訊 -->
+            <div class="details">
+              <div class="details-title">物件資訊</div>
+              <div class="details-grid">
+                <div class="detail-item">
+                  <span class="detail-label">格局</span>
+                  <span class="detail-value">3房2廳2衛</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">車位</span>
+                  <span class="detail-value">平面車位</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">管理費</span>
+                  <span class="detail-value">3,500/月</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">型態</span>
+                  <span class="detail-value">電梯大樓</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- 社區資訊 -->
+            <div class="community">
+              <div class="community-title">社區資訊</div>
+              <div class="community-info">
+                <div class="community-stat">
+                  <div class="community-stat-value">2019</div>
+                  <div class="community-stat-label">建成年份</div>
+                </div>
+                <div class="community-stat">
+                  <div class="community-stat-value">280</div>
+                  <div class="community-stat-label">總戶數</div>
+                </div>
+                <div class="community-stat">
+                  <div class="community-stat-value">15</div>
+                  <div class="community-stat-label">總樓層</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 物件說明 -->
+            <div class="description">
+              <div class="description-title">物件說明</div>
+              <div class="description-text">
+                高樓層景觀戶，採光通風極佳。格局方正實用，三面採光無暗房。社區管理完善，24小時警衛駐守。步行5分鐘至捷運市政府站，生活機能完善。屋況維護良好，可隨時交屋。
+              </div>
+            </div>
+
+            <!-- 地址位置 -->
+            <div class="location">
+              <div class="location-icon">
+                <svg class="icon" viewBox="0 0 24 24">
+                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                  <circle cx="12" cy="10" r="3" />
+                </svg>
+              </div>
+              <div class="location-text">
+                台中市南屯區惠文路 168 號
+                <small>南屯區｜近捷運市政府站</small>
+              </div>
+            </div>
+
+            <!-- 業務資訊 -->
+            <div class="agent">
+              <div class="agent-avatar"></div>
+              <div class="agent-info">
+                <div class="agent-name">王小明 資深顧問</div>
+                <div class="agent-company">MaiHouses 邁房子</div>
+              </div>
+              <div class="agent-cta">
+                <button class="agent-btn secondary">
+                  <svg class="icon" viewBox="0 0 24 24">
+                    <path
+                      d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"
+                    />
+                  </svg>
+                </button>
+                <button class="agent-btn primary">
+                  <svg class="icon" viewBox="0 0 24 24">
+                    <path
+                      d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"
+                    />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <!-- 品牌浮水印 -->
+            <div class="watermark">由 <strong>MaiHouses 邁房子</strong> 提供</div>
+          </div>
+        </div>
+
+        <div class="features new">
+          <h4>優化重點</h4>
+          <ul>
+            <li>深藍品牌色貫穿設計</li>
+            <li>總價 + 單價 雙價格呈現</li>
+            <li>真實房源圖片 180px</li>
+            <li>核心規格：坪數/樓層/屋齡/座向</li>
+            <li>真實物件資訊（格局/車位/管理費）</li>
+            <li>社區資訊：建成年/戶數/樓層</li>
+            <li>物件說明：業務撰寫的介紹文</li>
+            <li>完整地址與區域</li>
+            <li>SVG icon 取代 emoji</li>
+            <li>業務 CTA 按鈕（LINE/電話）</li>
+          </ul>
+        </div>
       </div>
     </div>
-  </div>
-</body>
+  </body>
 </html>

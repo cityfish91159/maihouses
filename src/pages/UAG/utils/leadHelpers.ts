@@ -3,22 +3,22 @@
  * 提取各組件共用的 Lead 驗證和計算邏輯
  */
 
-import type { Lead, Grade } from "../types/uag.types";
-import { GRADE_PROTECTION_HOURS } from "../uag-config";
+import type { Lead, Grade } from '../types/uag.types';
+import { GRADE_PROTECTION_HOURS } from '../uag-config';
 
 /**
  * 檢查 Lead 是否為獨家等級（S 或 A 級）
  * S/A 級有較長的保護期，顯示小時；B/C 級顯示天數
  */
 export function isExclusiveLead(lead: Lead): boolean {
-  return lead.grade === "S" || lead.grade === "A";
+  return lead.grade === 'S' || lead.grade === 'A';
 }
 
 /**
  * 檢查 Grade 是否為獨家等級
  */
 export function isExclusiveGrade(grade: Grade): boolean {
-  return grade === "S" || grade === "A";
+  return grade === 'S' || grade === 'A';
 }
 
 /**
@@ -62,17 +62,17 @@ export function calculateProtectionInfo(lead: Lead): ProtectionInfo {
  */
 export function getGradeColor(grade: Grade): string {
   switch (grade) {
-    case "S":
-      return "var(--grade-s, #dc2626)"; // 紅色
-    case "A":
-      return "var(--grade-a, #f59e0b)"; // 橙色
-    case "B":
-      return "var(--grade-b, #3b82f6)"; // 藍色
-    case "C":
-      return "var(--grade-c, #6b7280)"; // 灰色
-    case "F":
+    case 'S':
+      return 'var(--grade-s, #dc2626)'; // 紅色
+    case 'A':
+      return 'var(--grade-a, #f59e0b)'; // 橙色
+    case 'B':
+      return 'var(--grade-b, #3b82f6)'; // 藍色
+    case 'C':
+      return 'var(--grade-c, #6b7280)'; // 灰色
+    case 'F':
     default:
-      return "var(--grade-f, #9ca3af)"; // 淺灰
+      return 'var(--grade-f, #9ca3af)'; // 淺灰
   }
 }
 
@@ -81,7 +81,7 @@ export function getGradeColor(grade: Grade): string {
  */
 export function getProtectionText(lead: Lead): string {
   if (isExclusiveLead(lead)) {
-    return "獨家鎖定中";
+    return '獨家鎖定中';
   }
-  return "去重保護中";
+  return '去重保護中';
 }

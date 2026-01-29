@@ -1,10 +1,4 @@
-import React, {
-  useState,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-} from "react";
+import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import {
   MaiMaiBase,
   MaiMaiSpeech,
@@ -12,12 +6,12 @@ import {
   useMascotCelebrateEvent,
   useConfetti,
   SIZE_CLASSES,
-} from "./MaiMai";
-import type { MaiMaiMood } from "./MaiMai";
+} from './MaiMai';
+import type { MaiMaiMood } from './MaiMai';
 
 interface MascotInteractiveProps {
   mood?: MaiMaiMood;
-  size?: "sm" | "md" | "lg";
+  size?: 'sm' | 'md' | 'lg';
   className?: string;
   messages?: string[];
   // 登入頁互動
@@ -34,8 +28,8 @@ interface MascotInteractiveProps {
  */
 export default function MascotInteractive({
   mood: externalMood,
-  size = "md",
-  className = "",
+  size = 'md',
+  className = '',
   messages = [],
   isTypingEmail = false,
   isTypingPassword = false,
@@ -70,7 +64,7 @@ export default function MascotInteractive({
       setEventCelebrating(true);
       fireConfetti();
       setTimeout(() => setEventCelebrating(false), 2000);
-    }, [fireConfetti]),
+    }, [fireConfetti])
   );
   const prevMoodRef = useRef<MaiMaiMood | null>(null);
   const lastCelebrateAtRef = useRef<number>(0);
@@ -81,8 +75,7 @@ export default function MascotInteractive({
   }, [messages]);
 
   useEffect(() => {
-    const shouldCelebrate =
-      computedMood === "celebrate" || computedMood === "excited";
+    const shouldCelebrate = computedMood === 'celebrate' || computedMood === 'excited';
     const now = Date.now();
     if (
       shouldCelebrate &&
@@ -91,7 +84,7 @@ export default function MascotInteractive({
       !eventCelebrating // Prevent loop: don't re-dispatch if triggered by event
     ) {
       // 只 dispatch 事件，由事件監聽器統一處理 fireConfetti
-      window.dispatchEvent(new CustomEvent("mascot:celebrate"));
+      window.dispatchEvent(new CustomEvent('mascot:celebrate'));
       lastCelebrateAtRef.current = now;
     }
     prevMoodRef.current = computedMood;
@@ -106,16 +99,14 @@ export default function MascotInteractive({
       onMouseLeave={() => setIsHovered(false)}
       onClick={handleClick}
       onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") handleClick();
+        if (e.key === 'Enter' || e.key === ' ') handleClick();
       }}
     >
-      {effectiveMessages.length > 0 && (
-        <MaiMaiSpeech messages={effectiveMessages} />
-      )}
+      {effectiveMessages.length > 0 && <MaiMaiSpeech messages={effectiveMessages} />}
       <ConfettiCanvas />
       {/* 公仔 */}
       <div
-        className={`size-full transition-transform duration-300 ${isHovered ? "scale-110" : ""}`}
+        className={`size-full transition-transform duration-300 ${isHovered ? 'scale-110' : ''}`}
       >
         <MaiMaiBase
           mood={computedMood}
@@ -129,7 +120,7 @@ export default function MascotInteractive({
       {/* 點擊特效 */}
       {clickCount > 0 && clickCount <= 5 && (
         <div className="absolute -right-2 -top-2 animate-bounce text-lg">
-          {["💫", "✨", "🌟", "💖", "🎉"][Math.min(clickCount - 1, 4)]}
+          {['💫', '✨', '🌟', '💖', '🎉'][Math.min(clickCount - 1, 4)]}
         </div>
       )}
     </div>

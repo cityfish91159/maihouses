@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { toast } from 'sonner';
 import { logger } from '../lib/logger';
 import { TOAST_DURATION } from '../constants/toast';
@@ -36,11 +36,7 @@ export const useTrustActions = (propertyId: string) => {
     // Demo Trust Room URL - 展示安心留痕服務的完整流程
     const trustRoomUrl = `${window.location.origin}/maihouses/assure?case=TR-2024-001`;
 
-    const newWindow = window.open(
-      trustRoomUrl,
-      '_blank',
-      'noopener,noreferrer'
-    );
+    const newWindow = window.open(trustRoomUrl, '_blank', 'noopener,noreferrer');
 
     if (!newWindow) {
       logger.warn('Popup blocked, showing fallback toast', { propertyId });
@@ -50,9 +46,9 @@ export const useTrustActions = (propertyId: string) => {
           label: '手動開啟',
           onClick: () => {
             window.location.href = trustRoomUrl;
-          }
+          },
         },
-        duration: TOAST_DURATION.WARNING
+        duration: TOAST_DURATION.WARNING,
       });
     }
   }, [propertyId]);
@@ -68,9 +64,16 @@ export const useTrustActions = (propertyId: string) => {
     logger.info('User requested trust enable', { propertyId });
     toast.success('要求已送出', {
       description: '系統將通知房仲開啟安心留痕服務,我們會透過 Email 通知您進度',
-      duration: TOAST_DURATION.SUCCESS
+      duration: TOAST_DURATION.SUCCESS,
     });
   }, [propertyId]);
 
-  return { learnMore, requestEnable };
+  // ✅ 使用 useMemo 穩定返回物件，避免每次渲染都創建新物件
+  return useMemo(
+    () => ({
+      learnMore,
+      requestEnable,
+    }),
+    [learnMore, requestEnable]
+  );
 };

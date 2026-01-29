@@ -1,21 +1,8 @@
-import React, { useState, useMemo } from "react";
-import {
-  X,
-  ChevronRight,
-  Check,
-  Copy,
-  Share2,
-  FileText,
-  Link2,
-} from "lucide-react";
-import {
-  PropertyReportData,
-  ReportStyle,
-  REPORT_STYLES,
-  HIGHLIGHT_OPTIONS,
-} from "./types";
-import { notify } from "../../lib/notify";
-import { LineShareAction } from "../../components/social/LineShareAction";
+import React, { useState, useMemo } from 'react';
+import { X, ChevronRight, Check, Copy, Share2, FileText, Link2 } from 'lucide-react';
+import { PropertyReportData, ReportStyle, REPORT_STYLES, HIGHLIGHT_OPTIONS } from './types';
+import { notify } from '../../lib/notify';
+import { LineShareAction } from '../../components/social/LineShareAction';
 
 interface ReportGeneratorProps {
   property: PropertyReportData;
@@ -23,30 +10,25 @@ interface ReportGeneratorProps {
   onClose: () => void;
 }
 
-type Step = "style" | "highlights" | "photos" | "preview";
+type Step = 'style' | 'highlights' | 'photos' | 'preview';
 
-export default function ReportGenerator({
-  property,
-  isOpen,
-  onClose,
-}: ReportGeneratorProps) {
-  const [step, setStep] = useState<Step>("style");
-  const [selectedStyle, setSelectedStyle] = useState<ReportStyle>("simple");
+export default function ReportGenerator({ property, isOpen, onClose }: ReportGeneratorProps) {
+  const [step, setStep] = useState<Step>('style');
+  const [selectedStyle, setSelectedStyle] = useState<ReportStyle>('simple');
   const [selectedHighlights, setSelectedHighlights] = useState<string[]>([
-    "commute",
-    "school",
-    "community",
+    'commute',
+    'school',
+    'community',
   ]);
   const [selectedPhotos, setSelectedPhotos] = useState<number[]>([0, 1, 2, 3]);
-  const [customMessage, setCustomMessage] = useState("");
+  const [customMessage, setCustomMessage] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedUrl, setGeneratedUrl] = useState<string | null>(null);
 
   // 預設訊息
   const defaultMessage = useMemo(
-    () =>
-      `這是「${property.title}」的物件報告，我幫您整理了幾個重點，有空可以看看 🙂`,
-    [property.title],
+    () => `這是「${property.title}」的物件報告，我幫您整理了幾個重點，有空可以看看 🙂`,
+    [property.title]
   );
 
   // 生成報告連結
@@ -54,8 +36,8 @@ export default function ReportGenerator({
     const baseUrl = window.location.origin;
     const params = new URLSearchParams({
       aid: property.agent.id,
-      src: "line_share",
-      h: selectedHighlights.join(","),
+      src: 'line_share',
+      h: selectedHighlights.join(','),
       s: selectedStyle,
     });
     return `${baseUrl}/maihouses/r/${property.publicId}?${params.toString()}`;
@@ -96,9 +78,9 @@ export default function ReportGenerator({
       await new Promise((r) => setTimeout(r, 800));
       const url = generateReportUrl();
       setGeneratedUrl(url);
-      setStep("preview");
+      setStep('preview');
     } catch (e) {
-      notify.error("生成失敗，請稍後再試");
+      notify.error('生成失敗，請稍後再試');
     } finally {
       setIsGenerating(false);
     }
@@ -109,9 +91,9 @@ export default function ReportGenerator({
     if (!generatedUrl) return;
     try {
       await navigator.clipboard.writeText(generatedUrl);
-      notify.success("連結已複製！");
+      notify.success('連結已複製！');
     } catch (e) {
-      notify.error("複製失敗");
+      notify.error('複製失敗');
     }
   };
 
@@ -135,7 +117,7 @@ export default function ReportGenerator({
 
   // 重置並關閉
   const handleClose = () => {
-    setStep("style");
+    setStep('style');
     setGeneratedUrl(null);
     onClose();
   };
@@ -149,7 +131,7 @@ export default function ReportGenerator({
         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
         onClick={handleClose}
         onKeyDown={(e) => {
-          if (e.key === "Escape") handleClose();
+          if (e.key === 'Escape') handleClose();
         }}
         role="button"
         tabIndex={0}
@@ -161,10 +143,7 @@ export default function ReportGenerator({
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
           <h2 className="text-lg font-bold text-slate-800">生成物件報告</h2>
-          <button
-            onClick={handleClose}
-            className="rounded-full p-2 transition hover:bg-slate-100"
-          >
+          <button onClick={handleClose} className="rounded-full p-2 transition hover:bg-slate-100">
             <X size={20} className="text-slate-500" />
           </button>
         </div>
@@ -173,37 +152,31 @@ export default function ReportGenerator({
         <div className="border-b border-slate-100 bg-slate-50 px-5 py-3">
           <div className="flex items-center gap-2 text-sm">
             {/* [NASA TypeScript Safety] 定義為常數陣列避免 as Step[] */}
-            {(
-              ["style", "highlights", "photos", "preview"] satisfies Step[]
-            ).map((s, i) => (
+            {(['style', 'highlights', 'photos', 'preview'] satisfies Step[]).map((s, i) => (
               <React.Fragment key={s}>
                 <div
-                  className={`flex items-center gap-1.5 ${step === s ? "font-bold text-[#003366]" : "text-slate-400"}`}
+                  className={`flex items-center gap-1.5 ${step === s ? 'font-bold text-[#003366]' : 'text-slate-400'}`}
                 >
                   <div
                     className={`flex size-6 items-center justify-center rounded-full text-xs font-bold ${
                       step === s
-                        ? "bg-[#003366] text-white"
-                        : ["style", "highlights", "photos", "preview"].indexOf(
-                              step,
-                            ) > i
-                          ? "bg-green-500 text-white"
-                          : "bg-slate-200"
+                        ? 'bg-[#003366] text-white'
+                        : ['style', 'highlights', 'photos', 'preview'].indexOf(step) > i
+                          ? 'bg-green-500 text-white'
+                          : 'bg-slate-200'
                     }`}
                   >
-                    {["style", "highlights", "photos", "preview"].indexOf(
-                      step,
-                    ) > i ? (
+                    {['style', 'highlights', 'photos', 'preview'].indexOf(step) > i ? (
                       <Check size={14} />
                     ) : (
                       i + 1
                     )}
                   </div>
                   <span className="hidden sm:inline">
-                    {s === "style" && "選樣式"}
-                    {s === "highlights" && "選亮點"}
-                    {s === "photos" && "選照片"}
-                    {s === "preview" && "完成"}
+                    {s === 'style' && '選樣式'}
+                    {s === 'highlights' && '選亮點'}
+                    {s === 'photos' && '選照片'}
+                    {s === 'preview' && '完成'}
                   </span>
                 </div>
                 {i < 3 && <ChevronRight size={16} className="text-slate-300" />}
@@ -215,11 +188,9 @@ export default function ReportGenerator({
         {/* 內容區域 */}
         <div className="flex-1 overflow-y-auto p-5">
           {/* Step 1: 選擇樣式 */}
-          {step === "style" && (
+          {step === 'style' && (
             <div className="space-y-4">
-              <div className="mb-4 text-sm text-slate-500">
-                選擇最適合這位客戶的報告樣式
-              </div>
+              <div className="mb-4 text-sm text-slate-500">選擇最適合這位客戶的報告樣式</div>
 
               {Object.values(REPORT_STYLES).map((style) => (
                 <button
@@ -228,28 +199,24 @@ export default function ReportGenerator({
                     // [NASA TypeScript Safety] style.id 來自 REPORT_STYLES，已是 ReportStyle 類型
                     const styleId = style.id;
                     if (
-                      styleId === "simple" ||
-                      styleId === "investment" ||
-                      styleId === "marketing"
+                      styleId === 'simple' ||
+                      styleId === 'investment' ||
+                      styleId === 'marketing'
                     ) {
                       setSelectedStyle(styleId);
                     }
                   }}
                   className={`w-full rounded-xl border-2 p-4 text-left transition ${
                     selectedStyle === style.id
-                      ? "border-[#003366] bg-blue-50"
-                      : "border-slate-200 hover:border-slate-300"
+                      ? 'border-[#003366] bg-blue-50'
+                      : 'border-slate-200 hover:border-slate-300'
                   }`}
                 >
                   <div className="flex items-start gap-3">
                     <span className="text-2xl">{style.icon}</span>
                     <div className="flex-1">
-                      <div className="font-bold text-slate-800">
-                        {style.name}
-                      </div>
-                      <div className="text-sm text-slate-500">
-                        {style.description}
-                      </div>
+                      <div className="font-bold text-slate-800">{style.name}</div>
+                      <div className="text-sm text-slate-500">{style.description}</div>
                     </div>
                     {selectedStyle === style.id && (
                       <div className="flex size-6 items-center justify-center rounded-full bg-[#003366]">
@@ -263,7 +230,7 @@ export default function ReportGenerator({
           )}
 
           {/* Step 2: 選擇亮點 */}
-          {step === "highlights" && (
+          {step === 'highlights' && (
             <div className="space-y-4">
               <div className="mb-4 text-sm text-slate-500">
                 選擇 3 個最能打動客戶的亮點（已選 {selectedHighlights.length}
@@ -276,8 +243,8 @@ export default function ReportGenerator({
                   onClick={() => toggleHighlight(h.id)}
                   className={`w-full rounded-xl border-2 p-3 text-left transition ${
                     selectedHighlights.includes(h.id)
-                      ? "border-[#003366] bg-blue-50"
-                      : "border-slate-200 hover:border-slate-300"
+                      ? 'border-[#003366] bg-blue-50'
+                      : 'border-slate-200 hover:border-slate-300'
                   }`}
                 >
                   <div className="flex items-center gap-3">
@@ -298,7 +265,7 @@ export default function ReportGenerator({
           )}
 
           {/* Step 3: 選擇照片 */}
-          {step === "photos" && (
+          {step === 'photos' && (
             <div className="space-y-4">
               <div className="mb-4 text-sm text-slate-500">
                 選擇要放入報告的照片（已選 {selectedPhotos.length}/5）
@@ -311,8 +278,8 @@ export default function ReportGenerator({
                     onClick={() => togglePhoto(i)}
                     className={`relative aspect-square overflow-hidden rounded-lg border-2 transition ${
                       selectedPhotos.includes(i)
-                        ? "border-[#003366] ring-2 ring-[#003366]/20"
-                        : "border-transparent"
+                        ? 'border-[#003366] ring-2 ring-[#003366]/20'
+                        : 'border-transparent'
                     }`}
                   >
                     <img src={img} alt="" className="size-full object-cover" />
@@ -328,19 +295,15 @@ export default function ReportGenerator({
           )}
 
           {/* Step 4: 預覽 & 分享 */}
-          {step === "preview" && generatedUrl && (
+          {step === 'preview' && generatedUrl && (
             <div className="space-y-5">
               {/* 成功提示 */}
               <div className="py-4 text-center">
                 <div className="mx-auto mb-3 flex size-16 items-center justify-center rounded-full bg-green-100">
                   <Check size={32} className="text-green-600" />
                 </div>
-                <h3 className="text-lg font-bold text-slate-800">
-                  報告已生成！
-                </h3>
-                <p className="mt-1 text-sm text-slate-500">
-                  選擇分享方式發送給客戶
-                </p>
+                <h3 className="text-lg font-bold text-slate-800">報告已生成！</h3>
+                <p className="mt-1 text-sm text-slate-500">選擇分享方式發送給客戶</p>
               </div>
 
               {/* 連結預覽 */}
@@ -356,10 +319,7 @@ export default function ReportGenerator({
 
               {/* 分享訊息 */}
               <div>
-                <label
-                  htmlFor="share-message"
-                  className="mb-2 block text-sm text-slate-600"
-                >
+                <label htmlFor="share-message" className="mb-2 block text-sm text-slate-600">
                   分享訊息（可編輯）
                 </label>
                 <textarea
@@ -386,13 +346,13 @@ export default function ReportGenerator({
                   title={customMessage || defaultMessage}
                   onShareClick={() => {
                     // 追蹤報告分享事件
-                    fetch("/api/report/track", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
+                    fetch('/api/report/track', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
                       body: JSON.stringify({
                         property_id: property.publicId,
                         agent_id: property.agent.id,
-                        action: "line_share",
+                        action: 'line_share',
                         report_url: generatedUrl,
                       }),
                     }).catch(() => {
@@ -429,17 +389,12 @@ export default function ReportGenerator({
         </div>
 
         {/* Footer 按鈕 */}
-        {step !== "preview" && (
+        {step !== 'preview' && (
           <div className="flex gap-3 border-t border-slate-100 px-5 py-4">
-            {step !== "style" && (
+            {step !== 'style' && (
               <button
                 onClick={() => {
-                  const steps: Step[] = [
-                    "style",
-                    "highlights",
-                    "photos",
-                    "preview",
-                  ];
+                  const steps: Step[] = ['style', 'highlights', 'photos', 'preview'];
                   const currentIndex = steps.indexOf(step);
                   if (currentIndex > 0) {
                     const prevStep = steps[currentIndex - 1];
@@ -454,14 +409,11 @@ export default function ReportGenerator({
 
             <button
               onClick={() => {
-                if (step === "style") setStep("highlights");
-                else if (step === "highlights") setStep("photos");
-                else if (step === "photos") handleGenerate();
+                if (step === 'style') setStep('highlights');
+                else if (step === 'highlights') setStep('photos');
+                else if (step === 'photos') handleGenerate();
               }}
-              disabled={
-                isGenerating ||
-                (step === "highlights" && selectedHighlights.length === 0)
-              }
+              disabled={isGenerating || (step === 'highlights' && selectedHighlights.length === 0)}
               className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#003366] py-3 font-bold text-white transition hover:bg-[#002244] disabled:bg-slate-300"
             >
               {isGenerating ? (
@@ -469,8 +421,8 @@ export default function ReportGenerator({
                   <div className="size-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
                   生成中...
                 </>
-              ) : step === "photos" ? (
-                "生成報告"
+              ) : step === 'photos' ? (
+                '生成報告'
               ) : (
                 <>
                   下一步

@@ -5,10 +5,10 @@
  * 包含：快速導航、社區動態、待售物件
  */
 
-import { memo } from "react";
-import { Home, Search, Star, Clock, ChevronRight } from "lucide-react";
-import type { SidebarData, HotPost, SaleItem } from "../../types/feed";
-import { STRINGS } from "../../constants/strings";
+import { memo } from 'react';
+import { Home, Search, Star, Clock, ChevronRight } from 'lucide-react';
+import type { SidebarData, HotPost, SaleItem } from '../../types/feed';
+import { STRINGS } from '../../constants/strings';
 
 const S = STRINGS.FEED.SIDEBAR;
 
@@ -27,34 +27,28 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   {
-    id: "my-community",
-    label: "我的社區牆",
+    id: 'my-community',
+    label: '我的社區牆',
     icon: <Home size={16} />,
-    href: "#my-community",
+    href: '#my-community',
   },
   {
-    id: "explore",
-    label: "探索其他社區",
+    id: 'explore',
+    label: '探索其他社區',
     icon: <Search size={16} />,
-    href: "#explore",
+    href: '#explore',
   },
-  { id: "fav", label: "我的收藏", icon: <Star size={16} />, href: "#fav" },
+  { id: 'fav', label: '我的收藏', icon: <Star size={16} />, href: '#fav' },
   {
-    id: "history",
-    label: "瀏覽紀錄",
+    id: 'history',
+    label: '瀏覽紀錄',
     icon: <Clock size={16} />,
-    href: "#history",
+    href: '#history',
   },
 ];
 
 /** 側邊欄卡片容器 */
-function SidebarCard({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) {
+function SidebarCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="rounded-xl border border-brand-100 bg-white p-3.5 shadow-sm">
       <h4 className="mb-2.5 text-sm font-bold text-brand-700">{title}</h4>
@@ -75,8 +69,8 @@ function NavList({ activeNav }: { activeNav?: string }) {
             href={item.href}
             className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition-all ${
               isActive
-                ? "bg-gradient-to-r from-brand-700 to-brand-600 text-white shadow-sm"
-                : "text-gray-700 hover:bg-brand-50"
+                ? 'bg-gradient-to-r from-brand-700 to-brand-600 text-white shadow-sm'
+                : 'text-gray-700 hover:bg-brand-50'
             }`}
           >
             {item.icon}
@@ -104,12 +98,11 @@ function HotPostsCard({ posts }: { posts: HotPost[] | undefined }) {
   return (
     <SidebarCard title={`📊 ${S.HOT_TITLE}`}>
       <p className="text-sm leading-relaxed text-gray-600">
-        {S.HOT_NEW_POSTS}{" "}
-        <span className="font-bold text-brand-700">{totalPosts}</span>{" "}
+        {S.HOT_NEW_POSTS} <span className="font-bold text-brand-700">{totalPosts}</span>{' '}
         {S.HOT_POSTS_UNIT}
         <br />
-        {S.HOT_ACTIVE_COMMUNITIES}{" "}
-        <span className="font-bold text-brand-700">{uniqueCommunities}</span>{" "}
+        {S.HOT_ACTIVE_COMMUNITIES}{' '}
+        <span className="font-bold text-brand-700">{uniqueCommunities}</span>{' '}
         {S.HOT_COMMUNITIES_UNIT}
       </p>
     </SidebarCard>
@@ -129,8 +122,7 @@ function SaleItemsCard({ items }: { items: SaleItem[] | undefined }) {
   return (
     <SidebarCard title={`🏠 ${S.SALE_TITLE}`}>
       <p className="text-sm leading-relaxed text-gray-600">
-        {S.SALE_PREFIX}{" "}
-        <span className="font-bold text-brand-700">{items.length}</span>{" "}
+        {S.SALE_PREFIX} <span className="font-bold text-brand-700">{items.length}</span>{' '}
         {S.SALE_SUFFIX}
         <br />
         <a
@@ -147,8 +139,8 @@ function SaleItemsCard({ items }: { items: SaleItem[] | undefined }) {
 
 export const FeedSidebar = memo(function FeedSidebar({
   data,
-  activeNav = "my-community",
-  className = "",
+  activeNav = 'my-community',
+  className = '',
 }: FeedSidebarProps) {
   return (
     <aside

@@ -34,7 +34,7 @@ describe('useTrustActions', () => {
 
   describe('learnMore', () => {
     it('應該開啟新分頁並導向說明頁面', () => {
-      const mockWindowOpen = vi.fn(() => ({} as Window));
+      const mockWindowOpen = vi.fn(() => ({}) as Window);
       window.open = mockWindowOpen;
 
       const { result } = renderHook(() => useTrustActions(mockPropertyId));
@@ -43,7 +43,11 @@ describe('useTrustActions', () => {
         result.current.learnMore();
       });
 
-      expect(mockWindowOpen).toHaveBeenCalledWith(expect.stringContaining('/maihouses/assure?case=TR-2024-001'), '_blank', 'noopener,noreferrer');
+      expect(mockWindowOpen).toHaveBeenCalledWith(
+        expect.stringContaining('/maihouses/assure?case=TR-2024-001'),
+        '_blank',
+        'noopener,noreferrer'
+      );
     });
 
     it('當彈窗被阻擋時應該顯示 Toast 提示', () => {
@@ -115,7 +119,12 @@ describe('useTrustActions', () => {
 
       if (toastOptions && typeof toastOptions === 'object' && 'action' in toastOptions) {
         const action = toastOptions.action;
-        if (action && typeof action === 'object' && 'onClick' in action && typeof action.onClick === 'function') {
+        if (
+          action &&
+          typeof action === 'object' &&
+          'onClick' in action &&
+          typeof action.onClick === 'function'
+        ) {
           // Toast action 應該執行某些操作（依實際實作而定）
           expect(action.onClick).toBeDefined();
         }

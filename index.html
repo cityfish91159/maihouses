@@ -20,64 +20,64 @@
           url: url,
           line: lineNo,
           col: columnNo,
-          stack: error && error.stack ? error.stack : "N/A",
+          stack: error && error.stack ? error.stack : 'N/A',
         };
         window.__ERRORS__.push(errInfo);
 
-        var root = document.getElementById("root");
+        var root = document.getElementById('root');
         if (root) {
           var stackHtml =
             error && error.stack
               ? '<pre style="font-size:10px;overflow-x:auto;background:#1e1e1e;color:#d4d4d4;padding:10px;border-radius:4px;margin-top:10px;white-space:pre-wrap;word-break:break-all;">' +
                 error.stack +
-                "</pre>"
-              : "";
+                '</pre>'
+              : '';
           root.innerHTML =
             '<div style="padding:20px;color:#e11d48;background:#fff1f2;border:1px solid #fda4af;border-radius:8px;margin:10px;font-family:sans-serif;">' +
             '<h3 style="margin:0 0 10px 0">頁面執行出錯</h3>' +
             '<p style="font-size:13px;margin:0;word-break:break-all;">錯誤: ' +
             msg +
-            "</p>" +
+            '</p>' +
             '<p style="font-size:11px;color:#666;margin:5px 0 0 0;word-break:break-all;">位置: ' +
             url +
-            ":" +
+            ':' +
             lineNo +
-            ":" +
+            ':' +
             columnNo +
-            "</p>" +
+            '</p>' +
             stackHtml +
             '<button onclick="location.reload()" style="margin-top:15px;padding:8px 16px;background:#e11d48;color:white;border:none;border-radius:6px;font-weight:bold;">重新整理</button>' +
-            "</div>";
+            '</div>';
         }
         return false;
       };
       window.onunhandledrejection = function (event) {
         var reason = event.reason;
         var msg = reason instanceof Error ? reason.message : String(reason);
-        var stack = reason instanceof Error ? reason.stack : "N/A";
+        var stack = reason instanceof Error ? reason.stack : 'N/A';
         window.__ERRORS__.push({
-          type: "unhandledrejection",
+          type: 'unhandledrejection',
           msg: msg,
           stack: stack,
         });
 
-        var root = document.getElementById("root");
-        if (root && root.innerText.indexOf("載入中") !== -1) {
+        var root = document.getElementById('root');
+        if (root && root.innerText.indexOf('載入中') !== -1) {
           var stackHtml =
-            stack !== "N/A"
+            stack !== 'N/A'
               ? '<pre style="font-size:10px;overflow-x:auto;background:#1e1e1e;color:#d4d4d4;padding:10px;border-radius:4px;margin-top:10px;white-space:pre-wrap;word-break:break-all;">' +
                 stack +
-                "</pre>"
-              : "";
+                '</pre>'
+              : '';
           root.innerHTML =
             '<div style="padding:20px;color:#e11d48;background:#fff1f2;border:1px solid #fda4af;border-radius:8px;margin:10px;font-family:sans-serif;">' +
             '<h3 style="margin:0 0 10px 0">Promise 錯誤</h3>' +
             '<p style="font-size:13px;margin:0;word-break:break-all;">錯誤: ' +
             msg +
-            "</p>" +
+            '</p>' +
             stackHtml +
             '<button onclick="location.reload()" style="margin-top:15px;padding:8px 16px;background:#e11d48;color:white;border:none;border-radius:6px;font-weight:bold;">重新整理</button>' +
-            "</div>";
+            '</div>';
         }
       };
     </script>
@@ -128,12 +128,12 @@
     </noscript>
     <script>
       // Force Eruda if ?eruda=true is present
-      if (window.location.href.includes("eruda=true")) {
-        var script = document.createElement("script");
-        script.src = "//cdn.jsdelivr.net/npm/eruda";
+      if (window.location.href.includes('eruda=true')) {
+        var script = document.createElement('script');
+        script.src = '//cdn.jsdelivr.net/npm/eruda';
         script.onload = function () {
           eruda.init();
-          console.log("Eruda initialized directly from index.html");
+          console.log('Eruda initialized directly from index.html');
         };
         document.body.appendChild(script);
       }

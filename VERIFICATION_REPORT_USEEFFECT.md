@@ -9,6 +9,7 @@
 ## 1. sendEventRef 檢查 ✅
 
 ### 發現位置
+
 - **第 196 行**: `const sendEventRef = useRef(sendEvent);` - 正確初始化
 - **第 198-200 行**: useEffect 正確更新 sendEventRef.current
 - **第 207 行**: `sendEventRef.current("page_view", true);` - 正確使用
@@ -23,25 +24,30 @@
 ### 批判性問題
 
 #### ❌ 問題 1: 第 198-200 行 useEffect 缺少依賴陣列
+
 ```typescript
 useEffect(() => {
   sendEventRef.current = sendEvent;
 });
 ```
+
 **問題**: 沒有依賴陣列 = 每次 render 都執行（低效）
 **修復**: 應為 `}, [sendEvent]);`
 
 #### ❌ 問題 2: 第 203-237 行 useEffect 依賴陣列不完整
+
 ```typescript
 useEffect(() => {
   if (!propertyId) return;
   // ... 使用 sendEventRef
-}, [propertyId]);  // ⚠️ 缺少 sendEventRef 依賴
+}, [propertyId]); // ⚠️ 缺少 sendEventRef 依賴
 ```
+
 **問題**: 雖然使用 sendEventRef.current 不會導致執行，但違反 ESLint 規則
 **目前狀態**: 實際運作正常（因為使用 ref），但代碼品質問題
 
 #### ✅ 其他 useEffect（第 416-431 行）
+
 ```typescript
 useEffect(() => {
   const fetchProperty = async () => {
@@ -49,16 +55,19 @@ useEffect(() => {
     // ...
   };
   fetchProperty();
-}, [id]);  // ✅ 正確
+}, [id]); // ✅ 正確
 ```
 
 #### ✅ 其他 useEffect（第 180-193 行）
+
 ```typescript
 useEffect(() => {
-  const handleScroll = () => { /* ... */ };
-  window.addEventListener("scroll", handleScroll, { passive: true });
-  return () => window.removeEventListener("scroll", handleScroll);
-}, []);  // ✅ 正確 (沒有依賴)
+  const handleScroll = () => {
+    /* ... */
+  };
+  window.addEventListener('scroll', handleScroll, { passive: true });
+  return () => window.removeEventListener('scroll', handleScroll);
+}, []); // ✅ 正確 (沒有依賴)
 ```
 
 ---
@@ -68,6 +77,7 @@ useEffect(() => {
 ### 類型安全性 ✅
 
 **檢查項**:
+
 1. **sendEvent 函數簽名** (第 110-177 行)
    - 正確使用 useCallback
    - 參數類型明確: `eventType: string, useBeacon = false`
@@ -85,13 +95,13 @@ useEffect(() => {
 
 ## 4. 代碼品質評分
 
-| 項目 | 狀態 | 說明 |
-|------|------|------|
-| sendEventRef 實現 | ✅ 優秀 | 完整、正確、遵循最佳實踐 |
-| useEffect 依賴陣列 | ⚠️ 需修復 | 兩個地方有問題 |
-| 類型安全 | ✅ 優秀 | 無 any，無 @ts-ignore |
-| 錯誤處理 | ✅ 優秀 | try-catch, beacon 降級完整 |
-| 整體設計 | ✅ 優秀 | UAG 追蹤架構清晰 |
+| 項目               | 狀態      | 說明                       |
+| ------------------ | --------- | -------------------------- |
+| sendEventRef 實現  | ✅ 優秀   | 完整、正確、遵循最佳實踐   |
+| useEffect 依賴陣列 | ⚠️ 需修復 | 兩個地方有問題             |
+| 類型安全           | ✅ 優秀   | 無 any，無 @ts-ignore      |
+| 錯誤處理           | ✅ 優秀   | try-catch, beacon 降級完整 |
+| 整體設計           | ✅ 優秀   | UAG 追蹤架構清晰           |
 
 ---
 
@@ -100,6 +110,7 @@ useEffect(() => {
 ### 修復 A: 添加缺失的依賴陣列 (第 198-200 行)
 
 **當前**:
+
 ```typescript
 useEffect(() => {
   sendEventRef.current = sendEvent;
@@ -107,6 +118,7 @@ useEffect(() => {
 ```
 
 **修復後**:
+
 ```typescript
 useEffect(() => {
   sendEventRef.current = sendEvent;
@@ -116,12 +128,15 @@ useEffect(() => {
 ### 修復 B: 處理第 203-237 行 ESLint 警告 (可選)
 
 **選項 1 - 添加 sendEventRef 到依賴陣列**:
+
 ```typescript
 }, [propertyId, sendEventRef]);
 ```
+
 但這會導致不必要的重新執行。
 
 **選項 2 - 使用 ESLint disable (不推薦)**:
+
 ```typescript
 // eslint-disable-next-line react-hooks/exhaustive-deps
 }, [propertyId]);
@@ -135,12 +150,12 @@ useEffect(() => {
 
 ## 6. 最終驗證結果
 
-| 檢查項 | 結果 |
-|--------|------|
-| ✅ sendEventRef 實現 | **通過** - 完整且正確 |
-| ⚠️ useEffect 依賴陣列 | **需修復** - 第 198-200 行缺少依賴 |
-| ✅ TypeScript 錯誤 | **無發現** - 等待 typecheck 結果確認 |
-| ✅ 代碼安全性 | **通過** - 無 any、無禁用規則 |
+| 檢查項                | 結果                                 |
+| --------------------- | ------------------------------------ |
+| ✅ sendEventRef 實現  | **通過** - 完整且正確                |
+| ⚠️ useEffect 依賴陣列 | **需修復** - 第 198-200 行缺少依賴   |
+| ✅ TypeScript 錯誤    | **無發現** - 等待 typecheck 結果確認 |
+| ✅ 代碼安全性         | **通過** - 無 any、無禁用規則        |
 
 ---
 
@@ -153,4 +168,3 @@ useEffect(() => {
 ---
 
 **驗證狀態**: 🔴 發現 1 個需修復的問題（第 198-200 行）
-

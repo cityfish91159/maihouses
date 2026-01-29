@@ -1,14 +1,16 @@
-import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { z } from "zod";
-import { logger } from "../lib/logger";
+import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { z } from 'zod';
+import { logger } from '../lib/logger';
 
 // [NASA TypeScript Safety] OpenAI Response Schema
 const OpenAIResponseSchema = z.object({
-  choices: z.array(z.object({
-    message: z.object({
-      content: z.string(),
-    }),
-  })),
+  choices: z.array(
+    z.object({
+      message: z.object({
+        content: z.string(),
+      }),
+    })
+  ),
   usage: z.object({
     total_tokens: z.number(),
   }),
@@ -16,22 +18,22 @@ const OpenAIResponseSchema = z.object({
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // CORS
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-  if (req.method === "OPTIONS") {
+  if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
 
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   const { title, description, advantage1, advantage2 } = req.body || {};
 
   if (!title && !advantage1) {
-    return res.status(400).json({ error: "Missing required fields" });
+    return res.status(400).json({ error: 'Missing required fields' });
   }
 
   const apiKey = process.env.OPENAI_API_KEY;
@@ -39,7 +41,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // 優雅降級：如果沒有 API Key，回傳空陣列或基於規則的簡單標籤
     return res.status(200).json({
       capsules: [],
-      metadata: { status: "degraded", reason: "Missing API Key" },
+      metadata: { status: 'degraded', reason: 'Missing API Key' },
     });
   }
 
@@ -52,42 +54,37 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 範例輸出：["捷運宅", "景觀優"]
 
 房源標題：${title}
-房源描述：${description || "無"}
-優點 1：${advantage1 || "無"}
-優點 2：${advantage2 || "無"}
+房源描述：${description || '無'}
+優點 1：${advantage1 || '無'}
+優點 2：${advantage2 || '無'}
 `;
 
     const fetchWithRetry = async (retries = 3, delay = 1000) => {
       for (let i = 0; i < retries; i++) {
         try {
-          const res = await fetch(
-            "https://api.openai.com/v1/chat/completions",
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${apiKey}`,
-              },
-              body: JSON.stringify({
-                model: "gpt-3.5-turbo",
-                messages: [
-                  {
-                    role: "system",
-                    content: "你是一個只會回傳純 JSON 陣列的機器人。",
-                  },
-                  { role: "user", content: prompt },
-                ],
-                temperature: 0.3,
-                max_tokens: 50,
-              }),
+          const res = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${apiKey}`,
             },
-          );
+            body: JSON.stringify({
+              model: 'gpt-3.5-turbo',
+              messages: [
+                {
+                  role: 'system',
+                  content: '你是一個只會回傳純 JSON 陣列的機器人。',
+                },
+                { role: 'user', content: prompt },
+              ],
+              temperature: 0.3,
+              max_tokens: 50,
+            }),
+          });
 
           if (res.ok) return res;
           if (res.status >= 500 && i < retries - 1) {
-            await new Promise((resolve) =>
-              setTimeout(resolve, delay * (i + 1)),
-            );
+            await new Promise((resolve) => setTimeout(resolve, delay * (i + 1)));
             continue;
           }
           throw new Error(`OpenAI API error: ${res.statusText}`);
@@ -96,7 +93,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           await new Promise((resolve) => setTimeout(resolve, delay * (i + 1)));
         }
       }
-      throw new Error("Max retries reached");
+      throw new Error('Max retries reached');
     };
 
     const response = await fetchWithRetry();
@@ -105,21 +102,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const rawData: unknown = await response.json();
     const parseResult = OpenAIResponseSchema.safeParse(rawData);
     if (!parseResult.success) {
-      logger.error("[property/generate-key-capsules] OpenAI response validation failed", null, {
+      logger.error('[property/generate-key-capsules] OpenAI response validation failed', null, {
         error: parseResult.error.message,
       });
       return res.status(200).json({
         capsules: [],
-        metadata: { status: "error", message: "AI response validation failed" },
+        metadata: { status: 'error', message: 'AI response validation failed' },
       });
     }
     const data = parseResult.data;
-    let content = data.choices[0]?.message?.content?.trim() || "[]";
+    let content = data.choices[0]?.message?.content?.trim() || '[]';
 
     // 強健的 JSON 清洗邏輯
     content = content
-      .replace(/```json/g, "")
-      .replace(/```/g, "")
+      .replace(/```json/g, '')
+      .replace(/```/g, '')
       .trim();
 
     let capsules = [];
@@ -134,23 +131,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     return res.status(200).json({
       capsules: Array.isArray(capsules)
-        ? capsules
-            .slice(0, 2)
-            .filter((c) => typeof c === "string" && c.length > 0)
+        ? capsules.slice(0, 2).filter((c) => typeof c === 'string' && c.length > 0)
         : [],
       metadata: {
-        status: "success",
-        model: "gpt-3.5-turbo",
+        status: 'success',
+        model: 'gpt-3.5-turbo',
         usage: data.usage,
         generated_at: new Date().toISOString(),
       },
     });
   } catch (error: unknown) {
-    logger.error("[property/generate-key-capsules] API error", error);
-    const message = error instanceof Error ? error.message : "Unknown error";
+    logger.error('[property/generate-key-capsules] API error', error);
+    const message = error instanceof Error ? error.message : 'Unknown error';
     return res.status(200).json({
       capsules: [],
-      metadata: { status: "error", message },
+      metadata: { status: 'error', message },
     });
   }
 }

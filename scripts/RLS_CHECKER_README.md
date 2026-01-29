@@ -37,6 +37,7 @@ python scripts/check-rls-policies.py
 - `vapid_keys` - Web Push VAPID 金鑰
 
 **要求：**
+
 ```sql
 ALTER TABLE public.your_table ENABLE ROW LEVEL SECURITY;
 
@@ -54,6 +55,7 @@ USING (true) WITH CHECK (true);
 - `push_subscriptions` - 推播訂閱
 
 **要求：**
+
 ```sql
 ALTER TABLE public.your_table ENABLE ROW LEVEL SECURITY;
 
@@ -114,6 +116,7 @@ Reference: docs/property-detail-trust-ui-optimization.md
 ### 問題 1: RLS 未啟用
 
 **錯誤：**
+
 ```sql
 CREATE TABLE public.my_table (
   id UUID PRIMARY KEY,
@@ -123,6 +126,7 @@ CREATE TABLE public.my_table (
 ```
 
 **修復：**
+
 ```sql
 CREATE TABLE public.my_table (
   id UUID PRIMARY KEY,
@@ -141,6 +145,7 @@ USING (true) WITH CHECK (true);
 ### 問題 2: 系統內部表允許用戶存取
 
 **錯誤：**
+
 ```sql
 ALTER TABLE public.audit_logs ENABLE ROW LEVEL SECURITY;
 
@@ -151,6 +156,7 @@ USING (true);
 ```
 
 **修復：**
+
 ```sql
 ALTER TABLE public.audit_logs ENABLE ROW LEVEL SECURITY;
 

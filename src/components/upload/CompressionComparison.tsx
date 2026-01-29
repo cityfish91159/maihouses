@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { GripVertical } from "lucide-react";
+import React, { useState } from 'react';
+import { GripVertical } from 'lucide-react';
 
 interface CompressionComparisonProps {
   originalUrl: string;
@@ -27,11 +27,11 @@ export const CompressionComparison: React.FC<CompressionComparisonProps> = ({
   };
 
   const formatSize = (bytes: number) => {
-    if (bytes === 0) return "0 B";
+    if (bytes === 0) return '0 B';
     const k = 1024;
-    const sizes = ["B", "KB", "MB"];
+    const sizes = ['B', 'KB', 'MB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
   return (
@@ -39,7 +39,7 @@ export const CompressionComparison: React.FC<CompressionComparisonProps> = ({
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
       onClick={onClose}
       onKeyDown={(e) => {
-        if (e.key === "Escape") onClose();
+        if (e.key === 'Escape') onClose();
       }}
       role="button"
       aria-label="關閉對話框"
@@ -55,18 +55,12 @@ export const CompressionComparison: React.FC<CompressionComparisonProps> = ({
           <h3 className="font-bold">壓縮效果對比</h3>
           <div className="space-x-4 text-sm">
             <span className="text-gray-400">
-              原始:{" "}
-              <span className="text-white">{formatSize(originalSize)}</span>
+              原始: <span className="text-white">{formatSize(originalSize)}</span>
             </span>
             <span className="text-emerald-400">
-              壓縮後:{" "}
-              <span className="text-white">{formatSize(compressedSize)}</span>{" "}
-              (-{saving}%)
+              壓縮後: <span className="text-white">{formatSize(compressedSize)}</span> (-{saving}%)
             </span>
-            <button
-              onClick={onClose}
-              className="rounded bg-white/10 px-2 py-1 hover:bg-white/20"
-            >
+            <button onClick={onClose} className="rounded bg-white/10 px-2 py-1 hover:bg-white/20">
               關閉
             </button>
           </div>

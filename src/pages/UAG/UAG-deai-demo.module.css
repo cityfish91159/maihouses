@@ -73,14 +73,12 @@
 
   /* Swiss Style: Sharp shadows */
   --shadow-sharp-sm: 0 1px 2px rgba(0, 56, 90, 0.08);
-  --shadow-sharp-md:
-    0 2px 4px rgba(0, 56, 90, 0.06), 0 4px 8px rgba(0, 56, 90, 0.04);
-  --shadow-sharp-lg:
-    0 4px 6px rgba(0, 56, 90, 0.04), 0 10px 20px rgba(0, 56, 90, 0.06);
+  --shadow-sharp-md: 0 2px 4px rgba(0, 56, 90, 0.06), 0 4px 8px rgba(0, 56, 90, 0.04);
+  --shadow-sharp-lg: 0 4px 6px rgba(0, 56, 90, 0.04), 0 10px 20px rgba(0, 56, 90, 0.06);
 
   /* Typography: Corporate Trust from ui-ux-pro-max */
-  --font-heading: "Lexend", -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-body: "Source Sans 3", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-heading: 'Lexend', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-body: 'Source Sans 3', -apple-system, BlinkMacSystemFont, sans-serif;
 
   /* Swiss Style: Mathematical spacing */
   --space-unit: 8px;
@@ -192,11 +190,7 @@
   border: 1px solid var(--swiss-gray-300);
   border-radius: var(--radius-lg);
   /* Solid background with very subtle tint of brand color */
-  background: linear-gradient(
-    180deg,
-    var(--swiss-white) 0%,
-    rgba(0, 56, 90, 0.02) 100%
-  );
+  background: linear-gradient(180deg, var(--swiss-white) 0%, rgba(0, 56, 90, 0.02) 100%);
   overflow: hidden;
   box-shadow: var(--shadow-sharp-md);
 }
@@ -204,7 +198,7 @@
 /* Swiss Style grid lines: clean, mathematical */
 .deai-cluster::before,
 .deai-cluster::after {
-  content: "";
+  content: '';
   position: absolute;
   left: 50%;
   top: 50%;
@@ -323,27 +317,27 @@
 }
 
 /* Grade-specific styling: solid colors, no gradients */
-.deai-bubble[data-grade="S"] {
+.deai-bubble[data-grade='S'] {
   background: var(--grade-s-bg);
   border-color: var(--grade-s);
 }
 
-.deai-bubble[data-grade="A"] {
+.deai-bubble[data-grade='A'] {
   background: var(--grade-a-bg);
   border-color: var(--grade-a);
 }
 
-.deai-bubble[data-grade="B"] {
+.deai-bubble[data-grade='B'] {
   background: var(--grade-b-bg);
   border-color: var(--grade-b);
 }
 
-.deai-bubble[data-grade="C"] {
+.deai-bubble[data-grade='C'] {
   background: var(--grade-c-bg);
   border-color: var(--grade-c);
 }
 
-.deai-bubble[data-grade="F"] {
+.deai-bubble[data-grade='F'] {
   background: var(--grade-f-bg);
   border-color: var(--grade-f);
 }
@@ -369,19 +363,19 @@
   box-shadow: var(--shadow-sharp-sm);
 }
 
-.deai-bubble[data-grade="S"] .deai-bubble-grade {
+.deai-bubble[data-grade='S'] .deai-bubble-grade {
   background: var(--grade-s);
 }
-.deai-bubble[data-grade="A"] .deai-bubble-grade {
+.deai-bubble[data-grade='A'] .deai-bubble-grade {
   background: var(--grade-a);
 }
-.deai-bubble[data-grade="B"] .deai-bubble-grade {
+.deai-bubble[data-grade='B'] .deai-bubble-grade {
   background: var(--grade-b);
 }
-.deai-bubble[data-grade="C"] .deai-bubble-grade {
+.deai-bubble[data-grade='C'] .deai-bubble-grade {
   background: var(--grade-c);
 }
-.deai-bubble[data-grade="F"] .deai-bubble-grade {
+.deai-bubble[data-grade='F'] .deai-bubble-grade {
   background: var(--grade-f);
 }
 

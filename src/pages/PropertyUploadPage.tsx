@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
-import { useNavigate, Link, useSearchParams } from "react-router-dom";
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import {
   Loader2,
   Download,
@@ -10,24 +10,21 @@ import {
   Edit3,
   RotateCcw,
   AlertTriangle,
-} from "lucide-react";
-import { notify } from "../lib/notify";
-import { Logo } from "../components/Logo/Logo"; // Atomic Logo w/ M Icon
-import { useMaiMai } from "../context/MaiMaiContext";
-import { parse591Content, detect591Content } from "../lib/parse591";
-import { logger } from "../lib/logger";
+} from 'lucide-react';
+import { notify } from '../lib/notify';
+import { Logo } from '../components/Logo/Logo'; // Atomic Logo w/ M Icon
+import { useMaiMai } from '../context/MaiMaiContext';
+import { parse591Content, detect591Content } from '../lib/parse591';
+import { logger } from '../lib/logger';
 
 // 抽離的子組件 (HP-2.2)
-import { BasicInfoSection } from "../components/upload/BasicInfoSection";
-import { FeaturesSection } from "../components/upload/FeaturesSection";
-import { TwoGoodsSection } from "../components/upload/TwoGoodsSection";
-import { TrustToggleSection } from "../components/upload/TrustToggleSection";
-import { MediaSection } from "../components/upload/MediaSection";
-import { PreviewSection } from "../components/upload/PreviewSection";
-import {
-  UploadFormProvider,
-  useUploadForm,
-} from "../components/upload/UploadContext";
+import { BasicInfoSection } from '../components/upload/BasicInfoSection';
+import { FeaturesSection } from '../components/upload/FeaturesSection';
+import { TwoGoodsSection } from '../components/upload/TwoGoodsSection';
+import { TrustToggleSection } from '../components/upload/TrustToggleSection';
+import { MediaSection } from '../components/upload/MediaSection';
+import { PreviewSection } from '../components/upload/PreviewSection';
+import { UploadFormProvider, useUploadForm } from '../components/upload/UploadContext';
 
 const PropertyUploadContent: React.FC = () => {
   const navigate = useNavigate();
@@ -79,15 +76,15 @@ const PropertyUploadContent: React.FC = () => {
     }, 0);
 
     const onStorage = (event: StorageEvent) => {
-      if (event.key && event.key.startsWith("mh_draft_upload")) {
+      if (event.key && event.key.startsWith('mh_draft_upload')) {
         setDraftAvailable(hasDraft());
         setDraftPreview(getDraftPreview());
       }
     };
-    window.addEventListener("storage", onStorage);
+    window.addEventListener('storage', onStorage);
     return () => {
       clearTimeout(timer);
-      window.removeEventListener("storage", onStorage);
+      window.removeEventListener('storage', onStorage);
     };
   }, [userId, hasDraft, getDraftPreview]);
 
@@ -113,7 +110,7 @@ const PropertyUploadContent: React.FC = () => {
   const handleRestoreDraft = useCallback(() => {
     const draftData = restoreDraft();
     if (!draftData) {
-      notify.error("草稿還原失敗", "草稿可能已過期或損壞，已為你清除");
+      notify.error('草稿還原失敗', '草稿可能已過期或損壞，已為你清除');
       clearDraft();
       setDraftAvailable(false);
       setDraftPreview(null);
@@ -129,10 +126,10 @@ const PropertyUploadContent: React.FC = () => {
     const preview = getDraftPreview();
     setDraftPreview(preview);
     notify.success(
-      "草稿已還原",
+      '草稿已還原',
       preview
         ? `標題：${preview.title.slice(0, 20)}... / 儲存於 ${preview.savedAt}`
-        : "已載入上次編輯內容",
+        : '已載入上次編輯內容'
     );
   }, [restoreDraft, clearDraft, getDraftPreview, setForm]);
 
@@ -141,7 +138,7 @@ const PropertyUploadContent: React.FC = () => {
     clearDraft();
     setDraftAvailable(false);
     setDraftPreview(null);
-    notify.info("草稿已捨棄", "已清除本機草稿");
+    notify.info('草稿已捨棄', '已清除本機草稿');
   }, [clearDraft]);
 
   /**
@@ -152,7 +149,7 @@ const PropertyUploadContent: React.FC = () => {
     (
       timerRef: React.MutableRefObject<NodeJS.Timeout | null>,
       callback: () => void,
-      delay: number,
+      delay: number
     ): void => {
       if (timerRef.current) clearTimeout(timerRef.current);
       timerRef.current = setTimeout(() => {
@@ -160,7 +157,7 @@ const PropertyUploadContent: React.FC = () => {
         timerRef.current = null;
       }, delay);
     },
-    [],
+    []
   );
 
   // IM-1: 智慧貼上處理函數
@@ -170,7 +167,7 @@ const PropertyUploadContent: React.FC = () => {
   const IMPORT_DELAY_HIGH_CONFIDENCE = 500;
   const IMPORT_DELAY_LOW_CONFIDENCE = 200;
   const URL_IMPORT_DELAY = 300;
-  const TWO_GOODS_SECTION_ID = "two-goods-section";
+  const TWO_GOODS_SECTION_ID = 'two-goods-section';
 
   /**
    * P3: IM-5 追蹤解析品質（非同步，不阻塞主流程）
@@ -191,12 +188,12 @@ const PropertyUploadContent: React.FC = () => {
         missingFields?: string[];
       },
       textLength: number,
-      source: "paste" | "url" | "button",
+      source: 'paste' | 'url' | 'button'
     ) => {
       try {
-        await fetch("/api/analytics/import", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+        await fetch('/api/analytics/import', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             textLength,
             confidence: parsed.confidence,
@@ -215,17 +212,17 @@ const PropertyUploadContent: React.FC = () => {
           }),
         });
       } catch (error) {
-        logger.warn("[IM-5] Analytics tracking failed", { error });
+        logger.warn('[IM-5] Analytics tracking failed', { error });
       }
     },
-    [],
+    []
   );
 
   const handle591Import = useCallback(
-    (text: string, source: "paste" | "url" | "button" = "paste") => {
+    (text: string, source: 'paste' | 'url' | 'button' = 'paste') => {
       setLoading(true);
-      setMood("thinking");
-      addMessage("正在解析 591 物件資料...");
+      setMood('thinking');
+      addMessage('正在解析 591 物件資料...');
 
       // 先同步解析（不阻塞 UI）
       const parsed = parse591Content(text);
@@ -239,19 +236,19 @@ const PropertyUploadContent: React.FC = () => {
         lastImportedIdRef.current &&
         parsed.listingId !== lastImportedIdRef.current
       ) {
-        notify.info("偵測到新物件", "正在覆蓋先前的資料...");
+        notify.info('偵測到新物件', '正在覆蓋先前的資料...');
       }
 
       // IM-2.8: 解析失敗時立即回饋（0ms），不強制等待
       if (parsed.confidence === 0) {
-        setMood("confused");
+        setMood('confused');
         const missingMsg =
           parsed.missingFields?.length > 0
-            ? `缺少：${parsed.missingFields.join("、")}`
-            : "未能從內容中提取有效資訊";
+            ? `缺少：${parsed.missingFields.join('、')}`
+            : '未能從內容中提取有效資訊';
         addMessage(`解析失敗 ${missingMsg}`);
         setLoading(false);
-        notify.warning("解析失敗", missingMsg);
+        notify.warning('解析失敗', missingMsg);
         return;
       }
 
@@ -284,25 +281,21 @@ const PropertyUploadContent: React.FC = () => {
 
         // 根據信心分數顯示不同的 MaiMai 反應
         if (isHighConfidence) {
-          setMood("excited");
+          setMood('excited');
           addMessage(`完美！成功解析了 ${parsed.fieldsFound} 個欄位`);
           // 觸發慶祝動畫
-          window.dispatchEvent(new CustomEvent("mascot:celebrate"));
+          window.dispatchEvent(new CustomEvent('mascot:celebrate'));
         } else if (parsed.confidence >= 40) {
-          setMood("happy");
+          setMood('happy');
           const missingHint =
-            parsed.missingFields?.length > 0
-              ? `（缺少：${parsed.missingFields.join("、")}）`
-              : "";
-          addMessage(
-            `已填入 ${parsed.fieldsFound} 個欄位${missingHint}，剩下的再補齊吧～`,
-          );
+            parsed.missingFields?.length > 0 ? `（缺少：${parsed.missingFields.join('、')}）` : '';
+          addMessage(`已填入 ${parsed.fieldsFound} 個欄位${missingHint}，剩下的再補齊吧～`);
         } else {
-          setMood("confused");
+          setMood('confused');
           const missingHint =
             parsed.missingFields?.length > 0
-              ? `缺少：${parsed.missingFields.join("、")}`
-              : "內容可能不完整";
+              ? `缺少：${parsed.missingFields.join('、')}`
+              : '內容可能不完整';
           addMessage(`只找到了 ${parsed.fieldsFound} 個欄位 ${missingHint}`);
         }
 
@@ -310,12 +303,9 @@ const PropertyUploadContent: React.FC = () => {
 
         const notifyMsg =
           parsed.missingFields?.length > 0
-            ? `已填入 ${parsed.fieldsFound} 個欄位，缺少：${parsed.missingFields.join("、")}`
+            ? `已填入 ${parsed.fieldsFound} 個欄位，缺少：${parsed.missingFields.join('、')}`
             : `已自動填入 ${parsed.fieldsFound} 個欄位`;
-        notify.success(
-          "匯入成功",
-          `${notifyMsg}（信心度 ${parsed.confidence}%）`,
-        );
+        notify.success('匯入成功', `${notifyMsg}（信心度 ${parsed.confidence}%）`);
 
         // IM-AC3: 匯入成功後 3 秒，自動滾動至「兩好一公道」區塊
         // OPT-3: 使用 scheduleTask 統一管理 timer
@@ -323,11 +313,11 @@ const PropertyUploadContent: React.FC = () => {
           scrollTimerRef,
           () => {
             document.getElementById(TWO_GOODS_SECTION_ID)?.scrollIntoView({
-              behavior: "smooth",
-              block: "start",
+              behavior: 'smooth',
+              block: 'start',
             });
           },
-          SCROLL_DELAY_MS,
+          SCROLL_DELAY_MS
         );
       };
 
@@ -339,13 +329,13 @@ const PropertyUploadContent: React.FC = () => {
         completeImport();
       }
     },
-    [setForm, setLoading, setMood, addMessage, trackImportQuality, scheduleTask],
+    [setForm, setLoading, setMood, addMessage, trackImportQuality, scheduleTask]
   );
 
   // IM-4: iOS 捷徑支援 - 監聽 URL ?importText= 參數
   // OPT-2: 重寫以修復 SPA 導航 Bug、冗餘解碼、記憶體洩漏
   useEffect(() => {
-    const importText = searchParams.get("importText");
+    const importText = searchParams.get('importText');
 
     // OPT-2.2: 改用值比較而非 boolean 鎖，支援 SPA 中多次不同參數導航
     if (!importText || importText.trim().length === 0) return;
@@ -360,19 +350,15 @@ const PropertyUploadContent: React.FC = () => {
 
     // IM-4.3: 處理後清除 URL 參數 (replace: true 避免污染歷史紀錄)
     const newParams = new URLSearchParams(searchParams);
-    newParams.delete("importText");
+    newParams.delete('importText');
     setSearchParams(newParams, { replace: true });
 
     // 觸發匯入 (使用現有的 handle591Import 函數)
     if (detect591Content(textToImport)) {
       // OPT-3: 使用 scheduleTask 統一管理 timer
-      scheduleTask(
-        importTimerRef,
-        () => handle591Import(textToImport, "url"),
-        URL_IMPORT_DELAY,
-      );
+      scheduleTask(importTimerRef, () => handle591Import(textToImport, 'url'), URL_IMPORT_DELAY);
     } else {
-      notify.warning("URL 參數格式錯誤", "匯入的內容不符合 591 格式");
+      notify.warning('URL 參數格式錯誤', '匯入的內容不符合 591 格式');
     }
 
     // OPT-2.1: Cleanup function - 組件卸載時清理所有 timer
@@ -389,41 +375,38 @@ const PropertyUploadContent: React.FC = () => {
     const handlePaste = (e: ClipboardEvent) => {
       // IM-1.2: 排除 INPUT/TEXTAREA 焦點衝突
       const activeEl = document.activeElement;
-      if (activeEl?.tagName === "INPUT" || activeEl?.tagName === "TEXTAREA") {
+      if (activeEl?.tagName === 'INPUT' || activeEl?.tagName === 'TEXTAREA') {
         return;
       }
 
-      const text = e.clipboardData?.getData("text") || "";
+      const text = e.clipboardData?.getData('text') || '';
 
       // IM-1.3: 智慧偵測 591 內容
       if (detect591Content(text)) {
         e.preventDefault();
-        handle591Import(text, "paste"); // IM-5: 標記來源為 paste
+        handle591Import(text, 'paste'); // IM-5: 標記來源為 paste
       }
     };
 
-    document.addEventListener("paste", handlePaste);
-    return () => document.removeEventListener("paste", handlePaste);
+    document.addEventListener('paste', handlePaste);
+    return () => document.removeEventListener('paste', handlePaste);
   }, [handle591Import]);
 
   // P2 + P6: 591 搬家 - XSS 修復 + useCallback
   const handleImport591 = useCallback(() => {
-    const url = prompt("請貼上 591 網址或內容");
-    if (!url || typeof url !== "string") return;
+    const url = prompt('請貼上 591 網址或內容');
+    if (!url || typeof url !== 'string') return;
     const sanitizedUrl = url.trim();
     if (sanitizedUrl.length === 0 || sanitizedUrl.length > 10000) return;
 
     // 如果貼上的是 URL，顯示提示
-    if (sanitizedUrl.startsWith("http")) {
-      notify.info(
-        "提示",
-        "請直接從 591 頁面複製物件資訊，然後在空白處按 Ctrl+V 貼上即可自動填表",
-      );
+    if (sanitizedUrl.startsWith('http')) {
+      notify.info('提示', '請直接從 591 頁面複製物件資訊，然後在空白處按 Ctrl+V 貼上即可自動填表');
       return;
     }
 
     // 否則當作內容處理
-    handle591Import(sanitizedUrl, "button"); // IM-5: 標記來源為 button
+    handle591Import(sanitizedUrl, 'button'); // IM-5: 標記來源為 button
   }, [handle591Import]);
 
   if (showConfirmation && uploadResult) {
@@ -445,12 +428,8 @@ const PropertyUploadContent: React.FC = () => {
                   <Home size={24} />
                 </div>
                 <div>
-                  <p className="text-xs font-bold uppercase text-slate-500">
-                    物件編號
-                  </p>
-                  <p className="font-mono font-bold text-slate-700">
-                    {uploadResult.public_id}
-                  </p>
+                  <p className="text-xs font-bold uppercase text-slate-500">物件編號</p>
+                  <p className="font-mono font-bold text-slate-700">{uploadResult.public_id}</p>
                 </div>
               </div>
 
@@ -460,12 +439,8 @@ const PropertyUploadContent: React.FC = () => {
                     <Building2 size={24} />
                   </div>
                   <div>
-                    <p className="text-xs font-bold uppercase text-slate-500">
-                      社區牆
-                    </p>
-                    <p className="font-bold text-slate-700">
-                      {uploadResult.community_name}
-                    </p>
+                    <p className="text-xs font-bold uppercase text-slate-500">社區牆</p>
+                    <p className="font-bold text-slate-700">{uploadResult.community_name}</p>
                     {uploadResult.is_new_community && (
                       <span className="mt-0.5 inline-block rounded bg-orange-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
                         新建立
@@ -563,10 +538,7 @@ const PropertyUploadContent: React.FC = () => {
             </button>
 
             {!userId && (
-              <Link
-                to="/auth"
-                className="ml-2 text-sm font-bold text-[#003366] hover:underline"
-              >
+              <Link to="/auth" className="ml-2 text-sm font-bold text-[#003366] hover:underline">
                 登入同步
               </Link>
             )}
@@ -600,24 +572,15 @@ const PropertyUploadContent: React.FC = () => {
                     發佈確認
                   </h3>
                   <span
-                    className={`text-xs font-bold ${validation.canSubmit ? "text-green-500" : "text-red-400"}`}
+                    className={`text-xs font-bold ${validation.canSubmit ? 'text-green-500' : 'text-red-400'}`}
                   >
                     {validation.canSubmit ? (
                       <span className="flex items-center gap-1">
-                        <Check
-                          size={14}
-                          className="text-green-500"
-                          aria-hidden="true"
-                        />{" "}
-                        資料已齊全
+                        <Check size={14} className="text-green-500" aria-hidden="true" /> 資料已齊全
                       </span>
                     ) : (
                       <span className="flex items-center gap-1">
-                        <AlertTriangle
-                          size={14}
-                          className="text-red-400"
-                          aria-hidden="true"
-                        />{" "}
+                        <AlertTriangle size={14} className="text-red-400" aria-hidden="true" />{' '}
                         尚有必填欄位
                       </span>
                     )}
@@ -630,24 +593,18 @@ const PropertyUploadContent: React.FC = () => {
                   disabled={!validation.canSubmit || loading}
                   className={`group relative w-full overflow-hidden rounded-xl py-4 font-black text-white transition-all active:scale-[0.98] ${
                     validation.canSubmit && !loading
-                      ? "bg-gradient-to-r from-maihouses-dark to-maihouses-light shadow-lg shadow-blue-200 hover:shadow-2xl"
-                      : "cursor-not-allowed bg-slate-300"
+                      ? 'bg-gradient-to-r from-maihouses-dark to-maihouses-light shadow-lg shadow-blue-200 hover:shadow-2xl'
+                      : 'cursor-not-allowed bg-slate-300'
                   }`}
-                  aria-label={
-                    validation.canSubmit ? "發佈物件" : "資料尚未齊全，無法發佈"
-                  }
+                  aria-label={validation.canSubmit ? '發佈物件' : '資料尚未齊全，無法發佈'}
                 >
                   {loading ? (
                     <div className="flex items-center justify-center gap-3">
-                      <Loader2
-                        className="animate-spin"
-                        size={20}
-                        aria-hidden="true"
-                      />
+                      <Loader2 className="animate-spin" size={20} aria-hidden="true" />
                       <span>
                         {uploadProgress
                           ? `上傳中 ${Math.round(uploadProgress.total > 0 ? (uploadProgress.current / uploadProgress.total) * 100 : 0)}%`
-                          : "處理中..."}
+                          : '處理中...'}
                       </span>
                     </div>
                   ) : (
@@ -659,11 +616,11 @@ const PropertyUploadContent: React.FC = () => {
                 </button>
 
                 <p className="mt-4 text-center text-[11px] leading-relaxed text-slate-500">
-                  點擊發佈即代表您同意{" "}
+                  點擊發佈即代表您同意{' '}
                   <Link to="/terms" className="underline">
                     服務條款
-                  </Link>{" "}
-                  與{" "}
+                  </Link>{' '}
+                  與{' '}
                   <Link to="/privacy" className="underline">
                     隱私權政策
                   </Link>

@@ -1,14 +1,14 @@
-import React, { useState, useCallback } from "react";
-import { Search, LogIn, UserPlus, List, Menu, X } from "lucide-react";
-import { Logo } from "../Logo/Logo";
-import { ROUTES, RouteUtils } from "../../constants/routes";
-import { MaiMaiBase } from "../MaiMai";
-import { useMaiMai } from "../../context/MaiMaiContext";
-import { TUTORIAL_CONFIG } from "../../constants/tutorial";
+import React, { useState, useCallback } from 'react';
+import { Search, LogIn, UserPlus, List, Menu, X } from 'lucide-react';
+import { Logo } from '../Logo/Logo';
+import { ROUTES, RouteUtils } from '../../constants/routes';
+import { MaiMaiBase } from '../MaiMai';
+import { useMaiMai } from '../../context/MaiMaiContext';
+import { TUTORIAL_CONFIG } from '../../constants/tutorial';
 
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState('');
   const [clickCount, setClickCount] = useState(0);
   const { setMood, addMessage } = useMaiMai();
 
@@ -27,11 +27,11 @@ export default function Header() {
   /** 鍵盤事件:Enter 觸發搜尋 */
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLInputElement>) => {
-      if (e.key === "Enter") {
+      if (e.key === 'Enter') {
         handleSearch();
       }
     },
-    [handleSearch],
+    [handleSearch]
   );
 
   /** MaiMai 點擊處理：計數並觸發 celebrate */
@@ -40,18 +40,16 @@ export default function Header() {
     setClickCount(newCount);
 
     if (newCount >= TUTORIAL_CONFIG.CELEBRATE_CLICK_COUNT_THRESHOLD) {
-      setMood("celebrate");
+      setMood('celebrate');
       addMessage(TUTORIAL_CONFIG.MESSAGES.CELEBRATE);
-      window.dispatchEvent(
-        new CustomEvent("mascot:celebrate", { detail: { clicks: newCount } }),
-      );
+      window.dispatchEvent(new CustomEvent('mascot:celebrate', { detail: { clicks: newCount } }));
       setClickCount(0); // 重置計數器
     }
   }, [clickCount, setMood, addMessage]);
 
   /** 搜尋框 focus 處理：觸發搜尋提示 */
   const handleSearchFocus = useCallback(() => {
-    setMood("thinking");
+    setMood('thinking');
     addMessage(TUTORIAL_CONFIG.MESSAGES.SEARCH_HINT);
   }, [setMood, addMessage]);
 
@@ -64,14 +62,11 @@ export default function Header() {
           <Logo
             showSlogan={true}
             showBadge={true}
-            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
           />
 
           {/* Desktop Nav - 桌面版 */}
-          <nav
-            className="hidden items-center gap-1 md:flex md:gap-2"
-            aria-label="主要動作"
-          >
+          <nav className="hidden items-center gap-1 md:flex md:gap-2" aria-label="主要動作">
             {/* Column 1: List */}
             <a
               href={ROUTES.PROPERTY_LIST}
@@ -205,8 +200,7 @@ export default function Header() {
               {/* Speech Bubble */}
               <div className="md:bottom-4/5 pointer-events-none absolute bottom-3/4 right-[55%] w-[260px] origin-bottom-right animate-fadeIn whitespace-normal rounded-2xl rounded-br-none border-2 border-brand-100 bg-white px-5 py-2 shadow-lg md:right-[65%] md:w-auto md:max-w-none md:whitespace-nowrap md:py-3">
                 <p className="text-left text-[11px] font-bold leading-relaxed text-ink-700 md:text-sm">
-                  買房這麼大的事，先到{" "}
-                  <span className="font-black text-brand-700">邁鄰居</span>
+                  買房這麼大的事，先到 <span className="font-black text-brand-700">邁鄰居</span>
                   ，為未來的家查口碑、找評價，最放心！
                 </p>
                 {/* Bubble Tail */}
@@ -225,9 +219,7 @@ export default function Header() {
                   className="size-full"
                   animated={false}
                   showEffects={false}
-                  style={
-                    { "--maimai-body-fill": "#F6F9FF" } as React.CSSProperties
-                  }
+                  style={{ '--maimai-body-fill': '#F6F9FF' } as React.CSSProperties}
                 />
               </button>
             </div>
@@ -266,21 +258,21 @@ export default function Header() {
 
             {/* Capsules */}
             <div className="relative z-10 mt-6 grid grid-cols-3 gap-2">
-              {["社區評價", "房仲專區", "邁鄰居"].map((text) => {
+              {['社區評價', '房仲專區', '邁鄰居'].map((text) => {
                 const getHref = (label: string) => {
-                  if (label === "社區評價") return ROUTES.COMMUNITY_WALL_MVP;
-                  if (label === "房仲專區") return ROUTES.UAG;
-                  return "#";
+                  if (label === '社區評價') return ROUTES.COMMUNITY_WALL_MVP;
+                  if (label === '房仲專區') return ROUTES.UAG;
+                  return '#';
                 };
                 const href = getHref(text);
-                const target = text === "房仲專區" ? "_blank" : undefined;
+                const target = text === '房仲專區' ? '_blank' : undefined;
 
                 return (
                   <a
                     key={text}
                     href={href}
                     target={target}
-                    rel={target ? "noopener noreferrer" : undefined}
+                    rel={target ? 'noopener noreferrer' : undefined}
                     className="flex items-center justify-center rounded-2xl border border-brand-700 bg-brand-700 py-3 text-lg font-bold tracking-wide text-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-brand-600 hover:shadow-md active:scale-[0.98]"
                   >
                     {text}

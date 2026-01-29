@@ -104,7 +104,7 @@
 
 .reportDivider::before,
 .reportDivider::after {
-  content: "";
+  content: '';
   flex: 1;
   height: 1px;
   background: #e2e8f0;
@@ -550,7 +550,7 @@
 }
 
 .reportPreviewSectionTitle::before {
-  content: "";
+  content: '';
   width: 3px;
   height: 10px;
   background: #1749d7;

@@ -2,15 +2,9 @@
 <html lang="zh-Hant">
   <head>
     <meta charset="utf-8" />
-    <meta
-      content="width=device-width, initial-scale=1, viewport-fit=cover"
-      name="viewport"
-    />
+    <meta content="width=device-width, initial-scale=1, viewport-fit=cover" name="viewport" />
     <title>邁房子｜我的社區</title>
-    <meta
-      name="description"
-      content="邁房子社區信息流 - 與鄰居交流、掌握社區動態"
-    />
+    <meta name="description" content="邁房子社區信息流 - 與鄰居交流、掌握社區動態" />
     <style>
       :root {
         --ink: #0b214a;
@@ -34,8 +28,7 @@
         margin: 0;
         background: linear-gradient(180deg, var(--bg1), var(--bg2));
         color: var(--ink);
-        font-family:
-          "Noto Sans TC", "PingFang TC", "Helvetica Neue", Arial, sans-serif;
+        font-family: 'Noto Sans TC', 'PingFang TC', 'Helvetica Neue', Arial, sans-serif;
         -webkit-font-smoothing: antialiased;
       }
       .page {
@@ -324,7 +317,7 @@
         border-color: var(--brand);
         background: #f0f7ff;
       }
-      .links a[href="#my-community"] {
+      .links a[href='#my-community'] {
         margin-left: auto;
       }
 
@@ -471,7 +464,7 @@
       .btn.primary:hover {
         background: #004488;
       }
-      .btn[aria-pressed="true"] {
+      .btn[aria-pressed='true'] {
         color: #e02626;
         border-color: #ffd1d1;
         background: #fff5f5;
@@ -577,14 +570,7 @@
             <a href="auth.html?action=logout" role="menuitem">🚪 登出</a>
           </div>
         </details>
-        <button
-          type="button"
-          class="icon badge"
-          data-badge="2"
-          aria-label="通知"
-        >
-          🔔
-        </button>
+        <button type="button" class="icon badge" data-badge="2" aria-label="通知">🔔</button>
         <button type="button" class="icon" aria-label="訊息">💬</button>
       </div>
     </header>
@@ -596,9 +582,7 @@
         <b>您有一筆交易進行中</b>
         <span>惠宇上晴 12F・斡旋階段</span>
       </div>
-      <button class="enter" onclick="location.href = '/maihouses/trust/room'">
-        進入戰情室
-      </button>
+      <button class="enter" onclick="location.href = '/maihouses/trust/room'">進入戰情室</button>
     </div>
 
     <main class="page">
@@ -624,10 +608,7 @@
       <!-- 發文框 -->
       <div class="composer">
         <div class="avatar">M</div>
-        <textarea
-          placeholder="分享社區想法、詢問鄰居或發起討論…"
-          rows="1"
-        ></textarea>
+        <textarea placeholder="分享社區想法、詢問鄰居或發起討論…" rows="1"></textarea>
         <button class="btn">發佈</button>
       </div>
 
@@ -642,10 +623,7 @@
         </div>
         <div class="body">
           <p><b>年度消防演練通知</b></p>
-          <p>
-            12/15（日）上午 10:00
-            將進行全社區消防演練，届時會有警報聲響，請勿驚慌。
-          </p>
+          <p>12/15（日）上午 10:00 將進行全社區消防演練，届時會有警報聲響，請勿驚慌。</p>
           <div class="tags">
             <span class="tag ok">重要公告</span>
             <span class="tag">消防安全</span>
@@ -688,8 +666,7 @@
         </div>
         <div class="body">
           <p>
-            🏡 分享一下最近帶看的心得：惠宇上晴 12F
-            雙陽台戶，客廳採光真的很棒！上週屋主剛降價
+            🏡 分享一下最近帶看的心得：惠宇上晴 12F 雙陽台戶，客廳採光真的很棒！上週屋主剛降價
             <b>50 萬</b>，有興趣的鄰居可以私訊我。
           </p>
           <img
@@ -719,10 +696,7 @@
           </div>
         </div>
         <div class="body">
-          <p>
-            <b>停車位交換</b> 我有 B2-128 想與 B1
-            的位置交換，有意願的鄰居請留言～
-          </p>
+          <p><b>停車位交換</b> 我有 B2-128 想與 B1 的位置交換，有意願的鄰居請留言～</p>
           <div class="sub">❤️ 16 · 💬 11</div>
         </div>
         <div class="actions">
@@ -736,10 +710,7 @@
         <div class="head">
           <div
             class="avatar"
-            style="
-              background: linear-gradient(135deg, #667eea, #764ba2);
-              color: #fff;
-            "
+            style="background: linear-gradient(135deg, #667eea, #764ba2); color: #fff"
           >
             AI
           </div>
@@ -811,62 +782,54 @@
 
     <!-- 黏底 CTA - 社群導向 -->
     <div class="sticky">
-      <button class="cta" onclick="location.href = '#my-community'">
-        🧱 我的社區牆
-      </button>
-      <button class="cta primary" onclick="location.href = '#explore'">
-        🔍 探索其他社區
-      </button>
+      <button class="cta" onclick="location.href = '#my-community'">🧱 我的社區牆</button>
+      <button class="cta primary" onclick="location.href = '#explore'">🔍 探索其他社區</button>
     </div>
 
     <script>
       // ==== MVP v5.0 - 社群優先，交易融入 ====
       (function () {
         const $ = (sel, root = document) => root.querySelector(sel);
-        const $$ = (sel, root = document) =>
-          Array.from(root.querySelectorAll(sel));
+        const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
         // 1) 檢查是否有進行中的交易 - 有才顯示橫幅
         (async function checkTransaction() {
           try {
             // 模擬：從 localStorage 讀取交易狀態
-            const hasActiveTx = localStorage.getItem("mai_active_tx");
+            const hasActiveTx = localStorage.getItem('mai_active_tx');
 
             // 如果有交易，顯示橫幅
-            if (hasActiveTx === "true") {
-              $("#txBanner").classList.add("show");
+            if (hasActiveTx === 'true') {
+              $('#txBanner').classList.add('show');
             }
 
             // 開發測試：URL 加 ?tx=1 可強制顯示
-            if (new URLSearchParams(location.search).get("tx") === "1") {
-              $("#txBanner").classList.add("show");
-              localStorage.setItem("mai_active_tx", "true");
+            if (new URLSearchParams(location.search).get('tx') === '1') {
+              $('#txBanner').classList.add('show');
+              localStorage.setItem('mai_active_tx', 'true');
             }
           } catch (e) {
-            console.debug("Transaction check:", e);
+            console.debug('Transaction check:', e);
           }
         })();
 
         // 2) Event delegation
         document.addEventListener(
-          "click",
+          'click',
           function (e) {
-            const btn = e.target.closest("button, a");
+            const btn = e.target.closest('button, a');
             if (!btn) return;
 
             // Like toggle
-            if (
-              btn.classList.contains("btn") &&
-              /讚|已讀/.test(btn.textContent)
-            ) {
+            if (btn.classList.contains('btn') && /讚|已讀/.test(btn.textContent)) {
               e.preventDefault();
-              const liked = btn.getAttribute("aria-pressed") === "true";
-              btn.setAttribute("aria-pressed", liked ? "false" : "true");
+              const liked = btn.getAttribute('aria-pressed') === 'true';
+              btn.setAttribute('aria-pressed', liked ? 'false' : 'true');
               if (!liked) {
                 btn.dataset._orig = btn.textContent;
-                btn.textContent = "✅ " + btn.textContent.replace(/^./, "");
+                btn.textContent = '✅ ' + btn.textContent.replace(/^./, '');
               } else {
-                btn.textContent = btn.dataset._orig || "👍 讚";
+                btn.textContent = btn.dataset._orig || '👍 讚';
               }
               btn.disabled = true;
               setTimeout(() => {
@@ -876,63 +839,63 @@
             }
 
             // Publish handler
-            if (btn.closest(".composer") && btn.classList.contains("btn")) {
+            if (btn.closest('.composer') && btn.classList.contains('btn')) {
               e.preventDefault();
-              const textarea = $("textarea", btn.closest(".composer"));
+              const textarea = $('textarea', btn.closest('.composer'));
               if (!textarea) return;
               const content = textarea.value.trim();
               if (!content) {
-                console.log("內容為空");
+                console.log('內容為空');
                 return;
               }
-              console.log("發佈成功（本地）：", {
+              console.log('發佈成功（本地）：', {
                 content,
                 time: new Date().toISOString(),
               });
-              textarea.value = "";
-              alert("發佈成功！");
+              textarea.value = '';
+              alert('發佈成功！');
               return;
             }
 
             // Notifications placeholder
-            if (btn.classList.contains("icon")) {
+            if (btn.classList.contains('icon')) {
               e.preventDefault();
-              alert("功能開發中");
+              alert('功能開發中');
               return;
             }
           },
-          { passive: false },
+          { passive: false }
         );
 
         // 3) Textarea auto-resize
         (function () {
-          const textarea = $("textarea");
+          const textarea = $('textarea');
           if (!textarea) return;
-          textarea.addEventListener("input", function () {
-            this.style.height = "auto";
-            this.style.height = Math.min(this.scrollHeight, 120) + "px";
+          textarea.addEventListener('input', function () {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 120) + 'px';
           });
         })();
 
         // 4) Menu keyboard a11y
         (function () {
-          $$("details.menu > summary").forEach((sum) => {
-            sum.setAttribute("role", "button");
-            sum.addEventListener("keydown", (e) => {
-              if (e.key === "Escape") {
-                sum.parentElement.removeAttribute("open");
+          $$('details.menu > summary').forEach((sum) => {
+            sum.setAttribute('role', 'button');
+            sum.addEventListener('keydown', (e) => {
+              if (e.key === 'Escape') {
+                sum.parentElement.removeAttribute('open');
               }
             });
           });
-          document.addEventListener("click", (e) => {
-            $$("details.menu[open]").forEach((d) => {
-              if (!d.contains(e.target)) d.removeAttribute("open");
+          document.addEventListener('click', (e) => {
+            $$('details.menu[open]').forEach((d) => {
+              if (!d.contains(e.target)) d.removeAttribute('open');
             });
           });
         })();
 
         // 5) Lazy load images
-        $$("img:not([loading])").forEach((img) => (img.loading = "lazy"));
+        $$('img:not([loading])').forEach((img) => (img.loading = 'lazy'));
       })();
     </script>
   </body>

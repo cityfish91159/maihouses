@@ -57,40 +57,37 @@ const CONFIDENCE = {
 
 /** 台/臺 正規化 */
 function normalizeCity(text: string): string {
-  return text.replace(/臺/g, "台");
+  return text.replace(/臺/g, '台');
 }
 
 /** 合併跨行文字 */
 function mergeLines(text: string): string {
   return text
-    .replace(/\r\n/g, "\n")
-    .replace(/\n{2,}/g, "\n")
-    .replace(/[ \t]+/g, " ")
+    .replace(/\r\n/g, '\n')
+    .replace(/\n{2,}/g, '\n')
+    .replace(/[ \t]+/g, ' ')
     .trim();
 }
 
 /** 清理坪數字串（移除「約」「含車位」「含公設」等） */
 function cleanSize(str: string): string {
   return str
-    .replace(/約/g, "")
-    .replace(/含車位/g, "")
-    .replace(/含公設/g, "") // 2.4 模糊 fallback
-    .replace(/\([^)]*\)/g, "")
-    .replace(/（[^）]*）/g, "")
+    .replace(/約/g, '')
+    .replace(/含車位/g, '')
+    .replace(/含公設/g, '') // 2.4 模糊 fallback
+    .replace(/\([^)]*\)/g, '')
+    .replace(/（[^）]*）/g, '')
     .trim();
 }
 
 /** 數值轉換：統一轉為「萬」與「萬/月」 */
-function normalizePriceValue(
-  valStr: string,
-  originalUnit: "億" | "萬" | "元",
-): string {
-  let val = parseFloat(valStr.replace(/,/g, ""));
+function normalizePriceValue(valStr: string, originalUnit: '億' | '萬' | '元'): string {
+  let val = parseFloat(valStr.replace(/,/g, ''));
   if (isNaN(val)) return valStr;
 
-  if (originalUnit === "億") {
+  if (originalUnit === '億') {
     val = val * 10000;
-  } else if (originalUnit === "元") {
+  } else if (originalUnit === '元') {
     val = val / 10000;
   }
   // 萬則不變
@@ -113,8 +110,8 @@ function parsePrice(text: string): PriceMatch | null {
   const billionMatch = text.match(/(?:售價|總價)[：:]\s*([\d.]+)\s*億/);
   if (billionMatch && billionMatch[1]) {
     return {
-      value: normalizePriceValue(billionMatch[1], "億"),
-      unit: "萬",
+      value: normalizePriceValue(billionMatch[1], '億'),
+      unit: '萬',
       raw: billionMatch[0],
     };
   }
@@ -123,20 +120,18 @@ function parsePrice(text: string): PriceMatch | null {
   const saleMatch = text.match(/(?:售價|總價)[：:]\s*([\d,.]+)\s*萬/);
   if (saleMatch && saleMatch[1]) {
     return {
-      value: normalizePriceValue(saleMatch[1], "萬"),
-      unit: "萬",
+      value: normalizePriceValue(saleMatch[1], '萬'),
+      unit: '萬',
       raw: saleMatch[0],
     };
   }
 
   // 月租金/租金：XX 元/月 -> 轉為 萬/月
-  const rentMonthMatch = text.match(
-    /(?:月租金?|租金)[：:]\s*([\d,]+)\s*(?:元)?(?:\/月)?/,
-  );
+  const rentMonthMatch = text.match(/(?:月租金?|租金)[：:]\s*([\d,]+)\s*(?:元)?(?:\/月)?/);
   if (rentMonthMatch && rentMonthMatch[1]) {
     return {
-      value: normalizePriceValue(rentMonthMatch[1], "元"),
-      unit: "萬/月", // 審查要求保持月租標識，並以萬為主(推測)；或回傳 '元/月' 但數值已轉萬？
+      value: normalizePriceValue(rentMonthMatch[1], '元'),
+      unit: '萬/月', // 審查要求保持月租標識，並以萬為主(推測)；或回傳 '元/月' 但數值已轉萬？
       // 根據審查: "統一萬為主，月租保持『萬/月』"
       raw: rentMonthMatch[0],
     };
@@ -146,8 +141,8 @@ function parsePrice(text: string): PriceMatch | null {
   const simpleWanMatch = text.match(/([\d,.]+)\s*萬(?:元)?/);
   if (simpleWanMatch && simpleWanMatch[1]) {
     return {
-      value: normalizePriceValue(simpleWanMatch[1], "萬"),
-      unit: "萬",
+      value: normalizePriceValue(simpleWanMatch[1], '萬'),
+      unit: '萬',
       raw: simpleWanMatch[0],
     };
   }
@@ -156,8 +151,8 @@ function parsePrice(text: string): PriceMatch | null {
   const simpleRentMatch = text.match(/([\d,]+)\s*元\s*\/\s*月/);
   if (simpleRentMatch && simpleRentMatch[1]) {
     return {
-      value: normalizePriceValue(simpleRentMatch[1], "元"),
-      unit: "萬/月", // P0: 統一為萬/月
+      value: normalizePriceValue(simpleRentMatch[1], '元'),
+      unit: '萬/月', // P0: 統一為萬/月
       raw: simpleRentMatch[0],
     };
   }
@@ -200,11 +195,7 @@ const ADDRESS_PATTERNS = [
 ] as const;
 
 /** 591 物件 ID 解析模式 */
-const ID_PATTERNS = [
-  /detail\/(\d+)/,
-  /id=(\d+)/,
-  /591\.com\.tw\/\w+\/(\d+)/,
-] as const;
+const ID_PATTERNS = [/detail\/(\d+)/, /id=(\d+)/, /591\.com\.tw\/\w+\/(\d+)/] as const;
 
 // ============ 標題評分函數 ============
 
@@ -226,28 +217,24 @@ function scoreTitleLine(line: string, allText: string): number {
   if (ratio > 0.4) return -100;
 
   // 排除清單 (2.5)
-  if (
-    /^(售價|總價|租金|單價|坪數|格局|地址|樓層|屋齡|型態|用途|https?|591)/.test(
-      trimmed,
-    )
-  )
+  if (/^(售價|總價|租金|單價|坪數|格局|地址|樓層|屋齡|型態|用途|https?|591)/.test(trimmed))
     return -100;
-  if (trimmed.includes("元/月") || trimmed.includes("萬元")) return -100;
+  if (trimmed.includes('元/月') || trimmed.includes('萬元')) return -100;
   // 必須包含至少一個中文字 (避免純英文/數字雜訊)
   if (!/[\u4e00-\u9fa5]/.test(trimmed)) return -100;
 
   // 加分詞
   const positiveKeywords = [
-    "景觀",
-    "視野",
-    "採光",
-    "方正",
-    "捷運",
-    "學區",
-    "裝潢",
-    "全新",
-    "電梯",
-    "車位",
+    '景觀',
+    '視野',
+    '採光',
+    '方正',
+    '捷運',
+    '學區',
+    '裝潢',
+    '全新',
+    '電梯',
+    '車位',
   ];
   let positiveHits = 0;
   for (const kw of positiveKeywords) {
@@ -259,18 +246,18 @@ function scoreTitleLine(line: string, allText: string): number {
 
   // 房產詞 (門檻)
   const realEstateKeywords = [
-    "房",
-    "廳",
-    "衛",
-    "坪",
-    "公寓",
-    "大樓",
-    "透天",
-    "別墅",
-    "套房",
-    "雅房",
-    "住家",
-    "店面",
+    '房',
+    '廳',
+    '衛',
+    '坪',
+    '公寓',
+    '大樓',
+    '透天',
+    '別墅',
+    '套房',
+    '雅房',
+    '住家',
+    '店面',
   ];
   let hits = 0;
   for (const kw of realEstateKeywords) {
@@ -306,8 +293,8 @@ function selectBestTitle(lines: string[], allText: string): string | null {
 
 // 2.12: 處理 1+1 房 -> 2 房 (含錯誤處理)
 function normalizeRooms(raw: string): string {
-  if (raw.includes("+")) {
-    const sum = raw.split("+").reduce((acc, curr) => {
+  if (raw.includes('+')) {
+    const sum = raw.split('+').reduce((acc, curr) => {
       const num = parseFloat(curr);
       return acc + (isNaN(num) ? 0 : num);
     }, 0);
@@ -327,7 +314,7 @@ export function parse591Content(text: string): Parse591Result {
   };
 
   if (!text || text.trim().length === 0) {
-    result.missingFields = ["價格", "坪數", "格局", "地址", "標題"];
+    result.missingFields = ['價格', '坪數', '格局', '地址', '標題'];
     return result;
   }
 
@@ -343,7 +330,7 @@ export function parse591Content(text: string): Parse591Result {
     result.fieldsFound++;
     result.confidence += CONFIDENCE.PRICE;
   } else {
-    result.missingFields.push("價格");
+    result.missingFields.push('價格');
   }
 
   // 2. 坪數 (IM-2.2, 2.4)
@@ -368,7 +355,7 @@ export function parse591Content(text: string): Parse591Result {
       break;
     }
   }
-  if (!sizeFound) result.missingFields.push("坪數");
+  if (!sizeFound) result.missingFields.push('坪數');
 
   // 3. 格局 (IM-2.3)
   let layoutFound = false;
@@ -388,7 +375,7 @@ export function parse591Content(text: string): Parse591Result {
     const noHallMatch = normalized.match(LAYOUT_PATTERNS[1]); // Index 1 (Updated)
     if (noHallMatch && noHallMatch[1] && noHallMatch[2]) {
       result.rooms = normalizeRooms(noHallMatch[1]); // 2.12: Sum 1+1
-      result.halls = "0";
+      result.halls = '0';
       result.bathrooms = noHallMatch[2];
       layoutFound = true;
       result.confidence += CONFIDENCE.LAYOUT_FULL;
@@ -398,13 +385,13 @@ export function parse591Content(text: string): Parse591Result {
   // 3.3 開放式/套房
   if (!layoutFound) {
     if (
-      normalized.includes("開放式") ||
-      normalized.includes("套房") ||
-      normalized.includes("雅房")
+      normalized.includes('開放式') ||
+      normalized.includes('套房') ||
+      normalized.includes('雅房')
     ) {
-      result.rooms = "1"; // 視為 1 房 (Studio)
-      result.halls = "0";
-      result.bathrooms = "1";
+      result.rooms = '1'; // 視為 1 房 (Studio)
+      result.halls = '0';
+      result.bathrooms = '1';
       layoutFound = true;
       result.confidence += CONFIDENCE.LAYOUT_STUDIO; // 15分
     }
@@ -413,7 +400,7 @@ export function parse591Content(text: string): Parse591Result {
   if (layoutFound) {
     result.fieldsFound++; // 2.2: 格局只算一欄
   } else {
-    result.missingFields.push("格局");
+    result.missingFields.push('格局');
   }
 
   // 4. 地址 (IM-2.4, 2.6)
@@ -428,17 +415,17 @@ export function parse591Content(text: string): Parse591Result {
       break;
     }
   }
-  if (!addressFound) result.missingFields.push("地址");
+  if (!addressFound) result.missingFields.push('地址');
 
   // 5. 標題 (IM-2.5)
-  const lines = normalized.split("\n").filter((l) => l.trim().length > 0);
+  const lines = normalized.split('\n').filter((l) => l.trim().length > 0);
   const bestTitle = selectBestTitle(lines, normalized);
   if (bestTitle) {
     result.title = bestTitle;
     result.fieldsFound++;
     result.confidence += CONFIDENCE.TITLE; // 10分
   } else {
-    result.missingFields.push("標題");
+    result.missingFields.push('標題');
   }
 
   // 6. ID (IM-2.6) - 不計分
@@ -460,7 +447,7 @@ export function parse591Content(text: string): Parse591Result {
 export function detect591Content(text: string): boolean {
   // R4: 降低門檻至 8 (適應 "租金25000台北" 等短貼文)
   if (!text || text.trim().length < 8) return false;
-  if (text.includes("591")) return true;
+  if (text.includes('591')) return true;
 
   // 關鍵字計分
   let score = 0;

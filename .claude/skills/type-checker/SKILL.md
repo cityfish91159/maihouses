@@ -64,7 +64,7 @@ src/components/Login.tsx:42:15 - error TS7006: Parameter 'user' implicitly has a
 function handleUser(user: any) {}
 
 // ✅ 使用專案中已定義的類型
-import { User } from "@/types/user";
+import { User } from '@/types/user';
 function handleUser(user: User) {}
 ```
 
@@ -78,7 +78,7 @@ export interface UserProfile {
   id: string;
   name: string;
   email: string;
-  role: "admin" | "user" | "guest";
+  role: 'admin' | 'user' | 'guest';
 }
 ```
 

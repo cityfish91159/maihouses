@@ -1,7 +1,7 @@
-import imageCompression from "browser-image-compression";
-import heic2any from "heic2any";
-import { z } from "zod";
-import { logger } from "../lib/logger";
+import imageCompression from 'browser-image-compression';
+import heic2any from 'heic2any';
+import { z } from 'zod';
+import { logger } from '../lib/logger';
 
 export interface OptimizeOptions {
   maxWidthOrHeight?: number;
@@ -20,7 +20,7 @@ export interface OptimizeResult {
   error?: string;
 }
 
-const DEFAULT_OPTIONS: Required<Omit<OptimizeOptions, "onProgress">> = {
+const DEFAULT_OPTIONS: Required<Omit<OptimizeOptions, 'onProgress'>> = {
   maxWidthOrHeight: 2048,
   maxSizeMB: 1.5,
   quality: 0.85,
@@ -31,14 +31,13 @@ const DEFAULT_OPTIONS: Required<Omit<OptimizeOptions, "onProgress">> = {
  */
 export async function optimizePropertyImage(
   file: File,
-  options: OptimizeOptions = {},
+  options: OptimizeOptions = {}
 ): Promise<OptimizeResult> {
   const opts = { ...DEFAULT_OPTIONS, ...options };
   const originalSize = file.size;
   const targetBytes = opts.maxSizeMB * 1024 * 1024;
 
-  const isHeic =
-    file.type === "image/heic" || file.name.toLowerCase().endsWith(".heic");
+  const isHeic = file.type === 'image/heic' || file.name.toLowerCase().endsWith('.heic');
 
   // 若非 HEIC 且原始檔已低於目標大小，跳過壓縮
   if (originalSize <= targetBytes && !isHeic) {
@@ -48,26 +47,26 @@ export async function optimizePropertyImage(
       compressedSize: originalSize,
       ratio: 1,
       skipped: true,
-      reason: "under-threshold",
+      reason: 'under-threshold',
     };
   }
 
   // [NASA TypeScript Safety] Type Guard 驗證輸入是否為有效的 File 物件
   const isValidFile = (input: File | Blob): input is File => {
-    return input instanceof File || (input instanceof Blob && "name" in input);
+    return input instanceof File || (input instanceof Blob && 'name' in input);
   };
 
   // 內部重試函式
   const attemptCompression = async (
     input: File | Blob,
     quality: number,
-    retryCount = 0,
+    retryCount = 0
   ): Promise<File> => {
     try {
       // [NASA TypeScript Safety] 使用 Type Guard 驗證後再傳入
       const fileInput = isValidFile(input)
         ? input
-        : new File([input], "converted.jpg", { type: "image/jpeg" });
+        : new File([input], 'converted.jpg', { type: 'image/jpeg' });
 
       return await imageCompression(fileInput, {
         maxWidthOrHeight: opts.maxWidthOrHeight,
@@ -75,11 +74,11 @@ export async function optimizePropertyImage(
         initialQuality: quality,
         useWebWorker: true,
         preserveExif: true,
-        fileType: "image/jpeg", // 確保輸出為 JPEG
+        fileType: 'image/jpeg', // 確保輸出為 JPEG
       });
     } catch (error) {
-      if (error instanceof Error && error.name === "RangeError") {
-        throw new Error("記憶體不足 (OOM)，請嘗試上傳較小的圖片");
+      if (error instanceof Error && error.name === 'RangeError') {
+        throw new Error('記憶體不足 (OOM)，請嘗試上傳較小的圖片');
       }
       if (retryCount < 1) {
         return attemptCompression(input, quality * 0.8, retryCount + 1);
@@ -96,7 +95,7 @@ export async function optimizePropertyImage(
       try {
         const result = await heic2any({
           blob: file,
-          toType: "image/jpeg",
+          toType: 'image/jpeg',
           quality: opts.quality,
         });
         // heic2any returns Blob or Blob[]
@@ -112,8 +111,8 @@ export async function optimizePropertyImage(
           compressedSize: originalSize,
           ratio: 1,
           skipped: true,
-          reason: "heic-conversion-failed",
-          error: "iOS HEIC 格式轉換失敗，請改用 JPEG 格式的照片",
+          reason: 'heic-conversion-failed',
+          error: 'iOS HEIC 格式轉換失敗，請改用 JPEG 格式的照片',
         };
       }
     }
@@ -134,8 +133,8 @@ export async function optimizePropertyImage(
       compressedSize: originalSize,
       ratio: 1,
       skipped: true,
-      reason: "failed",
-      error: err instanceof Error ? err.message : "壓縮失敗",
+      reason: 'failed',
+      error: err instanceof Error ? err.message : '壓縮失敗',
     };
   }
 }
@@ -145,7 +144,7 @@ export async function optimizePropertyImage(
  */
 export async function optimizeImages(
   files: File[],
-  options: OptimizeOptions = {},
+  options: OptimizeOptions = {}
 ): Promise<{ optimized: File[]; warnings: string[]; skipped: number }> {
   const warnings: string[] = [];
   const optimized: File[] = [];
@@ -164,13 +163,11 @@ export async function optimizeImages(
         if (res.error) {
           warnings.push(`${file.name}: ${res.error}`);
         } else {
-          if (res.skipped && res.reason === "under-threshold") skippedCount++;
+          if (res.skipped && res.reason === 'under-threshold') skippedCount++;
           optimized.push(res.file);
         }
       } catch (e) {
-        warnings.push(
-          `${file.name}: ${e instanceof Error ? e.message : "Unknown error"}`,
-        );
+        warnings.push(`${file.name}: ${e instanceof Error ? e.message : 'Unknown error'}`);
       } finally {
         processedCount++;
         options.onProgress?.(Math.round((processedCount / files.length) * 100));

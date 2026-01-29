@@ -73,24 +73,6 @@ export interface ApiResponse<T = unknown> {
 // ============================================================================
 
 /**
- * 檢查警告陣列是否有效且非空
- * @internal
- */
-function hasValidWarnings(
-  warnings?: Array<{ code: string; message: string }>,
-): boolean {
-  return Boolean(warnings && warnings.length > 0);
-}
-
-/**
- * 檢查 details 是否應該包含在回應中
- * @internal
- */
-function shouldIncludeDetails(details: unknown): boolean {
-  return details !== undefined;
-}
-
-/**
  * 建立成功回應
  *
  * @template T - 資料類型
@@ -109,14 +91,11 @@ function shouldIncludeDetails(details: unknown): boolean {
  * ])
  * ```
  */
-export function successResponse<T>(
-  data: T,
-  warnings?: ApiResponse<T>["warnings"],
-): ApiResponse<T> {
+export function successResponse<T>(data: T, warnings?: ApiResponse<T>['warnings']): ApiResponse<T> {
   return {
     success: true,
     data,
-    ...(hasValidWarnings(warnings) ? { warnings } : {}),
+    ...(warnings && warnings.length > 0 ? { warnings } : {}),
   };
 }
 
@@ -145,14 +124,14 @@ export function successResponse<T>(
 export function errorResponse(
   code: ApiErrorCode | (string & {}),
   message: string,
-  details?: unknown,
+  details?: unknown
 ): ApiResponse<never> {
   return {
     success: false,
     error: {
       code,
       message,
-      ...(shouldIncludeDetails(details) ? { details } : {}),
+      ...(details !== undefined ? { details } : {}),
     },
   };
 }
@@ -168,37 +147,37 @@ export function errorResponse(
  */
 export const API_ERROR_CODES = {
   // 客戶端錯誤 (4xx)
-  INVALID_INPUT: "INVALID_INPUT",
-  INVALID_QUERY: "INVALID_QUERY",
-  NOT_FOUND: "NOT_FOUND",
-  PERMISSION_DENIED: "PERMISSION_DENIED",
-  UNAUTHORIZED: "UNAUTHORIZED",
-  FORBIDDEN: "FORBIDDEN",
-  METHOD_NOT_ALLOWED: "METHOD_NOT_ALLOWED",
-  CONFLICT: "CONFLICT", // 409 並發衝突
-  RATE_LIMIT_EXCEEDED: "RATE_LIMIT_EXCEEDED", // [Team 2] 429 速率限制
+  INVALID_INPUT: 'INVALID_INPUT',
+  INVALID_QUERY: 'INVALID_QUERY',
+  NOT_FOUND: 'NOT_FOUND',
+  PERMISSION_DENIED: 'PERMISSION_DENIED',
+  UNAUTHORIZED: 'UNAUTHORIZED',
+  FORBIDDEN: 'FORBIDDEN',
+  METHOD_NOT_ALLOWED: 'METHOD_NOT_ALLOWED',
+  CONFLICT: 'CONFLICT', // 409 並發衝突
+  RATE_LIMIT_EXCEEDED: 'RATE_LIMIT_EXCEEDED', // [Team 2] 429 速率限制
 
   // 伺服器錯誤 (5xx)
-  INTERNAL_ERROR: "INTERNAL_ERROR",
-  DATA_FETCH_FAILED: "DATA_FETCH_FAILED",
-  SERVICE_UNAVAILABLE: "SERVICE_UNAVAILABLE",
+  INTERNAL_ERROR: 'INTERNAL_ERROR',
+  DATA_FETCH_FAILED: 'DATA_FETCH_FAILED',
+  SERVICE_UNAVAILABLE: 'SERVICE_UNAVAILABLE',
 
   // 業務邏輯錯誤
-  COMMUNITY_NOT_FOUND: "COMMUNITY_NOT_FOUND",
-  FORBIDDEN_PRIVATE_POSTS: "FORBIDDEN_PRIVATE_POSTS",
-  REVIEW_FETCH_FAILED: "REVIEW_FETCH_FAILED",
-  PROPERTY_FETCH_FAILED: "PROPERTY_FETCH_FAILED",
-  AGENT_FETCH_FAILED: "AGENT_FETCH_FAILED",
+  COMMUNITY_NOT_FOUND: 'COMMUNITY_NOT_FOUND',
+  FORBIDDEN_PRIVATE_POSTS: 'FORBIDDEN_PRIVATE_POSTS',
+  REVIEW_FETCH_FAILED: 'REVIEW_FETCH_FAILED',
+  PROPERTY_FETCH_FAILED: 'PROPERTY_FETCH_FAILED',
+  AGENT_FETCH_FAILED: 'AGENT_FETCH_FAILED',
 } as const;
 
 /**
  * 常用警告碼定義
  */
 export const API_WARNING_CODES = {
-  PARTIAL_FAILURE: "PARTIAL_FAILURE",
-  REVIEWS_FETCH_FAILED: "REVIEWS_FETCH_FAILED",
-  AGENT_DATA_UNAVAILABLE: "AGENT_DATA_UNAVAILABLE",
-  COMMUNITY_DATA_INCOMPLETE: "COMMUNITY_DATA_INCOMPLETE",
+  PARTIAL_FAILURE: 'PARTIAL_FAILURE',
+  REVIEWS_FETCH_FAILED: 'REVIEWS_FETCH_FAILED',
+  AGENT_DATA_UNAVAILABLE: 'AGENT_DATA_UNAVAILABLE',
+  COMMUNITY_DATA_INCOMPLETE: 'COMMUNITY_DATA_INCOMPLETE',
 } as const;
 
 // ============================================================================
@@ -210,16 +189,14 @@ export const API_WARNING_CODES = {
  *
  * 從 API_ERROR_CODES 常數推導而來，提供 TypeScript 自動完成提示
  */
-export type ApiErrorCode =
-  (typeof API_ERROR_CODES)[keyof typeof API_ERROR_CODES];
+export type ApiErrorCode = (typeof API_ERROR_CODES)[keyof typeof API_ERROR_CODES];
 
 /**
  * API 警告碼型別
  *
  * 從 API_WARNING_CODES 常數推導而來，提供 TypeScript 自動完成提示
  */
-export type ApiWarningCode =
-  (typeof API_WARNING_CODES)[keyof typeof API_WARNING_CODES];
+export type ApiWarningCode = (typeof API_WARNING_CODES)[keyof typeof API_WARNING_CODES];
 
 // ============================================================================
 // Export

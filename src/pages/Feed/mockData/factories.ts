@@ -5,28 +5,25 @@
  * Following Community mockData patterns.
  */
 
-import type { FeedComment } from "../../../types/comment";
-import type { FeedPost } from "../../../types/feed";
-import { generateMockId, MOCK_AUTHORS } from "./shared";
+import type { FeedComment } from '../../../types/comment';
+import type { FeedPost } from '../../../types/feed';
+import { generateMockId, MOCK_AUTHORS } from './shared';
 
 // ============ Post Factory ============
 
 export interface CreatePostOptions {
   author?: string;
   floor?: string;
-  type?: FeedPost["type"];
+  type?: FeedPost['type'];
   communityId?: string;
   communityName?: string;
-  images?: FeedPost["images"];
+  images?: FeedPost['images'];
 }
 
 /**
  * Create a mock FeedPost
  */
-export const createMockPost = (
-  content: string,
-  options: CreatePostOptions = {},
-): FeedPost => {
+export const createMockPost = (content: string, options: CreatePostOptions = {}): FeedPost => {
   const {
     author = MOCK_AUTHORS.TEST_USER.name,
     floor,
@@ -62,7 +59,7 @@ export const createMockPost = (
 
 export interface CreateCommentOptions {
   author?: string;
-  role?: "resident" | "member" | "agent" | "official";
+  role?: 'resident' | 'member' | 'agent' | 'official';
 }
 
 /**
@@ -71,15 +68,15 @@ export interface CreateCommentOptions {
 export const createMockComment = (
   postId: string | number,
   content: string,
-  options: CreateCommentOptions = {},
+  options: CreateCommentOptions = {}
 ): FeedComment => {
-  const { author = MOCK_AUTHORS.TEST_USER.name, role = "member" } = options;
+  const { author = MOCK_AUTHORS.TEST_USER.name, role = 'member' } = options;
 
   return {
     id: `c-${postId}-${generateMockId()}`,
     postId: String(postId),
     author: {
-      id: "mock-user-id",
+      id: 'mock-user-id',
       name: author,
       role,
     },
@@ -97,22 +94,22 @@ export const createMockComment = (
 
 // ============ Safety Trace Factory ============
 
-import type { SafetyTracePost } from "./posts/agent";
+import type { SafetyTracePost } from './posts/agent';
 
 /**
  * Create a mock SafetyTracePost
  */
 export const createMockSafetyTrace = (
   property: string,
-  certificateNo: string,
+  certificateNo: string
 ): SafetyTracePost => ({
   id: generateMockId(),
-  type: "safety_trace",
+  type: 'safety_trace',
   certificateNo,
   property,
   time: new Date().toISOString(),
-  duration: "00:00–00:30",
+  duration: '00:00–00:30',
   photoCount: 0,
-  summary: "帶看資料已留存。",
-  tags: ["帶看完成"],
+  summary: '帶看資料已留存。',
+  tags: ['帶看完成'],
 });

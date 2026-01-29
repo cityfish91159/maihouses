@@ -1,7 +1,7 @@
-import { useState, useCallback, useMemo } from "react";
-import { Lead } from "../types/uag.types";
-import { useWindowSize } from "./useWindowSize";
-import { BREAKPOINTS } from "../uag-config";
+import { useState, useCallback, useMemo } from 'react';
+import { Lead } from '../types/uag.types';
+import { useWindowSize } from './useWindowSize';
+import { BREAKPOINTS } from '../uag-config';
 
 export function useLeadSelection() {
   // 使用元組儲存 [lead, 當時的 width 是否為手機]
@@ -29,8 +29,8 @@ export function useLeadSelection() {
     requestAnimationFrame(() => {
       if (isMobile) {
         document
-          .getElementById("action-panel-container")
-          ?.scrollIntoView({ behavior: "smooth", block: "center" });
+          .getElementById('action-panel-container')
+          ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
     });
   }, []);

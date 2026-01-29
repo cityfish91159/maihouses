@@ -21,7 +21,7 @@ interface UAGInput {
 
 interface UAGOutput {
   score: number;
-  level: "S" | "A" | "B" | "C" | "F";
+  level: 'S' | 'A' | 'B' | 'C' | 'F';
   breakdown: {
     verification: number;
     quality: number;
@@ -31,25 +31,23 @@ interface UAGOutput {
 }
 
 function safeNum(v: unknown, fallback: number): number {
-  if (typeof v !== "number" || !Number.isFinite(v)) return fallback;
+  if (typeof v !== 'number' || !Number.isFinite(v)) return fallback;
   return v;
 }
 
 export function uagScore(input: unknown): UAGOutput {
   const empty: UAGOutput = {
     score: 0,
-    level: "F",
+    level: 'F',
     breakdown: { verification: 0, quality: 0, responsiveness: 0, history: 0 },
   };
 
-  if (!input || typeof input !== "object") return empty;
+  if (!input || typeof input !== 'object') return empty;
 
   const d = input as UAGInput;
 
   // verification: hasVerifiedOwner +15, hasRealPhotos +15
-  const verification =
-    (d.hasVerifiedOwner === true ? 15 : 0) +
-    (d.hasRealPhotos === true ? 15 : 0);
+  const verification = (d.hasVerifiedOwner === true ? 15 : 0) + (d.hasRealPhotos === true ? 15 : 0);
 
   // quality: avgRating * 5 (max 25)
   const rating = Math.max(0, Math.min(5, safeNum(d.avgRating, 0)));
@@ -66,12 +64,12 @@ export function uagScore(input: unknown): UAGOutput {
 
   const score = verification + quality + responsiveness + history;
 
-  let level: "S" | "A" | "B" | "C" | "F";
-  if (score >= 90) level = "S";
-  else if (score >= 75) level = "A";
-  else if (score >= 60) level = "B";
-  else if (score >= 40) level = "C";
-  else level = "F";
+  let level: 'S' | 'A' | 'B' | 'C' | 'F';
+  if (score >= 90) level = 'S';
+  else if (score >= 75) level = 'A';
+  else if (score >= 60) level = 'B';
+  else if (score >= 40) level = 'C';
+  else level = 'F';
 
   return {
     score,

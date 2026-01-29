@@ -5,9 +5,9 @@
  * 使用 @tanstack/react-query 實現 SWR 策略
  */
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useCallback, useState } from "react";
-import { z } from "zod";
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useCallback, useState } from 'react';
+import { z } from 'zod';
 import {
   getCommunityWall,
   toggleLike as apiToggleLike,
@@ -16,7 +16,7 @@ import {
   answerQuestion as apiAnswerQuestion,
   type CommunityWallData,
   type CommunityPost,
-} from "../services/communityService";
+} from '../services/communityService';
 
 // [NASA TypeScript Safety] Zod Schema 用於驗證錯誤物件的 status 屬性
 const ErrorWithStatusSchema = z.object({
@@ -28,16 +28,16 @@ const ErrorWithStatusSchema = z.object({
  */
 function hasErrorStatus(error: unknown): error is { status: number } {
   const result = ErrorWithStatusSchema.safeParse(error);
-  return result.success && typeof result.data.status === "number";
+  return result.success && typeof result.data.status === 'number';
 }
 
 // Query Keys
 export const communityWallKeys = {
-  all: ["communityWall"] as const,
+  all: ['communityWall'] as const,
   wall: (communityId: string, includePrivate: boolean) =>
-    [...communityWallKeys.all, "wall", communityId, includePrivate] as const,
-  posts: (communityId: string, visibility: "public" | "private") =>
-    [...communityWallKeys.all, "posts", communityId, visibility] as const,
+    [...communityWallKeys.all, 'wall', communityId, includePrivate] as const,
+  posts: (communityId: string, visibility: 'public' | 'private') =>
+    [...communityWallKeys.all, 'posts', communityId, visibility] as const,
 };
 
 export interface UseCommunityWallOptions {
@@ -67,10 +67,7 @@ export interface UseCommunityWallReturn {
   /** 按讚/取消按讚（樂觀更新） */
   toggleLike: (postId: string) => Promise<void>;
   /** 發布貼文 */
-  createPost: (
-    content: string,
-    visibility?: "public" | "private",
-  ) => Promise<void>;
+  createPost: (content: string, visibility?: 'public' | 'private') => Promise<void>;
   /** 發問 */
   askQuestion: (question: string) => Promise<void>;
   /** 回答問題 */
@@ -81,7 +78,7 @@ export interface UseCommunityWallReturn {
 
 export function useCommunityWall(
   communityId: string | undefined,
-  options: UseCommunityWallOptions = {},
+  options: UseCommunityWallOptions = {}
 ): UseCommunityWallReturn {
   const {
     includePrivate = false,
@@ -95,11 +92,11 @@ export function useCommunityWall(
   const [isOptimisticUpdating, setIsOptimisticUpdating] = useState(false);
   // K: 若未登入則不使用樂觀更新（避免假成功再回滾的差 UX）
   const canOptimisticUpdate = !!currentUserId;
-  const optimisticUserId = currentUserId ?? "";
+  const optimisticUserId = currentUserId ?? '';
 
   // 主要查詢
   const { data, isLoading, isFetching, error, refetch } = useQuery({
-    queryKey: communityWallKeys.wall(communityId || "", includePrivate),
+    queryKey: communityWallKeys.wall(communityId || '', includePrivate),
     queryFn: () => getCommunityWall(communityId!, { includePrivate }),
     enabled: enabled && !!communityId,
     staleTime,
@@ -139,12 +136,12 @@ export function useCommunityWall(
 
       // 取消任何正在進行的查詢
       await queryClient.cancelQueries({
-        queryKey: communityWallKeys.wall(communityId || "", includePrivate),
+        queryKey: communityWallKeys.wall(communityId || '', includePrivate),
       });
 
       // 保存舊資料用於回滾
       const previousData = queryClient.getQueryData<CommunityWallData>(
-        communityWallKeys.wall(communityId || "", includePrivate),
+        communityWallKeys.wall(communityId || '', includePrivate)
       );
 
       // 樂觀更新
@@ -155,9 +152,7 @@ export function useCommunityWall(
             const isLiked = post.liked_by.includes(optimisticUserId);
             return {
               ...post,
-              likes_count: isLiked
-                ? Math.max(0, post.likes_count - 1)
-                : post.likes_count + 1,
+              likes_count: isLiked ? Math.max(0, post.likes_count - 1) : post.likes_count + 1,
               liked_by: isLiked
                 ? post.liked_by.filter((id) => id !== optimisticUserId)
                 : [...post.liked_by, optimisticUserId],
@@ -165,7 +160,7 @@ export function useCommunityWall(
           });
 
         queryClient.setQueryData<CommunityWallData>(
-          communityWallKeys.wall(communityId || "", includePrivate),
+          communityWallKeys.wall(communityId || '', includePrivate),
           {
             ...previousData,
             posts: {
@@ -173,7 +168,7 @@ export function useCommunityWall(
               public: updatePosts(previousData.posts.public),
               private: updatePosts(previousData.posts.private),
             },
-          },
+          }
         );
       }
 
@@ -183,8 +178,8 @@ export function useCommunityWall(
       // 失敗時回滾
       if (context?.previousData) {
         queryClient.setQueryData(
-          communityWallKeys.wall(communityId || "", includePrivate),
-          context.previousData,
+          communityWallKeys.wall(communityId || '', includePrivate),
+          context.previousData
         );
       }
     },
@@ -192,23 +187,18 @@ export function useCommunityWall(
       setIsOptimisticUpdating(false);
       // 重新驗證資料
       queryClient.invalidateQueries({
-        queryKey: communityWallKeys.wall(communityId || "", includePrivate),
+        queryKey: communityWallKeys.wall(communityId || '', includePrivate),
       });
     },
   });
 
   // 發文 Mutation
   const createPostMutation = useMutation({
-    mutationFn: ({
-      content,
-      visibility,
-    }: {
-      content: string;
-      visibility: "public" | "private";
-    }) => apiCreatePost(communityId!, content, visibility),
+    mutationFn: ({ content, visibility }: { content: string; visibility: 'public' | 'private' }) =>
+      apiCreatePost(communityId!, content, visibility),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: communityWallKeys.wall(communityId || "", includePrivate),
+        queryKey: communityWallKeys.wall(communityId || '', includePrivate),
       });
     },
   });
@@ -218,23 +208,18 @@ export function useCommunityWall(
     mutationFn: (question: string) => apiAskQuestion(communityId!, question),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: communityWallKeys.wall(communityId || "", includePrivate),
+        queryKey: communityWallKeys.wall(communityId || '', includePrivate),
       });
     },
   });
 
   // 回答 Mutation
   const answerQuestionMutation = useMutation({
-    mutationFn: ({
-      questionId,
-      content,
-    }: {
-      questionId: string;
-      content: string;
-    }) => apiAnswerQuestion(questionId, content),
+    mutationFn: ({ questionId, content }: { questionId: string; content: string }) =>
+      apiAnswerQuestion(questionId, content),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: communityWallKeys.wall(communityId || "", includePrivate),
+        queryKey: communityWallKeys.wall(communityId || '', includePrivate),
       });
     },
   });
@@ -244,30 +229,30 @@ export function useCommunityWall(
     async (postId: string) => {
       await likeMutation.mutateAsync(postId);
     },
-    [likeMutation],
+    [likeMutation]
   );
 
   const createPost = useCallback(
-    async (content: string, visibility: "public" | "private" = "public") => {
-      if (!communityId) throw new Error("缺少社區 ID");
+    async (content: string, visibility: 'public' | 'private' = 'public') => {
+      if (!communityId) throw new Error('缺少社區 ID');
       await createPostMutation.mutateAsync({ content, visibility });
     },
-    [communityId, createPostMutation],
+    [communityId, createPostMutation]
   );
 
   const askQuestion = useCallback(
     async (question: string) => {
-      if (!communityId) throw new Error("缺少社區 ID");
+      if (!communityId) throw new Error('缺少社區 ID');
       await askQuestionMutation.mutateAsync(question);
     },
-    [communityId, askQuestionMutation],
+    [communityId, askQuestionMutation]
   );
 
   const answerQuestion = useCallback(
     async (questionId: string, content: string) => {
       await answerQuestionMutation.mutateAsync({ questionId, content });
     },
-    [answerQuestionMutation],
+    [answerQuestionMutation]
   );
 
   // [NASA TypeScript Safety] 類型守衛確保 error 為 Error 或 null

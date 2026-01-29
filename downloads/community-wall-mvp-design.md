@@ -100,10 +100,7 @@
       content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover"
     />
     <title>社區牆｜惠宇上晴</title>
-    <meta
-      name="description"
-      content="社區熱帖、真實評價、準住戶問答 - 邁房子社區牆"
-    />
+    <meta name="description" content="社區熱帖、真實評價、準住戶問答 - 邁房子社區牆" />
     <style>
       /* === 動畫 === */
       @keyframes fadeInUp {
@@ -147,15 +144,9 @@
       html,
       body {
         min-height: 100%;
-        background: linear-gradient(
-          180deg,
-          var(--bg-base) 0%,
-          var(--bg-alt) 100%
-        );
+        background: linear-gradient(180deg, var(--bg-base) 0%, var(--bg-alt) 100%);
         color: var(--text-primary);
-        font-family:
-          -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC",
-          sans-serif;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans TC', sans-serif;
         -webkit-font-smoothing: antialiased;
       }
 
@@ -722,31 +713,28 @@
  * 支援權限控制（訪客/會員/住戶）
  */
 
-import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { createClient } from "@supabase/supabase-js";
+import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-);
+const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
 
 // 非會員可見數量
 const GUEST_LIMIT = 2;
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // CORS
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
-  if (req.method === "OPTIONS") {
+  if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
 
   const { communityId, type, visibility } = req.query;
 
   if (!communityId) {
-    return res.status(400).json({ error: "缺少 communityId" });
+    return res.status(400).json({ error: '缺少 communityId' });
   }
 
   // 檢查登入狀態
@@ -754,7 +742,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   let userId: string | null = null;
   let isAuthenticated = false;
 
-  if (authHeader?.startsWith("Bearer ")) {
+  if (authHeader?.startsWith('Bearer ')) {
     const token = authHeader.slice(7);
     try {
       const {
@@ -765,29 +753,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         isAuthenticated = true;
       }
     } catch (e) {
-      console.warn("Token 驗證失敗");
+      console.warn('Token 驗證失敗');
     }
   }
 
   try {
     switch (type) {
-      case "posts":
-        return await getPosts(
-          res,
-          communityId as string,
-          visibility as string,
-          isAuthenticated,
-        );
-      case "reviews":
+      case 'posts':
+        return await getPosts(res, communityId as string, visibility as string, isAuthenticated);
+      case 'reviews':
         return await getReviews(res, communityId as string, isAuthenticated);
-      case "questions":
+      case 'questions':
         return await getQuestions(res, communityId as string, isAuthenticated);
-      case "all":
+      case 'all':
       default:
         return await getAll(res, communityId as string, isAuthenticated);
     }
   } catch (error: any) {
-    console.error("API Error:", error);
+    console.error('API Error:', error);
     return res.status(500).json({ error: error.message });
   }
 }
@@ -796,23 +779,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 async function getPosts(
   res: VercelResponse,
   communityId: string,
-  visibility: string = "public",
-  isAuthenticated: boolean,
+  visibility: string = 'public',
+  isAuthenticated: boolean
 ) {
   let query = supabase
-    .from("community_posts")
-    .select("*")
-    .eq("community_id", communityId)
-    .order("is_pinned", { ascending: false })
-    .order("created_at", { ascending: false });
+    .from('community_posts')
+    .select('*')
+    .eq('community_id', communityId)
+    .order('is_pinned', { ascending: false })
+    .order('created_at', { ascending: false });
 
   // 非登入用戶只能看公開牆
   if (!isAuthenticated) {
-    query = query.eq("visibility", "public").limit(GUEST_LIMIT);
-  } else if (visibility === "public") {
-    query = query.eq("visibility", "public");
-  } else if (visibility === "private") {
-    query = query.eq("visibility", "private");
+    query = query.eq('visibility', 'public').limit(GUEST_LIMIT);
+  } else if (visibility === 'public') {
+    query = query.eq('visibility', 'public');
+  } else if (visibility === 'private') {
+    query = query.eq('visibility', 'private');
   }
 
   const { data, error, count } = await query;
@@ -830,16 +813,12 @@ async function getPosts(
 
 // 取得評價
 // 注意：community_reviews 是 View，資料來源為 properties 表的兩好一公道欄位
-async function getReviews(
-  res: VercelResponse,
-  communityId: string,
-  isAuthenticated: boolean,
-) {
+async function getReviews(res: VercelResponse, communityId: string, isAuthenticated: boolean) {
   let query = supabase
-    .from("community_reviews") // 這是 View，對接 properties 表
-    .select("*", { count: "exact" })
-    .eq("community_id", communityId)
-    .order("created_at", { ascending: false });
+    .from('community_reviews') // 這是 View，對接 properties 表
+    .select('*', { count: 'exact' })
+    .eq('community_id', communityId)
+    .order('created_at', { ascending: false });
 
   if (!isAuthenticated) {
     query = query.limit(GUEST_LIMIT);
@@ -851,9 +830,9 @@ async function getReviews(
 
   // 取得社區的 AI 總結
   const { data: community } = await supabase
-    .from("communities")
-    .select("two_good, one_fair, story_vibe")
-    .eq("id", communityId)
+    .from('communities')
+    .select('two_good, one_fair, story_vibe')
+    .eq('id', communityId)
     .single();
 
   return res.status(200).json({
@@ -862,25 +841,16 @@ async function getReviews(
     summary: community || null,
     total: count || 0,
     limited: !isAuthenticated,
-    hiddenCount:
-      !isAuthenticated && count ? Math.max(0, count - GUEST_LIMIT) : 0,
+    hiddenCount: !isAuthenticated && count ? Math.max(0, count - GUEST_LIMIT) : 0,
   });
 }
 
 // 取得問答（略）
-async function getQuestions(
-  res: VercelResponse,
-  communityId: string,
-  isAuthenticated: boolean,
-) {
+async function getQuestions(res: VercelResponse, communityId: string, isAuthenticated: boolean) {
   // ...
 }
 
-async function getAll(
-  res: VercelResponse,
-  communityId: string,
-  isAuthenticated: boolean,
-) {
+async function getAll(res: VercelResponse, communityId: string, isAuthenticated: boolean) {
   // ...
 }
 ```
@@ -894,32 +864,29 @@ async function getAll(
  * 準住戶問答 API - 發問和回答
  */
 
-import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { createClient } from "@supabase/supabase-js";
+import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-);
+const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // CORS
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
-  if (req.method === "OPTIONS") {
+  if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
 
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   // 驗證登入
   const authHeader = req.headers.authorization;
-  if (!authHeader?.startsWith("Bearer ")) {
-    return res.status(401).json({ error: "請先登入" });
+  if (!authHeader?.startsWith('Bearer ')) {
+    return res.status(401).json({ error: '請先登入' });
   }
 
   const token = authHeader.slice(7);
@@ -929,32 +896,26 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   } = await supabase.auth.getUser(token);
 
   if (authError || !user) {
-    return res.status(401).json({ error: "登入已過期，請重新登入" });
+    return res.status(401).json({ error: '登入已過期，請重新登入' });
   }
 
   try {
-    const {
-      action,
-      communityId,
-      questionId,
-      content,
-      isAnonymous = true,
-    } = req.body;
+    const { action, communityId, questionId, content, isAnonymous = true } = req.body;
 
     if (!action) {
-      return res.status(400).json({ error: "缺少 action 參數" });
+      return res.status(400).json({ error: '缺少 action 參數' });
     }
 
     switch (action) {
-      case "ask":
+      case 'ask':
         return await handleAsk(res, user.id, communityId, content, isAnonymous);
-      case "answer":
+      case 'answer':
         return await handleAnswer(res, user.id, questionId, content);
       default:
-        return res.status(400).json({ error: "無效的 action" });
+        return res.status(400).json({ error: '無效的 action' });
     }
   } catch (error: any) {
-    console.error("Question API Error:", error);
+    console.error('Question API Error:', error);
     return res.status(500).json({ error: error.message });
   }
 }
@@ -965,18 +926,18 @@ async function handleAsk(
   userId: string,
   communityId: string,
   question: string,
-  isAnonymous: boolean,
+  isAnonymous: boolean
 ) {
   if (!communityId || !question) {
-    return res.status(400).json({ error: "缺少 communityId 或 question" });
+    return res.status(400).json({ error: '缺少 communityId 或 question' });
   }
 
   if (question.length < 5) {
-    return res.status(400).json({ error: "問題至少需要 5 個字" });
+    return res.status(400).json({ error: '問題至少需要 5 個字' });
   }
 
   const { data, error } = await supabase
-    .from("community_questions")
+    .from('community_questions')
     .insert({
       community_id: communityId,
       author_id: userId,
@@ -991,7 +952,7 @@ async function handleAsk(
   return res.status(200).json({
     success: true,
     data,
-    message: "問題已發布，住戶會收到通知",
+    message: '問題已發布，住戶會收到通知',
   });
 }
 
@@ -1000,31 +961,31 @@ async function handleAnswer(
   res: VercelResponse,
   userId: string,
   questionId: string,
-  answer: string,
+  answer: string
 ) {
   if (!questionId || !answer) {
-    return res.status(400).json({ error: "缺少 questionId 或 answer" });
+    return res.status(400).json({ error: '缺少 questionId 或 answer' });
   }
 
   if (answer.length < 10) {
-    return res.status(400).json({ error: "回答至少需要 10 個字" });
+    return res.status(400).json({ error: '回答至少需要 10 個字' });
   }
 
   // 判斷回答者類型：查詢是否為房仲
-  let authorType: "resident" | "agent" = "resident";
+  let authorType: 'resident' | 'agent' = 'resident';
 
   const { data: agentProfile } = await supabase
-    .from("agents")
-    .select("id")
-    .eq("user_id", userId)
+    .from('agents')
+    .select('id')
+    .eq('user_id', userId)
     .maybeSingle();
 
   if (agentProfile) {
-    authorType = "agent";
+    authorType = 'agent';
   }
 
   const { data, error } = await supabase
-    .from("community_answers")
+    .from('community_answers')
     .insert({
       question_id: questionId,
       author_id: userId,
@@ -1039,7 +1000,7 @@ async function handleAnswer(
   return res.status(200).json({
     success: true,
     data,
-    message: "回答已發布",
+    message: '回答已發布',
   });
 }
 ```

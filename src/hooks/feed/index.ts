@@ -55,4 +55,4 @@ export {
   filterMockData,
   filterSecurePosts,
   createSecureFeedData,
-} from "./feedUtils";
+} from './feedUtils';

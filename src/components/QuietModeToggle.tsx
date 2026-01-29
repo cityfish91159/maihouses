@@ -1,11 +1,11 @@
-import React, { useState } from "react";
-import { useQuietMode } from "../context/QuietModeContext";
+import React, { useState } from 'react';
+import { useQuietMode } from '../context/QuietModeContext';
 
 export const QuietModeToggle: React.FC = () => {
   const { startQuiet, clearQuiet, isActive } = useQuietMode();
-  const [minutes, setMinutes] = useState<number | "">("");
+  const [minutes, setMinutes] = useState<number | ''>('');
   const [turns, setTurns] = useState<number>(10);
-  const [reason, setReason] = useState<string>("只聊天");
+  const [reason, setReason] = useState<string>('只聊天');
 
   if (isActive()) {
     return (
@@ -14,11 +14,11 @@ export const QuietModeToggle: React.FC = () => {
         title="安靜模式已啟用，點擊解除"
         className="btn-quiet on"
         style={{
-          padding: "6px 10px",
+          padding: '6px 10px',
           borderRadius: 8,
-          border: "1px solid #1749D7",
-          background: "#1749D7",
-          color: "#fff",
+          border: '1px solid #1749D7',
+          background: '#1749D7',
+          color: '#fff',
         }}
       >
         安靜中（解除）
@@ -28,7 +28,7 @@ export const QuietModeToggle: React.FC = () => {
 
   const handleStart = () => {
     const opts: { minutes?: number; turns?: number; reason?: string } = {};
-    if (typeof minutes === "number" && minutes > 0) opts.minutes = minutes;
+    if (typeof minutes === 'number' && minutes > 0) opts.minutes = minutes;
     if (turns > 0) opts.turns = turns;
     if (reason) opts.reason = reason;
     startQuiet(opts);
@@ -37,10 +37,10 @@ export const QuietModeToggle: React.FC = () => {
   return (
     <div
       style={{
-        display: "flex",
-        alignItems: "center",
+        display: 'flex',
+        alignItems: 'center',
         gap: 8,
-        flexWrap: "wrap",
+        flexWrap: 'wrap',
       }}
     >
       <button
@@ -48,37 +48,35 @@ export const QuietModeToggle: React.FC = () => {
         title="啟用安靜模式（預設 10 回合）"
         className="btn-quiet off"
         style={{
-          padding: "6px 10px",
+          padding: '6px 10px',
           borderRadius: 8,
-          border: "1px solid #1749D7",
-          background: "#fff",
-          color: "#1749D7",
+          border: '1px solid #1749D7',
+          background: '#fff',
+          color: '#1749D7',
         }}
       >
         開啟安靜模式
       </button>
       <button
-        onClick={() =>
-          startQuiet({ minutes: 20, turns: 999, reason: "只想聊 20 分鐘" })
-        }
+        onClick={() => startQuiet({ minutes: 20, turns: 999, reason: '只想聊 20 分鐘' })}
         style={{
-          padding: "4px 8px",
+          padding: '4px 8px',
           borderRadius: 999,
-          border: "1px dashed #1749D7",
-          background: "#F5F8FF",
-          color: "#1749D7",
+          border: '1px dashed #1749D7',
+          background: '#F5F8FF',
+          color: '#1749D7',
         }}
       >
         只想聊 20 分鐘
       </button>
       <button
-        onClick={() => startQuiet({ turns: 999, reason: "今天別推薦了" })}
+        onClick={() => startQuiet({ turns: 999, reason: '今天別推薦了' })}
         style={{
-          padding: "4px 8px",
+          padding: '4px 8px',
           borderRadius: 999,
-          border: "1px dashed #1749D7",
-          background: "#F5F8FF",
-          color: "#1749D7",
+          border: '1px dashed #1749D7',
+          background: '#F5F8FF',
+          color: '#1749D7',
         }}
       >
         今天別推薦了
@@ -89,16 +87,16 @@ export const QuietModeToggle: React.FC = () => {
         type="number"
         min={0}
         placeholder="分鐘(可選)"
-        value={typeof minutes === "number" ? minutes : ""}
+        value={typeof minutes === 'number' ? minutes : ''}
         onChange={(e) => {
           const v = Number(e.target.value);
-          setMinutes(Number.isFinite(v) ? v : "");
+          setMinutes(Number.isFinite(v) ? v : '');
         }}
         style={{
           width: 90,
-          padding: "4px 6px",
+          padding: '4px 6px',
           borderRadius: 6,
-          border: "1px solid #ddd",
+          border: '1px solid #ddd',
         }}
       />
       <input
@@ -114,9 +112,9 @@ export const QuietModeToggle: React.FC = () => {
         }}
         style={{
           width: 90,
-          padding: "4px 6px",
+          padding: '4px 6px',
           borderRadius: 6,
-          border: "1px solid #ddd",
+          border: '1px solid #ddd',
         }}
       />
       <input
@@ -128,9 +126,9 @@ export const QuietModeToggle: React.FC = () => {
         onChange={(e) => setReason(e.target.value)}
         style={{
           width: 120,
-          padding: "4px 6px",
+          padding: '4px 6px',
           borderRadius: 6,
-          border: "1px solid #ddd",
+          border: '1px solid #ddd',
         }}
       />
     </div>

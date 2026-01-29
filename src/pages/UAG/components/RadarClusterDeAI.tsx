@@ -23,9 +23,9 @@
  *    - Keyboard navigation support
  */
 
-import React, { useMemo } from "react";
-import type { Lead } from "../types/uag.types";
-import styles from "../UAG-deai-demo.module.css";
+import React, { useMemo } from 'react';
+import type { Lead } from '../types/uag.types';
+import styles from '../UAG-deai-demo.module.css';
 
 export interface RadarClusterDeAIProps {
   leads: Lead[];
@@ -43,11 +43,8 @@ function seededRandom(seed: string): number {
   return Math.abs((Math.sin(hash) * 10000) % 1);
 }
 
-export default function RadarClusterDeAI({
-  leads,
-  onSelectLead,
-}: RadarClusterDeAIProps) {
-  const liveLeads = leads.filter((l) => l.status === "new");
+export default function RadarClusterDeAI({ leads, onSelectLead }: RadarClusterDeAIProps) {
+  const liveLeads = leads.filter((l) => l.status === 'new');
 
   // 產生「等級-序號」標籤
   const leadLabels = useMemo(() => {
@@ -73,7 +70,7 @@ export default function RadarClusterDeAI({
 
     for (const lead of sortedLeads) {
       gradeCounters[lead.grade] = (gradeCounters[lead.grade] || 0) + 1;
-      const seq = String(gradeCounters[lead.grade]).padStart(2, "0");
+      const seq = String(gradeCounters[lead.grade]).padStart(2, '0');
       labels[lead.id] = `${lead.grade}-${seq}`;
     }
     return labels;
@@ -82,15 +79,15 @@ export default function RadarClusterDeAI({
   // ui-ux-pro-max: Swiss Style 尺寸系統（使用 8px 為基準單位）
   const getBubbleSize = (grade: string): number => {
     switch (grade) {
-      case "S":
+      case 'S':
         return 112; // 14 * 8
-      case "A":
+      case 'A':
         return 96; // 12 * 8
-      case "B":
+      case 'B':
         return 88; // 11 * 8
-      case "C":
+      case 'C':
         return 80; // 10 * 8
-      case "F":
+      case 'F':
         return 64; // 8 * 8
       default:
         return 80;
@@ -98,30 +95,24 @@ export default function RadarClusterDeAI({
   };
 
   return (
-    <section className={styles["deai-card"]}>
+    <section className={styles['deai-card']}>
       {/* Card Header */}
-      <div className={styles["deai-card-header"]}>
+      <div className={styles['deai-card-header']}>
         <div>
-          <h2 className={styles["deai-card-title"]}>UAG 精準導客雷達</h2>
-          <p className={styles["deai-card-sub"]}>
-            S/A 級獨家聯絡權｜B/C/F 級點數兌換
-          </p>
+          <h2 className={styles['deai-card-title']}>UAG 精準導客雷達</h2>
+          <p className={styles['deai-card-sub']}>S/A 級獨家聯絡權｜B/C/F 級點數兌換</p>
         </div>
       </div>
 
       {/* Radar Cluster */}
-      <div className={styles["deai-cluster"]}>
+      <div className={styles['deai-cluster']}>
         {/* Reference circles */}
-        <div
-          className={`${styles["deai-cluster-ring"]} ${styles["deai-cluster-ring--outer"]}`}
-        />
-        <div
-          className={`${styles["deai-cluster-ring"]} ${styles["deai-cluster-ring--inner"]}`}
-        />
+        <div className={`${styles['deai-cluster-ring']} ${styles['deai-cluster-ring--outer']}`} />
+        <div className={`${styles['deai-cluster-ring']} ${styles['deai-cluster-ring--inner']}`} />
 
         {/* Live indicator - ui-ux-pro-max: professional, not playful */}
-        <div className={styles["deai-live-badge"]}>
-          <span className={styles["deai-live-dot"]} />
+        <div className={styles['deai-live-badge']}>
+          <span className={styles['deai-live-dot']} />
           <span>Live 監控中</span>
         </div>
 
@@ -134,42 +125,38 @@ export default function RadarClusterDeAI({
           return (
             <div
               key={lead.id}
-              className={styles["deai-bubble"]}
+              className={styles['deai-bubble']}
               data-grade={lead.grade}
               role="button"
               aria-label={`${leadLabels[lead.id]} - ${lead.grade}級 - ${lead.intent}% 意向度 - ${lead.prop}`}
               tabIndex={0}
               style={
                 {
-                  "--bubble-size": `${size}px`,
+                  '--bubble-size': `${size}px`,
                   left: `${x}%`,
                   top: `${y}%`,
                   // 基於 ID 的微小偏移，增加有機感
-                  transform: `translate(-50%, -50%) translate(${seededRandom(lead.id) * 4 - 2}px, ${seededRandom(lead.id + "y") * 4 - 2}px)`,
+                  transform: `translate(-50%, -50%) translate(${seededRandom(lead.id) * 4 - 2}px, ${seededRandom(lead.id + 'y') * 4 - 2}px)`,
                 } as React.CSSProperties
               }
               onClick={() => onSelectLead(lead)}
               onKeyDown={(e) => {
                 // ui-ux-pro-max: onClick handler, keyboard support
-                if (e.key === "Enter" || e.key === " ") {
+                if (e.key === 'Enter' || e.key === ' ') {
                   e.preventDefault();
                   onSelectLead(lead);
                 }
               }}
             >
               {/* Grade badge */}
-              <div className={styles["deai-bubble-grade"]}>{lead.grade}</div>
+              <div className={styles['deai-bubble-grade']}>{lead.grade}</div>
 
               {/* Content */}
-              <span className={styles["deai-bubble-id"]}>
-                {leadLabels[lead.id] || lead.grade}
-              </span>
-              <span className={styles["deai-bubble-intent"]}>
-                {lead.intent}%
-              </span>
+              <span className={styles['deai-bubble-id']}>{leadLabels[lead.id] || lead.grade}</span>
+              <span className={styles['deai-bubble-intent']}>{lead.intent}%</span>
 
               {/* Label */}
-              <div className={styles["deai-bubble-label"]}>{lead.prop}</div>
+              <div className={styles['deai-bubble-label']}>{lead.prop}</div>
             </div>
           );
         })}

@@ -125,11 +125,11 @@ export const ARM_THINK_R_HAND_OFFSET = 8;
 
 // ============ 特效顏色 ============
 
-export const EFFECT_COLOR_GOLD = "#FFD700";
-export const EFFECT_COLOR_CONFETTI_RED = "#FF6B6B";
-export const EFFECT_COLOR_CONFETTI_TEAL = "#4ECDC4";
-export const EFFECT_COLOR_CONFETTI_YELLOW = "#FFE66D";
-export const EFFECT_COLOR_SHY_BLUE = "#87CEEB";
+export const EFFECT_COLOR_GOLD = '#FFD700';
+export const EFFECT_COLOR_CONFETTI_RED = '#FF6B6B';
+export const EFFECT_COLOR_CONFETTI_TEAL = '#4ECDC4';
+export const EFFECT_COLOR_CONFETTI_YELLOW = '#FFE66D';
+export const EFFECT_COLOR_SHY_BLUE = '#87CEEB';
 export const STAR_INNER_RATIO = 0.4;
 export const SPARKLE_DIAGONAL_RATIO = 0.6;
 
@@ -158,19 +158,16 @@ export const CONFETTI_RECT_3_HEIGHT_RATIO = 1.0;
 // ============ 尺寸配置 ============
 
 /** 尺寸 CSS 類別對照表 */
-export const SIZE_CLASSES: Record<"xs" | "sm" | "md" | "lg" | "xl", string> = {
-  xs: "w-12 h-12",
-  sm: "w-20 h-20",
-  md: "w-32 h-32",
-  lg: "w-40 h-40",
-  xl: "w-56 h-56",
+export const SIZE_CLASSES: Record<'xs' | 'sm' | 'md' | 'lg' | 'xl', string> = {
+  xs: 'w-12 h-12',
+  sm: 'w-20 h-20',
+  md: 'w-32 h-32',
+  lg: 'w-40 h-40',
+  xl: 'w-56 h-56',
 };
 
 // ============ 工具函式 ============
 
 /** 鏡像 SVG 路徑 (x -> 200-x) */
 export const mirrorPath = (path: string) =>
-  path.replace(
-    /(\d+)\s+(\d+)/g,
-    (_, x, y) => `${CANVAS_SIZE - parseInt(x)} ${y}`,
-  );
+  path.replace(/(\d+)\s+(\d+)/g, (_, x, y) => `${CANVAS_SIZE - parseInt(x)} ${y}`);

@@ -15,6 +15,7 @@
 ### 1. 觸發時機
 
 Token 升級邏輯在以下情況執行：
+
 - 用戶成功登入或註冊後
 - 在 `successRedirect` 函數中，取得用戶資訊後
 - 在重定向到 Feed 頁面之前
@@ -23,21 +24,21 @@ Token 升級邏輯在以下情況執行：
 
 ```javascript
 // 1. 檢查 localStorage 是否有待升級的 token
-const pendingToken = getLS("pending_trust_token");
+const pendingToken = getLS('pending_trust_token');
 
 // 2. 如果有 token 且用戶已登入
 if (pendingToken && user) {
   // 3. 取得用戶名稱（優先順序）
   const userName =
-    user.user_metadata?.name ||           // Google 名稱
-    user.user_metadata?.full_name ||      // 完整名稱
-    user.email?.split("@")[0] ||          // Email 前綴
-    "用戶";                               // 預設值
+    user.user_metadata?.name || // Google 名稱
+    user.user_metadata?.full_name || // 完整名稱
+    user.email?.split('@')[0] || // Email 前綴
+    '用戶'; // 預設值
 
   // 4. 呼叫 API 升級案件
-  await fetch("/api/trust/upgrade-case", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
+  await fetch('/api/trust/upgrade-case', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       token: pendingToken,
       userId: user.id,
@@ -46,13 +47,14 @@ if (pendingToken && user) {
   });
 
   // 5. 清除 localStorage（成功或失敗都清除，避免重複嘗試）
-  localStorage.removeItem("pending_trust_token");
+  localStorage.removeItem('pending_trust_token');
 }
 ```
 
 ### 3. 錯誤處理
 
 實作了完整的錯誤處理機制：
+
 - **API 呼叫成功**：記錄成功日誌，清除 token
 - **API 呼叫失敗**：記錄警告日誌，清除 token（避免重複嘗試）
 - **網路錯誤或其他異常**：記錄錯誤日誌，清除 token
@@ -70,15 +72,17 @@ if (pendingToken && user) {
 **位置：** `api/trust/upgrade-case.ts`
 
 **請求格式：**
+
 ```typescript
 {
-  token: string;      // UUID 格式的 Trust token
-  userId: string;     // 用戶 ID
-  userName: string;   // 用戶名稱
+  token: string; // UUID 格式的 Trust token
+  userId: string; // 用戶 ID
+  userName: string; // 用戶名稱
 }
 ```
 
 **回應格式：**
+
 ```typescript
 {
   success: boolean;
@@ -99,6 +103,7 @@ if (pendingToken && user) {
    - 收到 Trust Room 邀請連結（包含 token）
 
 2. **步驟**
+
    ```
    a. 點擊邀請連結
    b. Trust Room 頁面檢測到未登入
@@ -124,6 +129,7 @@ if (pendingToken && user) {
    - localStorage 中無 pending_trust_token
 
 2. **步驟**
+
    ```
    a. 用戶直接訪問登入頁面
    b. 用戶登入或註冊
@@ -144,6 +150,7 @@ if (pendingToken && user) {
    - 用戶未登入
 
 2. **步驟**
+
    ```
    a. 用戶登入
    b. successRedirect 函數執行
@@ -166,6 +173,7 @@ if (pendingToken && user) {
    - 網路中斷或 API 無回應
 
 2. **步驟**
+
    ```
    a. 用戶登入
    b. successRedirect 函數執行
@@ -192,12 +200,14 @@ if (pendingToken && user) {
 ### 測試步驟
 
 1. **設定待升級 Token**
+
    ```javascript
    // 在 Console 中執行
    localStorage.setItem('pending_trust_token', 'YOUR_TEST_TOKEN_UUID');
    ```
 
 2. **訪問登入頁面**
+
    ```
    https://maihouses.vercel.app/maihouses/auth.html
    ```
@@ -211,6 +221,7 @@ if (pendingToken && user) {
    - `[auth] Trust case upgrade failed:`
 
 5. **檢查 localStorage**
+
    ```javascript
    // 在 Console 中執行
    localStorage.getItem('pending_trust_token');
@@ -232,19 +243,23 @@ if (pendingToken && user) {
 ## 技術規範遵循
 
 ✅ **先讀後寫規範**：已閱讀相關檔案
+
 - `public/auth.html`
 - `api/trust/upgrade-case.ts`
 - `src/hooks/useAuth.ts`
 
 ✅ **代碼品質標準**
+
 - 無 `any` 類型
 - 完整錯誤處理
 - 遵循現有代碼風格
 
 ✅ **TypeScript 檢查**
+
 - `npm run typecheck` 通過
 
 ✅ **註解與文件**
+
 - 清晰的程式碼註解
 - 完整的測試計畫文件
 

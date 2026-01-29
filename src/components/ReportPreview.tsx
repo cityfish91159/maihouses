@@ -1,6 +1,6 @@
-import React from "react";
-import { Home, MapPin, MessageCircle, Phone } from "lucide-react";
-import styles from "../pages/UAG/components/ReportGenerator/ReportGenerator.module.css";
+import React from 'react';
+import { Home, MapPin, MessageCircle, Phone } from 'lucide-react';
+import styles from '../pages/UAG/components/ReportGenerator/ReportGenerator.module.css';
 
 interface PropertyData {
   id: string;
@@ -61,9 +61,7 @@ export default function ReportPreview({ property, agent }: ReportPreviewProps) {
           </div>
         )}
         <div className={styles.reportPreviewHeroOverlay}>
-          <div className={styles.reportPreviewCommunity}>
-            {property.community}社區
-          </div>
+          <div className={styles.reportPreviewCommunity}>{property.community}社區</div>
           <div className={styles.reportPreviewTitle}>{property.title}</div>
         </div>
       </div>
@@ -110,9 +108,7 @@ export default function ReportPreview({ property, agent }: ReportPreviewProps) {
           <div className={styles.reportPreviewSpecLabel}>屋齡</div>
         </div>
         <div className={styles.reportPreviewSpecItem}>
-          <div className={styles.reportPreviewSpecValue}>
-            {property.direction}
-          </div>
+          <div className={styles.reportPreviewSpecValue}>{property.direction}</div>
           <div className={styles.reportPreviewSpecLabel}>座向</div>
         </div>
       </div>
@@ -123,15 +119,11 @@ export default function ReportPreview({ property, agent }: ReportPreviewProps) {
         <div className={styles.reportPreviewDetailsGrid}>
           <div className={styles.reportPreviewDetailItem}>
             <span className={styles.reportPreviewDetailLabel}>格局</span>
-            <span className={styles.reportPreviewDetailValue}>
-              {property.rooms}
-            </span>
+            <span className={styles.reportPreviewDetailValue}>{property.rooms}</span>
           </div>
           <div className={styles.reportPreviewDetailItem}>
             <span className={styles.reportPreviewDetailLabel}>車位</span>
-            <span className={styles.reportPreviewDetailValue}>
-              {property.parking}
-            </span>
+            <span className={styles.reportPreviewDetailValue}>{property.parking}</span>
           </div>
           <div className={styles.reportPreviewDetailItem}>
             <span className={styles.reportPreviewDetailLabel}>管理費</span>
@@ -141,9 +133,7 @@ export default function ReportPreview({ property, agent }: ReportPreviewProps) {
           </div>
           <div className={styles.reportPreviewDetailItem}>
             <span className={styles.reportPreviewDetailLabel}>型態</span>
-            <span className={styles.reportPreviewDetailValue}>
-              {property.propertyType}
-            </span>
+            <span className={styles.reportPreviewDetailValue}>{property.propertyType}</span>
           </div>
         </div>
       </div>
@@ -153,23 +143,15 @@ export default function ReportPreview({ property, agent }: ReportPreviewProps) {
         <div className={styles.reportPreviewSectionTitle}>社區資訊</div>
         <div className={styles.reportPreviewCommunityInfo}>
           <div className={styles.reportPreviewCommunityStat}>
-            <div className={styles.reportPreviewCommunityStatValue}>
-              {property.communityYear}
-            </div>
-            <div className={styles.reportPreviewCommunityStatLabel}>
-              建成年份
-            </div>
+            <div className={styles.reportPreviewCommunityStatValue}>{property.communityYear}</div>
+            <div className={styles.reportPreviewCommunityStatLabel}>建成年份</div>
           </div>
           <div className={styles.reportPreviewCommunityStat}>
-            <div className={styles.reportPreviewCommunityStatValue}>
-              {property.communityUnits}
-            </div>
+            <div className={styles.reportPreviewCommunityStatValue}>{property.communityUnits}</div>
             <div className={styles.reportPreviewCommunityStatLabel}>總戶數</div>
           </div>
           <div className={styles.reportPreviewCommunityStat}>
-            <div className={styles.reportPreviewCommunityStatValue}>
-              {property.floorTotal}
-            </div>
+            <div className={styles.reportPreviewCommunityStatValue}>{property.floorTotal}</div>
             <div className={styles.reportPreviewCommunityStatLabel}>總樓層</div>
           </div>
         </div>
@@ -178,9 +160,7 @@ export default function ReportPreview({ property, agent }: ReportPreviewProps) {
       {/* 物件說明 */}
       <div className={styles.reportPreviewDescription}>
         <div className={styles.reportPreviewSectionTitle}>物件說明</div>
-        <div className={styles.reportPreviewDescriptionText}>
-          {property.description}
-        </div>
+        <div className={styles.reportPreviewDescriptionText}>{property.description}</div>
       </div>
 
       {/* 地址位置 */}
@@ -202,15 +182,11 @@ export default function ReportPreview({ property, agent }: ReportPreviewProps) {
           <span>{agent.company}</span>
         </div>
         <div className={styles.reportPreviewAgentCta}>
-          <button
-            className={`${styles.reportPreviewAgentBtn} ${styles.secondary}`}
-          >
+          <button className={`${styles.reportPreviewAgentBtn} ${styles.secondary}`}>
             <MessageCircle size={16} />
           </button>
           {agent.phone && (
-            <button
-              className={`${styles.reportPreviewAgentBtn} ${styles.primary}`}
-            >
+            <button className={`${styles.reportPreviewAgentBtn} ${styles.primary}`}>
               <Phone size={16} />
             </button>
           )}

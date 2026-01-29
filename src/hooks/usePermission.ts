@@ -10,10 +10,10 @@
  * 3. 完整狀態: 正確處理 Loading 與 Unauthenticated
  */
 
-import { useCallback, useMemo } from "react";
-import { useAuth } from "../hooks/useAuth";
-import { Permission, ROLE_PERMISSIONS } from "../types/permissions";
-import { Role } from "../types/community";
+import { useCallback, useMemo } from 'react';
+import { useAuth } from '../hooks/useAuth';
+import { Permission, ROLE_PERMISSIONS } from '../types/permissions';
+import { Role } from '../types/community';
 
 // P7-Audit-C2: Export return type for strict mocking
 export interface UsePermissionReturn {
@@ -39,7 +39,7 @@ export function usePermission(): UsePermissionReturn {
 
     // P7-Audit-C1: Strict Type Guard
     const isValidRole = (r: string | undefined): r is Role => {
-      return typeof r === "string" && Object.keys(ROLE_PERMISSIONS).includes(r);
+      return typeof r === 'string' && Object.keys(ROLE_PERMISSIONS).includes(r);
     };
 
     if (isValidRole(role)) {
@@ -57,7 +57,7 @@ export function usePermission(): UsePermissionReturn {
     (permission: Permission): boolean => {
       return permissions.has(permission);
     },
-    [permissions],
+    [permissions]
   );
 
   /**
@@ -68,7 +68,7 @@ export function usePermission(): UsePermissionReturn {
     (requiredPermissions: Permission[]): boolean => {
       return requiredPermissions.some((p) => permissions.has(p));
     },
-    [permissions],
+    [permissions]
   );
 
   /**
@@ -79,7 +79,7 @@ export function usePermission(): UsePermissionReturn {
     (requiredPermissions: Permission[]): boolean => {
       return requiredPermissions.every((p) => permissions.has(p));
     },
-    [permissions],
+    [permissions]
   );
 
   return {

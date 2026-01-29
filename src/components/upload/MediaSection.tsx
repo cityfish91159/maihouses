@@ -1,11 +1,11 @@
-import React, { useCallback } from "react";
-import { Sparkles, Upload, X, Star } from "lucide-react";
-import { useUploadForm } from "./UploadContext";
-import { CompressionComparison } from "./CompressionComparison";
+import React, { useCallback } from 'react';
+import { Sparkles, Upload, X, Star } from 'lucide-react';
+import { useUploadForm } from './UploadContext';
+import { CompressionComparison } from './CompressionComparison';
 
 // F3: 修正 focus ring 色系
 const inputClass =
-  "w-full p-3 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-brand focus:border-transparent outline-none text-sm transition-all";
+  'w-full p-3 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-brand focus:border-transparent outline-none text-sm transition-all';
 
 // M4: 定義常數避免魔術數字
 const MOCK_ORIGINAL_SIZE = 5_000_000; // 5MB
@@ -28,9 +28,9 @@ export const MediaSection: React.FC = () => {
 
   // M3: Mock data 僅在開發環境使用
   // M1: 安全取得第一張圖片 URL（處理 noUncheckedIndexedAccess）
-  const firstImageUrl = form.images[0] ?? "";
+  const firstImageUrl = form.images[0] ?? '';
   const mockComparison =
-    process.env.NODE_ENV !== "production"
+    process.env.NODE_ENV !== 'production'
       ? {
           originalUrl: firstImageUrl,
           compressedUrl: firstImageUrl,
@@ -76,10 +76,8 @@ export const MediaSection: React.FC = () => {
         <div>
           <span className="mb-3 flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-slate-500">
             <span>
-              物件照片 *{" "}
-              <span className="font-normal text-slate-500">
-                (至少 1 張，點擊設為封面)
-              </span>
+              物件照片 *{' '}
+              <span className="font-normal text-slate-500">(至少 1 張，點擊設為封面)</span>
             </span>
             {managedImages.length > 0 && (
               <button
@@ -99,14 +97,12 @@ export const MediaSection: React.FC = () => {
               <div
                 key={img.id}
                 className={`group relative aspect-square overflow-hidden rounded-xl border-2 shadow-sm transition-all ${
-                  img.isCover
-                    ? "ring-brand/20 border-brand ring-2"
-                    : "border-slate-200"
+                  img.isCover ? 'ring-brand/20 border-brand ring-2' : 'border-slate-200'
                 }`}
               >
                 <img
                   src={img.previewUrl}
-                  alt={`物件照片 ${index + 1}${img.isCover ? "（封面）" : ""}`}
+                  alt={`物件照片 ${index + 1}${img.isCover ? '（封面）' : ''}`}
                   className="size-full object-cover transition-opacity duration-200 group-hover:opacity-90"
                 />
                 <div className="absolute inset-0 bg-black/20 opacity-0 transition-opacity group-hover:opacity-100" />
@@ -128,17 +124,13 @@ export const MediaSection: React.FC = () => {
                   onClick={() => setCover(img.id)}
                   className={`absolute left-1.5 top-1.5 cursor-pointer rounded-full p-1.5 shadow-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2 ${
                     img.isCover
-                      ? "hover:bg-brand/90 bg-brand text-white"
-                      : "bg-white/80 text-slate-600 hover:bg-brand-50 hover:text-brand"
+                      ? 'hover:bg-brand/90 bg-brand text-white'
+                      : 'bg-white/80 text-slate-600 hover:bg-brand-50 hover:text-brand'
                   }`}
-                  title={img.isCover ? "目前封面" : "設為封面"}
-                  aria-label={img.isCover ? "目前為封面" : "設為封面"}
+                  title={img.isCover ? '目前封面' : '設為封面'}
+                  aria-label={img.isCover ? '目前為封面' : '設為封面'}
                 >
-                  <Star
-                    size={14}
-                    fill={img.isCover ? "currentColor" : "none"}
-                    aria-hidden="true"
-                  />
+                  <Star size={14} fill={img.isCover ? 'currentColor' : 'none'} aria-hidden="true" />
                 </button>
 
                 {/* 封面標籤 */}

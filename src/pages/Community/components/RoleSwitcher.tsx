@@ -4,8 +4,8 @@
  * 身份切換器（Mock 測試用）
  */
 
-import { useState } from "react";
-import type { Role } from "../types";
+import { useState } from 'react';
+import type { Role } from '../types';
 
 interface RoleSwitcherProps {
   role: Role;
@@ -13,21 +13,21 @@ interface RoleSwitcherProps {
 }
 
 const roleNames: Record<Role, string> = {
-  guest: "訪客模式",
-  member: "會員模式",
-  resident: "住戶模式",
-  agent: "房仲模式",
-  official: "官方模式",
-  admin: "管理員",
+  guest: '訪客模式',
+  member: '會員模式',
+  resident: '住戶模式',
+  agent: '房仲模式',
+  official: '官方模式',
+  admin: '管理員',
 };
 
 const roleLabels: Record<Role, string> = {
-  guest: "👤 訪客（未登入）",
-  member: "👥 一般會員",
-  resident: "🏠 已驗證住戶",
-  agent: "🏢 認證房仲",
-  official: "⚖️ 官方代表",
-  admin: "🔑 系統管理員",
+  guest: '👤 訪客（未登入）',
+  member: '👥 一般會員',
+  resident: '🏠 已驗證住戶',
+  agent: '🏢 認證房仲',
+  official: '⚖️ 官方代表',
+  admin: '🔑 系統管理員',
 };
 
 export function RoleSwitcher({ role, onRoleChange }: RoleSwitcherProps) {
@@ -51,29 +51,22 @@ export function RoleSwitcher({ role, onRoleChange }: RoleSwitcherProps) {
           aria-label="選擇身份"
         >
           {/* [NASA TypeScript Safety] 定義具體的 role 陣列避免 as Role[] */}
-          {(
-            [
-              "guest",
-              "member",
-              "resident",
-              "agent",
-              "official",
-              "admin",
-            ] satisfies Role[]
-          ).map((r) => (
-            <button
-              key={r}
-              role="option"
-              aria-selected={role === r}
-              onClick={() => {
-                onRoleChange(r);
-                setIsOpen(false);
-              }}
-              className={`block w-full rounded-lg px-3 py-2.5 text-left text-xs ${role === r ? "bg-brand-700/10 font-bold text-[var(--primary)]" : "text-[var(--text-primary)] hover:bg-[#f6f9ff]"}`}
-            >
-              {roleLabels[r]}
-            </button>
-          ))}
+          {(['guest', 'member', 'resident', 'agent', 'official', 'admin'] satisfies Role[]).map(
+            (r) => (
+              <button
+                key={r}
+                role="option"
+                aria-selected={role === r}
+                onClick={() => {
+                  onRoleChange(r);
+                  setIsOpen(false);
+                }}
+                className={`block w-full rounded-lg px-3 py-2.5 text-left text-xs ${role === r ? 'bg-brand-700/10 font-bold text-[var(--primary)]' : 'text-[var(--text-primary)] hover:bg-[#f6f9ff]'}`}
+              >
+                {roleLabels[r]}
+              </button>
+            )
+          )}
         </div>
       )}
     </div>

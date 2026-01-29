@@ -19,11 +19,11 @@ export interface StepData {
 
 export interface Step {
   name: string;
-  agentStatus: "pending" | "submitted";
-  buyerStatus: "pending" | "confirmed";
+  agentStatus: 'pending' | 'submitted';
+  buyerStatus: 'pending' | 'confirmed';
   locked: boolean;
   data: StepData;
-  paymentStatus?: "pending" | "initiated" | "completed" | "expired";
+  paymentStatus?: 'pending' | 'initiated' | 'completed' | 'expired';
   paymentDeadline?: number | null;
   checklist?: { id: string; label: string; checked: boolean }[];
 }

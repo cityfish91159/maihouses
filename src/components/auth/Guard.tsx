@@ -5,10 +5,10 @@
  * 用於包裹需要特定權限的 UI 區塊
  */
 
-import React from "react";
-import { usePermission } from "../../hooks/usePermission";
-import { Permission } from "../../types/permissions";
-import { LoadingState } from "../common/LoadingState";
+import React from 'react';
+import { usePermission } from '../../hooks/usePermission';
+import { Permission } from '../../types/permissions';
+import { LoadingState } from '../common/LoadingState';
 
 interface RequirePermissionProps {
   permission: Permission;

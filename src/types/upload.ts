@@ -1,5 +1,5 @@
 // UP-3.H: 集中管理上傳相關型別 (Single Source of Truth)
-import { PropertyFormInput } from "../services/propertyService";
+import { PropertyFormInput } from '../services/propertyService';
 
 // ============================================================
 // State Types
@@ -13,7 +13,7 @@ export interface UploadResult {
 }
 
 export interface UploadError {
-  type: "compression" | "heic" | "upload" | "network" | "validation";
+  type: 'compression' | 'heic' | 'upload' | 'network' | 'validation';
   message: string;
   canFallback?: boolean;
   originalFiles?: File[];
@@ -57,43 +57,43 @@ export interface UploadState {
 
 export type UploadAction =
   // Loading States
-  | { type: "SET_LOADING"; payload: boolean }
-  | { type: "SET_VALIDATING"; payload: boolean }
+  | { type: 'SET_LOADING'; payload: boolean }
+  | { type: 'SET_VALIDATING'; payload: boolean }
 
   // Compression Flow
-  | { type: "START_COMPRESSION" }
-  | { type: "UPDATE_COMPRESSION_PROGRESS"; payload: number }
-  | { type: "FINISH_COMPRESSION"; payload: ManagedImage[] }
+  | { type: 'START_COMPRESSION' }
+  | { type: 'UPDATE_COMPRESSION_PROGRESS'; payload: number }
+  | { type: 'FINISH_COMPRESSION'; payload: ManagedImage[] }
   | {
-      type: "COMPRESSION_FAILED";
+      type: 'COMPRESSION_FAILED';
       payload: { message: string; canFallback: boolean; originalFiles: File[] };
     }
 
   // Image Management (UP-3)
-  | { type: "ADD_IMAGES"; payload: ManagedImage[] }
-  | { type: "REMOVE_IMAGE"; payload: string }
-  | { type: "SET_COVER"; payload: string }
+  | { type: 'ADD_IMAGES'; payload: ManagedImage[] }
+  | { type: 'REMOVE_IMAGE'; payload: string }
+  | { type: 'SET_COVER'; payload: string }
 
   // Form
-  | { type: "SET_FORM"; payload: PropertyFormInput }
-  | { type: "UPDATE_FORM"; payload: Partial<PropertyFormInput> }
+  | { type: 'SET_FORM'; payload: PropertyFormInput }
+  | { type: 'UPDATE_FORM'; payload: Partial<PropertyFormInput> }
 
   // Upload Flow
-  | { type: "START_UPLOAD"; payload: { total: number } }
+  | { type: 'START_UPLOAD'; payload: { total: number } }
   | {
-      type: "UPDATE_UPLOAD_PROGRESS";
+      type: 'UPDATE_UPLOAD_PROGRESS';
       payload: { current: number; total: number };
     }
-  | { type: "UPLOAD_SUCCESS"; payload: UploadResult }
-  | { type: "UPLOAD_FAILED"; payload: UploadError }
+  | { type: 'UPLOAD_SUCCESS'; payload: UploadResult }
+  | { type: 'UPLOAD_FAILED'; payload: UploadError }
 
   // User & Community
-  | { type: "SET_USER_ID"; payload: string | undefined }
-  | { type: "SET_COMMUNITY_ID"; payload: string | undefined }
+  | { type: 'SET_USER_ID'; payload: string | undefined }
+  | { type: 'SET_COMMUNITY_ID'; payload: string | undefined }
 
   // Error Management
-  | { type: "CLEAR_ERROR" }
-  | { type: "SET_ERROR"; payload: UploadError }
+  | { type: 'CLEAR_ERROR' }
+  | { type: 'SET_ERROR'; payload: UploadError }
 
   // Reset
-  | { type: "RESET_UPLOAD_STATE" };
+  | { type: 'RESET_UPLOAD_STATE' };

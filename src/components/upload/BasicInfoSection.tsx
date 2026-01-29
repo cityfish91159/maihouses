@@ -1,17 +1,15 @@
-import React from "react";
-import { Home } from "lucide-react";
-import { CommunityPicker } from "../ui/CommunityPicker";
-import { useUploadForm } from "./UploadContext";
+import React from 'react';
+import { Home } from 'lucide-react';
+import { CommunityPicker } from '../ui/CommunityPicker';
+import { useUploadForm } from './UploadContext';
 
 const inputClass =
-  "w-full p-3 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-maihouses-dark focus:border-transparent outline-none text-sm transition-all";
+  'w-full p-3 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-maihouses-dark focus:border-transparent outline-none text-sm transition-all';
 
 export const BasicInfoSection: React.FC = () => {
   const { form, setForm, validation, setSelectedCommunityId } = useUploadForm();
 
-  const onInput = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
-  ) => {
+  const onInput = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
@@ -39,7 +37,7 @@ export const BasicInfoSection: React.FC = () => {
             name="title"
             value={form.title}
             onChange={onInput}
-            className={`${inputClass} font-bold ${!validation.title.valid && form.title.length > 0 ? "border-red-300 bg-red-50" : ""}`}
+            className={`${inputClass} font-bold ${!validation.title.valid && form.title.length > 0 ? 'border-red-300 bg-red-50' : ''}`}
             placeholder="例如：信義區101景觀全新裝潢大三房"
           />
         </div>
@@ -58,7 +56,7 @@ export const BasicInfoSection: React.FC = () => {
               type="number"
               value={form.price}
               onChange={onInput}
-              className={`${inputClass} ${!validation.price.valid && form.price.length > 0 ? "border-red-300 bg-red-50" : ""}`}
+              className={`${inputClass} ${!validation.price.valid && form.price.length > 0 ? 'border-red-300 bg-red-50' : ''}`}
               placeholder="0"
             />
           </div>
@@ -74,7 +72,7 @@ export const BasicInfoSection: React.FC = () => {
               name="address"
               value={form.address}
               onChange={onInput}
-              className={`${inputClass} ${!validation.address.valid && form.address.length > 0 ? "border-red-300 bg-red-50" : ""}`}
+              className={`${inputClass} ${!validation.address.valid && form.address.length > 0 ? 'border-red-300 bg-red-50' : ''}`}
               placeholder="台北市信義區..."
             />
           </div>
@@ -82,10 +80,7 @@ export const BasicInfoSection: React.FC = () => {
 
         <div>
           <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-500">
-            社區名稱 *{" "}
-            <span className="font-normal text-slate-400">
-              (透天/店面請選「無社區」)
-            </span>
+            社區名稱 * <span className="font-normal text-slate-400">(透天/店面請選「無社區」)</span>
           </span>
           <CommunityPicker
             value={form.communityName}

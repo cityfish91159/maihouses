@@ -11,7 +11,7 @@
  * - api/trust/send-notification.ts
  */
 
-import { z } from "zod";
+import { z } from 'zod';
 
 // ============================================================================
 // LINE User ID 驗證
@@ -33,7 +33,7 @@ export const LINE_USER_ID_REGEX = /^U[a-fA-F0-9]{32}$/;
  * 用於 API 參數驗證
  */
 export const LineUserIdSchema = z.string().regex(LINE_USER_ID_REGEX, {
-  message: "LINE User ID 格式錯誤，應為 U + 32 個十六進位字元",
+  message: 'LINE User ID 格式錯誤，應為 U + 32 個十六進位字元',
 });
 
 // ============================================================================
@@ -46,7 +46,7 @@ export const LineUserIdSchema = z.string().regex(LINE_USER_ID_REGEX, {
  * 用於生成案件詳情頁面連結
  */
 export const TRUST_ROOM_BASE_URL =
-  process.env.NEXT_PUBLIC_BASE_URL || "https://maihouses.vercel.app";
+  process.env.NEXT_PUBLIC_BASE_URL || 'https://maihouses.vercel.app';
 
 /**
  * Trust Room 路徑模板
@@ -54,7 +54,7 @@ export const TRUST_ROOM_BASE_URL =
  * 用於組合完整 Trust Room URL
  * 完整 URL = TRUST_ROOM_BASE_URL + TRUST_ROOM_PATH_PREFIX + caseId
  */
-export const TRUST_ROOM_PATH_PREFIX = "/maihouses/#/trust-room/";
+export const TRUST_ROOM_PATH_PREFIX = '/maihouses/#/trust-room/';
 
 // ============================================================================
 // 案件狀態
@@ -66,7 +66,7 @@ export const TRUST_ROOM_PATH_PREFIX = "/maihouses/#/trust-room/";
  * - active: 進行中的案件
  * - dormant: 暫停中的案件
  */
-export const ACTIVE_STATUSES = ["active", "dormant"] as const;
+export const ACTIVE_STATUSES = ['active', 'dormant'] as const;
 
 /**
  * 案件狀態類型

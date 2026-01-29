@@ -14,6 +14,6 @@ export interface Imported591Data {
   address: string;
   description: string;
   images: string[];
-  sourcePlatform: "MH" | "591";
+  sourcePlatform: 'MH' | '591';
   sourceExternalId: string;
 }

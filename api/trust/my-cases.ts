@@ -21,28 +21,21 @@
  * - idx_trust_cases_buyer_line ON trust_cases(buyer_line_id)
  */
 
-import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { z } from "zod";
-import { SYSTEM_API_KEY } from "./_utils";
-import { cors } from "../lib/cors";
-import { logger } from "../lib/logger";
-import { verifyAuth } from "../lib/auth";
-import {
-  successResponse,
-  errorResponse,
-  API_ERROR_CODES,
-} from "../lib/apiResponse";
+import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { z } from 'zod';
+import { SYSTEM_API_KEY } from './_utils';
+import { cors } from '../lib/cors';
+import { logger } from '../lib/logger';
+import { verifyAuth } from '../lib/auth';
+import { successResponse, errorResponse, API_ERROR_CODES } from '../lib/apiResponse';
 import {
   queryCasesByIdentity,
   getStepName,
   generateTrustRoomUrl,
   type CaseData,
-} from "./services/case-query";
-import { LineUserIdSchema } from "./constants/validation";
-import {
-  ERR_METHOD_NOT_ALLOWED,
-  ERR_UNAUTHORIZED,
-} from "./constants/messages";
+} from './services/case-query';
+import { LineUserIdSchema } from './constants/validation';
+import { ERR_METHOD_NOT_ALLOWED, ERR_UNAUTHORIZED } from './constants/messages';
 
 // ============================================================================
 // Request ID 生成
@@ -80,7 +73,7 @@ type ResponseCase = {
   agentName: string;
   currentStep: number;
   stepName: string;
-  status: "active" | "dormant";
+  status: 'active' | 'dormant';
   trustRoomUrl: string;
   updatedAt: string;
 };
@@ -105,18 +98,15 @@ function toResponseCase(c: CaseData): ResponseCase {
 // Handler
 // ============================================================================
 
-export default async function handler(
-  req: VercelRequest,
-  res: VercelResponse,
-): Promise<void> {
+export default async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
   cors(req, res);
 
-  if (req.method === "OPTIONS") {
+  if (req.method === 'OPTIONS') {
     res.status(200).end();
     return;
   }
 
-  if (req.method !== "GET") {
+  if (req.method !== 'GET') {
     res.status(405).json(errorResponse(API_ERROR_CODES.METHOD_NOT_ALLOWED, ERR_METHOD_NOT_ALLOWED));
     return;
   }
@@ -124,10 +114,10 @@ export default async function handler(
   // 生成請求追蹤 ID（用於追蹤完整請求生命週期）
   const requestId = generateRequestId();
 
-  logger.info("[my-cases] Request received", {
+  logger.info('[my-cases] Request received', {
     requestId,
     hasAuth: !!req.headers.authorization,
-    hasSystemKey: !!req.headers["x-system-key"],
+    hasSystemKey: !!req.headers['x-system-key'],
   });
 
   // ========================================================================
@@ -141,38 +131,41 @@ export default async function handler(
     // JWT 認證成功：用 buyer_user_id 查詢
     const userId = authResult.userId;
 
-    logger.info("[my-cases] JWT auth success", {
+    logger.info('[my-cases] JWT auth success', {
       requestId,
-      userIdMasked: userId.slice(0, 8) + "...",
+      userIdMasked: userId.slice(0, 8) + '...',
     });
 
     const result = await queryCasesByIdentity({ userId });
 
     if (!result.success) {
-      const statusCode = result.code === "INVALID_USER_ID" ? 400 : 500;
-      const errorCode = result.code === "INVALID_USER_ID"
-        ? API_ERROR_CODES.INVALID_QUERY
-        : API_ERROR_CODES.DATA_FETCH_FAILED;
+      const statusCode = result.code === 'INVALID_USER_ID' ? 400 : 500;
+      const errorCode =
+        result.code === 'INVALID_USER_ID'
+          ? API_ERROR_CODES.INVALID_QUERY
+          : API_ERROR_CODES.DATA_FETCH_FAILED;
       res.status(statusCode).json(errorResponse(errorCode, result.error));
       return;
     }
 
     const responseCases = result.data.cases.map(toResponseCase);
 
-    logger.info("[my-cases] JWT response", {
+    logger.info('[my-cases] JWT response', {
       requestId,
       count: responseCases.length,
     });
 
-    res.status(200).json(successResponse({
-      cases: responseCases,
-      total: result.data.total,
-    }));
+    res.status(200).json(
+      successResponse({
+        cases: responseCases,
+        total: result.data.total,
+      })
+    );
     return;
   }
 
   // JWT 失敗：嘗試 system-key 認證
-  const systemKey = req.headers["x-system-key"];
+  const systemKey = req.headers['x-system-key'];
 
   if (!systemKey || systemKey !== SYSTEM_API_KEY) {
     // 兩種認證都失敗
@@ -184,41 +177,43 @@ export default async function handler(
   const queryResult = SystemKeyQuerySchema.safeParse(req.query);
   if (!queryResult.success) {
     const firstIssue = queryResult.error.issues[0];
-    const message = firstIssue?.path[0] === "lineUserId"
-      ? "lineUserId 參數格式錯誤"
-      : "查詢參數格式錯誤";
+    const message =
+      firstIssue?.path[0] === 'lineUserId' ? 'lineUserId 參數格式錯誤' : '查詢參數格式錯誤';
     res.status(400).json(errorResponse(API_ERROR_CODES.INVALID_QUERY, message));
     return;
   }
 
   const { lineUserId } = queryResult.data;
 
-  logger.info("[my-cases] system-key auth success", {
+  logger.info('[my-cases] system-key auth success', {
     requestId,
-    lineIdMasked: lineUserId.slice(0, 5) + "...",
+    lineIdMasked: lineUserId.slice(0, 5) + '...',
   });
 
   // 用 buyer_line_id 查詢
   const result = await queryCasesByIdentity({ lineUserId });
 
   if (!result.success) {
-    const statusCode = result.code === "INVALID_LINE_ID" ? 400 : 500;
-    const errorCode = result.code === "INVALID_LINE_ID"
-      ? API_ERROR_CODES.INVALID_QUERY
-      : API_ERROR_CODES.DATA_FETCH_FAILED;
+    const statusCode = result.code === 'INVALID_LINE_ID' ? 400 : 500;
+    const errorCode =
+      result.code === 'INVALID_LINE_ID'
+        ? API_ERROR_CODES.INVALID_QUERY
+        : API_ERROR_CODES.DATA_FETCH_FAILED;
     res.status(statusCode).json(errorResponse(errorCode, result.error));
     return;
   }
 
   const responseCases = result.data.cases.map(toResponseCase);
 
-  logger.info("[my-cases] system-key response", {
+  logger.info('[my-cases] system-key response', {
     requestId,
     count: responseCases.length,
   });
 
-  res.status(200).json(successResponse({
-    cases: responseCases,
-    total: result.data.total,
-  }));
+  res.status(200).json(
+    successResponse({
+      cases: responseCases,
+      total: result.data.total,
+    })
+  );
 }

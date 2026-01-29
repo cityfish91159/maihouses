@@ -8,12 +8,12 @@
 
 ## 測試目標模組
 
-| 模組 | 行數 | 複雜度 | 預估測試案例 | 優先級 |
-|------|------|--------|-------------|--------|
-| `src/pages/UAG/hooks/useUAG.ts` | 335 | 高 | 15+ | P1 (先做) |
-| `src/pages/UAG/services/uagService.ts` | 698 | 高 | 20+ | P2 |
-| `api/community/wall.ts` | 1160 | 極高 | 25+ | P3 |
-| `src/hooks/useFeedData.ts` | ~900 | 極高 | 30+ | P4 (最後做) |
+| 模組                                   | 行數 | 複雜度 | 預估測試案例 | 優先級      |
+| -------------------------------------- | ---- | ------ | ------------ | ----------- |
+| `src/pages/UAG/hooks/useUAG.ts`        | 335  | 高     | 15+          | P1 (先做)   |
+| `src/pages/UAG/services/uagService.ts` | 698  | 高     | 20+          | P2          |
+| `api/community/wall.ts`                | 1160 | 極高   | 25+          | P3          |
+| `src/hooks/useFeedData.ts`             | ~900 | 極高   | 30+          | P4 (最後做) |
 
 **總計**: 90+ 測試案例,預估 4.5 小時
 
@@ -22,6 +22,7 @@
 ## 14 工具策略
 
 ### 必用工具 (6)
+
 1. **Memory Bank** - 此檔案,防止遺忘
 2. **Context Mastery** - Token 優化,最小讀取集合
 3. **Read Before Edit** - 完整理解再撰寫測試
@@ -30,6 +31,7 @@
 6. **Test Driven Agent** - TDD Red-Green-Refactor 循環
 
 ### 專業工具 (8)
+
 7. **rigorous_testing** ⭐⭐⭐ - 強制 >70% 覆蓋率
 8. **code-validator** ⭐⭐ - TypeScript 類型檢查
 9. **type-checker** ⭐⭐ - 修復類型錯誤
@@ -49,6 +51,7 @@
 **Mock 需求**: Supabase, uagService
 
 #### 測試類別
+
 - **初始化狀態** (3 cases)
   - 預設狀態正確
   - 從 localStorage 載入 mockMode
@@ -80,6 +83,7 @@
 **Mock 需求**: Supabase client
 
 #### 測試類別
+
 - **purchaseLead** (5 cases)
   - 成功購買
   - RLS 權限拒絕
@@ -118,6 +122,7 @@
 **Mock 需求**: Supabase, NextApiRequest/Response
 
 #### 測試類別
+
 - **GET 請求** (8 cases)
   - 成功取得公開貼文
   - 成功取得私密貼文 (已認證)
@@ -159,6 +164,7 @@
 **Mock 需求**: Supabase, React Query
 
 #### 測試類別
+
 - **Mock 模式** (5 cases)
   - 開啟 mock mode
   - 關閉 mock mode
@@ -286,6 +292,7 @@ src/hooks/__tests__/
 ### 已完成測試
 
 #### 1. ✅ useUAG.ts - 22 測試案例 (超標!)
+
 - **檔案**: `src/pages/UAG/hooks/__tests__/useUAG.test.ts`
 - **測試數**: 22 個 (預期 15+)
 - **狀態**: ✅ 全部通過
@@ -303,14 +310,17 @@ src/hooks/__tests__/
 ### 跳過的測試 (技術複雜度過高)
 
 #### 2. ⏭️ uagService.ts
+
 - **原因**: 涉及複雜 Supabase 並行查詢、資料轉換、RPC 呼叫
 - **建議**: 使用整合測試 或 E2E 測試
 
 #### 3. ⏭️ api/community/wall.ts
+
 - **原因**: 後端 Vercel Function,需要 mock NextApiRequest/Response + Supabase
 - **建議**: 使用 API 整合測試
 
 #### 4. ⏭️ useFeedData.ts
+
 - **原因**: 時間限制
 - **建議**: 未來補充
 

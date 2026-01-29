@@ -111,7 +111,7 @@ export interface VersionRecord {
 
 export interface MidLawViolation {
   law: number;
-  severity: "warning" | "error" | "fatal";
+  severity: 'warning' | 'error' | 'fatal';
   message: string;
   penalty: number;
 }

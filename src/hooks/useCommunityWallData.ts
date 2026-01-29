@@ -7,39 +7,26 @@
  * - 統一資料格式：不管來源是 Mock 還是 API，輸出格式一致
  */
 
-import { useState, useCallback, useMemo, useEffect, useRef } from "react";
-import { z } from "zod";
-import { safeLocalStorage } from "../lib/safeStorage";
-import { useCommunityWall } from "./useCommunityWallQuery";
-import { supabase } from "../lib/supabase";
-import { mhEnv } from "../lib/mhEnv";
-import { logger } from "../lib/logger";
-import type { CommunityWallData } from "../services/communityService";
-import type {
-  CommunityInfo,
-  Post,
-  Review,
-  Question,
-  Role,
-} from "../pages/Community/types";
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
+import { z } from 'zod';
+import { safeLocalStorage } from '../lib/safeStorage';
+import { useCommunityWall } from './useCommunityWallQuery';
+import { supabase } from '../lib/supabase';
+import { mhEnv } from '../lib/mhEnv';
+import { logger } from '../lib/logger';
+import type { CommunityWallData } from '../services/communityService';
+import type { CommunityInfo, Post, Review, Question, Role } from '../pages/Community/types';
 import {
   MOCK_DATA,
   createMockPost,
   createMockQuestion,
   createMockAnswer,
-} from "../pages/Community/mockData";
-import { convertApiData, sortPostsWithPinned } from "./communityWallConverters";
-import type { UnifiedWallData } from "./communityWallConverters";
+} from '../pages/Community/mockData';
+import { convertApiData, sortPostsWithPinned } from './communityWallConverters';
+import type { UnifiedWallData } from './communityWallConverters';
 
 // [NASA TypeScript Safety] Zod Schema 用於驗證 viewerRole
-const RoleSchema = z.enum([
-  "guest",
-  "member",
-  "resident",
-  "agent",
-  "official",
-  "admin",
-]);
+const RoleSchema = z.enum(['guest', 'member', 'resident', 'agent', 'official', 'admin']);
 
 /**
  * [NASA TypeScript Safety] 類型守衛：驗證 viewerRole 是否為有效的 Role
@@ -52,12 +39,12 @@ function isValidRole(value: unknown): value is Role {
 export type { Post, Review, Question, CommunityInfo };
 export type { UnifiedWallData };
 
-const MOCK_DATA_STORAGE_KEY = "community-wall-mock-data-v1";
+const MOCK_DATA_STORAGE_KEY = 'community-wall-mock-data-v1';
 const MOCK_LATENCY_MS = 250;
 
 const EMPTY_WALL_DATA: UnifiedWallData = {
   communityInfo: {
-    name: "載入中...",
+    name: '載入中...',
     year: null,
     units: null,
     managementFee: null,
@@ -87,7 +74,7 @@ const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const mergeMockState = (
   fallback: UnifiedWallData,
-  stored: Partial<UnifiedWallData> | null,
+  stored: Partial<UnifiedWallData> | null
 ): UnifiedWallData => {
   if (!stored) return fallback;
   return {
@@ -115,7 +102,7 @@ const loadPersistedMockState = (fallback: UnifiedWallData): UnifiedWallData => {
     const parsed = JSON.parse(raw);
     return mergeMockState(fallback, parsed);
   } catch (err) {
-    logger.error("[useCommunityWallData] Failed to load mock state", {
+    logger.error('[useCommunityWallData] Failed to load mock state', {
       error: err,
     });
     return fallback;
@@ -126,23 +113,17 @@ const saveMockState = (data: UnifiedWallData) => {
   try {
     safeLocalStorage.setItem(MOCK_DATA_STORAGE_KEY, JSON.stringify(data));
   } catch (err) {
-    logger.error("[useCommunityWallData] Failed to persist mock state", {
+    logger.error('[useCommunityWallData] Failed to persist mock state', {
       error: err,
     });
   }
 };
 
-// [NASA TypeScript Safety] 使用 Zod 驗證取代 as 類型斷言
-const resolveViewerRole = (
-  rawRole: unknown,
-  hasAuthenticatedUser: boolean,
-): Role => {
-  // [NASA TypeScript Safety] 使用類型守衛進行運行時驗證
-  if (isValidRole(rawRole)) {
-    return rawRole;
-  }
-  return hasAuthenticatedUser ? "member" : "guest";
-};
+/** 解析並驗證 viewerRole，使用類型守衛確保類型安全 */
+function resolveViewerRole(rawRole: unknown, hasAuthenticatedUser: boolean): Role {
+  if (isValidRole(rawRole)) return rawRole;
+  return hasAuthenticatedUser ? 'member' : 'guest';
+}
 
 // ============ Hook 選項 ============
 export interface UseCommunityWallDataOptions {
@@ -170,10 +151,7 @@ export interface UseCommunityWallDataReturn {
   /** 按讚 */
   toggleLike: (postId: string | number) => Promise<void>;
   /** 發文 */
-  createPost: (
-    content: string,
-    visibility?: "public" | "private",
-  ) => Promise<void>;
+  createPost: (content: string, visibility?: 'public' | 'private') => Promise<void>;
   /** 發問 */
   askQuestion: (question: string) => Promise<void>;
   /** 回答 */
@@ -197,16 +175,10 @@ export interface UseCommunityWallDataReturn {
  */
 export function useCommunityWallData(
   communityId: string | undefined,
-  options: UseCommunityWallDataOptions = {},
+  options: UseCommunityWallDataOptions = {}
 ): UseCommunityWallDataReturn {
-  const {
-    includePrivate = false,
-    initialMockData = MOCK_DATA,
-    persistMockState = true,
-  } = options;
-  const [useMock, setUseMockState] = useState<boolean>(() =>
-    mhEnv.isMockEnabled(),
-  );
+  const { includePrivate = false, initialMockData = MOCK_DATA, persistMockState = true } = options;
+  const [useMock, setUseMockState] = useState<boolean>(() => mhEnv.isMockEnabled());
 
   useEffect(() => {
     const unsubscribe = mhEnv.subscribe(setUseMockState);
@@ -214,9 +186,7 @@ export function useCommunityWallData(
   }, []);
 
   // K: 取得當前登入使用者 ID（供樂觀更新使用）
-  const [currentUserId, setCurrentUserId] = useState<string | undefined>(
-    undefined,
-  );
+  const [currentUserId, setCurrentUserId] = useState<string | undefined>(undefined);
   useEffect(() => {
     let mounted = true;
     const fetchUserId = async () => {
@@ -230,7 +200,7 @@ export function useCommunityWallData(
       } catch (err) {
         // 未登入或取得失敗，維持 undefined
         if (import.meta.env.DEV) {
-          logger.warn("[useCommunityWallData] 無法取得使用者 ID", {
+          logger.warn('[useCommunityWallData] 無法取得使用者 ID', {
             error: err,
           });
         }
@@ -255,15 +225,11 @@ export function useCommunityWallData(
 
   // Mock 模式的本地狀態（使用 immer 會更好，但這裡用簡單的 state）
   const [mockData, setMockData] = useState<UnifiedWallData>(() =>
-    persistMockState
-      ? loadPersistedMockState(initialMockData)
-      : initialMockData,
+    persistMockState ? loadPersistedMockState(initialMockData) : initialMockData
   );
   // likedPosts 只在 Mock 模式有效，切換模式時不需要清除
   // 因為 API 模式使用 apiData 中的 liked_by 資訊
-  const [likedPosts, setLikedPosts] = useState<Set<string | number>>(
-    () => new Set(),
-  );
+  const [likedPosts, setLikedPosts] = useState<Set<string | number>>(() => new Set());
   const hasAuthenticatedUser = Boolean(currentUserId);
 
   useEffect(() => {
@@ -307,7 +273,7 @@ export function useCommunityWallData(
       const converted = convertApiData(apiData);
       const safeCommunityInfo = converted.communityInfo?.name
         ? converted.communityInfo
-        : { ...EMPTY_WALL_DATA.communityInfo, name: "尚無社區資料" };
+        : { ...EMPTY_WALL_DATA.communityInfo, name: '尚無社區資料' };
       return { ...converted, communityInfo: safeCommunityInfo };
     }
 
@@ -325,17 +291,17 @@ export function useCommunityWallData(
 
   const viewerRole = useMemo<Role>(() => {
     if (useMock) {
-      return hasAuthenticatedUser ? "member" : "guest";
+      return hasAuthenticatedUser ? 'member' : 'guest';
     }
     return resolveViewerRole(apiData?.viewerRole, hasAuthenticatedUser);
   }, [useMock, apiData?.viewerRole, hasAuthenticatedUser]);
-  const isAuthenticated = viewerRole !== "guest";
+  const isAuthenticated = viewerRole !== 'guest';
 
   // Mock 模式下用於按讚的使用者 ID（若未登入，使用 localStorage 產生假 ID）
   const getMockUserId = useCallback((): string => {
     if (currentUserId) return currentUserId;
     // 未登入時，從 localStorage 取得或建立假 ID
-    const storageKey = "mock_user_id";
+    const storageKey = 'mock_user_id';
     let mockId = safeLocalStorage.getItem(storageKey);
     if (!mockId) {
       mockId = `mock-user-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -359,9 +325,7 @@ export function useCommunityWallData(
               const currentLikedBy = post.liked_by ?? [];
               return {
                 ...post,
-                likes: isLiked
-                  ? Math.max(0, currentLikes - 1)
-                  : currentLikes + 1,
+                likes: isLiked ? Math.max(0, currentLikes - 1) : currentLikes + 1,
                 liked_by: isLiked
                   ? currentLikedBy.filter((id) => id !== mockUserId)
                   : [...currentLikedBy, mockUserId],
@@ -390,19 +354,18 @@ export function useCommunityWallData(
       }
       await apiToggleLike(String(postId));
     },
-    [useMock, apiToggleLike, likedPosts, getMockUserId],
+    [useMock, apiToggleLike, likedPosts, getMockUserId]
   );
 
   const createPost = useCallback(
-    async (content: string, visibility: "public" | "private" = "public") => {
+    async (content: string, visibility: 'public' | 'private' = 'public') => {
       if (useMock) {
         // Mock 模式：新增貼文到本地狀態
         const newPost = createMockPost(content, visibility);
 
         setMockData((prev) => {
-          const target = visibility === "private" ? "private" : "public";
-          const targetTotal =
-            visibility === "private" ? "privateTotal" : "publicTotal";
+          const target = visibility === 'private' ? 'private' : 'public';
+          const targetTotal = visibility === 'private' ? 'privateTotal' : 'publicTotal';
           return {
             ...prev,
             posts: {
@@ -416,7 +379,7 @@ export function useCommunityWallData(
       }
       await apiCreatePost(content, visibility);
     },
-    [useMock, apiCreatePost],
+    [useMock, apiCreatePost]
   );
 
   const askQuestion = useCallback(
@@ -437,7 +400,7 @@ export function useCommunityWallData(
       }
       await apiAskQuestion(question);
     },
-    [useMock, apiAskQuestion],
+    [useMock, apiAskQuestion]
   );
 
   const answerQuestion = useCallback(
@@ -465,7 +428,7 @@ export function useCommunityWallData(
       }
       await apiAnswerQuestion(questionId, content);
     },
-    [useMock, apiAnswerQuestion],
+    [useMock, apiAnswerQuestion]
   );
 
   const setUseMock = useCallback((value: boolean) => {

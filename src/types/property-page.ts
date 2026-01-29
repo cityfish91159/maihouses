@@ -9,7 +9,7 @@
  * @see public/data/seed-property-page.json - Seed 資料
  * @see scripts/validate-property-types.ts - 驗證腳本
  */
-import { z } from "zod";
+import { z } from 'zod';
 
 // ============================================
 // Featured 區塊 Schema
@@ -37,11 +37,11 @@ export const FeaturedPropertyCardSchema = z.object({
   image: z.string().url(),
   title: z.string(),
   location: z.string(),
-  tags: z.array(z.string()).min(1, "至少要有一項 tags"),
-  details: z.array(z.string()).min(1, "至少要有一項 details"),
+  tags: z.array(z.string()).min(1, '至少要有一項 tags'),
+  details: z.array(z.string()).min(1, '至少要有一項 details'),
   highlights: z.string().optional(), // 僅 main 有
   rating: z.string(),
-  reviews: z.array(FeaturedReviewSchema).min(1, "至少要有一則評價"),
+  reviews: z.array(FeaturedReviewSchema).min(1, '至少要有一則評價'),
   lockCount: z.number().int().nonnegative(),
   price: z.string(),
   size: z.string(),
@@ -77,11 +77,11 @@ export const ListingPropertyCardSchema = z.object({
   id: z.string().optional(), // 導航用 ID (Mock 或 DB public_id)
   image: z.string().url(),
   title: z.string(),
-  tags: z.array(z.string()).min(1, "至少要有一項 tags"),
+  tags: z.array(z.string()).min(1, '至少要有一項 tags'),
   price: z.string(),
   size: z.string(),
   rating: z.string(),
-  reviews: z.array(ListingReviewSchema).min(1, "至少要有一則評價"),
+  reviews: z.array(ListingReviewSchema).min(1, '至少要有一則評價'),
   note: z.string(),
   lockLabel: z.string(),
   lockCount: z.number().int().nonnegative(),
@@ -96,7 +96,7 @@ export const ListingPropertyCardSchema = z.object({
  */
 export const PropertyPageDataSchema = z.object({
   featured: FeaturedSectionSchema,
-  listings: z.array(ListingPropertyCardSchema).min(1, "Listings 不能為空"),
+  listings: z.array(ListingPropertyCardSchema).min(1, 'Listings 不能為空'),
 });
 
 /**
@@ -145,9 +145,7 @@ export const PropertyPageAPIResponseSchema = z.object({
 });
 
 /** API 回應格式 */
-export type PropertyPageAPIResponse = z.infer<
-  typeof PropertyPageAPIResponseSchema
->;
+export type PropertyPageAPIResponse = z.infer<typeof PropertyPageAPIResponseSchema>;
 
 // ============================================
 // 統一 Review Adapter (D6 修正)
@@ -192,7 +190,7 @@ export function normalizeListingReview(r: ListingReview): NormalizedReview {
   // D21 修正：支援全形破折號 — 和半形 dash -
   const match = r.content.match(/「(.+)」[—-]\s*(.+)/);
   return {
-    author: match?.[2] ?? "匿名",
+    author: match?.[2] ?? '匿名',
     content: match?.[1] ?? r.content,
     badges: [r.badge],
   };

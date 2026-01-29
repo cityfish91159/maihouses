@@ -1,7 +1,7 @@
-import React from "react";
-import { Sparkles, AlertTriangle } from "lucide-react";
-import { HighlightPicker } from "../ui/HighlightPicker";
-import { useUploadForm } from "./UploadContext";
+import React from 'react';
+import { Sparkles, AlertTriangle } from 'lucide-react';
+import { HighlightPicker } from '../ui/HighlightPicker';
+import { useUploadForm } from './UploadContext';
 
 export const FeaturesSection: React.FC = () => {
   const { form, setForm, validation } = useUploadForm();
@@ -38,10 +38,7 @@ export const FeaturesSection: React.FC = () => {
         {validation.highlights.warnings.length > 0 && (
           <div className="mt-3 space-y-1">
             {validation.highlights.warnings.map((w: string, i: number) => (
-              <p
-                key={i}
-                className="flex items-center gap-1.5 text-xs text-amber-600"
-              >
+              <p key={i} className="flex items-center gap-1.5 text-xs text-amber-600">
                 <AlertTriangle size={14} /> {w}
               </p>
             ))}

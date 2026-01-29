@@ -1,18 +1,18 @@
-import { renderHook, act } from "@testing-library/react";
-import type { Mock } from "vitest";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useCommunityWall, communityWallKeys } from "../useCommunityWallQuery";
-import type { ReactNode } from "react";
-import type { CommunityWallData } from "../../services/communityService";
+import { renderHook, act } from '@testing-library/react';
+import type { Mock } from 'vitest';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { useCommunityWall, communityWallKeys } from '../useCommunityWallQuery';
+import type { ReactNode } from 'react';
+import type { CommunityWallData } from '../../services/communityService';
 import {
   getCommunityWall,
   toggleLike as apiToggleLike,
   createPost as apiCreatePost,
   askQuestion as apiAskQuestion,
   answerQuestion as apiAnswerQuestion,
-} from "../../services/communityService";
+} from '../../services/communityService';
 
-vi.mock("../../services/communityService", () => ({
+vi.mock('../../services/communityService', () => ({
   getCommunityWall: vi.fn(),
   toggleLike: vi.fn(),
   createPost: vi.fn(),
@@ -39,20 +39,20 @@ const createWrapper =
 
 const createWallData = (): CommunityWallData => ({
   communityInfo: {
-    name: "Test",
+    name: 'Test',
     year: 2020,
     units: 10,
     managementFee: 100,
-    builder: "Builder",
+    builder: 'Builder',
   },
   posts: {
     public: [
       {
-        id: "post-1",
-        community_id: "community-1",
-        author_id: "author-1",
-        content: "content",
-        visibility: "public",
+        id: 'post-1',
+        community_id: 'community-1',
+        author_id: 'author-1',
+        content: 'content',
+        visibility: 'public',
         likes_count: 0,
         liked_by: [],
         created_at: new Date().toISOString(),
@@ -85,32 +85,32 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 
-describe("useCommunityWall - API mutations", () => {
-  it("uses provided user id when toggling likes", async () => {
+describe('useCommunityWall - API mutations', () => {
+  it('uses provided user id when toggling likes', async () => {
     const client = createQueryClient();
     const wrapper = createWrapper(client);
-    const wallKey = communityWallKeys.wall("community-1", false);
+    const wallKey = communityWallKeys.wall('community-1', false);
     client.setQueryData(wallKey, createWallData());
 
     const { result, unmount } = renderHook(
       () =>
-        useCommunityWall("community-1", {
+        useCommunityWall('community-1', {
           enabled: false,
-          currentUserId: "user-123",
+          currentUserId: 'user-123',
         }),
-      { wrapper },
+      { wrapper }
     );
 
     await act(async () => {
-      await result.current.toggleLike("post-1");
+      await result.current.toggleLike('post-1');
     });
 
     expect(apiToggleLike).toHaveBeenCalled();
     const toggleMock = apiToggleLike as Mock;
     const firstCallArgs = toggleMock.mock.calls[0] ?? [];
-    expect(firstCallArgs[0]).toBe("post-1");
+    expect(firstCallArgs[0]).toBe('post-1');
     const updated = client.getQueryData<CommunityWallData>(wallKey);
-    expect(updated?.posts.public[0]?.liked_by).toContain("user-123");
+    expect(updated?.posts.public[0]?.liked_by).toContain('user-123');
     expect(updated?.posts.public[0]?.likes_count).toBe(1);
 
     unmount();
@@ -118,62 +118,55 @@ describe("useCommunityWall - API mutations", () => {
     client.getQueryCache().clear();
   });
 
-  it("calls createPost API with provided arguments", async () => {
+  it('calls createPost API with provided arguments', async () => {
     const client = createQueryClient();
     const wrapper = createWrapper(client);
     const { result, unmount } = renderHook(
-      () => useCommunityWall("community-1", { enabled: false }),
-      { wrapper },
+      () => useCommunityWall('community-1', { enabled: false }),
+      { wrapper }
     );
 
     await act(async () => {
-      await result.current.createPost("new post", "private");
+      await result.current.createPost('new post', 'private');
     });
 
-    expect(apiCreatePost).toHaveBeenCalledWith(
-      "community-1",
-      "new post",
-      "private",
-    );
+    expect(apiCreatePost).toHaveBeenCalledWith('community-1', 'new post', 'private');
     unmount();
     client.clear();
     client.getQueryCache().clear();
   });
 
-  it("calls askQuestion API", async () => {
+  it('calls askQuestion API', async () => {
     const client = createQueryClient();
     const wrapper = createWrapper(client);
     const { result, unmount } = renderHook(
-      () => useCommunityWall("community-1", { enabled: false }),
-      { wrapper },
+      () => useCommunityWall('community-1', { enabled: false }),
+      { wrapper }
     );
 
     await act(async () => {
-      await result.current.askQuestion("Is parking easy?");
+      await result.current.askQuestion('Is parking easy?');
     });
 
-    expect(apiAskQuestion).toHaveBeenCalledWith(
-      "community-1",
-      "Is parking easy?",
-    );
+    expect(apiAskQuestion).toHaveBeenCalledWith('community-1', 'Is parking easy?');
     unmount();
     client.clear();
     client.getQueryCache().clear();
   });
 
-  it("calls answerQuestion API", async () => {
+  it('calls answerQuestion API', async () => {
     const client = createQueryClient();
     const wrapper = createWrapper(client);
     const { result, unmount } = renderHook(
-      () => useCommunityWall("community-1", { enabled: false }),
-      { wrapper },
+      () => useCommunityWall('community-1', { enabled: false }),
+      { wrapper }
     );
 
     await act(async () => {
-      await result.current.answerQuestion("question-1", "Answer");
+      await result.current.answerQuestion('question-1', 'Answer');
     });
 
-    expect(apiAnswerQuestion).toHaveBeenCalledWith("question-1", "Answer");
+    expect(apiAnswerQuestion).toHaveBeenCalledWith('question-1', 'Answer');
     unmount();
     client.clear();
     client.getQueryCache().clear();

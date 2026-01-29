@@ -1,17 +1,17 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-TW">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>UAG 房仲小卡 - 僅展示小卡設計</title>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>UAG 房仲小卡 - 僅展示小卡設計</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
 
-    /* ========================================
+      /* ========================================
        設計來源：UI/UX Pro Max Skill
        ========================================
 
@@ -49,74 +49,74 @@
           - No scale transforms (avoid layout shift)
     ======================================== */
 
-    :root {
-      /* 品牌色 - 來自 src/index.css */
-      --brand: #00385a;
-      --brand-light: #004e7c;
-      --brand-rgb: 0, 56, 90;
+      :root {
+        /* 品牌色 - 來自 src/index.css */
+        --brand: #00385a;
+        --brand-light: #004e7c;
+        --brand-rgb: 0, 56, 90;
 
-      /* 中性色 - Swiss Modernism */
-      --black: #000000;
-      --white: #FFFFFF;
-      --grey-50: #F5F5F5;
-      --grey-200: #E5E5E5;
-      --grey-600: #64748B;
-      --grey-900: #0F172A;
+        /* 中性色 - Swiss Modernism */
+        --black: #000000;
+        --white: #ffffff;
+        --grey-50: #f5f5f5;
+        --grey-200: #e5e5e5;
+        --grey-600: #64748b;
+        --grey-900: #0f172a;
 
-      /* 功能色 */
-      --success: #10B981;
+        /* 功能色 */
+        --success: #10b981;
 
-      /* 字體 - 維持 UAG 現有 */
-      --font: -apple-system, BlinkMacSystemFont, "Inter", "Noto Sans TC", sans-serif;
+        /* 字體 - 維持 UAG 現有 */
+        --font: -apple-system, BlinkMacSystemFont, 'Inter', 'Noto Sans TC', sans-serif;
 
-      /* 間距 - 8px Grid */
-      --space-1: 4px;
-      --space-2: 8px;
-      --space-3: 12px;
-      --space-4: 16px;
-      --space-6: 24px;
+        /* 間距 - 8px Grid */
+        --space-1: 4px;
+        --space-2: 8px;
+        --space-3: 12px;
+        --space-4: 16px;
+        --space-6: 24px;
 
-      /* 陰影 - Tailwind shadow-md */
-      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        /* 陰影 - Tailwind shadow-md */
+        --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 
-      /* 圓角 */
-      --radius: 12px;
-    }
+        /* 圓角 */
+        --radius: 12px;
+      }
 
-    body {
-      font-family: var(--font);
-      background: var(--grey-50);
-      color: var(--grey-900);
-      line-height: 1.6;
-      max-width: 430px;
-      margin: 0 auto;
-      padding: var(--space-6);
-      -webkit-font-smoothing: antialiased;
-    }
+      body {
+        font-family: var(--font);
+        background: var(--grey-50);
+        color: var(--grey-900);
+        line-height: 1.6;
+        max-width: 430px;
+        margin: 0 auto;
+        padding: var(--space-6);
+        -webkit-font-smoothing: antialiased;
+      }
 
-    .demo-header {
-      background: #FEF3C7;
-      border: 2px solid #F59E0B;
-      border-radius: var(--radius);
-      padding: var(--space-4);
-      margin-bottom: var(--space-6);
-      font-size: 0.875rem;
-      line-height: 1.5;
-    }
+      .demo-header {
+        background: #fef3c7;
+        border: 2px solid #f59e0b;
+        border-radius: var(--radius);
+        padding: var(--space-4);
+        margin-bottom: var(--space-6);
+        font-size: 0.875rem;
+        line-height: 1.5;
+      }
 
-    .demo-header h1 {
-      font-size: 1rem;
-      font-weight: 700;
-      color: #92400E;
-      margin-bottom: var(--space-2);
-    }
+      .demo-header h1 {
+        font-size: 1rem;
+        font-weight: 700;
+        color: #92400e;
+        margin-bottom: var(--space-2);
+      }
 
-    .demo-header ul {
-      margin-left: var(--space-4);
-      color: #78350F;
-    }
+      .demo-header ul {
+        margin-left: var(--space-4);
+        color: #78350f;
+      }
 
-    /* ================================================
+      /* ================================================
        房仲小卡設計
        ================================================
        設計原則 (Swiss Modernism 2.0):
@@ -127,203 +127,183 @@
        - Subtle hover feedback (200ms)
     ================================================ */
 
-    .agent-card {
-      background: var(--white);
-      border: 1px solid var(--grey-200);
-      border-radius: var(--radius);
-      padding: var(--space-4);
-      box-shadow: var(--shadow-md);
+      .agent-card {
+        background: var(--white);
+        border: 1px solid var(--grey-200);
+        border-radius: var(--radius);
+        padding: var(--space-4);
+        box-shadow: var(--shadow-md);
 
-      /* Grid Layout */
-      display: grid;
-      grid-template-columns: auto 1fr;
-      gap: var(--space-3);
-      align-items: center;
+        /* Grid Layout */
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: var(--space-3);
+        align-items: center;
 
-      /* Subtle hover (UX guideline: 200-250ms) */
-      transition: background-color 200ms ease;
-    }
+        /* Subtle hover (UX guideline: 200-250ms) */
+        transition: background-color 200ms ease;
+      }
 
-    .agent-card:hover {
-      background: #FAFAFA;
-    }
+      .agent-card:hover {
+        background: #fafafa;
+      }
 
-    /* 頭像 */
-    .agent-avatar {
-      width: 48px;
-      height: 48px;
-      border-radius: 50%;
-      background: var(--brand);
-      color: var(--white);
+      /* 頭像 */
+      .agent-avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: var(--brand);
+        color: var(--white);
 
-      /* Center content */
-      display: grid;
-      place-items: center;
+        /* Center content */
+        display: grid;
+        place-items: center;
 
-      font-size: 1.25rem;
-      font-weight: 700;
-      flex-shrink: 0;
+        font-size: 1.25rem;
+        font-weight: 700;
+        flex-shrink: 0;
 
-      /* Subtle shadow */
-      box-shadow: 0 2px 4px rgba(var(--brand-rgb), 0.2);
-    }
+        /* Subtle shadow */
+        box-shadow: 0 2px 4px rgba(var(--brand-rgb), 0.2);
+      }
 
-    /* 資訊區 */
-    .agent-info {
-      display: grid;
-      gap: var(--space-1);
-      min-width: 0;
-    }
+      /* 資訊區 */
+      .agent-info {
+        display: grid;
+        gap: var(--space-1);
+        min-width: 0;
+      }
 
-    /* 名稱行 */
-    .agent-name-row {
-      display: flex;
-      align-items: center;
-      gap: var(--space-2);
-    }
+      /* 名稱行 */
+      .agent-name-row {
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+      }
 
-    .agent-name {
-      font-size: 0.9375rem;
-      font-weight: 700;
-      color: var(--grey-900);
-      letter-spacing: -0.01em;
-    }
+      .agent-name {
+        font-size: 0.9375rem;
+        font-weight: 700;
+        color: var(--grey-900);
+        letter-spacing: -0.01em;
+      }
 
-    .agent-code {
-      font-size: 0.75rem;
-      font-weight: 600;
-      color: var(--brand);
-      font-variant-numeric: tabular-nums;
-    }
+      .agent-code {
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: var(--brand);
+        font-variant-numeric: tabular-nums;
+      }
 
-    /* 公司名稱 */
-    .agent-company {
-      font-size: 0.75rem;
-      color: var(--grey-600);
-    }
+      /* 公司名稱 */
+      .agent-company {
+        font-size: 0.75rem;
+        color: var(--grey-600);
+      }
 
-    /* 統計行 (Inline Grid) */
-    .agent-stats {
-      display: flex;
-      gap: var(--space-3);
-      font-size: 0.75rem;
-      margin-top: var(--space-1);
-    }
+      /* 統計行 (Inline Grid) */
+      .agent-stats {
+        display: flex;
+        gap: var(--space-3);
+        font-size: 0.75rem;
+        margin-top: var(--space-1);
+      }
 
-    .stat-item {
-      color: var(--grey-600);
-    }
+      .stat-item {
+        color: var(--grey-600);
+      }
 
-    .stat-item strong {
-      color: var(--grey-900);
-      font-weight: 700;
-      margin-right: 2px;
-      font-variant-numeric: tabular-nums;
-    }
+      .stat-item strong {
+        color: var(--grey-900);
+        font-weight: 700;
+        margin-right: 2px;
+        font-variant-numeric: tabular-nums;
+      }
 
-    /* 信任分特別強調 (Success color) */
-    .stat-item.highlight strong {
-      color: var(--success);
-    }
+      /* 信任分特別強調 (Success color) */
+      .stat-item.highlight strong {
+        color: var(--success);
+      }
 
-    /* 變體：2x2 Grid 版本 */
-    .agent-card-grid {
-      background: var(--white);
-      border: 1px solid var(--grey-200);
-      border-radius: var(--radius);
-      padding: var(--space-4);
-      box-shadow: var(--shadow-md);
-      transition: background-color 200ms ease;
-    }
+      /* 變體：2x2 Grid 版本 */
+      .agent-card-grid {
+        background: var(--white);
+        border: 1px solid var(--grey-200);
+        border-radius: var(--radius);
+        padding: var(--space-4);
+        box-shadow: var(--shadow-md);
+        transition: background-color 200ms ease;
+      }
 
-    .agent-card-grid:hover {
-      background: #FAFAFA;
-    }
+      .agent-card-grid:hover {
+        background: #fafafa;
+      }
 
-    .agent-header-grid {
-      display: grid;
-      grid-template-columns: auto 1fr;
-      gap: var(--space-3);
-      margin-bottom: var(--space-3);
-      padding-bottom: var(--space-3);
-      border-bottom: 1px solid var(--grey-200);
-    }
+      .agent-header-grid {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: var(--space-3);
+        margin-bottom: var(--space-3);
+        padding-bottom: var(--space-3);
+        border-bottom: 1px solid var(--grey-200);
+      }
 
-    .stats-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: var(--space-3);
-    }
+      .stats-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: var(--space-3);
+      }
 
-    .stat-box {
-      text-align: center;
-    }
+      .stat-box {
+        text-align: center;
+      }
 
-    .stat-value {
-      font-size: 1.25rem;
-      font-weight: 700;
-      color: var(--brand);
-      line-height: 1;
-      font-variant-numeric: tabular-nums;
-    }
+      .stat-value {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--brand);
+        line-height: 1;
+        font-variant-numeric: tabular-nums;
+      }
 
-    .stat-value.highlight {
-      color: var(--success);
-    }
+      .stat-value.highlight {
+        color: var(--success);
+      }
 
-    .stat-label {
-      font-size: 0.6875rem;
-      color: var(--grey-600);
-      margin-top: var(--space-1);
-    }
+      .stat-label {
+        font-size: 0.6875rem;
+        color: var(--grey-600);
+        margin-top: var(--space-1);
+      }
 
-    .section-title {
-      font-size: 0.875rem;
-      font-weight: 700;
-      color: var(--grey-600);
-      margin-top: var(--space-6);
-      margin-bottom: var(--space-3);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-  </style>
-</head>
-<body>
-
-  <div class="demo-header">
-    <h1>UAG 房仲小卡設計</h1>
-    <p><strong>設計來源：</strong></p>
-    <ul>
-      <li>風格：Swiss Modernism 2.0 (UI/UX Pro Max - styles.csv)</li>
-      <li>配色：邁房子品牌色 #00385a (src/index.css)</li>
-      <li>佈局：Grid system + 8px spacing (Swiss Modernism)</li>
-      <li>互動：Subtle hover 200ms (UX guidelines)</li>
-      <li>卡片：Tailwind shadow-md + rounded-lg</li>
-    </ul>
-  </div>
-
-  <!-- 版本 A：單行橫排（推薦 - 最緊湊）-->
-  <h2 class="section-title">版本 A - 單行橫排（高度 ~72px）</h2>
-  <div class="agent-card">
-    <div class="agent-avatar">王</div>
-    <div class="agent-info">
-      <div class="agent-name-row">
-        <span class="agent-name">王小明</span>
-        <span class="agent-code">#12345</span>
-      </div>
-      <div class="agent-company">邁房子</div>
-      <div class="agent-stats">
-        <div class="stat-item highlight"><strong>92</strong> 信任分</div>
-        <div class="stat-item"><strong>45</strong> 帶看</div>
-        <div class="stat-item"><strong>8</strong> 成交</div>
-      </div>
+      .section-title {
+        font-size: 0.875rem;
+        font-weight: 700;
+        color: var(--grey-600);
+        margin-top: var(--space-6);
+        margin-bottom: var(--space-3);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="demo-header">
+      <h1>UAG 房仲小卡設計</h1>
+      <p><strong>設計來源：</strong></p>
+      <ul>
+        <li>風格：Swiss Modernism 2.0 (UI/UX Pro Max - styles.csv)</li>
+        <li>配色：邁房子品牌色 #00385a (src/index.css)</li>
+        <li>佈局：Grid system + 8px spacing (Swiss Modernism)</li>
+        <li>互動：Subtle hover 200ms (UX guidelines)</li>
+        <li>卡片：Tailwind shadow-md + rounded-lg</li>
+      </ul>
     </div>
-  </div>
 
-  <!-- 版本 B：2x2 Grid（更清晰）-->
-  <h2 class="section-title">版本 B - 2x2 Grid（高度 ~120px）</h2>
-  <div class="agent-card-grid">
-    <div class="agent-header-grid">
+    <!-- 版本 A：單行橫排（推薦 - 最緊湊）-->
+    <h2 class="section-title">版本 A - 單行橫排（高度 ~72px）</h2>
+    <div class="agent-card">
       <div class="agent-avatar">王</div>
       <div class="agent-info">
         <div class="agent-name-row">
@@ -331,28 +311,46 @@
           <span class="agent-code">#12345</span>
         </div>
         <div class="agent-company">邁房子</div>
+        <div class="agent-stats">
+          <div class="stat-item highlight"><strong>92</strong> 信任分</div>
+          <div class="stat-item"><strong>45</strong> 帶看</div>
+          <div class="stat-item"><strong>8</strong> 成交</div>
+        </div>
       </div>
     </div>
 
-    <div class="stats-grid">
-      <div class="stat-box">
-        <div class="stat-value highlight">92</div>
-        <div class="stat-label">信任分</div>
+    <!-- 版本 B：2x2 Grid（更清晰）-->
+    <h2 class="section-title">版本 B - 2x2 Grid（高度 ~120px）</h2>
+    <div class="agent-card-grid">
+      <div class="agent-header-grid">
+        <div class="agent-avatar">王</div>
+        <div class="agent-info">
+          <div class="agent-name-row">
+            <span class="agent-name">王小明</span>
+            <span class="agent-code">#12345</span>
+          </div>
+          <div class="agent-company">邁房子</div>
+        </div>
       </div>
-      <div class="stat-box">
-        <div class="stat-value">12</div>
-        <div class="stat-label">鼓勵</div>
-      </div>
-      <div class="stat-box">
-        <div class="stat-value">45</div>
-        <div class="stat-label">帶看</div>
-      </div>
-      <div class="stat-box">
-        <div class="stat-value">8</div>
-        <div class="stat-label">成交</div>
+
+      <div class="stats-grid">
+        <div class="stat-box">
+          <div class="stat-value highlight">92</div>
+          <div class="stat-label">信任分</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-value">12</div>
+          <div class="stat-label">鼓勵</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-value">45</div>
+          <div class="stat-label">帶看</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-value">8</div>
+          <div class="stat-label">成交</div>
+        </div>
       </div>
     </div>
-  </div>
-
-</body>
+  </body>
 </html>

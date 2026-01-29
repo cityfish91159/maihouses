@@ -5,16 +5,16 @@
  * P6-REFACTOR: Mock 資料已抽離至 mockData/posts/agent.ts
  */
 
-import { useCallback, useMemo, useEffect } from "react";
-import { useFeedData } from "../../hooks/useFeedData";
-import { notify } from "../../lib/notify";
-import { STRINGS } from "../../constants/strings";
+import { useCallback, useMemo, useEffect } from 'react';
+import { useFeedData } from '../../hooks/useFeedData';
+import { notify } from '../../lib/notify';
+import { STRINGS } from '../../constants/strings';
 import {
   getAgentFeedData,
   getAgentUagSummary,
   getAgentPerformanceStats,
   getAgentTodoList,
-} from "./mockData";
+} from './mockData';
 
 const S = STRINGS.FEED;
 
@@ -36,15 +36,8 @@ export function useAgentFeed(userId?: string, forceMock?: boolean) {
   // P6-REFACTOR: Todo List from external mockData (deep copy)
   const todoList = useMemo(() => getAgentTodoList(), []);
 
-  const {
-    createPost,
-    toggleLike,
-    isLiked,
-    addComment,
-    useMock,
-    setUseMock,
-    isAuthenticated,
-  } = feed;
+  const { createPost, toggleLike, isLiked, addComment, useMock, setUseMock, isAuthenticated } =
+    feed;
 
   useEffect(() => {
     if (forceMock !== undefined) {
@@ -55,15 +48,15 @@ export function useAgentFeed(userId?: string, forceMock?: boolean) {
   const handleComment = useCallback(
     async (postId: string | number, content: string) => {
       try {
-        if (typeof addComment === "function") {
+        if (typeof addComment === 'function') {
           await addComment(postId, content);
         }
-        notify.success("留言成功", "您的留言已發佈");
+        notify.success('留言成功', '您的留言已發佈');
       } catch {
-        notify.error("留言失敗", "請稍後再試");
+        notify.error('留言失敗', '請稍後再試');
       }
     },
-    [addComment],
+    [addComment]
   );
 
   // Bug 2 修正：新增 handleReply 和 handleShare
@@ -76,12 +69,12 @@ export function useAgentFeed(userId?: string, forceMock?: boolean) {
     if (navigator?.clipboard?.writeText) {
       try {
         await navigator.clipboard.writeText(shareUrl);
-        notify.success("連結已複製", "您可以將連結分享給朋友");
+        notify.success('連結已複製', '您可以將連結分享給朋友');
       } catch {
-        notify.error("複製失敗", "請手動複製網址");
+        notify.error('複製失敗', '請手動複製網址');
       }
     } else {
-      notify.info("分享功能暫未支援", "請在瀏覽器中操作");
+      notify.info('分享功能暫未支援', '請在瀏覽器中操作');
     }
   }, []);
 

@@ -22,20 +22,14 @@
  * @module feedUtils
  */
 
-import { z } from "zod";
-import { supabase } from "../../lib/supabase";
-import { logger } from "../../lib/logger";
-import { safeLocalStorage } from "../../lib/safeStorage";
-import { getCommunityName } from "../../constants";
-import { MOCK_SALE_ITEMS } from "../../services/mock/feed";
-import { STRINGS } from "../../constants/strings";
-import type {
-  FeedPost,
-  UnifiedFeedData,
-  SidebarData,
-  HotPost,
-  SaleItem,
-} from "../../types/feed";
+import { z } from 'zod';
+import { supabase } from '../../lib/supabase';
+import { logger } from '../../lib/logger';
+import { safeLocalStorage } from '../../lib/safeStorage';
+import { getCommunityName } from '../../constants';
+import { MOCK_SALE_ITEMS } from '../../services/mock/feed';
+import { STRINGS } from '../../constants/strings';
+import type { FeedPost, UnifiedFeedData, SidebarData, HotPost, SaleItem } from '../../types/feed';
 
 const S = STRINGS.FEED;
 
@@ -48,13 +42,13 @@ const PersistedFeedDataSchema = z
         .object({
           id: z.union([z.string(), z.number()]),
           author: z.string(),
-          type: z.enum(["resident", "member", "agent", "official"]),
+          type: z.enum(['resident', 'member', 'agent', 'official']),
           time: z.string(),
           title: z.string(),
           content: z.string(),
           comments: z.number(),
         })
-        .passthrough(),
+        .passthrough()
     ),
     totalPosts: z.number().optional(),
   })
@@ -65,7 +59,7 @@ const PersistedFeedDataSchema = z
 // ============================================================================
 
 /** localStorage 儲存 Mock 資料的 key */
-export const FEED_MOCK_STORAGE_KEY = "feed-mock-data-v1";
+export const FEED_MOCK_STORAGE_KEY = 'feed-mock-data-v1';
 
 /** Mock 模式模擬的網路延遲（毫秒） */
 export const MOCK_LATENCY_MS = 250;
@@ -97,9 +91,7 @@ export const ProfileRowSchema = z.object({
   id: z.string(),
   name: z.string().nullable(),
   floor: z.string().nullable(),
-  role: z
-    .enum(["guest", "member", "resident", "agent", "official", "admin"])
-    .nullable(),
+  role: z.enum(['guest', 'member', 'resident', 'agent', 'official', 'admin']).nullable(),
 });
 
 /** Profile 資料類型（從 Schema 推導） */
@@ -109,19 +101,14 @@ export type ProfileRow = z.infer<typeof ProfileRowSchema>;
  * 貼文可見性枚舉
  * P2 修復：使用 enum 而非 string 提升類型安全
  */
-export const PostVisibilitySchema = z.enum(["public", "private"]);
+export const PostVisibilitySchema = z.enum(['public', 'private']);
 export type PostVisibility = z.infer<typeof PostVisibilitySchema>;
 
 /**
  * 貼文類型枚舉
  * P3 修復：使用 enum 而非 string 提升類型安全
  */
-export const PostTypeSchema = z.enum([
-  "general",
-  "qa",
-  "review",
-  "announcement",
-]);
+export const PostTypeSchema = z.enum(['general', 'qa', 'review', 'announcement']);
 export type PostType = z.infer<typeof PostTypeSchema>;
 
 /**
@@ -176,7 +163,7 @@ const isProfileCacheValid = (entry: ProfileCacheEntry): boolean => {
  * @returns cached: 快取中的 Profile，uncached: 需要從 API 取得的 ID
  */
 const getProfilesFromCache = (
-  authorIds: string[],
+  authorIds: string[]
 ): {
   cached: Map<string, ProfileRow>;
   uncached: string[];
@@ -217,12 +204,10 @@ const setProfilesToCache = (profiles: ProfileRow[]): void => {
   // P4 修復：限制單次新增數量，防止溢出
   // 若傳入超過容量上限的資料，只保留前 PROFILE_CACHE_MAX_SIZE 項
   const safeProfiles =
-    profiles.length > PROFILE_CACHE_MAX_SIZE
-      ? profiles.slice(0, PROFILE_CACHE_MAX_SIZE)
-      : profiles;
+    profiles.length > PROFILE_CACHE_MAX_SIZE ? profiles.slice(0, PROFILE_CACHE_MAX_SIZE) : profiles;
 
   if (safeProfiles.length < profiles.length) {
-    logger.warn("[feedUtils] Profile batch exceeds cache limit, truncating", {
+    logger.warn('[feedUtils] Profile batch exceeds cache limit, truncating', {
       original: profiles.length,
       truncated: safeProfiles.length,
       maxSize: PROFILE_CACHE_MAX_SIZE,
@@ -231,13 +216,10 @@ const setProfilesToCache = (profiles: ProfileRow[]): void => {
 
   // B2 修復：超過容量上限時，清理最久未使用的項目
   // 計算需要清理的數量：確保新增後不超過容量上限
-  const spaceNeeded =
-    profileCache.size + safeProfiles.length - PROFILE_CACHE_MAX_SIZE;
+  const spaceNeeded = profileCache.size + safeProfiles.length - PROFILE_CACHE_MAX_SIZE;
 
   if (spaceNeeded > 0) {
-    const entries = [...profileCache.entries()].sort(
-      (a, b) => a[1].lastAccess - b[1].lastAccess,
-    );
+    const entries = [...profileCache.entries()].sort((a, b) => a[1].lastAccess - b[1].lastAccess);
     // 至少清理 20%，但若需要更多空間則清理更多
     const minEvict = Math.ceil(entries.length * 0.2);
     const toDelete = Math.max(minEvict, spaceNeeded);
@@ -248,7 +230,7 @@ const setProfilesToCache = (profiles: ProfileRow[]): void => {
         profileCache.delete(entry[0]);
       }
     }
-    logger.debug("[feedUtils] Profile cache LRU eviction", {
+    logger.debug('[feedUtils] Profile cache LRU eviction', {
       evicted: Math.min(toDelete, entries.length),
       remaining: profileCache.size,
       spaceNeeded,
@@ -277,7 +259,7 @@ const setProfilesToCache = (profiles: ProfileRow[]): void => {
 export const clearProfileCache = (): void => {
   const size = profileCache.size;
   profileCache.clear();
-  logger.debug("[feedUtils] Profile cache cleared", { previousSize: size });
+  logger.debug('[feedUtils] Profile cache cleared', { previousSize: size });
 };
 
 /**
@@ -329,9 +311,7 @@ export const getProfileCacheStats = (): {
 export const delay = (ms: number): Promise<void> => {
   // N2 修復：參數檢查
   if (ms < 0 || ms > MAX_DELAY_MS) {
-    throw new RangeError(
-      `delay ms must be between 0 and ${MAX_DELAY_MS}, got ${ms}`,
-    );
+    throw new RangeError(`delay ms must be between 0 and ${MAX_DELAY_MS}, got ${ms}`);
   }
   return new Promise((resolve) => setTimeout(resolve, ms));
 };
@@ -353,7 +333,7 @@ export const delay = (ms: number): Promise<void> => {
 export const deriveTitleFromContent = (content: string): string => {
   // P1 修復：使用 trim() 處理 whitespace-only 字串
   const trimmed = content.trim();
-  if (!trimmed) return "（無標題）";
+  if (!trimmed) return '（無標題）';
   return trimmed.length > TITLE_TRUNCATE_LENGTH
     ? `${trimmed.slice(0, TITLE_TRUNCATE_LENGTH)}...`
     : trimmed;
@@ -414,9 +394,7 @@ export const EMPTY_FEED_DATA: UnifiedFeedData = {
  * const data = loadPersistedFeedMockState(getDefaultMockData());
  * ```
  */
-export const loadPersistedFeedMockState = (
-  fallback: UnifiedFeedData,
-): UnifiedFeedData => {
+export const loadPersistedFeedMockState = (fallback: UnifiedFeedData): UnifiedFeedData => {
   const raw = safeLocalStorage.getItem(FEED_MOCK_STORAGE_KEY);
   if (!raw) return fallback;
 
@@ -426,7 +404,7 @@ export const loadPersistedFeedMockState = (
     // [NASA TypeScript Safety] 使用 Zod safeParse 取代 as 類型斷言
     const parseResult = PersistedFeedDataSchema.safeParse(jsonParsed);
     if (!parseResult.success) {
-      logger.warn("[feedUtils] Mock state validation failed, using fallback", {
+      logger.warn('[feedUtils] Mock state validation failed, using fallback', {
         error: parseResult.error.flatten(),
       });
       return fallback;
@@ -441,9 +419,9 @@ export const loadPersistedFeedMockState = (
     const posts: FeedPost[] = parsed.posts.map((p) => ({
       ...p,
       // 確保必要欄位存在，填入預設值
-      likes: typeof p.likes === "number" ? p.likes : 0,
-      views: typeof p.views === "number" ? p.views : undefined,
-      pinned: typeof p.pinned === "boolean" ? p.pinned : false,
+      likes: typeof p.likes === 'number' ? p.likes : 0,
+      views: typeof p.views === 'number' ? p.views : undefined,
+      pinned: typeof p.pinned === 'boolean' ? p.pinned : false,
     })) as FeedPost[];
     return {
       posts,
@@ -451,7 +429,7 @@ export const loadPersistedFeedMockState = (
       sidebarData: deriveSidebarData(posts),
     };
   } catch (err) {
-    logger.error("[feedUtils] Failed to load mock state", { error: err });
+    logger.error('[feedUtils] Failed to load mock state', { error: err });
     return fallback;
   }
 };
@@ -470,7 +448,7 @@ export const saveFeedMockState = (data: UnifiedFeedData): void => {
   try {
     safeLocalStorage.setItem(FEED_MOCK_STORAGE_KEY, JSON.stringify(data));
   } catch (err) {
-    logger.error("[feedUtils] Failed to persist mock state", { error: err });
+    logger.error('[feedUtils] Failed to persist mock state', { error: err });
   }
 };
 
@@ -505,9 +483,7 @@ export interface BuildProfileMapResult {
  * const profile = profiles.get('user-1');
  * ```
  */
-export const buildProfileMap = async (
-  authorIds: string[],
-): Promise<BuildProfileMapResult> => {
+export const buildProfileMap = async (authorIds: string[]): Promise<BuildProfileMapResult> => {
   if (!authorIds.length) {
     return { profiles: new Map(), hadError: false };
   }
@@ -521,13 +497,13 @@ export const buildProfileMap = async (
 
   // 從 API 取得未快取的 Profile
   const { data, error } = await supabase
-    .from("profiles")
-    .select("id, name, floor, role")
-    .in("id", uncached);
+    .from('profiles')
+    .select('id, name, floor, role')
+    .in('id', uncached);
 
   // I4 修復：明確的錯誤處理策略
   if (error) {
-    logger.error("[feedUtils] Fetch profiles failed", {
+    logger.error('[feedUtils] Fetch profiles failed', {
       error,
       uncachedCount: uncached.length,
       cachedCount: cached.size,
@@ -543,7 +519,7 @@ export const buildProfileMap = async (
   const parseResult = ProfileRowSchema.array().safeParse(data ?? []);
 
   if (!parseResult.success) {
-    logger.warn("[feedUtils] Profile schema validation failed", {
+    logger.warn('[feedUtils] Profile schema validation failed', {
       error: parseResult.error.flatten(),
       rawDataCount: data?.length ?? 0,
     });
@@ -551,7 +527,7 @@ export const buildProfileMap = async (
     return {
       profiles: cached,
       hadError: true,
-      errorMessage: "Profile data validation failed",
+      errorMessage: 'Profile data validation failed',
     };
   }
 
@@ -583,14 +559,10 @@ export const buildProfileMap = async (
  * const feedData = await mapSupabasePostsToFeed(data);
  * ```
  */
-export const mapSupabasePostsToFeed = async (
-  rows: SupabasePostRow[],
-): Promise<UnifiedFeedData> => {
+export const mapSupabasePostsToFeed = async (rows: SupabasePostRow[]): Promise<UnifiedFeedData> => {
   // 提取唯一的作者 ID
   const authorIds = Array.from(
-    new Set(
-      rows.map((r) => r.author_id).filter((id): id is string => Boolean(id)),
-    ),
+    new Set(rows.map((r) => r.author_id).filter((id): id is string => Boolean(id)))
   );
 
   const { profiles: profileMap } = await buildProfileMap(authorIds);
@@ -601,16 +573,12 @@ export const mapSupabasePostsToFeed = async (
     const likedBy = row.liked_by ?? [];
 
     // 角色正規化
-    const normalizedRole: FeedPost["type"] =
-      profile?.role === "agent"
-        ? "agent"
-        : profile?.role === "resident"
-          ? "resident"
-          : "member";
+    const normalizedRole: FeedPost['type'] =
+      profile?.role === 'agent' ? 'agent' : profile?.role === 'resident' ? 'resident' : 'member';
 
     const base: FeedPost = {
       id: row.id,
-      author: profile?.name ?? "住戶",
+      author: profile?.name ?? '住戶',
       type: normalizedRole,
       time: row.created_at || new Date().toISOString(),
       title: deriveTitleFromContent(row.content),
@@ -622,7 +590,7 @@ export const mapSupabasePostsToFeed = async (
       communityId: row.community_id,
       communityName: getCommunityName(row.community_id),
       liked_by: likedBy,
-      private: row.visibility === "private",
+      private: row.visibility === 'private',
     };
 
     return profile?.floor ? { ...base, floor: profile.floor } : base;
@@ -653,7 +621,7 @@ export const mapSupabasePostsToFeed = async (
  */
 export const filterMockData = (
   source: UnifiedFeedData,
-  targetCommunityId?: string,
+  targetCommunityId?: string
 ): UnifiedFeedData => {
   const filteredPosts = targetCommunityId
     ? source.posts.filter((p) => p.communityId === targetCommunityId)
@@ -682,14 +650,8 @@ export const filterMockData = (
  * const allPosts = filterSecurePosts(allPosts, true);
  * ```
  */
-export const filterSecurePosts = (
-  posts: FeedPost[],
-  canViewPrivate: boolean,
-): FeedPost[] => {
-  return posts.filter((p) => {
-    if (p.private && !canViewPrivate) return false;
-    return true;
-  });
+export const filterSecurePosts = (posts: FeedPost[], canViewPrivate: boolean): FeedPost[] => {
+  return posts.filter((p) => !p.private || canViewPrivate);
 };
 
 /**
@@ -706,7 +668,7 @@ export const filterSecurePosts = (
  */
 export const createSecureFeedData = (
   data: UnifiedFeedData,
-  canViewPrivate: boolean,
+  canViewPrivate: boolean
 ): UnifiedFeedData => {
   const securePosts = filterSecurePosts(data.posts, canViewPrivate);
   return {

@@ -83,13 +83,13 @@ maihouses/
 
 ### 關鍵模組
 
-| 模組 | 說明 |
-|------|------|
-| `src/lib/supabase.ts` | Supabase 客戶端初始化 |
-| `src/services/openai.ts` | AI 對話服務 + 繁體中文 system prompt |
-| `src/types/property-page.ts` | 房源 Zod Schema 類型定義 |
-| `src/hooks/useAuth.ts` | 認證狀態 hook |
-| `src/pages/UAG/` | UAG 業務廣告後台 (增量更新 + 智慧快取架構) |
+| 模組                         | 說明                                       |
+| ---------------------------- | ------------------------------------------ |
+| `src/lib/supabase.ts`        | Supabase 客戶端初始化                      |
+| `src/services/openai.ts`     | AI 對話服務 + 繁體中文 system prompt       |
+| `src/types/property-page.ts` | 房源 Zod Schema 類型定義                   |
+| `src/hooks/useAuth.ts`       | 認證狀態 hook                              |
+| `src/pages/UAG/`             | UAG 業務廣告後台 (增量更新 + 智慧快取架構) |
 
 ### 環境變數
 
@@ -121,13 +121,13 @@ SUPABASE_SERVICE_ROLE_KEY=eyJxxxxxx
 
 ### 禁止清單
 
-| 禁止項目 | 原因 | 替代方案 |
-|----------|------|----------|
-| `: any` | 失去類型安全 | 定義具體 interface/type |
-| `console.log` | 生產環境不應有 | 使用 `src/lib/logger.ts` 或移除 |
-| `// @ts-ignore` | 隱藏類型錯誤 | 修復根本問題 |
-| `// eslint-disable` | 隱藏代碼問題 | 修復根本問題 |
-| 硬編碼密鑰 | 安全風險 | 使用環境變數 |
+| 禁止項目            | 原因           | 替代方案                        |
+| ------------------- | -------------- | ------------------------------- |
+| `: any`             | 失去類型安全   | 定義具體 interface/type         |
+| `console.log`       | 生產環境不應有 | 使用 `src/lib/logger.ts` 或移除 |
+| `// @ts-ignore`     | 隱藏類型錯誤   | 修復根本問題                    |
+| `// eslint-disable` | 隱藏代碼問題   | 修復根本問題                    |
+| 硬編碼密鑰          | 安全風險       | 使用環境變數                    |
 
 ### 類型安全
 
@@ -162,6 +162,7 @@ const fetchUser = async (id: string): Promise<User> => {
 ### TypeScript 配置特性
 
 本專案使用嚴格的 TypeScript 設定：
+
 - `strict: true`
 - `noUncheckedIndexedAccess: true` - 索引存取返回 `T | undefined`
 - `exactOptionalPropertyTypes: true` - 可選屬性不等於 `undefined`

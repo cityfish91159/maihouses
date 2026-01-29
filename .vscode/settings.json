@@ -5,6 +5,9 @@
   "github.copilot.chat.terminalChatLocation": "terminal",
   "github.copilot.chat.runCommand.enabled": true,
   "github.copilot.chat.executeCommand.enabled": true,
+  "files.encoding": "utf8",
+  "files.autoGuessEncoding": false,
+  "files.eol": "\n",
 
   // Claude Code 設定 - 使用自己的 API Key
   "claude-code.model": "claude-opus-4-20250514",
@@ -72,8 +75,6 @@
   },
   "claudeCode.disableLoginPrompt": true,
   "claudeCode.terminalMode": false,
-  "claudeCode.environmentVariables": [
-
-  ],
+  "claudeCode.environmentVariables": [],
   "terminal.integrated.accessibleViewFocusOnCommandExecution": false
 }

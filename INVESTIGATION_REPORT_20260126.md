@@ -1,4 +1,5 @@
 # 🔍 八大團隊調查報告
+
 ## MH-100001 與 TEST-001 完整真相
 
 **調查日期**: 2026-01-26
@@ -26,6 +27,7 @@
 ## 🎯 團隊 1: public_id 生成邏輯調查
 
 ### 調查目標
+
 追查 MH-100001 的流水碼生成邏輯，以及 MH- 前綴的規則。
 
 ### 核心發現
@@ -58,11 +60,11 @@ CREATE TRIGGER set_property_public_id
 
 #### 2. 流水碼規則
 
-| 元素 | 說明 |
-|------|------|
-| **前綴** | `MH-` (MaiHouses 縮寫) |
-| **起始值** | `100002` |
-| **格式** | `MH-100002`, `MH-100003`, ... |
+| 元素       | 說明                                  |
+| ---------- | ------------------------------------- |
+| **前綴**   | `MH-` (MaiHouses 縮寫)                |
+| **起始值** | `100002`                              |
+| **格式**   | `MH-100002`, `MH-100003`, ...         |
 | **保留碼** | `MH-100001` (預留給 DEFAULT_PROPERTY) |
 
 #### 3. 上傳流程
@@ -90,6 +92,7 @@ TRIGGER 自動生成: MH-100002, MH-100003...
 ## 🎯 團隊 2: TEST-001 來源追查
 
 ### 調查目標
+
 追查 TEST-001 是誰建立的、為什麼建立、是否應該存在。
 
 ### 核心發現
@@ -114,6 +117,7 @@ VALUES
 **檔案標題**: `測試社區完整 Seed（用於 API 穩定性測試）`
 
 **用途**:
+
 - 測試社區牆 API
 - 測試問答功能
 - 測試評價系統
@@ -155,6 +159,7 @@ e92a921f fix: surface real agent stats
 ## 🎯 團隊 3: DEFAULT_PROPERTY 用途分析
 
 ### 調查目標
+
 分析 DEFAULT_PROPERTY 和 MH-100001 的關係，為什麼 MH-100001 會回傳假資料。
 
 ### 核心發現
@@ -166,18 +171,18 @@ e92a921f fix: surface real agent stats
 ```typescript
 // 預設資料 (Fallback Data) - 用於初始化或錯誤時，確保畫面不崩壞
 export const DEFAULT_PROPERTY: PropertyData = {
-  id: "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22",
-  publicId: "MH-100001",  // ← 保留碼
-  title: "",
+  id: 'b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22',
+  publicId: 'MH-100001', // ← 保留碼
+  title: '',
   price: 0,
-  address: "",
-  description: "",
+  address: '',
+  description: '',
   images: [],
   // ... 所有欄位都是空值或 0
-  trustEnabled: false,  // ← 問題所在
+  trustEnabled: false, // ← 問題所在
   agent: {
-    id: "",
-    name: "",
+    id: '',
+    name: '',
     // ... 空值
   },
 };
@@ -189,10 +194,10 @@ export const DEFAULT_PROPERTY: PropertyData = {
 
 ```typescript
 if (error || !data) {
-  logger.warn("查無正式資料，使用預設資料", { error });
+  logger.warn('查無正式資料，使用預設資料', { error });
   // 如果是開發環境或特定 ID，回傳預設資料以維持畫面
-  if (publicId === "MH-100001" || import.meta.env.DEV) {
-    return DEFAULT_PROPERTY;  // ← MH-100001 永遠回傳假資料
+  if (publicId === 'MH-100001' || import.meta.env.DEV) {
+    return DEFAULT_PROPERTY; // ← MH-100001 永遠回傳假資料
   }
   return null;
 }
@@ -227,6 +232,7 @@ ad0000f3 fix(Report): 修復報告生成器預覽與實際報告不一致問題
 ## 🎯 團隊 4: Supabase 資料庫實際狀態
 
 ### 調查目標
+
 檢查資料庫 properties 表中實際有哪些 public_id。
 
 ### 核心發現
@@ -242,11 +248,11 @@ supabase/migrations/20251205_test_community_seed.sql
 
 #### 2. 實際存在的 public_id
 
-| public_id | 用途 | 建立時間 |
-|-----------|------|----------|
-| TEST-001 | 社區牆測試 | 2025-12-05 |
-| TEST-002 | 社區牆測試 | 2025-12-05 |
-| TEST-003 | 社區牆測試 | 2025-12-05 |
+| public_id | 用途       | 建立時間   |
+| --------- | ---------- | ---------- |
+| TEST-001  | 社區牆測試 | 2025-12-05 |
+| TEST-002  | 社區牆測試 | 2025-12-05 |
+| TEST-003  | 社區牆測試 | 2025-12-05 |
 
 **MH-100001**: ❌ **不存在於資料庫**
 
@@ -268,6 +274,7 @@ CREATE SEQUENCE IF NOT EXISTS property_public_id_seq START 100002;
 ## 🎯 團隊 5: Migration 歷史分析
 
 ### 調查目標
+
 分析所有 migration 檔案，找出誰建立了哪些測試資料。
 
 ### 核心發現
@@ -286,6 +293,7 @@ $ ls supabase/migrations/*.sql | wc -l
 **唯一檔案**: `20251205_test_community_seed.sql`
 
 **內容**:
+
 - 建立測試社區
 - 建立測試房仲
 - 建立測試貼文
@@ -294,13 +302,13 @@ $ ls supabase/migrations/*.sql | wc -l
 
 #### 3. 相關 Migration 時間軸
 
-| 日期 | Migration | 說明 |
-|------|-----------|------|
-| 2025-11-27 | `20251127_auto_increment_id.sql` | 建立自動生成邏輯 |
-| 2025-11-27 | `20251127_properties_schema.sql` | 定義 properties 表結構 |
-| 2025-12-05 | `20251205_test_community_seed.sql` | 建立測試資料 |
-| 2026-01-22 | `20260122_create_property_with_review_rpc.sql` | RPC 函數 |
-| 2026-01-26 | `20260126_enable_trust_for_demo.sql` | **本次新增** (尚未執行) |
+| 日期       | Migration                                      | 說明                    |
+| ---------- | ---------------------------------------------- | ----------------------- |
+| 2025-11-27 | `20251127_auto_increment_id.sql`               | 建立自動生成邏輯        |
+| 2025-11-27 | `20251127_properties_schema.sql`               | 定義 properties 表結構  |
+| 2025-12-05 | `20251205_test_community_seed.sql`             | 建立測試資料            |
+| 2026-01-22 | `20260122_create_property_with_review_rpc.sql` | RPC 函數                |
+| 2026-01-26 | `20260126_enable_trust_for_demo.sql`           | **本次新增** (尚未執行) |
 
 ### 結論
 
@@ -311,6 +319,7 @@ $ ls supabase/migrations/*.sql | wc -l
 ## 🎯 團隊 6: 上傳頁整合邏輯
 
 ### 調查目標
+
 檢查上傳頁如何呼叫 createPropertyWithForm，以及如何生成詳情頁 URL。
 
 ### 核心發現
@@ -324,14 +333,14 @@ $ ls supabase/migrations/*.sql | wc -l
 const result = await propertyService.createPropertyWithForm(
   state.form,
   uploadRes.urls,
-  state.selectedCommunityId,
+  state.selectedCommunityId
 );
 
 // Step 2: 更新狀態
 dispatch({
-  type: "UPLOAD_SUCCESS",
+  type: 'UPLOAD_SUCCESS',
   payload: {
-    public_id: result.public_id,  // ← 從 RPC 回傳
+    public_id: result.public_id, // ← 從 RPC 回傳
     community_id: result.community_id,
     community_name: result.community_name || state.form.communityName,
     is_new_community: !state.selectedCommunityId && result.community_id !== null,
@@ -339,7 +348,7 @@ dispatch({
 });
 
 // Step 3: 通知用戶
-notify.success("🎉 刊登成功！", `物件編號：${result.public_id}`);
+notify.success('🎉 刊登成功！', `物件編號：${result.public_id}`);
 ```
 
 #### 2. public_id 來源
@@ -375,6 +384,7 @@ RETURNING public_id
 ## 🎯 團隊 7: RPC Function 檢查
 
 ### 調查目標
+
 檢查 Supabase RPC function 如何生成 public_id。
 
 ### 核心發現
@@ -443,6 +453,7 @@ RPC 回傳給前端
 ## 🎯 團隊 8: Claude 自己的錯誤行為審查
 
 ### 調查目標
+
 檢查 Claude 在本次對話中是否擅自建立了 TEST-001 或其他測試資料。
 
 ### 核心發現
@@ -470,6 +481,7 @@ $ git diff HEAD -- supabase/migrations/20251205_test_community_seed.sql
 **在本次對話中 Claude 做了什麼**:
 
 ❌ **錯誤 1**: 建議使用 TEST-001 驗證 FE-2
+
 ```
 "使用已存在的 TEST-001：
 https://maihouses.vercel.app/maihouses/property/TEST-001"
@@ -478,6 +490,7 @@ https://maihouses.vercel.app/maihouses/property/TEST-001"
 **分析**: Claude 看到資料庫有 TEST-001，錯誤地認為可以用來驗證 FE-2。
 
 ❌ **錯誤 2**: 質疑 MH-100001 的存在
+
 ```
 "MH-100001 在資料庫中嗎？答案: ❌ 目前不存在"
 ```
@@ -485,6 +498,7 @@ https://maihouses.vercel.app/maihouses/property/TEST-001"
 **分析**: Claude 沒理解 MH-100001 是刻意設計的 Fallback。
 
 ❌ **錯誤 3**: 過度複雜化解決方案
+
 ```
 "方案 A：修改 DEFAULT_PROPERTY
 方案 B：使用真實測試物件（建議）"
@@ -495,6 +509,7 @@ https://maihouses.vercel.app/maihouses/property/TEST-001"
 #### 4. 根本原因
 
 **Claude 沒有理解**:
+
 1. MH-100001 是 Mock/Fallback 設計，不應該在資料庫中
 2. TEST-001 是社區牆測試資料，與 PropertyDetailPage 無關
 3. 唯一正確做法：將 `DEFAULT_PROPERTY.trustEnabled` 改為 `true`
@@ -509,19 +524,20 @@ https://maihouses.vercel.app/maihouses/property/TEST-001"
 
 ### 核心真相
 
-| 項目 | 狀態 | 說明 |
-|------|------|------|
-| **MH-100001** | ✅ 合法設計 | Mock/Fallback ID，不應在資料庫中 |
-| **TEST-001** | ✅ 合法資料 | 社區牆測試用，與 FE-2 無關 |
-| **DEFAULT_PROPERTY** | ✅ 正確架構 | Fallback 機制，確保畫面不崩壞 |
-| **public_id 生成** | ✅ 正確流程 | 完全由資料庫 TRIGGER 自動生成 |
-| **Claude 行為** | ⚠️ 誤導建議 | 無擅自建立資料，但建議錯誤 |
+| 項目                 | 狀態        | 說明                             |
+| -------------------- | ----------- | -------------------------------- |
+| **MH-100001**        | ✅ 合法設計 | Mock/Fallback ID，不應在資料庫中 |
+| **TEST-001**         | ✅ 合法資料 | 社區牆測試用，與 FE-2 無關       |
+| **DEFAULT_PROPERTY** | ✅ 正確架構 | Fallback 機制，確保畫面不崩壞    |
+| **public_id 生成**   | ✅ 正確流程 | 完全由資料庫 TRIGGER 自動生成    |
+| **Claude 行為**      | ⚠️ 誤導建議 | 無擅自建立資料，但建議錯誤       |
 
 ### 為什麼 TEST-001 存在
 
 **TEST-001 是社區牆功能的測試資料**，與 PropertyDetailPage 無關。
 
 **建立目的**:
+
 ```
 測試網址:
 https://maihouses.vercel.app/maihouses/community/6959a167-1e23-4409-9c54-8475960a1d61/wall
@@ -560,11 +576,11 @@ https://maihouses.vercel.app/maihouses/property/MH-100001
 
 ### 錯誤時間軸
 
-| 時間 | Claude 行為 | 錯誤程度 |
-|------|------------|---------|
-| 13:00 | 建議使用 TEST-001 | 🔴 嚴重錯誤 |
-| 13:05 | 質疑 MH-100001 合法性 | 🔴 嚴重錯誤 |
-| 13:10 | 提出複雜解決方案 | 🟡 過度複雜 |
+| 時間  | Claude 行為                 | 錯誤程度    |
+| ----- | --------------------------- | ----------- |
+| 13:00 | 建議使用 TEST-001           | 🔴 嚴重錯誤 |
+| 13:05 | 質疑 MH-100001 合法性       | 🔴 嚴重錯誤 |
+| 13:10 | 提出複雜解決方案            | 🟡 過度複雜 |
 | 13:15 | 建議建立 MH-100001 到資料庫 | 🔴 嚴重錯誤 |
 
 ### 根本原因
@@ -602,18 +618,18 @@ https://maihouses.vercel.app/maihouses/property/MH-100001
 ```typescript
 // 優化 DEFAULT_PROPERTY 為完整的 Demo 資料
 export const DEFAULT_PROPERTY: PropertyData = {
-  id: "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22",
-  publicId: "MH-100001",
-  title: "邁房子 Demo 物件",  // ← 加入標題
-  price: 1200,  // ← 加入價格
-  address: "台北市信義區 Demo 路 123 號",  // ← 加入地址
-  description: "這是 MaiHouses 的 Demo 展示物件",
-  images: ["https://images.unsplash.com/..."],  // ← 加入圖片
-  trustEnabled: true,  // ← 重點
+  id: 'b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22',
+  publicId: 'MH-100001',
+  title: '邁房子 Demo 物件', // ← 加入標題
+  price: 1200, // ← 加入價格
+  address: '台北市信義區 Demo 路 123 號', // ← 加入地址
+  description: '這是 MaiHouses 的 Demo 展示物件',
+  images: ['https://images.unsplash.com/...'], // ← 加入圖片
+  trustEnabled: true, // ← 重點
   agent: {
-    id: "demo-agent",
-    name: "Demo 房仲",
-    company: "邁房子不動產",
+    id: 'demo-agent',
+    name: 'Demo 房仲',
+    company: '邁房子不動產',
     trustScore: 95,
     encouragementCount: 50,
   },

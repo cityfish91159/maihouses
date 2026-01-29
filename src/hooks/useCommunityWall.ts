@@ -5,7 +5,7 @@
  * 提供 SWR 風格的資料獲取與快取
  */
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   getCommunityWall,
   getPublicPosts,
@@ -14,7 +14,7 @@ import {
   createPost as apiCreatePost,
   CommunityWallData,
   CommunityPost,
-} from "../services/communityService";
+} from '../services/communityService';
 
 export interface UseCommunityWallOptions {
   /** 是否包含私密貼文（需登入） */
@@ -39,17 +39,14 @@ export interface UseCommunityWallReturn {
   /** 按讚/取消按讚 */
   toggleLike: (postId: string) => Promise<void>;
   /** 發布貼文 */
-  createPost: (
-    content: string,
-    visibility?: "public" | "private",
-  ) => Promise<void>;
+  createPost: (content: string, visibility?: 'public' | 'private') => Promise<void>;
   /** 樂觀更新後的貼文列表（即時反映 UI） */
   optimisticPosts: CommunityPost[];
 }
 
 export function useCommunityWall(
   communityId: string | undefined,
-  options: UseCommunityWallOptions = {},
+  options: UseCommunityWallOptions = {}
 ): UseCommunityWallReturn {
   const {
     includePrivate = false,
@@ -93,7 +90,7 @@ export function useCommunityWall(
         }
       } catch (err) {
         if (mountedRef.current) {
-          setError(err instanceof Error ? err.message : "載入社區牆失敗");
+          setError(err instanceof Error ? err.message : '載入社區牆失敗');
         }
       } finally {
         if (mountedRef.current) {
@@ -101,7 +98,7 @@ export function useCommunityWall(
         }
       }
     },
-    [communityId, includePrivate],
+    [communityId, includePrivate]
   );
 
   // 手動刷新（註：快取已改由 React Query 管理，此處只觸發重新 fetch）
@@ -113,21 +110,19 @@ export function useCommunityWall(
   const toggleLike = useCallback(
     async (postId: string) => {
       // 樂觀更新 UI
-      const userId = currentUserId ?? "anonymous-user";
+      const userId = currentUserId ?? 'anonymous-user';
       setOptimisticPosts((prev) =>
         prev.map((post) => {
           if (post.id !== postId) return post;
           const isLiked = post.liked_by.includes(userId);
           return {
             ...post,
-            likes_count: isLiked
-              ? Math.max(0, post.likes_count - 1)
-              : post.likes_count + 1,
+            likes_count: isLiked ? Math.max(0, post.likes_count - 1) : post.likes_count + 1,
             liked_by: isLiked
               ? post.liked_by.filter((id) => id !== userId)
               : [...post.liked_by, userId],
           };
-        }),
+        })
       );
 
       try {
@@ -138,18 +133,18 @@ export function useCommunityWall(
         await refresh();
       }
     },
-    [refresh, currentUserId],
+    [refresh, currentUserId]
   );
 
   // 發布貼文
   const createPost = useCallback(
-    async (content: string, visibility: "public" | "private" = "public") => {
-      if (!communityId) throw new Error("缺少社區 ID");
+    async (content: string, visibility: 'public' | 'private' = 'public') => {
+      if (!communityId) throw new Error('缺少社區 ID');
 
       await apiCreatePost(communityId, content, visibility);
       await refresh();
     },
-    [communityId, refresh],
+    [communityId, refresh]
   );
 
   // 初次載入
@@ -183,9 +178,9 @@ export function useCommunityWall(
       fetchData(true);
     };
 
-    window.addEventListener("focus", handleFocus);
+    window.addEventListener('focus', handleFocus);
     return () => {
-      window.removeEventListener("focus", handleFocus);
+      window.removeEventListener('focus', handleFocus);
     };
   }, [refreshOnFocus, fetchData]);
 
@@ -205,8 +200,8 @@ export function useCommunityWall(
  */
 export function useCommunityPosts(
   communityId: string | undefined,
-  visibility: "public" | "private" = "public",
-  options: { pageSize?: number } = {},
+  visibility: 'public' | 'private' = 'public',
+  options: { pageSize?: number } = {}
 ) {
   const { pageSize = 20 } = options;
 
@@ -223,8 +218,7 @@ export function useCommunityPosts(
     setError(null);
 
     try {
-      const fetcher =
-        visibility === "public" ? getPublicPosts : getPrivatePosts;
+      const fetcher = visibility === 'public' ? getPublicPosts : getPrivatePosts;
       const { items, total } = await fetcher(communityId, {
         page,
         limit: pageSize,
@@ -234,19 +228,11 @@ export function useCommunityPosts(
       setPage((prev) => prev + 1);
       setHasMore(posts.length + items.length < total);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "載入失敗");
+      setError(err instanceof Error ? err.message : '載入失敗');
     } finally {
       setIsLoading(false);
     }
-  }, [
-    communityId,
-    visibility,
-    page,
-    pageSize,
-    isLoading,
-    hasMore,
-    posts.length,
-  ]);
+  }, [communityId, visibility, page, pageSize, isLoading, hasMore, posts.length]);
 
   const reset = useCallback(() => {
     setPosts([]);

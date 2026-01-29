@@ -4,18 +4,18 @@
  * 社區牆發文 API
  */
 
-import type { VercelRequest, VercelResponse } from "@vercel/node";
-import type { SupabaseClient, PostgrestError } from "@supabase/supabase-js";
-import { createClient } from "@supabase/supabase-js";
-import { z } from "zod";
-import { logger } from "../lib/logger";
+import type { VercelRequest, VercelResponse } from '@vercel/node';
+import type { SupabaseClient, PostgrestError } from '@supabase/supabase-js';
+import { createClient } from '@supabase/supabase-js';
+import { z } from 'zod';
+import { logger } from '../lib/logger';
 
 // ============================================
 // Types
 // ============================================
 
 /** [NASA TypeScript Safety] 社區成員角色 Schema */
-const CommunityRoleSchema = z.enum(["resident", "agent", "moderator", "member", "visitor"]);
+const CommunityRoleSchema = z.enum(['resident', 'agent', 'moderator', 'member', 'visitor']);
 type CommunityRole = z.infer<typeof CommunityRoleSchema>;
 
 /** 所有有效的社區角色（用於運行時驗證） */
@@ -29,11 +29,7 @@ interface MembershipVerifyResult {
 }
 
 /** 允許發私密牆的角色 */
-const PRIVATE_POST_ALLOWED_ROLES: CommunityRole[] = [
-  "resident",
-  "agent",
-  "moderator",
-];
+const PRIVATE_POST_ALLOWED_ROLES: CommunityRole[] = ['resident', 'agent', 'moderator'];
 
 // ============================================
 // Zod Schemas (P3: Request Body Validation)
@@ -41,10 +37,10 @@ const PRIVATE_POST_ALLOWED_ROLES: CommunityRole[] = [
 
 /** 發文請求 Schema */
 const PostRequestSchema = z.object({
-  communityId: z.string().min(1, "社區 ID 不能為空"),
-  content: z.string().min(1, "內容不能為空").max(10000, "內容過長"),
-  visibility: z.enum(["public", "private"]).default("public"),
-  postType: z.string().default("general"),
+  communityId: z.string().min(1, '社區 ID 不能為空'),
+  content: z.string().min(1, '內容不能為空').max(10000, '內容過長'),
+  visibility: z.enum(['public', 'private']).default('public'),
+  postType: z.string().default('general'),
   images: z.array(z.string()).default([]),
 });
 
@@ -64,7 +60,7 @@ function getSupabase(): SupabaseClient {
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!url || !key) {
-    throw new Error("缺少 SUPABASE_URL 或 SUPABASE_SERVICE_ROLE_KEY 環境變數");
+    throw new Error('缺少 SUPABASE_URL 或 SUPABASE_SERVICE_ROLE_KEY 環境變數');
   }
 
   supabase = createClient(url, key);
@@ -84,17 +80,17 @@ function getSupabase(): SupabaseClient {
  */
 async function verifyCommunityMember(
   communityId: string,
-  userId: string,
+  userId: string
 ): Promise<MembershipVerifyResult> {
   const { data: membership, error: memberError } = await getSupabase()
-    .from("community_members")
-    .select("role")
-    .eq("community_id", communityId)
-    .eq("user_id", userId)
+    .from('community_members')
+    .select('role')
+    .eq('community_id', communityId)
+    .eq('user_id', userId)
     .maybeSingle();
 
   // PGRST116 = 查無資料，不算錯誤
-  if (memberError && memberError.code !== "PGRST116") {
+  if (memberError && memberError.code !== 'PGRST116') {
     return { isMember: false, role: null, error: memberError };
   }
 
@@ -128,12 +124,12 @@ function logUnauthorizedPostAttempt(
   userId: string,
   communityId: string,
   role: CommunityRole | null,
-  reason: string,
+  reason: string
 ): void {
   // 在生產環境中，這裡可以整合 Sentry 或其他日誌服務
   const timestamp = new Date().toISOString();
   const logEntry = {
-    event: "UNAUTHORIZED_PRIVATE_POST_ATTEMPT",
+    event: 'UNAUTHORIZED_PRIVATE_POST_ATTEMPT',
     timestamp,
     userId,
     communityId,
@@ -142,7 +138,7 @@ function logUnauthorizedPostAttempt(
   };
 
   // 使用 process.env.NODE_ENV 判斷，避免生產環境輸出
-  if (process.env.NODE_ENV !== "production") {
+  if (process.env.NODE_ENV !== 'production') {
     // 開發環境：輸出到 stderr 以便調試
     process.stderr.write(`[AUDIT] ${JSON.stringify(logEntry)}\n`);
   }
@@ -162,33 +158,33 @@ export const __postTestHelpers = {
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // P2: CORS 安全 - 限制允許的 Origin
-  const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(",") ?? [
-    "http://localhost:5173",
-    "https://pchome-online.github.io",
+  const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') ?? [
+    'http://localhost:5173',
+    'https://pchome-online.github.io',
   ];
   const origin = req.headers.origin;
 
   if (origin && allowedOrigins.includes(origin)) {
-    res.setHeader("Access-Control-Allow-Origin", origin);
-  } else if (allowedOrigins.includes("*")) {
-    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  } else if (allowedOrigins.includes('*')) {
+    res.setHeader('Access-Control-Allow-Origin', '*');
   }
 
-  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
-  if (req.method === "OPTIONS") {
+  if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
 
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   // 驗證登入
   const authHeader = req.headers.authorization;
-  if (!authHeader?.startsWith("Bearer ")) {
-    return res.status(401).json({ error: "請先登入" });
+  if (!authHeader?.startsWith('Bearer ')) {
+    return res.status(401).json({ error: '請先登入' });
   }
 
   const token = authHeader.slice(7);
@@ -198,7 +194,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   } = await getSupabase().auth.getUser(token);
 
   if (authError || !user) {
-    return res.status(401).json({ error: "登入已過期，請重新登入" });
+    return res.status(401).json({ error: '登入已過期，請重新登入' });
   }
 
   try {
@@ -209,49 +205,50 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const firstError = parseResult.error.issues[0];
       return res.status(400).json({
         success: false,
-        error: firstError?.message ?? "請求格式錯誤",
+        error: firstError?.message ?? '請求格式錯誤',
       });
     }
 
     const { communityId, content, visibility, postType, images } = parseResult.data;
 
     // 私密牆需要驗證是否為社區成員
-    if (visibility === "private") {
+    if (visibility === 'private') {
       // 使用抽象的 verifyCommunityMember 函式
-      const { isMember, role, error: memberError } = await verifyCommunityMember(
-        communityId,
-        user.id,
-      );
+      const {
+        isMember,
+        role,
+        error: memberError,
+      } = await verifyCommunityMember(communityId, user.id);
 
       // 資料庫錯誤
       if (memberError) {
         return res.status(500).json({
           success: false,
-          error: "驗證社區成員失敗",
+          error: '驗證社區成員失敗',
         });
       }
 
       // 非社區成員
       if (!isMember) {
-        logUnauthorizedPostAttempt(user.id, communityId, role, "NOT_MEMBER");
+        logUnauthorizedPostAttempt(user.id, communityId, role, 'NOT_MEMBER');
         return res.status(403).json({
           success: false,
-          error: "只有社區成員可以發文到私密牆",
+          error: '只有社區成員可以發文到私密牆',
         });
       }
 
       // 使用 canPostToPrivateWall 檢查角色權限
       if (!canPostToPrivateWall(role)) {
-        logUnauthorizedPostAttempt(user.id, communityId, role, "INSUFFICIENT_ROLE");
+        logUnauthorizedPostAttempt(user.id, communityId, role, 'INSUFFICIENT_ROLE');
         return res.status(403).json({
           success: false,
-          error: "權限不足，無法發文到私密牆",
+          error: '權限不足，無法發文到私密牆',
         });
       }
     }
 
     const { data, error } = await getSupabase()
-      .from("community_posts")
+      .from('community_posts')
       .insert({
         community_id: communityId,
         author_id: user.id,
@@ -268,14 +265,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(200).json({
       success: true,
       data,
-      message: visibility === "private" ? "已發布到私密牆" : "已發布到公開牆",
+      message: visibility === 'private' ? '已發布到私密牆' : '已發布到公開牆',
     });
   } catch (error: unknown) {
-    logger.error("[community/post] API error", error, {
+    logger.error('[community/post] API error', error, {
       userId: user.id,
       communityId: req.body?.communityId,
     });
-    const message = error instanceof Error ? error.message : "Unknown error";
+    const message = error instanceof Error ? error.message : 'Unknown error';
     return res.status(500).json({ error: message });
   }
 }

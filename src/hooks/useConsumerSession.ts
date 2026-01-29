@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback } from 'react';
 
 /**
  * useConsumerSession - 管理匿名消費者的 session
@@ -10,15 +10,15 @@ import { useState, useCallback } from "react";
  * 4. 使用 useState 快取避免每次 render 都讀 localStorage
  */
 
-const SESSION_KEY = "uag_session";
-const SESSION_CREATED_KEY = "uag_session_created";
+const SESSION_KEY = 'uag_session';
+const SESSION_CREATED_KEY = 'uag_session_created';
 const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 天
 
 /**
  * 獲取 session ID（SSR 安全）
  */
 function getSessionId(): string | null {
-  if (typeof window === "undefined") return null;
+  if (typeof window === 'undefined') return null;
   try {
     return localStorage.getItem(SESSION_KEY);
   } catch {
@@ -30,7 +30,7 @@ function getSessionId(): string | null {
  * 獲取 session 建立時間
  */
 function getSessionCreatedAt(): number | null {
-  if (typeof window === "undefined") return null;
+  if (typeof window === 'undefined') return null;
   try {
     const ts = localStorage.getItem(SESSION_CREATED_KEY);
     return ts ? parseInt(ts, 10) : null;
@@ -55,7 +55,7 @@ function isSessionExpired(): boolean {
  * 設置 session（同時記錄建立時間）
  */
 function setSession(sessionId: string): void {
-  if (typeof window === "undefined") return;
+  if (typeof window === 'undefined') return;
   try {
     localStorage.setItem(SESSION_KEY, sessionId);
     // 只有在沒有建立時間時才設置（避免覆蓋）
@@ -71,7 +71,7 @@ function setSession(sessionId: string): void {
  * 清除 session
  */
 function clearSession(): void {
-  if (typeof window === "undefined") return;
+  if (typeof window === 'undefined') return;
   try {
     localStorage.removeItem(SESSION_KEY);
     localStorage.removeItem(SESSION_CREATED_KEY);

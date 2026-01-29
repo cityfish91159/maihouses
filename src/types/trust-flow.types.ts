@@ -8,7 +8,7 @@
  * - [NASA TypeScript Safety] 完整類型定義
  */
 
-import { z } from "zod";
+import { z } from 'zod';
 
 // ============================================================================
 // Constants
@@ -16,42 +16,42 @@ import { z } from "zod";
 
 /** 步驟名稱（6 階段） */
 export const TRUST_STEP_NAMES: Record<number, string> = {
-  1: "M1 接洽",
-  2: "M2 帶看",
-  3: "M3 出價",
-  4: "M4 斡旋",
-  5: "M5 成交",
-  6: "M6 交屋",
+  1: 'M1 接洽',
+  2: 'M2 帶看',
+  3: 'M3 出價',
+  4: 'M4 斡旋',
+  5: 'M5 成交',
+  6: 'M6 交屋',
 };
 
 /** 步驟中文名稱 */
 export const TRUST_STEP_LABELS: Record<number, string> = {
-  1: "已電聯",
-  2: "已帶看",
-  3: "已出價",
-  4: "已斡旋",
-  5: "已成交",
-  6: "已交屋",
+  1: '已電聯',
+  2: '已帶看',
+  3: '已出價',
+  4: '已斡旋',
+  5: '已成交',
+  6: '已交屋',
 };
 
 /** 步驟描述 */
 export const TRUST_STEP_DESCRIPTIONS: Record<number, string> = {
-  1: "房仲已與買方電話聯繫",
-  2: "房仲已帶買方實地看屋",
-  3: "買方已向屋主提出價格",
-  4: "正在進行價格協商",
-  5: "恭喜！交易已成交",
-  6: "完成交屋手續",
+  1: '房仲已與買方電話聯繫',
+  2: '房仲已帶買方實地看屋',
+  3: '買方已向屋主提出價格',
+  4: '正在進行價格協商',
+  5: '恭喜！交易已成交',
+  6: '完成交屋手續',
 };
 
 /** 步驟圖示 */
 export const TRUST_STEP_ICONS: Record<number, string> = {
-  1: "📞",
-  2: "🏠",
-  3: "💰",
-  4: "📝",
-  5: "🤝",
-  6: "🔑",
+  1: '📞',
+  2: '🏠',
+  3: '💰',
+  4: '📝',
+  5: '🤝',
+  6: '🔑',
 };
 
 // ============================================================================
@@ -75,20 +75,20 @@ export const TRUST_STEP_ICONS: Record<number, string> = {
  * - expired: 已過期（向後相容）
  */
 export const CaseStatusSchema = z.enum([
-  "active",
-  "dormant",
-  "completed",
-  "closed_sold_to_other",
-  "closed_property_unlisted",
-  "closed_inactive",
-  "pending",
-  "cancelled",
-  "expired",
+  'active',
+  'dormant',
+  'completed',
+  'closed_sold_to_other',
+  'closed_property_unlisted',
+  'closed_inactive',
+  'pending',
+  'cancelled',
+  'expired',
 ]);
 export type CaseStatus = z.infer<typeof CaseStatusSchema>;
 
 /** 執行者類型 Schema */
-export const ActorTypeSchema = z.enum(["agent", "buyer", "system"]);
+export const ActorTypeSchema = z.enum(['agent', 'buyer', 'system']);
 export type ActorType = z.infer<typeof ActorTypeSchema>;
 
 /** 案件事件 Schema */
@@ -148,8 +148,8 @@ export type TrustCaseDetail = z.infer<typeof TrustCaseDetailSchema>;
 
 /** 建立案件請求 Schema */
 export const CreateCaseRequestSchema = z.object({
-  buyer_name: z.string().min(1, "買方名稱不可為空").max(100),
-  property_title: z.string().min(1, "物件標題不可為空").max(200),
+  buyer_name: z.string().min(1, '買方名稱不可為空').max(100),
+  property_title: z.string().min(1, '物件標題不可為空').max(200),
   buyer_session_id: z.string().optional(),
   buyer_contact: z.string().max(50).optional(),
   property_id: z.string().optional(),
@@ -169,7 +169,7 @@ export type CreateCaseResponse = z.infer<typeof CreateCaseResponseSchema>;
 export const UpdateStepRequestSchema = z.object({
   new_step: z.number().int().min(1).max(6),
   action: z.string().min(1).max(200),
-  actor: ActorTypeSchema.default("agent"),
+  actor: ActorTypeSchema.default('agent'),
   detail: z.string().max(500).optional(),
   offer_price: z.number().int().positive().optional(),
 });
@@ -219,7 +219,7 @@ export interface LegacyTrustEvent {
   step: number;
   stepName: string;
   action: string;
-  actor: "agent" | "buyer" | "system";
+  actor: 'agent' | 'buyer' | 'system';
   timestamp: number;
   hash?: string;
   detail?: string;
@@ -238,7 +238,7 @@ export interface LegacyTrustCase {
   buyerName: string;
   propertyTitle: string;
   currentStep: number;
-  status: "active" | "dormant" | "completed" | "closed" | "pending" | "expired";
+  status: 'active' | 'dormant' | 'completed' | 'closed' | 'pending' | 'expired';
   lastUpdate: number;
   offerPrice?: number;
   events: LegacyTrustEvent[];
@@ -261,12 +261,12 @@ export interface LegacyTrustCase {
 
 /** Legacy 狀態 Schema - 用於安全轉換 [DB-2] 新增 dormant, closed */
 const LegacyStatusSchema = z.enum([
-  "active",
-  "dormant",
-  "completed",
-  "closed",
-  "pending",
-  "expired",
+  'active',
+  'dormant',
+  'completed',
+  'closed',
+  'pending',
+  'expired',
 ]);
 
 /**
@@ -275,15 +275,15 @@ const LegacyStatusSchema = z.enum([
  *
  * [DB-2] closed_* 系列統一映射為 "closed"
  */
-function toSafeLegacyStatus(status: CaseStatus): LegacyTrustCase["status"] {
+function toSafeLegacyStatus(status: CaseStatus): LegacyTrustCase['status'] {
   // 先檢查 closed_* 系列，統一映射為 "closed"
-  if (status.startsWith("closed_")) {
-    return "closed";
+  if (status.startsWith('closed_')) {
+    return 'closed';
   }
   const result = LegacyStatusSchema.safeParse(status);
   if (result.success) return result.data;
   // cancelled 轉為 expired（最接近的語意）
-  return "expired";
+  return 'expired';
 }
 
 /**
@@ -297,7 +297,7 @@ function toSafeLegacyStatus(status: CaseStatus): LegacyTrustCase["status"] {
  */
 export function transformToLegacyCase(
   apiCase: TrustCase,
-  events: TrustCaseEvent[] = [],
+  events: TrustCaseEvent[] = []
 ): LegacyTrustCase {
   // [NASA TypeScript Safety] 使用 Zod safeParse 取代 type assertion
   const result: LegacyTrustCase = {
@@ -369,12 +369,10 @@ export function transformToLegacyCase(
  * @param legacyCase - 舊格式案件
  * @returns CreateCaseRequest 格式
  */
-export function transformToCreateRequest(
-  legacyCase: Partial<LegacyTrustCase>,
-): CreateCaseRequest {
+export function transformToCreateRequest(legacyCase: Partial<LegacyTrustCase>): CreateCaseRequest {
   return {
-    buyer_name: legacyCase.buyerName ?? "",
-    property_title: legacyCase.propertyTitle ?? "",
+    buyer_name: legacyCase.buyerName ?? '',
+    property_title: legacyCase.propertyTitle ?? '',
   };
 }
 
@@ -400,14 +398,14 @@ export function getStepLabel(step: number): string {
  * 取得步驟描述
  */
 export function getStepDescription(step: number): string {
-  return TRUST_STEP_DESCRIPTIONS[step] ?? "";
+  return TRUST_STEP_DESCRIPTIONS[step] ?? '';
 }
 
 /**
  * 取得步驟圖示
  */
 export function getStepIcon(step: number): string {
-  return TRUST_STEP_ICONS[step] ?? "📋";
+  return TRUST_STEP_ICONS[step] ?? '📋';
 }
 
 /**
@@ -428,25 +426,25 @@ export function formatCaseStatus(status: CaseStatus): {
   color: string;
 } {
   switch (status) {
-    case "active":
-      return { text: "進行中", bg: "#dcfce7", color: "#16a34a" };
-    case "dormant":
-      return { text: "休眠中", bg: "#fef3c7", color: "#d97706" };
-    case "completed":
-      return { text: "已成交", bg: "#dbeafe", color: "#2563eb" };
-    case "closed_sold_to_other":
-      return { text: "他人成交", bg: "#f3f4f6", color: "#6b7280" };
-    case "closed_property_unlisted":
-      return { text: "物件下架", bg: "#f3f4f6", color: "#6b7280" };
-    case "closed_inactive":
-      return { text: "已過期關閉", bg: "#f3f4f6", color: "#6b7280" };
-    case "pending":
-      return { text: "待處理", bg: "#fef3c7", color: "#d97706" };
-    case "cancelled":
-      return { text: "已取消", bg: "#fee2e2", color: "#dc2626" };
-    case "expired":
-      return { text: "已過期", bg: "#f3f4f6", color: "#6b7280" };
+    case 'active':
+      return { text: '進行中', bg: '#dcfce7', color: '#16a34a' };
+    case 'dormant':
+      return { text: '休眠中', bg: '#fef3c7', color: '#d97706' };
+    case 'completed':
+      return { text: '已成交', bg: '#dbeafe', color: '#2563eb' };
+    case 'closed_sold_to_other':
+      return { text: '他人成交', bg: '#f3f4f6', color: '#6b7280' };
+    case 'closed_property_unlisted':
+      return { text: '物件下架', bg: '#f3f4f6', color: '#6b7280' };
+    case 'closed_inactive':
+      return { text: '已過期關閉', bg: '#f3f4f6', color: '#6b7280' };
+    case 'pending':
+      return { text: '待處理', bg: '#fef3c7', color: '#d97706' };
+    case 'cancelled':
+      return { text: '已取消', bg: '#fee2e2', color: '#dc2626' };
+    case 'expired':
+      return { text: '已過期', bg: '#f3f4f6', color: '#6b7280' };
     default:
-      return { text: "未知", bg: "#f3f4f6", color: "#6b7280" };
+      return { text: '未知', bg: '#f3f4f6', color: '#6b7280' };
   }
 }

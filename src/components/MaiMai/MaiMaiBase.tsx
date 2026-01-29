@@ -1,4 +1,4 @@
-import React, { memo } from "react";
+import React, { memo } from 'react';
 import {
   SIZE_CLASSES,
   CANVAS_SIZE,
@@ -62,9 +62,9 @@ import {
   CONFETTI_RECT_3_HEIGHT_RATIO,
   mirrorPath,
   EyeData,
-} from "./types";
-import { MOOD_CONFIGS, EFFECT_POSITIONS } from "./configs";
-import type { EffectItem, MaiMaiMood, MaiMaiBaseProps } from "./types";
+} from './types';
+import { MOOD_CONFIGS, EFFECT_POSITIONS } from './configs';
+import type { EffectItem, MaiMaiMood, MaiMaiBaseProps } from './types';
 
 /**
  * MaiMai 公仔 SVG 骨架組件
@@ -73,30 +73,28 @@ import type { EffectItem, MaiMaiMood, MaiMaiBaseProps } from "./types";
 
 // ============ 樣式常量 ============
 /** opacity 過渡動畫 (path d 無法 transition，只用 opacity) */
-const T_OPACITY = "transition-opacity duration-300";
+const T_OPACITY = 'transition-opacity duration-300';
 /** transform 過渡動畫 */
-const T_TRANSFORM = "transition-transform duration-300";
+const T_TRANSFORM = 'transition-transform duration-300';
 
 // ============ SVG 部件 ============
 
 /** M 型天線 */
 export function Antenna({
   animated = false,
-  mood = "idle",
+  mood = 'idle',
 }: {
   animated?: boolean;
   mood?: MaiMaiMood;
 }) {
   const config = MOOD_CONFIGS[mood] || MOOD_CONFIGS.default;
   const droopy = config.antenna?.droopy;
-  const wiggle = mood === "wave" || mood === "celebrate" || mood === "excited";
+  const wiggle = mood === 'wave' || mood === 'celebrate' || mood === 'excited';
 
   // 基於眼睛座標與常量計算
   const aY = droopy ? ANTENNA_Y + ANTENNA_DROOP_OFFSET : ANTENNA_Y;
   const aTopY = droopy ? ANTENNA_TOP_Y + ANTENNA_DROOP_OFFSET : ANTENNA_TOP_Y;
-  const aPeakY = droopy
-    ? ANTENNA_PEAK_Y + ANTENNA_DROOP_PEAK_OFFSET
-    : ANTENNA_PEAK_Y;
+  const aPeakY = droopy ? ANTENNA_PEAK_Y + ANTENNA_DROOP_PEAK_OFFSET : ANTENNA_PEAK_Y;
 
   const d = `M ${EYE_L_X} ${aY} L ${EYE_L_X} ${aTopY} L ${CENTER_X} ${aPeakY} L ${EYE_R_X} ${aTopY} L ${EYE_R_X} ${aY}`;
 
@@ -108,7 +106,7 @@ export function Antenna({
       fill="none"
       strokeLinecap="round"
       strokeLinejoin="round"
-      className={`${T_OPACITY} ${wiggle ? "origin-bottom animate-wiggle" : ""} ${droopy ? "opacity-70" : ""}`}
+      className={`${T_OPACITY} ${wiggle ? 'origin-bottom animate-wiggle' : ''} ${droopy ? 'opacity-70' : ''}`}
     />
   );
 }
@@ -145,7 +143,7 @@ export function Body() {
 }
 
 /** 眉毛 */
-export function Eyebrows({ mood = "idle" }: { mood?: MaiMaiMood }) {
+export function Eyebrows({ mood = 'idle' }: { mood?: MaiMaiMood }) {
   const config = MOOD_CONFIGS[mood] || MOOD_CONFIGS.default;
   return (
     <>
@@ -180,10 +178,7 @@ export function Eyebrows({ mood = "idle" }: { mood?: MaiMaiMood }) {
  * @complexity O(n) where n = children depth
  * @sideEffects none
  */
-function areEyePropsEqual(
-  prev: { data: EyeData },
-  next: { data: EyeData },
-): boolean {
+function areEyePropsEqual(prev: { data: EyeData }, next: { data: EyeData }): boolean {
   const a = prev.data;
   const b = next.data;
 
@@ -242,20 +237,20 @@ function areEyePropsEqual(
  * <RenderEye data={eyes.closed().left} />
  */
 const RenderEye = memo(function RenderEye({ data }: { data: EyeData }) {
-  if (data.type === "circle") {
+  if (data.type === 'circle') {
     return (
       <circle
         cx={data.cx}
         cy={data.cy}
         r={data.r}
-        fill={data.fill || "none"}
-        stroke={data.fill === "currentColor" ? "none" : "currentColor"}
+        fill={data.fill || 'none'}
+        stroke={data.fill === 'currentColor' ? 'none' : 'currentColor'}
         strokeWidth={data.strokeWidth}
-        className={`${T_OPACITY} ${data.className || ""}`}
+        className={`${T_OPACITY} ${data.className || ''}`}
       />
     );
   }
-  if (data.type === "path") {
+  if (data.type === 'path') {
     return (
       <path
         d={data.d}
@@ -263,11 +258,11 @@ const RenderEye = memo(function RenderEye({ data }: { data: EyeData }) {
         strokeWidth={data.strokeWidth || 3}
         fill="none"
         strokeLinecap="round"
-        className={`${T_OPACITY} ${data.className || ""}`}
+        className={`${T_OPACITY} ${data.className || ''}`}
       />
     );
   }
-  if (data.type === "group") {
+  if (data.type === 'group') {
     return (
       <g className={data.className}>
         {data.children?.map((child, i) => (
@@ -280,10 +275,10 @@ const RenderEye = memo(function RenderEye({ data }: { data: EyeData }) {
 }, areEyePropsEqual);
 
 // DevTools 顯示名稱
-RenderEye.displayName = "RenderEye";
+RenderEye.displayName = 'RenderEye';
 
 /** 眼睛 */
-export function Eyes({ mood = "idle" }: { mood?: MaiMaiMood }) {
+export function Eyes({ mood = 'idle' }: { mood?: MaiMaiMood }) {
   const config = MOOD_CONFIGS[mood] || MOOD_CONFIGS.default;
   return (
     <>
@@ -294,7 +289,7 @@ export function Eyes({ mood = "idle" }: { mood?: MaiMaiMood }) {
 }
 
 /** 嘴巴 */
-export function Mouth({ mood = "idle" }: { mood?: MaiMaiMood }) {
+export function Mouth({ mood = 'idle' }: { mood?: MaiMaiMood }) {
   const config = MOOD_CONFIGS[mood] || MOOD_CONFIGS.default;
 
   // header 模式無嘴巴（空字串）
@@ -313,20 +308,13 @@ export function Mouth({ mood = "idle" }: { mood?: MaiMaiMood }) {
 }
 
 /** 手臂額外裝飾 (揮手、遮眼) */
-function ArmExtra({ type }: { type?: "wave" | "peek" | undefined }) {
+function ArmExtra({ type }: { type?: 'wave' | 'peek' | undefined }) {
   if (!type) return null;
 
-  if (type === "wave") {
+  if (type === 'wave') {
     const createWave = (x: number, y: number, origin: string) => (
       <g className={`animate-wave ${origin}`}>
-        <circle
-          cx={x}
-          cy={y}
-          r={WAVE_RADIUS}
-          stroke="currentColor"
-          strokeWidth="4"
-          fill="none"
-        />
+        <circle cx={x} cy={y} r={WAVE_RADIUS} stroke="currentColor" strokeWidth="4" fill="none" />
       </g>
     );
     const waveLX = SHOULDER_L_X - WAVE_OFFSET_X;
@@ -335,20 +323,16 @@ function ArmExtra({ type }: { type?: "wave" | "peek" | undefined }) {
 
     return (
       <>
-        {createWave(waveLX, waveY, "origin-bottom-right")}
-        {createWave(waveRX, waveY, "origin-bottom-left")}
+        {createWave(waveLX, waveY, 'origin-bottom-right')}
+        {createWave(waveRX, waveY, 'origin-bottom-left')}
       </>
     );
   }
 
-  if (type === "peek") {
+  if (type === 'peek') {
     const barX = CENTER_X - PEEK_BAR_WIDTH / 2;
     const barY = EYE_Y - PEEK_BAR_OFFSET_Y;
-    const peekBarXs = [
-      CENTER_X - PEEK_BAR_GAP,
-      CENTER_X,
-      CENTER_X + PEEK_BAR_GAP,
-    ];
+    const peekBarXs = [CENTER_X - PEEK_BAR_GAP, CENTER_X, CENTER_X + PEEK_BAR_GAP];
 
     return (
       <>
@@ -411,14 +395,8 @@ export function Arms({ mood }: { mood: MaiMaiMood }) {
 }
 
 /** 腿 */
-export function Legs({
-  mood,
-  animated = false,
-}: {
-  mood: MaiMaiMood;
-  animated?: boolean;
-}) {
-  const jumping = mood === "celebrate" || mood === "excited";
+export function Legs({ mood, animated = false }: { mood: MaiMaiMood; animated?: boolean }) {
+  const jumping = mood === 'celebrate' || mood === 'excited';
 
   if (jumping) {
     const jumpY = HIP_Y + JUMP_OFFSET;
@@ -519,18 +497,11 @@ const EffectStar = React.memo(function EffectStar({
   const r = size / 2;
   // 使用預計算的單位圓頂點
   const points = React.useMemo(() => {
-    return STAR_UNIT_VERTICES.map(
-      (v) => `${cx + v.x * r},${cy + v.y * r}`,
-    ).join(" ");
+    return STAR_UNIT_VERTICES.map((v) => `${cx + v.x * r},${cy + v.y * r}`).join(' ');
   }, [cx, cy, r]);
 
   return (
-    <polygon
-      points={points}
-      fill={EFFECT_COLOR_GOLD}
-      opacity={opacity}
-      className={className}
-    />
+    <polygon points={points} fill={EFFECT_COLOR_GOLD} opacity={opacity} className={className} />
   );
 });
 
@@ -652,7 +623,7 @@ export function Effects({ mood }: { mood: MaiMaiMood }) {
         const key = `${mood}-${p.kind}-${i}`;
 
         switch (p.kind) {
-          case "star":
+          case 'star':
             return (
               <EffectStar
                 key={key}
@@ -663,7 +634,7 @@ export function Effects({ mood }: { mood: MaiMaiMood }) {
                 className={p.className}
               />
             );
-          case "sparkle":
+          case 'sparkle':
             return (
               <EffectSparkle
                 key={key}
@@ -674,7 +645,7 @@ export function Effects({ mood }: { mood: MaiMaiMood }) {
                 className={p.className}
               />
             );
-          case "confetti":
+          case 'confetti':
             return (
               <EffectConfetti
                 key={key}
@@ -685,7 +656,7 @@ export function Effects({ mood }: { mood: MaiMaiMood }) {
                 className={p.className}
               />
             );
-          case "text":
+          case 'text':
             return (
               <text
                 key={key}
@@ -693,15 +664,15 @@ export function Effects({ mood }: { mood: MaiMaiMood }) {
                 y={cy}
                 fontSize={p.size}
                 className={p.className}
-                fontWeight={p.icon === "Hi!" ? "bold" : undefined}
+                fontWeight={p.icon === 'Hi!' ? 'bold' : undefined}
                 fill="currentColor"
                 opacity={p.opacity}
-                textAnchor={p.icon === "Hi!" ? "middle" : undefined}
+                textAnchor={p.icon === 'Hi!' ? 'middle' : undefined}
               >
                 {p.icon}
               </text>
             );
-          case "circle":
+          case 'circle':
             return (
               <circle
                 key={key}
@@ -713,7 +684,7 @@ export function Effects({ mood }: { mood: MaiMaiMood }) {
                 className={p.className}
               />
             );
-          case "ellipse":
+          case 'ellipse':
             return (
               <ellipse
                 key={key}
@@ -721,15 +692,11 @@ export function Effects({ mood }: { mood: MaiMaiMood }) {
                 cy={cy}
                 rx={p.rx}
                 ry={p.ry}
-                fill={mood === "shy" ? EFFECT_COLOR_SHY_BLUE : "white"}
-                stroke={mood === "wave" ? "currentColor" : "none"}
-                strokeWidth={mood === "wave" ? 2 : undefined}
+                fill={mood === 'shy' ? EFFECT_COLOR_SHY_BLUE : 'white'}
+                stroke={mood === 'wave' ? 'currentColor' : 'none'}
+                strokeWidth={mood === 'wave' ? 2 : undefined}
                 className={
-                  mood === "shy"
-                    ? "animate-drip"
-                    : mood === "wave"
-                      ? "animate-bounce"
-                      : p.className
+                  mood === 'shy' ? 'animate-drip' : mood === 'wave' ? 'animate-bounce' : p.className
                 }
               />
             );
@@ -744,9 +711,9 @@ export function Effects({ mood }: { mood: MaiMaiMood }) {
 // ============ 主組件 ============
 
 export function MaiMaiBase({
-  mood = "idle",
-  size = "md",
-  className = "",
+  mood = 'idle',
+  size = 'md',
+  className = '',
   animated = true,
   onClick,
   showEffects = true,
@@ -757,25 +724,25 @@ export function MaiMaiBase({
   // 根據心情決定動畫
   const getAnimationClass = () => {
     switch (activeMood) {
-      case "celebrate":
-      case "excited":
-        return "animate-jump";
-      case "happy":
-        return "animate-bounce-slow";
-      case "shy":
-        return "animate-shake";
-      case "idle":
-        return animated ? "animate-float" : "";
+      case 'celebrate':
+      case 'excited':
+        return 'animate-jump';
+      case 'happy':
+        return 'animate-bounce-slow';
+      case 'shy':
+        return 'animate-shake';
+      case 'idle':
+        return animated ? 'animate-float' : '';
       default:
-        return "";
+        return '';
     }
   };
 
-  const showBlush = activeMood === "shy" || activeMood === "peek";
+  const showBlush = activeMood === 'shy' || activeMood === 'peek';
 
   const handleKeyDown = onClick
     ? (e: React.KeyboardEvent) => {
-        if (e.key === "Enter" || e.key === " ") onClick();
+        if (e.key === 'Enter' || e.key === ' ') onClick();
       }
     : undefined;
 
@@ -783,16 +750,16 @@ export function MaiMaiBase({
   const interactiveProps = onClick
     ? {
         onClick,
-        role: "button" as const,
+        role: 'button' as const,
         tabIndex: 0,
         onKeyDown: handleKeyDown,
-        "aria-label": "MaiMai mascot button",
+        'aria-label': 'MaiMai mascot button',
       }
     : {};
 
   return (
     <div
-      className={`relative ${SIZE_CLASSES[size]} ${className} ${onClick ? "cursor-pointer" : ""}`}
+      className={`relative ${SIZE_CLASSES[size]} ${className} ${onClick ? 'cursor-pointer' : ''}`}
       style={style}
       {...interactiveProps}
     >
@@ -804,7 +771,7 @@ export function MaiMaiBase({
         key={activeMood}
         data-mood={activeMood}
         className={`size-full text-[var(--brand)] drop-shadow-sm ${T_TRANSFORM} ${getAnimationClass()} animate-fadeIn`}
-        style={{ animationDuration: "180ms" }}
+        style={{ animationDuration: '180ms' }}
       >
         {/* 特效 */}
         {showEffects && <Effects mood={activeMood} />}

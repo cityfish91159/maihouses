@@ -1,5 +1,5 @@
-import { toast } from "sonner";
-import { TOAST_DURATION } from "../constants/toast";
+import { toast } from 'sonner';
+import { TOAST_DURATION } from '../constants/toast';
 
 export type NotifyOptions = {
   id?: string | number;
@@ -21,7 +21,7 @@ type ToastOptions = {
 const mapOptions = (
   options: NotifyOptions = {},
   description?: string,
-  defaultDuration = 3200,
+  defaultDuration = 3200
 ): ToastOptions => {
   const mapped: ToastOptions = {
     duration: options.duration ?? defaultDuration,
@@ -50,31 +50,22 @@ export const notify = {
     toast.success(title, mapOptions(options, description, TOAST_DURATION.SUCCESS)),
 
   error: (title: string, description?: string, options?: NotifyOptions) =>
-    toast.error(
-      title,
-      mapOptions(options, description, options?.duration ?? TOAST_DURATION.ERROR),
-    ),
+    toast.error(title, mapOptions(options, description, options?.duration ?? TOAST_DURATION.ERROR)),
 
   warning: (title: string, description?: string, options?: NotifyOptions) =>
     toast.warning(
       title,
-      mapOptions(options, description, options?.duration ?? TOAST_DURATION.WARNING),
+      mapOptions(options, description, options?.duration ?? TOAST_DURATION.WARNING)
     ),
 
   info: (title: string, description?: string, options?: NotifyOptions) =>
     toast.info(title, mapOptions(options, description, TOAST_DURATION.INFO)),
 
   loading: (title: string, options?: NotifyOptions) =>
-    toast.loading(
-      title,
-      mapOptions(options, options?.description, options?.duration ?? Infinity),
-    ),
+    toast.loading(title, mapOptions(options, options?.description, options?.duration ?? Infinity)),
 
-  dev: (message = "此功能開發中", options?: NotifyOptions) =>
-    toast.info(
-      "開發中",
-      mapOptions(options, message, options?.duration ?? 2200),
-    ),
+  dev: (message = '此功能開發中', options?: NotifyOptions) =>
+    toast.info('開發中', mapOptions(options, message, options?.duration ?? 2200)),
 
   dismiss: (id?: string | number) => toast.dismiss(id),
 };

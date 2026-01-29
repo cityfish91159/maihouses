@@ -12,25 +12,25 @@
 // LINE 相關
 // ============================================================================
 
-export const ERR_INVALID_LINE_ID = "LINE User ID 格式錯誤";
+export const ERR_INVALID_LINE_ID = 'LINE User ID 格式錯誤';
 
 // ============================================================================
 // 查詢相關
 // ============================================================================
 
-export const ERR_DB_QUERY_FAILED = "案件查詢失敗";
-export const ERR_UNEXPECTED = "查詢發生未預期錯誤";
+export const ERR_DB_QUERY_FAILED = '案件查詢失敗';
+export const ERR_UNEXPECTED = '查詢發生未預期錯誤';
 
 // ============================================================================
 // HTTP 相關
 // ============================================================================
 
-export const ERR_METHOD_NOT_ALLOWED = "僅支援 GET 方法";
-export const ERR_UNAUTHORIZED = "請先登入";
-export const ERR_FORBIDDEN = "無權限存取此資源";
+export const ERR_METHOD_NOT_ALLOWED = '僅支援 GET 方法';
+export const ERR_UNAUTHORIZED = '請先登入';
+export const ERR_FORBIDDEN = '無權限存取此資源';
 
 // ============================================================================
 // 成功訊息
 // ============================================================================
 
-export const MSG_NO_CASES = "目前沒有進行中的交易";
+export const MSG_NO_CASES = '目前沒有進行中的交易';

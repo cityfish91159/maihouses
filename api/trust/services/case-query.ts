@@ -26,20 +26,16 @@
 // 目前無分頁功能，當消費者案件數量過多時可能影響效能。
 // 建議在 Phase 2 實作 cursor-based pagination。
 
-import { z } from "zod";
-import { supabase } from "../_utils";
-import { logger } from "../../lib/logger";
+import { z } from 'zod';
+import { supabase } from '../_utils';
+import { logger } from '../../lib/logger';
 import {
   ACTIVE_STATUSES,
   LineUserIdSchema,
   TRUST_ROOM_BASE_URL,
   TRUST_ROOM_PATH_PREFIX,
-} from "../constants/validation";
-import {
-  ERR_DB_QUERY_FAILED,
-  ERR_INVALID_LINE_ID,
-  ERR_UNEXPECTED,
-} from "../constants/messages";
+} from '../constants/validation';
+import { ERR_DB_QUERY_FAILED, ERR_INVALID_LINE_ID, ERR_UNEXPECTED } from '../constants/messages';
 
 // ============================================================================
 // Constants
@@ -47,12 +43,12 @@ import {
 
 /** 步驟名稱對照表（M1-M6） */
 export const TRUST_STEP_NAMES: Record<number, string> = {
-  1: "M1 接洽",
-  2: "M2 帶看",
-  3: "M3 出價",
-  4: "M4 斡旋",
-  5: "M5 成交",
-  6: "M6 交屋",
+  1: 'M1 接洽',
+  2: 'M2 帶看',
+  3: 'M3 出價',
+  4: 'M4 斡旋',
+  5: 'M5 成交',
+  6: 'M6 交屋',
 };
 
 // ============================================================================
@@ -65,7 +61,7 @@ export interface CaseData {
   propertyTitle: string;
   agentName: string;
   currentStep: number;
-  status: "active" | "dormant";
+  status: 'active' | 'dormant';
   updatedAt: string;
 }
 
@@ -85,7 +81,7 @@ export interface QuerySuccess {
 export interface QueryFailure {
   success: false;
   error: string;
-  code: "INVALID_LINE_ID" | "INVALID_USER_ID" | "DB_ERROR" | "VALIDATION_ERROR";
+  code: 'INVALID_LINE_ID' | 'INVALID_USER_ID' | 'DB_ERROR' | 'VALIDATION_ERROR';
 }
 
 export type QueryResult = QuerySuccess | QueryFailure;
@@ -118,14 +114,14 @@ const AgentRowSchema = z.object({
  * 遮蔽 LINE ID（用於日誌）
  */
 function maskLineId(lineId: string): string {
-  return lineId.length < 5 ? "***" : `${lineId.slice(0, 5)}...`;
+  return lineId.length < 5 ? '***' : `${lineId.slice(0, 5)}...`;
 }
 
 /**
  * 遮蔽 UUID（用於日誌）
  */
 function maskUUID(uuid: string): string {
-  return uuid.length < 8 ? "***" : `${uuid.slice(0, 8)}...`;
+  return uuid.length < 8 ? '***' : `${uuid.slice(0, 8)}...`;
 }
 
 /**
@@ -151,13 +147,13 @@ export function generateTrustRoomUrl(caseId: string): string {
 
 /** User ID Zod Schema */
 const UserIdSchema = z.string().uuid({
-  message: "User ID 格式錯誤，應為有效的 UUID",
+  message: 'User ID 格式錯誤，應為有效的 UUID',
 });
 
 /** 統一查詢參數 */
 export interface QueryIdentityParams {
-  userId?: string;      // UUID 格式，來自 JWT
-  lineUserId?: string;  // U + 32 hex，來自 LINE
+  userId?: string; // UUID 格式，來自 JWT
+  lineUserId?: string; // U + 32 hex，來自 LINE
 }
 
 /**
@@ -190,8 +186,8 @@ export async function queryCasesByIdentity(params: QueryIdentityParams): Promise
   if (!userId && !lineUserId) {
     return {
       success: false,
-      error: "需要提供 userId 或 lineUserId",
-      code: "VALIDATION_ERROR",
+      error: '需要提供 userId 或 lineUserId',
+      code: 'VALIDATION_ERROR',
     };
   }
 
@@ -199,13 +195,13 @@ export async function queryCasesByIdentity(params: QueryIdentityParams): Promise
   if (userId) {
     const userIdResult = UserIdSchema.safeParse(userId);
     if (!userIdResult.success) {
-      logger.warn("[case-query] Invalid user ID format", {
+      logger.warn('[case-query] Invalid user ID format', {
         userIdMasked: maskUUID(userId),
       });
       return {
         success: false,
-        error: "User ID 格式錯誤",
-        code: "INVALID_USER_ID",
+        error: 'User ID 格式錯誤',
+        code: 'INVALID_USER_ID',
       };
     }
   }
@@ -216,7 +212,7 @@ export async function queryCasesByIdentity(params: QueryIdentityParams): Promise
       return {
         success: false,
         error: ERR_INVALID_LINE_ID,
-        code: "INVALID_LINE_ID",
+        code: 'INVALID_LINE_ID',
       };
     }
   }
@@ -224,10 +220,10 @@ export async function queryCasesByIdentity(params: QueryIdentityParams): Promise
   const maskedUserId = userId ? maskUUID(userId) : undefined;
   const maskedLineId = lineUserId ? maskLineId(lineUserId) : undefined;
 
-  logger.info("[case-query] Query by identity started", {
+  logger.info('[case-query] Query by identity started', {
     userIdMasked: maskedUserId,
     lineIdMasked: maskedLineId,
-    queryMode: userId && lineUserId ? "OR" : "single",
+    queryMode: userId && lineUserId ? 'OR' : 'single',
   });
 
   try {
@@ -238,38 +234,38 @@ export async function queryCasesByIdentity(params: QueryIdentityParams): Promise
       // 雙欄位 OR 查詢：分別查詢後合併去重
       const [userResult, lineResult] = await Promise.all([
         supabase
-          .from("trust_cases")
-          .select("id, property_title, current_step, status, agent_id, updated_at")
-          .eq("buyer_user_id", userId)
-          .in("status", ACTIVE_STATUSES),
+          .from('trust_cases')
+          .select('id, property_title, current_step, status, agent_id, updated_at')
+          .eq('buyer_user_id', userId)
+          .in('status', ACTIVE_STATUSES),
         supabase
-          .from("trust_cases")
-          .select("id, property_title, current_step, status, agent_id, updated_at")
-          .eq("buyer_line_id", lineUserId)
-          .in("status", ACTIVE_STATUSES),
+          .from('trust_cases')
+          .select('id, property_title, current_step, status, agent_id, updated_at')
+          .eq('buyer_line_id', lineUserId)
+          .in('status', ACTIVE_STATUSES),
       ]);
 
       if (userResult.error) {
-        logger.error("[case-query] DB query error (userId in OR)", {
+        logger.error('[case-query] DB query error (userId in OR)', {
           error: userResult.error.message,
           code: userResult.error.code,
         });
         return {
           success: false,
           error: ERR_DB_QUERY_FAILED,
-          code: "DB_ERROR",
+          code: 'DB_ERROR',
         };
       }
 
       if (lineResult.error) {
-        logger.error("[case-query] DB query error (lineId in OR)", {
+        logger.error('[case-query] DB query error (lineId in OR)', {
           error: lineResult.error.message,
           code: lineResult.error.code,
         });
         return {
           success: false,
           error: ERR_DB_QUERY_FAILED,
-          code: "DB_ERROR",
+          code: 'DB_ERROR',
         };
       }
 
@@ -279,7 +275,7 @@ export async function queryCasesByIdentity(params: QueryIdentityParams): Promise
       // Step 3a: 先用 Zod 驗證所有資料
       const parseResult = z.array(CaseRowSchema).safeParse(combined);
       if (!parseResult.success) {
-        logger.warn("[case-query] Some case rows invalid (OR query)", {
+        logger.warn('[case-query] Some case rows invalid (OR query)', {
           issues: parseResult.error.issues.slice(0, 3).map((i) => i.message),
         });
         // 降級處理：逐筆驗證，只保留有效資料
@@ -311,21 +307,21 @@ export async function queryCasesByIdentity(params: QueryIdentityParams): Promise
     } else if (userId) {
       // 單欄位查詢：buyer_user_id
       const { data, error } = await supabase
-        .from("trust_cases")
-        .select("id, property_title, current_step, status, agent_id, updated_at")
-        .eq("buyer_user_id", userId)
-        .in("status", ACTIVE_STATUSES)
-        .order("updated_at", { ascending: false });
+        .from('trust_cases')
+        .select('id, property_title, current_step, status, agent_id, updated_at')
+        .eq('buyer_user_id', userId)
+        .in('status', ACTIVE_STATUSES)
+        .order('updated_at', { ascending: false });
 
       if (error) {
-        logger.error("[case-query] DB query error (userId)", {
+        logger.error('[case-query] DB query error (userId)', {
           error: error.message,
           code: error.code,
         });
         return {
           success: false,
           error: ERR_DB_QUERY_FAILED,
-          code: "DB_ERROR",
+          code: 'DB_ERROR',
         };
       }
 
@@ -334,7 +330,7 @@ export async function queryCasesByIdentity(params: QueryIdentityParams): Promise
         allCases = parseResult.data;
       } else {
         // 降級處理：記錄警告，逐筆驗證保留有效資料
-        logger.warn("[case-query] Some case rows invalid (userId query)", {
+        logger.warn('[case-query] Some case rows invalid (userId query)', {
           issues: parseResult.error.issues.slice(0, 3).map((i) => i.message),
           userIdMasked: maskedUserId,
         });
@@ -348,21 +344,21 @@ export async function queryCasesByIdentity(params: QueryIdentityParams): Promise
     } else if (lineUserId) {
       // 單欄位查詢：buyer_line_id
       const { data, error } = await supabase
-        .from("trust_cases")
-        .select("id, property_title, current_step, status, agent_id, updated_at")
-        .eq("buyer_line_id", lineUserId)
-        .in("status", ACTIVE_STATUSES)
-        .order("updated_at", { ascending: false });
+        .from('trust_cases')
+        .select('id, property_title, current_step, status, agent_id, updated_at')
+        .eq('buyer_line_id', lineUserId)
+        .in('status', ACTIVE_STATUSES)
+        .order('updated_at', { ascending: false });
 
       if (error) {
-        logger.error("[case-query] DB query error (lineId)", {
+        logger.error('[case-query] DB query error (lineId)', {
           error: error.message,
           code: error.code,
         });
         return {
           success: false,
           error: ERR_DB_QUERY_FAILED,
-          code: "DB_ERROR",
+          code: 'DB_ERROR',
         };
       }
 
@@ -371,7 +367,7 @@ export async function queryCasesByIdentity(params: QueryIdentityParams): Promise
         allCases = parseResult.data;
       } else {
         // 降級處理：記錄警告，逐筆驗證保留有效資料
-        logger.warn("[case-query] Some case rows invalid (lineId query)", {
+        logger.warn('[case-query] Some case rows invalid (lineId query)', {
           issues: parseResult.error.issues.slice(0, 3).map((i) => i.message),
           lineIdMasked: maskedLineId,
         });
@@ -386,7 +382,7 @@ export async function queryCasesByIdentity(params: QueryIdentityParams): Promise
 
     // Step 4: 無案件
     if (allCases.length === 0) {
-      logger.info("[case-query] No cases found", {
+      logger.info('[case-query] No cases found', {
         userIdMasked: maskedUserId,
         lineIdMasked: maskedLineId,
         durationMs: Date.now() - startTime,
@@ -406,12 +402,12 @@ export async function queryCasesByIdentity(params: QueryIdentityParams): Promise
     const agentNameMap = new Map<string, string>();
 
     const { data: agents, error: agentsError } = await supabase
-      .from("agents")
-      .select("id, name")
-      .in("id", agentIds);
+      .from('agents')
+      .select('id, name')
+      .in('id', agentIds);
 
     if (agentsError) {
-      logger.warn("[case-query] Agents query failed (non-blocking)", {
+      logger.warn('[case-query] Agents query failed (non-blocking)', {
         error: agentsError.message,
         code: agentsError.code,
       });
@@ -428,13 +424,13 @@ export async function queryCasesByIdentity(params: QueryIdentityParams): Promise
     const resultCases: CaseData[] = allCases.map((c) => ({
       id: c.id,
       propertyTitle: c.property_title,
-      agentName: agentNameMap.get(c.agent_id) ?? "未知房仲",
+      agentName: agentNameMap.get(c.agent_id) ?? '未知房仲',
       currentStep: c.current_step,
       status: c.status,
       updatedAt: c.updated_at,
     }));
 
-    logger.info("[case-query] Success", {
+    logger.info('[case-query] Success', {
       userIdMasked: maskedUserId,
       lineIdMasked: maskedLineId,
       count: resultCases.length,
@@ -449,15 +445,15 @@ export async function queryCasesByIdentity(params: QueryIdentityParams): Promise
       },
     };
   } catch (e) {
-    logger.error("[case-query] Unexpected error", {
-      error: e instanceof Error ? e.message : "Unknown",
+    logger.error('[case-query] Unexpected error', {
+      error: e instanceof Error ? e.message : 'Unknown',
       userIdMasked: maskedUserId,
       lineIdMasked: maskedLineId,
     });
     return {
       success: false,
       error: ERR_UNEXPECTED,
-      code: "DB_ERROR",
+      code: 'DB_ERROR',
     };
   }
 }

@@ -1,22 +1,17 @@
-import React from "react";
-import { useNavigate } from "react-router-dom";
-import type {
-  ListingPropertyCard,
-  ListingReview,
-} from "../../../types/property-page";
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import type { ListingPropertyCard, ListingReview } from '../../../types/property-page';
 
 interface LegacyHorizontalCardProps {
   data: ListingPropertyCard;
 }
 
-const LegacyHorizontalCard: React.FC<LegacyHorizontalCardProps> = ({
-  data,
-}) => {
+const LegacyHorizontalCard: React.FC<LegacyHorizontalCardProps> = ({ data }) => {
   const navigate = useNavigate();
 
   const handleNavigate = () => {
     // 使用 id 進行導航，若無則使用 demo 預設
-    const targetId = data.id || "MH-100001";
+    const targetId = data.id || 'MH-100001';
     navigate(`/property/${targetId}`);
   };
 
@@ -29,11 +24,11 @@ const LegacyHorizontalCard: React.FC<LegacyHorizontalCardProps> = ({
           className="horizontal-thumb"
           onClick={handleNavigate}
           onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") handleNavigate();
+            if (e.key === 'Enter' || e.key === ' ') handleNavigate();
           }}
           role="button"
           tabIndex={0}
-          style={{ cursor: "pointer" }}
+          style={{ cursor: 'pointer' }}
         >
           <img src={data.image} alt={data.title} loading="lazy" />
         </div>
@@ -45,13 +40,13 @@ const LegacyHorizontalCard: React.FC<LegacyHorizontalCardProps> = ({
                 onClick={handleNavigate}
                 className="horizontal-title-btn"
                 style={{
-                  cursor: "pointer",
-                  background: "none",
-                  border: "none",
+                  cursor: 'pointer',
+                  background: 'none',
+                  border: 'none',
                   padding: 0,
-                  font: "inherit",
-                  color: "inherit",
-                  fontWeight: "bold",
+                  font: 'inherit',
+                  color: 'inherit',
+                  fontWeight: 'bold',
                 }}
               >
                 {data.title}
@@ -86,9 +81,7 @@ const LegacyHorizontalCard: React.FC<LegacyHorizontalCardProps> = ({
             <span className="lock-icon">🔒</span>
             <div className="lock-text">
               <div className="lock-label">{data.lockLabel}</div>
-              {data.lockCount && (
-                <div className="lock-count">({data.lockCount})</div>
-              )}
+              {data.lockCount && <div className="lock-count">({data.lockCount})</div>}
             </div>
           </div>
         </div>
@@ -98,16 +91,16 @@ const LegacyHorizontalCard: React.FC<LegacyHorizontalCardProps> = ({
             className="btn-primary"
             onClick={handleNavigate}
             style={{
-              padding: "0.375rem",
-              minHeight: "2.5rem",
-              fontSize: "0.8125rem",
+              padding: '0.375rem',
+              minHeight: '2.5rem',
+              fontSize: '0.8125rem',
             }}
           >
             查看詳情
           </button>
           <button
             className="heart-btn"
-            style={{ width: "2.5rem", height: "2.5rem", minWidth: "2.5rem" }}
+            style={{ width: '2.5rem', height: '2.5rem', minWidth: '2.5rem' }}
           >
             ♥
           </button>

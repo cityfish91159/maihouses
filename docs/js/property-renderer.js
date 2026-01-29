@@ -22,11 +22,10 @@ export class PropertyRenderer {
       this.versionLog.push(entry);
     } else {
       this.versionLog[this.versionLogIndex] = entry;
-      this.versionLogIndex =
-        (this.versionLogIndex + 1) % this.versionLogCapacity;
+      this.versionLogIndex = (this.versionLogIndex + 1) % this.versionLogCapacity;
     }
 
-    if (typeof window !== "undefined") {
+    if (typeof window !== 'undefined') {
       // 為了相容性，對外暴露時仍提供排序後的陣列
       window.__renderVersionLog = this.getVersionLog();
     }
@@ -35,16 +34,13 @@ export class PropertyRenderer {
   clearLog() {
     this.versionLog = [];
     this.versionLogIndex = 0;
-    if (typeof window !== "undefined") {
+    if (typeof window !== 'undefined') {
       window.__renderVersionLog = [];
     }
   }
 
   getVersionLog() {
-    if (
-      !this.versionLogCapacity ||
-      this.versionLog.length < this.versionLogCapacity
-    ) {
+    if (!this.versionLogCapacity || this.versionLog.length < this.versionLogCapacity) {
       return [...this.versionLog];
     }
     // 重新排序 Ring Buffer
@@ -57,25 +53,25 @@ export class PropertyRenderer {
   ensureContainers() {
     if (this.containers) return;
     this.containers = {
-      main: document.getElementById("featured-main-container"),
-      sideTop: document.getElementById("featured-side-top-container"),
-      sideBottom: document.getElementById("featured-side-bottom-container"),
-      listings: document.getElementById("listing-grid-container"),
+      main: document.getElementById('featured-main-container'),
+      sideTop: document.getElementById('featured-side-top-container'),
+      sideBottom: document.getElementById('featured-side-bottom-container'),
+      listings: document.getElementById('listing-grid-container'),
     };
   }
 
   escapeHtml(str) {
-    if (typeof str !== "string") return str;
+    if (typeof str !== 'string') return str;
     return str.replace(
       /[&<>"']/g,
       (m) =>
         ({
-          "&": "&amp;",
-          "<": "&lt;",
-          ">": "&gt;",
-          '"': "&quot;",
-          "'": "&#39;",
-        })[m],
+          '&': '&amp;',
+          '<': '&lt;',
+          '>': '&gt;',
+          '"': '&quot;',
+          "'": '&#39;',
+        })[m]
     );
   }
 
@@ -98,9 +94,7 @@ export class PropertyRenderer {
     };
 
     const start =
-      typeof performance !== "undefined" && performance.now
-        ? performance.now()
-        : Date.now();
+      typeof performance !== 'undefined' && performance.now ? performance.now() : Date.now();
 
     await Promise.all(
       urls.map(
@@ -116,16 +110,14 @@ export class PropertyRenderer {
               resolve();
             };
             img.src = url;
-          }),
-      ),
+          })
+      )
     );
 
     summary.durationMs =
-      (typeof performance !== "undefined" && performance.now
-        ? performance.now()
-        : Date.now()) - start;
-    summary.coverage =
-      summary.attempted === 0 ? 1 : summary.loaded / summary.attempted;
+      (typeof performance !== 'undefined' && performance.now ? performance.now() : Date.now()) -
+      start;
+    summary.coverage = summary.attempted === 0 ? 1 : summary.loaded / summary.attempted;
     return summary;
   }
 
@@ -139,35 +131,22 @@ export class PropertyRenderer {
 
       const eventMeta = {
         version: currentVersion,
-        source: context.source || "unknown",
+        source: context.source || 'unknown',
         reason: context.reason || null,
-        ts:
-          typeof performance !== "undefined" && performance.now
-            ? performance.now()
-            : Date.now(),
+        ts: typeof performance !== 'undefined' && performance.now ? performance.now() : Date.now(),
       };
 
       // S4: 抽取共用渲染邏輯
-      this.renderFeaturedCard(
-        data?.featured?.main,
-        this.containers?.main,
-        "main",
-      );
-      this.renderFeaturedCard(
-        data?.featured?.sideTop,
-        this.containers?.sideTop,
-        "sideTop",
-      );
+      this.renderFeaturedCard(data?.featured?.main, this.containers?.main, 'main');
+      this.renderFeaturedCard(data?.featured?.sideTop, this.containers?.sideTop, 'sideTop');
       this.renderFeaturedCard(
         data?.featured?.sideBottom,
         this.containers?.sideBottom,
-        "sideBottom",
+        'sideBottom'
       );
 
       this.renderListings(data?.listings || []);
-      this.updateListingCount(
-        Array.isArray(data?.listings) ? data.listings.length : 0,
-      );
+      this.updateListingCount(Array.isArray(data?.listings) ? data.listings.length : 0);
 
       this.logVersion(eventMeta);
     });
@@ -176,129 +155,129 @@ export class PropertyRenderer {
   }
 
   updateListingCount(total) {
-    const countEl = document.querySelector(".listing-header .small-text");
-    if (countEl && typeof total === "number" && total > 0) {
+    const countEl = document.querySelector('.listing-header .small-text');
+    if (countEl && typeof total === 'number' && total > 0) {
       countEl.textContent = `共 ${total} 個社區`;
     }
   }
 
   createReviewElement(review, compact = false) {
-    const container = document.createElement("div");
+    const container = document.createElement('div');
     if (compact) {
-      container.className = "review-item-compact";
-      const badgeSpan = document.createElement("span");
-      badgeSpan.className = "review-badge";
-      badgeSpan.textContent = review?.badge || "";
+      container.className = 'review-item-compact';
+      const badgeSpan = document.createElement('span');
+      badgeSpan.className = 'review-badge';
+      badgeSpan.textContent = review?.badge || '';
 
-      const contentP = document.createElement("p");
-      contentP.className = "review-text";
-      contentP.textContent = review?.content || "";
+      const contentP = document.createElement('p');
+      contentP.className = 'review-text';
+      contentP.textContent = review?.content || '';
 
       container.appendChild(badgeSpan);
       container.appendChild(contentP);
       return container;
     }
 
-    container.className = "property-review-item";
-    const header = document.createElement("div");
-    header.className = "review-header";
+    container.className = 'property-review-item';
+    const header = document.createElement('div');
+    header.className = 'review-header';
 
-    const stars = document.createElement("span");
-    stars.className = "review-stars";
-    stars.textContent = review?.stars || "";
+    const stars = document.createElement('span');
+    stars.className = 'review-stars';
+    stars.textContent = review?.stars || '';
 
-    const author = document.createElement("span");
-    author.className = "review-author";
-    author.textContent = review?.author || "";
+    const author = document.createElement('span');
+    author.className = 'review-author';
+    author.textContent = review?.author || '';
 
     header.appendChild(stars);
     header.appendChild(author);
     container.appendChild(header);
 
     if (Array.isArray(review?.tags) && review.tags.length > 0) {
-      const tagsDiv = document.createElement("div");
-      tagsDiv.className = "review-tags";
+      const tagsDiv = document.createElement('div');
+      tagsDiv.className = 'review-tags';
       review.tags.forEach((tag) => {
-        const tagSpan = document.createElement("span");
-        tagSpan.className = "review-tag";
+        const tagSpan = document.createElement('span');
+        tagSpan.className = 'review-tag';
         tagSpan.textContent = tag;
         tagsDiv.appendChild(tagSpan);
       });
       container.appendChild(tagsDiv);
     }
 
-    const contentP = document.createElement("p");
-    contentP.className = "review-content";
-    contentP.textContent = review?.content || "";
+    const contentP = document.createElement('p');
+    contentP.className = 'review-content';
+    contentP.textContent = review?.content || '';
     container.appendChild(contentP);
 
     return container;
   }
 
-  renderFeaturedCard(item, container, variant = "main") {
+  renderFeaturedCard(item, container, variant = 'main') {
     if (!container || !item) return;
 
     const config =
       {
         main: {
-          cardClass: "",
-          chipClass: "",
+          cardClass: '',
+          chipClass: '',
           showHighlights: true,
-          lockPrefix: "還有 ",
-          btnText: "註冊查看",
+          lockPrefix: '還有 ',
+          btnText: '註冊查看',
           showCta: true,
         },
         sideTop: {
-          cardClass: "variant-side",
-          chipClass: "capsule-chip-sm",
+          cardClass: 'variant-side',
+          chipClass: 'capsule-chip-sm',
           showHighlights: false,
-          lockPrefix: "",
-          btnText: "查看",
+          lockPrefix: '',
+          btnText: '查看',
           showCta: false,
         },
         sideBottom: {
-          cardClass: "variant-side",
-          chipClass: "capsule-chip-sm",
+          cardClass: 'variant-side',
+          chipClass: 'capsule-chip-sm',
           showHighlights: false,
-          lockPrefix: "",
-          btnText: "查看",
+          lockPrefix: '',
+          btnText: '查看',
           showCta: false,
         },
       }[variant] || config.main;
 
-    const article = document.createElement("article");
+    const article = document.createElement('article');
     article.className = `property-card ${config.cardClass}`.trim();
 
     // Media Section
-    const mediaDiv = document.createElement("div");
-    mediaDiv.className = "property-media";
-    const img = document.createElement("img");
+    const mediaDiv = document.createElement('div');
+    mediaDiv.className = 'property-media';
+    const img = document.createElement('img');
     img.src = item.image;
     img.alt = item.title;
-    img.loading = "lazy";
-    img.decoding = "async";
-    const badge = document.createElement("span");
-    badge.className = "property-badge";
+    img.loading = 'lazy';
+    img.decoding = 'async';
+    const badge = document.createElement('span');
+    badge.className = 'property-badge';
     badge.textContent = item.badge;
     mediaDiv.appendChild(img);
     mediaDiv.appendChild(badge);
 
     // Content Section
-    const contentDiv = document.createElement("div");
-    contentDiv.className = "property-content";
+    const contentDiv = document.createElement('div');
+    contentDiv.className = 'property-content';
 
-    const title = document.createElement("h3");
-    title.className = "property-title";
+    const title = document.createElement('h3');
+    title.className = 'property-title';
     title.textContent = item.title;
 
-    const location = document.createElement("div");
-    location.className = "property-location";
+    const location = document.createElement('div');
+    location.className = 'property-location';
     location.textContent = item.location;
 
-    const tagsRow = document.createElement("div");
-    tagsRow.className = "property-tags-row";
+    const tagsRow = document.createElement('div');
+    tagsRow.className = 'property-tags-row';
     (item.tags || []).slice(0, 3).forEach((t) => {
-      const span = document.createElement("span");
+      const span = document.createElement('span');
       span.className = `capsule-chip ${config.chipClass}`.trim();
       span.textContent = t;
       tagsRow.appendChild(span);
@@ -309,66 +288,66 @@ export class PropertyRenderer {
     contentDiv.appendChild(tagsRow);
 
     if (config.showHighlights) {
-      const highlights = document.createElement("div");
-      highlights.className = "tiny-text tiny-text-highlight";
-      highlights.textContent = item.highlights || "";
+      const highlights = document.createElement('div');
+      highlights.className = 'tiny-text tiny-text-highlight';
+      highlights.textContent = item.highlights || '';
       contentDiv.appendChild(highlights);
     }
 
-    const rating = document.createElement("div");
-    rating.className = "property-rating";
-    const star = document.createElement("span");
-    star.className = "star";
-    star.textContent = "★";
+    const rating = document.createElement('div');
+    rating.className = 'property-rating';
+    const star = document.createElement('span');
+    star.className = 'star';
+    star.textContent = '★';
     rating.appendChild(star);
     rating.appendChild(document.createTextNode(item.rating));
     contentDiv.appendChild(rating);
 
-    const reviewsHost = document.createElement("div");
-    reviewsHost.className = "property-reviews";
+    const reviewsHost = document.createElement('div');
+    reviewsHost.className = 'property-reviews';
     const nodes = (item.reviews || []).map((r) => this.createReviewElement(r));
     reviewsHost.replaceChildren(...nodes);
     contentDiv.appendChild(reviewsHost);
 
-    const moreReviews = document.createElement("div");
-    moreReviews.className = "property-more-reviews";
-    const lockInfo = document.createElement("div");
-    lockInfo.className = "lock-info";
-    const lockIcon = document.createElement("span");
-    lockIcon.className = "lock-icon";
-    lockIcon.textContent = "🔒";
-    const lockText = document.createElement("span");
+    const moreReviews = document.createElement('div');
+    moreReviews.className = 'property-more-reviews';
+    const lockInfo = document.createElement('div');
+    lockInfo.className = 'lock-info';
+    const lockIcon = document.createElement('span');
+    lockIcon.className = 'lock-icon';
+    lockIcon.textContent = '🔒';
+    const lockText = document.createElement('span');
     lockText.textContent = `${config.lockPrefix}${item.lockCount} 則評價`;
     lockInfo.appendChild(lockIcon);
     lockInfo.appendChild(lockText);
-    const regBtn = document.createElement("button");
-    regBtn.className = "register-btn";
-    regBtn.type = "button";
+    const regBtn = document.createElement('button');
+    regBtn.className = 'register-btn';
+    regBtn.type = 'button';
     regBtn.textContent = config.btnText;
     moreReviews.appendChild(lockInfo);
     moreReviews.appendChild(regBtn);
     contentDiv.appendChild(moreReviews);
 
-    const price = document.createElement("div");
-    price.className = "property-price";
+    const price = document.createElement('div');
+    price.className = 'property-price';
     price.textContent = item.price;
-    const size = document.createElement("span");
+    const size = document.createElement('span');
     size.textContent = item.size;
     price.appendChild(size);
     contentDiv.appendChild(price);
 
     if (config.showCta) {
-      const cta = document.createElement("div");
-      cta.className = "property-cta";
-      const detailBtn = document.createElement("button");
-      detailBtn.className = "btn-primary";
-      detailBtn.type = "button";
-      detailBtn.textContent = "查看詳情";
-      const heartBtn = document.createElement("button");
-      heartBtn.className = "heart-btn";
-      heartBtn.type = "button";
-      heartBtn.setAttribute("aria-label", "加入收藏");
-      heartBtn.textContent = "♡";
+      const cta = document.createElement('div');
+      cta.className = 'property-cta';
+      const detailBtn = document.createElement('button');
+      detailBtn.className = 'btn-primary';
+      detailBtn.type = 'button';
+      detailBtn.textContent = '查看詳情';
+      const heartBtn = document.createElement('button');
+      heartBtn.className = 'heart-btn';
+      heartBtn.type = 'button';
+      heartBtn.setAttribute('aria-label', '加入收藏');
+      heartBtn.textContent = '♡';
       cta.appendChild(detailBtn);
       cta.appendChild(heartBtn);
       contentDiv.appendChild(cta);
@@ -385,12 +364,10 @@ export class PropertyRenderer {
     if (!container) return;
 
     // S1: 實作 DOM Diffing (Key-based Update with stable keys and signature)
-    const existingCards = Array.from(
-      container.querySelectorAll(".horizontal-card"),
-    );
+    const existingCards = Array.from(container.querySelectorAll('.horizontal-card'));
     const existingMap = new Map();
     existingCards.forEach((card) => {
-      const key = card.getAttribute("data-key");
+      const key = card.getAttribute('data-key');
       if (key) existingMap.set(key, card);
     });
 
@@ -414,72 +391,70 @@ export class PropertyRenderer {
         item.size,
         item.rating,
         item.note,
-        chipTags.join(","),
+        chipTags.join(','),
         item.lockLabel,
         item.lockCount,
-      ].join("|");
+      ].join('|');
 
-      const article = document.createElement("article");
-      article.className = "horizontal-card";
-      article.setAttribute("data-key", key);
+      const article = document.createElement('article');
+      article.className = 'horizontal-card';
+      article.setAttribute('data-key', key);
       article.dataset.sig = signature;
 
       // Left Section
-      const leftDiv = document.createElement("div");
-      leftDiv.className = "horizontal-left";
+      const leftDiv = document.createElement('div');
+      leftDiv.className = 'horizontal-left';
 
-      const thumbDiv = document.createElement("div");
-      thumbDiv.className = "horizontal-thumb";
-      const img = document.createElement("img");
+      const thumbDiv = document.createElement('div');
+      thumbDiv.className = 'horizontal-thumb';
+      const img = document.createElement('img');
       img.src = item.image;
       img.alt = item.title;
-      img.loading = "lazy";
-      img.decoding = "async";
+      img.loading = 'lazy';
+      img.decoding = 'async';
       thumbDiv.appendChild(img);
 
-      const mainDiv = document.createElement("div");
-      mainDiv.className = "horizontal-main";
+      const mainDiv = document.createElement('div');
+      mainDiv.className = 'horizontal-main';
 
-      const titleRow = document.createElement("div");
-      titleRow.className = "horizontal-title-row";
-      const pin = document.createElement("span");
-      pin.textContent = "📍";
-      const strong = document.createElement("strong");
+      const titleRow = document.createElement('div');
+      titleRow.className = 'horizontal-title-row';
+      const pin = document.createElement('span');
+      pin.textContent = '📍';
+      const strong = document.createElement('strong');
       strong.textContent = item.title;
       titleRow.appendChild(pin);
       titleRow.appendChild(strong);
       chipTags.forEach((t) => {
-        const span = document.createElement("span");
-        span.className = "capsule-chip capsule-chip-sm";
+        const span = document.createElement('span');
+        span.className = 'capsule-chip capsule-chip-sm';
         span.textContent = t;
         titleRow.appendChild(span);
       });
 
-      const priceDiv = document.createElement("div");
-      priceDiv.className = "horizontal-price";
+      const priceDiv = document.createElement('div');
+      priceDiv.className = 'horizontal-price';
       priceDiv.textContent = item.price;
-      const sizeSpan = document.createElement("span");
+      const sizeSpan = document.createElement('span');
       sizeSpan.textContent = item.size;
       priceDiv.appendChild(sizeSpan);
 
-      const ratingDiv = document.createElement("div");
-      ratingDiv.className = "horizontal-rating";
-      const star = document.createElement("span");
-      star.className = "star";
-      star.textContent = "★";
+      const ratingDiv = document.createElement('div');
+      ratingDiv.className = 'horizontal-rating';
+      const star = document.createElement('span');
+      star.className = 'star';
+      star.textContent = '★';
       ratingDiv.appendChild(star);
       ratingDiv.appendChild(document.createTextNode(item.rating));
 
-      const reviewsHost = document.createElement("div");
-      reviewsHost.className = "horizontal-reviews";
-      const nodes = (item.reviews || []).map((r) =>
-        this.createReviewElement(r, true),
-      );
+      const reviewsHost = document.createElement('div');
+      reviewsHost.className = 'horizontal-reviews';
+      const nodes = (item.reviews || []).map((r) => this.createReviewElement(r, true));
       reviewsHost.replaceChildren(...nodes);
 
-      const noteDiv = document.createElement("div");
-      noteDiv.className = "horizontal-bottom-note";
-      noteDiv.textContent = item.note || "";
+      const noteDiv = document.createElement('div');
+      noteDiv.className = 'horizontal-bottom-note';
+      noteDiv.textContent = item.note || '';
 
       mainDiv.appendChild(titleRow);
       mainDiv.appendChild(priceDiv);
@@ -491,48 +466,48 @@ export class PropertyRenderer {
       leftDiv.appendChild(mainDiv);
 
       // Right Section
-      const rightDiv = document.createElement("div");
-      rightDiv.className = "horizontal-right";
+      const rightDiv = document.createElement('div');
+      rightDiv.className = 'horizontal-right';
 
       const rightPrice = priceDiv.cloneNode(true);
 
-      const lockRow = document.createElement("div");
-      lockRow.className = "lock-row";
-      const lockHeader = document.createElement("div");
-      lockHeader.className = "lock-header";
-      const lockIcon = document.createElement("span");
-      lockIcon.className = "lock-icon";
-      lockIcon.textContent = "🔒";
-      const lockText = document.createElement("div");
-      lockText.className = "lock-text";
-      const lockLabel = document.createElement("span");
-      lockLabel.className = "lock-label";
-      lockLabel.textContent = item.lockLabel || "";
-      const lockCount = document.createElement("span");
-      lockCount.className = "lock-count";
+      const lockRow = document.createElement('div');
+      lockRow.className = 'lock-row';
+      const lockHeader = document.createElement('div');
+      lockHeader.className = 'lock-header';
+      const lockIcon = document.createElement('span');
+      lockIcon.className = 'lock-icon';
+      lockIcon.textContent = '🔒';
+      const lockText = document.createElement('div');
+      lockText.className = 'lock-text';
+      const lockLabel = document.createElement('span');
+      lockLabel.className = 'lock-label';
+      lockLabel.textContent = item.lockLabel || '';
+      const lockCount = document.createElement('span');
+      lockCount.className = 'lock-count';
       lockCount.textContent = `還有 ${item.lockCount} 則評價`;
       lockText.appendChild(lockLabel);
       lockText.appendChild(lockCount);
       lockHeader.appendChild(lockIcon);
       lockHeader.appendChild(lockText);
-      const lockBtn = document.createElement("button");
-      lockBtn.className = "lock-btn";
-      lockBtn.type = "button";
-      lockBtn.textContent = "註冊查看更多評價";
+      const lockBtn = document.createElement('button');
+      lockBtn.className = 'lock-btn';
+      lockBtn.type = 'button';
+      lockBtn.textContent = '註冊查看更多評價';
       lockRow.appendChild(lockHeader);
       lockRow.appendChild(lockBtn);
 
-      const ctaRow = document.createElement("div");
-      ctaRow.className = "horizontal-cta-row";
-      const viewBtn = document.createElement("button");
-      viewBtn.className = "btn-outline";
-      viewBtn.type = "button";
-      viewBtn.textContent = "查看";
-      const heartBtn = document.createElement("button");
-      heartBtn.className = "heart-btn";
-      heartBtn.type = "button";
-      heartBtn.setAttribute("aria-label", "加入收藏");
-      heartBtn.textContent = "♡";
+      const ctaRow = document.createElement('div');
+      ctaRow.className = 'horizontal-cta-row';
+      const viewBtn = document.createElement('button');
+      viewBtn.className = 'btn-outline';
+      viewBtn.type = 'button';
+      viewBtn.textContent = '查看';
+      const heartBtn = document.createElement('button');
+      heartBtn.className = 'heart-btn';
+      heartBtn.type = 'button';
+      heartBtn.setAttribute('aria-label', '加入收藏');
+      heartBtn.textContent = '♡';
       ctaRow.appendChild(viewBtn);
       ctaRow.appendChild(heartBtn);
 

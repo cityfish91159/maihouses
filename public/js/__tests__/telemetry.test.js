@@ -1,13 +1,13 @@
 // @vitest-environment jsdom
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { createTelemetry } from "../property-main.js";
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { createTelemetry } from '../property-main.js';
 
-describe("Telemetry LCP/FCP", () => {
+describe('Telemetry LCP/FCP', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
   });
 
-  it("captures LCP when PerformanceObserver triggers", () => {
+  it('captures LCP when PerformanceObserver triggers', () => {
     let callback;
     class MockPerformanceObserver {
       constructor(cb) {
@@ -16,7 +16,7 @@ describe("Telemetry LCP/FCP", () => {
       observe() {}
       disconnect() {}
     }
-    vi.stubGlobal("PerformanceObserver", MockPerformanceObserver);
+    vi.stubGlobal('PerformanceObserver', MockPerformanceObserver);
 
     const telemetry = createTelemetry();
 
@@ -29,14 +29,12 @@ describe("Telemetry LCP/FCP", () => {
     expect(data.lcp).toBe(123.45);
   });
 
-  it("captures FCP from performance entries", () => {
-    vi.stubGlobal("performance", {
+  it('captures FCP from performance entries', () => {
+    vi.stubGlobal('performance', {
       now: () => 1000,
       getEntriesByType: vi
         .fn()
-        .mockReturnValue([
-          { name: "first-contentful-paint", startTime: 45.67 },
-        ]),
+        .mockReturnValue([{ name: 'first-contentful-paint', startTime: 45.67 }]),
     });
 
     const telemetry = createTelemetry();
@@ -44,13 +42,13 @@ describe("Telemetry LCP/FCP", () => {
     expect(data.fcp).toBe(45.67);
   });
 
-  it("logs events with timestamps", () => {
+  it('logs events with timestamps', () => {
     const telemetry = createTelemetry();
-    telemetry.log("test-event", { foo: "bar" });
+    telemetry.log('test-event', { foo: 'bar' });
 
     const data = telemetry.expose();
-    expect(data.events[0].name).toBe("test-event");
-    expect(data.events[0].foo).toBe("bar");
-    expect(typeof data.events[0].ts).toBe("number");
+    expect(data.events[0].name).toBe('test-event');
+    expect(data.events[0].foo).toBe('bar');
+    expect(typeof data.events[0].ts).toBe('number');
   });
 });

@@ -5,17 +5,17 @@
  * 所有組件應從此 store 讀取模式狀態，而非各自管理
  */
 
-import { create } from "zustand";
-import { persist, createJSONStorage, devtools } from "zustand/middleware";
-import { safeLocalStorage } from "../lib/safeStorage";
+import { create } from 'zustand';
+import { persist, createJSONStorage, devtools } from 'zustand/middleware';
+import { safeLocalStorage } from '../lib/safeStorage';
 
 // ============================================================================
 // Constants
 // ============================================================================
 
-const STORAGE_KEY = "uag-mode";
-const URL_PARAM_KEY = "mock";
-const STORE_NAME = "UAGModeStore";
+const STORAGE_KEY = 'uag-mode';
+const URL_PARAM_KEY = 'mock';
+const STORE_NAME = 'UAGModeStore';
 
 // ============================================================================
 // Types
@@ -45,14 +45,14 @@ interface UAGModeState {
  * ?mock=0 或 ?mock=false 表示強制使用 Live 模式
  */
 function getInitialModeFromUrl(): boolean | null {
-  if (typeof window === "undefined") return null;
+  if (typeof window === 'undefined') return null;
 
   const urlParams = new URLSearchParams(window.location.search);
   const mockParam = urlParams.get(URL_PARAM_KEY);
 
   if (mockParam === null) return null;
 
-  return mockParam === "1" || mockParam === "true";
+  return mockParam === '1' || mockParam === 'true';
 }
 
 /**
@@ -64,8 +64,8 @@ function getStoredMode(): boolean {
     if (stored) {
       const parsed = JSON.parse(stored);
       // 兼容舊格式 "mock" / "live"
-      if (typeof parsed === "string") {
-        return parsed === "mock";
+      if (typeof parsed === 'string') {
+        return parsed === 'mock';
       }
       // 新格式 { state: { useMock: boolean } }
       if (parsed?.state?.useMock !== undefined) {
@@ -89,16 +89,15 @@ export const useUAGModeStore = create<UAGModeState>()(
       (set) => ({
         useMock: getStoredMode(),
 
-        setUseMock: (value) => set({ useMock: value }, false, "setUseMock"),
+        setUseMock: (value) => set({ useMock: value }, false, 'setUseMock'),
 
-        toggleMode: () =>
-          set((state) => ({ useMock: !state.useMock }), false, "toggleMode"),
+        toggleMode: () => set((state) => ({ useMock: !state.useMock }), false, 'toggleMode'),
 
         initializeMode: () => {
           // URL 參數優先級最高
           const urlMode = getInitialModeFromUrl();
           if (urlMode !== null) {
-            set({ useMock: urlMode }, false, "initializeMode/fromUrl");
+            set({ useMock: urlMode }, false, 'initializeMode/fromUrl');
             return;
           }
 
@@ -113,7 +112,7 @@ export const useUAGModeStore = create<UAGModeState>()(
           removeItem: (name) => safeLocalStorage.removeItem(name),
         })),
         partialize: (state) => ({ useMock: state.useMock }),
-      },
+      }
     ),
     {
       name: STORE_NAME,
@@ -126,8 +125,8 @@ export const useUAGModeStore = create<UAGModeState>()(
           date: true,
         },
       },
-    },
-  ),
+    }
+  )
 );
 
 // ============================================================================
@@ -151,14 +150,14 @@ export const selectUseMock = (state: UAGModeState) => state.useMock;
  * 向後兼容的輔助函數
  * 讓舊代碼可以逐步遷移
  */
-export function getUAGMode(): "mock" | "live" {
-  return useUAGModeStore.getState().useMock ? "mock" : "live";
+export function getUAGMode(): 'mock' | 'live' {
+  return useUAGModeStore.getState().useMock ? 'mock' : 'live';
 }
 
 /**
  * 向後兼容的輔助函數
  * 讓舊代碼可以逐步遷移
  */
-export function setUAGMode(mode: "mock" | "live"): void {
-  useUAGModeStore.getState().setUseMock(mode === "mock");
+export function setUAGMode(mode: 'mock' | 'live'): void {
+  useUAGModeStore.getState().setUseMock(mode === 'mock');
 }

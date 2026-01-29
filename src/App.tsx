@@ -1,37 +1,37 @@
-import { useEffect, useState } from "react";
-import { Routes, Route, useLocation } from "react-router-dom";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import { Toaster } from "sonner";
-import { getConfig, type AppConfig, type RuntimeOverrides } from "./app/config";
-import DevTools from "./app/devtools";
-import { trackEvent } from "./services/analytics";
-import Home from "./pages/Home";
-import Feed from "./pages/Feed";
-import Wall from "./pages/Community/Wall";
-import Suggested from "./pages/Community/Suggested";
-import Detail from "./pages/Property/Detail";
-import AssureDetail from "./pages/Assure/Detail";
-import ChatPage from "./pages/Chat";
-import ChatConnect from "./pages/Chat/Connect";
-import ChatStandalone from "./pages/Chat/Standalone";
-import ErrorBoundary from "./app/ErrorBoundary";
-import { QuietModeProvider } from "./context/QuietModeContext";
-import { MoodProvider } from "./context/MoodContext";
-import { MaiMaiProvider } from "./context/MaiMaiContext";
-import { CookieConsent } from "./components/CookieConsent";
+import { useEffect, useState } from 'react';
+import { Routes, Route, useLocation } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
+import { Toaster } from 'sonner';
+import { getConfig, type AppConfig, type RuntimeOverrides } from './app/config';
+import DevTools from './app/devtools';
+import { trackEvent } from './services/analytics';
+import Home from './pages/Home';
+import Feed from './pages/Feed';
+import Wall from './pages/Community/Wall';
+import Suggested from './pages/Community/Suggested';
+import Detail from './pages/Property/Detail';
+import AssureDetail from './pages/Assure/Detail';
+import ChatPage from './pages/Chat';
+import ChatConnect from './pages/Chat/Connect';
+import ChatStandalone from './pages/Chat/Standalone';
+import ErrorBoundary from './app/ErrorBoundary';
+import { QuietModeProvider } from './context/QuietModeContext';
+import { MoodProvider } from './context/MoodContext';
+import { MaiMaiProvider } from './context/MaiMaiContext';
+import { CookieConsent } from './components/CookieConsent';
 
-import UAGPage from "./pages/UAG";
-import UAGDeAIDemo from "./pages/UAG/UAGDeAIDemo";
-import UAGDeAIDemoV2 from "./pages/UAG/UAGDeAIDemoV2";
-import UIUXDemo from "./pages/UAG/demo/UIUXDemo";
-import { PropertyDetailPage } from "./pages/PropertyDetailPage";
-import { PropertyUploadPage } from "./pages/PropertyUploadPage";
-import PropertyListPage from "./pages/PropertyListPage";
-import { PropertyEditPage } from "./pages/PropertyEditPage";
-import { ReportPage } from "./pages/Report";
-import MusePage from "./pages/Muse/MusePage";
-import GodView from "./pages/Admin/GodView";
+import UAGPage from './pages/UAG';
+import UAGDeAIDemo from './pages/UAG/UAGDeAIDemo';
+import UAGDeAIDemoV2 from './pages/UAG/UAGDeAIDemoV2';
+import UIUXDemo from './pages/UAG/demo/UIUXDemo';
+import { PropertyDetailPage } from './pages/PropertyDetailPage';
+import { PropertyUploadPage } from './pages/PropertyUploadPage';
+import PropertyListPage from './pages/PropertyListPage';
+import { PropertyEditPage } from './pages/PropertyEditPage';
+import { ReportPage } from './pages/Report';
+import MusePage from './pages/Muse/MusePage';
+import GodView from './pages/Admin/GodView';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -46,9 +46,7 @@ const queryClient = new QueryClient({
 const ENABLE_PRIVATE_FEATURES = true;
 
 export default function App() {
-  const [config, setConfig] = useState<(AppConfig & RuntimeOverrides) | null>(
-    null,
-  );
+  const [config, setConfig] = useState<(AppConfig & RuntimeOverrides) | null>(null);
   const loc = useLocation();
 
   useEffect(() => {
@@ -56,13 +54,11 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (config) trackEvent("page_view", loc.pathname);
+    if (config) trackEvent('page_view', loc.pathname);
   }, [loc, config]);
 
   if (!config) {
-    return (
-      <div className="p-6 text-sm text-[var(--text-secondary)]">載入中…</div>
-    );
+    return <div className="p-6 text-sm text-[var(--text-secondary)]">載入中…</div>;
   }
 
   return (
@@ -281,10 +277,8 @@ export default function App() {
                 </>
               )}
             </Routes>
-            {import.meta.env.DEV && (
-              <ReactQueryDevtools initialIsOpen={false} />
-            )}
-            {config.devtools === "1" && <DevTools config={config} />}
+            {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}
+            {config.devtools === '1' && <DevTools config={config} />}
             <CookieConsent />
           </MaiMaiProvider>
         </MoodProvider>

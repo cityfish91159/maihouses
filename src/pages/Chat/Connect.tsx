@@ -1,12 +1,9 @@
-import { useEffect, useState } from "react";
-import { Helmet } from "react-helmet-async";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import { GlobalHeader } from "../../components/layout/GlobalHeader";
-import { HEADER_MODES } from "../../constants/header";
-import {
-  parseConnectToken,
-  isTokenExpired,
-} from "../../lib/connectTokenCrypto";
+import { useEffect, useState } from 'react';
+import { Helmet } from 'react-helmet-async';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { GlobalHeader } from '../../components/layout/GlobalHeader';
+import { HEADER_MODES } from '../../constants/header';
+import { parseConnectToken, isTokenExpired } from '../../lib/connectTokenCrypto';
 
 // ============================================================================
 // Type Definitions
@@ -23,7 +20,7 @@ interface ConnectTokenPayload {
 // Constants
 // ============================================================================
 
-const SESSION_STORAGE_KEY = "uag_session";
+const SESSION_STORAGE_KEY = 'uag_session';
 
 /**
  * 設置 Consumer Session（讓聊天室知道是哪個用戶）
@@ -33,7 +30,7 @@ function setConsumerSession(sessionId: string): void {
     localStorage.setItem(SESSION_STORAGE_KEY, sessionId);
   } catch {
     // localStorage 不可用時忽略
-    console.warn("localStorage not available");
+    console.warn('localStorage not available');
   }
 }
 
@@ -89,7 +86,7 @@ function LoadingDisplay() {
 // Main Component
 // ============================================================================
 
-type TokenStatus = "loading" | "invalid" | "expired" | "redirecting";
+type TokenStatus = 'loading' | 'invalid' | 'expired' | 'redirecting';
 
 interface TokenState {
   status: TokenStatus;
@@ -111,11 +108,11 @@ export default function ConnectPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
-  const token = searchParams.get("token");
+  const token = searchParams.get('token');
 
   // Token 狀態（異步解密需要 loading 狀態）
   const [tokenState, setTokenState] = useState<TokenState>({
-    status: "loading",
+    status: 'loading',
     payload: null,
   });
   const { status, payload } = tokenState;
@@ -124,22 +121,22 @@ export default function ConnectPage() {
   useEffect(() => {
     async function parseToken() {
       if (!token) {
-        setTokenState({ status: "invalid", payload: null });
+        setTokenState({ status: 'invalid', payload: null });
         return;
       }
 
       const parsed = await parseConnectToken(token);
       if (!parsed) {
-        setTokenState({ status: "invalid", payload: null });
+        setTokenState({ status: 'invalid', payload: null });
         return;
       }
 
       if (isTokenExpired(parsed)) {
-        setTokenState({ status: "expired", payload: null });
+        setTokenState({ status: 'expired', payload: null });
         return;
       }
 
-      setTokenState({ status: "redirecting", payload: parsed });
+      setTokenState({ status: 'redirecting', payload: parsed });
     }
 
     parseToken();
@@ -147,7 +144,7 @@ export default function ConnectPage() {
 
   // 只在 token 有效時執行導向（副作用）
   useEffect(() => {
-    if (status === "redirecting" && payload) {
+    if (status === 'redirecting' && payload) {
       setConsumerSession(payload.sessionId);
       navigate(`/maihouses/chat/${payload.conversationId}`, {
         replace: true,
@@ -160,14 +157,8 @@ export default function ConnectPage() {
     <Helmet>
       <title>邁房子 - 查看訊息</title>
       <meta property="og:title" content="邁房子 - 你有一則新訊息" />
-      <meta
-        property="og:description"
-        content="房仲傳送了一則訊息，點擊查看並回覆"
-      />
-      <meta
-        property="og:image"
-        content="https://maihouses.vercel.app/og-chat.png"
-      />
+      <meta property="og:description" content="房仲傳送了一則訊息，點擊查看並回覆" />
+      <meta property="og:image" content="https://maihouses.vercel.app/og-chat.png" />
       <meta property="og:type" content="website" />
       <meta property="og:site_name" content="邁房子 MaiHouses" />
     </Helmet>
@@ -175,7 +166,7 @@ export default function ConnectPage() {
 
   // 根據狀態顯示不同內容
   switch (status) {
-    case "expired":
+    case 'expired':
       return (
         <>
           {ogMeta}
@@ -186,18 +177,15 @@ export default function ConnectPage() {
         </>
       );
 
-    case "invalid":
+    case 'invalid':
       return (
         <>
           {ogMeta}
-          <ErrorDisplay
-            title="連結無效"
-            message="此連結格式不正確或已損壞，請確認連結是否完整。"
-          />
+          <ErrorDisplay title="連結無效" message="此連結格式不正確或已損壞，請確認連結是否完整。" />
         </>
       );
 
-    case "redirecting":
+    case 'redirecting':
     default:
       return (
         <>

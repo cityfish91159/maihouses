@@ -29,7 +29,8 @@ export const TrustServiceBanner: React.FC<TrustServiceBannerProps> = ({
         subtitleColor: 'text-blue-700',
         buttonBg: 'bg-blue-600',
         buttonHover: 'hover:bg-blue-700',
-        buttonFocus: 'focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-blue-600',
+        buttonFocus:
+          'focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-blue-600',
         icon: Shield,
         title: '本物件已開啟安心留痕服務',
         subtitle: '六階段交易追蹤 · 每步驟數位留痕 · 雙方確認機制',
@@ -45,7 +46,8 @@ export const TrustServiceBanner: React.FC<TrustServiceBannerProps> = ({
       subtitleColor: 'text-amber-700',
       buttonBg: 'bg-amber-600',
       buttonHover: 'hover:bg-amber-700',
-      buttonFocus: 'focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-amber-600',
+      buttonFocus:
+        'focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-amber-600',
       icon: Info,
       title: '本物件尚未開啟安心留痕服務',
       subtitle: '讓房仲開啟六階段交易追蹤,保障您的購屋權益',
@@ -75,16 +77,10 @@ export const TrustServiceBanner: React.FC<TrustServiceBannerProps> = ({
             <Icon className="size-5" aria-hidden="true" />
           </div>
           <div className="min-w-0 flex-1">
-            <h3
-              id={titleId}
-              className={`text-sm font-bold ${bannerConfig.textColor}`}
-            >
+            <h3 id={titleId} className={`text-sm font-bold ${bannerConfig.textColor}`}>
               {bannerConfig.title}
             </h3>
-            <p
-              id={subtitleId}
-              className={`text-xs ${bannerConfig.subtitleColor}`}
-            >
+            <p id={subtitleId} className={`text-xs ${bannerConfig.subtitleColor}`}>
               {bannerConfig.subtitle}
             </p>
           </div>

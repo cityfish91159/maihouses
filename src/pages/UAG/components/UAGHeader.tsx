@@ -1,15 +1,15 @@
-import React, { useEffect, useRef, useState } from "react";
-import type { User } from "@supabase/supabase-js";
-import { ChevronDown, LogOut } from "lucide-react";
+import React, { useEffect, useRef, useState } from 'react';
+import type { User } from '@supabase/supabase-js';
+import { ChevronDown, LogOut } from 'lucide-react';
 // import { useNotifications } from '../../../hooks/useNotifications';
 // import { useNotificationDropdown } from '../../../hooks/useNotificationDropdown';
 // import { NotificationBell } from '../../../components/common/NotificationBell';
 // import { NotificationDropdown } from '../../../components/layout/NotificationDropdown';
 // import { NotificationErrorBoundary } from '../../../components/layout/NotificationErrorBoundary';
-import { Logo } from "../../../components/Logo/Logo";
-import { ROUTES } from "../../../constants/routes";
-import styles from "../UAG.module.css";
-import type { AgentProfile } from "../types/uag.types";
+import { Logo } from '../../../components/Logo/Logo';
+import { ROUTES } from '../../../constants/routes';
+import styles from '../UAG.module.css';
+import type { AgentProfile } from '../types/uag.types';
 
 interface UAGHeaderProps {
   user?: User | null;
@@ -21,28 +21,20 @@ interface UAGHeaderProps {
 }
 
 const HeaderSkeleton = () => (
-  <header className={styles["uag-header"]}>
-    <div
-      className={`${styles["uag-header-inner"]} ${styles["uag-header-skeleton"]}`}
-    >
-      <div className={styles["uag-skeleton-block"]} />
-      <div className={styles["uag-skeleton-block"]} />
-      <div className={styles["uag-skeleton-block"]} />
+  <header className={styles['uag-header']}>
+    <div className={`${styles['uag-header-inner']} ${styles['uag-header-skeleton']}`}>
+      <div className={styles['uag-skeleton-block']} />
+      <div className={styles['uag-skeleton-block']} />
+      <div className={styles['uag-skeleton-block']} />
     </div>
   </header>
 );
 
 const HeaderError = () => (
-  <header className={styles["uag-header"]}>
-    <div
-      className={`${styles["uag-header-inner"]} ${styles["uag-header-error"]}`}
-    >
+  <header className={styles['uag-header']}>
+    <div className={`${styles['uag-header-inner']} ${styles['uag-header-error']}`}>
       <span>Header 載入失敗，請稍後再試</span>
-      <a
-        href={ROUTES.HOME}
-        className={styles["uag-home-link"]}
-        aria-label="返回邁房子首頁"
-      >
+      <a href={ROUTES.HOME} className={styles['uag-home-link']} aria-label="返回邁房子首頁">
         返回首頁
       </a>
     </div>
@@ -77,30 +69,24 @@ export const UAGHeader: React.FC<UAGHeaderProps> = ({
       // [NASA TypeScript Safety] 使用類型守衛取代 as HTMLElement
       const target = e.target;
       if (!(target instanceof HTMLElement)) return;
-      if (
-        !target.closest("#uag-user-menu-btn") &&
-        !target.closest("#uag-user-menu-dropdown")
-      ) {
+      if (!target.closest('#uag-user-menu-btn') && !target.closest('#uag-user-menu-dropdown')) {
         setUserMenuOpen(false);
       }
     };
-    document.addEventListener("click", handleClickOutside);
-    return () => document.removeEventListener("click", handleClickOutside);
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
   }, []);
 
   if (error) return <HeaderError />;
   if (isLoading) return <HeaderSkeleton />;
 
   const displayName =
-    agentProfile?.name ||
-    user?.user_metadata?.name ||
-    user?.email?.split("@")[0] ||
-    "訪客";
+    agentProfile?.name || user?.user_metadata?.name || user?.email?.split('@')[0] || '訪客';
   const email = user?.email ?? null;
   const company = agentProfile?.company ?? null;
 
   const handleUserMenuKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>) => {
-    if (e.key === "Enter" || e.key === " ") {
+    if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
       setUserMenuOpen((prev) => !prev);
     }
@@ -123,20 +109,16 @@ export const UAGHeader: React.FC<UAGHeaderProps> = ({
   const internalCode = agentProfile?.internalCode;
 
   return (
-    <header className={styles["uag-header"]}>
-      <div className={styles["uag-header-inner"]}>
+    <header className={styles['uag-header']}>
+      <div className={styles['uag-header-inner']}>
         <Logo showSlogan={false} showBadge={true} href={ROUTES.HOME} />
-        <div className={styles["uag-breadcrumb"]}>
+        <div className={styles['uag-breadcrumb']}>
           <span>UAG 客戶雷達</span>
-          {company && <span className={styles["uag-company"]}>{company}</span>}
-          <span
-            className={`${styles["uag-badge"]} ${styles["uag-badge--pro"]}`}
-          >
-            專業版 PRO
-          </span>
+          {company && <span className={styles['uag-company']}>{company}</span>}
+          <span className={`${styles['uag-badge']} ${styles['uag-badge--pro']}`}>專業版 PRO</span>
         </div>
-        <div className={styles["uag-header-actions"]}>
-          <div className={styles["uag-notification"]}>
+        <div className={styles['uag-header-actions']}>
+          <div className={styles['uag-notification']}>
             {/* Notification components temporarily disabled due to missing files */}
             {/* <NotificationBell
               ref={notificationTriggerRef}
@@ -165,57 +147,42 @@ export const UAGHeader: React.FC<UAGHeaderProps> = ({
             )} */}
           </div>
           {user && (
-            <div className={styles["uag-user"]}>
+            <div className={styles['uag-user']}>
               <button
                 ref={userMenuButtonRef}
                 id="uag-user-menu-btn"
-                className={styles["uag-user-button"]}
+                className={styles['uag-user-button']}
                 onClick={() => setUserMenuOpen((prev) => !prev)}
                 onKeyDown={handleUserMenuKeyDown}
                 aria-label={`用戶選單：${displayName}`}
                 aria-expanded={userMenuOpen}
               >
-                <div
-                  className={styles["uag-user-avatar"]}
-                  aria-label={`用戶頭像：${displayName}`}
-                >
+                <div className={styles['uag-user-avatar']} aria-label={`用戶頭像：${displayName}`}>
                   {displayName.charAt(0).toUpperCase()}
                 </div>
-                <div className={styles["uag-user-info"]}>
-                  <span className={styles["uag-user-name"]}>{displayName}</span>
-                  {email && (
-                    <span className={styles["uag-user-email"]}>{email}</span>
-                  )}
+                <div className={styles['uag-user-info']}>
+                  <span className={styles['uag-user-name']}>{displayName}</span>
+                  {email && <span className={styles['uag-user-email']}>{email}</span>}
                 </div>
-                <ChevronDown size={14} className={styles["uag-user-chevron"]} />
+                <ChevronDown size={14} className={styles['uag-user-chevron']} />
               </button>
 
               {userMenuOpen && (
-                <div
-                  id="uag-user-menu-dropdown"
-                  className={styles["uag-user-menu"]}
-                  role="menu"
-                >
-                  <div className={styles["uag-user-menu-meta"]}>
-                    <span className={styles["uag-user-menu-name"]}>
-                      {displayName}
-                    </span>
-                    {email && (
-                      <span className={styles["uag-user-menu-email"]}>
-                        {email}
-                      </span>
-                    )}
+                <div id="uag-user-menu-dropdown" className={styles['uag-user-menu']} role="menu">
+                  <div className={styles['uag-user-menu-meta']}>
+                    <span className={styles['uag-user-menu-name']}>{displayName}</span>
+                    {email && <span className={styles['uag-user-menu-email']}>{email}</span>}
                   </div>
-                  <div className={styles["uag-user-menu-divider"]} />
+                  <div className={styles['uag-user-menu-divider']} />
                   <button
-                    className={styles["uag-user-menu-item"]}
+                    className={styles['uag-user-menu-item']}
                     role="menuitem"
                     onClick={handleSignOutClick}
                     disabled={isSigningOut}
-                    aria-label={isSigningOut ? "正在登出" : "登出"}
+                    aria-label={isSigningOut ? '正在登出' : '登出'}
                   >
                     <LogOut size={16} />
-                    {isSigningOut ? "登出中..." : "登出"}
+                    {isSigningOut ? '登出中...' : '登出'}
                   </button>
                 </div>
               )}
@@ -226,29 +193,21 @@ export const UAGHeader: React.FC<UAGHeaderProps> = ({
 
       {/* 房仲資訊條：只要有 agentProfile 就顯示（支援 mock 模式） */}
       {agentProfile && (
-        <div className={styles["agent-bar"]}>
-          <div className={styles["agent-bar-avatar"]}>
-            {displayName.charAt(0).toUpperCase()}
-          </div>
-          <div className={styles["agent-bar-info"]}>
-            <div className={styles["agent-bar-name-row"]}>
+        <div className={styles['agent-bar']}>
+          <div className={styles['agent-bar-avatar']}>{displayName.charAt(0).toUpperCase()}</div>
+          <div className={styles['agent-bar-info']}>
+            <div className={styles['agent-bar-name-row']}>
               <span>{displayName}</span>
-              {internalCode && (
-                <span className={styles["agent-bar-code"]}>
-                  #{internalCode}
-                </span>
-              )}
+              {internalCode && <span className={styles['agent-bar-code']}>#{internalCode}</span>}
             </div>
-            <div className={styles["agent-bar-stats"]}>
-              <span
-                className={`${styles["agent-bar-stat"]} ${styles["trust"]}`}
-              >
+            <div className={styles['agent-bar-stats']}>
+              <span className={`${styles['agent-bar-stat']} ${styles['trust']}`}>
                 <strong>{trustScore}</strong> 信任分
               </span>
-              <span className={styles["agent-bar-stat"]}>
+              <span className={styles['agent-bar-stat']}>
                 <strong>{visitCount}</strong> 帶看
               </span>
-              <span className={styles["agent-bar-stat"]}>
+              <span className={styles['agent-bar-stat']}>
                 <strong>{dealCount}</strong> 成交
               </span>
             </div>

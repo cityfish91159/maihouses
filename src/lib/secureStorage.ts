@@ -52,7 +52,9 @@ const getEncryptionKey = (): string => {
 
   // 開發環境警告
   if (!import.meta.env.PROD && !key) {
-    logger.warn('[secureStorage] Using development fallback key. Set VITE_STORAGE_SECRET for production.');
+    logger.warn(
+      '[secureStorage] Using development fallback key. Set VITE_STORAGE_SECRET for production.'
+    );
     return 'maihouses-dev-key-DO-NOT-USE-IN-PRODUCTION';
   }
 

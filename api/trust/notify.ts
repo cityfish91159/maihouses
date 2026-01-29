@@ -12,17 +12,13 @@
  * - [Audit Logging] 結構化日誌（PII 遮罩）
  */
 
-import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { z } from "zod";
-import { supabase, SYSTEM_API_KEY } from "./_utils";
-import { cors } from "../lib/cors";
-import { logger } from "../lib/logger";
-import { LineUserIdSchema } from "./constants/validation";
-import {
-  successResponse,
-  errorResponse,
-  API_ERROR_CODES,
-} from "../lib/apiResponse";
+import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { z } from 'zod';
+import { supabase, SYSTEM_API_KEY } from './_utils';
+import { cors } from '../lib/cors';
+import { logger } from '../lib/logger';
+import { LineUserIdSchema } from './constants/validation';
+import { successResponse, errorResponse, API_ERROR_CODES } from '../lib/apiResponse';
 
 // ============================================================================
 // Types
@@ -33,7 +29,7 @@ import {
  * 使用已註冊用戶的 user_id
  */
 export interface NotifyTargetPush {
-  type: "push";
+  type: 'push';
   userId: string;
 }
 
@@ -42,7 +38,7 @@ export interface NotifyTargetPush {
  * 使用未註冊用戶的 LINE ID
  */
 export interface NotifyTargetLine {
-  type: "line";
+  type: 'line';
   lineId: string;
 }
 
@@ -78,7 +74,7 @@ type CaseNotifyFields = z.infer<typeof CaseNotifyFieldsSchema>;
  * API 查詢參數 Schema
  */
 const QuerySchema = z.object({
-  caseId: UUIDSchema.describe("caseId 必須是有效的 UUID"),
+  caseId: UUIDSchema.describe('caseId 必須是有效的 UUID'),
 });
 
 /**
@@ -135,60 +131,60 @@ export async function getNotifyTarget(caseId: string): Promise<NotifyTarget> {
   // [NASA TypeScript Safety] 函數入口驗證 - 不信任任何輸入
   const paramResult = GetNotifyTargetParamSchema.safeParse(caseId);
   if (!paramResult.success) {
-    logger.warn("[notify] Invalid caseId format", { caseId: maskUUID(caseId) });
+    logger.warn('[notify] Invalid caseId format', { caseId: maskUUID(caseId) });
     throw new Error(`Invalid caseId format: ${caseId}`);
   }
 
-  logger.info("[notify] getNotifyTarget called", { caseId: maskUUID(caseId) });
+  logger.info('[notify] getNotifyTarget called', { caseId: maskUUID(caseId) });
 
   // 查詢 trust_cases 表
   const { data, error } = await supabase
-    .from("trust_cases")
-    .select("buyer_user_id, buyer_line_id")
-    .eq("id", caseId)
+    .from('trust_cases')
+    .select('buyer_user_id, buyer_line_id')
+    .eq('id', caseId)
     .single();
 
   // 處理 DB 錯誤
   if (error) {
     // PGRST116 表示找不到資料
-    if (error.code === "PGRST116") {
-      logger.warn("[notify] Case not found", { caseId: maskUUID(caseId) });
+    if (error.code === 'PGRST116') {
+      logger.warn('[notify] Case not found', { caseId: maskUUID(caseId) });
       throw new Error(`Case not found: ${caseId}`);
     }
-    logger.error("[notify] Database error", error, { caseId: maskUUID(caseId) });
+    logger.error('[notify] Database error', error, { caseId: maskUUID(caseId) });
     throw new Error(`Database error: ${error.message}`);
   }
 
   // 驗證資料結構
   const parseResult = CaseNotifyFieldsSchema.safeParse(data);
   if (!parseResult.success) {
-    logger.error("[notify] Invalid data structure", parseResult.error, {
+    logger.error('[notify] Invalid data structure', parseResult.error, {
       caseId: maskUUID(caseId),
     });
-    throw new Error("Invalid case data structure");
+    throw new Error('Invalid case data structure');
   }
 
   const caseData: CaseNotifyFields = parseResult.data;
 
   // 優先順序：buyer_user_id > buyer_line_id
   if (caseData.buyer_user_id) {
-    logger.info("[notify] Found push target", {
+    logger.info('[notify] Found push target', {
       caseId: maskUUID(caseId),
       userIdMasked: maskUUID(caseData.buyer_user_id),
     });
-    return { type: "push", userId: caseData.buyer_user_id };
+    return { type: 'push', userId: caseData.buyer_user_id };
   }
 
   if (caseData.buyer_line_id) {
-    logger.info("[notify] Found LINE target", {
+    logger.info('[notify] Found LINE target', {
       caseId: maskUUID(caseId),
       lineIdMasked: maskLineId(caseData.buyer_line_id),
     });
-    return { type: "line", lineId: caseData.buyer_line_id };
+    return { type: 'line', lineId: caseData.buyer_line_id };
   }
 
   // 無可用通知目標
-  logger.info("[notify] No notify target available", { caseId: maskUUID(caseId) });
+  logger.info('[notify] No notify target available', { caseId: maskUUID(caseId) });
   return null;
 }
 
@@ -211,32 +207,25 @@ export async function getNotifyTarget(caseId: string): Promise<NotifyTarget> {
  * - 405: 不支援的 HTTP 方法
  * - 500: 伺服器錯誤
  */
-export default async function handler(
-  req: VercelRequest,
-  res: VercelResponse,
-): Promise<void> {
+export default async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
   // CORS
   cors(req, res);
-  if (req.method === "OPTIONS") {
+  if (req.method === 'OPTIONS') {
     res.status(200).end();
     return;
   }
 
   // 只允許 GET
-  if (req.method !== "GET") {
-    res
-      .status(405)
-      .json(errorResponse(API_ERROR_CODES.METHOD_NOT_ALLOWED, "只允許 GET 方法"));
+  if (req.method !== 'GET') {
+    res.status(405).json(errorResponse(API_ERROR_CODES.METHOD_NOT_ALLOWED, '只允許 GET 方法'));
     return;
   }
 
   // 驗證 System API Key
-  const systemKey = req.headers["x-system-key"];
+  const systemKey = req.headers['x-system-key'];
   if (systemKey !== SYSTEM_API_KEY) {
-    logger.warn("[notify] Unauthorized access attempt");
-    res
-      .status(401)
-      .json(errorResponse(API_ERROR_CODES.UNAUTHORIZED, "未授權的存取"));
+    logger.warn('[notify] Unauthorized access attempt');
+    res.status(401).json(errorResponse(API_ERROR_CODES.UNAUTHORIZED, '未授權的存取'));
     return;
   }
 
@@ -246,11 +235,9 @@ export default async function handler(
     const zodErrors = queryResult.error?.issues ?? [];
     const errorMessage =
       zodErrors.length > 0
-        ? zodErrors.map((e: { message: string }) => e.message).join(", ")
-        : "Invalid query parameters";
-    res
-      .status(400)
-      .json(errorResponse(API_ERROR_CODES.INVALID_QUERY, errorMessage));
+        ? zodErrors.map((e: { message: string }) => e.message).join(', ')
+        : 'Invalid query parameters';
+    res.status(400).json(errorResponse(API_ERROR_CODES.INVALID_QUERY, errorMessage));
     return;
   }
 
@@ -263,39 +250,31 @@ export default async function handler(
       successResponse({
         caseId,
         target,
-      }),
+      })
     );
   } catch (err) {
-    const errorMessage = err instanceof Error ? err.message : "Unknown error";
+    const errorMessage = err instanceof Error ? err.message : 'Unknown error';
 
     // caseId 格式無效
-    if (errorMessage.startsWith("Invalid caseId format")) {
-      res
-        .status(400)
-        .json(errorResponse(API_ERROR_CODES.INVALID_INPUT, errorMessage));
+    if (errorMessage.startsWith('Invalid caseId format')) {
+      res.status(400).json(errorResponse(API_ERROR_CODES.INVALID_INPUT, errorMessage));
       return;
     }
 
     // 案件不存在
-    if (errorMessage.startsWith("Case not found")) {
-      res
-        .status(404)
-        .json(errorResponse(API_ERROR_CODES.NOT_FOUND, errorMessage));
+    if (errorMessage.startsWith('Case not found')) {
+      res.status(404).json(errorResponse(API_ERROR_CODES.NOT_FOUND, errorMessage));
       return;
     }
 
     // 資料結構無效
-    if (errorMessage === "Invalid case data structure") {
-      res
-        .status(500)
-        .json(errorResponse(API_ERROR_CODES.INTERNAL_ERROR, "資料結構錯誤"));
+    if (errorMessage === 'Invalid case data structure') {
+      res.status(500).json(errorResponse(API_ERROR_CODES.INTERNAL_ERROR, '資料結構錯誤'));
       return;
     }
 
     // 其他錯誤
-    logger.error("[notify] Handler error", err);
-    res
-      .status(500)
-      .json(errorResponse(API_ERROR_CODES.INTERNAL_ERROR, "伺服器錯誤"));
+    logger.error('[notify] Handler error', err);
+    res.status(500).json(errorResponse(API_ERROR_CODES.INTERNAL_ERROR, '伺服器錯誤'));
   }
 }

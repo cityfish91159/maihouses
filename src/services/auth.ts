@@ -1,6 +1,6 @@
-import { supabase } from "../lib/supabase";
-import { z } from "zod";
-import { logger } from "../lib/logger";
+import { supabase } from '../lib/supabase';
+import { z } from 'zod';
+import { logger } from '../lib/logger';
 
 export interface User {
   id: string;
@@ -12,8 +12,8 @@ export interface User {
 // Supabase user 物件可能缺少某些欄位，使用預設值確保符合 User 介面
 const UserSchema = z.object({
   id: z.string(),
-  email: z.string().default(""),
-  created_at: z.string().default(""),
+  email: z.string().default(''),
+  created_at: z.string().default(''),
 });
 
 export interface AuthError {
@@ -52,12 +52,12 @@ export async function signIn(email: string, password: string) {
  */
 export async function signInWithGoogle() {
   const { data, error } = await supabase.auth.signInWithOAuth({
-    provider: "google",
+    provider: 'google',
     options: {
       redirectTo: `${globalThis.location.origin}/`,
       queryParams: {
-        access_type: "offline",
-        prompt: "consent",
+        access_type: 'offline',
+        prompt: 'consent',
       },
     },
   });
@@ -99,7 +99,7 @@ export function onAuthStateChange(callback: (user: User | null) => void) {
     if (parseResult.success) {
       callback(parseResult.data);
     } else {
-      logger.error("Invalid user data from auth state change", {
+      logger.error('Invalid user data from auth state change', {
         error: parseResult.error.flatten(),
       });
       callback(null);

@@ -1,9 +1,9 @@
-import { useState } from "react";
-import { ShieldCheck, ArrowRight, ChevronDown, ChevronUp } from "lucide-react";
-import MascotHouse from "../../../components/MascotHouse";
-import { HERO_STEPS } from "../../../constants/data";
-import { HomeCard } from "../components/HomeCard";
-import { HeroStep } from "../components/HeroStep";
+import { useState } from 'react';
+import { ShieldCheck, ArrowRight, ChevronDown, ChevronUp } from 'lucide-react';
+import MascotHouse from '../../../components/MascotHouse';
+import { HERO_STEPS } from '../../../constants/data';
+import { HomeCard } from '../components/HomeCard';
+import { HeroStep } from '../components/HeroStep';
 
 /** 手機版預設顯示的步驟數量 */
 const MOBILE_VISIBLE_STEPS = 2;
@@ -12,10 +12,7 @@ export default function HeroAssure() {
   const [isExpanded, setIsExpanded] = useState(false);
 
   return (
-    <HomeCard
-      variant="hero"
-      className="group/container relative overflow-hidden"
-    >
+    <HomeCard variant="hero" className="group/container relative overflow-hidden">
       {/* Header Area */}
       <div className="relative z-10 mb-10 flex flex-col items-center gap-6 md:flex-row md:gap-10">
         {/* Mascot: Wireframe House */}
@@ -57,9 +54,7 @@ export default function HeroAssure() {
         <div
           className="absolute left-7 top-0 -z-0 w-0.5 bg-border-light transition-all duration-300 md:hidden"
           style={{
-            height: isExpanded
-              ? `calc(100% - 3rem)`
-              : `calc(${MOBILE_VISIBLE_STEPS} * 3.5rem)`,
+            height: isExpanded ? `calc(100% - 3rem)` : `calc(${MOBILE_VISIBLE_STEPS} * 3.5rem)`,
           }}
         />
 
@@ -77,17 +72,11 @@ export default function HeroAssure() {
 
         {/* Mobile: 可收合的時間軸 */}
         <div className="grid grid-cols-1 gap-3 md:hidden">
-          {HERO_STEPS.slice(
-            0,
-            isExpanded ? HERO_STEPS.length : MOBILE_VISIBLE_STEPS,
-          ).map((step, index, arr) => (
-            <HeroStep
-              key={step.id}
-              {...step}
-              index={index}
-              isLast={index === arr.length - 1}
-            />
-          ))}
+          {HERO_STEPS.slice(0, isExpanded ? HERO_STEPS.length : MOBILE_VISIBLE_STEPS).map(
+            (step, index, arr) => (
+              <HeroStep key={step.id} {...step} index={index} isLast={index === arr.length - 1} />
+            )
+          )}
 
           {/* 展開/收合按鈕 */}
           <button
@@ -101,7 +90,7 @@ export default function HeroAssure() {
               </>
             ) : (
               <>
-                查看完整流程 ({HERO_STEPS.length - MOBILE_VISIBLE_STEPS} 步驟){" "}
+                查看完整流程 ({HERO_STEPS.length - MOBILE_VISIBLE_STEPS} 步驟){' '}
                 <ChevronDown size={16} />
               </>
             )}

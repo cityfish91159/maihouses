@@ -1,11 +1,8 @@
-import { supabase } from "../lib/supabase";
-import { Agent, Imported591Data } from "../lib/types";
-import {
-  computeAddressFingerprint,
-  normalizeCommunityName,
-} from "../utils/address";
-import { logger } from "../lib/logger";
-import { z } from "zod";
+import { supabase } from '../lib/supabase';
+import { Agent, Imported591Data } from '../lib/types';
+import { computeAddressFingerprint, normalizeCommunityName } from '../utils/address';
+import { logger } from '../lib/logger';
+import { z } from 'zod';
 
 /**
  * Google 級別防禦性驗證 Schema (SSOT)
@@ -13,13 +10,13 @@ import { z } from "zod";
  */
 const PropertyFormSchema = z
   .object({
-    title: z.string().min(1, "標題必填").max(100, "標題太長"),
-    price: z.string().min(1, "價格必填"),
-    address: z.string().min(5, "地址太短").max(200, "地址太長"),
-    communityName: z.string().min(1, "社區名稱必填"),
+    title: z.string().min(1, '標題必填').max(100, '標題太長'),
+    price: z.string().min(1, '價格必填'),
+    address: z.string().min(5, '地址太短').max(200, '地址太長'),
+    communityName: z.string().min(1, '社區名稱必填'),
     advantage1: z.string().max(100),
     advantage2: z.string().max(100),
-    disadvantage: z.string().min(10, "缺點至少需要 10 個字").max(200),
+    disadvantage: z.string().min(10, '缺點至少需要 10 個字').max(200),
     highlights: z.array(z.string()).optional(),
     trustEnabled: z.boolean().optional(),
   })
@@ -28,22 +25,18 @@ const PropertyFormSchema = z
       // 動態驗證邏輯：若有 AI 亮點標籤，優點字數門檻降低至 2 字 (標籤長度)
       const hasHighlights = (data.highlights?.length || 0) > 0;
       const minAdvLength = hasHighlights ? 2 : 5;
-      return (
-        data.advantage1.length >= minAdvLength &&
-        data.advantage2.length >= minAdvLength
-      );
+      return data.advantage1.length >= minAdvLength && data.advantage2.length >= minAdvLength;
     },
     {
-      message:
-        "優點描述字數不足 (若無 AI 標籤，優點需至少 5 字；有標籤則需至少 2 字)",
-      path: ["advantage1"],
-    },
+      message: '優點描述字數不足 (若無 AI 標籤，優點需至少 5 字；有標籤則需至少 2 字)',
+      path: ['advantage1'],
+    }
   );
 
 const UPLOAD_CONFIG = {
   CONCURRENCY: 3,
-  CACHE_CONTROL: "31536000", // 1 年快取
-  BUCKET: "property-images",
+  CACHE_CONTROL: '31536000', // 1 年快取
+  BUCKET: 'property-images',
 } as const;
 
 /**
@@ -67,7 +60,7 @@ export interface PropertyData {
   description: string;
   images: string[];
   agent: Agent;
-  sourcePlatform?: "MH" | "591";
+  sourcePlatform?: 'MH' | '591';
   size?: number;
   rooms?: number;
   halls?: number;
@@ -127,7 +120,7 @@ async function validateAndGetAgent(form: PropertyFormInput): Promise<string> {
   // 🛡️ 防禦性驗證：Service 層不信任 Client 資料
   const validation = PropertyFormSchema.safeParse(form);
   if (!validation.success) {
-    const errorMsg = validation.error.issues.map((e) => e.message).join(", ");
+    const errorMsg = validation.error.issues.map((e) => e.message).join(', ');
     throw new Error(`資料驗證失敗: ${errorMsg}`);
   }
 
@@ -138,14 +131,14 @@ async function validateAndGetAgent(form: PropertyFormInput): Promise<string> {
 
   // 嚴格權限控管：生產環境必須登入
   if (!user && !import.meta.env.DEV) {
-    throw new Error("請先登入 (權限不足)");
+    throw new Error('請先登入 (權限不足)');
   }
 
   // 若未登入且在開發模式，使用預設 agent_id
-  const agentId = user?.id || "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11";
+  const agentId = user?.id || 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
 
   if (!user && import.meta.env.DEV) {
-    logger.warn("[DEV] 使用 Mock Agent ID 發佈物件");
+    logger.warn('[DEV] 使用 Mock Agent ID 發佈物件');
   }
 
   return agentId;
@@ -161,15 +154,15 @@ interface CommunityResolution {
 /** 解析或建立社區 */
 async function resolveOrCreateCommunity(
   form: PropertyFormInput,
-  existingCommunityId?: string,
+  existingCommunityId?: string
 ): Promise<CommunityResolution> {
   let communityId: string | null = existingCommunityId || null;
   let finalCommunityName = form.communityName?.trim() || null;
   let isNewCommunity = false;
 
   // 「無社區」直接跳過
-  if (finalCommunityName === "無") {
-    return { communityId: null, communityName: "無", isNewCommunity: false };
+  if (finalCommunityName === '無') {
+    return { communityId: null, communityName: '無', isNewCommunity: false };
   }
 
   // 已選擇現有社區
@@ -217,15 +210,13 @@ async function resolveOrCreateCommunity(
 }
 
 /** 用地址指紋查找社區 */
-async function findCommunityByFingerprint(
-  fingerprint: string,
-): Promise<string | null> {
+async function findCommunityByFingerprint(fingerprint: string): Promise<string | null> {
   if (fingerprint.length < 5) return null;
 
   const { data } = await supabase
-    .from("communities")
-    .select("id")
-    .eq("address_fingerprint", fingerprint)
+    .from('communities')
+    .select('id')
+    .eq('address_fingerprint', fingerprint)
     .single();
 
   return data?.id || null;
@@ -234,32 +225,30 @@ async function findCommunityByFingerprint(
 /** 用社區名稱查找社區 */
 async function findCommunityByName(
   name: string,
-  address: string,
+  address: string
 ): Promise<{ id: string; name: string } | null> {
   if (name.length < 2) return null;
 
   const normalizedInput = normalizeCommunityName(name);
-  const district = address.match(/([^市縣]+[區鄉鎮市])/)?.[1] || "";
+  const district = address.match(/([^市縣]+[區鄉鎮市])/)?.[1] || '';
 
   // 同區域比對
   const { data: candidates } = await supabase
-    .from("communities")
-    .select("id, name")
-    .eq("district", district)
+    .from('communities')
+    .select('id, name')
+    .eq('district', district)
     .limit(50);
 
   if (candidates && candidates.length > 0) {
-    const matched = candidates.find(
-      (c) => normalizeCommunityName(c.name) === normalizedInput,
-    );
+    const matched = candidates.find((c) => normalizeCommunityName(c.name) === normalizedInput);
     if (matched) return matched;
   }
 
   // 跨區域精確比對
   const { data: exactMatch } = await supabase
-    .from("communities")
-    .select("id, name")
-    .eq("name", name)
+    .from('communities')
+    .select('id, name')
+    .eq('name', name)
     .single();
 
   return exactMatch || null;
@@ -268,13 +257,13 @@ async function findCommunityByName(
 /** 建立新社區 */
 async function createNewCommunity(
   form: PropertyFormInput,
-  addressFingerprint: string,
+  addressFingerprint: string
 ): Promise<string | null> {
-  const district = form.address.match(/([^市縣]+[區鄉鎮市])/)?.[1] || "";
-  const city = form.address.match(/^(.*?[市縣])/)?.[1] || "台北市";
+  const district = form.address.match(/([^市縣]+[區鄉鎮市])/)?.[1] || '';
+  const city = form.address.match(/^(.*?[市縣])/)?.[1] || '台北市';
 
   const { data, error } = await supabase
-    .from("communities")
+    .from('communities')
     .insert({
       name: form.communityName?.trim(),
       address: form.address,
@@ -285,11 +274,11 @@ async function createNewCommunity(
       completeness_score: 20,
       features: [form.type].filter(Boolean),
     })
-    .select("id")
+    .select('id')
     .single();
 
   if (error) {
-    logger.error("建立社區失敗", { error });
+    logger.error('建立社區失敗', { error });
     return null;
   }
 
@@ -301,16 +290,13 @@ async function createNewCommunity(
 // NOTE: linkCommunityReview 已移至 RPC fn_create_property_with_review
 export interface PropertyService {
   getPropertyByPublicId(publicId: string): Promise<PropertyData | null>;
-  createProperty(
-    data: Imported591Data,
-    agentId: string,
-  ): Promise<CreatePropertyResult>;
+  createProperty(data: Imported591Data, agentId: string): Promise<CreatePropertyResult>;
   uploadImages(
     files: File[],
     options?: {
       concurrency?: number;
       onProgress?: (completed: number, total: number) => void;
-    },
+    }
   ): Promise<{
     urls: string[];
     failed: { file: File; error: string }[];
@@ -321,39 +307,39 @@ export interface PropertyService {
   createPropertyWithForm(
     form: PropertyFormInput,
     images: string[],
-    existingCommunityId?: string,
+    existingCommunityId?: string
   ): Promise<CreatePropertyResult>;
   checkCommunityExists(
-    name: string,
+    name: string
   ): Promise<{ exists: boolean; community?: { id: string; name: string } }>;
 }
 
 // 預設資料 (Fallback Data) - 用於初始化或錯誤時，確保畫面不崩壞
 export const DEFAULT_PROPERTY: PropertyData = {
-  id: "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22",
-  publicId: "MH-100001",
-  title: "",
+  id: 'b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22',
+  publicId: 'MH-100001',
+  title: '',
   price: 0,
-  address: "",
-  description: "",
+  address: '',
+  description: '',
   images: [],
   size: 0,
   rooms: 0,
   halls: 0,
   bathrooms: 0,
-  floorCurrent: "",
+  floorCurrent: '',
   floorTotal: 0,
   features: [],
-  advantage1: "",
-  advantage2: "",
-  disadvantage: "",
+  advantage1: '',
+  advantage2: '',
+  disadvantage: '',
   trustEnabled: true,
   agent: {
-    id: "",
+    id: '',
     internalCode: 0,
-    name: "",
-    avatarUrl: "",
-    company: "",
+    name: '',
+    avatarUrl: '',
+    company: '',
     trustScore: 0,
     encouragementCount: 0,
   },
@@ -361,14 +347,11 @@ export const DEFAULT_PROPERTY: PropertyData = {
 
 export const propertyService: PropertyService = {
   // 1. 獲取物件詳情
-  getPropertyByPublicId: async (
-    publicId: string,
-  ): Promise<PropertyData | null> => {
+  getPropertyByPublicId: async (publicId: string): Promise<PropertyData | null> => {
     const coerceNumber = (value: unknown): number | null => {
       if (value == null) return null;
-      if (typeof value === "number")
-        return Number.isFinite(value) ? value : null;
-      if (typeof value === "string") {
+      if (typeof value === 'number') return Number.isFinite(value) ? value : null;
+      if (typeof value === 'string') {
         const trimmed = value.trim();
         if (!trimmed) return null;
         const parsed = Number(trimmed);
@@ -379,7 +362,7 @@ export const propertyService: PropertyService = {
     };
 
     const coerceNonEmptyString = (value: unknown): string | null => {
-      if (typeof value !== "string") return null;
+      if (typeof value !== 'string') return null;
       const trimmed = value.trim();
       return trimmed ? trimmed : null;
     };
@@ -387,20 +370,20 @@ export const propertyService: PropertyService = {
     try {
       // 嘗試從 Supabase 讀取正式資料
       const { data, error } = await supabase
-        .from("properties")
+        .from('properties')
         .select(
           `
           *,
           agent:agents (*)
-        `,
+        `
         )
-        .eq("public_id", publicId)
+        .eq('public_id', publicId)
         .single();
 
       if (error || !data) {
-        logger.warn("查無正式資料，使用預設資料", { error });
+        logger.warn('查無正式資料，使用預設資料', { error });
         // 如果是開發環境或特定 ID，回傳預設資料以維持畫面
-        if (publicId === "MH-100001" || import.meta.env.DEV) {
+        if (publicId === 'MH-100001' || import.meta.env.DEV) {
           return DEFAULT_PROPERTY;
         }
         return null;
@@ -419,7 +402,7 @@ export const propertyService: PropertyService = {
           id: data.agent.id,
           internalCode: data.agent.internal_code,
           name: data.agent.name,
-          avatarUrl: data.agent.avatar_url || "https://via.placeholder.com/150",
+          avatarUrl: data.agent.avatar_url || 'https://via.placeholder.com/150',
           company: data.agent.company,
           trustScore: data.agent.trust_score,
           encouragementCount: data.agent.encouragement_count,
@@ -452,7 +435,7 @@ export const propertyService: PropertyService = {
       result.trustEnabled = data.trust_enabled ?? false;
 
       // 針對 Demo 物件：若 DB 有資料但缺少結構化欄位，回退到 DEFAULT_PROPERTY（只補缺的欄位）
-      if (publicId === "MH-100001") {
+      if (publicId === 'MH-100001') {
         if (result.size == null && DEFAULT_PROPERTY.size != null)
           result.size = DEFAULT_PROPERTY.size;
         if (result.rooms == null && DEFAULT_PROPERTY.rooms != null)
@@ -461,10 +444,7 @@ export const propertyService: PropertyService = {
           result.halls = DEFAULT_PROPERTY.halls;
         if (result.bathrooms == null && DEFAULT_PROPERTY.bathrooms != null)
           result.bathrooms = DEFAULT_PROPERTY.bathrooms;
-        if (
-          result.floorCurrent == null &&
-          DEFAULT_PROPERTY.floorCurrent != null
-        )
+        if (result.floorCurrent == null && DEFAULT_PROPERTY.floorCurrent != null)
           result.floorCurrent = DEFAULT_PROPERTY.floorCurrent;
         if (result.floorTotal == null && DEFAULT_PROPERTY.floorTotal != null)
           result.floorTotal = DEFAULT_PROPERTY.floorTotal;
@@ -474,16 +454,13 @@ export const propertyService: PropertyService = {
           result.advantage1 = DEFAULT_PROPERTY.advantage1;
         if (result.advantage2 == null && DEFAULT_PROPERTY.advantage2 != null)
           result.advantage2 = DEFAULT_PROPERTY.advantage2;
-        if (
-          result.disadvantage == null &&
-          DEFAULT_PROPERTY.disadvantage != null
-        )
+        if (result.disadvantage == null && DEFAULT_PROPERTY.disadvantage != null)
           result.disadvantage = DEFAULT_PROPERTY.disadvantage;
       }
 
       return result;
     } catch (e) {
-      logger.error("Service Error", { error: e });
+      logger.error('Service Error', { error: e });
       return DEFAULT_PROPERTY;
     }
   },
@@ -492,7 +469,7 @@ export const propertyService: PropertyService = {
   createProperty: async (data: Imported591Data, agentId: string) => {
     // 不再前端生成 public_id，改由資料庫 Trigger 自動生成 (MH-100002, MH-100003...)
     const { data: result, error } = await supabase
-      .from("properties")
+      .from('properties')
       .insert({
         // public_id: 由 DB 自動生成
         title: data.title,
@@ -517,7 +494,7 @@ export const propertyService: PropertyService = {
     options?: {
       concurrency?: number;
       onProgress?: (completed: number, total: number) => void;
-    },
+    }
   ): Promise<{
     urls: string[];
     failed: { file: File; error: string }[];
@@ -534,7 +511,7 @@ export const propertyService: PropertyService = {
 
       const batchPromises = batch.map(async (file) => {
         try {
-          const fileExt = file.name.split(".").pop()?.toLowerCase() || "jpg";
+          const fileExt = file.name.split('.').pop()?.toLowerCase() || 'jpg';
           const fileName = `${crypto.randomUUID()}.${fileExt}`;
 
           const { error } = await supabase.storage
@@ -545,19 +522,17 @@ export const propertyService: PropertyService = {
             });
 
           if (error) {
-            logger.error("Image upload error", { error });
+            logger.error('Image upload error', { error });
             failed.push({ file, error: error.message });
             return null;
           }
 
-          const { data } = supabase.storage
-            .from("property-images")
-            .getPublicUrl(fileName);
+          const { data } = supabase.storage.from('property-images').getPublicUrl(fileName);
 
           return data.publicUrl;
         } catch (e: unknown) {
-          const errorMessage = e instanceof Error ? e.message : "上傳失敗";
-          logger.error("Image upload exception", { error: e });
+          const errorMessage = e instanceof Error ? e.message : '上傳失敗';
+          logger.error('Image upload exception', { error: e });
           failed.push({ file, error: errorMessage });
           return null;
         } finally {
@@ -583,18 +558,14 @@ export const propertyService: PropertyService = {
 
     // 從 URL 提取檔案名稱
     // 假設 URL 格式為: .../property-images/filename.jpg
-    const fileNames = urls
-      .map((url) => url.split("/").pop())
-      .filter(Boolean) as string[];
+    const fileNames = urls.map((url) => url.split('/').pop()).filter(Boolean) as string[];
 
     if (fileNames.length === 0) return;
 
-    const { error } = await supabase.storage
-      .from(UPLOAD_CONFIG.BUCKET)
-      .remove(fileNames);
+    const { error } = await supabase.storage.from(UPLOAD_CONFIG.BUCKET).remove(fileNames);
 
     if (error) {
-      logger.error("Failed to cleanup images", { error });
+      logger.error('Failed to cleanup images', { error });
       // 這裡不拋出錯誤，因為這是清理流程，不應阻斷主流程的錯誤回報
     }
   },
@@ -610,19 +581,19 @@ export const propertyService: PropertyService = {
   createPropertyWithForm: async (
     form: PropertyFormInput,
     images: string[],
-    existingCommunityId?: string,
+    existingCommunityId?: string
   ) => {
     // Step 1: 驗證並取得 agentId (27 行 helper)
     const agentId = await validateAndGetAgent(form);
 
     // Step 2: 解析或建立社區 (48 行 helper + 子函數)
-    const { communityId, communityName, isNewCommunity } =
-      await resolveOrCreateCommunity(form, existingCommunityId);
+    const { communityId, communityName, isNewCommunity } = await resolveOrCreateCommunity(
+      form,
+      existingCommunityId
+    );
 
     // Step 3: 計算地址指紋與 features
-    const addressFingerprint = form.address
-      ? computeAddressFingerprint(form.address)
-      : null;
+    const addressFingerprint = form.address ? computeAddressFingerprint(form.address) : null;
 
     const features = Array.from(
       new Set([
@@ -631,13 +602,13 @@ export const propertyService: PropertyService = {
         ...(!form.highlights || form.highlights.length === 0
           ? [form.advantage1, form.advantage2]
           : []),
-      ]),
+      ])
     ).filter(Boolean) as string[];
 
     // Step 4: 使用 RPC 原子性建立物件 + 社區評價
     // WHY: Transaction 保護，避免中途失敗導致資料不一致
     const { data: rpcResult, error: rpcError } = await supabase.rpc(
-      "fn_create_property_with_review",
+      'fn_create_property_with_review',
       {
         p_agent_id: agentId,
         p_title: form.title,
@@ -660,10 +631,10 @@ export const propertyService: PropertyService = {
         p_description: form.description,
         p_images: images,
         p_features: features,
-        p_source_platform: form.sourceExternalId ? "591" : "MH",
+        p_source_platform: form.sourceExternalId ? '591' : 'MH',
         p_source_external_id: form.sourceExternalId || null,
         p_trust_enabled: Boolean(form.trustEnabled),
-      },
+      }
     );
 
     if (rpcError) throw rpcError;
@@ -671,29 +642,29 @@ export const propertyService: PropertyService = {
     // BE-1: 使用 Zod safeParse 取代 `as` 類型斷言
     const parseResult = CreatePropertyRpcResultSchema.safeParse(rpcResult);
     if (!parseResult.success) {
-      logger.error("RPC response validation failed", {
+      logger.error('RPC response validation failed', {
         issues: parseResult.error.issues,
         rawResult: rpcResult,
       });
-      throw new Error("RPC 回傳結構驗證失敗");
+      throw new Error('RPC 回傳結構驗證失敗');
     }
 
     const result = parseResult.data;
     if (!result.success) {
-      throw new Error(result.error || "RPC failed");
+      throw new Error(result.error || 'RPC failed');
     }
 
     // BE-1: 驗證必要欄位存在，success=true 時 id 和 public_id 必須有值
     if (!result.id || !result.public_id) {
-      logger.error("RPC success but missing required fields", {
+      logger.error('RPC success but missing required fields', {
         id: result.id,
         public_id: result.public_id,
       });
-      throw new Error("RPC 回傳成功但缺少必要欄位");
+      throw new Error('RPC 回傳成功但缺少必要欄位');
     }
 
     // Step 5: Audit Log
-    logger.info("Property created", {
+    logger.info('Property created', {
       propertyId: result.id,
       publicId: result.public_id,
       agentId,
@@ -704,11 +675,11 @@ export const propertyService: PropertyService = {
 
     // Step 6: Fire-and-forget AI 總結（非關鍵路徑）
     if (communityId) {
-      fetch("/api/generate-community-profile", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      fetch('/api/generate-community-profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ communityId }),
-      }).catch((err) => logger.warn("AI 總結背景執行中", { error: err }));
+      }).catch((err) => logger.warn('AI 總結背景執行中', { error: err }));
     }
 
     return {
@@ -722,14 +693,14 @@ export const propertyService: PropertyService = {
 
   // 5. 檢查社區是否存在 (供前端即時驗證)
   checkCommunityExists: async (
-    name: string,
+    name: string
   ): Promise<{ exists: boolean; community?: { id: string; name: string } }> => {
     if (!name || name.trim().length < 2) return { exists: false };
 
     const { data } = await supabase
-      .from("communities")
-      .select("id, name")
-      .ilike("name", `%${name.trim()}%`)
+      .from('communities')
+      .select('id, name')
+      .ilike('name', `%${name.trim()}%`)
       .limit(1)
       .single();
 
@@ -741,7 +712,7 @@ export const propertyService: PropertyService = {
 // P10: 首頁精選房源 API
 // =============================================
 
-import type { FeaturedProperty } from "../types/property";
+import type { FeaturedProperty } from '../types/property';
 
 // Re-export for backward compatibility
 export type { FeaturedProperty as FeaturedPropertyForUI };
@@ -754,10 +725,10 @@ export type { FeaturedProperty as FeaturedPropertyForUI };
 export async function getFeaturedProperties(): Promise<FeaturedProperty[]> {
   try {
     // 這裡建議加上完整的錯誤處理與 Timeout 機制 (可選)
-    const response = await fetch("/api/home/featured-properties");
+    const response = await fetch('/api/home/featured-properties');
 
     if (!response.ok) {
-      logger.warn("[propertyService] API 回應非 200", {
+      logger.warn('[propertyService] API 回應非 200', {
         status: response.status,
       });
       return [];
@@ -769,10 +740,10 @@ export async function getFeaturedProperties(): Promise<FeaturedProperty[]> {
       return json.data;
     }
 
-    logger.warn("[propertyService] API 回傳格式錯誤", { json });
+    logger.warn('[propertyService] API 回傳格式錯誤', { json });
     return [];
   } catch (error) {
-    logger.error("[propertyService] getFeaturedProperties 失敗", { error });
+    logger.error('[propertyService] getFeaturedProperties 失敗', { error });
     return []; // Level 3: 回傳空陣列，讓前端維持顯示初始 Mock
   }
 }

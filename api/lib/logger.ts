@@ -18,13 +18,13 @@
  * - 結構化日誌：支援 context 物件
  */
 
-import { captureError, captureWarning, addBreadcrumb } from "./sentry";
+import { captureError, captureWarning, addBreadcrumb } from './sentry';
 
 // ============================================================================
 // Types
 // ============================================================================
 
-type LogLevel = "debug" | "info" | "warn" | "error";
+type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
 interface LogContext {
   [key: string]: unknown;
@@ -34,7 +34,7 @@ interface LogContext {
 // Configuration
 // ============================================================================
 
-const isProduction = process.env.NODE_ENV === "production";
+const isProduction = process.env.NODE_ENV === 'production';
 
 // ============================================================================
 // Logger Implementation
@@ -44,13 +44,9 @@ const isProduction = process.env.NODE_ENV === "production";
  * 格式化日誌訊息（開發環境用）
  * 僅在開發環境呼叫此函數，避免生產環境的效能開銷
  */
-function formatLogMessage(
-  level: LogLevel,
-  message: string,
-  context?: LogContext,
-): string {
+function formatLogMessage(level: LogLevel, message: string, context?: LogContext): string {
   const timestamp = new Date().toISOString();
-  const contextStr = context ? ` ${JSON.stringify(context)}` : "";
+  const contextStr = context ? ` ${JSON.stringify(context)}` : '';
   return `[${timestamp}] [${level.toUpperCase()}] ${message}${contextStr}\n`;
 }
 
@@ -75,7 +71,7 @@ export const logger = {
    */
   debug(message: string, context?: LogContext): void {
     if (!isProduction) {
-      writeToStderr(formatLogMessage("debug", message, context));
+      writeToStderr(formatLogMessage('debug', message, context));
     }
   },
 
@@ -87,10 +83,10 @@ export const logger = {
   info(message: string, context?: LogContext): void {
     if (isProduction) {
       // 生產環境：僅記錄 breadcrumb，不輸出到 stderr
-      addBreadcrumb(message, "api.log", context);
+      addBreadcrumb(message, 'api.log', context);
     } else {
       // 開發環境：輸出到 stderr
-      writeToStderr(formatLogMessage("info", message, context));
+      writeToStderr(formatLogMessage('info', message, context));
     }
   },
 
@@ -103,7 +99,7 @@ export const logger = {
     if (isProduction) {
       captureWarning(message, context);
     } else {
-      writeToStderr(formatLogMessage("warn", message, context));
+      writeToStderr(formatLogMessage('warn', message, context));
     }
   },
 
@@ -128,9 +124,8 @@ export const logger = {
       }
     } else {
       // 開發環境：輸出到 stderr
-      const errorMessage =
-        error instanceof Error ? `${message}: ${error.message}` : message;
-      writeToStderr(formatLogMessage("error", errorMessage, context));
+      const errorMessage = error instanceof Error ? `${message}: ${error.message}` : message;
+      writeToStderr(formatLogMessage('error', errorMessage, context));
     }
   },
 };

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef } from 'react';
 
 interface FocusTrapProps {
   children: React.ReactNode;
@@ -15,11 +15,7 @@ interface FocusTrapProps {
  * 3. 關閉時還原焦點
  * 4. 點擊外部不丟失焦點
  */
-export function FocusTrap({
-  children,
-  isActive,
-  initialFocusRef,
-}: FocusTrapProps) {
+export function FocusTrap({ children, isActive, initialFocusRef }: FocusTrapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
 
@@ -37,7 +33,7 @@ export function FocusTrap({
       } else if (containerRef.current) {
         // 尋找第一個可聚焦元素
         const focusable = containerRef.current.querySelectorAll(
-          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
         );
         // [NASA TypeScript Safety] 使用 instanceof 類型守衛驗證可聚焦元素
         const firstFocusable = focusable[0];
@@ -58,13 +54,13 @@ export function FocusTrap({
     if (!isActive) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key !== "Tab") return;
+      if (e.key !== 'Tab') return;
 
       const container = containerRef.current;
       if (!container) return;
 
       const focusableElements = container.querySelectorAll(
-        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
       );
 
       // [NASA TypeScript Safety] 使用 instanceof 類型守衛驗證可聚焦元素
@@ -90,8 +86,8 @@ export function FocusTrap({
       }
     };
 
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isActive]);
 
   return <div ref={containerRef}>{children}</div>;

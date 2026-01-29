@@ -1,11 +1,11 @@
 const { spawn } = require('child_process');
 
 const request = JSON.stringify({
-  jsonrpc: "2.0",
+  jsonrpc: '2.0',
   id: 1,
-  method: "tools/call",
+  method: 'tools/call',
   params: {
-    name: "codex",
+    name: 'codex',
     arguments: {
       prompt: `Strictly audit these BE-9 Trust Close API files:
 1. api/trust/close.ts
@@ -21,15 +21,15 @@ Check for:
 
 Output a numbered list of ALL defects found with file:line references. Be extremely strict.`,
       workingDirectory: process.cwd(),
-      reasoningEffort: "high"
-    }
-  }
+      reasoningEffort: 'high',
+    },
+  },
 });
 
 const child = spawn('npx', ['-y', 'codex-mcp-server'], {
   stdio: ['pipe', 'pipe', 'pipe'],
   shell: true,
-  cwd: process.cwd()
+  cwd: process.cwd(),
 });
 
 let output = '';
@@ -47,7 +47,12 @@ child.on('close', (code) => {
   console.log('=== CODEX RESPONSE ===');
   if (output) {
     try {
-      const parsed = JSON.parse(output.split('\n').filter(l => l.startsWith('{')).pop() || '{}');
+      const parsed = JSON.parse(
+        output
+          .split('\n')
+          .filter((l) => l.startsWith('{'))
+          .pop() || '{}'
+      );
       console.log(JSON.stringify(parsed, null, 2));
     } catch {
       console.log(output);

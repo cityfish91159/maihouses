@@ -13,18 +13,15 @@
  * ```
  */
 
-import * as Sentry from "@sentry/node";
-import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { ensureValidEnv } from "./env";
+import * as Sentry from '@sentry/node';
+import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { ensureValidEnv } from './env';
 
 // ============================================================================
 // Types
 // ============================================================================
 
-type VercelHandler = (
-  req: VercelRequest,
-  res: VercelResponse,
-) => Promise<VercelResponse | void>;
+type VercelHandler = (req: VercelRequest, res: VercelResponse) => Promise<VercelResponse | void>;
 
 interface SentryConfig {
   dsn: string | undefined;
@@ -46,12 +43,12 @@ let isInitialized = false;
  * 在 Sentry/Logger 初始化之前使用，避免循環依賴
  * 使用 stderr 輸出，符合 logger 設計原則
  */
-function infraLog(level: "info" | "error", message: string): void {
-  const isProduction = process.env.NODE_ENV === "production";
+function infraLog(level: 'info' | 'error', message: string): void {
+  const isProduction = process.env.NODE_ENV === 'production';
 
   // 生產環境：僅輸出 error 級別（嚴重配置問題）
   // 開發環境：輸出所有級別
-  if (isProduction && level !== "error") {
+  if (isProduction && level !== 'error') {
     return;
   }
 
@@ -65,8 +62,8 @@ function infraLog(level: "info" | "error", message: string): void {
  */
 function getSentryConfig(): SentryConfig {
   const dsn = process.env.SENTRY_DSN;
-  const environment = process.env.NODE_ENV || "development";
-  const isProduction = environment === "production";
+  const environment = process.env.NODE_ENV || 'development';
+  const isProduction = environment === 'production';
   const isEnabled = Boolean(dsn) && isProduction;
 
   return { dsn, environment, isProduction, isEnabled };
@@ -88,8 +85,8 @@ export function initSentry(): void {
     if (config.isProduction) {
       // 生產環境缺少 DSN 是嚴重配置錯誤，必須記錄
       infraLog(
-        "error",
-        "[SENTRY] CRITICAL: SENTRY_DSN not configured in production. Error monitoring disabled.",
+        'error',
+        '[SENTRY] CRITICAL: SENTRY_DSN not configured in production. Error monitoring disabled.'
       );
     }
     return;
@@ -105,12 +102,12 @@ export function initSentry(): void {
     profilesSampleRate: config.isProduction ? 0.1 : 0,
     // 忽略常見的非關鍵錯誤
     ignoreErrors: [
-      "Network request failed",
-      "Failed to fetch",
-      "AbortError",
-      "The operation was aborted",
-      "ECONNRESET",
-      "ETIMEDOUT",
+      'Network request failed',
+      'Failed to fetch',
+      'AbortError',
+      'The operation was aborted',
+      'ECONNRESET',
+      'ETIMEDOUT',
     ],
     // 發送前處理
     beforeSend(event) {
@@ -125,7 +122,7 @@ export function initSentry(): void {
 
   isInitialized = true;
   // 開發環境：輸出初始化確認（生產環境會被 infraLog 過濾）
-  infraLog("info", `[SENTRY] Initialized (env: ${config.environment})`);
+  infraLog('info', `[SENTRY] Initialized (env: ${config.environment})`);
 }
 
 // ============================================================================
@@ -135,17 +132,14 @@ export function initSentry(): void {
 /**
  * 捕獲並上報錯誤
  */
-export function captureError(
-  error: Error | unknown,
-  context?: Record<string, unknown>,
-): void {
+export function captureError(error: Error | unknown, context?: Record<string, unknown>): void {
   initSentry();
 
   if (error instanceof Error) {
     Sentry.captureException(error, { extra: context });
   } else {
     Sentry.captureMessage(String(error), {
-      level: "error",
+      level: 'error',
       extra: context,
     });
   }
@@ -154,13 +148,10 @@ export function captureError(
 /**
  * 捕獲警告級別訊息
  */
-export function captureWarning(
-  message: string,
-  context?: Record<string, unknown>,
-): void {
+export function captureWarning(message: string, context?: Record<string, unknown>): void {
   initSentry();
   Sentry.captureMessage(message, {
-    level: "warning",
+    level: 'warning',
     extra: context,
   });
 }
@@ -189,13 +180,13 @@ export function clearUserContext(): void {
 export function addBreadcrumb(
   message: string,
   category: string,
-  data?: Record<string, unknown>,
+  data?: Record<string, unknown>
 ): void {
   Sentry.addBreadcrumb({
     message,
     category,
     data,
-    level: "info",
+    level: 'info',
   });
 }
 
@@ -208,7 +199,7 @@ export function addBreadcrumb(
  */
 export function startTransaction(
   name: string,
-  op: string,
+  op: string
 ): ReturnType<typeof Sentry.startInactiveSpan> {
   initSentry();
   return Sentry.startInactiveSpan({
@@ -221,10 +212,7 @@ export function startTransaction(
 /**
  * 開始一個子 Span
  */
-export function startSpan(
-  name: string,
-  op: string,
-): ReturnType<typeof Sentry.startInactiveSpan> {
+export function startSpan(name: string, op: string): ReturnType<typeof Sentry.startInactiveSpan> {
   return Sentry.startInactiveSpan({ name, op });
 }
 
@@ -245,25 +233,22 @@ export function startSpan(
  * @param handlerName - Handler 名稱（用於識別）
  * @returns 包裝後的 Handler
  */
-export function withSentryHandler(
-  handler: VercelHandler,
-  handlerName: string,
-): VercelHandler {
+export function withSentryHandler(handler: VercelHandler, handlerName: string): VercelHandler {
   return async (req: VercelRequest, res: VercelResponse) => {
     initSentry();
 
     // 開始 Transaction
-    const transaction = startTransaction(`API ${handlerName}`, "http.server");
+    const transaction = startTransaction(`API ${handlerName}`, 'http.server');
 
     // 設置請求上下文
-    Sentry.setContext("request", {
+    Sentry.setContext('request', {
       method: req.method,
       url: req.url,
       query: req.query,
     });
 
     // 添加麵包屑
-    addBreadcrumb(`${req.method} ${handlerName}`, "http", {
+    addBreadcrumb(`${req.method} ${handlerName}`, 'http', {
       url: req.url,
     });
 
@@ -288,7 +273,7 @@ export function withSentryHandler(
       if (!res.headersSent) {
         return res.status(500).json({
           success: false,
-          error: "Internal server error",
+          error: 'Internal server error',
         });
       }
 
@@ -301,9 +286,7 @@ export function withSentryHandler(
  * 舊版 wrapper（向後兼容）
  * @deprecated 請使用 withSentryHandler
  */
-export function withSentry<T extends (...args: unknown[]) => Promise<unknown>>(
-  handler: T,
-): T {
+export function withSentry<T extends (...args: unknown[]) => Promise<unknown>>(handler: T): T {
   initSentry();
 
   return (async (...args: Parameters<T>) => {
@@ -311,7 +294,7 @@ export function withSentry<T extends (...args: unknown[]) => Promise<unknown>>(
       return await handler(...args);
     } catch (error) {
       captureError(error, {
-        handler: handler.name || "anonymous",
+        handler: handler.name || 'anonymous',
       });
       throw error;
     }
@@ -325,15 +308,11 @@ export function withSentry<T extends (...args: unknown[]) => Promise<unknown>>(
 /**
  * 記錄自定義指標
  */
-export function recordMetric(
-  name: string,
-  value: number,
-  tags?: Record<string, string>,
-): void {
+export function recordMetric(name: string, value: number, tags?: Record<string, string>): void {
   // Sentry 的 metrics 功能
   // 如果不可用，至少記錄到 console
   try {
-    Sentry.setMeasurement(name, value, "none");
+    Sentry.setMeasurement(name, value, 'none');
     if (tags) {
       Sentry.setTags(tags);
     }

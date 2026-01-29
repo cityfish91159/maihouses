@@ -117,11 +117,13 @@ test.describe('安全性驗證', () => {
   test('應該防止 XSS 攻擊', async ({ page }) => {
     // 嘗試注入 XSS payload
     const xssPayload = '<script>alert("XSS")</script>';
-    await page.goto(`${BASE_URL}/property/${TEST_PROPERTY_ID}?name=${encodeURIComponent(xssPayload)}`);
+    await page.goto(
+      `${BASE_URL}/property/${TEST_PROPERTY_ID}?name=${encodeURIComponent(xssPayload)}`
+    );
 
     // 驗證沒有執行 script
     const alerts: string[] = [];
-    page.on('dialog', dialog => {
+    page.on('dialog', (dialog) => {
       alerts.push(dialog.message());
       dialog.dismiss();
     });
@@ -171,7 +173,7 @@ test.describe('錯誤處理', () => {
     }
 
     // 前 10 次應該成功
-    const successCount = responses.filter(r => r.status === 201).length;
+    const successCount = responses.filter((r) => r.status === 201).length;
     expect(successCount).toBeGreaterThanOrEqual(10);
 
     // 第 11 次應該被 Rate Limit
@@ -224,12 +226,8 @@ test.describe('無障礙性驗證 (WCAG 2.1 AA)', () => {
 
     // 手動檢查按鈕顏色對比度
     const button = page.locator('button', { hasText: '進入服務' });
-    const bgColor = await button.evaluate(el =>
-      window.getComputedStyle(el).backgroundColor
-    );
-    const color = await button.evaluate(el =>
-      window.getComputedStyle(el).color
-    );
+    const bgColor = await button.evaluate((el) => window.getComputedStyle(el).backgroundColor);
+    const color = await button.evaluate((el) => window.getComputedStyle(el).color);
 
     // 驗證顏色已設置（詳細對比度計算需額外工具）
     expect(bgColor).toBeTruthy();

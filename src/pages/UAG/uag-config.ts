@@ -1,4 +1,4 @@
-import { Grade } from "./types/uag.types";
+import { Grade } from './types/uag.types';
 
 // ============================================================================
 // UAG 系統配置 (SSOT - Single Source of Truth)

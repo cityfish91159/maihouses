@@ -1,50 +1,50 @@
-import { useState, useEffect, useCallback } from "react";
-import { useMaiMai } from "../context/MaiMaiContext";
-import { safeLocalStorage } from "../lib/safeStorage";
-import { TUTORIAL_CONFIG } from "../constants/tutorial";
-import debounce from "lodash.debounce";
+import { useState, useEffect, useCallback } from 'react';
+import { useMaiMai } from '../context/MaiMaiContext';
+import { safeLocalStorage } from '../lib/safeStorage';
+import { TUTORIAL_CONFIG } from '../constants/tutorial';
+import debounce from 'lodash.debounce';
 
 interface TutorialStep {
   id: string;
-  trigger: "mount" | "click" | "idle" | "success";
+  trigger: 'mount' | 'click' | 'idle' | 'success';
   mood:
-    | "wave"
-    | "thinking"
-    | "excited"
-    | "sleep"
-    | "idle"
-    | "happy"
-    | "celebrate"
-    | "confused"
-    | "peek"
-    | "shy";
+    | 'wave'
+    | 'thinking'
+    | 'excited'
+    | 'sleep'
+    | 'idle'
+    | 'happy'
+    | 'celebrate'
+    | 'confused'
+    | 'peek'
+    | 'shy';
   message: string;
   action?: () => void;
 }
 
 const TUTORIALS: TutorialStep[] = [
   {
-    id: "welcome",
-    trigger: "mount",
-    mood: "wave",
+    id: 'welcome',
+    trigger: 'mount',
+    mood: 'wave',
     message: TUTORIAL_CONFIG.MESSAGES.WELCOME,
   },
   {
-    id: "search",
-    trigger: "click",
-    mood: "thinking",
+    id: 'search',
+    trigger: 'click',
+    mood: 'thinking',
     message: TUTORIAL_CONFIG.MESSAGES.SEARCH_HINT,
   },
   {
-    id: "uag",
-    trigger: "click",
-    mood: "excited",
-    message: "UAG 雷達幫你找到最有意願的客戶！",
+    id: 'uag',
+    trigger: 'click',
+    mood: 'excited',
+    message: 'UAG 雷達幫你找到最有意願的客戶！',
   },
   {
-    id: "idle",
-    trigger: "idle",
-    mood: "sleep",
+    id: 'idle',
+    trigger: 'idle',
+    mood: 'sleep',
     message: TUTORIAL_CONFIG.MESSAGES.IDLE_WAKEUP,
   },
 ];
@@ -55,24 +55,24 @@ export function useTutorial() {
 
   // Helper to safely set mood (Error Boundary)
   const safeSetMood = useCallback(
-    (mood: TutorialStep["mood"], message: string) => {
+    (mood: TutorialStep['mood'], message: string) => {
       try {
         setMood(mood);
         addMessage(message);
       } catch (error) {
-        console.error("[useTutorial] Failed to update MaiMai state", error);
+        console.error('[useTutorial] Failed to update MaiMai state', error);
       }
     },
-    [setMood, addMessage],
+    [setMood, addMessage]
   );
 
   // 首次訪問歡迎
   useEffect(() => {
-    const visited = safeLocalStorage.getItem("maimai-visited");
+    const visited = safeLocalStorage.getItem('maimai-visited');
     if (!visited && !hasShownWelcome) {
       const timer = setTimeout(() => {
-        safeSetMood("wave", TUTORIAL_CONFIG.MESSAGES.WELCOME);
-        safeLocalStorage.setItem("maimai-visited", "true");
+        safeSetMood('wave', TUTORIAL_CONFIG.MESSAGES.WELCOME);
+        safeLocalStorage.setItem('maimai-visited', 'true');
         setHasShownWelcome(true);
       }, TUTORIAL_CONFIG.WELCOME_DELAY_MS);
       return () => clearTimeout(timer);
@@ -83,7 +83,7 @@ export function useTutorial() {
   useEffect(() => {
     // Timeout handler
     const triggerIdle = () => {
-      safeSetMood("sleep", TUTORIAL_CONFIG.MESSAGES.IDLE_WAKEUP);
+      safeSetMood('sleep', TUTORIAL_CONFIG.MESSAGES.IDLE_WAKEUP);
     };
 
     // The actual timer reference
@@ -105,7 +105,7 @@ export function useTutorial() {
     resetTimer();
 
     // Attach listeners
-    const events = ["mousedown", "keydown", "scroll", "touchstart"];
+    const events = ['mousedown', 'keydown', 'scroll', 'touchstart'];
     events.forEach((e) => document.addEventListener(e, debouncedReset));
 
     return () => {
@@ -124,7 +124,7 @@ export function useTutorial() {
         tutorial.action?.();
       }
     },
-    [safeSetMood],
+    [safeSetMood]
   );
 
   return { showTutorial };

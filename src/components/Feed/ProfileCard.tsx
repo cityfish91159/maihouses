@@ -5,11 +5,11 @@
  * 顯示頭像、名稱、社區、等級、統計數據
  */
 
-import { memo } from "react";
-import { ArrowRight } from "lucide-react";
-import type { UserProfile } from "../../types/feed";
-import { STRINGS } from "../../constants/strings";
-import { ROUTES } from "../../constants/routes";
+import { memo } from 'react';
+import { ArrowRight } from 'lucide-react';
+import type { UserProfile } from '../../types/feed';
+import { STRINGS } from '../../constants/strings';
+import { ROUTES } from '../../constants/routes';
 
 const S = STRINGS.FEED.PROFILE;
 
@@ -18,11 +18,11 @@ interface ProfileCardProps {
   className?: string;
 }
 
-function getLevelLabel(role: UserProfile["role"]): string {
+function getLevelLabel(role: UserProfile['role']): string {
   switch (role) {
-    case "resident":
+    case 'resident':
       return STRINGS.FEED.PROFILE.LEVEL_RESIDENT;
-    case "agent":
+    case 'agent':
       return STRINGS.FEED.PROFILE.LEVEL_AGENT;
     default:
       return STRINGS.FEED.PROFILE.LEVEL_MEMBER;
@@ -30,29 +30,29 @@ function getLevelLabel(role: UserProfile["role"]): string {
 }
 
 /** 取得等級樣式 */
-function getLevelStyle(role: UserProfile["role"]): string {
+function getLevelStyle(role: UserProfile['role']): string {
   switch (role) {
-    case "resident":
-      return "bg-amber-100 text-amber-700 border-amber-300";
-    case "agent":
-      return "bg-blue-100 text-blue-700 border-blue-300";
+    case 'resident':
+      return 'bg-amber-100 text-amber-700 border-amber-300';
+    case 'agent':
+      return 'bg-blue-100 text-blue-700 border-blue-300';
     default:
-      return "bg-gray-100 text-gray-700 border-gray-300";
+      return 'bg-gray-100 text-gray-700 border-gray-300';
   }
 }
 
 export const ProfileCard = memo(function ProfileCard({
   profile,
-  className = "",
+  className = '',
 }: ProfileCardProps) {
+  // 簡單計算直接執行即可，無需 useMemo（成本 < 收益）
   const avatarLetter = profile.name.charAt(0).toUpperCase();
   const levelLabel = getLevelLabel(profile.role);
   const levelStyle = getLevelStyle(profile.role);
+  const communityLabel = STRINGS.FEED.PROFILE.FROM(profile.communityName || '我的社區');
 
   return (
-    <section
-      className={`rounded-2xl border border-brand-100 bg-white p-4 shadow-sm ${className}`}
-    >
+    <section className={`rounded-2xl border border-brand-100 bg-white p-4 shadow-sm ${className}`}>
       {/* User Info Row */}
       <div className="flex items-center gap-3.5">
         <div
@@ -62,13 +62,9 @@ export const ProfileCard = memo(function ProfileCard({
           {avatarLetter}
         </div>
         <div className="min-w-0 flex-1">
-          <h3 className="truncate text-lg font-black text-gray-900">
-            {profile.name}
-          </h3>
+          <h3 className="truncate text-lg font-black text-gray-900">{profile.name}</h3>
           <p className="flex items-center gap-2 text-sm text-gray-500">
-            <span className="truncate">
-              {STRINGS.FEED.PROFILE.FROM(profile.communityName || "我的社區")}
-            </span>
+            <span className="truncate">{communityLabel}</span>
             <span
               className={`inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-bold ${levelStyle}`}
             >

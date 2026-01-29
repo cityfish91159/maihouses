@@ -1,4 +1,4 @@
-import { STRINGS } from "../constants/strings";
+import { STRINGS } from '../constants/strings';
 
 /**
  * Format ISO string to relative time
@@ -10,7 +10,7 @@ export function formatRelativeTime(isoTime: string): string {
   const diffMs = now - time;
 
   // Handle future dates or invalid dates safely
-  if (isNaN(time)) return "";
+  if (isNaN(time)) return '';
   if (diffMs < 0) return STRINGS.FEED.POST.TIME_JUST_NOW;
 
   const diffMinutes = Math.floor(diffMs / (1000 * 60));

@@ -4,29 +4,29 @@
  * 購買客戶成功後彈出的訊息發送 Modal
  */
 
-import React, { useState, useCallback, useEffect } from "react";
-import { X, Send, MessageCircle, User, Home } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import type { Lead } from "../../pages/UAG/types/uag.types";
-import { messagingService } from "../../services/messagingService";
-import { notify } from "../../lib/notify";
-import { logger } from "../../lib/logger";
-import { ROUTES } from "../../constants/routes";
+import React, { useState, useCallback, useEffect } from 'react';
+import { X, Send, MessageCircle, User, Home } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import type { Lead } from '../../pages/UAG/types/uag.types';
+import { messagingService } from '../../services/messagingService';
+import { notify } from '../../lib/notify';
+import { logger } from '../../lib/logger';
+import { ROUTES } from '../../constants/routes';
 
 const S = {
-  TITLE: "發送訊息給客戶",
-  CUSTOMER_LABEL: "客戶",
-  PROPERTY_LABEL: "感興趣物件",
-  MESSAGE_LABEL: "訊息內容",
-  MESSAGE_PLACEHOLDER: "您好！我是專業房仲，很高興為您服務...",
-  SEND_BTN: "發送訊息",
-  LATER_BTN: "稍後再說",
-  SENDING: "發送中...",
-  SUCCESS: "訊息已發送",
-  SUCCESS_DESC: "客戶會收到通知",
-  ERROR: "發送失敗",
-  SAVED_FOR_LATER: "已儲存客戶資料",
-  SAVED_FOR_LATER_DESC: "您可以稍後在「我的客戶」中發送訊息",
+  TITLE: '發送訊息給客戶',
+  CUSTOMER_LABEL: '客戶',
+  PROPERTY_LABEL: '感興趣物件',
+  MESSAGE_LABEL: '訊息內容',
+  MESSAGE_PLACEHOLDER: '您好！我是專業房仲，很高興為您服務...',
+  SEND_BTN: '發送訊息',
+  LATER_BTN: '稍後再說',
+  SENDING: '發送中...',
+  SUCCESS: '訊息已發送',
+  SUCCESS_DESC: '客戶會收到通知',
+  ERROR: '發送失敗',
+  SAVED_FOR_LATER: '已儲存客戶資料',
+  SAVED_FOR_LATER_DESC: '您可以稍後在「我的客戶」中發送訊息',
 };
 
 interface SendMessageModalProps {
@@ -65,11 +65,11 @@ export function SendMessageModal({
   onSuccess,
 }: SendMessageModalProps): React.ReactElement | null {
   const navigate = useNavigate();
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState('');
   const [isSending, setIsSending] = useState(false);
 
   const customerName = getAnonymousName(lead.id);
-  const propertyName = lead.prop || "物件諮詢";
+  const propertyName = lead.prop || '物件諮詢';
 
   const handleSend = useCallback(async () => {
     if (!message.trim() || isSending) return;
@@ -78,13 +78,13 @@ export function SendMessageModal({
 
     try {
       // ========== Mock 模式檢測 ==========
-      const isMockMode = agentId === "mock-agent-001";
+      const isMockMode = agentId === 'mock-agent-001';
 
       if (isMockMode) {
         // Mock 模式：模擬延遲 + 成功
         await new Promise((resolve) => setTimeout(resolve, 800));
 
-        notify.success("訊息已發送", "客戶會收到通知");
+        notify.success('訊息已發送', '客戶會收到通知');
         // Mock 模式：不傳 conversationId，讓父組件生成
         onSuccess?.();
         onClose();
@@ -97,16 +97,12 @@ export function SendMessageModal({
       // [UAG-13 FIX] 驗證 conversationId 格式 (防禦性編程)
       let validConversationId = conversationId;
       if (conversationId) {
-        const uuidRegex =
-          /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
         if (!uuidRegex.test(conversationId)) {
-          logger.warn(
-            "[SendMessageModal] Invalid conversationId format, fallback to create flow",
-            {
-              invalidId: conversationId,
-              leadId: lead.id,
-            },
-          );
+          logger.warn('[SendMessageModal] Invalid conversationId format, fallback to create flow', {
+            invalidId: conversationId,
+            leadId: lead.id,
+          });
           validConversationId = undefined; // 強制走建立流程
         }
       }
@@ -116,7 +112,7 @@ export function SendMessageModal({
         const safeConversationId: string = validConversationId;
         await messagingService.sendMessage({
           conversation_id: safeConversationId,
-          sender_type: "agent",
+          sender_type: 'agent',
           sender_id: agentId,
           content: message.trim(),
         });
@@ -128,9 +124,9 @@ export function SendMessageModal({
       }
 
       // UAG-14: 新購買後首次訊息，使用整合式 API（建立對話 + 發送訊息 + LINE 推播）
-      const response = await fetch("/api/uag/send-message", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const response = await fetch('/api/uag/send-message', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           agentId,
           sessionId,
@@ -146,22 +142,22 @@ export function SendMessageModal({
       const result = await response.json();
 
       if (!result.success) {
-        throw new Error(result.error || "發送失敗");
+        throw new Error(result.error || '發送失敗');
       }
 
       // 根據 LINE 狀態顯示不同提示
       switch (result.lineStatus) {
-        case "sent":
-          notify.success("訊息已發送", "已同時透過 LINE 通知客戶");
+        case 'sent':
+          notify.success('訊息已發送', '已同時透過 LINE 通知客戶');
           break;
-        case "no_line":
-          notify.success("訊息已發送", "客戶未綁定 LINE，僅發送站內訊息");
+        case 'no_line':
+          notify.success('訊息已發送', '客戶未綁定 LINE，僅發送站內訊息');
           break;
-        case "unreachable":
-          notify.warning("訊息已發送", "LINE 無法送達（客戶可能已封鎖）");
+        case 'unreachable':
+          notify.warning('訊息已發送', 'LINE 無法送達（客戶可能已封鎖）');
           break;
-        case "pending":
-          notify.success("訊息已發送", "LINE 通知稍後送達");
+        case 'pending':
+          notify.success('訊息已發送', 'LINE 通知稍後送達');
           break;
         default:
           notify.success(S.SUCCESS, S.SUCCESS_DESC);
@@ -175,8 +171,8 @@ export function SendMessageModal({
         navigate(ROUTES.CHAT(result.conversationId));
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "請稍後再試";
-      logger.error("[SendMessageModal] Failed to send message", {
+      const errorMessage = err instanceof Error ? err.message : '請稍後再試';
+      logger.error('[SendMessageModal] Failed to send message', {
         error: errorMessage,
       });
       notify.error(S.ERROR, errorMessage);
@@ -209,24 +205,24 @@ export function SendMessageModal({
     if (!isOpen) return;
 
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
+      if (e.key === 'Escape') {
         onClose();
       }
     };
 
-    document.addEventListener("keydown", handleEscape);
-    return () => document.removeEventListener("keydown", handleEscape);
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
   }, [isOpen, onClose]);
 
   // Ctrl+Enter handler for textarea
   const handleTextareaKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-      if (e.key === "Enter" && e.ctrlKey) {
+      if (e.key === 'Enter' && e.ctrlKey) {
         e.preventDefault();
         handleSend();
       }
     },
-    [handleSend],
+    [handleSend]
   );
 
   if (!isOpen) return null;
@@ -247,10 +243,7 @@ export function SendMessageModal({
         <div className="flex items-center justify-between border-b border-gray-100 p-4">
           <div className="flex items-center gap-2">
             <MessageCircle className="size-5 text-brand-600" />
-            <h2
-              id="send-message-title"
-              className="text-lg font-bold text-gray-900"
-            >
+            <h2 id="send-message-title" className="text-lg font-bold text-gray-900">
               {S.TITLE}
             </h2>
           </div>
@@ -308,9 +301,7 @@ export function SendMessageModal({
               aria-label={S.MESSAGE_LABEL}
               disabled={isSending}
             />
-            <p className="mt-1 text-right text-xs text-gray-400">
-              {message.length}/500
-            </p>
+            <p className="mt-1 text-right text-xs text-gray-400">{message.length}/500</p>
           </div>
         </div>
 

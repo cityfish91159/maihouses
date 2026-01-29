@@ -90,9 +90,7 @@ export const SkeletonCard: React.FC<SkeletonCardProps> = ({
       role="status"
       aria-label="Loading card..."
     >
-      {showImage && (
-        <Skeleton width="w-full" height="h-48" rounded="lg" className="mb-4" />
-      )}
+      {showImage && <Skeleton width="w-full" height="h-48" rounded="lg" className="mb-4" />}
       <Skeleton width="w-3/4" height="h-6" className="mb-3" />
       {Array.from({ length: lines }).map((_, i) => (
         <Skeleton
@@ -153,9 +151,7 @@ interface SkeletonBannerProps {
 /**
  * Skeleton Banner - TrustServiceBanner Loading
  */
-export const SkeletonBanner: React.FC<SkeletonBannerProps> = ({
-  className = '',
-}) => {
+export const SkeletonBanner: React.FC<SkeletonBannerProps> = ({ className = '' }) => {
   return (
     <div
       className={`mx-auto max-w-4xl px-4 ${className}`}

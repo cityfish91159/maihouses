@@ -35,7 +35,10 @@ if (!fs.existsSync(authHtmlPath)) {
     { pattern: /pending_trust_token/, description: 'localStorage key: pending_trust_token' },
     { pattern: /\/api\/trust\/upgrade-case/, description: 'API 端點: /api/trust/upgrade-case' },
     { pattern: /Token 升級機制/, description: '註解：Token 升級機制' },
-    { pattern: /localStorage\.removeItem\("pending_trust_token"\)/, description: '清除 token 邏輯' },
+    {
+      pattern: /localStorage\.removeItem\("pending_trust_token"\)/,
+      description: '清除 token 邏輯',
+    },
   ];
 
   requiredPatterns.forEach(({ pattern, description }) => {

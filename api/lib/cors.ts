@@ -19,7 +19,7 @@
  * ```
  */
 
-import type { VercelRequest, VercelResponse } from "@vercel/node";
+import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 // ============================================================================
 // Constants
@@ -31,26 +31,26 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
  * - 開發環境：localhost:5173, 127.0.0.1:5173
  */
 const ALLOWED_ORIGINS = [
-  "https://maihouses.com",
-  "https://maihouses.vercel.app",
-  "http://localhost:5173",
-  "http://127.0.0.1:5173",
+  'https://maihouses.com',
+  'https://maihouses.vercel.app',
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
 ] as const;
 
 /**
  * 預設 Origin（當請求來源不在白名單時使用）
  */
-const DEFAULT_ORIGIN = "https://maihouses.com";
+const DEFAULT_ORIGIN = 'https://maihouses.com';
 
 /**
  * 允許的 HTTP 方法
  */
-const ALLOWED_METHODS = "GET, POST, PUT, PATCH, DELETE, OPTIONS";
+const ALLOWED_METHODS = 'GET, POST, PUT, PATCH, DELETE, OPTIONS';
 
 /**
  * 允許的 Headers
  */
-const ALLOWED_HEADERS = "Content-Type, Authorization, x-system-key";
+const ALLOWED_HEADERS = 'Content-Type, Authorization, x-system-key';
 
 // ============================================================================
 // CORS Function
@@ -67,19 +67,19 @@ const ALLOWED_HEADERS = "Content-Type, Authorization, x-system-key";
 export function cors(req: VercelRequest, res: VercelResponse): void {
   // [NASA TypeScript Safety] 使用類型守衛取代 as string
   const rawOrigin = req?.headers?.origin;
-  const origin = typeof rawOrigin === "string" ? rawOrigin : undefined;
+  const origin = typeof rawOrigin === 'string' ? rawOrigin : undefined;
 
   // 設定 Access-Control-Allow-Origin
   if (origin && (ALLOWED_ORIGINS as readonly string[]).includes(origin)) {
-    res.setHeader("Access-Control-Allow-Origin", origin);
+    res.setHeader('Access-Control-Allow-Origin', origin);
   } else {
-    res.setHeader("Access-Control-Allow-Origin", DEFAULT_ORIGIN);
+    res.setHeader('Access-Control-Allow-Origin', DEFAULT_ORIGIN);
   }
 
   // 設定其他 CORS Headers
-  res.setHeader("Access-Control-Allow-Methods", ALLOWED_METHODS);
-  res.setHeader("Access-Control-Allow-Headers", ALLOWED_HEADERS);
-  res.setHeader("Access-Control-Allow-Credentials", "true");
+  res.setHeader('Access-Control-Allow-Methods', ALLOWED_METHODS);
+  res.setHeader('Access-Control-Allow-Headers', ALLOWED_HEADERS);
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
 }
 
 // ============================================================================

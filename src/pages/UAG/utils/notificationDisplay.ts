@@ -3,7 +3,7 @@
  * 用於統一各組件中的通知狀態顯示
  */
 
-import type { NotificationStatus } from "../types/uag.types";
+import type { NotificationStatus } from '../types/uag.types';
 
 export interface NotificationDisplay {
   text: string;
@@ -20,51 +20,51 @@ export interface NotificationDisplay {
  * 符合 /ui-ux-pro-max styles.csv Row 29 - Data-Dense Dashboard 規則
  */
 export function getNotificationDisplay(
-  status: NotificationStatus | undefined,
+  status: NotificationStatus | undefined
 ): NotificationDisplay {
   switch (status) {
-    case "sent":
+    case 'sent':
       return {
-        text: "LINE + 站內信",
-        bgColor: "var(--notif-success-bg)",
-        textColor: "var(--notif-success-text)",
+        text: 'LINE + 站內信',
+        bgColor: 'var(--notif-success-bg)',
+        textColor: 'var(--notif-success-text)',
       };
-    case "no_line":
+    case 'no_line':
       return {
-        text: "僅站內信",
-        bgColor: "var(--bg-alt)",
-        textColor: "var(--ink-300)",
+        text: '僅站內信',
+        bgColor: 'var(--bg-alt)',
+        textColor: 'var(--ink-300)',
       };
-    case "unreachable":
+    case 'unreachable':
       return {
-        text: "LINE 無法送達",
-        bgColor: "var(--notif-error-bg)",
-        textColor: "var(--notif-error-text)",
+        text: 'LINE 無法送達',
+        bgColor: 'var(--notif-error-bg)',
+        textColor: 'var(--notif-error-text)',
       };
-    case "pending":
+    case 'pending':
       return {
-        text: "待發送",
-        bgColor: "var(--notif-pending-bg)",
-        textColor: "var(--notif-pending-text)",
+        text: '待發送',
+        bgColor: 'var(--notif-pending-bg)',
+        textColor: 'var(--notif-pending-text)',
       };
-    case "failed":
+    case 'failed':
       return {
-        text: "LINE 發送失敗",
-        bgColor: "var(--notif-error-bg)",
-        textColor: "var(--notif-error-text)",
+        text: 'LINE 發送失敗',
+        bgColor: 'var(--notif-error-bg)',
+        textColor: 'var(--notif-error-text)',
       };
-    case "skipped":
+    case 'skipped':
       return {
-        text: "僅站內信",
-        bgColor: "var(--bg-alt)",
-        textColor: "var(--ink-300)",
+        text: '僅站內信',
+        bgColor: 'var(--bg-alt)',
+        textColor: 'var(--ink-300)',
       };
     default:
       // 未知狀態或 undefined：已購買但尚無通知狀態，視為站內信已發送
       return {
-        text: "站內信已發送",
-        bgColor: "var(--bg-alt)",
-        textColor: "var(--ink-300)",
+        text: '站內信已發送',
+        bgColor: 'var(--bg-alt)',
+        textColor: 'var(--ink-300)',
       };
   }
 }

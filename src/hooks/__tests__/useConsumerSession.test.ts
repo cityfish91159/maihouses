@@ -1,16 +1,16 @@
-import { renderHook, act } from "@testing-library/react";
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { renderHook, act } from '@testing-library/react';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
   useConsumerSession,
   getSessionId,
   setSession,
   clearSession,
   isSessionExpired,
-} from "../useConsumerSession";
+} from '../useConsumerSession';
 
-describe("useConsumerSession", () => {
-  const SESSION_KEY = "uag_session";
-  const SESSION_CREATED_KEY = "uag_session_created";
+describe('useConsumerSession', () => {
+  const SESSION_KEY = 'uag_session';
+  const SESSION_CREATED_KEY = 'uag_session_created';
 
   beforeEach(() => {
     // 清除 localStorage
@@ -22,17 +22,14 @@ describe("useConsumerSession", () => {
     vi.useRealTimers();
   });
 
-  describe("SSR 安全", () => {
-    it("在沒有 window 時應該返回 null", () => {
+  describe('SSR 安全', () => {
+    it('在沒有 window 時應該返回 null', () => {
       // 模擬 SSR 環境（localStorage 不可用）
       // 使用 Object.defineProperty 暫時隱藏 window，無需 TypeScript 指令
       const originalWindow = global.window;
-      const windowDescriptor = Object.getOwnPropertyDescriptor(
-        global,
-        "window",
-      );
+      const windowDescriptor = Object.getOwnPropertyDescriptor(global, 'window');
 
-      Object.defineProperty(global, "window", {
+      Object.defineProperty(global, 'window', {
         value: undefined,
         writable: true,
         configurable: true,
@@ -44,15 +41,15 @@ describe("useConsumerSession", () => {
 
       // 恢復 window
       if (windowDescriptor) {
-        Object.defineProperty(global, "window", windowDescriptor);
+        Object.defineProperty(global, 'window', windowDescriptor);
       } else {
         global.window = originalWindow;
       }
     });
   });
 
-  describe("基本功能", () => {
-    it("沒有 session 時應該返回 null", () => {
+  describe('基本功能', () => {
+    it('沒有 session 時應該返回 null', () => {
       const { result } = renderHook(() => useConsumerSession());
 
       expect(result.current.sessionId).toBe(null);
@@ -60,30 +57,30 @@ describe("useConsumerSession", () => {
       expect(result.current.isExpired).toBe(false);
     });
 
-    it("有 session 時應該返回正確值", () => {
-      localStorage.setItem(SESSION_KEY, "test-session-123");
+    it('有 session 時應該返回正確值', () => {
+      localStorage.setItem(SESSION_KEY, 'test-session-123');
       localStorage.setItem(SESSION_CREATED_KEY, String(Date.now()));
 
       const { result } = renderHook(() => useConsumerSession());
 
-      expect(result.current.sessionId).toBe("test-session-123");
+      expect(result.current.sessionId).toBe('test-session-123');
       expect(result.current.hasValidSession).toBe(true);
       expect(result.current.isExpired).toBe(false);
     });
 
-    it("setSession 應該正確設置 session", () => {
+    it('setSession 應該正確設置 session', () => {
       const { result } = renderHook(() => useConsumerSession());
 
       act(() => {
-        result.current.setSession("new-session-456");
+        result.current.setSession('new-session-456');
       });
 
-      expect(localStorage.getItem(SESSION_KEY)).toBe("new-session-456");
+      expect(localStorage.getItem(SESSION_KEY)).toBe('new-session-456');
       expect(localStorage.getItem(SESSION_CREATED_KEY)).not.toBe(null);
     });
 
-    it("clearSession 應該清除 session", () => {
-      localStorage.setItem(SESSION_KEY, "test-session");
+    it('clearSession 應該清除 session', () => {
+      localStorage.setItem(SESSION_KEY, 'test-session');
       localStorage.setItem(SESSION_CREATED_KEY, String(Date.now()));
 
       const { result } = renderHook(() => useConsumerSession());
@@ -97,12 +94,12 @@ describe("useConsumerSession", () => {
     });
   });
 
-  describe("過期檢查", () => {
-    it("7 天內的 session 不應該過期", () => {
+  describe('過期檢查', () => {
+    it('7 天內的 session 不應該過期', () => {
       const now = Date.now();
       vi.setSystemTime(now);
 
-      localStorage.setItem(SESSION_KEY, "test-session");
+      localStorage.setItem(SESSION_KEY, 'test-session');
       localStorage.setItem(SESSION_CREATED_KEY, String(now));
 
       // 前進 6 天
@@ -111,11 +108,11 @@ describe("useConsumerSession", () => {
       expect(isSessionExpired()).toBe(false);
     });
 
-    it("超過 7 天的 session 應該過期", () => {
+    it('超過 7 天的 session 應該過期', () => {
       const now = Date.now();
       vi.setSystemTime(now);
 
-      localStorage.setItem(SESSION_KEY, "test-session");
+      localStorage.setItem(SESSION_KEY, 'test-session');
       localStorage.setItem(SESSION_CREATED_KEY, String(now));
 
       // 前進 8 天
@@ -124,18 +121,18 @@ describe("useConsumerSession", () => {
       expect(isSessionExpired()).toBe(true);
     });
 
-    it("沒有建立時間記錄時應該視為未過期（向後相容）", () => {
-      localStorage.setItem(SESSION_KEY, "old-session");
+    it('沒有建立時間記錄時應該視為未過期（向後相容）', () => {
+      localStorage.setItem(SESSION_KEY, 'old-session');
       // 沒有設置 SESSION_CREATED_KEY
 
       expect(isSessionExpired()).toBe(false);
     });
 
-    it("過期的 session 應該 hasValidSession = false", () => {
+    it('過期的 session 應該 hasValidSession = false', () => {
       const now = Date.now();
       vi.setSystemTime(now);
 
-      localStorage.setItem(SESSION_KEY, "test-session");
+      localStorage.setItem(SESSION_KEY, 'test-session');
       localStorage.setItem(SESSION_CREATED_KEY, String(now));
 
       // 前進 8 天
@@ -143,29 +140,27 @@ describe("useConsumerSession", () => {
 
       const { result } = renderHook(() => useConsumerSession());
 
-      expect(result.current.sessionId).toBe("test-session");
+      expect(result.current.sessionId).toBe('test-session');
       expect(result.current.isExpired).toBe(true);
       expect(result.current.hasValidSession).toBe(false);
     });
   });
 
-  describe("邊界情況", () => {
-    it("setSession 不應該覆蓋已有的建立時間", () => {
+  describe('邊界情況', () => {
+    it('setSession 不應該覆蓋已有的建立時間', () => {
       const originalTime = Date.now() - 1000;
       localStorage.setItem(SESSION_CREATED_KEY, String(originalTime));
 
-      setSession("new-session");
+      setSession('new-session');
 
-      expect(localStorage.getItem(SESSION_CREATED_KEY)).toBe(
-        String(originalTime),
-      );
+      expect(localStorage.getItem(SESSION_CREATED_KEY)).toBe(String(originalTime));
     });
 
-    it("localStorage 錯誤時應該優雅處理", () => {
+    it('localStorage 錯誤時應該優雅處理', () => {
       // 模擬 localStorage 拋出錯誤
       const originalGetItem = localStorage.getItem;
       localStorage.getItem = vi.fn(() => {
-        throw new Error("QuotaExceededError");
+        throw new Error('QuotaExceededError');
       });
 
       expect(getSessionId()).toBe(null);

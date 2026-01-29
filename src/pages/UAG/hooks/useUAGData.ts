@@ -9,22 +9,22 @@
  * @module useUAGData
  */
 
-import { useCallback, useEffect } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { UAGService } from "../services/uagService";
-import { AppDataSchema, type AppData } from "../types/uag.types";
-import { MOCK_DB } from "../mockData";
-import { logger } from "../../../lib/logger";
-import { notify } from "../../../lib/notify";
-import { useAuth } from "../../../hooks/useAuth";
-import { useUAGModeStore, selectUseMock } from "../../../stores/uagModeStore";
+import { useCallback, useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { UAGService } from '../services/uagService';
+import { AppDataSchema, type AppData } from '../types/uag.types';
+import { MOCK_DB } from '../mockData';
+import { logger } from '../../../lib/logger';
+import { notify } from '../../../lib/notify';
+import { useAuth } from '../../../hooks/useAuth';
+import { useUAGModeStore, selectUseMock } from '../../../stores/uagModeStore';
 
 // ============================================================================
 // Constants
 // ============================================================================
 
 /** React Query 快取鍵 */
-export const UAG_QUERY_KEY = "uagData" as const;
+export const UAG_QUERY_KEY = 'uagData' as const;
 
 /** Query 配置：staleTime 與 refetchInterval 保持一致避免不必要的 refetch */
 const QUERY_CONFIG = {
@@ -95,7 +95,7 @@ export function useUAGData(): UseUAGDataReturn {
 
     // 切換到 Live 模式時，檢查是否已登入
     if (!newMode && !userId) {
-      notify.error("請先登入", "切換到 Live 模式需要登入");
+      notify.error('請先登入', '切換到 Live 模式需要登入');
       return;
     }
 
@@ -112,15 +112,15 @@ export function useUAGData(): UseUAGDataReturn {
         // [NASA TypeScript Safety] 使用 Zod safeParse 取代 as unknown as AppData
         const parseResult = AppDataSchema.safeParse(MOCK_DB);
         if (!parseResult.success) {
-          logger.error("[useUAGData] Mock data validation failed", {
+          logger.error('[useUAGData] Mock data validation failed', {
             error: parseResult.error.message,
           });
-          throw new Error("Invalid mock data structure");
+          throw new Error('Invalid mock data structure');
         }
         return parseResult.data;
       }
       if (!userId) {
-        throw new Error("Not authenticated");
+        throw new Error('Not authenticated');
       }
       return UAGService.fetchAppData(userId);
     },

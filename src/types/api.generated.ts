@@ -4,7 +4,7 @@
  */
 
 export interface paths {
-  "/hello": {
+  '/hello': {
     parameters: {
       query?: never;
       header?: never;
@@ -30,7 +30,7 @@ export interface paths {
             [name: string]: unknown;
           };
           content: {
-            "application/json": {
+            'application/json': {
               /** @example true */
               success?: boolean;
               data?: {
@@ -52,7 +52,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  "/community/wall": {
+  '/community/wall': {
     parameters: {
       query?: never;
       header?: never;
@@ -70,8 +70,8 @@ export interface paths {
       parameters: {
         query: {
           communityId: string;
-          type?: "posts" | "reviews" | "questions" | "all";
-          visibility?: "public" | "private";
+          type?: 'posts' | 'reviews' | 'questions' | 'all';
+          visibility?: 'public' | 'private';
         };
         header?: never;
         path?: never;
@@ -85,9 +85,9 @@ export interface paths {
             [name: string]: unknown;
           };
           content: {
-            "application/json": {
+            'application/json': {
               success?: boolean;
-              data?: components["schemas"]["Post"][];
+              data?: components['schemas']['Post'][];
               total?: number;
               /** @description 是否受訪客限制 */
               limited?: boolean;
@@ -95,7 +95,7 @@ export interface paths {
             };
           };
         };
-        400: components["responses"]["BadRequest"];
+        400: components['responses']['BadRequest'];
       };
     };
     put?: never;
@@ -106,7 +106,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  "/community/post": {
+  '/community/post': {
     parameters: {
       query?: never;
       header?: never;
@@ -125,7 +125,7 @@ export interface paths {
       };
       requestBody: {
         content: {
-          "application/json": {
+          'application/json': {
             /** Format: uuid */
             communityId: string;
             content: string;
@@ -133,12 +133,12 @@ export interface paths {
              * @default public
              * @enum {string}
              */
-            visibility?: "public" | "private";
+            visibility?: 'public' | 'private';
             /**
              * @default general
              * @enum {string}
              */
-            postType?: "general" | "review" | "question";
+            postType?: 'general' | 'review' | 'question';
             images?: string[];
           };
         };
@@ -150,14 +150,14 @@ export interface paths {
             [name: string]: unknown;
           };
           content: {
-            "application/json": {
+            'application/json': {
               success?: boolean;
-              data?: components["schemas"]["Post"];
+              data?: components['schemas']['Post'];
               message?: string;
             };
           };
         };
-        401: components["responses"]["Unauthorized"];
+        401: components['responses']['Unauthorized'];
       };
     };
     delete?: never;
@@ -166,7 +166,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  "/community/like": {
+  '/community/like': {
     parameters: {
       query?: never;
       header?: never;
@@ -185,7 +185,7 @@ export interface paths {
       };
       requestBody: {
         content: {
-          "application/json": {
+          'application/json': {
             /** Format: uuid */
             postId: string;
           };
@@ -198,7 +198,7 @@ export interface paths {
             [name: string]: unknown;
           };
           content: {
-            "application/json": {
+            'application/json': {
               success?: boolean;
               data?: {
                 liked?: boolean;
@@ -207,8 +207,8 @@ export interface paths {
             };
           };
         };
-        401: components["responses"]["Unauthorized"];
-        404: components["responses"]["NotFound"];
+        401: components['responses']['Unauthorized'];
+        404: components['responses']['NotFound'];
       };
     };
     delete?: never;
@@ -217,7 +217,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  "/community/question": {
+  '/community/question': {
     parameters: {
       query?: never;
       header?: never;
@@ -236,9 +236,9 @@ export interface paths {
       };
       requestBody: {
         content: {
-          "application/json": {
+          'application/json': {
             /** @enum {string} */
-            action: "ask" | "answer";
+            action: 'ask' | 'answer';
             /**
              * Format: uuid
              * @description 發問時必填
@@ -262,14 +262,14 @@ export interface paths {
             [name: string]: unknown;
           };
           content: {
-            "application/json": {
+            'application/json': {
               success?: boolean;
-              data?: components["schemas"]["Question"];
+              data?: components['schemas']['Question'];
               message?: string;
             };
           };
         };
-        401: components["responses"]["Unauthorized"];
+        401: components['responses']['Unauthorized'];
       };
     };
     delete?: never;
@@ -278,7 +278,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  "/community/posts": {
+  '/community/posts': {
     parameters: {
       query?: never;
       header?: never;
@@ -295,7 +295,7 @@ export interface paths {
       parameters: {
         query: {
           community_id: string;
-          visibility?: "public" | "private";
+          visibility?: 'public' | 'private';
           /** @description 分頁游標 */
           cursor?: string;
           limit?: number;
@@ -312,16 +312,16 @@ export interface paths {
             [name: string]: unknown;
           };
           content: {
-            "application/json": {
+            'application/json': {
               /** @example true */
               success?: boolean;
-              data?: components["schemas"]["Post"][];
-              meta?: components["schemas"]["PaginationMeta"];
+              data?: components['schemas']['Post'][];
+              meta?: components['schemas']['PaginationMeta'];
             };
           };
         };
-        401: components["responses"]["Unauthorized"];
-        500: components["responses"]["ServerError"];
+        401: components['responses']['Unauthorized'];
+        500: components['responses']['ServerError'];
       };
     };
     put?: never;
@@ -338,7 +338,7 @@ export interface paths {
       };
       requestBody: {
         content: {
-          "application/json": {
+          'application/json': {
             /** Format: uuid */
             community_id: string;
             content: string;
@@ -346,7 +346,7 @@ export interface paths {
              * @default public
              * @enum {string}
              */
-            visibility?: "public" | "private";
+            visibility?: 'public' | 'private';
           };
         };
       };
@@ -357,15 +357,15 @@ export interface paths {
             [name: string]: unknown;
           };
           content: {
-            "application/json": {
+            'application/json': {
               /** @example true */
               success?: boolean;
-              data?: components["schemas"]["Post"];
+              data?: components['schemas']['Post'];
             };
           };
         };
-        401: components["responses"]["Unauthorized"];
-        403: components["responses"]["Forbidden"];
+        401: components['responses']['Unauthorized'];
+        403: components['responses']['Forbidden'];
       };
     };
     delete?: never;
@@ -374,7 +374,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  "/community/reviews": {
+  '/community/reviews': {
     parameters: {
       query?: never;
       header?: never;
@@ -400,9 +400,9 @@ export interface paths {
             [name: string]: unknown;
           };
           content: {
-            "application/json": {
+            'application/json': {
               success?: boolean;
-              data?: components["schemas"]["Review"][];
+              data?: components['schemas']['Review'][];
             };
           };
         };
@@ -416,7 +416,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  "/community/questions": {
+  '/community/questions': {
     parameters: {
       query?: never;
       header?: never;
@@ -441,9 +441,9 @@ export interface paths {
             [name: string]: unknown;
           };
           content: {
-            "application/json": {
+            'application/json': {
               success?: boolean;
-              data?: components["schemas"]["Question"][];
+              data?: components['schemas']['Question'][];
             };
           };
         };
@@ -457,7 +457,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  "/chat": {
+  '/chat': {
     parameters: {
       query?: never;
       header?: never;
@@ -481,7 +481,7 @@ export interface paths {
       };
       requestBody: {
         content: {
-          "application/json": {
+          'application/json': {
             /**
              * @description 用戶訊息
              * @example 我想在大安區找 3 房的新房子
@@ -490,7 +490,7 @@ export interface paths {
             /** @description 對話歷史 */
             history?: {
               /** @enum {string} */
-              role?: "user" | "assistant";
+              role?: 'user' | 'assistant';
               content?: string;
             }[];
           };
@@ -503,7 +503,7 @@ export interface paths {
             [name: string]: unknown;
           };
           content: {
-            "application/json": {
+            'application/json': {
               /** @example true */
               success?: boolean;
               /** @description AI 回覆內容 */
@@ -519,7 +519,7 @@ export interface paths {
             [name: string]: unknown;
           };
           content: {
-            "application/json": components["schemas"]["Error"];
+            'application/json': components['schemas']['Error'];
           };
         };
       };
@@ -530,7 +530,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  "/trust/transactions": {
+  '/trust/transactions': {
     parameters: {
       query?: never;
       header?: never;
@@ -541,7 +541,7 @@ export interface paths {
     get: {
       parameters: {
         query?: {
-          status?: "pending" | "in_progress" | "completed" | "cancelled";
+          status?: 'pending' | 'in_progress' | 'completed' | 'cancelled';
         };
         header?: never;
         path?: never;
@@ -555,9 +555,9 @@ export interface paths {
             [name: string]: unknown;
           };
           content: {
-            "application/json": {
+            'application/json': {
               success?: boolean;
-              data?: components["schemas"]["Transaction"][];
+              data?: components['schemas']['Transaction'][];
             };
           };
         };
@@ -571,7 +571,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  "/trust/transactions/{id}": {
+  '/trust/transactions/{id}': {
     parameters: {
       query?: never;
       header?: never;
@@ -596,13 +596,13 @@ export interface paths {
             [name: string]: unknown;
           };
           content: {
-            "application/json": {
+            'application/json': {
               success?: boolean;
-              data?: components["schemas"]["Transaction"];
+              data?: components['schemas']['Transaction'];
             };
           };
         };
-        404: components["responses"]["NotFound"];
+        404: components['responses']['NotFound'];
       };
     };
     put?: never;
@@ -613,7 +613,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  "/trust/login": {
+  '/trust/login': {
     parameters: {
       query?: never;
       header?: never;
@@ -635,9 +635,9 @@ export interface paths {
       };
       requestBody: {
         content: {
-          "application/json": {
+          'application/json': {
             /** @enum {string} */
-            role: "agent" | "buyer";
+            role: 'agent' | 'buyer';
             caseId?: string;
           };
         };
@@ -649,7 +649,7 @@ export interface paths {
             [name: string]: unknown;
           };
           content: {
-            "application/json": {
+            'application/json': {
               success?: boolean;
               data?: {
                 token?: string;
@@ -657,7 +657,7 @@ export interface paths {
             };
           };
         };
-        401: components["responses"]["Unauthorized"];
+        401: components['responses']['Unauthorized'];
       };
     };
     delete?: never;
@@ -666,7 +666,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  "/trust/me": {
+  '/trust/me': {
     parameters: {
       query?: never;
       header?: never;
@@ -689,17 +689,17 @@ export interface paths {
             [name: string]: unknown;
           };
           content: {
-            "application/json": {
+            'application/json': {
               success?: boolean;
               data?: {
                 /** @enum {string} */
-                role?: "agent" | "buyer";
+                role?: 'agent' | 'buyer';
                 caseId?: string;
               };
             };
           };
         };
-        401: components["responses"]["Unauthorized"];
+        401: components['responses']['Unauthorized'];
       };
     };
     put?: never;
@@ -710,7 +710,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  "/trust/session": {
+  '/trust/session': {
     parameters: {
       query?: never;
       header?: never;
@@ -732,7 +732,7 @@ export interface paths {
       };
       requestBody: {
         content: {
-          "application/json": {
+          'application/json': {
             token: string;
           };
         };
@@ -744,12 +744,12 @@ export interface paths {
             [name: string]: unknown;
           };
           content: {
-            "application/json": {
+            'application/json': {
               success?: boolean;
             };
           };
         };
-        401: components["responses"]["Unauthorized"];
+        401: components['responses']['Unauthorized'];
       };
     };
     delete?: never;
@@ -758,7 +758,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  "/trust/status": {
+  '/trust/status': {
     parameters: {
       query?: never;
       header?: never;
@@ -783,13 +783,13 @@ export interface paths {
             [name: string]: unknown;
           };
           content: {
-            "application/json": {
+            'application/json': {
               success?: boolean;
-              data?: components["schemas"]["TrustTransaction"];
+              data?: components['schemas']['TrustTransaction'];
             };
           };
         };
-        403: components["responses"]["Forbidden"];
+        403: components['responses']['Forbidden'];
       };
     };
     put?: never;
@@ -800,7 +800,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  "/trust/submit": {
+  '/trust/submit': {
     parameters: {
       query?: never;
       header?: never;
@@ -824,7 +824,7 @@ export interface paths {
       };
       requestBody: {
         content: {
-          "application/json": {
+          'application/json': {
             step: number;
             data: Record<string, never>;
           };
@@ -837,13 +837,13 @@ export interface paths {
             [name: string]: unknown;
           };
           content: {
-            "application/json": {
+            'application/json': {
               success?: boolean;
-              data?: components["schemas"]["TrustTransaction"];
+              data?: components['schemas']['TrustTransaction'];
             };
           };
         };
-        403: components["responses"]["Forbidden"];
+        403: components['responses']['Forbidden'];
       };
     };
     delete?: never;
@@ -852,7 +852,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  "/trust/confirm": {
+  '/trust/confirm': {
     parameters: {
       query?: never;
       header?: never;
@@ -876,7 +876,7 @@ export interface paths {
       };
       requestBody: {
         content: {
-          "application/json": {
+          'application/json': {
             step: number;
             /** @description 買家備註 */
             note?: string;
@@ -890,14 +890,14 @@ export interface paths {
             [name: string]: unknown;
           };
           content: {
-            "application/json": {
+            'application/json': {
               success?: boolean;
-              data?: components["schemas"]["TrustTransaction"];
+              data?: components['schemas']['TrustTransaction'];
             };
           };
         };
-        400: components["responses"]["BadRequest"];
-        403: components["responses"]["Forbidden"];
+        400: components['responses']['BadRequest'];
+        403: components['responses']['Forbidden'];
       };
     };
     delete?: never;
@@ -906,7 +906,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  "/trust/checklist": {
+  '/trust/checklist': {
     parameters: {
       query?: never;
       header?: never;
@@ -930,7 +930,7 @@ export interface paths {
       };
       requestBody: {
         content: {
-          "application/json": {
+          'application/json': {
             index: number;
             checked: boolean;
           };
@@ -943,9 +943,9 @@ export interface paths {
             [name: string]: unknown;
           };
           content: {
-            "application/json": {
+            'application/json': {
               success?: boolean;
-              data?: components["schemas"]["TrustTransaction"];
+              data?: components['schemas']['TrustTransaction'];
             };
           };
         };
@@ -957,7 +957,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  "/trust/payment": {
+  '/trust/payment': {
     parameters: {
       query?: never;
       header?: never;
@@ -987,13 +987,13 @@ export interface paths {
             [name: string]: unknown;
           };
           content: {
-            "application/json": {
+            'application/json': {
               success?: boolean;
-              data?: components["schemas"]["TrustTransaction"];
+              data?: components['schemas']['TrustTransaction'];
             };
           };
         };
-        400: components["responses"]["BadRequest"];
+        400: components['responses']['BadRequest'];
       };
     };
     delete?: never;
@@ -1002,7 +1002,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  "/trust/reset": {
+  '/trust/reset': {
     parameters: {
       query?: never;
       header?: never;
@@ -1032,7 +1032,7 @@ export interface paths {
             [name: string]: unknown;
           };
           content: {
-            "application/json": {
+            'application/json': {
               success?: boolean;
             };
           };
@@ -1045,7 +1045,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  "/trust/supplement": {
+  '/trust/supplement': {
     parameters: {
       query?: never;
       header?: never;
@@ -1066,7 +1066,7 @@ export interface paths {
       };
       requestBody: {
         content: {
-          "application/json": {
+          'application/json': {
             content: string;
           };
         };
@@ -1078,9 +1078,9 @@ export interface paths {
             [name: string]: unknown;
           };
           content: {
-            "application/json": {
+            'application/json': {
               success?: boolean;
-              data?: components["schemas"]["TrustTransaction"];
+              data?: components['schemas']['TrustTransaction'];
             };
           };
         };
@@ -1092,7 +1092,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  "/trust/token": {
+  '/trust/token': {
     parameters: {
       query?: never;
       header?: never;
@@ -1111,11 +1111,11 @@ export interface paths {
       };
       requestBody: {
         content: {
-          "application/json": {
+          'application/json': {
             apiKey: string;
             caseId: string;
             /** @enum {string} */
-            role: "agent" | "buyer";
+            role: 'agent' | 'buyer';
           };
         };
       };
@@ -1126,7 +1126,7 @@ export interface paths {
             [name: string]: unknown;
           };
           content: {
-            "application/json": {
+            'application/json': {
               success?: boolean;
               data?: {
                 token?: string;
@@ -1142,7 +1142,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  "/uag-track": {
+  '/uag-track': {
     parameters: {
       query?: never;
       header?: never;
@@ -1166,7 +1166,7 @@ export interface paths {
       };
       requestBody: {
         content: {
-          "application/json": {
+          'application/json': {
             session_id: string;
             agent_id?: string;
             fingerprint?: string;
@@ -1187,11 +1187,11 @@ export interface paths {
             [name: string]: unknown;
           };
           content: {
-            "application/json": {
+            'application/json': {
               success?: boolean;
               data?: {
                 /** @enum {string} */
-                grade?: "S" | "A" | "B" | "C" | "F";
+                grade?: 'S' | 'A' | 'B' | 'C' | 'F';
                 score?: number;
                 reason?: string;
               };
@@ -1206,7 +1206,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  "/session-recovery": {
+  '/session-recovery': {
     parameters: {
       query?: never;
       header?: never;
@@ -1228,7 +1228,7 @@ export interface paths {
       };
       requestBody: {
         content: {
-          "application/json": {
+          'application/json': {
             fingerprint: string;
             agentId?: string;
           };
@@ -1241,13 +1241,13 @@ export interface paths {
             [name: string]: unknown;
           };
           content: {
-            "application/json": {
+            'application/json': {
               success?: boolean;
               data?: {
                 recovered?: boolean;
                 session_id?: string;
                 /** @enum {string} */
-                grade?: "S" | "A" | "B" | "C" | "F";
+                grade?: 'S' | 'A' | 'B' | 'C' | 'F';
               };
             };
           };
@@ -1260,7 +1260,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  "/quick-filter": {
+  '/quick-filter': {
     parameters: {
       query?: never;
       header?: never;
@@ -1275,7 +1275,7 @@ export interface paths {
       parameters: {
         query: {
           agentId: string;
-          grade?: "S" | "A" | "B" | "C";
+          grade?: 'S' | 'A' | 'B' | 'C';
           limit?: number;
         };
         header?: never;
@@ -1290,10 +1290,10 @@ export interface paths {
             [name: string]: unknown;
           };
           content: {
-            "application/json": {
+            'application/json': {
               success?: boolean;
               data?: {
-                leads?: components["schemas"]["UAGLead"][];
+                leads?: components['schemas']['UAGLead'][];
                 count?: number;
                 /** Format: date-time */
                 cached_at?: string;
@@ -1311,7 +1311,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  "/archive-handler": {
+  '/archive-handler': {
     parameters: {
       query?: never;
       header?: never;
@@ -1339,7 +1339,7 @@ export interface paths {
             [name: string]: unknown;
           };
           content: {
-            "application/json": {
+            'application/json': {
               success?: boolean;
               data?: {
                 archived_count?: number;
@@ -1357,7 +1357,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  "/report/create": {
+  '/report/create': {
     parameters: {
       query?: never;
       header?: never;
@@ -1379,11 +1379,11 @@ export interface paths {
       };
       requestBody: {
         content: {
-          "application/json": {
+          'application/json': {
             propertyId: string;
             agentId: string;
             /** @enum {string} */
-            style?: "simple" | "investment" | "marketing";
+            style?: 'simple' | 'investment' | 'marketing';
             highlights?: string[];
             photos?: number[];
             customMessage?: string;
@@ -1397,7 +1397,7 @@ export interface paths {
             [name: string]: unknown;
           };
           content: {
-            "application/json": {
+            'application/json': {
               success?: boolean;
               data?: {
                 id?: string;
@@ -1416,7 +1416,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  "/report/track": {
+  '/report/track': {
     parameters: {
       query?: never;
       header?: never;
@@ -1438,7 +1438,7 @@ export interface paths {
       };
       requestBody: {
         content: {
-          "application/json": {
+          'application/json': {
             reportId: string;
             agentId?: string;
             source?: string;
@@ -1453,7 +1453,7 @@ export interface paths {
             [name: string]: unknown;
           };
           content: {
-            "application/json": {
+            'application/json': {
               success?: boolean;
               message?: string;
             };
@@ -1467,7 +1467,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  "/generate-community-profile": {
+  '/generate-community-profile': {
     parameters: {
       query?: never;
       header?: never;
@@ -1489,7 +1489,7 @@ export interface paths {
       };
       requestBody: {
         content: {
-          "application/json": {
+          'application/json': {
             /** Format: uuid */
             communityId: string;
           };
@@ -1502,7 +1502,7 @@ export interface paths {
             [name: string]: unknown;
           };
           content: {
-            "application/json": {
+            'application/json': {
               success?: boolean;
               data?: {
                 story_vibe?: string;
@@ -1514,7 +1514,7 @@ export interface paths {
             };
           };
         };
-        404: components["responses"]["NotFound"];
+        404: components['responses']['NotFound'];
       };
     };
     delete?: never;
@@ -1523,7 +1523,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  "/openai-proxy": {
+  '/openai-proxy': {
     parameters: {
       query?: never;
       header?: never;
@@ -1545,10 +1545,10 @@ export interface paths {
       };
       requestBody: {
         content: {
-          "application/json": {
+          'application/json': {
             messages: {
               /** @enum {string} */
-              role?: "system" | "user" | "assistant";
+              role?: 'system' | 'user' | 'assistant';
               content?: string;
             }[];
             /** @default gpt-4o-mini */
@@ -1567,7 +1567,7 @@ export interface paths {
             [name: string]: unknown;
           };
           content: {
-            "application/json": {
+            'application/json': {
               success?: boolean;
               data?: {
                 content?: string;
@@ -1584,7 +1584,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  "/replicate-detect": {
+  '/replicate-detect': {
     parameters: {
       query?: never;
       header?: never;
@@ -1606,7 +1606,7 @@ export interface paths {
       };
       requestBody: {
         content: {
-          "application/json": {
+          'application/json': {
             /** Format: uri */
             image: string;
             labels?: string[];
@@ -1614,9 +1614,9 @@ export interface paths {
              * @default general
              * @enum {string}
              */
-            mode?: "curtain" | "general";
+            mode?: 'curtain' | 'general';
             /** @enum {string} */
-            model?: "yolov8" | "grounding-dino";
+            model?: 'yolov8' | 'grounding-dino';
           };
         };
       };
@@ -1627,10 +1627,10 @@ export interface paths {
             [name: string]: unknown;
           };
           content: {
-            "application/json": {
+            'application/json': {
               success?: boolean;
               data?: {
-                detections?: components["schemas"]["Detection"][];
+                detections?: components['schemas']['Detection'][];
                 predictionId?: string;
               };
             };
@@ -1644,7 +1644,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  "/replicate-generate": {
+  '/replicate-generate': {
     parameters: {
       query?: never;
       header?: never;
@@ -1666,10 +1666,10 @@ export interface paths {
       };
       requestBody: {
         content: {
-          "application/json": {
+          'application/json': {
             prompt: string;
             /** @enum {string} */
-            model?: "flux" | "flux-dev" | "sdxl";
+            model?: 'flux' | 'flux-dev' | 'sdxl';
             deployment?: string;
           };
         };
@@ -1681,7 +1681,7 @@ export interface paths {
             [name: string]: unknown;
           };
           content: {
-            "application/json": {
+            'application/json': {
               success?: boolean;
               data?: {
                 output?: string[];
@@ -1698,7 +1698,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  "/x-raymike": {
+  '/x-raymike': {
     parameters: {
       query?: never;
       header?: never;
@@ -1720,7 +1720,7 @@ export interface paths {
       };
       requestBody: {
         content: {
-          "application/json": {
+          'application/json': {
             /** Format: uri */
             image: string;
             version?: string;
@@ -1734,7 +1734,7 @@ export interface paths {
             [name: string]: unknown;
           };
           content: {
-            "application/json": {
+            'application/json': {
               success?: boolean;
               data?: {
                 /** Format: uri */
@@ -1752,7 +1752,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  "/visualize-detections": {
+  '/visualize-detections': {
     parameters: {
       query?: never;
       header?: never;
@@ -1774,7 +1774,7 @@ export interface paths {
       };
       requestBody: {
         content: {
-          "application/json": {
+          'application/json': {
             /** Format: uri */
             image: string;
             boxes: {
@@ -1786,7 +1786,7 @@ export interface paths {
               score?: number;
             }[];
             /** @enum {string} */
-            mode?: "curtain" | "general";
+            mode?: 'curtain' | 'general';
           };
         };
       };
@@ -1797,7 +1797,7 @@ export interface paths {
             [name: string]: unknown;
           };
           content: {
-            "image/svg+xml": string;
+            'image/svg+xml': string;
           };
         };
       };
@@ -1808,7 +1808,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  "/health-replicate": {
+  '/health-replicate': {
     parameters: {
       query?: never;
       header?: never;
@@ -1834,7 +1834,7 @@ export interface paths {
             [name: string]: unknown;
           };
           content: {
-            "application/json": {
+            'application/json': {
               success?: boolean;
               data?: {
                 hasToken?: boolean;
@@ -1855,7 +1855,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  "/upload-imgix": {
+  '/upload-imgix': {
     parameters: {
       query?: never;
       header?: never;
@@ -1877,7 +1877,7 @@ export interface paths {
       };
       requestBody: {
         content: {
-          "application/json": {
+          'application/json': {
             /**
              * Format: byte
              * @description Base64 編碼的圖片
@@ -1893,13 +1893,13 @@ export interface paths {
             [name: string]: unknown;
           };
           content: {
-            "application/json": {
+            'application/json': {
               success?: boolean;
               /** Format: uri */
               url?: string;
               filename?: string;
               /** @enum {string} */
-              method?: "s3" | "base64";
+              method?: 's3' | 'base64';
             };
           };
         };
@@ -1911,7 +1911,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  "/cloud-test": {
+  '/cloud-test': {
     parameters: {
       query?: never;
       header?: never;
@@ -1922,7 +1922,7 @@ export interface paths {
     get: {
       parameters: {
         query?: {
-          ping?: "1";
+          ping?: '1';
         };
         header?: never;
         path?: never;
@@ -1936,7 +1936,7 @@ export interface paths {
             [name: string]: unknown;
           };
           content: {
-            "application/json": {
+            'application/json': {
               success?: boolean;
               data?: {
                 /** Format: uri */
@@ -1966,7 +1966,7 @@ export interface paths {
             [name: string]: unknown;
           };
           content: {
-            "application/json": {
+            'application/json': {
               success?: boolean;
               data?: {
                 url?: string;
@@ -2005,10 +2005,10 @@ export interface components {
       /** Format: uuid */
       author_id?: string;
       /** @enum {string} */
-      author_role?: "resident" | "agent" | "admin";
+      author_role?: 'resident' | 'agent' | 'admin';
       author_name?: string;
       /** @enum {string} */
-      visibility?: "public" | "private";
+      visibility?: 'public' | 'private';
       likes_count?: number;
       comments_count?: number;
       is_pinned?: boolean;
@@ -2065,7 +2065,7 @@ export interface components {
        */
       stage?: number;
       /** @enum {string} */
-      status?: "pending" | "in_progress" | "completed" | "cancelled";
+      status?: 'pending' | 'in_progress' | 'completed' | 'cancelled';
       /** Format: decimal */
       escrow_amount?: number;
       /** Format: date-time */
@@ -2097,7 +2097,7 @@ export interface components {
       management_fee?: number;
       images?: string[];
       /** @enum {string} */
-      status?: "active" | "sold" | "rented" | "removed";
+      status?: 'active' | 'sold' | 'rented' | 'removed';
       /** Format: date-time */
       created_at?: string;
     };
@@ -2115,7 +2115,7 @@ export interface components {
        *     F = 路過
        * @enum {string}
        */
-      grade?: "S" | "A" | "B" | "C" | "F";
+      grade?: 'S' | 'A' | 'B' | 'C' | 'F';
       /** @description 總停留秒數 */
       total_time?: number;
       /** @description 最大滾動深度 */
@@ -2132,9 +2132,9 @@ export interface components {
       session_id?: string;
       agent_id?: string;
       /** @enum {string} */
-      grade?: "S" | "A" | "B" | "C" | "F";
+      grade?: 'S' | 'A' | 'B' | 'C' | 'F';
       /** @enum {string} */
-      temperature?: "HOT" | "WARM" | "COLD";
+      temperature?: 'HOT' | 'WARM' | 'COLD';
       rank?: number;
       /** Format: date-time */
       last_active_at?: string;
@@ -2147,9 +2147,9 @@ export interface components {
       steps?: {
         [key: string]: {
           /** @enum {string} */
-          agentStatus?: "pending" | "submitted";
+          agentStatus?: 'pending' | 'submitted';
           /** @enum {string} */
-          buyerStatus?: "pending" | "confirmed";
+          buyerStatus?: 'pending' | 'confirmed';
           locked?: boolean;
           data?: Record<string, never>;
         };
@@ -2189,7 +2189,7 @@ export interface components {
          *       "error": "缺少必要欄位"
          *     }
          */
-        "application/json": components["schemas"]["Error"];
+        'application/json': components['schemas']['Error'];
       };
     };
     /** @description 未授權 */
@@ -2204,7 +2204,7 @@ export interface components {
          *       "error": "請先登入"
          *     }
          */
-        "application/json": components["schemas"]["Error"];
+        'application/json': components['schemas']['Error'];
       };
     };
     /** @description 權限不足 */
@@ -2219,7 +2219,7 @@ export interface components {
          *       "error": "權限不足"
          *     }
          */
-        "application/json": components["schemas"]["Error"];
+        'application/json': components['schemas']['Error'];
       };
     };
     /** @description 資源不存在 */
@@ -2234,7 +2234,7 @@ export interface components {
          *       "error": "找不到該資源"
          *     }
          */
-        "application/json": components["schemas"]["Error"];
+        'application/json': components['schemas']['Error'];
       };
     };
     /** @description 伺服器錯誤 */
@@ -2249,7 +2249,7 @@ export interface components {
          *       "error": "伺服器錯誤，請稍後再試"
          *     }
          */
-        "application/json": components["schemas"]["Error"];
+        'application/json': components['schemas']['Error'];
       };
     };
   };

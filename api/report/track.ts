@@ -1,6 +1,6 @@
-import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { z } from "zod";
-import { logger } from "../lib/logger";
+import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { z } from 'zod';
+import { logger } from '../lib/logger';
 
 // [NASA TypeScript Safety] Track Payload Schema
 const TrackPayloadSchema = z.object({
@@ -26,23 +26,23 @@ interface TrackPayload {
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // CORS
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-  if (req.method === "OPTIONS") {
+  if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
 
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
     // [NASA TypeScript Safety] 使用 Zod safeParse 取代 as TrackPayload
     const parseResult = TrackPayloadSchema.safeParse(req.body);
     if (!parseResult.success) {
-      return res.status(400).json({ error: "Missing reportId" });
+      return res.status(400).json({ error: 'Missing reportId' });
     }
     const { reportId, agentId, source, userAgent } = parseResult.data;
 
@@ -59,7 +59,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     //   });
 
     // 目前只記錄 log
-    logger.info("[report/track] Report tracked", {
+    logger.info('[report/track] Report tracked', {
       reportId,
       agentId,
       source,
@@ -68,13 +68,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     return res.status(200).json({
       success: true,
-      message: "Tracked successfully",
+      message: 'Tracked successfully',
     });
   } catch (error) {
-    logger.error("[report/track] Error", error);
+    logger.error('[report/track] Error', error);
     return res.status(500).json({
       success: false,
-      error: "Internal server error",
+      error: 'Internal server error',
     });
   }
 }

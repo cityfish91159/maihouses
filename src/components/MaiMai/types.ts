@@ -7,36 +7,29 @@
 
 /** MaiMai 心情狀態 */
 export type MaiMaiMood =
-  | "idle" // 待機,輕微呼吸
-  | "wave" // 揮手打招呼
-  | "peek" // 偷看(輸入密碼)
-  | "happy" // 開心
-  | "thinking" // 思考中
-  | "excited" // 超興奮
-  | "confused" // 困惑
-  | "celebrate" // 慶祝,撒花
-  | "shy" // 害羞/錯誤
-  | "sleep" // 睡著
-  | "header"; // Header 專用：靜態揮手,無嘴巴,無眨眼
+  | 'idle' // 待機,輕微呼吸
+  | 'wave' // 揮手打招呼
+  | 'peek' // 偷看(輸入密碼)
+  | 'happy' // 開心
+  | 'thinking' // 思考中
+  | 'excited' // 超興奮
+  | 'confused' // 困惑
+  | 'celebrate' // 慶祝,撒花
+  | 'shy' // 害羞/錯誤
+  | 'sleep' // 睡著
+  | 'header'; // Header 專用：靜態揮手,無嘴巴,無眨眼
 
 /** 尺寸配置 */
-export type MaiMaiSize = "xs" | "sm" | "md" | "lg" | "xl";
+export type MaiMaiSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
 /** 嘴巴形狀 */
-export type MouthShape =
-  | "smile"
-  | "big-smile"
-  | "wow"
-  | "focused"
-  | "worried"
-  | "sleep"
-  | "line";
+export type MouthShape = 'smile' | 'big-smile' | 'wow' | 'focused' | 'worried' | 'sleep' | 'line';
 
 // ============ 組件介面 ============
 
 /** 眼睛數據定義 */
 export interface EyeData {
-  type: "circle" | "path" | "group";
+  type: 'circle' | 'path' | 'group';
   d?: string;
   cx?: number;
   cy?: number;
@@ -51,12 +44,12 @@ export interface EyeData {
 export interface ArmPose {
   left: string;
   right?: string;
-  extraType?: "wave" | "peek";
+  extraType?: 'wave' | 'peek';
 }
 
 /** 眼睛狀態 */
 export interface EyeState {
-  type: "open" | "closed" | "happy" | "peek" | "worried";
+  type: 'open' | 'closed' | 'happy' | 'peek' | 'worried';
   y?: number;
   size?: number;
 }
@@ -106,7 +99,7 @@ export interface MoodConfig {
 
 export type EffectItem =
   | {
-      kind: "text";
+      kind: 'text';
       x: number;
       y: number;
       icon: string;
@@ -115,7 +108,7 @@ export type EffectItem =
       className?: string;
     }
   | {
-      kind: "star";
+      kind: 'star';
       x: number;
       y: number;
       size: number;
@@ -123,7 +116,7 @@ export type EffectItem =
       className?: string;
     }
   | {
-      kind: "sparkle";
+      kind: 'sparkle';
       x: number;
       y: number;
       size: number;
@@ -131,7 +124,7 @@ export type EffectItem =
       className?: string;
     }
   | {
-      kind: "confetti";
+      kind: 'confetti';
       x: number;
       y: number;
       size: number;
@@ -139,7 +132,7 @@ export type EffectItem =
       className?: string;
     }
   | {
-      kind: "circle";
+      kind: 'circle';
       x: number;
       y: number;
       r: number;
@@ -147,7 +140,7 @@ export type EffectItem =
       className?: string;
     }
   | {
-      kind: "ellipse";
+      kind: 'ellipse';
       x: number;
       y: number;
       rx: number;
@@ -159,4 +152,4 @@ export type EffectItem =
 // 為了向後相容,從 constants 重新匯出所有內容
 // Note: configs.ts 已移除重新匯出以避免循環依賴,請直接從 './configs' 引入
 
-export * from "./constants";
+export * from './constants';

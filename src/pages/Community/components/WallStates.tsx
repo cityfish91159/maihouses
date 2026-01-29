@@ -1,5 +1,5 @@
-import React from "react";
-import { STRINGS } from "../../../constants/strings";
+import React from 'react';
+import { STRINGS } from '../../../constants/strings';
 
 // Loading State
 export const WallLoading: React.FC = () => {
@@ -57,10 +57,7 @@ export const WallError: React.FC<WallErrorProps> = ({
   ),
 }) => {
   return (
-    <div
-      className="flex flex-col items-center justify-center py-12 text-center"
-      role="alert"
-    >
+    <div className="flex flex-col items-center justify-center py-12 text-center" role="alert">
       <div className="mb-4">{icon}</div>
       <h3 className="mb-2 text-lg font-medium text-gray-900">{title}</h3>
       <p className="mb-6 text-gray-500">{message}</p>

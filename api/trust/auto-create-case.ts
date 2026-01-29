@@ -20,22 +20,18 @@
  * - [Security Audit] 防止未授權建立案件 (Team 9 修復)
  */
 
-import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { z } from "zod";
-import { supabase, cors, logAudit, withTimeout, SYSTEM_API_KEY } from "./_utils";
-import {
-  successResponse,
-  errorResponse,
-  API_ERROR_CODES,
-} from "../lib/apiResponse";
-import { logger } from "../lib/logger";
-import { rateLimitMiddleware } from "../lib/rateLimiter";
+import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { z } from 'zod';
+import { supabase, cors, logAudit, withTimeout, SYSTEM_API_KEY } from './_utils';
+import { successResponse, errorResponse, API_ERROR_CODES } from '../lib/apiResponse';
+import { logger } from '../lib/logger';
+import { rateLimitMiddleware } from '../lib/rateLimiter';
 import {
   validateProperty,
   resolveBuyerInfo,
   getClientIp,
   getUserAgent,
-} from "./_auto-create-helpers";
+} from './_auto-create-helpers';
 
 // ============================================================================
 // Types & Schemas [NASA TypeScript Safety]
@@ -45,14 +41,10 @@ import {
 const AutoCreateCaseRequestSchema = z.object({
   propertyId: z
     .string()
-    .min(1, "propertyId 不可為空")
-    .regex(/^MH-\d+$/, "propertyId 格式錯誤（應為 MH-XXXXX）"),
-  userId: z.string().uuid("userId 格式錯誤").optional(),
-  userName: z
-    .string()
-    .min(1, "userName 不可為空")
-    .max(50, "userName 不可超過 50 字")
-    .optional(),
+    .min(1, 'propertyId 不可為空')
+    .regex(/^MH-\d+$/, 'propertyId 格式錯誤（應為 MH-XXXXX）'),
+  userId: z.string().uuid('userId 格式錯誤').optional(),
+  userName: z.string().min(1, 'userName 不可為空').max(50, 'userName 不可超過 50 字').optional(),
 });
 type AutoCreateCaseRequest = z.infer<typeof AutoCreateCaseRequestSchema>;
 
@@ -73,22 +65,15 @@ type CreateCaseResult = z.infer<typeof CreateCaseResultSchema>;
 // Handler [NASA TypeScript Safety]
 // ============================================================================
 
-export default async function handler(
-  req: VercelRequest,
-  res: VercelResponse
-): Promise<void> {
+export default async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
   cors(req, res);
-  if (req.method === "OPTIONS") {
+  if (req.method === 'OPTIONS') {
     res.status(200).end();
     return;
   }
 
-  if (req.method !== "POST") {
-    res
-      .status(405)
-      .json(
-        errorResponse(API_ERROR_CODES.METHOD_NOT_ALLOWED, "Method not allowed")
-      );
+  if (req.method !== 'POST') {
+    res.status(405).json(errorResponse(API_ERROR_CODES.METHOD_NOT_ALLOWED, 'Method not allowed'));
     return;
   }
 
@@ -99,35 +84,30 @@ export default async function handler(
 // POST /api/trust/auto-create-case [NASA TypeScript Safety]
 // ============================================================================
 
-async function handleAutoCreateCase(
-  req: VercelRequest,
-  res: VercelResponse
-): Promise<void> {
+async function handleAutoCreateCase(req: VercelRequest, res: VercelResponse): Promise<void> {
   // [Team 9 修復] Step 0: System API Key 認證
   // 此 API 僅允許前端系統呼叫,防止惡意建立案件
-  const systemKey = req.headers["x-system-key"];
+  const systemKey = req.headers['x-system-key'];
   if (systemKey !== SYSTEM_API_KEY) {
-    logger.warn("[trust/auto-create-case] Unauthorized access attempt", {
+    logger.warn('[trust/auto-create-case] Unauthorized access attempt', {
       ip: getClientIp(req),
       agent: getUserAgent(req),
     });
-    return void res
-      .status(401)
-      .json(errorResponse(API_ERROR_CODES.UNAUTHORIZED, "未授權的存取"));
+    return void res.status(401).json(errorResponse(API_ERROR_CODES.UNAUTHORIZED, '未授權的存取'));
   }
 
   // [Team 2 修復] Rate Limiting (10 requests per minute)
   const rateLimitError = rateLimitMiddleware(req, 10, 60000);
   if (rateLimitError) {
-    res.setHeader("X-RateLimit-Remaining", rateLimitError.remaining.toString());
-    res.setHeader("Retry-After", rateLimitError.retryAfter?.toString() || "60");
-    return void res.status(429).json(
-      errorResponse(
-        API_ERROR_CODES.RATE_LIMIT_EXCEEDED,
-        "請求過於頻繁，請稍後再試",
-        { retryAfter: rateLimitError.retryAfter }
-      )
-    );
+    res.setHeader('X-RateLimit-Remaining', rateLimitError.remaining.toString());
+    res.setHeader('Retry-After', rateLimitError.retryAfter?.toString() || '60');
+    return void res
+      .status(429)
+      .json(
+        errorResponse(API_ERROR_CODES.RATE_LIMIT_EXCEEDED, '請求過於頻繁，請稍後再試', {
+          retryAfter: rateLimitError.retryAfter,
+        })
+      );
   }
 
   // 1. 驗證請求參數
@@ -136,11 +116,7 @@ async function handleAutoCreateCase(
     return void res
       .status(400)
       .json(
-        errorResponse(
-          API_ERROR_CODES.INVALID_INPUT,
-          "請求參數格式錯誤",
-          bodyResult.error.issues
-        )
+        errorResponse(API_ERROR_CODES.INVALID_INPUT, '請求參數格式錯誤', bodyResult.error.issues)
       );
   }
 
@@ -153,15 +129,15 @@ async function handleAutoCreateCase(
     const propertyValidation = await validateProperty(propertyId);
     if (!propertyValidation.success) {
       const statusCode =
-        propertyValidation.errorCode === API_ERROR_CODES.NOT_FOUND ? 404 :
-        propertyValidation.errorCode === API_ERROR_CODES.INVALID_INPUT ? 400 : 500;
+        propertyValidation.errorCode === API_ERROR_CODES.NOT_FOUND
+          ? 404
+          : propertyValidation.errorCode === API_ERROR_CODES.INVALID_INPUT
+            ? 400
+            : 500;
 
       return void res
         .status(statusCode)
-        .json(errorResponse(
-          propertyValidation.errorCode!,
-          propertyValidation.errorMessage!
-        ));
+        .json(errorResponse(propertyValidation.errorCode!, propertyValidation.errorMessage!));
     }
 
     const property = propertyValidation.property!;
@@ -173,7 +149,7 @@ async function handleAutoCreateCase(
     // 4. 呼叫 RPC 建立案件（自動生成 token）
     // [Team 8 修復] 添加 15 秒 timeout 保護
     const { data: rpcData, error: rpcError } = await withTimeout(
-      supabase.rpc("fn_create_trust_case", {
+      supabase.rpc('fn_create_trust_case', {
         p_agent_id: property.agent_id,
         p_buyer_name: buyerName,
         p_property_title: property.title,
@@ -182,49 +158,34 @@ async function handleAutoCreateCase(
         p_property_id: propertyId,
       }),
       15000,
-      "RPC call timed out after 15 seconds",
+      'RPC call timed out after 15 seconds'
     );
 
     if (rpcError) {
-      logger.error("[trust/auto-create-case] RPC error", {
+      logger.error('[trust/auto-create-case] RPC error', {
         error: rpcError.message,
         propertyId,
       });
       return void res
         .status(500)
-        .json(
-          errorResponse(API_ERROR_CODES.DATA_FETCH_FAILED, "案件建立失敗")
-        );
+        .json(errorResponse(API_ERROR_CODES.DATA_FETCH_FAILED, '案件建立失敗'));
     }
 
     const resultParseResult = CreateCaseResultSchema.safeParse(rpcData);
     if (!resultParseResult.success) {
-      logger.error(
-        "[trust/auto-create-case] RPC response validation failed",
-        {
-          error: resultParseResult.error.message,
-        }
-      );
+      logger.error('[trust/auto-create-case] RPC response validation failed', {
+        error: resultParseResult.error.message,
+      });
       return void res
         .status(500)
-        .json(
-          errorResponse(
-            API_ERROR_CODES.INTERNAL_ERROR,
-            "回應格式驗證失敗"
-          )
-        );
+        .json(errorResponse(API_ERROR_CODES.INTERNAL_ERROR, '回應格式驗證失敗'));
     }
 
     const result = resultParseResult.data;
     if (!result.success) {
       return void res
         .status(400)
-        .json(
-          errorResponse(
-            API_ERROR_CODES.INVALID_INPUT,
-            result.error ?? "案件建立失敗"
-          )
-        );
+        .json(errorResponse(API_ERROR_CODES.INVALID_INPUT, result.error ?? '案件建立失敗'));
     }
 
     // 5. [Team Bravo - P-02] 並行執行非阻塞操作（效能優化）
@@ -236,18 +197,15 @@ async function handleAutoCreateCase(
       parallelTasks.push(
         (async () => {
           const { error } = await supabase
-            .from("trust_cases")
+            .from('trust_cases')
             .update({ buyer_user_id: buyerUserId })
-            .eq("id", result.case_id);
+            .eq('id', result.case_id);
 
           if (error) {
-            logger.error(
-              "[trust/auto-create-case] Failed to update buyer_user_id",
-              {
-                error: error.message,
-                case_id: result.case_id,
-              }
-            );
+            logger.error('[trust/auto-create-case] Failed to update buyer_user_id', {
+              error: error.message,
+              case_id: result.case_id,
+            });
           }
         })()
       );
@@ -256,10 +214,10 @@ async function handleAutoCreateCase(
     // Task 2: 審計日誌
     // [Team 9 修復] 增強匿名用戶追蹤資訊
     parallelTasks.push(
-      logAudit(result.case_id ?? "unknown", "AUTO_CREATE_CASE", {
-        id: buyerUserId ?? `anonymous-${getClientIp(req).replace(/\./g, "-")}`,
-        role: "buyer" as const,
-        txId: result.case_id ?? "unknown",
+      logAudit(result.case_id ?? 'unknown', 'AUTO_CREATE_CASE', {
+        id: buyerUserId ?? `anonymous-${getClientIp(req).replace(/\./g, '-')}`,
+        role: 'buyer' as const,
+        txId: result.case_id ?? 'unknown',
         ip: getClientIp(req),
         agent: getUserAgent(req),
       })
@@ -269,7 +227,7 @@ async function handleAutoCreateCase(
     await Promise.allSettled(parallelTasks);
 
     // [Team 9 修復] 增強日誌記錄,便於安全審計
-    logger.info("[trust/auto-create-case] Success", {
+    logger.info('[trust/auto-create-case] Success', {
       case_id: result.case_id,
       buyer_name: buyerName,
       property_id: propertyId,
@@ -288,14 +246,10 @@ async function handleAutoCreateCase(
       })
     );
   } catch (e) {
-    logger.error("[trust/auto-create-case] Unexpected error", {
-      error: e instanceof Error ? e.message : "Unknown",
+    logger.error('[trust/auto-create-case] Unexpected error', {
+      error: e instanceof Error ? e.message : 'Unknown',
     });
-    res
-      .status(500)
-      .json(
-        errorResponse(API_ERROR_CODES.INTERNAL_ERROR, "伺服器內部錯誤")
-      );
+    res.status(500).json(errorResponse(API_ERROR_CODES.INTERNAL_ERROR, '伺服器內部錯誤'));
   }
 }
 

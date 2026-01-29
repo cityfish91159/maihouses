@@ -1,14 +1,14 @@
-import { useCallback } from "react";
-import { useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { BACKUP_REVIEWS } from "../../../constants/data";
-import { HomeCard } from "../components/HomeCard";
-import { ReviewCard } from "../components/ReviewCard";
-import { getFeaturedHomeReviews } from "../../../services/communityService";
-import type { ReviewForUI } from "../../../types/review";
+import { useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { BACKUP_REVIEWS } from '../../../constants/data';
+import { HomeCard } from '../components/HomeCard';
+import { ReviewCard } from '../components/ReviewCard';
+import { getFeaturedHomeReviews } from '../../../services/communityService';
+import type { ReviewForUI } from '../../../types/review';
 
 // V4: Extract hardcoded URL
-const SEED_REVIEWS_URL = "/maihouses/community-wall_mvp.html";
+const SEED_REVIEWS_URL = '/maihouses/community-wall_mvp.html';
 
 /**
  * 將 ReviewForUI 轉換為 ReviewCard 所需格式
@@ -23,7 +23,7 @@ interface ReviewWithNavigation {
   rating: number;
   tags: string[];
   content: string;
-  source: "real" | "seed";
+  source: 'real' | 'seed';
   communityId: string | null;
 }
 
@@ -50,7 +50,7 @@ function mapToReviewWithNavigation(review: ReviewForUI): ReviewWithNavigation {
  * V3: BACKUP_REVIEWS 現在已包含 source 和 communityId
  */
 function mapBackupToReviewWithNavigation(
-  backup: (typeof BACKUP_REVIEWS)[number],
+  backup: (typeof BACKUP_REVIEWS)[number]
 ): ReviewWithNavigation {
   return {
     originalId: backup.id, // H5: Use stable ID directly
@@ -81,7 +81,7 @@ export default function CommunityTeaser() {
     isLoading,
     isError,
   } = useQuery({
-    queryKey: ["featured-reviews"],
+    queryKey: ['featured-reviews'],
     queryFn: getFeaturedHomeReviews,
     staleTime: 5 * 60 * 1000, // 5 minutes
     retry: 1, // U2: Retry once (handled by React Query now)
@@ -97,13 +97,13 @@ export default function CommunityTeaser() {
   // V1: Extract click handler with useCallback to avoid duplication
   const handleReviewClick = useCallback(
     (review: ReviewWithNavigation) => {
-      if (review.source === "real" && review.communityId) {
+      if (review.source === 'real' && review.communityId) {
         navigate(`/community/${review.communityId}/wall`);
       } else {
         window.location.href = SEED_REVIEWS_URL; // V4: Use constant
       }
     },
-    [navigate],
+    [navigate]
   );
 
   // Loading skeleton
@@ -178,7 +178,7 @@ export default function CommunityTeaser() {
             key={review.originalId}
             onClick={() => handleReviewClick(review)}
             onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") {
+              if (e.key === 'Enter' || e.key === ' ') {
                 // Fix Lie 7: Support Space key
                 e.preventDefault(); // Prevent scrolling for Space
                 handleReviewClick(review);

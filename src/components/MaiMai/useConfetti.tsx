@@ -3,8 +3,8 @@
  * @description 使用 canvas-confetti 實現高效能撒花動畫
  */
 
-import { useCallback, useEffect, useRef } from "react";
-import confetti from "canvas-confetti";
+import { useCallback, useEffect, useRef } from 'react';
+import confetti from 'canvas-confetti';
 
 interface UseConfettiOptions {
   /** 彩帶數量 */
@@ -44,13 +44,11 @@ export function useConfetti(options: UseConfettiOptions = {}) {
     particleCount = 100,
     spread = 70,
     origin = { x: 0.5, y: 0.6 },
-    colors = ["#FBBF24", "#F472B6", "#38BDF8", "#A78BFA", "#22C55E"],
+    colors = ['#FBBF24', '#F472B6', '#38BDF8', '#A78BFA', '#22C55E'],
   } = options;
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const confettiInstance = useRef<ReturnType<typeof confetti.create> | null>(
-    null,
-  );
+  const confettiInstance = useRef<ReturnType<typeof confetti.create> | null>(null);
 
   // 初始化 confetti 實例
   useEffect(() => {
@@ -88,12 +86,12 @@ export function useConfetti(options: UseConfettiOptions = {}) {
       <canvas
         ref={canvasRef}
         style={{
-          position: "fixed",
+          position: 'fixed',
           top: 0,
           left: 0,
-          width: "100%",
-          height: "100%",
-          pointerEvents: "none",
+          width: '100%',
+          height: '100%',
+          pointerEvents: 'none',
           zIndex: 9999,
         }}
       />

@@ -1,4 +1,4 @@
-import React, { memo } from "react";
+import React, { memo } from 'react';
 
 export const EmptyState = memo(() => {
   return (
@@ -18,4 +18,4 @@ export const EmptyState = memo(() => {
   );
 });
 
-EmptyState.displayName = "EmptyState";
+EmptyState.displayName = 'EmptyState';

@@ -1,4 +1,4 @@
-import React from "react";
+import React from 'react';
 
 interface LogoProps {
   showSlogan?: boolean;
@@ -16,11 +16,7 @@ interface LogoContentProps {
 }
 
 // 將 Content 移到組件外部，避免每次渲染時重新創建
-const LogoContent: React.FC<LogoContentProps> = ({
-  showSlogan,
-  className,
-  showBadge,
-}) => (
+const LogoContent: React.FC<LogoContentProps> = ({ showSlogan, className, showBadge }) => (
   <div className={`group flex cursor-pointer items-center gap-3 ${className}`}>
     {/* Logo Icon */}
     <div className="shadow-brand-700/20 group-hover:shadow-brand-700/30 relative flex size-[42px] items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-brand-700 to-brand-600 shadow-lg transition-all duration-300 group-hover:scale-105">
@@ -68,9 +64,9 @@ const LogoContent: React.FC<LogoContentProps> = ({
 
 export const Logo: React.FC<LogoProps> = ({
   showSlogan = true,
-  className = "",
+  className = '',
   onClick,
-  href = "/maihouses/",
+  href = '/maihouses/',
   showBadge = true,
   ariaLabel,
 }) => {
@@ -78,12 +74,7 @@ export const Logo: React.FC<LogoProps> = ({
 
   if (href) {
     return (
-      <a
-        href={href}
-        onClick={onClick}
-        className="no-underline"
-        aria-label={ariaLabel}
-      >
+      <a href={href} onClick={onClick} className="no-underline" aria-label={ariaLabel}>
         <LogoContent {...contentProps} />
       </a>
     );
@@ -95,7 +86,7 @@ export const Logo: React.FC<LogoProps> = ({
       tabIndex={0}
       onClick={onClick}
       onKeyDown={(e) => {
-        if ((e.key === "Enter" || e.key === " ") && onClick) onClick();
+        if ((e.key === 'Enter' || e.key === ' ') && onClick) onClick();
       }}
       aria-label={ariaLabel}
     >

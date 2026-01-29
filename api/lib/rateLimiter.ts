@@ -12,8 +12,8 @@
  * - [Team 2] Rate Limiting 實作
  */
 
-import type { VercelRequest } from "@vercel/node";
-import { logger } from "./logger";
+import type { VercelRequest } from '@vercel/node';
+import { logger } from './logger';
 
 // ============================================================================
 // Types
@@ -38,21 +38,24 @@ interface RateLimitResult {
 const rateLimitStore = new Map<string, RateLimitRecord>();
 
 // 定期清理過期記錄（每 5 分鐘）
-setInterval(() => {
-  const now = Date.now();
-  let cleaned = 0;
+setInterval(
+  () => {
+    const now = Date.now();
+    let cleaned = 0;
 
-  for (const [key, record] of rateLimitStore.entries()) {
-    if (record.resetTime < now) {
-      rateLimitStore.delete(key);
-      cleaned++;
+    for (const [key, record] of rateLimitStore.entries()) {
+      if (record.resetTime < now) {
+        rateLimitStore.delete(key);
+        cleaned++;
+      }
     }
-  }
 
-  if (cleaned > 0) {
-    logger.info("[rateLimiter] Cleaned expired records", { count: cleaned });
-  }
-}, 5 * 60 * 1000);
+    if (cleaned > 0) {
+      logger.info('[rateLimiter] Cleaned expired records', { count: cleaned });
+    }
+  },
+  5 * 60 * 1000
+);
 
 // ============================================================================
 // Rate Limiter
@@ -123,18 +126,18 @@ export function checkRateLimit(
  * @returns 客戶端 IP 地址
  */
 export function getIdentifier(req: VercelRequest): string {
-  const forwarded = req.headers["x-forwarded-for"];
+  const forwarded = req.headers['x-forwarded-for'];
 
-  if (typeof forwarded === "string") {
-    return forwarded.split(",")[0].trim();
+  if (typeof forwarded === 'string') {
+    return forwarded.split(',')[0].trim();
   }
 
   if (Array.isArray(forwarded) && forwarded.length > 0) {
     const first = forwarded[0];
-    return typeof first === "string" ? first : "unknown";
+    return typeof first === 'string' ? first : 'unknown';
   }
 
-  return "unknown";
+  return 'unknown';
 }
 
 /**
@@ -170,7 +173,7 @@ export function rateLimitMiddleware(
   const result = checkRateLimit(identifier, maxRequests, windowMs);
 
   if (!result.allowed) {
-    logger.warn("[rateLimiter] Rate limit exceeded", {
+    logger.warn('[rateLimiter] Rate limit exceeded', {
       identifier,
       count: maxRequests + 1,
       windowMs,
@@ -189,7 +192,7 @@ export function rateLimitMiddleware(
 export function resetRateLimit(identifier: string): void {
   const key = `ratelimit:${identifier}`;
   rateLimitStore.delete(key);
-  logger.info("[rateLimiter] Rate limit reset", { identifier });
+  logger.info('[rateLimiter] Rate limit reset', { identifier });
 }
 
 /**

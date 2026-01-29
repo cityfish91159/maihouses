@@ -4,7 +4,7 @@
  * - Uses AbortController + timeout for race safety
  */
 
-const API_ENDPOINT = "/api/property/page-data";
+const API_ENDPOINT = '/api/property/page-data';
 const REQUEST_TIMEOUT_MS = 5000;
 
 export class PropertyAPI {
@@ -37,8 +37,8 @@ export class PropertyAPI {
       }
       return null;
     } catch (error) {
-      if (error?.name !== "AbortError") {
-        console.warn("[PropertyAPI] getPageData failed", error);
+      if (error?.name !== 'AbortError') {
+        console.warn('[PropertyAPI] getPageData failed', error);
       }
       return null;
     } finally {
@@ -51,7 +51,7 @@ export class PropertyAPI {
 export const propertyAPI = new PropertyAPI();
 
 // 保留全域掛載以支援舊版調用（不建議直接依賴）
-if (typeof window !== "undefined") {
+if (typeof window !== 'undefined') {
   window.PropertyAPI = propertyAPI;
 }
 

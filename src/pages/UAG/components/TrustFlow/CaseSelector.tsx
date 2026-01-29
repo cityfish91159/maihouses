@@ -4,11 +4,11 @@
  * [code-simplifier] 從 TrustFlow.tsx 抽取的子組件
  */
 
-import React from "react";
-import { Plus } from "lucide-react";
-import type { TrustCase } from "./types";
-import { formatRelativeTime, getStatusBadge } from "./utils";
-import { getBuyerDisplayName } from "../../../../lib/trustPrivacy";
+import React from 'react';
+import { Plus } from 'lucide-react';
+import type { TrustCase } from './types';
+import { formatRelativeTime, getStatusBadge } from './utils';
+import { getBuyerDisplayName } from '../../../../lib/trustPrivacy';
 
 interface CaseSelectorProps {
   cases: TrustCase[];
@@ -26,31 +26,31 @@ export function CaseSelector({
   if (cases.length === 0) return null;
 
   return (
-    <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 4 }}>
+    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 4 }}>
       {cases.map((c) => {
         const isActive = c.id === selectedCaseId;
         const statusBadge = getStatusBadge(c.status);
-        const buyerDisplay = getBuyerDisplayName(c, "agent");
+        const buyerDisplay = getBuyerDisplayName(c, 'agent');
         return (
           <button
             key={c.id}
             onClick={() => onSelectCase(c.id)}
             style={{
-              padding: "8px 12px",
+              padding: '8px 12px',
               borderRadius: 8,
-              border: isActive ? "2px solid #1749d7" : "1px solid #e2e8f0",
-              background: isActive ? "#eef2ff" : "#fff",
-              cursor: "pointer",
-              textAlign: "left",
+              border: isActive ? '2px solid #1749d7' : '1px solid #e2e8f0',
+              background: isActive ? '#eef2ff' : '#fff',
+              cursor: 'pointer',
+              textAlign: 'left',
               minWidth: 140,
-              transition: "all 0.2s",
+              transition: 'all 0.2s',
             }}
           >
             <div
               style={{
                 fontSize: 12,
                 fontWeight: 700,
-                color: isActive ? "#1749d7" : "#334155",
+                color: isActive ? '#1749d7' : '#334155',
                 marginBottom: 2,
               }}
             >
@@ -59,21 +59,21 @@ export function CaseSelector({
             <div
               style={{
                 fontSize: 11,
-                color: "var(--ink-300)",
+                color: 'var(--ink-300)',
                 marginBottom: 4,
-                whiteSpace: "nowrap",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
                 maxWidth: 120,
               }}
             >
               {c.propertyTitle}
             </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <span
                 style={{
                   fontSize: 10,
-                  padding: "2px 6px",
+                  padding: '2px 6px',
                   borderRadius: 4,
                   background: statusBadge.bg,
                   color: statusBadge.color,
@@ -82,7 +82,7 @@ export function CaseSelector({
               >
                 M{c.currentStep}
               </span>
-              <span style={{ fontSize: 10, color: "#94a3b8" }}>
+              <span style={{ fontSize: 10, color: '#94a3b8' }}>
                 {formatRelativeTime(c.lastUpdate)}
               </span>
             </div>
@@ -91,16 +91,16 @@ export function CaseSelector({
       })}
       <button
         style={{
-          padding: "8px 12px",
+          padding: '8px 12px',
           borderRadius: 8,
-          border: "1px dashed #cbd5e1",
-          background: "#f8fafc",
-          cursor: "pointer",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
+          border: '1px dashed #cbd5e1',
+          background: '#f8fafc',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
           minWidth: 60,
-          color: "var(--ink-300)",
+          color: 'var(--ink-300)',
         }}
         onClick={onCreateNew}
       >

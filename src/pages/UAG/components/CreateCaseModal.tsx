@@ -8,32 +8,32 @@
  * - [No Lazy Implementation] 完整實作
  */
 
-import React, { useState, useCallback, useEffect, useRef } from "react";
-import { X, Plus, User, Home, Loader2 } from "lucide-react";
-import { z } from "zod";
-import { notify } from "../../../lib/notify";
-import { logger } from "../../../lib/logger";
-import type { CreateCaseRequest } from "../../../types/trust-flow.types";
+import React, { useState, useCallback, useEffect, useRef } from 'react';
+import { X, Plus, User, Home, Loader2 } from 'lucide-react';
+import { z } from 'zod';
+import { notify } from '../../../lib/notify';
+import { logger } from '../../../lib/logger';
+import type { CreateCaseRequest } from '../../../types/trust-flow.types';
 
 // ============================================================================
 // Constants [NASA TypeScript Safety]
 // ============================================================================
 
 const S = {
-  TITLE: "建立新案件",
-  BUYER_NAME_LABEL: "買方名稱",
-  BUYER_NAME_PLACEHOLDER: "請輸入買方名稱或代號",
-  PROPERTY_TITLE_LABEL: "物件標題",
-  PROPERTY_TITLE_PLACEHOLDER: "請輸入物件名稱",
-  BUYER_CONTACT_LABEL: "聯絡方式（選填）",
-  BUYER_CONTACT_PLACEHOLDER: "電話或 Email",
-  CREATE_BTN: "建立案件",
-  CANCEL_BTN: "取消",
-  CREATING: "建立中...",
-  SUCCESS: "案件建立成功",
-  SUCCESS_DESC: "已新增至安心流程管理",
-  ERROR: "建立失敗",
-  VALIDATION_ERROR: "請填寫必要欄位",
+  TITLE: '建立新案件',
+  BUYER_NAME_LABEL: '買方名稱',
+  BUYER_NAME_PLACEHOLDER: '請輸入買方名稱或代號',
+  PROPERTY_TITLE_LABEL: '物件標題',
+  PROPERTY_TITLE_PLACEHOLDER: '請輸入物件名稱',
+  BUYER_CONTACT_LABEL: '聯絡方式（選填）',
+  BUYER_CONTACT_PLACEHOLDER: '電話或 Email',
+  CREATE_BTN: '建立案件',
+  CANCEL_BTN: '取消',
+  CREATING: '建立中...',
+  SUCCESS: '案件建立成功',
+  SUCCESS_DESC: '已新增至安心流程管理',
+  ERROR: '建立失敗',
+  VALIDATION_ERROR: '請填寫必要欄位',
 };
 
 // ============================================================================
@@ -41,15 +41,9 @@ const S = {
 // ============================================================================
 
 const CreateCaseFormSchema = z.object({
-  buyer_name: z
-    .string()
-    .min(1, "買方名稱不可為空")
-    .max(100, "買方名稱最多 100 字"),
-  property_title: z
-    .string()
-    .min(1, "物件標題不可為空")
-    .max(200, "物件標題最多 200 字"),
-  buyer_contact: z.string().max(50, "聯絡方式最多 50 字").optional(),
+  buyer_name: z.string().min(1, '買方名稱不可為空').max(100, '買方名稱最多 100 字'),
+  property_title: z.string().min(1, '物件標題不可為空').max(200, '物件標題最多 200 字'),
+  buyer_contact: z.string().max(50, '聯絡方式最多 50 字').optional(),
 });
 
 // ============================================================================
@@ -75,9 +69,9 @@ export function CreateCaseModal({
   useMock,
   onSuccess,
 }: CreateCaseModalProps): React.ReactElement | null {
-  const [buyerName, setBuyerName] = useState("");
-  const [propertyTitle, setPropertyTitle] = useState("");
-  const [buyerContact, setBuyerContact] = useState("");
+  const [buyerName, setBuyerName] = useState('');
+  const [propertyTitle, setPropertyTitle] = useState('');
+  const [buyerContact, setBuyerContact] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -93,9 +87,9 @@ export function CreateCaseModal({
   // Reset form when modal opens
   useEffect(() => {
     if (isOpen) {
-      setBuyerName("");
-      setPropertyTitle("");
-      setBuyerContact("");
+      setBuyerName('');
+      setPropertyTitle('');
+      setBuyerContact('');
       setErrors({});
     }
   }, [isOpen]);
@@ -111,17 +105,16 @@ export function CreateCaseModal({
 
     const handleKeyDown = (e: KeyboardEvent) => {
       // Escape to close
-      if (e.key === "Escape" && !isCreating) {
+      if (e.key === 'Escape' && !isCreating) {
         onClose();
         return;
       }
 
       // [frontend_mastery] Focus Trap: Tab 循環在 Modal 內
-      if (e.key === "Tab" && modalRef.current) {
-        const focusableElements =
-          modalRef.current.querySelectorAll<HTMLElement>(
-            'button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])',
-          );
+      if (e.key === 'Tab' && modalRef.current) {
+        const focusableElements = modalRef.current.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        );
         const firstElement = focusableElements[0];
         const lastElement = focusableElements[focusableElements.length - 1];
 
@@ -137,10 +130,10 @@ export function CreateCaseModal({
       }
     };
 
-    document.addEventListener("keydown", handleKeyDown);
+    document.addEventListener('keydown', handleKeyDown);
     return () => {
       clearTimeout(timer);
-      document.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener('keydown', handleKeyDown);
     };
   }, [isOpen, onClose, isCreating]);
 
@@ -158,7 +151,7 @@ export function CreateCaseModal({
       const newErrors: Record<string, string> = {};
       for (const issue of result.error.issues) {
         const field = issue.path[0];
-        if (typeof field === "string") {
+        if (typeof field === 'string') {
           newErrors[field] = issue.message;
         }
       }
@@ -175,7 +168,7 @@ export function CreateCaseModal({
     // [frontend_mastery] 防抖動檢查
     const now = Date.now();
     if (now - lastSubmitTimeRef.current < DEBOUNCE_MS) {
-      logger.warn("[CreateCaseModal] Debounced duplicate submission");
+      logger.warn('[CreateCaseModal] Debounced duplicate submission');
       return;
     }
     lastSubmitTimeRef.current = now;
@@ -200,25 +193,25 @@ export function CreateCaseModal({
       }
 
       // Live mode: call API [Backend Safeguard]
-      const response = await fetch("/api/trust/cases", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
+      const response = await fetch('/api/trust/cases', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify(formData),
       });
 
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        throw new Error(result.error?.message || result.error || "建立失敗");
+        throw new Error(result.error?.message || result.error || '建立失敗');
       }
 
       notify.success(S.SUCCESS, S.SUCCESS_DESC);
       onSuccess?.(result.data.case_id, result.data.event_hash);
       onClose();
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "請稍後再試";
-      logger.error("[CreateCaseModal] Failed to create case", {
+      const errorMessage = err instanceof Error ? err.message : '請稍後再試';
+      logger.error('[CreateCaseModal] Failed to create case', {
         error: errorMessage,
       });
       notify.error(S.ERROR, errorMessage);
@@ -233,7 +226,7 @@ export function CreateCaseModal({
       e.preventDefault();
       handleCreate();
     },
-    [handleCreate],
+    [handleCreate]
   );
 
   if (!isOpen) return null;
@@ -252,10 +245,7 @@ export function CreateCaseModal({
         <div className="flex items-center justify-between border-b border-gray-100 p-4">
           <div className="flex items-center gap-2">
             <Plus className="size-5 text-brand-600" />
-            <h2
-              id="create-case-title"
-              className="text-lg font-bold text-gray-900"
-            >
+            <h2 id="create-case-title" className="text-lg font-bold text-gray-900">
               {S.TITLE}
             </h2>
           </div>
@@ -292,14 +282,12 @@ export function CreateCaseModal({
               maxLength={100}
               className={`w-full rounded-xl border px-4 py-2.5 text-sm transition-colors focus:outline-none focus:ring-2 ${
                 errors.buyer_name
-                  ? "border-red-300 focus:border-red-500 focus:ring-red-500/20"
-                  : "focus:ring-brand-500/20 border-gray-200 focus:border-brand-500"
+                  ? 'border-red-300 focus:border-red-500 focus:ring-red-500/20'
+                  : 'focus:ring-brand-500/20 border-gray-200 focus:border-brand-500'
               }`}
               disabled={isCreating}
             />
-            {errors.buyer_name && (
-              <p className="mt-1 text-xs text-red-500">{errors.buyer_name}</p>
-            )}
+            {errors.buyer_name && <p className="mt-1 text-xs text-red-500">{errors.buyer_name}</p>}
           </div>
 
           {/* Property Title */}
@@ -321,15 +309,13 @@ export function CreateCaseModal({
               maxLength={200}
               className={`w-full rounded-xl border px-4 py-2.5 text-sm transition-colors focus:outline-none focus:ring-2 ${
                 errors.property_title
-                  ? "border-red-300 focus:border-red-500 focus:ring-red-500/20"
-                  : "focus:ring-brand-500/20 border-gray-200 focus:border-brand-500"
+                  ? 'border-red-300 focus:border-red-500 focus:ring-red-500/20'
+                  : 'focus:ring-brand-500/20 border-gray-200 focus:border-brand-500'
               }`}
               disabled={isCreating}
             />
             {errors.property_title && (
-              <p className="mt-1 text-xs text-red-500">
-                {errors.property_title}
-              </p>
+              <p className="mt-1 text-xs text-red-500">{errors.property_title}</p>
             )}
           </div>
 

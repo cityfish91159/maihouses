@@ -1,12 +1,20 @@
-import React, { memo } from "react";
-import { Link } from "react-router-dom";
-import type { UserProfile } from "../../types/feed";
-import type { PerformanceStats } from "../../types/agent";
-import { STRINGS } from "../../constants/strings";
-import { ROUTES } from "../../constants/routes";
+import React, { memo, useMemo } from 'react';
+import { Link } from 'react-router-dom';
+import type { UserProfile } from '../../types/feed';
+import type { PerformanceStats } from '../../types/agent';
+import { STRINGS } from '../../constants/strings';
+import { ROUTES } from '../../constants/routes';
 
 // 問題 #16 修復：使用常數替代硬編碼
 const DEFAULT_COMMUNITY_ID = STRINGS.FEED.DEFAULT_COMMUNITY_ID;
+
+// 共用的 Badge 樣式（避免重複定義）
+const BADGE_CLASS =
+  'inline-flex items-center rounded-md border border-[#fde047] bg-[#fef9c3] px-2 py-[3px] align-middle text-[11px] font-extrabold text-[#854d0e]';
+
+// 共用的統計標籤樣式
+const STAT_BADGE_CLASS =
+  'inline-flex items-center rounded-full border border-green-200 bg-gradient-to-b from-[#f3fff8] to-green-50 px-2.5 py-[5px] text-[12px] font-bold text-[#0e8d52]';
 
 interface AgentProfileCardProps {
   profile: UserProfile;
@@ -17,11 +25,42 @@ interface AgentProfileCardProps {
 export const AgentProfileCard = memo(function AgentProfileCard({
   profile,
   stats,
-  className = "",
+  className = '',
 }: AgentProfileCardProps) {
   const avatarLetter = profile.name.charAt(0).toUpperCase();
-  const communityLabel =
-    profile.communityName || STRINGS.FEED.DEFAULT_COMMUNITY_NAME;
+  const communityLabel = profile.communityName || STRINGS.FEED.DEFAULT_COMMUNITY_NAME;
+
+  // 快取格式化的統計數據
+  const formattedScore = useMemo(() => stats.score.toLocaleString(), [stats.score]);
+
+  // 快取 Badge 渲染（避免每次重新創建 JSX）
+  const badges = useMemo(
+    () => (
+      <>
+        <span className={BADGE_CLASS}>{STRINGS.AGENT.PROFILE.BADGE_GOLD}</span>
+        <span className={`ml-1 ${BADGE_CLASS}`}>{STRINGS.AGENT.PROFILE.BADGE_VERIFIED}</span>
+      </>
+    ),
+    []
+  );
+
+  // 快取統計數據渲染
+  const statsDisplay = useMemo(
+    () => (
+      <>
+        <span className={STAT_BADGE_CLASS}>
+          {STRINGS.AGENT.PROFILE.STATS_SCORE} {formattedScore}
+        </span>
+        <span className={STAT_BADGE_CLASS}>
+          {STRINGS.AGENT.PROFILE.STATS_DAYS} {stats.days} 天
+        </span>
+        <span className={STAT_BADGE_CLASS}>
+          {STRINGS.AGENT.PROFILE.STATS_LIKED} {stats.liked}
+        </span>
+      </>
+    ),
+    [formattedScore, stats.days, stats.liked]
+  );
 
   return (
     <section
@@ -33,33 +72,15 @@ export const AgentProfileCard = memo(function AgentProfileCard({
           {avatarLetter}
         </div>
         <div className="flex-1">
-          <h3 className="m-0 mb-1 text-[18px] font-black text-[#0b214a]">
-            {profile.name}
-          </h3>
+          <h3 className="m-0 mb-1 text-[18px] font-black text-[#0b214a]">{profile.name}</h3>
           <p className="m-0 flex items-center gap-1 text-[13px] text-slate-500">
-            {STRINGS.AGENT.PROFILE.FROM_STORE} |
-            <span className="inline-flex items-center rounded-md border border-[#fde047] bg-[#fef9c3] px-2 py-[3px] align-middle text-[11px] font-extrabold text-[#854d0e]">
-              {STRINGS.AGENT.PROFILE.BADGE_GOLD}
-            </span>
-            <span className="ml-1 inline-flex items-center rounded-md border border-[#fde047] bg-[#fef9c3] px-2 py-[3px] align-middle text-[11px] font-extrabold text-[#854d0e]">
-              {STRINGS.AGENT.PROFILE.BADGE_VERIFIED}
-            </span>
+            {STRINGS.AGENT.PROFILE.FROM_STORE} | {badges}
           </p>
         </div>
       </div>
 
       {/* Stats Row */}
-      <div className="flex flex-wrap gap-2">
-        <span className="inline-flex items-center rounded-full border border-green-200 bg-gradient-to-b from-[#f3fff8] to-green-50 px-2.5 py-[5px] text-[12px] font-bold text-[#0e8d52]">
-          {STRINGS.AGENT.PROFILE.STATS_SCORE} {stats.score.toLocaleString()}
-        </span>
-        <span className="inline-flex items-center rounded-full border border-green-200 bg-gradient-to-b from-[#f3fff8] to-green-50 px-2.5 py-[5px] text-[12px] font-bold text-[#0e8d52]">
-          {STRINGS.AGENT.PROFILE.STATS_DAYS} {stats.days} 天
-        </span>
-        <span className="inline-flex items-center rounded-full border border-green-200 bg-gradient-to-b from-[#f3fff8] to-green-50 px-2.5 py-[5px] text-[12px] font-bold text-[#0e8d52]">
-          {STRINGS.AGENT.PROFILE.STATS_LIKED} {stats.liked}
-        </span>
-      </div>
+      <div className="flex flex-wrap gap-2">{statsDisplay}</div>
 
       {/* Links Row */}
       <div className="flex flex-wrap justify-start gap-2.5">

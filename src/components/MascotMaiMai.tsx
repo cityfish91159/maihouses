@@ -1,8 +1,8 @@
-import React, { useEffect, useMemo, useState, useRef } from "react";
-import { MaiMaiBase, useMaiMaiMood } from "./MaiMai";
-import { MaiMaiSpeech } from "./MaiMai/MaiMaiSpeech";
-import useConfetti from "./MaiMai/useConfetti";
-import type { MaiMaiMood } from "./MaiMai";
+import React, { useEffect, useMemo, useState, useRef } from 'react';
+import { MaiMaiBase, useMaiMaiMood } from './MaiMai';
+import { MaiMaiSpeech } from './MaiMai/MaiMaiSpeech';
+import useConfetti from './MaiMai/useConfetti';
+import type { MaiMaiMood } from './MaiMai';
 
 interface MascotMaiMaiProps {
   /** SmartAsk 是否正在輸入或請求 */
@@ -49,7 +49,7 @@ export default function MascotMaiMai({
 
   // 心情狀態機：輸入/請求 → thinking；成功 → excited/celebrate；錯誤 → shy
   const { mood, handleClick } = useMaiMaiMood({
-    externalMood: successFlash ? "excited" : undefined,
+    externalMood: successFlash ? 'excited' : undefined,
     isSuccess: successFlash,
     hasError,
     isLoading: isThinking,
@@ -59,21 +59,15 @@ export default function MascotMaiMai({
   const prevMoodRef = useRef<MaiMaiMood>(mood);
 
   useEffect(() => {
-    if (
-      (mood === "celebrate" || mood === "excited") &&
-      prevMoodRef.current !== mood
-    ) {
+    if ((mood === 'celebrate' || mood === 'excited') && prevMoodRef.current !== mood) {
       fireConfetti();
-      window.dispatchEvent(new CustomEvent("mascot:celebrate"));
+      window.dispatchEvent(new CustomEvent('mascot:celebrate'));
     }
     prevMoodRef.current = mood;
   }, [mood, fireConfetti]);
 
   // 氣泡內容：取最後 3 句文字
-  const speechMessages = useMemo(
-    () => messages.map((m) => m.trim()).filter(Boolean),
-    [messages],
-  );
+  const speechMessages = useMemo(() => messages.map((m) => m.trim()).filter(Boolean), [messages]);
 
   return (
     <div className="relative mb-4 h-40 w-32 text-brand">

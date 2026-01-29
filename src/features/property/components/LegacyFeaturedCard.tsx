@@ -1,24 +1,18 @@
-import React from "react";
-import { useNavigate } from "react-router-dom";
-import type {
-  FeaturedPropertyCard,
-  FeaturedReview,
-} from "../../../types/property-page";
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import type { FeaturedPropertyCard, FeaturedReview } from '../../../types/property-page';
 
 interface LegacyFeaturedCardProps {
   data: FeaturedPropertyCard;
-  variant: "main" | "side";
+  variant: 'main' | 'side';
 }
 
-const LegacyFeaturedCard: React.FC<LegacyFeaturedCardProps> = ({
-  data,
-  variant,
-}) => {
+const LegacyFeaturedCard: React.FC<LegacyFeaturedCardProps> = ({ data, variant }) => {
   const navigate = useNavigate();
 
   const handleNavigate = () => {
     // 使用 id 進行導航，若無則使用 demo 預設
-    const targetId = data.id || "MH-100001";
+    const targetId = data.id || 'MH-100001';
     navigate(`/property/${targetId}`);
   };
 
@@ -28,11 +22,11 @@ const LegacyFeaturedCard: React.FC<LegacyFeaturedCardProps> = ({
         className="property-media"
         onClick={handleNavigate}
         onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") handleNavigate();
+          if (e.key === 'Enter' || e.key === ' ') handleNavigate();
         }}
         role="button"
         tabIndex={0}
-        style={{ cursor: "pointer" }}
+        style={{ cursor: 'pointer' }}
       >
         <img src={data.image} alt={data.title} />
         <div className="property-badge">{data.badge}</div>
@@ -45,14 +39,14 @@ const LegacyFeaturedCard: React.FC<LegacyFeaturedCardProps> = ({
             onClick={handleNavigate}
             className="property-title-btn"
             style={{
-              cursor: "pointer",
-              background: "none",
-              border: "none",
+              cursor: 'pointer',
+              background: 'none',
+              border: 'none',
               padding: 0,
-              font: "inherit",
-              color: "inherit",
-              textAlign: "inherit",
-              width: "100%",
+              font: 'inherit',
+              color: 'inherit',
+              textAlign: 'inherit',
+              width: '100%',
             }}
           >
             {data.title}
@@ -62,18 +56,18 @@ const LegacyFeaturedCard: React.FC<LegacyFeaturedCardProps> = ({
 
         <div
           className="property-tags-row"
-          style={{ display: "flex", gap: "0.375rem", marginBottom: "0.625rem" }}
+          style={{ display: 'flex', gap: '0.375rem', marginBottom: '0.625rem' }}
         >
           {(data.tags || []).slice(0, 3).map((tag: string, i: number) => (
             <span
               key={i}
-              className={`capsule-chip ${variant !== "main" ? "capsule-chip-sm" : ""}`}
+              className={`capsule-chip ${variant !== 'main' ? 'capsule-chip-sm' : ''}`}
               style={{
-                fontSize: "0.75rem",
-                padding: "0.125rem 0.5rem",
-                borderRadius: "999px",
-                background: "var(--primary-light)",
-                color: "var(--primary-dark)",
+                fontSize: '0.75rem',
+                padding: '0.125rem 0.5rem',
+                borderRadius: '999px',
+                background: 'var(--primary-light)',
+                color: 'var(--primary-dark)',
                 fontWeight: 500,
               }}
             >
@@ -82,14 +76,14 @@ const LegacyFeaturedCard: React.FC<LegacyFeaturedCardProps> = ({
           ))}
         </div>
 
-        {variant === "main" && data.highlights && (
+        {variant === 'main' && data.highlights && (
           <div
             className="tiny-text tiny-text-highlight"
             style={{
-              fontSize: "0.75rem",
-              color: "#E63946",
+              fontSize: '0.75rem',
+              color: '#E63946',
               fontWeight: 600,
-              marginBottom: "0.5rem",
+              marginBottom: '0.5rem',
             }}
           >
             {data.highlights}
@@ -101,7 +95,7 @@ const LegacyFeaturedCard: React.FC<LegacyFeaturedCardProps> = ({
           {data.rating}
         </div>
 
-        {variant === "main" ? (
+        {variant === 'main' ? (
           // Main Card Layout
           <>
             <div className="property-reviews">
@@ -128,11 +122,11 @@ const LegacyFeaturedCard: React.FC<LegacyFeaturedCardProps> = ({
               className="property-more-reviews"
               onClick={handleNavigate}
               onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") handleNavigate();
+                if (e.key === 'Enter' || e.key === ' ') handleNavigate();
               }}
               role="button"
               tabIndex={0}
-              style={{ cursor: "pointer" }}
+              style={{ cursor: 'pointer' }}
             >
               <span className="lock-icon">🔒</span>
               <span>查看其他 {data.lockCount} 則住戶真實評價</span>
@@ -170,15 +164,13 @@ const LegacyFeaturedCard: React.FC<LegacyFeaturedCardProps> = ({
               className="property-more-reviews"
               onClick={handleNavigate}
               onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") handleNavigate();
+                if (e.key === 'Enter' || e.key === ' ') handleNavigate();
               }}
               role="button"
               tabIndex={0}
-              style={{ cursor: "pointer" }}
+              style={{ cursor: 'pointer' }}
             >
-              <div
-                style={{ display: "flex", alignItems: "center", gap: "4px" }}
-              >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                 <span className="lock-icon">🔒</span>
                 <span>{data.lockCount} 則評價</span>
               </div>

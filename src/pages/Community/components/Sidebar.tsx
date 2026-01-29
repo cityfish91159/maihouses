@@ -4,18 +4,18 @@
  * 側邊欄（社區資訊、數據、快速連結、問答、熱門貼文、公仔）
  */
 
-import { useMemo } from "react";
+import { useMemo } from 'react';
 import {
   SIDEBAR_HOT_POSTS_COUNT,
   SIDEBAR_QUESTIONS_COUNT,
   type CommunityInfo,
   type Post,
   type Question,
-} from "../types";
+} from '../types';
 
 /** 格式化可能為 null 的數值 */
-function formatValue(value: number | null | undefined, suffix = ""): string {
-  if (value === null || value === undefined) return "-";
+function formatValue(value: number | null | undefined, suffix = ''): string {
+  if (value === null || value === undefined) return '-';
   return `${value}${suffix}`;
 }
 
@@ -25,23 +25,15 @@ interface SidebarProps {
   posts: Post[];
 }
 
-export function Sidebar({
-  info,
-  questions: questionsProp,
-  posts,
-}: SidebarProps) {
+export function Sidebar({ info, questions: questionsProp, posts }: SidebarProps) {
   // 統一 questions 格式
   const questions = useMemo(
-    () =>
-      Array.isArray(questionsProp) ? questionsProp : questionsProp?.items || [],
-    [questionsProp],
+    () => (Array.isArray(questionsProp) ? questionsProp : questionsProp?.items || []),
+    [questionsProp]
   );
 
   // 只在 questions 變化時重新計算
-  const displayQuestions = useMemo(
-    () => questions.slice(0, SIDEBAR_QUESTIONS_COUNT),
-    [questions],
-  );
+  const displayQuestions = useMemo(() => questions.slice(0, SIDEBAR_QUESTIONS_COUNT), [questions]);
 
   // 只在 posts 變化時重新排序，避免每次 render 都 sort
   const hotPosts = useMemo(
@@ -53,7 +45,7 @@ export function Sidebar({
           return scoreB - scoreA;
         })
         .slice(0, SIDEBAR_HOT_POSTS_COUNT),
-    [posts],
+    [posts]
   );
 
   return (
@@ -65,21 +57,17 @@ export function Sidebar({
         </h4>
         <div className="mt-2.5 grid grid-cols-2 gap-2">
           {[
-            [formatValue(info.members), "已加入成員"],
-            [formatValue(info.avgRating), "平均評分"],
-            [formatValue(info.monthlyInteractions), "本月互動"],
-            [formatValue(info.forSale), "待售物件"],
+            [formatValue(info.members), '已加入成員'],
+            [formatValue(info.avgRating), '平均評分'],
+            [formatValue(info.monthlyInteractions), '本月互動'],
+            [formatValue(info.forSale), '待售物件'],
           ].map(([num, lbl]) => (
             <div
               key={lbl as string}
               className="rounded-[10px] bg-gradient-to-br from-[#f8faff] to-[#f0f5ff] p-3 text-center"
             >
-              <div className="text-xl font-black text-[var(--brand)]">
-                {num}
-              </div>
-              <div className="mt-0.5 text-[11px] text-[var(--text-secondary)]">
-                {lbl}
-              </div>
+              <div className="text-xl font-black text-[var(--brand)]">{num}</div>
+              <div className="mt-0.5 text-[11px] text-[var(--text-secondary)]">{lbl}</div>
             </div>
           ))}
         </div>
@@ -94,17 +82,15 @@ export function Sidebar({
           🔗 快速連結
         </h4>
         <div className="flex flex-col gap-1">
-          {["🏠 查看此社區物件", "📊 與其他社區比較", "🔔 追蹤此社區"].map(
-            (link) => (
-              <button
-                key={link}
-                type="button"
-                className="flex w-full items-center gap-2 rounded-[10px] px-3 py-2.5 text-left text-[13px] font-semibold text-[var(--text-primary)] transition-all hover:bg-[#f0f7ff]"
-              >
-                {link}
-              </button>
-            ),
-          )}
+          {['🏠 查看此社區物件', '📊 與其他社區比較', '🔔 追蹤此社區'].map((link) => (
+            <button
+              key={link}
+              type="button"
+              className="flex w-full items-center gap-2 rounded-[10px] px-3 py-2.5 text-left text-[13px] font-semibold text-[var(--text-primary)] transition-all hover:bg-[#f0f7ff]"
+            >
+              {link}
+            </button>
+          ))}
         </div>
       </nav>
 
@@ -124,9 +110,7 @@ export function Sidebar({
                 💬
               </span>
               <span className="truncate">
-                {q.question.length > 18
-                  ? q.question.substring(0, 18) + "..."
-                  : q.question}
+                {q.question.length > 18 ? q.question.substring(0, 18) + '...' : q.question}
               </span>
             </a>
           ))}
@@ -155,9 +139,7 @@ export function Sidebar({
                 ❤️ {p.likes}
               </span>
               <span className="truncate">
-                {p.title.length > 15
-                  ? p.title.substring(0, 15) + "..."
-                  : p.title}
+                {p.title.length > 15 ? p.title.substring(0, 15) + '...' : p.title}
               </span>
             </a>
           ))}
@@ -218,22 +200,8 @@ export function Sidebar({
             fill="none"
             strokeLinecap="round"
           />
-          <circle
-            cx="85"
-            cy="125"
-            r="4"
-            stroke="currentColor"
-            strokeWidth="3"
-            fill="none"
-          />
-          <circle
-            cx="115"
-            cy="125"
-            r="4"
-            stroke="currentColor"
-            strokeWidth="3"
-            fill="none"
-          />
+          <circle cx="85" cy="125" r="4" stroke="currentColor" strokeWidth="3" fill="none" />
+          <circle cx="115" cy="125" r="4" stroke="currentColor" strokeWidth="3" fill="none" />
           <path
             d="M 90 145 Q 100 155 110 145"
             stroke="currentColor"
@@ -282,9 +250,7 @@ export function Sidebar({
             strokeLinejoin="round"
           />
         </svg>
-        <p className="mb-2.5 text-[13px] font-bold text-[var(--brand)]">
-          有問題？問問鄰居！
-        </p>
+        <p className="mb-2.5 text-[13px] font-bold text-[var(--brand)]">有問題？問問鄰居！</p>
         <a
           href="#qa-section"
           className="inline-block rounded-full bg-[var(--brand)] px-4 py-2 text-xs font-bold text-white no-underline"

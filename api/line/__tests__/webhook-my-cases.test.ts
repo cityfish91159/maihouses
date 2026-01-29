@@ -3,8 +3,8 @@
  *
  * 測試 webhook 整合邏輯
  */
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import type { VercelRequest, VercelResponse } from "@vercel/node";
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 // 3.4: 使用共用常數
 import {
@@ -13,7 +13,7 @@ import {
   MY_CASES_KEYWORDS,
   MSG_NO_CASES,
   MSG_ERROR,
-} from "../constants/my-cases";
+} from '../constants/my-cases';
 
 // ============================================================================
 // Test Data - 使用共用常數
@@ -22,20 +22,20 @@ import {
 const sampleCases = [
   {
     id: TEST_CASE_ID,
-    propertyTitle: "信義區三房",
-    agentName: "王小明",
+    propertyTitle: '信義區三房',
+    agentName: '王小明',
     currentStep: 3,
-    status: "active" as const,
+    status: 'active' as const,
   },
 ];
 
 function createMessageEvent(text: string, userId = TEST_LINE_USER_ID) {
   return {
-    type: "message",
-    source: { type: "user", userId },
+    type: 'message',
+    source: { type: 'user', userId },
     timestamp: Date.now(),
-    replyToken: "test-reply-token",
-    message: { type: "text", text },
+    replyToken: 'test-reply-token',
+    message: { type: 'text', text },
   };
 }
 
@@ -79,38 +79,38 @@ function mockModules(options: MockOptions = {}) {
 
   const replyMessage = vi.fn().mockResolvedValue({});
 
-  vi.doMock("../../trust/services/case-query", () => ({
+  vi.doMock('../../trust/services/case-query', () => ({
     queryMyCases: vi.fn().mockResolvedValue(queryResult),
   }));
 
   // 3.4: Mock 使用共用常數 MY_CASES_KEYWORDS
-  vi.doMock("../formatters/my-cases-formatter", () => ({
+  vi.doMock('../formatters/my-cases-formatter', () => ({
     formatMyCasesReply: vi.fn((cases: unknown[]) =>
       cases.length === 0
-        ? { type: "text", text: MSG_NO_CASES }
+        ? { type: 'text', text: MSG_NO_CASES }
         : {
-            type: "flex",
+            type: 'flex',
             altText: `您目前有 ${cases.length} 筆進行中的交易`,
             contents: {
-              type: "carousel",
+              type: 'carousel',
               contents: [
                 {
-                  type: "bubble",
-                  body: { type: "box", layout: "vertical", contents: [] },
+                  type: 'bubble',
+                  body: { type: 'box', layout: 'vertical', contents: [] },
                 },
               ],
             },
           }
     ),
-    formatErrorReply: vi.fn(() => ({ type: "text", text: MSG_ERROR })),
+    formatErrorReply: vi.fn(() => ({ type: 'text', text: MSG_ERROR })),
     // 使用共用常數，確保與實作同步
     isMyTransactionQuery: vi.fn((text: string | null) => {
       if (!text) return false;
-      return MY_CASES_KEYWORDS.includes(text.trim() as typeof MY_CASES_KEYWORDS[number]);
+      return MY_CASES_KEYWORDS.includes(text.trim() as (typeof MY_CASES_KEYWORDS)[number]);
     }),
   }));
 
-  vi.doMock("@line/bot-sdk", () => ({
+  vi.doMock('@line/bot-sdk', () => ({
     messagingApi: {
       MessagingApiClient: class {
         replyMessage = replyMessage;
@@ -118,13 +118,13 @@ function mockModules(options: MockOptions = {}) {
     },
   }));
 
-  vi.doMock("../../lib/sentry", () => ({
+  vi.doMock('../../lib/sentry', () => ({
     withSentryHandler: (fn: Function) => fn,
     captureError: vi.fn(),
     addBreadcrumb: vi.fn(),
   }));
 
-  vi.doMock("../../lib/logger", () => ({
+  vi.doMock('../../lib/logger', () => ({
     logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
   }));
 
@@ -135,21 +135,21 @@ function mockModules(options: MockOptions = {}) {
 // Tests
 // ============================================================================
 
-describe("BE-4 LINE webhook「我的交易」", () => {
+describe('BE-4 LINE webhook「我的交易」', () => {
   beforeEach(() => {
     vi.resetModules();
     vi.clearAllMocks();
-    process.env.LINE_CHANNEL_ACCESS_TOKEN = "test-token";
+    process.env.LINE_CHANNEL_ACCESS_TOKEN = 'test-token';
   });
 
   // 3.5: 測試全部 5 個關鍵字
-  describe("關鍵字觸發測試", () => {
-    it.each(MY_CASES_KEYWORDS)("「%s」觸發查詢並回覆", async (keyword) => {
+  describe('關鍵字觸發測試', () => {
+    it.each(MY_CASES_KEYWORDS)('「%s」觸發查詢並回覆', async (keyword) => {
       const { replyMessage } = mockModules();
-      const { default: handler } = await import("../webhook");
+      const { default: handler } = await import('../webhook');
 
       const req = {
-        method: "POST",
+        method: 'POST',
         headers: {},
         body: {
           events: [createMessageEvent(keyword)],
@@ -163,23 +163,23 @@ describe("BE-4 LINE webhook「我的交易」", () => {
       expect(replyMessage).toHaveBeenCalledTimes(1);
       // 驗證回覆包含 Flex Message 或純文字
       expect(replyMessage).toHaveBeenCalledWith({
-        replyToken: "test-reply-token",
+        replyToken: 'test-reply-token',
         messages: [expect.objectContaining({ type: expect.stringMatching(/^(flex|text)$/) })],
       });
     });
   });
 
-  it("查詢失敗時回覆錯誤訊息", async () => {
+  it('查詢失敗時回覆錯誤訊息', async () => {
     const { replyMessage } = mockModules({
-      queryResult: { success: false, error: "DB error", code: "DB_ERROR" },
+      queryResult: { success: false, error: 'DB error', code: 'DB_ERROR' },
     });
-    const { default: handler } = await import("../webhook");
+    const { default: handler } = await import('../webhook');
 
     const req = {
-      method: "POST",
+      method: 'POST',
       headers: {},
       body: {
-        events: [createMessageEvent("我的交易")],
+        events: [createMessageEvent('我的交易')],
       },
     } as unknown as VercelRequest;
     const res = createMockRes();
@@ -187,22 +187,22 @@ describe("BE-4 LINE webhook「我的交易」", () => {
     await handler(req, res);
 
     expect(replyMessage).toHaveBeenCalledWith({
-      replyToken: "test-reply-token",
-      messages: [{ type: "text", text: MSG_ERROR }],
+      replyToken: 'test-reply-token',
+      messages: [{ type: 'text', text: MSG_ERROR }],
     });
   });
 
-  it("無案件時回覆空訊息", async () => {
+  it('無案件時回覆空訊息', async () => {
     const { replyMessage } = mockModules({
       queryResult: { success: true, data: { cases: [], total: 0 } },
     });
-    const { default: handler } = await import("../webhook");
+    const { default: handler } = await import('../webhook');
 
     const req = {
-      method: "POST",
+      method: 'POST',
       headers: {},
       body: {
-        events: [createMessageEvent("我的交易")],
+        events: [createMessageEvent('我的交易')],
       },
     } as unknown as VercelRequest;
     const res = createMockRes();
@@ -210,20 +210,20 @@ describe("BE-4 LINE webhook「我的交易」", () => {
     await handler(req, res);
 
     expect(replyMessage).toHaveBeenCalledWith({
-      replyToken: "test-reply-token",
-      messages: [{ type: "text", text: MSG_NO_CASES }],
+      replyToken: 'test-reply-token',
+      messages: [{ type: 'text', text: MSG_NO_CASES }],
     });
   });
 
-  it("其他訊息不觸發查詢（回覆 User ID）", async () => {
+  it('其他訊息不觸發查詢（回覆 User ID）', async () => {
     const { replyMessage } = mockModules();
-    const { default: handler } = await import("../webhook");
+    const { default: handler } = await import('../webhook');
 
     const req = {
-      method: "POST",
+      method: 'POST',
       headers: {},
       body: {
-        events: [createMessageEvent("你好")],
+        events: [createMessageEvent('你好')],
       },
     } as unknown as VercelRequest;
     const res = createMockRes();
@@ -231,25 +231,25 @@ describe("BE-4 LINE webhook「我的交易」", () => {
     await handler(req, res);
 
     expect(replyMessage).toHaveBeenCalledWith({
-      replyToken: "test-reply-token",
-      messages: [{ type: "text", text: expect.stringContaining("LINE User ID") }],
+      replyToken: 'test-reply-token',
+      messages: [{ type: 'text', text: expect.stringContaining('LINE User ID') }],
     });
   });
 
-  it("無 userId 時不處理訊息", async () => {
+  it('無 userId 時不處理訊息', async () => {
     const { replyMessage } = mockModules();
-    const { default: handler } = await import("../webhook");
+    const { default: handler } = await import('../webhook');
 
     const eventWithoutUserId = {
-      type: "message",
-      source: { type: "user" },
+      type: 'message',
+      source: { type: 'user' },
       timestamp: Date.now(),
-      replyToken: "test-reply-token",
-      message: { type: "text", text: "我的交易" },
+      replyToken: 'test-reply-token',
+      message: { type: 'text', text: '我的交易' },
     };
 
     const req = {
-      method: "POST",
+      method: 'POST',
       headers: {},
       body: {
         events: [eventWithoutUserId],

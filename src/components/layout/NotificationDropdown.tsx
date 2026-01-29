@@ -5,11 +5,11 @@
  * 顯示未讀私訊列表，點擊項目跳轉到對話頁面
  */
 
-import { useRef, useEffect, useState, useCallback } from "react";
-import { MessageCircle, X, RefreshCw, AlertTriangle } from "lucide-react";
-import type { ConversationListItem } from "../../types/messaging.types";
-import { MESSAGING_CONFIG } from "../../constants/messaging";
-import { ROUTES } from "../../constants/routes";
+import { useRef, useEffect, useState, useCallback } from 'react';
+import { MessageCircle, X, RefreshCw, AlertTriangle } from 'lucide-react';
+import type { ConversationListItem } from '../../types/messaging.types';
+import { MESSAGING_CONFIG } from '../../constants/messaging';
+import { ROUTES } from '../../constants/routes';
 
 interface NotificationDropdownProps {
   notifications: ConversationListItem[];
@@ -31,11 +31,11 @@ function formatRelativeTime(timestamp: string): string {
   const diffHours = Math.floor(diffMins / 60);
   const diffDays = Math.floor(diffHours / 24);
 
-  if (diffMins < 1) return "剛剛";
+  if (diffMins < 1) return '剛剛';
   if (diffMins < 60) return `${diffMins} 分鐘前`;
   if (diffHours < 24) return `${diffHours} 小時前`;
   if (diffDays < 7) return `${diffDays} 天前`;
-  return time.toLocaleDateString("zh-TW", { month: "short", day: "numeric" });
+  return time.toLocaleDateString('zh-TW', { month: 'short', day: 'numeric' });
 }
 
 // 從 config 解構常用常數
@@ -49,10 +49,7 @@ const {
 /**
  * 訊息預覽截斷
  */
-function truncateMessage(
-  content: string,
-  maxLength = MESSAGE_PREVIEW_MAX_LENGTH,
-): string {
+function truncateMessage(content: string, maxLength = MESSAGE_PREVIEW_MAX_LENGTH): string {
   if (content.length <= maxLength) return content;
   return `${content.slice(0, maxLength)}...`;
 }
@@ -66,10 +63,7 @@ export function NotificationDropdown({
   onRefresh,
 }: NotificationDropdownProps) {
   // 限制顯示數量
-  const displayNotifications = notifications.slice(
-    0,
-    MAX_NOTIFICATIONS_DISPLAY,
-  );
+  const displayNotifications = notifications.slice(0, MAX_NOTIFICATIONS_DISPLAY);
   const hasMore = notifications.length > MAX_NOTIFICATIONS_DISPLAY;
 
   // Focus 管理
@@ -79,12 +73,9 @@ export function NotificationDropdown({
   const [focusedIndex, setFocusedIndex] = useState(-1);
 
   // 設置 notification refs
-  const setNotificationRef = useCallback(
-    (el: HTMLButtonElement | null, index: number) => {
-      notificationRefs.current[index] = el;
-    },
-    [],
-  );
+  const setNotificationRef = useCallback((el: HTMLButtonElement | null, index: number) => {
+    notificationRefs.current[index] = el;
+  }, []);
 
   // 初始 focus 到關閉按鈕 + 全域鍵盤事件處理
   useEffect(() => {
@@ -92,14 +83,14 @@ export function NotificationDropdown({
 
     // Escape 鍵關閉
     const handleEscapeKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
+      if (e.key === 'Escape') {
         e.preventDefault();
         onClose();
       }
     };
 
-    document.addEventListener("keydown", handleEscapeKey);
-    return () => document.removeEventListener("keydown", handleEscapeKey);
+    document.addEventListener('keydown', handleEscapeKey);
+    return () => document.removeEventListener('keydown', handleEscapeKey);
   }, [onClose]);
 
   // 處理方向鍵導航
@@ -110,7 +101,7 @@ export function NotificationDropdown({
     if (itemCount === 0) return;
 
     switch (e.key) {
-      case "ArrowDown":
+      case 'ArrowDown':
         e.preventDefault();
         setFocusedIndex((prev) => {
           const next = prev < itemCount - 1 ? prev + 1 : 0;
@@ -118,7 +109,7 @@ export function NotificationDropdown({
           return next;
         });
         break;
-      case "ArrowUp":
+      case 'ArrowUp':
         e.preventDefault();
         setFocusedIndex((prev) => {
           const next = prev > 0 ? prev - 1 : itemCount - 1;
@@ -126,24 +117,21 @@ export function NotificationDropdown({
           return next;
         });
         break;
-      case "Home":
+      case 'Home':
         e.preventDefault();
         setFocusedIndex(0);
         notificationRefs.current[0]?.focus();
         break;
-      case "End":
+      case 'End':
         e.preventDefault();
         setFocusedIndex(itemCount - 1);
         notificationRefs.current[itemCount - 1]?.focus();
         break;
-      case "Tab":
+      case 'Tab':
         // Focus trap - 只允許在 dropdown 內部 Tab
         if (e.shiftKey) {
           // Shift+Tab 從關閉按鈕移到最後一個通知
-          if (
-            document.activeElement === closeButtonRef.current &&
-            itemCount > 0
-          ) {
+          if (document.activeElement === closeButtonRef.current && itemCount > 0) {
             e.preventDefault();
             setFocusedIndex(itemCount - 1);
             notificationRefs.current[itemCount - 1]?.focus();
@@ -192,10 +180,7 @@ export function NotificationDropdown({
                 aria-label="重新整理"
                 disabled={isLoading}
               >
-                <RefreshCw
-                  size={16}
-                  className={isLoading ? "animate-spin" : ""}
-                />
+                <RefreshCw size={16} className={isLoading ? 'animate-spin' : ''} />
               </button>
             )}
             <button
@@ -214,10 +199,7 @@ export function NotificationDropdown({
           {isLoading ? (
             // Loading State
             <div className="p-4">
-              {Array.from(
-                { length: LOADING_SKELETON_COUNT },
-                (_, i) => i + 1,
-              ).map((i) => (
+              {Array.from({ length: LOADING_SKELETON_COUNT }, (_, i) => i + 1).map((i) => (
                 <div key={i} className="mb-3 flex animate-pulse gap-3">
                   <div className="size-10 rounded-full bg-gray-200" />
                   <div className="flex-1 space-y-2">
@@ -233,9 +215,7 @@ export function NotificationDropdown({
               <div className="mb-3 rounded-full bg-brand-50 p-4">
                 <MessageCircle size={32} className="text-brand-400" />
               </div>
-              <h4 className="mb-1 text-sm font-bold text-gray-900">
-                沒有新訊息
-              </h4>
+              <h4 className="mb-1 text-sm font-bold text-gray-900">沒有新訊息</h4>
               <p className="text-xs text-gray-500">您目前沒有未讀的私訊</p>
             </div>
           ) : (
@@ -247,10 +227,10 @@ export function NotificationDropdown({
                   ref={(el) => setNotificationRef(el, index)}
                   onClick={() => onNotificationClick(notification.id)}
                   onFocus={() => setFocusedIndex(index)}
-                  className={`flex w-full gap-3 px-4 py-3 text-left transition-colors hover:bg-brand-50 focus:bg-brand-50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-brand-500 ${focusedIndex === index ? "bg-brand-50" : ""}`}
+                  className={`flex w-full gap-3 px-4 py-3 text-left transition-colors hover:bg-brand-50 focus:bg-brand-50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-brand-500 ${focusedIndex === index ? 'bg-brand-50' : ''}`}
                   role="menuitem"
                   tabIndex={focusedIndex === index ? 0 : -1}
-                  aria-current={focusedIndex === index ? "true" : undefined}
+                  aria-current={focusedIndex === index ? 'true' : undefined}
                 >
                   {/* Avatar */}
                   <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-brand-100 text-sm font-bold text-brand-700">
@@ -282,10 +262,8 @@ export function NotificationDropdown({
                     <div className="flex items-center gap-2">
                       <span className="text-xs text-gray-500">
                         {notification.last_message
-                          ? formatRelativeTime(
-                              notification.last_message.created_at,
-                            )
-                          : "尚無訊息"}
+                          ? formatRelativeTime(notification.last_message.created_at)
+                          : '尚無訊息'}
                       </span>
                       {notification.unread_count > 0 && (
                         <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-600 px-1.5 text-[10px] font-bold text-white">
@@ -300,8 +278,7 @@ export function NotificationDropdown({
               ))}
               {hasMore && (
                 <div className="px-4 py-3 text-center text-xs text-gray-500">
-                  還有 {notifications.length - MAX_NOTIFICATIONS_DISPLAY}{" "}
-                  則未讀訊息
+                  還有 {notifications.length - MAX_NOTIFICATIONS_DISPLAY} 則未讀訊息
                 </div>
               )}
             </div>

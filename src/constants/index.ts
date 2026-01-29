@@ -4,8 +4,4 @@
  * @module constants
  */
 
-export {
-  COMMUNITY_NAME_MAP,
-  getCommunityName,
-  isValidCommunityId,
-} from "./communities";
+export { COMMUNITY_NAME_MAP, getCommunityName, isValidCommunityId } from './communities';

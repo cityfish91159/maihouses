@@ -45,8 +45,7 @@
   --shadow-lg: 0 18px 40px rgba(15, 23, 42, 0.08);
   --shadow-glow: 0 0 20px rgba(23, 73, 215, 0.25);
 
-  --font:
-    -apple-system, BlinkMacSystemFont, "Inter", "Noto Sans TC", sans-serif;
+  --font: -apple-system, BlinkMacSystemFont, 'Inter', 'Noto Sans TC', sans-serif;
 }
 
 /* ====== Base ====== */
@@ -58,12 +57,11 @@
   padding-bottom: 80px;
   position: relative;
   background:
-    radial-gradient(circle at top, rgba(23, 73, 215, 0.08), transparent 55%),
-    var(--bg-page);
+    radial-gradient(circle at top, rgba(23, 73, 215, 0.08), transparent 55%), var(--bg-page);
 }
 
 .uag-page::before {
-  content: "";
+  content: '';
   position: fixed;
   inset: 0;
   background-image:
@@ -581,12 +579,7 @@
   min-height: 450px;
   border: 1px solid rgba(148, 163, 184, 0.35);
   border-radius: var(--radius-lg);
-  background: radial-gradient(
-    circle at 50% 50%,
-    #ffffff 0%,
-    #e5edff 55%,
-    #eef2ff 100%
-  );
+  background: radial-gradient(circle at 50% 50%, #ffffff 0%, #e5edff 55%, #eef2ff 100%);
   overflow: hidden;
   box-shadow:
     0 0 0 1px rgba(148, 163, 184, 0.25),
@@ -594,18 +587,13 @@
 }
 .uag-cluster::before,
 .uag-cluster::after {
-  content: "";
+  content: '';
   position: absolute;
   left: 50%;
   top: 50%;
   width: 140%;
   height: 1px;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(148, 163, 184, 0.45),
-    transparent
-  );
+  background: linear-gradient(90deg, transparent, rgba(148, 163, 184, 0.45), transparent);
   transform: translate(-50%, -50%);
   pointer-events: none;
 }
@@ -652,23 +640,23 @@
   box-shadow: 0 12px 24px rgba(59, 130, 246, 0.25);
   border-color: var(--uag-brand);
 }
-.uag-bubble[data-grade="S"] {
+.uag-bubble[data-grade='S'] {
   background: var(--grade-s-bg);
   border-color: var(--grade-s);
 }
-.uag-bubble[data-grade="A"] {
+.uag-bubble[data-grade='A'] {
   background: var(--grade-a-bg);
   border-color: var(--grade-a);
 }
-.uag-bubble[data-grade="B"] {
+.uag-bubble[data-grade='B'] {
   background: var(--grade-b-bg);
   border-color: var(--grade-b);
 }
-.uag-bubble[data-grade="C"] {
+.uag-bubble[data-grade='C'] {
   background: var(--grade-c-bg);
   border-color: var(--grade-c);
 }
-.uag-bubble[data-grade="F"] {
+.uag-bubble[data-grade='F'] {
   background: var(--grade-f-bg);
   border-color: var(--grade-f);
   opacity: 0.9;
@@ -845,7 +833,7 @@
   overflow: hidden;
 }
 .btn-attack::before {
-  content: "";
+  content: '';
   position: absolute;
   top: 0;
   left: -150%;
@@ -973,15 +961,15 @@
   }
   /* 工單 1: 手機版「保護期倒數」欄位修正 */
   /* 規則: ux-guidelines.csv - Table Handling: card layout */
-  .monitor-table td[data-label="保護期倒數"] {
+  .monitor-table td[data-label='保護期倒數'] {
     flex-direction: column;
     align-items: flex-start;
     text-align: left;
   }
-  .monitor-table td[data-label="保護期倒數"]::before {
+  .monitor-table td[data-label='保護期倒數']::before {
     margin-bottom: 4px;
   }
-  .monitor-table td[data-label="保護期倒數"] > div {
+  .monitor-table td[data-label='保護期倒數'] > div {
     width: 100%;
   }
   /* 工單 4: 按鈕觸控區域優化 */
@@ -989,7 +977,7 @@
   /* Do: Minimum 44x44px touch targets */
   /* Code: min-h-[44px] min-w-[44px] */
   /* Severity: High */
-  .monitor-table td[data-label="操作"] {
+  .monitor-table td[data-label='操作'] {
     justify-content: flex-end;
     padding-top: 12px;
     gap: 8px; /* Touch Spacing: gap-2 (8px) */

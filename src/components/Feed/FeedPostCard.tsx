@@ -7,14 +7,14 @@
  * Phase 7: 整合 useComments Hook
  */
 
-import { useState, useCallback, useRef, useEffect, memo, useMemo } from "react";
-import { Heart, MessageCircle, Share2, Calendar, Eye } from "lucide-react";
-import type { FeedPost } from "../../hooks/useFeedData";
-import { STRINGS } from "../../constants/strings";
-import { formatRelativeTime } from "../../utils/date";
-import { CommentList } from "./CommentList";
-import { CommentInput } from "./CommentInput";
-import { useComments } from "../../hooks/useComments";
+import { useState, useCallback, useRef, useEffect, memo, useMemo } from 'react';
+import { Heart, MessageCircle, Share2, Calendar, Eye } from 'lucide-react';
+import type { FeedPost } from '../../hooks/useFeedData';
+import { STRINGS } from '../../constants/strings';
+import { formatRelativeTime } from '../../utils/date';
+import { CommentList } from './CommentList';
+import { CommentInput } from './CommentInput';
+import { useComments } from '../../hooks/useComments';
 
 const S = STRINGS.FEED.POST;
 
@@ -33,22 +33,22 @@ interface FeedPostCardProps {
 }
 
 /** 根據作者類型取得 Avatar 樣式 */
-function getAvatarStyle(type: FeedPost["type"]): string {
+function getAvatarStyle(type: FeedPost['type']): string {
   switch (type) {
-    case "agent":
-      return "bg-amber-100 text-amber-700 ring-amber-200";
-    case "official":
-      return "bg-brand-700 text-white ring-brand-300";
+    case 'agent':
+      return 'bg-amber-100 text-amber-700 ring-amber-200';
+    case 'official':
+      return 'bg-brand-700 text-white ring-brand-300';
     default:
-      return "bg-brand-50 text-brand-700 ring-brand-100";
+      return 'bg-brand-50 text-brand-700 ring-brand-100';
   }
 }
 
-function getAuthorBadge(type: FeedPost["type"]): string | null {
+function getAuthorBadge(type: FeedPost['type']): string | null {
   switch (type) {
-    case "agent":
+    case 'agent':
       return S.BADGE_AGENT;
-    case "official":
+    case 'official':
       return S.BADGE_OFFICIAL;
     default:
       return null;
@@ -72,15 +72,8 @@ function FeedPostCommentSection({
   currentUserId,
   userInitial,
 }: FeedPostCommentSectionProps) {
-  const {
-    comments,
-    isLoading,
-    addComment,
-    toggleLike,
-    deleteComment,
-    loadReplies,
-    refresh,
-  } = useComments({ postId, communityId });
+  const { comments, isLoading, addComment, toggleLike, deleteComment, loadReplies, refresh } =
+    useComments({ postId, communityId });
 
   // Phase 6 Bug 4 修正：hasLoadedRef 防止重複載入
   const hasLoadedRef = useRef(false);
@@ -91,10 +84,7 @@ function FeedPostCommentSection({
     }
   }, [refresh]);
 
-  const isLoggedIn = useMemo(
-    () => currentUserId !== undefined,
-    [currentUserId],
-  );
+  const isLoggedIn = useMemo(() => currentUserId !== undefined, [currentUserId]);
 
   if (isLoading && comments.length === 0) {
     return (
@@ -119,7 +109,7 @@ function FeedPostCommentSection({
         onSubmit={(content) => addComment(content)}
         disabled={!isLoggedIn}
         userInitial={userInitial}
-        placeholder={isLoggedIn ? "寫下您的留言..." : "請先登入後留言"}
+        placeholder={isLoggedIn ? '寫下您的留言...' : '請先登入後留言'}
       />
     </div>
   );
@@ -132,11 +122,11 @@ export const FeedPostCard = memo(function FeedPostCard({
   onReply,
   onShare,
   onComment,
-  className = "",
+  className = '',
   // Phase 7: 新增 props
   communityId,
   currentUserId,
-  userInitial = "U",
+  userInitial = 'U',
 }: FeedPostCardProps) {
   const [isLiking, setIsLiking] = useState(false);
   const [isCommentsOpen, setIsCommentsOpen] = useState(false);
@@ -182,12 +172,8 @@ export const FeedPostCard = memo(function FeedPostCard({
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <span className="truncate text-sm font-bold text-gray-900">
-              {post.author}
-            </span>
-            {post.floor && (
-              <span className="text-xs text-gray-500">{post.floor}</span>
-            )}
+            <span className="truncate text-sm font-bold text-gray-900">{post.author}</span>
+            {post.floor && <span className="text-xs text-gray-500">{post.floor}</span>}
             {authorBadge && (
               <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold text-amber-700">
                 {authorBadge}
@@ -195,9 +181,7 @@ export const FeedPostCard = memo(function FeedPostCard({
             )}
           </div>
           <div className="flex items-center gap-2 text-xs text-gray-500">
-            {post.communityName && (
-              <span className="truncate">{post.communityName}</span>
-            )}
+            {post.communityName && <span className="truncate">{post.communityName}</span>}
             <span>·</span>
             <span>{formatRelativeTime(post.time)}</span>
           </div>
@@ -206,21 +190,13 @@ export const FeedPostCard = memo(function FeedPostCard({
 
       {/* Body */}
       <div className="pt-3">
-        {post.title && (
-          <h3 className="mb-1 text-sm font-bold text-gray-900">{post.title}</h3>
-        )}
-        <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-700">
-          {post.content}
-        </p>
+        {post.title && <h3 className="mb-1 text-sm font-bold text-gray-900">{post.title}</h3>}
+        <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-700">{post.content}</p>
 
         {/* Images (P6-REFACTOR) */}
         {/* Images (P6-REFACTOR) */}
         {post.images && post.images.length > 0 && (
-          <div
-            className={`mt-3 ${
-              post.images.length === 1 ? "block" : "grid grid-cols-2 gap-2"
-            }`}
-          >
+          <div className={`mt-3 ${post.images.length === 1 ? 'block' : 'grid grid-cols-2 gap-2'}`}>
             {post.images.map((img, idx) => (
               <div
                 key={`${post.id}-img-${idx}`}
@@ -231,23 +207,21 @@ export const FeedPostCard = memo(function FeedPostCard({
                   alt={img.alt}
                   loading="lazy"
                   onError={(e) => {
-                    e.currentTarget.style.display = "none";
+                    e.currentTarget.style.display = 'none';
                     e.currentTarget.parentElement?.classList.add(
-                      "flex",
-                      "items-center",
-                      "justify-center",
-                      "min-h-[200px]",
+                      'flex',
+                      'items-center',
+                      'justify-center',
+                      'min-h-[200px]'
                     );
                     // Insert fallback text/icon
-                    const span = document.createElement("span");
-                    span.textContent = "無法載入圖片";
-                    span.className = "text-xs text-gray-400 font-medium";
+                    const span = document.createElement('span');
+                    span.textContent = '無法載入圖片';
+                    span.className = 'text-xs text-gray-400 font-medium';
                     e.currentTarget.parentElement?.appendChild(span);
                   }}
                   className={`object-cover transition-opacity duration-300 ${
-                    post.images?.length === 1
-                      ? "max-h-80 w-full"
-                      : "aspect-square w-full"
+                    post.images?.length === 1 ? 'max-h-80 w-full' : 'aspect-square w-full'
                   }`}
                 />
               </div>
@@ -265,13 +239,13 @@ export const FeedPostCard = memo(function FeedPostCard({
           aria-pressed={isLiked}
           className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-bold transition-all active:scale-95 disabled:cursor-not-allowed disabled:opacity-60 ${
             isLiked
-              ? "border-red-200 bg-red-50 text-red-600"
-              : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
+              ? 'border-red-200 bg-red-50 text-red-600'
+              : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
           }`}
         >
-          <Heart size={14} fill={isLiked ? "currentColor" : "none"} />
+          <Heart size={14} fill={isLiked ? 'currentColor' : 'none'} />
           <span>{isLiked ? S.LIKED_BTN : S.LIKE_BTN}</span>
-          {typeof post.likes === "number" && post.likes > 0 && (
+          {typeof post.likes === 'number' && post.likes > 0 && (
             <span className="ml-0.5 text-gray-500">{post.likes}</span>
           )}
         </button>
@@ -281,16 +255,13 @@ export const FeedPostCard = memo(function FeedPostCard({
           onClick={handleReplyClick}
           className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-bold transition-all active:scale-95 ${
             isCommentsOpen
-              ? "border-indigo-200 bg-indigo-50 text-indigo-600"
-              : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
+              ? 'border-indigo-200 bg-indigo-50 text-indigo-600'
+              : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
           }`}
         >
-          <MessageCircle
-            size={14}
-            fill={isCommentsOpen ? "currentColor" : "none"}
-          />
+          <MessageCircle size={14} fill={isCommentsOpen ? 'currentColor' : 'none'} />
           <span>{S.REPLY_BTN}</span>
-          {typeof post.comments === "number" && post.comments > 0 && (
+          {typeof post.comments === 'number' && post.comments > 0 && (
             <span className="ml-0.5 text-gray-500">{post.comments}</span>
           )}
         </button>
@@ -306,7 +277,7 @@ export const FeedPostCard = memo(function FeedPostCard({
       </div>
 
       {/* Stats (for agent posts) */}
-      {post.type === "agent" && typeof post.views === "number" && (
+      {post.type === 'agent' && typeof post.views === 'number' && (
         <div className="mt-2 flex items-center gap-4 text-xs text-gray-500">
           <span className="flex items-center gap-1">
             <Eye size={12} />

@@ -1,435 +1,438 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-TW">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>UAG 超緊湊版 - 房仲小卡整合</title>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <title>UAG 超緊湊版 - 房仲小卡整合</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
 
-    :root {
-      /* 品牌色 - 首頁深藍 */
-      --brand: #00385a;
-      --brand-light: #004e7c;
+      :root {
+        /* 品牌色 - 首頁深藍 */
+        --brand: #00385a;
+        --brand-light: #004e7c;
 
-      /* 功能色 */
-      --accent: #10b981;
-      --warning: #f59e0b;
-      --danger: #ef4444;
+        /* 功能色 */
+        --accent: #10b981;
+        --warning: #f59e0b;
+        --danger: #ef4444;
 
-      /* 等級色 */
-      --grade-s: #ef4444;
-      --grade-a: #f97316;
-      --grade-b: #fbbf24;
-      --grade-c: #60a5fa;
+        /* 等級色 */
+        --grade-s: #ef4444;
+        --grade-a: #f97316;
+        --grade-b: #fbbf24;
+        --grade-c: #60a5fa;
 
-      /* 中性色 */
-      --ink-100: #0f172a;
-      --ink-200: #334155;
-      --ink-300: #64748b;
-      --bg-page: #f8fafc;
-      --bg-card: #ffffff;
-      --line-soft: #e2e8f0;
+        /* 中性色 */
+        --ink-100: #0f172a;
+        --ink-200: #334155;
+        --ink-300: #64748b;
+        --bg-page: #f8fafc;
+        --bg-card: #ffffff;
+        --line-soft: #e2e8f0;
 
-      --font: -apple-system, BlinkMacSystemFont, "Inter", "Noto Sans TC", sans-serif;
-    }
+        --font: -apple-system, BlinkMacSystemFont, 'Inter', 'Noto Sans TC', sans-serif;
+      }
 
-    body {
-      font-family: var(--font);
-      background: var(--bg-page);
-      color: var(--ink-100);
-      line-height: 1.4;
-      max-width: 430px;
-      margin: 0 auto;
-      min-height: 100vh;
-    }
+      body {
+        font-family: var(--font);
+        background: var(--bg-page);
+        color: var(--ink-100);
+        line-height: 1.4;
+        max-width: 430px;
+        margin: 0 auto;
+        min-height: 100vh;
+      }
 
-    /* ============ UAG Header ============ */
-    .uag-header {
-      position: sticky;
-      top: 0;
-      z-index: 50;
-      background: var(--brand);
-      color: white;
-      padding: 8px 12px;
-      box-shadow: 0 2px 8px rgba(0, 56, 90, 0.2);
-    }
+      /* ============ UAG Header ============ */
+      .uag-header {
+        position: sticky;
+        top: 0;
+        z-index: 50;
+        background: var(--brand);
+        color: white;
+        padding: 8px 12px;
+        box-shadow: 0 2px 8px rgba(0, 56, 90, 0.2);
+      }
 
-    .uag-header-inner {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-    }
+      .uag-header-inner {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+      }
 
-    .uag-logo {
-      font-size: 13px;
-      font-weight: 800;
-    }
+      .uag-logo {
+        font-size: 13px;
+        font-weight: 800;
+      }
 
-    .uag-header-stats {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 10px;
-      font-weight: 700;
-    }
+      .uag-header-stats {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 10px;
+        font-weight: 700;
+      }
 
-    .stat-chip {
-      padding: 3px 6px;
-      border-radius: 4px;
-      background: rgba(255, 255, 255, 0.15);
-      white-space: nowrap;
-    }
+      .stat-chip {
+        padding: 3px 6px;
+        border-radius: 4px;
+        background: rgba(255, 255, 255, 0.15);
+        white-space: nowrap;
+      }
 
-    .uag-user-btn {
-      width: 24px;
-      height: 24px;
-      border-radius: 50%;
-      background: white;
-      color: var(--brand);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 10px;
-      font-weight: 800;
-      border: none;
-    }
+      .uag-user-btn {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: white;
+        color: var(--brand);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 10px;
+        font-weight: 800;
+        border: none;
+      }
 
-    /* ============ 超緊湊房仲小卡 ============ */
-    .agent-card-mini {
-      background: white;
-      border-bottom: 1px solid var(--line-soft);
-      padding: 8px 12px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
+      /* ============ 超緊湊房仲小卡 ============ */
+      .agent-card-mini {
+        background: white;
+        border-bottom: 1px solid var(--line-soft);
+        padding: 8px 12px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
 
-    .agent-avatar-mini {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      background: var(--brand);
-      color: white;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 13px;
-      font-weight: 700;
-      flex-shrink: 0;
-    }
+      .agent-avatar-mini {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: var(--brand);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 13px;
+        font-weight: 700;
+        flex-shrink: 0;
+      }
 
-    .agent-info-mini {
-      flex: 1;
-      min-width: 0;
-    }
+      .agent-info-mini {
+        flex: 1;
+        min-width: 0;
+      }
 
-    .agent-name-row {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 13px;
-      font-weight: 700;
-      color: var(--ink-100);
-      margin-bottom: 2px;
-    }
+      .agent-name-row {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--ink-100);
+        margin-bottom: 2px;
+      }
 
-    .agent-code-mini {
-      font-size: 10px;
-      color: var(--ink-300);
-      font-weight: 600;
-    }
+      .agent-code-mini {
+        font-size: 10px;
+        color: var(--ink-300);
+        font-weight: 600;
+      }
 
-    .agent-stats-mini {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 10px;
-      color: var(--ink-300);
-    }
+      .agent-stats-mini {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 10px;
+        color: var(--ink-300);
+      }
 
-    .stat-mini {
-      white-space: nowrap;
-    }
+      .stat-mini {
+        white-space: nowrap;
+      }
 
-    .stat-mini strong {
-      color: var(--brand);
-      font-weight: 700;
-      margin-right: 2px;
-    }
+      .stat-mini strong {
+        color: var(--brand);
+        font-weight: 700;
+        margin-right: 2px;
+      }
 
-    .stat-mini.trust strong {
-      color: var(--accent);
-    }
+      .stat-mini.trust strong {
+        color: var(--accent);
+      }
 
-    /* ============ UAG 內容區 ============ */
-    .uag-content {
-      padding: 0 0 80px;
-    }
+      /* ============ UAG 內容區 ============ */
+      .uag-content {
+        padding: 0 0 80px;
+      }
 
-    .section {
-      background: white;
-      border-bottom: 8px solid var(--bg-page);
-      padding: 12px;
-    }
+      .section {
+        background: white;
+        border-bottom: 8px solid var(--bg-page);
+        padding: 12px;
+      }
 
-    .section-title {
-      font-size: 12px;
-      font-weight: 700;
-      color: var(--ink-200);
-      margin-bottom: 8px;
-      padding-left: 6px;
-      border-left: 3px solid var(--brand);
-    }
+      .section-title {
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--ink-200);
+        margin-bottom: 8px;
+        padding-left: 6px;
+        border-left: 3px solid var(--brand);
+      }
 
-    /* Radar 簡化 */
-    .radar-summary {
-      background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
-      border: 1px solid #bae6fd;
-      border-radius: 8px;
-      padding: 12px;
-      display: flex;
-      justify-content: space-around;
-      text-align: center;
-    }
+      /* Radar 簡化 */
+      .radar-summary {
+        background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+        border: 1px solid #bae6fd;
+        border-radius: 8px;
+        padding: 12px;
+        display: flex;
+        justify-content: space-around;
+        text-align: center;
+      }
 
-    .radar-item {
-      flex: 1;
-    }
+      .radar-item {
+        flex: 1;
+      }
 
-    .radar-value {
-      font-size: 24px;
-      font-weight: 900;
-      color: var(--brand);
-      font-variant-numeric: tabular-nums;
-    }
+      .radar-value {
+        font-size: 24px;
+        font-weight: 900;
+        color: var(--brand);
+        font-variant-numeric: tabular-nums;
+      }
 
-    .radar-label {
-      font-size: 10px;
-      color: var(--ink-300);
-      margin-top: 2px;
-    }
+      .radar-label {
+        font-size: 10px;
+        color: var(--ink-300);
+        margin-top: 2px;
+      }
 
-    /* Action Panel 緊湊 */
-    .action-compact {
-      background: #fef3c7;
-      border: 1px solid #fbbf24;
-      border-radius: 8px;
-      padding: 10px;
-      margin-top: 8px;
-    }
+      /* Action Panel 緊湊 */
+      .action-compact {
+        background: #fef3c7;
+        border: 1px solid #fbbf24;
+        border-radius: 8px;
+        padding: 10px;
+        margin-top: 8px;
+      }
 
-    .action-info {
-      font-size: 11px;
-      color: #92400e;
-      margin-bottom: 6px;
-    }
+      .action-info {
+        font-size: 11px;
+        color: #92400e;
+        margin-bottom: 6px;
+      }
 
-    .buy-btn-compact {
-      width: 100%;
-      padding: 10px;
-      border: none;
-      border-radius: 6px;
-      background: var(--brand);
-      color: white;
-      font-size: 13px;
-      font-weight: 700;
-      cursor: pointer;
-    }
+      .buy-btn-compact {
+        width: 100%;
+        padding: 10px;
+        border: none;
+        border-radius: 6px;
+        background: var(--brand);
+        color: white;
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
+      }
 
-    /* Asset Monitor 極簡 */
-    .asset-mini {
-      border-bottom: 1px solid var(--line-soft);
-      padding: 8px 0;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
+      /* Asset Monitor 極簡 */
+      .asset-mini {
+        border-bottom: 1px solid var(--line-soft);
+        padding: 8px 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
 
-    .asset-mini:last-child {
-      border-bottom: none;
-    }
+      .asset-mini:last-child {
+        border-bottom: none;
+      }
 
-    .asset-name-mini {
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--ink-100);
-    }
+      .asset-name-mini {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--ink-100);
+      }
 
-    .asset-time-mini {
-      font-size: 10px;
-      color: var(--ink-300);
-      font-variant-numeric: tabular-nums;
-    }
+      .asset-time-mini {
+        font-size: 10px;
+        color: var(--ink-300);
+        font-variant-numeric: tabular-nums;
+      }
 
-    .grade-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      display: inline-block;
-      margin-right: 4px;
-    }
+      .grade-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 4px;
+      }
 
-    .grade-dot.s { background: var(--grade-s); }
-    .grade-dot.a { background: var(--grade-a); }
+      .grade-dot.s {
+        background: var(--grade-s);
+      }
+      .grade-dot.a {
+        background: var(--grade-a);
+      }
 
-    /* Listings 極簡 */
-    .listing-mini {
-      padding: 8px 0;
-      border-bottom: 1px solid var(--line-soft);
-      font-size: 12px;
-    }
+      /* Listings 極簡 */
+      .listing-mini {
+        padding: 8px 0;
+        border-bottom: 1px solid var(--line-soft);
+        font-size: 12px;
+      }
 
-    .listing-mini:last-child {
-      border-bottom: none;
-    }
+      .listing-mini:last-child {
+        border-bottom: none;
+      }
 
-    .listing-title-mini {
-      font-weight: 600;
-      color: var(--ink-100);
-      margin-bottom: 3px;
-    }
+      .listing-title-mini {
+        font-weight: 600;
+        color: var(--ink-100);
+        margin-bottom: 3px;
+      }
 
-    .listing-stats-mini {
-      font-size: 10px;
-      color: var(--ink-300);
-    }
+      .listing-stats-mini {
+        font-size: 10px;
+        color: var(--ink-300);
+      }
 
-    /* Footer */
-    .uag-footer {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      max-width: 430px;
-      margin: 0 auto;
-      background: white;
-      border-top: 1px solid var(--line-soft);
-      padding: 8px 12px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 10px;
-      color: var(--ink-300);
-    }
+      /* Footer */
+      .uag-footer {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        max-width: 430px;
+        margin: 0 auto;
+        background: white;
+        border-top: 1px solid var(--line-soft);
+        padding: 8px 12px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 10px;
+        color: var(--ink-300);
+      }
 
-    .mode-toggle {
-      padding: 4px 8px;
-      border: 1px solid var(--line-soft);
-      border-radius: 4px;
-      background: white;
-      font-size: 10px;
-      font-weight: 600;
-      color: var(--brand);
-      cursor: pointer;
-    }
-  </style>
-</head>
-<body>
-
-  <!-- UAG Header -->
-  <div class="uag-header">
-    <div class="uag-header-inner">
-      <div class="uag-logo">邁房子 UAG</div>
-      <div class="uag-header-stats">
-        <div class="stat-chip">💎 1,250</div>
-        <div class="stat-chip">S: 3 | A: 7</div>
-      </div>
-      <button class="uag-user-btn">王</button>
-    </div>
-  </div>
-
-  <!-- 超緊湊房仲小卡（僅佔 48px 高）-->
-  <div class="agent-card-mini">
-    <div class="agent-avatar-mini">王</div>
-    <div class="agent-info-mini">
-      <div class="agent-name-row">
-        王小明
-        <span class="agent-code-mini">#12345</span>
-      </div>
-      <div class="agent-stats-mini">
-        <div class="stat-mini trust"><strong>92</strong>分</div>
-        <div class="stat-mini"><strong>45</strong>帶看</div>
-        <div class="stat-mini"><strong>8</strong>成交</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- UAG 內容區 -->
-  <div class="uag-content">
-
-    <!-- [1] Radar -->
-    <div class="section">
-      <div class="section-title">精準導客雷達</div>
-      <div class="radar-summary">
-        <div class="radar-item">
-          <div class="radar-value">3</div>
-          <div class="radar-label">S 級</div>
+      .mode-toggle {
+        padding: 4px 8px;
+        border: 1px solid var(--line-soft);
+        border-radius: 4px;
+        background: white;
+        font-size: 10px;
+        font-weight: 600;
+        color: var(--brand);
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- UAG Header -->
+    <div class="uag-header">
+      <div class="uag-header-inner">
+        <div class="uag-logo">邁房子 UAG</div>
+        <div class="uag-header-stats">
+          <div class="stat-chip">💎 1,250</div>
+          <div class="stat-chip">S: 3 | A: 7</div>
         </div>
-        <div class="radar-item">
-          <div class="radar-value">5</div>
-          <div class="radar-label">A 級</div>
-        </div>
-        <div class="radar-item">
-          <div class="radar-value">12</div>
-          <div class="radar-label">總客戶</div>
-        </div>
-      </div>
-
-      <div class="action-compact">
-        <div class="action-info">選中：訪客-S01 (S級) • 意向 95% • 成本 500點</div>
-        <button class="buy-btn-compact">🚀 獲取聯絡權限</button>
+        <button class="uag-user-btn">王</button>
       </div>
     </div>
 
-    <!-- [2] Asset Monitor -->
-    <div class="section">
-      <div class="section-title">已購客戶資產 (2)</div>
-
-      <div class="asset-mini">
-        <div>
-          <span class="grade-dot a"></span>
-          <span class="asset-name-mini">訪客-A03</span>
+    <!-- 超緊湊房仲小卡（僅佔 48px 高）-->
+    <div class="agent-card-mini">
+      <div class="agent-avatar-mini">王</div>
+      <div class="agent-info-mini">
+        <div class="agent-name-row">
+          王小明
+          <span class="agent-code-mini">#12345</span>
         </div>
-        <div class="asset-time-mini">剩 31.2h</div>
-      </div>
-
-      <div class="asset-mini">
-        <div>
-          <span class="grade-dot s"></span>
-          <span class="asset-name-mini">訪客-S02</span>
+        <div class="agent-stats-mini">
+          <div class="stat-mini trust"><strong>92</strong>分</div>
+          <div class="stat-mini"><strong>45</strong>帶看</div>
+          <div class="stat-mini"><strong>8</strong>成交</div>
         </div>
-        <div class="asset-time-mini">剩 30.5h</div>
       </div>
     </div>
 
-    <!-- [3] Listings -->
-    <div class="section">
-      <div class="section-title">我的房源 (2)</div>
+    <!-- UAG 內容區 -->
+    <div class="uag-content">
+      <!-- [1] Radar -->
+      <div class="section">
+        <div class="section-title">精準導客雷達</div>
+        <div class="radar-summary">
+          <div class="radar-item">
+            <div class="radar-value">3</div>
+            <div class="radar-label">S 級</div>
+          </div>
+          <div class="radar-item">
+            <div class="radar-value">5</div>
+            <div class="radar-label">A 級</div>
+          </div>
+          <div class="radar-item">
+            <div class="radar-value">12</div>
+            <div class="radar-label">總客戶</div>
+          </div>
+        </div>
 
-      <div class="listing-mini">
-        <div class="listing-title-mini">台北市大安區豪宅</div>
-        <div class="listing-stats-mini">👁 45 瀏覽 • ❤️ 12 收藏</div>
+        <div class="action-compact">
+          <div class="action-info">選中：訪客-S01 (S級) • 意向 95% • 成本 500點</div>
+          <button class="buy-btn-compact">🚀 獲取聯絡權限</button>
+        </div>
       </div>
 
-      <div class="listing-mini">
-        <div class="listing-title-mini">新北市永和區公寓</div>
-        <div class="listing-stats-mini">👁 28 瀏覽 • ❤️ 5 收藏</div>
+      <!-- [2] Asset Monitor -->
+      <div class="section">
+        <div class="section-title">已購客戶資產 (2)</div>
+
+        <div class="asset-mini">
+          <div>
+            <span class="grade-dot a"></span>
+            <span class="asset-name-mini">訪客-A03</span>
+          </div>
+          <div class="asset-time-mini">剩 31.2h</div>
+        </div>
+
+        <div class="asset-mini">
+          <div>
+            <span class="grade-dot s"></span>
+            <span class="asset-name-mini">訪客-S02</span>
+          </div>
+          <div class="asset-time-mini">剩 30.5h</div>
+        </div>
+      </div>
+
+      <!-- [3] Listings -->
+      <div class="section">
+        <div class="section-title">我的房源 (2)</div>
+
+        <div class="listing-mini">
+          <div class="listing-title-mini">台北市大安區豪宅</div>
+          <div class="listing-stats-mini">👁 45 瀏覽 • ❤️ 12 收藏</div>
+        </div>
+
+        <div class="listing-mini">
+          <div class="listing-title-mini">新北市永和區公寓</div>
+          <div class="listing-stats-mini">👁 28 瀏覽 • ❤️ 5 收藏</div>
+        </div>
       </div>
     </div>
 
-  </div>
-
-  <!-- Footer -->
-  <div class="uag-footer">
-    <div>v2.0 • Mock</div>
-    <button class="mode-toggle">切換模式</button>
-  </div>
-
-</body>
+    <!-- Footer -->
+    <div class="uag-footer">
+      <div>v2.0 • Mock</div>
+      <button class="mode-toggle">切換模式</button>
+    </div>
+  </body>
 </html>

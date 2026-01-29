@@ -1,15 +1,15 @@
-import React, { useState, useEffect } from "react";
-import { useQuietMode } from "../context/QuietModeContext";
+import React, { useState, useEffect } from 'react';
+import { useQuietMode } from '../context/QuietModeContext';
 
 const barStyle: React.CSSProperties = {
-  width: "100%",
-  background: "#0a2246",
-  color: "white",
+  width: '100%',
+  background: '#0a2246',
+  color: 'white',
   fontSize: 14,
-  lineHeight: "36px",
+  lineHeight: '36px',
   height: 36,
-  textAlign: "center",
-  letterSpacing: "0.5px",
+  textAlign: 'center',
+  letterSpacing: '0.5px',
 };
 
 export const QuietBanner: React.FC = () => {
@@ -26,9 +26,7 @@ export const QuietBanner: React.FC = () => {
 
   if (!isActive()) return null;
 
-  const minutesLeft = state.untilTs
-    ? Math.max(0, Math.ceil((state.untilTs - now) / 60000))
-    : null;
+  const minutesLeft = state.untilTs ? Math.max(0, Math.ceil((state.untilTs - now) / 60000)) : null;
   const turnsLeft = state.remainingTurns ?? null;
 
   return (
@@ -42,12 +40,12 @@ export const QuietBanner: React.FC = () => {
         aria-label="解除安靜模式"
         style={{
           marginLeft: 12,
-          padding: "2px 8px",
+          padding: '2px 8px',
           borderRadius: 6,
-          border: "1px solid #fff",
-          background: "transparent",
-          color: "#fff",
-          cursor: "pointer",
+          border: '1px solid #fff',
+          background: 'transparent',
+          color: '#fff',
+          cursor: 'pointer',
         }}
       >
         解除

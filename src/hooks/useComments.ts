@@ -8,12 +8,12 @@
  * - 刪除留言
  */
 
-import { useState, useCallback } from "react";
-import { supabase } from "../lib/supabase";
-import { logger } from "../lib/logger";
-import { notify } from "../lib/notify";
-import type { FeedComment } from "../types/comment";
-import { transformApiComment } from "../types/comment";
+import { useState, useCallback } from 'react';
+import { supabase } from '../lib/supabase';
+import { logger } from '../lib/logger';
+import { notify } from '../lib/notify';
+import type { FeedComment } from '../types/comment';
+import { transformApiComment } from '../types/comment';
 
 interface UseCommentsOptions {
   postId: string;
@@ -52,7 +52,7 @@ export function useComments({
 
     try {
       const { data, error: fetchError } = await supabase
-        .from("community_comments")
+        .from('community_comments')
         .select(
           `
           id,
@@ -65,12 +65,12 @@ export function useComments({
           created_at,
           updated_at,
           author:profiles(id, name, avatar_url, role, floor)
-        `,
+        `
         )
-        .eq("post_id", postId)
-        .eq("community_id", communityId)
-        .is("parent_id", null) // 只取頂層留言
-        .order("created_at", { ascending: true });
+        .eq('post_id', postId)
+        .eq('community_id', communityId)
+        .is('parent_id', null) // 只取頂層留言
+        .order('created_at', { ascending: true });
 
       if (fetchError) throw fetchError;
 
@@ -90,10 +90,10 @@ export function useComments({
 
       setComments(transformed);
     } catch (err) {
-      const e = err instanceof Error ? err : new Error("載入留言失敗");
+      const e = err instanceof Error ? err : new Error('載入留言失敗');
       setError(e);
-      logger.error("[useComments] refresh failed", { error: err });
-      notify.error("載入留言失敗", "請稍後再試");
+      logger.error('[useComments] refresh failed', { error: err });
+      notify.error('載入留言失敗', '請稍後再試');
     } finally {
       setIsLoading(false);
     }
@@ -106,15 +106,15 @@ export function useComments({
         data: { session },
       } = await supabase.auth.getSession();
       if (!session) {
-        notify.error("請先登入", "登入後才能留言");
+        notify.error('請先登入', '登入後才能留言');
         return;
       }
 
       try {
-        const response = await fetch("/api/community/comment", {
-          method: "POST",
+        const response = await fetch('/api/community/comment', {
+          method: 'POST',
           headers: {
-            "Content-Type": "application/json",
+            'Content-Type': 'application/json',
             Authorization: `Bearer ${session.access_token}`,
           },
           body: JSON.stringify({
@@ -159,14 +159,14 @@ export function useComments({
           setComments((prev) => [...prev, newComment]);
         }
 
-        notify.success("留言成功");
+        notify.success('留言成功');
       } catch (err) {
-        logger.error("[useComments] addComment failed", { error: err });
-        notify.error("留言失敗", "請稍後再試");
+        logger.error('[useComments] addComment failed', { error: err });
+        notify.error('留言失敗', '請稍後再試');
         throw err;
       }
     },
-    [postId, communityId, refresh],
+    [postId, communityId, refresh]
   );
 
   /**
@@ -181,7 +181,7 @@ export function useComments({
       data: { session },
     } = await supabase.auth.getSession();
     if (!session) {
-      notify.error("請先登入", "登入後才能按讚");
+      notify.error('請先登入', '登入後才能按讚');
       return;
     }
 
@@ -196,9 +196,7 @@ export function useComments({
           return {
             ...c,
             isLiked: newIsLiked,
-            likesCount: newIsLiked
-              ? c.likesCount + 1
-              : Math.max(0, c.likesCount - 1),
+            likesCount: newIsLiked ? c.likesCount + 1 : Math.max(0, c.likesCount - 1),
           };
         }
         // 檢查 replies
@@ -211,9 +209,7 @@ export function useComments({
                 return {
                   ...r,
                   isLiked: newIsLiked,
-                  likesCount: newIsLiked
-                    ? r.likesCount + 1
-                    : Math.max(0, r.likesCount - 1),
+                  likesCount: newIsLiked ? r.likesCount + 1 : Math.max(0, r.likesCount - 1),
                 };
               }
               return r;
@@ -228,13 +224,13 @@ export function useComments({
     setComments(applyLikeToggle);
 
     try {
-      const response = await fetch("/api/community/comment", {
-        method: "POST",
+      const response = await fetch('/api/community/comment', {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
           Authorization: `Bearer ${session.access_token}`,
         },
-        body: JSON.stringify({ action: "like", commentId }),
+        body: JSON.stringify({ action: 'like', commentId }),
       });
 
       const result = await response.json();
@@ -267,19 +263,19 @@ export function useComments({
               };
             }
             return c;
-          }),
+          })
         );
       }
     } catch (err) {
       // 3. 回滾：使用反向操作（再次 toggle = 還原）
       // 這種方式不依賴閉包捕獲的舊狀態，避免競態條件
       setComments(applyLikeToggle);
-      logger.warn("[useComments] toggleLike rollback", {
+      logger.warn('[useComments] toggleLike rollback', {
         commentId,
         error: err instanceof Error ? err.message : String(err),
-        reason: "API_FAILURE",
+        reason: 'API_FAILURE',
       });
-      notify.error("按讚失敗", "請稍後再試");
+      notify.error('按讚失敗', '請稍後再試');
     }
   }, []); // 空依賴：不依賴任何外部狀態，完全使用 functional update
 
@@ -296,7 +292,7 @@ export function useComments({
       data: { session },
     } = await supabase.auth.getSession();
     if (!session) {
-      notify.error("請先登入", "登入後才能刪除");
+      notify.error('請先登入', '登入後才能刪除');
       return;
     }
 
@@ -344,10 +340,10 @@ export function useComments({
     });
 
     try {
-      const response = await fetch("/api/community/comment", {
-        method: "DELETE",
+      const response = await fetch('/api/community/comment', {
+        method: 'DELETE',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
           Authorization: `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({ commentId }),
@@ -356,7 +352,7 @@ export function useComments({
       const result = await response.json();
       if (!result.success) throw new Error(result.error);
 
-      notify.success("留言已刪除");
+      notify.success('留言已刪除');
     } catch (err) {
       // 回滾：將刪除的留言重新插入
       if (deletedComment) {
@@ -392,12 +388,12 @@ export function useComments({
           }
         });
       }
-      logger.warn("[useComments] deleteComment rollback", {
+      logger.warn('[useComments] deleteComment rollback', {
         commentId,
         error: err instanceof Error ? err.message : String(err),
-        reason: "API_FAILURE",
+        reason: 'API_FAILURE',
       });
-      notify.error("刪除失敗", "請稍後再試");
+      notify.error('刪除失敗', '請稍後再試');
     }
   }, []); // 空依賴：完全使用 functional update
 
@@ -407,7 +403,7 @@ export function useComments({
 
     try {
       const { data, error: fetchError } = await supabase
-        .from("community_comments")
+        .from('community_comments')
         .select(
           `
           id,
@@ -419,10 +415,10 @@ export function useComments({
           replies_count,
           created_at,
           author:profiles(id, name, avatar_url, role, floor)
-        `,
+        `
         )
-        .eq("parent_id", commentId)
-        .order("created_at", { ascending: true });
+        .eq('parent_id', commentId)
+        .order('created_at', { ascending: true });
 
       if (fetchError) throw fetchError;
 
@@ -445,22 +441,20 @@ export function useComments({
           if (c.id === commentId) {
             const serverIds = new Set(replies.map((r) => r.id));
             // 保留本地有但伺服器沒有的回覆（可能是剛新增的樂觀更新）
-            const localOnlyReplies = (c.replies || []).filter(
-              (r) => !serverIds.has(r.id),
-            );
+            const localOnlyReplies = (c.replies || []).filter((r) => !serverIds.has(r.id));
             return {
               ...c,
               replies: [...replies, ...localOnlyReplies],
             };
           }
           return c;
-        }),
+        })
       );
     } catch (err) {
-      const e = err instanceof Error ? err : new Error("載入回覆失敗");
+      const e = err instanceof Error ? err : new Error('載入回覆失敗');
       setError(e);
-      logger.error("[useComments] loadReplies failed", { error: err });
-      notify.error("載入回覆失敗", "請稍後再試");
+      logger.error('[useComments] loadReplies failed', { error: err });
+      notify.error('載入回覆失敗', '請稍後再試');
     } finally {
       setIsLoadingReplies(false);
     }

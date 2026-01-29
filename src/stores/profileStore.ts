@@ -1,4 +1,4 @@
-import { safeLocalStorage } from "../lib/safeStorage";
+import { safeLocalStorage } from '../lib/safeStorage';
 
 export type UserMilestones = {
   birthday?: string; // YYYY-MM-DD
@@ -8,16 +8,16 @@ export type UserProfile = {
   tags: string[];
   milestones?: UserMilestones;
   lastSeenAt?: number;
-  lastMood?: "neutral" | "stress" | "rest";
+  lastMood?: 'neutral' | 'stress' | 'rest';
 };
 
-const STORAGE_KEY = "mai-user-profile-v1";
-const FIRST_SEEN_KEY = "mai-first-seen-ts";
-const WARM_DISMISS_KEY = "mai-warmbar-dismissed-date"; // YYYY-MM-DD
+const STORAGE_KEY = 'mai-user-profile-v1';
+const FIRST_SEEN_KEY = 'mai-first-seen-ts';
+const WARM_DISMISS_KEY = 'mai-warmbar-dismissed-date'; // YYYY-MM-DD
 
 // [NASA TypeScript Safety] 類型守衛驗證 UserProfile
 function isUserProfile(obj: unknown): obj is UserProfile {
-  if (typeof obj !== "object" || obj === null) return false;
+  if (typeof obj !== 'object' || obj === null) return false;
   const record = obj as Record<string, unknown>;
   return Array.isArray(record.tags);
 }
@@ -50,7 +50,7 @@ export function setMilestones(ms: UserMilestones) {
   p.milestones = { ...(p.milestones || {}), ...ms };
   saveProfile(p);
 }
-export function setLastMood(mood: "neutral" | "stress" | "rest") {
+export function setLastMood(mood: 'neutral' | 'stress' | 'rest') {
   const p = loadProfile();
   p.lastMood = mood;
   saveProfile(p);
@@ -79,8 +79,8 @@ export function getWarmTags(max = 3): string[] {
 function todayStr(): string {
   const d = new Date();
   const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
   return `${y}-${m}-${day}`;
 }
 function diffDays(a: Date, b: Date): number {
@@ -97,24 +97,19 @@ export function getMilestoneHint(ms?: UserMilestones): string | null {
     if (hint) return hint;
   }
   if (ms.move_in_date) {
-    const hint = nearAnnual(ms.move_in_date, now, 7, "搬家");
+    const hint = nearAnnual(ms.move_in_date, now, 7, '搬家');
     if (hint) return hint;
   }
   return null;
 }
-function nearAnnual(
-  dateStr: string,
-  now: Date,
-  days = 7,
-  label?: string,
-): string | null {
-  const [y, m, d] = dateStr.split("-").map((x) => Number(x));
+function nearAnnual(dateStr: string, now: Date, days = 7, label?: string): string | null {
+  const [y, m, d] = dateStr.split('-').map((x) => Number(x));
   if (!y || !m || !d) return null;
   const thisYear = new Date(now.getFullYear(), m - 1, d);
   const delta = Math.abs(diffDays(thisYear, now));
   if (delta <= days) {
-    if (label === "搬家") return "搬家一週年！";
-    return "生日快樂！";
+    if (label === '搬家') return '搬家一週年！';
+    return '生日快樂！';
   }
   return null;
 }

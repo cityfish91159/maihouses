@@ -21,7 +21,7 @@ const {
   endTask,
   verifySessionIntegrity,
   loadScoreLog,
-} = require("./supervisor.cjs");
+} = require('./supervisor.cjs');
 
 // ═══════════════════════════════════════════════════════════════
 // CLI 命令處理
@@ -32,43 +32,43 @@ const command = args[0];
 
 function showHelp() {
   logBox(
-    "AI Session CLI - 使用說明",
+    'AI Session CLI - 使用說明',
     [
-      "",
-      "命令：",
-      "  start <taskId> [desc]  開始新任務",
-      "  track                  標記已追蹤變更",
-      "  audit                  標記已審核代碼",
-      "  end                    結束當前任務",
-      "  status                 查看當前狀態",
-      "  score                  查看扣分紀錄",
-      "",
-      "範例：",
+      '',
+      '命令：',
+      '  start <taskId> [desc]  開始新任務',
+      '  track                  標記已追蹤變更',
+      '  audit                  標記已審核代碼',
+      '  end                    結束當前任務',
+      '  status                 查看當前狀態',
+      '  score                  查看扣分紀錄',
+      '',
+      '範例：',
       '  node session.cjs start FIX-123 "修復登入問題"',
-      "  node session.cjs track",
-      "  node session.cjs audit",
-      "  node session.cjs end",
-      "",
+      '  node session.cjs track',
+      '  node session.cjs audit',
+      '  node session.cjs end',
+      '',
     ],
-    "cyan",
+    'cyan'
   );
 }
 
 function cmdStart() {
   const taskId = args[1];
-  const description = args.slice(2).join(" ");
+  const description = args.slice(2).join(' ');
 
   if (!taskId) {
-    log("❌ 錯誤：請提供 taskId", "red");
-    log("   用法：session.cjs start <taskId> [description]", "yellow");
+    log('❌ 錯誤：請提供 taskId', 'red');
+    log('   用法：session.cjs start <taskId> [description]', 'yellow');
     process.exit(1);
   }
 
   // 檢查是否有未結束的任務
   const existing = loadSession();
   if (existing) {
-    log(`⚠️  警告：已有進行中的任務 ${existing.taskId}`, "yellow");
-    log("   請先執行 end 結束該任務", "yellow");
+    log(`⚠️  警告：已有進行中的任務 ${existing.taskId}`, 'yellow');
+    log('   請先執行 end 結束該任務', 'yellow');
     process.exit(1);
   }
 
@@ -77,14 +77,14 @@ function cmdStart() {
   logBox(
     `任務開始：${taskId}`,
     [
-      "",
-      `描述：${description || "(無描述)"}`,
+      '',
+      `描述：${description || '(無描述)'}`,
       `開始時間：${session.startedAt}`,
-      "",
-      "⚡ 下一步：完成代碼修改後執行 track",
-      "",
+      '',
+      '⚡ 下一步：完成代碼修改後執行 track',
+      '',
     ],
-    "green",
+    'green'
   );
 }
 
@@ -92,20 +92,20 @@ function cmdTrack() {
   try {
     const session = markTracked();
     logBox(
-      "已標記追蹤",
+      '已標記追蹤',
       [
-        "",
+        '',
         `任務：${session.taskId}`,
         `追蹤時間：${session.trackedAt}`,
-        "",
-        "⚡ 下一步：審核代碼後執行 audit",
-        "",
+        '',
+        '⚡ 下一步：審核代碼後執行 audit',
+        '',
       ],
-      "green",
+      'green'
     );
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Unknown error";
-    log(`❌ 錯誤：${message}`, "red");
+    const message = err instanceof Error ? err.message : 'Unknown error';
+    log(`❌ 錯誤：${message}`, 'red');
     process.exit(1);
   }
 }
@@ -114,20 +114,20 @@ function cmdAudit() {
   try {
     const session = markAudited();
     logBox(
-      "已標記審核",
+      '已標記審核',
       [
-        "",
+        '',
         `任務：${session.taskId}`,
         `審核時間：${session.auditedAt}`,
-        "",
-        "✅ 現在可以 commit 了",
-        "",
+        '',
+        '✅ 現在可以 commit 了',
+        '',
       ],
-      "green",
+      'green'
     );
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Unknown error";
-    log(`❌ 錯誤：${message}`, "red");
+    const message = err instanceof Error ? err.message : 'Unknown error';
+    log(`❌ 錯誤：${message}`, 'red');
     process.exit(1);
   }
 }
@@ -136,34 +136,31 @@ function cmdEnd() {
   const session = endTask();
 
   if (!session) {
-    log("ℹ️  沒有進行中的任務", "cyan");
+    log('ℹ️  沒有進行中的任務', 'cyan');
     return;
   }
 
   const duration =
     session.endedAt && session.startedAt
       ? Math.round(
-          (new Date(session.endedAt).getTime() -
-            new Date(session.startedAt).getTime()) /
-            1000 /
-            60,
+          (new Date(session.endedAt).getTime() - new Date(session.startedAt).getTime()) / 1000 / 60
         )
       : 0;
 
   logBox(
     `任務結束：${session.taskId}`,
     [
-      "",
+      '',
       `開始：${session.startedAt}`,
       `結束：${session.endedAt}`,
       `耗時：${duration} 分鐘`,
-      "",
-      `追蹤：${session.tracked ? "✅" : "❌"}`,
-      `審核：${session.audited ? "✅" : "❌"}`,
+      '',
+      `追蹤：${session.tracked ? '✅' : '❌'}`,
+      `審核：${session.audited ? '✅' : '❌'}`,
       `Commits：${session.commits?.length || 0}`,
-      "",
+      '',
     ],
-    "magenta",
+    'magenta'
   );
 }
 
@@ -171,42 +168,34 @@ function cmdStatus() {
   // 驗證 Session 完整性
   const integrity = verifySessionIntegrity();
   if (!integrity.valid) {
-    log(`🚨 Session 異常：${integrity.reason}`, "red");
+    log(`🚨 Session 異常：${integrity.reason}`, 'red');
     return;
   }
 
   const session = loadSession();
 
   if (!session) {
-    logBox(
-      "當前狀態",
-      ["", "沒有進行中的任務", "", "執行 start <taskId> 開始新任務", ""],
-      "cyan",
-    );
+    logBox('當前狀態', ['', '沒有進行中的任務', '', '執行 start <taskId> 開始新任務', ''], 'cyan');
     return;
   }
 
-  const elapsed = Math.round(
-    (Date.now() - new Date(session.startedAt).getTime()) / 1000 / 60,
-  );
+  const elapsed = Math.round((Date.now() - new Date(session.startedAt).getTime()) / 1000 / 60);
 
   logBox(
     `當前任務：${session.taskId}`,
     [
-      "",
-      `描述：${session.description || "(無)"}`,
+      '',
+      `描述：${session.description || '(無)'}`,
       `開始：${session.startedAt}`,
       `已進行：${elapsed} 分鐘`,
-      "",
-      `追蹤：${session.tracked ? `✅ ${session.trackedAt}` : "❌ 未完成"}`,
-      `審核：${session.audited ? `✅ ${session.auditedAt}` : "❌ 未完成"}`,
-      "",
-      session.tracked && session.audited
-        ? "✅ 可以 commit"
-        : "⚠️  尚未完成必要步驟",
-      "",
+      '',
+      `追蹤：${session.tracked ? `✅ ${session.trackedAt}` : '❌ 未完成'}`,
+      `審核：${session.audited ? `✅ ${session.auditedAt}` : '❌ 未完成'}`,
+      '',
+      session.tracked && session.audited ? '✅ 可以 commit' : '⚠️  尚未完成必要步驟',
+      '',
     ],
-    session.tracked && session.audited ? "green" : "yellow",
+    session.tracked && session.audited ? 'green' : 'yellow'
   );
 }
 
@@ -214,16 +203,16 @@ function cmdScore() {
   const scoreLog = loadScoreLog();
 
   if (scoreLog.entries.length === 0) {
-    logBox("扣分紀錄", ["", "🎉 目前沒有扣分紀錄", ""], "green");
+    logBox('扣分紀錄', ['', '🎉 目前沒有扣分紀錄', ''], 'green');
     return;
   }
 
   const lines = [
-    "",
+    '',
     `總扣分：${c.red}${c.bold}-${scoreLog.totalPenalty}${c.cyan} 分`,
-    "",
-    "最近 5 筆：",
-    "",
+    '',
+    '最近 5 筆：',
+    '',
   ];
 
   const recent = scoreLog.entries.slice(-5).reverse();
@@ -232,9 +221,9 @@ function cmdScore() {
     lines.push(`   ${entry.timestamp}`);
   });
 
-  lines.push("");
+  lines.push('');
 
-  logBox("扣分紀錄", lines, "yellow");
+  logBox('扣分紀錄', lines, 'yellow');
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -242,32 +231,32 @@ function cmdScore() {
 // ═══════════════════════════════════════════════════════════════
 
 switch (command) {
-  case "start":
+  case 'start':
     cmdStart();
     break;
-  case "track":
+  case 'track':
     cmdTrack();
     break;
-  case "audit":
+  case 'audit':
     cmdAudit();
     break;
-  case "end":
+  case 'end':
     cmdEnd();
     break;
-  case "status":
+  case 'status':
     cmdStatus();
     break;
-  case "score":
+  case 'score':
     cmdScore();
     break;
-  case "help":
-  case "--help":
-  case "-h":
+  case 'help':
+  case '--help':
+  case '-h':
     showHelp();
     break;
   default:
     if (command) {
-      log(`❌ 未知命令：${command}`, "red");
+      log(`❌ 未知命令：${command}`, 'red');
     }
     showHelp();
     process.exit(command ? 1 : 0);

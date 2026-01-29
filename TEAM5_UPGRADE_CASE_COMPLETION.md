@@ -11,6 +11,7 @@
 **路徑**: `C:\Users\陳世瑜\maihouses\api\trust\upgrade-case.ts`
 
 **功能**:
+
 - POST /api/trust/upgrade-case
 - 接收參數: `{ token: string, userId: string, userName: string }`
 - 驗證 token 有效性（格式、過期、撤銷）
@@ -19,6 +20,7 @@
 - 返回成功結果: `{ success: true, case_id }`
 
 **特性**:
+
 - ✅ 完整的 TypeScript 類型安全（Zod Schema 驗證）
 - ✅ 完整的錯誤處理（Token 無效、已過期、已綁定等）
 - ✅ 審計日誌記錄（AUDIT_LOGGING）
@@ -33,6 +35,7 @@
 **函數**: `fn_upgrade_trust_case(p_token UUID, p_user_id TEXT, p_user_name TEXT)`
 
 **業務邏輯**:
+
 1. 查詢案件並驗證 token（未過期、未撤銷）
 2. 使用 `FOR UPDATE` 鎖定案件（防止並發衝突）
 3. 檢查是否已綁定其他用戶
@@ -42,6 +45,7 @@
 7. 返回成功結果
 
 **安全性**:
+
 - ✅ SECURITY DEFINER（允許 anon 用戶執行）
 - ✅ 原子性操作（單次 UPDATE + FOR UPDATE 鎖定）
 - ✅ 防止重複綁定（檢查 buyer_user_id）
@@ -52,6 +56,7 @@
 **路徑**: `C:\Users\陳世瑜\maihouses\api\trust\__tests__\upgrade-case.test.ts`
 
 **測試案例**:
+
 - ✅ 成功升級案件
 - ✅ 拒絕非 POST 請求
 - ✅ Token 格式錯誤
@@ -69,6 +74,7 @@
 **路徑**: `C:\Users\陳世瑜\maihouses\docs\api-trust-upgrade-case.md`
 
 **內容**:
+
 - API 端點資訊
 - 使用情境說明
 - 請求/回應格式範例
@@ -80,34 +86,42 @@
 ## 代碼品質檢查
 
 ### ESLint
+
 ```bash
 npx eslint api/trust/upgrade-case.ts
 ```
+
 ✅ **結果**: 無警告或錯誤
 
 ### 測試
+
 ```bash
 npx vitest run api/trust/__tests__/upgrade-case.test.ts
 ```
+
 ✅ **結果**: 9/9 測試通過
 
 ## 技術規範遵循
 
 ### ✅ Backend Safeguard
+
 - RLS + 權限驗證
 - Token 驗證邏輯
 - SECURITY DEFINER 函數
 
 ### ✅ NASA TypeScript Safety
+
 - 完整類型定義
 - Zod Schema 驗證（無 `any` 類型）
 - 完整錯誤處理
 
 ### ✅ Audit Logging
+
 - 審計日誌記錄（logAudit）
 - 事件記錄（trust_case_events）
 
 ### ✅ No Lazy Implementation
+
 - 完整實作（無 TODO/placeholder）
 - 完整錯誤處理
 - 完整測試覆蓋
@@ -115,9 +129,11 @@ npx vitest run api/trust/__tests__/upgrade-case.test.ts
 ## 資料庫變更
 
 ### 新增 RPC 函數
+
 - `fn_upgrade_trust_case(p_token UUID, p_user_id TEXT, p_user_name TEXT)`
 
 ### 相依欄位（已存在）
+
 - `trust_cases.token` (UUID, 案件 token)
 - `trust_cases.token_expires_at` (TIMESTAMPTZ, token 過期時間)
 - `trust_cases.token_revoked_at` (TIMESTAMPTZ, token 撤銷時間)
@@ -166,12 +182,14 @@ if (data.success) {
 ## 部署步驟
 
 1. **執行 Migration**:
+
    ```bash
    # 在 Supabase Dashboard 執行
    supabase/migrations/20260128_add_upgrade_case_function.sql
    ```
 
 2. **部署 API**:
+
    ```bash
    # Vercel 會自動偵測 api/ 目錄下的新檔案
    git add api/trust/upgrade-case.ts

@@ -6,9 +6,9 @@ import React, {
   useMemo,
   useRef,
   useState,
-} from "react";
-import { Events, track } from "../analytics/track";
-import { safeLocalStorage } from "../lib/safeStorage";
+} from 'react';
+import { Events, track } from '../analytics/track';
+import { safeLocalStorage } from '../lib/safeStorage';
 
 type QuietState = {
   isQuiet: boolean;
@@ -18,23 +18,19 @@ type QuietState = {
 };
 type QuietAPI = {
   state: QuietState;
-  startQuiet: (opts?: {
-    minutes?: number;
-    turns?: number;
-    reason?: string;
-  }) => void;
+  startQuiet: (opts?: { minutes?: number; turns?: number; reason?: string }) => void;
   clearQuiet: () => void;
   decrementTurn: () => void;
   isActive: () => boolean;
 };
-const STORAGE_KEY = "mai-quiet-mode-v1";
+const STORAGE_KEY = 'mai-quiet-mode-v1';
 const QuietModeContext = createContext<QuietAPI | null>(null);
 
 // [NASA TypeScript Safety] 類型守衛驗證 QuietState
 function isQuietState(obj: unknown): obj is QuietState {
-  if (typeof obj !== "object" || obj === null) return false;
+  if (typeof obj !== 'object' || obj === null) return false;
   const record = obj as Record<string, unknown>;
-  return typeof record.isQuiet === "boolean";
+  return typeof record.isQuiet === 'boolean';
 }
 
 function readStorage(): QuietState {
@@ -55,9 +51,7 @@ function writeStorage(s: QuietState) {
   } catch {}
 }
 
-export const QuietModeProvider: React.FC<{ children: React.ReactNode }> = ({
-  children,
-}) => {
+export const QuietModeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // 惰性初始化：讀取並清理過期狀態，避免 effect 中 setState
   const [state, setState] = useState<QuietState>(() => {
     const saved = readStorage();
@@ -80,8 +74,7 @@ export const QuietModeProvider: React.FC<{ children: React.ReactNode }> = ({
     if (!state.isQuiet) return false;
     const now = Date.now();
     if (state.untilTs && now > state.untilTs) return false;
-    if (state.remainingTurns !== null && (state.remainingTurns ?? 0) <= 0)
-      return false;
+    if (state.remainingTurns !== null && (state.remainingTurns ?? 0) <= 0) return false;
     return true;
   }, [state]);
 
@@ -101,24 +94,21 @@ export const QuietModeProvider: React.FC<{ children: React.ReactNode }> = ({
     };
   }, []);
 
-  const startQuiet = useCallback(
-    (opts?: { minutes?: number; turns?: number; reason?: string }) => {
-      const minutes = opts?.minutes ?? null;
-      const turns = opts?.turns ?? 10; // 預設 10 回合
-      const reason = opts?.reason;
-      const untilTs = minutes ? Date.now() + minutes * 60000 : null;
-      const next: QuietState = {
-        isQuiet: true,
-        ...(reason && { reason }),
-        untilTs,
-        remainingTurns: turns,
-      };
-      setState(next);
-      writeStorage(next);
-      track(Events.QuietOn, { reason, minutes, turns });
-    },
-    [],
-  );
+  const startQuiet = useCallback((opts?: { minutes?: number; turns?: number; reason?: string }) => {
+    const minutes = opts?.minutes ?? null;
+    const turns = opts?.turns ?? 10; // 預設 10 回合
+    const reason = opts?.reason;
+    const untilTs = minutes ? Date.now() + minutes * 60000 : null;
+    const next: QuietState = {
+      isQuiet: true,
+      ...(reason && { reason }),
+      untilTs,
+      remainingTurns: turns,
+    };
+    setState(next);
+    writeStorage(next);
+    track(Events.QuietOn, { reason, minutes, turns });
+  }, []);
 
   const clearQuiet = useCallback(() => {
     const next: QuietState = {
@@ -145,7 +135,7 @@ export const QuietModeProvider: React.FC<{ children: React.ReactNode }> = ({
           remainingTurns: null,
         };
         writeStorage(cleared);
-        track(Events.QuietAutoOff, { reason: "turns_exhausted" });
+        track(Events.QuietAutoOff, { reason: 'turns_exhausted' });
         return cleared;
       }
       return next;
@@ -160,24 +150,19 @@ export const QuietModeProvider: React.FC<{ children: React.ReactNode }> = ({
       decrementTurn,
       isActive,
     }),
-    [state, startQuiet, clearQuiet, decrementTurn, isActive],
+    [state, startQuiet, clearQuiet, decrementTurn, isActive]
   );
 
-  return (
-    <QuietModeContext.Provider value={value}>
-      {children}
-    </QuietModeContext.Provider>
-  );
+  return <QuietModeContext.Provider value={value}>{children}</QuietModeContext.Provider>;
 };
 export function useQuietMode() {
   const ctx = useContext(QuietModeContext);
-  if (!ctx)
-    throw new Error("useQuietMode must be used within QuietModeProvider");
+  if (!ctx) throw new Error('useQuietMode must be used within QuietModeProvider');
   return ctx;
 }
 export function isQuietActiveFromStorage(): boolean {
   try {
-    const raw = safeLocalStorage.getItem("mai-quiet-mode-v1");
+    const raw = safeLocalStorage.getItem('mai-quiet-mode-v1');
     if (!raw) return false;
     const parsed: unknown = JSON.parse(raw);
     // [NASA TypeScript Safety] 使用類型守衛取代 as QuietState

@@ -8,13 +8,13 @@ Team 4 - 前端 Modal 團隊已成功建立 `src/components/TrustRoom/DataCollec
 
 ### 1. 核心檔案
 
-| 檔案 | 說明 | 狀態 |
-|------|------|------|
-| `src/components/TrustRoom/DataCollectionModal.tsx` | 主要組件檔案 | ✅ 完成 |
-| `src/components/TrustRoom/index.ts` | 導出檔案 | ✅ 完成 |
+| 檔案                                                    | 說明                     | 狀態    |
+| ------------------------------------------------------- | ------------------------ | ------- |
+| `src/components/TrustRoom/DataCollectionModal.tsx`      | 主要組件檔案             | ✅ 完成 |
+| `src/components/TrustRoom/index.ts`                     | 導出檔案                 | ✅ 完成 |
 | `src/components/TrustRoom/DataCollectionModal.test.tsx` | 單元測試 (12 個測試案例) | ✅ 完成 |
-| `src/components/TrustRoom/README.md` | 組件文件 | ✅ 完成 |
-| `src/components/TrustRoom/DataCollectionModal.demo.tsx` | Demo 展示頁面 | ✅ 完成 |
+| `src/components/TrustRoom/README.md`                    | 組件文件                 | ✅ 完成 |
+| `src/components/TrustRoom/DataCollectionModal.demo.tsx` | Demo 展示頁面            | ✅ 完成 |
 
 ### 2. Props 介面
 
@@ -32,22 +32,26 @@ interface DataCollectionModalProps {
 ### 3. 功能實作
 
 #### 表單欄位
+
 - ✅ 姓名 (必填) - 最多 50 字
 - ✅ 電話 (必填) - 最多 20 字，格式驗證
 - ✅ Email (選填) - 最多 100 字，格式驗證
 
 #### 按鈕
+
 - ✅ "送出" - 送出表單
 - ✅ "稍後再說" - 跳過/關閉 Modal
 - ✅ 關閉按鈕 (X) - 呼叫 onSkip
 
 #### 說明文字
+
 - ✅ 標題: "請填寫基本資料以保全交易過程全貌"
 - ✅ 隱私說明: "此資訊僅供法律留痕使用，不會公開給房仲"
 
 ### 4. 技術標準
 
 #### TypeScript 類型安全
+
 - ✅ 完整的 Props 介面定義
 - ✅ Zod Schema 驗證
 - ✅ 運行時類型檢查
@@ -55,6 +59,7 @@ interface DataCollectionModalProps {
 - ✅ 無使用 `any` 類型
 
 #### 表單驗證
+
 - ✅ Zod Schema 驗證
 - ✅ HTML5 required 屬性
 - ✅ 即時錯誤顯示
@@ -62,6 +67,7 @@ interface DataCollectionModalProps {
 - ✅ Email 格式驗證
 
 #### 無障礙性 (A11y)
+
 - ✅ ARIA 屬性完整
   - `role="dialog"`
   - `aria-modal="true"`
@@ -79,12 +85,14 @@ interface DataCollectionModalProps {
   - `required` 屬性
 
 #### 響應式設計
+
 - ✅ Tailwind CSS 響應式類別
 - ✅ 移動裝置支援
 - ✅ 最大寬度限制 (`max-w-md`)
 - ✅ 適當的 padding 和 spacing
 
 #### 錯誤處理
+
 - ✅ 表單驗證錯誤顯示
 - ✅ 必填欄位檢查
 - ✅ 格式驗證
@@ -93,24 +101,31 @@ interface DataCollectionModalProps {
 ### 5. 代碼品質
 
 #### ESLint
+
 ```bash
 npm run lint
 ```
+
 ✅ 通過 - 無錯誤或警告
 
 #### TypeScript
+
 ```bash
 npm run typecheck
 ```
+
 ✅ 通過 - 無類型錯誤
 
 #### 測試覆蓋
+
 ```bash
 npx vitest run src/components/TrustRoom/
 ```
+
 ✅ 12/12 測試通過
 
 測試案例：
+
 1. 不顯示當 isOpen 為 false
 2. 顯示當 isOpen 為 true
 3. 顯示必填欄位標記
@@ -127,6 +142,7 @@ npx vitest run src/components/TrustRoom/
 ### 6. 設計規範
 
 #### 樣式一致性
+
 - ✅ 使用專案 Design Tokens
 - ✅ 品牌色 (`brand-600`, `brand-700`)
 - ✅ 語意化陰影 (`shadow-2xl`)
@@ -134,6 +150,7 @@ npx vitest run src/components/TrustRoom/
 - ✅ 統一的動畫 (`animate-in fade-in zoom-in-95`)
 
 #### 遵循現有 Modal 模式
+
 - ✅ 參考 `ContactModal.tsx`
 - ✅ 參考 `SendMessageModal.tsx`
 - ✅ 參考 `CreateCaseModal.tsx`

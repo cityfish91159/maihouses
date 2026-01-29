@@ -29,61 +29,51 @@
  * - 保留 React hooks 邏輯於此檔案
  */
 
-import { useState, useCallback, useMemo, useEffect, useRef } from "react";
-import { mhEnv } from "../lib/mhEnv";
-import { safeLocalStorage } from "../lib/safeStorage";
-import { logger } from "../lib/logger";
-import { supabase } from "../lib/supabase";
-import type { Role } from "../types/community";
-import { useAuth } from "./useAuth";
-import { getCommunityName, isValidCommunityId } from "../constants";
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
+import { mhEnv } from '../lib/mhEnv';
+import { safeLocalStorage } from '../lib/safeStorage';
+import { logger } from '../lib/logger';
+import { supabase } from '../lib/supabase';
+import type { Role } from '../types/community';
+import { useAuth } from './useAuth';
+import { getCommunityName, isValidCommunityId } from '../constants';
 
-import type { FeedComment, FeedCommentAuthorRole } from "../types/comment";
-import { getConsumerFeedData } from "../pages/Feed/mockData";
-import { usePermission } from "./usePermission";
-import { PERMISSIONS } from "../types/permissions";
-import { uploadService } from "../services/uploadService";
-import type { FeedPost, UnifiedFeedData, SidebarData } from "../types/feed";
+import type { FeedComment, FeedCommentAuthorRole } from '../types/comment';
+import { getConsumerFeedData } from '../pages/Feed/mockData';
+import { usePermission } from './usePermission';
+import { PERMISSIONS } from '../types/permissions';
+import { uploadService } from '../services/uploadService';
+import type { FeedPost, UnifiedFeedData, SidebarData } from '../types/feed';
 
 // [NASA TypeScript Safety] 定義有效的 FeedPost type 值
-const VALID_POST_TYPES = ["agent", "resident", "official", "member"] as const;
+const VALID_POST_TYPES = ['agent', 'resident', 'official', 'member'] as const;
 type ValidPostType = (typeof VALID_POST_TYPES)[number];
 
 /**
  * [NASA TypeScript Safety] 類型守衛：驗證角色是否為有效的 FeedPost type
  */
 function isValidPostType(value: unknown): value is ValidPostType {
-  return (
-    typeof value === "string" &&
-    VALID_POST_TYPES.includes(value as ValidPostType)
-  );
+  return typeof value === 'string' && VALID_POST_TYPES.includes(value as ValidPostType);
 }
 
 /**
  * [NASA TypeScript Safety] 安全轉換角色為 FeedPost type
  */
-function toFeedPostType(role: string | undefined | null): FeedPost["type"] {
+function toFeedPostType(role: string | undefined | null): FeedPost['type'] {
   if (isValidPostType(role)) {
     return role;
   }
-  return "member";
+  return 'member';
 }
 
 /**
  * [NASA TypeScript Safety] 安全轉換角色為 FeedComment author role
  */
-function toCommentAuthorRole(
-  role: string | undefined | null,
-): FeedCommentAuthorRole {
-  if (
-    role === "agent" ||
-    role === "resident" ||
-    role === "official" ||
-    role === "member"
-  ) {
+function toCommentAuthorRole(role: string | undefined | null): FeedCommentAuthorRole {
+  if (role === 'agent' || role === 'resident' || role === 'official' || role === 'member') {
     return role;
   }
-  return "member";
+  return 'member';
 }
 
 // Phase 4: 從 feedUtils 導入純函數
@@ -102,7 +92,7 @@ import {
   filterMockData,
   filterSecurePosts,
   createSecureFeedData,
-} from "./feed";
+} from './feed';
 
 // Re-export types for backward compatibility
 export type { FeedPost, UnifiedFeedData, SidebarData };
@@ -116,13 +106,13 @@ const getDefaultMockData = (): UnifiedFeedData => getConsumerFeedData();
 export const createFeedMockPost = (
   content: string,
   communityId?: string,
-  communityName?: string,
+  communityName?: string
 ): FeedPost => ({
   id: Date.now(),
-  author: "測試用戶",
-  type: "resident",
+  author: '測試用戶',
+  type: 'resident',
   time: new Date().toISOString(),
-  title: content.substring(0, 20) + (content.length > 20 ? "..." : ""),
+  title: content.substring(0, 20) + (content.length > 20 ? '...' : ''),
   content,
   likes: 0,
   comments: 0,
@@ -158,11 +148,7 @@ export interface UseFeedDataReturn {
   /** 按讚 */
   toggleLike: (postId: string | number) => Promise<void>;
   /** 發文 */
-  createPost: (
-    content: string,
-    communityId?: string,
-    images?: File[],
-  ) => Promise<void>;
+  createPost: (content: string, communityId?: string, images?: File[]) => Promise<void>;
   /** 後端判定的使用者身份 */
   viewerRole: Role;
   /** 是否登入 */
@@ -183,15 +169,8 @@ export interface UseFeedDataReturn {
  * @param options.persistMockState - 是否將 Mock 狀態寫入 localStorage
  * @returns 統一資料、操作方法與錯誤/載入狀態
  */
-export function useFeedData(
-  options: UseFeedDataOptions = {},
-): UseFeedDataReturn {
-  const {
-    user: authUser,
-    role: authRole,
-    isAuthenticated,
-    loading: authLoading,
-  } = useAuth();
+export function useFeedData(options: UseFeedDataOptions = {}): UseFeedDataReturn {
+  const { user: authUser, role: authRole, isAuthenticated, loading: authLoading } = useAuth();
   const { communityId, initialMockData, persistMockState = true } = options;
 
   const { hasPermission } = usePermission();
@@ -201,9 +180,7 @@ export function useFeedData(
   const resolvedInitialMockData = initialMockData ?? getDefaultMockData();
 
   // ============ Mock 控制 ============
-  const [useMock, setUseMockState] = useState<boolean>(() =>
-    mhEnv.isMockEnabled(),
-  );
+  const [useMock, setUseMockState] = useState<boolean>(() => mhEnv.isMockEnabled());
 
   useEffect(() => {
     const unsubscribe = mhEnv.subscribe(setUseMockState);
@@ -229,9 +206,7 @@ export function useFeedData(
     };
   });
   const hasRestoredFromStorage = useRef(false);
-  const [likedPosts, setLikedPosts] = useState<Set<string | number>>(
-    () => new Set(),
-  );
+  const [likedPosts, setLikedPosts] = useState<Set<string | number>>(() => new Set());
 
   // P2-C1 修復：用 ref 追蹤是否已初始化 likedPosts，避免 mockData 變化重複執行
   const hasInitializedLikedPosts = useRef(false);
@@ -280,9 +255,7 @@ export function useFeedData(
   const lastApiDataRef = useRef<UnifiedFeedData | null>(null);
 
   // P2-C2/C4 修復：API 按讚狀態（用於樂觀更新）
-  const [apiLikedPosts, setApiLikedPosts] = useState<Set<string | number>>(
-    () => new Set(),
-  );
+  const [apiLikedPosts, setApiLikedPosts] = useState<Set<string | number>>(() => new Set());
 
   // P2-C3 更新：API 模式使用 Supabase 真實資料
   const fetchApiData = useCallback(async () => {
@@ -292,21 +265,21 @@ export function useFeedData(
 
     try {
       const query = supabase
-        .from("community_posts")
+        .from('community_posts')
         .select(
-          "id, community_id, author_id, content, visibility, likes_count, comments_count, liked_by, is_pinned, created_at, post_type",
+          'id, community_id, author_id, content, visibility, likes_count, comments_count, liked_by, is_pinned, created_at, post_type'
         )
-        .order("is_pinned", { ascending: false })
-        .order("created_at", { ascending: false })
+        .order('is_pinned', { ascending: false })
+        .order('created_at', { ascending: false })
         .limit(50);
 
       if (communityId) {
-        query.eq("community_id", communityId);
+        query.eq('community_id', communityId);
       }
 
       // P7-Audit-B4: API Level Security (Prevent data leakage over wire)
       if (!canViewPrivate) {
-        query.eq("visibility", "public");
+        query.eq('visibility', 'public');
       }
 
       const { data, error } = await query;
@@ -317,7 +290,7 @@ export function useFeedData(
       // [NASA TypeScript Safety] 使用 Zod safeParse 取代 as 類型斷言
       const parseResult = SupabasePostRowSchema.array().safeParse(data ?? []);
       if (!parseResult.success) {
-        logger.warn("[useFeedData] Supabase post data validation failed", {
+        logger.warn('[useFeedData] Supabase post data validation failed', {
           error: parseResult.error.flatten(),
         });
         // 降級處理：使用空陣列
@@ -355,10 +328,10 @@ export function useFeedData(
         setApiLikedPosts(initialLiked);
       }
     } catch (err) {
-      const error = err instanceof Error ? err : new Error("載入信息流失敗");
+      const error = err instanceof Error ? err : new Error('載入信息流失敗');
       setApiError(error);
       if (import.meta.env.DEV) {
-        logger.error("[useFeedData] API error", { error: err });
+        logger.error('[useFeedData] API error', { error: err });
       }
     } finally {
       setApiLoading(false);
@@ -395,7 +368,7 @@ export function useFeedData(
   }, [useMock, apiData, mockData, communityId, canViewPrivate]);
 
   // ============ viewerRole ============
-  const viewerRole = useMemo<Role>(() => authRole ?? "guest", [authRole]);
+  const viewerRole = useMemo<Role>(() => authRole ?? 'guest', [authRole]);
 
   // P2-C1 修復：Mock likedPosts 初始化（加 ref 保護，只執行一次）
   useEffect(() => {
@@ -416,7 +389,7 @@ export function useFeedData(
   // ============ Mock 模式 userId ============
   const getMockUserId = useCallback((): string => {
     if (currentUserId) return currentUserId;
-    const storageKey = "mock_user_id";
+    const storageKey = 'mock_user_id';
     let mockId = safeLocalStorage.getItem(storageKey);
     if (!mockId) {
       mockId = `mock-user-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -433,7 +406,7 @@ export function useFeedData(
       }
       return apiLikedPosts.has(postId);
     },
-    [useMock, likedPosts, apiLikedPosts],
+    [useMock, likedPosts, apiLikedPosts]
   );
 
   // ============ 操作方法 ============
@@ -456,7 +429,7 @@ export function useFeedData(
   const toggleLike = useCallback(
     async (postId: string | number) => {
       if (!useMock && !isAuthenticated) {
-        throw new Error("請先登入後再按讚");
+        throw new Error('請先登入後再按讚');
       }
 
       // Mock 模式：本地操作，無競態問題
@@ -472,9 +445,7 @@ export function useFeedData(
             const currentLikedBy = post.liked_by ?? [];
             return {
               ...post,
-              likes: currentlyLiked
-                ? Math.max(0, currentLikes - 1)
-                : currentLikes + 1,
+              likes: currentlyLiked ? Math.max(0, currentLikes - 1) : currentLikes + 1,
               liked_by: currentlyLiked
                 ? currentLikedBy.filter((id) => id !== mockUserId)
                 : [...currentLikedBy, mockUserId],
@@ -497,7 +468,7 @@ export function useFeedData(
       // API 模式：需要處理競態條件
       const actingUserId = currentUserId;
       if (!actingUserId) {
-        throw new Error("缺少使用者身份");
+        throw new Error('缺少使用者身份');
       }
 
       const postIdStr = String(postId);
@@ -508,7 +479,7 @@ export function useFeedData(
        */
       const applyLikeToggle = (
         data: UnifiedFeedData | null,
-        userId: string,
+        userId: string
       ): UnifiedFeedData | null => {
         if (!data) return data;
         return {
@@ -523,18 +494,14 @@ export function useFeedData(
               : [...currentLikedBy, userId];
             return {
               ...post,
-              likes: isCurrentlyLiked
-                ? Math.max(0, currentLikes - 1)
-                : currentLikes + 1,
+              likes: isCurrentlyLiked ? Math.max(0, currentLikes - 1) : currentLikes + 1,
               liked_by: nextLikedBy,
             };
           }),
         };
       };
 
-      const toggleLikedPostsSet = (
-        prev: Set<string | number>,
-      ): Set<string | number> => {
+      const toggleLikedPostsSet = (prev: Set<string | number>): Set<string | number> => {
         const next = new Set(prev);
         if (next.has(postId)) {
           next.delete(postId);
@@ -549,7 +516,7 @@ export function useFeedData(
       setApiLikedPosts(toggleLikedPostsSet);
 
       try {
-        const { data, error } = await supabase.rpc("toggle_like", {
+        const { data, error } = await supabase.rpc('toggle_like', {
           post_id: postIdStr,
         });
         if (error) {
@@ -564,12 +531,10 @@ export function useFeedData(
             posts: prev.posts.map((post) => {
               if (post.id !== postId) return post;
               const newLikes =
-                typeof data?.likes_count === "number"
-                  ? data.likes_count
-                  : (post.likes ?? 0);
+                typeof data?.likes_count === 'number' ? data.likes_count : (post.likes ?? 0);
               const likedBy = post.liked_by ?? [];
               const nextLikedBy =
-                data && "liked" in data
+                data && 'liked' in data
                   ? data.liked
                     ? [...new Set([...likedBy, actingUserId])]
                     : likedBy.filter((id) => id !== actingUserId)
@@ -587,29 +552,27 @@ export function useFeedData(
         // 這種方式不依賴閉包捕獲的舊狀態，避免競態條件
         setApiData((prev) => applyLikeToggle(prev, actingUserId));
         setApiLikedPosts(toggleLikedPostsSet);
-        logger.warn("[useFeedData] toggleLike rollback", {
+        logger.warn('[useFeedData] toggleLike rollback', {
           postId,
           error: err instanceof Error ? err.message : String(err),
-          reason: "API_FAILURE",
+          reason: 'API_FAILURE',
         });
-        throw err instanceof Error ? err : new Error("按讚失敗，請稍後再試");
+        throw err instanceof Error ? err : new Error('按讚失敗，請稍後再試');
       }
     },
-    [useMock, likedPosts, getMockUserId, isAuthenticated, currentUserId],
+    [useMock, likedPosts, getMockUserId, isAuthenticated, currentUserId]
   );
 
   // P2-C4 修復：API 模式加入樂觀更新 (Updated for P0 Image Upload)
   const createPost = useCallback(
     async (content: string, communityId?: string, images?: File[]) => {
       if (!useMock && !isAuthenticated) {
-        throw new Error("請先登入後再發文");
+        throw new Error('請先登入後再發文');
       }
 
       const resolvedCommunityId = communityId ?? options.communityId;
       if (resolvedCommunityId && !isValidCommunityId(resolvedCommunityId)) {
-        logger.warn(
-          "[useFeedData] Invalid communityId provided, fallback to undefined",
-        );
+        logger.warn('[useFeedData] Invalid communityId provided, fallback to undefined');
       }
       const safeCommunityId =
         resolvedCommunityId && isValidCommunityId(resolvedCommunityId)
@@ -617,23 +580,19 @@ export function useFeedData(
           : undefined;
 
       if (!useMock && !safeCommunityId) {
-        throw new Error("請先選擇社區後再發文");
+        throw new Error('請先選擇社區後再發文');
       }
       const resolvedCommunityName = getCommunityName(safeCommunityId);
 
       // Mock Mode
       if (useMock) {
-        const newPost = createFeedMockPost(
-          content,
-          safeCommunityId,
-          resolvedCommunityName,
-        );
+        const newPost = createFeedMockPost(content, safeCommunityId, resolvedCommunityName);
 
         // Mock Images
         if (images && images.length > 0) {
           newPost.images = images.map((_, i) => ({
             src: `https://picsum.photos/seed/${Date.now() + i}/400/300`,
-            alt: "Mock Image",
+            alt: 'Mock Image',
           }));
         }
 
@@ -650,7 +609,7 @@ export function useFeedData(
       const tempId = -Date.now();
       const tempPost: FeedPost = {
         id: tempId,
-        author: authUser?.user_metadata?.name || authUser?.email || "我",
+        author: authUser?.user_metadata?.name || authUser?.email || '我',
         // [NASA TypeScript Safety] 使用類型守衛取代 as 類型斷言
         type: toFeedPostType(authRole),
         time: new Date().toISOString(),
@@ -690,16 +649,16 @@ export function useFeedData(
           const results = await uploadService.uploadFiles(images);
           uploadedImages = results.map((res) => ({
             src: res.url,
-            alt: "Post Image",
+            alt: 'Post Image',
           }));
         }
 
         // 3. Insert Post
-        const { error } = await supabase.from("community_posts").insert({
+        const { error } = await supabase.from('community_posts').insert({
           content,
           community_id: safeCommunityId,
           author_id: currentUserId,
-          post_type: "general",
+          post_type: 'general',
           images: uploadedImages,
         });
 
@@ -708,7 +667,7 @@ export function useFeedData(
         // 4. Refresh
         await fetchApiData();
       } catch (err) {
-        logger.error("[useFeedData] Create post failed", { error: err });
+        logger.error('[useFeedData] Create post failed', { error: err });
         // Rollback
         setApiData((prev) => {
           if (!prev) return prev;
@@ -716,29 +675,19 @@ export function useFeedData(
             ...prev,
             posts: prev.posts.filter((p) => p.id !== tempId),
             totalPosts: prev.totalPosts - 1,
-            sidebarData: deriveSidebarData(
-              prev.posts.filter((p) => p.id !== tempId),
-            ),
+            sidebarData: deriveSidebarData(prev.posts.filter((p) => p.id !== tempId)),
           };
         });
         throw err;
       }
     },
-    [
-      useMock,
-      isAuthenticated,
-      options.communityId,
-      authUser,
-      authRole,
-      currentUserId,
-      fetchApiData,
-    ],
+    [useMock, isAuthenticated, options.communityId, authUser, authRole, currentUserId, fetchApiData]
   ); // E2: Added fetchApiData dependency
 
   const addComment = useCallback(
     async (postId: string | number, content: string) => {
       if (!useMock && !isAuthenticated) {
-        throw new Error("請先登入後再留言");
+        throw new Error('請先登入後再留言');
       }
 
       // Prepare Comment Object (Shared for Mock and Optimistic UI)
@@ -747,8 +696,8 @@ export function useFeedData(
         id: String(tempId),
         postId: String(postId),
         author: {
-          id: authUser?.id || "",
-          name: authUser?.user_metadata?.name || "測試用戶",
+          id: authUser?.id || '',
+          name: authUser?.user_metadata?.name || '測試用戶',
           // [NASA TypeScript Safety] 使用類型守衛取代 as 類型斷言
           role: toCommentAuthorRole(authRole),
         },
@@ -803,7 +752,7 @@ export function useFeedData(
         setApiLoading(true);
 
         // 2. Real API Call
-        const { error } = await supabase.from("community_comments").insert({
+        const { error } = await supabase.from('community_comments').insert({
           post_id: postId,
           community_id: options.communityId,
           author_id: currentUserId,
@@ -818,10 +767,9 @@ export function useFeedData(
         // F2 Fix: Removed console.error for production safety
         // Only log in DEV mode for debugging
         if (import.meta.env.DEV) {
-          logger.warn(
-            "[useFeedData] Add comment failed (Check Schema: community_comments?)",
-            { error: err },
-          );
+          logger.warn('[useFeedData] Add comment failed (Check Schema: community_comments?)', {
+            error: err,
+          });
         }
         setApiData(previousApiData);
         // [NASA TypeScript Safety] 使用 instanceof 取代 as Error
@@ -840,7 +788,7 @@ export function useFeedData(
       options.communityId,
       apiData,
       fetchApiData,
-    ],
+    ]
   );
 
   return {

@@ -1,15 +1,15 @@
-import React, { useMemo } from "react";
-import { GlobalHeader } from "../../components/layout/GlobalHeader";
-import { InlineComposer } from "../../components/Feed/InlineComposer";
-import { FeedPostCard } from "../../components/Feed/FeedPostCard";
-import { AgentProfileCard } from "../../components/Feed/AgentProfileCard";
-import { AgentSidebar } from "../../components/Feed/AgentSidebar";
-import { UagSummaryCard } from "../../components/Feed/UagSummaryCard";
-import { useAgentFeed } from "./useAgentFeed";
-import { useAuth } from "../../hooks/useAuth";
-import { useAgentConversations } from "../../hooks/useAgentConversations";
-import { STRINGS } from "../../constants/strings";
-import { MockToggle } from "../../components/common/MockToggle";
+import React, { useMemo } from 'react';
+import { GlobalHeader } from '../../components/layout/GlobalHeader';
+import { InlineComposer } from '../../components/Feed/InlineComposer';
+import { FeedPostCard } from '../../components/Feed/FeedPostCard';
+import { AgentProfileCard } from '../../components/Feed/AgentProfileCard';
+import { AgentSidebar } from '../../components/Feed/AgentSidebar';
+import { UagSummaryCard } from '../../components/Feed/UagSummaryCard';
+import { useAgentFeed } from './useAgentFeed';
+import { useAuth } from '../../hooks/useAuth';
+import { useAgentConversations } from '../../hooks/useAgentConversations';
+import { STRINGS } from '../../constants/strings';
+import { MockToggle } from '../../components/common/MockToggle';
 
 interface AgentPageProps {
   userId?: string;
@@ -38,19 +38,19 @@ export default function AgentPage({ userId, forceMock }: AgentPageProps) {
 
   const userProfile = useMemo(
     () => ({
-      id: user?.id || "demo-agent",
-      name: user?.user_metadata?.name || "游杰倫", // Fallback name
-      role: (viewerRole || "agent") as "agent", // Explicit cast for now as this is Agent view
+      id: user?.id || 'demo-agent',
+      name: user?.user_metadata?.name || '游杰倫', // Fallback name
+      role: (viewerRole || 'agent') as 'agent', // Explicit cast for now as this is Agent view
       communityId: STRINGS.FEED.DEFAULT_COMMUNITY_ID,
       communityName: STRINGS.FEED.DEFAULT_COMMUNITY_NAME, // Fallback community
-      email: user?.email || "agent@maihouses.com",
+      email: user?.email || 'agent@maihouses.com',
       stats: {
         days: performanceStats.days,
         liked: performanceStats.liked,
         contributions: performanceStats.replies, // mapping replies to contributions
       },
     }),
-    [user, viewerRole, performanceStats],
+    [user, viewerRole, performanceStats]
   );
 
   const handleCreatePost = async (content: string, images?: File[]) => {
@@ -82,21 +82,13 @@ export default function AgentPage({ userId, forceMock }: AgentPageProps) {
                 安
               </div>
               <div className="flex-1 leading-[1.3]">
-                <b className="block text-[15px] text-ink-900">
-                  {STRINGS.AGENT.TRUST.TITLE}
-                </b>
-                <div className="text-[12px] text-ink-600">
-                  帶看完成 · 惠宇上晴 12F A2 · 剛剛
-                </div>
+                <b className="block text-[15px] text-ink-900">{STRINGS.AGENT.TRUST.TITLE}</b>
+                <div className="text-[12px] text-ink-600">帶看完成 · 惠宇上晴 12F A2 · 剛剛</div>
               </div>
             </div>
             <div className="pt-1">
-              <p className="m-0 mb-2.5 leading-[1.6]">
-                {STRINGS.AGENT.TRUST.DESC_1}
-              </p>
-              <p className="m-0 mb-2.5 leading-[1.6]">
-                {STRINGS.AGENT.TRUST.DESC_2}
-              </p>
+              <p className="m-0 mb-2.5 leading-[1.6]">{STRINGS.AGENT.TRUST.DESC_1}</p>
+              <p className="m-0 mb-2.5 leading-[1.6]">{STRINGS.AGENT.TRUST.DESC_2}</p>
               <div className="flex flex-wrap gap-1.5">
                 <span className="rounded-full border border-grade-s-border bg-grade-s-bg px-2 py-0.5 text-[12px] text-grade-s-text">
                   {STRINGS.AGENT.TRUST.TAG_COMPLETED}

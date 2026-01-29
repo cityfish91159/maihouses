@@ -1,6 +1,6 @@
-import { Component, ReactNode } from "react";
-import { trackEvent } from "../services/analytics";
-import { logger } from "../lib/logger";
+import { Component, ReactNode } from 'react';
+import { trackEvent } from '../services/analytics';
+import { logger } from '../lib/logger';
 
 interface Props {
   children: ReactNode;
@@ -21,11 +21,11 @@ export default class ErrorBoundary extends Component<Props, State> {
 
   override componentDidCatch(err: unknown) {
     const errorId = this.state.errorId;
-    logger.error("[ErrorBoundary] Uncaught error", { error: err, errorId });
+    logger.error('[ErrorBoundary] Uncaught error', { error: err, errorId });
     try {
       // [NASA TypeScript Safety] 使用 instanceof 類型守衛取代 as Error
       const message = err instanceof Error ? err.message : String(err);
-      trackEvent("error_boundary", "*", message);
+      trackEvent('error_boundary', '*', message);
     } catch {}
   }
 
@@ -36,7 +36,7 @@ export default class ErrorBoundary extends Component<Props, State> {
 
   // [Team 8 修復] 回到首頁
   handleGoHome = () => {
-    window.location.href = "/maihouses/";
+    window.location.href = '/maihouses/';
   };
 
   override render() {
@@ -66,9 +66,7 @@ export default class ErrorBoundary extends Component<Props, State> {
             </div>
           </div>
 
-          <h2 className="mb-2 text-center text-xl font-bold text-slate-900">
-            系統發生錯誤
-          </h2>
+          <h2 className="mb-2 text-center text-xl font-bold text-slate-900">系統發生錯誤</h2>
 
           <p className="mb-4 text-center text-sm text-slate-600">
             很抱歉，頁面載入時發生問題。您可以嘗試重新載入，或回到首頁。
@@ -77,9 +75,7 @@ export default class ErrorBoundary extends Component<Props, State> {
           {this.state.errorId && (
             <div className="mb-4 rounded-lg bg-slate-100 p-3">
               <p className="text-xs text-slate-500">錯誤編號（供客服查詢）</p>
-              <p className="font-mono text-sm font-semibold text-slate-700">
-                {this.state.errorId}
-              </p>
+              <p className="font-mono text-sm font-semibold text-slate-700">{this.state.errorId}</p>
             </div>
           )}
 

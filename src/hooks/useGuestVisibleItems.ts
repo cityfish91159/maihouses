@@ -5,8 +5,8 @@
  * 用於 ReviewsSection、PostsSection、QASection 的 slice/hiddenCount 計算
  */
 
-import { useMemo } from "react";
-import { GUEST_VISIBLE_COUNT } from "../pages/Community/types";
+import { useMemo } from 'react';
+import { GUEST_VISIBLE_COUNT } from '../pages/Community/types';
 
 export interface GuestVisibleItemsResult<T> {
   /** 可見的項目（登入者看全部，訪客看有限數量） */
@@ -38,7 +38,7 @@ export interface GuestVisibleItemsResult<T> {
 export function useGuestVisibleItems<T>(
   items: T[],
   canSeeAll: boolean,
-  visibleCount: number = GUEST_VISIBLE_COUNT,
+  visibleCount: number = GUEST_VISIBLE_COUNT
 ): GuestVisibleItemsResult<T> {
   return useMemo(() => {
     if (canSeeAll) {

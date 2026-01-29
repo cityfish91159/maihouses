@@ -44,12 +44,12 @@
 
 .legacy-property-page {
   font-family:
-    "Noto Sans TC",
+    'Noto Sans TC',
     -apple-system,
     BlinkMacSystemFont,
-    "PingFang TC",
-    "Hiragino Sans",
-    "Microsoft JhengHei",
+    'PingFang TC',
+    'Hiragino Sans',
+    'Microsoft JhengHei',
     sans-serif;
   font-size: 0.9375rem;
   /* 15px */
@@ -149,7 +149,7 @@
   font-size: 1.5rem;
   /* 24px */
   font-weight: 700;
-  font-family: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+  font-family: ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
   color: #00385a;
   letter-spacing: 0.025em;
   line-height: 1;

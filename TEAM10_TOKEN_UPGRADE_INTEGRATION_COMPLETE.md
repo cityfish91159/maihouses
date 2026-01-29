@@ -36,20 +36,20 @@
 // ============================================================================
 // Token 升級機制：將匿名 token 綁定到已登入用戶
 // ============================================================================
-const pendingToken = getLS("pending_trust_token");
+const pendingToken = getLS('pending_trust_token');
 if (pendingToken) {
   try {
     // 取得用戶名稱（優先使用 metadata.name，否則使用 email 的前綴）
     const userName =
       user.user_metadata?.name ||
       user.user_metadata?.full_name ||
-      user.email?.split("@")[0] ||
-      "用戶";
+      user.email?.split('@')[0] ||
+      '用戶';
 
     // 呼叫 API 升級案件
-    const response = await fetch("/api/trust/upgrade-case", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+    const response = await fetch('/api/trust/upgrade-case', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         token: pendingToken,
         userId: user.id,
@@ -59,19 +59,19 @@ if (pendingToken) {
 
     if (response.ok) {
       const result = await response.json();
-      console.info("[auth] Trust case upgraded successfully:", result);
+      console.info('[auth] Trust case upgraded successfully:', result);
       // 成功後移除 localStorage 中的 token
-      localStorage.removeItem("pending_trust_token");
+      localStorage.removeItem('pending_trust_token');
     } else {
       const errorData = await response.json();
-      console.warn("[auth] Trust case upgrade failed:", errorData);
+      console.warn('[auth] Trust case upgrade failed:', errorData);
       // 即使失敗也移除 token，避免重複嘗試
-      localStorage.removeItem("pending_trust_token");
+      localStorage.removeItem('pending_trust_token');
     }
   } catch (upgradeError) {
-    console.error("[auth] Trust case upgrade error:", upgradeError);
+    console.error('[auth] Trust case upgrade error:', upgradeError);
     // 發生錯誤時也移除 token
-    localStorage.removeItem("pending_trust_token");
+    localStorage.removeItem('pending_trust_token');
   }
 }
 ```
@@ -92,6 +92,7 @@ if (pendingToken) {
 **檔案：** `docs/TOKEN_UPGRADE_INTEGRATION.md`
 
 **內容包含：**
+
 - 實作概述
 - 程式碼詳細說明
 - API 端點規格
@@ -105,6 +106,7 @@ if (pendingToken) {
 **檔案：** `docs/token-upgrade-test-guide.html`
 
 **功能：**
+
 - 一鍵設定測試 Token
 - 檢查當前 Token 狀態
 - 清除 Token
@@ -119,6 +121,7 @@ if (pendingToken) {
 **檔案：** `scripts/verify-token-upgrade-integration.js`
 
 **驗證項目：**
+
 - ✅ auth.html 包含必要代碼
 - ✅ API 端點檔案存在
 - ✅ 包含 Schema 驗證
@@ -128,6 +131,7 @@ if (pendingToken) {
 - ✅ 整合文件存在
 
 **執行結果：**
+
 ```
 ✅ 驗證通過：Token 升級機制整合完成！
 ```
@@ -169,6 +173,7 @@ if (pendingToken) {
 **端點：** `POST /api/trust/upgrade-case`
 
 **請求：**
+
 ```json
 {
   "token": "UUID",
@@ -178,6 +183,7 @@ if (pendingToken) {
 ```
 
 **回應（成功）：**
+
 ```json
 {
   "success": true,
@@ -189,6 +195,7 @@ if (pendingToken) {
 ```
 
 **回應（失敗）：**
+
 ```json
 {
   "success": false,
@@ -214,21 +221,25 @@ node scripts/verify-token-upgrade-integration.js
 ### 手動測試
 
 1. **開啟測試指南**
+
    ```
    開啟檔案：docs/token-upgrade-test-guide.html
    ```
 
 2. **設定測試 Token**
+
    ```javascript
    localStorage.setItem('pending_trust_token', '00000000-0000-0000-0000-000000000001');
    ```
 
 3. **前往登入頁面並登入**
+
    ```
    https://maihouses.vercel.app/maihouses/auth.html
    ```
 
 4. **觀察 Console 輸出**
+
    ```
    [auth] Trust case upgraded successfully: {...}
    ```
@@ -242,12 +253,12 @@ node scripts/verify-token-upgrade-integration.js
 
 ## 📊 測試場景覆蓋
 
-| 場景 | 說明 | 狀態 |
-|------|------|------|
-| ✅ 正常流程 | Token 存在且有效，升級成功 | 已驗證 |
+| 場景        | 說明                            | 狀態   |
+| ----------- | ------------------------------- | ------ |
+| ✅ 正常流程 | Token 存在且有效，升級成功      | 已驗證 |
 | ✅ 無 Token | localStorage 無 token，跳過升級 | 已驗證 |
-| ✅ API 失敗 | Token 無效或已過期，優雅處理 | 已驗證 |
-| ✅ 網路錯誤 | 網路中斷或超時，優雅處理 | 已驗證 |
+| ✅ API 失敗 | Token 無效或已過期，優雅處理    | 已驗證 |
+| ✅ 網路錯誤 | 網路中斷或超時，優雅處理        | 已驗證 |
 
 ---
 
@@ -276,6 +287,7 @@ node scripts/verify-token-upgrade-integration.js
 ### ✅ 先讀後寫規範
 
 已閱讀相關檔案：
+
 - `public/auth.html` - 登入頁面完整代碼
 - `api/trust/upgrade-case.ts` - API 端點實作
 - `src/hooks/useAuth.ts` - 認證 Hook（了解 user 結構）
@@ -293,6 +305,7 @@ node scripts/verify-token-upgrade-integration.js
 ```bash
 npm run typecheck
 ```
+
 **結果：** ✅ 通過（無類型錯誤）
 
 ### ✅ Lint 檢查
@@ -300,6 +313,7 @@ npm run typecheck
 ```bash
 npm run lint
 ```
+
 **結果：** ⚠️ 有 1 個既有錯誤（與本次修改無關）
 
 ---
@@ -313,6 +327,7 @@ Token 升級邏輯不會阻塞用戶登入流程，即使 API 失敗或網路錯
 ### 2. 自動清理機制
 
 無論升級成功或失敗，都會清除 `localStorage` 中的 token，避免：
+
 - 重複嘗試升級
 - localStorage 污染
 - 用戶困惑
@@ -320,6 +335,7 @@ Token 升級邏輯不會阻塞用戶登入流程，即使 API 失敗或網路錯
 ### 3. 智慧用戶名稱提取
 
 優先順序：
+
 1. `user.user_metadata.name`（Google 登入）
 2. `user.user_metadata.full_name`（完整名稱）
 3. `user.email.split("@")[0]`（Email 前綴）
@@ -328,6 +344,7 @@ Token 升級邏輯不會阻塞用戶登入流程，即使 API 失敗或網路錯
 ### 4. 完整日誌記錄
 
 使用不同級別的日誌：
+
 - `console.info` - 成功
 - `console.warn` - 業務邏輯失敗
 - `console.error` - 系統錯誤

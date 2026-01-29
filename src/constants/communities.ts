@@ -13,9 +13,9 @@
  * TODO: P5 時從 API 取得社區列表，此處改為 fallback
  */
 export const COMMUNITY_NAME_MAP: Record<string, string> = {
-  "test-uuid": "惠宇上晴",
-  "community-2": "遠雄中央公園",
-  "community-3": "國泰建設",
+  'test-uuid': '惠宇上晴',
+  'community-2': '遠雄中央公園',
+  'community-3': '國泰建設',
 };
 
 /**
@@ -24,10 +24,7 @@ export const COMMUNITY_NAME_MAP: Record<string, string> = {
  * @param fallback - 找不到時的預設值
  * @returns 社區名稱
  */
-export function getCommunityName(
-  communityId: string | undefined,
-  fallback = "我的社區",
-): string {
+export function getCommunityName(communityId: string | undefined, fallback = '我的社區'): string {
   if (!communityId) return fallback;
   return COMMUNITY_NAME_MAP[communityId] ?? fallback;
 }

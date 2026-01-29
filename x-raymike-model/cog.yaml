@@ -6,27 +6,27 @@ build:
   gpu: true
 
   # Python 版本
-  python_version: "3.11"
+  python_version: '3.11'
 
   # 系統依賴
   system_packages:
-    - "libgl1-mesa-glx"
-    - "libglib2.0-0"
+    - 'libgl1-mesa-glx'
+    - 'libglib2.0-0'
 
   # Python 依賴
   python_packages:
     # 深度學習框架
-    - "torch==2.1.0"
-    - "torchvision==0.16.0"
+    - 'torch==2.1.0'
+    - 'torchvision==0.16.0'
 
     # 圖像處理
-    - "opencv-python==4.8.1.78"
-    - "Pillow==10.1.0"
-    - "numpy==1.24.3"
-    - "scikit-image==0.22.0"
+    - 'opencv-python==4.8.1.78'
+    - 'Pillow==10.1.0'
+    - 'numpy==1.24.3'
+    - 'scikit-image==0.22.0'
 
     # 工具
-    - "requests==2.31.0"
+    - 'requests==2.31.0'
 
 # 預測接口
-predict: "predict.py:Predictor"
+predict: 'predict.py:Predictor'

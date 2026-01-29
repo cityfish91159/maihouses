@@ -1,25 +1,19 @@
-import { useEffect, useState } from "react";
-import type { AppConfig, RuntimeOverrides } from "./config";
-import { getSessionId, getMeta } from "../services/api";
-import { safeLocalStorage } from "../lib/safeStorage";
+import { useEffect, useState } from 'react';
+import type { AppConfig, RuntimeOverrides } from './config';
+import { getSessionId, getMeta } from '../services/api';
+import { safeLocalStorage } from '../lib/safeStorage';
 
-export default function DevTools({
-  config,
-}: {
-  config: AppConfig & RuntimeOverrides;
-}) {
+export default function DevTools({ config }: { config: AppConfig & RuntimeOverrides }) {
   const [visible, setVisible] = useState(true);
   const [mock, setMock] = useState(!!config.mock);
   const [latency, setLatency] = useState(config.latency ?? 0);
   const [error, setError] = useState(config.error ?? 0);
-  const [q, setQ] = useState(config.q ?? "");
-  const [backend, setBackend] = useState("—");
-  const [mockSeed, setMockSeed] = useState(config.mockSeed ?? "");
+  const [q, setQ] = useState(config.q ?? '');
+  const [backend, setBackend] = useState('—');
+  const [mockSeed, setMockSeed] = useState(config.mockSeed ?? '');
 
   useEffect(() => {
-    getMeta().then((r) =>
-      setBackend(r.ok && r.data ? r.data.backendVersion : "—"),
-    );
+    getMeta().then((r) => setBackend(r.ok && r.data ? r.data.backendVersion : '—'));
   }, []);
 
   if (!visible) return null;
@@ -32,10 +26,10 @@ export default function DevTools({
       error,
       q,
       mockSeed,
-      devtools: "1" as const,
+      devtools: '1' as const,
     };
     try {
-      safeLocalStorage.setItem("maihouse_config", JSON.stringify(next));
+      safeLocalStorage.setItem('maihouse_config', JSON.stringify(next));
     } catch {}
     location.reload();
   };
@@ -45,7 +39,7 @@ export default function DevTools({
     setMockSeed(s);
     try {
       safeLocalStorage.setItem(
-        "maihouse_config",
+        'maihouse_config',
         JSON.stringify({
           ...config,
           mockSeed: s,
@@ -53,8 +47,8 @@ export default function DevTools({
           latency,
           error,
           q,
-          devtools: "1" as const,
-        }),
+          devtools: '1' as const,
+        })
       );
     } catch {}
     location.reload();
@@ -69,12 +63,7 @@ export default function DevTools({
         <div>Backend：{backend}</div>
         <div>Session：{getSessionId()}</div>
         <label className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            checked={mock}
-            onChange={(e) => setMock(e.target.checked)}
-          />{" "}
-          Mock
+          <input type="checkbox" checked={mock} onChange={(e) => setMock(e.target.checked)} /> Mock
         </label>
         <label className="flex items-center gap-2">
           Latency
@@ -96,7 +85,7 @@ export default function DevTools({
           />
         </label>
         <label className="flex items-center gap-2">
-          q{" "}
+          q{' '}
           <input
             className="flex-1 rounded border p-1"
             value={q}

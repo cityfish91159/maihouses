@@ -1,9 +1,9 @@
-import React from "react";
-import CommunityWallCard from "./CommunityWallCard";
-import ChatPropertyCard from "./ChatPropertyCard";
+import React from 'react';
+import CommunityWallCard from './CommunityWallCard';
+import ChatPropertyCard from './ChatPropertyCard';
 
 type ChatMessageProps = {
-  role: "user" | "assistant";
+  role: 'user' | 'assistant';
   content: string;
   timestamp?: string;
 };
@@ -12,9 +12,7 @@ type ChatMessageProps = {
  * 解析訊息中的社區牆標記
  * 格式：[[社區牆:社區名稱:討論話題]]
  */
-function parseCommunityWallTags(
-  content: string,
-): { name: string; topic: string }[] {
+function parseCommunityWallTags(content: string): { name: string; topic: string }[] {
   const regex = /\[\[社區牆:([^:]+):([^\]]+)\]\]/g;
   const cards: { name: string; topic: string }[] = [];
   let match;
@@ -37,9 +35,7 @@ function parseCommunityWallTags(
  * 解析訊息中的物件標記
  * 格式：[[物件:社區名稱:物件ID]]
  */
-function parsePropertyTags(
-  content: string,
-): { community: string; propertyId: string }[] {
+function parsePropertyTags(content: string): { community: string; propertyId: string }[] {
   const regex = /\[\[物件:([^:]+):([^\]]+)\]\]/g;
   const properties: { community: string; propertyId: string }[] = [];
   let match;
@@ -81,9 +77,9 @@ function parseScenarioTags(content: string): string[] {
  */
 function stripAllTags(content: string): string {
   return content
-    .replace(/\[\[社區牆:[^:]+:[^\]]+\]\]/g, "")
-    .replace(/\[\[物件:[^:]+:[^\]]+\]\]/g, "")
-    .replace(/\[\[情境:[^\]]+\]\]/g, "")
+    .replace(/\[\[社區牆:[^:]+:[^\]]+\]\]/g, '')
+    .replace(/\[\[物件:[^:]+:[^\]]+\]\]/g, '')
+    .replace(/\[\[情境:[^\]]+\]\]/g, '')
     .trim();
 }
 
@@ -99,27 +95,20 @@ function ScenarioCard({ description }: { description: string }) {
   );
 }
 
-export default function ChatMessage({
-  role,
-  content,
-  timestamp,
-}: ChatMessageProps) {
+export default function ChatMessage({ role, content, timestamp }: ChatMessageProps) {
   // 只有 assistant 訊息才解析標記
-  const communityCards =
-    role === "assistant" ? parseCommunityWallTags(content) : [];
-  const propertyCards = role === "assistant" ? parsePropertyTags(content) : [];
-  const scenarios = role === "assistant" ? parseScenarioTags(content) : [];
-  const text = role === "assistant" ? stripAllTags(content) : content;
+  const communityCards = role === 'assistant' ? parseCommunityWallTags(content) : [];
+  const propertyCards = role === 'assistant' ? parsePropertyTags(content) : [];
+  const scenarios = role === 'assistant' ? parseScenarioTags(content) : [];
+  const text = role === 'assistant' ? stripAllTags(content) : content;
 
   return (
-    <div
-      className={`flex ${role === "user" ? "justify-end" : "justify-start"} animate-fadeIn`}
-    >
+    <div className={`flex ${role === 'user' ? 'justify-end' : 'justify-start'} animate-fadeIn`}>
       <div
         className={`max-w-[85%] rounded-2xl px-5 py-3.5 text-[15px] font-medium leading-relaxed shadow-sm ${
-          role === "user"
-            ? "rounded-br-sm bg-brand-700 text-white"
-            : "rounded-bl-sm border border-brand-100 bg-white text-ink-900"
+          role === 'user'
+            ? 'rounded-br-sm bg-brand-700 text-white'
+            : 'rounded-bl-sm border border-brand-100 bg-white text-ink-900'
         }`}
       >
         <div className="whitespace-pre-wrap">{text}</div>
@@ -137,11 +126,7 @@ export default function ChatMessage({
         {communityCards.length > 0 && (
           <div className="mt-2 space-y-2">
             {communityCards.map((card, i) => (
-              <CommunityWallCard
-                key={`community-${i}`}
-                name={card.name}
-                topic={card.topic}
-              />
+              <CommunityWallCard key={`community-${i}`} name={card.name} topic={card.topic} />
             ))}
           </div>
         )}
@@ -161,11 +146,11 @@ export default function ChatMessage({
 
         {timestamp && (
           <div
-            className={`mt-1.5 text-[11px] font-bold ${role === "user" ? "text-brand-300" : "text-brand-600/60"} text-right`}
+            className={`mt-1.5 text-[11px] font-bold ${role === 'user' ? 'text-brand-300' : 'text-brand-600/60'} text-right`}
           >
-            {new Date(timestamp).toLocaleTimeString("zh-TW", {
-              hour: "2-digit",
-              minute: "2-digit",
+            {new Date(timestamp).toLocaleTimeString('zh-TW', {
+              hour: '2-digit',
+              minute: '2-digit',
             })}
           </div>
         )}

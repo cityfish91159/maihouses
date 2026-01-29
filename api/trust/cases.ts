@@ -11,37 +11,27 @@
  * - [No Lazy Implementation] 完整實作
  */
 
-import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { z } from "zod";
-import { supabase, verifyToken, cors, logAudit } from "./_utils";
-import {
-  successResponse,
-  errorResponse,
-  API_ERROR_CODES,
-} from "../lib/apiResponse";
-import { logger } from "../lib/logger";
+import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { z } from 'zod';
+import { supabase, verifyToken, cors, logAudit } from './_utils';
+import { successResponse, errorResponse, API_ERROR_CODES } from '../lib/apiResponse';
+import { logger } from '../lib/logger';
 
 // ============================================================================
 // Types & Schemas [NASA TypeScript Safety]
 // ============================================================================
 
 /** 案件狀態 */
-const CaseStatusSchema = z.enum([
-  "active",
-  "pending",
-  "completed",
-  "cancelled",
-  "expired",
-]);
+const CaseStatusSchema = z.enum(['active', 'pending', 'completed', 'cancelled', 'expired']);
 type CaseStatus = z.infer<typeof CaseStatusSchema>;
 
 /** 執行者類型 */
-const ActorTypeSchema = z.enum(["agent", "buyer", "system"]);
+const ActorTypeSchema = z.enum(['agent', 'buyer', 'system']);
 
 /** 建立案件請求 Schema */
 const CreateCaseRequestSchema = z.object({
-  buyer_name: z.string().min(1, "買方名稱不可為空").max(100),
-  property_title: z.string().min(1, "物件標題不可為空").max(200),
+  buyer_name: z.string().min(1, '買方名稱不可為空').max(100),
+  property_title: z.string().min(1, '物件標題不可為空').max(200),
   buyer_session_id: z.string().optional(),
   buyer_contact: z.string().max(50).optional(),
   property_id: z.string().optional(),
@@ -100,12 +90,22 @@ interface AuthError {
 function validateAgentAuth(req: VercelRequest): AuthResult | AuthError {
   try {
     const user = verifyToken(req);
-    if (user.role !== "agent") {
-      return { success: false, status: 403, code: API_ERROR_CODES.FORBIDDEN, message: "只有房仲可以操作案件" };
+    if (user.role !== 'agent') {
+      return {
+        success: false,
+        status: 403,
+        code: API_ERROR_CODES.FORBIDDEN,
+        message: '只有房仲可以操作案件',
+      };
     }
     return { success: true, user };
   } catch {
-    return { success: false, status: 401, code: API_ERROR_CODES.UNAUTHORIZED, message: "未登入或 Token 已過期" };
+    return {
+      success: false,
+      status: 401,
+      code: API_ERROR_CODES.UNAUTHORIZED,
+      message: '未登入或 Token 已過期',
+    };
   }
 }
 
@@ -113,23 +113,20 @@ function validateAgentAuth(req: VercelRequest): AuthResult | AuthError {
 // Handler [NASA TypeScript Safety - 21 行]
 // ============================================================================
 
-export default async function handler(
-  req: VercelRequest,
-  res: VercelResponse
-): Promise<void> {
+export default async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
   cors(req, res);
-  if (req.method === "OPTIONS") {
+  if (req.method === 'OPTIONS') {
     res.status(200).end();
     return;
   }
 
   switch (req.method) {
-    case "GET":
+    case 'GET':
       return handleGetCases(req, res);
-    case "POST":
+    case 'POST':
       return handleCreateCase(req, res);
     default:
-      res.status(405).json(errorResponse(API_ERROR_CODES.INVALID_INPUT, "Method not allowed"));
+      res.status(405).json(errorResponse(API_ERROR_CODES.INVALID_INPUT, 'Method not allowed'));
   }
 }
 
@@ -150,40 +147,60 @@ const RpcResponseSchema = z.object({
 
 async function handleGetCases(req: VercelRequest, res: VercelResponse): Promise<void> {
   const authResult = validateAgentAuth(req);
-  if (!authResult.success) return void res.status(authResult.status).json(errorResponse(authResult.code, authResult.message));
+  if (!authResult.success)
+    return void res
+      .status(authResult.status)
+      .json(errorResponse(authResult.code, authResult.message));
 
   const queryResult = GetCasesQuerySchema.safeParse(req.query);
-  if (!queryResult.success) return void res.status(400).json(errorResponse(API_ERROR_CODES.INVALID_QUERY, "查詢參數格式錯誤", queryResult.error.issues));
+  if (!queryResult.success)
+    return void res
+      .status(400)
+      .json(
+        errorResponse(API_ERROR_CODES.INVALID_QUERY, '查詢參數格式錯誤', queryResult.error.issues)
+      );
 
   const { user } = authResult;
   const { status, limit, offset } = queryResult.data;
 
   try {
-    const { data, error } = await supabase.rpc("fn_get_trust_cases", {
-      p_agent_id: user.id, p_status: status ?? null, p_limit: limit, p_offset: offset,
+    const { data, error } = await supabase.rpc('fn_get_trust_cases', {
+      p_agent_id: user.id,
+      p_status: status ?? null,
+      p_limit: limit,
+      p_offset: offset,
     });
 
     if (error) {
-      logger.error("[trust/cases] RPC error", { error: error.message });
-      return void res.status(500).json(errorResponse(API_ERROR_CODES.DATA_FETCH_FAILED, "案件列表載入失敗"));
+      logger.error('[trust/cases] RPC error', { error: error.message });
+      return void res
+        .status(500)
+        .json(errorResponse(API_ERROR_CODES.DATA_FETCH_FAILED, '案件列表載入失敗'));
     }
 
     const rpcParseResult = RpcResponseSchema.safeParse(data);
     if (!rpcParseResult.success) {
-      logger.error("[trust/cases] Validation failed", { error: rpcParseResult.error.message });
-      return void res.status(500).json(errorResponse(API_ERROR_CODES.INTERNAL_ERROR, "資料格式驗證失敗"));
+      logger.error('[trust/cases] Validation failed', { error: rpcParseResult.error.message });
+      return void res
+        .status(500)
+        .json(errorResponse(API_ERROR_CODES.INTERNAL_ERROR, '資料格式驗證失敗'));
     }
 
     const { cases, total } = rpcParseResult.data;
 
     if (cases.length > 0) {
-      logger.info("[trust/cases] GET success", { agent_id: user.id, count: cases.length, total, status_filter: status ?? "all" });
+      logger.info('[trust/cases] GET success', {
+        agent_id: user.id,
+        count: cases.length,
+        total,
+        status_filter: status ?? 'all',
+      });
     }
 
     res.status(200).json(successResponse({ cases, total, limit, offset }));
   } catch (e) {
-    logger.error("[trust/cases] GET error", { error: e instanceof Error ? e.message : "Unknown" });
-    res.status(500).json(errorResponse(API_ERROR_CODES.INTERNAL_ERROR, "伺服器內部錯誤"));
+    logger.error('[trust/cases] GET error', { error: e instanceof Error ? e.message : 'Unknown' });
+    res.status(500).json(errorResponse(API_ERROR_CODES.INTERNAL_ERROR, '伺服器內部錯誤'));
   }
 }
 
@@ -193,41 +210,67 @@ async function handleGetCases(req: VercelRequest, res: VercelResponse): Promise<
 
 async function handleCreateCase(req: VercelRequest, res: VercelResponse): Promise<void> {
   const authResult = validateAgentAuth(req);
-  if (!authResult.success) return void res.status(authResult.status).json(errorResponse(authResult.code, authResult.message));
+  if (!authResult.success)
+    return void res
+      .status(authResult.status)
+      .json(errorResponse(authResult.code, authResult.message));
 
   const bodyResult = CreateCaseRequestSchema.safeParse(req.body);
-  if (!bodyResult.success) return void res.status(400).json(errorResponse(API_ERROR_CODES.INVALID_INPUT, "請求參數格式錯誤", bodyResult.error.issues));
+  if (!bodyResult.success)
+    return void res
+      .status(400)
+      .json(
+        errorResponse(API_ERROR_CODES.INVALID_INPUT, '請求參數格式錯誤', bodyResult.error.issues)
+      );
 
   const { user } = authResult;
-  const { buyer_name, property_title, buyer_session_id, buyer_contact, property_id } = bodyResult.data;
+  const { buyer_name, property_title, buyer_session_id, buyer_contact, property_id } =
+    bodyResult.data;
 
   try {
-    const { data, error } = await supabase.rpc("fn_create_trust_case", {
-      p_agent_id: user.id, p_buyer_name: buyer_name, p_property_title: property_title,
-      p_buyer_session_id: buyer_session_id ?? null, p_buyer_contact: buyer_contact ?? null, p_property_id: property_id ?? null,
+    const { data, error } = await supabase.rpc('fn_create_trust_case', {
+      p_agent_id: user.id,
+      p_buyer_name: buyer_name,
+      p_property_title: property_title,
+      p_buyer_session_id: buyer_session_id ?? null,
+      p_buyer_contact: buyer_contact ?? null,
+      p_property_id: property_id ?? null,
     });
 
     if (error) {
-      logger.error("[trust/cases] RPC error", { error: error.message, agent_id: user.id });
-      return void res.status(500).json(errorResponse(API_ERROR_CODES.DATA_FETCH_FAILED, "案件建立失敗"));
+      logger.error('[trust/cases] RPC error', { error: error.message, agent_id: user.id });
+      return void res
+        .status(500)
+        .json(errorResponse(API_ERROR_CODES.DATA_FETCH_FAILED, '案件建立失敗'));
     }
 
     const resultParseResult = CreateCaseResultSchema.safeParse(data);
     if (!resultParseResult.success) {
-      logger.error("[trust/cases] Validation failed", { error: resultParseResult.error.message });
-      return void res.status(500).json(errorResponse(API_ERROR_CODES.INTERNAL_ERROR, "回應格式驗證失敗"));
+      logger.error('[trust/cases] Validation failed', { error: resultParseResult.error.message });
+      return void res
+        .status(500)
+        .json(errorResponse(API_ERROR_CODES.INTERNAL_ERROR, '回應格式驗證失敗'));
     }
 
     const result = resultParseResult.data;
     if (!result.success) {
-      return void res.status(400).json(errorResponse(API_ERROR_CODES.INVALID_INPUT, result.error ?? "案件建立失敗"));
+      return void res
+        .status(400)
+        .json(errorResponse(API_ERROR_CODES.INVALID_INPUT, result.error ?? '案件建立失敗'));
     }
 
-    await logAudit(result.case_id ?? "unknown", "CREATE_TRUST_CASE", user);
-    logger.info("[trust/cases] POST success", { agent_id: user.id, case_id: result.case_id, buyer_name, property_title });
-    res.status(201).json(successResponse({ case_id: result.case_id, event_hash: result.event_hash }));
+    await logAudit(result.case_id ?? 'unknown', 'CREATE_TRUST_CASE', user);
+    logger.info('[trust/cases] POST success', {
+      agent_id: user.id,
+      case_id: result.case_id,
+      buyer_name,
+      property_title,
+    });
+    res
+      .status(201)
+      .json(successResponse({ case_id: result.case_id, event_hash: result.event_hash }));
   } catch (e) {
-    logger.error("[trust/cases] POST error", { error: e instanceof Error ? e.message : "Unknown" });
-    res.status(500).json(errorResponse(API_ERROR_CODES.INTERNAL_ERROR, "伺服器內部錯誤"));
+    logger.error('[trust/cases] POST error', { error: e instanceof Error ? e.message : 'Unknown' });
+    res.status(500).json(errorResponse(API_ERROR_CODES.INTERNAL_ERROR, '伺服器內部錯誤'));
   }
 }

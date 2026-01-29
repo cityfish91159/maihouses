@@ -7,10 +7,12 @@
 ⚠️ **注意**: 此 Migration 需要在有 Supabase 連線的環境執行
 
 ### Migration 檔案
+
 - `supabase/migrations/20260128_add_performance_indexes.sql`
 - `supabase/migrations/20260128_fix_rpc_logging_security.sql`
 
 ### 執行指令
+
 ```bash
 # 需要在 Supabase CLI 環境執行
 supabase db push
@@ -22,6 +24,7 @@ supabase db push
 ## EXPLAIN ANALYZE 驗證計畫
 
 ### 測試查詢 1: Token 驗證
+
 ```sql
 EXPLAIN ANALYZE
 SELECT id, buyer_user_id, buyer_name
@@ -32,10 +35,12 @@ WHERE token = 'test-token-uuid'
 ```
 
 **預期結果**:
+
 - 使用 `idx_trust_cases_token`
 - Execution Time < 5ms
 
 ### 測試查詢 2: 用戶案件列表
+
 ```sql
 EXPLAIN ANALYZE
 SELECT id, property_id, status, created_at
@@ -45,10 +50,12 @@ ORDER BY created_at DESC;
 ```
 
 **預期結果**:
+
 - 使用 `idx_trust_cases_buyer_user_id`
 - Execution Time < 10ms
 
 ### 測試查詢 3: 房仲案件列表
+
 ```sql
 EXPLAIN ANALYZE
 SELECT id, property_id, buyer_name, status
@@ -58,6 +65,7 @@ ORDER BY created_at DESC;
 ```
 
 **預期結果**:
+
 - 使用 `idx_trust_cases_agent_status`
 - Execution Time < 15ms
 

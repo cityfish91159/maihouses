@@ -5,12 +5,7 @@ import { TrustServiceBanner } from '../TrustServiceBanner';
 
 describe('TrustServiceBanner', () => {
   it('應該在 trustEnabled=true 時顯示已開啟狀態', () => {
-    render(
-      <TrustServiceBanner
-        trustEnabled={true}
-        propertyId="MH-100001"
-      />
-    );
+    render(<TrustServiceBanner trustEnabled={true} propertyId="MH-100001" />);
 
     expect(screen.getByText('本物件已開啟安心留痕服務')).toBeInTheDocument();
     expect(screen.getByText(/六階段交易追蹤/)).toBeInTheDocument();
@@ -18,12 +13,7 @@ describe('TrustServiceBanner', () => {
   });
 
   it('應該在 trustEnabled=false 時顯示未開啟狀態', () => {
-    render(
-      <TrustServiceBanner
-        trustEnabled={false}
-        propertyId="MH-100001"
-      />
-    );
+    render(<TrustServiceBanner trustEnabled={false} propertyId="MH-100001" />);
 
     expect(screen.getByText('本物件尚未開啟安心留痕服務')).toBeInTheDocument();
     expect(screen.getByText(/讓房仲開啟六階段交易追蹤/)).toBeInTheDocument();
@@ -67,12 +57,7 @@ describe('TrustServiceBanner', () => {
   });
 
   it('應該包含正確的 ARIA 屬性', () => {
-    const { container } = render(
-      <TrustServiceBanner
-        trustEnabled={true}
-        propertyId="MH-100001"
-      />
-    );
+    const { container } = render(<TrustServiceBanner trustEnabled={true} propertyId="MH-100001" />);
 
     const region = container.querySelector('[role="region"]');
     expect(region).toBeInTheDocument();
@@ -84,11 +69,7 @@ describe('TrustServiceBanner', () => {
 
   it('應該套用自訂的 className', () => {
     const { container } = render(
-      <TrustServiceBanner
-        trustEnabled={true}
-        propertyId="MH-100001"
-        className="custom-class"
-      />
+      <TrustServiceBanner trustEnabled={true} propertyId="MH-100001" className="custom-class" />
     );
 
     const wrapper = container.firstChild;
@@ -151,25 +132,15 @@ describe('TrustServiceBanner - Edge Cases', () => {
   });
 
   it('應該包含正確數量的裝飾性圖示 (至少2個)', () => {
-    const { container } = render(
-      <TrustServiceBanner
-        trustEnabled={true}
-        propertyId="MH-100001"
-      />
-    );
+    const { container } = render(<TrustServiceBanner trustEnabled={true} propertyId="MH-100001" />);
     const icons = container.querySelectorAll('[aria-hidden="true"]');
     expect(icons.length).toBeGreaterThanOrEqual(2); // Shield/Info + ChevronRight
   });
 
   it('應該在已開啟狀態套用正確的色彩系統', () => {
-    const { container } = render(
-      <TrustServiceBanner trustEnabled={true} propertyId="MH-100001" />
-    );
+    const { container } = render(<TrustServiceBanner trustEnabled={true} propertyId="MH-100001" />);
     const bannerDiv = container.querySelector('[role="region"]');
-    expect(bannerDiv).toHaveClass(
-      'bg-badge-trust-bg',
-      'border-badge-trust-border'
-    );
+    expect(bannerDiv).toHaveClass('bg-badge-trust-bg', 'border-badge-trust-border');
   });
 
   it('應該在未開啟狀態套用警示色彩系統', () => {
@@ -177,16 +148,11 @@ describe('TrustServiceBanner - Edge Cases', () => {
       <TrustServiceBanner trustEnabled={false} propertyId="MH-100001" />
     );
     const bannerDiv = container.querySelector('[role="region"]');
-    expect(bannerDiv).toHaveClass(
-      'bg-badge-warning-bg',
-      'border-badge-warning-border'
-    );
+    expect(bannerDiv).toHaveClass('bg-badge-warning-bg', 'border-badge-warning-border');
   });
 
   it('應該有清晰的 Focus 狀態樣式', () => {
-    render(
-      <TrustServiceBanner trustEnabled={true} propertyId="MH-100001" />
-    );
+    render(<TrustServiceBanner trustEnabled={true} propertyId="MH-100001" />);
     const button = screen.getByRole('button', { name: /進入安心留痕服務/ });
 
     // 檢查按鈕具備 transition 類別 (確保視覺回饋)
@@ -213,9 +179,7 @@ describe('TrustServiceBanner - Edge Cases', () => {
   });
 
   it('應該在按鈕點擊時有縮放動畫回饋', () => {
-    render(
-      <TrustServiceBanner trustEnabled={true} propertyId="MH-100001" />
-    );
+    render(<TrustServiceBanner trustEnabled={true} propertyId="MH-100001" />);
     const button = screen.getByRole('button', { name: /進入安心留痕服務/ });
 
     // [Team 8 第五位修復] 按鈕實際使用 active:opacity-85 而非 active:scale-95
@@ -223,14 +187,8 @@ describe('TrustServiceBanner - Edge Cases', () => {
   });
 
   it('應該在 isRequesting=true 時禁用按鈕並顯示 Loading', () => {
-    render(
-      <TrustServiceBanner
-        trustEnabled={false}
-        propertyId="MH-100001"
-        isRequesting={true}
-      />
-    );
-    const button = screen.getByRole('button', { name: /要求房仲開啟安心留痕服務/ });
+    render(<TrustServiceBanner trustEnabled={false} propertyId="MH-100001" isRequesting={true} />);
+    const button = screen.getByRole('button', { name: /處理中/ });
 
     expect(button).toBeDisabled();
     expect(button).toHaveAttribute('aria-busy', 'true');
@@ -239,11 +197,7 @@ describe('TrustServiceBanner - Edge Cases', () => {
 
   it('應該在 isRequesting=true 時顯示 Loader2 圖示', () => {
     const { container } = render(
-      <TrustServiceBanner
-        trustEnabled={false}
-        propertyId="MH-100001"
-        isRequesting={true}
-      />
+      <TrustServiceBanner trustEnabled={false} propertyId="MH-100001" isRequesting={true} />
     );
 
     // 檢查 Loader2 圖示是否存在且有動畫效果
@@ -264,7 +218,7 @@ describe('TrustServiceBanner - Edge Cases', () => {
       />
     );
 
-    const button = screen.getByRole('button', { name: /要求房仲開啟安心留痕服務/ });
+    const button = screen.getByRole('button', { name: /處理中/ });
 
     // 嘗試點擊被禁用的按鈕
     await user.click(button);
@@ -274,13 +228,7 @@ describe('TrustServiceBanner - Edge Cases', () => {
   });
 
   it('應該在 isRequesting=false 時正常顯示按鈕文字', () => {
-    render(
-      <TrustServiceBanner
-        trustEnabled={true}
-        propertyId="MH-100001"
-        isRequesting={false}
-      />
-    );
+    render(<TrustServiceBanner trustEnabled={true} propertyId="MH-100001" isRequesting={false} />);
 
     const button = screen.getByRole('button', { name: /進入安心留痕服務/ });
     expect(button).not.toBeDisabled();
@@ -290,11 +238,7 @@ describe('TrustServiceBanner - Edge Cases', () => {
 
   it('應該在 isRequesting 變更時更新按鈕狀態', () => {
     const { rerender } = render(
-      <TrustServiceBanner
-        trustEnabled={false}
-        propertyId="MH-100001"
-        isRequesting={false}
-      />
+      <TrustServiceBanner trustEnabled={false} propertyId="MH-100001" isRequesting={false} />
     );
 
     const button = screen.getByRole('button', { name: /要求房仲開啟安心留痕服務/ });
@@ -302,11 +246,7 @@ describe('TrustServiceBanner - Edge Cases', () => {
 
     // 更新為 loading 狀態
     rerender(
-      <TrustServiceBanner
-        trustEnabled={false}
-        propertyId="MH-100001"
-        isRequesting={true}
-      />
+      <TrustServiceBanner trustEnabled={false} propertyId="MH-100001" isRequesting={true} />
     );
 
     expect(button).toBeDisabled();
@@ -315,25 +255,15 @@ describe('TrustServiceBanner - Edge Cases', () => {
   });
 
   it('應該在 isRequesting 時有正確的 aria-disabled 屬性', () => {
-    render(
-      <TrustServiceBanner
-        trustEnabled={false}
-        propertyId="MH-100001"
-        isRequesting={true}
-      />
-    );
+    render(<TrustServiceBanner trustEnabled={false} propertyId="MH-100001" isRequesting={true} />);
 
-    const button = screen.getByRole('button', { name: /要求房仲開啟安心留痕服務/ });
+    const button = screen.getByRole('button', { name: /處理中/ });
     expect(button).toHaveAttribute('aria-disabled', 'true');
   });
 
   it('應該在 isRequesting 時包含 sr-only 狀態通知', () => {
     const { container } = render(
-      <TrustServiceBanner
-        trustEnabled={false}
-        propertyId="MH-100001"
-        isRequesting={true}
-      />
+      <TrustServiceBanner trustEnabled={false} propertyId="MH-100001" isRequesting={true} />
     );
 
     // 檢查 live region 是否存在

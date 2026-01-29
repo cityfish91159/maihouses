@@ -6,20 +6,14 @@
  */
 
 // P7-Audit-C9: Admin role enabled
-export type Role =
-  | "guest"
-  | "member"
-  | "resident"
-  | "agent"
-  | "official"
-  | "admin";
-export type WallTab = "public" | "private";
+export type Role = 'guest' | 'member' | 'resident' | 'agent' | 'official' | 'admin';
+export type WallTab = 'public' | 'private';
 
 export interface Post {
   id: number | string;
   author: string;
   floor?: string;
-  type: "resident" | "member" | "agent" | "official";
+  type: 'resident' | 'member' | 'agent' | 'official';
   time: string;
   title: string;
   content: string;
@@ -48,7 +42,7 @@ export interface Question {
   answersCount: number;
   answers: {
     author: string;
-    type: "resident" | "member" | "agent" | "official";
+    type: 'resident' | 'member' | 'agent' | 'official';
     content: string;
     expert?: boolean;
   }[];

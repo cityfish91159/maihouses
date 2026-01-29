@@ -159,11 +159,7 @@ Claude：✓ 使用 puppeteer MCP - 測試網頁登入
   "mcpServers": {
     "filesystem": {
       "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-filesystem",
-        "/home/user/maihouses"
-      ],
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/home/user/maihouses"],
       "env": {}
     },
     "puppeteer": {
@@ -178,11 +174,7 @@ Claude：✓ 使用 puppeteer MCP - 測試網頁登入
     },
     "git": {
       "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-git",
-        "/home/user/maihouses"
-      ],
+      "args": ["-y", "@modelcontextprotocol/server-git", "/home/user/maihouses"],
       "env": {}
     }
   }

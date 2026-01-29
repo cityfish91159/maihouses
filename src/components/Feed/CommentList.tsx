@@ -1,7 +1,7 @@
-import React, { useState, useCallback, useRef } from "react";
-import { FeedComment } from "../../types/comment";
-import { formatRelativeTime } from "../../utils/date";
-import { notify } from "../../lib/notify";
+import React, { useState, useCallback, useRef, memo } from 'react';
+import { FeedComment } from '../../types/comment';
+import { formatRelativeTime } from '../../utils/date';
+import { notify } from '../../lib/notify';
 
 interface CommentListProps {
   comments: FeedComment[];
@@ -23,353 +23,451 @@ interface CommentItemProps {
   onLoadReplies: (commentId: string) => Promise<void>;
 }
 
-const CommentItem: React.FC<CommentItemProps> = ({
-  comment,
-  currentUserId,
-  isReply = false,
-  onAddComment,
-  onToggleLike,
-  onDeleteComment,
-  onLoadReplies,
-}) => {
-  const [showReplies, setShowReplies] = useState(false);
-  const [showReplyInput, setShowReplyInput] = useState(false);
-  const [replyContent, setReplyContent] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [isLiking, setIsLiking] = useState(false);
-  const [isLoadingReplies, setIsLoadingReplies] = useState(false);
-  // useRef 追蹤 isLiking 以避免在 useCallback 依賴中造成不必要的重建
-  const isLikingRef = useRef(false);
+const CommentItem = memo(
+  function CommentItem({
+    comment,
+    currentUserId,
+    isReply = false,
+    onAddComment,
+    onToggleLike,
+    onDeleteComment,
+    onLoadReplies,
+  }: CommentItemProps) {
+    const [showReplies, setShowReplies] = useState(false);
+    const [showReplyInput, setShowReplyInput] = useState(false);
+    const [replyContent, setReplyContent] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const [isLiking, setIsLiking] = useState(false);
+    const [isLoadingReplies, setIsLoadingReplies] = useState(false);
+    // useRef 追蹤 isLiking 以避免在 useCallback 依賴中造成不必要的重建
+    const isLikingRef = useRef(false);
 
-  const authorName = comment.author.name || "匿名";
-  const authorRole = comment.author.role;
-  const isOwner = currentUserId && comment.author.id === currentUserId;
-  const isLoggedIn = currentUserId !== undefined;
-  const hasReplies = comment.repliesCount > 0;
-  const repliesLoaded = comment.replies !== undefined;
+    const authorName = comment.author.name || '匿名';
+    const authorRole = comment.author.role;
+    const isOwner = currentUserId && comment.author.id === currentUserId;
+    const isLoggedIn = currentUserId !== undefined;
+    const hasReplies = comment.repliesCount > 0;
+    const repliesLoaded = comment.replies !== undefined;
 
-  // Bug 1 修正：加入 try-catch 錯誤處理，使用 ref 追蹤狀態
-  const handleToggleLike = useCallback(async () => {
-    if (isLikingRef.current) return;
-    isLikingRef.current = true;
-    setIsLiking(true);
-    try {
-      await onToggleLike(comment.id);
-    } catch {
-      // 錯誤已在 useComments 處理（notify + logger）
-    } finally {
-      isLikingRef.current = false;
-      setIsLiking(false);
-    }
-  }, [comment.id, onToggleLike]);
-
-  const handleDelete = useCallback(async () => {
-    if (!confirm("確定要刪除此留言嗎？")) return;
-    setIsDeleting(true);
-    try {
-      await onDeleteComment(comment.id);
-    } catch {
-      // 錯誤已在 useComments 處理
-    } finally {
-      setIsDeleting(false);
-    }
-  }, [comment.id, onDeleteComment]);
-
-  // Bug 2 修正：加入 try-catch，失敗時不展開
-  const handleToggleReplies = useCallback(async () => {
-    if (showReplies) {
-      setShowReplies(false);
-      return;
-    }
-
-    if (hasReplies && !repliesLoaded) {
-      setIsLoadingReplies(true);
+    // Bug 1 修正：加入 try-catch 錯誤處理，使用 ref 追蹤狀態
+    const handleToggleLike = useCallback(async () => {
+      if (isLikingRef.current) return;
+      isLikingRef.current = true;
+      setIsLiking(true);
       try {
-        await onLoadReplies(comment.id);
-        setShowReplies(true);
+        await onToggleLike(comment.id);
       } catch {
-        // 錯誤已在 useComments 處理，不展開
+        // 錯誤已在 useComments 處理（notify + logger）
       } finally {
-        setIsLoadingReplies(false);
+        isLikingRef.current = false;
+        setIsLiking(false);
       }
-    } else {
-      setShowReplies(true);
-    }
-  }, [showReplies, hasReplies, repliesLoaded, comment.id, onLoadReplies]);
+    }, [comment.id, onToggleLike]);
 
-  const handleSubmitReply = useCallback(
-    async (e: React.FormEvent) => {
-      e.preventDefault();
-      if (!replyContent.trim() || isSubmitting) return;
-
-      setIsSubmitting(true);
+    const handleDelete = useCallback(async () => {
+      if (!confirm('確定要刪除此留言嗎？')) return;
+      setIsDeleting(true);
       try {
-        await onAddComment(replyContent, comment.id);
-        setReplyContent("");
-        setShowReplyInput(false);
-        setShowReplies(true);
+        await onDeleteComment(comment.id);
       } catch {
-        // 錯誤已在 useComments 處理，保留輸入內容
+        // 錯誤已在 useComments 處理
       } finally {
-        setIsSubmitting(false);
+        setIsDeleting(false);
       }
-    },
-    [replyContent, isSubmitting, onAddComment, comment.id],
-  );
+    }, [comment.id, onDeleteComment]);
 
-  const handleReplyKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key === "Enter" && !e.shiftKey) {
+    // Bug 2 修正：加入 try-catch，失敗時不展開
+    const handleToggleReplies = useCallback(async () => {
+      if (showReplies) {
+        setShowReplies(false);
+        return;
+      }
+
+      if (hasReplies && !repliesLoaded) {
+        setIsLoadingReplies(true);
+        try {
+          await onLoadReplies(comment.id);
+          setShowReplies(true);
+        } catch {
+          // 錯誤已在 useComments 處理，不展開
+        } finally {
+          setIsLoadingReplies(false);
+        }
+      } else {
+        setShowReplies(true);
+      }
+    }, [showReplies, hasReplies, repliesLoaded, comment.id, onLoadReplies]);
+
+    const handleSubmitReply = useCallback(
+      async (e: React.FormEvent) => {
         e.preventDefault();
-        handleSubmitReply(e);
-      }
-      if (e.key === "Escape") {
-        setShowReplyInput(false);
-        setReplyContent("");
-      }
-    },
-    [handleSubmitReply],
-  );
+        if (!replyContent.trim() || isSubmitting) return;
 
-  // Bug 5 修正：空字串處理
-  const avatarInitial = authorName.charAt(0) || "?";
+        setIsSubmitting(true);
+        try {
+          await onAddComment(replyContent, comment.id);
+          setReplyContent('');
+          setShowReplyInput(false);
+          setShowReplies(true);
+        } catch {
+          // 錯誤已在 useComments 處理，保留輸入內容
+        } finally {
+          setIsSubmitting(false);
+        }
+      },
+      [replyContent, isSubmitting, onAddComment, comment.id]
+    );
 
-  return (
-    <div className={`flex gap-3 ${isReply ? "ml-11" : ""}`}>
-      {/* Avatar */}
-      <div
-        className={`flex shrink-0 items-center justify-center rounded-full text-xs font-medium ${
-          isReply
-            ? "size-6 bg-gray-100 text-gray-600"
-            : "size-8 bg-indigo-50 text-indigo-600"
-        }`}
-      >
-        {avatarInitial}
-      </div>
+    const handleReplyKeyDown = useCallback(
+      (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          handleSubmitReply(e);
+        }
+        if (e.key === 'Escape') {
+          setShowReplyInput(false);
+          setReplyContent('');
+        }
+      },
+      [handleSubmitReply]
+    );
 
-      {/* Content */}
-      <div className="min-w-0 flex-1 space-y-1">
-        {/* Bubble */}
-        <div className="inline-block max-w-[90%] rounded-2xl rounded-tl-none bg-gray-50 px-4 py-2.5">
-          <div className="mb-0.5 flex items-center gap-2">
-            <span className="text-sm font-semibold text-gray-900">
-              {authorName}
-            </span>
-            {authorRole === "agent" && (
-              <span className="rounded-full bg-indigo-100 px-1.5 py-0.5 text-[10px] font-medium text-indigo-600">
-                房仲
-              </span>
-            )}
-            {authorRole === "resident" && (
-              <span className="rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-medium text-emerald-600">
-                住戶
-              </span>
-            )}
-            {authorRole === "official" && (
-              <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-600">
-                官方
-              </span>
-            )}
-          </div>
-          <p className="whitespace-pre-wrap text-[14px] leading-relaxed text-gray-700">
-            {comment.content}
-          </p>
+    // Bug 5 修正：空字串處理
+    const avatarInitial = authorName.charAt(0) || '?';
+
+    return (
+      <div className={`flex gap-3 ${isReply ? 'ml-11' : ''}`}>
+        {/* Avatar */}
+        <div
+          className={`flex shrink-0 items-center justify-center rounded-full text-xs font-medium ${
+            isReply ? 'size-6 bg-gray-100 text-gray-600' : 'size-8 bg-indigo-50 text-indigo-600'
+          }`}
+        >
+          {avatarInitial}
         </div>
 
-        {/* Actions */}
-        <div className="flex items-center gap-4 px-1">
-          <span className="text-xs text-gray-400">
-            {formatRelativeTime(comment.createdAt)}
-          </span>
+        {/* Content */}
+        <div className="min-w-0 flex-1 space-y-1">
+          {/* Bubble */}
+          <div className="inline-block max-w-[90%] rounded-2xl rounded-tl-none bg-gray-50 px-4 py-2.5">
+            <div className="mb-0.5 flex items-center gap-2">
+              <span className="text-sm font-semibold text-gray-900">{authorName}</span>
+              {authorRole === 'agent' && (
+                <span className="rounded-full bg-indigo-100 px-1.5 py-0.5 text-[10px] font-medium text-indigo-600">
+                  房仲
+                </span>
+              )}
+              {authorRole === 'resident' && (
+                <span className="rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-medium text-emerald-600">
+                  住戶
+                </span>
+              )}
+              {authorRole === 'official' && (
+                <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-600">
+                  官方
+                </span>
+              )}
+            </div>
+            <p className="whitespace-pre-wrap text-[14px] leading-relaxed text-gray-700">
+              {comment.content}
+            </p>
+          </div>
 
-          {/* Like button - 登入才能按讚 */}
-          <button
-            onClick={handleToggleLike}
-            disabled={!isLoggedIn || isLiking}
-            className={`text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
-              comment.isLiked
-                ? "text-red-500 hover:text-red-600"
-                : "text-gray-500 hover:text-gray-800"
-            }`}
-            title={isLoggedIn ? undefined : "請先登入"}
-          >
-            {isLiking ? "..." : comment.isLiked ? "已讚" : "讚"}
-          </button>
+          {/* Actions */}
+          <div className="flex items-center gap-4 px-1">
+            <span className="text-xs text-gray-400">{formatRelativeTime(comment.createdAt)}</span>
 
-          {comment.likesCount > 0 && (
-            <span className="text-xs text-gray-400">
-              {comment.likesCount} 個讚
-            </span>
-          )}
-
-          {/* Reply button - 登入才能回覆，只有頂層留言顯示 */}
-          {!isReply && (
+            {/* Like button - 登入才能按讚 */}
             <button
-              onClick={() => {
-                if (!isLoggedIn) {
-                  notify.error("請先登入", "登入後才能回覆");
-                  return;
-                }
-                setShowReplyInput(!showReplyInput);
-              }}
-              className={`text-xs font-medium transition-colors ${
-                isLoggedIn
-                  ? "text-gray-500 hover:text-gray-800"
-                  : "cursor-not-allowed text-gray-400"
+              onClick={handleToggleLike}
+              disabled={!isLoggedIn || isLiking}
+              className={`text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+                comment.isLiked
+                  ? 'text-red-500 hover:text-red-600'
+                  : 'text-gray-500 hover:text-gray-800'
               }`}
+              title={isLoggedIn ? undefined : '請先登入'}
             >
-              回覆
+              {isLiking ? '...' : comment.isLiked ? '已讚' : '讚'}
+            </button>
+
+            {comment.likesCount > 0 && (
+              <span className="text-xs text-gray-400">{comment.likesCount} 個讚</span>
+            )}
+
+            {/* Reply button - 登入才能回覆，只有頂層留言顯示 */}
+            {!isReply && (
+              <button
+                onClick={() => {
+                  if (!isLoggedIn) {
+                    notify.error('請先登入', '登入後才能回覆');
+                    return;
+                  }
+                  setShowReplyInput(!showReplyInput);
+                }}
+                className={`text-xs font-medium transition-colors ${
+                  isLoggedIn
+                    ? 'text-gray-500 hover:text-gray-800'
+                    : 'cursor-not-allowed text-gray-400'
+                }`}
+              >
+                回覆
+              </button>
+            )}
+
+            {/* Delete button (only for owner) */}
+            {isOwner && (
+              <button
+                onClick={handleDelete}
+                disabled={isDeleting}
+                className="text-xs font-medium text-gray-400 transition-colors hover:text-red-500 disabled:opacity-50"
+              >
+                {isDeleting ? '刪除中...' : '刪除'}
+              </button>
+            )}
+          </div>
+
+          {/* Show replies toggle - Bug 6 修正：使用區域 isLoadingReplies */}
+          {!isReply && hasReplies && (
+            <button
+              onClick={handleToggleReplies}
+              disabled={isLoadingReplies}
+              className="mt-1 flex items-center gap-1 text-xs font-medium text-indigo-600 transition-colors hover:text-indigo-800 disabled:opacity-50"
+            >
+              {isLoadingReplies ? (
+                <>
+                  <LoadingSpinner />
+                  載入中...
+                </>
+              ) : (
+                <>
+                  <ChevronIcon expanded={showReplies} />
+                  {showReplies ? '收起回覆' : `查看 ${comment.repliesCount} 則回覆`}
+                </>
+              )}
             </button>
           )}
 
-          {/* Delete button (only for owner) */}
-          {isOwner && (
-            <button
-              onClick={handleDelete}
-              disabled={isDeleting}
-              className="text-xs font-medium text-gray-400 transition-colors hover:text-red-500 disabled:opacity-50"
-            >
-              {isDeleting ? "刪除中..." : "刪除"}
-            </button>
+          {/* Reply input */}
+          {showReplyInput && (
+            <form onSubmit={handleSubmitReply} className="mt-2 flex gap-2">
+              <input
+                type="text"
+                value={replyContent}
+                onChange={(e) => setReplyContent(e.target.value)}
+                onKeyDown={handleReplyKeyDown}
+                placeholder={`回覆 ${authorName}...`}
+                disabled={isSubmitting}
+                className="min-w-0 flex-1 rounded-full border border-gray-200 bg-gray-50 px-4 py-2 text-sm outline-none transition-all focus:border-indigo-300 focus:bg-white focus:ring-2 focus:ring-indigo-100"
+              />
+              <button
+                type="submit"
+                disabled={!replyContent.trim() || isSubmitting}
+                className="rounded-full bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {isSubmitting ? '...' : '送出'}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowReplyInput(false);
+                  setReplyContent('');
+                }}
+                className="rounded-full px-3 py-2 text-sm text-gray-500 transition-colors hover:bg-gray-100"
+              >
+                取消
+              </button>
+            </form>
+          )}
+
+          {/* Replies list - replies !== undefined 且有內容時顯示 */}
+          {showReplies && comment.replies && comment.replies.length > 0 && (
+            <div className="mt-3 space-y-3">
+              {comment.replies.map((reply) => (
+                <CommentItem
+                  key={reply.id}
+                  comment={reply}
+                  currentUserId={currentUserId}
+                  isReply={true}
+                  onAddComment={onAddComment}
+                  onToggleLike={onToggleLike}
+                  onDeleteComment={onDeleteComment}
+                  onLoadReplies={onLoadReplies}
+                />
+              ))}
+            </div>
           )}
         </div>
-
-        {/* Show replies toggle - Bug 6 修正：使用區域 isLoadingReplies */}
-        {!isReply && hasReplies && (
-          <button
-            onClick={handleToggleReplies}
-            disabled={isLoadingReplies}
-            className="mt-1 flex items-center gap-1 text-xs font-medium text-indigo-600 transition-colors hover:text-indigo-800 disabled:opacity-50"
-          >
-            {isLoadingReplies ? (
-              <>
-                <LoadingSpinner />
-                載入中...
-              </>
-            ) : (
-              <>
-                <ChevronIcon expanded={showReplies} />
-                {showReplies
-                  ? "收起回覆"
-                  : `查看 ${comment.repliesCount} 則回覆`}
-              </>
-            )}
-          </button>
-        )}
-
-        {/* Reply input */}
-        {showReplyInput && (
-          <form onSubmit={handleSubmitReply} className="mt-2 flex gap-2">
-            <input
-              type="text"
-              value={replyContent}
-              onChange={(e) => setReplyContent(e.target.value)}
-              onKeyDown={handleReplyKeyDown}
-              placeholder={`回覆 ${authorName}...`}
-              disabled={isSubmitting}
-              className="min-w-0 flex-1 rounded-full border border-gray-200 bg-gray-50 px-4 py-2 text-sm outline-none transition-all focus:border-indigo-300 focus:bg-white focus:ring-2 focus:ring-indigo-100"
-            />
-            <button
-              type="submit"
-              disabled={!replyContent.trim() || isSubmitting}
-              className="rounded-full bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {isSubmitting ? "..." : "送出"}
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setShowReplyInput(false);
-                setReplyContent("");
-              }}
-              className="rounded-full px-3 py-2 text-sm text-gray-500 transition-colors hover:bg-gray-100"
-            >
-              取消
-            </button>
-          </form>
-        )}
-
-        {/* Replies list - replies !== undefined 且有內容時顯示 */}
-        {showReplies && comment.replies && comment.replies.length > 0 && (
-          <div className="mt-3 space-y-3">
-            {comment.replies.map((reply) => (
-              <CommentItem
-                key={reply.id}
-                comment={reply}
-                currentUserId={currentUserId}
-                isReply={true}
-                onAddComment={onAddComment}
-                onToggleLike={onToggleLike}
-                onDeleteComment={onDeleteComment}
-                onLoadReplies={onLoadReplies}
-              />
-            ))}
-          </div>
-        )}
       </div>
-    </div>
-  );
-};
+    );
+  },
+  (prevProps, nextProps) => {
+    // 自訂比較函數：只比較會影響 UI 的欄位
+    // 返回 true = 不重新渲染，false = 重新渲染
+
+    // 1. 留言內容改變 → 需要重新渲染
+    if (
+      prevProps.comment.id !== nextProps.comment.id ||
+      prevProps.comment.content !== nextProps.comment.content ||
+      prevProps.comment.author.id !== nextProps.comment.author.id ||
+      prevProps.comment.author.name !== nextProps.comment.author.name ||
+      prevProps.comment.author.role !== nextProps.comment.author.role
+    ) {
+      return false;
+    }
+
+    // 2. 按讚狀態改變 → 需要重新渲染
+    if (
+      prevProps.comment.likesCount !== nextProps.comment.likesCount ||
+      prevProps.comment.isLiked !== nextProps.comment.isLiked
+    ) {
+      return false;
+    }
+
+    // 3. 回覆數量改變 → 需要重新渲染
+    if (prevProps.comment.repliesCount !== nextProps.comment.repliesCount) {
+      return false;
+    }
+
+    // 4. 當前用戶 ID 改變（登入/登出）→ 需要重新渲染
+    if (prevProps.currentUserId !== nextProps.currentUserId) {
+      return false;
+    }
+
+    // 5. isReply 改變 → 需要重新渲染
+    if (prevProps.isReply !== nextProps.isReply) {
+      return false;
+    }
+
+    // 6. replies 陣列改變 → 需要重新渲染
+    // Bug Fix: 深度比較 replies 內容，不只是長度
+    const prevReplies = prevProps.comment.replies;
+    const nextReplies = nextProps.comment.replies;
+
+    // 6.1 長度檢查
+    if (prevReplies?.length !== nextReplies?.length) {
+      return false;
+    }
+
+    // 6.2 深度比較每個 reply 的關鍵屬性
+    if (prevReplies && nextReplies) {
+      for (let i = 0; i < prevReplies.length; i++) {
+        const prev = prevReplies[i];
+        const next = nextReplies[i];
+
+        if (!prev || !next) {
+          return false;
+        }
+
+        // 檢查 reply 的所有可能變更屬性
+        if (
+          prev.id !== next.id ||
+          prev.content !== next.content ||
+          prev.likesCount !== next.likesCount ||
+          prev.isLiked !== next.isLiked ||
+          prev.repliesCount !== next.repliesCount ||
+          prev.author.id !== next.author.id ||
+          prev.author.name !== next.author.name ||
+          prev.author.role !== next.author.role ||
+          prev.createdAt !== next.createdAt
+        ) {
+          return false;
+        }
+      }
+    }
+
+    // 7. 回調函數改變不重新渲染（假設父層已用 useCallback）
+    // onAddComment, onToggleLike, onDeleteComment, onLoadReplies 不比較
+
+    // 所有關鍵欄位相同 → 不重新渲染
+    return true;
+  }
+);
 
 // Loading spinner
-const LoadingSpinner: React.FC = () => (
-  <svg className="size-3 animate-spin" viewBox="0 0 24 24" fill="none">
-    <circle
-      className="opacity-25"
-      cx="12"
-      cy="12"
-      r="10"
-      stroke="currentColor"
-      strokeWidth="4"
-    />
-    <path
-      className="opacity-75"
-      fill="currentColor"
-      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-    />
-  </svg>
-);
+const LoadingSpinner = memo(function LoadingSpinner() {
+  return (
+    <svg className="size-3 animate-spin" viewBox="0 0 24 24" fill="none">
+      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+      <path
+        className="opacity-75"
+        fill="currentColor"
+        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+      />
+    </svg>
+  );
+});
 
 // Chevron icon
-const ChevronIcon: React.FC<{ expanded: boolean }> = ({ expanded }) => (
-  <svg
-    className={`size-4 transition-transform ${expanded ? "rotate-180" : ""}`}
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-    strokeWidth={2}
-  >
-    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-  </svg>
-);
+const ChevronIcon = memo(function ChevronIcon({ expanded }: { expanded: boolean }) {
+  return (
+    <svg
+      className={`size-4 transition-transform ${expanded ? 'rotate-180' : ''}`}
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth={2}
+    >
+      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+    </svg>
+  );
+});
 
 // Main CommentList component
-export const CommentList: React.FC<CommentListProps> = ({
-  comments,
-  currentUserId,
-  onAddComment,
-  onToggleLike,
-  onDeleteComment,
-  onLoadReplies,
-}) => {
-  if (!comments || comments.length === 0) {
-    return null;
-  }
+export const CommentList = memo(
+  function CommentList({
+    comments,
+    currentUserId,
+    onAddComment,
+    onToggleLike,
+    onDeleteComment,
+    onLoadReplies,
+  }: CommentListProps) {
+    if (!comments || comments.length === 0) {
+      return null;
+    }
 
-  return (
-    <div className="mt-4 space-y-4 border-t border-gray-100/50 pt-4">
-      {comments.map((comment) => (
-        <CommentItem
-          key={comment.id}
-          comment={comment}
-          currentUserId={currentUserId}
-          onAddComment={onAddComment}
-          onToggleLike={onToggleLike}
-          onDeleteComment={onDeleteComment}
-          onLoadReplies={onLoadReplies}
-        />
-      ))}
-    </div>
-  );
-};
+    return (
+      <div className="mt-4 space-y-4 border-t border-gray-100/50 pt-4">
+        {comments.map((comment) => (
+          <CommentItem
+            key={comment.id}
+            comment={comment}
+            currentUserId={currentUserId}
+            onAddComment={onAddComment}
+            onToggleLike={onToggleLike}
+            onDeleteComment={onDeleteComment}
+            onLoadReplies={onLoadReplies}
+          />
+        ))}
+      </div>
+    );
+  },
+  (prevProps, nextProps) => {
+    // 自訂比較函數
+
+    // 1. currentUserId 改變 → 需要重新渲染
+    if (prevProps.currentUserId !== nextProps.currentUserId) {
+      return false;
+    }
+
+    // 2. comments 陣列長度改變 → 需要重新渲染
+    if (prevProps.comments.length !== nextProps.comments.length) {
+      return false;
+    }
+
+    // 3. 檢查 comments 陣列引用是否改變
+    // 如果陣列引用改變，表示有內容更新，需要重新渲染讓 CommentItem 接收新 props
+    if (prevProps.comments !== nextProps.comments) {
+      return false;
+    }
+
+    // 4. 回調函數不比較（假設父層已用 useCallback）
+
+    // 陣列引用相同 → 不重新渲染
+    return true;
+  }
+);
+
+CommentList.displayName = 'CommentList';

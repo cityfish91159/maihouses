@@ -22,12 +22,12 @@ const startTotal = Date.now();
 function runStep(stepName, command, args, opts = {}) {
   const start = Date.now();
   console.log(`\n${c.cyan}➤ [檢查] ${stepName}...${c.reset}`);
-  
-  const result = spawnSync(command, args, { 
-    stdio: 'inherit', 
+
+  const result = spawnSync(command, args, {
+    stdio: 'inherit',
     shell: true,
     cwd: process.cwd(),
-    ...opts
+    ...opts,
   });
 
   const duration = ((Date.now() - start) / 1000).toFixed(2);
@@ -45,7 +45,7 @@ function runStep(stepName, command, args, opts = {}) {
 function deepScan() {
   console.log(`\n${c.cyan}➤ [掃描] 深度代碼衛生檢查...${c.reset}`);
   console.log(`${c.gray}ℹ️  豁免範圍: Muse相關 (全免), Analytics相關 (允許 var)${c.reset}`);
-  
+
   const forbidden = [
     { regex: /console\.log\(/, label: 'console.log (請刪除調試日誌)' },
     { regex: /debugger/, label: 'debugger (請刪除斷點)' },
@@ -64,28 +64,30 @@ function deepScan() {
 
   function walkDir(dir) {
     if (
-      dir.includes('node_modules') || 
-      dir.includes('.next') || 
-      dir.includes('.git') || 
+      dir.includes('node_modules') ||
+      dir.includes('.next') ||
+      dir.includes('.git') ||
       dir.includes('dist') ||
       dir.includes('build') ||
-      dir.toLowerCase().includes('muse') || 
+      dir.toLowerCase().includes('muse') ||
       dir.toLowerCase().includes('god-muse')
-    ) return;
+    )
+      return;
 
     const files = fs.readdirSync(dir);
     for (const file of files) {
       const fullPath = path.join(dir, file);
-      
+
       if (
-        file.toLowerCase().includes('muse') || 
+        file.toLowerCase().includes('muse') ||
         file.toLowerCase().includes('god-muse') ||
         file.endsWith('.d.ts') ||
         file.endsWith('.map')
-      ) continue;
+      )
+        continue;
 
       const stat = fs.statSync(fullPath);
-      
+
       if (stat.isDirectory()) {
         walkDir(fullPath);
       } else if (/\.(js|ts|tsx|jsx)$/.test(file)) {
@@ -97,10 +99,21 @@ function deepScan() {
         lines.forEach((line, index) => {
           const trimmedLine = line.trim();
           const isComment = trimmedLine.startsWith('//') || trimmedLine.startsWith('/*');
-          
-          forbidden.forEach(rule => {
-            if (isComment && !rule.label.includes('註解') && !rule.label.includes('ignore') && !rule.label.includes('disable')) return;
-            if (rule.label.startsWith('var') && (file.toLowerCase().includes('analytics') || fullPath.toLowerCase().includes('analytics'))) return;
+
+          forbidden.forEach((rule) => {
+            if (
+              isComment &&
+              !rule.label.includes('註解') &&
+              !rule.label.includes('ignore') &&
+              !rule.label.includes('disable')
+            )
+              return;
+            if (
+              rule.label.startsWith('var') &&
+              (file.toLowerCase().includes('analytics') ||
+                fullPath.toLowerCase().includes('analytics'))
+            )
+              return;
 
             if (rule.regex.test(line)) {
               console.log(`${c.yellow}⚠️  ${fullPath}:${index + 1}${c.reset}`);
@@ -117,7 +130,9 @@ function deepScan() {
   try {
     if (fs.existsSync('src')) walkDir('src');
     if (errors > 0) {
-      console.log(`\n${c.bgRed} 🛑 掃描失敗: 發現 ${errors} 個違規項目！嚴格模式不允許通過。 ${c.reset}`);
+      console.log(
+        `\n${c.bgRed} 🛑 掃描失敗: 發現 ${errors} 個違規項目！嚴格模式不允許通過。 ${c.reset}`
+      );
       process.exit(1);
     }
     console.log(`${c.green}✅ 代碼衛生檢查通過${c.reset}`);
@@ -130,8 +145,8 @@ function deepScan() {
 // 📐 檢查 Build 後的體積 (防止體積爆炸)
 function checkBundleSize() {
   console.log(`\n${c.cyan}➤ [檢查] Build 產物體積分析...${c.reset}`);
-  const buildDir = fs.existsSync('dist') ? 'dist' : (fs.existsSync('.next') ? '.next' : null);
-  
+  const buildDir = fs.existsSync('dist') ? 'dist' : fs.existsSync('.next') ? '.next' : null;
+
   if (!buildDir) {
     console.log(`${c.yellow}⚠️  找不到 build 資料夾 (dist/.next)，跳過體積檢查${c.reset}`);
     return;
@@ -149,14 +164,16 @@ function checkBundleSize() {
     }
   }
   getDirSize(buildDir);
-  
+
   const sizeMB = (totalSize / 1024 / 1024).toFixed(2);
   console.log(`📦 Build Folder Size: ${c.bold}${sizeMB} MB${c.reset}`);
 
   // 設定閾值 (例如 50MB，可根據專案調整)
-  const LIMIT_MB = 50; 
+  const LIMIT_MB = 50;
   if (sizeMB > LIMIT_MB) {
-    console.log(`${c.red}❌ 警告：Build 體積過大 (> ${LIMIT_MB}MB)！請檢查是否有未壓縮的資源。${c.reset}`);
+    console.log(
+      `${c.red}❌ 警告：Build 體積過大 (> ${LIMIT_MB}MB)！請檢查是否有未壓縮的資源。${c.reset}`
+    );
     // 這裡可以選擇是否要 exit(1)，目前先警告
   } else {
     console.log(`${c.green}✅ 體積在合理範圍內${c.reset}`);
@@ -174,14 +191,25 @@ deepScan();
 // 2. 架構檢查：循環依賴 (Circular Dependencies)
 // 需要安裝 madge 或使用 npx
 // 這一步能抓出很多架構上的壞味道
-runStep('架構檢查 (Circular Dependency)', 'npx', ['madge', '--circular', '--extensions', 'ts,tsx,js,jsx', './src']);
+runStep('架構檢查 (Circular Dependency)', 'npx', [
+  'madge',
+  '--circular',
+  '--extensions',
+  'ts,tsx,js,jsx',
+  './src',
+]);
 
 // 3. 類型檢查
 runStep('TypeScript TypeCheck', 'npm', ['run', 'typecheck']);
 
 // 4. 代碼風格 (Prettier) - 確保大家格式一致
 // 如果沒裝 prettier 可以註解掉
-runStep('Prettier Format Check', 'npx', ['prettier', '--check', 'src/**/*.{ts,tsx,js,css}', '!**/*muse*/**', '!**/*god-muse*/**'], { fatal: false });
+runStep(
+  'Prettier Format Check',
+  'npx',
+  ['prettier', '--check', 'src/**/*.{ts,tsx,js,css}', '!**/*muse*/**', '!**/*god-muse*/**'],
+  { fatal: false }
+);
 
 // 5. ESLint (零容忍)
 runStep('ESLint (Zero Tolerance)', 'npm', ['run', 'lint', '--', '--max-warnings=0']);
@@ -189,7 +217,7 @@ runStep('ESLint (Zero Tolerance)', 'npm', ['run', 'lint', '--', '--max-warnings=
 // 6. 單元/整合測試 (Testing) - 🔥 這就是從 60 分到 90 分的關鍵
 // 假設你有 npm run test，沒有的話會報錯 (提醒你去寫測試)
 // 如果使用 vitest，可以直接改 'npx vitest run'
-runStep('Unit/Integration Tests', 'npm', ['run', 'test', '--if-present']); 
+runStep('Unit/Integration Tests', 'npm', ['run', 'test', '--if-present']);
 
 // 7. 安全審計 (Moderate+)
 runStep('NPM Security Audit', 'npm', ['audit', '--audit-level=moderate']);

@@ -23,7 +23,7 @@ export function generateFuzzInput(): unknown {
   if (r < 0.2) return null;
 
   // 10% 錯誤類型
-  if (r < 0.3) return "not an object";
+  if (r < 0.3) return 'not an object';
 
   // 10% 部分欄位
   if (r < 0.4) {
@@ -50,14 +50,14 @@ export function generateFuzzInput(): unknown {
   // 10% 錯誤類型欄位
   if (r < 0.6) {
     return {
-      hasVerifiedOwner: "yes", // 應該是 boolean
+      hasVerifiedOwner: 'yes', // 應該是 boolean
       hasRealPhotos: 1, // 應該是 boolean
       hasPriceHistory: null,
-      responseTimeHours: "fast", // 應該是 number
+      responseTimeHours: 'fast', // 應該是 number
       reviewCount: [],
       avgRating: {},
       listingAgeDays: true,
-      updateFrequency: "often",
+      updateFrequency: 'often',
     };
   }
 
@@ -75,7 +75,7 @@ export function generateFuzzInput(): unknown {
       // 多餘
       __proto__: { polluted: true },
       constructor: null,
-      extraField: "should be ignored",
+      extraField: 'should be ignored',
     };
   }
 
@@ -83,21 +83,12 @@ export function generateFuzzInput(): unknown {
   const boundaryValues = [0, 0.001, 0.999, 1, 1.001, 4.999, 5, 5.001, -0.001];
 
   return {
-    hasVerifiedOwner: [true, false, null, undefined][
-      Math.floor(Math.random() * 4)
-    ],
-    hasRealPhotos: [true, false, null, undefined][
-      Math.floor(Math.random() * 4)
-    ],
-    hasPriceHistory: [true, false, null, undefined][
-      Math.floor(Math.random() * 4)
-    ],
-    responseTimeHours:
-      boundaryValues[Math.floor(Math.random() * boundaryValues.length)],
-    reviewCount:
-      boundaryValues[Math.floor(Math.random() * boundaryValues.length)],
-    avgRating:
-      boundaryValues[Math.floor(Math.random() * boundaryValues.length)],
+    hasVerifiedOwner: [true, false, null, undefined][Math.floor(Math.random() * 4)],
+    hasRealPhotos: [true, false, null, undefined][Math.floor(Math.random() * 4)],
+    hasPriceHistory: [true, false, null, undefined][Math.floor(Math.random() * 4)],
+    responseTimeHours: boundaryValues[Math.floor(Math.random() * boundaryValues.length)],
+    reviewCount: boundaryValues[Math.floor(Math.random() * boundaryValues.length)],
+    avgRating: boundaryValues[Math.floor(Math.random() * boundaryValues.length)],
     listingAgeDays: Math.floor(Math.random() * 1000),
     updateFrequency: Math.random() * 10,
   };

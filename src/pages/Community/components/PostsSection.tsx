@@ -5,37 +5,30 @@
  * 重構：使用 LockedOverlay + Tailwind brand 色系
  */
 
-import {
-  useState,
-  useCallback,
-  useId,
-  useMemo,
-  useRef,
-  useEffect,
-} from "react";
-import type { KeyboardEvent } from "react";
-import type { Role, Post, WallTab } from "../types";
-import { getPermissions } from "../types";
-import { canPerformAction, getPermissionDeniedMessage } from "../lib";
-import { useGuestVisibleItems } from "../../../hooks/useGuestVisibleItems";
-import { useThrottle } from "../../../hooks/useThrottle";
-import { useComments } from "../../../hooks/useComments";
-import { LockedOverlay } from "./LockedOverlay";
-import { ComposerModal } from "../../../components/Composer/ComposerModal";
-import { CommentList } from "../../../components/Feed/CommentList";
-import { CommentInput } from "../../../components/Feed/CommentInput";
-import { formatRelativeTimeLabel } from "../../../lib/time";
-import { notify } from "../../../lib/notify";
-import { STRINGS } from "../../../constants/strings";
-import { logger } from "../../../lib/logger";
+import { useState, useCallback, useId, useMemo, useRef, useEffect } from 'react';
+import type { KeyboardEvent } from 'react';
+import type { Role, Post, WallTab } from '../types';
+import { getPermissions } from '../types';
+import { canPerformAction, getPermissionDeniedMessage } from '../lib';
+import { useGuestVisibleItems } from '../../../hooks/useGuestVisibleItems';
+import { useThrottle } from '../../../hooks/useThrottle';
+import { useComments } from '../../../hooks/useComments';
+import { LockedOverlay } from './LockedOverlay';
+import { ComposerModal } from '../../../components/Composer/ComposerModal';
+import { CommentList } from '../../../components/Feed/CommentList';
+import { CommentInput } from '../../../components/Feed/CommentInput';
+import { formatRelativeTimeLabel } from '../../../lib/time';
+import { notify } from '../../../lib/notify';
+import { STRINGS } from '../../../constants/strings';
+import { logger } from '../../../lib/logger';
 
 // 解構 COMMUNITY 命名空間以簡化引用
 const { COMMUNITY: S } = STRINGS;
 
 // P2-UI-4: 封裝 Badge 邏輯
 function PostBadge({ post }: { post: Post }) {
-  const isAgent = post.type === "agent";
-  const isOfficial = post.type === "official";
+  const isAgent = post.type === 'agent';
+  const isOfficial = post.type === 'official';
 
   if (isAgent) {
     return (
@@ -70,17 +63,11 @@ interface PostCardProps {
   onLike?: (postId: number | string) => Promise<void> | void;
 }
 
-function PostCard({
-  post,
-  communityId,
-  currentUserId,
-  userInitial,
-  onLike,
-}: PostCardProps) {
+function PostCard({ post, communityId, currentUserId, userInitial, onLike }: PostCardProps) {
   const [isLiking, setIsLiking] = useState(false);
   const [isCommentsOpen, setIsCommentsOpen] = useState(false);
   const isMountedRef = useRef(true);
-  const isAgent = post.type === "agent";
+  const isAgent = post.type === 'agent';
   const displayTime = formatRelativeTimeLabel(post.time);
 
   // P2-UI-2: 優化 Emoji 可訪問性
@@ -89,14 +76,14 @@ function PostCard({
       <span className="flex items-center gap-1">
         <span role="img" aria-label="愛心">
           ❤️
-        </span>{" "}
+        </span>{' '}
         {post.likes}
       </span>
     ) : post.views !== undefined ? (
       <span className="flex items-center gap-1">
         <span role="img" aria-label="觀看數">
           👁️
-        </span>{" "}
+        </span>{' '}
         {post.views}
       </span>
     ) : null;
@@ -105,7 +92,7 @@ function PostCard({
       <span className="flex items-center gap-1">
         <span role="img" aria-label="留言數">
           💬
-        </span>{" "}
+        </span>{' '}
         {post.comments}
       </span>
     ) : null;
@@ -126,8 +113,8 @@ function PostCard({
       try {
         await onLike(post.id);
       } catch (error) {
-        logger.error("[PostsSection] Failed to toggle like", { error });
-        notify.error("按讚失敗", "請稍後重試");
+        logger.error('[PostsSection] Failed to toggle like', { error });
+        notify.error('按讚失敗', '請稍後重試');
       } finally {
         if (isMountedRef.current) {
           setIsLiking(false);
@@ -135,22 +122,20 @@ function PostCard({
       }
     },
     1000,
-    { trailing: true },
+    { trailing: true }
   );
 
   return (
     <article className="flex gap-2.5 rounded-[14px] border border-border-light bg-white p-3 transition-all hover:border-brand-600 hover:shadow-brand-sm">
       <div
-        className={`from-brand-100/50 flex size-10 shrink-0 items-center justify-center rounded-full border-2 bg-gradient-to-br to-white text-base font-extrabold ${isAgent ? "border-brand-light text-brand-600" : "border-brand text-brand"}`}
+        className={`from-brand-100/50 flex size-10 shrink-0 items-center justify-center rounded-full border-2 bg-gradient-to-br to-white text-base font-extrabold ${isAgent ? 'border-brand-light text-brand-600' : 'border-brand text-brand'}`}
         aria-hidden="true"
       >
         {post.author.charAt(0)}
       </div>
       <div className="flex flex-1 flex-col gap-1.5">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-[13px] font-bold text-ink-900">
-            {post.author}
-          </span>
+          <span className="text-[13px] font-bold text-ink-900">{post.author}</span>
           <PostBadge post={post} />
           <span className="text-[11px] text-ink-600">{displayTime}</span>
         </div>
@@ -166,7 +151,7 @@ function PostCard({
             <span className="flex items-center gap-1">
               <span role="img" aria-label="鎖頭">
                 🔒
-              </span>{" "}
+              </span>{' '}
               {S.PRIVATE_POST_LABEL}
             </span>
           )}
@@ -179,7 +164,7 @@ function PostCard({
             >
               <span role="img" aria-label="信封">
                 📩
-              </span>{" "}
+              </span>{' '}
               {S.BTN_MSG_AGENT}
             </button>
           ) : (
@@ -195,14 +180,14 @@ function PostCard({
                   <>
                     <span role="img" aria-label="沙漏">
                       ⏳
-                    </span>{" "}
+                    </span>{' '}
                     {S.BTN_LIKING}
                   </>
                 ) : (
                   <>
                     <span role="img" aria-label="愛心">
                       ❤️
-                    </span>{" "}
+                    </span>{' '}
                     {S.BTN_LIKE}
                   </>
                 )}
@@ -210,8 +195,8 @@ function PostCard({
               <button
                 className={`flex items-center gap-1 rounded-lg border px-2.5 py-1.5 text-[11px] font-semibold transition-all ${
                   isCommentsOpen
-                    ? "bg-brand/12 border-brand text-brand"
-                    : "bg-brand/6 hover:bg-brand/12 border-brand/10 text-brand"
+                    ? 'bg-brand/12 border-brand text-brand'
+                    : 'bg-brand/6 hover:bg-brand/12 border-brand/10 text-brand'
                 }`}
                 aria-label={S.BTN_REPLY_ARIA}
                 aria-expanded={isCommentsOpen}
@@ -219,7 +204,7 @@ function PostCard({
               >
                 <span role="img" aria-label="對話框">
                   💬
-                </span>{" "}
+                </span>{' '}
                 {S.BTN_REPLY}
               </button>
             </>
@@ -254,15 +239,8 @@ function PostCommentSection({
   currentUserId,
   userInitial,
 }: PostCommentSectionProps) {
-  const {
-    comments,
-    isLoading,
-    addComment,
-    toggleLike,
-    deleteComment,
-    loadReplies,
-    refresh,
-  } = useComments({ postId, communityId });
+  const { comments, isLoading, addComment, toggleLike, deleteComment, loadReplies, refresh } =
+    useComments({ postId, communityId });
 
   // Bug 4 修正：只在首次載入時 refresh，避免重複載入
   const hasLoadedRef = useRef(false);
@@ -300,7 +278,7 @@ function PostCommentSection({
         onSubmit={(content) => addComment(content)}
         disabled={!isLoggedIn}
         userInitial={userInitial}
-        placeholder={isLoggedIn ? "寫下您的留言..." : "請先登入後留言"}
+        placeholder={isLoggedIn ? '寫下您的留言...' : '請先登入後留言'}
       />
     </div>
   );
@@ -316,7 +294,7 @@ interface PostsSectionProps {
   currentUserId: string | undefined;
   userInitial: string;
   onLike?: (postId: number | string) => Promise<void> | void;
-  onCreatePost?: (content: string, visibility: "public" | "private") => void;
+  onCreatePost?: (content: string, visibility: 'public' | 'private') => void;
   onUnlock?: () => void;
 }
 
@@ -347,17 +325,15 @@ export function PostsSection({
 
   // PostModal 狀態
   const [postModalOpen, setPostModalOpen] = useState(false);
-  const [postModalVisibility, setPostModalVisibility] = useState<
-    "public" | "private"
-  >("public");
+  const [postModalVisibility, setPostModalVisibility] = useState<'public' | 'private'>('public');
 
   // AUDIT-01 Phase 7: 使用統一權限檢查函數
-  const openPostModal = (visibility: "public" | "private") => {
+  const openPostModal = (visibility: 'public' | 'private') => {
     if (isGuest) {
       notify.error(S.NOTIFY_LOGIN_TITLE, S.NOTIFY_LOGIN_DESC);
       return;
     }
-    const action = visibility === "public" ? "post_public" : "post_private";
+    const action = visibility === 'public' ? 'post_public' : 'post_private';
     if (!canPerformAction(perm, action)) {
       const msg = getPermissionDeniedMessage(action);
       notify.error(msg.title, msg.description);
@@ -379,44 +355,40 @@ export function PostsSection({
   }, []);
 
   const activeTabs = useMemo<WallTab[]>(() => {
-    return canPerformAction(perm, "view_private")
-      ? ["public", "private"]
-      : ["public"];
+    return canPerformAction(perm, 'view_private') ? ['public', 'private'] : ['public'];
   }, [perm]);
 
   const handlePrivateClick = () => {
-    if (!canPerformAction(perm, "view_private")) {
+    if (!canPerformAction(perm, 'view_private')) {
       notify.error(
-        perm.isGuest
-          ? S.NOTIFY_PRIVATE_ACCESS_DENIED
-          : S.NOTIFY_VERIFY_REQUIRED,
+        perm.isGuest ? S.NOTIFY_PRIVATE_ACCESS_DENIED : S.NOTIFY_VERIFY_REQUIRED,
         perm.isGuest
           ? `🔐 ${S.NOTIFY_PRIVATE_ACCESS_DENIED_DESC}`
-          : `🏠 ${S.NOTIFY_VERIFY_REQUIRED_DESC}`,
+          : `🏠 ${S.NOTIFY_VERIFY_REQUIRED_DESC}`
       );
       return;
     }
-    onTabChange("private");
+    onTabChange('private');
   };
 
   const handleTabKeyDown = useCallback(
     (event: KeyboardEvent<HTMLButtonElement>, current: WallTab) => {
-      if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) {
+      if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) {
         return;
       }
       event.preventDefault();
 
       const lastAvailableTab = activeTabs.at(-1);
 
-      if (event.key === "Home") {
-        focusTab("public");
-        if (currentTab !== "public") {
-          onTabChange("public");
+      if (event.key === 'Home') {
+        focusTab('public');
+        if (currentTab !== 'public') {
+          onTabChange('public');
         }
         return;
       }
 
-      if (event.key === "End") {
+      if (event.key === 'End') {
         // 無論權限如何，跳到最後一個可用 Tab
         if (lastAvailableTab && lastAvailableTab !== currentTab) {
           focusTab(lastAvailableTab);
@@ -430,24 +402,23 @@ export function PostsSection({
       const currentIndex = activeTabs.indexOf(current);
       if (currentIndex === -1) return;
 
-      const delta = event.key === "ArrowLeft" ? -1 : 1;
-      const nextIndex =
-        (currentIndex + delta + activeTabs.length) % activeTabs.length;
+      const delta = event.key === 'ArrowLeft' ? -1 : 1;
+      const nextIndex = (currentIndex + delta + activeTabs.length) % activeTabs.length;
       const nextTab = activeTabs[nextIndex];
       if (!nextTab) {
         return;
       }
 
-      if (nextTab === "private" && !canPerformAction(perm, "view_private")) {
-        focusTab("public");
-        onTabChange("public");
+      if (nextTab === 'private' && !canPerformAction(perm, 'view_private')) {
+        focusTab('public');
+        onTabChange('public');
         return;
       }
 
       focusTab(nextTab);
       onTabChange(nextTab);
     },
-    [activeTabs, currentTab, focusTab, onTabChange, perm],
+    [activeTabs, currentTab, focusTab, onTabChange, perm]
   );
 
   return (
@@ -463,7 +434,7 @@ export function PostsSection({
         >
           <span role="img" aria-label="火焰">
             🔥
-          </span>{" "}
+          </span>{' '}
           {S.SECTION_TITLE}
         </h2>
       </div>
@@ -480,12 +451,12 @@ export function PostsSection({
           ref={(node) => {
             tabRefs.current.public = node;
           }}
-          aria-selected={currentTab === "public"}
+          aria-selected={currentTab === 'public'}
           aria-controls={panelId}
-          onClick={() => onTabChange("public")}
-          onKeyDown={(event) => handleTabKeyDown(event, "public")}
-          tabIndex={currentTab === "public" ? 0 : -1}
-          className={`rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-all ${currentTab === "public" ? "bg-brand/10 border-brand-600 font-bold text-brand" : "hover:bg-brand/8 bg-brand-100/80 border-transparent text-ink-600 hover:text-brand"}`}
+          onClick={() => onTabChange('public')}
+          onKeyDown={(event) => handleTabKeyDown(event, 'public')}
+          tabIndex={currentTab === 'public' ? 0 : -1}
+          className={`rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-all ${currentTab === 'public' ? 'bg-brand/10 border-brand-600 font-bold text-brand' : 'hover:bg-brand/8 bg-brand-100/80 border-transparent text-ink-600 hover:text-brand'}`}
         >
           {S.TAB_PUBLIC}
         </button>
@@ -495,22 +466,18 @@ export function PostsSection({
           ref={(node) => {
             tabRefs.current.private = node;
           }}
-          aria-selected={currentTab === "private"}
+          aria-selected={currentTab === 'private'}
           aria-controls={panelId}
-          aria-disabled={!canPerformAction(perm, "view_private")}
+          aria-disabled={!canPerformAction(perm, 'view_private')}
           onClick={handlePrivateClick}
-          onKeyDown={(event) => handleTabKeyDown(event, "private")}
+          onKeyDown={(event) => handleTabKeyDown(event, 'private')}
           tabIndex={
-            canPerformAction(perm, "view_private")
-              ? currentTab === "private"
-                ? 0
-                : -1
-              : -1
+            canPerformAction(perm, 'view_private') ? (currentTab === 'private' ? 0 : -1) : -1
           }
-          className={`rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-all ${currentTab === "private" ? "bg-brand/10 border-brand-600 font-bold text-brand" : "hover:bg-brand/8 bg-brand-100/80 border-transparent text-ink-600 hover:text-brand"} ${!canPerformAction(perm, "view_private") ? "opacity-60" : ""}`}
+          className={`rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-all ${currentTab === 'private' ? 'bg-brand/10 border-brand-600 font-bold text-brand' : 'hover:bg-brand/8 bg-brand-100/80 border-transparent text-ink-600 hover:text-brand'} ${!canPerformAction(perm, 'view_private') ? 'opacity-60' : ''}`}
         >
-          {S.TAB_PRIVATE}{" "}
-          {!canPerformAction(perm, "view_private") && (
+          {S.TAB_PRIVATE}{' '}
+          {!canPerformAction(perm, 'view_private') && (
             <span role="img" aria-label="鎖頭">
               🔒
             </span>
@@ -522,11 +489,11 @@ export function PostsSection({
       <div
         id={panelId}
         role="tabpanel"
-        aria-labelledby={currentTab === "public" ? publicTabId : privateTabId}
+        aria-labelledby={currentTab === 'public' ? publicTabId : privateTabId}
         tabIndex={0}
         className="flex flex-col gap-2.5 px-3.5 pb-3.5"
       >
-        {currentTab === "public" ? (
+        {currentTab === 'public' ? (
           <>
             {visiblePublic.map((post) => (
               <PostCard
@@ -544,10 +511,7 @@ export function PostsSection({
               visible={hiddenPublicCount > 0 && !!nextHiddenPost}
               hiddenCount={hiddenPublicCount}
               countLabel={S.LOCKED_OVERLAY_COUNT_LABEL}
-              benefits={[
-                S.LOCKED_OVERLAY_BENEFIT_1,
-                S.LOCKED_OVERLAY_BENEFIT_2,
-              ]}
+              benefits={[S.LOCKED_OVERLAY_BENEFIT_1, S.LOCKED_OVERLAY_BENEFIT_2]}
               showCta
               {...(onUnlock ? { onCtaClick: onUnlock } : {})}
             >
@@ -561,21 +525,21 @@ export function PostsSection({
               )}
             </LockedOverlay>
 
-            {canPerformAction(perm, "post_public") && (
+            {canPerformAction(perm, 'post_public') && (
               <div className="bg-brand/3 flex justify-center rounded-[14px] border border-dashed border-border-light p-5">
                 <button
-                  onClick={() => openPostModal("public")}
+                  onClick={() => openPostModal('public')}
                   className="bg-brand/6 hover:bg-brand/12 border-brand/10 flex w-full items-center justify-center gap-1 rounded-lg border px-2.5 py-1.5 text-[11px] font-semibold text-brand"
                 >
                   <span role="img" aria-label="鉛筆">
                     ✏️
-                  </span>{" "}
+                  </span>{' '}
                   {S.BTN_POST_PUBLIC}
                 </button>
               </div>
             )}
           </>
-        ) : canPerformAction(perm, "view_private") ? (
+        ) : canPerformAction(perm, 'view_private') ? (
           <>
             {privatePosts.map((post) => (
               <PostCard
@@ -587,15 +551,15 @@ export function PostsSection({
                 {...(onLike ? { onLike } : {})}
               />
             ))}
-            {canPerformAction(perm, "post_private") ? (
+            {canPerformAction(perm, 'post_private') ? (
               <div className="bg-brand/3 flex justify-center rounded-[14px] border border-dashed border-border-light p-5">
                 <button
-                  onClick={() => openPostModal("private")}
+                  onClick={() => openPostModal('private')}
                   className="bg-brand/6 hover:bg-brand/12 border-brand/10 flex w-full items-center justify-center gap-1 rounded-lg border px-2.5 py-1.5 text-[11px] font-semibold text-brand"
                 >
                   <span role="img" aria-label="鉛筆">
                     ✏️
-                  </span>{" "}
+                  </span>{' '}
                   {S.BTN_POST_PRIVATE}
                 </button>
               </div>
@@ -610,9 +574,7 @@ export function PostsSection({
             <div className="mb-3 text-5xl opacity-50" aria-hidden="true">
               🔐
             </div>
-            <h4 className="mb-1.5 text-sm font-bold text-brand-700">
-              {S.LOCKED_TITLE}
-            </h4>
+            <h4 className="mb-1.5 text-sm font-bold text-brand-700">{S.LOCKED_TITLE}</h4>
             <p className="mb-4 text-xs text-ink-600">
               {perm.isGuest ? S.LOCKED_DESC_GUEST : S.LOCKED_DESC_USER}
             </p>

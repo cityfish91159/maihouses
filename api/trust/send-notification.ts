@@ -17,19 +17,19 @@
  * - [Audit Logging] 結構化日誌（PII 遮罩）
  */
 
-import { messagingApi } from "@line/bot-sdk";
-import webpush from "web-push";
-import { z } from "zod";
-import { supabase } from "./_utils";
+import { messagingApi } from '@line/bot-sdk';
+import webpush from 'web-push';
+import { z } from 'zod';
+import { supabase } from './_utils';
 import {
   getNotifyTarget,
   type NotifyTarget,
   type NotifyTargetPush,
   type NotifyTargetLine,
-} from "./notify";
-import { logger } from "../lib/logger";
-import { captureError, addBreadcrumb } from "../lib/sentry";
-import { LineUserIdSchema, TRUST_ROOM_BASE_URL } from "./constants/validation";
+} from './notify';
+import { logger } from '../lib/logger';
+import { captureError, addBreadcrumb } from '../lib/sentry';
+import { LineUserIdSchema, TRUST_ROOM_BASE_URL } from './constants/validation';
 
 // ============================================================================
 // Constants
@@ -53,7 +53,7 @@ const EXPIRED_SUBSCRIPTION_STATUS_CODES = new Set([410, 404, 403]);
  */
 export interface NotificationMessage {
   /** 訊息類型（用於日誌分類） */
-  type: "step_update" | "case_closed" | "case_wake" | "custom";
+  type: 'step_update' | 'case_closed' | 'case_wake' | 'custom';
   /** 標題（例：「交易進度更新」） */
   title: string;
   /** 內容（例：「M2 帶看 → M3 出價」） */
@@ -63,12 +63,7 @@ export interface NotificationMessage {
 /**
  * 發送通道類型
  */
-export type SendChannel =
-  | "push"
-  | "line"
-  | "fallback_line"
-  | "none"
-  | "skipped";
+export type SendChannel = 'push' | 'line' | 'fallback_line' | 'none' | 'skipped';
 
 /**
  * 發送結果
@@ -95,7 +90,7 @@ const UUIDSchema = z.string().uuid();
 
 /** 通知訊息 Schema */
 const NotificationMessageSchema = z.object({
-  type: z.enum(["step_update", "case_closed", "case_wake", "custom"]),
+  type: z.enum(['step_update', 'case_closed', 'case_wake', 'custom']),
   title: z.string().min(1).max(100),
   body: z.string().min(1).max(500),
 });
@@ -121,7 +116,7 @@ const CaseFallbackFieldsSchema = z.object({
  * @internal
  */
 function maskUUID(uuid: string): string {
-  if (uuid.length < 8) return "***";
+  if (uuid.length < 8) return '***';
   return `${uuid.slice(0, 8)}...`;
 }
 
@@ -130,7 +125,7 @@ function maskUUID(uuid: string): string {
  * @internal
  */
 function maskLineId(lineId: string): string {
-  if (lineId.length < 5) return "***";
+  if (lineId.length < 5) return '***';
   return `${lineId.slice(0, 5)}...`;
 }
 
@@ -148,13 +143,15 @@ function delay(ms: number): Promise<void> {
  */
 async function withRetry<T>(
   fn: () => Promise<T>,
-  channel: "push" | "line",
-): Promise<{ success: true; result: T; retried?: boolean } | { success: false; error: string; retried: true }> {
+  channel: 'push' | 'line'
+): Promise<
+  { success: true; result: T; retried?: boolean } | { success: false; error: string; retried: true }
+> {
   try {
     const result = await fn();
     return { success: true, result };
   } catch (firstError) {
-    const firstErrorMsg = firstError instanceof Error ? firstError.message : "Unknown error";
+    const firstErrorMsg = firstError instanceof Error ? firstError.message : 'Unknown error';
     logger.warn(`[send-notification] ${channel} failed, retrying`, { error: firstErrorMsg });
   }
 
@@ -164,7 +161,7 @@ async function withRetry<T>(
     const result = await fn();
     return { success: true, result, retried: true };
   } catch (retryError) {
-    const retryErrorMsg = retryError instanceof Error ? retryError.message : "Unknown error";
+    const retryErrorMsg = retryError instanceof Error ? retryError.message : 'Unknown error';
     return { success: false, error: retryErrorMsg, retried: true };
   }
 }
@@ -181,10 +178,7 @@ function generateTrustRoomUrl(caseId: string): string {
  * 建構 LINE 訊息內容
  * @internal
  */
-function buildLineMessageText(
-  message: NotificationMessage,
-  trustRoomUrl: string,
-): string {
+function buildLineMessageText(message: NotificationMessage, trustRoomUrl: string): string {
   const emoji = getMessageEmoji(message.type);
   return `${emoji} ${message.title}\n\n${message.body}\n\n🔗 查看詳情：${trustRoomUrl}`;
 }
@@ -193,16 +187,16 @@ function buildLineMessageText(
  * 根據訊息類型取得 Emoji
  * @internal
  */
-function getMessageEmoji(type: NotificationMessage["type"]): string {
+function getMessageEmoji(type: NotificationMessage['type']): string {
   switch (type) {
-    case "step_update":
-      return "📝";
-    case "case_closed":
-      return "🔒";
-    case "case_wake":
-      return "🔔";
-    case "custom":
-      return "📣";
+    case 'step_update':
+      return '📝';
+    case 'case_closed':
+      return '🔒';
+    case 'case_wake':
+      return '🔔';
+    case 'custom':
+      return '📣';
   }
 }
 
@@ -222,7 +216,7 @@ function getLineClient(): messagingApi.MessagingApiClient | null {
 
   const lineChannelToken = process.env.LINE_CHANNEL_ACCESS_TOKEN;
   if (!lineChannelToken) {
-    logger.warn("[send-notification] LINE_CHANNEL_ACCESS_TOKEN not configured");
+    logger.warn('[send-notification] LINE_CHANNEL_ACCESS_TOKEN not configured');
     return null;
   }
 
@@ -243,7 +237,7 @@ function getLineClient(): messagingApi.MessagingApiClient | null {
 export type PushSender = (
   userId: string,
   message: NotificationMessage,
-  trustRoomUrl: string,
+  trustRoomUrl: string
 ) => Promise<void>;
 
 // ============================================================================
@@ -258,15 +252,14 @@ let vapidConfigPromise: Promise<void> | null = null;
  * @internal
  */
 async function configureVapid(): Promise<void> {
-
   // 從 Supabase Vault 讀取私鑰（使用 service_role client）
   const { data: privateKey, error: privateKeyError } = await supabase.rpc(
-    "fn_get_vapid_private_key",
+    'fn_get_vapid_private_key'
   );
 
   if (privateKeyError || !privateKey) {
-    const errMsg = privateKeyError?.message ?? "No data returned";
-    logger.error("[send-notification] Failed to get VAPID_PRIVATE_KEY from Vault", {
+    const errMsg = privateKeyError?.message ?? 'No data returned';
+    logger.error('[send-notification] Failed to get VAPID_PRIVATE_KEY from Vault', {
       error: errMsg,
     });
     throw new Error(`Failed to get VAPID_PRIVATE_KEY from Vault: ${errMsg}`);
@@ -276,17 +269,13 @@ async function configureVapid(): Promise<void> {
   // 注意：雖然 VITE_ 前綴通常是前端用，但 Vercel Serverless 也能讀取
   const publicKey = process.env.VITE_VAPID_PUBLIC_KEY;
   if (!publicKey) {
-    logger.error("[send-notification] VITE_VAPID_PUBLIC_KEY not configured");
-    throw new Error("VITE_VAPID_PUBLIC_KEY not configured");
+    logger.error('[send-notification] VITE_VAPID_PUBLIC_KEY not configured');
+    throw new Error('VITE_VAPID_PUBLIC_KEY not configured');
   }
 
-  webpush.setVapidDetails(
-    "mailto:support@maihouses.com",
-    publicKey,
-    privateKey,
-  );
+  webpush.setVapidDetails('mailto:support@maihouses.com', publicKey, privateKey);
 
-  logger.info("[send-notification] VAPID configured successfully");
+  logger.info('[send-notification] VAPID configured successfully');
 }
 
 /**
@@ -334,12 +323,12 @@ const PushSubscriptionsArraySchema = z.array(PushSubscriptionRowSchema);
  */
 async function fetchSubscriptions(userId: string): Promise<PushSubscriptionRow[]> {
   const { data: subscriptionsRaw, error: subsError } = await supabase.rpc(
-    "fn_get_push_subscriptions",
-    { p_profile_id: userId },
+    'fn_get_push_subscriptions',
+    { p_profile_id: userId }
   );
 
   if (subsError) {
-    logger.error("[send-notification] Failed to get push subscriptions", {
+    logger.error('[send-notification] Failed to get push subscriptions', {
       error: subsError.message,
       userIdMasked: maskUUID(userId),
     });
@@ -348,11 +337,11 @@ async function fetchSubscriptions(userId: string): Promise<PushSubscriptionRow[]
 
   const parseResult = PushSubscriptionsArraySchema.safeParse(subscriptionsRaw);
   if (!parseResult.success) {
-    logger.error("[send-notification] Invalid subscriptions data format", {
+    logger.error('[send-notification] Invalid subscriptions data format', {
       error: parseResult.error.message,
       userIdMasked: maskUUID(userId),
     });
-    throw new Error("Invalid subscriptions data format");
+    throw new Error('Invalid subscriptions data format');
   }
 
   return parseResult.data;
@@ -364,10 +353,10 @@ async function fetchSubscriptions(userId: string): Promise<PushSubscriptionRow[]
  */
 function getErrorStatusCode(error: unknown): number | undefined {
   if (
-    typeof error === "object" &&
+    typeof error === 'object' &&
     error !== null &&
-    "statusCode" in error &&
-    typeof (error as { statusCode: unknown }).statusCode === "number"
+    'statusCode' in error &&
+    typeof (error as { statusCode: unknown }).statusCode === 'number'
   ) {
     return (error as { statusCode: number }).statusCode;
   }
@@ -380,14 +369,14 @@ function getErrorStatusCode(error: unknown): number | undefined {
  */
 function getErrorMessage(error: unknown): string {
   if (
-    typeof error === "object" &&
+    typeof error === 'object' &&
     error !== null &&
-    "message" in error &&
-    typeof (error as { message: unknown }).message === "string"
+    'message' in error &&
+    typeof (error as { message: unknown }).message === 'string'
   ) {
     return (error as { message: string }).message;
   }
-  return "Unknown error";
+  return 'Unknown error';
 }
 
 /**
@@ -395,8 +384,8 @@ function getErrorMessage(error: unknown): string {
  * @internal
  */
 function trimToByteLength(value: string, maxBytes: number): string {
-  if (maxBytes <= 0) return "";
-  if (Buffer.byteLength(value, "utf8") <= maxBytes) return value;
+  if (maxBytes <= 0) return '';
+  if (Buffer.byteLength(value, 'utf8') <= maxBytes) return value;
 
   let low = 0;
   let high = value.length;
@@ -404,7 +393,7 @@ function trimToByteLength(value: string, maxBytes: number): string {
   while (low < high) {
     const mid = Math.floor((low + high) / 2);
     const slice = value.slice(0, mid);
-    if (Buffer.byteLength(slice, "utf8") <= maxBytes) {
+    if (Buffer.byteLength(slice, 'utf8') <= maxBytes) {
       low = mid + 1;
     } else {
       high = mid;
@@ -420,7 +409,7 @@ function trimToByteLength(value: string, maxBytes: number): string {
  */
 function buildPushPayload(
   message: NotificationMessage,
-  trustRoomUrl: string,
+  trustRoomUrl: string
 ): { payload: string; trimmed: boolean } {
   const basePayload = {
     title: message.title,
@@ -429,20 +418,19 @@ function buildPushPayload(
   };
 
   let payload = JSON.stringify(basePayload);
-  if (Buffer.byteLength(payload, "utf8") <= MAX_PUSH_PAYLOAD_BYTES) {
+  if (Buffer.byteLength(payload, 'utf8') <= MAX_PUSH_PAYLOAD_BYTES) {
     return { payload, trimmed: false };
   }
 
   const emptyBodyPayload = JSON.stringify({
     title: message.title,
-    body: "",
+    body: '',
     data: { url: trustRoomUrl },
   });
-  const emptyBodyBytes = Buffer.byteLength(emptyBodyPayload, "utf8");
+  const emptyBodyBytes = Buffer.byteLength(emptyBodyPayload, 'utf8');
   const availableBytes = Math.max(0, MAX_PUSH_PAYLOAD_BYTES - emptyBodyBytes - 3);
   const trimmedBody = trimToByteLength(message.body, availableBytes);
-  const finalBody =
-    trimmedBody.length < message.body.length ? `${trimmedBody}...` : trimmedBody;
+  const finalBody = trimmedBody.length < message.body.length ? `${trimmedBody}...` : trimmedBody;
 
   payload = JSON.stringify({
     title: message.title,
@@ -450,7 +438,7 @@ function buildPushPayload(
     data: { url: trustRoomUrl },
   });
 
-  if (Buffer.byteLength(payload, "utf8") > MAX_PUSH_PAYLOAD_BYTES) {
+  if (Buffer.byteLength(payload, 'utf8') > MAX_PUSH_PAYLOAD_BYTES) {
     payload = emptyBodyPayload;
   }
 
@@ -463,18 +451,18 @@ function buildPushPayload(
  */
 function buildPushOptions(message: NotificationMessage): {
   TTL: number;
-  urgency: "very-low" | "low" | "normal" | "high";
+  urgency: 'very-low' | 'low' | 'normal' | 'high';
   topic: string;
 } {
   switch (message.type) {
-    case "case_closed":
-      return { TTL: 24 * 60 * 60, urgency: "high", topic: "trust-case-closed" };
-    case "case_wake":
-      return { TTL: 24 * 60 * 60, urgency: "normal", topic: "trust-case-wake" };
-    case "step_update":
-      return { TTL: 60 * 60, urgency: "normal", topic: "trust-step-update" };
-    case "custom":
-      return { TTL: 60 * 60, urgency: "low", topic: "trust-custom" };
+    case 'case_closed':
+      return { TTL: 24 * 60 * 60, urgency: 'high', topic: 'trust-case-closed' };
+    case 'case_wake':
+      return { TTL: 24 * 60 * 60, urgency: 'normal', topic: 'trust-case-wake' };
+    case 'step_update':
+      return { TTL: 60 * 60, urgency: 'normal', topic: 'trust-step-update' };
+    case 'custom':
+      return { TTL: 60 * 60, urgency: 'low', topic: 'trust-custom' };
   }
 }
 
@@ -485,7 +473,7 @@ function buildPushOptions(message: NotificationMessage): {
 async function processSendResults(
   results: PromiseSettledResult<unknown>[],
   subscriptions: PushSubscriptionRow[],
-  userId: string,
+  userId: string
 ): Promise<{ successCount: number; failCount: number }> {
   let successCount = 0;
   let failCount = 0;
@@ -504,7 +492,7 @@ async function processSendResults(
 
   await deleteExpiredSubscriptions(userId, expiredEndpoints);
 
-  logger.info("[send-notification] Push send summary", {
+  logger.info('[send-notification] Push send summary', {
     userIdMasked: maskUUID(userId),
     successCount,
     failCount,
@@ -517,11 +505,11 @@ async function processSendResults(
 function handleSinglePushResult(
   result: PromiseSettledResult<unknown>,
   sub: PushSubscriptionRow,
-  expiredEndpoints: Set<string>,
+  expiredEndpoints: Set<string>
 ): { success: number; fail: number } {
-  if (result.status === "fulfilled") {
-    logger.info("[send-notification] Push sent successfully", {
-      endpoint: sub.endpoint.slice(0, 50) + "...",
+  if (result.status === 'fulfilled') {
+    logger.info('[send-notification] Push sent successfully', {
+      endpoint: sub.endpoint.slice(0, 50) + '...',
     });
     return { success: 1, fail: 0 };
   }
@@ -530,14 +518,14 @@ function handleSinglePushResult(
   const errorMessage = getErrorMessage(result.reason);
 
   if (statusCode && EXPIRED_SUBSCRIPTION_STATUS_CODES.has(statusCode)) {
-    logger.info("[send-notification] Subscription expired, queue delete", {
-      endpoint: sub.endpoint.slice(0, 50) + "...",
+    logger.info('[send-notification] Subscription expired, queue delete', {
+      endpoint: sub.endpoint.slice(0, 50) + '...',
       statusCode,
     });
     expiredEndpoints.add(sub.endpoint);
   } else {
-    logger.error("[send-notification] Push send failed", {
-      endpoint: sub.endpoint.slice(0, 50) + "...",
+    logger.error('[send-notification] Push send failed', {
+      endpoint: sub.endpoint.slice(0, 50) + '...',
       statusCode,
       message: errorMessage,
     });
@@ -548,24 +536,24 @@ function handleSinglePushResult(
 
 async function deleteExpiredSubscriptions(
   userId: string,
-  expiredEndpoints: Set<string>,
+  expiredEndpoints: Set<string>
 ): Promise<void> {
   if (expiredEndpoints.size === 0) return;
 
   const endpoints = Array.from(expiredEndpoints);
   const { error: deleteError } = await supabase
-    .from("push_subscriptions")
+    .from('push_subscriptions')
     .delete()
-    .eq("profile_id", userId)
-    .in("endpoint", endpoints);
+    .eq('profile_id', userId)
+    .in('endpoint', endpoints);
 
   if (deleteError) {
-    logger.error("[send-notification] Failed to delete expired subscriptions", {
+    logger.error('[send-notification] Failed to delete expired subscriptions', {
       error: deleteError.message,
       count: endpoints.length,
     });
   } else {
-    logger.info("[send-notification] Deleted expired subscriptions", {
+    logger.info('[send-notification] Deleted expired subscriptions', {
       count: endpoints.length,
     });
   }
@@ -588,7 +576,7 @@ async function deleteExpiredSubscriptions(
 export async function defaultSendPush(
   userId: string,
   message: NotificationMessage,
-  trustRoomUrl: string,
+  trustRoomUrl: string
 ): Promise<void> {
   validateUserIdOrThrow(userId);
   logSendPushStart(userId, message.type);
@@ -596,18 +584,10 @@ export async function defaultSendPush(
   await ensureVapidConfigured();
 
   const subscriptions = await fetchSubscriptionsOrThrow(userId);
-  const { payload, pushOptions } = buildPushPayloadAndOptions(
-    message,
-    trustRoomUrl,
-    userId,
-  );
+  const { payload, pushOptions } = buildPushPayloadAndOptions(message, trustRoomUrl, userId);
 
   const results = await sendPushNotifications(subscriptions, payload, pushOptions);
-  const { successCount, failCount } = await processSendResults(
-    results,
-    subscriptions,
-    userId,
-  );
+  const { successCount, failCount } = await processSendResults(results, subscriptions, userId);
 
   if (successCount === 0) {
     throw new Error(`All ${failCount} push subscriptions failed`);
@@ -621,28 +601,23 @@ function validateUserIdOrThrow(userId: string): void {
   }
 }
 
-function logSendPushStart(
-  userId: string,
-  messageType: NotificationMessage["type"],
-): void {
-  logger.info("[send-notification] sendPush called", {
+function logSendPushStart(userId: string, messageType: NotificationMessage['type']): void {
+  logger.info('[send-notification] sendPush called', {
     userIdMasked: maskUUID(userId),
     messageType,
   });
 }
 
-async function fetchSubscriptionsOrThrow(
-  userId: string,
-): Promise<PushSubscriptionRow[]> {
+async function fetchSubscriptionsOrThrow(userId: string): Promise<PushSubscriptionRow[]> {
   const subscriptions = await fetchSubscriptions(userId);
   if (subscriptions.length === 0) {
-    logger.warn("[send-notification] No push subscriptions found", {
+    logger.warn('[send-notification] No push subscriptions found', {
       userIdMasked: maskUUID(userId),
     });
-    throw new Error("No push subscriptions found");
+    throw new Error('No push subscriptions found');
   }
 
-  logger.info("[send-notification] Found subscriptions", {
+  logger.info('[send-notification] Found subscriptions', {
     userIdMasked: maskUUID(userId),
     count: subscriptions.length,
   });
@@ -653,14 +628,14 @@ async function fetchSubscriptionsOrThrow(
 function buildPushPayloadAndOptions(
   message: NotificationMessage,
   trustRoomUrl: string,
-  userId: string,
+  userId: string
 ): {
   payload: string;
-  pushOptions: { TTL: number; urgency: "very-low" | "low" | "normal" | "high"; topic: string };
+  pushOptions: { TTL: number; urgency: 'very-low' | 'low' | 'normal' | 'high'; topic: string };
 } {
   const { payload, trimmed } = buildPushPayload(message, trustRoomUrl);
   if (trimmed) {
-    logger.warn("[send-notification] Push payload trimmed due to size limit", {
+    logger.warn('[send-notification] Push payload trimmed due to size limit', {
       userIdMasked: maskUUID(userId),
       messageType: message.type,
     });
@@ -672,7 +647,7 @@ function buildPushPayloadAndOptions(
 async function sendPushNotifications(
   subscriptions: PushSubscriptionRow[],
   payload: string,
-  pushOptions: { TTL: number; urgency: "very-low" | "low" | "normal" | "high"; topic: string },
+  pushOptions: { TTL: number; urgency: 'very-low' | 'low' | 'normal' | 'high'; topic: string }
 ): Promise<PromiseSettledResult<unknown>[]> {
   return Promise.allSettled(
     subscriptions.map((sub) =>
@@ -682,9 +657,9 @@ async function sendPushNotifications(
           keys: { p256dh: sub.p256dh, auth: sub.auth },
         },
         payload,
-        pushOptions,
-      ),
-    ),
+        pushOptions
+      )
+    )
   );
 }
 
@@ -722,7 +697,7 @@ export function resetPushSender(): void {
 async function sendLine(
   lineId: string,
   message: NotificationMessage,
-  trustRoomUrl: string,
+  trustRoomUrl: string
 ): Promise<void> {
   // [NASA TypeScript Safety] 驗證 lineId 格式
   const lineIdResult = LineUserIdSchema.safeParse(lineId);
@@ -732,22 +707,22 @@ async function sendLine(
 
   const lineClient = getLineClient();
   if (!lineClient) {
-    throw new Error("LINE client not available");
+    throw new Error('LINE client not available');
   }
 
   const messageText = buildLineMessageText(message, trustRoomUrl);
 
-  logger.info("[send-notification] sendLine called", {
+  logger.info('[send-notification] sendLine called', {
     lineIdMasked: maskLineId(lineId),
     messageType: message.type,
   });
 
   await lineClient.pushMessage({
     to: lineId,
-    messages: [{ type: "text", text: messageText }],
+    messages: [{ type: 'text', text: messageText }],
   });
 
-  logger.info("[send-notification] LINE push succeeded", {
+  logger.info('[send-notification] LINE push succeeded', {
     lineIdMasked: maskLineId(lineId),
   });
 }
@@ -769,17 +744,17 @@ async function logNotificationFailure(
   message: NotificationMessage,
   error: string,
   channel: SendChannel,
-  retried: boolean,
+  retried: boolean
 ): Promise<void> {
   const targetId = target
-    ? target.type === "push"
+    ? target.type === 'push'
       ? maskUUID(target.userId)
       : maskLineId(target.lineId)
-    : "none";
+    : 'none';
 
-  const targetType = target?.type ?? "none";
+  const targetType = target?.type ?? 'none';
 
-  logger.error("[send-notification] Notification failed", new Error(error), {
+  logger.error('[send-notification] Notification failed', new Error(error), {
     caseIdMasked: maskUUID(caseId),
     targetType,
     targetIdMasked: targetId,
@@ -799,16 +774,16 @@ async function logNotificationFailure(
 
   // 寫入 DB 日誌（使用 trust_case_events 表記錄系統事件）
   try {
-    await supabase.from("trust_case_events").insert({
+    await supabase.from('trust_case_events').insert({
       case_id: caseId,
       step: 0, // 系統事件
-      step_name: "系統通知",
+      step_name: '系統通知',
       action: `通知失敗：${message.type}`,
-      actor: "system",
-      detail: `${channel} 發送失敗${retried ? "（已重試）" : ""}：${error}`,
+      actor: 'system',
+      detail: `${channel} 發送失敗${retried ? '（已重試）' : ''}：${error}`,
     });
   } catch (dbError) {
-    logger.error("[send-notification] Failed to log to DB", dbError);
+    logger.error('[send-notification] Failed to log to DB', dbError);
   }
 }
 
@@ -823,14 +798,14 @@ async function logNotificationFailure(
  */
 async function getFallbackLineId(caseId: string): Promise<string | null> {
   const { data, error } = await supabase
-    .from("trust_cases")
-    .select("buyer_user_id, buyer_line_id")
-    .eq("id", caseId)
+    .from('trust_cases')
+    .select('buyer_user_id, buyer_line_id')
+    .eq('id', caseId)
     .single();
 
   // 修復 #7: DB 錯誤要 log
   if (error) {
-    logger.error("[send-notification] getFallbackLineId DB error", {
+    logger.error('[send-notification] getFallbackLineId DB error', {
       caseIdMasked: maskUUID(caseId),
       error: error.message,
       code: error.code,
@@ -839,7 +814,7 @@ async function getFallbackLineId(caseId: string): Promise<string | null> {
   }
 
   if (!data) {
-    logger.warn("[send-notification] getFallbackLineId no data", {
+    logger.warn('[send-notification] getFallbackLineId no data', {
       caseIdMasked: maskUUID(caseId),
     });
     return null;
@@ -847,7 +822,7 @@ async function getFallbackLineId(caseId: string): Promise<string | null> {
 
   const parseResult = CaseFallbackFieldsSchema.safeParse(data);
   if (!parseResult.success) {
-    logger.warn("[send-notification] getFallbackLineId invalid schema", {
+    logger.warn('[send-notification] getFallbackLineId invalid schema', {
       caseIdMasked: maskUUID(caseId),
       issues: parseResult.error.issues,
     });
@@ -896,7 +871,7 @@ async function getFallbackLineId(caseId: string): Promise<string | null> {
  */
 export async function sendNotification(
   caseId: string,
-  message: NotificationMessage,
+  message: NotificationMessage
 ): Promise<SendResult> {
   // [NASA TypeScript Safety] 函數入口驗證
   const paramsResult = SendNotificationParamsSchema.safeParse({
@@ -907,25 +882,25 @@ export async function sendNotification(
     const zodErrors = paramsResult.error?.issues ?? [];
     const errorMsg =
       zodErrors.length > 0
-        ? zodErrors.map((e: { message: string }) => e.message).join(", ")
-        : "Invalid parameters";
-    logger.warn("[send-notification] Invalid params", {
+        ? zodErrors.map((e: { message: string }) => e.message).join(', ')
+        : 'Invalid parameters';
+    logger.warn('[send-notification] Invalid params', {
       error: errorMsg,
     });
     return {
       success: false,
-      channel: "none",
+      channel: 'none',
       error: `Invalid parameters: ${errorMsg}`,
     };
   }
 
   // 添加 Sentry breadcrumb
-  addBreadcrumb("sendNotification called", "trust.notification", {
+  addBreadcrumb('sendNotification called', 'trust.notification', {
     caseId: maskUUID(caseId),
     messageType: message.type,
   });
 
-  logger.info("[send-notification] Starting notification", {
+  logger.info('[send-notification] Starting notification', {
     caseIdMasked: maskUUID(caseId),
     messageType: message.type,
   });
@@ -935,33 +910,33 @@ export async function sendNotification(
   try {
     target = await getNotifyTarget(caseId);
   } catch (err) {
-    const errorMsg = err instanceof Error ? err.message : "Unknown error";
-    logger.error("[send-notification] getNotifyTarget failed", err, {
+    const errorMsg = err instanceof Error ? err.message : 'Unknown error';
+    logger.error('[send-notification] getNotifyTarget failed', err, {
       caseIdMasked: maskUUID(caseId),
     });
     return {
       success: false,
-      channel: "none",
+      channel: 'none',
       error: errorMsg,
     };
   }
 
   // Step 2: 無通知目標
   if (!target) {
-    logger.info("[send-notification] No notify target", {
+    logger.info('[send-notification] No notify target', {
       caseIdMasked: maskUUID(caseId),
     });
     return {
       success: false,
-      channel: "none",
-      error: "No notification target available",
+      channel: 'none',
+      error: 'No notification target available',
     };
   }
 
   const trustRoomUrl = generateTrustRoomUrl(caseId);
 
   // Step 3: 根據類型發送
-  if (target.type === "push") {
+  if (target.type === 'push') {
     return sendWithPushAndFallback(caseId, target, message, trustRoomUrl);
   } else {
     return sendWithLineAndRetry(caseId, target, message, trustRoomUrl);
@@ -976,13 +951,13 @@ async function sendWithPushAndFallback(
   caseId: string,
   target: NotifyTargetPush,
   message: NotificationMessage,
-  trustRoomUrl: string,
+  trustRoomUrl: string
 ): Promise<SendResult> {
   const pushAttempt = await retryPushSend(target.userId, message, trustRoomUrl);
   if (pushAttempt.success) {
     return {
       success: true,
-      channel: "push",
+      channel: 'push',
       retried: pushAttempt.retried,
     };
   }
@@ -992,20 +967,17 @@ async function sendWithPushAndFallback(
     target,
     message,
     trustRoomUrl,
-    pushAttempt.error ?? "Unknown error",
+    pushAttempt.error ?? 'Unknown error'
   );
 }
 
 async function retryPushSend(
   userId: string,
   message: NotificationMessage,
-  trustRoomUrl: string,
+  trustRoomUrl: string
 ): Promise<{ success: boolean; retried?: boolean; error?: string }> {
   // 使用共用重試邏輯
-  const result = await withRetry(
-    () => pushSender(userId, message, trustRoomUrl),
-    "push",
-  );
+  const result = await withRetry(() => pushSender(userId, message, trustRoomUrl), 'push');
   return result.success
     ? { success: true, retried: result.retried }
     : { success: false, retried: result.retried, error: result.error };
@@ -1016,56 +988,49 @@ async function attemptLineFallback(
   target: NotifyTargetPush,
   message: NotificationMessage,
   trustRoomUrl: string,
-  pushErrorMsg: string,
+  pushErrorMsg: string
 ): Promise<SendResult> {
   const fallbackLineId = await getFallbackLineId(caseId);
   if (!fallbackLineId) {
-    await logNotificationFailure(
-      caseId,
-      target,
-      message,
-      pushErrorMsg,
-      "push",
-      true,
-    );
+    await logNotificationFailure(caseId, target, message, pushErrorMsg, 'push', true);
 
     return {
       success: false,
-      channel: "push",
+      channel: 'push',
       error: pushErrorMsg,
       retried: true,
     };
   }
 
-  logger.info("[send-notification] Attempting LINE fallback", {
+  logger.info('[send-notification] Attempting LINE fallback', {
     caseIdMasked: maskUUID(caseId),
   });
 
   try {
     await sendLine(fallbackLineId, message, trustRoomUrl);
-    logger.info("[send-notification] LINE fallback succeeded");
+    logger.info('[send-notification] LINE fallback succeeded');
     return {
       success: true,
-      channel: "fallback_line",
+      channel: 'fallback_line',
       retried: true,
       fallback: true,
     };
   } catch (fallbackError) {
     const fallbackErrorMsg =
-      fallbackError instanceof Error ? fallbackError.message : "Unknown error";
+      fallbackError instanceof Error ? fallbackError.message : 'Unknown error';
 
     await logNotificationFailure(
       caseId,
       target,
       message,
       `Push failed: ${pushErrorMsg}, LINE fallback failed: ${fallbackErrorMsg}`,
-      "fallback_line",
-      true,
+      'fallback_line',
+      true
     );
 
     return {
       success: false,
-      channel: "fallback_line",
+      channel: 'fallback_line',
       error: fallbackErrorMsg,
       retried: true,
       fallback: true,
@@ -1081,34 +1046,24 @@ async function sendWithLineAndRetry(
   caseId: string,
   target: NotifyTargetLine,
   message: NotificationMessage,
-  trustRoomUrl: string,
+  trustRoomUrl: string
 ): Promise<SendResult> {
   const skipResult = ensureLineClientAvailable(caseId);
   if (skipResult) return skipResult;
 
   // 使用共用重試邏輯
-  const result = await withRetry(
-    () => sendLine(target.lineId, message, trustRoomUrl),
-    "line",
-  );
+  const result = await withRetry(() => sendLine(target.lineId, message, trustRoomUrl), 'line');
 
   if (result.success) {
-    return { success: true, channel: "line", retried: result.retried };
+    return { success: true, channel: 'line', retried: result.retried };
   }
 
   // LINE 重試失敗
-  await logNotificationFailure(
-    caseId,
-    target,
-    message,
-    result.error,
-    "line",
-    true,
-  );
+  await logNotificationFailure(caseId, target, message, result.error, 'line', true);
 
   return {
     success: false,
-    channel: "line",
+    channel: 'line',
     error: result.error,
     retried: true,
   };
@@ -1118,13 +1073,13 @@ function ensureLineClientAvailable(caseId: string): SendResult | null {
   const lineClient = getLineClient();
   if (lineClient) return null;
 
-  logger.warn("[send-notification] LINE not available, skipping", {
+  logger.warn('[send-notification] LINE not available, skipping', {
     caseIdMasked: maskUUID(caseId),
   });
   return {
     success: false,
-    channel: "skipped",
-    error: "LINE client not configured",
+    channel: 'skipped',
+    error: 'LINE client not configured',
   };
 }
 
@@ -1144,16 +1099,16 @@ export async function sendStepUpdateNotification(
   caseId: string,
   fromStep: number,
   toStep: number,
-  propertyTitle?: string,
+  propertyTitle?: string
 ): Promise<SendResult> {
   // 使用共用的步驟名稱函數
-  const { getStepName } = await import("./services/case-query");
+  const { getStepName } = await import('./services/case-query');
   const fromName = getStepName(fromStep);
   const toName = getStepName(toStep);
 
   const message: NotificationMessage = {
-    type: "step_update",
-    title: propertyTitle ? `${propertyTitle} 進度更新` : "交易進度更新",
+    type: 'step_update',
+    title: propertyTitle ? `${propertyTitle} 進度更新` : '交易進度更新',
     body: `${fromName} → ${toName}`,
   };
 
@@ -1161,13 +1116,13 @@ export async function sendStepUpdateNotification(
 }
 
 /** 關閉原因類型 - 導出供 close.ts 使用 */
-export type CloseReason = "closed_sold_to_other" | "closed_property_unlisted" | "closed_inactive";
+export type CloseReason = 'closed_sold_to_other' | 'closed_property_unlisted' | 'closed_inactive';
 
 /** 關閉原因對應文字 */
 export const CLOSE_REASON_TEXTS: Record<CloseReason, string> = {
-  closed_sold_to_other: "此物件已由其他買方成交，感謝您的關注",
-  closed_property_unlisted: "此物件已下架，案件已關閉",
-  closed_inactive: "案件因長期無互動已自動關閉",
+  closed_sold_to_other: '此物件已由其他買方成交，感謝您的關注',
+  closed_property_unlisted: '此物件已下架，案件已關閉',
+  closed_inactive: '案件因長期無互動已自動關閉',
 };
 
 /**
@@ -1179,16 +1134,13 @@ export const CLOSE_REASON_TEXTS: Record<CloseReason, string> = {
  */
 export async function sendCaseClosedNotification(
   caseId: string,
-  reason:
-    | "closed_sold_to_other"
-    | "closed_property_unlisted"
-    | "closed_inactive",
-  propertyTitle?: string,
+  reason: 'closed_sold_to_other' | 'closed_property_unlisted' | 'closed_inactive',
+  propertyTitle?: string
 ): Promise<SendResult> {
   const message: NotificationMessage = {
-    type: "case_closed",
-    title: propertyTitle ? `${propertyTitle} 案件已關閉` : "案件已關閉",
-    body: CLOSE_REASON_TEXTS[reason] ?? "案件已關閉",
+    type: 'case_closed',
+    title: propertyTitle ? `${propertyTitle} 案件已關閉` : '案件已關閉',
+    body: CLOSE_REASON_TEXTS[reason] ?? '案件已關閉',
   };
 
   return sendNotification(caseId, message);
@@ -1202,17 +1154,13 @@ export async function sendCaseClosedNotification(
  */
 export async function sendCaseWakeNotification(
   caseId: string,
-  propertyTitle?: string,
+  propertyTitle?: string
 ): Promise<SendResult> {
   const message: NotificationMessage = {
-    type: "case_wake",
-    title: propertyTitle ? `${propertyTitle} 交易已恢復` : "交易已恢復",
-    body: "您的交易已恢復進行中，歡迎繼續追蹤進度",
+    type: 'case_wake',
+    title: propertyTitle ? `${propertyTitle} 交易已恢復` : '交易已恢復',
+    body: '您的交易已恢復進行中，歡迎繼續追蹤進度',
   };
 
   return sendNotification(caseId, message);
 }
-
-
-
-

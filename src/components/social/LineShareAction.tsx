@@ -1,6 +1,6 @@
-import React from "react";
-import { MessageCircle } from "lucide-react";
-import { notify } from "../../lib/notify";
+import React from 'react';
+import { MessageCircle } from 'lucide-react';
+import { notify } from '../../lib/notify';
 
 interface ShareProps {
   url: string;
@@ -16,17 +16,17 @@ export const LineShareAction: React.FC<ShareProps> = ({
   url,
   title,
   onShareClick,
-  className = "", // Default to empty string to fix undefined type error
-  btnText = "LINE 分享",
+  className = '', // Default to empty string to fix undefined type error
+  btnText = 'LINE 分享',
   showIcon = true,
-  wrapperClass = "inline-block", // Default to inline-block
+  wrapperClass = 'inline-block', // Default to inline-block
 }) => {
   const handleShare = () => {
     // 1. Trigger mascot celebration (Global Event)
-    window.dispatchEvent(new CustomEvent("mascot:celebrate"));
+    window.dispatchEvent(new CustomEvent('mascot:celebrate'));
 
     // 2. Notify user
-    notify.success("✨ 準備分享至 LINE", "MaiMai 已經幫您整理好物件摘要了！");
+    notify.success('✨ 準備分享至 LINE', 'MaiMai 已經幫您整理好物件摘要了！');
 
     // 3. Tracking callback (Intent only)
     if (onShareClick) {
@@ -35,7 +35,7 @@ export const LineShareAction: React.FC<ShareProps> = ({
 
     // 4. Open LINE share window
     const shareUrl = `https://social-plugins.line.me/lineit/share?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title)}`;
-    window.open(shareUrl, "_blank", "noopener,noreferrer");
+    window.open(shareUrl, '_blank', 'noopener,noreferrer');
   };
 
   // NOTE: react-share's LineShareButton opens the window immediately on click.
@@ -50,7 +50,7 @@ export const LineShareAction: React.FC<ShareProps> = ({
       role="button"
       tabIndex={0}
       onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
+        if (e.key === 'Enter' || e.key === ' ') {
           handleShare();
         }
       }}
@@ -61,10 +61,7 @@ export const LineShareAction: React.FC<ShareProps> = ({
          because react-share buttons might consume onClick for their window.open logic 
          but we want to track it "as it happens".
        */}
-      <button
-        type="button"
-        className={`flex items-center justify-center gap-2 ${className}`}
-      >
+      <button type="button" className={`flex items-center justify-center gap-2 ${className}`}>
         {showIcon && <MessageCircle size={18} />}
         <span>{btnText}</span>
       </button>

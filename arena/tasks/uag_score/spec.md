@@ -24,7 +24,7 @@ interface UAGInput {
 ```typescript
 interface UAGOutput {
   score: number; // 0-100
-  level: "S" | "A" | "B" | "C" | "F";
+  level: 'S' | 'A' | 'B' | 'C' | 'F';
   breakdown: {
     verification: number; // 0-30
     quality: number; // 0-25

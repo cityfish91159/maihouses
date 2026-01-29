@@ -16,18 +16,18 @@
 
 ### 必備 Skills 清單（每個任務都必須使用）
 
-| # | Skill | 用途 | 檢測方式 |
-|---|-------|------|----------|
-| 1 | /memory_bank | 防止遺忘 | 是否讀寫 MEMORY.md |
-| 2 | /context_mastery | 節省 Token | 是否用 Grep 代替整檔 Read |
-| 3 | /read-before-edit | 防止瞎改 | Edit 前是否有 Read |
-| 4 | /no_lazy_implementation | 防止佔位符 | 是否有 TODO/FIXME |
-| 5 | /agentic_architecture | 確保架構 | 是否先定義 types |
-| 6 | /audit_logging | 審計日誌 | API 是否有 logger |
-| 7 | /google_grade_reviewer | Google 審查 | 是否 Atomic Change |
-| 8 | /react_perf_perfection | React 效能 | 依賴陣列是否正確 |
-| 9 | /backend_safeguard | 後端安全 | API 是否有 Zod |
-| 10 | /nasa_typescript_safety | 類型安全 | 是否有 any |
+| #   | Skill                   | 用途        | 檢測方式                  |
+| --- | ----------------------- | ----------- | ------------------------- |
+| 1   | /memory_bank            | 防止遺忘    | 是否讀寫 MEMORY.md        |
+| 2   | /context_mastery        | 節省 Token  | 是否用 Grep 代替整檔 Read |
+| 3   | /read-before-edit       | 防止瞎改    | Edit 前是否有 Read        |
+| 4   | /no_lazy_implementation | 防止佔位符  | 是否有 TODO/FIXME         |
+| 5   | /agentic_architecture   | 確保架構    | 是否先定義 types          |
+| 6   | /audit_logging          | 審計日誌    | API 是否有 logger         |
+| 7   | /google_grade_reviewer  | Google 審查 | 是否 Atomic Change        |
+| 8   | /react_perf_perfection  | React 效能  | 依賴陣列是否正確          |
+| 9   | /backend_safeguard      | 後端安全    | API 是否有 Zod            |
+| 10  | /nasa_typescript_safety | 類型安全    | 是否有 any                |
 
 ---
 
@@ -43,6 +43,7 @@ echo "=== [1/10] memory_bank 審計 ===" && ls -la MEMORY.md 2>/dev/null || echo
 ```
 
 **檢測邏輯**：
+
 - MEMORY.md 不存在 = 🔴 Critical（從未建立記憶庫）
 - 本次 Session 沒有 Read MEMORY.md = 🔴 Critical（沒讀記憶）
 - 任務結束沒有更新 MEMORY.md = 🟡 High（沒寫記憶）
@@ -50,12 +51,14 @@ echo "=== [1/10] memory_bank 審計 ===" && ls -la MEMORY.md 2>/dev/null || echo
 ### 2.2 context_mastery 審計
 
 **檢測邏輯**（從對話歷史分析）：
+
 - 是否對大檔案（>500行）直接使用 Read 而非 Grep = 🟡 High
 - 是否讀取了不相關的檔案 = 🟠 Medium
 
 ### 2.3 read-before-edit 審計
 
 **檢測邏輯**（從對話歷史分析）：
+
 - 統計 Edit 工具調用次數
 - 統計對應檔案的 Read 工具調用次數
 - Edit 數 > Read 數 = 🔴 Critical（瞎改）
@@ -68,12 +71,14 @@ echo "=== [4/10] no_lazy_implementation 審計 ===" && grep -rn "// TODO\|// FIX
 ```
 
 **檢測邏輯**：
+
 - 找到 `// TODO` 或 `// FIXME` = 🟡 High（未完成）
 - 找到 `// ...` 或 `// implement` = 🔴 Critical（偷懶）
 
 ### 2.5 agentic_architecture 審計
 
 **檢測邏輯**（從對話歷史 + 代碼分析）：
+
 - 新功能是否先建立 types/ 定義 = 🟡 High
 - 是否混雜 API/UI/Hook 邏輯 = 🟠 Medium
 
@@ -112,14 +117,16 @@ echo "掃描完成"
 ```
 
 **檢測邏輯**：
+
 - 有 POST/PUT/DELETE 但沒有 logger = 🔴 Critical
-- api/lib/* 工具函數 = 不檢查（排除）
+- api/lib/\* 工具函數 = 不檢查（排除）
 - 只有 GET 的 endpoint = 不檢查（純讀取）
 - 只有 interface/type 導出 = 不檢查（非 endpoint）
 
 ### 2.7 google_grade_reviewer 審計
 
 **檢測邏輯**（從對話歷史分析）：
+
 - 一次 commit 包含多個不相關變更 = 🟡 High（非 Atomic）
 - 沒有解釋 WHY 的 hack 代碼 = 🟠 Medium
 
@@ -132,6 +139,7 @@ echo "--- 空依賴 useEffect ---" && grep -rn "useEffect(\s*() =>" src/ --inclu
 ```
 
 **檢測邏輯**：
+
 - 使用 `from 'lodash'` 而非直接路徑 = 🟠 Medium
 - useEffect 空依賴但有外部變數 = 🟡 High
 
@@ -143,6 +151,7 @@ echo "=== [9/10] backend_safeguard 審計 ===" && for f in $(find api -name "*.t
 ```
 
 **檢測邏輯**：
+
 - API endpoint 無 Zod 驗證 = 🔴 Critical
 - 錯誤回應洩漏 stack trace = 🔴 Critical
 
@@ -155,6 +164,7 @@ echo "--- unsafe cast ---" && grep -rn "as unknown as\|as any" src/ --include="*
 ```
 
 **檢測邏輯**：
+
 - 找到 `: any` = 🔴 Critical
 - 找到 `as unknown as` = 🔴 Critical
 - 找到 `as any` = 🔴 Critical
@@ -213,15 +223,15 @@ npm test 2>&1 | grep -E "(Tests|test files|passed|failed|PASS|FAIL)" | tail -10
 
 ### 5.1 統計工具調用
 
-| 工具 | 調用次數 | 說明 |
-|------|----------|------|
-| Read | ? | 讀取檔案 |
-| Edit | ? | 編輯檔案 |
-| Write | ? | 寫入檔案 |
-| Bash | ? | 執行命令 |
-| Grep | ? | 搜尋內容 |
-| Glob | ? | 搜尋檔案 |
-| Skill | ? | 調用 Skill |
+| 工具  | 調用次數 | 說明       |
+| ----- | -------- | ---------- |
+| Read  | ?        | 讀取檔案   |
+| Edit  | ?        | 編輯檔案   |
+| Write | ?        | 寫入檔案   |
+| Bash  | ?        | 執行命令   |
+| Grep  | ?        | 搜尋內容   |
+| Glob  | ?        | 搜尋檔案   |
+| Skill | ?        | 調用 Skill |
 
 ### 5.2 Read vs Edit 比對
 
@@ -233,18 +243,18 @@ npm test 2>&1 | grep -E "(Tests|test files|passed|failed|PASS|FAIL)" | tail -10
 
 檢查對話歷史中是否有 `<invoke name="Skill">` 調用：
 
-| 必備 Skill | 是否有調用記錄 |
-|------------|----------------|
-| /memory_bank | ✅/❌ |
-| /context_mastery | ✅/❌ |
-| /read-before-edit | ✅/❌ |
-| /no_lazy_implementation | ✅/❌ |
-| /agentic_architecture | ✅/❌ |
-| /audit_logging | ✅/❌ |
-| /google_grade_reviewer | ✅/❌ |
-| /react_perf_perfection | ✅/❌ |
-| /backend_safeguard | ✅/❌ |
-| /nasa_typescript_safety | ✅/❌ |
+| 必備 Skill              | 是否有調用記錄 |
+| ----------------------- | -------------- |
+| /memory_bank            | ✅/❌          |
+| /context_mastery        | ✅/❌          |
+| /read-before-edit       | ✅/❌          |
+| /no_lazy_implementation | ✅/❌          |
+| /agentic_architecture   | ✅/❌          |
+| /audit_logging          | ✅/❌          |
+| /google_grade_reviewer  | ✅/❌          |
+| /react_perf_perfection  | ✅/❌          |
+| /backend_safeguard      | ✅/❌          |
+| /nasa_typescript_safety | ✅/❌          |
 
 **缺失的必備 Skill = 🔴 Critical 便宜行事**
 
@@ -265,13 +275,13 @@ npm test 2>&1 | grep -E "(Tests|test files|passed|failed|PASS|FAIL)" | tail -10
 
 ## 📊 執行摘要
 
-| 類別 | 結果 |
-|------|------|
-| 必備 Skills 使用 | X/10 |
-| 禁止模式違規 | X 處 |
-| TypeScript | ✅/❌ |
-| ESLint | ✅/❌ |
-| 測試 | X/Y passed |
+| 類別             | 結果       |
+| ---------------- | ---------- |
+| 必備 Skills 使用 | X/10       |
+| 禁止模式違規     | X 處       |
+| TypeScript       | ✅/❌      |
+| ESLint           | ✅/❌      |
+| 測試             | X/Y passed |
 
 ---
 
@@ -279,49 +289,49 @@ npm test 2>&1 | grep -E "(Tests|test files|passed|failed|PASS|FAIL)" | tail -10
 
 ### 🔴 Critical（必須立即修復）
 
-| # | 類型 | 問題 | 位置/證據 |
-|---|------|------|-----------|
-| 1 | 必備 Skill 缺失 | 未使用 /memory_bank | 對話歷史無調用 |
-| 2 | any 類型 | `: any` | src/foo.ts:42 |
+| #   | 類型            | 問題                | 位置/證據      |
+| --- | --------------- | ------------------- | -------------- |
+| 1   | 必備 Skill 缺失 | 未使用 /memory_bank | 對話歷史無調用 |
+| 2   | any 類型        | `: any`             | src/foo.ts:42  |
 
 ### 🟡 High（需要解釋）
 
-| # | 類型 | 問題 | 位置/證據 |
-|---|------|------|-----------|
-| 1 | 未完成代碼 | `// TODO` | src/bar.ts:100 |
+| #   | 類型       | 問題      | 位置/證據      |
+| --- | ---------- | --------- | -------------- |
+| 1   | 未完成代碼 | `// TODO` | src/bar.ts:100 |
 
 ### 🟠 Medium（需要關注）
 
-| # | 類型 | 問題 | 位置/證據 |
-|---|------|------|-----------|
-| 1 | 效能問題 | barrel import | src/utils.ts:1 |
+| #   | 類型     | 問題          | 位置/證據      |
+| --- | -------- | ------------- | -------------- |
+| 1   | 效能問題 | barrel import | src/utils.ts:1 |
 
 ---
 
 ## ✅ 通過項目
 
-| 檢查項 | 結果 |
-|--------|------|
-| TypeScript 編譯 | 0 errors |
-| ESLint | 0 warnings |
-| 測試通過率 | 100% |
-| 無 console.log | ✅ |
+| 檢查項          | 結果       |
+| --------------- | ---------- |
+| TypeScript 編譯 | 0 errors   |
+| ESLint          | 0 warnings |
+| 測試通過率      | 100%       |
+| 無 console.log  | ✅         |
 
 ---
 
 ## 📋 必備 Skills 使用狀態
 
-| Skill | 狀態 | 證據 |
-|-------|------|------|
-| /memory_bank | ✅/❌ | [說明] |
-| /context_mastery | ✅/❌ | [說明] |
-| /read-before-edit | ✅/❌ | [說明] |
+| Skill                   | 狀態  | 證據   |
+| ----------------------- | ----- | ------ |
+| /memory_bank            | ✅/❌ | [說明] |
+| /context_mastery        | ✅/❌ | [說明] |
+| /read-before-edit       | ✅/❌ | [說明] |
 | /no_lazy_implementation | ✅/❌ | [說明] |
-| /agentic_architecture | ✅/❌ | [說明] |
-| /audit_logging | ✅/❌ | [說明] |
-| /google_grade_reviewer | ✅/❌ | [說明] |
-| /react_perf_perfection | ✅/❌ | [說明] |
-| /backend_safeguard | ✅/❌ | [說明] |
+| /agentic_architecture   | ✅/❌ | [說明] |
+| /audit_logging          | ✅/❌ | [說明] |
+| /google_grade_reviewer  | ✅/❌ | [說明] |
+| /react_perf_perfection  | ✅/❌ | [說明] |
+| /backend_safeguard      | ✅/❌ | [說明] |
 | /nasa_typescript_safety | ✅/❌ | [說明] |
 
 ---
@@ -333,32 +343,44 @@ npm test 2>&1 | grep -E "(Tests|test files|passed|failed|PASS|FAIL)" | tail -10
 
 ### no_lazy_implementation 掃描
 ```
+
 [貼上完整輸出]
+
 ```
 
 ### nasa_typescript_safety 掃描
 ```
+
 [貼上完整輸出]
+
 ```
 
 ### 禁止模式統計
 ```
+
 [貼上完整輸出]
+
 ```
 
 ### npm run typecheck
 ```
+
 [貼上完整輸出]
+
 ```
 
 ### npm run lint
 ```
+
 [貼上完整輸出]
+
 ```
 
 ### npm test
 ```
+
 [貼上完整輸出]
+
 ```
 
 </details>
@@ -388,16 +410,16 @@ npm test 2>&1 | grep -E "(Tests|test files|passed|failed|PASS|FAIL)" | tail -10
 
 最後，對本次審計執行進行自我檢查：
 
-| 檢查項 | 狀態 |
-|--------|------|
+| 檢查項                                 | 狀態  |
+| -------------------------------------- | ----- |
 | 是否執行了所有 10 個必備 Skills 檢查？ | ✅/❌ |
-| 是否執行了禁止模式掃描？ | ✅/❌ |
-| 是否執行了 npm run typecheck？ | ✅/❌ |
-| 是否執行了 npm run lint？ | ✅/❌ |
-| 是否執行了 npm test？ | ✅/❌ |
-| 是否顯示了完整的命令輸出？ | ✅/❌ |
-| 是否生成了完整的審計報告？ | ✅/❌ |
-| 是否誠實報告了所有發現？ | ✅/❌ |
+| 是否執行了禁止模式掃描？               | ✅/❌ |
+| 是否執行了 npm run typecheck？         | ✅/❌ |
+| 是否執行了 npm run lint？              | ✅/❌ |
+| 是否執行了 npm test？                  | ✅/❌ |
+| 是否顯示了完整的命令輸出？             | ✅/❌ |
+| 是否生成了完整的審計報告？             | ✅/❌ |
+| 是否誠實報告了所有發現？               | ✅/❌ |
 
 **如果任何項目為 ❌，則本次審計本身就是「便宜行事」。**
 

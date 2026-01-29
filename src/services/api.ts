@@ -1,7 +1,7 @@
-import { v4 as uuidv4 } from "uuid";
-import { getConfig } from "../app/config";
-import { postLLM } from "./ai";
-import { logger } from "../lib/logger";
+import { v4 as uuidv4 } from 'uuid';
+import { getConfig } from '../app/config';
+import { postLLM } from './ai';
+import { logger } from '../lib/logger';
 import type {
   ApiResponse,
   Paginated,
@@ -10,26 +10,26 @@ import type {
   AiAskReq,
   AiAskRes,
   CommunityPreview,
-} from "../types";
+} from '../types';
 
 let sessionId = uuidv4();
 export const getSessionId = () => sessionId;
 
 export async function apiFetch<T = unknown>(
   endpoint: string,
-  options: RequestInit = {},
+  options: RequestInit = {}
 ): Promise<ApiResponse<T>> {
   const cfg = await getConfig();
   const url = `${cfg.apiBaseUrl}${endpoint}`;
-  const method = (options.method || "GET").toUpperCase();
+  const method = (options.method || 'GET').toUpperCase();
 
   const baseHeaders: Record<string, string> = {
-    Accept: "application/json",
-    "X-API-Version": "v1",
-    "X-App-Version": cfg.appVersion,
-    "X-Session-Id": sessionId,
-    "X-Request-Id": uuidv4(),
-    "Accept-Language": "zh-Hant-TW",
+    Accept: 'application/json',
+    'X-API-Version': 'v1',
+    'X-App-Version': cfg.appVersion,
+    'X-Session-Id': sessionId,
+    'X-Request-Id': uuidv4(),
+    'Accept-Language': 'zh-Hant-TW',
   };
 
   const userHeaders: Record<string, string> = (() => {
@@ -46,18 +46,14 @@ export async function apiFetch<T = unknown>(
     return h;
   })();
 
-  if (
-    method === "POST" &&
-    !userHeaders["Idempotency-Key"] &&
-    !userHeaders["idempotency-key"]
-  ) {
-    userHeaders["Idempotency-Key"] = uuidv4();
+  if (method === 'POST' && !userHeaders['Idempotency-Key'] && !userHeaders['idempotency-key']) {
+    userHeaders['Idempotency-Key'] = uuidv4();
   }
 
   const headers = { ...baseHeaders, ...userHeaders };
 
   if (cfg.mock) {
-    const { mockHandler } = await import("./mock");
+    const { mockHandler } = await import('./mock');
     return mockHandler<T>(endpoint, { ...options, headers });
   }
 
@@ -73,22 +69,22 @@ export async function apiFetch<T = unknown>(
     if (!res.ok) {
       return {
         ok: false,
-        error: { code: "API_ERROR", message: "API 請求失敗" },
+        error: { code: 'API_ERROR', message: 'API 請求失敗' },
       };
     }
     const data = await res.json();
     return { ok: true, data };
   } catch (e) {
-    if (e instanceof Error && e.name === "AbortError")
+    if (e instanceof Error && e.name === 'AbortError')
       return {
         ok: false,
-        error: { code: "NETWORK_TIMEOUT", message: "請求超時" },
+        error: { code: 'NETWORK_TIMEOUT', message: '請求超時' },
       };
     return {
       ok: false,
       error: {
-        code: "NETWORK_ERROR",
-        message: e instanceof Error ? e.message : "Network error",
+        code: 'NETWORK_ERROR',
+        message: e instanceof Error ? e.message : 'Network error',
       },
     };
   } finally {
@@ -101,27 +97,25 @@ export const getMeta = () =>
     backendVersion: string;
     apiVersion: string;
     maintenance: boolean;
-  }>("/api/v1/meta");
+  }>('/api/v1/meta');
 
 export const getProperties = (page: number, pageSize: number, q?: string) =>
   apiFetch<Paginated<PropertyCard>>(
-    `/api/v1/properties?${new URLSearchParams({ page: String(page), pageSize: String(pageSize), ...(q ? { q } : {}) })}`,
+    `/api/v1/properties?${new URLSearchParams({ page: String(page), pageSize: String(pageSize), ...(q ? { q } : {}) })}`
   );
 
-export const getProperty = (id: string) =>
-  apiFetch<PropertyCard>(`/api/v1/properties/${id}`);
+export const getProperty = (id: string) => apiFetch<PropertyCard>(`/api/v1/properties/${id}`);
 
 export const getReviews = (communityId: string, limit = 2, offset = 0) =>
   apiFetch<ReviewSnippet[]>(
-    `/api/v1/communities/${communityId}/reviews?${new URLSearchParams({ limit: String(limit), offset: String(offset) })}`,
+    `/api/v1/communities/${communityId}/reviews?${new URLSearchParams({ limit: String(limit), offset: String(offset) })}`
   );
 
-export const getCommunities = () =>
-  apiFetch<CommunityPreview[]>("/api/v1/communities/preview");
+export const getCommunities = () => apiFetch<CommunityPreview[]>('/api/v1/communities/preview');
 
 export const aiAsk = async (
   req: AiAskReq,
-  onChunk?: (chunk: string) => void,
+  onChunk?: (chunk: string) => void
 ): Promise<ApiResponse<AiAskRes>> => {
   try {
     const messages = req.messages.map((m) => ({
@@ -132,12 +126,12 @@ export const aiAsk = async (
     const aiResult: AiAskRes = { answers: [result], recommends: [] };
     return { ok: true, data: aiResult };
   } catch (error) {
-    logger.error("AI Ask failed", { error });
+    logger.error('AI Ask failed', { error });
     return {
       ok: false,
       error: {
-        code: "AI_ERROR",
-        message: error instanceof Error ? error.message : "AI 暫時無法使用",
+        code: 'AI_ERROR',
+        message: error instanceof Error ? error.message : 'AI 暫時無法使用',
       },
     };
   }

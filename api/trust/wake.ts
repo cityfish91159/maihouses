@@ -21,16 +21,20 @@
  * - [Security Audit] 防止越權操作
  */
 
-import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { z } from "zod";
-import { supabase, verifyToken, cors, logAudit, SYSTEM_API_KEY, getClientIp, getUserAgent } from "./_utils";
+import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { z } from 'zod';
 import {
-  successResponse,
-  errorResponse,
-  API_ERROR_CODES,
-} from "../lib/apiResponse";
-import { logger } from "../lib/logger";
-import { sendCaseWakeNotification } from "./send-notification";
+  supabase,
+  verifyToken,
+  cors,
+  logAudit,
+  SYSTEM_API_KEY,
+  getClientIp,
+  getUserAgent,
+} from './_utils';
+import { successResponse, errorResponse, API_ERROR_CODES } from '../lib/apiResponse';
+import { logger } from '../lib/logger';
+import { sendCaseWakeNotification } from './send-notification';
 
 // ============================================================================
 // Zod Schemas [NASA TypeScript Safety]
@@ -38,18 +42,18 @@ import { sendCaseWakeNotification } from "./send-notification";
 
 /** 喚醒案件請求 Schema */
 const WakeCaseRequestSchema = z.object({
-  caseId: z.string().uuid("caseId 必須是有效的 UUID"),
+  caseId: z.string().uuid('caseId 必須是有效的 UUID'),
 });
 
 /** 案件狀態 Schema - 包含所有可能狀態 */
 const CaseStatusSchema = z.enum([
-  "active",
-  "dormant",
-  "closed",
-  "closed_sold_to_other",
-  "closed_property_unlisted",
-  "closed_inactive",
-  "completed",
+  'active',
+  'dormant',
+  'closed',
+  'closed_sold_to_other',
+  'closed_property_unlisted',
+  'closed_inactive',
+  'completed',
 ]);
 
 /** trust_cases 查詢結果 Schema */
@@ -71,7 +75,7 @@ const TrustCaseRowSchema = z.object({
  * @internal
  */
 function maskUUID(uuid: string): string {
-  if (uuid.length < 8) return "***";
+  if (uuid.length < 8) return '***';
   return `${uuid.slice(0, 8)}...`;
 }
 
@@ -80,67 +84,56 @@ function maskUUID(uuid: string): string {
 // ============================================================================
 
 /** 認證來源 */
-type AuthSource = "agent" | "buyer" | "system";
+type AuthSource = 'agent' | 'buyer' | 'system';
 
 // ============================================================================
 // Handler
 // ============================================================================
 
-export default async function handler(
-  req: VercelRequest,
-  res: VercelResponse,
-): Promise<void> {
+export default async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
   // CORS
   cors(req, res);
 
   // OPTIONS 預檢
-  if (req.method === "OPTIONS") {
+  if (req.method === 'OPTIONS') {
     res.status(200).end();
     return;
   }
 
   // 僅允許 POST
-  if (req.method !== "POST") {
-    res
-      .status(405)
-      .json(errorResponse(API_ERROR_CODES.METHOD_NOT_ALLOWED, "只允許 POST 方法"));
+  if (req.method !== 'POST') {
+    res.status(405).json(errorResponse(API_ERROR_CODES.METHOD_NOT_ALLOWED, '只允許 POST 方法'));
     return;
   }
 
   try {
     // Step 1: 雙認證（System Key 或 JWT）
-    const systemKey = req.headers["x-system-key"];
-    let authSource: AuthSource = "agent";
+    const systemKey = req.headers['x-system-key'];
+    let authSource: AuthSource = 'agent';
     let user: ReturnType<typeof verifyToken> | null = null;
 
     if (systemKey) {
       if (systemKey !== SYSTEM_API_KEY) {
-        res
-          .status(401)
-          .json(errorResponse(API_ERROR_CODES.UNAUTHORIZED, "未授權的存取"));
+        res.status(401).json(errorResponse(API_ERROR_CODES.UNAUTHORIZED, '未授權的存取'));
         return;
       }
-      authSource = "system";
+      authSource = 'system';
     } else {
       try {
         user = verifyToken(req);
       } catch {
-        res
-          .status(401)
-          .json(errorResponse(API_ERROR_CODES.UNAUTHORIZED, "未登入或 Token 已過期"));
+        res.status(401).json(errorResponse(API_ERROR_CODES.UNAUTHORIZED, '未登入或 Token 已過期'));
         return;
       }
 
       // 根據 role 設定 authSource
-      if (user.role === "agent") {
-        authSource = "agent";
-      } else if (user.role === "buyer") {
-        authSource = "buyer";
+      if (user.role === 'agent') {
+        authSource = 'agent';
+      } else if (user.role === 'buyer') {
+        authSource = 'buyer';
       } else {
         // system role 不能透過 JWT 喚醒
-        res
-          .status(403)
-          .json(errorResponse(API_ERROR_CODES.FORBIDDEN, "不支援此角色"));
+        res.status(403).json(errorResponse(API_ERROR_CODES.FORBIDDEN, '不支援此角色'));
         return;
       }
     }
@@ -148,14 +141,7 @@ export default async function handler(
     // Step 2: 檢查請求 Body
     const bodyResult = WakeCaseRequestSchema.safeParse(req.body);
     if (!bodyResult.success) {
-      res
-        .status(400)
-        .json(
-          errorResponse(
-            API_ERROR_CODES.INVALID_INPUT,
-            "請求參數格式錯誤",
-          ),
-        );
+      res.status(400).json(errorResponse(API_ERROR_CODES.INVALID_INPUT, '請求參數格式錯誤'));
       return;
     }
 
@@ -163,135 +149,115 @@ export default async function handler(
 
     // Step 3: 查詢案件是否存在
     const { data: caseRow, error: caseError } = await supabase
-      .from("trust_cases")
-      .select("id, agent_id, buyer_user_id, status, property_title, dormant_at")
-      .eq("id", caseId)
+      .from('trust_cases')
+      .select('id, agent_id, buyer_user_id, status, property_title, dormant_at')
+      .eq('id', caseId)
       .single();
 
     if (caseError || !caseRow) {
-      if (caseError?.code === "PGRST116") {
-        res
-          .status(404)
-          .json(errorResponse(API_ERROR_CODES.NOT_FOUND, "找不到案件"));
+      if (caseError?.code === 'PGRST116') {
+        res.status(404).json(errorResponse(API_ERROR_CODES.NOT_FOUND, '找不到案件'));
         return;
       }
 
-      logger.error("[trust/wake] Database error", {
-        error: caseError?.message ?? "Unknown",
+      logger.error('[trust/wake] Database error', {
+        error: caseError?.message ?? 'Unknown',
         caseIdMasked: maskUUID(caseId),
       });
-      res
-        .status(500)
-        .json(errorResponse(API_ERROR_CODES.DATA_FETCH_FAILED, "案件載入失敗"));
+      res.status(500).json(errorResponse(API_ERROR_CODES.DATA_FETCH_FAILED, '案件載入失敗'));
       return;
     }
 
     const caseParseResult = TrustCaseRowSchema.safeParse(caseRow);
     if (!caseParseResult.success) {
-      logger.error("[trust/wake] Case data validation failed", {
+      logger.error('[trust/wake] Case data validation failed', {
         caseIdMasked: maskUUID(caseId),
         issues: caseParseResult.error.issues,
       });
-      res
-        .status(500)
-        .json(errorResponse(API_ERROR_CODES.INTERNAL_ERROR, "資料格式驗證失敗"));
+      res.status(500).json(errorResponse(API_ERROR_CODES.INTERNAL_ERROR, '資料格式驗證失敗'));
       return;
     }
 
     const currentCase = caseParseResult.data;
 
     // Step 4: 驗證權限（根據 authSource 和 role 檢查不同欄位）
-    if (authSource === "agent" && user) {
+    if (authSource === 'agent' && user) {
       if (currentCase.agent_id !== user.id) {
-        res
-          .status(403)
-          .json(errorResponse(API_ERROR_CODES.FORBIDDEN, "無權限喚醒此案件"));
+        res.status(403).json(errorResponse(API_ERROR_CODES.FORBIDDEN, '無權限喚醒此案件'));
         return;
       }
-    } else if (authSource === "buyer" && user) {
+    } else if (authSource === 'buyer' && user) {
       if (currentCase.buyer_user_id !== user.id) {
-        res
-          .status(403)
-          .json(errorResponse(API_ERROR_CODES.FORBIDDEN, "無權限喚醒此案件"));
+        res.status(403).json(errorResponse(API_ERROR_CODES.FORBIDDEN, '無權限喚醒此案件'));
         return;
       }
     }
     // system 認證無需擁有權驗證
 
     // Step 5: 驗證狀態（僅允許 dormant）
-    if (currentCase.status !== "dormant") {
+    if (currentCase.status !== 'dormant') {
       res
         .status(400)
-        .json(
-          errorResponse(API_ERROR_CODES.INVALID_INPUT, "案件狀態不允許喚醒（必須為休眠狀態）"),
-        );
+        .json(errorResponse(API_ERROR_CODES.INVALID_INPUT, '案件狀態不允許喚醒（必須為休眠狀態）'));
       return;
     }
 
     // Step 6: 原子更新（狀態 + dormant_at + 擁有權驗證）
     const wokenAt = new Date().toISOString();
     let updateQuery = supabase
-      .from("trust_cases")
+      .from('trust_cases')
       .update({
-        status: "active",
+        status: 'active',
         dormant_at: null,
         updated_at: wokenAt,
       })
-      .eq("id", caseId)
-      .eq("status", "dormant");
+      .eq('id', caseId)
+      .eq('status', 'dormant');
 
     // 根據角色加入擁有權驗證防止競態條件
-    if (authSource === "agent" && user) {
-      updateQuery = updateQuery.eq("agent_id", user.id);
-    } else if (authSource === "buyer" && user) {
-      updateQuery = updateQuery.eq("buyer_user_id", user.id);
+    if (authSource === 'agent' && user) {
+      updateQuery = updateQuery.eq('agent_id', user.id);
+    } else if (authSource === 'buyer' && user) {
+      updateQuery = updateQuery.eq('buyer_user_id', user.id);
     }
 
     const { data: updatedCase, error: updateError } = await updateQuery
-      .select("id, agent_id, buyer_user_id, status, property_title, dormant_at")
+      .select('id, agent_id, buyer_user_id, status, property_title, dormant_at')
       .single();
 
     // Step 7: 處理並發衝突
     if (updateError) {
       // PGRST116 = no rows returned，可能是並發狀態變更
-      if (updateError.code === "PGRST116") {
-        logger.warn("[trust/wake] Concurrent update conflict", {
+      if (updateError.code === 'PGRST116') {
+        logger.warn('[trust/wake] Concurrent update conflict', {
           caseIdMasked: maskUUID(caseId),
           error: updateError.message,
         });
-        res
-          .status(409)
-          .json(errorResponse(API_ERROR_CODES.CONFLICT, "案件狀態已變更，請重新操作"));
+        res.status(409).json(errorResponse(API_ERROR_CODES.CONFLICT, '案件狀態已變更，請重新操作'));
         return;
       }
 
-      logger.error("[trust/wake] Update failed", {
-        error: updateError.message ?? "Unknown",
+      logger.error('[trust/wake] Update failed', {
+        error: updateError.message ?? 'Unknown',
         caseIdMasked: maskUUID(caseId),
       });
-      res
-        .status(500)
-        .json(errorResponse(API_ERROR_CODES.INTERNAL_ERROR, "案件更新失敗"));
+      res.status(500).json(errorResponse(API_ERROR_CODES.INTERNAL_ERROR, '案件更新失敗'));
       return;
     }
 
     if (!updatedCase) {
-      logger.warn("[trust/wake] No data returned", { caseIdMasked: maskUUID(caseId) });
-      res
-        .status(409)
-        .json(errorResponse(API_ERROR_CODES.CONFLICT, "案件狀態已變更，請重新操作"));
+      logger.warn('[trust/wake] No data returned', { caseIdMasked: maskUUID(caseId) });
+      res.status(409).json(errorResponse(API_ERROR_CODES.CONFLICT, '案件狀態已變更，請重新操作'));
       return;
     }
 
     const updatedParseResult = TrustCaseRowSchema.safeParse(updatedCase);
     if (!updatedParseResult.success) {
-      logger.error("[trust/wake] Updated data validation failed", {
+      logger.error('[trust/wake] Updated data validation failed', {
         caseIdMasked: maskUUID(caseId),
         issues: updatedParseResult.error.issues,
       });
-      res
-        .status(500)
-        .json(errorResponse(API_ERROR_CODES.INTERNAL_ERROR, "回應格式驗證失敗"));
+      res.status(500).json(errorResponse(API_ERROR_CODES.INTERNAL_ERROR, '回應格式驗證失敗'));
       return;
     }
 
@@ -299,12 +265,12 @@ export default async function handler(
 
     // Step 8: 寫入審計紀錄（標記來源 agent/buyer/system）
     const auditUser =
-      authSource !== "system" && user
+      authSource !== 'system' && user
         ? user
         : {
-            id: "system",
-            role: "system" as const,
-            txId: "system",
+            id: 'system',
+            role: 'system' as const,
+            txId: 'system',
             ip: getClientIp(req),
             agent: getUserAgent(req),
           };
@@ -312,50 +278,41 @@ export default async function handler(
     // 審計 action 根據來源區分
     const auditAction = `WAKE_TRUST_CASE_${authSource.toUpperCase()}`;
 
-    void logAudit(
-      caseId,
-      auditAction,
-      auditUser,
-    ).catch((auditErr) => {
-      logger.error("[trust/wake] Audit log failed (non-blocking)", {
+    void logAudit(caseId, auditAction, auditUser).catch((auditErr) => {
+      logger.error('[trust/wake] Audit log failed (non-blocking)', {
         case_id: caseId,
-        error: auditErr instanceof Error ? auditErr.message : "Unknown",
+        error: auditErr instanceof Error ? auditErr.message : 'Unknown',
       });
     });
 
-    logger.info("[trust/wake] Case woken", {
+    logger.info('[trust/wake] Case woken', {
       case_id: caseId,
-      previous_status: "dormant",
-      new_status: "active",
+      previous_status: 'dormant',
+      new_status: 'active',
       source: authSource,
     });
 
     // Step 9: 非阻塞通知（Phase 1 僅通知消費者）
-    void sendCaseWakeNotification(
-      caseId,
-      updated.property_title ?? undefined,
-    ).catch((err) =>
-      logger.error("[trust/wake] Notification failed", {
+    void sendCaseWakeNotification(caseId, updated.property_title ?? undefined).catch((err) =>
+      logger.error('[trust/wake] Notification failed', {
         case_id: caseId,
-        error: err instanceof Error ? err.message : "Unknown",
-      }),
+        error: err instanceof Error ? err.message : 'Unknown',
+      })
     );
 
     // Step 10: 成功回傳
     res.status(200).json(
       successResponse({
         caseId,
-        previousStatus: "dormant",
+        previousStatus: 'dormant',
         status: updated.status,
         wokenAt,
-      }),
+      })
     );
   } catch (e) {
-    logger.error("[trust/wake] Unexpected error", {
-      error: e instanceof Error ? e.message : "Unknown",
+    logger.error('[trust/wake] Unexpected error', {
+      error: e instanceof Error ? e.message : 'Unknown',
     });
-    res
-      .status(500)
-      .json(errorResponse(API_ERROR_CODES.INTERNAL_ERROR, "伺服器內部錯誤"));
+    res.status(500).json(errorResponse(API_ERROR_CODES.INTERNAL_ERROR, '伺服器內部錯誤'));
   }
 }

@@ -225,8 +225,8 @@ ai-tasks/
 
 ```typescript
 // scripts/ai-heartbeat.ts
-import fs from "fs";
-import path from "path";
+import fs from 'fs';
+import path from 'path';
 
 const TIMEOUT_MS = 5 * 60 * 1000; // 5 分鐘
 
@@ -240,14 +240,14 @@ interface Status {
 }
 
 function checkHeartbeat(taskId: string): void {
-  const statusPath = path.join("ai-tasks", taskId, "status.json");
+  const statusPath = path.join('ai-tasks', taskId, 'status.json');
 
   if (!fs.existsSync(statusPath)) {
     console.error(`❌ 找不到 status.json: ${statusPath}`);
     process.exit(1);
   }
 
-  const status: Status = JSON.parse(fs.readFileSync(statusPath, "utf-8"));
+  const status: Status = JSON.parse(fs.readFileSync(statusPath, 'utf-8'));
   const lastUpdate = new Date(status.lastUpdate).getTime();
   const now = Date.now();
   const diff = now - lastUpdate;
@@ -259,7 +259,7 @@ function checkHeartbeat(taskId: string): void {
 ╠══════════════════════════════════════════════════════════════╣
 ║ 任務：${status.taskId.padEnd(50)}║
 ║ 最後更新：${status.lastUpdate.padEnd(44)}║
-║ 超時時間：${Math.floor(diff / 1000)} 秒（限制 300 秒）${" ".repeat(26)}║
+║ 超時時間：${Math.floor(diff / 1000)} 秒（限制 300 秒）${' '.repeat(26)}║
 ╠══════════════════════════════════════════════════════════════╣
 ║ 🔥 執行懲罰：git checkout .                                  ║
 ╚══════════════════════════════════════════════════════════════╝
@@ -272,7 +272,7 @@ function checkHeartbeat(taskId: string): void {
 
 const taskId = process.argv[2];
 if (!taskId) {
-  console.error("用法: npx ts-node scripts/ai-heartbeat.ts TASK-2025-001");
+  console.error('用法: npx ts-node scripts/ai-heartbeat.ts TASK-2025-001');
   process.exit(1);
 }
 
@@ -283,9 +283,9 @@ checkHeartbeat(taskId);
 
 ```typescript
 // scripts/ai-progress-verify.ts
-import { execSync } from "child_process";
-import fs from "fs";
-import path from "path";
+import { execSync } from 'child_process';
+import fs from 'fs';
+import path from 'path';
 
 interface Spec {
   taskId: string;
@@ -306,26 +306,26 @@ interface Status {
 }
 
 function verifyProgress(taskId: string): void {
-  const specPath = path.join("ai-tasks", taskId, "spec.json");
-  const statusPath = path.join("ai-tasks", taskId, "status.json");
+  const specPath = path.join('ai-tasks', taskId, 'spec.json');
+  const statusPath = path.join('ai-tasks', taskId, 'status.json');
 
   if (!fs.existsSync(specPath) || !fs.existsSync(statusPath)) {
-    console.error("❌ 找不到 spec.json 或 status.json");
+    console.error('❌ 找不到 spec.json 或 status.json');
     process.exit(1);
   }
 
-  const spec: Spec = JSON.parse(fs.readFileSync(specPath, "utf-8"));
-  const status: Status = JSON.parse(fs.readFileSync(statusPath, "utf-8"));
+  const spec: Spec = JSON.parse(fs.readFileSync(specPath, 'utf-8'));
+  const status: Status = JSON.parse(fs.readFileSync(statusPath, 'utf-8'));
 
   // 檢查 git diff
-  let diffOutput = "";
+  let diffOutput = '';
   try {
-    diffOutput = execSync("git diff --name-only HEAD", { encoding: "utf-8" });
+    diffOutput = execSync('git diff --name-only HEAD', { encoding: 'utf-8' });
   } catch {
-    diffOutput = "";
+    diffOutput = '';
   }
 
-  const changedFiles = diffOutput.split("\n").filter(Boolean);
+  const changedFiles = diffOutput.split('\n').filter(Boolean);
 
   // 偷懶偵測：聲稱完成但沒有對應的 git 變更
   const completedCount = status.completed.length;
@@ -360,7 +360,7 @@ function verifyProgress(taskId: string): void {
   for (const cmd of spec.outputSpec.mustPass) {
     try {
       console.log(`🔍 執行：${cmd}`);
-      execSync(cmd, { stdio: "inherit" });
+      execSync(cmd, { stdio: 'inherit' });
       console.log(`✅ ${cmd} 通過`);
     } catch {
       console.error(`❌ ${cmd} 失敗`);
@@ -389,9 +389,7 @@ function verifyProgress(taskId: string): void {
 
 const taskId = process.argv[2];
 if (!taskId) {
-  console.error(
-    "用法: npx ts-node scripts/ai-progress-verify.ts TASK-2025-001",
-  );
+  console.error('用法: npx ts-node scripts/ai-progress-verify.ts TASK-2025-001');
   process.exit(1);
 }
 
@@ -402,9 +400,9 @@ verifyProgress(taskId);
 
 ```typescript
 // scripts/ai-spec-guard.ts
-import fs from "fs";
-import path from "path";
-import { execSync } from "child_process";
+import fs from 'fs';
+import path from 'path';
+import { execSync } from 'child_process';
 
 interface Spec {
   taskId: string;
@@ -422,11 +420,11 @@ interface Status {
 }
 
 function guardSpec(taskId: string): void {
-  const specPath = path.join("ai-tasks", taskId, "spec.json");
-  const statusPath = path.join("ai-tasks", taskId, "status.json");
+  const specPath = path.join('ai-tasks', taskId, 'spec.json');
+  const statusPath = path.join('ai-tasks', taskId, 'status.json');
 
-  const spec: Spec = JSON.parse(fs.readFileSync(specPath, "utf-8"));
-  const status: Status = JSON.parse(fs.readFileSync(statusPath, "utf-8"));
+  const spec: Spec = JSON.parse(fs.readFileSync(specPath, 'utf-8'));
+  const status: Status = JSON.parse(fs.readFileSync(statusPath, 'utf-8'));
 
   let score = 100;
   const errors: string[] = [];
@@ -451,7 +449,7 @@ function guardSpec(taskId: string): void {
   // 3. 執行所有必要命令
   for (const cmd of spec.outputSpec.mustPass) {
     try {
-      execSync(cmd, { stdio: "pipe" });
+      execSync(cmd, { stdio: 'pipe' });
     } catch {
       errors.push(`命令失敗：${cmd}`);
       score -= 20;
@@ -461,13 +459,13 @@ function guardSpec(taskId: string): void {
   // 4. 檢查 TypeScript 品質
   try {
     const tsFiles = execSync('find scripts -name "*.ts" | head -20', {
-      encoding: "utf-8",
+      encoding: 'utf-8',
     })
-      .split("\n")
+      .split('\n')
       .filter(Boolean);
 
     for (const file of tsFiles) {
-      const content = fs.readFileSync(file, "utf-8");
+      const content = fs.readFileSync(file, 'utf-8');
       const anyCount = (content.match(/: any/g) || []).length;
       if (anyCount > 0) {
         errors.push(`${file} 使用 any ${anyCount} 次`);
@@ -484,7 +482,7 @@ function guardSpec(taskId: string): void {
 ╔══════════════════════════════════════════════════════════════╗
 ║ ❌ 規格驗證失敗                                              ║
 ╠══════════════════════════════════════════════════════════════╣
-${errors.map((e) => `║ • ${e.padEnd(56)}║`).join("\n")}
+${errors.map((e) => `║ • ${e.padEnd(56)}║`).join('\n')}
 ╠══════════════════════════════════════════════════════════════╣
 ║ 分數：${String(score).padEnd(54)}║
 ╚══════════════════════════════════════════════════════════════╝
@@ -507,7 +505,7 @@ ${errors.map((e) => `║ • ${e.padEnd(56)}║`).join("\n")}
 
 const taskId = process.argv[2];
 if (!taskId) {
-  console.error("用法: npx ts-node scripts/ai-spec-guard.ts TASK-2025-001");
+  console.error('用法: npx ts-node scripts/ai-spec-guard.ts TASK-2025-001');
   process.exit(1);
 }
 
@@ -535,8 +533,8 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
-          cache: "npm"
+          node-version: '20'
+          cache: 'npm'
 
       - name: Install dependencies
         run: npm ci

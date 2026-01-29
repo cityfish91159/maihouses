@@ -5,7 +5,7 @@
  * 擴展 community.ts 的基礎型別，增加 Feed 專用屬性
  */
 
-import type { Post, Role } from "./community";
+import type { Post, Role } from './community';
 
 /** 圖片資訊（支援 WebP 優先） */
 export interface FeedImage {
@@ -71,7 +71,7 @@ export interface ActiveTransaction {
   /** 物件名稱 */
   propertyName?: string;
   /** 交易階段 */
-  stage?: "negotiation" | "contract" | "loan" | "closing";
+  stage?: 'negotiation' | 'contract' | 'loan' | 'closing';
   /** 交易 ID */
   transactionId?: string;
 }
@@ -120,7 +120,7 @@ export interface ConsumerPageState {
 
 // ============ useFeedData 專用型別 (避免循環依賴) ============
 
-import type { FeedComment } from "./comment";
+import type { FeedComment } from './comment';
 
 /** Feed 貼文（useFeedData 使用） */
 export interface FeedPost extends Post {
