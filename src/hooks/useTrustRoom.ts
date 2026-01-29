@@ -3,6 +3,7 @@ import { notify } from '../lib/notify';
 import { logger } from '../lib/logger';
 import { mockService, realService } from '../services/trustService';
 import type { Transaction, Step, StepData, StepRisks } from '../types/trust';
+import { mhEnv } from '../lib/mhEnv';
 
 // Re-export types for backward compatibility
 export type { Transaction, Step, StepData, StepRisks };
@@ -21,11 +22,30 @@ export function useTrustRoom() {
   const [timeLeft, setTimeLeft] = useState('--:--:--');
   const [authError, setAuthError] = useState(false);
 
+  // Mock Mode Toggle
+  const startMockMode = useCallback(async () => {
+    setIsMock(true);
+    setAuthError(false);
+    const mockId = 'MOCK-DEMO-01';
+    setCaseId(mockId);
+    setRole('agent');
+    const mockTx = await mockService.fetchData(mockId);
+    setTx(mockTx);
+    notify.success('已進入演示模式 (資料僅暫存於瀏覽器)');
+  }, []);
+
   // Init / Session Check
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
     const init = async () => {
+      // 0. Mock demo entry (from mock/demo pages)
+      if (mhEnv.isMockEnabled()) {
+        await startMockMode();
+        setLoading(false);
+        return;
+      }
+
       // 1. Check URL Token (Legacy/Link support)
       const hash = window.location.hash;
       if (hash.includes('token=')) {
@@ -66,19 +86,7 @@ export function useTrustRoom() {
     };
 
     init();
-  }, []);
-
-  // Mock Mode Toggle
-  const startMockMode = useCallback(async () => {
-    setIsMock(true);
-    setAuthError(false);
-    const mockId = 'MOCK-DEMO-01';
-    setCaseId(mockId);
-    setRole('agent');
-    const mockTx = await mockService.fetchData(mockId);
-    setTx(mockTx);
-    notify.success('已進入演示模式 (資料僅暫存於瀏覽器)');
-  }, []);
+  }, [startMockMode]);
 
   // Fetch Data
   const fetchData = useCallback(
