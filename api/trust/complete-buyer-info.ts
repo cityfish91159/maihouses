@@ -171,12 +171,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     // Step 3: 查詢案件是否存在
     // [Team 8 第三位修復] 添加 15 秒 timeout 保護
     // [Team 9 修復] 添加 token_expires_at 和 token_revoked_at 欄位查詢
+    const caseQueryPromise = supabase
+      .from('trust_cases')
+      .select('id, agent_id, status, buyer_name, token_expires_at, token_revoked_at')
+      .eq('id', caseId)
+      .single();
     const { data: caseRow, error: caseError } = await withTimeout(
-      supabase
-        .from('trust_cases')
-        .select('id, agent_id, status, buyer_name, token_expires_at, token_revoked_at')
-        .eq('id', caseId)
-        .single(),
+      caseQueryPromise,
       15000,
       'Database query timed out after 15 seconds'
     );
@@ -268,8 +269,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     }
 
     // [Team 8 第三位修復] 為 update 查詢添加 timeout
+    const updatePromise = updateQuery.select('id, buyer_name, buyer_phone, buyer_email').single();
     const { data: updatedCase, error: updateError } = await withTimeout(
-      updateQuery.select('id, buyer_name, buyer_phone, buyer_email').single(),
+      updatePromise,
       15000,
       'Update operation timed out after 15 seconds'
     );

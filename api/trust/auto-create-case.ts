@@ -148,15 +148,16 @@ async function handleAutoCreateCase(req: VercelRequest, res: VercelResponse): Pr
 
     // 4. 呼叫 RPC 建立案件（自動生成 token）
     // [Team 8 修復] 添加 15 秒 timeout 保護
+    const rpcPromise = supabase.rpc('fn_create_trust_case', {
+      p_agent_id: property.agent_id,
+      p_buyer_name: buyerName,
+      p_property_title: property.title,
+      p_buyer_session_id: null, // Phase 1.5 不需要 UAG session
+      p_buyer_contact: null,
+      p_property_id: propertyId,
+    });
     const { data: rpcData, error: rpcError } = await withTimeout(
-      supabase.rpc('fn_create_trust_case', {
-        p_agent_id: property.agent_id,
-        p_buyer_name: buyerName,
-        p_property_title: property.title,
-        p_buyer_session_id: null, // Phase 1.5 不需要 UAG session
-        p_buyer_contact: null,
-        p_property_id: propertyId,
-      }),
+      rpcPromise,
       15000,
       'RPC call timed out after 15 seconds'
     );
