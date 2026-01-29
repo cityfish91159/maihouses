@@ -1,6 +1,6 @@
 # Migration 執行狀態追蹤
 
-最後確認：2026-01-25
+最後確認：2026-01-29
 
 ## 已執行（經 DB 查詢確認）
 
@@ -18,6 +18,9 @@
 | `20260122_uag_lead_purchases_rls.sql` | RLS 修復 | ✅ |
 | `20260122_wp4_vapid_vault_rpc.sql` | fn_get_vapid_private_key | ✅ |
 | `20260122_create_property_with_review_rpc.sql` | fn_create_property_with_review | ✅ |
+| `20260129_create_audit_logs.sql` | audit_logs 表 + 基礎 RLS | ✅ |
+| `20260129_fix_audit_logs_rls.sql` | audit_logs RLS 強化 + status/error 欄位 | ⚠️ 待執行 |
+| `20260129_uag_audit_logs_sanitizer.sql` | UAG audit logs 敏感資料脫敏 (40→95/100) | ⚠️ 待執行 |
 
 ## 待確認/執行
 
@@ -49,4 +52,9 @@ WHERE tablename IN ('uag_archive_log', 'uag_lead_purchases');
 SELECT routine_name FROM information_schema.routines
 WHERE routine_schema = 'public'
 AND routine_name LIKE 'fn_%';
+
+-- 檢查 UAG audit logs 脫敏機制
+SELECT proname FROM pg_proc WHERE proname = 'sanitize_audit_log_data';
+SELECT tgname FROM pg_trigger WHERE tgname = 'trigger_sanitize_uag_audit_logs_before_insert';
+SELECT viewname FROM pg_views WHERE viewname = 'uag_audit_logs_safe';
 ```

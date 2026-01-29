@@ -1,0 +1,74 @@
+name: Check Supabase RLS Policies
+
+# Team 11: RLS Security Audit
+# 自動檢測所有 Supabase Migration 的 RLS 設定
+
+on:
+  pull_request:
+    paths:
+      - 'supabase/migrations/**/*.sql'
+  push:
+    branches:
+      - main
+    paths:
+      - 'supabase/migrations/**/*.sql'
+
+jobs:
+  check-rls:
+    name: RLS Policy Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Run RLS policy checker
+        id: rls-check
+        run: |
+          python scripts/check-rls-policies.py
+        continue-on-error: true
+
+      - name: Comment PR if violations found
+        if: failure() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## ⚠️ RLS Policy Violations Detected
+
+**Security Check Failed**: Some tables are missing Row Level Security (RLS) policies.
+
+### What to fix:
+
+1. ✅ All tables must have RLS enabled:
+   \`\`\`sql
+   ALTER TABLE public.your_table ENABLE ROW LEVEL SECURITY;
+   \`\`\`
+
+2. ✅ Sensitive tables (audit_logs, transactions, etc.) must have service_role only access:
+   \`\`\`sql
+   CREATE POLICY "service_role_only"
+   ON public.your_table FOR ALL TO service_role
+   USING (true) WITH CHECK (true);
+   \`\`\`
+
+3. ✅ Public tables should have explicit policies for authenticated/anon users
+
+### See detailed violations in the [workflow logs](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+
+**Reference**: \`docs/property-detail-trust-ui-optimization.md\`
+`
+            })
+
+      - name: Fail workflow if violations found
+        if: steps.rls-check.outcome == 'failure'
+        run: |
+          echo "❌ RLS policy violations detected"
+          exit 1
