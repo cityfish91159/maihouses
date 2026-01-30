@@ -1,4 +1,4 @@
-/**
+﻿/**
  * UAG Realtime 訂閱管理 Hook
  *
  * 職責：
@@ -92,7 +92,7 @@ export function useRealtimeUpdates({ useMock, userId, refetch }: UseRealtimeUpda
           });
 
           // 顯示 UI 通知
-          notify.success('🎉 新的 S 級客戶！請查看 UAG Radar 檢視詳細資訊');
+          notify.success('新的 S 級客戶！請查看 UAG Radar 檢視詳細資訊');
 
           // 刷新數據以顯示新的 S 級客戶
           void refetch();

@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { memo, type ReactNode } from 'react';
 import type { Step } from '../../types/trust';
 import { StepIcon } from './StepIcon';
 
@@ -11,7 +11,7 @@ interface StepCardProps {
   children: ReactNode;
 }
 
-export function StepCard({
+export const StepCard = memo(function StepCard({
   stepKey,
   step,
   isCurrent,
@@ -34,7 +34,7 @@ export function StepCard({
 
   return (
     <div
-      className={`relative py-3 pl-14 ${isFuture ? 'opacity-50 grayscale' : ''}`}
+      className={`relative py-3 pl-14 ${isFuture ? 'opacity-60 grayscale' : ''}`}
       data-step={stepKey}
     >
       <div
@@ -48,4 +48,4 @@ export function StepCard({
       <div className={cardClass}>{children}</div>
     </div>
   );
-}
+});

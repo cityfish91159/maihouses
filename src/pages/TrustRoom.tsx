@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useMemo, lazy, Suspense } from 'react';
+﻿import { useEffect, useState, useCallback, useMemo, lazy, Suspense } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import type { TrustRoomView, TrustStep, ConfirmResult } from '../types/trust.types';
@@ -141,47 +141,67 @@ export default function TrustRoom() {
     };
   }, [id, loadData]);
 
+  const updateOptimisticState = (stepNum: number) => {
+    if (!data) return null;
+    const previous = data;
+    const updatedSteps = data.steps_data.map((s) =>
+      s.step === stepNum ? { ...s, confirmed: true } : s
+    );
+    setData({
+      ...data,
+      steps_data: updatedSteps,
+    });
+    return { previous, updatedSteps };
+  };
+
+  const callConfirmRpc = async (stepNum: number): Promise<ConfirmResult | null> => {
+    const { data: result, error: rpcError } = (await supabase.rpc('confirm_trust_step', {
+      p_id: id,
+      p_token: token,
+      p_step: stepNum,
+    })) as { data: ConfirmResult | null; error: Error | null };
+
+    if (rpcError) throw rpcError;
+    return result;
+  };
+
+  const handleConfirmSuccess = (updatedSteps: TrustStep[]) => {
+    showMessage('success', '確認成功！');
+    const allConfirmed = updatedSteps.every((step) => step.confirmed);
+    if (allConfirmed) {
+      triggerCelebrate();
+    } else {
+      triggerHappy();
+    }
+  };
+
+  const handleConfirmError = (previous: TrustRoomView, text: string) => {
+    setData(previous);
+    showMessage('error', text);
+    triggerShyOnce();
+  };
+
   const handleConfirm = async (stepNum: number) => {
     if (!id || !token || confirming || !data) return;
     setConfirming(stepNum);
     triggerHaptic();
-    const oldData = { ...data };
-    const updatedSteps = data.steps_data.map((s) =>
-      s.step === stepNum ? { ...s, confirmed: true } : s
-    );
-    const nextData = {
-      ...data,
-      steps_data: updatedSteps,
-    };
-    setData(nextData);
+    const optimistic = updateOptimisticState(stepNum);
+    if (!optimistic) {
+      setConfirming(null);
+      return;
+    }
 
     try {
-      const { data: result, error: rpcError } = (await supabase.rpc('confirm_trust_step', {
-        p_id: id,
-        p_token: token,
-        p_step: stepNum,
-      })) as { data: ConfirmResult | null; error: Error | null };
-
-      if (rpcError) throw rpcError;
+      const result = await callConfirmRpc(stepNum);
 
       if (result?.success) {
-        showMessage('success', '確認成功！');
-        const allConfirmed = updatedSteps.every((step) => step.confirmed);
-        if (allConfirmed) {
-          triggerCelebrate();
-        } else {
-          triggerHappy();
-        }
+        handleConfirmSuccess(optimistic.updatedSteps);
       } else {
-        setData(oldData);
-        showMessage('error', result?.error || '確認失敗');
-        triggerShyOnce();
+        handleConfirmError(optimistic.previous, result?.error || '確認失敗');
       }
     } catch (err) {
       logger.error('[TrustRoom] 確認失敗', { error: err });
-      setData(oldData);
-      showMessage('error', '確認失敗，請稍後再試');
-      triggerShyOnce();
+      handleConfirmError(optimistic.previous, '確認失敗，請稍後再試');
     } finally {
       setConfirming(null);
     }
@@ -246,6 +266,7 @@ export default function TrustRoom() {
               setError(null);
               void loadData();
             }}
+            aria-label="重新載入頁面"
             className="mt-4 inline-flex min-h-[48px] w-full items-center justify-center rounded-xl bg-brand-700 px-4 text-sm font-semibold text-white transition hover:bg-brand-600"
           >
             重試載入

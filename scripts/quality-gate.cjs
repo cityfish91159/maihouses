@@ -61,12 +61,12 @@ try {
 header('[2/4] ESLint 錯誤檢查');
 try {
   // 嘗試強制輸出 JSON 格式以便解析
-  const lintCmd = 'npm run lint -- --format json'; 
+  const lintCmd = 'npm run lint -- --format json';
   const lintOutput = execSync(lintCmd, { cwd: ROOT, encoding: 'utf-8', stdio: ['ignore', 'pipe', 'ignore'] });
-  
+
   const results = JSON.parse(lintOutput || '[]');
   const totalErrors = results.reduce((acc, curr) => acc + curr.errorCount, 0);
-  
+
   if (totalErrors > 0) {
     checks.push({ name: 'ESLint', status: 'fail', error: `${totalErrors} errors` });
     log(` ❌ 發現 ${totalErrors} 個錯誤`, 'red');
@@ -133,7 +133,9 @@ if (stagedFiles.length > 0) {
     const fullPath = path.join(ROOT, file);
     if (!fs.existsSync(fullPath)) continue;
     // 只檢查代碼檔
-    if (!/\.(ts|tsx|js|jsx|cjs|mjs|py|go|env)$/.test(file)) continue; 
+    if (!/\.(ts|tsx|js|jsx|cjs|mjs|py|go|env)$/.test(file)) continue;
+    // 排除 scripts 資料夾（工具腳本可以有 console.log）
+    if (file.startsWith('scripts/')) continue;
 
     const content = fs.readFileSync(fullPath, 'utf-8');
     const lines = content.split('\n');
@@ -141,7 +143,7 @@ if (stagedFiles.length > 0) {
     lines.forEach((line, i) => {
       const trimmed = line.trim();
       if (trimmed.startsWith('//') || trimmed.startsWith('#')) return;
-      
+
       // Check: console.log
       if (/console\.log\(/.test(line)) {
         consoleLogCount++;

@@ -1,10 +1,11 @@
-/** DataCollectionModal - 安心留痕資料收集 Modal */
+﻿/** DataCollectionModal - 安心留痕資料收集 Modal */
 
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { X, Shield, Loader2, User, Phone, Mail, Info } from 'lucide-react';
 import { z } from 'zod';
 import { notify } from '../../lib/notify';
 import { logger } from '../../lib/logger';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
 
 // ============================================================================
 // Constants
@@ -26,19 +27,12 @@ const S = {
   PHONE_PLACEHOLDER: '0912345678',
   EMAIL_LABEL: 'Email',
   EMAIL_PLACEHOLDER: 'email@example.com（選填）',
-  PRIVACY_NOTE: '資料只用於交易紀錄，不會給別人看',
+  PRIVACY_NOTE: '資料只用於交易紀錄，不會外流',
   SUBMIT_BTN: '確認送出',
   SKIP_BTN: '稍後再說',
   SUBMITTING: '送出中...',
   VALIDATION_ERROR: '請填寫必要欄位',
 } as const;
-
-/** 焦點延遲常數：等待 Modal 動畫完成後再聚焦，避免動畫過程中焦點跳動 */
-const FOCUS_DELAY_MS = 50;
-
-/** Focusable 元素選擇器 */
-const FOCUSABLE_SELECTOR =
-  'button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])';
 
 // ============================================================================
 // Zod Schema [NASA TypeScript Safety]
@@ -131,44 +125,12 @@ function DataCollectionModalContent({
   const modalRef = useRef<HTMLFormElement>(null);
   const firstInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    // Auto-focus first input when modal opens (延遲以等待 CSS 動畫完成)
-    const timer = setTimeout(() => {
-      firstInputRef.current?.focus();
-    }, FOCUS_DELAY_MS);
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Escape to close (only if not submitting)
-      if (e.key === 'Escape' && !isSubmitting) {
-        onSkip();
-        return;
-      }
-
-      // [Team 8 修復] Focus Trap: Tab 循環在 Modal 內（完整選擇器）
-      if (e.key === 'Tab' && modalRef.current) {
-        const focusableElements =
-          modalRef.current.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR);
-        const firstElement = focusableElements[0];
-        const lastElement = focusableElements[focusableElements.length - 1];
-
-        if (e.shiftKey && document.activeElement === firstElement) {
-          // Shift+Tab on first element: go to last
-          e.preventDefault();
-          lastElement?.focus();
-        } else if (!e.shiftKey && document.activeElement === lastElement) {
-          // Tab on last element: go to first
-          e.preventDefault();
-          firstElement?.focus();
-        }
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-    return () => {
-      clearTimeout(timer);
-      document.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [onSkip, isSubmitting]);
+  useFocusTrap({
+    containerRef: modalRef,
+    initialFocusRef: firstInputRef,
+    onEscape: onSkip,
+    isEscapeEnabled: !isSubmitting,
+  });
 
   // Validate form
   const validateForm = useCallback((): { name: string; phone: string; email: string } | null => {
@@ -264,7 +226,7 @@ function DataCollectionModalContent({
           {/* Privacy Notice */}
           <div className="bg-brand-50/40 flex items-start gap-3 rounded-xl border border-brand-100 p-3">
             <Info className="mt-0.5 size-5 shrink-0 text-brand-600" />
-            <p className="text-xs text-brand-700">{S.PRIVACY_NOTE}</p>
+            <p className="text-sm text-brand-700">{S.PRIVACY_NOTE}</p>
           </div>
 
           {/* Name Input */}
@@ -359,6 +321,7 @@ function DataCollectionModalContent({
             <input
               id="data-email-input"
               type="email"
+              inputMode="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder={S.EMAIL_PLACEHOLDER}

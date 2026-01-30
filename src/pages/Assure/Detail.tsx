@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { useTrustRoom } from '../../hooks/useTrustRoom';
 import {
   RotateCcw,
@@ -237,6 +237,7 @@ export default function AssureDetail() {
         <div className="flex gap-2">
           <button
             onClick={reset}
+            aria-label="重置案件"
             className="flex size-11 items-center justify-center rounded bg-white/10 transition hover:bg-white/20"
           >
             <RotateCcw size={14} />
@@ -329,6 +330,7 @@ export default function AssureDetail() {
             <button
               onClick={addSupplement}
               disabled={!supplementInput}
+              aria-label="送出補充紀錄"
               className="min-h-[44px] rounded-lg bg-brand-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50"
             >
               送出
