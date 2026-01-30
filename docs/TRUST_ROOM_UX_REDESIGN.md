@@ -68,6 +68,8 @@
   - 演示按鈕：「啟動演示模式 (Demo Mode)」→「體驗看看」
   - 確認按鈕：「確認無誤並送出」→「確認送出」
   - 等待狀態：「等待房仲提交...」→「房仲還沒送出」
+  - 進度條寬度改用 class 映射（移除 inline style）
+  - 步驟卡片/付款區/清單配色改用 brand tokens
 
 ### Phase 4: DataCollectionModal.tsx 微調
 - [x] 4.1 更新標題文案（去 AI 味）
@@ -81,6 +83,7 @@
   - 隱私說明：「此資訊僅供法律留痕使用，不會公開給房仲」→「資料只用於交易紀錄，不會外流」
   - 按鈕：「送出」→「確認送出」
   - Placeholder：「請輸入您的姓名」→「你的名字」
+  - Modal 配色與邊框改用 brand tokens（去除灰藍色系）
 
 ### Phase 5: 整合驗證
 - [x] 5.1 `npm run typecheck` 通過
@@ -107,6 +110,23 @@
 - [ ] 6.6 位置：右下角固定，不遮擋主要內容
 - [ ] 6.7 手機版響應式尺寸調整
 - [ ] 6.8 效能：lazy load + requestAnimationFrame
+
+### Phase 7: 手機優先 UI 優化（ui-ux-pro-max 審查）
+- [ ] 7.1 **Touch Target Size**：確認按鈕 `py-2.5` → `py-3` + `min-h-[44px]`（44px 最小觸控區域）
+- [ ] 7.2 **徽章文字尺寸**：`text-[11px]` → `text-xs` (12px)，提升手機可讀性
+- [ ] 7.3 **進度條視覺權重**：`h-2` → `h-2.5` 或 `h-3`，加強視覺存在感
+- [ ] 7.4 **Safe Area 處理**：加入 `pb-safe` 或 `pb-8`，避免 iPhone Home Bar 遮擋
+- [ ] 7.5 **Toast 位置優化**：手機版改為 `left-4 right-4 top-4` 全寬，避開瀏覽器網址列
+- [ ] 7.6 **觸控間距確認**：確保所有觸控元素間距 ≥ 8px (`gap-2`)
+
+#### Phase 7 審查依據 (ui-ux-pro-max)
+| 問題 | 嚴重度 | 規範 |
+|------|--------|------|
+| Touch Target Size | HIGH | Minimum 44x44px touch targets |
+| Touch Spacing | MEDIUM | Minimum 8px gap between touch targets |
+| Typography | MEDIUM | 12px minimum for mobile readability |
+| Safe Area | MEDIUM | Account for iOS safe areas |
+| Toast Position | LOW | Avoid browser chrome overlap |
 
 ---
 

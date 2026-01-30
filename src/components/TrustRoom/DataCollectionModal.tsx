@@ -19,15 +19,15 @@ import { logger } from '../../lib/logger';
 // ============================================================================
 
 const S = {
-  TITLE: '請填寫基本資料以保全交易過程全貌',
+  TITLE: '留下聯絡方式，方便後續聯繫',
   NAME_LABEL: '姓名',
-  NAME_PLACEHOLDER: '請輸入您的姓名',
+  NAME_PLACEHOLDER: '你的名字',
   PHONE_LABEL: '電話',
-  PHONE_PLACEHOLDER: '0912-345-678',
+  PHONE_PLACEHOLDER: '0912345678',
   EMAIL_LABEL: 'Email',
-  EMAIL_PLACEHOLDER: 'example@email.com (選填)',
-  PRIVACY_NOTE: '此資訊僅供法律留痕使用，不會公開給房仲',
-  SUBMIT_BTN: '送出',
+  EMAIL_PLACEHOLDER: 'email@example.com（選填）',
+  PRIVACY_NOTE: '資料只用於交易紀錄，不會外流',
+  SUBMIT_BTN: '確認送出',
   SKIP_BTN: '稍後再說',
   SUBMITTING: '送出中...',
   VALIDATION_ERROR: '請填寫必要欄位',
@@ -221,13 +221,13 @@ function DataCollectionModalContent({
         aria-labelledby="data-collection-title"
         noValidate
         onSubmit={handleSubmit}
-        className="animate-in fade-in zoom-in-95 w-full max-w-md rounded-2xl bg-white shadow-2xl duration-200"
+        className="animate-in fade-in zoom-in-95 w-full max-w-md rounded-2xl bg-bg-card shadow-brand-lg duration-200"
       >
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-gray-100 p-4">
+        <div className="flex items-center justify-between border-b border-border p-4">
           <div className="flex items-center gap-2">
             <Shield className="size-5 text-brand-600" />
-            <h2 id="data-collection-title" className="text-base font-bold text-gray-900 sm:text-lg">
+            <h2 id="data-collection-title" className="text-base font-bold text-ink-900 sm:text-lg">
               {S.TITLE}
             </h2>
           </div>
@@ -235,7 +235,7 @@ function DataCollectionModalContent({
             type="button"
             onClick={handleSkip}
             disabled={isSubmitting}
-            className="rounded-full p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 disabled:opacity-50"
+            className="rounded-full p-1.5 text-text-muted transition-colors hover:bg-bg-base hover:text-ink-900 disabled:opacity-50"
             aria-label="關閉"
           >
             <X className="size-5" />
@@ -245,18 +245,18 @@ function DataCollectionModalContent({
         {/* Content */}
         <div className="space-y-4 p-4">
           {/* Privacy Notice */}
-          <div className="flex items-start gap-3 rounded-xl border border-blue-100 bg-blue-50 p-3">
-            <Shield className="mt-0.5 size-5 shrink-0 text-blue-600" />
-            <p className="text-xs text-blue-800">{S.PRIVACY_NOTE}</p>
+          <div className="bg-brand-50/40 flex items-start gap-3 rounded-xl border border-brand-100 p-3">
+            <Shield className="mt-0.5 size-5 shrink-0 text-brand-600" />
+            <p className="text-xs text-brand-700">{S.PRIVACY_NOTE}</p>
           </div>
 
           {/* Name Input */}
           <div>
             <label
               htmlFor="data-name-input"
-              className="mb-1.5 flex items-center gap-2 text-sm font-medium text-gray-700"
+              className="mb-1.5 flex items-center gap-2 text-sm font-medium text-ink-900"
             >
-              <User className="size-4 text-gray-400" />
+              <User className="size-4 text-text-muted" />
               {S.NAME_LABEL}
               <span className="text-red-500">*</span>
             </label>
@@ -273,7 +273,7 @@ function DataCollectionModalContent({
               className={`w-full rounded-xl border px-4 py-2.5 text-sm transition-colors focus:outline-none focus:ring-2 ${
                 errors.name
                   ? 'border-red-300 focus:border-red-500 focus:ring-red-500/20'
-                  : 'focus:ring-brand-500/20 border-gray-200 focus:border-brand-500'
+                  : 'focus:ring-brand-500/20 border-border focus:border-brand-500'
               }`}
               disabled={isSubmitting}
               required
@@ -294,9 +294,9 @@ function DataCollectionModalContent({
           <div>
             <label
               htmlFor="data-phone-input"
-              className="mb-1.5 flex items-center gap-2 text-sm font-medium text-gray-700"
+              className="mb-1.5 flex items-center gap-2 text-sm font-medium text-ink-900"
             >
-              <Phone className="size-4 text-gray-400" />
+              <Phone className="size-4 text-text-muted" />
               {S.PHONE_LABEL}
               <span className="text-red-500">*</span>
             </label>
@@ -313,7 +313,7 @@ function DataCollectionModalContent({
               className={`w-full rounded-xl border px-4 py-2.5 text-sm transition-colors focus:outline-none focus:ring-2 ${
                 errors.phone
                   ? 'border-red-300 focus:border-red-500 focus:ring-red-500/20'
-                  : 'focus:ring-brand-500/20 border-gray-200 focus:border-brand-500'
+                  : 'focus:ring-brand-500/20 border-border focus:border-brand-500'
               }`}
               disabled={isSubmitting}
               required
@@ -334,9 +334,9 @@ function DataCollectionModalContent({
           <div>
             <label
               htmlFor="data-email-input"
-              className="mb-1.5 flex items-center gap-2 text-sm font-medium text-gray-700"
+              className="mb-1.5 flex items-center gap-2 text-sm font-medium text-ink-900"
             >
-              <Mail className="size-4 text-gray-400" />
+              <Mail className="size-4 text-text-muted" />
               {S.EMAIL_LABEL}
             </label>
             <input
@@ -351,7 +351,7 @@ function DataCollectionModalContent({
               className={`w-full rounded-xl border px-4 py-2.5 text-sm transition-colors focus:outline-none focus:ring-2 ${
                 errors.email
                   ? 'border-red-300 focus:border-red-500 focus:ring-red-500/20'
-                  : 'focus:ring-brand-500/20 border-gray-200 focus:border-brand-500'
+                  : 'focus:ring-brand-500/20 border-border focus:border-brand-500'
               }`}
               disabled={isSubmitting}
             />
@@ -369,19 +369,19 @@ function DataCollectionModalContent({
         </div>
 
         {/* Footer */}
-        <div className="flex gap-3 border-t border-gray-100 p-4">
+        <div className="flex gap-3 border-t border-border p-4">
           <button
             type="button"
             onClick={handleSkip}
             disabled={isSubmitting}
-            className="flex-1 rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50"
+            className="flex-1 rounded-xl border border-border px-4 py-2.5 text-sm font-semibold text-ink-900 transition-colors hover:bg-bg-base disabled:opacity-50"
           >
             {S.SKIP_BTN}
           </button>
           <button
             type="submit"
             disabled={!name.trim() || !phone.trim() || isSubmitting}
-            className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-700 disabled:bg-gray-300 disabled:text-gray-500"
+            className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-brand-700 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-600 disabled:bg-border disabled:text-text-muted"
           >
             {isSubmitting ? (
               <>
