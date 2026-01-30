@@ -5,6 +5,7 @@ import type { TrustRoomView, TrustStep, ConfirmResult } from '../types/trust.typ
 import { STEP_ICONS_SVG, STEP_DESCRIPTIONS, STEP_NAMES } from '../types/trust.types';
 import { calcProgressWidthClass } from '../constants/progress';
 import { logger } from '../lib/logger';
+import { triggerHaptic } from '../lib/haptic';
 import { ShieldCheck, Clock, Check, Loader2, AlertTriangle } from 'lucide-react';
 import { useTrustRoomMaiMai } from '../hooks/useTrustRoomMaiMai';
 
@@ -16,6 +17,27 @@ const TOAST_DURATION_MS = 3000;
 const EXPIRY_WARNING_DAYS = 7;
 /** 每天毫秒數 */
 const MS_PER_DAY = 1000 * 60 * 60 * 24;
+
+/** 取得步驟卡片樣式 */
+const getStepCardClass = (isCurrent: boolean, isFuture: boolean): string => {
+  const opacity = isFuture ? 'opacity-40' : 'opacity-100';
+  const background = isCurrent
+    ? 'bg-brand-50/50 dark:bg-brand-900/25 dark:border-brand-400 border-2 border-brand-500'
+    : 'border border-border bg-white dark:bg-slate-900';
+  return `flex gap-4 rounded-xl p-4 transition-all ${opacity} ${background}`;
+};
+
+/** 取得步驟圖示容器樣式 */
+const getStepIconClass = (
+  confirmed: boolean,
+  isCurrent: boolean,
+  isDone: boolean
+): string => {
+  if (confirmed) return 'bg-success text-white';
+  if (isCurrent) return 'bg-brand-700 text-white';
+  if (isDone) return 'bg-brand-200 dark:bg-brand-900/40 dark:text-brand-200 text-brand-700';
+  return 'bg-bg-base text-text-muted dark:bg-slate-800 dark:text-slate-400';
+};
 
 export default function TrustRoom() {
   const [searchParams] = useSearchParams();
@@ -122,9 +144,7 @@ export default function TrustRoom() {
   const handleConfirm = async (stepNum: number) => {
     if (!id || !token || confirming || !data) return;
     setConfirming(stepNum);
-    if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
-      navigator.vibrate(50);
-    }
+    triggerHaptic();
     const oldData = { ...data };
     const updatedSteps = data.steps_data.map((s) =>
       s.step === stepNum ? { ...s, confirmed: true } : s
@@ -215,7 +235,10 @@ export default function TrustRoom() {
           <div className="bg-danger/10 mx-auto mb-4 flex size-12 items-center justify-center rounded-full text-danger">
             <AlertTriangle className="size-6" />
           </div>
-          <p className="text-sm font-semibold text-danger">{error}</p>
+          <h2 className="mb-2 text-base font-bold text-ink-900 dark:text-slate-100">
+            無法載入頁面
+          </h2>
+          <p className="text-sm text-text-muted dark:text-slate-400">{error}</p>
           <button
             type="button"
             onClick={() => {
@@ -240,7 +263,7 @@ export default function TrustRoom() {
         <div
           role="alert"
           aria-live="polite"
-          className={`fixed inset-x-4 top-[calc(1rem+env(safe-area-inset-top))] z-modal rounded-lg px-4 py-3 text-center font-medium text-white shadow-brand-md sm:left-1/2 sm:right-auto sm:top-5 sm:-translate-x-1/2 sm:px-6 sm:text-left sm:font-semibold ${
+          className={`fixed inset-x-4 top-[calc(1.5rem+env(safe-area-inset-top))] z-modal rounded-lg px-4 py-3 text-center font-medium text-white shadow-brand-md sm:left-1/2 sm:right-auto sm:top-5 sm:-translate-x-1/2 sm:px-6 sm:text-left sm:font-semibold ${
             message.type === 'success' ? 'bg-success' : 'bg-danger'
           }`}
         >
@@ -277,7 +300,7 @@ export default function TrustRoom() {
 
         {/* 進度條 */}
         <div className="bg-bg-base p-4 sm:px-6 dark:bg-slate-900">
-          <div className="h-2.5 w-full overflow-hidden rounded-full bg-border">
+          <div className="h-2.5 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
             <div
               className={`h-full rounded-full bg-gradient-to-r from-brand-700 to-success transition-all duration-500 ${progressWidthClass}`}
             />
@@ -288,7 +311,7 @@ export default function TrustRoom() {
         </div>
 
         {/* 步驟列表 */}
-        <div className="space-y-4 p-4">
+        <div className="space-y-5 p-4 sm:p-6">
           {sortedSteps.map((step: TrustStep) => {
             const isCurrent = step.step === data.current_step;
             const isDone = step.done;
@@ -303,27 +326,10 @@ export default function TrustRoom() {
             };
 
             return (
-              <div
-                key={step.step}
-                className={`flex gap-4 rounded-xl p-4 transition-all ${
-                  isFuture ? 'opacity-40' : 'opacity-100'
-                } ${
-                  isCurrent
-                    ? 'bg-brand-50/50 dark:bg-brand-900/25 dark:border-brand-400 border-2 border-brand-500'
-                    : 'border border-border bg-white dark:bg-slate-900'
-                }`}
-              >
+              <div key={step.step} className={getStepCardClass(isCurrent, isFuture)}>
                 {/* 步驟圖示 */}
                 <div
-                  className={`flex size-10 shrink-0 items-center justify-center rounded-full text-lg font-semibold sm:size-11 ${
-                    step.confirmed
-                      ? 'bg-success text-white'
-                      : isCurrent
-                        ? 'bg-brand-700 text-white'
-                      : isDone
-                        ? 'bg-brand-200 dark:bg-brand-900/40 dark:text-brand-200 text-brand-700'
-                        : 'bg-bg-base text-text-muted dark:bg-slate-800 dark:text-slate-400'
-                  }`}
+                  className={`flex size-11 shrink-0 items-center justify-center rounded-full text-lg font-semibold sm:size-12 ${getStepIconClass(step.confirmed, isCurrent, isDone)}`}
                 >
                   {renderStepIcon()}
                 </div>

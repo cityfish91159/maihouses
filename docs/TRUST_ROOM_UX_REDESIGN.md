@@ -174,6 +174,8 @@
 - `src/pages/TrustRoom.tsx`: 主容器補 bottom safe-area padding
 - `src/pages/TrustRoom.tsx`: Toast 改為手機全寬 + safe-area top
 - `src/pages/TrustRoom.tsx`: 確認按鈕新增 `py-3`，觸控高度 >= 48px
+- `src/pages/TrustRoom.tsx`: 步驟圖示尺寸調整為 `size-11 sm:size-12`
+- `src/lib/haptic.ts`: 抽出 `triggerHaptic` 工具並於 TrustRoom 使用
 ### Phase 8: Assure/Detail.tsx 組件拆分重構
 
 > ⚠️ **重要說明**：此 Phase 為大規模重構，需謹慎進行。
@@ -193,15 +195,15 @@
 
 #### 8.2 重構步驟
 
-- [ ] 8.2.1 建立 `src/components/Assure/` 目錄
-- [ ] 8.2.2 提取 `<StepIcon />` 組件（最小依賴，先行測試）
-- [ ] 8.2.3 提取 `<StepCard />` 容器組件
-- [ ] 8.2.4 提取 `<StepContent />` 內容組件
-- [ ] 8.2.5 提取 `<StepActions />` 操作組件
-- [ ] 8.2.6 提取 `<PaymentTimer />` 付款計時器
-- [ ] 8.2.7 提取 `<ChecklistPanel />` 交屋清單
-- [ ] 8.2.8 提取 `<SupplementList />` 補充紀錄
-- [ ] 8.2.9 更新 `Detail.tsx` 使用新組件
+- [x] 8.2.1 建立 `src/components/Assure/` 目錄
+- [x] 8.2.2 提取 `<StepIcon />` 組件（最小依賴，先行測試）
+- [x] 8.2.3 提取 `<StepCard />` 容器組件
+- [x] 8.2.4 提取 `<StepContent />` 內容組件
+- [x] 8.2.5 提取 `<StepActions />` 操作組件
+- [x] 8.2.6 提取 `<PaymentTimer />` 付款計時器
+- [x] 8.2.7 提取 `<ChecklistPanel />` 交屋清單
+- [x] 8.2.8 提取 `<SupplementList />` 補充紀錄
+- [x] 8.2.9 更新 `Detail.tsx` 使用新組件
 - [ ] 8.2.10 驗證功能正常（Mock + 正式模式）
 
 #### 8.3 Props 設計原則
@@ -256,6 +258,23 @@ interface PaymentTimerProps {
 - **總行數減少**：Detail.tsx 預計從 570 行降至 ~250 行
 - **子組件總行數**：~400 行（分散在 7 個檔案）
 - **可維護性提升**：每個組件職責單一，易於測試和修改
+
+#### Phase 8 施工紀錄 (2026-01-30)
+- `src/components/Assure/StepIcon.tsx`: 抽出步驟圖示（使用 STEP_ICONS_SVG）
+- `src/components/Assure/StepCard.tsx`: 卡片容器（狀態樣式 + icon/連線）
+- `src/components/Assure/StepContent.tsx`: 內容區塊（標題、狀態、子區塊）
+- `src/components/Assure/StepActions.tsx`: 操作按鈕區（送出/確認/付款）
+- `src/components/Assure/PaymentTimer.tsx`: 付款倒數區塊
+- `src/components/Assure/ChecklistPanel.tsx`: 交屋清單區塊
+- `src/components/Assure/SupplementList.tsx`: 補充紀錄列表
+- `src/pages/Assure/Detail.tsx`: 使用新組件重構步驟渲染
+- `src/components/Assure/__tests__`: 新增各子組件單元測試
+- `src/components/Assure/StepCard.tsx`: 圖示容器調整為 44px（size-11）
+- `src/components/Assure/PaymentTimer.tsx`: 按鈕高度修正 + aria-disabled + 文字函式化
+- `src/components/Assure/ChecklistPanel.tsx`: 確認按鈕高度修正、文字行距提升
+- `src/components/Assure/StepActions.tsx`: 按鈕高度修正、textarea aria-label、拆分 Agent/Buyer 行為
+- `src/components/Assure/StepContent.tsx`: props 分組（state/handlers）降低 drilling
+- `src/components/Assure/SupplementList.tsx`: key 改為 role+timestamp
 
 ### Phase 9: 房仲資料 API 化
 
