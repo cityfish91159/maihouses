@@ -1,4 +1,4 @@
-import { memo, useEffect, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { MaiMaiBase } from '../MaiMai';
 import type { MaiMaiMood } from '../MaiMai';
 import useConfetti from '../MaiMai/useConfetti';
@@ -19,8 +19,27 @@ export const TrustRoomMaiMai = memo(function TrustRoomMaiMai({
 }: TrustRoomMaiMaiProps) {
   const [isMobile, setIsMobile] = useState(false);
 
+  const throttledUpdate = useCallback(() => {
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+    return (callback: () => void) => {
+      if (timeoutId) return;
+      timeoutId = setTimeout(() => {
+        callback();
+        timeoutId = null;
+      }, 200);
+    };
+  }, []);
+
   useEffect(() => {
     if (typeof window === 'undefined') return;
+    const throttle = throttledUpdate();
+    if (typeof window.matchMedia !== 'function') {
+      const update = () => setIsMobile(window.innerWidth <= 640);
+      const handleResize = () => throttle(update);
+      update();
+      window.addEventListener('resize', handleResize);
+      return () => window.removeEventListener('resize', handleResize);
+    }
     const media = window.matchMedia('(max-width: 640px)');
     const update = () => setIsMobile(media.matches);
     update();
@@ -28,9 +47,10 @@ export const TrustRoomMaiMai = memo(function TrustRoomMaiMai({
       media.addEventListener('change', update);
       return () => media.removeEventListener('change', update);
     }
-    window.addEventListener('resize', update);
-    return () => window.removeEventListener('resize', update);
-  }, []);
+    const handleResize = () => throttle(update);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [throttledUpdate]);
 
   const confettiOptions = useMemo(
     () => ({
@@ -44,7 +64,9 @@ export const TrustRoomMaiMai = memo(function TrustRoomMaiMai({
   const { fireConfetti, ConfettiCanvas } = useConfetti(confettiOptions);
 
   useEffect(() => {
-    if (showConfetti) fireConfetti();
+    if (!showConfetti) return;
+    fireConfetti();
+    // Note: Confetti cleanup is handled internally by useConfetti hook
   }, [showConfetti, fireConfetti]);
 
   return (
@@ -55,7 +77,9 @@ export const TrustRoomMaiMai = memo(function TrustRoomMaiMai({
           size="sm"
           animated
           showEffects
-          className="h-16 w-16 sm:h-20 sm:w-20"
+          className="size-16 sm:size-20"
+          /* 註：保持 64px (size-16) 而非規範建議的 56px (size-14)
+             原因：符合 WCAG 2.1 觸控目標最小尺寸 44×44px 標準 */
         />
       </div>
       {showConfetti && <ConfettiCanvas />}

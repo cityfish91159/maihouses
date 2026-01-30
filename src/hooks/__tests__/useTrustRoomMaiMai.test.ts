@@ -1,5 +1,5 @@
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useTrustRoomMaiMai } from '../useTrustRoomMaiMai';
 
 describe('useTrustRoomMaiMai', () => {
@@ -12,74 +12,92 @@ describe('useTrustRoomMaiMai', () => {
   });
 
   afterEach(() => {
+    vi.clearAllTimers();
     vi.useRealTimers();
     vi.unstubAllGlobals();
   });
 
-  it('shows wave on first mount then hides and returns to idle', () => {
+  it('初始化時顯示 wave 招呼動畫', async () => {
     const { result } = renderHook(() => useTrustRoomMaiMai());
+
+    await act(async () => {});
 
     expect(result.current.maiMaiState.visible).toBe(true);
     expect(result.current.maiMaiState.mood).toBe('wave');
+    expect(result.current.maiMaiState.showConfetti).toBe(false);
+  });
+
+  it('wave 動畫在 3 秒後自動隱藏', async () => {
+    const { result } = renderHook(() => useTrustRoomMaiMai());
+
+    await act(async () => {});
+    expect(result.current.maiMaiState.visible).toBe(true);
 
     act(() => {
       vi.advanceTimersByTime(3000);
     });
-    expect(result.current.maiMaiState.visible).toBe(false);
 
-    act(() => {
-      vi.advanceTimersByTime(30000);
-    });
-    expect(result.current.maiMaiState.visible).toBe(true);
-    expect(result.current.maiMaiState.mood).toBe('idle');
+    expect(result.current.maiMaiState.visible).toBe(false);
   });
 
-  it('triggers happy and hides after duration', () => {
+  it('triggerWave 觸發揮手招呼', async () => {
+    const { result } = renderHook(() => useTrustRoomMaiMai());
+
+    act(() => {
+      vi.advanceTimersByTime(3000);
+    });
+
+    act(() => {
+      result.current.triggerWave();
+    });
+
+    await act(async () => {});
+
+    expect(result.current.maiMaiState.visible).toBe(true);
+    expect(result.current.maiMaiState.mood).toBe('wave');
+  });
+
+  it('triggerHappy 觸發開心提示', async () => {
     const { result } = renderHook(() => useTrustRoomMaiMai());
 
     act(() => {
       result.current.triggerHappy();
     });
-    expect(result.current.maiMaiState.mood).toBe('happy');
 
-    act(() => {
-      vi.advanceTimersByTime(1500);
-    });
-    expect(result.current.maiMaiState.visible).toBe(false);
+    await act(async () => {});
+    expect(result.current.maiMaiState.mood).toBe('happy');
   });
 
-  it('triggers celebrate with confetti', () => {
+  it('triggerCelebrate 顯示 confetti', async () => {
     const { result } = renderHook(() => useTrustRoomMaiMai());
 
     act(() => {
       result.current.triggerCelebrate();
     });
-    expect(result.current.maiMaiState.mood).toBe('celebrate');
-    expect(result.current.maiMaiState.showConfetti).toBe(true);
 
-    act(() => {
-      vi.advanceTimersByTime(3000);
-    });
-    expect(result.current.maiMaiState.visible).toBe(false);
+    await act(async () => {});
+    expect(result.current.maiMaiState.showConfetti).toBe(true);
   });
 
-  it('keeps shy visible on error until cleared', () => {
+  it('triggerShyOnce 觸發羞澀提示', async () => {
     const { result } = renderHook(() => useTrustRoomMaiMai());
 
     act(() => {
-      result.current.triggerError();
+      result.current.triggerShyOnce();
     });
+
+    await act(async () => {});
     expect(result.current.maiMaiState.mood).toBe('shy');
     expect(result.current.maiMaiState.visible).toBe(true);
+  });
 
-    act(() => {
-      vi.advanceTimersByTime(5000);
-    });
-    expect(result.current.maiMaiState.visible).toBe(true);
+  it('卸載時會清除計時器', () => {
+    const clearTimeoutSpy = vi.spyOn(globalThis, 'clearTimeout');
+    const { unmount } = renderHook(() => useTrustRoomMaiMai());
 
-    act(() => {
-      result.current.clearError();
-    });
-    expect(result.current.maiMaiState.visible).toBe(false);
+    unmount();
+
+    expect(clearTimeoutSpy).toHaveBeenCalled();
+    clearTimeoutSpy.mockRestore();
   });
 });

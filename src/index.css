@@ -107,6 +107,15 @@
   }
 }
 
+@keyframes mhShimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
 /* === 動畫 class ===
  * 所有 animate-* class 由 Tailwind 自動生成（見 tailwind.config.cjs）
  * 此處只保留延遲變體和特殊動畫 class
@@ -118,4 +127,15 @@
 
 .animate-pulse-delay-2 {
   animation-delay: 0.4s;
+}
+
+.mh-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--border) 0%,
+    rgba(255, 255, 255, 0.7) 50%,
+    var(--border) 100%
+  );
+  background-size: 200% 100%;
+  animation: mhShimmer 1.4s ease-in-out infinite;
 }

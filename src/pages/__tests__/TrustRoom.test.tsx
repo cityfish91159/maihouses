@@ -154,8 +154,8 @@ describe('TrustRoom', () => {
       </MemoryRouter>
     );
 
-    // Loading skeleton has animate-pulse class
-    expect(container.querySelector('.animate-pulse')).toBeInTheDocument();
+    // Loading skeleton has mh-shimmer class
+    expect(container.querySelector('.mh-shimmer')).toBeInTheDocument();
   });
 
   it('displays token expiry warning when less than 7 days remaining', async () => {

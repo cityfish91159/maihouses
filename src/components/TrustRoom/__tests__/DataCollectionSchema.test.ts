@@ -75,6 +75,18 @@ describe('DataCollectionFormSchema', () => {
     expect(result.success).toBe(false);
   });
 
+  it('preserves leading/trailing spaces in name input', () => {
+    const result = DataCollectionFormSchema.safeParse({
+      name: '  王小明  ',
+      phone: '0912345678',
+      email: '',
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.name).toBe('  王小明  ');
+    }
+  });
+
   it('rejects name with only spaces', () => {
     const result = DataCollectionFormSchema.safeParse({
       name: 'A B',

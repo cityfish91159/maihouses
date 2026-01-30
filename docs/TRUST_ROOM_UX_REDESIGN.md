@@ -126,6 +126,9 @@
  - `npm run lint` 通過
  - `vitest run`（progress / schema / TrustRoom / DataCollectionModal）通過
  - `constants/progress` 型別改為 tuple + union，避免索引 undefined
+ - TrustRoom 介面細節優化：步驟間距、進度條背景、Toast safe-area、案件編號截斷
+ - Loading Skeleton 加入 shimmer，錯誤狀態補卡片與重試
+ - 確認按鈕觸控高度提升至 48px
 
 ### Phase 6: MaiMai 吉祥物整合（極簡存在感）
 - [x] 6.1 建立 `useTrustRoomMaiMai` Hook
@@ -146,14 +149,16 @@
  - MaiMai 手機尺寸調整為 64px，加入 safe-area
  - Confetti 手機粒子減半、origin 自適應
  - 新增 `useTrustRoomMaiMai` 單元測試
+- `src/pages/TrustRoom.tsx`: 手機版響應式修正（Header padding、徽章橫向滑動、步驟圖示/標題尺寸調整、Toast 間距）
+- `src/pages/TrustRoom.tsx`: safe-area 左右邊距、確認按鈕 haptic、深色模式補強
 
 ### Phase 7: 手機優先 UI 優化（ui-ux-pro-max 審查）
-- [ ] 7.1 **Touch Target Size**：確認按鈕 `py-2.5` → `py-3` + `min-h-[44px]`（44px 最小觸控區域）
-- [ ] 7.2 **徽章文字尺寸**：`text-[11px]` → `text-xs` (12px)，提升手機可讀性
-- [ ] 7.3 **進度條視覺權重**：`h-2` → `h-2.5` 或 `h-3`，加強視覺存在感
-- [ ] 7.4 **Safe Area 處理**：加入 `pb-safe` 或 `pb-8`，避免 iPhone Home Bar 遮擋
-- [ ] 7.5 **Toast 位置優化**：手機版改為 `left-4 right-4 top-4` 全寬，避開瀏覽器網址列
-- [ ] 7.6 **觸控間距確認**：確保所有觸控元素間距 ≥ 8px (`gap-2`)
+- [x] 7.1 **Touch Target Size**：確認按鈕 `py-3` + `min-h-[48px]`（>= 44px 觸控區域）
+- [x] 7.2 **徽章文字尺寸**：維持 `text-xs` (12px)，手機可讀性符合
+- [x] 7.3 **進度條視覺權重**：`h-2` → `h-2.5`，加強視覺存在感
+- [x] 7.4 **Safe Area 處理**：加入 `pb-[calc(1rem+env(safe-area-inset-bottom))]`
+- [x] 7.5 **Toast 位置優化**：手機版改為 `left-4 right-4 top-4` 全寬
+- [x] 7.6 **觸控間距確認**：維持 `gap-2` 以上
 
 #### Phase 7 審查依據 (ui-ux-pro-max)
 | 問題 | 嚴重度 | 規範 |
@@ -164,6 +169,11 @@
 | Safe Area | MEDIUM | Account for iOS safe areas |
 | Toast Position | LOW | Avoid browser chrome overlap |
 
+#### Phase 7 施工紀錄 (2026-01-30)
+- `src/pages/TrustRoom.tsx`: 進度條高度調整為 `h-2.5`
+- `src/pages/TrustRoom.tsx`: 主容器補 bottom safe-area padding
+- `src/pages/TrustRoom.tsx`: Toast 改為手機全寬 + safe-area top
+- `src/pages/TrustRoom.tsx`: 確認按鈕新增 `py-3`，觸控高度 >= 48px
 ### Phase 8: Assure/Detail.tsx 組件拆分重構
 
 > ⚠️ **重要說明**：此 Phase 為大規模重構，需謹慎進行。
@@ -246,6 +256,21 @@ interface PaymentTimerProps {
 - **總行數減少**：Detail.tsx 預計從 570 行降至 ~250 行
 - **子組件總行數**：~400 行（分散在 7 個檔案）
 - **可維護性提升**：每個組件職責單一，易於測試和修改
+
+### Phase 9: 房仲資料 API 化
+
+> 詳細設計規格見「十一、房仲資料 API 化設計」
+
+- [ ] 9.1 資料庫 Schema 擴充（`20260130_agent_profile_extension.sql`）
+- [ ] 9.2 Supabase Storage Bucket 建立（`agent-avatars`）
+- [ ] 9.3 信任分計算 RPC（`fn_calculate_trust_score`）
+- [ ] 9.4 GET /api/agent/profile 端點
+- [ ] 9.5 GET /api/agent/me 端點
+- [ ] 9.6 PUT /api/agent/profile 端點
+- [ ] 9.7 POST /api/agent/avatar 端點
+- [ ] 9.8 UAG 個人資料頁面
+- [ ] 9.9 Property 頁面 AgentTrustCard 改用真實 API
+- [ ] 9.10 Mock 頁面欄位調整（成交率→服務評價、累積成交→完成案件）
 
 ---
 
@@ -804,6 +829,466 @@ import {
   Zap,          // 演示模式
 } from 'lucide-react';
 ```
+
+---
+
+## 十一、房仲資料 API 化設計
+
+> **目標**：將 Property 頁面右側的房仲資料從 Mock 連接到真實 API，並在 UAG 後台提供編輯功能。
+> **適用範圍**：正式版新增詳情頁（Mock 頁面欄位調整為與 API 一致即可，不接 API）
+
+### 11.1 現況分析
+
+| 顯示項目 | 目前來源 | 狀態 |
+|---------|---------|------|
+| 姓名 | `agents.name` | ✅ 有真實欄位 |
+| 大頭照 | `agents.avatar_url` | ✅ 有欄位但無上傳功能 |
+| 公司 | `agents.company` | ✅ 有真實欄位 |
+| 信任分 92 | `agents.trust_score` | ✅ 有欄位，需定義計算邏輯 |
+| 獲得鼓勵 156 | `agents.encouragement_count` | ✅ 真實累計 |
+| 成交率 62% | `Math.min(95, 60 + (trustScore % 30))` | ❌ **假計算，建議移除** |
+| 累積成交 322 | `encouragementCount * 2 + 10` | ❌ **假計算，需改為真實** |
+| 服務年資 4年 | 無欄位 | ❌ 需新增 |
+
+### 11.2 指標調整方案
+
+#### 移除「成交率」，改為「服務評價」
+
+成交率問題：
+- 難以驗證真實性
+- 分母（帶看次數）難以定義
+- 對新手房仲不公平
+
+**建議替代：服務評價 (`service_rating`)**
+```typescript
+interface ServiceRating {
+  score: number;        // 1-5 星，顯示平均值
+  review_count: number; // 評價數量
+}
+// 顯示：「⭐ 4.8 (32則評價)」
+```
+
+#### 「累積成交」改為「完成案件」
+
+```typescript
+interface AgentMetrics {
+  completed_cases: number;  // 已完成案件數（來自 Trust Room）
+  active_listings: number;  // 目前刊登物件數
+  service_years: number;    // 服務年資（自動計算）
+}
+```
+
+### 11.3 資料庫 Schema 擴充
+
+#### Migration: `20260130_agent_profile_extension.sql`
+
+```sql
+-- 基本資料（房仲可編輯）
+ALTER TABLE agents ADD COLUMN IF NOT EXISTS bio TEXT;
+ALTER TABLE agents ADD COLUMN IF NOT EXISTS specialties TEXT[];
+ALTER TABLE agents ADD COLUMN IF NOT EXISTS certifications TEXT[];
+ALTER TABLE agents ADD COLUMN IF NOT EXISTS joined_at TIMESTAMPTZ;
+ALTER TABLE agents ADD COLUMN IF NOT EXISTS phone VARCHAR(20);
+ALTER TABLE agents ADD COLUMN IF NOT EXISTS line_id VARCHAR(50);
+
+-- 指標欄位（系統計算/統計）
+ALTER TABLE agents ADD COLUMN IF NOT EXISTS service_rating DECIMAL(2,1) DEFAULT 0;
+ALTER TABLE agents ADD COLUMN IF NOT EXISTS review_count INTEGER DEFAULT 0;
+ALTER TABLE agents ADD COLUMN IF NOT EXISTS completed_cases INTEGER DEFAULT 0;
+ALTER TABLE agents ADD COLUMN IF NOT EXISTS active_listings INTEGER DEFAULT 0;
+
+-- 預設值補齊
+UPDATE agents SET joined_at = created_at WHERE joined_at IS NULL;
+
+-- 索引
+CREATE INDEX IF NOT EXISTS idx_agents_trust_score ON agents (trust_score DESC);
+```
+
+#### Supabase Storage Bucket
+
+```sql
+-- agent-avatars bucket
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+VALUES (
+  'agent-avatars',
+  'agent-avatars',
+  true,
+  2097152,  -- 2MB
+  ARRAY['image/jpeg', 'image/png', 'image/webp']
+) ON CONFLICT (id) DO NOTHING;
+
+-- RLS 政策
+CREATE POLICY "Agents can upload own avatar"
+  ON storage.objects FOR INSERT
+  WITH CHECK (
+    bucket_id = 'agent-avatars' AND
+    (storage.foldername(name))[1] = auth.uid()::text
+  );
+
+CREATE POLICY "Public can view avatars"
+  ON storage.objects FOR SELECT
+  USING (bucket_id = 'agent-avatars');
+
+CREATE POLICY "Agents can update own avatar"
+  ON storage.objects FOR UPDATE
+  USING (
+    bucket_id = 'agent-avatars' AND
+    (storage.foldername(name))[1] = auth.uid()::text
+  );
+```
+
+#### 信任分計算 RPC
+
+```sql
+CREATE OR REPLACE FUNCTION fn_calculate_trust_score(p_agent_id UUID)
+RETURNS INTEGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  v_score INTEGER := 60;  -- 基礎分
+  v_agent agents%ROWTYPE;
+BEGIN
+  SELECT * INTO v_agent FROM agents WHERE id = p_agent_id;
+
+  IF NOT FOUND THEN
+    RETURN 60;
+  END IF;
+
+  -- 服務評價加分 (最高 +20)
+  v_score := v_score + LEAST(20, COALESCE(v_agent.service_rating, 0)::INTEGER * 4);
+
+  -- 完成案件加分 (最高 +10)
+  v_score := v_score + LEAST(10, COALESCE(v_agent.completed_cases, 0) / 5);
+
+  -- 鼓勵數加分 (最高 +10)
+  v_score := v_score + LEAST(10, COALESCE(v_agent.encouragement_count, 0) / 20);
+
+  RETURN LEAST(100, v_score);
+END;
+$$;
+
+-- 自動更新觸發器
+CREATE OR REPLACE FUNCTION fn_update_agent_trust_score()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  NEW.trust_score := fn_calculate_trust_score(NEW.id);
+  RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER trg_agents_trust_score
+  BEFORE UPDATE ON agents
+  FOR EACH ROW
+  WHEN (
+    OLD.service_rating IS DISTINCT FROM NEW.service_rating OR
+    OLD.completed_cases IS DISTINCT FROM NEW.completed_cases OR
+    OLD.encouragement_count IS DISTINCT FROM NEW.encouragement_count
+  )
+  EXECUTE FUNCTION fn_update_agent_trust_score();
+```
+
+### 11.4 API 端點設計
+
+#### GET /api/agent/profile - 取得房仲資料（公開）
+
+**檔案：** `api/agent/profile.ts`
+
+```typescript
+// 請求
+GET /api/agent/profile?id={agent_id}
+
+// 公開端點，不需認證（Property 頁面使用）
+
+// 回應
+{
+  success: true,
+  data: {
+    id: string,
+    name: string,
+    avatar_url: string | null,
+    company: string,
+    bio: string | null,
+    specialties: string[],
+    certifications: string[],
+    phone: string | null,
+    line_id: string | null,
+
+    // 指標
+    trust_score: number,         // 1-100
+    encouragement_count: number,
+    service_rating: number,      // 1.0-5.0
+    review_count: number,
+    completed_cases: number,
+    service_years: number,       // 自動計算
+  }
+}
+```
+
+#### GET /api/agent/me - 取得當前房仲資料（UAG 用）
+
+**檔案：** `api/agent/me.ts`
+
+```typescript
+// 請求
+GET /api/agent/me
+Authorization: Bearer <jwt>
+
+// 回應：同 profile，但包含更多私密欄位
+{
+  success: true,
+  data: {
+    ...profile,
+    email: string,
+    points: number,
+    quota_s: number,
+    quota_a: number,
+    created_at: string,
+  }
+}
+```
+
+#### PUT /api/agent/profile - 更新房仲資料
+
+**檔案：** `api/agent/profile.ts`
+
+```typescript
+// 請求
+PUT /api/agent/profile
+Authorization: Bearer <jwt>
+Content-Type: application/json
+
+{
+  name?: string,           // 1-50 字
+  bio?: string,            // 最多 500 字
+  specialties?: string[],  // 最多 10 項
+  certifications?: string[],
+  phone?: string,          // 台灣手機格式
+  line_id?: string,
+  joined_at?: string,      // ISO date
+}
+
+// 回應
+{
+  success: true,
+  data: { updated_at: string }
+}
+```
+
+#### POST /api/agent/avatar - 上傳大頭照
+
+**檔案：** `api/agent/avatar.ts`
+
+```typescript
+// 請求
+POST /api/agent/avatar
+Authorization: Bearer <jwt>
+Content-Type: multipart/form-data
+
+FormData: { avatar: File }
+
+// 驗證
+// - 格式：image/jpeg, image/png, image/webp
+// - 大小：最大 2MB
+// - 建議尺寸：400x400px（自動縮放）
+
+// 回應
+{
+  success: true,
+  data: {
+    avatar_url: string  // 公開 URL
+  }
+}
+```
+
+### 11.5 UAG 個人資料頁面
+
+#### 目錄結構
+
+```
+src/pages/UAG/
+├── Profile/
+│   ├── index.tsx              # 主頁面
+│   ├── BasicInfoSection.tsx   # 基本資料區塊
+│   ├── AvatarUploader.tsx     # 照片上傳元件
+│   ├── MetricsDisplay.tsx     # 指標展示（唯讀）
+│   └── hooks/
+│       └── useAgentProfile.ts # 資料 Hook
+```
+
+#### 表單欄位設計
+
+| 欄位 | 類型 | 可編輯 | 驗證規則 |
+|-----|------|-------|---------|
+| 大頭照 | 圖片上傳 | ✅ | jpg/png/webp, ≤2MB |
+| 姓名 | 文字 | ✅ | 必填, 1-50字 |
+| 公司 | 文字 | ❌ | 系統設定 |
+| 自我介紹 | 多行文字 | ✅ | 最多 500 字 |
+| 專長區域 | 多選標籤 | ✅ | 預設選項，最多 10 項 |
+| 證照 | 多選標籤 | ✅ | 預設選項 |
+| 聯繫電話 | 電話 | ✅ | 台灣手機格式 |
+| LINE ID | 文字 | ✅ | 選填 |
+| 入行時間 | 日期選擇 | ✅ | 用於計算服務年資 |
+| 信任分 | 數字 | ❌ | 系統自動計算 |
+| 服務評價 | 星等 | ❌ | 來自客戶評價 |
+| 完成案件 | 數字 | ❌ | 來自 Trust Room |
+| 獲得鼓勵 | 數字 | ❌ | 來自客戶點擊 |
+
+#### 專長區域/證照預設選項
+
+```typescript
+const SPECIALTY_OPTIONS = [
+  '台北市', '新北市', '桃園市', '台中市', '高雄市',
+  '預售屋', '新成屋', '中古屋', '商辦', '店面',
+  '透天', '公寓', '大樓', '別墅', '土地',
+];
+
+const CERTIFICATION_OPTIONS = [
+  '不動產經紀人',
+  '不動產營業員',
+  '地政士',
+  '估價師',
+];
+```
+
+### 11.6 Property 頁面指標顯示調整
+
+#### AgentTrustCard 改用真實 API
+
+```typescript
+// 移除假計算
+// ❌ 舊版
+const dealRate = Math.min(95, 60 + (trustScore % 30));
+const totalDeals = encouragementCount * 2 + 10;
+
+// ✅ 新版
+const { data: agent } = useQuery({
+  queryKey: ['agent-profile', agentId],
+  queryFn: () => fetchAgentProfile(agentId),
+});
+```
+
+#### 卡片顯示設計
+
+```
+┌─────────────────────────────────────┐
+│  [照片]  王小明                      │
+│          永慶房屋 · 服務 4 年        │
+│                                     │
+│  信任分      服務評價     完成案件   │
+│    92      ⭐ 4.8(32)      45 件    │
+│                                     │
+│  ❤️ 獲得 156 次鼓勵                  │
+│                                     │
+│  [💬 LINE 諮詢]    [📞 來電諮詢]     │
+└─────────────────────────────────────┘
+```
+
+**變更說明：**
+- ❌ 移除「成交率」（無法驗證）
+- ✅ 新增「服務評價」（來自客戶）
+- ✅ 「累積成交」改為「完成案件」（來自 Trust Room）
+- ✅ 新增「服務年資」（自動計算）
+
+### 11.7 指標計算邏輯
+
+#### 信任分 (trust_score)
+
+```
+基礎分：60 分
++ 服務評價加分：rating × 4（最高 +20）
++ 完成案件加分：cases ÷ 5（最高 +10）
++ 獲得鼓勵加分：count ÷ 20（最高 +10）
+= 總分（最高 100）
+```
+
+#### 服務評價 (service_rating)
+
+```typescript
+// 來源：客戶在 Trust Room 完成後的回饋
+// 計算：所有評分的平均值
+service_rating = SUM(ratings) / COUNT(ratings)
+review_count = COUNT(ratings)
+```
+
+#### 完成案件 (completed_cases)
+
+```typescript
+// 來源：Trust Room 狀態為 'completed' 的案件數
+completed_cases = COUNT(trust_cases WHERE status = 'completed' AND agent_id = ?)
+```
+
+#### 服務年資
+
+```typescript
+// 自動計算，不儲存
+const serviceYears = Math.floor(
+  (Date.now() - new Date(agent.joined_at).getTime()) / (365.25 * 24 * 60 * 60 * 1000)
+);
+```
+
+### 11.8 檔案清單
+
+#### 新增檔案
+
+| 檔案 | 說明 |
+|-----|------|
+| `supabase/migrations/20260130_agent_profile_extension.sql` | Schema 擴充 |
+| `api/agent/profile.ts` | GET/PUT 房仲資料 |
+| `api/agent/me.ts` | GET 當前房仲（含私密欄位） |
+| `api/agent/avatar.ts` | POST 上傳大頭照 |
+| `src/pages/UAG/Profile/index.tsx` | 個人資料主頁 |
+| `src/pages/UAG/Profile/BasicInfoSection.tsx` | 基本資料區塊 |
+| `src/pages/UAG/Profile/AvatarUploader.tsx` | 照片上傳元件 |
+| `src/pages/UAG/Profile/MetricsDisplay.tsx` | 指標展示 |
+| `src/pages/UAG/Profile/hooks/useAgentProfile.ts` | 資料 Hook |
+| `src/types/agent.types.ts` | Agent 類型定義 |
+| `src/services/agentService.ts` | Agent API 服務 |
+
+#### 修改檔案
+
+| 檔案 | 修改內容 |
+|-----|---------|
+| `src/components/AgentTrustCard.tsx` | 改用真實 API，移除假計算 |
+| `src/pages/UAG/index.tsx` | 新增 Profile 路由 |
+| `src/types/supabase-schema.ts` | 更新 AgentRow 類型 |
+
+### 11.9 Mock 頁面欄位調整
+
+> Mock 頁面（`/maihouses/property/MH-100001`）不接 API，但欄位需調整為與正式版一致。
+
+| 原欄位 | 調整後 |
+|-------|--------|
+| 成交率 62% | 服務評價 ⭐ 4.8(32) |
+| 累積成交 322 | 完成案件 45 件 |
+| (無) | 服務年資 4 年 |
+
+### 11.10 驗收標準
+
+- [ ] `npm run typecheck` 通過
+- [ ] `npm run lint` 通過
+- [ ] 無 `any` 類型
+- [ ] API 有完整 Zod 驗證
+- [ ] RLS 政策正確設定
+- [ ] 照片上傳支援 jpg/png/webp
+- [ ] 照片大小限制 2MB
+- [ ] UAG 個人資料頁可正常編輯
+- [ ] Property 頁面顯示真實資料
+- [ ] 信任分自動計算正確
+- [ ] Mock 頁面欄位與正式版一致
+
+### 11.11 實作優先順序
+
+| 優先級 | 內容 |
+|-------|------|
+| P0 | 資料庫 Schema 擴充 |
+| P0 | GET API（讀取） |
+| P1 | PUT/POST API（寫入） |
+| P1 | UAG 個人資料頁面 |
+| P2 | Property 頁面更新 |
+| P2 | Mock 頁面欄位調整 |
 
 ---
 

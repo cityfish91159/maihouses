@@ -94,6 +94,11 @@ export function useTrustRoomMaiMai() {
     [clearTimers, hide, setStateSafe, startIdleTimer]
   );
 
+  /** 觸發「wave」揮手打招呼 */
+  const triggerWave = useCallback(() => {
+    trigger('wave', { duration: ANIMATION_CONFIG.waveDisplayTime });
+  }, [trigger]);
+
   /** 觸發「happy」短暫提示 */
   const triggerHappy = useCallback(() => {
     trigger('happy', { duration: ANIMATION_CONFIG.happyDisplayTime });
@@ -136,6 +141,7 @@ export function useTrustRoomMaiMai() {
 
   return {
     maiMaiState: state,
+    triggerWave,
     triggerHappy,
     triggerCelebrate,
     triggerShyOnce,

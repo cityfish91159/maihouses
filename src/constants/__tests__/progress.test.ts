@@ -24,6 +24,12 @@ describe('calcProgressWidthClass', () => {
     expect(calcProgressWidthClass(0, 0)).toBe('w-0');
   });
 
+  it('supports edge ratio values', () => {
+    expect(calcProgressWidthClass(1, 6)).toBe('w-1/6');
+    expect(calcProgressWidthClass(6, 6)).toBe('w-full');
+    expect(calcProgressWidthClass(7, 6)).toBe('w-full');
+  });
+
   // 極端值測試
   it('handles Infinity safely', () => {
     expect(calcProgressWidthClass(Infinity)).toBe('w-0');

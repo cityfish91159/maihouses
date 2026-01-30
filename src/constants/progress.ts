@@ -16,6 +16,12 @@ export const PROGRESS_MAX_STEP = 6;
 /** 預設進度條寬度 class */
 const DEFAULT_WIDTH = PROGRESS_WIDTH_CLASS[0];
 
+/**
+ * 計算進度條寬度 class
+ * @param value - 當前步驟（0-6）或完成數量
+ * @param total - 可選，總步驟數，用於比例計算
+ * @returns Tailwind 寬度 class
+ */
 export const calcProgressWidthClass = (value: number, total?: number): ProgressWidthClass => {
   const safeValue = Number.isFinite(value) ? value : 0;
   const safeTotal = Number.isFinite(total) ? total : undefined;
