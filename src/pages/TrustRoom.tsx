@@ -3,9 +3,14 @@ import { useSearchParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import type { TrustRoomView, TrustStep, ConfirmResult } from '../types/trust.types';
 import { STEP_ICONS_SVG, STEP_DESCRIPTIONS, STEP_NAMES } from '../types/trust.types';
-import { PROGRESS_WIDTH_CLASS } from '../constants/progress';
+import { calcProgressWidthClass } from '../constants/progress';
 import { logger } from '../lib/logger';
 import { ShieldCheck, Clock, Check, Loader2 } from 'lucide-react';
+
+/** Toast 訊息顯示時間（毫秒） */
+const TOAST_DURATION_MS = 3000;
+/** 到期警告顯示閾值（天） */
+const EXPIRY_WARNING_DAYS = 7;
 
 export default function TrustRoom() {
   const [searchParams] = useSearchParams();
@@ -30,7 +35,7 @@ export default function TrustRoom() {
 
   const showMessage = (type: 'success' | 'error', text: string) => {
     setMessage({ type, text });
-    setTimeout(() => setMessage(null), 3000);
+    setTimeout(() => setMessage(null), TOAST_DURATION_MS);
   };
 
   const loadData = useCallback(async () => {
@@ -48,7 +53,7 @@ export default function TrustRoom() {
 
       if (rpcError) throw rpcError;
       if (!Array.isArray(result) || result.length === 0) {
-        setError('連結已過期或不存在，請聯繫您的房仲取得新連結');
+        setError('連結已過期或不存在，請聯繫房仲取得新連結');
         return;
       }
       // [NASA TypeScript Safety] 使用類型守衛驗證 TrustRoomView
@@ -139,19 +144,16 @@ export default function TrustRoom() {
         sortedSteps: [],
         completedCount: 0,
         totalSteps: 0,
-        progressWidthClass: PROGRESS_WIDTH_CLASS[0],
+        progressWidthClass: calcProgressWidthClass(0),
       };
     const sorted = [...data.steps_data].sort((a, b) => a.step - b.step);
     const count = sorted.filter((s) => s.confirmed).length;
     const total = sorted.length;
-    const progressSteps = total > 0 ? Math.round((count / total) * 6) : 0;
-    const normalizedSteps = Math.max(0, Math.min(6, progressSteps));
-    const widthClass = PROGRESS_WIDTH_CLASS[normalizedSteps] ?? PROGRESS_WIDTH_CLASS[0];
     return {
       sortedSteps: sorted,
       completedCount: count,
       totalSteps: total,
-      progressWidthClass: widthClass,
+      progressWidthClass: calcProgressWidthClass(count, total),
     };
   }, [data]);
 
@@ -178,6 +180,8 @@ export default function TrustRoom() {
       {/* Toast 訊息 */}
       {message && (
         <div
+          role="alert"
+          aria-live="polite"
           className={`fixed left-1/2 top-5 z-modal -translate-x-1/2 rounded-lg px-6 py-3 font-semibold text-white shadow-brand-md ${
             message.type === 'success' ? 'bg-success' : 'bg-danger'
           }`}
@@ -195,7 +199,7 @@ export default function TrustRoom() {
               <ShieldCheck className="size-3.5" />
               交易紀錄
             </span>
-            {daysRemaining <= 7 && (
+            {daysRemaining <= EXPIRY_WARNING_DAYS && (
               <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700">
                 <Clock className="size-3" />
                 {daysRemaining > 0 ? `${daysRemaining} 天後到期` : '即將過期'}
@@ -258,6 +262,7 @@ export default function TrustRoom() {
                     if (step.confirmed) return <Check className="size-5" />;
                     const StepIcon = STEP_ICONS_SVG[step.step];
                     if (StepIcon) return <StepIcon className="size-5" />;
+                    // 未定義圖示時，顯示步驟數字作為 fallback
                     return step.step;
                   })()}
                 </div>

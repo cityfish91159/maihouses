@@ -18,6 +18,14 @@ import { logger } from '../../lib/logger';
 // Constants
 // ============================================================================
 
+/** 表單欄位長度限制 */
+const FIELD_LIMITS = {
+  NAME_MAX: 50,
+  PHONE_LENGTH: 10,
+  EMAIL_MAX: 100,
+} as const;
+
+/** UI 文案常數 */
 const S = {
   TITLE: '留下聯絡方式，方便後續聯繫',
   NAME_LABEL: '姓名',
@@ -26,16 +34,31 @@ const S = {
   PHONE_PLACEHOLDER: '0912345678',
   EMAIL_LABEL: 'Email',
   EMAIL_PLACEHOLDER: 'email@example.com（選填）',
-  PRIVACY_NOTE: '資料只用於交易紀錄，不會外流',
+  PRIVACY_NOTE: '資料只用於交易紀錄，不會給別人看',
   SUBMIT_BTN: '確認送出',
   SKIP_BTN: '稍後再說',
   SUBMITTING: '送出中...',
   VALIDATION_ERROR: '請填寫必要欄位',
-};
+} as const;
 
 // ============================================================================
 // Zod Schema [NASA TypeScript Safety]
 // ============================================================================
+
+/**
+ * 姓名驗證正則：僅允許中文（CJK 統一漢字）、英文字母、空格
+ * - \u4e00-\u9fa5: CJK 統一漢字（常用中文字）
+ * - a-zA-Z: 英文大小寫
+ * - \s: 空白字元（支援中間名空格）
+ */
+const NAME_REGEX = /^[\u4e00-\u9fa5a-zA-Z\s]+$/;
+
+/**
+ * 台灣手機號碼正則：09 開頭 + 8 位數字（共 10 碼）
+ * - 09: 台灣行動電話前綴
+ * - \d{8}: 後續 8 位數字
+ */
+const TW_PHONE_REGEX = /^09\d{8}$/;
 
 /**
  * [Team 7 修復] 前後端驗證規則統一
@@ -43,24 +66,25 @@ const S = {
  * 與後端 complete-buyer-info.ts Schema 保持一致：
  * - name: 僅允許中英文 + 空格
  * - phone: 台灣手機格式 09XXXXXXXX (10碼)
- * - email: 標準 Email 格式
+ * - email: 標準 Email 格式（選填）
  */
-const DataCollectionFormSchema = z.object({
+export const DataCollectionFormSchema = z.object({
   name: z
     .string()
     .min(1, '姓名不可為空')
-    .max(50, '姓名最多 50 字')
-    .regex(/^[\u4e00-\u9fa5a-zA-Z\s]+$/, '姓名僅能包含中英文'),
+    .max(FIELD_LIMITS.NAME_MAX, `姓名最多 ${FIELD_LIMITS.NAME_MAX} 字`)
+    .regex(NAME_REGEX, '姓名僅能包含中英文'),
   phone: z
     .string()
     .min(1, '電話不可為空')
-    .regex(/^09\d{8}$/, '請輸入正確的台灣手機號碼（09 開頭 10 碼）'),
+    .regex(TW_PHONE_REGEX, '請輸入正確的台灣手機號碼（09 開頭 10 碼）'),
   email: z
     .string()
-    .max(100, 'Email 最多 100 字')
-    .email('Email 格式不正確')
-    .optional()
-    .or(z.literal('')),
+    .max(FIELD_LIMITS.EMAIL_MAX, `Email 最多 ${FIELD_LIMITS.EMAIL_MAX} 字`)
+    .refine((val) => val === '' || z.string().email().safeParse(val).success, {
+      message: 'Email 格式不正確',
+    })
+    .optional(),
 });
 
 export type DataCollectionFormData = z.infer<typeof DataCollectionFormSchema>;
@@ -267,7 +291,7 @@ function DataCollectionModalContent({
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder={S.NAME_PLACEHOLDER}
-              maxLength={50}
+              maxLength={FIELD_LIMITS.NAME_MAX}
               aria-invalid={!!errors.name}
               aria-describedby={errors.name ? 'data-name-error' : undefined}
               className={`w-full rounded-xl border px-4 py-2.5 text-sm transition-colors focus:outline-none focus:ring-2 ${
@@ -307,7 +331,7 @@ function DataCollectionModalContent({
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               placeholder={S.PHONE_PLACEHOLDER}
-              maxLength={10}
+              maxLength={FIELD_LIMITS.PHONE_LENGTH}
               aria-invalid={!!errors.phone}
               aria-describedby={errors.phone ? 'data-phone-error' : undefined}
               className={`w-full rounded-xl border px-4 py-2.5 text-sm transition-colors focus:outline-none focus:ring-2 ${
@@ -345,7 +369,7 @@ function DataCollectionModalContent({
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder={S.EMAIL_PLACEHOLDER}
-              maxLength={100}
+              maxLength={FIELD_LIMITS.EMAIL_MAX}
               aria-invalid={!!errors.email}
               aria-describedby={errors.email ? 'data-email-error' : undefined}
               className={`w-full rounded-xl border px-4 py-2.5 text-sm transition-colors focus:outline-none focus:ring-2 ${
@@ -374,14 +398,14 @@ function DataCollectionModalContent({
             type="button"
             onClick={handleSkip}
             disabled={isSubmitting}
-            className="flex-1 min-h-[44px] rounded-xl border border-border px-4 py-2.5 text-sm font-semibold text-ink-900 transition-colors hover:bg-bg-base disabled:opacity-50"
+            className="min-h-[44px] flex-1 rounded-xl border border-border px-4 py-2.5 text-sm font-semibold text-ink-900 transition-colors hover:bg-bg-base disabled:opacity-50"
           >
             {S.SKIP_BTN}
           </button>
           <button
             type="submit"
             disabled={!name.trim() || !phone.trim() || isSubmitting}
-            className="flex flex-1 min-h-[44px] items-center justify-center gap-2 rounded-xl bg-brand-700 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-600 disabled:bg-border disabled:text-text-muted"
+            className="flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-xl bg-brand-700 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-600 disabled:bg-border disabled:text-text-muted"
           >
             {isSubmitting ? (
               <>

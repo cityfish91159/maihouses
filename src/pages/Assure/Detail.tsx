@@ -22,7 +22,13 @@ import { getAgentDisplayInfo } from '../../lib/trustPrivacy';
 import { DataCollectionModal } from '../../components/TrustRoom/DataCollectionModal';
 import { toast } from 'sonner';
 import { logger } from '../../lib/logger';
-import { PROGRESS_WIDTH_CLASS } from '../../constants/progress';
+import { calcProgressWidthClass } from '../../constants/progress';
+
+/** 房仲代付金額（新台幣） */
+const AGENT_PAYMENT_AMOUNT = 2000;
+
+/** pendingAction 自動取消時間（毫秒） */
+const PENDING_ACTION_TIMEOUT_MS = 3000;
 
 export default function AssureDetail() {
   const {
@@ -88,7 +94,7 @@ export default function AssureDetail() {
 
   useEffect(() => {
     if (!pendingAction) return;
-    const timer = setTimeout(() => setPendingAction(null), 3000);
+    const timer = setTimeout(() => setPendingAction(null), PENDING_ACTION_TIMEOUT_MS);
     return () => clearTimeout(timer);
   }, [pendingAction]);
 
@@ -213,8 +219,7 @@ export default function AssureDetail() {
     }
   };
 
-  const progressWidthClass =
-    PROGRESS_WIDTH_CLASS[Math.min(6, Math.max(0, tx.currentStep))] ?? 'w-0';
+  const progressWidthClass = calcProgressWidthClass(tx.currentStep);
 
   return (
     <div className="relative mx-auto min-h-screen max-w-md bg-bg-card pb-24 font-sans text-ink-900 shadow-brand-lg">
@@ -356,11 +361,11 @@ export default function AssureDetail() {
                         disabled={isBusy || timeLeft === '已逾期'}
                         className={`w-full rounded py-2 font-bold text-white shadow ${timeLeft === '已逾期' ? 'cursor-not-allowed bg-border text-text-muted' : 'bg-gradient-to-r from-brand-600 to-brand-700 hover:shadow-lg'}`}
                       >
-                        {timeLeft === '已逾期'
-                          ? '付款已截止'
-                          : isBusy
-                            ? '處理中...'
-                            : '房仲代付 NT$ 2,000'}
+                        {(() => {
+                          if (timeLeft === '已逾期') return '付款已截止';
+                          if (isBusy) return '處理中...';
+                          return `房仲代付 NT$ ${AGENT_PAYMENT_AMOUNT.toLocaleString()}`;
+                        })()}
                       </button>
                     ) : (
                       <div className="text-xs text-text-muted">等待房仲付款...</div>
@@ -381,6 +386,7 @@ export default function AssureDetail() {
                         }}
                         role="checkbox"
                         aria-checked={item.checked}
+                        aria-label={item.label}
                         tabIndex={0}
                         className={`flex cursor-pointer items-center rounded border p-4 transition ${item.checked ? 'border-brand-200 bg-brand-50/50' : 'border-border hover:bg-bg-base'}`}
                       >

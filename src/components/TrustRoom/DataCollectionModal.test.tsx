@@ -1,4 +1,4 @@
-/**
+﻿/**
  * DataCollectionModal - Unit Tests
  */
 
@@ -24,7 +24,7 @@ describe('DataCollectionModal', () => {
 
   it('顯示當 isOpen 為 true', () => {
     render(<DataCollectionModal isOpen={true} onSubmit={mockOnSubmit} onSkip={mockOnSkip} />);
-    expect(screen.getByText('請填寫基本資料以保全交易過程全貌')).toBeInTheDocument();
+    expect(screen.getByText('留下聯絡方式，方便後續聯繫')).toBeInTheDocument();
   });
 
   it('顯示必填欄位標記', () => {
@@ -50,10 +50,10 @@ describe('DataCollectionModal', () => {
   it('驗證必填欄位 - 姓名為空', async () => {
     render(<DataCollectionModal isOpen={true} onSubmit={mockOnSubmit} onSkip={mockOnSkip} />);
 
-    const phoneInput = screen.getByPlaceholderText('0912-345-678');
+    const phoneInput = screen.getByLabelText(/電話/i);
     fireEvent.change(phoneInput, { target: { value: '0912345678' } });
 
-    const submitButton = screen.getByText('送出');
+    const submitButton = screen.getByText('確認送出');
     fireEvent.click(submitButton);
 
     // HTML5 validation 會阻止表單提交
@@ -63,10 +63,10 @@ describe('DataCollectionModal', () => {
   it('驗證必填欄位 - 電話為空', async () => {
     render(<DataCollectionModal isOpen={true} onSubmit={mockOnSubmit} onSkip={mockOnSkip} />);
 
-    const nameInput = screen.getByPlaceholderText('請輸入您的姓名');
+    const nameInput = screen.getByLabelText(/姓名/i);
     fireEvent.change(nameInput, { target: { value: '測試用戶' } });
 
-    const submitButton = screen.getByText('送出');
+    const submitButton = screen.getByText('確認送出');
     fireEvent.click(submitButton);
 
     // HTML5 validation 會阻止表單提交
@@ -76,13 +76,13 @@ describe('DataCollectionModal', () => {
   it('成功送出表單 - 只填寫必填欄位', () => {
     render(<DataCollectionModal isOpen={true} onSubmit={mockOnSubmit} onSkip={mockOnSkip} />);
 
-    const nameInput = screen.getByPlaceholderText('請輸入您的姓名');
-    const phoneInput = screen.getByPlaceholderText('0912-345-678');
+    const nameInput = screen.getByLabelText(/姓名/i);
+    const phoneInput = screen.getByLabelText(/電話/i);
 
     fireEvent.change(nameInput, { target: { value: '測試用戶' } });
     fireEvent.change(phoneInput, { target: { value: '0912345678' } });
 
-    const submitButton = screen.getByText('送出');
+    const submitButton = screen.getByText('確認送出');
     fireEvent.click(submitButton);
 
     expect(mockOnSubmit).toHaveBeenCalledWith({
@@ -95,15 +95,15 @@ describe('DataCollectionModal', () => {
   it('成功送出表單 - 包含選填的 Email', () => {
     render(<DataCollectionModal isOpen={true} onSubmit={mockOnSubmit} onSkip={mockOnSkip} />);
 
-    const nameInput = screen.getByPlaceholderText('請輸入您的姓名');
-    const phoneInput = screen.getByPlaceholderText('0912-345-678');
-    const emailInput = screen.getByPlaceholderText('example@email.com (選填)');
+    const nameInput = screen.getByLabelText(/姓名/i);
+    const phoneInput = screen.getByLabelText(/電話/i);
+    const emailInput = screen.getByLabelText(/Email/i);
 
     fireEvent.change(nameInput, { target: { value: '測試用戶' } });
     fireEvent.change(phoneInput, { target: { value: '0912345678' } });
     fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
 
-    const submitButton = screen.getByText('送出');
+    const submitButton = screen.getByText('確認送出');
     fireEvent.click(submitButton);
 
     expect(mockOnSubmit).toHaveBeenCalledWith({
@@ -135,7 +135,7 @@ describe('DataCollectionModal', () => {
   it('顯示隱私說明', () => {
     render(<DataCollectionModal isOpen={true} onSubmit={mockOnSubmit} onSkip={mockOnSkip} />);
 
-    expect(screen.getByText('此資訊僅供法律留痕使用，不會公開給房仲')).toBeInTheDocument();
+    expect(screen.getByText('資料只用於交易紀錄，不會給別人看')).toBeInTheDocument();
   });
 
   it('有正確的 ARIA 屬性', () => {
@@ -161,7 +161,7 @@ describe('DataCollectionModal - Keyboard Navigation', () => {
     // 等待 auto-focus (50ms delay)
     await waitFor(
       () => {
-        const nameInput = screen.getByPlaceholderText('請輸入您的姓名');
+        const nameInput = screen.getByLabelText(/姓名/i);
         expect(nameInput).toHaveFocus();
       },
       { timeout: 200 }
@@ -204,14 +204,14 @@ describe('DataCollectionModal - Keyboard Navigation', () => {
     render(<DataCollectionModal isOpen={true} onSubmit={mockOnSubmit} onSkip={mockOnSkip} />);
 
     // 填寫必填欄位以啟用送出按鈕
-    const nameInput = screen.getByPlaceholderText('請輸入您的姓名');
-    const phoneInput = screen.getByPlaceholderText('0912-345-678');
+    const nameInput = screen.getByLabelText(/姓名/i);
+    const phoneInput = screen.getByLabelText(/電話/i);
     await user.type(nameInput, '測試用戶');
     await user.type(phoneInput, '0912345678');
 
     // 等待送出按鈕變成 enabled
     await waitFor(() => {
-      const submitButton = screen.getByText('送出');
+      const submitButton = screen.getByText('確認送出');
       expect(submitButton).not.toBeDisabled();
     });
 
@@ -225,7 +225,7 @@ describe('DataCollectionModal - Keyboard Navigation', () => {
 
     // Tab 到下一個元素（Email 輸入框）
     await user.keyboard('{Tab}');
-    const emailInput = screen.getByPlaceholderText('example@email.com (選填)');
+    const emailInput = screen.getByLabelText(/Email/i);
     expect(emailInput).toHaveFocus();
 
     // Tab 到下一個元素（稍後再說按鈕）
@@ -235,7 +235,7 @@ describe('DataCollectionModal - Keyboard Navigation', () => {
 
     // Tab 到下一個元素（送出按鈕）
     await user.keyboard('{Tab}');
-    const submitButton = screen.getByText('送出');
+    const submitButton = screen.getByText('確認送出');
     expect(submitButton).toHaveFocus();
   });
 
@@ -245,14 +245,14 @@ describe('DataCollectionModal - Keyboard Navigation', () => {
     render(<DataCollectionModal isOpen={true} onSubmit={mockOnSubmit} onSkip={mockOnSkip} />);
 
     // 填寫必填欄位以啟用送出按鈕
-    const nameInput = screen.getByPlaceholderText('請輸入您的姓名');
-    const phoneInput = screen.getByPlaceholderText('0912-345-678');
+    const nameInput = screen.getByLabelText(/姓名/i);
+    const phoneInput = screen.getByLabelText(/電話/i);
     await user.type(nameInput, '測試用戶');
     await user.type(phoneInput, '0912345678');
 
     // 等待送出按鈕變成 enabled
     await waitFor(() => {
-      const submitButton = screen.getByText('送出');
+      const submitButton = screen.getByText('確認送出');
       expect(submitButton).not.toBeDisabled();
     });
 
@@ -265,7 +265,7 @@ describe('DataCollectionModal - Keyboard Navigation', () => {
     await user.keyboard('{Shift>}{Tab}{/Shift}');
 
     // 驗證跳到送出按鈕(最後一個 enabled 元素)
-    const submitButton = screen.getByText('送出');
+    const submitButton = screen.getByText('確認送出');
     expect(submitButton).toHaveFocus();
   });
 
@@ -275,8 +275,8 @@ describe('DataCollectionModal - Keyboard Navigation', () => {
     render(<DataCollectionModal isOpen={true} onSubmit={mockOnSubmit} onSkip={mockOnSkip} />);
 
     // 填寫表單
-    const nameInput = screen.getByPlaceholderText('請輸入您的姓名');
-    const phoneInput = screen.getByPlaceholderText('0912-345-678');
+    const nameInput = screen.getByLabelText(/姓名/i);
+    const phoneInput = screen.getByLabelText(/電話/i);
 
     await user.type(nameInput, '測試用戶');
     await user.type(phoneInput, '0912345678');
@@ -297,8 +297,8 @@ describe('DataCollectionModal - Keyboard Navigation', () => {
     render(<DataCollectionModal isOpen={true} onSubmit={mockOnSubmit} onSkip={mockOnSkip} />);
 
     // 填寫必填欄位以啟用送出按鈕
-    const nameInput = screen.getByPlaceholderText('請輸入您的姓名');
-    const phoneInput = screen.getByPlaceholderText('0912-345-678');
+    const nameInput = screen.getByLabelText(/姓名/i);
+    const phoneInput = screen.getByLabelText(/電話/i);
     await user.type(nameInput, '測試用戶');
     await user.type(phoneInput, '0912345678');
 
@@ -311,7 +311,7 @@ describe('DataCollectionModal - Keyboard Navigation', () => {
     await user.keyboard('{Tab}'); // 稍後再說
     await user.keyboard('{Tab}'); // 送出
 
-    const submitButton = screen.getByText('送出');
+    const submitButton = screen.getByText('確認送出');
     expect(submitButton).toHaveFocus();
 
     // 再按一次 Tab，應該循環回關閉按鈕（第一個）
@@ -327,8 +327,8 @@ describe('DataCollectionModal - Keyboard Navigation', () => {
     render(<DataCollectionModal isOpen={true} onSubmit={mockOnSubmit} onSkip={mockOnSkip} />);
 
     // 填寫必填欄位以啟用送出按鈕
-    const nameInput = screen.getByPlaceholderText('請輸入您的姓名');
-    const phoneInput = screen.getByPlaceholderText('0912-345-678');
+    const nameInput = screen.getByLabelText(/姓名/i);
+    const phoneInput = screen.getByLabelText(/電話/i);
     await user.type(nameInput, '測試用戶');
     await user.type(phoneInput, '0912345678');
 
@@ -340,7 +340,7 @@ describe('DataCollectionModal - Keyboard Navigation', () => {
     // Shift+Tab 應該循環到最後一個元素（送出按鈕）
     await user.keyboard('{Shift>}{Tab}{/Shift}');
 
-    const submitButton = screen.getByText('送出');
+    const submitButton = screen.getByText('確認送出');
     expect(submitButton).toHaveFocus();
   });
 });
@@ -365,13 +365,13 @@ describe('DataCollectionModal - Error Handling', () => {
     render(<DataCollectionModal isOpen={true} onSubmit={errorOnSubmit} onSkip={mockOnSkip} />);
 
     // 填寫表單
-    const nameInput = screen.getByPlaceholderText('請輸入您的姓名');
-    const phoneInput = screen.getByPlaceholderText('0912-345-678');
+    const nameInput = screen.getByLabelText(/姓名/i);
+    const phoneInput = screen.getByLabelText(/電話/i);
     await user.type(nameInput, '測試用戶');
     await user.type(phoneInput, '0912345678');
 
     // 送出表單
-    const submitButton = screen.getByText('送出');
+    const submitButton = screen.getByText('確認送出');
     await user.click(submitButton);
 
     // 等待錯誤處理
@@ -397,13 +397,13 @@ describe('DataCollectionModal - Error Handling', () => {
     render(<DataCollectionModal isOpen={true} onSubmit={errorOnSubmit} onSkip={mockOnSkip} />);
 
     // 填寫表單
-    const nameInput = screen.getByPlaceholderText('請輸入您的姓名');
-    const phoneInput = screen.getByPlaceholderText('0912-345-678');
+    const nameInput = screen.getByLabelText(/姓名/i);
+    const phoneInput = screen.getByLabelText(/電話/i);
     await user.type(nameInput, '測試用戶');
     await user.type(phoneInput, '0912345678');
 
     // 送出表單
-    const submitButton = screen.getByText('送出');
+    const submitButton = screen.getByText('確認送出');
     await user.click(submitButton);
 
     // 等待異步錯誤處理
@@ -434,13 +434,13 @@ describe('DataCollectionModal - Error Handling', () => {
     );
 
     // 填寫表單
-    const nameInput = screen.getByPlaceholderText('請輸入您的姓名');
-    const phoneInput = screen.getByPlaceholderText('0912-345-678');
+    const nameInput = screen.getByLabelText(/姓名/i);
+    const phoneInput = screen.getByLabelText(/電話/i);
     await user.type(nameInput, '測試用戶');
     await user.type(phoneInput, '0912345678');
 
     // 第一次送出（會失敗）
-    const submitButton = screen.getByText('送出');
+    const submitButton = screen.getByText('確認送出');
     await user.click(submitButton);
 
     await waitFor(() => {
@@ -472,8 +472,8 @@ describe('DataCollectionModal - Error Handling', () => {
     );
 
     // 填寫表單
-    const nameInput = screen.getByPlaceholderText('請輸入您的姓名');
-    const phoneInput = screen.getByPlaceholderText('0912-345-678');
+    const nameInput = screen.getByLabelText(/姓名/i);
+    const phoneInput = screen.getByLabelText(/電話/i);
     await user.type(nameInput, '測試用戶');
     await user.type(phoneInput, '0912345678');
 
@@ -485,3 +485,5 @@ describe('DataCollectionModal - Error Handling', () => {
     expect(mockOnSubmit).not.toHaveBeenCalled();
   });
 });
+
+

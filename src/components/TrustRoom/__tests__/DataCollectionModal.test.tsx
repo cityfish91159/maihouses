@@ -72,7 +72,7 @@ describe('DataCollectionModal', () => {
       render(<DataCollectionModal isOpen={true} onSubmit={mockOnSubmit} onSkip={mockOnSkip} />);
 
       // 驗證標題
-      expect(screen.getByText('請填寫基本資料以保全交易過程全貌')).toBeInTheDocument();
+      expect(screen.getByText('留下聯絡方式，方便後續聯繫')).toBeInTheDocument();
 
       // 驗證表單欄位
       expect(screen.getByLabelText(/姓名/i)).toBeInTheDocument();

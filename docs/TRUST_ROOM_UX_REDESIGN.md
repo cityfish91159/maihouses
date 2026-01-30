@@ -113,6 +113,7 @@
 - `npm run gate` 通過（typecheck + lint）
 - Trust Room 相關檔案 emoji 掃描：無殘留
 - 待手動驗證：Mock 模式、正式模式、響應式
+ - 新增測試：progress 計算、資料收集 Zod schema、TrustRoom 整合渲染
 
 ### Phase 6: MaiMai 吉祥物整合（極簡存在感）
 - [ ] 6.1 建立 `useTrustRoomMaiMai` Hook
