@@ -1,3 +1,6 @@
+import type { ComponentType } from 'react';
+import { Banknote, FileText, Handshake, Home, Key, Phone } from 'lucide-react';
+
 export interface TrustStep {
   step: number;
   name: string;
@@ -38,29 +41,29 @@ export interface ConfirmResult {
   error?: string;
 }
 
-export const STEP_ICONS: Record<number, string> = {
-  1: '📞',
-  2: '🏠',
-  3: '💰',
-  4: '📝',
-  5: '🤝',
-  6: '🔑',
+export const STEP_ICONS_SVG: Record<number, ComponentType<{ className?: string }>> = {
+  1: Phone,
+  2: Home,
+  3: Banknote,
+  4: FileText,
+  5: Handshake,
+  6: Key,
 };
 
 export const STEP_NAMES: Record<number, string> = {
-  1: '已電聯',
-  2: '已帶看',
-  3: '已出價',
-  4: '已斡旋',
-  5: '已成交',
-  6: '已交屋',
+  1: '打過電話',
+  2: '看過房子',
+  3: '出價',
+  4: '談價',
+  5: '成交',
+  6: '交屋',
 };
 
 export const STEP_DESCRIPTIONS: Record<number, string> = {
-  1: '房仲已與您電話聯繫',
-  2: '房仲已帶您實地看屋',
-  3: '您已向屋主提出價格',
-  4: '正在進行價格協商',
-  5: '恭喜！交易已成交',
-  6: '完成交屋手續',
+  1: '房仲打來了',
+  2: '看過房子了',
+  3: '出價了',
+  4: '在談價中',
+  5: '成交了',
+  6: '拿到鑰匙',
 };

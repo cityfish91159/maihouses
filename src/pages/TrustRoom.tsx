@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import type { TrustRoomView, TrustStep, ConfirmResult } from '../types/trust.types';
-import { STEP_ICONS, STEP_DESCRIPTIONS } from '../types/trust.types';
+import { STEP_ICONS_SVG, STEP_DESCRIPTIONS } from '../types/trust.types';
 import { logger } from '../lib/logger';
 
 const COLORS = {
@@ -259,7 +259,16 @@ export default function TrustRoom() {
                     color: step.confirmed || isCurrent || isDone ? COLORS.white : COLORS.gray,
                   }}
                 >
-                  {step.confirmed ? '✓' : STEP_ICONS[step.step] || step.step}
+                  {step.confirmed ? (
+                    '✓'
+                  ) : STEP_ICONS_SVG[step.step] ? (
+                    (() => {
+                      const StepIcon = STEP_ICONS_SVG[step.step];
+                      return <StepIcon className="size-4" />;
+                    })()
+                  ) : (
+                    step.step
+                  )}
                 </div>
 
                 <div style={styles.stepContent}>

@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase';
 import { notify } from '../lib/notify';
 import { logger } from '../lib/logger';
 import type { TrustTransaction, TrustStep } from '../types/trust.types';
-import { STEP_NAMES, STEP_ICONS } from '../types/trust.types';
+import { STEP_NAMES } from '../types/trust.types';
 import { ROUTES } from '../constants/routes';
 
 // [NASA TypeScript Safety] Zod schema 用於驗證外部資料
