@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
 import { useTrustRoom } from '../../hooks/useTrustRoom';
 import {
   Phone,
@@ -23,33 +22,21 @@ import { getAgentDisplayInfo } from '../../lib/trustPrivacy';
 import { DataCollectionModal } from '../../components/TrustRoom/DataCollectionModal';
 import { toast } from 'sonner';
 import { logger } from '../../lib/logger';
-
-const PROGRESS_WIDTH_CLASS: Record<number, string> = {
-  0: 'w-0',
-  1: 'w-1/6',
-  2: 'w-1/3',
-  3: 'w-1/2',
-  4: 'w-2/3',
-  5: 'w-5/6',
-  6: 'w-full',
-};
+import { PROGRESS_WIDTH_CLASS } from '../../constants/progress';
 
 export default function AssureDetail() {
-  const location = useLocation();
-
   const {
     isMock,
     caseId,
-    setCaseId,
     role,
     setRole,
-    setToken,
     tx,
     loading,
     isBusy,
     timeLeft,
     startMockMode,
     dispatchAction,
+    fetchData,
   } = useTrustRoom();
 
   // Inputs
@@ -59,16 +46,13 @@ export default function AssureDetail() {
   // [Team 3 修復] M4 Modal 狀態管理
   const [showDataModal, setShowDataModal] = useState(false);
   const [isSubmittingData, setIsSubmittingData] = useState(false);
-
-  // Dev Helper
-  const isDev =
-    typeof window !== 'undefined' &&
-    (window.location.hostname === 'localhost' || window.location.hostname.includes('127.0.0.1'));
+  const [pendingAction, setPendingAction] = useState<null | 'pay' | 'reset'>(null);
 
   // Note: Token handling and initialization is now managed by useTrustRoom hook
   // We just need to handle the "No Token" state in the UI
 
   const handleAction = async (endpoint: string, body: Record<string, unknown> = {}) => {
+    setPendingAction(null);
     const success = await dispatchAction(endpoint, body);
     if (success) {
       setInputBuffer('');
@@ -80,15 +64,33 @@ export default function AssureDetail() {
     handleAction('submit', { step, data: { note: inputBuffer } });
   const confirmStep = (step: string) => handleAction('confirm', { step, note: inputBuffer });
   const pay = () => {
-    if (confirm('確認模擬付款？')) handleAction('payment');
+    if (pendingAction !== 'pay') {
+      setPendingAction('pay');
+      toast.info('再點一次確認付款');
+      return;
+    }
+    setPendingAction(null);
+    handleAction('payment');
   };
   const toggleCheck = (itemId: string, checked: boolean) => {
     if (role === 'buyer') handleAction('checklist', { itemId, checked });
   };
   const addSupplement = () => handleAction('supplement', { content: supplementInput });
   const reset = () => {
-    if (confirm('重置所有進度？')) handleAction('reset');
+    if (pendingAction !== 'reset') {
+      setPendingAction('reset');
+      toast.warning('再點一次確認重置');
+      return;
+    }
+    setPendingAction(null);
+    handleAction('reset');
   };
+
+  useEffect(() => {
+    if (!pendingAction) return;
+    const timer = setTimeout(() => setPendingAction(null), 3000);
+    return () => clearTimeout(timer);
+  }, [pendingAction]);
 
   const toggleRole = () => {
     const newRole = role === 'agent' ? 'buyer' : 'agent';
@@ -141,7 +143,7 @@ export default function AssureDetail() {
 
       // 重新載入案件資料（觸發 useTrustRoom 重新 fetch）
       // Note: useTrustRoom 會自動偵測 tx 變化並重新載入
-      window.location.reload();
+      await fetchData(caseId || undefined);
     } catch (error) {
       logger.error('handleDataSubmit error', {
         error: error instanceof Error ? error.message : 'Unknown',
@@ -227,12 +229,12 @@ export default function AssureDetail() {
             <ShieldCheck className="size-5 text-brand-light" />
             安心留痕
             {isMock && (
-              <span className="rounded bg-amber-500/20 px-2 py-0.5 text-[10px] font-medium text-amber-200">
+              <span className="rounded bg-amber-500/20 px-2 py-0.5 text-xs font-medium text-amber-200">
                 演示模式
               </span>
             )}
           </h1>
-          <div className="flex items-center gap-2 text-[10px] text-white/60">
+          <div className="flex items-center gap-2 text-xs text-white/60">
             <span>案號: {caseId}</span>
             {loading && <span className="animate-pulse">●</span>}
           </div>
@@ -317,12 +319,12 @@ export default function AssureDetail() {
                   <h3 className="flex items-center gap-2 font-bold text-ink-900">
                     {step.name}
                     {key === '5' && step.paymentStatus === 'initiated' && !step.locked && (
-                      <span className="animate-pulse rounded border border-amber-200 bg-amber-50 px-2 text-[10px] font-medium text-amber-700">
+                      <span className="animate-pulse rounded border border-amber-200 bg-amber-50 px-2 text-xs font-medium text-amber-700">
                         付款中
                       </span>
                     )}
                     {key === '5' && step.paymentStatus === 'expired' && (
-                      <span className="border-danger/20 bg-danger/10 rounded border px-2 text-[10px] font-medium text-danger">
+                      <span className="border-danger/20 bg-danger/10 rounded border px-2 text-xs font-medium text-danger">
                         逾期
                       </span>
                     )}
@@ -499,7 +501,7 @@ export default function AssureDetail() {
                         className="mb-1 flex items-start gap-2 rounded-lg border border-border bg-bg-base p-2 text-xs"
                       >
                         <span
-                          className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                          className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${
                             s.role === 'agent'
                               ? 'bg-brand-50 text-brand-700'
                               : 'bg-success/10 text-success'
@@ -528,7 +530,7 @@ export default function AssureDetail() {
             <FilePlus className="size-4 text-text-muted" />
             <h4 className="text-xs font-bold text-text-muted">補充紀錄</h4>
           </div>
-          <p className="mb-2 text-[10px] text-text-muted">
+          <p className="mb-2 text-xs text-text-muted">
             有話要補充？之前送出的改不了，但可以在這裡加註。
           </p>
           <div className="flex gap-2">

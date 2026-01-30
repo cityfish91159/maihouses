@@ -2,19 +2,10 @@ import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import type { TrustRoomView, TrustStep, ConfirmResult } from '../types/trust.types';
-import { STEP_ICONS_SVG, STEP_DESCRIPTIONS } from '../types/trust.types';
+import { STEP_ICONS_SVG, STEP_DESCRIPTIONS, STEP_NAMES } from '../types/trust.types';
+import { PROGRESS_WIDTH_CLASS } from '../constants/progress';
 import { logger } from '../lib/logger';
-import { ShieldCheck, Clock, Check } from 'lucide-react';
-
-const PROGRESS_WIDTH_CLASS: Record<number, string> = {
-  0: 'w-0',
-  1: 'w-1/6',
-  2: 'w-1/3',
-  3: 'w-1/2',
-  4: 'w-2/3',
-  5: 'w-5/6',
-  6: 'w-full',
-};
+import { ShieldCheck, Clock, Check, Loader2 } from 'lucide-react';
 
 export default function TrustRoom() {
   const [searchParams] = useSearchParams();
@@ -167,7 +158,10 @@ export default function TrustRoom() {
   if (loading)
     return (
       <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-bg-base to-brand-50 p-6 font-sans">
-        <span className="text-text-muted">載入中...</span>
+        <div className="flex items-center gap-2 text-text-muted">
+          <Loader2 className="size-4 animate-spin" />
+          <span>載入中...</span>
+        </div>
       </div>
     );
   if (error || !data)
@@ -184,7 +178,7 @@ export default function TrustRoom() {
       {/* Toast 訊息 */}
       {message && (
         <div
-          className={`fixed left-1/2 top-5 z-50 -translate-x-1/2 rounded-lg px-6 py-3 font-semibold text-white shadow-brand-md ${
+          className={`fixed left-1/2 top-5 z-modal -translate-x-1/2 rounded-lg px-6 py-3 font-semibold text-white shadow-brand-md ${
             message.type === 'success' ? 'bg-success' : 'bg-danger'
           }`}
         >
@@ -256,7 +250,7 @@ export default function TrustRoom() {
                       : isCurrent
                         ? 'bg-brand-700 text-white'
                         : isDone
-                          ? 'bg-gray-400 text-white'
+                          ? 'bg-brand-200 text-brand-700'
                           : 'bg-bg-base text-text-muted'
                   }`}
                 >
@@ -271,14 +265,16 @@ export default function TrustRoom() {
                 {/* 步驟內容 */}
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-base font-bold text-ink-900">{step.name}</span>
+                    <span className="text-base font-bold text-ink-900">
+                      {STEP_NAMES[step.step] ?? step.name}
+                    </span>
                     {isCurrent && !isDone && (
-                      <span className="rounded-full border border-brand-500 bg-white px-2 py-0.5 text-[11px] font-semibold text-brand-700">
+                      <span className="rounded-full border border-brand-500 bg-white px-2 py-0.5 text-xs font-semibold text-brand-700">
                         進行中
                       </span>
                     )}
                     {step.confirmed && (
-                      <span className="bg-success/10 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold text-success">
+                      <span className="bg-success/10 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold text-success">
                         <Check className="size-3" />
                         已確認
                       </span>
@@ -296,7 +292,7 @@ export default function TrustRoom() {
                     <button
                       onClick={() => handleConfirm(step.step)}
                       disabled={confirming === step.step}
-                      className={`mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-brand-700 px-5 py-2.5 text-sm font-semibold text-white shadow-brand-sm transition-all hover:bg-brand-600 hover:shadow-brand-md active:scale-[0.98] ${
+                      className={`mt-3 inline-flex h-11 w-full items-center justify-center gap-1.5 rounded-xl bg-brand-700 px-5 text-sm font-semibold text-white shadow-brand-sm transition-all hover:bg-brand-600 hover:shadow-brand-md active:scale-[0.98] ${
                         confirming === step.step ? 'cursor-not-allowed opacity-70' : ''
                       }`}
                     >

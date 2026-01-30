@@ -45,6 +45,11 @@
   - Toast 使用 `bg-success` / `bg-danger` 語意色
   - 所有 emoji 已替換為 SVG 圖示
   - 進度條寬度改用 class 映射（移除 `style`）
+  - 互動按鈕高度調整為 44px（符合 touch target）
+  - 徽章文字調整為 `text-xs` 可讀性
+  - Toast 提升至 `z-modal`
+  - 載入狀態補上 spinner
+  - 步驟標題改用 `STEP_NAMES`
 
 ### Phase 3: Assure/Detail.tsx 優化
 - [x] 3.1 更新 Header 色彩為品牌深藍
@@ -70,6 +75,11 @@
   - 等待狀態：「等待房仲提交...」→「房仲還沒送出」
   - 進度條寬度改用 class 映射（移除 inline style）
   - 步驟卡片/付款區/清單配色改用 brand tokens
+  - 進度條寬度常數抽到 `src/constants/progress.ts`
+  - 移除未使用 hook 解構與 `useLocation`
+  - 資料提交後改用 `fetchData` 更新（移除 `window.location.reload()`）
+  - Header/徽章/提示文字最小字級調整為 `text-xs`
+  - 重置/付款改為雙擊確認（避免原生 `confirm()`）
 
 ### Phase 4: DataCollectionModal.tsx 微調
 - [x] 4.1 更新標題文案（去 AI 味）
@@ -84,6 +94,9 @@
   - 按鈕：「送出」→「確認送出」
   - Placeholder：「請輸入您的姓名」→「你的名字」
   - Modal 配色與邊框改用 brand tokens（去除灰藍色系）
+  - 按鈕高度調整為 `min-h-[44px]`
+  - 移除 `animate-in` 系列類別（避免依賴外部插件）
+  - 隱私區塊圖示改為 `Info`，減少重複 Shield
 
 ### Phase 5: 整合驗證
 - [x] 5.1 `npm run typecheck` 通過

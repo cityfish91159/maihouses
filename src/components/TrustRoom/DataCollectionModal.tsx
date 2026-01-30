@@ -9,7 +9,7 @@
  */
 
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { X, Shield, Loader2, User, Phone, Mail } from 'lucide-react';
+import { X, Shield, Loader2, User, Phone, Mail, Info } from 'lucide-react';
 import { z } from 'zod';
 import { notify } from '../../lib/notify';
 import { logger } from '../../lib/logger';
@@ -221,7 +221,7 @@ function DataCollectionModalContent({
         aria-labelledby="data-collection-title"
         noValidate
         onSubmit={handleSubmit}
-        className="animate-in fade-in zoom-in-95 w-full max-w-md rounded-2xl bg-bg-card shadow-brand-lg duration-200"
+        className="w-full max-w-md rounded-2xl bg-bg-card shadow-brand-lg transition-transform duration-200"
       >
         {/* Header */}
         <div className="flex items-center justify-between border-b border-border p-4">
@@ -246,7 +246,7 @@ function DataCollectionModalContent({
         <div className="space-y-4 p-4">
           {/* Privacy Notice */}
           <div className="bg-brand-50/40 flex items-start gap-3 rounded-xl border border-brand-100 p-3">
-            <Shield className="mt-0.5 size-5 shrink-0 text-brand-600" />
+            <Info className="mt-0.5 size-5 shrink-0 text-brand-600" />
             <p className="text-xs text-brand-700">{S.PRIVACY_NOTE}</p>
           </div>
 
@@ -374,14 +374,14 @@ function DataCollectionModalContent({
             type="button"
             onClick={handleSkip}
             disabled={isSubmitting}
-            className="flex-1 rounded-xl border border-border px-4 py-2.5 text-sm font-semibold text-ink-900 transition-colors hover:bg-bg-base disabled:opacity-50"
+            className="flex-1 min-h-[44px] rounded-xl border border-border px-4 py-2.5 text-sm font-semibold text-ink-900 transition-colors hover:bg-bg-base disabled:opacity-50"
           >
             {S.SKIP_BTN}
           </button>
           <button
             type="submit"
             disabled={!name.trim() || !phone.trim() || isSubmitting}
-            className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-brand-700 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-600 disabled:bg-border disabled:text-text-muted"
+            className="flex flex-1 min-h-[44px] items-center justify-center gap-2 rounded-xl bg-brand-700 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-600 disabled:bg-border disabled:text-text-muted"
           >
             {isSubmitting ? (
               <>
@@ -389,10 +389,7 @@ function DataCollectionModalContent({
                 {S.SUBMITTING}
               </>
             ) : (
-              <>
-                <Shield className="size-4" />
-                {S.SUBMIT_BTN}
-              </>
+              <>{S.SUBMIT_BTN}</>
             )}
           </button>
         </div>
