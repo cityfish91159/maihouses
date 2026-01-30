@@ -1,20 +1,22 @@
 /** 進度條寬度 Tailwind class 映射（0-6 步驟） */
-export const PROGRESS_WIDTH_CLASS: Record<number, string> = {
-  0: 'w-0',
-  1: 'w-1/6',
-  2: 'w-1/3',
-  3: 'w-1/2',
-  4: 'w-2/3',
-  5: 'w-5/6',
-  6: 'w-full',
-};
+export const PROGRESS_WIDTH_CLASS = [
+  'w-0',
+  'w-1/6',
+  'w-1/3',
+  'w-1/2',
+  'w-2/3',
+  'w-5/6',
+  'w-full',
+] as const;
+
+export type ProgressWidthClass = (typeof PROGRESS_WIDTH_CLASS)[number];
 
 export const PROGRESS_MAX_STEP = 6;
 
 /** 預設進度條寬度 class */
-const DEFAULT_WIDTH = 'w-0';
+const DEFAULT_WIDTH = PROGRESS_WIDTH_CLASS[0];
 
-export const calcProgressWidthClass = (value: number, total?: number): string => {
+export const calcProgressWidthClass = (value: number, total?: number): ProgressWidthClass => {
   const safeValue = Number.isFinite(value) ? value : 0;
   const safeTotal = Number.isFinite(total) ? total : undefined;
   const progressValue =

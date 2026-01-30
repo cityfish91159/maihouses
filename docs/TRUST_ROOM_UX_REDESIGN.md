@@ -50,6 +50,11 @@
   - Toast 提升至 `z-modal`
   - 載入狀態補上 spinner
   - 步驟標題改用 `STEP_NAMES`
+  - 抽出 `MS_PER_DAY` 常數，避免 magic number
+  - URL token 加註安全風險提醒
+  - Loading 區塊改為 Skeleton UI
+  - 步驟圖示渲染抽為函式
+  - 確認按鈕加入 spinner/disabled 視覺提示
 
 ### Phase 3: Assure/Detail.tsx 優化
 - [x] 3.1 更新 Header 色彩為品牌深藍
@@ -97,6 +102,9 @@
   - 按鈕高度調整為 `min-h-[44px]`
   - 移除 `animate-in` 系列類別（避免依賴外部插件）
   - 隱私區塊圖示改為 `Info`，減少重複 Shield
+  - 精簡頂部註解，移除多餘 Skills 標註
+  - `FOCUS_DELAY_MS` 與 focusable selector 抽為常數
+  - Email 驗證改用 `.email().or(z.literal(''))` 簡化
 
 ### Phase 5: 整合驗證
 - [x] 5.1 `npm run typecheck` 通過
@@ -113,7 +121,11 @@
 - `npm run gate` 通過（typecheck + lint）
 - Trust Room 相關檔案 emoji 掃描：無殘留
 - 待手動驗證：Mock 模式、正式模式、響應式
- - 新增測試：progress 計算、資料收集 Zod schema、TrustRoom 整合渲染
+- 新增測試：progress 計算、資料收集 Zod schema、TrustRoom 整合渲染
+ - `npm run typecheck` 通過
+ - `npm run lint` 通過
+ - `vitest run`（progress / schema / TrustRoom / DataCollectionModal）通過
+ - `constants/progress` 型別改為 tuple + union，避免索引 undefined
 
 ### Phase 6: MaiMai 吉祥物整合（極簡存在感）
 - [ ] 6.1 建立 `useTrustRoomMaiMai` Hook

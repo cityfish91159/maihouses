@@ -1,12 +1,4 @@
-/**
- * DataCollectionModal - 安心留痕資料收集 Modal
- *
- * Skills Applied:
- * - [UI Perfection] 一致的 Modal 樣式
- * - [Frontend Mastery] React 最佳實踐 + Focus Trap
- * - [NASA TypeScript Safety] 完整類型定義 + Zod 驗證
- * - [No Lazy Implementation] 完整實作所有功能
- */
+/** DataCollectionModal - 安心留痕資料收集 Modal */
 
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { X, Shield, Loader2, User, Phone, Mail, Info } from 'lucide-react';
@@ -40,6 +32,13 @@ const S = {
   SUBMITTING: '送出中...',
   VALIDATION_ERROR: '請填寫必要欄位',
 } as const;
+
+/** 焦點延遲常數：等待 Modal 動畫完成後再聚焦，避免動畫過程中焦點跳動 */
+const FOCUS_DELAY_MS = 50;
+
+/** Focusable 元素選擇器 */
+const FOCUSABLE_SELECTOR =
+  'button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])';
 
 // ============================================================================
 // Zod Schema [NASA TypeScript Safety]
@@ -81,10 +80,9 @@ export const DataCollectionFormSchema = z.object({
   email: z
     .string()
     .max(FIELD_LIMITS.EMAIL_MAX, `Email 最多 ${FIELD_LIMITS.EMAIL_MAX} 字`)
-    .refine((val) => val === '' || z.string().email().safeParse(val).success, {
-      message: 'Email 格式不正確',
-    })
-    .optional(),
+    .email('Email 格式不正確')
+    .optional()
+    .or(z.literal('')),
 });
 
 export type DataCollectionFormData = z.infer<typeof DataCollectionFormSchema>;
@@ -133,10 +131,6 @@ function DataCollectionModalContent({
   const modalRef = useRef<HTMLFormElement>(null);
   const firstInputRef = useRef<HTMLInputElement>(null);
 
-  // [frontend_mastery] Focus Trap + Escape key handler (a11y compliant)
-  // 焦點延遲常數：等待 Modal 動畫完成後再聚焦，避免動畫過程中焦點跳動
-  const FOCUS_DELAY_MS = 50;
-
   useEffect(() => {
     // Auto-focus first input when modal opens (延遲以等待 CSS 動畫完成)
     const timer = setTimeout(() => {
@@ -152,9 +146,8 @@ function DataCollectionModalContent({
 
       // [Team 8 修復] Focus Trap: Tab 循環在 Modal 內（完整選擇器）
       if (e.key === 'Tab' && modalRef.current) {
-        const focusableElements = modalRef.current.querySelectorAll<HTMLElement>(
-          'button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])'
-        );
+        const focusableElements =
+          modalRef.current.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR);
         const firstElement = focusableElements[0];
         const lastElement = focusableElements[focusableElements.length - 1];
 

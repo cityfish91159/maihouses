@@ -11,10 +11,13 @@ import { ShieldCheck, Clock, Check, Loader2 } from 'lucide-react';
 const TOAST_DURATION_MS = 3000;
 /** 到期警告顯示閾值（天） */
 const EXPIRY_WARNING_DAYS = 7;
+/** 每天毫秒數 */
+const MS_PER_DAY = 1000 * 60 * 60 * 24;
 
 export default function TrustRoom() {
   const [searchParams] = useSearchParams();
   const id = searchParams.get('id');
+  // NOTE: URL token 可能會留在瀏覽器歷史紀錄，連結請避免外部分享
   const token = searchParams.get('token');
 
   const [data, setData] = useState<TrustRoomView | null>(null);
@@ -30,7 +33,7 @@ export default function TrustRoom() {
     const now = new Date();
     const expires = new Date(expiresAt);
     const diff = expires.getTime() - now.getTime();
-    return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
+    return Math.max(0, Math.ceil(diff / MS_PER_DAY));
   };
 
   const showMessage = (type: 'success' | 'error', text: string) => {
@@ -160,9 +163,14 @@ export default function TrustRoom() {
   if (loading)
     return (
       <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-bg-base to-brand-50 p-6 font-sans">
-        <div className="flex items-center gap-2 text-text-muted">
-          <Loader2 className="size-4 animate-spin" />
-          <span>載入中...</span>
+        <div className="w-full max-w-md animate-pulse space-y-4 rounded-2xl bg-bg-card p-6 shadow-brand-lg">
+          <div className="h-5 w-1/2 rounded-full bg-border" />
+          <div className="h-4 w-2/3 rounded-full bg-border" />
+          <div className="h-2 w-full rounded-full bg-border" />
+          <div className="space-y-3">
+            <div className="h-20 rounded-xl bg-border" />
+            <div className="h-20 rounded-xl bg-border" />
+          </div>
         </div>
       </div>
     );
@@ -234,6 +242,12 @@ export default function TrustRoom() {
             const isDone = step.done;
             const canConfirm = isDone && !step.confirmed;
             const isFuture = step.step > data.current_step;
+            const renderStepIcon = () => {
+              if (step.confirmed) return <Check className="size-5" />;
+              const StepIcon = STEP_ICONS_SVG[step.step];
+              if (StepIcon) return <StepIcon className="size-5" />;
+              return <span className="text-sm font-semibold">{step.step}</span>;
+            };
 
             return (
               <div
@@ -258,13 +272,7 @@ export default function TrustRoom() {
                           : 'bg-bg-base text-text-muted'
                   }`}
                 >
-                  {(() => {
-                    if (step.confirmed) return <Check className="size-5" />;
-                    const StepIcon = STEP_ICONS_SVG[step.step];
-                    if (StepIcon) return <StepIcon className="size-5" />;
-                    // 未定義圖示時，顯示步驟數字作為 fallback
-                    return step.step;
-                  })()}
+                  {renderStepIcon()}
                 </div>
 
                 {/* 步驟內容 */}
@@ -297,12 +305,16 @@ export default function TrustRoom() {
                     <button
                       onClick={() => handleConfirm(step.step)}
                       disabled={confirming === step.step}
-                      className={`mt-3 inline-flex h-11 w-full items-center justify-center gap-1.5 rounded-xl bg-brand-700 px-5 text-sm font-semibold text-white shadow-brand-sm transition-all hover:bg-brand-600 hover:shadow-brand-md active:scale-[0.98] ${
-                        confirming === step.step ? 'cursor-not-allowed opacity-70' : ''
+                      aria-busy={confirming === step.step}
+                      className={`mt-3 inline-flex h-11 w-full items-center justify-center gap-1.5 rounded-xl bg-brand-700 px-5 text-sm font-semibold text-white shadow-brand-sm transition-all hover:bg-brand-600 hover:shadow-brand-md active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-70 ${
+                        confirming === step.step ? 'ring-1 ring-brand-100' : ''
                       }`}
                     >
                       {confirming === step.step ? (
-                        '處理中...'
+                        <>
+                          <Loader2 className="size-4 animate-spin" />
+                          處理中...
+                        </>
                       ) : (
                         <>
                           <Check className="size-4" />
