@@ -128,14 +128,24 @@
  - `constants/progress` 型別改為 tuple + union，避免索引 undefined
 
 ### Phase 6: MaiMai 吉祥物整合（極簡存在感）
-- [ ] 6.1 建立 `useTrustRoomMaiMai` Hook
-- [ ] 6.2 首次進入：wave 表情 + 3 秒後淡出
-- [ ] 6.3 完成步驟確認：happy 表情 + 1.5 秒動畫
-- [ ] 6.4 全部完成：celebrate 表情 + confetti 慶祝
-- [ ] 6.5 錯誤狀態：shy 表情顯示
-- [ ] 6.6 位置：右下角固定，不遮擋主要內容
-- [ ] 6.7 手機版響應式尺寸調整
-- [ ] 6.8 效能：lazy load + requestAnimationFrame
+- [x] 6.1 建立 `useTrustRoomMaiMai` Hook
+- [x] 6.2 首次進入：wave 表情 + 3 秒後淡出
+- [x] 6.3 完成步驟確認：happy 表情 + 1.5 秒動畫
+- [x] 6.4 全部完成：celebrate 表情 + confetti 慶祝
+- [x] 6.5 錯誤狀態：shy 表情顯示
+- [x] 6.6 位置：右下角固定，不遮擋主要內容
+- [x] 6.7 手機版響應式尺寸調整
+- [x] 6.8 效能：lazy load + requestAnimationFrame
+
+#### Phase 6 施工紀錄 (2026-01-30)
+- `src/hooks/useTrustRoomMaiMai.ts`: 新增 MaiMai 狀態管理（wave/happy/celebrate/shy/idle）與 idle timer
+- `src/components/TrustRoom/TrustRoomMaiMai.tsx`: 封裝 MaiMai + confetti，桌機/手機尺寸對應
+- `src/pages/TrustRoom.tsx`: lazy 載入 MaiMai，成功/失敗/全完成觸發對應狀態
+- 補上 MaiMai Hook / 元件 JSDoc 說明
+ - TriggerOptions 新增 onComplete，idleDelay 加註說明
+ - MaiMai 手機尺寸調整為 64px，加入 safe-area
+ - Confetti 手機粒子減半、origin 自適應
+ - 新增 `useTrustRoomMaiMai` 單元測試
 
 ### Phase 7: 手機優先 UI 優化（ui-ux-pro-max 審查）
 - [ ] 7.1 **Touch Target Size**：確認按鈕 `py-2.5` → `py-3` + `min-h-[44px]`（44px 最小觸控區域）
@@ -153,6 +163,89 @@
 | Typography | MEDIUM | 12px minimum for mobile readability |
 | Safe Area | MEDIUM | Account for iOS safe areas |
 | Toast Position | LOW | Avoid browser chrome overlap |
+
+### Phase 8: Assure/Detail.tsx 組件拆分重構
+
+> ⚠️ **重要說明**：此 Phase 為大規模重構，需謹慎進行。
+> 目標：解決 `Assure/Detail.tsx` Line 289-531 步驟卡片邏輯過於複雜的問題（單一 render 超過 200 行）
+
+#### 8.1 子組件拆分計畫
+
+| 組件名稱 | 檔案路徑 | 職責 |
+|---------|---------|------|
+| `<StepCard />` | `src/components/Assure/StepCard.tsx` | 步驟卡片主體容器，處理樣式狀態（past/current/future） |
+| `<StepIcon />` | `src/components/Assure/StepIcon.tsx` | 步驟圖示，整合 STEP_ICONS_SVG |
+| `<StepContent />` | `src/components/Assure/StepContent.tsx` | 步驟內容顯示（帶看紀錄、付款計時器等） |
+| `<StepActions />` | `src/components/Assure/StepActions.tsx` | 操作按鈕區塊（送出、確認、付款） |
+| `<PaymentTimer />` | `src/components/Assure/PaymentTimer.tsx` | Step 5 付款倒數計時器 |
+| `<ChecklistPanel />` | `src/components/Assure/ChecklistPanel.tsx` | Step 6 交屋清單 |
+| `<SupplementList />` | `src/components/Assure/SupplementList.tsx` | 補充紀錄列表 |
+
+#### 8.2 重構步驟
+
+- [ ] 8.2.1 建立 `src/components/Assure/` 目錄
+- [ ] 8.2.2 提取 `<StepIcon />` 組件（最小依賴，先行測試）
+- [ ] 8.2.3 提取 `<StepCard />` 容器組件
+- [ ] 8.2.4 提取 `<StepContent />` 內容組件
+- [ ] 8.2.5 提取 `<StepActions />` 操作組件
+- [ ] 8.2.6 提取 `<PaymentTimer />` 付款計時器
+- [ ] 8.2.7 提取 `<ChecklistPanel />` 交屋清單
+- [ ] 8.2.8 提取 `<SupplementList />` 補充紀錄
+- [ ] 8.2.9 更新 `Detail.tsx` 使用新組件
+- [ ] 8.2.10 驗證功能正常（Mock + 正式模式）
+
+#### 8.3 Props 設計原則
+
+```typescript
+// StepCard.tsx
+interface StepCardProps {
+  stepKey: string;
+  step: TrustStep;
+  isCurrent: boolean;
+  isPast: boolean;
+  isFuture: boolean;
+  children: React.ReactNode;
+}
+
+// StepActions.tsx
+interface StepActionsProps {
+  stepKey: string;
+  step: TrustStep;
+  role: 'agent' | 'buyer';
+  isBusy: boolean;
+  onSubmit: (step: string) => void;
+  onConfirm: (step: string, note?: string) => void;
+}
+
+// PaymentTimer.tsx
+interface PaymentTimerProps {
+  timeLeft: string;
+  role: 'agent' | 'buyer';
+  isBusy: boolean;
+  onPay: () => void;
+}
+```
+
+#### 8.4 測試策略
+
+- [ ] 每個子組件需有獨立單元測試
+- [ ] 保留 Detail.tsx 整合測試
+- [ ] 重構後執行 `npm run gate` 確認品質
+
+#### 8.5 風險控管
+
+| 風險 | 緩解措施 |
+|------|---------|
+| 引入新 bug | 逐步提取，每步驗證 |
+| Props drilling | 必要時使用 Context |
+| 效能下降 | 使用 React.memo 優化 |
+| 樣式錯亂 | 保持 Tailwind class 不變 |
+
+#### 8.6 預估複雜度
+
+- **總行數減少**：Detail.tsx 預計從 570 行降至 ~250 行
+- **子組件總行數**：~400 行（分散在 7 個檔案）
+- **可維護性提升**：每個組件職責單一，易於測試和修改
 
 ---
 

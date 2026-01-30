@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useEffect, useState, useCallback, useMemo, lazy, Suspense } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import type { TrustRoomView, TrustStep, ConfirmResult } from '../types/trust.types';
@@ -6,6 +6,9 @@ import { STEP_ICONS_SVG, STEP_DESCRIPTIONS, STEP_NAMES } from '../types/trust.ty
 import { calcProgressWidthClass } from '../constants/progress';
 import { logger } from '../lib/logger';
 import { ShieldCheck, Clock, Check, Loader2 } from 'lucide-react';
+import { useTrustRoomMaiMai } from '../hooks/useTrustRoomMaiMai';
+
+const LazyTrustRoomMaiMai = lazy(() => import('../components/TrustRoom/TrustRoomMaiMai'));
 
 /** Toast 訊息顯示時間（毫秒） */
 const TOAST_DURATION_MS = 3000;
@@ -28,6 +31,14 @@ export default function TrustRoom() {
     type: 'success' | 'error';
     text: string;
   } | null>(null);
+  const {
+    maiMaiState,
+    triggerHappy,
+    triggerCelebrate,
+    triggerShyOnce,
+    triggerError,
+    clearError,
+  } = useTrustRoomMaiMai();
 
   const getDaysRemaining = (expiresAt: string): number => {
     const now = new Date();
@@ -112,10 +123,14 @@ export default function TrustRoom() {
     if (!id || !token || confirming || !data) return;
     setConfirming(stepNum);
     const oldData = { ...data };
-    setData({
+    const updatedSteps = data.steps_data.map((s) =>
+      s.step === stepNum ? { ...s, confirmed: true } : s
+    );
+    const nextData = {
       ...data,
-      steps_data: data.steps_data.map((s) => (s.step === stepNum ? { ...s, confirmed: true } : s)),
-    });
+      steps_data: updatedSteps,
+    };
+    setData(nextData);
 
     try {
       const { data: result, error: rpcError } = (await supabase.rpc('confirm_trust_step', {
@@ -128,14 +143,22 @@ export default function TrustRoom() {
 
       if (result?.success) {
         showMessage('success', '確認成功！');
+        const allConfirmed = updatedSteps.every((step) => step.confirmed);
+        if (allConfirmed) {
+          triggerCelebrate();
+        } else {
+          triggerHappy();
+        }
       } else {
         setData(oldData);
         showMessage('error', result?.error || '確認失敗');
+        triggerShyOnce();
       }
     } catch (err) {
       logger.error('[TrustRoom] 確認失敗', { error: err });
       setData(oldData);
       showMessage('error', '確認失敗，請稍後再試');
+      triggerShyOnce();
     } finally {
       setConfirming(null);
     }
@@ -159,6 +182,14 @@ export default function TrustRoom() {
       progressWidthClass: calcProgressWidthClass(count, total),
     };
   }, [data]);
+
+  useEffect(() => {
+    if (error) {
+      triggerError();
+    } else {
+      clearError();
+    }
+  }, [error, triggerError, clearError]);
 
   if (loading)
     return (
@@ -329,6 +360,17 @@ export default function TrustRoom() {
           })}
         </div>
       </div>
+
+      {maiMaiState.visible && (
+        <div className="pointer-events-none fixed bottom-[calc(1.5rem+env(safe-area-inset-bottom))] right-[calc(1.5rem+env(safe-area-inset-right))] z-50 sm:bottom-[calc(1rem+env(safe-area-inset-bottom))] sm:right-[calc(1rem+env(safe-area-inset-right))]">
+          <Suspense fallback={null}>
+            <LazyTrustRoomMaiMai
+              mood={maiMaiState.mood}
+              showConfetti={maiMaiState.showConfetti}
+            />
+          </Suspense>
+        </div>
+      )}
     </div>
   );
 }

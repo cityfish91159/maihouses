@@ -1,12 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useTrustRoom } from '../../hooks/useTrustRoom';
 import {
-  Phone,
-  ClipboardCheck,
-  HandCoins,
-  MessageSquare,
-  FileSignature,
-  Home,
   Lock,
   Check,
   RotateCcw,
@@ -23,12 +17,16 @@ import { DataCollectionModal } from '../../components/TrustRoom/DataCollectionMo
 import { toast } from 'sonner';
 import { logger } from '../../lib/logger';
 import { calcProgressWidthClass } from '../../constants/progress';
+import { STEP_ICONS_SVG } from '../../types/trust.types';
 
 /** 房仲代付金額（新台幣） */
 const AGENT_PAYMENT_AMOUNT = 2000;
 
 /** pendingAction 自動取消時間（毫秒） */
 const PENDING_ACTION_TIMEOUT_MS = 3000;
+
+/** Modal 延遲顯示時間（毫秒），避免與頁面渲染衝突 */
+const MODAL_DELAY_MS = 500;
 
 export default function AssureDetail() {
   const {
@@ -112,10 +110,9 @@ export default function AssureDetail() {
     const isTempBuyer = tx.buyerName?.startsWith('買方-') && tx.buyerUserId === null;
 
     if (isStage4 && isTempBuyer && !showDataModal) {
-      // 延遲 500ms 顯示 Modal，避免與頁面渲染衝突
       const timer = setTimeout(() => {
         setShowDataModal(true);
-      }, 500);
+      }, MODAL_DELAY_MS);
       return () => clearTimeout(timer);
     }
   }, [tx, role, showDataModal]);
@@ -143,7 +140,7 @@ export default function AssureDetail() {
       }
 
       toast.success('資料提交成功！', {
-        description: '您的資料已安全儲存，感謝您的配合。',
+        description: '資料已安全儲存，感謝你的配合。',
       });
       setShowDataModal(false);
 
@@ -166,7 +163,7 @@ export default function AssureDetail() {
   // [Team 3 修復] M4 Modal 跳過處理
   const handleDataSkip = () => {
     toast.info('已跳過資料填寫', {
-      description: '您可以稍後在案件頁面中補充資料。',
+      description: '你可以稍後在案件頁面中補充資料。',
     });
     setShowDataModal(false);
   };
@@ -198,25 +195,25 @@ export default function AssureDetail() {
     );
   }
 
-  if (!tx) return <div className="p-8 text-center">載入中...</div>;
+  if (!tx) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-bg-page">
+        <div className="flex flex-col items-center gap-4">
+          <div className="size-12 animate-spin rounded-full border-4 border-border border-t-brand-700"></div>
+          <p className="text-sm text-text-muted">載入中...</p>
+        </div>
+      </div>
+    );
+  }
 
-  const getStepIcon = (k: string) => {
-    switch (k) {
-      case '1':
-        return <Phone size={14} />;
-      case '2':
-        return <ClipboardCheck size={14} />;
-      case '3':
-        return <HandCoins size={14} />;
-      case '4':
-        return <MessageSquare size={14} />;
-      case '5':
-        return <FileSignature size={14} />;
-      case '6':
-        return <Home size={14} />;
-      default:
-        return <Info size={14} />;
-    }
+  /**
+   * 取得步驟圖示組件
+   * 使用 trust.types.ts 的 STEP_ICONS_SVG 統一定義
+   */
+  const getStepIcon = (stepKey: string) => {
+    const stepNum = parseInt(stepKey);
+    const IconComponent = STEP_ICONS_SVG[stepNum];
+    return IconComponent ? <IconComponent size={14} /> : <Info size={14} />;
   };
 
   const progressWidthClass = calcProgressWidthClass(tx.currentStep);

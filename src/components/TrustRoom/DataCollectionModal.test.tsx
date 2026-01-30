@@ -156,16 +156,19 @@ describe('DataCollectionModal - Keyboard Navigation', () => {
   });
 
   it('應該在 Modal 開啟時自動聚焦第一個輸入框', async () => {
+    vi.useFakeTimers();
+
     render(<DataCollectionModal isOpen={true} onSubmit={mockOnSubmit} onSkip={mockOnSkip} />);
 
-    // 等待 auto-focus (50ms delay)
-    await waitFor(
-      () => {
-        const nameInput = screen.getByLabelText(/姓名/i);
-        expect(nameInput).toHaveFocus();
-      },
-      { timeout: 200 }
-    );
+    // 快轉 auto-focus delay (50ms)
+    vi.advanceTimersByTime(50);
+
+    await waitFor(() => {
+      const nameInput = screen.getByLabelText(/姓名/i);
+      expect(nameInput).toHaveFocus();
+    });
+
+    vi.useRealTimers();
   });
 
   it('應該支援 Escape 鍵關閉 Modal', async () => {
@@ -388,7 +391,9 @@ describe('DataCollectionModal - Error Handling', () => {
   });
 
   it('應該處理 onSubmit 拋出的異步錯誤', async () => {
-    const user = userEvent.setup();
+    vi.useFakeTimers();
+    const user = userEvent.setup({ delay: null });
+
     const errorOnSubmit = vi.fn(async () => {
       await new Promise((resolve) => setTimeout(resolve, 10));
       throw new Error('異步錯誤');
@@ -406,17 +411,18 @@ describe('DataCollectionModal - Error Handling', () => {
     const submitButton = screen.getByText('確認送出');
     await user.click(submitButton);
 
-    // 等待異步錯誤處理
-    await waitFor(
-      () => {
-        expect(errorOnSubmit).toHaveBeenCalledWith({
-          name: '測試用戶',
-          phone: '0912345678',
-          email: '',
-        });
-      },
-      { timeout: 1000 }
-    );
+    // 快轉時間處理異步操作
+    await vi.runAllTimersAsync();
+
+    await waitFor(() => {
+      expect(errorOnSubmit).toHaveBeenCalledWith({
+        name: '測試用戶',
+        phone: '0912345678',
+        email: '',
+      });
+    });
+
+    vi.useRealTimers();
   });
 
   it('錯誤後表單應該仍然可用（不會卡住）', async () => {
