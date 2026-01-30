@@ -4,19 +4,16 @@ import { supabase } from '../lib/supabase';
 import type { TrustRoomView, TrustStep, ConfirmResult } from '../types/trust.types';
 import { STEP_ICONS_SVG, STEP_DESCRIPTIONS } from '../types/trust.types';
 import { logger } from '../lib/logger';
+import { ShieldCheck, Clock, Check } from 'lucide-react';
 
-const COLORS = {
-  primary: '#1749D7',
-  primaryLight: '#EBF0FF',
-  success: '#10B981',
-  successLight: '#D1FAE5',
-  warning: '#F59E0B',
-  warningLight: '#FEF3C7',
-  gray: '#6B7280',
-  grayLight: '#F3F4F6',
-  white: '#FFFFFF',
-  dark: '#0A2246',
-  red: '#EF4444',
+const PROGRESS_WIDTH_CLASS: Record<number, string> = {
+  0: 'w-0',
+  1: 'w-1/6',
+  2: 'w-1/3',
+  3: 'w-1/2',
+  4: 'w-2/3',
+  5: 'w-5/6',
+  6: 'w-full',
 };
 
 export default function TrustRoom() {
@@ -145,141 +142,153 @@ export default function TrustRoom() {
     }
   };
 
-  const { sortedSteps, progressPercent, completedCount, totalSteps } = useMemo(() => {
+  const { sortedSteps, completedCount, totalSteps, progressWidthClass } = useMemo(() => {
     if (!data || !Array.isArray(data.steps_data))
       return {
         sortedSteps: [],
-        progressPercent: 0,
         completedCount: 0,
         totalSteps: 0,
+        progressWidthClass: PROGRESS_WIDTH_CLASS[0],
       };
     const sorted = [...data.steps_data].sort((a, b) => a.step - b.step);
     const count = sorted.filter((s) => s.confirmed).length;
     const total = sorted.length;
-    const percent = total > 0 ? (count / total) * 100 : 0;
+    const progressSteps = total > 0 ? Math.round((count / total) * 6) : 0;
+    const normalizedSteps = Math.max(0, Math.min(6, progressSteps));
+    const widthClass = PROGRESS_WIDTH_CLASS[normalizedSteps] ?? PROGRESS_WIDTH_CLASS[0];
     return {
       sortedSteps: sorted,
-      progressPercent: percent,
       completedCount: count,
       totalSteps: total,
+      progressWidthClass: widthClass,
     };
   }, [data]);
 
   if (loading)
     return (
-      <div
-        style={{
-          ...styles.container,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        載入中...
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-bg-base to-brand-50 p-6 font-sans">
+        <span className="text-text-muted">載入中...</span>
       </div>
     );
   if (error || !data)
     return (
-      <div
-        style={{
-          ...styles.container,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          color: 'red',
-        }}
-      >
-        {error}
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-bg-base to-brand-50 p-6 font-sans">
+        <span className="text-danger">{error}</span>
       </div>
     );
 
   const daysRemaining = getDaysRemaining(data.token_expires_at);
 
   return (
-    <div style={styles.container}>
+    <div className="min-h-screen bg-gradient-to-br from-bg-base to-brand-50 p-4 font-sans sm:p-6">
+      {/* Toast 訊息 */}
       {message && (
         <div
-          style={{
-            ...styles.toast,
-            background: message.type === 'success' ? COLORS.success : COLORS.red,
-          }}
+          className={`fixed left-1/2 top-5 z-50 -translate-x-1/2 rounded-lg px-6 py-3 font-semibold text-white shadow-brand-md ${
+            message.type === 'success' ? 'bg-success' : 'bg-danger'
+          }`}
         >
           {message.text}
         </div>
       )}
-      <div style={styles.card}>
-        <div style={styles.header}>
-          <div style={styles.badgeRow}>
-            <span style={styles.badge}>🛡️ 安心交易</span>
+
+      {/* 主卡片 */}
+      <div className="mx-auto max-w-md overflow-hidden rounded-2xl bg-white shadow-brand-lg">
+        {/* Header */}
+        <div className="border-b border-border px-6 pb-4 pt-6">
+          <div className="mb-3 flex flex-wrap gap-2">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-brand-100 bg-brand-50 px-3 py-1 text-xs font-semibold text-brand-700">
+              <ShieldCheck className="size-3.5" />
+              交易紀錄
+            </span>
             {daysRemaining <= 7 && (
-              <span style={styles.warningBadge}>
-                ⏰ {daysRemaining > 0 ? `${daysRemaining} 天後過期` : '即將過期'}
+              <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700">
+                <Clock className="size-3" />
+                {daysRemaining > 0 ? `${daysRemaining} 天後到期` : '即將過期'}
               </span>
             )}
           </div>
-          <h1 style={styles.title}>{data.case_name}</h1>
-          {data.agent_name && <p style={styles.agentInfo}>承辦人：{data.agent_name}</p>}
-          <p style={styles.caseId}>案件編號：{data.id.slice(0, 8).toUpperCase()}</p>
+          <h1 className="text-xl font-bold text-ink-900">{data.case_name}</h1>
+          {data.agent_name && (
+            <p className="mt-2 text-sm text-text-muted">承辦人：{data.agent_name}</p>
+          )}
+          <p className="mt-1 text-xs text-text-muted">
+            案件編號：{data.id.slice(0, 8).toUpperCase()}
+          </p>
         </div>
 
-        <div style={styles.progressContainer}>
-          <div style={styles.progressBar}>
-            <div style={{ ...styles.progressFill, width: `${progressPercent}%` }} />
+        {/* 進度條 */}
+        <div className="bg-bg-base px-6 py-4">
+          <div className="h-2 w-full overflow-hidden rounded-full bg-white">
+            <div
+              className={`h-full rounded-full bg-gradient-to-r from-brand-700 to-success transition-all duration-500 ${progressWidthClass}`}
+            />
           </div>
-          <p style={styles.progressText}>
+          <p className="mt-2 text-center text-sm font-semibold text-text-muted">
             已確認 {completedCount}/{totalSteps} 步驟
           </p>
         </div>
 
-        <div style={styles.stepsContainer}>
+        {/* 步驟列表 */}
+        <div className="space-y-3 p-4">
           {sortedSteps.map((step: TrustStep) => {
             const isCurrent = step.step === data.current_step;
             const isDone = step.done;
             const canConfirm = isDone && !step.confirmed;
+            const isFuture = step.step > data.current_step;
+
             return (
               <div
                 key={step.step}
-                style={{
-                  ...styles.stepItem,
-                  opacity: step.step > data.current_step ? 0.4 : 1,
-                  background: isCurrent ? COLORS.primaryLight : COLORS.white,
-                  border: isCurrent ? `2px solid ${COLORS.primary}` : '1px solid #eee',
-                }}
+                className={`flex gap-4 rounded-xl p-4 transition-all ${
+                  isFuture ? 'opacity-40' : 'opacity-100'
+                } ${
+                  isCurrent
+                    ? 'bg-brand-50/50 border-2 border-brand-500'
+                    : 'border border-border bg-white'
+                }`}
               >
+                {/* 步驟圖示 */}
                 <div
-                  style={{
-                    ...styles.stepNumber,
-                    background: step.confirmed
-                      ? COLORS.success
+                  className={`flex size-11 shrink-0 items-center justify-center rounded-full text-lg font-semibold ${
+                    step.confirmed
+                      ? 'bg-success text-white'
                       : isCurrent
-                        ? COLORS.primary
+                        ? 'bg-brand-700 text-white'
                         : isDone
-                          ? '#9CA3AF'
-                          : COLORS.grayLight,
-                    color: step.confirmed || isCurrent || isDone ? COLORS.white : COLORS.gray,
-                  }}
+                          ? 'bg-gray-400 text-white'
+                          : 'bg-bg-base text-text-muted'
+                  }`}
                 >
-                  {step.confirmed ? (
-                    '✓'
-                  ) : STEP_ICONS_SVG[step.step] ? (
-                    (() => {
-                      const StepIcon = STEP_ICONS_SVG[step.step];
-                      return <StepIcon className="size-4" />;
-                    })()
-                  ) : (
-                    step.step
-                  )}
+                  {(() => {
+                    if (step.confirmed) return <Check className="size-5" />;
+                    const StepIcon = STEP_ICONS_SVG[step.step];
+                    if (StepIcon) return <StepIcon className="size-5" />;
+                    return step.step;
+                  })()}
                 </div>
 
-                <div style={styles.stepContent}>
-                  <div style={styles.stepHeader}>
-                    <span style={styles.stepName}>{step.name}</span>
-                    {isCurrent && !isDone && <span style={styles.currentBadge}>進行中</span>}
-                    {step.confirmed && <span style={styles.confirmedBadge}>✓ 已確認</span>}
+                {/* 步驟內容 */}
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-base font-bold text-ink-900">{step.name}</span>
+                    {isCurrent && !isDone && (
+                      <span className="rounded-full border border-brand-500 bg-white px-2 py-0.5 text-[11px] font-semibold text-brand-700">
+                        進行中
+                      </span>
+                    )}
+                    {step.confirmed && (
+                      <span className="bg-success/10 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold text-success">
+                        <Check className="size-3" />
+                        已確認
+                      </span>
+                    )}
                   </div>
-                  <p style={styles.stepDesc}>{STEP_DESCRIPTIONS[step.step]}</p>
+                  <p className="mt-1 text-sm leading-relaxed text-text-muted">
+                    {STEP_DESCRIPTIONS[step.step]}
+                  </p>
                   {step.confirmedAt && (
-                    <p style={styles.confirmedTime}>
+                    <p className="mt-1 text-xs text-text-muted">
                       確認於 {new Date(step.confirmedAt).toLocaleDateString()}
                     </p>
                   )}
@@ -287,13 +296,18 @@ export default function TrustRoom() {
                     <button
                       onClick={() => handleConfirm(step.step)}
                       disabled={confirming === step.step}
-                      style={{
-                        ...styles.confirmButton,
-                        opacity: confirming === step.step ? 0.7 : 1,
-                        cursor: confirming === step.step ? 'not-allowed' : 'pointer',
-                      }}
+                      className={`mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-brand-700 px-5 py-2.5 text-sm font-semibold text-white shadow-brand-sm transition-all hover:bg-brand-600 hover:shadow-brand-md active:scale-[0.98] ${
+                        confirming === step.step ? 'cursor-not-allowed opacity-70' : ''
+                      }`}
                     >
-                      {confirming === step.step ? '處理中...' : '✓ 確認此步驟已完成'}
+                      {confirming === step.step ? (
+                        '處理中...'
+                      ) : (
+                        <>
+                          <Check className="size-4" />
+                          確認此步驟已完成
+                        </>
+                      )}
                     </button>
                   )}
                 </div>
@@ -305,138 +319,3 @@ export default function TrustRoom() {
     </div>
   );
 }
-
-const styles: Record<string, React.CSSProperties> = {
-  container: {
-    minHeight: '100vh',
-    background: 'linear-gradient(135deg, #F6F9FF 0%, #EBF0FF 100%)',
-    padding: '24px 16px',
-    fontFamily: 'sans-serif',
-  },
-  toast: {
-    position: 'fixed',
-    top: 20,
-    left: '50%',
-    transform: 'translateX(-50%)',
-    padding: '12px 24px',
-    borderRadius: 8,
-    color: COLORS.white,
-    fontWeight: 600,
-    zIndex: 1000,
-  },
-  card: {
-    maxWidth: 480,
-    margin: '0 auto',
-    background: COLORS.white,
-    borderRadius: 16,
-    boxShadow: '0 4px 24px rgba(23, 73, 215, 0.1)',
-    overflow: 'hidden',
-  },
-  header: {
-    padding: '24px 24px 16px',
-    borderBottom: `1px solid ${COLORS.grayLight}`,
-  },
-  badgeRow: { display: 'flex', gap: 8, marginBottom: 12 },
-  badge: {
-    background: COLORS.primaryLight,
-    color: COLORS.primary,
-    fontSize: 12,
-    fontWeight: 600,
-    padding: '4px 12px',
-    borderRadius: 20,
-  },
-  warningBadge: {
-    background: COLORS.warningLight,
-    color: COLORS.warning,
-    fontSize: 12,
-    fontWeight: 600,
-    padding: '4px 12px',
-    borderRadius: 20,
-  },
-  title: { margin: 0, fontSize: 22, fontWeight: 700, color: COLORS.dark },
-  agentInfo: { margin: '8px 0 0', fontSize: 14, color: COLORS.gray },
-  caseId: { margin: '4px 0 0', fontSize: 12, color: COLORS.gray },
-  progressContainer: { padding: '16px 24px', background: COLORS.grayLight },
-  progressBar: {
-    height: 8,
-    background: COLORS.white,
-    borderRadius: 4,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    background: `linear-gradient(90deg, ${COLORS.primary}, ${COLORS.success})`,
-    borderRadius: 4,
-    transition: 'width 0.5s ease',
-  },
-  progressText: {
-    margin: '8px 0 0',
-    fontSize: 13,
-    fontWeight: 600,
-    color: COLORS.gray,
-    textAlign: 'center',
-  },
-  stepsContainer: { padding: 16 },
-  stepItem: {
-    display: 'flex',
-    gap: 16,
-    padding: 16,
-    marginBottom: 12,
-    borderRadius: 12,
-    transition: 'all 0.2s ease',
-  },
-  stepNumber: {
-    width: 44,
-    height: 44,
-    borderRadius: '50%',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontSize: 18,
-    fontWeight: 600,
-    flexShrink: 0,
-  },
-  stepContent: { flex: 1, minWidth: 0 },
-  stepHeader: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 8,
-    flexWrap: 'wrap',
-  },
-  stepName: { fontSize: 16, fontWeight: 700, color: COLORS.dark },
-  currentBadge: {
-    fontSize: 11,
-    fontWeight: 600,
-    color: COLORS.primary,
-    background: COLORS.white,
-    padding: '2px 8px',
-    borderRadius: 10,
-    border: `1px solid ${COLORS.primary}`,
-  },
-  confirmedBadge: {
-    fontSize: 11,
-    fontWeight: 600,
-    color: COLORS.success,
-    background: COLORS.successLight,
-    padding: '2px 8px',
-    borderRadius: 10,
-  },
-  stepDesc: {
-    margin: '4px 0 0',
-    fontSize: 13,
-    color: COLORS.gray,
-    lineHeight: 1.4,
-  },
-  confirmedTime: { margin: '4px 0 0', fontSize: 11, color: COLORS.gray },
-  confirmButton: {
-    marginTop: 12,
-    padding: '10px 20px',
-    fontSize: 14,
-    fontWeight: 600,
-    color: COLORS.white,
-    background: COLORS.primary,
-    border: 'none',
-    borderRadius: 8,
-    width: '100%',
-  },
-};

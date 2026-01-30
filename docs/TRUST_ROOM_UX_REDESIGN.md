@@ -21,45 +21,92 @@
 - `src/components/TrustManager.tsx`: 移除未使用 `STEP_ICONS` import
 
 ### Phase 2: TrustRoom.tsx 重構
-- [ ] 2.1 移除 `COLORS` 物件（硬編碼 hex）
-- [ ] 2.2 移除 `styles` 物件（inline styles）
-- [ ] 2.3 改用 Tailwind classes + tokens
-- [ ] 2.4 替換 `🛡️ 安心交易` 徽章為 `ShieldCheck` SVG
-- [ ] 2.5 替換 `⏰` 過期提示為 `Clock` SVG
-- [ ] 2.6 替換 `✓` 確認圖示為 `Check` SVG
-- [ ] 2.7 替換步驟數字圖示為對應 SVG
-- [ ] 2.8 更新進度條樣式（深藍漸層）
-- [ ] 2.9 更新卡片樣式（brand tokens）
-- [ ] 2.10 更新按鈕樣式
-- [ ] 2.11 更新 Toast 訊息樣式
+- [x] 2.1 移除 `COLORS` 物件（硬編碼 hex）
+- [x] 2.2 移除 `styles` 物件（inline styles）
+- [x] 2.3 改用 Tailwind classes + tokens
+- [x] 2.4 替換 `🛡️ 安心交易` 徽章為 `ShieldCheck` SVG
+- [x] 2.5 替換 `⏰` 過期提示為 `Clock` SVG
+- [x] 2.6 替換 `✓` 確認圖示為 `Check` SVG
+- [x] 2.7 替換步驟數字圖示為對應 SVG
+- [x] 2.8 更新進度條樣式（深藍漸層）
+- [x] 2.9 更新卡片樣式（brand tokens）
+- [x] 2.10 更新按鈕樣式
+- [x] 2.11 更新 Toast 訊息樣式
+
+#### Phase 2 施工紀錄 (2026-01-30)
+- `src/pages/TrustRoom.tsx`: 完全重構
+  - 移除 `COLORS` 硬編碼物件
+  - 移除 `styles` inline styles 物件（約 120 行）
+  - 改用 Tailwind classes 引用 brand tokens
+  - 新增 `ShieldCheck`, `Clock`, `Check` Lucide 圖示
+  - 背景改用 `bg-gradient-to-br from-bg-base to-brand-50`
+  - 進度條使用 `bg-gradient-to-r from-brand-700 to-success`
+  - 按鈕使用 `bg-brand-700` 搭配 `hover:bg-brand-600`
+  - Toast 使用 `bg-success` / `bg-danger` 語意色
+  - 所有 emoji 已替換為 SVG 圖示
+  - 進度條寬度改用 class 映射（移除 `style`）
 
 ### Phase 3: Assure/Detail.tsx 優化
-- [ ] 3.1 更新 Header 色彩為品牌深藍
-- [ ] 3.2 移除 `📢` emoji（房仲帶看紀錄）
-- [ ] 3.3 移除 `📝` emoji（新增補充紀錄）
-- [ ] 3.4 移除 `👨‍💼` `👤` emoji（角色標示）
-- [ ] 3.5 替換角色圖示為 `Briefcase` / `User` SVG
-- [ ] 3.6 更新空狀態文案（去 AI 味）
-- [ ] 3.7 更新演示模式按鈕文案
-- [ ] 3.8 更新各步驟操作文案
-- [ ] 3.9 統一卡片樣式為 brand tokens
+- [x] 3.1 更新 Header 色彩為品牌深藍
+- [x] 3.2 移除 `📢` emoji（房仲帶看紀錄）
+- [x] 3.3 移除 `📝` emoji（新增補充紀錄）
+- [x] 3.4 移除 `👨‍💼` `👤` emoji（角色標示）
+- [x] 3.5 替換角色圖示為 `Briefcase` / `User` SVG
+- [x] 3.6 更新空狀態文案（去 AI 味）
+- [x] 3.7 更新演示模式按鈕文案
+- [x] 3.8 更新各步驟操作文案
+- [x] 3.9 統一卡片樣式為 brand tokens
+
+#### Phase 3 施工紀錄 (2026-01-30)
+- `src/pages/Assure/Detail.tsx`: 完全重構
+  - Header 改用 `bg-brand-700` + `ShieldCheck` 圖示 + 「安心留痕」標題
+  - 進度條改用 `from-brand-700 to-success` 漸層
+  - 「📢 房仲帶看紀錄」→ `<Megaphone>` + 文字
+  - 「📝 新增補充紀錄」→ `<FilePlus>` + 「補充紀錄」
+  - 「👨‍💼」「👤」→ `<Briefcase>` / `<User>` 角色徽章
+  - 空狀態文案：「目前未檢測到...」→「沒有找到你的交易紀錄，想先體驗看看嗎？」
+  - 演示按鈕：「啟動演示模式 (Demo Mode)」→「體驗看看」
+  - 確認按鈕：「確認無誤並送出」→「確認送出」
+  - 等待狀態：「等待房仲提交...」→「房仲還沒送出」
 
 ### Phase 4: DataCollectionModal.tsx 微調
-- [ ] 4.1 更新標題文案（去 AI 味）
-- [ ] 4.2 更新隱私說明文案
-- [ ] 4.3 更新按鈕文案
-- [ ] 4.4 確認 SVG 圖示已使用（已有 Lucide）
+- [x] 4.1 更新標題文案（去 AI 味）
+- [x] 4.2 更新隱私說明文案
+- [x] 4.3 更新按鈕文案
+- [x] 4.4 確認 SVG 圖示已使用（已有 Lucide）
+
+#### Phase 4 施工紀錄 (2026-01-30)
+- `src/components/TrustRoom/DataCollectionModal.tsx`: 文案更新
+  - 標題：「請填寫基本資料以保全交易過程全貌」→「留下聯絡方式，方便後續聯繫」
+  - 隱私說明：「此資訊僅供法律留痕使用，不會公開給房仲」→「資料只用於交易紀錄，不會外流」
+  - 按鈕：「送出」→「確認送出」
+  - Placeholder：「請輸入您的姓名」→「你的名字」
 
 ### Phase 5: 整合驗證
-- [ ] 5.1 `npm run typecheck` 通過
-- [ ] 5.2 `npm run lint` 通過
-- [ ] 5.3 Mock 模式功能正常
-- [ ] 5.4 正式模式功能正常
-- [ ] 5.5 手機版響應式正常
-- [ ] 5.6 桌面版響應式正常
-- [ ] 5.7 無任何 emoji 殘留
-- [ ] 5.8 無任何 inline styles 殘留
-- [ ] 5.9 無任何硬編碼 hex 值
+- [x] 5.1 `npm run typecheck` 通過
+- [x] 5.2 `npm run lint` 通過
+- [ ] 5.3 Mock 模式功能正常（待手動驗證）
+- [ ] 5.4 正式模式功能正常（待手動驗證）
+- [ ] 5.5 手機版響應式正常（待手動驗證）
+- [ ] 5.6 桌面版響應式正常（待手動驗證）
+- [x] 5.7 無任何 emoji 殘留（Trust Room 相關檔案已確認）
+- [x] 5.8 無任何 inline styles 殘留（TrustRoom.tsx 已移除 styles 物件）
+- [x] 5.9 無任何硬編碼 hex 值（TrustRoom.tsx 已移除 COLORS 物件）
+
+#### Phase 5 施工紀錄 (2026-01-30)
+- `npm run gate` 通過（typecheck + lint）
+- Trust Room 相關檔案 emoji 掃描：無殘留
+- 待手動驗證：Mock 模式、正式模式、響應式
+
+### Phase 6: MaiMai 吉祥物整合（極簡存在感）
+- [ ] 6.1 建立 `useTrustRoomMaiMai` Hook
+- [ ] 6.2 首次進入：wave 表情 + 3 秒後淡出
+- [ ] 6.3 完成步驟確認：happy 表情 + 1.5 秒動畫
+- [ ] 6.4 全部完成：celebrate 表情 + confetti 慶祝
+- [ ] 6.5 錯誤狀態：shy 表情顯示
+- [ ] 6.6 位置：右下角固定，不遮擋主要內容
+- [ ] 6.7 手機版響應式尺寸調整
+- [ ] 6.8 效能：lazy load + requestAnimationFrame
 
 ---
 
@@ -404,14 +451,130 @@ export const STEP_DESCRIPTIONS: Record<number, string> = {
 
 ---
 
-## 六、實作檔案清單
+## 六、MaiMai 吉祥物整合規格
+
+### 6.1 設計理念：極簡存在感
+
+MaiMai 在 Trust Room 中的角色是「無聲陪伴者」，不主動干擾使用者，只在關鍵時刻給予視覺回饋。
+
+**核心原則**：
+- 不說話、不彈窗、不搶注意力
+- 只用表情和動作傳達情感
+- 出現短暫、消失自然
+
+### 6.2 觸發時機與表情
+
+| 時機 | 表情 | 動作 | 持續時間 |
+|------|------|------|---------|
+| 首次進入頁面 | `wave` | 從右下角滑入，揮手打招呼 | 3 秒後淡出 |
+| 完成步驟確認 | `happy` | 原地跳躍一下 | 1.5 秒後回到 idle |
+| 全部 6 步完成 | `celebrate` | 跳躍 + 放煙火 (confetti) | 3 秒 |
+| API 錯誤發生 | `shy` | 縮小 + 微微顫抖 | 顯示到錯誤消失 |
+| 長時間閒置 (>30s) | `idle` | 偶爾眨眼 | 持續 |
+
+### 6.3 位置與尺寸
+
+```css
+/* 桌面版 */
+.maimai-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 80px;
+  height: 80px;
+  z-index: 50;
+  pointer-events: none; /* 不干擾點擊 */
+}
+
+/* 手機版 */
+@media (max-width: 640px) {
+  .maimai-container {
+    bottom: 16px;
+    right: 16px;
+    width: 56px;
+    height: 56px;
+  }
+}
+```
+
+### 6.4 動畫規格
+
+```typescript
+// useTrustRoomMaiMai Hook
+interface TrustRoomMaiMaiState {
+  visible: boolean;
+  mood: MaiMaiMood;
+  showConfetti: boolean;
+}
+
+const ANIMATION_CONFIG = {
+  fadeInDuration: 300,      // ms
+  fadeOutDuration: 500,     // ms
+  waveDisplayTime: 3000,    // 首次進入揮手時間
+  happyDisplayTime: 1500,   // 確認步驟開心時間
+  celebrateDuration: 3000,  // 慶祝動畫時間
+};
+```
+
+### 6.5 效能考量
+
+- **Lazy Load**: MaiMai SVG 組件使用 `React.lazy()` 延遲載入
+- **RAF**: 動畫使用 `requestAnimationFrame` 而非 `setInterval`
+- **條件渲染**: 只在需要時 render MaiMai 組件
+- **GPU 加速**: 使用 `transform` 和 `opacity` 觸發 GPU 合成
+
+### 6.6 整合方式
+
+```tsx
+// src/pages/TrustRoom.tsx
+import { useTrustRoomMaiMai } from '../hooks/useTrustRoomMaiMai';
+import { MaiMaiBase } from '../components/MaiMai';
+
+export default function TrustRoom() {
+  const { maiMaiState, triggerHappy, triggerCelebrate } = useTrustRoomMaiMai();
+
+  const handleConfirm = async (stepNum: number) => {
+    // ... 原本的確認邏輯
+    if (result?.success) {
+      const allDone = checkAllStepsDone();
+      if (allDone) {
+        triggerCelebrate();
+      } else {
+        triggerHappy();
+      }
+    }
+  };
+
+  return (
+    <div>
+      {/* 主要內容 */}
+
+      {/* MaiMai 吉祥物 */}
+      {maiMaiState.visible && (
+        <div className="fixed bottom-6 right-6 z-50 pointer-events-none sm:bottom-4 sm:right-4">
+          <MaiMaiBase
+            mood={maiMaiState.mood}
+            size={80}
+            className="sm:size-14"
+          />
+          {maiMaiState.showConfetti && <Confetti />}
+        </div>
+      )}
+    </div>
+  );
+}
+```
+
+---
+
+## 七、實作檔案清單
 
 ### 需修改的檔案
 
 | 檔案 | 修改內容 |
 |------|---------|
 | `src/types/trust.types.ts` | 移除 STEP_ICONS emoji，新增 STEP_ICONS_SVG，更新 STEP_DESCRIPTIONS 文案 |
-| `src/pages/TrustRoom.tsx` | 完全重構，移除 inline styles，改用 Tailwind tokens |
+| `src/pages/TrustRoom.tsx` | 完全重構，移除 inline styles，改用 Tailwind tokens，整合 MaiMai |
 | `src/pages/Assure/Detail.tsx` | 移除所有 emoji，使用 Lucide icons，優化文案 |
 | `src/components/TrustRoom/DataCollectionModal.tsx` | 更新文案去除 AI 味，微調樣式 |
 | `tailwind.config.cjs` | 確認 tokens 完整性（已足夠） |
@@ -419,13 +582,15 @@ export const STEP_DESCRIPTIONS: Record<number, string> = {
 
 ### 新增的檔案
 
-無需新增檔案，所有變更在現有檔案內完成。
+| 檔案 | 用途 |
+|------|------|
+| `src/hooks/useTrustRoomMaiMai.ts` | MaiMai 狀態管理 Hook |
 
 ---
 
-## 七、驗收標準
+## 八、驗收標準
 
-### 7.1 視覺驗收
+### 8.1 視覺驗收
 
 - [ ] 所有 emoji 已被 SVG 圖示取代
 - [ ] 色彩使用與首頁一致（深藍色系）
@@ -433,20 +598,30 @@ export const STEP_DESCRIPTIONS: Record<number, string> = {
 - [ ] 進度條漸層正確顯示
 - [ ] 響應式設計在手機/桌面皆正常
 
-### 7.2 文案驗收
+### 8.2 文案驗收
 
 - [ ] 所有文案已更新為口語化版本
 - [ ] 無「恭喜」「您」等 AI 味詞彙
 - [ ] 訊息簡潔直接，無廢話
 
-### 7.3 功能驗收
+### 8.3 功能驗收
 
 - [ ] Mock 模式正常運作
 - [ ] 正式模式（有 token）正常運作
 - [ ] 步驟確認流程正常
 - [ ] DataCollectionModal 正常彈出與提交
 
-### 7.4 程式碼品質
+### 8.4 MaiMai 驗收
+
+- [ ] 首次進入：wave 表情正確顯示並 3 秒後淡出
+- [ ] 步驟確認：happy 表情正確觸發 1.5 秒
+- [ ] 全部完成：celebrate + confetti 動畫正常
+- [ ] 錯誤狀態：shy 表情正確顯示
+- [ ] 手機版：尺寸適當（56px），位置正確
+- [ ] 不遮擋：pointer-events: none，不影響互動
+- [ ] 效能：無明顯卡頓，動畫流暢
+
+### 8.5 程式碼品質
 
 - [ ] 無 TypeScript 錯誤
 - [ ] 無 ESLint 警告
@@ -455,7 +630,7 @@ export const STEP_DESCRIPTIONS: Record<number, string> = {
 
 ---
 
-## 八、時程建議
+## 九、時程建議
 
 | 階段 | 工作項目 | 複雜度 |
 |------|---------|--------|
@@ -464,10 +639,11 @@ export const STEP_DESCRIPTIONS: Record<number, string> = {
 | Phase 3 | 優化 `Assure/Detail.tsx` emoji 與文案 | 中 |
 | Phase 4 | 微調 `DataCollectionModal.tsx` 文案 | 低 |
 | Phase 5 | 整合測試與視覺 QA | 中 |
+| Phase 6 | MaiMai 吉祥物整合 | 中 |
 
 ---
 
-## 九、附錄：SVG 圖示參考
+## 十、附錄：SVG 圖示參考
 
 所有圖示皆來自 Lucide React（MIT License），已在專案中安裝。
 

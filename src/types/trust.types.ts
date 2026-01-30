@@ -1,4 +1,5 @@
 import type { ComponentType } from 'react';
+import type { LucideProps } from 'lucide-react';
 import { Banknote, FileText, Handshake, Home, Key, Phone } from 'lucide-react';
 
 export interface TrustStep {
@@ -41,7 +42,7 @@ export interface ConfirmResult {
   error?: string;
 }
 
-export const STEP_ICONS_SVG: Record<number, ComponentType<{ className?: string }>> = {
+export const STEP_ICONS_SVG: Record<number, ComponentType<LucideProps>> = {
   1: Phone,
   2: Home,
   3: Banknote,
