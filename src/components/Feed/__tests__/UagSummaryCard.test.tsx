@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+﻿import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { UagSummaryCard } from '../UagSummaryCard';
 import { STRINGS } from '../../../constants/strings';

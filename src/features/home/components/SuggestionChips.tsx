@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+﻿import React, { memo } from 'react';
 import { QUICK_QUESTIONS } from '../../../constants/data';
 
 interface SuggestionChipsProps {

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+﻿import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import { TrustRoomMaiMai } from '../TrustRoomMaiMai';
 
@@ -48,18 +48,14 @@ describe('TrustRoomMaiMai', () => {
   });
 
   it('uses correct size classes for accessibility (64px minimum)', () => {
-    const { container } = render(
-      <TrustRoomMaiMai mood="idle" showConfetti={false} />
-    );
+    const { container } = render(<TrustRoomMaiMai mood="idle" showConfetti={false} />);
     // size-16 = 64px (符合 WCAG 2.1 最小觸控目標 44×44px)
     const maimai = container.querySelector('.size-16');
     expect(maimai).toBeInTheDocument();
   });
 
   it('handles mood changes correctly', () => {
-    const { rerender } = render(
-      <TrustRoomMaiMai mood="wave" showConfetti={false} />
-    );
+    const { rerender } = render(<TrustRoomMaiMai mood="wave" showConfetti={false} />);
 
     rerender(<TrustRoomMaiMai mood="happy" showConfetti={false} />);
     expect(screen.getByRole('img')).toBeInTheDocument();
@@ -69,9 +65,7 @@ describe('TrustRoomMaiMai', () => {
   });
 
   it('initializes with correct mobile state', () => {
-    const { container } = render(
-      <TrustRoomMaiMai mood="idle" showConfetti={false} />
-    );
+    const { container } = render(<TrustRoomMaiMai mood="idle" showConfetti={false} />);
 
     // Verify responsive classes exist
     const maimai = container.querySelector('.sm\\:size-20');
@@ -79,18 +73,14 @@ describe('TrustRoomMaiMai', () => {
   });
 
   it('cleans up event listeners on unmount', () => {
-    const { unmount } = render(
-      <TrustRoomMaiMai mood="wave" showConfetti={false} />
-    );
+    const { unmount } = render(<TrustRoomMaiMai mood="wave" showConfetti={false} />);
 
     // Unmount should not throw errors
     expect(() => unmount()).not.toThrow();
   });
 
   it('handles responsive breakpoints correctly', () => {
-    const { container } = render(
-      <TrustRoomMaiMai mood="idle" showConfetti={false} />
-    );
+    const { container } = render(<TrustRoomMaiMai mood="idle" showConfetti={false} />);
 
     // Verify component renders with responsive classes
     expect(container.querySelector('.size-16')).toBeInTheDocument();
@@ -106,9 +96,7 @@ describe('TrustRoomMaiMai', () => {
     const moods = ['idle', 'wave', 'happy', 'celebrate', 'shy'] as const;
 
     moods.forEach((mood) => {
-      const { unmount } = render(
-        <TrustRoomMaiMai mood={mood} showConfetti={false} />
-      );
+      const { unmount } = render(<TrustRoomMaiMai mood={mood} showConfetti={false} />);
       expect(screen.getByRole('img')).toBeInTheDocument();
       unmount();
     });

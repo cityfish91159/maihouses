@@ -1,4 +1,4 @@
-import { logger } from '../lib/logger';
+﻿import { logger } from '../lib/logger';
 
 const REQUIRED_KEYS = ['VITE_SUPABASE_URL', 'VITE_SUPABASE_ANON_KEY'] as const;
 const OPTIONAL_KEYS = ['VITE_API_BASE_URL', 'VITE_APP_URL'] as const;

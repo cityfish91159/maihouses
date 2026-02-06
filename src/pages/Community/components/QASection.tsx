@@ -1,4 +1,4 @@
-/**
+﻿/**
  * QASection Component
  *
  * 準住戶問答區塊

@@ -1,4 +1,4 @@
-import {
+﻿import {
   resolveAuthorDisplay,
   convertApiPost,
   convertApiReview,

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * CaseSelector - 案件選擇器組件
  *
  * [code-simplifier] 從 TrustFlow.tsx 抽取的子組件

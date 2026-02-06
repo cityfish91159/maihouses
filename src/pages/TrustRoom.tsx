@@ -1,5 +1,6 @@
-﻿import { useEffect, useState, useCallback, useMemo, lazy, Suspense } from 'react';
+﻿import { useEffect, useRef, useState, useCallback, useMemo, lazy, Suspense } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { z } from 'zod';
 import { supabase } from '../lib/supabase';
 import type { TrustRoomView, TrustStep, ConfirmResult } from '../types/trust.types';
 import { STEP_ICONS_SVG, STEP_DESCRIPTIONS, STEP_NAMES } from '../types/trust.types';
@@ -18,6 +19,27 @@ const EXPIRY_WARNING_DAYS = 7;
 /** 每天毫秒數 */
 const MS_PER_DAY = 1000 * 60 * 60 * 24;
 
+const TrustStepSchema = z.object({
+  step: z.number().int(),
+  name: z.string(),
+  done: z.boolean(),
+  confirmed: z.boolean(),
+  date: z.string().nullable(),
+  note: z.string(),
+  confirmedAt: z.string().optional(),
+});
+
+const TrustRoomViewSchema = z.object({
+  id: z.string(),
+  case_name: z.string(),
+  agent_name: z.string().nullable(),
+  current_step: z.number().int(),
+  steps_data: z.array(TrustStepSchema),
+  status: z.enum(['active', 'completed', 'cancelled']),
+  created_at: z.string(),
+  token_expires_at: z.string(),
+});
+
 /** 取得步驟卡片樣式 */
 const getStepCardClass = (isCurrent: boolean, isFuture: boolean): string => {
   const opacity = isFuture ? 'opacity-40' : 'opacity-100';
@@ -28,11 +50,7 @@ const getStepCardClass = (isCurrent: boolean, isFuture: boolean): string => {
 };
 
 /** 取得步驟圖示容器樣式 */
-const getStepIconClass = (
-  confirmed: boolean,
-  isCurrent: boolean,
-  isDone: boolean
-): string => {
+const getStepIconClass = (confirmed: boolean, isCurrent: boolean, isDone: boolean): string => {
   if (confirmed) return 'bg-success text-white';
   if (isCurrent) return 'bg-brand-700 text-white';
   if (isDone) return 'bg-brand-200 dark:bg-brand-900/40 dark:text-brand-200 text-brand-700';
@@ -53,14 +71,21 @@ export default function TrustRoom() {
     type: 'success' | 'error';
     text: string;
   } | null>(null);
-  const {
-    maiMaiState,
-    triggerHappy,
-    triggerCelebrate,
-    triggerShyOnce,
-    triggerError,
-    clearError,
-  } = useTrustRoomMaiMai();
+  // #11 Toast timer ref for cleanup on unmount
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const { maiMaiState, triggerHappy, triggerCelebrate, triggerShyOnce, triggerError, clearError } =
+    useTrustRoomMaiMai();
+
+  // #11 cleanup toast timer on unmount
+  useEffect(() => {
+    return () => {
+      if (toastTimerRef.current) {
+        clearTimeout(toastTimerRef.current);
+        toastTimerRef.current = null;
+      }
+    };
+  }, []);
 
   const getDaysRemaining = (expiresAt: string): number => {
     const now = new Date();
@@ -71,7 +96,12 @@ export default function TrustRoom() {
 
   const showMessage = (type: 'success' | 'error', text: string) => {
     setMessage({ type, text });
-    setTimeout(() => setMessage(null), TOAST_DURATION_MS);
+    // #11 使用 ref 管理 timer，防止 unmount 後觸發 setState
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    toastTimerRef.current = setTimeout(() => {
+      setMessage(null);
+      toastTimerRef.current = null;
+    }, TOAST_DURATION_MS);
   };
 
   const loadData = useCallback(async () => {
@@ -92,11 +122,21 @@ export default function TrustRoom() {
         setError('連結已過期或不存在，請聯繫房仲取得新連結');
         return;
       }
-      // [NASA TypeScript Safety] 使用類型守衛驗證 TrustRoomView
-      const firstResult = result[0];
-      if (firstResult && typeof firstResult === 'object') {
-        setData(firstResult as TrustRoomView);
+      const parseResult = TrustRoomViewSchema.safeParse(result[0]);
+      if (!parseResult.success) {
+        logger.error('[TrustRoom] 資料格式驗證失敗', { issues: parseResult.error.issues });
+        setError('資料格式錯誤，請稍後再試');
+        return;
       }
+
+      const parsedData: TrustRoomView = {
+        ...parseResult.data,
+        steps_data: parseResult.data.steps_data.map(({ confirmedAt, ...step }) =>
+          confirmedAt === undefined ? step : { ...step, confirmedAt }
+        ),
+      };
+
+      setData(parsedData);
       setError(null);
     } catch (err) {
       logger.error('[TrustRoom] 載入失敗', { error: err });
@@ -118,6 +158,7 @@ export default function TrustRoom() {
           event: 'UPDATE',
           schema: 'public',
           table: 'trust_transactions',
+          // 安全：Supabase Realtime filter 在 server-side 執行，不會洩漏其他用戶資料
           filter: `id=eq.${id}`,
         },
         (payload) => {
@@ -321,7 +362,7 @@ export default function TrustRoom() {
 
         {/* 進度條 */}
         <div className="bg-bg-base p-4 sm:px-6 dark:bg-slate-900">
-          <div className="h-2.5 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
+          <div className="h-2.5 w-full overflow-hidden rounded-full bg-border">
             <div
               className={`h-full rounded-full bg-gradient-to-r from-brand-700 to-success transition-all duration-500 ${progressWidthClass}`}
             />
@@ -413,10 +454,7 @@ export default function TrustRoom() {
       {maiMaiState.visible && (
         <div className="pointer-events-none fixed bottom-[calc(1.5rem+env(safe-area-inset-bottom))] right-[calc(1.5rem+env(safe-area-inset-right))] z-50 sm:bottom-[calc(1rem+env(safe-area-inset-bottom))] sm:right-[calc(1rem+env(safe-area-inset-right))]">
           <Suspense fallback={null}>
-            <LazyTrustRoomMaiMai
-              mood={maiMaiState.mood}
-              showConfetti={maiMaiState.showConfetti}
-            />
+            <LazyTrustRoomMaiMai mood={maiMaiState.mood} showConfetti={maiMaiState.showConfetti} />
           </Suspense>
         </div>
       )}

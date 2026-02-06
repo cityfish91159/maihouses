@@ -1,4 +1,4 @@
-# React.memo 優化 Code Review Checklist
+﻿# React.memo 優化 Code Review Checklist
 
 ## 概述
 

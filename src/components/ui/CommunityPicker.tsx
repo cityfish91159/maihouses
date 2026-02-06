@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 智能社區選擇器 (Smart Community Picker)
  *
  * 功能：

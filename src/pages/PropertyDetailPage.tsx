@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+﻿import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Home, Hash, ArrowLeft, Phone, FileText } from 'lucide-react';
@@ -584,7 +584,7 @@ export const PropertyDetailPage: React.FC = () => {
               <PropertyDescription description={property.description} />
 
               {/* 優化方案 3: 使用 Intersection Observer 延遲渲染評論區 */}
-              <CommunityReviews isLoggedIn={isLoggedIn} />
+              <CommunityReviews isLoggedIn={isLoggedIn} communityId={property.communityId} />
             </div>
 
             {/* Sidebar / Agent Card */}
@@ -592,6 +592,7 @@ export const PropertyDetailPage: React.FC = () => {
               <div className="sticky top-24 space-y-4">
                 <AgentTrustCard
                   agent={property.agent}
+                  {...(property.isDemo !== undefined ? { isDemo: property.isDemo } : {})}
                   onLineClick={handleAgentLineClick}
                   onCallClick={handleAgentCallClick}
                   onBookingClick={handleAgentBookingClick}

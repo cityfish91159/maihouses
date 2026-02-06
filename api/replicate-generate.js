@@ -1,4 +1,4 @@
-// api/replicate-generate.js
+﻿// api/replicate-generate.js
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 export default async function handler(req, res) {

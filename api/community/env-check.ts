@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Vercel API: /api/community/env-check
  *
  * 診斷環境變數設置狀態（只顯示是否存在，不洩露值）

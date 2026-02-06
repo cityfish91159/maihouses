@@ -1,4 +1,4 @@
-# PropertyDetailPage 與 AgentTrustCard 父子組件優化審核報告
+﻿# PropertyDetailPage 與 AgentTrustCard 父子組件優化審核報告
 
 **審核日期**: 2026-01-29
 **審核範圍**: PropertyDetailPage.tsx, AgentTrustCard.tsx, useTrustActions.ts

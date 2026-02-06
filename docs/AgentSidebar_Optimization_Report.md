@@ -1,4 +1,4 @@
-# AgentSidebar 組件性能優化報告
+﻿# AgentSidebar 組件性能優化報告
 
 ## 執行日期
 2026-01-29

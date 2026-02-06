@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { Home, MapPin, MessageCircle, Phone } from 'lucide-react';
 import styles from '../pages/UAG/components/ReportGenerator/ReportGenerator.module.css';
 

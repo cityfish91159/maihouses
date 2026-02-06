@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState, useRef } from 'react';
+﻿import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { MaiMaiBase, useMaiMaiMood } from './MaiMai';
 import { MaiMaiSpeech } from './MaiMai/MaiMaiSpeech';
 import useConfetti from './MaiMai/useConfetti';

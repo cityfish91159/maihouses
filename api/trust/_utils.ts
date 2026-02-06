@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Trust Flow 共用工具模組
  *
  * 提供 Trust Room API 共用的功能：

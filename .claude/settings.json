@@ -1,4 +1,4 @@
-{
+﻿{
   "permissions": {
     "allow": [
       "Skill",
@@ -29,24 +29,14 @@
     ],
     "PostToolUse": [
       {
-        "matcher": "Edit",
+        "matcher": "Edit|Write",
         "hooks": [
           {
             "type": "command",
-            "command": "npm run typecheck 2>&1 | head -20",
-            "timeout": 60,
-            "statusMessage": "自動執行 TypeScript 檢查..."
-          }
-        ]
-      },
-      {
-        "matcher": "Write",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "npm run typecheck 2>&1 | head -20",
-            "timeout": 60,
-            "statusMessage": "自動執行 TypeScript 檢查..."
+            "command": "npm run typecheck 2>&1 | head -30 && echo '\n--- LINT CHECK ---' && npm run lint 2>&1 | head -20",
+            "timeout": 90,
+            "statusMessage": "自動執行 TypeScript + Lint 檢查...",
+            "continueOnFailure": false
           }
         ]
       }

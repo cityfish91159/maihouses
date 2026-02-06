@@ -1,4 +1,4 @@
-/**
+﻿/**
  * GlobalHeader Component
  *
  * 三分頁共用頂部導航列 (P3)

@@ -1,4 +1,4 @@
-# AgentProfileCard P2 優化報告
+﻿# AgentProfileCard P2 優化報告
 
 ## 執行時間
 **日期**: 2026-01-29

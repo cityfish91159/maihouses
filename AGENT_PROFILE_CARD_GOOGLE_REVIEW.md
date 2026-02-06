@@ -1,4 +1,4 @@
-# AgentProfileCard Google 級代碼審核報告
+﻿# AgentProfileCard Google 級代碼審核報告
 
 **審核日期**: 2026-01-29
 **審核標準**: Google Engineering Practices

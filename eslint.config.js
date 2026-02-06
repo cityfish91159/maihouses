@@ -1,4 +1,4 @@
-import tsParser from '@typescript-eslint/parser';
+﻿import tsParser from '@typescript-eslint/parser';
 import tailwindcss from 'eslint-plugin-tailwindcss';
 import reactHooks from 'eslint-plugin-react-hooks';
 import jsxA11y from 'eslint-plugin-jsx-a11y';

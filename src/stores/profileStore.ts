@@ -1,4 +1,4 @@
-import { safeLocalStorage } from '../lib/safeStorage';
+﻿import { safeLocalStorage } from '../lib/safeStorage';
 
 export type UserMilestones = {
   birthday?: string; // YYYY-MM-DD

@@ -1,4 +1,4 @@
-# PropertyDetailPage 優化架構圖
+﻿# PropertyDetailPage 優化架構圖
 
 ## 🏗️ 整體架構
 

@@ -1,4 +1,4 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+﻿import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { z } from 'zod';
 import { createInitialState, saveTx, verifyToken, cors } from './_utils';
 

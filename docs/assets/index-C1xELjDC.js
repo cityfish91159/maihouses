@@ -1,4 +1,4 @@
-import { g as M } from './index-By1D1jHu.js';
+﻿import { g as M } from './index-By1D1jHu.js';
 import './react-vendor-XkWQQLQ_.js';
 import './ui-libs-Cwk2ks74.js';
 import './supabase-Cx8Dzgcb.js';

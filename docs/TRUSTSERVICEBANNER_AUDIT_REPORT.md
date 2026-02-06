@@ -1,4 +1,4 @@
-# TrustServiceBanner.tsx 完整審核報告
+﻿# TrustServiceBanner.tsx 完整審核報告
 
 **審核時間**: 2026-01-29
 **審核標準**: 95/100 分以上

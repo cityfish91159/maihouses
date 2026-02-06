@@ -1,4 +1,4 @@
-import { supabase } from '../lib/supabase';
+﻿import { supabase } from '../lib/supabase';
 import { Agent, Imported591Data } from '../lib/types';
 import { computeAddressFingerprint, normalizeCommunityName } from '../utils/address';
 import { logger } from '../lib/logger';
@@ -77,6 +77,8 @@ export interface PropertyData {
   trustEnabled?: boolean;
   // 演示用物件（mock/demo）
   isDemo?: boolean;
+  // 社區 ID（用於社區評價查詢）
+  communityId?: string;
 }
 
 // 上傳表單輸入介面
@@ -372,6 +374,18 @@ export const propertyService: PropertyService = {
       return trimmed ? trimmed : null;
     };
 
+    const calcServiceYears = (
+      joinedAt?: string | null,
+      createdAt?: string | null
+    ): number | null => {
+      const source = joinedAt || createdAt;
+      if (!source) return null;
+      const ts = Date.parse(source);
+      if (!Number.isFinite(ts)) return null;
+      const years = Math.floor((Date.now() - ts) / (365.25 * 24 * 60 * 60 * 1000));
+      return Math.max(0, years);
+    };
+
     try {
       // 嘗試從 Supabase 讀取正式資料
       const { data, error } = await supabase
@@ -394,6 +408,63 @@ export const propertyService: PropertyService = {
         return null;
       }
 
+      // 構建基礎 agent 物件 (必填屬性)
+      const agent: Agent = {
+        id: data.agent.id,
+        internalCode: data.agent.internal_code,
+        name: data.agent.name,
+        avatarUrl: data.agent.avatar_url || 'https://via.placeholder.com/150',
+        company: data.agent.company,
+        trustScore: data.agent.trust_score,
+        encouragementCount: data.agent.encouragement_count,
+      };
+
+      // 條件式新增可選屬性 (exactOptionalPropertyTypes 相容)
+      const serviceRating = coerceNumber(data.agent.service_rating);
+      if (serviceRating !== null) {
+        agent.serviceRating = serviceRating;
+      }
+
+      const reviewCount = coerceNumber(data.agent.review_count);
+      if (reviewCount !== null) {
+        agent.reviewCount = reviewCount;
+      }
+
+      const completedCases = coerceNumber(data.agent.completed_cases);
+      if (completedCases !== null) {
+        agent.completedCases = completedCases;
+      }
+
+      const activeListings = coerceNumber(data.agent.active_listings);
+      if (activeListings !== null) {
+        agent.activeListings = activeListings;
+      }
+
+      const serviceYears = calcServiceYears(data.agent.joined_at, data.agent.created_at);
+      if (serviceYears !== null) {
+        agent.serviceYears = serviceYears;
+      }
+
+      if (data.agent.bio !== undefined && data.agent.bio !== null) {
+        agent.bio = data.agent.bio;
+      }
+
+      if (Array.isArray(data.agent.specialties)) {
+        agent.specialties = data.agent.specialties;
+      }
+
+      if (Array.isArray(data.agent.certifications)) {
+        agent.certifications = data.agent.certifications;
+      }
+
+      if (data.agent.phone !== undefined && data.agent.phone !== null) {
+        agent.phone = data.agent.phone;
+      }
+
+      if (data.agent.line_id !== undefined && data.agent.line_id !== null) {
+        agent.lineId = data.agent.line_id;
+      }
+
       const result: PropertyData = {
         id: data.id,
         publicId: data.public_id,
@@ -403,15 +474,7 @@ export const propertyService: PropertyService = {
         description: data.description,
         images: data.images || [],
         sourcePlatform: data.source_platform,
-        agent: {
-          id: data.agent.id,
-          internalCode: data.agent.internal_code,
-          name: data.agent.name,
-          avatarUrl: data.agent.avatar_url || 'https://via.placeholder.com/150',
-          company: data.agent.company,
-          trustScore: data.agent.trust_score,
-          encouragementCount: data.agent.encouragement_count,
-        },
+        agent,
         isDemo,
       };
 
@@ -439,6 +502,11 @@ export const propertyService: PropertyService = {
       if (data.disadvantage) result.disadvantage = data.disadvantage;
       // 安心留痕：DB 欄位為 trust_enabled，前端為 trustEnabled
       result.trustEnabled = data.trust_enabled ?? false;
+
+      // 社區 ID（用於社區評價查詢）
+      if (data.community_id) {
+        result.communityId = data.community_id;
+      }
 
       // 針對 Demo 物件：若 DB 有資料但缺少結構化欄位，回退到 DEFAULT_PROPERTY（只補缺的欄位）
       if (isDemo) {

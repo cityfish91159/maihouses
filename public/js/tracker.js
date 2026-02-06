@@ -1,4 +1,4 @@
-// UAG Tracker v8.6 - Simplified & Stable
+﻿// UAG Tracker v8.6 - Simplified & Stable
 // Fixes: click_line/call flag, page_exit duplicate, event batching
 // Features: listing_id, search_query, heartbeat, entry_ref
 

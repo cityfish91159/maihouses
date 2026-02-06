@@ -1,4 +1,4 @@
-/**
+﻿/**
  * AgentProfileCard 性能測試
  * 驗證 P2 優化：useMemo 快取和樣式常數提取
  */

@@ -1,4 +1,4 @@
-import { propertyMockData } from './property-data.js';
+﻿import { propertyMockData } from './property-data.js';
 import PropertyRenderer from './property-renderer.js';
 import propertyAPI from './services/property-api.js';
 

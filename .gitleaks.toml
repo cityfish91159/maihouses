@@ -1,0 +1,20 @@
+title = "maihouses gitleaks config"
+
+[allowlist]
+description = "Allow documented placeholder values and examples"
+paths = [
+  '''^\.env\.example$''',
+  '''^\.claude/MCP_GUIDE\.md$''',
+  '''^CLAUDE\.md$''',
+  '''^UAG_COMPLETE_SYSTEM_GUIDE\.md$''',
+  '''^\.github/copilot-instructions\.md$'''
+]
+regexes = [
+  '''(?i)sk-(proj-)?x{10,}''',
+  '''(?i)sk-ant-x{10,}''',
+  '''(?i)eyJx{3,}''',
+  '''(?i)xoxb-your-token''',
+  '''(?i)sk_live_12345''',
+  '''(?i)your[_-]key|your[_-].*here''',
+  '''(?i)test-(jwt-)?secret|test-key'''
+]

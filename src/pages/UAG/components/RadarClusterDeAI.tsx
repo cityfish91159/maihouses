@@ -1,4 +1,4 @@
-/**
+﻿/**
  * RadarClusterDeAI - 去除 AI 感的氣泡雷達組件
  *
  * 完全基於 ui-ux-pro-max 資料庫建議：

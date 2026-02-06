@@ -1,4 +1,4 @@
-/**
+﻿/**
  * UAG Connect Token 加密模組
  *
  * 使用 AES-256-GCM 加密 Connect Token，防止敏感資料外洩

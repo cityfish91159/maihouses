@@ -1,4 +1,4 @@
-import { memo } from 'react';
+﻿import { memo } from 'react';
 import { Flame, CheckCircle, MessageCircle, Calendar } from 'lucide-react';
 
 interface VipModalProps {

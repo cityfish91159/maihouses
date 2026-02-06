@@ -1,4 +1,4 @@
-# TrustServiceBanner 整合報告 - Team 7
+﻿# TrustServiceBanner 整合報告 - Team 7
 
 **日期**: 2026-01-28
 **任務**: 整合 `TrustServiceBanner` 到 `PropertyDetailPage.tsx`

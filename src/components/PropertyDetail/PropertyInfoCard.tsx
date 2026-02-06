@@ -1,4 +1,4 @@
-import { memo } from 'react';
+﻿import { memo } from 'react';
 import { MapPin, Heart, Eye, Users, Flame } from 'lucide-react';
 import type { PropertyData } from '../../services/propertyService';
 import { LineShareAction } from '../social/LineShareAction';

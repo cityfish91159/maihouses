@@ -81,7 +81,7 @@ echo ""
 
 # 給出建議
 if [ $required_missing -gt 0 ]; then
-    echo "�� 下一步："
+    echo "下一步："
     echo "-----------------------------------"
     if [ -z "$REPLICATE_API_TOKEN" ]; then
         echo "1. 申請 Replicate API Token:"

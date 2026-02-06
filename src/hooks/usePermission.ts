@@ -1,4 +1,4 @@
-/**
+﻿/**
  * usePermission Hook (L7+ Optimized)
  *
  * 統一的權限檢查 Hook

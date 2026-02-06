@@ -1,4 +1,4 @@
-// api/replicate-detect.js
+﻿// api/replicate-detect.js
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 export default async function handler(req, res) {

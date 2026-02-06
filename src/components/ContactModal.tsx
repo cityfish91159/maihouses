@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { X, Phone, MessageCircle, Mail, Calendar, Clock, CheckCircle, Loader2 } from 'lucide-react';
 import { notify } from '../lib/notify';
 import { createLead } from '../services/leadService';

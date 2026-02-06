@@ -1,4 +1,4 @@
-/**
+﻿/**
  * MUSE API Library
  * 模組化的 API 工具函數
  */

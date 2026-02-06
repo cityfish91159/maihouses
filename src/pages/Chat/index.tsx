@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+﻿import { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { GlobalHeader } from '../../components/layout/GlobalHeader';
 import { HEADER_MODES } from '../../constants/header';

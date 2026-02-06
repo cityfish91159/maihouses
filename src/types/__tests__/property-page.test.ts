@@ -1,4 +1,4 @@
-import { normalizeFeaturedReview, normalizeListingReview } from '../property-page';
+﻿import { normalizeFeaturedReview, normalizeListingReview } from '../property-page';
 
 describe('normalizeFeaturedReview', () => {
   it('maps stars to rating and passes tags', () => {

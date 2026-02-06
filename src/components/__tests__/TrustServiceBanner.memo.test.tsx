@@ -1,4 +1,4 @@
-/**
+﻿/**
  * TrustServiceBanner React.memo 優化效能測試
  * 驗證：
  * 1. TrustServiceBanner 的 memo 生效

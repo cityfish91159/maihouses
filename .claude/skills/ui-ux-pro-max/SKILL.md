@@ -5,34 +5,32 @@ description: 'UI/UX design intelligence. 50 styles, 21 palettes, 50 font pairing
 
 # UI/UX Pro Max - Design Intelligence
 
-Searchable database of UI styles, color palettes, font pairings, chart types, product recommendations, UX guidelines, and stack-specific best practices.
+CSV database of UI styles, color palettes, font pairings, chart types, product recommendations, UX guidelines, and stack-specific best practices.
 
-## Prerequisites
+## Data Location
 
-Check if Python is installed:
+All reference data lives in CSV files — read them directly with the Read tool:
 
-```bash
-python3 --version || python --version
 ```
-
-If Python is not installed, install it based on user's OS:
-
-**macOS:**
-
-```bash
-brew install python3
-```
-
-**Ubuntu/Debian:**
-
-```bash
-sudo apt update && sudo apt install python3
-```
-
-**Windows:**
-
-```powershell
-winget install Python.Python.3.12
+.claude/skills/ui-ux-pro-max/data/
+├── charts.csv        # Chart types & library recommendations
+├── colors.csv        # Color palettes by product type
+├── landing.csv       # Page structure & CTA strategies
+├── products.csv      # Product type recommendations
+├── prompts.csv       # AI prompts & CSS keywords
+├── styles.csv        # UI styles, colors, effects
+├── typography.csv    # Font pairings with Google Fonts
+├── ux-guidelines.csv # Best practices & anti-patterns
+└── stacks/
+    ├── html-tailwind.csv
+    ├── react.csv
+    ├── nextjs.csv
+    ├── vue.csv
+    ├── svelte.csv
+    ├── swiftui.csv
+    ├── react-native.csv
+    ├── flutter.csv
+    └── nuxt-ui.csv
 ```
 
 ---
@@ -50,109 +48,52 @@ Extract key information from user request:
 - **Industry**: healthcare, fintech, gaming, education, etc.
 - **Stack**: React, Vue, Next.js, or default to `html-tailwind`
 
-### Step 2: Search Relevant Domains
+### Step 2: Read Relevant CSV Files
 
-Use `search.py` multiple times to gather comprehensive information. Search until you have enough context.
+Use the Read tool to load the relevant CSV data files directly.
 
-```bash
-python3 .claude/skills/ui-ux-pro-max/scripts/search.py "<keyword>" --domain <domain> [-n <max_results>]
-```
+**Recommended read order:**
 
-**Recommended search order:**
-
-1. **Product** - Get style recommendations for product type
-2. **Style** - Get detailed style guide (colors, effects, frameworks)
-3. **Typography** - Get font pairings with Google Fonts imports
-4. **Color** - Get color palette (Primary, Secondary, CTA, Background, Text, Border)
-5. **Landing** - Get page structure (if landing page)
-6. **Chart** - Get chart recommendations (if dashboard/analytics)
-7. **UX** - Get best practices and anti-patterns
-8. **Stack** - Get stack-specific guidelines (default: html-tailwind)
+1. **products.csv** - Get style recommendations for product type
+2. **styles.csv** - Get detailed style guide (colors, effects, frameworks)
+3. **typography.csv** - Get font pairings with Google Fonts imports
+4. **colors.csv** - Get color palette (Primary, Secondary, CTA, Background, Text, Border)
+5. **landing.csv** - Get page structure (if landing page)
+6. **charts.csv** - Get chart recommendations (if dashboard/analytics)
+7. **ux-guidelines.csv** - Get best practices and anti-patterns
+8. **stacks/react.csv** (or relevant stack) - Get stack-specific guidelines
 
 ### Step 3: Stack Guidelines (Default: html-tailwind)
 
 If user doesn't specify a stack, **default to `html-tailwind`**.
 
-```bash
-python3 .claude/skills/ui-ux-pro-max/scripts/search.py "<keyword>" --stack html-tailwind
-```
-
 Available stacks: `html-tailwind`, `react`, `nextjs`, `vue`, `svelte`, `swiftui`, `react-native`, `flutter`
 
 ---
 
-## Search Reference
+## CSV Domain Reference
 
-### Available Domains
-
-| Domain       | Use For                              | Example Keywords                                         |
-| ------------ | ------------------------------------ | -------------------------------------------------------- |
-| `product`    | Product type recommendations         | SaaS, e-commerce, portfolio, healthcare, beauty, service |
-| `style`      | UI styles, colors, effects           | glassmorphism, minimalism, dark mode, brutalism          |
-| `typography` | Font pairings, Google Fonts          | elegant, playful, professional, modern                   |
-| `color`      | Color palettes by product type       | saas, ecommerce, healthcare, beauty, fintech, service    |
-| `landing`    | Page structure, CTA strategies       | hero, hero-centric, testimonial, pricing, social-proof   |
-| `chart`      | Chart types, library recommendations | trend, comparison, timeline, funnel, pie                 |
-| `ux`         | Best practices, anti-patterns        | animation, accessibility, z-index, loading               |
-| `prompt`     | AI prompts, CSS keywords             | (style name)                                             |
-
-### Available Stacks
-
-| Stack           | Focus                                          |
-| --------------- | ---------------------------------------------- |
-| `html-tailwind` | Tailwind utilities, responsive, a11y (DEFAULT) |
-| `react`         | State, hooks, performance, patterns            |
-| `nextjs`        | SSR, routing, images, API routes               |
-| `vue`           | Composition API, Pinia, Vue Router             |
-| `svelte`        | Runes, stores, SvelteKit                       |
-| `swiftui`       | Views, State, Navigation, Animation            |
-| `react-native`  | Components, Navigation, Lists                  |
-| `flutter`       | Widgets, State, Layout, Theming                |
-
----
-
-## Example Workflow
-
-**User request:** "Làm landing page cho dịch vụ chăm sóc da chuyên nghiệp"
-
-**AI should:**
-
-```bash
-# 1. Search product type
-python3 .claude/skills/ui-ux-pro-max/scripts/search.py "beauty spa wellness service" --domain product
-
-# 2. Search style (based on industry: beauty, elegant)
-python3 .claude/skills/ui-ux-pro-max/scripts/search.py "elegant minimal soft" --domain style
-
-# 3. Search typography
-python3 .claude/skills/ui-ux-pro-max/scripts/search.py "elegant luxury" --domain typography
-
-# 4. Search color palette
-python3 .claude/skills/ui-ux-pro-max/scripts/search.py "beauty spa wellness" --domain color
-
-# 5. Search landing page structure
-python3 .claude/skills/ui-ux-pro-max/scripts/search.py "hero-centric social-proof" --domain landing
-
-# 6. Search UX guidelines
-python3 .claude/skills/ui-ux-pro-max/scripts/search.py "animation" --domain ux
-python3 .claude/skills/ui-ux-pro-max/scripts/search.py "accessibility" --domain ux
-
-# 7. Search stack guidelines (default: html-tailwind)
-python3 .claude/skills/ui-ux-pro-max/scripts/search.py "layout responsive" --stack html-tailwind
-```
-
-**Then:** Synthesize all search results and implement the design.
+| CSV File          | Use For                              | Search Keywords                                          |
+| ----------------- | ------------------------------------ | -------------------------------------------------------- |
+| `products.csv`    | Product type recommendations         | SaaS, e-commerce, portfolio, healthcare, beauty, service |
+| `styles.csv`      | UI styles, colors, effects           | glassmorphism, minimalism, dark mode, brutalism          |
+| `typography.csv`  | Font pairings, Google Fonts          | elegant, playful, professional, modern                   |
+| `colors.csv`      | Color palettes by product type       | saas, ecommerce, healthcare, beauty, fintech, service    |
+| `landing.csv`     | Page structure, CTA strategies       | hero, hero-centric, testimonial, pricing, social-proof   |
+| `charts.csv`      | Chart types, library recommendations | trend, comparison, timeline, funnel, pie                 |
+| `ux-guidelines.csv` | Best practices, anti-patterns      | animation, accessibility, z-index, loading               |
+| `prompts.csv`     | AI prompts, CSS keywords             | (style name)                                             |
 
 ---
 
 ## Tips for Better Results
 
 1. **Be specific with keywords** - "healthcare SaaS dashboard" > "app"
-2. **Search multiple times** - Different keywords reveal different insights
+2. **Read multiple CSVs** - Different files reveal different insights
 3. **Combine domains** - Style + Typography + Color = Complete design system
-4. **Always check UX** - Search "animation", "z-index", "accessibility" for common issues
-5. **Use stack flag** - Get implementation-specific best practices
-6. **Iterate** - If first search doesn't match, try different keywords
+4. **Always check UX** - Read ux-guidelines.csv for "animation", "z-index", "accessibility" issues
+5. **Use stack CSV** - Get implementation-specific best practices
+6. **Iterate** - If first read doesn't match, check related CSV files
 
 ---
 
@@ -164,7 +105,7 @@ These are frequently overlooked issues that make UI look unprofessional:
 
 | Rule                       | Do                                              | Don't                                  |
 | -------------------------- | ----------------------------------------------- | -------------------------------------- |
-| **No emoji icons**         | Use SVG icons (Heroicons, Lucide, Simple Icons) | Use emojis like 🎨 🚀 ⚙️ as UI icons   |
+| **No emoji icons**         | Use SVG icons (Heroicons, Lucide, Simple Icons) | Use emojis as UI icons                 |
 | **Stable hover states**    | Use color/opacity transitions on hover          | Use scale transforms that shift layout |
 | **Correct brand logos**    | Research official SVG from Simple Icons         | Guess or use incorrect logo paths      |
 | **Consistent icon sizing** | Use fixed viewBox (24x24) with w-6 h-6          | Mix different icon sizes randomly      |

@@ -1,4 +1,4 @@
--- 檔案：20241201_property_community_link.sql
+﻿-- 檔案：20241201_property_community_link.sql
 -- 功能：社區牆自動建立與比對
 -- 說明：房仲上傳物件時，自動建立/關聯社區牆
 -- 

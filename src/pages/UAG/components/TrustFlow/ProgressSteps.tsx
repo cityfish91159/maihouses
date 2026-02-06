@@ -1,4 +1,4 @@
-/**
+﻿/**
  * ProgressSteps - 進度步驟顯示組件
  *
  * [code-simplifier] 從 TrustFlow.tsx 抽取的子組件

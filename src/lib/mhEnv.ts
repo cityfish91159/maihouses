@@ -1,4 +1,4 @@
-import { safeLocalStorage } from './safeStorage';
+﻿import { safeLocalStorage } from './safeStorage';
 
 const MOCK_PARAM = 'mock';
 const MOCK_STORAGE_KEY = 'mh_mock_mode';

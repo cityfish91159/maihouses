@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Trust Flow 共用驗證常數
  *
  * 集中管理 LINE User ID、案件狀態、URL 等常數定義

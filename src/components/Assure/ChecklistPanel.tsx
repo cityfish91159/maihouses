@@ -1,4 +1,4 @@
-import { Check } from 'lucide-react';
+﻿import { Check } from 'lucide-react';
 
 interface ChecklistItem {
   id: string;
@@ -26,7 +26,7 @@ export function ChecklistPanel({ checklist, onToggle, onConfirm }: ChecklistPane
           aria-checked={item.checked}
           aria-label={item.label}
           tabIndex={0}
-          className={`flex cursor-pointer items-center rounded border p-4 transition ${
+          className={`flex cursor-pointer items-center rounded-xl border p-4 transition ${
             item.checked ? 'border-brand-200 bg-brand-50/50' : 'border-border hover:bg-bg-base'
           }`}
         >
@@ -48,7 +48,7 @@ export function ChecklistPanel({ checklist, onToggle, onConfirm }: ChecklistPane
       ))}
       <button
         onClick={onConfirm}
-        className="mt-2 w-full min-h-[48px] rounded bg-brand-700 py-3 font-bold text-white transition hover:bg-brand-600"
+        className="mt-2 min-h-[48px] w-full rounded-xl bg-brand-700 py-3 font-bold text-white transition hover:bg-brand-600"
       >
         完成交屋
       </button>

@@ -1,4 +1,4 @@
-export interface KeyCapsuleInput {
+﻿export interface KeyCapsuleInput {
   advantage1?: string | null | undefined;
   advantage2?: string | null | undefined;
   features?: Array<string | null | undefined> | null | undefined;

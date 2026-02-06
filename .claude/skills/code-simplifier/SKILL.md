@@ -1,4 +1,4 @@
----
+﻿---
 name: code-simplifier
 description: |
   簡化與精煉代碼，提升清晰度、一致性和可維護性，同時保留所有功能。

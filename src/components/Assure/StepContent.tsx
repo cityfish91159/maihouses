@@ -1,4 +1,4 @@
-import { Lock, Megaphone } from 'lucide-react';
+﻿import { Lock, Megaphone } from 'lucide-react';
 import type { Step, Transaction } from '../../types/trust';
 import { ChecklistPanel } from './ChecklistPanel';
 import { PaymentTimer } from './PaymentTimer';
@@ -31,14 +31,12 @@ interface StepContentProps {
   handlers: StepContentHandlers;
 }
 
-export function StepContent({
-  stepKey,
-  step,
-  state,
-  handlers,
-}: StepContentProps) {
-  const { isCurrent, role, isBusy, inputValue, timeLeft, isPaid, supplements, agentPaymentAmount } =
-    state;
+export function StepContent({ stepKey, step, state, handlers }: StepContentProps) {
+  // 狀態解構 — UI 顯示
+  const { isCurrent, role, isBusy, inputValue } = state;
+  // 狀態解構 — 付款/交屋
+  const { timeLeft, isPaid, supplements, agentPaymentAmount } = state;
+  // 事件處理
   const { onInputChange, onSubmit, onConfirm, onPay, onToggleCheck } = handlers;
 
   return (

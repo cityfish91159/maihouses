@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+﻿import React, { useCallback } from 'react';
 import { Sparkles, Upload, X, Star } from 'lucide-react';
 import { useUploadForm } from './UploadContext';
 import { CompressionComparison } from './CompressionComparison';

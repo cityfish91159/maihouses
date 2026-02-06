@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+﻿import { test, expect } from '@playwright/test';
 
 /**
  * PropertyDetailPage TrustServiceBanner E2E Integration Tests

@@ -1,4 +1,4 @@
-// src/services/replicate.ts
+﻿// src/services/replicate.ts
 export interface ReplicateMetrics {
   predict_time?: number;
   total_time?: number;

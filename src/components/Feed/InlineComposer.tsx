@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+﻿import { useState, useRef, useEffect } from 'react';
 import { notify } from '../../lib/notify';
 import { STRINGS } from '../../constants/strings';
 import { Image, X } from 'lucide-react';

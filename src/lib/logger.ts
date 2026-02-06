@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Production Logger
  *
  * 生產環境使用 Sentry/LogRocket，開發環境使用 console

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Trust Cases API 測試
  * [Test Driven Agent] 先寫測試，再寫實作
  * [NASA TypeScript Safety] 完整類型定義

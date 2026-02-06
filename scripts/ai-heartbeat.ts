@@ -1,4 +1,4 @@
-// scripts/ai-heartbeat.ts
+﻿// scripts/ai-heartbeat.ts
 import fs from 'fs';
 import path from 'path';
 

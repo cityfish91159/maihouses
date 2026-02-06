@@ -1,4 +1,4 @@
-/**
+﻿/**
  * AUDIT-01 Phase 5: Lead 類型守衛測試
  *
  * 測試 isPurchasedLead 和 isUnpurchasedLead 類型守衛

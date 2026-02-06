@@ -1,4 +1,4 @@
-# UAG Score 任務規格
+﻿# UAG Score 任務規格
 
 ## 功能
 

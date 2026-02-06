@@ -1,4 +1,4 @@
-/**
+﻿/**
  * UAG De-AI Demo Page
  *
  * 完整示範去除 AI 感的 UAG 頁面設計

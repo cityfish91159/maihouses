@@ -1,4 +1,4 @@
-No,Product Type,Keywords,Primary (Hex),Secondary (Hex),CTA (Hex),Background (Hex),Text (Hex),Border (Hex),Notes
+﻿No,Product Type,Keywords,Primary (Hex),Secondary (Hex),CTA (Hex),Background (Hex),Text (Hex),Border (Hex),Notes
 1,SaaS (General),"saas, general",#2563EB,#3B82F6,#F97316,#F8FAFC,#1E293B,#E2E8F0,Trust blue + accent contrast
 2,Micro SaaS,"micro, saas",#2563EB,#3B82F6,#F97316,#F8FAFC,#1E293B,#E2E8F0,Vibrant primary + white space
 3,E-commerce,commerce,#3B82F6,#60A5FA,#F97316,#F8FAFC,#1E293B,#E2E8F0,Brand primary + success green

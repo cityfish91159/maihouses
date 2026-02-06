@@ -1,4 +1,4 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+﻿import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { getTx, saveTx, logAudit, verifyToken, cors, TIMEOUTS, TrustQuerySchema } from './_utils';
 import { logger } from '../lib/logger';
 

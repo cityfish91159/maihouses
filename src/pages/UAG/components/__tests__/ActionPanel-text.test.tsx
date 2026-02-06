@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 測試5：ActionPanel 文字確認
  * 驗證 ActionPanel.tsx L144, L177, L179 的文字內容
  * 確保使用「LINE/站內信」而非「簡訊」

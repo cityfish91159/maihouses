@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Property API Service (ESM)
  * - Fetches aggregated page data from the backend
  * - Uses AbortController + timeout for race safety

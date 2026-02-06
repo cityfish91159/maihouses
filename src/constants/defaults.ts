@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Application Defaults
  *
  * Central configuration for default values used across the application.

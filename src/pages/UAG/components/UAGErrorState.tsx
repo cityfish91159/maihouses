@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { FallbackProps } from 'react-error-boundary';
 
 export const UAGErrorState: React.FC<FallbackProps> = ({ error, resetErrorBoundary }) => {

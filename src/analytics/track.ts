@@ -1,4 +1,4 @@
-import { logger } from '../lib/logger';
+﻿import { logger } from '../lib/logger';
 
 // 簡易埋點（事件命名更貼近用戶語意）
 export async function track(event: string, payload?: Record<string, unknown>) {

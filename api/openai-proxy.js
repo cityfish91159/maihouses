@@ -1,4 +1,4 @@
-// api/openai-proxy.js
+﻿// api/openai-proxy.js
 export default async function handler(req, res) {
   // 設定 CORS
   res.setHeader('Access-Control-Allow-Origin', '*');

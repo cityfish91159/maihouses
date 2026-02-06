@@ -166,10 +166,14 @@
       "Bash(Select-Object -First 50)",
       "Bash(gzip:*)",
       "Bash(if not exist \"tests\\\\e2e\" mkdir \"tests\\\\e2e\")",
-      "Bash(/c/Users/陳世瑜/AppData/Roaming/npm/vercel.cmd --prod --yes)"
+      "Bash(/c/Users/陳世瑜/AppData/Roaming/npm/vercel.cmd --prod --yes)",
+      "Bash(npm i:*)"
     ]
   },
   "model": "claude-opus-4-5-20251101",
   "enableAllProjectMcpServers": true,
-  "enabledMcpjsonServers": ["filesystem", "puppeteer"]
+  "enabledMcpjsonServers": [
+    "filesystem",
+    "puppeteer"
+  ]
 }

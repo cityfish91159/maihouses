@@ -1,5 +1,11 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+﻿import { useCallback, useEffect, useRef, useState } from 'react';
 import type { MaiMaiMood } from '../components/MaiMai';
+
+/**
+ * MaiMai 心情狀態管理 hook
+ * 使用 ref-based scheduling 實現動畫狀態轉換，生產環境穩定
+ * Note: 未來可考慮遷移至 XState 以獲得更明確的狀態機模型
+ */
 
 const ANIMATION_CONFIG = {
   waveDisplayTime: 3000,

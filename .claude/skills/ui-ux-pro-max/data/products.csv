@@ -1,4 +1,4 @@
-No,Product Type,Keywords,Primary Style Recommendation,Secondary Styles,Landing Page Pattern,Dashboard Style (if applicable),Color Palette Focus,Key Considerations
+﻿No,Product Type,Keywords,Primary Style Recommendation,Secondary Styles,Landing Page Pattern,Dashboard Style (if applicable),Color Palette Focus,Key Considerations
 1,SaaS (General),"app, b2b, cloud, general, saas, software, subscription",Glassmorphism + Flat Design,"Soft UI Evolution, Minimalism",Hero + Features + CTA,Data-Dense + Real-Time Monitoring,Trust blue + accent contrast,Balance modern feel with clarity. Focus on CTAs.
 2,Micro SaaS,"app, b2b, cloud, indie, micro, micro-saas, niche, saas, small, software, solo, subscription",Flat Design + Vibrant & Block,"Motion-Driven, Micro-interactions",Minimal & Direct + Demo,Executive Dashboard,Vibrant primary + white space,"Keep simple, show product quickly. Speed is key."
 3,E-commerce,"buy, commerce, e, ecommerce, products, retail, sell, shop, store",Vibrant & Block-based,"Aurora UI, Motion-Driven",Feature-Rich Showcase,Sales Intelligence Dashboard,Brand primary + success green,Engagement & conversions. High visual hierarchy.

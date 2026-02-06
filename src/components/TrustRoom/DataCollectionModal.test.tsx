@@ -135,7 +135,7 @@ describe('DataCollectionModal', () => {
   it('顯示隱私說明', () => {
     render(<DataCollectionModal isOpen={true} onSubmit={mockOnSubmit} onSkip={mockOnSkip} />);
 
-    expect(screen.getByText('資料只用於交易紀錄，不會給別人看')).toBeInTheDocument();
+    expect(screen.getByText('資料只用於交易紀錄，不會外流')).toBeInTheDocument();
   });
 
   it('有正確的 ARIA 屬性', () => {

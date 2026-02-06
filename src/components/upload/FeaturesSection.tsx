@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { Sparkles, AlertTriangle } from 'lucide-react';
 import { HighlightPicker } from '../ui/HighlightPicker';
 import { useUploadForm } from './UploadContext';

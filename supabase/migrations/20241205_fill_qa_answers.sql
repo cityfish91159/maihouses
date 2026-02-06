@@ -1,4 +1,4 @@
--- Seed additional QA answers to keep the first question populated
+﻿-- Seed additional QA answers to keep the first question populated
 -- Community: demo wall data (communityId = 6c60721c-6bff-4e79-9f4d-0d3ccb3168f2)
 -- Safe to rerun: uses fixed IDs and upserts
 

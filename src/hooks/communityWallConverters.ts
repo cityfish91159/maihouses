@@ -1,4 +1,4 @@
-import type {
+﻿import type {
   CommunityPost,
   CommunityReview,
   CommunityQuestion,

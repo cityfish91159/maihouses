@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Mock Data for Feed
  *
  * Centralized mock data to avoid magic numbers in components.

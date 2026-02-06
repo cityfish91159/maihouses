@@ -1,4 +1,4 @@
-import { __testHelpers, type RealPropertyRow, type ReviewData } from '../featured-properties';
+﻿import { __testHelpers, type RealPropertyRow, type ReviewData } from '../featured-properties';
 
 const { formatPrice, adaptRealPropertyForUI, SERVER_SEEDS, REQUIRED_COUNT } = __testHelpers;
 

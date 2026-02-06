@@ -1,4 +1,4 @@
-const relativeTimeFormatter = new Intl.RelativeTimeFormat('zh-TW', {
+﻿const relativeTimeFormatter = new Intl.RelativeTimeFormat('zh-TW', {
   numeric: 'auto',
 });
 

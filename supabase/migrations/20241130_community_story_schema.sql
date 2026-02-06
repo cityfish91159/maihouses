@@ -1,4 +1,4 @@
--- 檔案：20241130_community_story_schema.sql
+﻿-- 檔案：20241130_community_story_schema.sql
 -- 功能：社區故事性推薦 - 支援「溫暖留客」策略
 -- 說明：為社區資料表新增「氛圍故事」相關欄位
 

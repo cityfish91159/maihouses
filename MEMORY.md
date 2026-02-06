@@ -1,4 +1,4 @@
-# 🧠 Project Memory Bank: MaiHouses
+﻿# 🧠 Project Memory Bank: MaiHouses
 
 > **Last Updated**: 2026-01-27 (v17 - FE-7 詳情頁安心留痕 UI 優化)
 > **Maintainer**: Claude / Antigravity

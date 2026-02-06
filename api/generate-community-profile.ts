@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Vercel API: /api/generate-community-profile
  *
  * AI 生成社區牆摘要（後台按鈕觸發）

@@ -1,3 +1,4 @@
+﻿import { Loader2 } from 'lucide-react';
 import type { Step } from '../../types/trust';
 
 interface StepActionsProps {
@@ -49,9 +50,15 @@ function AgentActions({
       <button
         onClick={() => onSubmit(stepKey)}
         disabled={isBusy}
-        className="w-full min-h-[48px] rounded-lg bg-brand-700 py-3 text-sm font-medium text-white transition hover:bg-brand-600"
+        className="min-h-[48px] w-full rounded-lg bg-brand-700 py-3 text-sm font-medium text-white transition hover:bg-brand-600"
       >
-        {isBusy ? '...' : '送出'}
+        {isBusy ? (
+          <span className="inline-flex items-center gap-1.5">
+            <Loader2 className="size-4 animate-spin" /> 處理中
+          </span>
+        ) : (
+          '送出'
+        )}
       </button>
     </div>
   );
@@ -96,9 +103,15 @@ function BuyerActions({
       <button
         onClick={() => onConfirm(stepKey)}
         disabled={isBusy}
-        className="w-full min-h-[48px] rounded-lg bg-success py-3 text-sm font-medium text-white transition hover:brightness-95"
+        className="min-h-[48px] w-full rounded-lg bg-success py-3 text-sm font-medium text-white transition hover:brightness-95"
       >
-        {isBusy ? '...' : '確認送出'}
+        {isBusy ? (
+          <span className="inline-flex items-center gap-1.5">
+            <Loader2 className="size-4 animate-spin" /> 處理中
+          </span>
+        ) : (
+          '確認送出'
+        )}
       </button>
     </div>
   );
@@ -116,8 +129,7 @@ export function StepActions({
   onConfirm,
 }: StepActionsProps) {
   const showCurrentActions = !step.locked && isCurrent && stepKey !== '5' && stepKey !== '6';
-  const showStep5Actions =
-    stepKey === '5' && !step.locked && step.paymentStatus === 'pending';
+  const showStep5Actions = stepKey === '5' && !step.locked && step.paymentStatus === 'pending';
 
   return (
     <>
@@ -150,7 +162,7 @@ export function StepActions({
           {role === 'agent' && step.agentStatus === 'pending' && (
             <button
               onClick={() => onSubmit('5')}
-              className="w-full min-h-[48px] rounded-lg bg-brand-700 py-3 font-medium text-white transition hover:bg-brand-600"
+              className="min-h-[48px] w-full rounded-lg bg-brand-700 py-3 font-medium text-white transition hover:bg-brand-600"
             >
               上傳合約並送出
             </button>
@@ -158,7 +170,7 @@ export function StepActions({
           {role === 'buyer' && step.agentStatus === 'submitted' && (
             <button
               onClick={() => onConfirm('5')}
-              className="w-full min-h-[48px] rounded-lg bg-success py-3 font-medium text-white transition hover:brightness-95"
+              className="min-h-[48px] w-full rounded-lg bg-success py-3 font-medium text-white transition hover:brightness-95"
             >
               確認合約（啟動付款）
             </button>

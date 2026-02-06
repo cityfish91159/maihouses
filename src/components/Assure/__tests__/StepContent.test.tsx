@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+﻿import { render, screen } from '@testing-library/react';
 import { StepContent } from '../StepContent';
 import type { Step } from '../../../types/trust';
 

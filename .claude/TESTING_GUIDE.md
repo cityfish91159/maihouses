@@ -1,4 +1,4 @@
-# Skills & MCP 測試指南
+﻿# Skills & MCP 測試指南
 
 這個文檔提供完整的測試步驟，驗證 Claude Skills 和 MCP Servers 是否正確配置並可用。
 

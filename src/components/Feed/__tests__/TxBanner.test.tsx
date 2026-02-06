@@ -1,4 +1,4 @@
-/**
+﻿/**
  * TxBanner Component Tests
  * MSG-3: 完整測試私訊提醒橫幅功能
  */

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * api/community/post.ts 測試
  *
  * 測試案例：

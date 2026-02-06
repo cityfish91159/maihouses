@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Property Page Types - Schema-First (Zod)
  *
  * 🔥 SSOT 單一真理來源：

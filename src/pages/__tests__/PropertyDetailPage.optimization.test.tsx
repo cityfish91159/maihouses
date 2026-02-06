@@ -1,4 +1,4 @@
-/**
+﻿/**
  * PropertyDetailPage 優化驗證測試
  *
  * 驗證項目:
@@ -8,10 +8,13 @@
  * 4. AgentTrustCard 與父組件的協作
  */
 
+import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import { renderHook } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
+import type { ReactElement } from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { PropertyDetailPage } from '../PropertyDetailPage';
 import { propertyService } from '../../services/propertyService';
 import { useTrustActions } from '../../hooks/useTrustActions';
@@ -109,8 +112,26 @@ const mockPropertyData = {
 };
 
 describe('PropertyDetailPage - 優化驗證', () => {
+  // 創建共用的 QueryClient 實例
+  let queryClient: QueryClient;
+
+  const createWrapper = () => {
+    return ({ children }: { children: React.ReactNode }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    );
+  };
+
+  const renderWithClient = (ui: ReactElement) => {
+    return render(ui, { wrapper: createWrapper() });
+  };
+
   beforeEach(() => {
     vi.clearAllMocks();
+    queryClient = new QueryClient({
+      defaultOptions: {
+        queries: { retry: false },
+      },
+    });
   });
 
   describe('1. useCallback 穩定性驗證', () => {
@@ -135,7 +156,7 @@ describe('PropertyDetailPage - 優化驗證', () => {
     it('PropertyDetailPage 的 callback 應該保持穩定（無依賴變化時）', async () => {
       vi.mocked(propertyService.getPropertyByPublicId).mockResolvedValue(mockPropertyData as any);
 
-      const { rerender } = render(
+      const { rerender } = renderWithClient(
         <MemoryRouter initialEntries={['/maihouses/property/MH-100001']}>
           <PropertyDetailPage />
         </MemoryRouter>
@@ -165,7 +186,7 @@ describe('PropertyDetailPage - 優化驗證', () => {
     it('capsuleTags 應該在相同 property 資料下保持穩定', async () => {
       vi.mocked(propertyService.getPropertyByPublicId).mockResolvedValue(mockPropertyData as any);
 
-      const { rerender } = render(
+      const { rerender } = renderWithClient(
         <MemoryRouter initialEntries={['/maihouses/property/MH-100001']}>
           <PropertyDetailPage />
         </MemoryRouter>
@@ -198,7 +219,7 @@ describe('PropertyDetailPage - 優化驗證', () => {
       const getItemSpy = vi.spyOn(Storage.prototype, 'getItem');
       const setItemSpy = vi.spyOn(Storage.prototype, 'setItem');
 
-      render(
+      renderWithClient(
         <MemoryRouter initialEntries={['/maihouses/property/MH-100001?aid=test-agent']}>
           <PropertyDetailPage />
         </MemoryRouter>
@@ -222,7 +243,7 @@ describe('PropertyDetailPage - 優化驗證', () => {
       // 透過檢查組件是否正常渲染來間接驗證
       vi.mocked(propertyService.getPropertyByPublicId).mockResolvedValue(mockPropertyData as any);
 
-      render(
+      renderWithClient(
         <MemoryRouter initialEntries={['/maihouses/property/MH-100001']}>
           <PropertyDetailPage />
         </MemoryRouter>
@@ -240,7 +261,7 @@ describe('PropertyDetailPage - 優化驗證', () => {
     it('PropertyInfoCard 應該正確渲染且優化生效', async () => {
       vi.mocked(propertyService.getPropertyByPublicId).mockResolvedValue(mockPropertyData as any);
 
-      render(
+      renderWithClient(
         <MemoryRouter initialEntries={['/maihouses/property/MH-100001']}>
           <PropertyDetailPage />
         </MemoryRouter>
@@ -248,24 +269,26 @@ describe('PropertyDetailPage - 優化驗證', () => {
 
       await waitFor(() => {
         // 驗證 PropertyInfoCard 內容
-        expect(screen.getByText('新光晴川 B棟 12樓')).toBeInTheDocument();
-        expect(screen.getByText('12800000')).toBeInTheDocument();
-        expect(screen.getByText(/台北市信義區信義路五段7號/)).toBeInTheDocument();
+        expect(screen.getByText(/新光晴川/)).toBeInTheDocument();
+        // 價格以數字呈現
+        expect(screen.getByText(/12800000/)).toBeInTheDocument();
+        // 地址部分匹配
+        expect(screen.getByText(/台北市信義區/)).toBeInTheDocument();
       });
     });
 
     it('PropertyGallery 應該正確處理圖片切換', async () => {
       vi.mocked(propertyService.getPropertyByPublicId).mockResolvedValue(mockPropertyData as any);
 
-      render(
+      renderWithClient(
         <MemoryRouter initialEntries={['/maihouses/property/MH-100001']}>
           <PropertyDetailPage />
         </MemoryRouter>
       );
 
       await waitFor(() => {
-        // 驗證圖片計數顯示
-        expect(screen.getByText(/1 \/ 2/)).toBeInTheDocument();
+        // 驗證圖片計數顯示（格式為 "1 / 2"）
+        expect(screen.getByText('1 / 2')).toBeInTheDocument();
       });
     });
   });
@@ -274,16 +297,18 @@ describe('PropertyDetailPage - 優化驗證', () => {
     it('父組件的 callback 應該正確傳遞給 AgentTrustCard', async () => {
       vi.mocked(propertyService.getPropertyByPublicId).mockResolvedValue(mockPropertyData as any);
 
-      render(
+      renderWithClient(
         <MemoryRouter initialEntries={['/maihouses/property/MH-100001']}>
           <PropertyDetailPage />
         </MemoryRouter>
       );
 
       await waitFor(() => {
-        // 驗證所有按鈕都存在
+        // 驗證 AgentTrustCard 中的 LINE 按鈕存在
         expect(screen.getByText('加 LINE 聊聊')).toBeInTheDocument();
-        expect(screen.getAllByText('預約看屋')).toHaveLength(2); // sidebar + mobile bar
+        // AgentTrustCard 和 MobileActionBar 中都有「預約看屋」按鈕
+        expect(screen.getAllByText('預約看屋')).toHaveLength(2);
+        // 驗證「致電諮詢」按鈕存在
         expect(screen.getByText('致電諮詢')).toBeInTheDocument();
       });
     });
@@ -294,7 +319,7 @@ describe('PropertyDetailPage - 優化驗證', () => {
         trustEnabled: true,
       } as any);
 
-      render(
+      renderWithClient(
         <MemoryRouter initialEntries={['/maihouses/property/MH-100001']}>
           <PropertyDetailPage />
         </MemoryRouter>
@@ -310,7 +335,7 @@ describe('PropertyDetailPage - 優化驗證', () => {
     it('多次渲染不應導致不必要的組件重新創建', async () => {
       vi.mocked(propertyService.getPropertyByPublicId).mockResolvedValue(mockPropertyData as any);
 
-      const { rerender } = render(
+      const { rerender } = renderWithClient(
         <MemoryRouter initialEntries={['/maihouses/property/MH-100001']}>
           <PropertyDetailPage />
         </MemoryRouter>

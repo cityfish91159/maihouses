@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Data Adapter
  * 將 Supabase properties 格式轉換為 Renderer 需要的格式
  * 這樣無論資料來自 Mock 還是真實 API，Renderer 都能正常運作

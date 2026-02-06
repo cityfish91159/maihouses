@@ -1,4 +1,4 @@
-# useEffect 驗證報告 - PropertyDetailPage.tsx
+﻿# useEffect 驗證報告 - PropertyDetailPage.tsx
 
 **驗證時間**: 2026-01-27
 **驗證者**: useEffect 驗證團隊

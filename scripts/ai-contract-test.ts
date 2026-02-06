@@ -1,4 +1,4 @@
-// scripts/ai-contract-test.ts
+﻿// scripts/ai-contract-test.ts
 // 8. Contract Test / Schema Lock - 寫死強制執行
 import fs from 'fs';
 import path from 'path';

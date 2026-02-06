@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 地址工具函數
  * 共用於 CommunityPicker 和 propertyService
  */

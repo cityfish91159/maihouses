@@ -1,4 +1,4 @@
-/**
+﻿/**
  * TxBanner Component
  *
  * 進行中交易橫幅 / 私訊提醒橫幅

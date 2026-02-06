@@ -1,4 +1,4 @@
----
+﻿---
 name: pre-commit-validator
 description: Git commit 前的完整驗證檢查。當用戶提到「commit」、「提交」、「push」或完成重要修改時自動執行。
 allowed-tools: Bash, Grep, Read

@@ -1,4 +1,4 @@
-// scripts/ai-mutation-test.ts
+﻿// scripts/ai-mutation-test.ts
 // 7. Mutation Testing（測試的測試）- 寫死強制執行
 import fs from 'fs';
 import path from 'path';

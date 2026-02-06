@@ -1,4 +1,4 @@
-export const STRINGS = {
+﻿export const STRINGS = {
   FEED: {
     TITLE: '我的社區',
     PAGE_TITLE: '邁房子｜我的社區',

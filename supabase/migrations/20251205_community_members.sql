@@ -1,4 +1,4 @@
--- 檔案：20251205_community_members.sql
+﻿-- 檔案：20251205_community_members.sql
 -- 功能：建立 community_members 表以支援社區牆角色與權限
 
 CREATE TABLE IF NOT EXISTS public.community_members (

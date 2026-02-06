@@ -1,4 +1,4 @@
-# 社區牆 MVP 完整設計文件
+﻿# 社區牆 MVP 完整設計文件
 
 > 檔案路徑：`/downloads/community-wall-mvp-design.md`  
 > 最後更新：2024/12/01  

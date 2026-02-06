@@ -1,4 +1,4 @@
--- Supabase mock dataset for Community Wall manual verification
+﻿-- Supabase mock dataset for Community Wall manual verification
 -- -------------------------------------------------------------
 -- 目的：為「社區牆」API 提供一組固定的範例資料，確保前端可以在
 --       Vercel 環境改用 API 模式時看到真實內容，而不會干擾到現有

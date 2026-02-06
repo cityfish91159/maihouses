@@ -1,4 +1,4 @@
-import { z } from 'zod';
+﻿import { z } from 'zod';
 
 export const GradeSchema = z.enum(['S', 'A', 'B', 'C', 'F']);
 export type Grade = z.infer<typeof GradeSchema>;

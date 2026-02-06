@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Migration: 建立 audit_logs 稽核日誌表
  *
  * Purpose: 修復 P0 致命問題 - 所有稽核日誌靜默失敗

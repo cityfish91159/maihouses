@@ -1,4 +1,4 @@
-# PropertyDetailPage 與 AgentTrustCard 優化驗證報告
+﻿# PropertyDetailPage 與 AgentTrustCard 優化驗證報告
 
 ## 🎯 審核結論
 

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * UAG Connect Token 前端解密模組
  *
  * 使用 Web Crypto API 解密後端加密的 Connect Token

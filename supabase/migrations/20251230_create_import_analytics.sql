@@ -1,4 +1,4 @@
--- IM-5: 591 匯入品質追蹤表
+﻿-- IM-5: 591 匯入品質追蹤表
 -- Migration: 20251230_create_import_analytics
 -- Description: 記錄 parse591 解析結果，用於品質監控與 Regex 優化
 

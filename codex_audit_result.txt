@@ -1,4 +1,4 @@
-1) api/trust/_utils.ts:70 — Error handling/best practice: missing Supabase env vars only logged, then `createClient(supabaseUrl!, supabaseKey!)` still runs, leading to runtime failures with undefined credentials; should hard-fail early.  
+﻿1) api/trust/_utils.ts:70 — Error handling/best practice: missing Supabase env vars only logged, then `createClient(supabaseUrl!, supabaseKey!)` still runs, leading to runtime failures with undefined credentials; should hard-fail early.  
 2) api/trust/_utils.ts:147 — Error handling/data integrity: `getTx` creates a new transaction state on any DB error (not just “not found”), which can mask outages/permission errors and create incorrect state.  
 3) api/trust/_utils.ts:228 — Type safety: `agent` is assigned `req.headers["user-agent"] || "unknown"`; header can be `string[]`, violating the `AuditUser.agent: string` contract and risking log serialization issues.  
 4) api/trust/close.ts:93 — Type safety: `systemKey` is `string | string[] | undefined`; comparing directly to `SYSTEM_API_KEY` can reject valid keys when multiple headers are present. Normalize before compare.  

@@ -1,4 +1,4 @@
-export interface UagSummary {
+﻿export interface UagSummary {
   grade: 'S' | 'A' | 'B' | 'C';
   score: number;
   growth: number;

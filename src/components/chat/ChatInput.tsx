@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+﻿import React, { useEffect, useRef, useState } from 'react';
 import { useQuietMode } from '../../context/QuietModeContext';
 import { Events, track } from '../../analytics/track';
 

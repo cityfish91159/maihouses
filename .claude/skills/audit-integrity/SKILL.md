@@ -1,4 +1,4 @@
-# /audit-integrity - AI Agent 誠信審計
+﻿# /audit-integrity - AI Agent 誠信審計
 
 > **版本**: 2.0.0
 > **用途**: 自動掃描並揭露所有「便宜行事」的地方

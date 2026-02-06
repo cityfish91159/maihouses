@@ -1,4 +1,4 @@
-/**
+﻿/**
  * PropertyDetailPage Integration Tests
  *
  * 測試策略：真實用戶行為測試 + 錯誤場景 + 邊緣案例
@@ -9,8 +9,9 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
+import type { ReactElement } from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { PropertyDetailPage } from '../PropertyDetailPage';
 import { propertyService } from '../../services/propertyService';
 import { toast } from 'sonner';
@@ -92,7 +93,7 @@ vi.mock('../../hooks/usePropertyTracker', () => ({
 
 const mockPropertyData = {
   publicId: 'MH-100001',
-  title: '新光晴川 B棟 12樓',
+  title: '新光晴川 B1-12樓',
   price: 12800000,
   trustEnabled: true,
   address: '台北市信義區',
@@ -103,25 +104,36 @@ const mockPropertyData = {
   bathrooms: 1,
   agent: {
     id: 'agent-001',
+    internalCode: 12345,
     name: '測試經紀人',
     phone: '0912345678',
     avatarUrl: 'https://example.com/avatar.jpg',
     company: '測試房仲',
     trustScore: 95,
+    encouragementCount: 50,
   },
   district: '信義區',
 };
 
 describe('PropertyDetailPage - User Behavior Tests', () => {
+  const renderWithClient = (ui: ReactElement) => {
+    const client = new QueryClient({
+      defaultOptions: {
+        queries: { retry: false },
+      },
+    });
+    return render(<QueryClientProvider client={client}>{ui}</QueryClientProvider>);
+  };
+
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   describe('真實用戶行為測試', () => {
     it('trustEnabled=true 時應顯示已開啟狀態橫幅', async () => {
-      vi.mocked(propertyService.getPropertyByPublicId).mockResolvedValue(mockPropertyData as any);
+      vi.mocked(propertyService.getPropertyByPublicId).mockResolvedValue(mockPropertyData as never);
 
-      render(
+      renderWithClient(
         <MemoryRouter initialEntries={['/maihouses/property/MH-100001']}>
           <PropertyDetailPage />
         </MemoryRouter>
@@ -139,9 +151,9 @@ describe('PropertyDetailPage - User Behavior Tests', () => {
       vi.mocked(propertyService.getPropertyByPublicId).mockResolvedValue({
         ...mockPropertyData,
         trustEnabled: false,
-      } as any);
+      } as never);
 
-      render(
+      renderWithClient(
         <MemoryRouter initialEntries={['/maihouses/property/MH-100001']}>
           <PropertyDetailPage />
         </MemoryRouter>
@@ -156,9 +168,9 @@ describe('PropertyDetailPage - User Behavior Tests', () => {
     });
 
     it('頁面載入時應顯示正確的房源標題', async () => {
-      vi.mocked(propertyService.getPropertyByPublicId).mockResolvedValue(mockPropertyData as any);
+      vi.mocked(propertyService.getPropertyByPublicId).mockResolvedValue(mockPropertyData as never);
 
-      render(
+      renderWithClient(
         <MemoryRouter initialEntries={['/maihouses/property/MH-100001']}>
           <PropertyDetailPage />
         </MemoryRouter>
@@ -179,7 +191,7 @@ describe('PropertyDetailPage - User Behavior Tests', () => {
         new Error('NetworkError: Failed to fetch')
       );
 
-      render(
+      renderWithClient(
         <MemoryRouter initialEntries={['/maihouses/property/MH-100001']}>
           <PropertyDetailPage />
         </MemoryRouter>
@@ -203,7 +215,7 @@ describe('PropertyDetailPage - User Behavior Tests', () => {
         new Error('500 Internal Server Error')
       );
 
-      render(
+      renderWithClient(
         <MemoryRouter initialEntries={['/maihouses/property/MH-100001']}>
           <PropertyDetailPage />
         </MemoryRouter>
@@ -230,7 +242,7 @@ describe('PropertyDetailPage - User Behavior Tests', () => {
         new Error('404 not found')
       );
 
-      render(
+      renderWithClient(
         <MemoryRouter initialEntries={['/maihouses/property/MH-100001']}>
           <PropertyDetailPage />
         </MemoryRouter>
@@ -255,9 +267,9 @@ describe('PropertyDetailPage - User Behavior Tests', () => {
       vi.mocked(propertyService.getPropertyByPublicId).mockResolvedValue({
         ...mockPropertyData,
         trustEnabled: undefined,
-      } as any);
+      } as never);
 
-      render(
+      renderWithClient(
         <MemoryRouter initialEntries={['/maihouses/property/MH-100001']}>
           <PropertyDetailPage />
         </MemoryRouter>

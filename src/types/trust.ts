@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Trust Room 共用型別定義
  * 從 useTrustRoom.ts 抽離,避免與 trustService.ts 產生循環依賴
  */

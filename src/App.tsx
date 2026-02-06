@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
@@ -25,6 +25,7 @@ import UAGPage from './pages/UAG';
 import UAGDeAIDemo from './pages/UAG/UAGDeAIDemo';
 import UAGDeAIDemoV2 from './pages/UAG/UAGDeAIDemoV2';
 import UIUXDemo from './pages/UAG/demo/UIUXDemo';
+import UAGProfilePage from './pages/UAG/Profile';
 import { PropertyDetailPage } from './pages/PropertyDetailPage';
 import { PropertyUploadPage } from './pages/PropertyUploadPage';
 import PropertyListPage from './pages/PropertyListPage';
@@ -100,6 +101,14 @@ export default function App() {
                 element={
                   <ErrorBoundary>
                     <UAGPage />
+                  </ErrorBoundary>
+                }
+              />
+              <Route
+                path="/uag/profile"
+                element={
+                  <ErrorBoundary>
+                    <UAGProfilePage />
                   </ErrorBoundary>
                 }
               />

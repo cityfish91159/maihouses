@@ -1,4 +1,4 @@
-// src/services/detection.ts
+﻿// src/services/detection.ts
 import { MODE_CONFIGS, type DetectionMode } from '../lib/detection-labels';
 
 export interface DetectionBox {

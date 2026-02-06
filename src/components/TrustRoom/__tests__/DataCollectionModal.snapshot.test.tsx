@@ -1,4 +1,4 @@
-/**
+﻿/**
  * DataCollectionModal - UI Snapshot Tests
  * 確保 UI 變更有追蹤，防止意外的視覺回歸
  */

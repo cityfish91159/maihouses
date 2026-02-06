@@ -1,4 +1,4 @@
-// src/lib/detection-labels.ts
+﻿// src/lib/detection-labels.ts
 // 窗簾專用精簡標籤 ontology
 
 export const CURTAIN_LABELS = [

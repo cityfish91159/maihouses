@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Trust Case Detail API - 安心交易案件詳情
  *
  * GET   /api/trust/cases/[id] - 取得案件詳情（含事件列表）

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * MSG-5: SendMessageModal
  *
  * 購買客戶成功後彈出的訊息發送 Modal

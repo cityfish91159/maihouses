@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Claude API Proxy for Vercel
  * 用於 GitHub Copilot 整合和進階 AI 對話
  */

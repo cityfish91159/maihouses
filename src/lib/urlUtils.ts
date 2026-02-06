@@ -1,4 +1,4 @@
-import { safeLocalStorage } from './safeStorage';
+﻿import { safeLocalStorage } from './safeStorage';
 
 /**
  * URL 工具函數 - 統一管理物件連結 (UAG v8.4)

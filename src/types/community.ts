@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Community Domain Types
  *
  * 社區牆領域模型定義 (Single Source of Truth)

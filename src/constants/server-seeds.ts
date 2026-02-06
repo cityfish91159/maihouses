@@ -1,4 +1,4 @@
-import type { ServerSeed } from '../types/review';
+﻿import type { ServerSeed } from '../types/review';
 
 export const SERVER_SEEDS: ServerSeed[] = [
   {

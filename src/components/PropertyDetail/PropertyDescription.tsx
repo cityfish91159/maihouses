@@ -1,4 +1,4 @@
-import { memo } from 'react';
+﻿import { memo } from 'react';
 
 interface PropertyDescriptionProps {
   description: string;

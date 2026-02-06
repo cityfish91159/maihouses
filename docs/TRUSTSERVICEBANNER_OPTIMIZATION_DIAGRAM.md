@@ -1,4 +1,4 @@
-# TrustServiceBanner 性能優化架構圖
+﻿# TrustServiceBanner 性能優化架構圖
 
 ## 組件層級結構
 

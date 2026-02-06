@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Trust Case Query Service
  *
  * 純業務邏輯層：查詢用戶的安心交易案件

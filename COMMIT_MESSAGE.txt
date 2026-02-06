@@ -1,4 +1,4 @@
-feat(security): 建立 RLS CI/CD 自動檢查系統 (Team 11)
+﻿feat(security): 建立 RLS CI/CD 自動檢查系統 (Team 11)
 
 ## 🎯 任務目標
 防止未啟用 RLS 的表上線，達成目標分數 95/100

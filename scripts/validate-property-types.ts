@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 驗證 seed-property-page.json 是否符合 Zod Schema
  *
  * 執行: npx tsx scripts/validate-property-types.ts

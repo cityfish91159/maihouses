@@ -1,4 +1,4 @@
-/**
+﻿/**
  * NotificationErrorBoundary
  *
  * MSG-2: Error Boundary for NotificationDropdown

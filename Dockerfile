@@ -1,4 +1,4 @@
-# Hermetic Build - 固定 Node 版本
+﻿# Hermetic Build - 固定 Node 版本
 FROM node:20-alpine
 
 WORKDIR /app

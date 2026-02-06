@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 測試2：有綁定 LINE 測試
  * 驗證修3（物件連結）和修4（Connect Token propertyId）
  */

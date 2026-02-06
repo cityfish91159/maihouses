@@ -1,4 +1,4 @@
-# Trust Room (安心留痕) UX 重設計規劃
+﻿# Trust Room (安心留痕) UX 重設計規劃
 
 **版本**: 1.0
 **日期**: 2026-01-30
@@ -280,16 +280,144 @@ interface PaymentTimerProps {
 
 > 詳細設計規格見「十一、房仲資料 API 化設計」
 
-- [ ] 9.1 資料庫 Schema 擴充（`20260130_agent_profile_extension.sql`）
-- [ ] 9.2 Supabase Storage Bucket 建立（`agent-avatars`）
-- [ ] 9.3 信任分計算 RPC（`fn_calculate_trust_score`）
-- [ ] 9.4 GET /api/agent/profile 端點
-- [ ] 9.5 GET /api/agent/me 端點
-- [ ] 9.6 PUT /api/agent/profile 端點
-- [ ] 9.7 POST /api/agent/avatar 端點
-- [ ] 9.8 UAG 個人資料頁面
-- [ ] 9.9 Property 頁面 AgentTrustCard 改用真實 API
-- [ ] 9.10 Mock 頁面欄位調整（成交率→服務評價、累積成交→完成案件）
+- [x] 9.1 資料庫 Schema 擴充（`20260130_agent_profile_extension.sql`）
+- [x] 9.2 Supabase Storage Bucket 建立（`agent-avatars`）
+- [x] 9.3 信任分計算 RPC（`fn_calculate_trust_score`）
+- [x] 9.4 GET /api/agent/profile 端點
+- [x] 9.5 GET /api/agent/me 端點
+- [x] 9.6 PUT /api/agent/profile 端點
+- [x] 9.7 POST /api/agent/avatar 端點
+- [x] 9.8 UAG 個人資料頁面
+- [x] 9.9 Property 頁面 AgentTrustCard 改用真實 API
+- [x] 9.10 Mock 頁面欄位調整（成交率→服務評價、累積成交→完成案件）
+
+#### Phase 9 施工紀錄 (2026-01-30)
+- `supabase/migrations/20260130_agent_profile_extension.sql`: 擴充 agents 欄位、建立 avatar bucket/RLS、信任分 RPC + trigger
+- `api/agent/profile.ts`: GET/PUT 房仲資料端點（含 Zod 驗證）
+- `api/agent/me.ts`: 取得登入房仲資料（含 points/quota）
+- `api/agent/avatar.ts`: 头像上傳（multipart + storage + 更新 avatar_url）
+- `api/lib/supabase.ts`: 共用 Supabase Admin client
+- `src/services/agentService.ts`: 前端 API service（profile/me/avatar）
+- `src/pages/UAG/Profile/*`: 新增個人資料頁（AvatarUploader/BasicInfo/Metrics）
+- `src/pages/UAG/hooks/useAgentProfile.ts`: 改用 /api/agent/me
+- `src/components/AgentTrustCard.tsx`: 改用真實 API + 指標改版
+- `src/pages/PropertyDetailPage.tsx`: Demo 物件傳入 isDemo
+
+#### Phase 9 Code Review (2026-01-30)
+
+**審核分數：91/100** ✅ 通過
+
+**優點：**
+- API 架構清晰，前後端類型一致
+- Zod Schema 驗證完整（輸入驗證、.strict() 防額外欄位）
+- RLS 政策設計安全（Storage bucket 有完整 INSERT/SELECT/UPDATE 政策）
+- Trust Score 計算機制專業（基礎分 60，各維度加分有上限）
+- React Query 整合專業（enabled 條件控制、staleTime、Optimistic Update）
+
+**P1 待修復：**
+- `api/agent/profile.ts` L28：phone 正則 `\\d` 應為 `\d`
+- `AgentTrustCard.tsx` L124-135：時段按鈕缺少 `min-h-[44px]`
+- `BasicInfoSection.tsx` L195-207：專長/證照按鈕缺少 `min-h-[44px]`
+
+**P2 建議：**
+- 抽取 API helper 函數（toNumber, normalizeStringArray, calcServiceYears）
+- BookingModal 獨立為單獨組件
+
+---
+
+### Phase 10: 物件詳情頁社區評價修復
+
+- [x] 10.1 修正「註冊查看全部」按鈕路徑（`/auth.html` → `/maihouses/auth.html`）
+- [x] 10.2 CommunityReviews 組件接收 `communityId` props
+- [x] 10.3 PropertyDetailPage 傳入 `communityId`（從 property 取得）
+- [x] 10.4 CommunityReviews 內部呼叫 API 取得評價總數（使用 useEffect + fetch）
+- [x] 10.5 評價數量顯示改為動態（移除硬編碼 `6`）
+- [x] 10.6 API 錯誤時 graceful fallback（顯示「註冊查看更多評價」）
+
+#### Phase 10 問題說明
+
+| 問題 | 位置 | 嚴重度 | 說明 |
+|------|------|--------|------|
+| 路徑錯誤 | `CommunityReviews.tsx` L121 | P0 | `/auth.html` 缺少 `/maihouses/` 前綴，導致 404 |
+| 數字硬編碼 | `CommunityReviews.tsx` L126 | P1 | 評價數量寫死為 `6`，應從 API 動態取得 |
+
+#### Phase 10 技術說明
+
+**現有 API：**
+- `GET /api/community/wall?communityId=xxx&type=reviews`
+- 回傳：`{ success: true, data: { total: number, ... } }`
+
+**修改檔案：**
+1. `src/components/PropertyDetail/CommunityReviews.tsx`
+   - 新增 props：`communityId?: string`
+   - 內部使用 `useEffect` 呼叫 API 取得 `total`
+   - 按鈕文案改為：`註冊查看全部 ${total} 則評價`
+   - 路徑修正：`/maihouses/auth.html?redirect=community`
+
+2. `src/pages/PropertyDetailPage.tsx`
+   - 傳入：`<CommunityReviews isLoggedIn={isLoggedIn} communityId={property.communityId} />`
+
+**注意事項：**
+- 若 `communityId` 為空，顯示預設文案「註冊查看更多評價」
+- API 錯誤時 graceful fallback，不影響頁面渲染
+
+#### Phase 10 施工紀錄 (2026-01-30)
+
+- `src/components/PropertyDetail/CommunityReviews.tsx`:
+  - 路徑修正：`/auth.html` → `/maihouses/auth.html`
+  - 新增 `communityId` prop
+  - 新增 `useEffect` 呼叫 `/api/community/wall?type=reviews` 取得評價總數
+  - 按鈕文案改為動態：有數據 → `註冊查看全部 ${total} 則評價`，無數據 → `註冊查看更多評價`
+  - 移除 emoji `💬`，改用 `<MessageSquare>` SVG
+  - 按鈕加入 `min-h-[44px]` 符合觸控規範
+- `src/services/propertyService.ts`:
+  - `PropertyData` 介面新增 `communityId?: string`
+  - `getPropertyByPublicId` 回傳 `community_id` 欄位
+- `src/pages/PropertyDetailPage.tsx`:
+  - 傳入：`<CommunityReviews isLoggedIn={isLoggedIn} communityId={property.communityId} />`
+
+---
+
+### Phase 11: 聯絡按鈕回歸本職 + 安心留痕自然嵌入
+
+> **問題**: 三按鈕都跳 ContactModal（違反心智模型）；聯絡流程中沒有安心留痕的串接入口
+>
+> **目標**: 三按鈕各司其職 + 在聯絡觸發的面板中自然嵌入 `TrustAssureHint`（安心留痕提示）
+
+**A. 三按鈕回歸本職**
+- [ ] 11.1 `AgentTrustCard.tsx` - 按鈕改為開啟各自面板（LINE / 電話 / 預約）
+- [ ] 11.2 `LineLinkPanel.tsx` - 新增 LINE 連結面板 Modal（有 lineId 直開，無則 fallback）
+- [ ] 11.3 `CallConfirmPanel.tsx` - 新增致電確認面板 Modal（有 phone 直撥，無則 fallback）
+- [ ] 11.4 `BookingModal.tsx` - 新增安心留痕提示區塊
+- [ ] 11.5 `PropertyDetailPage.tsx` - 移除統一導向 ContactModal，改為開啟各面板
+- [ ] 11.6 `MobileActionBar.tsx` / `MobileCTA.tsx` - 對齊桌面版邏輯
+- [ ] 11.7 `ContactModal.tsx` - 降級為通用兜底，移除假「已建立安心留痕」文字
+
+**B. 安心留痕自然嵌入**
+- [ ] 11.8 `TrustAssureHint.tsx` - 新增安心留痕提示區塊組件（四情境通用）
+- [ ] 11.9 四情境邏輯實作（A: 登入+已開啟 / B: 登入+未開啟 / C: 未登入+已開啟 / D: 未登入+未開啟）
+- [ ] 11.10 `LineLinkPanel` / `CallConfirmPanel` / `BookingModal` 嵌入 `TrustAssureHint`
+
+**C. 整合驗證**
+- [ ] 11.11 Mock 資料更新（`lineId` / `phone` / `trustEnabled`）
+- [ ] 11.12 追蹤事件驗證（含安心留痕勾選事件）
+- [ ] 11.13 `npm run gate` 通過
+
+#### Phase 11 問題說明
+
+| 按鈕 | 用戶預期 | 目前行為 | 問題 |
+|------|---------|---------|------|
+| 加 LINE 聊聊 | 直接開啟 LINE | 跳出 ContactModal | Mental Model Mismatch |
+| 預約看屋 | 選擇時段 | 跳出 ContactModal | 功能被泛化 |
+| 致電諮詢 | 直接撥打電話 | 跳出 ContactModal | Unnecessary Friction |
+
+#### Phase 11 設計方案
+
+| 按鈕 | 有聯絡資訊時 | 無聯絡資訊時（兜底） |
+|------|------------|-------------------|
+| 加 LINE 聊聊 | `line://ti/p/{LINE_ID}` | ContactModal（預設 LINE） |
+| 預約看屋 | BookingModal（時段選擇器） | BookingModal |
+| 致電諮詢 | `tel:{PHONE}` | ContactModal（預設電話） |
 
 ---
 
@@ -1308,6 +1436,512 @@ const serviceYears = Math.floor(
 | P1 | UAG 個人資料頁面 |
 | P2 | Property 頁面更新 |
 | P2 | Mock 頁面欄位調整 |
+
+---
+
+## Phase 11: 聯絡按鈕回歸本職 + 安心留痕自然嵌入
+
+> **問題**: 三按鈕都導向同一個 ContactModal（違反心智模型），且聯絡流程中完全沒有安心留痕的入口。
+> **目標**: 讓三按鈕各司其職，同時在每個聯絡面板中自然嵌入安心留痕提示，讓消費者在聯絡房仲時知道有這個服務。
+
+### 11.1 現況問題分析
+
+| 問題類別 | 現況 | 影響 |
+|---------|------|------|
+| **Mental Model Mismatch** | 三個按鈕（加 LINE / 致電 / 預約）點擊後都跳出相同 ContactModal | 用戶預期 LINE 直接開、電話直接撥，結果都要填表 |
+| **Unnecessary Friction** | 所有聯絡操作都需要填表 | 增加流失率，尤其手機版 |
+| **No Differentiation** | 三個按鈕功能完全相同 | 浪費介面空間 |
+| **安心留痕斷裂** | 聯絡流程中沒有安心留痕的入口 | 消費者不知道有這個保障服務，錯失串接時機 |
+| **假文案** | ContactModal 顯示「已建立安心留痕」但沒有真正建立 | 誤導用戶 |
+
+### 11.2 設計方案概覽
+
+#### A. 三按鈕行為規格
+
+| 按鈕 | 觸發 UI | 有聯絡資訊時 | 無聯絡資訊時 |
+|------|---------|------------|------------|
+| **加 LINE 聊聊** | `LineLinkPanel` | 顯示 LINE 深層連結按鈕，一鍵開啟 | 顯示 fallback 表單，請用戶留 LINE ID |
+| **致電諮詢** | `CallConfirmPanel` | 顯示電話號碼 + 撥打按鈕 | 顯示 fallback 表單，請房仲回電 |
+| **預約看屋** | `BookingModal` | 時段選擇器（保留現有） | 時段選擇器 |
+
+#### B. 安心留痕嵌入：`TrustAssureHint`
+
+每個面板（LineLinkPanel / CallConfirmPanel / BookingModal）底部都嵌入 `TrustAssureHint` 提示區塊。根據登入狀態和房仲是否已開啟安心留痕，顯示不同內容：
+
+| 情境 | `isLoggedIn` | `trustEnabled` | 提示色 | checkbox 文案 | 勾選後動作 |
+|------|-------------|----------------|--------|-------------|-----------|
+| **A** | `true` | `true` | 藍色 (`brand-50`) | 同時建立安心留痕案件 | 呼叫 `auto-create-case`（帶 `userId`） |
+| **B** | `true` | `false` | 琥珀色 (`amber-50`) | 同時要求房仲開啟安心留痕 | 呼叫 `requestEnable()`，在 lead 中附帶要求 |
+| **C** | `false` | `true` | 藍色 (`brand-50`) | 同時建立安心留痕案件 | 呼叫 `auto-create-case`（不帶 `userId`，匿名案件） |
+| **D** | `false` | `false` | 琥珀色 (`amber-50`) | 請房仲開啟安心留痕 | 在 lead 中附帶要求，不呼叫 API |
+
+### 11.3 `TrustAssureHint` 組件設計
+
+#### Props Interface
+
+```typescript
+// src/components/PropertyDetail/TrustAssureHint.tsx
+
+interface TrustAssureHintProps {
+  /** 用戶是否已登入 */
+  isLoggedIn: boolean;
+  /** 該物件的房仲是否已開啟安心留痕 */
+  trustEnabled: boolean;
+  /** 物件 ID（用於建立案件） */
+  propertyId: string;
+  /** 房仲 ID */
+  agentId: string;
+  /** checkbox 勾選狀態由外部控制 */
+  checked: boolean;
+  /** checkbox 勾選變更回調 */
+  onCheckedChange: (checked: boolean) => void;
+}
+```
+
+#### 組件結構
+
+```tsx
+<div className={cn(
+  'mt-4 rounded-lg border p-3',
+  trustEnabled
+    ? 'border-brand-200 bg-brand-50'      // 情境 A/C：藍色
+    : 'border-amber-200 bg-amber-50'       // 情境 B/D：琥珀色
+)}>
+  <label className="flex items-start gap-3 cursor-pointer">
+    <input
+      type="checkbox"
+      checked={checked}
+      onChange={(e) => onCheckedChange(e.target.checked)}
+      className="mt-0.5 size-4 rounded border-gray-300 text-brand-600"
+    />
+    <div>
+      <p className="text-sm font-medium text-text-primary">
+        {getCheckboxLabel(isLoggedIn, trustEnabled)}
+      </p>
+      <p className="mt-0.5 text-xs text-text-muted">
+        {getHintDescription(isLoggedIn, trustEnabled)}
+      </p>
+    </div>
+  </label>
+  <div className="mt-2 flex items-center gap-1.5 text-xs text-text-muted">
+    <ShieldCheck className="size-3.5" />
+    <span>安心留痕：交易過程全程記錄，保障雙方權益</span>
+  </div>
+</div>
+```
+
+#### 文案對照表
+
+| 情境 | checkbox 文案 | 說明文字 |
+|------|-------------|---------|
+| A (登入+已開啟) | 同時建立安心留痕案件 | 交易紀錄會自動建立，幫你記錄每一步 |
+| B (登入+未開啟) | 同時要求房仲開啟安心留痕 | 我們會通知房仲開啟交易紀錄功能 |
+| C (未登入+已開啟) | 同時建立安心留痕案件 | 不用登入也能建立，之後可用手機綁定 |
+| D (未登入+未開啟) | 請房仲開啟安心留痕 | 會在訊息中附帶你的要求 |
+
+### 11.4 `LineLinkPanel` 組件設計
+
+#### Props Interface
+
+```typescript
+// src/components/PropertyDetail/LineLinkPanel.tsx
+
+interface LineLinkPanelProps {
+  isOpen: boolean;
+  onClose: () => void;
+  /** 房仲 LINE ID（有值 → 直開，無值 → fallback） */
+  agentLineId?: string;
+  agentName: string;
+  /** 安心留痕相關 */
+  isLoggedIn: boolean;
+  trustEnabled: boolean;
+  propertyId: string;
+  agentId: string;
+}
+```
+
+#### 有 LINE ID 時的 UI
+
+```
+┌─────────────────────────────────────┐
+│  加 LINE 聊聊                    ✕  │
+│                                     │
+│  [LINE 圖示]                        │
+│  點擊下方按鈕直接開啟 LINE          │
+│  加入 王小明 的好友                  │
+│                                     │
+│  ┌─ [開啟 LINE] ──────────────────┐ │
+│  └────────────────────────────────┘ │
+│                                     │
+│  ┌─ TrustAssureHint ──────────────┐ │
+│  │ ☑ 同時建立安心留痕案件          │ │
+│  │   交易紀錄會自動建立...         │ │
+│  └────────────────────────────────┘ │
+└─────────────────────────────────────┘
+```
+
+#### 無 LINE ID 時的 Fallback UI
+
+```
+┌─────────────────────────────────────┐
+│  加 LINE 聊聊                    ✕  │
+│                                     │
+│  房仲尚未設定 LINE ID               │
+│  留下你的 LINE ID，房仲會主動加你   │
+│                                     │
+│  [你的 LINE ID: _______________]    │
+│  [送出]                             │
+│                                     │
+│  ┌─ TrustAssureHint ──────────────┐ │
+│  │ ☑ 請房仲開啟安心留痕            │ │
+│  └────────────────────────────────┘ │
+└─────────────────────────────────────┘
+```
+
+### 11.5 `CallConfirmPanel` 組件設計
+
+#### Props Interface
+
+```typescript
+// src/components/PropertyDetail/CallConfirmPanel.tsx
+
+interface CallConfirmPanelProps {
+  isOpen: boolean;
+  onClose: () => void;
+  /** 房仲電話（有值 → 顯示號碼+撥打，無值 → fallback） */
+  agentPhone?: string;
+  agentName: string;
+  /** 安心留痕相關 */
+  isLoggedIn: boolean;
+  trustEnabled: boolean;
+  propertyId: string;
+  agentId: string;
+}
+```
+
+#### 有電話時的 UI
+
+```
+┌─────────────────────────────────────┐
+│  致電諮詢                        ✕  │
+│                                     │
+│  [電話圖示]                         │
+│  王小明 的聯絡電話                   │
+│  0912-345-678                       │
+│                                     │
+│  ┌─ [撥打電話] ───────────────────┐ │
+│  └────────────────────────────────┘ │
+│                                     │
+│  ┌─ TrustAssureHint ──────────────┐ │
+│  │ ☑ 同時建立安心留痕案件          │ │
+│  └────────────────────────────────┘ │
+└─────────────────────────────────────┘
+```
+
+#### 無電話時的 Fallback UI
+
+```
+┌─────────────────────────────────────┐
+│  致電諮詢                        ✕  │
+│                                     │
+│  房仲尚未設定聯絡電話               │
+│  留下你的電話，房仲會回電給你       │
+│                                     │
+│  [你的電話: ___________________]    │
+│  [送出]                             │
+│                                     │
+│  ┌─ TrustAssureHint ──────────────┐ │
+│  │ ☑ 請房仲開啟安心留痕            │ │
+│  └────────────────────────────────┘ │
+└─────────────────────────────────────┘
+```
+
+### 11.6 `BookingModal` 安心留痕嵌入
+
+在現有 `BookingModal` 的時段選擇器下方，加入 `TrustAssureHint`：
+
+```
+┌─────────────────────────────────────┐
+│  預約看屋                        ✕  │
+│                                     │
+│  選擇你方便的時段                    │
+│  ┌───────┐ ┌───────┐ ┌───────┐     │
+│  │ 上午  │ │ 下午  │ │ 晚上  │     │
+│  └───────┘ └───────┘ └───────┘     │
+│                                     │
+│  [備註: _______________________]    │
+│                                     │
+│  ┌─ TrustAssureHint ──────────────┐ │
+│  │ ☑ 同時建立安心留痕案件          │ │
+│  │   交易紀錄會自動建立...         │ │
+│  └────────────────────────────────┘ │
+│                                     │
+│  ┌─ [確認預約] ───────────────────┐ │
+│  └────────────────────────────────┘ │
+└─────────────────────────────────────┘
+```
+
+### 11.7 按鈕觸發流程圖
+
+```
+用戶點擊「加 LINE 聊聊」
+    └─ 開啟 LineLinkPanel
+       ├─ 有 lineId → 顯示「開啟 LINE」按鈕
+       │   ├─ 點擊 → window.open(`https://line.me/R/ti/p/${lineId}`)
+       │   └─ 若勾選安心留痕 → 執行對應情境動作
+       └─ 無 lineId → 顯示 fallback 表單
+           ├─ 送出 → 建立 lead（附帶用戶 LINE ID）
+           └─ 若勾選安心留痕 → 在 lead 中附帶要求
+
+用戶點擊「致電諮詢」
+    └─ 開啟 CallConfirmPanel
+       ├─ 有 phone → 顯示電話號碼 + 「撥打電話」按鈕
+       │   ├─ 點擊 → window.location.href = `tel:${phone}`
+       │   └─ 若勾選安心留痕 → 執行對應情境動作
+       └─ 無 phone → 顯示 fallback 表單
+           ├─ 送出 → 建立 lead（請房仲回電）
+           └─ 若勾選安心留痕 → 在 lead 中附帶要求
+
+用戶點擊「預約看屋」
+    └─ 開啟 BookingModal
+       ├─ 選擇時段 → 送出預約
+       └─ 若勾選安心留痕 → 執行對應情境動作
+```
+
+### 11.8 安心留痕情境動作詳細邏輯
+
+```typescript
+// 根據情境決定安心留痕動作
+async function handleTrustAssureAction(
+  scenario: 'A' | 'B' | 'C' | 'D',
+  context: { propertyId: string; agentId: string; userId?: string }
+): Promise<void> {
+  switch (scenario) {
+    case 'A':
+      // 登入 + 已開啟 → 直接建立案件
+      await fetch('/api/trust/auto-create-case', {
+        method: 'POST',
+        body: JSON.stringify({
+          property_id: context.propertyId,
+          agent_id: context.agentId,
+          user_id: context.userId,
+        }),
+      });
+      break;
+
+    case 'B':
+      // 登入 + 未開啟 → 通知房仲開啟
+      await fetch('/api/property/enable-trust', {
+        method: 'POST',
+        body: JSON.stringify({
+          property_id: context.propertyId,
+          requested_by: context.userId,
+        }),
+      });
+      break;
+
+    case 'C':
+      // 未登入 + 已開啟 → 建立匿名案件
+      await fetch('/api/trust/auto-create-case', {
+        method: 'POST',
+        body: JSON.stringify({
+          property_id: context.propertyId,
+          agent_id: context.agentId,
+          // 不帶 user_id，後續可用手機綁定
+        }),
+      });
+      break;
+
+    case 'D':
+      // 未登入 + 未開啟 → 在 lead 中附帶要求（不另外呼叫 API）
+      // 由呼叫方在建立 lead 時附帶 trustAssureRequested: true
+      break;
+  }
+}
+
+// 情境判斷 helper
+function getTrustScenario(isLoggedIn: boolean, trustEnabled: boolean): 'A' | 'B' | 'C' | 'D' {
+  if (isLoggedIn && trustEnabled) return 'A';
+  if (isLoggedIn && !trustEnabled) return 'B';
+  if (!isLoggedIn && trustEnabled) return 'C';
+  return 'D';
+}
+```
+
+### 11.9 `AgentTrustCard` 按鈕改造
+
+#### 修改說明
+
+現有 `AgentTrustCard.tsx` 三個按鈕都呼叫同一個 `onContactClick()`，改為各自開啟對應面板。
+
+```typescript
+// 原本（所有按鈕同一個 callback）
+<button onClick={() => onContactClick?.()}>加 LINE 聊聊</button>
+<button onClick={() => onContactClick?.()}>致電諮詢</button>
+<button onClick={() => onContactClick?.()}>預約看屋</button>
+
+// 改為（各自開啟面板）
+<button onClick={() => onLineClick?.()}>加 LINE 聊聊</button>
+<button onClick={() => onCallClick?.()}>致電諮詢</button>
+<button onClick={() => onBookingClick?.()}>預約看屋</button>
+```
+
+#### Props 變更
+
+```typescript
+interface AgentTrustCardProps {
+  agent: Agent;
+  isDemo?: boolean;
+  // 移除：onContactClick
+  // 新增：各按鈕獨立 callback
+  onLineClick?: () => void;
+  onCallClick?: () => void;
+  onBookingClick?: () => void;
+}
+```
+
+### 11.10 `PropertyDetailPage` 整合
+
+`PropertyDetailPage` 負責管理三個面板的開關狀態，並傳遞所有必要資訊。
+
+```typescript
+// 狀態管理
+const [linePanelOpen, setLinePanelOpen] = useState(false);
+const [callPanelOpen, setCallPanelOpen] = useState(false);
+const [bookingOpen, setBookingOpen] = useState(false);
+
+// AgentTrustCard callbacks
+<AgentTrustCard
+  agent={agent}
+  onLineClick={() => setLinePanelOpen(true)}
+  onCallClick={() => setCallPanelOpen(true)}
+  onBookingClick={() => setBookingOpen(true)}
+/>
+
+// 面板渲染
+<LineLinkPanel
+  isOpen={linePanelOpen}
+  onClose={() => setLinePanelOpen(false)}
+  agentLineId={agent.lineId}
+  agentName={agent.name}
+  isLoggedIn={isLoggedIn}
+  trustEnabled={property.trustEnabled}
+  propertyId={property.id}
+  agentId={agent.id}
+/>
+
+<CallConfirmPanel
+  isOpen={callPanelOpen}
+  onClose={() => setCallPanelOpen(false)}
+  agentPhone={agent.phone}
+  agentName={agent.name}
+  isLoggedIn={isLoggedIn}
+  trustEnabled={property.trustEnabled}
+  propertyId={property.id}
+  agentId={agent.id}
+/>
+
+<BookingModal
+  isOpen={bookingOpen}
+  onClose={() => setBookingOpen(false)}
+  agentName={agent.name}
+  isLoggedIn={isLoggedIn}
+  trustEnabled={property.trustEnabled}
+  propertyId={property.id}
+  agentId={agent.id}
+/>
+```
+
+### 11.11 `ContactModal` 降級
+
+`ContactModal` 不再作為主要聯絡入口，降級為：
+- 其他頁面的通用兜底（例如搜尋結果頁）
+- 移除假的「已建立安心留痕」文字
+
+### 11.12 `MobileActionBar` / `MobileCTA` 對齊
+
+手機版底部按鈕行為需與桌面版完全一致：
+
+```typescript
+// MobileActionBar.tsx
+<button onClick={() => onLineClick?.()}>LINE</button>
+<button onClick={() => onCallClick?.()}>致電</button>
+<button onClick={() => onBookingClick?.()}>預約</button>
+
+// MobileCTA.tsx（浮動按鈕）
+// 主按鈕保留「預約看屋」，長按或展開顯示 LINE / 致電
+```
+
+### 11.13 新增檔案清單
+
+| 檔案 | 說明 |
+|-----|------|
+| `src/components/PropertyDetail/TrustAssureHint.tsx` | 安心留痕提示區塊（四情境通用） |
+| `src/components/PropertyDetail/LineLinkPanel.tsx` | LINE 連結面板 Modal |
+| `src/components/PropertyDetail/CallConfirmPanel.tsx` | 致電確認面板 Modal |
+
+### 11.14 修改檔案清單
+
+| 檔案 | 修改內容 |
+|-----|---------|
+| `src/components/PropertyDetail/BookingModal.tsx` | 嵌入 `TrustAssureHint` |
+| `src/components/AgentTrustCard.tsx` | 按鈕改為各自 callback（`onLineClick` / `onCallClick` / `onBookingClick`） |
+| `src/pages/PropertyDetailPage.tsx` | 管理三面板開關狀態，傳遞安心留痕相關 props |
+| `src/components/PropertyDetail/MobileActionBar.tsx` | 對齊桌面版按鈕邏輯 |
+| `src/components/PropertyDetail/MobileCTA.tsx` | 對齊桌面版按鈕邏輯 |
+| `src/components/ContactModal.tsx` | 降級為通用兜底，移除假「已建立安心留痕」文字 |
+| `src/services/propertyService.ts` | 確保 `PropertyData` 包含 `trustEnabled` |
+
+### 11.15 Mock 資料更新
+
+```typescript
+// src/services/propertyService.ts
+export const DEFAULT_PROPERTY: PropertyData = {
+  // ...existing fields
+  trustEnabled: true,  // 新增：安心留痕開啟狀態
+  agent: {
+    // ...existing fields
+    lineId: 'maihouses_demo',   // 已有（Phase 9）
+    phone: '0912-345-678',       // 已有（Phase 9）
+  },
+};
+```
+
+### 11.16 追蹤事件
+
+| 事件 | 觸發時機 | 參數 |
+|-----|---------|------|
+| `line_click` | 點擊加 LINE | `{ has_line_id: boolean, source: 'sidebar' \| 'mobile' }` |
+| `call_click` | 點擊致電 | `{ has_phone: boolean, source: 'sidebar' \| 'mobile' }` |
+| `booking_click` | 點擊預約看屋 | `{ source: 'sidebar' \| 'mobile' }` |
+| `trust_assure_checked` | 勾選安心留痕 checkbox | `{ scenario: 'A' \| 'B' \| 'C' \| 'D', panel: 'line' \| 'call' \| 'booking' }` |
+| `trust_assure_created` | 安心留痕案件建立成功 | `{ scenario: 'A' \| 'C', property_id: string }` |
+| `trust_assure_requested` | 要求房仲開啟安心留痕 | `{ scenario: 'B' \| 'D', property_id: string }` |
+
+### 11.17 驗收標準
+
+#### 三按鈕回歸本職
+- [ ] 點擊「加 LINE 聊聊」→ 開啟 `LineLinkPanel`（有 lineId 顯示開啟按鈕，無則 fallback 表單）
+- [ ] 點擊「致電諮詢」→ 開啟 `CallConfirmPanel`（有 phone 顯示撥打按鈕，無則 fallback 表單）
+- [ ] 點擊「預約看屋」→ 開啟 `BookingModal`（時段選擇器）
+- [ ] 三個按鈕不再導向同一個 ContactModal
+- [ ] 手機版行為與桌面版一致
+
+#### 安心留痕嵌入
+- [ ] 情境 A（登入+已開啟）：藍色提示，勾選後呼叫 `auto-create-case` 帶 userId
+- [ ] 情境 B（登入+未開啟）：琥珀色提示，勾選後呼叫 `requestEnable()`
+- [ ] 情境 C（未登入+已開啟）：藍色提示，勾選後呼叫 `auto-create-case` 不帶 userId
+- [ ] 情境 D（未登入+未開啟）：琥珀色提示，勾選後在 lead 中附帶要求
+- [ ] 三個面板（LINE / 電話 / 預約）都有 `TrustAssureHint`
+- [ ] checkbox 預設不勾選，用戶主動勾選才觸發
+- [ ] ContactModal 不再顯示假的「已建立安心留痕」文字
+
+#### 程式碼品質
+- [ ] `npm run typecheck` 通過
+- [ ] `npm run lint` 通過
+- [ ] 無 `any` 類型
+- [ ] 追蹤事件正常記錄（含安心留痕相關事件）
+- [ ] Mock 模式三按鈕功能正常
 
 ---
 

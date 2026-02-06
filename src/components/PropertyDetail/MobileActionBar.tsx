@@ -1,4 +1,4 @@
-import { memo } from 'react';
+﻿import { memo } from 'react';
 import { MessageCircle, Calendar, Shield, Eye, Flame } from 'lucide-react';
 
 interface MobileActionBarProps {

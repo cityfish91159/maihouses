@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Community Permission Utilities
  *
  * AUDIT-01 Phase 7: 統一權限檢查函數

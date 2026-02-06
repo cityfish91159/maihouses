@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import CommunityWallCard from './CommunityWallCard';
 import ChatPropertyCard from './ChatPropertyCard';
 

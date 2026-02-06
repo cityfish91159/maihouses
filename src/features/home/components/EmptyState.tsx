@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+﻿import React, { memo } from 'react';
 
 export const EmptyState = memo(() => {
   return (

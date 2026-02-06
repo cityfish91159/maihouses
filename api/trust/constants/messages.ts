@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Trust Flow 共用錯誤訊息
  *
  * 供 services / handler 內部一致使用

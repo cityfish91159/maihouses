@@ -1,4 +1,4 @@
-/**
+﻿/**
  * MaiMai 慶祝動畫 Hook
  * @description 使用 canvas-confetti 實現高效能撒花動畫
  */

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { politeRewrite } from '../services/ai';
 import { Events, track } from '../analytics/track';
 

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Window Interface 擴展
  *
  * 用於定義全域 window 物件的額外屬性（如 Google Analytics gtag）

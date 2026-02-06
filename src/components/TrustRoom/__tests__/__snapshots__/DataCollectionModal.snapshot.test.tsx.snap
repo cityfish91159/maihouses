@@ -4,12 +4,12 @@ exports[`DataCollectionModal - UI Snapshots > matches snapshot of modal structur
 <form
   aria-labelledby="data-collection-title"
   aria-modal="true"
-  class="w-full max-w-md rounded-2xl bg-bg-card shadow-brand-lg transition-transform duration-200"
+  class="w-full max-w-md rounded-2xl bg-bg-card shadow-brand-lg transition-transform duration-200 dark:border dark:border-border dark:bg-slate-900"
   novalidate=""
   role="dialog"
 >
   <div
-    class="flex items-center justify-between border-b border-border p-4"
+    class="flex items-center justify-between border-b border-border p-4 dark:border-slate-700"
   >
     <div
       class="flex items-center gap-2"
@@ -32,7 +32,7 @@ exports[`DataCollectionModal - UI Snapshots > matches snapshot of modal structur
         />
       </svg>
       <h2
-        class="text-base font-bold text-ink-900 sm:text-lg"
+        class="text-base font-bold text-ink-900 sm:text-lg dark:text-slate-100"
         id="data-collection-title"
       >
         留下聯絡方式，方便後續聯繫
@@ -97,14 +97,14 @@ exports[`DataCollectionModal - UI Snapshots > matches snapshot of modal structur
         />
       </svg>
       <p
-        class="text-xs text-brand-700"
+        class="text-sm text-brand-700"
       >
-        資料只用於交易紀錄，不會給別人看
+        資料只用於交易紀錄，不會外流
       </p>
     </div>
     <div>
       <label
-        class="mb-1.5 flex items-center gap-2 text-sm font-medium text-ink-900"
+        class="mb-1.5 flex items-center gap-2 text-sm font-medium text-ink-900 dark:text-slate-200"
         for="data-name-input"
       >
         <svg
@@ -149,7 +149,7 @@ exports[`DataCollectionModal - UI Snapshots > matches snapshot of modal structur
     </div>
     <div>
       <label
-        class="mb-1.5 flex items-center gap-2 text-sm font-medium text-ink-900"
+        class="mb-1.5 flex items-center gap-2 text-sm font-medium text-ink-900 dark:text-slate-200"
         for="data-phone-input"
       >
         <svg
@@ -190,7 +190,7 @@ exports[`DataCollectionModal - UI Snapshots > matches snapshot of modal structur
     </div>
     <div>
       <label
-        class="mb-1.5 flex items-center gap-2 text-sm font-medium text-ink-900"
+        class="mb-1.5 flex items-center gap-2 text-sm font-medium text-ink-900 dark:text-slate-200"
         for="data-email-input"
       >
         <svg
@@ -223,6 +223,7 @@ exports[`DataCollectionModal - UI Snapshots > matches snapshot of modal structur
         aria-invalid="false"
         class="w-full rounded-xl border px-4 py-2.5 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500/20 border-border focus:border-brand-500"
         id="data-email-input"
+        inputmode="email"
         maxlength="100"
         placeholder="email@example.com（選填）"
         type="email"
@@ -231,7 +232,7 @@ exports[`DataCollectionModal - UI Snapshots > matches snapshot of modal structur
     </div>
   </div>
   <div
-    class="flex gap-3 border-t border-border p-4"
+    class="flex gap-3 border-t border-border p-4 dark:border-slate-700"
   >
     <button
       class="min-h-[44px] flex-1 rounded-xl border border-border px-4 py-2.5 text-sm font-semibold text-ink-900 transition-colors hover:bg-bg-base disabled:opacity-50"
@@ -255,17 +256,17 @@ exports[`DataCollectionModal - UI Snapshots > matches snapshot when closed 1`] =
 exports[`DataCollectionModal - UI Snapshots > matches snapshot when open with empty form 1`] = `
 <div>
   <div
-    class="fixed inset-0 z-modal flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
+    class="fixed inset-0 z-modal flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm dark:bg-black/70"
   >
     <form
       aria-labelledby="data-collection-title"
       aria-modal="true"
-      class="w-full max-w-md rounded-2xl bg-bg-card shadow-brand-lg transition-transform duration-200"
+      class="w-full max-w-md rounded-2xl bg-bg-card shadow-brand-lg transition-transform duration-200 dark:border dark:border-border dark:bg-slate-900"
       novalidate=""
       role="dialog"
     >
       <div
-        class="flex items-center justify-between border-b border-border p-4"
+        class="flex items-center justify-between border-b border-border p-4 dark:border-slate-700"
       >
         <div
           class="flex items-center gap-2"
@@ -288,7 +289,7 @@ exports[`DataCollectionModal - UI Snapshots > matches snapshot when open with em
             />
           </svg>
           <h2
-            class="text-base font-bold text-ink-900 sm:text-lg"
+            class="text-base font-bold text-ink-900 sm:text-lg dark:text-slate-100"
             id="data-collection-title"
           >
             留下聯絡方式，方便後續聯繫
@@ -353,14 +354,14 @@ exports[`DataCollectionModal - UI Snapshots > matches snapshot when open with em
             />
           </svg>
           <p
-            class="text-xs text-brand-700"
+            class="text-sm text-brand-700"
           >
-            資料只用於交易紀錄，不會給別人看
+            資料只用於交易紀錄，不會外流
           </p>
         </div>
         <div>
           <label
-            class="mb-1.5 flex items-center gap-2 text-sm font-medium text-ink-900"
+            class="mb-1.5 flex items-center gap-2 text-sm font-medium text-ink-900 dark:text-slate-200"
             for="data-name-input"
           >
             <svg
@@ -405,7 +406,7 @@ exports[`DataCollectionModal - UI Snapshots > matches snapshot when open with em
         </div>
         <div>
           <label
-            class="mb-1.5 flex items-center gap-2 text-sm font-medium text-ink-900"
+            class="mb-1.5 flex items-center gap-2 text-sm font-medium text-ink-900 dark:text-slate-200"
             for="data-phone-input"
           >
             <svg
@@ -446,7 +447,7 @@ exports[`DataCollectionModal - UI Snapshots > matches snapshot when open with em
         </div>
         <div>
           <label
-            class="mb-1.5 flex items-center gap-2 text-sm font-medium text-ink-900"
+            class="mb-1.5 flex items-center gap-2 text-sm font-medium text-ink-900 dark:text-slate-200"
             for="data-email-input"
           >
             <svg
@@ -479,6 +480,7 @@ exports[`DataCollectionModal - UI Snapshots > matches snapshot when open with em
             aria-invalid="false"
             class="w-full rounded-xl border px-4 py-2.5 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500/20 border-border focus:border-brand-500"
             id="data-email-input"
+            inputmode="email"
             maxlength="100"
             placeholder="email@example.com（選填）"
             type="email"
@@ -487,7 +489,7 @@ exports[`DataCollectionModal - UI Snapshots > matches snapshot when open with em
         </div>
       </div>
       <div
-        class="flex gap-3 border-t border-border p-4"
+        class="flex gap-3 border-t border-border p-4 dark:border-slate-700"
       >
         <button
           class="min-h-[44px] flex-1 rounded-xl border border-border px-4 py-2.5 text-sm font-semibold text-ink-900 transition-colors hover:bg-bg-base disabled:opacity-50"
@@ -511,17 +513,17 @@ exports[`DataCollectionModal - UI Snapshots > matches snapshot when open with em
 exports[`DataCollectionModal - UI Snapshots > matches snapshot when submitting 1`] = `
 <div>
   <div
-    class="fixed inset-0 z-modal flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
+    class="fixed inset-0 z-modal flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm dark:bg-black/70"
   >
     <form
       aria-labelledby="data-collection-title"
       aria-modal="true"
-      class="w-full max-w-md rounded-2xl bg-bg-card shadow-brand-lg transition-transform duration-200"
+      class="w-full max-w-md rounded-2xl bg-bg-card shadow-brand-lg transition-transform duration-200 dark:border dark:border-border dark:bg-slate-900"
       novalidate=""
       role="dialog"
     >
       <div
-        class="flex items-center justify-between border-b border-border p-4"
+        class="flex items-center justify-between border-b border-border p-4 dark:border-slate-700"
       >
         <div
           class="flex items-center gap-2"
@@ -544,7 +546,7 @@ exports[`DataCollectionModal - UI Snapshots > matches snapshot when submitting 1
             />
           </svg>
           <h2
-            class="text-base font-bold text-ink-900 sm:text-lg"
+            class="text-base font-bold text-ink-900 sm:text-lg dark:text-slate-100"
             id="data-collection-title"
           >
             留下聯絡方式，方便後續聯繫
@@ -610,14 +612,14 @@ exports[`DataCollectionModal - UI Snapshots > matches snapshot when submitting 1
             />
           </svg>
           <p
-            class="text-xs text-brand-700"
+            class="text-sm text-brand-700"
           >
-            資料只用於交易紀錄，不會給別人看
+            資料只用於交易紀錄，不會外流
           </p>
         </div>
         <div>
           <label
-            class="mb-1.5 flex items-center gap-2 text-sm font-medium text-ink-900"
+            class="mb-1.5 flex items-center gap-2 text-sm font-medium text-ink-900 dark:text-slate-200"
             for="data-name-input"
           >
             <svg
@@ -663,7 +665,7 @@ exports[`DataCollectionModal - UI Snapshots > matches snapshot when submitting 1
         </div>
         <div>
           <label
-            class="mb-1.5 flex items-center gap-2 text-sm font-medium text-ink-900"
+            class="mb-1.5 flex items-center gap-2 text-sm font-medium text-ink-900 dark:text-slate-200"
             for="data-phone-input"
           >
             <svg
@@ -705,7 +707,7 @@ exports[`DataCollectionModal - UI Snapshots > matches snapshot when submitting 1
         </div>
         <div>
           <label
-            class="mb-1.5 flex items-center gap-2 text-sm font-medium text-ink-900"
+            class="mb-1.5 flex items-center gap-2 text-sm font-medium text-ink-900 dark:text-slate-200"
             for="data-email-input"
           >
             <svg
@@ -739,6 +741,7 @@ exports[`DataCollectionModal - UI Snapshots > matches snapshot when submitting 1
             class="w-full rounded-xl border px-4 py-2.5 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500/20 border-border focus:border-brand-500"
             disabled=""
             id="data-email-input"
+            inputmode="email"
             maxlength="100"
             placeholder="email@example.com（選填）"
             type="email"
@@ -747,7 +750,7 @@ exports[`DataCollectionModal - UI Snapshots > matches snapshot when submitting 1
         </div>
       </div>
       <div
-        class="flex gap-3 border-t border-border p-4"
+        class="flex gap-3 border-t border-border p-4 dark:border-slate-700"
       >
         <button
           class="min-h-[44px] flex-1 rounded-xl border border-border px-4 py-2.5 text-sm font-semibold text-ink-900 transition-colors hover:bg-bg-base disabled:opacity-50"

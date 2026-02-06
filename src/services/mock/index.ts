@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Mock API Handler
  *
  * [NASA TypeScript Safety] 此檔案中的 `as T` 類型斷言是 Mock 實作的預期行為。

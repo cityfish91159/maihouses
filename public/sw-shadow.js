@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Shadow Service Worker - 精簡版
  * 只保留必要功能
  */

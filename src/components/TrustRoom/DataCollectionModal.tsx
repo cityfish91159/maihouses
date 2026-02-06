@@ -192,7 +192,7 @@ function DataCollectionModalContent({
   }, [isSubmitting, onSkip]);
 
   return (
-    <div className="fixed inset-0 z-modal flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+    <div className="fixed inset-0 z-modal flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm dark:bg-black/70">
       <form
         ref={modalRef}
         role="dialog"
@@ -200,13 +200,16 @@ function DataCollectionModalContent({
         aria-labelledby="data-collection-title"
         noValidate
         onSubmit={handleSubmit}
-        className="w-full max-w-md rounded-2xl bg-bg-card shadow-brand-lg transition-transform duration-200"
+        className="w-full max-w-md rounded-2xl bg-bg-card shadow-brand-lg transition-transform duration-200 dark:border dark:border-border dark:bg-slate-900"
       >
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-border p-4">
+        <div className="flex items-center justify-between border-b border-border p-4 dark:border-slate-700">
           <div className="flex items-center gap-2">
             <Shield className="size-5 text-brand-600" />
-            <h2 id="data-collection-title" className="text-base font-bold text-ink-900 sm:text-lg">
+            <h2
+              id="data-collection-title"
+              className="text-base font-bold text-ink-900 sm:text-lg dark:text-slate-100"
+            >
               {S.TITLE}
             </h2>
           </div>
@@ -233,7 +236,7 @@ function DataCollectionModalContent({
           <div>
             <label
               htmlFor="data-name-input"
-              className="mb-1.5 flex items-center gap-2 text-sm font-medium text-ink-900"
+              className="mb-1.5 flex items-center gap-2 text-sm font-medium text-ink-900 dark:text-slate-200"
             >
               <User className="size-4 text-text-muted" />
               {S.NAME_LABEL}
@@ -273,7 +276,7 @@ function DataCollectionModalContent({
           <div>
             <label
               htmlFor="data-phone-input"
-              className="mb-1.5 flex items-center gap-2 text-sm font-medium text-ink-900"
+              className="mb-1.5 flex items-center gap-2 text-sm font-medium text-ink-900 dark:text-slate-200"
             >
               <Phone className="size-4 text-text-muted" />
               {S.PHONE_LABEL}
@@ -313,7 +316,7 @@ function DataCollectionModalContent({
           <div>
             <label
               htmlFor="data-email-input"
-              className="mb-1.5 flex items-center gap-2 text-sm font-medium text-ink-900"
+              className="mb-1.5 flex items-center gap-2 text-sm font-medium text-ink-900 dark:text-slate-200"
             >
               <Mail className="size-4 text-text-muted" />
               {S.EMAIL_LABEL}
@@ -349,7 +352,7 @@ function DataCollectionModalContent({
         </div>
 
         {/* Footer */}
-        <div className="flex gap-3 border-t border-border p-4">
+        <div className="flex gap-3 border-t border-border p-4 dark:border-slate-700">
           <button
             type="button"
             onClick={handleSkip}

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Mock Properties Data
  * 格式對齊 Supabase properties 表結構
  *

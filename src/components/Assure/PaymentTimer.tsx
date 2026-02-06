@@ -1,4 +1,4 @@
-interface PaymentTimerProps {
+﻿interface PaymentTimerProps {
   timeLeft: string;
   role: 'agent' | 'buyer';
   isBusy: boolean;
@@ -14,7 +14,7 @@ export function PaymentTimer({ timeLeft, role, isBusy, amount, onPay }: PaymentT
   };
 
   return (
-    <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-center">
+    <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 p-4 text-center">
       <div className="mb-1 font-mono text-2xl font-bold text-amber-700">{timeLeft}</div>
       <div className="mb-3 text-xs text-amber-600">付款截止</div>
       {role === 'agent' ? (
@@ -22,7 +22,7 @@ export function PaymentTimer({ timeLeft, role, isBusy, amount, onPay }: PaymentT
           onClick={onPay}
           disabled={isBusy || timeLeft === '已逾期'}
           aria-disabled={isBusy || timeLeft === '已逾期'}
-          className={`w-full min-h-[48px] rounded py-3 font-bold text-white shadow ${
+          className={`min-h-[48px] w-full rounded-xl py-3 font-bold text-white shadow ${
             timeLeft === '已逾期'
               ? 'cursor-not-allowed bg-border text-text-muted'
               : 'bg-gradient-to-r from-brand-600 to-brand-700 hover:shadow-lg'

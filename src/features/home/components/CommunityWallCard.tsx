@@ -1,4 +1,4 @@
-import { ExternalLink, Star, MessageSquare } from 'lucide-react';
+﻿import { ExternalLink, Star, MessageSquare } from 'lucide-react';
 
 /**
  * ============================================

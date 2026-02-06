@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Property Page Renderer (ESM)
  * - Version guarded rendering to prevent stale updates
  * - Optional image preload to reduce flicker

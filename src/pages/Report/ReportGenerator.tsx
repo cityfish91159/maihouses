@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+﻿import React, { useState, useMemo } from 'react';
 import { X, ChevronRight, Check, Copy, Share2, FileText, Link2 } from 'lucide-react';
 import { PropertyReportData, ReportStyle, REPORT_STYLES, HIGHLIGHT_OPTIONS } from './types';
 import { notify } from '../../lib/notify';

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Trust Flow Types 測試
  *
  * [Test Driven Agent] 五種強度測試

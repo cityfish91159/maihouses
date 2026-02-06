@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+﻿import React, { useMemo } from 'react';
 import { MapPin } from 'lucide-react';
 import { buildKeyCapsuleTags } from '../../utils/keyCapsules';
 import { useUploadForm } from './UploadContext';

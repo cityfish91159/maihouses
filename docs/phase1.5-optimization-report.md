@@ -1,4 +1,4 @@
-# Phase 1.5 PropertyDetailPage 效能優化報告
+﻿# Phase 1.5 PropertyDetailPage 效能優化報告
 
 **報告日期**: 2026-01-29
 **優化範圍**: PropertyDetailPage.tsx + TrustServiceBanner.tsx + CommentList.tsx

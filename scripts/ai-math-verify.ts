@@ -1,4 +1,4 @@
-// scripts/ai-math-verify.ts
+﻿// scripts/ai-math-verify.ts
 // 13. 數學級驗證 - 寫死強制執行
 import fs from 'fs';
 import { execSync } from 'child_process';

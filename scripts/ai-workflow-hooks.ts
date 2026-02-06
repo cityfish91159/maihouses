@@ -1,4 +1,4 @@
-#!/usr/bin/env npx ts-node
+﻿#!/usr/bin/env npx ts-node
 
 /**
  * AI Workflow Hooks v1.0

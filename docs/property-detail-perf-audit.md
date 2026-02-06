@@ -1,4 +1,4 @@
-# PropertyDetailPage.tsx - React Performance Perfection 審核報告
+﻿# PropertyDetailPage.tsx - React Performance Perfection 審核報告
 
 **審核日期**: 2026-01-29
 **審核員**: React Performance Perfection Protocol

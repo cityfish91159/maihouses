@@ -1,8 +1,8 @@
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '../../../lib/supabase';
+﻿import { useQuery } from '@tanstack/react-query';
 import type { AgentProfile } from '../types/uag.types';
 import { MOCK_AGENT_PROFILE } from '../mockData';
 import { useUAGModeStore } from '../../../stores/uagModeStore';
+import { fetchAgentMe } from '../../../services/agentService';
 
 interface UseAgentProfileResult {
   profile: AgentProfile | null;
@@ -29,34 +29,18 @@ export function useAgentProfile(userId: string | undefined): UseAgentProfileResu
 
       if (!userId) return null;
 
-      const { data: agent, error: queryError } = await supabase
-        .from('agents')
-        .select(
-          'id, internal_code, name, avatar_url, company, trust_score, encouragement_count, visit_count, deal_count'
-        )
-        .eq('id', userId)
-        .single();
-
-      if (queryError) {
-        // 如果找不到記錄，回傳 null 而不是拋錯誤
-        if (queryError.code === 'PGRST116') {
-          return null;
-        }
-        throw new Error(`Failed to fetch agent profile: ${queryError.message}`);
-      }
-
-      if (!agent) return null;
+      const data = await fetchAgentMe();
 
       return {
-        id: agent.id,
-        internalCode: agent.internal_code,
-        name: agent.name,
-        avatarUrl: agent.avatar_url,
-        company: agent.company ?? '邁房子',
-        trustScore: agent.trust_score ?? 80,
-        encouragementCount: agent.encouragement_count ?? 0,
-        visitCount: agent.visit_count ?? 0,
-        dealCount: agent.deal_count ?? 0,
+        id: data.id,
+        internalCode: data.internalCode,
+        name: data.name,
+        avatarUrl: data.avatarUrl,
+        company: data.company ?? '邁房子',
+        trustScore: data.trustScore,
+        encouragementCount: data.encouragementCount,
+        visitCount: data.visitCount ?? 0,
+        dealCount: data.dealCount ?? 0,
       };
     },
     enabled: useMock || !!userId,

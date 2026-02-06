@@ -1,4 +1,4 @@
-import { PropertyFormInput } from '../../services/propertyService';
+﻿import { PropertyFormInput } from '../../services/propertyService';
 import {
   UploadState,
   UploadAction,

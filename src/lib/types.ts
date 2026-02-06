@@ -6,6 +6,16 @@ export interface Agent {
   company: string;
   trustScore: number;
   encouragementCount: number;
+  serviceRating?: number;
+  reviewCount?: number;
+  completedCases?: number;
+  activeListings?: number;
+  serviceYears?: number;
+  bio?: string | null;
+  specialties?: string[];
+  certifications?: string[];
+  phone?: string | null;
+  lineId?: string | null;
 }
 
 export interface Imported591Data {

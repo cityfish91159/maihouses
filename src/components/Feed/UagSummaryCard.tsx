@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+﻿import { Link } from 'react-router-dom';
 import type { UagSummary } from '../../types/agent';
 import { STRINGS } from '../../constants/strings';
 import { ROUTES } from '../../constants/routes';

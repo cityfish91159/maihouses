@@ -1,4 +1,4 @@
-/**
+﻿/**
  * PostSkeleton Component
  *
  * 載入中的骨架屏動畫

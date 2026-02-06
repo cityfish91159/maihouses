@@ -1,4 +1,4 @@
-/**
+﻿/**
  * RequirePermission Guard Component
  *
  * 下一代的權限守衛組件

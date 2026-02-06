@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Vercel API: /api/home/featured-reviews
  *
  * 首頁評價聚合 API - 混合動力架構 (Hybrid Reviews System)

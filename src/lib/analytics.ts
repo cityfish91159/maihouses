@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Google Analytics 工具函數
  */
 

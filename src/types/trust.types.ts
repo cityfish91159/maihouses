@@ -1,4 +1,4 @@
-import { Banknote, FileText, Handshake, Home, Key, Phone } from 'lucide-react';
+﻿import { Banknote, FileText, Handshake, Home, Key, Phone } from 'lucide-react';
 
 /**
  * 交易步驟資料結構
@@ -99,23 +99,23 @@ export const STEP_ICONS_SVG: Record<number, typeof Phone> = {
 
 /** 步驟名稱（用於標題顯示） */
 export const STEP_NAMES: Record<number, string> = {
-  1: '電話聯繫',
-  2: '實地看屋',
+  1: '電聯',
+  2: '帶看',
   3: '出價',
-  4: '斡旋談價',
+  4: '斡旋',
   5: '成交',
   6: '交屋',
 };
 
 /**
- * 步驟描述（買方視角，統一「已完成」語態）
- * 注意: 步驟 4「雙方議價中」為進行中狀態，與其他「已...」語態不同
+ * 步驟描述（買方視角，口語化用語）
+ * 設計規格: docs/TRUST_ROOM_UX_REDESIGN.md
  */
 export const STEP_DESCRIPTIONS: Record<number, string> = {
-  1: '已接到房仲電話',
-  2: '已實地看過房子',
-  3: '已提出購買價格',
-  4: '雙方議價中', // 進行中狀態，語態與其他步驟不同
-  5: '已簽約成交',
-  6: '已取得鑰匙',
+  1: '房仲打來了',
+  2: '看過房子了',
+  3: '出價了',
+  4: '在談價中',
+  5: '成交了',
+  6: '拿到鑰匙',
 };

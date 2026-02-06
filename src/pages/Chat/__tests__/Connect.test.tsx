@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Connect.tsx 導向邏輯測試
  * 測試2補充：驗證 Connect 頁面的 token 解析和導向邏輯
  */

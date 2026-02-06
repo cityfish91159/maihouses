@@ -1,4 +1,4 @@
-import React, { forwardRef, useState, useRef } from 'react';
+﻿import React, { forwardRef, useState, useRef } from 'react';
 import { MousePointerClick, Sparkles, Rocket, Coins, X, Loader2 } from 'lucide-react';
 import { Lead } from '../types/uag.types';
 import styles from '../UAG.module.css';

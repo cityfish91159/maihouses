@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
+﻿import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import LegacyFeaturedCard from '../features/property/components/LegacyFeaturedCard';
 import LegacyHorizontalCard from '../features/property/components/LegacyHorizontalCard';

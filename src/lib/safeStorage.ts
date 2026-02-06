@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Safe Storage Wrapper
  *
  * iOS Safari in Private Mode (and some other restrictive environments)

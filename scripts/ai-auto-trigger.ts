@@ -1,4 +1,4 @@
-// scripts/ai-auto-trigger.ts
+﻿// scripts/ai-auto-trigger.ts
 // 0. 務必自動觸發 - 寫死強制執行
 import fs from 'fs';
 import path from 'path';

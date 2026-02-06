@@ -1,4 +1,4 @@
-# RLS Policy Checker
+﻿# RLS Policy Checker
 
 自動檢測 Supabase Migration 的 Row Level Security (RLS) 設定，確保資料庫安全性。
 

@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { useMood } from '../context/MoodContext';
 
 const chipStyle = (active: boolean): React.CSSProperties => ({

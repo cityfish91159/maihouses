@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Legacy Trust APIs - Zod Validation Tests
  *
  * [rigorous_testing] 驗證 6 個舊版 API 的 Zod Schema 驗證

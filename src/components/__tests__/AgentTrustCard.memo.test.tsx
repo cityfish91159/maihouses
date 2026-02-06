@@ -1,4 +1,4 @@
-/**
+﻿/**
  * AgentTrustCard React.memo 優化效能測試
  * 驗證：
  * 1. AgentTrustCard 在父組件重渲染時不重渲染
@@ -8,11 +8,20 @@
  */
 
 import { render, screen, fireEvent } from '@testing-library/react';
-import { useState } from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { useState, type ReactElement } from 'react';
 import { AgentTrustCard } from '../AgentTrustCard';
 import type { Agent } from '../../lib/types';
 
 describe('AgentTrustCard React.memo Performance', () => {
+  const renderWithClient = (ui: ReactElement) => {
+    const client = new QueryClient({
+      defaultOptions: {
+        queries: { retry: false },
+      },
+    });
+    return render(<QueryClientProvider client={client}>{ui}</QueryClientProvider>);
+  };
   const createMockAgent = (overrides: Partial<Agent> = {}): Agent => ({
     id: 'agent-1',
     internalCode: 12345,
@@ -21,6 +30,10 @@ describe('AgentTrustCard React.memo Performance', () => {
     company: '測試不動產',
     trustScore: 85,
     encouragementCount: 10,
+    serviceRating: 4.8,
+    reviewCount: 32,
+    completedCases: 45,
+    serviceYears: 4,
     ...overrides,
   });
 
@@ -57,7 +70,7 @@ describe('AgentTrustCard React.memo Performance', () => {
         );
       };
 
-      const { getByTestId, getByText } = render(<TestWrapper />);
+      const { getByTestId, getByText } = renderWithClient(<TestWrapper />);
 
       // 第一次渲染
       const firstCard = document.querySelector('.rounded-xl.border');
@@ -90,7 +103,7 @@ describe('AgentTrustCard React.memo Performance', () => {
         );
       };
 
-      const { getByTestId, getByText } = render(<TestWrapper />);
+      const { getByTestId, getByText } = renderWithClient(<TestWrapper />);
 
       const firstCard = document.querySelector('.rounded-xl.border');
 
@@ -125,7 +138,7 @@ describe('AgentTrustCard React.memo Performance', () => {
         );
       };
 
-      const { getByText } = render(<TestWrapper />);
+      const { getByText } = renderWithClient(<TestWrapper />);
 
       // 初始狀態
       expect(screen.getByText('原名')).toBeInTheDocument();
@@ -154,7 +167,7 @@ describe('AgentTrustCard React.memo Performance', () => {
         );
       };
 
-      const { getByText } = render(<TestWrapper />);
+      const { getByText } = renderWithClient(<TestWrapper />);
 
       // 初始狀態
       expect(screen.getByText('85')).toBeInTheDocument();
@@ -183,7 +196,7 @@ describe('AgentTrustCard React.memo Performance', () => {
         );
       };
 
-      const { getByText } = render(<TestWrapper />);
+      const { getByText } = renderWithClient(<TestWrapper />);
 
       // 初始狀態
       expect(screen.getByText('10')).toBeInTheDocument();
@@ -212,7 +225,7 @@ describe('AgentTrustCard React.memo Performance', () => {
         );
       };
 
-      const { getByText } = render(<TestWrapper />);
+      const { getByText } = renderWithClient(<TestWrapper />);
 
       // 初始狀態
       expect(screen.getByText('舊公司')).toBeInTheDocument();
@@ -243,7 +256,7 @@ describe('AgentTrustCard React.memo Performance', () => {
         );
       };
 
-      const { getByText, container } = render(<TestWrapper />);
+      const { getByText, container } = renderWithClient(<TestWrapper />);
 
       // 初始狀態
       const oldImg = container.querySelector('img[alt="測試經紀人"]');
@@ -273,7 +286,7 @@ describe('AgentTrustCard React.memo Performance', () => {
         );
       };
 
-      const { getByText } = render(<TestWrapper />);
+      const { getByText } = renderWithClient(<TestWrapper />);
 
       // 初始狀態
       expect(screen.getByText(/12345/)).toBeInTheDocument();
@@ -310,7 +323,7 @@ describe('AgentTrustCard React.memo Performance', () => {
         );
       };
 
-      const { getByTestId, getByText } = render(<TestWrapper />);
+      const { getByTestId, getByText } = renderWithClient(<TestWrapper />);
 
       // 第一次渲染
       const firstCard = document.querySelector('.rounded-xl.border');
@@ -347,7 +360,7 @@ describe('AgentTrustCard React.memo Performance', () => {
         );
       };
 
-      const { getByTestId, getByText } = render(<TestWrapper />);
+      const { getByTestId, getByText } = renderWithClient(<TestWrapper />);
 
       const firstCard = document.querySelector('.rounded-xl.border');
 
@@ -380,7 +393,7 @@ describe('AgentTrustCard React.memo Performance', () => {
         );
       };
 
-      const { getByTestId, getByText } = render(<TestWrapper />);
+      const { getByTestId, getByText } = renderWithClient(<TestWrapper />);
 
       const firstCard = document.querySelector('.rounded-xl.border');
 
@@ -411,7 +424,7 @@ describe('AgentTrustCard React.memo Performance', () => {
         );
       };
 
-      const { getByText } = render(<TestWrapper />);
+      const { getByText } = renderWithClient(<TestWrapper />);
 
       // 改變回調函數引用
       fireEvent.click(getByText('Update Version'));
@@ -426,46 +439,38 @@ describe('AgentTrustCard React.memo Performance', () => {
   });
 
   describe('useMemo agentMetrics 快取', () => {
-    it('應該在 agent.trustScore 改變時重新計算 agentMetrics', () => {
+    it('應該在 agent.serviceYears 改變時重新計算 agentMetrics', () => {
       const TestWrapper = () => {
-        const [agent, setAgent] = useState(
-          createMockAgent({ trustScore: 60, encouragementCount: 10 })
-        );
+        const [agent, setAgent] = useState(createMockAgent({ serviceYears: 3 }));
 
-        const updateScore = () => {
-          setAgent({ ...agent, trustScore: 100 });
+        const updateYears = () => {
+          setAgent({ ...agent, serviceYears: 5 });
         };
 
         return (
           <div>
-            <button onClick={updateScore}>Update Score</button>
+            <button onClick={updateYears}>Update Years</button>
             <AgentTrustCard agent={agent} onLineClick={mockCallbacks.onLineClick} />
           </div>
         );
       };
 
-      const { getByText } = render(<TestWrapper />);
+      const { getByText } = renderWithClient(<TestWrapper />);
 
-      // 初始狀態：經驗年數基於 trustScore / 25 + 1
-      // trustScore=60 → floor(60/25)+1 = 2+1 = 3年
       expect(screen.getByText('3年')).toBeInTheDocument();
 
-      // 更新分數
-      fireEvent.click(getByText('Update Score'));
+      fireEvent.click(getByText('Update Years'));
 
-      // trustScore=100 → floor(100/25)+1 = 4+1 = 5年
       expect(screen.queryByText('3年')).not.toBeInTheDocument();
       expect(screen.getByText('5年')).toBeInTheDocument();
     });
 
-    it('應該在 agent.encouragementCount 改變時重新計算 agentMetrics', () => {
+    it('應該在 agent.completedCases 改變時重新計算 agentMetrics', () => {
       const TestWrapper = () => {
-        const [agent, setAgent] = useState(
-          createMockAgent({ trustScore: 85, encouragementCount: 10 })
-        );
+        const [agent, setAgent] = useState(createMockAgent({ completedCases: 12 }));
 
         const updateCount = () => {
-          setAgent({ ...agent, encouragementCount: 20 });
+          setAgent({ ...agent, completedCases: 20 });
         };
 
         return (
@@ -476,17 +481,14 @@ describe('AgentTrustCard React.memo Performance', () => {
         );
       };
 
-      const { getByText } = render(<TestWrapper />);
+      const { getByText } = renderWithClient(<TestWrapper />);
 
-      // 初始狀態：totalDeals = encouragementCount * 2 + 10 = 30
-      expect(screen.getByText('30')).toBeInTheDocument();
+      expect(screen.getByText('12')).toBeInTheDocument();
 
-      // 更新鼓勵數
       fireEvent.click(getByText('Update Count'));
 
-      // totalDeals = 20 * 2 + 10 = 50
-      expect(screen.queryByText('30')).not.toBeInTheDocument();
-      expect(screen.getByText('50')).toBeInTheDocument();
+      expect(screen.queryByText('12')).not.toBeInTheDocument();
+      expect(screen.getByText('20')).toBeInTheDocument();
     });
 
     it('應該基於 internalCode 計算穩定的在線狀態', () => {
@@ -494,18 +496,21 @@ describe('AgentTrustCard React.memo Performance', () => {
       const onlineAgent = createMockAgent({ internalCode: 12345 }); // 5 > 3 → 在線
       const offlineAgent = createMockAgent({ internalCode: 12342 }); // 2 <= 3 → 離線
 
-      const { rerender, container } = render(
+      const { container, unmount } = renderWithClient(
         <AgentTrustCard agent={onlineAgent} onLineClick={mockCallbacks.onLineClick} />
       );
 
       // 在線狀態
       expect(container.textContent).toContain('在線');
 
-      // 切換為離線經紀人
-      rerender(<AgentTrustCard agent={offlineAgent} onLineClick={mockCallbacks.onLineClick} />);
+      // 清除並重新渲染離線經紀人
+      unmount();
+      const { container: container2 } = renderWithClient(
+        <AgentTrustCard agent={offlineAgent} onLineClick={mockCallbacks.onLineClick} />
+      );
 
       // 離線狀態
-      expect(container.textContent).toContain('離線');
+      expect(container2.textContent).toContain('離線');
     });
   });
 
@@ -524,7 +529,7 @@ describe('AgentTrustCard React.memo Performance', () => {
         );
       };
 
-      const { getByText, container } = render(<TestWrapper />);
+      const { getByText, container } = renderWithClient(<TestWrapper />);
 
       // 觸發 tooltip 顯示
       const trustScoreDiv = container.querySelector('[role="button"]');
@@ -557,7 +562,7 @@ describe('AgentTrustCard React.memo Performance', () => {
         );
       };
 
-      const { getByText } = render(<TestWrapper />);
+      const { getByText } = renderWithClient(<TestWrapper />);
 
       // 打開預約 Modal
       const bookingButton = screen.getByText('預約看屋');
@@ -577,7 +582,7 @@ describe('AgentTrustCard React.memo Performance', () => {
   describe('按鈕點擊行為', () => {
     it('應該正確觸發 onLineClick', () => {
       const agent = createMockAgent();
-      render(<AgentTrustCard agent={agent} onLineClick={mockCallbacks.onLineClick} />);
+      renderWithClient(<AgentTrustCard agent={agent} onLineClick={mockCallbacks.onLineClick} />);
 
       const lineButton = screen.getByText('加 LINE 聊聊');
       fireEvent.click(lineButton);
@@ -587,7 +592,7 @@ describe('AgentTrustCard React.memo Performance', () => {
 
     it('應該正確觸發 onCallClick', () => {
       const agent = createMockAgent();
-      render(<AgentTrustCard agent={agent} onCallClick={mockCallbacks.onCallClick} />);
+      renderWithClient(<AgentTrustCard agent={agent} onCallClick={mockCallbacks.onCallClick} />);
 
       const callButton = screen.getByText('致電諮詢');
       fireEvent.click(callButton);
@@ -597,7 +602,9 @@ describe('AgentTrustCard React.memo Performance', () => {
 
     it('應該正確觸發 onBookingClick', () => {
       const agent = createMockAgent();
-      render(<AgentTrustCard agent={agent} onBookingClick={mockCallbacks.onBookingClick} />);
+      renderWithClient(
+        <AgentTrustCard agent={agent} onBookingClick={mockCallbacks.onBookingClick} />
+      );
 
       const bookingButton = screen.getByText('預約看屋');
       fireEvent.click(bookingButton);
@@ -607,7 +614,7 @@ describe('AgentTrustCard React.memo Performance', () => {
 
     it('應該在沒有 onBookingClick 時顯示內建 Modal', () => {
       const agent = createMockAgent();
-      render(<AgentTrustCard agent={agent} onLineClick={mockCallbacks.onLineClick} />);
+      renderWithClient(<AgentTrustCard agent={agent} onLineClick={mockCallbacks.onLineClick} />);
 
       const bookingButton = screen.getByText('預約看屋');
       fireEvent.click(bookingButton);
@@ -618,35 +625,33 @@ describe('AgentTrustCard React.memo Performance', () => {
   });
 
   describe('績效指標顯示', () => {
-    it('應該正確計算並顯示成交率', () => {
-      const agent = createMockAgent({ trustScore: 85 });
-      render(<AgentTrustCard agent={agent} onLineClick={mockCallbacks.onLineClick} />);
+    it('應該正確顯示服務評價與評論數', () => {
+      const agent = createMockAgent({ serviceRating: 4.6, reviewCount: 18 });
+      renderWithClient(<AgentTrustCard agent={agent} onLineClick={mockCallbacks.onLineClick} />);
 
-      // closureRate = min(95, 60 + (85 % 30)) = min(95, 85) = 85
-      expect(screen.getByText('85%')).toBeInTheDocument();
+      expect(screen.getByText('4.6')).toBeInTheDocument();
+      expect(screen.getByText('(18)')).toBeInTheDocument();
     });
 
-    it('應該正確計算並顯示累積成交數', () => {
-      const agent = createMockAgent({ encouragementCount: 15 });
-      render(<AgentTrustCard agent={agent} onLineClick={mockCallbacks.onLineClick} />);
+    it('應該正確顯示完成案件數', () => {
+      const agent = createMockAgent({ completedCases: 40 });
+      renderWithClient(<AgentTrustCard agent={agent} onLineClick={mockCallbacks.onLineClick} />);
 
-      // totalDeals = 15 * 2 + 10 = 40
       expect(screen.getByText('40')).toBeInTheDocument();
     });
 
-    it('應該正確計算並顯示服務經驗', () => {
-      const agent = createMockAgent({ trustScore: 75 });
-      render(<AgentTrustCard agent={agent} onLineClick={mockCallbacks.onLineClick} />);
+    it('應該正確顯示服務年資', () => {
+      const agent = createMockAgent({ serviceYears: 6 });
+      renderWithClient(<AgentTrustCard agent={agent} onLineClick={mockCallbacks.onLineClick} />);
 
-      // experience = floor(75 / 25) + 1 = 3 + 1 = 4
-      expect(screen.getByText('4年')).toBeInTheDocument();
+      expect(screen.getByText('6年')).toBeInTheDocument();
     });
   });
 
   describe('在線狀態顯示', () => {
     it('應該顯示在線狀態和快速回覆時間', () => {
       const onlineAgent = createMockAgent({ internalCode: 12345 }); // 5 > 3 → 在線
-      const { container } = render(
+      const { container } = renderWithClient(
         <AgentTrustCard agent={onlineAgent} onLineClick={mockCallbacks.onLineClick} />
       );
 
@@ -656,7 +661,7 @@ describe('AgentTrustCard React.memo Performance', () => {
 
     it('應該顯示離線狀態（無回覆時間提示）', () => {
       const offlineAgent = createMockAgent({ internalCode: 12342 }); // 2 <= 3 → 離線
-      const { container } = render(
+      const { container } = renderWithClient(
         <AgentTrustCard agent={offlineAgent} onLineClick={mockCallbacks.onLineClick} />
       );
 
@@ -670,7 +675,7 @@ describe('AgentTrustCard React.memo Performance', () => {
   describe('認證 badge 顯示', () => {
     it('應該顯示已認證標記', () => {
       const agent = createMockAgent();
-      render(<AgentTrustCard agent={agent} onLineClick={mockCallbacks.onLineClick} />);
+      renderWithClient(<AgentTrustCard agent={agent} onLineClick={mockCallbacks.onLineClick} />);
 
       expect(screen.getByText('已認證')).toBeInTheDocument();
     });

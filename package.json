@@ -36,6 +36,7 @@
     "speedup:log": "bash scripts/speedup-control.sh log",
     "lint:ui": "bash ./check-ui.sh",
     "gate": "node scripts/quality-gate.cjs",
+    "gen-context": "node scripts/gen-context.cjs",
     "police": "node scripts/police.cjs",
     "ultimate-gate": "node scripts/ultimate-gate.cjs",
     "dev:force": "vite --force",

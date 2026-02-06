@@ -1,4 +1,4 @@
----
+﻿---
 name: rigorous_testing
 description: |
   嚴格測試協議。強制執行「如果沒測試，就不算完成」原則。

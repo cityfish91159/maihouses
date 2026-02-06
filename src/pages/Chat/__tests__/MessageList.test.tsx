@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+﻿import { render, screen } from '@testing-library/react';
 import { MessageList } from '../MessageList';
 import type { Message } from '../../../types/messaging.types';
 

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * UAG v8 Schema 自動部署腳本
  *
  * 使用方式: node supabase/migrations/deploy_uag.js

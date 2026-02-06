@@ -1,4 +1,4 @@
-# TxBanner 組件優化報告
+﻿# TxBanner 組件優化報告
 
 ## 優化概述
 

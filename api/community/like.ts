@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Vercel API: /api/community/like
  *
  * 按讚/取消讚 API

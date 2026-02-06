@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Skeleton Screen 組件 - Loading 狀態骨架屏
  *
  * Team Foxtrot-2: U-02 Loading Skeleton

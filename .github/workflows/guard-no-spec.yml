@@ -1,4 +1,4 @@
-name: guard-no-spec
+﻿name: guard-no-spec
 on: [pull_request]
 jobs:
   check:

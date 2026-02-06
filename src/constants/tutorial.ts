@@ -1,4 +1,4 @@
-export const TUTORIAL_CONFIG = {
+﻿export const TUTORIAL_CONFIG = {
   // Idle Timer
   IDLE_TIMEOUT_MS: 5 * 60 * 1000,
 

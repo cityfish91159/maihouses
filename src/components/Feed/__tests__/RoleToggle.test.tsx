@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+﻿import { render, screen, fireEvent } from '@testing-library/react';
 import { RoleToggle } from '../../Feed/RoleToggle';
 import { STRINGS } from '../../../constants/strings';
 import React from 'react';

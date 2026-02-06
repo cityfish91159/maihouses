@@ -1,4 +1,4 @@
--- 20251226_fix_shadow_logs_metadata.sql
+﻿-- 20251226_fix_shadow_logs_metadata.sql
 -- 修復 shadow_logs 表，讓焚燒功能可以正常運作
 
 -- 1. 加入 metadata 欄位（如果不存在）

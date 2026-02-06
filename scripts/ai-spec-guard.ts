@@ -1,4 +1,4 @@
-// scripts/ai-spec-guard.ts
+﻿// scripts/ai-spec-guard.ts
 import fs from 'fs';
 import path from 'path';
 import { execSync } from 'child_process';

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * UAG Score - Claude v2 (精簡版)
  */
 

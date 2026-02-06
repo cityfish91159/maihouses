@@ -1,4 +1,4 @@
-// Mock env config BEFORE importing service
+﻿// Mock env config BEFORE importing service
 vi.mock('../../config/env', () => ({
   env: {
     VITE_SUPABASE_URL: 'https://mock.supabase.co',

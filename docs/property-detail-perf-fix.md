@@ -1,4 +1,4 @@
-# PropertyDetailPage 性能修復報告
+﻿# PropertyDetailPage 性能修復報告
 
 ## 修復日期
 2026-01-29

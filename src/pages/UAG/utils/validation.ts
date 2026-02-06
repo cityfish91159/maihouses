@@ -1,4 +1,4 @@
-import { Lead, UserData } from '../types/uag.types';
+﻿import { Lead, UserData } from '../types/uag.types';
 
 /**
  * 驗證用戶是否能購買指定 Lead

@@ -1,4 +1,4 @@
-import { useMemo, useState, useCallback, useEffect } from 'react';
+﻿import { useMemo, useState, useCallback, useEffect } from 'react';
 import type { MaiMaiMood, UseMaiMaiMoodOptions } from './types';
 
 /**

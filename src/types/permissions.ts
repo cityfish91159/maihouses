@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Permission Domain Types (L7+ Optimized)
  *
  * 定義系統中的所有權限能力與角色映射

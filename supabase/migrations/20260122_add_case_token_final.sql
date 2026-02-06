@@ -1,4 +1,4 @@
--- DB-3: Case Token (v2 Security Fixed)
+﻿-- DB-3: Case Token (v2 Security Fixed)
 
 ALTER TABLE public.trust_cases
 ADD COLUMN IF NOT EXISTS token UUID NOT NULL DEFAULT gen_random_uuid();

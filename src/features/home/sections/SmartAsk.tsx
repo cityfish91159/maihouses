@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+﻿import { useState, useRef, useEffect } from 'react';
 import { Send, Sparkles, MessageCircle, Heart } from 'lucide-react';
 import { postLLM, setJustChatMode } from '../../../services/ai';
 import MascotInteractive from '../../../components/MascotInteractive';

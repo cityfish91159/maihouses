@@ -1,4 +1,4 @@
-// scripts/ai-score-gate.ts
+﻿// scripts/ai-score-gate.ts
 // 3. 80分 HARD GATE - 寫死強制執行
 import fs from 'fs';
 import path from 'path';

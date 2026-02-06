@@ -1,4 +1,4 @@
-# 拆分驗證報告 - usePropertyTracker Hook 分離
+﻿# 拆分驗證報告 - usePropertyTracker Hook 分離
 
 **驗證時間**: 2026-01-27 11:30 UTC+8
 **驗證者**: 拆分驗證團隊

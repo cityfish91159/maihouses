@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Trust Privacy 隱私保護邏輯測試
  *
  * Skills Applied:

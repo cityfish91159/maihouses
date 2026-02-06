@@ -1,4 +1,4 @@
-import { memo, useState, useCallback } from 'react';
+﻿import { memo, useState, useCallback } from 'react';
 import { Home } from 'lucide-react';
 
 interface PropertyGalleryProps {

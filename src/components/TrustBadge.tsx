@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { Shield, CheckCircle } from 'lucide-react';
 
 const ICON_SIZE_MD = 16;

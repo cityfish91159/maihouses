@@ -1,4 +1,4 @@
-import { Lead } from '../types/uag.types';
+﻿import { Lead } from '../types/uag.types';
 import styles from '../UAG.module.css';
 import { calculateProtectionInfo, getProtectionText } from '../utils/leadHelpers';
 import { getNotificationDisplay } from '../utils/notificationDisplay';

@@ -1,4 +1,4 @@
-import { isQuietActiveFromStorage } from '../context/QuietModeContext';
+﻿import { isQuietActiveFromStorage } from '../context/QuietModeContext';
 import { loadProfile } from '../stores/profileStore';
 import { safeLocalStorage } from '../lib/safeStorage';
 import { z } from 'zod';

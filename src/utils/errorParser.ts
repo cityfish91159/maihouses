@@ -1,4 +1,4 @@
-interface SupabaseError {
+﻿interface SupabaseError {
   code?: string;
   message?: string;
 }

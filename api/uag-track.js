@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @deprecated 此檔案已棄用，請使用 api/uag/track.ts
  * 保留此檔案僅為向後兼容，新功能請在 TypeScript 版本中開發
  * Migration: 2026-01-10

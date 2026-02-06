@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Property Page Mock Data
  *
  * ⚠️ SSOT 警告：此檔案內容必須與 public/data/seed-property-page.json 保持同步！

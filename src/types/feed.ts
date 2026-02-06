@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Feed Domain Types
  *
  * 信息流領域模型定義

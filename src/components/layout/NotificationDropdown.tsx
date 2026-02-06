@@ -1,4 +1,4 @@
-/**
+﻿/**
  * NotificationDropdown Component
  *
  * MSG-2: 鈴鐺通知下拉選單

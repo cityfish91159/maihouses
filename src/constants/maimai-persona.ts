@@ -1,4 +1,4 @@
-import { safeLocalStorage } from '../lib/safeStorage';
+﻿import { safeLocalStorage } from '../lib/safeStorage';
 
 export function savePainPointsToStorage(): void {
   safeLocalStorage.setItem('maimai_pain_points', JSON.stringify(painPoints));

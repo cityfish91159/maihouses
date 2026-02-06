@@ -1,4 +1,4 @@
-import { handleScriptError, handleScriptSuccess } from '../error-handler';
+﻿import { handleScriptError, handleScriptSuccess } from '../error-handler';
 
 describe('error-handler', () => {
   let consoleSpy: {

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * P7 Scenario Verification Test Suite
  *
  * 嚴格驗證 P7-7 定義的四種用戶情境

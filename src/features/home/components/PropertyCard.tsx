@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import type { FeaturedProperty, PropertyReview } from '../../../types/property';
 import { isSpecTag } from '../../../lib/tagUtils';
 

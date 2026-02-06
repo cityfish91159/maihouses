@@ -1,4 +1,4 @@
-const handler = require('./api/property/generate-key-capsules.ts').default;
+﻿const handler = require('./api/property/generate-key-capsules.ts').default;
 
 async function test() {
   const req = {

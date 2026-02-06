@@ -1,13 +1,6 @@
 ﻿import { useState, useEffect } from 'react';
 import { useTrustRoom } from '../../hooks/useTrustRoom';
-import {
-  RotateCcw,
-  User,
-  Briefcase,
-  Zap,
-  ShieldCheck,
-  FilePlus,
-} from 'lucide-react';
+import { RotateCcw, User, Briefcase, Zap, ShieldCheck, FilePlus } from 'lucide-react';
 import { getAgentDisplayInfo } from '../../lib/trustPrivacy';
 import { DataCollectionModal } from '../../components/TrustRoom/DataCollectionModal';
 import { toast } from 'sonner';
@@ -175,9 +168,7 @@ export default function AssureDetail() {
             <ShieldCheck size={32} />
           </div>
           <h2 className="mb-2 text-xl font-bold text-ink-900">安心留痕</h2>
-          <p className="mb-6 text-sm text-text-muted">
-            沒有找到你的交易紀錄，想先體驗看看嗎？
-          </p>
+          <p className="mb-6 text-sm text-text-muted">沒有找到你的交易紀錄，想先體驗看看嗎？</p>
 
           <button
             onClick={startMockMode}

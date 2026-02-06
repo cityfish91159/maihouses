@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Community Wall Types
  *
  * 社區牆共用型別定義

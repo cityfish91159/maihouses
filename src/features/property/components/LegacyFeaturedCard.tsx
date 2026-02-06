@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { FeaturedPropertyCard, FeaturedReview } from '../../../types/property-page';
 

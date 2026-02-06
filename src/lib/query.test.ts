@@ -1,4 +1,4 @@
-import { parseFreeText } from './query';
+﻿import { parseFreeText } from './query';
 
 describe('parseFreeText', () => {
   it('台中 西屯 3房 1500萬 → 結構化', () => {

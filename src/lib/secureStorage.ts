@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Secure Storage - AES-256 加密的 localStorage 封裝
  *
  * 安全性設計:

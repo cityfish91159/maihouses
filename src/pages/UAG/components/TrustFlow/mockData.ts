@@ -1,4 +1,4 @@
-/**
+﻿/**
  * TrustFlow Mock Data - 測試/展示用模擬資料
  *
  * [code-simplifier] 抽取 Mock 資料到獨立檔案

@@ -1,4 +1,4 @@
-import type { PropertyPageData } from '../../../types/property-page';
+﻿import type { PropertyPageData } from '../../../types/property-page';
 
 export const SEED_DATA: PropertyPageData = {
   featured: {

@@ -1,4 +1,4 @@
----
+﻿---
 name: skill-marketplace
 description: 自動從 Skills Marketplace (skillsmp.com) 搜尋、安裝並使用適合當前任務的技能。當面對複雜任務或需要專業工具時自動觸發。
 allowed-tools: WebFetch, WebSearch, Bash, Write, Read, Grep

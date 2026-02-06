@@ -1,4 +1,4 @@
-import { logger } from '../../../lib/logger';
+﻿import { logger } from '../../../lib/logger';
 import type { PropertyReportData } from '../types';
 
 // Generator 的亮點格式

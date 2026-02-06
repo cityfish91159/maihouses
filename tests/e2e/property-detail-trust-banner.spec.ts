@@ -1,4 +1,4 @@
-import { test, expect, type Page } from '@playwright/test';
+﻿import { test, expect, type Page } from '@playwright/test';
 
 const PROPERTY_URL = '/maihouses/property/MH-100001';
 

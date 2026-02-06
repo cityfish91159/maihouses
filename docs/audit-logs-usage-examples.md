@@ -1,4 +1,4 @@
-# audit_logs 使用範例
+﻿# audit_logs 使用範例
 
 本文檔說明如何使用更新後的 `logAudit` 函數，以及新的 `status` 和 `error` 欄位。
 

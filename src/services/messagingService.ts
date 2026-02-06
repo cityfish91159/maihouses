@@ -1,4 +1,4 @@
-/**
+﻿/**
  * MSG-5: Messaging Service
  *
  * 處理對話建立與訊息發送

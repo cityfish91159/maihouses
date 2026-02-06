@@ -1,4 +1,4 @@
-// scripts/ai-diff-gate.ts
+﻿// scripts/ai-diff-gate.ts
 // 10. Diff Complexity Gate - 寫死強制執行
 import { execSync } from 'child_process';
 import path from 'path';

@@ -1,4 +1,4 @@
-// scripts/ai-laziness-detector.ts
+﻿// scripts/ai-laziness-detector.ts
 // 4. 兩次偷懶機制 - 寫死強制執行
 import fs from 'fs';
 import path from 'path';

@@ -42,6 +42,8 @@ export const StepCard = memo(function StepCard({
       >
         <StepIcon stepKey={stepKey} />
       </div>
+      {/* 時間軸連接線：連接上下步驟圖示中心，最後一步不需要 */}
+      {/* bottom-[-20px]: 延伸到下一步驟的間距; left-[24px]: 對齊 44px 圓形中心; top-[50px]: 從圖示底部開始; w-[2px]: 細線 */}
       {stepKey !== '6' && (
         <div className="absolute bottom-[-20px] left-[24px] top-[50px] z-0 w-[2px] bg-border"></div>
       )}

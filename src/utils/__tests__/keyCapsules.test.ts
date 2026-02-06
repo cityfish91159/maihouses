@@ -1,4 +1,4 @@
-import { buildKeyCapsuleTags, formatArea, formatLayout, formatFloor } from '../keyCapsules';
+﻿import { buildKeyCapsuleTags, formatArea, formatLayout, formatFloor } from '../keyCapsules';
 
 describe('formatArea', () => {
   it('應正確格式化坪數', () => {

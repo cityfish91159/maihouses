@@ -1,4 +1,4 @@
-// scripts/ai-completion.ts
+﻿// scripts/ai-completion.ts
 // 6. 任務完成驗證 - 寫死強制執行
 import fs from 'fs';
 import path from 'path';

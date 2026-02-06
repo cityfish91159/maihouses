@@ -1,4 +1,4 @@
--- ==============================================================================
+﻿-- ==============================================================================
 -- UAG-3: RPC Functions & Credit System
 -- 1. Setup Credit System (Agents Table Extension)
 -- 2. Create Purchase History Table

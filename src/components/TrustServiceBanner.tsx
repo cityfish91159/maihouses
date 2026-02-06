@@ -1,4 +1,4 @@
-import { useMemo, memo } from 'react';
+﻿import { useMemo, memo } from 'react';
 import { Shield, Info, ChevronRight, Loader2 } from 'lucide-react';
 
 interface TrustServiceBannerProps {

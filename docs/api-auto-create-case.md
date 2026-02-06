@@ -1,4 +1,4 @@
-# Auto-Create Case API 使用指南
+﻿# Auto-Create Case API 使用指南
 
 ## 概述
 

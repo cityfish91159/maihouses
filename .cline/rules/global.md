@@ -1,4 +1,4 @@
-# 🌐 Cline Global Rules v2.0 - 強制工具搜尋版
+﻿# 🌐 Cline Global Rules v2.0 - 強制工具搜尋版
 
 > 此規則適用於所有任務，優先級高於 Workspace Rules
 

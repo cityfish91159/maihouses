@@ -1,4 +1,4 @@
--- 20251225220000_intimate_sessions.sql
+﻿-- 20251225220000_intimate_sessions.sql
 -- 追蹤親密互動時段（含自慰紀錄）
 
 CREATE TABLE IF NOT EXISTS intimate_sessions (

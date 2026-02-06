@@ -1,4 +1,4 @@
-/**
+﻿/**
  * NOTIFY-2: Web Push 推播類型定義
  * @see supabase/migrations/20260103_001_push_subscriptions.sql
  */

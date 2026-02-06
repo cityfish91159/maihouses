@@ -1,4 +1,4 @@
-/** 進度條寬度 Tailwind class 映射（0-6 步驟） */
+﻿/** 進度條寬度 Tailwind class 映射（0-6 步驟） */
 export const PROGRESS_WIDTH_CLASS = [
   'w-0',
   'w-1/6',

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import type { AppConfig, RuntimeOverrides } from './config';
 import { getSessionId, getMeta } from '../services/api';
 import { safeLocalStorage } from '../lib/safeStorage';

@@ -1,4 +1,4 @@
-# AI 嚴格執行規範 (Strict Execution Rules)
+﻿# AI 嚴格執行規範 (Strict Execution Rules)
 
 > 本規範強制 AI agent 用最高規格執行每一個任務，禁止偷懶、跳過、腦補
 

@@ -1,4 +1,4 @@
-# Claude Skills 說明
+﻿# Claude Skills 說明
 
 這個目錄包含 maihouses 專案的 Claude Agent Skills 配置。
 

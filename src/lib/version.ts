@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Build metadata helpers
  *
  * 將 Vite define 注入的 commit 與建置時間整理成 UI 可用的字串。

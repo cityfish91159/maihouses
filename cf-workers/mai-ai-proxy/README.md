@@ -1,4 +1,4 @@
-# mai-ai-proxy (Cloudflare Workers)
+﻿# mai-ai-proxy (Cloudflare Workers)
 
 OpenAI 兼容聊天代理（SSE 串流）
 

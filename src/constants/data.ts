@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { ScanEye, HandCoins, Phone, MessageSquareText, Landmark, KeyRound } from 'lucide-react';
 
 export const HERO_STEPS = [

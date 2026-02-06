@@ -1,4 +1,4 @@
-// api/x-raymike.js
+﻿// api/x-raymike.js
 // X-Ray Mike 模型接口 - 用於圖片透視處理
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 

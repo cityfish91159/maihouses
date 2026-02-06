@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { PROPERTIES } from '../../../constants/data';
 import PropertyCard from '../components/PropertyCard';
 import { getFeaturedProperties } from '../../../services/propertyService';

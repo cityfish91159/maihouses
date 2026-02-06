@@ -1,4 +1,4 @@
-// UP-3.H: 集中管理上傳相關型別 (Single Source of Truth)
+﻿// UP-3.H: 集中管理上傳相關型別 (Single Source of Truth)
 import { PropertyFormInput } from '../services/propertyService';
 
 // ============================================================

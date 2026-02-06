@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Supabase Database Types (從 migrations 手動生成)
  *
  * 📌 這不是 Supabase CLI 自動生成的
@@ -9,8 +9,9 @@
  * @see supabase/migrations/20251127_property_upload_schema.sql
  * @see supabase/migrations/20251206_fix_community_reviews_view.sql
  * @see supabase/migrations/20260122_add_trust_enabled.sql
+ * @see supabase/migrations/20260130_agent_profile_extension.sql
  *
- * 最後更新: 2026-01-21
+ * 最後更新: 2026-01-30
  */
 
 // ============================================
@@ -171,6 +172,21 @@ export interface AgentRow {
   company: string | null; // TEXT
   trust_score: number; // INTEGER DEFAULT 80
   encouragement_count: number; // INTEGER DEFAULT 0
+  visit_count: number; // INTEGER DEFAULT 0
+  deal_count: number; // INTEGER DEFAULT 0
+  points: number; // INTEGER DEFAULT 1000
+  quota_s: number; // INTEGER DEFAULT 0
+  quota_a: number; // INTEGER DEFAULT 0
+  bio: string | null; // TEXT
+  specialties: string[] | null; // TEXT[]
+  certifications: string[] | null; // TEXT[]
+  joined_at: string | null; // TIMESTAMPTZ
+  phone: string | null; // TEXT
+  line_id: string | null; // TEXT
+  service_rating: number; // DECIMAL(2,1) DEFAULT 0
+  review_count: number; // INTEGER DEFAULT 0
+  completed_cases: number; // INTEGER DEFAULT 0
+  active_listings: number; // INTEGER DEFAULT 0
   created_at: string; // TIMESTAMPTZ DEFAULT NOW()
 }
 

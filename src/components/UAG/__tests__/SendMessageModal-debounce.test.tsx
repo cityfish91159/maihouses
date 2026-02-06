@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 測試4：連按 3 次不重複發 - 前端防重複機制
  * 驗證 SendMessageModal.tsx L72, L91, L305 的 isSending 邏輯
  */

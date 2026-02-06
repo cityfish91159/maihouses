@@ -1,4 +1,4 @@
-/**
+﻿/**
  * my-cases-formatter.ts 單元測試
  *
  * 測試 LINE 訊息格式化邏輯（Flex Message + 純文字）

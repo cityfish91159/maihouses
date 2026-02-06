@@ -1,4 +1,4 @@
-# AI Supervisor 優化清單
+﻿# AI Supervisor 優化清單
 
 > 生成時間: 2025-12-11
 > 狀態: 審查完成 ✅

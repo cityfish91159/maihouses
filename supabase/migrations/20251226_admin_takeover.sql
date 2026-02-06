@@ -1,4 +1,4 @@
--- 管理員接管功能：當管理員接管對話時，AI 暫停回應
+﻿-- 管理員接管功能：當管理員接管對話時，AI 暫停回應
 -- Add admin_takeover column to user_progress table
 
 ALTER TABLE user_progress

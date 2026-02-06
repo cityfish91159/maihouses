@@ -1,4 +1,4 @@
-# UagSummaryCard 冗餘優化移除報告
+﻿# UagSummaryCard 冗餘優化移除報告
 
 ## 執行時間
 2026-01-29 (更新)

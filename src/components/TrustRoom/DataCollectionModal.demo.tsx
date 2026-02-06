@@ -1,4 +1,4 @@
-/**
+﻿/**
  * DataCollectionModal - Demo Page
  *
  * 用於展示和測試 DataCollectionModal 組件

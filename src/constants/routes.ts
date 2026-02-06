@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 應用程式路由常數
  * 集中管理所有路由路徑，避免硬編碼
  */
@@ -32,6 +32,9 @@ export const ROUTES = {
 
   /** UAG 評分系統 */
   UAG: '/maihouses/uag',
+
+  /** UAG 個人資料 */
+  UAG_PROFILE: '/maihouses/uag/profile',
 
   /** 信任交易 */
   TRUST: '/trust',

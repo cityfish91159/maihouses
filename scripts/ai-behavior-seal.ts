@@ -1,4 +1,4 @@
-// scripts/ai-behavior-seal.ts
+﻿// scripts/ai-behavior-seal.ts
 // 12. 行為層封印 - 寫死強制執行
 import fs from 'fs';
 import path from 'path';

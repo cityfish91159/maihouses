@@ -1,4 +1,4 @@
-import { Briefcase, User } from 'lucide-react';
+﻿import { Briefcase, User } from 'lucide-react';
 
 interface SupplementItem {
   role: string;
@@ -25,11 +25,7 @@ export function SupplementList({ supplements }: SupplementListProps) {
               s.role === 'agent' ? 'bg-brand-50 text-brand-700' : 'bg-success/10 text-success'
             }`}
           >
-            {s.role === 'agent' ? (
-              <Briefcase className="size-3" />
-            ) : (
-              <User className="size-3" />
-            )}
+            {s.role === 'agent' ? <Briefcase className="size-3" /> : <User className="size-3" />}
             {s.role === 'agent' ? '房仲' : '買方'}
           </span>
           <span className="flex-1">{s.content}</span>

@@ -1,4 +1,4 @@
----
+﻿---
 name: code-review
 description: 生產級代碼審查 - 深度思考流程，扣分制評分（可為負分）。當完成任務、PR 合併前、或用戶要求嚴格審查時使用。
 allowed-tools: Read, Grep, Bash

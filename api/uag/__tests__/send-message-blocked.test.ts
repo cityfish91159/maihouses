@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 測試3：封鎖 OA 測試（程式化部分）
  * 驗證 api/uag/send-message.ts L367-380 的 blocked 狀態處理
  */

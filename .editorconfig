@@ -1,9 +1,12 @@
 root = true
 
 [*]
-charset = utf-8
+charset = utf-8-bom
 end_of_line = lf
 insert_final_newline = true
+
+[*.{sh,bash,zsh,cmd,bat}]
+charset = utf-8
 
 [*.{png,jpg,jpeg,gif,webp,ico,pdf,zip,gz,tgz,bz2,7z,rar,mp4,mp3,wav,woff,woff2,ttf,eot,otf,pyc}]
 charset = unset

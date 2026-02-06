@@ -1,4 +1,4 @@
-# Phase 10: Context Mastery - 檔案依賴地圖
+﻿# Phase 10: Context Mastery - 檔案依賴地圖
 
 ## 📊 檔案大小分析
 

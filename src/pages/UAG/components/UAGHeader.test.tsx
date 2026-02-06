@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+﻿import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { UAGHeader } from './UAGHeader';
 import { User } from '@supabase/supabase-js';
@@ -7,6 +7,7 @@ import { User } from '@supabase/supabase-js';
 vi.mock('lucide-react', () => ({
   ChevronDown: () => <span data-testid="chevron-down" />,
   LogOut: () => <span data-testid="log-out" />,
+  User: () => <span data-testid="user-icon" />,
 }));
 
 // Mock Logo component

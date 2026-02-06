@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Vercel API: /api/community/post
  *
  * 社區牆發文 API

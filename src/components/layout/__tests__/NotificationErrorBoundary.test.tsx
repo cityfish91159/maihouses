@@ -1,4 +1,4 @@
-/**
+﻿/**
  * NotificationErrorBoundary 組件測試
  * MSG-2: 通知錯誤邊界
  */

@@ -1,4 +1,4 @@
-import { memo } from 'react';
+﻿import { memo } from 'react';
 import type { PropertyData } from '../../services/propertyService';
 import { DEFAULT_PROPERTY } from '../../services/propertyService';
 import { formatArea, formatLayout, formatFloor } from '../../utils/keyCapsules';

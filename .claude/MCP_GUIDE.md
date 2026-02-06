@@ -1,4 +1,4 @@
-# MCP Servers 配置指南
+﻿# MCP Servers 配置指南
 
 這個檔案說明 maihouses 專案的 MCP (Model Context Protocol) 配置。
 

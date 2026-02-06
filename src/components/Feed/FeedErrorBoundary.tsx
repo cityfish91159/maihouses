@@ -1,4 +1,4 @@
-/**
+﻿/**
  * FeedErrorBoundary Component
  *
  * 動態牆錯誤邊界，捕獲並顯示錯誤狀態

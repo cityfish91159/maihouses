@@ -1,4 +1,4 @@
-# Trust Room 隱私保護使用指南
+﻿# Trust Room 隱私保護使用指南
 
 ## 快速開始
 

@@ -1,4 +1,4 @@
-// scripts/ai-cross-check.ts
+﻿// scripts/ai-cross-check.ts
 // 12. Cross-Check Gate - 交叉驗證所有審核結果
 import { execSync } from 'child_process';
 import fs from 'fs';

@@ -1,4 +1,4 @@
-// api/upload-imgix.js
+﻿// api/upload-imgix.js
 // 上傳圖片到 imgix (透過 S3 或 返回 base64)
 
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';

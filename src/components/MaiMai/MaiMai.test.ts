@@ -1,4 +1,4 @@
-/**
+﻿/**
  * MaiMai 組件單元測試
  * @description 驗證 MOOD_CONFIGS 完整性與一致性
  */

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Feed Mock Data - Main Entry
  *
  * Centralized mock data exports with deep copy to prevent state mutation.

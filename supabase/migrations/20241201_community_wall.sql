@@ -1,4 +1,4 @@
--- 檔案：20241201_community_wall.sql
+﻿-- 檔案：20241201_community_wall.sql
 -- 功能：社區牆完整 Schema（貼文 + 問答）
 -- 說明：支援公開牆/私密牆/準住戶問答
 

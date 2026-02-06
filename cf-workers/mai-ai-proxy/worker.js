@@ -1,4 +1,4 @@
-// cf-workers/mai-ai-proxy/worker.js
+﻿// cf-workers/mai-ai-proxy/worker.js
 // Cloudflare Workers proxy for OpenAI-compatible chat completions (minimal)
 // 極簡回退：保留原始 CORS allowlist + 基礎 KV 流量桶 + 直接 SSE 轉發，不加額外 JSON 錯誤格式化或本地開發白名單。
 

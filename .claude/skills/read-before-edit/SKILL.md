@@ -1,4 +1,4 @@
----
+﻿---
 name: read-before-edit
 description: 強制執行「先讀後寫」規範，確保 Claude 在修改任何檔案前完整閱讀相關代碼。當需要修改檔案時自動使用。
 allowed-tools: Read, Grep, Glob

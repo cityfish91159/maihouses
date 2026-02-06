@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useMemo, useState } from 'react';
+﻿import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { MaiMaiBase } from '../MaiMai';
 import type { MaiMaiMood } from '../MaiMai';
 import useConfetti from '../MaiMai/useConfetti';
@@ -18,27 +18,28 @@ export const TrustRoomMaiMai = memo(function TrustRoomMaiMai({
   showConfetti,
 }: TrustRoomMaiMaiProps) {
   const [isMobile, setIsMobile] = useState(false);
+  // #18 簡化 throttle，使用 ref 存 timeoutId
+  const throttleRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const throttledUpdate = useCallback(() => {
-    let timeoutId: ReturnType<typeof setTimeout> | null = null;
-    return (callback: () => void) => {
-      if (timeoutId) return;
-      timeoutId = setTimeout(() => {
-        callback();
-        timeoutId = null;
-      }, 200);
-    };
+  const throttledUpdate = useCallback((callback: () => void) => {
+    if (throttleRef.current) return;
+    throttleRef.current = setTimeout(() => {
+      callback();
+      throttleRef.current = null;
+    }, 200);
   }, []);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    const throttle = throttledUpdate();
     if (typeof window.matchMedia !== 'function') {
       const update = () => setIsMobile(window.innerWidth <= 640);
-      const handleResize = () => throttle(update);
+      const handleResize = () => throttledUpdate(update);
       update();
       window.addEventListener('resize', handleResize);
-      return () => window.removeEventListener('resize', handleResize);
+      return () => {
+        window.removeEventListener('resize', handleResize);
+        if (throttleRef.current) clearTimeout(throttleRef.current);
+      };
     }
     const media = window.matchMedia('(max-width: 640px)');
     const update = () => setIsMobile(media.matches);
@@ -47,9 +48,12 @@ export const TrustRoomMaiMai = memo(function TrustRoomMaiMai({
       media.addEventListener('change', update);
       return () => media.removeEventListener('change', update);
     }
-    const handleResize = () => throttle(update);
+    const handleResize = () => throttledUpdate(update);
     window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (throttleRef.current) clearTimeout(throttleRef.current);
+    };
   }, [throttledUpdate]);
 
   const confettiOptions = useMemo(

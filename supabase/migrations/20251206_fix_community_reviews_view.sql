@@ -1,4 +1,4 @@
--- 檔案：20251206_fix_community_reviews_view.sql
+﻿-- 檔案：20251206_fix_community_reviews_view.sql
 -- 說明：重建 community_reviews View，補齊 author_id / property_id / pros/cons 欄位，
 --       以符合 /api/community/wall 的查詢欄位，避免 column not exists 錯誤。
 

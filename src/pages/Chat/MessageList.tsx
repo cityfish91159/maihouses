@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+﻿import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import clsx from 'clsx';
 import { List, type ListImperativeAPI, type RowComponentProps } from 'react-window';
 import type { Message, SenderType } from '../../types/messaging.types';

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Property Page Configuration
  * 環境設定與 API 配置
  */

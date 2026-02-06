@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Auto-Create Case Helpers - 輔助函數
  *
  * Team Delta: Q-01 + Q-02 重構

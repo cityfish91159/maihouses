@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Vercel API: /api/community/question
  *
  * 準住戶問答 API - 發問和回答

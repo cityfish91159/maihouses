@@ -1,4 +1,4 @@
--- 20251225153000_remove_auth_mvp.sql
+﻿-- 20251225153000_remove_auth_mvp.sql
 
 -- 1. 移除 Foreign Key 外鍵限制 (不再強制 user_id 必須存在於 auth.users)
 alter table shadow_logs drop constraint if exists shadow_logs_user_id_fkey;

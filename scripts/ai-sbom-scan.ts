@@ -1,4 +1,4 @@
-// scripts/ai-sbom-scan.ts
+﻿// scripts/ai-sbom-scan.ts
 // 11. SBOM + 依賴掃描 - 寫死強制執行
 import fs from 'fs';
 import { execSync } from 'child_process';

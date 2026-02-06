@@ -1,4 +1,4 @@
-export const HEADER_MODES = {
+﻿export const HEADER_MODES = {
   COMMUNITY: 'community',
   CONSUMER: 'consumer',
   AGENT: 'agent',

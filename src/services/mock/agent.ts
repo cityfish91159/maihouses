@@ -1,4 +1,4 @@
-import type { UagSummary, PerformanceStats, TodoItem } from '../../types/agent';
+﻿import type { UagSummary, PerformanceStats, TodoItem } from '../../types/agent';
 
 export const MOCK_UAG_SUMMARY: UagSummary = {
   grade: 'S',

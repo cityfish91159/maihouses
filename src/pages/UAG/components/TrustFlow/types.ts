@@ -1,4 +1,4 @@
-/**
+﻿/**
  * TrustFlow Types - 安心流程組件類型定義
  *
  * [code-simplifier] 抽取共用類型到獨立檔案

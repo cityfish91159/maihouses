@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 591 物件資訊解析器 (IM-2 Production Grade v2.4)
  * @description 用於解析從 591 網站複製的物件內容，帶多重 fallback 策略
  * @version 2.4.0 - 2025-12-30

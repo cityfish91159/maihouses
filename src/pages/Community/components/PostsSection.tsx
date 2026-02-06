@@ -1,4 +1,4 @@
-/**
+﻿/**
  * PostsSection Component
  *
  * 社區貼文區塊（公開牆/私密牆）

@@ -1,4 +1,4 @@
-# ⚠️ Migration 執行安全檢查清單
+﻿# ⚠️ Migration 執行安全檢查清單
 
 ## 🔴 緊急狀態：20251231_004 Migration 尚未執行
 

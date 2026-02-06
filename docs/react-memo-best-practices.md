@@ -1,4 +1,4 @@
-# React.memo 使用指南
+﻿# React.memo 使用指南
 
 **建立日期**: 2026-01-29
 **適用專案**: maihouses

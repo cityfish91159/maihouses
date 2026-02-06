@@ -1,4 +1,4 @@
-/**
+﻿/**
  * API Integration Tests: POST /api/trust/auto-create-case
  *
  * Team Bravo: P0-2 補完測試覆蓋

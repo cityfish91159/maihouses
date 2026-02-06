@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { Shield, ThumbsUp, ThumbsDown, AlertTriangle } from 'lucide-react';
 import { useUploadForm } from './UploadContext';
 

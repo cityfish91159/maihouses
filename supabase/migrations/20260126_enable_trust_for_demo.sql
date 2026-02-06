@@ -1,4 +1,4 @@
--- Migration: 啟用 MH-100001 Demo 物件的安心留痕功能
+﻿-- Migration: 啟用 MH-100001 Demo 物件的安心留痕功能
 -- Date: 2026-01-26
 -- Purpose: FE-2 完成後，需在生產環境顯示安心留痕徽章
 -- Impact: 僅影響 MH-100001 Demo 物件

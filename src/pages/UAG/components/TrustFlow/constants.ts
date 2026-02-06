@@ -1,4 +1,4 @@
-/**
+﻿/**
  * TrustFlow Constants - 安心流程常數
  *
  * [code-simplifier] 抽取常數定義到獨立檔案

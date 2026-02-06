@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { STRINGS } from '../../../constants/strings';
 
 // Loading State

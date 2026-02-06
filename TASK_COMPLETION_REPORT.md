@@ -1,4 +1,4 @@
-# DataCollectionModal 組件完成報告
+﻿# DataCollectionModal 組件完成報告
 
 ## 任務概述
 

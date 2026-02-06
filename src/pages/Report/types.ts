@@ -1,4 +1,4 @@
-// 報告類型定義
+﻿// 報告類型定義
 
 export type ReportStyle = 'simple' | 'investment' | 'marketing';
 

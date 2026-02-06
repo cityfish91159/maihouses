@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Feed Mock Data - Shared Constants & Utilities
  *
  * Centralized mock data constants to avoid magic strings/numbers.

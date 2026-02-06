@@ -1,4 +1,4 @@
-# CommentInput 效能優化報告
+﻿# CommentInput 效能優化報告
 
 ## 優化摘要
 

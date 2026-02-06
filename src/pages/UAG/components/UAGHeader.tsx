@@ -1,6 +1,6 @@
-import React, { useEffect, useRef, useState } from 'react';
+﻿import React, { useEffect, useRef, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
-import { ChevronDown, LogOut } from 'lucide-react';
+import { ChevronDown, LogOut, User as UserIcon } from 'lucide-react';
 // import { useNotifications } from '../../../hooks/useNotifications';
 // import { useNotificationDropdown } from '../../../hooks/useNotificationDropdown';
 // import { NotificationBell } from '../../../components/common/NotificationBell';
@@ -174,6 +174,17 @@ export const UAGHeader: React.FC<UAGHeaderProps> = ({
                     {email && <span className={styles['uag-user-menu-email']}>{email}</span>}
                   </div>
                   <div className={styles['uag-user-menu-divider']} />
+                  <button
+                    className={styles['uag-user-menu-item']}
+                    role="menuitem"
+                    onClick={() => {
+                      setUserMenuOpen(false);
+                      window.location.href = ROUTES.UAG_PROFILE;
+                    }}
+                  >
+                    <UserIcon size={16} />
+                    個人資料
+                  </button>
                   <button
                     className={styles['uag-user-menu-item']}
                     role="menuitem"

@@ -1,4 +1,4 @@
-import { apiFetch, getSessionId } from './api';
+﻿import { apiFetch, getSessionId } from './api';
 import { safeLocalStorage } from '../lib/safeStorage';
 import { logger } from '../lib/logger';
 

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Vercel API: /api/community/wall
  *
  * 社區牆資料 API - 取得貼文、評價、問答

@@ -1,4 +1,4 @@
-import type { PropertyCard, ReviewSnippet, CommunityPreview } from '../../types';
+﻿import type { PropertyCard, ReviewSnippet, CommunityPreview } from '../../types';
 
 let seed = 97;
 const rnd = () => (seed = ((seed * 9301 + 49297) % 233280) / 233280);

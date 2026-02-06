@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react';
+﻿import { render } from '@testing-library/react';
 import { StepCard } from '../StepCard';
 import type { Step } from '../../../types/trust';
 
@@ -19,7 +19,7 @@ describe('StepCard', () => {
     );
 
     expect(getByText('內容')).toBeInTheDocument();
-    expect(container.firstChild).toHaveClass('opacity-50');
+    expect(container.firstChild).toHaveClass('opacity-60');
   });
 
   it('renders line for non-final step', () => {

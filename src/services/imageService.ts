@@ -1,4 +1,4 @@
-import imageCompression from 'browser-image-compression';
+﻿import imageCompression from 'browser-image-compression';
 import heic2any from 'heic2any';
 import { z } from 'zod';
 import { logger } from '../lib/logger';

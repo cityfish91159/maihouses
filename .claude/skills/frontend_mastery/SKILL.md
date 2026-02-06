@@ -1,4 +1,4 @@
----
+﻿---
 name: frontend_mastery
 description: Advanced React patterns, performance optimization, and state management rules.
 allowed-tools: Read, Edit, Write

@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+﻿import React, { useMemo } from 'react';
 import { Lead } from '../types/uag.types';
 import styles from '../UAG.module.css';
 

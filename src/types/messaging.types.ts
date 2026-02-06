@@ -1,4 +1,4 @@
-/**
+﻿/**
  * MSG-1: 私訊系統類型定義
  * @see supabase/migrations/20251231_003_messaging_schema.sql
  */

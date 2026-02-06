@@ -1,4 +1,4 @@
-import { useReducer, useCallback, useRef, startTransition } from 'react';
+﻿import { useReducer, useCallback, useRef, startTransition } from 'react';
 import { aiAsk } from '../../../services/api';
 import { trackEvent } from '../../../services/analytics';
 import type { AiMessage, PropertyCard } from '../../../types';

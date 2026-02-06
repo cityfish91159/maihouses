@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 
 export const UAGLoadingSkeleton = () => (
   <div className="p-6 text-center">

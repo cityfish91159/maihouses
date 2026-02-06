@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Trust Upgrade Case API - Token 升級為已註冊用戶
  *
  * POST /api/trust/upgrade-case

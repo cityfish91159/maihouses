@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+﻿import { useState, useCallback, useEffect } from 'react';
 import { STRINGS } from '../constants/strings';
 
 export interface ComposerData {

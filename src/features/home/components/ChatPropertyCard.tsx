@@ -1,4 +1,4 @@
-import { ExternalLink, Building2, MapPin, Maximize, DollarSign } from 'lucide-react';
+﻿import { ExternalLink, Building2, MapPin, Maximize, DollarSign } from 'lucide-react';
 import { isSpecTag } from '../../../lib/tagUtils';
 
 /**

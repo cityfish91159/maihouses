@@ -1,4 +1,4 @@
-/**
+﻿/**
  * EventTimeline - 事件時間軸組件
  *
  * [code-simplifier] 從 TrustFlow.tsx 抽取的子組件

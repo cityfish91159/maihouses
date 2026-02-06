@@ -1,4 +1,4 @@
-import type { Transaction, Step, StepData } from '../types/trust';
+﻿import type { Transaction, Step, StepData } from '../types/trust';
 import { safeSessionStorage } from '../lib/safeStorage';
 import { logger } from '../lib/logger';
 

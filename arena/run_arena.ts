@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+﻿#!/usr/bin/env npx tsx
 /**
  * 🏟️ ARENA RUNNER（強度 5x 版）
  */

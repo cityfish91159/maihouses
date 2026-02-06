@@ -1,4 +1,4 @@
-/**
+﻿/**
  * AgentSidebar 性能測試
  *
  * 驗證 React.memo 和 useMemo 優化的效果

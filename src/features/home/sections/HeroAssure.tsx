@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { ShieldCheck, ArrowRight, ChevronDown, ChevronUp } from 'lucide-react';
 import MascotHouse from '../../../components/MascotHouse';
 import { HERO_STEPS } from '../../../constants/data';

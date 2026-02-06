@@ -1,4 +1,4 @@
-# UAG v8 Schema 部署指南
+﻿# UAG v8 Schema 部署指南
 
 ## 📝 部署步驟
 

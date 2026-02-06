@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+﻿import { test, expect } from '@playwright/test';
 
 // 診斷測試 - 檢查 console 錯誤
 test('DEBUG: check console errors', async ({ page }) => {

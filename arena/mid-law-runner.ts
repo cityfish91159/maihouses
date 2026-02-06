@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+﻿#!/usr/bin/env npx tsx
 /**
  * 🔥 MID-LAW RUNNER - 即時檢查器（強度 5x 版）
  */

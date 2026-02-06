@@ -1,4 +1,4 @@
-// 根據部署環境自動選擇 API 端點
+﻿// 根據部署環境自動選擇 API 端點
 const getApiEndpoint = () => {
   // Vercel 環境：使用相對路徑
   if (window.location.hostname.includes('vercel.app')) {

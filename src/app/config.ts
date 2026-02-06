@@ -1,4 +1,4 @@
-import { safeLocalStorage } from '../lib/safeStorage';
+﻿import { safeLocalStorage } from '../lib/safeStorage';
 import { logger } from '../lib/logger';
 
 export interface AppConfig {

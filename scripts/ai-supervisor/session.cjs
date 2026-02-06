@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+﻿#!/usr/bin/env node
 /**
  * AI Session CLI - 任務追蹤命令列工具
  *

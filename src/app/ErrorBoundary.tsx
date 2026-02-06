@@ -1,4 +1,4 @@
-import { Component, ReactNode } from 'react';
+﻿import { Component, ReactNode } from 'react';
 import { trackEvent } from '../services/analytics';
 import { logger } from '../lib/logger';
 

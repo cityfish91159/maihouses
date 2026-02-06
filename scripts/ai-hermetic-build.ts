@@ -1,4 +1,4 @@
-// scripts/ai-hermetic-build.ts
+﻿// scripts/ai-hermetic-build.ts
 // 9. Hermetic Build - 寫死強制執行
 import fs from 'fs';
 import { execSync } from 'child_process';

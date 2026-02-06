@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+﻿import React, { memo } from 'react';
 import {
   SIZE_CLASSES,
   CANVAS_SIZE,

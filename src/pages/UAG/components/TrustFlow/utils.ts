@@ -1,4 +1,4 @@
-/**
+﻿/**
  * TrustFlow Utils - 安心流程工具函數
  *
  * [code-simplifier] 抽取 helper 函數到獨立檔案

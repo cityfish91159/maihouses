@@ -1,4 +1,4 @@
-/**
+﻿/**
  * TxBanner Performance Tests
  * 驗證 P2 優化後的性能改進
  */

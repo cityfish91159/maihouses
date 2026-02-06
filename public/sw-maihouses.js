@@ -1,4 +1,4 @@
-/**
+﻿/**
  * MaiHouses Service Worker
  * NOTIFY-2: Web Push 推播通知
  *

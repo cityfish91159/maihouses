@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { empathicEcho } from '../services/ai';
 import { addNote } from '../stores/notesStore';
 import { Events, track } from '../analytics/track';

@@ -1,4 +1,4 @@
-// scripts/ai-reporter.ts
+﻿// scripts/ai-reporter.ts
 // 5. 即時回報系統 - 寫死強制執行
 import fs from 'fs';
 import path from 'path';
