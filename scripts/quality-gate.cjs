@@ -150,11 +150,16 @@ if (stagedFiles.length > 0) {
         filesWithConsoleLog.push(`${file}:${i + 1}`);
       }
 
-      // Check: Secrets
-      for (const pattern of secretPatterns) {
-        if (pattern.test(line)) {
-            secretCount++;
-            filesWithSecrets.push(`${file}:${i + 1}`);
+      // Check: Secrets (排除有 nosemgrep 註釋的行)
+      const prevLine = i > 0 ? lines[i - 1].trim() : '';
+      const hasNosemgrep = prevLine.includes('nosemgrep:') || trimmed.includes('nosemgrep:');
+
+      if (!hasNosemgrep) {
+        for (const pattern of secretPatterns) {
+          if (pattern.test(line)) {
+              secretCount++;
+              filesWithSecrets.push(`${file}:${i + 1}`);
+          }
         }
       }
     });

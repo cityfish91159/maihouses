@@ -1,7 +1,8 @@
 {
-  "scripts/ai-supervisor/supervisor.cjs": "af6973d64871de202573b9e596c3a3652b3d628ced3f21a53cb0b288ef8290fd",
+  "scripts/ai-supervisor/supervisor.cjs": "78382efe31f060b882dda705603fd3ceb0f6fb82abeb85d85d6b7ce9fc52e4b1",
   "scripts/ai-supervisor/session.cjs": "e9b43f3b17cc843cd843faa300211ee3d810e70d57192f6e77c7208e274ba8d5",
   ".git/hooks/pre-commit": "627bf5b65eb7fc88bb195aeead8d00397441a7023346b5cfb380540456f60ee0",
   ".git/hooks/post-commit": "af72e1fc0b8c528eb11166e0ad70a430148752df06ce080fc2466f23db7449fe",
-  "_createdAt": "2026-01-06T03:20:11.168Z"
+  "_createdAt": "2026-01-06T03:20:11.168Z",
+  "scripts/quality-gate.cjs": "708df01e186226577418ae87d3e5b6a67df6d856c09b5e17875a740c84aaaa23"
 }

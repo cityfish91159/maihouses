@@ -356,8 +356,12 @@ function scanQuality(files) {
         });
       }
 
-      // 檢查 console.log（排除測試檔）
-      if (!file.includes('.test.') && !file.includes('__tests__')) {
+      // 檢查 console.log（排除測試檔和工具腳本）
+      const isToolScript =
+        file.startsWith('.claude/skills/') ||
+        file.startsWith('scripts/') ||
+        file.startsWith('mcp-servers/');
+      if (!file.includes('.test.') && !file.includes('__tests__') && !isToolScript) {
         if (/console\.log\(/.test(line)) {
           issues.push({
             file,

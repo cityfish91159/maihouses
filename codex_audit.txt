@@ -1,8 +1,0 @@
-﻿1) api/trust/close.ts:61 — `property_title` is required in `TrustCaseRowSchema`, but later treated as nullable (`updated.property_title ?? undefined`), so valid rows with NULL will fail validation and 500; type-safety + error handling mismatch.  
-2) api/trust/close.ts:202 — update query does not include `agent_id` when JWT-authenticated, so a race (ownership change between read/update) can close someone else’s case; authorization/TOCTOU risk.  
-3) api/trust/close.ts:212 — `!updatedCase` is treated as 500 even when it’s a normal concurrent status change/no-op; should be 409/404 (error handling gap).  
-4) api/trust/_utils.ts:74 — logs missing Supabase creds but still creates client with non‑null assertions; leads to undefined config runtime failures instead of failing fast (best practice/error handling).  
-5) api/trust/_utils.ts:147 — `getTx` treats any DB error as “missing” and creates/upserts a new state, masking real failures and risking data integrity (error handling).  
-6) api/trust/_utils.ts:152 — `data.state` is returned without schema validation, so malformed DB state bypasses type safety (type-safety issue).  
-7) api/trust/send-notification.ts:815 — `getFallbackLineId` returns null on DB error or invalid data without logging, silently suppressing fallback and hiding root cause (error handling gap).  
-8) api/trust/send-notification.ts:966 and api/trust/send-notification.ts:1060 — duplicated retry logic for push vs LINE increases maintenance risk and inconsistency (code duplication/best practice).
