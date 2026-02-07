@@ -624,7 +624,11 @@ export const PropertyDetailPage: React.FC = () => {
               <PropertyDescription description={property.description} />
 
               {/* 優化方案 3: 使用 Intersection Observer 延遲渲染評論區 */}
-              <CommunityReviews isLoggedIn={isLoggedIn} communityId={property.communityId} />
+              <CommunityReviews
+                isLoggedIn={isLoggedIn}
+                communityId={property.communityId}
+                {...(property.isDemo !== undefined && { isDemo: property.isDemo })}
+              />
             </div>
 
             {/* Sidebar / Agent Card */}
