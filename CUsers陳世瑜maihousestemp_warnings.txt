@@ -1,0 +1,50 @@
+[35m[1m zero-slack-coder 強制檢查 (全專案掃描)[0m
+[2m
+ 掃描 416 個檔案...[0m
+[36m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[1m 違規清單[0m
+[36m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[0m
+ [33mWARNINGS (506)[0m — 建議修復[0m
+[0m  [33m[func-too-long][0m src/App.tsx:49[0m
+[2m    函數 App 共 249 行 (建議 <60)[0m
+[0m  [33m[func-too-long][0m src/components/BudgetLite.tsx:11[0m
+[2m    函數 BudgetLite 共 150 行 (建議 <60)[0m
+[0m  [33m[func-too-long][0m src/components/DebriefMini.tsx:18[0m
+[2m    函數 DebriefMini 共 89 行 (建議 <60)[0m
+[0m  [33m[func-too-long][0m src/components/Header/Header.tsx:9[0m
+[2m    函數 Header 共 280 行 (建議 <60)[0m
+[0m  [33m[func-too-long][0m src/components/MaiMai/configs.ts:67[0m
+[2m    函數 eyes 共 126 行 (建議 <60)[0m
+[0m  [33m[func-too-long][0m src/components/MaiMai/configs.ts:278[0m
+[2m    函數 MOOD_CONFIGS 共 89 行 (建議 <60)[0m
+[0m  [33m[file-too-large][0m src/components/MaiMai/MaiMaiBase.tsx[0m
+[2m    檔案 811 行，建議拆分 (>500 行)[0m
+[0m  [33m[a11y-button-label][0m src/components/PropertyDetail/CommunityReviews.tsx:239[0m
+[2m    icon-only button 必須有 aria-label[0m
+[0m  [33m[a11y-button-label][0m src/components/PropertyDetail/PropertyInfoCard.tsx:55[0m
+[2m    icon-only button 必須有 aria-label[0m
+[0m  [33m[func-too-long][0m src/components/QuietModeToggle.tsx:4[0m
+[2m    函數 QuietModeToggle 共 133 行 (建議 <60)[0m
+[0m  [33m[a11y-button-label][0m src/components/ReportPreview.tsx:185[0m
+[2m    icon-only button 必須有 aria-label[0m
+[0m  [33m[a11y-button-label][0m src/components/ReportPreview.tsx:189[0m
+[2m    icon-only button 必須有 aria-label[0m
+[0m  [33m[file-too-large][0m src/components/TrustManager.tsx[0m
+[2m    檔案 519 行，建議拆分 (>500 行)[0m
+[0m  [33m[func-too-long][0m src/components/TrustManager.tsx:410[0m
+[2m    函數 styles 共 109 行 (建議 <60)[0m
+[0m  [33m[func-too-long][0m src/components/TrustRoom/DataCollectionModal.demo.tsx:11[0m
+[2m    函數 DataCollectionModalDemo 共 94 行 (建議 <60)[0m
+[0m  [33m[func-too-long][0m src/components/upload/BasicInfoSection.tsx:9[0m
+[2m    函數 BasicInfoSection 共 200 行 (建議 <60)[0m
+[0m  [33m[func-too-long][0m src/components/upload/MediaSection.tsx:14[0m
+[2m    函數 MediaSection 共 200 行 (建議 <60)[0m
+[0m  [33m[func-too-long][0m src/components/upload/PreviewSection.tsx:6[0m
+[2m    函數 PreviewSection 共 84 行 (建議 <60)[0m
+[0m  [33m[func-too-long][0m src/components/upload/TwoGoodsSection.tsx:8[0m
+[2m    函數 TwoGoodsSection 共 143 行 (建議 <60)[0m
+[0m  [33m[file-too-large][0m src/components/upload/UploadContext.tsx[0m
+[2m    檔案 518 行，建議拆分 (>500 行)[0m
+[2m  ... 還有 486 個 warnings[0m
+[33m[1m ZERO-SLACK PASSED (506 warnings) [0m

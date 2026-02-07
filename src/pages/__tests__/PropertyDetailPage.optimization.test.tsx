@@ -168,7 +168,7 @@ describe('PropertyDetailPage - 優化驗證', () => {
 
       // 檢查 AgentTrustCard 是否渲染（代表 callbacks 已傳遞）
       expect(screen.getByText('王小明')).toBeInTheDocument();
-      expect(screen.getByText('加 LINE 聊聊')).toBeInTheDocument();
+      expect(screen.getByTestId('agent-card-line-button')).toBeInTheDocument();
 
       // 強制重新渲染
       rerender(
@@ -304,12 +304,10 @@ describe('PropertyDetailPage - 優化驗證', () => {
       );
 
       await waitFor(() => {
-        // 驗證 AgentTrustCard 中的 LINE 按鈕存在
-        expect(screen.getByText('加 LINE 聊聊')).toBeInTheDocument();
-        // AgentTrustCard 和 MobileActionBar 中都有「預約看屋」按鈕
-        expect(screen.getAllByText('預約看屋')).toHaveLength(2);
-        // 驗證「致電諮詢」按鈕存在
-        expect(screen.getByText('致電諮詢')).toBeInTheDocument();
+        // 驗證 AgentTrustCard 中的按鈕存在（用 testId 避免重複元素問題）
+        expect(screen.getByTestId('agent-card-line-button')).toBeInTheDocument();
+        expect(screen.getByTestId('agent-card-booking-button')).toBeInTheDocument();
+        expect(screen.getByTestId('agent-card-call-button')).toBeInTheDocument();
       });
     });
 

@@ -25,6 +25,8 @@ interface ContactModalProps {
   readonly agentId: string;
   readonly agentName: string;
   readonly source: 'sidebar' | 'mobile_bar' | 'booking';
+  readonly defaultChannel?: ContactChannel;
+  readonly trustAssureRequested?: boolean;
 }
 
 export const ContactModal: React.FC<ContactModalProps> = ({
@@ -35,12 +37,14 @@ export const ContactModal: React.FC<ContactModalProps> = ({
   agentId,
   agentName,
   source,
+  defaultChannel = 'line',
+  trustAssureRequested = false,
 }) => {
   const [step, setStep] = useState<'form' | 'submitting' | 'success'>('form');
   const [form, setForm] = useState<ContactFormData>({
     name: '',
     phone: '',
-    preferredChannel: 'line',
+    preferredChannel: defaultChannel,
     preferredTime: '',
     budget: '',
     needs: '',
@@ -60,6 +64,14 @@ export const ContactModal: React.FC<ContactModalProps> = ({
     setStep('submitting');
 
     try {
+      const trustAssureNote = '使用者要求：同步處理安心留痕';
+      const normalizedNeeds = form.needs.trim();
+      const needsDescription = trustAssureRequested
+        ? normalizedNeeds
+          ? `${normalizedNeeds}\n${trustAssureNote}`
+          : trustAssureNote
+        : normalizedNeeds;
+
       // 建立 Lead - 使用 leadService
       const result = await createLead({
         customerName: form.name,
@@ -69,7 +81,7 @@ export const ContactModal: React.FC<ContactModalProps> = ({
         source,
         ...(form.budget ? { budgetRange: form.budget } : {}),
         ...(form.preferredTime ? { preferredContactTime: form.preferredTime } : {}),
-        ...(form.needs ? { needsDescription: form.needs } : {}),
+        ...(needsDescription ? { needsDescription } : {}),
       });
 
       if (result.success) {
@@ -141,12 +153,12 @@ export const ContactModal: React.FC<ContactModalProps> = ({
     <div className="fixed inset-0 z-modal flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
       <div className="max-h-[90vh] w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl">
         {/* Header */}
-        <div className="bg-gradient-to-r from-[#003366] to-[#00A8E8] p-5 text-white">
+        <div className="bg-gradient-to-r from-brand-700 to-brand-light p-5 text-white">
           <div className="flex items-start justify-between">
             <div>
               <h3 className="text-xl font-bold">聯絡經紀人</h3>
               <p className="mt-1 text-sm opacity-90">
-                {agentName} 將在 <span className="font-bold">10 分鐘內</span> 回覆您
+                {agentName} 將在 <span className="font-bold">10 分鐘內</span> 回覆你
               </p>
             </div>
             <button
@@ -172,19 +184,11 @@ export const ContactModal: React.FC<ContactModalProps> = ({
               <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-full bg-green-100">
                 <CheckCircle className="text-green-600" size={32} />
               </div>
-              <h4 className="mb-2 text-xl font-bold text-slate-800">已建立安心留痕！</h4>
-              <p className="mb-4 text-slate-600">
-                {agentName} 將在 <span className="font-bold text-[#003366]">10 分鐘內</span>{' '}
-                與您聯繫
+              <h4 className="mb-2 text-xl font-bold text-slate-800">聯絡需求已送出</h4>
+              <p className="text-slate-600">
+                {agentName} 將在 <span className="font-bold text-brand-700">10 分鐘內</span>{' '}
+                與你聯繫
               </p>
-              <div className="rounded-xl bg-blue-50 p-4 text-left text-sm">
-                <p className="mb-2 font-medium text-[#003366]">📋 您的諮詢紀錄已保存：</p>
-                <ul className="space-y-1 text-slate-600">
-                  <li>✅ 首次聯繫時間已記錄</li>
-                  <li>✅ 經紀人回覆時間將被追蹤</li>
-                  <li>✅ 所有溝通承諾將留存備查</li>
-                </ul>
-              </div>
             </div>
           ) : step === 'submitting' ? (
             /* 送出中 */
@@ -195,6 +199,15 @@ export const ContactModal: React.FC<ContactModalProps> = ({
           ) : (
             /* 表單 */
             <form onSubmit={handleSubmit} className="space-y-5">
+              {trustAssureRequested && (
+                <div className="border-brand-200 rounded-xl border bg-brand-50 p-3">
+                  <p className="text-sm font-semibold text-brand-700">已附帶安心留痕需求</p>
+                  <p className="mt-1 text-xs text-brand-700">
+                    系統會把你的安心留痕需求一併通知經紀人。
+                  </p>
+                </div>
+              )}
+
               {/* 📋 聯絡前須知 - SLA 承諾 */}
               <div className="rounded-xl border border-amber-200 bg-amber-50 p-3">
                 <p className="mb-2 flex items-center gap-1.5 text-sm font-bold text-amber-900">
@@ -208,7 +221,7 @@ export const ContactModal: React.FC<ContactModalProps> = ({
                   </li>
                   <li className="flex items-center gap-1.5">
                     <CheckCircle size={12} className="shrink-0 text-green-600" />
-                    您的聯絡資訊受隱私保護，僅供本次諮詢使用
+                    你的聯絡資訊受隱私保護，僅供本次諮詢使用
                   </li>
                   <li className="flex items-center gap-1.5">
                     <CheckCircle size={12} className="shrink-0 text-green-600" />
@@ -231,8 +244,8 @@ export const ContactModal: React.FC<ContactModalProps> = ({
                     type="text"
                     value={form.name}
                     onChange={(e) => setForm({ ...form, name: e.target.value })}
-                    placeholder="如何稱呼您"
-                    className="w-full rounded-xl border border-slate-200 px-4 py-2.5 outline-none transition-all focus:border-[#003366] focus:ring-2 focus:ring-[#003366]/20"
+                    placeholder="如何稱呼你"
+                    className="focus:ring-brand-200 w-full rounded-xl border border-slate-200 px-4 py-2.5 outline-none transition-all focus:border-brand-500 focus:ring-2"
                     required
                   />
                 </div>
@@ -249,7 +262,7 @@ export const ContactModal: React.FC<ContactModalProps> = ({
                     value={form.phone}
                     onChange={(e) => setForm({ ...form, phone: e.target.value })}
                     placeholder="0912-345-678"
-                    className="w-full rounded-xl border border-slate-200 px-4 py-2.5 outline-none transition-all focus:border-[#003366] focus:ring-2 focus:ring-[#003366]/20"
+                    className="focus:ring-brand-200 w-full rounded-xl border border-slate-200 px-4 py-2.5 outline-none transition-all focus:border-brand-500 focus:ring-2"
                     required
                   />
                 </div>
@@ -271,7 +284,7 @@ export const ContactModal: React.FC<ContactModalProps> = ({
                       onClick={() => setForm({ ...form, preferredChannel: opt.value })}
                       className={`flex flex-1 items-center justify-center gap-2 rounded-xl border-2 py-2.5 transition-all ${
                         form.preferredChannel === opt.value
-                          ? 'border-[#003366] bg-blue-50 text-[#003366]'
+                          ? 'border-brand-700 bg-brand-50 text-brand-700'
                           : 'border-slate-200 text-slate-600 hover:border-slate-300'
                       }`}
                     >
@@ -299,7 +312,7 @@ export const ContactModal: React.FC<ContactModalProps> = ({
                       onClick={() => setForm({ ...form, preferredTime: time })}
                       className={`rounded-lg px-3 py-2 text-xs font-medium transition-all ${
                         form.preferredTime === time
-                          ? 'bg-[#003366] text-white'
+                          ? 'bg-brand-700 text-white'
                           : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                       }`}
                     >
@@ -321,7 +334,7 @@ export const ContactModal: React.FC<ContactModalProps> = ({
                   id="contact-budget"
                   value={form.budget}
                   onChange={(e) => setForm({ ...form, budget: e.target.value })}
-                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 outline-none transition-all focus:border-[#003366] focus:ring-2 focus:ring-[#003366]/20"
+                  className="focus:ring-brand-200 w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 outline-none transition-all focus:border-brand-500 focus:ring-2"
                 >
                   <option value="">請選擇</option>
                   {budgetOptions.map((opt) => (
@@ -346,28 +359,17 @@ export const ContactModal: React.FC<ContactModalProps> = ({
                   onChange={(e) => setForm({ ...form, needs: e.target.value })}
                   placeholder="例如：想了解學區、需要停車位、希望近捷運..."
                   rows={3}
-                  className="w-full resize-none rounded-xl border border-slate-200 px-4 py-2.5 outline-none transition-all focus:border-[#003366] focus:ring-2 focus:ring-[#003366]/20"
+                  className="focus:ring-brand-200 w-full resize-none rounded-xl border border-slate-200 px-4 py-2.5 outline-none transition-all focus:border-brand-500 focus:ring-2"
                 />
-              </div>
-
-              {/* 安心提示 */}
-              <div className="flex items-start gap-3 rounded-xl border border-green-100 bg-green-50 p-3">
-                <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-green-100">
-                  <CheckCircle size={16} className="text-green-600" />
-                </div>
-                <div className="text-xs text-green-800">
-                  <p className="mb-1 font-medium">🛡️ 安心留痕保障</p>
-                  <p>您的諮詢將被完整記錄，經紀人的每一次回覆和承諾都會留存，保障您的權益。</p>
-                </div>
               </div>
 
               {/* 送出按鈕 */}
               <button
                 type="submit"
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#003366] py-3.5 font-bold text-white shadow-lg shadow-blue-900/20 transition-colors hover:bg-[#004488]"
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-700 py-3.5 font-bold text-white shadow-lg transition-colors hover:bg-brand-600"
               >
                 <Calendar size={18} />
-                送出諮詢，建立安心留痕
+                送出諮詢
               </button>
             </form>
           )}
@@ -378,3 +380,5 @@ export const ContactModal: React.FC<ContactModalProps> = ({
 };
 
 export default ContactModal;
+
+

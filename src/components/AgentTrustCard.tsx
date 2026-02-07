@@ -1,4 +1,4 @@
-import React, { useState, useMemo, memo } from 'react';
+import React, { useState, useMemo, memo, type CSSProperties } from 'react';
 import {
   Shield,
   ThumbsUp,
@@ -14,7 +14,7 @@ import {
 import { Agent } from '../lib/types';
 import { useQuery } from '@tanstack/react-query';
 import { fetchAgentProfile } from '../services/agentService';
-import { BookingModal } from './PropertyDetail/BookingModal';
+import { LINE_BRAND_GREEN, LINE_BRAND_GREEN_HOVER } from './PropertyDetail/constants';
 
 interface AgentTrustCardProps {
   agent: Agent;
@@ -44,7 +44,6 @@ export const AgentTrustCard: React.FC<AgentTrustCardProps> = memo(function Agent
   onBookingClick,
 }) {
   const [showTrustTooltip, setShowTrustTooltip] = useState(false);
-  const [showBookingModal, setShowBookingModal] = useState(false);
   const [avatarError, setAvatarError] = useState(false);
 
   const isTestEnv = import.meta.env.MODE === 'test' || import.meta.env.VITEST;
@@ -68,6 +67,11 @@ export const AgentTrustCard: React.FC<AgentTrustCardProps> = memo(function Agent
   const displayName = profile?.name ?? agent.name;
   const rawAvatar = profile?.avatarUrl ?? agent.avatarUrl;
   const displayCompany = profile?.company ?? agent.company ?? '邁房子';
+
+  const lineBrandVars = {
+    '--line-brand-green': LINE_BRAND_GREEN,
+    '--line-brand-green-hover': LINE_BRAND_GREEN_HOVER,
+  } as CSSProperties;
 
   const trustBreakdown = getTrustBreakdown(trustScore);
 
@@ -103,8 +107,7 @@ export const AgentTrustCard: React.FC<AgentTrustCardProps> = memo(function Agent
   ]);
 
   return (
-    <>
-      <div className="rounded-xl border border-border bg-bg-card p-4 shadow-sm">
+      <div style={lineBrandVars} className="rounded-xl border border-border bg-bg-card p-4 shadow-sm">
         <div className="flex items-start gap-4">
           <div className="relative">
             {/* #19 avatar fallback 改用 Lucide UserCircle */}
@@ -237,10 +240,11 @@ export const AgentTrustCard: React.FC<AgentTrustCardProps> = memo(function Agent
 
         {/* CTA 按鈕區 */}
         <div className="mt-4 space-y-2 border-t border-border pt-3">
-          {/* 主要 CTA：加 LINE（低門檻）- LINE 品牌綠 #06C755 為官方指定色 */}
+          {/* 主要 CTA：加 LINE（低門檻）- LINE 官方品牌色 */}
           <button
             onClick={onLineClick}
-            className="flex min-h-[44px] w-full items-center justify-center gap-2 rounded-lg bg-[#06C755] py-2.5 text-sm font-bold text-white shadow-sm transition-colors hover:bg-[#05B04A] focus:ring-2 focus:ring-brand-500"
+            data-testid="agent-card-line-button"
+            className="flex min-h-[44px] w-full items-center justify-center gap-2 rounded-lg bg-[var(--line-brand-green)] py-2.5 text-sm font-bold text-white shadow-sm transition-colors hover:bg-[var(--line-brand-green-hover)] focus:ring-2 focus:ring-brand-500"
           >
             <MessageCircle size={18} />加 LINE 聊聊
           </button>
@@ -248,7 +252,8 @@ export const AgentTrustCard: React.FC<AgentTrustCardProps> = memo(function Agent
           {/* 次要 CTA */}
           <div className="flex gap-2">
             <button
-              onClick={() => (onBookingClick ? onBookingClick() : setShowBookingModal(true))}
+              onClick={onBookingClick}
+              data-testid="agent-card-booking-button"
               className="flex min-h-[44px] flex-1 items-center justify-center gap-1.5 rounded-lg bg-brand-700 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-600 focus:ring-2 focus:ring-brand-500"
             >
               <Calendar size={16} />
@@ -256,6 +261,7 @@ export const AgentTrustCard: React.FC<AgentTrustCardProps> = memo(function Agent
             </button>
             <button
               onClick={onCallClick}
+              data-testid="agent-card-call-button"
               className="flex min-h-[44px] flex-1 items-center justify-center gap-1.5 rounded-lg border border-brand-700 bg-bg-card py-2 text-sm font-medium text-brand-700 transition-colors hover:bg-brand-50 focus:ring-2 focus:ring-brand-500"
             >
               <Phone size={16} />
@@ -264,13 +270,5 @@ export const AgentTrustCard: React.FC<AgentTrustCardProps> = memo(function Agent
           </div>
         </div>
       </div>
-
-      {/* 預約看屋 Modal (#5 獨立組件) */}
-      <BookingModal
-        isOpen={showBookingModal}
-        onClose={() => setShowBookingModal(false)}
-        agentName={displayName}
-      />
-    </>
   );
 });

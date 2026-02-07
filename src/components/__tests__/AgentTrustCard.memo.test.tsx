@@ -547,35 +547,13 @@ describe('AgentTrustCard React.memo Performance', () => {
     });
   });
 
-  describe('預約看屋 Modal', () => {
-    it('應該在打開 Modal 後父組件重渲染時不關閉 Modal', () => {
+  describe('預約看屋按鈕', () => {
+    it('應該在沒有 onBookingClick 時點擊預約按鈕不報錯', () => {
       const agent = createMockAgent();
+      renderWithClient(<AgentTrustCard agent={agent} onLineClick={mockCallbacks.onLineClick} />);
 
-      const TestWrapper = () => {
-        const [count, setCount] = useState(0);
-
-        return (
-          <div>
-            <button onClick={() => setCount((prev) => prev + 1)}>Increment</button>
-            <AgentTrustCard agent={agent} onLineClick={mockCallbacks.onLineClick} />
-          </div>
-        );
-      };
-
-      const { getByText } = renderWithClient(<TestWrapper />);
-
-      // 打開預約 Modal
       const bookingButton = screen.getByText('預約看屋');
-      fireEvent.click(bookingButton);
-
-      // 驗證 Modal 顯示（預約表單，不是成功訊息）
-      expect(screen.getByText(/選擇方便的時段/)).toBeInTheDocument();
-
-      // 觸發父組件重渲染
-      fireEvent.click(getByText('Increment'));
-
-      // Modal 應該仍然顯示（因為 memo 保持了組件內部狀態）
-      expect(screen.getByText(/選擇方便的時段/)).toBeInTheDocument();
+      expect(() => fireEvent.click(bookingButton)).not.toThrow();
     });
   });
 
@@ -612,15 +590,15 @@ describe('AgentTrustCard React.memo Performance', () => {
       expect(mockCallbacks.onBookingClick).toHaveBeenCalledTimes(1);
     });
 
-    it('應該在沒有 onBookingClick 時顯示內建 Modal', () => {
+    it('應該在沒有 onBookingClick 時不開啟任何 Modal（由父組件控制）', () => {
       const agent = createMockAgent();
       renderWithClient(<AgentTrustCard agent={agent} onLineClick={mockCallbacks.onLineClick} />);
 
       const bookingButton = screen.getByText('預約看屋');
       fireEvent.click(bookingButton);
 
-      // 驗證內建 Modal 顯示
-      expect(screen.getByText(/選擇方便的時段/)).toBeInTheDocument();
+      // 不應開啟內建 Modal（已移除 fallback，改由父組件 PropertyDetailPage 管理）
+      expect(screen.queryByText(/選擇方便的時段/)).not.toBeInTheDocument();
     });
   });
 

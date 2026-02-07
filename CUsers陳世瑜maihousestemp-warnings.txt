@@ -1,0 +1,307 @@
+
+ zero-slack-coder 強制檢查 (全專案掃描)
+
+ 掃描 414 個檔案...
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ 違規清單
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+ WARNINGS (145) — 建議修復
+  [func-too-long] src/App.tsx:49
+    函數 App 共 249 行 (建議 <200)
+  [func-too-long] src/components/Header/Header.tsx:9
+    函數 Header 共 280 行 (建議 <200)
+  [file-too-large] src/components/MaiMai/MaiMaiBase.tsx
+    檔案 811 行，建議拆分 (>800 行)
+  [func-too-long] src/features/home/sections/SmartAsk.tsx:23
+    函數 SmartAsk 共 307 行 (建議 <200)
+  [file-too-large] src/hooks/useFeedData.ts
+    檔案 809 行，建議拆分 (>800 行)
+  [func-too-long] src/hooks/useNotifications.ts:199
+    函數 useNotifications 共 224 行 (建議 <200)
+  [func-too-long] src/hooks/usePropertyDraft.ts:81
+    函數 usePropertyDraft 共 239 行 (建議 <200)
+  [func-too-long] src/hooks/usePropertyTracker.ts:58
+    函數 usePropertyTracker 共 263 行 (建議 <200)
+  [func-too-long] src/hooks/usePushNotifications.ts:94
+    函數 usePushNotifications 共 373 行 (建議 <200)
+  [func-too-long] src/hooks/useTrustRoom.ts:10
+    函數 useTrustRoom 共 208 行 (建議 <200)
+  [func-too-long] src/pages/Assure/Detail.tsx:21
+    函數 AssureDetail 共 325 行 (建議 <200)
+  [func-too-long] src/pages/Chat/useChat.ts:77
+    函數 useChat 共 381 行 (建議 <200)
+  [file-too-large] src/pages/Community/components/QASection.tsx
+    檔案 910 行，建議拆分 (>800 行)
+  [func-too-long] src/pages/Community/Wall.tsx:68
+    函數 WallInner 共 428 行 (建議 <200)
+  [func-too-long] src/pages/Feed/useConsumer.ts:28
+    函數 useConsumer 共 237 行 (建議 <200)
+  [func-too-long] src/pages/PropertyDetailPage.tsx:71
+    函數 PropertyDetailPage 共 693 行 (建議 <200)
+  [func-too-long] src/pages/PropertyEditPage.tsx:25
+    函數 PropertyEditPage 共 202 行 (建議 <200)
+  [func-too-long] src/pages/PropertyUploadPage.tsx:29
+    函數 PropertyUploadContent 共 608 行 (建議 <200)
+  [func-too-long] src/pages/TrustRoom.tsx:60
+    函數 TrustRoom 共 404 行 (建議 <200)
+  [func-too-long] src/pages/UAG/index.tsx:33
+    函數 UAGPageContent 共 297 行 (建議 <200)
+  [func-too-long] src/pages/UAG/UAGDeAIDemo.tsx:204
+    函數 UAGDeAIDemo 共 279 行 (建議 <200)
+  [file-too-large] src/pages/UAG/UAGDeAIDemoV2.tsx
+    檔案 899 行，建議拆分 (>800 行)
+  [func-too-long] src/pages/UAG/UAGDeAIDemoV2.tsx:327
+    函數 UAGDeAIDemoV2 共 572 行 (建議 <200)
+  [func-too-long] src/services/ai.ts:107
+    函數 composeSystemPrompt 共 303 行 (建議 <200)
+  [file-too-large] src/services/propertyService.ts
+    檔案 833 行，建議拆分 (>800 行)
+  [func-too-long] src/services/propertyService.ts:361
+    函數 propertyService 共 432 行 (建議 <200)
+  [func-too-long] api/community/comment.ts:57
+    函數 handler 共 211 行 (建議 <200)
+  [file-too-large] api/community/wall.ts
+    檔案 992 行，建議拆分 (>800 行)
+  [func-too-long] api/trust/close.ts:74
+    函數 handler 共 209 行 (建議 <200)
+  [func-too-long] api/trust/complete-buyer-info.ts:99
+    函數 handler 共 273 行 (建議 <200)
+  [file-too-large] api/trust/send-notification.ts
+    檔案 1167 行，建議拆分 (>800 行)
+  [func-too-long] api/trust/services/case-query.ts:181
+    函數 queryCasesByIdentity 共 279 行 (建議 <200)
+  [func-too-long] api/trust/upgrade-case.ts:73
+    函數 handler 共 215 行 (建議 <200)
+  [func-too-long] api/trust/wake.ts:93
+    函數 handler 共 226 行 (建議 <200)
+  [func-too-long] api/uag/send-message.ts:229
+    函數 handler 共 317 行 (建議 <200)
+  [missing-test] src/features/home/hooks/useSmartAsk.ts
+    缺少對應的測試檔案
+  [missing-test] src/hooks/feed/index.ts
+    缺少對應的測試檔案
+  [missing-test] src/hooks/useAgentConversations.ts
+    缺少對應的測試檔案
+  [missing-test] src/hooks/useAuth.ts
+    缺少對應的測試檔案
+  [missing-test] src/hooks/useBodyScrollLock.ts
+    缺少對應的測試檔案
+  [missing-test] src/hooks/useComments.ts
+    缺少對應的測試檔案
+  [missing-test] src/hooks/useCommunityWall.ts
+    缺少對應的測試檔案
+  [missing-test] src/hooks/useCommunityWallData.ts
+    缺少對應的測試檔案
+  [missing-test] src/hooks/useComposer.ts
+    缺少對應的測試檔案
+  [missing-test] src/hooks/useFocusTrap.ts
+    缺少對應的測試檔案
+  [missing-test] src/hooks/useGuestVisibleItems.ts
+    缺少對應的測試檔案
+  [missing-test] src/hooks/usePropertyFormValidation.ts
+    缺少對應的測試檔案
+  [missing-test] src/hooks/usePropertyTracker.ts
+    缺少對應的測試檔案
+  [missing-test] src/hooks/usePushNotifications.ts
+    缺少對應的測試檔案
+  [missing-test] src/hooks/useThrottle.ts
+    缺少對應的測試檔案
+  [missing-test] src/hooks/useTrustRoom.ts
+    缺少對應的測試檔案
+  [missing-test] src/lib/ai.ts
+    缺少對應的測試檔案
+  [missing-test] src/lib/connectTokenCrypto.ts
+    缺少對應的測試檔案
+  [missing-test] src/lib/detection-labels.ts
+    缺少對應的測試檔案
+  [missing-test] src/lib/haptic.ts
+    缺少對應的測試檔案
+  [missing-test] src/lib/logger.ts
+    缺少對應的測試檔案
+  [missing-test] src/lib/mhEnv.ts
+    缺少對應的測試檔案
+  [missing-test] src/lib/notify.ts
+    缺少對應的測試檔案
+  [missing-test] src/lib/safeStorage.ts
+    缺少對應的測試檔案
+  [missing-test] src/lib/secureStorage.ts
+    缺少對應的測試檔案
+  [missing-test] src/lib/supabase.ts
+    缺少對應的測試檔案
+  [missing-test] src/lib/time.ts
+    缺少對應的測試檔案
+  [missing-test] src/lib/types.ts
+    缺少對應的測試檔案
+  [missing-test] src/lib/urlUtils.ts
+    缺少對應的測試檔案
+  [missing-test] src/lib/utils.ts
+    缺少對應的測試檔案
+  [missing-test] src/lib/version.ts
+    缺少對應的測試檔案
+  [missing-test] src/pages/Community/lib/index.ts
+    缺少對應的測試檔案
+  [missing-test] src/pages/Community/lib/permissions.ts
+    缺少對應的測試檔案
+  [missing-test] src/pages/UAG/hooks/useAgentProfile.ts
+    缺少對應的測試檔案
+  [missing-test] src/pages/UAG/hooks/useLeadPurchase.ts
+    缺少對應的測試檔案
+  [missing-test] src/pages/UAG/hooks/useLeadSelection.ts
+    缺少對應的測試檔案
+  [missing-test] src/pages/UAG/hooks/useRealtimeUpdates.ts
+    缺少對應的測試檔案
+  [missing-test] src/pages/UAG/hooks/useUAGData.ts
+    缺少對應的測試檔案
+  [missing-test] src/pages/UAG/hooks/useWindowSize.ts
+    缺少對應的測試檔案
+  [missing-test] src/pages/UAG/Profile/hooks/useAgentProfile.ts
+    缺少對應的測試檔案
+  [missing-test] src/services/agentService.ts
+    缺少對應的測試檔案
+  [missing-test] src/services/ai.ts
+    缺少對應的測試檔案
+  [missing-test] src/services/analytics.ts
+    缺少對應的測試檔案
+  [missing-test] src/services/api.ts
+    缺少對應的測試檔案
+  [missing-test] src/services/auth.ts
+    缺少對應的測試檔案
+  [missing-test] src/services/detection.ts
+    缺少對應的測試檔案
+  [missing-test] src/services/imageService.ts
+    缺少對應的測試檔案
+  [missing-test] src/services/index.ts
+    缺少對應的測試檔案
+  [missing-test] src/services/leadService.ts
+    缺少對應的測試檔案
+  [missing-test] src/services/messagingService.ts
+    缺少對應的測試檔案
+  [missing-test] src/services/mock/agent.ts
+    缺少對應的測試檔案
+  [missing-test] src/services/mock/feed.ts
+    缺少對應的測試檔案
+  [missing-test] src/services/mock/fixtures.ts
+    缺少對應的測試檔案
+  [missing-test] src/services/mock/index.ts
+    缺少對應的測試檔案
+  [missing-test] src/services/openai.ts
+    缺少對應的測試檔案
+  [missing-test] src/services/replicate.ts
+    缺少對應的測試檔案
+  [missing-test] src/services/trustService.ts
+    缺少對應的測試檔案
+  [missing-test] src/services/uploadService.ts
+    缺少對應的測試檔案
+  [missing-test] api/agent/avatar.ts
+    缺少對應的測試檔案
+  [missing-test] api/agent/me.ts
+    缺少對應的測試檔案
+  [missing-test] api/agent/profile.ts
+    缺少對應的測試檔案
+  [missing-test] api/analytics/import.ts
+    缺少對應的測試檔案
+  [missing-test] api/chat.ts
+    缺少對應的測試檔案
+  [missing-test] api/claude.ts
+    缺少對應的測試檔案
+  [missing-test] api/community/comment.ts
+    缺少對應的測試檔案
+  [missing-test] api/community/env-check.ts
+    缺少對應的測試檔案
+  [missing-test] api/community/like.ts
+    缺少對應的測試檔案
+  [missing-test] api/community/question.ts
+    缺少對應的測試檔案
+  [missing-test] api/generate-community-profile.ts
+    缺少對應的測試檔案
+  [missing-test] api/home/featured-reviews.ts
+    缺少對應的測試檔案
+  [missing-test] api/lib/auth.ts
+    缺少對應的測試檔案
+  [missing-test] api/lib/cors.ts
+    缺少對應的測試檔案
+  [missing-test] api/lib/crypto.ts
+    缺少對應的測試檔案
+  [missing-test] api/lib/env.ts
+    缺少對應的測試檔案
+  [missing-test] api/lib/helpers.ts
+    缺少對應的測試檔案
+  [missing-test] api/lib/index.ts
+    缺少對應的測試檔案
+  [missing-test] api/lib/intentDetector.ts
+    缺少對應的測試檔案
+  [missing-test] api/lib/logger.ts
+    缺少對應的測試檔案
+  [missing-test] api/lib/rateLimiter.ts
+    缺少對應的測試檔案
+  [missing-test] api/lib/sentry.ts
+    缺少對應的測試檔案
+  [missing-test] api/lib/supabase.ts
+    缺少對應的測試檔案
+  [missing-test] api/lib/taskManager.ts
+    缺少對應的測試檔案
+  [missing-test] api/lib/timeUtils.ts
+    缺少對應的測試檔案
+  [missing-test] api/line/webhook.ts
+    缺少對應的測試檔案
+  [missing-test] api/line-notify.ts
+    缺少對應的測試檔案
+  [missing-test] api/log-error.ts
+    缺少對應的測試檔案
+  [missing-test] api/muse-speak.ts
+    缺少對應的測試檔案
+  [missing-test] api/property/generate-key-capsules.ts
+    缺少對應的測試檔案
+  [missing-test] api/report/create.ts
+    缺少對應的測試檔案
+  [missing-test] api/report/track.ts
+    缺少對應的測試檔案
+  [missing-test] api/shadow-beacon.ts
+    缺少對應的測試檔案
+  [missing-test] api/test/line-push.ts
+    缺少對應的測試檔案
+  [missing-test] api/trust/auto-create-case-public.ts
+    缺少對應的測試檔案
+  [missing-test] api/trust/cases/[id].ts
+    缺少對應的測試檔案
+  [missing-test] api/trust/checklist.ts
+    缺少對應的測試檔案
+  [missing-test] api/trust/complete-buyer-info.ts
+    缺少對應的測試檔案
+  [missing-test] api/trust/confirm.ts
+    缺少對應的測試檔案
+  [missing-test] api/trust/login.ts
+    缺少對應的測試檔案
+  [missing-test] api/trust/me.ts
+    缺少對應的測試檔案
+  [missing-test] api/trust/payment.ts
+    缺少對應的測試檔案
+  [missing-test] api/trust/reset.ts
+    缺少對應的測試檔案
+  [missing-test] api/trust/session.ts
+    缺少對應的測試檔案
+  [missing-test] api/trust/status.ts
+    缺少對應的測試檔案
+  [missing-test] api/trust/submit.ts
+    缺少對應的測試檔案
+  [missing-test] api/trust/supplement.ts
+    缺少對應的測試檔案
+  [missing-test] api/trust/token.ts
+    缺少對應的測試檔案
+  [missing-test] api/trust/_auto-create-helpers.ts
+    缺少對應的測試檔案
+  [missing-test] api/trust/_utils.ts
+    缺少對應的測試檔案
+  [missing-test] api/uag/track.ts
+    缺少對應的測試檔案
+  [missing-test] api/__test-utils__/mockRequest.ts
+    缺少對應的測試檔案
+
+ Warning 分類統計:
+  [missing-test] × 110
+  [func-too-long] × 28
+  [file-too-large] × 7
+
+ ZERO-SLACK PASSED (145 warnings) 

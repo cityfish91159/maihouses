@@ -35,24 +35,48 @@ VALUES (
   ARRAY['image/jpeg', 'image/png', 'image/webp']
 ) ON CONFLICT (id) DO NOTHING;
 
--- RLS Policies
-CREATE POLICY "Agents can upload own avatar"
-  ON storage.objects FOR INSERT
-  WITH CHECK (
-    bucket_id = 'agent-avatars' AND
-    (storage.foldername(name))[1] = auth.uid()::text
-  );
+-- RLS Policies (idempotent - safe to re-run)
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'storage'
+    AND tablename = 'objects'
+    AND policyname = 'Agents can upload own avatar'
+  ) THEN
+    CREATE POLICY "Agents can upload own avatar"
+      ON storage.objects FOR INSERT
+      WITH CHECK (
+        bucket_id = 'agent-avatars' AND
+        (storage.foldername(name))[1] = auth.uid()::text
+      );
+  END IF;
 
-CREATE POLICY "Public can view avatars"
-  ON storage.objects FOR SELECT
-  USING (bucket_id = 'agent-avatars');
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'storage'
+    AND tablename = 'objects'
+    AND policyname = 'Public can view avatars'
+  ) THEN
+    CREATE POLICY "Public can view avatars"
+      ON storage.objects FOR SELECT
+      USING (bucket_id = 'agent-avatars');
+  END IF;
 
-CREATE POLICY "Agents can update own avatar"
-  ON storage.objects FOR UPDATE
-  USING (
-    bucket_id = 'agent-avatars' AND
-    (storage.foldername(name))[1] = auth.uid()::text
-  );
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'storage'
+    AND tablename = 'objects'
+    AND policyname = 'Agents can update own avatar'
+  ) THEN
+    CREATE POLICY "Agents can update own avatar"
+      ON storage.objects FOR UPDATE
+      USING (
+        bucket_id = 'agent-avatars' AND
+        (storage.foldername(name))[1] = auth.uid()::text
+      );
+  END IF;
+END $$;
 
 -- ============================================================================
 -- Trust Score RPC + Trigger

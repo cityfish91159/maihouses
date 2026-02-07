@@ -13,3 +13,5 @@ export { MobileActionBar } from './MobileActionBar';
 export { MobileCTA } from './MobileCTA';
 export { VipModal } from './VipModal';
 export { BookingModal } from './BookingModal';
+export { CallConfirmPanel } from './CallConfirmPanel';
+export { LineLinkPanel } from './LineLinkPanel';

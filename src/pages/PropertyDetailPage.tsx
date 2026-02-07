@@ -7,16 +7,17 @@ import { TrustBadge } from '../components/TrustBadge';
 import { TrustServiceBanner } from '../components/TrustServiceBanner';
 import ErrorBoundary from '../app/ErrorBoundary';
 import { propertyService, DEFAULT_PROPERTY, PropertyData } from '../services/propertyService';
-import { ContactModal } from '../components/ContactModal';
+import { ContactModal, type ContactChannel } from '../components/ContactModal';
 import { ReportGenerator } from './Report';
 import { trackTrustServiceEnter } from '../lib/analytics';
+import { track } from '../analytics/track';
 import { buildKeyCapsuleTags } from '../utils/keyCapsules';
 import { logger } from '../lib/logger';
 import { supabase } from '../lib/supabase';
 import { notify } from '../lib/notify';
-import { z } from 'zod';
 import { secureStorage } from '../lib/secureStorage';
 import { SkeletonBanner } from '../components/SkeletonScreen';
+import { useAuth } from '../hooks/useAuth';
 import { useTrustActions } from '../hooks/useTrustActions';
 import { usePropertyTracker } from '../hooks/usePropertyTracker';
 import { TOAST_DURATION } from '../constants/toast';
@@ -32,135 +33,13 @@ import {
   MobileActionBar,
   MobileCTA,
   VipModal,
+  LineLinkPanel,
+  CallConfirmPanel,
+  BookingModal,
 } from '../components/PropertyDetail';
-
-/**
- * [Team 8 第五位修復] 錯誤分類輔助函數
- *
- * 將複雜的 if-else 鏈條提取為獨立函數，降低 cyclomatic complexity。
- *
- * @param error - 錯誤物件
- * @returns 錯誤標題和描述
- */
-function classifyTrustServiceError(error: unknown): {
-  title: string;
-  description: string;
-} {
-  const errorMessage = error instanceof Error ? error.message : String(error);
-  const errorCode =
-    error && typeof error === 'object' && 'code' in error
-      ? String((error as { code: unknown }).code)
-      : '';
-
-  // 優先使用 error.code（更可靠）
-  if (errorCode === 'RATE_LIMIT_EXCEEDED') {
-    return {
-      title: '操作過於頻繁',
-      description: '請稍後再試（約 1 分鐘）',
-    };
-  }
-
-  if (errorCode === 'UNAUTHORIZED') {
-    return {
-      title: '權限不足',
-      description: '請登入後再試',
-    };
-  }
-
-  if (errorCode === 'NOT_FOUND') {
-    return {
-      title: '物件不存在',
-      description: '此物件可能已下架',
-    };
-  }
-
-  // Timeout 錯誤
-  if (
-    errorMessage.includes('timed out') ||
-    errorMessage.includes('timeout') ||
-    errorMessage.includes('Timeout')
-  ) {
-    return {
-      title: '請求超時',
-      description: '伺服器回應時間過長，請稍後再試',
-    };
-  }
-
-  // CORS 錯誤
-  if (
-    errorMessage.includes('CORS') ||
-    errorMessage.includes('Cross-Origin') ||
-    errorCode === 'ERR_BLOCKED_BY_CLIENT'
-  ) {
-    return {
-      title: '連線被阻擋',
-      description: '請檢查瀏覽器設定或網路環境',
-    };
-  }
-
-  // 網路連線錯誤
-  if (
-    errorMessage.includes('NetworkError') ||
-    errorMessage.includes('Failed to fetch') ||
-    errorMessage.includes('網路') ||
-    errorCode === 'ERR_NETWORK'
-  ) {
-    return {
-      title: '網路連線異常',
-      description: '請檢查網路連線後重試',
-    };
-  }
-
-  // 速率限制（字串匹配作為 fallback）
-  if (errorMessage.includes('429') || errorMessage.includes('請求過於頻繁')) {
-    return {
-      title: '操作過於頻繁',
-      description: '請稍後再試（約 1 分鐘）',
-    };
-  }
-
-  // 權限錯誤（字串匹配作為 fallback）
-  if (
-    errorMessage.includes('401') ||
-    errorMessage.includes('403') ||
-    errorMessage.includes('未授權')
-  ) {
-    return {
-      title: '權限不足',
-      description: '請登入後再試',
-    };
-  }
-
-  // 資源不存在（字串匹配作為 fallback）
-  if (errorMessage.includes('404') || errorMessage.includes('not found')) {
-    return {
-      title: '物件不存在',
-      description: '此物件可能已下架',
-    };
-  }
-
-  // 伺服器錯誤（字串匹配作為 fallback）
-  if (errorMessage.includes('500') || errorMessage.includes('系統錯誤')) {
-    return {
-      title: '伺服器異常',
-      description: '請稍後再試，或聯繫客服',
-    };
-  }
-
-  // 預設錯誤
-  return {
-    title: '無法進入服務',
-    description: '請稍後再試',
-  };
-}
-
-const AUTO_CREATE_CASE_RESPONSE_SCHEMA = z.object({
-  data: z.object({
-    token: z.string().uuid(),
-    case_id: z.string().uuid(),
-    buyer_name: z.string(),
-  }),
-});
+import { getTrustScenario, shouldAttachTrustAssureLeadNote } from '../components/PropertyDetail/trustAssure';
+import { useTrustAssureFlow } from './propertyDetail/useTrustAssureFlow';
+import { classifyTrustServiceError, AUTO_CREATE_CASE_RESPONSE_SCHEMA } from './propertyDetail/trustServiceErrors';
 
 const FALLBACK_IMAGE =
   'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80';
@@ -184,13 +63,25 @@ export const PropertyDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [searchParams] = useSearchParams();
   const [isFavorite, setIsFavorite] = useState(false);
+  const { isAuthenticated, user, session } = useAuth();
 
-  // Mock: 固定未登入狀態（正式版改用 useAuth）
-  const isLoggedIn = false;
+  const isLoggedIn = isAuthenticated;
 
   // ContactModal 狀態
   const [showContactModal, setShowContactModal] = useState(false);
   const [contactSource, setContactSource] = useState<'sidebar' | 'mobile_bar' | 'booking'>(
+    'sidebar'
+  );
+  const [contactDefaultChannel, setContactDefaultChannel] = useState<ContactChannel>('line');
+  const [contactTrustAssureRequested, setContactTrustAssureRequested] = useState(false);
+
+  // Phase 11-A: 三按鈕分流面板狀態
+  const [linePanelOpen, setLinePanelOpen] = useState(false);
+  const [callPanelOpen, setCallPanelOpen] = useState(false);
+  const [bookingOpen, setBookingOpen] = useState(false);
+  const [linePanelSource, setLinePanelSource] = useState<'sidebar' | 'mobile_bar'>('sidebar');
+  const [callPanelSource, setCallPanelSource] = useState<'sidebar' | 'mobile_bar'>('sidebar');
+  const [bookingSource, setBookingSource] = useState<'sidebar' | 'mobile_bar' | 'booking'>(
     'sidebar'
   );
 
@@ -245,20 +136,59 @@ export const PropertyDetailPage: React.FC = () => {
     handleGradeUpgrade
   );
 
-  // 開啟聯絡 Modal 的處理函數
   const openContactModal = useCallback(
-    (source: 'sidebar' | 'mobile_bar' | 'booking') => {
+    (
+      source: 'sidebar' | 'mobile_bar' | 'booking',
+      defaultChannel: ContactChannel = 'line',
+      trustAssureRequested = false
+    ) => {
       setContactSource(source);
+      setContactDefaultChannel(defaultChannel);
+      setContactTrustAssureRequested(trustAssureRequested);
       setShowContactModal(true);
-      // 同時追蹤點擊事件
-      if (source === 'mobile_bar') {
-        propertyTracker.trackLineClick();
-      } else {
-        propertyTracker.trackCallClick();
-      }
+    },
+    []
+  );
+
+  const closeContactModal = useCallback(() => {
+    setShowContactModal(false);
+    setContactTrustAssureRequested(false);
+  }, []);
+
+  const openLinePanel = useCallback(
+    (source: 'sidebar' | 'mobile_bar') => {
+      setLinePanelSource(source);
+      setLinePanelOpen(true);
+      propertyTracker.trackLineClick();
     },
     [propertyTracker]
   );
+
+  const openCallPanel = useCallback(
+    (source: 'sidebar' | 'mobile_bar') => {
+      setCallPanelSource(source);
+      setCallPanelOpen(true);
+      propertyTracker.trackCallClick();
+    },
+    [propertyTracker]
+  );
+
+  const openBookingPanel = useCallback((source: 'sidebar' | 'mobile_bar' | 'booking') => {
+    setBookingSource(source);
+    setBookingOpen(true);
+    void track('booking_click', {
+      source: source === 'mobile_bar' ? 'mobile' : 'sidebar',
+    });
+    logger.info('audit.contact.booking', {
+      source,
+      propertyId: property.publicId,
+      agentId: property.agent?.id ?? agentId,
+    });
+  }, [agentId, property.agent?.id, property.publicId]);
+
+  const closeLinePanel = useCallback(() => setLinePanelOpen(false), []);
+  const closeCallPanel = useCallback(() => setCallPanelOpen(false), []);
+  const closeBookingPanel = useCallback(() => setBookingOpen(false), []);
 
   // 社會證明數據 - 模擬即時瀏覽人數與預約組數
   const socialProof = useMemo(() => {
@@ -273,6 +203,7 @@ export const PropertyDetailPage: React.FC = () => {
 
   // 安心留痕服務操作
   const trustActions = useTrustActions(property.publicId);
+  const isTrustEnabled = property.trustEnabled ?? false;
 
   const handleEnterService = useCallback(async () => {
     if (isRequesting) return;
@@ -407,18 +338,125 @@ export const PropertyDetailPage: React.FC = () => {
     propertyTracker.trackPhotoClick();
   }, [propertyTracker]);
 
-  // AgentTrustCard 專用的穩定 callbacks
+  const shouldAttachContactTrustAssure = useCallback(
+    (trustChecked: boolean): boolean => {
+      const scenario = getTrustScenario(isLoggedIn, property.trustEnabled ?? false);
+      return shouldAttachTrustAssureLeadNote(scenario, trustChecked);
+    },
+    [isLoggedIn, property.trustEnabled]
+  );
+
+  const resolvedUserName = useMemo(() => {
+    const metadataName = user?.user_metadata?.name;
+    if (typeof metadataName === 'string' && metadataName.trim()) {
+      return metadataName.trim();
+    }
+    if (typeof user?.email === 'string' && user.email.trim()) {
+      return user.email.trim();
+    }
+    return undefined;
+  }, [user?.email, user?.user_metadata]);
+
+  const createAutoTrustCase = useCallback(
+    async (payload: { propertyId: string; userId?: string; userName?: string }) => {
+      const res = await fetch('/api/trust/auto-create-case-public', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        if (res.status === 429) {
+          throw new Error('AUTO_CREATE_THROTTLED');
+        }
+        throw new Error('AUTO_CREATE_FAILED');
+      }
+
+      return res.json().catch(() => null);
+    },
+    []
+  );
+
+  const { handleTrustAssureAction } = useTrustAssureFlow({
+    isLoggedIn,
+    isTrustEnabled,
+    propertyPublicId: property.publicId,
+    ...(property.id ? { propertyInternalId: property.id } : {}),
+    ...(session?.access_token ? { sessionAccessToken: session.access_token } : {}),
+    ...(user?.id ? { userId: user.id } : {}),
+    ...(resolvedUserName ? { resolvedUserName } : {}),
+    createAutoTrustCase,
+  });
+
+  // AgentTrustCard callbacks
   const handleAgentLineClick = useCallback(() => {
-    openContactModal('sidebar');
-  }, [openContactModal]);
+    openLinePanel('sidebar');
+  }, [openLinePanel]);
 
   const handleAgentCallClick = useCallback(() => {
-    openContactModal('sidebar');
-  }, [openContactModal]);
+    openCallPanel('sidebar');
+  }, [openCallPanel]);
 
   const handleAgentBookingClick = useCallback(() => {
-    openContactModal('booking');
-  }, [openContactModal]);
+    openBookingPanel('sidebar');
+  }, [openBookingPanel]);
+
+  // Mobile / FAB / VIP callbacks
+  const handleMobileLineClick = useCallback(() => {
+    openLinePanel('mobile_bar');
+  }, [openLinePanel]);
+
+  const handleMobileCallClick = useCallback(() => {
+    openCallPanel('mobile_bar');
+  }, [openCallPanel]);
+
+  const handleMobileBookingClick = useCallback(() => {
+    openBookingPanel('mobile_bar');
+  }, [openBookingPanel]);
+
+  const handleFloatingCallClick = useCallback(() => {
+    openCallPanel('mobile_bar');
+  }, [openCallPanel]);
+
+  const handleVipLineClick = useCallback(() => {
+    openLinePanel('mobile_bar');
+  }, [openLinePanel]);
+
+  const handleVipBookingClick = useCallback(() => {
+    openBookingPanel('booking');
+  }, [openBookingPanel]);
+
+  const handleLineFallbackContact = useCallback(
+    (trustAssureChecked: boolean) => {
+      openContactModal(
+        linePanelSource,
+        'line',
+        shouldAttachContactTrustAssure(trustAssureChecked)
+      );
+    },
+    [linePanelSource, openContactModal, shouldAttachContactTrustAssure]
+  );
+
+  const handleCallFallbackContact = useCallback(
+    (trustAssureChecked: boolean) => {
+      openContactModal(
+        callPanelSource,
+        'phone',
+        shouldAttachContactTrustAssure(trustAssureChecked)
+      );
+    },
+    [callPanelSource, openContactModal, shouldAttachContactTrustAssure]
+  );
+
+  const handleBookingSubmit = useCallback(
+    async (payload: { selectedSlot: string; phone: string; trustAssureChecked: boolean }) => {
+      const requested = shouldAttachContactTrustAssure(payload.trustAssureChecked);
+      openContactModal(bookingSource, 'phone', requested);
+    },
+    [bookingSource, openContactModal, shouldAttachContactTrustAssure]
+  );
 
   // 當 mockTrustEnabled 改變時，更新 property
   useEffect(() => {
@@ -474,7 +512,7 @@ export const PropertyDetailPage: React.FC = () => {
     fetchProperty();
   }, [id, mockTrustEnabled]);
 
-  const isTrustEnabled = property.trustEnabled ?? false;
+  const isActionLocked = linePanelOpen || callPanelOpen || bookingOpen || showContactModal;
 
   return (
     <ErrorBoundary>
@@ -556,9 +594,11 @@ export const PropertyDetailPage: React.FC = () => {
 
           {/* 優化方案 1: 使用拆分的 MobileCTA 組件 */}
           <MobileCTA
-            onLineClick={() => openContactModal('mobile_bar')}
-            onCallClick={() => openContactModal('mobile_bar')}
+            onLineClick={handleMobileLineClick}
+            onCallClick={handleMobileCallClick}
+            onBookingClick={handleMobileBookingClick}
             weeklyBookings={socialProof.weeklyBookings}
+            isActionLocked={isActionLocked}
           />
 
           <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
@@ -607,7 +647,7 @@ export const PropertyDetailPage: React.FC = () => {
 
         {/* 📱 30秒回電浮動按鈕 - 高轉換 */}
         <button
-          onClick={() => openContactModal('booking')}
+          onClick={handleFloatingCallClick}
           className="fixed bottom-28 right-4 z-40 flex size-16 animate-bounce flex-col items-center justify-center rounded-full bg-orange-500 text-xs font-bold text-white shadow-2xl transition-transform hover:scale-110 hover:bg-orange-600 lg:bottom-8"
           style={{ animationDuration: '2s' }}
         >
@@ -617,34 +657,66 @@ export const PropertyDetailPage: React.FC = () => {
 
         {/* 優化方案 1: 使用拆分的 MobileActionBar 組件 */}
         <MobileActionBar
-          onLineClick={() => openContactModal('mobile_bar')}
-          onBookingClick={() => openContactModal('booking')}
+          onLineClick={handleMobileLineClick}
+          onCallClick={handleMobileCallClick}
+          onBookingClick={handleMobileBookingClick}
           socialProof={socialProof}
+          isActionLocked={isActionLocked}
+        />
+
+        <LineLinkPanel
+          isOpen={linePanelOpen}
+          onClose={closeLinePanel}
+          agentLineId={property.agent?.lineId ?? null}
+          agentName={property.agent?.name || '專屬業務'}
+          isLoggedIn={isLoggedIn}
+          trustEnabled={isTrustEnabled}
+          onTrustAction={(checked) => handleTrustAssureAction('line', checked)}
+          onFallbackContact={handleLineFallbackContact}
+        />
+
+        <CallConfirmPanel
+          isOpen={callPanelOpen}
+          onClose={closeCallPanel}
+          agentPhone={property.agent?.phone ?? null}
+          agentName={property.agent?.name || '專屬業務'}
+          isLoggedIn={isLoggedIn}
+          trustEnabled={isTrustEnabled}
+          onTrustAction={(checked) => handleTrustAssureAction('call', checked)}
+          onFallbackContact={handleCallFallbackContact}
+        />
+
+        <BookingModal
+          isOpen={bookingOpen}
+          onClose={closeBookingPanel}
+          agentName={property.agent?.name || '專屬業務'}
+          isLoggedIn={isLoggedIn}
+          trustEnabled={isTrustEnabled}
+          onTrustAction={(checked) => handleTrustAssureAction('booking', checked)}
+          onSubmitBooking={handleBookingSubmit}
         />
 
         {/* 統一聯絡入口 Modal */}
-        <ContactModal
-          isOpen={showContactModal}
-          onClose={() => setShowContactModal(false)}
-          propertyId={property.publicId}
-          propertyTitle={property.title}
-          agentId={agentId}
-          agentName={property.agent?.name || '專屬業務'}
-          source={contactSource}
-        />
+        {showContactModal && (
+          <ContactModal
+            isOpen={showContactModal}
+            onClose={closeContactModal}
+            propertyId={property.publicId}
+            propertyTitle={property.title}
+            agentId={agentId}
+            agentName={property.agent?.name || '專屬業務'}
+            source={contactSource}
+            defaultChannel={contactDefaultChannel}
+            trustAssureRequested={contactTrustAssureRequested}
+          />
+        )}
 
         {/* 優化方案 1: 使用拆分的 VipModal 組件 */}
         <VipModal
           isOpen={showVipModal}
           onClose={() => setShowVipModal(false)}
-          onLineClick={() => {
-            propertyTracker.trackLineClick();
-            openContactModal('mobile_bar');
-          }}
-          onBookingClick={() => {
-            propertyTracker.trackCallClick();
-            openContactModal('booking');
-          }}
+          onLineClick={handleVipLineClick}
+          onBookingClick={handleVipBookingClick}
           reason={vipReason}
         />
 

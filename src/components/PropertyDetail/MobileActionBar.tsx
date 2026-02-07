@@ -1,36 +1,42 @@
-﻿import { memo } from 'react';
-import { MessageCircle, Calendar, Shield, Eye, Flame } from 'lucide-react';
+import { memo } from 'react';
+import { MessageCircle, Phone, Calendar, Shield, Eye, Flame } from 'lucide-react';
 
 interface MobileActionBarProps {
   onLineClick: () => void;
+  onCallClick: () => void;
   onBookingClick: () => void;
-  socialProof: {
+  socialProof?: {
     currentViewers: number;
     isHot: boolean;
   };
+  isActionLocked?: boolean;
 }
 
 /**
  * 行動端底部操作欄組件
  *
  * 功能:
- * - 加 LINE 諮詢按鈕
+ * - 加 LINE 聊聊按鈕
+ * - 致電諮詢按鈕
  * - 預約看屋按鈕
- * - 社會證明資訊
+ * - 社會證明資訊（瀏覽人數、熱門標記）
+ * - Action Lock 狀態控制
  *
  * @remarks
- * 使用 React.memo 優化
- * 固定在螢幕底部 (僅行動端顯示)
+ * 使用 React.memo 優化渲染
+ * 固定在螢幕底部（僅行動端顯示，lg 以上隱藏）
  */
 export const MobileActionBar = memo(function MobileActionBar({
   onLineClick,
+  onCallClick,
   onBookingClick,
-  socialProof,
+  socialProof = { currentViewers: 0, isHot: false },
+  isActionLocked = false,
 }: MobileActionBarProps) {
   return (
     <div className="pb-safe fixed inset-x-0 bottom-0 z-overlay border-t border-slate-100 bg-white p-3 lg:hidden">
-      {/* 經紀人驗證資訊 */}
-      <div className="mb-2 flex items-center justify-center gap-4 text-[10px] text-slate-500">
+      {/* 社會證明資訊 */}
+      <div className="mb-2 flex items-center justify-center gap-4 text-xs text-slate-500">
         <span className="flex items-center gap-1">
           <Shield size={10} className="text-green-500" />
           認證經紀人
@@ -47,22 +53,35 @@ export const MobileActionBar = memo(function MobileActionBar({
         )}
       </div>
 
-      {/* 雙主按鈕 */}
+      {/* 三主按鈕 */}
       <div className="flex gap-2">
-        {/* 左按鈕：加 LINE（低門檻）*/}
+        {/* 加 LINE 聊聊 */}
         <button
           onClick={onLineClick}
-          className="flex flex-[4] items-center justify-center gap-2 rounded-xl bg-[#06C755] py-3 font-bold text-white shadow-lg shadow-green-500/20"
+          disabled={isActionLocked}
+          className="flex min-h-[44px] flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#06C755] py-3 font-bold text-white shadow-lg shadow-green-500/20 transition-colors hover:bg-[#05b34c] disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none"
         >
-          <MessageCircle size={20} />加 LINE 諮詢
+          <MessageCircle size={18} />
+          加 LINE 聊聊
         </button>
 
-        {/* 右按鈕：預約看屋（高意圖）*/}
+        {/* 致電諮詢 */}
+        <button
+          onClick={onCallClick}
+          disabled={isActionLocked}
+          className="flex min-h-[44px] flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl bg-brand-500 py-3 font-bold text-white shadow-lg shadow-blue-900/20 transition-colors hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none"
+        >
+          <Phone size={18} />
+          致電諮詢
+        </button>
+
+        {/* 預約看屋 */}
         <button
           onClick={onBookingClick}
-          className="flex flex-[6] items-center justify-center gap-2 rounded-xl bg-[#003366] py-3 font-bold text-white shadow-lg shadow-blue-900/20"
+          disabled={isActionLocked}
+          className="flex min-h-[44px] flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl bg-brand-700 py-3 font-bold text-white shadow-lg shadow-blue-900/20 transition-colors hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none"
         >
-          <Calendar size={20} />
+          <Calendar size={18} />
           預約看屋
         </button>
       </div>

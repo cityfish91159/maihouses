@@ -1,29 +1,62 @@
-import React, { useState, useMemo, useEffect, useRef, memo, useCallback } from 'react';
+import { useState, useMemo, useEffect, useRef, memo, useCallback, useId } from 'react';
 import { X, CheckCircle, Calendar } from 'lucide-react';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
+import { notify } from '../../lib/notify';
+import { buildTimeSlots, sanitizePhoneInput, isValidPhone } from './bookingUtils';
+import { TrustAssureHint } from './TrustAssureHint';
 
 interface BookingModalProps {
   isOpen: boolean;
   onClose: () => void;
   agentName: string;
+  onSubmitBooking: (data: {
+    selectedSlot: string;
+    phone: string;
+    trustAssureChecked: boolean;
+  }) => Promise<void>;
+  isLoggedIn?: boolean;
+  trustEnabled?: boolean;
+  onTrustAction?: (checked: boolean) => Promise<void>;
 }
 
-/** 預約時段選擇器 Modal (#5 從 AgentTrustCard 獨立) */
-export const BookingModal: React.FC<BookingModalProps> = memo(function BookingModal({
+/** 預約時段選擇器 Modal */
+export const BookingModal = memo(function BookingModal({
   isOpen,
   onClose,
   agentName,
-}) {
+  onSubmitBooking,
+  isLoggedIn = false,
+  trustEnabled = false,
+  onTrustAction,
+}: BookingModalProps) {
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
   const [phone, setPhone] = useState('');
   const [submitted, setSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [trustAssureChecked, setTrustAssureChecked] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const modalRef = useRef<HTMLDivElement>(null);
   const firstButtonRef = useRef<HTMLButtonElement>(null);
+  const titleId = useId();
 
-  const handleClose = useCallback(() => onClose(), [onClose]);
+  const resetForm = useCallback(() => {
+    setSelectedSlot(null);
+    setPhone('');
+    setSubmitted(false);
+    setIsSubmitting(false);
+    setTrustAssureChecked(false);
+  }, []);
 
-  // P0 FocusTrap + Escape 支援
+  const handleClose = useCallback(() => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+    resetForm();
+    onClose();
+  }, [onClose, resetForm]);
+
+  // FocusTrap + Escape 支援
   useFocusTrap({
     containerRef: modalRef,
     initialFocusRef: firstButtonRef,
@@ -31,7 +64,7 @@ export const BookingModal: React.FC<BookingModalProps> = memo(function BookingMo
     isActive: isOpen,
   });
 
-  // #6 cleanup setTimeout on unmount
+  // cleanup setTimeout on unmount
   useEffect(() => {
     return () => {
       if (timerRef.current) {
@@ -41,44 +74,57 @@ export const BookingModal: React.FC<BookingModalProps> = memo(function BookingMo
     };
   }, []);
 
-  // 生成未來 7 天的可用時段（計算輕量，無需 memoization）
-  const getTimeSlots = () => {
-    const slots: { date: string; day: string; times: string[] }[] = [];
-    const days: string[] = ['日', '一', '二', '三', '四', '五', '六'];
+  const timeSlots = useMemo(() => buildTimeSlots(), []);
 
-    for (let i = 1; i <= 7; i++) {
-      const date = new Date();
-      date.setDate(date.getDate() + i);
-      const dayStr = `${date.getMonth() + 1}/${date.getDate()}`;
-      const dayName = days[date.getDay()] ?? '日';
+  const sanitizedPhone = sanitizePhoneInput(phone);
+  const isPhoneValid = isValidPhone(sanitizedPhone);
+  const canSubmit = Boolean(selectedSlot) && isPhoneValid;
 
-      // 週末有更多時段
-      const times =
-        date.getDay() === 0 || date.getDay() === 6
-          ? ['10:00', '11:00', '14:00', '15:00', '16:00']
-          : ['14:00', '15:00', '19:00'];
+  const handleSubmit = useCallback(async () => {
+    if (isSubmitting) return;
+    if (!selectedSlot || !isPhoneValid) return;
 
-      slots.push({ date: dayStr, day: dayName, times });
+    setIsSubmitting(true);
+
+    try {
+      await onSubmitBooking({
+        selectedSlot,
+        phone: sanitizedPhone,
+        trustAssureChecked,
+      });
+    } catch {
+      notify.error('預約送出失敗', '請稍後再試');
+      setIsSubmitting(false);
+      return;
     }
-    return slots;
-  };
 
-  const timeSlots = getTimeSlots();
+    setSubmitted(true);
+
+    if (trustAssureChecked && onTrustAction) {
+      try {
+        await onTrustAction(true);
+      } catch {
+        notify.warning('預約已送出', '安心留痕未完成，你可以稍後再試一次。');
+      }
+    }
+
+    timerRef.current = setTimeout(() => {
+      handleClose();
+    }, 2000);
+
+    setIsSubmitting(false);
+  }, [
+    handleClose,
+    isPhoneValid,
+    isSubmitting,
+    onSubmitBooking,
+    onTrustAction,
+    sanitizedPhone,
+    selectedSlot,
+    trustAssureChecked,
+  ]);
 
   if (!isOpen) return null;
-
-  const handleSubmit = () => {
-    if (!selectedSlot || !phone) return;
-    setSubmitted(true);
-    // #6 使用 ref 管理 timer，確保 unmount 時清除
-    timerRef.current = setTimeout(() => {
-      onClose();
-      setSubmitted(false);
-      setSelectedSlot(null);
-      setPhone('');
-      timerRef.current = null;
-    }, 2000);
-  };
 
   return (
     <div className="fixed inset-0 z-modal flex items-end justify-center bg-black/50 p-4 backdrop-blur-sm sm:items-center">
@@ -86,23 +132,25 @@ export const BookingModal: React.FC<BookingModalProps> = memo(function BookingMo
         ref={modalRef}
         role="dialog"
         aria-modal="true"
-        aria-labelledby="booking-modal-title"
+        aria-labelledby={titleId}
         className="max-h-[80vh] w-full max-w-md overflow-hidden rounded-2xl bg-bg-card shadow-2xl"
       >
         {/* Header */}
         <div className="bg-gradient-to-r from-brand-700 to-brand-light p-4 text-white">
           <div className="flex items-center justify-between">
             <div>
-              <h3 id="booking-modal-title" className="text-lg font-bold">
+              <h3 id={titleId} className="text-lg font-bold">
                 預約看屋
               </h3>
-              <p className="text-sm opacity-80">選擇方便的時段，{agentName} 將為您安排</p>
+              <p className="text-sm opacity-80">
+                選擇方便的時段，{agentName} 將為你安排
+              </p>
             </div>
             <button
               ref={firstButtonRef}
-              onClick={onClose}
+              onClick={handleClose}
               aria-label="關閉"
-              className="min-h-[44px] min-w-[44px] rounded-full p-2 transition-colors hover:bg-white/20 focus:ring-2 focus:ring-white/50"
+              className="min-h-[44px] min-w-[44px] cursor-pointer rounded-full p-2 transition-colors hover:bg-white/20 focus:ring-2 focus:ring-white/50"
             >
               <X size={20} />
             </button>
@@ -115,7 +163,7 @@ export const BookingModal: React.FC<BookingModalProps> = memo(function BookingMo
               <CheckCircle className="text-green-500" size={32} />
             </div>
             <h4 className="mb-2 text-xl font-bold text-ink-900">預約成功！</h4>
-            <p className="text-text-muted">經紀人將盡快與您聯繫確認</p>
+            <p className="text-text-muted">經紀人將盡快與你聯繫確認</p>
           </div>
         ) : (
           <div className="max-h-[60vh] overflow-y-auto p-4">
@@ -133,8 +181,9 @@ export const BookingModal: React.FC<BookingModalProps> = memo(function BookingMo
                       return (
                         <button
                           key={slotId}
+                          name={time}
                           onClick={() => setSelectedSlot(slotId)}
-                          className={`min-h-[44px] rounded-lg px-3 py-1.5 text-sm font-medium transition-all ${
+                          className={`min-h-[44px] cursor-pointer rounded-lg px-3 py-1.5 text-sm font-medium transition-all ${
                             isSelected
                               ? 'bg-brand-700 text-white'
                               : 'bg-bg-base text-ink-900 hover:bg-border'
@@ -155,7 +204,7 @@ export const BookingModal: React.FC<BookingModalProps> = memo(function BookingMo
                 htmlFor="booking-phone"
                 className="mb-1 block text-xs font-medium text-ink-600"
               >
-                您的手機號碼
+                你的手機號碼
               </label>
               <input
                 id="booking-phone"
@@ -163,17 +212,26 @@ export const BookingModal: React.FC<BookingModalProps> = memo(function BookingMo
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder="0912-345-678"
+                inputMode="numeric"
                 className="w-full rounded-xl border border-border p-3 outline-none focus:border-transparent focus:ring-2 focus:ring-brand-500"
               />
             </div>
 
+            {/* Trust Assure Hint */}
+            <TrustAssureHint
+              isLoggedIn={isLoggedIn}
+              trustEnabled={trustEnabled}
+              checked={trustAssureChecked}
+              onCheckedChange={setTrustAssureChecked}
+            />
+
             {/* Submit Button */}
             <button
               onClick={handleSubmit}
-              disabled={!selectedSlot || !phone}
+              disabled={!canSubmit || isSubmitting}
               className={`mt-4 flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl py-3 font-bold transition-all ${
-                selectedSlot && phone
-                  ? 'bg-brand-700 text-white hover:bg-brand-600 focus:ring-2 focus:ring-brand-500'
+                canSubmit && !isSubmitting
+                  ? 'cursor-pointer bg-brand-700 text-white hover:bg-brand-600 focus:ring-2 focus:ring-brand-500'
                   : 'cursor-not-allowed bg-bg-base text-text-muted'
               }`}
             >

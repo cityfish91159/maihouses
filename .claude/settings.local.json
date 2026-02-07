@@ -167,7 +167,10 @@
       "Bash(gzip:*)",
       "Bash(if not exist \"tests\\\\e2e\" mkdir \"tests\\\\e2e\")",
       "Bash(/c/Users/陳世瑜/AppData/Roaming/npm/vercel.cmd --prod --yes)",
-      "Bash(npm i:*)"
+      "Bash(npm i:*)",
+      "Bash(git -C \"C:/Users/陳世瑜/maihouses\" ls-files --error-unmatch src/components/PropertyDetail/LineLinkPanel.tsx src/components/PropertyDetail/CallConfirmPanel.tsx src/components/PropertyDetail/TrustAssureHint.tsx src/components/PropertyDetail/trustAssure.ts)",
+      "Bash(git -C \"C:/Users/陳世瑜/maihouses\" status src/components/PropertyDetail/)",
+      "Bash(git fsck:*)"
     ]
   },
   "model": "claude-opus-4-5-20251101",

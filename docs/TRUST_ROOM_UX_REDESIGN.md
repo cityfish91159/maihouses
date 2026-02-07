@@ -385,23 +385,23 @@ interface PaymentTimerProps {
 > **目標**: 三按鈕各司其職 + 在聯絡觸發的面板中自然嵌入 `TrustAssureHint`（安心留痕提示）
 
 **A. 三按鈕回歸本職**
-- [ ] 11.1 `AgentTrustCard.tsx` - 按鈕改為開啟各自面板（LINE / 電話 / 預約）
-- [ ] 11.2 `LineLinkPanel.tsx` - 新增 LINE 連結面板 Modal（有 lineId 直開，無則 fallback）
-- [ ] 11.3 `CallConfirmPanel.tsx` - 新增致電確認面板 Modal（有 phone 直撥，無則 fallback）
-- [ ] 11.4 `BookingModal.tsx` - 新增安心留痕提示區塊
-- [ ] 11.5 `PropertyDetailPage.tsx` - 移除統一導向 ContactModal，改為開啟各面板
-- [ ] 11.6 `MobileActionBar.tsx` / `MobileCTA.tsx` - 對齊桌面版邏輯
-- [ ] 11.7 `ContactModal.tsx` - 降級為通用兜底，移除假「已建立安心留痕」文字
+- [x] 11.1 `AgentTrustCard.tsx` - 按鈕改為開啟各自面板（LINE / 電話 / 預約）
+- [x] 11.2 `LineLinkPanel.tsx` - 新增 LINE 連結面板 Modal（有 lineId 直開，無則 fallback）
+- [x] 11.3 `CallConfirmPanel.tsx` - 新增致電確認面板 Modal（有 phone 直撥，無則 fallback）
+- [x] 11.4 `BookingModal.tsx` - 新增安心留痕提示區塊
+- [x] 11.5 `PropertyDetailPage.tsx` - 移除統一導向 ContactModal，改為開啟各面板
+- [x] 11.6 `MobileActionBar.tsx` / `MobileCTA.tsx` - 對齊桌面版邏輯
+- [x] 11.7 `ContactModal.tsx` - 降級為通用兜底，移除假「已建立安心留痕」文字
 
 **B. 安心留痕自然嵌入**
-- [ ] 11.8 `TrustAssureHint.tsx` - 新增安心留痕提示區塊組件（四情境通用）
-- [ ] 11.9 四情境邏輯實作（A: 登入+已開啟 / B: 登入+未開啟 / C: 未登入+已開啟 / D: 未登入+未開啟）
-- [ ] 11.10 `LineLinkPanel` / `CallConfirmPanel` / `BookingModal` 嵌入 `TrustAssureHint`
+- [x] 11.8 `TrustAssureHint.tsx` - 新增安心留痕提示區塊組件（四情境通用）
+- [x] 11.9 四情境邏輯實作（A: 登入+已開啟 / B: 登入+未開啟 / C: 未登入+已開啟 / D: 未登入+未開啟）
+- [x] 11.10 `LineLinkPanel` / `CallConfirmPanel` / `BookingModal` 嵌入 `TrustAssureHint`
 
 **C. 整合驗證**
-- [ ] 11.11 Mock 資料更新（`lineId` / `phone` / `trustEnabled`）
-- [ ] 11.12 追蹤事件驗證（含安心留痕勾選事件）
-- [ ] 11.13 `npm run gate` 通過
+- [x] 11.11 Mock 資料更新（`lineId` / `phone` / `trustEnabled`）
+- [x] 11.12 追蹤事件驗證（含安心留痕勾選事件）
+- [x] 11.13 `npm run gate` 通過
 
 #### Phase 11 問題說明
 
@@ -1555,8 +1555,8 @@ interface LineLinkPanelProps {
   /** 安心留痕相關 */
   isLoggedIn: boolean;
   trustEnabled: boolean;
-  propertyId: string;
-  agentId: string;
+  onTrustAction?: (checked: boolean) => Promise<void>;
+  onFallbackContact?: (trustChecked: boolean) => void;
 }
 ```
 
@@ -1614,8 +1614,8 @@ interface CallConfirmPanelProps {
   /** 安心留痕相關 */
   isLoggedIn: boolean;
   trustEnabled: boolean;
-  propertyId: string;
-  agentId: string;
+  onTrustAction?: (checked: boolean) => Promise<void>;
+  onFallbackContact?: (trustChecked: boolean) => void;
 }
 ```
 
@@ -1921,27 +1921,27 @@ export const DEFAULT_PROPERTY: PropertyData = {
 ### 11.17 驗收標準
 
 #### 三按鈕回歸本職
-- [ ] 點擊「加 LINE 聊聊」→ 開啟 `LineLinkPanel`（有 lineId 顯示開啟按鈕，無則 fallback 表單）
-- [ ] 點擊「致電諮詢」→ 開啟 `CallConfirmPanel`（有 phone 顯示撥打按鈕，無則 fallback 表單）
-- [ ] 點擊「預約看屋」→ 開啟 `BookingModal`（時段選擇器）
-- [ ] 三個按鈕不再導向同一個 ContactModal
-- [ ] 手機版行為與桌面版一致
+- [x] 點擊「加 LINE 聊聊」→ 開啟 `LineLinkPanel`（有 lineId 顯示開啟按鈕，無則 fallback 表單）
+- [x] 點擊「致電諮詢」→ 開啟 `CallConfirmPanel`（有 phone 顯示撥打按鈕，無則 fallback 表單）
+- [x] 點擊「預約看屋」→ 開啟 `BookingModal`（時段選擇器）
+- [x] 三個按鈕不再導向同一個 ContactModal
+- [x] 手機版行為與桌面版一致
 
 #### 安心留痕嵌入
-- [ ] 情境 A（登入+已開啟）：藍色提示，勾選後呼叫 `auto-create-case` 帶 userId
-- [ ] 情境 B（登入+未開啟）：琥珀色提示，勾選後呼叫 `requestEnable()`
-- [ ] 情境 C（未登入+已開啟）：藍色提示，勾選後呼叫 `auto-create-case` 不帶 userId
-- [ ] 情境 D（未登入+未開啟）：琥珀色提示，勾選後在 lead 中附帶要求
-- [ ] 三個面板（LINE / 電話 / 預約）都有 `TrustAssureHint`
-- [ ] checkbox 預設不勾選，用戶主動勾選才觸發
-- [ ] ContactModal 不再顯示假的「已建立安心留痕」文字
+- [x] 情境 A（登入+已開啟）：藍色提示，勾選後呼叫 `auto-create-case` 帶 userId
+- [x] 情境 B（登入+未開啟）：琥珀色提示，勾選後呼叫 `requestEnable()`
+- [x] 情境 C（未登入+已開啟）：藍色提示，勾選後呼叫 `auto-create-case` 不帶 userId
+- [x] 情境 D（未登入+未開啟）：琥珀色提示，勾選後在 lead 中附帶要求
+- [x] 三個面板（LINE / 電話 / 預約）都有 `TrustAssureHint`
+- [x] checkbox 預設不勾選，用戶主動勾選才觸發
+- [x] ContactModal 不再顯示假的「已建立安心留痕」文字
 
 #### 程式碼品質
-- [ ] `npm run typecheck` 通過
-- [ ] `npm run lint` 通過
-- [ ] 無 `any` 類型
-- [ ] 追蹤事件正常記錄（含安心留痕相關事件）
-- [ ] Mock 模式三按鈕功能正常
+- [x] `npm run typecheck` 通過
+- [x] `npm run lint` 通過
+- [x] 無 `any` 類型
+- [x] 追蹤事件正常記錄（含安心留痕相關事件）
+- [x] Mock 模式三按鈕功能正常
 
 ---
 
