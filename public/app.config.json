@@ -1,5 +1,5 @@
 {
-  "apiBaseUrl": "https://api.maihouses.com",
+  "apiBaseUrl": "https://maihouses.vercel.app",
   "appVersion": "1.0.7",
   "minBackend": "1.0.0",
   "features": {
