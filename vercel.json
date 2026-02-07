@@ -53,6 +53,10 @@
       "handle": "filesystem"
     },
     {
+      "src": "/maihouses/auth\\.html",
+      "dest": "/auth.html"
+    },
+    {
       "src": "/maihouses/?.*",
       "dest": "/index.html"
     },
