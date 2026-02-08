@@ -93,7 +93,7 @@ export const PropertyInfoCard = memo(function PropertyInfoCard({
       {/* 社會證明提示 - FOMO (#8 真實數據) */}
       <div className="mt-3 flex flex-wrap gap-2">
         {/* 熱門標記：trustEnabled && trustCasesCount >= 3 才顯示 */}
-        {socialProof.isHot && (
+        {trustEnabled && socialProof.isHot && (
           <div className="inline-flex animate-pulse items-center gap-1 rounded-full bg-orange-50 px-2 py-1 text-xs font-medium text-orange-600">
             <Flame size={12} />
             熱門物件

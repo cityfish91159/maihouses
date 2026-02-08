@@ -53,6 +53,19 @@ describe('MobileCTA', () => {
     expect(screen.queryByText(/組客戶已賞屋/)).not.toBeInTheDocument();
   });
 
+  it('trustEnabled=false 時不顯示提示文字', () => {
+    render(
+      <MobileCTA
+        onLineClick={vi.fn()}
+        onCallClick={vi.fn()}
+        socialProof={{ currentViewers: 5, trustCasesCount: 9, isHot: true }}
+        trustEnabled={false}
+      />
+    );
+
+    expect(screen.queryByText(/組客戶已賞屋/)).not.toBeInTheDocument();
+  });
+
   it('action lock 時雙按鈕應 disabled', () => {
     render(
       <MobileCTA

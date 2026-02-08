@@ -138,6 +138,18 @@ const renderWithClient = (ui: ReactElement) => {
   return render(<QueryClientProvider client={client}>{ui}</QueryClientProvider>);
 };
 
+const getPostRequestBodyByUrl = <TBody extends Record<string, unknown>>(url: string): TBody => {
+  const fetchMock = vi.mocked(fetch);
+  const matchedCall = fetchMock.mock.calls.find(
+    ([requestUrl, init]) =>
+      requestUrl === url && (init as { method?: string } | undefined)?.method === 'POST'
+  );
+
+  expect(matchedCall).toBeDefined();
+  const body = (matchedCall?.[1] as { body?: string } | undefined)?.body;
+  return JSON.parse(body ?? '{}') as TBody;
+};
+
 describe('PropertyDetailPage phase11 interactions', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -279,6 +291,12 @@ describe('PropertyDetailPage phase11 interactions', () => {
       '/api/trust/auto-create-case-public',
       expect.objectContaining({ method: 'POST' })
     );
+    const requestBody = getPostRequestBodyByUrl<{
+      propertyId?: string;
+      userId?: string;
+    }>('/api/trust/auto-create-case-public');
+    expect(requestBody.propertyId).toBe('MH-100001');
+    expect(requestBody.userId).toBe('user-1');
     expect(track).toHaveBeenCalledWith(
       'trust_assure_checked',
       expect.objectContaining({ scenario: 'A', panel: 'line' })
@@ -354,10 +372,10 @@ describe('PropertyDetailPage phase11 interactions', () => {
       '/api/trust/auto-create-case-public',
       expect.objectContaining({ method: 'POST' })
     );
-    const requestBody = JSON.parse(
-      (fetchMock.mock.calls[0]?.[1] as { body?: string })?.body ?? '{}'
-    ) as { propertyId?: string; userId?: string };
-
+    const requestBody = getPostRequestBodyByUrl<{
+      propertyId?: string;
+      userId?: string;
+    }>('/api/trust/auto-create-case-public');
     expect(requestBody.propertyId).toBe('MH-100001');
     expect(requestBody.userId).toBeUndefined();
     expect(track).toHaveBeenCalledWith(

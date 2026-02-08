@@ -69,6 +69,19 @@ describe('MobileActionBar', () => {
     expect(screen.queryByText('熱門')).not.toBeInTheDocument();
   });
 
+  it('trustEnabled=false 時即使 isHot=true 也不應顯示熱門標籤', () => {
+    render(
+      <MobileActionBar
+        onLineClick={vi.fn()}
+        onCallClick={vi.fn()}
+        socialProof={socialProof}
+        trustEnabled={false}
+      />
+    );
+
+    expect(screen.queryByText('熱門')).not.toBeInTheDocument();
+  });
+
   it('currentViewers=0 時應顯示 0 人瀏覽中', () => {
     render(
       <MobileActionBar

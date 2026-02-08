@@ -199,6 +199,8 @@ export const PropertyDetailPage: React.FC = () => {
   const closeLinePanel = useCallback(() => setLinePanelOpen(false), []);
   const closeCallPanel = useCallback(() => setCallPanelOpen(false), []);
 
+  const isTrustEnabled = property.trustEnabled ?? false;
+
   // #8 社會證明真實數據 — 正式版從 API 取得，Mock 保持假數據
   const { data: publicStats } = useQuery({
     queryKey: ['property-public-stats', property.publicId],
@@ -214,6 +216,12 @@ export const PropertyDetailPage: React.FC = () => {
     staleTime: 60_000, // 1 分鐘快取
   });
 
+  // 正式版瀏覽基準值：同一物件頁面保持穩定，避免重算導致數字抖動
+  const liveViewerBaseline = useMemo(
+    () => Math.floor(Math.random() * 16) + 3, // 3-18
+    [property.publicId]
+  );
+
   const socialProof = useMemo(() => {
     // Mock 版：基於 property.publicId 產生穩定的隨機數（完全不改）
     if (property.isDemo) {
@@ -226,20 +234,18 @@ export const PropertyDetailPage: React.FC = () => {
     }
 
     // 正式版：真實數據
-    const baseViewers = Math.floor(Math.random() * 16) + 3; // 亂數初始值 3-18
     const realViewCount = publicStats?.data?.view_count ?? 0;
     const trustCasesCount = publicStats?.data?.trust_cases_count ?? 0;
 
     return {
-      currentViewers: Math.max(baseViewers, realViewCount), // 顯示較大值
+      currentViewers: Math.max(liveViewerBaseline, realViewCount), // 顯示較大值
       trustCasesCount, // 真實案件數
-      isHot: trustCasesCount >= 3, // 3 組以上才算熱門
+      isHot: isTrustEnabled && trustCasesCount >= 3, // 需啟用安心留痕且 3 組以上才算熱門
     };
-  }, [property.isDemo, property.publicId, publicStats]);
+  }, [isTrustEnabled, liveViewerBaseline, property.isDemo, publicStats]);
 
   // 安心留痕服務操作
   const trustActions = useTrustActions(property.publicId);
-  const isTrustEnabled = property.trustEnabled ?? false;
 
   const handleEnterService = useCallback(async () => {
     if (isRequesting) return;

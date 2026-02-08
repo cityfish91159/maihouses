@@ -29,7 +29,7 @@
 
 ### 正式版專屬
 
-- [ ] **#8** [P0] 社會證明真實數據 — 瀏覽人數（uag_events）+ 賞屋組數（trust_cases）替換假數據
+- [x] **#8** [P0] 社會證明真實數據 — 瀏覽人數（uag_events）+ 賞屋組數（trust_cases）替換假數據 ✅ 2026-02-08
 - [x] **#10** [P0] 社區評價正式版 API 資料層修正 + Mock fallback（Mock fallback ✅ / 按鈕連結 ✅ / 正式版資料層待處理）
 
 ### 信任分 / 鼓勵數 / 評價系統
@@ -55,9 +55,13 @@
 
 - [ ] **#17** [P0] 移除詳情頁「生成報告」FAB + 「30秒回電」浮動按鈕 — 前端移除 + API `report/create.ts` `report/track.ts` 移除 + 路由 `/r/:id` 移除
 
+### 品牌體驗 / MaiMai 公仔
+
+- [ ] **#18** [P1] 詳情頁導入 MaiMai 公仔（A+C+D 組合）— 右欄情境陪伴 + Panel 歡迎語 + 載入/錯誤狀態替換
+
 ### Mock 版專屬
 
-- [ ] **#5** [P0] 詳情頁 DEFAULT_PROPERTY 填充完整 mock agent 資料
+- [x] **#5** [P0] 詳情頁 DEFAULT_PROPERTY 填充完整 mock agent 資料 ✅ 2026-02-08
 - [ ] **#6** [P0] UAG Header Mock 模式顯示使用者區塊與「個人資料」入口
 - [ ] **#7** [P0] Profile 頁面支援 Mock 模式（未登入可預覽 + 模擬編輯）
 

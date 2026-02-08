@@ -61,7 +61,7 @@ export const MobileActionBar = memo(function MobileActionBar({
           </span>
         )}
         {/* 熱門標記 — trustEnabled && trustCasesCount >= 3 才顯示 */}
-        {socialProof.isHot && (
+        {trustEnabled && socialProof.isHot && (
           <span className="flex items-center gap-1 font-medium text-orange-500">
             <Flame size={10} />
             熱門

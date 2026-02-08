@@ -17,7 +17,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import { logger } from '../lib/logger';
-import { apiResponse } from '../lib/apiResponse';
+import { API_ERROR_CODES, errorResponse, successResponse } from '../lib/apiResponse';
 import { cors } from '../lib/cors';
 
 // ============================================
@@ -54,12 +54,6 @@ interface PublicStatsData {
   trust_cases_count: number;
 }
 
-interface PublicStatsResponse {
-  success: boolean;
-  data?: PublicStatsData;
-  error?: string;
-}
-
 // ============================================
 // Main Handler
 // ============================================
@@ -76,7 +70,9 @@ export default async function handler(
 
   // 只接受 GET
   if (req.method !== 'GET') {
-    return apiResponse(res, 405, { error: 'Method not allowed' });
+    return res
+      .status(405)
+      .json(errorResponse(API_ERROR_CODES.METHOD_NOT_ALLOWED, 'Method not allowed'));
   }
 
   try {
@@ -87,10 +83,15 @@ export default async function handler(
         errors: result.error.errors,
         query: req.query,
       });
-      return apiResponse(res, 400, {
-        error: 'Invalid query parameters',
-        details: result.error.errors,
-      });
+      return res
+        .status(400)
+        .json(
+          errorResponse(
+            API_ERROR_CODES.INVALID_QUERY,
+            'Invalid query parameters',
+            result.error.errors
+          )
+        );
     }
 
     const { id: propertyId } = result.data;
@@ -107,10 +108,15 @@ export default async function handler(
         error: error.message,
         code: error.code,
       });
-      return apiResponse(res, 500, {
-        error: 'Failed to fetch property stats',
-        details: error.message,
-      });
+      return res
+        .status(500)
+        .json(
+          errorResponse(
+            API_ERROR_CODES.DATA_FETCH_FAILED,
+            'Failed to fetch property stats',
+            error.message
+          )
+        );
     }
 
     // RPC 回傳格式：{ view_count: number, trust_cases_count: number }
@@ -124,14 +130,11 @@ export default async function handler(
       stats,
     });
 
-    return apiResponse<PublicStatsResponse>(res, 200, {
-      success: true,
-      data: stats,
-    });
+    return res.status(200).json(successResponse(stats));
   } catch (err) {
     logger.error('[public-stats] Unexpected error', { error: err });
-    return apiResponse(res, 500, {
-      error: 'Internal server error',
-    });
+    return res
+      .status(500)
+      .json(errorResponse(API_ERROR_CODES.INTERNAL_ERROR, 'Internal server error'));
   }
 }
