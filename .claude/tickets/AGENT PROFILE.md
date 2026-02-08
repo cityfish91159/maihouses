@@ -23,9 +23,9 @@
 ### 正式版 + Mock 共通
 
 - [x] **#1** [P0] agentId fallback 修正 — 加入 `property.agent.id` 避免 Lead 寫成 'unknown'
-- [ ] **#2** [P0] 移除預約看屋 + 雙按鈕 UX 重構 — 三按鈕 → LINE + 致電雙按鈕，移除 BookingModal
+- [x] **#2** [P0] 移除預約看屋 + 雙按鈕 UX 重構 — 三按鈕 → LINE + 致電雙按鈕，移除 BookingModal ✅ 2026-02-08
 - [ ] **#3** [P1] createLead 補傳 preferredChannel 欄位
-- [ ] **#4** [P2] LINE 按鈕色統一（併入 #2）
+- [ ] **#4** [P2] LINE 按鈕色統一（併入 #2） ✅ 已完成於 #2
 
 ### 正式版專屬
 
@@ -175,13 +175,102 @@ const agentId = useMemo(() => {
 
 ### 驗收標準
 
-- [ ] BookingModal 相關檔案已刪除
-- [ ] AgentTrustCard 顯示 LINE + 致電雙按鈕，視覺美觀合理
-- [ ] MobileActionBar 底部欄兩按鈕，觸摸面積充足（>= 44px）
-- [ ] MobileCTA 首屏兩按鈕
-- [ ] VipModal 顯示 LINE + 致電，無預約按鈕
-- [ ] 所有 LINE 按鈕色統一使用 CSS variable（#4 合併完成）
-- [ ] typecheck + lint 通過
+- [x] BookingModal 相關檔案已刪除
+- [x] AgentTrustCard 顯示 LINE + 致電雙按鈕，視覺美觀合理
+- [x] MobileActionBar 底部欄兩按鈕，觸摸面積充足（>= 44px）
+- [x] MobileCTA 首屏兩按鈕
+- [x] VipModal 顯示 LINE + 致電，無預約按鈕
+- [x] 所有 LINE 按鈕色統一使用 CSS variable（#4 合併完成）
+- [x] typecheck + lint 通過
+
+### #2 施工紀錄 (2026-02-08)
+
+#### 修改檔案清單
+
+**UI 組件 (8 個檔案):**
+1. `src/components/AgentTrustCard.tsx`
+   - 移除 `onBookingClick` prop 與 `Calendar` import
+   - 三按鈕改為雙按鈕 full-width 布局
+   - LINE 按鈕：綠色 `#06C755` 主 CTA
+   - 致電按鈕：outline style 次 CTA (`border-brand-700`)
+   - 所有按鈕加入 `aria-label`、`min-h-[44px]`、`transition-colors duration-200`
+
+2. `src/components/PropertyDetail/MobileActionBar.tsx`
+   - 移除 `onBookingClick` prop 與 `Calendar` import
+   - 三按鈕改為雙按鈕（LINE + 致電）
+
+3. `src/components/PropertyDetail/MobileCTA.tsx`
+   - 移除 `onBookingClick` prop，改 `weeklyBookings` → `trustCasesCount`
+   - 文案「本物件 X 組預約中」→「本物件 X 組客戶已賞屋」
+   - `trustCasesCount=0` 時不顯示提示
+
+4. `src/components/PropertyDetail/VipModal.tsx`
+   - 移除 `onBookingClick` → 改為 `onCallClick`
+   - 「預約看屋」按鈕改為「致電諮詢」（Phone icon）
+
+5. `src/components/PropertyDetail/PropertyInfoCard.tsx`
+   - `socialProof.weeklyBookings` → `trustCasesCount`
+   - 文案「本週 X 組預約看屋」→「X 組客戶已賞屋」
+
+6. `src/components/PropertyDetail/index.ts`
+   - 移除 `BookingModal` export
+
+7. `src/pages/PropertyDetailPage.tsx`
+   - 移除 `bookingOpen`, `bookingSource` state
+   - 移除 `openBookingPanel`, `closeBookingPanel`, `handleBookingSubmit` handlers
+   - 移除 `handleAgentBookingClick`, `handleMobileBookingClick`, `handleVipBookingClick` callbacks
+   - 新增 `handleVipCallClick` callback
+   - `socialProof.weeklyBookings` → `trustCasesCount`
+   - 移除 `BookingModal` 渲染與相關 props 傳遞
+
+8. `src/pages/propertyDetail/PropertyDetailActionLayer.tsx`
+   - 移除 `BookingModal` import
+   - 移除 `BookingPanelLayerProps` interface
+   - 移除 `bookingPanel` prop 與相關使用
+   - `VipModal` 的 `onBookingClick` → `onCallClick`
+   - `MobileActionBar` 移除 `onBookingClick` prop
+   - `socialProof.weeklyBookings` → `trustCasesCount`
+
+**測試檔案 (5 個檔案):**
+1. `src/components/__tests__/AgentTrustCard.memo.test.tsx`
+   - 移除 `onBookingClick` mock
+   - 移除所有預約相關測試（「應該忽略 onBookingClick 回調函數引用變化」、「應該在沒有 onBookingClick 時點擊預約按鈕不報錯」等）
+   - 移除空的「預約看屋按鈕」測試 suite
+
+2. `src/components/PropertyDetail/__tests__/MobileCTA.test.tsx`
+   - 測試從三按鈕改為雙按鈕（移除預約相關測試）
+   - `weeklyBookings` → `trustCasesCount`
+   - 更新文案斷言
+
+3. `src/components/PropertyDetail/__tests__/MobileActionBar.test.tsx`
+   - 測試從三按鈕改為雙按鈕
+   - 移除 `onBookingClick` 相關測試
+
+4. `src/pages/__tests__/PropertyDetailPage.phase11.test.tsx`
+   - 移除「點擊側欄預約按鈕應開啟 BookingModal」測試
+
+5. `src/pages/__tests__/PropertyDetailPage.handlers.test.tsx`
+   - 移除「handleAgentBookingClick 應開啟 BookingModal」測試
+
+6. `src/pages/__tests__/PropertyDetailPage.optimization.test.tsx`
+   - 更新「父組件的 callback 應該正確傳遞給 AgentTrustCard」測試
+   - 移除 `agent-card-booking-button` 斷言，保留 LINE + 致電雙按鈕驗證
+
+#### 測試結果
+```
+✅ Test Files  138 passed (138)
+✅ Tests       1725 passed (1725)
+✅ TypeScript  通過
+✅ ESLint      通過
+```
+
+#### Commit
+```
+feat(PropertyDetail): 完成 Phase 11-A 三按鈕回歸雙按鈕 UX 重構
+
+19 files changed, 614 insertions(+), 378 deletions(-)
+Commit: e3c34f2e
+```
 
 ---
 
