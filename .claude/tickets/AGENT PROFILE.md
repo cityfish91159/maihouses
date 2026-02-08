@@ -20,50 +20,80 @@
 
 ## 實作進度總覽
 
-### 正式版 + Mock 共通
+> **設計原則：每個工單 ≤ 5 項施工內容**，確保 AI 能一次性完成不跳步。
+> 大工單已拆分為子工單（#9a-d、#19a-e、#20a-e），每個子工單獨立可交付。
 
-- [x] **#1** [P0] agentId fallback 修正 — 加入 `property.agent.id` 避免 Lead 寫成 'unknown'
-- [x] **#2** [P0] 移除預約看屋 + 雙按鈕 UX 重構 — 三按鈕 → LINE + 致電雙按鈕，移除 BookingModal ✅ 2026-02-08
-- [x] **#3** [P1] createLead 補傳 preferredChannel 欄位 ✅ 2026-02-08
-- [x] **#4** [P2] LINE 按鈕色統一（併入 #2） ✅ 已完成於 #2
+### 已完成 ✅
 
-### 正式版專屬
+- [x] **#1** [P0] agentId fallback 修正 — `property.agent.id` 避免 Lead 寫成 'unknown'
+- [x] **#2** [P0] 移除預約看屋 + 雙按鈕 UX 重構 ✅ 2026-02-08
+- [x] **#3** [P1] createLead 補傳 preferredChannel ✅ 2026-02-08
+- [x] **#4** [P2] LINE 按鈕色統一（併入 #2） ✅
+- [x] **#5** [P0] 詳情頁 DEFAULT_PROPERTY mock agent 資料 ✅ 2026-02-08
+- [x] **#6** [P0] UAG Header Mock 入口 ✅ 2026-02-08
+- [x] **#8** [P0] 社會證明真實數據 ✅ 2026-02-08
+- [x] **#10** [P0] 社區評價正式版 API 修正 + Mock fallback ✅
 
-- [x] **#8** [P0] 社會證明真實數據 — 瀏覽人數（uag_events）+ 賞屋組數（trust_cases）替換假數據 ✅ 2026-02-08
-- [x] **#10** [P0] 社區評價正式版 API 資料層修正 + Mock fallback（Mock fallback ✅ / 按鈕連結 ✅ / 正式版資料層待處理）
+### 待開發 — 功能移除（最優先）
 
-### 信任分 / 鼓勵數 / 評價系統
+- [ ] **#17** [P0] 移除「生成報告」FAB +「30秒回電」浮動按鈕（5 項：17-A~E）
 
-- [ ] **#12** [P1] 信任分 Tooltip 修正 + 績效指標 seed 校正 — 移除假拆分改說明型 Tooltip + DB 補齊 service_rating/review_count/completed_cases/joined_at
-- [ ] **#13** [P0] 房仲評價系統 — DB `agent_reviews` 建表 + 評價 API + Step 2 評價彈窗 + (32) 可點擊查看評價列表 + 自動計算 AVG
-- [ ] **#14** [P1] 獲得鼓勵系統 — 社區評價（兩好一公道）按讚 → 累積到 `agents.encouragement_count`
+### 待開發 — 信任分 / 評價 / 鼓勵
 
-### 經紀人認證 / 完成案件 / 店名
+- [ ] **#12** [P1] 信任分 Tooltip 修正 + seed 校正（2 項：12-A/B）
+- [ ] **#13** [P0] 房仲評價系統（5 項：13-A DB + 13-B API + 13-C/D 前端 + 13-E 整合）
+- [ ] **#14** [P1] 獲得鼓勵系統（4 項：14-A DB + 14-B API + 14-C/D 前端 + 14-E 整合）
 
-- [ ] **#15** [P0] 經紀人認證系統 + 完成案件自動累積 — DB 補 `license_number` / `is_verified` + 結案 Trigger 自動 +1 `completed_cases` + 前端條件式「已認證」+ 手機版同步
-- [ ] **#16** [P1] 店名開放編輯 — `company` 加入 `UpdateProfileSchema` + 前端 BasicInfoSection 移除 disabled
+### 待開發 — 經紀人認證 / 店名
 
-### Header / 品牌統一
+- [ ] **#15** [P0] 經紀人認證 + 完成案件累積（5 項：15-A DB + 15-B/C API + 15-D/E 前端）
+- [ ] **#16** [P1] 店名開放編輯（3 項：16-A API + 16-B 前端 + 16-C 類型）
 
-- [ ] **#11** [P1] 詳情頁 Header 品牌統一 — 統一使用 `<Logo>` 組件 + 返回按鈕功能 + 色彩 design token + 無障礙補強
+### 待開發 — Header / 品牌 / MaiMai
 
-### 手機版 UX 優化
+- [ ] **#11** [P1] 詳情頁 Header 品牌統一（4 項：11-A Logo + 11-B 返回 + 11-C token + 11-D a11y）
+- [ ] **#18** [P1] 詳情頁 MaiMai 公仔 A+C+D（3 項：18-A 右欄 + 18-B 歡迎語 + 18-C 狀態替換）
 
-- [ ] **#9** [P1] 手機版 UX 優化 — DetailPage 11 項 + UAG 12 項 + 跨頁面 3 項（共 26 項）
+### 待開發 — Mock 版
 
-### 功能移除
+- [x] **#7** [P0] Profile 頁 Mock 模式（3 項） ✅ 2026-02-08
 
-- [ ] **#17** [P0] 移除詳情頁「生成報告」FAB + 「30秒回電」浮動按鈕 — 前端移除 + API `report/create.ts` `report/track.ts` 移除 + 路由 `/r/:id` 移除
+### 待開發 — DetailPage 手機版 UX 修正（原 #9 拆分）
 
-### 品牌體驗 / MaiMai 公仔
+- [ ] **#9a** [P1] DetailPage A11y + 動畫修正（5 項：D3 VipModal focus trap + D4 VipModal 底部滑出 + D6 ActionBar ARIA + D7 CTA ARIA + D8 reduced-motion）
+- [ ] **#9b** [P1] DetailPage 排版 + 手勢修正（5 項：D5 社會證明 320px + D9 Panel 滑入動畫 + D10 金額字體 + D11 Gallery swipe + C3 iOS viewport）
 
-- [ ] **#18** [P1] 詳情頁導入 MaiMai 公仔（A+C+D 組合）— 右欄情境陪伴 + Panel 歡迎語 + 載入/錯誤狀態替換
+### 待開發 — UAG 手機版 UX 修正（原 #9 拆分）
 
-### Mock 版專屬
+- [ ] **#9c** [P1] UAG 觸控 + 排版修正（5 項：U1 Radar 觸控 + U2 z-index 統一 + U3 麵包屑溢出 + U4 字體過小 + U5 overscroll）
+- [ ] **#9d** [P1] UAG 列表 + Mock + 桌面版（3 項：U6 縮圖尺寸 + U10 Mock conversation_id + U12 桌面多列）
 
-- [x] **#5** [P0] 詳情頁 DEFAULT_PROPERTY 填充完整 mock agent 資料 ✅ 2026-02-08
-- [ ] **#6** [P0] UAG Header Mock 模式顯示使用者區塊與「個人資料」入口
-- [ ] **#7** [P0] Profile 頁面支援 Mock 模式（未登入可預覽 + 模擬編輯）
+### 待開發 — UAG Radar 泡泡強化（原 #19 拆分）
+
+- [ ] **#19a** [P0] Radar 泡泡手機版核心（5 項：R1 尺寸自適應 + R2 碰撞偏移 + R3 觸控擴展 + R4 標籤 Tooltip + R5 S 級光暈）
+- [ ] **#19b** [P1] Radar 進階效果（3 項：R6 選中展開 + R7 動態高度 + R8 篩選 Chips）
+
+### 待開發 — UAG 導航 + 佈局重設計（原 #19 拆分）
+
+- [ ] **#19c** [P0] UAG 底部 Tab + KPI 卡片（2 項：M1 Tab 導航 + M6 KPI 摘要列）
+- [ ] **#19d** [P1] UAG 卡片 + 互動升級（3 項：M3 ActionPanel Bottom Sheet + M4 Swipe-to-Action + M5 Glassmorphism）
+- [ ] **#19e** [P1] UAG 收合 + 微互動 + Loading（3 項：M7 可收合區塊 + M8 微互動 + M9 MaiMai Loading）
+
+### 待開發 — 詳情頁手機版現代化（新增 #20 拆分）
+
+- [ ] **#20a** [P0] Gallery 手勢 + 經紀人 Bottom Sheet（3 項：D1 Gallery swipe+skeleton + D2 AgentBottomSheet + D11 縮圖觸控擴大）
+- [ ] **#20b** [P0] 文本優化 + ActionBar 毛玻璃（3 項：D3 Description 展開全文 + D4 ActionBar 毛玻璃+滾動隱藏 + D9 Glassmorphism 統一）
+- [ ] **#20c** [P1] InfoCard + Specs 視覺升級（2 項：D5 InfoCard 資訊重組 + D6 Specs Bento Grid）
+- [ ] **#20d** [P1] 評論 + Panel + FAB 升級（3 項：D7 CommunityReviews SVG 星級 + D8 Panel 統一升級 + D10 FAB 重定位+漸層）
+- [ ] **#20e** [P2] 動畫 + 微互動精緻化（4 項：D12 價格動畫 + D13 Section 進場 + D14 VipModal 倒數 + D15 Banner Shield 動畫）
+
+### 已完成項快速驗證
+
+```bash
+npm run typecheck
+npm run lint
+npm test
+```
 
 ---
 
@@ -418,7 +448,7 @@ agent: {
   id: 'mock-agent-001',
   internalCode: 88001,
   name: '陳小明',
-  avatarUrl: '',
+  avatarUrl: 'https://via.placeholder.com/150',
   company: '邁房子',
   trustScore: 87,
   encouragementCount: 23,
@@ -433,9 +463,17 @@ agent: {
 
 ### 驗收標準
 
-- [ ] `/maihouses/property/MH-100001` AgentTrustCard 顯示「陳小明」+ 完整數據
-- [ ] 點「加 LINE 聊聊」→ LineLinkPanel 顯示 LINE ID（非 fallback）
-- [ ] 點「致電諮詢」→ CallConfirmPanel 顯示電話號碼（非 fallback）
+- [x] `/maihouses/property/MH-100001` AgentTrustCard 顯示「陳小明」+ 完整數據 ✅ 2026-02-08
+- [x] 點「加 LINE 聊聊」→ LineLinkPanel 顯示 LINE ID（非 fallback） ✅ 2026-02-08
+- [x] 點「致電諮詢」→ CallConfirmPanel 顯示電話號碼（非 fallback） ✅ 2026-02-08
+
+### 驗證命令（可重複）
+
+```bash
+npm run test:agent-profile-5
+npm run typecheck
+npm run check:utf8
+```
 
 ---
 
@@ -452,14 +490,16 @@ Mock 模式下 `user` 為 null → 整個使用者區塊消失 → 找不到「�
 | 檔案 | 改動 |
 |------|------|
 | `UAGHeader.tsx` | 新增 `useMock` prop，條件改為 `{(user \|\| useMock) && ...}` |
-| `UAGHeader.tsx` | Mock 模式下顯示假名字「陳小明」+ 導向 `/maihouses/uag/profile?mock=true` |
+| `UAGHeader.tsx` | Mock 模式下顯示假名字「游杰倫」+ 導向 `/maihouses/uag/profile?mock=true` |
+| `UAGHeader.tsx` | Mock（未登入）模式下隱藏無效「登出」操作，避免誤點 |
 | `src/pages/UAG/index.tsx` | 將 `useMock` 傳入 `<UAGHeader>` |
+| `src/pages/UAG/components/UAGHeader.test.tsx` | 補齊 Mock 專屬測試（顯示區塊、個資導向、隱藏登出） |
 
 ### 驗收標準
 
-- [ ] Mock 模式右上角可看到使用者頭像 + 下拉選單含「個人資料」
-- [ ] 點擊導向 Profile 頁面（帶 mock 參數）
-- [ ] 正式模式行為不變
+- [x] Mock 模式右上角可看到使用者頭像 + 下拉選單含「個人資料」 ✅ 2026-02-08
+- [x] 點擊導向 Profile 頁面（帶 mock 參數） ✅ 2026-02-08
+- [x] 正式模式行為不變 ✅ 2026-02-08
 
 ---
 
@@ -747,37 +787,13 @@ const socialProof = useMemo(() => {
 
 ---
 
-## #9 [P1] 手機版 UX 優化（DetailPage + UAG + 跨頁面）
+## #9a [P1] DetailPage A11y + 動畫修正（5 項）
 
 ### 來源
 
-根據 `/ui-ux-pro-max` 的 `ux-guidelines.csv` 規範逐項審核，比對 DetailPage 與 UAG 手機版呈現。
+根據 `/ui-ux-pro-max` 的 `ux-guidelines.csv` 規範審核 DetailPage 手機版無障礙與動畫問題。
 
----
-
-### DetailPage 手機版優化（D1-D11）
-
-#### D1. `animate-bounce` 過度動畫
-
-**檔案：** `src/pages/PropertyDetailPage.tsx` L649-654
-**規範引用：** ux-guidelines #7（連續動畫 ≤ 5 秒）、#12（動畫不干擾閱讀）
-
-**問題：** 浮動「30秒回電」按鈕使用 `animate-bounce` 無限循環，手機上持續跳動分散注意力。
-
-**修復方案：**
-- 改為 `animate-bounce` 只播 3 次後停止（`animation-iteration-count: 3`）
-- 或改為 hover/focus 時才 bounce
-
-#### D2. 浮動按鈕與 MobileActionBar 重疊
-
-**檔案：** `src/pages/PropertyDetailPage.tsx` L649（`fixed bottom-6 right-4`）
-**規範引用：** ux-guidelines #17（fixed 定位衝突）
-
-**問題：** 浮動「30秒回電」按鈕 `bottom-6`（24px）與 MobileActionBar `fixed bottom-0` 重疊，行動裝置上互相遮擋。
-
-**修復方案：**
-- 浮動按鈕 `bottom` 改為 `bottom-20`（80px），確保在 ActionBar 上方
-- 或在 MobileActionBar 可見時隱藏浮動按鈕
+> **注意：** 原 #9 D1（animate-bounce）和 D2（浮動按鈕重疊）已被 **#17 移除生成報告+30秒回電** 解決，不再需要處理。
 
 #### D3. VipModal 缺少 focus trap
 
@@ -800,16 +816,6 @@ const socialProof = useMemo(() => {
 
 **修復方案：**
 - 手機版改為 `items-end`（底部滑出），與 LineLinkPanel / CallConfirmPanel 一致
-
-#### D5. 社會證明區 320px 窄螢幕溢出
-
-**檔案：** `src/components/PropertyDetail/PropertyInfoCard.tsx` L86-101
-**規範引用：** ux-guidelines #6（320px 最小寬度支援）
-
-**問題：** 瀏覽人數 + 賞屋組數兩個 badge 在 320px 窄螢幕可能擠壓換行。
-
-**修復方案：**
-- 外層 `flex gap-2` 加入 `flex-wrap`，允許窄螢幕自動換行
 
 #### D6. MobileActionBar 缺少 ARIA label
 
@@ -839,6 +845,29 @@ const socialProof = useMemo(() => {
 **修復方案：**
 - Tailwind 加入 `motion-reduce:animate-none` 到有動畫的元素
 - 或全域 CSS 加入 `@media (prefers-reduced-motion: reduce) { .animate-bounce { animation: none; } }`
+
+### 驗收標準
+
+- [ ] D3: VipModal 有 focus trap + 正確 ARIA 屬性
+- [ ] D4: VipModal 手機版從底部滑出
+- [ ] D6: MobileActionBar 按鈕有 `aria-label`
+- [ ] D7: MobileCTA 按鈕有 `aria-label`
+- [ ] D8: `prefers-reduced-motion` 時動畫停止
+- [ ] typecheck + lint 通過
+
+---
+
+## #9b [P1] DetailPage 排版 + 手勢修正（5 項：D5 + D9 + D10 + D11 + C3）
+
+#### D5. 社會證明區 320px 窄螢幕溢出
+
+**檔案：** `src/components/PropertyDetail/PropertyInfoCard.tsx` L86-101
+**規範引用：** ux-guidelines #6（320px 最小寬度支援）
+
+**問題：** 瀏覽人數 + 賞屋組數兩個 badge 在 320px 窄螢幕可能擠壓換行。
+
+**修復方案：**
+- 外層 `flex gap-2` 加入 `flex-wrap`，允許窄螢幕自動換行
 
 #### D9. LineLinkPanel / CallConfirmPanel 缺少滑入動畫
 
@@ -871,9 +900,30 @@ const socialProof = useMemo(() => {
 **修復方案：**
 - 加入 touch event handler（`touchstart` / `touchmove` / `touchend`）支援左右滑動切換
 
+#### C3. iOS viewport 100vh 問題
+
+**涉及檔案：** 全站 Modal / 固定欄
+**規範引用：** ux-guidelines #17（iOS viewport）
+
+**問題：** iOS Safari 的 `100vh` 包含地址欄高度，可能導致固定欄超出實際可視區域。
+
+**修復方案：**
+- 改用 `100dvh`（dynamic viewport height）或 `min-height: -webkit-fill-available`
+
+### 驗收標準
+
+- [ ] D5: 社會證明區 320px `flex-wrap` 不溢出
+- [ ] D9: Panel 有滑入動畫（200ms）
+- [ ] D10: 手機版金額副標題 `text-sm` 可讀
+- [ ] D11: Gallery 支援 swipe 手勢
+- [ ] C3: iOS viewport 使用 `dvh`
+- [ ] typecheck + lint 通過
+
 ---
 
-### UAG 手機版優化（U1-U12）
+## #9c [P1] UAG 觸控 + 排版修正（5 項）
+
+> **注意：** 原 #9 U7（Footer safe area）已被 **#19c-M1 底部 Tab 導航** 取代。U9（Agent Bar 擠壓）已被 **#19c-M6 KPI 卡片列** 升級。U8/U11（按鈕觸控）已被 **#19d-M4 Swipe-to-Action** 升級。
 
 #### U1. RadarCluster 觸控目標太小
 
@@ -926,6 +976,19 @@ const socialProof = useMemo(() => {
 **修復方案：**
 - 主容器加 `overscroll-behavior: contain`
 
+### 驗收標準
+
+- [ ] U1: RadarCluster 數據點觸控目標 ≥ 44px
+- [ ] U2: z-index 統一使用 Tailwind scale 或常數檔
+- [ ] U3: 麵包屑 320px 不溢出
+- [ ] U4: Agent bar 字體手機版 ≥ 12px
+- [ ] U5: 有 `overscroll-behavior: contain`
+- [ ] typecheck + lint 通過
+
+---
+
+## #9d [P1] UAG 列表 + Mock + 桌面版修正（3 項）
+
 #### U6. Listing 縮圖尺寸優化
 
 **檔案：** `src/pages/UAG/components/ListingFeed.tsx`
@@ -936,62 +999,11 @@ const socialProof = useMemo(() => {
 **修復方案：**
 - 手機版縮圖改為 `80x80`（`size-16` → `size-20`）
 
-#### U7. Footer 固定欄手機安全區
-
-**檔案：** `src/pages/UAG/UAG.module.css` L1322-1354
-**規範引用：** ux-guidelines #17（iOS safe area）
-
-**問題：** UAG 底部固定欄沒有考慮 iOS safe area inset，可能被 Home Indicator 遮擋。
-
-**修復方案：**
-- 加入 `padding-bottom: env(safe-area-inset-bottom, 0)` 或 Tailwind `pb-safe`
-
-#### U8. AssetMonitor 卡片觸控改進
-
-**檔案：** `src/pages/UAG/components/AssetMonitor.tsx`
-**規範引用：** ux-guidelines #22（觸控目標 ≥ 44px）
-
-**問題：** 手機版 AssetMonitor 表格轉卡片模式，行動按鈕（查看、編輯）可能小於 44px。
-
-**修復方案：**
-- 確保行動按鈕 `min-height: 44px`
-
-#### U9. Agent Bar 超窄屏（<480px）統計數據擠壓
-
-**檔案：** `src/pages/UAG/UAG.module.css` L95-148（`.agent-bar` + `.agent-bar-stats`）
-**規範引用：** ux-guidelines #22（觸控目標 ≥ 44px）、#67（手機可讀性）、#65（320/375/414px 斷點測試）、react.csv #14（避免 inline style）
-
-**問題：** Agent Bar 的統計數據（信任分 / 帶看 / 成交 / 鼓勵）在 375px 窄屏上全部擠在一行。每個數據區塊只有約 60px 寬度，11px 字體 + 標籤文字嚴重擠壓，觸控交互困難。CSS 只有 `@media (max-width: 1024px)` 斷點，**缺少 `<480px` 超窄屏專用處理**。
-
-**實際擠壓情況（375px 模擬）：**
-```
-|👤 游杰倫|◀ 12345 ⚡92 🚶45 ✔️8 |
-```
-
-**修復方案：**
-```css
-/* src/pages/UAG/UAG.module.css */
-@media (max-width: 480px) {
-  .agent-bar {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
-  }
-  .agent-bar-stats {
-    flex-wrap: wrap;
-    gap: 8px 12px;
-    width: 100%;
-  }
-  .agent-bar-stat {
-    min-width: 60px;  /* 確保每個統計區塊最小寬度 */
-  }
-}
-```
-
-**UI/UX Pro Max 檢查：**
-- ux-guidelines #65：需在 320px、375px、414px 三個斷點都測試通過
-- ux-guidelines #67：手機端字體最小 12px（`text-xs`），目前 11px 不合規
-- ux-guidelines #22：統計數據若有觸控交互（Tooltip），需 ≥ 44px touch target
+> **已取代項（不需處理）：**
+> - ~~U7 Footer safe area~~ → 被 #19c-M1 底部 Tab 導航取代
+> - ~~U8 AssetMonitor 觸控~~ → 被 #19d-M4 Swipe-to-Action 升級
+> - ~~U9 Agent Bar 擠壓~~ → 被 #19c-M6 KPI 卡片列升級
+> - ~~U11 Monitor Table 按鈕~~ → 被 #19d-M4 Swipe-to-Action 升級
 
 #### U10. Mock Lead A-6600 `conversation_id` 缺失
 
@@ -1032,41 +1044,6 @@ const socialProof = useMemo(() => {
 - Mock 與 Live 的資料結構必須完全一致，避免只在 Mock 出現的 undefined edge case
 - ux-guidelines #33：如果 `conversation_id` 為空導致操作按鈕異常，需顯示清楚錯誤訊息
 
-#### U11. Monitor Table 手機端按鈕觸控目標不足 44px
-
-**檔案：** `src/pages/UAG/UAG.module.css` L915-930（`.monitor-table` 手機版卡片轉換）
-**檔案：** `src/pages/UAG/components/AssetMonitor.tsx`（操作按鈕區）
-**規範引用：** ux-guidelines #22（觸控目標 ≥ 44px）、#23（相鄰觸控間距 ≥ 8px）、react.csv #15（組件職責清晰）
-
-**問題：** AssetMonitor 在 `<768px` 下隱藏表頭轉為卡片式，但卡片內的操作按鈕（「發送訊息」「查看聊天」「查看報告」）：
-1. 按鈕高度未強制 `min-height: 44px`
-2. 按鈕之間間距可能 < 8px
-3. 在 375px 窄屏上，多個按鈕擠在一行導致觸控誤觸
-
-**修復方案：**
-```css
-/* src/pages/UAG/UAG.module.css */
-@media (max-width: 768px) {
-  .monitor-card-actions {
-    display: flex;
-    flex-direction: column;  /* 改為垂直排列 */
-    gap: 8px;                /* 按鈕間距 ≥ 8px */
-    width: 100%;
-  }
-  .monitor-card-actions button {
-    min-height: 44px;        /* 觸控目標 ≥ 44px */
-    width: 100%;             /* 全寬按鈕 */
-    justify-content: center;
-  }
-}
-```
-
-**UI/UX Pro Max 檢查：**
-- ux-guidelines #22：所有按鈕 `min-height: 44px`（High severity）
-- ux-guidelines #23：相鄰按鈕 `gap ≥ 8px`（Medium severity）
-- ux-guidelines #71：手機表格必須用 `overflow-x-auto` 或卡片式（已符合）
-- ux-guidelines #30：按鈕需有 `active:scale-[0.98]` 回饋
-
 #### U12. Desktop 版本未利用寬屏多列排列
 
 **檔案：** `src/pages/UAG/UAG.module.css` L374-379（grid layout）
@@ -1103,69 +1080,16 @@ const socialProof = useMemo(() => {
 - ux-guidelines #73：文字行長度控制（Medium severity）
 - products.csv `dashboard` 類型建議：資訊面板應利用網格並排展示，減少垂直滾動
 
----
-
-### 跨頁面共通優化（C1-C3）
-
-#### C1. LINE 品牌色硬編碼殘留
-
-**涉及檔案：** 多處
-**規範引用：** ux-guidelines #15（一致性）
-
-**問題：** 部分地方仍用硬編碼 `bg-[#06C755]`，部分已改用 CSS variable `--line-brand-green`。
-
-**修復方案：**
-- 全站統一使用 `constants.ts` 的 `LINE_BRAND_GREEN` + CSS variable
-
-#### C2. Modal 背景 backdrop 不一致
-
-**涉及檔案：** VipModal / LineLinkPanel / CallConfirmPanel
-**規範引用：** ux-guidelines #15（一致性）
-
-**問題：** LineLinkPanel 用 `bg-black/50 backdrop-blur-sm`，VipModal 用 `bg-black/60`，不一致。
-
-**修復方案：**
-- 統一為 `bg-black/50 backdrop-blur-sm`
-
-#### C3. iOS viewport 100vh 問題
-
-**涉及檔案：** 全站 Modal / 固定欄
-**規範引用：** ux-guidelines #17（iOS viewport）
-
-**問題：** iOS Safari 的 `100vh` 包含地址欄高度，可能導致固定欄超出實際可視區域。
-
-**修復方案：**
-- 改用 `100dvh`（dynamic viewport height）或 `min-height: -webkit-fill-available`
-
----
+> **跨頁面共通項已分散至對應子工單：**
+> - ~~C1 LINE 品牌色~~ → 已在 #2 中統一（`LINE_BRAND_GREEN` 常數 + CSS variable）
+> - ~~C2 Modal backdrop~~ → 併入 #20d-D8（Panel 統一升級）
+> - C3 iOS viewport → 併入 #9b
 
 ### 驗收標準
 
-- [ ] D1: 浮動按鈕動畫不超過 3 次循環
-- [ ] D2: 浮動按鈕不與 MobileActionBar 重疊
-- [ ] D3: VipModal 有 focus trap + 正確 ARIA 屬性
-- [ ] D4: VipModal 手機版從底部滑出
-- [ ] D5: 社會證明 badge 在 320px 不溢出
-- [ ] D6-D7: 所有 CTA 按鈕有 `aria-label`
-- [ ] D8: `prefers-reduced-motion` 時動畫停止
-- [ ] D9: Panel 有滑入動畫（200ms）
-- [ ] D10: 手機版金額副標題可讀
-- [ ] D11: 圖片 gallery 支援 swipe 手勢
-- [ ] U1: RadarCluster 數據點觸控目標 ≥ 44px
-- [ ] U2: z-index 統一管理
-- [ ] U3: 麵包屑 320px 不溢出
-- [ ] U4: Agent bar 字體手機版 ≥ 12px
-- [ ] U5: 有 `overscroll-behavior: contain`
 - [ ] U6: Listing 縮圖手機版 80px
-- [ ] U7: Footer 有 iOS safe area 處理
-- [ ] U8: AssetMonitor 按鈕 ≥ 44px
-- [ ] U9: Agent Bar 在 375px/320px 統計數據不擠壓（flex-wrap 換行）
-- [ ] U10: Mock Lead A-6600 補齊 `conversation_id`，與 Live 模式結構一致
-- [ ] U11: Monitor Table 手機版操作按鈕 ≥ 44px + 垂直排列 + 間距 ≥ 8px
-- [ ] U12: Desktop ≥ 1280px 時 ActionPanel/AssetMonitor 並排、ListingFeed/TrustFlow 並排
-- [ ] C1: LINE 色全站統一 CSS variable
-- [ ] C2: Modal backdrop 統一
-- [ ] C3: iOS viewport 使用 `dvh`
+- [ ] U10: Mock Lead A-6600 補齊 `conversation_id`
+- [ ] U12: Desktop ≥ 1280px 時組件並排
 - [ ] typecheck + lint 通過
 
 ---
@@ -2848,106 +2772,1530 @@ company: payload.company,
 
 ---
 
-## 依賴關係
+## #18 [P1] 詳情頁導入 MaiMai 公仔（A+C+D 組合）
+
+### 問題分析
+
+| 項目 | 現狀 | 問題 |
+|------|------|------|
+| 品牌辨識度 | 詳情頁無 MaiMai 公仔 | 首頁、登入頁、TrustRoom 都有吉祥物互動，詳情頁缺乏品牌溫度 |
+| 右欄空白 | 桌面版 AgentTrustCard 下方空白 | 浪費高價值側欄空間 |
+| 載入體驗 | 使用 Skeleton 骨架屏 + Spinner | 無人格化的等待體驗，用戶焦慮感較高 |
+| 錯誤體驗 | ErrorBoundary 純文字提示 | 冰冷的錯誤訊息，缺乏品牌安撫 |
+| Panel 開啟 | LineLinkPanel / CallConfirmPanel 純功能 | 首次開啟無歡迎語，少了親切引導 |
+
+### 設計方案
+
+**批准方案：A + C + D 組合**
+
+| 子項 | 名稱 | 說明 | 位置 |
+|------|------|------|------|
+| **18-A** | 右欄情境陪伴 | 在 AgentTrustCard 下方加入 MaiMai 公仔，根據頁面狀態切換心情 | 桌面版右欄（lg 以上） |
+| **18-B** | Panel 歡迎語 | LineLinkPanel / CallConfirmPanel 開啟時顯示 MaiMai + 對話氣泡 | Panel 頂部 |
+| **18-C** | 載入/錯誤狀態替換 | 用 MaiMai 公仔取代冰冷的 Spinner / ErrorBoundary 文字 | 頁面級載入/錯誤 |
+
+### 18-A. 右欄情境陪伴（PropertyDetailMaiMai）
+
+**位置：** 桌面版 `PropertyDetailPage.tsx` 右欄，AgentTrustCard 下方
+
+**心情對應表：**
+
+| 頁面狀態 | MaiMai 心情 | 對話氣泡文案 |
+|----------|------------|-------------|
+| 正常瀏覽 | `idle` | 「嗨～歡迎看屋！有問題可以問我喔」 |
+| 社會證明 isHot | `excited` | 「這間好搶手！已經有 {n} 組在看了」 |
+| trustEnabled = true | `happy` | 「這位房仲有開啟安心留痕，交易更有保障」 |
+| 用戶 hover AgentTrustCard | `wave` | 「想聯絡房仲嗎？點上方按鈕就可以囉」 |
+| 頁面閒置 30 秒 | `thinking` | 「還在考慮嗎？可以加 LINE 先聊聊看」 |
+
+**Props Interface：**
+
+```typescript
+// src/components/PropertyDetail/PropertyDetailMaiMai.tsx（新增）
+interface PropertyDetailMaiMaiProps {
+  trustEnabled: boolean;
+  isHot: boolean;
+  trustCasesCount: number;
+  agentName: string;
+}
+```
+
+**實作要點：**
+- 使用 `MaiMaiBase` + `MaiMaiSpeech` 組合
+- 尺寸：`sm`（80px），不搶 AgentTrustCard 視覺焦點
+- 心情由 `useMaiMaiMood` hook 管理（`externalMood` 依據狀態切換）
+- 閒置偵測用 `useEffect` + `setTimeout`（30 秒無操作）
+- `prefers-reduced-motion` 時禁用動畫（ux-guidelines #9）
+- 手機版（< lg）**不顯示**此組件，避免佔用有限空間
+
+**桌面版佈局（lg 以上）：**
 
 ```
-#1 agentId fallback 修正（獨立，最優先）
+┌─────────────────────────────┬─────────────────┐
+│ 圖片、描述、評價…           │ AgentTrustCard   │
+│                             │ ───────────────  │
+│                             │ [MaiMai sm]      │
+│                             │  💬 對話氣泡     │
+│                             │                  │
+└─────────────────────────────┴─────────────────┘
+```
 
-#2 移除預約看屋 + 雙按鈕 UX 重構（獨立，含 #4 LINE 色統一）
+**手機版（< lg）：不渲染 — 使用 `className="hidden lg:block"`**
 
-#8 社會證明真實數據（獨立，但建議在 #2 之後做，因為 #2 會改動同樣的組件）
-  ├─ 8-A DB migration（最先）
-  ├─ 8-B API 端點（依賴 8-A）
-  └─ 8-C/D/E/F 前端整合（依賴 8-B）
+> 手機版 MaiMai 已由 Header 吉祥物提供品牌辨識，右欄場景不適合手機佈局。
+> ux-guidelines #67: 手機版字體 ≥ 14px、ux-guidelines #22: 觸控 ≥ 44px 均不受影響（不渲染）。
 
-#5 詳情頁 mock agent（獨立，最快見效）
-      │
-#6 UAG Header mock 入口（獨立）
+### 18-B. Panel 歡迎語
+
+**修改檔案：**
+- `src/components/PropertyDetail/LineLinkPanel.tsx`
+- `src/components/PropertyDetail/CallConfirmPanel.tsx`
+
+**設計：** Panel 開啟時，頂部顯示 MaiMai `xs`（48px）+ 單句歡迎語
+
+**歡迎語對應表：**
+
+| Panel | MaiMai 心情 | 歡迎語 |
+|-------|------------|--------|
+| LineLinkPanel（有 lineId） | `wave` | 「加 LINE 直接聊，回覆最快喔！」 |
+| LineLinkPanel（無 lineId → fallback） | `thinking` | 「房仲還沒設定 LINE，用表單留言吧」 |
+| CallConfirmPanel（有 phone） | `happy` | 「撥打電話前確認一下～」 |
+| CallConfirmPanel（無 phone → fallback） | `thinking` | 「房仲還沒設定電話，用表單留言吧」 |
+
+**新增 Props：** 無需新增 Props — MaiMai 歡迎語是 Panel 內部渲染，根據已有 `agentLineId` / `agentPhone` 判斷
+
+**JSX 範例（LineLinkPanel 內部頂部）：**
+
+```tsx
+{/* MaiMai 歡迎語 — ux-guidelines #7 animation 150-300ms */}
+<div className="mb-4 flex items-center gap-3">
+  <MaiMaiBase
+    mood={agentLineId ? 'wave' : 'thinking'}
+    size="xs"
+    animated={!prefersReducedMotion}
+  />
+  <p className="text-sm text-slate-600">
+    {agentLineId
+      ? '加 LINE 直接聊，回覆最快喔！'
+      : '房仲還沒設定 LINE，用表單留言吧'}
+  </p>
+</div>
+```
+
+**手機版考量：**
+- Panel 本身是 Modal / Bottom Sheet，已有手機版佈局
+- MaiMai `xs`（48px）高度 + gap-3 ≈ 60px 額外高度，不影響 Panel 可見區域
+- 觸控目標不受影響（MaiMai 是純展示，非互動元素）
+- ux-guidelines #22: 觸控 ≥ 44px — Panel 按鈕本身已符合
+- ux-guidelines #7: 動畫 150-300ms — `animate-in fade-in duration-200`
+
+### 18-C. 載入/錯誤狀態替換
+
+**修改檔案：** `src/pages/PropertyDetailPage.tsx`
+
+**載入狀態替換：**
+
+| 現狀 | 替換後 |
+|------|--------|
+| `<SkeletonScreen />` + Spinner 文字 | MaiMai `md`（128px）`thinking` 心情 + 「正在幫你找房子資訊…」 |
+
+```tsx
+// 載入中狀態
+if (isLoading) {
+  return (
+    <div className="flex min-h-[50vh] flex-col items-center justify-center gap-4">
+      <MaiMaiBase mood="thinking" size="md" animated={!prefersReducedMotion} />
+      <p className="text-base text-slate-600">正在幫你找房子資訊…</p>
+    </div>
+  );
+}
+```
+
+**錯誤狀態替換：**
+
+| 現狀 | 替換後 |
+|------|--------|
+| 純文字 `ErrorBoundary` / 「載入失敗」 | MaiMai `md`（128px）`shy` 心情 + 「哎呀！找不到這個物件…」+ 重試按鈕 |
+
+```tsx
+// 錯誤狀態
+if (error) {
+  return (
+    <div className="flex min-h-[50vh] flex-col items-center justify-center gap-4">
+      <MaiMaiBase mood="shy" size="md" animated={!prefersReducedMotion} />
+      <p className="text-base text-slate-600">哎呀！找不到這個物件…</p>
+      <button
+        onClick={handleRetry}
+        className="min-h-[44px] rounded-xl bg-brand-700 px-6 py-2.5 text-sm font-medium text-white transition-colors duration-200 hover:bg-brand-600 motion-reduce:transition-none"
+      >
+        再試一次
+      </button>
+    </div>
+  );
+}
+```
+
+**手機版考量：**
+- 載入/錯誤為全頁面級，手機/桌面都會顯示
+- `md` 尺寸（128px）在手機端不會超出螢幕（最小 320px 寬）
+- `min-h-[50vh]` 確保垂直居中
+- 重試按鈕 `min-h-[44px]` 符合 ux-guidelines #22 觸控目標
+- `motion-reduce:transition-none` 符合 ux-guidelines #9 `prefers-reduced-motion`
+- ux-guidelines #67: `text-base`（16px）確保手機可讀性
+
+### UX 規範合規表
+
+| 規範 | 編號 | 合規說明 |
+|------|------|---------|
+| 動畫 150-300ms | ux-guidelines #7 | MaiMai `animated` prop + `duration-200` class |
+| prefers-reduced-motion | ux-guidelines #9 | 所有 MaiMai 實例檢查 `prefersReducedMotion`，搭配 `motion-reduce:transition-none` |
+| 觸控目標 ≥ 44px | ux-guidelines #22 | 重試按鈕 `min-h-[44px]`，MaiMai 本身為純展示非互動 |
+| 手機優先 | ux-guidelines #23 | 18-A 手機版不渲染，18-B/C 手機版已合規 |
+| 品牌一致性 | ux-guidelines #73 | 使用統一 MaiMai 系統組件，不另造新公仔 |
+| 文案可讀性 | ux-guidelines #67 | 所有文字 ≥ 14px（`text-sm` = 14px, `text-base` = 16px） |
+| 無障礙 aria | ux-guidelines #33 | `MaiMaiSpeech` 自帶 `role="status"` + `aria-live="polite"` |
+| React memo | react.csv #1 | `PropertyDetailMaiMai` 使用 `memo()` 包裝 |
+| useCallback 穩定引用 | react.csv #2 | 心情切換邏輯放 `useMaiMaiMood` hook 內部 |
+| 避免 God Component | react.csv #7 | MaiMai 邏輯抽為獨立 `PropertyDetailMaiMai` 組件 |
+| ErrorBoundary | react.csv #4 | 18-C 錯誤狀態本身就是 ErrorBoundary 的 fallback |
+| 產品調性 | products.csv #38 | Real Estate: Trust Blue + Gold accents — MaiMai 不改動品牌色，和諧融入 |
+
+### Mock 模式處理
+
+| 元素 | Mock 行為 | 正式版行為 |
+|------|----------|-----------|
+| 18-A 右欄 MaiMai | 顯示，`isHot=true`，`trustEnabled=true` | 顯示，依據真實資料 |
+| 18-B Panel 歡迎語 | 顯示，根據 Mock agent lineId/phone 判斷 | 顯示，根據真實 agent 資料判斷 |
+| 18-C 載入狀態 MaiMai | 不易見（Mock 資料秒回） | 顯示 `thinking` 心情 |
+| 18-C 錯誤狀態 MaiMai | 可透過 DevTools 強制觸發 | 顯示 `shy` 心情 + 重試按鈕 |
+
+### 涉及檔案清單
+
+| 層級 | 檔案 | 操作 | 說明 |
+|------|------|------|------|
+| 組件 | `src/components/PropertyDetail/PropertyDetailMaiMai.tsx` | **新增** | 右欄 MaiMai 情境陪伴組件 |
+| 組件 | `src/components/PropertyDetail/LineLinkPanel.tsx` | 修改 | 頂部加入 MaiMai xs 歡迎語 |
+| 組件 | `src/components/PropertyDetail/CallConfirmPanel.tsx` | 修改 | 頂部加入 MaiMai xs 歡迎語 |
+| 頁面 | `src/pages/PropertyDetailPage.tsx` | 修改 | 右欄插入 PropertyDetailMaiMai + 載入/錯誤狀態替換 |
+| 組件 | `src/components/PropertyDetail/index.ts` | 修改 | export PropertyDetailMaiMai |
+
+**保留不動：**
+| 檔案 | 原因 |
+|------|------|
+| `src/components/MaiMai/*` | MaiMai 核心系統不修改 |
+| `src/context/MaiMaiContext.tsx` | 全站心情 Context 不修改 |
+| `src/components/Header/Header.tsx` | Header MaiMai 獨立，不受影響 |
+
+### 追蹤事件
+
+| 事件名 | 觸發時機 | payload |
+|--------|---------|---------|
+| `maimai_property_mood` | MaiMai 心情切換時 | `{ mood, trigger, propertyId }` |
+| `maimai_panel_welcome` | Panel 開啟顯示歡迎語時 | `{ panelType: 'line' \| 'call', hasContact: boolean }` |
+
+### 驗收標準
+
+- [ ] 桌面版（≥ 1024px）右欄 AgentTrustCard 下方顯示 MaiMai sm 公仔 + 對話氣泡
+- [ ] 手機版（< 1024px）右欄 MaiMai **不顯示**
+- [ ] MaiMai 心情根據 `trustEnabled` / `isHot` / 閒置時間正確切換
+- [ ] LineLinkPanel 開啟時頂部顯示 MaiMai xs + 歡迎語（有/無 lineId 文案不同）
+- [ ] CallConfirmPanel 開啟時頂部顯示 MaiMai xs + 歡迎語（有/無 phone 文案不同）
+- [ ] 載入中顯示 MaiMai `thinking` + 「正在幫你找房子資訊…」
+- [ ] 錯誤時顯示 MaiMai `shy` + 「哎呀！找不到這個物件…」+ 重試按鈕
+- [ ] 重試按鈕 `min-h-[44px]`（ux-guidelines #22）
+- [ ] `prefers-reduced-motion` 下所有 MaiMai 動畫停止（ux-guidelines #9）
+- [ ] Mock 頁面（`/maihouses/property/MH-100001`）正常顯示
+- [ ] typecheck + lint 通過
+
+---
+
+## #19c [P0] UAG 底部 Tab + KPI 卡片列（2 項：M1 + M6）
+
+### 問題分析（#19 共用）
+
+| 項目 | 現狀 | 問題 |
+|------|------|------|
+| 頁面導航 | Footer 按鈕列 `flex-wrap`，按鈕 padding 4px | 觸控不足 44px，多行跳動，功能入口隱藏在最底部 |
+| Agent Bar 統計 | 4 個統計擠一行，11px 字體 | 375px 窄屏不可讀，觸控困難 |
+| Radar 泡泡 | 絕對 px 尺寸（60-120px），無碰撞檢測 | 手機 320px 容器泡泡嚴重碰撞重疊 |
+| 泡泡標籤 | `bottom: -24px` 常駐 | 底部泡泡標籤被 `overflow: hidden` 裁切 |
+| 泡泡選中 | `translateY(-4px)` + 藍邊框 | 視覺反饋太弱，不確定選了哪個 |
+| 購買慾望 | S/A/B/C/F 只有顏色差異 | S 級缺少「搶手感」視覺暗示 |
+| 卡片風格 | 實色白底 + 灰邊框 | 缺乏視覺層次和現代感 |
+| 操作按鈕 | AssetMonitor 按鈕佔卡片大量空間 | 窄屏觸控不足 44px |
+| 互動反饋 | 僅 `hover:bg-xxx` | 缺少按下/成功/失敗的即時回饋 |
+| 載入狀態 | 灰色骨架屏 | 缺乏品牌辨識度 |
+| 頁面長度 | 所有組件垂直堆疊 | 手機需滾動 5+ 屏 |
+| ActionPanel | 需向下滾動才能看到 | 選中泡泡後流程斷裂 |
+
+### 設計方案總覽
+
+| 子項 | 名稱 | 類型 | 優先級 |
+|------|------|------|--------|
+| **M1** | 底部 Tab 導航 | 架構級 | P0 |
+| **M3** | ActionPanel → Bottom Sheet | 架構級 | P1 |
+| **M4** | AssetMonitor Swipe-to-Action | 互動升級 | P1 |
+| **M5** | Glassmorphism 卡片風格 | 視覺升級 | P1 |
+| **M6** | KPI 摘要卡片列 | 架構級 | P0 |
+| **M7** | 可收合區塊 | 架構級 | P1 |
+| **M8** | 微互動升級 | 互動升級 | P1 |
+| **M9** | MaiMai Loading | 品牌體驗 | P2 |
+| **R1** | 泡泡尺寸自適應 | Radar 強化 | P0 |
+| **R2** | 簡易碰撞偏移 | Radar 強化 | P0 |
+| **R3** | 觸控擴展區 | Radar 強化 | P0 |
+| **R4** | 標籤改 Tooltip | Radar 強化 | P1 |
+| **R5** | S 級脈衝光暈 | 購買慾強化 | P1 |
+| **R6** | 選中展開效果 | Radar 強化 | P1 |
+| **R7** | 容器動態高度 | Radar 優化 | P2 |
+| **R8** | 等級篩選 Chips | Radar 強化 | P2 |
+
+---
+
+### 19-M1. [P0] 底部 Tab 導航（取代 Footer 按鈕列）
+
+**現狀檔案：** `src/pages/UAG/components/UAGFooter.tsx` + `UAG.module.css` L1322-1377
+**規範引用：** ux-guidelines #17（iOS safe area）、#22（觸控 ≥ 44px）、products.csv SaaS Dashboard
+
+**問題：** Footer 用 `flex-wrap` 塞了「方案設定」「加值點數」「點數徽章」，手機版按鈕 `padding: 4px 10px` 遠小於 44px，可能多行跳動撐高 footer。
+
+**方案：** 手機版（<768px）改為 iOS/Android 風格 Tab Bar
+
+```
+┌─────────────────────────────────────┐
+│  🏠 概覽  │  👥 商機  │  📊 監控  │  ⚙️ 設定  │
+└─────────────────────────────────────┘
+```
+
+**Tab 對應：**
+
+| Tab | 內容 | 原組件 |
+|-----|------|--------|
+| 概覽 | RadarCluster + ActionPanel | 主頁預設 Tab |
+| 商機 | ListingFeed（房源 + 社區牆） | 原 k-span-3 x2 |
+| 監控 | AssetMonitor + TrustFlow | 原 k-span-6 |
+| 設定 | 方案設定 + 加值點數 + Profile 入口 | 原 Footer 按鈕 |
+
+**設計規格：**
+
+```tsx
+// 新增 src/pages/UAG/components/UAGTabBar.tsx
+interface UAGTabBarProps {
+  activeTab: 'overview' | 'leads' | 'monitor' | 'settings';
+  onTabChange: (tab: UAGTabBarProps['activeTab']) => void;
+}
+```
+
+```css
+/* 手機版 Tab Bar */
+.uag-tab-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  display: flex;
+  justify-content: space-around;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-top: 1px solid rgba(226, 232, 240, 0.6);
+  padding-bottom: env(safe-area-inset-bottom, 0);  /* iOS safe area */
+}
+.uag-tab-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 52px;      /* ≥ 44px 觸控目標 */
+  gap: 2px;
+  font-size: 10px;
+  color: var(--ink-300);
+  transition: color 200ms;
+}
+.uag-tab-item.active {
+  color: var(--uag-brand);
+}
+.uag-tab-indicator {
+  position: absolute;
+  top: 0;
+  height: 2px;
+  background: var(--uag-brand);
+  border-radius: 0 0 2px 2px;
+  transition: left 200ms, width 200ms;
+}
+
+/* 桌面版：隱藏 Tab Bar，保留原 Footer */
+@media (min-width: 768px) {
+  .uag-tab-bar { display: none; }
+}
+```
+
+**影響：** 手機版不再是 5 屏垂直滾動，而是 4 個 Tab 各 1-2 屏。
+
+> **#19c 包含 M1（上方）+ M6（下方 L3336 處）。完成後做 #19d。**
+
+---
+
+## #19d [P1] UAG 卡片 + 互動升級（3 項：M3 + M4 + M5）
+
+### 19-M3. [P1] ActionPanel → Bottom Sheet
+
+**現狀檔案：** `src/pages/UAG/components/ActionPanel.tsx` + `UAG.module.css` L724-880
+**規範引用：** ux-guidelines #30（手勢互動）、#7（動畫 150-300ms）、#9（prefers-reduced-motion）
+
+**問題：** 點擊 Radar 泡泡後，用戶需向下滾動才能看到 ActionPanel 的客戶詳情和購買按鈕，流程斷裂。
+
+**方案：** 手機版選中泡泡時，ActionPanel 以 Bottom Sheet 從底部滑出
+
+**設計規格：**
+
+```tsx
+// 新增 src/pages/UAG/components/ActionBottomSheet.tsx
+interface ActionBottomSheetProps {
+  lead: Lead | null;        // null = 關閉
+  onClose: () => void;
+  onPurchase: (lead: Lead) => void;
+  onConfirm: () => void;
+  onCancel: () => void;
+  isPurchasing: boolean;
+}
+```
+
+```css
+/* Bottom Sheet 基礎 */
+.action-sheet-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 40;
+  opacity: 0;
+  transition: opacity 250ms;
+}
+.action-sheet-overlay.open { opacity: 1; }
+
+.action-sheet {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 45;
+  background: white;
+  border-radius: 16px 16px 0 0;
+  max-height: 85vh;
+  transform: translateY(100%);
+  transition: transform 300ms cubic-bezier(0.32, 0.72, 0, 1);
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+.action-sheet.open { transform: translateY(0); }
+
+/* Drag handle */
+.action-sheet-handle {
+  width: 48px;
+  height: 5px;
+  border-radius: 3px;
+  background: #d1d5db;
+  margin: 8px auto 16px;
+}
+
+/* CTA 黏在底部 */
+.action-sheet-cta {
+  position: sticky;
+  bottom: 0;
+  padding: 16px;
+  background: white;
+  border-top: 1px solid #e5e7eb;
+}
+
+/* 桌面版：不使用 Bottom Sheet */
+@media (min-width: 768px) {
+  .action-sheet-overlay,
+  .action-sheet { display: none; }
+}
+
+/* prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  .action-sheet,
+  .action-sheet-overlay { transition: none; }
+}
+```
+
+**互動流程：** 點擊泡泡 → Sheet 從底部滑出（50vh）→ 可上拉到 85vh → CTA 始終可見 → 下拉關閉
+
+---
+
+### 19-M4. [P1] AssetMonitor Swipe-to-Action
+
+**現狀檔案：** `src/pages/UAG/components/AssetMonitor.tsx` + `UAG.module.css` L881-1024
+**規範引用：** ux-guidelines #22（觸控 ≥ 44px）、#23（間距 ≥ 8px）、#30（手勢互動）
+
+**問題：** AssetMonitor 卡片化已做得好，但操作按鈕（發送訊息/查看聊天/查看報告）佔卡片大量空間，窄屏上可能 < 44px。
+
+**方案：** 手機版卡片左滑顯示操作按鈕
+
+```
+正常狀態：
+┌────────────────────────────────┐
+│  [S] 買家 S-9999                │
+│  保護期：2天14小時               │
+│  ████████░░ 72%                │
+│  狀態：已聯繫                    │
+└────────────────────────────────┘
+
+← 左滑後：
+┌──────────────────────┬──────────┐
+│  [S] 買家 S-9999      │  💬      │
+│  保護期：2天14小時      │  發訊息  │
+│  ████████░░ 72%       │──────────│
+│  狀態：已聯繫           │  📋      │
+│                       │  報告    │
+└──────────────────────┴──────────┘
+```
+
+**設計規格：**
+
+```css
+/* Swipe-to-Action 容器 */
+.monitor-card-swipe {
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;  /* 隱藏捲軸 */
+}
+.monitor-card-swipe::-webkit-scrollbar { display: none; }
+
+.monitor-card-content {
+  scroll-snap-align: start;
+  flex-shrink: 0;
+  width: 100%;
+}
+.monitor-card-actions-hidden {
+  scroll-snap-align: end;
+  flex-shrink: 0;
+  width: 80px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.monitor-card-actions-hidden button {
+  min-height: 44px;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 首次提示 */
+.swipe-hint {
+  animation: hintSlide 1.5s ease-out;
+  animation-delay: 1s;
+  animation-fill-mode: forwards;
+}
+@keyframes hintSlide {
+  0% { transform: translateX(0); }
+  30% { transform: translateX(-30px); }
+  100% { transform: translateX(0); }
+}
+```
+
+---
+
+### 19-M5. [P1] Glassmorphism 卡片風格升級
+
+**現狀檔案：** `src/pages/UAG/UAG.module.css` L454-535（`.uag-card`）
+**規範引用：** styles.csv Glassmorphism、products.csv #38 Real Estate Trust Blue
+
+**問題：** 現有卡片 `background: #fff` + `border: 1px solid var(--line-soft)`，缺乏視覺層次。
+
+**方案：** 核心卡片改為玻璃質感
+
+```css
+/* Glassmorphism 基礎 */
+.uag-card {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(15, 23, 42, 0.08);
+  transition: box-shadow 200ms, background 200ms;
+}
+.uag-card:hover {
+  box-shadow: 0 12px 40px rgba(15, 23, 42, 0.12);
+  background: rgba(255, 255, 255, 0.85);
+}
+
+/* 頁面底色改為淡灰藍漸層 */
+.uag-container {
+  background: linear-gradient(135deg, #f8fafc 0%, #eef2ff 50%, #f0f9ff 100%);
+}
+
+/* 等級色帶（卡片左邊框） */
+.uag-card[data-grade='S'] { border-left: 3px solid var(--grade-s); }
+.uag-card[data-grade='A'] { border-left: 3px solid var(--grade-a); }
+.uag-card[data-grade='B'] { border-left: 3px solid var(--grade-b); }
+```
+
+**效果：** 頁面底色漸層 + 玻璃卡片浮在上方，現代感立即提升。
+
+### #19d 驗收標準
+
+- [ ] M3: 手機版選中泡泡後 ActionPanel 以 Bottom Sheet 滑出
+- [ ] M4: AssetMonitor 手機版支援左滑顯示操作按鈕
+- [ ] M5: 核心卡片改為 Glassmorphism 風格
+- [ ] typecheck + lint 通過
+
+---
+
+## #19c（續）— 19-M6. [P0] KPI 摘要卡片列（取代 Agent Bar 擠壓）
+
+### 19-M6. [P0] KPI 摘要卡片列（取代 Agent Bar 擠壓）
+
+**現狀檔案：** `src/pages/UAG/components/UAGHeader.tsx` L206-227（Agent Bar stats）
+**規範引用：** ux-guidelines #22（觸控 ≥ 44px）、#67（手機可讀性）、products.csv SaaS Dashboard
+
+**問題：** Agent Bar 的統計在 375px 窄屏上 4 個數據擠一行，11px 字體不可讀（U9 問題的升級版解法）。
+
+**方案：** 手機版改為 2x2 KPI Grid 卡片
+
+```
+┌───────────────┬───────────────┐
+│  ⭐ 92        │  🚶 45        │
+│  信任分        │  帶看組數      │
+├───────────────┼───────────────┤
+│  ✅ 8         │  💪 152       │
+│  成交案件      │  獲得鼓勵      │
+└───────────────┴───────────────┘
+```
+
+**設計規格：**
+
+```tsx
+// 修改 src/pages/UAG/components/UAGHeader.tsx
+// 手機版 Agent Bar stats 區域
+<div className="grid grid-cols-2 gap-2 lg:hidden">
+  {stats.map(stat => (
+    <div
+      key={stat.label}
+      className="flex flex-col items-center justify-center rounded-xl px-3 py-2"
+      style={{ background: stat.bgColor, minHeight: '56px' }}
+    >
+      <span className="text-2xl font-bold tabular-nums" style={{ color: stat.color }}>
+        {stat.value}
+      </span>
+      <span className="text-xs text-slate-500">{stat.label}</span>
+    </div>
+  ))}
+</div>
+
+// 桌面版保持現有橫向排列
+<div className="hidden lg:flex gap-6">
+  {/* 現有 stat items 不變 */}
+</div>
+```
+
+**KPI 色彩：**
+
+| 統計 | 底色 | 數字色 |
+|------|------|--------|
+| 信任分 | `bg-blue-50` | `text-blue-700` |
+| 帶看組數 | `bg-green-50` | `text-green-700` |
+| 成交案件 | `bg-amber-50` | `text-amber-700` |
+| 獲得鼓勵 | `bg-purple-50` | `text-purple-700` |
+
+**效果：** 每格 56px 高 >> 44px 觸控；數字 24px >> 11px 可讀性；取代 U9 的 flex-wrap 修補方案。
+
+### #19c 驗收標準
+
+- [ ] M1: 手機版底部 Tab Bar 切換 4 個 Tab
+- [ ] M1: 桌面版（≥768px）隱藏 Tab Bar
+- [ ] M6: 手機版 KPI 2x2 Grid，數字 ≥ 24px
+- [ ] typecheck + lint 通過
+
+---
+
+## #19e [P1] UAG 收合 + 微互動 + Loading（3 項：M7 + M8 + M9）
+
+### 19-M7. [P1] 可收合區塊（Collapsible Sections）
+
+**現狀檔案：** `src/pages/UAG/index.tsx`（主頁面 Grid 佈局）
+**規範引用：** ux-guidelines #7（動畫 150-300ms）、#9（prefers-reduced-motion）
+
+**問題：** 手機版 5+ 屏垂直滾動，用戶無法快速定位。
+
+**方案：** ListingFeed、TrustFlow 等次要區塊改為可收合手風琴（搭配 M1 Tab 導航時，在各 Tab 內部使用）
+
+```css
+/* 收合/展開 */
+.collapsible-header {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  cursor: pointer;
+}
+.collapsible-body {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 300ms ease-out;
+}
+.collapsible-body.expanded {
+  max-height: 2000px;  /* 足夠大的值 */
+}
+.collapsible-chevron {
+  transition: transform 200ms;
+}
+.collapsible-chevron.expanded {
+  transform: rotate(180deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .collapsible-body { transition: none; }
+  .collapsible-chevron { transition: none; }
+}
+```
+
+**localStorage 記憶：** `uag-collapsed-sections` key 儲存 `{ listingFeed: false, trustFlow: true }` 展開狀態。
+
+---
+
+### 19-M8. [P1] 微互動升級
+
+**現狀檔案：** 全 UAG 組件
+**規範引用：** ux-guidelines #7（150-300ms）、#30（視覺回饋）、#9（prefers-reduced-motion）
+
+**方案：** 全局加入以下微互動
+
+| 場景 | 動效 | CSS |
+|------|------|-----|
+| 按鈕按下 | scale 縮小 | `active:scale-[0.97] transition-transform duration-100` |
+| 購買成功 | 脈衝 + 綠勾 | `animate-ping` 0.5s 後消失 + confetti |
+| 購買失敗 | 紅色搖晃 | `animate-shake`（自訂 3 次左右搖晃 0.3s） |
+| 卡片載入 | 骨架屏脈衝 | `animate-pulse bg-slate-200/60` |
+| 資料更新 | 數字跳動 | `transition: all 300ms` 數字滑動到新值 |
+| Tab 切換 | 指示器滑動 | `transition-[left,width] duration-200` |
+
+```css
+/* 搖晃動畫 */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+.animate-shake { animation: shake 0.3s ease-in-out; }
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-shake { animation: none; }
+}
+```
+
+---
+
+### 19-M9. [P2] MaiMai Loading 狀態
+
+**現狀檔案：** `src/pages/UAG/components/UAGLoadingSkeleton.tsx`
+**規範引用：** ux-guidelines #73（品牌一致性）、products.csv #38 Real Estate
+
+**方案：** 手機版 UAG 載入改為 MaiMai `thinking` + 品牌化進度條
+
+```tsx
+<div className="flex min-h-[60vh] flex-col items-center justify-center gap-4">
+  <MaiMaiBase mood="thinking" size="md" animated={!prefersReducedMotion} />
+  <p className="text-base text-slate-600">正在載入你的商機資料...</p>
+  <div className="h-1 w-48 overflow-hidden rounded-full bg-slate-100">
+    <div className="h-full animate-[loading_1.5s_ease-in-out_infinite] rounded-full bg-brand-500" />
+  </div>
+</div>
+```
+
+### #19e 驗收標準
+
+- [ ] M7: 次要區塊可收合/展開，localStorage 記憶
+- [ ] M8: 按鈕 `active:scale-[0.97]`，購買 confetti，失敗搖晃
+- [ ] M9: 手機版載入改為 MaiMai thinking + 品牌進度條
+- [ ] typecheck + lint 通過
+
+---
+
+## #19a [P0] Radar 泡泡手機版核心（5 項：R1 + R2 + R3 + R4 + R5）
+
+### 19-R1. [P0] Radar 泡泡尺寸自適應
+
+**現狀檔案：** `src/pages/UAG/components/RadarCluster.tsx` L139-148
+**規範引用：** ux-guidelines #65（320/375/414px 測試）、#22（觸控目標）
+
+**問題：** 泡泡固定 px（S=120 A=100 B=90 C=80 F=60），320px 容器內一個 S 級就佔 37.5% 寬。
+
+**方案：** 手機版等比縮放 60%
+
+```typescript
+// RadarCluster.tsx — 新增 containerWidth 感知
+const isMobile = containerWidth < 768;
+const sizeMap: Record<string, number> = isMobile
+  ? { S: 72, A: 60, B: 54, C: 48, F: 40 }
+  : { S: 120, A: 100, B: 90, C: 80, F: 60 };
+const size = sizeMap[lead.grade] ?? (isMobile ? 40 : 60);
+```
+
+**實作要點：** 用 `useRef` + `ResizeObserver` 取得容器寬度，或簡單用 `window.innerWidth` + resize listener。
+
+---
+
+### 19-R2. [P0] 簡易碰撞偏移
+
+**現狀檔案：** `src/pages/UAG/components/RadarCluster.tsx` L136-148（泡泡定位）
+**規範引用：** ux-guidelines #22（觸控 ≥ 44px — 重疊泡泡無法獨立點擊）
+
+**問題：** 12 個泡泡 x/y 百分比定位，手機縮小後互相遮擋。
+
+**方案：** 渲染前 O(n²) 迭代 3 次推開重疊泡泡
+
+```typescript
+// 新增 src/pages/UAG/utils/resolveOverlap.ts
+export function resolveOverlap(
+  bubbles: { x: number; y: number; size: number }[],
+  containerW: number,
+  containerH: number,
+  padding: number = 4
+): { x: number; y: number }[] {
+  const resolved = bubbles.map(b => ({
+    x: (b.x / 100) * containerW,
+    y: (b.y / 100) * containerH,
+  }));
+
+  for (let iter = 0; iter < 3; iter++) {
+    for (let i = 0; i < resolved.length; i++) {
+      for (let j = i + 1; j < resolved.length; j++) {
+        const dx = resolved[j].x - resolved[i].x;
+        const dy = resolved[j].y - resolved[i].y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        const minDist = (bubbles[i].size + bubbles[j].size) / 2 + padding;
+
+        if (dist < minDist && dist > 0) {
+          const overlap = (minDist - dist) / 2;
+          const nx = dx / dist;
+          const ny = dy / dist;
+          resolved[i].x -= nx * overlap;
+          resolved[i].y -= ny * overlap;
+          resolved[j].x += nx * overlap;
+          resolved[j].y += ny * overlap;
+        }
+      }
+    }
+  }
+
+  // 邊界約束
+  for (const pos of resolved) {
+    pos.x = Math.max(30, Math.min(containerW - 30, pos.x));
+    pos.y = Math.max(30, Math.min(containerH - 30, pos.y));
+  }
+
+  return resolved;
+}
+```
+
+**效果：** 泡泡保持原始大致區域，但不再重疊，每個可獨立點擊。
+
+---
+
+### 19-R3. [P0] 觸控擴展區
+
+**現狀檔案：** `src/pages/UAG/UAG.module.css` L616-642（`.uag-bubble`）
+**規範引用：** ux-guidelines #22（觸控 ≥ 44px）
+
+**問題：** F 級手機版縮到 40px，低於 44px 標準，但視覺不能放大（等級差異是核心）。
+
+**方案：** 透明 `::after` 偽元素擴展觸控區域
+
+```css
+.uag-bubble::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  min-width: 48px;
+  min-height: 48px;
+  border-radius: 50%;
+}
+```
+
+**效果：** F 級視覺 40px（保持等級差異），觸控 48px（合規 ux-guidelines #22）。
+
+---
+
+### 19-R4. [P1] 手機版標籤改 Tooltip
+
+**現狀檔案：** `src/pages/UAG/UAG.module.css` L681-694（`.uag-bubble-label`）
+**規範引用：** ux-guidelines #33（資訊不被裁切）
+
+**問題：** `.uag-bubble-label` 在 `bottom: -24px`，底部泡泡標籤被容器 `overflow: hidden` 裁切。
+
+**方案：** 手機版隱藏常駐標籤，點擊後從上方彈出
+
+```css
+@media (max-width: 768px) {
+  .uag-bubble-label {
+    display: none;
+  }
+  .uag-bubble:focus .uag-bubble-label,
+  .uag-bubble.selected .uag-bubble-label {
+    display: block;
+    bottom: auto;
+    top: -28px;
+    z-index: 30;
+    animation: fadeIn 200ms ease-out;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(4px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+```
+
+---
+
+### 19-R5. [P1] S 級脈衝光暈（強化購買慾望）
+
+**現狀檔案：** `src/pages/UAG/UAG.module.css` L643-663（`.uag-bubble[data-grade]`）
+**規範引用：** ux-guidelines #9（prefers-reduced-motion）、styles.csv（微互動回饋）
+
+**方案：** S 級金色脈衝 + A 級藍色脈衝
+
+```css
+/* S 級：金色脈衝 — 「搶手感」 */
+.uag-bubble[data-grade='S'] {
+  animation:
+    float var(--float) ease-in-out infinite,
+    s-pulse 2s ease-in-out infinite;
+}
+@keyframes s-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); }
+  50% { box-shadow: 0 0 0 12px rgba(245, 158, 11, 0); }
+}
+
+/* A 級：藍色脈衝（較弱） */
+.uag-bubble[data-grade='A'] {
+  animation:
+    float var(--float) ease-in-out infinite,
+    a-pulse 3s ease-in-out infinite;
+}
+@keyframes a-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.3); }
+  50% { box-shadow: 0 0 0 8px rgba(59, 130, 246, 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .uag-bubble[data-grade='S'],
+  .uag-bubble[data-grade='A'] {
+    animation: none;
+  }
+}
+```
+
+**購買心理：** 金色呼吸光暈 =「黃金商機正在跳動，不搶就沒了」。
+
+### #19a 驗收標準
+
+- [ ] R1: 手機版泡泡等比縮放（S:72 A:60 B:54 C:48 F:40）
+- [ ] R2: 12 個泡泡在 320px 容器不重疊
+- [ ] R3: F 級泡泡觸控區域 ≥ 48px
+- [ ] R4: 手機版標籤隱藏，選中後彈出 Tooltip
+- [ ] R5: S 級有金色脈衝光暈，A 級有藍色脈衝
+- [ ] typecheck + lint 通過
+
+---
+
+## #19b [P1] Radar 進階效果（3 項：R6 + R7 + R8）
+
+### 19-R6. [P1] 選中泡泡展開效果
+
+**現狀檔案：** `src/pages/UAG/UAG.module.css` L636-642（`.uag-bubble:hover/.selected`）
+**規範引用：** ux-guidelines #7（250ms 動畫）、#30（視覺回饋）
+
+**問題：** 選中只有 `translateY(-4px)`，視覺反饋太弱。
+
+**方案：** 選中泡泡放大彈出 + 其他泡泡退場
+
+```css
+/* 選中泡泡：彈性放大 */
+.uag-bubble.selected {
+  transform: scale(1.15) translateY(-4px);
+  z-index: 30;
+  box-shadow: 0 16px 40px rgba(59, 130, 246, 0.35);
+  border-color: var(--uag-brand);
+  transition: all 250ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* 未選中泡泡：退場 */
+.uag-cluster.has-selection .uag-bubble:not(.selected) {
+  opacity: 0.4;
+  filter: grayscale(30%);
+  transform: scale(0.92);
+  transition: all 250ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .uag-bubble.selected,
+  .uag-cluster.has-selection .uag-bubble:not(.selected) {
+    transition: none;
+  }
+}
+```
+
+**JS 配合：** 選中時在 `.uag-cluster` 加 `has-selection` class。
+
+---
+
+### 19-R7. [P2] Radar 容器動態高度
+
+**現狀檔案：** `src/pages/UAG/components/RadarCluster.tsx` L70（`minHeight: '450px'`）
+**規範引用：** ux-guidelines #65（空間效率）
+
+**方案：** 根據泡泡數量動態調整
+
+```typescript
+const containerHeight = useMemo(() => {
+  const count = liveLeads.length;
+  if (isMobile) {
+    if (count <= 3) return 240;
+    if (count <= 8) return 320;
+    return 380;
+  }
+  return 450; // 桌面版不變
+}, [liveLeads.length, isMobile]);
+```
+
+---
+
+### 19-R8. [P2] 等級篩選 Chips
+
+**現狀檔案：** `src/pages/UAG/components/RadarCluster.tsx`（新增區域）
+**規範引用：** ux-guidelines #22（觸控 ≥ 44px）、#30（篩選回饋）
+
+**方案：** Radar 頂部加等級篩選 Chip 列
+
+```tsx
+// RadarCluster 內部新增
+<div className="mb-3 flex flex-wrap gap-2">
+  {(['all', 'S', 'A', 'B', 'C', 'F'] as const).map(grade => {
+    const count = grade === 'all'
+      ? liveLeads.length
+      : liveLeads.filter(l => l.grade === grade).length;
+    if (grade !== 'all' && count === 0) return null;
+    return (
+      <button
+        key={grade}
+        onClick={() => setGradeFilter(grade)}
+        className={`min-h-[32px] rounded-full px-3 text-xs font-bold transition-colors duration-200
+          ${activeGrade === grade
+            ? 'bg-[var(--grade-' + grade.toLowerCase() + ')] text-white'
+            : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+          }`}
+      >
+        {grade === 'all' ? '全部' : grade} {count}
+      </button>
+    );
+  })}
+</div>
+```
+
+**篩選行為：** 點 S chip → 非 S 泡泡 `opacity: 0.15 scale(0.8) pointer-events: none`。
+**飢餓行銷：** chip 顯示數量（如 `S 4`）= 「還有 4 個 S 級等你搶」。
+
+---
+
+### UX 規範合規總表
+
+| 規範 | 編號 | 涵蓋項目 |
+|------|------|---------|
+| 觸控 ≥ 44px | ux-guidelines #22 | M1 Tab、M4 操作按鈕、M6 KPI 卡片、R1+R3 泡泡 |
+| 動畫 150-300ms | ux-guidelines #7 | M3 Sheet 300ms、M8 微互動、R5 脈衝、R6 展開 |
+| prefers-reduced-motion | ux-guidelines #9 | M3、M7、M8、R5、R6 全部有 reduce 媒體查詢 |
+| iOS safe area | ux-guidelines #17 | M1 Tab Bar `pb-safe`、M3 Sheet `env(safe-area-inset-bottom)` |
+| 320/375/414px 測試 | ux-guidelines #65 | R1 尺寸自適應、M6 KPI 2x2 Grid |
+| 手勢互動 | ux-guidelines #30 | M3 上下拉、M4 左滑、R8 篩選 |
+| 品牌一致性 | ux-guidelines #73 | M5 Glassmorphism、M9 MaiMai |
+| 視覺回饋 | ux-guidelines #30 | M8 按壓/成功/失敗、R6 選中效果 |
+| 手機可讀性 | ux-guidelines #67 | M6 數字 24px、R4 標籤 Tooltip |
+| 資訊不裁切 | ux-guidelines #33 | R4 標籤改 Tooltip |
+| SaaS Dashboard | products.csv | M1 Tab 導航、M6 KPI 卡片列 |
+| Glassmorphism | styles.csv | M5 玻璃質感卡片 |
+| React memo | react.csv #1 | 所有新增組件用 `memo()` |
+| useCallback | react.csv #2 | Tab 切換、篩選回呼 |
+
+### Mock 模式處理
+
+| 元素 | Mock 行為 | 正式版行為 |
+|------|----------|-----------|
+| M1 Tab 導航 | 正常顯示 4 Tab | 相同 |
+| M3 Bottom Sheet | 點擊 Mock 泡泡開啟 | 點擊真實泡泡開啟 |
+| M5 Glassmorphism | 正常顯示 | 相同 |
+| M6 KPI 卡片 | Mock 資料（信任 92/帶看 45 等） | 真實 API 資料 |
+| R1-R6 Radar 強化 | Mock leads 12 個 | 真實 leads |
+| R8 篩選 Chips | Mock leads 計數 | 真實 leads 計數 |
+| M9 MaiMai Loading | 不易見（Mock 秒回） | 顯示 thinking |
+
+### 涉及檔案清單
+
+| 層級 | 檔案 | 操作 | 對應項 |
+|------|------|------|--------|
+| 組件 | `src/pages/UAG/components/UAGTabBar.tsx` | **新增** | M1 |
+| 組件 | `src/pages/UAG/components/ActionBottomSheet.tsx` | **新增** | M3 |
+| 工具 | `src/pages/UAG/utils/resolveOverlap.ts` | **新增** | R2 |
+| 組件 | `src/pages/UAG/components/UAGFooter.tsx` | 修改 | M1（桌面保留，手機隱藏） |
+| 組件 | `src/pages/UAG/components/UAGHeader.tsx` | 修改 | M6（Agent Bar stats 改 KPI Grid） |
+| 組件 | `src/pages/UAG/components/RadarCluster.tsx` | 修改 | R1/R2/R4/R6/R7/R8 |
+| 組件 | `src/pages/UAG/components/ActionPanel.tsx` | 修改 | M3（手機版改用 Sheet） |
+| 組件 | `src/pages/UAG/components/AssetMonitor.tsx` | 修改 | M4（Swipe-to-Action） |
+| 組件 | `src/pages/UAG/components/UAGLoadingSkeleton.tsx` | 修改 | M9 |
+| 頁面 | `src/pages/UAG/index.tsx` | 修改 | M1/M7（Tab 路由 + 收合邏輯） |
+| CSS | `src/pages/UAG/UAG.module.css` | 修改 | M5/R3/R4/R5/R6/M8 |
+
+### 與現有 U1-U12 的關係
+
+| 現有項目 | 新方案 | 關係 |
+|---------|--------|------|
+| U7 Footer safe area | **M1 取代** | M1 Tab Bar 完全取代 Footer |
+| U9 Agent Bar 擠壓 | **M6 升級** | M6 KPI 卡片列是 U9 的升級版解法 |
+| U8/U11 按鈕觸控 | **M4 升級** | M4 Swipe-to-Action 是 U8/U11 的升級版解法 |
+| U1-U6/U10/U12 | **不衝突** | 仍需獨立處理 |
+
+### #19b 驗收標準
+
+- [ ] R6: 選中泡泡 `scale(1.15)` 彈出，未選中 `opacity-0.4 scale-0.92` 退場
+- [ ] R7: Radar 容器高度根據泡泡數量動態調整
+- [ ] R8: Radar 頂部等級篩選 Chips，含各等級數量顯示
+- [ ] typecheck + lint 通過
+
+---
+
+## #20a [P0] 詳情頁手機版 — Gallery 手勢 + 經紀人 Bottom Sheet（3 項）
+
+### 來源
+
+根據 `/ui-ux-pro-max` 的 `products.csv #38 Real Estate`（Glassmorphism + Minimalism）、`ux-guidelines.csv` 規範審核 PropertyDetailPage 手機版呈現。
+
+---
+
+### 20a-D1. Gallery 手勢滑動 + Skeleton
+
+**檔案：** `src/components/PropertyDetail/PropertyGallery.tsx`
+**規範引用：** ux-guidelines #7（手機手勢優先）、#20（skeleton > spinner）
+
+**現狀：** 僅能點擊縮圖切換圖片，無 touch swipe 手勢，載入時無 skeleton。
+
+**方案：**
+- 加入 `touchstart`/`touchmove`/`touchend` 手勢偵測，左右滑動切換圖片
+- `touch-action: pan-y`（允許垂直滾動，攔截水平滑動）
+- 滑動超過 50px 閾值觸發切換，配合 `transition: transform 200ms ease-out`
+- loading 時顯示 shimmer skeleton（`animate-pulse bg-slate-200 rounded-2xl`）
+
+```typescript
+// touch swipe handler 骨架
+const touchStartX = useRef(0);
+const handleTouchStart = (e: React.TouchEvent) => {
+  touchStartX.current = e.touches[0]!.clientX;
+};
+const handleTouchEnd = (e: React.TouchEvent) => {
+  const diff = e.changedTouches[0]!.clientX - touchStartX.current;
+  if (Math.abs(diff) > 50) {
+    diff > 0 ? goToPrev() : goToNext();
+  }
+};
+```
+
+### 20a-D2. 經紀人資訊 Bottom Sheet
+
+**檔案：** 新增 `src/components/PropertyDetail/AgentBottomSheet.tsx`，修改 `MobileActionBar.tsx`
+**規範引用：** ux-guidelines #32（重要資訊不可隱藏）、react.csv #18（Portal）
+
+**現狀：** 手機版完全看不到經紀人資訊（AgentTrustCard 僅桌面 Sidebar `lg:col-span-1` 顯示），用戶無法查看經紀人頭像、公司、信任分數。
+
+**方案：**
+- MobileActionBar 上方新增經紀人頭像 pill：`<AgentPill>` 顯示頭像 + 姓名 + 認證 badge
+- 點擊 pill 彈出 `AgentBottomSheet`（Bottom Sheet Modal）
+- Bottom Sheet 內容：頭像、姓名、公司、信任分、完成案件數、加入時間
+- 動畫：`translate-y-full → translate-y-0`，`200ms ease-out`
+
+```typescript
+interface AgentBottomSheetProps {
+  isOpen: boolean;
+  onClose: () => void;
+  agent: {
+    name: string;
+    avatarUrl: string | null;
+    company: string;
+    trustScore: number;
+    completedCases: number;
+    isVerified: boolean;
+  };
+}
+```
+
+### 20a-D11. Gallery 縮圖觸控擴大 + Scroll Snap
+
+**檔案：** `src/components/PropertyDetail/PropertyGallery.tsx`
+**規範引用：** ux-guidelines #22（觸控 ≥ 44px，圖片建議 ≥ 64px）
+
+**現狀：** 縮圖 `h-14 w-20`（56×80px），手指觸控偏小。
+
+**方案：**
+- 縮圖改為 `h-16 w-24`（64×96px）
+- active 狀態加入 `ring-2 ring-brand-500`
+- 加入 scroll snap：`snap-x snap-mandatory` + 每張 `snap-center`
+
+### 檔案清單
+
+| 類型 | 檔案 |
+|------|------|
+| 新增 | `src/components/PropertyDetail/AgentBottomSheet.tsx` |
+| 修改 | `PropertyGallery.tsx`、`MobileActionBar.tsx`、`PropertyDetail/index.ts` |
+
+### 驗收標準
+
+- [ ] D1: Gallery 可左右滑動切換圖片，載入時顯示 skeleton
+- [ ] D2: 手機版可看到經紀人頭像 pill，點擊彈出 Bottom Sheet
+- [ ] D11: 縮圖 64×96px，scroll snap 對齊
+- [ ] 桌面版不受影響（`lg:hidden` 隔離）
+- [ ] typecheck + lint 通過
+
+---
+
+## #20b [P0] 詳情頁手機版 — 文本優化 + ActionBar 毛玻璃（3 項）
+
+### 20b-D3. PropertyDescription 展開全文
+
+**檔案：** `src/components/PropertyDetail/PropertyDescription.tsx`
+**規範引用：** ux-guidelines #44（長文本必須可折疊）、#9（減少認知負擔）
+
+**現狀：** 描述無長度限制，超長描述佔滿螢幕。
+
+**方案：**
+- 預設顯示 4 行：`line-clamp-4`
+- 底部 gradient fade-out：`bg-gradient-to-t from-white to-transparent h-8`
+- 「展開全文 ▼」/「收起 ▲」按鈕切換
+- `useState<boolean>(false)` 控制展開狀態
+
+### 20b-D4. MobileActionBar 毛玻璃 + 滾動隱藏
+
+**檔案：** `MobileActionBar.tsx`，新增 `src/hooks/useScrollDirection.ts`
+**規範引用：** styles.csv Glassmorphism `backdrop-blur-xl`、ux-guidelines #36（固定元素可自動隱藏）
+
+**現狀：** 純白 `bg-white` 背景，永久佔據底部 ~80px。社會證明 icon 10px 過小。
+
+**方案：**
+- 背景改為 `bg-white/95 backdrop-blur-xl border-t border-white/20`
+- 社會證明 icon 10px → 14px
+- 加入 `useScrollDirection` hook：下滑顯示、上滑隱藏
+- 隱藏動畫：`transform: translateY(100%)` + `transition 300ms ease`
+- `prefers-reduced-motion: reduce` 時停用滾動隱藏
+
+```typescript
+// useScrollDirection.ts
+function useScrollDirection(threshold = 10): 'up' | 'down' {
+  const [direction, setDirection] = useState<'up' | 'down'>('up');
+  const lastY = useRef(0);
+  useEffect(() => {
+    const handler = () => {
+      const y = window.scrollY;
+      if (Math.abs(y - lastY.current) > threshold) {
+        setDirection(y > lastY.current ? 'down' : 'up');
+        lastY.current = y;
+      }
+    };
+    window.addEventListener('scroll', handler, { passive: true });
+    return () => window.removeEventListener('scroll', handler);
+  }, [threshold]);
+  return direction;
+}
+```
+
+### 20b-D9. Glassmorphism 統一設計語言
+
+**檔案：** `tailwind.config.cjs`、`PropertySpecs.tsx`、`MobileCTA.tsx`、`PropertyInfoCard.tsx`
+**規範引用：** products.csv #38 Real Estate 首選 Glassmorphism、styles.csv #1
+
+**現狀：** 部分組件有毛玻璃（VipModal、TrustServiceBanner），部分沒有（PropertySpecs、MobileCTA）。
+
+**方案：**
+- Tailwind 新增 utility：`.glass-card` = `@apply bg-white/80 backdrop-blur-xl border border-white/20 shadow-lg`
+- 套用到 PropertySpecs、MobileCTA、PropertyInfoCard
+
+### 檔案清單
+
+| 類型 | 檔案 |
+|------|------|
+| 新增 | `src/hooks/useScrollDirection.ts` |
+| 修改 | `PropertyDescription.tsx`、`MobileActionBar.tsx`、`MobileCTA.tsx`、`PropertySpecs.tsx`、`PropertyInfoCard.tsx`、`tailwind.config.cjs` |
+
+### 驗收標準
+
+- [ ] D3: 描述預設 4 行 + gradient fade + 展開/收起按鈕
+- [ ] D4: ActionBar 毛玻璃效果，上滑隱藏下滑顯示，icon 14px
+- [ ] D9: 三個組件統一使用 glass-card 風格
+- [ ] typecheck + lint 通過
+
+---
+
+## #20c [P1] 詳情頁手機版 — InfoCard + Specs 視覺升級（2 項）
+
+### 20c-D5. PropertyInfoCard 資訊重組
+
+**檔案：** `src/components/PropertyDetail/PropertyInfoCard.tsx`
+**規範引用：** ux-guidelines #22（觸控 ≥ 44px）、#48（數字變化用動畫）
+
+**現狀：** 標題可能過長換行、地址無截斷、社會證明靜態、按鈕觸控區 `p-2`（~40px）偏小。
+
+**方案：**
+- 標題：`line-clamp-2`
+- 地址：`truncate` + 點擊展開全文
+- 瀏覽人數：counter 數字滾動動畫（CSS `@property --num` counter）
+- 分享/收藏按鈕：`p-2` → `p-2.5`（44px）
+
+### 20c-D6. PropertySpecs Bento Grid + Icon
+
+**檔案：** `src/components/PropertyDetail/PropertySpecs.tsx`
+**規範引用：** styles.csv #5 Bento Grid、products.csv #38
+
+**現狀：** 純白背景、雙欄 `grid-cols-2`、標籤和數值同樣灰色、無 icon。
+
+**方案：**
+- 數值改為 `text-brand-700 font-extrabold`
+- 每項加 Lucide icon：`LayoutDashboard`=坪數、`BedDouble`=臥室、`Bath`=衛浴、`Building`=樓層
+- 主坪數佔 2 格（Bento Grid）：`col-span-2` 放大顯示
+
+### 檔案清單
+
+| 類型 | 檔案 |
+|------|------|
+| 修改 | `PropertyInfoCard.tsx`、`PropertySpecs.tsx` |
+
+### 驗收標準
+
+- [ ] D5: 標題 2 行截斷、地址 truncate、按鈕 44px
+- [ ] D6: Specs 有 icon + Bento Grid + 數值強調色
+- [ ] typecheck + lint 通過
+
+---
+
+## #20d [P1] 詳情頁手機版 — 評論 + Panel + FAB 升級（3 項）
+
+### 20d-D7. CommunityReviews 星級 SVG + 卡片動效
+
+**檔案：** `src/components/PropertyDetail/CommunityReviews.tsx`
+**規範引用：** ux-guidelines #14（icon 一致性）、#3（互動反饋）
+
+**現狀：** 星級為純文字 `★★★★★`、卡片無 hover/active、頭像純色圓形。
+
+**方案：**
+- 星級改為 SVG Star icon + 黃色漸層填充（`from-yellow-400 to-amber-500`）
+- 卡片加入 `hover:shadow-md active:scale-[0.98] transition-all duration-200`
+- 頭像改為 `bg-gradient-to-br from-brand-400 to-brand-600`
+- 「前往社區牆」改為 pill 按鈕 `bg-brand-50 hover:bg-brand-100 rounded-full px-4 py-2`
+
+### 20d-D8. LineLinkPanel / CallConfirmPanel 統一升級
+
+**檔案：** `LineLinkPanel.tsx`、`CallConfirmPanel.tsx`
+**規範引用：** ux-guidelines #20（loading 必備）、react.csv #22（表單即時驗證）
+
+**現狀：** backdrop `bg-black/50` 略淺、無 loading、輸入框無即時驗證。
+
+**方案：**
+- backdrop：`bg-black/50` → `bg-black/60 backdrop-blur-sm`
+- 開啟時 0.3s skeleton → 內容淡入
+- 輸入框即時驗證：紅色邊框 `border-red-500` + shake 動畫 + 錯誤文字
+- 電話號碼分段顯示：`0912-345-678`
+
+### 20d-D10. 30秒回電 FAB 重定位 + 漸層
+
+**檔案：** `src/pages/propertyDetail/PropertyDetailActionLayer.tsx`
+**規範引用：** ux-guidelines #37（浮動按鈕間距 ≥ 16px）、#3（互動反饋）
+
+**現狀：** `bottom-28` 與 ActionBar 僅 32px 間距、純橘色。
+
+> **注意：** #17 移除此 FAB 後，本項自動完成。若 #17 未執行，則執行以下方案。
+
+**方案（#17 未執行時）：**
+- `bottom-28` → `bottom-36`
+- 背景：`bg-gradient-to-br from-orange-500 to-red-500`
+- 點擊後 spinner + 文字「連線中...」
+
+### 檔案清單
+
+| 類型 | 檔案 |
+|------|------|
+| 修改 | `CommunityReviews.tsx`、`LineLinkPanel.tsx`、`CallConfirmPanel.tsx`、`PropertyDetailActionLayer.tsx`（若 #17 未執行） |
+
+### 驗收標準
+
+- [ ] D7: 星級 SVG icon、卡片 hover 動效、頭像漸層
+- [ ] D8: Panel backdrop blur、skeleton loading、即時驗證
+- [ ] D10: FAB 間距足夠 / 或已被 #17 移除
+- [ ] typecheck + lint 通過
+
+---
+
+## #20e [P2] 詳情頁手機版 — 動畫 + 微互動精緻化（4 項）
+
+### 20e-D12. 價格 + 社會證明 Micro-Interactions
+
+**檔案：** `PropertyInfoCard.tsx`、`MobileActionBar.tsx`
+
+**方案：**
+- 價格首次載入 counter 滾動動畫（0 → 1,280 萬）
+- 瀏覽人數每 30 秒微閃 `animate-pulse`（一次）
+- 熱門 Flame icon：`@keyframes flame-flicker`（微擺動 ±3deg）
+
+### 20e-D13. Section 進場動畫
+
+**檔案：** `PropertyDetailPage.tsx`，新增 `src/hooks/useInViewAnimation.ts`
+**規範引用：** ux-guidelines #12（入場動畫 150-300ms）
+
+**方案：**
+- 每個 Section 加 `opacity-0 translate-y-4` → `opacity-100 translate-y-0`
+- Intersection Observer 觸發，threshold 0.1
+- `prefers-reduced-motion: reduce` 時停用
+
+```typescript
+function useInViewAnimation(ref: RefObject<HTMLElement>) {
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry?.isIntersecting) el.classList.add('animate-in'); },
+      { threshold: 0.1 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [ref]);
+}
+```
+
+### 20e-D14. VipModal 關閉倒數 + 福利動畫
+
+**檔案：** `VipModal.tsx`
+
+**方案：**
+- 3 秒倒數後才顯示關閉按鈕（防止誤觸跳過）
+- CheckCircle icon 依序淡入：stagger animation 0.2s 間隔
+- 倒數圈 SVG：`stroke-dasharray` + `stroke-dashoffset` 動畫
+
+### 20e-D15. TrustServiceBanner Shield 動畫
+
+**檔案：** `TrustServiceBanner.tsx`
+
+**方案：**
+- 已開啟：Shield 加入 `animate-pulse`（柔和脈動）
+- 未開啟：Shield 加入 `animate-bounce`（吸引注意，3 次後停止）
+
+### 檔案清單
+
+| 類型 | 檔案 |
+|------|------|
+| 新增 | `src/hooks/useInViewAnimation.ts` |
+| 修改 | `PropertyInfoCard.tsx`、`MobileActionBar.tsx`、`PropertyDetailPage.tsx`、`VipModal.tsx`、`TrustServiceBanner.tsx` |
+
+### 驗收標準
+
+- [ ] D12: 價格數字滾動、瀏覽人數微閃、Flame 擺動
+- [ ] D13: Section 進場動畫 + reduced-motion 停用
+- [ ] D14: VipModal 3 秒倒數 + 福利 stagger
+- [ ] D15: Shield 根據狀態有不同動畫
+- [ ] 所有動畫有 `prefers-reduced-motion: reduce` 對應
+- [ ] typecheck + lint 通過
+
+---
+
+## 依賴關係
+
+> 已拆分為小工單，每個子工單內部依賴見詳細區塊。此處僅列工單間依賴。
+
+```
+已完成 ✅: #1, #2(含#4), #3, #5, #6, #8, #10
+
+#17 移除生成報告+30秒回電（獨立，最優先）
+  └─ 完成後 #9a D1/D2 自動解決、#20d D10 自動完成
+
+#7 Profile 頁 mock（依賴 #6 ✅）
+
+#12 信任分 Tooltip + seed 校正（獨立）
       │
       ▼
-#7 Profile 頁 mock 模式（依賴 #6 提供入口）
+#13 房仲評價系統（依賴 #12）
+#15 經紀人認證 + 完成案件（依賴 #12）
 
-#3 createLead 補 preferredChannel（獨立）
+#14 獲得鼓勵系統（依賴 #10 ✅）
 
-#10 社區評價正式版 API 資料層修正（Mock fallback ✅ 已完成）
-  ├─ 10-A 為 MH-100001 補 community_id migration（依賴社區存在）
-  └─ 10-B 為正式版社區補 seed 評價（依賴 10-A）
+#16 店名開放編輯（獨立）
+#11 Header 品牌統一（獨立）
+#18 MaiMai 公仔（建議在 #17 之後）
 
-#12 信任分 Tooltip 修正（獨立，可隨時做）
-  ├─ 12-A Tooltip 改說明型（前端，獨立）
-  └─ 12-B seed 指標校正 migration（DB，獨立，可與 #5 同時做）
+--- DetailPage 手機版 UX 修正（原 #9 拆分）---
 
-#13 房仲評價系統（依賴 #12-B seed 校正完成後再做，否則正式版初始數據不一致）
-  ├─ 13-A DB migration agent_reviews（最先）
-  ├─ 13-B API GET/POST（依賴 13-A）
-  ├─ 13-C 前端型別（獨立）
-  ├─ 13-D ReviewPromptModal（依賴 13-B/C）
-  ├─ 13-E AgentReviewListModal（依賴 13-B/C）
-  ├─ 13-F AgentTrustCard (32) 改可點擊（依賴 13-E）
-  ├─ 13-G PropertyDetailPage 整合（依賴 13-E/F）
-  ├─ 13-H Assure Step 2 觸發（依賴 13-D）
-  └─ 13-I useAgentReviews hook（依賴 13-B/C）
+#9a DetailPage A11y + 動畫（5 項，依賴 #2 ✅）
+#9b DetailPage 排版 + 手勢（5 項，依賴 #2 ✅）
+  ※ D1/D2 已被 #17 解決，不在 #9a/b 中
 
-#14 獲得鼓勵系統（依賴 #10 社區評價正式版修正，因為需要 community_reviews 有真實資料）
-  ├─ 14-A DB migration community_review_likes（最先）
-  ├─ 14-B API POST/GET review-like（依賴 14-A）
-  ├─ 14-C 前端型別（獨立）
-  ├─ 14-D CommunityReviews 加 👍 按鈕（依賴 14-B/C）
-  ├─ 14-E useCommunityReviewLike hook（依賴 14-B/C）
-  └─ 14-F PropertyDetailPage 整合（依賴 14-D/E）
+--- UAG 手機版 UX 修正（原 #9 拆分）---
 
-#11 詳情頁 Header 品牌統一（獨立，建議在 #2 之後做）
-  ├─ 11-A Logo 組件統一（獨立）
-  ├─ 11-B 返回按鈕功能（獨立）
-  ├─ 11-C 色彩 design token（獨立）
-  └─ 11-D/E 無障礙 + 手機版微調（獨立）
+#9c UAG 觸控 + 排版（5 項，獨立）
+#9d UAG 列表 + Mock + 桌面（3 項，獨立）
+  ※ U7/U9/U8/U11 已被 #19a-e 取代
 
-#15 經紀人認證系統 + 完成案件自動累積（獨立，建議在 #12 之後做）
-  ├─ 15-A DB migration 認證欄位 + 結案 Trigger（最先）
-  ├─ 15-B 前端類型更新（獨立）
-  ├─ 15-C API 更新（依賴 15-A）
-  ├─ 15-D AgentTrustCard 條件式認證（依賴 15-B/C）
-  ├─ 15-E MobileActionBar 條件式認證（依賴 15-B/C）
-  └─ 15-F UAG Profile 證照字號輸入（依賴 15-C）
+--- UAG 手機版現代化（原 #19 拆分）---
 
-#16 店名開放編輯（獨立，可隨時做）
-  ├─ 16-A API UpdateProfileSchema 加 company（獨立）
-  ├─ 16-B BasicInfoSection 移除 disabled（依賴 16-A）
-  └─ 16-C 類型 + Service 更新（依賴 16-A）
+#19c UAG Tab + KPI（2 項，最先，架構級）
+      │
+      ├─ #19a Radar 泡泡核心（5 項，獨立）
+      ├─ #19b Radar 進階效果（3 項，依賴 #19a）
+      ├─ #19d 卡片 + 互動（3 項，依賴 #19c）
+      └─ #19e 收合 + 微互動（3 項，依賴 #19c）
 
-#17 移除詳情頁「生成報告」+「30秒回電」（獨立，建議最優先做，移除後 #9 D1/D2 自動解決）
-  ├─ 17-A PropertyDetailPage.tsx 移除浮動按鈕 + ReportGenerator（最先）
-  ├─ 17-B PropertyDetailActionLayer.tsx 同步移除（依賴 17-A 確認範圍）
-  ├─ 17-C App.tsx 移除 /r/:id 路由（依賴 17-A）
-  ├─ 17-D 刪除 src/pages/Report/ 整個目錄（依賴 17-A/C）
-  └─ 17-E 刪除 api/report/（獨立）
+--- 詳情頁手機版現代化（新增 #20 拆分）---
 
-#9 手機版 UX 優化（建議在 #2、#11、#15、#17 之後做，#17 解決 D1/D2，#15 改動 MobileActionBar）
-  ├─ D1-D2 已被 #17 解決（浮動按鈕移除後不再存在）
-  ├─ D3-D11 DetailPage 優化（依賴 #2 完成後的雙按鈕佈局）
-  ├─ U1-U12 UAG 優化（獨立）
-  └─ C1-C3 跨頁面共通（獨立，可隨時做）
+#20a Gallery + AgentBottomSheet（3 項，依賴 #2 ✅）
+#20b 文本 + ActionBar 毛玻璃（3 項，依賴 #2 ✅）
+#20c InfoCard + Specs 升級（2 項，獨立）
+#20d 評論 + Panel + FAB（3 項，#17 完成後 D10 自動解決）
+#20e 動畫 + 微互動（4 項，建議最後做）
 ```
 
 ---
 
 ## 建議實作順序
 
-| 順序 | 工單 | 優先級 | 版本 | 預估影響檔案數 |
-|------|------|--------|------|---------------|
-| 1 | #1 agentId fallback | P0 | 正式+Mock | 1 |
-| 2 | #2 移除預約看屋 + 雙按鈕 UX（含 #4） | P0 | 正式+Mock | 9（含刪除 3 個檔案） |
-| 3 | **#17 移除生成報告 + 30秒回電** | **P0** | **正式+Mock** | **2 修改 + 7 刪除** |
-| 4 | #8 社會證明真實數據 | P0 | 正式版 | 6（含新增 2 個檔案） |
-| 5 | #5 詳情頁 mock agent | P0 | Mock | 1 |
-| 6 | #6 UAG Header mock 入口 | P0 | Mock | 2 |
-| 7 | #7 Profile 頁 mock | P0 | Mock | 2-3 |
-| 8 | #3 createLead 補 preferredChannel | P1 | 正式 | 2 |
-| 9 | #12 信任分 Tooltip 修正 + seed 校正 | P1 | 正式+Mock | 1 + 1 migration |
-| 10 | #13 房仲評價系統 | P0 | 正式+Mock | 6 新增 + 3 修改 + 1 migration |
-| 11 | #15 經紀人認證 + 完成案件累積 | P0 | 正式+Mock | 2 修改 + 1 migration + 5 修改 |
-| 12 | #16 店名開放編輯 | P1 | 正式+Mock | 4 修改 |
-| 13 | #14 獲得鼓勵系統 | P1 | 正式+Mock | 4 新增 + 2 修改 + 1 migration |
-| 14 | #11 詳情頁 Header 品牌統一 | P1 | 正式+Mock | 1 |
-| 15 | #10 社區評價正式版資料層修正 | P0 | 正式 | 2（migration） |
-| 16 | #9 手機版 UX 優化（26 項，D1/D2 已被 #17 解決） | P1 | 正式+Mock | 14+ |
+> 小工單設計：每個 ≤ 5 項施工內容，AI 可一次性完成。
+
+| 順序 | 工單 | 施工項數 | 優先級 | 預估檔案數 |
+|------|------|---------|--------|-----------|
+| 1 ✅ | #1 agentId fallback | 1 | P0 | 1 |
+| 2 ✅ | #2 移除預約看屋 + 雙按鈕（含 #4） | 4 | P0 | 9 |
+| 3 ✅ | #3 createLead 補 preferredChannel | 1 | P1 | 2 |
+| 4 ✅ | #5 詳情頁 mock agent | 1 | P0 | 1 |
+| 5 ✅ | #6 UAG Header mock | 1 | P0 | 2 |
+| 6 ✅ | #8 社會證明真實數據 | 4 | P0 | 6 |
+| 7 ✅ | #10 社區評價 API 修正 | 2 | P0 | 2 |
+| 8 | **#17 移除生成報告 + 30秒回電** | **5** | **P0** | **2 改 + 7 刪** |
+| 9 | #7 Profile 頁 mock | 3 | P0 | 3 |
+| 10 | #12 信任分 Tooltip + seed | 2 | P1 | 2 |
+| 11 | #13 房仲評價系統 | 5 | P0 | 10 |
+| 12 | #15 經紀人認證 + 完成案件 | 5 | P0 | 8 |
+| 13 | #16 店名開放編輯 | 3 | P1 | 4 |
+| 14 | #14 獲得鼓勵系統 | 4 | P1 | 7 |
+| 15 | #11 Header 品牌統一 | 4 | P1 | 1 |
+| 16 | #18 MaiMai 公仔 A+C+D | 3 | P1 | 4 |
+| 17 | #19c UAG Tab + KPI | 2 | P0 | 3 |
+| 18 | #19a Radar 泡泡核心 | 5 | P0 | 3 |
+| 19 | #19d UAG 卡片 + 互動 | 3 | P1 | 4 |
+| 20 | #19b Radar 進階效果 | 3 | P1 | 2 |
+| 21 | #19e UAG 收合 + 微互動 | 3 | P1 | 3 |
+| 22 | #9a DetailPage A11y + 動畫 | 5 | P1 | 4 |
+| 23 | #9b DetailPage 排版 + 手勢 | 5 | P1 | 4 |
+| 24 | #9c UAG 觸控 + 排版 | 5 | P1 | 4 |
+| 25 | #9d UAG 列表 + Mock + 桌面 | 3 | P1 | 3 |
+| 26 | #20a Gallery + AgentBottomSheet | 3 | P0 | 4 |
+| 27 | #20b 文本 + ActionBar 毛玻璃 | 3 | P0 | 7 |
+| 28 | #20c InfoCard + Specs 升級 | 2 | P1 | 2 |
+| 29 | #20d 評論 + Panel + FAB | 3 | P1 | 4 |
+| 30 | #20e 動畫 + 微互動 | 4 | P2 | 6 |
