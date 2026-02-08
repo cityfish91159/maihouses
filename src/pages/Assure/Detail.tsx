@@ -41,6 +41,7 @@ export default function AssureDetail() {
   const [showDataModal, setShowDataModal] = useState(false);
   const [isSubmittingData, setIsSubmittingData] = useState(false);
   const [pendingAction, setPendingAction] = useState<null | 'pay' | 'reset'>(null);
+  const [hasDismissedDataModal, setHasDismissedDataModal] = useState(false);
 
   // Note: Token handling and initialization is now managed by useTrustRoom hook
   // We just need to handle the "No Token" state in the UI
@@ -69,7 +70,11 @@ export default function AssureDetail() {
   const toggleCheck = (itemId: string, checked: boolean) => {
     if (role === 'buyer') handleAction('checklist', { itemId, checked });
   };
-  const addSupplement = () => handleAction('supplement', { content: supplementInput });
+  const addSupplement = () => {
+    const content = supplementInput.trim();
+    if (!content) return;
+    handleAction('supplement', { content });
+  };
   const reset = () => {
     if (pendingAction !== 'reset') {
       setPendingAction('reset');
@@ -93,19 +98,32 @@ export default function AssureDetail() {
 
   // [Team 3 修復] M4 資料收集 Modal 觸發邏輯
   useEffect(() => {
-    if (!tx || role !== 'buyer') return;
+    if (!tx || role !== 'buyer' || showDataModal || hasDismissedDataModal) return;
 
     // 檢查是否需要顯示 Modal（stage === 4 且為臨時代號）
     const isStage4 = tx.currentStep === 4;
     const isTempBuyer = tx.buyerName?.startsWith('買方-') && tx.buyerUserId === null;
 
-    if (isStage4 && isTempBuyer && !showDataModal) {
+    if (isStage4 && isTempBuyer) {
       const timer = setTimeout(() => {
         setShowDataModal(true);
       }, MODAL_DELAY_MS);
       return () => clearTimeout(timer);
     }
-  }, [tx, role, showDataModal]);
+  }, [tx, role, showDataModal, hasDismissedDataModal]);
+
+  // 當案件狀態已不需要資料收集時，重置略過狀態
+  useEffect(() => {
+    if (!tx) {
+      setHasDismissedDataModal(false);
+      return;
+    }
+    const shouldPromptDataModal =
+      tx.currentStep === 4 && tx.buyerName?.startsWith('買方-') && tx.buyerUserId === null;
+    if (!shouldPromptDataModal) {
+      setHasDismissedDataModal(false);
+    }
+  }, [caseId, tx]);
 
   // [Team 3 修復] M4 資料收集表單提交
   const handleDataSubmit = async (data: { name: string; phone: string; email: string }) => {
@@ -132,6 +150,7 @@ export default function AssureDetail() {
       toast.success('資料提交成功！', {
         description: '資料已安全儲存，感謝你的配合。',
       });
+      setHasDismissedDataModal(false);
       setShowDataModal(false);
 
       // 重新載入案件資料（觸發 useTrustRoom 重新 fetch）
@@ -155,6 +174,7 @@ export default function AssureDetail() {
     toast.info('已跳過資料填寫', {
       description: '你可以稍後在案件頁面中補充資料。',
     });
+    setHasDismissedDataModal(true);
     setShowDataModal(false);
   };
 
@@ -320,7 +340,7 @@ export default function AssureDetail() {
             />
             <button
               onClick={addSupplement}
-              disabled={!supplementInput}
+              disabled={!supplementInput.trim()}
               aria-label="送出補充紀錄"
               className="min-h-[44px] rounded-lg bg-brand-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50"
             >

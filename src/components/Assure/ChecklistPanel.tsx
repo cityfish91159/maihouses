@@ -20,7 +20,10 @@ export function ChecklistPanel({ checklist, onToggle, onConfirm }: ChecklistPane
           key={item.id}
           onClick={() => onToggle(item.id, !item.checked)}
           onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') onToggle(item.id, !item.checked);
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              onToggle(item.id, !item.checked);
+            }
           }}
           role="checkbox"
           aria-checked={item.checked}

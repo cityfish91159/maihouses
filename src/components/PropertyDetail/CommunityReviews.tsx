@@ -6,6 +6,7 @@ import { logger } from '../../lib/logger';
 interface CommunityReviewsProps {
   isLoggedIn: boolean;
   communityId?: string | undefined;
+  isDemo?: boolean | undefined;
 }
 
 interface ReviewPreview {
@@ -47,6 +48,34 @@ const LOCKED_PREVIEW_PLACEHOLDER: ReviewPreview = {
   avatarClass: 'bg-green-500',
 };
 
+// Mock 評價資料（isDemo 且無 communityId 時使用）
+const MOCK_REVIEWS: ReviewPreview[] = [
+  {
+    initial: '林',
+    name: '林***',
+    residentLabel: '信義區住戶',
+    stars: '★★★★★',
+    content: '透過平台不僅看到了真實的成交行情，還能直接與經紀人溝通，整體體驗非常順暢。',
+    avatarClass: 'bg-brand-700',
+  },
+  {
+    initial: '王',
+    name: '王***',
+    residentLabel: '住戶評價',
+    stars: '★★★★★',
+    content: '社區管理很用心，公設維護良好，住戶素質也不錯，住起來很安心。',
+    avatarClass: 'bg-brand-light',
+  },
+  {
+    initial: '住',
+    name: '住戶',
+    residentLabel: '社區住戶',
+    stars: '★★★★★',
+    content: '樓下就有便利商店和公車站，生活機能很方便，唯一小缺點是假日停車位比較緊張。',
+    avatarClass: 'bg-green-500',
+  },
+];
+
 const maskName = (name: string): string => {
   const trimmed = name.trim();
   if (!trimmed) return '住戶';
@@ -86,11 +115,13 @@ const toPreview = (item: CommunityReviewItem, index: number): ReviewPreview | nu
 export const CommunityReviews = memo(function CommunityReviews({
   isLoggedIn,
   communityId,
+  isDemo = false,
 }: CommunityReviewsProps) {
   const navigate = useNavigate();
   const [isVisible, setIsVisible] = useState(false);
-  const [totalReviews, setTotalReviews] = useState<number | null>(null);
-  const [reviewPreviews, setReviewPreviews] = useState<ReviewPreview[]>([]);
+  const useMockData = isDemo && !communityId;
+  const [totalReviews, setTotalReviews] = useState<number | null>(() => useMockData ? 12 : null);
+  const [reviewPreviews, setReviewPreviews] = useState<ReviewPreview[]>(() => useMockData ? MOCK_REVIEWS : []);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -112,7 +143,7 @@ export const CommunityReviews = memo(function CommunityReviews({
   }, []);
 
   useEffect(() => {
-    if (!communityId || !isVisible) return;
+    if (!isVisible || !communityId) return;
 
     const controller = new AbortController();
 
@@ -159,7 +190,7 @@ export const CommunityReviews = memo(function CommunityReviews({
   const lockedReview = reviewPreviews[2] ?? LOCKED_PREVIEW_PLACEHOLDER;
 
   const handleAuthRedirect = useCallback(() => {
-    navigate('/maihouses/auth.html?redirect=community');
+    navigate('/maihouses/auth.html?mode=login');
   }, [navigate]);
 
   const handleCommunityWall = useCallback(() => {

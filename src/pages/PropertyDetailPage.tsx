@@ -109,9 +109,10 @@ export const PropertyDetailPage: React.FC = () => {
   const agentId = useMemo(() => {
     let aid = searchParams.get('aid');
     if (!aid) aid = localStorage.getItem('uag_last_aid');
+    if (!aid || aid === 'unknown') aid = property.agent?.id || null;
     if (aid && aid !== 'unknown') localStorage.setItem('uag_last_aid', aid);
     return aid || 'unknown';
-  }, [searchParams]);
+  }, [searchParams, property.agent?.id]);
 
   // S 級客戶即時攔截回調
   const handleGradeUpgrade = useCallback((grade: string, reason?: string) => {

@@ -235,6 +235,30 @@ describe('PropertyDetailPage - 優化驗證', () => {
       getItemSpy.mockRestore();
       setItemSpy.mockRestore();
     });
+
+    it('無 aid 參數且 localStorage 無值時，應 fallback 使用 property.agent.id', async () => {
+      vi.mocked(propertyService.getPropertyByPublicId).mockResolvedValue(mockPropertyData as any);
+
+      localStorage.removeItem('uag_last_aid');
+      const getItemSpy = vi.spyOn(Storage.prototype, 'getItem');
+      const setItemSpy = vi.spyOn(Storage.prototype, 'setItem');
+
+      renderWithClient(
+        <MemoryRouter initialEntries={['/maihouses/property/MH-100001']}>
+          <PropertyDetailPage />
+        </MemoryRouter>
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText(/新光晴川/)).toBeInTheDocument();
+      });
+
+      expect(getItemSpy).toHaveBeenCalledWith('uag_last_aid');
+      expect(setItemSpy).toHaveBeenCalledWith('uag_last_aid', 'agent-001');
+
+      getItemSpy.mockRestore();
+      setItemSpy.mockRestore();
+    });
   });
 
   describe('3. React.memo 組件驗證', () => {

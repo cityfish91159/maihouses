@@ -1323,7 +1323,7 @@
       const supabaseUrl = 'https://mtqnjmoisrvjofdxhwhi.supabase.co';
       const supabaseKey =
         'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im10cW5qbW9pc3J2am9mZHhod2hpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1MjE1MDEsImV4cCI6MjA3OTA5NzUwMX0.P2o5n09PQChfryl-WLT7v6wRVWhDK6Oik7ajjcwyNrc';
-      const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+      const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
 
       // Helpers
       const qs = (k) => new URLSearchParams(location.search).get(k);
@@ -1371,7 +1371,46 @@
       const errPhone = document.getElementById('errPhone');
       const errTerms = document.getElementById('errTerms');
 
-      let mode = qs('mode') || 'login';
+      const normalizeRole = (value) => (value === 'member' || value === 'agent' ? value : null);
+      const normalizeMode = (value) => (value === 'signup' || value === 'login' ? value : null);
+
+      const getSelectedRole = () => {
+        const checked = document.querySelector('input[name="role"]:checked');
+        return normalizeRole(checked?.value || '');
+      };
+
+      const applyRoleFromQuery = () => {
+        const roleFromQuery = normalizeRole(qs('role'));
+        if (!roleFromQuery) return;
+        const radio = document.querySelector(`input[name="role"][value="${roleFromQuery}"]`);
+        if (radio) radio.checked = true;
+      };
+
+      const resolveModeFromQuery = () => {
+        const modeFromQuery = normalizeMode(qs('mode'));
+        if (modeFromQuery) return modeFromQuery;
+        // 共用網址強化：只傳 role 時，預設進註冊模式
+        return normalizeRole(qs('role')) ? 'signup' : 'login';
+      };
+
+      const getSafeReturnPath = () => {
+        const ret = qs('return');
+        if (!ret) return null;
+
+        try {
+          const target = new URL(ret, window.location.origin);
+          const isSameOrigin = target.origin === window.location.origin;
+          const isAllowedPath = target.pathname.startsWith('/maihouses/');
+          if (!isSameOrigin || !isAllowedPath) return null;
+          return `${target.pathname}${target.search}${target.hash}`;
+        } catch (e) {
+          console.warn('[auth] invalid return URL', e);
+          return null;
+        }
+      };
+
+      let mode = resolveModeFromQuery();
+      applyRoleFromQuery();
 
       // 吉祥物狀態管理
       let mascotMood = 'idle';
@@ -1499,6 +1538,14 @@
         // Update URL
         const url = new URL(location.href);
         url.searchParams.set('mode', mode);
+        if (isLogin) {
+          url.searchParams.delete('role');
+        } else {
+          const selectedRole = getSelectedRole();
+          if (selectedRole) {
+            url.searchParams.set('role', selectedRole);
+          }
+        }
         if (replace) {
           history.replaceState(null, '', url);
         } else {
@@ -1523,9 +1570,9 @@
         // 稍等讓動畫播放
         await new Promise((r) => setTimeout(r, 800));
 
-        const ret = qs('return');
-        if (ret) {
-          go(ret);
+        const safeReturnPath = getSafeReturnPath();
+        if (safeReturnPath) {
+          go(safeReturnPath);
           return;
         }
 
@@ -1535,7 +1582,7 @@
         try {
           const {
             data: { user },
-          } = await supabase.auth.getUser();
+          } = await supabaseClient.auth.getUser();
           if (user) {
             // 1. Check metadata
             if (user.user_metadata && user.user_metadata.role) {
@@ -1547,7 +1594,7 @@
               if (pending) {
                 role = pending;
                 // Try to update metadata for future
-                supabase.auth.updateUser({ data: { role: pending } });
+                supabaseClient.auth.updateUser({ data: { role: pending } });
                 localStorage.removeItem('mh.auth.pending_role');
               }
             }
@@ -1610,7 +1657,8 @@
 
       syncMode(true);
       window.onpopstate = () => {
-        mode = qs('mode') || 'login';
+        mode = resolveModeFromQuery();
+        applyRoleFromQuery();
         syncMode(true);
       };
       tabLogin?.addEventListener('click', () => {
@@ -1623,19 +1671,25 @@
         syncMode(false);
         clearErrors();
       });
+      document.querySelectorAll('input[name="role"]').forEach((input) => {
+        input.addEventListener('change', () => {
+          if (mode !== 'signup') return;
+          syncMode(true);
+        });
+      });
 
       // Handle Logout Action
       const isLogout = qs('action') === 'logout';
       if (isLogout) {
         if (cardSubtitle) cardSubtitle.textContent = '已成功登出';
         // Clear session immediately
-        supabase.auth.signOut().then(() => {
+        supabaseClient.auth.signOut().then(() => {
           localStorage.removeItem('mh.auth.role');
         });
       }
 
       // Listen for auth state changes (Handle OAuth Redirect)
-      supabase.auth.onAuthStateChange((event, session) => {
+      supabaseClient.auth.onAuthStateChange((event, session) => {
         // If we are in logout mode, ignore any session presence to prevent auto-redirect
         if (isLogout) return;
 
@@ -1663,7 +1717,7 @@
             redirectUrl = 'https://maihouses.vercel.app/maihouses/auth.html';
           }
 
-          const { error } = await supabase.auth.signInWithOAuth({
+          const { error } = await supabaseClient.auth.signInWithOAuth({
             provider: 'google',
             options: {
               redirectTo: redirectUrl,
@@ -1749,7 +1803,7 @@
 
         try {
           if (isLogin) {
-            const { error } = await supabase.auth.signInWithPassword({
+            const { error } = await supabaseClient.auth.signInWithPassword({
               email,
               password,
             });
@@ -1757,7 +1811,7 @@
           } else {
             const role =
               (document.querySelector('input[name="role"]:checked') || {}).value || 'member';
-            const { error } = await supabase.auth.signUp({
+            const { error } = await supabaseClient.auth.signUp({
               email,
               password,
               options: { data: { role, phone } },

@@ -162,17 +162,33 @@ export function StepActions({
           {role === 'agent' && step.agentStatus === 'pending' && (
             <button
               onClick={() => onSubmit('5')}
-              className="min-h-[48px] w-full rounded-lg bg-brand-700 py-3 font-medium text-white transition hover:bg-brand-600"
+              disabled={isBusy}
+              aria-busy={isBusy}
+              className="min-h-[48px] w-full rounded-lg bg-brand-700 py-3 font-medium text-white transition hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              上傳合約並送出
+              {isBusy ? (
+                <span className="inline-flex items-center gap-1.5">
+                  <Loader2 className="size-4 animate-spin" /> 處理中
+                </span>
+              ) : (
+                '上傳合約並送出'
+              )}
             </button>
           )}
           {role === 'buyer' && step.agentStatus === 'submitted' && (
             <button
               onClick={() => onConfirm('5')}
-              className="min-h-[48px] w-full rounded-lg bg-success py-3 font-medium text-white transition hover:brightness-95"
+              disabled={isBusy}
+              aria-busy={isBusy}
+              className="min-h-[48px] w-full rounded-lg bg-success py-3 font-medium text-white transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              確認合約（啟動付款）
+              {isBusy ? (
+                <span className="inline-flex items-center gap-1.5">
+                  <Loader2 className="size-4 animate-spin" /> 處理中
+                </span>
+              ) : (
+                '確認合約（啟動付款）'
+              )}
             </button>
           )}
         </div>

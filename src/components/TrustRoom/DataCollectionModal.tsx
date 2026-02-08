@@ -287,7 +287,10 @@ function DataCollectionModalContent({
               type="tel"
               inputMode="numeric"
               value={phone}
-              onChange={(e) => setPhone(e.target.value)}
+              onChange={(e) => {
+                const digitsOnly = e.target.value.replace(/\D/g, '').slice(0, FIELD_LIMITS.PHONE_LENGTH);
+                setPhone(digitsOnly);
+              }}
               placeholder={S.PHONE_PLACEHOLDER}
               maxLength={FIELD_LIMITS.PHONE_LENGTH}
               aria-invalid={!!errors.phone}

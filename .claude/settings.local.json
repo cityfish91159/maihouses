@@ -170,7 +170,10 @@
       "Bash(npm i:*)",
       "Bash(git -C \"C:/Users/陳世瑜/maihouses\" ls-files --error-unmatch src/components/PropertyDetail/LineLinkPanel.tsx src/components/PropertyDetail/CallConfirmPanel.tsx src/components/PropertyDetail/TrustAssureHint.tsx src/components/PropertyDetail/trustAssure.ts)",
       "Bash(git -C \"C:/Users/陳世瑜/maihouses\" status src/components/PropertyDetail/)",
-      "Bash(git fsck:*)"
+      "Bash(git fsck:*)",
+      "Bash(git status:*)",
+      "Bash(xargs cat:*)",
+      "Bash(strings:*)"
     ]
   },
   "model": "claude-opus-4-5-20251101",
