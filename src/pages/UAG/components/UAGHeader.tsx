@@ -82,9 +82,9 @@ export const UAGHeader: React.FC<UAGHeaderProps> = ({
   if (error) return <HeaderError />;
   if (isLoading) return <HeaderSkeleton />;
 
-  // #6 Mock 模式：使用假名字「陳小明」
+  // #6 Mock 模式：使用假名字「游杰倫」
   const displayName = useMock
-    ? '陳小明'
+    ? '游杰倫'
     : agentProfile?.name || user?.user_metadata?.name || user?.email?.split('@')[0] || '訪客';
   const email = useMock ? null : (user?.email ?? null);
   const company = agentProfile?.company ?? null;
