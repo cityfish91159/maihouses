@@ -75,6 +75,7 @@ export interface CreateLeadParams {
   source: 'sidebar' | 'mobile_bar' | 'booking' | 'direct'; // 'booking' deprecated (Phase 11-A #2)
   budgetRange?: string;
   preferredContactTime?: string;
+  preferredChannel?: 'phone' | 'line' | 'message'; // #3 偏好聯絡方式
   needsDescription?: string;
 }
 
@@ -102,6 +103,16 @@ interface CreateLeadApiResponse {
  */
 export async function createLead(params: CreateLeadParams): Promise<CreateLeadResponse> {
   try {
+    // #3 將 preferredChannel 前綴到 needsDescription
+    const channelPrefix = params.preferredChannel
+      ? `[偏好聯絡：${params.preferredChannel === 'line' ? 'LINE' : params.preferredChannel === 'phone' ? '電話' : '站內訊息'}]`
+      : '';
+    const finalDescription = channelPrefix
+      ? params.needsDescription
+        ? `${channelPrefix} ${params.needsDescription}`
+        : channelPrefix
+      : params.needsDescription;
+
     const response = await fetch('/api/lead/create', {
       method: 'POST',
       headers: {
@@ -116,7 +127,7 @@ export async function createLead(params: CreateLeadParams): Promise<CreateLeadRe
         source: params.source,
         budgetRange: params.budgetRange,
         preferredContactTime: params.preferredContactTime,
-        needsDescription: params.needsDescription,
+        needsDescription: finalDescription,
         agentId: params.agentId,
       }),
     });

@@ -79,6 +79,7 @@ export const ContactModal: React.FC<ContactModalProps> = ({
         agentId,
         propertyId,
         source,
+        preferredChannel: form.preferredChannel, // #3 傳遞偏好聯絡方式
         ...(form.budget ? { budgetRange: form.budget } : {}),
         ...(form.preferredTime ? { preferredContactTime: form.preferredTime } : {}),
         ...(needsDescription ? { needsDescription } : {}),
