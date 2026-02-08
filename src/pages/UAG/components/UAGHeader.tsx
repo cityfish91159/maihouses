@@ -18,6 +18,7 @@ interface UAGHeaderProps {
   error?: Error | null;
   onSignOut?: () => Promise<void> | void;
   isSigningOut?: boolean;
+  useMock?: boolean; // #6 Mock 模式支援
 }
 
 const HeaderSkeleton = () => (
@@ -48,6 +49,7 @@ export const UAGHeader: React.FC<UAGHeaderProps> = ({
   error = null,
   onSignOut,
   isSigningOut = false,
+  useMock = false, // #6 預設為 false
 }) => {
   // const { count, notifications, isLoading: notificationsLoading, error: notificationsError, isStale, refresh } = useNotifications();
   const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -80,9 +82,11 @@ export const UAGHeader: React.FC<UAGHeaderProps> = ({
   if (error) return <HeaderError />;
   if (isLoading) return <HeaderSkeleton />;
 
-  const displayName =
-    agentProfile?.name || user?.user_metadata?.name || user?.email?.split('@')[0] || '訪客';
-  const email = user?.email ?? null;
+  // #6 Mock 模式：使用假名字「陳小明」
+  const displayName = useMock
+    ? '陳小明'
+    : agentProfile?.name || user?.user_metadata?.name || user?.email?.split('@')[0] || '訪客';
+  const email = useMock ? null : (user?.email ?? null);
   const company = agentProfile?.company ?? null;
 
   const handleUserMenuKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>) => {
@@ -146,7 +150,8 @@ export const UAGHeader: React.FC<UAGHeaderProps> = ({
               </div>
             )} */}
           </div>
-          {user && (
+          {/* #6 Mock 模式：即使 user 為 null 也顯示使用者區塊 */}
+          {(user || useMock) && (
             <div className={styles['uag-user']}>
               <button
                 ref={userMenuButtonRef}
@@ -179,7 +184,10 @@ export const UAGHeader: React.FC<UAGHeaderProps> = ({
                     role="menuitem"
                     onClick={() => {
                       setUserMenuOpen(false);
-                      window.location.href = ROUTES.UAG_PROFILE;
+                      // #6 Mock 模式：導向帶 mock 參數的 Profile 頁面
+                      window.location.href = useMock
+                        ? `${ROUTES.UAG_PROFILE}?mock=true`
+                        : ROUTES.UAG_PROFILE;
                     }}
                   >
                     <UserIcon size={16} />

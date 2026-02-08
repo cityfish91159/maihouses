@@ -250,6 +250,7 @@ function UAGPageContent() {
         error={authError}
         onSignOut={handleSignOut}
         isSigningOut={isSigningOut}
+        useMock={useMock} // #6 傳入 Mock 模式狀態
       />
 
       <main className={styles['uag-container']}>
