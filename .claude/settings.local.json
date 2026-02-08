@@ -173,7 +173,8 @@
       "Bash(git fsck:*)",
       "Bash(git status:*)",
       "Bash(xargs cat:*)",
-      "Bash(strings:*)"
+      "Bash(strings:*)",
+      "Bash(gh api:*)"
     ]
   },
   "model": "claude-opus-4-5-20251101",

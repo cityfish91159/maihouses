@@ -1,7 +1,8 @@
-﻿import { memo } from 'react';
+﻿import { memo, type CSSProperties } from 'react';
 import { MapPin, Heart, Eye, Users, Flame } from 'lucide-react';
 import type { PropertyData } from '../../services/propertyService';
 import { LineShareAction } from '../social/LineShareAction';
+import { LINE_BRAND_GREEN, LINE_BRAND_GREEN_HOVER } from './constants';
 
 interface PropertyInfoCardProps {
   property: PropertyData;
@@ -38,8 +39,13 @@ export const PropertyInfoCard = memo(function PropertyInfoCard({
   capsuleTags,
   socialProof,
 }: PropertyInfoCardProps) {
+  const lineBrandVars = {
+    '--line-brand-green': LINE_BRAND_GREEN,
+    '--line-brand-green-hover': LINE_BRAND_GREEN_HOVER,
+  } as CSSProperties;
+
   return (
-    <div>
+    <div style={lineBrandVars}>
       <div className="flex items-start justify-between gap-4">
         <h1 className="text-2xl font-bold leading-tight text-slate-900">{property.title}</h1>
         {/* 分享 + 收藏按鈕群組 */}
@@ -48,7 +54,7 @@ export const PropertyInfoCard = memo(function PropertyInfoCard({
             url={`${window.location.origin}/maihouses/property/${property.publicId}`}
             title={`【邁房子推薦】${property.title} | 總價 ${property.price} 萬`}
             onShareClick={onLineShare}
-            className="rounded-full bg-[#06C755] p-2 text-white transition-all hover:bg-[#05a847] hover:shadow-md"
+            className="rounded-full bg-[var(--line-brand-green)] p-2 text-white transition-all hover:bg-[var(--line-brand-green-hover)] hover:shadow-md"
             showIcon={true}
             btnText=""
           />

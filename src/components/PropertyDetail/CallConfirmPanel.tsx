@@ -4,7 +4,7 @@ import { notify } from '../../lib/notify';
 import { track } from '../../analytics/track';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
 import { TrustAssureHint } from './TrustAssureHint';
-import { isValidPhone, sanitizePhoneInput } from './bookingUtils';
+import { isValidPhone, sanitizePhoneInput } from './contactUtils';
 
 interface CallConfirmPanelProps {
   isOpen: boolean;

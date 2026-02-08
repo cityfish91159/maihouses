@@ -41,7 +41,7 @@ export interface Lead {
   customer_line_id?: string;
   agent_id: string;
   property_id: string;
-  source: 'sidebar' | 'mobile_bar' | 'booking' | 'direct';
+  source: 'sidebar' | 'mobile_bar' | 'booking' | 'direct'; // 'booking' deprecated (Phase 11-A #2)
   status: LeadStatus;
   budget_range?: string;
   preferred_contact_time?: string;
@@ -72,7 +72,7 @@ export interface CreateLeadParams {
   // 客戶端僅作提示，後端會以 propertyId 解析最終 agentId（權威來源）。
   agentId: string;
   propertyId: string;
-  source: 'sidebar' | 'mobile_bar' | 'booking' | 'direct';
+  source: 'sidebar' | 'mobile_bar' | 'booking' | 'direct'; // 'booking' deprecated (Phase 11-A #2)
   budgetRange?: string;
   preferredContactTime?: string;
   needsDescription?: string;

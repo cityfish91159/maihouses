@@ -1,0 +1,150 @@
+嚴格稽核報告
+日期：2026-02-08
+稽核範圍：.claude/tickets/AGENT PROFILE.md
+目標項目：#2 [P0] 移除預約看屋 + 雙按鈕 UX 重構（三按鈕 -> LINE + 致電）
+
+========================================
+一、稽核方式（strict-audit）
+========================================
+1) 讀取票據 #2 的「移除範圍」與「驗收標準」。
+2) 逐檔比對實作是否符合：
+- src/pages/PropertyDetailPage.tsx
+- src/components/AgentTrustCard.tsx
+- src/components/PropertyDetail/MobileActionBar.tsx
+- src/components/PropertyDetail/MobileCTA.tsx
+- src/components/PropertyDetail/VipModal.tsx
+- src/components/PropertyDetail/PropertyInfoCard.tsx
+- src/pages/propertyDetail/PropertyDetailActionLayer.tsx
+- src/components/PropertyDetail/index.ts
+3) 搜尋殘留引用：
+- BookingModal
+- bookingUtils
+- onBookingClick
+- weeklyBookings
+4) 執行測試與靜態檢查：
+- #2 關聯元件測試
+- #2 關聯頁面測試
+- BookingModal 舊測試（確認是否仍可執行）
+- typecheck
+- lint
+
+========================================
+二、執行命令與結果
+========================================
+A. 代碼比對命令
+- rg -n "BookingModal|bookingUtils|onBookingClick|weeklyBookings" src -S
+- rg -n "onLineClick|onCallClick|trustCasesCount" ... -S
+- rg -n "#06C755|LINE_BRAND_GREEN|line-brand-green" ... -S
+
+B. 測試與檢查命令
+1) cmd /c npm run test -- src/components/__tests__/AgentTrustCard.memo.test.tsx src/components/PropertyDetail/__tests__/MobileActionBar.test.tsx src/components/PropertyDetail/__tests__/MobileCTA.test.tsx
+- 結果：3 files passed, 35 tests passed
+
+2) cmd /c npm run test -- src/pages/__tests__/PropertyDetailPage.phase11.test.tsx src/pages/__tests__/PropertyDetailPage.handlers.test.tsx src/pages/__tests__/PropertyDetailPage.optimization.test.tsx
+- 結果：3 files passed, 23 tests passed
+
+3) cmd /c npm run test -- src/components/PropertyDetail/__tests__/BookingModal.test.tsx
+- 結果：1 file passed, 10 tests passed
+- 結論：BookingModal 仍存在且仍可完整運作（不符合 #2「刪除」要求）
+
+4) cmd /c npm run typecheck
+- 結果：PASS
+
+5) cmd /c npm run lint
+- 結果：PASS
+
+========================================
+三、驗收標準逐條判定（#2）
+========================================
+1) [FAIL] BookingModal 相關檔案已刪除
+證據：
+- src/components/PropertyDetail/BookingModal.tsx（存在）
+- src/components/PropertyDetail/bookingUtils.ts（存在）
+- src/components/PropertyDetail/__tests__/BookingModal.test.tsx（存在，且 10 測試通過）
+
+2) [PASS] AgentTrustCard 顯示 LINE + 致電雙按鈕
+證據：
+- src/components/AgentTrustCard.tsx:21
+- src/components/AgentTrustCard.tsx:22
+- src/components/AgentTrustCard.tsx:242
+- src/components/AgentTrustCard.tsx:252
+
+3) [PASS] MobileActionBar 兩按鈕，觸控面積 >= 44px
+證據：
+- src/components/PropertyDetail/MobileActionBar.tsx:58
+- src/components/PropertyDetail/MobileActionBar.tsx:61
+- src/components/PropertyDetail/MobileActionBar.tsx:69
+
+4) [PASS] MobileCTA 首屏雙按鈕
+證據：
+- src/components/PropertyDetail/MobileCTA.tsx:37
+- src/components/PropertyDetail/MobileCTA.tsx:48
+
+5) [PASS] VipModal 顯示 LINE + 致電，無預約按鈕
+證據：
+- src/components/PropertyDetail/VipModal.tsx:7
+- src/components/PropertyDetail/VipModal.tsx:8
+- src/components/PropertyDetail/VipModal.tsx:95
+
+6) [FAIL] 所有 LINE 按鈕色統一使用 CSS variable（#4 併入 #2）
+現況證據（仍有硬編碼 #06C755）：
+- src/components/PropertyDetail/MobileActionBar.tsx:61
+- src/components/PropertyDetail/MobileCTA.tsx:40
+- src/components/PropertyDetail/VipModal.tsx:85
+- src/components/PropertyDetail/PropertyInfoCard.tsx:51
+
+補充：
+- src/components/AgentTrustCard.tsx 已使用 CSS variable（line-brand-green）。
+- src/components/PropertyDetail/constants.ts 已定義 LINE_BRAND_GREEN，但尚未全量套用。
+
+7) [PASS] typecheck + lint 通過
+證據：
+- typecheck: PASS
+- lint: PASS
+
+========================================
+四、整體結論
+========================================
+最終判定：FAIL（未達成 #2 完整驗收）
+
+主因：
+1) 預約看屋鏈路沒有徹底移除（BookingModal / bookingUtils / 測試仍存在）。
+2) LINE 顏色尚未全站收斂到 CSS variable，仍有多處硬編碼。
+
+========================================
+五、修補清單（按優先級）
+========================================
+P0-1：徹底移除預約看屋殘留
+- 刪除：src/components/PropertyDetail/BookingModal.tsx
+- 刪除：src/components/PropertyDetail/__tests__/BookingModal.test.tsx
+- 將電話驗證函數從 bookingUtils 拆到 contactUtils：
+  - 新增：src/components/PropertyDetail/contactUtils.ts
+  - 轉移：isValidPhone / sanitizePhoneInput
+  - 修改：src/components/PropertyDetail/CallConfirmPanel.tsx 改 import contactUtils
+- 完成後刪除：src/components/PropertyDetail/bookingUtils.ts
+
+P0-2：LINE 色統一（去除硬編碼）
+- 將下列檔案中 #06C755/#05b34c 改為 CSS variable：
+  - src/components/PropertyDetail/MobileActionBar.tsx
+  - src/components/PropertyDetail/MobileCTA.tsx
+  - src/components/PropertyDetail/VipModal.tsx
+  - src/components/PropertyDetail/PropertyInfoCard.tsx
+
+P1（建議）：清理 booking 型別殘留
+- 若功能已完全移除，可收斂以下 union 的 'booking'：
+  - ContactModal source union
+  - PropertyDetailActionLayer contactSource union
+
+========================================
+六、修補後重驗收命令
+========================================
+1) cmd /c npm run test -- src/components/__tests__/AgentTrustCard.memo.test.tsx src/components/PropertyDetail/__tests__/MobileActionBar.test.tsx src/components/PropertyDetail/__tests__/MobileCTA.test.tsx src/pages/__tests__/PropertyDetailPage.phase11.test.tsx src/pages/__tests__/PropertyDetailPage.handlers.test.tsx src/pages/__tests__/PropertyDetailPage.optimization.test.tsx
+2) cmd /c npm run typecheck
+3) cmd /c npm run lint
+4) rg -n "BookingModal|bookingUtils|onBookingClick|weeklyBookings|#06C755" src -S
+
+預期結果：
+- 無 BookingModal / onBookingClick / weeklyBookings 殘留
+- 僅允許 constants 定義 LINE 顏色，不允許元件硬編碼
+
+（報告結束）

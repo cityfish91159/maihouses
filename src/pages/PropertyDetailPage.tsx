@@ -68,9 +68,7 @@ export const PropertyDetailPage: React.FC = () => {
 
   // ContactModal 狀態
   const [showContactModal, setShowContactModal] = useState(false);
-  const [contactSource, setContactSource] = useState<'sidebar' | 'mobile_bar' | 'booking'>(
-    'sidebar'
-  );
+  const [contactSource, setContactSource] = useState<'sidebar' | 'mobile_bar'>('sidebar');
   const [contactDefaultChannel, setContactDefaultChannel] = useState<ContactChannel>('line');
   const [contactTrustAssureRequested, setContactTrustAssureRequested] = useState(false);
 
@@ -152,7 +150,7 @@ export const PropertyDetailPage: React.FC = () => {
 
   const openContactModal = useCallback(
     (
-      source: 'sidebar' | 'mobile_bar' | 'booking',
+      source: 'sidebar' | 'mobile_bar',
       defaultChannel: ContactChannel = 'line',
       trustAssureRequested = false
     ) => {

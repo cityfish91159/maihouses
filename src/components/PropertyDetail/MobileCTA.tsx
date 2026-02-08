@@ -1,5 +1,6 @@
-import { memo } from 'react';
+import { memo, type CSSProperties } from 'react';
 import { Phone, MessageCircle } from 'lucide-react';
+import { LINE_BRAND_GREEN, LINE_BRAND_GREEN_HOVER } from './constants';
 
 interface MobileCTAProps {
   onLineClick: () => void;
@@ -28,16 +29,21 @@ export const MobileCTA = memo(function MobileCTA({
   trustCasesCount = 0,
   isActionLocked,
 }: MobileCTAProps) {
+  const lineBrandVars = {
+    '--line-brand-green': LINE_BRAND_GREEN,
+    '--line-brand-green-hover': LINE_BRAND_GREEN_HOVER,
+  } as CSSProperties;
+
   return (
     <div className="mb-6 lg:hidden">
-      <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-lg">
+      <div style={lineBrandVars} className="rounded-2xl border border-slate-100 bg-white p-4 shadow-lg">
         <div className="flex gap-3">
           {/* 加 LINE 聊聊 - 主 CTA */}
           <button
             onClick={onLineClick}
             aria-label="加 LINE 聊聊"
             disabled={isActionLocked}
-            className="flex min-h-[44px] flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#06C755] py-3 text-base font-bold tracking-wide text-white shadow-lg shadow-green-500/20 transition-all duration-200 hover:bg-[#05b34c] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none motion-reduce:active:scale-100"
+            className="flex min-h-[44px] flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl bg-[var(--line-brand-green)] py-3 text-base font-bold tracking-wide text-white shadow-lg shadow-green-500/20 transition-all duration-200 hover:bg-[var(--line-brand-green-hover)] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none motion-reduce:active:scale-100"
           >
             <MessageCircle size={20} />
             加 LINE 聊聊

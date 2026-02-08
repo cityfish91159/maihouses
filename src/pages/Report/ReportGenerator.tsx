@@ -1,8 +1,12 @@
-﻿import React, { useState, useMemo } from 'react';
+﻿import React, { useState, useMemo, type CSSProperties } from 'react';
 import { X, ChevronRight, Check, Copy, Share2, FileText, Link2 } from 'lucide-react';
 import { PropertyReportData, ReportStyle, REPORT_STYLES, HIGHLIGHT_OPTIONS } from './types';
 import { notify } from '../../lib/notify';
 import { LineShareAction } from '../../components/social/LineShareAction';
+import {
+  LINE_BRAND_GREEN,
+  LINE_BRAND_GREEN_HOVER,
+} from '../../components/PropertyDetail/constants';
 
 interface ReportGeneratorProps {
   property: PropertyReportData;
@@ -13,6 +17,11 @@ interface ReportGeneratorProps {
 type Step = 'style' | 'highlights' | 'photos' | 'preview';
 
 export default function ReportGenerator({ property, isOpen, onClose }: ReportGeneratorProps) {
+  const lineBrandVars = {
+    '--line-brand-green': LINE_BRAND_GREEN,
+    '--line-brand-green-hover': LINE_BRAND_GREEN_HOVER,
+  } as CSSProperties;
+
   const [step, setStep] = useState<Step>('style');
   const [selectedStyle, setSelectedStyle] = useState<ReportStyle>('simple');
   const [selectedHighlights, setSelectedHighlights] = useState<string[]>([
@@ -125,7 +134,7 @@ export default function ReportGenerator({ property, isOpen, onClose }: ReportGen
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-modal flex items-end justify-center sm:items-center">
+    <div style={lineBrandVars} className="fixed inset-0 z-modal flex items-end justify-center sm:items-center">
       {/* 背景遮罩 */}
       <div
         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
@@ -359,7 +368,7 @@ export default function ReportGenerator({ property, isOpen, onClose }: ReportGen
                       /* 追蹤失敗不影響用戶體驗 */
                     });
                   }}
-                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#06C755] py-3 font-bold text-white transition hover:bg-[#05a847]"
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--line-brand-green)] py-3 font-bold text-white transition hover:bg-[var(--line-brand-green-hover)]"
                   wrapperClass="w-full"
                   btnText="LINE 分享"
                   showIcon={true}

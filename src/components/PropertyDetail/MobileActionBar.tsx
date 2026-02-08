@@ -1,5 +1,6 @@
-import { memo } from 'react';
+import { memo, type CSSProperties } from 'react';
 import { MessageCircle, Phone, Shield, Eye, Flame } from 'lucide-react';
+import { LINE_BRAND_GREEN, LINE_BRAND_GREEN_HOVER } from './constants';
 
 interface MobileActionBarProps {
   onLineClick: () => void;
@@ -31,8 +32,13 @@ export const MobileActionBar = memo(function MobileActionBar({
   socialProof = { currentViewers: 0, isHot: false },
   isActionLocked = false,
 }: MobileActionBarProps) {
+  const lineBrandVars = {
+    '--line-brand-green': LINE_BRAND_GREEN,
+    '--line-brand-green-hover': LINE_BRAND_GREEN_HOVER,
+  } as CSSProperties;
+
   return (
-    <div className="pb-safe fixed inset-x-0 bottom-0 z-overlay border-t border-slate-100 bg-white p-3 lg:hidden">
+    <div style={lineBrandVars} className="pb-safe fixed inset-x-0 bottom-0 z-overlay border-t border-slate-100 bg-white p-3 lg:hidden">
       {/* 社會證明資訊 */}
       <div className="mb-2 flex items-center justify-center gap-4 text-xs text-slate-500">
         <span className="flex items-center gap-1">
@@ -58,7 +64,7 @@ export const MobileActionBar = memo(function MobileActionBar({
           onClick={onLineClick}
           aria-label="加 LINE 聊聊"
           disabled={isActionLocked}
-          className="flex min-h-[44px] flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#06C755] py-3 font-bold tracking-wide text-white shadow-lg shadow-green-500/20 transition-all duration-200 hover:bg-[#05b34c] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none motion-reduce:active:scale-100"
+          className="flex min-h-[44px] flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl bg-[var(--line-brand-green)] py-3 font-bold tracking-wide text-white shadow-lg shadow-green-500/20 transition-all duration-200 hover:bg-[var(--line-brand-green-hover)] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none motion-reduce:active:scale-100"
         >
           <MessageCircle size={18} />
           加 LINE 聊聊

@@ -32,6 +32,14 @@
 - [ ] **#8** [P0] 社會證明真實數據 — 瀏覽人數（uag_events）+ 賞屋組數（trust_cases）替換假數據
 - [x] **#10** [P0] 社區評價正式版 API 資料層修正 + Mock fallback（Mock fallback ✅ / 按鈕連結 ✅ / 正式版資料層待處理）
 
+### 信任分 / 鼓勵數
+
+- [ ] **#12** [P1] 信任分 Tooltip 修正 — 移除假拆分，改為說明型 Tooltip + seed 指標校正
+
+### Header / 品牌統一
+
+- [ ] **#11** [P1] 詳情頁 Header 品牌統一 — 統一使用 `<Logo>` 組件 + 返回按鈕功能 + 色彩 design token + 無障礙補強
+
 ### 手機版 UX 優化
 
 - [ ] **#9** [P1] 手機版 UX 優化 — DetailPage 11 項 + UAG 8 項 + 跨頁面 3 項（共 22 項）
@@ -926,6 +934,250 @@ const socialProof = useMemo(() => {
 
 ---
 
+## #11 [P1] 詳情頁 Header 品牌統一
+
+### 問題
+
+**檔案：** `src/pages/PropertyDetailPage.tsx` L505-525
+
+詳情頁 Header 完全獨立手刻，與首頁 `<Logo>` 組件不一致：
+
+| 面向 | 首頁 Header (`Header.tsx`) | 詳情頁 Header (`PropertyDetailPage.tsx`) |
+|------|--------------------------|----------------------------------------|
+| **Logo 組件** | 統一 `<Logo>` 組件 | 手刻 `<Home>` icon + 文字 |
+| **品牌色** | `brand-700`（design token） | 硬編碼 `#003366` / `#00A8E8` |
+| **Icon 尺寸** | 42x42px、圓角 xl、shine 動畫 | 32x32px (size-8)、圓角 lg |
+| **文字樣式** | `font-serif text-[24px]` + badge | `text-xl font-extrabold`，無 serif |
+| **連結行為** | 點擊回首頁 `/maihouses/` | 無連結（純靜態文字） |
+| **返回按鈕** | N/A | `<ArrowLeft>` 存在但**無 onClick** |
+| **無障礙** | `aria-label` 完整 | 返回按鈕、Logo 均缺少 `aria-label` |
+
+### 改動
+
+#### 11-A. [P0] 統一使用 `<Logo>` 組件
+
+| 檔案 | 改動 |
+|------|------|
+| `src/pages/PropertyDetailPage.tsx` L507-516 | 移除手刻 Logo，改用 `<Logo showSlogan={false} showBadge={true} href="/maihouses/" />` |
+
+**改動前：**
+```tsx
+<div className="flex items-center gap-2 text-xl font-extrabold text-[#003366]">
+  <div className="flex size-8 items-center justify-center rounded-lg bg-gradient-to-br from-[#003366] to-[#00A8E8] text-white">
+    <Home size={18} />
+  </div>
+  邁房子
+</div>
+```
+
+**改動後：**
+```tsx
+<Logo showSlogan={false} showBadge={true} href="/maihouses/" ariaLabel="回到邁房子首頁" />
+```
+
+#### 11-B. [P1] 返回按鈕加 onClick 功能
+
+| 檔案 | 改動 |
+|------|------|
+| `src/pages/PropertyDetailPage.tsx` L508-510 | 加入 `onClick` 事件 + `aria-label` |
+
+**改動前：**
+```tsx
+<button className="rounded-full p-2 transition-colors hover:bg-slate-100">
+  <ArrowLeft size={20} className="text-slate-600" />
+</button>
+```
+
+**改動後：**
+```tsx
+<button
+  onClick={() => window.history.length > 1 ? navigate(-1) : navigate('/maihouses/')}
+  className="rounded-full p-2 transition-colors hover:bg-slate-100"
+  aria-label="返回上一頁"
+>
+  <ArrowLeft size={20} className="text-slate-600" />
+</button>
+```
+
+#### 11-C. [P1] 色彩改用 design token
+
+| 檔案 | 位置 | 改動 |
+|------|------|------|
+| `PropertyDetailPage.tsx` L506 | Header border | `border-slate-100` → `border-brand-100` |
+| `PropertyDetailPage.tsx` L523 | 物件編號文字 | `text-[#003366]` → `text-brand-700` |
+| `PropertyDetailPage.tsx` L702 | 報告 FAB 漸層 | `from-[#003366] to-[#00A8E8]` → `from-brand-700 to-brand-600` |
+
+#### 11-D. [P2] 無障礙補強
+
+| 檔案 | 改動 |
+|------|------|
+| `PropertyDetailPage.tsx` L506 | `<nav>` 加 `aria-label="物件導覽"` |
+| `PropertyDetailPage.tsx` L520 | 物件編號區塊加 `role="status"` |
+
+#### 11-E. [P2] 手機版 Header 微調
+
+| 項目 | 改動 |
+|------|------|
+| 物件編號 | 加 `hidden xs:flex`，極窄螢幕（<360px）隱藏避免擠壓 |
+| 返回按鈕 touch target | `p-2` → `p-2.5`，確保 44x44px |
+
+### 涉及檔案清單
+
+| 檔案 | 操作 | 說明 |
+|------|------|------|
+| `src/pages/PropertyDetailPage.tsx` | 修改 | Header 區塊重構（L505-525），移除 `Home` icon import |
+| `src/components/Logo/Logo.tsx` | 不動 | 已有完整 props 支援，直接複用 |
+
+### 驗收標準
+
+- [ ] 詳情頁 Logo 與首頁視覺一致（42x42 icon、serif 字體、badge、hover shine 效果）
+- [ ] 點擊 Logo 導向 `/maihouses/`
+- [ ] 返回按鈕有 `onClick`，有瀏覽歷史回上頁，無歷史回首頁
+- [ ] 無硬編碼 `#003366` / `#00A8E8`，全部使用 design token
+- [ ] `aria-label` 完整（返回按鈕、Logo、nav、物件編號）
+- [ ] 手機版 320px 無溢出
+- [ ] typecheck + lint 通過
+
+---
+
+## #12 [P1] 信任分 Tooltip 修正 + Seed 指標校正
+
+### 問題
+
+**檔案：** `src/components/AgentTrustCard.tsx` L26-35, L173-192
+
+信任分 Tooltip 的拆分數值是假的，與 DB Trigger 計算邏輯完全不一致：
+
+| 面向 | 前端 Tooltip（假） | DB Trigger（真） |
+|------|-------------------|-----------------|
+| **計算方式** | 總分倒推 `score × 比例` | 基礎 60 + 三項加分 |
+| **維度** | 實名認證 40% / 回覆速度 30% / 成交記錄 30% | 服務評價(+20) / 完成案件(+10) / 鼓勵數(+10) |
+| **數值** | 假的（92 → 36+27+27=90，還丟失 2 分） | 真實計算 |
+
+**DB 真實公式（`fn_calculate_trust_score`）：**
+```
+基礎分           60（平台實名認證即得）
++ 服務評價       service_rating × 4，最高 +20
++ 完成案件       completed_cases / 5，最高 +10
++ 客戶回饋       encouragement_count / 20，最高 +10
+= 信任分         上限 100
+```
+
+**MH-100001 seed 問題（信任分 + 績效指標）：**
+
+信任分 Tooltip 假拆分之外，經紀人績效指標區塊（`AgentTrustCard` L220-236）也有問題：
+
+| 欄位 | DB seed 值 | 正式版顯示 | Mock 顯示 | 問題 |
+|------|-----------|-----------|----------|------|
+| `trust_score` | 硬編碼 92 | 92 | 92 | 未經 Trigger，不是真實計算值 |
+| `service_rating` | NULL → DEFAULT 0 | **0.0** | 4.8 | 正式版顯示 0.0 |
+| `review_count` | NULL → DEFAULT 0 | **(0)** | (32) | 正式版顯示 (0) |
+| `completed_cases` | NULL → DEFAULT 0 | **0** | 45 | 正式版顯示 0 |
+| `joined_at` | backfill = `created_at`（~2025-11-27） | **0年** | 4年 | 建立才 ~3 個月，`Math.floor(0.2)` = 0 |
+| `encouragement_count` | 156 | 156 | 156 | 正常 |
+
+Mock 版硬編碼在 `agentMetrics`（L76-83），不受 DB 影響，永遠正常。
+正式版走 `profile?.xxx ?? agent.xxx ?? 0`，程式碼邏輯正確，問題全在 DB seed 資料缺失。
+
+### 改動
+
+#### 12-A. [P1] Tooltip 改為說明型（移除假拆分）
+
+| 檔案 | 改動 |
+|------|------|
+| `src/components/AgentTrustCard.tsx` L26-35 | 移除 `getTrustBreakdown` 函數 |
+| `src/components/AgentTrustCard.tsx` L73 | 移除 `trustBreakdown` 變數 |
+| `src/components/AgentTrustCard.tsx` L8-10 | 移除 `Clock`、`CheckCircle`、`FileText` import（不再使用） |
+| `src/components/AgentTrustCard.tsx` L174-192 | Tooltip 內容替換為說明型 |
+
+**改動前（假拆分）：**
+```tsx
+const getTrustBreakdown = (score: number) => {
+  const base = Math.floor(score * 0.4);
+  const response = Math.floor(score * 0.3);
+  const deals = Math.floor(score * 0.3);
+  return [
+    { label: '實名認證', value: base, icon: CheckCircle },
+    { label: '回覆速度', value: response, icon: Clock },
+    { label: '成交記錄', value: deals, icon: FileText },
+  ];
+};
+```
+
+**改動後（說明型 Tooltip）：**
+```tsx
+{showTrustTooltip && (
+  <div className="absolute bottom-full left-0 z-10 mb-2 w-52 rounded-lg bg-slate-800 p-3 text-xs text-white shadow-xl">
+    <div className="mb-1 font-bold">
+      信任分數 <span className="text-green-400">{trustScore}</span> / 100
+    </div>
+    <p className="mb-2 text-slate-300">綜合以下指標自動計算：</p>
+    <ul className="space-y-1 text-slate-300">
+      <li className="flex items-center gap-1.5">
+        <Shield size={10} className="shrink-0 text-green-400" />
+        平台實名認證
+      </li>
+      <li className="flex items-center gap-1.5">
+        <Star size={10} className="shrink-0 text-green-400" />
+        歷史服務評價
+      </li>
+      <li className="flex items-center gap-1.5">
+        <ThumbsUp size={10} className="shrink-0 text-green-400" />
+        成交記錄與客戶回饋
+      </li>
+    </ul>
+    <p className="mt-2 border-t border-slate-600 pt-2 text-[10px] text-slate-400">
+      每筆交易完成後即時更新
+    </p>
+    <div className="absolute left-4 top-full border-8 border-transparent border-t-slate-800" />
+  </div>
+)}
+```
+
+**不需新增 import** — `Shield`、`Star`、`ThumbsUp` 已存在於 import 列表。
+
+#### 12-B. [P2] MH-100001 seed 指標校正（正式版）
+
+| 檔案 | 改動 |
+|------|------|
+| `supabase/migrations/YYYYMMDD_fix_agent_seed_metrics.sql` | **新增** — 為 seed agent 補齊指標欄位 |
+
+```sql
+UPDATE public.agents
+SET
+  service_rating = 4.8,
+  completed_cases = 45,
+  encouragement_count = 156
+WHERE id = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
+-- Trigger 自動重算 trust_score = 60 + 19 + 9 + 7 = 95
+```
+
+Trigger `trg_agents_trust_score` 會在 UPDATE 時自動執行 `fn_calculate_trust_score`，重算 `trust_score`。
+
+### 涉及檔案清單
+
+| 檔案 | 操作 | 說明 |
+|------|------|------|
+| `src/components/AgentTrustCard.tsx` | 修改 | 移除假拆分函數 + Tooltip 改說明型 + 清理 import |
+| `supabase/migrations/YYYYMMDD_fix_agent_seed_metrics.sql` | 新增 | seed agent 指標校正（觸發 Trigger 重算） |
+
+### Mock 版影響
+
+**無影響。** `isDemo=true` 時 `shouldFetchProfile=false`，不呼叫 API。Tooltip 顯示相同的說明文字，不涉及任何數值拆分。
+
+### 驗收標準
+
+- [ ] Tooltip 不再顯示假拆分數值
+- [ ] Tooltip 顯示「信任分數 N / 100」+ 三項指標說明 + 更新頻率
+- [ ] `getTrustBreakdown` 函數已移除
+- [ ] `Clock`、`CheckCircle`、`FileText` import 已清理（確認無其他使用）
+- [ ] MH-100001 的 `service_rating`、`completed_cases` 已補齊（migration）
+- [ ] Trigger 重算後 `trust_score` 為合理值（預期 95）
+- [ ] Mock 頁行為不變
+- [ ] typecheck + lint 通過
+
+---
+
 ## 依賴關係
 
 ```
@@ -951,7 +1203,17 @@ const socialProof = useMemo(() => {
   ├─ 10-A 為 MH-100001 補 community_id migration（依賴社區存在）
   └─ 10-B 為正式版社區補 seed 評價（依賴 10-A）
 
-#9 手機版 UX 優化（建議在 #2 之後做，因為 #2 會改動同樣的組件）
+#12 信任分 Tooltip 修正（獨立，可隨時做）
+  ├─ 12-A Tooltip 改說明型（前端，獨立）
+  └─ 12-B seed 指標校正 migration（DB，獨立，可與 #5 同時做）
+
+#11 詳情頁 Header 品牌統一（獨立，建議在 #2 之後做）
+  ├─ 11-A Logo 組件統一（獨立）
+  ├─ 11-B 返回按鈕功能（獨立）
+  ├─ 11-C 色彩 design token（獨立）
+  └─ 11-D/E 無障礙 + 手機版微調（獨立）
+
+#9 手機版 UX 優化（建議在 #2、#11 之後做，因為 #2、#11 會改動同樣的組件）
   ├─ D1-D11 DetailPage 優化（依賴 #2 完成後的雙按鈕佈局）
   ├─ U1-U8 UAG 優化（獨立）
   └─ C1-C3 跨頁面共通（獨立，可隨時做）
@@ -970,5 +1232,7 @@ const socialProof = useMemo(() => {
 | 5 | #6 UAG Header mock 入口 | P0 | Mock | 2 |
 | 6 | #7 Profile 頁 mock | P0 | Mock | 2-3 |
 | 7 | #3 createLead 補 preferredChannel | P1 | 正式 | 2 |
-| 8 | #10 社區評價正式版資料層修正 | P0 | 正式 | 2（migration） |
-| 9 | #9 手機版 UX 優化（22 項） | P1 | 正式+Mock | 12+ |
+| 8 | #12 信任分 Tooltip 修正 + seed 校正 | P1 | 正式+Mock | 1 + 1 migration |
+| 9 | #11 詳情頁 Header 品牌統一 | P1 | 正式+Mock | 1 |
+| 10 | #10 社區評價正式版資料層修正 | P0 | 正式 | 2（migration） |
+| 11 | #9 手機版 UX 優化（22 項） | P1 | 正式+Mock | 12+ |

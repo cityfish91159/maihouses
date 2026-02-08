@@ -42,7 +42,7 @@ interface CallPanelLayerProps {
 
 interface ContactModalLayerProps {
   showContactModal: boolean;
-  contactSource: 'sidebar' | 'mobile_bar' | 'booking';
+  contactSource: 'sidebar' | 'mobile_bar';
   contactDefaultChannel: ContactChannel;
   contactTrustAssureRequested: boolean;
   onCloseContactModal: () => void;

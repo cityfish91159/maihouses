@@ -1,5 +1,6 @@
-﻿import { memo } from 'react';
+﻿import { memo, type CSSProperties } from 'react';
 import { Flame, CheckCircle, MessageCircle, Phone } from 'lucide-react';
+import { LINE_BRAND_GREEN, LINE_BRAND_GREEN_HOVER } from './constants';
 
 interface VipModalProps {
   isOpen: boolean;
@@ -29,10 +30,16 @@ export const VipModal = memo(function VipModal({
   onCallClick,
   reason,
 }: VipModalProps) {
+  const lineBrandVars = {
+    '--line-brand-green': LINE_BRAND_GREEN,
+    '--line-brand-green-hover': LINE_BRAND_GREEN_HOVER,
+  } as CSSProperties;
+
   if (!isOpen) return null;
 
   return (
     <div
+      style={lineBrandVars}
       className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4"
       onClick={onClose}
       onKeyDown={(e) => {
@@ -82,7 +89,7 @@ export const VipModal = memo(function VipModal({
               onLineClick();
             }}
             aria-label="立即加 LINE 諮詢"
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#06C755] py-3 font-bold tracking-wide text-white shadow-lg shadow-green-500/20 transition-all duration-200 hover:bg-[#05b34c] active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--line-brand-green)] py-3 font-bold tracking-wide text-white shadow-lg shadow-green-500/20 transition-all duration-200 hover:bg-[var(--line-brand-green-hover)] active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100"
           >
             <MessageCircle size={20} />
             立即加 LINE 諮詢

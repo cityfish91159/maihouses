@@ -24,7 +24,7 @@ interface ContactModalProps {
   readonly propertyTitle: string;
   readonly agentId: string;
   readonly agentName: string;
-  readonly source: 'sidebar' | 'mobile_bar' | 'booking';
+  readonly source: 'sidebar' | 'mobile_bar';
   readonly defaultChannel?: ContactChannel;
   readonly trustAssureRequested?: boolean;
 }
