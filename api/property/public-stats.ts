@@ -61,7 +61,7 @@ interface PublicStatsData {
 export default async function handler(
   req: VercelRequest,
   res: VercelResponse
-): Promise<void> {
+): Promise<VercelResponse | void> {
   // CORS
   cors(req, res);
   if (req.method === 'OPTIONS') {
@@ -80,7 +80,7 @@ export default async function handler(
     const result = QuerySchema.safeParse(req.query);
     if (!result.success) {
       logger.warn('[public-stats] Invalid query params', {
-        errors: result.error.errors,
+        errors: result.error.issues,
         query: req.query,
       });
       return res
@@ -89,7 +89,7 @@ export default async function handler(
           errorResponse(
             API_ERROR_CODES.INVALID_QUERY,
             'Invalid query parameters',
-            result.error.errors
+            result.error.issues
           )
         );
     }
