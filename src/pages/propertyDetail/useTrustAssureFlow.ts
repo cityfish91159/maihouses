@@ -4,7 +4,7 @@ import { logger } from '../../lib/logger';
 import { notify } from '../../lib/notify';
 import { getTrustScenario } from '../../components/PropertyDetail/trustAssure';
 
-type TrustAssurePanel = 'line' | 'call' | 'booking';
+type TrustAssurePanel = 'line' | 'call' | 'booking'; // 'booking' deprecated (Phase 11-A #2), kept for analytics compatibility
 
 interface UseTrustAssureFlowOptions {
   isLoggedIn: boolean;

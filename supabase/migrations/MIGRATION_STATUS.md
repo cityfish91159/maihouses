@@ -1,6 +1,6 @@
 ﻿# Migration 執行狀態追蹤
 
-最後確認：2026-01-29
+最後確認：2026-02-08
 
 ## 已執行（經 DB 查詢確認）
 
@@ -19,6 +19,7 @@
 | `20260122_wp4_vapid_vault_rpc.sql`             | fn_get_vapid_private_key                        | ✅        |
 | `20260122_create_property_with_review_rpc.sql` | fn_create_property_with_review                  | ✅        |
 | `20260129_create_audit_logs.sql`               | audit_logs 表 + 基礎 RLS                        | ✅        |
+| `20260130_agent_profile_extension.sql`         | agents 擴充 + agent-avatars bucket/RLS + trust score RPC/trigger | ✅        |
 | `20260129_fix_audit_logs_rls.sql`              | audit_logs RLS 強化 + status/error 欄位         | ⚠️ 待執行 |
 | `20260129_uag_audit_logs_sanitizer.sql`        | UAG audit logs 敏感資料脫敏 (40→95/100)         | ⚠️ 待執行 |
 

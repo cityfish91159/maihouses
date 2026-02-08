@@ -32,9 +32,10 @@
 - [ ] **#8** [P0] 社會證明真實數據 — 瀏覽人數（uag_events）+ 賞屋組數（trust_cases）替換假數據
 - [x] **#10** [P0] 社區評價正式版 API 資料層修正 + Mock fallback（Mock fallback ✅ / 按鈕連結 ✅ / 正式版資料層待處理）
 
-### 信任分 / 鼓勵數
+### 信任分 / 鼓勵數 / 評價系統
 
-- [ ] **#12** [P1] 信任分 Tooltip 修正 — 移除假拆分，改為說明型 Tooltip + seed 指標校正
+- [ ] **#12** [P1] 信任分 Tooltip 修正 + 績效指標 seed 校正 — 移除假拆分改說明型 Tooltip + DB 補齊 service_rating/review_count/completed_cases/joined_at
+- [ ] **#13** [P0] 房仲評價系統 — DB `agent_reviews` 建表 + 評價 API + Step 2 評價彈窗 + (32) 可點擊查看評價列表 + 自動計算 AVG
 
 ### Header / 品牌統一
 
@@ -1136,34 +1137,49 @@ const getTrustBreakdown = (score: number) => {
 
 **不需新增 import** — `Shield`、`Star`、`ThumbsUp` 已存在於 import 列表。
 
-#### 12-B. [P2] MH-100001 seed 指標校正（正式版）
+#### 12-B. [P0] MH-100001 seed 指標全量校正（正式版）
 
 | 檔案 | 改動 |
 |------|------|
-| `supabase/migrations/YYYYMMDD_fix_agent_seed_metrics.sql` | **新增** — 為 seed agent 補齊指標欄位 |
+| `supabase/migrations/YYYYMMDD_fix_agent_seed_metrics.sql` | **新增** — 為 seed agent 補齊所有指標欄位 |
 
 ```sql
 UPDATE public.agents
 SET
-  service_rating = 4.8,
-  completed_cases = 45,
-  encouragement_count = 156
+  service_rating = 4.8,          -- 正式版顯示 4.8（與 Mock 一致）
+  review_count = 32,             -- 正式版顯示 (32)（與 Mock 一致）
+  completed_cases = 45,          -- 正式版顯示 45（與 Mock 一致）
+  encouragement_count = 156,     -- 維持不變（已有值）
+  joined_at = NOW() - INTERVAL '4 years'  -- 正式版顯示 4年（與 Mock 一致）
 WHERE id = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
 -- Trigger 自動重算 trust_score = 60 + 19 + 9 + 7 = 95
 ```
 
+校正後正式版 vs Mock 對照：
+
+| 欄位 | 校正前（正式版） | 校正後（正式版） | Mock |
+|------|---------------|---------------|------|
+| serviceRating | 0.0 | **4.8** | 4.8 |
+| reviewCount | (0) | **(32)** | (32) |
+| completedCases | 0 | **45** | 45 |
+| serviceYears | 0年 | **4年** | 4年 |
+| trustScore | 92（硬編碼） | **95**（Trigger 算） | 92（prop 值） |
+| encouragementCount | 156 | 156 | 156 |
+
 Trigger `trg_agents_trust_score` 會在 UPDATE 時自動執行 `fn_calculate_trust_score`，重算 `trust_score`。
+
+**前端零改動** — 程式碼邏輯完全正確（`profile?.xxx ?? agent.xxx ?? 0`），問題全在 DB seed 資料缺失。
 
 ### 涉及檔案清單
 
 | 檔案 | 操作 | 說明 |
 |------|------|------|
 | `src/components/AgentTrustCard.tsx` | 修改 | 移除假拆分函數 + Tooltip 改說明型 + 清理 import |
-| `supabase/migrations/YYYYMMDD_fix_agent_seed_metrics.sql` | 新增 | seed agent 指標校正（觸發 Trigger 重算） |
+| `supabase/migrations/YYYYMMDD_fix_agent_seed_metrics.sql` | 新增 | seed agent 全量指標校正（觸發 Trigger 重算） |
 
 ### Mock 版影響
 
-**無影響。** `isDemo=true` 時 `shouldFetchProfile=false`，不呼叫 API。Tooltip 顯示相同的說明文字，不涉及任何數值拆分。
+**無影響。** Mock 版績效指標硬編碼在 `agentMetrics`（L76-83），`isDemo=true` 時 `shouldFetchProfile=false`，不呼叫 API。Tooltip 顯示相同的說明文字，不涉及任何數值拆分。
 
 ### 驗收標準
 
@@ -1171,9 +1187,10 @@ Trigger `trg_agents_trust_score` 會在 UPDATE 時自動執行 `fn_calculate_tru
 - [ ] Tooltip 顯示「信任分數 N / 100」+ 三項指標說明 + 更新頻率
 - [ ] `getTrustBreakdown` 函數已移除
 - [ ] `Clock`、`CheckCircle`、`FileText` import 已清理（確認無其他使用）
-- [ ] MH-100001 的 `service_rating`、`completed_cases` 已補齊（migration）
+- [ ] 正式版績效指標顯示正確：4.8 / (32) / 45 / 4年
+- [ ] MH-100001 的 `service_rating`、`review_count`、`completed_cases`、`joined_at` 已補齊
 - [ ] Trigger 重算後 `trust_score` 為合理值（預期 95）
-- [ ] Mock 頁行為不變
+- [ ] Mock 頁行為不變（績效指標 + Tooltip 均不受影響）
 - [ ] typecheck + lint 通過
 
 ---
