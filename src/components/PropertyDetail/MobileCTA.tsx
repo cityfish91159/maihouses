@@ -37,7 +37,7 @@ export const MobileCTA = memo(function MobileCTA({
             onClick={onLineClick}
             aria-label="加 LINE 聊聊"
             disabled={isActionLocked}
-            className="flex min-h-[44px] flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#06C755] py-3 text-base font-bold text-white shadow-lg transition-colors duration-200 hover:bg-[#05b34c] disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none"
+            className="flex min-h-[44px] flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#06C755] py-3 text-base font-bold tracking-wide text-white shadow-lg shadow-green-500/20 transition-all duration-200 hover:bg-[#05b34c] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none motion-reduce:active:scale-100"
           >
             <MessageCircle size={20} />
             加 LINE 聊聊
@@ -48,16 +48,20 @@ export const MobileCTA = memo(function MobileCTA({
             onClick={onCallClick}
             aria-label="致電諮詢"
             disabled={isActionLocked}
-            className="flex min-h-[44px] flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl bg-brand-700 py-3 text-base font-bold text-white shadow-lg transition-colors duration-200 hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none"
+            className="flex min-h-[44px] flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl bg-brand-700 py-3 text-base font-bold tracking-wide text-white shadow-lg shadow-blue-900/20 transition-all duration-200 hover:bg-brand-600 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none motion-reduce:active:scale-100"
           >
             <Phone size={20} />
             致電諮詢
           </button>
         </div>
 
-        {/* 賞屋組數提示（#8 真實數據，trust_cases_count > 0 時顯示） */}
+        {/* 賞屋組數提示（#8 真實數據，trust_cases_count > 0 時顯示） + ARIA live 無障礙增強 */}
         {trustCasesCount > 0 && (
-          <p className="mt-2 text-center text-xs text-slate-700">
+          <p
+            className="mt-2 text-center text-xs text-slate-700"
+            aria-live="polite"
+            aria-atomic="true"
+          >
             本物件 {trustCasesCount} 組客戶已賞屋，把握機會！
           </p>
         )}

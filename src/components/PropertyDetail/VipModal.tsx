@@ -82,7 +82,7 @@ export const VipModal = memo(function VipModal({
               onLineClick();
             }}
             aria-label="立即加 LINE 諮詢"
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#06C755] py-3 font-bold text-white shadow-lg transition-colors duration-200 hover:bg-[#05b34c] motion-reduce:transition-none"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#06C755] py-3 font-bold tracking-wide text-white shadow-lg shadow-green-500/20 transition-all duration-200 hover:bg-[#05b34c] active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100"
           >
             <MessageCircle size={20} />
             立即加 LINE 諮詢
@@ -95,7 +95,7 @@ export const VipModal = memo(function VipModal({
               onCallClick();
             }}
             aria-label="致電諮詢"
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-700 py-3 font-bold text-white transition-colors duration-200 hover:bg-brand-600 motion-reduce:transition-none"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-700 py-3 font-bold tracking-wide text-white shadow-lg shadow-blue-900/20 transition-all duration-200 hover:bg-brand-600 active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100"
           >
             <Phone size={20} />
             致電諮詢

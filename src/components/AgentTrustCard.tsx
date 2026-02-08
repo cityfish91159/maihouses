@@ -242,7 +242,7 @@ export const AgentTrustCard: React.FC<AgentTrustCardProps> = memo(function Agent
             onClick={onLineClick}
             aria-label="加 LINE 聊聊"
             data-testid="agent-card-line-button"
-            className="flex min-h-[44px] w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-[var(--line-brand-green)] py-2.5 text-sm font-bold text-white shadow-sm transition-colors duration-200 hover:bg-[var(--line-brand-green-hover)] focus:ring-2 focus:ring-brand-500 motion-reduce:transition-none"
+            className="flex min-h-[44px] w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-[var(--line-brand-green)] py-2.5 text-sm font-bold tracking-wide text-white shadow-lg shadow-green-500/20 transition-all duration-200 hover:bg-[var(--line-brand-green-hover)] focus:ring-2 focus:ring-brand-500 active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100"
           >
             <MessageCircle size={18} />加 LINE 聊聊
           </button>
@@ -252,7 +252,7 @@ export const AgentTrustCard: React.FC<AgentTrustCardProps> = memo(function Agent
             onClick={onCallClick}
             aria-label="致電諮詢"
             data-testid="agent-card-call-button"
-            className="flex min-h-[44px] w-full cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-brand-700 bg-bg-card py-2.5 text-sm font-medium text-brand-700 transition-colors duration-200 hover:bg-brand-50 focus:ring-2 focus:ring-brand-500 motion-reduce:transition-none"
+            className="flex min-h-[44px] w-full cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-brand-700 bg-bg-card py-2.5 text-sm font-medium tracking-wide text-brand-700 shadow-sm shadow-blue-900/10 transition-all duration-200 hover:bg-brand-50 focus:ring-2 focus:ring-brand-500 active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100"
           >
             <Phone size={18} />
             致電諮詢
