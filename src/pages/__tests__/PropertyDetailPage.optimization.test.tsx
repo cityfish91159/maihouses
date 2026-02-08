@@ -236,7 +236,7 @@ describe('PropertyDetailPage - 優化驗證', () => {
       setItemSpy.mockRestore();
     });
 
-    it('無 aid 參數且 localStorage 無值時，應 fallback 使用 property.agent.id', async () => {
+    it('無 aid 參數且 localStorage 無值時，API 回傳後應 fallback 使用 property.agent.id', async () => {
       vi.mocked(propertyService.getPropertyByPublicId).mockResolvedValue(mockPropertyData as any);
 
       localStorage.removeItem('uag_last_aid');
@@ -249,15 +249,58 @@ describe('PropertyDetailPage - 優化驗證', () => {
         </MemoryRouter>
       );
 
+      // 等待 API 回傳真實 property 後，agentId 應更新為 property.agent.id
       await waitFor(() => {
         expect(screen.getByText(/新光晴川/)).toBeInTheDocument();
       });
 
       expect(getItemSpy).toHaveBeenCalledWith('uag_last_aid');
+      // 驗證 API 回傳後，agentId 更新為 'agent-001' 並寫入 localStorage
       expect(setItemSpy).toHaveBeenCalledWith('uag_last_aid', 'agent-001');
 
       getItemSpy.mockRestore();
       setItemSpy.mockRestore();
+    });
+
+    it('API 失敗時 agentId 應為 unknown（防守測試）', async () => {
+      vi.mocked(propertyService.getPropertyByPublicId).mockResolvedValue(null);
+
+      localStorage.removeItem('uag_last_aid');
+      const setItemSpy = vi.spyOn(Storage.prototype, 'setItem');
+
+      renderWithClient(
+        <MemoryRouter initialEntries={['/maihouses/property/MH-INVALID']}>
+          <PropertyDetailPage />
+        </MemoryRouter>
+      );
+
+      await waitFor(() => {
+        // 等待渲染完成（即使 API 失敗）
+        expect(screen.queryByText(/新光晴川/)).not.toBeInTheDocument();
+      });
+
+      // 驗證 'unknown' 不會被寫入 localStorage
+      expect(setItemSpy).not.toHaveBeenCalledWith('uag_last_aid', 'unknown');
+
+      setItemSpy.mockRestore();
+    });
+
+    it('DEFAULT_PROPERTY 的空字串 agent.id 應被視為無效', () => {
+      // 模擬 useMemo 的計算邏輯（單元測試級別）
+      const simulateAgentIdCalculation = (propertyAgentId: string | undefined) => {
+        let aid: string | null = null;
+        // 模擬無 URL 參數、無 localStorage
+        if (!aid || aid === 'unknown') aid = propertyAgentId || null;
+        if (aid === '') aid = null; // 空字串強制轉為 null
+        return aid || 'unknown';
+      };
+
+      // DEFAULT_PROPERTY.agent.id = ''
+      expect(simulateAgentIdCalculation('')).toBe('unknown');
+      // 有效的 agent.id
+      expect(simulateAgentIdCalculation('agent-123')).toBe('agent-123');
+      // undefined
+      expect(simulateAgentIdCalculation(undefined)).toBe('unknown');
     });
   });
 

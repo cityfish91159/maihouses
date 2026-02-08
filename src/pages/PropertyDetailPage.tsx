@@ -105,14 +105,22 @@ export const PropertyDetailPage: React.FC = () => {
     isDemo: isDemoPropertyId(id),
   }));
 
-  // ✅ 快取 agent_id，只在 mount 時讀取一次 localStorage
+  // ✅ 計算 agent_id 優先級：URL ?aid > localStorage > property.agent.id > 'unknown'
   const agentId = useMemo(() => {
     let aid = searchParams.get('aid');
     if (!aid) aid = localStorage.getItem('uag_last_aid');
+    // 空字串也視為無效（修復 #2: DEFAULT_PROPERTY.agent.id = '' 導致首幀為 'unknown'）
     if (!aid || aid === 'unknown') aid = property.agent?.id || null;
-    if (aid && aid !== 'unknown') localStorage.setItem('uag_last_aid', aid);
+    if (aid === '') aid = null; // 空字串強制轉為 null
     return aid || 'unknown';
   }, [searchParams, property.agent?.id]);
+
+  // ✅ 副作用：將有效 agentId 寫入 localStorage（React 18+ StrictMode 安全）
+  useEffect(() => {
+    if (agentId && agentId !== 'unknown') {
+      localStorage.setItem('uag_last_aid', agentId);
+    }
+  }, [agentId]);
 
   // S 級客戶即時攔截回調
   const handleGradeUpgrade = useCallback((grade: string, reason?: string) => {
@@ -180,12 +188,13 @@ export const PropertyDetailPage: React.FC = () => {
     void track('booking_click', {
       source: source === 'mobile_bar' ? 'mobile' : 'sidebar',
     });
+    // 修復 #4: 統一使用 agentId（已包含優先級邏輯），確保審計日誌與實際操作一致
     logger.info('audit.contact.booking', {
       source,
       propertyId: property.publicId,
-      agentId: property.agent?.id ?? agentId,
+      agentId: agentId,
     });
-  }, [agentId, property.agent?.id, property.publicId]);
+  }, [agentId, property.publicId]);
 
   const closeLinePanel = useCallback(() => setLinePanelOpen(false), []);
   const closeCallPanel = useCallback(() => setCallPanelOpen(false), []);

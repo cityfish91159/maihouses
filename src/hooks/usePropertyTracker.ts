@@ -95,7 +95,8 @@ export const usePropertyTracker = (
   const buildPayload = useCallback(
     (eventType: string) => ({
       session_id: getSessionId(),
-      agent_id: agentId,
+      // 修復 #3: 過濾 'unknown' agentId，避免首幀污染 UAG 追蹤資料
+      agent_id: agentId !== 'unknown' ? agentId : null,
       fingerprint: btoa(
         JSON.stringify({
           screen: typeof screen !== 'undefined' ? `${screen.width}x${screen.height}` : 'unknown',
