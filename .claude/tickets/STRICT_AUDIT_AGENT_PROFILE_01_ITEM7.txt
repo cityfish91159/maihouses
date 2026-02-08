@@ -1,0 +1,103 @@
+【STRICT-AUDIT 報告】
+工單：AGENT PROFILE-01 / #7 [P0] Profile 頁面支援 Mock 模式（Mock 版）
+審核日期：2026-02-08
+審核範圍：
+- `.claude/tickets/AGENT PROFILE.md`（#7 段落與驗收）
+- `src/pages/UAG/Profile/index.tsx`
+- `src/pages/UAG/Profile/hooks/useAgentProfile.ts`
+- `src/pages/UAG/Profile/index.test.tsx`
+- `src/pages/UAG/Profile/hooks/useAgentProfile.test.tsx`
+
+==================================================
+一、分數總表（100 分制）
+==================================================
+1. 功能正確性：40 / 40
+2. 測試覆蓋完整度：28 / 30
+3. 回歸風險控制：19 / 20
+4. 文件一致性：10 / 10
+總分：97 / 100
+結論：#7 已達可關單品質，無 P0/P1 缺陷；有 2 項 P2 級優化建議。
+
+==================================================
+二、嚴格審核步驟（逐步執行）
+==================================================
+步驟 1：讀取工單需求與驗收標準
+- 依據：`.claude/tickets/AGENT PROFILE.md:506`（#7 標題）
+- 依據：`.claude/tickets/AGENT PROFILE.md:521`（Mock URL 可顯示）
+- 依據：`.claude/tickets/AGENT PROFILE.md:522`（可模擬編輯 + notify）
+- 依據：`.claude/tickets/AGENT PROFILE.md:523`（正式模式行為不變）
+
+步驟 2：靜態比對代碼（功能邏輯）
+- Profile 返回路由：
+  - `src/pages/UAG/Profile/index.tsx:15`（`handleBackToUAG`）
+  - `src/pages/UAG/Profile/index.tsx:16`（mock 返回 `/uag?mock=true`，live 返回 `/uag`）
+  - `src/pages/UAG/Profile/index.tsx:42`、`src/pages/UAG/Profile/index.tsx:63`（兩個返回按鈕都用同一 handler）
+- Mock 模式資料與保存：
+  - `src/pages/UAG/Profile/hooks/useAgentProfile.ts:11`（queryKey 區分 mock/live）
+  - `src/pages/UAG/Profile/hooks/useAgentProfile.ts:50`（query 走 mock/live 分支）
+  - `src/pages/UAG/Profile/hooks/useAgentProfile.ts:76`（mock save 寫回本地快取）
+  - `src/pages/UAG/Profile/hooks/useAgentProfile.ts:93`（live save invalidate）
+  - `src/pages/UAG/Profile/hooks/useAgentProfile.ts:118`（avatar 更新快取）
+
+步驟 3：測試執行（#7 回歸）
+- 指令：
+  `npm run test -- src/pages/UAG/Profile/index.test.tsx src/pages/UAG/Profile/hooks/useAgentProfile.test.tsx src/pages/UAG/components/UAGHeader.test.tsx src/pages/UAG/index.test.tsx`
+- 結果：
+  - 4 files passed
+  - 17 tests passed
+- #7 直接關聯測試證據：
+  - `src/pages/UAG/Profile/index.test.tsx:53`（mock=true 返回）
+  - `src/pages/UAG/Profile/index.test.tsx:63`（錯誤頁 mock=true 返回）
+  - `src/pages/UAG/Profile/index.test.tsx:78`（live 返回）
+  - `src/pages/UAG/Profile/hooks/useAgentProfile.test.tsx:78`（mock 載入不打 fetch）
+  - `src/pages/UAG/Profile/hooks/useAgentProfile.test.tsx:89`（mock save 快取更新 + 不打 API）
+  - `src/pages/UAG/Profile/hooks/useAgentProfile.test.tsx:113`（mock/live 快取隔離）
+
+步驟 4：型別與編碼檢查
+- 指令：`npm run typecheck`
+  - 結果：通過
+- 指令：`npm run check:utf8`
+  - 結果：`UTF-8 check passed.`
+
+步驟 5：工單文件一致性檢查
+- #7 驗收清單已改為完成狀態：
+  - `.claude/tickets/AGENT PROFILE.md:521`
+  - `.claude/tickets/AGENT PROFILE.md:522`
+  - `.claude/tickets/AGENT PROFILE.md:523`
+
+==================================================
+三、做好的部分（簡述）
+==================================================
+1. 已修正 Profile 返回 UAG 白頁問題（保留 mock 參數並避免 basename 重複）。
+2. Mock 模式保存已可即時反映在畫面，不再只有 toast 成功但資料不變。
+3. mock/live Query key 已隔離，避免快取污染正式模式。
+4. #7 驗收清單與代碼、測試結果一致。
+
+==================================================
+四、不好的部分（詳細）
+==================================================
+本輪未發現 P0 / P1 缺陷。以下為 P2 級風險與優化建議：
+
+【P2-1】缺少真實瀏覽器層 E2E（含 basename）
+- 現況：目前以單元/Hook 測試驗證返回路徑，尚未用瀏覽器 E2E 實際走 `/maihouses/uag/profile?mock=true` → 點返回。
+- 風險：部署環境若改變 router/basename 或 CDN rewrite 規則，單元測試無法直接捕捉。
+- 建議：加一支 Playwright/Cypress smoke case，覆蓋 #7 三條驗收路徑。
+
+【P2-2】Mock 頭像上傳使用 `URL.createObjectURL` 未釋放
+- 位置：`src/pages/UAG/Profile/hooks/useAgentProfile.ts`（mock avatar 分支）
+- 風險：大量重複上傳時可能造成記憶體累積。
+- 建議：在 AvatarUploader 中於新圖覆蓋或元件卸載時 `URL.revokeObjectURL`。
+
+==================================================
+五、最終判定
+==================================================
+- #7 是否可視為完成：是
+- 是否仍有阻斷上線問題：否
+- 建議：可先關單；P2 兩項列入後續優化清單。
+
+==================================================
+六、執行指令清單（本次 strict-audit）
+==================================================
+1. `npm run test -- src/pages/UAG/Profile/index.test.tsx src/pages/UAG/Profile/hooks/useAgentProfile.test.tsx src/pages/UAG/components/UAGHeader.test.tsx src/pages/UAG/index.test.tsx`
+2. `npm run typecheck`
+3. `npm run check:utf8`

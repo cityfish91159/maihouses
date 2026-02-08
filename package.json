@@ -21,6 +21,8 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "eslint src",
     "test": "vitest run",
+    "test:agent-profile-5": "vitest run src/pages/__tests__/PropertyDetailPage.defaultProperty.test.tsx src/services/__tests__/propertyService.defaultProperty.test.ts src/components/PropertyDetail/__tests__/LineLinkPanel.test.tsx src/components/PropertyDetail/__tests__/CallConfirmPanel.test.tsx src/pages/__tests__/PropertyDetailPage.phase11.test.tsx",
+    "test:agent-profile-completed": "vitest run src/pages/__tests__/PropertyDetailPage.optimization.test.tsx src/pages/__tests__/PropertyDetailPage.phase11.test.tsx src/pages/__tests__/PropertyDetailPage.defaultProperty.test.tsx src/components/__tests__/ContactModal.trustAssure.test.tsx src/components/PropertyDetail/__tests__/MobileActionBar.test.tsx src/components/PropertyDetail/__tests__/MobileCTA.test.tsx src/components/PropertyDetail/__tests__/PropertyInfoCard.test.tsx src/components/PropertyDetail/__tests__/LineLinkPanel.test.tsx src/components/PropertyDetail/__tests__/CallConfirmPanel.test.tsx src/services/__tests__/leadService.preferredChannel.test.ts src/services/__tests__/propertyService.defaultProperty.test.ts api/property/__tests__/public-stats.test.ts",
     "test:watch": "vitest",
     "generate:schema": "tsx scripts/generate-json-schema.ts",
     "verify:seed": "tsx scripts/verify-seed-strict.ts",

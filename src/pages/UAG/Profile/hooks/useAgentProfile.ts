@@ -8,7 +8,8 @@ import {
   uploadAgentAvatar,
 } from '../../../../services/agentService';
 
-const AGENT_PROFILE_QUERY_KEY = ['agent-profile-me'] as const;
+const getAgentProfileQueryKey = (isMockMode: boolean) =>
+  ['agent-profile-me', isMockMode ? 'mock' : 'live'] as const;
 
 // #7 Mock 資料
 const MOCK_PROFILE: AgentProfileMe = {
@@ -43,9 +44,10 @@ export function useAgentProfile() {
   const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
   const isMockMode = searchParams.get('mock') === 'true';
+  const profileQueryKey = getAgentProfileQueryKey(isMockMode);
 
   const { data, isLoading, error } = useQuery({
-    queryKey: AGENT_PROFILE_QUERY_KEY,
+    queryKey: profileQueryKey,
     queryFn: async () => {
       // #7 Mock 模式：直接回傳假資料
       if (isMockMode) {
@@ -66,14 +68,30 @@ export function useAgentProfile() {
       }
       return updateAgentProfile(payload);
     },
-    onSuccess: () => {
+    onSuccess: (_, payload) => {
       // #7 Mock 模式：提示這是模擬
       if (isMockMode) {
         notify.success('已更新個人資料（Mock 模式）', '這是模擬更新，實際資料未儲存');
+        // #7: Mock 模式更新本地快取，讓 UI 立即反映編輯結果
+        queryClient.setQueryData<AgentProfileMe | undefined>(profileQueryKey, (prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            ...(payload.name !== undefined ? { name: payload.name } : {}),
+            ...(payload.bio !== undefined ? { bio: payload.bio } : {}),
+            ...(payload.specialties !== undefined ? { specialties: payload.specialties } : {}),
+            ...(payload.certifications !== undefined
+              ? { certifications: payload.certifications }
+              : {}),
+            ...(payload.phone !== undefined ? { phone: payload.phone } : {}),
+            ...(payload.lineId !== undefined ? { lineId: payload.lineId } : {}),
+            ...(payload.joinedAt !== undefined ? { joinedAt: payload.joinedAt } : {}),
+          };
+        });
       } else {
         notify.success('已更新個人資料');
+        queryClient.invalidateQueries({ queryKey: profileQueryKey });
       }
-      queryClient.invalidateQueries({ queryKey: AGENT_PROFILE_QUERY_KEY });
     },
     onError: (err) => {
       const message = err instanceof Error ? err.message : '更新失敗';
@@ -97,7 +115,7 @@ export function useAgentProfile() {
       } else {
         notify.success('頭像已更新');
       }
-      queryClient.setQueryData<AgentProfileMe | undefined>(AGENT_PROFILE_QUERY_KEY, (prev) =>
+      queryClient.setQueryData<AgentProfileMe | undefined>(profileQueryKey, (prev) =>
         prev ? { ...prev, avatarUrl: url } : prev
       );
     },

@@ -99,15 +99,16 @@ export const PropertyDetailPage: React.FC = () => {
     isDemo: isDemoPropertyId(id),
   }));
 
-  // ✅ agentId 正規化：trim + 格式驗證（UUID 或 'agent-' 開頭）
+  // ✅ agentId 正規化：trim + 格式驗證（UUID / agent-* / mock-agent-*）
   const normalizeAgentId = useCallback((aid: string | null | undefined): string | null => {
     if (!aid) return null;
     const trimmed = aid.trim();
     if (trimmed === '' || trimmed === 'unknown') return null;
-    // UUID 格式: 8-4-4-4-12 或 'agent-' 開頭（允許 mock agent-001）
+    // UUID 格式: 8-4-4-4-12，或語意化 agent id（agent-* / mock-agent-*）
     const isValid =
       /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(trimmed) ||
-      /^agent-\w+$/i.test(trimmed);
+      /^agent-[a-z0-9_-]+$/i.test(trimmed) ||
+      /^mock-agent-[a-z0-9_-]+$/i.test(trimmed);
     return isValid ? trimmed : null;
   }, []);
 

@@ -297,7 +297,9 @@ describe('PropertyDetailPage - 優化驗證', () => {
         { input: 'unknown', expected: null },
         { input: 'invalid-format', expected: null },
         { input: '123-abc', expected: null },
-        { input: 'agent-001', expected: 'agent-001' }, // Mock agent ID
+        { input: 'agent-001', expected: 'agent-001' },
+        { input: 'agent-test-123', expected: 'agent-test-123' }, // 支援連字號
+        { input: 'mock-agent-001', expected: 'mock-agent-001' }, // #5 mock agent ID
         { input: '550e8400-e29b-41d4-a716-446655440000', expected: '550e8400-e29b-41d4-a716-446655440000' }, // UUID
         { input: '  agent-123  ', expected: 'agent-123' }, // trim
       ];
@@ -310,7 +312,8 @@ describe('PropertyDetailPage - 優化驗證', () => {
           if (trimmed === '' || trimmed === 'unknown') return null;
           const isValid =
             /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(trimmed) ||
-            /^agent-\w+$/i.test(trimmed);
+            /^agent-[a-z0-9_-]+$/i.test(trimmed) ||
+            /^mock-agent-[a-z0-9_-]+$/i.test(trimmed);
           return isValid ? trimmed : null;
         };
 

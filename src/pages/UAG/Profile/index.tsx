@@ -1,7 +1,6 @@
-﻿import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import React from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
-import { ROUTES } from '../../../constants/routes';
 import { AvatarUploader } from './AvatarUploader';
 import { MetricsDisplay } from './MetricsDisplay';
 import { BasicInfoSection } from './BasicInfoSection';
@@ -9,6 +8,15 @@ import { useAgentProfile } from './hooks/useAgentProfile';
 
 export default function UAGProfilePage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const isMockMode = searchParams.get('mock') === 'true';
+
+  // 返回 UAG：保留 mock 參數，且使用 router 內部路徑避免 basename 重複。
+  const handleBackToUAG = () => {
+    const targetUrl = isMockMode ? '/uag?mock=true' : '/uag';
+    navigate(targetUrl);
+  };
+
   const { profile, isLoading, error, updateProfile, isUpdating, uploadAvatar, isUploadingAvatar } =
     useAgentProfile();
 
@@ -31,7 +39,7 @@ export default function UAGProfilePage() {
       <div className="min-h-screen bg-slate-50">
         <div className="mx-auto max-w-3xl p-6">
           <button
-            onClick={() => navigate(ROUTES.UAG)}
+            onClick={handleBackToUAG}
             className="mb-4 inline-flex items-center gap-2 text-sm text-slate-600 hover:text-slate-900"
           >
             <ArrowLeft size={16} />
@@ -52,7 +60,7 @@ export default function UAGProfilePage() {
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <button
-              onClick={() => navigate(ROUTES.UAG)}
+              onClick={handleBackToUAG}
               className="inline-flex items-center gap-2 text-xs font-medium text-slate-500 hover:text-slate-800"
             >
               <ArrowLeft size={14} />

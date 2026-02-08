@@ -1,4 +1,4 @@
-﻿import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { UAGHeader } from './UAGHeader';
 import { User } from '@supabase/supabase-js';
@@ -58,6 +58,18 @@ describe('UAGHeader', () => {
     expect(screen.queryByLabelText(/用戶頭像/)).not.toBeInTheDocument();
   });
 
+  it('Mock 模式 user 為 null 仍顯示使用者區塊', () => {
+    renderHeader({ user: null, useMock: true });
+    expect(screen.getByRole('button', { name: /用戶選單/i })).toBeInTheDocument();
+    expect(screen.getByLabelText(/用戶頭像：游杰倫/)).toBeInTheDocument();
+  });
+
+
+  it('Mock 模式選單不顯示登出按鈕', () => {
+    renderHeader({ user: null, useMock: true });
+    fireEvent.click(screen.getByRole('button', { name: /用戶選單/i }));
+    expect(screen.queryByRole('menuitem', { name: /登出/i })).not.toBeInTheDocument();
+  });
   it('點擊頭像打開選單', () => {
     renderHeader({ user: mockUser });
     const menuButton = screen.getByRole('button', { name: /用戶選單/i });
@@ -87,6 +99,28 @@ describe('UAGHeader', () => {
     fireEvent.click(signOutBtn);
 
     expect(onSignOut).toHaveBeenCalled();
+  });
+
+  it('Mock 模式點擊個人資料會導向 profile?mock=true', () => {
+    const originalLocation = window.location;
+
+    try {
+      Object.defineProperty(window, 'location', {
+        configurable: true,
+        value: { href: '' } as unknown as Location,
+      });
+
+      renderHeader({ user: null, useMock: true });
+      fireEvent.click(screen.getByRole('button', { name: /用戶選單/i }));
+      fireEvent.click(screen.getByRole('menuitem', { name: '個人資料' }));
+
+      expect(window.location.href).toBe('/maihouses/uag/profile?mock=true');
+    } finally {
+      Object.defineProperty(window, 'location', {
+        configurable: true,
+        value: originalLocation,
+      });
+    }
   });
 
   it('響應式設計：行動版隱藏 email', () => {

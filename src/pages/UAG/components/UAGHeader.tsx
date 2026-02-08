@@ -88,6 +88,8 @@ export const UAGHeader: React.FC<UAGHeaderProps> = ({
     : agentProfile?.name || user?.user_metadata?.name || user?.email?.split('@')[0] || '訪客';
   const email = useMock ? null : (user?.email ?? null);
   const company = agentProfile?.company ?? null;
+  const showSignOut = Boolean(user);
+  const profileHref = useMock ? `${ROUTES.UAG_PROFILE}?mock=true` : ROUTES.UAG_PROFILE;
 
   const handleUserMenuKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>) => {
     if (e.key === 'Enter' || e.key === ' ') {
@@ -185,24 +187,24 @@ export const UAGHeader: React.FC<UAGHeaderProps> = ({
                     onClick={() => {
                       setUserMenuOpen(false);
                       // #6 Mock 模式：導向帶 mock 參數的 Profile 頁面
-                      window.location.href = useMock
-                        ? `${ROUTES.UAG_PROFILE}?mock=true`
-                        : ROUTES.UAG_PROFILE;
+                      window.location.href = profileHref;
                     }}
                   >
                     <UserIcon size={16} />
                     個人資料
                   </button>
-                  <button
-                    className={styles['uag-user-menu-item']}
-                    role="menuitem"
-                    onClick={handleSignOutClick}
-                    disabled={isSigningOut}
-                    aria-label={isSigningOut ? '正在登出' : '登出'}
-                  >
-                    <LogOut size={16} />
-                    {isSigningOut ? '登出中...' : '登出'}
-                  </button>
+                  {showSignOut && (
+                    <button
+                      className={styles['uag-user-menu-item']}
+                      role="menuitem"
+                      onClick={handleSignOutClick}
+                      disabled={isSigningOut}
+                      aria-label={isSigningOut ? '正在登出' : '登出'}
+                    >
+                      <LogOut size={16} />
+                      {isSigningOut ? '登出中...' : '登出'}
+                    </button>
+                  )}
                 </div>
               )}
             </div>

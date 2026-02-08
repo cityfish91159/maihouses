@@ -1,4 +1,4 @@
-﻿import React, { useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Camera } from 'lucide-react';
 import { notify } from '../../../lib/notify';
 
@@ -10,6 +10,7 @@ interface AvatarUploaderProps {
 }
 
 const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+const isBlobUrl = (url: string | null): url is string => Boolean(url && url.startsWith('blob:'));
 
 export const AvatarUploader: React.FC<AvatarUploaderProps> = ({
   name,
@@ -18,6 +19,24 @@ export const AvatarUploader: React.FC<AvatarUploaderProps> = ({
   onUpload,
 }) => {
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const previousBlobUrlRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    const previousBlobUrl = previousBlobUrlRef.current;
+    if (isBlobUrl(previousBlobUrl) && previousBlobUrl !== avatarUrl) {
+      URL.revokeObjectURL(previousBlobUrl);
+    }
+    previousBlobUrlRef.current = isBlobUrl(avatarUrl) ? avatarUrl : null;
+  }, [avatarUrl]);
+
+  useEffect(() => {
+    return () => {
+      const previousBlobUrl = previousBlobUrlRef.current;
+      if (isBlobUrl(previousBlobUrl)) {
+        URL.revokeObjectURL(previousBlobUrl);
+      }
+    };
+  }, []);
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];

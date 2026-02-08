@@ -343,8 +343,8 @@ export const DEFAULT_PROPERTY: PropertyData = {
   agent: {
     id: 'mock-agent-001',
     internalCode: 88001,
-    name: '陳小明',
-    avatarUrl: '',
+    name: '游杰倫',
+    avatarUrl: 'https://via.placeholder.com/150',
     company: '邁房子',
     trustScore: 87,
     encouragementCount: 23,

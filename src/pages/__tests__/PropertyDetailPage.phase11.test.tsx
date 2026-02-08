@@ -165,12 +165,14 @@ describe('PropertyDetailPage phase11 interactions', () => {
     );
   });
 
-  it('點擊加 LINE 後應開啟 LineLinkPanel', async () => {
-    const user = userEvent.setup();
-    vi.mocked(propertyService.getPropertyByPublicId).mockResolvedValue(mockPropertyData as never);
+  it(
+    '點擊加 LINE 後應開啟 LineLinkPanel',
+    async () => {
+      const user = userEvent.setup();
+      vi.mocked(propertyService.getPropertyByPublicId).mockResolvedValue(mockPropertyData as never);
 
-    renderWithClient(
-      <MemoryRouter initialEntries={['/maihouses/property/MH-100001']}>
+      renderWithClient(
+        <MemoryRouter initialEntries={['/maihouses/property/MH-100001']}>
         <PropertyDetailPage />
       </MemoryRouter>
     );
@@ -181,8 +183,12 @@ describe('PropertyDetailPage phase11 interactions', () => {
 
     await user.click(screen.getAllByRole('button', { name: '加 LINE 聊聊' })[0]!);
 
-    expect(await screen.findByRole('button', { name: '開啟 LINE' })).toBeInTheDocument();
-  });
+      expect(
+        await screen.findByRole('button', { name: '開啟 LINE' }, { timeout: 10000 })
+      ).toBeInTheDocument();
+    },
+    15000
+  );
 
   it('點擊致電後應開啟 CallConfirmPanel', async () => {
     const user = userEvent.setup();

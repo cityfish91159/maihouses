@@ -21,7 +21,8 @@
 ## 實作進度總覽
 
 > **設計原則：每個工單 ≤ 5 項施工內容**，確保 AI 能一次性完成不跳步。
-> 大工單已拆分為子工單（#9a-d、#19a-e、#20a-e），每個子工單獨立可交付。
+> 大工單已拆分為子工單（#9a-d、#13a-b、#14a-b、#19a-e、#20a-e），每個子工單獨立可交付。
+> 例外：#15（6 項）和 #17（6 項）僅超 1 項，暫不再拆。
 
 ### 已完成 ✅
 
@@ -33,30 +34,29 @@
 - [x] **#6** [P0] UAG Header Mock 入口 ✅ 2026-02-08
 - [x] **#8** [P0] 社會證明真實數據 ✅ 2026-02-08
 - [x] **#10** [P0] 社區評價正式版 API 修正 + Mock fallback ✅
+- [x] **#7** [P0] Profile 頁 Mock 模式 ✅ 2026-02-08
 
 ### 待開發 — 功能移除（最優先）
 
-- [ ] **#17** [P0] 移除「生成報告」FAB +「30秒回電」浮動按鈕（5 項：17-A~E）
+- [ ] **#17** [P0] 移除「生成報告」FAB +「30秒回電」浮動按鈕（6 項：17-A~F）
 
 ### 待開發 — 信任分 / 評價 / 鼓勵
 
 - [ ] **#12** [P1] 信任分 Tooltip 修正 + seed 校正（2 項：12-A/B）
-- [ ] **#13** [P0] 房仲評價系統（5 項：13-A DB + 13-B API + 13-C/D 前端 + 13-E 整合）
-- [ ] **#14** [P1] 獲得鼓勵系統（4 項：14-A DB + 14-B API + 14-C/D 前端 + 14-E 整合）
+- [ ] **#13a** [P0] 房仲評價系統 — DB + API + 類型（4 項：13-A DB + 13-B API + 13-C 類型 + 13-I Hook）
+- [ ] **#13b** [P0] 房仲評價系統 — 前端組件 + 整合（5 項：13-D ReviewPromptModal + 13-E ReviewListModal + 13-F AgentTrustCard + 13-G DetailPage 整合 + 13-H Assure Step 2 觸發）
+- [ ] **#14a** [P1] 獲得鼓勵系統 — DB + API + 類型（4 項：14-A DB + 14-B API + 14-C 類型 + 14-E Hook）
+- [ ] **#14b** [P1] 獲得鼓勵系統 — 前端組件 + 整合（3 項：14-D 按讚 UI + 14-F DetailPage 整合 + 14-G 資料流）
 
 ### 待開發 — 經紀人認證 / 店名
 
-- [ ] **#15** [P0] 經紀人認證 + 完成案件累積（5 項：15-A DB + 15-B/C API + 15-D/E 前端）
+- [ ] **#15** [P0] 經紀人認證 + 完成案件累積（6 項：15-A DB + 15-B 類型 + 15-C API + 15-D/E 前端 + 15-F UAG Profile）
 - [ ] **#16** [P1] 店名開放編輯（3 項：16-A API + 16-B 前端 + 16-C 類型）
 
 ### 待開發 — Header / 品牌 / MaiMai
 
-- [ ] **#11** [P1] 詳情頁 Header 品牌統一（4 項：11-A Logo + 11-B 返回 + 11-C token + 11-D a11y）
+- [ ] **#11** [P1] 詳情頁 Header 品牌統一（5 項：11-A Logo + 11-B 返回 + 11-C token + 11-D a11y + 11-E 手機版微調）
 - [ ] **#18** [P1] 詳情頁 MaiMai 公仔 A+C+D（3 項：18-A 右欄 + 18-B 歡迎語 + 18-C 狀態替換）
-
-### 待開發 — Mock 版
-
-- [x] **#7** [P0] Profile 頁 Mock 模式（3 項） ✅ 2026-02-08
 
 ### 待開發 — DetailPage 手機版 UX 修正（原 #9 拆分）
 
@@ -65,7 +65,7 @@
 
 ### 待開發 — UAG 手機版 UX 修正（原 #9 拆分）
 
-- [ ] **#9c** [P1] UAG 觸控 + 排版修正（5 項：U1 Radar 觸控 + U2 z-index 統一 + U3 麵包屑溢出 + U4 字體過小 + U5 overscroll）
+- [ ] **#9c** [P1] UAG 觸控 + 排版修正（5 項：U1 Radar 觸控 + U2 z-index 統一 + U3 Header 手機精簡 + U4 字體過小 + U5 overscroll）
 - [ ] **#9d** [P1] UAG 列表 + Mock + 桌面版（3 項：U6 縮圖尺寸 + U10 Mock conversation_id + U12 桌面多列）
 
 ### 待開發 — UAG Radar 泡泡強化（原 #19 拆分）
@@ -86,6 +86,11 @@
 - [ ] **#20c** [P1] InfoCard + Specs 視覺升級（2 項：D5 InfoCard 資訊重組 + D6 Specs Bento Grid）
 - [ ] **#20d** [P1] 評論 + Panel + FAB 升級（3 項：D7 CommunityReviews SVG 星級 + D8 Panel 統一升級 + D10 FAB 重定位+漸層）
 - [ ] **#20e** [P2] 動畫 + 微互動精緻化（4 項：D12 價格動畫 + D13 Section 進場 + D14 VipModal 倒數 + D15 Banner Shield 動畫）
+
+### 待開發 — UAG Profile 頁 UX 升級（新增 #21 拆分）
+
+- [ ] **#21a** [P0] Profile 手機版佈局重構（5 項：P1 頭像行內精簡 + P2 指標精簡 + P3 Tab 分段 + P4 儲存按鈕上移 + P5 返回按鈕 touch target）
+- [ ] **#21b** [P1] Profile 桌面版 + 通用品質提升（5 項：P6 表單分段卡片 + P7 表單即時驗證 + P8 儲存狀態回饋 + P9 指標色彩對齊 + P10 專長 chip 手機版摺疊）
 
 ### 已完成項快速驗證
 
@@ -447,7 +452,7 @@ rg "bg-\[var\(--line-brand-green\)\]" --type-add 'tsx:*.tsx' --type tsx
 agent: {
   id: 'mock-agent-001',
   internalCode: 88001,
-  name: '陳小明',
+  name: '游杰倫',
   avatarUrl: 'https://via.placeholder.com/150',
   company: '邁房子',
   trustScore: 87,
@@ -463,7 +468,7 @@ agent: {
 
 ### 驗收標準
 
-- [x] `/maihouses/property/MH-100001` AgentTrustCard 顯示「陳小明」+ 完整數據 ✅ 2026-02-08
+- [x] `/maihouses/property/MH-100001` AgentTrustCard 顯示「游杰倫」+ 完整數據 ✅ 2026-02-08
 - [x] 點「加 LINE 聊聊」→ LineLinkPanel 顯示 LINE ID（非 fallback） ✅ 2026-02-08
 - [x] 點「致電諮詢」→ CallConfirmPanel 顯示電話號碼（非 fallback） ✅ 2026-02-08
 
@@ -515,12 +520,19 @@ Mock 模式下 `user` 為 null → 整個使用者區塊消失 → 找不到「�
 |------|------|
 | `src/pages/UAG/Profile/hooks/useAgentProfile.ts` | 偵測 `?mock=true`，回傳 mock 假資料 |
 | `src/pages/UAG/Profile/index.tsx` | Mock 模式下編輯用 local state 保存 + notify 提示 |
+| `src/pages/UAG/Profile/index.tsx` | 返回 UAG 保留 `mock=true`，並改用 router 內部路徑避免 `basename` 重複白頁 |
+| `src/pages/UAG/Profile/hooks/useAgentProfile.ts` | `queryKey` 區分 mock/live，避免快取污染；Mock 保存後同步更新本地快取 |
+| `src/pages/UAG/Profile/AvatarUploader.tsx` | Mock 頭像預覽的 `blob:` URL 在切換與卸載時自動釋放（`URL.revokeObjectURL`） |
+| `src/pages/UAG/Profile/index.test.tsx` | 新增返回按鈕路徑測試（mock/live + 錯誤頁） |
+| `src/pages/UAG/Profile/basename-navigation.test.tsx` | 新增 `basename=/maihouses` 路由整合測試（防白頁回歸） |
+| `src/pages/UAG/Profile/hooks/useAgentProfile.test.tsx` | 新增 Mock 載入/保存/快取隔離測試 |
+| `src/pages/UAG/Profile/AvatarUploader.test.tsx` | 新增 `blob:` URL 釋放測試 |
 
 ### 驗收標準
 
-- [ ] 訪問 `/maihouses/uag/profile?mock=true` 可正常顯示
-- [ ] 可模擬編輯 → notify 成功提示
-- [ ] 正式模式行為不變
+- [x] 訪問 `/maihouses/uag/profile?mock=true` 可正常顯示 ✅ 2026-02-08
+- [x] 可模擬編輯 → notify 成功提示 ✅ 2026-02-08
+- [x] 正式模式行為不變 ✅ 2026-02-08
 
 ---
 
@@ -946,15 +958,19 @@ const socialProof = useMemo(() => {
 - 統一使用 Tailwind z-index scale（`z-10`, `z-20`, `z-30`, `z-modal`）
 - 或建立 `z-index.ts` 常數檔統一管理
 
-#### U3. 麵包屑（Breadcrumb）手機溢出
+#### U3. Header 手機版資訊精簡（原「麵包屑溢出」升級）
 
-**檔案：** `src/pages/UAG/components/UAGHeader.tsx` L115-119
-**規範引用：** ux-guidelines #6（320px 最小寬度）
+**檔案：** `src/pages/UAG/components/UAGHeader.tsx` L115-125（麵包屑）、L157-174（用戶區塊）
+**規範引用：** ux-guidelines #6（Breadcrumbs: 3+ 層才用）、#17（Fixed Positioning: 避免固定元素堆疊）、#22（Touch Target ≥ 44px）、#69（Horizontal Scroll: 禁止溢出）
 
-**問題：** 公司名 badge + PRO badge + 麵包屑文字在 320px 手機可能溢出。
+**問題分析：** Header 一行塞了 Logo + 麵包屑文字 + 公司 badge + PRO badge + 用戶頭像/名稱/chevron，320px 預估寬度 ~330px 會溢出。加上 Agent Bar（44px）和 Footer（48px），固定元素共 ~140px，640px 手機只剩 500px 可視。麵包屑在已有 Tab Bar（#19c M1）的前提下屬於冗餘導航。
 
 **修復方案：**
-- 加 `overflow-hidden text-ellipsis whitespace-nowrap` 或 `max-w-[200px] truncate`
+- 麵包屑整行加 `hidden md:flex`（手機版隱藏，桌面版保留）
+- PRO badge 加 `hidden md:inline`（手機版隱藏）
+- 公司 badge 移至 #19c M6 KPI Grid 上方顯示（手機版不在 Header 出現）
+- 用戶區塊手機版隱藏名稱，只保留頭像 icon：`.uag-user-info { display: none }` 在 `@media (max-width: 767px)`
+- 配合 #19c M6 KPI Grid 取代 Agent Bar stats，手機版 Header 精簡為 `[ Logo ] ... [ 👤 頭像 ]`
 
 #### U4. Agent bar 字體過小
 
@@ -980,7 +996,7 @@ const socialProof = useMemo(() => {
 
 - [ ] U1: RadarCluster 數據點觸控目標 ≥ 44px
 - [ ] U2: z-index 統一使用 Tailwind scale 或常數檔
-- [ ] U3: 麵包屑 320px 不溢出
+- [ ] U3: 手機版 Header 只顯示 Logo + 頭像，麵包屑/PRO badge/用戶名稱 hidden，320px 無溢出
 - [ ] U4: Agent bar 字體手機版 ≥ 12px
 - [ ] U5: 有 `overscroll-behavior: contain`
 - [ ] typecheck + lint 通過
@@ -1176,16 +1192,20 @@ const socialProof = useMemo(() => {
 
 #### 11-E. [P2] 手機版 Header 微調
 
+**問題分析：** 11-A 替換 `<Logo>` 後 icon 從 32→42px + serif 字體 + badge，320px Header 預估寬度 ~326px 會溢出。物件編號本質是「內容」非「導航」，不應佔用 Header 空間。
+
+**規範引用：** ux-guidelines #17（Fixed Positioning — 避免固定元素堆疊過多）、#22（Touch Target ≥ 44px）、#69（Horizontal Scroll — 禁止手機水平溢出）
+
 | 項目 | 改動 |
 |------|------|
-| 物件編號 | 加 `hidden xs:flex`，極窄螢幕（<360px）隱藏避免擠壓 |
+| 物件編號 | 從 Header 移至內容區（Gallery 上方），改用 `text-sm text-brand-700 font-mono`，提高可讀性 |
 | 返回按鈕 touch target | `p-2` → `p-2.5`，確保 44x44px |
 
 ### 涉及檔案清單
 
 | 檔案 | 操作 | 說明 |
 |------|------|------|
-| `src/pages/PropertyDetailPage.tsx` | 修改 | Header 區塊重構（L505-525），移除 `Home` icon import |
+| `src/pages/PropertyDetailPage.tsx` | 修改 | Header 區塊重構（L505-525），移除 `Home` icon import；物件編號從 Header 移至 Gallery 上方 |
 | `src/components/Logo/Logo.tsx` | 不動 | 已有完整 props 支援，直接複用 |
 
 ### 驗收標準
@@ -1195,6 +1215,7 @@ const socialProof = useMemo(() => {
 - [ ] 返回按鈕有 `onClick`，有瀏覽歷史回上頁，無歷史回首頁
 - [ ] 無硬編碼 `#003366` / `#00A8E8`，全部使用 design token
 - [ ] `aria-label` 完整（返回按鈕、Logo、nav、物件編號）
+- [ ] 物件編號在 Gallery 上方（非 Header 內），手機桌面皆可見
 - [ ] 手機版 320px 無溢出
 - [ ] typecheck + lint 通過
 
@@ -1354,7 +1375,7 @@ Trigger `trg_agents_trust_score` 會在 UPDATE 時自動執行 `fn_calculate_tru
 
 ---
 
-## #13 [P0] 房仲評價系統（Assure Step 2 觸發 + 詳情頁查看）
+## #13a [P0] 房仲評價系統 — DB + API + 類型（4 項：13-A + 13-B + 13-C + 13-I）
 
 ### 需求
 
@@ -1589,6 +1610,23 @@ export const CreateReviewPayloadSchema = z.object({
 export type CreateReviewPayload = z.infer<typeof CreateReviewPayloadSchema>;
 ```
 
+> **#13a 包含 13-A（上方）+ 13-B + 13-C + 13-I（下方 Hook 區塊）。**
+
+### #13a 驗收標準
+
+- [ ] DB：`agent_reviews` 表已建立，RLS 已啟用
+- [ ] DB：INSERT 一筆評價後 `agents.service_rating` 和 `review_count` 自動更新
+- [ ] DB：同 agent + reviewer + case 防重複
+- [ ] API：`GET /api/agent/reviews?agentId=xxx` 回傳評價列表 + 星級分佈
+- [ ] API：`POST /api/agent/reviews` 新增評價，Zod 驗證 rating 1-5
+- [ ] Type：`agent-review.ts` Zod schema 完整
+- [ ] Hook：`useAgentReviews.ts` useQuery + useMutation 運作正常
+- [ ] typecheck + lint 通過
+
+---
+
+## #13b [P0] 房仲評價系統 — 前端組件 + 整合（5 項：13-D + 13-E + 13-F + 13-G + 13-H）
+
 ### 13-D. [P0] 組件 — `ReviewPromptModal`（Step 2 確認後彈出）
 
 | 檔案 | 操作 |
@@ -1770,6 +1808,19 @@ BuyerActions 點擊「確認送出」(Step 2)
 - 只在 Step 2 確認當下觸發一次
 - 不阻擋後續步驟操作
 
+### #13b 驗收標準
+
+- [ ] 前端：`ReviewPromptModal` 可選 1-5 星 + 評語（選填）+ 送出/稍後再說
+- [ ] 前端：`AgentReviewListModal` 顯示星級分佈長條圖 + 評價列表
+- [ ] 前端：`AgentTrustCard` 的 `(32)` 可點擊，有 hover 效果 + 虛線底線
+- [ ] 前端：Assure Step 2 確認成功後 500ms 彈出 `ReviewPromptModal`
+- [ ] 前端：Mock 模式 AgentReviewListModal 顯示假資料
+- [ ] typecheck + lint 通過
+
+---
+
+## #13a（續）— 13-I Hook
+
 ### 13-I. [P1] Hook — `src/hooks/useAgentReviews.ts`
 
 | 檔案 | 操作 |
@@ -1820,23 +1871,11 @@ export function useSubmitReview() {
 - `AgentReviewListModal` `isDemo=true`：顯示 3 筆 MOCK_REVIEWS 假資料
 - `ReviewPromptModal`：Mock 模式下 POST 不發，直接 notify + 關閉
 
-### 驗收標準
-
-- [ ] DB：`agent_reviews` 表已建立，RLS 已啟用
-- [ ] DB：INSERT 一筆評價後 `agents.service_rating` 和 `review_count` 自動更新
-- [ ] DB：同 agent + reviewer + case 防重複
-- [ ] API：`GET /api/agent/reviews?agentId=xxx` 回傳評價列表 + 星級分佈
-- [ ] API：`POST /api/agent/reviews` 新增評價，Zod 驗證 rating 1-5
-- [ ] 前端：`AgentTrustCard` 的 `(32)` 可點擊，有 hover 效果 + 虛線底線
-- [ ] 前端：點擊 (32) 開啟 `AgentReviewListModal`，顯示星級分佈長條圖 + 評價列表
-- [ ] 前端：Assure Step 2 確認成功後 500ms 彈出 `ReviewPromptModal`
-- [ ] 前端：ReviewPromptModal 可選 1-5 星 + 評語（選填）+ 送出/稍後再說
-- [ ] 前端：Mock 模式 AgentReviewListModal 顯示假資料
-- [ ] typecheck + lint 通過
+> **注意：** 此處的驗收標準已拆分至 #13a 和 #13b 各自的驗收區塊。
 
 ---
 
-## #14 [P1] 獲得鼓勵系統 — 社區評價（兩好一公道）按讚 → agents.encouragement_count
+## #14a [P1] 獲得鼓勵系統 — DB + API + 類型（4 項：14-A + 14-B + 14-C + 14-E）
 
 ### 背景分析
 
@@ -2027,6 +2066,21 @@ export const ToggleReviewLikePayloadSchema = z.object({
 export type ToggleReviewLikePayload = z.infer<typeof ToggleReviewLikePayloadSchema>;
 ```
 
+> **#14a 包含 14-A（上方）+ 14-B + 14-C + 14-E（下方 Hook 區塊）。**
+
+### #14a 驗收標準
+
+- [ ] DB：`community_review_likes` 表已建立，RLS 已啟用
+- [ ] DB：Trigger 自動 COUNT → UPDATE `agents.encouragement_count`
+- [ ] API：`POST /api/community/review-like` toggle 按讚/取消
+- [ ] Type：`community-review-like.ts` Zod schema 完整
+- [ ] Hook：`useCommunityReviewLike.ts` optimistic update 運作正常
+- [ ] typecheck + lint 通過
+
+---
+
+## #14b [P1] 獲得鼓勵系統 — 前端組件 + 整合（3 項：14-D + 14-F + 14-G）
+
 ### 14-D. [P1] 前端組件 — 社區牆評價按讚 UI
 
 | 檔案 | 改動 |
@@ -2078,6 +2132,8 @@ interface ReviewPreview {
   totalLikes: number;   // 新增：該評價總讚數
 }
 ```
+
+## #14a（續）— 14-E Hook
 
 ### 14-E. [P1] Hook — `src/hooks/useCommunityReviewLike.ts`
 
@@ -2208,21 +2264,13 @@ const MOCK_REVIEWS: ReviewPreview[] = [
 | 修改 | `src/components/PropertyDetail/CommunityReviews.tsx` | 修改 | 評價卡片加 👍 按鈕 + Mock toggle |
 | 修改 | `src/pages/PropertyDetailPage.tsx` | 修改 | 整合 useCommunityReviewLike |
 
-### 驗收標準
+### #14b 驗收標準
 
-- [ ] DB：`community_review_likes` 表已建立，RLS 已啟用
-- [ ] DB：INSERT 一筆讚後 `agents.encouragement_count` 自動更新（Trigger 正確）
-- [ ] DB：同 user + property 防重複（UNIQUE INDEX）
-- [ ] DB：DELETE 讚後 `encouragement_count` 正確遞減
-- [ ] API：`POST /api/community/review-like` toggle 讚/取消讚，回傳 `liked` + `totalLikes`
-- [ ] API：`GET /api/community/review-like?propertyId=xxx` 回傳讚數 + 用戶狀態
-- [ ] API：Zod 驗證 propertyId 非空
 - [ ] 前端：`CommunityReviews` 每筆評價旁有 👍 按鈕，hover 有變色效果
 - [ ] 前端：已按讚狀態顯示 `bg-brand-50 text-brand-700`，未讚顯示灰色
 - [ ] 前端：按讚後 `AgentTrustCard` 的「獲得鼓勵」數字即時更新
 - [ ] 前端：未登入時 👍 按鈕 disabled，帶 tooltip 提示
 - [ ] Mock：按讚可 toggle，本地 state 管理，視覺效果與正式版完全一致
-- [ ] Mock：`MOCK_REVIEWS` 含 `propertyId` / `liked` / `totalLikes` 欄位
 - [ ] typecheck + lint 通過
 
 ---
@@ -3356,6 +3404,8 @@ interface ActionBottomSheetProps {
 
 **問題：** Agent Bar 的統計在 375px 窄屏上 4 個數據擠一行，11px 字體不可讀（U9 問題的升級版解法）。
 
+**承接 #9c U3：** 手機版 Header 精簡後，公司 badge 從 Header 麵包屑移至此 KPI Grid 上方，作為「姓名 · 公司」一行顯示。
+
 **方案：** 手機版改為 2x2 KPI Grid 卡片
 
 ```
@@ -4207,6 +4257,195 @@ function useInViewAnimation(ref: RefObject<HTMLElement>) {
 
 ---
 
+## #21a [P0] UAG Profile 手機版佈局重構（5 項）
+
+### 來源
+
+根據 `/ui-ux-pro-max` 的 `ux-guidelines.csv`、`colors.csv #SaaS`、`stacks/react.csv` 審核 UAG Profile 頁手機版（375px）呈現。核心問題：首屏被頭像（128px）+指標（4 格 ~200px）佔滿，個人資料表單完全在折疊線下，用戶不知道有表單可編輯。
+
+---
+
+### 21a-P1. 頭像行內精簡
+
+**檔案：** `src/pages/UAG/Profile/index.tsx`、`src/pages/UAG/Profile/AvatarUploader.tsx`
+**規範引用：** ux-guidelines #84（Above the Fold — CTA 必須在首屏）、#23（Information Density — 避免資訊過載）
+
+**現狀：** 頭像 128×128px + 上傳按鈕 + 說明文字垂直堆疊，佔 ~220px。
+
+**方案：**
+- 手機版頭像縮為 48×48px，與姓名+公司名同行顯示（`flex items-center gap-3`）
+- 點擊頭像觸發上傳（移除獨立上傳按鈕）
+- 桌面版保留 128px 原始佈局不變
+
+### 21a-P2. 指標區精簡
+
+**檔案：** `src/pages/UAG/Profile/MetricsDisplay.tsx`
+**規範引用：** ux-guidelines #23（Information Density）、#84（Above the Fold）
+
+**現狀：** 4 格指標（信任分/服務評價/完成案件/服務年資）垂直 2×2 grid，佔 ~200px。
+
+**方案：**
+- 手機版改為 1 行 4 格水平排列：`grid-cols-4 gap-2`
+- 每格精簡為數字 + 標籤（移除圖示），高度從 ~100px 降至 ~48px
+- 桌面版保持 2×2 grid 原始佈局
+
+### 21a-P3. Tab 分段表單
+
+**檔案：** `src/pages/UAG/Profile/index.tsx`、`src/pages/UAG/Profile/BasicInfoSection.tsx`
+**規範引用：** ux-guidelines #20（Content Grouping — 邏輯分組 + 可折疊）、stacks/react.csv #7（受控組件表單）
+
+**現狀：** 所有表單欄位（姓名/公司/手機/LINE/加入日期/自介/專長 15 chip/證照 4 chip）一次攤開，滾動距離極長。
+
+**方案：**
+- 手機版加入 Tab 切換：`[基本資料]` / `[專長證照]`
+- Tab 1 — 基本資料：姓名、公司、手機、LINE ID、加入日期、自我介紹
+- Tab 2 — 專長證照：專長領域 15 chip + 專業證照 4 chip
+- Tab 動畫：`transition-all duration-200`
+- 桌面版保持單頁滾動佈局不變
+
+```typescript
+// Tab state
+const [activeTab, setActiveTab] = useState<'basic' | 'expertise'>('basic');
+```
+
+### 21a-P4. 儲存按鈕固定頂部
+
+**檔案：** `src/pages/UAG/Profile/index.tsx`
+**規範引用：** ux-guidelines #84（CTA 可見性）、#22（Touch Target ≥ 44px）
+
+**現狀：** 儲存按鈕在桌面版右上角，手機版需捲到頂部才能點擊。
+
+**方案：**
+- 手機版 Header 改為：`← 返回 UAG` ... `[儲存]`，儲存按鈕嵌入 Header 右側
+- 儲存按鈕 `min-h-[44px] min-w-[64px]`，確保觸控目標
+
+### 21a-P5. 返回按鈕 touch target
+
+**檔案：** `src/pages/UAG/Profile/index.tsx`
+**規範引用：** ux-guidelines #22（Touch Target ≥ 44px）
+
+**現狀：** 「← 返回 UAG」為純文字連結，點擊區域 ~32px。
+
+**方案：**
+- 改為帶 `ChevronLeft` icon 的按鈕：`p-2.5 rounded-lg`
+- `min-h-[44px] min-w-[44px]`
+- 文字 `hidden sm:inline`（極窄螢幕只顯示 icon）
+
+### 檔案清單
+
+| 類型 | 檔案 |
+|------|------|
+| 修改 | `src/pages/UAG/Profile/index.tsx` |
+| 修改 | `src/pages/UAG/Profile/AvatarUploader.tsx` |
+| 修改 | `src/pages/UAG/Profile/MetricsDisplay.tsx` |
+| 修改 | `src/pages/UAG/Profile/BasicInfoSection.tsx` |
+
+### 驗收標準
+
+- [ ] P1: 手機版頭像 48px 與姓名同行，點擊可上傳；桌面版保留 128px
+- [ ] P2: 手機版指標 1 行 4 格，高度 ≤ 48px；桌面版保持 2×2
+- [ ] P3: 手機版 Tab 切換「基本資料/專長證照」，桌面版保持單頁
+- [ ] P4: 手機版儲存按鈕固定在 Header 右側，觸控 ≥ 44px
+- [ ] P5: 返回按鈕觸控 ≥ 44px，極窄螢幕只顯示 icon
+- [ ] typecheck + lint 通過
+
+---
+
+## #21b [P1] UAG Profile 桌面版 + 通用品質提升（5 項）
+
+### 來源
+
+根據 `/ui-ux-pro-max` 的 `colors.csv #SaaS`、`stacks/react.csv`、`ux-guidelines.csv` 審核 UAG Profile 頁桌面版（1440px）+ 通用品質。
+
+---
+
+### 21b-P6. 表單分段卡片
+
+**檔案：** `src/pages/UAG/Profile/BasicInfoSection.tsx`
+**規範引用：** ux-guidelines #20（Content Grouping）、styles.csv — Bento Box Grid（空間最大化利用）
+
+**現狀：** 桌面版所有欄位無視覺分隔，專長/證照 chip 混在一起。
+
+**方案：**
+- 表單分 4 個卡片區段，每段用 `bg-slate-50 rounded-xl p-6` 包裹 + 區段標題
+- 區段：① 基本資料（姓名+公司 2 欄 grid）② 聯絡方式（手機+LINE 2 欄 grid）③ 自我介紹 ④ 專長+證照
+- 基本資料/聯絡方式用 `grid grid-cols-2 gap-4`，減少垂直高度
+
+### 21b-P7. 表單即時驗證
+
+**檔案：** `src/pages/UAG/Profile/BasicInfoSection.tsx`、`src/services/agentService.ts`
+**規範引用：** stacks/react.csv #7（受控組件 + 即時驗證）、ux-guidelines #36（Form Validation — 即時回饋）
+
+**現狀：** 手機號碼、LINE ID 無格式提示，輸入錯誤只在送出後才知道。
+
+**方案：**
+- 手機號碼 placeholder 改為 `09xx-xxx-xxx`，blur 時檢查格式（`/^09\d{8}$/`）
+- LINE ID 即時檢查格式（`/^[a-z0-9_.@-]+$/i`），不符顯示紅框 + 提示文字
+- 錯誤提示：`text-sm text-red-600 mt-1`
+
+### 21b-P8. 儲存狀態回饋
+
+**檔案：** `src/pages/UAG/Profile/index.tsx`、`src/pages/UAG/Profile/hooks/useAgentProfile.ts`
+**規範引用：** ux-guidelines #12（Loading State — 超過 300ms 需 indicator）
+
+**現狀：** 儲存時按鈕無視覺回饋，用戶不確定是否成功。
+
+**方案：**
+- 儲存中：按鈕文字改 `儲存中...` + spinner icon + `disabled`
+- 成功：`notify.success('個人資料已儲存')`（已有，確認觸發）
+- 失敗：`notify.error('儲存失敗，請稍後再試')`
+
+### 21b-P9. 指標色彩對齊 SaaS 色盤
+
+**檔案：** `src/pages/UAG/Profile/MetricsDisplay.tsx`
+**規範引用：** colors.csv — SaaS General（Primary: #2563EB Trust Blue）
+
+**現狀：** 指標區全部灰底（`bg-slate-100`），缺乏品牌色彩層次。
+
+**方案：**
+- 信任分卡片：`bg-blue-50 border border-blue-200` + 數字 `text-blue-700`
+- 其餘三格保持 `bg-slate-50 border border-slate-200`
+- hover 態：`hover:border-blue-300 transition-colors duration-200`
+
+### 21b-P10. 專長 chip 手機版摺疊
+
+**檔案：** `src/pages/UAG/Profile/BasicInfoSection.tsx`
+**規範引用：** ux-guidelines #20（Content Grouping）、#23（Information Density）
+
+**現狀：** 專長領域 15 項 chip 全部攤開，手機版佔 ~300px。
+
+**方案：**
+- 手機版預設顯示前 6 項 + 「+9 顯示更多」按鈕
+- 點擊展開全部 15 項，再次點擊收合
+- 桌面版全部顯示（空間充足）
+
+```typescript
+const [showAllSkills, setShowAllSkills] = useState(false);
+const visibleSkills = showAllSkills ? allSkills : allSkills.slice(0, 6);
+const hiddenCount = allSkills.length - 6;
+```
+
+### 檔案清單
+
+| 類型 | 檔案 |
+|------|------|
+| 修改 | `src/pages/UAG/Profile/BasicInfoSection.tsx` |
+| 修改 | `src/pages/UAG/Profile/MetricsDisplay.tsx` |
+| 修改 | `src/pages/UAG/Profile/index.tsx` |
+| 修改 | `src/pages/UAG/Profile/hooks/useAgentProfile.ts` |
+| 修改 | `src/services/agentService.ts` |
+
+### 驗收標準
+
+- [ ] P6: 桌面版表單分 4 段卡片，基本資料/聯絡方式用 2 欄 grid
+- [ ] P7: 手機號碼、LINE ID 有格式提示和即時驗證紅框
+- [ ] P8: 儲存中按鈕 spinner + disabled，成功/失敗有 toast
+- [ ] P9: 信任分卡片 blue-50 底色，其餘 slate-50
+- [ ] P10: 手機版專長 chip 預設顯示 6 項 +「顯示更多」
+- [ ] typecheck + lint 通過
+
+---
+
 ## 依賴關係
 
 > 已拆分為小工單，每個子工單內部依賴見詳細區塊。此處僅列工單間依賴。
@@ -4222,14 +4461,16 @@ function useInViewAnimation(ref: RefObject<HTMLElement>) {
 #12 信任分 Tooltip + seed 校正（獨立）
       │
       ▼
-#13 房仲評價系統（依賴 #12）
-#15 經紀人認證 + 完成案件（依賴 #12）
+#13a 房仲評價 — DB + API + 類型（4 項，依賴 #12）
+  └─ #13b 房仲評價 — 前端 + 整合（5 項，依賴 #13a）
+#15 經紀人認證 + 完成案件（6 項，依賴 #12）
 
-#14 獲得鼓勵系統（依賴 #10 ✅）
+#14a 獲得鼓勵 — DB + API + 類型（4 項，依賴 #10 ✅）
+  └─ #14b 獲得鼓勵 — 前端 + 整合（3 項，依賴 #14a）
 
-#16 店名開放編輯（獨立）
-#11 Header 品牌統一（獨立）
-#18 MaiMai 公仔（建議在 #17 之後）
+#16 店名開放編輯（3 項，獨立）
+#11 Header 品牌統一（5 項，獨立）
+#18 MaiMai 公仔（3 項，建議在 #17 之後）
 
 --- DetailPage 手機版 UX 修正（原 #9 拆分）---
 
@@ -4259,6 +4500,11 @@ function useInViewAnimation(ref: RefObject<HTMLElement>) {
 #20c InfoCard + Specs 升級（2 項，獨立）
 #20d 評論 + Panel + FAB（3 項，#17 完成後 D10 自動解決）
 #20e 動畫 + 微互動（4 項，建議最後做）
+
+--- UAG Profile 頁 UX 升級（新增 #21 拆分）---
+
+#21a Profile 手機版佈局重構（5 項，依賴 #7 ✅）
+  └─ #21b Profile 桌面版 + 通用品質（5 項，依賴 #21a）
 ```
 
 ---
@@ -4276,26 +4522,30 @@ function useInViewAnimation(ref: RefObject<HTMLElement>) {
 | 5 ✅ | #6 UAG Header mock | 1 | P0 | 2 |
 | 6 ✅ | #8 社會證明真實數據 | 4 | P0 | 6 |
 | 7 ✅ | #10 社區評價 API 修正 | 2 | P0 | 2 |
-| 8 | **#17 移除生成報告 + 30秒回電** | **5** | **P0** | **2 改 + 7 刪** |
-| 9 | #7 Profile 頁 mock | 3 | P0 | 3 |
+| 8 ✅ | #7 Profile 頁 mock | 3 | P0 | 3 |
+| 9 | **#17 移除生成報告 + 30秒回電** | **6** | **P0** | **2 改 + 7 刪** |
 | 10 | #12 信任分 Tooltip + seed | 2 | P1 | 2 |
-| 11 | #13 房仲評價系統 | 5 | P0 | 10 |
-| 12 | #15 經紀人認證 + 完成案件 | 5 | P0 | 8 |
-| 13 | #16 店名開放編輯 | 3 | P1 | 4 |
-| 14 | #14 獲得鼓勵系統 | 4 | P1 | 7 |
-| 15 | #11 Header 品牌統一 | 4 | P1 | 1 |
-| 16 | #18 MaiMai 公仔 A+C+D | 3 | P1 | 4 |
-| 17 | #19c UAG Tab + KPI | 2 | P0 | 3 |
-| 18 | #19a Radar 泡泡核心 | 5 | P0 | 3 |
-| 19 | #19d UAG 卡片 + 互動 | 3 | P1 | 4 |
-| 20 | #19b Radar 進階效果 | 3 | P1 | 2 |
-| 21 | #19e UAG 收合 + 微互動 | 3 | P1 | 3 |
-| 22 | #9a DetailPage A11y + 動畫 | 5 | P1 | 4 |
-| 23 | #9b DetailPage 排版 + 手勢 | 5 | P1 | 4 |
-| 24 | #9c UAG 觸控 + 排版 | 5 | P1 | 4 |
-| 25 | #9d UAG 列表 + Mock + 桌面 | 3 | P1 | 3 |
-| 26 | #20a Gallery + AgentBottomSheet | 3 | P0 | 4 |
-| 27 | #20b 文本 + ActionBar 毛玻璃 | 3 | P0 | 7 |
-| 28 | #20c InfoCard + Specs 升級 | 2 | P1 | 2 |
-| 29 | #20d 評論 + Panel + FAB | 3 | P1 | 4 |
-| 30 | #20e 動畫 + 微互動 | 4 | P2 | 6 |
+| 11 | #13a 房仲評價 — DB + API + 類型 | 4 | P0 | 5 |
+| 12 | #13b 房仲評價 — 前端 + 整合 | 5 | P0 | 5 |
+| 13 | #15 經紀人認證 + 完成案件 | 6 | P0 | 8 |
+| 14 | #16 店名開放編輯 | 3 | P1 | 4 |
+| 15 | #14a 獲得鼓勵 — DB + API + 類型 | 4 | P1 | 4 |
+| 16 | #14b 獲得鼓勵 — 前端 + 整合 | 3 | P1 | 3 |
+| 17 | #11 Header 品牌統一 | 5 | P1 | 1 |
+| 18 | #18 MaiMai 公仔 A+C+D | 3 | P1 | 4 |
+| 19 | #19c UAG Tab + KPI | 2 | P0 | 3 |
+| 20 | #19a Radar 泡泡核心 | 5 | P0 | 3 |
+| 21 | #19d UAG 卡片 + 互動 | 3 | P1 | 4 |
+| 22 | #19b Radar 進階效果 | 3 | P1 | 2 |
+| 23 | #19e UAG 收合 + 微互動 | 3 | P1 | 3 |
+| 24 | #9a DetailPage A11y + 動畫 | 5 | P1 | 4 |
+| 25 | #9b DetailPage 排版 + 手勢 | 5 | P1 | 4 |
+| 26 | #9c UAG 觸控 + 排版 | 5 | P1 | 4 |
+| 27 | #9d UAG 列表 + Mock + 桌面 | 3 | P1 | 3 |
+| 28 | #20a Gallery + AgentBottomSheet | 3 | P0 | 4 |
+| 29 | #20b 文本 + ActionBar 毛玻璃 | 3 | P0 | 7 |
+| 30 | #20c InfoCard + Specs 升級 | 2 | P1 | 2 |
+| 31 | #20d 評論 + Panel + FAB | 3 | P1 | 4 |
+| 32 | #20e 動畫 + 微互動 | 4 | P2 | 6 |
+| 33 | #21a Profile 手機版佈局重構 | 5 | P0 | 4 |
+| 34 | #21b Profile 桌面版 + 通用品質 | 5 | P1 | 5 |
