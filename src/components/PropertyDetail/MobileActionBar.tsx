@@ -1,10 +1,9 @@
 import { memo } from 'react';
-import { MessageCircle, Phone, Calendar, Shield, Eye, Flame } from 'lucide-react';
+import { MessageCircle, Phone, Shield, Eye, Flame } from 'lucide-react';
 
 interface MobileActionBarProps {
   onLineClick: () => void;
   onCallClick: () => void;
-  onBookingClick: () => void;
   socialProof?: {
     currentViewers: number;
     isHot: boolean;
@@ -13,23 +12,22 @@ interface MobileActionBarProps {
 }
 
 /**
- * 行動端底部操作欄組件
+ * 行動端底部操作欄組件（#2 雙按鈕重構）
  *
  * 功能:
- * - 加 LINE 聊聊按鈕
- * - 致電諮詢按鈕
- * - 預約看屋按鈕
+ * - 加 LINE 聊聊按鈕（主 CTA）
+ * - 致電諮詢按鈕（次 CTA）
  * - 社會證明資訊（瀏覽人數、熱門標記）
  * - Action Lock 狀態控制
  *
  * @remarks
  * 使用 React.memo 優化渲染
  * 固定在螢幕底部（僅行動端顯示，lg 以上隱藏）
+ * 觸控目標 >= 44px (ux-guidelines #22)
  */
 export const MobileActionBar = memo(function MobileActionBar({
   onLineClick,
   onCallClick,
-  onBookingClick,
   socialProof = { currentViewers: 0, isHot: false },
   isActionLocked = false,
 }: MobileActionBarProps) {
@@ -53,36 +51,28 @@ export const MobileActionBar = memo(function MobileActionBar({
         )}
       </div>
 
-      {/* 三主按鈕 */}
+      {/* 雙主按鈕（#2 UX 重構） */}
       <div className="flex gap-2">
-        {/* 加 LINE 聊聊 */}
+        {/* 加 LINE 聊聊 - 主 CTA */}
         <button
           onClick={onLineClick}
+          aria-label="加 LINE 聊聊"
           disabled={isActionLocked}
-          className="flex min-h-[44px] flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#06C755] py-3 font-bold text-white shadow-lg shadow-green-500/20 transition-colors hover:bg-[#05b34c] disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none"
+          className="flex min-h-[44px] flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#06C755] py-3 font-bold text-white shadow-lg shadow-green-500/20 transition-colors duration-200 hover:bg-[#05b34c] disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none"
         >
           <MessageCircle size={18} />
           加 LINE 聊聊
         </button>
 
-        {/* 致電諮詢 */}
+        {/* 致電諮詢 - 次 CTA */}
         <button
           onClick={onCallClick}
+          aria-label="致電諮詢"
           disabled={isActionLocked}
-          className="flex min-h-[44px] flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl bg-brand-500 py-3 font-bold text-white shadow-lg shadow-blue-900/20 transition-colors hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none"
+          className="flex min-h-[44px] flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl bg-brand-700 py-3 font-bold text-white shadow-lg shadow-blue-900/20 transition-colors duration-200 hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none"
         >
           <Phone size={18} />
           致電諮詢
-        </button>
-
-        {/* 預約看屋 */}
-        <button
-          onClick={onBookingClick}
-          disabled={isActionLocked}
-          className="flex min-h-[44px] flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl bg-brand-700 py-3 font-bold text-white shadow-lg shadow-blue-900/20 transition-colors hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none"
-        >
-          <Calendar size={18} />
-          預約看屋
         </button>
       </div>
     </div>

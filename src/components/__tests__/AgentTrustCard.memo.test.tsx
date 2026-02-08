@@ -40,7 +40,6 @@ describe('AgentTrustCard React.memo Performance', () => {
   const mockCallbacks = {
     onLineClick: vi.fn(),
     onCallClick: vi.fn(),
-    onBookingClick: vi.fn(),
   };
 
   beforeEach(() => {
@@ -64,7 +63,6 @@ describe('AgentTrustCard React.memo Performance', () => {
               agent={agent}
               onLineClick={mockCallbacks.onLineClick}
               onCallClick={mockCallbacks.onCallClick}
-              onBookingClick={mockCallbacks.onBookingClick}
             />
           </div>
         );
@@ -372,38 +370,6 @@ describe('AgentTrustCard React.memo Performance', () => {
       expect(secondCard).toBe(firstCard);
     });
 
-    it('應該忽略 onBookingClick 回調函數引用變化', () => {
-      const agent = createMockAgent();
-
-      const TestWrapper = () => {
-        const [version, setVersion] = useState(0);
-
-        const handleBookingClick = () => {};
-
-        return (
-          <div>
-            <button onClick={() => setVersion((prev) => prev + 1)}>Update</button>
-            <div data-testid="version">{version}</div>
-            <AgentTrustCard
-              agent={agent}
-              onLineClick={mockCallbacks.onLineClick}
-              onBookingClick={handleBookingClick}
-            />
-          </div>
-        );
-      };
-
-      const { getByTestId, getByText } = renderWithClient(<TestWrapper />);
-
-      const firstCard = document.querySelector('.rounded-xl.border');
-
-      fireEvent.click(getByText('Update'));
-
-      expect(getByTestId('version').textContent).toBe('1');
-
-      const secondCard = document.querySelector('.rounded-xl.border');
-      expect(secondCard).toBe(firstCard);
-    });
 
     it('應該在回調函數引用變化時仍能正確執行', () => {
       const agent = createMockAgent();
@@ -547,16 +513,6 @@ describe('AgentTrustCard React.memo Performance', () => {
     });
   });
 
-  describe('預約看屋按鈕', () => {
-    it('應該在沒有 onBookingClick 時點擊預約按鈕不報錯', () => {
-      const agent = createMockAgent();
-      renderWithClient(<AgentTrustCard agent={agent} onLineClick={mockCallbacks.onLineClick} />);
-
-      const bookingButton = screen.getByText('預約看屋');
-      expect(() => fireEvent.click(bookingButton)).not.toThrow();
-    });
-  });
-
   describe('按鈕點擊行為', () => {
     it('應該正確觸發 onLineClick', () => {
       const agent = createMockAgent();
@@ -576,29 +532,6 @@ describe('AgentTrustCard React.memo Performance', () => {
       fireEvent.click(callButton);
 
       expect(mockCallbacks.onCallClick).toHaveBeenCalledTimes(1);
-    });
-
-    it('應該正確觸發 onBookingClick', () => {
-      const agent = createMockAgent();
-      renderWithClient(
-        <AgentTrustCard agent={agent} onBookingClick={mockCallbacks.onBookingClick} />
-      );
-
-      const bookingButton = screen.getByText('預約看屋');
-      fireEvent.click(bookingButton);
-
-      expect(mockCallbacks.onBookingClick).toHaveBeenCalledTimes(1);
-    });
-
-    it('應該在沒有 onBookingClick 時不開啟任何 Modal（由父組件控制）', () => {
-      const agent = createMockAgent();
-      renderWithClient(<AgentTrustCard agent={agent} onLineClick={mockCallbacks.onLineClick} />);
-
-      const bookingButton = screen.getByText('預約看屋');
-      fireEvent.click(bookingButton);
-
-      // 不應開啟內建 Modal（已移除 fallback，改由父組件 PropertyDetailPage 管理）
-      expect(screen.queryByText(/選擇方便的時段/)).not.toBeInTheDocument();
     });
   });
 

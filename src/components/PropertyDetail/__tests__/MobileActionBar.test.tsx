@@ -5,28 +5,25 @@ import { MobileActionBar } from '../MobileActionBar';
 describe('MobileActionBar', () => {
   const socialProof = { currentViewers: 6, isHot: true };
 
-  it('應渲染三個核心按鈕與可讀字體資訊列', () => {
+  it('應渲染雙按鈕與可讀字體資訊列', () => {
     const { container } = render(
       <MobileActionBar
         onLineClick={vi.fn()}
         onCallClick={vi.fn()}
-        onBookingClick={vi.fn()}
         socialProof={socialProof}
       />
     );
 
     expect(screen.getByRole('button', { name: '加 LINE 聊聊' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '致電諮詢' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: '預約看屋' })).toBeInTheDocument();
     expect(container.querySelector('.text-xs')).toBeInTheDocument();
   });
 
-  it('action lock 時三個按鈕應 disabled', () => {
+  it('action lock 時雙按鈕應 disabled', () => {
     render(
       <MobileActionBar
         onLineClick={vi.fn()}
         onCallClick={vi.fn()}
-        onBookingClick={vi.fn()}
         socialProof={socialProof}
         isActionLocked={true}
       />
@@ -34,31 +31,26 @@ describe('MobileActionBar', () => {
 
     expect(screen.getByRole('button', { name: '加 LINE 聊聊' })).toBeDisabled();
     expect(screen.getByRole('button', { name: '致電諮詢' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: '預約看屋' })).toBeDisabled();
   });
 
-  it('三按鈕點擊時應觸發對應 callback', async () => {
+  it('雙按鈕點擊時應觸發對應 callback', async () => {
     const user = userEvent.setup();
     const onLineClick = vi.fn();
     const onCallClick = vi.fn();
-    const onBookingClick = vi.fn();
 
     render(
       <MobileActionBar
         onLineClick={onLineClick}
         onCallClick={onCallClick}
-        onBookingClick={onBookingClick}
         socialProof={socialProof}
       />
     );
 
     await user.click(screen.getByRole('button', { name: '加 LINE 聊聊' }));
     await user.click(screen.getByRole('button', { name: '致電諮詢' }));
-    await user.click(screen.getByRole('button', { name: '預約看屋' }));
 
     expect(onLineClick).toHaveBeenCalledTimes(1);
     expect(onCallClick).toHaveBeenCalledTimes(1);
-    expect(onBookingClick).toHaveBeenCalledTimes(1);
   });
 
   it('isHot=false 時不應顯示熱門標籤', () => {
@@ -66,7 +58,6 @@ describe('MobileActionBar', () => {
       <MobileActionBar
         onLineClick={vi.fn()}
         onCallClick={vi.fn()}
-        onBookingClick={vi.fn()}
         socialProof={{ ...socialProof, isHot: false }}
       />
     );
@@ -79,7 +70,6 @@ describe('MobileActionBar', () => {
       <MobileActionBar
         onLineClick={vi.fn()}
         onCallClick={vi.fn()}
-        onBookingClick={vi.fn()}
         socialProof={{ currentViewers: 0, isHot: false }}
       />
     );
@@ -89,7 +79,7 @@ describe('MobileActionBar', () => {
 
   it('未傳 socialProof 時應使用預設值', () => {
     render(
-      <MobileActionBar onLineClick={vi.fn()} onCallClick={vi.fn()} onBookingClick={vi.fn()} />
+      <MobileActionBar onLineClick={vi.fn()} onCallClick={vi.fn()} />
     );
 
     expect(screen.getByText('0 人瀏覽中')).toBeInTheDocument();
@@ -100,18 +90,15 @@ describe('MobileActionBar', () => {
       <MobileActionBar
         onLineClick={vi.fn()}
         onCallClick={vi.fn()}
-        onBookingClick={vi.fn()}
         socialProof={socialProof}
       />
     );
 
     const lineButton = screen.getByRole('button', { name: '加 LINE 聊聊' });
     const callButton = screen.getByRole('button', { name: '致電諮詢' });
-    const bookingButton = screen.getByRole('button', { name: '預約看屋' });
 
     expect(lineButton.className).toContain('min-h-[44px]');
     expect(callButton.className).toContain('min-h-[44px]');
-    expect(bookingButton.className).toContain('min-h-[44px]');
     expect(lineButton.className).toContain('motion-reduce:transition-none');
   });
 });

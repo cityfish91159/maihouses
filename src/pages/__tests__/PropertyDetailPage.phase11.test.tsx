@@ -229,25 +229,6 @@ describe('PropertyDetailPage phase11 interactions', () => {
     expect(await screen.findByRole('button', { name: '撥打電話' })).toBeInTheDocument();
   });
 
-  it('點擊側欄預約按鈕應開啟 BookingModal', async () => {
-    const user = userEvent.setup();
-    vi.mocked(propertyService.getPropertyByPublicId).mockResolvedValue(mockPropertyData as never);
-
-    renderWithClient(
-      <MemoryRouter initialEntries={['/maihouses/property/MH-100001']}>
-        <PropertyDetailPage />
-      </MemoryRouter>
-    );
-
-    await waitFor(() => {
-      expect(screen.getByText('測試經紀人')).toBeInTheDocument();
-    });
-
-    await user.click(screen.getByTestId('agent-card-booking-button'));
-
-    expect(await screen.findByRole('heading', { name: '預約看屋' })).toBeInTheDocument();
-  });
-
   it('LINE fallback 且勾選安心留痕時，ContactModal 應顯示附帶需求提示', async () => {
     const user = userEvent.setup();
     vi.mocked(propertyService.getPropertyByPublicId).mockResolvedValue(

@@ -69,6 +69,7 @@ export interface CreateLeadParams {
   customerPhone: string;
   customerEmail?: string;
   customerLineId?: string;
+  // 客戶端僅作提示，後端會以 propertyId 解析最終 agentId（權威來源）。
   agentId: string;
   propertyId: string;
   source: 'sidebar' | 'mobile_bar' | 'booking' | 'direct';
@@ -84,31 +85,75 @@ export interface CreateLeadResponse {
   error?: string;
 }
 
+interface CreateLeadApiResponse {
+  success: boolean;
+  data?: {
+    leadId?: string;
+    agentId?: string;
+  };
+  error?: {
+    code?: string;
+    message?: string;
+  };
+}
+
 /**
  * 建立新的客戶線索
  */
 export async function createLead(params: CreateLeadParams): Promise<CreateLeadResponse> {
   try {
-    // 使用 RPC 函數建立 lead（包含自動事件記錄）
-    const { data, error } = await supabase.rpc('create_lead', {
-      p_customer_name: params.customerName,
-      p_customer_phone: params.customerPhone,
-      p_customer_email: params.customerEmail || null,
-      p_customer_line_id: params.customerLineId || null,
-      p_agent_id: params.agentId,
-      p_property_id: params.propertyId,
-      p_source: params.source,
-      p_budget_range: params.budgetRange || null,
-      p_preferred_contact_time: params.preferredContactTime || null,
-      p_needs_description: params.needsDescription || null,
+    const response = await fetch('/api/lead/create', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        customerName: params.customerName,
+        customerPhone: params.customerPhone,
+        customerEmail: params.customerEmail,
+        customerLineId: params.customerLineId,
+        propertyId: params.propertyId,
+        source: params.source,
+        budgetRange: params.budgetRange,
+        preferredContactTime: params.preferredContactTime,
+        needsDescription: params.needsDescription,
+        agentId: params.agentId,
+      }),
     });
 
-    if (error) {
-      logger.error('[LeadService] Create lead error', { error });
-      return { success: false, error: error.message };
+    const json = (await response.json().catch(() => null)) as CreateLeadApiResponse | null;
+
+    if (!response.ok || !json?.success) {
+      const errorMessage = json?.error?.message || `HTTP ${response.status}`;
+      logger.error('[LeadService] Create lead API error', {
+        status: response.status,
+        propertyId: params.propertyId,
+        clientAgentId: params.agentId,
+        error: errorMessage,
+      });
+      return { success: false, error: errorMessage };
     }
 
-    return { success: true, leadId: data };
+    const leadId = json.data?.leadId;
+    const resolvedAgentId = json.data?.agentId;
+    if (!leadId) {
+      logger.error('[LeadService] Create lead API missing leadId', {
+        propertyId: params.propertyId,
+        clientAgentId: params.agentId,
+        resolvedAgentId,
+      });
+      return { success: false, error: '建立諮詢失敗，請稍後再試' };
+    }
+
+    if (resolvedAgentId && params.agentId && resolvedAgentId !== params.agentId) {
+      logger.warn('[LeadService] AgentId overridden by backend', {
+        propertyId: params.propertyId,
+        clientAgentId: params.agentId,
+        resolvedAgentId,
+      });
+    }
+
+    return { success: true, leadId };
   } catch (err) {
     const errorMessage = err instanceof Error ? err.message : '未知錯誤';
     logger.error('[LeadService] Create lead exception', { error: err });

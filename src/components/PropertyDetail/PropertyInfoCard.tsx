@@ -12,7 +12,7 @@ interface PropertyInfoCardProps {
   capsuleTags: string[];
   socialProof: {
     currentViewers: number;
-    weeklyBookings: number;
+    trustCasesCount: number;
     isHot: boolean;
   };
 }
@@ -96,7 +96,7 @@ export const PropertyInfoCard = memo(function PropertyInfoCard({
         </div>
         <div className="inline-flex items-center gap-1 rounded-full bg-slate-50 px-2 py-1 text-xs text-slate-600">
           <Users size={12} className="text-green-500" />
-          本週 {socialProof.weeklyBookings} 組預約看屋
+          {socialProof.trustCasesCount} 組客戶已賞屋
         </div>
       </div>
 

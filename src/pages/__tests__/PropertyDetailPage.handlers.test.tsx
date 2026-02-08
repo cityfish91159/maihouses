@@ -184,26 +184,5 @@ describe('PropertyDetailPage sidebar handlers', () => {
     });
   });
 
-  it('handleAgentBookingClick 應開啟 BookingModal', async () => {
-    const user = userEvent.setup();
-    vi.mocked(propertyService.getPropertyByPublicId).mockResolvedValue(mockPropertyData as never);
-
-    renderWithClient(
-      <MemoryRouter initialEntries={['/maihouses/property/MH-100001']}>
-        <PropertyDetailPage />
-      </MemoryRouter>
-    );
-
-    await waitFor(() => {
-      expect(screen.getByText('測試經紀人')).toBeInTheDocument();
-    });
-
-    await user.click(screen.getByTestId('agent-card-booking-button'));
-
-    // 驗證 BookingModal 開啟
-    await waitFor(() => {
-      expect(screen.getByRole('dialog', { name: /預約看屋/i })).toBeInTheDocument();
-    });
-  });
 });
 

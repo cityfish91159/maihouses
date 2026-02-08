@@ -35,7 +35,6 @@ import {
   VipModal,
   LineLinkPanel,
   CallConfirmPanel,
-  BookingModal,
 } from '../components/PropertyDetail';
 import { getTrustScenario, shouldAttachTrustAssureLeadNote } from '../components/PropertyDetail/trustAssure';
 import { useTrustAssureFlow } from './propertyDetail/useTrustAssureFlow';
@@ -75,15 +74,11 @@ export const PropertyDetailPage: React.FC = () => {
   const [contactDefaultChannel, setContactDefaultChannel] = useState<ContactChannel>('line');
   const [contactTrustAssureRequested, setContactTrustAssureRequested] = useState(false);
 
-  // Phase 11-A: 三按鈕分流面板狀態
+  // Phase 11-A + #2: 雙按鈕分流面板狀態（移除 booking）
   const [linePanelOpen, setLinePanelOpen] = useState(false);
   const [callPanelOpen, setCallPanelOpen] = useState(false);
-  const [bookingOpen, setBookingOpen] = useState(false);
   const [linePanelSource, setLinePanelSource] = useState<'sidebar' | 'mobile_bar'>('sidebar');
   const [callPanelSource, setCallPanelSource] = useState<'sidebar' | 'mobile_bar'>('sidebar');
-  const [bookingSource, setBookingSource] = useState<'sidebar' | 'mobile_bar' | 'booking'>(
-    'sidebar'
-  );
 
   // S 級 VIP 攔截 Modal
   const [showVipModal, setShowVipModal] = useState(false);
@@ -105,15 +100,25 @@ export const PropertyDetailPage: React.FC = () => {
     isDemo: isDemoPropertyId(id),
   }));
 
+  // ✅ agentId 正規化：trim + 格式驗證（UUID 或 'agent-' 開頭）
+  const normalizeAgentId = useCallback((aid: string | null | undefined): string | null => {
+    if (!aid) return null;
+    const trimmed = aid.trim();
+    if (trimmed === '' || trimmed === 'unknown') return null;
+    // UUID 格式: 8-4-4-4-12 或 'agent-' 開頭（允許 mock agent-001）
+    const isValid =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(trimmed) ||
+      /^agent-\w+$/i.test(trimmed);
+    return isValid ? trimmed : null;
+  }, []);
+
   // ✅ 計算 agent_id 優先級：URL ?aid > localStorage > property.agent.id > 'unknown'
   const agentId = useMemo(() => {
-    let aid = searchParams.get('aid');
-    if (!aid) aid = localStorage.getItem('uag_last_aid');
-    // 空字串也視為無效（修復 #2: DEFAULT_PROPERTY.agent.id = '' 導致首幀為 'unknown'）
-    if (!aid || aid === 'unknown') aid = property.agent?.id || null;
-    if (aid === '') aid = null; // 空字串強制轉為 null
+    let aid = normalizeAgentId(searchParams.get('aid'));
+    if (!aid) aid = normalizeAgentId(localStorage.getItem('uag_last_aid'));
+    if (!aid) aid = normalizeAgentId(property.agent?.id);
     return aid || 'unknown';
-  }, [searchParams, property.agent?.id]);
+  }, [searchParams, property.agent?.id, normalizeAgentId]);
 
   // ✅ 副作用：將有效 agentId 寫入 localStorage（React 18+ StrictMode 安全）
   useEffect(() => {
@@ -182,31 +187,17 @@ export const PropertyDetailPage: React.FC = () => {
     [propertyTracker]
   );
 
-  const openBookingPanel = useCallback((source: 'sidebar' | 'mobile_bar' | 'booking') => {
-    setBookingSource(source);
-    setBookingOpen(true);
-    void track('booking_click', {
-      source: source === 'mobile_bar' ? 'mobile' : 'sidebar',
-    });
-    // 修復 #4: 統一使用 agentId（已包含優先級邏輯），確保審計日誌與實際操作一致
-    logger.info('audit.contact.booking', {
-      source,
-      propertyId: property.publicId,
-      agentId: agentId,
-    });
-  }, [agentId, property.publicId]);
-
   const closeLinePanel = useCallback(() => setLinePanelOpen(false), []);
   const closeCallPanel = useCallback(() => setCallPanelOpen(false), []);
-  const closeBookingPanel = useCallback(() => setBookingOpen(false), []);
 
-  // 社會證明數據 - 模擬即時瀏覽人數與預約組數
+  // 社會證明數據 (#2 改為 trustCasesCount, #8 將接入真實數據)
   const socialProof = useMemo(() => {
-    // 基於 property.publicId 產生穩定的隨機數
+    // Mock 版：基於 property.publicId 產生穩定的隨機數
+    // 正式版：#8 將改用 publicStats API 真實數據
     const seed = property.publicId?.charCodeAt(3) || 0;
     return {
       currentViewers: Math.floor(seed % 5) + 2, // 2-6 人正在瀏覽
-      weeklyBookings: Math.floor(seed % 8) + 5, // 5-12 組預約
+      trustCasesCount: Math.floor(seed % 8) + 5, // 5-12 組客戶已賞屋（#2 改名）
       isHot: seed % 3 === 0, // 1/3 機率顯示為熱門
     };
   }, [property.publicId]);
@@ -400,7 +391,7 @@ export const PropertyDetailPage: React.FC = () => {
     createAutoTrustCase,
   });
 
-  // AgentTrustCard callbacks
+  // AgentTrustCard callbacks (#2 移除 booking)
   const handleAgentLineClick = useCallback(() => {
     openLinePanel('sidebar');
   }, [openLinePanel]);
@@ -409,11 +400,7 @@ export const PropertyDetailPage: React.FC = () => {
     openCallPanel('sidebar');
   }, [openCallPanel]);
 
-  const handleAgentBookingClick = useCallback(() => {
-    openBookingPanel('sidebar');
-  }, [openBookingPanel]);
-
-  // Mobile / FAB / VIP callbacks
+  // Mobile / FAB / VIP callbacks (#2 移除 booking)
   const handleMobileLineClick = useCallback(() => {
     openLinePanel('mobile_bar');
   }, [openLinePanel]);
@@ -421,10 +408,6 @@ export const PropertyDetailPage: React.FC = () => {
   const handleMobileCallClick = useCallback(() => {
     openCallPanel('mobile_bar');
   }, [openCallPanel]);
-
-  const handleMobileBookingClick = useCallback(() => {
-    openBookingPanel('mobile_bar');
-  }, [openBookingPanel]);
 
   const handleFloatingCallClick = useCallback(() => {
     openCallPanel('mobile_bar');
@@ -434,9 +417,9 @@ export const PropertyDetailPage: React.FC = () => {
     openLinePanel('mobile_bar');
   }, [openLinePanel]);
 
-  const handleVipBookingClick = useCallback(() => {
-    openBookingPanel('booking');
-  }, [openBookingPanel]);
+  const handleVipCallClick = useCallback(() => {
+    openCallPanel('mobile_bar');
+  }, [openCallPanel]);
 
   const handleLineFallbackContact = useCallback(
     (trustAssureChecked: boolean) => {
@@ -458,14 +441,6 @@ export const PropertyDetailPage: React.FC = () => {
       );
     },
     [callPanelSource, openContactModal, shouldAttachContactTrustAssure]
-  );
-
-  const handleBookingSubmit = useCallback(
-    async (payload: { selectedSlot: string; phone: string; trustAssureChecked: boolean }) => {
-      const requested = shouldAttachContactTrustAssure(payload.trustAssureChecked);
-      openContactModal(bookingSource, 'phone', requested);
-    },
-    [bookingSource, openContactModal, shouldAttachContactTrustAssure]
   );
 
   // 當 mockTrustEnabled 改變時，更新 property
@@ -522,7 +497,7 @@ export const PropertyDetailPage: React.FC = () => {
     fetchProperty();
   }, [id, mockTrustEnabled]);
 
-  const isActionLocked = linePanelOpen || callPanelOpen || bookingOpen || showContactModal;
+  const isActionLocked = linePanelOpen || callPanelOpen || showContactModal;
 
   return (
     <ErrorBoundary>
@@ -602,12 +577,11 @@ export const PropertyDetailPage: React.FC = () => {
             fallbackImage={FALLBACK_IMAGE}
           />
 
-          {/* 優化方案 1: 使用拆分的 MobileCTA 組件 */}
+          {/* 優化方案 1: 使用拆分的 MobileCTA 組件（#2 雙按鈕） */}
           <MobileCTA
             onLineClick={handleMobileLineClick}
             onCallClick={handleMobileCallClick}
-            onBookingClick={handleMobileBookingClick}
-            weeklyBookings={socialProof.weeklyBookings}
+            trustCasesCount={socialProof.trustCasesCount}
             isActionLocked={isActionLocked}
           />
 
@@ -649,7 +623,6 @@ export const PropertyDetailPage: React.FC = () => {
                   {...(property.isDemo !== undefined ? { isDemo: property.isDemo } : {})}
                   onLineClick={handleAgentLineClick}
                   onCallClick={handleAgentCallClick}
-                  onBookingClick={handleAgentBookingClick}
                 />
 
                 {/* FE-2: 安心留痕徽章（僅當房仲開啟服務時顯示） */}
@@ -669,11 +642,10 @@ export const PropertyDetailPage: React.FC = () => {
           <span className="mt-0.5 text-[10px]">30秒回電</span>
         </button>
 
-        {/* 優化方案 1: 使用拆分的 MobileActionBar 組件 */}
+        {/* 優化方案 1: 使用拆分的 MobileActionBar 組件（#2 雙按鈕） */}
         <MobileActionBar
           onLineClick={handleMobileLineClick}
           onCallClick={handleMobileCallClick}
-          onBookingClick={handleMobileBookingClick}
           socialProof={socialProof}
           isActionLocked={isActionLocked}
         />
@@ -700,16 +672,6 @@ export const PropertyDetailPage: React.FC = () => {
           onFallbackContact={handleCallFallbackContact}
         />
 
-        <BookingModal
-          isOpen={bookingOpen}
-          onClose={closeBookingPanel}
-          agentName={property.agent?.name || '專屬業務'}
-          isLoggedIn={isLoggedIn}
-          trustEnabled={isTrustEnabled}
-          onTrustAction={(checked) => handleTrustAssureAction('booking', checked)}
-          onSubmitBooking={handleBookingSubmit}
-        />
-
         {/* 統一聯絡入口 Modal */}
         {showContactModal && (
           <ContactModal
@@ -725,12 +687,12 @@ export const PropertyDetailPage: React.FC = () => {
           />
         )}
 
-        {/* 優化方案 1: 使用拆分的 VipModal 組件 */}
+        {/* 優化方案 1: 使用拆分的 VipModal 組件（#2 雙按鈕） */}
         <VipModal
           isOpen={showVipModal}
           onClose={() => setShowVipModal(false)}
           onLineClick={handleVipLineClick}
-          onBookingClick={handleVipBookingClick}
+          onCallClick={handleVipCallClick}
           reason={vipReason}
         />
 

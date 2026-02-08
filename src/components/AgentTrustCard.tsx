@@ -7,7 +7,6 @@ import {
   Phone,
   Clock,
   CheckCircle,
-  Calendar,
   FileText,
   UserCircle,
 } from 'lucide-react';
@@ -21,7 +20,6 @@ interface AgentTrustCardProps {
   isDemo?: boolean;
   onLineClick?: () => void;
   onCallClick?: () => void;
-  onBookingClick?: () => void;
 }
 
 // 信任分數構成說明
@@ -41,7 +39,6 @@ export const AgentTrustCard: React.FC<AgentTrustCardProps> = memo(function Agent
   isDemo = false,
   onLineClick,
   onCallClick,
-  onBookingClick,
 }) {
   const [showTrustTooltip, setShowTrustTooltip] = useState(false);
   const [avatarError, setAvatarError] = useState(false);
@@ -238,36 +235,28 @@ export const AgentTrustCard: React.FC<AgentTrustCardProps> = memo(function Agent
           </div>
         </div>
 
-        {/* CTA 按鈕區 */}
+        {/* CTA 按鈕區 - 雙按鈕布局（#2 UX 重構） */}
         <div className="mt-4 space-y-2 border-t border-border pt-3">
           {/* 主要 CTA：加 LINE（低門檻）- LINE 官方品牌色 */}
           <button
             onClick={onLineClick}
+            aria-label="加 LINE 聊聊"
             data-testid="agent-card-line-button"
-            className="flex min-h-[44px] w-full items-center justify-center gap-2 rounded-lg bg-[var(--line-brand-green)] py-2.5 text-sm font-bold text-white shadow-sm transition-colors hover:bg-[var(--line-brand-green-hover)] focus:ring-2 focus:ring-brand-500"
+            className="flex min-h-[44px] w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-[var(--line-brand-green)] py-2.5 text-sm font-bold text-white shadow-sm transition-colors duration-200 hover:bg-[var(--line-brand-green-hover)] focus:ring-2 focus:ring-brand-500 motion-reduce:transition-none"
           >
             <MessageCircle size={18} />加 LINE 聊聊
           </button>
 
-          {/* 次要 CTA */}
-          <div className="flex gap-2">
-            <button
-              onClick={onBookingClick}
-              data-testid="agent-card-booking-button"
-              className="flex min-h-[44px] flex-1 items-center justify-center gap-1.5 rounded-lg bg-brand-700 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-600 focus:ring-2 focus:ring-brand-500"
-            >
-              <Calendar size={16} />
-              預約看屋
-            </button>
-            <button
-              onClick={onCallClick}
-              data-testid="agent-card-call-button"
-              className="flex min-h-[44px] flex-1 items-center justify-center gap-1.5 rounded-lg border border-brand-700 bg-bg-card py-2 text-sm font-medium text-brand-700 transition-colors hover:bg-brand-50 focus:ring-2 focus:ring-brand-500"
-            >
-              <Phone size={16} />
-              致電諮詢
-            </button>
-          </div>
+          {/* 次要 CTA：致電諮詢（outline 樣式） */}
+          <button
+            onClick={onCallClick}
+            aria-label="致電諮詢"
+            data-testid="agent-card-call-button"
+            className="flex min-h-[44px] w-full cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-brand-700 bg-bg-card py-2.5 text-sm font-medium text-brand-700 transition-colors duration-200 hover:bg-brand-50 focus:ring-2 focus:ring-brand-500 motion-reduce:transition-none"
+          >
+            <Phone size={18} />
+            致電諮詢
+          </button>
         </div>
       </div>
   );

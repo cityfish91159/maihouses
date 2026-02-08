@@ -116,6 +116,14 @@ export function buildQRCodeUrl(propertyId: string, agentId: string): string {
 
 /**
  * 從 URL 解析追蹤參數
+ *
+ * @deprecated 此函數的 agentId fallback 邏輯與 PropertyDetailPage.tsx 不一致。
+ * 建議直接使用 PropertyDetailPage 的 agentId 計算邏輯（包含 property.agent.id fallback）。
+ * 目前專案內無使用，保留供未來重構參考。
+ *
+ * 差異：
+ * - PropertyDetailPage: URL > localStorage > property.agent.id > 'unknown'
+ * - parseTrackingParams: URL > localStorage > 'unknown'（缺少 property.agent.id fallback）
  */
 export function parseTrackingParams(): {
   agentId: string;
@@ -136,7 +144,7 @@ export function parseTrackingParams(): {
 
   const params = new URLSearchParams(window.location.search);
 
-  // 優先從 URL 取，其次從 localStorage
+  // 優先從 URL 取，其次從 localStorage（修復 #6: 註記不一致性）
   let agentId = params.get('aid');
   if (!agentId || agentId === 'unknown') {
     agentId = safeLocalStorage.getItem('uag_last_aid') || 'unknown';

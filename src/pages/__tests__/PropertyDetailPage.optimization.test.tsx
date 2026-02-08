@@ -19,12 +19,13 @@ import { PropertyDetailPage } from '../PropertyDetailPage';
 import { propertyService } from '../../services/propertyService';
 import { useTrustActions } from '../../hooks/useTrustActions';
 
-// Mock dependencies
+// Mock dependencies - 動態 useParams（修復 #3: 測試固定 useParams 問題）
+const mockUseParams = vi.fn(() => ({ id: 'MH-100001' }));
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom');
   return {
     ...actual,
-    useParams: () => ({ id: 'MH-100001' }),
+    useParams: () => mockUseParams(),
   };
 });
 
@@ -220,7 +221,7 @@ describe('PropertyDetailPage - 優化驗證', () => {
       const setItemSpy = vi.spyOn(Storage.prototype, 'setItem');
 
       renderWithClient(
-        <MemoryRouter initialEntries={['/maihouses/property/MH-100001?aid=test-agent']}>
+        <MemoryRouter initialEntries={['/maihouses/property/MH-100001?aid=agent-test123']}>
           <PropertyDetailPage />
         </MemoryRouter>
       );
@@ -229,8 +230,8 @@ describe('PropertyDetailPage - 優化驗證', () => {
         expect(screen.getByText(/新光晴川/)).toBeInTheDocument();
       });
 
-      // 驗證 localStorage 被調用（快取邏輯）
-      expect(setItemSpy).toHaveBeenCalledWith('uag_last_aid', 'test-agent');
+      // 驗證 localStorage 被調用（快取邏輯）- 使用符合 agent-xxx 格式的 ID
+      expect(setItemSpy).toHaveBeenCalledWith('uag_last_aid', 'agent-test123');
 
       getItemSpy.mockRestore();
       setItemSpy.mockRestore();
@@ -263,6 +264,8 @@ describe('PropertyDetailPage - 優化驗證', () => {
     });
 
     it('API 失敗時 agentId 應為 unknown（防守測試）', async () => {
+      // 修復 #3: 動態設定 useParams 為 MH-INVALID
+      mockUseParams.mockReturnValue({ id: 'MH-INVALID' });
       vi.mocked(propertyService.getPropertyByPublicId).mockResolvedValue(null);
 
       localStorage.removeItem('uag_last_aid');
@@ -283,24 +286,36 @@ describe('PropertyDetailPage - 優化驗證', () => {
       expect(setItemSpy).not.toHaveBeenCalledWith('uag_last_aid', 'unknown');
 
       setItemSpy.mockRestore();
+      mockUseParams.mockReturnValue({ id: 'MH-100001' }); // 復原
     });
 
-    it('DEFAULT_PROPERTY 的空字串 agent.id 應被視為無效', () => {
-      // 模擬 useMemo 的計算邏輯（單元測試級別）
-      const simulateAgentIdCalculation = (propertyAgentId: string | undefined) => {
-        let aid: string | null = null;
-        // 模擬無 URL 參數、無 localStorage
-        if (!aid || aid === 'unknown') aid = propertyAgentId || null;
-        if (aid === '') aid = null; // 空字串強制轉為 null
-        return aid || 'unknown';
-      };
+    it('agentId 正規化應過濾無效格式（修復 #1）', () => {
+      // 測試 normalizeAgentId 邏輯（單元測試級別）
+      const testCases = [
+        { input: '', expected: null },
+        { input: '  ', expected: null },
+        { input: 'unknown', expected: null },
+        { input: 'invalid-format', expected: null },
+        { input: '123-abc', expected: null },
+        { input: 'agent-001', expected: 'agent-001' }, // Mock agent ID
+        { input: '550e8400-e29b-41d4-a716-446655440000', expected: '550e8400-e29b-41d4-a716-446655440000' }, // UUID
+        { input: '  agent-123  ', expected: 'agent-123' }, // trim
+      ];
 
-      // DEFAULT_PROPERTY.agent.id = ''
-      expect(simulateAgentIdCalculation('')).toBe('unknown');
-      // 有效的 agent.id
-      expect(simulateAgentIdCalculation('agent-123')).toBe('agent-123');
-      // undefined
-      expect(simulateAgentIdCalculation(undefined)).toBe('unknown');
+      testCases.forEach(({ input, expected }) => {
+        // 模擬 normalizeAgentId 邏輯
+        const normalize = (aid: string | null | undefined): string | null => {
+          if (!aid) return null;
+          const trimmed = aid.trim();
+          if (trimmed === '' || trimmed === 'unknown') return null;
+          const isValid =
+            /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(trimmed) ||
+            /^agent-\w+$/i.test(trimmed);
+          return isValid ? trimmed : null;
+        };
+
+        expect(normalize(input)).toBe(expected);
+      });
     });
   });
 
@@ -371,9 +386,8 @@ describe('PropertyDetailPage - 優化驗證', () => {
       );
 
       await waitFor(() => {
-        // 驗證 AgentTrustCard 中的按鈕存在（用 testId 避免重複元素問題）
+        // 驗證 AgentTrustCard 中的雙按鈕存在（Phase 11-A 三按鈕改雙按鈕）
         expect(screen.getByTestId('agent-card-line-button')).toBeInTheDocument();
-        expect(screen.getByTestId('agent-card-booking-button')).toBeInTheDocument();
         expect(screen.getByTestId('agent-card-call-button')).toBeInTheDocument();
       });
     });

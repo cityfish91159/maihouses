@@ -1,7 +1,6 @@
 import { FileText, Phone } from 'lucide-react';
 import { ContactModal, type ContactChannel } from '../../components/ContactModal';
 import {
-  BookingModal,
   CallConfirmPanel,
   LineLinkPanel,
   MobileActionBar,
@@ -13,7 +12,7 @@ import type { PropertyData } from '../../services/propertyService';
 interface SocialProof {
   socialProof: {
     currentViewers: number;
-    weeklyBookings: number;
+    trustCasesCount: number;
     isHot: boolean;
   };
 }
@@ -23,7 +22,6 @@ interface MobileActionLayerProps extends SocialProof {
   onFloatingCallClick: () => void;
   onMobileLineClick: () => void;
   onMobileCallClick: () => void;
-  onMobileBookingClick: () => void;
 }
 
 interface LinePanelLayerProps {
@@ -42,18 +40,6 @@ interface CallPanelLayerProps {
   onCallFallbackContact: (trustAssureChecked: boolean) => void;
 }
 
-interface BookingPanelLayerProps {
-  bookingPanelSession: number;
-  bookingOpen: boolean;
-  onCloseBookingPanel: () => void;
-  onBookingTrustAction: (checked: boolean) => Promise<void>;
-  onBookingSubmit: (payload: {
-    selectedSlot: string;
-    phone: string;
-    trustAssureChecked: boolean;
-  }) => Promise<void>;
-}
-
 interface ContactModalLayerProps {
   showContactModal: boolean;
   contactSource: 'sidebar' | 'mobile_bar' | 'booking';
@@ -66,7 +52,7 @@ interface VipLayerProps {
   showVipModal: boolean;
   onCloseVipModal: () => void;
   onVipLineClick: () => void;
-  onVipBookingClick: () => void;
+  onVipCallClick: () => void;
   vipReason: string;
 }
 
@@ -84,7 +70,6 @@ interface PropertyDetailActionLayerProps {
   mobileActions: MobileActionLayerProps;
   linePanel: LinePanelLayerProps;
   callPanel: CallPanelLayerProps;
-  bookingPanel: BookingPanelLayerProps;
   contactModalLayer: ContactModalLayerProps;
   vipLayer: VipLayerProps;
   reportLayer: ReportLayerProps;
@@ -98,7 +83,6 @@ export function PropertyDetailActionLayer({
   mobileActions,
   linePanel,
   callPanel,
-  bookingPanel,
   contactModalLayer,
   vipLayer,
   reportLayer,
@@ -117,7 +101,6 @@ export function PropertyDetailActionLayer({
       <MobileActionBar
         onLineClick={mobileActions.onMobileLineClick}
         onCallClick={mobileActions.onMobileCallClick}
-        onBookingClick={mobileActions.onMobileBookingClick}
         socialProof={mobileActions.socialProof}
         isActionLocked={mobileActions.isActionLocked}
       />
@@ -146,17 +129,6 @@ export function PropertyDetailActionLayer({
         onFallbackContact={callPanel.onCallFallbackContact}
       />
 
-      <BookingModal
-        key={`booking-panel-${bookingPanel.bookingPanelSession}`}
-        isOpen={bookingPanel.bookingOpen}
-        onClose={bookingPanel.onCloseBookingPanel}
-        agentName={property.agent?.name || '專屬業務'}
-        isLoggedIn={isLoggedIn}
-        trustEnabled={isTrustEnabled}
-        onTrustAction={bookingPanel.onBookingTrustAction}
-        onSubmitBooking={bookingPanel.onBookingSubmit}
-      />
-
       <ContactModal
         key={contactModalLayer.contactDefaultChannel}
         isOpen={contactModalLayer.showContactModal}
@@ -174,7 +146,7 @@ export function PropertyDetailActionLayer({
         isOpen={vipLayer.showVipModal}
         onClose={vipLayer.onCloseVipModal}
         onLineClick={vipLayer.onVipLineClick}
-        onBookingClick={vipLayer.onVipBookingClick}
+        onCallClick={vipLayer.onVipCallClick}
         reason={vipLayer.vipReason}
       />
 
