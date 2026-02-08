@@ -1,4 +1,5 @@
 ﻿import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useSearchParams } from 'react-router-dom';
 import { notify } from '../../../../lib/notify';
 import type { AgentProfileMe, UpdateAgentProfilePayload } from '../../../../types/agent.types';
 import {
@@ -9,20 +10,69 @@ import {
 
 const AGENT_PROFILE_QUERY_KEY = ['agent-profile-me'] as const;
 
+// #7 Mock 資料
+const MOCK_PROFILE: AgentProfileMe = {
+  id: 'mock-agent-001',
+  internalCode: 88001,
+  name: '游杰倫',
+  avatarUrl: null,
+  company: '邁房子',
+  bio: '專注於大台北地區房地產買賣，擅長捷運宅與學區房。',
+  specialties: ['捷運宅', '學區房', '首購族諮詢'],
+  certifications: ['不動產經紀人', '地政士'],
+  phone: '0912345678',
+  lineId: 'maihouses_demo',
+  trustScore: 87,
+  encouragementCount: 23,
+  serviceRating: 4.8,
+  reviewCount: 32,
+  completedCases: 45,
+  activeListings: 12,
+  serviceYears: 4,
+  joinedAt: '2021-02-01',
+  visitCount: 156,
+  dealCount: 45,
+  email: null,
+  points: 1200,
+  quotaS: 5,
+  quotaA: 10,
+  createdAt: '2021-02-01T00:00:00Z',
+};
+
 export function useAgentProfile() {
   const queryClient = useQueryClient();
+  const [searchParams] = useSearchParams();
+  const isMockMode = searchParams.get('mock') === 'true';
 
   const { data, isLoading, error } = useQuery({
     queryKey: AGENT_PROFILE_QUERY_KEY,
-    queryFn: fetchAgentMe,
+    queryFn: async () => {
+      // #7 Mock 模式：直接回傳假資料
+      if (isMockMode) {
+        return MOCK_PROFILE;
+      }
+      return fetchAgentMe();
+    },
     staleTime: 5 * 60 * 1000,
-    retry: 1,
+    retry: isMockMode ? 0 : 1, // Mock 模式不重試
   });
 
   const updateMutation = useMutation({
-    mutationFn: (payload: UpdateAgentProfilePayload) => updateAgentProfile(payload),
+    mutationFn: async (payload: UpdateAgentProfilePayload) => {
+      // #7 Mock 模式：模擬更新
+      if (isMockMode) {
+        await new Promise((resolve) => setTimeout(resolve, 500)); // 模擬網路延遲
+        return;
+      }
+      return updateAgentProfile(payload);
+    },
     onSuccess: () => {
-      notify.success('已更新個人資料');
+      // #7 Mock 模式：提示這是模擬
+      if (isMockMode) {
+        notify.success('已更新個人資料（Mock 模式）', '這是模擬更新，實際資料未儲存');
+      } else {
+        notify.success('已更新個人資料');
+      }
       queryClient.invalidateQueries({ queryKey: AGENT_PROFILE_QUERY_KEY });
     },
     onError: (err) => {
@@ -32,9 +82,21 @@ export function useAgentProfile() {
   });
 
   const avatarMutation = useMutation({
-    mutationFn: (file: File) => uploadAgentAvatar(file),
+    mutationFn: async (file: File) => {
+      // #7 Mock 模式：模擬上傳
+      if (isMockMode) {
+        await new Promise((resolve) => setTimeout(resolve, 800)); // 模擬上傳延遲
+        return URL.createObjectURL(file); // 使用本地預覽 URL
+      }
+      return uploadAgentAvatar(file);
+    },
     onSuccess: (url) => {
-      notify.success('頭像已更新');
+      // #7 Mock 模式：提示這是模擬
+      if (isMockMode) {
+        notify.success('頭像已更新（Mock 模式）', '這是本地預覽，實際未上傳');
+      } else {
+        notify.success('頭像已更新');
+      }
       queryClient.setQueryData<AgentProfileMe | undefined>(AGENT_PROFILE_QUERY_KEY, (prev) =>
         prev ? { ...prev, avatarUrl: url } : prev
       );
