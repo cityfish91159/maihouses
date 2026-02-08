@@ -25,7 +25,7 @@
 - [x] **#1** [P0] agentId fallback 修正 — 加入 `property.agent.id` 避免 Lead 寫成 'unknown'
 - [x] **#2** [P0] 移除預約看屋 + 雙按鈕 UX 重構 — 三按鈕 → LINE + 致電雙按鈕，移除 BookingModal ✅ 2026-02-08
 - [x] **#3** [P1] createLead 補傳 preferredChannel 欄位 ✅ 2026-02-08
-- [ ] **#4** [P2] LINE 按鈕色統一（併入 #2） ✅ 已完成於 #2
+- [x] **#4** [P2] LINE 按鈕色統一（併入 #2） ✅ 已完成於 #2
 
 ### 正式版專屬
 
@@ -36,6 +36,12 @@
 
 - [ ] **#12** [P1] 信任分 Tooltip 修正 + 績效指標 seed 校正 — 移除假拆分改說明型 Tooltip + DB 補齊 service_rating/review_count/completed_cases/joined_at
 - [ ] **#13** [P0] 房仲評價系統 — DB `agent_reviews` 建表 + 評價 API + Step 2 評價彈窗 + (32) 可點擊查看評價列表 + 自動計算 AVG
+- [ ] **#14** [P1] 獲得鼓勵系統 — 社區評價（兩好一公道）按讚 → 累積到 `agents.encouragement_count`
+
+### 經紀人認證 / 完成案件 / 店名
+
+- [ ] **#15** [P0] 經紀人認證系統 + 完成案件自動累積 — DB 補 `license_number` / `is_verified` + 結案 Trigger 自動 +1 `completed_cases` + 前端條件式「已認證」+ 手機版同步
+- [ ] **#16** [P1] 店名開放編輯 — `company` 加入 `UpdateProfileSchema` + 前端 BasicInfoSection 移除 disabled
 
 ### Header / 品牌統一
 
@@ -335,6 +341,53 @@ ContactModal 收集 `preferredChannel`（LINE/電話/站內訊息）但沒傳給
 ## #4 [P2] LINE 按鈕色統一（併入 #2）
 
 > **此項已併入 #2 一起處理。** 在 #2 移除預約按鈕、重構雙按鈕 UX 時，同時將硬編碼 `bg-[#06C755]` 改為 CSS variable。
+
+### 實作方式
+
+1. **定義常數** (`src/components/PropertyDetail/constants.ts`)
+   ```typescript
+   export const LINE_BRAND_GREEN = '#06C755';
+   export const LINE_BRAND_GREEN_HOVER = '#05B04A';
+   ```
+
+2. **使用 CSS Variables 模式**（所有組件統一）
+   ```typescript
+   const lineBrandVars = {
+     '--line-brand-green': LINE_BRAND_GREEN,
+     '--line-brand-green-hover': LINE_BRAND_GREEN_HOVER,
+   } as CSSProperties;
+
+   // 在按鈕上使用
+   className="bg-[var(--line-brand-green)] hover:bg-[var(--line-brand-green-hover)]"
+   ```
+
+### 覆蓋檔案
+
+✅ 以下 7 個檔案已統一使用 CSS variable：
+- `src/components/AgentTrustCard.tsx`
+- `src/components/PropertyDetail/MobileActionBar.tsx`
+- `src/components/PropertyDetail/MobileCTA.tsx`
+- `src/components/PropertyDetail/VipModal.tsx`
+- `src/components/PropertyDetail/LineLinkPanel.tsx`
+- `src/components/PropertyDetail/PropertyInfoCard.tsx`
+- `src/pages/Report/ReportGenerator.tsx`
+
+### 驗證結果（2026-02-08）
+
+```bash
+# 搜尋硬編碼 LINE 綠色（排除 constants.ts）
+grep -rn "bg-\[#06C755\]" --include="*.tsx" --include="*.ts" src/ | grep -v "constants.ts"
+# 結果：無匹配（✅ 全部已移除硬編碼）
+
+grep -rn "bg-\[#05B04A\]" --include="*.tsx" --include="*.ts" src/ | grep -v "constants.ts"
+# 結果：無匹配（✅ 全部已移除硬編碼）
+
+# 確認 CSS variable 使用
+rg "bg-\[var\(--line-brand-green\)\]" --type-add 'tsx:*.tsx' --type tsx
+# 結果：7 個檔案正確使用（✅）
+```
+
+✅ **#4 已完全實作並驗證完成**
 
 ---
 
@@ -1241,13 +1294,13 @@ Trigger `trg_agents_trust_score` 會在 UPDATE 時自動執行 `fn_calculate_tru
 ```
 service_rating = AVG(所有 agent_reviews 的 rating)
 review_count   = COUNT(所有 agent_reviews)
-encouragement_count = review_count（評價即鼓勵）
 ```
 
 - 買方 A 給 5 星、買方 B 給 4 星、買方 C 給 5 星
 - `service_rating = (5+4+5)/3 = 4.7`
 - `review_count = 3`
-- `encouragement_count = 3`
+
+> **注意：** `encouragement_count`（獲得鼓勵）由 #14 獨立處理，來源是社區評價（兩好一公道）的按讚數，不等於 review_count。
 
 #### 資料流向
 
@@ -1258,7 +1311,7 @@ Assure Step 2 確認成功
   → 買方填 1-5 星 + 評語（選填）
   → POST /api/agent/reviews
   → INSERT agent_reviews
-  → Trigger 自動 AVG → UPDATE agents.service_rating, review_count, encouragement_count
+  → Trigger 自動 AVG → UPDATE agents.service_rating, review_count
   → fn_calculate_trust_score Trigger 連帶更新 trust_score
 
 [評價查看]
@@ -1356,10 +1409,10 @@ BEGIN
   UPDATE public.agents
   SET
     service_rating = COALESCE(v_avg, 0),
-    review_count = COALESCE(v_count, 0),
-    encouragement_count = COALESCE(v_count, 0)
+    review_count = COALESCE(v_count, 0)
   WHERE id = v_agent_id;
   -- 這會觸發 trg_agents_trust_score 連帶更新 trust_score
+  -- 注意：encouragement_count 由 #14（社區評價按讚）獨立管理，不在此 Trigger
 
   RETURN COALESCE(NEW, OLD);
 END;
@@ -1688,7 +1741,6 @@ export function useSubmitReview() {
 
 - [ ] DB：`agent_reviews` 表已建立，RLS 已啟用
 - [ ] DB：INSERT 一筆評價後 `agents.service_rating` 和 `review_count` 自動更新
-- [ ] DB：`encouragement_count` 與 `review_count` 同步（評價即鼓勵）
 - [ ] DB：同 agent + reviewer + case 防重複
 - [ ] API：`GET /api/agent/reviews?agentId=xxx` 回傳評價列表 + 星級分佈
 - [ ] API：`POST /api/agent/reviews` 新增評價，Zod 驗證 rating 1-5
@@ -1697,6 +1749,777 @@ export function useSubmitReview() {
 - [ ] 前端：Assure Step 2 確認成功後 500ms 彈出 `ReviewPromptModal`
 - [ ] 前端：ReviewPromptModal 可選 1-5 星 + 評語（選填）+ 送出/稍後再說
 - [ ] 前端：Mock 模式 AgentReviewListModal 顯示假資料
+- [ ] typecheck + lint 通過
+
+---
+
+## #14 [P1] 獲得鼓勵系統 — 社區評價（兩好一公道）按讚 → agents.encouragement_count
+
+### 背景分析
+
+**現狀：** `agents.encouragement_count = 156` 是 seed 硬編碼值，系統中不存在任何 +1 機制。
+
+**需求路徑（用戶確認）：**
+```
+房仲上傳物件時填寫「兩好一公道」（advantage_1 / advantage_2 / disadvantage）
+  → 存入 properties 表
+  → community_reviews VIEW 投影出來，顯示在社區牆
+  → 消費者覺得「兩好一公道」實用 → 按讚 👍
+  → 讚數累積 → 加總回 agents.encouragement_count
+  → 連帶觸發 fn_calculate_trust_score 更新信任分
+```
+
+**關鍵發現：**
+- `community_reviews` 是 **VIEW**（非 Table），投影自 `properties` 表（`20241201_community_wall.sql` L215-231）
+- View 無法直接加 `liked_by` 欄位，不可改為 Table（會破壞 `fn_create_property_with_review` RPC）
+- 現有 `community_posts.liked_by` + `toggle_like` 只影響社區貼文，與房仲評價完全無關
+
+**方案選擇：** Method B — 新建 `community_review_likes` 表，平行於既有 `community_posts` 按讚系統，不動 View 結構。
+
+### 14-A. [P1] DB Migration — `community_review_likes` 建表 + Trigger
+
+| 檔案 | 操作 |
+|------|------|
+| `supabase/migrations/YYYYMMDD_community_review_likes.sql` | **新增** |
+
+**表結構：**
+
+```sql
+-- ========================================================
+-- #14: 社區評價（兩好一公道）按讚系統
+-- 用途：消費者對社區牆上的「兩好一公道」評價按讚
+-- 讚數加總 → agents.encouragement_count
+-- ========================================================
+
+CREATE TABLE IF NOT EXISTS public.community_review_likes (
+  id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  property_id     TEXT NOT NULL,                            -- 對應 properties.id（即 community_reviews 的 id）
+  user_id         UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- 防重複：同一 user 對同一 property 只能讚一次
+CREATE UNIQUE INDEX idx_community_review_likes_unique
+  ON public.community_review_likes(property_id, user_id);
+
+-- 查詢效能：按 property 查讚數
+CREATE INDEX idx_community_review_likes_property
+  ON public.community_review_likes(property_id);
+
+-- 查詢效能：按 user 查自己讚過哪些
+CREATE INDEX idx_community_review_likes_user
+  ON public.community_review_likes(user_id);
+```
+
+**RLS 策略：**
+
+```sql
+ALTER TABLE public.community_review_likes ENABLE ROW LEVEL SECURITY;
+
+-- SELECT: 任何人可看讚數（含 anon，因為詳情頁未登入也要顯示鼓勵數）
+CREATE POLICY "community_review_likes_select" ON public.community_review_likes
+  FOR SELECT USING (true);
+
+-- INSERT: 登入者可按讚，user_id 必須是自己
+CREATE POLICY "community_review_likes_insert" ON public.community_review_likes
+  FOR INSERT WITH CHECK (auth.uid() IS NOT NULL AND user_id = auth.uid());
+
+-- DELETE: 限本人取消讚
+CREATE POLICY "community_review_likes_delete" ON public.community_review_likes
+  FOR DELETE USING (user_id = auth.uid());
+
+-- 權限
+GRANT SELECT ON public.community_review_likes TO anon;
+GRANT SELECT, INSERT, DELETE ON public.community_review_likes TO authenticated;
+```
+
+**Trigger — 自動加總讚數到 agents.encouragement_count：**
+
+```sql
+CREATE OR REPLACE FUNCTION public.fn_recalc_encouragement_count()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_property_id TEXT;
+  v_agent_id UUID;
+  v_total_likes INTEGER;
+BEGIN
+  -- 取得受影響的 property_id
+  v_property_id := COALESCE(NEW.property_id, OLD.property_id);
+
+  -- 透過 properties 表找到 agent_id
+  SELECT agent_id INTO v_agent_id
+  FROM public.properties
+  WHERE id = v_property_id;
+
+  IF v_agent_id IS NULL THEN
+    RETURN COALESCE(NEW, OLD);
+  END IF;
+
+  -- 計算該 agent 所有物件評價的讚數總和
+  SELECT COUNT(*) INTO v_total_likes
+  FROM public.community_review_likes crl
+  INNER JOIN public.properties p ON crl.property_id = p.id
+  WHERE p.agent_id = v_agent_id;
+
+  UPDATE public.agents
+  SET encouragement_count = COALESCE(v_total_likes, 0)
+  WHERE id = v_agent_id;
+  -- 連帶觸發 trg_agents_trust_score 更新 trust_score
+
+  RETURN COALESCE(NEW, OLD);
+END;
+$$;
+
+CREATE TRIGGER trg_community_review_likes_encouragement
+  AFTER INSERT OR DELETE ON public.community_review_likes
+  FOR EACH ROW EXECUTE FUNCTION public.fn_recalc_encouragement_count();
+```
+
+### 14-B. [P1] API — `POST /api/community/review-like`
+
+| 檔案 | 操作 |
+|------|------|
+| `api/community/review-like.ts` | **新增** |
+
+**POST — 按讚/取消讚（toggle）：**
+
+```
+POST /api/community/review-like
+Body: { propertyId: string }
+需要認證（auth token）
+
+回傳：
+{
+  success: true,
+  liked: true | false,        // true=已按讚, false=已取消
+  totalLikes: 5               // 該評價目前總讚數
+}
+```
+
+- Zod 驗證：`propertyId` 必須為非空字串
+- Toggle 邏輯：已讚 → DELETE，未讚 → INSERT
+- 回傳 `liked` 狀態 + `totalLikes` 讓前端即時更新
+- 驗證 `propertyId` 對應的 property 確實存在且有兩好一公道內容
+
+**GET — 查詢某評價的讚數 + 當前用戶是否已讚：**
+
+```
+GET /api/community/review-like?propertyId=xxx
+
+回傳：
+{
+  success: true,
+  liked: false,                // 未登入固定 false
+  totalLikes: 5
+}
+```
+
+- anon 可查（未登入 `liked` 固定 `false`）
+
+### 14-C. [P0] 前端類型 — `src/types/community-review-like.ts`
+
+| 檔案 | 操作 |
+|------|------|
+| `src/types/community-review-like.ts` | **新增** |
+
+```typescript
+import { z } from 'zod';
+
+export const ReviewLikeResponseSchema = z.object({
+  success: z.literal(true),
+  liked: z.boolean(),
+  totalLikes: z.number().int().min(0),
+});
+
+export type ReviewLikeResponse = z.infer<typeof ReviewLikeResponseSchema>;
+
+export const ToggleReviewLikePayloadSchema = z.object({
+  propertyId: z.string().min(1),
+});
+
+export type ToggleReviewLikePayload = z.infer<typeof ToggleReviewLikePayloadSchema>;
+```
+
+### 14-D. [P1] 前端組件 — 社區牆評價按讚 UI
+
+| 檔案 | 改動 |
+|------|------|
+| `src/components/PropertyDetail/CommunityReviews.tsx` | 修改：每筆評價卡片加 👍 按讚按鈕 |
+
+**改動位置：** `CommunityReviews.tsx` 評價卡片 `publicReviews.map(...)` 迴圈內
+
+**改動前：**
+```tsx
+<p className="text-sm leading-relaxed text-ink-600">{review.content}</p>
+```
+
+**改動後：**
+```tsx
+<p className="text-sm leading-relaxed text-ink-600">{review.content}</p>
+<div className="mt-2 flex items-center gap-1">
+  <button
+    onClick={() => onToggleLike?.(review.propertyId)}
+    disabled={!isLoggedIn || likeBusy}
+    aria-label={`鼓勵這則評價${review.liked ? '（已鼓勵）' : ''}`}
+    className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs transition-colors ${
+      review.liked
+        ? 'bg-brand-50 text-brand-700 font-medium'
+        : 'bg-bg-base text-text-muted hover:bg-brand-50 hover:text-brand-600'
+    } ${!isLoggedIn ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
+  >
+    <ThumbsUp size={12} />
+    <span>{review.totalLikes > 0 ? review.totalLikes : '實用'}</span>
+  </button>
+</div>
+```
+
+> **注意：** `ThumbsUp` 需從 `lucide-react` 新增 import。
+
+**新增 Props：**
+```typescript
+interface CommunityReviewsProps {
+  isLoggedIn: boolean;
+  communityId?: string;
+  isDemo?: boolean;
+  onToggleLike?: (propertyId: string) => void;  // 新增
+}
+
+interface ReviewPreview {
+  // ... 既有欄位
+  propertyId: string;   // 新增：用於按讚 API
+  liked: boolean;       // 新增：當前用戶是否已讚
+  totalLikes: number;   // 新增：該評價總讚數
+}
+```
+
+### 14-E. [P1] Hook — `src/hooks/useCommunityReviewLike.ts`
+
+| 檔案 | 操作 |
+|------|------|
+| `src/hooks/useCommunityReviewLike.ts` | **新增** |
+
+```typescript
+export function useCommunityReviewLike() {
+  const queryClient = useQueryClient();
+
+  const toggleLike = useMutation({
+    mutationFn: (propertyId: string) =>
+      fetch('/api/community/review-like', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ propertyId }),
+      }).then(res => res.json()),
+    onSuccess: () => {
+      // 刷新 agent-profile 讓 encouragement_count 更新
+      queryClient.invalidateQueries({ queryKey: ['agent-profile'] });
+    },
+  });
+
+  return { toggleLike };
+}
+```
+
+### 14-F. [P1] 修改 — `PropertyDetailPage` 整合
+
+| 檔案 | 改動 |
+|------|------|
+| `src/pages/PropertyDetailPage.tsx` | 引入 `useCommunityReviewLike`，傳入 `CommunityReviews` |
+
+```typescript
+const { toggleLike } = useCommunityReviewLike();
+
+<CommunityReviews
+  isLoggedIn={isLoggedIn}
+  communityId={property.communityId}
+  isDemo={isDemo}
+  onToggleLike={(propertyId) => toggleLike.mutate(propertyId)}  // 新增
+/>
+```
+
+成功按讚後 `agent-profile` query 自動 invalidate → `AgentTrustCard` 的 `encouragementCount` 即時更新。
+
+### 14-G. [P1] 資料流圖
+
+```
+消費者在 PropertyDetailPage 看到 CommunityReviews 區塊
+  ├─ 每筆「兩好一公道」評價旁有 👍 按鈕
+  │
+  └─ 點擊 👍
+      ├─ 未登入 → 按鈕 disabled，灰色 + 提示「登入後可鼓勵」
+      │
+      └─ 已登入 → POST /api/community/review-like { propertyId }
+          ├─ 已讚 → DELETE → liked: false
+          └─ 未讚 → INSERT → liked: true
+              │
+              └─ DB Trigger: fn_recalc_encouragement_count()
+                  │
+                  ├─ 找到 property → agent_id
+                  ├─ SUM 該 agent 所有物件的讚數
+                  └─ UPDATE agents SET encouragement_count = SUM
+                      │
+                      └─ 觸發 trg_agents_trust_score → 更新 trust_score
+                          │
+                          └─ 前端 invalidateQueries('agent-profile')
+                              └─ AgentTrustCard 的「獲得鼓勵」數字即時更新
+```
+
+### Mock 模式處理
+
+> **原則（用戶要求）：Mock 頁跟 API 效果必須一模一樣。**
+
+| 元素 | Mock 行為 | 正式版行為 |
+|------|----------|-----------|
+| `CommunityReviews` 按讚按鈕 | 顯示，可點擊，**樂觀更新**讚數（+1 / -1），不發 API | 顯示，可點擊，發 API + 樂觀更新 |
+| `AgentTrustCard` 獲得鼓勵 | 顯示 156（seed 硬編碼），按讚後 +1（本地 state） | 從 `profile.encouragementCount` 讀取，API invalidate 自動更新 |
+| 👍 `liked` 狀態 | 本地 `useState` 管理 toggle | API 回傳 `liked` 狀態 |
+| 未登入時 | 按鈕 disabled + tooltip「登入後可鼓勵」 | 同左 |
+
+**Mock 模式具體實作：**
+```typescript
+// CommunityReviews 內部
+const handleToggleLike = useCallback((propertyId: string) => {
+  if (isDemo) {
+    // Mock: 本地 toggle，不發 API
+    setReviewPreviews(prev => prev.map(r =>
+      r.propertyId === propertyId
+        ? { ...r, liked: !r.liked, totalLikes: r.liked ? r.totalLikes - 1 : r.totalLikes + 1 }
+        : r
+    ));
+    return;
+  }
+  onToggleLike?.(propertyId);
+}, [isDemo, onToggleLike]);
+```
+
+**Mock 假資料更新（MOCK_REVIEWS）：**
+```typescript
+const MOCK_REVIEWS: ReviewPreview[] = [
+  {
+    // ... 既有欄位
+    propertyId: 'MH-100001',
+    liked: false,
+    totalLikes: 3,
+  },
+  {
+    // ...
+    propertyId: 'MH-100002',
+    liked: true,   // 預設已讚一筆，展示兩種狀態
+    totalLikes: 7,
+  },
+  // ...
+];
+```
+
+### 涉及檔案清單
+
+| 層級 | 檔案 | 操作 | 說明 |
+|------|------|------|------|
+| DB | `supabase/migrations/YYYYMMDD_community_review_likes.sql` | **新增** | 建表 + RLS + Trigger |
+| API | `api/community/review-like.ts` | **新增** | POST toggle + GET 查詢 |
+| Type | `src/types/community-review-like.ts` | **新增** | Zod schema + 型別 |
+| Hook | `src/hooks/useCommunityReviewLike.ts` | **新增** | useMutation toggle |
+| 修改 | `src/components/PropertyDetail/CommunityReviews.tsx` | 修改 | 評價卡片加 👍 按鈕 + Mock toggle |
+| 修改 | `src/pages/PropertyDetailPage.tsx` | 修改 | 整合 useCommunityReviewLike |
+
+### 驗收標準
+
+- [ ] DB：`community_review_likes` 表已建立，RLS 已啟用
+- [ ] DB：INSERT 一筆讚後 `agents.encouragement_count` 自動更新（Trigger 正確）
+- [ ] DB：同 user + property 防重複（UNIQUE INDEX）
+- [ ] DB：DELETE 讚後 `encouragement_count` 正確遞減
+- [ ] API：`POST /api/community/review-like` toggle 讚/取消讚，回傳 `liked` + `totalLikes`
+- [ ] API：`GET /api/community/review-like?propertyId=xxx` 回傳讚數 + 用戶狀態
+- [ ] API：Zod 驗證 propertyId 非空
+- [ ] 前端：`CommunityReviews` 每筆評價旁有 👍 按鈕，hover 有變色效果
+- [ ] 前端：已按讚狀態顯示 `bg-brand-50 text-brand-700`，未讚顯示灰色
+- [ ] 前端：按讚後 `AgentTrustCard` 的「獲得鼓勵」數字即時更新
+- [ ] 前端：未登入時 👍 按鈕 disabled，帶 tooltip 提示
+- [ ] Mock：按讚可 toggle，本地 state 管理，視覺效果與正式版完全一致
+- [ ] Mock：`MOCK_REVIEWS` 含 `propertyId` / `liked` / `totalLikes` 欄位
+- [ ] typecheck + lint 通過
+
+---
+
+## #15 [P0] 經紀人認證系統 + 完成案件自動累積
+
+### 背景分析
+
+**問題一：「已認證」標記是信任造假**
+
+`AgentTrustCard.tsx:143-146` 對所有房仲**無條件 hardcode 顯示**「已認證」。DB `agents` 表沒有任何認證相關欄位（`is_verified` / `license_number` / `verified_at`）。在安心留痕產品語境下，這是嚴重的信任誤導。
+
+`MobileActionBar.tsx:44-47` 同樣 hardcode 顯示「認證經紀人」。
+
+**問題二：經紀人編號是無意義的流水號**
+
+`agents.internal_code SERIAL` 是 PostgreSQL 自動遞增值（1, 2, 3...），不等於台灣合法經紀人證照字號。顯示 `經紀人編號：#1` 對消費者毫無意義。
+
+**問題三：完成案件永遠為 0**
+
+`agents.completed_cases INTEGER DEFAULT 0`，`api/trust/close.ts` 結案時**完全沒有** +1 的邏輯。Mock 硬編碼 `45`，但正式版永遠是 `0`，且 `fn_calculate_trust_score` 信任分公式有 `completed_cases / 5`（max +10），所以信任分也偏低。
+
+### 15-A. [P0] DB Migration — 認證欄位 + 完成案件 Trigger
+
+| 檔案 | 操作 |
+|------|------|
+| `supabase/migrations/YYYYMMDD_agent_verification_and_cases.sql` | **新增** |
+
+**新增欄位：**
+
+```sql
+-- ========================================================
+-- #15: 經紀人認證系統 + 完成案件自動累積
+-- ========================================================
+
+-- 1) 認證欄位
+ALTER TABLE public.agents ADD COLUMN IF NOT EXISTS license_number TEXT;     -- 經紀人證照字號
+ALTER TABLE public.agents ADD COLUMN IF NOT EXISTS is_verified BOOLEAN DEFAULT false;  -- 是否已認證
+ALTER TABLE public.agents ADD COLUMN IF NOT EXISTS verified_at TIMESTAMPTZ;            -- 認證通過時間
+
+-- 2) 索引
+CREATE INDEX IF NOT EXISTS idx_agents_is_verified ON public.agents(is_verified) WHERE is_verified = true;
+
+-- 3) Seed 更新（Demo 房仲設為已認證）
+UPDATE public.agents
+SET
+  license_number = '(113)北市經紀字第004521號',
+  is_verified = true,
+  verified_at = '2024-06-15T00:00:00Z'
+WHERE id = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
+```
+
+**完成案件自動累積 Trigger：**
+
+```sql
+-- 結案 Trigger：trust_cases.status → 'closed' 時自動 +1 agents.completed_cases
+CREATE OR REPLACE FUNCTION public.fn_increment_completed_cases()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  -- 只在狀態變為 'closed' 時觸發（防止重複計算）
+  IF NEW.status = 'closed' AND (OLD.status IS DISTINCT FROM 'closed') THEN
+    UPDATE public.agents
+    SET completed_cases = COALESCE(completed_cases, 0) + 1
+    WHERE id = NEW.agent_id;
+    -- 連帶觸發 trg_agents_trust_score 更新信任分
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER trg_trust_cases_completed
+  AFTER UPDATE ON public.trust_cases
+  FOR EACH ROW EXECUTE FUNCTION public.fn_increment_completed_cases();
+```
+
+### 15-B. [P0] 前端類型更新
+
+| 檔案 | 改動 |
+|------|------|
+| `src/lib/types.ts` | `Agent` interface 新增 `licenseNumber?` / `isVerified?` |
+| `src/types/agent.types.ts` | `AgentProfile` interface 新增 `licenseNumber?` / `isVerified?` / `verifiedAt?` |
+
+```typescript
+// src/lib/types.ts Agent interface 新增：
+licenseNumber?: string | null;
+isVerified?: boolean;
+
+// src/types/agent.types.ts AgentProfile interface 新增：
+licenseNumber?: string | null;
+isVerified?: boolean;
+verifiedAt?: string | null;
+```
+
+### 15-C. [P0] API 更新
+
+| 檔案 | 改動 |
+|------|------|
+| `api/agent/profile.ts` | `AgentRowSchema` + `buildProfilePayload` 加入 `license_number` / `is_verified` / `verified_at` |
+| `api/agent/profile.ts` | `UpdateProfileSchema` 加入 `license_number` |
+| `api/agent/me.ts` | 同步加入認證欄位到 response |
+| `src/services/agentService.ts` | `AgentProfileApiSchema` + `mapAgentProfile` 加入欄位映射 |
+| `src/services/propertyService.ts` | `agent` 建構加入 `licenseNumber` / `isVerified` |
+
+**GET response 新增欄位：**
+```json
+{
+  "license_number": "(113)北市經紀字第004521號",
+  "is_verified": true,
+  "verified_at": "2024-06-15T00:00:00Z"
+}
+```
+
+**PUT 可更新 `license_number`（房仲自填，後台審核另做）：**
+```typescript
+// UpdateProfileSchema 新增：
+license_number: z.union([z.string().trim().min(5).max(100), z.null()]).optional(),
+```
+
+### 15-D. [P0] 前端 — `AgentTrustCard` 條件式認證顯示
+
+| 檔案 | 改動 |
+|------|------|
+| `src/components/AgentTrustCard.tsx` L141-147 | 條件式顯示「已認證」/ 「未認證」|
+| `src/components/AgentTrustCard.tsx` L142 | 經紀人編號改為證照字號 / 平台編號 |
+
+**改動前（L141-147）：**
+```tsx
+<div className="mt-0.5 flex items-center gap-2">
+  <p className="text-xs text-text-muted">經紀人編號：#{agent.internalCode}</p>
+  <div className="flex items-center gap-0.5 rounded bg-green-50 px-1.5 py-0.5 text-[10px] text-green-600">
+    <Shield size={10} />
+    <span>已認證</span>
+  </div>
+</div>
+```
+
+**改動後：**
+```tsx
+<div className="mt-0.5 flex items-center gap-2">
+  {licenseNumber ? (
+    <p className="text-xs text-text-muted">經紀人證照：{licenseNumber}</p>
+  ) : (
+    <p className="text-xs text-text-muted">
+      平台編號：MH-{String(agent.internalCode).padStart(5, '0')}
+    </p>
+  )}
+  {isVerified ? (
+    <div className="flex items-center gap-0.5 rounded bg-green-50 px-1.5 py-0.5 text-[10px] text-green-600">
+      <Shield size={10} />
+      <span>已認證</span>
+    </div>
+  ) : (
+    <div className="flex items-center gap-0.5 rounded bg-slate-100 px-1.5 py-0.5 text-[10px] text-text-muted">
+      <span>未認證</span>
+    </div>
+  )}
+</div>
+```
+
+**變數來源：**
+```tsx
+const licenseNumber = profile?.licenseNumber ?? agent.licenseNumber ?? null;
+const isVerified = profile?.isVerified ?? agent.isVerified ?? false;
+```
+
+### 15-E. [P0] 前端 — `MobileActionBar` 條件式認證顯示
+
+| 檔案 | 改動 |
+|------|------|
+| `src/components/PropertyDetail/MobileActionBar.tsx` L5, L43-47 | 新增 `isVerified` prop，條件式顯示 |
+
+**改動前（L43-47）：**
+```tsx
+<span className="flex items-center gap-1">
+  <Shield size={10} className="text-green-500" />
+  認證經紀人
+</span>
+```
+
+**改動後：**
+```tsx
+{isVerified && (
+  <span className="flex items-center gap-1">
+    <Shield size={10} className="text-green-500" />
+    認證經紀人
+  </span>
+)}
+```
+
+**Props 新增：**
+```typescript
+interface MobileActionBarProps {
+  // ... 既有
+  isVerified?: boolean;  // 新增
+}
+```
+
+**PropertyDetailPage 傳入：**
+```tsx
+<MobileActionBar
+  onLineClick={handleAgentLineClick}
+  onCallClick={handleAgentCallClick}
+  socialProof={socialProof}
+  isVerified={property.agent.isVerified}   // 新增
+/>
+```
+
+### 15-F. [P1] UAG Profile — 新增「證照字號」輸入欄
+
+| 檔案 | 改動 |
+|------|------|
+| `src/pages/UAG/Profile/BasicInfoSection.tsx` | 新增 `licenseNumber` state + 輸入欄 |
+| `src/types/agent.types.ts` | `UpdateAgentProfilePayload` 新增 `licenseNumber?` |
+| `src/services/agentService.ts` | `updateAgentProfile` body 加入 `license_number` |
+
+**BasicInfoSection 新增輸入欄（在「加入日期」下方）：**
+```tsx
+<div className="space-y-2">
+  <label htmlFor="agent-license" className="text-sm font-medium text-slate-700">
+    經紀人證照字號
+  </label>
+  <input
+    id="agent-license"
+    type="text"
+    value={licenseNumber}
+    onChange={(event) => setLicenseNumber(event.target.value)}
+    className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-slate-400"
+    placeholder="例：(113)北市經紀字第004521號"
+    aria-label="經紀人證照字號"
+  />
+  <p className="text-[10px] text-slate-400">
+    填寫後將顯示「已認證」標記
+  </p>
+</div>
+```
+
+### Mock 模式處理
+
+> **原則：Mock 維持現況，不做改動。**
+
+| 元素 | Mock 行為 | 正式版行為 |
+|------|----------|-----------|
+| `AgentTrustCard` 已認證 | 繼續 hardcode 顯示（`isDemo=true` 時跳過條件判斷） | 條件式 `isVerified` 判斷 |
+| `AgentTrustCard` 經紀人編號 | 繼續顯示 `#0`（Mock seed） | 有證照顯示字號，無證照顯示 `MH-00001` |
+| `MobileActionBar` 認證經紀人 | 繼續顯示（Mock `isVerified` 默認 `true`） | 條件式判斷 |
+| `completed_cases` | 硬編碼 `45` | DB Trigger 自動累積 |
+| UAG Profile 證照欄 | Mock 模式顯示假值 | 正式版可編輯 |
+
+**Mock 判斷邏輯（AgentTrustCard）：**
+```tsx
+// isDemo 時沿用舊邏輯，正式版才走條件式
+const isVerified = isDemo ? true : (profile?.isVerified ?? agent.isVerified ?? false);
+const licenseNumber = isDemo ? null : (profile?.licenseNumber ?? agent.licenseNumber ?? null);
+```
+
+### 涉及檔案清單
+
+| 層級 | 檔案 | 操作 | 說明 |
+|------|------|------|------|
+| DB | `supabase/migrations/YYYYMMDD_agent_verification_and_cases.sql` | **新增** | 認證欄位 + 結案 Trigger |
+| Type | `src/lib/types.ts` | 修改 | `Agent` 加 `licenseNumber` / `isVerified` |
+| Type | `src/types/agent.types.ts` | 修改 | `AgentProfile` + `UpdateAgentProfilePayload` 加欄位 |
+| API | `api/agent/profile.ts` | 修改 | Schema + response + PUT 加 `license_number` |
+| API | `api/agent/me.ts` | 修改 | response 加 `license_number` / `is_verified` |
+| Service | `src/services/agentService.ts` | 修改 | schema + mapAgentProfile 加欄位 |
+| Service | `src/services/propertyService.ts` | 修改 | agent 建構加欄位 |
+| 組件 | `src/components/AgentTrustCard.tsx` | 修改 | 條件式認證 + 證照字號 |
+| 組件 | `src/components/PropertyDetail/MobileActionBar.tsx` | 修改 | 條件式「認證經紀人」+ 新 prop |
+| 頁面 | `src/pages/PropertyDetailPage.tsx` | 修改 | 傳入 `isVerified` 到 MobileActionBar |
+| 頁面 | `src/pages/UAG/Profile/BasicInfoSection.tsx` | 修改 | 新增證照字號輸入欄 |
+
+### 驗收標準
+
+- [ ] DB：`agents` 表有 `license_number` / `is_verified` / `verified_at` 欄位
+- [ ] DB：Demo 房仲 seed 已設為 `is_verified = true`
+- [ ] DB：`trust_cases` 結案時 `agents.completed_cases` 自動 +1（Trigger 正確）
+- [ ] DB：重複結案（已是 closed 再 UPDATE）不會重複 +1
+- [ ] DB：`completed_cases` +1 後 `trust_score` 連帶更新
+- [ ] API：GET `/api/agent/profile` 回傳 `license_number` / `is_verified` / `verified_at`
+- [ ] API：PUT `/api/agent/profile` 可更新 `license_number`
+- [ ] 前端：有 `license_number` 時顯示「經紀人證照：(113)北市經紀字第004521號」
+- [ ] 前端：無 `license_number` 時顯示「平台編號：MH-00001」
+- [ ] 前端：`is_verified = true` → 綠色「已認證」badge
+- [ ] 前端：`is_verified = false` → 灰色「未認證」badge
+- [ ] 手機版：`MobileActionBar` 僅 `isVerified = true` 時顯示「認證經紀人」
+- [ ] Mock：`isDemo=true` 時維持現有行為（hardcode 顯示已認證）
+- [ ] UAG Profile：有「經紀人證照字號」輸入欄，提交後存入 DB
+- [ ] typecheck + lint 通過
+
+---
+
+## #16 [P1] 店名開放編輯
+
+### 背景分析
+
+`BasicInfoSection.tsx:108-115` 的「公司」欄位是 **disabled**，房仲無法修改自己的公司/分店名。`UpdateProfileSchema`（`api/agent/profile.ts:23-33`）也沒有 `company` 欄位，API 端也不支援更新。
+
+### 16-A. [P1] API — `UpdateProfileSchema` 加入 `company`
+
+| 檔案 | 改動 |
+|------|------|
+| `api/agent/profile.ts` L23-33 | `UpdateProfileSchema` 加入 `company` |
+
+```typescript
+// UpdateProfileSchema 新增：
+company: z.string().trim().min(1).max(100).optional(),
+```
+
+### 16-B. [P1] 前端 — `BasicInfoSection` 開放編輯
+
+| 檔案 | 改動 |
+|------|------|
+| `src/pages/UAG/Profile/BasicInfoSection.tsx` L41-47 | 新增 `company` state |
+| `src/pages/UAG/Profile/BasicInfoSection.tsx` L108-115 | 移除 `disabled`，加入 `onChange` |
+| `src/pages/UAG/Profile/BasicInfoSection.tsx` L49-62 | payload 加入 `company` |
+
+**改動前（L108-115）：**
+```tsx
+<input
+  id="agent-company"
+  type="text"
+  value={profile.company ?? '邁房子'}
+  disabled
+  className="w-full rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 text-sm text-slate-500"
+/>
+```
+
+**改動後：**
+```tsx
+<input
+  id="agent-company"
+  type="text"
+  value={company}
+  onChange={(event) => setCompany(event.target.value)}
+  className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-slate-400"
+  placeholder="公司/分店名稱"
+  aria-label="公司名稱"
+/>
+```
+
+### 16-C. [P1] 前端 — 類型 + Service 更新
+
+| 檔案 | 改動 |
+|------|------|
+| `src/types/agent.types.ts` | `UpdateAgentProfilePayload` 新增 `company?` |
+| `src/services/agentService.ts` L175-183 | `updateAgentProfile` body 加入 `company` |
+
+```typescript
+// UpdateAgentProfilePayload 新增：
+company?: string | null;
+
+// agentService.ts body 新增：
+company: payload.company,
+```
+
+### Mock 模式處理
+
+| 元素 | Mock 行為 | 正式版行為 |
+|------|----------|-----------|
+| 公司欄位 | Mock 模式可編輯（本地 state），不發 API | 正式版可編輯，PUT API 更新 DB |
+
+### 涉及檔案清單
+
+| 層級 | 檔案 | 操作 | 說明 |
+|------|------|------|------|
+| API | `api/agent/profile.ts` | 修改 | `UpdateProfileSchema` 加 `company` |
+| Type | `src/types/agent.types.ts` | 修改 | `UpdateAgentProfilePayload` 加 `company` |
+| Service | `src/services/agentService.ts` | 修改 | PUT body 加 `company` |
+| 頁面 | `src/pages/UAG/Profile/BasicInfoSection.tsx` | 修改 | 移除 disabled + 加 state/onChange |
+
+### 驗收標準
+
+- [ ] API：PUT `/api/agent/profile` 可更新 `company` 欄位
+- [ ] 前端：BasicInfoSection 公司欄位可編輯（非 disabled）
+- [ ] 前端：修改公司名 → 儲存 → 詳情頁 AgentTrustCard 顯示新名稱
+- [ ] Mock：Mock 模式下公司欄位可編輯（本地 state，不發 API）
 - [ ] typecheck + lint 通過
 
 ---
@@ -1741,13 +2564,34 @@ export function useSubmitReview() {
   ├─ 13-H Assure Step 2 觸發（依賴 13-D）
   └─ 13-I useAgentReviews hook（依賴 13-B/C）
 
+#14 獲得鼓勵系統（依賴 #10 社區評價正式版修正，因為需要 community_reviews 有真實資料）
+  ├─ 14-A DB migration community_review_likes（最先）
+  ├─ 14-B API POST/GET review-like（依賴 14-A）
+  ├─ 14-C 前端型別（獨立）
+  ├─ 14-D CommunityReviews 加 👍 按鈕（依賴 14-B/C）
+  ├─ 14-E useCommunityReviewLike hook（依賴 14-B/C）
+  └─ 14-F PropertyDetailPage 整合（依賴 14-D/E）
+
 #11 詳情頁 Header 品牌統一（獨立，建議在 #2 之後做）
   ├─ 11-A Logo 組件統一（獨立）
   ├─ 11-B 返回按鈕功能（獨立）
   ├─ 11-C 色彩 design token（獨立）
   └─ 11-D/E 無障礙 + 手機版微調（獨立）
 
-#9 手機版 UX 優化（建議在 #2、#11 之後做，因為 #2、#11 會改動同樣的組件）
+#15 經紀人認證系統 + 完成案件自動累積（獨立，建議在 #12 之後做）
+  ├─ 15-A DB migration 認證欄位 + 結案 Trigger（最先）
+  ├─ 15-B 前端類型更新（獨立）
+  ├─ 15-C API 更新（依賴 15-A）
+  ├─ 15-D AgentTrustCard 條件式認證（依賴 15-B/C）
+  ├─ 15-E MobileActionBar 條件式認證（依賴 15-B/C）
+  └─ 15-F UAG Profile 證照字號輸入（依賴 15-C）
+
+#16 店名開放編輯（獨立，可隨時做）
+  ├─ 16-A API UpdateProfileSchema 加 company（獨立）
+  ├─ 16-B BasicInfoSection 移除 disabled（依賴 16-A）
+  └─ 16-C 類型 + Service 更新（依賴 16-A）
+
+#9 手機版 UX 優化（建議在 #2、#11、#15 之後做，因為 #15 會改動 MobileActionBar）
   ├─ D1-D11 DetailPage 優化（依賴 #2 完成後的雙按鈕佈局）
   ├─ U1-U8 UAG 優化（獨立）
   └─ C1-C3 跨頁面共通（獨立，可隨時做）
@@ -1768,6 +2612,9 @@ export function useSubmitReview() {
 | 7 | #3 createLead 補 preferredChannel | P1 | 正式 | 2 |
 | 8 | #12 信任分 Tooltip 修正 + seed 校正 | P1 | 正式+Mock | 1 + 1 migration |
 | 9 | #13 房仲評價系統 | P0 | 正式+Mock | 6 新增 + 3 修改 + 1 migration |
-| 10 | #11 詳情頁 Header 品牌統一 | P1 | 正式+Mock | 1 |
-| 11 | #10 社區評價正式版資料層修正 | P0 | 正式 | 2（migration） |
-| 12 | #9 手機版 UX 優化（22 項） | P1 | 正式+Mock | 12+ |
+| 10 | #15 經紀人認證 + 完成案件累積 | P0 | 正式+Mock | 2 修改 + 1 migration + 5 修改 |
+| 11 | #16 店名開放編輯 | P1 | 正式+Mock | 4 修改 |
+| 12 | #14 獲得鼓勵系統 | P1 | 正式+Mock | 4 新增 + 2 修改 + 1 migration |
+| 13 | #11 詳情頁 Header 品牌統一 | P1 | 正式+Mock | 1 |
+| 14 | #10 社區評價正式版資料層修正 | P0 | 正式 | 2（migration） |
+| 15 | #9 手機版 UX 優化（22 項） | P1 | 正式+Mock | 12+ |
