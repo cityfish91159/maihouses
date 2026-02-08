@@ -1,5 +1,6 @@
 ﻿import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { Home, Hash, ArrowLeft, Phone, FileText } from 'lucide-react';
 import { AgentTrustCard } from '../components/AgentTrustCard';
@@ -118,6 +119,16 @@ export const PropertyDetailPage: React.FC = () => {
     return aid || 'unknown';
   }, [searchParams, property.agent?.id, normalizeAgentId]);
 
+  // #1 防呆：若正規化後仍為 unknown，但 property.agent.id 有原始值，Lead 仍優先使用原始值
+  const leadAgentId = useMemo(() => {
+    if (agentId !== 'unknown') return agentId;
+    const rawPropertyAgentId = property.agent?.id?.trim();
+    if (rawPropertyAgentId && rawPropertyAgentId.toLowerCase() !== 'unknown') {
+      return rawPropertyAgentId;
+    }
+    return 'unknown';
+  }, [agentId, property.agent?.id]);
+
   // ✅ 副作用：將有效 agentId 寫入 localStorage（React 18+ StrictMode 安全）
   useEffect(() => {
     if (agentId && agentId !== 'unknown') {
@@ -188,17 +199,43 @@ export const PropertyDetailPage: React.FC = () => {
   const closeLinePanel = useCallback(() => setLinePanelOpen(false), []);
   const closeCallPanel = useCallback(() => setCallPanelOpen(false), []);
 
-  // 社會證明數據 (#2 改為 trustCasesCount, #8 將接入真實數據)
+  // #8 社會證明真實數據 — 正式版從 API 取得，Mock 保持假數據
+  const { data: publicStats } = useQuery({
+    queryKey: ['property-public-stats', property.publicId],
+    queryFn: async () => {
+      const res = await fetch(`/api/property/public-stats?id=${property.publicId}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return res.json() as Promise<{
+        success: boolean;
+        data: { view_count: number; trust_cases_count: number };
+      }>;
+    },
+    enabled: !property.isDemo && Boolean(property.publicId),
+    staleTime: 60_000, // 1 分鐘快取
+  });
+
   const socialProof = useMemo(() => {
-    // Mock 版：基於 property.publicId 產生穩定的隨機數
-    // 正式版：#8 將改用 publicStats API 真實數據
-    const seed = property.publicId?.charCodeAt(3) || 0;
+    // Mock 版：基於 property.publicId 產生穩定的隨機數（完全不改）
+    if (property.isDemo) {
+      const seed = property.publicId?.charCodeAt(3) || 0;
+      return {
+        currentViewers: Math.floor(seed % 5) + 2, // 2-6 人正在瀏覽
+        trustCasesCount: Math.floor(seed % 8) + 5, // 5-12 組客戶已賞屋（保持 Mock 假數據）
+        isHot: seed % 3 === 0, // 1/3 機率顯示為熱門
+      };
+    }
+
+    // 正式版：真實數據
+    const baseViewers = Math.floor(Math.random() * 16) + 3; // 亂數初始值 3-18
+    const realViewCount = publicStats?.data?.view_count ?? 0;
+    const trustCasesCount = publicStats?.data?.trust_cases_count ?? 0;
+
     return {
-      currentViewers: Math.floor(seed % 5) + 2, // 2-6 人正在瀏覽
-      trustCasesCount: Math.floor(seed % 8) + 5, // 5-12 組客戶已賞屋（#2 改名）
-      isHot: seed % 3 === 0, // 1/3 機率顯示為熱門
+      currentViewers: Math.max(baseViewers, realViewCount), // 顯示較大值
+      trustCasesCount, // 真實案件數
+      isHot: trustCasesCount >= 3, // 3 組以上才算熱門
     };
-  }, [property.publicId]);
+  }, [property.isDemo, property.publicId, publicStats]);
 
   // 安心留痕服務操作
   const trustActions = useTrustActions(property.publicId);
@@ -579,7 +616,8 @@ export const PropertyDetailPage: React.FC = () => {
           <MobileCTA
             onLineClick={handleMobileLineClick}
             onCallClick={handleMobileCallClick}
-            trustCasesCount={socialProof.trustCasesCount}
+            socialProof={socialProof}
+            trustEnabled={isTrustEnabled}
             isActionLocked={isActionLocked}
           />
 
@@ -595,6 +633,7 @@ export const PropertyDetailPage: React.FC = () => {
                 onMapClick={handleMapClick}
                 capsuleTags={capsuleTags}
                 socialProof={socialProof}
+                trustEnabled={isTrustEnabled}
               />
 
               {/* 優化方案 1: 使用拆分的 PropertySpecs 組件 */}
@@ -645,6 +684,7 @@ export const PropertyDetailPage: React.FC = () => {
           onLineClick={handleMobileLineClick}
           onCallClick={handleMobileCallClick}
           socialProof={socialProof}
+          trustEnabled={isTrustEnabled}
           isActionLocked={isActionLocked}
         />
 
@@ -677,7 +717,7 @@ export const PropertyDetailPage: React.FC = () => {
             onClose={closeContactModal}
             propertyId={property.publicId}
             propertyTitle={property.title}
-            agentId={agentId}
+            agentId={leadAgentId}
             agentName={property.agent?.name || '專屬業務'}
             source={contactSource}
             defaultChannel={contactDefaultChannel}

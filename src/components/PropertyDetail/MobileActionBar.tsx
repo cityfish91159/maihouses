@@ -1,5 +1,5 @@
 import { memo, type CSSProperties } from 'react';
-import { MessageCircle, Phone, Shield, Eye, Flame } from 'lucide-react';
+import { MessageCircle, Phone, Shield, Eye, Flame, Users } from 'lucide-react';
 import { LINE_BRAND_GREEN, LINE_BRAND_GREEN_HOVER } from './constants';
 
 interface MobileActionBarProps {
@@ -7,8 +7,10 @@ interface MobileActionBarProps {
   onCallClick: () => void;
   socialProof?: {
     currentViewers: number;
+    trustCasesCount: number; // #8 新增
     isHot: boolean;
   };
+  trustEnabled: boolean; // #8 控制賞屋組數顯示
   isActionLocked?: boolean;
 }
 
@@ -29,7 +31,8 @@ interface MobileActionBarProps {
 export const MobileActionBar = memo(function MobileActionBar({
   onLineClick,
   onCallClick,
-  socialProof = { currentViewers: 0, isHot: false },
+  socialProof = { currentViewers: 0, trustCasesCount: 0, isHot: false },
+  trustEnabled,
   isActionLocked = false,
 }: MobileActionBarProps) {
   const lineBrandVars = {
@@ -39,16 +42,25 @@ export const MobileActionBar = memo(function MobileActionBar({
 
   return (
     <div style={lineBrandVars} className="pb-safe fixed inset-x-0 bottom-0 z-overlay border-t border-slate-100 bg-white p-3 lg:hidden">
-      {/* 社會證明資訊 */}
+      {/* 社會證明資訊（#8 真實數據） */}
       <div className="mb-2 flex items-center justify-center gap-4 text-xs text-slate-500">
         <span className="flex items-center gap-1">
           <Shield size={10} className="text-green-500" />
           認證經紀人
         </span>
+        {/* 瀏覽人數 — 永遠顯示 */}
         <span className="flex items-center gap-1">
           <Eye size={10} className="text-blue-500" />
           {socialProof.currentViewers} 人瀏覽中
         </span>
+        {/* 賞屋組數 — trustEnabled && trustCasesCount > 0 才顯示 */}
+        {trustEnabled && socialProof.trustCasesCount > 0 && (
+          <span className="flex items-center gap-1">
+            <Users size={10} className="text-green-500" />
+            {socialProof.trustCasesCount} 組已賞屋
+          </span>
+        )}
+        {/* 熱門標記 — trustEnabled && trustCasesCount >= 3 才顯示 */}
         {socialProof.isHot && (
           <span className="flex items-center gap-1 font-medium text-orange-500">
             <Flame size={10} />

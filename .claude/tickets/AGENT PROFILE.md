@@ -49,7 +49,11 @@
 
 ### 手機版 UX 優化
 
-- [ ] **#9** [P1] 手機版 UX 優化 — DetailPage 11 項 + UAG 8 項 + 跨頁面 3 項（共 22 項）
+- [ ] **#9** [P1] 手機版 UX 優化 — DetailPage 11 項 + UAG 12 項 + 跨頁面 3 項（共 26 項）
+
+### 功能移除
+
+- [ ] **#17** [P0] 移除詳情頁「生成報告」FAB + 「30秒回電」浮動按鈕 — 前端移除 + API `report/create.ts` `report/track.ts` 移除 + 路由 `/r/:id` 移除
 
 ### Mock 版專屬
 
@@ -739,7 +743,7 @@ const socialProof = useMemo(() => {
 
 ---
 
-## #9 [P1] 手機版 UX 優化（DetailPage + UAG）
+## #9 [P1] 手機版 UX 優化（DetailPage + UAG + 跨頁面）
 
 ### 來源
 
@@ -865,7 +869,7 @@ const socialProof = useMemo(() => {
 
 ---
 
-### UAG 手機版優化（U1-U8）
+### UAG 手機版優化（U1-U12）
 
 #### U1. RadarCluster 觸控目標太小
 
@@ -948,6 +952,153 @@ const socialProof = useMemo(() => {
 **修復方案：**
 - 確保行動按鈕 `min-height: 44px`
 
+#### U9. Agent Bar 超窄屏（<480px）統計數據擠壓
+
+**檔案：** `src/pages/UAG/UAG.module.css` L95-148（`.agent-bar` + `.agent-bar-stats`）
+**規範引用：** ux-guidelines #22（觸控目標 ≥ 44px）、#67（手機可讀性）、#65（320/375/414px 斷點測試）、react.csv #14（避免 inline style）
+
+**問題：** Agent Bar 的統計數據（信任分 / 帶看 / 成交 / 鼓勵）在 375px 窄屏上全部擠在一行。每個數據區塊只有約 60px 寬度，11px 字體 + 標籤文字嚴重擠壓，觸控交互困難。CSS 只有 `@media (max-width: 1024px)` 斷點，**缺少 `<480px` 超窄屏專用處理**。
+
+**實際擠壓情況（375px 模擬）：**
+```
+|👤 游杰倫|◀ 12345 ⚡92 🚶45 ✔️8 |
+```
+
+**修復方案：**
+```css
+/* src/pages/UAG/UAG.module.css */
+@media (max-width: 480px) {
+  .agent-bar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .agent-bar-stats {
+    flex-wrap: wrap;
+    gap: 8px 12px;
+    width: 100%;
+  }
+  .agent-bar-stat {
+    min-width: 60px;  /* 確保每個統計區塊最小寬度 */
+  }
+}
+```
+
+**UI/UX Pro Max 檢查：**
+- ux-guidelines #65：需在 320px、375px、414px 三個斷點都測試通過
+- ux-guidelines #67：手機端字體最小 12px（`text-xs`），目前 11px 不合規
+- ux-guidelines #22：統計數據若有觸控交互（Tooltip），需 ≥ 44px touch target
+
+#### U10. Mock Lead A-6600 `conversation_id` 缺失
+
+**檔案：** `src/pages/UAG/mockData.ts` L142-157（A-6600 Lead 定義）
+**規範引用：** react.csv #4（避免不必要 state）、ux-guidelines #33（錯誤回饋）
+
+**問題：** A-6600 是已購 Lead（`status: 'purchased'`），但缺少 `conversation_id` 欄位。AssetMonitor 表格中該 Lead 的「操作」欄依賴 `conversation_id` 判斷顯示「發送訊息」還是「查看聊天」。缺少此欄位可能導致：
+- 操作按鈕邏輯判斷錯誤
+- Mock 與 Live 模式行為不一致（Live 模式的已購 Lead 一定有 `conversation_id`）
+
+**問題代碼：**
+```typescript
+{
+  id: MOCK_IDS.leads.A6600,
+  name: '買家 A-6600',
+  grade: 'A',
+  status: 'purchased',
+  purchased_at: Date.now() - 10 * 3600000,
+  notification_status: 'pending',
+  // ❌ 缺少 conversation_id — 與其他已購 Lead 不一致
+}
+```
+
+**修復方案：**
+```typescript
+{
+  id: MOCK_IDS.leads.A6600,
+  name: '買家 A-6600',
+  grade: 'A',
+  status: 'purchased',
+  purchased_at: Date.now() - 10 * 3600000,
+  notification_status: 'pending',
+  conversation_id: 'mock-conv-A6600-001',  // ✅ 補齊
+}
+```
+
+**UI/UX Pro Max 檢查：**
+- Mock 與 Live 的資料結構必須完全一致，避免只在 Mock 出現的 undefined edge case
+- ux-guidelines #33：如果 `conversation_id` 為空導致操作按鈕異常，需顯示清楚錯誤訊息
+
+#### U11. Monitor Table 手機端按鈕觸控目標不足 44px
+
+**檔案：** `src/pages/UAG/UAG.module.css` L915-930（`.monitor-table` 手機版卡片轉換）
+**檔案：** `src/pages/UAG/components/AssetMonitor.tsx`（操作按鈕區）
+**規範引用：** ux-guidelines #22（觸控目標 ≥ 44px）、#23（相鄰觸控間距 ≥ 8px）、react.csv #15（組件職責清晰）
+
+**問題：** AssetMonitor 在 `<768px` 下隱藏表頭轉為卡片式，但卡片內的操作按鈕（「發送訊息」「查看聊天」「查看報告」）：
+1. 按鈕高度未強制 `min-height: 44px`
+2. 按鈕之間間距可能 < 8px
+3. 在 375px 窄屏上，多個按鈕擠在一行導致觸控誤觸
+
+**修復方案：**
+```css
+/* src/pages/UAG/UAG.module.css */
+@media (max-width: 768px) {
+  .monitor-card-actions {
+    display: flex;
+    flex-direction: column;  /* 改為垂直排列 */
+    gap: 8px;                /* 按鈕間距 ≥ 8px */
+    width: 100%;
+  }
+  .monitor-card-actions button {
+    min-height: 44px;        /* 觸控目標 ≥ 44px */
+    width: 100%;             /* 全寬按鈕 */
+    justify-content: center;
+  }
+}
+```
+
+**UI/UX Pro Max 檢查：**
+- ux-guidelines #22：所有按鈕 `min-height: 44px`（High severity）
+- ux-guidelines #23：相鄰按鈕 `gap ≥ 8px`（Medium severity）
+- ux-guidelines #71：手機表格必須用 `overflow-x-auto` 或卡片式（已符合）
+- ux-guidelines #30：按鈕需有 `active:scale-[0.98]` 回饋
+
+#### U12. Desktop 版本未利用寬屏多列排列
+
+**檔案：** `src/pages/UAG/UAG.module.css` L374-379（grid layout）
+**規範引用：** ux-guidelines #21（容器寬度限制）、ux-guidelines #73（行長度 65-75ch）、react.csv #15（組件職責）
+
+**問題：** Desktop（≥1025px）版本的 6 個主要組件（RadarCluster、ActionPanel、AssetMonitor、ListingFeed、ReportGenerator、TrustFlow）全部佔 6 列（`grid-column: span 6`），垂直堆疊。造成 1440px+ 寬屏頁面極長（需滾動 5+ 屏），浪費了桌面端的水平空間。
+
+**現有 CSS：**
+```css
+.uag-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 24px;
+}
+.k-span-6 { grid-column: span 6; }
+/* ❌ 沒有 @media (min-width: 1025px) 的多列排列 */
+```
+
+**修復方案：**
+```css
+@media (min-width: 1280px) {
+  /* ActionPanel + AssetMonitor 並排 */
+  .uag-grid > .k-span-6:nth-child(2) { grid-column: span 3; }
+  .uag-grid > .k-span-6:nth-child(3) { grid-column: span 3; }
+
+  /* ListingFeed + TrustFlow 並排 */
+  .uag-grid > .k-span-6:nth-child(4) { grid-column: span 3; }
+  .uag-grid > .k-span-6:nth-child(6) { grid-column: span 3; }
+}
+```
+
+**UI/UX Pro Max 檢查：**
+- ux-guidelines #21：文字容器 max-width 65-75ch（Medium severity）
+- ux-guidelines #73：文字行長度控制（Medium severity）
+- products.csv `dashboard` 類型建議：資訊面板應利用網格並排展示，減少垂直滾動
+
 ---
 
 ### 跨頁面共通優化（C1-C3）
@@ -1004,6 +1155,10 @@ const socialProof = useMemo(() => {
 - [ ] U6: Listing 縮圖手機版 80px
 - [ ] U7: Footer 有 iOS safe area 處理
 - [ ] U8: AssetMonitor 按鈕 ≥ 44px
+- [ ] U9: Agent Bar 在 375px/320px 統計數據不擠壓（flex-wrap 換行）
+- [ ] U10: Mock Lead A-6600 補齊 `conversation_id`，與 Live 模式結構一致
+- [ ] U11: Monitor Table 手機版操作按鈕 ≥ 44px + 垂直排列 + 間距 ≥ 8px
+- [ ] U12: Desktop ≥ 1280px 時 ActionPanel/AssetMonitor 並排、ListingFeed/TrustFlow 並排
 - [ ] C1: LINE 色全站統一 CSS variable
 - [ ] C2: Modal backdrop 統一
 - [ ] C3: iOS viewport 使用 `dvh`
@@ -2524,6 +2679,171 @@ company: payload.company,
 
 ---
 
+## #17 [P0] 移除詳情頁「生成報告」FAB +「30秒回電」浮動按鈕
+
+### 背景
+
+詳情頁右下角有兩個浮動按鈕：
+1. **「30秒回電」**（橘色圓形 FAB，`animate-bounce` 無限循環）— 功能與 MobileActionBar / MobileCTA 的「致電諮詢」按鈕重複
+2. **「生成報告」**（藍色漸層圓形 FAB，hover 顯示 tooltip）— 開啟 ReportGenerator Modal，生成物件行銷報告
+
+用戶決定移除這兩個功能，原因：
+- 「30秒回電」與已重構的雙按鈕 CTA 功能重複，且 `animate-bounce` 持續跳動影響 UX（#9 D1 也指出此問題）
+- 「生成報告」功能面向消費者端不需要，UAG 後台有獨立的 ReportGenerator
+
+### 影響範圍分析
+
+```
+移除目標:
+├─ 前端（PropertyDetailPage.tsx）
+│   ├─ 「30秒回電」浮動按鈕（L672-680）
+│   ├─ handleFloatingCallClick callback（L447-449）
+│   ├─ 「生成報告」FAB 按鈕（L737-747）
+│   ├─ showReportGenerator state（L87）
+│   ├─ ReportGenerator Modal 組件實例（L750-770）
+│   └─ import: ReportGenerator, FileText
+│
+├─ 前端（PropertyDetailActionLayer.tsx）— 備用版
+│   ├─ 「30秒回電」浮動按鈕
+│   ├─ 「生成報告」FAB 按鈕
+│   ├─ ReportGenerator 組件實例
+│   └─ import: ReportGenerator, FileText
+│
+├─ API（可移除）
+│   ├─ api/report/create.ts — 報告建立 API
+│   └─ api/report/track.ts — 報告追蹤 API
+│
+├─ 前端路由（可移除）
+│   ├─ App.tsx — `/r/:id` 路由 + ReportPage import
+│   └─ src/pages/Report/ 整個目錄 — ReportPage + ReportGenerator + types + dataAdapter
+│
+└─ 保留不動（UAG 仍需使用）
+    ├─ src/pages/UAG/components/ReportGenerator/ — UAG 獨立版本
+    └─ src/components/ReportPreview.tsx — 被 UAG ReportGenerator 引用
+```
+
+### 17-A. [P0] 前端 — 移除 `PropertyDetailPage.tsx` 浮動按鈕 + ReportGenerator
+
+| 檔案 | 行號 | 操作 |
+|------|------|------|
+| `src/pages/PropertyDetailPage.tsx` L5 | 修改 | import 移除 `FileText` |
+| `src/pages/PropertyDetailPage.tsx` L12 | 刪除 | 移除 `import { ReportGenerator } from './Report'` |
+| `src/pages/PropertyDetailPage.tsx` L87 | 刪除 | 移除 `showReportGenerator` state |
+| `src/pages/PropertyDetailPage.tsx` L447-449 | 刪除 | 移除 `handleFloatingCallClick` callback |
+| `src/pages/PropertyDetailPage.tsx` L672-680 | 刪除 | 移除「30秒回電」浮動按鈕 JSX |
+| `src/pages/PropertyDetailPage.tsx` L737-770 | 刪除 | 移除「生成報告」FAB + ReportGenerator Modal |
+
+**移除代碼（30秒回電 — L672-680）：**
+```tsx
+{/* 📱 30秒回電浮動按鈕 - 高轉換 */}
+<button
+  onClick={handleFloatingCallClick}
+  className="fixed bottom-28 right-4 z-40 flex size-16 animate-bounce ..."
+  style={{ animationDuration: '2s' }}
+>
+  <Phone size={22} />
+  <span className="mt-0.5 text-[10px]">30秒回電</span>
+</button>
+```
+
+**移除代碼（生成報告 FAB — L737-770）：**
+```tsx
+{/* 報告生成 FAB 按鈕 */}
+<button onClick={() => setShowReportGenerator(true)} className="group fixed bottom-24 right-4 z-40 ...">
+  <FileText size={24} />
+  <span className="...">生成報告</span>
+</button>
+<ReportGenerator property={{...}} isOpen={showReportGenerator} onClose={...} />
+```
+
+### 17-B. [P0] 前端 — 移除 `PropertyDetailActionLayer.tsx` 對應部分
+
+| 檔案 | 操作 |
+|------|------|
+| `src/pages/propertyDetail/PropertyDetailActionLayer.tsx` L1 | import 移除 `FileText` |
+| `src/pages/propertyDetail/PropertyDetailActionLayer.tsx` L9 | 刪除 `import { ReportGenerator }` |
+| `src/pages/propertyDetail/PropertyDetailActionLayer.tsx` L22 | 移除 `onFloatingCallClick` prop |
+| `src/pages/propertyDetail/PropertyDetailActionLayer.tsx` L60-62 | 移除 `showReportGenerator` / `onOpenReportGenerator` / `onCloseReportGenerator` props |
+| `src/pages/propertyDetail/PropertyDetailActionLayer.tsx` | 移除 30秒回電按鈕 + 生成報告 FAB + ReportGenerator JSX |
+
+### 17-C. [P0] 前端路由 — 移除 `/r/:id` 路由 + Report 頁面
+
+| 檔案 | 操作 |
+|------|------|
+| `src/App.tsx` L33 | 刪除 `import { ReportPage } from './pages/Report'` |
+| `src/App.tsx` L251-258 | 刪除 `/r/:id` Route 區塊 |
+
+### 17-D. [P1] 前端 — 移除 `src/pages/Report/` 整個目錄
+
+| 檔案 | 操作 | 說明 |
+|------|------|------|
+| `src/pages/Report/index.ts` | 刪除 | 導出檔 |
+| `src/pages/Report/ReportGenerator.tsx` | 刪除 | 詳情頁版報告生成器 |
+| `src/pages/Report/ReportPage.tsx` | 刪除 | `/r/:id` 報告預覽頁 |
+| `src/pages/Report/types.ts` | 刪除 | 報告類型定義 |
+| `src/pages/Report/utils/dataAdapter.ts` | 刪除 | 報告資料轉換 |
+
+**注意保留：**
+- `src/components/ReportPreview.tsx` — **不刪除**，UAG 後台的 ReportGenerator (`src/pages/UAG/components/ReportGenerator/index.tsx`) 仍在使用
+- `src/pages/UAG/components/ReportGenerator/` — **不刪除**，UAG 後台獨立功能
+
+### 17-E. [P1] API — 移除 `api/report/` 目錄
+
+| 檔案 | 操作 | 說明 |
+|------|------|------|
+| `api/report/create.ts` | 刪除 | 報告建立 API（POST /api/report/create） |
+| `api/report/track.ts` | 刪除 | 報告追蹤 API（POST /api/report/track） |
+
+### 17-F. [P2] 清理 — #9 D1/D2 自動解決
+
+移除浮動按鈕後，以下 #9 項目自動解決：
+- **D1** `animate-bounce` 過度動畫 → 按鈕已移除，問題不再存在
+- **D2** 浮動按鈕與 MobileActionBar 重疊 → 按鈕已移除，問題不再存在
+
+建議在 #9 驗收標準中標記 D1、D2 為「已被 #17 解決」。
+
+### Mock 模式處理
+
+| 元素 | Mock 行為 | 正式版行為 |
+|------|----------|-----------|
+| 30秒回電按鈕 | 移除（不再顯示） | 移除（不再顯示） |
+| 生成報告 FAB | 移除（不再顯示） | 移除（不再顯示） |
+| ReportGenerator Modal | 移除（不再存在） | 移除（不再存在） |
+| `/r/:id` 路由 | 移除 | 移除 |
+| `api/report/*` | N/A | 移除 |
+
+### 涉及檔案清單
+
+| 層級 | 檔案 | 操作 | 說明 |
+|------|------|------|------|
+| 頁面 | `src/pages/PropertyDetailPage.tsx` | 修改 | 移除 2 個浮動按鈕 + ReportGenerator + 相關 state/callback/import |
+| 頁面 | `src/pages/propertyDetail/PropertyDetailActionLayer.tsx` | 修改 | 同步移除浮動按鈕 + ReportGenerator props/JSX |
+| 路由 | `src/App.tsx` | 修改 | 移除 `/r/:id` 路由 + ReportPage import |
+| 頁面 | `src/pages/Report/` 整個目錄（5 個檔案） | 刪除 | 不再被任何元件引用 |
+| API | `api/report/create.ts` | 刪除 | 報告建立 API |
+| API | `api/report/track.ts` | 刪除 | 報告追蹤 API |
+
+**保留不動：**
+| 檔案 | 原因 |
+|------|------|
+| `src/components/ReportPreview.tsx` | UAG ReportGenerator 仍在使用 |
+| `src/pages/UAG/components/ReportGenerator/` | UAG 後台獨立功能 |
+
+### 驗收標準
+
+- [ ] 詳情頁右下角不再顯示「30秒回電」浮動按鈕
+- [ ] 詳情頁右下角不再顯示「生成報告」FAB 按鈕
+- [ ] Mock 頁面（`/maihouses/property/MH-100001`）同步移除
+- [ ] 正式版頁面同步移除
+- [ ] `/r/:id` 路由移除（訪問返回 404）
+- [ ] `api/report/create` 端點移除
+- [ ] `api/report/track` 端點移除
+- [ ] UAG 後台 ReportGenerator 功能不受影響
+- [ ] `src/components/ReportPreview.tsx` 仍可正常被 UAG 使用
+- [ ] typecheck + lint 通過
+
+---
+
 ## 依賴關係
 
 ```
@@ -2591,9 +2911,17 @@ company: payload.company,
   ├─ 16-B BasicInfoSection 移除 disabled（依賴 16-A）
   └─ 16-C 類型 + Service 更新（依賴 16-A）
 
-#9 手機版 UX 優化（建議在 #2、#11、#15 之後做，因為 #15 會改動 MobileActionBar）
-  ├─ D1-D11 DetailPage 優化（依賴 #2 完成後的雙按鈕佈局）
-  ├─ U1-U8 UAG 優化（獨立）
+#17 移除詳情頁「生成報告」+「30秒回電」（獨立，建議最優先做，移除後 #9 D1/D2 自動解決）
+  ├─ 17-A PropertyDetailPage.tsx 移除浮動按鈕 + ReportGenerator（最先）
+  ├─ 17-B PropertyDetailActionLayer.tsx 同步移除（依賴 17-A 確認範圍）
+  ├─ 17-C App.tsx 移除 /r/:id 路由（依賴 17-A）
+  ├─ 17-D 刪除 src/pages/Report/ 整個目錄（依賴 17-A/C）
+  └─ 17-E 刪除 api/report/（獨立）
+
+#9 手機版 UX 優化（建議在 #2、#11、#15、#17 之後做，#17 解決 D1/D2，#15 改動 MobileActionBar）
+  ├─ D1-D2 已被 #17 解決（浮動按鈕移除後不再存在）
+  ├─ D3-D11 DetailPage 優化（依賴 #2 完成後的雙按鈕佈局）
+  ├─ U1-U12 UAG 優化（獨立）
   └─ C1-C3 跨頁面共通（獨立，可隨時做）
 ```
 
@@ -2605,16 +2933,17 @@ company: payload.company,
 |------|------|--------|------|---------------|
 | 1 | #1 agentId fallback | P0 | 正式+Mock | 1 |
 | 2 | #2 移除預約看屋 + 雙按鈕 UX（含 #4） | P0 | 正式+Mock | 9（含刪除 3 個檔案） |
-| 3 | #8 社會證明真實數據 | P0 | 正式版 | 6（含新增 2 個檔案） |
-| 4 | #5 詳情頁 mock agent | P0 | Mock | 1 |
-| 5 | #6 UAG Header mock 入口 | P0 | Mock | 2 |
-| 6 | #7 Profile 頁 mock | P0 | Mock | 2-3 |
-| 7 | #3 createLead 補 preferredChannel | P1 | 正式 | 2 |
-| 8 | #12 信任分 Tooltip 修正 + seed 校正 | P1 | 正式+Mock | 1 + 1 migration |
-| 9 | #13 房仲評價系統 | P0 | 正式+Mock | 6 新增 + 3 修改 + 1 migration |
-| 10 | #15 經紀人認證 + 完成案件累積 | P0 | 正式+Mock | 2 修改 + 1 migration + 5 修改 |
-| 11 | #16 店名開放編輯 | P1 | 正式+Mock | 4 修改 |
-| 12 | #14 獲得鼓勵系統 | P1 | 正式+Mock | 4 新增 + 2 修改 + 1 migration |
-| 13 | #11 詳情頁 Header 品牌統一 | P1 | 正式+Mock | 1 |
-| 14 | #10 社區評價正式版資料層修正 | P0 | 正式 | 2（migration） |
-| 15 | #9 手機版 UX 優化（22 項） | P1 | 正式+Mock | 12+ |
+| 3 | **#17 移除生成報告 + 30秒回電** | **P0** | **正式+Mock** | **2 修改 + 7 刪除** |
+| 4 | #8 社會證明真實數據 | P0 | 正式版 | 6（含新增 2 個檔案） |
+| 5 | #5 詳情頁 mock agent | P0 | Mock | 1 |
+| 6 | #6 UAG Header mock 入口 | P0 | Mock | 2 |
+| 7 | #7 Profile 頁 mock | P0 | Mock | 2-3 |
+| 8 | #3 createLead 補 preferredChannel | P1 | 正式 | 2 |
+| 9 | #12 信任分 Tooltip 修正 + seed 校正 | P1 | 正式+Mock | 1 + 1 migration |
+| 10 | #13 房仲評價系統 | P0 | 正式+Mock | 6 新增 + 3 修改 + 1 migration |
+| 11 | #15 經紀人認證 + 完成案件累積 | P0 | 正式+Mock | 2 修改 + 1 migration + 5 修改 |
+| 12 | #16 店名開放編輯 | P1 | 正式+Mock | 4 修改 |
+| 13 | #14 獲得鼓勵系統 | P1 | 正式+Mock | 4 新增 + 2 修改 + 1 migration |
+| 14 | #11 詳情頁 Header 品牌統一 | P1 | 正式+Mock | 1 |
+| 15 | #10 社區評價正式版資料層修正 | P0 | 正式 | 2（migration） |
+| 16 | #9 手機版 UX 優化（26 項，D1/D2 已被 #17 解決） | P1 | 正式+Mock | 14+ |

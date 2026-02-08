@@ -5,7 +5,12 @@ import { LINE_BRAND_GREEN, LINE_BRAND_GREEN_HOVER } from './constants';
 interface MobileCTAProps {
   onLineClick: () => void;
   onCallClick: () => void;
-  trustCasesCount?: number;
+  socialProof: {
+    currentViewers: number;
+    trustCasesCount: number;
+    isHot: boolean;
+  };
+  trustEnabled: boolean; // #8 控制賞屋組數顯示
   isActionLocked?: boolean;
 }
 
@@ -26,7 +31,8 @@ interface MobileCTAProps {
 export const MobileCTA = memo(function MobileCTA({
   onLineClick,
   onCallClick,
-  trustCasesCount = 0,
+  socialProof,
+  trustEnabled,
   isActionLocked,
 }: MobileCTAProps) {
   const lineBrandVars = {
@@ -61,14 +67,14 @@ export const MobileCTA = memo(function MobileCTA({
           </button>
         </div>
 
-        {/* 賞屋組數提示（#8 真實數據，trust_cases_count > 0 時顯示） + ARIA live 無障礙增強 */}
-        {trustCasesCount > 0 && (
+        {/* 賞屋組數提示（#8 真實數據，有開啟安心留痕服務 且 案件數 > 0 時才顯示） */}
+        {trustEnabled && socialProof.trustCasesCount > 0 && (
           <p
             className="mt-2 text-center text-xs text-slate-700"
             aria-live="polite"
             aria-atomic="true"
           >
-            本物件 {trustCasesCount} 組客戶已賞屋，把握機會！
+            本物件 {socialProof.trustCasesCount} 組客戶已賞屋，把握機會！
           </p>
         )}
       </div>

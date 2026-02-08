@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { MobileActionBar } from '../MobileActionBar';
 
 describe('MobileActionBar', () => {
-  const socialProof = { currentViewers: 6, isHot: true };
+  const socialProof = { currentViewers: 6, trustCasesCount: 3, isHot: true };
 
   it('應渲染雙按鈕與可讀字體資訊列', () => {
     const { container } = render(
@@ -11,6 +11,7 @@ describe('MobileActionBar', () => {
         onLineClick={vi.fn()}
         onCallClick={vi.fn()}
         socialProof={socialProof}
+        trustEnabled={true}
       />
     );
 
@@ -25,6 +26,7 @@ describe('MobileActionBar', () => {
         onLineClick={vi.fn()}
         onCallClick={vi.fn()}
         socialProof={socialProof}
+        trustEnabled={true}
         isActionLocked={true}
       />
     );
@@ -43,6 +45,7 @@ describe('MobileActionBar', () => {
         onLineClick={onLineClick}
         onCallClick={onCallClick}
         socialProof={socialProof}
+        trustEnabled={true}
       />
     );
 
@@ -59,6 +62,7 @@ describe('MobileActionBar', () => {
         onLineClick={vi.fn()}
         onCallClick={vi.fn()}
         socialProof={{ ...socialProof, isHot: false }}
+        trustEnabled={true}
       />
     );
 
@@ -70,7 +74,8 @@ describe('MobileActionBar', () => {
       <MobileActionBar
         onLineClick={vi.fn()}
         onCallClick={vi.fn()}
-        socialProof={{ currentViewers: 0, isHot: false }}
+        socialProof={{ currentViewers: 0, trustCasesCount: 0, isHot: false }}
+        trustEnabled={true}
       />
     );
 
@@ -79,7 +84,7 @@ describe('MobileActionBar', () => {
 
   it('未傳 socialProof 時應使用預設值', () => {
     render(
-      <MobileActionBar onLineClick={vi.fn()} onCallClick={vi.fn()} />
+      <MobileActionBar onLineClick={vi.fn()} onCallClick={vi.fn()} trustEnabled={true} />
     );
 
     expect(screen.getByText('0 人瀏覽中')).toBeInTheDocument();
@@ -91,6 +96,7 @@ describe('MobileActionBar', () => {
         onLineClick={vi.fn()}
         onCallClick={vi.fn()}
         socialProof={socialProof}
+        trustEnabled={true}
       />
     );
 

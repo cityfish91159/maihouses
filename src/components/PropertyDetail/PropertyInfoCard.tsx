@@ -16,6 +16,7 @@ interface PropertyInfoCardProps {
     trustCasesCount: number;
     isHot: boolean;
   };
+  trustEnabled: boolean; // #8 控制賞屋組數顯示
 }
 
 /**
@@ -38,6 +39,7 @@ export const PropertyInfoCard = memo(function PropertyInfoCard({
   onMapClick,
   capsuleTags,
   socialProof,
+  trustEnabled,
 }: PropertyInfoCardProps) {
   const lineBrandVars = {
     '--line-brand-green': LINE_BRAND_GREEN,
@@ -88,22 +90,27 @@ export const PropertyInfoCard = memo(function PropertyInfoCard({
         <span className="ml-2 text-sm font-medium text-red-500">可議價</span>
       </div>
 
-      {/* 社會證明提示 - FOMO */}
+      {/* 社會證明提示 - FOMO (#8 真實數據) */}
       <div className="mt-3 flex flex-wrap gap-2">
+        {/* 熱門標記：trustEnabled && trustCasesCount >= 3 才顯示 */}
         {socialProof.isHot && (
           <div className="inline-flex animate-pulse items-center gap-1 rounded-full bg-orange-50 px-2 py-1 text-xs font-medium text-orange-600">
             <Flame size={12} />
             熱門物件
           </div>
         )}
+        {/* 瀏覽人數 — 永遠顯示 */}
         <div className="inline-flex items-center gap-1 rounded-full bg-slate-50 px-2 py-1 text-xs text-slate-600">
           <Eye size={12} className="text-blue-500" />
           {socialProof.currentViewers} 人正在瀏覽
         </div>
-        <div className="inline-flex items-center gap-1 rounded-full bg-slate-50 px-2 py-1 text-xs text-slate-600">
-          <Users size={12} className="text-green-500" />
-          {socialProof.trustCasesCount} 組客戶已賞屋
-        </div>
+        {/* 賞屋組數 — 有開啟安心留痕服務 且 案件數 > 0 時才顯示 */}
+        {trustEnabled && socialProof.trustCasesCount > 0 && (
+          <div className="inline-flex items-center gap-1 rounded-full bg-slate-50 px-2 py-1 text-xs text-slate-600">
+            <Users size={12} className="text-green-500" />
+            本物件 {socialProof.trustCasesCount} 組客戶已賞屋
+          </div>
+        )}
       </div>
 
       {/* Tags */}

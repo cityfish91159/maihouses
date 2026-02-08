@@ -12,7 +12,8 @@ describe('MobileCTA', () => {
       <MobileCTA
         onLineClick={onLineClick}
         onCallClick={onCallClick}
-        trustCasesCount={9}
+        socialProof={{ currentViewers: 5, trustCasesCount: 9, isHot: true }}
+        trustEnabled={true}
       />
     );
 
@@ -28,7 +29,8 @@ describe('MobileCTA', () => {
       <MobileCTA
         onLineClick={vi.fn()}
         onCallClick={vi.fn()}
-        trustCasesCount={9}
+        socialProof={{ currentViewers: 5, trustCasesCount: 9, isHot: true }}
+        trustEnabled={true}
       />
     );
 
@@ -43,7 +45,8 @@ describe('MobileCTA', () => {
       <MobileCTA
         onLineClick={vi.fn()}
         onCallClick={vi.fn()}
-        trustCasesCount={0}
+        socialProof={{ currentViewers: 5, trustCasesCount: 0, isHot: false }}
+        trustEnabled={true}
       />
     );
 
@@ -55,7 +58,8 @@ describe('MobileCTA', () => {
       <MobileCTA
         onLineClick={vi.fn()}
         onCallClick={vi.fn()}
-        trustCasesCount={3}
+        socialProof={{ currentViewers: 5, trustCasesCount: 3, isHot: true }}
+        trustEnabled={true}
         isActionLocked={true}
       />
     );
@@ -69,7 +73,8 @@ describe('MobileCTA', () => {
       <MobileCTA
         onLineClick={vi.fn()}
         onCallClick={vi.fn()}
-        trustCasesCount={3}
+        socialProof={{ currentViewers: 5, trustCasesCount: 3, isHot: true }}
+        trustEnabled={true}
       />
     );
 

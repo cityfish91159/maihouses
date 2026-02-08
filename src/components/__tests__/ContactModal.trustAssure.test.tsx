@@ -83,4 +83,67 @@ describe('ContactModal trust assure fallback integration', () => {
       })
     );
   });
+
+  it('預設應傳遞 preferredChannel=line', async () => {
+    const user = userEvent.setup();
+
+    render(
+      <ContactModal
+        isOpen={true}
+        onClose={vi.fn()}
+        propertyId="MH-100001"
+        propertyTitle="測試物件"
+        agentId="agent-001"
+        agentName="測試經紀人"
+        source="sidebar"
+        defaultChannel="line"
+      />
+    );
+
+    await user.type(screen.getByLabelText(/姓名/), '王小明');
+    await user.type(screen.getByLabelText(/電話/), '0912-345-678');
+    await user.click(screen.getByRole('button', { name: /送出諮詢/ }));
+
+    await waitFor(() => {
+      expect(mockedCreateLead).toHaveBeenCalledTimes(1);
+    });
+
+    expect(mockedCreateLead).toHaveBeenCalledWith(
+      expect.objectContaining({
+        preferredChannel: 'line',
+      })
+    );
+  });
+
+  it('切換偏好聯絡方式為電話時，應傳遞 preferredChannel=phone', async () => {
+    const user = userEvent.setup();
+
+    render(
+      <ContactModal
+        isOpen={true}
+        onClose={vi.fn()}
+        propertyId="MH-100001"
+        propertyTitle="測試物件"
+        agentId="agent-001"
+        agentName="測試經紀人"
+        source="sidebar"
+        defaultChannel="line"
+      />
+    );
+
+    await user.click(screen.getByRole('button', { name: '電話' }));
+    await user.type(screen.getByLabelText(/姓名/), '王小明');
+    await user.type(screen.getByLabelText(/電話/), '0912-345-678');
+    await user.click(screen.getByRole('button', { name: /送出諮詢/ }));
+
+    await waitFor(() => {
+      expect(mockedCreateLead).toHaveBeenCalledTimes(1);
+    });
+
+    expect(mockedCreateLead).toHaveBeenCalledWith(
+      expect.objectContaining({
+        preferredChannel: 'phone',
+      })
+    );
+  });
 });
