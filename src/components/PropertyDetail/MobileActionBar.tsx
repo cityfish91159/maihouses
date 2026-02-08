@@ -1,5 +1,7 @@
 import { memo, type CSSProperties } from 'react';
 import { MessageCircle, Phone, Shield, Eye, Flame, Users } from 'lucide-react';
+import { cn } from '../../lib/utils';
+import { motionA11y } from '../../lib/motionA11y';
 import { LINE_BRAND_GREEN, LINE_BRAND_GREEN_HOVER } from './constants';
 
 interface MobileActionBarProps {
@@ -76,7 +78,10 @@ export const MobileActionBar = memo(function MobileActionBar({
           onClick={onLineClick}
           aria-label="加 LINE 聊聊"
           disabled={isActionLocked}
-          className="flex min-h-[44px] flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl bg-[var(--line-brand-green)] py-3 font-bold tracking-wide text-white shadow-lg shadow-green-500/20 transition-all duration-200 hover:bg-[var(--line-brand-green-hover)] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none motion-reduce:active:scale-100"
+          className={cn(
+            'flex min-h-[44px] flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl bg-[var(--line-brand-green)] py-3 font-bold tracking-wide text-white shadow-lg shadow-green-500/20 duration-200 hover:bg-[var(--line-brand-green-hover)] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:active:scale-100 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2',
+            motionA11y.transitionAll
+          )}
         >
           <MessageCircle size={18} />
           加 LINE 聊聊
@@ -87,7 +92,10 @@ export const MobileActionBar = memo(function MobileActionBar({
           onClick={onCallClick}
           aria-label="致電諮詢"
           disabled={isActionLocked}
-          className="flex min-h-[44px] flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl bg-brand-700 py-3 font-bold tracking-wide text-white shadow-lg shadow-blue-900/20 transition-all duration-200 hover:bg-brand-600 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none motion-reduce:active:scale-100"
+          className={cn(
+            'flex min-h-[44px] flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl bg-brand-700 py-3 font-bold tracking-wide text-white shadow-lg shadow-blue-900/20 duration-200 hover:bg-brand-600 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:active:scale-100 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2',
+            motionA11y.transitionAll
+          )}
         >
           <Phone size={18} />
           致電諮詢

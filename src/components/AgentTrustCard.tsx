@@ -120,7 +120,7 @@ export const AgentTrustCard: React.FC<AgentTrustCardProps> = memo(function Agent
             )}
             {/* 在線狀態指示器 */}
             <div
-              className={`absolute -bottom-1 -right-1 ${isOnline ? 'bg-green-500' : 'bg-text-muted'} flex items-center gap-0.5 rounded-full border border-white px-1.5 py-0.5 text-[10px] text-white`}
+              className={`absolute -bottom-1 -right-1 ${isOnline ? 'bg-green-500' : 'bg-text-muted'} flex items-center gap-0.5 rounded-full border border-white px-1.5 py-0.5 text-xs text-white`}
             >
               <div
                 className={`size-1.5 rounded-full ${isOnline ? 'animate-pulse bg-white' : 'bg-neutral-200'}`}
@@ -140,7 +140,7 @@ export const AgentTrustCard: React.FC<AgentTrustCardProps> = memo(function Agent
                 </h3>
                 <div className="mt-0.5 flex items-center gap-2">
                   <p className="text-xs text-text-muted">經紀人編號：#{agent.internalCode}</p>
-                  <div className="flex items-center gap-0.5 rounded bg-green-50 px-1.5 py-0.5 text-[10px] text-green-600">
+                  <div className="flex items-center gap-0.5 rounded bg-green-50 px-1.5 py-0.5 text-xs text-green-600">
                     <Shield size={10} />
                     <span>已認證</span>
                   </div>
@@ -167,7 +167,7 @@ export const AgentTrustCard: React.FC<AgentTrustCardProps> = memo(function Agent
                 </div>
                 <div>
                   <div className="text-sm font-bold text-brand-700">{trustScore}</div>
-                  <div className="text-[10px] text-text-muted">信任分</div>
+                  <div className="text-xs text-text-muted">信任分</div>
                 </div>
 
                 {/* Trust Score Tooltip */}
@@ -201,7 +201,7 @@ export const AgentTrustCard: React.FC<AgentTrustCardProps> = memo(function Agent
                 </div>
                 <div>
                   <div className="text-sm font-bold text-ink-900">{encouragementCount}</div>
-                  <div className="text-[10px] text-text-muted">獲得鼓勵</div>
+                  <div className="text-xs text-text-muted">獲得鼓勵</div>
                 </div>
               </div>
             </div>
@@ -222,21 +222,21 @@ export const AgentTrustCard: React.FC<AgentTrustCardProps> = memo(function Agent
             <div className="text-lg font-bold text-brand-700">
               {agentMetrics.serviceRating.toFixed(1)}
             </div>
-            <div className="text-[10px] text-text-muted">服務評價</div>
-            <div className="text-[10px] text-text-muted">({agentMetrics.reviewCount})</div>
+            <div className="text-xs text-text-muted">服務評價</div>
+            <div className="text-xs text-text-muted">({agentMetrics.reviewCount})</div>
           </div>
           <div className="border-x border-border text-center">
             <div className="text-lg font-bold text-ink-900">{agentMetrics.completedCases}</div>
-            <div className="text-[10px] text-text-muted">完成案件</div>
+            <div className="text-xs text-text-muted">完成案件</div>
           </div>
           <div className="text-center">
             <div className="text-lg font-bold text-ink-900">{agentMetrics.serviceYears}年</div>
-            <div className="text-[10px] text-text-muted">服務年資</div>
+            <div className="text-xs text-text-muted">服務年資</div>
           </div>
         </div>
 
         {/* CTA 按鈕區 - 雙按鈕布局（#2 UX 重構） */}
-        <div className="mt-4 space-y-2 border-t border-border pt-3">
+        <div className="mt-4 space-y-3 border-t border-border pt-3">
           {/* 主要 CTA：加 LINE（低門檻）- LINE 官方品牌色 */}
           <button
             onClick={onLineClick}

@@ -3,6 +3,8 @@ import { MapPin, Heart, Eye, Users, Flame } from 'lucide-react';
 import type { PropertyData } from '../../services/propertyService';
 import { LineShareAction } from '../social/LineShareAction';
 import { LINE_BRAND_GREEN, LINE_BRAND_GREEN_HOVER } from './constants';
+import { cn } from '../../lib/utils';
+import { motionA11y } from '../../lib/motionA11y';
 
 interface PropertyInfoCardProps {
   property: PropertyData;
@@ -56,13 +58,14 @@ export const PropertyInfoCard = memo(function PropertyInfoCard({
             url={`${window.location.origin}/maihouses/property/${property.publicId}`}
             title={`【邁房子推薦】${property.title} | 總價 ${property.price} 萬`}
             onShareClick={onLineShare}
-            className="rounded-full bg-[var(--line-brand-green)] p-2 text-white transition-all hover:bg-[var(--line-brand-green-hover)] hover:shadow-md"
+            className="rounded-full bg-[var(--line-brand-green)] p-2 text-white transition-all hover:bg-[var(--line-brand-green-hover)] hover:shadow-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
             showIcon={true}
             btnText=""
           />
           <button
             onClick={onFavoriteToggle}
-            className={`rounded-full p-2 transition-all ${isFavorite ? 'bg-red-50 text-red-500' : 'bg-slate-50 text-slate-400 hover:bg-slate-100'}`}
+            aria-label={isFavorite ? '取消收藏' : '加入收藏'}
+            className={`rounded-full p-2 transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 ${isFavorite ? 'bg-red-50 text-red-500 focus:ring-red-500' : 'bg-slate-50 text-slate-400 hover:bg-slate-100 focus:ring-slate-400'}`}
           >
             <Heart size={24} fill={isFavorite ? 'currentColor' : 'none'} />
           </button>
@@ -77,15 +80,15 @@ export const PropertyInfoCard = memo(function PropertyInfoCard({
           target="_blank"
           rel="noopener noreferrer"
           onClick={onMapClick}
-          className="ml-2 flex items-center gap-1 rounded-full bg-blue-50 px-2 py-1 text-xs font-medium text-blue-600 transition-colors hover:bg-blue-100"
+          className="ml-2 inline-flex min-h-[44px] items-center gap-1 rounded-full bg-blue-50 px-4 py-2 text-sm font-medium text-blue-600 transition-colors hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
         >
-          <MapPin size={12} />
+          <MapPin size={14} />
           查看地圖
         </a>
       </div>
 
       <div className="mt-4 flex items-baseline gap-2">
-        <span className="text-3xl font-extrabold text-[#003366]">{property.price}</span>
+        <span className="text-3xl font-extrabold text-brand-700">{property.price}</span>
         <span className="text-lg font-medium text-slate-500">萬</span>
         <span className="ml-2 text-sm font-medium text-red-500">可議價</span>
       </div>
@@ -94,19 +97,24 @@ export const PropertyInfoCard = memo(function PropertyInfoCard({
       <div className="mt-3 flex flex-wrap gap-2">
         {/* 熱門標記：trustEnabled && trustCasesCount >= 3 才顯示 */}
         {trustEnabled && socialProof.isHot && (
-          <div className="inline-flex animate-pulse items-center gap-1 rounded-full bg-orange-50 px-2 py-1 text-xs font-medium text-orange-600">
+          <div
+            className={cn(
+              'inline-flex items-center gap-1 rounded-full bg-orange-50 px-2 py-1 text-sm font-medium text-orange-600',
+              motionA11y.pulse
+            )}
+          >
             <Flame size={12} />
             熱門物件
           </div>
         )}
         {/* 瀏覽人數 — 永遠顯示 */}
-        <div className="inline-flex items-center gap-1 rounded-full bg-slate-50 px-2 py-1 text-xs text-slate-600">
+        <div className="inline-flex items-center gap-1 rounded-full bg-slate-50 px-2 py-1 text-sm text-slate-600">
           <Eye size={12} className="text-blue-500" />
           {socialProof.currentViewers} 人正在瀏覽
         </div>
         {/* 賞屋組數 — 有開啟安心留痕服務 且 案件數 > 0 時才顯示 */}
         {trustEnabled && socialProof.trustCasesCount > 0 && (
-          <div className="inline-flex items-center gap-1 rounded-full bg-slate-50 px-2 py-1 text-xs text-slate-600">
+          <div className="inline-flex items-center gap-1 rounded-full bg-slate-50 px-2 py-1 text-sm text-slate-600">
             <Users size={12} className="text-green-500" />
             本物件 {socialProof.trustCasesCount} 組客戶已賞屋
           </div>
@@ -118,7 +126,7 @@ export const PropertyInfoCard = memo(function PropertyInfoCard({
         {capsuleTags.map((tag) => (
           <span
             key={tag}
-            className="rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-[#003366]"
+            className="rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-brand-700"
           >
             {tag}
           </span>

@@ -2,6 +2,8 @@
 import { useNavigate } from 'react-router-dom';
 import { Star, Lock, ChevronRight, MessageSquare } from 'lucide-react';
 import { logger } from '../../lib/logger';
+import { cn } from '../../lib/utils';
+import { motionA11y } from '../../lib/motionA11y';
 
 interface CommunityReviewsProps {
   isLoggedIn: boolean;
@@ -206,7 +208,7 @@ export const CommunityReviews = memo(function CommunityReviews({
               <Star size={18} className="text-yellow-500" fill="currentColor" />
               社區評價
             </h3>
-            <span className="rounded-full bg-bg-base px-2 py-1 text-xs text-text-muted">
+            <span className="rounded-full bg-bg-base px-2 py-1 text-sm text-text-muted">
               住戶社區
             </span>
           </div>
@@ -216,7 +218,7 @@ export const CommunityReviews = memo(function CommunityReviews({
               publicReviews.map((review) => (
                 <div
                   key={`${review.name}-${review.content.slice(0, 12)}`}
-                  className="flex gap-3 rounded-xl bg-bg-base p-3"
+                  className="flex gap-3 rounded-2xl bg-bg-base p-3"
                 >
                   <div
                     className={`flex size-10 shrink-0 items-center justify-center rounded-full text-lg font-bold text-white ${review.avatarClass}`}
@@ -226,7 +228,7 @@ export const CommunityReviews = memo(function CommunityReviews({
                   <div className="min-w-0 flex-1">
                     <div className="mb-1 flex items-center gap-2">
                       <span className="text-sm font-bold text-ink-900">{review.name}</span>
-                      <span className="text-xs text-text-muted">{review.residentLabel}</span>
+                      <span className="text-sm text-text-muted">{review.residentLabel}</span>
                       <span className="text-xs text-yellow-500">{review.stars}</span>
                     </div>
                     <p className="text-sm leading-relaxed text-ink-600">{review.content}</p>
@@ -234,13 +236,13 @@ export const CommunityReviews = memo(function CommunityReviews({
                 </div>
               ))
             ) : (
-              <div className="rounded-xl border border-dashed border-border bg-bg-base p-3 text-sm text-text-muted">
+              <div className="rounded-2xl border border-dashed border-border bg-bg-base p-3 text-sm text-text-muted">
                 目前尚無公開評價，登入後可查看更多社區回饋。
               </div>
             )}
           </div>
 
-          <div className="relative mt-3 overflow-hidden rounded-xl">
+          <div className="relative mt-3 overflow-hidden rounded-2xl">
             <div
               className={`flex gap-3 bg-bg-base p-3 ${!isLoggedIn ? 'select-none blur-sm' : ''}`}
             >
@@ -252,7 +254,7 @@ export const CommunityReviews = memo(function CommunityReviews({
               <div className="flex-1">
                 <div className="mb-1 flex items-center gap-2">
                   <span className="text-sm font-bold text-ink-900">{lockedReview.name}</span>
-                  <span className="text-xs text-text-muted">{lockedReview.residentLabel}</span>
+                  <span className="text-sm text-text-muted">{lockedReview.residentLabel}</span>
                   {isLoggedIn && (
                     <span className="text-xs text-yellow-500">{lockedReview.stars}</span>
                   )}
@@ -280,13 +282,13 @@ export const CommunityReviews = memo(function CommunityReviews({
           </div>
 
           <div className="mt-4 flex items-center justify-between border-t border-border pt-3">
-            <p className="flex items-center gap-1 text-xs text-text-muted">
+            <p className="flex items-center gap-1 text-sm text-text-muted">
               <MessageSquare size={12} />
               加入社區牆，與其他住戶交流
             </p>
             <button
               onClick={handleCommunityWall}
-              className="flex min-h-[44px] items-center gap-1 rounded text-xs font-bold text-brand-700 hover:underline focus:ring-2 focus:ring-brand-500"
+              className="flex min-h-[44px] items-center gap-1 rounded text-sm font-bold text-brand-700 hover:underline focus:ring-2 focus:ring-brand-500"
             >
               前往社區牆
               <ChevronRight size={12} />
@@ -294,7 +296,7 @@ export const CommunityReviews = memo(function CommunityReviews({
           </div>
         </>
       ) : (
-        <div className="h-96 animate-pulse rounded-xl bg-gray-100"></div>
+        <div className={cn('h-96 rounded-xl bg-gray-100', motionA11y.pulse)}></div>
       )}
     </div>
   );

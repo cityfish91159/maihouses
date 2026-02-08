@@ -60,7 +60,7 @@
 
 ### 待開發 — DetailPage 手機版 UX 修正（原 #9 拆分）
 
-- [ ] **#9a** [P1] DetailPage A11y + 動畫修正（5 項：D3 VipModal focus trap + D4 VipModal 底部滑出 + D6 ActionBar ARIA + D7 CTA ARIA + D8 reduced-motion）
+- [x] **#9a** [P1] DetailPage A11y + 動畫修正（5 項：D3 VipModal focus trap + D4 VipModal 底部滑出 + D6 ActionBar ARIA + D7 CTA ARIA + D8 reduced-motion）✅ 2026-02-08
 - [ ] **#9b** [P1] DetailPage 排版 + 手勢修正（5 項：D5 社會證明 320px + D9 Panel 滑入動畫 + D10 金額字體 + D11 Gallery swipe + C3 iOS viewport）
 
 ### 待開發 — UAG 手機版 UX 修正（原 #9 拆分）
@@ -860,12 +860,64 @@ const socialProof = useMemo(() => {
 
 ### 驗收標準
 
-- [ ] D3: VipModal 有 focus trap + 正確 ARIA 屬性
-- [ ] D4: VipModal 手機版從底部滑出
-- [ ] D6: MobileActionBar 按鈕有 `aria-label`
-- [ ] D7: MobileCTA 按鈕有 `aria-label`
-- [ ] D8: `prefers-reduced-motion` 時動畫停止
-- [ ] typecheck + lint 通過
+- [x] D3: VipModal 有 focus trap + 正確 ARIA 屬性
+- [x] D4: VipModal 手機版從底部滑出
+- [x] D6: MobileActionBar 按鈕有 `aria-label`
+- [x] D7: MobileCTA 按鈕有 `aria-label`
+- [x] D8: `prefers-reduced-motion` 時動畫停止
+- [x] typecheck + lint 通過
+
+### #9a 施工紀錄（2026-02-08）
+
+#### 修改檔案
+1. `src/components/PropertyDetail/VipModal.tsx`
+   - 新增 `useFocusTrap`，補上 `onEscape` + 初始 focus（D3）
+   - modal container 改為 `role="dialog"`，加入 `aria-modal` 與 `aria-labelledby`（D3）
+   - backdrop 改為 `role="presentation"`，以 backdrop click 關閉（D3）
+   - 手機版改為底部滑出佈局：`items-end` + `rounded-t-2xl`，桌面維持 `sm:items-center`（D4）
+
+2. `src/pages/PropertyDetailPage.tsx`
+   - `30秒回電` 浮動按鈕加入 `motion-reduce:animate-none`、`motion-reduce:transition-none`（D8）
+   - `生成報告` FAB 與 tooltip 補 `motion-reduce:transition-none`（D8）
+
+3. `src/components/PropertyDetail/__tests__/VipModal.test.tsx`（新增）
+   - 驗證 dialog ARIA（`aria-modal` + `aria-labelledby`）
+   - 驗證 `useFocusTrap` 觸發 `onEscape`
+   - 驗證 backdrop click 關閉與手機底部佈局 class
+
+4. `src/pages/__tests__/PropertyDetailPage.phase11.test.tsx`
+   - 新增 reduced-motion 回歸測試，驗證 `30秒回電` 按鈕 class
+
+5. `src/lib/motionA11y.ts`（新增）
+   - 建立統一動畫 utility：`withMotionSafety()` + `motionA11y` presets
+   - 強制動畫/轉場統一補齊 `motion-reduce` 對應 class（方案 B）
+
+6. `src/components/PropertyDetail/CommunityReviews.tsx`
+   - skeleton `animate-pulse` 改為使用 `motionA11y.pulse`（補齊 D8）
+
+7. `src/components/PropertyDetail/PropertyInfoCard.tsx`
+   - 熱門標記 `animate-pulse` 改為使用 `motionA11y.pulse`（補齊 D8）
+
+8. `src/lib/motionA11y.test.ts`（新增）
+   - 驗證 utility 會補齊 `motion-reduce:animate-none` / `motion-reduce:transition-none`
+
+9. `src/components/PropertyDetail/__tests__/CommunityReviews.motion.test.tsx`（新增）
+   - 驗證 CommunityReviews skeleton 有 reduced-motion 保護
+
+10. `src/components/PropertyDetail/__tests__/PropertyInfoCard.test.tsx`
+   - 補測熱門標記 `animate-pulse` 是否含 reduced-motion class
+
+11. `src/components/PropertyDetail/MobileActionBar.tsx`、`src/components/PropertyDetail/MobileCTA.tsx`、`src/components/PropertyDetail/VipModal.tsx`
+   - 將手寫 `motion-reduce` 轉場 class 改為統一使用 `motionA11y` utility（規則集中化）
+   - 避免各組件分散複製貼上造成未來遺漏
+
+#### 驗證命令
+```bash
+npm run test -- src/components/PropertyDetail/__tests__/VipModal.test.tsx src/components/PropertyDetail/__tests__/MobileActionBar.test.tsx src/components/PropertyDetail/__tests__/MobileCTA.test.tsx src/pages/__tests__/PropertyDetailPage.phase11.test.tsx
+npm run test -- src/lib/motionA11y.test.ts src/components/PropertyDetail/__tests__/CommunityReviews.motion.test.tsx src/components/PropertyDetail/__tests__/PropertyInfoCard.test.tsx
+npm run typecheck
+npm run lint -- --format json
+```
 
 ---
 
@@ -970,7 +1022,7 @@ const socialProof = useMemo(() => {
 - PRO badge 加 `hidden md:inline`（手機版隱藏）
 - 公司 badge 移至 #19c M6 KPI Grid 上方顯示（手機版不在 Header 出現）
 - 用戶區塊手機版隱藏名稱，只保留頭像 icon：`.uag-user-info { display: none }` 在 `@media (max-width: 767px)`
-- 配合 #19c M6 KPI Grid 取代 Agent Bar stats，手機版 Header 精簡為 `[ Logo ] ... [ 👤 頭像 ]`
+- 配合 #19c M6 KPI Grid 取代 Agent Bar stats，手機版 Header 精簡為 `[ Logo ] ... [ 頭像 icon ]`
 
 #### U4. Agent bar 字體過小
 
@@ -1683,7 +1735,7 @@ interface ReviewPromptModalProps {
 ┌───────────────────────────────────────┐
 │ ← 王小明 的服務評價                   │
 │                                       │
-│ ⭐ 4.8  (32 則評價)                   │
+│ [Star] 4.8  (32 則評價)               │
 │ ────────────────────────────           │
 │ ★★★★★  5顆星 ████████████ 24 (75%)   │
 │ ★★★★☆  4顆星 ████         6 (19%)    │
@@ -1886,7 +1938,7 @@ export function useSubmitReview() {
 房仲上傳物件時填寫「兩好一公道」（advantage_1 / advantage_2 / disadvantage）
   → 存入 properties 表
   → community_reviews VIEW 投影出來，顯示在社區牆
-  → 消費者覺得「兩好一公道」實用 → 按讚 👍
+  → 消費者覺得「兩好一公道」實用 → 按讚（ThumbsUp）
   → 讚數累積 → 加總回 agents.encouragement_count
   → 連帶觸發 fn_calculate_trust_score 更新信任分
 ```
@@ -2085,7 +2137,7 @@ export type ToggleReviewLikePayload = z.infer<typeof ToggleReviewLikePayloadSche
 
 | 檔案 | 改動 |
 |------|------|
-| `src/components/PropertyDetail/CommunityReviews.tsx` | 修改：每筆評價卡片加 👍 按讚按鈕 |
+| `src/components/PropertyDetail/CommunityReviews.tsx` | 修改：每筆評價卡片加按讚按鈕（Lucide `ThumbsUp`） |
 
 **改動位置：** `CommunityReviews.tsx` 評價卡片 `publicReviews.map(...)` 迴圈內
 
@@ -2185,9 +2237,9 @@ const { toggleLike } = useCommunityReviewLike();
 
 ```
 消費者在 PropertyDetailPage 看到 CommunityReviews 區塊
-  ├─ 每筆「兩好一公道」評價旁有 👍 按鈕
+  ├─ 每筆「兩好一公道」評價旁有按讚按鈕（Lucide ThumbsUp）
   │
-  └─ 點擊 👍
+  └─ 點擊按讚
       ├─ 未登入 → 按鈕 disabled，灰色 + 提示「登入後可鼓勵」
       │
       └─ 已登入 → POST /api/community/review-like { propertyId }
@@ -2214,7 +2266,7 @@ const { toggleLike } = useCommunityReviewLike();
 |------|----------|-----------|
 | `CommunityReviews` 按讚按鈕 | 顯示，可點擊，**樂觀更新**讚數（+1 / -1），不發 API | 顯示，可點擊，發 API + 樂觀更新 |
 | `AgentTrustCard` 獲得鼓勵 | 顯示 156（seed 硬編碼），按讚後 +1（本地 state） | 從 `profile.encouragementCount` 讀取，API invalidate 自動更新 |
-| 👍 `liked` 狀態 | 本地 `useState` 管理 toggle | API 回傳 `liked` 狀態 |
+| 按讚 `liked` 狀態 | 本地 `useState` 管理 toggle | API 回傳 `liked` 狀態 |
 | 未登入時 | 按鈕 disabled + tooltip「登入後可鼓勵」 | 同左 |
 
 **Mock 模式具體實作：**
@@ -2261,15 +2313,15 @@ const MOCK_REVIEWS: ReviewPreview[] = [
 | API | `api/community/review-like.ts` | **新增** | POST toggle + GET 查詢 |
 | Type | `src/types/community-review-like.ts` | **新增** | Zod schema + 型別 |
 | Hook | `src/hooks/useCommunityReviewLike.ts` | **新增** | useMutation toggle |
-| 修改 | `src/components/PropertyDetail/CommunityReviews.tsx` | 修改 | 評價卡片加 👍 按鈕 + Mock toggle |
+| 修改 | `src/components/PropertyDetail/CommunityReviews.tsx` | 修改 | 評價卡片加按讚按鈕（Lucide ThumbsUp） + Mock toggle |
 | 修改 | `src/pages/PropertyDetailPage.tsx` | 修改 | 整合 useCommunityReviewLike |
 
 ### #14b 驗收標準
 
-- [ ] 前端：`CommunityReviews` 每筆評價旁有 👍 按鈕，hover 有變色效果
+- [ ] 前端：`CommunityReviews` 每筆評價旁有按讚按鈕（Lucide `ThumbsUp`），hover 有變色效果
 - [ ] 前端：已按讚狀態顯示 `bg-brand-50 text-brand-700`，未讚顯示灰色
 - [ ] 前端：按讚後 `AgentTrustCard` 的「獲得鼓勵」數字即時更新
-- [ ] 前端：未登入時 👍 按鈕 disabled，帶 tooltip 提示
+- [ ] 前端：未登入時按讚按鈕 disabled，帶 tooltip 提示
 - [ ] Mock：按讚可 toggle，本地 state 管理，視覺效果與正式版完全一致
 - [ ] typecheck + lint 通過
 
@@ -2883,7 +2935,7 @@ interface PropertyDetailMaiMaiProps {
 │ 圖片、描述、評價…           │ AgentTrustCard   │
 │                             │ ───────────────  │
 │                             │ [MaiMai sm]      │
-│                             │  💬 對話氣泡     │
+│                             │ [MessageCircle]  │
 │                             │                  │
 └─────────────────────────────┴─────────────────┘
 ```
@@ -3110,7 +3162,7 @@ if (error) {
 
 ```
 ┌─────────────────────────────────────┐
-│  🏠 概覽  │  👥 商機  │  📊 監控  │  ⚙️ 設定  │
+│ [Home] 概覽 │ [Users] 商機 │ [BarChart] 監控 │ [Settings] 設定 │
 └─────────────────────────────────────┘
 ```
 
@@ -3292,10 +3344,10 @@ interface ActionBottomSheetProps {
 
 ← 左滑後：
 ┌──────────────────────┬──────────┐
-│  [S] 買家 S-9999      │  💬      │
+│  [S] 買家 S-9999      │[MessageCircle]│
 │  保護期：2天14小時      │  發訊息  │
 │  ████████░░ 72%       │──────────│
-│  狀態：已聯繫           │  📋      │
+│  狀態：已聯繫           │[ClipboardList]│
 │                       │  報告    │
 └──────────────────────┴──────────┘
 ```
@@ -3410,11 +3462,11 @@ interface ActionBottomSheetProps {
 
 ```
 ┌───────────────┬───────────────┐
-│  ⭐ 92        │  🚶 45        │
-│  信任分        │  帶看組數      │
+│ [Shield] 92   │ [Footprints] 45│
+│  信任分        │  帶看組數       │
 ├───────────────┼───────────────┤
-│  ✅ 8         │  💪 152       │
-│  成交案件      │  獲得鼓勵      │
+│ [Check] 8     │ [ThumbsUp] 152│
+│  成交案件      │  獲得鼓勵       │
 └───────────────┴───────────────┘
 ```
 

@@ -237,4 +237,21 @@ describe('LineLinkPanel', () => {
 
     expect(onClose).toHaveBeenCalledTimes(1);
   });
+
+  it('互動按鈕與輸入框應帶 reduced-motion transition class', () => {
+    render(
+      <LineLinkPanel
+        isOpen={true}
+        onClose={vi.fn()}
+        agentName="測試經紀人"
+        isLoggedIn={true}
+        trustEnabled={true}
+      />
+    );
+
+    const fallbackButton = screen.getByRole('button', { name: '改用聯絡表單' });
+    const fallbackInput = screen.getByLabelText('你的 LINE ID');
+    expect(fallbackButton.className).toContain('motion-reduce:transition-none');
+    expect(fallbackInput.className).toContain('motion-reduce:transition-none');
+  });
 });

@@ -61,7 +61,7 @@ export default function UAGProfilePage() {
           <div>
             <button
               onClick={handleBackToUAG}
-              className="inline-flex items-center gap-2 text-xs font-medium text-slate-500 hover:text-slate-800"
+              className="inline-flex items-center gap-2 text-xs font-medium text-slate-500 transition-colors hover:text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 active:text-slate-900"
             >
               <ArrowLeft size={14} />
               返回 UAG

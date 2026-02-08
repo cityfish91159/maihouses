@@ -1,5 +1,7 @@
 ﻿import { memo, useState, useCallback } from 'react';
 import { Home } from 'lucide-react';
+import { cn } from '../../lib/utils';
+import { motionA11y } from '../../lib/motionA11y';
 
 interface PropertyGalleryProps {
   images: string[];
@@ -56,7 +58,10 @@ export const PropertyGallery = memo(function PropertyGallery({
           src={displayImage}
           alt={title}
           onError={handleImageError}
-          className="size-full object-cover transition-transform duration-700 group-hover:scale-105"
+          className={cn(
+            'size-full object-cover duration-700 group-hover:scale-105',
+            motionA11y.transitionTransform
+          )}
           loading="eager"
           decoding="async"
         />
@@ -75,11 +80,13 @@ export const PropertyGallery = memo(function PropertyGallery({
             <button
               key={i}
               onClick={() => handleThumbnailClick(i)}
-              className={`h-14 w-20 shrink-0 overflow-hidden rounded-lg border-2 transition-all ${
+              className={cn(
+                'h-14 w-20 shrink-0 overflow-hidden rounded-lg border-2',
                 i === currentImageIndex
-                  ? 'border-[#003366] ring-2 ring-[#003366]/20'
-                  : 'border-transparent opacity-70 hover:opacity-100'
-              }`}
+                  ? 'border-brand-700 ring-2 ring-brand-700/20'
+                  : 'border-transparent opacity-70 hover:opacity-100',
+                motionA11y.transitionAll
+              )}
             >
               <img
                 src={img}

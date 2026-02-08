@@ -228,4 +228,21 @@ describe('CallConfirmPanel', () => {
 
     expect(onFallbackContact).toHaveBeenCalledWith(true);
   });
+
+  it('互動按鈕與輸入框應帶 reduced-motion transition class', () => {
+    render(
+      <CallConfirmPanel
+        isOpen={true}
+        onClose={vi.fn()}
+        agentName="測試經紀人"
+        isLoggedIn={true}
+        trustEnabled={false}
+      />
+    );
+
+    const fallbackButton = screen.getByRole('button', { name: '改用聯絡表單' });
+    const fallbackInput = screen.getByLabelText('你的電話');
+    expect(fallbackButton.className).toContain('motion-reduce:transition-none');
+    expect(fallbackInput.className).toContain('motion-reduce:transition-none');
+  });
 });

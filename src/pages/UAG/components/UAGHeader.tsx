@@ -175,7 +175,12 @@ export const UAGHeader: React.FC<UAGHeaderProps> = ({
               </button>
 
               {userMenuOpen && (
-                <div id="uag-user-menu-dropdown" className={styles['uag-user-menu']} role="menu">
+                <div
+                  id="uag-user-menu-dropdown"
+                  className={`${styles['uag-user-menu']} animate-in fade-in slide-in-from-top-2 duration-200`}
+                  role="menu"
+                  aria-hidden={!userMenuOpen}
+                >
                   <div className={styles['uag-user-menu-meta']}>
                     <span className={styles['uag-user-menu-name']}>{displayName}</span>
                     {email && <span className={styles['uag-user-menu-email']}>{email}</span>}

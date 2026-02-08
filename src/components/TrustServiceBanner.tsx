@@ -166,7 +166,7 @@ export const TrustServiceBanner = memo(
           >
             {isRequesting ? (
               <>
-                <Loader2 className="size-5 animate-spin" aria-hidden="true" />
+                <Loader2 className="size-5 animate-spin motion-reduce:animate-none" aria-hidden="true" />
                 <span className="sr-only">正在處理</span>
                 處理中...
               </>

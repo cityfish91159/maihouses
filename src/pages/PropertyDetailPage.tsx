@@ -23,6 +23,8 @@ import { useTrustActions } from '../hooks/useTrustActions';
 import { usePropertyTracker } from '../hooks/usePropertyTracker';
 import { TOAST_DURATION } from '../constants/toast';
 import { isDemoPropertyId } from '../constants/property';
+import { cn } from '../lib/utils';
+import { motionA11y } from '../lib/motionA11y';
 
 // 優化方案 1: 拆分組件並使用 React.memo
 import {
@@ -220,7 +222,7 @@ export const PropertyDetailPage: React.FC = () => {
   // 正式版瀏覽基準值：同一物件頁面保持穩定，避免重算導致數字抖動
   const liveViewerBaseline = useMemo(
     () => Math.floor(Math.random() * 16) + 3, // 3-18
-    [property.publicId]
+    []
   );
 
   const socialProof = useMemo(() => {
@@ -243,7 +245,7 @@ export const PropertyDetailPage: React.FC = () => {
       trustCasesCount, // 真實案件數
       isHot: isTrustEnabled && trustCasesCount >= 3, // 需啟用安心留痕且 3 組以上才算熱門
     };
-  }, [isTrustEnabled, liveViewerBaseline, property.isDemo, publicStats]);
+  }, [isTrustEnabled, liveViewerBaseline, property.isDemo, property.publicId, publicStats]);
 
   // 安心留痕服務操作
   const trustActions = useTrustActions(property.publicId);
@@ -547,11 +549,14 @@ export const PropertyDetailPage: React.FC = () => {
         {/* Header */}
         <nav className="sticky top-0 z-overlay flex h-16 items-center justify-between border-b border-slate-100 bg-white/90 px-4 shadow-sm backdrop-blur-md">
           <div className="flex items-center gap-3">
-            <button className="rounded-full p-2 transition-colors hover:bg-slate-100">
+            <button
+              aria-label="返回"
+              className="min-h-[44px] min-w-[44px] rounded-full p-2 transition-colors hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 active:bg-slate-200"
+            >
               <ArrowLeft size={20} className="text-slate-600" />
             </button>
-            <div className="flex items-center gap-2 text-xl font-extrabold text-[#003366]">
-              <div className="flex size-8 items-center justify-center rounded-lg bg-gradient-to-br from-[#003366] to-[#00A8E8] text-white">
+            <div className="flex items-center gap-2 text-xl font-extrabold text-brand-700">
+              <div className="flex size-8 items-center justify-center rounded-lg bg-gradient-to-br from-brand-700 to-brand-light text-white">
                 <Home size={18} />
               </div>
               邁房子
@@ -571,7 +576,10 @@ export const PropertyDetailPage: React.FC = () => {
           <div className="mx-auto max-w-4xl px-4 pt-4">
             <div className="flex items-center gap-2 rounded-lg border-2 border-dashed border-amber-300 bg-amber-50 p-3">
               <div className="flex-1">
-                <p className="text-xs font-bold text-amber-900">🧪 開發測試模式 (僅 Mock 頁面)</p>
+                <p className="text-xs font-bold text-amber-900">
+                  <span className="mr-1 inline-block size-3 rounded-full bg-amber-500" aria-hidden="true" />
+                  開發測試模式 (僅 Mock 頁面)
+                </p>
                 <p className="text-[10px] text-amber-700">切換安心留痕狀態查看不同 UI 效果</p>
               </div>
               <button
@@ -589,8 +597,8 @@ export const PropertyDetailPage: React.FC = () => {
                 {mockTrustEnabled === null
                   ? '啟動測試'
                   : mockTrustEnabled
-                    ? '✅ 已開啟'
-                    : '❌ 未開啟'}
+                    ? '已開啟'
+                    : '未開啟'}
               </button>
             </div>
           </div>
@@ -679,8 +687,11 @@ export const PropertyDetailPage: React.FC = () => {
         {/* 📱 30秒回電浮動按鈕 - 高轉換 */}
         <button
           onClick={handleFloatingCallClick}
-          className="fixed bottom-28 right-4 z-40 flex size-16 animate-bounce flex-col items-center justify-center rounded-full bg-orange-500 text-xs font-bold text-white shadow-2xl transition-transform hover:scale-110 hover:bg-orange-600 lg:bottom-8"
-          style={{ animationDuration: '2s' }}
+          className={cn(
+            'fixed bottom-28 right-4 z-40 flex size-16 flex-col items-center justify-center rounded-full bg-orange-500 text-xs font-bold text-white shadow-2xl [animation-duration:2s] hover:scale-110 hover:bg-orange-600 motion-reduce:hover:scale-100 lg:bottom-8',
+            motionA11y.bounce,
+            motionA11y.transitionTransform
+          )}
         >
           <Phone size={22} />
           <span className="mt-0.5 text-[10px]">30秒回電</span>
@@ -744,11 +755,19 @@ export const PropertyDetailPage: React.FC = () => {
         {/* 報告生成 FAB 按鈕 */}
         <button
           onClick={() => setShowReportGenerator(true)}
-          className="group fixed bottom-24 right-4 z-40 flex size-14 items-center justify-center rounded-full bg-gradient-to-br from-[#003366] to-[#00A8E8] text-white shadow-lg transition-all hover:scale-105 hover:shadow-xl"
+          className={cn(
+            'group fixed bottom-24 right-4 z-40 flex size-14 items-center justify-center rounded-full bg-gradient-to-br from-[#003366] to-[#00A8E8] text-white shadow-lg hover:scale-105 hover:shadow-xl motion-reduce:hover:scale-100',
+            motionA11y.transitionAll
+          )}
           title="生成物件報告"
         >
           <FileText size={24} />
-          <span className="absolute right-full mr-3 whitespace-nowrap rounded-lg bg-slate-800 px-3 py-1.5 text-sm font-medium text-white opacity-0 transition-opacity group-hover:opacity-100">
+          <span
+            className={cn(
+              'absolute right-full mr-3 whitespace-nowrap rounded-lg bg-slate-800 px-3 py-1.5 text-sm font-medium text-white opacity-0 group-hover:opacity-100',
+              motionA11y.transitionOpacity
+            )}
+          >
             生成報告
           </span>
         </button>

@@ -44,27 +44,14 @@ export const LineShareAction: React.FC<ShareProps> = ({
   // The 'beforeOnClick' or just 'onClick' usually works.
 
   return (
-    <div
+    <button
+      type="button"
       onClick={handleShare}
-      className={wrapperClass}
-      role="button"
-      tabIndex={0}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          handleShare();
-        }
-      }}
+      className={`flex items-center justify-center gap-2 ${className} ${wrapperClass}`}
       aria-label={btnText}
     >
-      {/* 
-         Wrapping in a div to capture the click event bubbling up 
-         because react-share buttons might consume onClick for their window.open logic 
-         but we want to track it "as it happens".
-       */}
-      <button type="button" className={`flex items-center justify-center gap-2 ${className}`}>
-        {showIcon && <MessageCircle size={18} />}
-        <span>{btnText}</span>
-      </button>
-    </div>
+      {showIcon && <MessageCircle size={18} />}
+      {btnText && <span>{btnText}</span>}
+    </button>
   );
 };

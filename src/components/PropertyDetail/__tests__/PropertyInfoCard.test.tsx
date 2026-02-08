@@ -47,7 +47,7 @@ describe('PropertyInfoCard', () => {
   });
 
   it('trustEnabled=true 且 isHot=true 時應顯示熱門物件', () => {
-    render(
+    const { container } = render(
       <PropertyInfoCard
         property={baseProperty}
         isFavorite={false}
@@ -61,5 +61,8 @@ describe('PropertyInfoCard', () => {
     );
 
     expect(screen.getByText('熱門物件')).toBeInTheDocument();
+
+    const hotBadge = container.querySelector('.animate-pulse');
+    expect(hotBadge?.className).toContain('motion-reduce:animate-none');
   });
 });

@@ -389,4 +389,22 @@ describe('PropertyDetailPage phase11 interactions', () => {
       expect.objectContaining({ scenario: 'C', property_id: 'MH-100001' })
     );
   });
+
+  it('30秒回電按鈕應支援 reduced-motion class', async () => {
+    vi.mocked(propertyService.getPropertyByPublicId).mockResolvedValue(mockPropertyData as never);
+
+    renderWithClient(
+      <MemoryRouter initialEntries={['/maihouses/property/MH-100001']}>
+        <PropertyDetailPage />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('測試經紀人')).toBeInTheDocument();
+    });
+
+    const floatingCallButton = screen.getByRole('button', { name: /30秒回電/ });
+    expect(floatingCallButton.className).toContain('motion-reduce:animate-none');
+    expect(floatingCallButton.className).toContain('motion-reduce:transition-none');
+  });
 });

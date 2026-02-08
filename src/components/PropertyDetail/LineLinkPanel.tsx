@@ -3,6 +3,8 @@ import { MessageCircle, X } from 'lucide-react';
 import { notify } from '../../lib/notify';
 import { track } from '../../analytics/track';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
+import { cn } from '../../lib/utils';
+import { motionA11y } from '../../lib/motionA11y';
 import { TrustAssureHint } from './TrustAssureHint';
 import { LINE_BRAND_GREEN, LINE_BRAND_GREEN_HOVER, LINE_ID_PATTERN } from './constants';
 
@@ -152,7 +154,10 @@ export function LineLinkPanel({
               ref={firstButtonRef}
               onClick={onClose}
               aria-label="關閉"
-              className="min-h-[44px] min-w-[44px] cursor-pointer rounded-full p-2 transition-colors hover:bg-white/20"
+              className={cn(
+                'min-h-[44px] min-w-[44px] cursor-pointer rounded-full p-2 hover:bg-white/20',
+                motionA11y.transitionColors
+              )}
             >
               <X size={20} />
             </button>
@@ -170,7 +175,10 @@ export function LineLinkPanel({
               <button
                 onClick={handleLineOpen}
                 disabled={isSubmitting}
-                className="flex min-h-[44px] w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-[var(--line-brand-green)] py-3 font-bold text-white transition-colors hover:bg-[var(--line-brand-green-hover)] disabled:cursor-not-allowed disabled:opacity-60"
+                className={cn(
+                  'flex min-h-[44px] w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-[var(--line-brand-green)] py-3 font-bold text-white hover:bg-[var(--line-brand-green-hover)] disabled:cursor-not-allowed disabled:opacity-60',
+                  motionA11y.transitionColors
+                )}
               >
                 <MessageCircle size={18} />
                 開啟 LINE
@@ -193,12 +201,18 @@ export function LineLinkPanel({
                 value={fallbackLineId}
                 onChange={(e) => setFallbackLineId(e.target.value)}
                 placeholder="例：maihouses_demo"
-                className="focus:ring-brand-200 mt-1 min-h-[44px] w-full rounded-xl border border-border bg-bg-card px-3 text-sm text-ink-900 outline-none transition-colors placeholder:text-text-muted focus:border-brand-500 focus:ring-2"
+                className={cn(
+                  'focus:ring-brand-200 mt-1 min-h-[44px] w-full rounded-xl border border-border bg-bg-card px-3 text-sm text-ink-900 outline-none placeholder:text-text-muted focus:border-brand-500 focus:ring-2',
+                  motionA11y.transitionColors
+                )}
               />
               <button
                 onClick={handleFallback}
                 disabled={isSubmitting}
-                className="mt-3 min-h-[44px] w-full cursor-pointer rounded-xl bg-brand-700 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-60"
+                className={cn(
+                  'mt-3 min-h-[44px] w-full cursor-pointer rounded-xl bg-brand-700 px-4 py-3 text-sm font-semibold text-white hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-60',
+                  motionA11y.transitionColors
+                )}
               >
                 改用聯絡表單
               </button>
@@ -216,4 +230,3 @@ export function LineLinkPanel({
     </div>
   );
 }
-

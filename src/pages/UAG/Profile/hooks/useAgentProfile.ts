@@ -104,6 +104,11 @@ export function useAgentProfile() {
       // #7 Mock 模式：模擬上傳
       if (isMockMode) {
         await new Promise((resolve) => setTimeout(resolve, 800)); // 模擬上傳延遲
+        // P0-5 FIX: 先釋放舊的 URL，避免記憶體洩漏
+        const oldProfile = queryClient.getQueryData<AgentProfileMe>(profileQueryKey);
+        if (oldProfile?.avatarUrl && oldProfile.avatarUrl.startsWith('blob:')) {
+          URL.revokeObjectURL(oldProfile.avatarUrl);
+        }
         return URL.createObjectURL(file); // 使用本地預覽 URL
       }
       return uploadAgentAvatar(file);

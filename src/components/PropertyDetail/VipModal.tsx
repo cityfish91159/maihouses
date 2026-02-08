@@ -1,5 +1,8 @@
-﻿import { memo, type CSSProperties } from 'react';
-import { Flame, CheckCircle, MessageCircle, Phone } from 'lucide-react';
+﻿import { memo, useCallback, useId, useRef, type CSSProperties } from 'react';
+import { Flame, CheckCircle, MessageCircle, Phone, X } from 'lucide-react';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
+import { cn } from '../../lib/utils';
+import { motionA11y, withMotionSafety } from '../../lib/motionA11y';
 import { LINE_BRAND_GREEN, LINE_BRAND_GREEN_HOVER } from './constants';
 
 interface VipModalProps {
@@ -30,37 +33,69 @@ export const VipModal = memo(function VipModal({
   onCallClick,
   reason,
 }: VipModalProps) {
+  const modalRef = useRef<HTMLDivElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const titleId = useId();
+
   const lineBrandVars = {
     '--line-brand-green': LINE_BRAND_GREEN,
     '--line-brand-green-hover': LINE_BRAND_GREEN_HOVER,
   } as CSSProperties;
+
+  useFocusTrap({
+    containerRef: modalRef,
+    initialFocusRef: closeButtonRef,
+    onEscape: onClose,
+    isActive: isOpen,
+  });
+
+  const handleBackdropClick = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      if (e.target === e.currentTarget) {
+        onClose();
+      }
+    },
+    [onClose]
+  );
 
   if (!isOpen) return null;
 
   return (
     <div
       style={lineBrandVars}
-      className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4"
-      onClick={onClose}
-      onKeyDown={(e) => {
-        if (e.key === 'Escape') onClose();
-      }}
-      role="button"
-      tabIndex={0}
-      aria-label="關閉 VIP 彈窗"
+      className="fixed inset-0 z-[60] flex items-end justify-center bg-black/60 p-4 sm:items-center"
+      onClick={handleBackdropClick}
+      role="presentation"
     >
       <div
-        className="animate-in zoom-in-95 w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl duration-300"
-        onClick={(e) => e.stopPropagation()}
-        onKeyDown={(e) => e.stopPropagation()}
-        role="presentation"
+        ref={modalRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        className={withMotionSafety(
+          'animate-in slide-in-from-bottom-8 max-h-[90vh] w-full max-w-sm overflow-y-auto rounded-t-2xl bg-white p-6 shadow-2xl duration-300 sm:zoom-in-95 sm:rounded-2xl',
+          { animate: true }
+        )}
       >
         {/* Header */}
-        <div className="mb-4 text-center">
-          <div className="mx-auto mb-3 flex size-16 items-center justify-center rounded-full bg-gradient-to-br from-orange-400 to-red-500">
+        <div className="relative mb-4 text-center">
+          <button
+            ref={closeButtonRef}
+            onClick={onClose}
+            aria-label="關閉 VIP 彈窗"
+            className={cn(
+              'absolute right-0 top-0 min-h-[44px] min-w-[44px] rounded-full p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2',
+              motionA11y.transitionColors
+            )}
+          >
+            <X size={20} />
+          </button>
+          <div className="mx-auto mb-3 flex size-16 items-center justify-center rounded-full bg-gradient-to-br from-orange-600 to-red-600">
             <Flame size={32} className="text-white" />
           </div>
-          <h3 className="text-xl font-bold text-slate-800">發現您對此物件很有興趣！</h3>
+          <h3 id={titleId} className="text-xl font-bold text-slate-800">
+            發現您對此物件很有興趣！
+          </h3>
           <p className="mt-1 text-sm text-slate-500">{reason || '專屬 VIP 服務為您優先安排'}</p>
         </div>
 
@@ -89,7 +124,10 @@ export const VipModal = memo(function VipModal({
               onLineClick();
             }}
             aria-label="立即加 LINE 諮詢"
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--line-brand-green)] py-3 font-bold tracking-wide text-white shadow-lg shadow-green-500/20 transition-all duration-200 hover:bg-[var(--line-brand-green-hover)] active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100"
+            className={cn(
+              'flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--line-brand-green)] py-3 font-bold tracking-wide text-white shadow-lg shadow-green-500/20 duration-200 hover:bg-[var(--line-brand-green-hover)] active:scale-[0.98] motion-reduce:active:scale-100',
+              motionA11y.transitionAll
+            )}
           >
             <MessageCircle size={20} />
             立即加 LINE 諮詢
@@ -102,7 +140,10 @@ export const VipModal = memo(function VipModal({
               onCallClick();
             }}
             aria-label="致電諮詢"
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-700 py-3 font-bold tracking-wide text-white shadow-lg shadow-blue-900/20 transition-all duration-200 hover:bg-brand-600 active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100"
+            className={cn(
+              'flex w-full items-center justify-center gap-2 rounded-xl bg-brand-700 py-3 font-bold tracking-wide text-white shadow-lg shadow-blue-900/20 duration-200 hover:bg-brand-600 active:scale-[0.98] motion-reduce:active:scale-100',
+              motionA11y.transitionAll
+            )}
           >
             <Phone size={20} />
             致電諮詢
@@ -110,7 +151,7 @@ export const VipModal = memo(function VipModal({
 
           <button
             onClick={onClose}
-            className="w-full py-2 text-sm text-slate-400 transition-colors hover:text-slate-600"
+            className={cn('w-full py-2 text-sm text-slate-400 hover:text-slate-600', motionA11y.transitionColors)}
           >
             稍後再說
           </button>
