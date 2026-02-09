@@ -52,7 +52,7 @@ const save = () => {
 const MAX = 300000;
 
 async function flush(batch: Uag[]) {
-  const r = await apiFetch<{ retryAfterMs?: number } | null>('/api/v1/uag/events', {
+  const r = await apiFetch<{ retryAfterMs?: number } | null>('/uag/track', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(batch),

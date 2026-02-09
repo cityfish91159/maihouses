@@ -31,7 +31,7 @@ function header(options: RequestInit, key: string) {
 }
 
 export async function mockHandler(
-  endpoint: '/api/v1/communities/preview',
+  endpoint: '/communities/preview',
   options: RequestInit
 ): Promise<ApiResponse<import('../../types').CommunityPreview[]>>;
 export async function mockHandler<T = unknown>(
@@ -46,9 +46,9 @@ export async function mockHandler<T = unknown>(
   await delay(cfg.latency ?? 0);
   maybeFail(cfg.error ?? 0);
 
-  if (endpoint === '/api/v1/uag/events') return { ok: true, data: null as T };
+  if (endpoint === '/uag/track') return { ok: true, data: null as T };
 
-  if (/^\/api\/v1\/meta$/.test(endpoint))
+  if (/^\/meta$/.test(endpoint))
     return {
       ok: true,
       data: {
@@ -58,7 +58,7 @@ export async function mockHandler<T = unknown>(
       } as T,
     };
 
-  if (endpoint.startsWith('/api/v1/properties?')) {
+  if (endpoint.startsWith('/properties?')) {
     const sp = new URLSearchParams(endpoint.split('?')[1] || '');
     const page = +sp.get('page')! || 1;
     const pageSize = +sp.get('pageSize')! || 8;
@@ -78,7 +78,7 @@ export async function mockHandler<T = unknown>(
     return { ok: true, data: data as T };
   }
 
-  if (/^\/api\/v1\/properties\/[^/?]+$/.test(endpoint)) {
+  if (/^\/properties\/[^/?]+$/.test(endpoint)) {
     const id = endpoint.split('/').pop()!;
     const p = makeProperties(24).find((x) => x.id === id);
     return p
@@ -86,9 +86,9 @@ export async function mockHandler<T = unknown>(
       : { ok: false, error: { code: 'NOT_FOUND', message: '物件不存在' } };
   }
 
-  if (/^\/api\/v1\/communities\/.+\/reviews\?/.test(endpoint)) {
+  if (/^\/communities\/.+\/reviews\?/.test(endpoint)) {
     // 解析 communityId
-    const m = /^\/api\/v1\/communities\/([^/?]+)\/reviews\?/.exec(endpoint)!;
+    const m = /^\/communities\/([^/?]+)\/reviews\?/.exec(endpoint)!;
     const communityId = m?.[1] ?? '';
     const sp = new URLSearchParams(endpoint.split('?')[1] || '');
     const limit = +sp.get('limit')! || 2;
@@ -105,12 +105,12 @@ export async function mockHandler<T = unknown>(
     return { ok: true, data: reviews as T };
   }
 
-  if (/^\/api\/v1\/communities\/preview$/.test(endpoint)) {
+  if (/^\/communities\/preview$/.test(endpoint)) {
     return { ok: true, data: makeCommunities(6) as T };
   }
 
   // AI 助理已接 OpenAI API，不使用 mock
-  if (endpoint === '/api/v1/ai/ask') {
+  if (endpoint === '/ai/ask') {
     return {
       ok: false,
       error: { code: 'USE_REAL_API', message: 'AI 助理使用真實 OpenAI API' },

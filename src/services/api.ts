@@ -97,21 +97,21 @@ export const getMeta = () =>
     backendVersion: string;
     apiVersion: string;
     maintenance: boolean;
-  }>('/api/v1/meta');
+  }>('/meta');
 
 export const getProperties = (page: number, pageSize: number, q?: string) =>
   apiFetch<Paginated<PropertyCard>>(
-    `/api/v1/properties?${new URLSearchParams({ page: String(page), pageSize: String(pageSize), ...(q ? { q } : {}) })}`
+    `/properties?${new URLSearchParams({ page: String(page), pageSize: String(pageSize), ...(q ? { q } : {}) })}`
   );
 
-export const getProperty = (id: string) => apiFetch<PropertyCard>(`/api/v1/properties/${id}`);
+export const getProperty = (id: string) => apiFetch<PropertyCard>(`/properties/${id}`);
 
 export const getReviews = (communityId: string, limit = 2, offset = 0) =>
   apiFetch<ReviewSnippet[]>(
-    `/api/v1/communities/${communityId}/reviews?${new URLSearchParams({ limit: String(limit), offset: String(offset) })}`
+    `/communities/${communityId}/reviews?${new URLSearchParams({ limit: String(limit), offset: String(offset) })}`
   );
 
-export const getCommunities = () => apiFetch<CommunityPreview[]>('/api/v1/communities/preview');
+export const getCommunities = () => apiFetch<CommunityPreview[]>('/communities/preview');
 
 export const aiAsk = async (
   req: AiAskReq,

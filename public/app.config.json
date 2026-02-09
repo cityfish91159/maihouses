@@ -1,6 +1,6 @@
 {
-  "apiBaseUrl": "https://maihouses.vercel.app",
-  "appVersion": "1.0.7",
+  "apiBaseUrl": "/api",
+  "appVersion": "1.0.8",
   "minBackend": "1.0.0",
   "features": {
     "heroAssure": true,
@@ -8,7 +8,7 @@
     "communityTeaser": true,
     "propertyGrid": true
   },
-  "mock": true,
+  "mock": false,
   "latency": 0,
   "error": 0,
   "supabaseUrl": "https://your-project.supabase.co",
