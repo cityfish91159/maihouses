@@ -19,16 +19,16 @@
 
 <!-- gen-context:recent-commits -->
 ```
-52ee5adb feat(phase11): Phase 11-A 三按鈕回歸本職完整實作 + 安全修復
-37295f76 fix(security): 修復 pre-commit hook 誤報問題
-5c631405 feat: Phase 1-10 完整部署 + 防偷懶機制 + ultimate-gate 通過
-d276f06b fix(ux): Phase 1-10 完整 UX 規範修復 + BOM 問題解決
-dd3f9957 feat: phase8 assure refactor
-63ca415c chore: phase7 ux and test fixes
-73e57410 feat: trust room phase6 mascot
-dd111ce9 fix: trust room review improvements
-b078544f test: add trust room coverage
-fb37ad68 fix: trust room ux followups
+3fb94c37 fix(ux): 修復 33 項 UX/A11y 問題（P0 5項 + P1 18項 + P2 10項）
+d7b500d9 fix(UAG): #7 修復 Profile Mock 模式返回 UAG 白屏問題
+7178c2e1 docs: 標記 #7 Profile Mock 模式完成
+e7ea3724 feat(UAG): #7 實作 Profile 頁 Mock 模式支援
+08df67b5 fix(UAG): Mock 模式名字改為游杰倫
+73716cae feat(UAG): 實作 #6 Header Mock 模式使用者區塊
+fe33e955 fix(api): 修復 public-stats.ts TypeScript 錯誤
+4a715a54 refactor(PropertyDetail): #8 社會證明優化 + API 格式統一
+47edaa76 feat(PropertyDetail): 實作 #5 DEFAULT_PROPERTY agent 完整 mock 資料
+b769a896 feat(PropertyDetail): 實作 #8 社會證明真實數據
 ```
 
 ## 禁區（已穩定，勿碰）
@@ -45,44 +45,58 @@ fb37ad68 fix: trust room ux followups
 
 ## 自動統計
 
-> 由 `npm run gen-context` 於 2026-02-07 產生
+> 由 `npm run gen-context` 於 2026-02-09 產生
 
 ### 最近 commit
 ```
-52ee5adb feat(phase11): Phase 11-A 三按鈕回歸本職完整實作 + 安全修復
-37295f76 fix(security): 修復 pre-commit hook 誤報問題
-5c631405 feat: Phase 1-10 完整部署 + 防偷懶機制 + ultimate-gate 通過
-d276f06b fix(ux): Phase 1-10 完整 UX 規範修復 + BOM 問題解決
-dd3f9957 feat: phase8 assure refactor
-63ca415c chore: phase7 ux and test fixes
-73e57410 feat: trust room phase6 mascot
-dd111ce9 fix: trust room review improvements
-b078544f test: add trust room coverage
-fb37ad68 fix: trust room ux followups
+3fb94c37 fix(ux): 修復 33 項 UX/A11y 問題（P0 5項 + P1 18項 + P2 10項）
+d7b500d9 fix(UAG): #7 修復 Profile Mock 模式返回 UAG 白屏問題
+7178c2e1 docs: 標記 #7 Profile Mock 模式完成
+e7ea3724 feat(UAG): #7 實作 Profile 頁 Mock 模式支援
+08df67b5 fix(UAG): Mock 模式名字改為游杰倫
+73716cae feat(UAG): 實作 #6 Header Mock 模式使用者區塊
+fe33e955 fix(api): 修復 public-stats.ts TypeScript 錯誤
+4a715a54 refactor(PropertyDetail): #8 社會證明優化 + API 格式統一
+47edaa76 feat(PropertyDetail): 實作 #5 DEFAULT_PROPERTY agent 完整 mock 資料
+b769a896 feat(PropertyDetail): 實作 #8 社會證明真實數據
 ```
 
 ### 檔案數量
 | 目錄 | 檔案數 |
 |------|--------|
-| src/ | 463 |
-| api/ | 118 |
-| 測試 | 138 |
+| src/ | 472 |
+| api/ | 122 |
+| 測試 | 151 |
 
 ### 大檔案（>500 行）
 ```
-（無）
+2153 src/types/api.generated.ts
+1952 src/constants/maimai-persona.ts
+1703 src/pages/UAG/UAG.module.css
+1316 src/pages/UAG/UAG-deai-v2.module.css
+1248 api/trust/__tests__/send-notification.test.ts
+1167 api/trust/send-notification.ts
+1091 api/trust/__tests__/auto-create-case.test.ts
+1023 api/trust/__tests__/cases.test.ts
+1003 src/types/__tests__/trust-flow.types.test.ts
+992 api/community/wall.ts
+971 api/trust/__tests__/wake.test.ts
+933 src/pages/UAG/components/ReportGenerator/ReportGenerator.module.css
+910 src/pages/Community/components/QASection.tsx
+899 src/pages/UAG/UAGDeAIDemoV2.tsx
+887 src/pages/UAG/demo/UIUXDemo.tsx
 ```
 
 ### 近 7 天修改熱點
 ```
-2 test-output.txt
-      2 temp_s1_s4.md
-      2 temp.txt
-      2 supabase/migrations/20260130_agent_profile_extension.sql
-      2 src/pages/PropertyDetailPage.tsx
-      2 src/pages/__tests__/PropertyDetailPage.optimization.test.tsx
-      2 src/components/PropertyDetail/MobileCTA.tsx
-      2 src/components/PropertyDetail/MobileActionBar.tsx
-      2 src/components/PropertyDetail/index.ts
-      2 src/components/PropertyDetail/BookingModal.tsx
+    12 .claude/tickets/AGENT PROFILE.md
+    11 src/pages/PropertyDetailPage.tsx
+     8 src/components/PropertyDetail/MobileActionBar.tsx
+     7 src/components/PropertyDetail/MobileCTA.tsx
+     6 src/components/PropertyDetail/PropertyInfoCard.tsx
+     6 src/pages/__tests__/PropertyDetailPage.optimization.test.tsx
+     5 src/components/AgentTrustCard.tsx
+     5 src/components/PropertyDetail/VipModal.tsx
+     5 src/pages/UAG/components/UAGHeader.tsx
+     5 src/pages/__tests__/PropertyDetailPage.phase11.test.tsx
 ```

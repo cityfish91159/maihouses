@@ -80,56 +80,13 @@ export default function RadarCluster({ leads, onSelectLead }: RadarClusterProps)
       </div>
       <div className={styles['uag-cluster']} id="radar-container">
         <div
-          style={{
-            position: 'absolute',
-            left: '50%',
-            top: '50%',
-            transform: 'translate(-50%,-50%)',
-            width: '300px',
-            height: '300px',
-            border: '1px dashed #cbd5e1',
-            borderRadius: '50%',
-            pointerEvents: 'none',
-          }}
+          className={`${styles['uag-cluster-ring']} ${styles['uag-cluster-ring-outer']}`}
         ></div>
         <div
-          style={{
-            position: 'absolute',
-            left: '50%',
-            top: '50%',
-            transform: 'translate(-50%,-50%)',
-            width: '150px',
-            height: '150px',
-            border: '1px dashed #cbd5e1',
-            borderRadius: '50%',
-            pointerEvents: 'none',
-          }}
+          className={`${styles['uag-cluster-ring']} ${styles['uag-cluster-ring-inner']}`}
         ></div>
-        <div
-          style={{
-            position: 'absolute',
-            left: '16px',
-            top: '16px',
-            background: 'rgba(255,255,255,0.9)',
-            padding: '6px 12px',
-            borderRadius: '20px',
-            fontSize: '12px',
-            color: 'var(--ink)',
-            boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
-            border: '1px solid #e2e8f0',
-            zIndex: 5,
-          }}
-        >
-          <span
-            style={{
-              width: '8px',
-              height: '8px',
-              background: '#22c55e',
-              borderRadius: '50%',
-              display: 'inline-block',
-              marginRight: '4px',
-            }}
-          ></span>
+        <div className={styles['uag-cluster-live-badge']}>
+          <span className={styles['uag-live-dot']}></span>
           <span style={{ fontWeight: 700 }}>Live 監控中</span>
         </div>
 
@@ -167,6 +124,7 @@ export default function RadarCluster({ leads, onSelectLead }: RadarClusterProps)
               onClick={() => onSelectLead(lead)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
                   onSelectLead(lead);
                 }
               }}
@@ -180,11 +138,11 @@ export default function RadarCluster({ leads, onSelectLead }: RadarClusterProps)
               >
                 {lead.grade}
               </div>
-              <div style={{ textAlign: 'center', lineHeight: 1.2 }}>
-                <div style={{ fontWeight: 800, fontSize: '14px' }}>
+              <div className={styles['uag-bubble-content']}>
+                <div className={styles['uag-bubble-id']}>
                   {leadLabels[lead.id] || lead.grade}
                 </div>
-                <div style={{ fontSize: '11px', color: 'var(--ink-300)' }}>{lead.intent}%</div>
+                <div className={styles['uag-bubble-intent']}>{lead.intent}%</div>
               </div>
               <div className={styles['uag-bubble-label']}>{lead.prop}</div>
             </div>

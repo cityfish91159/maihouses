@@ -2,14 +2,13 @@
 import { useParams, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { Home, Hash, ArrowLeft, Phone, FileText } from 'lucide-react';
+import { Home, Hash, ArrowLeft } from 'lucide-react';
 import { AgentTrustCard } from '../components/AgentTrustCard';
 import { TrustBadge } from '../components/TrustBadge';
 import { TrustServiceBanner } from '../components/TrustServiceBanner';
 import ErrorBoundary from '../app/ErrorBoundary';
 import { propertyService, DEFAULT_PROPERTY, PropertyData } from '../services/propertyService';
 import { ContactModal, type ContactChannel } from '../components/ContactModal';
-import { ReportGenerator } from './Report';
 import { trackTrustServiceEnter } from '../lib/analytics';
 import { track } from '../analytics/track';
 import { buildKeyCapsuleTags } from '../utils/keyCapsules';
@@ -23,8 +22,6 @@ import { useTrustActions } from '../hooks/useTrustActions';
 import { usePropertyTracker } from '../hooks/usePropertyTracker';
 import { TOAST_DURATION } from '../constants/toast';
 import { isDemoPropertyId } from '../constants/property';
-import { cn } from '../lib/utils';
-import { motionA11y } from '../lib/motionA11y';
 
 // 優化方案 1: 拆分組件並使用 React.memo
 import {
@@ -39,9 +36,15 @@ import {
   LineLinkPanel,
   CallConfirmPanel,
 } from '../components/PropertyDetail';
-import { getTrustScenario, shouldAttachTrustAssureLeadNote } from '../components/PropertyDetail/trustAssure';
+import {
+  getTrustScenario,
+  shouldAttachTrustAssureLeadNote,
+} from '../components/PropertyDetail/trustAssure';
 import { useTrustAssureFlow } from './propertyDetail/useTrustAssureFlow';
-import { classifyTrustServiceError, AUTO_CREATE_CASE_RESPONSE_SCHEMA } from './propertyDetail/trustServiceErrors';
+import {
+  classifyTrustServiceError,
+  AUTO_CREATE_CASE_RESPONSE_SCHEMA,
+} from './propertyDetail/trustServiceErrors';
 
 const FALLBACK_IMAGE =
   'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80';
@@ -84,9 +87,6 @@ export const PropertyDetailPage: React.FC = () => {
   // S 級 VIP 攔截 Modal
   const [showVipModal, setShowVipModal] = useState(false);
   const [vipReason, setVipReason] = useState<string>('');
-
-  // 報告生成器 Modal
-  const [showReportGenerator, setShowReportGenerator] = useState(false);
 
   // 安心留痕要求處理狀態
   const [isRequesting, setIsRequesting] = useState(false);
@@ -444,16 +444,12 @@ export const PropertyDetailPage: React.FC = () => {
     openCallPanel('sidebar');
   }, [openCallPanel]);
 
-  // Mobile / FAB / VIP callbacks (#2 移除 booking)
+  // Mobile / VIP callbacks (#2 移除 booking)
   const handleMobileLineClick = useCallback(() => {
     openLinePanel('mobile_bar');
   }, [openLinePanel]);
 
   const handleMobileCallClick = useCallback(() => {
-    openCallPanel('mobile_bar');
-  }, [openCallPanel]);
-
-  const handleFloatingCallClick = useCallback(() => {
     openCallPanel('mobile_bar');
   }, [openCallPanel]);
 
@@ -467,11 +463,7 @@ export const PropertyDetailPage: React.FC = () => {
 
   const handleLineFallbackContact = useCallback(
     (trustAssureChecked: boolean) => {
-      openContactModal(
-        linePanelSource,
-        'line',
-        shouldAttachContactTrustAssure(trustAssureChecked)
-      );
+      openContactModal(linePanelSource, 'line', shouldAttachContactTrustAssure(trustAssureChecked));
     },
     [linePanelSource, openContactModal, shouldAttachContactTrustAssure]
   );
@@ -545,7 +537,7 @@ export const PropertyDetailPage: React.FC = () => {
 
   return (
     <ErrorBoundary>
-      <div className="min-h-screen bg-[#f8fafc] font-sans text-slate-800">
+      <div className="min-h-dvh bg-[#f8fafc] font-sans text-slate-800">
         {/* Header */}
         <nav className="sticky top-0 z-overlay flex h-16 items-center justify-between border-b border-slate-100 bg-white/90 px-4 shadow-sm backdrop-blur-md">
           <div className="flex items-center gap-3">
@@ -567,7 +559,7 @@ export const PropertyDetailPage: React.FC = () => {
           <div className="flex items-center rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 font-mono text-xs text-slate-500">
             <Hash size={12} className="mr-1 text-gray-400" />
             編號：
-            <span className="ml-1 font-bold text-[#003366]">{property.publicId}</span>
+            <span className="ml-1 font-bold text-brand-700">{property.publicId}</span>
           </div>
         </nav>
 
@@ -577,7 +569,10 @@ export const PropertyDetailPage: React.FC = () => {
             <div className="flex items-center gap-2 rounded-lg border-2 border-dashed border-amber-300 bg-amber-50 p-3">
               <div className="flex-1">
                 <p className="text-xs font-bold text-amber-900">
-                  <span className="mr-1 inline-block size-3 rounded-full bg-amber-500" aria-hidden="true" />
+                  <span
+                    className="mr-1 inline-block size-3 rounded-full bg-amber-500"
+                    aria-hidden="true"
+                  />
                   開發測試模式 (僅 Mock 頁面)
                 </p>
                 <p className="text-[10px] text-amber-700">切換安心留痕狀態查看不同 UI 效果</p>
@@ -592,13 +587,14 @@ export const PropertyDetailPage: React.FC = () => {
                     return newValue;
                   })
                 }
+                aria-label={
+                  mockTrustEnabled === null
+                    ? '啟動安心留痕測試'
+                    : `安心留痕目前${mockTrustEnabled ? '已開啟' : '未開啟'}，點擊切換`
+                }
                 className="rounded-lg bg-amber-600 px-4 py-2 text-xs font-bold text-white transition hover:bg-amber-700 active:scale-95"
               >
-                {mockTrustEnabled === null
-                  ? '啟動測試'
-                  : mockTrustEnabled
-                    ? '已開啟'
-                    : '未開啟'}
+                {mockTrustEnabled === null ? '啟動測試' : mockTrustEnabled ? '已開啟' : '未開啟'}
               </button>
             </div>
           </div>
@@ -684,19 +680,6 @@ export const PropertyDetailPage: React.FC = () => {
           </div>
         </main>
 
-        {/* 📱 30秒回電浮動按鈕 - 高轉換 */}
-        <button
-          onClick={handleFloatingCallClick}
-          className={cn(
-            'fixed bottom-28 right-4 z-40 flex size-16 flex-col items-center justify-center rounded-full bg-orange-500 text-xs font-bold text-white shadow-2xl [animation-duration:2s] hover:scale-110 hover:bg-orange-600 motion-reduce:hover:scale-100 lg:bottom-8',
-            motionA11y.bounce,
-            motionA11y.transitionTransform
-          )}
-        >
-          <Phone size={22} />
-          <span className="mt-0.5 text-[10px]">30秒回電</span>
-        </button>
-
         {/* 優化方案 1: 使用拆分的 MobileActionBar 組件（#2 雙按鈕） */}
         <MobileActionBar
           onLineClick={handleMobileLineClick}
@@ -750,49 +733,6 @@ export const PropertyDetailPage: React.FC = () => {
           onLineClick={handleVipLineClick}
           onCallClick={handleVipCallClick}
           reason={vipReason}
-        />
-
-        {/* 報告生成 FAB 按鈕 */}
-        <button
-          onClick={() => setShowReportGenerator(true)}
-          className={cn(
-            'group fixed bottom-24 right-4 z-40 flex size-14 items-center justify-center rounded-full bg-gradient-to-br from-[#003366] to-[#00A8E8] text-white shadow-lg hover:scale-105 hover:shadow-xl motion-reduce:hover:scale-100',
-            motionA11y.transitionAll
-          )}
-          title="生成物件報告"
-        >
-          <FileText size={24} />
-          <span
-            className={cn(
-              'absolute right-full mr-3 whitespace-nowrap rounded-lg bg-slate-800 px-3 py-1.5 text-sm font-medium text-white opacity-0 group-hover:opacity-100',
-              motionA11y.transitionOpacity
-            )}
-          >
-            生成報告
-          </span>
-        </button>
-
-        {/* 報告生成器 Modal */}
-        <ReportGenerator
-          property={{
-            id: property.id,
-            publicId: property.publicId,
-            title: property.title,
-            price: property.price,
-            address: property.address,
-            description: property.description,
-            images: property.images,
-            agent: {
-              id: property.agent.id,
-              name: property.agent.name,
-              avatarUrl: property.agent.avatarUrl,
-              company: property.agent.company,
-              trustScore: property.agent.trustScore,
-              reviewCount: property.agent.encouragementCount,
-            },
-          }}
-          isOpen={showReportGenerator}
-          onClose={() => setShowReportGenerator(false)}
         />
       </div>
     </ErrorBoundary>

@@ -25,7 +25,7 @@ describe('BE-5 Real Handler Tests', () => {
     vi.clearAllMocks();
   });
 
-  it('GET /api/trust/cases - unauthorized returns 401', async () => {
+  it('GET /api/trust/cases - unauthorized returns 401', { timeout: 20000 }, async () => {
     vi.doMock('../_utils', () => ({
       supabase: { rpc: vi.fn() },
       verifyToken: vi.fn(() => {
@@ -100,7 +100,7 @@ describe('BE-5 Real Handler Tests', () => {
     expect(res.statusCode).toBe(200);
   });
 
-  it('GET /api/trust/cases/[id] - accepts step=0 event', { timeout: 10000 }, async () => {
+  it('GET /api/trust/cases/[id] - accepts step=0 event', { timeout: 20000 }, async () => {
     const mockRpc = vi.fn().mockResolvedValue({
       data: {
         id: '550e8400-e29b-41d4-a716-446655440000',

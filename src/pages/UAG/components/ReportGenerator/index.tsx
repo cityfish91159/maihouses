@@ -23,6 +23,8 @@ import uagStyles from '../../UAG.module.css';
 import styles from './ReportGenerator.module.css';
 import type { Listing } from '../../types/uag.types';
 import ReportPreview from '../../../../components/ReportPreview';
+import { buildSharedReportUrl } from './reportUrl';
+import { encodeSharedReportPayload } from '../../sharedReportPayload';
 
 // 報告樣式類型
 type ReportStyle = 'simple' | 'investment' | 'marketing';
@@ -376,15 +378,15 @@ export default function ReportGenerator({
         },
       };
 
-      // 編碼資料到 URL（使用 encodeURIComponent 確保中文正確編碼）
-      const encodedData = encodeURIComponent(
-        btoa(unescape(encodeURIComponent(JSON.stringify(reportData))))
-      );
+      const encodedData = encodeSharedReportPayload(reportData);
       const reportId = `R-${Date.now().toString(36).toUpperCase()}`;
 
-      // 根據當前路徑判斷 basename
-      const basename = window.location.pathname.startsWith('/maihouses') ? '/maihouses' : '';
-      const url = `${window.location.origin}${basename}/r/${reportId}?d=${encodedData}`;
+      const url = buildSharedReportUrl({
+        origin: window.location.origin,
+        pathname: window.location.pathname,
+        reportId,
+        encodedData,
+      });
 
       setReportUrl(url);
       setStep(3); // 改為 step 3 (完成)

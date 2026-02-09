@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useRef, useState } from 'react';
+﻿import React, { useEffect, useRef, useState, useCallback } from 'react';
 import type { User } from '@supabase/supabase-js';
 import { ChevronDown, LogOut, User as UserIcon } from 'lucide-react';
 // import { useNotifications } from '../../../hooks/useNotifications';
@@ -54,6 +54,7 @@ export const UAGHeader: React.FC<UAGHeaderProps> = ({
   // const { count, notifications, isLoading: notificationsLoading, error: notificationsError, isStale, refresh } = useNotifications();
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const userMenuButtonRef = useRef<HTMLButtonElement | null>(null);
+  const menuDropdownRef = useRef<HTMLDivElement | null>(null);
 
   // 使用共用 Hook 管理通知下拉選單
   // const {
@@ -65,18 +66,47 @@ export const UAGHeader: React.FC<UAGHeaderProps> = ({
   // } = useNotificationDropdown();
 
   // 點擊外部關閉用戶選單（通知選單由 Hook 處理）
-  // ⚠️ useEffect 必須在所有 early return 之前調用
+  // 只在選單開啟時綁定監聽，避免不必要的全域事件處理
   useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      // [NASA TypeScript Safety] 使用類型守衛取代 as HTMLElement
+    if (!userMenuOpen) return;
+
+    const handlePointerDownOutside = (e: PointerEvent) => {
       const target = e.target;
       if (!(target instanceof HTMLElement)) return;
       if (!target.closest('#uag-user-menu-btn') && !target.closest('#uag-user-menu-dropdown')) {
         setUserMenuOpen(false);
       }
     };
-    document.addEventListener('click', handleClickOutside);
-    return () => document.removeEventListener('click', handleClickOutside);
+
+    document.addEventListener('pointerdown', handlePointerDownOutside);
+    return () => document.removeEventListener('pointerdown', handlePointerDownOutside);
+  }, [userMenuOpen]);
+
+  // Focus trap: Escape 關閉、Tab 循環（必須在 early return 之前）
+  const handleDropdownKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      setUserMenuOpen(false);
+      userMenuButtonRef.current?.focus();
+      return;
+    }
+
+    if (e.key === 'Tab' && menuDropdownRef.current) {
+      const focusable = menuDropdownRef.current.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), a:not([disabled])'
+      );
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (!first || !last) return;
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    }
   }, []);
 
   if (error) return <HeaderError />;
@@ -98,11 +128,6 @@ export const UAGHeader: React.FC<UAGHeaderProps> = ({
     }
   };
 
-  const handleNotificationClick = (conversationId: string) => {
-    // closeNotificationMenu();
-    window.location.href = ROUTES.CHAT(conversationId);
-  };
-
   const handleSignOutClick = async () => {
     setUserMenuOpen(false);
     await onSignOut?.();
@@ -117,7 +142,9 @@ export const UAGHeader: React.FC<UAGHeaderProps> = ({
   return (
     <header className={styles['uag-header']}>
       <div className={styles['uag-header-inner']}>
-        <Logo showSlogan={false} showBadge={true} href={ROUTES.HOME} />
+        <div className={styles['uag-logo-wrap']}>
+          <Logo showSlogan={false} showBadge={true} href={ROUTES.HOME} />
+        </div>
         <div className={styles['uag-breadcrumb']}>
           <span>UAG 客戶雷達</span>
           {company && <span className={styles['uag-company']}>{company}</span>}
@@ -162,9 +189,11 @@ export const UAGHeader: React.FC<UAGHeaderProps> = ({
                 onClick={() => setUserMenuOpen((prev) => !prev)}
                 onKeyDown={handleUserMenuKeyDown}
                 aria-label={`用戶選單：${displayName}`}
+                aria-haspopup="menu"
+                aria-controls="uag-user-menu-dropdown"
                 aria-expanded={userMenuOpen}
               >
-                <div className={styles['uag-user-avatar']} aria-label={`用戶頭像：${displayName}`}>
+                <div className={styles['uag-user-avatar']} aria-hidden="true">
                   {displayName.charAt(0).toUpperCase()}
                 </div>
                 <div className={styles['uag-user-info']}>
@@ -176,10 +205,13 @@ export const UAGHeader: React.FC<UAGHeaderProps> = ({
 
               {userMenuOpen && (
                 <div
+                  ref={menuDropdownRef}
                   id="uag-user-menu-dropdown"
                   className={`${styles['uag-user-menu']} animate-in fade-in slide-in-from-top-2 duration-200`}
                   role="menu"
+                  tabIndex={-1}
                   aria-hidden={!userMenuOpen}
+                  onKeyDown={handleDropdownKeyDown}
                 >
                   <div className={styles['uag-user-menu-meta']}>
                     <span className={styles['uag-user-menu-name']}>{displayName}</span>

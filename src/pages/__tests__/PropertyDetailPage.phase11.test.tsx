@@ -154,7 +154,11 @@ describe('PropertyDetailPage phase11 interactions', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockAuthState.isAuthenticated = true;
-    mockAuthState.user = { id: 'user-1', email: 'test@example.com', user_metadata: { name: '測試用戶' } };
+    mockAuthState.user = {
+      id: 'user-1',
+      email: 'test@example.com',
+      user_metadata: { name: '測試用戶' },
+    };
     mockAuthState.session = { access_token: 'token' };
     vi.stubGlobal(
       'fetch',
@@ -165,14 +169,12 @@ describe('PropertyDetailPage phase11 interactions', () => {
     );
   });
 
-  it(
-    '點擊加 LINE 後應開啟 LineLinkPanel',
-    async () => {
-      const user = userEvent.setup();
-      vi.mocked(propertyService.getPropertyByPublicId).mockResolvedValue(mockPropertyData as never);
+  it('點擊加 LINE 後應開啟 LineLinkPanel', async () => {
+    const user = userEvent.setup();
+    vi.mocked(propertyService.getPropertyByPublicId).mockResolvedValue(mockPropertyData as never);
 
-      renderWithClient(
-        <MemoryRouter initialEntries={['/maihouses/property/MH-100001']}>
+    renderWithClient(
+      <MemoryRouter initialEntries={['/maihouses/property/MH-100001']}>
         <PropertyDetailPage />
       </MemoryRouter>
     );
@@ -183,12 +185,10 @@ describe('PropertyDetailPage phase11 interactions', () => {
 
     await user.click(screen.getAllByRole('button', { name: '加 LINE 聊聊' })[0]!);
 
-      expect(
-        await screen.findByRole('button', { name: '開啟 LINE' }, { timeout: 10000 })
-      ).toBeInTheDocument();
-    },
-    15000
-  );
+    expect(
+      await screen.findByRole('button', { name: '開啟 LINE' }, { timeout: 10000 })
+    ).toBeInTheDocument();
+  }, 15000);
 
   it('點擊致電後應開啟 CallConfirmPanel', async () => {
     const user = userEvent.setup();
@@ -390,7 +390,7 @@ describe('PropertyDetailPage phase11 interactions', () => {
     );
   });
 
-  it('30秒回電按鈕應支援 reduced-motion class', async () => {
+  it('不應渲染 30秒回電與生成報告浮動按鈕', async () => {
     vi.mocked(propertyService.getPropertyByPublicId).mockResolvedValue(mockPropertyData as never);
 
     renderWithClient(
@@ -403,8 +403,7 @@ describe('PropertyDetailPage phase11 interactions', () => {
       expect(screen.getByText('測試經紀人')).toBeInTheDocument();
     });
 
-    const floatingCallButton = screen.getByRole('button', { name: /30秒回電/ });
-    expect(floatingCallButton.className).toContain('motion-reduce:animate-none');
-    expect(floatingCallButton.className).toContain('motion-reduce:transition-none');
+    expect(screen.queryByRole('button', { name: /30秒回電/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /生成報告/ })).not.toBeInTheDocument();
   });
 });

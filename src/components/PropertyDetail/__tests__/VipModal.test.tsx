@@ -111,4 +111,3 @@ describe('VipModal', () => {
     expect(dialog.className).toContain('rounded-t-2xl');
   });
 });
-

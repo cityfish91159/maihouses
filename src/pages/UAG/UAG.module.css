@@ -46,6 +46,17 @@
   --shadow-glow: 0 0 20px rgba(23, 73, 215, 0.25);
 
   --font: -apple-system, BlinkMacSystemFont, 'Inter', 'Noto Sans TC', sans-serif;
+
+  /* Z-index layers */
+  --z-bg-grid: 0;
+  --z-content: 1;
+  --z-live-badge: 5;
+  --z-bubble: 10;
+  --z-bubble-active: 20;
+  --z-sticky: 50;
+  --z-modal: 55;
+  --z-dropdown: 60;
+  --z-footer: 100;
 }
 
 /* ====== Base ====== */
@@ -54,8 +65,12 @@
   background: var(--bg-page);
   color: var(--ink-100);
   line-height: 1.5;
+  min-height: 100dvh;
   padding-bottom: 80px;
   position: relative;
+  overscroll-behavior: contain;
+  overscroll-behavior-y: contain;
+  overflow-x: clip;
   background:
     radial-gradient(circle at top, rgba(23, 73, 215, 0.08), transparent 55%), var(--bg-page);
 }
@@ -70,13 +85,13 @@
   background-size: 40px 40px;
   opacity: 0.22;
   pointer-events: none;
-  z-index: 0;
+  z-index: var(--z-bg-grid);
 }
 
 .uag-header {
   position: sticky;
   top: 0;
-  z-index: 50;
+  z-index: var(--z-sticky);
   background: rgba(255, 255, 255, 0.96);
   backdrop-filter: blur(14px);
   border-bottom: 1px solid var(--line-soft);
@@ -89,6 +104,11 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+}
+.uag-logo-wrap {
+  min-width: 0;
+  display: flex;
+  align-items: center;
 }
 
 /* ====== Agent Bar (房仲資訊條) ====== */
@@ -138,6 +158,9 @@
   color: var(--ink-300);
   margin-top: 2px;
 }
+.agent-bar-stat {
+  white-space: nowrap;
+}
 .agent-bar-stat strong {
   color: var(--ink-100);
   font-weight: 700;
@@ -154,6 +177,36 @@
   }
   .agent-bar-stats {
     gap: 8px;
+  }
+}
+@media (max-width: 768px) {
+  .agent-bar-stats {
+    font-size: 12px;
+  }
+}
+@media (max-width: 380px) {
+  .uag-header-inner {
+    padding: 10px 8px;
+  }
+  .uag-header-actions {
+    gap: 6px;
+  }
+  .uag-logo-wrap {
+    transform: scale(0.92);
+    transform-origin: left center;
+  }
+  .agent-bar {
+    padding: 6px 10px;
+    gap: 8px;
+  }
+  .agent-bar-code {
+    display: none;
+  }
+  .agent-bar-stats {
+    gap: 6px;
+    font-size: 12px;
+    flex-wrap: wrap;
+    row-gap: 2px;
   }
 }
 /* ====== UAG Header Actions ====== */
@@ -242,6 +295,8 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  min-width: 44px;
+  min-height: 44px;
   padding: 4px 8px 4px 4px;
   border-radius: 999px;
   border: 1px solid var(--line-soft);
@@ -297,7 +352,7 @@
   border-radius: 12px;
   box-shadow: 0 16px 32px rgba(15, 23, 42, 0.12);
   padding: 8px;
-  z-index: 60;
+  z-index: var(--z-dropdown);
 }
 .uag-user-menu-meta {
   display: flex;
@@ -369,7 +424,7 @@
   margin: 0 auto;
   padding: 24px;
   position: relative;
-  z-index: 1;
+  z-index: var(--z-content);
 }
 .uag-grid {
   display: grid;
@@ -391,6 +446,15 @@
 .k-span-6 {
   grid-column: span 6;
 } /* Full Width */
+
+/* Desktop 佈局：1280px+ 時組件並排，利用寬屏空間 */
+@media (min-width: 1280px) {
+  /* ActionPanel + AssetMonitor 並排（使用穩定容器 id，避免 DOM 順序耦合） */
+  .uag-grid > #action-panel-container,
+  .uag-grid > #asset-monitor-container {
+    grid-column: span 3;
+  }
+}
 
 /* RWD Optimizations */
 @media (max-width: 1024px) {
@@ -438,6 +502,43 @@
   .uag-badge--pro {
     padding: 2px 6px;
     font-size: 9px;
+  }
+}
+
+@media (max-width: 767px) {
+  .uag-header-inner {
+    min-height: 56px;
+  }
+  .uag-breadcrumb {
+    display: none;
+  }
+  .uag-company {
+    display: none;
+  }
+  .uag-badge--pro {
+    display: none;
+  }
+  .uag-header-actions {
+    margin-left: auto;
+    gap: 8px;
+  }
+  .uag-user-button {
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    justify-content: center;
+    gap: 0;
+  }
+  .uag-user-info {
+    display: none;
+  }
+  .uag-user-chevron {
+    display: none;
+  }
+  .uag-user-avatar {
+    width: 32px;
+    height: 32px;
+    font-size: 13px;
   }
 }
 
@@ -606,17 +707,12 @@
   }
 }
 
-/* Accessibility: Respect user's motion preferences */
-@media (prefers-reduced-motion: reduce) {
-  .uag-bubble {
-    animation: none;
-  }
-}
-
 .uag-bubble {
   position: absolute;
   width: var(--w);
   height: var(--w);
+  min-width: 44px;
+  min-height: 44px;
   border-radius: 50%;
   background: #fff;
   border: 2px solid rgba(226, 232, 240, 0.9);
@@ -631,14 +727,55 @@
     box-shadow 0.3s,
     border-color 0.3s;
   animation: float var(--float) ease-in-out infinite;
-  z-index: 10;
+  z-index: var(--z-bubble);
 }
 .uag-bubble:hover,
-.uag-bubble.selected {
+.uag-bubble.selected,
+.uag-bubble:focus-visible {
   transform: translateY(-4px);
-  z-index: 20;
+  z-index: var(--z-bubble-active);
   box-shadow: 0 12px 24px rgba(59, 130, 246, 0.25);
   border-color: var(--uag-brand);
+}
+.uag-bubble:focus-visible {
+  outline: 3px solid var(--uag-brand);
+  outline-offset: 2px;
+}
+.uag-bubble:focus {
+  outline: none;
+}
+
+.uag-cluster-live-badge {
+  position: absolute;
+  left: 16px;
+  top: 16px;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  color: var(--ink-100);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e2e8f0;
+  z-index: var(--z-live-badge);
+}
+
+.uag-live-dot {
+  width: 8px;
+  height: 8px;
+  background: #22c55e;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 4px;
+  animation: live-dot-pulse 2s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .uag-bubble {
+    animation: none;
+  }
+  .uag-live-dot {
+    animation: none;
+    opacity: 1;
+  }
 }
 .uag-bubble[data-grade='S'] {
   background: var(--grade-s-bg);
@@ -692,6 +829,46 @@
   border: 1px solid var(--line-soft);
   pointer-events: none;
 }
+.uag-bubble-intent {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ink-100); /* WCAG 2.1 AA: 對比度 16:1 (修正自 --ink-200 的 3.5:1) */
+  font-variant-numeric: tabular-nums;
+}
+
+/* Bubble 內容容器 */
+.uag-bubble-content {
+  text-align: center;
+  line-height: 1.2;
+}
+
+/* Bubble ID/標籤 (例如 S-01, A-03) */
+.uag-bubble-id {
+  font-weight: 800;
+  font-size: 14px;
+}
+
+/* 雷達同心圓 */
+.uag-cluster-ring {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  border: 1px dashed var(--line-soft);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.uag-cluster-ring-outer {
+  width: 300px;
+  height: 300px;
+}
+
+.uag-cluster-ring-inner {
+  width: 150px;
+  height: 150px;
+}
+
 @keyframes float {
   0%,
   100% {
@@ -710,6 +887,15 @@
   }
   100% {
     box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+  }
+}
+@keyframes live-dot-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
   }
 }
 @keyframes skeleton {
@@ -1118,8 +1304,12 @@
 }
 @media (max-width: 768px) {
   .listing-item {
-    grid-template-columns: 72px 1fr;
+    grid-template-columns: 80px 1fr;
     padding: 10px 8px;
+  }
+  .l-thumb {
+    width: 80px;
+    height: 80px;
   }
 }
 
@@ -1332,7 +1522,7 @@
   justify-content: flex-end;
   gap: 16px;
   box-shadow: 0 -10px 30px rgba(15, 23, 42, 0.1);
-  z-index: 100;
+  z-index: var(--z-footer);
 }
 @media (max-width: 768px) {
   .uag-footer-bar {
@@ -1419,7 +1609,7 @@
 .modal-overlay {
   position: fixed;
   inset: 0;
-  z-index: 50;
+  z-index: var(--z-modal);
   display: flex;
   align-items: center;
   justify-content: center;

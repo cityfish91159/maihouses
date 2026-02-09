@@ -1,12 +1,10 @@
-import { FileText, Phone } from 'lucide-react';
-import { ContactModal, type ContactChannel } from '../../components/ContactModal';
+﻿import { ContactModal, type ContactChannel } from '../../components/ContactModal';
 import {
   CallConfirmPanel,
   LineLinkPanel,
   MobileActionBar,
   VipModal,
 } from '../../components/PropertyDetail';
-import { ReportGenerator } from '../Report';
 import type { PropertyData } from '../../services/propertyService';
 
 interface SocialProof {
@@ -19,7 +17,6 @@ interface SocialProof {
 
 interface MobileActionLayerProps extends SocialProof {
   isActionLocked: boolean;
-  onFloatingCallClick: () => void;
   onMobileLineClick: () => void;
   onMobileCallClick: () => void;
 }
@@ -56,12 +53,6 @@ interface VipLayerProps {
   vipReason: string;
 }
 
-interface ReportLayerProps {
-  showReportGenerator: boolean;
-  onOpenReportGenerator: () => void;
-  onCloseReportGenerator: () => void;
-}
-
 interface PropertyDetailActionLayerProps {
   property: PropertyData;
   agentId: string;
@@ -72,7 +63,6 @@ interface PropertyDetailActionLayerProps {
   callPanel: CallPanelLayerProps;
   contactModalLayer: ContactModalLayerProps;
   vipLayer: VipLayerProps;
-  reportLayer: ReportLayerProps;
 }
 
 export function PropertyDetailActionLayer({
@@ -85,19 +75,9 @@ export function PropertyDetailActionLayer({
   callPanel,
   contactModalLayer,
   vipLayer,
-  reportLayer,
 }: PropertyDetailActionLayerProps) {
   return (
     <>
-      <button
-        onClick={mobileActions.onFloatingCallClick}
-        aria-label="30秒回電"
-        className="fixed bottom-8 right-4 z-40 hidden size-16 flex-col items-center justify-center rounded-full bg-brand-700 text-xs font-bold text-white shadow-2xl transition-colors hover:bg-brand-600 motion-reduce:transition-none lg:flex"
-      >
-        <Phone size={22} />
-        <span className="mt-0.5 text-xs">30秒回電</span>
-      </button>
-
       <MobileActionBar
         onLineClick={mobileActions.onMobileLineClick}
         onCallClick={mobileActions.onMobileCallClick}
@@ -149,44 +129,6 @@ export function PropertyDetailActionLayer({
         onLineClick={vipLayer.onVipLineClick}
         onCallClick={vipLayer.onVipCallClick}
         reason={vipLayer.vipReason}
-      />
-
-      <button
-        onClick={reportLayer.onOpenReportGenerator}
-        aria-label="生成物件報告"
-        className="group fixed bottom-24 right-4 z-40 flex size-14 items-center justify-center rounded-full bg-gradient-to-br from-brand-700 to-brand-light text-white shadow-lg transition-all hover:shadow-xl motion-reduce:transition-none"
-        title="生成物件報告"
-      >
-        <FileText size={24} />
-        <span className="sr-only">生成物件報告</span>
-        <span
-          aria-hidden="true"
-          className="absolute right-full mr-3 hidden whitespace-nowrap rounded-lg bg-slate-800 px-3 py-1.5 text-sm font-medium text-white opacity-0 transition-opacity group-hover:opacity-100 sm:block"
-        >
-          生成報告
-        </span>
-      </button>
-
-      <ReportGenerator
-        property={{
-          id: property.id,
-          publicId: property.publicId,
-          title: property.title,
-          price: property.price,
-          address: property.address,
-          description: property.description,
-          images: property.images,
-          agent: {
-            id: property.agent.id,
-            name: property.agent.name,
-            avatarUrl: property.agent.avatarUrl,
-            company: property.agent.company,
-            trustScore: property.agent.trustScore,
-            reviewCount: property.agent.encouragementCount,
-          },
-        }}
-        isOpen={reportLayer.showReportGenerator}
-        onClose={reportLayer.onCloseReportGenerator}
       />
     </>
   );

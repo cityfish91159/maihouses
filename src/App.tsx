@@ -30,9 +30,10 @@ import { PropertyDetailPage } from './pages/PropertyDetailPage';
 import { PropertyUploadPage } from './pages/PropertyUploadPage';
 import PropertyListPage from './pages/PropertyListPage';
 import { PropertyEditPage } from './pages/PropertyEditPage';
-import { ReportPage } from './pages/Report';
+import NotFoundPage from './pages/NotFoundPage';
 import MusePage from './pages/Muse/MusePage';
 import GodView from './pages/Admin/GodView';
+import SharedReportPreviewPage from './pages/UAG/SharedReportPreviewPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -109,6 +110,14 @@ export default function App() {
                 element={
                   <ErrorBoundary>
                     <UAGProfilePage />
+                  </ErrorBoundary>
+                }
+              />
+              <Route
+                path="/share/report/:id"
+                element={
+                  <ErrorBoundary>
+                    <SharedReportPreviewPage />
                   </ErrorBoundary>
                 }
               />
@@ -248,14 +257,6 @@ export default function App() {
                   </ErrorBoundary>
                 }
               />
-              <Route
-                path="/r/:id"
-                element={
-                  <ErrorBoundary>
-                    <ReportPage />
-                  </ErrorBoundary>
-                }
-              />
               {/* 🔒 私密功能路由 - 僅在啟用時可見 */}
               {ENABLE_PRIVATE_FEATURES && (
                 <>
@@ -285,6 +286,14 @@ export default function App() {
                   />
                 </>
               )}
+              <Route
+                path="*"
+                element={
+                  <ErrorBoundary>
+                    <NotFoundPage />
+                  </ErrorBoundary>
+                }
+              />
             </Routes>
             {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}
             {config.devtools === '1' && <DevTools config={config} />}

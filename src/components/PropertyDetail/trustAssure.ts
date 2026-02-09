@@ -42,7 +42,7 @@ export function getTrustAssureCopy(scenario: TrustScenario): TrustAssureCopy {
 
 export function shouldAttachTrustAssureLeadNote(
   scenario: TrustScenario,
-  checked: boolean,
+  checked: boolean
 ): boolean {
   return (scenario === 'B' || scenario === 'D') && checked;
 }

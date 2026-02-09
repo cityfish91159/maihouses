@@ -97,6 +97,12 @@
   --transition-fast: 150ms ease;
   --transition-normal: 200ms ease;
   --transition-slow: 250ms ease;
+
+  /* Layering scale */
+  --z-layer-live: 10;
+  --z-layer-bubble: 10;
+  --z-layer-bubble-hover: 20;
+  --z-layer-sticky: 50;
 }
 
 /* ====== De-AI Page Base ====== */
@@ -117,7 +123,7 @@
 .deai-header {
   position: sticky;
   top: 0;
-  z-index: 50; /* ui-ux-pro-max: z-index scale 10 20 30 50 */
+  z-index: var(--z-layer-sticky); /* ui-ux-pro-max: z-index scale 10 20 30 50 */
   background: var(--swiss-white);
   border-bottom: 1px solid var(--swiss-gray-200);
   /* Swiss Style: Sharp shadow, no blur */
@@ -253,7 +259,7 @@
   color: var(--swiss-gray-700);
   box-shadow: var(--shadow-sharp-sm);
   border: 1px solid var(--swiss-gray-200);
-  z-index: 10;
+  z-index: var(--z-layer-live);
   display: flex;
   align-items: center;
   gap: var(--space-xs);
@@ -298,7 +304,7 @@
     transform var(--transition-normal),
     box-shadow var(--transition-normal),
     border-color var(--transition-normal);
-  z-index: 10;
+  z-index: var(--z-layer-bubble);
   /* Remove AI floating animation */
   animation: none;
 }
@@ -306,7 +312,7 @@
 /* ui-ux-pro-max: Visual feedback on interactive elements */
 .deai-bubble:hover {
   transform: scale(1.08);
-  z-index: 20;
+  z-index: var(--z-layer-bubble-hover);
   box-shadow: var(--shadow-sharp-lg);
   border-color: var(--brand-primary);
 }
@@ -643,7 +649,7 @@
   justify-content: flex-end;
   gap: var(--space-md);
   box-shadow: 0 -2px 4px rgba(0, 56, 90, 0.04);
-  z-index: 50;
+  z-index: var(--z-layer-sticky);
 }
 
 /* ====== Utility: No Animation ====== */

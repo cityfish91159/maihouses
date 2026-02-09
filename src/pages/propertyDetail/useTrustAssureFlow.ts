@@ -21,7 +21,11 @@ interface UseTrustAssureFlowOptions {
   }) => Promise<unknown>;
 }
 
-const trackChecked = (scenario: 'A' | 'B' | 'C' | 'D', panel: TrustAssurePanel, propertyId: string) => {
+const trackChecked = (
+  scenario: 'A' | 'B' | 'C' | 'D',
+  panel: TrustAssurePanel,
+  propertyId: string
+) => {
   void track('trust_assure_checked', { scenario, panel });
   logger.info('audit.trust_assure.checked', {
     scenario,
@@ -30,7 +34,11 @@ const trackChecked = (scenario: 'A' | 'B' | 'C' | 'D', panel: TrustAssurePanel, 
   });
 };
 
-const trackCreated = (scenario: 'A' | 'B' | 'C' | 'D', panel: TrustAssurePanel, propertyId: string) => {
+const trackCreated = (
+  scenario: 'A' | 'B' | 'C' | 'D',
+  panel: TrustAssurePanel,
+  propertyId: string
+) => {
   void track('trust_assure_created', {
     scenario,
     property_id: propertyId,
@@ -136,4 +144,3 @@ export function useTrustAssureFlow({
 
   return { handleTrustAssureAction };
 }
-

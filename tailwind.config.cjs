@@ -173,6 +173,8 @@
         'float-up': 'floatUp 3s ease-in-out infinite',
         /** 撒花動畫 - 慶祝特效 */
         confetti: 'confetti 1s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards',
+        /** 水平提示彈跳 - Gallery 右箭頭首次滑動提示 */
+        'hint-swipe': 'bounceX 0.4s ease-out 2',
       },
       /**
        * 🎬 Keyframes 定義 (SSOT - Single Source of Truth)
@@ -257,6 +259,11 @@
           '0%': { transform: 'scale(1)' },
           '50%': { transform: 'scale(0.95)' },
           '100%': { transform: 'scale(1)' },
+        },
+        /** 水平彈跳：Gallery 右箭頭滑動提示 */
+        bounceX: {
+          '0%, 100%': { transform: 'translateX(0)' },
+          '50%': { transform: 'translateX(-4px)' },
         },
       },
       zIndex: {

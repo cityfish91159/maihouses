@@ -3,6 +3,8 @@
 /* 容器 */
 .reportContainer {
   min-height: 400px;
+  --z-report-phone-notch: 10;
+  --z-report-hero-tag: 2;
 }
 
 /* 步驟通用 */
@@ -369,7 +371,7 @@
   height: 24px;
   background: #000;
   border-radius: 0 0 14px 14px;
-  z-index: 10;
+  z-index: var(--z-report-phone-notch);
 }
 
 .reportPhoneContent {
@@ -404,7 +406,7 @@
   border-radius: 4px;
   font-size: 10px;
   font-weight: 600;
-  z-index: 2;
+  z-index: var(--z-report-hero-tag);
 }
 
 .reportPreviewHeroImg {

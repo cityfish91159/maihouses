@@ -9,7 +9,7 @@
 } from './types/uag.types';
 
 // Mock IDs
-const MOCK_IDS = {
+export const MOCK_IDS = {
   // leads.id 是 UUID（來自 uag_lead_purchases.id）
   leads: {
     S5566: '173ba3ba-7796-409c-8516-730227843687',
@@ -153,7 +153,7 @@ export const MOCK_DB: AppData = {
       session_id: MOCK_IDS.sessions.A6600,
       property_id: MOCK_IDS.properties.presale,
       notification_status: 'pending',
-      // 待發送狀態：無 conversation_id，顯示「發送訊息」按鈕
+      conversation_id: 'mock-conv-A6600-001',
     },
 
     // 雷達：更多可購買的模擬圓點 (status = new)

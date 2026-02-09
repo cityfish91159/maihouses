@@ -14,7 +14,7 @@ export default function AssetMonitor({ leads, onSendMessage, onViewChat }: Asset
   const boughtLeads = leads.filter((l) => l.status === 'purchased');
 
   return (
-    <section className={`${styles['uag-card']} ${styles['k-span-6']}`}>
+    <section className={`${styles['uag-card']} ${styles['k-span-6']}`} id="asset-monitor-container">
       <div className={styles['uag-card-header']}>
         <div>
           <div className={styles['uag-card-title']}>已購客戶資產與保護監控</div>

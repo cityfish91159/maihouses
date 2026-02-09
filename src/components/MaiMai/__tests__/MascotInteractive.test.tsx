@@ -1,5 +1,5 @@
 ﻿import React from 'react';
-import { render, cleanup } from '@testing-library/react';
+import { act, cleanup, render } from '@testing-library/react';
 import MascotInteractive from '../../MascotInteractive';
 
 const mockFireConfetti = vi.fn();
@@ -49,7 +49,9 @@ describe('MascotInteractive confetti edge trigger', () => {
     expect(eventCount).toBe(1);
 
     // 等待冷卻（eventCelebrating 重置需要 2 秒），再進入 celebrate 會再觸發
-    vi.advanceTimersByTime(2100);
+    act(() => {
+      vi.advanceTimersByTime(2100);
+    });
     rerender(<MascotInteractive mood="celebrate" messages={['hi']} />);
     expect(mockFireConfetti).toHaveBeenCalledTimes(2);
     expect(eventCount).toBe(2);

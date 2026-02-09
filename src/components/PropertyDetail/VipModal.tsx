@@ -73,7 +73,7 @@ export const VipModal = memo(function VipModal({
         aria-modal="true"
         aria-labelledby={titleId}
         className={withMotionSafety(
-          'animate-in slide-in-from-bottom-8 max-h-[90vh] w-full max-w-sm overflow-y-auto rounded-t-2xl bg-white p-6 shadow-2xl duration-300 sm:zoom-in-95 sm:rounded-2xl',
+          'animate-in slide-in-from-bottom-8 sm:zoom-in-95 max-h-[90vh] w-full max-w-sm overflow-y-auto rounded-t-2xl bg-white p-6 shadow-2xl duration-300 sm:rounded-2xl',
           { animate: true }
         )}
       >
@@ -125,7 +125,7 @@ export const VipModal = memo(function VipModal({
             }}
             aria-label="立即加 LINE 諮詢"
             className={cn(
-              'flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--line-brand-green)] py-3 font-bold tracking-wide text-white shadow-lg shadow-green-500/20 duration-200 hover:bg-[var(--line-brand-green-hover)] active:scale-[0.98] motion-reduce:active:scale-100',
+              'flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--line-brand-green)] py-3 font-bold tracking-wide text-white shadow-lg shadow-green-500/20 duration-200 hover:bg-[var(--line-brand-green-hover)] focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 active:scale-[0.98] motion-reduce:active:scale-100',
               motionA11y.transitionAll
             )}
           >
@@ -141,7 +141,7 @@ export const VipModal = memo(function VipModal({
             }}
             aria-label="致電諮詢"
             className={cn(
-              'flex w-full items-center justify-center gap-2 rounded-xl bg-brand-700 py-3 font-bold tracking-wide text-white shadow-lg shadow-blue-900/20 duration-200 hover:bg-brand-600 active:scale-[0.98] motion-reduce:active:scale-100',
+              'flex w-full items-center justify-center gap-2 rounded-xl bg-brand-700 py-3 font-bold tracking-wide text-white shadow-lg shadow-blue-900/20 duration-200 hover:bg-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 active:scale-[0.98] motion-reduce:active:scale-100',
               motionA11y.transitionAll
             )}
           >
@@ -151,7 +151,10 @@ export const VipModal = memo(function VipModal({
 
           <button
             onClick={onClose}
-            className={cn('w-full py-2 text-sm text-slate-400 hover:text-slate-600', motionA11y.transitionColors)}
+            className={cn(
+              'w-full py-2 text-sm text-slate-400 hover:text-slate-600',
+              motionA11y.transitionColors
+            )}
           >
             稍後再說
           </button>

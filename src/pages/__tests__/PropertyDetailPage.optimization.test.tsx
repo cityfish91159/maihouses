@@ -300,7 +300,10 @@ describe('PropertyDetailPage - 優化驗證', () => {
         { input: 'agent-001', expected: 'agent-001' },
         { input: 'agent-test-123', expected: 'agent-test-123' }, // 支援連字號
         { input: 'mock-agent-001', expected: 'mock-agent-001' }, // #5 mock agent ID
-        { input: '550e8400-e29b-41d4-a716-446655440000', expected: '550e8400-e29b-41d4-a716-446655440000' }, // UUID
+        {
+          input: '550e8400-e29b-41d4-a716-446655440000',
+          expected: '550e8400-e29b-41d4-a716-446655440000',
+        }, // UUID
         { input: '  agent-123  ', expected: 'agent-123' }, // trim
       ];
 

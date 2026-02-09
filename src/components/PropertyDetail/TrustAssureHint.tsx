@@ -26,9 +26,7 @@ export const TrustAssureHint = memo(function TrustAssureHint({
     <div
       className={cn(
         'mt-4 rounded-lg border p-3',
-        copy.tone === 'brand'
-          ? 'border-brand-200 bg-brand-50'
-          : 'border-amber-200 bg-amber-50',
+        copy.tone === 'brand' ? 'border-brand-200 bg-brand-50' : 'border-amber-200 bg-amber-50',
         className
       )}
     >

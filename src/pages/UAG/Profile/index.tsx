@@ -24,10 +24,10 @@ export default function UAGProfilePage() {
     return (
       <div className="min-h-screen bg-slate-50">
         <div className="mx-auto max-w-5xl p-6">
-          <div className="h-6 w-40 animate-pulse rounded bg-slate-200" />
+          <div className="h-6 w-40 animate-pulse rounded bg-slate-200 motion-reduce:animate-none" />
           <div className="mt-6 grid gap-6 lg:grid-cols-[280px,1fr]">
-            <div className="h-40 animate-pulse rounded-2xl bg-white/60 sm:h-64" />
-            <div className="h-64 animate-pulse rounded-2xl bg-white/60 sm:h-96" />
+            <div className="h-40 animate-pulse rounded-2xl bg-white/60 motion-reduce:animate-none sm:h-64" />
+            <div className="h-64 animate-pulse rounded-2xl bg-white/60 motion-reduce:animate-none sm:h-96" />
           </div>
         </div>
       </div>

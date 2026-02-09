@@ -32,6 +32,7 @@ export function LineLinkPanel({
   const [trustChecked, setTrustChecked] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [fallbackLineId, setFallbackLineId] = useState('');
+  const [panelReady, setPanelReady] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
   const firstButtonRef = useRef<HTMLButtonElement>(null);
   const titleId = useId();
@@ -52,6 +53,12 @@ export function LineLinkPanel({
     setTrustChecked(false);
     setIsSubmitting(false);
     setFallbackLineId('');
+    setPanelReady(false);
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    setPanelReady(true);
   }, [isOpen]);
 
   useFocusTrap({
@@ -135,7 +142,13 @@ export function LineLinkPanel({
         aria-modal="true"
         aria-labelledby={titleId}
         style={lineBrandVars}
-        className="w-full max-w-md rounded-2xl bg-bg-card shadow-2xl"
+        className={cn(
+          'w-full max-w-md rounded-2xl bg-bg-card shadow-2xl',
+          'transform-gpu duration-200 ease-out',
+          motionA11y.transitionTransform,
+          motionA11y.transitionOpacity,
+          panelReady ? 'translate-y-0 opacity-100' : 'translate-y-6 opacity-0 sm:translate-y-2'
+        )}
       >
         {/* Header - LINE 品牌漸層 */}
         <div className="bg-gradient-to-r from-[var(--line-brand-green)] to-[var(--line-brand-green-hover)] p-4 text-white">

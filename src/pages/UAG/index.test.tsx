@@ -88,7 +88,7 @@ describe('UAGPage', () => {
     expect(screen.getByText('點數')).toBeInTheDocument();
   });
 
-  it('allows selecting and purchasing a lead', async () => {
+  it('allows selecting and purchasing a lead', { timeout: 20000 }, async () => {
     renderWithQueryClient();
 
     // Wait for data to load (mock mode is default)

@@ -122,8 +122,10 @@ export const CommunityReviews = memo(function CommunityReviews({
   const navigate = useNavigate();
   const [isVisible, setIsVisible] = useState(false);
   const useMockData = isDemo && !communityId;
-  const [totalReviews, setTotalReviews] = useState<number | null>(() => useMockData ? 12 : null);
-  const [reviewPreviews, setReviewPreviews] = useState<ReviewPreview[]>(() => useMockData ? MOCK_REVIEWS : []);
+  const [totalReviews, setTotalReviews] = useState<number | null>(() => (useMockData ? 12 : null));
+  const [reviewPreviews, setReviewPreviews] = useState<ReviewPreview[]>(() =>
+    useMockData ? MOCK_REVIEWS : []
+  );
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -271,7 +273,7 @@ export const CommunityReviews = memo(function CommunityReviews({
               <div className="absolute inset-0 flex items-end justify-center bg-gradient-to-b from-transparent via-white/80 to-white pb-3">
                 <button
                   onClick={handleAuthRedirect}
-                  className="flex min-h-[44px] items-center gap-2 rounded-full bg-brand-700 px-4 py-2 text-sm font-bold text-white shadow-lg transition-colors hover:bg-brand-600 focus:ring-2 focus:ring-brand-500"
+                  className="flex min-h-[44px] items-center gap-2 rounded-full bg-brand-700 px-4 py-2 text-sm font-bold text-white shadow-lg transition-colors hover:bg-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2"
                 >
                   <Lock size={14} />
                   {reviewButtonText}

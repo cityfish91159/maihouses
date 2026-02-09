@@ -86,6 +86,12 @@
   /* ui-ux-pro-max: Corporate Trust 字體 */
   --font-heading: 'Lexend', -apple-system, BlinkMacSystemFont, sans-serif;
   --font-body: 'Source Sans 3', -apple-system, BlinkMacSystemFont, 'Noto Sans TC', sans-serif;
+
+  /* Layering scale */
+  --z-layer-live: 10;
+  --z-layer-bubble: 10;
+  --z-layer-sticky: 50;
+  --z-layer-footer: 100;
 }
 
 /* ====== Page Base ====== */
@@ -104,7 +110,7 @@
 .deai-v2-header {
   position: sticky;
   top: 0;
-  z-index: 50;
+  z-index: var(--z-layer-sticky);
   background: #fff;
   border-bottom: 1px solid var(--border);
 }
@@ -333,7 +339,7 @@
   font-size: 12px;
   font-weight: 600;
   color: var(--text-muted);
-  z-index: 10;
+  z-index: var(--z-layer-live);
 }
 
 .deai-v2-live-dot {
@@ -361,7 +367,7 @@
   transition:
     border-color var(--transition-fast),
     box-shadow var(--transition-fast);
-  z-index: 10;
+  z-index: var(--z-layer-bubble);
 }
 
 /* ui-ux-pro-max: Micro-interactions - hover (50-100ms), subtle visual change */
@@ -660,7 +666,7 @@
   align-items: center;
   justify-content: flex-end;
   gap: 12px;
-  z-index: 100;
+  z-index: var(--z-layer-footer);
 }
 
 /* ui-ux-pro-max: Flat Design buttons */

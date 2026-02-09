@@ -16,4 +16,3 @@ describe('CommunityReviews motion a11y', () => {
     expect(skeleton?.className).toContain('motion-reduce:animate-none');
   });
 });
-

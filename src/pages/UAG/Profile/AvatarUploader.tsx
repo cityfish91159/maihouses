@@ -70,7 +70,7 @@ export const AvatarUploader: React.FC<AvatarUploaderProps> = ({
         </div>
         <button
           type="button"
-          className="rounded-full border border-slate-200 px-4 py-2 text-sm text-slate-600 hover:border-slate-300"
+          className="min-h-[44px] rounded-full border border-slate-200 px-4 py-2 text-sm text-slate-600 transition-colors hover:border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
           onClick={() => inputRef.current?.click()}
           disabled={isUploading}
           aria-label="上傳頭像"

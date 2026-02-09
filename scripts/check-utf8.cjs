@@ -51,6 +51,13 @@ for (const file of files) {
     const buf = readFileSync(file);
     decoder.decode(buf);
   } catch (err) {
+    if (err && typeof err === 'object' && 'code' in err) {
+      const errorCode = err.code;
+      if (errorCode === 'ENOENT' || errorCode === 'ENOTDIR') {
+        // File removed in working tree but still listed by git index before staging.
+        continue;
+      }
+    }
     invalid.push(file);
   }
 }

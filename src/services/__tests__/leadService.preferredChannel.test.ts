@@ -117,4 +117,3 @@ describe('leadService createLead preferredChannel', () => {
     expect(getRequestBody().needsDescription).toBe('只想了解管理費');
   });
 });
-

@@ -96,9 +96,7 @@ describe('MobileActionBar', () => {
   });
 
   it('未傳 socialProof 時應使用預設值', () => {
-    render(
-      <MobileActionBar onLineClick={vi.fn()} onCallClick={vi.fn()} trustEnabled={true} />
-    );
+    render(<MobileActionBar onLineClick={vi.fn()} onCallClick={vi.fn()} trustEnabled={true} />);
 
     expect(screen.getByText('0 人瀏覽中')).toBeInTheDocument();
   });

@@ -381,5 +381,3 @@ export const ContactModal: React.FC<ContactModalProps> = ({
 };
 
 export default ContactModal;
-
-

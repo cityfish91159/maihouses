@@ -370,7 +370,6 @@ describe('AgentTrustCard React.memo Performance', () => {
       expect(secondCard).toBe(firstCard);
     });
 
-
     it('應該在回調函數引用變化時仍能正確執行', () => {
       const agent = createMockAgent();
       let callCount = 0;

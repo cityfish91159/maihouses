@@ -78,7 +78,7 @@ const BasicInfoForm: React.FC<BasicInfoSectionProps> = ({ profile, isSaving, onS
         </div>
         <button
           type="submit"
-          className="min-h-[44px] w-full rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-300 sm:w-auto"
+          className="min-h-[44px] w-full rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:bg-slate-300 sm:w-auto"
           disabled={isSaving}
         >
           {isSaving ? '儲存中...' : '儲存變更'}
@@ -95,7 +95,7 @@ const BasicInfoForm: React.FC<BasicInfoSectionProps> = ({ profile, isSaving, onS
             type="text"
             value={name}
             onChange={(event) => setName(event.target.value)}
-            className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-slate-400"
+            className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none transition-colors focus:border-brand-500 focus:ring-2 focus:ring-brand-500 focus:ring-offset-1"
             placeholder="輸入姓名"
             required
             aria-required="true"
@@ -124,7 +124,7 @@ const BasicInfoForm: React.FC<BasicInfoSectionProps> = ({ profile, isSaving, onS
             inputMode="tel"
             value={phone}
             onChange={(event) => setPhone(event.target.value)}
-            className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-slate-400"
+            className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none transition-colors focus:border-brand-500 focus:ring-2 focus:ring-brand-500 focus:ring-offset-1"
             placeholder="0912-345-678"
             aria-label="手機號碼"
           />
@@ -139,7 +139,7 @@ const BasicInfoForm: React.FC<BasicInfoSectionProps> = ({ profile, isSaving, onS
             inputMode="text"
             value={lineId}
             onChange={(event) => setLineId(event.target.value)}
-            className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-slate-400"
+            className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none transition-colors focus:border-brand-500 focus:ring-2 focus:ring-brand-500 focus:ring-offset-1"
             placeholder="line-id"
             aria-label="LINE ID"
           />
@@ -154,7 +154,7 @@ const BasicInfoForm: React.FC<BasicInfoSectionProps> = ({ profile, isSaving, onS
             value={joinedAt}
             max={today}
             onChange={(event) => setJoinedAt(event.target.value)}
-            className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-slate-400"
+            className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none transition-colors focus:border-brand-500 focus:ring-2 focus:ring-brand-500 focus:ring-offset-1"
             aria-label="加入日期"
           />
         </div>
@@ -168,8 +168,9 @@ const BasicInfoForm: React.FC<BasicInfoSectionProps> = ({ profile, isSaving, onS
           id="agent-bio"
           value={bio}
           onChange={(event) => setBio(event.target.value)}
-          className="min-h-[120px] w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-slate-400"
+          className="min-h-[120px] w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none transition-colors focus:border-brand-500 focus:ring-2 focus:ring-brand-500 focus:ring-offset-1"
           placeholder="用 2-3 句話介紹自己"
+          maxLength={500}
           aria-label="自我介紹"
         />
       </div>

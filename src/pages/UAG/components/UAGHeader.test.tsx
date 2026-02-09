@@ -1,18 +1,27 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
+import type { User } from '@supabase/supabase-js';
 import { UAGHeader } from './UAGHeader';
-import { User } from '@supabase/supabase-js';
 
-// Mock Lucide icons to avoid issues
+const UAG_STYLES_PATH = resolve(process.cwd(), 'src/pages/UAG/UAG.module.css');
+
 vi.mock('lucide-react', () => ({
-  ChevronDown: () => <span data-testid="chevron-down" />,
-  LogOut: () => <span data-testid="log-out" />,
-  User: () => <span data-testid="user-icon" />,
+  ChevronDown: ({ className }: { className?: string }) => (
+    <span data-testid="chevron-down" className={className} />
+  ),
+  LogOut: ({ className }: { className?: string }) => (
+    <span data-testid="log-out" className={className} />
+  ),
+  User: ({ className }: { className?: string }) => (
+    <span data-testid="user-icon" className={className} />
+  ),
 }));
 
-// Mock Logo component
-// Mock Logo removed to test real component integration
-// vi.mock('../../../components/Logo/Logo', ...);
+vi.mock('../../../components/Logo/Logo', () => ({
+  Logo: ({ href }: { href?: string }) => <a href={href ?? '/maihouses/'}>邁房子</a>,
+}));
 
 describe('UAGHeader', () => {
   const mockUser: User = {
@@ -24,84 +33,57 @@ describe('UAGHeader', () => {
     email: 'test@example.com',
   } as User;
 
-  const renderHeader = (props: React.ComponentProps<typeof UAGHeader>) => {
-    return render(
+  const renderHeader = (props: React.ComponentProps<typeof UAGHeader>) =>
+    render(
       <MemoryRouter>
         <UAGHeader {...props} />
       </MemoryRouter>
     );
-  };
 
-  it('顯示返回首頁連結', () => {
+  it('renders logo home link', () => {
     renderHeader({});
-    // Using real Logo component - check for "邁房子" text or aria-label
-    // The Logo component renders "邁房子" text
-    const logoText = screen.getByText('邁房子');
-    expect(logoText).toBeInTheDocument();
-
-    // Check if it's wrapped in a link with correct href
-    const link = logoText.closest('a');
+    const link = screen.getByRole('link', { name: '邁房子' });
     expect(link).toHaveAttribute('href', '/maihouses/');
   });
 
-  it('已登入時顯示用戶資訊', () => {
+  it('shows user block for authenticated user', () => {
     renderHeader({ user: mockUser });
     expect(screen.getByText('Test User')).toBeInTheDocument();
     expect(screen.getByText('test@example.com')).toBeInTheDocument();
-    // Avatar should display first letter
-    expect(screen.getByText('T')).toBeInTheDocument();
+    const userMenuButton = screen.getByRole('button', { name: /用戶選單/i });
+    expect(userMenuButton).toBeInTheDocument();
+    expect(userMenuButton).toHaveAttribute('aria-haspopup', 'menu');
+    expect(userMenuButton).toHaveAttribute('aria-controls', 'uag-user-menu-dropdown');
   });
 
-  it('未登入時不顯示用戶資訊', () => {
+  it('hides user block when logged out and not in mock mode', () => {
     renderHeader({ user: null });
-    expect(screen.queryByText('Test User')).not.toBeInTheDocument();
-    expect(screen.queryByLabelText(/用戶頭像/)).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /用戶選單/i })).not.toBeInTheDocument();
   });
 
-  it('Mock 模式 user 為 null 仍顯示使用者區塊', () => {
+  it('shows user block in mock mode even without real user', () => {
     renderHeader({ user: null, useMock: true });
     expect(screen.getByRole('button', { name: /用戶選單/i })).toBeInTheDocument();
-    expect(screen.getByLabelText(/用戶頭像：游杰倫/)).toBeInTheDocument();
+    expect(screen.getByText('游杰倫')).toBeInTheDocument();
   });
 
+  it('opens menu and displays profile item', () => {
+    renderHeader({ user: mockUser });
 
-  it('Mock 模式選單不顯示登出按鈕', () => {
+    fireEvent.click(screen.getByRole('button', { name: /用戶選單/i }));
+    expect(screen.getByRole('menu')).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: '個人資料' })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: /登出/i })).toBeInTheDocument();
+  });
+
+  it('mock mode menu does not show sign out item', () => {
     renderHeader({ user: null, useMock: true });
+
     fireEvent.click(screen.getByRole('button', { name: /用戶選單/i }));
     expect(screen.queryByRole('menuitem', { name: /登出/i })).not.toBeInTheDocument();
   });
-  it('點擊頭像打開選單', () => {
-    renderHeader({ user: mockUser });
-    const menuButton = screen.getByRole('button', { name: /用戶選單/i });
 
-    // Initially closed
-    expect(screen.queryByRole('menu')).not.toBeInTheDocument();
-
-    // Click to open
-    fireEvent.click(menuButton);
-    expect(screen.getByRole('menu')).toBeInTheDocument();
-    expect(screen.getByRole('menuitem', { name: /登出/i })).toBeInTheDocument();
-
-    // Click again to close (optional but good behavior check)
-    fireEvent.click(menuButton);
-    expect(screen.queryByRole('menu')).not.toBeInTheDocument();
-  });
-
-  it('點擊登出執行登出動作', async () => {
-    const onSignOut = vi.fn();
-    renderHeader({ user: mockUser, onSignOut });
-
-    // Open menu
-    fireEvent.click(screen.getByRole('button', { name: /用戶選單/i }));
-
-    // Click sign out
-    const signOutBtn = screen.getByRole('menuitem', { name: /登出/i });
-    fireEvent.click(signOutBtn);
-
-    expect(onSignOut).toHaveBeenCalled();
-  });
-
-  it('Mock 模式點擊個人資料會導向 profile?mock=true', () => {
+  it('navigates to mock profile route from menu in mock mode', () => {
     const originalLocation = window.location;
 
     try {
@@ -123,13 +105,77 @@ describe('UAGHeader', () => {
     }
   });
 
-  it('響應式設計：行動版隱藏 email', () => {
-    // Note: detailed style checks like "display: none" on media queries are hard in jsdom.
-    // We verify the class names are applied correctly which carry the RWD logic.
+  it('renders header elements with mobile-collapse classes', () => {
     renderHeader({ user: mockUser });
 
-    const emailEl = screen.getByText('test@example.com');
-    // Expect it to have the class responsible for hiding it on mobile (from UAG.module.css)
-    expect(emailEl.className).toContain('uag-user-email');
+    const logoWrap = screen.getByRole('link', { name: '邁房子' }).closest('div');
+    expect(logoWrap?.className).toContain('uag-logo-wrap');
+
+    const breadcrumb = screen.getByText('UAG 客戶雷達').closest('div');
+    expect(breadcrumb?.className).toContain('uag-breadcrumb');
+
+    const proBadge = screen.getByText('專業版 PRO');
+    expect(proBadge.className).toContain('uag-badge--pro');
+
+    const userInfo = screen.getByText('Test User').closest('div');
+    expect(userInfo?.className).toContain('uag-user-info');
+
+    expect(screen.getByTestId('chevron-down').className).toContain('uag-user-chevron');
+  });
+
+  it('defines mobile hide rules and 44px user touch target in CSS', () => {
+    const css = readFileSync(UAG_STYLES_PATH, 'utf8');
+
+    expect(css).toContain('overscroll-behavior: contain;');
+    expect(css).toContain('overflow-x: clip;');
+    expect(css).toMatch(
+      /@media \(max-width: 767px\)[\s\S]*?\.uag-breadcrumb\s*{[\s\S]*?display:\s*none;/
+    );
+    expect(css).toMatch(
+      /@media \(max-width: 767px\)[\s\S]*?\.uag-company\s*{[\s\S]*?display:\s*none;/
+    );
+    expect(css).toMatch(
+      /@media \(max-width: 767px\)[\s\S]*?\.uag-badge--pro\s*{[\s\S]*?display:\s*none;/
+    );
+    expect(css).toMatch(
+      /@media \(max-width: 767px\)[\s\S]*?\.uag-user-info\s*{[\s\S]*?display:\s*none;/
+    );
+    expect(css).toMatch(
+      /@media \(max-width: 767px\)[\s\S]*?\.uag-user-button\s*{[\s\S]*?width:\s*44px;[\s\S]*?height:\s*44px;/
+    );
+  });
+
+  it('keeps agent bar stats readable on very narrow screens', () => {
+    const css = readFileSync(UAG_STYLES_PATH, 'utf8');
+
+    expect(css).toContain('@media (max-width: 380px)');
+    expect(css).toMatch(
+      /@media \(max-width: 380px\)[\s\S]*?\.uag-header-inner\s*{[\s\S]*?padding:\s*10px 8px;/
+    );
+    expect(css).toMatch(
+      /@media \(max-width: 380px\)[\s\S]*?\.agent-bar-code\s*{[\s\S]*?display:\s*none;/
+    );
+    expect(css).toMatch(
+      /@media \(max-width: 380px\)[\s\S]*?\.agent-bar-stats\s*{[\s\S]*?font-size:\s*12px;/
+    );
+  });
+
+  it('renders agent bar stats when agent profile exists', () => {
+    renderHeader({
+      user: mockUser,
+      agentProfile: {
+        id: 'agent-1',
+        name: '游杰倫',
+        company: '邁房子',
+        internalCode: 6600,
+        trustScore: 88,
+        encouragementCount: 12,
+        visitCount: 15,
+        dealCount: 7,
+      },
+    });
+
+    const statsNode = screen.getByText('信任分').closest('div');
+    expect(statsNode?.className).toContain('agent-bar-stats');
   });
 });

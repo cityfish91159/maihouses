@@ -38,7 +38,7 @@
 
 ### 待開發 — 功能移除（最優先）
 
-- [ ] **#17** [P0] 移除「生成報告」FAB +「30秒回電」浮動按鈕（6 項：17-A~F）
+- [x] **#17** [P0] 移除「生成報告」FAB +「30秒回電」浮動按鈕（6 項：17-A~F）✅ 2026-02-08
 
 ### 待開發 — 信任分 / 評價 / 鼓勵
 
@@ -61,12 +61,12 @@
 ### 待開發 — DetailPage 手機版 UX 修正（原 #9 拆分）
 
 - [x] **#9a** [P1] DetailPage A11y + 動畫修正（5 項：D3 VipModal focus trap + D4 VipModal 底部滑出 + D6 ActionBar ARIA + D7 CTA ARIA + D8 reduced-motion）✅ 2026-02-08
-- [ ] **#9b** [P1] DetailPage 排版 + 手勢修正（5 項：D5 社會證明 320px + D9 Panel 滑入動畫 + D10 金額字體 + D11 Gallery swipe + C3 iOS viewport）
+- [x] **#9b** [P1] DetailPage 排版 + 手勢修正（5 項：D5 社會證明 320px + D9 Panel 滑入動畫 + D10 金額字體 + D11 Gallery swipe + C3 iOS viewport）✅ 2026-02-09
 
 ### 待開發 — UAG 手機版 UX 修正（原 #9 拆分）
 
-- [ ] **#9c** [P1] UAG 觸控 + 排版修正（5 項：U1 Radar 觸控 + U2 z-index 統一 + U3 Header 手機精簡 + U4 字體過小 + U5 overscroll）
-- [ ] **#9d** [P1] UAG 列表 + Mock + 桌面版（3 項：U6 縮圖尺寸 + U10 Mock conversation_id + U12 桌面多列）
+- [x] **#9c** [P1] UAG 觸控 + 排版修正（5 項：U1 Radar 觸控 + U2 z-index 統一 + U3 Header 手機精簡 + U4 字體過小 + U5 overscroll）✅ 2026-02-09
+- [x] **#9d** [P1] UAG 列表 + Mock + 桌面版（3 項：U6 縮圖尺寸 + U10 Mock conversation_id + U12 桌面多列）✅ 2026-02-09
 
 ### 待開發 — UAG Radar 泡泡強化（原 #19 拆分）
 
@@ -976,12 +976,54 @@ npm run lint -- --format json
 
 ### 驗收標準
 
-- [ ] D5: 社會證明區 320px `flex-wrap` 不溢出
-- [ ] D9: Panel 有滑入動畫（200ms）
-- [ ] D10: 手機版金額副標題 `text-sm` 可讀
-- [ ] D11: Gallery 支援 swipe 手勢
-- [ ] C3: iOS viewport 使用 `dvh`
-- [ ] typecheck + lint 通過
+- [x] D5: 社會證明區 320px `flex-wrap` 不溢出
+- [x] D9: Panel 有滑入動畫（200ms）
+- [x] D10: 手機版金額副標題 `text-sm` 可讀
+- [x] D11: Gallery 支援 swipe 手勢
+- [x] C3: iOS viewport 使用 `dvh`
+- [x] typecheck + lint 通過
+
+### #9b 施工紀錄（2026-02-09）
+
+#### 修改檔案
+1. `src/components/PropertyDetail/LineLinkPanel.tsx`
+   - 新增 `panelReady` 狀態，開啟 panel 後套用 `translate-y-0` / `opacity-100` 進場態
+   - 補上 200ms 進場轉場：`duration-200 ease-out` + `transform-gpu`
+   - 套用 `motionA11y.transitionTransform` / `motionA11y.transitionOpacity`，維持 reduced-motion 相容（D9）
+
+2. `src/components/PropertyDetail/CallConfirmPanel.tsx`
+   - 與 LineLinkPanel 同步補齊 bottom-sheet 進場滑入動畫
+   - 保持 reduced-motion 對應 class，確保無障礙動作一致（D9）
+
+3. `src/components/PropertyDetail/PropertyGallery.tsx`
+   - 新增 `touchstart` / `touchmove` / `touchend` 手勢處理
+   - 加入 `SWIPE_THRESHOLD`（40px）避免誤觸切圖
+   - 支援左右滑動切換圖片，僅在索引變化時觸發 `onPhotoClick`（D11）
+
+4. `src/pages/PropertyDetailPage.tsx`
+   - 頁面根容器改為 `min-h-dvh`，改善 iOS Safari 動態視窗高度問題（C3）
+
+5. `src/components/PropertyDetail/PropertyInfoCard.tsx`
+   - 確認既有實作已符合 D5/D10：社會證明區 `flex-wrap`、價格副標題 `text-sm`，本次維持不變
+
+6. `src/components/PropertyDetail/__tests__/LineLinkPanel.test.tsx`
+   - 以 UTF-8 重寫測試內容，補上 panel 滑入動畫 class 驗證（D9）
+
+7. `src/components/PropertyDetail/__tests__/CallConfirmPanel.test.tsx`
+   - 以 UTF-8 重寫測試內容，補上 panel 滑入動畫 class 驗證（D9）
+
+8. `src/components/PropertyDetail/__tests__/PropertyGallery.motion.test.tsx`
+   - 以 UTF-8 重寫測試內容，新增 swipe 左右切圖驗證（D11）
+
+9. `src/pages/__tests__/PropertyDetailPage.viewport.test.tsx`
+   - 新增 `min-h-dvh` 回歸測試（C3）
+
+#### 驗證命令
+```bash
+npm run test -- src/components/PropertyDetail/__tests__/LineLinkPanel.test.tsx src/components/PropertyDetail/__tests__/CallConfirmPanel.test.tsx src/components/PropertyDetail/__tests__/PropertyGallery.motion.test.tsx src/pages/__tests__/PropertyDetailPage.viewport.test.tsx src/pages/__tests__/PropertyDetailPage.phase11.test.tsx
+npm run typecheck
+npm run lint -- --format json
+```
 
 ---
 
@@ -1046,12 +1088,68 @@ npm run lint -- --format json
 
 ### 驗收標準
 
-- [ ] U1: RadarCluster 數據點觸控目標 ≥ 44px
-- [ ] U2: z-index 統一使用 Tailwind scale 或常數檔
-- [ ] U3: 手機版 Header 只顯示 Logo + 頭像，麵包屑/PRO badge/用戶名稱 hidden，320px 無溢出
-- [ ] U4: Agent bar 字體手機版 ≥ 12px
-- [ ] U5: 有 `overscroll-behavior: contain`
-- [ ] typecheck + lint 通過
+- [x] U1: RadarCluster 數據點觸控目標 ≥ 44px
+- [x] U2: z-index 統一使用 Tailwind scale 或常數檔
+- [x] U3: 手機版 Header 只顯示 Logo + 頭像，麵包屑/PRO badge/用戶名稱 hidden，320px 無溢出
+- [x] U4: Agent bar 字體手機版 ≥ 12px
+- [x] U5: 有 `overscroll-behavior: contain`
+- [x] typecheck + lint 通過
+
+### #9c 施工紀錄（2026-02-09）
+
+#### 修改檔案
+1. `src/pages/UAG/UAG.module.css`
+   - 新增 UAG 專用 z-index token（`--z-*`）並套用到 Header、下拉選單、Bubble、Footer、Modal（U2）
+   - `uag-page` 新增 `overscroll-behavior: contain`、`overscroll-behavior-y: contain`、`overflow-x: clip` 與 `min-height: 100dvh`（U5）
+   - `uag-bubble` 新增 `min-width/min-height: 44px`，確保觸控目標下限（U1）
+   - 新增 `@media (max-width: 767px)`：隱藏 `uag-breadcrumb`、`uag-company`、`uag-badge--pro`、`uag-user-info`、`uag-user-chevron`，保留頭像操作區（U3）
+   - `agent-bar-stats` 手機字體調整為 `12px`，並在 `@media (max-width: 380px)` 保持 `12px` 不降級（U4）
+   - 新增 `uag-logo-wrap` 與 `@media (max-width: 380px)` 的 Header 壓縮規則（`uag-header-inner` padding、actions gap、logo scale），降低超窄螢幕擠壓風險（U3）
+   - 新增 `uag-cluster-live-badge`、`uag-live-dot` class，取代 RadarCluster inline z-index
+
+2. `src/pages/UAG/components/RadarCluster.tsx`
+   - 將 Live 監控 badge 改為 CSS class（移除 inline `zIndex: 5`）
+   - 保留 bubble role/button/keyboard 操作行為，配合 CSS 完成 U1 + U2
+
+3. `src/pages/UAG/components/UAGHeader.tsx`
+   - 使用 `pointerdown` 並僅在選單開啟時綁定外點關閉監聽，降低全域事件負擔
+   - 用戶選單按鈕補上 `aria-haspopup="menu"`、`aria-controls="uag-user-menu-dropdown"`（a11y）
+   - Logo 外層新增 `uag-logo-wrap`，提供超窄螢幕可控縮放掛載點
+
+4. `src/pages/UAG/components/UAGHeader.test.tsx`
+   - 以 UTF-8 重寫測試，補齊 Mock 模式、選單、行動版精簡相關 class 驗證（U3/U4）
+   - 補強 CSS 斷點驗證：`@media (max-width: 767px)` 隱藏規則 + `@media (max-width: 380px)` 字級下限驗證（U3/U4）
+   - 補強 a11y 與容器驗證：`aria-haspopup/aria-controls` + `uag-logo-wrap`
+
+5. `src/pages/UAG/components/RadarCluster.test.tsx`（新增）
+   - 驗證 bubble 觸控尺寸變數（F=60px、S=120px）與互動（click/Enter）
+   - 驗證 Live badge 使用新 class（U1/U2）
+   - 補強 `.uag-bubble` CSS 規則驗證：`min-width/min-height: 44px`（U1）
+
+6. `src/pages/UAG/components/__tests__/UAGHeader.responsive.test.tsx`
+   - 同步更新極窄螢幕（`max-width: 380px`）字級預期為 `12px`，避免 U4 回歸
+
+7. `src/pages/UAG/components/ReportGenerator/ReportGenerator.module.css`
+   - 補齊報告預覽區域 z-index token：`--z-report-phone-notch`、`--z-report-hero-tag`（U2 延伸補強）
+   - `reportPhoneNotch`、`reportPreviewHeroTag` 由數字 z-index 改為 token 引用
+
+8. `src/pages/UAG/UAG-deai-demo.module.css`
+   - 新增 `--z-layer-live`、`--z-layer-bubble`、`--z-layer-bubble-hover`、`--z-layer-sticky`
+   - Header、Live badge、Bubble、Footer 的 z-index 全部改為 token 引用，移除數字硬編碼（U2 延伸補強）
+
+9. `src/pages/UAG/UAG-deai-v2.module.css`
+   - 新增 `--z-layer-live`、`--z-layer-bubble`、`--z-layer-sticky`、`--z-layer-footer`
+   - Header、Live badge、Bubble、Footer 的 z-index 全部改為 token 引用，移除數字硬編碼（U2 延伸補強）
+
+#### 驗證命令
+```bash
+npm run test -- src/pages/UAG/components/UAGHeader.test.tsx src/pages/UAG/components/RadarCluster.test.tsx src/pages/UAG/index.test.tsx src/pages/UAG/components/__tests__/UAGHeader.responsive.test.tsx
+npm run test -- src/pages/UAG/__tests__/ticket9d-regression.test.ts
+npm run typecheck
+npm run lint
+npm run check:utf8
+rg -n "z-index\\s*:\\s*[0-9]+" src/pages/UAG -S
+```
 
 ---
 
@@ -1155,10 +1253,35 @@ npm run lint -- --format json
 
 ### 驗收標準
 
-- [ ] U6: Listing 縮圖手機版 80px
-- [ ] U10: Mock Lead A-6600 補齊 `conversation_id`
-- [ ] U12: Desktop ≥ 1280px 時組件並排
-- [ ] typecheck + lint 通過
+- [x] U6: Listing 縮圖手機版 80px
+- [x] U10: Mock Lead A-6600 補齊 `conversation_id`
+- [x] U12: Desktop ≥ 1280px 時組件並排
+- [x] typecheck + lint 通過
+
+### #9d 施工紀錄（2026-02-09）
+
+#### 修改檔案
+1. `src/pages/UAG/UAG.module.css`
+   - 新增 `@media (min-width: 1280px)`：`action-panel` 與 `asset-monitor` 改為 `span 3`，桌面版並排顯示（U12）
+   - 手機版 `listing-item` 欄寬改為 `80px + 1fr`，並將 `.l-thumb` 調整為 `80x80`（U6）
+
+2. `src/pages/UAG/components/AssetMonitor.tsx`
+   - 根節點 `<section>` 補上 `id="asset-monitor-container"`，提供桌面版 U12 佈局規則掛載點
+
+3. `src/pages/UAG/mockData.ts`
+   - A-6600 已購 Lead 補上 `conversation_id: 'mock-conv-A6600-001'`，使 Mock 與已購資料結構一致（U10）
+
+4. `src/pages/UAG/__tests__/ticket9d-regression.test.ts`（新增）
+   - 驗證 A-6600 已補齊 `conversation_id`
+   - 驗證 U12 桌面多列 CSS 規則存在
+   - 驗證 U6 手機縮圖 `80px` CSS 規則存在
+
+#### 驗證命令
+```bash
+npm run test -- src/pages/UAG/__tests__/ticket9d-regression.test.ts
+npm run typecheck
+npm run lint
+```
 
 ---
 
@@ -2859,16 +2982,56 @@ company: payload.company,
 
 ### 驗收標準
 
-- [ ] 詳情頁右下角不再顯示「30秒回電」浮動按鈕
-- [ ] 詳情頁右下角不再顯示「生成報告」FAB 按鈕
-- [ ] Mock 頁面（`/maihouses/property/MH-100001`）同步移除
-- [ ] 正式版頁面同步移除
-- [ ] `/r/:id` 路由移除（訪問返回 404）
-- [ ] `api/report/create` 端點移除
-- [ ] `api/report/track` 端點移除
-- [ ] UAG 後台 ReportGenerator 功能不受影響
-- [ ] `src/components/ReportPreview.tsx` 仍可正常被 UAG 使用
-- [ ] typecheck + lint 通過
+- [x] 詳情頁右下角不再顯示「30秒回電」浮動按鈕
+- [x] 詳情頁右下角不再顯示「生成報告」FAB 按鈕
+- [x] Mock 頁面（`/maihouses/property/MH-100001`）同步移除
+- [x] 正式版頁面同步移除
+- [x] `/r/:id` 路由移除（訪問返回 404）
+- [x] `api/report/create` 端點移除
+- [x] `api/report/track` 端點移除
+- [x] UAG 後台 ReportGenerator 功能不受影響
+- [x] `src/components/ReportPreview.tsx` 仍可正常被 UAG 使用
+- [x] typecheck + lint 通過
+
+### #17 施工紀錄（2026-02-08）
+
+#### 修改檔案
+1. `src/pages/PropertyDetailPage.tsx`
+   - 移除 `30秒回電` 浮動按鈕 JSX 與 `handleFloatingCallClick`
+   - 移除 `生成報告` FAB、`ReportGenerator` Modal、相關 state/import
+   - 保留既有 `MobileActionBar` / `MobileCTA` / `LineLinkPanel` / `CallConfirmPanel` 聯絡主流程
+
+2. `src/pages/propertyDetail/PropertyDetailActionLayer.tsx`
+   - 同步移除 `30秒回電` 按鈕、`生成報告` FAB、`ReportGenerator` 相關 props/JSX/import
+   - 以 UTF-8 重寫檔案，修正原有中文字亂碼內容
+
+3. `src/App.tsx`
+   - 刪除 `ReportPage` import
+   - 刪除 `/r/:id` Route
+
+4. `src/pages/Report/`（整個目錄）
+   - 刪除 `index.ts`
+   - 刪除 `ReportGenerator.tsx`
+   - 刪除 `ReportPage.tsx`
+   - 刪除 `types.ts`
+   - 刪除 `utils/dataAdapter.ts`
+
+5. `api/report/`
+   - 刪除 `create.ts`（`POST /api/report/create`）
+   - 刪除 `track.ts`（`POST /api/report/track`）
+
+6. `src/types/api.generated.ts`
+   - 移除 `/report/create`、`/report/track` 對應路徑型別，避免殘留過時 API 描述
+
+7. `src/pages/__tests__/PropertyDetailPage.phase11.test.tsx`
+   - 將原「30秒回電 reduced-motion」測試改為「不應渲染 30秒回電與生成報告浮動按鈕」回歸測試
+
+#### 驗證命令
+```bash
+npm run test -- src/pages/__tests__/PropertyDetailPage.phase11.test.tsx src/components/PropertyDetail/__tests__/MobileActionBar.test.tsx src/components/PropertyDetail/__tests__/MobileCTA.test.tsx
+npm run typecheck
+npm run lint -- --format json
+```
 
 ---
 
