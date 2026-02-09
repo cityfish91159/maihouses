@@ -32,9 +32,8 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
 BEGIN
-  IF NEW.status IN ('closed', 'completed')
-     AND COALESCE(OLD.status, '') NOT IN ('closed', 'completed')
-     AND NEW.agent_id ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$' THEN
+  IF NEW.status = 'closed'
+     AND (OLD.status IS DISTINCT FROM 'closed') THEN
     UPDATE public.agents
     SET completed_cases = COALESCE(completed_cases, 0) + 1
     WHERE id = NEW.agent_id::uuid;

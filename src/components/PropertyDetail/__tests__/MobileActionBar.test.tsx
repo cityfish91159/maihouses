@@ -18,6 +18,7 @@ describe('MobileActionBar', () => {
     expect(screen.getByRole('button', { name: '加 LINE 聊聊' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '致電諮詢' })).toBeInTheDocument();
     expect(screen.getByText('6 人瀏覽中')).toBeInTheDocument();
+    expect(screen.queryByText('認證經紀人')).not.toBeInTheDocument();
   });
 
   it('disables both buttons when action is locked', () => {

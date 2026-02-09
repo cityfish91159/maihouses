@@ -36,7 +36,7 @@ export const MobileActionBar = memo(function MobileActionBar({
   onCallClick,
   socialProof = { currentViewers: 0, trustCasesCount: 0, isHot: false },
   trustEnabled,
-  isVerified = true,
+  isVerified = false,
   isActionLocked = false,
 }: MobileActionBarProps) {
   const lineBrandVars = {

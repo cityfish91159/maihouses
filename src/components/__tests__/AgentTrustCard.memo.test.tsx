@@ -639,6 +639,16 @@ describe('AgentTrustCard React.memo Performance', () => {
       expect(screen.getByText('經紀人證照：(113)北市經紀字第004521號')).toBeInTheDocument();
     });
 
+    it('internalCode 非法且無證照時應顯示平台編號 fallback', () => {
+      const agent = createMockAgent({
+        licenseNumber: null,
+        internalCode: Number.NaN,
+      });
+      renderWithClient(<AgentTrustCard agent={agent} onLineClick={mockCallbacks.onLineClick} />);
+
+      expect(screen.getByText('平台編號：MH-未設定')).toBeInTheDocument();
+    });
+
     it('未認證時應顯示未認證標記', () => {
       const agent = createMockAgent({ isVerified: false });
       renderWithClient(<AgentTrustCard agent={agent} onLineClick={mockCallbacks.onLineClick} />);

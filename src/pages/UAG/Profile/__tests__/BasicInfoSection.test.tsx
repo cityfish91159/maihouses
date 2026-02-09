@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { BasicInfoSection } from './BasicInfoSection';
-import type { AgentProfileMe } from '../../../types/agent.types';
+import { BasicInfoSection } from '../BasicInfoSection';
+import type { AgentProfileMe } from '../../../../types/agent.types';
 
 function createProfile(overrides: Partial<AgentProfileMe> = {}): AgentProfileMe {
   return {

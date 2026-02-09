@@ -43,11 +43,18 @@ export const AgentTrustCard: React.FC<AgentTrustCardProps> = memo(function Agent
     retry: 1,
   });
 
+  const safeInternalCode = Number.isFinite(agent.internalCode)
+    ? Math.max(0, Math.trunc(agent.internalCode))
+    : null;
+
   // MVP: 後續改接 profile.isOnline API (#16)
   // 設計決策：MVP 階段使用模擬值，後端 API 完成後可替換為 profile.isOnline
   const isOnline = useMemo(() => {
-    return agent.internalCode % 10 > 3; // 約 70% 機率在線，對同一 agent 結果穩定
-  }, [agent.internalCode]);
+    if (safeInternalCode === null) {
+      return false;
+    }
+    return safeInternalCode % 10 > 3; // 約 70% 機率在線，對同一 agent 結果穩定
+  }, [safeInternalCode]);
   const trustScore = profile?.trustScore ?? agent.trustScore;
   const encouragementCount = profile?.encouragementCount ?? agent.encouragementCount;
   const displayName = profile?.name ?? agent.name;
@@ -55,7 +62,8 @@ export const AgentTrustCard: React.FC<AgentTrustCardProps> = memo(function Agent
   const displayCompany = profile?.company ?? agent.company ?? '邁房子';
   const licenseNumber = isDemo ? null : (profile?.licenseNumber ?? agent.licenseNumber ?? null);
   const isVerified = isDemo ? true : (profile?.isVerified ?? agent.isVerified ?? false);
-  const platformCode = `MH-${String(agent.internalCode).padStart(5, '0')}`;
+  const platformCode =
+    safeInternalCode === null ? 'MH-未設定' : `MH-${String(safeInternalCode).padStart(5, '0')}`;
 
   const lineBrandVars = {
     '--line-brand-green': LINE_BRAND_GREEN,
