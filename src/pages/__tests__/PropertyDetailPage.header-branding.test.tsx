@@ -209,7 +209,8 @@ describe('PropertyDetailPage header branding (#11)', () => {
 
   it('resolves back target correctly for both history branches', () => {
     expect(resolvePropertyDetailBackTarget(1)).toBe('/maihouses/');
-    expect(resolvePropertyDetailBackTarget(2)).toBe(-1);
+    expect(resolvePropertyDetailBackTarget(2)).toBe('/maihouses/');
+    expect(resolvePropertyDetailBackTarget(3)).toBe(-1);
   });
 
   it('has no horizontal overflow on 320px viewport', async () => {
