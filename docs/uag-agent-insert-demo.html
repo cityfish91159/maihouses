@@ -1,0 +1,420 @@
+﻿<!doctype html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>UAG 房仲資訊插入 Demo</title>
+    <style>
+      /*
+    ========================================
+    設計來源標註
+    ========================================
+
+    1. 色彩系統 - src/index.css
+       --brand: #00385a (深藍)
+       --brand-light: #009fe8
+       --text-primary: #0a2246
+       --text-secondary: #526070
+       --bg-page: #eef2f7
+       --border: #e6edf7
+       --success: #0f6a23
+
+    2. 風格參考 - UI/UX Pro Max (styles.csv)
+       Dimensional Layering:
+       - Neutral base + brand accent
+       - box-shadow elevation (4 levels)
+       - Best for: Dashboards, card layouts, SaaS
+
+    3. 產品類型 - UI/UX Pro Max (products.csv)
+       Analytics Dashboard:
+       - Minimalism secondary style
+       - Data-Dense layout
+
+    4. 間距系統 - 現有 UAG.module.css
+       Mobile: padding 16px, gap 16px
+       Cards: padding 24px desktop, 16px mobile
+
+    5. 房仲資訊插入位置決策：
+       UAG 組件優先順序（最重要→最不重要）：
+       1. RadarCluster（雷達）← 最重要
+       2. ActionPanel（購買面板）
+       3. AssetMonitor（已購資產）
+       4. ListingFeed（房源列表）
+       5. ReportGenerator
+       6. TrustFlow
+
+       房仲資訊不重要 → 不應佔用主要視覺空間
+       建議：整合進 Header 區域，不新增獨立卡片
+    ========================================
+    */
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      :root {
+        /* 品牌色 - 來自 src/index.css */
+        --brand: #00385a;
+        --brand-light: #009fe8;
+        --brand-600: #004e7c;
+        --text-primary: #0a2246;
+        --text-secondary: #526070;
+        --text-muted: #6c7b91;
+        --bg-page: #eef2f7;
+        --bg-card: #ffffff;
+        --border: #e6edf7;
+        --success: #0f6a23;
+        --line-soft: #e2e8f0;
+
+        /* UAG 現有變數 */
+        --grade-s: #ea580c;
+        --grade-a: #16a34a;
+
+        /* 間距 */
+        --space-2: 8px;
+        --space-3: 12px;
+        --space-4: 16px;
+
+        /* 圓角 */
+        --radius-md: 10px;
+        --radius-lg: 16px;
+
+        /* 字體 */
+        --font: -apple-system, BlinkMacSystemFont, 'Inter', 'Noto Sans TC', sans-serif;
+      }
+
+      body {
+        font-family: var(--font);
+        background: var(--bg-page);
+        color: var(--text-primary);
+        line-height: 1.5;
+        max-width: 430px;
+        margin: 0 auto;
+        min-height: 100vh;
+      }
+
+      /* ========================================
+       UAG Header（含房仲資訊整合）
+       設計原則：房仲資訊不重要，整合進 Header
+       不佔用雷達下方的主要視覺空間
+    ======================================== */
+      .uag-header {
+        position: sticky;
+        top: 0;
+        z-index: 50;
+        background: rgba(255, 255, 255, 0.96);
+        backdrop-filter: blur(14px);
+        border-bottom: 1px solid var(--line-soft);
+        box-shadow: 0 4px 12px rgba(0, 56, 90, 0.06);
+      }
+
+      /* Header 主區（Logo + 統計）*/
+      .header-main {
+        padding: 10px var(--space-4);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--space-3);
+      }
+
+      .logo {
+        font-size: 14px;
+        font-weight: 800;
+        color: var(--brand);
+      }
+
+      .header-stats {
+        display: flex;
+        gap: 6px;
+        font-size: 11px;
+      }
+
+      .stat-chip {
+        padding: 4px 8px;
+        background: rgba(0, 56, 90, 0.08);
+        color: var(--brand);
+        border-radius: 6px;
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+      }
+
+      /* Header 房仲資訊條（緊湊版）*/
+      .agent-bar {
+        padding: 8px var(--space-4);
+        background: linear-gradient(90deg, rgba(0, 56, 90, 0.03), transparent);
+        border-top: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        gap: var(--space-3);
+      }
+
+      .agent-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: var(--brand);
+        color: #fff;
+        display: grid;
+        place-items: center;
+        font-size: 13px;
+        font-weight: 700;
+        flex-shrink: 0;
+      }
+
+      .agent-info {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .agent-name-row {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--text-primary);
+      }
+
+      .agent-code {
+        font-size: 11px;
+        color: var(--brand);
+        font-weight: 600;
+      }
+
+      .agent-stats-row {
+        display: flex;
+        gap: var(--space-3);
+        font-size: 11px;
+        color: var(--text-secondary);
+        margin-top: 2px;
+      }
+
+      .agent-stat strong {
+        color: var(--text-primary);
+        font-weight: 700;
+        margin-right: 2px;
+      }
+
+      .agent-stat.trust strong {
+        color: var(--success);
+      }
+
+      /* ========================================
+       UAG 內容區（保持原有結構）
+    ======================================== */
+      .uag-content {
+        padding: var(--space-4);
+        padding-bottom: 80px;
+      }
+
+      .uag-card {
+        background: var(--bg-card);
+        border-radius: var(--radius-lg);
+        padding: var(--space-4);
+        margin-bottom: var(--space-4);
+        border: 1px solid var(--border);
+        box-shadow: 0 4px 12px rgba(0, 56, 90, 0.04);
+      }
+
+      .card-title {
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--text-secondary);
+        margin-bottom: var(--space-3);
+        padding-left: 10px;
+        border-left: 3px solid var(--brand);
+      }
+
+      /* Radar 區（最重要）*/
+      .radar-placeholder {
+        background: linear-gradient(135deg, #f0f7ff, #e6f0fa);
+        border: 2px dashed var(--brand);
+        border-radius: var(--radius-lg);
+        min-height: 280px;
+        display: grid;
+        place-items: center;
+        color: var(--brand);
+        font-size: 14px;
+        font-weight: 700;
+      }
+
+      /* Action Panel */
+      .action-panel {
+        background: #fff8f0;
+        border: 1px solid #fed7aa;
+        border-radius: var(--radius-md);
+        padding: var(--space-3);
+      }
+
+      .action-info {
+        font-size: 12px;
+        color: #9a3412;
+        margin-bottom: var(--space-3);
+      }
+
+      .action-btn {
+        width: 100%;
+        padding: var(--space-3);
+        background: var(--brand);
+        color: #fff;
+        border: none;
+        border-radius: var(--radius-md);
+        font-size: 14px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      /* Asset Monitor */
+      .asset-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: var(--space-3) 0;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .asset-item:last-child {
+        border-bottom: none;
+      }
+
+      .asset-name {
+        font-size: 13px;
+        font-weight: 600;
+      }
+
+      .asset-time {
+        font-size: 11px;
+        color: var(--text-muted);
+      }
+
+      .grade-badge {
+        padding: 2px 8px;
+        border-radius: 999px;
+        font-size: 10px;
+        font-weight: 700;
+        color: #fff;
+      }
+
+      .grade-s {
+        background: var(--grade-s);
+      }
+      .grade-a {
+        background: var(--grade-a);
+      }
+
+      /* Footer */
+      .uag-footer {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        max-width: 430px;
+        margin: 0 auto;
+        background: rgba(255, 255, 255, 0.96);
+        backdrop-filter: blur(10px);
+        border-top: 1px solid var(--line-soft);
+        padding: 10px var(--space-4);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 11px;
+        color: var(--text-muted);
+      }
+    </style>
+  </head>
+  <body>
+    <!-- UAG Header（含房仲資訊整合）-->
+    <div class="uag-header">
+      <!-- 主區：Logo + 統計 -->
+      <div class="header-main">
+        <div class="logo">邁房子 UAG</div>
+        <div class="header-stats">
+          <div class="stat-chip">1,250 點</div>
+          <div class="stat-chip">S: 3</div>
+        </div>
+      </div>
+
+      <!-- 房仲資訊條（緊湊版，整合進 Header）-->
+      <div class="agent-bar">
+        <div class="agent-avatar">王</div>
+        <div class="agent-info">
+          <div class="agent-name-row">
+            王小明
+            <span class="agent-code">#12345</span>
+          </div>
+          <div class="agent-stats-row">
+            <span class="agent-stat trust"><strong>92</strong> 信任分</span>
+            <span class="agent-stat"><strong>45</strong> 帶看</span>
+            <span class="agent-stat"><strong>8</strong> 成交</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- UAG 內容區 -->
+    <div class="uag-content">
+      <!-- [1] RadarCluster（最重要）-->
+      <div class="uag-card">
+        <div class="card-title">精準導客雷達</div>
+        <div class="radar-placeholder">
+          RadarCluster 組件<br />
+          （UAG 最重要的區塊）
+        </div>
+      </div>
+
+      <!-- [2] ActionPanel -->
+      <div class="action-panel">
+        <div class="action-info">選中：訪客-S01 (S級) · 意向 95% · 成本 500 點</div>
+        <button class="action-btn">購買聯絡權限</button>
+      </div>
+
+      <!-- [3] AssetMonitor -->
+      <div class="uag-card" style="margin-top: 16px">
+        <div class="card-title">已購客戶資產</div>
+
+        <div class="asset-item">
+          <div>
+            <div class="asset-name">訪客-A03</div>
+            <div class="asset-time">剩餘 31.2h / 48h</div>
+          </div>
+          <span class="grade-badge grade-a">A</span>
+        </div>
+
+        <div class="asset-item">
+          <div>
+            <div class="asset-name">訪客-S02</div>
+            <div class="asset-time">剩餘 30.5h / 72h</div>
+          </div>
+          <span class="grade-badge grade-s">S</span>
+        </div>
+      </div>
+
+      <!-- [4] ListingFeed（簡化展示）-->
+      <div class="uag-card">
+        <div class="card-title">我的房源</div>
+
+        <div class="asset-item">
+          <div>
+            <div class="asset-name">台北市大安區豪宅</div>
+            <div class="asset-time">45 瀏覽 · 12 收藏</div>
+          </div>
+        </div>
+
+        <div class="asset-item">
+          <div>
+            <div class="asset-name">新北市永和區公寓</div>
+            <div class="asset-time">28 瀏覽 · 5 收藏</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="uag-footer">
+      <span>v2.0</span>
+      <span>Mock Mode</span>
+    </div>
+  </body>
+</html>

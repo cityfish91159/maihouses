@@ -86,6 +86,8 @@ const MockProperties = {
         trust_score: 92,
         encouragement_count: 156,
       },
+      // 安心留痕服務狀態
+      trust_enabled: true,
       // 顯示用標籤
       badge: '熱門社區',
       is_featured: true,

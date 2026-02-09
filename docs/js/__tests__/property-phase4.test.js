@@ -19,10 +19,19 @@ function buildFeatured(title) {
         details: ['detail'],
         highlights: '亮點',
         rating: '4.0',
-        reviews: [],
+        reviews: [
+          {
+            avatar: 'A',
+            name: 'User',
+            role: 'Buyer',
+            tags: ['Verified'],
+            text: 'Good',
+          },
+        ],
         lockCount: 1,
         price: '100 萬',
         size: '10 坪',
+        tags: ['捷運宅', '景觀'],
       },
       sideTop: {
         badge: '側上',
@@ -35,6 +44,7 @@ function buildFeatured(title) {
         lockCount: 1,
         price: '100 萬',
         size: '10 坪',
+        tags: ['新成屋'],
       },
       sideBottom: {
         badge: '側下',
@@ -47,10 +57,27 @@ function buildFeatured(title) {
         lockCount: 1,
         price: '100 萬',
         size: '10 坪',
+        tags: ['低總價'],
       },
     },
     listings: [],
   };
+}
+
+function buildListings(count = 1) {
+  return Array.from({ length: count }, (_, i) => ({
+    id: `list-${i}`,
+    image: `https://example.com/list-${i}.jpg`,
+    title: `Listing ${i}`,
+    location: '📍 Location',
+    details: ['Detail'],
+    rating: '4.5',
+    reviews: [],
+    lockCount: 5,
+    price: '500 萬',
+    size: '20 坪',
+    tags: ['精選'],
+  }));
 }
 
 describe('PropertyAPI race protection', () => {

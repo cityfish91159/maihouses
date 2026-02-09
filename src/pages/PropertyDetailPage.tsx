@@ -1,11 +1,12 @@
 ﻿import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { useParams, useSearchParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { Home, Hash, ArrowLeft } from 'lucide-react';
+import { Hash, ArrowLeft } from 'lucide-react';
 import { AgentTrustCard } from '../components/AgentTrustCard';
 import { TrustBadge } from '../components/TrustBadge';
 import { TrustServiceBanner } from '../components/TrustServiceBanner';
+import { Logo } from '../components/Logo/Logo';
 import ErrorBoundary from '../app/ErrorBoundary';
 import { propertyService, DEFAULT_PROPERTY, PropertyData } from '../services/propertyService';
 import { ContactModal, type ContactChannel } from '../components/ContactModal';
@@ -49,6 +50,9 @@ import {
 const FALLBACK_IMAGE =
   'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80';
 
+export const resolvePropertyDetailBackTarget = (historyLength: number): number | string =>
+  historyLength > 1 ? -1 : '/maihouses/';
+
 /**
  * 房源詳情頁面
  *
@@ -66,6 +70,7 @@ const FALLBACK_IMAGE =
  */
 export const PropertyDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [isFavorite, setIsFavorite] = useState(false);
   const { isAuthenticated, user, session } = useAuth();
@@ -461,6 +466,15 @@ export const PropertyDetailPage: React.FC = () => {
     openCallPanel('mobile_bar');
   }, [openCallPanel]);
 
+  const handleBackClick = useCallback(() => {
+    const backTarget = resolvePropertyDetailBackTarget(window.history.length);
+    if (typeof backTarget === 'number') {
+      navigate(backTarget);
+      return;
+    }
+    navigate(backTarget);
+  }, [navigate]);
+
   const handleLineFallbackContact = useCallback(
     (trustAssureChecked: boolean) => {
       openContactModal(linePanelSource, 'line', shouldAttachContactTrustAssure(trustAssureChecked));
@@ -539,27 +553,25 @@ export const PropertyDetailPage: React.FC = () => {
     <ErrorBoundary>
       <div className="min-h-dvh bg-[#f8fafc] font-sans text-slate-800">
         {/* Header */}
-        <nav className="sticky top-0 z-overlay flex h-16 items-center justify-between border-b border-slate-100 bg-white/90 px-4 shadow-sm backdrop-blur-md">
-          <div className="flex items-center gap-3">
+        <nav
+          aria-label="物件導覽"
+          className="sticky top-0 z-overlay flex h-16 items-center border-b border-brand-100 bg-white/90 px-4 shadow-sm backdrop-blur-md"
+        >
+          <div className="flex min-w-0 items-center gap-2.5">
             <button
-              aria-label="返回"
-              className="min-h-[44px] min-w-[44px] rounded-full p-2 transition-colors hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 active:bg-slate-200"
+              type="button"
+              onClick={handleBackClick}
+              aria-label="返回上一頁"
+              className="min-h-[44px] min-w-[44px] rounded-full p-2.5 transition-colors hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 active:bg-slate-200"
             >
               <ArrowLeft size={20} className="text-slate-600" />
             </button>
-            <div className="flex items-center gap-2 text-xl font-extrabold text-brand-700">
-              <div className="flex size-8 items-center justify-center rounded-lg bg-gradient-to-br from-brand-700 to-brand-light text-white">
-                <Home size={18} />
-              </div>
-              邁房子
-            </div>
-          </div>
-
-          {/* 僅顯示公開編號 */}
-          <div className="flex items-center rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 font-mono text-xs text-slate-500">
-            <Hash size={12} className="mr-1 text-gray-400" />
-            編號：
-            <span className="ml-1 font-bold text-brand-700">{property.publicId}</span>
+            <Logo
+              showSlogan={false}
+              showBadge={true}
+              href="/maihouses/"
+              ariaLabel="回到邁房子首頁"
+            />
           </div>
         </nav>
 
@@ -615,6 +627,16 @@ export const PropertyDetailPage: React.FC = () => {
         )}
 
         <main className="mx-auto max-w-4xl p-4 pb-24">
+          <div
+            role="status"
+            aria-label={`物件編號 ${property.publicId}`}
+            className="mb-3 inline-flex items-center rounded-lg border border-brand-100 bg-brand-50 px-3 py-1.5 font-mono text-sm text-brand-700"
+          >
+            <Hash size={14} className="mr-1 text-brand-500" />
+            編號：
+            <span className="ml-1 font-bold text-brand-700">{property.publicId}</span>
+          </div>
+
           {/* 優化方案 1: 使用拆分的 PropertyGallery 組件 */}
           <PropertyGallery
             images={property.images || []}

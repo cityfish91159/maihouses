@@ -55,7 +55,7 @@
 
 ### 待開發 — Header / 品牌 / MaiMai
 
-- [ ] **#11** [P1] 詳情頁 Header 品牌統一（5 項：11-A Logo + 11-B 返回 + 11-C token + 11-D a11y + 11-E 手機版微調）
+- [x] **#11** [P1] 詳情頁 Header 品牌統一（5 項：11-A Logo + 11-B 返回 + 11-C token + 11-D a11y + 11-E 手機版微調）✅ 2026-02-09
 - [ ] **#18** [P1] 詳情頁 MaiMai 公仔 A+C+D（3 項：18-A 右欄 + 18-B 歡迎語 + 18-C 狀態替換）
 
 ### 待開發 — DetailPage 手機版 UX 修正（原 #9 拆分）
@@ -1385,14 +1385,37 @@ npm run lint
 
 ### 驗收標準
 
-- [ ] 詳情頁 Logo 與首頁視覺一致（42x42 icon、serif 字體、badge、hover shine 效果）
-- [ ] 點擊 Logo 導向 `/maihouses/`
-- [ ] 返回按鈕有 `onClick`，有瀏覽歷史回上頁，無歷史回首頁
-- [ ] 無硬編碼 `#003366` / `#00A8E8`，全部使用 design token
-- [ ] `aria-label` 完整（返回按鈕、Logo、nav、物件編號）
-- [ ] 物件編號在 Gallery 上方（非 Header 內），手機桌面皆可見
-- [ ] 手機版 320px 無溢出
-- [ ] typecheck + lint 通過
+- [x] 詳情頁 Logo 與首頁視覺一致（42x42 icon、serif 字體、badge、hover shine 效果）
+- [x] 點擊 Logo 導向 `/maihouses/`
+- [x] 返回按鈕有 `onClick`，有瀏覽歷史回上頁，無歷史回首頁
+- [x] 無硬編碼 `#003366` / `#00A8E8`，全部使用 design token
+- [x] `aria-label` 完整（返回按鈕、Logo、nav、物件編號）
+- [x] 物件編號在 Gallery 上方（非 Header 內），手機桌面皆可見
+- [x] 手機版 320px 無溢出
+- [x] typecheck + lint 通過
+
+### #11 施工紀錄（2026-02-09）
+
+#### 修改檔案
+1. `src/pages/PropertyDetailPage.tsx`
+   - Header Logo 改為共用 `<Logo showSlogan={false} showBadge={true} href="/maihouses/" ariaLabel="回到邁房子首頁" />`（11-A）
+   - 返回按鈕新增 `onClick`，使用 `resolvePropertyDetailBackTarget(window.history.length)` 決定 `navigate(-1)` 或 `navigate('/maihouses/')`，並補 `aria-label="返回上一頁"`（11-B）
+   - Header border 改為 `border-brand-100`，移除手刻 logo 區塊（11-C）
+   - `<nav>` 新增 `aria-label="物件導覽"`；物件編號改為 `role="status"` 並補 `aria-label`（11-D）
+   - 物件編號由 Header 移至 `main` 內容區、Gallery 上方；返回按鈕 `p-2.5` 確保 touch target（11-E）
+   - 新增 `resolvePropertyDetailBackTarget` 匯出函式，確保返回邏輯可測試與可維護
+
+2. `src/pages/__tests__/PropertyDetailPage.header-branding.test.tsx`（新增）
+   - 新增 #11 回歸測試：品牌化 Logo 連結、nav a11y、物件編號位置、返回按鈕導頁
+   - 補 `resolvePropertyDetailBackTarget` 的雙分支測試（有歷史/無歷史）
+
+#### 驗證命令
+```bash
+npm run test -- src/pages/__tests__/PropertyDetailPage.header-branding.test.tsx src/pages/__tests__/PropertyDetailPage.phase11.test.tsx
+npm run typecheck
+npm run lint
+npm run check:utf8
+```
 
 ---
 

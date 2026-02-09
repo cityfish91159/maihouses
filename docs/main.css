@@ -7,11 +7,11 @@
    CSS Variables - 設計令牌
    ======================================== */
 :root {
-  /* Brand Colors - 統一使用原版色碼 */
-  --brand-primary: #1a5fdb;
-  --brand-primary-light: #6aa4ff;
-  --brand-primary-dark: #0d3399;
-  --brand-primary-rgb: 26, 95, 219;
+  /* Brand Colors - 統一使用 React 主色 #00385a */
+  --brand-primary: #00385a;
+  --brand-primary-light: #004e7c;
+  --brand-primary-dark: #002840;
+  --brand-primary-rgb: 0, 56, 90;
 
   /* Neutral Colors */
   --neutral-50: #f6f9ff; /* 背景 */
