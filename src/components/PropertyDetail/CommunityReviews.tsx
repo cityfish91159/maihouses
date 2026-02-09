@@ -146,7 +146,6 @@ export const CommunityReviews = memo(function CommunityReviews({
   const [reviewPreviews, setReviewPreviews] = useState<ReviewPreview[]>(() =>
     useMockData ? MOCK_REVIEWS : []
   );
-  const [likeBusy, setLikeBusy] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -276,9 +275,9 @@ export const CommunityReviews = memo(function CommunityReviews({
                     <div className="mt-2 flex items-center gap-1">
                       <button
                         onClick={() => handleToggleLike(review.propertyId)}
-                        disabled={!isLoggedIn || likeBusy}
+                        disabled={!isLoggedIn}
                         aria-label={`鼓勵這則評價${review.liked ? '（已鼓勵）' : ''}`}
-                        className={`inline-flex min-h-[44px] items-center gap-1 rounded-full px-2 py-0.5 text-xs transition-colors ${
+                        className={`inline-flex min-h-[44px] items-center gap-1 rounded-full px-2 py-0.5 text-xs transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 ${
                           review.liked
                             ? 'bg-brand-50 font-medium text-brand-700'
                             : 'bg-bg-base text-text-muted hover:bg-brand-50 hover:text-brand-600'

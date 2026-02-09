@@ -109,8 +109,7 @@ export function useCommunityReviewLike() {
         queryClient.setQueryData(context.key, context.previous);
       }
     },
-    onSuccess: (data, propertyId) => {
-      queryClient.setQueryData(reviewLikeQueryKey(propertyId), data);
+    onSuccess: (_data, propertyId) => {
       queryClient.invalidateQueries({ queryKey: ['agent-profile'] });
       queryClient.invalidateQueries({ queryKey: reviewLikeQueryKey(propertyId) });
     },

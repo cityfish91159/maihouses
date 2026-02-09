@@ -138,7 +138,8 @@ describe('/api/community/review-like', () => {
     const count = createLikeCountTable(6);
     const from = vi.fn().mockReturnValueOnce(properties.table).mockReturnValueOnce(count.table);
 
-    mockGetSupabaseAdmin.mockReturnValue({ from } as never);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Test mock for Supabase client
+    mockGetSupabaseAdmin.mockReturnValue({ from } as any);
     mockVerifyAuth.mockResolvedValue({
       success: false,
       error: 'Missing or invalid Authorization header',
@@ -172,7 +173,8 @@ describe('/api/community/review-like', () => {
       .mockReturnValueOnce(count.table)
       .mockReturnValueOnce(likedLookup.table);
 
-    mockGetSupabaseAdmin.mockReturnValue({ from } as never);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Test mock for Supabase client
+    mockGetSupabaseAdmin.mockReturnValue({ from } as any);
     mockVerifyAuth.mockResolvedValue({
       success: true,
       userId: 'user-1',
@@ -225,7 +227,8 @@ describe('/api/community/review-like', () => {
     const properties = createPropertiesTable(incompleteProperty);
     const from = vi.fn().mockReturnValueOnce(properties.table);
 
-    mockGetSupabaseAdmin.mockReturnValue({ from } as never);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Test mock for Supabase client
+    mockGetSupabaseAdmin.mockReturnValue({ from } as any);
     mockVerifyAuth.mockResolvedValue({
       success: true,
       userId: 'user-1',
@@ -259,7 +262,8 @@ describe('/api/community/review-like', () => {
       .mockReturnValueOnce(insert.table)
       .mockReturnValueOnce(count.table);
 
-    mockGetSupabaseAdmin.mockReturnValue({ from } as never);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Test mock for Supabase client
+    mockGetSupabaseAdmin.mockReturnValue({ from } as any);
     mockVerifyAuth.mockResolvedValue({
       success: true,
       userId: 'user-1',
@@ -298,7 +302,8 @@ describe('/api/community/review-like', () => {
       .mockReturnValueOnce(insert.table)
       .mockReturnValueOnce(count.table);
 
-    mockGetSupabaseAdmin.mockReturnValue({ from } as never);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Test mock for Supabase client
+    mockGetSupabaseAdmin.mockReturnValue({ from } as any);
     mockVerifyAuth.mockResolvedValue({
       success: true,
       userId: 'user-1',
@@ -333,7 +338,8 @@ describe('/api/community/review-like', () => {
       .mockReturnValueOnce(del.table)
       .mockReturnValueOnce(count.table);
 
-    mockGetSupabaseAdmin.mockReturnValue({ from } as never);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Test mock for Supabase client
+    mockGetSupabaseAdmin.mockReturnValue({ from } as any);
     mockVerifyAuth.mockResolvedValue({
       success: true,
       userId: 'user-1',

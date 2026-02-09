@@ -137,6 +137,25 @@ describe('CommunityReviews', () => {
 
   it('正式模式按讚呼叫 onToggleLike', async () => {
     const user = userEvent.setup();
+
+    // Mock fetch 回傳假資料
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        success: true,
+        data: {
+          data: [
+            {
+              id: 'review-1',
+              content: { pros: ['測試評價'], cons: null },
+              agent: { name: '測試經紀人' },
+            },
+          ],
+          total: 1,
+        },
+      }),
+    });
+
     renderWithRouter(
       <CommunityReviews
         isLoggedIn={true}
@@ -146,13 +165,21 @@ describe('CommunityReviews', () => {
       />
     );
 
-    // 等待 IntersectionObserver 觸發
+    // 等待評價載入（名字會被 maskName 轉為 "測***"）
     await waitFor(() => {
-      expect(screen.getByText('社區評價')).toBeInTheDocument();
+      expect(screen.getByText('測***')).toBeInTheDocument();
     });
 
-    // 注意：正式模式需要 API 回傳資料才會有按讚按鈕
-    // 此測試僅驗證 onToggleLike 是否被傳遞
+    // 點擊按讚按鈕
+    const likeButton = screen.getAllByLabelText(/鼓勵這則評價/)[0];
+    if (likeButton) {
+      await user.click(likeButton);
+
+      // 驗證 onToggleLike 被呼叫
+      await waitFor(() => {
+        expect(mockOnToggleLike).toHaveBeenCalledTimes(1);
+      });
+    }
   });
 
   it('未登入顯示註冊提示按鈕', async () => {
