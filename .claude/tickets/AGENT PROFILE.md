@@ -43,7 +43,7 @@
 ### 待開發 — 信任分 / 評價 / 鼓勵
 
 - [x] **#12** [P1] 信任分 Tooltip 修正 + seed 校正（2 項：12-A/B）✅ 2026-02-09
-- [ ] **#13a** [P0] 房仲評價系統 — DB + API + 類型（4 項：13-A DB + 13-B API + 13-C 類型 + 13-I Hook）
+- [x] **#13a** [P0] 房仲評價系統 — DB + API + 類型（4 項：13-A DB + 13-B API + 13-C 類型 + 13-I Hook）✅ 2026-02-09
 - [ ] **#13b** [P0] 房仲評價系統 — 前端組件 + 整合（5 項：13-D ReviewPromptModal + 13-E ReviewListModal + 13-F AgentTrustCard + 13-G DetailPage 整合 + 13-H Assure Step 2 觸發）
 - [ ] **#14a** [P1] 獲得鼓勵系統 — DB + API + 類型（4 項：14-A DB + 14-B API + 14-C 類型 + 14-E Hook）
 - [ ] **#14b** [P1] 獲得鼓勵系統 — 前端組件 + 整合（3 項：14-D 按讚 UI + 14-F DetailPage 整合 + 14-G 資料流）
@@ -1837,14 +1837,50 @@ export type CreateReviewPayload = z.infer<typeof CreateReviewPayloadSchema>;
 
 ### #13a 驗收標準
 
-- [ ] DB：`agent_reviews` 表已建立，RLS 已啟用
-- [ ] DB：INSERT 一筆評價後 `agents.service_rating` 和 `review_count` 自動更新
-- [ ] DB：同 agent + reviewer + case 防重複
-- [ ] API：`GET /api/agent/reviews?agentId=xxx` 回傳評價列表 + 星級分佈
-- [ ] API：`POST /api/agent/reviews` 新增評價，Zod 驗證 rating 1-5
-- [ ] Type：`agent-review.ts` Zod schema 完整
-- [ ] Hook：`useAgentReviews.ts` useQuery + useMutation 運作正常
-- [ ] typecheck + lint 通過
+- [x] DB：`agent_reviews` 表已建立，RLS 已啟用
+- [x] DB：INSERT 一筆評價後 `agents.service_rating` 和 `review_count` 自動更新
+- [x] DB：同 agent + reviewer + case 防重複
+- [x] API：`GET /api/agent/reviews?agentId=xxx` 回傳評價列表 + 星級分佈
+- [x] API：`POST /api/agent/reviews` 新增評價，Zod 驗證 rating 1-5
+- [x] Type：`agent-review.ts` Zod schema 完整
+- [x] Hook：`useAgentReviews.ts` useQuery + useMutation 運作正常
+- [x] typecheck + lint 通過
+
+### #13a 施工紀錄（2026-02-09）
+
+#### 修改檔案
+1. `supabase/migrations/20260209_agent_reviews.sql`（13-A）
+   - 新增 `public.agent_reviews` 表（`agent_id / reviewer_id / trust_case_id / property_id / rating / comment / is_public / created_at`）
+   - 新增防重複唯一索引：`agent_id + reviewer_id + trust_case_id`
+   - 啟用 RLS，補齊 SELECT/INSERT/UPDATE/DELETE policies 與 `anon/authenticated` 權限
+   - 新增 `fn_recalc_agent_review_stats` + `trg_agent_reviews_stats`，在 INSERT/UPDATE/DELETE 後自動回寫 `agents.service_rating`、`agents.review_count`
+
+2. `api/agent/reviews.ts`（13-B）
+   - 新增 `GET /api/agent/reviews`：支援 `agentId/page/limit`，回傳分頁評價、平均分、星級分佈
+   - 新增 reviewer 名稱遮罩（`X***`）與分頁預設值（`page=1`, `limit=10`）
+   - 新增 `POST /api/agent/reviews`：整合 `verifyAuth`、Zod 驗證、重複檢查、寫入評價
+   - 新增衝突處理（409）與統一 API 回應格式
+
+3. `src/types/agent-review.ts`（13-C）
+   - 新增 `AgentReviewSchema`、`AgentReviewListResponseSchema`、`CreateReviewPayloadSchema`、`CreateReviewResponseSchema`
+   - 補齊對應 TypeScript 型別輸出
+
+4. `src/hooks/useAgentReviews.ts`（13-I）
+   - 新增 `useAgentReviewList`（`useQuery`）與 `useSubmitReview`（`useMutation`）
+   - 新增 `fetchAgentReviews`、`postAgentReview` helper
+   - 成功提交後自動 `invalidateQueries(['agent-reviews', agentId])` 與 `invalidateQueries(['agent-profile', agentId])`
+
+5. 測試檔案
+   - `api/agent/__tests__/reviews.test.ts`（新增）
+   - `src/hooks/__tests__/useAgentReviews.test.tsx`（新增）
+
+#### 驗證命令
+```bash
+npm run test -- api/agent/__tests__/reviews.test.ts src/hooks/__tests__/useAgentReviews.test.tsx
+npm run typecheck
+npm run lint
+npm run check:utf8
+```
 
 ---
 
