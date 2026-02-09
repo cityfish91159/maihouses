@@ -2,7 +2,7 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ReactNode } from 'react';
-import { useAgentReviewList, useSubmitReview } from '../useAgentReviews';
+import { postAgentReview, useAgentReviewList, useSubmitReview } from '../useAgentReviews';
 
 const { mockGetSession } = vi.hoisted(() => ({
   mockGetSession: vi.fn(),
@@ -104,6 +104,7 @@ describe('useAgentReviews', () => {
         agentId: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
         rating: 5,
         comment: 'excellent service',
+        trustCaseId: '12b4af9b-8985-4329-bdcf-3569f9878f56',
       });
     });
 
@@ -122,5 +123,14 @@ describe('useAgentReviews', () => {
     expect(invalidateSpy).toHaveBeenCalledWith({
       queryKey: ['agent-profile', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'],
     });
+  });
+
+  it('postAgentReview rejects payload without trustCaseId', async () => {
+    await expect(
+      postAgentReview({
+        agentId: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
+        rating: 5,
+      } as never)
+    ).rejects.toThrow('Invalid review payload');
   });
 });

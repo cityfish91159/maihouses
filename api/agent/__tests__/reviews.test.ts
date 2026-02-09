@@ -70,6 +70,30 @@ function createMockResponse(): MockRes {
   return res;
 }
 
+function createTrustCaseSelectResult(data: unknown, error: { message: string } | null = null) {
+  const maybeSingle = vi.fn().mockResolvedValue({ data, error });
+  const eq = vi.fn().mockReturnValue({ maybeSingle });
+  return {
+    select: vi.fn().mockReturnValue({ eq }),
+    maybeSingle,
+    eq,
+  };
+}
+
+function createDuplicateSelectResult(rows: unknown[] = [], error: { message: string } | null = null) {
+  const limit = vi.fn().mockResolvedValue({ data: rows, error });
+  const eq3 = vi.fn().mockReturnValue({ limit });
+  const eq2 = vi.fn().mockReturnValue({ eq: eq3 });
+  const eq1 = vi.fn().mockReturnValue({ eq: eq2 });
+  return {
+    select: vi.fn().mockReturnValue({ eq: eq1 }),
+    limit,
+    eq1,
+    eq2,
+    eq3,
+  };
+}
+
 describe('/api/agent/reviews', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -208,32 +232,10 @@ describe('/api/agent/reviews', () => {
     expect(res.statusCode).toBe(401);
   });
 
-  it('POST enforces duplicate protection for same agent+reviewer+case', async () => {
+  it('POST requires trustCaseId', async () => {
     mockVerifyAuth.mockResolvedValue({
       success: true,
       userId: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
-    });
-
-    const duplicateBuilder = {
-      eq: vi.fn(),
-      limit: vi.fn().mockResolvedValue({
-        data: [{ id: '3f5f96ef-6910-4fe8-83da-f7944f1119d8' }],
-        error: null,
-      }),
-    };
-    const duplicateBuilder2 = {
-      eq: vi.fn(),
-    };
-    const duplicateBuilder3 = {
-      eq: vi.fn().mockReturnValue(duplicateBuilder),
-    };
-    duplicateBuilder.eq.mockReturnValue(duplicateBuilder2);
-    duplicateBuilder2.eq.mockReturnValue(duplicateBuilder3);
-
-    mockGetSupabaseAdmin.mockReturnValue({
-      from: vi.fn().mockReturnValue({
-        select: vi.fn().mockReturnValue(duplicateBuilder),
-      }),
     });
 
     const handler = (await import('../reviews')).default;
@@ -241,6 +243,126 @@ describe('/api/agent/reviews', () => {
       method: 'POST',
       body: {
         agentId: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
+        rating: 5,
+      },
+    });
+    const res = createMockResponse();
+
+    await handler(req as never, res as never);
+
+    expect(res.statusCode).toBe(400);
+    expect(res.jsonData).toMatchObject({
+      success: false,
+      error: { code: 'INVALID_INPUT' },
+    });
+  });
+
+  it('POST rejects when reviewer is not trust-case buyer', async () => {
+    mockVerifyAuth.mockResolvedValue({
+      success: true,
+      userId: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
+    });
+
+    const trustCaseSelect = createTrustCaseSelectResult({
+      id: '12b4af9b-8985-4329-bdcf-3569f9878f56',
+      agent_id: 'de305d54-75b4-431b-adb2-eb6b9e546014',
+      buyer_user_id: 'f0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
+      current_step: 2,
+      property_id: 'MH-100001',
+    });
+
+    mockGetSupabaseAdmin.mockReturnValue({
+      from: vi.fn().mockReturnValueOnce(trustCaseSelect),
+    });
+
+    const handler = (await import('../reviews')).default;
+    const req = createMockRequest({
+      method: 'POST',
+      body: {
+        agentId: 'de305d54-75b4-431b-adb2-eb6b9e546014',
+        rating: 5,
+        trustCaseId: '12b4af9b-8985-4329-bdcf-3569f9878f56',
+      },
+    });
+    const res = createMockResponse();
+
+    await handler(req as never, res as never);
+
+    expect(res.statusCode).toBe(403);
+    expect(res.jsonData).toMatchObject({
+      success: false,
+      error: { code: 'PERMISSION_DENIED' },
+    });
+  });
+
+  it('POST rejects when trust case has not reached step 2', async () => {
+    mockVerifyAuth.mockResolvedValue({
+      success: true,
+      userId: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
+    });
+
+    const trustCaseSelect = createTrustCaseSelectResult({
+      id: '12b4af9b-8985-4329-bdcf-3569f9878f56',
+      agent_id: 'de305d54-75b4-431b-adb2-eb6b9e546014',
+      buyer_user_id: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
+      current_step: 1,
+      property_id: 'MH-100001',
+    });
+
+    mockGetSupabaseAdmin.mockReturnValue({
+      from: vi.fn().mockReturnValueOnce(trustCaseSelect),
+    });
+
+    const handler = (await import('../reviews')).default;
+    const req = createMockRequest({
+      method: 'POST',
+      body: {
+        agentId: 'de305d54-75b4-431b-adb2-eb6b9e546014',
+        rating: 5,
+        trustCaseId: '12b4af9b-8985-4329-bdcf-3569f9878f56',
+      },
+    });
+    const res = createMockResponse();
+
+    await handler(req as never, res as never);
+
+    expect(res.statusCode).toBe(422);
+    expect(res.jsonData).toMatchObject({
+      success: false,
+      error: { code: 'INVALID_INPUT' },
+    });
+  });
+
+  it('POST enforces duplicate protection for same agent+reviewer+case', async () => {
+    mockVerifyAuth.mockResolvedValue({
+      success: true,
+      userId: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
+    });
+
+    const trustCaseSelect = createTrustCaseSelectResult({
+      id: '12b4af9b-8985-4329-bdcf-3569f9878f56',
+      agent_id: 'de305d54-75b4-431b-adb2-eb6b9e546014',
+      buyer_user_id: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
+      current_step: 3,
+      property_id: 'MH-100001',
+    });
+
+    const duplicateSelect = createDuplicateSelectResult([
+      { id: '3f5f96ef-6910-4fe8-83da-f7944f1119d8' },
+    ]);
+
+    mockGetSupabaseAdmin.mockReturnValue({
+      from: vi
+        .fn()
+        .mockReturnValueOnce(trustCaseSelect)
+        .mockReturnValueOnce(duplicateSelect),
+    });
+
+    const handler = (await import('../reviews')).default;
+    const req = createMockRequest({
+      method: 'POST',
+      body: {
+        agentId: 'de305d54-75b4-431b-adb2-eb6b9e546014',
         rating: 5,
         trustCaseId: '12b4af9b-8985-4329-bdcf-3569f9878f56',
       },
@@ -262,21 +384,15 @@ describe('/api/agent/reviews', () => {
       userId: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
     });
 
-    const duplicateBuilder = {
-      eq: vi.fn(),
-      limit: vi.fn().mockResolvedValue({
-        data: [],
-        error: null,
-      }),
-    };
-    const duplicateBuilder2 = {
-      eq: vi.fn(),
-    };
-    const duplicateBuilder3 = {
-      eq: vi.fn().mockReturnValue(duplicateBuilder),
-    };
-    duplicateBuilder.eq.mockReturnValue(duplicateBuilder2);
-    duplicateBuilder2.eq.mockReturnValue(duplicateBuilder3);
+    const trustCaseSelect = createTrustCaseSelectResult({
+      id: '12b4af9b-8985-4329-bdcf-3569f9878f56',
+      agent_id: 'de305d54-75b4-431b-adb2-eb6b9e546014',
+      buyer_user_id: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
+      current_step: 4,
+      property_id: 'MH-100001',
+    });
+
+    const duplicateSelect = createDuplicateSelectResult([]);
 
     const insertBuilder = {
       select: vi.fn(),
@@ -286,28 +402,41 @@ describe('/api/agent/reviews', () => {
       }),
     };
     insertBuilder.select.mockReturnValue(insertBuilder);
+    const insertMock = vi.fn().mockReturnValue(insertBuilder);
 
-    const mockFrom = vi.fn().mockReturnValue({
-      insert: vi.fn().mockReturnValue(insertBuilder),
-    });
+    const fromMock = vi
+      .fn()
+      .mockReturnValueOnce(trustCaseSelect)
+      .mockReturnValueOnce(duplicateSelect)
+      .mockReturnValueOnce({
+        insert: insertMock,
+      });
 
     mockGetSupabaseAdmin.mockReturnValue({
-      from: mockFrom,
+      from: fromMock,
     });
 
     const handler = (await import('../reviews')).default;
     const req = createMockRequest({
       method: 'POST',
       body: {
-        agentId: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
+        agentId: 'de305d54-75b4-431b-adb2-eb6b9e546014',
         rating: 5,
         comment: 'excellent support',
+        trustCaseId: '12b4af9b-8985-4329-bdcf-3569f9878f56',
       },
     });
     const res = createMockResponse();
 
     await handler(req as never, res as never);
 
+    expect(insertMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        trust_case_id: '12b4af9b-8985-4329-bdcf-3569f9878f56',
+        step_completed: 4,
+        property_id: 'MH-100001',
+      })
+    );
     expect(res.statusCode).toBe(200);
     expect(res.jsonData).toMatchObject({
       success: true,

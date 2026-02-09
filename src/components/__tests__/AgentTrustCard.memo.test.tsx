@@ -510,8 +510,9 @@ describe('AgentTrustCard React.memo Performance', () => {
       // 觸發父組件重渲染
       fireEvent.click(getByText('Increment'));
 
-      // 因為 memo，組件不應重渲染，tooltip 應保持顯示
-      // 注意：實際上 tooltip 是組件內部狀態，memo 會保持內部狀態
+      // 父組件重渲染後，tooltip 仍應維持可見
+      expect(screen.getByRole('tooltip')).toBeInTheDocument();
+      expect(screen.getByText('綜合以下指標自動計算：')).toBeInTheDocument();
     });
 
     it('應該支援鍵盤切換 tooltip 並處理 Escape 關閉', () => {
@@ -530,6 +531,25 @@ describe('AgentTrustCard React.memo Performance', () => {
 
       fireEvent.keyDown(trustScoreDiv, { key: 'Escape' });
       expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
+    });
+
+    it('應該支援 Enter 切換 tooltip 並同步 aria-expanded', () => {
+      const agent = createMockAgent();
+      const { container } = renderWithClient(
+        <AgentTrustCard agent={agent} onLineClick={mockCallbacks.onLineClick} />
+      );
+
+      const trustScoreDiv = container.querySelector('[role="button"]') as HTMLElement;
+      expect(trustScoreDiv).toBeInTheDocument();
+      expect(trustScoreDiv).toHaveAttribute('aria-expanded', 'false');
+
+      fireEvent.keyDown(trustScoreDiv, { key: 'Enter' });
+      expect(screen.getByRole('tooltip')).toBeInTheDocument();
+      expect(trustScoreDiv).toHaveAttribute('aria-expanded', 'true');
+
+      fireEvent.keyDown(trustScoreDiv, { key: 'Enter' });
+      expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
+      expect(trustScoreDiv).toHaveAttribute('aria-expanded', 'false');
     });
   });
 

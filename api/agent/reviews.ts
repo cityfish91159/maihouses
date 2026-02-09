@@ -55,11 +55,34 @@ const InsertedReviewSchema = z.object({
   id: z.string().uuid(),
 });
 
+const TrustCaseForReviewSchema = z.object({
+  id: z.string().uuid(),
+  agent_id: z.string().min(1),
+  buyer_user_id: z.string().uuid().nullable(),
+  current_step: z.number().int().min(1),
+  property_id: z.string().nullable(),
+});
+
+const REVIEW_GATE_MIN_STEP = 2;
+const REVIEWER_NAME_CACHE_MAX = 500;
+const reviewerNameCache = new Map<string, string>();
+
 function maskReviewerName(rawName: string | null | undefined): string {
   const normalized = rawName?.trim() ?? '';
   if (!normalized) return 'User***';
   const [firstChar = 'U'] = Array.from(normalized);
   return `${firstChar}***`;
+}
+
+function normalizeIdentity(rawValue: string): string {
+  return rawValue.trim().toLowerCase();
+}
+
+function setReviewerNameCache(reviewerId: string, maskedName: string): void {
+  reviewerNameCache.set(reviewerId, maskedName);
+  if (reviewerNameCache.size <= REVIEWER_NAME_CACHE_MAX) return;
+  const oldestKey = reviewerNameCache.keys().next().value;
+  if (oldestKey) reviewerNameCache.delete(oldestKey);
 }
 
 function extractDisplayName(user: { email?: string | null; user_metadata?: unknown } | null): string {
@@ -111,15 +134,27 @@ async function buildReviewerNameMap(
 
   await Promise.all(
     reviewerIds.map(async (reviewerId) => {
+      const cached = reviewerNameCache.get(reviewerId);
+      if (cached) {
+        nameMap.set(reviewerId, cached);
+        return;
+      }
+
       try {
         const { data, error } = await supabase.auth.admin.getUserById(reviewerId);
         if (error) {
-          nameMap.set(reviewerId, 'User***');
+          const fallback = 'User***';
+          setReviewerNameCache(reviewerId, fallback);
+          nameMap.set(reviewerId, fallback);
           return;
         }
-        nameMap.set(reviewerId, maskReviewerName(extractDisplayName(data.user)));
+        const maskedName = maskReviewerName(extractDisplayName(data.user));
+        setReviewerNameCache(reviewerId, maskedName);
+        nameMap.set(reviewerId, maskedName);
       } catch {
-        nameMap.set(reviewerId, 'User***');
+        const fallback = 'User***';
+        setReviewerNameCache(reviewerId, fallback);
+        nameMap.set(reviewerId, fallback);
       }
     })
   );
@@ -276,44 +311,111 @@ async function handlePost(req: VercelRequest, res: VercelResponse): Promise<void
   const supabase = getSupabaseAdmin();
 
   try {
-    if (payload.trustCaseId) {
-      const { data: existingRows, error: existingError } = await supabase
-        .from('agent_reviews')
-        .select('id')
-        .eq('agent_id', payload.agentId)
-        .eq('reviewer_id', authResult.userId)
-        .eq('trust_case_id', payload.trustCaseId)
-        .limit(1);
+    const { data: trustCaseRaw, error: trustCaseError } = await supabase
+      .from('trust_cases')
+      .select('id, agent_id, buyer_user_id, current_step, property_id')
+      .eq('id', payload.trustCaseId)
+      .maybeSingle();
 
-      if (existingError) {
-        logger.error('[agent/reviews] duplicate-check failed', {
-          agentId: payload.agentId,
-          reviewerId: authResult.userId,
-          trustCaseId: payload.trustCaseId,
-          error: existingError.message,
-        });
-        res
-          .status(500)
-          .json(errorResponse(API_ERROR_CODES.DATA_FETCH_FAILED, 'Failed to validate duplicate review'));
-        return;
-      }
-
-      if ((existingRows ?? []).length > 0) {
-        res.status(409).json(errorResponse(API_ERROR_CODES.CONFLICT, 'Review already exists for this case'));
-        return;
-      }
+    if (trustCaseError) {
+      logger.error('[agent/reviews] trust-case query failed', {
+        trustCaseId: payload.trustCaseId,
+        reviewerId: authResult.userId,
+        error: trustCaseError.message,
+      });
+      res
+        .status(500)
+        .json(errorResponse(API_ERROR_CODES.DATA_FETCH_FAILED, 'Failed to validate trust case'));
+      return;
     }
+
+    if (!trustCaseRaw) {
+      res
+        .status(404)
+        .json(errorResponse(API_ERROR_CODES.NOT_FOUND, 'Trust case not found'));
+      return;
+    }
+
+    const parsedTrustCase = TrustCaseForReviewSchema.safeParse(trustCaseRaw);
+    if (!parsedTrustCase.success) {
+      logger.error('[agent/reviews] invalid trust-case payload', {
+        trustCaseId: payload.trustCaseId,
+        error: parsedTrustCase.error.message,
+      });
+      res
+        .status(500)
+        .json(errorResponse(API_ERROR_CODES.INTERNAL_ERROR, 'Invalid trust case payload'));
+      return;
+    }
+
+    const trustCase = parsedTrustCase.data;
+
+    if (trustCase.buyer_user_id !== authResult.userId) {
+      res
+        .status(403)
+        .json(errorResponse(API_ERROR_CODES.PERMISSION_DENIED, 'Only the case buyer can submit review'));
+      return;
+    }
+
+    if (trustCase.current_step < REVIEW_GATE_MIN_STEP) {
+      res
+        .status(422)
+        .json(errorResponse(API_ERROR_CODES.INVALID_INPUT, 'Review is available after step 2 confirmation'));
+      return;
+    }
+
+    if (normalizeIdentity(trustCase.agent_id) !== normalizeIdentity(payload.agentId)) {
+      res
+        .status(422)
+        .json(errorResponse(API_ERROR_CODES.INVALID_INPUT, 'Agent does not match trust case'));
+      return;
+    }
+
+    if (payload.propertyId && trustCase.property_id && payload.propertyId !== trustCase.property_id) {
+      res
+        .status(422)
+        .json(errorResponse(API_ERROR_CODES.INVALID_INPUT, 'Property does not match trust case'));
+      return;
+    }
+
+    const { data: existingRows, error: existingError } = await supabase
+      .from('agent_reviews')
+      .select('id')
+      .eq('agent_id', payload.agentId)
+      .eq('reviewer_id', authResult.userId)
+      .eq('trust_case_id', payload.trustCaseId)
+      .limit(1);
+
+    if (existingError) {
+      logger.error('[agent/reviews] duplicate-check failed', {
+        agentId: payload.agentId,
+        reviewerId: authResult.userId,
+        trustCaseId: payload.trustCaseId,
+        error: existingError.message,
+      });
+      res
+        .status(500)
+        .json(errorResponse(API_ERROR_CODES.DATA_FETCH_FAILED, 'Failed to validate duplicate review'));
+      return;
+    }
+
+    if ((existingRows ?? []).length > 0) {
+      res.status(409).json(errorResponse(API_ERROR_CODES.CONFLICT, 'Review already exists for this case'));
+      return;
+    }
+
+    const resolvedPropertyId = payload.propertyId ?? trustCase.property_id ?? null;
 
     const { data, error } = await supabase
       .from('agent_reviews')
       .insert({
         agent_id: payload.agentId,
         reviewer_id: authResult.userId,
-        trust_case_id: payload.trustCaseId ?? null,
-        property_id: payload.propertyId ?? null,
+        trust_case_id: payload.trustCaseId,
+        property_id: resolvedPropertyId,
         rating: payload.rating,
         comment: payload.comment?.trim() ? payload.comment.trim() : null,
-        step_completed: 2,
+        step_completed: trustCase.current_step,
         is_public: true,
       })
       .select('id')

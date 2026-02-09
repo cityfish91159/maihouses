@@ -226,6 +226,7 @@ export const AgentTrustCard: React.FC<AgentTrustCardProps> = memo(function Agent
       {/* 經紀人績效指標 */}
       <div className="mt-4 grid grid-cols-3 gap-2 border-y border-border py-3">
         <button
+          type="button"
           onClick={onReviewClick}
           className="cursor-pointer rounded-lg p-1 text-center transition-colors hover:bg-bg-base focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2"
           aria-label={`查看 ${agentMetrics.reviewCount} 則服務評價`}
@@ -252,6 +253,7 @@ export const AgentTrustCard: React.FC<AgentTrustCardProps> = memo(function Agent
       <div className="mt-4 space-y-3 border-t border-border pt-3">
         {/* 主要 CTA：加 LINE（低門檻）- LINE 官方品牌色 */}
         <button
+          type="button"
           onClick={onLineClick}
           aria-label="加 LINE 聊聊"
           data-testid="agent-card-line-button"
@@ -262,6 +264,7 @@ export const AgentTrustCard: React.FC<AgentTrustCardProps> = memo(function Agent
 
         {/* 次要 CTA：致電諮詢（outline 樣式） */}
         <button
+          type="button"
           onClick={onCallClick}
           aria-label="致電諮詢"
           data-testid="agent-card-call-button"

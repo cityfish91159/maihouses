@@ -374,10 +374,10 @@ export default function AssureDetail() {
       )}
 
       {/* #13b: 評價提示 Modal */}
-      {showReviewPrompt && tx && caseId && (
+      {showReviewPrompt && tx && caseId && localStorage.getItem('uag_last_aid') && (
         <ReviewPromptModal
           open={showReviewPrompt}
-          agentId={localStorage.getItem('uag_last_aid') || ''}
+          agentId={localStorage.getItem('uag_last_aid')!}
           agentName={tx.agentName || ''}
           trustCaseId={caseId}
           onClose={() => setShowReviewPrompt(false)}

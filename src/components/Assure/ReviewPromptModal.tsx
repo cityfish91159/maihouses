@@ -1,14 +1,17 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { Star, Loader2, X } from 'lucide-react';
 import { toast } from 'sonner';
+import { useQueryClient } from '@tanstack/react-query';
 import { logger } from '../../lib/logger';
 import type { CreateReviewPayload } from '../../types/agent-review';
+import { postAgentReview } from '../../hooks/useAgentReviews';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
 
 interface ReviewPromptModalProps {
   open: boolean;
   agentId: string;
   agentName: string;
-  trustCaseId?: string;
+  trustCaseId: string;
   propertyId?: string;
   onClose: () => void;
   onSubmitted: () => void;
@@ -27,6 +30,16 @@ export const ReviewPromptModal: React.FC<ReviewPromptModalProps> = ({
   const [hoverRating, setHoverRating] = useState<number>(0);
   const [comment, setComment] = useState<string>('');
   const [isBusy, setIsBusy] = useState<boolean>(false);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const queryClient = useQueryClient();
+
+  useFocusTrap({
+    containerRef: dialogRef as React.RefObject<HTMLElement>,
+    initialFocusRef: closeButtonRef as React.RefObject<HTMLElement>,
+    isActive: open,
+    onEscape: onClose,
+  });
 
   const handleSubmit = useCallback(async () => {
     if (rating === 0) {
@@ -36,6 +49,11 @@ export const ReviewPromptModal: React.FC<ReviewPromptModalProps> = ({
 
     if (comment.length > 500) {
       toast.error('評語最多 500 字');
+      return;
+    }
+
+    if (!trustCaseId.trim()) {
+      toast.error('缺少案件資訊，無法送出評價');
       return;
     }
 
@@ -50,24 +68,19 @@ export const ReviewPromptModal: React.FC<ReviewPromptModalProps> = ({
         propertyId,
       };
 
-      const res = await fetch('/api/agent/reviews', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({ error: '系統錯誤' }));
-        throw new Error(errorData.error || '提交評價失敗');
-      }
+      await postAgentReview(payload);
 
       toast.success('感謝您的評價！');
       logger.info('Agent review submitted', {
         agentId,
+        agentName,
         rating,
         trustCaseId,
         propertyId,
       });
+
+      queryClient.invalidateQueries({ queryKey: ['agent-reviews', agentId] });
+      queryClient.invalidateQueries({ queryKey: ['agent-profile', agentId] });
 
       onSubmitted();
       onClose();
@@ -76,15 +89,24 @@ export const ReviewPromptModal: React.FC<ReviewPromptModalProps> = ({
       logger.error('Failed to submit agent review', {
         error: errorMessage,
         agentId,
+        agentName,
         rating,
       });
+
+      const normalizedMessage = errorMessage.toLowerCase();
+      const description = normalizedMessage.includes('unauthorized')
+        ? '請先登入後再送出評價'
+        : normalizedMessage.includes('網路')
+          ? '網路連線異常，請檢查後重試'
+          : '請稍後再試';
+
       toast.error('提交失敗', {
-        description: errorMessage.includes('網路') ? '網路連線異常，請檢查後重試' : '請稍後再試',
+        description,
       });
     } finally {
       setIsBusy(false);
     }
-  }, [rating, comment, agentId, trustCaseId, propertyId, onSubmitted, onClose]);
+  }, [rating, comment, agentId, agentName, trustCaseId, propertyId, onSubmitted, onClose, queryClient]);
 
   const handleLater = useCallback(() => {
     logger.info('Agent review prompt dismissed', { agentId });
@@ -106,8 +128,9 @@ export const ReviewPromptModal: React.FC<ReviewPromptModalProps> = ({
       aria-modal="true"
       aria-labelledby="review-modal-title"
     >
-      <div className="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+      <div ref={dialogRef} className="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
         <button
+          ref={closeButtonRef}
           onClick={handleLater}
           className="absolute right-4 top-4 rounded-full p-1 text-text-muted transition-colors hover:bg-bg-base"
           aria-label="關閉"
@@ -155,8 +178,18 @@ export const ReviewPromptModal: React.FC<ReviewPromptModalProps> = ({
             className="w-full rounded-lg border border-border p-3 text-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
             placeholder="分享您的感受..."
           />
-          <div className="mt-1 text-right text-xs text-text-muted">{comment.length}/500</div>
+          <div className={`mt-1 text-right text-xs ${
+            comment.length > 450 ? 'text-red-600' :
+            comment.length > 400 ? 'text-amber-600' :
+            'text-text-muted'
+          }`}>
+            {comment.length}/500
+          </div>
         </div>
+
+        {rating === 0 && (
+          <p className="mb-2 text-center text-xs text-red-600">請選擇星級評價後才能送出</p>
+        )}
 
         <div className="flex gap-3">
           <button

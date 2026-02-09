@@ -1783,11 +1783,12 @@ GET /api/agent/reviews?agentId=xxx&page=1&limit=10
 
 ```
 POST /api/agent/reviews
-Body: { agentId, rating, comment?, trustCaseId?, propertyId? }
+Body: { agentId, rating, trustCaseId, comment?, propertyId? }
 需要認證（auth token）
 ```
 
 - Zod 驗證：`rating` 1-5 整數、`comment` 最多 500 字
+- 案件驗證：`trustCaseId` 必填，且必須符合「本人買方 + step>=2 + agent 一致」
 - 防重複：同 agent + reviewer + case 只能一次
 - 成功回傳 `{ success: true, reviewId }`
 
@@ -1826,7 +1827,7 @@ export const CreateReviewPayloadSchema = z.object({
   agentId: z.string().uuid(),
   rating: z.number().int().min(1).max(5),
   comment: z.string().max(500).optional(),
-  trustCaseId: z.string().uuid().optional(),
+  trustCaseId: z.string().uuid(),
   propertyId: z.string().optional(),
 });
 
@@ -1842,6 +1843,7 @@ export type CreateReviewPayload = z.infer<typeof CreateReviewPayloadSchema>;
 - [x] DB：同 agent + reviewer + case 防重複
 - [x] API：`GET /api/agent/reviews?agentId=xxx` 回傳評價列表 + 星級分佈
 - [x] API：`POST /api/agent/reviews` 新增評價，Zod 驗證 rating 1-5
+- [x] API：`POST /api/agent/reviews` 強制 `trustCaseId` + 案件資格驗證（買方/步驟/agent）
 - [x] Type：`agent-review.ts` Zod schema 完整
 - [x] Hook：`useAgentReviews.ts` useQuery + useMutation 運作正常
 - [x] typecheck + lint 通過
@@ -1858,7 +1860,7 @@ export type CreateReviewPayload = z.infer<typeof CreateReviewPayloadSchema>;
 2. `api/agent/reviews.ts`（13-B）
    - 新增 `GET /api/agent/reviews`：支援 `agentId/page/limit`，回傳分頁評價、平均分、星級分佈
    - 新增 reviewer 名稱遮罩（`X***`）與分頁預設值（`page=1`, `limit=10`）
-   - 新增 `POST /api/agent/reviews`：整合 `verifyAuth`、Zod 驗證、重複檢查、寫入評價
+   - 新增 `POST /api/agent/reviews`：整合 `verifyAuth`、Zod 驗證、案件資格驗證（買方/step/agent）、重複檢查、寫入評價
    - 新增衝突處理（409）與統一 API 回應格式
 
 3. `src/types/agent-review.ts`（13-C）
