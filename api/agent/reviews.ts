@@ -5,7 +5,7 @@ import { logger } from '../lib/logger';
 import { getSupabaseAdmin } from '../lib/supabase';
 import { verifyAuth, sendAuthError } from '../lib/auth';
 import { successResponse, errorResponse, API_ERROR_CODES } from '../lib/apiResponse';
-import { CreateReviewPayloadSchema } from '../../src/types/agent-review';
+import { CreateReviewPayloadSchema } from '../lib/schemas/agent-review';
 
 const DEFAULT_PAGE = 1;
 const DEFAULT_LIMIT = 10;

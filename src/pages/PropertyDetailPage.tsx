@@ -22,6 +22,7 @@ import { SkeletonBanner } from '../components/SkeletonScreen';
 import { useAuth } from '../hooks/useAuth';
 import { useTrustActions } from '../hooks/useTrustActions';
 import { usePropertyTracker } from '../hooks/usePropertyTracker';
+import { useCommunityReviewLike } from '../hooks/useCommunityReviewLike';
 import { TOAST_DURATION } from '../constants/toast';
 import { isDemoPropertyId } from '../constants/property';
 
@@ -265,6 +266,9 @@ export const PropertyDetailPage: React.FC = () => {
 
   // 安心留痕服務操作
   const trustActions = useTrustActions(property.publicId);
+
+  // #14b: 獲得鼓勵系統
+  const { toggleLike } = useCommunityReviewLike();
 
   const handleEnterService = useCallback(async () => {
     if (isRequesting) return;
@@ -697,6 +701,7 @@ export const PropertyDetailPage: React.FC = () => {
                 isLoggedIn={isLoggedIn}
                 communityId={property.communityId}
                 {...(property.isDemo !== undefined && { isDemo: property.isDemo })}
+                onToggleLike={(propertyId) => toggleLike.mutate(propertyId)}
               />
             </div>
 

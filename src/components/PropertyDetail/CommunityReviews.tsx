@@ -1,6 +1,6 @@
 ﻿import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Star, Lock, ChevronRight, MessageSquare } from 'lucide-react';
+import { Star, Lock, ChevronRight, MessageSquare, ThumbsUp } from 'lucide-react';
 import { logger } from '../../lib/logger';
 import { cn } from '../../lib/utils';
 import { motionA11y } from '../../lib/motionA11y';
@@ -9,6 +9,7 @@ interface CommunityReviewsProps {
   isLoggedIn: boolean;
   communityId?: string | undefined;
   isDemo?: boolean | undefined;
+  onToggleLike?: (propertyId: string) => void;
 }
 
 interface ReviewPreview {
@@ -18,6 +19,9 @@ interface ReviewPreview {
   stars: string;
   content: string;
   avatarClass: string;
+  propertyId: string;
+  liked: boolean;
+  totalLikes: number;
 }
 
 interface CommunityReviewItem {
@@ -48,6 +52,9 @@ const LOCKED_PREVIEW_PLACEHOLDER: ReviewPreview = {
   stars: '★★★★★',
   content: '登入後可查看完整住戶評價與社區回饋內容。',
   avatarClass: 'bg-green-500',
+  propertyId: '',
+  liked: false,
+  totalLikes: 0,
 };
 
 // Mock 評價資料（isDemo 且無 communityId 時使用）
@@ -59,6 +66,9 @@ const MOCK_REVIEWS: ReviewPreview[] = [
     stars: '★★★★★',
     content: '透過平台不僅看到了真實的成交行情，還能直接與經紀人溝通，整體體驗非常順暢。',
     avatarClass: 'bg-brand-700',
+    propertyId: 'MH-100001',
+    liked: false,
+    totalLikes: 3,
   },
   {
     initial: '王',
@@ -67,6 +77,9 @@ const MOCK_REVIEWS: ReviewPreview[] = [
     stars: '★★★★★',
     content: '社區管理很用心，公設維護良好，住戶素質也不錯，住起來很安心。',
     avatarClass: 'bg-brand-light',
+    propertyId: 'MH-100002',
+    liked: true,
+    totalLikes: 7,
   },
   {
     initial: '住',
@@ -75,6 +88,9 @@ const MOCK_REVIEWS: ReviewPreview[] = [
     stars: '★★★★★',
     content: '樓下就有便利商店和公車站，生活機能很方便，唯一小缺點是假日停車位比較緊張。',
     avatarClass: 'bg-green-500',
+    propertyId: 'MH-100003',
+    liked: false,
+    totalLikes: 2,
   },
 ];
 
@@ -111,6 +127,9 @@ const toPreview = (item: CommunityReviewItem, index: number): ReviewPreview | nu
     stars: '★★★★★',
     content,
     avatarClass: AVATAR_CLASSES[index % AVATAR_CLASSES.length] ?? 'bg-brand-700',
+    propertyId: item.id || '',
+    liked: false,
+    totalLikes: 0,
   };
 };
 
@@ -118,6 +137,7 @@ export const CommunityReviews = memo(function CommunityReviews({
   isLoggedIn,
   communityId,
   isDemo = false,
+  onToggleLike,
 }: CommunityReviewsProps) {
   const navigate = useNavigate();
   const [isVisible, setIsVisible] = useState(false);
@@ -126,6 +146,7 @@ export const CommunityReviews = memo(function CommunityReviews({
   const [reviewPreviews, setReviewPreviews] = useState<ReviewPreview[]>(() =>
     useMockData ? MOCK_REVIEWS : []
   );
+  const [likeBusy, setLikeBusy] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -201,6 +222,24 @@ export const CommunityReviews = memo(function CommunityReviews({
     navigate('/maihouses/community-wall_mvp.html');
   }, [navigate]);
 
+  const handleToggleLike = useCallback(
+    (propertyId: string) => {
+      if (isDemo) {
+        // Mock: 本地 toggle，不發 API
+        setReviewPreviews((prev) =>
+          prev.map((r) =>
+            r.propertyId === propertyId
+              ? { ...r, liked: !r.liked, totalLikes: r.liked ? r.totalLikes - 1 : r.totalLikes + 1 }
+              : r
+          )
+        );
+        return;
+      }
+      onToggleLike?.(propertyId);
+    },
+    [isDemo, onToggleLike]
+  );
+
   return (
     <div ref={ref} className="rounded-2xl border border-border bg-bg-card p-4 shadow-sm">
       {isVisible ? (
@@ -234,6 +273,21 @@ export const CommunityReviews = memo(function CommunityReviews({
                       <span className="text-xs text-yellow-500">{review.stars}</span>
                     </div>
                     <p className="text-sm leading-relaxed text-ink-600">{review.content}</p>
+                    <div className="mt-2 flex items-center gap-1">
+                      <button
+                        onClick={() => handleToggleLike(review.propertyId)}
+                        disabled={!isLoggedIn || likeBusy}
+                        aria-label={`鼓勵這則評價${review.liked ? '（已鼓勵）' : ''}`}
+                        className={`inline-flex min-h-[44px] items-center gap-1 rounded-full px-2 py-0.5 text-xs transition-colors ${
+                          review.liked
+                            ? 'bg-brand-50 font-medium text-brand-700'
+                            : 'bg-bg-base text-text-muted hover:bg-brand-50 hover:text-brand-600'
+                        } ${!isLoggedIn ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
+                      >
+                        <ThumbsUp size={12} />
+                        <span>{review.totalLikes > 0 ? review.totalLikes : '實用'}</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))

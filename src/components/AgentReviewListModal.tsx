@@ -5,6 +5,9 @@ import type { AgentReviewListData } from '../types/agent-review';
 import { fetchAgentReviews } from '../hooks/useAgentReviews';
 import { useFocusTrap } from '../hooks/useFocusTrap';
 
+/** Seed agent（演示用），DB 無評價時改走 mock 路徑 */
+const SEED_AGENT_ID = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
+
 interface AgentReviewListModalProps {
   open: boolean;
   agentId: string;
@@ -54,7 +57,7 @@ export const AgentReviewListModal: React.FC<AgentReviewListModalProps> = ({
   onClose,
 }) => {
   const [page, setPage] = useState(1);
-  const isDemo = agentId.startsWith('mock-');
+  const isDemo = agentId.startsWith('mock-') || agentId === SEED_AGENT_ID;
   const dialogRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
 

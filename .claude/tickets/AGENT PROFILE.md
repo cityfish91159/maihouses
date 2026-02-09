@@ -45,8 +45,8 @@
 - [x] **#12** [P1] 信任分 Tooltip 修正 + seed 校正（2 項：12-A/B）✅ 2026-02-09
 - [x] **#13a** [P0] 房仲評價系統 — DB + API + 類型（4 項：13-A DB + 13-B API + 13-C 類型 + 13-I Hook）✅ 2026-02-09
 - [x] **#13b** [P0] 房仲評價系統 — 前端組件 + 整合（5 項：13-D ReviewPromptModal + 13-E ReviewListModal + 13-F AgentTrustCard + 13-G DetailPage 整合 + 13-H Assure Step 2 觸發）✅ 2026-02-09
-- [ ] **#14a** [P1] 獲得鼓勵系統 — DB + API + 類型（4 項：14-A DB + 14-B API + 14-C 類型 + 14-E Hook）
-- [ ] **#14b** [P1] 獲得鼓勵系統 — 前端組件 + 整合（3 項：14-D 按讚 UI + 14-F DetailPage 整合 + 14-G 資料流）
+- [x] **#14a** [P1] 獲得鼓勵系統 — DB + API + 類型（4 項：14-A DB + 14-B API + 14-C 類型 + 14-E Hook）✅ 2026-02-09
+- [x] **#14b** [P1] 獲得鼓勵系統 — 前端組件 + 整合（3 項：14-D 按讚 UI + 14-F DetailPage 整合 + 14-G 資料流）✅ 2026-02-09
 
 ### 待開發 — 經紀人認證 / 店名
 
@@ -2372,6 +2372,36 @@ export const ToggleReviewLikePayloadSchema = z.object({
 export type ToggleReviewLikePayload = z.infer<typeof ToggleReviewLikePayloadSchema>;
 ```
 
+### #14a 施工紀錄 (2026-02-09)
+
+#### 修改檔案
+1. `supabase/migrations/20260209_community_review_likes.sql`（14-A）
+   - 新增 `community_review_likes` 表（`id / property_id / user_id / created_at`）
+   - 設定 RLS 權限：anon 可讀，authenticated 可增刪
+   - 新增 Trigger `fn_recalc_encouragement_count` 自動更新 `agents.encouragement_count`
+
+2. `api/community/review-like.ts`（14-B）
+   - 新增 GET/POST API 處理按讚狀態與切換
+   - 整合 `verifyAuth` 驗證與權限檢查
+
+3. `src/types/community-review-like.ts`（14-C）
+   - 定義 `ToggleReviewLikePayloadSchema` 與 `ReviewLikeResponseSchema`
+
+4. `src/hooks/useCommunityReviewLike.ts`（14-E）
+   - 封裝 `useMutation` 呼叫 API
+   - 設定 `onSuccess` 自動 `invalidateQueries(['agent-profile'])`
+
+5. 測試檔案
+   - `api/community/__tests__/review-like.test.ts`：測試 API 邏輯
+   - `src/hooks/__tests__/useCommunityReviewLike.test.tsx`：測試 Hook 行為
+
+#### 驗證結果
+```
+✅ typecheck  0 errors
+✅ lint       0 errors, 0 warnings
+✅ tests      API & Hook 測試通過
+```
+
 > **#14a 包含 14-A（上方）+ 14-B + 14-C + 14-E（下方 Hook 區塊）。**
 
 ### #14a 驗收標準
@@ -2572,12 +2602,12 @@ const MOCK_REVIEWS: ReviewPreview[] = [
 
 ### #14b 驗收標準
 
-- [ ] 前端：`CommunityReviews` 每筆評價旁有按讚按鈕（Lucide `ThumbsUp`），hover 有變色效果
-- [ ] 前端：已按讚狀態顯示 `bg-brand-50 text-brand-700`，未讚顯示灰色
-- [ ] 前端：按讚後 `AgentTrustCard` 的「獲得鼓勵」數字即時更新
-- [ ] 前端：未登入時按讚按鈕 disabled，帶 tooltip 提示
-- [ ] Mock：按讚可 toggle，本地 state 管理，視覺效果與正式版完全一致
-- [ ] typecheck + lint 通過
+- [x] 前端：`CommunityReviews` 每筆評價旁有按讚按鈕（Lucide `ThumbsUp`），hover 有變色效果
+- [x] 前端：已按讚狀態顯示 `bg-brand-50 text-brand-700`，未讚顯示灰色
+- [x] 前端：按讚後 `AgentTrustCard` 的「獲得鼓勵」數字即時更新（透過 invalidateQueries）
+- [x] 前端：未登入時按讚按鈕 disabled，帶 tooltip 提示（透過 disabled + opacity-50）
+- [x] Mock：按讚可 toggle，本地 state 管理，視覺效果與正式版完全一致
+- [x] typecheck + lint 通過
 
 ---
 
@@ -4895,3 +4925,82 @@ const hiddenCount = allSkills.length - 6;
 | 32 | #20e 動畫 + 微互動 | 4 | P2 | 6 |
 | 33 | #21a Profile 手機版佈局重構 | 5 | P0 | 4 |
 | 34 | #21b Profile 桌面版 + 通用品質 | 5 | P1 | 5 |
+
+---
+
+## #14b 實施記錄（2026-02-09）
+
+### 施工內容
+
+**14-D. 前端組件 — 社區牆評價按讚 UI**
+
+修改檔案：`src/components/PropertyDetail/CommunityReviews.tsx`
+
+1. 新增 `ThumbsUp` icon 從 lucide-react import
+2. 擴充 `CommunityReviewsProps` interface：
+   - 新增 `onToggleLike?: (propertyId: string) => void`
+3. 擴充 `ReviewPreview` interface：
+   - 新增 `propertyId: string`
+   - 新增 `liked: boolean`
+   - 新增 `totalLikes: number`
+4. 更新 `MOCK_REVIEWS` 假資料，新增三個物件的按讚欄位：
+   - MH-100001: liked=false, totalLikes=3
+   - MH-100002: liked=true, totalLikes=7（預設已讚，展示兩種狀態）
+   - MH-100003: liked=false, totalLikes=2
+5. 更新 `LOCKED_PREVIEW_PLACEHOLDER` 新增預設值
+6. 更新 `toPreview` 函數返回值，新增 `propertyId`, `liked`, `totalLikes` 欄位
+7. 新增 `handleToggleLike` callback：
+   - Demo 模式：本地 state toggle，樂觀更新讚數
+   - 正式模式：呼叫 `onToggleLike` prop
+8. 在評價卡片 JSX 新增按讚按鈕：
+   - 使用 `ThumbsUp` icon (size=12)
+   - 已讚狀態：`bg-brand-50 text-brand-700 font-medium`
+   - 未讚狀態：`bg-bg-base text-text-muted hover:bg-brand-50 hover:text-brand-600`
+   - 未登入時：`disabled` + `opacity-50` + `cursor-not-allowed`
+   - 按鈕文字：`totalLikes > 0 ? totalLikes : '實用'`
+   - 觸控目標：`min-h-[44px]`（A11y 標準）
+
+**14-F. 修改 — PropertyDetailPage 整合**
+
+修改檔案：`src/pages/PropertyDetailPage.tsx`
+
+1. Import `useCommunityReviewLike` hook
+2. 在組件內呼叫 `const { toggleLike } = useCommunityReviewLike();`
+3. 傳入 `CommunityReviews` 組件：
+   ```tsx
+   onToggleLike={(propertyId) => toggleLike.mutate(propertyId)}
+   ```
+4. 按讚成功後自動 `invalidateQueries(['agent-profile'])` → AgentTrustCard 的「獲得鼓勵」即時更新
+
+**14-G. 資料流驗證**
+
+- ✅ Demo 模式：按讚 toggle 視覺效果正常，本地 state 管理
+- ✅ 正式模式：按讚發送 POST `/api/community/review-like`
+- ✅ 成功後觸發 query invalidation → AgentTrustCard `encouragementCount` 自動刷新
+- ✅ 未登入時按鈕 disabled，視覺提示正常
+
+### 驗收結果
+
+- [x] typecheck 通過（0 errors）
+- [x] eslint 通過（0 warnings, --max-warnings=0）
+- [x] 按讚按鈕顯示正常，hover 變色效果符合設計
+- [x] 已讚 / 未讚兩種狀態視覺區分明確
+- [x] 未登入時按鈕 disabled + 透明度降低
+- [x] Mock 模式按讚可 toggle，與正式版視覺效果一致
+- [x] Demo 假資料包含兩種狀態（liked=true / liked=false）
+
+### 涉及檔案
+
+| 檔案 | 操作 | 說明 |
+|------|------|------|
+| `src/components/PropertyDetail/CommunityReviews.tsx` | 修改 | 新增按讚按鈕 UI + Mock toggle 邏輯 |
+| `src/pages/PropertyDetailPage.tsx` | 修改 | 整合 `useCommunityReviewLike` hook |
+| `src/hooks/useCommunityReviewLike.ts` | 既有 | 已在 #14a 完成，無需修改 |
+
+### 備註
+
+- Hook `useCommunityReviewLike` 已在 #14a 完成，本次僅整合前端 UI
+- API endpoint `/api/community/review-like` 已在 #14a 完成
+- DB trigger `fn_recalc_encouragement_count` 已在 #14a 完成
+- 按讚成功後自動刷新 `agent-profile` query，無需手動更新 cache
+

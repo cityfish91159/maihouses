@@ -42,8 +42,8 @@ function extractBearerToken(authHeader: string | undefined): string | null {
  * @returns 驗證結果，包含 userId 或錯誤訊息
  */
 export async function verifyAuth(req: VercelRequest): Promise<AuthVerificationResult> {
-  const supabaseUrl = process.env.SUPABASE_URL;
-  const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
+  const supabaseUrl = process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL;
+  const supabaseAnonKey = process.env.SUPABASE_ANON_KEY ?? process.env.VITE_SUPABASE_ANON_KEY;
 
   if (!supabaseUrl || !supabaseAnonKey) {
     return {

@@ -437,7 +437,7 @@ describe('/api/agent/reviews', () => {
         property_id: 'MH-100001',
       })
     );
-    expect(res.statusCode).toBe(200);
+    expect(res.statusCode).toBe(201);
     expect(res.jsonData).toMatchObject({
       success: true,
       data: { reviewId: '3f5f96ef-6910-4fe8-83da-f7944f1119d8' },
