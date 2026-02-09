@@ -3,6 +3,8 @@ import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { ReactElement } from 'react';
 import { AgentReviewListModal } from '../AgentReviewListModal';
+import { fetchAgentReviews } from '../../hooks/useAgentReviews';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
 
 vi.mock('../../hooks/useFocusTrap', () => ({
   useFocusTrap: vi.fn(),
@@ -11,6 +13,9 @@ vi.mock('../../hooks/useFocusTrap', () => ({
 vi.mock('../../hooks/useAgentReviews', () => ({
   fetchAgentReviews: vi.fn(),
 }));
+
+const mockedFetchAgentReviews = vi.mocked(fetchAgentReviews);
+const mockedUseFocusTrap = vi.mocked(useFocusTrap);
 
 describe('AgentReviewListModal', () => {
   const renderWithClient = (ui: ReactElement) => {
@@ -70,24 +75,31 @@ describe('AgentReviewListModal', () => {
 
   it('mock 資料顯示載入更多按鈕（表示有評論列表）', async () => {
     renderWithClient(<AgentReviewListModal {...defaultProps} />);
-    // 等待資料載入完成，mock 有 3 則 reviews、total 32，所以載入更多會顯示
     await waitFor(() => {
       expect(screen.getByText('載入更多...')).toBeInTheDocument();
     });
   });
 
-  it('星級分佈百分比在 total=0 時不為 NaN', async () => {
-    // mock agentId 預設 total=32，不會觸發除以零
-    // 此測試驗證渲染不會出錯
-    renderWithClient(<AgentReviewListModal {...defaultProps} />);
-    await waitFor(() => {
-      expect(screen.getByText('4.8')).toBeInTheDocument();
+  it('total=0 時顯示「尚無評價」而非 NaN', async () => {
+    mockedFetchAgentReviews.mockResolvedValueOnce({
+      reviews: [],
+      total: 0,
+      avgRating: 0,
+      distribution: { '1': 0, '2': 0, '3': 0, '4': 0, '5': 0 },
     });
-    // 確認所有百分比文字都不包含 NaN
-    const percentTexts = screen.getAllByText(/\d+ \(\d+%\)/);
-    for (const el of percentTexts) {
-      expect(el.textContent).not.toContain('NaN');
-    }
+
+    renderWithClient(
+      <AgentReviewListModal
+        open={true}
+        agentId="real-agent-zero"
+        agentName="零評價經紀人"
+        onClose={vi.fn()}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('尚無評價')).toBeInTheDocument();
+    });
   });
 
   it('顯示「載入更多」按鈕並能點擊', async () => {
@@ -97,6 +109,24 @@ describe('AgentReviewListModal', () => {
       expect(screen.getByText('載入更多...')).toBeInTheDocument();
     });
     await user.click(screen.getByText('載入更多...'));
-    // 點擊後 page 狀態遞增，不應報錯
+  });
+
+  it('useFocusTrap 被呼叫且傳入 onEscape', () => {
+    renderWithClient(<AgentReviewListModal {...defaultProps} />);
+    expect(mockedUseFocusTrap).toHaveBeenCalledWith(
+      expect.objectContaining({
+        isActive: true,
+        onEscape: defaultProps.onClose,
+      })
+    );
+  });
+
+  it('aria-labelledby 連結到標題 h2', () => {
+    renderWithClient(<AgentReviewListModal {...defaultProps} />);
+    const dialog = screen.getByRole('dialog');
+    const labelledById = dialog.getAttribute('aria-labelledby');
+    expect(labelledById).toBeTruthy();
+    const heading = screen.getByText('測試經紀人 的服務評價');
+    expect(heading.id).toBe(labelledById);
   });
 });

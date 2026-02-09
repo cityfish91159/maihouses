@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { z } from 'zod';
 import { supabase } from '../lib/supabase';
 import {
   AgentReviewListResponseSchema,
@@ -7,6 +8,15 @@ import {
   type AgentReviewListData,
   type CreateReviewPayload,
 } from '../types/agent-review';
+
+// Error Response Schema for safe error message extraction
+const ErrorResponseSchema = z.object({
+  error: z
+    .object({
+      message: z.string(),
+    })
+    .optional(),
+});
 
 const DEFAULT_PAGE = 1;
 const DEFAULT_LIMIT = 10;
@@ -26,8 +36,11 @@ export async function fetchAgentReviews(
   const payload: unknown = await response.json().catch(() => ({}));
 
   if (!response.ok) {
+    const errorParse = ErrorResponseSchema.safeParse(payload);
     throw new Error(
-      (payload as { error?: { message?: string } })?.error?.message ?? 'Failed to fetch reviews'
+      errorParse.success && errorParse.data.error?.message
+        ? errorParse.data.error.message
+        : 'Failed to fetch reviews'
     );
   }
 
@@ -63,9 +76,11 @@ export async function postAgentReview(payload: CreateReviewPayload): Promise<{ r
 
   const responsePayload: unknown = await response.json().catch(() => ({}));
   if (!response.ok) {
+    const errorParse = ErrorResponseSchema.safeParse(responsePayload);
     throw new Error(
-      (responsePayload as { error?: { message?: string } })?.error?.message ??
-        'Failed to submit review'
+      errorParse.success && errorParse.data.error?.message
+        ? errorParse.data.error.message
+        : 'Failed to submit review'
     );
   }
 

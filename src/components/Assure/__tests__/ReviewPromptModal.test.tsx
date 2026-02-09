@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { ReactElement } from 'react';
 import { ReviewPromptModal } from '../ReviewPromptModal';
+import { useFocusTrap } from '../../../hooks/useFocusTrap';
 
 vi.mock('../../../hooks/useFocusTrap', () => ({
   useFocusTrap: vi.fn(),
@@ -11,6 +12,8 @@ vi.mock('../../../hooks/useFocusTrap', () => ({
 vi.mock('../../../hooks/useAgentReviews', () => ({
   postAgentReview: vi.fn().mockResolvedValue({ reviewId: 'mock-review-1' }),
 }));
+
+const mockedUseFocusTrap = vi.mocked(useFocusTrap);
 
 describe('ReviewPromptModal', () => {
   const renderWithClient = (ui: ReactElement) => {
@@ -113,5 +116,24 @@ describe('ReviewPromptModal', () => {
       expect(defaultProps.onSubmitted).toHaveBeenCalledTimes(1);
     });
     expect(defaultProps.onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('useFocusTrap 被呼叫且傳入 onEscape', () => {
+    renderWithClient(<ReviewPromptModal {...defaultProps} />);
+    expect(mockedUseFocusTrap).toHaveBeenCalledWith(
+      expect.objectContaining({
+        isActive: true,
+        onEscape: defaultProps.onClose,
+      })
+    );
+  });
+
+  it('aria-labelledby 連結到標題 h2', () => {
+    renderWithClient(<ReviewPromptModal {...defaultProps} />);
+    const dialog = screen.getByRole('dialog');
+    const labelledById = dialog.getAttribute('aria-labelledby');
+    expect(labelledById).toBeTruthy();
+    const heading = screen.getByText('覺得這次帶看服務如何？');
+    expect(heading.id).toBe(labelledById);
   });
 });

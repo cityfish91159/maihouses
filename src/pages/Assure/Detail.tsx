@@ -191,6 +191,8 @@ export default function AssureDetail() {
     setShowDataModal(false);
   };
 
+  const lastAgentId = localStorage.getItem('uag_last_aid');
+
   // --- RENDERING ---
 
   if (!tx && !loading) {
@@ -374,10 +376,10 @@ export default function AssureDetail() {
       )}
 
       {/* #13b: 評價提示 Modal */}
-      {showReviewPrompt && tx && caseId && localStorage.getItem('uag_last_aid') && (
+      {showReviewPrompt && tx && caseId && lastAgentId && (
         <ReviewPromptModal
           open={showReviewPrompt}
-          agentId={localStorage.getItem('uag_last_aid')!}
+          agentId={lastAgentId}
           agentName={tx.agentName || ''}
           trustCaseId={caseId}
           onClose={() => setShowReviewPrompt(false)}

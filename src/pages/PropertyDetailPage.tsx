@@ -51,8 +51,15 @@ import {
 const FALLBACK_IMAGE =
   'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80';
 
-export const resolvePropertyDetailBackTarget = (historyLength: number): number | string =>
-  historyLength > 1 ? -1 : '/maihouses/';
+/**
+ * 解析返回目標
+ * Safari 直接開啟頁面時 history.length 會是 2，所以用 > 2 更安全
+ * 或結合 document.referrer 判斷是否有來源頁
+ */
+export const resolvePropertyDetailBackTarget = (historyLength: number): number | string => {
+  // 使用 > 2 避免 Safari 的 history.length === 2 誤判
+  return historyLength > 2 ? -1 : '/maihouses/';
+};
 
 /**
  * 房源詳情頁面
@@ -767,12 +774,14 @@ export const PropertyDetailPage: React.FC = () => {
         />
 
         {/* #13b: 評價列表 Modal */}
-        <AgentReviewListModal
-          open={reviewListOpen}
-          agentId={property.agent?.id || ''}
-          agentName={property.agent?.name || ''}
-          onClose={() => setReviewListOpen(false)}
-        />
+        {reviewListOpen && (
+          <AgentReviewListModal
+            open={reviewListOpen}
+            agentId={property.agent?.id || ''}
+            agentName={property.agent?.name || ''}
+            onClose={() => setReviewListOpen(false)}
+          />
+        )}
       </div>
     </ErrorBoundary>
   );
