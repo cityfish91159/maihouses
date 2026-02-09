@@ -19,7 +19,7 @@ export type RuntimeOverrides = {
   mockSeed?: string;
 };
 
-const LS = 'maihouse_config';
+const LS = 'maihouse_config_v2'; // v2: 修復 API 路徑問題，強制清除舊快取
 
 const DEFAULT_CONFIG: AppConfig & Partial<RuntimeOverrides> = {
   apiBaseUrl: '/api',
