@@ -2376,45 +2376,54 @@ export type ToggleReviewLikePayload = z.infer<typeof ToggleReviewLikePayloadSche
 
 #### 修改檔案
 1. `supabase/migrations/20260209_community_review_likes.sql`（14-A）
-   - 新增 `community_review_likes` 表（`id / property_id / user_id / created_at`）
-   - 設定 RLS 權限：anon 可讀，authenticated 可增刪
-   - 新增 Trigger `fn_recalc_encouragement_count` 自動更新 `agents.encouragement_count`
+   - 重寫 migration（移除毀損文字），建立 `community_review_likes`（`property_id UUID` FK `properties.id`）
+   - 補齊唯一索引與查詢索引（`property_id + user_id`、`property_id`、`user_id`）
+   - 以 `DROP POLICY IF EXISTS` + `CREATE POLICY` 方式重建 RLS（anon 可讀、authenticated 可增刪）
+   - 新增 `fn_recalc_encouragement_count` + `trg_community_review_likes_encouragement`
+   - 補 backfill SQL，將既有 `agents.encouragement_count` 與按讚資料對齊
 
 2. `api/community/review-like.ts`（14-B）
-   - 新增 GET/POST API 處理按讚狀態與切換
-   - 整合 `verifyAuth` 驗證與權限檢查
+   - 重寫 GET/POST handler（含 `OPTIONS`），統一 `errorResponse` 錯誤格式
+   - 修正認證流程為 `verifyAuth(req)`，移除錯誤依賴與無效 import
+   - 新增 property 解析：同時支援 `properties.id`(UUID) 與 `public_id`（例如 `MH-100001`）
+   - 新增「兩好一公道」完整性驗證（缺欄位回傳 422）
+   - 新增 toggle 分支：已讚 DELETE、未讚 INSERT、`23505` 併發衝突視為 idempotent 成功
 
 3. `src/types/community-review-like.ts`（14-C）
-   - 定義 `ToggleReviewLikePayloadSchema` 與 `ReviewLikeResponseSchema`
+   - 補齊 `ReviewLikeQuerySchema`、`ReviewLikeApiErrorSchema`
+   - 保留並強化 `ToggleReviewLikePayloadSchema`、`ReviewLikeResponseSchema`（型別與 Zod 一致）
 
 4. `src/hooks/useCommunityReviewLike.ts`（14-E）
-   - 封裝 `useMutation` 呼叫 API
-   - 設定 `onSuccess` 自動 `invalidateQueries(['agent-profile'])`
+   - 新增 `fetchReviewLikeStatus` / `postReviewLike` / `useCommunityReviewLikeStatus`
+   - `useCommunityReviewLike` 補齊 optimistic update、error rollback、settled refetch
+   - 成功後 `invalidateQueries(['agent-profile'])`，同步更新 AgentTrustCard 鼓勵數
 
 5. 測試檔案
-   - `api/community/__tests__/review-like.test.ts`：測試 API 邏輯
-   - `src/hooks/__tests__/useCommunityReviewLike.test.tsx`：測試 Hook 行為
+   - `api/community/__tests__/review-like.test.ts`（重寫）
+     - 覆蓋 GET/POST、未授權、summary 不完整(422)、insert/delete、`23505` idempotent
+   - `src/hooks/__tests__/useCommunityReviewLike.test.tsx`（重寫）
+     - 覆蓋 helper API call、Unauthorized、optimistic update、rollback
 
 #### 驗證結果
-```
-✅ typecheck  0 errors
-✅ lint       0 errors, 0 warnings
-✅ tests      API & Hook 測試通過
+```bash
+npm run test -- api/community/__tests__/review-like.test.ts src/hooks/__tests__/useCommunityReviewLike.test.tsx
+npm run typecheck
+npm run lint
+npm run check:utf8
 ```
 
 > **#14a 包含 14-A（上方）+ 14-B + 14-C + 14-E（下方 Hook 區塊）。**
 
 ### #14a 驗收標準
 
-- [ ] DB：`community_review_likes` 表已建立，RLS 已啟用
-- [ ] DB：Trigger 自動 COUNT → UPDATE `agents.encouragement_count`
-- [ ] API：`POST /api/community/review-like` toggle 按讚/取消
-- [ ] Type：`community-review-like.ts` Zod schema 完整
-- [ ] Hook：`useCommunityReviewLike.ts` optimistic update 運作正常
-- [ ] typecheck + lint 通過
+- [x] DB：`community_review_likes` 表已建立，RLS 已啟用
+- [x] DB：Trigger 自動 COUNT → UPDATE `agents.encouragement_count`
+- [x] API：`POST /api/community/review-like` toggle 按讚/取消
+- [x] Type：`community-review-like.ts` Zod schema 完整
+- [x] Hook：`useCommunityReviewLike.ts` optimistic update 運作正常
+- [x] typecheck + lint 通過
 
 ---
-
 ## #14b [P1] 獲得鼓勵系統 — 前端組件 + 整合（3 項：14-D + 14-F + 14-G）
 
 ### 14-D. [P1] 前端組件 — 社區牆評價按讚 UI

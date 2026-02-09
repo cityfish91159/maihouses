@@ -38,6 +38,14 @@ function createWrapper(queryClient: QueryClient) {
   );
 }
 
+function createDeferred<T>() {
+  let resolve!: (value: T | PromiseLike<T>) => void;
+  const promise = new Promise<T>((res) => {
+    resolve = res;
+  });
+  return { promise, resolve };
+}
+
 describe('useCommunityReviewLike', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -114,11 +122,8 @@ describe('useCommunityReviewLike', () => {
       ok: boolean;
       json: () => Promise<{ success: true; liked: boolean; totalLikes: number }>;
     };
-    let resolveFetch: ((value: FetchResponse) => void) | null = null;
-    const fetchPromise: Promise<FetchResponse> = new Promise((resolve) => {
-      resolveFetch = resolve;
-    });
-    vi.stubGlobal('fetch', vi.fn().mockReturnValue(fetchPromise));
+    const deferred = createDeferred<FetchResponse>();
+    vi.stubGlobal('fetch', vi.fn().mockReturnValue(deferred.promise));
 
     const queryClient = createQueryClient();
     const propertyId = 'MH-100001';
@@ -144,11 +149,7 @@ describe('useCommunityReviewLike', () => {
       });
     });
 
-    if (!resolveFetch) {
-      throw new Error('Expected deferred fetch resolver to be initialized');
-    }
-
-    resolveFetch({
+    deferred.resolve({
       ok: true,
       json: async () => ({ success: true, liked: true, totalLikes: 4 }),
     });
